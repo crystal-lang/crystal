@@ -25,11 +25,11 @@ jobs:
       - name: Install LLVM
         run: |
           apt-get update
-          apt remove 'llvm-*' 'libllvm*'
+          apt-get remove -y 'llvm-*' 'libllvm*'
           apt-get install -y software-properties-common
           wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
           apt-add-repository -y deb http://apt.llvm.org/noble/ llvm-toolchain-noble-18 main
-          apt install -y llvm-18-dev
+          apt-get install -y llvm-18-dev
           ln -s $(which wasm-ld-18) /usr/bin/wasm-ld
 
       - name: Download wasm32 libs
