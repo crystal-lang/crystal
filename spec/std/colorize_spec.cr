@@ -100,16 +100,16 @@ describe "colorize" do
   it "prints colorize ANSI escape codes" do
     Colorize.with.bold.print.should eq("\e[1m")
     Colorize.with.bright.print.should eq("\e[1m")
-    Colorize.with.dim.print.should eq("\e[0;2m")
-    Colorize.with.italic.print.should eq("\e[0;3m")
-    Colorize.with.underline.print.should eq("\e[0;4m")
-    Colorize.with.blink.print.should eq("\e[0;5m")
-    Colorize.with.blink_fast.print.should eq("\e[0;6m")
-    Colorize.with.reverse.print.should eq("\e[0;7m")
-    Colorize.with.hidden.print.should eq("\e[0;8m")
-    Colorize.with.strikethrough.print.should eq("\e[0;9m")
-    Colorize.with.double_underline.print.should eq("\e[0;21m")
-    Colorize.with.overline.print.should eq("\e[0;53m")
+    Colorize.with.dim.print.should eq("\e[2m")
+    Colorize.with.italic.print.should eq("\e[3m")
+    Colorize.with.underline.print.should eq("\e[4m")
+    Colorize.with.blink.print.should eq("\e[5m")
+    Colorize.with.blink_fast.print.should eq("\e[6m")
+    Colorize.with.reverse.print.should eq("\e[7m")
+    Colorize.with.hidden.print.should eq("\e[8m")
+    Colorize.with.strikethrough.print.should eq("\e[9m")
+    Colorize.with.double_underline.print.should eq("\e[21m")
+    Colorize.with.overline.print.should eq("\e[53m")
   end
 
   it "only prints colorize ANSI escape codes" do
