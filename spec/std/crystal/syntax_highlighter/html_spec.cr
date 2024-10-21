@@ -165,5 +165,5 @@ describe Crystal::SyntaxHighlighter::HTML do
 
   # fix for https://forum.crystal-lang.org/t/question-about-the-crystal-syntax-highlighter/7283
   it_highlights %q(/#{l[""]}/
-    "\\n"), %(<span class=\"s\">/</span><span class=\"i\">\#{</span>l[<span class=\"s\">&quot;&quot;</span>]<span class=\"i\">}</span><span class=\"s\">/</span>\n    <span class=\"s\">&quot;\\\\n&quot;</span>)
+    "\\n"), %(<span class="s">/</span><span class="i">\#{</span>l[<span class="s">&quot;&quot;</span>]<span class="i">}</span><span class="s">/</span>\n    <span class="s">&quot;\\\\n&quot;</span>)
 end
