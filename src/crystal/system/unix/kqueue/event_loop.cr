@@ -66,7 +66,7 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
       system_set_timer(@timers.next_ready?)
 
       # re-add all registered fds
-      Evented.arena.each { |fd, index| system_add(fd, index) }
+      Evented.arena.each_index { |fd, index| system_add(fd, index) }
     end
   {% end %}
 
