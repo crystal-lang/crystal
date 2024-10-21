@@ -18,7 +18,7 @@ private def unix_request(path)
 end
 
 private def unused_port
-  TCPServer.open(0) do |server|
+  TCPServer.open(Socket::IPAddress::UNSPECIFIED, 0) do |server|
     server.local_address.port
   end
 end
