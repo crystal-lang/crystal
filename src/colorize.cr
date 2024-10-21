@@ -497,7 +497,7 @@ struct Colorize::Object(T)
   protected def self.print(io : IO, color : {fore: Color, back: Color, mode: Mode}) : Nil
     last_color = @@last_color
     append_start(io, color)
-    @@last_color = color
+    @@last_color = last_color
   end
 
   protected def self.surround(io, color, &)
