@@ -643,8 +643,7 @@ class Crystal::Call
       if obj.is_a?(InstanceVar)
         scope = self.scope
         ivar = scope.lookup_instance_var(obj.name)
-        deps = ivar.dependencies?
-        if deps && deps.size == 1 && deps.first.same?(program.nil_var)
+        if ivar.dependencies.size == 1 && ivar.dependencies.first.same?(program.nil_var)
           similar_name = scope.lookup_similar_instance_var_name(ivar.name)
           if similar_name
             msg << colorize(" (#{ivar.name} was never assigned a value, did you mean #{similar_name}?)").yellow.bold

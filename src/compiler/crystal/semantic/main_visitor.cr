@@ -373,7 +373,7 @@ module Crystal
           var.bind_to(@program.nil_var)
           var.nil_if_read = false
 
-          meta_var.bind_to(@program.nil_var) unless meta_var.dependencies.try &.any? &.same?(@program.nil_var)
+          meta_var.bind_to(@program.nil_var) unless meta_var.dependencies.any? &.same?(@program.nil_var)
           node.bind_to(@program.nil_var)
         end
 
@@ -1283,7 +1283,7 @@ module Crystal
         # It can happen that this call is inside an ArrayLiteral or HashLiteral,
         # was expanded but isn't bound to the expansion because the call (together
         # with its expansion) was cloned.
-        if (expanded = node.expanded) && (!node.dependencies? || !node.type?)
+        if (expanded = node.expanded) && (node.dependencies.empty? || !node.type?)
           node.bind_to(expanded)
         end
 

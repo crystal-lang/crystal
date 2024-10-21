@@ -1,7 +1,69 @@
 module Crystal
+  # Specialized container for ASTNodes to use for bindings tracking.
+  #
+  # The average number of elements in both dependencies and observers is below 2
+  # for ASTNodes. This struct inlines the first two elements saving up 4
+  # allocations per node (two arrays, with a header and buffer for each) but we
+  # need to pay a slight extra cost in memory upfront: a total of 6 pointers (48
+  # bytes) vs 2 pointers (16 bytes). The other downside is that since this is a
+  # struct, we need to be careful with mutation.
+  struct SmallNodeList
+    include Enumerable(ASTNode)
+
+    @first : ASTNode?
+    @second : ASTNode?
+    @tail : Array(ASTNode)?
+
+    def each(& : ASTNode ->)
+      if first = @first
+        yield first
+      end
+      if second = @second
+        yield second
+      end
+      if tail = @tail
+        tail.each { |node| yield node }
+      end
+    end
+
+    def push(node : ASTNode) : self
+      if @first.nil?
+        @first = node
+      elsif @second.nil?
+        @second = node
+      else
+        tail = @tail ||= Array(ASTNode).new
+        tail.push(node)
+      end
+      self
+    end
+
+    def reject!(& : ASTNode ->) : self
+      if first = @first
+        if yield first
+          @first = nil
+        end
+      end
+      if second = @second
+        if yield second
+          @second = nil
+        end
+      end
+      if tail = @tail
+        tail.reject! { |node| yield node }
+      end
+      self
+    end
+
+    def concat(nodes : Enumerable(ASTNode)) : self
+      nodes.each { |node| self.push(node) }
+      self
+    end
+  end
+
   class ASTNode
-    property! dependencies : Array(ASTNode)
-    property observers : Array(ASTNode)?
+    getter dependencies : SmallNodeList = SmallNodeList.new
+    @observers : SmallNodeList = SmallNodeList.new
     property enclosing_call : Call?
 
     @dirty = false
@@ -107,8 +169,8 @@ module Crystal
     end
 
     def bind_to(node : ASTNode) : Nil
-      bind(node) do |dependencies|
-        dependencies.push node
+      bind(node) do
+        @dependencies.push node
         node.add_observer self
       end
     end
@@ -116,8 +178,8 @@ module Crystal
     def bind_to(nodes : Indexable) : Nil
       return if nodes.empty?
 
-      bind do |dependencies|
-        dependencies.concat nodes
+      bind do
+        @dependencies.concat nodes
         nodes.each &.add_observer self
       end
     end
@@ -130,9 +192,7 @@ module Crystal
         raise_frozen_type freeze_type, from_type, from
       end
 
-      dependencies = @dependencies ||= [] of ASTNode
-
-      yield dependencies
+      yield
 
       new_type = type_from_dependencies
       new_type = map_type(new_type) if new_type
@@ -150,7 +210,7 @@ module Crystal
     end
 
     def type_from_dependencies : Type?
-      Type.merge dependencies
+      Type.merge @dependencies
     end
 
     def unbind_from(nodes : Nil)
@@ -158,18 +218,17 @@ module Crystal
     end
 
     def unbind_from(node : ASTNode)
-      @dependencies.try &.reject! &.same?(node)
+      @dependencies.reject! &.same?(node)
       node.remove_observer self
     end
 
-    def unbind_from(nodes : Array(ASTNode))
-      @dependencies.try &.reject! { |dep| nodes.any? &.same?(dep) }
+    def unbind_from(nodes : Enumerable(ASTNode))
+      @dependencies.reject! { |dep| nodes.any? &.same?(dep) }
       nodes.each &.remove_observer self
     end
 
     def add_observer(observer)
-      observers = @observers ||= [] of ASTNode
-      observers.push observer
+      @observers.push observer
     end
 
     def remove_observer(observer)
@@ -269,8 +328,8 @@ module Crystal
       visited = Set(ASTNode).new.compare_by_identity
       owner_trace << node if node.type?.try &.includes_type?(owner)
       visited.add node
-      while deps = node.dependencies?
-        dependencies = deps.select { |dep| dep.type? && dep.type.includes_type?(owner) && !visited.includes?(dep) }
+      while true
+        dependencies = node.dependencies.select { |dep| dep.type? && dep.type.includes_type?(owner) && !visited.includes?(dep) }
         if dependencies.size > 0
           node = dependencies.first
           nil_reason = node.nil_reason if node.is_a?(MetaTypeVar)
