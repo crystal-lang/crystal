@@ -17,12 +17,24 @@ module Crystal
     def each(& : ASTNode ->)
       if first = @first
         yield first
+        if second = @second
+          yield second
+          if tail = @tail
+            tail.each { |node| yield node }
+          end
+        end
       end
-      if second = @second
-        yield second
-      end
-      if tail = @tail
-        tail.each { |node| yield node }
+    end
+
+    def size
+      if @first.nil?
+        0
+      elsif @second.nil?
+        1
+      elsif (tail = @tail).nil?
+        2
+      else
+        2 + tail.size
       end
     end
 
@@ -31,8 +43,9 @@ module Crystal
         @first = node
       elsif @second.nil?
         @second = node
+      elsif (tail = @tail).nil?
+        @tail = [node] of ASTNode
       else
-        tail = @tail ||= Array(ASTNode).new
         tail.push(node)
       end
       self
@@ -40,17 +53,18 @@ module Crystal
 
     def reject!(& : ASTNode ->) : self
       if first = @first
+        if second = @second
+          if tail = @tail
+            tail.reject! { |node| yield node }
+          end
+          if yield second
+            @second = tail.try &.shift?
+          end
+        end
         if yield first
-          @first = nil
+          @first = @second
+          @second = tail.try &.shift?
         end
-      end
-      if second = @second
-        if yield second
-          @second = nil
-        end
-      end
-      if tail = @tail
-        tail.reject! { |node| yield node }
       end
       self
     end
