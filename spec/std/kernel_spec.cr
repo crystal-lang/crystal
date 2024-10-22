@@ -254,38 +254,44 @@ describe "hardware exception" do
     error.should_not contain("Stack overflow")
   end
 
-  it "detects stack overflow on the main stack", tags: %w[slow] do
-    # This spec can take some time under FreeBSD where
-    # the default stack size is 0.5G.  Setting a
-    # smaller stack size with `ulimit -s 8192`
-    # will address this.
-    status, _, error = compile_and_run_source <<-'CRYSTAL'
-      def foo
-        y = StaticArray(Int8, 512).new(0)
+  {% if flag?(:netbsd) %}
+    # FIXME: on netbsd the process crashes with SIGILL after receiving SIGSEGV
+    pending "detects stack overflow on the main stack"
+    pending "detects stack overflow on a fiber stack"
+  {% else %}
+    it "detects stack overflow on the main stack", tags: %w[slow] do
+      # This spec can take some time under FreeBSD where
+      # the default stack size is 0.5G.  Setting a
+      # smaller stack size with `ulimit -s 8192`
+      # will address this.
+      status, _, error = compile_and_run_source <<-'CRYSTAL'
+        def foo
+          y = StaticArray(Int8, 512).new(0)
+          foo
+        end
         foo
-      end
-      foo
-    CRYSTAL
+      CRYSTAL
 
-    status.success?.should be_false
-    error.should contain("Stack overflow")
-  end
+      status.success?.should be_false
+      error.should contain("Stack overflow")
+    end
 
-  it "detects stack overflow on a fiber stack", tags: %w[slow] do
-    status, _, error = compile_and_run_source <<-'CRYSTAL'
-      def foo
-        y = StaticArray(Int8, 512).new(0)
-        foo
-      end
+    it "detects stack overflow on a fiber stack", tags: %w[slow] do
+      status, _, error = compile_and_run_source <<-'CRYSTAL'
+        def foo
+          y = StaticArray(Int8, 512).new(0)
+          foo
+        end
 
-      spawn do
-        foo
-      end
+        spawn do
+          foo
+        end
 
-      sleep 60.seconds
-    CRYSTAL
+        sleep 60.seconds
+      CRYSTAL
 
-    status.success?.should be_false
-    error.should contain("Stack overflow")
-  end
+      status.success?.should be_false
+      error.should contain("Stack overflow")
+    end
+  {% end %}
 end

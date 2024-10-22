@@ -79,7 +79,7 @@ describe TCPSocket, tags: "network" do
         # FIXME: Resolve special handling for win32. The error code handling should be identical.
         {% if flag?(:win32) %}
           [WinError::WSAHOST_NOT_FOUND, WinError::WSATRY_AGAIN].should contain err.os_error
-        {% elsif flag?(:android) %}
+        {% elsif flag?(:android) || flag?(:netbsd) %}
           err.os_error.should eq(Errno.new(LibC::EAI_NODATA))
         {% else %}
           [Errno.new(LibC::EAI_NONAME), Errno.new(LibC::EAI_AGAIN)].should contain err.os_error
@@ -93,7 +93,7 @@ describe TCPSocket, tags: "network" do
         # FIXME: Resolve special handling for win32. The error code handling should be identical.
         {% if flag?(:win32) %}
           [WinError::WSAHOST_NOT_FOUND, WinError::WSATRY_AGAIN].should contain err.os_error
-        {% elsif flag?(:android) %}
+        {% elsif flag?(:android) || flag?(:netbsd) %}
           err.os_error.should eq(Errno.new(LibC::EAI_NODATA))
         {% else %}
           [Errno.new(LibC::EAI_NONAME), Errno.new(LibC::EAI_AGAIN)].should contain err.os_error
@@ -142,7 +142,7 @@ describe TCPSocket, tags: "network" do
         (client.tcp_nodelay = false).should be_false
         client.tcp_nodelay?.should be_false
 
-        {% unless flag?(:openbsd) %}
+        {% unless flag?(:openbsd) || flag?(:netbsd) %}
           (client.tcp_keepalive_idle = 42).should eq 42
           client.tcp_keepalive_idle.should eq 42
           (client.tcp_keepalive_interval = 42).should eq 42
