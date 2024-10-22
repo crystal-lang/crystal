@@ -79,6 +79,25 @@ describe "Range" do
     (1...5).includes?(5).should be_false
   end
 
+  it "does union" do
+    (1..5).union(3..7).should eq(1..7)
+    (1..10).union(1...15).should eq(1...15)
+    (1...10).union(1..15).should eq(1..15)
+    (1..5).union(10..20).should eq(nil)
+  end
+
+  it "does intersection" do
+    (1..5).intersection(3..7).should eq(3..5)
+    (1..10).intersection(1...15).should eq(1..10)
+    (1...10).intersection(1..15).should eq(1...10)
+    (1..5).intersection(10..20).should eq(nil)
+  end
+
+  it "overlaps?" do
+    (1...10).overlaps?(10..11).should eq(false)
+    (1..10).overlaps?(5..9).should eq(true)
+  end
+
   it "does to_s" do
     (1...5).to_s.should eq("1...5")
     (1..5).to_s.should eq("1..5")

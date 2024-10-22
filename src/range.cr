@@ -261,7 +261,7 @@ struct Range(B, E)
   # ```
   def union(other : Range)
     if self.end < other.begin || other.end < self.begin
-      return 0..0
+      return nil
     end
 
     larger = (self.end > other.end)
@@ -281,7 +281,7 @@ struct Range(B, E)
   # ```
   def intersection(other : Range)
     if self.end < other.begin || other.end < self.begin
-      return 0..0
+      return nil
     end
 
     larger = (self.end > other.end)
