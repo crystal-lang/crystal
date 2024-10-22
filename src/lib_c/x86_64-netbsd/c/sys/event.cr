@@ -28,5 +28,5 @@ lib LibC
   end
 
   fun kqueue1(flags : Int) : Int
-  fun kevent = __kevent100(kq : Int, changelist : Kevent*, nchanges : SizeT, eventlist : Kevent*, nevents : SizeT, timeout : Timespec*) : Int
+  fun kevent = __kevent50(kq : Int, changelist : Kevent*, nchanges : SizeT, eventlist : Kevent*, nevents : SizeT, timeout : Timespec*) : Int
 end
