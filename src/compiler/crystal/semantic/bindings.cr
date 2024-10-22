@@ -15,15 +15,9 @@ module Crystal
     @tail : Array(ASTNode)?
 
     def each(& : ASTNode ->)
-      if first = @first
-        yield first
-        if second = @second
-          yield second
-          if tail = @tail
-            tail.each { |node| yield node }
-          end
-        end
-      end
+      yield @first || return
+      yield @second || return
+      @tail.try(&.each { |node| yield node })
     end
 
     def size
