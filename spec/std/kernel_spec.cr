@@ -8,6 +8,14 @@ describe "PROGRAM_NAME" do
         pending! "Example is broken in Nix shell (#12332)"
       end
 
+      # MSYS2: gcc/ld doesn't support unicode paths
+      # https://github.com/msys2/MINGW-packages/issues/17812
+      {% if flag?(:windows) %}
+        if ENV["MSYSTEM"]?
+          pending! "Example is broken in MSYS2 shell"
+        end
+      {% end %}
+
       File.write(source_file, "File.basename(PROGRAM_NAME).inspect(STDOUT)")
 
       compile_file(source_file, bin_name: "×‽😂") do |executable_file|
