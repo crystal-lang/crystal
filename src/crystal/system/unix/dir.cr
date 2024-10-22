@@ -43,10 +43,10 @@ module Crystal::System::Dir
 
   def self.info(dir, path) : ::File::Info
     fd = {% if flag?(:netbsd) %}
-        dir.value.dd_fd
-      {% else %}
-        LibC.dirfd(dir)
-      {% end %}
+           dir.value.dd_fd
+         {% else %}
+           LibC.dirfd(dir)
+         {% end %}
     Crystal::System::FileDescriptor.system_info(fd)
   end
 
