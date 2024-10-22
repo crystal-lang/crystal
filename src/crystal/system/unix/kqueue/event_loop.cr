@@ -214,7 +214,11 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
   private def system_set_timer(time : Time::Span?) : Nil
     if time
       flags = LibC::EV_ADD | LibC::EV_ONESHOT | LibC::EV_CLEAR
-      t = time - Time.monotonic
+
+      seconds, nanoseconds = System::Time.monotonic
+      now = Time::Span.new(seconds: seconds, nanoseconds: nanoseconds)
+      t = time - now
+
       data =
         {% if LibC.has_constant?(:NOTE_NSECONDS) %}
           t.total_nanoseconds.to_i64!.clamp(0..)

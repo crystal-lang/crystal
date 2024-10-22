@@ -34,7 +34,11 @@ struct Crystal::Evented::Event
   include PointerLinkedList::Node
 
   def initialize(@type : Type, @fiber, @index = nil, timeout : Time::Span? = nil)
-    @wake_at = Time.monotonic + timeout if timeout
+    if timeout
+      seconds, nanoseconds = System::Time.monotonic
+      now = Time::Span.new(seconds: seconds, nanoseconds: nanoseconds)
+      @wake_at = now + timeout
+    end
   end
 
   # Mark the IO event as timed out.

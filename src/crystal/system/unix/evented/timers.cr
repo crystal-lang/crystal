@@ -29,11 +29,13 @@ struct Crystal::Evented::Timers
   end
 
   # Dequeues and yields each ready timer (their `#wake_at` is lower than
-  # `Time.monotonic`) from the oldest to the most recent (i.e. time ascending).
+  # `System::Time.monotonic`) from the oldest to the most recent (i.e. time
+  # ascending).
   def dequeue_ready(& : Evented::Event* -> Nil) : Nil
     return if @list.empty?
 
-    now = Time.monotonic
+    seconds, nanoseconds = System::Time.monotonic
+    now = Time::Span.new(seconds: seconds, nanoseconds: nanoseconds)
     n = 0
 
     @list.each do |event|
