@@ -507,11 +507,6 @@ module Crystal
           link_flags += " -L/usr/local/lib"
         end
 
-        if program.has_flag?("openbsd")
-          # OpenBSD requires Indirect Branch Tracking by default, but we're not
-          # compatible (yet), so we disable it for now:
-          link_flags += " -Wl,-znobtcfi"
-        end
 
         {DEFAULT_LINKER, %(#{DEFAULT_LINKER} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags(@cross_compile)}), object_names}
       end
