@@ -85,6 +85,9 @@ describe UDPSocket, tags: "network" do
     elsif {{ flag?(:freebsd) }} && family == Socket::Family::INET6
       # FIXME: fails with "Error sending datagram to [ipv6]:port: Network is unreachable"
       pending "joins and transmits to multicast groups"
+    elsif {{ flag?(:netbsd) }} && family == Socket::Family::INET6
+      # FIXME: fails with "setsockopt: EADDRNOTAVAIL"
+      pending "joins and transmits to multicast groups"
     else
       it "joins and transmits to multicast groups" do
         udp = UDPSocket.new(family)
