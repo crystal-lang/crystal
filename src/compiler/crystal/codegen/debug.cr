@@ -42,17 +42,13 @@ module Crystal
 
       if @program.has_flag?("msvc")
         # Windows uses CodeView instead of DWARF
-        mod.add_flag(
-          LibLLVM::ModuleFlagBehavior::Warning,
-          "CodeView",
-          mod.context.int32.const_int(1)
-        )
+        mod.add_flag(LibLLVM::ModuleFlagBehavior::Warning, "CodeView", 1)
       end
 
       mod.add_flag(
         LibLLVM::ModuleFlagBehavior::Warning,
         "Debug Info Version",
-        mod.context.int32.const_int(LLVM::DEBUG_METADATA_VERSION)
+        LLVM::DEBUG_METADATA_VERSION
       )
     end
 
