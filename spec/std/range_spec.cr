@@ -80,23 +80,84 @@ describe "Range" do
   end
 
   it "does union" do
-    (1..5).union(3..7).should eq(1..7)
-    (1..10).union(1...15).should eq(1...15)
-    (1...10).union(1..15).should eq(1..15)
-    (1..5).union(10..20).should eq(nil)
+    # Int ranges
+    (1..5).union(3..7).should eq(1..7)          # Overlapping integer ranges
+    
+    # TODO: This test will fail - 
+    #   In an integer setting this case is doable. We can simply check adjaceny with +-1.
+    #   However, how do we define an adjacent range for other data types? 
+    #     Examples of adjacency ambiguity:
+    #       - Floats: Is 4.1's upper adjacent value 4.2 or 4.11, etc.?
+    #       - Times: Is a time's adjacent value +1 second or +1 hour, etc.?
+    # 
+    #   How do we define adjacency?
+    #   
+    # (1..5).union(6..10).should eq(1..10)      # Adjacent ranges
+    
+    (1..5).union(10..15).should eq(nil)         # Disjoint integer ranges
+  
+    # Float ranges
+    (1.0..5.5).union(3.2..7.8).should eq(1.0..7.8)  # Overlapping float ranges
+    (1.0..2.5).union(3.0..4.0).should eq(nil)       # Non-overlapping float ranges
+  
+    # String ranges
+    ('a'..'e').union('c'..'g').should eq('a'..'g')  # Overlapping string ranges
+    ('a'..'c').union('d'..'f').should eq(nil)       # Non-overlapping string ranges
+  
+    # Time ranges
+    t1 = Time.local(2024, 10, 1)
+    t2 = Time.local(2024, 10, 5)
+    t3 = Time.local(2024, 10, 10)
+    t4 = Time.local(2024, 10, 15)
+    (t1..t2).union(t2..t3).should eq(t1..t3)        # Adjacent time ranges
+    (t1..t2).union(t3..t4).should eq(nil)           # Disjoint time ranges
   end
-
+  
   it "does intersection" do
-    (1..5).intersection(3..7).should eq(3..5)
-    (1..10).intersection(1...15).should eq(1..10)
-    (1...10).intersection(1..15).should eq(1...10)
-    (1..5).intersection(10..20).should eq(nil)
-  end
+    # Int ranges
+    (1..5).intersection(3..7).should eq(3..5)       # Overlapping integer ranges
+    (1..5).intersection(6..10).should eq(nil)       # Non-overlapping integer ranges
+    (1..5).intersection(5..10).should eq(5..5)
 
-  it "overlaps?" do
-    (1...10).overlaps?(10..11).should eq(false)
-    (1..10).overlaps?(5..9).should eq(true)
+    # Float ranges
+    (1.0..5.5).intersection(3.2..7.8).should eq(3.2..5.5)  # Overlapping float ranges
+    (1.0..2.5).intersection(3.0..4.0).should eq(nil)       # Non-overlapping float ranges
+  
+    # String ranges
+    ('a'..'e').intersection('c'..'g').should eq('c'..'e')  # Overlapping string ranges
+    ('a'..'c').intersection('d'..'f').should eq(nil)       # Non-overlapping string ranges
+  
+    # Time ranges
+    t1 = Time.local(2024, 10, 1)
+    t2 = Time.local(2024, 10, 5)
+    t3 = Time.local(2024, 10, 10)
+    t4 = Time.local(2024, 10, 15)
+    (t1..t3).intersection(t2..t4).should eq(t2..t3)        # Overlapping time ranges
+    (t1..t2).intersection(t3..t4).should eq(nil)           # Non-overlapping time ranges
   end
+  
+  it "overlaps?" do
+    # Int ranges
+    (1..5).overlaps?(3..7).should eq(true)          # Overlapping integer ranges
+    (1..5).overlaps?(6..10).should eq(false)        # Non-overlapping integer ranges
+  
+    # Float ranges
+    (1.0..5.5).overlaps?(3.2..7.8).should eq(true)  # Overlapping float ranges
+    (1.0..2.5).overlaps?(3.0..4.0).should eq(false) # Non-overlapping float ranges
+  
+    # String ranges
+    ('a'..'e').overlaps?('c'..'g').should eq(true)  # Overlapping string ranges
+    ('a'..'c').overlaps?('d'..'f').should eq(false) # Non-overlapping string ranges
+  
+    # Time ranges
+    t1 = Time.local(2024, 10, 1)
+    t2 = Time.local(2024, 10, 5)
+    t3 = Time.local(2024, 10, 10)
+    t4 = Time.local(2024, 10, 15)
+    (t1..t3).overlaps?(t2..t4).should eq(true)      # Overlapping time ranges
+    (t1..t2).overlaps?(t3..t4).should eq(false)     # Non-overlapping time ranges
+  end
+  
 
   it "does to_s" do
     (1...5).to_s.should eq("1...5")
