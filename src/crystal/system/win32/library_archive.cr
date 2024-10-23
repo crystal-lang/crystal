@@ -88,17 +88,17 @@ module Crystal::System::LibraryArchive
 
       if machine == 0x0000 && section_count == 0xFFFF
         # short import library
-      version = io.read_bytes(UInt16, IO::ByteFormat::LittleEndian)
-      return unless version == 0 # 1 and 2 are used by object files (ANON_OBJECT_HEADER)
+        version = io.read_bytes(UInt16, IO::ByteFormat::LittleEndian)
+        return unless version == 0 # 1 and 2 are used by object files (ANON_OBJECT_HEADER)
 
-      # machine(2) + time(4) + size(4) + ordinal/hint(2) + flags(2)
-      io.skip(14)
+        # machine(2) + time(4) + size(4) + ordinal/hint(2) + flags(2)
+        io.skip(14)
 
-      # TODO: is there a way to do this without constructing a temporary string,
-      # but with the optimizations present in `IO#gets`?
-      return unless io.gets('\0') # symbol name
+        # TODO: is there a way to do this without constructing a temporary string,
+        # but with the optimizations present in `IO#gets`?
+        return unless io.gets('\0') # symbol name
 
-      if dll_name = io.gets('\0', chomp: true)
+        if dll_name = io.gets('\0', chomp: true)
           @dlls << dll_name if valid_dll?(dll_name)
         end
       else
