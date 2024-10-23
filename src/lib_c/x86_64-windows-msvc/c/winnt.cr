@@ -392,6 +392,21 @@ lib LibC
     optionalHeader : IMAGE_OPTIONAL_HEADER64
   end
 
+  IMAGE_SCN_CNT_INITIALIZED_DATA = 0x00000040
+
+  struct IMAGE_SECTION_HEADER
+    name : BYTE[8]
+    virtualSize : DWORD
+    virtualAddress : DWORD
+    sizeOfRawData : DWORD
+    pointerToRawData : DWORD
+    pointerToRelocations : DWORD
+    pointerToLinenumbers : DWORD
+    numberOfRelocations : WORD
+    numberOfLinenumbers : WORD
+    characteristics : DWORD
+  end
+
   struct IMAGE_IMPORT_BY_NAME
     hint : WORD
     name : CHAR[1]
