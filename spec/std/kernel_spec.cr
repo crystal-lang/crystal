@@ -251,55 +251,60 @@ describe "at_exit" do
   end
 end
 
-describe "hardware exception" do
-  it "reports invalid memory access", tags: %w[slow] do
-    status, _, error = compile_and_run_source <<-'CRYSTAL'
-      puts Pointer(Int64).null.value
-    CRYSTAL
+{% if flag?(:openbsd) %}
+  # FIXME: the segfault handler doesn't work on OpenBSD
+  pending "hardware exception"
+{% else %}
+  describe "hardware exception" do
+    it "reports invalid memory access", tags: %w[slow] do
+      status, _, error = compile_and_run_source <<-'CRYSTAL'
+        puts Pointer(Int64).null.value
+      CRYSTAL
 
-    status.success?.should be_false
-    error.should contain("Invalid memory access")
-    error.should_not contain("Stack overflow")
+      status.success?.should be_false
+      error.should contain("Invalid memory access")
+      error.should_not contain("Stack overflow")
+    end
+
+    {% if flag?(:netbsd) %}
+      # FIXME: on netbsd the process crashes with SIGILL after receiving SIGSEGV
+      pending "detects stack overflow on the main stack"
+      pending "detects stack overflow on a fiber stack"
+    {% else %}
+      it "detects stack overflow on the main stack", tags: %w[slow] do
+        # This spec can take some time under FreeBSD where
+        # the default stack size is 0.5G.  Setting a
+        # smaller stack size with `ulimit -s 8192`
+        # will address this.
+        status, _, error = compile_and_run_source <<-'CRYSTAL'
+          def foo
+            y = StaticArray(Int8, 512).new(0)
+            foo
+          end
+          foo
+        CRYSTAL
+
+        status.success?.should be_false
+        error.should contain("Stack overflow")
+      end
+
+      it "detects stack overflow on a fiber stack", tags: %w[slow] do
+        status, _, error = compile_and_run_source <<-'CRYSTAL'
+          def foo
+            y = StaticArray(Int8, 512).new(0)
+            foo
+          end
+
+          spawn do
+            foo
+          end
+
+          sleep 60.seconds
+        CRYSTAL
+
+        status.success?.should be_false
+        error.should contain("Stack overflow")
+      end
+    {% end %}
   end
-
-  {% if flag?(:netbsd) %}
-    # FIXME: on netbsd the process crashes with SIGILL after receiving SIGSEGV
-    pending "detects stack overflow on the main stack"
-    pending "detects stack overflow on a fiber stack"
-  {% else %}
-    it "detects stack overflow on the main stack", tags: %w[slow] do
-      # This spec can take some time under FreeBSD where
-      # the default stack size is 0.5G.  Setting a
-      # smaller stack size with `ulimit -s 8192`
-      # will address this.
-      status, _, error = compile_and_run_source <<-'CRYSTAL'
-        def foo
-          y = StaticArray(Int8, 512).new(0)
-          foo
-        end
-        foo
-      CRYSTAL
-
-      status.success?.should be_false
-      error.should contain("Stack overflow")
-    end
-
-    it "detects stack overflow on a fiber stack", tags: %w[slow] do
-      status, _, error = compile_and_run_source <<-'CRYSTAL'
-        def foo
-          y = StaticArray(Int8, 512).new(0)
-          foo
-        end
-
-        spawn do
-          foo
-        end
-
-        sleep 60.seconds
-      CRYSTAL
-
-      status.success?.should be_false
-      error.should contain("Stack overflow")
-    end
-  {% end %}
-end
+{% end %}

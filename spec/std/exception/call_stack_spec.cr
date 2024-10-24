@@ -55,14 +55,19 @@ describe "Backtrace" do
     error.to_s.should contain("IndexError")
   end
 
-  it "prints crash backtrace to stderr", tags: %w[slow] do
-    sample = datapath("crash_backtrace_sample")
+  {% if flag?(:openbsd) %}
+    # FIXME: the segfault handler doesn't work on OpenBSD
+    pending "prints crash backtrace to stderr"
+  {% else %}
+    it "prints crash backtrace to stderr", tags: %w[slow] do
+      sample = datapath("crash_backtrace_sample")
 
-    _, output, error = compile_and_run_file(sample)
+      _, output, error = compile_and_run_file(sample)
 
-    output.to_s.should be_empty
-    error.to_s.should contain("Invalid memory access")
-  end
+      output.to_s.should be_empty
+      error.to_s.should contain("Invalid memory access")
+    end
+  {% end %}
 
   # Do not test this on platforms that cannot remove the current working
   # directory of the process:
