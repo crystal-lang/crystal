@@ -55,9 +55,9 @@ class Crystal::Program
 
       case target.architecture
       when "aarch64"
-        flags.add "branch-protection=bti"
+        flags.add "branch-protection=bti" unless flags.any?(&.starts_with?("branch-protection="))
       when "x86_64", "i386"
-        flags.add "cf-protection=branch"
+        flags.add "cf-protection=branch" unless flags.any?(&.starts_with?("cf-protection="))
       end
     end
 
