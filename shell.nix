@@ -19,16 +19,13 @@
 # $ nix-shell --pure --arg musl true
 #
 
-{llvm ? 11, musl ? false, system ? builtins.currentSystem}:
+{llvm ? 18, musl ? false, system ? builtins.currentSystem}:
 
 let
   nixpkgs = import (builtins.fetchTarball {
-    name = "nixpkgs-23.05";
-    url = "https://github.com/NixOS/nixpkgs/archive/23.05.tar.gz";
-    sha256 = "10wn0l08j9lgqcw8177nh2ljrnxdrpri7bp0g7nvrsn9rkawvlbf";
-  }) {
-    inherit system;
-  };
+    name = "nixpkgs-unstable";
+    url = "https://github.com/NixOS/nixpkgs/archive/master.tar.gz";
+  }) { inherit system; };
 
   pkgs = if musl then nixpkgs.pkgsMusl else nixpkgs;
   llvmPackages = pkgs."llvmPackages_${toString llvm}";
