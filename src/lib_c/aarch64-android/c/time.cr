@@ -23,6 +23,11 @@ lib LibC
     tv_nsec : Long
   end
 
+  struct Itimerspec
+    it_interval : Timespec
+    it_value : Timespec
+  end
+
   fun clock_gettime(__clock : ClockidT, __ts : Timespec*) : Int
   fun clock_settime(__clock : ClockidT, __ts : Timespec*) : Int
   fun gmtime_r(__t : TimeT*, __tm : Tm*) : Tm*
