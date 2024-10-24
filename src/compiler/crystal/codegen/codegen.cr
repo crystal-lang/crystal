@@ -274,7 +274,8 @@ module Crystal
                    @llvm_context : LLVM::Context = LLVM::Context.new)
       @abi = @program.target_machine.abi
       # LLVM::Context.register(@llvm_context, "main")
-      @main_mod = @llvm_mod = new_module("main_module")
+      @llvm_mod = configure_module(@llvm_context.new_module("main_module"))
+      @main_mod = @llvm_mod
       @main_llvm_context = @main_mod.context
       @llvm_typer = LLVMTyper.new(@program, @llvm_context)
       @main_llvm_typer = @llvm_typer
@@ -364,8 +365,7 @@ module Crystal
 
     getter llvm_context
 
-    def new_module(module_name)
-      llvm_mod = @llvm_context.new_module(module_name)
+    def configure_module(llvm_mod)
       llvm_mod.data_layout = @program.target_machine.data_layout
 
       # enable branch authentication instructions (BTI)
