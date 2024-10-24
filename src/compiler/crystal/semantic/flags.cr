@@ -49,7 +49,18 @@ class Crystal::Program
       flags.add "freebsd#{target.freebsd_version}"
     end
     flags.add "netbsd" if target.netbsd?
-    flags.add "openbsd" if target.openbsd?
+
+    if target.openbsd?
+      flags.add "openbsd"
+
+      case target.architecture
+      when "aarch64"
+        flags.add "branch-protection=bti" unless flags.any?(&.starts_with?("branch-protection="))
+      when "x86_64", "i386"
+        flags.add "cf-protection=branch" unless flags.any?(&.starts_with?("cf-protection="))
+      end
+    end
+
     flags.add "dragonfly" if target.dragonfly?
     flags.add "solaris" if target.solaris?
     flags.add "android" if target.android?

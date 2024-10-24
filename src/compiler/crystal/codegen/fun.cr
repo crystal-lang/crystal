@@ -626,8 +626,7 @@ class Crystal::CodeGenVisitor
         # LLVM::Context.register(llvm_context, type_name)
 
         llvm_typer = LLVMTyper.new(@program, llvm_context)
-        llvm_mod = llvm_context.new_module(type_name)
-        llvm_mod.data_layout = self.data_layout
+        llvm_mod = configure_module(llvm_context.new_module(type_name))
         llvm_builder = new_builder(llvm_context)
 
         define_symbol_table llvm_mod, llvm_typer
