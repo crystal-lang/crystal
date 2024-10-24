@@ -84,6 +84,8 @@ describe SemanticVersion do
       99999999999999999999999.999999999999999999.99999999999999999----RC-SNAPSHOT.12.09.1--------------------------------..12
     )
     sversions.each do |s|
+      SemanticVersion.valid?(s).should be_false
+      SemanticVersion.parse?(s).should be_nil
       expect_raises(ArgumentError) { SemanticVersion.parse(s) }
     end
   end
