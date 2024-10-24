@@ -5,6 +5,8 @@ private alias ProjectInfo = Crystal::Doc::ProjectInfo
 
 private def run_git(command)
   Process.run(%(git -c user.email="" -c user.name="spec" #{command}), shell: true)
+rescue IO::Error
+  pending! "Git is not available"
 end
 
 private def assert_with_defaults(initial, expected, *, file = __FILE__, line = __LINE__)
