@@ -736,7 +736,7 @@ describe IO do
         it "says invalid byte sequence" do
           io = SimpleIOMemory.new(Slice.new(1, 255_u8))
           io.set_encoding("EUC-JP")
-          expect_raises ArgumentError, {% if flag?(:musl) || flag?(:freebsd) %}"Incomplete multibyte sequence"{% else %}"Invalid multibyte sequence"{% end %} do
+          expect_raises ArgumentError, {% if flag?(:musl) || flag?(:freebsd) || flag?(:netbsd) %}"Incomplete multibyte sequence"{% else %}"Invalid multibyte sequence"{% end %} do
             io.read_char
           end
         end
