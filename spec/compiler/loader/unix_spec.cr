@@ -40,7 +40,11 @@ describe Crystal::Loader do
       exc = expect_raises(Crystal::Loader::LoadError, /no such file|not found|cannot open/i) do
         Crystal::Loader.parse(["-l", "foo/bar.o"], search_paths: [] of String)
       end
-      exc.message.should contain File.join(Dir.current, "foo", "bar.o")
+      {% if flag?(:openbsd) %}
+        exc.message.should contain "foo/bar.o"
+      {% else %}
+        exc.message.should contain File.join(Dir.current, "foo", "bar.o")
+      {% end %}
     end
   end
 

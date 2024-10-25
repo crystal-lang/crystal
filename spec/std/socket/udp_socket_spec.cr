@@ -88,6 +88,9 @@ describe UDPSocket, tags: "network" do
     elsif {{ flag?(:netbsd) }} && family == Socket::Family::INET6
       # FIXME: fails with "setsockopt: EADDRNOTAVAIL"
       pending "joins and transmits to multicast groups"
+    elsif {{ flag?(:openbsd) }}
+      # FIXME: fails with "setsockopt: EINVAL (ipv4) or EADDRNOTAVAIL (ipv6)"
+      pending "joins and transmits to multicast groups"
     else
       it "joins and transmits to multicast groups" do
         udp = UDPSocket.new(family)

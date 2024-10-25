@@ -500,6 +500,19 @@ module Crystal
       else
         link_flags = @link_flags || ""
         link_flags += " -rdynamic"
+
+        if program.has_flag?("freebsd") || program.has_flag?("openbsd")
+          # pkgs are installed to usr/local/lib but it's not in LIBRARY_PATH by
+          # default; we declare it to ease linking on these platforms:
+          link_flags += " -L/usr/local/lib"
+        end
+
+        if program.has_flag?("openbsd")
+          # OpenBSD requires Indirect Branch Tracking by default, but we're not
+          # compatible (yet), so we disable it for now:
+          link_flags += " -Wl,-znobtcfi"
+        end
+
         {DEFAULT_LINKER, %(#{DEFAULT_LINKER} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags(@cross_compile)}), object_names}
       end
     end
