@@ -76,6 +76,15 @@ class Crystal::Loader
       parser.unknown_args do |args, after_dash|
         file_paths.concat args
       end
+
+      # although flags starting with `-Wl,` appear in `args` above, this is
+      # still called by `OptionParser`, so we assume it is fine to ignore these
+      # flags
+      parser.invalid_option do |arg|
+        unless arg.starts_with?("-Wl,")
+          raise LoadError.new "Not a recognized linker flag: #{arg}"
+        end
+      end
     end
 
     search_paths = extra_search_paths + search_paths
