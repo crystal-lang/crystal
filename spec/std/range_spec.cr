@@ -95,11 +95,14 @@ describe "Range" do
     # (1..5).union(6..10).should eq(1..10)      # Adjacent ranges
     
     (1..5).union(10..15).should eq(nil)         # Disjoint integer ranges
-  
+
+
     # Float ranges
     (1.0..5.5).union(3.2..7.8).should eq(1.0..7.8)  # Overlapping float ranges
     (1.0..2.5).union(3.0..4.0).should eq(nil)       # Non-overlapping float ranges
   
+
+
     # String ranges
     ('a'..'e').union('c'..'g').should eq('a'..'g')  # Overlapping string ranges
     ('a'..'c').union('d'..'f').should eq(nil)       # Non-overlapping string ranges
@@ -118,6 +121,7 @@ describe "Range" do
     (1..5).intersection(3..7).should eq(3..5)       # Overlapping integer ranges
     (1..5).intersection(6..10).should eq(nil)       # Non-overlapping integer ranges
     (1..5).intersection(5..10).should eq(5..5)
+    #(1...1).intersection(0..10).should eq(nil)
 
     # Float ranges
     (1.0..5.5).intersection(3.2..7.8).should eq(3.2..5.5)  # Overlapping float ranges

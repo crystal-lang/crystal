@@ -265,11 +265,11 @@ struct Range(B, E)
     end
 
     larger = (self.end > other.end)
-    if (larger && self.excludes_end?) || (!larger && other.excludes_end?)
-      return (self.begin < other.begin ? self.begin : other.begin)...(self.end > other.end ? self.end : other.end)
-    end
-
-    (self.begin < other.begin ? self.begin : other.begin)..(self.end > other.end ? self.end : other.end)
+    Range.new(
+      self.begin < other.begin ? self.begin : other.begin,
+      self.end > other.end ? self.end : other.end,
+      exclusive: (larger && self.excludes_end?) || (!larger && other.excludes_end?),
+   )
   end
 
   # Returns the intersection of this range, and another.
@@ -285,11 +285,11 @@ struct Range(B, E)
     end
 
     larger = (self.end > other.end)
-    if (!larger && self.excludes_end?) || (larger && other.excludes_end?)
-      return (self.begin > other.begin ? self.begin : other.begin)...(self.end < other.end ? self.end : other.end)
-    end
-
-    (self.begin > other.begin ? self.begin : other.begin)..(self.end < other.end ? self.end : other.end)
+    Range.new(
+      self.begin > other.begin ? self.begin : other.begin,
+      self.end < other.end ? self.end : other.end,
+      exclusive:(!larger && self.excludes_end?) || (larger && other.excludes_end?),
+   )
   end
 
   # Returns `true` if this range overlaps with another range.
