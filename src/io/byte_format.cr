@@ -20,9 +20,9 @@
 # ### Encode to bytes
 #
 # ```
-# raw = uninitialized UInt8[2]
-# IO::ByteFormat::LittleEndian.encode(0x1234_i16, raw.to_slice)
-# raw # => StaticArray[0x34, 0x12]
+# bytes = StaticArray(UInt8, 2).new 0
+# IO::ByteFormat::LittleEndian.encode(0x1234_i16, bytes.to_slice)
+# bytes # => StaticArray[0x34, 0x12]
 # ```
 #
 # ### Encode to IO
