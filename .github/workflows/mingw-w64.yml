@@ -8,6 +8,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
+env:
+  SPEC_SPLIT_DOTS: 160
+
 jobs:
   x86_64-mingw-w64-cross-compile:
     runs-on: ubuntu-24.04
@@ -89,3 +92,63 @@ jobs:
           path: |
             bin/
             share/
+
+  x86_64-mingw-w64-test:
+    runs-on: windows-2022
+    needs: [x86_64-mingw-w64-link]
+    steps:
+      - name: Setup MSYS2
+        id: msys2
+        uses: msys2/setup-msys2@ddf331adaebd714795f1042345e6ca57bd66cea8 # v2.24.1
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            git
+            make
+            mingw-w64-ucrt-x86_64-pkgconf
+            mingw-w64-ucrt-x86_64-cc
+            mingw-w64-ucrt-x86_64-gc
+            mingw-w64-ucrt-x86_64-pcre2
+            mingw-w64-ucrt-x86_64-libiconv
+            mingw-w64-ucrt-x86_64-zlib
+            mingw-w64-ucrt-x86_64-llvm
+            mingw-w64-ucrt-x86_64-gmp
+            mingw-w64-ucrt-x86_64-libxml2
+            mingw-w64-ucrt-x86_64-libyaml
+            mingw-w64-ucrt-x86_64-openssl
+            mingw-w64-ucrt-x86_64-libffi
+
+      - name: Disable CRLF line ending substitution
+        run: |
+          git config --global core.autocrlf false
+
+      - name: Download Crystal source
+        uses: actions/checkout@v4
+
+      - name: Download Crystal executable
+        uses: actions/download-artifact@v4
+        with:
+          name: x86_64-mingw-w64-crystal
+          path: crystal
+
+      - name: Run stdlib specs
+        shell: msys2 {0}
+        run: |
+          export PATH="$(pwd)/crystal/bin:$PATH"
+          export CRYSTAL_SPEC_COMPILER_BIN="$(pwd)/crystal/bin/crystal.exe"
+          make std_spec
+
+      - name: Run compiler specs
+        shell: msys2 {0}
+        run: |
+          export PATH="$(pwd)/crystal/bin:$PATH"
+          export CRYSTAL_SPEC_COMPILER_BIN="$(pwd)/crystal/bin/crystal.exe"
+          make compiler_spec FLAGS=-Dwithout_ffi
+
+      - name: Run primitives specs
+        shell: msys2 {0}
+        run: |
+          export PATH="$(pwd)/crystal/bin:$PATH"
+          export CRYSTAL_SPEC_COMPILER_BIN="$(pwd)/crystal/bin/crystal.exe"
+          make -o .build/crystal.exe primitives_spec # we know the compiler is fresh; do not rebuild it here
