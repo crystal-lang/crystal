@@ -162,6 +162,10 @@ class Crystal::Loader
       read_ld_conf(default_search_paths)
     {% end %}
 
+    cc_each_library_path do |path|
+      default_search_paths << path
+    end
+
     {% if flag?(:darwin) %}
       default_search_paths << "/usr/lib"
       default_search_paths << "/usr/local/lib"
@@ -179,7 +183,7 @@ class Crystal::Loader
       default_search_paths << "/usr/lib"
     {% end %}
 
-    default_search_paths
+    default_search_paths.uniq!
   end
 
   def self.read_ld_conf(array = [] of String, path = "/etc/ld.so.conf") : Nil
@@ -198,6 +202,22 @@ class Crystal::Loader
         end
       else
         array << line.strip
+      end
+    end
+  end
+
+  def self.cc_each_library_path(& : String ->) : Nil
+    search_dirs = begin
+      `#{Crystal::Compiler::DEFAULT_LINKER} -print-search-dirs`
+    rescue IO::Error
+      return
+    end
+
+    search_dirs.each_line do |line|
+      if libraries = line.lchop?("libraries: =")
+        libraries.split(Process::PATH_DELIMITER) do |path|
+          yield File.expand_path(path)
+        end
       end
     end
   end

@@ -1,11 +1,4 @@
 require "spec"
-
-{% if flag?(:interpreted) && !flag?(:win32) %}
-  # TODO: figure out how to link against libstdc++ in interpreted code (#14398)
-  pending LLVM::Type
-  {% skip_file %}
-{% end %}
-
 require "llvm"
 
 describe LLVM::Type do
