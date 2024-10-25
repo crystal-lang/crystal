@@ -1,4 +1,4 @@
-{% skip_file if flag?(:openbsd) %}
+{% skip_file if flag?(:openbsd) || (flag?(:win32) && flag?(:gnu)) %}
 
 require "../../spec_helper"
 

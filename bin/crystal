@@ -184,9 +184,18 @@ fi
 # with symlinks resolved as well (see https://github.com/crystal-lang/crystal/issues/12969).
 cd "$(realpath "$(pwd)")"
 
-if [ -x "$CRYSTAL_DIR/crystal" ]; then
-  __warning_msg "Using compiled compiler at ${CRYSTAL_DIR#"$PWD/"}/crystal"
-  exec "$CRYSTAL_DIR/crystal" "$@"
+case "$(uname -s)" in
+  CYGWIN*|MSYS_NT*|MINGW32_NT*|MINGW64_NT*)
+    CRYSTAL_BIN="crystal.exe"
+    ;;
+  *)
+    CRYSTAL_BIN="crystal"
+    ;;
+esac
+
+if [ -x "$CRYSTAL_DIR/${CRYSTAL_BIN}" ]; then
+  __warning_msg "Using compiled compiler at ${CRYSTAL_DIR#"$PWD/"}/${CRYSTAL_BIN}"
+  exec "$CRYSTAL_DIR/${CRYSTAL_BIN}" "$@"
 elif !($PARENT_CRYSTAL_EXISTS); then
   __error_msg 'You need to have a crystal executable in your path! or set CRYSTAL env variable'
   exit 1
