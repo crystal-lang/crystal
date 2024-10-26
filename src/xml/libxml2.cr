@@ -13,14 +13,8 @@ lib LibXML
 
   fun xmlInitParser
 
-  # TODO: check if other platforms also support per-thread globals
-  {% if flag?(:win32) %}
-    fun __xmlIndentTreeOutput : Int*
-    fun __xmlTreeIndentString : UInt8**
-  {% else %}
-    $xmlIndentTreeOutput : Int
-    $xmlTreeIndentString : UInt8*
-  {% end %}
+  fun __xmlIndentTreeOutput : Int*
+  fun __xmlTreeIndentString : UInt8**
 
   alias Dtd = Void*
   alias Dict = Void*

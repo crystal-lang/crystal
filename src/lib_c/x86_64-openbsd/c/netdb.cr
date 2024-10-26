@@ -13,6 +13,7 @@ lib LibC
   EAI_FAIL       =  -4
   EAI_FAMILY     =  -6
   EAI_MEMORY     = -10
+  EAI_NODATA     =  -5
   EAI_NONAME     =  -2
   EAI_SERVICE    =  -8
   EAI_SOCKTYPE   =  -7

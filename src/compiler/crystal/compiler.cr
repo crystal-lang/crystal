@@ -479,7 +479,7 @@ module Crystal
         link_flags += " -Wl,--stack,0x800000"
         lib_flags = program.lib_flags(@cross_compile)
         lib_flags = expand_lib_flags(lib_flags) if expand
-        cmd = %(#{DEFAULT_LINKER} #{Process.quote_windows(object_names)} -o #{Process.quote_windows(output_filename)} #{link_flags} #{lib_flags})
+        cmd = %(#{DEFAULT_LINKER} #{Process.quote_windows(object_names)} -o #{Process.quote_windows(output_filename)} #{link_flags} #{lib_flags}).gsub('\n', ' ')
 
         if cmd.size > 32000
           # The command line would be too big, pass the args through a file instead.
@@ -500,6 +500,19 @@ module Crystal
       else
         link_flags = @link_flags || ""
         link_flags += " -rdynamic"
+
+        if program.has_flag?("freebsd") || program.has_flag?("openbsd")
+          # pkgs are installed to usr/local/lib but it's not in LIBRARY_PATH by
+          # default; we declare it to ease linking on these platforms:
+          link_flags += " -L/usr/local/lib"
+        end
+
+        if program.has_flag?("openbsd")
+          # OpenBSD requires Indirect Branch Tracking by default, but we're not
+          # compatible (yet), so we disable it for now:
+          link_flags += " -Wl,-znobtcfi"
+        end
+
         {DEFAULT_LINKER, %(#{DEFAULT_LINKER} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags(@cross_compile)}), object_names}
       end
     end

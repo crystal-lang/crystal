@@ -425,9 +425,9 @@ describe IO do
       str.read_fully?(slice).should be_nil
     end
 
-    # pipe(2) returns bidirectional file descriptors on FreeBSD and Solaris,
+    # pipe(2) returns bidirectional file descriptors on some platforms,
     # gate this test behind the platform flag.
-    {% unless flag?(:freebsd) || flag?(:solaris) %}
+    {% unless flag?(:freebsd) || flag?(:solaris) || flag?(:openbsd) %}
       it "raises if trying to read to an IO not opened for reading" do
         IO.pipe do |r, w|
           expect_raises(IO::Error, "File not open for reading") do
@@ -574,9 +574,9 @@ describe IO do
       io.read_byte.should be_nil
     end
 
-    # pipe(2) returns bidirectional file descriptors on FreeBSD and Solaris,
+    # pipe(2) returns bidirectional file descriptors on some platforms,
     # gate this test behind the platform flag.
-    {% unless flag?(:freebsd) || flag?(:solaris) %}
+    {% unless flag?(:freebsd) || flag?(:solaris) || flag?(:openbsd) %}
       it "raises if trying to write to an IO not opened for writing" do
         IO.pipe do |r, w|
           # unless sync is used the flush on close triggers the exception again
