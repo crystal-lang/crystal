@@ -1176,6 +1176,30 @@ describe "::sprintf" do
     pending "floats"
   end
 
+  context "chars" do
+    it "works" do
+      assert_sprintf "%c", 'a', "a"
+      assert_sprintf "%3c", 'R', "  R"
+      assert_sprintf "%-3c", 'L', "L  "
+      assert_sprintf "%c", '▞', "▞"
+      assert_sprintf "%c", 65, "A"
+      assert_sprintf "%c", 66.to_i8, "B"
+      assert_sprintf "%c", 67.to_i16, "C"
+      assert_sprintf "%c", 68.to_i32, "D"
+      assert_sprintf "%c", 69.to_i64, "E"
+      assert_sprintf "%c", 97.to_u8, "a"
+      assert_sprintf "%c", 98.to_u16, "b"
+      assert_sprintf "%c", 99.to_u32, "c"
+      assert_sprintf "%c", 100.to_u64, "d"
+      assert_sprintf "%c", 0x259E, "▞"
+    end
+
+    it "raises if not a Char or Int" do
+      expect_raises(ArgumentError, "Expected a char or integer") { sprintf("%c", "this") }
+      expect_raises(ArgumentError, "Expected a char or integer") { sprintf("%c", 17.34) }
+    end
+  end
+
   context "strings" do
     it "works" do
       assert_sprintf "%s", 'a', "a"

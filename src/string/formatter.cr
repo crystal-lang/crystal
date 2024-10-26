@@ -248,8 +248,15 @@ struct String::Formatter(A)
   end
 
   def char(flags, arg) : Nil
+    val = if arg.is_a?(Char)
+      arg
+    elsif arg.is_a?(Int::Primitive)
+      arg.chr
+    else
+      raise ArgumentError.new("Expected a char or integer, not #{arg.inspect}")
+    end
     pad 1, flags if flags.left_padding?
-    @io << arg
+    @io << val
     pad 1, flags if flags.right_padding?
   end
 
