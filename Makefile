@@ -74,6 +74,7 @@ else
   EXE :=
   WINDOWS :=
 endif
+CRYSTAL_BIN := crystal$(EXE)
 
 DESTDIR ?=
 PREFIX ?= /usr/local
@@ -129,7 +130,7 @@ interpreter_spec: $(O)/interpreter_spec$(EXE) ## Run interpreter specs
 
 .PHONY: smoke_test
 smoke_test: ## Build specs as a smoke test
-smoke_test: $(O)/std_spec$(EXE) $(O)/compiler_spec$(EXE) $(O)/$(CRYSTAL)$(EXE)
+smoke_test: $(O)/std_spec$(EXE) $(O)/compiler_spec$(EXE) $(O)/$(CRYSTAL_BIN)
 
 .PHONY: all_spec
 all_spec: $(O)/all_spec$(EXE) ## Run all specs (note: this builds a huge program; `test` recipe builds individual binaries and is recommended for reduced resource usage)
@@ -146,7 +147,7 @@ docs: ## Generate standard library documentation
 	cp -av doc/ docs/
 
 .PHONY: crystal
-crystal: $(O)/$(CRYSTAL)$(EXE) ## Build the compiler
+crystal: $(O)/$(CRYSTAL_BIN) ## Build the compiler
 
 .PHONY: deps llvm_ext
 deps: $(DEPS) ## Build dependencies
@@ -161,9 +162,9 @@ generate_data: ## Run generator scripts for Unicode, SSL config, ...
 	$(MAKE) -B -f scripts/generate_data.mk
 
 .PHONY: install
-install: $(O)/$(CRYSTAL)$(EXE) man/crystal.1.gz ## Install the compiler at DESTDIR
+install: $(O)/$(CRYSTAL_BIN) man/crystal.1.gz ## Install the compiler at DESTDIR
 	$(INSTALL) -d -m 0755 "$(BINDIR)/"
-	$(INSTALL) -m 0755 "$(O)/$(CRYSTAL)$(EXE)" "$(BINDIR)/$(CRYSTAL)$(EXE)"
+	$(INSTALL) -m 0755 "$(O)/$(CRYSTAL_BIN)" "$(BINDIR)/$(CRYSTAL_BIN)"
 
 	$(INSTALL) -d -m 0755 $(DATADIR)
 	cp -av src "$(DATADIR)/src"
@@ -183,14 +184,14 @@ install: $(O)/$(CRYSTAL)$(EXE) man/crystal.1.gz ## Install the compiler at DESTD
 
 ifeq ($(WINDOWS),1)
 .PHONY: install_dlls
-install_dlls: $(O)/$(CRYSTAL)$(EXE) ## Install the compiler's dependent DLLs at DESTDIR (Windows only)
+install_dlls: $(O)/$(CRYSTAL_BIN) ## Install the compiler's dependent DLLs at DESTDIR (Windows only)
 	$(INSTALL) -d -m 0755 "$(BINDIR)/"
-	@ldd $(O)/$(CRYSTAL)$(EXE) | grep -iv ' => /c/windows/system32' | sed 's/.* => //; s/ (.*//' | xargs -t -i $(INSTALL) -m 0755 '{}' "$(BINDIR)/"
+	@ldd $(O)/$(CRYSTAL_BIN) | grep -iv ' => /c/windows/system32' | sed 's/.* => //; s/ (.*//' | xargs -t -i $(INSTALL) -m 0755 '{}' "$(BINDIR)/"
 endif
 
 .PHONY: uninstall
 uninstall: ## Uninstall the compiler from DESTDIR
-	rm -f "$(BINDIR)/$(CRYSTAL)$(EXE)"
+	rm -f "$(BINDIR)/$(CRYSTAL_BIN)"
 
 	rm -rf "$(DATADIR)/src"
 
@@ -227,7 +228,7 @@ $(O)/compiler_spec$(EXE): $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@mkdir -p $(O)
 	$(EXPORT_CC) $(EXPORTS) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/compiler_spec.cr --release
 
-$(O)/primitives_spec$(EXE): $(O)/$(CRYSTAL)$(EXE) $(DEPS) $(SOURCES) $(SPEC_SOURCES)
+$(O)/primitives_spec$(EXE): $(O)/$(CRYSTAL_BIN) $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@mkdir -p $(O)
 	$(EXPORT_CC) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/primitives_spec.cr
 
@@ -236,7 +237,7 @@ $(O)/interpreter_spec$(EXE): $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@mkdir -p $(O)
 	$(EXPORT_CC) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/compiler/interpreter_spec.cr
 
-$(O)/$(CRYSTAL)$(EXE): $(DEPS) $(SOURCES)
+$(O)/$(CRYSTAL_BIN): $(DEPS) $(SOURCES)
 	$(call check_llvm_config)
 	@mkdir -p $(O)
 	@# NOTE: USE_PCRE1 is only used for testing compatibility with legacy environments that don't provide libpcre2.
