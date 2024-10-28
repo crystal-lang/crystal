@@ -21,7 +21,7 @@ all:
 ## Run generators (Unicode, SSL config, ...)
 ##   $ make -B generate_data
 
-CRYSTAL ?= crystal ## which previous crystal compiler use
+CRYSTAL ?= crystal## which previous crystal compiler use
 LLVM_CONFIG ?=     ## llvm-config command path to use
 
 release ?=      ## Compile in release mode
