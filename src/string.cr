@@ -3618,7 +3618,7 @@ class String
   #
   # ```
   # "Hello, World".rindex("orld")    # => 8
-  # "Hello, World".rindex("snorlax") # => nil
+  # "Hello, World".rindex("snorlax") # => Enumerable::NotFoundError
   # ```
   def rindex!(search : String, offset = size - search.size) : Int32
     rindex(search, offset) || raise Enumerable::NotFoundError.new
@@ -3631,7 +3631,7 @@ class String
   #
   # ```
   # "Hello, World".rindex(/world/i) # => 7
-  # "Hello, World".rindex(/world/)  # => nil
+  # "Hello, World".rindex(/world/)  # => Enumerable::NotFoundError
   # ```
   def rindex!(search : Regex, offset = size, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Int32
     rindex(search, offset, options: options) || raise Enumerable::NotFoundError.new
