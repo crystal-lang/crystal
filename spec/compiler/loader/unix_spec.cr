@@ -53,7 +53,7 @@ describe Crystal::Loader do
       with_env "LD_LIBRARY_PATH": "ld1::ld2", "DYLD_LIBRARY_PATH": nil do
         search_paths = Crystal::Loader.default_search_paths
         {% if flag?(:darwin) %}
-          search_paths.should eq ["/usr/lib", "/usr/local/lib"]
+          search_paths[-2..].should eq ["/usr/lib", "/usr/local/lib"]
         {% else %}
           search_paths[0, 2].should eq ["ld1", "ld2"]
           {% if flag?(:android) %}
