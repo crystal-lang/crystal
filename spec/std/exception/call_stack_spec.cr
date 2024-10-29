@@ -12,9 +12,9 @@ describe "Backtrace" do
 
     _, output, _ = compile_and_run_file(source_file)
 
-    # resolved file:line:column (no column for windows PDB because of poor
-    # support in general)
-    {% if flag?(:win32) %}
+    # resolved file:line:column (no column for MSVC PDB because of poor support
+    # by external tooling in general)
+    {% if flag?(:msvc) %}
       output.should match(/^#{Regex.escape(source_file)}:3 in 'callee1'/m)
       output.should match(/^#{Regex.escape(source_file)}:13 in 'callee3'/m)
     {% else %}

@@ -17,6 +17,10 @@ module Crystal::System::LibraryArchive
   private struct COFFReader
     getter dlls = Set(String).new
 
+    # MSVC-style import libraries include the `__NULL_IMPORT_DESCRIPTOR` symbol,
+    # MinGW-style ones do not
+    getter? msvc = false
+
     def initialize(@ar : ::File)
     end
 
@@ -39,6 +43,7 @@ module Crystal::System::LibraryArchive
           if first
             first = false
             return unless filename == "/"
+            handle_first_member(io)
           elsif !filename.in?("/", "//")
             handle_standard_member(io)
           end
@@ -62,26 +67,69 @@ module Crystal::System::LibraryArchive
       @ar.seek(new_pos)
     end
 
-    private def handle_standard_member(io)
-      sig1 = io.read_bytes(UInt16, IO::ByteFormat::LittleEndian)
-      return unless sig1 == 0x0000 # IMAGE_FILE_MACHINE_UNKNOWN
+    private def handle_first_member(io)
+      symbol_count = io.read_bytes(UInt32, IO::ByteFormat::BigEndian)
 
-      sig2 = io.read_bytes(UInt16, IO::ByteFormat::LittleEndian)
-      return unless sig2 == 0xFFFF
+      # 4-byte offset per symbol
+      io.skip(symbol_count * 4)
 
-      version = io.read_bytes(UInt16, IO::ByteFormat::LittleEndian)
-      return unless version == 0 # 1 and 2 are used by object files (ANON_OBJECT_HEADER)
-
-      # machine(2) + time(4) + size(4) + ordinal/hint(2) + flags(2)
-      io.skip(14)
-
-      # TODO: is there a way to do this without constructing a temporary string,
-      # but with the optimizations present in `IO#gets`?
-      return unless io.gets('\0') # symbol name
-
-      if dll_name = io.gets('\0', chomp: true)
-        @dlls << dll_name
+      symbol_count.times do
+        symbol = io.gets('\0', chomp: true)
+        if symbol == "__NULL_IMPORT_DESCRIPTOR"
+          @msvc = true
+          break
+        end
       end
+    end
+
+    private def handle_standard_member(io)
+      machine = io.read_bytes(UInt16, IO::ByteFormat::LittleEndian)
+      section_count = io.read_bytes(UInt16, IO::ByteFormat::LittleEndian)
+
+      if machine == 0x0000 && section_count == 0xFFFF
+        # short import library
+        version = io.read_bytes(UInt16, IO::ByteFormat::LittleEndian)
+        return unless version == 0 # 1 and 2 are used by object files (ANON_OBJECT_HEADER)
+
+        # machine(2) + time(4) + size(4) + ordinal/hint(2) + flags(2)
+        io.skip(14)
+
+        # TODO: is there a way to do this without constructing a temporary string,
+        # but with the optimizations present in `IO#gets`?
+        return unless io.gets('\0') # symbol name
+
+        if dll_name = io.gets('\0', chomp: true)
+          @dlls << dll_name if valid_dll?(dll_name)
+        end
+      else
+        # long import library, code based on GNU binutils `dlltool -I`:
+        # https://sourceware.org/git/?p=binutils-gdb.git;a=blob;f=binutils/dlltool.c;hb=967dc35c78adb85ee1e2e596047d9dc69107a9db#l3231
+
+        # timeDateStamp(4) + pointerToSymbolTable(4) + numberOfSymbols(4) + sizeOfOptionalHeader(2) + characteristics(2)
+        io.skip(16)
+
+        section_count.times do |i|
+          section_header = uninitialized LibC::IMAGE_SECTION_HEADER
+          return unless io.read_fully?(pointerof(section_header).to_slice(1).to_unsafe_bytes)
+
+          name = String.new(section_header.name.to_unsafe, section_header.name.index(0) || section_header.name.size)
+          next unless name == (msvc? ? ".idata$6" : ".idata$7")
+
+          if msvc? ? section_header.characteristics.bits_set?(LibC::IMAGE_SCN_CNT_INITIALIZED_DATA) : section_header.pointerToRelocations == 0
+            bytes_read = sizeof(LibC::IMAGE_FILE_HEADER) + sizeof(LibC::IMAGE_SECTION_HEADER) * (i + 1)
+            io.skip(section_header.pointerToRawData - bytes_read)
+            if dll_name = io.gets('\0', chomp: true, limit: section_header.sizeOfRawData)
+              @dlls << dll_name if valid_dll?(dll_name)
+            end
+          end
+
+          return
+        end
+      end
+    end
+
+    private def valid_dll?(name)
+      name.size >= 5 && name[-4..].compare(".dll", case_insensitive: true) == 0
     end
   end
 end

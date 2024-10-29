@@ -21,7 +21,7 @@ all:
 ## Run generators (Unicode, SSL config, ...)
 ##   $ make -B generate_data
 
-CRYSTAL ?= crystal ## which previous crystal compiler use
+CRYSTAL ?= crystal## which previous crystal compiler use
 LLVM_CONFIG ?=     ## llvm-config command path to use
 
 release ?=      ## Compile in release mode
@@ -68,12 +68,13 @@ CXXFLAGS += $(if $(debug),-g -O0)
 
 # MSYS2 support (native Windows should use `Makefile.win` instead)
 ifeq ($(OS),Windows_NT)
-  CRYSTAL_BIN := crystal.exe
+  EXE := .exe
   WINDOWS := 1
 else
-  CRYSTAL_BIN := crystal
+  EXE :=
   WINDOWS :=
 endif
+CRYSTAL_BIN := crystal$(EXE)
 
 DESTDIR ?=
 PREFIX ?= /usr/local
@@ -112,28 +113,28 @@ test: spec ## Run tests
 spec: std_spec primitives_spec compiler_spec
 
 .PHONY: std_spec
-std_spec: $(O)/std_spec ## Run standard library specs
-	$(O)/std_spec $(SPEC_FLAGS)
+std_spec: $(O)/std_spec$(EXE) ## Run standard library specs
+	$(O)/std_spec$(EXE) $(SPEC_FLAGS)
 
 .PHONY: compiler_spec
-compiler_spec: $(O)/compiler_spec ## Run compiler specs
-	$(O)/compiler_spec $(SPEC_FLAGS)
+compiler_spec: $(O)/compiler_spec$(EXE) ## Run compiler specs
+	$(O)/compiler_spec$(EXE) $(SPEC_FLAGS)
 
 .PHONY: primitives_spec
-primitives_spec: $(O)/primitives_spec ## Run primitives specs
-	$(O)/primitives_spec $(SPEC_FLAGS)
+primitives_spec: $(O)/primitives_spec$(EXE) ## Run primitives specs
+	$(O)/primitives_spec$(EXE) $(SPEC_FLAGS)
 
 .PHONY: interpreter_spec
-interpreter_spec: $(O)/interpreter_spec ## Run interpreter specs
-	$(O)/interpreter_spec $(SPEC_FLAGS)
+interpreter_spec: $(O)/interpreter_spec$(EXE) ## Run interpreter specs
+	$(O)/interpreter_spec$(EXE) $(SPEC_FLAGS)
 
 .PHONY: smoke_test
 smoke_test: ## Build specs as a smoke test
-smoke_test: $(O)/std_spec $(O)/compiler_spec $(O)/$(CRYSTAL_BIN)
+smoke_test: $(O)/std_spec$(EXE) $(O)/compiler_spec$(EXE) $(O)/$(CRYSTAL_BIN)
 
 .PHONY: all_spec
-all_spec: $(O)/all_spec ## Run all specs (note: this builds a huge program; `test` recipe builds individual binaries and is recommended for reduced resource usage)
-	$(O)/all_spec $(SPEC_FLAGS)
+all_spec: $(O)/all_spec$(EXE) ## Run all specs (note: this builds a huge program; `test` recipe builds individual binaries and is recommended for reduced resource usage)
+	$(O)/all_spec$(EXE) $(SPEC_FLAGS)
 
 .PHONY: samples
 samples: ## Build example programs
@@ -212,26 +213,26 @@ uninstall_docs: ## Uninstall docs from DESTDIR
 	rm -rf "$(DATADIR)/docs"
 	rm -rf "$(DATADIR)/examples"
 
-$(O)/all_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
+$(O)/all_spec$(EXE): $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	$(call check_llvm_config)
 	@mkdir -p $(O)
 	$(EXPORT_CC) $(EXPORTS) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/all_spec.cr
 
-$(O)/std_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
+$(O)/std_spec$(EXE): $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	$(call check_llvm_config)
 	@mkdir -p $(O)
 	$(EXPORT_CC) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/std_spec.cr
 
-$(O)/compiler_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
+$(O)/compiler_spec$(EXE): $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	$(call check_llvm_config)
 	@mkdir -p $(O)
 	$(EXPORT_CC) $(EXPORTS) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/compiler_spec.cr --release
 
-$(O)/primitives_spec: $(O)/$(CRYSTAL_BIN) $(DEPS) $(SOURCES) $(SPEC_SOURCES)
+$(O)/primitives_spec$(EXE): $(O)/$(CRYSTAL_BIN) $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@mkdir -p $(O)
 	$(EXPORT_CC) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/primitives_spec.cr
 
-$(O)/interpreter_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
+$(O)/interpreter_spec$(EXE): $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	$(eval interpreter=1)
 	@mkdir -p $(O)
 	$(EXPORT_CC) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/compiler/interpreter_spec.cr

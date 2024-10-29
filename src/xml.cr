@@ -107,12 +107,7 @@ module XML
   end
 
   protected def self.with_indent_tree_output(indent : Bool, &)
-    ptr = {% if flag?(:win32) %}
-            LibXML.__xmlIndentTreeOutput
-          {% else %}
-            pointerof(LibXML.xmlIndentTreeOutput)
-          {% end %}
-
+    ptr = LibXML.__xmlIndentTreeOutput
     old, ptr.value = ptr.value, indent ? 1 : 0
     begin
       yield
@@ -122,12 +117,7 @@ module XML
   end
 
   protected def self.with_tree_indent_string(string : String, &)
-    ptr = {% if flag?(:win32) %}
-            LibXML.__xmlTreeIndentString
-          {% else %}
-            pointerof(LibXML.xmlTreeIndentString)
-          {% end %}
-
+    ptr = LibXML.__xmlTreeIndentString
     old, ptr.value = ptr.value, string.to_unsafe
     begin
       yield
