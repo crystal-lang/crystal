@@ -11,9 +11,6 @@
 # :nodoc:
 class Crystal::OnceState
   @rec = [] of Bool*
-  {% if flag?(:preview_mt) %}
-    @mutex = Mutex.new(:reentrant)
-  {% end %}
 
   def once(flag : Bool*, initializer : Void*)
     unless flag.value
@@ -29,7 +26,13 @@ class Crystal::OnceState
     end
   end
 
-  {% if flag?(:preview_mt) %}
+  # on Win32, `Crystal::System::FileDescriptor#@@reader_thread` spawns a new
+  # thread even without the `preview_mt` flag, and the thread can also reference
+  # Crystal constants, leading to race conditions, so we always enable the mutex
+  # TODO: can this be improved?
+  {% if flag?(:preview_mt) || flag?(:win32) %}
+    @mutex = Mutex.new(:reentrant)
+
     def once(flag : Bool*, initializer : Void*)
       unless flag.value
         @mutex.synchronize do
