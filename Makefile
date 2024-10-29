@@ -144,7 +144,7 @@ samples: ## Build example programs
 docs: ## Generate standard library documentation
 	$(call check_llvm_config)
 	./bin/crystal docs src/docs_main.cr $(DOCS_OPTIONS) --project-name=Crystal --project-version=$(CRYSTAL_VERSION) --source-refname=$(CRYSTAL_CONFIG_BUILD_COMMIT)
-	cp -av doc/ docs/
+	cp -R -P -p doc/ docs/
 
 .PHONY: crystal
 crystal: $(O)/$(CRYSTAL_BIN) ## Build the compiler
@@ -167,7 +167,7 @@ install: $(O)/$(CRYSTAL_BIN) man/crystal.1.gz ## Install the compiler at DESTDIR
 	$(INSTALL) -m 0755 "$(O)/$(CRYSTAL_BIN)" "$(BINDIR)/$(CRYSTAL_BIN)"
 
 	$(INSTALL) -d -m 0755 $(DATADIR)
-	cp -av src "$(DATADIR)/src"
+	cp -R -P -p src "$(DATADIR)/src"
 	rm -rf "$(DATADIR)/$(LLVM_EXT_OBJ)" # Don't install llvm_ext.o
 
 	$(INSTALL) -d -m 0755 "$(MANDIR)/man1/"
@@ -205,8 +205,8 @@ uninstall: ## Uninstall the compiler from DESTDIR
 install_docs: docs ## Install docs at DESTDIR
 	$(INSTALL) -d -m 0755 $(DATADIR)
 
-	cp -av docs "$(DATADIR)/docs"
-	cp -av samples "$(DATADIR)/examples"
+	cp -R -P -p docs "$(DATADIR)/docs"
+	cp -R -P -p samples "$(DATADIR)/examples"
 
 .PHONY: uninstall_docs
 uninstall_docs: ## Uninstall docs from DESTDIR
