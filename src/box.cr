@@ -5,9 +5,13 @@
 #
 # For an example usage, see `Proc`'s explanation about sending Procs to C.
 class Box(T)
+  # :nodoc:
+  #
   # Returns the original object
   getter object : T
 
+  # :nodoc:
+  #
   # Creates a `Box` with the given object.
   #
   # This method isn't usually used directly. Instead, `Box.box` is used.
