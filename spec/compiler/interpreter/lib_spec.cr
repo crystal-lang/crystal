@@ -3,7 +3,7 @@ require "./spec_helper"
 require "../loader/spec_helper"
 
 private def ldflags
-  {% if flag?(:win32) %}
+  {% if flag?(:msvc) %}
     "/LIBPATH:#{SPEC_CRYSTAL_LOADER_LIB_PATH} sum.lib"
   {% else %}
     "-L#{SPEC_CRYSTAL_LOADER_LIB_PATH} -lsum"
@@ -11,7 +11,7 @@ private def ldflags
 end
 
 private def ldflags_with_backtick
-  {% if flag?(:win32) %}
+  {% if flag?(:msvc) %}
     "/LIBPATH:#{SPEC_CRYSTAL_LOADER_LIB_PATH} `powershell.exe -C Write-Host -NoNewline sum.lib`"
   {% else %}
     "-L#{SPEC_CRYSTAL_LOADER_LIB_PATH} -l`echo sum`"

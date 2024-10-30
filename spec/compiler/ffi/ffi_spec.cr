@@ -27,7 +27,7 @@ private def dll_search_paths
   {% end %}
 end
 
-{% if flag?(:unix) %}
+{% if flag?(:unix) || (flag?(:win32) && flag?(:gnu)) %}
   class Crystal::Loader
     def self.new(search_paths : Array(String), *, dll_search_paths : Nil)
       new(search_paths)

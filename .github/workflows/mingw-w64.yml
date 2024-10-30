@@ -144,7 +144,14 @@ jobs:
         run: |
           export PATH="$(pwd)/crystal/bin:$PATH"
           export CRYSTAL_SPEC_COMPILER_BIN="$(pwd)/crystal/bin/crystal.exe"
-          make compiler_spec FLAGS=-Dwithout_ffi
+          make compiler_spec
+
+      - name: Run interpreter specs
+        shell: msys2 {0}
+        run: |
+          export PATH="$(pwd)/crystal/bin:$PATH"
+          export CRYSTAL_SPEC_COMPILER_BIN="$(pwd)/crystal/bin/crystal.exe"
+          make interpreter_spec
 
       - name: Run primitives specs
         shell: msys2 {0}
