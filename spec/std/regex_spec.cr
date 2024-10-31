@@ -433,7 +433,7 @@ describe "Regex" do
       })
     end
 
-    it "alpanumeric" do
+    it "alphanumeric" do
       /(?<f1>)/.name_table.should eq({1 => "f1"})
     end
 

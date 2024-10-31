@@ -2830,7 +2830,7 @@ describe "String" do
         bytes.to_a.should eq([72, 0, 101, 0, 108, 0, 108, 0, 111, 0])
       end
 
-      {% unless flag?(:musl) || flag?(:solaris) || flag?(:freebsd) || flag?(:dragonfly) %}
+      {% unless flag?(:musl) || flag?(:solaris) || flag?(:freebsd) || flag?(:dragonfly) || flag?(:netbsd) %}
         it "flushes the shift state (#11992)" do
           "\u{00CA}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x66])
           "\u{00CA}\u{0304}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x62])
@@ -2839,7 +2839,7 @@ describe "String" do
 
       # FreeBSD iconv encoder expects ISO/IEC 10646 compatibility code points,
       # see https://www.ccli.gov.hk/doc/e_hkscs_2008.pdf for details.
-      {% if flag?(:freebsd) || flag?(:dragonfly) %}
+      {% if flag?(:freebsd) || flag?(:dragonfly) || flag?(:netbsd) %}
         it "flushes the shift state (#11992)" do
           "\u{F329}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x66])
           "\u{F325}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x62])
@@ -2883,7 +2883,7 @@ describe "String" do
         String.new(bytes, "UTF-16LE").should eq("Hello")
       end
 
-      {% unless flag?(:solaris) || flag?(:freebsd) || flag?(:dragonfly) %}
+      {% unless flag?(:solaris) || flag?(:freebsd) || flag?(:dragonfly) || flag?(:netbsd) %}
         it "decodes with shift state" do
           String.new(Bytes[0x88, 0x66], "BIG5-HKSCS").should eq("\u{00CA}")
           String.new(Bytes[0x88, 0x62], "BIG5-HKSCS").should eq("\u{00CA}\u{0304}")
@@ -2892,7 +2892,7 @@ describe "String" do
 
       # FreeBSD iconv decoder returns ISO/IEC 10646-1:2000 code points,
       # see https://www.ccli.gov.hk/doc/e_hkscs_2008.pdf for details.
-      {% if flag?(:freebsd) || flag?(:dragonfly) %}
+      {% if flag?(:freebsd) || flag?(:dragonfly) || flag?(:netbsd) %}
         it "decodes with shift state" do
           String.new(Bytes[0x88, 0x66], "BIG5-HKSCS").should eq("\u{00CA}")
           String.new(Bytes[0x88, 0x62], "BIG5-HKSCS").should eq("\u{F325}")

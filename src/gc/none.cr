@@ -154,7 +154,7 @@ module GC
   # will block until it can acquire the lock).
   #
   # In both cases there can't be a deadlock since we won't suspend another
-  # thread until it has successfuly added (or removed) itself to (from) the
+  # thread until it has successfully added (or removed) itself to (from) the
   # linked list and released the lock, and the other thread won't progress until
   # it can add (or remove) itself from the list.
   #

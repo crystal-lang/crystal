@@ -164,6 +164,8 @@ lib LibGC
 
   fun stop_world_external = GC_stop_world_external
   fun start_world_external = GC_start_world_external
+  fun get_suspend_signal = GC_get_suspend_signal : Int
+  fun get_thr_restart_signal = GC_get_thr_restart_signal : Int
 end
 
 module GC
@@ -483,4 +485,16 @@ module GC
   def self.start_world : Nil
     LibGC.start_world_external
   end
+
+  {% if flag?(:unix) %}
+    # :nodoc:
+    def self.sig_suspend : Signal
+      Signal.new(LibGC.get_suspend_signal)
+    end
+
+    # :nodoc:
+    def self.sig_resume : Signal
+      Signal.new(LibGC.get_thr_restart_signal)
+    end
+  {% end %}
 end

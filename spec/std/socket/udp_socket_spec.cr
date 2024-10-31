@@ -82,6 +82,15 @@ describe UDPSocket, tags: "network" do
       # TODO: figure out why updating `multicast_loopback` produces a
       # `setsockopt 18: Invalid argument` error
       pending "joins and transmits to multicast groups"
+    elsif {{ flag?(:freebsd) }} && family == Socket::Family::INET6
+      # FIXME: fails with "Error sending datagram to [ipv6]:port: Network is unreachable"
+      pending "joins and transmits to multicast groups"
+    elsif {{ flag?(:netbsd) }} && family == Socket::Family::INET6
+      # FIXME: fails with "setsockopt: EADDRNOTAVAIL"
+      pending "joins and transmits to multicast groups"
+    elsif {{ flag?(:openbsd) }}
+      # FIXME: fails with "setsockopt: EINVAL (ipv4) or EADDRNOTAVAIL (ipv6)"
+      pending "joins and transmits to multicast groups"
     else
       it "joins and transmits to multicast groups" do
         udp = UDPSocket.new(family)
