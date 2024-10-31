@@ -50,7 +50,7 @@ git add shard.yml
 
 # Write release date into src/SOURCE_DATE_EPOCH
 release_date=$(head -n1 "$current_changelog" | grep -o -P '(?<=\()[^)]+')
-echo "$(date --utc --date="${release_date}" +%s)" > src/SOURCE_DATE_EPOCH
+date --utc --date="${release_date}" +%s > src/SOURCE_DATE_EPOCH
 git add src/SOURCE_DATE_EPOCH
 
 if grep --silent -E "^## \[$VERSION\]" CHANGELOG.md; then

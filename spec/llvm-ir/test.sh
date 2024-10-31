@@ -16,11 +16,12 @@ crystal=${CRYSTAL_SPEC_COMPILER_BIN:-$SCRIPT_ROOT/../../bin/crystal}
 mkdir -p "$BUILD_DIR"
 
 function test() {
-  echo "test: $@"
+  echo "test: $*"
 
   input_cr="$SCRIPT_ROOT/$1"
   output_ll="$BUILD_DIR/${1%.cr}.ll"
-  compiler_options="$2"
+  # FIXME: unused variable
+  # compiler_options="$2"
   check_prefix="${3+--check-prefix $3}"
 
   # $BUILD_DIR/test-ir is never used
