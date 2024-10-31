@@ -45,6 +45,10 @@ class LLVM::Module
     GlobalCollection.new(self)
   end
 
+  def add_flag(module_flag : LibLLVM::ModuleFlagBehavior, key : String, val : Int32)
+    add_flag(module_flag, key, @context.int32.const_int(val))
+  end
+
   def add_flag(module_flag : LibLLVM::ModuleFlagBehavior, key : String, val : Value)
     LibLLVM.add_module_flag(
       self,

@@ -274,7 +274,7 @@ module Crystal
                    @llvm_context : LLVM::Context = LLVM::Context.new)
       @abi = @program.target_machine.abi
       # LLVM::Context.register(@llvm_context, "main")
-      @llvm_mod = @llvm_context.new_module("main_module")
+      @llvm_mod = configure_module(@llvm_context.new_module("main_module"))
       @main_mod = @llvm_mod
       @main_llvm_context = @main_mod.context
       @llvm_typer = LLVMTyper.new(@program, @llvm_context)
@@ -345,8 +345,6 @@ module Crystal
       @unused_fun_defs = [] of FunDef
       @proc_counts = Hash(String, Int32).new(0)
 
-      @llvm_mod.data_layout = self.data_layout
-
       # We need to define __crystal_malloc and __crystal_realloc as soon as possible,
       # to avoid some memory being allocated with plain malloc.
       codegen_well_known_functions @node
@@ -366,6 +364,30 @@ module Crystal
     end
 
     getter llvm_context
+
+    def configure_module(llvm_mod)
+      llvm_mod.data_layout = @program.target_machine.data_layout
+
+      # enable branch authentication instructions (BTI)
+      if @program.has_flag?("aarch64")
+        if @program.has_flag?("branch-protection=bti")
+          llvm_mod.add_flag(:override, "branch-target-enforcement", 1)
+        end
+      end
+
+      # enable control flow enforcement protection (CET): IBT and/or SHSTK
+      if @program.has_flag?("x86_64") || @program.has_flag?("i386")
+        if @program.has_flag?("cf-protection=branch") || @program.has_flag?("cf-protection=full")
+          llvm_mod.add_flag(:override, "cf-protection-branch", 1)
+        end
+
+        if @program.has_flag?("cf-protection=return") || @program.has_flag?("cf-protection=full")
+          llvm_mod.add_flag(:override, "cf-protection-return", 1)
+        end
+      end
+
+      llvm_mod
+    end
 
     def new_builder(llvm_context)
       wrap_builder(llvm_context.new_builder)
@@ -417,10 +439,6 @@ module Crystal
       global.linkage = LLVM::Linkage::Private
       global.global_constant = true
       global.initializer = llvm_element_type.const_array(llvm_elements)
-    end
-
-    def data_layout
-      @program.target_machine.data_layout
     end
 
     class CodegenWellKnownFunctions < Visitor
