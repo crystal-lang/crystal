@@ -85,16 +85,6 @@ class Crystal::Loader
     return false unless File.file?(path)
 
     System::LibraryArchive.imported_dlls(path).all? do |dll|
-      unless api_set?(dll)
-        # TODO: is it okay to assume `search_paths` here is equivalent to
-        # `dll_search_paths` in the MSVC loader?
-        dll_full_path = @search_paths.try &.each do |search_path|
-          full_path = File.join(search_path, dll)
-          break full_path if File.file?(full_path)
-        end
-      end
-      dll = dll_full_path || dll
-
       load_dll?(dll)
     end
   end
