@@ -153,7 +153,7 @@ prepare_build() {
 
   # Install a recent bash version for nix-shell.
   # macos ships with an ancient one.
-  if [ `uname` = "Darwin" ]; then
+  if [ $(uname) = "Darwin" ]; then
     on_nix_shell "brew install bash"
   fi
   # initialize nix environment
@@ -172,7 +172,7 @@ prepare_build() {
 
 verify_version() {
   # If building a tag, check it matches with file
-  FILE_VERSION=`cat ./src/VERSION`
+  FILE_VERSION=$(cat ./src/VERSION)
 
   if [ "$FILE_VERSION" != "$CURRENT_TAG" ]
   then
@@ -206,7 +206,7 @@ with_build_env() {
   on_linux docker run \
     --rm -t \
     -u $(id -u) \
-    -v $PWD:/mnt \
+    -v "$PWD":/mnt \
     -v /etc/passwd:/etc/passwd \
     -v /etc/group:/etc/group \
     -w /mnt \
@@ -222,7 +222,7 @@ with_build_env() {
     CRYSTAL_CACHE_DIR="/tmp/crystal" \
     /bin/sh -c "'$command'"
 
-  on_nix_shell nix-shell --pure $CI_NIX_SHELL_ARGS --run "'TZ=$TZ $command'"
+  on_nix_shell nix-shell --pure "$CI_NIX_SHELL_ARGS" --run "'TZ=$TZ $command'"
 
   on_github echo "::endgroup::"
 }

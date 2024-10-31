@@ -24,7 +24,7 @@ set +x
 
 WORK_DIR=$(mktemp -d)
 function cleanup {
-  rm -rf $WORK_DIR
+  rm -rf "$WORK_DIR"
 }
 trap cleanup EXIT
 
