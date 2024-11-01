@@ -168,7 +168,7 @@ install: $(O)/$(CRYSTAL_BIN) man/crystal.1.gz ## Install the compiler at DESTDIR
 	$(INSTALL) -m 0755 "$(O)/$(CRYSTAL_BIN)" "$(BINDIR)/$(CRYSTAL_BIN)"
 
 	$(INSTALL) -d -m 0755 $(DATADIR)
-	cp -R $(if $(deref_symlinks),-L --preserve=all,-P -p) src "$(DATADIR)/src"
+	cp -R -p $(if $(deref_symlinks),-L,-P) src "$(DATADIR)/src"
 	rm -rf "$(DATADIR)/$(LLVM_EXT_OBJ)" # Don't install llvm_ext.o
 
 	$(INSTALL) -d -m 0755 "$(MANDIR)/man1/"
