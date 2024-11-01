@@ -248,9 +248,10 @@ struct String::Formatter(A)
   end
 
   def char(flags, arg) : Nil
-    val = if arg.is_a?(Char)
+    val = case arg
+    when Char
       arg
-    elsif arg.is_a?(Int::Primitive)
+    when Int::Primitive
       arg.chr
     else
       raise ArgumentError.new("Expected a char or integer, not #{arg.inspect}")
