@@ -31,7 +31,7 @@ jobs:
           crystal: "1.14.0"
 
       - name: Cross-compile Crystal
-        run: make && make -B target=x86_64-windows-gnu release=1
+        run: make && make -B target=x86_64-windows-gnu release=1 interpreter=1
 
       - name: Upload crystal.obj
         uses: actions/upload-artifact@v4
@@ -63,6 +63,7 @@ jobs:
             mingw-w64-ucrt-x86_64-libiconv
             mingw-w64-ucrt-x86_64-zlib
             mingw-w64-ucrt-x86_64-llvm
+            mingw-w64-ucrt-x86_64-libffi
 
       - name: Download crystal.obj
         uses: actions/download-artifact@v4
@@ -80,7 +81,7 @@ jobs:
         run: |
           mkdir bin
           cc crystal.obj -o bin/crystal.exe \
-            $(pkg-config bdw-gc libpcre2-8 iconv zlib --libs) \
+            $(pkg-config bdw-gc libpcre2-8 iconv zlib libffi --libs) \
             $(llvm-config --libs --system-libs --ldflags) \
             -lDbgHelp -lole32 -lWS2_32 -Wl,--stack,0x800000
           ldd bin/crystal.exe | grep -iv /c/windows/system32 | sed 's/.* => //; s/ (.*//' | xargs -t -i cp '{}' bin/
