@@ -251,7 +251,7 @@ struct String::Formatter(A)
     if arg.is_a?(Int::Primitive)
       arg = arg.chr
     end
-    unless arg.is_a?(Char)  
+    unless arg.is_a?(Char)
       raise ArgumentError.new("Expected a char or integer, not #{arg.inspect}")
     end
     pad 1, flags if flags.left_padding?
