@@ -27,7 +27,7 @@ private def dll_search_paths
   {% end %}
 end
 
-{% if flag?(:unix) %}
+{% if flag?(:unix) || (flag?(:win32) && flag?(:gnu)) %}
   class Crystal::Loader
     def self.new(search_paths : Array(String), *, dll_search_paths : Nil)
       new(search_paths)
@@ -39,9 +39,17 @@ describe Crystal::FFI::CallInterface do
   before_all do
     FileUtils.mkdir_p(SPEC_CRYSTAL_LOADER_LIB_PATH)
     build_c_dynlib(compiler_datapath("ffi", "sum.c"))
+
+    {% if flag?(:win32) && flag?(:gnu) %}
+      ENV["PATH"] = "#{SPEC_CRYSTAL_LOADER_LIB_PATH}#{Process::PATH_DELIMITER}#{ENV["PATH"]}"
+    {% end %}
   end
 
   after_all do
+    {% if flag?(:win32) && flag?(:gnu) %}
+      ENV["PATH"] = ENV["PATH"].delete_at(0, ENV["PATH"].index!(Process::PATH_DELIMITER) + 1)
+    {% end %}
+
     FileUtils.rm_rf(SPEC_CRYSTAL_LOADER_LIB_PATH)
   end
 
