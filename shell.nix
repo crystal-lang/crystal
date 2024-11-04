@@ -74,7 +74,7 @@ let
 
   stdLibDeps = with pkgs; [
       boehmgc gmp libevent libiconv libxml2 libyaml openssl pcre2 zlib
-    ] ++ lib.optionals stdenv.isDarwin [ libiconvReal ];
+    ] ++ lib.optionals stdenv.isDarwin [ libiconv ];
 
   tools = [ pkgs.hostname pkgs.git llvmPackages.bintools ] ++ pkgs.lib.optional (!llvmPackages.lldb.meta.broken) llvmPackages.lldb;
 in
