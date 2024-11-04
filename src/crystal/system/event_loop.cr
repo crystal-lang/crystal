@@ -8,11 +8,11 @@ abstract class Crystal::EventLoop
       # TODO: netbsd: the kqueue evloop doesn't work (needs investigation)
       # TODO: openbsd: the kqueue evloop is magnitudes slower (needs investigation)
       # TODO: solaris: the epoll evloop hasn't been tested (better: use event-ports)
-      {% if flag?(:evloop_libevent) || flag?(:dragonfly) || flag?(:netbsd) || flag?(:openbsd) || flag?(:solaris) %}
+      {% if flag?("evloop=libevent") || flag?(:dragonfly) || flag?(:netbsd) || flag?(:openbsd) || flag?(:solaris) %}
         Crystal::LibEvent::EventLoop.new
-      {% elsif flag?(:evloop_epoll) || flag?(:android) || flag?(:linux) %}
+      {% elsif flag?("evloop=epoll") || flag?(:android) || flag?(:linux) %}
         Crystal::Epoll::EventLoop.new
-      {% elsif flag?(:evloop_kqueue) || flag?(:darwin) || flag?(:freebsd) %}
+      {% elsif flag?("evloop=kqueue") || flag?(:darwin) || flag?(:freebsd) %}
         Crystal::Kqueue::EventLoop.new
       {% else %}
         {% raise "Event loop not supported" %}
@@ -90,11 +90,11 @@ end
 {% if flag?(:wasi) %}
   require "./wasi/event_loop"
 {% elsif flag?(:unix) %}
-  {% if flag?(:evloop_libevent) || flag?(:dragonfly) || flag?(:netbsd) || flag?(:openbsd) || flag?(:solaris) %}
+  {% if flag?("evloop=libevent") || flag?(:dragonfly) || flag?(:netbsd) || flag?(:openbsd) || flag?(:solaris) %}
     require "./unix/event_loop_libevent"
-  {% elsif flag?(:evloop_epoll) || flag?(:android) || flag?(:linux) %}
+  {% elsif flag?("evloop=epoll") || flag?(:android) || flag?(:linux) %}
     require "./unix/epoll/event_loop"
-  {% elsif flag?(:evloop_kqueue) || flag?(:darwin) || flag?(:freebsd) %}
+  {% elsif flag?("evloop=kqueue") || flag?(:darwin) || flag?(:freebsd) %}
     require "./unix/kqueue/event_loop"
   {% else %}
     {% raise "Event loop not supported" %}

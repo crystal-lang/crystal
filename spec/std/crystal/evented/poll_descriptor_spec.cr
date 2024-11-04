@@ -1,4 +1,4 @@
-{% skip_file if !flag?(:unix) || flag?(:evloop_libevent) %}
+{% skip_file if !flag?(:unix) || flag?("evloop=libevent") %}
 
 require "spec"
 require "../../../../src/crystal/system/unix/evented/poll_descriptor"

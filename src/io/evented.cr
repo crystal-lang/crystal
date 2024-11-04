@@ -1,4 +1,4 @@
-{% skip_file unless flag?(:evloop_libevent) || flag?(:wasi) || flag?(:dragonfly) || flag?(:netbsd) || flag?(:openbsd) || flag?(:solaris) %}
+{% skip_file unless flag?("evloop=libevent") || flag?(:wasi) || flag?(:dragonfly) || flag?(:netbsd) || flag?(:openbsd) || flag?(:solaris) %}
 
 require "crystal/thread_local_value"
 
