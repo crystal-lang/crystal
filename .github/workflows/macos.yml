@@ -44,7 +44,7 @@ jobs:
         run: bin/ci prepare_build
 
       - name: Test
-        run: bin/ci build
+        run: CRYSTAL_OPTS=-Duse_libiconv bin/ci build
 
       - name: Test interpreter
-        run: bin/ci with_build_env 'make interpreter_spec'
+        run: bin/ci with_build_env 'CRYSTAL_OPTS=-Duse_libiconv make interpreter_spec'
