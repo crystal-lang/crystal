@@ -11,6 +11,7 @@ concurrency:
 env:
   SPEC_SPLIT_DOTS: 160
   CI_NIX_SHELL: true
+  CRYSTAL_OPTS: -Dwithout_encoding
 
 jobs:
   darwin-test:
