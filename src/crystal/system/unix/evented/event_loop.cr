@@ -352,22 +352,22 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
       event = Evented::Event.new(type, Fiber.current, index, timeout)
 
       return false unless Evented.arena.get?(index) do |pd|
-        yield pd, pointerof(event)
-      end
+                            yield pd, pointerof(event)
+                          end
     else
       # OPTIMIZE: failing to allocate may be a simple conflict with 2 fibers
       # starting to read or write on the same fd, we may want to detect any
       # error situation instead of returning and retrying a syscall
       return false unless Evented.arena.allocate_at?(io.fd) do |pd, index|
-        # register the fd with the event loop (once), it should usually merely add
-        # the fd to the current evloop but may "transfer" the ownership from
-        # another event loop:
-        io.__evloop_data = index
-        pd.value.take_ownership(self, io.fd, index)
+                            # register the fd with the event loop (once), it should usually merely add
+                            # the fd to the current evloop but may "transfer" the ownership from
+                            # another event loop:
+                            io.__evloop_data = index
+                            pd.value.take_ownership(self, io.fd, index)
 
-        event = Evented::Event.new(type, Fiber.current, index, timeout)
-        yield pd, pointerof(event)
-      end
+                            event = Evented::Event.new(type, Fiber.current, index, timeout)
+                            yield pd, pointerof(event)
+                          end
     end
 
     if event.wake_at?
@@ -466,12 +466,12 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
     when .io_read?
       # reached read timeout: cancel io event; by rule the timer always wins,
       # even in case of conflict with #unsafe_resume_io we must resume the fiber
-      Evented.arena.get?(event.value.index, &.value.@readers.delete(event))
+      Evented.arena.get?(event.value.index) { |event| event.value.@readers.delete(event) }
       event.value.timed_out!
     when .io_write?
       # reached write timeout: cancel io event; by rule the timer always wins,
       # even in case of conflict with #unsafe_resume_io we must resume the fiber
-      Evented.arena.get?(event.value.index, &.value.@writers.delete(event))
+      Evented.arena.get?(event.value.index) { |event| event.value.@writers.delete(event) }
       event.value.timed_out!
     when .select_timeout?
       # always dequeue the event but only enqueue the fiber if we win the
