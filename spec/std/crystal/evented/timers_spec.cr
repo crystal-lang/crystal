@@ -1,7 +1,6 @@
-{% skip_file if !flag?(:unix) || flag?("evloop=libevent") %}
+{% skip_file unless Crystal.has_constant?(:Evented) %}
 
 require "spec"
-require "../../../../src/crystal/system/unix/evented/timers"
 
 describe Crystal::Evented::Timers do
   it "#empty?" do

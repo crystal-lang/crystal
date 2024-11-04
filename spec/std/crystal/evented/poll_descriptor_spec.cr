@@ -1,7 +1,6 @@
-{% skip_file if !flag?(:unix) || flag?("evloop=libevent") %}
+{% skip_file unless Crystal.has_constant?(:Evented) %}
 
 require "spec"
-require "../../../../src/crystal/system/unix/evented/poll_descriptor"
 
 class Crystal::Evented::FakeLoop < Crystal::Evented::EventLoop
   getter operations = [] of {Symbol, Int32, Crystal::Evented::Arena::Index | Bool}

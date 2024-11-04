@@ -4,18 +4,18 @@ abstract class Crystal::EventLoop
     {% if flag?(:wasi) %}
       Crystal::Wasi::EventLoop.new
     {% elsif flag?(:unix) %}
-      # TODO: dragonfly: the kqueue evloop hasn't been tested
+      # TODO: dragonfly: the kqueue evloop doesn't work properly (regular hangs on evloop.run)
       # TODO: netbsd: the kqueue evloop doesn't work (needs investigation)
-      # TODO: openbsd: the kqueue evloop is magnitudes slower (needs investigation)
-      # TODO: solaris: the epoll evloop hasn't been tested (better: use event-ports)
-      {% if flag?("evloop=libevent") || flag?(:dragonfly) || flag?(:netbsd) || flag?(:openbsd) || flag?(:solaris) %}
+      # TODO: openbsd: the kqueue evloop is sluggish when running std specs (the main fiber keeps reenqueueing itself from the evloop run)
+      # TODO: solaris: the epoll evloop hasn't been tested (better alternative: use event-ports)
+      {% if flag?("evloop=libevent") %}
         Crystal::LibEvent::EventLoop.new
       {% elsif flag?("evloop=epoll") || flag?(:android) || flag?(:linux) %}
         Crystal::Epoll::EventLoop.new
       {% elsif flag?("evloop=kqueue") || flag?(:darwin) || flag?(:freebsd) %}
         Crystal::Kqueue::EventLoop.new
       {% else %}
-        {% raise "Event loop not supported" %}
+        Crystal::LibEvent::EventLoop.new
       {% end %}
     {% elsif flag?(:win32) %}
       Crystal::IOCP::EventLoop.new
@@ -90,14 +90,14 @@ end
 {% if flag?(:wasi) %}
   require "./wasi/event_loop"
 {% elsif flag?(:unix) %}
-  {% if flag?("evloop=libevent") || flag?(:dragonfly) || flag?(:netbsd) || flag?(:openbsd) || flag?(:solaris) %}
+  {% if flag?("evloop=libevent") %}
     require "./unix/event_loop_libevent"
   {% elsif flag?("evloop=epoll") || flag?(:android) || flag?(:linux) %}
     require "./unix/epoll/event_loop"
   {% elsif flag?("evloop=kqueue") || flag?(:darwin) || flag?(:freebsd) %}
     require "./unix/kqueue/event_loop"
   {% else %}
-    {% raise "Event loop not supported" %}
+    require "./unix/event_loop_libevent"
   {% end %}
 {% elsif flag?(:win32) %}
   require "./win32/event_loop_iocp"

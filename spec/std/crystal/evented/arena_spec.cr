@@ -1,7 +1,6 @@
-{% skip_file if !flag?(:unix) || flag?("evloop=libevent") %}
+{% skip_file unless Crystal.has_constant?(:Evented) %}
 
 require "spec"
-require "../../../../src/crystal/system/unix/evented/arena"
 
 describe Crystal::Evented::Arena do
   describe "#allocate_at?" do

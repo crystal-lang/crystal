@@ -1,3 +1,5 @@
+require "crystal/pointer_linked_list"
+
 # Information about the event that a `Fiber` is waiting on.
 #
 # The event can be waiting for `IO` with or without a timeout, or be a timed

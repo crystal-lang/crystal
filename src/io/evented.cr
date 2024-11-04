@@ -1,4 +1,6 @@
-{% skip_file unless flag?("evloop=libevent") || flag?(:wasi) || flag?(:dragonfly) || flag?(:netbsd) || flag?(:openbsd) || flag?(:solaris) %}
+require "crystal/system/event_loop"
+
+{% skip_file unless flag?(:wasi) || Crystal.has_constant?(:LibEvent) %}
 
 require "crystal/thread_local_value"
 
