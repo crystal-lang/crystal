@@ -213,6 +213,7 @@ with_build_env() {
     -e CRYSTAL_CACHE_DIR="/tmp/crystal" \
     -e SPEC_SPLIT_DOTS \
     -e USE_PCRE1 \
+    -e CRYSTAL_OPTS \
     "$DOCKER_TEST_IMAGE" \
     "$ARCH_CMD" /bin/sh -c "'$command'"
 
