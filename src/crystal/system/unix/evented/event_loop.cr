@@ -466,12 +466,12 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
     when .io_read?
       # reached read timeout: cancel io event; by rule the timer always wins,
       # even in case of conflict with #unsafe_resume_io we must resume the fiber
-      Evented.arena.get?(event.value.index) { |event| event.value.@readers.delete(event) }
+      Evented.arena.get?(event.value.index) { |pd| pd.value.@readers.delete(event) }
       event.value.timed_out!
     when .io_write?
       # reached write timeout: cancel io event; by rule the timer always wins,
       # even in case of conflict with #unsafe_resume_io we must resume the fiber
-      Evented.arena.get?(event.value.index) { |event| event.value.@writers.delete(event) }
+      Evented.arena.get?(event.value.index) { |pd| pd.value.@writers.delete(event) }
       event.value.timed_out!
     when .select_timeout?
       # always dequeue the event but only enqueue the fiber if we win the
