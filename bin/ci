@@ -223,7 +223,7 @@ with_build_env() {
     CRYSTAL_CACHE_DIR="/tmp/crystal" \
     /bin/sh -c "'$command'"
 
-  on_nix_shell nix-shell --pure $CI_NIX_SHELL_ARGS --keep CRYSTAL_OPTS --run "'TZ=$TZ $command'"
+  on_nix_shell nix-shell --pure $CI_NIX_SHELL_ARGS --run "'TZ=$TZ $command'"
 
   on_github echo "::endgroup::"
 }
