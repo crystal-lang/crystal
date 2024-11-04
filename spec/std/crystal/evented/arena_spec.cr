@@ -1,4 +1,4 @@
-{% skip_file unless flag?(:unix) %}
+{% skip_file if !flag?(:unix) || flag?(:evloop_libevent) %}
 
 require "spec"
 require "../../../../src/crystal/system/unix/evented/arena"
