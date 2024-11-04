@@ -215,7 +215,7 @@ class Crystal::Evented::Arena(T, BLOCK_BYTESIZE)
     # example fork or another thread trying to iterate after realloc but before
     # we got the time to set @blocks or to allocate the new blocks
     new_size = n + 1
-    new_pointer = GC.malloc(new_size * BLOCK_BYTESIZE).as(Pointer(Pointer(Entry(T))))
+    new_pointer = GC.malloc(new_size * sizeof(Pointer(Entry(T)))).as(Pointer(Pointer(Entry(T))))
     old_size.times { |k| new_pointer[k] = old_pointer[k] }
     old_size.upto(n) { |j| new_pointer[j] = allocate_block }
 
