@@ -6,4 +6,4 @@ shards:
     version: 0.5.0
   reply:
     git: https://github.com/i3oris/reply.git
-    version: 0.3.1+git.commit.90a7eb5a76048884d5d56bf6b9369f1e67fdbcd7
+    version: 0.3.1+git.commit.db423dae3dd34c6ba5e36174653a0c109117a167

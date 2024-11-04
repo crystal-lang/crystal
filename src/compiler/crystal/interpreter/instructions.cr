@@ -1276,6 +1276,16 @@ require "./repl"
           ptr
         end,
       },
+      reset_class: {
+        operands:   [size : Int32, type_id : Int32],
+        pop_values: [pointer : Pointer(UInt8)],
+        push:       true,
+        code:       begin
+          pointer.clear(size)
+          pointer.as(Int32*).value = type_id
+          pointer
+        end,
+      },
       put_metaclass: {
         operands:   [size : Int32, union_type : Bool],
         push:       true,
@@ -1299,7 +1309,7 @@ require "./repl"
         code:       begin
           tmp_stack = stack
           stack_grow_by(union_size - from_size)
-          (tmp_stack - from_size).copy_to(tmp_stack - from_size + type_id_bytesize, from_size)
+          (tmp_stack - from_size).move_to(tmp_stack - from_size + type_id_bytesize, from_size)
           (tmp_stack - from_size).as(Int64*).value = type_id.to_i64!
         end,
         disassemble: {
@@ -1309,6 +1319,8 @@ require "./repl"
       put_reference_type_in_union: {
         operands:   [union_size : Int32],
         code:       begin
+          # `copy_to` here is valid only when `from_size <= type_id_bytesize`,
+          # which is always true
           from_size = sizeof(Pointer(UInt8))
           reference = (stack - from_size).as(UInt8**).value
           type_id =
@@ -1452,7 +1464,7 @@ require "./repl"
       tuple_indexer_known_index: {
         operands:   [tuple_size : Int32, offset : Int32, value_size : Int32],
         code:       begin
-          (stack - tuple_size).copy_from(stack - tuple_size + offset, value_size)
+          (stack - tuple_size).move_from(stack - tuple_size + offset, value_size)
           aligned_value_size = align(value_size)
           stack_shrink_by(tuple_size - value_size)
           stack_grow_by(aligned_value_size - value_size)
@@ -1464,7 +1476,7 @@ require "./repl"
       },
       tuple_copy_element: {
         operands:   [tuple_size : Int32, old_offset : Int32, new_offset : Int32, element_size : Int32],
-        code:       (stack - tuple_size + new_offset).copy_from(stack - tuple_size + old_offset, element_size),
+        code:       (stack - tuple_size + new_offset).move_from(stack - tuple_size + old_offset, element_size),
       },
       # >>> Tuples (3)
 

@@ -19,16 +19,16 @@ module Crystal::LibEvent
       @freed = false
     end
 
-    def add(timeout : Time::Span?) : Nil
-      if timeout
-        timeval = LibC::Timeval.new(
-          tv_sec: LibC::TimeT.new(timeout.total_seconds),
-          tv_usec: timeout.nanoseconds // 1_000
-        )
-        LibEvent2.event_add(@event, pointerof(timeval))
-      else
-        LibEvent2.event_add(@event, nil)
-      end
+    def add(timeout : Time::Span) : Nil
+      timeval = LibC::Timeval.new(
+        tv_sec: LibC::TimeT.new(timeout.total_seconds),
+        tv_usec: timeout.nanoseconds // 1_000
+      )
+      LibEvent2.event_add(@event, pointerof(timeval))
+    end
+
+    def add(timeout : Nil) : Nil
+      LibEvent2.event_add(@event, nil)
     end
 
     def free : Nil

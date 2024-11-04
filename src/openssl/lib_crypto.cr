@@ -1,6 +1,6 @@
 {% begin %}
   lib LibCrypto
-    {% if flag?(:win32) %}
+    {% if flag?(:msvc) %}
       {% from_libressl = false %}
       {% ssl_version = nil %}
       {% for dir in Crystal::LIBRARY_PATH.split(Crystal::System::Process::HOST_PATH_DELIMITER) %}
@@ -13,10 +13,12 @@
       {% end %}
       {% ssl_version ||= "0.0.0" %}
     {% else %}
-      {% from_libressl = (`hash pkg-config 2> /dev/null || printf %s false` != "false") &&
-                         (`test -f $(pkg-config --silence-errors --variable=includedir libcrypto)/openssl/opensslv.h || printf %s false` != "false") &&
-                         (`printf "#include <openssl/opensslv.h>\nLIBRESSL_VERSION_NUMBER" | ${CC:-cc} $(pkg-config --cflags --silence-errors libcrypto || true) -E -`.chomp.split('\n').last != "LIBRESSL_VERSION_NUMBER") %}
-      {% ssl_version = `hash pkg-config 2> /dev/null && pkg-config --silence-errors --modversion libcrypto || printf %s 0.0.0`.split.last.gsub(/[^0-9.]/, "") %}
+      # these have to be wrapped in `sh -c` since for MinGW-w64 the compiler
+      # passes the command string to `LibC.CreateProcessW`
+      {% from_libressl = (`sh -c 'hash pkg-config 2> /dev/null || printf %s false'` != "false") &&
+                         (`sh -c 'test -f $(pkg-config --silence-errors --variable=includedir libcrypto)/openssl/opensslv.h || printf %s false'` != "false") &&
+                         (`sh -c 'printf "#include <openssl/opensslv.h>\nLIBRESSL_VERSION_NUMBER" | ${CC:-cc} $(pkg-config --cflags --silence-errors libcrypto || true) -E -'`.chomp.split('\n').last != "LIBRESSL_VERSION_NUMBER") %}
+      {% ssl_version = `sh -c 'hash pkg-config 2> /dev/null && pkg-config --silence-errors --modversion libcrypto || printf %s 0.0.0'`.split.last.gsub(/[^0-9.]/, "") %}
     {% end %}
 
     {% if from_libressl %}
@@ -57,7 +59,10 @@ lib LibCrypto
 
   struct Bio
     method : Void*
-    callback : (Void*, Int, Char*, Int, Long, Long) -> Long
+    callback : BIO_callback_fn
+    {% if compare_versions(LIBRESSL_VERSION, "3.5.0") >= 0 %}
+      callback_ex : BIO_callback_fn_ex
+    {% end %}
     cb_arg : Char*
     init : Int
     shutdown : Int
@@ -71,6 +76,9 @@ lib LibCrypto
     num_read : ULong
     num_write : ULong
   end
+
+  alias BIO_callback_fn = (Bio*, Int, Char*, Int, Long, Long) -> Long
+  alias BIO_callback_fn_ex = (Bio*, Int, Char, SizeT, Int, Long, Int, SizeT*) -> Long
 
   PKCS5_SALT_LEN     =  8
   EVP_MAX_KEY_LENGTH = 32

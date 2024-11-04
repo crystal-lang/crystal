@@ -52,6 +52,20 @@ struct Pointer(T)
     def pointer
       @pointer
     end
+
+    # Creates a slice pointing at the values appended by this instance.
+    #
+    # ```
+    # slice = Slice(Int32).new(5)
+    # appender = slice.to_unsafe.appender
+    # appender << 1
+    # appender << 2
+    # appender << 3
+    # appender.to_slice # => Slice[1, 2, 3]
+    # ```
+    def to_slice : Slice(T)
+      @start.to_slice(size)
+    end
   end
 
   include Comparable(self)
@@ -420,6 +434,7 @@ struct Pointer(T)
   # ptr = Pointer(Int32).new(5678)
   # ptr.address # => 5678
   # ```
+  @[Deprecated("Call `.new(UInt64)` directly instead")]
   def self.new(address : Int)
     new address.to_u64!
   end

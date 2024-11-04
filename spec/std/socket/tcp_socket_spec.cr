@@ -3,6 +3,12 @@
 require "./spec_helper"
 require "../../support/win32"
 
+# TODO: Windows networking in the interpreter requires #12495
+{% if flag?(:interpreted) && flag?(:win32) %}
+  pending TCPSocket
+  {% skip_file %}
+{% end %}
+
 describe TCPSocket, tags: "network" do
   describe "#connect" do
     each_ip_family do |family, address|
@@ -41,7 +47,7 @@ describe TCPSocket, tags: "network" do
         end
         error.os_error.should eq({% if flag?(:win32) %}
           WinError::WSATYPE_NOT_FOUND
-        {% elsif flag?(:linux) && !flag?(:android) %}
+        {% elsif (flag?(:linux) && !flag?(:android)) || flag?(:openbsd) %}
           Errno.new(LibC::EAI_SERVICE)
         {% else %}
           Errno.new(LibC::EAI_NONAME)
@@ -73,7 +79,7 @@ describe TCPSocket, tags: "network" do
         # FIXME: Resolve special handling for win32. The error code handling should be identical.
         {% if flag?(:win32) %}
           [WinError::WSAHOST_NOT_FOUND, WinError::WSATRY_AGAIN].should contain err.os_error
-        {% elsif flag?(:android) %}
+        {% elsif flag?(:android) || flag?(:netbsd) || flag?(:openbsd) %}
           err.os_error.should eq(Errno.new(LibC::EAI_NODATA))
         {% else %}
           [Errno.new(LibC::EAI_NONAME), Errno.new(LibC::EAI_AGAIN)].should contain err.os_error
@@ -87,7 +93,7 @@ describe TCPSocket, tags: "network" do
         # FIXME: Resolve special handling for win32. The error code handling should be identical.
         {% if flag?(:win32) %}
           [WinError::WSAHOST_NOT_FOUND, WinError::WSATRY_AGAIN].should contain err.os_error
-        {% elsif flag?(:android) %}
+        {% elsif flag?(:android) || flag?(:netbsd) || flag?(:openbsd) %}
           err.os_error.should eq(Errno.new(LibC::EAI_NODATA))
         {% else %}
           [Errno.new(LibC::EAI_NONAME), Errno.new(LibC::EAI_AGAIN)].should contain err.os_error
@@ -136,7 +142,7 @@ describe TCPSocket, tags: "network" do
         (client.tcp_nodelay = false).should be_false
         client.tcp_nodelay?.should be_false
 
-        {% unless flag?(:openbsd) %}
+        {% unless flag?(:openbsd) || flag?(:netbsd) %}
           (client.tcp_keepalive_idle = 42).should eq 42
           client.tcp_keepalive_idle.should eq 42
           (client.tcp_keepalive_interval = 42).should eq 42

@@ -7,6 +7,7 @@ require "crystal/tracing"
 #
 # While this fiber is waiting this time, other ready-to-execute
 # fibers might start their execution.
+@[Deprecated("Use `::sleep(Time::Span)` instead")]
 def sleep(seconds : Number) : Nil
   if seconds < 0
     raise ArgumentError.new "Sleep seconds must be positive"
@@ -42,7 +43,7 @@ end
 #
 # spawn do
 #   6.times do
-#     sleep 1
+#     sleep 1.second
 #     puts 1
 #   end
 #   ch.send(nil)
@@ -50,7 +51,7 @@ end
 #
 # spawn do
 #   3.times do
-#     sleep 2
+#     sleep 2.seconds
 #     puts 2
 #   end
 #   ch.send(nil)

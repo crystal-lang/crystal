@@ -1,5 +1,17 @@
 require "spec"
 
+private module MyModule; end
+
+private class Foo
+  include MyModule
+end
+
+private record NoObjectId, to_unsafe : Int32 do
+  def same?(other : self) : Bool
+    to_unsafe == other.to_unsafe
+  end
+end
+
 describe "expectations" do
   describe "accept a custom failure message" do
     it { 1.should be < 3, "custom message!" }
@@ -24,6 +36,17 @@ describe "expectations" do
     it do
       array = [1]
       array.should_not be [1]
+    end
+
+    it "works with type that does not implement `#object_id`" do
+      a = NoObjectId.new(1)
+      a.should be a
+      a.should_not be NoObjectId.new(2)
+    end
+
+    it "works with module type (#14920)" do
+      a = Foo.new
+      a.as(MyModule).should be a.as(MyModule)
     end
   end
 

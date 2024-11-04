@@ -36,6 +36,13 @@ describe Crystal::Repl::Interpreter do
         CRYSTAL
     end
 
+    it "returns large union type (#15041)" do
+      interpret(<<-CRYSTAL).should eq(4_i64)
+        a = {3_i64, 4_i64} || nil
+        a.is_a?(Tuple) ? a[1] : 5_i64
+        CRYSTAL
+    end
+
     it "put and remove from union in local var" do
       interpret(<<-CRYSTAL).should eq(3)
         a = 1 == 1 ? 2 : true

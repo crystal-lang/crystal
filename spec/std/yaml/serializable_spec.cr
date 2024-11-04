@@ -1001,7 +1001,7 @@ describe "YAML::Serializable" do
         yaml = YAMLAttrWithPresenceAndIgnoreSerialize.from_yaml(%({"last_name": null}))
         yaml.last_name_present?.should be_true
 
-        # libyaml 0.2.5 removes traling space for empty scalar nodes
+        # libyaml 0.2.5 removes trailing space for empty scalar nodes
         if YAML.libyaml_version >= SemanticVersion.new(0, 2, 5)
           yaml.to_yaml.should eq("---\nlast_name:\n")
         else

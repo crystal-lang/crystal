@@ -215,4 +215,23 @@ describe "Code gen: union type" do
       Union(Nil, Int32).foo
       )).to_string.should eq("TupleLiteral")
   end
+
+  it "respects union payload alignment when upcasting Bool (#14898)" do
+    mod = codegen(<<-CRYSTAL)
+      x = uninitialized Bool | UInt8[64]
+      x = true
+      CRYSTAL
+
+    str = mod.to_s
+    {% if LibLLVM::IS_LT_150 %}
+      str.should contain("store i512 1, i512* %2, align 8")
+    {% else %}
+      str.should contain("store i512 1, ptr %1, align 8")
+    {% end %}
+
+    # an i512 store defaults to 16-byte alignment, which is undefined behavior
+    # as it overestimates the actual alignment of `x`'s data field (x86 in
+    # particular segfaults on misaligned 16-byte stores)
+    str.should_not contain("align 16")
+  end
 end

@@ -284,7 +284,7 @@ def create_spec_compiler
   compiler
 end
 
-def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::None, flags = nil, *, file = __FILE__)
+def run(code, filename : String? = nil, inject_primitives = true, debug = Crystal::Debug::None, flags = nil, *, file = __FILE__) : LLVM::GenericValue | SpecRunOutput
   if inject_primitives
     code = %(require "primitives"\n#{code})
   end
@@ -294,7 +294,7 @@ def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::
   # in the current executable!), so instead we compile
   # the program and run it, printing the last
   # expression and using that to compare the result.
-  if code.includes?(%(require "prelude")) || flags
+  if code.includes?(%(require "prelude"))
     ast = Parser.parse(code).as(Expressions)
     last = ast.expressions.last
     assign = Assign.new(Var.new("__tempvar"), last)
@@ -315,7 +315,23 @@ def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::
       return SpecRunOutput.new(output)
     end
   else
-    new_program.run(code, filename: filename, debug: debug)
+    program = new_program
+    program.flags.concat(flags) if flags
+    program.run(code, filename: filename, debug: debug)
+  end
+end
+
+def run(code, return_type : T.class, filename : String? = nil, inject_primitives = true, debug = Crystal::Debug::None, flags = nil, *, file = __FILE__) forall T
+  if inject_primitives
+    code = %(require "primitives"\n#{code})
+  end
+
+  if code.includes?(%(require "prelude"))
+    fail "TODO: support the prelude in typed codegen specs", file: file
+  else
+    program = new_program
+    program.flags.concat(flags) if flags
+    program.run(code, return_type: T, filename: filename, debug: debug)
   end
 end
 

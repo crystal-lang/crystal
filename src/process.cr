@@ -291,33 +291,20 @@ class Process
 
   private def stdio_to_fd(stdio : Stdio, for dst_io : IO::FileDescriptor) : IO::FileDescriptor
     case stdio
-    when IO::FileDescriptor
-      stdio
-    when IO
-      if stdio.closed?
-        if dst_io == STDIN
-          return File.open(File::NULL, "r").tap(&.close)
-        else
-          return File.open(File::NULL, "w").tap(&.close)
+    in IO::FileDescriptor
+      # on Windows, only async pipes can be passed to child processes, async
+      # regular files will report an error and those require a separate pipe
+      # (https://github.com/crystal-lang/crystal/pull/13362#issuecomment-1519082712)
+      {% if flag?(:win32) %}
+        unless stdio.blocking || stdio.info.type.pipe?
+          return io_to_fd(stdio, for: dst_io)
         end
-      end
+      {% end %}
 
-      if dst_io == STDIN
-        fork_io, process_io = IO.pipe(read_blocking: true)
-
-        @wait_count += 1
-        ensure_channel
-        spawn { copy_io(stdio, process_io, channel, close_dst: true) }
-      else
-        process_io, fork_io = IO.pipe(write_blocking: true)
-
-        @wait_count += 1
-        ensure_channel
-        spawn { copy_io(process_io, stdio, channel, close_src: true) }
-      end
-
-      fork_io
-    when Redirect::Pipe
+      stdio
+    in IO
+      io_to_fd(stdio, for: dst_io)
+    in Redirect::Pipe
       case dst_io
       when STDIN
         fork_io, @input = IO.pipe(read_blocking: true)
@@ -330,17 +317,41 @@ class Process
       end
 
       fork_io
-    when Redirect::Inherit
+    in Redirect::Inherit
       dst_io
-    when Redirect::Close
+    in Redirect::Close
       if dst_io == STDIN
         File.open(File::NULL, "r")
       else
         File.open(File::NULL, "w")
       end
-    else
-      raise "BUG: Impossible type in stdio #{stdio.class}"
     end
+  end
+
+  private def io_to_fd(stdio : Stdio, for dst_io : IO::FileDescriptor) : IO::FileDescriptor
+    if stdio.closed?
+      if dst_io == STDIN
+        return File.open(File::NULL, "r").tap(&.close)
+      else
+        return File.open(File::NULL, "w").tap(&.close)
+      end
+    end
+
+    if dst_io == STDIN
+      fork_io, process_io = IO.pipe(read_blocking: true)
+
+      @wait_count += 1
+      ensure_channel
+      spawn { copy_io(stdio, process_io, channel, close_dst: true) }
+    else
+      process_io, fork_io = IO.pipe(write_blocking: true)
+
+      @wait_count += 1
+      ensure_channel
+      spawn { copy_io(process_io, stdio, channel, close_src: true) }
+    end
+
+    fork_io
   end
 
   # :nodoc:
