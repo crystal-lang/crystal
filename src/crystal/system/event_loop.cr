@@ -17,6 +17,11 @@ abstract class Crystal::EventLoop
     Crystal::Scheduler.event_loop
   end
 
+  @[AlwaysInline]
+  def self.current? : self?
+    Crystal::Scheduler.event_loop?
+  end
+
   # Runs the loop.
   #
   # Returns immediately if events are activable. Set `blocking` to false to
@@ -51,7 +56,7 @@ abstract class Crystal::EventLoop
     abstract def free : Nil
 
     # Adds a new timeout to this event.
-    abstract def add(timeout : Time::Span?) : Nil
+    abstract def add(timeout : Time::Span) : Nil
   end
 end
 

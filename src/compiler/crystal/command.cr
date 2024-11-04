@@ -40,14 +40,14 @@ class Crystal::Command
 
     Tool:
         context                  show context for given location
+        dependencies             show file dependency tree
         expand                   show macro expansion for given location
         flags                    print all macro `flag?` values
         format                   format project, directories and/or files
         hierarchy                show type hierarchy
-        dependencies             show file dependency tree
         implementations          show implementations for given call in location
-        unreachable              show methods that are never called
         types                    show type of main variables
+        unreachable              show methods that are never called
         --help, -h               show this help
     USAGE
 
@@ -130,6 +130,9 @@ class Crystal::Command
     else
       if command.ends_with?(".cr")
         error "file '#{command}' does not exist"
+      elsif external_command = Process.find_executable("crystal-#{command}")
+        options.shift
+        Process.exec(external_command, options, env: {"CRYSTAL" => Process.executable_path})
       else
         error "unknown command: #{command}"
       end

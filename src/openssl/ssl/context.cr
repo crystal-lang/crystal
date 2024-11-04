@@ -178,7 +178,7 @@ abstract class OpenSSL::SSL::Context
       {% if LibSSL.has_method?(:ssl_ctx_set_alpn_select_cb) %}
         alpn_cb = ->(ssl : LibSSL::SSL, o : LibC::Char**, olen : LibC::Char*, i : LibC::Char*, ilen : LibC::Int, data : Void*) {
           proto = Box(Bytes).unbox(data)
-          ret = LibSSL.ssl_select_next_proto(o, olen, proto, 2, i, ilen)
+          ret = LibSSL.ssl_select_next_proto(o, olen, proto, proto.size, i, ilen)
           if ret != LibSSL::OPENSSL_NPN_NEGOTIATED
             LibSSL::SSL_TLSEXT_ERR_NOACK
           else

@@ -2606,6 +2606,206 @@ module Crystal
         node.end_location.not_nil!.line_number.should eq(5)
       end
 
+      it "sets correct locations of macro if / else" do
+        parser = Parser.new(<<-CR)
+          {% if 1 == val %}
+            "one!"
+            "bar"
+          {% else %}
+            "not one"
+            "bar"
+          {% end %}
+        CR
+
+        node = parser.parse.as MacroIf
+
+        location = node.cond.location.should_not be_nil
+        location.line_number.should eq 1
+        location = node.cond.end_location.should_not be_nil
+        location.line_number.should eq 1
+
+        location = node.then.location.should_not be_nil
+        location.line_number.should eq 1
+        location = node.then.end_location.should_not be_nil
+        location.line_number.should eq 4
+
+        location = node.else.location.should_not be_nil
+        location.line_number.should eq 4
+        location = node.else.end_location.should_not be_nil
+        location.line_number.should eq 7
+      end
+
+      it "sets correct locations of macro if / elsif" do
+        parser = Parser.new(<<-CR)
+          {% if 1 == val %}
+            "one!"
+            "bar"
+          {% elsif 2 == val %}
+            "not one"
+            "bar"
+          {% end %}
+        CR
+
+        node = parser.parse.as MacroIf
+
+        location = node.cond.location.should_not be_nil
+        location.line_number.should eq 1
+        location = node.cond.end_location.should_not be_nil
+        location.line_number.should eq 1
+
+        location = node.then.location.should_not be_nil
+        location.line_number.should eq 1
+        location = node.then.end_location.should_not be_nil
+        location.line_number.should eq 4
+
+        location = node.else.location.should_not be_nil
+        location.line_number.should eq 4
+        location = node.else.end_location.should_not be_nil
+        location.line_number.should eq 7
+      end
+
+      it "sets correct locations of macro if / else / elsif" do
+        parser = Parser.new(<<-CR)
+          {% if 1 == val %}
+            "one!"
+            "bar"
+          {% elsif 2 == val %}
+            "not one"
+            "bar"
+          {% else %}
+            "biz"
+            "blah"
+          {% end %}
+        CR
+
+        node = parser.parse.as MacroIf
+
+        location = node.cond.location.should_not be_nil
+        location.line_number.should eq 1
+        location = node.cond.end_location.should_not be_nil
+        location.line_number.should eq 1
+
+        location = node.then.location.should_not be_nil
+        location.line_number.should eq 1
+        location = node.then.end_location.should_not be_nil
+        location.line_number.should eq 4
+
+        location = node.else.location.should_not be_nil
+        location.line_number.should eq 4
+        location = node.else.end_location.should_not be_nil
+        location.line_number.should eq 10
+      end
+
+      it "sets the correct location for MacroExpressions in a MacroIf" do
+        parser = Parser.new(<<-CR)
+          {% if 1 == 2 %}
+            {{2 * 2}}
+          {% else %}
+             {%
+               1 + 1
+               2 + 2
+             %}
+          {% end %}
+        CR
+
+        node = parser.parse.should be_a MacroIf
+        location = node.location.should_not be_nil
+        location.line_number.should eq 1
+        location.column_number.should eq 3
+
+        then_node = node.then.should be_a Expressions
+        then_node_location = then_node.location.should_not be_nil
+        then_node_location.line_number.should eq 1
+        then_node_location = then_node.end_location.should_not be_nil
+        then_node_location.line_number.should eq 3
+
+        then_node_location = then_node.expressions[1].location.should_not be_nil
+        then_node_location.line_number.should eq 2
+        then_node_location = then_node.expressions[1].end_location.should_not be_nil
+        then_node_location.line_number.should eq 2
+
+        else_node = node.else.should be_a Expressions
+        else_node_location = else_node.location.should_not be_nil
+        else_node_location.line_number.should eq 3
+        else_node_location = else_node.end_location.should_not be_nil
+        else_node_location.line_number.should eq 8
+
+        else_node = node.else.should be_a Expressions
+        else_node_location = else_node.expressions[1].location.should_not be_nil
+        else_node_location.line_number.should eq 4
+        else_node_location = else_node.expressions[1].end_location.should_not be_nil
+        else_node_location.line_number.should eq 7
+      end
+
+      it "sets correct location of Begin within another node" do
+        parser = Parser.new(<<-CR)
+          macro finished
+            {% begin %}
+              {{2 * 2}}
+               {%
+                 1 + 1
+                 2 + 2
+               %}
+            {% end %}
+          end
+        CR
+
+        node = parser.parse.should be_a Macro
+        node = node.body.should be_a Expressions
+        node = node.expressions[1].should be_a MacroIf
+
+        location = node.location.should_not be_nil
+        location.line_number.should eq 2
+        location = node.end_location.should_not be_nil
+        location.line_number.should eq 8
+      end
+
+      it "sets correct location of MacroIf within another node" do
+        parser = Parser.new(<<-CR)
+          macro finished
+            {% if false %}
+              {{2 * 2}}
+               {%
+                 1 + 1
+                 2 + 2
+               %}
+            {% end %}
+          end
+        CR
+
+        node = parser.parse.should be_a Macro
+        node = node.body.should be_a Expressions
+        node = node.expressions[1].should be_a MacroIf
+
+        location = node.location.should_not be_nil
+        location.line_number.should eq 2
+        location = node.end_location.should_not be_nil
+        location.line_number.should eq 8
+      end
+
+      it "sets correct location of MacroIf (unless) within another node" do
+        parser = Parser.new(<<-CR)
+          macro finished
+            {% unless false %}
+              {{2 * 2}}
+               {%
+                 1 + 1
+                 2 + 2
+               %}
+            {% end %}
+          end
+        CR
+
+        node = parser.parse.should be_a Macro
+        node = node.body.should be_a Expressions
+        node = node.expressions[1].should be_a MacroIf
+
+        location = node.location.should_not be_nil
+        location.line_number.should eq 2
+        location = node.end_location.should_not be_nil
+        location.line_number.should eq 8
+      end
+
       it "sets correct location of trailing ensure" do
         parser = Parser.new("foo ensure bar")
         node = parser.parse.as(ExceptionHandler)

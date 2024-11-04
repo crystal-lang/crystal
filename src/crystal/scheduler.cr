@@ -24,6 +24,12 @@ class Crystal::Scheduler
     Thread.current.scheduler.@event_loop
   end
 
+  def self.event_loop?
+    if scheduler = Thread.current?.try(&.scheduler?)
+      scheduler.@event_loop
+    end
+  end
+
   def self.enqueue(fiber : Fiber) : Nil
     Crystal.trace :sched, "enqueue", fiber: fiber do
       thread = Thread.current

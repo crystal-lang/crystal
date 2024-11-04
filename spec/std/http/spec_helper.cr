@@ -49,7 +49,7 @@ def run_server(server, &)
     {% if flag?(:preview_mt) %}
       # avoids fiber synchronization issues in specs, like closing the server
       # before we properly listen, ...
-      sleep 0.001
+      sleep 1.millisecond
     {% end %}
     yield server_done
   ensure

@@ -12,9 +12,9 @@ describe Benchmark::IPS::Job do
   it "works in general / integration test" do
     # test several things to avoid running a benchmark over and over again in
     # the specs
-    j = Benchmark::IPS::Job.new(0.001, 0.001, interactive: false)
-    a = j.report("a") { sleep 0.001 }
-    b = j.report("b") { sleep 0.002 }
+    j = Benchmark::IPS::Job.new(1.millisecond, 1.millisecond, interactive: false)
+    a = j.report("a") { sleep 1.milliseconds }
+    b = j.report("b") { sleep 2.milliseconds }
 
     j.execute
 
@@ -31,7 +31,7 @@ describe Benchmark::IPS::Job do
 end
 
 private def create_entry
-  Benchmark::IPS::Entry.new("label", ->{ 1 + 1 })
+  Benchmark::IPS::Entry.new("label", -> { 1 + 1 })
 end
 
 private def h_mean(mean)

@@ -13,5 +13,5 @@ lib LibC
 
   fun gettimeofday = __gettimeofday50(x0 : Timeval*, x1 : Timezone*) : Int
   fun utimes = __utimes50(path : Char*, times : Timeval[2]) : Int
-  fun futimens = __futimens50(fd : Int, times : Timespec[2]) : Int
+  fun futimens(fd : Int, times : Timespec[2]) : Int
 end

@@ -25,7 +25,7 @@ class TCPSocket < IPSocket
   # connection time to the remote server with `connect_timeout`. Both values
   # must be in seconds (integers or floats).
   #
-  # Note that `dns_timeout` is currently ignored.
+  # NOTE: *dns_timeout* is currently only supported on Windows.
   def initialize(host : String, port, dns_timeout = nil, connect_timeout = nil, blocking = false)
     Addrinfo.tcp(host, port, timeout: dns_timeout) do |addrinfo|
       super(addrinfo.family, addrinfo.type, addrinfo.protocol, blocking)

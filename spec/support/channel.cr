@@ -10,9 +10,9 @@ def schedule_timeout(c : Channel(SpecChannelStatus))
       # TODO: it's not clear why some interpreter specs
       # take more than 1 second in some cases.
       # See #12429.
-      sleep 5
+      sleep 5.seconds
     {% else %}
-      sleep 1
+      sleep 1.second
     {% end %}
     c.send(SpecChannelStatus::Timeout)
   end

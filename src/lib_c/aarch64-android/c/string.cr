@@ -5,5 +5,6 @@ lib LibC
   fun memcmp(__lhs : Void*, __rhs : Void*, __n : SizeT) : Int
   fun strcmp(__lhs : Char*, __rhs : Char*) : Int
   fun strerror(__errno_value : Int) : Char*
+  fun strerror_r(Int, Char*, SizeT) : Int
   fun strlen(__s : Char*) : SizeT
 end

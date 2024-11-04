@@ -41,7 +41,7 @@ module Crystal
     source : String | Array(String),
     highlight_line_number = nil,
     color = false,
-    line_number_start = 1
+    line_number_start = 1,
   )
     source = source.lines if source.is_a? String
     line_number_padding = (source.size + line_number_start).to_s.chars.size

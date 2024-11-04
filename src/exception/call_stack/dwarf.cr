@@ -10,6 +10,10 @@ struct Exception::CallStack
   @@dwarf_line_numbers : Crystal::DWARF::LineNumbers?
   @@dwarf_function_names : Array(Tuple(LibC::SizeT, LibC::SizeT, String))?
 
+  {% if flag?(:win32) %}
+    @@coff_symbols : Hash(Int32, Array(Crystal::PE::COFFSymbol))?
+  {% end %}
+
   # :nodoc:
   def self.load_debug_info : Nil
     return if ENV["CRYSTAL_LOAD_DEBUG_INFO"]? == "0"

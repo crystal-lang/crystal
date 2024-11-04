@@ -1,5 +1,4 @@
 require "c/dbghelp"
-require "c/malloc"
 
 # :nodoc:
 struct Exception::CallStack
@@ -33,38 +32,7 @@ struct Exception::CallStack
   end
 
   def self.setup_crash_handler
-    LibC.AddVectoredExceptionHandler(1, ->(exception_info) do
-      case exception_info.value.exceptionRecord.value.exceptionCode
-      when LibC::EXCEPTION_ACCESS_VIOLATION
-        addr = exception_info.value.exceptionRecord.value.exceptionInformation[1]
-        Crystal::System.print_error "Invalid memory access (C0000005) at address %p\n", Pointer(Void).new(addr)
-        print_backtrace(exception_info)
-        LibC._exit(1)
-      when LibC::EXCEPTION_STACK_OVERFLOW
-        LibC._resetstkoflw
-        Crystal::System.print_error "Stack overflow (e.g., infinite or very deep recursion)\n"
-        print_backtrace(exception_info)
-        LibC._exit(1)
-      else
-        LibC::EXCEPTION_CONTINUE_SEARCH
-      end
-    end)
-
-    # ensure that even in the case of stack overflow there is enough reserved
-    # stack space for recovery (for other threads this is done in
-    # `Crystal::System::Thread.thread_proc`)
-    stack_size = Crystal::System::Fiber::RESERVED_STACK_SIZE
-    LibC.SetThreadStackGuarantee(pointerof(stack_size))
-
-    # this catches invalid argument checks inside the C runtime library
-    LibC._set_invalid_parameter_handler(->(expression, _function, _file, _line, _pReserved) do
-      message = expression ? String.from_utf16(expression)[0] : "(no message)"
-      Crystal::System.print_error "CRT invalid parameter handler invoked: %s\n", message
-      caller.each do |frame|
-        Crystal::System.print_error "  from %s\n", frame
-      end
-      LibC._exit(1)
-    end)
+    Crystal::System::Signal.setup_seh_handler
   end
 
   {% if flag?(:interpreted) %} @[Primitive(:interpreter_call_stack_unwind)] {% end %}
@@ -93,6 +61,8 @@ struct Exception::CallStack
                    {% elsif flag?(:i386) %}
                      # TODO: use WOW64_CONTEXT in place of CONTEXT
                      {% raise "x86 not supported" %}
+                   {% elsif flag?(:aarch64) %}
+                     LibC::IMAGE_FILE_MACHINE_ARM64
                    {% else %}
                      {% raise "Architecture not supported" %}
                    {% end %}
@@ -102,9 +72,15 @@ struct Exception::CallStack
     stack_frame.addrFrame.mode = LibC::ADDRESS_MODE::AddrModeFlat
     stack_frame.addrStack.mode = LibC::ADDRESS_MODE::AddrModeFlat
 
-    stack_frame.addrPC.offset = context.value.rip
-    stack_frame.addrFrame.offset = context.value.rbp
-    stack_frame.addrStack.offset = context.value.rsp
+    {% if flag?(:x86_64) %}
+      stack_frame.addrPC.offset = context.value.rip
+      stack_frame.addrFrame.offset = context.value.rbp
+      stack_frame.addrStack.offset = context.value.rsp
+    {% elsif flag?(:aarch64) %}
+      stack_frame.addrPC.offset = context.value.pc
+      stack_frame.addrFrame.offset = context.value.x[29]
+      stack_frame.addrStack.offset = context.value.sp
+    {% end %}
 
     last_frame = nil
     cur_proc = LibC.GetCurrentProcess

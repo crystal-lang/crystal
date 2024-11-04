@@ -70,7 +70,7 @@ struct NamedTuple
       {% begin %}
         {
           {% for key in T %}
-            {{ key.stringify }}: options[{{ key.symbolize }}].as(typeof(element_type({{ key }}))),
+            {{ key.stringify }}: options[{{ key.symbolize }}].as(typeof(element_type({{ key.symbolize }}))),
           {% end %}
         }
       {% end %}
@@ -119,7 +119,7 @@ struct NamedTuple
     {% begin %}
       NamedTuple.new(
       {% for key, value in T %}
-        {{key.stringify}}: self[{{key.symbolize}}].cast(hash.fetch({{key.symbolize}}) { hash["{{key}}"] }),
+        {{key.stringify}}: self[{{key.symbolize}}].cast(hash.fetch({{key.symbolize}}) { hash[{{key.stringify}}] }),
       {% end %}
       )
     {% end %}

@@ -34,7 +34,7 @@ module ECR
   # ```
   macro def_to_s(filename)
     def to_s(__io__ : IO) : Nil
-      ECR.embed {{filename}}, "__io__"
+      ::ECR.embed {{filename}}, "__io__"
     end
   end
 

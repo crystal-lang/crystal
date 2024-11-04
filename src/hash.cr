@@ -872,7 +872,8 @@ class Hash(K, V)
   # Marks an entry in `@entries` at `index` as deleted
   # *without* modifying any counters (`@size` and `@deleted_count`).
   private def delete_entry(index) : Nil
-    set_entry(index, Entry(K, V).deleted)
+    # sets `Entry#@hash` to 0 and removes stale references to key and value
+    (@entries + index).clear
   end
 
   # Marks an entry in `@entries` at `index` as deleted
@@ -1054,7 +1055,7 @@ class Hash(K, V)
     self
   end
 
-  # Returns `true` of this Hash is comparing keys by `object_id`.
+  # Returns `true` if this Hash is comparing keys by `object_id`.
   #
   # See `compare_by_identity`.
   getter? compare_by_identity : Bool
@@ -1746,7 +1747,8 @@ class Hash(K, V)
   # hash.transform_keys { |key, value| key.to_s * value } # => {"a" => 1, "bb" => 2, "ccc" => 3}
   # ```
   def transform_keys(& : K, V -> K2) : Hash(K2, V) forall K2
-    each_with_object({} of K2 => V) do |(key, value), memo|
+    copy = Hash(K2, V).new(initial_capacity: entries_capacity)
+    each_with_object(copy) do |(key, value), memo|
       memo[yield(key, value)] = value
     end
   end
@@ -1761,7 +1763,8 @@ class Hash(K, V)
   # hash.transform_values { |value, key| "#{key}#{value}" } # => {:a => "a1", :b => "b2", :c => "c3"}
   # ```
   def transform_values(& : V, K -> V2) : Hash(K, V2) forall V2
-    each_with_object({} of K => V2) do |(key, value), memo|
+    copy = Hash(K, V2).new(initial_capacity: entries_capacity)
+    each_with_object(copy) do |(key, value), memo|
       memo[key] = yield(value, key)
     end
   end
@@ -2148,16 +2151,11 @@ class Hash(K, V)
     hash
   end
 
+  # :nodoc:
   struct Entry(K, V)
     getter key, value, hash
 
     def initialize(@hash : UInt32, @key : K, @value : V)
-    end
-
-    def self.deleted
-      key = uninitialized K
-      value = uninitialized V
-      new(0_u32, key, value)
     end
 
     def deleted? : Bool
