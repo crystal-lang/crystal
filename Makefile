@@ -24,18 +24,19 @@ all:
 CRYSTAL ?= crystal## which previous crystal compiler use
 LLVM_CONFIG ?=     ## llvm-config command path to use
 
-release ?=      ## Compile in release mode
-stats ?=        ## Enable statistics output
-progress ?=     ## Enable progress output
-threads ?=      ## Maximum number of threads to use
-debug ?=        ## Add symbolic debug info
-verbose ?=      ## Run specs in verbose mode
-junit_output ?= ## Path to output junit results
-static ?=       ## Enable static linking
-target ?=       ## Cross-compilation target
-interpreter ?=  ## Enable interpreter feature
-check ?=        ## Enable only check when running format
-order ?=random  ## Enable order for spec execution (values: "default" | "random" | seed number)
+release ?=        ## Compile in release mode
+stats ?=          ## Enable statistics output
+progress ?=       ## Enable progress output
+threads ?=        ## Maximum number of threads to use
+debug ?=          ## Add symbolic debug info
+verbose ?=        ## Run specs in verbose mode
+junit_output ?=   ## Path to output junit results
+static ?=         ## Enable static linking
+target ?=         ## Cross-compilation target
+interpreter ?=    ## Enable interpreter feature
+check ?=          ## Enable only check when running format
+order ?=random    ## Enable order for spec execution (values: "default" | "random" | seed number)
+deref_symlinks ?= ## Deference symbolic links for `make install`
 
 O := .build
 SOURCES := $(shell find src -name '*.cr')
@@ -167,7 +168,7 @@ install: $(O)/$(CRYSTAL_BIN) man/crystal.1.gz ## Install the compiler at DESTDIR
 	$(INSTALL) -m 0755 "$(O)/$(CRYSTAL_BIN)" "$(BINDIR)/$(CRYSTAL_BIN)"
 
 	$(INSTALL) -d -m 0755 $(DATADIR)
-	cp -av src "$(DATADIR)/src"
+	cp $(if $(deref_symlinks),-rvL --preserve=all,-av) src "$(DATADIR)/src"
 	rm -rf "$(DATADIR)/$(LLVM_EXT_OBJ)" # Don't install llvm_ext.o
 
 	$(INSTALL) -d -m 0755 "$(MANDIR)/man1/"

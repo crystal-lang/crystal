@@ -1,4 +1,4 @@
-{% skip_file unless flag?(:unix) || flag?(:msvc) %}
+{% skip_file unless flag?(:unix) || flag?(:win32) %}
 require "option_parser"
 
 # This loader component imitates the behaviour of `ld.so` for linking and loading
@@ -105,4 +105,6 @@ end
   require "./loader/unix"
 {% elsif flag?(:msvc) %}
   require "./loader/msvc"
+{% elsif flag?(:win32) && flag?(:gnu) %}
+  require "./loader/mingw"
 {% end %}

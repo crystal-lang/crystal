@@ -3473,8 +3473,8 @@ class String
   # ```
   # "Hello, World".rindex('o')    # => 8
   # "Hello, World".rindex('Z')    # => nil
-  # "Hello, World".rindex("o", 5) # => 4
-  # "Hello, World".rindex("W", 2) # => nil
+  # "Hello, World".rindex('o', 5) # => 4
+  # "Hello, World".rindex('W', 2) # => nil
   # ```
   def rindex(search : Char, offset = size - 1)
     # If it's ASCII we can delegate to slice
@@ -3519,7 +3519,16 @@ class String
     end
   end
 
-  # :ditto:
+  # Returns the index of the _last_ appearance of *search* in the string,
+  # If *offset* is present, it defines the position to _end_ the search
+  # (characters beyond this point are ignored).
+  #
+  # ```
+  # "Hello, World".rindex("orld")    # => 8
+  # "Hello, World".rindex("snorlax") # => nil
+  # "Hello, World".rindex("o", 5)    # => 4
+  # "Hello, World".rindex("W", 2)    # => nil
+  # ```
   def rindex(search : String, offset = size - search.size) : Int32?
     offset += size if offset < 0
     return if offset < 0
@@ -3572,7 +3581,16 @@ class String
     end
   end
 
-  # :ditto:
+  # Returns the index of the _last_ appearance of *search* in the string,
+  # If *offset* is present, it defines the position to _end_ the search
+  # (characters beyond this point are ignored).
+  #
+  # ```
+  # "Hello, World".rindex(/world/i) # => 7
+  # "Hello, World".rindex(/world/)  # => nil
+  # "Hello, World".rindex(/o/, 5)   # => 4
+  # "Hello, World".rindex(/W/, 2)   # => nil
+  # ```
   def rindex(search : Regex, offset = size, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Int32?
     offset += size if offset < 0
     return nil unless 0 <= offset <= size
@@ -3586,21 +3604,49 @@ class String
     match_result.try &.begin
   end
 
-  # :ditto:
-  #
+  # Returns the index of the _last_ appearance of *search* in the string,
+  # If *offset* is present, it defines the position to _end_ the search
+  # (characters beyond this point are ignored).
   # Raises `Enumerable::NotFoundError` if *search* does not occur in `self`.
-  def rindex!(search : Regex, offset = size, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Int32
-    rindex(search, offset, options: options) || raise Enumerable::NotFoundError.new
+  #
+  # ```
+  # "Hello, World".rindex!('o')    # => 8
+  # "Hello, World".rindex!('Z')    # raises Enumerable::NotFoundError
+  # "Hello, World".rindex!('o', 5) # => 4
+  # "Hello, World".rindex!('W', 2) # raises Enumerable::NotFoundError
+  # ```
+  def rindex!(search : Char, offset = size - 1) : Int32
+    rindex(search, offset) || raise Enumerable::NotFoundError.new
   end
 
-  # :ditto:
+  # Returns the index of the _last_ appearance of *search* in the string,
+  # If *offset* is present, it defines the position to _end_ the search
+  # (characters beyond this point are ignored).
+  # Raises `Enumerable::NotFoundError` if *search* does not occur in `self`.
+  #
+  # ```
+  # "Hello, World".rindex!("orld")    # => 8
+  # "Hello, World".rindex!("snorlax") # raises Enumerable::NotFoundError
+  # "Hello, World".rindex!("o", 5)    # => 4
+  # "Hello, World".rindex!("W", 2)    # raises Enumerable::NotFoundError
+  # ```
   def rindex!(search : String, offset = size - search.size) : Int32
     rindex(search, offset) || raise Enumerable::NotFoundError.new
   end
 
-  # :ditto:
-  def rindex!(search : Char, offset = size - 1) : Int32
-    rindex(search, offset) || raise Enumerable::NotFoundError.new
+  # Returns the index of the _last_ appearance of *search* in the string,
+  # If *offset* is present, it defines the position to _end_ the search
+  # (characters beyond this point are ignored).
+  # Raises `Enumerable::NotFoundError` if *search* does not occur in `self`.
+  #
+  # ```
+  # "Hello, World".rindex!(/world/i) # => 7
+  # "Hello, World".rindex!(/world/)  # raises Enumerable::NotFoundError
+  # "Hello, World".rindex!(/o/, 5)   # => 4
+  # "Hello, World".rindex!(/W/, 2)   # raises Enumerable::NotFoundError
+  # ```
+  def rindex!(search : Regex, offset = size, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Int32
+    rindex(search, offset, options: options) || raise Enumerable::NotFoundError.new
   end
 
   # Searches separator or pattern (`Regex`) in the string, and returns
