@@ -180,7 +180,7 @@ class Crystal::Evented::Arena(T)
   # and returns false.
   #
   # Raises if *index* is negative.
-  def get?(index : Index) : Bool
+  def get?(index : Index, &) : Bool
     at?(index) do |entry|
       yield entry.value.pointer
       return true
