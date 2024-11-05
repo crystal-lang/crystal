@@ -991,6 +991,25 @@ describe "Array" do
       ary2 = ary.map_with_index(10) { |e, i| e + i }
       ary2.should eq([11, 12, 14, 15])
     end
+
+    it "doesn't break on concurrent mutation (pop)" do
+      ary = [1, 2, 3]
+
+      ary.map_with_index do |e, i|
+        ary.pop if e == 1
+        {e, i}
+      end.should eq [{1, 0}, {2, 1}]
+    end
+
+    it "doesn't break on concurrent mutation (push)" do
+      ary = [1, 2, 3]
+
+      mapped = ary.map_with_index do |e, i|
+        ary.push 4 if e == 1
+        {e, i}
+      end
+      mapped.should eq [{1, 0}, {2, 1}, {3, 2}, {4, 3}]
+    end
   end
 
   describe "#map" do
@@ -998,6 +1017,23 @@ describe "Array" do
       a = [1, 2, 3]
       a.map { |x| x * 2 }.should eq([2, 4, 6])
       a.should eq([1, 2, 3])
+    end
+
+    it "doesn't break on concurrent mutation (pop)" do
+      ary = [1, 2, 3]
+
+      ary.map do |e|
+        ary.pop if e == 1
+        e
+      end.should eq [1, 2]
+    end
+
+    it "doesn't break on concurrent mutation (push)" do
+      ary = [1, 2, 3]
+      ary.map do |e|
+        ary.push 4 if e == 1
+        e
+      end.should eq [1, 2, 3, 4]
     end
   end
 
