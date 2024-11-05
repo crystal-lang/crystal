@@ -83,7 +83,7 @@ jobs:
           cc crystal.obj -o bin/crystal.exe \
             $(pkg-config bdw-gc libpcre2-8 iconv zlib libffi --libs) \
             $(llvm-config --libs --system-libs --ldflags) \
-            -lDbgHelp -lole32 -lWS2_32 -Wl,--stack,0x800000
+            -lole32 -lWS2_32 -Wl,--stack,0x800000
           ldd bin/crystal.exe | grep -iv /c/windows/system32 | sed 's/.* => //; s/ (.*//' | xargs -t -i cp '{}' bin/
 
       - name: Upload Crystal
