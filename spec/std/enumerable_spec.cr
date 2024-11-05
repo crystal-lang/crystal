@@ -557,6 +557,31 @@ describe "Enumerable" do
     end
   end
 
+  describe "find_value" do
+    it "finds and returns the first truthy block result" do
+      [1, 2, 3].find_value { |i| "1" if i == 1 }.should eq "1"
+      {1, 2, 3}.find_value { |i| "2" if i == 2 }.should eq "2"
+      (1..3).find_value { |i| "3" if i == 3 }.should eq "3"
+
+      # Block returns `true && expression` vs the above `expression if true`.
+      # Same idea, but a different idiom. It serves as an allegory for the next
+      # test which checks `false` vs `nil`.
+      [1, 2, 3].find_value { |i| i == 1 && "1" }.should eq "1"
+      {1, 2, 3}.find_value { |i| i == 2 && "2" }.should eq "2"
+      (1..3).find_value { |i| i == 3 && "3" }.should eq "3"
+    end
+
+    it "returns the default value if there are no truthy block results" do
+      {1, 2, 3}.find_value { |i| "4" if i == 4 }.should eq nil
+      {1, 2, 3}.find_value "nope" { |i| "4" if i == 4 }.should eq "nope"
+      ([] of Int32).find_value false { true }.should eq false
+
+      # Same as above but returns `false` instead of `nil`.
+      {1, 2, 3}.find_value { |i| i == 4 && "4" }.should eq nil
+      {1, 2, 3}.find_value "nope" { |i| i == 4 && "4" }.should eq "nope"
+    end
+  end
+
   describe "first" do
     it "calls block if empty" do
       (1...1).first { 10 }.should eq(10)
