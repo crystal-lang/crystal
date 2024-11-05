@@ -1015,6 +1015,24 @@ describe "Array" do
       ary.should eq([20, 22, 24])
       ary2.should be(ary)
     end
+
+    it "doesn't break on concurrent mutation (pop)" do
+      ary = [1, 2, 3]
+
+      ary.map_with_index! do |e, i|
+        ary.pop if e == 1
+        e
+      end.should eq [1, 2]
+    end
+
+    it "doesn't break on concurrent mutation (push)" do
+      ary = [1, 2, 3]
+
+      ary.map_with_index! do |e, i|
+        ary.push 4 if e == 1
+        e
+      end.should eq [1, 2, 3, 4]
+    end
   end
 
   describe "#map!" do
@@ -1022,6 +1040,24 @@ describe "Array" do
       a = [1, 2, 3]
       a.map! { |x| x * 2 }
       a.should eq([2, 4, 6])
+    end
+
+    it "doesn't break on concurrent mutation (pop)" do
+      ary = [1, 2, 3]
+
+      ary.map! do |e|
+        ary.pop if e == 1
+        e
+      end.should eq [1,2 ]
+    end
+
+    it "doesn't break on concurrent mutation (push)" do
+      ary = [1, 2, 3]
+
+      ary.map! do |e|
+        ary.push 4 if e == 1
+        e
+      end.should eq [1, 2, 3, 4]
     end
   end
 
