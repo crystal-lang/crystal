@@ -979,16 +979,20 @@ describe "Array" do
     end
   end
 
-  it "does map" do
-    a = [1, 2, 3]
-    a.map { |x| x * 2 }.should eq([2, 4, 6])
-    a.should eq([1, 2, 3])
+  describe "#map" do
+    it "does map" do
+      a = [1, 2, 3]
+      a.map { |x| x * 2 }.should eq([2, 4, 6])
+      a.should eq([1, 2, 3])
+    end
   end
 
-  it "does map!" do
-    a = [1, 2, 3]
-    a.map! { |x| x * 2 }
-    a.should eq([2, 4, 6])
+  describe "#map!" do
+    it "does map!" do
+      a = [1, 2, 3]
+      a.map! { |x| x * 2 }
+      a.should eq([2, 4, 6])
+    end
   end
 
   describe "pop" do
@@ -1919,30 +1923,34 @@ describe "Array" do
     ary2.should be(ary1)
   end
 
-  it "does map_with_index" do
-    ary = [1, 1, 2, 2]
-    ary2 = ary.map_with_index { |e, i| e + i }
-    ary2.should eq([1, 2, 4, 5])
+  describe "#map_with_index" do
+    it "does map_with_index" do
+      ary = [1, 1, 2, 2]
+      ary2 = ary.map_with_index { |e, i| e + i }
+      ary2.should eq([1, 2, 4, 5])
+    end
+
+    it "does map_with_index, with offset" do
+      ary = [1, 1, 2, 2]
+      ary2 = ary.map_with_index(10) { |e, i| e + i }
+      ary2.should eq([11, 12, 14, 15])
+    end
   end
 
-  it "does map_with_index, with offset" do
-    ary = [1, 1, 2, 2]
-    ary2 = ary.map_with_index(10) { |e, i| e + i }
-    ary2.should eq([11, 12, 14, 15])
-  end
+  describe "#map_with_index!" do
+    it "does map_with_index!" do
+      ary = [0, 1, 2]
+      ary2 = ary.map_with_index! { |e, i| i * 2 }
+      ary.should eq([0, 2, 4])
+      ary2.should be(ary)
+    end
 
-  it "does map_with_index!" do
-    ary = [0, 1, 2]
-    ary2 = ary.map_with_index! { |e, i| i * 2 }
-    ary.should eq([0, 2, 4])
-    ary2.should be(ary)
-  end
-
-  it "does map_with_index!, with offset" do
-    ary = [0, 1, 2]
-    ary2 = ary.map_with_index!(10) { |e, i| i * 2 }
-    ary.should eq([20, 22, 24])
-    ary2.should be(ary)
+    it "does map_with_index!, with offset" do
+      ary = [0, 1, 2]
+      ary2 = ary.map_with_index!(10) { |e, i| i * 2 }
+      ary.should eq([20, 22, 24])
+      ary2.should be(ary)
+    end
   end
 
   it "does + with different types (#568)" do
