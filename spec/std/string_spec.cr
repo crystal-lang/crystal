@@ -778,7 +778,7 @@ describe "String" do
       {"!hello!", "\u{1f602}hello\u{1f602}", "\xFEhello\xFF"}.each do |str|
         {"", "\n", "\r", "\r\n"}.each do |newline|
           x = str + newline
-          x.size # side-effect
+          x.size_known?.should be_true
           y = x.chomp
           y.@length.should eq(7)
         end
@@ -787,9 +787,9 @@ describe "String" do
 
     it "does not pre-compute string size if not possible" do
       x = String.build &.<< "abc\n"
-      x.@length.should eq(0)
+      x.size_known?.should be_false
       y = x.chomp
-      y.@length.should eq(0)
+      y.size_known?.should be_false
     end
   end
 
