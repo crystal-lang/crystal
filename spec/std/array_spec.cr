@@ -2205,7 +2205,7 @@ describe "Array" do
   end
 
   describe "#ensure_capacity" do
-    it "does nothing if fits" do
+    it "does nothing if it fits" do
       ary = [1, 2, 3]
       capacity1 = ary.remaining_capacity
       ary.ensure_capacity(3)
@@ -2226,7 +2226,7 @@ describe "Array" do
       ary.remaining_capacity.should eq(2)
     end
 
-    it "does nothing if not enough capacity" do
+    it "does nothing if there's not enough capacity" do
       ary = [1, 2, 3]
       ary.ensure_capacity(2).should eq([1, 2, 3])
       ary.remaining_capacity.should eq(3)

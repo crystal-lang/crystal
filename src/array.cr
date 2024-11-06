@@ -2120,7 +2120,7 @@ class Array(T)
     shift_buffer_by -@offset_to_buffer
   end
 
-  # Enusures that the internal buffer has at least `capacity` elements.
+  # Ensures that the internal buffer has at least `capacity` elements.
   def ensure_capacity(capacity : Int32) : self
     resize_to_capacity capacity if capacity >= @size
     self
