@@ -27,6 +27,7 @@ class Crystal::Loader
     libnames = [] of String
     file_paths = [] of String
     extra_search_paths = [] of String
+    crt_dll = "msvcrt"
 
     OptionParser.parse(args.dup) do |parser|
       parser.on("-L DIRECTORY", "--library-path DIRECTORY", "Add DIRECTORY to library search path") do |directory|
@@ -39,17 +40,21 @@ class Crystal::Loader
         raise LoadError.new "static libraries are not supported by Crystal's runtime loader"
       end
       parser.unknown_args do |args, after_dash|
-        file_paths.concat args
+        file_paths.concat args.reject(&.starts_with?("-mcrtdll="))
       end
 
       parser.invalid_option do |arg|
-        unless arg.starts_with?("-Wl,")
+        if crt_dll_arg = arg.lchop?("-mcrtdll=")
+          # the GCC spec is `%{!mcrtdll=*:-lmsvcrt} %{mcrtdll=*:-l%*}`
+          crt_dll = crt_dll_arg
+        elsif !arg.starts_with?("-Wl,")
           raise LoadError.new "Not a recognized linker flag: #{arg}"
         end
       end
     end
 
     search_paths = extra_search_paths + search_paths
+    libnames << crt_dll
 
     begin
       loader = new(search_paths)
