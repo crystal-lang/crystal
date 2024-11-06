@@ -285,7 +285,7 @@ jobs:
 
   dist_darwin:
     macos:
-      xcode: 13.4.1
+      xcode: 14.3.1
     shell: /bin/bash --login -eo pipefail
     steps:
       - restore_cache:
