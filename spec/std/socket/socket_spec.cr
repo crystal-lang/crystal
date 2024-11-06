@@ -87,6 +87,8 @@ describe Socket, tags: "network" do
 
     expect_raises(IO::TimeoutError) { server.accept }
     expect_raises(IO::TimeoutError) { server.accept? }
+
+    server.close
   end
 
   it "sends messages" do
