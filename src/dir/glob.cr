@@ -38,7 +38,7 @@ class Dir
   # Returns an array of all files that match against any of *patterns*.
   #
   # ```
-  # Dir.glob "path/to/folder/*.txt" # Returns all files in the folder that end in ".txt".
+  # Dir.glob "path/to/folder/*.txt" # Returns all files in the target folder that end in ".txt".
   # Dir.glob "path/to/folder/**/*"  # Returns all files in the target folder and its subfolders.
   # ```
   # The pattern syntax is similar to shell filename globbing, see `File.match?` for details.
