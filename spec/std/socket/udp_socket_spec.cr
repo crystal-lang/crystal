@@ -28,7 +28,7 @@ describe UDPSocket, tags: "network" do
       socket = UDPSocket.new(family)
       socket.bind(address, 0)
       socket.local_address.address.should eq address
-  ensure
+    ensure
       socket.try &.close
     end
 
