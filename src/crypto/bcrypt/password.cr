@@ -3,6 +3,8 @@ require "../subtle"
 
 # Generate, read and verify `Crypto::Bcrypt` hashes.
 #
+# NOTE: To use `Password`, you must explicitly import it with `require "crypto/bcrypt/password"`
+#
 # ```
 # require "crypto/bcrypt/password"
 #
@@ -15,6 +17,8 @@ require "../subtle"
 #
 # See `Crypto::Bcrypt` for hints to select the cost when generating hashes.
 class Crypto::Bcrypt::Password
+  private SUPPORTED_VERSIONS = ["2", "2a", "2b", "2y"]
+
   # Hashes a password.
   #
   # ```
@@ -45,6 +49,7 @@ class Crypto::Bcrypt::Password
   def initialize(@raw_hash : String)
     parts = @raw_hash.split('$')
     raise Error.new("Invalid hash string") unless parts.size == 4
+    raise Error.new("Invalid hash version") unless SUPPORTED_VERSIONS.includes?(parts[1])
 
     @version = parts[1]
     @cost = parts[2].to_i
@@ -67,7 +72,8 @@ class Crypto::Bcrypt::Password
   # ```
   def verify(password : String) : Bool
     hashed_password = Bcrypt.new(password, salt, cost)
-    Crypto::Subtle.constant_time_compare(@raw_hash, hashed_password)
+    hashed_password_digest = Base64.encode(hashed_password.digest, hashed_password.digest.size - 1)
+    Crypto::Subtle.constant_time_compare(@digest, hashed_password_digest)
   end
 
   def to_s(io : IO) : Nil

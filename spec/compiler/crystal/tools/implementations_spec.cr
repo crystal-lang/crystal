@@ -30,9 +30,11 @@ private def assert_implementations(code)
   if cursor_location
     visitor, result = processed_implementation_visitor(code, cursor_location)
 
-    result_location = result.implementations.not_nil!.map { |e| Location.new(e.filename.not_nil!, e.line.not_nil!, e.column.not_nil!).to_s }.sort
+    result_locations = result.implementations.not_nil!.map do |e|
+      Location.new(e.filename.not_nil!, e.line.not_nil!, e.column.not_nil!).to_s
+    end.sort!
 
-    result_location.should eq(expected_locations.map(&.to_s))
+    result_locations.should eq(expected_locations.map(&.to_s))
   else
     raise "no cursor found in spec"
   end

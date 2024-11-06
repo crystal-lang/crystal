@@ -67,7 +67,7 @@ class Random::PCG32
     @state = oldstate &* PCG_DEFAULT_MULTIPLIER_64 &+ @inc
     xorshifted = UInt32.new!(((oldstate >> 18) ^ oldstate) >> 27)
     rot = UInt32.new!(oldstate >> 59)
-    return UInt32.new!((xorshifted >> rot) | (xorshifted << ((~rot &+ 1) & 31)))
+    UInt32.new!(xorshifted.rotate_right(rot))
   end
 
   def jump(delta)

@@ -640,7 +640,8 @@ describe "Semantic: initialize" do
       a = 1 > 0 ? nil : 1
       Foo.new(a)
       ",
-      "no overload matches", inject_primitives: true
+      "expected argument #1 to 'Foo.new' to be Int32, not (Int32 | Nil)",
+      inject_primitives: true
   end
 
   it "doesn't mark instance variable as nilable when using self.class" do

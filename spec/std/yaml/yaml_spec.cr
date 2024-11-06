@@ -137,11 +137,11 @@ describe "YAML" do
 
       it "has correct message (#4006)" do
         expect_raises YAML::ParseException, "could not find expected ':' at line 4, column 1, while scanning a simple key at line 3, column 5" do
-          YAML.parse <<-END
+          YAML.parse <<-YAML
             a:
               - "b": >
                 c
-            END
+            YAML
         end
       end
 

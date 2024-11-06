@@ -11,7 +11,7 @@ struct LLVM::BasicBlockCollection
     BasicBlock.new LibLLVM.append_basic_block_in_context(context, @function, name)
   end
 
-  def append(name = "")
+  def append(name = "", &)
     context = LibLLVM.get_module_context(LibLLVM.get_global_parent(@function))
     block = append name
     # builder = Builder.new(LibLLVM.create_builder_in_context(context), LLVM::Context.new(context, dispose_on_finalize: false))
@@ -21,7 +21,7 @@ struct LLVM::BasicBlockCollection
     block
   end
 
-  def each : Nil
+  def each(&) : Nil
     bb = LibLLVM.get_first_basic_block(@function)
     while bb
       yield LLVM::BasicBlock.new bb

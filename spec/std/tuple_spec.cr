@@ -24,36 +24,79 @@ describe "Tuple" do
     {1}.empty?.should be_false
   end
 
-  it "does []" do
-    a = {1, 2.5}
-    i = 0
-    a[i].should eq(1)
-    i = 1
-    a[i].should eq(2.5)
-    i = -1
-    a[i].should eq(2.5)
-    i = -2
-    a[i].should eq(1)
+  describe "#[] with non-literal index" do
+    it "gets tuple element" do
+      a = {1, 2.5}
+      i = 0
+      a[i].should eq(1)
+      i = 1
+      a[i].should eq(2.5)
+      i = -1
+      a[i].should eq(2.5)
+      i = -2
+      a[i].should eq(1)
+      typeof(a[i]).should eq(Int32 | Float64)
+    end
+
+    it "raises index out of bounds" do
+      a = {1, 2.5}
+      i = 2
+      expect_raises(IndexError) { a[i] }
+      i = -3
+      expect_raises(IndexError) { a[i] }
+    end
   end
 
-  it "does [] raises index out of bounds" do
-    a = {1, 2.5}
-    i = 2
-    expect_raises(IndexError) { a[i] }
-    i = -3
-    expect_raises(IndexError) { a[i] }
+  describe "#[]? with non-literal index" do
+    it "gets tuple element or nil" do
+      a = {1, 2.5}
+      i = 0
+      a[i]?.should eq(1)
+      i = -1
+      a[i]?.should eq(2.5)
+      i = 2
+      a[i]?.should be_nil
+      i = -3
+      a[i]?.should be_nil
+      typeof(a[i]?).should eq(Int32 | Float64 | Nil)
+    end
   end
 
-  it "does []?" do
-    a = {1, 2}
-    i = 1
-    a[i]?.should eq(2)
-    i = -1
-    a[i]?.should eq(2)
-    i = 2
-    a[i]?.should be_nil
-    i = -3
-    a[i]?.should be_nil
+  describe ".[] with non-literal index" do
+    it "gets tuple metaclass element" do
+      a = Tuple(Int32, Float64)
+      i = 0
+      a[i].should eq(Int32)
+      i = 1
+      a[i].should eq(Float64)
+      i = -1
+      a[i].should eq(Float64)
+      i = -2
+      a[i].should eq(Int32)
+    end
+
+    it "raises index out of bounds" do
+      a = Tuple(Int32, Float64)
+      i = 2
+      expect_raises(IndexError) { a[i] }
+      i = -3
+      expect_raises(IndexError) { a[i] }
+    end
+  end
+
+  describe ".[]? with non-literal index" do
+    it "gets tuple metaclass element or nil" do
+      a = Tuple(Int32, Float64)
+      i = 0
+      a[i]?.should eq(Int32)
+      i = -1
+      a[i]?.should eq(Float64)
+      i = 2
+      a[i]?.should be_nil
+      i = -3
+      a[i]?.should be_nil
+      typeof(a[i]?).should eq(Union(Int32.class, Float64.class, Nil))
+    end
   end
 
   it "does at" do
@@ -80,7 +123,7 @@ describe "Tuple" do
     end
 
     it "works with mixed types" do
-      {1, "a", 1.0, :a}.values_at(0, 1, 2, 3).should eq({1, "a", 1.0, :a})
+      {1, "a", 1.0, false}.values_at(0, 1, 2, 3).should eq({1, "a", 1.0, false})
     end
   end
 
@@ -182,7 +225,7 @@ describe "Tuple" do
       Tuple(Int32).from([1, 2])
     end
 
-    expect_raises(TypeCastError, /cast from String to Int32 failed/) do
+    expect_raises(TypeCastError, /[Cc]ast from String to Int32 failed/) do
       Tuple(Int32, String).from(["foo", 1])
     end
   end
@@ -196,7 +239,7 @@ describe "Tuple" do
       {Int32}.from([1, 2])
     end
 
-    expect_raises(TypeCastError, /cast from String to Int32 failed/) do
+    expect_raises(TypeCastError, /[Cc]ast from String to Int32 failed/) do
       {Int32, String}.from(["foo", 1])
     end
   end
@@ -298,4 +341,24 @@ describe "Tuple" do
     ary = Tuple.new.to_a
     ary.size.should eq(0)
   end
+
+  # Tuple#to_static_array don't compile on aarch64-darwin and
+  # aarch64-linux-musl due to a codegen error caused by LLVM < 13.0.0.
+  # See https://github.com/crystal-lang/crystal/issues/11358 for details.
+  {% unless compare_versions(Crystal::LLVM_VERSION, "13.0.0") < 0 && flag?(:aarch64) && (flag?(:musl) || flag?(:darwin) || flag?(:android)) %}
+    it "#to_static_array" do
+      ary = {1, 'a', true}.to_static_array
+      ary.should be_a(StaticArray(Int32 | Char | Bool, 3))
+      ary.should eq(StaticArray[1, 'a', true])
+      ary.size.should eq(3)
+
+      ary = Tuple.new.to_static_array
+      ary.should be_a(StaticArray(NoReturn, 0))
+      ary.size.should eq(0)
+
+      ary = Tuple(String | Int32).new(1).to_static_array
+      ary.should be_a(StaticArray(String | Int32, 1))
+      ary.should eq StaticArray[1.as(String | Int32)]
+    end
+  {% end %}
 end

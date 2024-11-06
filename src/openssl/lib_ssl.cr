@@ -6,15 +6,25 @@ require "./lib_crypto"
 
 {% begin %}
   lib LibSSL
-    {% if flag?(:win32) %}
+    {% if flag?(:msvc) %}
       {% from_libressl = false %}
-      {% ssl_version = env("CRYSTAL_OPENSSL_VERSION") %}
-      {% raise "Cannot determine OpenSSL version, make sure the environment variable `CRYSTAL_OPENSSL_VERSION` is set" unless ssl_version %}
+      {% ssl_version = nil %}
+      {% for dir in Crystal::LIBRARY_PATH.split(Crystal::System::Process::HOST_PATH_DELIMITER) %}
+        {% unless ssl_version %}
+          {% config_path = "#{dir.id}\\openssl_VERSION" %}
+          {% if config_version = read_file?(config_path) %}
+            {% ssl_version = config_version.chomp %}
+          {% end %}
+        {% end %}
+      {% end %}
+      {% ssl_version ||= "0.0.0" %}
     {% else %}
-      {% from_libressl = (`hash pkg-config 2> /dev/null || printf %s false` != "false") &&
-                         (`test -f $(pkg-config --silence-errors --variable=includedir libssl)/openssl/opensslv.h || printf %s false` != "false") &&
-                         (`printf "#include <openssl/opensslv.h>\nLIBRESSL_VERSION_NUMBER" | ${CC:-cc} $(pkg-config --cflags --silence-errors libssl || true) -E -`.chomp.split('\n').last != "LIBRESSL_VERSION_NUMBER") %}
-      {% ssl_version = `hash pkg-config 2> /dev/null && pkg-config --silence-errors --modversion libssl || printf %s 0.0.0`.split.last.gsub(/[^0-9.]/, "") %}
+      # these have to be wrapped in `sh -c` since for MinGW-w64 the compiler
+      # passes the command string to `LibC.CreateProcessW`
+      {% from_libressl = (`sh -c 'hash pkg-config 2> /dev/null || printf %s false'` != "false") &&
+                         (`sh -c 'test -f $(pkg-config --silence-errors --variable=includedir libssl)/openssl/opensslv.h || printf %s false'` != "false") &&
+                         (`sh -c 'printf "#include <openssl/opensslv.h>\nLIBRESSL_VERSION_NUMBER" | ${CC:-cc} $(pkg-config --cflags --silence-errors libssl || true) -E -'`.chomp.split('\n').last != "LIBRESSL_VERSION_NUMBER") %}
+      {% ssl_version = `sh -c 'hash pkg-config 2> /dev/null && pkg-config --silence-errors --modversion libssl || printf %s 0.0.0'`.split.last.gsub(/[^0-9.]/, "") %}
     {% end %}
 
     {% if from_libressl %}
@@ -34,6 +44,11 @@ require "./lib_crypto"
   @[Link("user32")]  # GetProcessWindowStation, GetUserObjectInformationW, _MessageBoxW
 {% else %}
   @[Link(ldflags: "`command -v pkg-config > /dev/null && pkg-config --libs --silence-errors libssl || printf %s '-lssl -lcrypto'`")]
+{% end %}
+{% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
+  # TODO: if someone brings their own OpenSSL 1.x.y on Windows, will this have a different name?
+  @[Link(dll: "libssl-3-x64.dll")]
+  @[Link(dll: "libcrypto-3-x64.dll")]
 {% end %}
 lib LibSSL
   alias Int = LibC::Int
@@ -213,6 +228,7 @@ lib LibSSL
   fun ssl_ctx_get_verify_mode = SSL_CTX_get_verify_mode(ctx : SSLContext) : VerifyMode
   fun ssl_ctx_set_verify = SSL_CTX_set_verify(ctx : SSLContext, mode : VerifyMode, callback : VerifyCallback)
   fun ssl_ctx_set_default_verify_paths = SSL_CTX_set_default_verify_paths(ctx : SSLContext) : Int
+  fun ssl_ctx_get_cert_store = SSL_CTX_get_cert_store(ctx : SSLContext) : LibCrypto::X509_STORE
   fun ssl_ctx_ctrl = SSL_CTX_ctrl(ctx : SSLContext, cmd : Int, larg : ULong, parg : Void*) : ULong
 
   {% if compare_versions(OPENSSL_VERSION, "3.0.0") >= 0 %}
@@ -253,6 +269,7 @@ lib LibSSL
 
     fun ssl_get0_alpn_selected = SSL_get0_alpn_selected(handle : SSL, data : Char**, len : LibC::UInt*) : Void
     fun ssl_ctx_set_alpn_select_cb = SSL_CTX_set_alpn_select_cb(ctx : SSLContext, cb : ALPNCallback, arg : Void*) : Void
+    fun ssl_ctx_set_alpn_protos = SSL_CTX_set_alpn_protos(ctx : SSLContext, protos : Char*, protos_len : Int) : Int
   {% end %}
 
   {% if compare_versions(OPENSSL_VERSION, "1.0.2") >= 0 %}
@@ -268,6 +285,11 @@ lib LibSSL
   {% if compare_versions(OPENSSL_VERSION, "1.1.0") >= 0 %}
     fun ssl_ctx_set_security_level = SSL_CTX_set_security_level(ctx : SSLContext, level : Int) : Void
     fun ssl_ctx_get_security_level = SSL_CTX_get_security_level(ctx : SSLContext) : Int
+  {% end %}
+
+  # SSL reason codes
+  {% if compare_versions(OPENSSL_VERSION, "3.0.0") >= 0 %}
+    SSL_R_UNEXPECTED_EOF_WHILE_READING = 294
   {% end %}
 end
 

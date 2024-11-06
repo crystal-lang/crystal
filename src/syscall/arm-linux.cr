@@ -1,4 +1,4 @@
-{% skip_file unless flag?(:linux) && flag?(:arm) %}
+{% skip_file unless flag?(:linux) && flag?(:arm) && !flag?(:interpreted) %}
 
 module Syscall
   # :nodoc:
@@ -409,8 +409,8 @@ module Syscall
   end
 
   macro def_syscall(name, return_type, *args)
-    @[AlwaysInline]
-    def self.{{name.id}}({{*args}}) : {{return_type}}
+    @[::AlwaysInline]
+    def self.{{name.id}}({{args.splat}}) : {{return_type}}
       ret = uninitialized {{return_type}}
 
       {% if args.size == 0 %}

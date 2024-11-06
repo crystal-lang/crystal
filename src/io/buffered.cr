@@ -6,28 +6,39 @@
 # Additionally, several methods, like `#gets`, are implemented in a more
 # efficient way.
 module IO::Buffered
+  @in_buffer = Pointer(UInt8).null
+  @out_buffer = Pointer(UInt8).null
   @in_buffer_rem = Bytes.empty
   @out_count = 0
   @sync = false
   @read_buffering = true
   @flush_on_newline = false
-  @buffer_size = 8192
+  @buffer_size = IO::DEFAULT_BUFFER_SIZE
 
   # Reads at most *slice.size* bytes from the wrapped `IO` into *slice*.
   # Returns the number of bytes read.
+  #
+  # TODO: Add return type restriction `Int32`
   abstract def unbuffered_read(slice : Bytes)
 
-  # Writes at most *slice.size* bytes from *slice* into the wrapped `IO`.
-  # Returns the number of bytes written.
+  # Writes *slice* entirely into the wrapped `IO`.
+  #
+  # TODO: Add return type restriction `Nil`
   abstract def unbuffered_write(slice : Bytes)
 
   # Flushes the wrapped `IO`.
+  #
+  # TODO: Add return type restriction `Nil`
   abstract def unbuffered_flush
 
   # Closes the wrapped `IO`.
+  #
+  # TODO: Add return type restriction `Nil`
   abstract def unbuffered_close
 
   # Rewinds the wrapped `IO`.
+  #
+  # TODO: Add return type restriction `Nil`
   abstract def unbuffered_rewind
 
   # Return the buffer size used
@@ -38,7 +49,7 @@ module IO::Buffered
   # Set the buffer size of both the read and write buffer
   # Cannot be changed after any of the buffers have been allocated
   def buffer_size=(value)
-    if @in_buffer || @out_buffer
+    if (@in_buffer || @out_buffer) && (buffer_size != value)
       raise ArgumentError.new("Cannot change buffer_size after buffers have been allocated")
     end
     @buffer_size = value
@@ -96,7 +107,7 @@ module IO::Buffered
   # peek data if the current buffer is empty:
   # otherwise no read is performed and whatever
   # is in the buffer is returned.
-  def peek : Bytes?
+  def peek : Bytes
     check_open
 
     if @in_buffer_rem.empty?
@@ -176,6 +187,28 @@ module IO::Buffered
 
     if flush_on_newline? && byte === '\n'
       flush
+    end
+  end
+
+  # Returns the current position (in bytes) in this `IO`.
+  #
+  # ```
+  # File.write("testfile", "hello")
+  #
+  # file = File.new("testfile")
+  # file.pos     # => 0
+  # file.gets(2) # => "he"
+  # file.pos     # => 2
+  # ```
+  def pos : Int64
+    flush
+    in_rem = @in_buffer_rem.size
+
+    # TODO In 2.0 we should make `unbuffered_pos` an abstract method of Buffered
+    if self.responds_to?(:unbuffered_pos)
+      self.unbuffered_pos - in_rem
+    else
+      super - in_rem
     end
   end
 

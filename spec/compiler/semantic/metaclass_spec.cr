@@ -134,6 +134,18 @@ describe "Semantic: metaclass" do
       bar_class.should be_a_proper_subtype_of(foo_class)
     end
 
+    it "virtual metaclass type with virtual type (#12628)" do
+      mod = semantic(%(
+        class Base; end
+        class Impl < Base; end
+        )).program
+
+      base = mod.types["Base"]
+      base.virtual_type!.metaclass.implements?(base).should be_false
+      base.virtual_type!.metaclass.implements?(base.metaclass).should be_true
+      base.virtual_type!.metaclass.implements?(base.metaclass.virtual_type!).should be_true
+    end
+
     it "generic classes (1)" do
       mod = semantic(%(
         class Foo(T); end
@@ -248,7 +260,7 @@ describe "Semantic: metaclass" do
   end
 
   it "can't reopen as struct" do
-    assert_error <<-CR, "Bar is not a struct, it's a metaclass"
+    assert_error <<-CRYSTAL, "Bar is not a struct, it's a metaclass"
       class Foo
       end
 
@@ -256,11 +268,11 @@ describe "Semantic: metaclass" do
 
       struct Bar
       end
-      CR
+      CRYSTAL
   end
 
   it "can't reopen as module" do
-    assert_error <<-CR, "Bar is not a module, it's a metaclass"
+    assert_error <<-CRYSTAL, "Bar is not a module, it's a metaclass"
       class Foo
       end
 
@@ -268,6 +280,6 @@ describe "Semantic: metaclass" do
 
       module Bar
       end
-      CR
+      CRYSTAL
   end
 end

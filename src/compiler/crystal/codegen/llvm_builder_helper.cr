@@ -1,4 +1,6 @@
 module Crystal
+  record LLVMTypedFunction, type : LLVM::Type, func : LLVM::Function
+
   module LLVMBuilderHelper
     def int1(n)
       llvm_context.int1.const_int(n)
@@ -28,6 +30,25 @@ module Crystal
       int32(n)
     end
 
+    def size_t
+      llvm_context.int(@program.size_bit_width)
+    end
+
+    def size_t(n)
+      size_t.const_int(n)
+    end
+
+    def size_t(value : LLVM::Value)
+      case value.type.int_width <=> @program.size_bit_width
+      when .zero?
+        value
+      when .positive?
+        builder.trunc(value, size_t)
+      else
+        builder.zext(value, size_t)
+      end
+    end
+
     def int(n, type)
       llvm_type(type).const_int(n)
     end
@@ -42,9 +63,9 @@ module Crystal
 
     def float(value, type)
       case type.kind
-      when :f32
+      when .f32?
         float32(value.to_f32)
-      when :f64
+      when .f64?
         float64(value.to_f64)
       else
         raise "Unsupported float type"
@@ -79,48 +100,72 @@ module Crystal
       builder.icmp LLVM::IntPredicate::NE, value, value.type.null
     end
 
-    def gep(ptr, index0 : Int32, name = "")
+    def gep(ptr : LLVM::Value, index0 : Int32, name = "")
       gep ptr, int32(index0), name
     end
 
-    def gep(ptr, index0 : LLVM::Value, name = "")
+    def gep(ptr : LLVM::Value, index0 : LLVM::Value, name = "")
       builder.inbounds_gep ptr, index0, name
     end
 
-    def gep(ptr, index0 : Int32, index1 : Int32, name = "")
+    def gep(ptr : LLVM::Value, index0 : Int32, index1 : Int32, name = "")
       gep ptr, int32(index0), int32(index1), name
     end
 
-    def gep(ptr, index0 : LLVM::Value, index1 : LLVM::Value, name = "")
+    def gep(ptr : LLVM::Value, index0 : LLVM::Value, index1 : LLVM::Value, name = "")
       builder.inbounds_gep ptr, index0, index1, name
     end
 
-    def call(func, name : String = "")
+    def gep(type : LLVM::Type, ptr : LLVM::Value, index0 : Int32, name = "")
+      gep type, ptr, int32(index0), name
+    end
+
+    def gep(type : LLVM::Type, ptr : LLVM::Value, index0 : LLVM::Value, name = "")
+      builder.inbounds_gep type, ptr, index0, name
+    end
+
+    def gep(type : LLVM::Type, ptr : LLVM::Value, index0 : Int32, index1 : Int32, name = "")
+      gep type, ptr, int32(index0), int32(index1), name
+    end
+
+    def gep(type : LLVM::Type, ptr : LLVM::Value, index0 : LLVM::Value, index1 : LLVM::Value, name = "")
+      builder.inbounds_gep type, ptr, index0, index1, name
+    end
+
+    def call(func : LLVMTypedFunction, name : String = "")
       call(func, [] of LLVM::Value, name)
     end
 
-    def call(func, arg : LLVM::Value, name : String = "")
+    def call(func : LLVMTypedFunction, arg : LLVM::Value, name : String = "")
       call(func, [arg], name)
     end
 
-    def call(func : LLVM::Function, args : Array(LLVM::Value), name : String = "")
+    def call(func : LLVMTypedFunction, args : Array(LLVM::Value), name : String = "")
       if catch_pad = @catch_pad
         funclet = builder.build_operand_bundle_def("funclet", [catch_pad])
       else
         funclet = LLVM::OperandBundleDef.null
       end
 
-      builder.call(func, args, bundle: funclet, name: name)
+      begin
+        builder.call(func.type, func.func, args, bundle: funclet, name: name)
+      ensure
+        funclet.dispose
+      end
     end
 
-    def invoke(func : LLVM::Function, args : Array(LLVM::Value), a_then, a_catch, name : String = "")
+    def invoke(func : LLVMTypedFunction, args : Array(LLVM::Value), a_then, a_catch, name : String = "")
       if catch_pad = @catch_pad
         funclet = builder.build_operand_bundle_def("funclet", [catch_pad])
       else
         funclet = LLVM::OperandBundleDef.null
       end
 
-      builder.invoke(func, args, a_then, a_catch, bundle: funclet, name: name)
+      begin
+        builder.invoke(func.type, func.func, args, a_then, a_catch, bundle: funclet, name: name)
+      ensure
+        funclet.dispose
+      end
     end
 
     delegate ptr2int, int2ptr, and, or, not, bit_cast,
@@ -137,10 +182,6 @@ module Crystal
 
     def ret(value)
       builder.ret value
-    end
-
-    def cast_to_void_pointer(pointer)
-      bit_cast pointer, llvm_context.void_pointer
     end
 
     def extend_int(from_type, to_type, value)
@@ -171,16 +212,32 @@ module Crystal
       end
     end
 
-    def cast_to(value, type)
-      bit_cast value, llvm_type(type)
+    def cast_to(value : LLVM::ValueMethods, type : Type)
+      pointer_cast value, llvm_type(type)
     end
 
-    def cast_to_pointer(value, type)
-      bit_cast value, llvm_type(type).pointer
+    def cast_to_pointer(value : LLVM::ValueMethods, type : Type)
+      pointer_cast value, llvm_type(type).pointer
+    end
+
+    def cast_to_void_pointer(pointer : LLVM::ValueMethods)
+      pointer_cast pointer, llvm_context.void_pointer
+    end
+
+    # *type* must be a pointer type; on LLVM 15.0 or above *type* is not
+    # evaluated at all and *value* is returned unchanged, because all opaque
+    # pointer types (in the same context) are identical
+    macro pointer_cast(value, type)
+      {% if LibLLVM::IS_LT_150 %}
+        bit_cast({{ value }}, {{ type }})
+      {% else %}
+        {{ value }}
+      {% end %}
     end
 
     delegate llvm_type, llvm_struct_type, llvm_arg_type, llvm_embedded_type,
-      llvm_c_type, llvm_c_return_type, llvm_return_type, to: llvm_typer
+      llvm_c_type, llvm_c_return_type, llvm_return_type, llvm_embedded_c_type,
+      llvm_intrinsic_return_type, to: llvm_typer
 
     def llvm_proc_type(type)
       llvm_typer.proc_type(type.as(ProcInstanceType))
@@ -196,6 +253,14 @@ module Crystal
 
     def llvm_struct_size(type)
       llvm_struct_type(type).size
+    end
+
+    def llvm_alignment(type)
+      llvm_type(type).alignment
+    end
+
+    def llvm_struct_alignment(type)
+      llvm_struct_type(type).alignment
     end
   end
 end

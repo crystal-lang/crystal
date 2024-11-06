@@ -44,19 +44,19 @@ module OpenSSL::SSL::HostnameValidation
           pattern = String.new(dns_name, dns_name_len)
           return Result::MatchFound if matches_hostname?(pattern, hostname)
         when LibCrypto::GEN_IPADD
-          data = LibCrypto.asn1_string_data(current_name.value)
-          len = LibCrypto.asn1_string_length(current_name.value)
+          data = Slice.new(LibCrypto.asn1_string_data(current_name.value), LibCrypto.asn1_string_length(current_name.value))
 
-          case len
+          case data.size
           when 4
-            addr = uninitialized LibC::InAddr
-            if LibC.inet_pton(LibC::AF_INET, hostname, pointerof(addr).as(Void*)) > 0
-              return Result::MatchFound if addr == data.as(LibC::InAddr*).value
+            if v4_fields = ::Socket::IPAddress.parse_v4_fields?(hostname)
+              return Result::MatchFound if v4_fields.to_slice == data
             end
           when 16
-            addr6 = uninitialized LibC::In6Addr
-            if LibC.inet_pton(LibC::AF_INET6, hostname, pointerof(addr6).as(Void*)) > 0
-              return Result::MatchFound if addr6.unsafe_as(StaticArray(UInt32, 4)) == data.as(StaticArray(UInt32, 4)*).value
+            if v6_fields = ::Socket::IPAddress.parse_v6_fields?(hostname)
+              {% if IO::ByteFormat::NetworkEndian != IO::ByteFormat::SystemEndian %}
+                v6_fields.map! &.byte_swap
+              {% end %}
+              return Result::MatchFound if v6_fields.to_slice.to_unsafe_bytes == data
             end
           else
             # not a length we expect
@@ -135,7 +135,7 @@ module OpenSSL::SSL::HostnameValidation
     end
 
     # fail match when hostname is an IP address
-    if ::Socket.ip?(hostname)
+    if ::Socket::IPAddress.valid?(hostname)
       return false
     end
 

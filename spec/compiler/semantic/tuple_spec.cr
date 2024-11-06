@@ -314,8 +314,29 @@ describe "Semantic: tuples" do
     end
   end
 
+  describe "#[](Path)" do
+    it "works for tuple indexer" do
+      assert_type("A = 0; {1, 'a'}[A]") { int32 }
+    end
+
+    it "works for named tuple indexer" do
+      assert_type("A = :a; {a: 1, b: 'a'}[A]") { int32 }
+    end
+  end
+
   it "can name a tuple type" do
     assert_type("Tuple(Int32, Float64)") { tuple_of([int32, float64]).metaclass }
+  end
+
+  it "gives error when using named args on Tuple" do
+    assert_error %(
+      Tuple(x: Int32, y: Char)
+      ),
+      "can only use named arguments with NamedTuple"
+  end
+
+  it "doesn't error if Tuple has no args" do
+    assert_type("Tuple()") { tuple_of([] of Type).metaclass }
   end
 
   it "types T as a tuple of metaclasses" do
@@ -374,6 +395,16 @@ describe "Semantic: tuples" do
       foo "foo", 1
       ),
       "recursive splat expansion"
+  end
+
+  it "doesn't trigger recursive splat expansion error (#7164)" do
+    assert_no_errors %(
+      def call(*args)
+        call({1})
+      end
+
+      call(1)
+      )
   end
 
   it "allows tuple covariance" do

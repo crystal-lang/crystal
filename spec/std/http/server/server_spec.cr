@@ -1,8 +1,14 @@
 require "../spec_helper"
 require "http/server"
-require "http/client/response"
+require "http/client"
 require "../../../support/ssl"
 require "../../../support/channel"
+
+# TODO: Windows networking in the interpreter requires #12495
+{% if flag?(:interpreted) && flag?(:win32) %}
+  pending HTTP::Server
+  {% skip_file %}
+{% end %}
 
 # TODO: replace with `HTTP::Client.get` once it supports connecting to Unix socket (#2735)
 private def unix_request(path)
@@ -45,18 +51,15 @@ describe HTTP::Server do
     server = HTTP::Server.new { }
     server.bind_unused_port
 
-    spawn do
+    run_server(server) do
       server.close
-      sleep 0.001
     end
-
-    server.listen
   end
 
   it "closes the server" do
     server = HTTP::Server.new { }
     address = server.bind_unused_port
-    ch = Channel(Symbol).new
+    ch = Channel(SpecChannelStatus).new
 
     spawn do
       server.listen
@@ -68,17 +71,17 @@ describe HTTP::Server do
     while !server.listening?
       Fiber.yield
     end
-    sleep 0.1
+    sleep 0.1.seconds
 
     schedule_timeout ch
 
     TCPSocket.open(address.address, address.port) { }
 
     # wait before closing the server
-    sleep 0.1
+    sleep 0.1.seconds
     server.close
 
-    ch.receive.should eq(:end)
+    ch.receive.should eq SpecChannelStatus::End
   end
 
   it "reuses the TCP port (SO_REUSEPORT)" do
@@ -121,12 +124,12 @@ describe HTTP::Server do
 
     run_server(server) do
       TCPSocket.open(address.address, address.port) do |socket|
-        socket << requestize(<<-REQUEST
+        socket << requestize(<<-HTTP
           POST / HTTP/1.1
           Expect: 100-continue
           Content-Length: 5
 
-          REQUEST
+          HTTP
         )
         socket << "\r\n"
         socket.flush
@@ -153,12 +156,12 @@ describe HTTP::Server do
 
     run_server(server) do
       TCPSocket.open(address.address, address.port) do |socket|
-        socket << requestize(<<-REQUEST
+        socket << requestize(<<-HTTP
           POST / HTTP/1.1
           Expect: 100-continue
           Content-Length: 5
 
-          REQUEST
+          HTTP
         )
         socket << "\r\n"
         socket.flush
@@ -368,8 +371,8 @@ describe HTTP::Server do
           File.exists?(path1).should be_false
           File.exists?(path2).should be_false
         ensure
-          File.delete(path1) if File.exists?(path1)
-          File.delete(path2) if File.exists?(path2)
+          File.delete?(path1)
+          File.delete?(path2)
         end
       end
     end
@@ -430,7 +433,7 @@ describe HTTP::Server do
       begin
         ch.receive
         client = HTTP::Client.new(address.address, address.port, client_context)
-        client.read_timeout = client.connect_timeout = 3
+        client.read_timeout = client.connect_timeout = 3.seconds
         client.get("/").body.should eq "ok"
       ensure
         ch.send nil

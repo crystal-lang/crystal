@@ -319,7 +319,7 @@ describe "Semantic: const" do
    "1 + 2", "1 + ZED", "ZED - 1", "ZED * 2", "ZED // 2",
    "1 &+ ZED", "ZED &- 1", "ZED &* 2"].each do |node|
     it "doesn't errors if constant depends on another one defined later through method, but constant is simple (#{node})" do
-      assert_no_errors <<-CR, inject_primitives: true
+      assert_no_errors <<-CRYSTAL, inject_primitives: true
         ZED = 10
 
         struct Int32
@@ -337,7 +337,7 @@ describe "Semantic: const" do
         end
 
         CONST1
-        CR
+        CRYSTAL
     end
   end
 
@@ -452,19 +452,19 @@ describe "Semantic: const" do
   end
 
   it "errors if using const in proc notation parameter type" do
-    assert_error <<-CR, "A is not a type, it's a constant"
+    assert_error <<-CRYSTAL, "A is not a type, it's a constant"
       A = 1
 
       x : A ->
-      CR
+      CRYSTAL
   end
 
   it "errors if using const in proc notation return type" do
-    assert_error <<-CR, "A is not a type, it's a constant"
+    assert_error <<-CRYSTAL, "A is not a type, it's a constant"
       A = 1
 
       x : -> A
-      CR
+      CRYSTAL
   end
 
   it "errors if using return inside constant value (#5391)" do

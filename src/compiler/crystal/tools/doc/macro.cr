@@ -107,14 +107,11 @@ class Crystal::Doc::Macro
   def arg_to_html(arg : Arg, io, html : HTMLOption = :all)
     if arg.external_name != arg.name
       if name = arg.external_name.presence
-        if Symbol.needs_quotes_for_named_argument? name
-          if html.none?
-            name.inspect io
-          else
-            HTML.escape name.inspect, io
-          end
-        else
+        name = Symbol.quote_for_named_argument(name)
+        if html.none?
           io << name
+        else
+          HTML.escape name, io
         end
       else
         io << "_"
@@ -129,7 +126,7 @@ class Crystal::Doc::Macro
     if default_value = arg.default_value
       io << " = "
       if html.highlight?
-        io << Highlighter.highlight(default_value.to_s)
+        io << SyntaxHighlighter::HTML.highlight!(default_value.to_s)
       else
         io << default_value
       end

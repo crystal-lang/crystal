@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# TODO: the specs in this folder still expect typed pointers and so will fail
+# on LLVM 15+ which use opaque pointers
+
 set -euo pipefail
 
 SCRIPT_PATH="$(realpath "$0")"
@@ -33,6 +36,7 @@ function test() {
 pushd $BUILD_DIR >/dev/null
 
 test argless-initialize-debug-loc.cr "--cross-compile --target x86_64-unknown-linux-gnu --prelude=empty"
+test proc-call-debug-loc.cr "--cross-compile --target x86_64-unknown-linux-gnu --prelude=empty"
 test proc-pointer-debug-loc.cr "--cross-compile --target x86_64-unknown-linux-gnu --prelude=empty"
 test pass-closure-to-c-debug-loc.cr "--cross-compile --target x86_64-unknown-linux-gnu --prelude=empty"
 
@@ -54,4 +58,3 @@ test cast-unions.cr "--cross-compile --target x86_64-apple-darwin --prelude=empt
 test assign-unions.cr "--cross-compile --target x86_64-apple-darwin --prelude=empty --no-debug" X64
 
 popd >/dev/null
-

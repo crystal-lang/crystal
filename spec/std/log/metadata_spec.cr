@@ -28,6 +28,14 @@ describe Log::Metadata do
     m({a: 1}).extend({} of Symbol => String).should_not be_empty
   end
 
+  describe "#dup" do
+    it "creates a shallow copy" do
+      Log::Metadata.empty.dup.should eq(Log::Metadata.empty)
+      m({a: 1}).dup.should eq(m({a: 1}))
+      m({a: 1, b: 3}).dup.should eq(m({a: 1, b: 3}))
+    end
+  end
+
   it "extend" do
     m({a: 1}).extend({b: 2}).should eq(m({a: 1, b: 2}))
     m({a: 1, b: 3}).extend({b: 2}).should eq(m({a: 1, b: 2}))

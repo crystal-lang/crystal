@@ -14,8 +14,8 @@ module OpenSSL::X509
     # ```
     def self.parse(string : String) : Name
       new.tap do |name|
-        string.split('/').each do |entry|
-          oid, value = entry.split('=')
+        string.split('/') do |entry|
+          oid, _, value = entry.partition('=')
           name.add_entry(oid, value)
         end
       end

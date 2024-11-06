@@ -1,5 +1,7 @@
 # The JSON module allows parsing and generating [JSON](http://json.org/) documents.
 #
+# NOTE: To use `JSON` or its children, you must explicitly import it with `require "json"`
+#
 # ### General type-safe interface
 #
 # The general type-safe interface for parsing JSON is to invoke `T.from_json` on a

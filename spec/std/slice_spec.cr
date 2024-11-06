@@ -1,6 +1,6 @@
 require "spec"
 require "spec/helpers/iterate"
-require "../support/string"
+require "spec/helpers/string"
 
 private class BadSortingClass
   include Comparable(self)
@@ -87,7 +87,7 @@ describe "Slice" do
     expect_raises(IndexError) { slice[3] = 1 }
   end
 
-  it "does +" do
+  it "#+(Int)" do
     slice = Slice.new(3) { |i| i + 1 }
 
     slice1 = slice + 1
@@ -104,30 +104,59 @@ describe "Slice" do
 
   it "does []? with start and count" do
     slice = Slice.new(4) { |i| i + 1 }
+
     slice1 = slice[1, 2]?
     slice1.should_not be_nil
     slice1 = slice1.not_nil!
     slice1.size.should eq(2)
+    slice1.to_unsafe.should eq(slice.to_unsafe + 1)
     slice1[0].should eq(2)
     slice1[1].should eq(3)
 
-    slice[-1, 1]?.should be_nil
+    slice2 = slice[-1, 1]?
+    slice2.should_not be_nil
+    slice2 = slice2.not_nil!
+    slice2.size.should eq(1)
+    slice2.to_unsafe.should eq(slice.to_unsafe + 3)
+
     slice[3, 2]?.should be_nil
     slice[0, 5]?.should be_nil
-    slice[3, -1]?.should be_nil
+    expect_raises(ArgumentError, "Negative count: -1") { slice[3, -1]? }
+  end
+
+  it "does []? with range" do
+    slice = Slice.new(4) { |i| i + 1 }
+
+    slice1 = slice[1..2]?
+    slice1.should_not be_nil
+    slice1 = slice1.not_nil!
+    slice1.size.should eq(2)
+    slice1.to_unsafe.should eq(slice.to_unsafe + 1)
+    slice1[0].should eq(2)
+    slice1[1].should eq(3)
+
+    slice[4..7]?.should be_nil
+    slice[3..4]?.should be_nil
+    slice[-2..4]?.should be_nil
+    slice[-6..-5]?.should be_nil
   end
 
   it "does [] with start and count" do
     slice = Slice.new(4) { |i| i + 1 }
+
     slice1 = slice[1, 2]
     slice1.size.should eq(2)
+    slice1.to_unsafe.should eq(slice.to_unsafe + 1)
     slice1[0].should eq(2)
     slice1[1].should eq(3)
 
-    expect_raises(IndexError) { slice[-1, 1] }
+    slice2 = slice[-1, 1]
+    slice2.size.should eq(1)
+    slice2.to_unsafe.should eq(slice.to_unsafe + 3)
+
     expect_raises(IndexError) { slice[3, 2] }
     expect_raises(IndexError) { slice[0, 5] }
-    expect_raises(IndexError) { slice[3, -1] }
+    expect_raises(ArgumentError, "Negative count: -1") { slice[3, -1] }
   end
 
   it "does empty?" do
@@ -347,45 +376,86 @@ describe "Slice" do
     end
   end
 
-  it "does hexstring" do
-    slice = Bytes.new(4) { |i| i.to_u8 + 1 }
-    slice.hexstring.should eq("01020304")
+  describe "#unsafe_slice_of" do
+    it "reinterprets a slice's elements" do
+      slice = Bytes.new(10) { |i| i.to_u8 + 1 }
+
+      {% if IO::ByteFormat::SystemEndian == IO::ByteFormat::LittleEndian %}
+        slice.unsafe_slice_of(Int16).should eq(Int16.slice(0x0201, 0x0403, 0x0605, 0x0807, 0x0A09))
+        slice.unsafe_slice_of(Int32).should eq(Int32.slice(0x04030201, 0x08070605))
+
+        slice.unsafe_slice_of(UInt64)[0] = 0x1122_3344_5566_7788_u64
+        slice.should eq(Bytes[0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11, 0x09, 0x0A])
+      {% else %}
+        slice.unsafe_slice_of(Int16).should eq(Int16.slice(0x0102, 0x0304, 0x0506, 0x0708, 0x090A))
+        slice.unsafe_slice_of(Int32).should eq(Int32.slice(0x01020304, 0x05060708))
+
+        slice.unsafe_slice_of(UInt64)[0] = 0x1122_3344_5566_7788_u64
+        slice.should eq(Bytes[0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x09, 0x0A])
+      {% end %}
+    end
   end
 
-  it "does hexdump for empty slice" do
-    Bytes.empty.hexdump.should eq("")
+  describe "#to_unsafe_bytes" do
+    it "reinterprets a slice's elements as bytes" do
+      slice = Slice[0x01020304, -0x01020304]
+      bytes = slice.to_unsafe_bytes
 
-    io = IO::Memory.new
-    Bytes.empty.hexdump(io).should eq(0)
-    io.to_s.should eq("")
+      {% if IO::ByteFormat::SystemEndian == IO::ByteFormat::LittleEndian %}
+        bytes.should eq(Bytes[0x04, 0x03, 0x02, 0x01, 0xFC, 0xFC, 0xFD, 0xFE])
+        bytes[3] = 0x55
+        slice[0].should eq(0x55020304)
+      {% else %}
+        bytes.should eq(Bytes[0x01, 0x02, 0x03, 0x04, 0xFE, 0xFD, 0xFC, 0xFC])
+        bytes[3] = 0x55
+        slice[0].should eq(0x01020355)
+      {% end %}
+    end
   end
 
-  it "does hexdump" do
-    slice = Bytes.new(96) { |i| i.to_u8 + 32 }
-    assert_prints slice.hexdump, <<-EOF
-      00000000  20 21 22 23 24 25 26 27  28 29 2a 2b 2c 2d 2e 2f   !"#$%&'()*+,-./
-      00000010  30 31 32 33 34 35 36 37  38 39 3a 3b 3c 3d 3e 3f  0123456789:;<=>?
-      00000020  40 41 42 43 44 45 46 47  48 49 4a 4b 4c 4d 4e 4f  @ABCDEFGHIJKLMNO
-      00000030  50 51 52 53 54 55 56 57  58 59 5a 5b 5c 5d 5e 5f  PQRSTUVWXYZ[\\]^_
-      00000040  60 61 62 63 64 65 66 67  68 69 6a 6b 6c 6d 6e 6f  `abcdefghijklmno
-      00000050  70 71 72 73 74 75 76 77  78 79 7a 7b 7c 7d 7e 7f  pqrstuvwxyz{|}~.\n
-      EOF
+  describe "#hexstring" do
+    it "works for Bytes" do
+      slice = Bytes.new(4) { |i| i.to_u8 + 1 }
+      slice.hexstring.should eq("01020304")
+    end
+  end
 
-    plus = Bytes.new(101) { |i| i.to_u8 + 32 }
-    assert_prints plus.hexdump, <<-EOF
-      00000000  20 21 22 23 24 25 26 27  28 29 2a 2b 2c 2d 2e 2f   !"#$%&'()*+,-./
-      00000010  30 31 32 33 34 35 36 37  38 39 3a 3b 3c 3d 3e 3f  0123456789:;<=>?
-      00000020  40 41 42 43 44 45 46 47  48 49 4a 4b 4c 4d 4e 4f  @ABCDEFGHIJKLMNO
-      00000030  50 51 52 53 54 55 56 57  58 59 5a 5b 5c 5d 5e 5f  PQRSTUVWXYZ[\\]^_
-      00000040  60 61 62 63 64 65 66 67  68 69 6a 6b 6c 6d 6e 6f  `abcdefghijklmno
-      00000050  70 71 72 73 74 75 76 77  78 79 7a 7b 7c 7d 7e 7f  pqrstuvwxyz{|}~.
-      00000060  80 81 82 83 84                                    .....\n
-      EOF
+  describe "#hexdump" do
+    it "works for empty slice" do
+      Bytes.empty.hexdump.should eq("")
 
-    num = Bytes.new(10) { |i| i.to_u8 + 48 }
-    assert_prints num.hexdump, <<-EOF
-      00000000  30 31 32 33 34 35 36 37  38 39                    0123456789\n
-      EOF
+      io = IO::Memory.new
+      Bytes.empty.hexdump(io).should eq(0)
+      io.to_s.should eq("")
+    end
+
+    it "works for Bytes" do
+      slice = Bytes.new(96) { |i| i.to_u8 + 32 }
+      assert_prints slice.hexdump, <<-EOF
+        00000000  20 21 22 23 24 25 26 27  28 29 2a 2b 2c 2d 2e 2f   !"#$%&'()*+,-./
+        00000010  30 31 32 33 34 35 36 37  38 39 3a 3b 3c 3d 3e 3f  0123456789:;<=>?
+        00000020  40 41 42 43 44 45 46 47  48 49 4a 4b 4c 4d 4e 4f  @ABCDEFGHIJKLMNO
+        00000030  50 51 52 53 54 55 56 57  58 59 5a 5b 5c 5d 5e 5f  PQRSTUVWXYZ[\\]^_
+        00000040  60 61 62 63 64 65 66 67  68 69 6a 6b 6c 6d 6e 6f  `abcdefghijklmno
+        00000050  70 71 72 73 74 75 76 77  78 79 7a 7b 7c 7d 7e 7f  pqrstuvwxyz{|}~.\n
+        EOF
+
+      plus = Bytes.new(101) { |i| i.to_u8 + 32 }
+      assert_prints plus.hexdump, <<-EOF
+        00000000  20 21 22 23 24 25 26 27  28 29 2a 2b 2c 2d 2e 2f   !"#$%&'()*+,-./
+        00000010  30 31 32 33 34 35 36 37  38 39 3a 3b 3c 3d 3e 3f  0123456789:;<=>?
+        00000020  40 41 42 43 44 45 46 47  48 49 4a 4b 4c 4d 4e 4f  @ABCDEFGHIJKLMNO
+        00000030  50 51 52 53 54 55 56 57  58 59 5a 5b 5c 5d 5e 5f  PQRSTUVWXYZ[\\]^_
+        00000040  60 61 62 63 64 65 66 67  68 69 6a 6b 6c 6d 6e 6f  `abcdefghijklmno
+        00000050  70 71 72 73 74 75 76 77  78 79 7a 7b 7c 7d 7e 7f  pqrstuvwxyz{|}~.
+        00000060  80 81 82 83 84                                    .....\n
+        EOF
+
+      num = Bytes.new(10) { |i| i.to_u8 + 48 }
+      assert_prints num.hexdump, <<-EOF
+        00000000  30 31 32 33 34 35 36 37  38 39                    0123456789\n
+        EOF
+    end
   end
 
   it_iterates "#each", [1, 2, 3], Slice[1, 2, 3].each
@@ -433,6 +503,20 @@ describe "Slice" do
     end
   end
 
+  it "#same?" do
+    slice = Slice[1, 2, 3]
+
+    slice.should be slice
+    slice.should_not be slice.dup
+    slice.should_not be Slice[1, 2, 3]
+
+    (slice + 1).should be slice + 1
+    slice.should_not be slice + 1
+
+    (slice[0, 2]).should be slice[0, 2]
+    slice.should_not be slice[0, 2]
+  end
+
   it "does macro []" do
     slice = Slice[1, 'a', "foo"]
     slice.should be_a(Slice(Int32 | Char | String))
@@ -446,6 +530,12 @@ describe "Slice" do
     slice = Bytes[1, 2, 3]
     slice.should be_a(Bytes)
     slice.to_a.should eq([1, 2, 3])
+  end
+
+  it "does Bytes[]" do
+    slice = Bytes[]
+    slice.should be_a(Bytes)
+    slice.should be_empty
   end
 
   it "uses percent vars in [] macro (#2954)" do
@@ -464,7 +554,7 @@ describe "Slice" do
     a = Bytes[1, 2, 3]
     a.shuffle!
     b = [1, 2, 3]
-    3.times { a.includes?(b.shift).should be_true }
+    3.times { a.should contain(b.shift) }
   end
 
   it "does map" do
@@ -551,7 +641,7 @@ describe "Slice" do
 
   it "creates empty slice" do
     slice = Slice(Int32).empty
-    slice.empty?.should be_true
+    slice.should be_empty
   end
 
   it "creates read-only slice" do
@@ -597,6 +687,7 @@ describe "Slice" do
     subslice = slice[2..4]
     subslice.read_only?.should be_false
     subslice.size.should eq(3)
+    subslice.to_unsafe.should eq(slice.to_unsafe + 2)
     subslice.should eq(Slice.new(3) { |i| i + 3 })
   end
 
@@ -793,6 +884,62 @@ describe "Slice" do
       (Bytes[1, 3, 3] <=> Bytes[1, 2, 3]).should be > 0
       (Bytes[1, 2, 3] <=> Bytes[1, 2, 3, 4]).should be < 0
       (Bytes[1, 2, 3, 4] <=> Bytes[1, 2, 3]).should be > 0
+    end
+  end
+
+  describe "#+(Slice)" do
+    it "concatenates two slices" do
+      a = Slice[1, 2]
+      b = a + Slice[3, 4, 5]
+      b.should be_a(Slice(Int32))
+      b.should eq(Slice[1, 2, 3, 4, 5])
+      a.should eq(Slice[1, 2])
+
+      c = Slice[1, 2] + Slice['a', 'b', 'c']
+      c.should be_a(Slice(Int32 | Char))
+      c.should eq(Slice[1, 2, 'a', 'b', 'c'])
+    end
+  end
+
+  describe ".join" do
+    it "concatenates an indexable of slices" do
+      a = Slice.join([Slice[1, 2], Slice[3, 4, 5]])
+      a.should be_a(Slice(Int32))
+      a.should eq(Slice[1, 2, 3, 4, 5])
+
+      b = Slice.join({Slice[1, 2], Slice['a', 'b', 'c']})
+      b.should be_a(Slice(Int32 | Char))
+      b.should eq(Slice[1, 2, 'a', 'b', 'c'])
+
+      c = Slice.join(Deque{Slice[1, 2], Slice['a', 'b', 'c'], Slice["d", "e"], Slice[3, "f"]})
+      c.should be_a(Slice(Int32 | Char | String))
+      c.should eq(Slice[1, 2, 'a', 'b', 'c', "d", "e", 3, "f"])
+    end
+
+    it "concatenates a slice of slices" do
+      a = Slice[1]
+      b = Slice['a']
+      c = Slice["xyz"]
+
+      Slice.join(Slice[a, b, c]).should eq(Slice[1, 'a', "xyz"])
+    end
+
+    it "concatenates an empty indexable of slices" do
+      a = Slice.join(Array(Slice(Int32)).new)
+      a.should be_a(Slice(Int32))
+      a.should be_empty
+
+      b = Slice.join(Deque(Slice(Int32)).new)
+      b.should be_a(Slice(Int32))
+      b.should be_empty
+    end
+  end
+
+  describe ".additive_identity" do
+    it "returns an empty slice" do
+      a = Slice(Int32).additive_identity
+      a.should be_a(Slice(Int32))
+      a.should be_empty
     end
   end
 end

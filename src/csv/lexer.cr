@@ -107,7 +107,6 @@ abstract class CSV::Lexer
       case char = next_char
       when '\0'
         raise "Unclosed quote"
-        break
       when @quote_char
         case next_char
         when @separator
@@ -139,7 +138,7 @@ abstract class CSV::Lexer
   private def next_char
     @column_number += 1
     char = next_char_no_column_increment
-    if char == '\n' || char == '\r'
+    if char.in?('\n', '\r')
       @column_number = 0
       @line_number += 1
     end

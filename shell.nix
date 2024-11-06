@@ -19,18 +19,19 @@
 # $ nix-shell --pure --arg musl true
 #
 
-{llvm ? 10, musl ? false, system ? builtins.currentSystem}:
+{llvm ? 11, musl ? false, system ? builtins.currentSystem}:
 
 let
   nixpkgs = import (builtins.fetchTarball {
-    name = "nixpkgs-20.03";
-    url = "https://github.com/NixOS/nixpkgs/archive/2d580cd2793a7b5f4b8b6b88fb2ccec700ee1ae6.tar.gz";
-    sha256 = "1nbanzrir1y0yi2mv70h60sars9scwmm0hsxnify2ldpczir9n37";
+    name = "nixpkgs-23.05";
+    url = "https://github.com/NixOS/nixpkgs/archive/23.05.tar.gz";
+    sha256 = "10wn0l08j9lgqcw8177nh2ljrnxdrpri7bp0g7nvrsn9rkawvlbf";
   }) {
     inherit system;
   };
 
   pkgs = if musl then nixpkgs.pkgsMusl else nixpkgs;
+  llvmPackages = pkgs."llvmPackages_${toString llvm}";
 
   genericBinary = { url, sha256 }:
     pkgs.stdenv.mkDerivation rec {
@@ -52,82 +53,30 @@ let
   # Hashes obtained using `nix-prefetch-url --unpack <url>`
   latestCrystalBinary = genericBinary ({
     x86_64-darwin = {
-      url = "https://github.com/crystal-lang/crystal/releases/download/1.2.2/crystal-1.2.2-1-darwin-universal.tar.gz";
-      sha256 = "sha256:1y7bcwl6jybg28sdd9xrgkxbz3ysdqn1jlgapi50avc47h30kgbb";
+      url = "https://github.com/crystal-lang/crystal/releases/download/1.14.0/crystal-1.14.0-1-darwin-universal.tar.gz";
+      sha256 = "sha256:09mp3mngj4wik4v2bffpms3x8dksmrcy0a7hs4cg8b13hrfdrgww";
+    };
+
+    aarch64-darwin = {
+      url = "https://github.com/crystal-lang/crystal/releases/download/1.14.0/crystal-1.14.0-1-darwin-universal.tar.gz";
+      sha256 = "sha256:09mp3mngj4wik4v2bffpms3x8dksmrcy0a7hs4cg8b13hrfdrgww";
     };
 
     x86_64-linux = {
-      url = "https://github.com/crystal-lang/crystal/releases/download/1.2.2/crystal-1.2.2-1-linux-x86_64.tar.gz";
-      sha256 = "sha256:1cxkyq7n2xw6h9c99h28c2ssf3viiw1vigb0w6l2rpnw4f55fbqz";
+      url = "https://github.com/crystal-lang/crystal/releases/download/1.14.0/crystal-1.14.0-1-linux-x86_64.tar.gz";
+      sha256 = "sha256:0p5b22ivggf9xlw91cbhib7n4lzd8is1shd3480jjp14rn1kiy5z";
     };
   }.${pkgs.stdenv.system});
 
-  pkgconfig = pkgs.pkgconfig;
-
-  llvm_suite = ({
-    llvm_10 = {
-      llvm = pkgs.llvm_10;
-      extra = [ pkgs.lld_10 pkgs.lldb_10 ];
-    };
-    llvm_9 = {
-      llvm = pkgs.llvm_9;
-      extra = [ ]; # lldb it fails to compile on Darwin
-    };
-    llvm_8 = {
-      llvm = pkgs.llvm_8;
-      extra = [ ]; # lldb it fails to compile on Darwin
-    };
-    llvm_7 = {
-      llvm = pkgs.llvm;
-      extra = [ pkgs.lldb ];
-    };
-    llvm_6 = {
-      llvm = pkgs.llvm_6;
-      extra = [ ]; # lldb it fails to compile on Darwin
-    };
-  }."llvm_${toString llvm}");
-
-  libatomic_ops = builtins.fetchurl {
-    url = "https://github.com/ivmai/libatomic_ops/releases/download/v7.6.10/libatomic_ops-7.6.10.tar.gz";
-    sha256 = "1bwry043f62pc4mgdd37zx3fif19qyrs8f5bw7qxlmkzh5hdyzjq";
-  };
-
-  boehmgc = pkgs.stdenv.mkDerivation rec {
-    pname = "boehm-gc";
-    version = "8.0.4";
-
-    src = builtins.fetchTarball {
-      url = "https://github.com/ivmai/bdwgc/releases/download/v${version}/gc-${version}.tar.gz";
-      sha256 = "16ic5dwfw51r5lcl88vx3qrkg3g2iynblazkri3sl9brnqiyzjk7";
-    };
-
-    patches = [
-      (pkgs.fetchpatch {
-        url = "https://github.com/ivmai/bdwgc/commit/5668de71107022a316ee967162bc16c10754b9ce.patch";
-        sha256 = "02f0rlxl4fsqk1xiq0pabkhwydnmyiqdik2llygkc6ixhxbii8xw";
-      })
-    ];
-
-    postUnpack = ''
-      mkdir $sourceRoot/libatomic_ops
-      tar -xzf ${libatomic_ops} -C $sourceRoot/libatomic_ops --strip-components 1
-    '';
-
-    configureFlags = [
-      "--disable-debug"
-      "--disable-dependency-tracking"
-      "--disable-shared"
-      "--enable-large-config"
-    ];
-
-    enableParallelBuilding = true;
+  boehmgc = pkgs.boehmgc.override {
+    enableLargeConfig = true;
   };
 
   stdLibDeps = with pkgs; [
-      boehmgc gmp libevent libiconv libxml2 libyaml openssl pcre zlib
-    ] ++ stdenv.lib.optionals stdenv.isDarwin [ libiconv ];
+      boehmgc gmp libevent libiconv libxml2 libyaml openssl pcre2 zlib
+    ] ++ lib.optionals stdenv.isDarwin [ libiconv ];
 
-  tools = [ pkgs.hostname pkgs.git llvm_suite.extra ];
+  tools = [ pkgs.hostname pkgs.git llvmPackages.bintools ] ++ pkgs.lib.optional (!llvmPackages.lldb.meta.broken) llvmPackages.lldb;
 in
 
 pkgs.stdenv.mkDerivation rec {
@@ -135,11 +84,12 @@ pkgs.stdenv.mkDerivation rec {
 
   buildInputs = tools ++ stdLibDeps ++ [
     latestCrystalBinary
-    pkgconfig
-    llvm_suite.llvm
+    pkgs.pkg-config
+    llvmPackages.libllvm
+    pkgs.libffi
   ];
 
-  LLVM_CONFIG = "${llvm_suite.llvm}/bin/llvm-config";
+  LLVM_CONFIG = "${llvmPackages.libllvm.dev}/bin/llvm-config";
 
   MACOSX_DEPLOYMENT_TARGET = "10.11";
 }

@@ -1,6 +1,9 @@
 require "c/netdb"
 
-{% if flag?(:linux) %}
+# On musl systems, librt is empty. The entire library is already included in libc.
+# On gnu systems, it's been integrated into `glibc` since 2.34 and it's not available
+# as a shared library.
+{% if flag?(:linux) && flag?(:gnu) && !flag?(:interpreted) && !flag?(:android) %}
   @[Link("rt")]
 {% end %}
 
@@ -16,11 +19,7 @@ require "c/netdb"
 lib LibEvent2
   alias Int = LibC::Int
 
-  {% if flag?(:windows) %}
-    # TODO
-  {% else %}
-    alias EvutilSocketT = Int
-  {% end %}
+  alias EvutilSocketT = Int
 
   type EventBase = Void*
   type Event = Void*
@@ -48,6 +47,7 @@ lib LibEvent2
   fun event_base_dispatch(eb : EventBase) : Int
   fun event_base_loop(eb : EventBase, flags : EventLoopFlags) : Int
   fun event_base_loopbreak(eb : EventBase) : Int
+  fun event_base_loopexit(EventBase, LibC::Timeval*) : LibC::Int
   fun event_set_log_callback(callback : (Int, UInt8*) -> Nil)
   fun event_enable_debug_mode
   fun event_reinit(eb : EventBase) : Int

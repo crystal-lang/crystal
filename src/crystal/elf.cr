@@ -88,7 +88,7 @@ module Crystal
         SYMTAB_SHNDX  = 18
       end
 
-      @[Flags]
+      @[::Flags]
       enum Flags : UInt64
         WRITE            =        0x1
         ALLOC            =        0x2
@@ -146,7 +146,7 @@ module Crystal
     property! shnum : UInt16
     property! shstrndx : UInt16
 
-    def self.open(path)
+    def self.open(path, &)
       File.open(path, "r") do |file|
         yield new(file)
       end
@@ -229,7 +229,7 @@ module Crystal
     # Searches for a section then yield the `SectionHeader` and the IO object
     # ready for parsing if the section was found. Returns the valure returned by
     # the block or nil if the section wasn't found.
-    def read_section?(name : String)
+    def read_section?(name : String, &)
       if sh = section_headers.find { |sh| sh_name(sh.name) == name }
         @io.seek(sh.offset) do
           yield sh, @io

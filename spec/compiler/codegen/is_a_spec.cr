@@ -45,6 +45,16 @@ describe "Codegen: is_a?" do
     run("1.is_a?(Object)").to_b.should be_true
   end
 
+  it "doesn't error if result is discarded (#14113)" do
+    run(<<-CRYSTAL).to_i.should eq(1)
+      class Foo
+      end
+
+      (Foo.new || "").is_a?(Foo)
+      1
+      CRYSTAL
+  end
+
   it "evaluate method on filtered type" do
     run("a = 1; a = 'a'; if a.is_a?(Char); a.ord; else; 0; end").to_i.chr.should eq('a')
   end
@@ -584,8 +594,6 @@ describe "Codegen: is_a?" do
 
   it "resets truthy state after visiting nodes (bug)" do
     run(%(
-      require "prelude"
-
       a = 123
       if !1.is_a?(Int32)
         a = 456
@@ -772,8 +780,6 @@ describe "Codegen: is_a?" do
 
   it "codegens untyped var (#4009)" do
     codegen(%(
-      require "prelude"
-
       i = 1
       1 || i.is_a?(Int32) ? "" : i
       ))
@@ -893,5 +899,45 @@ describe "Codegen: is_a?" do
       x = D.new || C.new
       x.is_a?(Union(B, C))
     )).to_b.should be_false
+  end
+
+  it "restricts union metaclass to metaclass (#12295)" do
+    run(%(
+      x = true ? Union(String | Int32) : String
+      if x.is_a?(String.class)
+        1
+      else
+        2
+      end
+    )).to_i.should eq(2)
+  end
+
+  it "does is_a? for generic type against generic class instance type (#12304)" do
+    run(%(
+      require "prelude"
+
+      class A
+      end
+
+      class B(T) < A
+      end
+
+      a = B(Int32).new.as(A)
+      b = a.as(B)
+
+      b.is_a?(B(Int32))
+    )).to_b.should be_true
+  end
+
+  it "virtual metaclass type is not virtual instance type (#12628)" do
+    run(<<-CRYSTAL).to_b.should be_false
+      abstract struct Base
+      end
+
+      struct Impl < Base
+      end
+
+      Base.as(Base | Base.class).is_a?(Base | Impl)
+      CRYSTAL
   end
 end

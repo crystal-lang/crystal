@@ -417,8 +417,6 @@ describe "Codegen: super" do
 
   it "calls super from virtual metaclass type (#2841)" do
     run(%(
-      require "prelude"
-
       abstract class Foo
         def self.bar(x : Bool)
           x

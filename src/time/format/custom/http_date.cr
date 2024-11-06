@@ -94,8 +94,8 @@ struct Time::Format
       !ansi_c_format && current_char.ascii_whitespace?
     end
 
-    def http_date_short_day_name_with_comma? : Bool?
-      return unless current_char.ascii_letter?
+    def http_date_short_day_name_with_comma? : Bool
+      return false unless current_char.ascii_letter?
 
       short_day_name
 

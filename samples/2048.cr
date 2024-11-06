@@ -2,31 +2,40 @@
 
 require "colorize"
 
+enum Action
+  Up
+  Down
+  Left
+  Right
+  Escape
+  Unknown
+end
+
 module Screen
   TILES = {
-        0 => {:white, nil},
-        2 => {:black, :white},
-        4 => {:blue, :white},
-        8 => {:black, :yellow},
-       16 => {:white, :red},
-       32 => {:black, :red},
-       64 => {:white, :magenta},
-      128 => {:red, :yellow},
-      256 => {:magenta, :yellow},
-      512 => {:white, :yellow},
-     1024 => {:white, :yellow},
-     2048 => {:white, :yellow},
-     4096 => {:white, :black},
-     8192 => {:white, :black},
-    16384 => {:white, :black},
-    32768 => {:white, :black},
-    65536 => {:white, :black},
+        0 => {Colorize::ColorANSI::White, nil},
+        2 => {Colorize::ColorANSI::Black, Colorize::ColorANSI::White},
+        4 => {Colorize::ColorANSI::Blue, Colorize::ColorANSI::White},
+        8 => {Colorize::ColorANSI::Black, Colorize::ColorANSI::Yellow},
+       16 => {Colorize::ColorANSI::White, Colorize::ColorANSI::Red},
+       32 => {Colorize::ColorANSI::Black, Colorize::ColorANSI::Red},
+       64 => {Colorize::ColorANSI::White, Colorize::ColorANSI::Magenta},
+      128 => {Colorize::ColorANSI::Red, Colorize::ColorANSI::Yellow},
+      256 => {Colorize::ColorANSI::Magenta, Colorize::ColorANSI::Yellow},
+      512 => {Colorize::ColorANSI::White, Colorize::ColorANSI::Yellow},
+     1024 => {Colorize::ColorANSI::White, Colorize::ColorANSI::Yellow},
+     2048 => {Colorize::ColorANSI::White, Colorize::ColorANSI::Yellow},
+     4096 => {Colorize::ColorANSI::White, Colorize::ColorANSI::Black},
+     8192 => {Colorize::ColorANSI::White, Colorize::ColorANSI::Black},
+    16384 => {Colorize::ColorANSI::White, Colorize::ColorANSI::Black},
+    32768 => {Colorize::ColorANSI::White, Colorize::ColorANSI::Black},
+    65536 => {Colorize::ColorANSI::White, Colorize::ColorANSI::Black},
   }
 
-  def self.colorize_for(tile)
+  def self.colorize_for(tile, &)
     fg_color, bg_color = TILES[tile]
     color = Colorize.with.fore(fg_color)
-    color = color.on(bg_color) if bg_color
+    color = color.back(bg_color) if bg_color
     color.surround do
       yield
     end
@@ -40,26 +49,22 @@ module Screen
     STDIN.raw do |io|
       buffer = Bytes.new(3)
       bytes_read = io.read(buffer)
-      return :unknown if bytes_read == 0
+      return Action::Unknown if bytes_read == 0
       input = String.new(buffer[0, bytes_read])
 
       case input
       when "\e[A", "w"
-        :up
+        Action::Up
       when "\e[B", "s"
-        :down
+        Action::Down
       when "\e[C", "d"
-        :right
+        Action::Right
       when "\e[D", "a"
-        :left
-      when "\e"
-        :escape
-      when "\u{3}"
-        :ctrl_c
-      when "q", "Q"
-        :q
+        Action::Left
+      when "\e", "\u{3}", "q", "Q"
+        Action::Escape
       else
-        :unknown
+        Action::Unknown
       end
     end
   end
@@ -220,7 +225,7 @@ class Game
   def insert_tile
     value = rand > 0.8 ? 4 : 2
 
-    empty_cells = @grid.map(&.count &.nil?).sum
+    empty_cells = @grid.sum(&.count &.nil?)
 
     fill_cell = empty_cells > 1 ? rand(empty_cells - 1) + 1 : 1
 
@@ -236,7 +241,7 @@ class Game
     end
   end
 
-  def each_cell_with_index
+  def each_cell_with_index(&)
     0.upto(@grid.size - 1) do |row|
       0.upto(@grid.size - 1) do |col|
         yield @grid[row][col], row, col
@@ -246,19 +251,17 @@ class Game
 
   def execute_action(action)
     case action
-    when :up, :down, :left, :right
+    in .up?, .down?, .left?, .right?
       if can_move_in? action
         shift_grid action
         true
       else
         false
       end
-    when :ctrl_c, :escape, :q
+    in .escape?
       end_game "Bye"
-    when :unknown
+    in .unknown?
       false # ignore
-    else
-      raise ArgumentError.new "Unknown action: #{action}"
     end
   end
 
@@ -292,13 +295,13 @@ class Game
     end
   end
 
-  def movable_tiles(direction, drow, dcol)
+  def movable_tiles(direction, drow, dcol, &)
     max = @grid.size - 1
     from_row, to_row, from_column, to_column =
       case direction
-      when :up, :left
+      when .up?, .left?
         {0, max, 0, max}
-      when :down, :right
+      when .down?, .right?
         {max, 0, max, 0}
       else
         raise ArgumentError.new "Unknown direction #{direction}"
@@ -328,13 +331,13 @@ class Game
     drow = dcol = 0
 
     case direction
-    when :up
+    when .up?
       drow = -1
-    when :down
+    when .down?
       drow = 1
-    when :left
+    when .left?
       dcol = -1
-    when :right
+    when .right?
       dcol = 1
     else
       raise ArgumentError.new "Unknown direction #{direction}"
@@ -345,13 +348,13 @@ class Game
 
   def to_border?(direction, row, col, drow, dcol)
     case direction
-    when :up
+    when .up?
       row + drow < 0
-    when :down
+    when .down?
       row + drow >= @grid.size
-    when :left
+    when .left?
       col + dcol < 0
-    when :right
+    when .right?
       col + dcol >= @grid.size
     else
       false
@@ -367,8 +370,8 @@ class Game
   end
 
   def can_move?
-    can_move_in?(:up) || can_move_in?(:down) ||
-      can_move_in?(:left) || can_move_in?(:right)
+    can_move_in?(Action::Up) || can_move_in?(Action::Down) ||
+      can_move_in?(Action::Left) || can_move_in?(Action::Right)
   end
 
   def end_game(msg)
@@ -377,4 +380,5 @@ class Game
   end
 end
 
+at_exit { STDIN.cooked! }
 Game.new.run

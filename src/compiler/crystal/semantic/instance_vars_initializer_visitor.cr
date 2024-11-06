@@ -94,7 +94,7 @@ class Crystal::InstanceVarsInitializerVisitor < Crystal::SemanticVisitor
       next if scope.is_a?(GenericType)
 
       # Check if we can autocast
-      if value.supports_autocast?(@program.has_flag?("number_autocast")) && (scope_initializer = scope_initializers[index])
+      if value.supports_autocast?(!@program.has_flag?("no_number_autocast")) && (scope_initializer = scope_initializers[index])
         cloned_value = value.clone
         cloned_value.accept MainVisitor.new(program)
         if casted_value = MainVisitor.check_automatic_cast(@program, cloned_value, scope.lookup_instance_var(i.target.name).type)

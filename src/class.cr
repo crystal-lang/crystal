@@ -95,7 +95,15 @@ class Class
   end
 
   def ===(other)
-    other.is_a?(self)
+    # This branch handles `Int32.class === 1` case.
+    # In this case, `@type` is `Class` and `other.is_a?(self)` means `other.is_a?(Object)`
+    # because type of `self` is an instance type of the scope type and the instance type of `Class` is `Object`.
+    # See https://github.com/crystal-lang/crystal/issues/10736.
+    {% if @type == Class %}
+      other.is_a?(Class)
+    {% else %}
+      other.is_a?(self)
+    {% end %}
   end
 
   # Returns the name of this class.
@@ -135,14 +143,18 @@ class Class
     typeof(t, u)
   end
 
-  # Returns `true` if this class is `Nil`.
+  # Returns `true` if `nil` is an instance of this type.
   #
   # ```
-  # Int32.nilable? # => false
-  # Nil.nilable?   # => true
+  # Int32.nilable?            # => false
+  # Nil.nilable?              # => true
+  # (Int32 | String).nilable? # => false
+  # (Int32 | Nil).nilable?    # => true
+  # NoReturn.nilable?         # => false
+  # Value.nilable?            # => true
   # ```
   def nilable? : Bool
-    self == ::Nil
+    {{ @type >= Nil }}
   end
 
   def to_s(io : IO) : Nil

@@ -85,7 +85,7 @@ class YAML::Nodes::Builder
 
   def sequence(anchor : String? = nil, tag : String? = nil,
                style : YAML::SequenceStyle = YAML::SequenceStyle::ANY,
-               reference = nil) : Nil
+               reference = nil, &) : Nil
     node = Sequence.new
     node.anchor = anchor
     node.tag = tag
@@ -102,7 +102,7 @@ class YAML::Nodes::Builder
 
   def mapping(anchor : String? = nil, tag : String? = nil,
               style : YAML::MappingStyle = YAML::MappingStyle::ANY,
-              reference = nil) : Nil
+              reference = nil, &) : Nil
     node = Mapping.new
     node.anchor = anchor
     node.tag = tag
@@ -130,7 +130,7 @@ class YAML::Nodes::Builder
     end
   end
 
-  private def push_to_stack(node)
+  private def push_to_stack(node, &)
     push_node(node)
 
     old_current = @current

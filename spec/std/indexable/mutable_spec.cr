@@ -12,14 +12,14 @@ private class SafeIndexableMutable
     @values = Array.new(size) { |i| [i + offset] }
   end
 
-  def unsafe_fetch(i)
-    raise IndexError.new unless 0 <= i < size
-    @values[i][0]
+  def unsafe_fetch(index)
+    raise IndexError.new unless 0 <= index < size
+    @values[index][0]
   end
 
-  def unsafe_put(i, value : Int32)
-    raise IndexError.new unless 0 <= i < size
-    @values[i] = [value]
+  def unsafe_put(index, value : Int32)
+    raise IndexError.new unless 0 <= index < size
+    @values[index] = [value]
   end
 end
 
@@ -37,14 +37,14 @@ private class SafeIndexableMutableFoo
     @values = Array.new(size) { [Foo.new] }
   end
 
-  def unsafe_fetch(i)
-    raise IndexError.new unless 0 <= i < size
-    @values[i][0]
+  def unsafe_fetch(index)
+    raise IndexError.new unless 0 <= index < size
+    @values[index][0]
   end
 
-  def unsafe_put(i, value : Foo)
-    raise IndexError.new unless 0 <= i < size
-    @values[i] = [value]
+  def unsafe_put(index, value : Foo)
+    raise IndexError.new unless 0 <= index < size
+    @values[index] = [value]
   end
 end
 
@@ -194,11 +194,11 @@ describe Indexable::Mutable do
 
         coll = SafeIndexableMutableFoo.new(5)
         foo = Foo.new
-        coll.fill(foo, 1, 0).includes?(foo).should be_false
-        coll.fill(foo, 5, 0).includes?(foo).should be_false
-        coll.fill(foo, -3, 0).includes?(foo).should be_false
-        coll.fill(foo, -5, 0).includes?(foo).should be_false
-        coll.fill(foo, 4, -1).includes?(foo).should be_false
+        coll.fill(foo, 1, 0).should_not contain(foo)
+        coll.fill(foo, 5, 0).should_not contain(foo)
+        coll.fill(foo, -3, 0).should_not contain(foo)
+        coll.fill(foo, -5, 0).should_not contain(foo)
+        coll.fill(foo, 4, -1).should_not contain(foo)
       end
 
       it "raises on out of bound start index" do
@@ -229,10 +229,10 @@ describe Indexable::Mutable do
 
         coll = SafeIndexableMutableFoo.new(5)
         foo = Foo.new
-        coll.fill(foo, 1..0).includes?(foo).should be_false
-        coll.fill(foo, 5...5).includes?(foo).should be_false
-        coll.fill(foo, -3...1).includes?(foo).should be_false
-        coll.fill(foo, -5..-6).includes?(foo).should be_false
+        coll.fill(foo, 1..0).should_not contain(foo)
+        coll.fill(foo, 5...5).should_not contain(foo)
+        coll.fill(foo, -3...1).should_not contain(foo)
+        coll.fill(foo, -5..-6).should_not contain(foo)
       end
 
       it "raises on out of bound start index" do
@@ -290,11 +290,11 @@ describe Indexable::Mutable do
 
         coll = SafeIndexableMutableFoo.new(5)
         foo = Foo.new
-        coll.fill(1, 0) { foo }.includes?(foo).should be_false
-        coll.fill(5, 0) { foo }.includes?(foo).should be_false
-        coll.fill(-3, 0) { foo }.includes?(foo).should be_false
-        coll.fill(-5, 0) { foo }.includes?(foo).should be_false
-        coll.fill(4, -1) { foo }.includes?(foo).should be_false
+        coll.fill(1, 0) { foo }.should_not contain(foo)
+        coll.fill(5, 0) { foo }.should_not contain(foo)
+        coll.fill(-3, 0) { foo }.should_not contain(foo)
+        coll.fill(-5, 0) { foo }.should_not contain(foo)
+        coll.fill(4, -1) { foo }.should_not contain(foo)
       end
 
       it "raises on out of bound start index" do
@@ -325,10 +325,10 @@ describe Indexable::Mutable do
 
         coll = SafeIndexableMutableFoo.new(5)
         foo = Foo.new
-        coll.fill(1..0) { foo }.includes?(foo).should be_false
-        coll.fill(5...5) { foo }.includes?(foo).should be_false
-        coll.fill(-3...1) { foo }.includes?(foo).should be_false
-        coll.fill(-5..-6) { foo }.includes?(foo).should be_false
+        coll.fill(1..0) { foo }.should_not contain(foo)
+        coll.fill(5...5) { foo }.should_not contain(foo)
+        coll.fill(-3...1) { foo }.should_not contain(foo)
+        coll.fill(-5..-6) { foo }.should_not contain(foo)
       end
 
       it "raises on out of bound start index" do

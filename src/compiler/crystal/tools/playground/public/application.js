@@ -84,8 +84,7 @@ $(function(){
               .attr("href", msg.html_url)
               .attr("target", "_blank")
               .append($("<span>").text(msg.html_url))
-              .append(" ")
-              .append($("<span>").addClass("octicon octicon-link-external"))
+              .append(` <svg viewBox="0 0 16 16" class="octicon"><use xlink:href="/vendor/octicons-19.5.0/octicons.svg#link-external-16"></use></svg>`)
             )).openModal();
       }
     });
@@ -132,7 +131,9 @@ function initDemoPlayground(dom) {
             output = $("<code>").addClass("output").css("min-height", "1.5em")
           )))
       ).append(
-      outputIndicator = $("<div>").addClass("col s1")
+        `<div class="col s1"><svg viewBox="0 0 16 16" class="octicon"><use xlink:href="/vendor/octicons-19.5.0/octicons.svg#terminal-16"></use></svg></div>`
+      ).append(
+      outputIndicator = $("<div>")
       ).append(
         $("<div>").addClass("col s4").append(buttonsContainer = $("<div>").addClass("demoButtonsContainer"))
       ));

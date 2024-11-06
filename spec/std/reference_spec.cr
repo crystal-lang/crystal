@@ -50,13 +50,7 @@ private module ReferenceSpec
   end
 
   class TestClassWithFinalize
-    property key : Symbol?
-
-    def finalize
-      if key = self.key
-        State.inc(key)
-      end
-    end
+    include FinalizeCounter
   end
 end
 
@@ -144,6 +138,6 @@ describe "Reference" do
 
   it "calls #finalize on #dup'ed objects" do
     obj = ReferenceSpec::TestClassWithFinalize.new
-    assert_finalizes(:clone) { obj.dup }
+    assert_finalizes("dup") { obj.dup }
   end
 end

@@ -20,7 +20,7 @@ class URI
   # ```
   # require "uri/yaml"
   #
-  # URI.parse("http://example.com").to_yaml # => "http://example.com"
+  # URI.parse("http://example.com").to_yaml # => "--- http://example.com\n"
   # ```
   def to_yaml(yaml : YAML::Nodes::Builder)
     yaml.scalar to_s

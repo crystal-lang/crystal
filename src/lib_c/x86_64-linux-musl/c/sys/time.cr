@@ -13,4 +13,5 @@ lib LibC
 
   fun gettimeofday(x0 : Timeval*, x1 : Void*) : Int
   fun utimes(path : Char*, times : Timeval[2]) : Int
+  fun futimens(fd : Int, times : Timespec[2]) : Int
 end

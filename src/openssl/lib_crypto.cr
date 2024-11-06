@@ -1,14 +1,24 @@
 {% begin %}
   lib LibCrypto
-    {% if flag?(:win32) %}
+    {% if flag?(:msvc) %}
       {% from_libressl = false %}
-      {% ssl_version = env("CRYSTAL_OPENSSL_VERSION") %}
-      {% raise "Cannot determine OpenSSL version, make sure the environment variable `CRYSTAL_OPENSSL_VERSION` is set" unless ssl_version %}
+      {% ssl_version = nil %}
+      {% for dir in Crystal::LIBRARY_PATH.split(Crystal::System::Process::HOST_PATH_DELIMITER) %}
+        {% unless ssl_version %}
+          {% config_path = "#{dir.id}\\openssl_VERSION" %}
+          {% if config_version = read_file?(config_path) %}
+            {% ssl_version = config_version.chomp %}
+          {% end %}
+        {% end %}
+      {% end %}
+      {% ssl_version ||= "0.0.0" %}
     {% else %}
-      {% from_libressl = (`hash pkg-config 2> /dev/null || printf %s false` != "false") &&
-                         (`test -f $(pkg-config --silence-errors --variable=includedir libcrypto)/openssl/opensslv.h || printf %s false` != "false") &&
-                         (`printf "#include <openssl/opensslv.h>\nLIBRESSL_VERSION_NUMBER" | ${CC:-cc} $(pkg-config --cflags --silence-errors libcrypto || true) -E -`.chomp.split('\n').last != "LIBRESSL_VERSION_NUMBER") %}
-      {% ssl_version = `hash pkg-config 2> /dev/null && pkg-config --silence-errors --modversion libcrypto || printf %s 0.0.0`.split.last.gsub(/[^0-9.]/, "") %}
+      # these have to be wrapped in `sh -c` since for MinGW-w64 the compiler
+      # passes the command string to `LibC.CreateProcessW`
+      {% from_libressl = (`sh -c 'hash pkg-config 2> /dev/null || printf %s false'` != "false") &&
+                         (`sh -c 'test -f $(pkg-config --silence-errors --variable=includedir libcrypto)/openssl/opensslv.h || printf %s false'` != "false") &&
+                         (`sh -c 'printf "#include <openssl/opensslv.h>\nLIBRESSL_VERSION_NUMBER" | ${CC:-cc} $(pkg-config --cflags --silence-errors libcrypto || true) -E -'`.chomp.split('\n').last != "LIBRESSL_VERSION_NUMBER") %}
+      {% ssl_version = `sh -c 'hash pkg-config 2> /dev/null && pkg-config --silence-errors --modversion libcrypto || printf %s 0.0.0'`.split.last.gsub(/[^0-9.]/, "") %}
     {% end %}
 
     {% if from_libressl %}
@@ -28,6 +38,10 @@
 {% else %}
   @[Link(ldflags: "`command -v pkg-config > /dev/null && pkg-config --libs --silence-errors libcrypto || printf %s '-lcrypto'`")]
 {% end %}
+{% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
+  # TODO: if someone brings their own OpenSSL 1.x.y on Windows, will this have a different name?
+  @[Link(dll: "libcrypto-3-x64.dll")]
+{% end %}
 lib LibCrypto
   alias Char = LibC::Char
   alias Int = LibC::Int
@@ -40,11 +54,15 @@ lib LibCrypto
   type X509_EXTENSION = Void*
   type X509_NAME = Void*
   type X509_NAME_ENTRY = Void*
+  type X509_STORE = Void*
   type X509_STORE_CTX = Void*
 
   struct Bio
     method : Void*
-    callback : (Void*, Int, Char*, Int, Long, Long) -> Long
+    callback : BIO_callback_fn
+    {% if compare_versions(LIBRESSL_VERSION, "3.5.0") >= 0 %}
+      callback_ex : BIO_callback_fn_ex
+    {% end %}
     cb_arg : Char*
     init : Int
     shutdown : Int
@@ -59,14 +77,20 @@ lib LibCrypto
     num_write : ULong
   end
 
+  alias BIO_callback_fn = (Bio*, Int, Char*, Int, Long, Long) -> Long
+  alias BIO_callback_fn_ex = (Bio*, Int, Char, SizeT, Int, Long, Int, SizeT*) -> Long
+
   PKCS5_SALT_LEN     =  8
   EVP_MAX_KEY_LENGTH = 32
   EVP_MAX_IV_LENGTH  = 16
 
-  CTRL_EOF   =  2
-  CTRL_PUSH  =  6
-  CTRL_POP   =  7
-  CTRL_FLUSH = 11
+  CTRL_EOF           =  2
+  CTRL_PUSH          =  6
+  CTRL_POP           =  7
+  CTRL_FLUSH         = 11
+  CTRL_SET_KTLS_SEND = 72
+  CTRL_GET_KTLS_SEND = 73
+  CTRL_GET_KTLS_RECV = 76
 
   alias BioMethodWrite = (Bio*, Char*, SizeT, SizeT*) -> Int
   alias BioMethodWriteOld = (Bio*, Char*, Int) -> Int
@@ -98,12 +122,13 @@ lib LibCrypto
 
   fun BIO_new(BioMethod*) : Bio*
   fun BIO_free(Bio*) : Int
-  fun BIO_set_data(Bio*, Void*)
-  fun BIO_get_data(Bio*) : Void*
-  fun BIO_set_init(Bio*, Int)
-  fun BIO_set_shutdown(Bio*, Int)
 
   {% if compare_versions(LibCrypto::OPENSSL_VERSION, "1.1.0") >= 0 %}
+    fun BIO_set_data(Bio*, Void*)
+    fun BIO_get_data(Bio*) : Void*
+    fun BIO_set_init(Bio*, Int)
+    fun BIO_set_shutdown(Bio*, Int)
+
     fun BIO_meth_new(Int, Char*) : BioMethod*
     fun BIO_meth_set_read(BioMethod*, BioMethodReadOld)
     fun BIO_meth_set_write(BioMethod*, BioMethodWriteOld)
@@ -251,6 +276,12 @@ lib LibCrypto
   fun err_get_error = ERR_get_error : ULong
   fun err_error_string = ERR_error_string(e : ULong, buf : Char*) : Char*
 
+  {% if compare_versions(OPENSSL_VERSION, "3.0.0") >= 0 %}
+    ERR_SYSTEM_FLAG = Int32::MAX.to_u32 + 1
+    ERR_SYSTEM_MASK = Int32::MAX.to_u32
+    ERR_REASON_MASK = 0x7FFFFF
+  {% end %}
+
   struct MD5Context
     a : UInt
     b : UInt
@@ -266,7 +297,7 @@ lib LibCrypto
   fun md5_update = MD5_Update(c : MD5Context*, data : Void*, len : LibC::SizeT) : Int
   fun md5_final = MD5_Final(md : UInt8*, c : MD5Context*) : Int
   fun md5_transform = MD5_Transform(c : MD5Context*, b : UInt8*)
-  fun md5 = MD5(data : UInt8*, lengh : LibC::SizeT, md : UInt8*) : UInt8*
+  fun md5 = MD5(data : UInt8*, length : LibC::SizeT, md : UInt8*) : UInt8*
 
   fun pkcs5_pbkdf2_hmac_sha1 = PKCS5_PBKDF2_HMAC_SHA1(pass : LibC::Char*, passlen : LibC::Int, salt : UInt8*, saltlen : LibC::Int, iter : LibC::Int, keylen : LibC::Int, out : UInt8*) : LibC::Int
   {% if compare_versions(OPENSSL_VERSION, "1.0.0") >= 0 %}
@@ -304,6 +335,7 @@ lib LibCrypto
     fun sk_value(x0 : Void*, x1 : Int) : Void*
   {% end %}
 
+  fun d2i_X509(a : X509*, ppin : UInt8**, length : Long) : X509
   fun x509_dup = X509_dup(a : X509) : X509
   fun x509_free = X509_free(a : X509)
   fun x509_get_subject_name = X509_get_subject_name(a : X509) : X509_NAME
@@ -339,6 +371,8 @@ lib LibCrypto
   fun x509_extension_create_by_nid = X509_EXTENSION_create_by_NID(ex : X509_EXTENSION, nid : Int, crit : Int, data : ASN1_STRING) : X509_EXTENSION
   fun x509v3_ext_nconf_nid = X509V3_EXT_nconf_nid(conf : Void*, ctx : Void*, ext_nid : Int, value : Char*) : X509_EXTENSION
   fun x509v3_ext_print = X509V3_EXT_print(out : Bio*, ext : X509_EXTENSION, flag : Int, indent : Int) : Int
+
+  fun x509_store_add_cert = X509_STORE_add_cert(ctx : X509_STORE, x : X509) : Int
 
   {% unless compare_versions(OPENSSL_VERSION, "1.1.0") >= 0 %}
     fun err_load_crypto_strings = ERR_load_crypto_strings

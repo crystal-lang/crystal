@@ -3,6 +3,13 @@ require "./item"
 class Crystal::Doc::Type
   include Item
 
+  PSEUDO_CLASS_PREFIX = "CRYSTAL_PSEUDO__"
+  PSEUDO_CLASS_NOTE   = <<-DOC
+
+    NOTE: This is a pseudo-class provided directly by the Crystal compiler.
+    It cannot be reopened nor overridden.
+    DOC
+
   getter type : Crystal::Type
 
   def initialize(@generator : Generator, type : Crystal::Type)
@@ -12,23 +19,23 @@ class Crystal::Doc::Type
   def kind
     case @type
     when Const
-      :const
+      "const"
     when .struct?
-      :struct
+      "struct"
     when .class?, .metaclass?
-      :class
+      "class"
     when .module?
-      :module
+      "module"
     when AliasType
-      :alias
+      "alias"
     when EnumType
-      :enum
+      "enum"
     when NoReturnType, VoidType
-      :struct
+      "struct"
     when AnnotationType
-      :annotation
+      "annotation"
     when LibType
-      :module
+      "module"
     else
       raise "Unhandled type in `kind`: #{@type}"
     end
@@ -39,7 +46,11 @@ class Crystal::Doc::Type
     when Program
       "Top Level Namespace"
     when NamedType
-      type.name
+      if @generator.project_info.crystal_stdlib?
+        type.name.lchop(PSEUDO_CLASS_PREFIX)
+      else
+        type.name
+      end
     when NoReturnType
       "NoReturn"
     when VoidType
@@ -117,7 +128,7 @@ class Crystal::Doc::Type
 
   def ast_node?
     type = @type
-    type.is_a?(ClassType) && type.full_name == Crystal::Macros::ASTNode.name
+    type.is_a?(ClassType) && type.full_name == "Crystal::Macros::ASTNode"
   end
 
   def locations
@@ -133,15 +144,15 @@ class Crystal::Doc::Type
   end
 
   def enum?
-    kind == :enum
+    @type.is_a?(EnumType)
   end
 
   def alias?
-    kind == :alias
+    @type.is_a?(AliasType)
   end
 
   def const?
-    kind == :const
+    @type.is_a?(Const)
   end
 
   def alias_definition
@@ -176,9 +187,14 @@ class Crystal::Doc::Type
             defs << method(def_with_metadata.def, false)
           end
         end
-        defs.sort_by!(&.name.downcase)
+        defs.sort_by! { |x| sort_order(x) }
       end
     end
+  end
+
+  private def sort_order(item)
+    # Sort operators first, then alphanumeric (case-insensitive).
+    {item.name[0].alphanumeric? ? 1 : 0, item.name.downcase}
   end
 
   @class_methods : Array(Method)?
@@ -201,7 +217,7 @@ class Crystal::Doc::Type
           end
         end
       end
-      class_methods.sort_by!(&.name.downcase)
+      class_methods.sort_by! { |x| sort_order(x) }
     end
   end
 
@@ -225,7 +241,7 @@ class Crystal::Doc::Type
           end
         end
       end
-      macros.sort_by!(&.name.downcase)
+      macros.sort_by! { |x| sort_order(x) }
     end
   end
 
@@ -398,7 +414,11 @@ class Crystal::Doc::Type
   end
 
   def doc
-    @type.doc
+    if (t = type).is_a?(NamedType) && t.name.starts_with?(PSEUDO_CLASS_PREFIX)
+      "#{@type.doc}#{PSEUDO_CLASS_NOTE}"
+    else
+      @type.doc
+    end
   end
 
   def lookup_path(path_or_names : Path | Array(String))
@@ -512,11 +532,7 @@ class Crystal::Doc::Type
     if (named_args = node.named_args) && !named_args.empty?
       io << ", " unless node.type_vars.empty?
       named_args.join(io, ", ") do |entry|
-        if Symbol.needs_quotes_for_named_argument?(entry.name)
-          entry.name.inspect(io)
-        else
-          io << entry.name
-        end
+        Symbol.quote_for_named_argument(io, entry.name)
         io << ": "
         node_to_html entry.value, io, html: html
       end
@@ -566,12 +582,12 @@ class Crystal::Doc::Type
     return false unless node.is_a?(Path)
 
     match = lookup_path(node)
-    match && match.type == @generator.program.nil_type
+    !!match.try &.type == @generator.program.nil_type
   end
 
   def node_to_html(node, io, html : HTMLOption = :all)
     if html.highlight?
-      io << Highlighter.highlight(node.to_s)
+      io << SyntaxHighlighter::HTML.highlight!(node.to_s)
     else
       io << node
     end
@@ -631,11 +647,7 @@ class Crystal::Doc::Type
   def type_to_html(type : Crystal::NamedTupleInstanceType, io, text = nil, html : HTMLOption = :all)
     io << '{'
     type.entries.join(io, ", ") do |entry|
-      if Symbol.needs_quotes_for_named_argument?(entry.name)
-        entry.name.inspect(io)
-      else
-        io << entry.name
-      end
+      Symbol.quote_for_named_argument(io, entry.name)
       io << ": "
       type_to_html entry.type, io, html: html
     end

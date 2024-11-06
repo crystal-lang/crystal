@@ -3,12 +3,25 @@ require "../syntax/to_s"
 module Crystal
   class ToSVisitor
     def visit(node : Arg)
+      if parsed_annotations = node.parsed_annotations
+        parsed_annotations.each do |ann|
+          ann.accept self
+          @str << ' '
+        end
+      end
+
+      case @current_arg_type
+      when .splat?        then @str << '*'
+      when .double_splat? then @str << "**"
+      when .block_arg?    then @str << '&'
+      end
+
       if node.external_name != node.name
         visit_named_arg_name(node.external_name)
         @str << ' '
       end
       if node.name
-        @str << decorate_arg(node, node.name)
+        @str << node.name
       else
         @str << '?'
       end
@@ -24,19 +37,24 @@ module Crystal
         default_value.accept self
       end
       false
+    ensure
+      @current_arg_type = :none
     end
 
     def visit(node : Primitive)
       @str << "# primitive: "
       @str << node.name
+      false
     end
 
     def visit(node : MetaVar)
       @str << node.name
+      false
     end
 
     def visit(node : MetaMacroVar)
       @str << node.name
+      false
     end
 
     def visit(node : TypeFilteredNode)

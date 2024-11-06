@@ -129,6 +129,12 @@ describe Log do
     Log.context.metadata.should eq(Log::Metadata.build({a: 1, b: 2}))
   end
 
+  it "context supports unsigned values" do
+    Log.context.set a: 1_u32, b: 2_u64
+
+    Log.context.metadata.should eq(Log::Metadata.build({a: 1_u32, b: 2_u64}))
+  end
+
   describe "emitter dsl" do
     it "can be used with message" do
       backend = Log::MemoryBackend.new
@@ -256,6 +262,15 @@ describe Log do
       entry.message.should eq("")
       entry.data.should eq(m({a: 1}))
       entry.exception.should be_nil
+    end
+
+    it "does not emit anything when a nil is emitted" do
+      backend = Log::MemoryBackend.new
+      log = Log.new("a", backend, :notice)
+
+      log.notice { nil }
+
+      backend.entries.should be_empty
     end
   end
 end

@@ -1,7 +1,9 @@
-int a() {
+#include "../visibility.h"
+
+LOCAL int a() {
   return 41;
 }
 
-int foo() {
+EXPORT int foo() {
   return 42;
 }

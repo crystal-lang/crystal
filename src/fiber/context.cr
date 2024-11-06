@@ -7,10 +7,26 @@ class Fiber
   @[Extern]
   struct Context
     property stack_top : Void*
-    property resumable : LibC::Long
+
+    {% if flag?(:interpreted) %}
+      # In interpreted mode, the interpreted fibers will be backed by a real
+      # fiber run by the interpreter. The fiber context is thus fake.
+      #
+      # The `stack_top` property is actually a pointer to the real Fiber
+      # running in the interpreter.
+      #
+      # The `resumable` property is also delegated to the real fiber. Only the
+      # getter is defined (so we know the real state of the fiber); we don't
+      # declare a setter because only the interpreter can manipulate it (in the
+      # `makecontext` and `swapcontext` primitives).
+      def resumable : LibC::Long
+        Crystal::Interpreter.fiber_resumable(pointerof(@stack_top))
+      end
+    {% else %}
+      property resumable : LibC::Long = 0
+    {% end %}
 
     def initialize(@stack_top = Pointer(Void).null)
-      @resumable = 0
     end
   end
 
@@ -36,7 +52,7 @@ class Fiber
   # (see makecontext below) and thus must also be saved/restored when swapping
   # the context.
   #
-  # def self.swapcontext(current_context : Context*, old_context : Context*) : Nil
+  # def self.swapcontext(current_context : Context*, new_context : Context*) : Nil
   # end
 
   # :nodoc:
@@ -52,4 +68,8 @@ end
 # Load the arch-specific methods to create a context and to swap from one
 # context to another one. There are two methods: `Fiber#makecontext` and
 # `Fiber.swapcontext`.
-require "./context/*"
+{% if flag?(:interpreted) %}
+  require "./context/interpreted"
+{% else %}
+  require "./context/*"
+{% end %}

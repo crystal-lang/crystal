@@ -139,14 +139,14 @@ CrystalDocs.runQuery = function(query) {
         matches = matches.concat(typeMatches);
       }
       results.push({
-        id: constant.html_id,
+        id: constant.id,
         type: type.full_name,
         result_type: "constant",
         name: constant.name,
         full_name: type.full_name + "#" + constant.name,
         value: constant.value,
         summary: constant.summary,
-        href: type.path + "#" + constant.html_id,
+        href: type.path + "#" + constant.id,
         matched_fields: matchedFields,
         matched_terms: matches
       });

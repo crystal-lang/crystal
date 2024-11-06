@@ -2,6 +2,12 @@ require "spec"
 require "yaml"
 require "../../support/finalize"
 
+class YAMLAttrValue(T)
+  include YAML::Serializable
+
+  property value : T
+end
+
 record YAMLAttrPoint, x : Int32, y : Int32 do
   include YAML::Serializable
 end
@@ -94,12 +100,6 @@ class YAMLAttrPersonEmittingNullsByOptions
   property value2 : Int32?
 end
 
-class YAMLAttrWithBool
-  include YAML::Serializable
-
-  property value : Bool
-end
-
 class YAMLAttrWithTime
   include YAML::Serializable
 
@@ -127,10 +127,25 @@ class YAMLAttrWithNilableTimeEmittingNull
   end
 end
 
-class YAMLAttrWithPropertiesKey
+class YAMLAttrWithTimeArray1
   include YAML::Serializable
 
-  property properties : Hash(String, String)
+  @[YAML::Field(converter: YAML::ArrayConverter(Time::EpochConverter))]
+  property value : Array(Time)
+end
+
+class YAMLAttrWithTimeArray2
+  include YAML::Serializable
+
+  @[YAML::Field(converter: YAML::ArrayConverter.new(Time::EpochConverter))]
+  property value : Array(Time)
+end
+
+class YAMLAttrWithTimeArray3
+  include YAML::Serializable
+
+  @[YAML::Field(converter: YAML::ArrayConverter.new(Time::Format.new("%F %T")))]
+  property value : Array(Time)
 end
 
 class YAMLAttrWithSimpleMapping
@@ -145,11 +160,6 @@ class YAMLAttrWithKeywordsMapping
 
   property end : Int32
   property abstract : Int32
-end
-
-class YAMLAttrWithAny
-  include YAML::Serializable
-  property obj : YAML::Any
 end
 
 class YAMLAttrWithProblematicKeys
@@ -211,23 +221,25 @@ class YAMLAttrWithTimeEpoch
   property value : Time
 end
 
+class YAMLAttrNilableWithTimeEpoch
+  include YAML::Serializable
+
+  @[YAML::Field(converter: Time::EpochConverter)]
+  property value : Time?
+end
+
+class YAMLAttrDefaultWithTimeEpoch
+  include YAML::Serializable
+
+  @[YAML::Field(converter: Time::EpochConverter)]
+  property value : Time = Time.unix(0)
+end
+
 class YAMLAttrWithTimeEpochMillis
   include YAML::Serializable
 
   @[YAML::Field(converter: Time::EpochMillisConverter)]
   property value : Time
-end
-
-class YAMLAttrWithNilableUnion
-  include YAML::Serializable
-
-  property value : Int32?
-end
-
-class YAMLAttrWithNilableUnion2
-  include YAML::Serializable
-
-  property value : Int32 | Nil
 end
 
 class YAMLAttrWithPresence
@@ -246,6 +258,29 @@ class YAMLAttrWithPresence
   getter? last_name_present : Bool
 end
 
+class YAMLAttrWithPresenceAndIgnoreSerialize
+  include YAML::Serializable
+
+  @[YAML::Field(presence: true, ignore_serialize: ignore_first_name?)]
+  property first_name : String?
+
+  @[YAML::Field(presence: true, ignore_serialize: last_name.nil? && !last_name_present?, emit_null: true)]
+  property last_name : String?
+
+  @[YAML::Field(ignore: true)]
+  getter? first_name_present : Bool = false
+
+  @[YAML::Field(ignore: true)]
+  getter? last_name_present : Bool = false
+
+  def initialize(@first_name : String? = nil, @last_name : String? = nil)
+  end
+
+  def ignore_first_name?
+    first_name.nil? || first_name == ""
+  end
+end
+
 class YAMLAttrWithQueryAttributes
   include YAML::Serializable
 
@@ -260,16 +295,12 @@ end
 
 private class YAMLAttrWithFinalize
   include YAML::Serializable
+  include FinalizeCounter
+
   property value : YAML::Any
 
   @[YAML::Field(ignore: true)]
-  property key : Symbol?
-
-  def finalize
-    if key = self.key
-      State.inc(key)
-    end
-  end
+  property key : String?
 end
 
 module YAMLAttrModule
@@ -297,6 +328,17 @@ class YAMLAttrModuleTest2 < YAMLAttrModuleTest
 
   def to_tuple
     {@moo, @foo, @bar}
+  end
+end
+
+module YAMLAttrModuleWithSameNameClass
+  class YAMLAttrModuleWithSameNameClass
+  end
+
+  class Test
+    include YAML::Serializable
+
+    property foo = 42
   end
 end
 
@@ -341,12 +383,6 @@ module YAMLNamespace
   end
 end
 
-class YAMLWithShape
-  include YAML::Serializable
-
-  property shape : YAMLShape
-end
-
 enum YAMLVariableDiscriminatorEnumFoo
   Foo = 4
 end
@@ -380,6 +416,48 @@ class YAMLVariableDiscriminatorEnum < YAMLVariableDiscriminatorValueType
 end
 
 class YAMLVariableDiscriminatorEnum8 < YAMLVariableDiscriminatorValueType
+end
+
+class YAMLStrictDiscriminator
+  include YAML::Serializable
+  include YAML::Serializable::Strict
+
+  property type : String
+
+  use_yaml_discriminator "type", {foo: YAMLStrictDiscriminatorFoo, bar: YAMLStrictDiscriminatorBar}
+end
+
+class YAMLStrictDiscriminatorFoo < YAMLStrictDiscriminator
+end
+
+class YAMLStrictDiscriminatorBar < YAMLStrictDiscriminator
+  property x : YAMLStrictDiscriminator
+  property y : YAMLStrictDiscriminator
+end
+
+class YAMLSomething
+  include YAML::Serializable
+
+  property value : YAMLSomething?
+end
+
+module YAMLDiscriminatorBug
+  abstract class Base
+    include YAML::Serializable
+
+    use_yaml_discriminator("type", {"a" => A, "b" => B, "c" => C})
+  end
+
+  class A < Base
+  end
+
+  class B < Base
+    property source : Base
+    property value : Int32 = 1
+  end
+
+  class C < B
+  end
 end
 
 describe "YAML::Serializable" do
@@ -500,7 +578,7 @@ describe "YAML::Serializable" do
 
   it "doesn't emit null when doing to_yaml" do
     person = YAMLAttrPerson.from_yaml("---\nname: John\n")
-    (person.to_yaml =~ /age/).should be_falsey
+    person.to_yaml.should_not match /age/
   end
 
   it "raises if non-nilable attribute is nil" do
@@ -515,7 +593,7 @@ describe "YAML::Serializable" do
   end
 
   it "doesn't raises on false value when not-nil" do
-    yaml = YAMLAttrWithBool.from_yaml("---\nvalue: false\n")
+    yaml = YAMLAttrValue(Bool).from_yaml("---\nvalue: false\n")
     yaml.value.should be_false
   end
 
@@ -580,7 +658,7 @@ describe "YAML::Serializable" do
 
   it "emits null on request when doing to_yaml" do
     person = YAMLAttrPersonEmittingNull.from_yaml("---\nname: John\n")
-    (person.to_yaml =~ /age/).should be_truthy
+    person.to_yaml.should match /age/
   end
 
   it "emit_nulls option" do
@@ -619,11 +697,11 @@ describe "YAML::Serializable" do
     yaml.to_yaml.should match(/\A---\nvalue: ?\n\z/)
   end
 
-  it "outputs YAML with properties key" do
+  it "outputs YAML with Hash" do
     input = {
-      properties: {"foo" => "bar"},
+      value: {"foo" => "bar"},
     }.to_yaml
-    yaml = YAMLAttrWithPropertiesKey.from_yaml(input)
+    yaml = YAMLAttrValue(Hash(String, String)).from_yaml(input)
     yaml.to_yaml.should eq(input)
   end
 
@@ -634,14 +712,21 @@ describe "YAML::Serializable" do
   end
 
   it "parses yaml with any" do
-    yaml = YAMLAttrWithAny.from_yaml("obj: hello")
-    yaml.obj.as_s.should eq("hello")
+    yaml = YAMLAttrValue(YAML::Any).from_yaml("value: hello")
+    yaml.value.as_s.should eq("hello")
 
-    yaml = YAMLAttrWithAny.from_yaml({:obj => ["foo", "bar"]}.to_yaml)
-    yaml.obj[1].as_s.should eq("bar")
+    yaml = YAMLAttrValue(YAML::Any).from_yaml({:value => ["foo", "bar"]}.to_yaml)
+    yaml.value[1].as_s.should eq("bar")
 
-    yaml = YAMLAttrWithAny.from_yaml({:obj => {:foo => :bar}}.to_yaml)
-    yaml.obj["foo"].as_s.should eq("bar")
+    yaml = YAMLAttrValue(YAML::Any).from_yaml({:value => {:foo => :bar}}.to_yaml)
+    yaml.value["foo"].as_s.should eq("bar")
+
+    yaml = YAMLAttrValue(YAML::Any).from_yaml("extra: &foo hello\nvalue: *foo")
+    yaml.value.as_s.should eq("hello")
+
+    expect_raises YAML::ParseException, "Unknown anchor 'foo' at line 1, column 8" do
+      YAMLAttrValue(YAML::Any).from_yaml("value: *foo")
+    end
   end
 
   it "parses yaml with problematic keys" do
@@ -658,6 +743,26 @@ describe "YAML::Serializable" do
 
     yaml.bar.should eq(7)
     typeof(yaml.bar).should eq(Int8)
+  end
+
+  it "checks that values fit into integer types" do
+    expect_raises(YAML::ParseException, /Can't read Int16/) do
+      YAMLAttrWithSmallIntegers.from_yaml(%({"foo": 21000000, "bar": 7}))
+    end
+
+    expect_raises(YAML::ParseException, /Can't read Int8/) do
+      YAMLAttrWithSmallIntegers.from_yaml(%({"foo": 21, "bar": 7000}))
+    end
+  end
+
+  it "checks that non-integer values for integer fields report the expected type" do
+    expect_raises(YAML::ParseException, /Can't read Int16/) do
+      YAMLAttrWithSmallIntegers.from_yaml(%({"foo": "a", "bar": 7}))
+    end
+
+    expect_raises(YAML::ParseException, /Can't read Int8/) do
+      YAMLAttrWithSmallIntegers.from_yaml(%({"foo": 21, "bar": "a"}))
+    end
   end
 
   it "parses recursive" do
@@ -740,9 +845,10 @@ describe "YAML::Serializable" do
       yaml.a.should eq 11
       yaml.b.should eq "Haha"
 
-      yaml = YAMLAttrWithDefaults.from_yaml(%({"a":null,"b":null}))
+      yaml = YAMLAttrWithDefaults.from_yaml(%({"a":null,"b":null,"f":null}))
       yaml.a.should eq 11
       yaml.b.should eq "Haha"
+      yaml.f.should be_nil
 
       yaml = YAMLAttrWithDefaults.from_yaml(%({"b":""}))
       yaml.b.should eq ""
@@ -799,6 +905,16 @@ describe "YAML::Serializable" do
     end
   end
 
+  it "converter with null value (#13655)" do
+    YAMLAttrNilableWithTimeEpoch.from_yaml(%({"value": null})).value.should be_nil
+    YAMLAttrNilableWithTimeEpoch.from_yaml(%({"value":1459859781})).value.should eq Time.unix(1459859781)
+  end
+
+  it "converter with default value" do
+    YAMLAttrDefaultWithTimeEpoch.from_yaml(%({"value": null})).value.should eq Time.unix(0)
+    YAMLAttrDefaultWithTimeEpoch.from_yaml(%({"value":1459859781})).value.should eq Time.unix(1459859781)
+  end
+
   it "uses Time::EpochConverter" do
     string = %({"value":1459859781})
     yaml = YAMLAttrWithTimeEpoch.from_yaml(string)
@@ -815,30 +931,42 @@ describe "YAML::Serializable" do
     yaml.to_yaml.should eq("---\nvalue: 1459860483856\n")
   end
 
-  it "parses nilable union" do
-    obj = YAMLAttrWithNilableUnion.from_yaml(%({"value": 1}))
-    obj.value.should eq(1)
-    obj.to_yaml.should eq("---\nvalue: 1\n")
+  describe YAML::ArrayConverter do
+    it "uses converter metaclass" do
+      string = %(---\nvalue:\n- 1459859781\n)
+      yaml = YAMLAttrWithTimeArray1.from_yaml(string)
+      yaml.value.should be_a(Array(Time))
+      yaml.value.should eq([Time.unix(1459859781)])
+      yaml.to_yaml.should eq(string)
+    end
 
-    obj = YAMLAttrWithNilableUnion.from_yaml(%({"value": null}))
-    obj.value.should be_nil
-    obj.to_yaml.should eq("--- {}\n")
+    it "uses converter instance with nested converter metaclass" do
+      string = %(---\nvalue:\n- 1459859781\n)
+      yaml = YAMLAttrWithTimeArray2.from_yaml(string)
+      yaml.value.should be_a(Array(Time))
+      yaml.value.should eq([Time.unix(1459859781)])
+      yaml.to_yaml.should eq(string)
+    end
 
-    obj = YAMLAttrWithNilableUnion.from_yaml(%({}))
-    obj.value.should be_nil
-    obj.to_yaml.should eq("--- {}\n")
+    it "uses converter instance with nested converter instance" do
+      string = %(---\nvalue:\n- 2014-10-31 23:37:16\n)
+      yaml = YAMLAttrWithTimeArray3.from_yaml(string)
+      yaml.value.should be_a(Array(Time))
+      yaml.value.map(&.to_s).should eq(["2014-10-31 23:37:16 UTC"])
+      yaml.to_yaml.should eq(string)
+    end
   end
 
-  it "parses nilable union2" do
-    obj = YAMLAttrWithNilableUnion2.from_yaml(%({"value": 1}))
+  it "parses nilable union" do
+    obj = YAMLAttrValue(Int32?).from_yaml(%({"value": 1}))
     obj.value.should eq(1)
     obj.to_yaml.should eq("---\nvalue: 1\n")
 
-    obj = YAMLAttrWithNilableUnion2.from_yaml(%({"value": null}))
+    obj = YAMLAttrValue(Int32?).from_yaml(%({"value": null}))
     obj.value.should be_nil
     obj.to_yaml.should eq("--- {}\n")
 
-    obj = YAMLAttrWithNilableUnion2.from_yaml(%({}))
+    obj = YAMLAttrValue(Int32?).from_yaml(%({}))
     obj.value.should be_nil
     obj.to_yaml.should eq("--- {}\n")
   end
@@ -850,6 +978,53 @@ describe "YAML::Serializable" do
       yaml.first_name_present?.should be_true
       yaml.last_name.should be_nil
       yaml.last_name_present?.should be_false
+    end
+  end
+
+  describe "serializes YAML with presence markers and ignore_serialize" do
+    context "ignore_serialize is set to a method which returns true when value is nil or empty string" do
+      it "ignores field when value is empty string" do
+        yaml = YAMLAttrWithPresenceAndIgnoreSerialize.from_yaml(%({"first_name": ""}))
+        yaml.first_name_present?.should be_true
+        yaml.to_yaml.should eq("--- {}\n")
+      end
+
+      it "ignores field when value is nil" do
+        yaml = YAMLAttrWithPresenceAndIgnoreSerialize.from_yaml(%({"first_name": null}))
+        yaml.first_name_present?.should be_true
+        yaml.to_yaml.should eq("--- {}\n")
+      end
+    end
+
+    context "ignore_serialize is set to conditional expressions 'last_name.nil? && !last_name_present?'" do
+      it "emits null when value is null and @last_name_present is true" do
+        yaml = YAMLAttrWithPresenceAndIgnoreSerialize.from_yaml(%({"last_name": null}))
+        yaml.last_name_present?.should be_true
+
+        # libyaml 0.2.5 removes trailing space for empty scalar nodes
+        if YAML.libyaml_version >= SemanticVersion.new(0, 2, 5)
+          yaml.to_yaml.should eq("---\nlast_name:\n")
+        else
+          yaml.to_yaml.should eq("---\nlast_name: \n")
+        end
+      end
+      it "does not emit null when value is null and @last_name_present is false" do
+        yaml = YAMLAttrWithPresenceAndIgnoreSerialize.from_yaml(%({}))
+        yaml.last_name_present?.should be_false
+        yaml.to_yaml.should eq("--- {}\n")
+      end
+
+      it "emits field when value is not nil and @last_name_present is false" do
+        yaml = YAMLAttrWithPresenceAndIgnoreSerialize.new(last_name: "something")
+        yaml.last_name_present?.should be_false
+        yaml.to_yaml.should eq("---\nlast_name: something\n")
+      end
+
+      it "emits field when value is not nil and @last_name_present is true" do
+        yaml = YAMLAttrWithPresenceAndIgnoreSerialize.from_yaml(%({"last_name":"something"}))
+        yaml.last_name_present?.should be_true
+        yaml.to_yaml.should eq("---\nlast_name: something\n")
+      end
     end
   end
 
@@ -893,7 +1068,7 @@ describe "YAML::Serializable" do
   end
 
   it "calls #finalize" do
-    assert_finalizes(:yaml) { YAMLAttrWithFinalize.from_yaml("---\nvalue: 1\n") }
+    assert_finalizes("yaml") { YAMLAttrWithFinalize.from_yaml("---\nvalue: 1\n") }
   end
 
   describe "work with module and inheritance" do
@@ -901,6 +1076,10 @@ describe "YAML::Serializable" do
     it { YAMLAttrModuleTest.from_yaml(%({"phoo": 20})).to_tuple.should eq({10, 20}) }
     it { YAMLAttrModuleTest2.from_yaml(%({"phoo": 20, "bar": 30})).to_tuple.should eq({10, 20, 30}) }
     it { YAMLAttrModuleTest2.from_yaml(%({"bar": 30, "moo": 40})).to_tuple.should eq({40, 15, 30}) }
+  end
+
+  describe "work with inned class using same module name" do
+    it { YAMLAttrModuleWithSameNameClass::Test.from_yaml(%({"foo": 42})).foo.should eq(42) }
   end
 
   describe "use_yaml_discriminator" do
@@ -928,8 +1107,8 @@ describe "YAML::Serializable" do
     end
 
     it "deserializes type which nests type with discriminator (#9849)" do
-      container = YAMLWithShape.from_yaml(%({"shape": {"type": "point", "x": 1, "y": 2}}))
-      point = container.shape.as(YAMLPoint)
+      container = YAMLAttrValue(YAMLShape).from_yaml(%({"value": {"type": "point", "x": 1, "y": 2}}))
+      point = container.value.as(YAMLPoint)
       point.x.should eq(1)
       point.y.should eq(2)
     end
@@ -950,6 +1129,24 @@ describe "YAML::Serializable" do
       object_enum = YAMLVariableDiscriminatorValueType.from_yaml(%({"type": 18}))
       object_enum.should be_a(YAMLVariableDiscriminatorEnum8)
     end
+
+    it "deserializes with discriminator, strict recursive type" do
+      foo = YAMLStrictDiscriminator.from_yaml(%({"type": "foo"}))
+      foo = foo.should be_a(YAMLStrictDiscriminatorFoo)
+
+      bar = YAMLStrictDiscriminator.from_yaml(%({"type": "bar", "x": {"type": "foo"}, "y": {"type": "foo"}}))
+      bar = bar.should be_a(YAMLStrictDiscriminatorBar)
+      bar.x.should be_a(YAMLStrictDiscriminatorFoo)
+      bar.y.should be_a(YAMLStrictDiscriminatorFoo)
+    end
+
+    it "deserializes with discriminator, another recursive type, fixes: #13429" do
+      c = YAMLDiscriminatorBug::Base.from_yaml %q({"type": "c", "source": {"type": "a"}, "value": 2})
+      c.as(YAMLDiscriminatorBug::C).value.should eq 2
+
+      c = YAMLDiscriminatorBug::Base.from_yaml %q({"type": "c", "source": {"type": "a"}})
+      c.as(YAMLDiscriminatorBug::C).value.should eq 1
+    end
   end
 
   describe "namespaced classes" do
@@ -958,5 +1155,9 @@ describe "YAML::Serializable" do
       request.foo.id.should eq "id:foo"
       request.bar.id.should eq "id:bar"
     end
+  end
+
+  it "fixes #13337" do
+    YAMLSomething.from_yaml(%({"value":{}})).value.should_not be_nil
   end
 end

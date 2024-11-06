@@ -4,6 +4,8 @@ require "digest/crc32"
 # The Compress::Zip module contains readers and writers of the zip
 # file format, described at [PKWARE's site](https://pkware.cachefly.net/webdocs/APPNOTE/APPNOTE-6.3.3.TXT).
 #
+# NOTE: To use `Zip` or its children, you must explicitly import it with `require "compress/zip"`
+#
 # ### Reading zip files
 #
 # Two types are provided to read from zip files:

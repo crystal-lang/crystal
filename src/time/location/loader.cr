@@ -5,7 +5,7 @@ class Time::Location
   # time zone data.
   #
   # Details on the exact cause can be found in the error message.
-  class InvalidTZDataError < Exception
+  class InvalidTZDataError < Time::Error
     def self.initialize(message : String? = "Malformed time zone information", cause : Exception? = nil)
       super(message, cause)
     end
@@ -26,6 +26,13 @@ class Time::Location
   end
 
   # :nodoc:
+  def self.load_android(name : String, sources : Enumerable(String)) : Time::Location?
+    if path = find_android_tzdata_file(sources)
+      load_from_android_tzdata(name, path) || raise InvalidLocationNameError.new(name, path)
+    end
+  end
+
+  # :nodoc:
   def self.load_from_dir_or_zip(name : String, source : String) : Time::Location?
     if source.ends_with?(".zip")
       open_file_cached(name, source) do |file|
@@ -41,12 +48,29 @@ class Time::Location
     end
   end
 
-  private def self.open_file_cached(name : String, path : String)
+  # :nodoc:
+  def self.load_from_android_tzdata(name : String, path : String) : Time::Location?
     return nil unless File.exists?(path)
 
     mtime = File.info(path).modification_time
     if (cache = @@location_cache[name]?) && cache[:time] == mtime
-      return cache[:location]
+      cache[:location]
+    else
+      File.open(path) do |file|
+        read_android_tzdata(file, false) do |location_name, location|
+          @@location_cache[location_name] = {time: mtime, location: location}
+        end
+        @@location_cache[name].try &.[:location]
+      end
+    end
+  end
+
+  private def self.open_file_cached(name : String, path : String, &)
+    return nil unless File.exists?(path)
+
+    mtime = File.info(path).modification_time
+    if (cache = @@location_cache[name]?) && cache[:time] == mtime
+      cache[:location]
     else
       File.open(path) do |file|
         location = yield file
@@ -68,15 +92,21 @@ class Time::Location
         path = File.join(source, name)
       end
 
-      return source if File.exists?(path) && File.file?(path) && File.readable?(path)
+      return source if File.exists?(path) && File.file?(path) && File::Info.readable?(path)
     end
   end
 
+  # :nodoc:
+  def self.find_android_tzdata_file(sources : Enumerable(String)) : String?
+    sources.find do |path|
+      File.exists?(path) && File.file?(path) && File::Info.readable?(path)
+    end
+  end
+
+  # :nodoc:
   # Parse "zoneinfo" time zone file.
   # This is the standard file format used by most operating systems.
   # See https://data.iana.org/time-zones/tz-link.html, https://github.com/eggert/tz, tzfile(5)
-
-  # :nodoc:
   def self.read_zoneinfo(location_name : String, io : IO) : Time::Location
     raise InvalidTZDataError.new unless io.read_string(4) == "TZif"
 
@@ -110,7 +140,7 @@ class Time::Location
 
     abbreviations = read_buffer(io, abbrev_length)
 
-    leap_second_time_pairs = Bytes.new(num_leap_seconds)
+    leap_second_time_pairs = Bytes.new(num_leap_seconds * 8)
     io.read_fully(leap_second_time_pairs)
 
     isstddata = Bytes.new(num_std_wall)
@@ -150,6 +180,38 @@ class Time::Location
     raise InvalidTZDataError.new(cause: exc)
   end
 
+  private ANDROID_TZDATA_NAME_LENGTH = 40
+  private ANDROID_TZDATA_ENTRY_SIZE  = ANDROID_TZDATA_NAME_LENGTH + 12
+
+  # :nodoc:
+  # Reads a packed tzdata file for Android's Bionic C runtime. Defined in
+  # https://android.googlesource.com/platform/bionic/+/master/libc/tzcode/bionic.cpp
+  def self.read_android_tzdata(io : IO, local : Bool, & : String, Time::Location ->)
+    header = io.read_string(12)
+    raise InvalidTZDataError.new unless header.starts_with?("tzdata") && header.ends_with?('\0')
+
+    index_offset = read_int32(io)
+    data_offset = read_int32(io)
+    io.skip(4) # final_offset
+    unless index_offset <= data_offset && (data_offset - index_offset).divisible_by?(ANDROID_TZDATA_ENTRY_SIZE)
+      raise InvalidTZDataError.new
+    end
+
+    io.seek(index_offset)
+    entries = Array.new((data_offset - index_offset) // ANDROID_TZDATA_ENTRY_SIZE) do
+      name = io.read_string(40).rstrip('\0')
+      start = read_int32(io)
+      length = read_int32(io)
+      io.skip(4) # unused
+      {name, start, length}
+    end
+
+    entries.each do |(name, start, length)|
+      io.seek(start + data_offset)
+      yield name, read_zoneinfo(local ? "Local" : name, read_buffer(io, length))
+    end
+  end
+
   private def self.read_int32(io : IO)
     io.read_bytes(Int32, IO::ByteFormat::BigEndian)
   end
@@ -173,7 +235,7 @@ class Time::Location
 
   # This method loads an entry from an uncompressed zip file.
   # See http://www.onicos.com/staff/iz/formats/zip.html for ZIP format layout
-  private def self.read_zip_file(name : String, file : File)
+  private def self.read_zip_file(name : String, file : File, &)
     file.seek -ZIP_TAIL_SIZE, IO::Seek::End
 
     if file.read_bytes(Int32, IO::ByteFormat::LittleEndian) != END_OF_CENTRAL_DIRECTORY_HEADER_SIGNATURE

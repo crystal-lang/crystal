@@ -1,6 +1,6 @@
 require "spec"
 require "http"
-require "../../support/string"
+require "spec/helpers/string"
 
 private def http_quote_string(io : IO, string)
   HTTP.quote_string(string, io)

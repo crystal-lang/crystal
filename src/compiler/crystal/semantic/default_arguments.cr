@@ -34,7 +34,7 @@ class Crystal::Def
       end
     end
 
-    retain_body = yields || splat_index || double_splat || assigns_special_var? || macro_def? || args.any? { |arg| arg.default_value && arg.restriction }
+    retain_body = block_arity || splat_index || double_splat || assigns_special_var? || macro_def? || args.any? { |arg| arg.default_value && arg.restriction }
 
     splat_index = self.splat_index
     double_splat = self.double_splat
@@ -94,16 +94,17 @@ class Crystal::Def
       new_name = name
     end
 
-    expansion = Def.new(new_name, new_args, nil, receiver.clone, block_arg.clone, return_type.clone, macro_def?, yields).at(self)
+    expansion = Def.new(new_name, new_args, nil, receiver.clone, block_arg.clone, return_type.clone, macro_def?, block_arity).at(self)
     expansion.args.each { |arg| arg.default_value = nil }
     expansion.calls_super = calls_super?
     expansion.calls_initialize = calls_initialize?
     expansion.calls_previous_def = calls_previous_def?
     expansion.uses_block_arg = uses_block_arg?
-    expansion.yields = yields
+    expansion.block_arity = block_arity
     expansion.raises = raises?
     expansion.free_vars = free_vars
     expansion.annotations = annotations
+    expansion.special_vars = special_vars
     if owner = self.owner?
       expansion.owner = owner
     end
