@@ -17,7 +17,19 @@ describe "Signal" do
     Signal::ABRT.should be_a(Signal)
   end
 
-  {% unless flag?(:win32) %}
+  {% if flag?(:dragonfly) %}
+    # FIXME: can't use SIGUSR1/SIGUSR2 because Boehm uses them + no
+    # SIRTMIN/SIGRTMAX support => figure which signals we could use
+    pending "runs a signal handler"
+    pending "ignores a signal"
+    pending "allows chaining of signals"
+    pending "CHLD.reset sets default Crystal child handler"
+    pending "CHLD.ignore sets default Crystal child handler"
+    pending "CHLD.trap is called after default Crystal child handler"
+    pending "CHLD.reset removes previously set trap"
+  {% end %}
+
+  {% unless flag?(:win32) || flag?(:dragonfly) %}
     # can't use SIGUSR1/SIGUSR2 on FreeBSD because Boehm uses them to suspend/resume threads
     signal1 = {% if flag?(:freebsd) %} Signal.new(LibC::SIGRTMAX - 1) {% else %} Signal::USR1 {% end %}
     signal2 = {% if flag?(:freebsd) %} Signal.new(LibC::SIGRTMAX - 2) {% else %} Signal::USR2 {% end %}
