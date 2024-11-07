@@ -629,3 +629,7 @@ end
     end
   end
 {% end %}
+
+{% if flag?(:interpreted) && flag?(:unix) %}
+  Crystal::System::Signal.setup_default_handlers
+{% end %}
