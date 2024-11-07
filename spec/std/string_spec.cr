@@ -510,13 +510,16 @@ describe "String" do
     "x1.2".to_f64?(strict: false).should be_nil
     "1#{Float64::MAX}".to_f?.should be_nil
     "-1#{Float64::MAX}".to_f?.should be_nil
+    expect_raises(ArgumentError) { "".to_f(whitespace: false) }
+
+    pending! "Old Microsoft C runtime does not handle special floats" if msys2_environment == "MINGW64"
+
     " NaN".to_f?.try(&.nan?).should be_true
     "NaN".to_f?.try(&.nan?).should be_true
     "-NaN".to_f?.try(&.nan?).should be_true
     "nan".to_f?(whitespace: false).try(&.nan?).should be_true
     " nan".to_f?(whitespace: false).should be_nil
     "nan ".to_f?(whitespace: false).should be_nil
-    expect_raises(ArgumentError) { "".to_f(whitespace: false) }
     "nani".to_f?(strict: true).should be_nil
     " INF".to_f?.should eq Float64::INFINITY
     "INF".to_f?.should eq Float64::INFINITY
@@ -554,6 +557,9 @@ describe "String" do
     "x1.2".to_f32?(strict: false).should be_nil
     "1#{Float32::MAX}".to_f32?.should be_nil
     "-1#{Float32::MAX}".to_f32?.should be_nil
+
+    pending! "Old Microsoft C runtime does not handle special floats" if msys2_environment == "MINGW64"
+
     " NaN".to_f32?.try(&.nan?).should be_true
     "NaN".to_f32?.try(&.nan?).should be_true
     "-NaN".to_f32?.try(&.nan?).should be_true
@@ -597,6 +603,9 @@ describe "String" do
     "x1.2".to_f64?(strict: false).should be_nil
     "1#{Float64::MAX}".to_f64?.should be_nil
     "-1#{Float64::MAX}".to_f64?.should be_nil
+
+    pending! "Old Microsoft C runtime does not handle special floats" if msys2_environment == "MINGW64"
+
     " NaN".to_f64?.try(&.nan?).should be_true
     "NaN".to_f64?.try(&.nan?).should be_true
     "-NaN".to_f64?.try(&.nan?).should be_true
