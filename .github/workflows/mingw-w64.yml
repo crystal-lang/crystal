@@ -80,7 +80,7 @@ jobs:
         shell: msys2 {0}
         run: |
           mkdir bin
-          cc crystal.obj -o bin/crystal.exe -mcrtdll=ucrt -municode \
+          cc crystal.obj -o bin/crystal.exe -municode \
             $(pkg-config bdw-gc libpcre2-8 iconv zlib libffi --libs) \
             $(llvm-config --libs --system-libs --ldflags) \
             -lDbgHelp -lole32 -lWS2_32 -Wl,--stack,0x800000

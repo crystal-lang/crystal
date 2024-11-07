@@ -1,7 +1,5 @@
 {% if flag?(:msvc) %}
   @[Link({{ flag?(:static) ? "libucrt" : "ucrt" }})]
-{% elsif flag?(:win32) && flag?(:gnu) %}
-  @[Link(ldflags: "-mcrtdll=ucrt")]
 {% end %}
 lib LibC
   alias Char = UInt8
