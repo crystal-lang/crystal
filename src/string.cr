@@ -1661,12 +1661,12 @@ class String
     case to_unsafe[bytesize - 1]
     when '\n'
       if bytesize > 1 && to_unsafe[bytesize - 2] === '\r'
-        unsafe_byte_slice_string(0, bytesize - 2)
+        unsafe_byte_slice_string(0, bytesize - 2, @length > 0 ? @length - 2 : 0)
       else
-        unsafe_byte_slice_string(0, bytesize - 1)
+        unsafe_byte_slice_string(0, bytesize - 1, @length > 0 ? @length - 1 : 0)
       end
     when '\r'
-      unsafe_byte_slice_string(0, bytesize - 1)
+      unsafe_byte_slice_string(0, bytesize - 1, @length > 0 ? @length - 1 : 0)
     else
       self
     end
@@ -3473,8 +3473,8 @@ class String
   # ```
   # "Hello, World".rindex('o')    # => 8
   # "Hello, World".rindex('Z')    # => nil
-  # "Hello, World".rindex("o", 5) # => 4
-  # "Hello, World".rindex("W", 2) # => nil
+  # "Hello, World".rindex('o', 5) # => 4
+  # "Hello, World".rindex('W', 2) # => nil
   # ```
   def rindex(search : Char, offset = size - 1)
     # If it's ASCII we can delegate to slice
@@ -3519,7 +3519,16 @@ class String
     end
   end
 
-  # :ditto:
+  # Returns the index of the _last_ appearance of *search* in the string,
+  # If *offset* is present, it defines the position to _end_ the search
+  # (characters beyond this point are ignored).
+  #
+  # ```
+  # "Hello, World".rindex("orld")    # => 8
+  # "Hello, World".rindex("snorlax") # => nil
+  # "Hello, World".rindex("o", 5)    # => 4
+  # "Hello, World".rindex("W", 2)    # => nil
+  # ```
   def rindex(search : String, offset = size - search.size) : Int32?
     offset += size if offset < 0
     return if offset < 0
@@ -3572,7 +3581,16 @@ class String
     end
   end
 
-  # :ditto:
+  # Returns the index of the _last_ appearance of *search* in the string,
+  # If *offset* is present, it defines the position to _end_ the search
+  # (characters beyond this point are ignored).
+  #
+  # ```
+  # "Hello, World".rindex(/world/i) # => 7
+  # "Hello, World".rindex(/world/)  # => nil
+  # "Hello, World".rindex(/o/, 5)   # => 4
+  # "Hello, World".rindex(/W/, 2)   # => nil
+  # ```
   def rindex(search : Regex, offset = size, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Int32?
     offset += size if offset < 0
     return nil unless 0 <= offset <= size
@@ -3586,21 +3604,49 @@ class String
     match_result.try &.begin
   end
 
-  # :ditto:
-  #
+  # Returns the index of the _last_ appearance of *search* in the string,
+  # If *offset* is present, it defines the position to _end_ the search
+  # (characters beyond this point are ignored).
   # Raises `Enumerable::NotFoundError` if *search* does not occur in `self`.
-  def rindex!(search : Regex, offset = size, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Int32
-    rindex(search, offset, options: options) || raise Enumerable::NotFoundError.new
+  #
+  # ```
+  # "Hello, World".rindex!('o')    # => 8
+  # "Hello, World".rindex!('Z')    # raises Enumerable::NotFoundError
+  # "Hello, World".rindex!('o', 5) # => 4
+  # "Hello, World".rindex!('W', 2) # raises Enumerable::NotFoundError
+  # ```
+  def rindex!(search : Char, offset = size - 1) : Int32
+    rindex(search, offset) || raise Enumerable::NotFoundError.new
   end
 
-  # :ditto:
+  # Returns the index of the _last_ appearance of *search* in the string,
+  # If *offset* is present, it defines the position to _end_ the search
+  # (characters beyond this point are ignored).
+  # Raises `Enumerable::NotFoundError` if *search* does not occur in `self`.
+  #
+  # ```
+  # "Hello, World".rindex!("orld")    # => 8
+  # "Hello, World".rindex!("snorlax") # raises Enumerable::NotFoundError
+  # "Hello, World".rindex!("o", 5)    # => 4
+  # "Hello, World".rindex!("W", 2)    # raises Enumerable::NotFoundError
+  # ```
   def rindex!(search : String, offset = size - search.size) : Int32
     rindex(search, offset) || raise Enumerable::NotFoundError.new
   end
 
-  # :ditto:
-  def rindex!(search : Char, offset = size - 1) : Int32
-    rindex(search, offset) || raise Enumerable::NotFoundError.new
+  # Returns the index of the _last_ appearance of *search* in the string,
+  # If *offset* is present, it defines the position to _end_ the search
+  # (characters beyond this point are ignored).
+  # Raises `Enumerable::NotFoundError` if *search* does not occur in `self`.
+  #
+  # ```
+  # "Hello, World".rindex!(/world/i) # => 7
+  # "Hello, World".rindex!(/world/)  # raises Enumerable::NotFoundError
+  # "Hello, World".rindex!(/o/, 5)   # => 4
+  # "Hello, World".rindex!(/W/, 2)   # raises Enumerable::NotFoundError
+  # ```
+  def rindex!(search : Regex, offset = size, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Int32
+    rindex(search, offset, options: options) || raise Enumerable::NotFoundError.new
   end
 
   # Searches separator or pattern (`Regex`) in the string, and returns
@@ -5506,12 +5552,12 @@ class String
     Slice.new(to_unsafe + byte_offset, bytesize - byte_offset, read_only: true)
   end
 
-  protected def unsafe_byte_slice_string(byte_offset)
-    String.new(unsafe_byte_slice(byte_offset))
+  protected def unsafe_byte_slice_string(byte_offset, *, size = 0)
+    String.new(to_unsafe + byte_offset, bytesize - byte_offset, size)
   end
 
-  protected def unsafe_byte_slice_string(byte_offset, count)
-    String.new(unsafe_byte_slice(byte_offset, count))
+  protected def unsafe_byte_slice_string(byte_offset, count, size = 0)
+    String.new(to_unsafe + byte_offset, count, size)
   end
 
   protected def self.char_bytes_and_bytesize(char : Char)

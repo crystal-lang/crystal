@@ -7,7 +7,7 @@ require "c/stdlib"
   @[Link({{ flag?(:static) ? "libcmt" : "msvcrt" }})]
   {% if flag?(:msvc) %}
     @[Link(ldflags: "/ENTRY:wmainCRTStartup")]
-  {% elsif flag?(:gnu) %}
+  {% elsif flag?(:gnu) && !flag?(:interpreted) %}
     @[Link(ldflags: "-municode")]
   {% end %}
 {% end %}

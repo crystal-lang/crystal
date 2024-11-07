@@ -208,7 +208,7 @@ module Crystal::System::Thread
       Thread.current_thread.@suspended.set(true)
 
       # block all signals but SIG_RESUME
-      mask = LibC::SigsetT.new
+      mask = uninitialized LibC::SigsetT
       LibC.sigfillset(pointerof(mask))
       LibC.sigdelset(pointerof(mask), SIG_RESUME)
 
