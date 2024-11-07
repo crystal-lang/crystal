@@ -4,10 +4,7 @@ abstract class Crystal::EventLoop
     {% if flag?(:wasi) %}
       Crystal::Wasi::EventLoop.new
     {% elsif flag?(:unix) %}
-      # TODO: dragonfly: the kqueue evloop doesn't work properly (regular hangs on evloop.run)
-      # TODO: netbsd: the kqueue evloop doesn't work (needs investigation)
-      # TODO: openbsd: the kqueue evloop is sluggish when running std specs (the main fiber keeps reenqueueing itself from the evloop run)
-      # TODO: solaris: the epoll evloop hasn't been tested (better alternative: use event-ports)
+      # TODO: enable more targets by default (need manual tests or fixes)
       {% if flag?("evloop=libevent") %}
         Crystal::LibEvent::EventLoop.new
       {% elsif flag?("evloop=epoll") || flag?(:android) || flag?(:linux) %}
