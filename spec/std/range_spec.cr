@@ -92,7 +92,7 @@ describe "Range" do
     # 
     #   How do we define adjacency?
     #   
-    # (1..5).union(6..10).should eq(1..10)      # Adjacent ranges
+    (1..5).union(6..10).should eq(1..10)      # Adjacent ranges
     
     (1..5).union(10..15).should eq(nil)         # Disjoint integer ranges
 
@@ -105,7 +105,8 @@ describe "Range" do
 
     # String ranges
     ('a'..'e').union('c'..'g').should eq('a'..'g')  # Overlapping string ranges
-    ('a'..'c').union('d'..'f').should eq(nil)       # Non-overlapping string ranges
+    ('a'..'c').union('e'..'f').should eq(nil)       # Non-overlapping string ranges
+    ('a'..'c').union('d'..'f').should eq('a'..'f')       # Adjacent string ranges
   
     # Time ranges
     t1 = Time.local(2024, 10, 1)

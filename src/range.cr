@@ -260,7 +260,11 @@ struct Range(B, E)
   # (1...10).union(1..10) # => 1..10
   # ```
   def union(other : Range)
-    return nil if self.end < other.begin || other.end < self.begin
+    e_s : E = self.end
+    e_o : E = other.end
+
+    return if self.end < other.begin && (!e_s.responds_to?(:succ) || e_s.succ != other.begin)
+    return if other.end < self.begin && (!e_o.responds_to?(:succ) || e_o.succ != self.begin)
 
     larger = (self.end > other.end)
     Range.new(
@@ -278,7 +282,7 @@ struct Range(B, E)
   # (1...10).intersection(7..12) # => 7...10
   # ```
   def intersection(other : Range)
-    return nil if self.end < other.begin || other.end < self.begin
+    return if self.end < other.begin || other.end < self.begin
 
     larger = (self.end > other.end)
     Range.new(
