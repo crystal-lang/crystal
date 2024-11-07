@@ -1,5 +1,6 @@
 {% if flag?(:win32) %}
   require "c/process"
+  require "c/heapapi"
 {% end %}
 require "crystal/tracing"
 
@@ -11,21 +12,42 @@ module GC
   # :nodoc:
   def self.malloc(size : LibC::SizeT) : Void*
     Crystal.trace :gc, "malloc", size: size
-    # libc malloc is not guaranteed to return cleared memory, so we need to
-    # explicitly clear it. Ref: https://github.com/crystal-lang/crystal/issues/14678
-    LibC.malloc(size).tap(&.clear)
+
+    {% if flag?(:win32) %}
+      LibC.HeapAlloc(LibC.GetProcessHeap, LibC::HEAP_ZERO_MEMORY, size)
+    {% else %}
+      # libc malloc is not guaranteed to return cleared memory, so we need to
+      # explicitly clear it. Ref: https://github.com/crystal-lang/crystal/issues/14678
+      LibC.malloc(size).tap(&.clear)
+    {% end %}
   end
 
   # :nodoc:
   def self.malloc_atomic(size : LibC::SizeT) : Void*
     Crystal.trace :gc, "malloc", size: size, atomic: 1
-    LibC.malloc(size)
+
+    {% if flag?(:win32) %}
+      LibC.HeapAlloc(LibC.GetProcessHeap, 0, size)
+    {% else %}
+      LibC.malloc(size)
+    {% end %}
   end
 
   # :nodoc:
   def self.realloc(pointer : Void*, size : LibC::SizeT) : Void*
     Crystal.trace :gc, "realloc", size: size
-    LibC.realloc(pointer, size)
+
+    {% if flag?(:win32) %}
+      # realloc with a null pointer should behave like plain malloc, but Win32
+      # doesn't do that
+      if pointer
+        LibC.HeapReAlloc(LibC.GetProcessHeap, LibC::HEAP_ZERO_MEMORY, pointer, size)
+      else
+        LibC.HeapAlloc(LibC.GetProcessHeap, LibC::HEAP_ZERO_MEMORY, size)
+      end
+    {% else %}
+      LibC.realloc(pointer, size)
+    {% end %}
   end
 
   def self.collect
@@ -39,7 +61,12 @@ module GC
 
   def self.free(pointer : Void*) : Nil
     Crystal.trace :gc, "free"
-    LibC.free(pointer)
+
+    {% if flag?(:win32) %}
+      LibC.HeapFree(LibC.GetProcessHeap, 0, pointer)
+    {% else %}
+      LibC.free(pointer)
+    {% end %}
   end
 
   def self.is_heap_ptr(pointer : Void*) : Bool
