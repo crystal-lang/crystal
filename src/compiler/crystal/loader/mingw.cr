@@ -7,6 +7,8 @@ require "crystal/system/win32/library_archive"
 # The core implementation is derived from the MSVC loader. Main deviations are:
 #
 # - `.parse` follows GNU `ld`'s style, rather than MSVC `link`'s;
+# - `.parse` automatically inserts a C runtime library if `-mcrtdll` isn't
+#   supplied;
 # - `#library_filename` follows the usual naming of the MinGW linker: `.dll.a`
 #   for DLL import libraries, `.a` for other libraries;
 # - `.default_search_paths` relies solely on `.cc_each_library_path`.
@@ -28,6 +30,11 @@ class Crystal::Loader
     file_paths = [] of String
     extra_search_paths = [] of String
 
+    # note that `msvcrt` is a default runtime chosen at MinGW-w64 build time,
+    # `ucrt` is always UCRT (even in a MINGW64 environment), and
+    # `msvcrt-os` is always MSVCRT (even in a UCRT64 environment)
+    crt_dll = "msvcrt"
+
     OptionParser.parse(args.dup) do |parser|
       parser.on("-L DIRECTORY", "--library-path DIRECTORY", "Add DIRECTORY to library search path") do |directory|
         extra_search_paths << directory
@@ -39,17 +46,21 @@ class Crystal::Loader
         raise LoadError.new "static libraries are not supported by Crystal's runtime loader"
       end
       parser.unknown_args do |args, after_dash|
-        file_paths.concat args
+        file_paths.concat args.reject(&.starts_with?("-mcrtdll="))
       end
 
       parser.invalid_option do |arg|
-        unless arg.starts_with?("-Wl,")
+        if crt_dll_arg = arg.lchop?("-mcrtdll=")
+          # the GCC spec is `%{!mcrtdll=*:-lmsvcrt} %{mcrtdll=*:-l%*}`
+          crt_dll = crt_dll_arg
+        elsif !arg.starts_with?("-Wl,")
           raise LoadError.new "Not a recognized linker flag: #{arg}"
         end
       end
     end
 
     search_paths = extra_search_paths + search_paths
+    libnames << crt_dll
 
     begin
       loader = new(search_paths)
