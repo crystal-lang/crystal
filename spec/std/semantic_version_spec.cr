@@ -45,6 +45,20 @@ describe SemanticVersion do
     end
   end
 
+  it "accepts valid versions" do
+    %w[
+      1.2.3
+      1.2.3-2
+      1.2.3-10
+      1.2.3-alpha
+      1.2.3-alpha.2
+      1.2.3-alpha.10
+    ].each do |version|
+      SemanticVersion.valid?(version).should be_true
+      SemanticVersion.parse?(version).should_not be_nil
+    end
+  end
+
   it "does not accept bad versions" do
     sversions = %w(
       1
