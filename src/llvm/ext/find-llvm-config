@@ -8,7 +8,7 @@ if ! LLVM_CONFIG=$(command -v "$LLVM_CONFIG"); then
     ([ "${llvm_config_version#"$version"}" != "$llvm_config_version" ] && command -v llvm-config) || \
     command -v llvm-config-"${version%.*}" || \
     command -v llvm-config-"$version" || \
-    command -v llvm-config"${version%.*}""${version#*.}" || \
+    command -v "llvm-config${version%.*}${version#*.}" || \
     command -v llvm-config"${version%.*}" || \
     command -v llvm-config"$version" || \
     command -v llvm"${version%.*}"-config)
