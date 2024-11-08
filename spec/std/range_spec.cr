@@ -82,18 +82,7 @@ describe "Range" do
   it "does union" do
     # Int ranges
     (1..5).union(3..7).should eq(1..7)          # Overlapping integer ranges
-    
-    # TODO: This test will fail - 
-    #   In an integer setting this case is doable. We can simply check adjaceny with +-1.
-    #   However, how do we define an adjacent range for other data types? 
-    #     Examples of adjacency ambiguity:
-    #       - Floats: Is 4.1's upper adjacent value 4.2 or 4.11, etc.?
-    #       - Times: Is a time's adjacent value +1 second or +1 hour, etc.?
-    # 
-    #   How do we define adjacency?
-    #   
-    (1..5).union(6..10).should eq(1..10)      # Adjacent ranges
-    
+    (1..5).union(6..10).should eq(1..10)        # Adjacent ranges
     (1..5).union(10..15).should eq(nil)         # Disjoint integer ranges
 
 
@@ -115,6 +104,13 @@ describe "Range" do
     t4 = Time.local(2024, 10, 15)
     (t1..t2).union(t2..t3).should eq(t1..t3)        # Adjacent time ranges
     (t1..t2).union(t3..t4).should eq(nil)           # Disjoint time ranges
+
+    # Exclusive ranges
+    (1...5).union(5...10).should eq(1...10)        # Adjacent exclusive integer ranges
+    (1.0...5.5).union(3.2...7.8).should eq(1.0...7.8)  # Overlapping exclusive float ranges
+    ('a'...'e').union('c'...'g').should eq('a'...'g')  # Overlapping exclusive string ranges
+    (t1...t2).union(t2...t3).should eq(t1...t3)        # Adjacent exclusive time ranges
+
   end
   
   it "does intersection" do
@@ -139,6 +135,12 @@ describe "Range" do
     t4 = Time.local(2024, 10, 15)
     (t1..t3).intersection(t2..t4).should eq(t2..t3)        # Overlapping time ranges
     (t1..t2).intersection(t3..t4).should eq(nil)           # Non-overlapping time ranges
+
+    # Exclusive ranges
+    (1...5).intersection(3...7).should eq(3...5)       # Overlapping exclusive integer ranges
+    (1.0...5.5).intersection(3.2...7.8).should eq(3.2...5.5)  # Overlapping exclusive float ranges
+    ('a'...'e').intersection('c'...'g').should eq('c'...'e')  # Overlapping exclusive string ranges
+    (t1...t3).intersection(t2...t4).should eq(t2...t3)        # Overlapping exclusive time ranges
   end
   
   it "overlaps?" do

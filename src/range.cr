@@ -253,7 +253,7 @@ struct Range(B, E)
   end
 
   # Returns the union of this range, and another.
-  # Returns 0..0 if there is no overlap.
+  # Returns `nil` if there is no overlap.
   #
   # ```
   # (1..5).union(5..10)   # => 1..10
@@ -266,16 +266,15 @@ struct Range(B, E)
     return if self.end < other.begin && (!e_s.responds_to?(:succ) || e_s.succ != other.begin)
     return if other.end < self.begin && (!e_o.responds_to?(:succ) || e_o.succ != self.begin)
 
-    larger = (self.end > other.end)
     Range.new(
-      self.begin < other.begin ? self.begin : other.begin,
-      self.end > other.end ? self.end : other.end,
-      exclusive: (larger && self.excludes_end?) || (!larger && other.excludes_end?),
+      Math.min(self.begin, other.begin),
+      Math.max(self.end, other.end),
+      exclusive:({self, other}.max_by(&.end).excludes_end?),
     )
   end
 
   # Returns the intersection of this range, and another.
-  # Returns 0..0 if there is no overlap.
+  # Returns `nil` if there is no overlap.
   #
   # ```
   # (2..10).intersection(0..8)   # => 2..8
@@ -284,12 +283,11 @@ struct Range(B, E)
   def intersection(other : Range)
     return if self.end < other.begin || other.end < self.begin
 
-    larger = (self.end > other.end)
     Range.new(
-      self.begin > other.begin ? self.begin : other.begin,
-      self.end < other.end ? self.end : other.end,
-      exclusive:(!larger && self.excludes_end?) || (larger && other.excludes_end?),
-    )
+      Math.max(self.begin, other.begin),
+      Math.min(self.end, other.end),
+      exclusive:({self, other}.max_by(&.end).excludes_end?),
+    ) 
   end
 
   # Returns `true` if this range overlaps with another range.
