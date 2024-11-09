@@ -207,6 +207,13 @@ describe Number do
     it { assert_prints 1.0e+34.humanize, "10,000Q" }
     it { assert_prints 1.0e+35.humanize, "100,000Q" }
 
+    it { assert_prints 0.humanize(separate_unit: true), "0.0" }
+    it { assert_prints 12_345.humanize(separate_unit: true), "12.3\u00A0k" }
+    it { assert_prints 0.123_456_78.humanize(5, separate_unit: true), "123.46\u00A0m" }
+    it { assert_prints 1.0e-14.humanize(separate_unit: true), "10.0\u00A0f" }
+    it { assert_prints 1.0e+9.humanize(separate_unit: true), "1.0\u00A0G" }
+    it { assert_prints 1.0e+35.humanize(separate_unit: true), "100,000\u00A0Q" }
+
     it { assert_prints Float32::INFINITY.humanize, "Infinity" }
     it { assert_prints (-Float32::INFINITY).humanize, "-Infinity" }
     it { assert_prints Float32::NAN.humanize, "NaN" }
@@ -261,6 +268,7 @@ describe Number do
       it { assert_prints 1.0e+8.humanize(prefixes: CUSTOM_PREFIXES), "100d" }
       it { assert_prints 1.0e+9.humanize(prefixes: CUSTOM_PREFIXES), "1,000d" }
       it { assert_prints 1.0e+10.humanize(prefixes: CUSTOM_PREFIXES), "10,000d" }
+      it { assert_prints 1.0e+10.humanize(prefixes: CUSTOM_PREFIXES, separate_unit: true), "10,000\u00A0d" }
     end
   end
 end
@@ -281,6 +289,7 @@ describe Int do
     it { assert_prints 1025.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC), "1.0KB" }
     it { assert_prints 1026.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC), "1.01KB" }
     it { assert_prints 2048.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC), "2.0KB" }
+    it { assert_prints 2048.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC, separate_unit: true), "2.0\u00A0KB" }
 
     it { assert_prints 1536.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC), "1.5KB" }
     it { assert_prints 524288.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC), "512KB" }
@@ -289,8 +298,14 @@ describe Int do
     it { assert_prints 1099511627776.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC), "1.0TB" }
     it { assert_prints 1125899906842624.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC), "1.0PB" }
     it { assert_prints 1152921504606846976.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC), "1.0EB" }
+    it { assert_prints 1152921504606846976.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC, separate_unit: true), "1.0\u00A0EB" }
 
     it { assert_prints 1024.humanize_bytes(format: Int::BinaryPrefixFormat::IEC), "1.0kiB" }
     it { assert_prints 1073741824.humanize_bytes(format: Int::BinaryPrefixFormat::IEC), "1.0GiB" }
+
+    # it { assert_prints 0.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC, separate_unit: true), "0 B" }
+    # it { assert_prints 2048.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC, separate_unit: true), "2.0 KB" }
+    # it { assert_prints 1073741824.humanize_bytes(format: Int::BinaryPrefixFormat::IEC, separate_unit: true), "1.0 GiB" }
+    # it { assert_prints 1152921504606846976.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC, separate_unit: true), "1.0 EB" }
   end
 end
