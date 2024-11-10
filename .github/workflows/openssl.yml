@@ -23,6 +23,8 @@ jobs:
             repository: http://dl-cdn.alpinelinux.org/alpine/v3.17/main
           - pkg: "openssl-dev=~3.3"
             repository: http://dl-cdn.alpinelinux.org/alpine/v3.20/main
+          - pkg: "libressl-dev=~2.7"
+            repository: http://dl-cdn.alpinelinux.org/alpine/v3.9/main
           - pkg: "libressl-dev=~3.4"
             repository: http://dl-cdn.alpinelinux.org/alpine/v3.15/community
           - pkg: "libressl-dev=~3.5"
