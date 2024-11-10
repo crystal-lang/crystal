@@ -1798,11 +1798,7 @@ class String
   def rchop? : String?
     return if empty?
 
-    if to_unsafe[bytesize - 1] < 0x80 || single_byte_optimizable?
-      return unsafe_byte_slice_string(0, bytesize - 1)
-    end
-
-    self[0, size - 1]
+    unsafe_byte_slice_string(0, Char::Reader.new(at_end: self).pos, @length > 0 ? @length - 1 : 0)
   end
 
   # Returns a new `String` with *suffix* removed from the end of the string if possible, else returns `nil`.
