@@ -1,5 +1,5 @@
 {% begin %}
-  {% if flag?(:win32) && !flag?(:static) %}
+  {% if flag?(:msvc) && !flag?(:static) %}
     {% config = nil %}
     {% for dir in Crystal::LIBRARY_PATH.split(Crystal::System::Process::HOST_PATH_DELIMITER) %}
       {% config ||= read_file?("#{dir.id}/llvm_VERSION") %}
@@ -21,7 +21,7 @@
     lib LibLLVM
     end
   {% else %}
-    {% llvm_config = env("LLVM_CONFIG") || `#{__DIR__}/ext/find-llvm-config`.stringify %}
+    {% llvm_config = env("LLVM_CONFIG") || `sh #{__DIR__}/ext/find-llvm-config`.stringify %}
     {% llvm_version = `#{llvm_config.id} --version`.stringify %}
     {% llvm_targets = env("LLVM_TARGETS") || `#{llvm_config.id} --targets-built`.stringify %}
     {% llvm_ldflags = "`#{llvm_config.id} --libs --system-libs --ldflags#{" --link-static".id if flag?(:static)}#{" 2> /dev/null".id unless flag?(:win32)}`" %}

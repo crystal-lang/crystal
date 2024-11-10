@@ -32,10 +32,8 @@ resolve_symlinks() {
     _resolve_symlinks "$1"
 }
 
-_resolve_symlinks() {
+_resolve_symlinks() (
     _assert_no_path_cycles "$@" || return
-
-    local dir_context path
 
     if path=$(readlink -- "$1"); then
         dir_context=$(dirname -- "$1")
@@ -43,7 +41,7 @@ _resolve_symlinks() {
     else
         printf '%s\n' "$1"
     fi
-}
+)
 
 _prepend_dir_context_if_necessary() {
     if [ "$1" = . ]; then
@@ -60,9 +58,7 @@ _prepend_path_if_relative() {
     esac
 }
 
-_assert_no_path_cycles() {
-    local target path
-
+_assert_no_path_cycles() (
     target=$1
     shift
 
@@ -71,7 +67,7 @@ _assert_no_path_cycles() {
             return 1
         fi
     done
-}
+)
 
 canonicalize_path() {
     if [ -d "$1" ]; then
@@ -85,35 +81,32 @@ _canonicalize_dir_path() {
     { cd "$1" 2>/dev/null && pwd -P; }
 }
 
-_canonicalize_file_path() {
-    local dir file
+_canonicalize_file_path() (
     dir=$(dirname -- "$1")
     file=$(basename -- "$1")
     { cd "$dir" 2>/dev/null >/dev/null && printf '%s/%s\n' "$(pwd -P)" "$file"; }
-}
+)
 
 ##############################################################################
 
 # Based on http://stackoverflow.com/q/370047/641451
-remove_path_item() {
-  local path item
-
+remove_path_item() (
   path="$1"
 
   printf "%s" "$path" | awk -v item="$2" -v RS=: -v ORS=: '$0 != item' | sed 's/:$//'
-}
+)
 
 ##############################################################################
 
-__has_colors() {
-  local num_colors=$(tput colors 2>/dev/null)
+__has_colors() (
+  num_colors=$(tput colors 2>/dev/null)
 
   if [ -n "$num_colors" ] && [ "$num_colors" -gt 2 ]; then
     return 0
   else
     return 1
   fi
-}
+)
 __error_msg() {
   if __has_colors; then
     # bold red coloring
@@ -137,7 +130,7 @@ SCRIPT_ROOT="$(dirname "$SCRIPT_PATH")"
 CRYSTAL_ROOT="$(dirname "$SCRIPT_ROOT")"
 CRYSTAL_DIR="$CRYSTAL_ROOT/.build"
 
-export CRYSTAL_PATH="${CRYSTAL_PATH:-lib:$CRYSTAL_ROOT/src}"
+export CRYSTAL_PATH="${CRYSTAL_PATH:-./lib:$CRYSTAL_ROOT/src}"
 if [ -n "${CRYSTAL_PATH##*"$CRYSTAL_ROOT"/src*}" ]; then
   __warning_msg "CRYSTAL_PATH env variable does not contain $CRYSTAL_ROOT/src"
 fi
@@ -148,7 +141,7 @@ export CRYSTAL_HAS_WRAPPER=true
 PARENT_CRYSTAL="$CRYSTAL"
 
 # check if the parent crystal command is a path that refers to this script
-if [ -z "${PARENT_CRYSTAL##*/*}" -a "$(realpath "$PARENT_CRYSTAL")" = "$SCRIPT_PATH" ]; then
+if [ -z "${PARENT_CRYSTAL##*/*}" ] && [ "$(realpath "$PARENT_CRYSTAL")" = "$SCRIPT_PATH" ]; then
   # ignore it and use `crystal` as parent compiler command
   PARENT_CRYSTAL="crystal"
 fi
@@ -174,8 +167,8 @@ PARENT_CRYSTAL_EXISTS=$(test !$?)
 if ($PARENT_CRYSTAL_EXISTS); then
   if [ -z "$CRYSTAL_CONFIG_LIBRARY_PATH" ] || [ -z "$CRYSTAL_LIBRARY_PATH" ]; then
     CRYSTAL_INSTALLED_LIBRARY_PATH="$($PARENT_CRYSTAL env CRYSTAL_LIBRARY_PATH 2> /dev/null || echo "")"
-    export CRYSTAL_LIBRARY_PATH=${CRYSTAL_LIBRARY_PATH:-$CRYSTAL_INSTALLED_LIBRARY_PATH}
-    export CRYSTAL_CONFIG_LIBRARY_PATH=${CRYSTAL_CONFIG_LIBRARY_PATH:-$CRYSTAL_INSTALLED_LIBRARY_PATH}
+    export CRYSTAL_LIBRARY_PATH="${CRYSTAL_LIBRARY_PATH:-$CRYSTAL_INSTALLED_LIBRARY_PATH}"
+    export CRYSTAL_CONFIG_LIBRARY_PATH="${CRYSTAL_CONFIG_LIBRARY_PATH:-$CRYSTAL_INSTALLED_LIBRARY_PATH}"
   fi
 fi
 
@@ -184,10 +177,19 @@ fi
 # with symlinks resolved as well (see https://github.com/crystal-lang/crystal/issues/12969).
 cd "$(realpath "$(pwd)")"
 
-if [ -x "$CRYSTAL_DIR/crystal" ]; then
-  __warning_msg "Using compiled compiler at ${CRYSTAL_DIR#"$PWD/"}/crystal"
-  exec "$CRYSTAL_DIR/crystal" "$@"
-elif !($PARENT_CRYSTAL_EXISTS); then
+case "$(uname -s)" in
+  CYGWIN*|MSYS_NT*|MINGW32_NT*|MINGW64_NT*)
+    CRYSTAL_BIN="crystal.exe"
+    ;;
+  *)
+    CRYSTAL_BIN="crystal"
+    ;;
+esac
+
+if [ -x "$CRYSTAL_DIR/${CRYSTAL_BIN}" ]; then
+  __warning_msg "Using compiled compiler at ${CRYSTAL_DIR#"$PWD/"}/${CRYSTAL_BIN}"
+  exec "$CRYSTAL_DIR/${CRYSTAL_BIN}" "$@"
+elif (! $PARENT_CRYSTAL_EXISTS); then
   __error_msg 'You need to have a crystal executable in your path! or set CRYSTAL env variable'
   exit 1
 else

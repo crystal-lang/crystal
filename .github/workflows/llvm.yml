@@ -2,6 +2,8 @@ name: LLVM CI
 
 on: [push, pull_request]
 
+permissions: {}
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
@@ -11,51 +13,29 @@ env:
 
 jobs:
   llvm_test:
-    runs-on: ubuntu-22.04
+    runs-on: ${{ matrix.runs-on }}
     strategy:
       fail-fast: false
       matrix:
         include:
-          - llvm_version: "13.0.0"
-            llvm_filename: "clang+llvm-13.0.0-x86_64-linux-gnu-ubuntu-20.04.tar.xz"
-          - llvm_version: "14.0.0"
-            llvm_filename: "clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz"
-          - llvm_version: "15.0.6"
-            llvm_filename: "clang+llvm-15.0.6-x86_64-linux-gnu-ubuntu-18.04.tar.xz"
-          - llvm_version: "16.0.3"
-            llvm_filename: "clang+llvm-16.0.3-x86_64-linux-gnu-ubuntu-22.04.tar.xz"
-          - llvm_version: "17.0.6"
-            llvm_filename: "clang+llvm-17.0.6-x86_64-linux-gnu-ubuntu-22.04.tar.xz"
-          - llvm_version: "18.1.4"
-            llvm_filename: "clang+llvm-18.1.4-x86_64-linux-gnu-ubuntu-18.04.tar.xz"
-          - llvm_version: "19.1.0"
-            llvm_filename: "LLVM-19.1.0-Linux-X64.tar.xz"
+          - {llvm_version: 13, runs-on: ubuntu-22.04, codename: jammy}
+          - {llvm_version: 14, runs-on: ubuntu-22.04, codename: jammy}
+          - {llvm_version: 15, runs-on: ubuntu-22.04, codename: jammy}
+          - {llvm_version: 16, runs-on: ubuntu-22.04, codename: jammy}
+          - {llvm_version: 17, runs-on: ubuntu-24.04, codename: noble}
+          - {llvm_version: 18, runs-on: ubuntu-24.04, codename: noble}
+          - {llvm_version: 19, runs-on: ubuntu-24.04, codename: noble}
     name: "LLVM ${{ matrix.llvm_version }}"
     steps:
       - name: Checkout Crystal source
         uses: actions/checkout@v4
 
-      - name: Cache LLVM
-        id: cache-llvm
-        uses: actions/cache@v4
-        with:
-          path: ./llvm
-          key: llvm-${{ matrix.llvm_version }}
-        if: "${{ !env.ACT }}"
-
       - name: Install LLVM ${{ matrix.llvm_version }}
         run: |
-          mkdir -p llvm
-          curl -L "https://github.com/llvm/llvm-project/releases/download/llvmorg-${{ matrix.llvm_version }}/${{ matrix.llvm_filename }}" > llvm.tar.xz
-          tar x --xz -C llvm --strip-components=1 -f llvm.tar.xz
-        if: steps.cache-llvm.outputs.cache-hit != 'true'
-
-      - name: Set up LLVM
-        run: |
-          sudo apt-get install -y libtinfo5
-          echo "PATH=$(pwd)/llvm/bin:$PATH" >> $GITHUB_ENV
-          echo "LLVM_CONFIG=$(pwd)/llvm/bin/llvm-config" >> $GITHUB_ENV
-          echo "LD_LIBRARY_PATH=$(pwd)/llvm/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+          sudo apt remove 'llvm-*' 'libllvm*'
+          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
+          sudo apt-add-repository -y deb http://apt.llvm.org/${{ matrix.codename }}/ llvm-toolchain-${{ matrix.codename }}-${{ matrix.llvm_version }} main
+          sudo apt install -y llvm-${{ matrix.llvm_version }}-dev lld
 
       - name: Install Crystal
         uses: crystal-lang/install-crystal@v1

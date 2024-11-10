@@ -9,7 +9,7 @@
 # * bionic libc
 #
 # See https://crystal-lang.org/reference/man/required_libraries.html#system-library
-{% if flag?(:win32) %}
+{% if flag?(:msvc) %}
   @[Link({{ flag?(:static) ? "libucrt" : "ucrt" }})]
 {% end %}
 lib LibC

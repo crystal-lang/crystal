@@ -1174,6 +1174,38 @@ class Crystal::Repl::Interpreter
     fiber.@context.resumable
   end
 
+  private def signal_descriptor(fd : Int32) : Nil
+    {% if flag?(:unix) %}
+      # replace the interpreter's signal writer so that the interpreted code
+      # will receive signals from now on
+      writer = IO::FileDescriptor.new(fd)
+      writer.sync = true
+      Crystal::System::Signal.writer = writer
+    {% else %}
+      raise "BUG: interpreter doesn't support signals on this target"
+    {% end %}
+  end
+
+  private def signal(signum : Int32, handler : Int32) : Nil
+    {% if flag?(:unix) %}
+      signal = ::Signal.new(signum)
+      case handler
+      when 0
+        signal.reset
+      when 1
+        signal.ignore
+      else
+        # register the signal for the OS so the process will receive them;
+        # registers a fake handler since the interpreter won't handle the signal:
+        # the interpreted code will receive it and will execute the interpreted
+        # handler
+        signal.trap { }
+      end
+    {% else %}
+      raise "BUG: interpreter doesn't support signals on this target"
+    {% end %}
+  end
+
   private def pry(ip, instructions, stack_bottom, stack)
     offset = (ip - instructions.instructions.to_unsafe).to_i32
     node = instructions.nodes[offset]?

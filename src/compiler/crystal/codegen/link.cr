@@ -120,18 +120,18 @@ module Crystal
   end
 
   class Program
-    def lib_flags
-      has_flag?("msvc") ? lib_flags_windows : lib_flags_posix
+    def lib_flags(cross_compiling : Bool = false)
+      has_flag?("msvc") ? lib_flags_windows(cross_compiling) : lib_flags_posix(cross_compiling)
     end
 
-    private def lib_flags_windows
+    private def lib_flags_windows(cross_compiling)
       flags = [] of String
 
       # Add CRYSTAL_LIBRARY_PATH locations, so the linker preferentially
       # searches user-given library paths.
       if has_flag?("msvc")
         CrystalLibraryPath.paths.each do |path|
-          flags << Process.quote_windows("/LIBPATH:#{path}")
+          flags << quote_flag("/LIBPATH:#{path}", cross_compiling)
         end
       end
 
@@ -141,14 +141,14 @@ module Crystal
         end
 
         if libname = ann.lib
-          flags << Process.quote_windows("#{libname}.lib")
+          flags << quote_flag("#{libname}.lib", cross_compiling)
         end
       end
 
       flags.join(" ")
     end
 
-    private def lib_flags_posix
+    private def lib_flags_posix(cross_compiling)
       flags = [] of String
       static_build = has_flag?("static")
 
@@ -158,7 +158,7 @@ module Crystal
       # Add CRYSTAL_LIBRARY_PATH locations, so the linker preferentially
       # searches user-given library paths.
       CrystalLibraryPath.paths.each do |path|
-        flags << Process.quote_posix("-L#{path}")
+        flags << quote_flag("-L#{path}", cross_compiling)
       end
 
       link_annotations.reverse_each do |ann|
@@ -173,15 +173,23 @@ module Crystal
         elsif (lib_name = ann.lib) && (flag = pkg_config(lib_name, static_build))
           flags << flag
         elsif (lib_name = ann.lib)
-          flags << Process.quote_posix("-l#{lib_name}")
+          flags << quote_flag("-l#{lib_name}", cross_compiling)
         end
 
         if framework = ann.framework
-          flags << "-framework" << Process.quote_posix(framework)
+          flags << "-framework" << quote_flag(framework, cross_compiling)
         end
       end
 
       flags.join(" ")
+    end
+
+    private def quote_flag(flag, cross_compiling)
+      if cross_compiling
+        has_flag?("windows") ? Process.quote_windows(flag) : Process.quote_posix(flag)
+      else
+        Process.quote(flag)
+      end
     end
 
     # Searches among CRYSTAL_LIBRARY_PATH, the compiler's directory, and PATH

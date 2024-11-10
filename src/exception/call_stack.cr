@@ -1,10 +1,7 @@
 {% if flag?(:interpreted) %}
   require "./call_stack/interpreter"
-{% elsif flag?(:win32) %}
+{% elsif flag?(:win32) && !flag?(:gnu) %}
   require "./call_stack/stackwalk"
-  {% if flag?(:gnu) %}
-    require "./lib_unwind"
-  {% end %}
 {% elsif flag?(:wasm32) %}
   require "./call_stack/null"
 {% else %}

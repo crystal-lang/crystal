@@ -5,7 +5,12 @@ lib LibLLVM
   # counterparts (e.g. `LLVMModuleFlagBehavior` v.s. `LLVM::Module::ModFlagBehavior`)
 
   enum ModuleFlagBehavior
-    Warning = 1
+    Error        = 0
+    Warning      = 1
+    Require      = 2
+    Override     = 3
+    Append       = 4
+    AppendUnique = 5
   end
 
   alias AttributeIndex = UInt

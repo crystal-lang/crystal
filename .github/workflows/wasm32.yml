@@ -2,6 +2,8 @@ name: WebAssembly CI
 
 on: [push, pull_request]
 
+permissions: {}
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
@@ -11,7 +13,7 @@ env:
 
 jobs:
   wasm32-test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     container: crystallang/crystal:1.14.0-build
     steps:
       - name: Download Crystal source
@@ -25,10 +27,11 @@ jobs:
       - name: Install LLVM
         run: |
           apt-get update
-          apt-get install -y curl lsb-release wget software-properties-common gnupg
-          curl -O https://apt.llvm.org/llvm.sh
-          chmod +x llvm.sh
-          ./llvm.sh 18
+          apt-get remove -y 'llvm-*' 'libllvm*'
+          apt-get install -y curl software-properties-common
+          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
+          apt-add-repository -y deb http://apt.llvm.org/noble/ llvm-toolchain-noble-18 main
+          apt-get install -y llvm-18-dev lld-18
           ln -s $(which wasm-ld-18) /usr/bin/wasm-ld
 
       - name: Download wasm32 libs
