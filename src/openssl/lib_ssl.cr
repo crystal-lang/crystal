@@ -139,7 +139,7 @@ lib LibSSL
     NETSCAPE_DEMO_CIPHER_CHANGE_BUG = 0x40000000
     CRYPTOPRO_TLSEXT_BUG            = 0x80000000
 
-    {% if compare_versions(OPENSSL_VERSION, "1.1.0") >= 0 || compare_versions(LibCrypto::LIBRESSL_VERSION, "2.3.0") >= 0 %}
+    {% if compare_versions(OPENSSL_VERSION, "1.1.0") >= 0 || compare_versions(LIBRESSL_VERSION, "2.3.0") >= 0 %}
       MICROSOFT_SESS_ID_BUG            = 0x00000000
       NETSCAPE_CHALLENGE_BUG           = 0x00000000
       NETSCAPE_REUSE_CIPHER_CHANGE_BUG = 0x00000000
@@ -258,7 +258,7 @@ lib LibSSL
     fun ssl_set_num_tickets = SSL_set_num_tickets(ctx : SSL, larg : LibC::SizeT) : Int
   {% end %}
 
-  {% if compare_versions(OPENSSL_VERSION, "1.1.0") >= 0 || compare_versions(LibCrypto::LIBRESSL_VERSION, "2.3.0") >= 0 %}
+  {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 || compare_versions(LibSSL::LIBRESSL_VERSION, "2.3.0") >= 0 %}
     fun tls_method = TLS_method : SSLMethod
   {% else %}
     fun ssl_library_init = SSL_library_init
