@@ -258,7 +258,7 @@ lib LibSSL
     fun ssl_set_num_tickets = SSL_set_num_tickets(ctx : SSL, larg : LibC::SizeT) : Int
   {% end %}
 
-  {% if compare_versions(OPENSSL_VERSION, "1.1.0") >= 0 || compare_versions(LibCrypto::LIBRESSL_VERSION, "2.3.0") >= 0  %}
+  {% if compare_versions(OPENSSL_VERSION, "1.1.0") >= 0 || compare_versions(LibCrypto::LIBRESSL_VERSION, "2.3.0") >= 0 %}
     fun tls_method = TLS_method : SSLMethod
   {% else %}
     fun ssl_library_init = SSL_library_init
