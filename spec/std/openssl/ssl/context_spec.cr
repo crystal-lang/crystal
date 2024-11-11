@@ -128,11 +128,12 @@ describe OpenSSL::SSL::Context do
     context = OpenSSL::SSL::Context::Client.new
     level = context.security_level
     context.security_level = level + 1
-    {% if LibSSL.has_method?(:ssl_ctx_get_security_level) %}
+
+    if LibSSL.responds_to?(:ssl_ctx_set_security_level)
       context.security_level.should eq(level + 1)
-    {% else %}
+    else
       context.security_level.should eq 0
-    {% end %}
+    end
   end
 
   it "adds temporary ecdh curve (P-256)" do
