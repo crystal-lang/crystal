@@ -193,7 +193,7 @@ class Crystal::Codegen::Target
   end
 
   def eabi?
-    environment_parts.includes? "eabi"
+    environment_parts.any? { |part| part.includes? "eabi" }
   end
 
   def to_target_machine(cpu = "", features = "", optimization_mode = Compiler::OptimizationMode::O0,
