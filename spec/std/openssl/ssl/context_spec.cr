@@ -194,12 +194,12 @@ describe OpenSSL::SSL::Context do
     context.verify_mode.should eq(OpenSSL::SSL::VerifyMode::PEER)
   end
 
-  {% if LibSSL.has_method?(:ssl_ctx_set_alpn_protos) %}
+  if LibSSL.responds_to?(:ssl_ctx_set_alpn_protos)
     it "alpn_protocol=" do
       context = OpenSSL::SSL::Context::Client.insecure
       context.alpn_protocol = "h2"
     end
-  {% end %}
+  end
 
   it "calls #finalize on insecure client context" do
     assert_finalizes("insecure_client_ctx") { OpenSSL::SSL::Context::Client.insecure }

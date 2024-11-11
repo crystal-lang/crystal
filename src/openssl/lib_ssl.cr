@@ -295,9 +295,9 @@ lib LibSSL
   {% end %}
 end
 
-{% if LibSSL.has_method?(:ssl_library_init) %}
+if LibSSL.responds_to?(:ssl_library_init)
   LibSSL.ssl_library_init
   LibSSL.ssl_load_error_strings
   LibCrypto.openssl_add_all_algorithms
   LibCrypto.err_load_crypto_strings
-{% end %}
+end
