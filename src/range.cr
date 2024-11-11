@@ -269,7 +269,7 @@ struct Range(B, E)
     Range.new(
       Math.min(self.begin, other.begin),
       Math.max(self.end, other.end),
-      exclusive:({self, other}.max_by(&.end).excludes_end?),
+      exclusive: ({self, other}.max_by(&.end).excludes_end?),
     )
   end
 
@@ -286,8 +286,8 @@ struct Range(B, E)
     Range.new(
       Math.max(self.begin, other.begin),
       Math.min(self.end, other.end),
-      exclusive:({self, other}.max_by(&.end).excludes_end?),
-    ) 
+      exclusive: ({self, other}.max_by(&.end).excludes_end?),
+    )
   end
 
   # Returns `true` if this range overlaps with another range.
