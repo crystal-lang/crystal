@@ -152,7 +152,7 @@ struct Number
   # delimiter (see `#format`).
   #
   # See `Int#humanize_bytes` to format a file size.
-  def humanize(io : IO, precision = 3, separator = '.', delimiter = ',', *, base = 10 ** 3, significant = true, unit_separator : String = "", prefixes : Indexable = SI_PREFIXES) : Nil
+  def humanize(io : IO, precision = 3, separator = '.', delimiter = ',', *, base = 10 ** 3, significant = true, unit_separator = nil, prefixes : Indexable = SI_PREFIXES) : Nil
     humanize(io, precision, separator, delimiter, base: base, significant: significant, unit_separator: unit_separator) do |magnitude, _|
       magnitude = Number.prefix_index(magnitude, prefixes: prefixes)
       {magnitude, Number.si_prefix(magnitude, prefixes)}
@@ -160,7 +160,7 @@ struct Number
   end
 
   # :ditto:
-  def humanize(precision = 3, separator = '.', delimiter = ',', *, base = 10 ** 3, significant = true, unit_separator : String = "", prefixes = SI_PREFIXES) : String
+  def humanize(precision = 3, separator = '.', delimiter = ',', *, base = 10 ** 3, significant = true, unit_separator = nil, prefixes = SI_PREFIXES) : String
     String.build do |io|
       humanize(io, precision, separator, delimiter, base: base, significant: significant, unit_separator: unit_separator, prefixes: prefixes)
     end
@@ -215,7 +215,7 @@ struct Number
   # ```
   #
   # See `Int#humanize_bytes` to format a file size.
-  def humanize(io : IO, precision = 3, separator = '.', delimiter = ',', *, base = 10 ** 3, significant = true, unit_separator : String = "", &prefixes : (Int32, Float64) -> {Int32, _} | {Int32, _, Bool}) : Nil
+  def humanize(io : IO, precision = 3, separator = '.', delimiter = ',', *, base = 10 ** 3, significant = true, unit_separator = nil, &prefixes : (Int32, Float64) -> {Int32, _} | {Int32, _, Bool}) : Nil
     if zero? || (responds_to?(:infinite?) && self.infinite?) || (responds_to?(:nan?) && self.nan?)
       digits = 0
     else
@@ -259,12 +259,12 @@ struct Number
 
     number.format(io, separator, delimiter, decimal_places: decimal_places, only_significant: significant)
 
-    io << unit_separator if unit
+    io << unit_separator.to_s if unit
     io << unit
   end
 
   # :ditto:
-  def humanize(precision = 3, separator = '.', delimiter = ',', *, base = 10 ** 3, significant = true, unit_separator : String = "", &) : String
+  def humanize(precision = 3, separator = '.', delimiter = ',', *, base = 10 ** 3, significant = true, unit_separator = nil, &) : String
     String.build do |io|
       humanize(io, precision, separator, delimiter, base: base, significant: significant, unit_separator: unit_separator) do |magnitude, number|
         yield magnitude, number
@@ -273,14 +273,14 @@ struct Number
   end
 
   # :ditto:
-  def humanize(io : IO, precision = 3, separator = '.', delimiter = ',', *, base = 10 ** 3, significant = true, unit_separator : String = "", prefixes : Proc) : Nil
+  def humanize(io : IO, precision = 3, separator = '.', delimiter = ',', *, base = 10 ** 3, significant = true, unit_separator = nil, prefixes : Proc) : Nil
     humanize(io, precision, separator, delimiter, base: base, significant: significant, unit_separator: unit_separator) do |magnitude, number|
       prefixes.call(magnitude, number)
     end
   end
 
   # :ditto:
-  def humanize(precision = 3, separator = '.', delimiter = ',', *, base = 10 ** 3, significant = true, unit_separator : String = "", prefixes : Proc) : String
+  def humanize(precision = 3, separator = '.', delimiter = ',', *, base = 10 ** 3, significant = true, unit_separator = nil, prefixes : Proc) : String
     String.build do |io|
       humanize(io, precision, separator, delimiter, base: base, significant: significant, unit_separator: unit_separator, prefixes: prefixes)
     end
@@ -322,7 +322,7 @@ struct Int
   # ```
   #
   # See `Number#humanize` for more details on the behaviour and arguments.
-  def humanize_bytes(io : IO, precision : Int = 3, separator = '.', *, significant : Bool = true, unit_separator : String = "", format : BinaryPrefixFormat = :IEC) : Nil
+  def humanize_bytes(io : IO, precision : Int = 3, separator = '.', *, significant : Bool = true, unit_separator = nil, format : BinaryPrefixFormat = :IEC) : Nil
     humanize(io, precision, separator, nil, base: 1024, significant: significant) do |magnitude|
       magnitude = Number.prefix_index(magnitude)
 
@@ -341,7 +341,7 @@ struct Int
   end
 
   # :ditto:
-  def humanize_bytes(precision : Int = 3, separator = '.', *, significant : Bool = true, unit_separator : String = "", format : BinaryPrefixFormat = :IEC) : String
+  def humanize_bytes(precision : Int = 3, separator = '.', *, significant : Bool = true, unit_separator = nil, format : BinaryPrefixFormat = :IEC) : String
     String.build do |io|
       humanize_bytes(io, precision, separator, significant: significant, unit_separator: unit_separator, format: format)
     end

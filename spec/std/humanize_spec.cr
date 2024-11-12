@@ -213,9 +213,13 @@ describe Number do
     it { assert_prints 1.0e+9.humanize(unit_separator: "\t"), "1.0\tG" }
     it { assert_prints 1.0e+35.humanize(unit_separator: "-"), "100,000-Q" }
     it { assert_prints 0.000_001.humanize(unit_separator: "\u2009"), "1.0\u2009µ" }
+    it { assert_prints 0.000_001.humanize(unit_separator: '\u2009'), "1.0\u2009µ" }
     it { assert_prints 0.000_000_001.humanize(unit_separator: "."), "1.0.n" }
     it { assert_prints 1_000_000_000_000.humanize(unit_separator: "__"), "1.0__T" }
     it { assert_prints 123_456_789_012.humanize(unit_separator: ","), "123,G" }
+    it { assert_prints 123_456_789_012.humanize(unit_separator: '-'), "123-G" }
+    it { assert_prints 123_456_789_012.humanize(unit_separator: 0), "1230G" }
+    it { assert_prints 123_456_789_012.humanize(unit_separator: nil), "123G" }
 
     it { assert_prints Float32::INFINITY.humanize, "Infinity" }
     it { assert_prints (-Float32::INFINITY).humanize, "-Infinity" }
