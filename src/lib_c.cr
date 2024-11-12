@@ -1,4 +1,4 @@
-{% if flag?(:win32) %}
+{% if flag?(:msvc) %}
   @[Link({{ flag?(:static) ? "libucrt" : "ucrt" }})]
 {% end %}
 lib LibC

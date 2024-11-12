@@ -116,6 +116,7 @@ module Crystal::System::File
     WinError::ERROR_FILE_NOT_FOUND,
     WinError::ERROR_PATH_NOT_FOUND,
     WinError::ERROR_INVALID_NAME,
+    WinError::ERROR_DIRECTORY,
   }
 
   def self.check_not_found_error(message, path)

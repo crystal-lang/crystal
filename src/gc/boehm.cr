@@ -164,6 +164,8 @@ lib LibGC
 
   fun stop_world_external = GC_stop_world_external
   fun start_world_external = GC_start_world_external
+  fun get_suspend_signal = GC_get_suspend_signal : Int
+  fun get_thr_restart_signal = GC_get_thr_restart_signal : Int
 end
 
 module GC
@@ -198,7 +200,7 @@ module GC
     {% end %}
     LibGC.init
 
-    LibGC.set_start_callback ->do
+    LibGC.set_start_callback -> do
       GC.lock_write
     end
 
@@ -449,7 +451,7 @@ module GC
     @@curr_push_other_roots = block
     @@prev_push_other_roots = LibGC.get_push_other_roots
 
-    LibGC.set_push_other_roots ->do
+    LibGC.set_push_other_roots -> do
       @@curr_push_other_roots.try(&.call)
       @@prev_push_other_roots.try(&.call)
     end
@@ -483,4 +485,16 @@ module GC
   def self.start_world : Nil
     LibGC.start_world_external
   end
+
+  {% if flag?(:unix) %}
+    # :nodoc:
+    def self.sig_suspend : Signal
+      Signal.new(LibGC.get_suspend_signal)
+    end
+
+    # :nodoc:
+    def self.sig_resume : Signal
+      Signal.new(LibGC.get_thr_restart_signal)
+    end
+  {% end %}
 end

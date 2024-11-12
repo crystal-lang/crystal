@@ -1,11 +1,3 @@
-{% if flag?(:musl) %}
-  # FIXME: These thread specs occasionally fail on musl/alpine based ci, so
-  # they're disabled for now to reduce noise.
-  # See https://github.com/crystal-lang/crystal/issues/8738
-  pending Thread::Mutex
-  {% skip_file %}
-{% end %}
-
 require "../spec_helper"
 
 # interpreter doesn't support threads yet (#14287)

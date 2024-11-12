@@ -76,7 +76,7 @@ class Crystal::IOCP::EventLoop < Crystal::EventLoop
 
       # Wait for completion timed out but it may have been interrupted or we ask
       # for immediate timeout (nonblocking), so we check for the next event
-      # readyness again:
+      # readiness again:
       return false if next_event.wake_at > Time.monotonic
     end
 
@@ -121,7 +121,7 @@ class Crystal::IOCP::EventLoop < Crystal::EventLoop
     return unless thread
 
     # alert the thread to interrupt GetQueuedCompletionStatusEx
-    LibC.QueueUserAPC(->(ptr : LibC::ULONG_PTR) {}, thread, LibC::ULONG_PTR.new(0))
+    LibC.QueueUserAPC(->(ptr : LibC::ULONG_PTR) { }, thread, LibC::ULONG_PTR.new(0))
   end
 
   def enqueue(event : Crystal::IOCP::Event)

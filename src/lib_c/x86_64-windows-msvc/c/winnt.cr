@@ -392,9 +392,65 @@ lib LibC
     optionalHeader : IMAGE_OPTIONAL_HEADER64
   end
 
+  IMAGE_DIRECTORY_ENTRY_EXPORT =  0
+  IMAGE_DIRECTORY_ENTRY_IMPORT =  1
+  IMAGE_DIRECTORY_ENTRY_IAT    = 12
+
+  IMAGE_SCN_CNT_INITIALIZED_DATA = 0x00000040
+
+  struct IMAGE_SECTION_HEADER
+    name : BYTE[8]
+    virtualSize : DWORD
+    virtualAddress : DWORD
+    sizeOfRawData : DWORD
+    pointerToRawData : DWORD
+    pointerToRelocations : DWORD
+    pointerToLinenumbers : DWORD
+    numberOfRelocations : WORD
+    numberOfLinenumbers : WORD
+    characteristics : DWORD
+  end
+
+  struct IMAGE_EXPORT_DIRECTORY
+    characteristics : DWORD
+    timeDateStamp : DWORD
+    majorVersion : WORD
+    minorVersion : WORD
+    name : DWORD
+    base : DWORD
+    numberOfFunctions : DWORD
+    numberOfNames : DWORD
+    addressOfFunctions : DWORD
+    addressOfNames : DWORD
+    addressOfNameOrdinals : DWORD
+  end
+
   struct IMAGE_IMPORT_BY_NAME
     hint : WORD
     name : CHAR[1]
+  end
+
+  struct IMAGE_SYMBOL_n_name
+    short : DWORD
+    long : DWORD
+  end
+
+  union IMAGE_SYMBOL_n
+    shortName : BYTE[8]
+    name : IMAGE_SYMBOL_n_name
+  end
+
+  IMAGE_SYM_CLASS_EXTERNAL = 2
+  IMAGE_SYM_CLASS_STATIC   = 3
+
+  @[Packed]
+  struct IMAGE_SYMBOL
+    n : IMAGE_SYMBOL_n
+    value : DWORD
+    sectionNumber : Short
+    type : WORD
+    storageClass : BYTE
+    numberOfAuxSymbols : BYTE
   end
 
   union IMAGE_THUNK_DATA64_u1

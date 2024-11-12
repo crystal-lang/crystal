@@ -227,6 +227,6 @@ end
 struct CRYSTAL_PSEUDO__NoReturn
 end
 
-# Similar in usage to `Nil`. `Void` is prefered for C lib bindings.
+# Similar in usage to `Nil`. `Void` is preferred for C lib bindings.
 struct CRYSTAL_PSEUDO__Void
 end

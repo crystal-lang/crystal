@@ -585,7 +585,7 @@ end
     def self.after_fork_child_callbacks
       @@after_fork_child_callbacks ||= [
         # reinit event loop first:
-        ->{ Crystal::EventLoop.current.after_fork },
+        -> { Crystal::EventLoop.current.after_fork },
 
         # reinit signal handling:
         ->Crystal::System::Signal.after_fork,
@@ -628,4 +628,8 @@ end
       sleep 1.day
     end
   end
+{% end %}
+
+{% if flag?(:interpreted) && flag?(:unix) %}
+  Crystal::System::Signal.setup_default_handlers
 {% end %}

@@ -24,5 +24,13 @@ module Crystal
     @[Primitive(:interpreter_fiber_resumable)]
     def self.fiber_resumable(context) : LibC::Long
     end
+
+    @[Primitive(:interpreter_signal_descriptor)]
+    def self.signal_descriptor(fd : Int32) : Nil
+    end
+
+    @[Primitive(:interpreter_signal)]
+    def self.signal(signum : Int32, handler : Int32) : Nil
+    end
   end
 end

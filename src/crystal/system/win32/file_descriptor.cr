@@ -194,8 +194,12 @@ module Crystal::System::FileDescriptor
     file_descriptor_close
   end
 
-  def file_descriptor_close
-    if LibC.CloseHandle(windows_handle) == 0
+  def file_descriptor_close(&)
+    # Clear the @volatile_fd before actually closing it in order to
+    # reduce the chance of reading an outdated handle value
+    handle = LibC::HANDLE.new(@volatile_fd.swap(LibC::INVALID_HANDLE_VALUE.address))
+
+    if LibC.CloseHandle(handle) == 0
       yield
     end
   end
