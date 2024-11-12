@@ -135,7 +135,7 @@ class Crystal::Command
         if executable_path = Process.executable_path
           crystal_path = File.dirname(executable_path)
         end
-        path = [crystal_path, ENV["PATH"]?].compact_map!.join(Process::PATH_DELIMITER)
+        path = [crystal_path, ENV["PATH"]?].compact!.join(Process::PATH_DELIMITER)
 
         Process.exec(external_command, options, env: {"PATH" => path})
       else

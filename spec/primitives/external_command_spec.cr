@@ -12,6 +12,8 @@ describe Crystal::Command do
           puts Process.find_executable("crystal")
           puts PROGRAM_NAME
           puts ARGV
+
+          exit 123
           CRYSTAL
 
         Process.run(compiler_path, ["build", source_file, "-o", command_path])
@@ -27,7 +29,8 @@ describe Crystal::Command do
       lines = process.output.gets_to_end.lines
 
       status = process.wait
-      status.success?.should be_true
+      status.normal_exit?.should be_true
+      status.exit_code.should eq 123
 
       lines.should eq [
         compiler_path,
