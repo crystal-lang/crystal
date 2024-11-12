@@ -114,21 +114,18 @@ struct Range(B, E)
       raise ArgumentError.new("Can't each beginless range")
     end
 
-    # TODO: This typeof and the macro interpolations are a workaround until #9324 is fixed.
-    typeof(yield current)
-
     {% if E == Nil %}
       while true
-        {{ "yield current".id }}
+        yield current
         current = current.succ
       end
     {% else %}
       end_value = @end
       while end_value.nil? || current < end_value
-        {{ "yield current".id }}
+        yield current
         current = current.succ
       end
-      {{ "yield current".id }} if !@exclusive && current == end_value
+      yield current if !@exclusive && current == end_value
     {% end %}
   end
 
