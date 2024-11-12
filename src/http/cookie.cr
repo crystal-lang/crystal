@@ -192,10 +192,8 @@ module HTTP
       end
     end
 
-    # tell the browser to delete the cookie.
-    # Set its value to an empty string
-    # and set its expiration time to the past
-    # Browsers delete cookies that have expired.
+    # Destroys the cookie.
+    # This is done by causing the cookie to expire. Also clears its value.
     def destroy
       self.value = ""
       self.expires = Time::UNIX_EPOCH
