@@ -73,7 +73,7 @@ class WaitGroup
   # wg.spawn { do_something }
   # wg.wait
   # ```
-  def spawn(name : String? = nil, &block) : Fiber
+  def spawn(*, name : String? = nil, &block) : Fiber
     add
     ::spawn(name: name) do
       block.call
