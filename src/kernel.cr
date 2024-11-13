@@ -630,6 +630,6 @@ end
   end
 {% end %}
 
-{% if flag?(:interpreted) && flag?(:unix) %}
+{% if flag?(:interpreted) && flag?(:unix) && Crystal::Interpreter.has_method?(:signal_descriptor) %}
   Crystal::System::Signal.setup_default_handlers
 {% end %}
