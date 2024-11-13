@@ -120,7 +120,7 @@ describe TCPServer, tags: "network" do
 
     it "binds to all interfaces" do
       port = unused_local_port
-      TCPServer.open(port) do |server|
+      TCPServer.open(Socket::IPAddress::UNSPECIFIED, port) do |server|
         server.local_address.port.should eq port
       end
     end
