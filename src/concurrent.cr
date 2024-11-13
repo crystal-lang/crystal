@@ -40,6 +40,7 @@ end
 # # Write "1" every 1 second and "2" every 2 seconds for 6 seconds.
 #
 # require "wait_group"
+#
 # wg = WaitGroup.new 2
 #
 # spawn do
