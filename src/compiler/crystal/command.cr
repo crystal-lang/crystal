@@ -142,7 +142,7 @@ class Crystal::Command
         path = [crystal_exec_path, ENV["PATH"]?].compact!.join(Process::PATH_DELIMITER)
 
         Process.exec(external_command, options, env: {
-          "PATH" => path,
+          "PATH"              => path,
           "CRYSTAL_EXEC_PATH" => crystal_exec_path,
         })
       else
