@@ -192,8 +192,8 @@ class Crystal::Codegen::Target
     @architecture == "avr"
   end
 
-  def eabi?
-    environment_parts.any? { |part| part.includes? "eabi" }
+  def embedded?
+    environment_parts.any? { |part| part == "eabi" || part == "eabihf" }
   end
 
   def to_target_machine(cpu = "", features = "", optimization_mode = Compiler::OptimizationMode::O0,
@@ -232,7 +232,7 @@ class Crystal::Codegen::Target
                 in .o0?             then LLVM::CodeGenOptLevel::None
                 end
 
-    if eabi?
+    if embedded?
       reloc = LLVM::RelocMode::Static
     else
       reloc = LLVM::RelocMode::PIC
