@@ -345,16 +345,26 @@ record ChangelogEntry,
 
       io << " ("
       pull_requests.join(io, ", ") do |pr|
-        print_link_and_thanks(io, pr)
+        pr.link_ref(io)
+      end
+
+      authors = collect_authors
+      if authors.present?
+        io << ", thanks "
+        authors.join(io, ", ") do |author|
+          io << "@" << author
+        end
       end
       io << ")"
     end
 
-    def print_link_and_thanks(io, pr)
-      pr.link_ref(io)
-      if author = pr.author
-        io << ", thanks @" << author
+    def collect_authors
+      authors = [] of String
+      pull_requests.each do |pr|
+        author = pr.author || next
+        authors << author unless authors.includes?(author)
       end
+      authors
     end
 
     def print_ref_labels(io)
