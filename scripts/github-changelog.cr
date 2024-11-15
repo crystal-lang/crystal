@@ -313,8 +313,15 @@ end
 milestone = query_milestone(api_token, repository, milestone)
 
 record ChangelogEntry,
-  pr : PullRequest,
-  fixups : Array(PullRequest) = [] of PullRequest do
+  pull_requests = Array(PullRequest) do
+    def initialize(pr : PullRequest)
+      @pull_requests = [pr]
+    end
+
+    def pr
+      pull_requests[0]
+    end
+
     def to_s(io : IO)
       if sub_topic = pr.sub_topic
         io << "*(" << pr.sub_topic << ")* "
@@ -337,10 +344,8 @@ record ChangelogEntry,
       io << pr.title.sub(/^\[?(?:#{pr.type}|#{pr.sub_topic})(?::|\]:?) /i, "")
 
       io << " ("
-      print_link_and_thanks(io, pr)
-      io << ", " if fixups.present?
-      fixups.join(io) do |fixup|
-        print_link_and_thanks(io, fixup)
+      pull_requests.join(io, ", ") do |pr|
+        print_link_and_thanks(io, pr)
       end
       io << ")"
     end
@@ -353,8 +358,7 @@ record ChangelogEntry,
     end
 
     def print_ref_labels(io)
-      print_ref_label(io, pr)
-      fixups.each { |pr| print_ref_label(io, pr) }
+      pull_requests.each { |pr| print_ref_label(io, pr) }
     end
 
     def print_ref_label(io, pr)
@@ -373,7 +377,7 @@ milestone.pull_requests.each do |pr|
 
   parent_entry = entries.find { |entry| entry.pr.number == parent_number }
   if parent_entry
-    parent_entry.fixups << pr
+    parent_entry.pull_requests << pr
   else
     STDERR.puts "Unresolved fixup: ##{parent_number} for: #{pr.title} (##{pr.number})"
   end
