@@ -69,7 +69,7 @@ module Float::FastFloat
         mantissa = (bits & mantissa_mask) | hidden_bit_mask
       end
 
-      AdjustedMantissa.new(power2: power2, mantissa: mantissa)
+      AdjustedMantissa.new(power2: power2, mantissa: mantissa.to_u64!)
     end
 
     # get the extended precision value of the halfway point between b and b+u.
