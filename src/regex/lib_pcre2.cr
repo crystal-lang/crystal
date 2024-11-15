@@ -1,3 +1,8 @@
+# Supported library versions:
+#
+# * libpcre2 (recommended: 10.36+)
+#
+# See https://crystal-lang.org/reference/man/required_libraries.html#regular-expression-engine
 @[Link("pcre2-8", pkg_config: "libpcre2-8")]
 {% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
   @[Link(dll: "pcre2-8.dll")]
