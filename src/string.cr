@@ -1,9 +1,9 @@
-require "c/stdlib"
 require "c/string"
 require "crystal/small_deque"
 {% unless flag?(:without_iconv) %}
   require "crystal/iconv"
 {% end %}
+require "float/fast_float"
 
 # A `String` represents an immutable sequence of UTF-8 characters.
 #
@@ -732,10 +732,7 @@ class String
 
   # :ditto:
   def to_f64?(whitespace : Bool = true, strict : Bool = true) : Float64?
-    to_f_impl(whitespace: whitespace, strict: strict) do
-      v = LibC.strtod self, out endptr
-      {v, endptr}
-    end
+    Float::FastFloat.to_f64?(self, whitespace, strict)
   end
 
   # Same as `#to_f` but returns a Float32.
@@ -745,59 +742,7 @@ class String
 
   # Same as `#to_f?` but returns a Float32.
   def to_f32?(whitespace : Bool = true, strict : Bool = true) : Float32?
-    to_f_impl(whitespace: whitespace, strict: strict) do
-      v = LibC.strtof self, out endptr
-      {v, endptr}
-    end
-  end
-
-  private def to_f_impl(whitespace : Bool = true, strict : Bool = true, &)
-    return unless first_char = self[0]?
-    return unless whitespace || '0' <= first_char <= '9' || first_char.in?('-', '+', 'i', 'I', 'n', 'N')
-
-    v, endptr = yield
-
-    unless v.finite?
-      startptr = to_unsafe
-      if whitespace
-        while startptr.value.unsafe_chr.ascii_whitespace?
-          startptr += 1
-        end
-      end
-      if startptr.value.unsafe_chr.in?('+', '-')
-        startptr += 1
-      end
-
-      if v.nan?
-        return unless startptr.value.unsafe_chr.in?('n', 'N')
-      else
-        return unless startptr.value.unsafe_chr.in?('i', 'I')
-      end
-    end
-
-    string_end = to_unsafe + bytesize
-
-    # blank string
-    return if endptr == to_unsafe
-
-    if strict
-      if whitespace
-        while endptr < string_end && endptr.value.unsafe_chr.ascii_whitespace?
-          endptr += 1
-        end
-      end
-      # reached the end of the string
-      v if endptr == string_end
-    else
-      ptr = to_unsafe
-      if whitespace
-        while ptr < string_end && ptr.value.unsafe_chr.ascii_whitespace?
-          ptr += 1
-        end
-      end
-      # consumed some bytes
-      v if endptr > ptr
-    end
+    Float::FastFloat.to_f32?(self, whitespace, strict)
   end
 
   # Returns the `Char` at the given *index*.
