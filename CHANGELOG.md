@@ -17,6 +17,7 @@
 - *(networking)* Better handle explicit chunked encoding responses ([#15092], thanks @Blacksmoke16)
 - *(networking)* Support OpenSSL on MSYS2 ([#15111], thanks @HertzDevil)
 - *(runtime)* Support call stacks for MinGW-w64 builds ([#15117], thanks @HertzDevil)
+- *(runtime)* Support MSYS2's CLANGARM64 environment on ARM64 Windows ([#15159], thanks @HertzDevil)
 - *(text)* Add `unit_separator` to `#humanize` and `#humanize_bytes` ([#15176], thanks @CTC97)
 - *(text)* Add `Regex::CompileOptions::MULTILINE_ONLY` ([#14870], thanks @ralsina)
 - *(text)* Add type restrictions to Levenshtein ([#15168], thanks @beta-ziliani)
@@ -30,18 +31,21 @@
 [#15092]: https://github.com/crystal-lang/crystal/pull/15092
 [#15111]: https://github.com/crystal-lang/crystal/pull/15111
 [#15117]: https://github.com/crystal-lang/crystal/pull/15117
+[#15159]: https://github.com/crystal-lang/crystal/pull/15159
 [#15176]: https://github.com/crystal-lang/crystal/pull/15176
 [#14870]: https://github.com/crystal-lang/crystal/pull/14870
 [#15168]: https://github.com/crystal-lang/crystal/pull/15168
 
 #### compiler
 
+- Basic MinGW-w64 cross-compilation support ([#15070], thanks @HertzDevil)
 - *(cli)* Support building from a MinGW-w64-based compiler ([#15077], thanks @HertzDevil)
 - *(codegen)* Add indirect branch tracking ([#15122], thanks @ysbaddaden)
 - *(interpreter)* Support "long format" DLL import libraries ([#15119], thanks @HertzDevil)
 - *(interpreter)* Add `cc`'s search paths to Unix dynamic library loader ([#15127], thanks @HertzDevil)
 - *(interpreter)* Basic MinGW-w64-based interpreter support ([#15140], thanks @HertzDevil)
 
+[#15070]: https://github.com/crystal-lang/crystal/pull/15070
 [#15077]: https://github.com/crystal-lang/crystal/pull/15077
 [#15122]: https://github.com/crystal-lang/crystal/pull/15122
 [#15119]: https://github.com/crystal-lang/crystal/pull/15119
@@ -56,14 +60,6 @@
 [#14718]: https://github.com/crystal-lang/crystal/pull/14718
 [#15059]: https://github.com/crystal-lang/crystal/pull/15059
 
-#### other
-
-- Basic MinGW-w64 cross-compilation support ([#15070], thanks @HertzDevil)
-- Support MSYS2's CLANGARM64 environment on ARM64 Windows ([#15159], thanks @HertzDevil)
-
-[#15070]: https://github.com/crystal-lang/crystal/pull/15070
-[#15159]: https://github.com/crystal-lang/crystal/pull/15159
-
 ### Bugfixes
 
 #### lang
@@ -74,6 +70,7 @@
 
 #### stdlib
 
+- LibC bindings and std specs on NetBSD 10 ([#15115], thanks @ysbaddaden)
 - *(files)* Treat `WinError::ERROR_DIRECTORY` as an error for non-existent files ([#15114], thanks @HertzDevil)
 - *(files)* Replace handle atomically in `IO::FileDescriptor#close` on Windows ([#15165], thanks @HertzDevil)
 - *(llvm)* Fix `find-llvm-config` to ignore `LLVM_CONFIG`'s escape sequences ([#15076], thanks @HertzDevil)
@@ -86,6 +83,7 @@
 - *(runtime)* Fix static linking when using MinGW-w64 ([#15167], thanks @HertzDevil)
 - *(text)* Fix libiconv build on Windows ([#15095], thanks @HertzDevil)
 
+[#15115]: https://github.com/crystal-lang/crystal/pull/15115
 [#15114]: https://github.com/crystal-lang/crystal/pull/15114
 [#15165]: https://github.com/crystal-lang/crystal/pull/15165
 [#15076]: https://github.com/crystal-lang/crystal/pull/15076
@@ -100,8 +98,10 @@
 
 #### compiler
 
+- OpenBSD: fix integration and broken specs ([#15118], thanks @ysbaddaden)
 - *(interpreter)* setup signal handlers in interpreted code ([#14766], thanks @ysbaddaden, [#15178], thanks @straight-shoota)
 
+[#15118]: https://github.com/crystal-lang/crystal/pull/15118
 [#14766]: https://github.com/crystal-lang/crystal/pull/14766
 [#15178]: https://github.com/crystal-lang/crystal/pull/15178
 
@@ -111,17 +111,9 @@
 
 [#15082]: https://github.com/crystal-lang/crystal/pull/15082
 
-#### other
-
-- LibC bindings and std specs on NetBSD 10 ([#15115], thanks @ysbaddaden)
-- OpenBSD: fix integration and broken specs ([#15118], thanks @ysbaddaden)
-
-[#15115]: https://github.com/crystal-lang/crystal/pull/15115
-[#15118]: https://github.com/crystal-lang/crystal/pull/15118
-
 ### Chores
 
-#### other
+#### stdlib
 
 - Fix various typos ([#15080], thanks @kojix2)
 
@@ -174,6 +166,7 @@
 - Add docs for lib bindings with supported library versions ([#14900], thanks @straight-shoota)
 - *(concurrency)* Make `Fiber.timeout` and `.cancel_timeout` nodoc ([#15184], thanks @straight-shoota)
 - *(concurrency)* Update example code for `::spawn` with `WaitGroup` ([#15191], thanks @BigBoyBarney)
+- *(numeric)* Clarify behavior of `strict` for `String`-to-number conversions ([#15199], thanks @HertzDevil)
 - *(runtime)* Make `Box` constructor and `object` getter nodoc ([#15136], thanks @straight-shoota)
 - *(system)* Add example for `Dir.glob` ([#15171], thanks @BigBoyBarney)
 - *(text)* Add note about locale-dependent system error messages ([#15196], thanks @HertzDevil)
@@ -182,6 +175,7 @@
 [#14900]: https://github.com/crystal-lang/crystal/pull/14900
 [#15184]: https://github.com/crystal-lang/crystal/pull/15184
 [#15191]: https://github.com/crystal-lang/crystal/pull/15191
+[#15199]: https://github.com/crystal-lang/crystal/pull/15199
 [#15136]: https://github.com/crystal-lang/crystal/pull/15136
 [#15171]: https://github.com/crystal-lang/crystal/pull/15171
 [#15196]: https://github.com/crystal-lang/crystal/pull/15196
@@ -190,20 +184,26 @@
 #### other
 
 - Fix `EventLoop` docs for `Socket` `read`, `write` ([#15194], thanks @straight-shoota)
+- Fixup libressl version range for `lib_crypto` ([#15198], thanks @straight-shoota)
 
 [#15194]: https://github.com/crystal-lang/crystal/pull/15194
+[#15198]: https://github.com/crystal-lang/crystal/pull/15198
 
 ### Specs
 
 #### stdlib
 
+- Fix failing specs on FreeBSD ([#15093], thanks @ysbaddaden)
 - *(networking)* DragonFlyBSD: std specs fixes + pending ([#15152], thanks @ysbaddaden)
 - *(networking)* Close some dangling sockets in specs ([#15163], thanks @HertzDevil)
+- *(networking)* Update specs to run with IPv6 support disabled ([#15046], thanks @Blacksmoke16)
 - *(system)* Improve `System::User` specs on Windows ([#15156], thanks @HertzDevil)
 - *(system)* Make `cmd.exe` drop `%PROCESSOR_ARCHITECTURE%` in `Process` specs ([#15158], thanks @HertzDevil)
 
+[#15093]: https://github.com/crystal-lang/crystal/pull/15093
 [#15152]: https://github.com/crystal-lang/crystal/pull/15152
 [#15163]: https://github.com/crystal-lang/crystal/pull/15163
+[#15046]: https://github.com/crystal-lang/crystal/pull/15046
 [#15156]: https://github.com/crystal-lang/crystal/pull/15156
 [#15158]: https://github.com/crystal-lang/crystal/pull/15158
 
@@ -221,13 +221,9 @@
 
 #### other
 
-- Fix failing specs on FreeBSD ([#15093], thanks @ysbaddaden)
 - Disable specs that break on MinGW-w64 ([#15116], thanks @HertzDevil)
-- Update specs to run with IPv6 support disabled ([#15046], thanks @Blacksmoke16)
 
-[#15093]: https://github.com/crystal-lang/crystal/pull/15093
 [#15116]: https://github.com/crystal-lang/crystal/pull/15116
-[#15046]: https://github.com/crystal-lang/crystal/pull/15046
 
 ### Infrastructure
 
