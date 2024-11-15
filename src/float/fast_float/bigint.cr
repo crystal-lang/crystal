@@ -201,31 +201,13 @@ module Float::FastFloat
     uint64_hi64(x0, x1.unsafe_shl(32) | x2)
   end
 
-  {% unless flag?(:interpreted) %}
-    lib Intrinsics
-      {% if Limb == UInt64 %}
-        fun uadd_with_overflow_i64 = "llvm.uadd.with.overflow.i64"(UInt64, UInt64) : {UInt64, Bool}
-      {% else %}
-        fun uadd_with_overflow_i32 = "llvm.uadd.with.overflow.i32"(UInt32, UInt32) : {UInt32, Bool}
-      {% end %}
-    end
-  {% end %}
-
   # add two small integers, checking for overflow.
   # we want an efficient operation.
   # NOTE(crystal): returns also *overflow* by value
   def self.scalar_add(x : Limb, y : Limb) : {Limb, Bool}
-    {% if flag?(:interpreted) %}
-      z = x &+ y
-      overflow = z < x
-      {z, overflow}
-    {% else %}
-      {% if Limb == UInt64 %}
-        Intrinsics.uadd_with_overflow_i64(x, y)
-      {% else %}
-        Intrinsics.uadd_with_overflow_i32(x, y)
-      {% end %}
-    {% end %}
+    z = x &+ y
+    overflow = z < x
+    {z, overflow}
   end
 
   # multiply two small integers, getting both the high and low bits.
