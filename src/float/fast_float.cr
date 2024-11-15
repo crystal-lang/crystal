@@ -42,11 +42,14 @@ struct Float
       finish = start + str.bytesize
       options = ParseOptionsT(typeof(str.to_unsafe.value)).new(format: :general)
 
-      ret = BinaryFormat_Float64.new.from_chars_advanced(start, finish, pointerof(value), options, whitespace: whitespace)
-      if ret.ec == Errno::NONE
-        if trailing_chars_allowed?(ret.ptr, finish, whitespace, strict)
-          value
-        end
+      if whitespace
+        start += str.calc_excess_left
+        finish -= str.calc_excess_right
+      end
+
+      ret = BinaryFormat_Float64.new.from_chars_advanced(start, finish, pointerof(value), options)
+      if ret.ec == Errno::NONE && (!strict || ret.ptr == finish)
+        value
       end
     end
 
@@ -56,24 +59,14 @@ struct Float
       finish = start + str.bytesize
       options = ParseOptionsT(typeof(str.to_unsafe.value)).new(format: :general)
 
-      ret = BinaryFormat_Float32.new.from_chars_advanced(start, finish, pointerof(value), options, whitespace: whitespace)
-      if ret.ec == Errno::NONE
-        if trailing_chars_allowed?(ret.ptr, finish, whitespace, strict)
-          value
-        end
+      if whitespace
+        start += str.calc_excess_left
+        finish -= str.calc_excess_right
       end
-    end
 
-    private def self.trailing_chars_allowed?(ptr, finish, whitespace, strict)
-      if strict
-        if whitespace
-          while ptr < finish && ptr.value.unsafe_chr.ascii_whitespace?
-            ptr += 1
-          end
-        end
-        ptr == finish
-      else
-        true
+      ret = BinaryFormat_Float32.new.from_chars_advanced(start, finish, pointerof(value), options)
+      if ret.ec == Errno::NONE && (!strict || ret.ptr == finish)
+        value
       end
     end
   end

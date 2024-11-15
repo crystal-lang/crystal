@@ -172,18 +172,12 @@ module Float::FastFloat
       FromCharsResultT(UC).new(ptr, ec)
     end
 
-    # NOTE(crystal): *whitespace* is a normal argument
-    def from_chars_advanced(first : UC*, last : UC*, value : T*, options : ParseOptionsT(UC), whitespace : Bool) : FromCharsResultT(UC) forall UC
+    def from_chars_advanced(first : UC*, last : UC*, value : T*, options : ParseOptionsT(UC)) : FromCharsResultT(UC) forall UC
       {% raise "only some floating-point types are supported" unless T == Float32 || T == Float64 %}
 
       # TODO(crystal): support UInt16 and UInt32
       {% raise "only UInt8 is supported" unless UC == UInt8 %}
 
-      if whitespace
-        while first != last && first.value.unsafe_chr.ascii_whitespace?
-          first += 1
-        end
-      end
       if first == last
         return FromCharsResultT(UC).new(first, Errno::EINVAL)
       end

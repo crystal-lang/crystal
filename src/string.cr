@@ -2105,7 +2105,8 @@ class String
     remove_excess_left(excess_left)
   end
 
-  private def calc_excess_right
+  # :nodoc:
+  def calc_excess_right
     if single_byte_optimizable?
       i = bytesize - 1
       while i >= 0 && to_unsafe[i].unsafe_chr.ascii_whitespace?
@@ -2143,7 +2144,8 @@ class String
     bytesize - byte_index
   end
 
-  private def calc_excess_left
+  # :nodoc:
+  def calc_excess_left
     if single_byte_optimizable?
       excess_left = 0
       # All strings end with '\0', and it's not a whitespace
