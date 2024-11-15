@@ -100,7 +100,7 @@
 
 #### compiler
 
-- *(interpreter)* setup signal handlers in interpreted code ([#14766], thanks @ysbaddaden)
+- *(interpreter)* setup signal handlers in interpreted code ([#14766], thanks @ysbaddaden, [#15178], thanks @straight-shoota)
 
 [#14766]: https://github.com/crystal-lang/crystal/pull/14766
 
