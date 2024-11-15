@@ -250,9 +250,12 @@ module Float::FastFloat
   # multiply bigint by scalar value.
   def self.small_mul(vec : Stackvec(Size)*, y : Limb) : Bool forall Size
     carry = Limb.zero
-    vec.value.map_with_index! do |xi, i|
+    i = 0
+    while i < vec.value.size
+      xi = vec.value.unsafe_fetch(i)
       z, carry = scalar_mul(xi, y, carry)
-      z
+      vec.value.unsafe_put(i, z)
+      i &+= 1
     end
     if carry != 0
       fastfloat_try vec.value.try_push(carry)
@@ -270,8 +273,10 @@ module Float::FastFloat
     end
 
     carry = false
-    y.each_with_index do |yi, index|
+    index = 0
+    while index < y.size
       xi = x.value.unsafe_fetch(index &+ start)
+      yi = y.unsafe_fetch(index)
       c2 = false
       xi, c1 = scalar_add(xi, yi)
       if carry
@@ -279,6 +284,7 @@ module Float::FastFloat
       end
       x.value.unsafe_put(index &+ start, xi)
       carry = c1 || c2
+      index &+= 1
     end
 
     # handle overflow
@@ -440,7 +446,8 @@ module Float::FastFloat
       elsif @vec.size < other.value.@vec.size
         -1
       else
-        @vec.size.downto(1) do |index|
+        index = @vec.size
+        while index > 0
           xi = @vec.unsafe_fetch(index &- 1)
           yi = other.value.@vec.unsafe_fetch(index &- 1)
           if xi > yi
@@ -448,6 +455,7 @@ module Float::FastFloat
           elsif xi < yi
             return -1
           end
+          index &-= 1
         end
         0
       end
@@ -464,10 +472,12 @@ module Float::FastFloat
       shl = n
       shr = LIMB_BITS &- n
       prev = Limb.zero
-      @vec.map_with_index! do |xi, index|
-        (xi.unsafe_shl(shl) | prev.unsafe_shr(shr)).tap do
-          prev = xi
-        end
+      index = 0
+      while index < @vec.size
+        xi = @vec.unsafe_fetch(index)
+        @vec.unsafe_put(index, xi.unsafe_shl(shl) | prev.unsafe_shr(shr))
+        prev = xi
+        index &+= 1
       end
 
       carry = prev.unsafe_shr(shr)

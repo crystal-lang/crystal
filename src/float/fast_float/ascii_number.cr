@@ -135,8 +135,8 @@ module Float::FastFloat
       p += 1
     end
     end_of_integer_part = p
-    digit_count = (end_of_integer_part - start_digits).to_i64!
-    answer.integer = Slice.new(start_digits, digit_count.to_i32)
+    digit_count = (end_of_integer_part - start_digits).to_i32!
+    answer.integer = Slice.new(start_digits, digit_count)
     if fmt.json_fmt?
       # at least 1 digit in integer part, without leading zeros
       if digit_count == 0
@@ -162,7 +162,7 @@ module Float::FastFloat
         i = i &* 10 &+ digit # in rare cases, this will overflow, but that's ok
       end
       exponent = before - p
-      answer.fraction = Slice.new(before, (p - before).to_i32)
+      answer.fraction = Slice.new(before, (p - before).to_i32!)
       digit_count &-= exponent
     end
     if fmt.json_fmt?
@@ -246,7 +246,7 @@ module Float::FastFloat
         int_end = p + answer.integer.size
         minimal_nineteen_digit_integer = 1000000000000000000_u64
         while i < minimal_nineteen_digit_integer && p != int_end
-          i = i &* 10 &+ (p.value - '0'.ord).to_u64!
+          i = i &* 10 &+ (p.value &- '0'.ord).to_u64!
           p += 1
         end
         if i >= minimal_nineteen_digit_integer # We have a big integers
@@ -255,7 +255,7 @@ module Float::FastFloat
           p = answer.fraction.to_unsafe
           frac_end = p + answer.fraction.size
           while i < minimal_nineteen_digit_integer && p != frac_end
-            i = i &* 10 &+ (p.value - '0'.ord).to_u64!
+            i = i &* 10 &+ (p.value &- '0'.ord).to_u64!
             p += 1
           end
           exponent = (answer.fraction.to_unsafe - p) &+ exp_number
