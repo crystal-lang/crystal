@@ -1,5 +1,283 @@
 # Changelog
 
+## [1.15.0] (2025-01-09)
+
+[1.15.0]: https://github.com/crystal-lang/crystal/releases/1.15.0
+
+### Features
+
+#### stdlib
+
+- *(collection)* Add `Iterator(T).empty` ([#15039], thanks @spuun)
+- *(collection)* Add `Enumerable#find_value` ([#14893], thanks @jgaskins)
+- *(concurrency)* Implement the ARM64 Windows context switch ([#15155], thanks @HertzDevil)
+- *(concurrency)* Add optional `name` parameter forward to `WaitGroup#spawn` ([#15189], thanks @spuun)
+- *(crypto)* Enable bindings for functions in LibreSSL ([#15177], thanks @straight-shoota)
+- *(networking)* Add `Socket::Address.from` without `addrlen` ([#15060], thanks @mamantoha)
+- *(networking)* Better handle explicit chunked encoding responses ([#15092], thanks @Blacksmoke16)
+- *(networking)* Support OpenSSL on MSYS2 ([#15111], thanks @HertzDevil)
+- *(runtime)* Support call stacks for MinGW-w64 builds ([#15117], thanks @HertzDevil)
+- *(text)* Add `unit_separator` to `#humanize` and `#humanize_bytes` ([#15176], thanks @CTC97)
+- *(text)* Add `Regex::CompileOptions::MULTILINE_ONLY` ([#14870], thanks @ralsina)
+- *(text)* Add type restrictions to Levenshtein ([#15168], thanks @beta-ziliani)
+
+[#15039]: https://github.com/crystal-lang/crystal/pull/15039
+[#14893]: https://github.com/crystal-lang/crystal/pull/14893
+[#15155]: https://github.com/crystal-lang/crystal/pull/15155
+[#15189]: https://github.com/crystal-lang/crystal/pull/15189
+[#15177]: https://github.com/crystal-lang/crystal/pull/15177
+[#15060]: https://github.com/crystal-lang/crystal/pull/15060
+[#15092]: https://github.com/crystal-lang/crystal/pull/15092
+[#15111]: https://github.com/crystal-lang/crystal/pull/15111
+[#15117]: https://github.com/crystal-lang/crystal/pull/15117
+[#15176]: https://github.com/crystal-lang/crystal/pull/15176
+[#14870]: https://github.com/crystal-lang/crystal/pull/14870
+[#15168]: https://github.com/crystal-lang/crystal/pull/15168
+
+#### compiler
+
+- *(cli)* Support building from a MinGW-w64-based compiler ([#15077], thanks @HertzDevil)
+- *(codegen)* Add indirect branch tracking ([#15122], thanks @ysbaddaden)
+- *(interpreter)* Support "long format" DLL import libraries ([#15119], thanks @HertzDevil)
+- *(interpreter)* Add `cc`'s search paths to Unix dynamic library loader ([#15127], thanks @HertzDevil)
+- *(interpreter)* Basic MinGW-w64-based interpreter support ([#15140], thanks @HertzDevil)
+
+[#15077]: https://github.com/crystal-lang/crystal/pull/15077
+[#15122]: https://github.com/crystal-lang/crystal/pull/15122
+[#15119]: https://github.com/crystal-lang/crystal/pull/15119
+[#15127]: https://github.com/crystal-lang/crystal/pull/15127
+[#15140]: https://github.com/crystal-lang/crystal/pull/15140
+
+#### tools
+
+- *(formatter)* Enable pending formatter features ([#14718], thanks @Blacksmoke16)
+- *(unreachable)* Implement `codecov` format for `unreachable` tool ([#15059], thanks @Blacksmoke16)
+
+[#14718]: https://github.com/crystal-lang/crystal/pull/14718
+[#15059]: https://github.com/crystal-lang/crystal/pull/15059
+
+#### other
+
+- Basic MinGW-w64 cross-compilation support ([#15070], thanks @HertzDevil)
+- Support MSYS2's CLANGARM64 environment on ARM64 Windows ([#15159], thanks @HertzDevil)
+
+[#15070]: https://github.com/crystal-lang/crystal/pull/15070
+[#15159]: https://github.com/crystal-lang/crystal/pull/15159
+
+### Bugfixes
+
+#### lang
+
+- *(macros)* Add location information to more MacroIf related nodes ([#15100], thanks @Blacksmoke16)
+
+[#15100]: https://github.com/crystal-lang/crystal/pull/15100
+
+#### stdlib
+
+- *(files)* Treat `WinError::ERROR_DIRECTORY` as an error for non-existent files ([#15114], thanks @HertzDevil)
+- *(files)* Replace handle atomically in `IO::FileDescriptor#close` on Windows ([#15165], thanks @HertzDevil)
+- *(llvm)* Fix `find-llvm-config` to ignore `LLVM_CONFIG`'s escape sequences ([#15076], thanks @HertzDevil)
+- *(networking)* **[regression]** Fix `UNIXSocket#receive` ([#15107], thanks @straight-shoota)
+- *(numeric)* Fix `Complex#/` edge cases ([#15086], thanks @HertzDevil)
+- *(numeric)* Fix `Number#humanize` printing of `(-)Infinity` and `NaN` ([#15090], thanks @lachlan)
+- *(runtime)* Fix Deadlock with parallel stop-world/fork calls in MT ([#15096], thanks @ysbaddaden)
+- *(runtime)* **[regression]** Protect constant initializers with mutex on Windows ([#15134], thanks @HertzDevil)
+- *(runtime)* use `uninitialized LibC::SigsetT` ([#15144], thanks @straight-shoota)
+- *(runtime)* Fix static linking when using MinGW-w64 ([#15167], thanks @HertzDevil)
+- *(text)* Fix libiconv build on Windows ([#15095], thanks @HertzDevil)
+
+[#15114]: https://github.com/crystal-lang/crystal/pull/15114
+[#15165]: https://github.com/crystal-lang/crystal/pull/15165
+[#15076]: https://github.com/crystal-lang/crystal/pull/15076
+[#15107]: https://github.com/crystal-lang/crystal/pull/15107
+[#15086]: https://github.com/crystal-lang/crystal/pull/15086
+[#15090]: https://github.com/crystal-lang/crystal/pull/15090
+[#15096]: https://github.com/crystal-lang/crystal/pull/15096
+[#15134]: https://github.com/crystal-lang/crystal/pull/15134
+[#15144]: https://github.com/crystal-lang/crystal/pull/15144
+[#15167]: https://github.com/crystal-lang/crystal/pull/15167
+[#15095]: https://github.com/crystal-lang/crystal/pull/15095
+
+#### compiler
+
+- *(interpreter)* setup signal handlers in interpreted code ([#14766], thanks @ysbaddaden)
+- *(interpreter)* **[regression]** Add compiler versions constraints for interpreter signal handler ([#15178], thanks @straight-shoota)
+
+[#14766]: https://github.com/crystal-lang/crystal/pull/14766
+[#15178]: https://github.com/crystal-lang/crystal/pull/15178
+
+#### tools
+
+- Improve man and shell completion for tools ([#15082], thanks @Blacksmoke16)
+
+[#15082]: https://github.com/crystal-lang/crystal/pull/15082
+
+#### other
+
+- LibC bindings and std specs on NetBSD 10 ([#15115], thanks @ysbaddaden)
+- OpenBSD: fix integration and broken specs ([#15118], thanks @ysbaddaden)
+
+[#15115]: https://github.com/crystal-lang/crystal/pull/15115
+[#15118]: https://github.com/crystal-lang/crystal/pull/15118
+
+### Chores
+
+#### other
+
+- Fix various typos ([#15080], thanks @kojix2)
+
+[#15080]: https://github.com/crystal-lang/crystal/pull/15080
+
+### Performance
+
+#### stdlib
+
+- *(concurrency)* Do not over-commit fiber stacks on Windows ([#15037], thanks @HertzDevil)
+- *(text)* Pre-compute `String` size after `#chomp()` if possible ([#15153], thanks @HertzDevil)
+- *(text)* Optimize `String#rchop?()` ([#15175], thanks @HertzDevil)
+
+[#15037]: https://github.com/crystal-lang/crystal/pull/15037
+[#15153]: https://github.com/crystal-lang/crystal/pull/15153
+[#15175]: https://github.com/crystal-lang/crystal/pull/15175
+
+#### compiler
+
+- *(semantic)* Inline `ASTNode` bindings dependencies and observers ([#15098], thanks @ggiraldez)
+
+[#15098]: https://github.com/crystal-lang/crystal/pull/15098
+
+### Refactor
+
+#### stdlib
+
+- Use Win32 heap functions with `-Dgc_none` ([#15173], thanks @HertzDevil)
+- *(runtime)* Refactor uses of `LibC.dladdr` inside `Exception::CallStack` ([#15108], thanks @HertzDevil)
+- *(serialization)* Use per-thread libxml2 global state on all platforms ([#15121], thanks @HertzDevil)
+- *(system)* Event Loop ([#14996], thanks @ysbaddaden)
+- *(system)* Assume `getrandom` on Linux ([#15040], thanks @ysbaddaden)
+
+[#15173]: https://github.com/crystal-lang/crystal/pull/15173
+[#15108]: https://github.com/crystal-lang/crystal/pull/15108
+[#15121]: https://github.com/crystal-lang/crystal/pull/15121
+[#14996]: https://github.com/crystal-lang/crystal/pull/14996
+[#15040]: https://github.com/crystal-lang/crystal/pull/15040
+
+#### compiler
+
+- *(semantic)* Replace uses of `AliasType#types?` by `Type#lookup_name` ([#15068], thanks @straight-shoota)
+
+[#15068]: https://github.com/crystal-lang/crystal/pull/15068
+
+### Documentation
+
+#### stdlib
+
+- Add docs for lib bindings with supported library versions ([#14900], thanks @straight-shoota)
+- *(concurrency)* Make `Fiber.timeout` and `.cancel_timeout` nodoc ([#15184], thanks @straight-shoota)
+- *(concurrency)* Update example code for `::spawn` with `WaitGroup` ([#15191], thanks @BigBoyBarney)
+- *(runtime)* Make `Box` constructor and `object` getter nodoc ([#15136], thanks @straight-shoota)
+- *(system)* Add example for `Dir.glob` ([#15171], thanks @BigBoyBarney)
+- *(text)* Add note about locale-dependent system error messages ([#15196], thanks @HertzDevil)
+- *(text)* Improve docs for `String#rindex!` ([#15132], thanks @BigBoyBarney)
+
+[#14900]: https://github.com/crystal-lang/crystal/pull/14900
+[#15184]: https://github.com/crystal-lang/crystal/pull/15184
+[#15191]: https://github.com/crystal-lang/crystal/pull/15191
+[#15136]: https://github.com/crystal-lang/crystal/pull/15136
+[#15171]: https://github.com/crystal-lang/crystal/pull/15171
+[#15196]: https://github.com/crystal-lang/crystal/pull/15196
+[#15132]: https://github.com/crystal-lang/crystal/pull/15132
+
+#### other
+
+- Fix `EventLoop` docs for `Socket` `read`, `write` ([#15194], thanks @straight-shoota)
+
+[#15194]: https://github.com/crystal-lang/crystal/pull/15194
+
+### Specs
+
+#### stdlib
+
+- *(networking)* DragonFlyBSD: std specs fixes + pending ([#15152], thanks @ysbaddaden)
+- *(networking)* Close some dangling sockets in specs ([#15163], thanks @HertzDevil)
+- *(system)* Improve `System::User` specs on Windows ([#15156], thanks @HertzDevil)
+- *(system)* Make `cmd.exe` drop `%PROCESSOR_ARCHITECTURE%` in `Process` specs ([#15158], thanks @HertzDevil)
+
+[#15152]: https://github.com/crystal-lang/crystal/pull/15152
+[#15163]: https://github.com/crystal-lang/crystal/pull/15163
+[#15156]: https://github.com/crystal-lang/crystal/pull/15156
+[#15158]: https://github.com/crystal-lang/crystal/pull/15158
+
+#### compiler
+
+- *(interpreter)* **[regression]** Fix `Crystal::Loader.default_search_paths` spec for macOS ([#15135], thanks @HertzDevil)
+
+[#15135]: https://github.com/crystal-lang/crystal/pull/15135
+
+#### tools
+
+- *(docs-generator)* Allow skipping compiler tool specs that require Git ([#15125], thanks @HertzDevil)
+
+[#15125]: https://github.com/crystal-lang/crystal/pull/15125
+
+#### other
+
+- Fix failing specs on FreeBSD ([#15093], thanks @ysbaddaden)
+- Disable specs that break on MinGW-w64 ([#15116], thanks @HertzDevil)
+- Update specs to run with IPv6 support disabled ([#15046], thanks @Blacksmoke16)
+
+[#15093]: https://github.com/crystal-lang/crystal/pull/15093
+[#15116]: https://github.com/crystal-lang/crystal/pull/15116
+[#15046]: https://github.com/crystal-lang/crystal/pull/15046
+
+### Infrastructure
+
+- Update previous Crystal release 1.14.0 ([#15071], thanks @straight-shoota)
+- Fix remove trailing whitespace from CRYSTAL definition ([#15131], thanks @straight-shoota)
+- Make utilities posix compatible ([#15139], thanks @nanobowers)
+- Make `bin/crystal` work on MSYS2 ([#15094], thanks @HertzDevil)
+- Make `Makefile` work on MSYS2 ([#15102], thanks @HertzDevil)
+- Support `.exe` file extension in `Makefile` on MSYS2 ([#15123], thanks @HertzDevil)
+- Support dereferencing symlinks in `make install` ([#15138], thanks @HertzDevil)
+- *(ci)* Extract `deploy_api_docs` job into its own Workflow ([#15022], thanks @straight-shoota)
+- *(ci)* Remove pin for ancient nix version ([#15150], thanks @straight-shoota)
+- *(ci)* Migrate renovate config ([#15151], thanks @renovate)
+- *(ci)* Update XCode 15.3.0 in circleci ([#15164], thanks @straight-shoota)
+- *(ci)* **[security]** Restrict GitHub token permissions of CI workflows ([#15087], thanks @HertzDevil)
+- *(ci)* Do not link against `DbgHelp` for MinGW-w64 CI build ([#15160], thanks @HertzDevil)
+- *(ci)* Add CI workflow for cross-compiling Crystal on MSYS2 ([#15110], thanks @HertzDevil)
+- *(ci)* Add MinGW-w64 CI workflow for stdlib and compiler specs ([#15124], thanks @HertzDevil)
+- *(ci)* Use official Apt respositories for LLVM CI ([#15103], thanks @HertzDevil)
+- *(ci)* Drop LLVM Apt installer script on WebAssembly CI ([#15109], thanks @HertzDevil)
+- *(ci)* Run interpreter specs on Windows CI ([#15141], thanks @HertzDevil)
+
+[#15071]: https://github.com/crystal-lang/crystal/pull/15071
+[#15131]: https://github.com/crystal-lang/crystal/pull/15131
+[#15139]: https://github.com/crystal-lang/crystal/pull/15139
+[#15094]: https://github.com/crystal-lang/crystal/pull/15094
+[#15102]: https://github.com/crystal-lang/crystal/pull/15102
+[#15123]: https://github.com/crystal-lang/crystal/pull/15123
+[#15138]: https://github.com/crystal-lang/crystal/pull/15138
+[#15022]: https://github.com/crystal-lang/crystal/pull/15022
+[#15150]: https://github.com/crystal-lang/crystal/pull/15150
+[#15151]: https://github.com/crystal-lang/crystal/pull/15151
+[#15164]: https://github.com/crystal-lang/crystal/pull/15164
+[#15087]: https://github.com/crystal-lang/crystal/pull/15087
+[#15160]: https://github.com/crystal-lang/crystal/pull/15160
+[#15110]: https://github.com/crystal-lang/crystal/pull/15110
+[#15124]: https://github.com/crystal-lang/crystal/pull/15124
+[#15103]: https://github.com/crystal-lang/crystal/pull/15103
+[#15109]: https://github.com/crystal-lang/crystal/pull/15109
+[#15141]: https://github.com/crystal-lang/crystal/pull/15141
+
+### other
+
+#### compiler
+
+- *(codegen)* Emit position dependent code for embedded targets ([#15174], thanks @RX14)
+
+[#15174]: https://github.com/crystal-lang/crystal/pull/15174
+
 ## [1.14.0] (2024-10-09)
 
 [1.14.0]: https://github.com/crystal-lang/crystal/releases/1.14.0
