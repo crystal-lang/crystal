@@ -317,7 +317,9 @@ class String
   # * **whitespace**: if `true`, leading and trailing whitespaces are allowed
   # * **underscore**: if `true`, underscores in numbers are allowed
   # * **prefix**: if `true`, the prefixes `"0x"`, `"0o"` and `"0b"` override the base
-  # * **strict**: if `true`, extraneous characters past the end of the number are disallowed
+  # * **strict**: if `true`, extraneous characters past the end of the number
+  #   are disallowed, unless **whitespace** is also `true` and all the trailing
+  #   characters past the number are whitespaces
   # * **leading_zero_is_octal**: if `true`, then a number prefixed with `"0"` will be treated as an octal
   #
   # ```
@@ -692,7 +694,9 @@ class String
   #
   # Options:
   # * **whitespace**: if `true`, leading and trailing whitespaces are allowed
-  # * **strict**: if `true`, extraneous characters past the end of the number are disallowed
+  # * **strict**: if `true`, extraneous characters past the end of the number
+  #   are disallowed, unless **whitespace** is also `true` and all the trailing
+  #   characters past the number are whitespaces
   #
   # ```
   # "123.45e1".to_f                # => 1234.5
@@ -717,7 +721,9 @@ class String
   #
   # Options:
   # * **whitespace**: if `true`, leading and trailing whitespaces are allowed
-  # * **strict**: if `true`, extraneous characters past the end of the number are disallowed
+  # * **strict**: if `true`, extraneous characters past the end of the number
+  #   are disallowed, unless **whitespace** is also `true` and all the trailing
+  #   characters past the number are whitespaces
   #
   # ```
   # "123.45e1".to_f?                # => 1234.5
