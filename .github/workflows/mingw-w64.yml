@@ -18,12 +18,12 @@ jobs:
       - name: Download Crystal source
         uses: actions/checkout@v4
 
-      - name: Install LLVM 18
+      - name: Install LLVM 19
         run: |
           sudo apt remove 'llvm-*' 'libllvm*'
           wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
-          sudo apt-add-repository -y deb http://apt.llvm.org/noble/ llvm-toolchain-noble-18 main
-          sudo apt install -y llvm-18-dev
+          sudo apt-add-repository -y deb http://apt.llvm.org/noble/ llvm-toolchain-noble-19 main
+          sudo apt install -y llvm-19-dev
 
       - name: Install Crystal
         uses: crystal-lang/install-crystal@v1
