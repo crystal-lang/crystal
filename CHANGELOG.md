@@ -103,6 +103,7 @@
 - *(interpreter)* setup signal handlers in interpreted code ([#14766], thanks @ysbaddaden, [#15178], thanks @straight-shoota)
 
 [#14766]: https://github.com/crystal-lang/crystal/pull/14766
+[#15178]: https://github.com/crystal-lang/crystal/pull/15178
 
 #### tools
 
