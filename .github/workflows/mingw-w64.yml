@@ -18,12 +18,13 @@ jobs:
       - name: Download Crystal source
         uses: actions/checkout@v4
 
-      - name: Install LLVM 18
+      - name: Install LLVM
         run: |
+          _llvm_major=$(wget -qO- https://raw.githubusercontent.com/msys2/MINGW-packages/refs/heads/master/mingw-w64-llvm/PKGBUILD | grep '_version=' | sed -E 's/_version=([0-9]+).*/\1/')
           sudo apt remove 'llvm-*' 'libllvm*'
           wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
-          sudo apt-add-repository -y deb http://apt.llvm.org/noble/ llvm-toolchain-noble-18 main
-          sudo apt install -y llvm-18-dev
+          sudo apt-add-repository -y deb http://apt.llvm.org/noble/ llvm-toolchain-noble-${_llvm_major} main
+          sudo apt install -y llvm-${_llvm_major}-dev
 
       - name: Install Crystal
         uses: crystal-lang/install-crystal@v1
@@ -80,10 +81,10 @@ jobs:
         shell: msys2 {0}
         run: |
           mkdir bin
-          cc crystal.obj -o bin/crystal.exe \
+          cc crystal.obj -o bin/crystal.exe -municode \
             $(pkg-config bdw-gc libpcre2-8 iconv zlib libffi --libs) \
             $(llvm-config --libs --system-libs --ldflags) \
-            -lDbgHelp -lole32 -lWS2_32 -Wl,--stack,0x800000
+            -lole32 -lWS2_32 -Wl,--stack,0x800000
           ldd bin/crystal.exe | grep -iv /c/windows/system32 | sed 's/.* => //; s/ (.*//' | xargs -t -i cp '{}' bin/
 
       - name: Upload Crystal

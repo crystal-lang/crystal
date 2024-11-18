@@ -434,7 +434,7 @@ class Crystal::Repl::Context
   # used in `Crystal::Program#each_dll_path`
   private def dll_search_paths
     {% if flag?(:msvc) %}
-      paths = CrystalLibraryPath.paths
+      paths = CrystalLibraryPath.default_paths
 
       if executable_path = Process.executable_path
         paths << File.dirname(executable_path)

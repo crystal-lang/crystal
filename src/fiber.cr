@@ -246,12 +246,15 @@ class Fiber
     @timeout_event.try &.delete
   end
 
+  # :nodoc:
+  #
   # The current fiber will resume after a period of time.
   # The timeout can be cancelled with `cancel_timeout`
   def self.timeout(timeout : Time::Span, select_action : Channel::TimeoutAction) : Nil
     Fiber.current.timeout(timeout, select_action)
   end
 
+  # :nodoc:
   def self.cancel_timeout : Nil
     Fiber.current.cancel_timeout
   end

@@ -32,7 +32,7 @@ end
 private def print_env_command
   {% if flag?(:win32) %}
     # cmd adds these by itself, clear them out before printing.
-    shell_command("set COMSPEC=& set PATHEXT=& set PROMPT=& set")
+    shell_command("set COMSPEC=& set PATHEXT=& set PROMPT=& set PROCESSOR_ARCHITECTURE=& set")
   {% else %}
     {"env", [] of String}
   {% end %}

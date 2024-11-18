@@ -28,6 +28,8 @@ describe UDPSocket, tags: "network" do
       socket = UDPSocket.new(family)
       socket.bind(address, 0)
       socket.local_address.address.should eq address
+    ensure
+      socket.try &.close
     end
 
     it "sends and receives messages" do
@@ -77,6 +79,10 @@ describe UDPSocket, tags: "network" do
       # However this is known to work on macOS Mojave with Darwin 18.2.0.
       # Darwin also has a bug that prevents selecting the "default" interface.
       # https://lists.apple.com/archives/darwin-kernel/2014/Mar/msg00012.html
+      pending "joins and transmits to multicast groups"
+    elsif {{ flag?(:dragonfly) }} && family == Socket::Family::INET6
+      # TODO: figure out why updating `multicast_loopback` produces a
+      # `setsockopt 9: Can't assign requested address
       pending "joins and transmits to multicast groups"
     elsif {{ flag?(:solaris) }} && family == Socket::Family::INET
       # TODO: figure out why updating `multicast_loopback` produces a
