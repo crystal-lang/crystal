@@ -482,7 +482,7 @@ describe "String" do
     it { "1Y2P0IJ32E8E7".to_i64(36).should eq(9223372036854775807) }
   end
 
-  # more specs are available in `spec/std/string/fast_float_spec.cr`
+  # more specs are available in `spec/manual/string_to_f_supplemental_spec.cr`
   it "does to_f" do
     expect_raises(ArgumentError) { "".to_f }
     "".to_f?.should be_nil
