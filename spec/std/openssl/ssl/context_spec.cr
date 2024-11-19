@@ -32,7 +32,7 @@ describe OpenSSL::SSL::Context do
     (context.options & OpenSSL::SSL::Options::NO_SESSION_RESUMPTION_ON_RENEGOTIATION).should eq(OpenSSL::SSL::Options::NO_SESSION_RESUMPTION_ON_RENEGOTIATION)
     (context.options & OpenSSL::SSL::Options::SINGLE_ECDH_USE).should eq(OpenSSL::SSL::Options::SINGLE_ECDH_USE)
     (context.options & OpenSSL::SSL::Options::SINGLE_DH_USE).should eq(OpenSSL::SSL::Options::SINGLE_DH_USE)
-    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
+    {% if LibSSL::Options.has_constant?(:NO_RENEGOTIATION) %}
       (context.options & OpenSSL::SSL::Options::NO_RENEGOTIATION).should eq(OpenSSL::SSL::Options::NO_RENEGOTIATION)
     {% end %}
 
@@ -128,12 +128,12 @@ describe OpenSSL::SSL::Context do
     context = OpenSSL::SSL::Context::Client.new
     level = context.security_level
     context.security_level = level + 1
-    # SSL_CTX_get_security_level is not supported by libressl
-    {% if LibSSL::OPENSSL_VERSION != "0.0.0" %}
+
+    if LibSSL.responds_to?(:ssl_ctx_set_security_level)
       context.security_level.should eq(level + 1)
-    {% else %}
+    else
       context.security_level.should eq 0
-    {% end %}
+    end
   end
 
   it "adds temporary ecdh curve (P-256)" do
@@ -194,12 +194,12 @@ describe OpenSSL::SSL::Context do
     context.verify_mode.should eq(OpenSSL::SSL::VerifyMode::PEER)
   end
 
-  {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.0.2") >= 0 %}
+  if LibSSL.responds_to?(:ssl_ctx_set_alpn_protos)
     it "alpn_protocol=" do
       context = OpenSSL::SSL::Context::Client.insecure
       context.alpn_protocol = "h2"
     end
-  {% end %}
+  end
 
   it "calls #finalize on insecure client context" do
     assert_finalizes("insecure_client_ctx") { OpenSSL::SSL::Context::Client.insecure }

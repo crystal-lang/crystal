@@ -60,6 +60,9 @@ enum WinError : UInt32
   # using the current default `LANGID`.
   #
   # On non-win32 platforms the result is always an empty string.
+  #
+  # NOTE: The result may depend on the current system locale. Specs and
+  # comparisons should use `#value` instead of this method.
   def message : String
     {% if flag?(:win32) %}
       unsafe_message { |slice| String.from_utf16(slice).strip }
