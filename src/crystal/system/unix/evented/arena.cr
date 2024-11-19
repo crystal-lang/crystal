@@ -144,7 +144,7 @@ class Crystal::Evented::Arena(T, BLOCK_BYTESIZE)
 
   # Yields the object previously allocated at *index* then releases it.
   #
-  # Does nothing if the object isn't allocated, the generation has changed of
+  # Does nothing if the object isn't allocated, the generation has changed or
   # *index* is out of bounds.
   def free(index : Index, &) : Nil
     at?(index) do |entry|
