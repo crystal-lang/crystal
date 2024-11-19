@@ -1,4 +1,5 @@
 require "crystal/pointer_linked_list"
+require "crystal/pointer_pairing_heap"
 
 # Information about the event that a `Fiber` is waiting on.
 #
@@ -35,6 +36,9 @@ struct Crystal::Evented::Event
   # The event can be added to `Waiters` lists.
   include PointerLinkedList::Node
 
+  # The event can be added to the `Timers` list.
+  include PointerPairingHeap::Node
+
   def initialize(@type : Type, @fiber, @index = nil, timeout : Time::Span? = nil)
     if timeout
       seconds, nanoseconds = System::Time.monotonic
@@ -54,5 +58,9 @@ struct Crystal::Evented::Event
   #
   # NOTE: musn't be changed after registering the event into `Timers`!
   def wake_at=(@wake_at)
+  end
+
+  def heap_compare(other : Pointer(self)) : Bool
+    wake_at < other.value.wake_at
   end
 end

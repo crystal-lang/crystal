@@ -67,14 +67,16 @@ describe Crystal::Evented::Timers do
     event0.wake_at = -1.minute
     timers.add(pointerof(event0)).should be_true # added new head (next ready)
 
-    events = [] of Crystal::Evented::Event*
-    timers.each { |event| events << event }
-    events.should eq([
-      pointerof(event0),
-      pointerof(event1),
-      pointerof(event3),
-      pointerof(event2),
-    ])
+    # TODO: forcefully dequeue the next ready event, then check the order
+
+    # events = [] of Crystal::Evented::Event*
+    # timers.each { |event| events << event }
+    # events.should eq([
+    #   pointerof(event0),
+    #   pointerof(event1),
+    #   pointerof(event3),
+    #   pointerof(event2),
+    # ])
     timers.empty?.should be_false
   end
 
