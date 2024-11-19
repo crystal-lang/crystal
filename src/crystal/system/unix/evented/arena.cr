@@ -186,7 +186,6 @@ class Crystal::Evented::Arena(T, BLOCK_BYTESIZE)
   private def at(index : Int32, grow : Bool) : Pointer(Entry(T))
     raise IndexError.new unless 0 <= index < @capacity
 
-    entries_per_block = BLOCK_BYTESIZE // sizeof(Entry(T))
     n, j = index.divmod(entries_per_block)
 
     if n >= @blocks.size
@@ -200,7 +199,6 @@ class Crystal::Evented::Arena(T, BLOCK_BYTESIZE)
   private def at?(index : Int32) : Pointer(Entry(T))?
     return unless 0 <= index < @capacity
 
-    entries_per_block = BLOCK_BYTESIZE // sizeof(Entry(T))
     n, j = index.divmod(entries_per_block)
 
     if block = @blocks[n]?
@@ -209,15 +207,13 @@ class Crystal::Evented::Arena(T, BLOCK_BYTESIZE)
   end
 
   private def unsafe_grow(n)
-    old_size, old_pointer = @blocks.size, @blocks.to_unsafe
-
     # we manually dup instead of using realloc to avoid parallelism issues, for
     # example fork or another thread trying to iterate after realloc but before
     # we got the time to set @blocks or to allocate the new blocks
     new_size = n + 1
     new_pointer = GC.malloc(new_size * sizeof(Pointer(Entry(T)))).as(Pointer(Pointer(Entry(T))))
-    old_size.times { |k| new_pointer[k] = old_pointer[k] }
-    old_size.upto(n) { |j| new_pointer[j] = allocate_block }
+    @blocks.to_unsafe.copy_to(new_pointer, @blocks.size)
+    @blocks.size.upto(n) { |j| new_pointer[j] = allocate_block }
 
     @blocks = Slice.new(new_pointer, new_size)
   end
@@ -229,7 +225,6 @@ class Crystal::Evented::Arena(T, BLOCK_BYTESIZE)
   # Iterates all allocated objects, yields the actual index as well as the
   # generation index.
   def each_index(&) : Nil
-    entries_per_block = BLOCK_BYTESIZE // sizeof(Entry(T))
     index = 0
 
     @blocks.each do |block|
@@ -243,5 +238,10 @@ class Crystal::Evented::Arena(T, BLOCK_BYTESIZE)
         index += 1
       end
     end
+  end
+
+  private def entries_per_block
+    # can't be a constant: can't access a generic when assigning a constant
+    BLOCK_BYTESIZE // sizeof(Entry(T))
   end
 end
