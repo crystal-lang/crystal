@@ -317,7 +317,9 @@ class String
   # * **whitespace**: if `true`, leading and trailing whitespaces are allowed
   # * **underscore**: if `true`, underscores in numbers are allowed
   # * **prefix**: if `true`, the prefixes `"0x"`, `"0o"` and `"0b"` override the base
-  # * **strict**: if `true`, extraneous characters past the end of the number are disallowed
+  # * **strict**: if `true`, extraneous characters past the end of the number
+  #   are disallowed, unless **whitespace** is also `true` and all the trailing
+  #   characters past the number are whitespaces
   # * **leading_zero_is_octal**: if `true`, then a number prefixed with `"0"` will be treated as an octal
   #
   # ```
@@ -692,7 +694,9 @@ class String
   #
   # Options:
   # * **whitespace**: if `true`, leading and trailing whitespaces are allowed
-  # * **strict**: if `true`, extraneous characters past the end of the number are disallowed
+  # * **strict**: if `true`, extraneous characters past the end of the number
+  #   are disallowed, unless **whitespace** is also `true` and all the trailing
+  #   characters past the number are whitespaces
   #
   # ```
   # "123.45e1".to_f                # => 1234.5
@@ -717,7 +721,9 @@ class String
   #
   # Options:
   # * **whitespace**: if `true`, leading and trailing whitespaces are allowed
-  # * **strict**: if `true`, extraneous characters past the end of the number are disallowed
+  # * **strict**: if `true`, extraneous characters past the end of the number
+  #   are disallowed, unless **whitespace** is also `true` and all the trailing
+  #   characters past the number are whitespaces
   #
   # ```
   # "123.45e1".to_f?                # => 1234.5
@@ -1661,12 +1667,12 @@ class String
     case to_unsafe[bytesize - 1]
     when '\n'
       if bytesize > 1 && to_unsafe[bytesize - 2] === '\r'
-        unsafe_byte_slice_string(0, bytesize - 2)
+        unsafe_byte_slice_string(0, bytesize - 2, @length > 0 ? @length - 2 : 0)
       else
-        unsafe_byte_slice_string(0, bytesize - 1)
+        unsafe_byte_slice_string(0, bytesize - 1, @length > 0 ? @length - 1 : 0)
       end
     when '\r'
-      unsafe_byte_slice_string(0, bytesize - 1)
+      unsafe_byte_slice_string(0, bytesize - 1, @length > 0 ? @length - 1 : 0)
     else
       self
     end
@@ -1798,11 +1804,7 @@ class String
   def rchop? : String?
     return if empty?
 
-    if to_unsafe[bytesize - 1] < 0x80 || single_byte_optimizable?
-      return unsafe_byte_slice_string(0, bytesize - 1)
-    end
-
-    self[0, size - 1]
+    unsafe_byte_slice_string(0, Char::Reader.new(at_end: self).pos, @length > 0 ? @length - 1 : 0)
   end
 
   # Returns a new `String` with *suffix* removed from the end of the string if possible, else returns `nil`.
@@ -5552,12 +5554,12 @@ class String
     Slice.new(to_unsafe + byte_offset, bytesize - byte_offset, read_only: true)
   end
 
-  protected def unsafe_byte_slice_string(byte_offset)
-    String.new(unsafe_byte_slice(byte_offset))
+  protected def unsafe_byte_slice_string(byte_offset, *, size = 0)
+    String.new(to_unsafe + byte_offset, bytesize - byte_offset, size)
   end
 
-  protected def unsafe_byte_slice_string(byte_offset, count)
-    String.new(unsafe_byte_slice(byte_offset, count))
+  protected def unsafe_byte_slice_string(byte_offset, count, size = 0)
+    String.new(to_unsafe + byte_offset, count, size)
   end
 
   protected def self.char_bytes_and_bytesize(char : Char)

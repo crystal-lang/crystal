@@ -3,8 +3,9 @@
 require "./spec_helper"
 require "signal"
 
-# interpreted code never receives signals (#12241)
-pending_interpreted describe: "Signal" do
+{% skip_file if flag?(:interpreted) && !Crystal::Interpreter.has_method?(:signal) %}
+
+describe "Signal" do
   typeof(Signal::ABRT.reset)
   typeof(Signal::ABRT.ignore)
   typeof(Signal::ABRT.trap { 1 })

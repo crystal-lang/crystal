@@ -32,6 +32,11 @@ require "crystal/tracing"
   @[Link("gc", pkg_config: "bdw-gc")]
 {% end %}
 
+# Supported library versions:
+#
+# * libgc (8.2.0+; earlier versions require a patch for MT support)
+#
+# See https://crystal-lang.org/reference/man/required_libraries.html#other-runtime-libraries
 {% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
   @[Link(dll: "gc.dll")]
 {% end %}

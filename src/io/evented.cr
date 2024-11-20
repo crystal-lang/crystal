@@ -1,4 +1,6 @@
-{% skip_file if flag?(:win32) %}
+require "crystal/system/event_loop"
+
+{% skip_file unless flag?(:wasi) || Crystal.has_constant?(:LibEvent) %}
 
 require "crystal/thread_local_value"
 
