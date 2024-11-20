@@ -13,7 +13,7 @@ env:
 
 jobs:
   test-interpreter_spec:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     container:
       image: crystallang/crystal:1.14.0-build
     name: "Test Interpreter"
@@ -24,7 +24,7 @@ jobs:
         run: make interpreter_spec junit_output=.junit/interpreter_spec.xml
 
   build-interpreter:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     container:
       image: crystallang/crystal:1.14.0-build
     name: Build interpreter
@@ -43,7 +43,7 @@ jobs:
 
   test-interpreter-std_spec:
     needs: build-interpreter
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     container:
       image: crystallang/crystal:1.14.0-build
     strategy:
@@ -67,7 +67,7 @@ jobs:
 
   test-interpreter-primitives_spec:
     needs: build-interpreter
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     container:
       image: crystallang/crystal:1.14.0-build
     name: "Test primitives_spec with interpreter"
