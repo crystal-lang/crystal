@@ -314,69 +314,69 @@ milestone = query_milestone(api_token, repository, milestone)
 
 record ChangelogEntry,
   pull_requests : Array(PullRequest) do
-    def initialize(pr : PullRequest)
-      @pull_requests = [pr]
-    end
-
-    def pr
-      pull_requests[0]
-    end
-
-    def to_s(io : IO)
-      if sub_topic = pr.sub_topic
-        io << "*(" << pr.sub_topic << ")* "
-      end
-      if pr.labels.includes?("security")
-        io << "**[security]** "
-      end
-      if pr.labels.includes?("breaking-change")
-        io << "**[breaking]** "
-      end
-      if pr.regression?
-        io << "**[regression]** "
-      end
-      if pr.experimental?
-        io << "**[experimental]** "
-      end
-      if pr.deprecated?
-        io << "**[deprecation]** "
-      end
-      io << pr.title.sub(/^\[?(?:#{pr.type}|#{pr.sub_topic})(?::|\]:?) /i, "")
-
-      io << " ("
-      pull_requests.join(io, ", ") do |pr|
-        pr.link_ref(io)
-      end
-
-      authors = collect_authors
-      if authors.present?
-        io << ", thanks "
-        authors.join(io, ", ") do |author|
-          io << "@" << author
-        end
-      end
-      io << ")"
-    end
-
-    def collect_authors
-      authors = [] of String
-      pull_requests.each do |pr|
-        author = pr.author || next
-        authors << author unless authors.includes?(author)
-      end
-      authors
-    end
-
-    def print_ref_labels(io)
-      pull_requests.each { |pr| print_ref_label(io, pr) }
-    end
-
-    def print_ref_label(io, pr)
-      pr.link_ref(io)
-      io << ": " << pr.permalink
-      io.puts
-    end
+  def initialize(pr : PullRequest)
+    @pull_requests = [pr]
   end
+
+  def pr
+    pull_requests[0]
+  end
+
+  def to_s(io : IO)
+    if sub_topic = pr.sub_topic
+      io << "*(" << pr.sub_topic << ")* "
+    end
+    if pr.labels.includes?("security")
+      io << "**[security]** "
+    end
+    if pr.labels.includes?("breaking-change")
+      io << "**[breaking]** "
+    end
+    if pr.regression?
+      io << "**[regression]** "
+    end
+    if pr.experimental?
+      io << "**[experimental]** "
+    end
+    if pr.deprecated?
+      io << "**[deprecation]** "
+    end
+    io << pr.title.sub(/^\[?(?:#{pr.type}|#{pr.sub_topic})(?::|\]:?) /i, "")
+
+    io << " ("
+    pull_requests.join(io, ", ") do |pr|
+      pr.link_ref(io)
+    end
+
+    authors = collect_authors
+    if authors.present?
+      io << ", thanks "
+      authors.join(io, ", ") do |author|
+        io << "@" << author
+      end
+    end
+    io << ")"
+  end
+
+  def collect_authors
+    authors = [] of String
+    pull_requests.each do |pr|
+      author = pr.author || next
+      authors << author unless authors.includes?(author)
+    end
+    authors
+  end
+
+  def print_ref_labels(io)
+    pull_requests.each { |pr| print_ref_label(io, pr) }
+  end
+
+  def print_ref_label(io, pr)
+    pr.link_ref(io)
+    io << ": " << pr.permalink
+    io.puts
+  end
+end
 
 entries = milestone.pull_requests.compact_map do |pr|
   ChangelogEntry.new(pr) unless pr.fixup?
