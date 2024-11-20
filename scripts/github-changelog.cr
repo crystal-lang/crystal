@@ -312,8 +312,9 @@ end
 
 milestone = query_milestone(api_token, repository, milestone)
 
-record ChangelogEntry,
-  pull_requests : Array(PullRequest) do
+struct ChangelogEntry
+  getter pull_requests : Array(PullRequest)
+
   def initialize(pr : PullRequest)
     @pull_requests = [pr]
   end
