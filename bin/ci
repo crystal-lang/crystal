@@ -213,6 +213,7 @@ with_build_env() {
     -e CRYSTAL_CACHE_DIR="/tmp/crystal" \
     -e SPEC_SPLIT_DOTS \
     -e USE_PCRE1 \
+    -e CRYSTAL_OPTS \
     "$DOCKER_TEST_IMAGE" \
     "$ARCH_CMD" /bin/sh -c "'$command'"
 
@@ -222,7 +223,7 @@ with_build_env() {
     CRYSTAL_CACHE_DIR="/tmp/crystal" \
     /bin/sh -c "'$command'"
 
-  on_nix_shell nix-shell --pure $CI_NIX_SHELL_ARGS --run "'TZ=$TZ $command'"
+  on_nix_shell nix-shell --pure $CI_NIX_SHELL_ARGS --keep CRYSTAL_OPTS --run "'TZ=$TZ $command'"
 
   on_github echo "::endgroup::"
 }
