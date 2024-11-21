@@ -1,14 +1,11 @@
 # Generational Arena.
 #
-# Allocates a `Slice` of `T` through `mmap`. `T` is supposed to be a struct, so
-# it can be embedded right into the memory region.
-#
 # The arena allocates objects `T` at a predefined index. The object iself is
 # uninitialized (outside of having its memory initialized to zero). The object
-# can be allocated and later retrieved using the generation index
-# (Arena::Index) that contains both the actual index (Int32) and the generation
-# number (UInt32). Deallocating the object increases the generation number,
-# which allows the object to be reallocated later on. Trying to retrieve the
+# can be allocated and later retrieved using the generation index (Arena::Index)
+# that contains both the actual index (Int32) and the generation number
+# (UInt32). Deallocating the object increases the generation number, which
+# allows the object to be reallocated later on. Trying to retrieve the
 # allocation using the generation index will fail if the generation number
 # changed (it's a new allocation).
 #
@@ -21,24 +18,15 @@
 # They're unique to the process and the OS always reuses the lowest fd numbers
 # before growing.
 #
-# Thread safety: the memory region is pre-allocated (up to capacity) using mmap
-# (virtual allocation) and pointers are never invalidated. Individual
-# allocation, deallocation and regular accesses are protected by a fine grained
-# lock over each object: parallel accesses to the memory region are prohibited,
-# and pointers are expected to not outlive the block that yielded them (don't
-# capture them).
+# Thread safety: the memory region is divided in blocks of size BLOCK_BYTESIZE
+# allocated in the GC. Pointers are thus never invalidated. Mutating the blocks
+# is protected by a mutual exclusion lock. Individual (de)allocations of objects
+# are protected with a fine grained lock.
 #
-# Guarantees: `mmap` initializes the memory to zero, which means `T` objects are
+# Guarantees: blocks' memory is initialized to zero, which means `T` objects are
 # initialized to zero by default, then `#free` will also clear the memory, so
 # the next allocation shall be initialized to zero, too.
-#
-# TODO: instead of the mmap that must preallocate a fixed chunk of virtual
-# memory, we could allocate individual blocks of memory, then access the actual
-# block at `index % size`. Pointers would still be valid (as long as the block
-# isn't collected). We wouldn't have to worry about maximum capacity, we could
-# still allocate blocks discontinuously & collect unused blocks during GC
-# collections.
-class Crystal::Evented::Arena(T)
+class Crystal::Evented::Arena(T, BLOCK_BYTESIZE)
   INVALID_INDEX = Index.new(-1, 0)
 
   struct Index
@@ -93,41 +81,12 @@ class Crystal::Evented::Arena(T)
     end
   end
 
-  @buffer : Slice(Entry(T))
+  @blocks : Slice(Pointer(Entry(T)))
+  @capacity : Int32
 
-  {% unless flag?(:preview_mt) %}
-    # Remember the maximum allocated fd ever;
-    #
-    # This is specific to `EventLoop#after_fork` that needs to iterate the arena
-    # for registered fds in epoll/kqueue to re-add them to the new epoll/kqueue
-    # instances. Without this upper limit we'd iterate the whole arena which
-    # would lead the kernel to try and allocate the whole mmap in physical
-    # memory (instead of virtual memory) which would at best be a waste, and a
-    # worst fill the memory (e.g. unlimited open files).
-    @maximum = 0
-  {% end %}
-
-  def initialize(capacity : Int32)
-    pointer = self.class.mmap(LibC::SizeT.new(sizeof(Entry(T))) * capacity)
-    @buffer = Slice.new(pointer.as(Pointer(Entry(T))), capacity)
-  end
-
-  protected def self.mmap(bytesize)
-    flags = LibC::MAP_PRIVATE | LibC::MAP_ANON
-    prot = LibC::PROT_READ | LibC::PROT_WRITE
-
-    pointer = LibC.mmap(nil, bytesize, prot, flags, -1, 0)
-    System.panic("mmap", Errno.value) if pointer == LibC::MAP_FAILED
-
-    {% if flag?(:linux) %}
-      LibC.madvise(pointer, bytesize, LibC::MADV_NOHUGEPAGE)
-    {% end %}
-
-    pointer
-  end
-
-  def finalize
-    LibC.munmap(@buffer.to_unsafe, @buffer.bytesize)
+  def initialize(@capacity : Int32)
+    @blocks = Slice(Pointer(Entry(T))).new(1) { allocate_block }
+    @mutex = Thread::Mutex.new
   end
 
   # Allocates the object at *index* unless already allocated, then yields a
@@ -140,14 +99,11 @@ class Crystal::Evented::Arena(T)
   # There are no generational checks.
   # Raises if *index* is out of bounds.
   def allocate_at?(index : Int32, & : (Pointer(T), Index) ->) : Index?
-    entry = at(index)
+    entry = at(index, grow: true)
 
     entry.value.@lock.sync do
       return if entry.value.allocated?
 
-      {% unless flag?(:preview_mt) %}
-        @maximum = index if index > @maximum
-      {% end %}
       entry.value.allocated = true
 
       gen_index = Index.new(index, entry.value.generation)
@@ -165,9 +121,8 @@ class Crystal::Evented::Arena(T)
 
   # Yields a pointer to the object previously allocated at *index*.
   #
-  # Raises if the object isn't allocated.
-  # Raises if the generation has changed (i.e. the object has been freed then reallocated).
-  # Raises if *index* is negative.
+  # Raises if the object isn't allocated, the generation has changed (i.e. the
+  # object has been freed then reallocated) or *index* is out of bounds.
   def get(index : Index, &) : Nil
     at(index) do |entry|
       yield entry.value.pointer
@@ -176,10 +131,9 @@ class Crystal::Evented::Arena(T)
 
   # Yields a pointer to the object previously allocated at *index* and returns
   # true.
-  # Does nothing if the object isn't allocated or the generation has changed,
-  # and returns false.
   #
-  # Raises if *index* is negative.
+  # Does nothing if the object isn't allocated, the generation has changed or
+  # *index* is out of bounds.
   def get?(index : Index, &) : Bool
     at?(index) do |entry|
       yield entry.value.pointer
@@ -189,9 +143,9 @@ class Crystal::Evented::Arena(T)
   end
 
   # Yields the object previously allocated at *index* then releases it.
-  # Does nothing if the object isn't allocated or the generation has changed.
   #
-  # Raises if *index* is negative.
+  # Does nothing if the object isn't allocated, the generation has changed or
+  # *index* is out of bounds.
   def free(index : Index, &) : Nil
     at?(index) do |entry|
       begin
@@ -203,7 +157,7 @@ class Crystal::Evented::Arena(T)
   end
 
   private def at(index : Index, &) : Nil
-    entry = at(index.index)
+    entry = at(index.index, grow: false)
     entry.value.@lock.lock
 
     unless entry.value.allocated? && entry.value.generation == index.generation
@@ -229,29 +183,65 @@ class Crystal::Evented::Arena(T)
     end
   end
 
-  private def at(index : Int32) : Pointer(Entry(T))
-    (@buffer + index).to_unsafe
+  private def at(index : Int32, grow : Bool) : Pointer(Entry(T))
+    raise IndexError.new unless 0 <= index < @capacity
+
+    n, j = index.divmod(entries_per_block)
+
+    if n >= @blocks.size
+      raise RuntimeError.new("#{self.class.name}: not allocated index=#{index}") unless grow
+      @mutex.synchronize { unsafe_grow(n) if n >= @blocks.size }
+    end
+
+    @blocks.to_unsafe[n] + j
   end
 
   private def at?(index : Int32) : Pointer(Entry(T))?
-    if 0 <= index < @buffer.size
-      @buffer.to_unsafe + index
+    return unless 0 <= index < @capacity
+
+    n, j = index.divmod(entries_per_block)
+
+    if block = @blocks[n]?
+      block + j
     end
   end
 
-  {% unless flag?(:preview_mt) %}
-    # Iterates all allocated objects, yields the actual index as well as the
-    # generation index.
-    def each(&) : Nil
-      pointer = @buffer.to_unsafe
+  private def unsafe_grow(n)
+    # we manually dup instead of using realloc to avoid parallelism issues, for
+    # example fork or another thread trying to iterate after realloc but before
+    # we got the time to set @blocks or to allocate the new blocks
+    new_size = n + 1
+    new_pointer = GC.malloc(new_size * sizeof(Pointer(Entry(T)))).as(Pointer(Pointer(Entry(T))))
+    @blocks.to_unsafe.copy_to(new_pointer, @blocks.size)
+    @blocks.size.upto(n) { |j| new_pointer[j] = allocate_block }
 
-      0.upto(@maximum) do |index|
-        entry = pointer + index
+    @blocks = Slice.new(new_pointer, new_size)
+  end
+
+  private def allocate_block
+    GC.malloc(BLOCK_BYTESIZE).as(Pointer(Entry(T)))
+  end
+
+  # Iterates all allocated objects, yields the actual index as well as the
+  # generation index.
+  def each_index(&) : Nil
+    index = 0
+
+    @blocks.each do |block|
+      entries_per_block.times do |j|
+        entry = block + j
 
         if entry.value.allocated?
           yield index, Index.new(index, entry.value.generation)
         end
+
+        index += 1
       end
     end
-  {% end %}
+  end
+
+  private def entries_per_block
+    # can't be a constant: can't access a generic when assigning a constant
+    BLOCK_BYTESIZE // sizeof(Entry(T))
+  end
 end

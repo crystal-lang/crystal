@@ -38,13 +38,18 @@ module Crystal::Evented
   # allows optimizations to the OS (it can reuse already allocated resources),
   # and either the man page explicitly says so (Linux), or they don't (BSD) and
   # they must follow the POSIX definition.
-  protected class_getter arena = Arena(PollDescriptor).new(max_fds)
+  #
+  # The block size is set to 64KB because it's a multiple of:
+  # - 4KB (usual page size)
+  # - 1024 (common soft limit for open files)
+  # - sizeof(Arena::Entry(PollDescriptor))
+  protected class_getter arena = Arena(PollDescriptor, 65536).new(max_fds)
 
   private def self.max_fds : Int32
     if LibC.getrlimit(LibC::RLIMIT_NOFILE, out rlimit) == -1
       raise RuntimeError.from_errno("getrlimit(RLIMIT_NOFILE)")
     end
-    rlimit.rlim_cur.clamp(..Int32::MAX).to_i32!
+    rlimit.rlim_max.clamp(..Int32::MAX).to_i32!
   end
 end
 
