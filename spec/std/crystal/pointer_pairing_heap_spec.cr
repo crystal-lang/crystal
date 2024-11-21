@@ -12,6 +12,25 @@ private struct Node
   def heap_compare(other : Pointer(self)) : Bool
     key < other.value.key
   end
+
+  def inspect(io : IO, indent = 0) : Nil
+    prv = @heap_previous
+    nxt = @heap_next
+    chd = @heap_child
+
+    indent.times { io << ' ' }
+    io << "Node value=" << key
+    io << " prv=" << prv.try(&.value.key)
+    io << " nxt=" << nxt.try(&.value.key)
+    io << " chd=" << chd.try(&.value.key)
+    io.puts
+
+    node = heap_child?
+    while node
+      node.value.inspect(io, indent + 2)
+      node = node.value.heap_next?
+    end
+  end
 end
 
 describe Crystal::PointerPairingHeap do
@@ -52,7 +71,8 @@ describe Crystal::PointerPairingHeap do
 
     # removes in ascending order
     10.times do |i|
-      heap.shift?.should eq(nodes.to_unsafe + i)
+      node = heap.shift?
+      node.should eq(nodes.to_unsafe + i)
     end
   end
 
@@ -60,28 +80,21 @@ describe Crystal::PointerPairingHeap do
     heap = Crystal::PointerPairingHeap(Node).new
     nodes = StaticArray(Node, 10).new { |i| Node.new(i) }
 
-    # noop: empty
-    heap.delete(nodes.to_unsafe + 0).should eq({false, false})
-
     # insert in random order
     (0..9).to_a.shuffle.each do |i|
       heap.add nodes.to_unsafe + i
     end
 
-    # noop: unknown node
-    node11 = Node.new(11)
-    heap.delete(pointerof(node11)).should eq({false, false})
-
     # remove some values
-    heap.delete(nodes.to_unsafe + 3).should eq({true, false})
-    heap.delete(nodes.to_unsafe + 7).should eq({true, false})
-    heap.delete(nodes.to_unsafe + 1).should eq({true, false})
+    heap.delete(nodes.to_unsafe + 3)
+    heap.delete(nodes.to_unsafe + 7)
+    heap.delete(nodes.to_unsafe + 1)
 
     # remove tail
-    heap.delete(nodes.to_unsafe + 9).should eq({true, false})
+    heap.delete(nodes.to_unsafe + 9)
 
     # remove head
-    heap.delete(nodes.to_unsafe + 0).should eq({true, true})
+    heap.delete(nodes.to_unsafe + 0)
 
     # repeatedly delete min
     [2, 4, 5, 6, 8].each do |i|
@@ -106,7 +119,7 @@ describe Crystal::PointerPairingHeap do
     heap.shift?.should be_nil
   end
 
-  it "randomly adds while we shift nodes" do
+  it "randomly shift while we add nodes" do
     heap = Crystal::PointerPairingHeap(Node).new
 
     nodes = uninitialized StaticArray(Node, 1000)

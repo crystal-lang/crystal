@@ -38,12 +38,21 @@ struct Crystal::Evented::Timers
   # Add a new timer into the list. Returns true if it is the next ready timer.
   def add(event : Evented::Event*) : Bool
     @heap.add(event)
+    @heap.first? == event
   end
 
   # Remove a timer from the list. Returns a tuple(dequeued, was_next_ready) of
   # booleans. The first bool tells whether the event was dequeued, in which case
   # the second one tells if it was the next ready event.
   def delete(event : Evented::Event*) : {Bool, Bool}
-    @heap.delete(event)
+    if @heap.first? == event
+      @heap.shift?
+      {true, true}
+    elsif event.value.heap_previous?
+      @heap.delete(event)
+      {true, false}
+    else
+      {false, false}
+    end
   end
 end

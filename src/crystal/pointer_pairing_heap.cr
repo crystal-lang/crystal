@@ -17,7 +17,7 @@ class Crystal::PointerPairingHeap(T)
     abstract def heap_compare(other : Pointer(self)) : Bool
   end
 
-  @head : T* | Nil
+  @head : Pointer(T)?
 
   private def head=(head)
     @head = head
@@ -29,11 +29,11 @@ class Crystal::PointerPairingHeap(T)
     @head.nil?
   end
 
-  def first? : T* | Nil
+  def first? : Pointer(T)?
     @head
   end
 
-  def shift? : T* | Nil
+  def shift? : Pointer(T)?
     if node = @head
       self.head = merge_pairs(node.value.heap_child?)
       node.value.heap_child = nil
@@ -41,32 +41,14 @@ class Crystal::PointerPairingHeap(T)
     end
   end
 
-  def add(node : T*) : Bool
+  def add(node : Pointer(T)) : Nil
     if node.value.heap_previous? || node.value.heap_next? || node.value.heap_child?
       raise ArgumentError.new("The node is already in a Pairing Heap tree")
     end
     self.head = meld(@head, node)
-    node == @head
   end
 
-  def delete(node : T*) : {Bool, Bool}
-    if node == @head
-      self.head = merge_pairs(node.value.heap_child?)
-      node.value.heap_child = nil
-      return {true, true}
-    end
-
-    if remove?(node)
-      subtree = merge_pairs(node.value.heap_child?)
-      self.head = meld(@head, subtree)
-      unlink(node)
-      return {true, false}
-    end
-
-    {false, false}
-  end
-
-  private def remove?(node)
+  def delete(node : Pointer(T)) : Nil
     if previous_node = node.value.heap_previous?
       next_sibling = node.value.heap_next?
 
@@ -80,9 +62,13 @@ class Crystal::PointerPairingHeap(T)
         next_sibling.value.heap_previous = previous_node
       end
 
-      true
+      subtree = merge_pairs(node.value.heap_child?)
+      clear(node)
+      self.head = meld(@head, subtree)
     else
-      false
+      # removing head
+      self.head = merge_pairs(node.value.heap_child?)
+      node.value.heap_child = nil
     end
   end
 
@@ -99,10 +85,10 @@ class Crystal::PointerPairingHeap(T)
       clear_recursive(child)
       child = child.value.heap_next?
     end
-    unlink(node)
+    clear(node)
   end
 
-  private def meld(a : T*, b : T*) : T*
+  private def meld(a : Pointer(T), b : Pointer(T)) : Pointer(T)
     if a.value.heap_compare(b)
       add_child(a, b)
     else
@@ -110,18 +96,18 @@ class Crystal::PointerPairingHeap(T)
     end
   end
 
-  private def meld(a : T*, b : Nil) : T*
+  private def meld(a : Pointer(T), b : Nil) : Pointer(T)
     a
   end
 
-  private def meld(a : Nil, b : T*) : T*
+  private def meld(a : Nil, b : Pointer(T)) : Pointer(T)
     b
   end
 
   private def meld(a : Nil, b : Nil) : Nil
   end
 
-  private def add_child(parent : T*, node : T*) : T*
+  private def add_child(parent : Pointer(T), node : Pointer(T)) : Pointer(T)
     first_child = parent.value.heap_child?
     parent.value.heap_child = node
 
@@ -132,28 +118,39 @@ class Crystal::PointerPairingHeap(T)
     parent
   end
 
-  # Twopass merge of the children of *node* into pairs of two.
-  private def merge_pairs(a : T*) : T* | Nil
-    a.value.heap_previous = nil
+  private def merge_pairs(node : Pointer(T)?) : Pointer(T)?
+    return unless node
 
-    if b = a.value.heap_next?
-      a.value.heap_next = nil
-      b.value.heap_previous = nil
-    else
-      return a
+    # 1st pass: meld children into pairs (left to right)
+    tail = nil
+
+    while a = node
+      if b = a.value.heap_next?
+        node = b.value.heap_next?
+        root = meld(a, b)
+        root.value.heap_previous = tail
+        tail = root
+      else
+        a.value.heap_previous = tail
+        tail = a
+        break
+      end
     end
 
-    rest = merge_pairs(b.value.heap_next?)
-    b.value.heap_next = nil
+    # 2nd pass: meld the pairs back into a single tree (right to left)
+    root = nil
 
-    pair = meld(a, b)
-    meld(pair, rest)
+    while tail
+      node = tail.value.heap_previous?
+      root = meld(root, tail)
+      tail = node
+    end
+
+    root.value.heap_next = nil if root
+    root
   end
 
-  private def merge_pairs(node : Nil) : Nil
-  end
-
-  private def unlink(node) : Nil
+  private def clear(node) : Nil
     node.value.heap_previous = nil
     node.value.heap_next = nil
     node.value.heap_child = nil
