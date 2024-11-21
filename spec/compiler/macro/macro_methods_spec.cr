@@ -762,6 +762,10 @@ module Crystal
         assert_macro %({{[1, 2, 3].map { |e| e == 2 }}}), "[false, true, false]"
       end
 
+      it "executes map assigns location" do
+        assert_macro %({{[1].map { |e| e }.filename }}), %("")
+      end
+
       it "executes reduce with no initial value" do
         assert_macro %({{[1, 2, 3].reduce { |acc, val| acc * val }}}), "6"
       end
