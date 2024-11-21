@@ -367,7 +367,7 @@ module Crystal
         block = node.block.try { |b| @program.normalize(b) }
 
         begin
-          result = receiver.interpret(node.name, args, named_args, block, self, node.name_location)
+          @last = receiver.interpret(node.name, args, named_args, block, self, node.name_location)
         rescue ex : MacroRaiseException
           # Re-raise to avoid the logic in the other rescue blocks and to retain the original location
           raise ex
@@ -376,8 +376,7 @@ module Crystal
         rescue ex
           node.raise ex.message
         end
-        result.location ||= node.name_location
-        @last = result
+        @last.location ||= node.name_location
       else
         # no receiver: special calls
         # may raise `Crystal::TopLevelMacroRaiseException`
