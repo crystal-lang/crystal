@@ -259,7 +259,7 @@ struct Number
 
     number.format(io, separator, delimiter, decimal_places: decimal_places, only_significant: significant)
 
-    io << unit_separator.to_s if unit
+    io << unit_separator if unit
     io << unit
   end
 
