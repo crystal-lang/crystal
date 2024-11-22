@@ -393,7 +393,7 @@ module Crystal
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
       case method
       when "id"
-        interpret_check_args { MacroId.new(to_macro_id) }
+        interpret_check_args { MacroId.new(to_macro_id).at(location) }
       when "stringify"
         interpret_check_args { stringify }
       when "symbolize"
