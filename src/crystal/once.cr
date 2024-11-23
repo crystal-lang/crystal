@@ -81,7 +81,7 @@ fun __crystal_once_exec(flag : Bool*, initializer : Void*) : Void
     Proc(Nil).new(initializer, Pointer(Void).null).call
     Atomic::Ops.store(flag, :initialized, :release, false)
   ensure
-    {% if flag?(:preview_mt) %}
+    {% if flag?(:preview_mt) || flag?(:win32) %}
       state.unlock
     {% end %}
   end
