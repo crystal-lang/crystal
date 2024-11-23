@@ -54,7 +54,7 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
     end
   {% end %}
 
-  private def system_run(blocking : Bool) : Nil
+  private def system_run(blocking : Bool, & : Fiber ->) : Nil
     Crystal.trace :evloop, "run", blocking: blocking ? 1 : 0
 
     # wait for events (indefinitely when blocking)
@@ -72,21 +72,21 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
         # TODO: panic if epoll_event.value.events != LibC::EPOLLIN (could be EPOLLERR or EPLLHUP)
         Crystal.trace :evloop, "interrupted"
         @eventfd.read
-        # OPTIMIZE: only reset interrupted before a blocking wait
         @interrupted.clear
       when @timerfd.fd
         # TODO: panic if epoll_event.value.events != LibC::EPOLLIN (could be EPOLLERR or EPLLHUP)
         Crystal.trace :evloop, "timer"
         timer_triggered = true
       else
-        process_io(epoll_event)
+        process_io(epoll_event) { |fiber| yield fiber }
       end
     end
 
-    process_timers(timer_triggered)
+    # OPTIMIZE: only process timers when timer_triggered (?)
+    process_timers(timer_triggered) { |fiber| yield fiber }
   end
 
-  private def process_io(epoll_event : LibC::EpollEvent*) : Nil
+  private def process_io(epoll_event : LibC::EpollEvent*, &) : Nil
     index = Evented::Arena::Index.new(epoll_event.value.data.u64)
     events = epoll_event.value.events
 
@@ -94,19 +94,19 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
 
     Evented.arena.get?(index) do |pd|
       if (events & (LibC::EPOLLERR | LibC::EPOLLHUP)) != 0
-        pd.value.@readers.ready_all { |event| unsafe_resume_io(event) }
-        pd.value.@writers.ready_all { |event| unsafe_resume_io(event) }
+        pd.value.@readers.ready_all { |event| unsafe_resume_io(event) { |fiber| yield fiber } }
+        pd.value.@writers.ready_all { |event| unsafe_resume_io(event) { |fiber| yield fiber } }
         return
       end
 
       if (events & LibC::EPOLLRDHUP) == LibC::EPOLLRDHUP
-        pd.value.@readers.ready_all { |event| unsafe_resume_io(event) }
+        pd.value.@readers.ready_all { |event| unsafe_resume_io(event) { |fiber| yield fiber } }
       elsif (events & LibC::EPOLLIN) == LibC::EPOLLIN
-        pd.value.@readers.ready_one { |event| unsafe_resume_io(event) }
+        pd.value.@readers.ready_one { |event| unsafe_resume_io(event) { |fiber| yield fiber } }
       end
 
       if (events & LibC::EPOLLOUT) == LibC::EPOLLOUT
-        pd.value.@writers.ready_one { |event| unsafe_resume_io(event) }
+        pd.value.@writers.ready_one { |event| unsafe_resume_io(event) { |fiber| yield fiber } }
       end
     end
   end
