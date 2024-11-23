@@ -61,22 +61,20 @@ fun __crystal_once(state : Void*, flag : Bool*, initializer : Void*) : Void
 end
 
 # :nodoc:
-# Using @[NoInline] and cold call convention so llvm
-# optimizes for the hot path (var already initialized).
+# Using @[NoInline] so llvm optimizes for the hot path (var already initialized).
 @[NoInline]
-@[CallConvention("Cold")]
 fun __crystal_once_exec(flag : Bool*, initializer : Void*) : Void
   flag = flag.as(Crystal::OnceState*)
 
   {% if flag?(:preview_mt) || flag?(:win32) %}
     state = Crystal.once_mutex
-    state.as(Mutex).lock
+    state.lock
   {% end %}
 
-  flag_value = Atomic::Ops.load(flag, :acquire, volatile: false)
-  return if flag_value.initialized?
-
   begin
+    flag_value = Atomic::Ops.load(flag, :acquire, volatile: false)
+    return if flag_value.initialized?
+
     raise "Recursion while initializing class variables and/or constants" if flag_value.processing?
 
     Atomic::Ops.store(flag, :processing, :monotonic, false)
@@ -84,7 +82,7 @@ fun __crystal_once_exec(flag : Bool*, initializer : Void*) : Void
     Atomic::Ops.store(flag, :initialized, :release, false)
   ensure
     {% if flag?(:preview_mt) %}
-      state.as(Mutex).unlock
+      state.unlock
     {% end %}
   end
 end
