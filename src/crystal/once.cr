@@ -4,51 +4,87 @@
 # only once. `__crystal_once_init` is executed only once at the beginning of the program
 # and the result is passed on each call to `__crystal_once`.
 
-# This implementation uses an array to store the initialization flag pointers for each value
-# to find infinite loops and raise an error. In multithread mode a mutex is used to
-# avoid race conditions between threads.
-
 # :nodoc:
-class Crystal::OnceState
-  @rec = [] of Bool*
-
-  def once(flag : Bool*, initializer : Void*)
-    unless flag.value
-      if @rec.includes?(flag)
-        raise "Recursion while initializing class variables and/or constants"
-      end
-      @rec << flag
-
-      Proc(Nil).new(initializer, Pointer(Void).null).call
-      flag.value = true
-
-      @rec.pop
-    end
+module Crystal
+  # :nodoc:
+  enum OnceState : Int8
+    Processing    = -1
+    Uninitialized =  0
+    Initialized   =  1
   end
 
-  # on Win32, `Crystal::System::FileDescriptor#@@reader_thread` spawns a new
+  # On Win32, `Crystal::System::FileDescriptor#@@reader_thread` spawns a new
   # thread even without the `preview_mt` flag, and the thread can also reference
   # Crystal constants, leading to race conditions, so we always enable the mutex
   # TODO: can this be improved?
   {% if flag?(:preview_mt) || flag?(:win32) %}
-    @mutex = Mutex.new(:reentrant)
+    # This variable is uninitialized so this variable
+    # won't be initialized using `__crystal_once`.
+    @@once_mutex = uninitialized Mutex
 
-    def once(flag : Bool*, initializer : Void*)
-      unless flag.value
-        @mutex.synchronize do
-          previous_def
-        end
-      end
+    # :nodoc:
+    def self.once_mutex : Mutex
+      Atomic::Ops.load(pointerof(@@once_mutex).as(Void**), :acquire, volatile: false).as(Mutex)
+    end
+
+    # :nodoc:
+    def self.once_mutex=(val : Mutex) : Nil
+      Atomic::Ops.store(pointerof(@@once_mutex).as(Void**), val.as(Void*), :release, volatile: false)
     end
   {% end %}
 end
 
 # :nodoc:
+# This method is supposed to initialize and return the state variable used for `__crystal_once`,
+# but using the `Crystal::ONCE_MUTEX` variable in combination with the @[AlwaysInline] annotation
+# on `__crystal_once` allows LLVM to defer loading the once mutex to when we actually need it.
+#
+# Since we only need the once mutex on the first access of any const variable,
+# but don't need it all the other times, this reduces the register pressure when accessing a const.
 fun __crystal_once_init : Void*
-  Crystal::OnceState.new.as(Void*)
+  {% if flag?(:preview_mt) || flag?(:win32) %}
+    Crystal.once_mutex = Mutex.new(:reentrant)
+  {% end %}
+
+  Pointer(Void).null
 end
 
 # :nodoc:
-fun __crystal_once(state : Void*, flag : Bool*, initializer : Void*)
-  state.as(Crystal::OnceState).once(flag, initializer)
+# Simply defers to `__crystal_once_exec` in the rare case we need to initialize a variable.
+#
+# Using `@[AlwaysInline]` allows LLVM to optimize const accesses, but since this is a `fun`,
+# the function will appear in the symbol table but will never be referenced.
+@[AlwaysInline]
+fun __crystal_once(state : Void*, flag : Bool*, initializer : Void*) : Void
+  return if flag.as(Crystal::OnceState*).value.initialized?
+  __crystal_once_exec(flag, initializer)
+end
+
+# :nodoc:
+# Using @[NoInline] and cold call convention so llvm
+# optimizes for the hot path (var already initialized).
+@[NoInline]
+@[CallConvention("Cold")]
+fun __crystal_once_exec(flag : Bool*, initializer : Void*) : Void
+  flag = flag.as(Crystal::OnceState*)
+
+  {% if flag?(:preview_mt) || flag?(:win32) %}
+    state = Crystal.once_mutex
+    state.as(Mutex).lock
+  {% end %}
+
+  flag_value = Atomic::Ops.load(flag, :acquire, volatile: false)
+  return if flag_value.initialized?
+
+  begin
+    raise "Recursion while initializing class variables and/or constants" if flag_value.processing?
+
+    Atomic::Ops.store(flag, :processing, :monotonic, false)
+    Proc(Nil).new(initializer, Pointer(Void).null).call
+    Atomic::Ops.store(flag, :initialized, :release, false)
+  ensure
+    {% if flag?(:preview_mt) %}
+      state.as(Mutex).unlock
+    {% end %}
+  end
 end
