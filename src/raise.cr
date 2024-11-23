@@ -182,6 +182,7 @@ end
   end
 {% else %}
   {% mingw = flag?(:win32) && flag?(:gnu) %}
+  # :nodoc:
   fun {{ mingw ? "__crystal_personality_imp".id : "__crystal_personality".id }}(
     version : Int32, actions : LibUnwind::Action, exception_class : UInt64, exception_object : LibUnwind::Exception*, context : Void*,
   ) : LibUnwind::ReasonCode
