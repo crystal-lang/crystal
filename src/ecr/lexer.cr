@@ -25,6 +25,15 @@ class ECR::Lexer
     end
   end
 
+  class SyntaxException < Exception
+    getter line_number : Int32
+    getter column_number : Int32
+
+    def initialize(message, @line_number, @column_number)
+      super(message)
+    end
+  end
+
   def initialize(string)
     @reader = Char::Reader.new(string)
     @token = Token.new
@@ -99,11 +108,20 @@ class ECR::Lexer
       case current_char
       when '\0'
         if is_output
-          raise "Unexpected end of file inside <%= ..."
+          raise SyntaxException.new(
+            "Unexpected end of file inside <%= ...",
+            @line_number, @column_number
+          )
         elsif is_escape
-          raise "Unexpected end of file inside <%% ..."
+          raise SyntaxException.new(
+            "Unexpected end of file inside <%% ...",
+            @line_number, @column_number
+          )
         else
-          raise "Unexpected end of file inside <% ..."
+          raise SyntaxException.new(
+            "Unexpected end of file inside <% ...",
+            @line_number, @column_number
+          )
         end
       when '\n'
         @line_number += 1
@@ -123,7 +141,14 @@ class ECR::Lexer
 
           if is_end
             setup_control_token(start_pos, is_escape, suppress_leading, true)
-            raise "Expecting '>' after '-%'" if current_char != '>'
+
+            if current_char != '>'
+              raise SyntaxException.new(
+                "Expecting '>' after '-%'",
+                @line_number, @column_number
+              )
+            end
+
             next_char
             break
           end
