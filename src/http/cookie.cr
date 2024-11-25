@@ -104,6 +104,21 @@ module HTTP
       end
     end
 
+    # Returns an unambiguous string representation of this cookie.
+    #
+    # It uses the `Set-Cookie` serialization from `#to_set_cookie_header` which
+    # represents the full state of the cookie.
+    #
+    # ```
+    # HTTP::Cookie.new("foo", "bar").inspect                        # => HTTP::Cookie["foo=bar"]
+    # HTTP::Cookie.new("foo", "bar", domain: "example.com").inspect # => HTTP::Cookie["foo=bar; domain=example.com"]
+    # ```
+    def inspect(io : IO) : Nil
+      io << "HTTP::Cookie["
+      to_s.inspect(io)
+      io << "]"
+    end
+
     # Returns a string representation of this cookie.
     #
     # It uses the `Set-Cookie` serialization from `#to_set_cookie_header` which

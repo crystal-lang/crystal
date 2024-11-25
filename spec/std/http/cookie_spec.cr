@@ -173,6 +173,13 @@ module HTTP
       end
     end
 
+    describe "#inspect" do
+      it "stringifies" do
+        HTTP::Cookie.new("foo", "bar").inspect.should eq %(HTTP::Cookie["foo=bar"])
+        HTTP::Cookie.new("x", "y", domain: "example.com", path: "/foo", expires: Time.unix(1257894000), samesite: :lax).inspect.should eq %(HTTP::Cookie["x=y; domain=example.com; path=/foo; expires=Tue, 10 Nov 2009 23:00:00 GMT; SameSite=Lax"])
+      end
+    end
+
     describe "#valid? & #validate!" do
       it "raises on invalid cookie with __Secure- prefix" do
         cookie = HTTP::Cookie.new "x", "", secure: false
