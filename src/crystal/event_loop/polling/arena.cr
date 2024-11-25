@@ -13,7 +13,7 @@
 # that something else will maintain the uniqueness of indexes and reuse indexes
 # as much as possible instead of growing.
 #
-# For example this arena is used to hold `Crystal::Evented::PollDescriptor`
+# For example this arena is used to hold `Crystal::EventLoop::Polling::PollDescriptor`
 # allocations for all the fd in a program, where the fd is used as the index.
 # They're unique to the process and the OS always reuses the lowest fd numbers
 # before growing.
@@ -26,7 +26,7 @@
 # Guarantees: blocks' memory is initialized to zero, which means `T` objects are
 # initialized to zero by default, then `#free` will also clear the memory, so
 # the next allocation shall be initialized to zero, too.
-class Crystal::Evented::Arena(T, BLOCK_BYTESIZE)
+class Crystal::EventLoop::Polling::Arena(T, BLOCK_BYTESIZE)
   INVALID_INDEX = Index.new(-1, 0)
 
   struct Index

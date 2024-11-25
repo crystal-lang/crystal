@@ -1,11 +1,9 @@
-require "./event_loop"
-
 # Information related to the evloop for a fd, such as the read and write queues
 # (waiting `Event`), as well as which evloop instance currently owns the fd.
 #
 # Thread-unsafe: parallel mutations must be protected with a lock.
-struct Crystal::Evented::PollDescriptor
-  @event_loop : Evented::EventLoop?
+struct Crystal::EventLoop::Polling::PollDescriptor
+  @event_loop : Polling?
   @readers = Waiters.new
   @writers = Waiters.new
 

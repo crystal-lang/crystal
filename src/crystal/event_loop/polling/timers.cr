@@ -7,9 +7,9 @@ require "crystal/pointer_pairing_heap"
 #
 # NOTE: this is a struct because it only wraps a const pointer to an object
 # allocated in the heap.
-struct Crystal::Evented::Timers
+struct Crystal::EventLoop::Polling::Timers
   def initialize
-    @heap = PointerPairingHeap(Evented::Event).new
+    @heap = PointerPairingHeap(Event).new
   end
 
   def empty? : Bool
@@ -24,7 +24,7 @@ struct Crystal::Evented::Timers
   # Dequeues and yields each ready timer (their `#wake_at` is lower than
   # `System::Time.monotonic`) from the oldest to the most recent (i.e. time
   # ascending).
-  def dequeue_ready(& : Evented::Event* -> Nil) : Nil
+  def dequeue_ready(& : Event* -> Nil) : Nil
     seconds, nanoseconds = System::Time.monotonic
     now = Time::Span.new(seconds: seconds, nanoseconds: nanoseconds)
 
@@ -36,7 +36,7 @@ struct Crystal::Evented::Timers
   end
 
   # Add a new timer into the list. Returns true if it is the next ready timer.
-  def add(event : Evented::Event*) : Bool
+  def add(event : Event*) : Bool
     @heap.add(event)
     @heap.first? == event
   end
@@ -44,7 +44,7 @@ struct Crystal::Evented::Timers
   # Remove a timer from the list. Returns a tuple(dequeued, was_next_ready) of
   # booleans. The first bool tells whether the event was dequeued, in which case
   # the second one tells if it was the next ready event.
-  def delete(event : Evented::Event*) : {Bool, Bool}
+  def delete(event : Event*) : {Bool, Bool}
     if @heap.first? == event
       @heap.shift?
       {true, true}

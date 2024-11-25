@@ -1,11 +1,11 @@
-{% skip_file unless Crystal.has_constant?(:Evented) %}
+{% skip_file unless Crystal::EventLoop.has_constant?(:Polling) %}
 
 require "spec"
 
-describe Crystal::Evented::Arena do
+describe Crystal::EventLoop::Polling::Arena do
   describe "#allocate_at?" do
     it "yields block when not allocated" do
-      arena = Crystal::Evented::Arena(Int32, 96).new(32)
+      arena = Crystal::EventLoop::Polling::Arena(Int32, 96).new(32)
       pointer = nil
       index = nil
       called = 0
@@ -31,8 +31,8 @@ describe Crystal::Evented::Arena do
     end
 
     it "allocates up to capacity" do
-      arena = Crystal::Evented::Arena(Int32, 96).new(32)
-      indexes = [] of Crystal::Evented::Arena::Index
+      arena = Crystal::EventLoop::Polling::Arena(Int32, 96).new(32)
+      indexes = [] of Crystal::EventLoop::Polling::Arena::Index
 
       indexes = 32.times.map do |i|
         arena.allocate_at?(i) { |ptr, _| ptr.value = i }
@@ -49,7 +49,7 @@ describe Crystal::Evented::Arena do
     end
 
     it "checks bounds" do
-      arena = Crystal::Evented::Arena(Int32, 96).new(32)
+      arena = Crystal::EventLoop::Polling::Arena(Int32, 96).new(32)
       expect_raises(IndexError) { arena.allocate_at?(-1) { } }
       expect_raises(IndexError) { arena.allocate_at?(33) { } }
     end
@@ -57,7 +57,7 @@ describe Crystal::Evented::Arena do
 
   describe "#get" do
     it "returns previously allocated object" do
-      arena = Crystal::Evented::Arena(Int32, 96).new(32)
+      arena = Crystal::EventLoop::Polling::Arena(Int32, 96).new(32)
       pointer = nil
 
       index = arena.allocate_at(30) do |ptr|
@@ -77,15 +77,15 @@ describe Crystal::Evented::Arena do
     end
 
     it "can't access unallocated object" do
-      arena = Crystal::Evented::Arena(Int32, 96).new(32)
+      arena = Crystal::EventLoop::Polling::Arena(Int32, 96).new(32)
 
       expect_raises(RuntimeError) do
-        arena.get(Crystal::Evented::Arena::Index.new(10, 0)) { }
+        arena.get(Crystal::EventLoop::Polling::Arena::Index.new(10, 0)) { }
       end
     end
 
     it "checks generation" do
-      arena = Crystal::Evented::Arena(Int32, 96).new(32)
+      arena = Crystal::EventLoop::Polling::Arena(Int32, 96).new(32)
       called = 0
 
       index1 = arena.allocate_at(2) { called += 1 }
@@ -102,15 +102,15 @@ describe Crystal::Evented::Arena do
     end
 
     it "checks out of bounds" do
-      arena = Crystal::Evented::Arena(Int32, 96).new(32)
-      expect_raises(IndexError) { arena.get(Crystal::Evented::Arena::Index.new(-1, 0)) { } }
-      expect_raises(IndexError) { arena.get(Crystal::Evented::Arena::Index.new(33, 0)) { } }
+      arena = Crystal::EventLoop::Polling::Arena(Int32, 96).new(32)
+      expect_raises(IndexError) { arena.get(Crystal::EventLoop::Polling::Arena::Index.new(-1, 0)) { } }
+      expect_raises(IndexError) { arena.get(Crystal::EventLoop::Polling::Arena::Index.new(33, 0)) { } }
     end
   end
 
   describe "#get?" do
     it "returns previously allocated object" do
-      arena = Crystal::Evented::Arena(Int32, 96).new(32)
+      arena = Crystal::EventLoop::Polling::Arena(Int32, 96).new(32)
       pointer = nil
 
       index = arena.allocate_at(30) do |ptr|
@@ -131,16 +131,16 @@ describe Crystal::Evented::Arena do
     end
 
     it "can't access unallocated index" do
-      arena = Crystal::Evented::Arena(Int32, 96).new(32)
+      arena = Crystal::EventLoop::Polling::Arena(Int32, 96).new(32)
 
       called = 0
-      ret = arena.get?(Crystal::Evented::Arena::Index.new(10, 0)) { called += 1 }
+      ret = arena.get?(Crystal::EventLoop::Polling::Arena::Index.new(10, 0)) { called += 1 }
       ret.should be_false
       called.should eq(0)
     end
 
     it "checks generation" do
-      arena = Crystal::Evented::Arena(Int32, 96).new(32)
+      arena = Crystal::EventLoop::Polling::Arena(Int32, 96).new(32)
       called = 0
 
       old_index = arena.allocate_at(2) { }
@@ -166,11 +166,11 @@ describe Crystal::Evented::Arena do
     end
 
     it "checks out of bounds" do
-      arena = Crystal::Evented::Arena(Int32, 96).new(32)
+      arena = Crystal::EventLoop::Polling::Arena(Int32, 96).new(32)
       called = 0
 
-      arena.get?(Crystal::Evented::Arena::Index.new(-1, 0)) { called += 1 }.should be_false
-      arena.get?(Crystal::Evented::Arena::Index.new(33, 0)) { called += 1 }.should be_false
+      arena.get?(Crystal::EventLoop::Polling::Arena::Index.new(-1, 0)) { called += 1 }.should be_false
+      arena.get?(Crystal::EventLoop::Polling::Arena::Index.new(33, 0)) { called += 1 }.should be_false
 
       called.should eq(0)
     end
@@ -178,7 +178,7 @@ describe Crystal::Evented::Arena do
 
   describe "#free" do
     it "deallocates the object" do
-      arena = Crystal::Evented::Arena(Int32, 96).new(32)
+      arena = Crystal::EventLoop::Polling::Arena(Int32, 96).new(32)
 
       index1 = arena.allocate_at(3) { |ptr| ptr.value = 123 }
       arena.free(index1) { }
@@ -192,7 +192,7 @@ describe Crystal::Evented::Arena do
     end
 
     it "checks generation" do
-      arena = Crystal::Evented::Arena(Int32, 96).new(32)
+      arena = Crystal::EventLoop::Polling::Arena(Int32, 96).new(32)
 
       called = 0
       old_index = arena.allocate_at(1) { }
@@ -214,19 +214,19 @@ describe Crystal::Evented::Arena do
     end
 
     it "checks out of bounds" do
-      arena = Crystal::Evented::Arena(Int32, 96).new(32)
+      arena = Crystal::EventLoop::Polling::Arena(Int32, 96).new(32)
       called = 0
 
-      arena.free(Crystal::Evented::Arena::Index.new(-1, 0)) { called += 1 }
-      arena.free(Crystal::Evented::Arena::Index.new(33, 0)) { called += 1 }
+      arena.free(Crystal::EventLoop::Polling::Arena::Index.new(-1, 0)) { called += 1 }
+      arena.free(Crystal::EventLoop::Polling::Arena::Index.new(33, 0)) { called += 1 }
 
       called.should eq(0)
     end
   end
 
   it "#each_index" do
-    arena = Crystal::Evented::Arena(Int32, 96).new(32)
-    indices = [] of {Int32, Crystal::Evented::Arena::Index}
+    arena = Crystal::EventLoop::Polling::Arena(Int32, 96).new(32)
+    indices = [] of {Int32, Crystal::EventLoop::Polling::Arena::Index}
 
     arena.each_index { |i, index| indices << {i, index} }
     indices.should be_empty

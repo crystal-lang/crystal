@@ -1,9 +1,9 @@
-{% skip_file unless Crystal.has_constant?(:Evented) %}
+{% skip_file unless Crystal::EventLoop.has_constant?(:Polling) %}
 
 require "spec"
 
-class Crystal::Evented::FakeLoop < Crystal::Evented::EventLoop
-  getter operations = [] of {Symbol, Int32, Crystal::Evented::Arena::Index | Bool}
+class Crystal::EventLoop::FakeLoop < Crystal::EventLoop::Polling
+  getter operations = [] of {Symbol, Int32, Arena::Index | Bool}
 
   private def system_run(blocking : Bool, & : Fiber ->) : Nil
   end
@@ -27,13 +27,13 @@ class Crystal::Evented::FakeLoop < Crystal::Evented::EventLoop
   end
 end
 
-describe Crystal::Evented::Waiters do
+describe Crystal::EventLoop::Polling::Waiters do
   describe "#take_ownership" do
     it "associates a poll descriptor to an evloop instance" do
       fd = Int32::MAX
-      pd = Crystal::Evented::PollDescriptor.new
-      index = Crystal::Evented::Arena::Index.new(fd, 0)
-      evloop = Crystal::Evented::FakeLoop.new
+      pd = Crystal::EventLoop::Polling::PollDescriptor.new
+      index = Crystal::EventLoop::Polling::Arena::Index.new(fd, 0)
+      evloop = Crystal::EventLoop::Polling::FakeLoop.new
 
       pd.take_ownership(evloop, fd, index)
       pd.@event_loop.should be(evloop)
@@ -45,11 +45,11 @@ describe Crystal::Evented::Waiters do
 
     it "moves a poll descriptor to another evloop instance" do
       fd = Int32::MAX
-      pd = Crystal::Evented::PollDescriptor.new
-      index = Crystal::Evented::Arena::Index.new(fd, 0)
+      pd = Crystal::EventLoop::Polling::PollDescriptor.new
+      index = Crystal::EventLoop::Polling::Arena::Index.new(fd, 0)
 
-      evloop1 = Crystal::Evented::FakeLoop.new
-      evloop2 = Crystal::Evented::FakeLoop.new
+      evloop1 = Crystal::EventLoop::Polling::FakeLoop.new
+      evloop2 = Crystal::EventLoop::Polling::FakeLoop.new
 
       pd.take_ownership(evloop1, fd, index)
       pd.take_ownership(evloop2, fd, index)
@@ -67,10 +67,10 @@ describe Crystal::Evented::Waiters do
 
     it "can't move to the current evloop" do
       fd = Int32::MAX
-      pd = Crystal::Evented::PollDescriptor.new
-      index = Crystal::Evented::Arena::Index.new(fd, 0)
+      pd = Crystal::EventLoop::Polling::PollDescriptor.new
+      index = Crystal::EventLoop::Polling::Arena::Index.new(fd, 0)
 
-      evloop = Crystal::Evented::FakeLoop.new
+      evloop = Crystal::EventLoop::Polling::FakeLoop.new
 
       pd.take_ownership(evloop, fd, index)
       expect_raises(Exception) { pd.take_ownership(evloop, fd, index) }
@@ -78,15 +78,15 @@ describe Crystal::Evented::Waiters do
 
     it "can't move with pending waiters" do
       fd = Int32::MAX
-      pd = Crystal::Evented::PollDescriptor.new
-      index = Crystal::Evented::Arena::Index.new(fd, 0)
-      event = Crystal::Evented::Event.new(:io_read, Fiber.current)
+      pd = Crystal::EventLoop::Polling::PollDescriptor.new
+      index = Crystal::EventLoop::Polling::Arena::Index.new(fd, 0)
+      event = Crystal::EventLoop::Polling::Event.new(:io_read, Fiber.current)
 
-      evloop1 = Crystal::Evented::FakeLoop.new
+      evloop1 = Crystal::EventLoop::Polling::FakeLoop.new
       pd.take_ownership(evloop1, fd, index)
       pd.@readers.add(pointerof(event))
 
-      evloop2 = Crystal::Evented::FakeLoop.new
+      evloop2 = Crystal::EventLoop::Polling::FakeLoop.new
       expect_raises(RuntimeError) { pd.take_ownership(evloop2, fd, index) }
 
       pd.@event_loop.should be(evloop1)

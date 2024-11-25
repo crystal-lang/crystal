@@ -1,5 +1,3 @@
-require "./event"
-
 # A FIFO queue of `Event` waiting on the same operation (either read or write)
 # for a fd. See `PollDescriptor`.
 #
@@ -7,7 +5,7 @@ require "./event"
 # always ready variables.
 #
 # Thread unsafe: parallel mutations must be protected with a lock.
-struct Crystal::Evented::Waiters
+struct Crystal::EventLoop::Polling::Waiters
   @list = PointerLinkedList(Event).new
   @ready = false
   @always_ready = false

@@ -1,13 +1,13 @@
-{% skip_file unless Crystal.has_constant?(:Evented) %}
+{% skip_file unless Crystal::EventLoop.has_constant?(:Polling) %}
 
 require "spec"
 
-describe Crystal::Evented::Timers do
+describe Crystal::EventLoop::Polling::Timers do
   it "#empty?" do
-    timers = Crystal::Evented::Timers.new
+    timers = Crystal::EventLoop::Polling::Timers.new
     timers.empty?.should be_true
 
-    event = Crystal::Evented::Event.new(:sleep, Fiber.current, timeout: 7.seconds)
+    event = Crystal::EventLoop::Polling::Event.new(:sleep, Fiber.current, timeout: 7.seconds)
     timers.add(pointerof(event))
     timers.empty?.should be_false
 
@@ -17,13 +17,13 @@ describe Crystal::Evented::Timers do
 
   it "#next_ready?" do
     # empty
-    timers = Crystal::Evented::Timers.new
+    timers = Crystal::EventLoop::Polling::Timers.new
     timers.next_ready?.should be_nil
 
     # with events
-    event1s = Crystal::Evented::Event.new(:sleep, Fiber.current, timeout: 1.second)
-    event3m = Crystal::Evented::Event.new(:sleep, Fiber.current, timeout: 3.minutes)
-    event5m = Crystal::Evented::Event.new(:sleep, Fiber.current, timeout: 5.minutes)
+    event1s = Crystal::EventLoop::Polling::Event.new(:sleep, Fiber.current, timeout: 1.second)
+    event3m = Crystal::EventLoop::Polling::Event.new(:sleep, Fiber.current, timeout: 3.minutes)
+    event5m = Crystal::EventLoop::Polling::Event.new(:sleep, Fiber.current, timeout: 5.minutes)
 
     timers.add(pointerof(event5m))
     timers.next_ready?.should eq(event5m.wake_at?)
@@ -36,11 +36,11 @@ describe Crystal::Evented::Timers do
   end
 
   it "#dequeue_ready" do
-    timers = Crystal::Evented::Timers.new
+    timers = Crystal::EventLoop::Polling::Timers.new
 
-    event1 = Crystal::Evented::Event.new(:sleep, Fiber.current, timeout: 0.seconds)
-    event2 = Crystal::Evented::Event.new(:sleep, Fiber.current, timeout: 0.seconds)
-    event3 = Crystal::Evented::Event.new(:sleep, Fiber.current, timeout: 1.minute)
+    event1 = Crystal::EventLoop::Polling::Event.new(:sleep, Fiber.current, timeout: 0.seconds)
+    event2 = Crystal::EventLoop::Polling::Event.new(:sleep, Fiber.current, timeout: 0.seconds)
+    event3 = Crystal::EventLoop::Polling::Event.new(:sleep, Fiber.current, timeout: 1.minute)
 
     # empty
     called = 0
@@ -48,12 +48,12 @@ describe Crystal::Evented::Timers do
     called.should eq(0)
 
     # add events in non chronological order
-    timers = Crystal::Evented::Timers.new
+    timers = Crystal::EventLoop::Polling::Timers.new
     timers.add(pointerof(event1))
     timers.add(pointerof(event3))
     timers.add(pointerof(event2))
 
-    events = [] of Crystal::Evented::Event*
+    events = [] of Crystal::EventLoop::Polling::Event*
     timers.dequeue_ready { |event| events << event }
 
     events.should eq([
@@ -64,12 +64,12 @@ describe Crystal::Evented::Timers do
   end
 
   it "#add" do
-    timers = Crystal::Evented::Timers.new
+    timers = Crystal::EventLoop::Polling::Timers.new
 
-    event0 = Crystal::Evented::Event.new(:sleep, Fiber.current)
-    event1 = Crystal::Evented::Event.new(:sleep, Fiber.current, timeout: 0.seconds)
-    event2 = Crystal::Evented::Event.new(:sleep, Fiber.current, timeout: 2.minutes)
-    event3 = Crystal::Evented::Event.new(:sleep, Fiber.current, timeout: 1.minute)
+    event0 = Crystal::EventLoop::Polling::Event.new(:sleep, Fiber.current)
+    event1 = Crystal::EventLoop::Polling::Event.new(:sleep, Fiber.current, timeout: 0.seconds)
+    event2 = Crystal::EventLoop::Polling::Event.new(:sleep, Fiber.current, timeout: 2.minutes)
+    event3 = Crystal::EventLoop::Polling::Event.new(:sleep, Fiber.current, timeout: 1.minute)
 
     # add events in non chronological order
     timers.add(pointerof(event1)).should be_true # added to the head (next ready)
@@ -81,13 +81,13 @@ describe Crystal::Evented::Timers do
   end
 
   it "#delete" do
-    event1 = Crystal::Evented::Event.new(:sleep, Fiber.current, timeout: 0.seconds)
-    event2 = Crystal::Evented::Event.new(:sleep, Fiber.current, timeout: 0.seconds)
-    event3 = Crystal::Evented::Event.new(:sleep, Fiber.current, timeout: 1.minute)
-    event4 = Crystal::Evented::Event.new(:sleep, Fiber.current, timeout: 4.minutes)
+    event1 = Crystal::EventLoop::Polling::Event.new(:sleep, Fiber.current, timeout: 0.seconds)
+    event2 = Crystal::EventLoop::Polling::Event.new(:sleep, Fiber.current, timeout: 0.seconds)
+    event3 = Crystal::EventLoop::Polling::Event.new(:sleep, Fiber.current, timeout: 1.minute)
+    event4 = Crystal::EventLoop::Polling::Event.new(:sleep, Fiber.current, timeout: 4.minutes)
 
     # add events in non chronological order
-    timers = Crystal::Evented::Timers.new
+    timers = Crystal::EventLoop::Polling::Timers.new
     timers.add(pointerof(event1))
     timers.add(pointerof(event3))
     timers.add(pointerof(event2))

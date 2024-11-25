@@ -490,7 +490,7 @@ private module ConsoleUtils
         handle: handle,
         slice: slice,
         iocp: Crystal::EventLoop.current.iocp,
-        completion_key: Crystal::IOCP::CompletionKey.new(:stdin_read, ::Fiber.current),
+        completion_key: Crystal::System::IOCP::CompletionKey.new(:stdin_read, ::Fiber.current),
       )
       @@read_cv.signal
     end
@@ -509,7 +509,11 @@ private module ConsoleUtils
     units_read.to_i32
   end
 
-  record ReadRequest, handle : LibC::HANDLE, slice : Slice(UInt16), iocp : LibC::HANDLE, completion_key : Crystal::IOCP::CompletionKey
+  record ReadRequest,
+    handle : LibC::HANDLE,
+    slice : Slice(UInt16),
+    iocp : LibC::HANDLE,
+    completion_key : Crystal::System::IOCP::CompletionKey
 
   @@read_cv = ::Thread::ConditionVariable.new
   @@read_requests = Deque(ReadRequest).new
