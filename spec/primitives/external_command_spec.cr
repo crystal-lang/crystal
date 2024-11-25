@@ -1,8 +1,8 @@
 {% skip_file if flag?(:interpreted) %}
 
-require "../spec_helper"
+require "../support/tempfile"
 
-describe Crystal::Command do
+describe "Crystal::Command" do
   it "exec external commands", tags: %w[slow] do
     with_temp_executable "crystal-external" do |path|
       with_tempfile "crystal-external.cr" do |source_file|

@@ -4,7 +4,16 @@ abstract class Crystal::EventLoop
     {% if flag?(:wasi) %}
       Crystal::Wasi::EventLoop.new
     {% elsif flag?(:unix) %}
-      Crystal::LibEvent::EventLoop.new
+      # TODO: enable more targets by default (need manual tests or fixes)
+      {% if flag?("evloop=libevent") %}
+        Crystal::LibEvent::EventLoop.new
+      {% elsif flag?("evloop=epoll") || flag?(:android) || flag?(:linux) %}
+        Crystal::Epoll::EventLoop.new
+      {% elsif flag?("evloop=kqueue") || flag?(:darwin) || flag?(:freebsd) %}
+        Crystal::Kqueue::EventLoop.new
+      {% else %}
+        Crystal::LibEvent::EventLoop.new
+      {% end %}
     {% elsif flag?(:win32) %}
       Crystal::IOCP::EventLoop.new
     {% else %}
@@ -78,7 +87,15 @@ end
 {% if flag?(:wasi) %}
   require "./wasi/event_loop"
 {% elsif flag?(:unix) %}
-  require "./unix/event_loop_libevent"
+  {% if flag?("evloop=libevent") %}
+    require "./unix/event_loop_libevent"
+  {% elsif flag?("evloop=epoll") || flag?(:android) || flag?(:linux) %}
+    require "./unix/epoll/event_loop"
+  {% elsif flag?("evloop=kqueue") || flag?(:darwin) || flag?(:freebsd) %}
+    require "./unix/kqueue/event_loop"
+  {% else %}
+    require "./unix/event_loop_libevent"
+  {% end %}
 {% elsif flag?(:win32) %}
   require "./win32/event_loop_iocp"
 {% else %}

@@ -40,12 +40,6 @@ jobs:
           name: x86_64-mingw-w64-crystal-obj
           path: .build/crystal.obj
 
-      - name: Upload standard library
-        uses: actions/upload-artifact@v4
-        with:
-          name: x86_64-mingw-w64-crystal-stdlib
-          path: src
-
   x86_64-mingw-w64-link:
     runs-on: windows-2022
     needs: [x86_64-mingw-w64-cross-compile]
@@ -57,6 +51,7 @@ jobs:
           msystem: UCRT64
           update: true
           install: >-
+            make
             mingw-w64-ucrt-x86_64-pkgconf
             mingw-w64-ucrt-x86_64-cc
             mingw-w64-ucrt-x86_64-gc
@@ -66,34 +61,37 @@ jobs:
             mingw-w64-ucrt-x86_64-llvm
             mingw-w64-ucrt-x86_64-libffi
 
+      - name: Disable CRLF line ending substitution
+        run: |
+          git config --global core.autocrlf false
+
+      - name: Download Crystal source
+        uses: actions/checkout@v4
+
       - name: Download crystal.obj
         uses: actions/download-artifact@v4
         with:
           name: x86_64-mingw-w64-crystal-obj
 
-      - name: Download standard library
-        uses: actions/download-artifact@v4
-        with:
-          name: x86_64-mingw-w64-crystal-stdlib
-          path: share/crystal/src
-
       - name: Link Crystal executable
         shell: msys2 {0}
         run: |
-          mkdir bin
-          cc crystal.obj -o bin/crystal.exe -municode \
+          mkdir .build
+          cc crystal.obj -o .build/crystal.exe -municode \
             $(pkg-config bdw-gc libpcre2-8 iconv zlib libffi --libs) \
             $(llvm-config --libs --system-libs --ldflags) \
             -lole32 -lWS2_32 -Wl,--stack,0x800000
-          ldd bin/crystal.exe | grep -iv /c/windows/system32 | sed 's/.* => //; s/ (.*//' | xargs -t -i cp '{}' bin/
 
-      - name: Upload Crystal
+      - name: Package Crystal
+        shell: msys2 {0}
+        run: |
+          make install install_dlls deref_symlinks=1 PREFIX="$(pwd)/crystal"
+
+      - name: Upload Crystal executable
         uses: actions/upload-artifact@v4
         with:
           name: x86_64-mingw-w64-crystal
-          path: |
-            bin/
-            share/
+          path: crystal
 
   x86_64-mingw-w64-test:
     runs-on: windows-2022
