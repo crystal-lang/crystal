@@ -104,6 +104,19 @@ module HTTP
       end
     end
 
+    # Returns a string representation of this cookie.
+    #
+    # It uses the `Set-Cookie` serialization from `#to_set_cookie_header` which
+    # represents the full state of the cookie.
+    #
+    # ```
+    # HTTP::Cookie.new("foo", "bar").to_s                        # => "foo=bar"
+    # HTTP::Cookie.new("foo", "bar", domain: "example.com").to_s # => "foo=bar; domain=example.com"
+    # ```
+    def to_s(io : IO) : Nil
+      to_set_cookie_header(io)
+    end
+
     # Returns a string representation of this cookie in the format used by the
     # `Set-Cookie` header of an HTTP response.
     #

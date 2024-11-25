@@ -166,6 +166,13 @@ module HTTP
       it { assert_prints HTTP::Cookie.new("empty-value", "").to_set_cookie_header, "empty-value=" }
     end
 
+    describe "#to_s" do
+      it "stringifies" do
+        HTTP::Cookie.new("foo", "bar").to_s.should eq "foo=bar"
+        HTTP::Cookie.new("x", "y", domain: "example.com", path: "/foo", expires: Time.unix(1257894000), samesite: :lax).to_s.should eq "x=y; domain=example.com; path=/foo; expires=Tue, 10 Nov 2009 23:00:00 GMT; SameSite=Lax"
+      end
+    end
+
     describe "#valid? & #validate!" do
       it "raises on invalid cookie with __Secure- prefix" do
         cookie = HTTP::Cookie.new "x", "", secure: false
