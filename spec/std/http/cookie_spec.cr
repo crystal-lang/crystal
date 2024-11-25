@@ -751,4 +751,39 @@ module HTTP
       cookies.to_h.should_not eq(cookies_hash)
     end
   end
+
+  describe "#to_s" do
+    it "stringifies" do
+      cookies = HTTP::Cookies{
+        HTTP::Cookie.new("foo", "bar"),
+        HTTP::Cookie.new("x", "y", domain: "example.com", path: "/foo", expires: Time.unix(1257894000), samesite: :lax),
+      }
+
+      cookies.to_s.should eq %(HTTP::Cookies{"foo=bar", "x=y; domain=example.com; path=/foo; expires=Tue, 10 Nov 2009 23:00:00 GMT; SameSite=Lax"})
+    end
+  end
+
+  describe "#inspect" do
+    it "stringifies" do
+      cookies = HTTP::Cookies{
+        HTTP::Cookie.new("foo", "bar"),
+        HTTP::Cookie.new("x", "y", domain: "example.com", path: "/foo", expires: Time.unix(1257894000), samesite: :lax),
+      }
+
+      cookies.inspect.should eq %(HTTP::Cookies{"foo=bar", "x=y; domain=example.com; path=/foo; expires=Tue, 10 Nov 2009 23:00:00 GMT; SameSite=Lax"})
+    end
+  end
+
+  describe "#pretty_print" do
+    it "stringifies" do
+      cookies = HTTP::Cookies{
+        HTTP::Cookie.new("foo", "bar"),
+        HTTP::Cookie.new("x", "y", domain: "example.com", path: "/foo", expires: Time.unix(1257894000), samesite: :lax),
+      }
+      cookies.pretty_inspect.should eq <<-CRYSTAL
+        HTTP::Cookies{"foo=bar",
+         "x=y; domain=example.com; path=/foo; expires=Tue, 10 Nov 2009 23:00:00 GMT; SameSite=Lax"}
+        CRYSTAL
+    end
+  end
 end

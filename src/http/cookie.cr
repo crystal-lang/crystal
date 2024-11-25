@@ -539,5 +539,32 @@ module HTTP
     def to_h : Hash(String, Cookie)
       @cookies.dup
     end
+
+    # Returns a string representation of this cookies list.
+    #
+    # It uses the `Set-Cookie` serialization from `Cookie#to_set_cookie_header` which
+    # represents the full state of the cookie.
+    #
+    # ```
+    # HTTP::Cookies{
+    #   HTTP::Cookie.new("foo", "bar"),
+    #   HTTP::Cookie.new("foo", "bar", domain: "example.com"),
+    # }.to_s # => "HTTP::Cookies{\"foo=bar\", \"foo=bar; domain=example.com\"}"
+    # ```
+    def to_s(io : IO)
+      io << "HTTP::Cookies{"
+      join(io, ", ") { |cookie| cookie.to_set_cookie_header.inspect(io) }
+      io << "}"
+    end
+
+    # :ditto:
+    def inspect(io : IO)
+      to_s(io)
+    end
+
+    # :ditto:
+    def pretty_print(pp) : Nil
+      pp.list("HTTP::Cookies{", self, "}") { |elem| pp.text(elem.to_set_cookie_header.inspect) }
+    end
   end
 end
