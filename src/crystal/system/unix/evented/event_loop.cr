@@ -113,7 +113,9 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
 
   # NOTE: thread unsafe
   def run(blocking : Bool) : Bool
-    system_run(blocking)
+    system_run(blocking) do |fiber|
+      Crystal::Scheduler.enqueue(fiber)
+    end
     true
   end
 
@@ -299,11 +301,15 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
 
     Evented.arena.free(index) do |pd|
       pd.value.@readers.ready_all do |event|
-        pd.value.@event_loop.try(&.unsafe_resume_io(event))
+        pd.value.@event_loop.try(&.unsafe_resume_io(event) do |fiber|
+          Crystal::Scheduler.enqueue(fiber)
+        end)
       end
 
       pd.value.@writers.ready_all do |event|
-        pd.value.@event_loop.try(&.unsafe_resume_io(event))
+        pd.value.@event_loop.try(&.unsafe_resume_io(event) do |fiber|
+          Crystal::Scheduler.enqueue(fiber)
+        end)
       end
 
       pd.value.remove(io.fd)
@@ -418,7 +424,7 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
   # Thread unsafe: we must hold the poll descriptor waiter lock for the whole
   # duration of the dequeue/resume_io otherwise we might conflict with timers
   # trying to cancel an IO event.
-  protected def unsafe_resume_io(event : Evented::Event*) : Bool
+  protected def unsafe_resume_io(event : Evented::Event*, &) : Bool
     # we only partially own the poll descriptor; thanks to the lock we know that
     # another thread won't dequeue it, yet it may still be in the timers queue,
     # which at worst may be waiting on the lock to be released, so event* can be
@@ -426,7 +432,7 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
 
     if !event.value.wake_at? || delete_timer(event)
       # no timeout or we canceled it: we fully own the event
-      Crystal::Scheduler.enqueue(event.value.fiber)
+      yield event.value.fiber
       true
     else
       # failed to cancel the timeout so the timer owns the event (by rule)
@@ -439,7 +445,7 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
   # Shall be called after processing IO events. IO events with a timeout that
   # have succeeded shall already have been removed from `@timers` otherwise the
   # fiber could be resumed twice!
-  private def process_timers(timer_triggered : Bool) : Nil
+  private def process_timers(timer_triggered : Bool, &) : Nil
     # collect ready timers before processing them —this is safe— to avoids a
     # deadlock situation when another thread tries to process a ready IO event
     # (in poll descriptor waiters) with a timeout (same event* in timers)
@@ -458,11 +464,11 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
     end
 
     buffer.to_slice[0, size].each do |event|
-      process_timer(event)
+      process_timer(event) { |fiber| yield fiber }
     end
   end
 
-  private def process_timer(event : Evented::Event*)
+  private def process_timer(event : Evented::Event*, &)
     # we dequeued the event from timers, and by rule we own it, so event* can
     # safely be dereferenced:
     fiber = event.value.fiber
@@ -492,7 +498,7 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
       raise RuntimeError.new("BUG: unexpected event in timers: #{event.value}%s\n")
     end
 
-    Crystal::Scheduler.enqueue(fiber)
+    yield fiber
   end
 
   # internals: system
@@ -505,7 +511,7 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
   #
   # The `PollDescriptor` of IO events can be retrieved using the *index*
   # from the system event's user data.
-  private abstract def system_run(blocking : Bool) : Nil
+  private abstract def system_run(blocking : Bool, & : Fiber ->) : Nil
 
   # Add *fd* to the polling system, setting *index* as user data.
   protected abstract def system_add(fd : Int32, index : Index) : Nil
