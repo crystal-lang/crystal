@@ -1,6 +1,7 @@
 require "spec"
 require "http/cookie"
 require "http/headers"
+require "spec/helpers/string"
 
 private def parse_first_cookie(header)
   cookies = HTTP::Cookie::Parser.parse_cookies(header)
@@ -145,24 +146,24 @@ module HTTP
     end
 
     describe "#to_set_cookie_header" do
-      it { HTTP::Cookie.new("x", "v$1").to_set_cookie_header.should eq "x=v$1" }
+      it { assert_prints HTTP::Cookie.new("x", "v$1").to_set_cookie_header, "x=v$1" }
 
-      it { HTTP::Cookie.new("x", "seven", domain: "127.0.0.1").to_set_cookie_header.should eq "x=seven; domain=127.0.0.1" }
+      it { assert_prints HTTP::Cookie.new("x", "seven", domain: "127.0.0.1").to_set_cookie_header, "x=seven; domain=127.0.0.1" }
 
-      it { HTTP::Cookie.new("x", "y", path: "/").to_set_cookie_header.should eq "x=y; path=/" }
-      it { HTTP::Cookie.new("x", "y", path: "/example").to_set_cookie_header.should eq "x=y; path=/example" }
+      it { assert_prints HTTP::Cookie.new("x", "y", path: "/").to_set_cookie_header, "x=y; path=/" }
+      it { assert_prints HTTP::Cookie.new("x", "y", path: "/example").to_set_cookie_header, "x=y; path=/example" }
 
-      it { HTTP::Cookie.new("x", "expiring", expires: Time.unix(1257894000)).to_set_cookie_header.should eq "x=expiring; expires=Tue, 10 Nov 2009 23:00:00 GMT" }
-      it { HTTP::Cookie.new("x", "expiring-1601", expires: Time.utc(1601, 1, 1, 1, 1, 1, nanosecond: 1)).to_set_cookie_header.should eq "x=expiring-1601; expires=Mon, 01 Jan 1601 01:01:01 GMT" }
+      it { assert_prints HTTP::Cookie.new("x", "expiring", expires: Time.unix(1257894000)).to_set_cookie_header, "x=expiring; expires=Tue, 10 Nov 2009 23:00:00 GMT" }
+      it { assert_prints HTTP::Cookie.new("x", "expiring-1601", expires: Time.utc(1601, 1, 1, 1, 1, 1, nanosecond: 1)).to_set_cookie_header, "x=expiring-1601; expires=Mon, 01 Jan 1601 01:01:01 GMT" }
 
       it "samesite" do
-        HTTP::Cookie.new("x", "samesite-default", samesite: nil).to_set_cookie_header.should eq "x=samesite-default"
-        HTTP::Cookie.new("x", "samesite-lax", samesite: :lax).to_set_cookie_header.should eq "x=samesite-lax; SameSite=Lax"
-        HTTP::Cookie.new("x", "samesite-strict", samesite: :strict).to_set_cookie_header.should eq "x=samesite-strict; SameSite=Strict"
-        HTTP::Cookie.new("x", "samesite-none", samesite: :none).to_set_cookie_header.should eq "x=samesite-none; SameSite=None"
+        assert_prints HTTP::Cookie.new("x", "samesite-default", samesite: nil).to_set_cookie_header, "x=samesite-default"
+        assert_prints HTTP::Cookie.new("x", "samesite-lax", samesite: :lax).to_set_cookie_header, "x=samesite-lax; SameSite=Lax"
+        assert_prints HTTP::Cookie.new("x", "samesite-strict", samesite: :strict).to_set_cookie_header, "x=samesite-strict; SameSite=Strict"
+        assert_prints HTTP::Cookie.new("x", "samesite-none", samesite: :none).to_set_cookie_header, "x=samesite-none; SameSite=None"
       end
 
-      it { HTTP::Cookie.new("empty-value", "").to_set_cookie_header.should eq "empty-value=" }
+      it { assert_prints HTTP::Cookie.new("empty-value", "").to_set_cookie_header, "empty-value=" }
     end
 
     describe "#valid? & #validate!" do
