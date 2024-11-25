@@ -33,9 +33,15 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     iocp
   end
 
+  def run(blocking : Bool) : Bool
+    run_impl(blocking) do |fiber|
+      fiber.enqueue
+    end
+  end
+
   # Runs the event loop and enqueues the fiber for the next upcoming event or
   # completion.
-  def run(blocking : Bool) : Bool
+  private def run_impl(blocking : Bool, &) : Bool
     # Pull the next upcoming event from the event queue. This determines the
     # timeout for waiting on the completion port.
     # OPTIMIZE: Implement @queue as a priority queue in order to avoid this
@@ -65,7 +71,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
       wait_time = blocking ? (next_event.wake_at - now).total_milliseconds : 0
       timed_out = System::IOCP.wait_queued_completions(wait_time, alertable: blocking) do |fiber|
         # This block may run multiple times. Every single fiber gets enqueued.
-        fiber.enqueue
+        yield fiber
       end
 
       @blocked_thread.set(nil, :release)
@@ -102,9 +108,9 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     # was already activated.
     if next_event.timeout? && (select_action = fiber.timeout_select_action)
       fiber.timeout_select_action = nil
-      select_action.time_expired(fiber)
+      yield fiber if select_action.time_expired?
     else
-      fiber.enqueue
+      yield fiber
     end
 
     # We enqueued a fiber.
