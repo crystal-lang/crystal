@@ -414,6 +414,37 @@ module Iterator(T)
     end
   end
 
+  # Returns an iterator that applies the given function to the element and then
+  # returns it unless it is `nil` or `false`. If the returned value would be
+  # `nil` or `false` it instead returns the next non `nil` or `false` value.
+  #
+  # ```
+  # iter = (1..5).each.filter_map { |i| i * 2 if i.even? }
+  # iter.next # => 4
+  # iter.next # => 8
+  # iter.next # => Iterator::Stop::INSTANCE
+  # ```
+  def filter_map(&func : T -> _)
+    FilterMapIterator(typeof(self), T, typeof(func.call(first).not_nil!)).new(self, func)
+  end
+
+  private struct FilterMapIterator(I, T, U)
+    include Iterator(U)
+    include IteratorWrapper
+
+    def initialize(@iterator : I, @func : T -> U?)
+    end
+
+    def next
+      while true
+        value = wrapped_next
+        mapped_value = @func.call(value)
+
+        return mapped_value if mapped_value
+      end
+    end
+  end
+
   # Returns an iterator that returns consecutive chunks of the size *n*.
   #
   # ```

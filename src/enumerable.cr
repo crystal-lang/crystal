@@ -257,6 +257,22 @@ module Enumerable(T)
     ary
   end
 
+  # Returns an `Array` containing the truthy results (everything except `false` or `nil`)
+  # of running the block against each element of the collection.
+  #
+  # ```
+  # (1..10).filter_map { |i| i * 2 if i.even? } # => [4, 8, 12, 16, 20]
+  # ```
+  def filter_map(& : T -> _)
+    ary = [] of typeof((yield Enumerable.element_type(self)).not_nil!)
+    each do |e|
+      if v = yield e
+        ary << v
+      end
+    end
+    ary
+  end
+
   # Returns the number of elements in the collection for which
   # the passed block is truthy.
   #

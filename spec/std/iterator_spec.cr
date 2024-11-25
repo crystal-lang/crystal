@@ -162,6 +162,16 @@ describe Iterator do
     end
   end
 
+  describe "filter_map" do
+    it "applies the function and removes falsy values" do
+      assert_iterates_iterator [4, 8], (1..5).each.filter_map { |i| i * 2 if i.even? }
+    end
+
+    it "sums after filter_map to_a" do
+      (1..5).each.filter_map { |i| i * 2 if i.even? }.to_a.sum.should eq(12)
+    end
+  end
+
   describe "chain" do
     it "chains" do
       iter = (1..2).each.chain(('a'..'b').each)

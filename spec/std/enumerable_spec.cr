@@ -113,6 +113,10 @@ describe "Enumerable" do
     it { Set{1, nil, 2, nil, 3}.compact_map { |x| x.try &.+(1) }.should eq([2, 3, 4]) }
   end
 
+  describe "filter map" do
+    it { (1..10).filter_map { |i| i * 2 if i.even? }.should eq([4, 8, 12, 16, 20]) }
+  end
+
   describe "size without block" do
     it "returns the number of elements in the Enumerable" do
       SpecEnumerable.new.size.should eq 3
