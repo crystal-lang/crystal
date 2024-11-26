@@ -48,9 +48,7 @@ describe HTTP do
     end
 
     it "handles errors" do
-      expect_raises(Time::Format::Error, %(Invalid date format at 3: "Thu>>")) do
-        HTTP.parse_time("Thu")
-      end
+      HTTP.parse_time("Thu").should be_nil
     end
   end
 
