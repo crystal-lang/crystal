@@ -7,29 +7,28 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   # This is a list of resume and timeout events managed outside of IOCP.
   @queue = Deque(Event).new
 
+  @iocp = System::IOCP.new
   @lock = Crystal::SpinLock.new
   @interrupted = Atomic(Bool).new(false)
   @blocked_thread = Atomic(Thread?).new(nil)
 
-  # Returns the base IO Completion Port
-  getter iocp : LibC::HANDLE do
-    create_completion_port(LibC::INVALID_HANDLE_VALUE, nil)
+  # Returns the base IO Completion Port.
+  def iocp_handle : LibC::HANDLE
+    @iocp.handle
   end
 
-  def create_completion_port(handle : LibC::HANDLE, parent : LibC::HANDLE? = iocp)
-    iocp = LibC.CreateIoCompletionPort(handle, parent, nil, 0)
-    if iocp.null?
-      raise IO::Error.from_winerror("CreateIoCompletionPort")
+  def create_completion_port(handle : LibC::HANDLE)
+    iocp = LibC.CreateIoCompletionPort(handle, @iocp.handle, nil, 0)
+    raise IO::Error.from_winerror("CreateIoCompletionPort") if iocp.null?
+
+    # all overlapped operations may finish synchronously, in which case we do
+    # not reschedule the running fiber; the following call tells Win32 not to
+    # queue an I/O completion packet to the associated IOCP as well, as this
+    # would be done by default
+    if LibC.SetFileCompletionNotificationModes(handle, LibC::FILE_SKIP_COMPLETION_PORT_ON_SUCCESS) == 0
+      raise IO::Error.from_winerror("SetFileCompletionNotificationModes")
     end
-    if parent
-      # all overlapped operations may finish synchronously, in which case we do
-      # not reschedule the running fiber; the following call tells Win32 not to
-      # queue an I/O completion packet to the associated IOCP as well, as this
-      # would be done by default
-      if LibC.SetFileCompletionNotificationModes(handle, LibC::FILE_SKIP_COMPLETION_PORT_ON_SUCCESS) == 0
-        raise IO::Error.from_winerror("SetFileCompletionNotificationModes")
-      end
-    end
+
     iocp
   end
 
@@ -69,7 +68,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
       end
 
       wait_time = blocking ? (next_event.wake_at - now).total_milliseconds : 0
-      timed_out = System::IOCP.wait_queued_completions(wait_time, alertable: blocking) do |fiber|
+      timed_out = @iocp.wait_queued_completions(wait_time, alertable: blocking) do |fiber|
         # This block may run multiple times. Every single fiber gets enqueued.
         yield fiber
       end

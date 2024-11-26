@@ -37,7 +37,7 @@ struct Crystal::System::Process
       LibC::JOBOBJECTINFOCLASS::AssociateCompletionPortInformation,
       LibC::JOBOBJECT_ASSOCIATE_COMPLETION_PORT.new(
         completionKey: @completion_key.as(Void*),
-        completionPort: Crystal::EventLoop.current.iocp,
+        completionPort: Crystal::EventLoop.current.iocp_handle,
       ),
     )
 

@@ -489,7 +489,7 @@ private module ConsoleUtils
       @@read_requests << ReadRequest.new(
         handle: handle,
         slice: slice,
-        iocp: Crystal::EventLoop.current.iocp,
+        iocp: Crystal::EventLoop.current.iocp_handle,
         completion_key: Crystal::System::IOCP::CompletionKey.new(:stdin_read, ::Fiber.current),
       )
       @@read_cv.signal

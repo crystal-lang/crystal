@@ -3,7 +3,7 @@ require "c/handleapi"
 require "crystal/system/thread_linked_list"
 
 # :nodoc:
-module Crystal::System::IOCP
+struct Crystal::System::IOCP
   # :nodoc:
   class CompletionKey
     enum Tag
@@ -16,9 +16,25 @@ module Crystal::System::IOCP
 
     def initialize(@tag : Tag, @fiber : ::Fiber? = nil)
     end
+
+    def valid?(number_of_bytes_transferred)
+      case tag
+      in .process_run?
+        number_of_bytes_transferred.in?(LibC::JOB_OBJECT_MSG_EXIT_PROCESS, LibC::JOB_OBJECT_MSG_ABNORMAL_EXIT_PROCESS)
+      in .stdin_read?
+        true
+      end
+    end
   end
 
-  def self.wait_queued_completions(timeout, alertable = false, &)
+  getter handle : LibC::HANDLE
+
+  def initialize
+    @handle = LibC.CreateIoCompletionPort(LibC::INVALID_HANDLE_VALUE, nil, nil, 0)
+    raise IO::Error.from_winerror("CreateIoCompletionPort") if @handle.null?
+  end
+
+  def wait_queued_completions(timeout, alertable = false, &)
     overlapped_entries = uninitialized LibC::OVERLAPPED_ENTRY[1]
 
     if timeout > UInt64::MAX
@@ -26,7 +42,9 @@ module Crystal::System::IOCP
     else
       timeout = timeout.to_u64
     end
-    result = LibC.GetQueuedCompletionStatusEx(Crystal::EventLoop.current.iocp, overlapped_entries, overlapped_entries.size, out removed, timeout, alertable)
+
+    result = LibC.GetQueuedCompletionStatusEx(@handle, overlapped_entries, overlapped_entries.size, out removed, timeout, alertable)
+
     if result == 0
       error = WinError.value
       if timeout && error.wait_timeout?
@@ -52,7 +70,7 @@ module Crystal::System::IOCP
         operation = OverlappedOperation.unbox(entry.lpOverlapped)
         operation.schedule { |fiber| yield fiber }
       in CompletionKey
-        if completion_key_valid?(completion_key, entry.dwNumberOfBytesTransferred)
+        if completion_key.valid?(entry.dwNumberOfBytesTransferred)
           # if `Process` exits before a call to `#wait`, this fiber will be
           # reset already
           if fiber = completion_key.fiber
@@ -67,15 +85,6 @@ module Crystal::System::IOCP
     end
 
     false
-  end
-
-  private def self.completion_key_valid?(completion_key, number_of_bytes_transferred)
-    case completion_key.tag
-    in .process_run?
-      number_of_bytes_transferred.in?(LibC::JOB_OBJECT_MSG_EXIT_PROCESS, LibC::JOB_OBJECT_MSG_ABNORMAL_EXIT_PROCESS)
-    in .stdin_read?
-      true
-    end
   end
 
   abstract class OverlappedOperation
