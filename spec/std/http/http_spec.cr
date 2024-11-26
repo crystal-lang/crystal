@@ -46,6 +46,12 @@ describe HTTP do
       parsed_time.offset.should eq -3 * 3600
       parsed_time.to_utc.to_s.should eq("2011-09-10 02:36:00 UTC")
     end
+
+    it "handles errors" do
+      expect_raises(Time::Format::Error, %(Invalid date format at 3: "Thu>>")) do
+        HTTP.parse_time("Thu")
+      end
+    end
   end
 
   describe "generates HTTP date" do
