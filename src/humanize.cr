@@ -151,6 +151,9 @@ struct Number
   # *separator* describes the decimal separator, *delimiter* the thousands
   # delimiter (see `#format`).
   #
+  # *unit_separator* is used for custom separation of the value and the unit.
+  # Users are encouraged to use a non-breaking space ('\u00A0') to prevent output being split across lines.
+  #
   # See `Int#humanize_bytes` to format a file size.
   def humanize(io : IO, precision = 3, separator = '.', delimiter = ',', *, base = 10 ** 3, significant = true, unit_separator = nil, prefixes : Indexable = SI_PREFIXES) : Nil
     humanize(io, precision, separator, delimiter, base: base, significant: significant, unit_separator: unit_separator) do |magnitude, _|
