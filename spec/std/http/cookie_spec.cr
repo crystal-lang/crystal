@@ -44,6 +44,12 @@ module HTTP
         expect_raises IO::Error, "Invalid cookie value" do
           HTTP::Cookie.new("x", %(foo\rbar))
         end
+
+        [*("\x00".."\x08"), *("\x0A".."\x1F"), "\t", %(" "), %("), ",", "\\", "\x7f", "\xFF", "🍪"].each do |char|
+          expect_raises IO::Error, "Invalid cookie value" do
+            HTTP::Cookie.new("x", char)
+          end
+        end
       end
 
       describe "with a security prefix" do
