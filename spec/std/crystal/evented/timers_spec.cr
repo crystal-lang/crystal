@@ -10,6 +10,9 @@ describe Crystal::Evented::Timers do
     event = Crystal::Evented::Event.new(:sleep, Fiber.current, timeout: 7.seconds)
     timers.add(pointerof(event))
     timers.empty?.should be_false
+
+    timers.delete(pointerof(event))
+    timers.empty?.should be_true
   end
 
   it "#next_ready?" do
@@ -18,9 +21,18 @@ describe Crystal::Evented::Timers do
     timers.next_ready?.should be_nil
 
     # with events
-    event = Crystal::Evented::Event.new(:sleep, Fiber.current, timeout: 5.seconds)
-    timers.add(pointerof(event))
-    timers.next_ready?.should eq(event.wake_at?)
+    event1s = Crystal::Evented::Event.new(:sleep, Fiber.current, timeout: 1.second)
+    event3m = Crystal::Evented::Event.new(:sleep, Fiber.current, timeout: 3.minutes)
+    event5m = Crystal::Evented::Event.new(:sleep, Fiber.current, timeout: 5.minutes)
+
+    timers.add(pointerof(event5m))
+    timers.next_ready?.should eq(event5m.wake_at?)
+
+    timers.add(pointerof(event1s))
+    timers.next_ready?.should eq(event1s.wake_at?)
+
+    timers.add(pointerof(event3m))
+    timers.next_ready?.should eq(event1s.wake_at?)
   end
 
   it "#dequeue_ready" do
@@ -66,16 +78,6 @@ describe Crystal::Evented::Timers do
 
     event0.wake_at = -1.minute
     timers.add(pointerof(event0)).should be_true # added new head (next ready)
-
-    events = [] of Crystal::Evented::Event*
-    timers.each { |event| events << event }
-    events.should eq([
-      pointerof(event0),
-      pointerof(event1),
-      pointerof(event3),
-      pointerof(event2),
-    ])
-    timers.empty?.should be_false
   end
 
   it "#delete" do
