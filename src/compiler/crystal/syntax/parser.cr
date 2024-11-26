@@ -802,7 +802,12 @@ module Crystal
           end_location = token_end_location
           @wants_regex = false
           next_token_skip_space
-          atomic = Call.new(atomic, "[]").at(location)
+
+          if block = parse_block(block: nil, stop_on_do: @stop_on_do)
+            end_location = block.end_location
+          end
+
+          atomic = Call.new(atomic, "[]", block: block).at(location)
           atomic.name_location = name_location
           atomic.end_location = end_location
           atomic.name_size = 0 if atomic.is_a?(Call)
@@ -845,9 +850,11 @@ module Crystal
             skip_space
           end
 
+          block = parse_block(block, stop_on_do: @stop_on_do)
+
           atomic = Call.new(atomic, method_name, (args || [] of ASTNode), block, block_arg, named_args).at(location)
           atomic.name_location = name_location
-          atomic.end_location = end_location
+          atomic.end_location = block.try(&.end_location) || end_location
           atomic.name_size = 0 if atomic.is_a?(Call)
           atomic
         else
