@@ -212,9 +212,14 @@ module Crystal
             if arg.name == arg.external_name && !arg.name.starts_with?("__temp_")
               # Regular arg
               all_typed_args[arg.external_name] << resolve_type(arg)
-            elsif arg.name != arg.external_name && arg.name.starts_with?("__arg")
+            elsif arg.name != arg.external_name && (arg.name.starts_with?("__arg") || !arg.name.starts_with?("__"))
+              # Either
               # A class / instance var that used a keword and then got used in a method argument, like:
               # def begin=(@begin)
+              # end
+              # - OR -
+              # A method used an external_name in the argument list, like:
+              # def test(external_name real_name)
               # end
               all_typed_args[arg.external_name] << resolve_type(arg)
             elsif @type_splats && (splat_arg = splat_arg_name) && arg.name == arg.external_name && arg.name.starts_with?("__temp_")

@@ -374,6 +374,22 @@ describe Crystal::SourceTyper do
     OUTPUT
   end
 
+  it "types args that use an external name" do
+    run_source_typer_spec(<<-INPUT, <<-OUTPUT)
+    def test(external_name real_name)
+      nil
+    end
+
+    test("world!")
+    INPUT
+    def test(external_name real_name : String) : Nil
+      nil
+    end
+
+    test("world!")
+    OUTPUT
+  end
+
   it "runs prelude and types everything" do
     run_source_typer_spec(<<-INPUT, <<-OUTPUT, line_number: -1, prelude: "prelude")
     # This file tries to capture each type of definition format
