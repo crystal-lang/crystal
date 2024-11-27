@@ -282,21 +282,26 @@ module Crystal
 
     # Given a list of types, wrap them in a ASTNode appropriate for printing that type out
     private def to_ast(types : Array(Crystal::Type))
+      # TODO: "flatten" types so that all union types are brought up and deduped
       case types.size
       when 1
         # Use var to communicate a single type name
-        Crystal::Var.new(types[0].to_s)
+        Crystal::Var.new(type_name(types[0]))
       when 2
         if types.includes?(program.nil)
           # One type is Nil, so write this using the slightly more human readable format with a '?' suffix
           not_nil_type = types.reject(&.==(program.nil))[0]
           Crystal::Var.new("#{not_nil_type}?")
         else
-          Crystal::Union.new(types.map { |t| Crystal::Var.new(t.to_s).as(Crystal::ASTNode) })
+          Crystal::Union.new(types.map { |t| Crystal::Var.new(type_name(t)).as(Crystal::ASTNode) })
         end
       else
-        Crystal::Union.new(types.map { |t| Crystal::Var.new(t.to_s).as(Crystal::ASTNode) })
+        Crystal::Union.new(types.map { |t| Crystal::Var.new(type_name(t)).as(Crystal::ASTNode) })
       end
+    end
+
+    def type_name(type : Crystal::Type) : String
+      type.to_s.gsub(/:Module$/, ".class")
     end
 
     # Child class of the crystal formatter, but will write in type restrictions for the def return_type, or individual args,

@@ -390,6 +390,28 @@ describe Crystal::SourceTyper do
     OUTPUT
   end
 
+  it "types args that are module classes (Metatype)" do
+    run_source_typer_spec(<<-INPUT, <<-OUTPUT, line_number: 4)
+    module MyModule
+    end
+
+    def hello(world)
+      nil
+    end
+
+    hello(MyModule)
+    INPUT
+    module MyModule
+    end
+
+    def hello(world : MyModule.class) : Nil
+      nil
+    end
+
+    hello(MyModule)
+    OUTPUT
+  end
+
   it "runs prelude and types everything" do
     run_source_typer_spec(<<-INPUT, <<-OUTPUT, line_number: -1, prelude: "prelude")
     # This file tries to capture each type of definition format
