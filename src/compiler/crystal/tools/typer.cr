@@ -307,7 +307,7 @@ module Crystal
     end
 
     def type_name(type : Crystal::Type) : String
-      type.to_s.gsub(/:Module$/, ".class")
+      type.to_s.gsub(/:Module$/, ".class").gsub("+", "")
     end
 
     # Child class of the crystal formatter, but will write in type restrictions for the def return_type, or individual args,
