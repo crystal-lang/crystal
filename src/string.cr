@@ -3092,12 +3092,12 @@ class String
     return true if same?(other)
 
     # If the bytesize differs, they cannot be equal
-    return false unless bytesize == other.bytesize
+    return false if bytesize != other.bytesize
 
     # If the character size of both strings differs, they cannot be equal.
     # We need to exclude the case that @length of either string might not have
     # been calculated (indicated by `0`).
-    return false unless (@length == other.@length) || (@length & other.@length).zero?
+    return false if @length != other.@length && @length != 0 && other.@length != 0
 
     # All meta data matches up, so we need to compare byte-by-byte.
     to_unsafe.memcmp(other.to_unsafe, bytesize) == 0
