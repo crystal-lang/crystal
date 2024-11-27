@@ -1,6 +1,7 @@
 require "./spec_helper"
 
 def run_source_typer_spec(input, expected_output,
+                          excludes : Array(String) = [] of String,
                           splats : Bool = true,
                           line_number : Int32 = 1,
                           named_splats : Bool = true,
@@ -8,7 +9,7 @@ def run_source_typer_spec(input, expected_output,
                           prelude : String = "")
   entrypoint_file = File.expand_path("entrypoint.cr")
   locator = line_number > 0 ? "#{entrypoint_file}:#{line_number}" : entrypoint_file
-  typer = Crystal::SourceTyper.new(entrypoint_file, [locator], blocks, splats, named_splats, prelude)
+  typer = Crystal::SourceTyper.new(entrypoint_file, [locator], excludes, blocks, splats, named_splats, prelude)
 
   typer.semantic(entrypoint_file, input)
 
@@ -350,6 +351,26 @@ describe Crystal::SourceTyper do
 
     hello(nil)
     hello("world")
+    OUTPUT
+  end
+
+  it "types args that use keyword names" do
+    run_source_typer_spec(<<-INPUT, <<-OUTPUT, line_number: 3)
+    class Test
+      @begin : String = ""
+      def begin=(@begin)
+      end
+    end
+    Test.new.begin = "world"
+    INPUT
+    class Test
+      @begin : String = ""
+
+      def begin=(@begin : String) : String
+      end
+    end
+
+    Test.new.begin = "world"
     OUTPUT
   end
 

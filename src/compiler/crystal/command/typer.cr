@@ -4,29 +4,29 @@
 # logic is in `crystal/tools/formatter.cr`.
 
 class Crystal::Command
-  private def typer
+  private def apply_types
     prelude = "prelude"
     type_blocks = false
     type_splats = false
     type_double_splats = false
+    excludes = ["lib"]
     stats = false
     progress = false
     error_trace = false
 
     OptionParser.parse(options) do |opts|
       opts.banner = <<-USAGE
-        Usage: typer [options] entrypoint [def_descriptor [def_descriptor [...]]]
+        Usage: crystal tool apply-types [options] entrypoint [def_locator [def_locator [...]]]
 
-        A def_descriptor comes in 4 formats:
+        A def_locator comes in 4 formats:
 
-        * A directory name ('src/')
+        * A directory name ('src')
         * A file ('src/my_project.cr')
         * A line number in a file ('src/my_project.cr:3')
         * The location of the def method to be typed, specifically ('src/my_project.cr:3:3')
 
-        If a `def` definition matches a provided def_descriptor, then it will be typed if type restrictions are missing.
-        If no dev_descriptors are provided, then 'src' is tried, or all files under current directory (and sub directories, recursive)
-        are typed if no 'src' directory exists.
+        If a `def` definition matches a provided def_locator and is missing type restrictions, they will be added.
+        If no def_locators are provided, then the directory of the entrypoint is used.
 
         Options:
         USAGE
@@ -63,6 +63,10 @@ class Crystal::Command
       opts.on("--error-trace", "Show full error trace") do
         error_trace = true
       end
+
+      opts.on("--exclude [DIRECTORY]", "Exclude a directory from being typed") do |ex|
+        excludes << ex
+      end
     end
 
     entrypoint = options.shift
@@ -71,6 +75,7 @@ class Crystal::Command
     results = SourceTyper.new(
       entrypoint,
       def_locators,
+      excludes,
       type_blocks,
       type_splats,
       type_double_splats,

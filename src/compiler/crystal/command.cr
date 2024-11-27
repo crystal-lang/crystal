@@ -39,6 +39,7 @@ class Crystal::Command
     Usage: crystal tool [tool] [switches] [program file] [--] [arguments]
 
     Tool:
+        apply-types              add type restrictions to all untyped defs and def arguments
         context                  show context for given location
         dependencies             show file dependency tree
         expand                   show macro expansion for given location
@@ -46,7 +47,6 @@ class Crystal::Command
         format                   format project, directories and/or files
         hierarchy                show type hierarchy
         implementations          show implementations for given call in location
-        apply-types              add types to all untyped defs and def arguments
         types                    show type of main variables
         unreachable              show methods that are never called
         --help, -h               show this help
@@ -176,6 +176,9 @@ class Crystal::Command
     when !tool
       puts COMMANDS_USAGE
       exit
+    when "apply-types".starts_with?(tool)
+      options.shift
+      apply_types
     when "context".starts_with?(tool)
       options.shift
       context
@@ -197,9 +200,6 @@ class Crystal::Command
     when "implementations".starts_with?(tool)
       options.shift
       implementations
-    when "apply-types".starts_with?(tool)
-      options.shift
-      typer
     when "types".starts_with?(tool)
       options.shift
       types

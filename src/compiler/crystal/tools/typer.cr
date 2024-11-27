@@ -11,6 +11,7 @@ module Crystal
 
     def initialize(@entrypoint : String,
                    @def_locators : Array(String),
+                   @excludes : Array(String),
                    @type_blocks : Bool,
                    @type_splats : Bool,
                    @type_double_splats : Bool,
@@ -72,7 +73,7 @@ module Crystal
       semantic_node = program.semantic nodes, cleanup: true
 
       # Use the DefVisitor to locate and match any 'def's that match a def_locator
-      def_visitor = DefVisitor.new(@def_locators, entrypoint)
+      def_visitor = DefVisitor.new(@def_locators, @excludes, entrypoint)
       semantic_node.accept(def_visitor)
 
       # Hash up the location => (parsed) definition.
@@ -211,6 +212,11 @@ module Crystal
             if arg.name == arg.external_name && !arg.name.starts_with?("__temp_")
               # Regular arg
               all_typed_args[arg.external_name] << resolve_type(arg)
+            elsif arg.name != arg.external_name && arg.name.starts_with?("__arg")
+              # A class / instance var that used a keword and then got used in a method argument, like:
+              # def begin=(@begin)
+              # end
+              all_typed_args[arg.external_name] << resolve_type(arg)
             elsif @type_splats && (splat_arg = splat_arg_name) && arg.name == arg.external_name && arg.name.starts_with?("__temp_")
               # Splat arg, where the compiler generated a uniq name for it
               encountered_splat_arg = true
@@ -222,7 +228,7 @@ module Crystal
             elsif (!@type_splats || !@type_double_splats) && arg.name.starts_with?("__temp_")
               # Ignore, it didn't fall into one of the above conditions (i.e. typing a particular splat wasn't specified)
             else
-              raise "Unknown handling of arg #{arg} in #{def_instance}\n#{parsed}"
+              raise "Unknown handling of arg #{arg} at #{def_instance.location} in #{def_instance}\n#{parsed}"
             end
           end
 
@@ -433,9 +439,9 @@ module Crystal
           accept restriction
           # ===== BEGIN NEW CODE =====
           # If the current arg doesn't have a restriction already and we have a signature, write in the type restriction
-        elsif (sig = @signatures[@current_def.try &.location.to_s || 0_u64]?) && sig.args[node.name]?
+        elsif (sig = @signatures[@current_def.try &.location.to_s || 0_u64]?) && sig.args[node.external_name]?
           skip_space_or_newline
-          write " : #{sig.args[node.name]}"
+          write " : #{sig.args[node.external_name]}"
           @added_types = true
           # ===== END NEW CODE =====
         end
@@ -488,26 +494,24 @@ module Crystal
       @file_locators : Array(String) = [] of String
       @line_locators : Array(String) = [] of String
       @line_and_column_locators : Array(String) = [] of String
+      @excludes : Array(String)
 
-      def initialize(@def_locators : Array(String), entrypoint)
-        if @def_locators.empty?
-          entrypoint_dir = File.dirname(entrypoint)
-          # Nothing was provided, is the entrypoint in the `src` directory?
-          if entrypoint_dir.ends_with?("/src") || entrypoint_dir.includes?("/src/")
-            @def_locators << File.dirname(entrypoint_dir)
-          else
-            # entrypoint isn't in a 'src' directory, assume we should only type it, and only it, wherever it is
-            @def_locators << entrypoint
-          end
+      def initialize(def_locators : Array(String), excludes : Array(String), entrypoint : String)
+        if def_locators.empty?
+          # No def_locators provided, default to the directory of entrypoint.
+          def_locators << File.dirname(entrypoint)
         end
 
-        def_locs = @def_locators.map { |p| File.expand_path(p) }
+        def_locs = def_locators.map { |p| File.expand_path(Crystal.normalize_path(p)) }
+        @excludes = excludes.map { |p| File.expand_path(Crystal.normalize_path(p)) }
         @dir_locators = def_locs.reject(&.match(CRYSTAL_LOCATOR_PARSER))
         def_locs.compact_map(&.match(CRYSTAL_LOCATOR_PARSER)).each do |loc|
           @file_locators << loc[0] unless loc["line_number"]?
           @line_locators << loc[0] unless loc["col_number"]?
           @line_and_column_locators << loc[0] if loc["line_number"]? && loc["col_number"]?
         end
+
+        @excludes = @excludes - @dir_locators
       end
 
       def visit(node : Crystal::Def)
@@ -526,11 +530,21 @@ module Crystal
       end
 
       private def node_in_def_locators(location : Crystal::Location) : Bool
+        # location isn't an actual filename (i.e. "expanded macro at ...")
         return false unless location.to_s.starts_with?("/") || location.to_s.starts_with?(/\w:/)
-        return true if @dir_locators.any? { |d| location.filename.to_s.starts_with?(d) }
-        return true if @file_locators.includes?(location.filename)
+
+        # Location matched exactly
+        return true if @line_and_column_locators.includes?("#{location.filename}:#{location.line_number}:#{location.column_number}")
         return true if @line_locators.includes?("#{location.filename}:#{location.line_number}")
-        @line_and_column_locators.includes?("#{location.filename}:#{location.line_number}:#{location.column_number}")
+        return true if @file_locators.includes?(location.filename)
+
+        # Check excluded directories before included directories (this assumes excluded directories are children of included directories)
+        return false if @excludes.any? { |d| location.filename.to_s.starts_with?(d) }
+
+        return true if @dir_locators.any? { |d| location.filename.to_s.starts_with?(d) }
+
+        # Whelp, nothing matched, skip this location
+        false
       end
     end
   end
