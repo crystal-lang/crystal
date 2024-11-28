@@ -35,7 +35,7 @@ struct Crystal::System::IOCP
   end
 
   def wait_queued_completions(timeout, alertable = false, &)
-    overlapped_entries = uninitialized LibC::OVERLAPPED_ENTRY[1]
+    overlapped_entries = uninitialized LibC::OVERLAPPED_ENTRY[64]
 
     if timeout > UInt64::MAX
       timeout = LibC::INFINITE
