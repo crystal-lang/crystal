@@ -18,6 +18,7 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_blocking_init(value)
+    self.sync = value
   end
 
   private def system_reopen(other : IO::FileDescriptor)
