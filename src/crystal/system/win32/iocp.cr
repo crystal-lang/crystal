@@ -121,7 +121,6 @@ struct Crystal::System::IOCP
     end
 
     private def done!
-      @fiber.cancel_timeout
       @state = :done
     end
 
