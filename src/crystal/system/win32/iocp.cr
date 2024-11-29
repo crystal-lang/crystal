@@ -1,5 +1,7 @@
 {% skip_file unless flag?(:win32) %}
 require "c/handleapi"
+require "c/ioapiset"
+require "c/ntdll"
 require "crystal/system/thread_linked_list"
 
 # :nodoc:
@@ -9,6 +11,8 @@ struct Crystal::System::IOCP
     enum Tag
       ProcessRun
       StdinRead
+      Interrupt
+      Timer
     end
 
     property fiber : ::Fiber?
@@ -21,7 +25,7 @@ struct Crystal::System::IOCP
       case tag
       in .process_run?
         number_of_bytes_transferred.in?(LibC::JOB_OBJECT_MSG_EXIT_PROCESS, LibC::JOB_OBJECT_MSG_ABNORMAL_EXIT_PROCESS)
-      in .stdin_read?
+      in .stdin_read?, .interrupt?, .timer?
         true
       end
     end
@@ -60,11 +64,12 @@ struct Crystal::System::IOCP
       raise IO::Error.new("GetQueuedCompletionStatusEx returned 0")
     end
 
+    # TODO: wouldn't the processing fit better in `EventLoop::IOCP#run`?
     removed.times do |i|
       entry = overlapped_entries[i]
 
-      # at the moment only `::Process#wait` uses a non-nil completion key; all
-      # I/O operations, including socket ones, do not set this field
+      # See `CompletionKey` for the operations that use a non-nil completion
+      # key. All IO operations (include File, Socket) do not set this field.
       case completion_key = Pointer(Void).new(entry.lpCompletionKey).as(CompletionKey?)
       in Nil
         operation = OverlappedOperation.unbox(entry.lpOverlapped)
@@ -85,6 +90,26 @@ struct Crystal::System::IOCP
     end
 
     false
+  end
+
+  def associate_wait_completion_packet(wait_handle : LibC::HANDLE, target_handle : LibC::HANDLE, completion_key : CompletionKey) : Bool
+    status = LibNTDLL.NtAssociateWaitCompletionPacket(wait_handle, @handle, target_handle, completion_key.as(Void*), nil, 0, nil, out signaled)
+    raise RuntimeError.from_os_error("NtAssociateWaitCompletionPacket", WinError.from_ntstatus(status)) unless status == 0
+    signaled == 1
+  end
+
+  def cancel_wait_completion_packet(wait_handle : LibC::HANDLE, remove_signaled : Bool) : LibNTDLL::NTSTATUS
+    case status = LibNTDLL.NtCancelWaitCompletionPacket(wait_handle, remove_signaled ? 1 : 0)
+    when LibC::STATUS_CANCELLED, LibC::STATUS_SUCCESS, LibC::STATUS_PENDING
+      status
+    else
+      raise RuntimeError.from_os_error("NtCancelWaitCompletionPacket", WinError.from_ntstatus(status))
+    end
+  end
+
+  def post_queued_completion_status(completion_key : CompletionKey, number_of_bytes_transferred = 0)
+    result = LibC.PostQueuedCompletionStatus(@handle, number_of_bytes_transferred, completion_key.as(Void*).address, nil)
+    raise RuntimeError.from_winerror("PostQueuedCompletionStatus") if result == 0
   end
 
   abstract class OverlappedOperation
@@ -126,17 +151,24 @@ struct Crystal::System::IOCP
 
     private def wait_for_completion(timeout)
       if timeout
-        sleep timeout
-      else
-        ::Fiber.suspend
-      end
+        event = ::Fiber.current.resume_event
+        event.add(timeout)
 
-      unless @state.done?
-        if try_cancel
-          # Wait for cancellation to complete. We must not free the operation
-          # until it's completed.
+        ::Fiber.suspend
+
+        if event.timed_out?
+          # By the time the fiber was resumed, the operation may have completed
+          # concurrently.
+          return if @state.done?
+          return unless try_cancel
+
+          # We cancelled the operation or failed to cancel it (e.g. race
+          # condition), we must suspend the fiber again until the completion
+          # port is notified of the actual result.
           ::Fiber.suspend
         end
+      else
+        ::Fiber.suspend
       end
     end
   end

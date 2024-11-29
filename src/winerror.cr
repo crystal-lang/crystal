@@ -2,6 +2,7 @@
   require "c/winbase"
   require "c/errhandlingapi"
   require "c/winsock2"
+  require "c/winternl"
 {% end %}
 
 # `WinError` represents Windows' [System Error Codes](https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes#system-error-codes-1).
@@ -51,6 +52,14 @@ enum WinError : UInt32
       LibC.WSASetLastError(winerror.value)
     {% else %}
       raise NotImplementedError.new("WinError.value=")
+    {% end %}
+  end
+
+  def self.from_ntstatus(status) : self
+    {% if flag?(:win32) %}
+      WinError.new(LibNTDLL.RtlNtStatusToDosError(status))
+    {% else %}
+      raise NotImplementedError.new("WinError.from_ntstatus")
     {% end %}
   end
 

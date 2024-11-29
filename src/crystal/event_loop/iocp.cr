@@ -1,23 +1,38 @@
-require "c/ioapiset"
-require "crystal/system/print_error"
+# forward declaration for the require below to not create a module
+class Crystal::EventLoop::IOCP < Crystal::EventLoop
+end
+
+require "c/ntdll"
 require "../system/win32/iocp"
+require "../system/win32/waitable_timer"
+require "./timers"
+require "./iocp/*"
 
 # :nodoc:
 class Crystal::EventLoop::IOCP < Crystal::EventLoop
-  # This is a list of resume and timeout events managed outside of IOCP.
-  @queue = Deque(Event).new
+  def initialize
+    @mutex = Thread::Mutex.new
+    @timers = Timers(Timer).new
 
-  @iocp = System::IOCP.new
-  @lock = Crystal::SpinLock.new
-  @interrupted = Atomic(Bool).new(false)
-  @blocked_thread = Atomic(Thread?).new(nil)
+    # the completion port
+    @iocp = System::IOCP.new
+
+    # custom completion to interrupt a blocking run
+    @interrupted = Atomic(Bool).new(false)
+    @interrupt_key = System::IOCP::CompletionKey.new(:interrupt)
+
+    # high resolution timer, with custom packet and completion to interrupt a
+    # blocking run so it can run the next expiring timer
+    @waitable_timer = System::WaitableTimer.new
+    @timer_key = System::IOCP::CompletionKey.new(:timer)
+  end
 
   # Returns the base IO Completion Port.
   def iocp_handle : LibC::HANDLE
     @iocp.handle
   end
 
-  def create_completion_port(handle : LibC::HANDLE)
+  def create_completion_port(handle : LibC::HANDLE) : LibC::HANDLE
     iocp = LibC.CreateIoCompletionPort(handle, @iocp.handle, nil, 0)
     raise IO::Error.from_winerror("CreateIoCompletionPort") if iocp.null?
 
@@ -33,119 +48,113 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   end
 
   def run(blocking : Bool) : Bool
+    enqueued = false
+
     run_impl(blocking) do |fiber|
       fiber.enqueue
+      enqueued = true
     end
+
+    enqueued
   end
 
   # Runs the event loop and enqueues the fiber for the next upcoming event or
   # completion.
-  private def run_impl(blocking : Bool, &) : Bool
-    # Pull the next upcoming event from the event queue. This determines the
-    # timeout for waiting on the completion port.
-    # OPTIMIZE: Implement @queue as a priority queue in order to avoid this
-    # explicit search for the lowest value and dequeue more efficient.
-    next_event = @queue.min_by?(&.wake_at)
+  private def run_impl(blocking : Bool, &) : Nil
+    Crystal.trace :evloop, "run", blocking: blocking ? 1 : 0
 
-    # no registered events: nothing to wait for
-    return false unless next_event
+    timeout = blocking ? LibC::INFINITE : 0
 
-    now = Time.monotonic
+    # the array must be at least as large as `overlapped_entries` in
+    # `System::IOCP#wait_queued_completions`
+    events = uninitialized FiberEvent[64]
+    size = 0
 
-    if next_event.wake_at > now
-      # There is no event ready to wake. We wait for completions until the next
-      # event wake time, unless nonblocking or already interrupted (timeout
-      # immediately).
-      if blocking
-        @lock.sync do
-          if @interrupted.get(:acquire)
-            blocking = false
-          else
-            # memorize the blocked thread (so we can alert it)
-            @blocked_thread.set(Thread.current, :release)
-          end
-        end
+    @iocp.wait_queued_completions(timeout) do |fiber|
+      if (event = fiber.@resume_event) && event.wake_at?
+        events[size] = event
+        size += 1
       end
-
-      wait_time = blocking ? (next_event.wake_at - now).total_milliseconds : 0
-      timed_out = @iocp.wait_queued_completions(wait_time, alertable: blocking) do |fiber|
-        # This block may run multiple times. Every single fiber gets enqueued.
-        yield fiber
-      end
-
-      @blocked_thread.set(nil, :release)
-      @interrupted.set(false, :release)
-
-      # The wait for completion enqueued events.
-      return true unless timed_out
-
-      # Wait for completion timed out but it may have been interrupted or we ask
-      # for immediate timeout (nonblocking), so we check for the next event
-      # readiness again:
-      return false if next_event.wake_at > Time.monotonic
-    end
-
-    # next_event gets activated because its wake time is passed, either from the
-    # start or because completion wait has timed out.
-
-    dequeue next_event
-
-    fiber = next_event.fiber
-
-    # If the waiting fiber was already shut down in the mean time, we can just
-    # abandon here. There's no need to go for the next event because the scheduler
-    # will just try again.
-    # OPTIMIZE: It might still be worth considering to start over from the top
-    # or call recursively, in order to ensure at least one fiber get enqueued.
-    # This would avoid the scheduler needing to looking at runnable again just
-    # to notice it's still empty. The lock involved there should typically be
-    # uncontested though, so it's probably not a big deal.
-    return false if fiber.dead?
-
-    # A timeout event needs special handling because it does not necessarily
-    # means to resume the fiber directly, in case a different select branch
-    # was already activated.
-    if next_event.timeout? && (select_action = fiber.timeout_select_action)
-      fiber.timeout_select_action = nil
-      yield fiber if select_action.time_expired?
-    else
       yield fiber
     end
 
-    # We enqueued a fiber.
-    true
+    @mutex.synchronize do
+      # cancel the timeout of completed operations
+      events.to_slice[0...size].each do |event|
+        @timers.delete(pointerof(event.@timer))
+        event.clear
+      end
+
+      # run expired timers
+      @timers.dequeue_ready do |timer|
+        process_timer(timer) { |fiber| yield fiber }
+      end
+
+      # update timer
+      rearm_waitable_timer(@timers.next_ready?)
+    end
+
+    @interrupted.set(false, :release)
+  end
+
+  private def process_timer(timer : Pointer(Timer), &)
+    fiber = timer.value.fiber
+
+    case timer.value.type
+    in .sleep?
+      timer.value.timed_out!
+      fiber.@resume_event.as(FiberEvent).clear
+    in .select_timeout?
+      return unless select_action = fiber.timeout_select_action
+      fiber.timeout_select_action = nil
+      return unless select_action.time_expired?
+      fiber.@timeout_event.as(FiberEvent).clear
+    end
+
+    yield fiber
   end
 
   def interrupt : Nil
-    thread = nil
-
-    @lock.sync do
-      @interrupted.set(true)
-      thread = @blocked_thread.swap(nil, :acquire)
-    end
-    return unless thread
-
-    # alert the thread to interrupt GetQueuedCompletionStatusEx
-    LibC.QueueUserAPC(->(ptr : LibC::ULONG_PTR) { }, thread, LibC::ULONG_PTR.new(0))
-  end
-
-  def enqueue(event : Event)
-    unless @queue.includes?(event)
-      @queue << event
+    unless @interrupted.get(:acquire)
+      @iocp.post_queued_completion_status(@interrupt_key)
     end
   end
 
-  def dequeue(event : Event)
-    @queue.delete(event)
+  protected def add_timer(timer : Pointer(Timer)) : Nil
+    @mutex.synchronize do
+      is_next_ready = @timers.add(timer)
+      rearm_waitable_timer(timer.value.wake_at) if is_next_ready
+    end
   end
 
-  # Create a new resume event for a fiber.
-  def create_resume_event(fiber : Fiber) : Crystal::EventLoop::Event
-    Event.new(fiber)
+  protected def delete_timer(timer : Pointer(Timer)) : Nil
+    @mutex.synchronize do
+      _, was_next_ready = @timers.delete(timer)
+      rearm_waitable_timer(@timers.next_ready?) if was_next_ready
+    end
   end
 
-  def create_timeout_event(fiber) : Crystal::EventLoop::Event
-    Event.new(fiber, timeout: true)
+  protected def rearm_waitable_timer(time : Time::Span?) : Nil
+    status = @iocp.cancel_wait_completion_packet(@waitable_timer.packet_handle, true)
+    if time
+      @waitable_timer.set(time)
+      if status == LibC::STATUS_PENDING
+        interrupt
+      else
+        # STATUS_CANCELLED, STATUS_SUCCESS
+        @iocp.associate_wait_completion_packet(@waitable_timer.packet_handle, @waitable_timer.handle, @timer_key)
+      end
+    else
+      @waitable_timer.cancel
+    end
+  end
+
+  def create_resume_event(fiber : Fiber) : EventLoop::Event
+    FiberEvent.new(:sleep, fiber)
+  end
+
+  def create_timeout_event(fiber : Fiber) : EventLoop::Event
+    FiberEvent.new(:select_timeout, fiber)
   end
 
   def read(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
@@ -281,30 +290,5 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   end
 
   def remove(socket : ::Socket) : Nil
-  end
-end
-
-class Crystal::EventLoop::IOCP::Event
-  include Crystal::EventLoop::Event
-
-  getter fiber
-  getter wake_at
-  getter? timeout
-
-  def initialize(@fiber : Fiber, @wake_at = Time.monotonic, *, @timeout = false)
-  end
-
-  # Frees the event
-  def free : Nil
-    Crystal::EventLoop.current.dequeue(self)
-  end
-
-  def delete
-    free
-  end
-
-  def add(timeout : Time::Span) : Nil
-    @wake_at = Time.monotonic + timeout
-    Crystal::EventLoop.current.enqueue(self)
   end
 end
