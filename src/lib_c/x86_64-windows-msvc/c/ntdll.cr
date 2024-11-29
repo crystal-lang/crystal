@@ -11,7 +11,7 @@ lib LibNTDLL
   fun NtCreateWaitCompletionPacket(
     waitCompletionPacketHandle : LibC::HANDLE*,
     desiredAccess : ACCESS_MASK,
-    objectAttributes : LibC::OBJECT_ATTRIBUTES*
+    objectAttributes : LibC::OBJECT_ATTRIBUTES*,
   ) : NTSTATUS
 
   fun NtAssociateWaitCompletionPacket(
@@ -22,11 +22,11 @@ lib LibNTDLL
     apcContext : Void*,
     ioStatus : NTSTATUS,
     ioStatusInformation : LibC::ULONG*,
-    alreadySignaled : LibC::BOOLEAN*
+    alreadySignaled : LibC::BOOLEAN*,
   ) : NTSTATUS
 
   fun NtCancelWaitCompletionPacket(
     waitCompletionPacketHandle : LibC::HANDLE,
-    removeSignaledPacket : LibC::BOOLEAN
+    removeSignaledPacket : LibC::BOOLEAN,
   ) : NTSTATUS
 end
