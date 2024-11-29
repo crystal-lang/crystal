@@ -10,6 +10,10 @@ require "./iocp/*"
 
 # :nodoc:
 class Crystal::EventLoop::IOCP < Crystal::EventLoop
+  @waitable_timer : System::WaitableTimer?
+  @timer_packet : LibC::HANDLE?
+  @timer_key : System::IOCP::CompletionKey?
+
   def initialize
     @mutex = Thread::Mutex.new
     @timers = Timers(Timer).new
@@ -21,10 +25,16 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     @interrupted = Atomic(Bool).new(false)
     @interrupt_key = System::IOCP::CompletionKey.new(:interrupt)
 
-    # high resolution timer, with custom packet and completion to interrupt a
-    # blocking run so it can run the next expiring timer
-    @waitable_timer = System::WaitableTimer.new
-    @timer_key = System::IOCP::CompletionKey.new(:timer)
+    # On Windows 10+ we leverage a high resolution timer with completion packet
+    # to notify a completion port; on legacy Windows we fallback to the low
+    # resolution timeout (~15.6ms)
+    @mutex.synchronize do
+      if System::IOCP.wait_completion_packet_methods?
+        @waitable_timer = System::WaitableTimer.new
+        @timer_packet = @iocp.create_wait_completion_packet
+        @timer_key = System::IOCP::CompletionKey.new(:timer)
+      end
+    end
   end
 
   # Returns the base IO Completion Port.
@@ -63,7 +73,19 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   private def run_impl(blocking : Bool, &) : Nil
     Crystal.trace :evloop, "run", blocking: blocking ? 1 : 0
 
-    timeout = blocking ? LibC::INFINITE : 0
+    if @waitable_timer
+      timeout = blocking ? LibC::INFINITE : 0_i64
+    elsif blocking
+      if time = @mutex.synchronize { @timers.next_ready? }
+        seconds, nanoseconds = System::Time.monotonic
+        now = Time::Span.new(seconds: seconds, nanoseconds: nanoseconds)
+        timeout = (time - now).total_milliseconds.to_i64.clamp(0_i64..)
+      else
+        timeout = LibC::INFINITE
+      end
+    else
+      timeout = 0_i64
+    end
 
     # the array must be at least as large as `overlapped_entries` in
     # `System::IOCP#wait_queued_completions`
@@ -91,7 +113,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
       end
 
       # update timer
-      rearm_waitable_timer(@timers.next_ready?)
+      rearm_waitable_timer(@timers.next_ready?, interruptible: false)
     end
 
     @interrupted.set(false, :release)
@@ -123,29 +145,33 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   protected def add_timer(timer : Pointer(Timer)) : Nil
     @mutex.synchronize do
       is_next_ready = @timers.add(timer)
-      rearm_waitable_timer(timer.value.wake_at) if is_next_ready
+      rearm_waitable_timer(timer.value.wake_at, interruptible: true) if is_next_ready
     end
   end
 
   protected def delete_timer(timer : Pointer(Timer)) : Nil
     @mutex.synchronize do
       _, was_next_ready = @timers.delete(timer)
-      rearm_waitable_timer(@timers.next_ready?) if was_next_ready
+      rearm_waitable_timer(@timers.next_ready?, interruptible: false) if was_next_ready
     end
   end
 
-  protected def rearm_waitable_timer(time : Time::Span?) : Nil
-    status = @iocp.cancel_wait_completion_packet(@waitable_timer.packet_handle, true)
-    if time
-      @waitable_timer.set(time)
-      if status == LibC::STATUS_PENDING
-        interrupt
+  protected def rearm_waitable_timer(time : Time::Span?, interruptible : Bool) : Nil
+    if waitable_timer = @waitable_timer
+      status = @iocp.cancel_wait_completion_packet(@timer_packet.not_nil!, true)
+      if time
+        waitable_timer.set(time)
+        if status == LibC::STATUS_PENDING
+          interrupt
+        else
+          # STATUS_CANCELLED, STATUS_SUCCESS
+          @iocp.associate_wait_completion_packet(@timer_packet.not_nil!, waitable_timer.handle, @timer_key.not_nil!)
+        end
       else
-        # STATUS_CANCELLED, STATUS_SUCCESS
-        @iocp.associate_wait_completion_packet(@waitable_timer.packet_handle, @waitable_timer.handle, @timer_key)
+        waitable_timer.cancel
       end
-    else
-      @waitable_timer.cancel
+    elsif interruptible
+      interrupt
     end
   end
 

@@ -6,6 +6,32 @@ require "crystal/system/thread_linked_list"
 
 # :nodoc:
 struct Crystal::System::IOCP
+  @@wait_completion_packet_methods : Bool? = nil
+  @@_NtCreateWaitCompletionPacket = uninitialized Proc(LibC::HANDLE*, LibNTDLL::ACCESS_MASK, LibC::OBJECT_ATTRIBUTES*, LibNTDLL::NTSTATUS)
+  @@_NtAssociateWaitCompletionPacket = uninitialized Proc(LibC::HANDLE, LibC::HANDLE, LibC::HANDLE, Void*, Void*, LibNTDLL::NTSTATUS, LibC::ULONG*, LibC::BOOLEAN*, LibNTDLL::NTSTATUS)
+  @@_NtCancelWaitCompletionPacket = uninitialized Proc(LibC::HANDLE, LibC::BOOLEAN, LibNTDLL::NTSTATUS)
+
+  def self.wait_completion_packet_methods? : Bool
+    unless (supported = @@wait_completion_packet_methods).nil?
+      return supported
+    end
+
+    handle = LibC.LoadLibraryExW(Crystal::System.to_wstr("ntdll.dll"), nil, 0)
+    return @@wait_completion_packet_methods = false if handle.null?
+
+    pointer = LibC.GetProcAddress(handle, "NtCreateWaitCompletionPacket")
+    return @@wait_completion_packet_methods = false if pointer.null?
+    @@_NtCreateWaitCompletionPacket = Proc(LibC::HANDLE*, LibNTDLL::ACCESS_MASK, LibC::OBJECT_ATTRIBUTES*, LibNTDLL::NTSTATUS).new(pointer, Pointer(Void).null)
+
+    pointer = LibC.GetProcAddress(handle, "NtAssociateWaitCompletionPacket")
+    @@_NtAssociateWaitCompletionPacket = Proc(LibC::HANDLE, LibC::HANDLE, LibC::HANDLE, Void*, Void*, LibNTDLL::NTSTATUS, LibC::ULONG*, LibC::BOOLEAN*, LibNTDLL::NTSTATUS).new(pointer, Pointer(Void).null)
+
+    pointer = LibC.GetProcAddress(handle, "NtCancelWaitCompletionPacket")
+    @@_NtCancelWaitCompletionPacket = Proc(LibC::HANDLE, LibC::BOOLEAN, LibNTDLL::NTSTATUS).new(pointer, Pointer(Void).null)
+
+    @@wait_completion_packet_methods = true
+  end
+
   # :nodoc:
   class CompletionKey
     enum Tag
@@ -73,8 +99,11 @@ struct Crystal::System::IOCP
       case completion_key = Pointer(Void).new(entry.lpCompletionKey).as(CompletionKey?)
       in Nil
         operation = OverlappedOperation.unbox(entry.lpOverlapped)
+        Crystal.trace :evloop, "operation", op: operation.class.name, fiber: operation.@fiber
         operation.schedule { |fiber| yield fiber }
       in CompletionKey
+        Crystal.trace :evloop, "completion", tag: completion_key.tag.to_s, bytes: entry.dwNumberOfBytesTransferred, fiber: completion_key.fiber
+
         if completion_key.valid?(entry.dwNumberOfBytesTransferred)
           # if `Process` exits before a call to `#wait`, this fiber will be
           # reset already
@@ -92,24 +121,41 @@ struct Crystal::System::IOCP
     false
   end
 
+  def post_queued_completion_status(completion_key : CompletionKey, number_of_bytes_transferred = 0)
+    result = LibC.PostQueuedCompletionStatus(@handle, number_of_bytes_transferred, completion_key.as(Void*).address, nil)
+    raise RuntimeError.from_winerror("PostQueuedCompletionStatus") if result == 0
+  end
+
+  def create_wait_completion_packet : LibC::HANDLE
+    packet_handle = LibC::HANDLE.null
+    object_attributes = Pointer(LibC::OBJECT_ATTRIBUTES).null
+    status = @@_NtCreateWaitCompletionPacket.call(pointerof(packet_handle), LibNTDLL::GENERIC_ALL, object_attributes)
+    raise RuntimeError.from_os_error("NtCreateWaitCompletionPacket", WinError.from_ntstatus(status)) unless status == 0
+    packet_handle
+  end
+
   def associate_wait_completion_packet(wait_handle : LibC::HANDLE, target_handle : LibC::HANDLE, completion_key : CompletionKey) : Bool
-    status = LibNTDLL.NtAssociateWaitCompletionPacket(wait_handle, @handle, target_handle, completion_key.as(Void*), nil, 0, nil, out signaled)
+    signaled = 0_u8
+    status = @@_NtAssociateWaitCompletionPacket.call(
+      wait_handle,
+      @handle,
+      target_handle,
+      completion_key.as(Void*),
+      Pointer(Void).null,
+      LibNTDLL::NTSTATUS.new!(0),
+      Pointer(LibC::ULONG).null,
+      pointerof(signaled))
     raise RuntimeError.from_os_error("NtAssociateWaitCompletionPacket", WinError.from_ntstatus(status)) unless status == 0
     signaled == 1
   end
 
   def cancel_wait_completion_packet(wait_handle : LibC::HANDLE, remove_signaled : Bool) : LibNTDLL::NTSTATUS
-    case status = LibNTDLL.NtCancelWaitCompletionPacket(wait_handle, remove_signaled ? 1 : 0)
+    case status = @@_NtCancelWaitCompletionPacket.call(wait_handle, remove_signaled ? 1_u8 : 0_u8)
     when LibC::STATUS_CANCELLED, LibC::STATUS_SUCCESS, LibC::STATUS_PENDING
       status
     else
       raise RuntimeError.from_os_error("NtCancelWaitCompletionPacket", WinError.from_ntstatus(status))
     end
-  end
-
-  def post_queued_completion_status(completion_key : CompletionKey, number_of_bytes_transferred = 0)
-    result = LibC.PostQueuedCompletionStatus(@handle, number_of_bytes_transferred, completion_key.as(Void*).address, nil)
-    raise RuntimeError.from_winerror("PostQueuedCompletionStatus") if result == 0
   end
 
   abstract class OverlappedOperation

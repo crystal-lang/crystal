@@ -1,4 +1,5 @@
 require "c/ntdef"
+require "c/winnt"
 
 @[Link("ntdll")]
 lib LibNTDLL
