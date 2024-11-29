@@ -15,9 +15,9 @@ private struct Timer
   end
 end
 
-describe Crystal::EventLoop::Polling::Timers do
+describe Crystal::EventLoop::Timers do
   it "#empty?" do
-    timers = Crystal::EventLoop::Polling::Timers(Timer).new
+    timers = Crystal::EventLoop::Timers(Timer).new
     timers.empty?.should be_true
 
     event = Timer.new(7.seconds)
@@ -30,7 +30,7 @@ describe Crystal::EventLoop::Polling::Timers do
 
   it "#next_ready?" do
     # empty
-    timers = Crystal::EventLoop::Polling::Timers(Timer).new
+    timers = Crystal::EventLoop::Timers(Timer).new
     timers.next_ready?.should be_nil
 
     # with events
@@ -49,7 +49,7 @@ describe Crystal::EventLoop::Polling::Timers do
   end
 
   it "#dequeue_ready" do
-    timers = Crystal::EventLoop::Polling::Timers(Timer).new
+    timers = Crystal::EventLoop::Timers(Timer).new
 
     event1 = Timer.new(0.seconds)
     event2 = Timer.new(0.seconds)
@@ -61,7 +61,7 @@ describe Crystal::EventLoop::Polling::Timers do
     called.should eq(0)
 
     # add events in non chronological order
-    timers = Crystal::EventLoop::Polling::Timers(Timer).new
+    timers = Crystal::EventLoop::Timers(Timer).new
     timers.add(pointerof(event1))
     timers.add(pointerof(event3))
     timers.add(pointerof(event2))
@@ -77,7 +77,7 @@ describe Crystal::EventLoop::Polling::Timers do
   end
 
   it "#add" do
-    timers = Crystal::EventLoop::Polling::Timers(Timer).new
+    timers = Crystal::EventLoop::Timers(Timer).new
 
     event0 = Timer.new
     event1 = Timer.new(0.seconds)
@@ -100,7 +100,7 @@ describe Crystal::EventLoop::Polling::Timers do
     event4 = Timer.new(4.minutes)
 
     # add events in non chronological order
-    timers = Crystal::EventLoop::Polling::Timers(Timer).new
+    timers = Crystal::EventLoop::Timers(Timer).new
     timers.add(pointerof(event1))
     timers.add(pointerof(event3))
     timers.add(pointerof(event2))
