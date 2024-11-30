@@ -15,9 +15,7 @@ def run_source_typer_spec(input, expected_output,
 
   typer.files.to_a.should eq [entrypoint_file]
   result = typer.type_source(entrypoint_file, input)
-  result.should_not be_nil
-  not_nil_result = result.not_nil!("Why is this failing???")
-  not_nil_result.strip.should eq expected_output
+  result.try(&.strip).should eq expected_output.try &.strip
 end
 
 describe Crystal::SourceTyper do
@@ -410,6 +408,39 @@ describe Crystal::SourceTyper do
 
     hello(MyModule)
     OUTPUT
+  end
+
+  it "types args and include default type" do
+    run_source_typer_spec(<<-INPUT, <<-OUTPUT)
+    def test(arg = nil)
+      nil
+    end
+    test(3)
+    INPUT
+    def test(arg : Int32? = nil) : Nil
+      nil
+    end
+
+    test(3)
+    OUTPUT
+  end
+
+  it "doesn't type methods that are inherited" do
+    run_source_typer_spec(<<-INPUT, nil, line_number: -1)
+    class Foo
+      def test(arg)
+        nil
+      end
+    end
+
+    class Bar < Foo
+      def test(arg)
+        1
+      end
+    end
+
+    Bar.new.test(3)
+    INPUT
   end
 
   it "runs prelude and types everything" do

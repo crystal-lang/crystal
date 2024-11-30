@@ -144,8 +144,11 @@ module Crystal
 
       program.types.each { |_, t| types << t }
 
+      overridden_method_locations = [] of String
       while type = types.shift?
         type.types?.try &.each { |_, t| types << t }
+        # pp! type, def_overrides_parent_def(type)
+        def_overrides_parent_def(type).each { |loc| overridden_method_locations << loc }
 
         # Check for class instance 'def's
         if type.responds_to?(:def_instances)
@@ -167,7 +170,36 @@ module Crystal
         end
       end
 
+      # Now remove all overridden methods
+      overridden_method_locations.each do |loc|
+        ret.delete(loc)
+      end
+
       ret
+    end
+
+    private def def_overrides_parent_def(type) : Array(String)
+      overriden_locations = [] of String
+      type.defs.try &.each_value do |defs_with_metadata|
+        defs_with_metadata.each do |def_with_metadata|
+          next if def_with_metadata.def.location.to_s.starts_with?("expanded macro:")
+          type.ancestors.each do |ancestor|
+            other_defs_with_metadata = ancestor.defs.try &.[def_with_metadata.def.name]?
+            other_defs_with_metadata.try &.each do |other_def_with_metadata|
+              next if other_def_with_metadata.def.location.to_s.starts_with?("expanded macro:")
+              found_def_with_same_name = true
+
+              if def_with_metadata.compare_strictness(other_def_with_metadata, self_owner: type, other_owner: ancestor) == 0
+                # puts "Method #{type}##{def_with_metadata.def.name} overrides #{ancestor}##{def_with_metadata.def.name}"
+                # Found a method with the same name and same, stricter or weaker restriction,
+                # so it overrides
+                overriden_locations << def_with_metadata.def.location.to_s
+              end
+            end
+          end
+        end
+      end
+      overriden_locations
     end
 
     # Given an 'arg', return its type that's good for printing (VirtualTypes suffix themselves with a '+')
@@ -188,10 +220,7 @@ module Crystal
 
     # Generates a map of (parsed) Def#location => Signature for that Def
     private def init_signatures(accepted_defs : Hash(String, Crystal::Def)) : Hash(String, Signature)
-      # This is hard to read, but transforms the def_instances array into a hash of def.location -> its full Signature
       @_signatures ||= accepted_def_instances(accepted_defs).compact_map do |location, def_instances|
-        # Finally, combine all def_instances for a single def_obj_id into a single signature
-
         parsed = accepted_defs[location]
 
         all_typed_args = Hash(String, Set(Crystal::Type)).new { |h, k| h[k] = Set(Crystal::Type).new }
@@ -234,6 +263,13 @@ module Crystal
               # Ignore, it didn't fall into one of the above conditions (i.e. typing a particular splat wasn't specified)
             else
               raise "Unknown handling of arg #{arg} at #{def_instance.location} in #{def_instance}\n#{parsed}"
+            end
+
+            # Special case - we can have default args that are never used be a different type than what was set.
+            # Ensure those default arg types also get respected (i.e. `arg = nil` => `arg : Int32? = nil` instead
+            # of `arg : Int32 = nil`)
+            if def_val = arg.default_value
+              all_typed_args[arg.external_name] << program.semantic(def_val).type
             end
           end
 
