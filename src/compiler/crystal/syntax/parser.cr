@@ -2117,7 +2117,7 @@ module Crystal
           raise "invalid regex: #{regex_error}", location
         end
 
-        result = RegexLiteral.new(result, options)
+        result = RegexLiteral.new(result, options).at(location)
       else
         # no special treatment
       end
