@@ -457,18 +457,18 @@ class Object
           {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
 
           def {{method_prefix}}\{{name.var.id}} : \{{name.type}}
-            if (value = {{var_prefix}}\{{name.var.id}}).nil?
+            if (%value = {{var_prefix}}\{{name.var.id}}).nil?
               {{var_prefix}}\{{name.var.id}} = \{{yield}}
             else
-              value
+              %value
             end
           end
         \{% else %}
           def {{method_prefix}}\{{name.id}}
-            if (value = {{var_prefix}}\{{name.id}}).nil?
+            if (%value = {{var_prefix}}\{{name.id}}).nil?
               {{var_prefix}}\{{name.id}} = \{{yield}}
             else
-              value
+              %value
             end
           end
         \{% end %}
@@ -561,10 +561,10 @@ class Object
           end
 
           def {{method_prefix}}\{{name.var.id}} : \{{name.type}}
-            if (value = {{var_prefix}}\{{name.var.id}}).nil?
+            if (%value = {{var_prefix}}\{{name.var.id}}).nil?
               ::raise ::NilAssertionError.new("\{{@type}}\{{"{{doc_prefix}}".id}}\{{name.var.id}} cannot be nil")
             else
-              value
+              %value
             end
           end
         \{% else %}
@@ -573,10 +573,10 @@ class Object
           end
 
           def {{method_prefix}}\{{name.id}}
-            if (value = {{var_prefix}}\{{name.id}}).nil?
+            if (%value = {{var_prefix}}\{{name.id}}).nil?
               ::raise ::NilAssertionError.new("\{{@type}}\{{"{{doc_prefix}}".id}}\{{name.id}} cannot be nil")
             else
-              value
+              %value
             end
           end
         \{% end %}
@@ -688,18 +688,18 @@ class Object
           {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
 
           def {{method_prefix}}\{{name.var.id}}? : \{{name.type}}
-            if (value = {{var_prefix}}\{{name.var.id}}).nil?
+            if (%value = {{var_prefix}}\{{name.var.id}}).nil?
               {{var_prefix}}\{{name.var.id}} = \{{yield}}
             else
-              value
+              %value
             end
           end
         \{% else %}
           def {{method_prefix}}\{{name.id}}?
-            if (value = {{var_prefix}}\{{name.id}}).nil?
+            if (%value = {{var_prefix}}\{{name.id}}).nil?
               {{var_prefix}}\{{name.id}} = \{{yield}}
             else
-              value
+              %value
             end
           end
         \{% end %}
@@ -970,10 +970,10 @@ class Object
           {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
 
           def {{method_prefix}}\{{name.var.id}} : \{{name.type}}
-            if (value = {{var_prefix}}\{{name.var.id}}).nil?
+            if (%value = {{var_prefix}}\{{name.var.id}}).nil?
               {{var_prefix}}\{{name.var.id}} = \{{yield}}
             else
-              value
+              %value
             end
           end
 
@@ -981,10 +981,10 @@ class Object
           end
         \{% else %}
           def {{method_prefix}}\{{name.id}}
-            if (value = {{var_prefix}}\{{name.id}}).nil?
+            if (%value = {{var_prefix}}\{{name.id}}).nil?
               {{var_prefix}}\{{name.id}} = \{{yield}}
             else
-              value
+              %value
             end
           end
 
@@ -1216,10 +1216,10 @@ class Object
           {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
 
           def {{method_prefix}}\{{name.var.id}}? : \{{name.type}}
-            if (value = {{var_prefix}}\{{name.var.id}}).nil?
+            if (%value = {{var_prefix}}\{{name.var.id}}).nil?
               {{var_prefix}}\{{name.var.id}} = \{{yield}}
             else
-              value
+              %value
             end
           end
 
@@ -1227,10 +1227,10 @@ class Object
           end
         \{% else %}
           def {{method_prefix}}\{{name.id}}?
-            if (value = {{var_prefix}}\{{name.id}}).nil?
+            if (%value = {{var_prefix}}\{{name.id}}).nil?
               {{var_prefix}}\{{name.id}} = \{{yield}}
             else
-              value
+              %value
             end
           end
 
