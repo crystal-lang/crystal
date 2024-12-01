@@ -1,9 +1,9 @@
-require "../evented/event_loop"
-require "../epoll"
-require "../eventfd"
-require "../timerfd"
+require "./polling"
+require "../system/unix/epoll"
+require "../system/unix/eventfd"
+require "../system/unix/timerfd"
 
-class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
+class Crystal::EventLoop::Epoll < Crystal::EventLoop::Polling
   def initialize
     # the epoll instance
     @epoll = System::Epoll.new
@@ -50,7 +50,7 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
       system_set_timer(@timers.next_ready?)
 
       # re-add all registered fds
-      Evented.arena.each_index { |fd, index| system_add(fd, index) }
+      Polling.arena.each_index { |fd, index| system_add(fd, index) }
     end
   {% end %}
 
@@ -87,12 +87,12 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
   end
 
   private def process_io(epoll_event : LibC::EpollEvent*, &) : Nil
-    index = Evented::Arena::Index.new(epoll_event.value.data.u64)
+    index = Polling::Arena::Index.new(epoll_event.value.data.u64)
     events = epoll_event.value.events
 
     Crystal.trace :evloop, "event", fd: index.index, index: index.to_i64, events: events
 
-    Evented.arena.get?(index) do |pd|
+    Polling.arena.get?(index) do |pd|
       if (events & (LibC::EPOLLERR | LibC::EPOLLHUP)) != 0
         pd.value.@readers.ready_all { |event| unsafe_resume_io(event) { |fiber| yield fiber } }
         pd.value.@writers.ready_all { |event| unsafe_resume_io(event) { |fiber| yield fiber } }
@@ -116,7 +116,7 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
     @eventfd.write(1) if @interrupted.test_and_set
   end
 
-  protected def system_add(fd : Int32, index : Evented::Arena::Index) : Nil
+  protected def system_add(fd : Int32, index : Polling::Arena::Index) : Nil
     Crystal.trace :evloop, "epoll_ctl", op: "add", fd: fd, index: index.to_i64
     events = LibC::EPOLLIN | LibC::EPOLLOUT | LibC::EPOLLRDHUP | LibC::EPOLLET
     @epoll.add(fd, events, u64: index.to_u64)

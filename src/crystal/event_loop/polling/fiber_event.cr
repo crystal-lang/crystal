@@ -1,8 +1,8 @@
-class Crystal::Evented::FiberEvent
+class Crystal::EventLoop::Polling::FiberEvent
   include Crystal::EventLoop::Event
 
-  def initialize(@event_loop : EventLoop, fiber : Fiber, type : Evented::Event::Type)
-    @event = Evented::Event.new(type, fiber)
+  def initialize(@event_loop : EventLoop, fiber : Fiber, type : Event::Type)
+    @event = Event.new(type, fiber)
   end
 
   # sleep or select timeout

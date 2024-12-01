@@ -1,7 +1,7 @@
-require "../evented/event_loop"
-require "../kqueue"
+require "./polling"
+require "../system/unix/kqueue"
 
-class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
+class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
   # the following are arbitrary numbers to identify specific events
   INTERRUPT_IDENTIFIER =  9
   TIMER_IDENTIFIER     = 10
@@ -66,7 +66,7 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
       system_set_timer(@timers.next_ready?)
 
       # re-add all registered fds
-      Evented.arena.each_index { |fd, index| system_add(fd, index) }
+      Polling.arena.each_index { |fd, index| system_add(fd, index) }
     end
   {% end %}
 
@@ -118,16 +118,16 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
   private def process_io(kevent : LibC::Kevent*, &) : Nil
     index =
       {% if flag?(:bits64) %}
-        Evented::Arena::Index.new(kevent.value.udata.address)
+        Polling::Arena::Index.new(kevent.value.udata.address)
       {% else %}
         # assuming 32-bit target: rebuild the arena index
-        Evented::Arena::Index.new(kevent.value.ident.to_i32!, kevent.value.udata.address.to_u32!)
+        Polling::Arena::Index.new(kevent.value.ident.to_i32!, kevent.value.udata.address.to_u32!)
       {% end %}
 
     Crystal.trace :evloop, "event", fd: kevent.value.ident, index: index.to_i64,
       filter: kevent.value.filter, flags: kevent.value.flags, fflags: kevent.value.fflags
 
-    Evented.arena.get?(index) do |pd|
+    Polling.arena.get?(index) do |pd|
       if (kevent.value.fflags & LibC::EV_EOF) == LibC::EV_EOF
         # apparently some systems may report EOF on write with EVFILT_READ instead
         # of EVFILT_WRITE, so let's wake all waiters:
@@ -167,7 +167,7 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
     {% end %}
   end
 
-  protected def system_add(fd : Int32, index : Evented::Arena::Index) : Nil
+  protected def system_add(fd : Int32, index : Polling::Arena::Index) : Nil
     Crystal.trace :evloop, "kevent", op: "add", fd: fd, index: index.to_i64
 
     # register both read and write events

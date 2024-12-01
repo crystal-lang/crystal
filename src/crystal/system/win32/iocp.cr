@@ -3,7 +3,7 @@ require "c/handleapi"
 require "crystal/system/thread_linked_list"
 
 # :nodoc:
-module Crystal::IOCP
+module Crystal::System::IOCP
   # :nodoc:
   class CompletionKey
     enum Tag
@@ -11,10 +11,10 @@ module Crystal::IOCP
       StdinRead
     end
 
-    property fiber : Fiber?
+    property fiber : ::Fiber?
     getter tag : Tag
 
-    def initialize(@tag : Tag, @fiber : Fiber? = nil)
+    def initialize(@tag : Tag, @fiber : ::Fiber? = nil)
     end
   end
 
@@ -88,7 +88,7 @@ module Crystal::IOCP
     private abstract def try_cancel : Bool
 
     @overlapped = LibC::OVERLAPPED.new
-    @fiber = Fiber.current
+    @fiber = ::Fiber.current
     @state : State = :started
 
     def self.run(*args, **opts, &)
@@ -120,14 +120,14 @@ module Crystal::IOCP
       if timeout
         sleep timeout
       else
-        Fiber.suspend
+        ::Fiber.suspend
       end
 
       unless @state.done?
         if try_cancel
           # Wait for cancellation to complete. We must not free the operation
           # until it's completed.
-          Fiber.suspend
+          ::Fiber.suspend
         end
       end
     end
@@ -225,7 +225,7 @@ module Crystal::IOCP
         error = WinError.new(result.to_u32!)
         yield error
 
-        raise Socket::Addrinfo::Error.from_os_error("GetAddrInfoExOverlappedResult", error)
+        raise ::Socket::Addrinfo::Error.from_os_error("GetAddrInfoExOverlappedResult", error)
       end
 
       @overlapped.union.pointer.as(LibC::ADDRINFOEXW**).value
@@ -239,7 +239,7 @@ module Crystal::IOCP
           # Operation has already completed, do nothing
           return false
         else
-          raise Socket::Addrinfo::Error.from_os_error("GetAddrInfoExCancel", error)
+          raise ::Socket::Addrinfo::Error.from_os_error("GetAddrInfoExCancel", error)
         end
       end
       true

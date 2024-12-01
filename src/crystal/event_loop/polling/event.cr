@@ -8,7 +8,7 @@ require "crystal/pointer_pairing_heap"
 #
 # The events can be found in different queues, for example `Timers` and/or
 # `Waiters` depending on their type.
-struct Crystal::Evented::Event
+struct Crystal::EventLoop::Polling::Event
   enum Type
     IoRead
     IoWrite

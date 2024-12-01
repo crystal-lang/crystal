@@ -1,32 +1,32 @@
-{% skip_file unless Crystal.has_constant?(:Evented) %}
+{% skip_file unless Crystal::EventLoop.has_constant?(:Polling) %}
 
 require "spec"
 
-describe Crystal::Evented::Waiters do
+describe Crystal::EventLoop::Polling::Waiters do
   describe "#add" do
     it "adds event to list" do
-      waiters = Crystal::Evented::Waiters.new
+      waiters = Crystal::EventLoop::Polling::Waiters.new
 
-      event = Crystal::Evented::Event.new(:io_read, Fiber.current)
+      event = Crystal::EventLoop::Polling::Event.new(:io_read, Fiber.current)
       ret = waiters.add(pointerof(event))
       ret.should be_true
     end
 
     it "doesn't add the event when the list is ready (race condition)" do
-      waiters = Crystal::Evented::Waiters.new
+      waiters = Crystal::EventLoop::Polling::Waiters.new
       waiters.ready_one { true }
 
-      event = Crystal::Evented::Event.new(:io_read, Fiber.current)
+      event = Crystal::EventLoop::Polling::Event.new(:io_read, Fiber.current)
       ret = waiters.add(pointerof(event))
       ret.should be_false
       waiters.@ready.should be_false
     end
 
     it "doesn't add the event when the list is always ready" do
-      waiters = Crystal::Evented::Waiters.new
+      waiters = Crystal::EventLoop::Polling::Waiters.new
       waiters.ready_all { }
 
-      event = Crystal::Evented::Event.new(:io_read, Fiber.current)
+      event = Crystal::EventLoop::Polling::Event.new(:io_read, Fiber.current)
       ret = waiters.add(pointerof(event))
       ret.should be_false
       waiters.@always_ready.should be_true
@@ -35,8 +35,8 @@ describe Crystal::Evented::Waiters do
 
   describe "#delete" do
     it "removes the event from the list" do
-      waiters = Crystal::Evented::Waiters.new
-      event = Crystal::Evented::Event.new(:io_read, Fiber.current)
+      waiters = Crystal::EventLoop::Polling::Waiters.new
+      event = Crystal::EventLoop::Polling::Event.new(:io_read, Fiber.current)
 
       waiters.add(pointerof(event))
       waiters.delete(pointerof(event))
@@ -47,15 +47,15 @@ describe Crystal::Evented::Waiters do
     end
 
     it "does nothing when the event isn't in the list" do
-      waiters = Crystal::Evented::Waiters.new
-      event = Crystal::Evented::Event.new(:io_read, Fiber.current)
+      waiters = Crystal::EventLoop::Polling::Waiters.new
+      event = Crystal::EventLoop::Polling::Event.new(:io_read, Fiber.current)
       waiters.delete(pointerof(event))
     end
   end
 
   describe "#ready_one" do
     it "marks the list as ready when empty (race condition)" do
-      waiters = Crystal::Evented::Waiters.new
+      waiters = Crystal::EventLoop::Polling::Waiters.new
       called = false
 
       waiters.ready_one { called = true }
@@ -65,10 +65,10 @@ describe Crystal::Evented::Waiters do
     end
 
     it "dequeues events in FIFO order" do
-      waiters = Crystal::Evented::Waiters.new
-      event1 = Crystal::Evented::Event.new(:io_read, Fiber.current)
-      event2 = Crystal::Evented::Event.new(:io_read, Fiber.current)
-      event3 = Crystal::Evented::Event.new(:io_read, Fiber.current)
+      waiters = Crystal::EventLoop::Polling::Waiters.new
+      event1 = Crystal::EventLoop::Polling::Event.new(:io_read, Fiber.current)
+      event2 = Crystal::EventLoop::Polling::Event.new(:io_read, Fiber.current)
+      event3 = Crystal::EventLoop::Polling::Event.new(:io_read, Fiber.current)
       called = 0
 
       waiters.add(pointerof(event1))
@@ -97,10 +97,10 @@ describe Crystal::Evented::Waiters do
     end
 
     it "dequeues events until the block returns true" do
-      waiters = Crystal::Evented::Waiters.new
-      event1 = Crystal::Evented::Event.new(:io_read, Fiber.current)
-      event2 = Crystal::Evented::Event.new(:io_read, Fiber.current)
-      event3 = Crystal::Evented::Event.new(:io_read, Fiber.current)
+      waiters = Crystal::EventLoop::Polling::Waiters.new
+      event1 = Crystal::EventLoop::Polling::Event.new(:io_read, Fiber.current)
+      event2 = Crystal::EventLoop::Polling::Event.new(:io_read, Fiber.current)
+      event3 = Crystal::EventLoop::Polling::Event.new(:io_read, Fiber.current)
       called = 0
 
       waiters.add(pointerof(event1))
@@ -115,9 +115,9 @@ describe Crystal::Evented::Waiters do
     end
 
     it "dequeues events until empty and marks the list as ready" do
-      waiters = Crystal::Evented::Waiters.new
-      event1 = Crystal::Evented::Event.new(:io_read, Fiber.current)
-      event2 = Crystal::Evented::Event.new(:io_read, Fiber.current)
+      waiters = Crystal::EventLoop::Polling::Waiters.new
+      event1 = Crystal::EventLoop::Polling::Event.new(:io_read, Fiber.current)
+      event2 = Crystal::EventLoop::Polling::Event.new(:io_read, Fiber.current)
       called = 0
 
       waiters.add(pointerof(event1))
@@ -134,7 +134,7 @@ describe Crystal::Evented::Waiters do
 
   describe "#ready_all" do
     it "marks the list as always ready" do
-      waiters = Crystal::Evented::Waiters.new
+      waiters = Crystal::EventLoop::Polling::Waiters.new
       called = false
 
       waiters.ready_all { called = true }
@@ -144,10 +144,10 @@ describe Crystal::Evented::Waiters do
     end
 
     it "dequeues all events" do
-      waiters = Crystal::Evented::Waiters.new
-      event1 = Crystal::Evented::Event.new(:io_read, Fiber.current)
-      event2 = Crystal::Evented::Event.new(:io_read, Fiber.current)
-      event3 = Crystal::Evented::Event.new(:io_read, Fiber.current)
+      waiters = Crystal::EventLoop::Polling::Waiters.new
+      event1 = Crystal::EventLoop::Polling::Event.new(:io_read, Fiber.current)
+      event2 = Crystal::EventLoop::Polling::Event.new(:io_read, Fiber.current)
+      event3 = Crystal::EventLoop::Polling::Event.new(:io_read, Fiber.current)
       called = 0
 
       waiters.add(pointerof(event1))
