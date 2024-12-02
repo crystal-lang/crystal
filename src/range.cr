@@ -491,6 +491,12 @@ struct Range(B, E)
     if b.is_a?(Int) && e.is_a?(Int)
       return 0 if e < b
 
+      # Convert `e` to `Int32` in order to ensure that `e &- b` doesn't get
+      # truncated due to the smaller type of `e`.
+      if e.is_a?(UInt8 | Int8 | UInt16 | Int16)
+        e = e.to_i32!
+      end
+
       diff = (e &- b).to_i32.abs
       diff &+= 1 unless @exclusive
       diff
