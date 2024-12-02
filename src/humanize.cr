@@ -151,7 +151,7 @@ struct Number
   # *separator* describes the decimal separator, *delimiter* the thousands
   # delimiter (see `#format`).
   #
-  # *unit_separator* is used for custom separation of the value and the unit.
+  # *unit_separator* is inserted between the value and the unit.
   # Users are encouraged to use a non-breaking space ('\u00A0') to prevent output being split across lines.
   #
   # See `Int#humanize_bytes` to format a file size.
