@@ -8,6 +8,10 @@ lib LibNTDLL
 
   GENERIC_ALL = 0x10000000_u32
 
+  alias NtCreateWaitCompletionPacketProc = Proc(LibC::HANDLE*, ACCESS_MASK, LibC::OBJECT_ATTRIBUTES*, NTSTATUS)
+  alias NtAssociateWaitCompletionPacketProc = Proc(LibC::HANDLE, LibC::HANDLE, LibC::HANDLE, Void*, Void*, NTSTATUS, LibC::ULONG*, LibC::BOOLEAN*, NTSTATUS)
+  alias NtCancelWaitCompletionPacketProc = Proc(LibC::HANDLE, LibC::BOOLEAN, NTSTATUS)
+
   fun NtCreateWaitCompletionPacket(
     waitCompletionPacketHandle : LibC::HANDLE*,
     desiredAccess : ACCESS_MASK,
