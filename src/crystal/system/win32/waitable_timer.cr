@@ -13,12 +13,15 @@ class Crystal::System::WaitableTimer
   end
 
   def set(time : ::Time::Span) : Nil
+    # convert absolute time to relative time, expressed in 100ns interval,
+    # rounded up
     seconds, nanoseconds = System::Time.monotonic
-    now = ::Time::Span.new(seconds: seconds, nanoseconds: nanoseconds)
+    relative = time - ::Time::Span.new(seconds: seconds, nanoseconds: nanoseconds)
+    ticks = (relative.to_i * 10_000_000 + (relative.nanoseconds + 99) // 100).clamp(0_i64..)
 
     # negative duration means relative time (positive would mean absolute
-    # realtime clock); in 100ns interval
-    duration = -(((time - now).total_nanoseconds / 100).to_i64.clamp(0_i64..))
+    # realtime clock)
+    duration = -ticks
 
     ret = LibC.SetWaitableTimer(@handle, pointerof(duration), 0, nil, nil, 0)
     raise RuntimeError.from_winerror("SetWaitableTimer") if ret == 0
