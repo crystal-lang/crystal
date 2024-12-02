@@ -301,8 +301,8 @@ class Crystal::Command
       puts "Execute: #{elapsed_time}"
     end
 
-    if status.exit_reason.normal? && !error_on_exit
-      exit status.exit_code
+    if (exit_code = status.exit_code?) && !error_on_exit
+      exit exit_code
     end
 
     if message = exit_message(status)
