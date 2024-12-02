@@ -14,7 +14,7 @@ struct Crystal::System::IOCP
     # then let the interpreter load the symbols, which will create interpreter
     # Proc (not interpreted) that can be called.
     class_getter?(wait_completion_packet_methods : Bool) do
-      detect_wait_completion_packet_symbols
+      detect_wait_completion_packet_methods
     end
 
     private def self.detect_wait_completion_packet_methods : Bool
@@ -30,7 +30,7 @@ struct Crystal::System::IOCP
     @@_NtCancelWaitCompletionPacket = uninitialized LibNTDLL::NtCancelWaitCompletionPacketProc
 
     class_getter?(wait_completion_packet_methods : Bool) do
-      load_wait_completion_packet_symbols
+      load_wait_completion_packet_methods
     end
 
     private def self.load_wait_completion_packet_methods : Bool
