@@ -136,12 +136,22 @@ module HTTP
       io << "; #{@extension}" if @extension
     end
 
+    # Returns a string representation of this cookie in the format used by the
+    # `Cookie` header of an HTTP request.
+    # This includes only the `#name` and `#value`. All other attributes are left
+    # out.
+    #
+    # ```
+    # HTTP::Cookie.new("foo", "bar").to_cookie_header                        # => "foo=bar"
+    # HTTP::Cookie.new("foo", "bar", domain: "example.com").to_cookie_header # => "foo=bar
+    # ```
     def to_cookie_header : String
       String.build(@name.bytesize + @value.bytesize + 1) do |io|
         to_cookie_header(io)
       end
     end
 
+    # :ditto:
     def to_cookie_header(io) : Nil
       io << @name
       io << '='
