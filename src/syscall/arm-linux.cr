@@ -409,7 +409,7 @@ module Syscall
   end
 
   macro def_syscall(name, return_type, *args)
-    @[AlwaysInline]
+    @[::AlwaysInline]
     def self.{{name.id}}({{args.splat}}) : {{return_type}}
       ret = uninitialized {{return_type}}
 

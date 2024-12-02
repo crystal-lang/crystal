@@ -59,19 +59,19 @@ struct URI::Params
   # ```
   module Serializable
     macro included
-      def self.from_www_form(params : String)
-        new_from_www_form URI::Params.parse params
+      def self.from_www_form(params : ::String)
+        new_from_www_form ::URI::Params.parse params
       end
 
       # :nodoc:
       #
       # This is needed so that nested types can pass the name thru internally.
       # Has to be public so the generated code can call it, but should be considered an implementation detail.
-      def self.from_www_form(params : ::URI::Params, name : String)
+      def self.from_www_form(params : ::URI::Params, name : ::String)
         new_from_www_form(params, name)
       end
 
-      protected def self.new_from_www_form(params : ::URI::Params, name : String? = nil)
+      protected def self.new_from_www_form(params : ::URI::Params, name : ::String? = nil)
         instance = allocate
         instance.initialize(__uri_params: params, name: name)
         GC.add_finalizer(instance) if instance.responds_to?(:finalize)
@@ -79,12 +79,12 @@ struct URI::Params
       end
 
       macro inherited
-        def self.from_www_form(params : String)
-          new_from_www_form URI::Params.parse params
+        def self.from_www_form(params : ::String)
+          new_from_www_form ::URI::Params.parse params
         end
 
         # :nodoc:
-        def self.from_www_form(params : ::URI::Params, name : String)
+        def self.from_www_form(params : ::URI::Params, name : ::String)
           new_from_www_form(params, name)
         end
       end

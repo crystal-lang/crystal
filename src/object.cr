@@ -457,18 +457,18 @@ class Object
           {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
 
           def {{method_prefix}}\{{name.var.id}} : \{{name.type}}
-            if (value = {{var_prefix}}\{{name.var.id}}).nil?
+            if (%value = {{var_prefix}}\{{name.var.id}}).nil?
               {{var_prefix}}\{{name.var.id}} = \{{yield}}
             else
-              value
+              %value
             end
           end
         \{% else %}
           def {{method_prefix}}\{{name.id}}
-            if (value = {{var_prefix}}\{{name.id}}).nil?
+            if (%value = {{var_prefix}}\{{name.id}}).nil?
               {{var_prefix}}\{{name.id}} = \{{yield}}
             else
-              value
+              %value
             end
           end
         \{% end %}
@@ -561,10 +561,10 @@ class Object
           end
 
           def {{method_prefix}}\{{name.var.id}} : \{{name.type}}
-            if (value = {{var_prefix}}\{{name.var.id}}).nil?
-              ::raise NilAssertionError.new("\{{@type}}\{{"{{doc_prefix}}".id}}\{{name.var.id}} cannot be nil")
+            if (%value = {{var_prefix}}\{{name.var.id}}).nil?
+              ::raise ::NilAssertionError.new("\{{@type}}\{{"{{doc_prefix}}".id}}\{{name.var.id}} cannot be nil")
             else
-              value
+              %value
             end
           end
         \{% else %}
@@ -573,10 +573,10 @@ class Object
           end
 
           def {{method_prefix}}\{{name.id}}
-            if (value = {{var_prefix}}\{{name.id}}).nil?
-              ::raise NilAssertionError.new("\{{@type}}\{{"{{doc_prefix}}".id}}\{{name.id}} cannot be nil")
+            if (%value = {{var_prefix}}\{{name.id}}).nil?
+              ::raise ::NilAssertionError.new("\{{@type}}\{{"{{doc_prefix}}".id}}\{{name.id}} cannot be nil")
             else
-              value
+              %value
             end
           end
         \{% end %}
@@ -688,18 +688,18 @@ class Object
           {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
 
           def {{method_prefix}}\{{name.var.id}}? : \{{name.type}}
-            if (value = {{var_prefix}}\{{name.var.id}}).nil?
+            if (%value = {{var_prefix}}\{{name.var.id}}).nil?
               {{var_prefix}}\{{name.var.id}} = \{{yield}}
             else
-              value
+              %value
             end
           end
         \{% else %}
           def {{method_prefix}}\{{name.id}}?
-            if (value = {{var_prefix}}\{{name.id}}).nil?
+            if (%value = {{var_prefix}}\{{name.id}}).nil?
               {{var_prefix}}\{{name.id}} = \{{yield}}
             else
-              value
+              %value
             end
           end
         \{% end %}
@@ -970,10 +970,10 @@ class Object
           {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
 
           def {{method_prefix}}\{{name.var.id}} : \{{name.type}}
-            if (value = {{var_prefix}}\{{name.var.id}}).nil?
+            if (%value = {{var_prefix}}\{{name.var.id}}).nil?
               {{var_prefix}}\{{name.var.id}} = \{{yield}}
             else
-              value
+              %value
             end
           end
 
@@ -981,10 +981,10 @@ class Object
           end
         \{% else %}
           def {{method_prefix}}\{{name.id}}
-            if (value = {{var_prefix}}\{{name.id}}).nil?
+            if (%value = {{var_prefix}}\{{name.id}}).nil?
               {{var_prefix}}\{{name.id}} = \{{yield}}
             else
-              value
+              %value
             end
           end
 
@@ -1216,10 +1216,10 @@ class Object
           {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
 
           def {{method_prefix}}\{{name.var.id}}? : \{{name.type}}
-            if (value = {{var_prefix}}\{{name.var.id}}).nil?
+            if (%value = {{var_prefix}}\{{name.var.id}}).nil?
               {{var_prefix}}\{{name.var.id}} = \{{yield}}
             else
-              value
+              %value
             end
           end
 
@@ -1227,10 +1227,10 @@ class Object
           end
         \{% else %}
           def {{method_prefix}}\{{name.id}}?
-            if (value = {{var_prefix}}\{{name.id}}).nil?
+            if (%value = {{var_prefix}}\{{name.id}}).nil?
               {{var_prefix}}\{{name.id}} = \{{yield}}
             else
-              value
+              %value
             end
           end
 
@@ -1293,7 +1293,7 @@ class Object
   # wrapper.capitalize     # => "Hello"
   # ```
   macro delegate(*methods, to object)
-    {% if compare_versions(Crystal::VERSION, "1.12.0-dev") >= 0 %}
+    {% if compare_versions(::Crystal::VERSION, "1.12.0-dev") >= 0 %}
       {% eq_operators = %w(<= >= == != []= ===) %}
       {% for method in methods %}
         {% if method.id.ends_with?('=') && !eq_operators.includes?(method.id.stringify) %}
@@ -1427,18 +1427,18 @@ class Object
   macro def_clone
     # Returns a copy of `self` with all instance variables cloned.
     def clone
-      \{% if @type < Reference && !@type.instance_vars.map(&.type).all? { |t| t == ::Bool || t == ::Char || t == ::Symbol || t == ::String || t < ::Number::Primitive } %}
+      \{% if @type < ::Reference && !@type.instance_vars.map(&.type).all? { |t| t == ::Bool || t == ::Char || t == ::Symbol || t == ::String || t < ::Number::Primitive } %}
         exec_recursive_clone do |hash|
           clone = \{{@type}}.allocate
           hash[object_id] = clone.object_id
           clone.initialize_copy(self)
-          GC.add_finalizer(clone) if clone.responds_to?(:finalize)
+          ::GC.add_finalizer(clone) if clone.responds_to?(:finalize)
           clone
         end
       \{% else %}
         clone = \{{@type}}.allocate
         clone.initialize_copy(self)
-        GC.add_finalizer(clone) if clone.responds_to?(:finalize)
+        ::GC.add_finalizer(clone) if clone.responds_to?(:finalize)
         clone
       \{% end %}
     end

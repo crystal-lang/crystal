@@ -735,6 +735,9 @@ module Crystal
 
             case @token.type
             when .op_eq?
+              atomic = Call.new(atomic, name)
+              unexpected_token unless can_be_assigned?(atomic)
+
               # Rewrite 'f.x = arg' as f.x=(arg)
               next_token
 
@@ -760,15 +763,20 @@ module Crystal
                 end_location = arg.end_location
               end
 
-              atomic = Call.new(atomic, "#{name}=", arg).at(location).at_end(end_location)
+              atomic.at(location).at_end(end_location)
+              atomic.name = "#{name}="
+              atomic.args = [arg] of ASTNode
               atomic.name_location = name_location
               next
             when .assignment_operator?
+              call = Call.new(atomic, name)
+              unexpected_token unless can_be_assigned?(call)
+
               op_name_location = @token.location
               method = @token.type.to_s.byte_slice(0, @token.type.to_s.size - 1)
               next_token_skip_space_or_newline
               value = parse_op_assign
-              call = Call.new(atomic, name).at(location)
+              call.at(location)
               call.name_location = name_location
               atomic = OpAssign.new(call, method, value).at(location)
               atomic.name_location = op_name_location
@@ -848,7 +856,8 @@ module Crystal
           atomic = Call.new(atomic, method_name, (args || [] of ASTNode), block, block_arg, named_args).at(location)
           atomic.name_location = name_location
           atomic.end_location = end_location
-          atomic.name_size = 0 if atomic.is_a?(Call)
+          atomic.name_size = 0
+          atomic.args_in_brackets = true
           atomic
         else
           break
@@ -1622,7 +1631,7 @@ module Crystal
       elsif @token.type.op_lsquare?
         call = parse_atomic_method_suffix obj, location
 
-        if @token.type.op_eq? && call.is_a?(Call)
+        if @token.type.op_eq? && call.is_a?(Call) && can_be_assigned?(call)
           next_token_skip_space
           exp = parse_op_assign
           call.name = "#{call.name}="
@@ -1643,6 +1652,8 @@ module Crystal
         call = call.as(Call)
 
         if @token.type.op_eq?
+          unexpected_token unless can_be_assigned?(call)
+
           next_token_skip_space
           if @token.type.op_lparen?
             next_token_skip_space
@@ -1660,7 +1671,7 @@ module Crystal
         else
           call = parse_atomic_method_suffix call, location
 
-          if @token.type.op_eq? && call.is_a?(Call) && call.name == "[]"
+          if @token.type.op_eq? && call.is_a?(Call) && can_be_assigned?(call)
             next_token_skip_space
             exp = parse_op_assign
             call.name = "#{call.name}="
@@ -2106,7 +2117,7 @@ module Crystal
           raise "invalid regex: #{regex_error}", location
         end
 
-        result = RegexLiteral.new(result, options)
+        result = RegexLiteral.new(result, options).at(location)
       else
         # no special treatment
       end
@@ -3213,7 +3224,7 @@ module Crystal
         when .macro_literal?
           pieces << MacroLiteral.new(@token.value.to_s).at(@token.location).at_end(token_end_location)
         when .macro_expression_start?
-          pieces << MacroExpression.new(parse_macro_expression)
+          pieces << MacroExpression.new(parse_macro_expression).at(@token.location).at_end(token_end_location)
           check_macro_expression_end
           skip_whitespace = check_macro_skip_whitespace
         when .macro_control_start?
@@ -3341,6 +3352,7 @@ module Crystal
     end
 
     def parse_macro_control(start_location, macro_state = Token::MacroState.default)
+      location = @token.location
       next_token_skip_space_or_newline
 
       case @token.value
@@ -3385,9 +3397,9 @@ module Crystal
 
         return MacroFor.new(vars, exp, body).at_end(token_end_location)
       when Keyword::IF
-        return parse_macro_if(start_location, macro_state)
+        return parse_macro_if(start_location, macro_state).at(location)
       when Keyword::UNLESS
-        return parse_macro_if(start_location, macro_state, is_unless: true)
+        return parse_macro_if(start_location, macro_state, is_unless: true).at(location)
       when Keyword::BEGIN
         next_token_skip_space
         check :OP_PERCENT_RCURLY
@@ -3400,7 +3412,7 @@ module Crystal
         next_token_skip_space
         check :OP_PERCENT_RCURLY
 
-        return MacroIf.new(BoolLiteral.new(true), body).at_end(token_end_location)
+        return MacroIf.new(BoolLiteral.new(true), body).at(location).at_end(token_end_location)
       when Keyword::ELSE, Keyword::ELSIF, Keyword::END
         return nil
       when Keyword::VERBATIM
@@ -3428,7 +3440,7 @@ module Crystal
       exps = parse_expressions
       @in_macro_expression = false
 
-      MacroExpression.new(exps, output: false).at_end(token_end_location)
+      MacroExpression.new(exps, output: false).at(location).at_end(token_end_location)
     end
 
     def parse_macro_if(start_location, macro_state, check_end = true, is_unless = false)
@@ -6186,7 +6198,10 @@ module Crystal
       when Var, InstanceVar, ClassVar, Path, Global, Underscore
         true
       when Call
-        !node.has_parentheses? && ((node.obj.nil? && node.args.empty? && node.block.nil?) || node.name == "[]")
+        return false if node.has_parentheses?
+        no_args = node.args.empty? && node.named_args.nil? && node.block.nil?
+        return true if Lexer.ident?(node.name) && no_args
+        node.name == "[]" && (node.args_in_brackets? || no_args)
       else
         false
       end

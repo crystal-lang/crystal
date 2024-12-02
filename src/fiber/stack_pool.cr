@@ -42,7 +42,11 @@ class Fiber
 
     # Removes a stack from the bottom of the pool, or allocates a new one.
     def checkout : {Void*, Void*}
-      stack = @deque.pop? || Crystal::System::Fiber.allocate_stack(STACK_SIZE, @protect)
+      if stack = @deque.pop?
+        Crystal::System::Fiber.reset_stack(stack, STACK_SIZE, @protect)
+      else
+        stack = Crystal::System::Fiber.allocate_stack(STACK_SIZE, @protect)
+      end
       {stack, stack + STACK_SIZE}
     end
 

@@ -32,7 +32,7 @@ end
 private def print_env_command
   {% if flag?(:win32) %}
     # cmd adds these by itself, clear them out before printing.
-    shell_command("set COMSPEC=& set PATHEXT=& set PROMPT=& set")
+    shell_command("set COMSPEC=& set PATHEXT=& set PROMPT=& set PROCESSOR_ARCHITECTURE=& set")
   {% else %}
     {"env", [] of String}
   {% end %}
@@ -55,7 +55,12 @@ private def newline
 end
 
 # interpreted code doesn't receive SIGCHLD for `#wait` to work (#12241)
-pending_interpreted describe: Process do
+{% if flag?(:interpreted) && !flag?(:win32) %}
+  pending Process
+  {% skip_file %}
+{% end %}
+
+describe Process do
   describe ".new" do
     it "raises if command doesn't exist" do
       expect_raises(File::NotFoundError, "Error executing process: 'foobarbaz'") do
@@ -165,6 +170,14 @@ pending_interpreted describe: Process do
       error = IO::Memory.new
       Process.run(*shell_command("1>&2 echo hello"), error: error)
       error.to_s.should eq("hello#{newline}")
+    end
+
+    it "sends long output and error to IO" do
+      output = IO::Memory.new
+      error = IO::Memory.new
+      Process.run(*shell_command("echo #{"." * 8000}"), output: output, error: error)
+      output.to_s.should eq("." * 8000 + newline)
+      error.to_s.should be_empty
     end
 
     it "controls process in block" do
@@ -479,6 +492,27 @@ pending_interpreted describe: Process do
   {% end %}
 
   describe ".exec" do
+    it "redirects STDIN and STDOUT to files", tags: %w[slow] do
+      with_tempfile("crystal-exec-stdin", "crystal-exec-stdout") do |stdin_path, stdout_path|
+        File.write(stdin_path, "foobar")
+
+        status, _, _ = compile_and_run_source <<-CRYSTAL
+          command = #{stdin_to_stdout_command[0].inspect}
+          args = #{stdin_to_stdout_command[1].to_a} of String
+          stdin_path = #{stdin_path.inspect}
+          stdout_path = #{stdout_path.inspect}
+          File.open(stdin_path) do |input|
+            File.open(stdout_path, "w") do |output|
+              Process.exec(command, args, input: input, output: output)
+            end
+          end
+          CRYSTAL
+
+        status.success?.should be_true
+        File.read(stdout_path).chomp.should eq("foobar")
+      end
+    end
+
     it "gets error from exec" do
       expect_raises(File::NotFoundError, "Error executing process: 'foobarbaz'") do
         Process.exec("foobarbaz")

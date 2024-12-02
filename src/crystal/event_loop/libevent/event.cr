@@ -5,7 +5,7 @@ require "./lib_event2"
 {% end %}
 
 # :nodoc:
-module Crystal::LibEvent
+class Crystal::EventLoop::LibEvent < Crystal::EventLoop
   struct Event
     include Crystal::EventLoop::Event
 
@@ -19,16 +19,16 @@ module Crystal::LibEvent
       @freed = false
     end
 
-    def add(timeout : Time::Span?) : Nil
-      if timeout
-        timeval = LibC::Timeval.new(
-          tv_sec: LibC::TimeT.new(timeout.total_seconds),
-          tv_usec: timeout.nanoseconds // 1_000
-        )
-        LibEvent2.event_add(@event, pointerof(timeval))
-      else
-        LibEvent2.event_add(@event, nil)
-      end
+    def add(timeout : Time::Span) : Nil
+      timeval = LibC::Timeval.new(
+        tv_sec: LibC::TimeT.new(timeout.total_seconds),
+        tv_usec: timeout.nanoseconds // 1_000
+      )
+      LibEvent2.event_add(@event, pointerof(timeval))
+    end
+
+    def add(timeout : Nil) : Nil
+      LibEvent2.event_add(@event, nil)
     end
 
     def free : Nil
@@ -56,7 +56,7 @@ module Crystal::LibEvent
 
       def new_event(s : Int32, flags : LibEvent2::EventFlags, data, &callback : LibEvent2::Callback)
         event = LibEvent2.event_new(@base, s, flags, callback, data.as(Void*))
-        Crystal::LibEvent::Event.new(event)
+        LibEvent::Event.new(event)
       end
 
       # NOTE: may return `true` even if no event has been triggered (e.g.

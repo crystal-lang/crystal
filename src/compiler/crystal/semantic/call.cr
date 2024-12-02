@@ -13,6 +13,9 @@ class Crystal::Call
   property? uses_with_scope = false
 
   class RetryLookupWithLiterals < ::Exception
+    def initialize
+      self.callstack = Exception::CallStack.empty
+    end
   end
 
   def program

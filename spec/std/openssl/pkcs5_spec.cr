@@ -13,7 +13,7 @@ describe OpenSSL::PKCS5 do
     end
   end
 
-  {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.0.0") >= 0 %}
+  {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.0.0") >= 0 || LibSSL::LIBRESSL_VERSION != "0.0.0" %}
     {% if compare_versions(LibSSL::OPENSSL_VERSION, "3.0.0") < 0 %}
       [
         {OpenSSL::Algorithm::MD4, 1, 16, "1857f69412150bca4542581d0f9e7fd1"},

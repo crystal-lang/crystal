@@ -1,11 +1,11 @@
 require "c/ioapiset"
 require "crystal/system/print_error"
-require "./iocp"
+require "../system/win32/iocp"
 
 # :nodoc:
-class Crystal::IOCP::EventLoop < Crystal::EventLoop
+class Crystal::EventLoop::IOCP < Crystal::EventLoop
   # This is a list of resume and timeout events managed outside of IOCP.
-  @queue = Deque(Crystal::IOCP::Event).new
+  @queue = Deque(Event).new
 
   @lock = Crystal::SpinLock.new
   @interrupted = Atomic(Bool).new(false)
@@ -63,7 +63,7 @@ class Crystal::IOCP::EventLoop < Crystal::EventLoop
       end
 
       wait_time = blocking ? (next_event.wake_at - now).total_milliseconds : 0
-      timed_out = IOCP.wait_queued_completions(wait_time, alertable: blocking) do |fiber|
+      timed_out = System::IOCP.wait_queued_completions(wait_time, alertable: blocking) do |fiber|
         # This block may run multiple times. Every single fiber gets enqueued.
         fiber.enqueue
       end
@@ -76,7 +76,7 @@ class Crystal::IOCP::EventLoop < Crystal::EventLoop
 
       # Wait for completion timed out but it may have been interrupted or we ask
       # for immediate timeout (nonblocking), so we check for the next event
-      # readyness again:
+      # readiness again:
       return false if next_event.wake_at > Time.monotonic
     end
 
@@ -121,37 +121,37 @@ class Crystal::IOCP::EventLoop < Crystal::EventLoop
     return unless thread
 
     # alert the thread to interrupt GetQueuedCompletionStatusEx
-    LibC.QueueUserAPC(->(ptr : LibC::ULONG_PTR) {}, thread, LibC::ULONG_PTR.new(0))
+    LibC.QueueUserAPC(->(ptr : LibC::ULONG_PTR) { }, thread, LibC::ULONG_PTR.new(0))
   end
 
-  def enqueue(event : Crystal::IOCP::Event)
+  def enqueue(event : Event)
     unless @queue.includes?(event)
       @queue << event
     end
   end
 
-  def dequeue(event : Crystal::IOCP::Event)
+  def dequeue(event : Event)
     @queue.delete(event)
   end
 
   # Create a new resume event for a fiber.
   def create_resume_event(fiber : Fiber) : Crystal::EventLoop::Event
-    Crystal::IOCP::Event.new(fiber)
+    Event.new(fiber)
   end
 
   def create_timeout_event(fiber) : Crystal::EventLoop::Event
-    Crystal::IOCP::Event.new(fiber, timeout: true)
+    Event.new(fiber, timeout: true)
   end
 
   def read(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
-    IOCP.overlapped_operation(file_descriptor, "ReadFile", file_descriptor.read_timeout) do |overlapped|
+    System::IOCP.overlapped_operation(file_descriptor, "ReadFile", file_descriptor.read_timeout) do |overlapped|
       ret = LibC.ReadFile(file_descriptor.windows_handle, slice, slice.size, out byte_count, overlapped)
       {ret, byte_count}
     end.to_i32
   end
 
   def write(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
-    IOCP.overlapped_operation(file_descriptor, "WriteFile", file_descriptor.write_timeout, writing: true) do |overlapped|
+    System::IOCP.overlapped_operation(file_descriptor, "WriteFile", file_descriptor.write_timeout, writing: true) do |overlapped|
       ret = LibC.WriteFile(file_descriptor.windows_handle, slice, slice.size, out byte_count, overlapped)
       {ret, byte_count}
     end.to_i32
@@ -159,6 +159,9 @@ class Crystal::IOCP::EventLoop < Crystal::EventLoop
 
   def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
     LibC.CancelIoEx(file_descriptor.windows_handle, nil) unless file_descriptor.system_blocking?
+  end
+
+  def remove(file_descriptor : Crystal::System::FileDescriptor) : Nil
   end
 
   private def wsa_buffer(bytes)
@@ -171,7 +174,7 @@ class Crystal::IOCP::EventLoop < Crystal::EventLoop
   def read(socket : ::Socket, slice : Bytes) : Int32
     wsabuf = wsa_buffer(slice)
 
-    bytes_read = IOCP.wsa_overlapped_operation(socket, socket.fd, "WSARecv", socket.read_timeout, connreset_is_error: false) do |overlapped|
+    bytes_read = System::IOCP.wsa_overlapped_operation(socket, socket.fd, "WSARecv", socket.read_timeout, connreset_is_error: false) do |overlapped|
       flags = 0_u32
       ret = LibC.WSARecv(socket.fd, pointerof(wsabuf), 1, out bytes_received, pointerof(flags), overlapped, nil)
       {ret, bytes_received}
@@ -183,7 +186,7 @@ class Crystal::IOCP::EventLoop < Crystal::EventLoop
   def write(socket : ::Socket, slice : Bytes) : Int32
     wsabuf = wsa_buffer(slice)
 
-    bytes = IOCP.wsa_overlapped_operation(socket, socket.fd, "WSASend", socket.write_timeout) do |overlapped|
+    bytes = System::IOCP.wsa_overlapped_operation(socket, socket.fd, "WSASend", socket.write_timeout) do |overlapped|
       ret = LibC.WSASend(socket.fd, pointerof(wsabuf), 1, out bytes_sent, 0, overlapped, nil)
       {ret, bytes_sent}
     end
@@ -193,7 +196,7 @@ class Crystal::IOCP::EventLoop < Crystal::EventLoop
 
   def send_to(socket : ::Socket, slice : Bytes, address : ::Socket::Address) : Int32
     wsabuf = wsa_buffer(slice)
-    bytes_written = IOCP.wsa_overlapped_operation(socket, socket.fd, "WSASendTo", socket.write_timeout) do |overlapped|
+    bytes_written = System::IOCP.wsa_overlapped_operation(socket, socket.fd, "WSASendTo", socket.write_timeout) do |overlapped|
       ret = LibC.WSASendTo(socket.fd, pointerof(wsabuf), 1, out bytes_sent, 0, address, address.size, overlapped, nil)
       {ret, bytes_sent}
     end
@@ -219,7 +222,7 @@ class Crystal::IOCP::EventLoop < Crystal::EventLoop
     wsabuf = wsa_buffer(slice)
 
     flags = 0_u32
-    bytes_read = IOCP.wsa_overlapped_operation(socket, socket.fd, "WSARecvFrom", socket.read_timeout) do |overlapped|
+    bytes_read = System::IOCP.wsa_overlapped_operation(socket, socket.fd, "WSARecvFrom", socket.read_timeout) do |overlapped|
       ret = LibC.WSARecvFrom(socket.fd, pointerof(wsabuf), 1, out bytes_received, pointerof(flags), sockaddr, pointerof(addrlen), overlapped, nil)
       {ret, bytes_received}
     end
@@ -271,9 +274,12 @@ class Crystal::IOCP::EventLoop < Crystal::EventLoop
 
   def close(socket : ::Socket) : Nil
   end
+
+  def remove(socket : ::Socket) : Nil
+  end
 end
 
-class Crystal::IOCP::Event
+class Crystal::EventLoop::IOCP::Event
   include Crystal::EventLoop::Event
 
   getter fiber
@@ -292,8 +298,8 @@ class Crystal::IOCP::Event
     free
   end
 
-  def add(timeout : Time::Span?) : Nil
-    @wake_at = timeout ? Time.monotonic + timeout : Time.monotonic
+  def add(timeout : Time::Span) : Nil
+    @wake_at = Time.monotonic + timeout
     Crystal::EventLoop.current.enqueue(self)
   end
 end

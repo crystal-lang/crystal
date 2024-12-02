@@ -60,6 +60,9 @@ enum WinError : UInt32
   # using the current default `LANGID`.
   #
   # On non-win32 platforms the result is always an empty string.
+  #
+  # NOTE: The result may depend on the current system locale. Specs and
+  # comparisons should use `#value` instead of this method.
   def message : String
     {% if flag?(:win32) %}
       unsafe_message { |slice| String.from_utf16(slice).strip }
@@ -2305,6 +2308,7 @@ enum WinError : UInt32
   ERROR_STATE_CONTAINER_NAME_SIZE_LIMIT_EXCEEDED                = 15818_u32
   ERROR_API_UNAVAILABLE                                         = 15841_u32
 
-  WSA_IO_PENDING    = ERROR_IO_PENDING
-  WSA_IO_INCOMPLETE = ERROR_IO_INCOMPLETE
+  WSA_IO_PENDING     = ERROR_IO_PENDING
+  WSA_IO_INCOMPLETE  = ERROR_IO_INCOMPLETE
+  WSA_INVALID_HANDLE = ERROR_INVALID_HANDLE
 end

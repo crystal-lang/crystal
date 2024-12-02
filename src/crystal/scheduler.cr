@@ -1,4 +1,4 @@
-require "crystal/system/event_loop"
+require "crystal/event_loop"
 require "crystal/system/print_error"
 require "./fiber_channel"
 require "fiber"
@@ -22,6 +22,12 @@ class Crystal::Scheduler
 
   def self.event_loop
     Thread.current.scheduler.@event_loop
+  end
+
+  def self.event_loop?
+    if scheduler = Thread.current?.try(&.scheduler?)
+      scheduler.@event_loop
+    end
   end
 
   def self.enqueue(fiber : Fiber) : Nil

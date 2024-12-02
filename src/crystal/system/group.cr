@@ -12,6 +12,8 @@ end
   require "./wasi/group"
 {% elsif flag?(:unix) %}
   require "./unix/group"
+{% elsif flag?(:win32) %}
+  require "./win32/group"
 {% else %}
   {% raise "No Crystal::System::Group implementation available" %}
 {% end %}

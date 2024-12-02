@@ -9,6 +9,16 @@ private def exit_status(status)
   {% end %}
 end
 
+private def status_for(exit_reason : Process::ExitReason)
+  exit_code = case exit_reason
+              when .interrupted?
+                {% if flag?(:unix) %}Signal::INT.value{% else %}LibC::STATUS_CONTROL_C_EXIT{% end %}
+              else
+                raise NotImplementedError.new("status_for")
+              end
+  Process::Status.new(exit_code)
+end
+
 describe Process::Status do
   it "#exit_code" do
     Process::Status.new(exit_status(0)).exit_code.should eq 0
@@ -16,6 +26,8 @@ describe Process::Status do
     Process::Status.new(exit_status(127)).exit_code.should eq 127
     Process::Status.new(exit_status(128)).exit_code.should eq 128
     Process::Status.new(exit_status(255)).exit_code.should eq 255
+
+    status_for(:interrupted).exit_code.should eq({% if flag?(:unix) %}0{% else %}LibC::STATUS_CONTROL_C_EXIT.to_i32!{% end %})
   end
 
   it "#success?" do
@@ -24,6 +36,8 @@ describe Process::Status do
     Process::Status.new(exit_status(127)).success?.should be_false
     Process::Status.new(exit_status(128)).success?.should be_false
     Process::Status.new(exit_status(255)).success?.should be_false
+
+    status_for(:interrupted).success?.should be_false
   end
 
   it "#normal_exit?" do
@@ -32,6 +46,8 @@ describe Process::Status do
     Process::Status.new(exit_status(127)).normal_exit?.should be_true
     Process::Status.new(exit_status(128)).normal_exit?.should be_true
     Process::Status.new(exit_status(255)).normal_exit?.should be_true
+
+    status_for(:interrupted).normal_exit?.should eq {{ flag?(:win32) }}
   end
 
   it "#signal_exit?" do
@@ -40,6 +56,8 @@ describe Process::Status do
     Process::Status.new(exit_status(127)).signal_exit?.should be_false
     Process::Status.new(exit_status(128)).signal_exit?.should be_false
     Process::Status.new(exit_status(255)).signal_exit?.should be_false
+
+    status_for(:interrupted).signal_exit?.should eq {{ !flag?(:win32) }}
   end
 
   it "equality" do

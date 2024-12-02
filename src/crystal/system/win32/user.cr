@@ -1,4 +1,4 @@
-require "c/sddl"
+require "crystal/system/windows"
 require "c/lm"
 require "c/userenv"
 require "c/security"
@@ -71,7 +71,7 @@ module Crystal::System::User
   end
 
   def self.from_username?(username : String) : ::System::User?
-    if found = name_to_sid(username)
+    if found = Crystal::System.name_to_sid(username)
       if found.type.sid_type_user?
         from_sid(found.sid)
       end
@@ -79,7 +79,7 @@ module Crystal::System::User
   end
 
   def self.from_id?(id : String) : ::System::User?
-    if sid = sid_from_s(id)
+    if sid = Crystal::System.sid_from_s(id)
       begin
         from_sid(sid)
       ensure
@@ -89,13 +89,13 @@ module Crystal::System::User
   end
 
   private def self.from_sid(sid : LibC::SID*) : ::System::User?
-    canonical = sid_to_name(sid) || return
+    canonical = Crystal::System.sid_to_name(sid) || return
     return unless canonical.type.sid_type_user?
 
     domain_and_user = "#{canonical.domain}\\#{canonical.name}"
     full_name = lookup_full_name(canonical.name, canonical.domain, domain_and_user) || return
     pgid = lookup_primary_group_id(canonical.name, canonical.domain) || return
-    uid = sid_to_s(sid)
+    uid = Crystal::System.sid_to_s(sid)
     home_dir = lookup_home_directory(uid, canonical.name) || return
 
     ::System::User.new(domain_and_user, uid, pgid, full_name, home_dir)
@@ -136,10 +136,10 @@ module Crystal::System::User
   # https://support.microsoft.com/en-us/help/297951/how-to-use-the-primarygroupid-attribute-to-find-the-primary-group-for
   # The method follows this formula: domainRID + "-" + primaryGroupRID
   private def self.lookup_primary_group_id(name : String, domain : String) : String?
-    domain_sid = name_to_sid(domain) || return
+    domain_sid = Crystal::System.name_to_sid(domain) || return
     return unless domain_sid.type.sid_type_domain?
 
-    domain_sid_str = sid_to_s(domain_sid.sid)
+    domain_sid_str = Crystal::System.sid_to_s(domain_sid.sid)
 
     # If the user has joined a domain use the RID of the default primary group
     # called "Domain Users":
@@ -210,43 +210,6 @@ module Crystal::System::User
     return "#{profile_dir}\\#{username}" if profile_dir
   end
 
-  private record SIDLookupResult, sid : LibC::SID*, domain : String, type : LibC::SID_NAME_USE
-
-  private def self.name_to_sid(name : String) : SIDLookupResult?
-    utf16_name = Crystal::System.to_wstr(name)
-
-    sid_size = LibC::DWORD.zero
-    domain_buf_size = LibC::DWORD.zero
-    LibC.LookupAccountNameW(nil, utf16_name, nil, pointerof(sid_size), nil, pointerof(domain_buf_size), out _)
-
-    unless WinError.value.error_none_mapped?
-      sid = Pointer(UInt8).malloc(sid_size).as(LibC::SID*)
-      domain_buf = Slice(LibC::WCHAR).new(domain_buf_size)
-      if LibC.LookupAccountNameW(nil, utf16_name, sid, pointerof(sid_size), domain_buf, pointerof(domain_buf_size), out sid_type) != 0
-        domain = String.from_utf16(domain_buf[..-2])
-        SIDLookupResult.new(sid, domain, sid_type)
-      end
-    end
-  end
-
-  private record NameLookupResult, name : String, domain : String, type : LibC::SID_NAME_USE
-
-  private def self.sid_to_name(sid : LibC::SID*) : NameLookupResult?
-    name_buf_size = LibC::DWORD.zero
-    domain_buf_size = LibC::DWORD.zero
-    LibC.LookupAccountSidW(nil, sid, nil, pointerof(name_buf_size), nil, pointerof(domain_buf_size), out _)
-
-    unless WinError.value.error_none_mapped?
-      name_buf = Slice(LibC::WCHAR).new(name_buf_size)
-      domain_buf = Slice(LibC::WCHAR).new(domain_buf_size)
-      if LibC.LookupAccountSidW(nil, sid, name_buf, pointerof(name_buf_size), domain_buf, pointerof(domain_buf_size), out sid_type) != 0
-        name = String.from_utf16(name_buf[..-2])
-        domain = String.from_utf16(domain_buf[..-2])
-        NameLookupResult.new(name, domain, sid_type)
-      end
-    end
-  end
-
   private def self.domain_joined? : Bool
     status = LibC.NetGetJoinInformation(nil, out domain, out type)
     if status != LibC::NERR_Success
@@ -255,19 +218,5 @@ module Crystal::System::User
     is_domain = type.net_setup_domain_name?
     LibC.NetApiBufferFree(domain)
     is_domain
-  end
-
-  private def self.sid_to_s(sid : LibC::SID*) : String
-    if LibC.ConvertSidToStringSidW(sid, out ptr) == 0
-      raise RuntimeError.from_winerror("ConvertSidToStringSidW")
-    end
-    str, _ = String.from_utf16(ptr)
-    LibC.LocalFree(ptr)
-    str
-  end
-
-  private def self.sid_from_s(str : String) : LibC::SID*
-    status = LibC.ConvertStringSidToSidW(Crystal::System.to_wstr(str), out sid)
-    status != 0 ? sid : Pointer(LibC::SID).null
   end
 end

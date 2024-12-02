@@ -2,6 +2,8 @@ name: macOS CI
 
 on: [push, pull_request]
 
+permissions: {}
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
@@ -27,9 +29,9 @@ jobs:
 
       - uses: cachix/install-nix-action@v27
         with:
-          install_url: https://releases.nixos.org/nix/nix-2.9.2/install
           extra_nix_config: |
             experimental-features = nix-command
+
       - uses: cachix/cachix-action@v15
         with:
           name: crystal-ci

@@ -45,12 +45,49 @@ module Crystal::System::Thread
     LibC.SwitchToThread
   end
 
-  @[ThreadLocal]
-  class_property current_thread : ::Thread { ::Thread.new }
+  # MinGW does not support TLS correctly
+  {% if flag?(:gnu) %}
+    @@current_key : LibC::DWORD = begin
+      current_key = LibC.TlsAlloc
+      if current_key == LibC::TLS_OUT_OF_INDEXES
+        Crystal::System.panic("TlsAlloc()", WinError.value)
+      end
+      current_key
+    end
 
-  def self.current_thread? : ::Thread?
-    @@current_thread
-  end
+    def self.current_thread : ::Thread
+      th = current_thread?
+      return th if th
+
+      # Thread#start sets `Thread.current` as soon it starts. Thus we know
+      # that if `Thread.current` is not set then we are in the main thread
+      self.current_thread = ::Thread.new
+    end
+
+    def self.current_thread? : ::Thread?
+      ptr = LibC.TlsGetValue(@@current_key)
+      err = WinError.value
+      unless err == WinError::ERROR_SUCCESS
+        Crystal::System.panic("TlsGetValue()", err)
+      end
+
+      ptr.as(::Thread?)
+    end
+
+    def self.current_thread=(thread : ::Thread)
+      if LibC.TlsSetValue(@@current_key, thread.as(Void*)) == 0
+        Crystal::System.panic("TlsSetValue()", WinError.value)
+      end
+      thread
+    end
+  {% else %}
+    @[ThreadLocal]
+    class_property current_thread : ::Thread { ::Thread.new }
+
+    def self.current_thread? : ::Thread?
+      @@current_thread
+    end
+  {% end %}
 
   def self.sleep(time : ::Time::Span) : Nil
     LibC.Sleep(time.total_milliseconds.to_i.clamp(1..))
@@ -76,7 +113,9 @@ module Crystal::System::Thread
     {% else %}
       tib = LibC.NtCurrentTeb
       high_limit = tib.value.stackBase
-      LibC.VirtualQuery(tib.value.stackLimit, out mbi, sizeof(LibC::MEMORY_BASIC_INFORMATION))
+      if LibC.VirtualQuery(tib.value.stackLimit, out mbi, sizeof(LibC::MEMORY_BASIC_INFORMATION)) == 0
+        raise RuntimeError.from_winerror("VirtualQuery")
+      end
       low_limit = mbi.allocationBase
       low_limit
     {% end %}

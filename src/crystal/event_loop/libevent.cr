@@ -1,8 +1,11 @@
-require "./event_libevent"
+require "./libevent/event"
 
 # :nodoc:
-class Crystal::LibEvent::EventLoop < Crystal::EventLoop
-  private getter(event_base) { Crystal::LibEvent::Event::Base.new }
+class Crystal::EventLoop::LibEvent < Crystal::EventLoop
+  private getter(event_base) { Crystal::EventLoop::LibEvent::Event::Base.new }
+
+  def after_fork_before_exec : Nil
+  end
 
   {% unless flag?(:preview_mt) %}
     # Reinitializes the event loop after a fork.
@@ -20,14 +23,14 @@ class Crystal::LibEvent::EventLoop < Crystal::EventLoop
   end
 
   # Create a new resume event for a fiber.
-  def create_resume_event(fiber : Fiber) : Crystal::EventLoop::Event
+  def create_resume_event(fiber : Fiber) : Crystal::EventLoop::LibEvent::Event
     event_base.new_event(-1, LibEvent2::EventFlags::None, fiber) do |s, flags, data|
       data.as(Fiber).enqueue
     end
   end
 
   # Creates a timeout_event.
-  def create_timeout_event(fiber) : Crystal::EventLoop::Event
+  def create_timeout_event(fiber) : Crystal::EventLoop::LibEvent::Event
     event_base.new_event(-1, LibEvent2::EventFlags::None, fiber) do |s, flags, data|
       f = data.as(Fiber)
       if (select_action = f.timeout_select_action)
@@ -91,6 +94,9 @@ class Crystal::LibEvent::EventLoop < Crystal::EventLoop
 
   def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
     file_descriptor.evented_close
+  end
+
+  def remove(file_descriptor : Crystal::System::FileDescriptor) : Nil
   end
 
   def read(socket : ::Socket, slice : Bytes) : Int32
@@ -184,6 +190,9 @@ class Crystal::LibEvent::EventLoop < Crystal::EventLoop
 
   def close(socket : ::Socket) : Nil
     socket.evented_close
+  end
+
+  def remove(socket : ::Socket) : Nil
   end
 
   def evented_read(target, errno_msg : String, &) : Int32

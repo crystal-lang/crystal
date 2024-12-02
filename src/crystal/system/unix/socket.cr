@@ -1,10 +1,11 @@
 require "c/netdb"
 require "c/netinet/tcp"
 require "c/sys/socket"
-require "io/evented"
 
 module Crystal::System::Socket
-  include IO::Evented
+  {% if IO.has_constant?(:Evented) %}
+    include IO::Evented
+  {% end %}
 
   alias Handle = Int32
 
@@ -24,6 +25,9 @@ module Crystal::System::Socket
   end
 
   private def initialize_handle(fd)
+    {% if Crystal::EventLoop.has_constant?(:Polling) %}
+      @__evloop_data = Crystal::EventLoop::Polling::Arena::INVALID_INDEX
+    {% end %}
   end
 
   # Tries to bind the socket to a local address.

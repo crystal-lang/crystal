@@ -1,4 +1,4 @@
-require "./event_loop/socket"
+require "../event_loop/socket"
 
 module Crystal::System::Socket
   # Creates a file descriptor / socket handle
@@ -98,6 +98,10 @@ module Crystal::System::Socket
   # no need to initialize the event loop at all.
   # Also used in `Socket#finalize`
   # def socket_close
+
+  private def event_loop? : Crystal::EventLoop::Socket?
+    Crystal::EventLoop.current?
+  end
 
   private def event_loop : Crystal::EventLoop::Socket
     Crystal::EventLoop.current
