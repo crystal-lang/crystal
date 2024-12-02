@@ -425,7 +425,7 @@ struct Enum
   # Color.from_value?(2) # => Color::Blue
   # Color.from_value?(3) # => nil
   # ```
-  def self.from_value?(value : Int) : self?
+  def self.from_value?(value : Int)
     {% if @type.annotation(Flags) %}
       all_mask = {{@type}}::All.value
       return if all_mask & value != value
@@ -506,7 +506,7 @@ struct Enum
   # ```
   #
   # If multiple members match the same normalized string, the first one is returned.
-  def self.parse?(string : String) : self?
+  def self.parse?(string : String)
     {% begin %}
       case string.gsub('-', '_').camelcase.downcase
       # Temporarily map all constants to their normalized value in order to
