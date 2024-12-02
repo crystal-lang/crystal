@@ -14,7 +14,7 @@ enum Process::ExitReason
   #   reserved for normal exits.
   Normal
 
-  # The process terminated abnormally.
+  # The process terminated due to an abort request.
   #
   # * On Unix-like systems, this corresponds to `Signal::ABRT`, `Signal::KILL`,
   #   and `Signal::QUIT`.
