@@ -28,12 +28,10 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     # On Windows 10+ we leverage a high resolution timer with completion packet
     # to notify a completion port; on legacy Windows we fallback to the low
     # resolution timeout (~15.6ms)
-    @mutex.synchronize do
-      if System::IOCP.wait_completion_packet_methods?
-        @waitable_timer = System::WaitableTimer.new
-        @timer_packet = @iocp.create_wait_completion_packet
-        @timer_key = System::IOCP::CompletionKey.new(:timer)
-      end
+    if System::IOCP.wait_completion_packet_methods?
+      @waitable_timer = System::WaitableTimer.new
+      @timer_packet = @iocp.create_wait_completion_packet
+      @timer_key = System::IOCP::CompletionKey.new(:timer)
     end
   end
 
