@@ -75,6 +75,9 @@ class Fiber
   {% end %}
 
   # :nodoc:
+  property schedlink : Fiber?
+
+  # :nodoc:
   def self.inactive(fiber : Fiber)
     fibers.delete(fiber)
   end
