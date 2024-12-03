@@ -553,6 +553,16 @@ module HTTP
         cookies = Cookies.from_client_headers Headers{"Cookie" => "a=b", "Set-Cookie" => "x=y"}
         cookies.to_h.should eq({"a" => Cookie.new("a", "b")})
       end
+
+      it "chops value at the first invalid byte" do
+        HTTP::Cookies.from_client_headers(
+          HTTP::Headers {"Cookie" => "ginger=snap; cookie=hm🍪delicious; snicker=doodle",}
+        ).to_h.should eq({
+          "ginger" => HTTP::Cookie.new("ginger", "snap"),
+          "cookie" => HTTP::Cookie.new("cookie", "hm"),
+          "snicker" => HTTP::Cookie.new("snicker", "doodle"),
+        })
+      end
     end
 
     describe ".from_server_headers" do
@@ -563,6 +573,15 @@ module HTTP
       it "does not accept Cookie header" do
         cookies = Cookies.from_server_headers Headers{"Set-Cookie" => "a=b", "Cookie" => "x=y"}
         cookies.to_h.should eq({"a" => Cookie.new("a", "b")})
+      end
+
+      it "drops cookies with invalid byte in value" do
+        HTTP::Cookies.from_server_headers(
+          HTTP::Headers {"Set-Cookie" => ["ginger=snap", "cookie=hm🍪delicious", "snicker=doodle"],}
+        ).to_h.should eq({
+          "ginger" => HTTP::Cookie.new("ginger", "snap"),
+          "snicker" => HTTP::Cookie.new("snicker", "doodle"),
+        })
       end
     end
 
