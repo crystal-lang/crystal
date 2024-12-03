@@ -556,10 +556,10 @@ module HTTP
 
       it "chops value at the first invalid byte" do
         HTTP::Cookies.from_client_headers(
-          HTTP::Headers {"Cookie" => "ginger=snap; cookie=hm🍪delicious; snicker=doodle",}
+          HTTP::Headers{"Cookie" => "ginger=snap; cookie=hm🍪delicious; snicker=doodle"}
         ).to_h.should eq({
-          "ginger" => HTTP::Cookie.new("ginger", "snap"),
-          "cookie" => HTTP::Cookie.new("cookie", "hm"),
+          "ginger"  => HTTP::Cookie.new("ginger", "snap"),
+          "cookie"  => HTTP::Cookie.new("cookie", "hm"),
           "snicker" => HTTP::Cookie.new("snicker", "doodle"),
         })
       end
@@ -577,9 +577,9 @@ module HTTP
 
       it "drops cookies with invalid byte in value" do
         HTTP::Cookies.from_server_headers(
-          HTTP::Headers {"Set-Cookie" => ["ginger=snap", "cookie=hm🍪delicious", "snicker=doodle"],}
+          HTTP::Headers{"Set-Cookie" => ["ginger=snap", "cookie=hm🍪delicious", "snicker=doodle"]}
         ).to_h.should eq({
-          "ginger" => HTTP::Cookie.new("ginger", "snap"),
+          "ginger"  => HTTP::Cookie.new("ginger", "snap"),
           "snicker" => HTTP::Cookie.new("snicker", "doodle"),
         })
       end
