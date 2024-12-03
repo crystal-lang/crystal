@@ -74,6 +74,10 @@ class Thread
     @@threads.try(&.unsafe_each { |thread| yield thread })
   end
 
+  def self.each(&)
+    threads.each { |thread| yield thread }
+  end
+
   def self.lock : Nil
     threads.@mutex.lock
   end
