@@ -8,7 +8,7 @@ class Crystal::EventLoop::FakeLoop < Crystal::EventLoop::Polling
   private def system_run(blocking : Bool, & : Fiber ->) : Nil
   end
 
-  private def interrupt : Nil
+  def interrupt : Nil
   end
 
   protected def system_add(fd : Int32, index : Arena::Index) : Nil
