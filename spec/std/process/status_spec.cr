@@ -27,7 +27,13 @@ describe Process::Status do
     Process::Status.new(exit_status(128)).exit_code.should eq 128
     Process::Status.new(exit_status(255)).exit_code.should eq 255
 
-    status_for(:interrupted).exit_code.should eq({% if flag?(:unix) %}0{% else %}LibC::STATUS_CONTROL_C_EXIT.to_i32!{% end %})
+    if {{ flag?(:unix) }}
+      expect_raises(RuntimeError, "Abnormal exit has no exit code") do
+        status_for(:interrupted).exit_code
+      end
+    else
+      status_for(:interrupted).exit_code.should eq({% if flag?(:unix) %}0{% else %}LibC::STATUS_CONTROL_C_EXIT.to_i32!{% end %})
+    end
   end
 
   it "#success?" do

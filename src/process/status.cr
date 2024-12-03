@@ -205,9 +205,19 @@ class Process::Status
     {% end %}
   end
 
-  # If `normal_exit?` is `true`, returns the exit code of the process.
+  # Returns the exit code of the process if it exited normally (`#normal_exit?`).
+  #
+  # Raises `RuntimeError` if the status describes an abnormal exit.
+  #
+  # ```
+  # Process.run("true").exit_code                                # => 1
+  # Process.run("exit 123", shell: true).exit_code               # => 123
+  # Process.new("sleep", ["10"]).tap(&.terminate).wait.exit_code # RuntimeError: Abnormal exit has no exit code
+  # ```
   def exit_code : Int32
     {% if flag?(:unix) %}
+      raise RuntimeError.new("Abnormal exit has no exit code") unless normal_exit?
+
       # define __WEXITSTATUS(status) (((status) & 0xff00) >> 8)
       (@exit_status & 0xff00) >> 8
     {% else %}
