@@ -15,7 +15,9 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
   {% end %}
 
   def run(blocking : Bool) : Bool
-    event_base.loop(once: true, nonblock: !blocking)
+    flags = LibEvent2::EventLoopFlags::Once
+    flags |= blocking ? LibEvent2::EventLoopFlags::NoExitOnEmpty : LibEvent2::EventLoopFlags::NonBlock
+    event_base.loop(flags)
   end
 
   def interrupt : Nil

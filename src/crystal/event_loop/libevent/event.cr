@@ -61,10 +61,7 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
 
       # NOTE: may return `true` even if no event has been triggered (e.g.
       #       nonblocking), but `false` means that nothing was processed.
-      def loop(once : Bool, nonblock : Bool) : Bool
-        flags = LibEvent2::EventLoopFlags::None
-        flags |= LibEvent2::EventLoopFlags::Once if once
-        flags |= LibEvent2::EventLoopFlags::NonBlock if nonblock
+      def loop(flags : LibEvent2::EventLoopFlags) : Bool
         LibEvent2.event_base_loop(@base, flags) == 0
       end
 
