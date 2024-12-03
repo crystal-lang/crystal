@@ -14,6 +14,9 @@ private def parse_set_cookie(header)
   cookie.not_nil!
 end
 
+# invalid printable ascii characters, non-printable ascii characters and chontrol characters
+private INVALID_COOKIE_VALUES = ("\x00".."\x08").to_a + ("\x0A".."\x1F").to_a + ["\r", "\t", "\n", %(" "), %("), ",", ";", "\\", "\x7f", "\xFF", "🍪"]
+
 module HTTP
   describe Cookie do
     it "#==" do
@@ -45,7 +48,7 @@ module HTTP
           HTTP::Cookie.new("x", %(foo\rbar))
         end
 
-        (("\x00".."\x08").to_a + ("\x0A".."\x1F").to_a + ["\t", %(" "), %("), ",", "\\", "\x7f", "\xFF", "🍪"]).each do |char|
+        INVALID_COOKIE_VALUES.each do |char|
           expect_raises IO::Error, "Invalid cookie value" do
             HTTP::Cookie.new("x", char)
           end
@@ -137,14 +140,10 @@ module HTTP
     describe "#value=" do
       it "raises on invalid value" do
         cookie = HTTP::Cookie.new("x", "")
-        invalid_values = {
-          '"', ',', ';', '\\', # invalid printable ascii characters
-          '\r', '\t', '\n',    # non-printable ascii characters
-        }.map { |c| "foo#{c}bar" }
 
-        invalid_values.each do |invalid_value|
+        INVALID_COOKIE_VALUES.each do |v|
           expect_raises IO::Error, "Invalid cookie value" do
-            cookie.value = invalid_value
+            cookie.value = "foo#{v}bar"
           end
         end
       end
