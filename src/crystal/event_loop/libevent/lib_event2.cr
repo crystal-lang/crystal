@@ -31,8 +31,9 @@ lib LibEvent2
 
   @[Flags]
   enum EventLoopFlags
-    Once     = 0x01
-    NonBlock = 0x02
+    Once          = 0x01
+    NonBlock      = 0x02
+    NoExitOnEmpty = 0x04
   end
 
   @[Flags]
