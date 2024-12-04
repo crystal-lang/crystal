@@ -1367,6 +1367,27 @@ describe "String" do
       "foo foo".byte_index("oo", 2).should eq(5)
       "こんにちは世界".byte_index("ちは").should eq(9)
     end
+
+    it "gets byte index of regex" do 
+      str = "0123x"
+      pattern = /x/
+
+      str.byte_index(pattern).should eq(4)
+      str.byte_index(pattern, offset: 4).should eq(4)
+      str.byte_index(pattern, offset: 5).should be_nil
+      str.byte_index(pattern, offset: -1).should eq(4)
+      str.byte_index(/y/).should be_nil
+
+      str = "012abc678"
+      pattern = /[abc]/
+
+      puts str.byte_index(pattern).should eq(3)
+      puts str.byte_index(pattern, offset: 2).should eq(3)
+      puts str.byte_index(pattern, offset: 5).should eq(5)
+      puts str.byte_index(pattern, offset: -4).should eq(5)
+      puts str.byte_index(pattern, offset: -1).should be_nil
+      str.byte_index(/y/).should be_nil
+    end
   end
 
   describe "includes?" do

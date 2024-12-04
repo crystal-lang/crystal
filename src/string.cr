@@ -3886,6 +3886,27 @@ class String
     nil
   end
 
+  # Returns the byte index of the regex *pattern* in the string, or `nil` if the pattern does not find a match.
+  # If *offset* is present, it defines the position to start the search.
+  #
+  # Negative *offset* can be used to start the search from the end of the string.
+  #
+  # ```
+  # "hello world".byte_index(/o/)             # => 4
+  # "hello world".byte_index(/o/, offset: 4)  # => 4
+  # "hello world".byte_index(/o/, offset: 5)  # => 7
+  # "hello world".byte_index(/o/, offset: -1) # => nil
+  # "hello world".byte_index(/y/)             # => nil
+  # ```
+  def byte_index(pattern : Regex, offset = 0, options : Regex::MatchOptions = Regex::MatchOptions::None) : Int32?
+    offset += bytesize if offset < 0
+    return if offset < 0
+
+    if match = pattern.match_at_byte_index(self, offset, options: options)
+      match.byte_begin
+    end
+  end
+
   # Returns the byte index of a char index, or `nil` if out of bounds.
   #
   # It is valid to pass `#size` to *index*, and in this case the answer
