@@ -1368,7 +1368,7 @@ describe "String" do
       "こんにちは世界".byte_index("ちは").should eq(9)
     end
 
-    it "gets byte index of regex" do 
+    it "gets byte index of regex" do
       str = "0123x"
       pattern = /x/
 
