@@ -2,6 +2,7 @@ require "c/signal"
 require "c/stdio"
 require "c/sys/wait"
 require "c/unistd"
+require "../print_error"
 
 module Crystal::System::Signal
   # The number of libc functions that can be called safely from a signal(2)

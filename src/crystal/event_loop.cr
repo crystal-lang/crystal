@@ -27,12 +27,20 @@ abstract class Crystal::EventLoop
 
   @[AlwaysInline]
   def self.current : self
-    Crystal::Scheduler.event_loop
+    {% if flag?(:execution_context) %}
+      ExecutionContext.current.event_loop
+    {% else %}
+      Crystal::Scheduler.event_loop
+    {% end %}
   end
 
   @[AlwaysInline]
-  def self.current? : self?
-    Crystal::Scheduler.event_loop?
+  def self.current? : self | Nil
+    {% if flag?(:execution_context) %}
+      ExecutionContext.current.event_loop
+    {% else %}
+      Crystal::Scheduler.event_loop?
+    {% end %}
   end
 
   # Runs the loop.
