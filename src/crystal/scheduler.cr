@@ -66,7 +66,7 @@ class Crystal::Scheduler
   end
 
   def self.sleep(time : Time::Span) : Nil
-    Crystal.trace :sched, "sleep", for: time.total_nanoseconds.to_i64!
+    Crystal.trace :sched, "sleep", for: time
     Thread.current.scheduler.sleep(time)
   end
 
@@ -225,7 +225,7 @@ class Crystal::Scheduler
       pending = Atomic(Int32).new(count - 1)
       @@workers = Array(Thread).new(count) do |i|
         if i == 0
-          worker_loop = Fiber.new(name: "Worker Loop") { Thread.current.scheduler.run_loop }
+          worker_loop = Fiber.new(name: "worker-loop") { Thread.current.scheduler.run_loop }
           worker_loop.set_current_thread
           Thread.current.scheduler.enqueue worker_loop
           Thread.current
@@ -272,7 +272,7 @@ class Crystal::Scheduler
 
   # Background loop to cleanup unused fiber stacks.
   def spawn_stack_pool_collector
-    fiber = Fiber.new(name: "Stack pool collector", &->@stack_pool.collect_loop)
+    fiber = Fiber.new(name: "stack-pool-collector", &->@stack_pool.collect_loop)
     {% if flag?(:preview_mt) %} fiber.set_current_thread {% end %}
     enqueue(fiber)
   end

@@ -51,37 +51,58 @@ module Crystal
           @size = 0
         end
 
-        def write(bytes : Bytes) : Nil
+        def write(value : Bytes) : Nil
           pos = @size
           remaining = N - pos
           return if remaining == 0
 
-          n = bytes.size.clamp(..remaining)
-          bytes.to_unsafe.copy_to(@buf.to_unsafe + pos, n)
+          n = value.size.clamp(..remaining)
+          value.to_unsafe.copy_to(@buf.to_unsafe + pos, n)
           @size = pos + n
         end
 
-        def write(string : String) : Nil
-          write string.to_slice
+        def write(value : String) : Nil
+          write value.to_slice
         end
 
-        def write(fiber : Fiber) : Nil
-          write fiber.as(Void*)
-          write ":"
-          write fiber.name || "?"
+        def write(value : Char) : Nil
+          chars = uninitialized UInt8[4]
+          i = 0
+          value.each_byte do |byte|
+            chars[i] = byte
+            i += 1
+          end
+          write chars.to_slice[0, i]
         end
 
-        def write(ptr : Pointer) : Nil
+        def write(value : Fiber) : Nil
+          write value.as(Void*)
+          write ':'
+          write value.name || '?'
+        end
+
+        def write(value : Pointer) : Nil
           write "0x"
-          System.to_int_slice(ptr.address, 16, true, 2) { |bytes| write(bytes) }
+          System.to_int_slice(value.address, 16, true, 2) { |bytes| write(bytes) }
         end
 
-        def write(int : Int::Signed) : Nil
-          System.to_int_slice(int, 10, true, 2) { |bytes| write(bytes) }
+        def write(value : Int::Signed) : Nil
+          System.to_int_slice(value, 10, true, 2) { |bytes| write(bytes) }
         end
 
-        def write(uint : Int::Unsigned) : Nil
-          System.to_int_slice(uint, 10, false, 2) { |bytes| write(bytes) }
+        def write(value : Int::Unsigned) : Nil
+          System.to_int_slice(value, 10, false, 2) { |bytes| write(bytes) }
+        end
+
+        def write(value : Time::Span) : Nil
+          write(value.seconds * Time::NANOSECONDS_PER_SECOND + value.nanoseconds)
+        end
+
+        def write(value : Bool) : Nil
+          write value ? '1' : '0'
+        end
+
+        def write(value : Nil) : Nil
         end
 
         def to_slice : Bytes

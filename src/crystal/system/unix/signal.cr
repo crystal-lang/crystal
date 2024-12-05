@@ -82,7 +82,7 @@ module Crystal::System::Signal
   end
 
   private def self.start_loop
-    spawn(name: "Signal Loop") do
+    spawn(name: "signal-loop") do
       loop do
         value = reader.read_bytes(Int32)
       rescue IO::Error
