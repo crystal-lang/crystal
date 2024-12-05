@@ -13,6 +13,7 @@ class Fiber
     # pointer value) rather than downwards, so *protect* must be false.
     def initialize(@protect : Bool = true)
       @deque = Deque(Void*).new
+      @lock = Crystal::SpinLock.new
     end
 
     def finalize
@@ -25,7 +26,7 @@ class Fiber
     # returning memory to the operating system.
     def collect(count = lazy_size // 2) : Nil
       count.times do
-        if stack = @deque.shift?
+        if stack = @lock.sync { @deque.shift? }
           Crystal::System::Fiber.free_stack(stack, STACK_SIZE)
         else
           return
@@ -42,7 +43,7 @@ class Fiber
 
     # Removes a stack from the bottom of the pool, or allocates a new one.
     def checkout : {Void*, Void*}
-      if stack = @deque.pop?
+      if !@deque.empty? && (stack = @lock.sync { @deque.pop? })
         Crystal::System::Fiber.reset_stack(stack, STACK_SIZE, @protect)
       else
         stack = Crystal::System::Fiber.allocate_stack(STACK_SIZE, @protect)
@@ -52,7 +53,7 @@ class Fiber
 
     # Appends a stack to the bottom of the pool.
     def release(stack) : Nil
-      @deque.push(stack)
+      @lock.sync { @deque.push(stack) }
     end
 
     # Returns the approximated size of the pool. It may be equal or slightly
