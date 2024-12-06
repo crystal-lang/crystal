@@ -14,7 +14,7 @@ private def parse_set_cookie(header)
   cookie.not_nil!
 end
 
-# invalid printable ascii characters, non-printable ascii characters and chontrol characters
+# invalid printable ascii characters, non-printable ascii characters and control characters
 private INVALID_COOKIE_VALUES = ("\x00".."\x08").to_a + ("\x0A".."\x1F").to_a + ["\r", "\t", "\n", %(" "), %("), ",", ";", "\\", "\x7f", "\xFF", "🍪"]
 
 module HTTP
