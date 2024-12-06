@@ -20,7 +20,12 @@ module IO::Evented
     @read_timed_out = timed_out
 
     if reader = @readers.get?.try &.shift?
-      reader.enqueue
+      {% if flag?(:execution_context) && Crystal::EventLoop.has_constant?(:LibEvent) %}
+        event_loop = Crystal::EventLoop.current.as(Crystal::EventLoop::LibEvent)
+        event_loop.callback_enqueue(reader)
+      {% else %}
+        reader.enqueue
+      {% end %}
     end
   end
 
@@ -29,7 +34,12 @@ module IO::Evented
     @write_timed_out = timed_out
 
     if writer = @writers.get?.try &.shift?
-      writer.enqueue
+      {% if flag?(:execution_context) && Crystal::EventLoop.has_constant?(:LibEvent) %}
+        event_loop = Crystal::EventLoop.current.as(Crystal::EventLoop::LibEvent)
+        event_loop.callback_enqueue(reader)
+      {% else %}
+        writer.enqueue
+      {% end %}
     end
   end
 
