@@ -182,6 +182,11 @@ class Thread
     self.system_name = name
   end
 
+  # Changes the Thread#name property but doesn't update the system name. Useful
+  # on the main thread where we'd change the process name (e.g. top, ps, ...).
+  def internal_name=(@name : String)
+  end
+
   # Holds the GC thread handler
   property gc_thread_handler : Void* = Pointer(Void).null
 
