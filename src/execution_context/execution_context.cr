@@ -4,6 +4,7 @@ require "../crystal/system/thread_linked_list"
 require "../fiber"
 require "../fiber/stack_pool"
 require "./scheduler"
+require "./single_threaded"
 
 {% raise "ERROR: execution contexts require the `preview_mt` compilation flag" unless flag?(:preview_mt) %}
 
@@ -17,7 +18,7 @@ module ExecutionContext
 
   # :nodoc:
   def self.init_default_context : Nil
-    raise NotImplementedError.new("No execution context implementations (yet)")
+    @@default = SingleThreaded.default
   end
 
   # Returns the default number of workers to start in the execution context.
