@@ -2,6 +2,7 @@
 abstract class Crystal::EventLoop::Polling < Crystal::EventLoop; end
 
 require "./polling/*"
+require "./timers"
 
 module Crystal::System::FileDescriptor
   # user data (generation index for the arena)
@@ -96,7 +97,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
   end
 
   @lock = SpinLock.new # protects parallel accesses to @timers
-  @timers = Timers.new
+  @timers = Timers(Event).new
 
   # reset the mutexes since another thread may have acquired the lock of one
   # event loop, which would prevent closing file descriptors for example.

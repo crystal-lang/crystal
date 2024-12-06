@@ -80,7 +80,7 @@ jobs:
           cc crystal.obj -o .build/crystal.exe -municode \
             $(pkg-config bdw-gc libpcre2-8 iconv zlib libffi --libs) \
             $(llvm-config --libs --system-libs --ldflags) \
-            -lole32 -lWS2_32 -Wl,--stack,0x800000
+            -lole32 -lWS2_32 -lntdll -Wl,--stack,0x800000
 
       - name: Package Crystal
         shell: msys2 {0}
