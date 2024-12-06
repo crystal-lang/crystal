@@ -269,7 +269,7 @@ struct Range(B, E)
     Range.new(
       Math.min(self.begin, other.begin),
       Math.max(self.end, other.end),
-      exclusive: self.excludes_end? || other.excludes_end?,
+      {self, other}.max_by(&.end).excludes_end?
     )
   end
 
