@@ -263,13 +263,13 @@ struct Range(B, E)
     e_s : E = self.end
     e_o : E = other.end
 
-    return if self.end < other.begin && (!e_s.responds_to?(:succ) || e_s.succ != other.begin)
-    return if other.end < self.begin && (!e_o.responds_to?(:succ) || e_o.succ != self.begin)
+    return Range.new(self.begin, self.begin, exclusive: true) if self.end < other.begin && (!e_s.responds_to?(:succ) || e_s.succ != other.begin)
+    return Range.new(self.begin, self.begin, exclusive: true) if other.end < self.begin && (!e_o.responds_to?(:succ) || e_o.succ != self.begin)
 
     Range.new(
       Math.min(self.begin, other.begin),
       Math.max(self.end, other.end),
-      exclusive: {self, other}.max_by(&.end).excludes_end?,
+      exclusive: self.excludes_end? || other.excludes_end?,
     )
   end
 
@@ -281,12 +281,12 @@ struct Range(B, E)
   # (1...10).intersection(7..12) # => 7...10
   # ```
   def intersection(other : Range)
-    return if self.end < other.begin || other.end < self.begin
+    return Range.new(self.begin, self.begin, exclusive: true) if self.end < other.begin || other.end < self.begin
 
     Range.new(
       Math.max(self.begin, other.begin),
       Math.min(self.end, other.end),
-      exclusive: {self, other}.max_by(&.end).excludes_end?,
+      exclusive: self.excludes_end? || other.excludes_end?,
     )
   end
 
