@@ -112,7 +112,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     end
   {% end %}
 
-  # NOTE: thread unsafe
+  # thread unsafe
   def run(blocking : Bool) : Bool
     system_run(blocking) do |fiber|
       {% if flag?(:execution_context) %}
@@ -123,6 +123,13 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     end
     true
   end
+
+  {% if flag?(:execution_context) %}
+    # thread unsafe
+    def run(queue : Fiber::Queue*, blocking : Bool) : Nil
+      system_run(blocking) { |fiber| queue.value.push(fiber) }
+    end
+  {% end %}
 
   # fiber interface, see Crystal::EventLoop
 

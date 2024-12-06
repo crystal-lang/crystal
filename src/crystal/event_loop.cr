@@ -54,6 +54,13 @@ abstract class Crystal::EventLoop
   # events.
   abstract def run(blocking : Bool) : Bool
 
+  {% if flag?(:execution_context) %}
+    # Same as `#run` but collects runnable fibers into *queue* instead of
+    # enqueueing in parallel, so the caller is responsible and in control for
+    # when and how the fibers will be enqueued.
+    abstract def run(queue : Fiber::Queue*, blocking : Bool) : Nil
+  {% end %}
+
   # Tells a blocking run loop to no longer wait for events to activate. It may
   # for example enqueue a NOOP event with an immediate (or past) timeout. Having
   # activated an event, the loop shall return, allowing the blocked thread to
