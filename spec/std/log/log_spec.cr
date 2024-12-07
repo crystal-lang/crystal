@@ -264,13 +264,28 @@ describe Log do
       entry.exception.should be_nil
     end
 
-    it "does not emit anything when a nil is emitted" do
+    it "does not emit when block returns nil" do
       backend = Log::MemoryBackend.new
       log = Log.new("a", backend, :notice)
 
       log.notice { nil }
 
       backend.entries.should be_empty
+    end
+
+    it "does emit when block returns nil but exception is provided" do
+      backend = Log::MemoryBackend.new
+      log = Log.new("a", backend, :notice)
+      ex = Exception.new "the attached exception"
+
+      log.notice(exception: ex) { nil }
+
+      entry = backend.entries.first
+      entry.source.should eq("a")
+      entry.severity.should eq(s(:notice))
+      entry.message.should eq("")
+      entry.data.should eq(Log::Metadata.empty)
+      entry.exception.should eq(ex)
     end
   end
 end
