@@ -197,6 +197,15 @@ class Process::Status
     exit_reason.normal?
   end
 
+  # Returns `true` if the process terminated abnormally.
+  #
+  # Equivalent to `ExitReason#abnormal?`
+  #
+  # * `#exit_reason` provides more insights into the specific exit reason.
+  def abnormal_exit? : Bool
+    exit_reason.abnormal?
+  end
+
   # If `signal_exit?` is `true`, returns the *Signal* the process
   # received and didn't handle. Will raise if `signal_exit?` is `false`.
   #
