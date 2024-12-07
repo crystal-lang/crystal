@@ -276,6 +276,8 @@ describe "Lexer" do
   it_lexes "&+@foo", :OP_AMP_PLUS
   it_lexes "&-@foo", :OP_AMP_MINUS
   it_lexes_const "Foo"
+  it_lexes_const "ÁrvíztűrőTükörfúrógép"
+  it_lexes_const "ǅǈǋǲᾈᾉᾊ"
   it_lexes_instance_var "@foo"
   it_lexes_class_var "@@foo"
   it_lexes_globals ["$foo", "$FOO", "$_foo", "$foo123"]
