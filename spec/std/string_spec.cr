@@ -482,6 +482,7 @@ describe "String" do
     it { "1Y2P0IJ32E8E7".to_i64(36).should eq(9223372036854775807) }
   end
 
+  # more specs are available in `spec/manual/string_to_f_supplemental_spec.cr`
   it "does to_f" do
     expect_raises(ArgumentError) { "".to_f }
     "".to_f?.should be_nil
@@ -503,6 +504,7 @@ describe "String" do
     "  1234.56  ".to_f?(whitespace: false).should be_nil
     expect_raises(ArgumentError) { "  1234.56foo".to_f }
     "  1234.56foo".to_f?.should be_nil
+    "\u{A0}\u{2028}\u{2029}1234.56\u{A0}\u{2028}\u{2029}".to_f.should eq(1234.56_f64)
     "123.45 x".to_f64(strict: false).should eq(123.45_f64)
     expect_raises(ArgumentError) { "x1.2".to_f64 }
     "x1.2".to_f64?.should be_nil
@@ -547,6 +549,7 @@ describe "String" do
     "  1234.56  ".to_f32?(whitespace: false).should be_nil
     expect_raises(ArgumentError) { "  1234.56foo".to_f32 }
     "  1234.56foo".to_f32?.should be_nil
+    "\u{A0}\u{2028}\u{2029}1234.56\u{A0}\u{2028}\u{2029}".to_f32.should eq(1234.56_f32)
     "123.45 x".to_f32(strict: false).should eq(123.45_f32)
     expect_raises(ArgumentError) { "x1.2".to_f32 }
     "x1.2".to_f32?.should be_nil
@@ -590,6 +593,7 @@ describe "String" do
     "  1234.56  ".to_f64?(whitespace: false).should be_nil
     expect_raises(ArgumentError) { "  1234.56foo".to_f64 }
     "  1234.56foo".to_f64?.should be_nil
+    "\u{A0}\u{2028}\u{2029}1234.56\u{A0}\u{2028}\u{2029}".to_f64.should eq(1234.56_f64)
     "123.45 x".to_f64(strict: false).should eq(123.45_f64)
     expect_raises(ArgumentError) { "x1.2".to_f64 }
     "x1.2".to_f64?.should be_nil
