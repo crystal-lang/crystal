@@ -36,6 +36,16 @@ describe Process::Status do
     end
   end
 
+  it "#exit_code?" do
+    Process::Status.new(exit_status(0)).exit_code?.should eq 0
+    Process::Status.new(exit_status(1)).exit_code?.should eq 1
+    Process::Status.new(exit_status(127)).exit_code?.should eq 127
+    Process::Status.new(exit_status(128)).exit_code?.should eq 128
+    Process::Status.new(exit_status(255)).exit_code?.should eq 255
+
+    status_for(:interrupted).exit_code?.should eq({% if flag?(:unix) %}nil{% else %}LibC::STATUS_CONTROL_C_EXIT.to_i32!{% end %})
+  end
+
   it "#success?" do
     Process::Status.new(exit_status(0)).success?.should be_true
     Process::Status.new(exit_status(1)).success?.should be_false
