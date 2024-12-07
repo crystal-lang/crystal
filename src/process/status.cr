@@ -240,7 +240,7 @@ class Process::Status
 
   # Returns `true` if the process exited normally with an exit code of `0`.
   def success? : Bool
-    normal_exit? && exit_code == 0
+    exit_code? == 0
   end
 
   private def signal_code
