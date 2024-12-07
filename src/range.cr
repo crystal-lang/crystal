@@ -253,7 +253,7 @@ struct Range(B, E)
   end
 
   # Returns the union of this range, and another.
-  # Returns `nil` if there is no overlap.
+  # Returns `self.begin...self.begin` if there is no overlap.
   #
   # ```
   # (1..5).union(5..10)   # => 1..10
@@ -274,7 +274,7 @@ struct Range(B, E)
   end
 
   # Returns the intersection of this range, and another.
-  # Returns `nil` if there is no overlap.
+  # Returns `self.begin...self.begin` if there is no overlap.
   #
   # ```
   # (2..10).intersection(0..8)   # => 2..8
