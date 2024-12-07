@@ -15,6 +15,9 @@ private def parse_set_cookie(header)
   cookie.not_nil!
 end
 
+# invalid printable ascii characters, non-printable ascii characters and control characters
+private INVALID_COOKIE_VALUES = ("\x00".."\x08").to_a + ("\x0A".."\x1F").to_a + ["\r", "\t", "\n", %(" "), %("), ",", ";", "\\", "\x7f", "\xFF", "🍪"]
+
 module HTTP
   describe Cookie do
     it "#==" do
@@ -44,6 +47,12 @@ module HTTP
       it "raises on invalid value" do
         expect_raises IO::Error, "Invalid cookie value" do
           HTTP::Cookie.new("x", %(foo\rbar))
+        end
+
+        INVALID_COOKIE_VALUES.each do |char|
+          expect_raises IO::Error, "Invalid cookie value" do
+            HTTP::Cookie.new("x", char)
+          end
         end
       end
 
@@ -132,14 +141,10 @@ module HTTP
     describe "#value=" do
       it "raises on invalid value" do
         cookie = HTTP::Cookie.new("x", "")
-        invalid_values = {
-          '"', ',', ';', '\\', # invalid printable ascii characters
-          '\r', '\t', '\n',    # non-printable ascii characters
-        }.map { |c| "foo#{c}bar" }
 
-        invalid_values.each do |invalid_value|
+        INVALID_COOKIE_VALUES.each do |v|
           expect_raises IO::Error, "Invalid cookie value" do
-            cookie.value = invalid_value
+            cookie.value = "foo#{v}bar"
           end
         end
       end
@@ -562,6 +567,16 @@ module HTTP
         cookies = Cookies.from_client_headers Headers{"Cookie" => "a=b", "Set-Cookie" => "x=y"}
         cookies.to_h.should eq({"a" => Cookie.new("a", "b")})
       end
+
+      it "chops value at the first invalid byte" do
+        HTTP::Cookies.from_client_headers(
+          HTTP::Headers{"Cookie" => "ginger=snap; cookie=hm🍪delicious; snicker=doodle"}
+        ).to_h.should eq({
+          "ginger"  => HTTP::Cookie.new("ginger", "snap"),
+          "cookie"  => HTTP::Cookie.new("cookie", "hm"),
+          "snicker" => HTTP::Cookie.new("snicker", "doodle"),
+        })
+      end
     end
 
     describe ".from_server_headers" do
@@ -572,6 +587,15 @@ module HTTP
       it "does not accept Cookie header" do
         cookies = Cookies.from_server_headers Headers{"Set-Cookie" => "a=b", "Cookie" => "x=y"}
         cookies.to_h.should eq({"a" => Cookie.new("a", "b")})
+      end
+
+      it "drops cookies with invalid byte in value" do
+        HTTP::Cookies.from_server_headers(
+          HTTP::Headers{"Set-Cookie" => ["ginger=snap", "cookie=hm🍪delicious", "snicker=doodle"]}
+        ).to_h.should eq({
+          "ginger"  => HTTP::Cookie.new("ginger", "snap"),
+          "snicker" => HTTP::Cookie.new("snicker", "doodle"),
+        })
       end
     end
 
