@@ -46,6 +46,7 @@ class Crystal::Command
         format                   format project, directories and/or files
         hierarchy                show type hierarchy
         implementations          show implementations for given call in location
+        apply-types              add types to all untyped defs and def arguments
         types                    show type of main variables
         unreachable              show methods that are never called
         --help, -h               show this help
@@ -196,6 +197,9 @@ class Crystal::Command
     when "implementations".starts_with?(tool)
       options.shift
       implementations
+    when "apply-types".starts_with?(tool)
+      options.shift
+      typer
     when "types".starts_with?(tool)
       options.shift
       types
