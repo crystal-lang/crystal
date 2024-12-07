@@ -183,7 +183,7 @@ class Process::Status
 
   # Returns `true` if the process terminated normally.
   #
-  # Equivalent to `ExitReason#Normal`
+  # Equivalent to `ExitReason::Normal`
   #
   # * `#exit_reason` provides more insights into other exit reasons.
   def normal_exit? : Bool
