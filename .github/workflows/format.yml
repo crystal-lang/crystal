@@ -1,0 +1,29 @@
+on:
+  push:
+  pull_request:
+
+name: "Format checks"
+permissions: {}
+
+jobs:
+  shellcheck:
+    name: Shellcheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run ShellCheck
+        uses: ludeeus/action-shellcheck@master
+        with:
+          # shellcheck doesn't have good support for zsh, so we're ignoring this
+          ignore_paths: >-
+            *.zsh
+          severity: error
+
+      - name: Run ShellCheck Warnings
+        uses: ludeeus/action-shellcheck@master
+        with:
+          ignore_paths: >-
+            ./etc/completion.zsh
+            ./etc/completion.bash
+            ./etc/win-ci/cygwin-build-iconv.sh
+          severity: warning
