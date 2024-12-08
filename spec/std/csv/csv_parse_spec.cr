@@ -49,6 +49,17 @@ describe CSV do
       CSV.parse(%("","")).should eq([["", ""]])
     end
 
+    it "parses to hashes" do
+      csv_text = "Index,Customer Id,First Name,Last Name
+              1,DD37Cf93aecA6Dc,Sheryl,Baxter
+              2,1Ef7b82A4CAAD10,Preston,Lozano
+              3,6F94879bDAfE5a6,,Berry"
+
+      CSV.parse_to_h(csv_text).should eq([{"Index" => "1", "Customer Id" => "DD37Cf93aecA6Dc", "First Name" => "Sheryl", "Last Name" => "Baxter"},
+                                          {"Index" => "2", "Customer Id" => "1Ef7b82A4CAAD10", "First Name" => "Preston", "Last Name" => "Lozano"},
+                                          {"Index" => "3", "Customer Id" => "6F94879bDAfE5a6", "First Name" => "", "Last Name" => "Berry"}])
+    end
+
     it "raises if single quote in the middle" do
       expect_raises CSV::MalformedCSVError, "Unexpected quote at line 1, column 4" do
         CSV.parse(%(hel"lo))
