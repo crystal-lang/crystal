@@ -18,7 +18,7 @@ module ExecutionContext
     getter name : String
 
     @mutex : Thread::Mutex
-    @condition = Thread::ConditionVariable
+    @condition : Thread::ConditionVariable
     protected getter global_queue : GlobalQueue
 
     getter stack_pool : Fiber::StackPool = Fiber::StackPool.new

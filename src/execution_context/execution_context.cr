@@ -6,6 +6,7 @@ require "../fiber/stack_pool"
 require "./scheduler"
 require "./single_threaded"
 require "./multi_threaded"
+require "./isolated"
 
 {% raise "ERROR: execution contexts require the `preview_mt` compilation flag" unless flag?(:preview_mt) %}
 
