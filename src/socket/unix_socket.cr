@@ -18,7 +18,9 @@ class UNIXSocket < Socket
   getter path : String?
 
   # Connects a named UNIX socket, bound to a filesystem pathname.
-  def initialize(@path : String, type : Type = Type::STREAM)
+  def initialize(path : Path | String, type : Type = Type::STREAM)
+    path = path.to_s
+    @path = path
     super(Family::UNIX, type, Protocol::IP)
 
     connect(UNIXAddress.new(path)) do |error|
@@ -40,7 +42,7 @@ class UNIXSocket < Socket
   # eventually closes the socket when the block returns.
   #
   # Returns the value of the block.
-  def self.open(path, type : Type = Type::STREAM, &)
+  def self.open(path : Path | String, type : Type = Type::STREAM, &)
     sock = new(path, type)
     begin
       yield sock
