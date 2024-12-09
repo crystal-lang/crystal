@@ -38,8 +38,7 @@ class UNIXServer < UNIXSocket
   #
   # [Only the stream type is supported on Windows](https://devblogs.microsoft.com/commandline/af_unix-comes-to-windows/#unsupportedunavailable).
   def initialize(path : Path | String, type : Type = Type::STREAM, backlog : Int = 128)
-    path = path.to_s
-    @path = path
+    @path = path = path.to_s
     super(Family::UNIX, type)
 
     system_bind(UNIXAddress.new(path), path) do |error|
@@ -56,8 +55,7 @@ class UNIXServer < UNIXSocket
 
   # Creates a UNIXServer from an already configured raw file descriptor
   def initialize(*, fd : Handle, type : Type = Type::STREAM, path : Path | String? = nil)
-    path = path.to_s
-    @path = path
+    @path = path = path.to_s
     super(fd: fd, type: type, path: path)
   end
 

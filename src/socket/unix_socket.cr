@@ -19,8 +19,7 @@ class UNIXSocket < Socket
 
   # Connects a named UNIX socket, bound to a filesystem pathname.
   def initialize(path : Path | String, type : Type = Type::STREAM)
-    path = path.to_s
-    @path = path
+    @path = path = path.to_s
     super(Family::UNIX, type, Protocol::IP)
 
     connect(UNIXAddress.new(path)) do |error|
