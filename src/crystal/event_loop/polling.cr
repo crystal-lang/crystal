@@ -123,11 +123,11 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
   # fiber interface, see Crystal::EventLoop
 
   def create_resume_event(fiber : Fiber) : FiberEvent
-    FiberEvent.new(self, fiber, :sleep)
+    FiberEvent.new(:sleep, fiber)
   end
 
   def create_timeout_event(fiber : Fiber) : FiberEvent
-    FiberEvent.new(self, fiber, :select_timeout)
+    FiberEvent.new(:select_timeout, fiber)
   end
 
   # file descriptor interface, see Crystal::EventLoop::FileDescriptor
