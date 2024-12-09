@@ -44,7 +44,10 @@ pending_interpreted describe: Thread do
   end
 
   it "names the thread" do
-    Thread.current.name.should be_nil
+    {% unless flag?(:execution_context) %}
+      # EC: we set thread#internal_name but not thread#system_name
+      Thread.current.name.should be_nil
+    {% end %}
     name = nil
 
     thread = Thread.new(name: "some-name") do
