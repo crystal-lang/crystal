@@ -5,6 +5,7 @@ require "../fiber"
 require "../fiber/stack_pool"
 require "./scheduler"
 require "./single_threaded"
+require "./multi_threaded"
 
 {% raise "ERROR: execution contexts require the `preview_mt` compilation flag" unless flag?(:preview_mt) %}
 
@@ -18,7 +19,11 @@ module ExecutionContext
 
   # :nodoc:
   def self.init_default_context : Nil
-    @@default = SingleThreaded.default
+    {% if flag?(:mt) %}
+      @@default = MultiThreaded.default(default_workers_count)
+    {% else %}
+      @@default = SingleThreaded.default
+    {% end %}
   end
 
   # Returns the default number of workers to start in the execution context.
