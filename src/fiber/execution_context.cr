@@ -20,7 +20,11 @@ module Fiber::ExecutionContext
 
   # :nodoc:
   def self.init_default_context : Nil
-    @@default = SingleThreaded.default
+    {% if flag?(:mt) %}
+      @@default = MultiThreaded.default(default_workers_count)
+    {% else %}
+      @@default = SingleThreaded.default
+    {% end %}
     @@monitor = Monitor.new
   end
 
