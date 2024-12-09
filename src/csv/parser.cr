@@ -21,9 +21,17 @@ class CSV::Parser
 
   def parse_to_h : Array(Hash(String, String))
     rows = [] of Hash(String, String)
+    row_number = @lexer.line_number
+
+    rewind
     if headers = next_row
-      while row = next_row
-        rows << parse_row_to_h_internal(headers, row)
+      while @lexer.line_number < row_number
+        next_row
+      end
+      each_row do |row|
+        if parsed_row = parse_row_to_h_internal(headers, row)
+          rows << parsed_row
+        end
       end
     end
     rows
@@ -81,12 +89,10 @@ class CSV::Parser
     end
   end
 
-  private def parse_row_to_h_internal(headers : Array(String), row : Array(String)) : Hash(String, String)
+  private def parse_row_to_h_internal(headers : Array(String), row : Array(String)) : Hash(String, String) | Nil
     h = {} of String => String
-    headers.each_with_index do |header, i|
-      h[header] = row[i].strip || ""
-    end
-    h
+    row.empty? ? return nil : headers.each_with_index { |header, i| h[header] = row[i] }
+    return h
   end
 
   private struct RowIterator

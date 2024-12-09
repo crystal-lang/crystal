@@ -50,14 +50,37 @@ describe CSV do
     end
 
     it "parses to hashes" do
-      csv_text = "Index,Customer Id,First Name,Last Name
-              1,DD37Cf93aecA6Dc,Sheryl,Baxter
-              2,1Ef7b82A4CAAD10,Preston,Lozano
-              3,6F94879bDAfE5a6,,Berry"
+      csv_text = "Index,Customer Id,First Name,Last Name\n\n1,DD37Cf93aecA6Dc,Sheryl,Baxter\n2,1Ef7b82A4CAAD10,Preston,Lozano\n3,6F94879bDAfE5a6,,Berry, Jerry, \n"
 
       CSV.parse_to_h(csv_text).should eq([{"Index" => "1", "Customer Id" => "DD37Cf93aecA6Dc", "First Name" => "Sheryl", "Last Name" => "Baxter"},
                                           {"Index" => "2", "Customer Id" => "1Ef7b82A4CAAD10", "First Name" => "Preston", "Last Name" => "Lozano"},
                                           {"Index" => "3", "Customer Id" => "6F94879bDAfE5a6", "First Name" => "", "Last Name" => "Berry"}])
+    end
+
+    it "parses to hashes with no headers" do
+      csv_text = "\n1,DD37Cf93aecA6Dc,Sheryl,Baxter\n2,1Ef7b82A4CAAD10,Preston,Lozano\n3,6F94879bDAfE5a6,,Berry"
+
+      actual = [{} of String => String, {} of String => String, {} of String => String]
+
+      CSV.parse_to_h(csv_text).should eq(actual)
+    end
+
+    it "parses to hashes with only headers" do
+      csv_text = "Index,Customer Id,First Name,Last Name"
+
+      CSV.parse_to_h(csv_text).should eq([] of Hash(String, String))
+    end
+
+    it "parses to hashes remaining rows" do
+      csv_text = "Index,Customer Id,First Name,Last Name\n1,DD37Cf93aecA6Dc,Sheryl,Baxter\n2,1Ef7b82A4CAAD10,Preston,Lozano\n3,6F94879bDAfE5a6,,Berry"
+      parser = CSV::Parser.new(csv_text)
+      # skip header
+      parser.next_row
+      # skip rows
+      parser.next_row
+      parser.next_row
+
+      parser.parse_to_h.should eq([{"Index" => "3", "Customer Id" => "6F94879bDAfE5a6", "First Name" => "", "Last Name" => "Berry"}])
     end
 
     it "raises if single quote in the middle" do
