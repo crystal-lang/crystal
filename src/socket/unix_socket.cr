@@ -19,11 +19,10 @@ class UNIXSocket < Socket
 
   # Connects a named UNIX socket, bound to a filesystem pathname.
   def initialize(path : Path | String, type : Type = Type::STREAM)
-    path = path.to_s
-    @path = path
+    @path = path.to_s
     super(Family::UNIX, type, Protocol::IP)
 
-    connect(UNIXAddress.new(path)) do |error|
+    connect(UNIXAddress.new(@path)) do |error|
       close
       raise error
     end
@@ -34,7 +33,8 @@ class UNIXSocket < Socket
   end
 
   # Creates a UNIXSocket from an already configured raw file descriptor
-  def initialize(*, fd : Handle, type : Type = Type::STREAM, @path : String? = nil)
+  def initialize(*, fd : Handle, type : Type = Type::STREAM, path : Path | String? = nil)
+    @path = path.to_s
     super fd, Family::UNIX, type, Protocol::IP
   end
 
