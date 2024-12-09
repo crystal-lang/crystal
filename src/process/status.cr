@@ -228,9 +228,9 @@ class Process::Status
   # Process.new("sleep", ["10"]).tap(&.terminate).wait.exit_code? # => nil
   # ```
   def exit_code? : Int32?
-    {% if flag?(:unix) %}
-      return unless normal_exit?
+    return unless normal_exit?
 
+    {% if flag?(:unix) %}
       # define __WEXITSTATUS(status) (((status) & 0xff00) >> 8)
       (@exit_status & 0xff00) >> 8
     {% else %}
