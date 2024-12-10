@@ -106,6 +106,26 @@ describe Log do
     backend.entries.all? { |e| e.exception == ex }.should be_true
   end
 
+  it "can log exceptions without specifying a block" do
+    backend = Log::MemoryBackend.new
+    log = Log.new("a", backend, :warn)
+    ex = Exception.new
+
+    log.trace(exception: ex)
+    log.debug(exception: ex)
+    log.info(exception: ex)
+    log.notice(exception: ex)
+    log.warn(exception: ex)
+    log.error(exception: ex)
+    log.fatal(exception: ex)
+
+    backend.entries.map { |e| {e.source, e.severity, e.message, e.data, e.exception} }.should eq([
+      {"a", s(:warn), "", Log::Metadata.empty, ex},
+      {"a", s(:error), "", Log::Metadata.empty, ex},
+      {"a", s(:fatal), "", Log::Metadata.empty, ex},
+    ])
+  end
+
   it "contains the current context" do
     Log.context.set a: 1
 

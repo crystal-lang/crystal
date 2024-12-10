@@ -41,6 +41,15 @@ class Log
   {% for method in %w(trace debug info notice warn error fatal) %}
     {% severity = method.id.camelcase %}
 
+    # Logs the given *exception* if the logger's current severity is lower than
+    # or equal to `Severity::{{severity}}`.
+    def {{method.id}}(*, exception : Exception) : Nil
+      severity = Severity::{{severity}}
+      if level <= severity && (backend = @backend)
+        backend.dispatch Emitter.new(@source, severity, exception).emit("")
+      end
+    end
+
     # Logs a message if the logger's current severity is lower than or equal to
     # `Severity::{{ severity }}`.
     #
