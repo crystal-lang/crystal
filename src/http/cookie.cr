@@ -243,6 +243,14 @@ module HTTP
       end
     end
 
+    # Destroys the cookie.
+    # This is done by causing the cookie to expire. Also clears its value.
+    def destroy
+      self.value = ""
+      self.expires = Time::UNIX_EPOCH
+      self.max_age = Time::Span.zero
+    end
+
     # :nodoc:
     module Parser
       module Regex
