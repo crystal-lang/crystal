@@ -325,7 +325,7 @@ module Crystal
         command = "#{Process.quote(original_filename)} #{Process.quote(run_args)}"
 
         message = IO::Memory.new
-        message << "Error executing run (exit code: #{result.status.exit_code}): #{command}\n"
+        message << "Error executing run (exit code: #{result.status}): #{command}\n"
 
         if result.stdout.empty? && result.stderr.empty?
           message << "\nGot no output."
