@@ -101,6 +101,7 @@ module Crystal::System::FileDescriptor
 
   private def system_blocking_init(value)
     @system_blocking = value
+    self.sync = value
     Crystal::EventLoop.current.create_completion_port(windows_handle) unless value
   end
 
