@@ -229,8 +229,6 @@ describe Process::Status do
     it "on abnormal exit" do
       {% if flag?(:win32) %}
         assert_prints status_for(:interrupted).to_s, "3221225786"
-      {% elsif flag?(:wasi) %}
-        assert_prints status_for(:interrupted).to_s, "INT"
       {% else %}
         assert_prints status_for(:interrupted).to_s, "INT"
       {% end %}
@@ -257,8 +255,6 @@ describe Process::Status do
     it "on abnormal exit" do
       {% if flag?(:win32) %}
         assert_prints status_for(:interrupted).inspect, "Process::Status[3221225786]"
-      {% elsif flag?(:wasi) %}
-        assert_prints status_for(:interrupted).inspect, "Process::Status[Signal::INT]"
       {% else %}
         assert_prints status_for(:interrupted).inspect, "Process::Status[Signal::INT]"
       {% end %}
