@@ -228,9 +228,7 @@ describe Process::Status do
 
     it "on abnormal exit" do
       {% if flag?(:win32) %}
-        expect_raises(NotImplementedError, "Not Implemented: Process::Status#exit_signal") do
-          status_for(:interrupted).to_s
-        end
+        assert_prints status_for(:interrupted).to_s, "3221225786"
       {% elsif flag?(:wasi) %}
         assert_prints status_for(:interrupted).to_s, "INT"
       {% else %}
@@ -258,9 +256,7 @@ describe Process::Status do
 
     it "on abnormal exit" do
       {% if flag?(:win32) %}
-        expect_raises(NotImplementedError, "Not Implemented: Process::Status#exit_signal") do
-          status_for(:interrupted).inspect
-        end
+        assert_prints status_for(:interrupted).inspect, "Process::Status[3221225786]"
       {% elsif flag?(:wasi) %}
         assert_prints status_for(:interrupted).inspect, "Process::Status[Signal::INT]"
       {% else %}
