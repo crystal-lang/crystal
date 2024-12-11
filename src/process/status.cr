@@ -193,6 +193,7 @@ class Process::Status
   # Equivalent to `ExitReason::Normal`
   #
   # * `#exit_reason` provides more insights into other exit reasons.
+  # * `#abnormal_exit?` returns the inverse.
   def normal_exit? : Bool
     exit_reason.normal?
   end
@@ -202,6 +203,7 @@ class Process::Status
   # Equivalent to `ExitReason#abnormal?`
   #
   # * `#exit_reason` provides more insights into the specific exit reason.
+  # * `#normal_exit?` returns the inverse.
   def abnormal_exit? : Bool
     exit_reason.abnormal?
   end
