@@ -135,7 +135,8 @@ class Process::Status
         @exit_status & 0xC0000000_u32 == 0 ? ExitReason::Normal : ExitReason::Unknown
       end
     {% elsif flag?(:unix) && !flag?(:wasm32) %}
-      if normal_exit?
+      # define __WIFEXITED(status) (__WTERMSIG(status) == 0)
+      if signal_code == 0
         ExitReason::Normal
       elsif signal_exit?
         case Signal.from_value?(signal_code)
@@ -181,13 +182,12 @@ class Process::Status
   end
 
   # Returns `true` if the process terminated normally.
+  #
+  # Equivalent to `ExitReason::Normal`
+  #
+  # * `#exit_reason` provides more insights into other exit reasons.
   def normal_exit? : Bool
-    {% if flag?(:unix) %}
-      # define __WIFEXITED(status) (__WTERMSIG(status) == 0)
-      signal_code == 0
-    {% else %}
-      true
-    {% end %}
+    exit_reason.normal?
   end
 
   # If `signal_exit?` is `true`, returns the *Signal* the process
@@ -228,9 +228,9 @@ class Process::Status
   # Process.new("sleep", ["10"]).tap(&.terminate).wait.exit_code? # => nil
   # ```
   def exit_code? : Int32?
-    {% if flag?(:unix) %}
-      return unless normal_exit?
+    return unless normal_exit?
 
+    {% if flag?(:unix) %}
       # define __WEXITSTATUS(status) (((status) & 0xff00) >> 8)
       (@exit_status & 0xff00) >> 8
     {% else %}
