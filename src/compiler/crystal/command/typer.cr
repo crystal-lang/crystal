@@ -14,7 +14,7 @@ class Crystal::Command
     progress = false
     error_trace = false
 
-    OptionParser.parse(options) do |opts|
+    parser = OptionParser.new do |opts|
       opts.banner = <<-USAGE
         Usage: crystal tool apply-types [options] entrypoint [def_locator [def_locator [...]]]
 
@@ -69,7 +69,13 @@ class Crystal::Command
       end
     end
 
-    entrypoint = options.shift
+    parser.parse(options)
+
+    unless entrypoint = options.shift?
+      puts parser
+      exit
+    end
+
     def_locators = options
 
     results = SourceTyper.new(

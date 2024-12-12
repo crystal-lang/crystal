@@ -72,6 +72,10 @@ module Crystal
       # And now infer types of everything
       semantic_node = program.semantic nodes, cleanup: true
 
+      # We might run semantic later in an attempt to resolve defaults, don't display those stats or progress
+      @program.progress_tracker.stats = false
+      @program.progress_tracker.progress = false
+
       # Use the DefVisitor to locate and match any 'def's that match a def_locator
       def_visitor = DefVisitor.new(@def_locators, @excludes, entrypoint)
       semantic_node.accept(def_visitor)
@@ -264,13 +268,6 @@ module Crystal
             else
               raise "Unknown handling of arg #{arg} at #{def_instance.location} in #{def_instance}\n#{parsed}"
             end
-
-            # Special case - we can have default args that are never used be a different type than what was set.
-            # Ensure those default arg types also get respected (i.e. `arg = nil` => `arg : Int32? = nil` instead
-            # of `arg : Int32 = nil`)
-            if def_val = arg.default_value
-              all_typed_args[arg.external_name] << program.semantic(def_val).type
-            end
           end
 
           encountered_non_splat_arg_def_instance |= !encountered_splat_arg
@@ -278,6 +275,16 @@ module Crystal
 
           if @type_blocks && (arg = def_instance.block_arg)
             all_typed_args[arg.external_name] << resolve_type(arg)
+          end
+        end
+
+        parsed.args.each do |arg|
+          if def_val = arg.default_value
+            if def_val.to_s.matches?(/^[A-Z_]+$/)
+              # This looks like a constant, let's try qualifying it with the parent type
+              def_val = Crystal::Path.new([parsed.owner.to_s, def_val.to_s])
+            end
+            all_typed_args[arg.external_name] << program.semantic(def_val).type rescue nil
           end
         end
 

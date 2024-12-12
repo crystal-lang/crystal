@@ -425,6 +425,25 @@ describe Crystal::SourceTyper do
     OUTPUT
   end
 
+  it "types args with constant defaults" do
+    run_source_typer_spec(<<-INPUT, <<-OUTPUT, line_number: -1)
+    class Foo
+      MY_CONSTANT = 3
+      def test(arg = MY_CONSTANT); end
+    end
+
+    Foo.new.test(3.0)
+    INPUT
+    class Foo
+      MY_CONSTANT = 3
+
+      def test(arg : Float64 | Int32 = MY_CONSTANT) : Nil; end
+    end
+
+    Foo.new.test(3.0)
+    OUTPUT
+  end
+
   it "doesn't type methods that are inherited" do
     run_source_typer_spec(<<-INPUT, nil, line_number: -1)
     class Foo
