@@ -225,7 +225,8 @@ struct Enum
     end
   end
 
-  private def member_name
+  # :nodoc:
+  def member_name : String?
     # Can't use `case` here because case with duplicate values do
     # not compile, but enums can have duplicates (such as `enum Foo; FOO = 1; BAR = 1; end`).
     {% for member in @type.constants %}
