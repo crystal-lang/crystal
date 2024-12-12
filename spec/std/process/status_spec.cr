@@ -105,6 +105,11 @@ describe Process::Status do
       Process::Status.new(Signal::INT.value).exit_signal.should eq Signal::INT
       last_signal = Signal.values[-1]
       Process::Status.new(last_signal.value).exit_signal.should eq last_signal
+
+      unknown_signal = Signal.new(126)
+      expect_raises(Exception, "Unknown enum Signal value: 126") do
+        Process::Status.new(unknown_signal.value).exit_signal
+      end
     end
 
     it "#normal_exit? with signal code" do
@@ -249,6 +254,10 @@ describe Process::Status do
         assert_prints Process::Status.new(Signal::HUP.value).to_s, "HUP"
         last_signal = Signal.values[-1]
         assert_prints Process::Status.new(last_signal.value).to_s, last_signal.to_s
+
+        expect_raises(Exception, "Unknown enum Signal value: 126") do
+          Process::Status.new(Signal.new(126).value).to_s
+        end
       end
     {% end %}
   end
@@ -275,6 +284,11 @@ describe Process::Status do
         assert_prints Process::Status.new(Signal::HUP.value).inspect, "Process::Status[Signal::HUP]"
         last_signal = Signal.values[-1]
         assert_prints Process::Status.new(last_signal.value).inspect, "Process::Status[#{last_signal.inspect}]"
+
+        unknown_signal = Signal.new(126)
+        expect_raises(Exception, "Unknown enum Signal value: 126") do
+          Process::Status.new(unknown_signal.value).inspect
+        end
       end
     {% end %}
   end
