@@ -83,4 +83,6 @@ class Crypto::Bcrypt::Password
   def inspect(io : IO) : Nil
     to_s(io)
   end
+
+  def_equals_and_hash
 end

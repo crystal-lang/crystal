@@ -78,4 +78,13 @@ describe "Crypto::Bcrypt::Password" do
       (password2y.verify "secret").should be_true
     end
   end
+
+  describe "#==" do
+    it "is equal if the string representations are equal" do
+      canonical = Crypto::Bcrypt::Password.create("secret", 4)
+      challenge = Crypto::Bcrypt::Password.new(canonical.to_s)
+
+      canonical.should eq challenge
+    end
+  end
 end
