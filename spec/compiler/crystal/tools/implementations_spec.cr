@@ -3,6 +3,7 @@ require "../../../spec_helper"
 private def processed_implementation_visitor(code, cursor_location)
   compiler = Compiler.new
   compiler.no_codegen = true
+  compiler.prelude = "empty"
   result = compiler.compile(Compiler::Source.new(".", code), "fake-no-build")
 
   visitor = ImplementationsVisitor.new(cursor_location)

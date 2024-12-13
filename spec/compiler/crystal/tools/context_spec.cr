@@ -3,6 +3,7 @@ require "../../../spec_helper"
 private def processed_context_visitor(code, cursor_location)
   compiler = Compiler.new
   compiler.no_codegen = true
+  compiler.prelude = "empty"
   result = compiler.compile(Compiler::Source.new(".", code), "fake-no-build")
 
   visitor = ContextVisitor.new(cursor_location)
