@@ -62,6 +62,16 @@ describe Process::Status do
     status_for(:interrupted).normal_exit?.should be_false
   end
 
+  it "#abnormal_exit?" do
+    Process::Status.new(exit_status(0)).abnormal_exit?.should be_false
+    Process::Status.new(exit_status(1)).abnormal_exit?.should be_false
+    Process::Status.new(exit_status(127)).abnormal_exit?.should be_false
+    Process::Status.new(exit_status(128)).abnormal_exit?.should be_false
+    Process::Status.new(exit_status(255)).abnormal_exit?.should be_false
+
+    status_for(:interrupted).abnormal_exit?.should be_true
+  end
+
   it "#signal_exit?" do
     Process::Status.new(exit_status(0)).signal_exit?.should be_false
     Process::Status.new(exit_status(1)).signal_exit?.should be_false
