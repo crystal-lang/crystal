@@ -52,7 +52,7 @@ describe "implementations" do
         1
       end
 
-      puts f‸oo
+      f‸oo
     )
   end
 
@@ -117,7 +117,6 @@ describe "implementations" do
       end
 
       while f‸oo
-        puts 2
       end
     )
   end
@@ -129,7 +128,6 @@ describe "implementations" do
       end
 
       if f‸oo
-        puts 2
       end
     )
   end
@@ -140,7 +138,7 @@ describe "implementations" do
         1
       end
 
-      puts 2 if f‸oo
+      2 if f‸oo
     )
   end
 
@@ -151,7 +149,6 @@ describe "implementations" do
       end
 
       begin
-        puts 2
       rescue
         f‸oo
       end
