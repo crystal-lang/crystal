@@ -236,6 +236,14 @@ describe Process::Status do
       assert_prints Process::Status.new(exit_status(255)).to_s, "255"
     end
 
+    it "on abnormal exit" do
+      {% if flag?(:win32) %}
+        assert_prints status_for(:interrupted).to_s, "3221225786"
+      {% else %}
+        assert_prints status_for(:interrupted).to_s, "INT"
+      {% end %}
+    end
+
     {% if flag?(:unix) && !flag?(:wasi) %}
       it "with exit signal" do
         assert_prints Process::Status.new(Signal::HUP.value).to_s, "HUP"
@@ -252,6 +260,14 @@ describe Process::Status do
       assert_prints Process::Status.new(exit_status(127)).inspect, "Process::Status[127]"
       assert_prints Process::Status.new(exit_status(128)).inspect, "Process::Status[128]"
       assert_prints Process::Status.new(exit_status(255)).inspect, "Process::Status[255]"
+    end
+
+    it "on abnormal exit" do
+      {% if flag?(:win32) %}
+        assert_prints status_for(:interrupted).inspect, "Process::Status[3221225786]"
+      {% else %}
+        assert_prints status_for(:interrupted).inspect, "Process::Status[Signal::INT]"
+      {% end %}
     end
 
     {% if flag?(:unix) && !flag?(:wasi) %}
