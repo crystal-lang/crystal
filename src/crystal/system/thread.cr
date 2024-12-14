@@ -48,6 +48,8 @@ class Thread
   include Crystal::System::Thread
 
   # all thread objects, so the GC can see them (it doesn't scan thread locals)
+  # and iterate each thread to mark its current stack (the current fiber may not
+  # be the main thread's fiber that the GC knows)
   protected class_getter(threads) { Thread::LinkedList(Thread).new }
 
   @system_handle : Crystal::System::Thread::Handle
@@ -86,6 +88,9 @@ class Thread
   def initialize(@name : String? = nil, &@func : Thread ->)
     @system_handle = uninitialized Crystal::System::Thread::Handle
     init_handle
+
+    # keep a reference to the thread object
+    Thread.threads.push(self)
   end
 
   # Used once to initialize the thread object representing the main thread of
@@ -159,7 +164,8 @@ class Thread
   end
 
   protected def start
-    Thread.threads.push(self)
+    # note: until we set the current fiber, the GC will mark the thread's main
+    # stack (i.e. it's safe to allocate objects):
     Thread.current = self
     @current_fiber = @main_fiber = fiber = Fiber.new(stack_address, self)
 
@@ -172,6 +178,15 @@ class Thread
     rescue ex
       @exception = ex
     ensure
+      {% if flag?(:preview_mt) %}
+        # fix the thread stack now so we can start cleaning up references
+        GC.lock_read
+        GC.set_stackbottom(self, fiber.@stack_bottom)
+        GC.unlock_read
+      {% else %}
+        GC.set_stackbottom(fiber.@stack_bottom)
+      {% end %}
+
       Thread.threads.delete(self)
       Fiber.inactive(fiber)
       detach { system_close }
