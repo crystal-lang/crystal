@@ -476,4 +476,18 @@ describe "implementations" do
     F‸oo
     )
   end
+
+  it "find implementation on def with no location" do
+    _, result = processed_implementation_visitor <<-CRYSTAL, Location.new(".", 5, 5)
+      enum Foo
+        FOO
+      end
+
+      Foo.new(42)
+      CRYSTAL
+
+    result.implementations.not_nil!.map do |e|
+      Location.new(e.filename, e.line, e.column).to_s
+    end.should eq ["<unknown>:0:0"]
+  end
 end
