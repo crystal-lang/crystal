@@ -613,7 +613,7 @@ describe "Semantic: macro" do
       CRYSTAL
   end
 
-  it "being with {{ yield }} (#15050)", focus: true do
+  it "being with {{ yield }} (#15050)" do
     result = top_level_semantic <<-CRYSTAL, wants_doc: true
       macro foo
         {{yield}}
