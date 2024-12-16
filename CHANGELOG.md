@@ -14,6 +14,7 @@
 - *(concurrency)* Add optional `name` parameter forward to `WaitGroup#spawn` ([#15189], thanks @spuun)
 - *(crypto)* Enable bindings for functions in LibreSSL ([#15177], thanks @straight-shoota)
 - *(log)* Add `Log` overloads for logging exceptions without giving a block ([#15257], thanks @lachlan)
+- *(networking)* Add `HTTP::Cookie#expire` ([#14819], thanks @a-alhusaini)
 - *(networking)* Better handle explicit chunked encoding responses ([#15092], thanks @Blacksmoke16)
 - *(networking)* Support OpenSSL on MSYS2 ([#15111], thanks @HertzDevil)
 - *(networking)* Add `Socket::Address.from` without `addrlen` ([#15060], thanks @mamantoha)
@@ -34,6 +35,7 @@
 [#15189]: https://github.com/crystal-lang/crystal/pull/15189
 [#15177]: https://github.com/crystal-lang/crystal/pull/15177
 [#15257]: https://github.com/crystal-lang/crystal/pull/15257
+[#14819]: https://github.com/crystal-lang/crystal/pull/14819
 [#15092]: https://github.com/crystal-lang/crystal/pull/15092
 [#15111]: https://github.com/crystal-lang/crystal/pull/15111
 [#15060]: https://github.com/crystal-lang/crystal/pull/15060
@@ -56,6 +58,7 @@
 - *(interpreter)* Support "long format" DLL import libraries ([#15119], thanks @HertzDevil)
 - *(interpreter)* Add `cc`'s search paths to Unix dynamic library loader ([#15127], thanks @HertzDevil)
 - *(interpreter)* Basic MinGW-w64-based interpreter support ([#15140], thanks @HertzDevil)
+- *(parser)* ECR syntax error raises exception that includes line/column information ([#15222], thanks @nobodywasishere)
 - *(parser)* Allow constants to start with non-ascii uppercase and titlecase ([#15148], thanks @nanobowers)
 
 [#15070]: https://github.com/crystal-lang/crystal/pull/15070
@@ -65,6 +68,7 @@
 [#15119]: https://github.com/crystal-lang/crystal/pull/15119
 [#15127]: https://github.com/crystal-lang/crystal/pull/15127
 [#15140]: https://github.com/crystal-lang/crystal/pull/15140
+[#15222]: https://github.com/crystal-lang/crystal/pull/15222
 [#15148]: https://github.com/crystal-lang/crystal/pull/15148
 
 #### tools
@@ -97,6 +101,7 @@
 - *(runtime)* **[regression]** Protect constant initializers with mutex on Windows ([#15134], thanks @HertzDevil)
 - *(runtime)* use `uninitialized LibC::SigsetT` ([#15144], thanks @straight-shoota)
 - *(runtime)* Fix static linking when using MinGW-w64 ([#15167], thanks @HertzDevil)
+- *(system)* Fix `Process::Status` for unknown signals ([#15280], thanks @straight-shoota)
 - *(system)* Raise on abnormal exit in `Procss::Status#exit_code` ([#15241], thanks @straight-shoota)
 - *(text)* Fix libiconv build on Windows ([#15095], thanks @HertzDevil)
 - *(text)* Change `sprintf "%c"` to support only `Char` and `Int::Primitive` ([#15142], thanks @nanobowers)
@@ -114,6 +119,7 @@
 [#15134]: https://github.com/crystal-lang/crystal/pull/15134
 [#15144]: https://github.com/crystal-lang/crystal/pull/15144
 [#15167]: https://github.com/crystal-lang/crystal/pull/15167
+[#15280]: https://github.com/crystal-lang/crystal/pull/15280
 [#15241]: https://github.com/crystal-lang/crystal/pull/15241
 [#15095]: https://github.com/crystal-lang/crystal/pull/15095
 [#15142]: https://github.com/crystal-lang/crystal/pull/15142
@@ -139,6 +145,12 @@
 
 [#15082]: https://github.com/crystal-lang/crystal/pull/15082
 [#15273]: https://github.com/crystal-lang/crystal/pull/15273
+
+#### other
+
+- register GC callbacks inside GC.init ([#15278], thanks @ysbaddaden)
+
+[#15278]: https://github.com/crystal-lang/crystal/pull/15278
 
 ### Chores
 
@@ -218,6 +230,12 @@
 
 [#15068]: https://github.com/crystal-lang/crystal/pull/15068
 
+#### other
+
+- Drop `Crystal::FiberChannel` ([#15245], thanks @ysbaddaden)
+
+[#15245]: https://github.com/crystal-lang/crystal/pull/15245
+
 ### Documentation
 
 #### stdlib
@@ -287,6 +305,7 @@
 
 ### Infrastructure
 
+- Changelog for 1.15.0 ([#15277], thanks @straight-shoota)
 - Update previous Crystal release 1.14.0 ([#15071], thanks @straight-shoota)
 - Fix remove trailing whitespace from CRYSTAL definition ([#15131], thanks @straight-shoota)
 - Make utilities posix compatible ([#15139], thanks @nanobowers)
@@ -314,6 +333,7 @@
 - *(ci)* Drop LLVM Apt installer script on WebAssembly CI ([#15109], thanks @HertzDevil)
 - *(ci)* Run interpreter specs on Windows CI ([#15141], thanks @HertzDevil)
 
+[#15277]: https://github.com/crystal-lang/crystal/pull/15277
 [#15071]: https://github.com/crystal-lang/crystal/pull/15071
 [#15131]: https://github.com/crystal-lang/crystal/pull/15131
 [#15139]: https://github.com/crystal-lang/crystal/pull/15139
