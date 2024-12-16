@@ -10,6 +10,8 @@ on:
         required: true
         type: string
 
+permissions: {}
+
 jobs:
   build:
     runs-on: windows-2022
@@ -25,7 +27,7 @@ jobs:
         uses: crystal-lang/install-crystal@v1
         id: install-crystal
         with:
-          crystal: "1.13.3"
+          crystal: "1.14.0"
 
       - name: Download Crystal source
         uses: actions/checkout@v4

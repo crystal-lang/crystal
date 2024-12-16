@@ -3,7 +3,7 @@ require "./spec_helper"
 require "../loader/spec_helper"
 
 private def ldflags
-  {% if flag?(:win32) %}
+  {% if flag?(:msvc) %}
     "/LIBPATH:#{SPEC_CRYSTAL_LOADER_LIB_PATH} sum.lib"
   {% else %}
     "-L#{SPEC_CRYSTAL_LOADER_LIB_PATH} -lsum"
@@ -11,7 +11,7 @@ private def ldflags
 end
 
 private def ldflags_with_backtick
-  {% if flag?(:win32) %}
+  {% if flag?(:msvc) %}
     "/LIBPATH:#{SPEC_CRYSTAL_LOADER_LIB_PATH} `powershell.exe -C Write-Host -NoNewline sum.lib`"
   {% else %}
     "-L#{SPEC_CRYSTAL_LOADER_LIB_PATH} -l`echo sum`"
@@ -19,12 +19,24 @@ private def ldflags_with_backtick
 end
 
 describe Crystal::Repl::Interpreter do
-  context "variadic calls" do
-    before_all do
-      FileUtils.mkdir_p(SPEC_CRYSTAL_LOADER_LIB_PATH)
-      build_c_dynlib(compiler_datapath("interpreter", "sum.c"))
-    end
+  before_all do
+    FileUtils.mkdir_p(SPEC_CRYSTAL_LOADER_LIB_PATH)
+    build_c_dynlib(compiler_datapath("interpreter", "sum.c"))
 
+    {% if flag?(:win32) %}
+      ENV["PATH"] = "#{SPEC_CRYSTAL_LOADER_LIB_PATH}#{Process::PATH_DELIMITER}#{ENV["PATH"]}"
+    {% end %}
+  end
+
+  after_all do
+    {% if flag?(:win32) %}
+      ENV["PATH"] = ENV["PATH"].delete_at(0, ENV["PATH"].index!(Process::PATH_DELIMITER) + 1)
+    {% end %}
+
+    FileUtils.rm_rf(SPEC_CRYSTAL_LOADER_LIB_PATH)
+  end
+
+  context "variadic calls" do
     it "promotes float" do
       interpret(<<-CRYSTAL).should eq 3.5
         @[Link(ldflags: #{ldflags.inspect})]
@@ -65,18 +77,9 @@ describe Crystal::Repl::Interpreter do
         LibSum.sum_int(2, E::ONE, F::FOUR)
         CRYSTAL
     end
-
-    after_all do
-      FileUtils.rm_rf(SPEC_CRYSTAL_LOADER_LIB_PATH)
-    end
   end
 
   context "command expansion" do
-    before_all do
-      FileUtils.mkdir_p(SPEC_CRYSTAL_LOADER_LIB_PATH)
-      build_c_dynlib(compiler_datapath("interpreter", "sum.c"))
-    end
-
     it "expands ldflags" do
       interpret(<<-CRYSTAL).should eq 4
         @[Link(ldflags: #{ldflags_with_backtick.inspect})]
@@ -86,10 +89,6 @@ describe Crystal::Repl::Interpreter do
 
         LibSum.simple_sum_int(2, 2)
         CRYSTAL
-    end
-
-    after_all do
-      FileUtils.rm_rf(SPEC_CRYSTAL_LOADER_LIB_PATH)
     end
   end
 end

@@ -176,7 +176,14 @@ struct Crystal::System::Process
     newmask = uninitialized LibC::SigsetT
     oldmask = uninitialized LibC::SigsetT
 
+    # block signals while we fork, so the child process won't forward signals it
+    # may receive to the parent through the signal pipe, but make sure to not
+    # block stop-the-world signals as it appears to create deadlocks in glibc
+    # for example; this is safe because these signal handlers musn't be
+    # registered through `Signal.trap` but directly through `sigaction`.
     LibC.sigfillset(pointerof(newmask))
+    LibC.sigdelset(pointerof(newmask), System::Thread.sig_suspend)
+    LibC.sigdelset(pointerof(newmask), System::Thread.sig_resume)
     ret = LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(newmask), pointerof(oldmask))
     raise RuntimeError.from_errno("Failed to disable signals") unless ret == 0
 
@@ -345,6 +352,7 @@ struct Crystal::System::Process
 
   private def self.reopen_io(src_io : IO::FileDescriptor, dst_io : IO::FileDescriptor)
     if src_io.closed?
+      Crystal::EventLoop.current.remove(dst_io)
       dst_io.file_descriptor_close
     else
       src_io = to_real_fd(src_io)

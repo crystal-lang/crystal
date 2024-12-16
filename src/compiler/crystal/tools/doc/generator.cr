@@ -251,13 +251,6 @@ class Crystal::Doc::Generator
   def collect_subtypes(parent)
     types = [] of Type
 
-    # AliasType has defined `types?` to be the types
-    # of the aliased type, but for docs we don't want
-    # to list the nested types for aliases.
-    if parent.is_a?(AliasType)
-      return types
-    end
-
     parent.types?.try &.each_value do |type|
       case type
       when Const, LibType

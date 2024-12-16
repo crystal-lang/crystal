@@ -369,7 +369,7 @@ Disable colored output.
 .Op --
 .Op arguments
 .Pp
-Run a tool. The available tools are: context, dependencies, flags, format, hierarchy, implementations, and types.
+Run a tool. The available tools are: context, dependencies, expand, flags, format, hierarchy, implementations, types, and unreachable.
 .Pp
 Tools:
 .Bl -tag -offset indent
@@ -442,7 +442,7 @@ Options:
 .It Fl D Ar FLAG, Fl -define= Ar FLAG
 Define a compile-time flag. This is useful to conditionally define types, methods, or commands based on flags available at compile time. The default flags are from the target triple given with --target-triple or the hosts default, if none is given.
 .It Fl f Ar FORMAT, Fl -format= Ar FORMAT
-Output format 'text' (default), 'json', or 'csv'.
+Output format 'text' (default), 'json', 'codecov', or 'csv'.
 .It Fl -tallies
 Print reachable methods and their call counts as well.
 .It Fl -check

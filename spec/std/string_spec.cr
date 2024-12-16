@@ -773,6 +773,24 @@ describe "String" do
     it { "hello\n\n\n\n".chomp("").should eq("hello\n\n\n\n") }
 
     it { "hello\r\n".chomp("\n").should eq("hello") }
+
+    it "pre-computes string size if possible" do
+      {"!hello!", "\u{1f602}hello\u{1f602}", "\xFEhello\xFF"}.each do |str|
+        {"", "\n", "\r", "\r\n"}.each do |newline|
+          x = str + newline
+          x.size_known?.should be_true
+          y = x.chomp
+          y.@length.should eq(7)
+        end
+      end
+    end
+
+    it "does not pre-compute string size if not possible" do
+      x = String.build &.<< "abc\n"
+      x.size_known?.should be_false
+      y = x.chomp
+      y.size_known?.should be_false
+    end
   end
 
   describe "lchop" do
@@ -1348,6 +1366,27 @@ describe "String" do
       "foo foo".byte_index("oo").should eq(1)
       "foo foo".byte_index("oo", 2).should eq(5)
       "こんにちは世界".byte_index("ちは").should eq(9)
+    end
+
+    it "gets byte index of regex" do
+      str = "0123x"
+      pattern = /x/
+
+      str.byte_index(pattern).should eq(4)
+      str.byte_index(pattern, offset: 4).should eq(4)
+      str.byte_index(pattern, offset: 5).should be_nil
+      str.byte_index(pattern, offset: -1).should eq(4)
+      str.byte_index(/y/).should be_nil
+
+      str = "012abc678"
+      pattern = /[abc]/
+
+      str.byte_index(pattern).should eq(3)
+      str.byte_index(pattern, offset: 2).should eq(3)
+      str.byte_index(pattern, offset: 5).should eq(5)
+      str.byte_index(pattern, offset: -4).should eq(5)
+      str.byte_index(pattern, offset: -1).should be_nil
+      str.byte_index(/y/).should be_nil
     end
   end
 
@@ -2830,7 +2869,7 @@ describe "String" do
         bytes.to_a.should eq([72, 0, 101, 0, 108, 0, 108, 0, 111, 0])
       end
 
-      {% unless flag?(:musl) || flag?(:solaris) || flag?(:freebsd) || flag?(:dragonfly) %}
+      {% unless flag?(:musl) || flag?(:solaris) || flag?(:freebsd) || flag?(:dragonfly) || flag?(:netbsd) %}
         it "flushes the shift state (#11992)" do
           "\u{00CA}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x66])
           "\u{00CA}\u{0304}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x62])
@@ -2839,7 +2878,7 @@ describe "String" do
 
       # FreeBSD iconv encoder expects ISO/IEC 10646 compatibility code points,
       # see https://www.ccli.gov.hk/doc/e_hkscs_2008.pdf for details.
-      {% if flag?(:freebsd) || flag?(:dragonfly) %}
+      {% if flag?(:freebsd) || flag?(:dragonfly) || flag?(:netbsd) %}
         it "flushes the shift state (#11992)" do
           "\u{F329}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x66])
           "\u{F325}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x62])
@@ -2883,7 +2922,7 @@ describe "String" do
         String.new(bytes, "UTF-16LE").should eq("Hello")
       end
 
-      {% unless flag?(:solaris) || flag?(:freebsd) || flag?(:dragonfly) %}
+      {% unless flag?(:solaris) || flag?(:freebsd) || flag?(:dragonfly) || flag?(:netbsd) %}
         it "decodes with shift state" do
           String.new(Bytes[0x88, 0x66], "BIG5-HKSCS").should eq("\u{00CA}")
           String.new(Bytes[0x88, 0x62], "BIG5-HKSCS").should eq("\u{00CA}\u{0304}")
@@ -2892,7 +2931,7 @@ describe "String" do
 
       # FreeBSD iconv decoder returns ISO/IEC 10646-1:2000 code points,
       # see https://www.ccli.gov.hk/doc/e_hkscs_2008.pdf for details.
-      {% if flag?(:freebsd) || flag?(:dragonfly) %}
+      {% if flag?(:freebsd) || flag?(:dragonfly) || flag?(:netbsd) %}
         it "decodes with shift state" do
           String.new(Bytes[0x88, 0x66], "BIG5-HKSCS").should eq("\u{00CA}")
           String.new(Bytes[0x88, 0x62], "BIG5-HKSCS").should eq("\u{F325}")

@@ -1,5 +1,5 @@
 # :nodoc:
-class Crystal::Wasi::EventLoop < Crystal::EventLoop
+class Crystal::EventLoop::Wasi < Crystal::EventLoop
   # Runs the event loop.
   def run(blocking : Bool) : Bool
     raise NotImplementedError.new("Crystal::Wasi::EventLoop.run")
@@ -129,7 +129,7 @@ class Crystal::Wasi::EventLoop < Crystal::EventLoop
   end
 end
 
-struct Crystal::Wasi::Event
+struct Crystal::EventLoop::Wasi::Event
   include Crystal::EventLoop::Event
 
   def add(timeout : Time::Span) : Nil

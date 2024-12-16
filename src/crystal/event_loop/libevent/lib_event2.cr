@@ -7,6 +7,11 @@ require "c/netdb"
   @[Link("rt")]
 {% end %}
 
+# Supported library versions:
+#
+# * libevent2
+#
+# See https://crystal-lang.org/reference/man/required_libraries.html#other-runtime-libraries
 {% if flag?(:openbsd) %}
   @[Link("event_core")]
   @[Link("event_extra")]
@@ -26,8 +31,9 @@ lib LibEvent2
 
   @[Flags]
   enum EventLoopFlags
-    Once     = 0x01
-    NonBlock = 0x02
+    Once          = 0x01
+    NonBlock      = 0x02
+    NoExitOnEmpty = 0x04
   end
 
   @[Flags]

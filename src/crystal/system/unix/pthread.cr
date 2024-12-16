@@ -208,7 +208,7 @@ module Crystal::System::Thread
       Thread.current_thread.@suspended.set(true)
 
       # block all signals but SIG_RESUME
-      mask = LibC::SigsetT.new
+      mask = uninitialized LibC::SigsetT
       LibC.sigfillset(pointerof(mask))
       LibC.sigdelset(pointerof(mask), SIG_RESUME)
 
@@ -249,7 +249,8 @@ module Crystal::System::Thread
     end
   end
 
-  # the suspend/resume signals follow BDWGC
+  # the suspend/resume signals try to follow BDWGC but aren't exact (e.g. it may
+  # use SIGUSR1 and SIGUSR2 on FreeBSD instead of SIGRT).
 
   private SIG_SUSPEND =
     {% if flag?(:linux) %}
@@ -266,6 +267,22 @@ module Crystal::System::Thread
     {% else %}
       LibC::SIGXCPU
     {% end %}
+
+  def self.sig_suspend : ::Signal
+    if GC.responds_to?(:sig_suspend)
+      GC.sig_suspend
+    else
+      ::Signal.new(SIG_SUSPEND)
+    end
+  end
+
+  def self.sig_resume : ::Signal
+    if GC.responds_to?(:sig_resume)
+      GC.sig_resume
+    else
+      ::Signal.new(SIG_RESUME)
+    end
+  end
 end
 
 # In musl (alpine) the calls to unwind API segfaults

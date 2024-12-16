@@ -1,4 +1,4 @@
-{% skip_file unless flag?(:aarch64) %}
+{% skip_file unless flag?(:aarch64) && !flag?(:win32) %}
 
 class Fiber
   # :nodoc:

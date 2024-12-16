@@ -2,9 +2,12 @@ require "c/stringapiset"
 require "c/winnls"
 require "c/stdlib"
 
-{% begin %}
-  # we have both `main` and `wmain`, so we must choose an unambiguous entry point
-  @[Link({{ flag?(:static) ? "libcmt" : "msvcrt" }}, ldflags: "/ENTRY:wmainCRTStartup")]
+# we have both `main` and `wmain`, so we must choose an unambiguous entry point
+{% if flag?(:msvc) %}
+  @[Link({{ flag?(:static) ? "libcmt" : "msvcrt" }})]
+  @[Link(ldflags: "/ENTRY:wmainCRTStartup")]
+{% elsif flag?(:gnu) && !flag?(:interpreted) %}
+  @[Link(ldflags: "-municode")]
 {% end %}
 lib LibCrystalMain
 end

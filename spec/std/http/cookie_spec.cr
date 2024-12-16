@@ -1,6 +1,7 @@
 require "spec"
 require "http/cookie"
 require "http/headers"
+require "spec/helpers/string"
 
 private def parse_first_cookie(header)
   cookies = HTTP::Cookie::Parser.parse_cookies(header)
@@ -13,6 +14,9 @@ private def parse_set_cookie(header)
   cookie.should_not be_nil
   cookie.not_nil!
 end
+
+# invalid printable ascii characters, non-printable ascii characters and control characters
+private INVALID_COOKIE_VALUES = ("\x00".."\x08").to_a + ("\x0A".."\x1F").to_a + ["\r", "\t", "\n", %(" "), %("), ",", ";", "\\", "\x7f", "\xFF", "🍪"]
 
 module HTTP
   describe Cookie do
@@ -43,6 +47,12 @@ module HTTP
       it "raises on invalid value" do
         expect_raises IO::Error, "Invalid cookie value" do
           HTTP::Cookie.new("x", %(foo\rbar))
+        end
+
+        INVALID_COOKIE_VALUES.each do |char|
+          expect_raises IO::Error, "Invalid cookie value" do
+            HTTP::Cookie.new("x", char)
+          end
         end
       end
 
@@ -131,38 +141,48 @@ module HTTP
     describe "#value=" do
       it "raises on invalid value" do
         cookie = HTTP::Cookie.new("x", "")
-        invalid_values = {
-          '"', ',', ';', '\\', # invalid printable ascii characters
-          '\r', '\t', '\n',    # non-printable ascii characters
-        }.map { |c| "foo#{c}bar" }
 
-        invalid_values.each do |invalid_value|
+        INVALID_COOKIE_VALUES.each do |v|
           expect_raises IO::Error, "Invalid cookie value" do
-            cookie.value = invalid_value
+            cookie.value = "foo#{v}bar"
           end
         end
       end
     end
 
     describe "#to_set_cookie_header" do
-      it { HTTP::Cookie.new("x", "v$1").to_set_cookie_header.should eq "x=v$1" }
+      it { assert_prints HTTP::Cookie.new("x", "v$1").to_set_cookie_header, "x=v$1" }
 
-      it { HTTP::Cookie.new("x", "seven", domain: "127.0.0.1").to_set_cookie_header.should eq "x=seven; domain=127.0.0.1" }
+      it { assert_prints HTTP::Cookie.new("x", "seven", domain: "127.0.0.1").to_set_cookie_header, "x=seven; domain=127.0.0.1" }
 
-      it { HTTP::Cookie.new("x", "y", path: "/").to_set_cookie_header.should eq "x=y; path=/" }
-      it { HTTP::Cookie.new("x", "y", path: "/example").to_set_cookie_header.should eq "x=y; path=/example" }
+      it { assert_prints HTTP::Cookie.new("x", "y", path: "/").to_set_cookie_header, "x=y; path=/" }
+      it { assert_prints HTTP::Cookie.new("x", "y", path: "/example").to_set_cookie_header, "x=y; path=/example" }
 
-      it { HTTP::Cookie.new("x", "expiring", expires: Time.unix(1257894000)).to_set_cookie_header.should eq "x=expiring; expires=Tue, 10 Nov 2009 23:00:00 GMT" }
-      it { HTTP::Cookie.new("x", "expiring-1601", expires: Time.utc(1601, 1, 1, 1, 1, 1, nanosecond: 1)).to_set_cookie_header.should eq "x=expiring-1601; expires=Mon, 01 Jan 1601 01:01:01 GMT" }
+      it { assert_prints HTTP::Cookie.new("x", "expiring", expires: Time.unix(1257894000)).to_set_cookie_header, "x=expiring; expires=Tue, 10 Nov 2009 23:00:00 GMT" }
+      it { assert_prints HTTP::Cookie.new("x", "expiring-1601", expires: Time.utc(1601, 1, 1, 1, 1, 1, nanosecond: 1)).to_set_cookie_header, "x=expiring-1601; expires=Mon, 01 Jan 1601 01:01:01 GMT" }
 
       it "samesite" do
-        HTTP::Cookie.new("x", "samesite-default", samesite: nil).to_set_cookie_header.should eq "x=samesite-default"
-        HTTP::Cookie.new("x", "samesite-lax", samesite: :lax).to_set_cookie_header.should eq "x=samesite-lax; SameSite=Lax"
-        HTTP::Cookie.new("x", "samesite-strict", samesite: :strict).to_set_cookie_header.should eq "x=samesite-strict; SameSite=Strict"
-        HTTP::Cookie.new("x", "samesite-none", samesite: :none).to_set_cookie_header.should eq "x=samesite-none; SameSite=None"
+        assert_prints HTTP::Cookie.new("x", "samesite-default", samesite: nil).to_set_cookie_header, "x=samesite-default"
+        assert_prints HTTP::Cookie.new("x", "samesite-lax", samesite: :lax).to_set_cookie_header, "x=samesite-lax; SameSite=Lax"
+        assert_prints HTTP::Cookie.new("x", "samesite-strict", samesite: :strict).to_set_cookie_header, "x=samesite-strict; SameSite=Strict"
+        assert_prints HTTP::Cookie.new("x", "samesite-none", samesite: :none).to_set_cookie_header, "x=samesite-none; SameSite=None"
       end
 
-      it { HTTP::Cookie.new("empty-value", "").to_set_cookie_header.should eq "empty-value=" }
+      it { assert_prints HTTP::Cookie.new("empty-value", "").to_set_cookie_header, "empty-value=" }
+    end
+
+    describe "#to_s" do
+      it "stringifies" do
+        HTTP::Cookie.new("foo", "bar").to_s.should eq "foo=bar"
+        HTTP::Cookie.new("x", "y", domain: "example.com", path: "/foo", expires: Time.unix(1257894000), samesite: :lax).to_s.should eq "x=y; domain=example.com; path=/foo; expires=Tue, 10 Nov 2009 23:00:00 GMT; SameSite=Lax"
+      end
+    end
+
+    describe "#inspect" do
+      it "stringifies" do
+        HTTP::Cookie.new("foo", "bar").inspect.should eq %(HTTP::Cookie["foo=bar"])
+        HTTP::Cookie.new("x", "y", domain: "example.com", path: "/foo", expires: Time.unix(1257894000), samesite: :lax).inspect.should eq %(HTTP::Cookie["x=y; domain=example.com; path=/foo; expires=Tue, 10 Nov 2009 23:00:00 GMT; SameSite=Lax"])
+      end
     end
 
     describe "#valid? & #validate!" do
@@ -547,6 +567,16 @@ module HTTP
         cookies = Cookies.from_client_headers Headers{"Cookie" => "a=b", "Set-Cookie" => "x=y"}
         cookies.to_h.should eq({"a" => Cookie.new("a", "b")})
       end
+
+      it "chops value at the first invalid byte" do
+        HTTP::Cookies.from_client_headers(
+          HTTP::Headers{"Cookie" => "ginger=snap; cookie=hm🍪delicious; snicker=doodle"}
+        ).to_h.should eq({
+          "ginger"  => HTTP::Cookie.new("ginger", "snap"),
+          "cookie"  => HTTP::Cookie.new("cookie", "hm"),
+          "snicker" => HTTP::Cookie.new("snicker", "doodle"),
+        })
+      end
     end
 
     describe ".from_server_headers" do
@@ -557,6 +587,15 @@ module HTTP
       it "does not accept Cookie header" do
         cookies = Cookies.from_server_headers Headers{"Set-Cookie" => "a=b", "Cookie" => "x=y"}
         cookies.to_h.should eq({"a" => Cookie.new("a", "b")})
+      end
+
+      it "drops cookies with invalid byte in value" do
+        HTTP::Cookies.from_server_headers(
+          HTTP::Headers{"Set-Cookie" => ["ginger=snap", "cookie=hm🍪delicious", "snicker=doodle"]}
+        ).to_h.should eq({
+          "ginger"  => HTTP::Cookie.new("ginger", "snap"),
+          "snicker" => HTTP::Cookie.new("snicker", "doodle"),
+        })
       end
     end
 
@@ -734,6 +773,41 @@ module HTTP
       cookies_hash.should eq(compare_hash)
       cookies["x"] = "y"
       cookies.to_h.should_not eq(cookies_hash)
+    end
+  end
+
+  describe "#to_s" do
+    it "stringifies" do
+      cookies = HTTP::Cookies{
+        HTTP::Cookie.new("foo", "bar"),
+        HTTP::Cookie.new("x", "y", domain: "example.com", path: "/foo", expires: Time.unix(1257894000), samesite: :lax),
+      }
+
+      cookies.to_s.should eq %(HTTP::Cookies{"foo=bar", "x=y; domain=example.com; path=/foo; expires=Tue, 10 Nov 2009 23:00:00 GMT; SameSite=Lax"})
+    end
+  end
+
+  describe "#inspect" do
+    it "stringifies" do
+      cookies = HTTP::Cookies{
+        HTTP::Cookie.new("foo", "bar"),
+        HTTP::Cookie.new("x", "y", domain: "example.com", path: "/foo", expires: Time.unix(1257894000), samesite: :lax),
+      }
+
+      cookies.inspect.should eq %(HTTP::Cookies{"foo=bar", "x=y; domain=example.com; path=/foo; expires=Tue, 10 Nov 2009 23:00:00 GMT; SameSite=Lax"})
+    end
+  end
+
+  describe "#pretty_print" do
+    it "stringifies" do
+      cookies = HTTP::Cookies{
+        HTTP::Cookie.new("foo", "bar"),
+        HTTP::Cookie.new("x", "y", domain: "example.com", path: "/foo", expires: Time.unix(1257894000), samesite: :lax),
+      }
+      cookies.pretty_inspect.should eq <<-CRYSTAL
+        HTTP::Cookies{"foo=bar",
+         "x=y; domain=example.com; path=/foo; expires=Tue, 10 Nov 2009 23:00:00 GMT; SameSite=Lax"}
+        CRYSTAL
     end
   end
 end

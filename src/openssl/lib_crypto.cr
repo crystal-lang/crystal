@@ -1,6 +1,12 @@
+# Supported library versions:
+#
+# * openssl (1.1.0–3.3+)
+# * libressl (2.0–4.0+)
+#
+# See https://crystal-lang.org/reference/man/required_libraries.html#tls
 {% begin %}
   lib LibCrypto
-    {% if flag?(:win32) %}
+    {% if flag?(:msvc) %}
       {% from_libressl = false %}
       {% ssl_version = nil %}
       {% for dir in Crystal::LIBRARY_PATH.split(Crystal::System::Process::HOST_PATH_DELIMITER) %}
@@ -13,10 +19,12 @@
       {% end %}
       {% ssl_version ||= "0.0.0" %}
     {% else %}
-      {% from_libressl = (`hash pkg-config 2> /dev/null || printf %s false` != "false") &&
-                         (`test -f $(pkg-config --silence-errors --variable=includedir libcrypto)/openssl/opensslv.h || printf %s false` != "false") &&
-                         (`printf "#include <openssl/opensslv.h>\nLIBRESSL_VERSION_NUMBER" | ${CC:-cc} $(pkg-config --cflags --silence-errors libcrypto || true) -E -`.chomp.split('\n').last != "LIBRESSL_VERSION_NUMBER") %}
-      {% ssl_version = `hash pkg-config 2> /dev/null && pkg-config --silence-errors --modversion libcrypto || printf %s 0.0.0`.split.last.gsub(/[^0-9.]/, "") %}
+      # these have to be wrapped in `sh -c` since for MinGW-w64 the compiler
+      # passes the command string to `LibC.CreateProcessW`
+      {% from_libressl = (`sh -c 'hash pkg-config 2> /dev/null || printf %s false'` != "false") &&
+                         (`sh -c 'test -f $(pkg-config --silence-errors --variable=includedir libcrypto)/openssl/opensslv.h || printf %s false'` != "false") &&
+                         (`sh -c 'printf "#include <openssl/opensslv.h>\nLIBRESSL_VERSION_NUMBER" | ${CC:-cc} $(pkg-config --cflags --silence-errors libcrypto || true) -E -'`.chomp.split('\n').last != "LIBRESSL_VERSION_NUMBER") %}
+      {% ssl_version = `sh -c 'hash pkg-config 2> /dev/null && pkg-config --silence-errors --modversion libcrypto || printf %s 0.0.0'`.split.last.gsub(/[^0-9.]/, "") %}
     {% end %}
 
     {% if from_libressl %}
@@ -101,7 +109,7 @@ lib LibCrypto
   alias BioMethodDestroy = Bio* -> Int
   alias BioMethodCallbackCtrl = (Bio*, Int, Void*) -> Long
 
-  {% if compare_versions(LibCrypto::OPENSSL_VERSION, "1.1.0") >= 0 %}
+  {% if compare_versions(LibCrypto::OPENSSL_VERSION, "1.1.0") >= 0 || compare_versions(LibCrypto::LIBRESSL_VERSION, "2.7.0") >= 0 %}
     type BioMethod = Void
   {% else %}
     struct BioMethod
@@ -121,7 +129,7 @@ lib LibCrypto
   fun BIO_new(BioMethod*) : Bio*
   fun BIO_free(Bio*) : Int
 
-  {% if compare_versions(LibCrypto::OPENSSL_VERSION, "1.1.0") >= 0 %}
+  {% if compare_versions(LibCrypto::OPENSSL_VERSION, "1.1.0") >= 0 || compare_versions(LibCrypto::LIBRESSL_VERSION, "2.7.0") >= 0 %}
     fun BIO_set_data(Bio*, Void*)
     fun BIO_get_data(Bio*) : Void*
     fun BIO_set_init(Bio*, Int)
@@ -137,6 +145,7 @@ lib LibCrypto
     fun BIO_meth_set_destroy(BioMethod*, BioMethodDestroy)
     fun BIO_meth_set_callback_ctrl(BioMethod*, BioMethodCallbackCtrl)
   {% end %}
+  # LibreSSL does not define these symbols
   {% if compare_versions(LibCrypto::OPENSSL_VERSION, "1.1.1") >= 0 %}
     fun BIO_meth_set_read_ex(BioMethod*, BioMethodRead)
     fun BIO_meth_set_write_ex(BioMethod*, BioMethodWrite)
@@ -221,7 +230,7 @@ lib LibCrypto
 
   fun evp_digestfinal_ex = EVP_DigestFinal_ex(ctx : EVP_MD_CTX, md : UInt8*, size : UInt32*) : Int32
 
-  {% if compare_versions(OPENSSL_VERSION, "1.1.0") >= 0 %}
+  {% if compare_versions(OPENSSL_VERSION, "1.1.0") >= 0 || compare_versions(LibCrypto::LIBRESSL_VERSION, "2.7.0") >= 0 %}
     fun evp_md_ctx_new = EVP_MD_CTX_new : EVP_MD_CTX
     fun evp_md_ctx_free = EVP_MD_CTX_free(ctx : EVP_MD_CTX)
   {% else %}
@@ -298,7 +307,7 @@ lib LibCrypto
   fun md5 = MD5(data : UInt8*, length : LibC::SizeT, md : UInt8*) : UInt8*
 
   fun pkcs5_pbkdf2_hmac_sha1 = PKCS5_PBKDF2_HMAC_SHA1(pass : LibC::Char*, passlen : LibC::Int, salt : UInt8*, saltlen : LibC::Int, iter : LibC::Int, keylen : LibC::Int, out : UInt8*) : LibC::Int
-  {% if compare_versions(OPENSSL_VERSION, "1.0.0") >= 0 %}
+  {% if compare_versions(OPENSSL_VERSION, "1.0.0") >= 0 || LIBRESSL_VERSION != "0.0.0" %}
     fun pkcs5_pbkdf2_hmac = PKCS5_PBKDF2_HMAC(pass : LibC::Char*, passlen : LibC::Int, salt : UInt8*, saltlen : LibC::Int, iter : LibC::Int, digest : EVP_MD, keylen : LibC::Int, out : UInt8*) : LibC::Int
   {% end %}
 
@@ -372,12 +381,12 @@ lib LibCrypto
 
   fun x509_store_add_cert = X509_STORE_add_cert(ctx : X509_STORE, x : X509) : Int
 
-  {% unless compare_versions(OPENSSL_VERSION, "1.1.0") >= 0 %}
+  {% unless compare_versions(OPENSSL_VERSION, "1.1.0") >= 0 || compare_versions(LibCrypto::LIBRESSL_VERSION, "3.0.0") >= 0 %}
     fun err_load_crypto_strings = ERR_load_crypto_strings
     fun openssl_add_all_algorithms = OPENSSL_add_all_algorithms_noconf
   {% end %}
 
-  {% if compare_versions(OPENSSL_VERSION, "1.0.2") >= 0 %}
+  {% if compare_versions(OPENSSL_VERSION, "1.0.2") >= 0 || LIBRESSL_VERSION != "0.0.0" %}
     type X509VerifyParam = Void*
 
     @[Flags]

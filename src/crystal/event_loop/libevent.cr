@@ -1,8 +1,8 @@
-require "./event_libevent"
+require "./libevent/event"
 
 # :nodoc:
-class Crystal::LibEvent::EventLoop < Crystal::EventLoop
-  private getter(event_base) { Crystal::LibEvent::Event::Base.new }
+class Crystal::EventLoop::LibEvent < Crystal::EventLoop
+  private getter(event_base) { Crystal::EventLoop::LibEvent::Event::Base.new }
 
   def after_fork_before_exec : Nil
   end
@@ -15,7 +15,9 @@ class Crystal::LibEvent::EventLoop < Crystal::EventLoop
   {% end %}
 
   def run(blocking : Bool) : Bool
-    event_base.loop(once: true, nonblock: !blocking)
+    flags = LibEvent2::EventLoopFlags::Once
+    flags |= blocking ? LibEvent2::EventLoopFlags::NoExitOnEmpty : LibEvent2::EventLoopFlags::NonBlock
+    event_base.loop(flags)
   end
 
   def interrupt : Nil
@@ -23,14 +25,14 @@ class Crystal::LibEvent::EventLoop < Crystal::EventLoop
   end
 
   # Create a new resume event for a fiber.
-  def create_resume_event(fiber : Fiber) : Crystal::EventLoop::Event
+  def create_resume_event(fiber : Fiber) : Crystal::EventLoop::LibEvent::Event
     event_base.new_event(-1, LibEvent2::EventFlags::None, fiber) do |s, flags, data|
       data.as(Fiber).enqueue
     end
   end
 
   # Creates a timeout_event.
-  def create_timeout_event(fiber) : Crystal::EventLoop::Event
+  def create_timeout_event(fiber) : Crystal::EventLoop::LibEvent::Event
     event_base.new_event(-1, LibEvent2::EventFlags::None, fiber) do |s, flags, data|
       f = data.as(Fiber)
       if (select_action = f.timeout_select_action)

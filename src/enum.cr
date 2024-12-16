@@ -100,7 +100,7 @@
 #
 # Color::Red.value # : UInt8
 # ```
-struct Enum
+abstract struct Enum
   include Comparable(self)
 
   # Returns *value*.

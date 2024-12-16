@@ -1,4 +1,4 @@
-# This file is only required when sockets are used (`require "./event_loop/socket"` in `src/crystal/system/socket.cr`)
+# This file is only required when sockets are used (`require "crystal/event_loop/socket"` in `src/crystal/system/socket.cr`)
 #
 # It fills `Crystal::EventLoop::Socket` with abstract defs.
 
@@ -12,7 +12,7 @@ abstract class Crystal::EventLoop
     # Returns the number of bytes read (up to `slice.size`).
     # Returns 0 when the socket is closed and no data available.
     #
-    # Use `#send_to` for sending a message to a specific target address.
+    # Use `#receive_from` for capturing the source address of a message.
     abstract def read(socket : ::Socket, slice : Bytes) : Int32
 
     # Writes at least one byte from *slice* to the socket.
@@ -22,7 +22,7 @@ abstract class Crystal::EventLoop
     #
     # Returns the number of bytes written (up to `slice.size`).
     #
-    # Use `#receive_from` for capturing the source address of a message.
+    # Use `#send_to` for sending a message to a specific target address.
     abstract def write(socket : ::Socket, slice : Bytes) : Int32
 
     # Accepts an incoming TCP connection on the socket.

@@ -454,7 +454,7 @@ module HTTP
         request.form_params["test"].should eq("foobar")
       end
 
-      it "returns ignors invalid content-type" do
+      it "ignores invalid content-type" do
         request = Request.new("POST", "/form", nil, HTTP::Params.encode({"test" => "foobar"}))
         request.form_params?.should eq(nil)
         request.form_params.size.should eq(0)

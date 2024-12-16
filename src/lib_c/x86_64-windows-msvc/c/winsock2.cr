@@ -154,7 +154,7 @@ lib LibC
     addr : Sockaddr*,
     addrlen : Int*,
     lpfnCondition : LPCONDITIONPROC,
-    dwCallbackData : DWORD*
+    dwCallbackData : DWORD*,
   ) : SOCKET
 
   fun WSAConnect(
@@ -164,21 +164,21 @@ lib LibC
     lpCallerData : WSABUF*,
     lpCalleeData : WSABUF*,
     lpSQOS : LPQOS,
-    lpGQOS : LPQOS
+    lpGQOS : LPQOS,
   )
   fun WSACreateEvent : WSAEVENT
 
   fun WSAEventSelect(
     s : SOCKET,
     hEventObject : WSAEVENT,
-    lNetworkEvents : Long
+    lNetworkEvents : Long,
   ) : Int
   fun WSAGetOverlappedResult(
     s : SOCKET,
     lpOverlapped : WSAOVERLAPPED*,
     lpcbTransfer : DWORD*,
     fWait : BOOL,
-    lpdwFlags : DWORD*
+    lpdwFlags : DWORD*,
   ) : BOOL
   fun WSAIoctl(
     s : SOCKET,
@@ -189,7 +189,7 @@ lib LibC
     cbOutBuffer : DWORD,
     lpcbBytesReturned : DWORD*,
     lpOverlapped : WSAOVERLAPPED*,
-    lpCompletionRoutine : WSAOVERLAPPED_COMPLETION_ROUTINE*
+    lpCompletionRoutine : WSAOVERLAPPED_COMPLETION_ROUTINE*,
   ) : Int
   fun WSARecv(
     s : SOCKET,
@@ -198,7 +198,7 @@ lib LibC
     lpNumberOfBytesRecvd : DWORD*,
     lpFlags : DWORD*,
     lpOverlapped : WSAOVERLAPPED*,
-    lpCompletionRoutine : WSAOVERLAPPED_COMPLETION_ROUTINE*
+    lpCompletionRoutine : WSAOVERLAPPED_COMPLETION_ROUTINE*,
   ) : Int
   fun WSARecvFrom(
     s : SOCKET,
@@ -209,10 +209,10 @@ lib LibC
     lpFrom : Sockaddr*,
     lpFromlen : Int*,
     lpOverlapped : WSAOVERLAPPED*,
-    lpCompletionRoutine : WSAOVERLAPPED_COMPLETION_ROUTINE*
+    lpCompletionRoutine : WSAOVERLAPPED_COMPLETION_ROUTINE*,
   ) : Int
   fun WSAResetEvent(
-    hEvent : WSAEVENT
+    hEvent : WSAEVENT,
   ) : BOOL
   fun WSASend(
     s : SOCKET,
@@ -221,7 +221,7 @@ lib LibC
     lpNumberOfBytesSent : DWORD*,
     dwFlags : DWORD,
     lpOverlapped : WSAOVERLAPPED*,
-    lpCompletionRoutine : WSAOVERLAPPED_COMPLETION_ROUTINE*
+    lpCompletionRoutine : WSAOVERLAPPED_COMPLETION_ROUTINE*,
   ) : Int
   fun WSASendTo(
     s : SOCKET,
@@ -232,7 +232,7 @@ lib LibC
     lpTo : Sockaddr*,
     iTolen : Int,
     lpOverlapped : WSAOVERLAPPED*,
-    lpCompletionRoutine : WSAOVERLAPPED_COMPLETION_ROUTINE*
+    lpCompletionRoutine : WSAOVERLAPPED_COMPLETION_ROUTINE*,
   ) : Int
   fun WSASocketW(
     af : Int,
@@ -240,13 +240,13 @@ lib LibC
     protocol : Int,
     lpProtocolInfo : WSAPROTOCOL_INFOW*,
     g : GROUP,
-    dwFlags : DWORD
+    dwFlags : DWORD,
   ) : SOCKET
   fun WSAWaitForMultipleEvents(
     cEvents : DWORD,
     lphEvents : WSAEVENT*,
     fWaitAll : BOOL,
     dwTimeout : DWORD,
-    fAlertable : BOOL
+    fAlertable : BOOL,
   ) : DWORD
 end

@@ -8,6 +8,14 @@ describe "PROGRAM_NAME" do
         pending! "Example is broken in Nix shell (#12332)"
       end
 
+      # MSYS2: gcc/ld doesn't support unicode paths
+      # https://github.com/msys2/MINGW-packages/issues/17812
+      {% if flag?(:windows) %}
+        if ENV["MSYSTEM"]?
+          pending! "Example is broken in MSYS2 shell"
+        end
+      {% end %}
+
       File.write(source_file, "File.basename(PROGRAM_NAME).inspect(STDOUT)")
 
       compile_file(source_file, bin_name: "×‽😂") do |executable_file|
@@ -243,49 +251,60 @@ describe "at_exit" do
   end
 end
 
-describe "hardware exception" do
-  it "reports invalid memory access", tags: %w[slow] do
-    status, _, error = compile_and_run_source <<-'CRYSTAL'
-      puts Pointer(Int64).null.value
-    CRYSTAL
+{% if flag?(:openbsd) %}
+  # FIXME: the segfault handler doesn't work on OpenBSD
+  pending "hardware exception"
+{% else %}
+  describe "hardware exception" do
+    it "reports invalid memory access", tags: %w[slow] do
+      status, _, error = compile_and_run_source <<-'CRYSTAL'
+        puts Pointer(Int64).null.value
+      CRYSTAL
 
-    status.success?.should be_false
-    error.should contain("Invalid memory access")
-    error.should_not contain("Stack overflow")
-  end
+      status.success?.should be_false
+      error.should contain("Invalid memory access")
+      error.should_not contain("Stack overflow")
+    end
 
-  it "detects stack overflow on the main stack", tags: %w[slow] do
-    # This spec can take some time under FreeBSD where
-    # the default stack size is 0.5G.  Setting a
-    # smaller stack size with `ulimit -s 8192`
-    # will address this.
-    status, _, error = compile_and_run_source <<-'CRYSTAL'
-      def foo
-        y = StaticArray(Int8, 512).new(0)
-        foo
-      end
-      foo
-    CRYSTAL
+    {% if flag?(:netbsd) %}
+      # FIXME: on netbsd the process crashes with SIGILL after receiving SIGSEGV
+      pending "detects stack overflow on the main stack"
+      pending "detects stack overflow on a fiber stack"
+    {% else %}
+      it "detects stack overflow on the main stack", tags: %w[slow] do
+        # This spec can take some time under FreeBSD where
+        # the default stack size is 0.5G.  Setting a
+        # smaller stack size with `ulimit -s 8192`
+        # will address this.
+        status, _, error = compile_and_run_source <<-'CRYSTAL'
+          def foo
+            y = StaticArray(Int8, 512).new(0)
+            foo
+          end
+          foo
+        CRYSTAL
 
-    status.success?.should be_false
-    error.should contain("Stack overflow")
-  end
-
-  it "detects stack overflow on a fiber stack", tags: %w[slow] do
-    status, _, error = compile_and_run_source <<-'CRYSTAL'
-      def foo
-        y = StaticArray(Int8, 512).new(0)
-        foo
-      end
-
-      spawn do
-        foo
+        status.success?.should be_false
+        error.should contain("Stack overflow")
       end
 
-      sleep 60.seconds
-    CRYSTAL
+      it "detects stack overflow on a fiber stack", tags: %w[slow] do
+        status, _, error = compile_and_run_source <<-'CRYSTAL'
+          def foo
+            y = StaticArray(Int8, 512).new(0)
+            foo
+          end
 
-    status.success?.should be_false
-    error.should contain("Stack overflow")
+          spawn do
+            foo
+          end
+
+          sleep 60.seconds
+        CRYSTAL
+
+        status.success?.should be_false
+        error.should contain("Stack overflow")
+      end
+    {% end %}
   end
-end
+{% end %}

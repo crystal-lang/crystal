@@ -393,14 +393,16 @@ class Crystal::Repl::Context
   getter(loader : Loader) {
     lib_flags = program.lib_flags
     # Execute and expand `subcommands`.
-    lib_flags = lib_flags.gsub(/`(.*?)`/) { `#{$1}` }
+    lib_flags = lib_flags.gsub(/`(.*?)`/) { `#{$1}`.chomp }
 
     args = Process.parse_arguments(lib_flags)
     # FIXME: Part 1: This is a workaround for initial integration of the interpreter:
     # The loader can't handle the static libgc.a usually shipped with crystal and loading as a shared library conflicts
     # with the compiler's own GC.
-    # (MSVC doesn't seem to have this issue)
-    args.delete("-lgc")
+    # (Windows doesn't seem to have this issue)
+    unless program.has_flag?("win32") && program.has_flag?("gnu")
+      args.delete("-lgc")
+    end
 
     # recreate the MSVC developer prompt environment, similar to how compiled
     # code does it in `Compiler#linker_command`
@@ -432,7 +434,7 @@ class Crystal::Repl::Context
   # used in `Crystal::Program#each_dll_path`
   private def dll_search_paths
     {% if flag?(:msvc) %}
-      paths = CrystalLibraryPath.paths
+      paths = CrystalLibraryPath.default_paths
 
       if executable_path = Process.executable_path
         paths << File.dirname(executable_path)

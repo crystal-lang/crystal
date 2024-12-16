@@ -51,6 +51,7 @@ describe Socket::IPAddress do
     addr2.port.should eq(addr1.port)
     typeof(addr2.address).should eq(String)
     addr2.address.should eq(addr1.address)
+    addr2.should eq(Socket::IPAddress.from(addr1_c))
   end
 
   it "transforms an IPv6 address into a C struct and back" do
@@ -64,6 +65,7 @@ describe Socket::IPAddress do
     addr2.port.should eq(addr1.port)
     typeof(addr2.address).should eq(String)
     addr2.address.should eq(addr1.address)
+    addr2.should eq(Socket::IPAddress.from(addr1_c))
   end
 
   it "won't resolve domains" do
@@ -431,6 +433,7 @@ end
       addr2.family.should eq(addr1.family)
       addr2.path.should eq(addr1.path)
       addr2.to_s.should eq(path)
+      addr2 = Socket::UNIXAddress.from(addr1.to_unsafe)
     end
 
     it "raises when path is too long" do

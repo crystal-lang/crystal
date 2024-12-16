@@ -1,0 +1,161 @@
+name: MinGW-w64 CI
+
+on: [push, pull_request]
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+env:
+  SPEC_SPLIT_DOTS: 160
+
+jobs:
+  x86_64-mingw-w64-cross-compile:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Download Crystal source
+        uses: actions/checkout@v4
+
+      - name: Install LLVM
+        run: |
+          _llvm_major=$(wget -qO- https://raw.githubusercontent.com/msys2/MINGW-packages/refs/heads/master/mingw-w64-llvm/PKGBUILD | grep '_version=' | sed -E 's/_version=([0-9]+).*/\1/')
+          sudo apt remove 'llvm-*' 'libllvm*'
+          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
+          sudo apt-add-repository -y deb http://apt.llvm.org/noble/ llvm-toolchain-noble-${_llvm_major} main
+          sudo apt install -y llvm-${_llvm_major}-dev
+
+      - name: Install Crystal
+        uses: crystal-lang/install-crystal@v1
+        with:
+          crystal: "1.14.0"
+
+      - name: Cross-compile Crystal
+        run: make && make -B target=x86_64-windows-gnu release=1 interpreter=1
+
+      - name: Upload crystal.obj
+        uses: actions/upload-artifact@v4
+        with:
+          name: x86_64-mingw-w64-crystal-obj
+          path: .build/crystal.obj
+
+  x86_64-mingw-w64-link:
+    runs-on: windows-2022
+    needs: [x86_64-mingw-w64-cross-compile]
+    steps:
+      - name: Setup MSYS2
+        id: msys2
+        uses: msys2/setup-msys2@d44ca8e88d8b43d56cf5670f91747359d5537f97 # v2.26.0
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            make
+            mingw-w64-ucrt-x86_64-pkgconf
+            mingw-w64-ucrt-x86_64-cc
+            mingw-w64-ucrt-x86_64-gc
+            mingw-w64-ucrt-x86_64-pcre2
+            mingw-w64-ucrt-x86_64-libiconv
+            mingw-w64-ucrt-x86_64-zlib
+            mingw-w64-ucrt-x86_64-llvm
+            mingw-w64-ucrt-x86_64-libffi
+
+      - name: Disable CRLF line ending substitution
+        run: |
+          git config --global core.autocrlf false
+
+      - name: Download Crystal source
+        uses: actions/checkout@v4
+
+      - name: Download crystal.obj
+        uses: actions/download-artifact@v4
+        with:
+          name: x86_64-mingw-w64-crystal-obj
+
+      - name: Link Crystal executable
+        shell: msys2 {0}
+        run: |
+          mkdir .build
+          cc crystal.obj -o .build/crystal.exe -municode \
+            $(pkg-config bdw-gc libpcre2-8 iconv zlib libffi --libs) \
+            $(llvm-config --libs --system-libs --ldflags) \
+            -lole32 -lWS2_32 -lntdll -Wl,--stack,0x800000
+
+      - name: Package Crystal
+        shell: msys2 {0}
+        run: |
+          make install install_dlls deref_symlinks=1 PREFIX="$(pwd)/crystal"
+
+      - name: Upload Crystal executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: x86_64-mingw-w64-crystal
+          path: crystal
+
+  x86_64-mingw-w64-test:
+    runs-on: windows-2022
+    needs: [x86_64-mingw-w64-link]
+    steps:
+      - name: Setup MSYS2
+        id: msys2
+        uses: msys2/setup-msys2@d44ca8e88d8b43d56cf5670f91747359d5537f97 # v2.26.0
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            git
+            make
+            mingw-w64-ucrt-x86_64-pkgconf
+            mingw-w64-ucrt-x86_64-cc
+            mingw-w64-ucrt-x86_64-gc
+            mingw-w64-ucrt-x86_64-pcre2
+            mingw-w64-ucrt-x86_64-libiconv
+            mingw-w64-ucrt-x86_64-zlib
+            mingw-w64-ucrt-x86_64-llvm
+            mingw-w64-ucrt-x86_64-gmp
+            mingw-w64-ucrt-x86_64-libxml2
+            mingw-w64-ucrt-x86_64-libyaml
+            mingw-w64-ucrt-x86_64-openssl
+            mingw-w64-ucrt-x86_64-libffi
+
+      - name: Disable CRLF line ending substitution
+        run: |
+          git config --global core.autocrlf false
+
+      - name: Download Crystal source
+        uses: actions/checkout@v4
+
+      - name: Download Crystal executable
+        uses: actions/download-artifact@v4
+        with:
+          name: x86_64-mingw-w64-crystal
+          path: crystal
+
+      - name: Run stdlib specs
+        shell: msys2 {0}
+        run: |
+          export PATH="$(pwd)/crystal/bin:$PATH"
+          export CRYSTAL_SPEC_COMPILER_BIN="$(pwd)/crystal/bin/crystal.exe"
+          make std_spec
+
+      - name: Run compiler specs
+        shell: msys2 {0}
+        run: |
+          export PATH="$(pwd)/crystal/bin:$PATH"
+          export CRYSTAL_SPEC_COMPILER_BIN="$(pwd)/crystal/bin/crystal.exe"
+          make compiler_spec
+
+      - name: Run interpreter specs
+        shell: msys2 {0}
+        run: |
+          export PATH="$(pwd)/crystal/bin:$PATH"
+          export CRYSTAL_SPEC_COMPILER_BIN="$(pwd)/crystal/bin/crystal.exe"
+          make interpreter_spec
+
+      - name: Run primitives specs
+        shell: msys2 {0}
+        run: |
+          export PATH="$(pwd)/crystal/bin:$PATH"
+          export CRYSTAL_SPEC_COMPILER_BIN="$(pwd)/crystal/bin/crystal.exe"
+          make -o .build/crystal.exe primitives_spec # we know the compiler is fresh; do not rebuild it here
