@@ -132,11 +132,7 @@ class ECR::Lexer
 
           if is_end
             setup_control_token(start_pos, is_escape, suppress_leading, true)
-
-            if current_char != '>'
-              raise "Expecting '>' after '-%'"
-            end
-
+            raise "Expecting '>' after '-%'" if current_char != '>'
             next_char
             break
           end
