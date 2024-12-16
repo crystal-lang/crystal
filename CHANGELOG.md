@@ -101,6 +101,7 @@
 - *(runtime)* **[regression]** Protect constant initializers with mutex on Windows ([#15134], thanks @HertzDevil)
 - *(runtime)* use `uninitialized LibC::SigsetT` ([#15144], thanks @straight-shoota)
 - *(runtime)* Fix static linking when using MinGW-w64 ([#15167], thanks @HertzDevil)
+- *(runtime)* register GC callbacks inside `GC.init` ([#15278], thanks @ysbaddaden)
 - *(system)* Fix `Process::Status` for unknown signals ([#15280], thanks @straight-shoota)
 - *(system)* Raise on abnormal exit in `Procss::Status#exit_code` ([#15241], thanks @straight-shoota)
 - *(text)* Fix libiconv build on Windows ([#15095], thanks @HertzDevil)
@@ -119,6 +120,7 @@
 [#15134]: https://github.com/crystal-lang/crystal/pull/15134
 [#15144]: https://github.com/crystal-lang/crystal/pull/15144
 [#15167]: https://github.com/crystal-lang/crystal/pull/15167
+[#15278]: https://github.com/crystal-lang/crystal/pull/15278
 [#15280]: https://github.com/crystal-lang/crystal/pull/15280
 [#15241]: https://github.com/crystal-lang/crystal/pull/15241
 [#15095]: https://github.com/crystal-lang/crystal/pull/15095
@@ -145,12 +147,6 @@
 
 [#15082]: https://github.com/crystal-lang/crystal/pull/15082
 [#15273]: https://github.com/crystal-lang/crystal/pull/15273
-
-#### other
-
-- register GC callbacks inside GC.init ([#15278], thanks @ysbaddaden)
-
-[#15278]: https://github.com/crystal-lang/crystal/pull/15278
 
 ### Chores
 
@@ -201,6 +197,7 @@
 
 - Use Win32 heap functions with `-Dgc_none` ([#15173], thanks @HertzDevil)
 - *(collection)* Refactor `Enumerable#map` to delegate to `#map_with_index` ([#15210], thanks @straight-shoota)
+- *(concurrency)* Drop `Crystal::FiberChannel` ([#15245], thanks @ysbaddaden)
 - *(runtime)* Refactor uses of `LibC.dladdr` inside `Exception::CallStack` ([#15108], thanks @HertzDevil)
 - *(runtime)* Crystal::EventLoop namespace ([#15226], thanks @ysbaddaden)
 - *(runtime)* Change `libevent` event loop to wait forever when blocking ([#15243], thanks @ysbaddaden)
@@ -212,6 +209,7 @@
 
 [#15173]: https://github.com/crystal-lang/crystal/pull/15173
 [#15210]: https://github.com/crystal-lang/crystal/pull/15210
+[#15245]: https://github.com/crystal-lang/crystal/pull/15245
 [#15108]: https://github.com/crystal-lang/crystal/pull/15108
 [#15226]: https://github.com/crystal-lang/crystal/pull/15226
 [#15243]: https://github.com/crystal-lang/crystal/pull/15243
@@ -229,12 +227,6 @@
 - *(semantic)* Replace uses of `AliasType#types?` by `Type#lookup_name` ([#15068], thanks @straight-shoota)
 
 [#15068]: https://github.com/crystal-lang/crystal/pull/15068
-
-#### other
-
-- Drop `Crystal::FiberChannel` ([#15245], thanks @ysbaddaden)
-
-[#15245]: https://github.com/crystal-lang/crystal/pull/15245
 
 ### Documentation
 
