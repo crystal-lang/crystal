@@ -69,6 +69,7 @@ abstract class Crystal::EventLoop
     #
     # Called by `::Socket#finalize` before closing the socket. Errors shall be
     # silently ignored.
-    abstract def remove(socket : ::Socket) : Nil
+    def self.remove(socket : ::Socket) : Nil
+    end
   end
 end

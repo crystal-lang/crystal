@@ -164,7 +164,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     evented_close(file_descriptor)
   end
 
-  def remove(file_descriptor : System::FileDescriptor) : Nil
+  def self.remove(file_descriptor : System::FileDescriptor) : Nil
     internal_remove(file_descriptor)
   end
 
@@ -267,7 +267,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     evented_close(socket)
   end
 
-  def remove(socket : ::Socket) : Nil
+  def self.remove(socket : ::Socket) : Nil
     internal_remove(socket)
   end
 
@@ -317,7 +317,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     end
   end
 
-  private def internal_remove(io)
+  private def self.internal_remove(io)
     return unless (index = io.__evloop_data).valid?
 
     Polling.arena.free(index) do |pd|
