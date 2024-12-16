@@ -192,9 +192,19 @@ module HTTP
       end
     end
 
-    # Destroys the cookie.
-    # This is done by causing the cookie to expire. Also clears its value.
-    def destroy
+    # Expires the cookie.
+    #
+    # Causes the cookie to be destroyed. Sets the value to the empty string and
+    # expires its lifetime.
+    #
+    # ```
+    # cookie = HTTP::Cookie.new("hello", "world")
+    # cookie.expire
+    #
+    # cookie.value    # => ""
+    # cookie.expired? # => true
+    # ```
+    def expire
       self.value = ""
       self.expires = Time::UNIX_EPOCH
       self.max_age = Time::Span.zero

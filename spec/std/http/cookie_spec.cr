@@ -70,9 +70,9 @@ module HTTP
       end
     end
 
-    it "#destroy" do
+    it "#expire" do
       cookie = HTTP::Cookie.new("hello", "world")
-      cookie.destroy
+      cookie.expire
 
       cookie.value.empty?.should be_true
       cookie.expired?.should be_true
