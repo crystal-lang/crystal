@@ -1,24 +1,28 @@
 abstract class Crystal::EventLoop
-  # Creates an event loop instance
-  def self.create : self
+  def self.backend_class
     {% if flag?(:wasi) %}
-      Crystal::EventLoop::Wasi.new
+      Crystal::EventLoop::Wasi
     {% elsif flag?(:unix) %}
       # TODO: enable more targets by default (need manual tests or fixes)
       {% if flag?("evloop=libevent") %}
-        Crystal::EventLoop::LibEvent.new
+        Crystal::EventLoop::LibEvent
       {% elsif flag?("evloop=epoll") || flag?(:android) || flag?(:linux) %}
-        Crystal::EventLoop::Epoll.new
+        Crystal::EventLoop::Epoll
       {% elsif flag?("evloop=kqueue") || flag?(:darwin) || flag?(:freebsd) %}
-        Crystal::EventLoop::Kqueue.new
+        Crystal::EventLoop::Kqueue
       {% else %}
-        Crystal::EventLoop::LibEvent.new
+        Crystal::EventLoop::LibEvent
       {% end %}
     {% elsif flag?(:win32) %}
-      Crystal::EventLoop::IOCP.new
+      Crystal::EventLoop::IOCP
     {% else %}
       {% raise "Event loop not supported" %}
     {% end %}
+  end
+
+  # Creates an event loop instance
+  def self.create : self
+    backend_class.new
   end
 
   @[AlwaysInline]
