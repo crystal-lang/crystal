@@ -466,18 +466,18 @@ struct Colorize::Object(T)
   # ```
   # require "colorize"
   #
-  # Colorize.with.red.print        # => "\e[31m"
-  # "hello world".green.bold.print # => "\e[32;1m"
+  # Colorize.with.red.ansi_escape        # => "\e[31m"
+  # "hello world".green.bold.ansi_escape # => "\e[32;1m"
   # ```
-  def print : String
+  def ansi_escape : String
     String.build do |io|
-      print io
+      ansi_escape io
     end
   end
 
-  # Same as `print` but writes to a given *io*.
-  def print(io : IO) : Nil
-    self.class.print(io, to_named_tuple)
+  # Same as `ansi_escape` but writes to a given *io*.
+  def ansi_escape(io : IO) : Nil
+    self.class.ansi_escape(io, to_named_tuple)
   end
 
   private def to_named_tuple
@@ -494,7 +494,7 @@ struct Colorize::Object(T)
     mode: Mode::None,
   }
 
-  protected def self.print(io : IO, color : {fore: Color, back: Color, mode: Mode}) : Nil
+  protected def self.ansi_escape(io : IO, color : {fore: Color, back: Color, mode: Mode}) : Nil
     last_color = @@last_color
     append_start(io, color)
     @@last_color = last_color

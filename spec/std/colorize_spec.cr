@@ -98,23 +98,23 @@ describe "colorize" do
   end
 
   it "prints colorize ANSI escape codes" do
-    Colorize.with.bold.print.should eq("\e[1m")
-    Colorize.with.bright.print.should eq("\e[1m")
-    Colorize.with.dim.print.should eq("\e[2m")
-    Colorize.with.italic.print.should eq("\e[3m")
-    Colorize.with.underline.print.should eq("\e[4m")
-    Colorize.with.blink.print.should eq("\e[5m")
-    Colorize.with.blink_fast.print.should eq("\e[6m")
-    Colorize.with.reverse.print.should eq("\e[7m")
-    Colorize.with.hidden.print.should eq("\e[8m")
-    Colorize.with.strikethrough.print.should eq("\e[9m")
-    Colorize.with.double_underline.print.should eq("\e[21m")
-    Colorize.with.overline.print.should eq("\e[53m")
+    Colorize.with.bold.ansi_escape.should eq("\e[1m")
+    Colorize.with.bright.ansi_escape.should eq("\e[1m")
+    Colorize.with.dim.ansi_escape.should eq("\e[2m")
+    Colorize.with.italic.ansi_escape.should eq("\e[3m")
+    Colorize.with.underline.ansi_escape.should eq("\e[4m")
+    Colorize.with.blink.ansi_escape.should eq("\e[5m")
+    Colorize.with.blink_fast.ansi_escape.should eq("\e[6m")
+    Colorize.with.reverse.ansi_escape.should eq("\e[7m")
+    Colorize.with.hidden.ansi_escape.should eq("\e[8m")
+    Colorize.with.strikethrough.ansi_escape.should eq("\e[9m")
+    Colorize.with.double_underline.ansi_escape.should eq("\e[21m")
+    Colorize.with.overline.ansi_escape.should eq("\e[53m")
   end
 
   it "only prints colorize ANSI escape codes" do
-    colorize("hello").red.bold.print.should eq("\e[31;1m")
-    colorize("hello").bold.dim.underline.blink.reverse.hidden.print.should eq("\e[1;2;4;5;7;8m")
+    colorize("hello").red.bold.ansi_escape.should eq("\e[31;1m")
+    colorize("hello").bold.dim.underline.blink.reverse.hidden.ansi_escape.should eq("\e[1;2;4;5;7;8m")
   end
 
   it "colorizes mode combination" do
