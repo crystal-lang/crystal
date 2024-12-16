@@ -164,7 +164,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     evented_close(file_descriptor)
   end
 
-  def self.remove(file_descriptor : System::FileDescriptor) : Nil
+  protected def self.remove_impl(file_descriptor : System::FileDescriptor) : Nil
     internal_remove(file_descriptor)
   end
 
@@ -267,7 +267,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     evented_close(socket)
   end
 
-  def self.remove(socket : ::Socket) : Nil
+  protected def self.remove_impl(socket : ::Socket) : Nil
     internal_remove(socket)
   end
 

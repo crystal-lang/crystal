@@ -111,7 +111,7 @@ module Crystal::System::Signal
   # descriptors of the parent process and send it received signals.
   def self.after_fork
     @@pipe.each do |pipe_io|
-      typeof(Crystal::EventLoop.current).remove(pipe_io)
+      Crystal::EventLoop.remove(pipe_io)
       pipe_io.file_descriptor_close { }
     end
   ensure

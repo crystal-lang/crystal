@@ -430,7 +430,7 @@ class Socket < IO
   def finalize
     return if closed?
 
-    typeof(Crystal::EventLoop.current).remove(self)
+    Crystal::EventLoop.remove(self)
     socket_close { } # ignore error
   end
 
