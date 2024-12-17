@@ -138,7 +138,7 @@ describe Process::Status do
       Process::Status.new(0x00).signal_exit?.should be_false
       Process::Status.new(0x01).signal_exit?.should be_true
       Process::Status.new(0x7e).signal_exit?.should be_true
-      Process::Status.new(0x7f).signal_exit?.should be_false
+      Process::Status.new(0x7f).signal_exit?.should be_true
     end
   {% end %}
 
