@@ -105,6 +105,9 @@ describe Process::Status do
       Process::Status.new(Signal::INT.value).exit_signal.should eq Signal::INT
       last_signal = Signal.values[-1]
       Process::Status.new(last_signal.value).exit_signal.should eq last_signal
+
+      unknown_signal = Signal.new(126)
+      Process::Status.new(unknown_signal.value).exit_signal.should eq unknown_signal
     end
 
     it "#normal_exit? with signal code" do
@@ -249,6 +252,8 @@ describe Process::Status do
         assert_prints Process::Status.new(Signal::HUP.value).to_s, "HUP"
         last_signal = Signal.values[-1]
         assert_prints Process::Status.new(last_signal.value).to_s, last_signal.to_s
+
+        assert_prints Process::Status.new(Signal.new(126).value).to_s, "Signal[126]"
       end
     {% end %}
   end
@@ -275,6 +280,9 @@ describe Process::Status do
         assert_prints Process::Status.new(Signal::HUP.value).inspect, "Process::Status[Signal::HUP]"
         last_signal = Signal.values[-1]
         assert_prints Process::Status.new(last_signal.value).inspect, "Process::Status[#{last_signal.inspect}]"
+
+        unknown_signal = Signal.new(126)
+        assert_prints Process::Status.new(unknown_signal.value).inspect, "Process::Status[Signal[126]]"
       end
     {% end %}
   end

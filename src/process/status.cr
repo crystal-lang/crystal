@@ -217,7 +217,7 @@ class Process::Status
   # which also works on Windows.
   def exit_signal : Signal
     {% if flag?(:unix) && !flag?(:wasm32) %}
-      Signal.from_value(signal_code)
+      Signal.new(signal_code)
     {% else %}
       raise NotImplementedError.new("Process::Status#exit_signal")
     {% end %}
@@ -298,7 +298,12 @@ class Process::Status
       if normal_exit?
         io << exit_code
       else
-        io << exit_signal
+        signal = exit_signal
+        if name = signal.member_name
+          io << name
+        else
+          signal.inspect(io)
+        end
       end
     {% end %}
   end
@@ -314,7 +319,8 @@ class Process::Status
       if normal_exit?
         exit_code.to_s
       else
-        exit_signal.to_s
+        signal = exit_signal
+        signal.member_name || signal.inspect
       end
     {% end %}
   end
