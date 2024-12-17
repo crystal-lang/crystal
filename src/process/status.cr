@@ -292,10 +292,10 @@ class Process::Status
     {% if flag?(:win32) %}
       @exit_status.to_s(io)
     {% else %}
-      if normal_exit?
-        exit_code.inspect(io)
+      if signal = exit_signal?
+        signal.inspect(io)
       else
-        exit_signal.inspect(io)
+        exit_code.inspect(io)
       end
     {% end %}
     io << "]"
@@ -309,15 +309,14 @@ class Process::Status
     {% if flag?(:win32) %}
       @exit_status.to_s(io)
     {% else %}
-      if normal_exit?
-        io << exit_code
-      else
-        signal = exit_signal
+      if signal = exit_signal?
         if name = signal.member_name
           io << name
         else
           signal.inspect(io)
         end
+      else
+        io << exit_code
       end
     {% end %}
   end
@@ -330,11 +329,10 @@ class Process::Status
     {% if flag?(:win32) %}
       @exit_status.to_s
     {% else %}
-      if normal_exit?
-        exit_code.to_s
-      else
-        signal = exit_signal
+      if signal = exit_signal?
         signal.member_name || signal.inspect
+      else
+        exit_code.to_s
       end
     {% end %}
   end
