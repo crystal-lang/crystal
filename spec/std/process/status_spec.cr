@@ -256,6 +256,14 @@ describe Process::Status do
         assert_prints Process::Status.new(Signal.new(126).value).to_s, "Signal[126]"
       end
     {% end %}
+
+    {% if flag?(:win32) %}
+      it "hex format" do
+        assert_prints Process::Status.new(UInt16::MAX).to_s, "0x0000FFFF"
+        assert_prints Process::Status.new(0x01234567).to_s, "0x01234567"
+        assert_prints Process::Status.new(UInt32::MAX).to_s, "0xFFFFFFFF"
+      end
+    {% end %}
   end
 
   describe "#inspect" do
@@ -283,6 +291,14 @@ describe Process::Status do
 
         unknown_signal = Signal.new(126)
         assert_prints Process::Status.new(unknown_signal.value).inspect, "Process::Status[Signal[126]]"
+      end
+    {% end %}
+
+    {% if flag?(:win32) %}
+      it "hex format" do
+        assert_prints Process::Status.new(UInt16::MAX).inspect, "Process::Status[0x0000FFFF]"
+        assert_prints Process::Status.new(0x01234567).inspect, "Process::Status[0x01234567]"
+        assert_prints Process::Status.new(UInt32::MAX).inspect, "Process::Status[0xFFFFFFFF]"
       end
     {% end %}
   end
