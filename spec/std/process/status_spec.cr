@@ -99,6 +99,13 @@ describe Process::Status do
     err1.hash.should eq(err2.hash)
   end
 
+  it "#exit_signal?" do
+    Process::Status.new(exit_status(0)).exit_signal?.should be_nil
+    Process::Status.new(exit_status(1)).exit_signal?.should be_nil
+
+    status_for(:interrupted).exit_signal?.should eq({% if flag?(:unix) %}Signal::INT{% else %}nil{% end %})
+  end
+
   {% if flag?(:unix) && !flag?(:wasi) %}
     it "#exit_signal" do
       Process::Status.new(Signal::HUP.value).exit_signal.should eq Signal::HUP
@@ -108,6 +115,16 @@ describe Process::Status do
 
       unknown_signal = Signal.new(126)
       Process::Status.new(unknown_signal.value).exit_signal.should eq unknown_signal
+    end
+
+    it "#exit_signal?" do
+      Process::Status.new(Signal::HUP.value).exit_signal?.should eq Signal::HUP
+      Process::Status.new(Signal::INT.value).exit_signal?.should eq Signal::INT
+      last_signal = Signal.values[-1]
+      Process::Status.new(last_signal.value).exit_signal?.should eq last_signal
+
+      unknown_signal = Signal.new(126)
+      Process::Status.new(unknown_signal.value).exit_signal?.should eq unknown_signal
     end
 
     it "#normal_exit? with signal code" do

@@ -223,6 +223,20 @@ class Process::Status
     {% end %}
   end
 
+  # Returns the exit `Signal` or `nil` if there is none.
+  #
+  # On Windows returns always `nil`.
+  #
+  # * `#exit_reason` is a portable alternative.
+  def exit_signal? : Signal?
+    {% if flag?(:unix) && !flag?(:wasm32) %}
+      code = signal_code
+      unless code.zero?
+        Signal.new(code)
+      end
+    {% end %}
+  end
+
   # Returns the exit code of the process if it exited normally (`#normal_exit?`).
   #
   # Raises `RuntimeError` if the status describes an abnormal exit.
