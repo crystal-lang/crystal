@@ -180,12 +180,14 @@ class Process::Status
   end
 
   # Returns `true` if the process was terminated by a signal.
+  #
+  # NOTE: In contrast to `WIFSIGNALED` in glibc, the status code `0x7E` (`SIGSTOP`)
+  # is considered a signal.
+  #
+  # * `#abnormal_exit?` is a more portable alternative.
+  # * `#exit_signal?` provides more information about the signal.
   def signal_exit? : Bool
-    {% if flag?(:unix) %}
-      0x01 <= (@exit_status & 0x7F) <= 0x7E
-    {% else %}
-      false
-    {% end %}
+    !!exit_signal?
   end
 
   # Returns `true` if the process terminated normally.
