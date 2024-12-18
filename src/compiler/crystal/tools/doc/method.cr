@@ -43,7 +43,7 @@ class Crystal::Doc::Method
   # This docs not include the "Description copied from ..." banner
   # in case it's needed.
   def doc
-    doc_info.doc
+    doc_info.doc.try &.strip.lchop(":showdoc:")
   end
 
   # Returns the type this method's docs are copied from, but
@@ -128,10 +128,26 @@ class Crystal::Doc::Method
     case
     when @type.program?
       ""
-    when @class_method
+    when @class_method, @type.lib?
       "."
     else
       "#"
+    end
+  end
+
+  def visibility
+    case @def.visibility
+    in .public?
+    in .protected?
+      "protected "
+    in .private?
+      "private "
+    end
+  end
+
+  def real_name
+    if (d = @def).is_a?(External) && (real_name = d.real_name) && (real_name != d.name)
+      " = #{real_name}"
     end
   end
 
@@ -174,6 +190,8 @@ class Crystal::Doc::Method
 
   def kind
     case
+    when @type.lib?
+      "fun "
     when @type.program?
       "def "
     when @class_method
@@ -186,7 +204,9 @@ class Crystal::Doc::Method
   def id
     String.build do |io|
       io << to_s.delete(' ')
-      if @class_method
+      if @type.lib?
+        io << "-function"
+      elsif @class_method
         io << "-class-method"
       else
         io << "-instance-method"
@@ -320,6 +340,7 @@ class Crystal::Doc::Method
     builder.object do
       builder.field "html_id", id
       builder.field "name", name
+      builder.field "real_name", real_name if real_name
       builder.field "doc", doc unless doc.nil?
       builder.field "summary", formatted_summary unless formatted_summary.nil?
       builder.field "abstract", abstract?
@@ -327,7 +348,7 @@ class Crystal::Doc::Method
       builder.field "args_string", args_to_s unless args.empty?
       builder.field "args_html", args_to_html unless args.empty?
       builder.field "location", location unless location.nil?
-      builder.field "def", self.def
+      builder.field @type.lib? ? "fun" : "def", self.def
     end
   end
 
