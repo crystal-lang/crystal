@@ -1859,7 +1859,7 @@ module Crystal
       when "type_vars"
         interpret_check_args { TypeNode.type_vars(type) }
       when "instance_vars"
-        interpret_check_args { TypeNode.instance_vars(type) }
+        interpret_check_args { TypeNode.instance_vars(type, name_loc) }
       when "class_vars"
         interpret_check_args { TypeNode.class_vars(type) }
       when "ancestors"
@@ -2021,7 +2021,7 @@ module Crystal
           end
         end
       when "has_inner_pointers?"
-        interpret_check_args { BoolLiteral.new(type.has_inner_pointers?) }
+        interpret_check_args { TypeNode.has_inner_pointers?(type, name_loc) }
       else
         super
       end
@@ -2077,8 +2077,15 @@ module Crystal
       end
     end
 
-    def self.instance_vars(type)
+    def self.instance_vars(type, name_loc)
       if type.is_a?(InstanceVarContainer)
+        unless type.program.top_level_semantic_complete?
+          if name_loc
+            raise Crystal::TypeException.new("`TypeNode#instance_vars` cannot be called in the top-level scope: instance vars are not yet initialized", name_loc)
+          else
+            raise Crystal::TypeException.new("`TypeNode#instance_vars` cannot be called in the top-level scope: instance vars are not yet initialized")
+          end
+        end
         ArrayLiteral.map(type.all_instance_vars) do |name, ivar|
           meta_var = MetaMacroVar.new(name[1..-1], ivar.type)
           meta_var.var = ivar
@@ -2088,6 +2095,18 @@ module Crystal
       else
         empty_no_return_array
       end
+    end
+
+    def self.has_inner_pointers?(type, name_loc)
+      unless type.program.top_level_semantic_complete?
+        if name_loc
+          raise Crystal::TypeException.new("`TypeNode#has_inner_pointers?` cannot be called in the top-level scope: instance vars are not yet initialized", name_loc)
+        else
+          raise Crystal::TypeException.new("`TypeNode#has_inner_pointers?` cannot be called in the top-level scope: instance vars are not yet initialized")
+        end
+      end
+
+      BoolLiteral.new(type.has_inner_pointers?)
     end
 
     def self.class_vars(type)
