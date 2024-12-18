@@ -270,13 +270,18 @@ class Process::Status
 
   # Prints a textual representation of the process status to *io*.
   #
-  # The result is equivalent to `#to_s`, but prefixed by the type name and
-  # delimited by square brackets: `Process::Status[0]`, `Process::Status[1]`,
-  # `Process::Status[Signal::HUP]`.
+  # The result is similar to `#to_s`, but prefixed by the type name,
+  # delimited by square brackets, and constants use full paths:
+  # `Process::Status[0]`, `Process::Status[1]`, `Process::Status[Signal::HUP]`,
+  # `Process::Status[LibC::STATUS_CONTROL_C_EXIT]`.
   def inspect(io : IO) : Nil
     io << "Process::Status["
     {% if flag?(:win32) %}
-      @exit_status.to_s(io)
+      if name = name_for_win32_exit_status
+        io << "LibC::" << name
+      else
+        @exit_status.to_s(io)
+      end
     {% else %}
       if normal_exit?
         exit_code.inspect(io)
@@ -287,13 +292,38 @@ class Process::Status
     io << "]"
   end
 
+  private def name_for_win32_exit_status
+    case @exit_status
+    # Ignoring LibC::STATUS_SUCCESS here because we prefer its numerical representation `0`
+    when LibC::STATUS_FATAL_APP_EXIT          then "STATUS_FATAL_APP_EXIT"
+    when LibC::STATUS_DATATYPE_MISALIGNMENT   then "STATUS_DATATYPE_MISALIGNMENT"
+    when LibC::STATUS_BREAKPOINT              then "STATUS_BREAKPOINT"
+    when LibC::STATUS_ACCESS_VIOLATION        then "STATUS_ACCESS_VIOLATION"
+    when LibC::STATUS_ILLEGAL_INSTRUCTION     then "STATUS_ILLEGAL_INSTRUCTION"
+    when LibC::STATUS_FLOAT_DIVIDE_BY_ZERO    then "STATUS_FLOAT_DIVIDE_BY_ZERO"
+    when LibC::STATUS_FLOAT_INEXACT_RESULT    then "STATUS_FLOAT_INEXACT_RESULT"
+    when LibC::STATUS_FLOAT_INVALID_OPERATION then "STATUS_FLOAT_INVALID_OPERATION"
+    when LibC::STATUS_FLOAT_OVERFLOW          then "STATUS_FLOAT_OVERFLOW"
+    when LibC::STATUS_FLOAT_UNDERFLOW         then "STATUS_FLOAT_UNDERFLOW"
+    when LibC::STATUS_PRIVILEGED_INSTRUCTION  then "STATUS_PRIVILEGED_INSTRUCTION"
+    when LibC::STATUS_STACK_OVERFLOW          then "STATUS_STACK_OVERFLOW"
+    when LibC::STATUS_CANCELLED               then "STATUS_CANCELLED"
+    when LibC::STATUS_CONTROL_C_EXIT          then "STATUS_CONTROL_C_EXIT"
+    end
+  end
+
   # Prints a textual representation of the process status to *io*.
   #
-  # A normal exit status prints the numerical value (`0`, `1` etc).
+  # A normal exit status prints the numerical value (`0`, `1` etc) or a named
+  # status (e.g. `STATUS_CONTROL_C_EXIT` on Windows).
   # A signal exit status prints the name of the `Signal` member (`HUP`, `INT`, etc.).
   def to_s(io : IO) : Nil
     {% if flag?(:win32) %}
-      @exit_status.to_s(io)
+      if name = name_for_win32_exit_status
+        io << name
+      else
+        @exit_status.to_s(io)
+      end
     {% else %}
       if normal_exit?
         io << exit_code
@@ -310,11 +340,12 @@ class Process::Status
 
   # Returns a textual representation of the process status.
   #
-  # A normal exit status prints the numerical value (`0`, `1` etc).
+  # A normal exit status prints the numerical value (`0`, `1` etc) or a named
+  # status (e.g. `STATUS_CONTROL_C_EXIT` on Windows).
   # A signal exit status prints the name of the `Signal` member (`HUP`, `INT`, etc.).
   def to_s : String
     {% if flag?(:win32) %}
-      @exit_status.to_s
+      name_for_win32_exit_status || @exit_status.to_s
     {% else %}
       if normal_exit?
         exit_code.to_s
