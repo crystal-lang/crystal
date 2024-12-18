@@ -294,7 +294,7 @@ class Process::Status
       if name = name_for_win32_exit_status
         io << "LibC::" << name
       else
-        @exit_status.to_s(io)
+        stringify_exit_status_windows(io)
       end
     {% else %}
       if signal = exit_signal?
@@ -336,7 +336,7 @@ class Process::Status
       if name = name_for_win32_exit_status
         io << name
       else
-        @exit_status.to_s(io)
+        stringify_exit_status_windows(io)
       end
     {% else %}
       if signal = exit_signal?
@@ -358,7 +358,7 @@ class Process::Status
   # A signal exit status prints the name of the `Signal` member (`HUP`, `INT`, etc.).
   def to_s : String
     {% if flag?(:win32) %}
-      name_for_win32_exit_status || @exit_status.to_s
+      name_for_win32_exit_status || String.build { |io| stringify_exit_status_windows(io) }
     {% else %}
       if signal = exit_signal?
         signal.member_name || signal.inspect
@@ -366,5 +366,15 @@ class Process::Status
         exit_code.to_s
       end
     {% end %}
+  end
+
+  private def stringify_exit_status_windows(io)
+    # On Windows large status codes are typically expressed in hexadecimal
+    if @exit_status >= UInt16::MAX
+      io << "0x"
+      @exit_status.to_s(base: 16, upcase: true).rjust(io, 8, '0')
+    else
+      @exit_status.to_s(io)
+    end
   end
 end
