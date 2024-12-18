@@ -100,7 +100,7 @@
 #
 # Color::Red.value # : UInt8
 # ```
-struct Enum
+abstract struct Enum
   include Comparable(self)
 
   # Returns *value*.
@@ -167,11 +167,11 @@ struct Enum
 
   # Returns an unambiguous `String` representation of this enum member.
   # In the case of a single member value, this is the fully qualified name of
-  # the member (equvalent to `#to_s` with the enum name as prefix).
+  # the member (equivalent to `#to_s` with the enum name as prefix).
   # In the case of multiple members (for a flags enum), it's a call to `Enum.[]`
   # for recreating the same value.
   #
-  # If the value can't be represented fully by named members, the remainig value
+  # If the value can't be represented fully by named members, the remaining value
   # is appended.
   #
   # ```
@@ -225,7 +225,8 @@ struct Enum
     end
   end
 
-  private def member_name
+  # :nodoc:
+  def member_name : String?
     # Can't use `case` here because case with duplicate values do
     # not compile, but enums can have duplicates (such as `enum Foo; FOO = 1; BAR = 1; end`).
     {% for member in @type.constants %}

@@ -1,5 +1,5 @@
 require "./digest"
-require "openssl"
+require "openssl/digest"
 
 # Implements the MD5 digest algorithm.
 #

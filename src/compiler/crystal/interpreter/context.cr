@@ -75,7 +75,7 @@ class Crystal::Repl::Context
     end
 
     # This is a stack pool, for checkout_stack.
-    @stack_pool = [] of UInt8*
+    @stack_pool = Fiber::StackPool.new(protect: false)
 
     # Mapping of types to numeric ids
     @type_to_id = {} of Type => Int32
@@ -106,16 +106,12 @@ class Crystal::Repl::Context
   # Once the block returns, the stack is returned to the pool.
   # The stack is not cleared after or before it's used.
   def checkout_stack(& : UInt8* -> _)
-    if @stack_pool.empty?
-      stack = Pointer(Void).malloc(8 * 1024 * 1024).as(UInt8*)
-    else
-      stack = @stack_pool.pop
-    end
+    stack, _ = @stack_pool.checkout
 
     begin
-      yield stack
+      yield stack.as(UInt8*)
     ensure
-      @stack_pool.push(stack)
+      @stack_pool.release(stack)
     end
   end
 
@@ -315,8 +311,44 @@ class Crystal::Repl::Context
     0
   end
 
+  def inner_alignof_type(node : ASTNode) : Int32
+    inner_alignof_type(node.type?)
+  end
+
+  def inner_alignof_type(type : Type) : Int32
+    @program.align_of(type.sizeof_type).to_i32
+  end
+
+  def inner_alignof_type(type : Nil) : Int32
+    0
+  end
+
   def aligned_instance_sizeof_type(type : Type) : Int32
-    align(@program.instance_size_of(type.sizeof_type).to_i32)
+    align(inner_instance_sizeof_type(type))
+  end
+
+  def inner_instance_sizeof_type(node : ASTNode) : Int32
+    inner_instance_sizeof_type(node.type?)
+  end
+
+  def inner_instance_sizeof_type(type : Type) : Int32
+    @program.instance_size_of(type.sizeof_type).to_i32
+  end
+
+  def inner_instance_sizeof_type(type : Nil) : Int32
+    0
+  end
+
+  def inner_instance_alignof_type(node : ASTNode) : Int32
+    inner_instance_alignof_type(node.type?)
+  end
+
+  def inner_instance_alignof_type(type : Type) : Int32
+    @program.instance_align_of(type.sizeof_type).to_i32
+  end
+
+  def inner_instance_alignof_type(type : Nil) : Int32
+    0
   end
 
   def offset_of(type : Type, index : Int32) : Int32
@@ -356,26 +388,30 @@ class Crystal::Repl::Context
     @id_to_type[id]
   end
 
+  getter? loader : Loader?
+
   getter(loader : Loader) {
     lib_flags = program.lib_flags
     # Execute and expand `subcommands`.
-    lib_flags = lib_flags.gsub(/`(.*?)`/) { `#{$1}` }
+    lib_flags = lib_flags.gsub(/`(.*?)`/) { `#{$1}`.chomp }
 
     args = Process.parse_arguments(lib_flags)
     # FIXME: Part 1: This is a workaround for initial integration of the interpreter:
     # The loader can't handle the static libgc.a usually shipped with crystal and loading as a shared library conflicts
     # with the compiler's own GC.
-    # (MSVC doesn't seem to have this issue)
-    args.delete("-lgc")
+    # (Windows doesn't seem to have this issue)
+    unless program.has_flag?("win32") && program.has_flag?("gnu")
+      args.delete("-lgc")
+    end
 
-    Crystal::Loader.parse(args).tap do |loader|
-      if ENV["CRYSTAL_INTERPRETER_LOADER_INFO"]?.presence
-        STDERR.puts "Crystal::Loader loaded libraries:"
-        loader.loaded_libraries.each do |path|
-          STDERR.puts "      #{path}"
-        end
-      end
+    # recreate the MSVC developer prompt environment, similar to how compiled
+    # code does it in `Compiler#linker_command`
+    if program.has_flag?("msvc")
+      _, link_args = program.msvc_compiler_and_flags
+      args.concat(link_args)
+    end
 
+    Crystal::Loader.parse(args, dll_search_paths: dll_search_paths).tap do |loader|
       # FIXME: Part 2: This is a workaround for initial integration of the interpreter:
       # We append a handle to the current executable (i.e. the compiler program)
       # to the loader's handle list. This gives the loader access to all the symbols in the compiler program,
@@ -385,10 +421,34 @@ class Crystal::Repl::Context
       loader.load_current_program_handle
 
       if ENV["CRYSTAL_INTERPRETER_LOADER_INFO"]?.presence
-        STDERR.puts "      current program handle"
+        STDERR.puts "Crystal::Loader loaded libraries:"
+        loader.loaded_libraries.each do |path|
+          STDERR.puts "      #{path}"
+        end
       end
     end
   }
+
+  # Extra DLL search paths to mimic compiled code's DLL-copying behavior
+  # regarding `@[Link]` annotations. These directories should match the ones
+  # used in `Crystal::Program#each_dll_path`
+  private def dll_search_paths
+    {% if flag?(:msvc) %}
+      paths = CrystalLibraryPath.default_paths
+
+      if executable_path = Process.executable_path
+        paths << File.dirname(executable_path)
+      end
+
+      ENV["PATH"]?.try &.split(Process::PATH_DELIMITER, remove_empty: true) do |path|
+        paths << path
+      end
+
+      paths
+    {% else %}
+      nil
+    {% end %}
+  end
 
   def c_function(name : String)
     loader.find_symbol(name)

@@ -243,4 +243,115 @@ describe "Code gen: sizeof" do
 
       z)).to_i.should eq(16)
   end
+
+  describe "alignof" do
+    it "gets alignof primitive types" do
+      run("alignof(Int32)").to_i.should eq(4)
+      run("alignof(Void)").to_i.should eq(1)
+      run("alignof(NoReturn)").to_i.should eq(1)
+      run("alignof(Nil)").to_i.should eq(1)
+      run("alignof(Bool)").to_i.should eq(1)
+    end
+
+    it "gets alignof struct" do
+      run(<<-CRYSTAL).to_i.should eq(4)
+        struct Foo
+          def initialize(@x : Int8, @y : Int32, @z : Int16)
+          end
+        end
+
+        Foo.new(1, 2, 3)
+
+        alignof(Foo)
+        CRYSTAL
+    end
+
+    it "gets alignof class" do
+      # pointer size and alignment should be identical
+      run(<<-CRYSTAL).to_i.should eq(sizeof(Void*))
+        class Foo
+          def initialize(@x : Int8, @y : Int32, @z : Int16)
+          end
+        end
+
+        Foo.new(1, 2, 3)
+
+        alignof(Foo)
+        CRYSTAL
+    end
+
+    it "gets alignof union" do
+      run("alignof(Int32 | Int8)").to_i.should eq(8)
+      run("alignof(Int32 | Int64)").to_i.should eq(8)
+    end
+
+    it "alignof mixed union is not less than alignof its variant types" do
+      # NOTE: `alignof(Int128) == 16` is not guaranteed
+      run("alignof(Int32 | Int128) >= alignof(Int128)").to_b.should be_true
+    end
+  end
+
+  describe "instance_alignof" do
+    it "gets instance_alignof class" do
+      run(<<-CRYSTAL).to_i.should eq(4)
+        class Foo
+          def initialize(@x : Int8, @y : Int32, @z : Int16)
+          end
+        end
+
+        Foo.new(1, 2, 3)
+
+        instance_alignof(Foo)
+        CRYSTAL
+
+      run(<<-CRYSTAL).to_i.should eq(8)
+        class Foo
+          def initialize(@x : Int8, @y : Int64, @z : Int16)
+          end
+        end
+
+        Foo.new(1, 2, 3)
+
+        instance_alignof(Foo)
+        CRYSTAL
+
+      run(<<-CRYSTAL).to_i.should eq(4)
+        class Foo
+        end
+
+        Foo.new
+
+        instance_alignof(Foo)
+        CRYSTAL
+    end
+
+    it "gets instance_alignof a generic type with type vars" do
+      run(<<-CRYSTAL).to_i.should eq(4)
+        class Foo(T)
+          def initialize(@x : T)
+          end
+        end
+
+        instance_alignof(Foo(Int32))
+        CRYSTAL
+
+      run(<<-CRYSTAL).to_i.should eq(8)
+        class Foo(T)
+          def initialize(@x : T)
+          end
+        end
+
+        instance_alignof(Foo(Int64))
+        CRYSTAL
+
+      run(<<-CRYSTAL).to_i.should eq(4)
+        class Foo(T)
+          def initialize(@x : T)
+          end
+        end
+
+        instance_alignof(Foo(Int8))
+        CRYSTAL
+    end
+  end
 end

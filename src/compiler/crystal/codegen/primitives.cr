@@ -11,6 +11,8 @@ class Crystal::CodeGenVisitor
             else
               raise "BUG: unhandled primitive in codegen visit: #{node.name}"
             end
+
+    false
   end
 
   def codegen_primitive(call, node, target_def, call_args)
@@ -25,6 +27,8 @@ class Crystal::CodeGenVisitor
               codegen_primitive_convert node, target_def, call_args, checked: false
             when "allocate"
               codegen_primitive_allocate node, target_def, call_args
+            when "pre_initialize"
+              codegen_primitive_pre_initialize node, target_def, call_args
             when "pointer_malloc"
               codegen_primitive_pointer_malloc node, target_def, call_args
             when "pointer_set"
@@ -740,6 +744,17 @@ class Crystal::CodeGenVisitor
     @last
   end
 
+  def codegen_primitive_pre_initialize(node, target_def, call_args)
+    type = node.type
+
+    base_type = type.is_a?(VirtualType) ? type.base_type : type
+
+    ptr = call_args[target_def.owner.passed_as_self? ? 1 : 0]
+    pre_initialize_aggregate base_type, llvm_struct_type(base_type), ptr
+
+    @last = cast_to ptr, type
+  end
+
   def codegen_primitive_pointer_malloc(node, target_def, call_args)
     type = node.type.as(PointerInstanceType)
     llvm_type = llvm_embedded_type(type.element_type)
@@ -1150,8 +1165,11 @@ class Crystal::CodeGenVisitor
     call = check_atomic_call(call, target_def)
     ptr, cmp, new, success_ordering, failure_ordering = call_args
 
-    success_ordering = atomic_ordering_get_const(call.args[-2], success_ordering)
-    failure_ordering = atomic_ordering_get_const(call.args[-1], failure_ordering)
+    success_node = call.args[-2]
+    failure_node = call.args[-1]
+    success_ordering = atomic_ordering_get_const(success_node, success_ordering)
+    failure_ordering = atomic_ordering_get_const(failure_node, failure_ordering)
+    validate_atomic_cmpxchg_ordering(success_node, success_ordering, failure_node, failure_ordering)
 
     value = builder.cmpxchg(ptr, cmp, new, success_ordering, failure_ordering)
     value_type = node.type.as(TupleInstanceType)
@@ -1177,8 +1195,13 @@ class Crystal::CodeGenVisitor
     call = check_atomic_call(call, target_def)
     ordering, _ = call_args
 
-    ordering = atomic_ordering_get_const(call.args[0], ordering)
+    ordering_node = call.args[0]
+    ordering = atomic_ordering_get_const(ordering_node, ordering)
     singlethread = bool_from_bool_literal(call.args[1])
+
+    ordering_node.raise "must be atomic" if ordering.not_atomic?
+    ordering_node.raise "cannot be unordered" if ordering.unordered?
+    ordering_node.raise "must have acquire, release, acquire_release or sequentially_consistent ordering" if ordering.monotonic?
 
     builder.fence(ordering, singlethread)
     llvm_nil
@@ -1271,6 +1294,23 @@ class Crystal::CodeGenVisitor
     else
       node.raise "BUG: unknown atomic rwm bin op: #{node}"
     end
+  end
+
+  def validate_atomic_cmpxchg_ordering(success_node, success_ordering, failure_node, failure_ordering)
+    success_node.raise "must be atomic" if success_ordering.not_atomic?
+    success_node.raise "cannot be unordered" if success_ordering.unordered?
+
+    failure_node.raise "must be atomic" if failure_ordering.not_atomic?
+    failure_node.raise "cannot be unordered" if failure_ordering.unordered?
+    failure_node.raise "cannot include release semantics" if failure_ordering.release? || failure_ordering.acquire_release?
+
+    {% if LibLLVM::IS_LT_130 %}
+      # Atomic(T) macros enforce this rule to provide a consistent public API
+      # regardless of which LLVM version crystal was compiled with. The compiler,
+      # however, only needs to make sure that the codegen is correct for the LLVM
+      # version
+      failure_node.raise "shall be no stronger than success ordering" if failure_ordering > success_ordering
+    {% end %}
   end
 
   def bool_from_bool_literal(node)

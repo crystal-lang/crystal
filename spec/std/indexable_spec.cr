@@ -1,4 +1,32 @@
 require "spec"
+require "spec/helpers/iterate"
+
+module OtherInterface; end
+
+private record Three do
+  include OtherInterface
+end
+
+private record Four do
+  include OtherInterface
+end
+
+private struct InterfaceIndexable
+  include Indexable(OtherInterface)
+
+  def size
+    2
+  end
+
+  def unsafe_fetch(index : Int) : OtherInterface
+    case index
+    when 0 then Three.new
+    when 1 then Four.new
+    else
+      raise ""
+    end
+  end
+end
 
 private class SafeIndexable
   include Indexable(Int32)
@@ -810,6 +838,17 @@ describe Indexable do
         b.should eq(comb)
       end
       iter.next.should be_a(Iterator::Stop)
+    end
+
+    describe "n > size (#14088)" do
+      it_iterates "#each_repeated_combination", [[1, 1, 1], [1, 1, 2], [1, 2, 2], [2, 2, 2]], SafeIndexable.new(2, 1).each_repeated_combination(3)
+      it_iterates "#each_repeated_combination", [[1, 1, 1, 1], [1, 1, 1, 2], [1, 1, 2, 2], [1, 2, 2, 2], [2, 2, 2, 2]], SafeIndexable.new(2, 1).each_repeated_combination(4)
+    end
+  end
+
+  describe "#to_a" do
+    it "without a block of an interface type" do
+      InterfaceIndexable.new.to_a.should eq [Three.new, Four.new]
     end
   end
 end

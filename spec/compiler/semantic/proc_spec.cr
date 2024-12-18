@@ -249,8 +249,6 @@ describe "Semantic: proc" do
 
   it "types proc literal hard type inference (1)" do
     assert_type(%(
-      require "prelude"
-
       class Foo
         def initialize(@x : Int32)
         end
@@ -543,8 +541,6 @@ describe "Semantic: proc" do
 
   it "types proc literal with a type that was never instantiated" do
     assert_type(%(
-      require "prelude"
-
       class Foo
         def initialize(@x : Int32)
         end
@@ -560,8 +556,6 @@ describe "Semantic: proc" do
 
   it "types proc pointer with a type that was never instantiated" do
     assert_type(%(
-      require "prelude"
-
       class Foo
         def initialize(@x : Int32)
         end

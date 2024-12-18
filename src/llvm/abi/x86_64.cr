@@ -100,7 +100,7 @@ class LLVM::ABI::X86_64 < LLVM::ABI
   def classify(type)
     words = (size(type) + 7) // 8
     reg_classes = Array.new(words, RegClass::NoClass)
-    if words > 4
+    if words > 4 || has_misaligned_fields?(type)
       all_mem(reg_classes)
     else
       classify(type, reg_classes, 0, 0)
@@ -273,6 +273,16 @@ class LLVM::ABI::X86_64 < LLVM::ABI
 
   def size(type : Type) : Int32
     size(type, 8)
+  end
+
+  def has_misaligned_fields?(type : Type) : Bool
+    return false unless type.packed_struct?
+    offset = 0
+    type.struct_element_types.each do |elem|
+      return true unless offset.divisible_by?(align(elem))
+      offset += size(elem)
+    end
+    false
   end
 
   enum RegClass

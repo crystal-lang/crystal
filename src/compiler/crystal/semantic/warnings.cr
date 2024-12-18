@@ -76,7 +76,7 @@ module Crystal
     def short_reference
       case owner
       when Program
-        "top-level #{name}"
+        "::#{name}"
       when MetaclassType
         "#{owner.instance_type.to_s(generic_args: false)}.#{name}"
       else
@@ -122,7 +122,7 @@ module Crystal
     def short_reference
       case owner
       when Program
-        "top-level #{name}"
+        "::#{name}"
       when .metaclass?
         "#{owner.instance_type}.#{name}"
       else

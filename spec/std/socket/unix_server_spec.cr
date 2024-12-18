@@ -4,6 +4,12 @@ require "../../support/fibers"
 require "../../support/channel"
 require "../../support/tempfile"
 
+# TODO: Windows networking in the interpreter requires #12495
+{% if flag?(:interpreted) && flag?(:win32) %}
+  pending UNIXServer
+  {% skip_file %}
+{% end %}
+
 describe UNIXServer do
   describe ".new" do
     it "raises when path is too long" do
@@ -95,13 +101,13 @@ describe UNIXServer do
           ch.send(:end)
         end
 
-        ch.receive.begin?.should be_true
+        ch.receive.should eq SpecChannelStatus::Begin
 
         # wait for the server to call accept
         wait_until_blocked f
 
         server.close
-        ch.receive.end?.should be_true
+        ch.receive.should eq SpecChannelStatus::End
 
         exception.should be_a(IO::Error)
         exception.try(&.message).should eq("Closed stream")
@@ -136,17 +142,31 @@ describe UNIXServer do
           ch.send :end
         end
 
-        ch.receive.begin?.should be_true
+        ch.receive.should eq SpecChannelStatus::Begin
 
         # wait for the server to call accept
         wait_until_blocked f
 
         server.close
-        ch.receive.end?.should be_true
+        ch.receive.should eq SpecChannelStatus::End
 
         ret.should be_nil
       end
     end
+
+    {% unless flag?(:win32) %}
+      it "sets close on exec flag" do
+        with_tempfile("unix_socket-accept.sock") do |path|
+          UNIXServer.open(path) do |server|
+            UNIXSocket.open(path) do |client|
+              server.accept? do |sock|
+                sock.close_on_exec?.should be_true
+              end
+            end
+          end
+        end
+      end
+    {% end %}
   end
 
   # Datagram socket type is not supported on Windows yet:

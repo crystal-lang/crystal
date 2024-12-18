@@ -1,5 +1,6 @@
 require "../spec_helper"
 require "../../support/channel"
+require "../../support/string"
 require "spec/helpers/iterate"
 
 require "socket"
@@ -104,11 +105,11 @@ describe IO do
         write.puts "hello"
         slice = Bytes.new 1024
 
-        read.read_timeout = 1
+        read.read_timeout = 1.second
         read.read(slice).should eq(6)
 
         expect_raises(IO::TimeoutError) do
-          read.read_timeout = 0.0000001
+          read.read_timeout = 0.1.microseconds
           read.read(slice)
         end
       end
@@ -146,15 +147,6 @@ describe IO do
     end
   end
 
-  it "reopens" do
-    File.open(datapath("test_file.txt")) do |file1|
-      File.open(datapath("test_file.ini")) do |file2|
-        file2.reopen(file1)
-        file2.gets.should eq("Hello World")
-      end
-    end
-  end
-
   describe "read operations" do
     it "does gets" do
       io = SimpleIOMemory.new("hello\nworld\n")
@@ -181,6 +173,40 @@ describe IO do
       io.gets(chomp: false).should eq("hello\n")
       io.gets(chomp: false).should eq("world\n")
       io.gets(chomp: false).should be_nil
+    end
+
+    it "does gets with empty string (no peek)" do
+      io = SimpleIOMemory.new("")
+      io.gets(chomp: true).should be_nil
+    end
+
+    it "does gets with empty string (with peek)" do
+      io = IO::Memory.new("")
+      io.gets(chomp: true).should be_nil
+    end
+
+    it "does gets with \\n (no peek)" do
+      io = SimpleIOMemory.new("\n")
+      io.gets(chomp: true).should eq("")
+      io.gets(chomp: true).should be_nil
+    end
+
+    it "does gets with \\n (with peek)" do
+      io = IO::Memory.new("\n")
+      io.gets(chomp: true).should eq("")
+      io.gets(chomp: true).should be_nil
+    end
+
+    it "does gets with \\r\\n (no peek)" do
+      io = SimpleIOMemory.new("\r\n")
+      io.gets(chomp: true).should eq("")
+      io.gets(chomp: true).should be_nil
+    end
+
+    it "does gets with \\r\\n (with peek)" do
+      io = IO::Memory.new("\r\n")
+      io.gets(chomp: true).should eq("")
+      io.gets(chomp: true).should be_nil
     end
 
     it "does gets with big line" do
@@ -304,29 +330,13 @@ describe IO do
       io.read_char.should eq('界')
       io.read_char.should be_nil
 
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xc4, 0x70]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xc4, 0x70, 0x00, 0x00]).read_char }
+      {% for bytes, char in VALID_UTF8_BYTE_SEQUENCES %}
+        SimpleIOMemory.new(Bytes{{ bytes }}).read_char.should eq({{ char }})
+      {% end %}
 
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xf8]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xf8, 0x00, 0x00, 0x00]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0x81]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0x81, 0x00, 0x00, 0x00]).read_char }
-
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xed, 0xa0, 0x80]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xed, 0xa0, 0x80, 0x00]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xed, 0xbf, 0xbf]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xed, 0xbf, 0xbf, 0x00]).read_char }
-
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xc0, 0x80]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xc0, 0x80, 0x00, 0x00]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xc1, 0xbf]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xc1, 0xbf, 0x00, 0x00]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xe0, 0x80, 0x80]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xe0, 0x80, 0x80, 0x00]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xe0, 0x9f, 0xbf]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xe0, 0x9f, 0xbf, 0x00]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xf0, 0x80, 0x80, 0x80]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xf0, 0x8f, 0xbf, 0xbf]).read_char }
+      {% for bytes in INVALID_UTF8_BYTE_SEQUENCES %}
+        expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes{{ bytes }}).read_char }
+      {% end %}
     end
 
     it "reads byte" do
@@ -415,9 +425,9 @@ describe IO do
       str.read_fully?(slice).should be_nil
     end
 
-    # pipe(2) returns bidirectional file descriptors on FreeBSD,
+    # pipe(2) returns bidirectional file descriptors on some platforms,
     # gate this test behind the platform flag.
-    {% unless flag?(:freebsd) %}
+    {% unless flag?(:freebsd) || flag?(:solaris) || flag?(:openbsd) || flag?(:dragonfly) %}
       it "raises if trying to read to an IO not opened for reading" do
         IO.pipe do |r, w|
           expect_raises(IO::Error, "File not open for reading") do
@@ -450,6 +460,30 @@ describe IO do
         io1 = OneByOneIO.new("hello")
         io2 = IO::Memory.new("hella")
         IO.same_content?(io2, io1).should be_false
+      end
+
+      it "refutes prefix match, one way" do
+        io1 = OneByOneIO.new("hello")
+        io2 = IO::Memory.new("hello again")
+        IO.same_content?(io1, io2).should be_false
+      end
+
+      it "refutes prefix match, second way" do
+        io1 = IO::Memory.new("hello")
+        io2 = OneByOneIO.new("hello again")
+        IO.same_content?(io1, io2).should be_false
+      end
+
+      it "refutes prefix match, one way" do
+        io1 = OneByOneIO.new("hello again")
+        io2 = IO::Memory.new("hello")
+        IO.same_content?(io1, io2).should be_false
+      end
+
+      it "refutes prefix match, second way" do
+        io1 = IO::Memory.new("hello again")
+        io2 = OneByOneIO.new("hello")
+        IO.same_content?(io1, io2).should be_false
       end
     end
   end
@@ -540,9 +574,9 @@ describe IO do
       io.read_byte.should be_nil
     end
 
-    # pipe(2) returns bidirectional file descriptors on FreeBSD,
+    # pipe(2) returns bidirectional file descriptors on some platforms,
     # gate this test behind the platform flag.
-    {% unless flag?(:freebsd) %}
+    {% unless flag?(:freebsd) || flag?(:solaris) || flag?(:openbsd) || flag?(:dragonfly) %}
       it "raises if trying to write to an IO not opened for writing" do
         IO.pipe do |r, w|
           # unless sync is used the flush on close triggers the exception again
@@ -702,9 +736,13 @@ describe IO do
         it "says invalid byte sequence" do
           io = SimpleIOMemory.new(Slice.new(1, 255_u8))
           io.set_encoding("EUC-JP")
-          expect_raises ArgumentError, {% if flag?(:musl) || flag?(:freebsd) %}"Incomplete multibyte sequence"{% else %}"Invalid multibyte sequence"{% end %} do
-            io.read_char
-          end
+          message =
+            {% if flag?(:musl) || flag?(:freebsd) || flag?(:netbsd) || flag?(:dragonfly) %}
+              "Incomplete multibyte sequence"
+            {% else %}
+              "Invalid multibyte sequence"
+            {% end %}
+          expect_raises(ArgumentError, message) { io.read_char }
         end
 
         it "skips invalid byte sequences" do
@@ -782,23 +820,26 @@ describe IO do
           io.gets_to_end.should eq("\r\nFoo\nBar")
         end
 
-        it "gets ascii from socket (#9056)" do
-          server = TCPServer.new "localhost", 0
-          sock = TCPSocket.new "localhost", server.local_address.port
-          begin
-            sock.set_encoding("ascii")
-            spawn do
-              client = server.accept
-              message = client.gets
-              client << "#{message}\n"
+        # TODO: Windows networking in the interpreter requires #12495
+        {% unless flag?(:interpreted) || flag?(:win32) %}
+          it "gets ascii from socket (#9056)" do
+            server = TCPServer.new "localhost", 0
+            sock = TCPSocket.new "localhost", server.local_address.port
+            begin
+              sock.set_encoding("ascii")
+              spawn do
+                client = server.accept
+                message = client.gets
+                client << "#{message}\n"
+              end
+              sock << "K\n"
+              sock.gets.should eq("K")
+            ensure
+              server.close
+              sock.close
             end
-            sock << "K\n"
-            sock.gets.should eq("K")
-          ensure
-            server.close
-            sock.close
           end
-        end
+        {% end %}
       end
 
       describe "encode" do
@@ -939,11 +980,11 @@ describe IO do
 
         schedule_timeout ch
 
-        ch.receive.begin?.should be_true
+        ch.receive.should eq SpecChannelStatus::Begin
         wait_until_blocked f
 
         read.close
-        ch.receive.end?.should be_true
+        ch.receive.should eq SpecChannelStatus::End
       end
     end
 
@@ -962,21 +1003,22 @@ describe IO do
 
         schedule_timeout ch
 
-        ch.receive.begin?.should be_true
+        ch.receive.should eq SpecChannelStatus::Begin
         wait_until_blocked f
 
         write.close
-        ch.receive.end?.should be_true
+        ch.receive.should eq SpecChannelStatus::End
       end
     end
   end
 
-  typeof(STDIN.noecho { })
-  typeof(STDIN.noecho!)
-  typeof(STDIN.echo { })
-  typeof(STDIN.echo!)
-  typeof(STDIN.cooked { })
-  typeof(STDIN.cooked!)
-  typeof(STDIN.raw { })
-  typeof(STDIN.raw!)
+  describe IO::Error do
+    describe ".new" do
+      it "accepts `cause` argument (#14241)" do
+        cause = Exception.new("cause")
+        error = IO::Error.new("foo", cause: cause)
+        error.cause.should be cause
+      end
+    end
+  end
 end

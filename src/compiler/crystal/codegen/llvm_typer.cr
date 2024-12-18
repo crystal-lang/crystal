@@ -245,6 +245,10 @@ module Crystal
       llvm_type(type.remove_alias, wants_size)
     end
 
+    private def create_llvm_type(type : ReferenceStorageType, wants_size)
+      llvm_struct_type(type.reference_type, wants_size)
+    end
+
     private def create_llvm_type(type : NonGenericModuleType | GenericClassType, wants_size)
       # This can only be reached if the module or generic class don't have implementors
       @llvm_context.int1
@@ -574,15 +578,15 @@ module Crystal
     end
 
     def align_of(type)
-      @layout.abi_alignment(type)
+      if type.void?
+        1_u32
+      else
+        @layout.abi_alignment(type)
+      end
     end
 
     def size_t
-      if @program.bits64?
-        @llvm_context.int64
-      else
-        @llvm_context.int32
-      end
+      @llvm_context.int(@program.size_bit_width)
     end
 
     @pointer_size : UInt64?

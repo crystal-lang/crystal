@@ -31,6 +31,7 @@ let
   };
 
   pkgs = if musl then nixpkgs.pkgsMusl else nixpkgs;
+  llvmPackages = pkgs."llvmPackages_${toString llvm}";
 
   genericBinary = { url, sha256 }:
     pkgs.stdenv.mkDerivation rec {
@@ -52,86 +53,30 @@ let
   # Hashes obtained using `nix-prefetch-url --unpack <url>`
   latestCrystalBinary = genericBinary ({
     x86_64-darwin = {
-      url = "https://github.com/crystal-lang/crystal/releases/download/1.9.2/crystal-1.9.2-1-darwin-universal.tar.gz";
-      sha256 = "sha256:0ngiflk7yxb6ry5ax1zrbm3rh4psq7flv7xj6ph4g8qqx74qv79m";
+      url = "https://github.com/crystal-lang/crystal/releases/download/1.14.0/crystal-1.14.0-1-darwin-universal.tar.gz";
+      sha256 = "sha256:09mp3mngj4wik4v2bffpms3x8dksmrcy0a7hs4cg8b13hrfdrgww";
     };
 
     aarch64-darwin = {
-      url = "https://github.com/crystal-lang/crystal/releases/download/1.9.2/crystal-1.9.2-1-darwin-universal.tar.gz";
-      sha256 = "sha256:0ngiflk7yxb6ry5ax1zrbm3rh4psq7flv7xj6ph4g8qqx74qv79m";
+      url = "https://github.com/crystal-lang/crystal/releases/download/1.14.0/crystal-1.14.0-1-darwin-universal.tar.gz";
+      sha256 = "sha256:09mp3mngj4wik4v2bffpms3x8dksmrcy0a7hs4cg8b13hrfdrgww";
     };
 
     x86_64-linux = {
-      url = "https://github.com/crystal-lang/crystal/releases/download/1.9.2/crystal-1.9.2-1-linux-x86_64.tar.gz";
-      sha256 = "sha256:1d4wmr49m3ykylh4zwp184mm98vj0cqmflhgnmgry8nkwhkvs900";
+      url = "https://github.com/crystal-lang/crystal/releases/download/1.14.0/crystal-1.14.0-1-linux-x86_64.tar.gz";
+      sha256 = "sha256:0p5b22ivggf9xlw91cbhib7n4lzd8is1shd3480jjp14rn1kiy5z";
     };
   }.${pkgs.stdenv.system});
 
-  pkgconfig = pkgs.pkgconfig;
-
-  llvm_suite = ({
-    llvm_16 = {
-      llvm = pkgs.llvm_16;
-      extra = [ pkgs.lld_16 pkgs.lldb_16 ];
-    };
-    llvm_15 = {
-      llvm = pkgs.llvm_15;
-      extra = [ pkgs.lld_15 pkgs.lldb_15 ];
-    };
-    llvm_14 = {
-      llvm = pkgs.llvm_14;
-      extra = [ pkgs.lld_14 pkgs.lldb_14 ];
-    };
-    llvm_13 = {
-      llvm = pkgs.llvm_13;
-      extra = [ pkgs.lld_13 pkgs.lldb_13 ];
-    };
-    llvm_12 = {
-      llvm = pkgs.llvm_12;
-      extra = [ pkgs.lld_12 pkgs.lldb_12 ];
-    };
-    llvm_11 = {
-      llvm = pkgs.llvm_11;
-      extra = [ pkgs.lld_11 pkgs.lldb_11 ];
-    };
-    llvm_10 = {
-      llvm = pkgs.llvm_10;
-      extra = [ pkgs.lld_10 ]; # lldb marked as broken
-    };
-    llvm_9 = {
-      llvm = pkgs.llvm_9;
-      extra = [ pkgs.lld_9 ]; # lldb marked as broken
-    };
-    llvm_8 = {
-      llvm = pkgs.llvm_8;
-      extra = [ pkgs.lld_8 ]; # lldb marked as broken
-    };
-  }."llvm_${toString llvm}");
-
-  boehmgc = pkgs.stdenv.mkDerivation rec {
-    pname = "boehm-gc";
-    version = "8.2.4";
-
-    src = builtins.fetchTarball {
-      url = "https://github.com/ivmai/bdwgc/releases/download/v${version}/gc-${version}.tar.gz";
-      sha256 = "0primpxl7hykfbmszf7ppbv7k1nj41f1r5m56n96q92mmzqlwybm";
-    };
-
-    configureFlags = [
-      "--disable-debug"
-      "--disable-dependency-tracking"
-      "--disable-shared"
-      "--enable-large-config"
-    ];
-
-    enableParallelBuilding = true;
+  boehmgc = pkgs.boehmgc.override {
+    enableLargeConfig = true;
   };
 
   stdLibDeps = with pkgs; [
       boehmgc gmp libevent libiconv libxml2 libyaml openssl pcre2 zlib
     ] ++ lib.optionals stdenv.isDarwin [ libiconv ];
 
-  tools = [ pkgs.hostname pkgs.git llvm_suite.extra ];
+  tools = [ pkgs.hostname pkgs.git llvmPackages.bintools ] ++ pkgs.lib.optional (!llvmPackages.lldb.meta.broken) llvmPackages.lldb;
 in
 
 pkgs.stdenv.mkDerivation rec {
@@ -139,12 +84,12 @@ pkgs.stdenv.mkDerivation rec {
 
   buildInputs = tools ++ stdLibDeps ++ [
     latestCrystalBinary
-    pkgconfig
-    llvm_suite.llvm
+    pkgs.pkg-config
+    llvmPackages.libllvm
     pkgs.libffi
   ];
 
-  LLVM_CONFIG = "${llvm_suite.llvm.dev}/bin/llvm-config";
+  LLVM_CONFIG = "${llvmPackages.libllvm.dev}/bin/llvm-config";
 
   MACOSX_DEPLOYMENT_TARGET = "10.11";
 }

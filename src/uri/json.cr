@@ -23,6 +23,20 @@ class URI
   # URI.parse("http://example.com").to_json # => %("http://example.com")
   # ```
   def to_json(builder : JSON::Builder)
-    builder.string to_s
+    builder.string self
+  end
+
+  # Deserializes the given JSON *key* into a `URI`
+  #
+  # NOTE: `require "uri/json"` is required to opt-in to this feature.
+  def self.from_json_object_key?(key : String) : URI?
+    parse key
+  rescue URI::Error
+    nil
+  end
+
+  # :nodoc:
+  def to_json_object_key : String
+    to_s
   end
 end

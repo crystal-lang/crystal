@@ -21,6 +21,26 @@ class Socket
       end
     end
 
+    # :ditto:
+    def self.from(sockaddr : LibC::Sockaddr*) : Address
+      case family = Family.new(sockaddr.value.sa_family)
+      when Family::INET6
+        sockaddr = sockaddr.as(LibC::SockaddrIn6*)
+
+        IPAddress.new(sockaddr, sizeof(typeof(sockaddr)))
+      when Family::INET
+        sockaddr = sockaddr.as(LibC::SockaddrIn*)
+
+        IPAddress.new(sockaddr, sizeof(typeof(sockaddr)))
+      when Family::UNIX
+        sockaddr = sockaddr.as(LibC::SockaddrUn*)
+
+        UNIXAddress.new(sockaddr, sizeof(typeof(sockaddr)))
+      else
+        raise "Unsupported family type: #{family} (#{family.value})"
+      end
+    end
+
     # Parses a `Socket::Address` from an URI.
     #
     # Supported formats:
@@ -108,6 +128,22 @@ class Socket
         new(sockaddr.as(LibC::SockaddrIn6*), addrlen.to_i)
       when Family::INET
         new(sockaddr.as(LibC::SockaddrIn*), addrlen.to_i)
+      else
+        raise "Unsupported family type: #{family} (#{family.value})"
+      end
+    end
+
+    # :ditto:
+    def self.from(sockaddr : LibC::Sockaddr*) : IPAddress
+      case family = Family.new(sockaddr.value.sa_family)
+      when Family::INET6
+        sockaddr = sockaddr.as(LibC::SockaddrIn6*)
+
+        new(sockaddr, sizeof(typeof(sockaddr)))
+      when Family::INET
+        sockaddr = sockaddr.as(LibC::SockaddrIn*)
+
+        new(sockaddr, sizeof(typeof(sockaddr)))
       else
         raise "Unsupported family type: #{family} (#{family.value})"
       end
@@ -386,6 +422,8 @@ class Socket
         end
       {% elsif flag?(:linux) %}
         addr.__in6_u.__u6_addr16 = bytes
+      {% elsif flag?(:solaris) %}
+        addr._S6_un._S6_u16 = bytes
       {% elsif flag?(:win32) %}
         addr.u.word = bytes
       {% else %}
@@ -528,6 +566,8 @@ class Socket
         addr.s6_addr
       {% elsif flag?(:linux) %}
         addr.__in6_u.__u6_addr8
+      {% elsif flag?(:solaris) %}
+        addr._S6_un._S6_u8
       {% elsif flag?(:win32) %}
         addr.u.byte
       {% else %}
@@ -743,6 +783,17 @@ class Socket
         raise NotImplementedError.new "Socket::UNIXAddress.from"
       {% else %}
         new(sockaddr.as(LibC::SockaddrUn*), addrlen.to_i)
+      {% end %}
+    end
+
+    # :ditto:
+    def self.from(sockaddr : LibC::Sockaddr*) : UNIXAddress
+      {% if flag?(:wasm32) %}
+        raise NotImplementedError.new "Socket::UNIXAddress.from"
+      {% else %}
+        sockaddr = sockaddr.as(LibC::SockaddrUn*)
+
+        new(sockaddr, sizeof(typeof(sockaddr)))
       {% end %}
     end
 

@@ -50,10 +50,24 @@ lib LibC
                      bInheritHandles : BOOL, dwCreationFlags : DWORD,
                      lpEnvironment : Void*, lpCurrentDirectory : LPWSTR,
                      lpStartupInfo : STARTUPINFOW*, lpProcessInformation : PROCESS_INFORMATION*) : BOOL
+  {% if LibC::WIN32_WINNT >= LibC::WIN32_WINNT_WIN10 %}
+    fun SetThreadDescription(hThread : HANDLE, lpThreadDescription : LPWSTR) : LONG
+  {% end %}
   fun SetThreadStackGuarantee(stackSizeInBytes : DWORD*) : BOOL
   fun GetProcessTimes(hProcess : HANDLE, lpCreationTime : FILETIME*, lpExitTime : FILETIME*,
                       lpKernelTime : FILETIME*, lpUserTime : FILETIME*) : BOOL
   fun SwitchToThread : BOOL
+  fun QueueUserAPC(pfnAPC : PAPCFUNC, hThread : HANDLE, dwData : ULONG_PTR) : DWORD
+
+  fun GetThreadContext(hThread : HANDLE, lpContext : CONTEXT*) : DWORD
+  fun ResumeThread(hThread : HANDLE) : DWORD
+  fun SuspendThread(hThread : HANDLE) : DWORD
+
+  TLS_OUT_OF_INDEXES = 0xFFFFFFFF_u32
+
+  fun TlsAlloc : DWORD
+  fun TlsGetValue(dwTlsIndex : DWORD) : Void*
+  fun TlsSetValue(dwTlsIndex : DWORD, lpTlsValue : Void*) : BOOL
 
   PROCESS_QUERY_INFORMATION = 0x0400
 end

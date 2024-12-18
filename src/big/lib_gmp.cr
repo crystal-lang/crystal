@@ -1,5 +1,14 @@
-{% if flag?(:win32) %}
+# Supported library versions:
+#
+# * libgmp
+# * libmpir
+#
+# See https://crystal-lang.org/reference/man/required_libraries.html#big-numbers
+{% if flag?(:win32) && !flag?(:gnu) %}
   @[Link("mpir")]
+  {% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
+    @[Link(dll: "mpir.dll")]
+  {% end %}
 {% else %}
   @[Link("gmp")]
 {% end %}
@@ -11,7 +20,7 @@ lib LibGMP
   # MPIR uses its own `mpir_si` and `mpir_ui` typedefs in places where GMP uses
   # the LibC types, when the function name has `si` or `ui`; we follow this
   # distinction
-  {% if flag?(:win32) && flag?(:bits64) %}
+  {% if flag?(:win32) && !flag?(:gnu) && flag?(:bits64) %}
     alias SI = LibC::LongLong
     alias UI = LibC::ULongLong
   {% else %}
@@ -23,21 +32,19 @@ lib LibGMP
   alias Double = LibC::Double
   alias BitcntT = UI
 
-  alias IntPrimitiveSigned = Int8 | Int16 | Int32 | LibC::Long
-  alias IntPrimitiveUnsigned = UInt8 | UInt16 | UInt32 | LibC::ULong
-  alias IntPrimitive = IntPrimitiveSigned | IntPrimitiveUnsigned
+  alias MpExp = LibC::Long
 
-  {% if flag?(:win32) && flag?(:bits64) %}
-    alias MpExp = LibC::Long
+  {% if flag?(:win32) && !flag?(:gnu) %}
     alias MpSize = LibC::LongLong
-    alias MpLimb = LibC::ULongLong
-  {% elsif flag?(:bits64) %}
-    alias MpExp = Int64
-    alias MpSize = LibC::Long
-    alias MpLimb = LibC::ULong
   {% else %}
-    alias MpExp = Int32
     alias MpSize = LibC::Long
+  {% end %}
+
+  # NOTE: this assumes GMP is configured by build time to define
+  # `_LONG_LONG_LIMB=1` on Windows
+  {% if flag?(:win32) %}
+    alias MpLimb = LibC::ULongLong
+  {% else %}
     alias MpLimb = LibC::ULong
   {% end %}
 
@@ -120,6 +127,8 @@ lib LibGMP
   fun xor = __gmpz_xor(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
   fun com = __gmpz_com(rop : MPZ*, op : MPZ*)
 
+  fun tstbit = __gmpz_tstbit(op : MPZ*, bit_index : BitcntT) : Int
+
   fun fdiv_q_2exp = __gmpz_fdiv_q_2exp(q : MPZ*, n : MPZ*, b : BitcntT)
   fun mul_2exp = __gmpz_mul_2exp(rop : MPZ*, op1 : MPZ*, op2 : BitcntT)
 
@@ -143,15 +152,17 @@ lib LibGMP
   fun gcd_ui = __gmpz_gcd_ui(rop : MPZ*, op1 : MPZ*, op2 : UI) : UI
   fun lcm = __gmpz_lcm(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
   fun lcm_ui = __gmpz_lcm_ui(rop : MPZ*, op1 : MPZ*, op2 : UI)
+  fun invert = __gmpz_invert(rop : MPZ*, op1 : MPZ*, op2 : MPZ*) : Int
   fun remove = __gmpz_remove(rop : MPZ*, op : MPZ*, f : MPZ*) : BitcntT
 
   # # Miscellaneous Functions
 
-  fun fits_ulong_p = __gmpz_fits_ulong_p(op : MPZ*) : Int
-  fun fits_slong_p = __gmpz_fits_slong_p(op : MPZ*) : Int
-  {% if flag?(:win32) %}
+  {% if flag?(:win32) && !flag?(:gnu) %}
     fun fits_ui_p = __gmpz_fits_ui_p(op : MPZ*) : Int
     fun fits_si_p = __gmpz_fits_si_p(op : MPZ*) : Int
+  {% else %}
+    fun fits_ulong_p = __gmpz_fits_ulong_p(op : MPZ*) : Int
+    fun fits_slong_p = __gmpz_fits_slong_p(op : MPZ*) : Int
   {% end %}
 
   # # Special Functions
@@ -234,10 +245,14 @@ lib LibGMP
 
   # # Arithmetic
   fun mpf_add = __gmpf_add(rop : MPF*, op1 : MPF*, op2 : MPF*)
+  fun mpf_add_ui = __gmpf_add_ui(rop : MPF*, op1 : MPF*, op2 : UI)
   fun mpf_sub = __gmpf_sub(rop : MPF*, op1 : MPF*, op2 : MPF*)
+  fun mpf_sub_ui = __gmpf_sub_ui(rop : MPF*, op1 : MPF*, op2 : UI)
   fun mpf_mul = __gmpf_mul(rop : MPF*, op1 : MPF*, op2 : MPF*)
+  fun mpf_mul_ui = __gmpf_mul_ui(rop : MPF*, op1 : MPF*, op2 : UI)
   fun mpf_div = __gmpf_div(rop : MPF*, op1 : MPF*, op2 : MPF*)
   fun mpf_div_ui = __gmpf_div_ui(rop : MPF*, op1 : MPF*, op2 : UI)
+  fun mpf_ui_div = __gmpf_ui_div(rop : MPF*, op1 : UI, op2 : MPF*)
   fun mpf_neg = __gmpf_neg(rop : MPF*, op : MPF*)
   fun mpf_abs = __gmpf_abs(rop : MPF*, op : MPF*)
   fun mpf_sqrt = __gmpf_sqrt(rop : MPF*, op : MPF*)

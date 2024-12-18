@@ -107,7 +107,16 @@ module Enumerable(T)
   # ```
   # [nil, true, 99].any? # => true
   # [nil, false].any?    # => false
+  # ([] of Int32).any?   # => false
   # ```
+  #
+  # * `#present?` does not consider truthiness of elements.
+  # * `#any?(&)` and `#any(pattern)` allow custom conditions.
+  #
+  # NOTE: `#any?` usually has the same semantics as `#present?`. They only
+  # differ if the element type can be falsey (i.e. `T <= Nil || T <= Pointer || T <= Bool`).
+  # It's typically advised to prefer `#present?` unless these specific truthiness
+  # semantics are required.
   def any? : Bool
     any? &.itself
   end
@@ -426,6 +435,44 @@ module Enumerable(T)
     nil
   end
 
+  # Iterates over the collection, yielding every *n*th element, starting with the first.
+  #
+  # ```
+  # %w[Alice Bob Charlie David].each_step(2) do |user|
+  #   puts "User: #{user}"
+  # end
+  # ```
+  #
+  # Prints:
+  #
+  # ```text
+  # User: Alice
+  # User: Charlie
+  # ```
+  #
+  # Accepts an optional *offset* parameter
+  #
+  # ```
+  # %w[Alice Bob Charlie David].each_step(2, offset: 1) do |user|
+  #   puts "User: #{user}"
+  # end
+  # ```
+  #
+  # Which would print:
+  #
+  # ```text
+  # User: Bob
+  # User: David
+  # ```
+  def each_step(n : Int, *, offset : Int = 0, & : T ->) : Nil
+    raise ArgumentError.new("Invalid n size: #{n}") if n <= 0
+    raise ArgumentError.new("Invalid offset size: #{offset}") if offset < 0
+    offset_mod = offset % n
+    each_with_index do |elem, i|
+      yield elem if i >= offset && i % n == offset_mod
+    end
+  end
+
   # Iterates over the collection, yielding both the elements and their index.
   #
   # ```
@@ -511,6 +558,25 @@ module Enumerable(T)
     raise Enumerable::NotFoundError.new
   end
 
+  # Yields each value until the first truthy block result and returns that result.
+  #
+  # Accepts an optional parameter `if_none`, to set what gets returned if
+  # no element is found (defaults to `nil`).
+  #
+  # ```
+  # [1, 2, 3, 4].find_value { |i| i > 2 }     # => true
+  # [1, 2, 3, 4].find_value { |i| i > 8 }     # => nil
+  # [1, 2, 3, 4].find_value(-1) { |i| i > 8 } # => -1
+  # ```
+  def find_value(if_none = nil, & : T ->)
+    each do |i|
+      if result = yield i
+        return result
+      end
+    end
+    if_none
+  end
+
   # Returns the first element in the collection,
   # If the collection is empty, calls the block and returns its value.
   #
@@ -589,11 +655,7 @@ module Enumerable(T)
     h = Hash(U, Array(T)).new
     each do |e|
       v = yield e
-      if h.has_key?(v)
-        h[v].push(e)
-      else
-        h[v] = [e]
-      end
+      h.put_if_absent(v) { Array(T).new } << e
     end
     h
   end
@@ -971,9 +1033,9 @@ module Enumerable(T)
   # [1, 2, 3].map { |i| i * 10 } # => [10, 20, 30]
   # ```
   def map(& : T -> U) : Array(U) forall U
-    ary = [] of U
-    each { |e| ary << yield e }
-    ary
+    map_with_index do |e|
+      yield e
+    end
   end
 
   # Like `map`, but the block gets passed both the element and its index.
@@ -1613,15 +1675,33 @@ module Enumerable(T)
     count { true }
   end
 
-  # Returns `true` if `self` is empty, `false` otherwise.
+  # Returns `true` if `self` does not contain any element.
   #
   # ```
   # ([] of Int32).empty? # => true
   # ([1]).empty?         # => false
+  # [nil, false].empty?  # => false
   # ```
+  #
+  # * `#present?` returns the inverse.
   def empty? : Bool
     each { return false }
     true
+  end
+
+  # Returns `true` if `self` contains at least one element.
+  #
+  # ```
+  # ([] of Int32).present? # => false
+  # ([1]).present?         # => true
+  # [nil, false].present?  # => true
+  # ```
+  #
+  # * `#empty?` returns the inverse.
+  # * `#any?` considers only truthy elements.
+  # * `#any?(&)` and `#any(pattern)` allow custom conditions.
+  def present? : Bool
+    !empty?
   end
 
   # Returns an `Array` with the first *count* elements removed
@@ -1909,7 +1989,7 @@ module Enumerable(T)
   # ["a", "b", "c", "b"].tally # => {"a"=>1, "b"=>2, "c"=>1}
   # ```
   def tally : Hash(T, Int32)
-    tally_by(&.itself)
+    tally_by(Hash(T, Int32).new, &.itself)
   end
 
   # Tallies the collection. Accepts a *hash* to count occurrences.
@@ -1932,9 +2012,20 @@ module Enumerable(T)
   # ```
   # (1..5).to_a # => [1, 2, 3, 4, 5]
   # ```
-  def to_a
+  def to_a : Array(T)
     ary = [] of T
     each { |e| ary << e }
+    ary
+  end
+
+  # Returns an `Array` with the results of running *block* against each element of the collection.
+  #
+  # ```
+  # (1..5).to_a { |i| i * 2 } # => [2, 4, 6, 8, 10]
+  # ```
+  def to_a(& : T -> U) : Array(U) forall U
+    ary = [] of U
+    each { |e| ary << yield e }
     ary
   end
 

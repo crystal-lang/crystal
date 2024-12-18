@@ -97,6 +97,26 @@ class HTTP::WebSocket
     @ws.pong(message)
   end
 
+  # Streams data into io until the io is flushed and sent as a message.
+  #
+  # The method accepts a block with an `io` argument.
+  # The io object can call on `IO#write` and `IO#flush` method.
+  # The `write` method accepts `Bytes` (`Slice(UInt8)`) and sends the data in chunks of *frame_size* bytes. The `flush` method sends all the data in io and resets it.
+  # The remaining data in it is sent as a message when the block is finished executing.
+  # For further information, see the `HTTP::WebSocket::Protocol::StreamIO` class.
+  #
+  # ```
+  # # Open websocket connection
+  # ws = HTTP::WebSocket.new("websocket.example.com", "/chat")
+  #
+  # # Open stream
+  # ws.stream(false) do |io|
+  #   io.write "Hello, ".encode("UTF-8") # Sends "Hello, " to io
+  #   io.flush                           # Sends "Hello, " to the socket
+  #   io.write "world!".encode("UTF-8")  # Sends "world!" to io
+  # end
+  # # Sends "world!" to the socket
+  # ```
   def stream(binary = true, frame_size = 1024, &)
     check_open
     @ws.stream(binary: binary, frame_size: frame_size) do |io|

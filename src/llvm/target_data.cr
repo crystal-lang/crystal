@@ -30,6 +30,6 @@ struct LLVM::TargetData
   end
 
   def to_data_layout_string
-    String.new(LibLLVM.copy_string_rep_of_target_data(self))
+    LLVM.string_and_dispose(LibLLVM.copy_string_rep_of_target_data(self))
   end
 end

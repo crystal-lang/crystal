@@ -11,14 +11,4 @@ module Spec
     lines = lines_cache.put_if_absent(file) { File.read_lines(file) }
     lines[line - 1]?
   end
-
-  # :nodoc:
-  def self.relative_file(file)
-    cwd = Dir.current
-    if basename = file.lchop? cwd
-      basename.lchop '/'
-    else
-      file
-    end
-  end
 end

@@ -418,26 +418,26 @@ class JSON::PullParser
     read_bool if kind.bool?
   end
 
-  {% for type in [Int8, Int16, Int32, Int64, UInt8, UInt16, UInt32] %}
-    # Reads an {{type}} value and returns it.
-    #
-    # If the value is not an integer or does not fit in a {{type}} variable, it returns `nil`.
-    def read?(klass : {{type}}.class)
-      {{type}}.new(int_value).tap { read_next } if kind.int?
-    rescue JSON::ParseException | OverflowError
-      nil
-    end
-  {% end %}
+  {% begin %}
+    # types that don't fit into `Int64` (integer type for `JSON::Any`)'s range
+    {% large_ints = [UInt64, Int128, UInt128] %}
 
-  # Reads an `Int64` value and returns it.
-  #
-  # If the value is not an integer or does not fin in an `Int64` variable, it returns `nil`.
-  def read?(klass : UInt64.class) : UInt64?
-    # UInt64 is a special case due to exceeding bounds of @int_value
-    UInt64.new(raw_value).tap { read_next } if kind.int?
-  rescue JSON::ParseException | ArgumentError
-    nil
-  end
+    {% for int in Int::Primitive.union_types %}
+      {% is_large_int = large_ints.includes?(int) %}
+
+      # Reads an `{{int}}` value and returns it.
+      #
+      # If the value is not an integer or does not fit in an `{{int}}`, it
+      # returns `nil`.
+      def read?(klass : {{int}}.class) : {{int}}?
+        if kind.int?
+          {{int}}.new({{ is_large_int ? "raw_value".id : "int_value".id }}).tap { read_next }
+        end
+      rescue JSON::ParseException | {{ is_large_int ? ArgumentError : OverflowError }}
+        nil
+      end
+    {% end %}
+  {% end %}
 
   # Reads an `Float32` value and returns it.
   #

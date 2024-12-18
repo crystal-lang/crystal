@@ -91,45 +91,51 @@ require "./spec/cli"
 # value can be used to rerun the specs in that same order by passing the seed
 # value to `--order`.
 module Spec
-end
+  # :nodoc:
+  class CLI
+    # :nodoc:
+    #
+    # Implement formatter configuration.
+    def configure_formatter(formatter, output_path = nil)
+      case formatter
+      when "junit"
+        junit_formatter = Spec::JUnitFormatter.file(Path.new(output_path.not_nil!))
+        add_formatter(junit_formatter)
+      when "verbose"
+        override_default_formatter(Spec::VerboseFormatter.new)
+      when "tap"
+        override_default_formatter(Spec::TAPFormatter.new)
+      end
+    end
 
-Colorize.on_tty_only!
+    def main(args)
+      Colorize.on_tty_only!
 
-# :nodoc:
-#
-# Implement formatter configuration.
-def Spec.configure_formatter(formatter, output_path = nil)
-  case formatter
-  when "junit"
-    junit_formatter = Spec::JUnitFormatter.file(Path.new(output_path.not_nil!))
-    Spec.add_formatter(junit_formatter)
-  when "verbose"
-    Spec.override_default_formatter(Spec::VerboseFormatter.new)
-  when "tap"
-    Spec.override_default_formatter(Spec::TAPFormatter.new)
+      begin
+        option_parser.parse(args)
+      rescue e : OptionParser::InvalidOption
+        abort("Error: #{e.message}")
+      end
+
+      unless args.empty?
+        STDERR.puts "Error: unknown argument '#{args.first}'"
+        exit 1
+      end
+
+      if ENV["SPEC_VERBOSE"]? == "1"
+        override_default_formatter(Spec::VerboseFormatter.new)
+      end
+
+      add_split_filter ENV["SPEC_SPLIT"]?
+
+      {% unless flag?(:wasm32) %}
+        # TODO(wasm): Enable this once `Process.on_terminate` is implemented
+        Process.on_terminate { abort! }
+      {% end %}
+
+      run
+    end
   end
 end
 
-begin
-  Spec.option_parser.parse(ARGV)
-rescue e : OptionParser::InvalidOption
-  abort("Error: #{e.message}")
-end
-
-unless ARGV.empty?
-  STDERR.puts "Error: unknown argument '#{ARGV.first}'"
-  exit 1
-end
-
-if ENV["SPEC_VERBOSE"]? == "1"
-  Spec.override_default_formatter(Spec::VerboseFormatter.new)
-end
-
-Spec.add_split_filter ENV["SPEC_SPLIT"]?
-
-{% unless flag?(:wasm32) %}
-  # TODO(wasm): Enable this once `Process.on_interrupt` is implemented
-  Process.on_interrupt { Spec.abort! }
-{% end %}
-
-Spec.run
+Spec.cli.main(ARGV)

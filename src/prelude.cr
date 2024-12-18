@@ -65,6 +65,7 @@ require "raise"
 require "random"
 require "range"
 require "reference"
+require "reference_storage"
 require "regex"
 require "set"
 {% unless flag?(:wasm32) %}

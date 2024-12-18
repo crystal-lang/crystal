@@ -34,14 +34,14 @@ struct Slice(T)
   macro [](*args, read_only = false)
     # TODO: there should be a better way to check this, probably
     # asking if @type was instantiated or if T is defined
-    {% if @type.name != "Slice(T)" && T < Number %}
+    {% if @type.name != "Slice(T)" && T < ::Number %}
       {{T}}.slice({{args.splat(", ")}}read_only: {{read_only}})
     {% else %}
-      %ptr = Pointer(typeof({{*args}})).malloc({{args.size}})
+      %ptr = ::Pointer(typeof({{args.splat}})).malloc({{args.size}})
       {% for arg, i in args %}
         %ptr[{{i}}] = {{arg}}
       {% end %}
-      Slice.new(%ptr, {{args.size}}, read_only: {{read_only}})
+      ::Slice.new(%ptr, {{args.size}}, read_only: {{read_only}})
     {% end %}
   end
 
@@ -222,35 +222,49 @@ struct Slice(T)
   end
 
   # Returns a new slice that starts at *start* elements from this slice's start,
-  # and of *count* size.
+  # and of exactly *count* size.
   #
+  # Negative *start* is added to `#size`, thus it's treated as index counting
+  # from the end of the array, `-1` designating the last element.
+  #
+  # Raises `ArgumentError` if *count* is negative.
   # Returns `nil` if the new slice falls outside this slice.
   #
   # ```
   # slice = Slice.new(5) { |i| i + 10 }
   # slice # => Slice[10, 11, 12, 13, 14]
   #
-  # slice[1, 3]?  # => Slice[11, 12, 13]
-  # slice[1, 33]? # => nil
+  # slice[1, 3]?   # => Slice[11, 12, 13]
+  # slice[1, 33]?  # => nil
+  # slice[-3, 2]?  # => Slice[12, 13]
+  # slice[-3, 10]? # => nil
   # ```
   def []?(start : Int, count : Int) : Slice(T)?
-    return unless 0 <= start <= @size
-    return unless 0 <= count <= @size - start
+    # we skip the calculated count because the subslice must contain exactly
+    # *count* elements
+    start, _ = Indexable.normalize_start_and_count(start, count, size) { return }
+    return unless count <= @size - start
 
     Slice.new(@pointer + start, count, read_only: @read_only)
   end
 
   # Returns a new slice that starts at *start* elements from this slice's start,
-  # and of *count* size.
+  # and of exactly *count* size.
   #
+  # Negative *start* is added to `#size`, thus it's treated as index counting
+  # from the end of the array, `-1` designating the last element.
+  #
+  # Raises `ArgumentError` if *count* is negative.
   # Raises `IndexError` if the new slice falls outside this slice.
   #
   # ```
   # slice = Slice.new(5) { |i| i + 10 }
   # slice # => Slice[10, 11, 12, 13, 14]
   #
-  # slice[1, 3]  # => Slice[11, 12, 13]
-  # slice[1, 33] # raises IndexError
+  # slice[1, 3]   # => Slice[11, 12, 13]
+  # slice[1, 33]  # raises IndexError
+  # slice[-3, 2]  # => Slice[12, 13]
+  # slice[-3, 10] # raises IndexError
   # ```
   def [](start : Int, count : Int) : Slice(T)
     self[start, count]? || raise IndexError.new
@@ -272,7 +286,7 @@ struct Slice(T)
   # slice[1..33]? # => nil
   # ```
   def []?(range : Range)
-    start, count = Indexable.range_to_index_and_count(range, size) || raise IndexError.new
+    start, count = Indexable.range_to_index_and_count(range, size) || return nil
     self[start, count]?
   end
 
@@ -488,14 +502,14 @@ struct Slice(T)
     super(range) { |i| yield i }
   end
 
-  def copy_from(source : Pointer(T), count)
+  def copy_from(source : Pointer(T), count) : Nil
     check_writable
     check_size(count)
 
     @pointer.copy_from(source, count)
   end
 
-  def copy_to(target : Pointer(T), count)
+  def copy_to(target : Pointer(T), count) : Nil
     check_size(count)
 
     @pointer.copy_to(target, count)
@@ -513,7 +527,7 @@ struct Slice(T)
   # dst             # => Slice['a', 'a', 'a', 'b', 'b']
   # dst.copy_to src # raises IndexError
   # ```
-  def copy_to(target : self)
+  def copy_to(target : self) : Nil
     target.check_writable
     raise IndexError.new if target.size < size
 
@@ -524,18 +538,18 @@ struct Slice(T)
   #
   # Raises `IndexError` if the destination slice cannot fit the data being transferred.
   @[AlwaysInline]
-  def copy_from(source : self)
+  def copy_from(source : self) : Nil
     source.copy_to(self)
   end
 
-  def move_from(source : Pointer(T), count)
+  def move_from(source : Pointer(T), count) : Nil
     check_writable
     check_size(count)
 
     @pointer.move_from(source, count)
   end
 
-  def move_to(target : Pointer(T), count)
+  def move_to(target : Pointer(T), count) : Nil
     @pointer.move_to(target, count)
   end
 
@@ -554,7 +568,7 @@ struct Slice(T)
   # ```
   #
   # See also: `Pointer#move_to`.
-  def move_to(target : self)
+  def move_to(target : self) : Nil
     target.check_writable
     raise IndexError.new if target.size < size
 
@@ -566,7 +580,7 @@ struct Slice(T)
   #
   # Raises `IndexError` if the destination slice cannot fit the data being transferred.
   @[AlwaysInline]
-  def move_from(source : self)
+  def move_from(source : self) : Nil
     source.move_to(self)
   end
 
@@ -811,6 +825,9 @@ struct Slice(T)
   # Bytes[1, 2] <=> Bytes[1, 2] # => 0
   # ```
   def <=>(other : Slice(U)) forall U
+    # If both slices are identical references, we can skip the memory comparison.
+    return 0 if same?(other)
+
     min_size = Math.min(size, other.size)
     {% if T == UInt8 && U == UInt8 %}
       cmp = to_unsafe.memcmp(other.to_unsafe, min_size)
@@ -833,7 +850,12 @@ struct Slice(T)
   # Bytes[1, 2] == Bytes[1, 2, 3] # => false
   # ```
   def ==(other : Slice(U)) : Bool forall U
+    # If both slices are of different sizes, they cannot be equal.
     return false if size != other.size
+
+    # If both slices are identical references, we can skip the memory comparison.
+    # Not using `same?` here because we have already compared sizes.
+    return true if to_unsafe == other.to_unsafe
 
     {% if T == UInt8 && U == UInt8 %}
       to_unsafe.memcmp(other.to_unsafe, size) == 0
@@ -843,6 +865,21 @@ struct Slice(T)
       end
       true
     {% end %}
+  end
+
+  # Returns `true` if `self` and *other* point to the same memory, i.e. pointer
+  # and size are identical.
+  #
+  # ```
+  # slice = Slice[1, 2, 3]
+  # slice.same?(slice)           # => true
+  # slice == Slice[1, 2, 3]      # => false
+  # slice.same?(slice + 1)       # => false
+  # (slice + 1).same?(slice + 1) # => true
+  # slice.same?(slice[0, 2])     # => false
+  # ```
+  def same?(other : self) : Bool
+    to_unsafe == other.to_unsafe && size == other.size
   end
 
   def to_slice : self
@@ -932,7 +969,7 @@ struct Slice(T)
   # Raises `ArgumentError` if for any two elements the block returns `nil`.
   def sort(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
-      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}.\nThe block is supposed to be a custom comparison operation, compatible with `Comparable#<=>`.\nDid you mean to use `#sort_by`?" %}
     {% end %}
 
     dup.sort! &block
@@ -954,7 +991,7 @@ struct Slice(T)
   # Raises `ArgumentError` if for any two elements the block returns `nil`.
   def unstable_sort(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
-      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}.\nThe block is supposed to be a custom comparison operation, compatible with `Comparable#<=>`.\nDid you mean to use `#unstable_sort_by`?" %}
     {% end %}
 
     dup.unstable_sort!(&block)
@@ -981,13 +1018,23 @@ struct Slice(T)
   # the result could also be `[b, a]`.
   #
   # If stability is expendable, `#unstable_sort!` provides a performance
-  # advantage over stable sort.
+  # advantage over stable sort. As an optimization, if `T` is any primitive
+  # integer type, `Char`, any enum type, any `Pointer` instance, `Symbol`, or
+  # `Time::Span`, then an unstable sort is automatically used.
   #
   # Raises `ArgumentError` if the comparison between any two elements returns `nil`.
   def sort! : self
-    Slice.merge_sort!(self)
+    # If two values `x, y : T` have the same binary representation whenever they
+    # compare equal, i.e. `x <=> y == 0` implies
+    # `pointerof(x).memcmp(pointerof(y), 1) == 0`, then swapping the two values
+    # is a no-op and therefore a stable sort isn't required
+    {% if T.union_types.size == 1 && (T <= Int::Primitive || T <= Char || T <= Enum || T <= Pointer || T <= Symbol || T <= Time::Span) %}
+      unstable_sort!
+    {% else %}
+      Slice.merge_sort!(self)
 
-    self
+      self
+    {% end %}
   end
 
   # Sorts all elements in `self` based on the return value of the comparison
@@ -1055,7 +1102,7 @@ struct Slice(T)
   # Raises `ArgumentError` if for any two elements the block returns `nil`.
   def sort!(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
-      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}.\nThe block is supposed to be a custom comparison operation, compatible with `Comparable#<=>`.\nDid you mean to use `#sort_by!`?" %}
     {% end %}
 
     Slice.merge_sort!(self, block)
@@ -1098,7 +1145,7 @@ struct Slice(T)
   # Raises `ArgumentError` if for any two elements the block returns `nil`.
   def unstable_sort!(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
-      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}.\nThe block is supposed to be a custom comparison operation, compatible with `Comparable#<=>`.\nDid you mean to use `#unstable_sort_by!`?" %}
     {% end %}
 
     Slice.intro_sort!(to_unsafe, size, block)

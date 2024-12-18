@@ -42,9 +42,11 @@ module Crystal::System::Env
     while environ_ptr
       environ_value = environ_ptr.value
       if environ_value
-        key_value = String.new(environ_value).split('=', 2)
-        key = key_value[0]
-        value = key_value[1]? || ""
+        # this does `String.new(environ_value).partition('=')` without an intermediary string
+        key_value = Slice.new(environ_value, LibC.strlen(environ_value))
+        split_index = key_value.index!(0x3d_u8) # '='
+        key = String.new(key_value[0, split_index])
+        value = String.new(key_value[split_index + 1..])
         yield key, value
         environ_ptr += 1
       else

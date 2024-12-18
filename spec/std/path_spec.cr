@@ -931,7 +931,7 @@ describe Path do
     assert_paths_raw("foo..txt/", "foo.", &.stem)
   end
 
-  describe ".home" do
+  pending_wasm32 describe: ".home" do
     it "uses home from environment variable if set" do
       with_env({HOME_ENV_KEY => "foo/bar"}) do
         Path.home.should eq(Path.new("foo/bar"))

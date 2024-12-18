@@ -1,5 +1,6 @@
 require "spec"
 require "spec/helpers/string"
+require "big"
 
 private LENGTH_UNITS = ->(magnitude : Int32, number : Float64) do
   case magnitude
@@ -91,6 +92,21 @@ describe Number do
     it { assert_prints Float64::INFINITY.format, "Infinity" }
     it { assert_prints (-Float64::INFINITY).format, "-Infinity" }
     it { assert_prints Float64::NAN.format, "NaN" }
+
+    it { assert_prints "12345.67890123456789012345".to_big_d.format, "12,345.67890123456789012345" }
+
+    it "extracts integer part correctly (#12997)" do
+      assert_prints 1.9999998.format, "1.9999998"
+      assert_prints 1111111.999999998.format, "1,111,111.999999998"
+    end
+
+    it "does not perform double rounding when decimal places are given" do
+      assert_prints 1.2345.format(decimal_places: 24), "1.234499999999999930722083"
+      assert_prints 1.2345.format(decimal_places: 65), "1.23449999999999993072208326339023187756538391113281250000000000000"
+      assert_prints 1.2345.format(decimal_places: 71), "1.23449999999999993072208326339023187756538391113281250000000000000000000"
+      assert_prints 1.2345.format(decimal_places: 83), "1.23449999999999993072208326339023187756538391113281250000000000000000000000000000000"
+      assert_prints 1.2345.format(decimal_places: 99), "1.234499999999999930722083263390231877565383911132812500000000000000000000000000000000000000000000000"
+    end
   end
 
   describe "#humanize" do
@@ -191,6 +207,24 @@ describe Number do
     it { assert_prints 1.0e+34.humanize, "10,000Q" }
     it { assert_prints 1.0e+35.humanize, "100,000Q" }
 
+    it { assert_prints 0.humanize(unit_separator: '_'), "0.0" }
+    it { assert_prints 0.123_456_78.humanize(5, unit_separator: '\u00A0'), "123.46\u00A0m" }
+    it { assert_prints 1.0e-14.humanize(unit_separator: ' '), "10.0 f" }
+    it { assert_prints 0.000_001.humanize(unit_separator: '\u2009'), "1.0\u2009µ" }
+    it { assert_prints 1_000_000_000_000.humanize(unit_separator: "__"), "1.0__T" }
+    it { assert_prints 0.000_000_001.humanize(unit_separator: "."), "1.0.n" }
+    it { assert_prints 1.0e+9.humanize(unit_separator: "\t"), "1.0\tG" }
+    it { assert_prints 123_456_789_012.humanize(unit_separator: 0), "1230G" }
+    it { assert_prints 123_456_789_012.humanize(unit_separator: nil), "123G" }
+
+    it { assert_prints Float32::INFINITY.humanize, "Infinity" }
+    it { assert_prints (-Float32::INFINITY).humanize, "-Infinity" }
+    it { assert_prints Float32::NAN.humanize, "NaN" }
+
+    it { assert_prints Float64::INFINITY.humanize, "Infinity" }
+    it { assert_prints (-Float64::INFINITY).humanize, "-Infinity" }
+    it { assert_prints Float64::NAN.humanize, "NaN" }
+
     it { assert_prints 1_234.567_890_123.humanize(precision: 2, significant: false), "1.23k" }
     it { assert_prints 123.456_789_012_3.humanize(precision: 2, significant: false), "123.46" }
     it { assert_prints 12.345_678_901_23.humanize(precision: 2, significant: false), "12.35" }
@@ -237,6 +271,7 @@ describe Number do
       it { assert_prints 1.0e+8.humanize(prefixes: CUSTOM_PREFIXES), "100d" }
       it { assert_prints 1.0e+9.humanize(prefixes: CUSTOM_PREFIXES), "1,000d" }
       it { assert_prints 1.0e+10.humanize(prefixes: CUSTOM_PREFIXES), "10,000d" }
+      it { assert_prints 1.0e+10.humanize(prefixes: CUSTOM_PREFIXES, unit_separator: '\u00A0'), "10,000\u00A0d" }
     end
   end
 end
@@ -257,6 +292,7 @@ describe Int do
     it { assert_prints 1025.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC), "1.0KB" }
     it { assert_prints 1026.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC), "1.01KB" }
     it { assert_prints 2048.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC), "2.0KB" }
+    it { assert_prints 2048.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC, unit_separator: '\u202F'), "2.0\u202FKB" }
 
     it { assert_prints 1536.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC), "1.5KB" }
     it { assert_prints 524288.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC), "512KB" }
@@ -265,6 +301,7 @@ describe Int do
     it { assert_prints 1099511627776.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC), "1.0TB" }
     it { assert_prints 1125899906842624.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC), "1.0PB" }
     it { assert_prints 1152921504606846976.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC), "1.0EB" }
+    it { assert_prints 1152921504606846976.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC, unit_separator: '\u2009'), "1.0\u2009EB" }
 
     it { assert_prints 1024.humanize_bytes(format: Int::BinaryPrefixFormat::IEC), "1.0kiB" }
     it { assert_prints 1073741824.humanize_bytes(format: Int::BinaryPrefixFormat::IEC), "1.0GiB" }

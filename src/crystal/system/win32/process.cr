@@ -1,33 +1,90 @@
 require "c/processthreadsapi"
 require "c/handleapi"
+require "c/jobapi2"
 require "c/synchapi"
 require "c/tlhelp32"
 require "process/shell"
 require "crystal/atomic_semaphore"
 
 struct Crystal::System::Process
+  {% if host_flag?(:windows) %}
+    HOST_PATH_DELIMITER = ';'
+  {% else %}
+    HOST_PATH_DELIMITER = ':'
+  {% end %}
+
   getter pid : LibC::DWORD
   @thread_id : LibC::DWORD
   @process_handle : LibC::HANDLE
+  @job_object : LibC::HANDLE
+  @completion_key = IOCP::CompletionKey.new(:process_run)
 
-  @@interrupt_handler : Proc(Nil)?
+  @@interrupt_handler : Proc(::Process::ExitReason, Nil)?
   @@interrupt_count = Crystal::AtomicSemaphore.new
   @@win32_interrupt_handler : LibC::PHANDLER_ROUTINE?
   @@setup_interrupt_handler = Atomic::Flag.new
+  @@last_interrupt = ::Process::ExitReason::Interrupted
 
   def initialize(process_info)
     @pid = process_info.dwProcessId
     @thread_id = process_info.dwThreadId
     @process_handle = process_info.hProcess
+
+    @job_object = LibC.CreateJobObjectW(nil, nil)
+
+    # enable IOCP notifications
+    config_job_object(
+      LibC::JOBOBJECTINFOCLASS::AssociateCompletionPortInformation,
+      LibC::JOBOBJECT_ASSOCIATE_COMPLETION_PORT.new(
+        completionKey: @completion_key.as(Void*),
+        completionPort: Crystal::EventLoop.current.iocp_handle,
+      ),
+    )
+
+    # but not for any child processes
+    config_job_object(
+      LibC::JOBOBJECTINFOCLASS::ExtendedLimitInformation,
+      LibC::JOBOBJECT_EXTENDED_LIMIT_INFORMATION.new(
+        basicLimitInformation: LibC::JOBOBJECT_BASIC_LIMIT_INFORMATION.new(
+          limitFlags: LibC::JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK,
+        ),
+      ),
+    )
+
+    if LibC.AssignProcessToJobObject(@job_object, @process_handle) == 0
+      raise RuntimeError.from_winerror("AssignProcessToJobObject")
+    end
+  end
+
+  private def config_job_object(kind, info)
+    if LibC.SetInformationJobObject(@job_object, kind, pointerof(info), sizeof(typeof(info))) == 0
+      raise RuntimeError.from_winerror("SetInformationJobObject")
+    end
   end
 
   def release
     return if @process_handle == LibC::HANDLE.null
     close_handle(@process_handle)
     @process_handle = LibC::HANDLE.null
+    close_handle(@job_object)
+    @job_object = LibC::HANDLE.null
   end
 
   def wait
+    if LibC.GetExitCodeProcess(@process_handle, out exit_code) == 0
+      raise RuntimeError.from_winerror("GetExitCodeProcess")
+    end
+    return exit_code unless exit_code == LibC::STILL_ACTIVE
+
+    # let `@job_object` do its job
+    # TODO: message delivery is "not guaranteed"; does it ever happen? Are we
+    # stuck forever in that case?
+    # (https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-jobobject_associate_completion_port)
+    @completion_key.fiber = ::Fiber.current
+    ::Fiber.suspend
+
+    # If the IOCP notification is delivered before the process fully exits,
+    # wait for it
     if LibC.WaitForSingleObject(@process_handle, LibC::INFINITE) != LibC::WAIT_OBJECT_0
       raise RuntimeError.from_winerror("WaitForSingleObject")
     end
@@ -38,7 +95,7 @@ struct Crystal::System::Process
     # waitpid returns, we wait 5 milliseconds to attempt to replicate this behaviour.
     sleep 5.milliseconds
 
-    if LibC.GetExitCodeProcess(@process_handle, out exit_code) == 0
+    if LibC.GetExitCodeProcess(@process_handle, pointerof(exit_code)) == 0
       raise RuntimeError.from_winerror("GetExitCodeProcess")
     end
     if exit_code == LibC::STILL_ACTIVE
@@ -100,10 +157,26 @@ struct Crystal::System::Process
     raise NotImplementedError.new("Process.signal")
   end
 
-  def self.on_interrupt(&@@interrupt_handler : ->) : Nil
+  @[Deprecated("Use `#on_terminate` instead")]
+  def self.on_interrupt(&handler : ->) : Nil
+    on_terminate do |reason|
+      handler.call if reason.interrupted?
+    end
+  end
+
+  def self.on_terminate(&@@interrupt_handler : ::Process::ExitReason ->) : Nil
     restore_interrupts!
     @@win32_interrupt_handler = handler = LibC::PHANDLER_ROUTINE.new do |event_type|
-      next 0 unless event_type.in?(LibC::CTRL_C_EVENT, LibC::CTRL_BREAK_EVENT)
+      @@last_interrupt = case event_type
+                         when LibC::CTRL_C_EVENT, LibC::CTRL_BREAK_EVENT
+                           ::Process::ExitReason::Interrupted
+                         when LibC::CTRL_CLOSE_EVENT
+                           ::Process::ExitReason::TerminalDisconnected
+                         when LibC::CTRL_LOGOFF_EVENT, LibC::CTRL_SHUTDOWN_EVENT
+                           ::Process::ExitReason::SessionEnded
+                         else
+                           next 0
+                         end
       @@interrupt_count.signal
       1
     end
@@ -136,8 +209,9 @@ struct Crystal::System::Process
 
         if handler = @@interrupt_handler
           non_nil_handler = handler # if handler is closured it will also have the Nil type
+          int_type = @@last_interrupt
           spawn do
-            non_nil_handler.call
+            non_nil_handler.call int_type
           rescue ex
             ex.inspect_with_backtrace(STDERR)
             STDERR.puts("FATAL: uncaught exception while processing interrupt handler, exiting")
@@ -182,7 +256,7 @@ struct Crystal::System::Process
   end
 
   private def self.handle_from_io(io : IO::FileDescriptor, parent_io)
-    source_handle = FileDescriptor.windows_handle!(io.fd)
+    source_handle = io.windows_handle
 
     cur_proc = LibC.GetCurrentProcess
     if LibC.DuplicateHandle(cur_proc, source_handle, cur_proc, out new_handle, 0, true, LibC::DUPLICATE_SAME_ACCESS) == 0
@@ -207,7 +281,7 @@ struct Crystal::System::Process
 
     if LibC.CreateProcessW(
          nil, System.to_wstr(command_args), nil, nil, true, LibC::CREATE_UNICODE_ENVIRONMENT,
-         make_env_block(env, clear_env), chdir.try { |str| System.to_wstr(str) },
+         make_env_block(env, clear_env), chdir.try { |str| System.to_wstr(str) } || Pointer(UInt16).null,
          pointerof(startup_info), pointerof(process_info)
        ) == 0
       error = WinError.value
@@ -235,6 +309,16 @@ struct Crystal::System::Process
       end
       command
     else
+      # Disable implicit execution of batch files (https://github.com/crystal-lang/crystal/issues/14536)
+      #
+      # > `CreateProcessW()` implicitly spawns `cmd.exe` when executing batch files (`.bat`, `.cmd`, etc.), even if the application didn’t specify them in the command line.
+      # > The problem is that the `cmd.exe` has complicated parsing rules for the command arguments, and programming language runtimes fail to escape the command arguments properly.
+      # > Because of this, it’s possible to inject commands if someone can control the part of command arguments of the batch file.
+      # https://flatt.tech/research/posts/batbadbut-you-cant-securely-execute-commands-on-windows/
+      if command.byte_slice?(-4, 4).try(&.downcase).in?(".bat", ".cmd")
+        raise ::File::Error.from_os_error("Error executing process", WinError::ERROR_BAD_EXE_FORMAT, file: command)
+      end
+
       command_args = [command]
       command_args.concat(args) if args
       command_args
@@ -242,9 +326,9 @@ struct Crystal::System::Process
   end
 
   private def self.try_replace(command_args, env, clear_env, input, output, error, chdir)
-    reopen_io(input, ORIGINAL_STDIN)
-    reopen_io(output, ORIGINAL_STDOUT)
-    reopen_io(error, ORIGINAL_STDERR)
+    old_input_fd = reopen_io(input, ORIGINAL_STDIN)
+    old_output_fd = reopen_io(output, ORIGINAL_STDOUT)
+    old_error_fd = reopen_io(error, ORIGINAL_STDERR)
 
     ENV.clear if clear_env
     env.try &.each do |key, val|
@@ -267,11 +351,18 @@ struct Crystal::System::Process
     argv << Pointer(LibC::WCHAR).null
 
     LibC._wexecvp(command, argv)
+
+    # exec failed; restore the original C runtime file descriptors
+    errno = Errno.value
+    LibC._dup2(old_input_fd, 0)
+    LibC._dup2(old_output_fd, 1)
+    LibC._dup2(old_error_fd, 2)
+    errno
   end
 
   def self.replace(command_args, env, clear_env, input, output, error, chdir) : NoReturn
-    try_replace(command_args, env, clear_env, input, output, error, chdir)
-    raise_exception_from_errno(command_args.is_a?(String) ? command_args : command_args[0])
+    errno = try_replace(command_args, env, clear_env, input, output, error, chdir)
+    raise_exception_from_errno(command_args.is_a?(String) ? command_args : command_args[0], errno)
   end
 
   private def self.raise_exception_from_errno(command, errno = Errno.value)
@@ -283,21 +374,41 @@ struct Crystal::System::Process
     end
   end
 
+  # Replaces the C standard streams' file descriptors, not Win32's, since
+  # `try_replace` uses the C `LibC._wexecvp` and only cares about the former.
+  # Returns a duplicate of the original file descriptor
   private def self.reopen_io(src_io : IO::FileDescriptor, dst_io : IO::FileDescriptor)
-    src_io = to_real_fd(src_io)
-
-    dst_io.reopen(src_io)
-    dst_io.blocking = true
-    dst_io.close_on_exec = false
-  end
-
-  private def self.to_real_fd(fd : IO::FileDescriptor)
-    case fd
-    when STDIN  then ORIGINAL_STDIN
-    when STDOUT then ORIGINAL_STDOUT
-    when STDERR then ORIGINAL_STDERR
-    else             fd
+    unless src_io.system_blocking?
+      raise IO::Error.new("Non-blocking streams are not supported in `Process.exec`", target: src_io)
     end
+
+    src_fd =
+      case src_io
+      when STDIN  then 0
+      when STDOUT then 1
+      when STDERR then 2
+      else
+        LibC._open_osfhandle(src_io.windows_handle, 0)
+      end
+
+    dst_fd =
+      case dst_io
+      when ORIGINAL_STDIN  then 0
+      when ORIGINAL_STDOUT then 1
+      when ORIGINAL_STDERR then 2
+      else
+        raise "BUG: Invalid destination IO"
+      end
+
+    return src_fd if dst_fd == src_fd
+
+    orig_src_fd = LibC._dup(src_fd)
+
+    if LibC._dup2(src_fd, dst_fd) == -1
+      raise IO::Error.from_errno("Failed to replace C file descriptor", target: dst_io)
+    end
+
+    orig_src_fd
   end
 
   def self.chroot(path)

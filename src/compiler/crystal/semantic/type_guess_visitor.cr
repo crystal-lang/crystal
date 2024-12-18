@@ -86,6 +86,7 @@ module Crystal
       end
 
       check_var_is_self(node)
+      false
     end
 
     def visit(node : UninitializedVar)
@@ -114,6 +115,7 @@ module Crystal
           # TODO: can this be reached?
         end
       end
+      false
     end
 
     def visit(node : Assign)
@@ -1077,6 +1079,14 @@ module Crystal
       @program.int32
     end
 
+    def guess_type(node : AlignOf)
+      @program.int32
+    end
+
+    def guess_type(node : InstanceAlignOf)
+      @program.int32
+    end
+
     def guess_type(node : OffsetOf)
       @program.int32
     end
@@ -1275,7 +1285,7 @@ module Crystal
       false
     end
 
-    def visit(node : InstanceSizeOf | SizeOf | OffsetOf | TypeOf | PointerOf)
+    def visit(node : InstanceSizeOf | SizeOf | InstanceAlignOf | AlignOf | OffsetOf | TypeOf | PointerOf)
       false
     end
 
@@ -1345,6 +1355,7 @@ module Crystal
       if node.name == "self"
         @has_self = true
       end
+      false
     end
 
     def visit(node : ASTNode)

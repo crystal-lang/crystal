@@ -111,11 +111,13 @@ class IO::Delimited < IO
         next_index = @active_delimiter_buffer.index(first_byte, 1)
 
         # We read up to that new match, if any, or the entire buffer
-        read_bytes = next_index || @active_delimiter_buffer.size
+        read_bytes = Math.min(next_index || @active_delimiter_buffer.size, slice.size)
 
         slice.copy_from(@active_delimiter_buffer[0, read_bytes])
         slice += read_bytes
         @active_delimiter_buffer += read_bytes
+
+        return read_bytes if slice.empty?
         return read_bytes + read_internal(slice)
       end
     end
@@ -192,7 +194,7 @@ class IO::Delimited < IO
     slice.copy_from(peek[0, index])
     slice += index
 
-    # Copy the rest of the peek buffer into delimted buffer
+    # Copy the rest of the peek buffer into delimited buffer
     @delimiter_buffer.copy_from(rest)
     @active_delimiter_buffer = @delimiter_buffer[0, rest.size]
 

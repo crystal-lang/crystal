@@ -59,6 +59,7 @@ module Crystal
     def initialize(string, string_pool : StringPool? = nil, warnings : WarningCollection? = nil)
       @warnings = warnings || WarningCollection.new
       @reader = Char::Reader.new(string)
+      check_reader_error
       @token = Token.new
       @temp_token = Token.new
       @line_number = 1
@@ -335,18 +336,20 @@ module Crystal
               @token.type = :OP_PERCENT
             end
           when 'r'
-            case next_char
+            case peek_next_char
             when '(', '[', '{', '<', '|'
+              next_char
               delimited_pair :regex, current_char, closing_char, start
             else
-              raise "unknown %r char"
+              @token.type = :OP_PERCENT
             end
           when 'x'
-            case next_char
+            case peek_next_char
             when '(', '[', '{', '<', '|'
+              next_char
               delimited_pair :command, current_char, closing_char, start
             else
-              raise "unknown %x char"
+              @token.type = :OP_PERCENT
             end
           when 'w'
             case peek_next_char
@@ -584,8 +587,19 @@ module Crystal
             return check_ident_or_keyword(:abstract, start)
           end
         when 'l'
-          if char_sequence?('i', 'a', 's')
-            return check_ident_or_keyword(:alias, start)
+          if next_char == 'i'
+            case next_char
+            when 'a'
+              if next_char == 's'
+                return check_ident_or_keyword(:alias, start)
+              end
+            when 'g'
+              if char_sequence?('n', 'o', 'f')
+                return check_ident_or_keyword(:alignof, start)
+              end
+            else
+              # scan_ident
+            end
           end
         when 's'
           case peek_next_char
@@ -717,8 +731,19 @@ module Crystal
                 return check_ident_or_keyword(:include, start)
               end
             when 's'
-              if char_sequence?('t', 'a', 'n', 'c', 'e', '_', 's', 'i', 'z', 'e', 'o', 'f')
-                return check_ident_or_keyword(:instance_sizeof, start)
+              if char_sequence?('t', 'a', 'n', 'c', 'e', '_')
+                case next_char
+                when 's'
+                  if char_sequence?('i', 'z', 'e', 'o', 'f')
+                    return check_ident_or_keyword(:instance_sizeof, start)
+                  end
+                when 'a'
+                  if char_sequence?('l', 'i', 'g', 'n', 'o', 'f')
+                    return check_ident_or_keyword(:instance_alignof, start)
+                  end
+                else
+                  # scan_ident
+                end
               end
             else
               # scan_ident
@@ -1023,7 +1048,7 @@ module Crystal
 
         scan_ident(start)
       else
-        if current_char.ascii_uppercase?
+        if current_char.uppercase? || current_char.titlecase?
           while ident_part?(next_char)
             # Nothing to do
           end
@@ -2194,8 +2219,8 @@ module Crystal
     def consume_non_braced_unicode_escape
       codepoint = 0
       4.times do
-        hex_value = char_to_hex(next_char) { expected_hexadecimal_character_in_unicode_escape }
-        codepoint = 16 * codepoint + hex_value
+        hex_value = next_char.to_i?(16) || expected_hexadecimal_character_in_unicode_escape
+        codepoint = 16 &* codepoint &+ hex_value
       end
       if 0xD800 <= codepoint <= 0xDFFF
         raise "invalid unicode codepoint (surrogate half)"
@@ -2224,8 +2249,8 @@ module Crystal
             expected_hexadecimal_character_in_unicode_escape
           end
         else
-          hex_value = char_to_hex(char) { expected_hexadecimal_character_in_unicode_escape }
-          codepoint = 16 * codepoint + hex_value
+          hex_value = char.to_i?(16) || expected_hexadecimal_character_in_unicode_escape
+          codepoint = 16 &* codepoint &+ hex_value
           found_digit = true
         end
       end
@@ -2337,18 +2362,6 @@ module Crystal
       set_token_raw_from_start(start)
 
       @token
-    end
-
-    def char_to_hex(char, &)
-      if '0' <= char <= '9'
-        char - '0'
-      elsif 'a' <= char <= 'f'
-        10 + (char - 'a')
-      elsif 'A' <= char <= 'F'
-        10 + (char - 'A')
-      else
-        yield
-      end
     end
 
     def consume_loc_pragma
@@ -2742,11 +2755,13 @@ module Crystal
     end
 
     def next_char_no_column_increment
-      char = @reader.next_char
+      @reader.next_char.tap { check_reader_error }
+    end
+
+    private def check_reader_error
       if error = @reader.error
         ::raise InvalidByteSequenceError.new("Unexpected byte 0x#{error.to_s(16)} at position #{@reader.pos}, malformed UTF-8")
       end
-      char
     end
 
     def next_char
@@ -2799,6 +2814,13 @@ module Crystal
     def next_token_never_a_symbol
       @wants_symbol = false
       next_token.tap { @wants_symbol = true }
+    end
+
+    def wants_def_or_macro_name(& : ->)
+      @wants_def_or_macro_name = true
+      yield
+    ensure
+      @wants_def_or_macro_name = false
     end
 
     def current_char

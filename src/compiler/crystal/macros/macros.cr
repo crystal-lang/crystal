@@ -93,7 +93,7 @@ class Crystal::Program
       return CompiledMacroRun.new(executable_path, elapsed_time, true)
     end
 
-    result = host_compiler.compile Compiler::Source.new(filename, source), executable_path, combine_rpath: true
+    result = host_compiler.compile Compiler::Source.new(filename, source), executable_path
 
     # Write the new files from which 'filename' depends into the cache dir
     # (here we store how to obtain these files, because a require might use
@@ -145,7 +145,7 @@ class Crystal::Program
 
       # Although release takes longer, once the bc is cached in .crystal
       # the subsequent times will make program execution faster.
-      host_compiler.release = true
+      host_compiler.release!
 
       # Don't cleanup old directories after compiling: it might happen
       # that in doing so we remove the directory associated with the current

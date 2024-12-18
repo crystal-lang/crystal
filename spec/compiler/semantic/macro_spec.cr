@@ -271,6 +271,24 @@ describe "Semantic: macro" do
       CRYSTAL
   end
 
+  it "errors if find macros but missing argument" do
+    assert_error(<<-CRYSTAL, "wrong number of arguments for macro 'foo' (given 0, expected 1)")
+      macro foo(x)
+        1
+      end
+
+      foo
+      CRYSTAL
+
+    assert_error(<<-CRYSTAL, "wrong number of arguments for macro 'foo' (given 0, expected 1)")
+      private macro foo(x)
+        1
+      end
+
+      foo
+      CRYSTAL
+  end
+
   describe "raise" do
     describe "inside macro" do
       describe "without node" do
@@ -593,6 +611,21 @@ describe "Semantic: macro" do
         baz
       end
       CRYSTAL
+  end
+
+  it "begins with {{ yield }} (#15050)" do
+    result = top_level_semantic <<-CRYSTAL, wants_doc: true
+      macro foo
+        {{yield}}
+      end
+
+      foo do
+        # doc comment
+        def test
+        end
+      end
+      CRYSTAL
+    result.program.defs.try(&.["test"][0].def.doc).should eq "doc comment"
   end
 
   it "can return class type in macro def" do
@@ -1083,6 +1116,19 @@ describe "Semantic: macro" do
       end
 
       Foo(Int32).foo("foo")
+      CRYSTAL
+  end
+
+  it "finds type for global path shared with free var" do
+    assert_type(<<-CRYSTAL) { int32 }
+      module T
+      end
+
+      def foo(x : T) forall T
+        {{ ::T.module? ? 1 : 'a' }}
+      end
+
+      foo("")
       CRYSTAL
   end
 
@@ -1657,6 +1703,41 @@ describe "Semantic: macro" do
     method.location.not_nil!.expanded_location.not_nil!.line_number.should eq(9)
   end
 
+  it "assigns to underscore" do
+    assert_no_errors <<-CRYSTAL
+      {% _ = 1 %}
+      CRYSTAL
+  end
+
+  it "unpacks block parameters inside macros (#13742)" do
+    assert_no_errors <<-CRYSTAL
+      macro foo
+        {% [{1, 2}, {3, 4}].each { |(k, v)| k } %}
+      end
+
+      foo
+      CRYSTAL
+
+    assert_no_errors <<-CRYSTAL
+      macro foo
+        {% [{1, 2}, {3, 4}].each { |(k, v)| k } %}
+      end
+
+      foo
+      foo
+      CRYSTAL
+  end
+
+  it "unpacks to underscore within block parameters inside macros" do
+    assert_type(<<-CRYSTAL) { bool }
+      {% begin %}
+        {% x = nil %}
+        {% [{1, true, 'a', ""}].each { |(_, y, _, _)| x = y } %}
+        {{ x }}
+      {% end %}
+      CRYSTAL
+  end
+
   it "executes OpAssign (#9356)" do
     assert_type(<<-CRYSTAL) { int32 }
       {% begin %}
@@ -1688,5 +1769,46 @@ describe "Semantic: macro" do
         { {{a}}, {{b}} }
       {% end %}
       CRYSTAL
+  end
+
+  it "assigns to underscore in MultiAssign" do
+    assert_type(<<-CRYSTAL) { tuple_of([char, bool]) }
+      {% begin %}
+        {% _, x, *_, y = [1, 'a', "", nil, true] %}
+        { {{x}}, {{y}} }
+      {% end %}
+      CRYSTAL
+  end
+
+  describe "@caller" do
+    it "returns an array of each call" do
+      assert_type(<<-CRYSTAL) { int32 }
+        macro test
+          {{@caller.size == 1 ? 1 : 'f'}}
+        end
+
+        test
+        CRYSTAL
+    end
+
+    it "provides access to the `Call` information" do
+      assert_type(<<-CRYSTAL) { tuple_of([int32, char] of Type) }
+        macro test(num)
+          {{@caller.first.args[0] == 1 ? 1 : 'f'}}
+        end
+
+        {test(1), test(2)}
+        CRYSTAL
+    end
+
+    it "returns nil if no stack is available" do
+      assert_type(<<-CRYSTAL) { char }
+        def test
+          {{(c = @caller) ? 1 : 'f'}}
+        end
+
+        test
+        CRYSTAL
+    end
   end
 end

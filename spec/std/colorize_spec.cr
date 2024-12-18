@@ -86,10 +86,15 @@ describe "colorize" do
     colorize("hello").bold.to_s.should eq("\e[1mhello\e[0m")
     colorize("hello").bright.to_s.should eq("\e[1mhello\e[0m")
     colorize("hello").dim.to_s.should eq("\e[2mhello\e[0m")
+    colorize("hello").italic.to_s.should eq("\e[3mhello\e[0m")
     colorize("hello").underline.to_s.should eq("\e[4mhello\e[0m")
     colorize("hello").blink.to_s.should eq("\e[5mhello\e[0m")
+    colorize("hello").blink_fast.to_s.should eq("\e[6mhello\e[0m")
     colorize("hello").reverse.to_s.should eq("\e[7mhello\e[0m")
     colorize("hello").hidden.to_s.should eq("\e[8mhello\e[0m")
+    colorize("hello").strikethrough.to_s.should eq("\e[9mhello\e[0m")
+    colorize("hello").double_underline.to_s.should eq("\e[21mhello\e[0m")
+    colorize("hello").overline.to_s.should eq("\e[53mhello\e[0m")
   end
 
   it "colorizes mode combination" do

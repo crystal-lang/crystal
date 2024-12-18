@@ -97,38 +97,89 @@ module HTTP
     private def validate_value(value)
       value.each_byte do |byte|
         # valid characters for cookie-value per https://tools.ietf.org/html/rfc6265#section-4.1.1
-        # all printable ASCII characters except ' ', ',', '"', ';' and '\\'
-        if !byte.in?(0x21...0x7f) || byte.in?(0x22, 0x2c, 0x3b, 0x5c)
+        # all printable ASCII characters except ',', '"', ';' and '\\'
+        if !byte.in?(0x20...0x7f) || byte.in?(0x22, 0x2c, 0x3b, 0x5c)
           raise IO::Error.new("Invalid cookie value")
         end
       end
     end
 
+    # Returns an unambiguous string representation of this cookie.
+    #
+    # It uses the `Set-Cookie` serialization from `#to_set_cookie_header` which
+    # represents the full state of the cookie.
+    #
+    # ```
+    # HTTP::Cookie.new("foo", "bar").inspect                        # => HTTP::Cookie["foo=bar"]
+    # HTTP::Cookie.new("foo", "bar", domain: "example.com").inspect # => HTTP::Cookie["foo=bar; domain=example.com"]
+    # ```
+    def inspect(io : IO) : Nil
+      io << "HTTP::Cookie["
+      to_s.inspect(io)
+      io << "]"
+    end
+
+    # Returns a string representation of this cookie.
+    #
+    # It uses the `Set-Cookie` serialization from `#to_set_cookie_header` which
+    # represents the full state of the cookie.
+    #
+    # ```
+    # HTTP::Cookie.new("foo", "bar").to_s                        # => "foo=bar"
+    # HTTP::Cookie.new("foo", "bar", domain: "example.com").to_s # => "foo=bar; domain=example.com"
+    # ```
+    def to_s(io : IO) : Nil
+      to_set_cookie_header(io)
+    end
+
+    # Returns a string representation of this cookie in the format used by the
+    # `Set-Cookie` header of an HTTP response.
+    #
+    # ```
+    # HTTP::Cookie.new("foo", "bar").to_set_cookie_header                        # => "foo=bar"
+    # HTTP::Cookie.new("foo", "bar", domain: "example.com").to_set_cookie_header # => "foo=bar; domain=example.com"
+    # ```
     def to_set_cookie_header : String
+      String.build do |header|
+        to_set_cookie_header(header)
+      end
+    end
+
+    # :ditto:
+    def to_set_cookie_header(io : IO) : Nil
       path = @path
       expires = @expires
       max_age = @max_age
       domain = @domain
       samesite = @samesite
-      String.build do |header|
-        to_cookie_header(header)
-        header << "; domain=#{domain}" if domain
-        header << "; path=#{path}" if path
-        header << "; expires=#{HTTP.format_time(expires)}" if expires
-        header << "; max-age=#{max_age.to_i}" if max_age
-        header << "; Secure" if @secure
-        header << "; HttpOnly" if @http_only
-        header << "; SameSite=#{samesite}" if samesite
-        header << "; #{@extension}" if @extension
-      end
+
+      to_cookie_header(io)
+      io << "; domain=#{domain}" if domain
+      io << "; path=#{path}" if path
+      io << "; expires=#{HTTP.format_time(expires)}" if expires
+      io << "; max-age=#{max_age.to_i}" if max_age
+      io << "; Secure" if @secure
+      io << "; HttpOnly" if @http_only
+      io << "; SameSite=#{samesite}" if samesite
+      io << "; #{@extension}" if @extension
     end
 
+    # Returns a string representation of this cookie in the format used by the
+    # `Cookie` header of an HTTP request.
+    # This includes only the `#name` and `#value`. All other attributes are left
+    # out.
+    #
+    # ```
+    # HTTP::Cookie.new("foo", "bar").to_cookie_header                        # => "foo=bar"
+    # HTTP::Cookie.new("foo", "bar", domain: "example.com").to_cookie_header # => "foo=bar
+    # ```
     def to_cookie_header : String
       String.build(@name.bytesize + @value.bytesize + 1) do |io|
         to_cookie_header(io)
       end
     end
 
+    # :ditto:
     def to_cookie_header(io) : Nil
       io << @name
       io << '='
@@ -192,13 +243,31 @@ module HTTP
       end
     end
 
+    # Expires the cookie.
+    #
+    # Causes the cookie to be destroyed. Sets the value to the empty string and
+    # expires its lifetime.
+    #
+    # ```
+    # cookie = HTTP::Cookie.new("hello", "world")
+    # cookie.expire
+    #
+    # cookie.value    # => ""
+    # cookie.expired? # => true
+    # ```
+    def expire
+      self.value = ""
+      self.expires = Time::UNIX_EPOCH
+      self.max_age = Time::Span.zero
+    end
+
     # :nodoc:
     module Parser
       module Regex
         CookieName     = /[^()<>@,;:\\"\/\[\]?={} \t\x00-\x1f\x7f]+/
-        CookieOctet    = /[!#-+\--:<-\[\]-~]/
+        CookieOctet    = /[!#-+\--:<-\[\]-~ ]/
         CookieValue    = /(?:"#{CookieOctet}*"|#{CookieOctet}*)/
-        CookiePair     = /(?<name>#{CookieName})=(?<value>#{CookieValue})/
+        CookiePair     = /\s*(?<name>#{CookieName})\s*=\s*(?<value>#{CookieValue})\s*/
         DomainLabel    = /[A-Za-z0-9\-]+/
         DomainIp       = /(?:\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/
         Time           = /(?:\d{2}:\d{2}:\d{2})/
@@ -230,9 +299,11 @@ module HTTP
       def parse_cookies(header, &)
         header.scan(CookieString).each do |pair|
           value = pair["value"]
-          if value.starts_with?('"')
+          if value.starts_with?('"') && value.ends_with?('"')
             # Unwrap quoted cookie value
             value = value.byte_slice(1, value.bytesize - 2)
+          else
+            value = value.strip
           end
           yield Cookie.new(pair["name"], value)
         end
@@ -251,8 +322,16 @@ module HTTP
         expires = parse_time(match["expires"]?)
         max_age = match["max_age"]?.try(&.to_i64.seconds)
 
+        # Unwrap quoted cookie value
+        cookie_value = match["value"]
+        if cookie_value.starts_with?('"') && cookie_value.ends_with?('"')
+          cookie_value = cookie_value.byte_slice(1, cookie_value.bytesize - 2)
+        else
+          cookie_value = cookie_value.strip
+        end
+
         Cookie.new(
-          match["name"], match["value"],
+          match["name"], cookie_value,
           path: match["path"]?,
           expires: expires,
           domain: match["domain"]?,
@@ -477,6 +556,33 @@ module HTTP
     # Returns this collection as a plain `Hash`.
     def to_h : Hash(String, Cookie)
       @cookies.dup
+    end
+
+    # Returns a string representation of this cookies list.
+    #
+    # It uses the `Set-Cookie` serialization from `Cookie#to_set_cookie_header` which
+    # represents the full state of the cookie.
+    #
+    # ```
+    # HTTP::Cookies{
+    #   HTTP::Cookie.new("foo", "bar"),
+    #   HTTP::Cookie.new("foo", "bar", domain: "example.com"),
+    # }.to_s # => "HTTP::Cookies{\"foo=bar\", \"foo=bar; domain=example.com\"}"
+    # ```
+    def to_s(io : IO)
+      io << "HTTP::Cookies{"
+      join(io, ", ") { |cookie| cookie.to_set_cookie_header.inspect(io) }
+      io << "}"
+    end
+
+    # :ditto:
+    def inspect(io : IO)
+      to_s(io)
+    end
+
+    # :ditto:
+    def pretty_print(pp) : Nil
+      pp.list("HTTP::Cookies{", self, "}") { |elem| pp.text(elem.to_set_cookie_header.inspect) }
     end
   end
 end

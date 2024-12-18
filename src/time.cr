@@ -212,7 +212,11 @@ require "crystal/system/time"
 # elapsed_time # => 20.milliseconds (approximately)
 # ```
 struct Time
-  class FloatingTimeConversionError < Exception
+  # Raised when an error occurs while performing a `Time` based operation.
+  class Error < Exception
+  end
+
+  class FloatingTimeConversionError < Error
   end
 
   include Comparable(Time)
@@ -1041,7 +1045,7 @@ struct Time
       raise ArgumentError.new "Invalid year"
     end
 
-    year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)
+    year.divisible_by?(4) && (!year.divisible_by?(100) || year.divisible_by?(400))
   end
 
   # Prints this `Time` to *io*.

@@ -433,6 +433,8 @@ abstract class IO
   # io.read_string(6) # raises IO::EOFError
   # ```
   def read_string(bytesize : Int) : String
+    return "" if bytesize == 0
+
     String.new(bytesize) do |ptr|
       if decoder = decoder()
         read = decoder.read_utf8(self, Slice.new(ptr, bytesize))
@@ -561,10 +563,7 @@ abstract class IO
           decoder.write(str)
         end
       else
-        buffer = uninitialized UInt8[DEFAULT_BUFFER_SIZE]
-        while (read_bytes = read(buffer.to_slice)) > 0
-          str.write buffer.to_slice[0, read_bytes]
-        end
+        IO.copy(self, str)
       end
     end
   end
@@ -750,11 +749,12 @@ abstract class IO
 
   private def gets_slow(delimiter : Char, limit, chomp)
     buffer = String::Builder.new
-    gets_slow(delimiter, limit, chomp, buffer)
-    buffer.empty? ? nil : buffer.to_s
+    bytes_read = gets_slow(delimiter, limit, chomp, buffer)
+    buffer.to_s if bytes_read
   end
 
-  private def gets_slow(delimiter : Char, limit, chomp, buffer : String::Builder) : Nil
+  private def gets_slow(delimiter : Char, limit, chomp, buffer : String::Builder) : Bool
+    bytes_read = false
     chomp_rn = delimiter == '\n' && chomp
 
     while true
@@ -764,6 +764,7 @@ abstract class IO
       end
 
       char, char_bytesize = info
+      bytes_read = true
 
       # Consider the case of \r\n when the delimiter is \n and chomp = true
       if chomp_rn && char == '\r'
@@ -799,6 +800,8 @@ abstract class IO
       break if char_bytesize >= limit
       limit -= char_bytesize
     end
+
+    bytes_read
   end
 
   # Reads until *delimiter* is found or the end of the `IO` is reached.
@@ -1216,11 +1219,14 @@ abstract class IO
 
     while true
       read1 = stream1.read(buf1.to_slice)
+      if read1.zero?
+        # First stream is EOF, check if the second has more.
+        return stream2.read_byte.nil?
+      end
       read2 = stream2.read_fully?(buf2.to_slice[0, read1])
       return false unless read2
 
       return false if buf1.to_unsafe.memcmp(buf2.to_unsafe, read1) != 0
-      return true if read1 == 0
     end
   end
 

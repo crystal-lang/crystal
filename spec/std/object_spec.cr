@@ -11,6 +11,8 @@ private class StringWrapper
   end
 end
 
+private EQ_OPERATORS = %w(<= >= == != []= ===)
+
 private class TestObject
   getter getter1
   getter getter2 : Int32
@@ -113,6 +115,19 @@ private class TestObject
     {key, value}
   end
 
+  # NOTE: these methods are a syntax error in older versions
+  {% if compare_versions(Crystal::VERSION, "1.12.0-dev") >= 0 %}
+    {% for op in EQ_OPERATORS %}
+      def {{ op.id }}(*args, **opts)
+        [args, opts]
+      end
+
+      def {{ op.id }}(*args, **opts, &)
+        [args, opts, yield]
+      end
+    {% end %}
+  {% end %}
+
   annotation TestAnnotation
   end
 
@@ -130,7 +145,10 @@ end
 
 private class DelegatedTestObject
   delegate :property1=, to: @test_object
-  delegate :[]=, to: @test_object
+
+  {% for op in EQ_OPERATORS %}
+    delegate {{ op.id.symbolize }}, to: @test_object
+  {% end %}
 
   def initialize(@test_object : TestObject)
   end
@@ -206,6 +224,22 @@ describe Object do
       delegated = DelegatedTestObject.new(test_object)
       (delegated["foo"] = "bar").should eq({"foo", "bar"})
     end
+
+    {% if compare_versions(Crystal::VERSION, "1.12.0-dev") >= 0 %}
+      {% for op in EQ_OPERATORS %}
+        it "forwards \#{{ op.id }} with multiple parameters" do
+          test_object = TestObject.new
+          delegated = DelegatedTestObject.new(test_object)
+          delegated.{{ op.id }}(1, 2, a: 3, b: 4).should eq [{1, 2}, {a: 3, b: 4}]
+        end
+
+        it "forwards \#{{ op.id }} with multiple parameters and block parameter" do
+          test_object = TestObject.new
+          delegated = DelegatedTestObject.new(test_object)
+          delegated.{{ op.id }}(1, 2, a: 3, b: 4) { 5 }.should eq [{1, 2}, {a: 3, b: 4}, 5]
+        end
+      {% end %}
+    {% end %}
   end
 
   describe "getter" do

@@ -373,6 +373,10 @@ module Crystal
       nil
     end
 
+    def lookup_name(name)
+      types?.try(&.[name]?)
+    end
+
     def parents
       nil
     end
@@ -555,7 +559,7 @@ module Crystal
            program.tuple, program.named_tuple,
            program.pointer, program.static_array,
            program.union, program.enum, program.proc,
-           PrimitiveType
+           PrimitiveType, GenericReferenceStorageType
         false
       else
         true
@@ -1389,10 +1393,10 @@ module Crystal
       # Float64 mantissa has 52 bits
       case kind
       when .i8?, .u8?, .i16?, .u16?
-        # Less than 23 bits, so convertable to Float32 and Float64 without precision loss
+        # Less than 23 bits, so convertible to Float32 and Float64 without precision loss
         true
       when .i32?, .u32?
-        # Less than 52 bits, so convertable to Float64 without precision loss
+        # Less than 52 bits, so convertible to Float64 without precision loss
         other_type.kind.f64?
       else
         false
@@ -2642,6 +2646,33 @@ module Crystal
     end
   end
 
+  # The non-instantiated ReferenceStorage(T) type.
+  class GenericReferenceStorageType < GenericClassType
+    @struct = true
+
+    def new_generic_instance(program, generic_type, type_vars)
+      type_param = self.type_vars.first
+      t = type_vars[type_param].type
+
+      unless t.is_a?(TypeParameter) || (t.class? && !t.struct?)
+        raise TypeException.new "Can't instantiate ReferenceStorage(#{type_param}) with #{type_param} = #{t} (#{type_param} must be a reference type)"
+      end
+
+      ReferenceStorageType.new program, t, self, type_param
+    end
+  end
+
+  class ReferenceStorageType < GenericClassInstanceType
+    getter reference_type : Type
+
+    def initialize(program, @reference_type, generic_type, type_param)
+      t_var = Var.new("T", @reference_type)
+      t_var.bind_to t_var
+
+      super(program, generic_type, program.value, {type_param => t_var} of String => ASTNode)
+    end
+  end
+
   # A lib type, like `lib LibC`.
   class LibType < ModuleType
     getter link_annotations : Array(LinkAnnotation)?
@@ -2700,7 +2731,7 @@ module Crystal
     end
 
     delegate remove_typedef, pointer?, defs,
-      macros, reference_like?, parents, to: typedef
+      macros, reference_like?, parents, lookup_instance_var, to: typedef
 
     def remove_indirection
       self
@@ -2729,17 +2760,9 @@ module Crystal
     delegate lookup_defs, lookup_defs_with_modules, lookup_first_def,
       lookup_macro, lookup_macros, to: aliased_type
 
-    def types?
+    def lookup_name(name)
       process_value
-      if aliased_type = @aliased_type
-        aliased_type.types?
-      else
-        nil
-      end
-    end
-
-    def types
-      types?.not_nil!
+      @aliased_type.try(&.lookup_name(name))
     end
 
     def remove_alias

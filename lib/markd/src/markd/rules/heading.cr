@@ -15,8 +15,8 @@ module Markd::Rule
         container = parser.add_child(Node::Type::Heading, parser.next_nonspace)
         container.data["level"] = match[0].strip.size
         container.text = parser.line[parser.offset..-1]
-          .sub(/^ *#+ *$/, "")
-          .sub(/ +#+ *$/, "")
+          .sub(/^[ \t]*#+[ \t]*$/, "")
+          .sub(/[ \t]+#+[ \t]*$/, "")
 
         parser.advance_offset(parser.line.size - parser.offset)
 
@@ -26,6 +26,13 @@ module Markd::Rule
             !parent.type.block_quote?
         # Setext Heading matched
         parser.close_unmatched_blocks
+
+        while container.text[0]? == '[' &&
+              (pos = parser.inline_lexer.reference(container.text, parser.refmap)) && pos > 0
+          container.text = container.text.byte_slice(pos)
+        end
+        return MatchValue::None if container.text.empty?
+
         heading = Node.new(Node::Type::Heading)
         heading.source_pos = container.source_pos
         heading.data["level"] = match[0][0] == '=' ? 1 : 2

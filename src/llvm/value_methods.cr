@@ -3,11 +3,12 @@ module LLVM::ValueMethods
   end
 
   def name=(name)
-    LibLLVM.set_value_name(self, name)
+    LibLLVM.set_value_name2(self, name, name.bytesize)
   end
 
   def name
-    String.new LibLLVM.get_value_name(self)
+    ptr = LibLLVM.get_value_name2(self, out len)
+    String.new(ptr, len)
   end
 
   def kind

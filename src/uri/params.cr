@@ -94,6 +94,23 @@ class URI
       end
     end
 
+    # Appends the given key value pairs as a url-encoded URI form/query to the given `io`.
+    #
+    # ```
+    # require "uri/params"
+    #
+    # io = IO::Memory.new
+    # URI::Params.encode(io, {"foo" => "bar", "baz" => ["quux", "quuz"]})
+    # io.to_s # => "foo=bar&baz=quux&baz=quuz"
+    # ```
+    def self.encode(io : IO, hash : Hash(String, String | Array(String))) : Nil
+      build(io) do |builder|
+        hash.each do |key, value|
+          builder.add key, value
+        end
+      end
+    end
+
     # Returns the given key value pairs as a url-encoded URI form/query.
     #
     # ```
@@ -101,8 +118,25 @@ class URI
     #
     # URI::Params.encode({foo: "bar", baz: ["quux", "quuz"]}) # => "foo=bar&baz=quux&baz=quuz"
     # ```
-    def self.encode(named_tuple : NamedTuple)
+    def self.encode(named_tuple : NamedTuple) : String
       build do |builder|
+        named_tuple.each do |key, value|
+          builder.add key.to_s, value
+        end
+      end
+    end
+
+    # Appends the given key value pairs as a url-encoded URI form/query to the given `io`.
+    #
+    # ```
+    # require "uri/params"
+    #
+    # io = IO::Memory.new
+    # URI::Params.encode(io, {foo: "bar", baz: ["quux", "quuz"]})
+    # io.to_s # => "foo=bar&baz=quux&baz=quuz"
+    # ```
+    def self.encode(io : IO, named_tuple : NamedTuple) : Nil
+      build(io) do |builder|
         named_tuple.each do |key, value|
           builder.add key.to_s, value
         end
@@ -141,6 +175,11 @@ class URI
       String.build do |io|
         yield Builder.new(io, space_to_plus: space_to_plus)
       end
+    end
+
+    # :ditto:
+    def self.build(io : IO, *, space_to_plus : Bool = true, & : Builder ->) : Nil
+      yield Builder.new(io, space_to_plus: space_to_plus)
     end
 
     protected getter raw_params

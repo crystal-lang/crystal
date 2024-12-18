@@ -41,9 +41,17 @@ private def run_init_project(skeleton_type, name, author, email, github_name, di
   ).run
 end
 
+private def git_available?
+  Process.run(Crystal::Git.executable).success?
+rescue IO::Error
+  false
+end
+
 module Crystal
   describe Init::InitProject do
     it "correctly uses git config" do
+      pending! "Git is not available" unless git_available?
+
       within_temporary_directory do
         File.write(".gitconfig", <<-INI)
         [user]
@@ -165,7 +173,7 @@ module Crystal
           parsed["version"].should eq("0.1.0")
           parsed["authors"].should eq(["John Smith <john@smith.com>"])
           parsed["license"].should eq("MIT")
-          parsed["crystal"].should eq(Crystal::Config.version)
+          parsed["crystal"].should eq(">= #{Crystal::Config.version}")
           parsed["targets"]?.should be_nil
         end
 
@@ -212,9 +220,11 @@ module Crystal
           )
         end
 
-        with_file "example/.git/config" { }
+        if git_available?
+          with_file "example/.git/config" { }
 
-        with_file "other-example-directory/.git/config" { }
+          with_file "other-example-directory/.git/config" { }
+        end
       end
     end
   end

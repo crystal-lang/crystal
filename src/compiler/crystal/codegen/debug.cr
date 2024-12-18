@@ -40,27 +40,15 @@ module Crystal
     def push_debug_info_metadata(mod)
       di_builder(mod).end
 
-      if @program.has_flag?("windows")
+      if @program.has_flag?("msvc")
         # Windows uses CodeView instead of DWARF
-        mod.add_flag(
-          LibLLVM::ModuleFlagBehavior::Warning,
-          "CodeView",
-          mod.context.int32.const_int(1)
-        )
-      elsif @program.has_flag?("osx") || @program.has_flag?("android")
-        # DebugInfo generation in LLVM by default uses a higher version of dwarf
-        # than OS X currently understands. Android has the same problem.
-        mod.add_flag(
-          LibLLVM::ModuleFlagBehavior::Warning,
-          "Dwarf Version",
-          mod.context.int32.const_int(2)
-        )
+        mod.add_flag(LibLLVM::ModuleFlagBehavior::Warning, "CodeView", 1)
       end
 
       mod.add_flag(
         LibLLVM::ModuleFlagBehavior::Warning,
         "Debug Info Version",
-        mod.context.int32.const_int(LLVM::DEBUG_METADATA_VERSION)
+        LLVM::DEBUG_METADATA_VERSION
       )
     end
 
@@ -140,14 +128,21 @@ module Crystal
 
     def create_debug_type(type : EnumType, original_type : Type)
       elements = type.types.map do |name, item|
-        value = if item.is_a?(Const) && (value2 = item.value).is_a?(NumberLiteral)
-                  value2.value.to_i64 rescue value2.value.to_u64
-                else
-                  0
-                end
+        str_value = item.as?(Const).try &.value.as?(NumberLiteral).try &.value
+
+        value =
+          if type.base_type.kind.unsigned_int?
+            str_value.try(&.to_u64?) || 0_u64
+          else
+            str_value.try(&.to_i64?) || 0_i64
+          end
+
         di_builder.create_enumerator(name, value)
       end
-      di_builder.create_enumeration_type(nil, original_type.to_s, nil, 1, 32, 32, elements, get_debug_type(type.base_type))
+
+      size_in_bits = type.base_type.kind.bytesize
+      align_in_bits = align_of(type.base_type)
+      di_builder.create_enumeration_type(nil, original_type.to_s, nil, 1, size_in_bits, align_in_bits, elements, get_debug_type(type.base_type))
     end
 
     def create_debug_type(type : InstanceVarContainer, original_type : Type)
@@ -202,7 +197,7 @@ module Crystal
         if ivar_debug_type = get_debug_type(ivar_type)
           embedded_type = llvm_type(ivar_type)
           size = @program.target_machine.data_layout.size_in_bits(embedded_type)
-          align = llvm_typer.align_of(embedded_type) * 8u64
+          align = align_of(ivar_type)
           member = di_builder.create_member_type(nil, ivar_type.to_s, nil, 1, size, align, 0, LLVM::DIFlags::Zero, ivar_debug_type)
           element_types << member
         end
@@ -342,13 +337,7 @@ module Crystal
     end
 
     private def align_of(type)
-      case type
-      when CharType    then 32
-      when IntegerType then type.bits
-      when FloatType   then type.bytes * 8
-      when BoolType    then 8
-      else                  0 # unsupported
-      end
+      @program.target_machine.data_layout.abi_alignment(llvm_type(type)) * 8
     end
 
     private def declare_local(type, alloca, location, basic_block : LLVM::BasicBlock? = nil, &)
@@ -374,12 +363,28 @@ module Crystal
       old_debug_location = @current_debug_location
       set_current_debug_location location
       if builder.current_debug_location != llvm_nil && (ptr = alloca)
+        # FIXME: When debug records are used instead of debug intrinsics, it
+        # seems inserting them into an empty BasicBlock will instead place them
+        # in a totally different (next?) function where the variable doesn't
+        # exist, leading to a "function-local metadata used in wrong function"
+        # validation error. This might happen when e.g. all variables inside a
+        # block are closured. Ideally every debug record should immediately
+        # follow the variable it declares.
+        {% unless LibLLVM::IS_LT_190 %}
+          call(do_nothing_fun) if block.instructions.empty?
+        {% end %}
         di_builder.insert_declare_at_end(ptr, var, expr, builder.current_debug_location_metadata, block)
         set_current_debug_location old_debug_location
         true
       else
         set_current_debug_location old_debug_location
         false
+      end
+    end
+
+    private def do_nothing_fun
+      fetch_typed_fun(@llvm_mod, "llvm.donothing") do
+        LLVM::Type.function([] of LLVM::Type, @llvm_context.void)
       end
     end
 
@@ -463,7 +468,9 @@ module Crystal
       scope = get_current_debug_scope(location)
 
       if scope
-        builder.set_current_debug_location(location.line_number || 1, location.column_number, scope)
+        debug_loc = di_builder.create_debug_location(location.line_number || 1, location.column_number, scope)
+        # NOTE: `di_builder.context` is only necessary for LLVM 8
+        builder.set_current_debug_location(debug_loc, di_builder.context)
       else
         clear_current_debug_location
       end
@@ -472,7 +479,7 @@ module Crystal
     def clear_current_debug_location
       @current_debug_location = nil
 
-      builder.set_current_debug_location(0, 0, nil)
+      builder.clear_current_debug_location
     end
 
     def emit_fun_debug_metadata(func, fun_name, location, *, debug_types = [] of LibLLVM::MetadataRef, is_optimized = false)

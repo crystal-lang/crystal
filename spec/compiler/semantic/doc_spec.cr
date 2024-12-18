@@ -353,6 +353,24 @@ describe "Semantic: doc" do
     a.locations.not_nil!.size.should eq(1)
   end
 
+  it "stores location for implicit flag enum members" do
+    result = semantic %(
+      @[Flags]
+      enum Foo
+        A = 1
+        B = 2
+      end
+    ), wants_doc: true
+    program = result.program
+    foo = program.types["Foo"]
+
+    a_loc = foo.types["All"].locations.should_not be_nil
+    a_loc.should_not be_empty
+
+    b_loc = foo.types["None"].locations.should_not be_nil
+    b_loc.should_not be_empty
+  end
+
   it "stores doc for constant" do
     result = semantic %(
       # Hello
@@ -613,6 +631,48 @@ describe "Semantic: doc" do
       program = result.program
       type = program.lookup_macros("foo").as(Array(Macro)).first
       type.doc.should eq("Some description")
+    end
+
+    it "attached to macro call" do
+      result = semantic %(
+        annotation Ann
+        end
+
+        macro gen_type
+          class Foo; end
+        end
+
+        # Some description
+        @[Ann]
+        gen_type
+      ), wants_doc: true
+      program = result.program
+      type = program.types["Foo"]
+      type.doc.should eq("Some description")
+    end
+
+    it "attached to macro call that produces multiple types" do
+      result = semantic %(
+        annotation Ann
+        end
+
+        class Foo
+          macro getter(decl)
+            @{{decl.var.id}} : {{decl.type.id}}
+
+            def {{decl.var.id}} : {{decl.type.id}}
+              @{{decl.var.id}}
+            end
+          end
+
+          # Some description
+          @[Ann]
+          getter name : String?
+        end
+      ), wants_doc: true
+      program = result.program
+      a_def = program.types["Foo"].lookup_defs("name").first
+      a_def.doc.should eq("Some description")
     end
   end
 end

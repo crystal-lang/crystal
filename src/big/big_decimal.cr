@@ -459,28 +459,44 @@ struct BigDecimal < Number
     BigDecimal.new(mantissa, 0)
   end
 
+  # :inherit:
+  def integer? : Bool
+    factor_powers_of_ten
+    scale == 0
+  end
+
   def round(digits : Number, base = 10, *, mode : RoundingMode = :ties_even) : BigDecimal
-    return self if (base == 10 && @scale <= digits) || zero?
+    return self if zero?
 
-    # the following is same as the overload in `Number` except `base.to_f`
-    # becomes `.to_big_d`
-    if digits < 0
-      multiplier = base.to_big_d ** digits.abs
-      shifted = self / multiplier
+    if base == 10
+      return self if @scale <= digits
+
+      # optimized version that skips `#div` completely, always exact
+      shifted = mul_power_of_ten(digits)
+      rounded = shifted.round(mode)
+      rounded.mul_power_of_ten(-digits)
     else
-      multiplier = base.to_big_d ** digits
-      shifted = self * multiplier
+      # the following is same as the overload in `Number` except `base.to_f`
+      # becomes `base.to_big_d`; note that the `#/` calls always use
+      # `DEFAULT_PRECISION`
+      if digits < 0
+        multiplier = base.to_big_d ** digits.abs
+        shifted = self / multiplier
+      else
+        multiplier = base.to_big_d ** digits
+        shifted = self * multiplier
+      end
+
+      rounded = shifted.round(mode)
+
+      if digits < 0
+        result = rounded * multiplier
+      else
+        result = rounded / multiplier
+      end
+
+      BigDecimal.new result
     end
-
-    rounded = shifted.round(mode)
-
-    if digits < 0
-      result = rounded * multiplier
-    else
-      result = rounded / multiplier
-    end
-
-    BigDecimal.new result
   end
 
   def to_s(io : IO) : Nil
@@ -737,10 +753,6 @@ struct BigDecimal < Number
     self
   end
 
-  def hash(hasher)
-    hasher.string(to_s)
-  end
-
   # Returns the *quotient* as absolutely negative if `self` and *other* have
   # different signs, otherwise returns the *quotient*.
   def normalize_quotient(other : BigDecimal, quotient : BigInt) : BigInt
@@ -757,6 +769,15 @@ struct BigDecimal < Number
 
   private def power_ten_to(x : Int) : Int
     TEN_I ** x
+  end
+
+  # returns `self * 10 ** exponent`
+  protected def mul_power_of_ten(exponent : Int)
+    if exponent <= scale
+      BigDecimal.new(@value, @scale - exponent)
+    else
+      BigDecimal.new(@value * power_ten_to(exponent - scale), 0_u64)
+    end
   end
 
   # Factors out any extra powers of ten in the internal representation.
@@ -852,5 +873,24 @@ class String
   # ```
   def to_big_d : BigDecimal
     BigDecimal.new(self)
+  end
+end
+
+# :nodoc:
+struct Crystal::Hasher
+  def self.reduce_num(value : BigDecimal)
+    v = reduce_num(value.value.abs)
+
+    # v = UInt64.mulmod(v, 10_u64.powmod(-scale, HASH_MODULUS), HASH_MODULUS)
+    # TODO: consider #7516 or similar
+    scale = value.scale
+    x = 0x1ccc_cccc_cccc_cccc_u64 # 10^-1 (mod HASH_MODULUS)
+    while scale > 0
+      v = UInt64.mulmod(v, x, HASH_MODULUS) if scale.bits_set?(1)
+      scale = scale.unsafe_shr(1)
+      x = UInt64.mulmod(x, x, HASH_MODULUS)
+    end
+
+    v &* value.sign
   end
 end

@@ -10,6 +10,11 @@ class Log
     @initial_level = level
   end
 
+  def finalize : Nil
+    # NOTE: workaround for https://github.com/crystal-lang/crystal/pull/14473
+    Log.builder.cleanup_collected_log(self)
+  end
+
   # :nodoc:
   def changed_level : Severity?
     @level
@@ -36,6 +41,15 @@ class Log
   {% for method in %w(trace debug info notice warn error fatal) %}
     {% severity = method.id.camelcase %}
 
+    # Logs the given *exception* if the logger's current severity is lower than
+    # or equal to `Severity::{{severity}}`.
+    def {{method.id}}(*, exception : Exception) : Nil
+      severity = Severity::{{severity}}
+      if level <= severity && (backend = @backend)
+        backend.dispatch Emitter.new(@source, severity, exception).emit("")
+      end
+    end
+
     # Logs a message if the logger's current severity is lower than or equal to
     # `Severity::{{ severity }}`.
     #
@@ -60,13 +74,16 @@ class Log
       dsl = Emitter.new(@source, severity, exception)
       result = yield dsl
 
-      case result
-      when Entry
-        backend.dispatch result
-      when Nil
-        # emit nothing
-      else
-        backend.dispatch dsl.emit(result.to_s)
+      unless result.nil? && exception.nil?
+        entry =
+           case result
+           when Entry
+             result
+           else
+             dsl.emit(result.to_s)
+           end
+
+        backend.dispatch entry
       end
     end
   {% end %}

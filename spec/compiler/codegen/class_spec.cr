@@ -857,8 +857,6 @@ describe "Code gen: class" do
 
   it "codegens singleton (#718)" do
     run(%(
-      require "prelude"
-
       class Singleton
         @@instance = new
 

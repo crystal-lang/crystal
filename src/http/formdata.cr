@@ -139,12 +139,10 @@ module HTTP::FormData
     name = nil
 
     parts = content_disposition.split(';')
-    type = parts[0]
+    type = parts.shift?
     raise Error.new("Invalid Content-Disposition: not form-data") unless type == "form-data"
-    (1...parts.size).each do |i|
-      part = parts[i]
-
-      key, value = part.split('=', 2)
+    parts.each do |part|
+      key, _, value = part.partition('=')
       key = key.strip
       value = value.strip
       if value[0] == '"'

@@ -15,19 +15,35 @@ module Crystal::System::Signal
   @@pipe = IO.pipe(read_blocking: false, write_blocking: true)
   @@handlers = {} of ::Signal => Handler
   @@sigset = Sigset.new
-  class_setter child_handler : Handler?
+  class_property child_handler : Handler?
   @@mutex = Mutex.new(:unchecked)
 
   def self.trap(signal, handler) : Nil
     @@mutex.synchronize do
       unless @@handlers[signal]?
         @@sigset << signal
-        LibC.signal(signal.value, ->(value : Int32) {
-          writer.write_bytes(value) unless writer.closed?
-        })
+        {% if flag?(:interpreted) && Crystal::Interpreter.has_method?(:signal) %}
+          Crystal::Interpreter.signal(signal.value, 2)
+        {% else %}
+          action = LibC::Sigaction.new
+
+          # restart some interrupted syscalls (read, write, accept, ...) instead
+          # of returning EINTR:
+          action.sa_flags = LibC::SA_RESTART
+
+          action.sa_sigaction = LibC::SigactionHandlerT.new do |value, _, _|
+            writer.write_bytes(value) unless writer.closed?
+          end
+          LibC.sigemptyset(pointerof(action.@sa_mask))
+          LibC.sigaction(signal, pointerof(action), nil)
+        {% end %}
       end
       @@handlers[signal] = handler
     end
+  end
+
+  def self.trap_handler?(signal)
+    @@mutex.synchronize { @@handlers[signal]? }
   end
 
   def self.reset(signal) : Nil
@@ -50,7 +66,16 @@ module Crystal::System::Signal
     else
       @@mutex.synchronize do
         @@handlers.delete(signal)
-        LibC.signal(signal, handler)
+        {% if flag?(:interpreted) && Crystal::Interpreter.has_method?(:signal) %}
+          h = case handler
+              when LibC::SIG_DFL then 0
+              when LibC::SIG_IGN then 1
+              else                    2
+              end
+          Crystal::Interpreter.signal(signal.value, h)
+        {% else %}
+          LibC.signal(signal, handler)
+        {% end %}
         @@sigset.delete(signal)
       end
     end
@@ -85,7 +110,10 @@ module Crystal::System::Signal
   # Replaces the signal pipe so the child process won't share the file
   # descriptors of the parent process and send it received signals.
   def self.after_fork
-    @@pipe.each(&.file_descriptor_close)
+    @@pipe.each do |pipe_io|
+      Crystal::EventLoop.current.remove(pipe_io)
+      pipe_io.file_descriptor_close { }
+    end
   ensure
     @@pipe = IO.pipe(read_blocking: false, write_blocking: true)
   end
@@ -104,7 +132,13 @@ module Crystal::System::Signal
   # sub-process.
   def self.after_fork_before_exec
     ::Signal.each do |signal|
-      LibC.signal(signal, LibC::SIG_DFL) if @@sigset.includes?(signal)
+      next unless @@sigset.includes?(signal)
+
+      {% if flag?(:interpreted) && Crystal::Interpreter.has_method?(:signal) %}
+        Crystal::Interpreter.signal(signal.value, 0)
+      {% else %}
+        LibC.signal(signal, LibC::SIG_DFL)
+      {% end %}
     end
   ensure
     {% unless flag?(:preview_mt) %}
@@ -120,6 +154,14 @@ module Crystal::System::Signal
     @@pipe[1]
   end
 
+  {% unless flag?(:interpreted) %}
+    # :nodoc:
+    def self.writer=(writer : IO::FileDescriptor)
+      @@pipe = {@@pipe[0], writer}
+      writer
+    end
+  {% end %}
+
   private def self.fatal(message : String)
     STDERR.puts("FATAL: #{message}, exiting")
     STDERR.flush
@@ -130,6 +172,9 @@ module Crystal::System::Signal
   @@setup_segfault_handler = Atomic::Flag.new
   @@segfault_handler = LibC::SigactionHandlerT.new { |sig, info, data|
     # Capture fault signals (SEGV, BUS) and finish the process printing a backtrace first
+
+    # This handler must not allocate memory via the GC! Expanding the heap or
+    # triggering a GC cycle here could generate another SEGV
 
     # Determine if the SEGV was inside or 'near' the top of the stack
     # to check for potential stack overflow. 'Near' is a small
@@ -149,7 +194,7 @@ module Crystal::System::Signal
     if is_stack_overflow
       Crystal::System.print_error "Stack overflow (e.g., infinite or very deep recursion)\n"
     else
-      Crystal::System.print_error "Invalid memory access (signal %d) at address 0x%lx\n", sig, addr
+      Crystal::System.print_error "Invalid memory access (signal %d) at address %p\n", sig, addr
     end
 
     Exception::CallStack.print_backtrace
@@ -160,7 +205,16 @@ module Crystal::System::Signal
     return unless @@setup_default_handlers.test_and_set
     @@sigset.clear
     start_loop
-    ::Signal::PIPE.ignore
+
+    {% if flag?(:interpreted) && Interpreter.has_method?(:signal_descriptor) %}
+      # replace the interpreter's writer pipe with the interpreted, so signals
+      # will be received by the interpreter, but handled by the interpreted
+      # signal loop
+      Crystal::Interpreter.signal_descriptor(@@pipe[1].fd)
+    {% else %}
+      ::Signal::PIPE.ignore
+    {% end %}
+
     ::Signal::CHLD.reset
   end
 

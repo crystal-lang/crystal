@@ -120,10 +120,7 @@ end
       dwMaximumWindowSize : COORD
     end
 
-    STD_OUTPUT_HANDLE = -11
-
     fun GetConsoleScreenBufferInfo(hConsoleOutput : Void*, lpConsoleScreenBufferInfo : CONSOLE_SCREEN_BUFFER_INFO*) : Void
-    fun GetStdHandle(nStdHandle : UInt32) : Void*
   end
 {% else %}
   lib LibC
@@ -145,6 +142,10 @@ end
       {% end %}
     {% end %}
 
-    fun ioctl(fd : Int, request : ULong, ...) : Int
+    {% if flag?(:android) %}
+      fun ioctl(__fd : Int, __request : Int, ...) : Int
+    {% else %}
+      fun ioctl(fd : Int, request : ULong, ...) : Int
+    {% end %}
   end
 {% end %}

@@ -199,7 +199,7 @@ class Log::Metadata
   end
 
   struct Value
-    Crystal.datum types: {nil: Nil, bool: Bool, i: Int32, i64: Int64, f: Float32, f64: Float64, s: String, time: Time}, hash_key_type: String, immutable: false, target_type: Log::Metadata::Value
+    Crystal.datum types: {nil: Nil, bool: Bool, i: Int32, i64: Int64, u: UInt32, u64: UInt64, f: Float32, f64: Float64, s: String, time: Time}, hash_key_type: String, immutable: false, target_type: Log::Metadata::Value
 
     # Creates `Log::Metadata` from the given *values*.
     # All keys are converted to `String`

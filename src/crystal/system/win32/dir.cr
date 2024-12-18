@@ -147,8 +147,8 @@ module Crystal::System::Dir
   end
 
   def self.create(path : String, mode : Int32) : Nil
-    if LibC._wmkdir(System.to_wstr(path)) == -1
-      raise ::File::Error.from_errno("Unable to create directory", file: path)
+    if LibC.CreateDirectoryW(System.to_wstr(path), nil) == 0
+      raise ::File::Error.from_winerror("Unable to create directory", file: path)
     end
   end
 
@@ -179,8 +179,8 @@ module Crystal::System::Dir
       end
     end
 
-    return true if LibC._wrmdir(win_path) == 0
+    return true if LibC.RemoveDirectoryW(win_path) != 0
     LibC.SetFileAttributesW(win_path, attributes) if read_only_removed
-    raise ::File::Error.from_errno("Unable to remove directory", file: path)
+    raise ::File::Error.from_winerror("Unable to remove directory", file: path)
   end
 end

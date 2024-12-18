@@ -148,12 +148,12 @@ class HTTP::Server
 
   # Creates a new HTTP server with a handler chain constructed from the *handlers*
   # array and the given block.
-  def self.new(handlers : Array(HTTP::Handler), &handler : HTTP::Handler::HandlerProc) : self
+  def self.new(handlers : Indexable(HTTP::Handler), &handler : HTTP::Handler::HandlerProc) : self
     new(HTTP::Server.build_middleware(handlers, handler))
   end
 
   # Creates a new HTTP server with the *handlers* array as handler chain.
-  def self.new(handlers : Array(HTTP::Handler)) : self
+  def self.new(handlers : Indexable(HTTP::Handler)) : self
     new(HTTP::Server.build_middleware(handlers))
   end
 

@@ -13,11 +13,12 @@ module Regex::PCRE2
     end
   end
 
-  class_getter version_number : {Int32, Int32} = begin
+  class_getter version_number : {Int32, Int32} do
     version = self.version
     dot = version.index('.') || raise RuntimeError.new("Invalid libpcre2 version")
     space = version.index(' ', dot) || raise RuntimeError.new("Invalid libpcre2 version")
-    {version.byte_slice(0, dot).to_i, version.byte_slice(dot + 1, space - dot - 1).to_i}
+    # PCRE2 versions can contain -RC{N} which would make `.to_i` fail unless strict is set to false
+    {version.byte_slice(0, dot).to_i, version.byte_slice(dot + 1, space - dot - 1).to_i(strict: false)}
   end
 
   # :nodoc:
@@ -66,7 +67,8 @@ module Regex::PCRE2
       if options.includes?(option)
         flag |= case option
                 when .ignore_case?       then LibPCRE2::CASELESS
-                when .multiline?         then LibPCRE2::DOTALL | LibPCRE2::MULTILINE
+                when .multiline?         then LibPCRE2::MULTILINE | LibPCRE2::DOTALL
+                when .multiline_only?    then LibPCRE2::MULTILINE
                 when .dotall?            then LibPCRE2::DOTALL
                 when .extended?          then LibPCRE2::EXTENDED
                 when .anchored?          then LibPCRE2::ANCHORED

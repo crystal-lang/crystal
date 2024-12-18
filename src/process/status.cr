@@ -14,10 +14,10 @@ enum Process::ExitReason
   #   reserved for normal exits.
   Normal
 
-  # The process terminated abnormally.
+  # The process terminated due to an abort request.
   #
-  # * On Unix-like systems, this corresponds to `Signal::ABRT`, `Signal::HUP`,
-  #   `Signal::KILL`, `Signal::QUIT`, and `Signal::TERM`.
+  # * On Unix-like systems, this corresponds to `Signal::ABRT`, `Signal::KILL`,
+  #   and `Signal::QUIT`.
   # * On Windows, this corresponds to the `NTSTATUS` value
   #   `STATUS_FATAL_APP_EXIT`.
   Aborted
@@ -79,6 +79,25 @@ enum Process::ExitReason
   # A `Process::Status` that maps to `Unknown` may map to a different value if
   # new enum members are added to `ExitReason`.
   Unknown
+
+  # The process exited due to the user closing the terminal window or ending an ssh session.
+  #
+  # * On Unix-like systems, this corresponds to `Signal::HUP`.
+  # * On Windows, this corresponds to the `CTRL_CLOSE_EVENT` message.
+  TerminalDisconnected
+
+  # The process exited due to the user logging off or shutting down the OS.
+  #
+  # * On Unix-like systems, this corresponds to `Signal::TERM`.
+  # * On Windows, this corresponds to the `CTRL_LOGOFF_EVENT` and `CTRL_SHUTDOWN_EVENT` messages.
+  SessionEnded
+
+  # Returns `true` if the process exited abnormally.
+  #
+  # This includes all values except `Normal`.
+  def abnormal?
+    !normal?
+  end
 end
 
 # The status of a terminated process. Returned by `Process#wait`.
@@ -123,14 +142,19 @@ class Process::Status
         @exit_status & 0xC0000000_u32 == 0 ? ExitReason::Normal : ExitReason::Unknown
       end
     {% elsif flag?(:unix) && !flag?(:wasm32) %}
-      if normal_exit?
+      # define __WIFEXITED(status) (__WTERMSIG(status) == 0)
+      if signal_code == 0
         ExitReason::Normal
       elsif signal_exit?
         case Signal.from_value?(signal_code)
         when Nil
           ExitReason::Signal
-        when .abrt?, .hup?, .kill?, .quit?, .term?
+        when .abrt?, .kill?, .quit?
           ExitReason::Aborted
+        when .hup?
+          ExitReason::TerminalDisconnected
+        when .term?
+          ExitReason::SessionEnded
         when .int?
           ExitReason::Interrupted
         when .trap?
@@ -165,13 +189,23 @@ class Process::Status
   end
 
   # Returns `true` if the process terminated normally.
+  #
+  # Equivalent to `ExitReason::Normal`
+  #
+  # * `#exit_reason` provides more insights into other exit reasons.
+  # * `#abnormal_exit?` returns the inverse.
   def normal_exit? : Bool
-    {% if flag?(:unix) %}
-      # define __WIFEXITED(status) (__WTERMSIG(status) == 0)
-      signal_code == 0
-    {% else %}
-      true
-    {% end %}
+    exit_reason.normal?
+  end
+
+  # Returns `true` if the process terminated abnormally.
+  #
+  # Equivalent to `ExitReason#abnormal?`
+  #
+  # * `#exit_reason` provides more insights into the specific exit reason.
+  # * `#normal_exit?` returns the inverse.
+  def abnormal_exit? : Bool
+    exit_reason.abnormal?
   end
 
   # If `signal_exit?` is `true`, returns the *Signal* the process
@@ -183,14 +217,37 @@ class Process::Status
   # which also works on Windows.
   def exit_signal : Signal
     {% if flag?(:unix) && !flag?(:wasm32) %}
-      Signal.from_value(signal_code)
+      Signal.new(signal_code)
     {% else %}
       raise NotImplementedError.new("Process::Status#exit_signal")
     {% end %}
   end
 
-  # If `normal_exit?` is `true`, returns the exit code of the process.
+  # Returns the exit code of the process if it exited normally (`#normal_exit?`).
+  #
+  # Raises `RuntimeError` if the status describes an abnormal exit.
+  #
+  # ```
+  # Process.run("true").exit_code                                # => 1
+  # Process.run("exit 123", shell: true).exit_code               # => 123
+  # Process.new("sleep", ["10"]).tap(&.terminate).wait.exit_code # RuntimeError: Abnormal exit has no exit code
+  # ```
   def exit_code : Int32
+    exit_code? || raise RuntimeError.new("Abnormal exit has no exit code")
+  end
+
+  # Returns the exit code of the process if it exited normally.
+  #
+  # Returns `nil` if the status describes an abnormal exit.
+  #
+  # ```
+  # Process.run("true").exit_code?                                # => 1
+  # Process.run("exit 123", shell: true).exit_code?               # => 123
+  # Process.new("sleep", ["10"]).tap(&.terminate).wait.exit_code? # => nil
+  # ```
+  def exit_code? : Int32?
+    return unless normal_exit?
+
     {% if flag?(:unix) %}
       # define __WEXITSTATUS(status) (((status) & 0xff00) >> 8)
       (@exit_status & 0xff00) >> 8
@@ -201,7 +258,7 @@ class Process::Status
 
   # Returns `true` if the process exited normally with an exit code of `0`.
   def success? : Bool
-    normal_exit? && exit_code == 0
+    exit_code? == 0
   end
 
   private def signal_code
@@ -218,11 +275,15 @@ class Process::Status
   # `Process::Status[Signal::HUP]`.
   def inspect(io : IO) : Nil
     io << "Process::Status["
-    if normal_exit?
-      exit_code.inspect(io)
-    else
-      exit_signal.inspect(io)
-    end
+    {% if flag?(:win32) %}
+      @exit_status.to_s(io)
+    {% else %}
+      if normal_exit?
+        exit_code.inspect(io)
+      else
+        exit_signal.inspect(io)
+      end
+    {% end %}
     io << "]"
   end
 
@@ -231,11 +292,20 @@ class Process::Status
   # A normal exit status prints the numerical value (`0`, `1` etc).
   # A signal exit status prints the name of the `Signal` member (`HUP`, `INT`, etc.).
   def to_s(io : IO) : Nil
-    if normal_exit?
-      io << exit_code
-    else
-      io << exit_signal
-    end
+    {% if flag?(:win32) %}
+      @exit_status.to_s(io)
+    {% else %}
+      if normal_exit?
+        io << exit_code
+      else
+        signal = exit_signal
+        if name = signal.member_name
+          io << name
+        else
+          signal.inspect(io)
+        end
+      end
+    {% end %}
   end
 
   # Returns a textual representation of the process status.
@@ -243,10 +313,15 @@ class Process::Status
   # A normal exit status prints the numerical value (`0`, `1` etc).
   # A signal exit status prints the name of the `Signal` member (`HUP`, `INT`, etc.).
   def to_s : String
-    if normal_exit?
-      exit_code.to_s
-    else
-      exit_signal.to_s
-    end
+    {% if flag?(:win32) %}
+      @exit_status.to_s
+    {% else %}
+      if normal_exit?
+        exit_code.to_s
+      else
+        signal = exit_signal
+        signal.member_name || signal.inspect
+      end
+    {% end %}
   end
 end

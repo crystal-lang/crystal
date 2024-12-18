@@ -67,9 +67,7 @@ class Time::Location
         with_zoneinfo do
           Location.load("UTC").should eq Location::UTC
           Location.load("").should eq Location::UTC
-
-          # Etc/UTC could be pointing to anything
-          Location.load("Etc/UTC").should_not eq Location::UTC
+          Location.load("Etc/UTC").should eq Location::UTC
         end
       end
 
@@ -168,6 +166,7 @@ class Time::Location
 
     describe ".load_android" do
       it "loads Europe/Berlin" do
+        Location.__clear_location_cache
         location = Location.load_android("Europe/Berlin", {datapath("android_tzdata")}).should_not be_nil
 
         location.name.should eq "Europe/Berlin"
@@ -187,6 +186,7 @@ class Time::Location
 
       it "loads new data if tzdata file was changed" do
         tzdata_path = datapath("android_tzdata")
+        Location.__clear_location_cache
         location1 = Location.load_android("Europe/Berlin", {tzdata_path})
         File.touch(tzdata_path)
         location2 = Location.load_android("Europe/Berlin", {tzdata_path})

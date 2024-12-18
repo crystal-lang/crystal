@@ -82,16 +82,16 @@ macro record(__name name, *properties, **kwargs)
     {% end %}
 
     def initialize({{
-                     *properties.map do |field|
+                     properties.map do |field|
                        "@#{field.id}".id
-                     end
+                     end.splat
                    }})
     end
 
     {{yield}}
 
     def copy_with({{
-                    *properties.map do |property|
+                    properties.map do |property|
                       if property.is_a?(Assign)
                         "#{property.target.id} _#{property.target.id} = @#{property.target.id}".id
                       elsif property.is_a?(TypeDeclaration)
@@ -99,10 +99,10 @@ macro record(__name name, *properties, **kwargs)
                       else
                         "#{property.id} _#{property.id} = @#{property.id}".id
                       end
-                    end
+                    end.splat
                   }})
       self.class.new({{
-                       *properties.map do |property|
+                       properties.map do |property|
                          if property.is_a?(Assign)
                            "_#{property.target.id}".id
                          elsif property.is_a?(TypeDeclaration)
@@ -110,13 +110,13 @@ macro record(__name name, *properties, **kwargs)
                          else
                            "_#{property.id}".id
                          end
-                       end
+                       end.splat
                      }})
     end
 
     def clone
       self.class.new({{
-                       *properties.map do |property|
+                       properties.map do |property|
                          if property.is_a?(Assign)
                            "@#{property.target.id}.clone".id
                          elsif property.is_a?(TypeDeclaration)
@@ -124,7 +124,7 @@ macro record(__name name, *properties, **kwargs)
                          else
                            "@#{property.id}.clone".id
                          end
-                       end
+                       end.splat
                      }})
     end
   end
@@ -150,7 +150,7 @@ macro pp!(*exps)
     ::print %prefix
     ::pp({{exp}})
   {% else %}
-    %names = { {{*exps.map(&.stringify)}} }
+    %names = { {{exps.map(&.stringify).splat}} }
     %max_size = %names.max_of &.size
     {
       {% for exp, i in exps %}
@@ -184,7 +184,7 @@ macro p!(*exps)
     ::print %prefix
     ::p({{exp}})
   {% else %}
-    %names = { {{*exps.map(&.stringify)}} }
+    %names = { {{exps.map(&.stringify).splat}} }
     %max_size = %names.max_of &.size
     {
       {% for exp, i in exps %}

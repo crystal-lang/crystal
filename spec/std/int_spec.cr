@@ -13,6 +13,13 @@ private macro it_converts_to_s(num, str, **opts)
 end
 
 describe "Int" do
+  describe "#integer?" do
+    {% for int in BUILTIN_INTEGER_TYPES %}
+      it { {{ int }}::MIN.integer?.should be_true }
+      it { {{ int }}::MAX.integer?.should be_true }
+    {% end %}
+  end
+
   describe "**" do
     it "with positive Int32" do
       x = 2 ** 2
@@ -139,6 +146,156 @@ describe "Int" do
     end
   end
 
+  describe "#to_signed" do
+    {% for n in [8, 16, 32, 64, 128] %}
+      it "does for Int{{n}}" do
+        x = Int{{n}}.new(123).to_signed
+        x.should be_a(Int{{n}})
+        x.should eq(123)
+
+        Int{{n}}.new(-123).to_signed.should eq(-123)
+        Int{{n}}::MIN.to_signed.should eq(Int{{n}}::MIN)
+        Int{{n}}::MAX.to_signed.should eq(Int{{n}}::MAX)
+      end
+
+      it "does for UInt{{n}}" do
+        x = UInt{{n}}.new(123).to_signed
+        x.should be_a(Int{{n}})
+        x.should eq(123)
+
+        UInt{{n}}::MIN.to_signed.should eq(0)
+        expect_raises(OverflowError) { UInt{{n}}::MAX.to_signed }
+        expect_raises(OverflowError) { (UInt{{n}}.new(Int{{n}}::MAX) + 1).to_signed }
+      end
+    {% end %}
+  end
+
+  describe "#to_signed!" do
+    {% for n in [8, 16, 32, 64, 128] %}
+      it "does for Int{{n}}" do
+        x = Int{{n}}.new(123).to_signed!
+        x.should be_a(Int{{n}})
+        x.should eq(123)
+
+        Int{{n}}.new(-123).to_signed!.should eq(-123)
+        Int{{n}}::MIN.to_signed!.should eq(Int{{n}}::MIN)
+        Int{{n}}::MAX.to_signed!.should eq(Int{{n}}::MAX)
+      end
+
+      it "does for UInt{{n}}" do
+        x = UInt{{n}}.new(123).to_signed!
+        x.should be_a(Int{{n}})
+        x.should eq(123)
+
+        UInt{{n}}::MIN.to_signed!.should eq(0)
+        UInt{{n}}::MAX.to_signed!.should eq(-1)
+        (UInt{{n}}::MAX - 122).to_signed!.should eq(-123)
+        (UInt{{n}}.new(Int{{n}}::MAX) + 1).to_signed!.should eq(Int{{n}}::MIN)
+      end
+    {% end %}
+  end
+
+  describe "#to_unsigned" do
+    {% for n in [8, 16, 32, 64, 128] %}
+      it "does for Int{{n}}" do
+        x = Int{{n}}.new(123).to_unsigned
+        x.should be_a(UInt{{n}})
+        x.should eq(123)
+
+        Int{{n}}.zero.to_unsigned.should eq(UInt{{n}}::MIN)
+        Int{{n}}::MAX.to_unsigned.should eq(UInt{{n}}.new(Int{{n}}::MAX))
+        expect_raises(OverflowError) { Int{{n}}::MIN.to_unsigned }
+      end
+
+      it "does for UInt{{n}}" do
+        x = UInt{{n}}.new(123).to_unsigned
+        x.should be_a(UInt{{n}})
+        x.should eq(123)
+
+        UInt{{n}}::MIN.to_unsigned.should eq(UInt{{n}}::MIN)
+        UInt{{n}}::MAX.to_unsigned.should eq(UInt{{n}}::MAX)
+      end
+    {% end %}
+  end
+
+  describe "#to_unsigned!" do
+    {% for n in [8, 16, 32, 64, 128] %}
+      it "does for Int{{n}}" do
+        x = Int{{n}}.new(123).to_unsigned!
+        x.should be_a(UInt{{n}})
+        x.should eq(123)
+
+        Int{{n}}.new(-123).to_unsigned!.should eq(UInt{{n}}::MAX - 122)
+        Int{{n}}::MIN.to_unsigned!.should eq(UInt{{n}}::MAX // 2 + 1)
+        Int{{n}}::MAX.to_unsigned!.should eq(UInt{{n}}::MAX // 2)
+        Int{{n}}.new(-1).to_unsigned!.should eq(UInt{{n}}::MAX)
+      end
+
+      it "does for UInt{{n}}" do
+        x = UInt{{n}}.new(123).to_unsigned!
+        x.should be_a(UInt{{n}})
+        x.should eq(123)
+
+        UInt{{n}}::MIN.to_unsigned!.should eq(UInt{{n}}::MIN)
+        UInt{{n}}::MAX.to_unsigned!.should eq(UInt{{n}}::MAX)
+      end
+    {% end %}
+  end
+
+  describe "#abs_unsigned" do
+    {% for int in Int::Signed.union_types %}
+      it "does for {{ int }}" do
+        x = {{ int }}.new(123).abs_unsigned
+        x.should be_a(U{{ int }})
+        x.should eq(123)
+
+        x = {{ int }}.new(-123).abs_unsigned
+        x.should be_a(U{{ int }})
+        x.should eq(123)
+      end
+
+      it "does for U{{ int }}" do
+        x = U{{ int }}.new(123).abs_unsigned
+        x.should be_a(U{{ int }})
+        x.should eq(123)
+      end
+
+      it "does not overflow on {{ int }}::MIN" do
+        x = {{ int }}::MIN.abs_unsigned
+        x.should be_a(U{{ int }})
+        x.should eq(U{{ int }}.zero &- {{ int }}::MIN)
+      end
+    {% end %}
+  end
+
+  describe "#neg_signed" do
+    {% for int in Int::Signed.union_types %}
+      it "does for {{ int }}" do
+        x = {{ int }}.new(123).neg_signed
+        x.should be_a({{ int }})
+        x.should eq(-123)
+
+        x = {{ int }}.new(-123).neg_signed
+        x.should be_a({{ int }})
+        x.should eq(123)
+
+        expect_raises(OverflowError) { {{ int }}::MIN.neg_signed }
+      end
+
+      it "does for U{{ int }}" do
+        x = U{{ int }}.new(123).neg_signed
+        x.should be_a({{ int }})
+        x.should eq(-123)
+      end
+
+      it "does not overflow on {{ int }}::MIN.abs_unsigned" do
+        x = {{ int }}::MIN.abs_unsigned.neg_signed
+        x.should be_a({{ int }})
+        x.should eq({{ int }}::MIN)
+      end
+    {% end %}
+  end
+
   describe "gcd" do
     it { 14.gcd(0).should eq(14) }
     it { 14.gcd(1).should eq(1) }
@@ -219,6 +376,7 @@ describe "Int" do
       it_converts_to_s 62, "10", base: 62
       it_converts_to_s 97, "1z", base: 62
       it_converts_to_s 3843, "ZZ", base: 62
+      it_converts_to_s Int128::MIN, "-1#{"0" * 127}", base: 2
 
       it "raises on base 1" do
         expect_raises(ArgumentError, "Invalid base 1") { 123.to_s(1) }

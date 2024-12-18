@@ -180,6 +180,16 @@ module Crystal
       node
     end
 
+    def transform(node : AlignOf)
+      node.exp = node.exp.transform(self)
+      node
+    end
+
+    def transform(node : InstanceAlignOf)
+      node.exp = node.exp.transform(self)
+      node
+    end
+
     def transform(node : OffsetOf)
       node.offsetof_type = node.offsetof_type.transform(self)
       node.offset = node.offset.transform(self)
@@ -220,9 +230,7 @@ module Crystal
     end
 
     def transform(node : Select)
-      node.whens.map! do |a_when|
-        Select::When.new(a_when.condition.transform(self), a_when.body.transform(self))
-      end
+      transform_many node.whens
 
       if node_else = node.else
         node.else = node_else.transform(self)
@@ -559,7 +567,6 @@ module Crystal
     end
 
     def transform(node : MacroExpression)
-      node.exp = node.exp.transform(self)
       node
     end
 
@@ -572,15 +579,10 @@ module Crystal
     end
 
     def transform(node : MacroIf)
-      node.cond = node.cond.transform(self)
-      node.then = node.then.transform(self)
-      node.else = node.else.transform(self)
       node
     end
 
     def transform(node : MacroFor)
-      node.exp = node.exp.transform(self)
-      node.body = node.body.transform(self)
       node
     end
 

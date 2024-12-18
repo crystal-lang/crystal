@@ -15,7 +15,7 @@ describe LLVM do
   it ".default_target_triple" do
     triple = LLVM.default_target_triple
     {% if flag?(:darwin) %}
-      triple.should match(/-apple-macosx$/)
+      triple.should match(/-apple-(darwin|macosx)/)
     {% elsif flag?(:android) %}
       triple.should match(/-android$/)
     {% elsif flag?(:linux) %}
@@ -30,6 +30,8 @@ describe LLVM do
       triple.should match(/-dragonfly/)
     {% elsif flag?(:netbsd) %}
       triple.should match(/-netbsd/)
+    {% elsif flag?(:solaris) %}
+      triple.should match(/-solaris$/)
     {% elsif flag?(:wasi) %}
       triple.should match(/-wasi/)
     {% else %}

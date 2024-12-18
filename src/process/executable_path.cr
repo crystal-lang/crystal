@@ -50,7 +50,7 @@ class Process
       # Windows doesn't have "executable" metadata for files, so it also doesn't have files that are "not executable".
       true
     {% else %}
-      File.executable?(path)
+      File::Info.executable?(path)
     {% end %}
   end
 
@@ -95,7 +95,7 @@ class Process
     end
 
     if path && !has_separator
-      path.split(PATH_DELIMITER).each do |path_entry|
+      path.split(PATH_DELIMITER) do |path_entry|
         yield Path.new(path_entry, name)
       end
     end

@@ -30,6 +30,7 @@ lib LibC
   end
 
   alias PthreadCondattrT = Long
+  alias PthreadKeyT = Int
 
   struct PthreadMutexT
     __private : Int32[10]

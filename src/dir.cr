@@ -246,6 +246,11 @@ class Dir
   end
 
   # Returns `true` if the given path exists and is a directory
+  #
+  # ```
+  # Dir.mkdir("testdir")
+  # Dir.exists?("testdir") # => true
+  # ```
   def self.exists?(path : Path | String) : Bool
     if info = File.info?(path)
       info.type.directory?
@@ -274,6 +279,11 @@ class Dir
   # can be specified, with a default of 777 (0o777).
   #
   # NOTE: *mode* is ignored on windows.
+  #
+  # ```
+  # Dir.mkdir("testdir")
+  # Dir.exists?("testdir") # => true
+  # ```
   def self.mkdir(path : Path | String, mode = 0o777) : Nil
     Crystal::System::Dir.create(path.to_s, mode)
   end
