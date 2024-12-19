@@ -99,7 +99,27 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
     var_type = check_allowed_in_lib node.type_spec, var_type
 
     type = current_type.as(LibType)
-    type.add_var node.name, var_type, (node.real_name || node.name), thread_local
+
+    setter = External.new(
+      "#{node.name}=", [Arg.new("value", type: var_type)],
+      Primitive.new("external_var_set", var_type), node.real_name || node.name
+    ).at(node.location)
+    setter.set_type(var_type)
+    setter.external_var = true
+    setter.thread_local = thread_local
+    setter.doc = node.doc || @annotations.try(&.first?).try(&.doc)
+
+    getter = External.new(
+      "#{node.name}", [] of Arg,
+      Primitive.new("external_var_get", var_type), node.real_name || node.name
+    ).at(node.location)
+    getter.set_type(var_type)
+    getter.external_var = true
+    getter.thread_local = thread_local
+    getter.doc = node.doc || @annotations.try(&.first?).try(&.doc)
+
+    type.add_def setter
+    type.add_def getter
 
     false
   end

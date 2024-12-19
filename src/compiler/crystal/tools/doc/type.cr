@@ -219,6 +219,30 @@ class Crystal::Doc::Type
       end
     end
   end
+
+  @external_vars : Array(Method)?
+
+  def external_vars
+    @external_vars ||= begin
+      case @type
+      when LibType
+        defs = [] of Method
+        @type.defs.try &.each do |def_name, defs_with_metadata|
+          defs_with_metadata.each do |def_with_metadata|
+            next unless (ext = def_with_metadata.def).is_a?(External)
+            next if !ext.external_var? || ext.name.ends_with?("=")
+            next unless @generator.must_include? ext
+
+            defs << method(ext, false)
+          end
+        end
+        defs.sort_by! { |x| sort_order(x) }
+      else
+        [] of Method
+      end
+    end
+  end
+
   @functions : Array(Method)?
 
   def functions
@@ -228,7 +252,8 @@ class Crystal::Doc::Type
         defs = [] of Method
         @type.defs.try &.each do |def_name, defs_with_metadata|
           defs_with_metadata.each do |def_with_metadata|
-            next unless def_with_metadata.def.is_a?(External)
+            next unless (ext = def_with_metadata.def).is_a?(External)
+            next if ext.external_var?
             next unless @generator.must_include? def_with_metadata.def
 
             defs << method(def_with_metadata.def, false)

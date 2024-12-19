@@ -124,10 +124,16 @@ class Crystal::Doc::Method
     @generator.relative_location(@def)
   end
 
+  def external_var?
+    (ext = @def).is_a?(External) && ext.external_var?
+  end
+
   def prefix
     case
     when @type.program?
       ""
+    when external_var?
+      "$"
     when @class_method, @type.lib?
       "."
     else
@@ -190,6 +196,8 @@ class Crystal::Doc::Method
 
   def kind
     case
+    when external_var?
+      "$"
     when @type.lib?
       "fun "
     when @type.program?
@@ -204,7 +212,9 @@ class Crystal::Doc::Method
   def id
     String.build do |io|
       io << to_s.delete(' ')
-      if @type.lib?
+      if external_var?
+        io << "-external-var"
+      elsif @type.lib?
         io << "-function"
       elsif @class_method
         io << "-class-method"
@@ -349,6 +359,7 @@ class Crystal::Doc::Method
       builder.field "args_html", args_to_html unless args.empty?
       builder.field "location", location unless location.nil?
       builder.field @type.lib? ? "fun" : "def", self.def
+      builder.field "external_var", external_var?
     end
   end
 

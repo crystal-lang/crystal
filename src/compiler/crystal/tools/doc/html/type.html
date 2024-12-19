@@ -104,7 +104,9 @@
 <% end %>
 
 <% if type.lib? %>
+  <%= MethodSummaryTemplate.new("External Variable Summary", type.external_vars) %>
   <%= MethodSummaryTemplate.new("Function Summary", type.functions) %>
+  <%= MethodDetailTemplate.new("External Variable Detail", type.external_vars) %>
   <%= MethodDetailTemplate.new("Function Detail", type.functions) %>
 <% elsif !type.type_def? %>
   <%= MethodSummaryTemplate.new("Constructors", type.constructors) %>
