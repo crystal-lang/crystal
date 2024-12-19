@@ -303,4 +303,20 @@ describe "ASTNode#to_s" do
       end
     end
     CRYSTAL
+
+  expect_to_s <<-'CR', <<-'CR'
+  {% verbatim do %}
+    {%
+      if !foo.empty? || 2 == 2
+        raise "oh noes"
+      end
+    %}
+  {% end %}
+  CR
+  {% verbatim do %}
+    {% if !foo.empty? || (2 == 2)
+    raise("oh noes")
+  end %}
+  {% end %}
+  CR
 end
