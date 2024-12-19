@@ -267,7 +267,7 @@ class Crystal::Doc::Type
   end
 
   private def showdoc?(adef)
-    @generator.showdoc?(adef.doc.try &.strip) || @generator.showdoc?(self)
+    @generator.showdoc?(adef.doc.try &.strip) || @generator.showdoc?(@type)
   end
 
   private def sort_order(item)
