@@ -106,7 +106,7 @@
 <% if type.lib? %>
   <%= MethodSummaryTemplate.new("Function Summary", type.functions) %>
   <%= MethodDetailTemplate.new("Function Detail", type.functions) %>
-<% else %>
+<% elsif !type.type_def? %>
   <%= MethodSummaryTemplate.new("Constructors", type.constructors) %>
   <%= MethodSummaryTemplate.new(type.program? ? "Method Summary" : "Class Method Summary", type.class_methods) %>
   <%= MethodSummaryTemplate.new("Macro Summary", type.macros) %>
