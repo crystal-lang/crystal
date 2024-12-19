@@ -6056,8 +6056,8 @@ module Crystal
       skip_statement_end
 
       vars.each do |var|
-        exps << TypeDeclaration.new(var, type)
-          .at(var).at_end(type).tap(&.doc=(doc))
+        var.doc = doc
+        exps << TypeDeclaration.new(var, type).at(var).at_end(type)
       end
     end
 
