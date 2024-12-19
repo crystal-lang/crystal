@@ -641,6 +641,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   end
 
   def visit(node : TypeDef)
+    annotations = read_annotations
     type = current_type.types[node.name]?
 
     if type
@@ -650,7 +651,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       typed_def_type = check_allowed_in_lib node.type_spec, typed_def_type
       type = TypeDefType.new @program, current_type, node.name, typed_def_type
 
-      attach_doc type, node, nil
+      attach_doc type, node, annotations
 
       current_type.types[node.name] = type
     end
