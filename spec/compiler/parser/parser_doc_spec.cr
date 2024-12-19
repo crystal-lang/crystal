@@ -72,6 +72,7 @@ describe "Parser doc" do
       .body.as(Crystal::Expressions)
       .expressions.each do |exp|
       exp.as(Crystal::TypeDeclaration)
+        .var.as(Crystal::Var)
         .doc.should eq("This is Foo.\nUse it well.")
     end
   end
