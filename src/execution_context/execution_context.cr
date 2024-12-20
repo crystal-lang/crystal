@@ -7,6 +7,7 @@ require "./scheduler"
 require "./single_threaded"
 require "./multi_threaded"
 require "./isolated"
+require "./monitor"
 
 {% raise "ERROR: execution contexts require the `preview_mt` compilation flag" unless flag?(:preview_mt) %}
 
@@ -25,6 +26,7 @@ module ExecutionContext
     {% else %}
       @@default = SingleThreaded.default
     {% end %}
+    @@monitor = Monitor.new
   end
 
   # Returns the default number of workers to start in the execution context.
