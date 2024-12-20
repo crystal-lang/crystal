@@ -108,6 +108,13 @@ class Process::Status
     @exit_status.to_i32!
   end
 
+  # Returns the exit status as indicated by the operating system.
+  #
+  # It can encode exit codes and termination signals and is platform-specific.
+  def system_exit_status : UInt32
+    @exit_status.to_u32!
+  end
+
   {% if flag?(:win32) %}
     # :nodoc:
     def initialize(@exit_status : UInt32)
