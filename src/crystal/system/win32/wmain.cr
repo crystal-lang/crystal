@@ -20,8 +20,6 @@ end
 # contains the correctly encoded UTF-16 *argv*, convert it to UTF-8, and then
 # forward it to the original `main`.
 #
-# Invokes `Crystal.main`.
-#
 # NOTE: we cannot use anything from the standard library here, including the GC.
 fun wmain(argc : Int32, argv : UInt16**) : Int32
   utf8_argv = LibC.malloc(sizeof(UInt8*) &* argc).as(UInt8**)
