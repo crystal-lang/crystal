@@ -21,6 +21,7 @@ module Fiber::ExecutionContext
   # :nodoc:
   def self.init_default_context : Nil
     @@default = SingleThreaded.default
+    @@monitor = Monitor.new
   end
 
   # Returns the default number of workers to start in the execution context.
