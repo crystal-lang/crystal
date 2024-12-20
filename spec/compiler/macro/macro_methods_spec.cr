@@ -1801,7 +1801,7 @@ module Crystal
         end
 
         it "does not error when called from def scope" do
-          assert_type <<-CRYSTAL {|program| program.string }
+          assert_type <<-CRYSTAL { |program| program.string }
             module Moo
             end
             def moo
@@ -2516,7 +2516,7 @@ module Crystal
         end
 
         it "does not error when called from def scope" do
-          assert_type <<-CRYSTAL {|program| program.bool }
+          assert_type <<-CRYSTAL { |program| program.bool }
             module Moo
             end
             def moo
