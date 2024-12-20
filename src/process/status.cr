@@ -142,37 +142,30 @@ class Process::Status
         @exit_status & 0xC0000000_u32 == 0 ? ExitReason::Normal : ExitReason::Unknown
       end
     {% elsif flag?(:unix) && !flag?(:wasm32) %}
-      # define __WIFEXITED(status) (__WTERMSIG(status) == 0)
-      if signal_code == 0
+      case exit_signal?
+      when Nil
         ExitReason::Normal
-      elsif signal_exit?
-        case Signal.from_value?(signal_code)
-        when Nil
-          ExitReason::Signal
-        when .abrt?, .kill?, .quit?
-          ExitReason::Aborted
-        when .hup?
-          ExitReason::TerminalDisconnected
-        when .term?
-          ExitReason::SessionEnded
-        when .int?
-          ExitReason::Interrupted
-        when .trap?
-          ExitReason::Breakpoint
-        when .segv?
-          ExitReason::AccessViolation
-        when .bus?
-          ExitReason::BadMemoryAccess
-        when .ill?
-          ExitReason::BadInstruction
-        when .fpe?
-          ExitReason::FloatException
-        else
-          ExitReason::Signal
-        end
+      when .abrt?, .kill?, .quit?
+        ExitReason::Aborted
+      when .hup?
+        ExitReason::TerminalDisconnected
+      when .term?
+        ExitReason::SessionEnded
+      when .int?
+        ExitReason::Interrupted
+      when .trap?
+        ExitReason::Breakpoint
+      when .segv?
+        ExitReason::AccessViolation
+      when .bus?
+        ExitReason::BadMemoryAccess
+      when .ill?
+        ExitReason::BadInstruction
+      when .fpe?
+        ExitReason::FloatException
       else
         # TODO: stop / continue
-        ExitReason::Unknown
+        ExitReason::Signal
       end
     {% else %}
       raise NotImplementedError.new("Process::Status#exit_reason")
