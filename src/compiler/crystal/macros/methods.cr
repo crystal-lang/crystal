@@ -2080,10 +2080,11 @@ module Crystal
     def self.instance_vars(type, name_loc)
       if type.is_a?(InstanceVarContainer)
         unless type.program.top_level_semantic_complete?
+          message = "`TypeNode#instance_vars` cannot be called in the top-level scope: instance vars are not yet initialized"
           if name_loc
-            raise Crystal::TypeException.new("`TypeNode#instance_vars` cannot be called in the top-level scope: instance vars are not yet initialized", name_loc)
+            raise Crystal::TypeException.new(message, name_loc)
           else
-            raise Crystal::TypeException.new("`TypeNode#instance_vars` cannot be called in the top-level scope: instance vars are not yet initialized")
+            raise Crystal::TypeException.new(message)
           end
         end
         ArrayLiteral.map(type.all_instance_vars) do |name, ivar|
@@ -2099,10 +2100,11 @@ module Crystal
 
     def self.has_inner_pointers?(type, name_loc)
       unless type.program.top_level_semantic_complete?
+        message = "`TypeNode#has_inner_pointers?` cannot be called in the top-level scope: instance vars are not yet initialized"
         if name_loc
-          raise Crystal::TypeException.new("`TypeNode#has_inner_pointers?` cannot be called in the top-level scope: instance vars are not yet initialized", name_loc)
+          raise Crystal::TypeException.new(message, name_loc)
         else
-          raise Crystal::TypeException.new("`TypeNode#has_inner_pointers?` cannot be called in the top-level scope: instance vars are not yet initialized")
+          raise Crystal::TypeException.new(message)
         end
       end
 
