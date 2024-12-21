@@ -78,6 +78,11 @@ class Fiber
     @@fibers.try(&.unsafe_each { |fiber| yield fiber })
   end
 
+  # :nodoc:
+  def self.each(&)
+    fibers.each { |fiber| yield fiber }
+  end
+
   # Creates a new `Fiber` instance.
   #
   # When the fiber is executed, it runs *proc* in its context.
