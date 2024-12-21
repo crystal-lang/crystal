@@ -73,7 +73,7 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
   private def system_run(blocking : Bool, & : Fiber ->) : Nil
     buffer = uninitialized LibC::Kevent[128]
 
-    Crystal.trace :evloop, "run", blocking: blocking ? 1 : 0
+    Crystal.trace :evloop, "run", blocking: blocking
     timeout = blocking ? nil : Time::Span.zero
     kevents = @kqueue.wait(buffer.to_slice, timeout)
 

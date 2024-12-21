@@ -2,6 +2,7 @@ require "c/signal"
 require "c/stdio"
 require "c/sys/wait"
 require "c/unistd"
+require "../print_error"
 
 module Crystal::System::Signal
   # The number of libc functions that can be called safely from a signal(2)
@@ -82,7 +83,7 @@ module Crystal::System::Signal
   end
 
   private def self.start_loop
-    spawn(name: "Signal Loop") do
+    spawn(name: "signal-loop") do
       loop do
         value = reader.read_bytes(Int32)
       rescue IO::Error
@@ -111,7 +112,7 @@ module Crystal::System::Signal
   # descriptors of the parent process and send it received signals.
   def self.after_fork
     @@pipe.each do |pipe_io|
-      Crystal::EventLoop.current.remove(pipe_io)
+      Crystal::EventLoop.remove(pipe_io)
       pipe_io.file_descriptor_close { }
     end
   ensure

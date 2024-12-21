@@ -55,6 +55,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     iocp
   end
 
+  # thread unsafe
   def run(blocking : Bool) : Bool
     enqueued = false
 
@@ -65,6 +66,13 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
 
     enqueued
   end
+
+  {% if flag?(:execution_context) %}
+    # thread unsafe
+    def run(queue : Fiber::Queue*, blocking : Bool) : Nil
+      run_impl(blocking) { |fiber| queue.value.push(fiber) }
+    end
+  {% end %}
 
   # Runs the event loop and enqueues the fiber for the next upcoming event or
   # completion.
@@ -201,9 +209,6 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     LibC.CancelIoEx(file_descriptor.windows_handle, nil) unless file_descriptor.system_blocking?
   end
 
-  def remove(file_descriptor : Crystal::System::FileDescriptor) : Nil
-  end
-
   private def wsa_buffer(bytes)
     wsabuf = LibC::WSABUF.new
     wsabuf.len = bytes.size
@@ -313,8 +318,5 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   end
 
   def close(socket : ::Socket) : Nil
-  end
-
-  def remove(socket : ::Socket) : Nil
   end
 end

@@ -519,7 +519,12 @@ private module ConsoleUtils
   @@read_requests = Deque(ReadRequest).new
   @@bytes_read = Deque(Int32).new
   @@mtx = ::Thread::Mutex.new
-  @@reader_thread = ::Thread.new { reader_loop }
+  @@reader_thread =
+    {% if flag?(:execution_context) %}
+      ExecutionContext.new("READER-LOOP") { reader_loop }
+    {% else %}
+      ::Thread.new { reader_loop }
+    {% end %}
 
   private def self.reader_loop
     while true

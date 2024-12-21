@@ -68,10 +68,47 @@ class Thread
 
   getter name : String?
 
+  {% if flag?(:execution_context) %}
+    # :nodoc:
+    getter! execution_context : ExecutionContext
+
+    # :nodoc:
+    property! current_scheduler : ExecutionContext::Scheduler
+
+    # :nodoc:
+    def execution_context=(@execution_context : ExecutionContext) : ExecutionContext
+      main_fiber.execution_context = execution_context
+    end
+
+    # :nodoc:
+    def dead_fiber=(@dead_fiber : Fiber) : Fiber
+    end
+
+    # :nodoc:
+    def dead_fiber? : Fiber?
+      if fiber = @dead_fiber
+        @dead_fiber = nil
+        fiber
+      end
+    end
+  {% else %}
+    # :nodoc:
+    getter scheduler : Crystal::Scheduler { Crystal::Scheduler.new(self) }
+
+    # :nodoc:
+    def scheduler? : ::Crystal::Scheduler?
+      @scheduler
+    end
+  {% end %}
+
   def self.unsafe_each(&)
     # nothing to iterate when @@threads is nil + don't lazily allocate in a
     # method called from a GC collection callback!
     @@threads.try(&.unsafe_each { |thread| yield thread })
+  end
+
+  def self.each(&)
+    threads.each { |thread| yield thread }
   end
 
   def self.lock : Nil
@@ -150,14 +187,6 @@ class Thread
     thread.name = name
   end
 
-  # :nodoc:
-  getter scheduler : Crystal::Scheduler { Crystal::Scheduler.new(self) }
-
-  # :nodoc:
-  def scheduler? : ::Crystal::Scheduler?
-    @scheduler
-  end
-
   protected def start
     Thread.threads.push(self)
     Thread.current = self
@@ -180,6 +209,11 @@ class Thread
 
   protected def name=(@name : String)
     self.system_name = name
+  end
+
+  # Changes the Thread#name property but doesn't update the system name. Useful
+  # on the main thread where we'd change the process name (e.g. top, ps, ...).
+  def internal_name=(@name : String)
   end
 
   # Holds the GC thread handler

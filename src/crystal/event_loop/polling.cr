@@ -112,22 +112,33 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     end
   {% end %}
 
-  # NOTE: thread unsafe
+  # thread unsafe
   def run(blocking : Bool) : Bool
     system_run(blocking) do |fiber|
-      Crystal::Scheduler.enqueue(fiber)
+      {% if flag?(:execution_context) %}
+        fiber.execution_context.enqueue(fiber)
+      {% else %}
+        Crystal::Scheduler.enqueue(fiber)
+      {% end %}
     end
     true
   end
 
+  {% if flag?(:execution_context) %}
+    # thread unsafe
+    def run(queue : Fiber::Queue*, blocking : Bool) : Nil
+      system_run(blocking) { |fiber| queue.value.push(fiber) }
+    end
+  {% end %}
+
   # fiber interface, see Crystal::EventLoop
 
   def create_resume_event(fiber : Fiber) : FiberEvent
-    FiberEvent.new(self, fiber, :sleep)
+    FiberEvent.new(:sleep, fiber)
   end
 
   def create_timeout_event(fiber : Fiber) : FiberEvent
-    FiberEvent.new(self, fiber, :select_timeout)
+    FiberEvent.new(:select_timeout, fiber)
   end
 
   # file descriptor interface, see Crystal::EventLoop::FileDescriptor
@@ -164,7 +175,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     evented_close(file_descriptor)
   end
 
-  def remove(file_descriptor : System::FileDescriptor) : Nil
+  protected def self.remove_impl(file_descriptor : System::FileDescriptor) : Nil
     internal_remove(file_descriptor)
   end
 
@@ -267,7 +278,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     evented_close(socket)
   end
 
-  def remove(socket : ::Socket) : Nil
+  protected def self.remove_impl(socket : ::Socket) : Nil
     internal_remove(socket)
   end
 
@@ -303,13 +314,21 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     Polling.arena.free(index) do |pd|
       pd.value.@readers.ready_all do |event|
         pd.value.@event_loop.try(&.unsafe_resume_io(event) do |fiber|
-          Crystal::Scheduler.enqueue(fiber)
+          {% if flag?(:execution_context) %}
+            fiber.execution_context.enqueue(fiber)
+          {% else %}
+            Crystal::Scheduler.enqueue(fiber)
+          {% end %}
         end)
       end
 
       pd.value.@writers.ready_all do |event|
         pd.value.@event_loop.try(&.unsafe_resume_io(event) do |fiber|
-          Crystal::Scheduler.enqueue(fiber)
+          {% if flag?(:execution_context) %}
+            fiber.execution_context.enqueue(fiber)
+          {% else %}
+            Crystal::Scheduler.enqueue(fiber)
+          {% end %}
         end)
       end
 
@@ -317,7 +336,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     end
   end
 
-  private def internal_remove(io)
+  private def self.internal_remove(io)
     return unless (index = io.__evloop_data).valid?
 
     Polling.arena.free(index) do |pd|
