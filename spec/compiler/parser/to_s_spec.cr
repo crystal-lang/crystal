@@ -253,6 +253,8 @@ describe "ASTNode#to_s" do
   expect_to_s "{%\n  1\n  2\n  3\n%}"
   expect_to_s "{%\n  1\n%}"
   expect_to_s "{%\n  2 + 2\n%}"
+  expect_to_s "{%\n  a = 1 %}", "{%\n  a = 1\n%}"
+  expect_to_s "{% a = 1\n%}", "{% a = 1 %}"
 
   expect_to_s %(asm("nop" ::::))
   expect_to_s %(asm("nop" : "a"(1), "b"(2) : "c"(3), "d"(4) : "e", "f" : "volatile", "alignstack", "intel"))
