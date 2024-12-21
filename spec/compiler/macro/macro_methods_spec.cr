@@ -1785,9 +1785,30 @@ module Crystal
         end
       end
 
-      it "executes instance_vars" do
-        assert_macro("{{x.instance_vars.map &.stringify}}", %(["bytesize", "length", "c"])) do |program|
-          {x: TypeNode.new(program.string)}
+      describe "#instance_vars" do
+        it "executes instance_vars" do
+          assert_macro("{{x.instance_vars.map &.stringify}}", %(["bytesize", "length", "c"])) do |program|
+            {x: TypeNode.new(program.string)}
+          end
+        end
+
+        it "errors when called from top-level scope" do
+          assert_error <<-CRYSTAL, "`TypeNode#instance_vars` cannot be called in the top-level scope: instance vars are not yet initialized"
+            class Foo
+            end
+            {{ Foo.instance_vars }}
+          CRYSTAL
+        end
+
+        it "does not error when called from def scope" do
+          assert_type <<-CRYSTAL { |program| program.string }
+            module Moo
+            end
+            def moo
+              {{ Moo.instance_vars.stringify }}
+            end
+            moo
+          CRYSTAL
         end
       end
 
@@ -2484,6 +2505,25 @@ module Crystal
           assert_macro("{{x.has_inner_pointers?}}", %(true)) do |program|
             {x: TypeNode.new(program.proc_of(program.void))}
           end
+        end
+
+        it "errors when called from top-level scope" do
+          assert_error <<-CRYSTAL, "`TypeNode#has_inner_pointers?` cannot be called in the top-level scope: instance vars are not yet initialized"
+            class Foo
+            end
+            {{ Foo.has_inner_pointers? }}
+          CRYSTAL
+        end
+
+        it "does not error when called from def scope" do
+          assert_type <<-CRYSTAL { |program| program.bool }
+            module Moo
+            end
+            def moo
+              {{ Moo.has_inner_pointers? }}
+            end
+            moo
+          CRYSTAL
         end
       end
     end
