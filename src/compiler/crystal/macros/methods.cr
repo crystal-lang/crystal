@@ -1541,6 +1541,8 @@ module Crystal
         interpret_check_args { @then }
       when "else"
         interpret_check_args { @else }
+      when "is_unless?"
+        interpret_check_args { BoolLiteral.new @is_unless }
       else
         super
       end
