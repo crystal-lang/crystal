@@ -47,16 +47,21 @@ class Thread
     # `#unsafe_each` until the method has returned.
     def delete(node : T) : Nil
       @mutex.synchronize do
-        if previous = node.previous
-          previous.next = node.next
+        previous = node.previous
+        _next = node.next
+
+        if previous
+          node.previous = nil
+          previous.next = _next
         else
-          @head = node.next
+          @head = _next
         end
 
-        if _next = node.next
-          _next.previous = node.previous
+        if _next
+          node.next = nil
+          _next.previous = previous
         else
-          @tail = node.previous
+          @tail = previous
         end
       end
     end
