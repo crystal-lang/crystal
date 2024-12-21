@@ -2187,13 +2187,21 @@ module Crystal
   end
 
   # A macro expression,
-  # surrounded by {{ ... }} (output = true)
-  # or by {% ... %} (output = false)
+  # surrounded by {{ ... }}` (output = true, multiline = false)
+  # or by `{% ... %}` (output = false, multiline = false)
+  #
+  # ```
+  # # (output = false, multiline = true)
+  # {%
+  #   ...
+  # %}
+  # ```
   class MacroExpression < ASTNode
     property exp : ASTNode
     property? output : Bool
+    property? multiline : Bool
 
-    def initialize(@exp : ASTNode, @output = true)
+    def initialize(@exp : ASTNode, @output = true, @multiline : Bool = false)
     end
 
     def accept_children(visitor)
@@ -2201,10 +2209,10 @@ module Crystal
     end
 
     def clone_without_location
-      MacroExpression.new(@exp.clone, @output)
+      MacroExpression.new(@exp.clone, @output, @multiline)
     end
 
-    def_equals_and_hash exp, output?
+    def_equals_and_hash exp, output?, multiline?
   end
 
   # Free text that is part of a macro

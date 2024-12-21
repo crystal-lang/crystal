@@ -728,13 +728,29 @@ module Crystal
     end
 
     def visit(node : MacroExpression)
-      @str << (node.output? ? "{{" : "{% ")
-      @str << ' ' if node.output?
+      @str << (node.output? ? "{{ " : node.multiline? ? "{%" : "{% ")
+
+      if node.multiline?
+        newline
+        @indent += 1
+      end
+
       outside_macro do
+        # If the MacroExpression consists of a single node we need to manually handle appending indent and trailing newline if #multiline?
+        # Otherwise, the Expressions logic handles that for us
+        if !node.exp.is_a? Expressions
+          append_indent
+        end
+
         node.exp.accept self
       end
-      @str << ' ' if node.output?
-      @str << (node.output? ? "}}" : " %}")
+
+      if node.multiline?
+        @indent -= 1
+        newline if !node.exp.is_a? Expressions
+      end
+
+      @str << (node.output? ? " }}" : node.multiline? ? "%}" : " %}")
       false
     end
 

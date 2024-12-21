@@ -3353,7 +3353,13 @@ module Crystal
 
     def parse_macro_control(start_location, macro_state = Token::MacroState.default)
       location = @token.location
-      next_token_skip_space_or_newline
+      next_token_skip_space
+      multiline = false
+
+      if @token.type.newline?
+        multiline = true
+        next_token_skip_space_or_newline
+      end
 
       case @token.value
       when Keyword::FOR
@@ -3440,7 +3446,7 @@ module Crystal
       exps = parse_expressions
       @in_macro_expression = false
 
-      MacroExpression.new(exps, output: false).at(location).at_end(token_end_location)
+      MacroExpression.new(exps, output: false, multiline: multiline).at(location).at_end(token_end_location)
     end
 
     def parse_macro_if(start_location, macro_state, check_end = true, is_unless = false)
