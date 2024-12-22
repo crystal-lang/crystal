@@ -309,7 +309,7 @@ describe "ASTNode#to_s" do
     end
     CR
 
-  expect_to_s <<-'CR' # , focus: true
+  expect_to_s <<-'CR'
     macro finished
       {% verbatim do %}
         {%
