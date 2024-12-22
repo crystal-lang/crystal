@@ -246,7 +246,13 @@ describe "ASTNode#to_s" do
   expect_to_s "1.+(&block)"
   expect_to_s "1.//(2, a: 3)"
   expect_to_s "1.//(2, &block)"
-  expect_to_s %({% verbatim do %}\n  1{{ 2 }}\n  3{{ 4 }}\n{% end %})
+  expect_to_s <<-'CR'
+    {% verbatim do %}
+      1{{ 2 }}
+      3{{ 4 }}
+    {% end %}
+    CR
+
   expect_to_s %({% for foo in bar %}\n  {{ if true\n  foo\n  bar\nend }}\n{% end %})
   expect_to_s "{% a = 1 %}"
   expect_to_s "{{ a = 1 }}"
@@ -255,6 +261,64 @@ describe "ASTNode#to_s" do
   expect_to_s "{%\n  2 + 2\n%}"
   expect_to_s "{%\n  a = 1 %}", "{%\n  a = 1\n%}"
   expect_to_s "{% a = 1\n%}", "{% a = 1 %}"
+
+  # FIXME: Should respect significant whitespace
+  expect_to_s <<-'CR', <<-'CR'
+    macro finished
+      {% verbatim do %}
+        {%
+          10
+
+          # Foo
+
+          20
+        %}
+      {% end %}
+    end
+    CR
+    macro finished
+      {% verbatim do %}
+        {%
+          10
+          20
+        %}
+      {% end %}
+    end
+    CR
+
+  # FIXME: Should respect significant whitespace
+  expect_to_s <<-'CR', <<-'CR'
+    macro finished
+      {% verbatim do %}
+        {%
+          10
+
+          # Foo
+          20
+        %}
+      {% end %}
+    end
+    CR
+    macro finished
+      {% verbatim do %}
+        {%
+          10
+          20
+        %}
+      {% end %}
+    end
+    CR
+
+  expect_to_s <<-'CR' # , focus: true
+    macro finished
+      {% verbatim do %}
+        {%
+          10
+          20
+        %}
+      {% end %}
+    end
+    CR
 
   expect_to_s %(asm("nop" ::::))
   expect_to_s %(asm("nop" : "a"(1), "b"(2) : "c"(3), "d"(4) : "e", "f" : "volatile", "alignstack", "intel"))

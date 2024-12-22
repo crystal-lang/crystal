@@ -223,7 +223,9 @@ module Crystal
       else
         node.expressions.each_with_index do |exp, i|
           unless exp.nop?
-            append_indent unless node.keyword.paren? && i == 0
+            if !exp.is_a?(MacroLiteral) || !exp.value.blank?
+              append_indent unless node.keyword.paren? && i == 0
+            end
             exp.accept self
             newline unless node.keyword.paren? && i == node.expressions.size - 1
           end
@@ -717,9 +719,11 @@ module Crystal
       end
       newline
 
+      @indent += 1
       inside_macro do
         accept node.body
       end
+      @indent -= 1
 
       # newline
       append_indent
@@ -738,7 +742,7 @@ module Crystal
       outside_macro do
         # If the MacroExpression consists of a single node we need to manually handle appending indent and trailing newline if #multiline?
         # Otherwise, the Expressions logic handles that for us
-        if !node.exp.is_a? Expressions
+        if node.multiline? && !node.exp.is_a?(Expressions)
           append_indent
         end
 
@@ -747,6 +751,7 @@ module Crystal
 
       if node.multiline?
         @indent -= 1
+        append_indent
         newline if !node.exp.is_a? Expressions
       end
 
@@ -806,9 +811,13 @@ module Crystal
 
     def visit(node : MacroVerbatim)
       @str << "{% verbatim do %}"
+
+      @indent += 1
       inside_macro do
         node.exp.accept self
       end
+      @indent -= 1
+
       @str << "{% end %}"
       false
     end
