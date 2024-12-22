@@ -1118,7 +1118,7 @@ module Crystal
     it_parses "puts {{**1}}", Call.new(nil, "puts", MacroExpression.new(DoubleSplat.new(1.int32)))
     it_parses "{{a = 1 if 2}}", MacroExpression.new(If.new(2.int32, Assign.new("a".var, 1.int32)))
     it_parses "{% a = 1 %}", MacroExpression.new(Assign.new("a".var, 1.int32), output: false)
-    it_parses "{%\n  a = 1\n%}", MacroExpression.new(Assign.new("a".var, 1.int32), output: false, multiline: true)
+    it_parses "{%\n  a = 1\n%}", MacroExpression.new(Assign.new("a".var, 1.int32), output: false)
     it_parses "{% a = 1 if 2 %}", MacroExpression.new(If.new(2.int32, Assign.new("a".var, 1.int32)), output: false)
     it_parses "{% if 1; 2; end %}", MacroExpression.new(If.new(1.int32, 2.int32), output: false)
     it_parses "{%\nif 1; 2; end\n%}", MacroExpression.new(If.new(1.int32, 2.int32), output: false)
@@ -1128,8 +1128,8 @@ module Crystal
     it_parses "{% unless 1; 2; else 3; end %}", MacroExpression.new(Unless.new(1.int32, 2.int32, 3.int32), output: false)
     it_parses "{% unless 1\n  x\nend %}", MacroExpression.new(Unless.new(1.int32, "x".var), output: false)
     it_parses "{% x unless 1 %}", MacroExpression.new(Unless.new(1.int32, "x".var), output: false)
-    it_parses "{%\n  x unless 1\n%}", MacroExpression.new(Unless.new(1.int32, "x".var), output: false, multiline: true)
-    it_parses "{%\n  1\n  2\n  3\n%}", MacroExpression.new(Expressions.new([1.int32, 2.int32, 3.int32] of ASTNode), output: false, multiline: true)
+    it_parses "{%\n  x unless 1\n%}", MacroExpression.new(Unless.new(1.int32, "x".var), output: false)
+    it_parses "{%\n  1\n  2\n  3\n%}", MacroExpression.new(Expressions.new([1.int32, 2.int32, 3.int32] of ASTNode), output: false)
 
     assert_syntax_error "{% unless 1; 2; elsif 3; 4; end %}"
     assert_syntax_error "{% unless 1 %} 2 {% elsif 3 %} 3 {% end %}"
