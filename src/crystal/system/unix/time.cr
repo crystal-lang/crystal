@@ -39,9 +39,8 @@ module Crystal::System::Time
       nanoseconds = total_nanoseconds.remainder(NANOSECONDS_PER_SECOND)
       {seconds.to_i64, nanoseconds.to_i32}
     {% else %}
-      if LibC.clock_gettime(LibC::CLOCK_MONOTONIC, out tp) == 1
-        raise RuntimeError.from_errno("clock_gettime(CLOCK_MONOTONIC)")
-      end
+      ret = LibC.clock_gettime(LibC::CLOCK_MONOTONIC, out tp)
+      raise RuntimeError.from_errno("clock_gettime(CLOCK_MONOTONIC)") unless ret == 0
       {tp.tv_sec.to_i64, tp.tv_nsec.to_i32}
     {% end %}
   end
@@ -51,7 +50,8 @@ module Crystal::System::Time
       info = mach_timebase_info
       LibC.mach_absolute_time &* info.numer // info.denom
     {% else %}
-      LibC.clock_gettime(LibC::CLOCK_MONOTONIC, out tp)
+      ret = LibC.clock_gettime(LibC::CLOCK_MONOTONIC, out tp)
+      raise RuntimeError.from_errno("clock_gettime(CLOCK_MONOTONIC)") unless ret == 0
       tp.tv_sec.to_u64! &* NANOSECONDS_PER_SECOND &+ tp.tv_nsec.to_u64!
     {% end %}
   end
