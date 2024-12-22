@@ -202,11 +202,61 @@ module Crystal
 
     def visit(node : NamedTupleLiteral)
       @str << '{'
-      node.entries.join(@str, ", ") do |entry|
+
+      # short-circuit to handle empty named tuple context
+      if node.entries.empty?
+        @str << '}'
+        return false
+      end
+
+      # A node starts multiline when its starting brace is on a different line than the staring line of it's first entry
+      start_multiline = (start_loc = node.location) && (first_entry_loc = node.entries.first?.try &.value.location) && first_entry_loc.line_number > start_loc.line_number
+
+      # and similarly ends multiline if its last entry's end location is on a different line than its ending brace
+      end_multiline = (last_entry_loc = node.entries.last?.try &.value.end_location) && (end_loc = node.end_location) && end_loc.line_number > last_entry_loc.line_number
+
+      last_entry = node.entries.first
+
+      if start_multiline
+        newline
+        @indent += 1
+        append_indent
+      end
+
+      node.entries.each_with_index do |entry, idx|
+        write_extra_newlines (last_entry.value || entry.value).end_location, entry.value.location
+
+        if (current_entry_loc = entry.value.location) && (last_entry_loc = last_entry.value.location) && current_entry_loc.line_number > last_entry_loc.line_number
+          newline
+
+          # If the node is not starting multiline, explicitly enable it once there is a line break to ensure additional values are indented properly
+          unless start_multiline
+            start_multiline = true
+            @indent += 1
+          end
+
+          append_indent
+        elsif !idx.zero?
+          @str << ' '
+        end
+
         visit_named_arg_name(entry.key)
         @str << ": "
         entry.value.accept self
+
+        last_entry = entry
+
+        @str << ',' unless idx == node.entries.size - 1
       end
+
+      @indent -= 1 if start_multiline
+
+      if end_multiline
+        @str << ','
+        newline
+        append_indent
+      end
+
       @str << '}'
       false
     end
