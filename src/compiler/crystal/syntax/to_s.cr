@@ -223,9 +223,7 @@ module Crystal
       else
         node.expressions.each_with_index do |exp, i|
           unless exp.nop?
-            if !exp.is_a?(MacroLiteral) || !exp.value.blank?
-              append_indent unless node.keyword.paren? && i == 0
-            end
+            append_indent unless node.keyword.paren? && i == 0
             exp.accept self
             newline unless node.keyword.paren? && i == node.expressions.size - 1
           end
