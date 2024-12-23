@@ -1,7 +1,7 @@
 require "../../support/syntax"
 
-private def expect_to_s(original, expected = original, emit_doc = false, file = __FILE__, line = __LINE__)
-  it "does to_s of #{original.inspect}", file, line do
+private def expect_to_s(original, expected = original, emit_doc = false, file = __FILE__, line = __LINE__, focus = false)
+  it "does to_s of #{original.inspect}", file, line, focus: focus do
     str = IO::Memory.new expected.bytesize
 
     source = original
@@ -262,8 +262,7 @@ describe "ASTNode#to_s" do
   expect_to_s "{%\n  a = 1 %}", "{%\n  a = 1\n%}"
   expect_to_s "{% a = 1\n%}", "{% a = 1 %}"
 
-  # FIXME: Should respect significant whitespace
-  expect_to_s <<-'CR', <<-'CR'
+  expect_to_s <<-'CR', <<-CR
     macro finished
       {% verbatim do %}
         {%
@@ -280,14 +279,16 @@ describe "ASTNode#to_s" do
       {% verbatim do %}
         {%
           10
+
+
+
           20
         %}
       {% end %}
     end
     CR
 
-  # FIXME: Should respect significant whitespace
-  expect_to_s <<-'CR', <<-'CR'
+  expect_to_s <<-'CR', <<-CR
     macro finished
       {% verbatim do %}
         {%
@@ -303,6 +304,8 @@ describe "ASTNode#to_s" do
       {% verbatim do %}
         {%
           10
+
+
           20
         %}
       {% end %}

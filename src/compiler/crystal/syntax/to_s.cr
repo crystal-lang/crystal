@@ -55,6 +55,21 @@ module Crystal
       true
     end
 
+    private def add_whitespace_around(first_node_location : Location?, second_node_location : Location?, &) : Nil
+      # If any location information is missing, don't add any extra newlines.
+      if !first_node_location || !second_node_location
+        yield
+        return
+      end
+
+      # Only emit extra newlines. I.e. those more than the first handled via the Expressions visitor.
+      ((second_node_location.line_number - 1) - first_node_location.line_number).times do
+        newline
+      end
+
+      yield
+    end
+
     def visit(node : Nop)
       false
     end
@@ -221,11 +236,17 @@ module Crystal
       if @inside_macro > 0
         node.expressions.each &.accept self
       else
+        last_node = node.expressions.first
+
         node.expressions.each_with_index do |exp, i|
           unless exp.nop?
-            append_indent unless node.keyword.paren? && i == 0
-            exp.accept self
-            newline unless node.keyword.paren? && i == node.expressions.size - 1
+            self.add_whitespace_around last_node.end_location, exp.location do
+              append_indent unless node.keyword.paren? && i == 0
+              exp.accept self
+              newline unless node.keyword.paren? && i == node.expressions.size - 1
+            end
+
+            last_node = exp
           end
         end
       end
