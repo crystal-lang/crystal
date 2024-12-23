@@ -104,7 +104,7 @@ end
 class Process::Status
   # Platform-specific exit status code, which usually contains either the exit code or a termination signal.
   # The other `Process::Status` methods extract the values from `exit_status`.
-  @[Deprecated("Use `Process::Status#exit_code`")]
+  @[Deprecated("Use `#exit_reason`, `#exit_code`, or `#system_exit_status` instead")]
   def exit_status : Int32
     @exit_status.to_i32!
   end
