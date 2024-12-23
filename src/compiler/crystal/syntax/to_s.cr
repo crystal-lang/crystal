@@ -55,14 +55,14 @@ module Crystal
       true
     end
 
-    private def add_whitespace_around(first_node_location : Location?, second_node_location : Location?, &) : Nil
+    private def write_extra_newlines(first_node_location : Location?, second_node_location : Location?, &) : Nil
       # If any location information is missing, don't add any extra newlines.
       if !first_node_location || !second_node_location
         yield
         return
       end
 
-      # Only emit extra newlines. I.e. those more than the first handled via the Expressions visitor.
+      # Only write the "extra" newlines. I.e. If there are more than one. The first newline is handled directly via the Expressions visitor.
       ((second_node_location.line_number - 1) - first_node_location.line_number).times do
         newline
       end
@@ -240,7 +240,7 @@ module Crystal
 
         node.expressions.each_with_index do |exp, i|
           unless exp.nop?
-            self.add_whitespace_around last_node.end_location, exp.location do
+            self.write_extra_newlines last_node.end_location, exp.location do
               append_indent unless node.keyword.paren? && i == 0
               exp.accept self
               newline unless node.keyword.paren? && i == node.expressions.size - 1
@@ -774,8 +774,8 @@ module Crystal
       # If the opening tag has a newline after it, force trailing tag to have one as well
       if is_multiline
         @indent -= 1
-        append_indent
         newline if !node.exp.is_a? Expressions
+        append_indent
       end
 
       @str << (node.output? ? " }}" : is_multiline ? "%}" : " %}")
