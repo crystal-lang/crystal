@@ -42,8 +42,7 @@ class Thread
 
           LibC.pthread_cond_timedwait_relative_np(self, mutex, pointerof(ts))
         {% else %}
-          clock_gettime_ret = LibC.clock_gettime(LibC::CLOCK_MONOTONIC, out ts)
-          raise RuntimeError.from_errno("clock_gettime(CLOCK_MONOTONIC)") unless clock_gettime_ret == 0
+          LibC.clock_gettime(LibC::CLOCK_MONOTONIC, out ts)
           ts.tv_sec += time.to_i
           ts.tv_nsec += time.nanoseconds
 
