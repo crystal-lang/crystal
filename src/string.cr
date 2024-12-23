@@ -1,9 +1,9 @@
-require "c/stdlib"
 require "c/string"
 require "crystal/small_deque"
 {% unless flag?(:without_iconv) %}
   require "crystal/iconv"
 {% end %}
+require "float/fast_float"
 
 # A `String` represents an immutable sequence of UTF-8 characters.
 #
@@ -317,7 +317,9 @@ class String
   # * **whitespace**: if `true`, leading and trailing whitespaces are allowed
   # * **underscore**: if `true`, underscores in numbers are allowed
   # * **prefix**: if `true`, the prefixes `"0x"`, `"0o"` and `"0b"` override the base
-  # * **strict**: if `true`, extraneous characters past the end of the number are disallowed
+  # * **strict**: if `true`, extraneous characters past the end of the number
+  #   are disallowed, unless **whitespace** is also `true` and all the trailing
+  #   characters past the number are whitespaces
   # * **leading_zero_is_octal**: if `true`, then a number prefixed with `"0"` will be treated as an octal
   #
   # ```
@@ -692,7 +694,9 @@ class String
   #
   # Options:
   # * **whitespace**: if `true`, leading and trailing whitespaces are allowed
-  # * **strict**: if `true`, extraneous characters past the end of the number are disallowed
+  # * **strict**: if `true`, extraneous characters past the end of the number
+  #   are disallowed, unless **whitespace** is also `true` and all the trailing
+  #   characters past the number are whitespaces
   #
   # ```
   # "123.45e1".to_f                # => 1234.5
@@ -717,7 +721,9 @@ class String
   #
   # Options:
   # * **whitespace**: if `true`, leading and trailing whitespaces are allowed
-  # * **strict**: if `true`, extraneous characters past the end of the number are disallowed
+  # * **strict**: if `true`, extraneous characters past the end of the number
+  #   are disallowed, unless **whitespace** is also `true` and all the trailing
+  #   characters past the number are whitespaces
   #
   # ```
   # "123.45e1".to_f?                # => 1234.5
@@ -732,10 +738,7 @@ class String
 
   # :ditto:
   def to_f64?(whitespace : Bool = true, strict : Bool = true) : Float64?
-    to_f_impl(whitespace: whitespace, strict: strict) do
-      v = LibC.strtod self, out endptr
-      {v, endptr}
-    end
+    Float::FastFloat.to_f64?(self, whitespace, strict)
   end
 
   # Same as `#to_f` but returns a Float32.
@@ -745,59 +748,7 @@ class String
 
   # Same as `#to_f?` but returns a Float32.
   def to_f32?(whitespace : Bool = true, strict : Bool = true) : Float32?
-    to_f_impl(whitespace: whitespace, strict: strict) do
-      v = LibC.strtof self, out endptr
-      {v, endptr}
-    end
-  end
-
-  private def to_f_impl(whitespace : Bool = true, strict : Bool = true, &)
-    return unless first_char = self[0]?
-    return unless whitespace || '0' <= first_char <= '9' || first_char.in?('-', '+', 'i', 'I', 'n', 'N')
-
-    v, endptr = yield
-
-    unless v.finite?
-      startptr = to_unsafe
-      if whitespace
-        while startptr.value.unsafe_chr.ascii_whitespace?
-          startptr += 1
-        end
-      end
-      if startptr.value.unsafe_chr.in?('+', '-')
-        startptr += 1
-      end
-
-      if v.nan?
-        return unless startptr.value.unsafe_chr.in?('n', 'N')
-      else
-        return unless startptr.value.unsafe_chr.in?('i', 'I')
-      end
-    end
-
-    string_end = to_unsafe + bytesize
-
-    # blank string
-    return if endptr == to_unsafe
-
-    if strict
-      if whitespace
-        while endptr < string_end && endptr.value.unsafe_chr.ascii_whitespace?
-          endptr += 1
-        end
-      end
-      # reached the end of the string
-      v if endptr == string_end
-    else
-      ptr = to_unsafe
-      if whitespace
-        while ptr < string_end && ptr.value.unsafe_chr.ascii_whitespace?
-          ptr += 1
-        end
-      end
-      # consumed some bytes
-      v if endptr > ptr
-    end
+    Float::FastFloat.to_f32?(self, whitespace, strict)
   end
 
   # Returns the `Char` at the given *index*.
@@ -1661,12 +1612,12 @@ class String
     case to_unsafe[bytesize - 1]
     when '\n'
       if bytesize > 1 && to_unsafe[bytesize - 2] === '\r'
-        unsafe_byte_slice_string(0, bytesize - 2)
+        unsafe_byte_slice_string(0, bytesize - 2, @length > 0 ? @length - 2 : 0)
       else
-        unsafe_byte_slice_string(0, bytesize - 1)
+        unsafe_byte_slice_string(0, bytesize - 1, @length > 0 ? @length - 1 : 0)
       end
     when '\r'
-      unsafe_byte_slice_string(0, bytesize - 1)
+      unsafe_byte_slice_string(0, bytesize - 1, @length > 0 ? @length - 1 : 0)
     else
       self
     end
@@ -1798,11 +1749,7 @@ class String
   def rchop? : String?
     return if empty?
 
-    if to_unsafe[bytesize - 1] < 0x80 || single_byte_optimizable?
-      return unsafe_byte_slice_string(0, bytesize - 1)
-    end
-
-    self[0, size - 1]
+    unsafe_byte_slice_string(0, Char::Reader.new(at_end: self).pos, @length > 0 ? @length - 1 : 0)
   end
 
   # Returns a new `String` with *suffix* removed from the end of the string if possible, else returns `nil`.
@@ -2164,7 +2111,8 @@ class String
     remove_excess_left(excess_left)
   end
 
-  private def calc_excess_right
+  # :nodoc:
+  def calc_excess_right
     if single_byte_optimizable?
       i = bytesize - 1
       while i >= 0 && to_unsafe[i].unsafe_chr.ascii_whitespace?
@@ -2202,7 +2150,8 @@ class String
     bytesize - byte_index
   end
 
-  private def calc_excess_left
+  # :nodoc:
+  def calc_excess_left
     if single_byte_optimizable?
       excess_left = 0
       # All strings end with '\0', and it's not a whitespace
@@ -3086,8 +3035,18 @@ class String
   # "abcdef".compare("ABCDEF", case_insensitive: true) == 0 # => true
   # ```
   def ==(other : self) : Bool
+    # Quick pointer comparison if both strings are identical references
     return true if same?(other)
-    return false unless bytesize == other.bytesize
+
+    # If the bytesize differs, they cannot be equal
+    return false if bytesize != other.bytesize
+
+    # If the character size of both strings differs, they cannot be equal.
+    # We need to exclude the case that @length of either string might not have
+    # been calculated (indicated by `0`).
+    return false if @length != other.@length && @length != 0 && other.@length != 0
+
+    # All meta data matches up, so we need to compare byte-by-byte.
     to_unsafe.memcmp(other.to_unsafe, bytesize) == 0
   end
 
@@ -3473,8 +3432,8 @@ class String
   # ```
   # "Hello, World".rindex('o')    # => 8
   # "Hello, World".rindex('Z')    # => nil
-  # "Hello, World".rindex("o", 5) # => 4
-  # "Hello, World".rindex("W", 2) # => nil
+  # "Hello, World".rindex('o', 5) # => 4
+  # "Hello, World".rindex('W', 2) # => nil
   # ```
   def rindex(search : Char, offset = size - 1)
     # If it's ASCII we can delegate to slice
@@ -3519,7 +3478,16 @@ class String
     end
   end
 
-  # :ditto:
+  # Returns the index of the _last_ appearance of *search* in the string,
+  # If *offset* is present, it defines the position to _end_ the search
+  # (characters beyond this point are ignored).
+  #
+  # ```
+  # "Hello, World".rindex("orld")    # => 8
+  # "Hello, World".rindex("snorlax") # => nil
+  # "Hello, World".rindex("o", 5)    # => 4
+  # "Hello, World".rindex("W", 2)    # => nil
+  # ```
   def rindex(search : String, offset = size - search.size) : Int32?
     offset += size if offset < 0
     return if offset < 0
@@ -3572,7 +3540,16 @@ class String
     end
   end
 
-  # :ditto:
+  # Returns the index of the _last_ appearance of *search* in the string,
+  # If *offset* is present, it defines the position to _end_ the search
+  # (characters beyond this point are ignored).
+  #
+  # ```
+  # "Hello, World".rindex(/world/i) # => 7
+  # "Hello, World".rindex(/world/)  # => nil
+  # "Hello, World".rindex(/o/, 5)   # => 4
+  # "Hello, World".rindex(/W/, 2)   # => nil
+  # ```
   def rindex(search : Regex, offset = size, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Int32?
     offset += size if offset < 0
     return nil unless 0 <= offset <= size
@@ -3586,21 +3563,49 @@ class String
     match_result.try &.begin
   end
 
-  # :ditto:
-  #
+  # Returns the index of the _last_ appearance of *search* in the string,
+  # If *offset* is present, it defines the position to _end_ the search
+  # (characters beyond this point are ignored).
   # Raises `Enumerable::NotFoundError` if *search* does not occur in `self`.
-  def rindex!(search : Regex, offset = size, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Int32
-    rindex(search, offset, options: options) || raise Enumerable::NotFoundError.new
+  #
+  # ```
+  # "Hello, World".rindex!('o')    # => 8
+  # "Hello, World".rindex!('Z')    # raises Enumerable::NotFoundError
+  # "Hello, World".rindex!('o', 5) # => 4
+  # "Hello, World".rindex!('W', 2) # raises Enumerable::NotFoundError
+  # ```
+  def rindex!(search : Char, offset = size - 1) : Int32
+    rindex(search, offset) || raise Enumerable::NotFoundError.new
   end
 
-  # :ditto:
+  # Returns the index of the _last_ appearance of *search* in the string,
+  # If *offset* is present, it defines the position to _end_ the search
+  # (characters beyond this point are ignored).
+  # Raises `Enumerable::NotFoundError` if *search* does not occur in `self`.
+  #
+  # ```
+  # "Hello, World".rindex!("orld")    # => 8
+  # "Hello, World".rindex!("snorlax") # raises Enumerable::NotFoundError
+  # "Hello, World".rindex!("o", 5)    # => 4
+  # "Hello, World".rindex!("W", 2)    # raises Enumerable::NotFoundError
+  # ```
   def rindex!(search : String, offset = size - search.size) : Int32
     rindex(search, offset) || raise Enumerable::NotFoundError.new
   end
 
-  # :ditto:
-  def rindex!(search : Char, offset = size - 1) : Int32
-    rindex(search, offset) || raise Enumerable::NotFoundError.new
+  # Returns the index of the _last_ appearance of *search* in the string,
+  # If *offset* is present, it defines the position to _end_ the search
+  # (characters beyond this point are ignored).
+  # Raises `Enumerable::NotFoundError` if *search* does not occur in `self`.
+  #
+  # ```
+  # "Hello, World".rindex!(/world/i) # => 7
+  # "Hello, World".rindex!(/world/)  # raises Enumerable::NotFoundError
+  # "Hello, World".rindex!(/o/, 5)   # => 4
+  # "Hello, World".rindex!(/W/, 2)   # raises Enumerable::NotFoundError
+  # ```
+  def rindex!(search : Regex, offset = size, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Int32
+    rindex(search, offset, options: options) || raise Enumerable::NotFoundError.new
   end
 
   # Searches separator or pattern (`Regex`) in the string, and returns
@@ -3826,6 +3831,27 @@ class String
     end
 
     nil
+  end
+
+  # Returns the byte index of the regex *pattern* in the string, or `nil` if the pattern does not find a match.
+  # If *offset* is present, it defines the position to start the search.
+  #
+  # Negative *offset* can be used to start the search from the end of the string.
+  #
+  # ```
+  # "hello world".byte_index(/o/)             # => 4
+  # "hello world".byte_index(/o/, offset: 4)  # => 4
+  # "hello world".byte_index(/o/, offset: 5)  # => 7
+  # "hello world".byte_index(/o/, offset: -1) # => nil
+  # "hello world".byte_index(/y/)             # => nil
+  # ```
+  def byte_index(pattern : Regex, offset = 0, options : Regex::MatchOptions = Regex::MatchOptions::None) : Int32?
+    offset += bytesize if offset < 0
+    return if offset < 0
+
+    if match = pattern.match_at_byte_index(self, offset, options: options)
+      match.byte_begin
+    end
   end
 
   # Returns the byte index of a char index, or `nil` if out of bounds.
@@ -5506,12 +5532,12 @@ class String
     Slice.new(to_unsafe + byte_offset, bytesize - byte_offset, read_only: true)
   end
 
-  protected def unsafe_byte_slice_string(byte_offset)
-    String.new(unsafe_byte_slice(byte_offset))
+  protected def unsafe_byte_slice_string(byte_offset, *, size = 0)
+    String.new(to_unsafe + byte_offset, bytesize - byte_offset, size)
   end
 
-  protected def unsafe_byte_slice_string(byte_offset, count)
-    String.new(unsafe_byte_slice(byte_offset, count))
+  protected def unsafe_byte_slice_string(byte_offset, count, size = 0)
+    String.new(to_unsafe + byte_offset, count, size)
   end
 
   protected def self.char_bytes_and_bytesize(char : Char)

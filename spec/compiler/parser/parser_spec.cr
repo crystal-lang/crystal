@@ -204,6 +204,8 @@ module Crystal
 
     it_parses "a = 1", Assign.new("a".var, 1.int32)
     it_parses "a = b = 2", Assign.new("a".var, Assign.new("b".var, 2.int32))
+    it_parses "a[] = 1", Call.new("a".call, "[]=", 1.int32)
+    it_parses "a.[] = 1", Call.new("a".call, "[]=", 1.int32)
 
     it_parses "a, b = 1, 2", MultiAssign.new(["a".var, "b".var] of ASTNode, [1.int32, 2.int32] of ASTNode)
     it_parses "a, b = 1", MultiAssign.new(["a".var, "b".var] of ASTNode, [1.int32] of ASTNode)
@@ -275,6 +277,10 @@ module Crystal
     assert_syntax_error "a {} += 1"
     assert_syntax_error "a.b() += 1"
     assert_syntax_error "a.[]() += 1"
+
+    assert_syntax_error "a.[] 0 = 1"
+    assert_syntax_error "a.[] 0 += 1"
+    assert_syntax_error "a b: 0 = 1"
 
     it_parses "def foo\n1\nend", Def.new("foo", body: 1.int32)
     it_parses "def downto(n)\n1\nend", Def.new("downto", ["n".arg], 1.int32)
@@ -524,11 +530,15 @@ module Crystal
     it_parses "foo &.+(2)", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "+", 2.int32)))
     it_parses "foo &.bar.baz", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Call.new(Var.new("__arg0"), "bar"), "baz")))
     it_parses "foo(&.bar.baz)", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Call.new(Var.new("__arg0"), "bar"), "baz")))
+    it_parses "foo &.block[]", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Call.new(Var.new("__arg0"), "block"), "[]")))
     it_parses "foo &.block[0]", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Call.new(Var.new("__arg0"), "block"), "[]", 0.int32)))
     it_parses "foo &.block=(0)", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "block=", 0.int32)))
     it_parses "foo &.block = 0", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "block=", 0.int32)))
+    it_parses "foo &.block[] = 1", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Call.new(Var.new("__arg0"), "block"), "[]=", 1.int32)))
     it_parses "foo &.block[0] = 1", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Call.new(Var.new("__arg0"), "block"), "[]=", 0.int32, 1.int32)))
+    it_parses "foo &.[]", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "[]")))
     it_parses "foo &.[0]", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "[]", 0.int32)))
+    it_parses "foo &.[] = 1", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "[]=", 1.int32)))
     it_parses "foo &.[0] = 1", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "[]=", 0.int32, 1.int32)))
     it_parses "foo(&.is_a?(T))", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], IsA.new(Var.new("__arg0"), "T".path)))
     it_parses "foo(&.!)", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Not.new(Var.new("__arg0"))))
@@ -2226,6 +2236,31 @@ module Crystal
 
     assert_syntax_error "lib Foo%end", %(unexpected token: "%")
 
+    assert_syntax_error "foo.[]? = 1"
+    assert_syntax_error "foo.[]? += 1"
+    assert_syntax_error "foo[0]? = 1"
+    assert_syntax_error "foo[0]? += 1"
+    assert_syntax_error "foo.[0]? = 1"
+    assert_syntax_error "foo.[0]? += 1"
+    assert_syntax_error "foo &.[0]? = 1"
+    assert_syntax_error "foo &.[0]? += 1"
+
+    assert_syntax_error "foo &.[]?=(1)"
+    assert_syntax_error "foo &.[]? = 1"
+    assert_syntax_error "foo &.[]? 0 =(1)"
+    assert_syntax_error "foo &.[]? 0 = 1"
+    assert_syntax_error "foo &.[]?(0)=(1)"
+    assert_syntax_error "foo &.[]?(0) = 1"
+    assert_syntax_error "foo &.[] 0 =(1)"
+    assert_syntax_error "foo &.[] 0 = 1"
+    assert_syntax_error "foo &.[](0)=(1)"
+    assert_syntax_error "foo &.[](0) = 1"
+
+    assert_syntax_error "foo &.bar.[] 0 =(1)"
+    assert_syntax_error "foo &.bar.[] 0 = 1"
+    assert_syntax_error "foo &.bar.[](0)=(1)"
+    assert_syntax_error "foo &.bar.[](0) = 1"
+
     describe "end locations" do
       assert_end_location "nil"
       assert_end_location "false"
@@ -2696,6 +2731,116 @@ module Crystal
         location.line_number.should eq 10
       end
 
+      it "sets the correct location for MacroExpressions in a MacroIf" do
+        parser = Parser.new(<<-CR)
+          {% if 1 == 2 %}
+            {{2 * 2}}
+          {% else %}
+             {%
+               1 + 1
+               2 + 2
+             %}
+          {% end %}
+        CR
+
+        node = parser.parse.should be_a MacroIf
+        location = node.location.should_not be_nil
+        location.line_number.should eq 1
+        location.column_number.should eq 3
+
+        then_node = node.then.should be_a Expressions
+        then_node_location = then_node.location.should_not be_nil
+        then_node_location.line_number.should eq 1
+        then_node_location = then_node.end_location.should_not be_nil
+        then_node_location.line_number.should eq 3
+
+        then_node_location = then_node.expressions[1].location.should_not be_nil
+        then_node_location.line_number.should eq 2
+        then_node_location = then_node.expressions[1].end_location.should_not be_nil
+        then_node_location.line_number.should eq 2
+
+        else_node = node.else.should be_a Expressions
+        else_node_location = else_node.location.should_not be_nil
+        else_node_location.line_number.should eq 3
+        else_node_location = else_node.end_location.should_not be_nil
+        else_node_location.line_number.should eq 8
+
+        else_node = node.else.should be_a Expressions
+        else_node_location = else_node.expressions[1].location.should_not be_nil
+        else_node_location.line_number.should eq 4
+        else_node_location = else_node.expressions[1].end_location.should_not be_nil
+        else_node_location.line_number.should eq 7
+      end
+
+      it "sets correct location of Begin within another node" do
+        parser = Parser.new(<<-CR)
+          macro finished
+            {% begin %}
+              {{2 * 2}}
+               {%
+                 1 + 1
+                 2 + 2
+               %}
+            {% end %}
+          end
+        CR
+
+        node = parser.parse.should be_a Macro
+        node = node.body.should be_a Expressions
+        node = node.expressions[1].should be_a MacroIf
+
+        location = node.location.should_not be_nil
+        location.line_number.should eq 2
+        location = node.end_location.should_not be_nil
+        location.line_number.should eq 8
+      end
+
+      it "sets correct location of MacroIf within another node" do
+        parser = Parser.new(<<-CR)
+          macro finished
+            {% if false %}
+              {{2 * 2}}
+               {%
+                 1 + 1
+                 2 + 2
+               %}
+            {% end %}
+          end
+        CR
+
+        node = parser.parse.should be_a Macro
+        node = node.body.should be_a Expressions
+        node = node.expressions[1].should be_a MacroIf
+
+        location = node.location.should_not be_nil
+        location.line_number.should eq 2
+        location = node.end_location.should_not be_nil
+        location.line_number.should eq 8
+      end
+
+      it "sets correct location of MacroIf (unless) within another node" do
+        parser = Parser.new(<<-CR)
+          macro finished
+            {% unless false %}
+              {{2 * 2}}
+               {%
+                 1 + 1
+                 2 + 2
+               %}
+            {% end %}
+          end
+        CR
+
+        node = parser.parse.should be_a Macro
+        node = node.body.should be_a Expressions
+        node = node.expressions[1].should be_a MacroIf
+
+        location = node.location.should_not be_nil
+        location.line_number.should eq 2
+        location = node.end_location.should_not be_nil
+        location.line_number.should eq 8
+      end
+
       it "sets correct location of trailing ensure" do
         parser = Parser.new("foo ensure bar")
         node = parser.parse.as(ExceptionHandler)
@@ -2910,6 +3055,18 @@ module Crystal
       source = "@[::Foo]"
       node = Parser.parse(source).as(Annotation).path
       node_source(source, node).should eq("::Foo")
+    end
+
+    it "sets args_in_brackets to false for `a.b`" do
+      parser = Parser.new("a.b")
+      node = parser.parse.as(Call)
+      node.args_in_brackets?.should be_false
+    end
+
+    it "sets args_in_brackets to true for `a[b]`" do
+      parser = Parser.new("a[b]")
+      node = parser.parse.as(Call)
+      node.args_in_brackets?.should be_true
     end
   end
 end

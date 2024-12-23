@@ -33,6 +33,13 @@ private class MockIterator
 end
 
 describe Iterator do
+  describe "Iterator.empty" do
+    it "creates empty iterator" do
+      iter = Iterator(String).empty
+      iter.next.should be_a(Iterator::Stop)
+    end
+  end
+
   describe "Iterator.of" do
     it "creates singleton" do
       iter = Iterator.of(42)

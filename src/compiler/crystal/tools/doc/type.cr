@@ -117,7 +117,6 @@ class Crystal::Doc::Type
 
     unless ast_node?
       @type.ancestors.each do |ancestor|
-        next unless @generator.must_include? ancestor
         doc_type = @generator.type(ancestor)
         ancestors << doc_type
         break if ancestor == @generator.program.object || doc_type.ast_node?
@@ -259,7 +258,6 @@ class Crystal::Doc::Type
       included_modules = [] of Type
       @type.parents.try &.each do |parent|
         if parent.module?
-          next unless @generator.must_include? parent
           included_modules << @generator.type(parent)
         end
       end
@@ -274,7 +272,6 @@ class Crystal::Doc::Type
       extended_modules = [] of Type
       @type.metaclass.parents.try &.each do |parent|
         if parent.module?
-          next unless @generator.must_include? parent
           extended_modules << @generator.type(parent)
         end
       end

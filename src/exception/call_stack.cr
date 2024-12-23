@@ -1,6 +1,6 @@
 {% if flag?(:interpreted) %}
   require "./call_stack/interpreter"
-{% elsif flag?(:win32) %}
+{% elsif flag?(:win32) && !flag?(:gnu) %}
   require "./call_stack/stackwalk"
 {% elsif flag?(:wasm32) %}
   require "./call_stack/null"
@@ -34,9 +34,7 @@ struct Exception::CallStack
   def initialize(@callstack : Array(Void*) = CallStack.unwind)
   end
 
-  def self.empty
-    new([] of Void*)
-  end
+  class_getter empty = new([] of Void*)
 
   def printable_backtrace : Array(String)
     @backtrace ||= decode_backtrace

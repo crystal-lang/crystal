@@ -2,6 +2,8 @@ name: Windows CI
 
 on: [push, pull_request]
 
+permissions: {}
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
@@ -273,6 +275,9 @@ jobs:
 
       - name: Run compiler specs
         run: make -f Makefile.win compiler_spec
+
+      - name: Run interpreter specs
+        run: make -f Makefile.win interpreter_spec
 
       - name: Run primitives specs
         run: make -f Makefile.win -o .build\crystal.exe primitives_spec # we know the compiler is fresh; do not rebuild it here

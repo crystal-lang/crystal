@@ -38,7 +38,10 @@ enum Errno
     {% end %}
   {% end %}
 
-  # Convert an Errno to an error message
+  # Returns the system error message associated with this errno.
+  #
+  # NOTE: The result may depend on the current system locale. Specs and
+  # comparisons should use `#value` instead of this method.
   def message : String
     unsafe_message { |slice| String.new(slice) }
   end

@@ -28,6 +28,8 @@ describe UDPSocket, tags: "network" do
       socket = UDPSocket.new(family)
       socket.bind(address, 0)
       socket.local_address.address.should eq address
+    ensure
+      socket.try &.close
     end
 
     it "sends and receives messages" do
@@ -78,9 +80,22 @@ describe UDPSocket, tags: "network" do
       # Darwin also has a bug that prevents selecting the "default" interface.
       # https://lists.apple.com/archives/darwin-kernel/2014/Mar/msg00012.html
       pending "joins and transmits to multicast groups"
+    elsif {{ flag?(:dragonfly) }} && family == Socket::Family::INET6
+      # TODO: figure out why updating `multicast_loopback` produces a
+      # `setsockopt 9: Can't assign requested address
+      pending "joins and transmits to multicast groups"
     elsif {{ flag?(:solaris) }} && family == Socket::Family::INET
       # TODO: figure out why updating `multicast_loopback` produces a
       # `setsockopt 18: Invalid argument` error
+      pending "joins and transmits to multicast groups"
+    elsif {{ flag?(:freebsd) }} && family == Socket::Family::INET6
+      # FIXME: fails with "Error sending datagram to [ipv6]:port: Network is unreachable"
+      pending "joins and transmits to multicast groups"
+    elsif {{ flag?(:netbsd) }} && family == Socket::Family::INET6
+      # FIXME: fails with "setsockopt: EADDRNOTAVAIL"
+      pending "joins and transmits to multicast groups"
+    elsif {{ flag?(:openbsd) }}
+      # FIXME: fails with "setsockopt: EINVAL (ipv4) or EADDRNOTAVAIL (ipv6)"
       pending "joins and transmits to multicast groups"
     else
       it "joins and transmits to multicast groups" do

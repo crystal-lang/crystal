@@ -3,6 +3,7 @@ require "../../../spec_helper"
 private def processed_context_visitor(code, cursor_location)
   compiler = Compiler.new
   compiler.no_codegen = true
+  compiler.prelude = "empty"
   result = compiler.compile(Compiler::Source.new(".", code), "fake-no-build")
 
   visitor = ContextVisitor.new(cursor_location)
@@ -118,15 +119,20 @@ describe "context" do
   it "includes last call" do
     assert_context_includes %(
       class Foo
-        property lorem
+        def lorem
+          @lorem
+        end
 
         def initialize(@lorem : Int64)
         end
       end
 
+      def foo(f)
+      end
+
       f = Foo.new(1i64)
 
-      puts f.lo‸rem
+      foo f.lo‸rem
       1
     ), "f.lorem", ["Int64"]
   end
@@ -141,9 +147,13 @@ describe "context" do
 
   it "does includes regex special variables" do
     assert_context_keys %(
+      def match
+        $~ = "match"
+      end
+
       def foo
-        s = "string"
-        s =~ /s/
+        s = "foo"
+        match
         ‸
         0
       end
@@ -185,11 +195,7 @@ describe "context" do
 
   it "can handle union types" do
     assert_context_includes %(
-    a = if rand() > 0
-      1i64
-    else
-      "foo"
-    end
+    a = 1_i64.as(Int64 | String)
     ‸
     0
     ), "a", ["(Int64 | String)"]
@@ -197,11 +203,7 @@ describe "context" do
 
   it "can display text output" do
     run_context_tool(%(
-    a = if rand() > 0
-      1i64
-    else
-      "foo"
-    end
+    a = 1_i64.as(Int64 | String)
     ‸
     0
     )) do |result|
@@ -218,11 +220,7 @@ describe "context" do
 
   it "can display json output" do
     run_context_tool(%(
-    a = if rand() > 0
-      1i64
-    else
-      "foo"
-    end
+    a = 1_i64.as(Int64 | String)
     ‸
     0
     )) do |result|

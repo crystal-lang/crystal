@@ -139,7 +139,7 @@ module Levenshtein
   # end
   # best_match # => "ello"
   # ```
-  def self.find(name, tolerance = nil, &)
+  def self.find(name, tolerance = nil, &) : String?
     Finder.find(name, tolerance) do |sn|
       yield sn
     end
@@ -154,7 +154,7 @@ module Levenshtein
   # Levenshtein.find("hello", ["hullo", "hel", "hall", "hell"], 2) # => "hullo"
   # Levenshtein.find("hello", ["hurlo", "hel", "hall"], 1)         # => nil
   # ```
-  def self.find(name, all_names, tolerance = nil)
+  def self.find(name, all_names, tolerance = nil) : String?
     Finder.find(name, all_names, tolerance)
   end
 end

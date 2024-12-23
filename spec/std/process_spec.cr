@@ -32,7 +32,7 @@ end
 private def print_env_command
   {% if flag?(:win32) %}
     # cmd adds these by itself, clear them out before printing.
-    shell_command("set COMSPEC=& set PATHEXT=& set PROMPT=& set")
+    shell_command("set COMSPEC=& set PATHEXT=& set PROMPT=& set PROCESSOR_ARCHITECTURE=& set")
   {% else %}
     {"env", [] of String}
   {% end %}
@@ -170,6 +170,14 @@ describe Process do
       error = IO::Memory.new
       Process.run(*shell_command("1>&2 echo hello"), error: error)
       error.to_s.should eq("hello#{newline}")
+    end
+
+    it "sends long output and error to IO" do
+      output = IO::Memory.new
+      error = IO::Memory.new
+      Process.run(*shell_command("echo #{"." * 8000}"), output: output, error: error)
+      output.to_s.should eq("." * 8000 + newline)
+      error.to_s.should be_empty
     end
 
     it "controls process in block" do

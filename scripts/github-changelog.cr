@@ -140,41 +140,8 @@ record PullRequest,
   @[JSON::Field(root: "nodes", converter: JSON::ArrayConverter(LabelNameConverter))]
   @labels : Array(String)
 
-  def to_s(io : IO)
-    if topic = self.sub_topic
-      io << "*(" << sub_topic << ")* "
-    end
-    if labels.includes?("security")
-      io << "**[security]** "
-    end
-    if labels.includes?("breaking-change")
-      io << "**[breaking]** "
-    end
-    if regression?
-      io << "**[regression]** "
-    end
-    if experimental?
-      io << "**[experimental]** "
-    end
-    if deprecated?
-      io << "**[deprecation]** "
-    end
-    io << title.sub(/^\[?(?:#{type}|#{sub_topic})(?::|\]:?) /i, "") << " ("
-    link_ref(io)
-    if author = self.author
-      io << ", thanks @" << author
-    end
-    io << ")"
-  end
-
   def link_ref(io)
     io << "[#" << number << "]"
-  end
-
-  def print_ref_label(io)
-    link_ref(io)
-    io << ": " << permalink
-    io.puts
   end
 
   def <=>(other : self)
@@ -299,6 +266,11 @@ record PullRequest,
     else                type || ""
     end
   end
+
+  def fixup?
+    md = title.match(/\[fixup #(.\d+)/) || return
+    md[1]?.try(&.to_i)
+  end
 end
 
 def query_milestone(api_token, repository, number)
@@ -340,7 +312,89 @@ end
 
 milestone = query_milestone(api_token, repository, milestone)
 
-sections = milestone.pull_requests.group_by(&.section)
+struct ChangelogEntry
+  getter pull_requests : Array(PullRequest)
+
+  def initialize(pr : PullRequest)
+    @pull_requests = [pr]
+  end
+
+  def pr
+    pull_requests[0]
+  end
+
+  def to_s(io : IO)
+    if sub_topic = pr.sub_topic
+      io << "*(" << pr.sub_topic << ")* "
+    end
+    if pr.labels.includes?("security")
+      io << "**[security]** "
+    end
+    if pr.labels.includes?("breaking-change")
+      io << "**[breaking]** "
+    end
+    if pr.regression?
+      io << "**[regression]** "
+    end
+    if pr.experimental?
+      io << "**[experimental]** "
+    end
+    if pr.deprecated?
+      io << "**[deprecation]** "
+    end
+    io << pr.title.sub(/^\[?(?:#{pr.type}|#{pr.sub_topic})(?::|\]:?) /i, "")
+
+    io << " ("
+    pull_requests.join(io, ", ") do |pr|
+      pr.link_ref(io)
+    end
+
+    authors = collect_authors
+    if authors.present?
+      io << ", thanks "
+      authors.join(io, ", ") do |author|
+        io << "@" << author
+      end
+    end
+    io << ")"
+  end
+
+  def collect_authors
+    authors = [] of String
+    pull_requests.each do |pr|
+      author = pr.author || next
+      authors << author unless authors.includes?(author)
+    end
+    authors
+  end
+
+  def print_ref_labels(io)
+    pull_requests.each { |pr| print_ref_label(io, pr) }
+  end
+
+  def print_ref_label(io, pr)
+    pr.link_ref(io)
+    io << ": " << pr.permalink
+    io.puts
+  end
+end
+
+entries = milestone.pull_requests.compact_map do |pr|
+  ChangelogEntry.new(pr) unless pr.fixup?
+end
+
+milestone.pull_requests.each do |pr|
+  parent_number = pr.fixup? || next
+
+  parent_entry = entries.find { |entry| entry.pr.number == parent_number }
+  if parent_entry
+    parent_entry.pull_requests << pr
+  else
+    STDERR.puts "Unresolved fixup: ##{parent_number} for: #{pr.title} (##{pr.number})"
+  end
+end
+
+sections = entries.group_by(&.pr.section)
 
 SECTION_TITLES = {
   "breaking"    => "Breaking changes",
@@ -367,37 +421,37 @@ puts
 puts "[#{milestone.title}]: https://github.com/#{repository}/releases/#{milestone.title}"
 puts
 
-def print_items(prs)
-  prs.each do |pr|
-    puts "- #{pr}"
+def print_entries(entries)
+  entries.each do |entry|
+    puts "- #{entry}"
   end
   puts
 
-  prs.each(&.print_ref_label(STDOUT))
+  entries.each(&.print_ref_labels(STDOUT))
   puts
 end
 
 SECTION_TITLES.each do |id, title|
-  prs = sections[id]? || next
+  entries = sections[id]? || next
   puts "### #{title}"
   puts
 
   if id == "infra"
-    prs.sort_by!(&.infra_sort_tuple)
-    print_items prs
+    entries.sort_by!(&.pr.infra_sort_tuple)
+    print_entries entries
   else
-    topics = prs.group_by(&.primary_topic)
+    topics = entries.group_by(&.pr.primary_topic)
 
     topic_titles = topics.keys.sort_by! { |k| TOPIC_ORDER.index(k) || Int32::MAX }
 
     topic_titles.each do |topic_title|
-      topic_prs = topics[topic_title]? || next
+      topic_entries = topics[topic_title]? || next
 
       puts "#### #{topic_title}"
       puts
 
-      topic_prs.sort!
-      print_items topic_prs
+      topic_entries.sort_by!(&.pr)
+      print_entries topic_entries
     end
   end
 end

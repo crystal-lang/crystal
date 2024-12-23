@@ -52,7 +52,7 @@ class WaitGroup
   #   end
   # end
   # ```
-  def self.wait : Nil
+  def self.wait(&) : Nil
     instance = new
     yield instance
     instance.wait
@@ -73,9 +73,9 @@ class WaitGroup
   # wg.spawn { do_something }
   # wg.wait
   # ```
-  def spawn(&block) : Fiber
+  def spawn(*, name : String? = nil, &block) : Fiber
     add
-    ::spawn do
+    ::spawn(name: name) do
       block.call
     ensure
       done

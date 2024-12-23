@@ -21,49 +21,61 @@ all:
 ## Run generators (Unicode, SSL config, ...)
 ##   $ make -B generate_data
 
-CRYSTAL ?= crystal ## which previous crystal compiler use
+CRYSTAL ?= crystal## which previous crystal compiler use
 LLVM_CONFIG ?=     ## llvm-config command path to use
 
-release ?=      ## Compile in release mode
-stats ?=        ## Enable statistics output
-progress ?=     ## Enable progress output
-threads ?=      ## Maximum number of threads to use
-debug ?=        ## Add symbolic debug info
-verbose ?=      ## Run specs in verbose mode
-junit_output ?= ## Path to output junit results
-static ?=       ## Enable static linking
-target ?=       ## Cross-compilation target
-interpreter ?=  ## Enable interpreter feature
-check ?=        ## Enable only check when running format
-order ?=random  ## Enable order for spec execution (values: "default" | "random" | seed number)
+release ?=        ## Compile in release mode
+stats ?=          ## Enable statistics output
+progress ?=       ## Enable progress output
+threads ?=        ## Maximum number of threads to use
+debug ?=          ## Add symbolic debug info
+verbose ?=        ## Run specs in verbose mode
+junit_output ?=   ## Path to output junit results
+static ?=         ## Enable static linking
+target ?=         ## Cross-compilation target
+interpreter ?=    ## Enable interpreter feature
+check ?=          ## Enable only check when running format
+order ?=random    ## Enable order for spec execution (values: "default" | "random" | seed number)
+deref_symlinks ?= ## Deference symbolic links for `make install`
 
 O := .build
 SOURCES := $(shell find src -name '*.cr')
 SPEC_SOURCES := $(shell find spec -name '*.cr')
 override FLAGS += -D strict_multi_assign -D preview_overload_order $(if $(release),--release )$(if $(stats),--stats )$(if $(progress),--progress )$(if $(threads),--threads $(threads) )$(if $(debug),-d )$(if $(static),--static )$(if $(LDFLAGS),--link-flags="$(LDFLAGS)" )$(if $(target),--cross-compile --target $(target) )$(if $(interpreter),,-Dwithout_interpreter )
 SPEC_WARNINGS_OFF := --exclude-warnings spec/std --exclude-warnings spec/compiler --exclude-warnings spec/primitives
-SPEC_FLAGS := $(if $(verbose),-v )$(if $(junit_output),--junit_output $(junit_output) )$(if $(order),--order=$(order) )
+override SPEC_FLAGS += $(if $(verbose),-v )$(if $(junit_output),--junit_output $(junit_output) )$(if $(order),--order=$(order) )
 CRYSTAL_CONFIG_LIBRARY_PATH := '$$ORIGIN/../lib/crystal'
 CRYSTAL_CONFIG_BUILD_COMMIT ?= $(shell git rev-parse --short HEAD 2> /dev/null)
 CRYSTAL_CONFIG_PATH := '$$ORIGIN/../share/crystal/src'
 CRYSTAL_VERSION ?= $(shell cat src/VERSION)
 SOURCE_DATE_EPOCH ?= $(shell (cat src/SOURCE_DATE_EPOCH || (git show -s --format=%ct HEAD || stat -c "%Y" Makefile || stat -f "%m" Makefile)) 2> /dev/null)
-ifeq ($(shell command -v ld.lld >/dev/null && uname -s),Linux)
+check_lld := command -v ld.lld >/dev/null && case "$$(uname -s)" in MINGW32*|MINGW64*|Linux) echo 1;; esac
+ifeq ($(shell $(check_lld)),1)
   EXPORT_CC ?= CC="$(CC) -fuse-ld=lld"
 endif
-EXPORTS := \
+override EXPORTS += \
   CRYSTAL_CONFIG_BUILD_COMMIT="$(CRYSTAL_CONFIG_BUILD_COMMIT)" \
 	CRYSTAL_CONFIG_PATH=$(CRYSTAL_CONFIG_PATH) \
 	SOURCE_DATE_EPOCH="$(SOURCE_DATE_EPOCH)"
-EXPORTS_BUILD := \
+override EXPORTS_BUILD += \
 	$(EXPORT_CC) \
 	CRYSTAL_CONFIG_LIBRARY_PATH=$(CRYSTAL_CONFIG_LIBRARY_PATH)
 SHELL = sh
 LLVM_CONFIG := $(shell src/llvm/ext/find-llvm-config)
-LLVM_VERSION := $(if $(LLVM_CONFIG),$(shell $(LLVM_CONFIG) --version 2> /dev/null))
+LLVM_VERSION := $(if $(LLVM_CONFIG),$(shell "$(LLVM_CONFIG)" --version 2> /dev/null))
 LLVM_EXT_DIR = src/llvm/ext
 LLVM_EXT_OBJ = $(LLVM_EXT_DIR)/llvm_ext.o
 CXXFLAGS += $(if $(debug),-g -O0)
+
+# MSYS2 support (native Windows should use `Makefile.win` instead)
+ifeq ($(OS),Windows_NT)
+  EXE := .exe
+  WINDOWS := 1
+else
+  EXE :=
+  WINDOWS :=
+endif
+CRYSTAL_BIN := crystal$(EXE)
 
 DESTDIR ?=
 PREFIX ?= /usr/local
@@ -74,9 +86,9 @@ DATADIR ?= $(DESTDIR)$(PREFIX)/share/crystal
 INSTALL ?= /usr/bin/install
 
 ifeq ($(or $(TERM),$(TERM),dumb),dumb)
-  colorize = $(shell printf >&2 "$1")
+  colorize = $(shell printf "%s" "$1" >&2)
 else
-  colorize = $(shell printf >&2 "\033[33m$1\033[0m\n")
+  colorize = $(shell printf "\033[33m%s\033[0m\n" "$1" >&2)
 endif
 
 DEPS = $(LLVM_EXT_OBJ)
@@ -102,28 +114,28 @@ test: spec ## Run tests
 spec: std_spec primitives_spec compiler_spec
 
 .PHONY: std_spec
-std_spec: $(O)/std_spec ## Run standard library specs
-	$(O)/std_spec $(SPEC_FLAGS)
+std_spec: $(O)/std_spec$(EXE) ## Run standard library specs
+	$(O)/std_spec$(EXE) $(SPEC_FLAGS)
 
 .PHONY: compiler_spec
-compiler_spec: $(O)/compiler_spec ## Run compiler specs
-	$(O)/compiler_spec $(SPEC_FLAGS)
+compiler_spec: $(O)/compiler_spec$(EXE) ## Run compiler specs
+	$(O)/compiler_spec$(EXE) $(SPEC_FLAGS)
 
 .PHONY: primitives_spec
-primitives_spec: $(O)/primitives_spec ## Run primitives specs
-	$(O)/primitives_spec $(SPEC_FLAGS)
+primitives_spec: $(O)/primitives_spec$(EXE) ## Run primitives specs
+	$(O)/primitives_spec$(EXE) $(SPEC_FLAGS)
 
 .PHONY: interpreter_spec
-interpreter_spec: $(O)/interpreter_spec ## Run interpreter specs
-	$(O)/interpreter_spec $(SPEC_FLAGS)
+interpreter_spec: $(O)/interpreter_spec$(EXE) ## Run interpreter specs
+	$(O)/interpreter_spec$(EXE) $(SPEC_FLAGS)
 
 .PHONY: smoke_test
 smoke_test: ## Build specs as a smoke test
-smoke_test: $(O)/std_spec $(O)/compiler_spec $(O)/crystal
+smoke_test: $(O)/std_spec$(EXE) $(O)/compiler_spec$(EXE) $(O)/$(CRYSTAL_BIN)
 
 .PHONY: all_spec
-all_spec: $(O)/all_spec ## Run all specs (note: this builds a huge program; `test` recipe builds individual binaries and is recommended for reduced resource usage)
-	$(O)/all_spec $(SPEC_FLAGS)
+all_spec: $(O)/all_spec$(EXE) ## Run all specs (note: this builds a huge program; `test` recipe builds individual binaries and is recommended for reduced resource usage)
+	$(O)/all_spec$(EXE) $(SPEC_FLAGS)
 
 .PHONY: samples
 samples: ## Build example programs
@@ -133,10 +145,10 @@ samples: ## Build example programs
 docs: ## Generate standard library documentation
 	$(call check_llvm_config)
 	./bin/crystal docs src/docs_main.cr $(DOCS_OPTIONS) --project-name=Crystal --project-version=$(CRYSTAL_VERSION) --source-refname=$(CRYSTAL_CONFIG_BUILD_COMMIT)
-	cp -av doc/ docs/
+	cp -R -P -p doc/ docs/
 
 .PHONY: crystal
-crystal: $(O)/crystal ## Build the compiler
+crystal: $(O)/$(CRYSTAL_BIN) ## Build the compiler
 
 .PHONY: deps llvm_ext
 deps: $(DEPS) ## Build dependencies
@@ -151,12 +163,12 @@ generate_data: ## Run generator scripts for Unicode, SSL config, ...
 	$(MAKE) -B -f scripts/generate_data.mk
 
 .PHONY: install
-install: $(O)/crystal man/crystal.1.gz ## Install the compiler at DESTDIR
+install: $(O)/$(CRYSTAL_BIN) man/crystal.1.gz ## Install the compiler at DESTDIR
 	$(INSTALL) -d -m 0755 "$(BINDIR)/"
-	$(INSTALL) -m 0755 "$(O)/crystal" "$(BINDIR)/crystal"
+	$(INSTALL) -m 0755 "$(O)/$(CRYSTAL_BIN)" "$(BINDIR)/$(CRYSTAL_BIN)"
 
 	$(INSTALL) -d -m 0755 $(DATADIR)
-	cp -av src "$(DATADIR)/src"
+	cp -R -p $(if $(deref_symlinks),-L,-P) src "$(DATADIR)/src"
 	rm -rf "$(DATADIR)/$(LLVM_EXT_OBJ)" # Don't install llvm_ext.o
 
 	$(INSTALL) -d -m 0755 "$(MANDIR)/man1/"
@@ -171,9 +183,16 @@ install: $(O)/crystal man/crystal.1.gz ## Install the compiler at DESTDIR
 	$(INSTALL) -d -m 0755 "$(DESTDIR)$(PREFIX)/share/fish/vendor_completions.d/"
 	$(INSTALL) -m 644 etc/completion.fish "$(DESTDIR)$(PREFIX)/share/fish/vendor_completions.d/crystal.fish"
 
+ifeq ($(WINDOWS),1)
+.PHONY: install_dlls
+install_dlls: $(O)/$(CRYSTAL_BIN) ## Install the compiler's dependent DLLs at DESTDIR (Windows only)
+	$(INSTALL) -d -m 0755 "$(BINDIR)/"
+	@ldd $(O)/$(CRYSTAL_BIN) | grep -iv ' => /c/windows/system32' | sed 's/.* => //; s/ (.*//' | xargs -t -i $(INSTALL) -m 0755 '{}' "$(BINDIR)/"
+endif
+
 .PHONY: uninstall
 uninstall: ## Uninstall the compiler from DESTDIR
-	rm -f "$(BINDIR)/crystal"
+	rm -f "$(BINDIR)/$(CRYSTAL_BIN)"
 
 	rm -rf "$(DATADIR)/src"
 
@@ -187,44 +206,47 @@ uninstall: ## Uninstall the compiler from DESTDIR
 install_docs: docs ## Install docs at DESTDIR
 	$(INSTALL) -d -m 0755 $(DATADIR)
 
-	cp -av docs "$(DATADIR)/docs"
-	cp -av samples "$(DATADIR)/examples"
+	cp -R -P -p docs "$(DATADIR)/docs"
+	cp -R -P -p samples "$(DATADIR)/examples"
 
 .PHONY: uninstall_docs
 uninstall_docs: ## Uninstall docs from DESTDIR
 	rm -rf "$(DATADIR)/docs"
 	rm -rf "$(DATADIR)/examples"
 
-$(O)/all_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
+$(O)/all_spec$(EXE): $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	$(call check_llvm_config)
 	@mkdir -p $(O)
 	$(EXPORT_CC) $(EXPORTS) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/all_spec.cr
 
-$(O)/std_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
+$(O)/std_spec$(EXE): $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	$(call check_llvm_config)
 	@mkdir -p $(O)
 	$(EXPORT_CC) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/std_spec.cr
 
-$(O)/compiler_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
+$(O)/compiler_spec$(EXE): $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	$(call check_llvm_config)
 	@mkdir -p $(O)
 	$(EXPORT_CC) $(EXPORTS) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/compiler_spec.cr --release
 
-$(O)/primitives_spec: $(O)/crystal $(DEPS) $(SOURCES) $(SPEC_SOURCES)
+$(O)/primitives_spec$(EXE): $(O)/$(CRYSTAL_BIN) $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@mkdir -p $(O)
 	$(EXPORT_CC) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/primitives_spec.cr
 
-$(O)/interpreter_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
+$(O)/interpreter_spec$(EXE): $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	$(eval interpreter=1)
 	@mkdir -p $(O)
 	$(EXPORT_CC) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/compiler/interpreter_spec.cr
 
-$(O)/crystal: $(DEPS) $(SOURCES)
+$(O)/$(CRYSTAL_BIN): $(DEPS) $(SOURCES)
 	$(call check_llvm_config)
 	@mkdir -p $(O)
 	@# NOTE: USE_PCRE1 is only used for testing compatibility with legacy environments that don't provide libpcre2.
 	@# Newly built compilers should never be distributed with libpcre to ensure syntax consistency.
-	$(EXPORTS) $(EXPORTS_BUILD) ./bin/crystal build $(FLAGS) -o $@ src/compiler/crystal.cr -D without_openssl -D without_zlib $(if $(USE_PCRE1),-D use_pcre,-D use_pcre2)
+	$(EXPORTS) $(EXPORTS_BUILD) ./bin/crystal build $(FLAGS) -o $(if $(WINDOWS),$(O)/crystal-next.exe,$@) src/compiler/crystal.cr -D without_openssl -D without_zlib $(if $(USE_PCRE1),-D use_pcre,-D use_pcre2)
+	@# NOTE: on MSYS2 it is not possible to overwrite a running program, so the compiler must be first built with
+	@# a different filename and then moved to the final destination.
+	$(if $(WINDOWS),mv $(O)/crystal-next.exe $@)
 
 $(LLVM_EXT_OBJ): $(LLVM_EXT_DIR)/llvm_ext.cc
 	$(call check_llvm_config)

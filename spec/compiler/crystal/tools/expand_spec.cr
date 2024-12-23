@@ -5,6 +5,7 @@ private def processed_expand_visitor(code, cursor_location)
   compiler.no_codegen = true
   compiler.no_cleanup = true
   compiler.wants_doc = true
+  compiler.prelude = "empty"
   result = compiler.compile(Compiler::Source.new(".", code), "fake-no-build")
 
   visitor = ExpandVisitor.new(cursor_location)
