@@ -236,11 +236,11 @@ module Crystal
       if @inside_macro > 0
         node.expressions.each &.accept self
       else
-        last_node = node.expressions.first
+        last_node = nil
 
         node.expressions.each_with_index do |exp, i|
           unless exp.nop?
-            self.write_extra_newlines last_node.end_location, exp.location do
+            self.write_extra_newlines((last_node || exp).end_location, exp.location) do
               append_indent unless node.keyword.paren? && i == 0
               exp.accept self
               newline unless node.keyword.paren? && i == node.expressions.size - 1
