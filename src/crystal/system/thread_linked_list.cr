@@ -24,6 +24,13 @@ class Thread
       end
     end
 
+    # Safely iterates the list.
+    def each(&) : Nil
+      @mutex.synchronize do
+        unsafe_each { |node| yield node }
+      end
+    end
+
     # Appends a node to the tail of the list. The operation is thread-safe.
     #
     # There are no guarantees that a node being pushed will be iterated by
