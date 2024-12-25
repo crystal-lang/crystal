@@ -104,6 +104,7 @@ end
 class Process::Status
   # Platform-specific exit status code, which usually contains either the exit code or a termination signal.
   # The other `Process::Status` methods extract the values from `exit_status`.
+  @[Deprecated("Use `#exit_reason`, `#exit_code`, or `#system_exit_status` instead")]
   def exit_status : Int32
     @exit_status.to_i32!
   end
@@ -268,7 +269,7 @@ class Process::Status
       # define __WEXITSTATUS(status) (((status) & 0xff00) >> 8)
       (@exit_status & 0xff00) >> 8
     {% else %}
-      exit_status
+      @exit_status.to_i32!
     {% end %}
   end
 
