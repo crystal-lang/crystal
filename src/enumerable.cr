@@ -1808,7 +1808,10 @@ module Enumerable(T)
   # Expects all types returned from the block to respond to `#+` method.
   #
   # This method calls `.additive_identity` on the yielded type to determine the
-  # type of the sum value.
+  # type of the sum value.  Hence, it can fail to compile if
+  # `.additive_identity` fails to determine a safe type, e.g., in case of
+  # union types.  In such cases, use `sum(initial)` with an initial value of
+  # the expected type of the sum value.
   #
   # If the collection is empty, returns `additive_identity`.
   #
@@ -1886,8 +1889,11 @@ module Enumerable(T)
   #
   # Expects all types returned from the block to respond to `#*` method.
   #
-  # This method calls `.multiplicative_identity` on the element type to determine the
-  # type of the sum value.
+  # This method calls `.multiplicative_identity` on the element type to
+  # determine the type of the product value.  Hence, it can fail to compile if
+  # `.multiplicative_identity` fails to determine a safe type, e.g., in case
+  # of union types.  In such cases, use `product(initial)` with an initial
+  # value of the expected type of the product value.
   #
   # If the collection is empty, returns `multiplicative_identity`.
   #
@@ -2292,7 +2298,11 @@ module Enumerable(T)
     # if the type is a union.
     def self.first
       {% if X.union? %}
-        {{X.union_types.first}}
+        {{
+          raise("Enumerable#sum/product() does support Union types. " +
+                "Instead, use Enumerable#sum/product(initial) with an " +
+                "initial value of the expected type of the sum/product call.")
+        }}
       {% else %}
         X
       {% end %}
