@@ -2299,9 +2299,9 @@ module Enumerable(T)
     def self.first
       {% if X.union? %}
         {{
-          raise("Enumerable#sum/product() does support Union types. " +
+          raise("Enumerable#sum and #product do not support Union types. " +
                 "Instead, use Enumerable#sum/product(initial) with an " +
-                "initial value of the expected type of the sum/product call.")
+                "initial value of the expected type of the call.")
         }}
       {% else %}
         X
