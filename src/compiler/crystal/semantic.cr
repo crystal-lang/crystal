@@ -87,6 +87,17 @@ class Crystal::Program
       end
     end
 
+    self.top_level_semantic_complete = true
+
     {node, processor}
   end
+
+  # This property indicates that the compiler has finished the top-level semantic
+  # stage.
+  # At this point, instance variables are declared and macros `#instance_vars`
+  # and `#has_internal_pointers?` provide meaningful information.
+  #
+  # FIXME: Introduce a more generic method to track progress of compiler stages
+  # (potential synergy with `ProcessTracker`?).
+  property? top_level_semantic_complete = false
 end
