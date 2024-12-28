@@ -1374,8 +1374,8 @@ describe "Enumerable" do
         [1, 10000000000_u64].sum
         CRYSTAL
         "Enumerable#sum() and #product() do not support Union types. " +
-        "Instead, use Enumerable#sum and #product(initial), respectively, " +
-        "with an initial value of the intended type of the call."
+        "Instead, use Enumerable#sum(initial) and #product(initial), " +
+        "respectively, with an initial value of the intended type of the call."
     end
 
     it "uses additive_identity from type" do
@@ -1428,8 +1428,8 @@ describe "Enumerable" do
         [1, 10000000000_u64].product
         CRYSTAL
         "Enumerable#sum() and #product() do not support Union types. " +
-        "Instead, use Enumerable#sum and #product(initial), respectively, " +
-        "with an initial value of the intended type of the call."
+        "Instead, use Enumerable#sum(initial) and #product(initial), " +
+        "respectively, with an initial value of the intended type of the call."
     end
   end
 
