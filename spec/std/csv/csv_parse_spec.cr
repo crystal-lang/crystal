@@ -72,15 +72,12 @@ describe CSV do
     end
 
     it "parses to hashes remaining rows" do
-      csv_text = "Index,Customer Id,First Name,Last Name\n1,DD37Cf93aecA6Dc,Sheryl,Baxter\n2,1Ef7b82A4CAAD10,Preston,Lozano\n3,6F94879bDAfE5a6,,Berry"
+      csv_text = "Index,Customer Id,First Name,Last Name\n1,DD37Cf93aecA6Dc,Sheryl,Baxter\n2,1Ef7b82A4CAAD10,Preston,Lozano"
       parser = CSV::Parser.new(csv_text)
-      # skip header
-      parser.next_row
-      # skip rows
-      parser.next_row
+
       parser.next_row
 
-      parser.parse_to_h.should eq([{"Index" => "3", "Customer Id" => "6F94879bDAfE5a6", "First Name" => "", "Last Name" => "Berry"}])
+      parser.parse_to_h.should eq([{"1" => "2", "DD37Cf93aecA6Dc" => "1Ef7b82A4CAAD10", "Sheryl" => "Preston", "Baxter" => "Lozano"}])
     end
 
     it "raises if single quote in the middle" do

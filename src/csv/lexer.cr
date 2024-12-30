@@ -30,9 +30,6 @@ abstract class CSV::Lexer
   getter quote_char : Char
 
   # :nodoc:
-  protected getter line_number : Int32
-
-  # :nodoc:
   def initialize(@separator : Char = DEFAULT_SEPARATOR, @quote_char : Char = DEFAULT_QUOTE_CHAR)
     @token = Token.new
     @buffer = IO::Memory.new

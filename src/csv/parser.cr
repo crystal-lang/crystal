@@ -21,14 +21,8 @@ class CSV::Parser
 
   def parse_to_h : Array(Hash(String, String))
     rows = [] of Hash(String, String)
-    row_number = @lexer.line_number
-
-    rewind
     if headers = next_row
-      while @lexer.line_number < row_number
-        next_row
-      end
-      each_row do |row|
+      while row = next_row
         if parsed_row = parse_row_to_h_internal(headers, row)
           rows << parsed_row
         end
