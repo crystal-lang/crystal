@@ -1771,7 +1771,7 @@ module Enumerable(T)
   end
 
   private def additive_identity(reflect)
-    type = reflect.first
+    type = reflect.type
     if type.responds_to? :additive_identity
       type.additive_identity
     else
@@ -1850,7 +1850,7 @@ module Enumerable(T)
   # ```
   #
   # This method calls `.multiplicative_identity` on the element type to determine the
-  # type of the sum value.
+  # type of the product value.
   #
   # If the collection is empty, returns `multiplicative_identity`.
   #
@@ -1858,7 +1858,7 @@ module Enumerable(T)
   # ([] of Int32).product # => 1
   # ```
   def product
-    product Reflect(T).first.multiplicative_identity
+    product Reflect(T).type.multiplicative_identity
   end
 
   # Multiplies *initial* and all the elements in the collection
@@ -1901,7 +1901,7 @@ module Enumerable(T)
   # ([] of Int32).product { |x| x + 1 } # => 1
   # ```
   def product(& : T -> _)
-    product(Reflect(typeof(yield Enumerable.element_type(self))).first.multiplicative_identity) do |value|
+    product(Reflect(typeof(yield Enumerable.element_type(self))).type.multiplicative_identity) do |value|
       yield value
     end
   end
@@ -2293,10 +2293,9 @@ module Enumerable(T)
 
   # :nodoc:
   private struct Reflect(X)
-    # For now it's just a way to implement `Enumerable#sum` in a way that the
-    # initial value given to it has the type of the first type in the union,
-    # if the type is a union.
-    def self.first
+    # For now, Reflect is used to reject union types in `#sum()` and
+    # `#product()` methods.
+    def self.type
       {% if X.union? %}
         {{
           raise("`Enumerable#sum()` and `#product()` do not support Union " +
