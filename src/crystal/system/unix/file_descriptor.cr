@@ -36,6 +36,7 @@ module Crystal::System::FileDescriptor
 
   private def system_blocking_init(value)
     self.system_blocking = false unless value
+    self.sync = value
   end
 
   private def system_close_on_exec?
