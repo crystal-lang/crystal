@@ -338,19 +338,22 @@ module Crystal
     %w(
       bar? bar!
     ).each do |name|
-      assert_syntax_warning "def foo(#{name}); end", "invalid parameter name: #{name}", 1, 14
-      assert_syntax_warning "def foo(foo #{name}); end", "invalid parameter name: #{name}", 1, 17
+      assert_syntax_warning "def foo(#{name}); end", "invalid parameter name: #{name}"
+      assert_syntax_warning "def foo(foo #{name}); end", "invalid parameter name: #{name}"
       it_parses "def foo(#{name} foo); end", Def.new("foo", [Arg.new("foo", external_name: name.to_s)])
 
-      assert_syntax_warning "macro foo(#{name}); end", "invalid parameter name: #{name}", 1, 16
-      assert_syntax_warning "macro foo(foo #{name}); end", "invalid parameter name: #{name}", 1, 19
+      assert_syntax_warning "macro foo(#{name}); end", "invalid parameter name: #{name}"
+      assert_syntax_warning "macro foo(foo #{name}); end", "invalid parameter name: #{name}"
       it_parses "macro foo(#{name} foo); end", Macro.new("foo", [Arg.new("foo", external_name: name.to_s)], body: MacroLiteral.new(" "))
 
       it_parses "foo(#{name})", Call.new(nil, "foo", [name.call] of ASTNode)
       it_parses "foo #{name}", Call.new(nil, "foo", [name.call] of ASTNode)
 
-      assert_syntax_warning "foo { |#{name}| }", "invalid parameter name: #{name}", 1, 12
-      assert_syntax_warning "foo { |(#{name})| }", "invalid parameter name: #{name}", 1, 13
+      assert_syntax_warning "foo { |#{name}| }", "invalid parameter name: #{name}"
+      assert_syntax_warning "foo { |foo, (#{name})| }", "invalid parameter name: #{name}"
+
+      assert_syntax_warning "foo do |foo, #{name}|\nend", "invalid parameter name: #{name}"
+      assert_syntax_warning "foo do |(#{name})|\nend", "invalid parameter name: #{name}"
     end
 
     it_parses "def self.foo\n1\nend", Def.new("foo", body: 1.int32, receiver: "self".var)
