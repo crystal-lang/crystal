@@ -50,10 +50,10 @@ describe Crystal::SyntaxHighlighter::HTML do
       def if else elsif end class module include
       extend while until do yield return unless next break
       begin lib fun type struct union enum macro out require
-      case when select then of rescue ensure is_a? alias sizeof
+      case when select then of rescue ensure is_a? alias sizeof alignof
       as as? typeof for in with self super private asm
       nil? abstract pointerof
-      protected uninitialized instance_sizeof offsetof
+      protected uninitialized instance_sizeof instance_alignof offsetof
       annotation verbatim
     ).each do |kw|
       it_highlights kw, %(<span class="k">#{kw}</span>)
@@ -68,15 +68,44 @@ describe Crystal::SyntaxHighlighter::HTML do
     it_highlights "def foo", %(<span class="k">def</span> <span class="m">foo</span>)
 
     %w(
-      + - * &+ &- &* / // = == < <= > >= ! != =~ !~ & | ^ ~ **
-      >> << % [] []? []= <=> ===
+      [] []? []= <=>
+      + - * /
+      == < <= > >= != =~ !~
+      & | ^ ~ ** >> << %
+    ).each do |op|
+      it_highlights %(def #{op}), %(<span class="k">def</span> <span class="m">#{HTML.escape(op)}</span>)
+    end
+
+    it_highlights %(def //), %(<span class="k">def</span> <span class="m">/</span><span class="m">/</span>)
+
+    %w(
+      + - * &+ &- &* &** / // = == < <= > >= ! != =~ !~ & | ^ ~ **
+      >> << % [] []? []= <=> === && ||
+      += -= *= /= //= &= |= ^= **= >>= <<= %= &+= &-= &*= &&= ||=
     ).each do |op|
       it_highlights "1 #{op} 2", %(<span class="n">1</span> <span class="o">#{HTML.escape(op)}</span> <span class="n">2</span>)
     end
 
+    it_highlights %(1/2), %(<span class="n">1</span><span class="o">/</span><span class="n">2</span>)
+    it_highlights %(1 /2), %(<span class="n">1</span> <span class="o">/</span><span class="n">2</span>)
+    it_highlights %(1/ 2), %(<span class="n">1</span><span class="o">/</span> <span class="n">2</span>)
+
+    it_highlights %(a/b), %(a<span class="o">/</span>b)
+    it_highlights %(a/ b), %(a<span class="o">/</span> b)
+    it_highlights %(a / b), %(a <span class="o">/</span> b)
+
+    it_highlights %(a /b/), %(a <span class="s">/b/</span>)
+
+    it_highlights %($1), %($1)
+    it_highlights %($2?), %($2?)
+    it_highlights %($?), %($?)
+    it_highlights %($~), %($~)
+
     it_highlights %("foo"), %(<span class="s">&quot;foo&quot;</span>)
     it_highlights %("<>"), %(<span class="s">&quot;&lt;&gt;&quot;</span>)
     it_highlights %("foo\#{bar}baz"), %(<span class="s">&quot;foo</span><span class="i">\#{</span>bar<span class="i">}</span><span class="s">baz&quot;</span>)
+    it_highlights %("foo\#{[1, bar, "str"]}baz"), %(<span class="s">&quot;foo</span><span class="i">\#{</span>[<span class="n">1</span>, bar, <span class="s">&quot;str&quot;</span>]<span class="i">}</span><span class="s">baz&quot;</span>)
+    it_highlights %("nest1\#{foo + "nest2\#{1 + 1}bar"}baz"), %(<span class="s">&quot;nest1</span><span class="i">\#{</span>foo <span class="o">+</span> <span class="s">&quot;nest2</span><span class="i">\#{</span><span class="n">1</span> <span class="o">+</span> <span class="n">1</span><span class="i">}</span><span class="s">bar&quot;</span><span class="i">}</span><span class="s">baz&quot;</span>)
     it_highlights "/foo/xim", %(<span class="s">/foo/</span>xim)
     it_highlights "`foo`", %(<span class="s">`foo`</span>)
     it_highlights "%(foo)", %(<span class="s">%(foo)</span>)
@@ -93,13 +122,13 @@ describe Crystal::SyntaxHighlighter::HTML do
 
     it_highlights "Set{1, 2, 3}", %(<span class="t">Set</span>{<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>})
 
-    it_highlights <<-CR, <<-HTML
+    it_highlights <<-CRYSTAL, <<-HTML
     foo, bar = <<-FOO, <<-BAR
       foo
       FOO
       bar
       BAR
-    CR
+    CRYSTAL
     foo, bar <span class="o">=</span> <span class="s">&lt;&lt;-FOO</span>, <span class="s">&lt;&lt;-BAR</span>
     <span class="s">  foo
       FOO</span>
@@ -111,20 +140,20 @@ describe Crystal::SyntaxHighlighter::HTML do
   describe "#highlight!" do
     it_highlights! %(foo = bar("baz\#{PI + 1}") # comment), "foo <span class=\"o\">=</span> bar(<span class=\"s\">&quot;baz</span><span class=\"i\">\#{</span><span class=\"t\">PI</span> <span class=\"o\">+</span> <span class=\"n\">1</span><span class=\"i\">}</span><span class=\"s\">&quot;</span>) <span class=\"c\"># comment</span>"
 
-    it_highlights! <<-CR, <<-HTML
+    it_highlights! <<-CRYSTAL, <<-HTML
       foo, bar = <<-FOO, <<-BAR
         foo
         FOO
-      CR
+      CRYSTAL
       foo, bar = &lt;&lt;-FOO, &lt;&lt;-BAR
         foo
         FOO
       HTML
 
-    it_highlights! <<-CR, <<-HTML
+    it_highlights! <<-CRYSTAL, <<-HTML
       foo, bar = <<-FOO, <<-BAR
         foo
-      CR
+      CRYSTAL
       foo, bar = &lt;&lt;-FOO, &lt;&lt;-BAR
         foo
       HTML
@@ -133,4 +162,8 @@ describe Crystal::SyntaxHighlighter::HTML do
     it_highlights! "%w[foo"
     it_highlights! "%i[foo"
   end
+
+  # fix for https://forum.crystal-lang.org/t/question-about-the-crystal-syntax-highlighter/7283
+  it_highlights %q(/#{l[""]}/
+    "\\n"), %(<span class="s">/</span><span class="i">\#{</span>l[<span class="s">&quot;&quot;</span>]<span class="i">}</span><span class="s">/</span>\n    <span class="s">&quot;\\\\n&quot;</span>)
 end

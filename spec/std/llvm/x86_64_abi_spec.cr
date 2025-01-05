@@ -5,17 +5,17 @@ require "llvm"
   LLVM.init_x86
 {% end %}
 
-private def abi
-  triple = LLVM.default_target_triple.gsub(/^(.+?)-/, "x86_64-")
+private def abi(win64 = false)
+  triple = win64 ? "x86_64-windows-msvc" : LLVM.default_target_triple.gsub(/^(.+?)-/, "x86_64-")
   target = LLVM::Target.from_triple(triple)
   machine = target.create_target_machine(triple)
   machine.enable_global_isel = false
-  LLVM::ABI::X86_64.new(machine)
+  win64 ? LLVM::ABI::X86_Win64.new(machine) : LLVM::ABI::X86_64.new(machine)
 end
 
-private def test(msg, &block : LLVM::ABI, LLVM::Context ->)
-  it msg do
-    abi = abi()
+private def test(msg, *, win64 = false, file = __FILE__, line = __LINE__, &block : LLVM::ABI, LLVM::Context ->)
+  it msg, file: file, line: line do
+    abi = abi(win64)
     ctx = LLVM::Context.new
     block.call(abi, ctx)
   end
@@ -133,7 +133,7 @@ class LLVM::ABI
           info.return_type.should eq(ArgType.direct(str, cast: ctx.struct([ctx.int64, ctx.int64])))
         end
 
-        test "does with structs between 64 and 128 bits" do |abi, ctx|
+        test "does with structs larger than 128 bits" do |abi, ctx|
           str = ctx.struct([ctx.int64, ctx.int64, ctx.int8])
           arg_types = [str]
           return_type = str
@@ -143,6 +143,60 @@ class LLVM::ABI
 
           info.arg_types[0].should eq(ArgType.indirect(str, Attribute::ByVal))
           info.return_type.should eq(ArgType.indirect(str, Attribute::StructRet))
+        end
+      end
+    {% end %}
+  end
+
+  describe X86_Win64 do
+    {% if LibLLVM::BUILT_TARGETS.includes?(:x86) %}
+      describe "abi_info" do
+        test "does with structs between 64 and 128 bits", win64: true do |abi, ctx|
+          str = ctx.struct([ctx.int64, ctx.int16])
+          arg_types = [str]
+          return_type = str
+
+          info = abi.abi_info(arg_types, return_type, true, ctx)
+          info.arg_types.size.should eq(1)
+
+          info.arg_types[0].should eq(ArgType.indirect(str, Attribute::ByVal))
+          info.return_type.should eq(ArgType.indirect(str, Attribute::StructRet))
+        end
+
+        test "does with structs larger than 128 bits", win64: true do |abi, ctx|
+          str = ctx.struct([ctx.int64, ctx.int64, ctx.int8])
+          arg_types = [str]
+          return_type = str
+
+          info = abi.abi_info(arg_types, return_type, true, ctx)
+          info.arg_types.size.should eq(1)
+
+          info.arg_types[0].should eq(ArgType.indirect(str, Attribute::ByVal))
+          info.return_type.should eq(ArgType.indirect(str, Attribute::StructRet))
+        end
+
+        test "does with packed struct containing unaligned fields (#9873)" do |abi, ctx|
+          str = ctx.struct([ctx.int8, ctx.int16], packed: true)
+          arg_types = [str]
+          return_type = str
+
+          info = abi.abi_info(arg_types, return_type, true, ctx)
+          info.arg_types.size.should eq(1)
+
+          info.arg_types[0].should eq(ArgType.indirect(str, Attribute::ByVal))
+          info.return_type.should eq(ArgType.indirect(str, Attribute::StructRet))
+        end
+
+        test "does with packed struct not containing unaligned fields" do |abi, ctx|
+          str = ctx.struct([ctx.int16, ctx.int8], packed: true)
+          arg_types = [str]
+          return_type = str
+
+          info = abi.abi_info(arg_types, return_type, true, ctx)
+          info.arg_types.size.should eq(1)
+
+          info.arg_types[0].should eq(ArgType.direct(str, cast: ctx.struct([ctx.int64])))
+          info.return_type.should eq(ArgType.direct(str, cast: ctx.struct([ctx.int64])))
         end
       end
     {% end %}

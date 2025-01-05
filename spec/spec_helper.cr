@@ -1,4 +1,4 @@
-{% raise("Please use `make spec` or `bin/crystal` when running specs, or set the i_know_what_im_doing flag if you know what you're doing") unless env("CRYSTAL_HAS_WRAPPER") || flag?("i_know_what_im_doing") %}
+{% raise("Please use `make test` or `bin/crystal` when running specs, or set the i_know_what_im_doing flag if you know what you're doing") unless env("CRYSTAL_HAS_WRAPPER") || flag?("i_know_what_im_doing") %}
 
 ENV["CRYSTAL_PATH"] = "#{__DIR__}/../src"
 
@@ -8,8 +8,11 @@ require "compiler/requires"
 require "./support/syntax"
 require "./support/tempfile"
 require "./support/win32"
+require "./support/wasm32"
 
 class Crystal::Program
+  setter temp_var_counter
+
   def union_of(type1, type2, type3)
     union_of([type1, type2, type3] of Type).not_nil!
   end
@@ -35,7 +38,7 @@ record SemanticResult,
   program : Program,
   node : ASTNode
 
-def assert_type(str, *, inject_primitives = false, flags = nil, file = __FILE__, line = __LINE__)
+def assert_type(str, *, inject_primitives = false, flags = nil, file = __FILE__, line = __LINE__, &)
   result = semantic(str, flags: flags, inject_primitives: inject_primitives)
   program = result.program
   expected_type = with program yield program
@@ -77,13 +80,42 @@ def semantic(node : ASTNode, *, warnings = nil, wants_doc = false, flags = nil)
   SemanticResult.new(program, node)
 end
 
+def top_level_semantic(code : String, wants_doc = false, inject_primitives = false)
+  node = parse(code, wants_doc: wants_doc)
+  node = inject_primitives(node) if inject_primitives
+  top_level_semantic node, wants_doc: wants_doc
+end
+
+def top_level_semantic(node : ASTNode, wants_doc = false)
+  program = new_program
+  program.wants_doc = wants_doc
+  node = program.normalize node
+  node, _ = program.top_level_semantic node
+  SemanticResult.new(program, node)
+end
+
 def assert_normalize(from, to, flags = nil, *, file = __FILE__, line = __LINE__)
   program = new_program
   program.flags.concat(flags.split) if flags
-  normalizer = Normalizer.new(program)
   from_nodes = Parser.parse(from)
   to_nodes = program.normalize(from_nodes)
-  to_nodes.to_s.strip.should eq(to.strip), file: file, line: line
+  to_nodes_str = to_nodes.to_s.strip
+  to_nodes_str.should eq(to.strip), file: file, line: line
+
+  # first idempotency check: the result should be fully normalized
+  to_nodes_str2 = program.normalize(to_nodes).to_s.strip
+  unless to_nodes_str2 == to_nodes_str
+    fail "Idempotency failed:\nBefore: #{to_nodes_str.inspect}\nAfter:  #{to_nodes_str2.inspect}", file: file, line: line
+  end
+
+  # second idempotency check: if the normalizer mutates the original node,
+  # further normalizations should not produce a different result
+  program.temp_var_counter = 0
+  to_nodes_str2 = program.normalize(from_nodes).to_s.strip
+  unless to_nodes_str2 == to_nodes_str
+    fail "Idempotency failed:\nBefore: #{to_nodes_str.inspect}\nAfter:  #{to_nodes_str2.inspect}", file: file, line: line
+  end
+
   to_nodes
 end
 
@@ -92,10 +124,16 @@ def assert_expand(from : String, to, *, flags = nil, file = __FILE__, line = __L
 end
 
 def assert_expand(from_nodes : ASTNode, to, *, flags = nil, file = __FILE__, line = __LINE__)
+  assert_expand(from_nodes, flags: flags, file: file, line: line) do |to_nodes|
+    to_nodes.to_s.strip.should eq(to.strip), file: file, line: line
+  end
+end
+
+def assert_expand(from_nodes : ASTNode, *, flags = nil, file = __FILE__, line = __LINE__, &)
   program = new_program
   program.flags.concat(flags.split) if flags
   to_nodes = LiteralExpander.new(program).expand(from_nodes)
-  to_nodes.to_s.strip.should eq(to.strip), file: file, line: line
+  yield to_nodes, program
 end
 
 def assert_expand_second(from : String, to, *, flags = nil, file = __FILE__, line = __LINE__)
@@ -167,7 +205,7 @@ def assert_macro_error(macro_body, message = nil, *, flags = nil, file = __FILE_
   end
 end
 
-def prepare_macro_call(macro_body, flags = nil)
+def prepare_macro_call(macro_body, flags = nil, &)
   program = new_program
   program.flags.concat(flags.split) if flags
   args = yield program
@@ -246,7 +284,7 @@ def create_spec_compiler
   compiler
 end
 
-def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::None, flags = nil, *, file = __FILE__)
+def run(code, filename : String? = nil, inject_primitives = true, debug = Crystal::Debug::None, flags = nil, *, file = __FILE__) : LLVM::GenericValue | SpecRunOutput
   if inject_primitives
     code = %(require "primitives"\n#{code})
   end
@@ -256,7 +294,7 @@ def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::
   # in the current executable!), so instead we compile
   # the program and run it, printing the last
   # expression and using that to compare the result.
-  if code.includes?(%(require "prelude")) || flags
+  if code.includes?(%(require "prelude"))
     ast = Parser.parse(code).as(Expressions)
     last = ast.expressions.last
     assign = Assign.new(Var.new("__tempvar"), last)
@@ -277,11 +315,27 @@ def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::
       return SpecRunOutput.new(output)
     end
   else
-    new_program.run(code, filename: filename, debug: debug)
+    program = new_program
+    program.flags.concat(flags) if flags
+    program.run(code, filename: filename, debug: debug)
   end
 end
 
-def test_c(c_code, crystal_code, *, file = __FILE__)
+def run(code, return_type : T.class, filename : String? = nil, inject_primitives = true, debug = Crystal::Debug::None, flags = nil, *, file = __FILE__) forall T
+  if inject_primitives
+    code = %(require "primitives"\n#{code})
+  end
+
+  if code.includes?(%(require "prelude"))
+    fail "TODO: support the prelude in typed codegen specs", file: file
+  else
+    program = new_program
+    program.flags.concat(flags) if flags
+    program.run(code, return_type: T, filename: filename, debug: debug)
+  end
+end
+
+def test_c(c_code, crystal_code, *, file = __FILE__, &)
   with_temp_c_object_file(c_code, file: file) do |o_filename|
     yield run(%(
     require "prelude"

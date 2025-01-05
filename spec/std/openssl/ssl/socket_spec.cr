@@ -4,6 +4,12 @@ require "../../spec_helper"
 require "../../socket/spec_helper"
 require "../../../support/ssl"
 
+# TODO: Windows networking in the interpreter requires #12495
+{% if flag?(:interpreted) && flag?(:win32) %}
+  pending OpenSSL::SSL::Socket
+  {% skip_file %}
+{% end %}
+
 describe OpenSSL::SSL::Socket do
   describe OpenSSL::SSL::Socket::Server do
     it "auto accept client by default" do
@@ -69,7 +75,7 @@ describe OpenSSL::SSL::Socket do
       server_tests: ->(client : Server) {
         client.cipher.should_not be_empty
       },
-      client_tests: ->(client : Client) {}
+      client_tests: ->(client : Client) { }
     )
   end
 
@@ -78,7 +84,7 @@ describe OpenSSL::SSL::Socket do
       server_tests: ->(client : Server) {
         client.tls_version.should contain "TLS"
       },
-      client_tests: ->(client : Client) {}
+      client_tests: ->(client : Client) { }
     )
   end
 
@@ -91,6 +97,26 @@ describe OpenSSL::SSL::Socket do
         client.peer_certificate.should_not be_nil
       }
     )
+  end
+
+  it "returns selected alpn protocol" do
+    tcp_server = TCPServer.new("127.0.0.1", 0)
+    server_context, client_context = ssl_context_pair
+
+    server_context.alpn_protocol = "h2"
+    client_context.alpn_protocol = "h2"
+
+    OpenSSL::SSL::Server.open(tcp_server, server_context) do |server|
+      spawn do
+        Client.open(TCPSocket.new(tcp_server.local_address.address, tcp_server.local_address.port), client_context, hostname: "example.com") do |socket|
+          socket.alpn_protocol.should eq("h2")
+        end
+      end
+
+      client = server.accept
+      client.alpn_protocol.should eq("h2")
+      client.close
+    end
   end
 
   it "accepts clients that only write then close the connection" do
@@ -140,20 +166,26 @@ describe OpenSSL::SSL::Socket do
     server_context, client_context = ssl_context_pair
     server_context.disable_session_resume_tickets # avoid Broken pipe
 
-    server_finished_reading = Channel(String).new
+    server_finished_reading = Channel(String | Exception).new
     spawn do
       OpenSSL::SSL::Server.open(tcp_server, server_context, sync_close: true) do |server|
         server_socket = server.accept
         received = server_socket.gets_to_end # interprets underlying socket close as a graceful EOF
         server_finished_reading.send(received)
       end
+    rescue exc
+      server_finished_reading.send exc
     end
+
     socket = TCPSocket.new(tcp_server.local_address.address, tcp_server.local_address.port)
     socket_ssl = OpenSSL::SSL::Socket::Client.new(socket, client_context, hostname: "example.com", sync_close: true)
     socket_ssl.print "hello"
     socket_ssl.flush # needed today see #5375
     socket.close     # close underlying socket without gracefully shutting down SSL at all
     server_received = server_finished_reading.receive
+    if server_received.is_a?(Exception)
+      raise server_received
+    end
     server_received.should eq("hello")
   end
 end

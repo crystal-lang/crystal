@@ -4,7 +4,7 @@ module Crystal
       def initialize(@io : IO::FileDescriptor, @offset : UInt32 | UInt64, size)
         # Read a good chunk of bytes to decode strings faster
         # (avoid seeking/reading the IO too many times)
-        @buffer = Bytes.new(Math.max(16384, size))
+        @buffer = Bytes.new(Math.min(Math.max(16384, size), io.info.size - offset))
         pos = @io.pos
         @io.read_fully(@buffer)
         @io.pos = pos

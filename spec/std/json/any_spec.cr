@@ -3,6 +3,19 @@ require "json"
 require "yaml"
 
 describe JSON::Any do
+  it ".new" do
+    JSON::Any.new(nil).raw.should be_nil
+    JSON::Any.new(true).raw.should eq true
+    JSON::Any.new(1_i64).raw.should eq 1_i64
+    JSON::Any.new(1).raw.should eq 1
+    JSON::Any.new(1_u8).raw.should eq 1
+    JSON::Any.new(0.0).raw.should eq 0.0
+    JSON::Any.new(0.0_f32).raw.should eq 0.0
+    JSON::Any.new("foo").raw.should eq "foo"
+    JSON::Any.new([] of JSON::Any).raw.should eq [] of JSON::Any
+    JSON::Any.new({} of String => JSON::Any).raw.should eq({} of String => JSON::Any)
+  end
+
   describe "casts" do
     it "gets nil" do
       JSON.parse("null").as_nil.should be_nil
@@ -30,14 +43,36 @@ describe JSON::Any do
 
     it "gets float32" do
       JSON.parse("123.45").as_f32.should eq(123.45_f32)
+      expect_raises(TypeCastError) { JSON.parse("true").as_f32 }
       JSON.parse("123.45").as_f32?.should eq(123.45_f32)
       JSON.parse("true").as_f32?.should be_nil
     end
 
+    it "gets float32 from JSON integer (#8618)" do
+      value = JSON.parse("123").as_f32
+      value.should eq(123.0)
+      value.should be_a(Float32)
+
+      value = JSON.parse("123").as_f32?
+      value.should eq(123.0)
+      value.should be_a(Float32)
+    end
+
     it "gets float64" do
       JSON.parse("123.45").as_f.should eq(123.45)
+      expect_raises(TypeCastError) { JSON.parse("true").as_f }
       JSON.parse("123.45").as_f?.should eq(123.45)
       JSON.parse("true").as_f?.should be_nil
+    end
+
+    it "gets float64 from JSON integer (#8618)" do
+      value = JSON.parse("123").as_f
+      value.should eq(123.0)
+      value.should be_a(Float64)
+
+      value = JSON.parse("123").as_f?
+      value.should eq(123.0)
+      value.should be_a(Float64)
     end
 
     it "gets string" do

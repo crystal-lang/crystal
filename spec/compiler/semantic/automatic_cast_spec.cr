@@ -208,7 +208,7 @@ describe "Semantic: automatic cast" do
 
       foo(:four)
       ),
-      "expected argument #1 to 'foo' to be Foo, not Symbol"
+      "expected argument #1 to 'foo' to match a member of enum Foo"
   end
 
   it "says ambiguous call for symbol" do
@@ -730,7 +730,7 @@ describe "Semantic: automatic cast" do
   end
 
   it "errors when autocast default value doesn't match enum member" do
-    assert_error <<-CR,
+    assert_error <<-CRYSTAL,
       enum Foo
         FOO
       end
@@ -739,7 +739,7 @@ describe "Semantic: automatic cast" do
       end
 
       foo
-      CR
+      CRYSTAL
       "can't autocast :bar to Foo: no matching enum member"
   end
 end

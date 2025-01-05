@@ -4,6 +4,8 @@
 # `UInt32`s. The total number of bits stored is set at creation and is
 # immutable.
 #
+# NOTE: To use `BitArray`, you must explicitly import it with `require "bit_array"`
+#
 # ### Example
 #
 # ```
@@ -54,7 +56,7 @@ struct BitArray
     # NOTE: If BitArray implements resizing, there may be more than 1 binary
     # representation and their hashes for equivalent BitArrays after a downsize as the
     # discarded bits may not have been zeroed.
-    return LibC.memcmp(@bits, other.@bits, bytesize) == 0
+    LibC.memcmp(@bits, other.@bits, bytesize) == 0
   end
 
   def unsafe_fetch(index : Int) : Bool
@@ -484,10 +486,10 @@ struct BitArray
     return self if size <= 1
 
     if size <= 32
-      @bits.value = Intrinsics.bitreverse32(@bits.value) >> (32 - size)
+      @bits.value = @bits.value.bit_reverse >> (32 - size)
     elsif size <= 64
       more_bits = @bits.as(UInt64*)
-      more_bits.value = Intrinsics.bitreverse64(more_bits.value) >> (64 - size)
+      more_bits.value = more_bits.value.bit_reverse >> (64 - size)
     else
       # 3 or more groups of bits
       offset = (-size) % 32
@@ -502,17 +504,17 @@ struct BitArray
         #     hgfedcba fghijklm nopqrstu
         (malloc_size - 1).downto(1) do |i|
           # fshl(a, b, count) = (a << count) | (b >> (N - count))
-          @bits[i] = Intrinsics.bitreverse32(Intrinsics.fshl32(@bits[i], @bits[i - 1], offset))
+          @bits[i] = Intrinsics.fshl32(@bits[i], @bits[i - 1], offset).bit_reverse
         end
 
         # last group:
         #
         #     edcba000 fghijklm nopqrstu
         #     000abcde fghijklm nopqrstu
-        @bits[0] = Intrinsics.bitreverse32(@bits[0] << offset)
+        @bits[0] = (@bits[0] << offset).bit_reverse
       else
         # no padding; do only the bit reverses
-        Slice.new(@bits, malloc_size).map! { |x| Intrinsics.bitreverse32(x) }
+        Slice.new(@bits, malloc_size).map! &.bit_reverse
       end
 
       # reversing all groups themselves:
@@ -643,7 +645,7 @@ struct BitArray
     bit_index_and_sub_index(index) { raise IndexError.new }
   end
 
-  private def bit_index_and_sub_index(index)
+  private def bit_index_and_sub_index(index, &)
     index = check_index_out_of_bounds(index) do
       return yield
     end

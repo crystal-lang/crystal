@@ -2,8 +2,8 @@ require "spec"
 require "./spec_helper"
 
 private def yield_to(fiber)
-  Crystal::Scheduler.enqueue(Fiber.current)
-  Crystal::Scheduler.resume(fiber)
+  Fiber.current.enqueue
+  fiber.resume
 end
 
 private macro parallel(*jobs)
@@ -82,7 +82,7 @@ describe Channel do
     context "receive raise-on-close single-channel" do
       it "types" do
         ch = Channel(String).new
-        spawn_and_wait(->{ ch.send "foo" }) do
+        spawn_and_wait(-> { ch.send "foo" }) do
           i, m = Channel.select(ch.receive_select_action)
           typeof(i).should eq(Int32)
           typeof(m).should eq(String)
@@ -92,7 +92,7 @@ describe Channel do
       it "types nilable channel" do
         # Yes, although it is discouraged
         ch = Channel(Nil).new
-        spawn_and_wait(->{ ch.send nil }) do
+        spawn_and_wait(-> { ch.send nil }) do
           i, m = Channel.select(ch.receive_select_action)
           typeof(i).should eq(Int32)
           typeof(m).should eq(Nil)
@@ -101,7 +101,7 @@ describe Channel do
 
       it "raises if channel was closed" do
         ch = Channel(String).new
-        spawn_and_wait(->{ ch.close }) do
+        spawn_and_wait(-> { ch.close }) do
           expect_raises Channel::ClosedError do
             Channel.select(ch.receive_select_action)
           end
@@ -110,7 +110,7 @@ describe Channel do
 
       it "raises if channel is closed while waiting" do
         ch = Channel(String).new
-        spawn_and_wait(->{ sleep 0.2; ch.close }) do
+        spawn_and_wait(-> { sleep 0.2.seconds; ch.close }) do
           expect_raises Channel::ClosedError do
             Channel.select(ch.receive_select_action)
           end
@@ -120,7 +120,7 @@ describe Channel do
       it "awakes all waiting selects" do
         ch = Channel(String).new
 
-        p = ->{
+        p = -> {
           begin
             Channel.select(ch.receive_select_action)
             0
@@ -129,7 +129,7 @@ describe Channel do
           end
         }
 
-        spawn_and_wait(->{ sleep 0.2; ch.close }) do
+        spawn_and_wait(-> { sleep 0.2.seconds; ch.close }) do
           r = parallel p.call, p.call, p.call, p.call
           r.should eq({1, 1, 1, 1})
         end
@@ -140,7 +140,7 @@ describe Channel do
       it "types" do
         ch = Channel(String).new
         ch2 = Channel(Bool).new
-        spawn_and_wait(->{ ch.send "foo" }) do
+        spawn_and_wait(-> { ch.send "foo" }) do
           i, m = Channel.select(ch.receive_select_action, ch2.receive_select_action)
           typeof(i).should eq(Int32)
           typeof(m).should eq(String | Bool)
@@ -151,7 +151,7 @@ describe Channel do
     context "receive nil-on-close single-channel" do
       it "types" do
         ch = Channel(String).new
-        spawn_and_wait(->{ ch.send "foo" }) do
+        spawn_and_wait(-> { ch.send "foo" }) do
           i, m = Channel.select(ch.receive_select_action?)
           typeof(i).should eq(Int32)
           typeof(m).should eq(String | Nil)
@@ -161,7 +161,7 @@ describe Channel do
       it "types nilable channel" do
         # Yes, although it is discouraged
         ch = Channel(Nil).new
-        spawn_and_wait(->{ ch.send nil }) do
+        spawn_and_wait(-> { ch.send nil }) do
           i, m = Channel.select(ch.receive_select_action?)
           typeof(i).should eq(Int32)
           typeof(m).should eq(Nil)
@@ -170,7 +170,7 @@ describe Channel do
 
       it "returns nil if channel was closed" do
         ch = Channel(String).new
-        spawn_and_wait(->{ ch.close }) do
+        spawn_and_wait(-> { ch.close }) do
           i, m = Channel.select(ch.receive_select_action?)
           m.should be_nil
         end
@@ -178,7 +178,7 @@ describe Channel do
 
       it "returns nil channel is closed while waiting" do
         ch = Channel(String).new
-        spawn_and_wait(->{ sleep 0.2; ch.close }) do
+        spawn_and_wait(-> { sleep 0.2.seconds; ch.close }) do
           i, m = Channel.select(ch.receive_select_action?)
           m.should be_nil
         end
@@ -187,11 +187,11 @@ describe Channel do
       it "awakes all waiting selects" do
         ch = Channel(String).new
 
-        p = ->{
+        p = -> {
           Channel.select(ch.receive_select_action?)
         }
 
-        spawn_and_wait(->{ sleep 0.2; ch.close }) do
+        spawn_and_wait(-> { sleep 0.2.seconds; ch.close }) do
           r = parallel p.call, p.call, p.call, p.call
           r.should eq({ {0, nil}, {0, nil}, {0, nil}, {0, nil} })
         end
@@ -202,7 +202,7 @@ describe Channel do
       it "types" do
         ch = Channel(String).new
         ch2 = Channel(Bool).new
-        spawn_and_wait(->{ ch.send "foo" }) do
+        spawn_and_wait(-> { ch.send "foo" }) do
           i, m = Channel.select(ch.receive_select_action?, ch2.receive_select_action?)
           typeof(i).should eq(Int32)
           typeof(m).should eq(String | Bool | Nil)
@@ -212,7 +212,7 @@ describe Channel do
       it "returns index of closed channel" do
         ch = Channel(String).new
         ch2 = Channel(Bool).new
-        spawn_and_wait(->{ ch2.close }) do
+        spawn_and_wait(-> { ch2.close }) do
           i, m = Channel.select(ch.receive_select_action?, ch2.receive_select_action?)
           i.should eq(1)
           m.should eq(nil)
@@ -224,7 +224,7 @@ describe Channel do
       it "raises if receive channel was closed and receive? channel was not ready" do
         ch = Channel(String).new
         ch2 = Channel(String).new
-        spawn_and_wait(->{ ch.close }) do
+        spawn_and_wait(-> { ch.close }) do
           expect_raises Channel::ClosedError do
             Channel.select(ch.receive_select_action, ch2.receive_select_action?)
           end
@@ -234,7 +234,7 @@ describe Channel do
       it "returns nil if receive channel was not ready and receive? channel was closed" do
         ch = Channel(String).new
         ch2 = Channel(String).new
-        spawn_and_wait(->{ ch2.close }) do
+        spawn_and_wait(-> { ch2.close }) do
           i, m = Channel.select(ch.receive_select_action, ch2.receive_select_action?)
           i.should eq(1)
           m.should eq(nil)
@@ -245,7 +245,7 @@ describe Channel do
     context "send raise-on-close single-channel" do
       it "types" do
         ch = Channel(String).new
-        spawn_and_wait(->{ ch.receive }) do
+        spawn_and_wait(-> { ch.receive }) do
           i, m = Channel.select(ch.send_select_action("foo"))
           typeof(i).should eq(Int32)
           typeof(m).should eq(Nil)
@@ -255,7 +255,7 @@ describe Channel do
       it "types nilable channel" do
         # Yes, although it is discouraged
         ch = Channel(Nil).new
-        spawn_and_wait(->{ ch.receive }) do
+        spawn_and_wait(-> { ch.receive }) do
           i, m = Channel.select(ch.send_select_action(nil))
           typeof(i).should eq(Int32)
           typeof(m).should eq(Nil)
@@ -264,7 +264,7 @@ describe Channel do
 
       it "raises if channel was closed" do
         ch = Channel(String).new
-        spawn_and_wait(->{ ch.close }) do
+        spawn_and_wait(-> { ch.close }) do
           expect_raises Channel::ClosedError do
             Channel.select(ch.send_select_action("foo"))
           end
@@ -273,7 +273,7 @@ describe Channel do
 
       it "raises if channel is closed while waiting" do
         ch = Channel(String).new
-        spawn_and_wait(->{ sleep 0.2; ch.close }) do
+        spawn_and_wait(-> { sleep 0.2.seconds; ch.close }) do
           expect_raises Channel::ClosedError do
             Channel.select(ch.send_select_action("foo"))
           end
@@ -283,7 +283,7 @@ describe Channel do
       it "awakes all waiting selects" do
         ch = Channel(String).new
 
-        p = ->{
+        p = -> {
           begin
             Channel.select(ch.send_select_action("foo"))
             0
@@ -292,7 +292,7 @@ describe Channel do
           end
         }
 
-        spawn_and_wait(->{ sleep 0.2; ch.close }) do
+        spawn_and_wait(-> { sleep 0.2.seconds; ch.close }) do
           r = parallel p.call, p.call, p.call, p.call
           r.should eq({1, 1, 1, 1})
         end
@@ -303,7 +303,7 @@ describe Channel do
       it "types" do
         ch = Channel(String).new
         ch2 = Channel(Bool).new
-        spawn_and_wait(->{ ch.receive }) do
+        spawn_and_wait(-> { ch.receive }) do
           i, m = Channel.select(ch.send_select_action("foo"), ch2.send_select_action(true))
           typeof(i).should eq(Int32)
           typeof(m).should eq(Nil)
@@ -314,7 +314,7 @@ describe Channel do
     context "timeout" do
       it "types" do
         ch = Channel(String).new
-        spawn_and_wait(->{ ch.send "foo" }) do
+        spawn_and_wait(-> { ch.send "foo" }) do
           i, m = Channel.select(ch.receive_select_action, timeout_select_action(0.1.seconds))
           typeof(i).should eq(Int32)
           typeof(m).should eq(String?)
@@ -323,7 +323,7 @@ describe Channel do
 
       it "triggers timeout" do
         ch = Channel(String).new
-        spawn_and_wait(->{}) do
+        spawn_and_wait(-> { }) do
           i, m = Channel.select(ch.receive_select_action, timeout_select_action(0.1.seconds))
 
           i.should eq(1)
@@ -333,7 +333,7 @@ describe Channel do
 
       it "triggers timeout (reverse order)" do
         ch = Channel(String).new
-        spawn_and_wait(->{}) do
+        spawn_and_wait(-> { }) do
           i, m = Channel.select(timeout_select_action(0.1.seconds), ch.receive_select_action)
 
           i.should eq(0)
@@ -343,7 +343,7 @@ describe Channel do
 
       it "triggers timeout (same fiber multiple times)" do
         ch = Channel(String).new
-        spawn_and_wait(->{}) do
+        spawn_and_wait(-> { }) do
           3.times do
             i, m = Channel.select(ch.receive_select_action, timeout_select_action(0.1.seconds))
 
@@ -355,7 +355,7 @@ describe Channel do
 
       it "allows receiving while waiting" do
         ch = Channel(String).new
-        spawn_and_wait(->{ ch.send "foo" }) do
+        spawn_and_wait(-> { ch.send "foo" }) do
           i, m = Channel.select(ch.receive_select_action, timeout_select_action(1.seconds))
           i.should eq(0)
           m.should eq("foo")
@@ -364,7 +364,7 @@ describe Channel do
 
       it "allows receiving while waiting (reverse order)" do
         ch = Channel(String).new
-        spawn_and_wait(->{ ch.send "foo" }) do
+        spawn_and_wait(-> { ch.send "foo" }) do
           i, m = Channel.select(timeout_select_action(1.seconds), ch.receive_select_action)
           i.should eq(1)
           m.should eq("foo")
@@ -373,7 +373,7 @@ describe Channel do
 
       it "allows receiving while waiting (same fiber multiple times)" do
         ch = Channel(String).new
-        spawn_and_wait(->{ 3.times { ch.send "foo" } }) do
+        spawn_and_wait(-> { 3.times { ch.send "foo" } }) do
           3.times do
             i, m = Channel.select(ch.receive_select_action, timeout_select_action(1.seconds))
             i.should eq(0)
@@ -384,7 +384,7 @@ describe Channel do
 
       it "negative amounts should not trigger timeout" do
         ch = Channel(String).new
-        spawn_and_wait(->{ ch.send "foo" }) do
+        spawn_and_wait(-> { ch.send "foo" }) do
           i, m = Channel.select(ch.receive_select_action, timeout_select_action(-1.seconds))
 
           i.should eq(0)
@@ -394,7 +394,7 @@ describe Channel do
 
       it "send raise-on-close raises if channel was closed while waiting" do
         ch = Channel(String).new
-        spawn_and_wait(->{ ch.close }) do
+        spawn_and_wait(-> { ch.close }) do
           expect_raises Channel::ClosedError do
             Channel.select(ch.send_select_action("foo"), timeout_select_action(0.1.seconds))
           end
@@ -403,7 +403,7 @@ describe Channel do
 
       it "receive raise-on-close raises if channel was closed while waiting" do
         ch = Channel(String).new
-        spawn_and_wait(->{ ch.close }) do
+        spawn_and_wait(-> { ch.close }) do
           expect_raises Channel::ClosedError do
             Channel.select(ch.receive_select_action, timeout_select_action(0.1.seconds))
           end
@@ -412,7 +412,7 @@ describe Channel do
 
       it "receive nil-on-close returns index of closed while waiting" do
         ch = Channel(String).new
-        spawn_and_wait(->{ ch.close }) do
+        spawn_and_wait(-> { ch.close }) do
           i, m = Channel.select(ch.receive_select_action?, timeout_select_action(0.1.seconds))
 
           i.should eq(0)
@@ -426,7 +426,7 @@ describe Channel do
     context "receive raise-on-close single-channel" do
       it "types" do
         ch = Channel(String).new
-        spawn_and_wait(->{ ch.send "foo" }) do
+        spawn_and_wait(-> { ch.send "foo" }) do
           i, m = Channel.non_blocking_select(ch.receive_select_action)
           typeof(i).should eq(Int32)
           typeof(m).should eq(String | Channel::NotReady)
@@ -438,7 +438,7 @@ describe Channel do
       it "types" do
         ch = Channel(String).new
         ch2 = Channel(Bool).new
-        spawn_and_wait(->{ ch.send "foo" }) do
+        spawn_and_wait(-> { ch.send "foo" }) do
           i, m = Channel.non_blocking_select(ch.receive_select_action, ch2.receive_select_action)
           typeof(i).should eq(Int32)
           typeof(m).should eq(String | Bool | Channel::NotReady)
@@ -449,7 +449,7 @@ describe Channel do
     context "receive nil-on-close single-channel" do
       it "types" do
         ch = Channel(String).new
-        spawn_and_wait(->{ ch.send "foo" }) do
+        spawn_and_wait(-> { ch.send "foo" }) do
           i, m = Channel.non_blocking_select(ch.receive_select_action?)
           typeof(i).should eq(Int32)
           typeof(m).should eq(String | Nil | Channel::NotReady)
@@ -458,7 +458,7 @@ describe Channel do
 
       it "returns nil if channel was closed" do
         ch = Channel(String).new
-        spawn_and_wait(->{ ch.close }) do
+        spawn_and_wait(-> { ch.close }) do
           i, m = Channel.non_blocking_select(ch.receive_select_action?)
           m.should be_nil
         end
@@ -470,7 +470,7 @@ describe Channel do
         ch = Channel(String).new
         ch2 = Channel(String).new
 
-        spawn_and_wait(->{ ch.close }) do
+        spawn_and_wait(-> { ch.close }) do
           expect_raises Channel::ClosedError do
             Channel.non_blocking_select(ch.receive_select_action, ch2.receive_select_action?)
           end
@@ -480,7 +480,7 @@ describe Channel do
       it "returns nil if receive channel was not ready and receive? channel was closed" do
         ch = Channel(String).new
         ch2 = Channel(String).new
-        spawn_and_wait(->{ ch2.close }) do
+        spawn_and_wait(-> { ch2.close }) do
           i, m = Channel.non_blocking_select(ch.receive_select_action, ch2.receive_select_action?)
           i.should eq(1)
           m.should eq(nil)
@@ -491,7 +491,7 @@ describe Channel do
     context "send raise-on-close single-channel" do
       it "types" do
         ch = Channel(String).new
-        spawn_and_wait(->{ ch.receive }) do
+        spawn_and_wait(-> { ch.receive }) do
           i, m = Channel.non_blocking_select(ch.send_select_action("foo"))
           typeof(i).should eq(Int32)
           typeof(m).should eq(Nil | Channel::NotReady)
@@ -503,7 +503,7 @@ describe Channel do
       it "types" do
         ch = Channel(String).new
         ch2 = Channel(Bool).new
-        spawn_and_wait(->{ ch.receive }) do
+        spawn_and_wait(-> { ch.receive }) do
           i, m = Channel.non_blocking_select(ch.send_select_action("foo"), ch2.send_select_action(true))
           typeof(i).should eq(Int32)
           typeof(m).should eq(Nil | Channel::NotReady)
@@ -514,7 +514,7 @@ describe Channel do
     context "timeout" do
       it "types" do
         ch = Channel(String).new
-        spawn_and_wait(->{ ch.send "foo" }) do
+        spawn_and_wait(-> { ch.send "foo" }) do
           i, m = Channel.non_blocking_select(ch.receive_select_action, timeout_select_action(0.1.seconds))
           typeof(i).should eq(Int32)
           typeof(m).should eq(String | Nil | Channel::NotReady)
@@ -523,7 +523,7 @@ describe Channel do
 
       it "should not trigger timeout" do
         ch = Channel(String).new
-        spawn_and_wait(->{}) do
+        spawn_and_wait(-> { }) do
           i, m = Channel.non_blocking_select(ch.receive_select_action, timeout_select_action(0.1.seconds))
 
           i.should eq(2)
@@ -533,7 +533,7 @@ describe Channel do
 
       it "negative amounts should not trigger timeout" do
         ch = Channel(String).new
-        spawn_and_wait(->{}) do
+        spawn_and_wait(-> { }) do
           i, m = Channel.non_blocking_select(ch.receive_select_action, timeout_select_action(-1.seconds))
 
           i.should eq(2)
@@ -543,7 +543,7 @@ describe Channel do
 
       it "send raise-on-close raises if channel was closed while waiting" do
         ch = Channel(String).new
-        spawn_and_wait(->{ ch.close }) do
+        spawn_and_wait(-> { ch.close }) do
           expect_raises Channel::ClosedError do
             Channel.non_blocking_select(ch.send_select_action("foo"), timeout_select_action(0.1.seconds))
           end
@@ -552,7 +552,7 @@ describe Channel do
 
       it "receive raise-on-close raises if channel was closed while waiting" do
         ch = Channel(String).new
-        spawn_and_wait(->{ ch.close }) do
+        spawn_and_wait(-> { ch.close }) do
           expect_raises Channel::ClosedError do
             Channel.non_blocking_select(ch.receive_select_action, timeout_select_action(0.1.seconds))
           end
@@ -561,12 +561,23 @@ describe Channel do
 
       it "receive nil-on-close returns index of closed while waiting" do
         ch = Channel(String).new
-        spawn_and_wait(->{ ch.close }) do
+        spawn_and_wait(-> { ch.close }) do
           i, m = Channel.non_blocking_select(ch.receive_select_action?, timeout_select_action(0.1.seconds))
 
           i.should eq(0)
           m.should eq(nil)
         end
+      end
+    end
+
+    it "returns correct index for array argument" do
+      ch = [Channel(String).new, Channel(String).new, Channel(String).new]
+      channels = [ch[0], ch[2], ch[1]] # shuffle around to get non-sequential lock_object_ids
+      spawn_and_wait(-> { channels[0].send "foo" }) do
+        i, m = Channel.non_blocking_select(channels.map(&.receive_select_action))
+
+        i.should eq(0)
+        m.should eq("foo")
       end
     end
   end
@@ -608,7 +619,7 @@ describe "unbuffered" do
     spawn { ch.send 2; ch.send 5 }
     spawn { ch.send 3; ch.send 6 }
 
-    (1..6).map { ch.receive }.sort.should eq([1, 2, 3, 4, 5, 6])
+    (1..6).map { ch.receive }.sort!.should eq([1, 2, 3, 4, 5, 6])
   end
 
   it "works with select" do

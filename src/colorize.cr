@@ -3,6 +3,8 @@
 # as its main interface, which calls `to_s` and surrounds it with the necessary escape codes
 # when it comes to obtaining a string representation of the object.
 #
+# NOTE: To use `Colorize`, you must explicitly import it with `require "colorize"`
+#
 # Its first argument changes the foreground color:
 #
 # ```
@@ -127,8 +129,7 @@ module Colorize
   # "hello".colorize.red.to_s # => "hello"
   # ```
   #
-  # NOTE: This is by default disabled on non-TTY devices because they likely don't support ANSI escape codes.
-  # This will also be disabled if the environment variable `TERM` is "dumb" or `NO_COLOR` contains any value.
+  # NOTE: This is by default disabled if the environment variable `NO_COLOR` contains any value.
   class_property? enabled : Bool { !ENV.has_key?("NO_COLOR") }
 
   # Makes `Colorize.enabled` `true` if and only if both of `STDOUT.tty?`
@@ -146,7 +147,7 @@ module Colorize
   # io = IO::Memory.new
   # Colorize.with.green.surround(io) do
   #   io << "green"
-  #   Colorize.reset
+  #   Colorize.reset(io)
   #   io << " default"
   # end
   # ```
@@ -283,7 +284,7 @@ module Colorize
     Bright = 1
     # Dims the text color.
     Dim
-    # Underlines the text.
+    # Draws a line below the text.
     Underline
     # Makes the text blink slowly.
     Blink
@@ -291,16 +292,31 @@ module Colorize
     Reverse
     # Makes the text invisible.
     Hidden
+    # Italicizes the text.
+    Italic
+    # Makes the text blink quickly.
+    BlinkFast
+    # Crosses out the text.
+    Strikethrough
+    # Draws two lines below the text.
+    DoubleUnderline
+    # Draws a line above the text.
+    Overline
   end
 end
 
-private def each_code(mode : Colorize::Mode)
-  yield '1' if mode.bold?
-  yield '2' if mode.dim?
-  yield '4' if mode.underline?
-  yield '5' if mode.blink?
-  yield '7' if mode.reverse?
-  yield '8' if mode.hidden?
+private def each_code(mode : Colorize::Mode, &)
+  yield "1" if mode.bold?
+  yield "2" if mode.dim?
+  yield "3" if mode.italic?
+  yield "4" if mode.underline?
+  yield "5" if mode.blink?
+  yield "6" if mode.blink_fast?
+  yield "7" if mode.reverse?
+  yield "8" if mode.hidden?
+  yield "9" if mode.strikethrough?
+  yield "21" if mode.double_underline?
+  yield "53" if mode.overline?
 end
 
 # A colorized object. Colors and text decorations can be modified.
@@ -436,12 +452,32 @@ struct Colorize::Object(T)
   #
   # io.to_s # returns a colorful string where "colorful" is red, "hello" green, "world" blue and " string" red again
   # ```
-  def surround(io = STDOUT)
+  def surround(io = STDOUT, &)
     return yield io unless @enabled
 
     Object.surround(io, to_named_tuple) do |io|
       yield io
     end
+  end
+
+  # Prints the ANSI escape codes for an object. Note that this has no effect on a `Colorize::Object` with content,
+  # only the escape codes.
+  #
+  # ```
+  # require "colorize"
+  #
+  # Colorize.with.red.ansi_escape        # => "\e[31m"
+  # "hello world".green.bold.ansi_escape # => "\e[32;1m"
+  # ```
+  def ansi_escape : String
+    String.build do |io|
+      ansi_escape io
+    end
+  end
+
+  # Same as `ansi_escape` but writes to a given *io*.
+  def ansi_escape(io : IO) : Nil
+    self.class.ansi_escape(io, to_named_tuple)
   end
 
   private def to_named_tuple
@@ -458,7 +494,13 @@ struct Colorize::Object(T)
     mode: Mode::None,
   }
 
-  protected def self.surround(io, color)
+  protected def self.ansi_escape(io : IO, color : {fore: Color, back: Color, mode: Mode}) : Nil
+    last_color = @@last_color
+    append_start(io, color)
+    @@last_color = last_color
+  end
+
+  protected def self.surround(io, color, &)
     last_color = @@last_color
     must_append_end = append_start(io, color)
     @@last_color = color

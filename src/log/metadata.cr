@@ -37,6 +37,10 @@ class Log::Metadata
     data
   end
 
+  def dup : self
+    self
+  end
+
   protected def setup(@parent : Metadata?, entries : NamedTuple | Hash)
     @size = @overridden_size = entries.size
     @max_total_size = @size + (@parent.try(&.max_total_size) || 0)
@@ -136,7 +140,7 @@ class Log::Metadata
     fetch(key) { nil }
   end
 
-  def fetch(key)
+  def fetch(key, &)
     entry = find_entry(key)
     entry ? entry[:value] : yield key
   end
@@ -195,7 +199,7 @@ class Log::Metadata
   end
 
   struct Value
-    Crystal.datum types: {nil: Nil, bool: Bool, i: Int32, i64: Int64, f: Float32, f64: Float64, s: String, time: Time}, hash_key_type: String, immutable: false, target_type: Log::Metadata::Value
+    Crystal.datum types: {nil: Nil, bool: Bool, i: Int32, i64: Int64, u: UInt32, u64: UInt64, f: Float32, f64: Float64, s: String, time: Time}, hash_key_type: String, immutable: false, target_type: Log::Metadata::Value
 
     # Creates `Log::Metadata` from the given *values*.
     # All keys are converted to `String`

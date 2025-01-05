@@ -18,6 +18,17 @@ describe IO::Memory do
     io.gets_to_end.should eq(s)
   end
 
+  it "write raises EOFError" do
+    io = IO::Memory.new
+    initial_capacity = io.@capacity
+    expect_raises(IO::EOFError) do
+      io.write Slice.new(Pointer(UInt8).null, Int32::MAX)
+    end
+    # nothing get's written
+    io.bytesize.should eq 0
+    io.@capacity.should eq initial_capacity
+  end
+
   it "reads byte" do
     io = IO::Memory.new("abc")
     io.read_byte.should eq('a'.ord)
@@ -494,4 +505,26 @@ describe IO::Memory do
       end
     end
   {% end %}
+
+  it "allocates for > 1 GB", tags: %w[slow] do
+    io = IO::Memory.new
+    mbstring = "a" * 1024 * 1024
+    1024.times { io << mbstring }
+
+    io.bytesize.should eq(1 << 30)
+    io.@capacity.should eq 1 << 30
+
+    io << mbstring
+
+    io.bytesize.should eq (1 << 30) + (1 << 20)
+    io.@capacity.should eq Int32::MAX
+
+    1022.times { io << mbstring }
+
+    io.write mbstring.to_slice[0..-4]
+    io << "a"
+    expect_raises(IO::EOFError) do
+      io << "a"
+    end
+  end
 end

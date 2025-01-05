@@ -10,6 +10,7 @@ lib LibC
   FD_CLOEXEC = 1
   O_CLOEXEC  = 0
   O_CREAT    = 1_u16 << 12
+  O_EXCL     = 4_u16 << 12
   O_NOFOLLOW = 0x01000000
   O_TRUNC    = 8_u16 << 12
   O_APPEND   =      1_u16

@@ -37,6 +37,11 @@ class Log
 
   {% for method in %i(trace debug info notice warn error fatal) %}
     # See `Log#{{method.id}}`.
+    def self.{{method.id}}(*, exception : Exception) : Nil
+      Top.{{method.id}}(exception: exception)
+    end
+
+    # See `Log#{{method.id}}`.
     def self.{{method.id}}(*, exception : Exception? = nil)
       Top.{{method.id}}(exception: exception) do |dsl|
         yield dsl
@@ -93,7 +98,7 @@ class Log
   # end
   # Log.info { %(message with {"a" => 1} context) }
   # ```
-  def self.with_context(**kwargs)
+  def self.with_context(**kwargs, &)
     previous = Log.context
     Log.context.set(**kwargs) unless kwargs.empty?
     begin
@@ -104,7 +109,7 @@ class Log
   end
 
   # :ditto:
-  def self.with_context(values)
+  def self.with_context(values, &)
     previous = Log.context
     Log.context.set(values) unless values.empty?
     begin
@@ -115,14 +120,14 @@ class Log
   end
 
   # :ditto:
-  def with_context(**kwargs)
+  def with_context(**kwargs, &)
     self.class.with_context(**kwargs) do
       yield
     end
   end
 
   # :ditto:
-  def with_context(values)
+  def with_context(values, &)
     self.class.with_context(values) do
       yield
     end

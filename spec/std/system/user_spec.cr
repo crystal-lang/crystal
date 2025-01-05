@@ -1,8 +1,27 @@
 require "spec"
 require "system/user"
 
-USER_NAME = {{ `id -un`.stringify.chomp }}
-USER_ID   = {{ `id -u`.stringify.chomp }}
+{% if flag?(:win32) %}
+  {% parts = `whoami /USER /FO TABLE /NH`.stringify.chomp.split(" ") %}
+  USER_NAME = {{ parts[0..-2].join(" ") }}
+  USER_ID   = {{ parts[-1] }}
+{% else %}
+  USER_NAME = {{ `id -un`.stringify.chomp }}
+  USER_ID   = {{ `id -u`.stringify.chomp }}
+{% end %}
+
+INVALID_USER_NAME = "this_user_does_not_exist"
+INVALID_USER_ID   = {% if flag?(:android) %}"8888"{% else %}"1234567"{% end %}
+
+def normalized_username(username)
+  # on Windows, domain names are case-insensitive, so we unify the letter case
+  # from sources like `whoami`, `hostname`, or Win32 APIs
+  {% if flag?(:win32) %}
+    username.upcase
+  {% else %}
+    username
+  {% end %}
+end
 
 describe System::User do
   describe ".find_by(*, name)" do
@@ -10,13 +29,13 @@ describe System::User do
       user = System::User.find_by(name: USER_NAME)
 
       user.should be_a(System::User)
-      user.username.should eq(USER_NAME)
+      normalized_username(user.username).should eq(normalized_username(USER_NAME))
       user.id.should eq(USER_ID)
     end
 
     it "raises on a nonexistent user" do
       expect_raises System::User::NotFoundError, "No such user" do
-        System::User.find_by(name: "this_user_does_not_exist")
+        System::User.find_by(name: INVALID_USER_NAME)
       end
     end
   end
@@ -27,12 +46,12 @@ describe System::User do
 
       user.should be_a(System::User)
       user.id.should eq(USER_ID)
-      user.username.should eq(USER_NAME)
+      normalized_username(user.username).should eq(normalized_username(USER_NAME))
     end
 
     it "raises on nonexistent user id" do
       expect_raises System::User::NotFoundError, "No such user" do
-        System::User.find_by(id: "1234567")
+        System::User.find_by(id: INVALID_USER_ID)
       end
     end
   end
@@ -42,12 +61,12 @@ describe System::User do
       user = System::User.find_by?(name: USER_NAME).not_nil!
 
       user.should be_a(System::User)
-      user.username.should eq(USER_NAME)
+      normalized_username(user.username).should eq(normalized_username(USER_NAME))
       user.id.should eq(USER_ID)
     end
 
     it "returns nil on nonexistent user" do
-      user = System::User.find_by?(name: "this_user_does_not_exist")
+      user = System::User.find_by?(name: INVALID_USER_NAME)
       user.should eq(nil)
     end
   end
@@ -58,18 +77,19 @@ describe System::User do
 
       user.should be_a(System::User)
       user.id.should eq(USER_ID)
-      user.username.should eq(USER_NAME)
+      normalized_username(user.username).should eq(normalized_username(USER_NAME))
     end
 
     it "returns nil on nonexistent user id" do
-      user = System::User.find_by?(id: "1234567")
+      user = System::User.find_by?(id: INVALID_USER_ID)
       user.should eq(nil)
     end
   end
 
   describe "#username" do
     it "is the same as the source name" do
-      System::User.find_by(name: USER_NAME).username.should eq(USER_NAME)
+      user = System::User.find_by(name: USER_NAME)
+      normalized_username(user.username).should eq(normalized_username(USER_NAME))
     end
   end
 
@@ -105,7 +125,8 @@ describe System::User do
 
   describe "#to_s" do
     it "returns a string representation" do
-      System::User.find_by(name: USER_NAME).to_s.should eq("#{USER_NAME} (#{USER_ID})")
+      user = System::User.find_by(name: USER_NAME)
+      user.to_s.should eq("#{user.username} (#{user.id})")
     end
   end
 end

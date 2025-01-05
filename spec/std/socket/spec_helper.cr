@@ -5,7 +5,7 @@ module SocketSpecHelper
   class_getter?(supports_ipv6 : Bool) do
     TCPServer.open("::1", 0) { return true }
     false
-  rescue Socket::BindError
+  rescue Socket::Error
     false
   end
 end
@@ -33,7 +33,7 @@ def each_ip_family(&block : Socket::Family, String, String ->)
 end
 
 def unused_local_port
-  TCPServer.open("::", 0) do |server|
+  TCPServer.open(Socket::IPAddress::UNSPECIFIED, 0) do |server|
     server.local_address.port
   end
 end

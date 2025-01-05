@@ -11,6 +11,17 @@ set -eu
 
 CRYSTAL_VERSION=$1
 
+# Write dev version for next minor release into src/VERSION
+minor_branch="${CRYSTAL_VERSION%.*}"
+next_minor="$((${minor_branch#*.} + 1))"
+echo "${CRYSTAL_VERSION%%.*}.${next_minor}.0-dev" > src/VERSION
+
+# Update shard.yml
+sed -i -E "s/version: .*/version: $(cat src/VERSION)/" shard.yml
+
+# Remove SOURCE_DATE_EPOCH (only used in source tree of a release)
+rm -f src/SOURCE_DATE_EPOCH
+
 # Edit PREVIOUS_CRYSTAL_BASE_URL in .circleci/config.yml
 sed -i -E "s|[0-9.]+/crystal-[0-9.]+-[0-9]|$CRYSTAL_VERSION/crystal-$CRYSTAL_VERSION-1|g" .circleci/config.yml
 
@@ -25,6 +36,9 @@ sed -i -E "s|crystal-[0-9.]+-[0-9]|crystal-$CRYSTAL_VERSION-1|g" bin/ci
 # Update the patch version of the latest entry if same minor version to have only one item per minor version
 sed -i -E "/crystal_bootstrap_version:/ s/(, ${CRYSTAL_VERSION%.*}\.[0-9]*)?\]\$/, $CRYSTAL_VERSION]/" .github/workflows/linux.yml
 sed -i -E "s|crystallang/crystal:[0-9.]+|crystallang/crystal:$CRYSTAL_VERSION|g" .github/workflows/*.yml
+
+# Edit .github/workflows/*.yml to update version for install-crystal action
+sed -i -E "s|crystal: \"[0-9.]+\"|crystal: \"$CRYSTAL_VERSION\"|g" .github/workflows/*.yml
 
 # Edit shell.nix latestCrystalBinary using nix-prefetch-url --unpack <url>
 darwin_url="https://github.com/crystal-lang/crystal/releases/download/$CRYSTAL_VERSION/crystal-$CRYSTAL_VERSION-1-darwin-universal.tar.gz"

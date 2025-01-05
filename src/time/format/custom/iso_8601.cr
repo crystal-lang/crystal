@@ -77,7 +77,7 @@ struct Time::Format
 
           second
 
-          if current_char == '.' || current_char == ','
+          if current_char.in?('.', ',')
             next_char
             second_fraction
           end
@@ -86,7 +86,7 @@ struct Time::Format
         end
       end
 
-      if current_char == '.' || current_char == ','
+      if current_char.in?('.', ',')
         next_char
 
         pos = @reader.pos

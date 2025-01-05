@@ -29,6 +29,8 @@ require "./subtle"
 # Last but not least: beware of denial of services! Always protect your
 # application using an external strategy (eg: rate limiting), otherwise
 # endpoints that verifies bcrypt hashes will be an easy target.
+#
+# NOTE: To use `Bcrypt`, you must explicitly import it with `require "crypto/bcrypt"`
 class Crypto::Bcrypt
   class Error < Exception
   end

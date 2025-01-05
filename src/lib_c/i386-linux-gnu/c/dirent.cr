@@ -11,7 +11,7 @@ lib LibC
     d_ino : InoT
     d_off : OffT
     d_reclen : UShort
-    d_type : Char
+    d_type : UChar
     d_name : StaticArray(Char, 256)
   end
 

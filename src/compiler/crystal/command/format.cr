@@ -11,7 +11,18 @@ class Crystal::Command
     show_backtrace = false
 
     OptionParser.parse(@options) do |opts|
-      opts.banner = "Usage: crystal tool format [options] [file or directory]\n\nOptions:"
+      opts.banner = <<-USAGE
+        Usage: crystal tool format [options] [- | file or directory ...]
+
+        Formats Crystal code in place.
+
+        If a file or directory is omitted,
+        Crystal source files beneath the working directory are formatted.
+
+        To format STDIN to STDOUT, use '-' in place of any path arguments.
+
+        Options:
+        USAGE
 
       opts.on("--check", "Checks that formatting code produces no changes") do |f|
         check = true
@@ -67,7 +78,7 @@ class Crystal::Command
       @show_backtrace : Bool = false,
       @color : Bool = true,
       # stdio is injectable for testing
-      @stdin : IO = STDIN, @stdout : IO = STDOUT, @stderr : IO = STDERR
+      @stdin : IO = STDIN, @stdout : IO = STDOUT, @stderr : IO = STDERR,
     )
       @format_stdin = files.size == 1 && files[0] == "-"
 
@@ -109,7 +120,7 @@ class Crystal::Command
           format_file filename
         end
       elsif Dir.exists?(filename)
-        filename = filename.chomp('/')
+        filename = ::Path[filename.chomp('/')].to_posix
         filenames = Dir["#{filename}/**/*.cr"]
         format_many filenames
       else

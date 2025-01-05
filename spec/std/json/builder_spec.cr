@@ -1,8 +1,8 @@
 require "spec"
 require "json"
-require "../../support/string"
+require "spec/helpers/string"
 
-private def assert_built(expected, *, file = __FILE__, line = __LINE__)
+private def assert_built(expected, *, file = __FILE__, line = __LINE__, &)
   assert_prints JSON.build { |json| with json yield json }, expected, file: file, line: line
 end
 

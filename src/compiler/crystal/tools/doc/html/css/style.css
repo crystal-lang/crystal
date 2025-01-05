@@ -1,3 +1,7 @@
+:root {
+  color-scheme: light dark;
+}
+
 html, body {
   background: #FFFFFF;
   position: relative;
@@ -723,4 +727,254 @@ span.flag.lime {
 .main-content h5:hover .anchor .octicon-link,
 .main-content h6:hover .anchor .octicon-link {
   visibility: visible
+}
+
+img {
+  max-width: 100%;
+}
+
+table {
+  font-size: 14px;
+  display: block;
+  max-width: -moz-fit-content;
+  max-width: fit-content;
+  overflow-x: auto;
+  white-space: nowrap;
+  background: #fdfdfd;
+  text-align: center;
+  border: 1px solid #eee;
+  border-collapse: collapse;
+  padding: 0px 5px 0px 5px;
+}
+
+table th {
+  padding: 10px;
+  letter-spacing: 1px;
+  border-bottom: 1px solid #eee;
+}
+
+table td {
+  padding: 10px;
+}
+
+#sidebar-btn {
+  height: 32px;
+  width: 32px;
+}
+
+#sidebar-btn-label {
+  height: 2em;
+  width: 2em;
+}
+
+#sidebar-btn, #sidebar-btn-label {
+  display: none;
+  margin: .7rem;
+  appearance: none;
+  color: black;
+  cursor: pointer;
+}
+
+@media only screen and (max-width: 635px) {
+  .sidebar, .main-content {
+    /* svg size + vertical margin - .search-box padding-top */
+    padding-top: calc(2em + 2 * 0.7rem - 13px);
+  }
+
+  #sidebar-btn, #sidebar-btn-label {
+    display: block;
+    position: absolute;
+    z-index: 50;
+    transition-duration: 200ms;
+    left: 0;
+  }
+  
+  #sidebar-btn:not(:checked) ~ #sidebar-btn-label > .close,
+  #sidebar-btn:checked ~ #sidebar-btn-label > .open,
+  #sidebar-btn:checked ~ .main-content {
+    display: none;
+  }
+
+  #sidebar-btn:checked {
+    left: calc(100% - 32px - (2 * 0.7rem));
+  }
+
+  #sidebar-btn:checked ~ #sidebar-btn-label {
+    color: white;
+    /* 100% - svg size - horizontal margin */
+    left: calc(100% - 2em - (2 * 0.7rem));
+  }
+
+  #sidebar-btn~.sidebar {
+    width: 0%;
+  }
+
+  #sidebar-btn:checked~.sidebar {
+    visibility: visible;
+    width: 100%;
+  }
+
+  .sidebar {
+    transition-duration: 200ms;
+    max-width: 100vw;
+    visibility: hidden;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  html, body {
+    background: #1b1b1b;
+  }
+
+  body {
+    color: white;
+  }
+
+  a {
+    color: #8cb4ff;
+  }
+
+  .main-content a:visited {
+    color: #5f8de3;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    color: white;
+  }
+
+  h1.type-name {
+    color: white;
+    background-color: #202020;
+    border: 1px solid #353535;
+  }
+
+  .project-versions-nav > option {
+    background-color: #222;
+  }
+
+  .superclass-hierarchy .superclass a,
+  .superclass-hierarchy .superclass a:visited,
+  .other-type a,
+  .other-type a:visited,
+  .entry-summary .signature,
+  .entry-summary a:visited {
+    background-color: #202020;
+    color: white;
+    border: 1px solid #353535;
+  }
+
+  .superclass-hierarchy .superclass a:hover,
+  .other-type a:hover,
+  .entry-summary .signature:hover {
+    background: #443d4d;
+    border-color: #b092d4;
+  }
+
+  .kind {
+    color: #b092d4;
+  }
+
+  .n {
+    color: #00ade6;
+  }
+
+  .t {
+    color: #00ade6;
+  }
+
+  .k {
+    color: #ff66ae;
+  }
+
+  .o {
+    color: #ff66ae;
+  }
+
+  .s {
+    color: #7799ff;
+  }
+
+  .i {
+    color: #b38668;
+  }
+
+  .m {
+    color: #b9a5d6;
+  }
+
+  .c {
+    color: #a1a1a1;
+  }
+
+  .methods-inherited a, .methods-inherited a:visited {
+    color: #B290D9;
+  }
+
+  .methods-inherited a:hover {
+    color: #D4B7F4;
+  }
+
+  .methods-inherited .tooltip>span {
+    background: #443d4d;
+  }
+
+  .methods-inherited .tooltip * {
+    color: white;
+  }
+
+  .entry-detail:target .signature {
+    background-color: #443d4d;
+    border: 1px solid #b092d4;
+  }
+
+  .entry-detail .signature {
+    background-color: #202020;
+    color: white;
+    border: 1px solid #353535;
+  }
+
+  .entry-detail .signature .method-permalink {
+    color: #b092d4;
+  }
+
+  :not(pre)>code {
+    background-color: #202020;
+  }
+
+  span.flag.purple {
+    background-color: #443d4d;
+    color: #ECE1F9;
+    border-color: #b092d4;
+  }
+
+  .sidebar input::-webkit-input-placeholder { /* Chrome/Opera/Safari */
+    color: white;
+  }
+  
+  .sidebar input::-moz-placeholder { /* Firefox 19+ */
+    color: white;
+  }
+  
+  .sidebar input:-ms-input-placeholder { /* IE 10+ */
+    color: white;
+  }
+  
+  .sidebar input:-moz-placeholder { /* Firefox 18- */
+    color: white;
+  }
+
+  pre,
+  table {
+    color: white;
+    background: #202020;
+    border: 1px solid #353535;
+  }
+
+  table th {
+    border-bottom: 1px solid #353535;
+  }
+
+  #sidebar-btn, #sidebar-btn-label {
+    color: white;
+  }
 }

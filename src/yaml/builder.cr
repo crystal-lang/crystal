@@ -67,7 +67,7 @@ class YAML::Builder
   end
 
   # Starts a YAML stream, invokes the block, and ends it.
-  def stream
+  def stream(&)
     start_stream
     yield.tap { end_stream }
   end
@@ -83,7 +83,7 @@ class YAML::Builder
   end
 
   # Starts a document, invokes the block, and then ends it.
-  def document
+  def document(&)
     start_document
     yield.tap { end_document }
   end
@@ -109,7 +109,7 @@ class YAML::Builder
   end
 
   # Starts a sequence, invokes the block, and the ends it.
-  def sequence(anchor : String? = nil, tag : String? = nil, style : YAML::SequenceStyle = YAML::SequenceStyle::ANY)
+  def sequence(anchor : String? = nil, tag : String? = nil, style : YAML::SequenceStyle = YAML::SequenceStyle::ANY, &)
     start_sequence(anchor, tag, style)
     yield.tap { end_sequence }
   end
@@ -128,7 +128,7 @@ class YAML::Builder
   end
 
   # Starts a mapping, invokes the block, and then ends it.
-  def mapping(anchor : String? = nil, tag : String? = nil, style : YAML::MappingStyle = YAML::MappingStyle::ANY)
+  def mapping(anchor : String? = nil, tag : String? = nil, style : YAML::MappingStyle = YAML::MappingStyle::ANY, &)
     start_mapping(anchor, tag, style)
     yield.tap { end_mapping }
   end
@@ -199,7 +199,7 @@ class YAML::Builder
   end
 
   private macro emit(event_name, *args)
-    LibYAML.yaml_{{event_name}}_event_initialize(pointerof(@event), {{*args}})
+    LibYAML.yaml_{{event_name}}_event_initialize(pointerof(@event), {{args.splat}})
     yaml_emit({{event_name.stringify}})
   end
 
@@ -239,7 +239,7 @@ module YAML
   # end
   # string # => "---\nfoo:\n- 1\n- 2\n"
   # ```
-  def self.build
+  def self.build(&)
     String.build do |str|
       build(str) do |yaml|
         yield yaml
@@ -248,7 +248,7 @@ module YAML
   end
 
   # Writes YAML into the given `IO`. A `YAML::Builder` is yielded to the block.
-  def self.build(io : IO) : Nil
+  def self.build(io : IO, &) : Nil
     YAML::Builder.build(io) do |yaml|
       yaml.stream do
         yaml.document do

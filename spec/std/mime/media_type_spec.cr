@@ -1,6 +1,6 @@
 require "../spec_helper"
 require "mime/media_type"
-require "../../support/string"
+require "spec/helpers/string"
 
 private def parse(string)
   type = MIME::MediaType.parse(string)

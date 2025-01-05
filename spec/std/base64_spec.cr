@@ -1,7 +1,7 @@
 require "spec"
 require "base64"
 require "crystal/digest/md5"
-require "../support/string"
+require "spec/helpers/string"
 
 # rearrange parameters for `assert_prints`
 {% for method in %w(encode strict_encode urlsafe_encode) %}

@@ -48,13 +48,13 @@ module Crystal
         end
       end
 
-      alias Value = Bool | Int32 | Int64 | Slice(UInt8) | String | UInt16 | UInt32 | UInt64 | UInt8
+      alias Value = Bool | Int32 | Int64 | Slice(UInt8) | String | UInt16 | UInt32 | UInt64 | UInt8 | UInt128
 
       def read_abbreviations(io)
         @abbreviations = Abbrev.read(io, debug_abbrev_offset)
       end
 
-      def each
+      def each(&)
         end_offset = @offset + @unit_length
         attributes = [] of {AT, FORM, Value}
 
@@ -106,6 +106,8 @@ module Crystal
           @io.read_bytes(UInt32)
         when FORM::Data8
           @io.read_bytes(UInt64)
+        when FORM::Data16
+          @io.read_bytes(UInt128)
         when FORM::Sdata
           DWARF.read_signed_leb128(@io)
         when FORM::Udata

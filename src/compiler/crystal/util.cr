@@ -15,10 +15,14 @@ module Crystal
     filename
   end
 
-  def self.error(msg, color, exit_code = 1, stderr = STDERR, leading_error = true)
+  def self.error(msg, color, exit_code : Int = 1, stderr = STDERR, leading_error = true) : NoReturn
+    error(msg, color, nil, stderr, leading_error)
+    exit(exit_code)
+  end
+
+  def self.error(msg, color, exit_code : Nil, stderr = STDERR, leading_error = true)
     stderr.print "Error: ".colorize.toggle(color).red.bold if leading_error
     stderr.puts msg.colorize.toggle(color).bright
-    exit(exit_code) if exit_code
   end
 
   def self.tempfile(basename)
@@ -37,7 +41,7 @@ module Crystal
     source : String | Array(String),
     highlight_line_number = nil,
     color = false,
-    line_number_start = 1
+    line_number_start = 1,
   )
     source = source.lines if source.is_a? String
     line_number_padding = (source.size + line_number_start).to_s.chars.size

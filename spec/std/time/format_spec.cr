@@ -1,5 +1,6 @@
-require "./spec_helper"
-require "../../support/string"
+require "../spec_helper"
+require "../../support/time"
+require "spec/helpers/string"
 
 def parse_time(format, string)
   Time.parse_utc(format, string)

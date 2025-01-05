@@ -69,6 +69,9 @@ class Crystal::Repl::Interpreter
   # - when doing `finish`, we'd like to exit the current frame
   @pry_max_target_frame : Int32?
 
+  # The input reader for the pry interface, it's stored here notably to hold the history.
+  @pry_reader : PryReader
+
   # The set of local variables for interpreting code.
   getter local_vars : LocalVars
 
@@ -110,7 +113,7 @@ class Crystal::Repl::Interpreter
   def initialize(
     @context : Context,
     # TODO: what if the stack is exhausted?
-    @stack : UInt8* = Pointer(Void).malloc(8 * 1024 * 1024).as(UInt8*)
+    @stack : UInt8* = Pointer(Void).malloc(8 * 1024 * 1024).as(UInt8*),
   )
     @local_vars = LocalVars.new(@context)
     @argv = [] of String
@@ -123,6 +126,9 @@ class Crystal::Repl::Interpreter
     @block_level = 0
 
     @compiled_def = nil
+
+    @pry_reader = PryReader.new
+    @pry_reader.color = @context.program.color?
   end
 
   def self.new(interpreter : Interpreter, compiled_def : CompiledDef, stack : Pointer(UInt8), block_level : Int32)
@@ -141,6 +147,9 @@ class Crystal::Repl::Interpreter
     @call_stack_leave_index = @call_stack.size
 
     @compiled_def = compiled_def
+
+    @pry_reader = PryReader.new
+    @pry_reader.color = @context.program.color?
   end
 
   # Interprets the give node under the given context.
@@ -167,8 +176,10 @@ class Crystal::Repl::Interpreter
     compiled_def = @compiled_def
 
     # Declare or migrate local variables
+    # TODO: we should also migrate variables if we are outside of a block
+    # in a pry session, but that's tricky so we'll leave it for later.
     if !compiled_def || in_pry
-      migrate_local_vars(@local_vars, meta_vars)
+      migrate_local_vars(@local_vars, meta_vars) if @local_vars.block_level == 0
 
       # TODO: is it okay to assume this is always the program? Probably not.
       # Check if we need a local variable for the closure context
@@ -187,7 +198,13 @@ class Crystal::Repl::Interpreter
         # Closured vars don't belong in the local variables table
         next if meta_var.closured?
 
-        existing_type = @local_vars.type?(name, 0)
+        # Check if the var already exists from the current block upwards
+        existing_type = nil
+        @local_vars.block_level.downto(0) do |level|
+          existing_type = @local_vars.type?(name, level)
+          break if existing_type
+        end
+
         if existing_type
           if existing_type != meta_var.type
             raise "BUG: can't change type of local variable #{name} from #{existing_type} to #{meta_var.type} yet"
@@ -411,7 +428,7 @@ class Crystal::Repl::Interpreter
   end
 
   private def migrate_local_vars(current_local_vars, next_meta_vars)
-    # Check if any existing local variable size changed.
+    # Check if any existing local variable type changed.
     # If so, it means we need to put them inside a union,
     # or make the union bigger.
     current_names = current_local_vars.names_at_block_level_zero
@@ -427,7 +444,7 @@ class Crystal::Repl::Interpreter
 
       current_type = current_local_vars.type(current_name, 0)
       next_type = next_meta_vars[current_name].type
-      aligned_sizeof_type(current_type) != aligned_sizeof_type(next_type)
+      current_type != next_type
     end
 
     return unless needs_migration
@@ -982,16 +999,17 @@ class Crystal::Repl::Interpreter
 
   private macro stack_pop(t)
     %aligned_size = align(sizeof({{t}}))
-    %value = (stack - %aligned_size).as({{t}}*).value
+    %value = uninitialized {{t}}
+    (stack - %aligned_size).copy_to(pointerof(%value).as(UInt8*), sizeof(typeof(%value)))
     stack_shrink_by(%aligned_size)
     %value
   end
 
   private macro stack_push(value)
     %temp = {{value}}
-    stack.as(Pointer(typeof({{value}}))).value = %temp
+    %size = sizeof(typeof(%temp))
 
-    %size = sizeof(typeof({{value}}))
+    stack.copy_from(pointerof(%temp).as(UInt8*), %size)
     %aligned_size = align(%size)
     stack += %size
     stack_grow_by(%aligned_size - %size)
@@ -1065,7 +1083,7 @@ class Crystal::Repl::Interpreter
     argv.size + 1
   end
 
-  @argv_unsafe : Pointer(Pointer(UInt8))?
+  @argv_unsafe = Pointer(Pointer(UInt8)).null
 
   private def argv_unsafe
     @argv_unsafe ||= begin
@@ -1137,6 +1155,7 @@ class Crystal::Repl::Interpreter
         nil
       end
     end
+    spawned_fiber.@context.resumable = 1
     spawned_fiber.as(Void*)
   end
 
@@ -1144,9 +1163,47 @@ class Crystal::Repl::Interpreter
     # current_fiber = current_context.as(Fiber*).value
     new_fiber = new_context.as(Fiber*).value
 
-    # We directly resume the next fiber.
-    # TODO: is this okay? We totally ignore the scheduler here!
+    # delegates the context switch to the interpreter's scheduler, so we update
+    # the current fiber reference, set the GC stack bottom, and so on (aka
+    # there's more to switching context than `Fiber.swapcontext`):
     new_fiber.resume
+  end
+
+  private def fiber_resumable(context : Void*) : LibC::Long
+    fiber = context.as(Fiber*).value
+    fiber.@context.resumable
+  end
+
+  private def signal_descriptor(fd : Int32) : Nil
+    {% if flag?(:unix) %}
+      # replace the interpreter's signal writer so that the interpreted code
+      # will receive signals from now on
+      writer = IO::FileDescriptor.new(fd)
+      writer.sync = true
+      Crystal::System::Signal.writer = writer
+    {% else %}
+      raise "BUG: interpreter doesn't support signals on this target"
+    {% end %}
+  end
+
+  private def signal(signum : Int32, handler : Int32) : Nil
+    {% if flag?(:unix) %}
+      signal = ::Signal.new(signum)
+      case handler
+      when 0
+        signal.reset
+      when 1
+        signal.ignore
+      else
+        # register the signal for the OS so the process will receive them;
+        # registers a fake handler since the interpreter won't handle the signal:
+        # the interpreted code will receive it and will execute the interpreted
+        # handler
+        signal.trap { }
+      end
+    {% else %}
+      raise "BUG: interpreter doesn't support signals on this target"
+    {% end %}
   end
 
   private def pry(ip, instructions, stack_bottom, stack)
@@ -1177,9 +1234,10 @@ class Crystal::Repl::Interpreter
     # Remember the portion from stack_bottom + local_vars.max_bytesize up to stack
     # because it might happen that the child interpreter will overwrite some
     # of that if we already have some values in the stack past the local vars
-    data_size = stack - (stack_bottom + local_vars.max_bytesize)
+    original_local_vars_max_bytesize = local_vars.max_bytesize
+    data_size = stack - (stack_bottom + original_local_vars_max_bytesize)
     data = Pointer(Void).malloc(data_size).as(UInt8*)
-    data.copy_from(stack_bottom + local_vars.max_bytesize, data_size)
+    data.copy_from(stack_bottom + original_local_vars_max_bytesize, data_size)
 
     gatherer = LocalVarsGatherer.new(location, a_def)
     gatherer.gather
@@ -1221,12 +1279,8 @@ class Crystal::Repl::Interpreter
 
     interpreter = Interpreter.new(self, compiled_def, local_vars, closure_context, stack_bottom, block_level)
 
-    prompt = Prompt.new(@context, show_nest: false)
-
     while @pry
-      prefix = String.build do |io|
-        io.print "pry"
-        io.print '('
+      @pry_reader.prompt_info = String.build do |io|
         unless owner.is_a?(Program)
           if owner.metaclass?
             io.print owner.instance_type
@@ -1237,10 +1291,9 @@ class Crystal::Repl::Interpreter
           end
         end
         io.print compiled_def.def.name
-        io.print ')'
       end
 
-      input = prompt.prompt(prefix)
+      input = @pry_reader.read_next
       unless input
         self.pry = false
         break
@@ -1275,11 +1328,16 @@ class Crystal::Repl::Interpreter
       end
 
       begin
-        line_node = prompt.parse(
-          input: input,
+        parser = Parser.new(
+          input,
+          string_pool: @context.program.string_pool,
           var_scopes: [meta_vars.keys.to_set],
         )
+        line_node = parser.parse
+
         next unless line_node
+
+        main_visitor = MainVisitor.new(from_main_visitor: main_visitor)
 
         vars_size_before_semantic = main_visitor.vars.size
 
@@ -1306,7 +1364,8 @@ class Crystal::Repl::Interpreter
         # to their new type)
         local_vars = interpreter.local_vars
 
-        prompt.display(value)
+        print " => "
+        puts SyntaxHighlighter::Colorize.highlight!(value.to_s)
       rescue ex : EscapingException
         print "Unhandled exception: "
         print ex
@@ -1322,7 +1381,7 @@ class Crystal::Repl::Interpreter
     end
 
     # Restore the stack data in case it tas overwritten
-    (stack_bottom + local_vars.max_bytesize).copy_from(data, data_size)
+    (stack_bottom + original_local_vars_max_bytesize).copy_from(data, data_size)
   end
 
   private def whereami(a_def : Def, location : Location)

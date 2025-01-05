@@ -24,7 +24,7 @@ module MIME::Multipart
   # ```
   #
   # See: `Multipart::Parser`
-  def self.parse(io, boundary)
+  def self.parse(io, boundary, &)
     parser = Parser.new(io, boundary)
     while parser.has_next?
       parser.next { |headers, io| yield headers, io }
@@ -68,8 +68,10 @@ module MIME::Multipart
   # ```
   #
   # See: `Multipart::Parser`
-  def self.parse(request : HTTP::Request)
-    boundary = parse_boundary(request.headers["Content-Type"])
+  def self.parse(request : HTTP::Request, &)
+    if content_type = request.headers["Content-Type"]?
+      boundary = parse_boundary(content_type)
+    end
     return nil unless boundary
 
     body = request.body
@@ -77,9 +79,50 @@ module MIME::Multipart
     parse(body, boundary) { |headers, io| yield headers, io }
   end
 
+  # Parses a MIME multipart message, yielding `HTTP::Headers` and an `IO` for
+  # each body part.
+  #
+  # Please note that the IO object yielded to the block is only valid while the
+  # block is executing. The IO is closed as soon as the supplied block returns.
+  #
+  # ```
+  # require "http"
+  # require "mime/multipart"
+  #
+  # headers = HTTP::Headers{"Content-Type" => "multipart/byteranges; boundary=aA40"}
+  # body = "--aA40\r\nContent-Type: text/plain\r\n\r\nbody\r\n--aA40--"
+  # response = HTTP::Client::Response.new(
+  #   status: :ok,
+  #   headers: headers,
+  #   body: body,
+  # )
+  #
+  # MIME::Multipart.parse(response) do |headers, io|
+  #   headers["Content-Type"] # => "text/plain"
+  #   io.gets_to_end          # => "body"
+  # end
+  # ```
+  #
+  # See: `Multipart::Parser`
+  def self.parse(response : HTTP::Client::Response, &)
+    if content_type = response.headers["Content-Type"]?
+      boundary = parse_boundary(content_type)
+    end
+    return nil unless boundary
+
+    if body = response.body.presence
+      body = IO::Memory.new(body)
+    else
+      body = response.body_io?
+    end
+    return nil unless body
+
+    parse(body, boundary) { |headers, io| yield headers, io }
+  end
+
   # Yields a `Multipart::Builder` to the given block, writing to *io* and
   # using *boundary*. `#finish` is automatically called on the builder.
-  def self.build(io : IO, boundary : String = Multipart.generate_boundary)
+  def self.build(io : IO, boundary : String = Multipart.generate_boundary, &)
     builder = Builder.new(io, boundary)
     yield builder
     builder.finish
@@ -87,7 +130,7 @@ module MIME::Multipart
 
   # Yields a `Multipart::Builder` to the given block, returning the generated
   # message as a `String`.
-  def self.build(boundary : String = Multipart.generate_boundary)
+  def self.build(boundary : String = Multipart.generate_boundary, &)
     String.build do |io|
       build(io, boundary) { |g| yield g }
     end

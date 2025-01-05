@@ -1,4 +1,5 @@
 require "../spec_helper"
+require "../../support/number"
 require "yaml"
 require "big"
 require "big/yaml"
@@ -53,14 +54,32 @@ describe "YAML serialization" do
       end
     end
 
-    it "does Int32#from_yaml" do
-      Int32.from_yaml("123").should eq(123)
+    {% for int in BUILTIN_INTEGER_TYPES %}
+      it "does {{ int }}.from_yaml" do
+        {{ int }}.from_yaml("0").should(be_a({{ int }})).should eq(0)
+        {{ int }}.from_yaml("123").should(be_a({{ int }})).should eq(123)
+        {{ int }}.from_yaml({{ int }}::MIN.to_s).should(be_a({{ int }})).should eq({{ int }}::MIN)
+        {{ int }}.from_yaml({{ int }}::MAX.to_s).should(be_a({{ int }})).should eq({{ int }}::MAX)
+      end
+
+      it "raises if {{ int }}.from_yaml overflows" do
+        expect_raises(YAML::ParseException, "Can't read {{ int }}") do
+          {{ int }}.from_yaml(({{ int }}::MIN.to_big_i - 1).to_s)
+        end
+        expect_raises(YAML::ParseException, "Can't read {{ int }}") do
+          {{ int }}.from_yaml(({{ int }}::MAX.to_big_i + 1).to_s)
+        end
+      end
+    {% end %}
+
+    it "does Int.from_yaml with prefixes" do
       Int32.from_yaml("0xabc").should eq(0xabc)
       Int32.from_yaml("0b10110").should eq(0b10110)
+      Int32.from_yaml("0777").should eq(0o777)
     end
 
-    it "does Int64#from_yaml" do
-      Int64.from_yaml("123456789123456789").should eq(123456789123456789)
+    it "does Int.from_yaml with underscores" do
+      Int32.from_yaml("1_2_34").should eq(1_2_34)
     end
 
     it "does String#from_yaml" do
@@ -232,9 +251,8 @@ describe "YAML serialization" do
         YAMLSpecEnum.from_yaml(%("One")).should eq(YAMLSpecEnum::One)
         YAMLSpecEnum.from_yaml(%("two")).should eq(YAMLSpecEnum::Two)
         YAMLSpecEnum.from_yaml(%("ONE_HUNDRED")).should eq(YAMLSpecEnum::OneHundred)
-        expect_raises(YAML::ParseException, %(Unknown enum YAMLSpecEnum value: "ONE-HUNDRED")) do
-          YAMLSpecEnum.from_yaml(%("ONE-HUNDRED"))
-        end
+        YAMLSpecEnum.from_yaml(%("ONE-HUNDRED")).should eq(YAMLSpecEnum::OneHundred)
+
         expect_raises(YAML::ParseException, %(Unknown enum YAMLSpecEnum value: " one ")) do
           YAMLSpecEnum.from_yaml(%(" one "))
         end

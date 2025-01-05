@@ -93,7 +93,7 @@ module Crystal
         end
 
         a_def.body = generated_nodes
-        a_def.yields = block.try &.args.size
+        a_def.block_arity = block.try &.args.size
       end
 
       owner = self

@@ -4,7 +4,7 @@ require "./spec_helper"
 describe Crystal::Repl::Interpreter do
   context "blocks" do
     it "interprets simplest block" do
-      interpret(<<-CODE).should eq(1)
+      interpret(<<-CRYSTAL).should eq(1)
         def foo
           yield
         end
@@ -14,11 +14,11 @@ describe Crystal::Repl::Interpreter do
           a += 1
         end
         a
-      CODE
+      CRYSTAL
     end
 
     it "interprets block with multiple yields" do
-      interpret(<<-CODE).should eq(2)
+      interpret(<<-CRYSTAL).should eq(2)
         def foo
           yield
           yield
@@ -29,11 +29,11 @@ describe Crystal::Repl::Interpreter do
           a += 1
         end
         a
-      CODE
+      CRYSTAL
     end
 
     it "interprets yield return value" do
-      interpret(<<-CODE).should eq(1)
+      interpret(<<-CRYSTAL).should eq(1)
         def foo
           yield
         end
@@ -42,11 +42,11 @@ describe Crystal::Repl::Interpreter do
           1
         end
         z
-      CODE
+      CRYSTAL
     end
 
     it "interprets yield inside another block" do
-      interpret(<<-CODE).should eq(1)
+      interpret(<<-CRYSTAL).should eq(1)
         def foo
           bar do
             yield
@@ -62,11 +62,11 @@ describe Crystal::Repl::Interpreter do
           a += 1
         end
         a
-      CODE
+      CRYSTAL
     end
 
     it "interprets yield inside def with arguments" do
-      interpret(<<-CODE).should eq(18)
+      interpret(<<-CRYSTAL).should eq(18)
         def foo(x)
           a = yield
           a + x
@@ -76,11 +76,11 @@ describe Crystal::Repl::Interpreter do
           8
         end
         a
-      CODE
+      CRYSTAL
     end
 
     it "interprets yield expression" do
-      interpret(<<-CODE).should eq(2)
+      interpret(<<-CRYSTAL).should eq(2)
         def foo
           yield 1
         end
@@ -90,11 +90,11 @@ describe Crystal::Repl::Interpreter do
           a += x
         end
         a
-      CODE
+      CRYSTAL
     end
 
     it "interprets yield expressions" do
-      interpret(<<-CODE).should eq(2 + 2*3 + 4*5)
+      interpret(<<-CRYSTAL).should eq(2 + 2*3 + 4*5)
         def foo
           yield 3, 4, 5
         end
@@ -104,11 +104,11 @@ describe Crystal::Repl::Interpreter do
           a += a * x + y * z
         end
         a
-      CODE
+      CRYSTAL
     end
 
     it "discards yield expression" do
-      interpret(<<-CODE).should eq(3)
+      interpret(<<-CRYSTAL).should eq(3)
         def foo
           yield 1
         end
@@ -118,11 +118,11 @@ describe Crystal::Repl::Interpreter do
           a = 3
         end
         a
-      CODE
+      CRYSTAL
     end
 
     it "yields different values to form a union" do
-      interpret(<<-CODE).should eq(5)
+      interpret(<<-CRYSTAL).should eq(5)
         def foo
           yield 1
           yield 'a'
@@ -139,11 +139,11 @@ describe Crystal::Repl::Interpreter do
             end
         end
         a
-      CODE
+      CRYSTAL
     end
 
     it "returns from block" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
         def foo
           baz do
             yield
@@ -165,11 +165,11 @@ describe Crystal::Repl::Interpreter do
         end
 
         bar
-      CODE
+      CRYSTAL
     end
 
     it "interprets next inside block" do
-      interpret(<<-CODE).should eq(10)
+      interpret(<<-CRYSTAL).should eq(10)
         def foo
           yield
         end
@@ -181,11 +181,11 @@ describe Crystal::Repl::Interpreter do
           end
           20
         end
-      CODE
+      CRYSTAL
     end
 
     it "interprets next inside block (union, through next)" do
-      interpret(<<-CODE).should eq(10)
+      interpret(<<-CRYSTAL).should eq(10)
         def foo
           yield
         end
@@ -203,11 +203,11 @@ describe Crystal::Repl::Interpreter do
         else
           20
         end
-      CODE
+      CRYSTAL
     end
 
     it "interprets next inside block (union, through normal exit)" do
-      interpret(<<-CODE).should eq('a')
+      interpret(<<-CRYSTAL).should eq('a')
         def foo
           yield
         end
@@ -225,11 +225,11 @@ describe Crystal::Repl::Interpreter do
         else
           'b'
         end
-      CODE
+      CRYSTAL
     end
 
     it "interprets break inside block" do
-      interpret(<<-CODE).should eq(20)
+      interpret(<<-CRYSTAL).should eq(20)
         def baz
           yield
         end
@@ -248,11 +248,11 @@ describe Crystal::Repl::Interpreter do
           end
           20
         end
-      CODE
+      CRYSTAL
     end
 
     it "interprets break inside block (union, through break)" do
-      interpret(<<-CODE).should eq(20)
+      interpret(<<-CRYSTAL).should eq(20)
         def foo
           yield
           'a'
@@ -270,11 +270,11 @@ describe Crystal::Repl::Interpreter do
         else
           30
         end
-      CODE
+      CRYSTAL
     end
 
     it "interprets break inside block (union, through normal flow)" do
-      interpret(<<-CODE).should eq('a')
+      interpret(<<-CRYSTAL).should eq('a')
         def foo
           yield
           'a'
@@ -292,11 +292,11 @@ describe Crystal::Repl::Interpreter do
         else
           'b'
         end
-      CODE
+      CRYSTAL
     end
 
     it "interprets break inside block (union, through return)" do
-      interpret(<<-CODE).should eq('a')
+      interpret(<<-CRYSTAL).should eq('a')
         def foo
           yield
           return 'a'
@@ -314,11 +314,11 @@ describe Crystal::Repl::Interpreter do
         else
           'b'
         end
-      CODE
+      CRYSTAL
     end
 
     it "interprets block with args that conflict with a local var" do
-      interpret(<<-CODE).should eq(201)
+      interpret(<<-CRYSTAL).should eq(201)
         def foo
           yield 1
         end
@@ -331,11 +331,11 @@ describe Crystal::Repl::Interpreter do
         end
 
         x + a
-      CODE
+      CRYSTAL
     end
 
     it "interprets block with args that conflict with a local var" do
-      interpret(<<-CODE).should eq(216)
+      interpret(<<-CRYSTAL).should eq(216)
         def foo
           yield 1
         end
@@ -375,11 +375,11 @@ describe Crystal::Repl::Interpreter do
           x += a
         end
         x + a
-      CODE
+      CRYSTAL
     end
 
     it "clears block local variables when calling block" do
-      interpret(<<-CODE).should eq(20)
+      interpret(<<-CRYSTAL).should eq(20)
         def foo
           yield 1
         end
@@ -406,11 +406,11 @@ describe Crystal::Repl::Interpreter do
         else
           z
         end
-        CODE
+        CRYSTAL
     end
 
     it "clears block local variables when calling block (2)" do
-      interpret(<<-CODE).should eq(20)
+      interpret(<<-CRYSTAL).should eq(20)
         def foo
           yield
         end
@@ -433,11 +433,11 @@ describe Crystal::Repl::Interpreter do
         else
           20
         end
-        CODE
+        CRYSTAL
     end
 
     it "captures non-closure block" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
         def capture(&block : Int32 -> Int32)
           block
         end
@@ -447,11 +447,11 @@ describe Crystal::Repl::Interpreter do
         a = 100
         b = capture { |x| x + 1 }
         b.call(41)
-      CODE
+      CRYSTAL
     end
 
     it "casts yield expression to block var type (not block arg type)" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
         def foo
           yield 42
         end
@@ -466,11 +466,11 @@ describe Crystal::Repl::Interpreter do
         a = 0
         bar { |z| a = z }
         a
-      CODE
+      CRYSTAL
     end
 
     it "interprets with ... yield" do
-      interpret(<<-CODE).should eq(31)
+      interpret(<<-CRYSTAL).should eq(31)
         struct Int32
           def plus(x : Int32)
             self + x
@@ -484,11 +484,11 @@ describe Crystal::Repl::Interpreter do
         foo do |x|
           1 + (plus x)
         end
-      CODE
+      CRYSTAL
     end
 
     it "interprets with ... yield with struct" do
-      interpret(<<-CODE).should eq(2)
+      interpret(<<-CRYSTAL).should eq(2)
         struct Foo
           def initialize
             @x = 1
@@ -511,11 +511,11 @@ describe Crystal::Repl::Interpreter do
           inc
           x
         end
-      CODE
+      CRYSTAL
     end
 
     it "interprets with ... yield with extra arguments (#12296)" do
-      interpret(<<-CODE).should eq(1)
+      interpret(<<-CRYSTAL).should eq(1)
         class Object
           def itself
             self
@@ -529,11 +529,11 @@ describe Crystal::Repl::Interpreter do
         build do |t|
           itself
         end
-      CODE
+      CRYSTAL
     end
 
     it "counts with ... yield scope in block args bytesize (#12316)" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
         class Object
           def itself
             self
@@ -551,11 +551,11 @@ describe Crystal::Repl::Interpreter do
         foo do |x|
           itself &- x
         end
-      CODE
+      CRYSTAL
     end
 
     it "interprets yield with splat (1)" do
-      interpret(<<-CODE).should eq((2 - 3) * 4)
+      interpret(<<-CRYSTAL).should eq((2 - 3) * 4)
         def foo
           t = {2, 3, 4}
           yield *t
@@ -566,11 +566,11 @@ describe Crystal::Repl::Interpreter do
           a = (x1 - x2) * x3
         end
         a
-      CODE
+      CRYSTAL
     end
 
     it "interprets yield with splat (2)" do
-      interpret(<<-CODE).should eq((((1 - 2) * 3) - 4) * 5)
+      interpret(<<-CRYSTAL).should eq((((1 - 2) * 3) - 4) * 5)
         def foo
           t = {2, 3, 4}
           yield 1, *t, 5
@@ -581,11 +581,11 @@ describe Crystal::Repl::Interpreter do
           a = (((x1 - x2) * x3) - x4) * x5
         end
         a
-      CODE
+      CRYSTAL
     end
 
     it "interprets yield with splat, less block arguments" do
-      interpret(<<-CODE).should eq(2 - 3)
+      interpret(<<-CRYSTAL).should eq(2 - 3)
         def foo
           t = {2, 3, 4}
           yield *t
@@ -596,11 +596,11 @@ describe Crystal::Repl::Interpreter do
           a = x1 - x2
         end
         a
-      CODE
+      CRYSTAL
     end
 
     it "interprets block with splat" do
-      interpret(<<-CODE).should eq((((1 - 2) * 3) - 4) * 5)
+      interpret(<<-CRYSTAL).should eq((((1 - 2) * 3) - 4) * 5)
         def foo
           yield 1, 2, 3, 4, 5
         end
@@ -610,11 +610,11 @@ describe Crystal::Repl::Interpreter do
           a = (((x1 - x[0]) * x[1]) - x[2]) * x5
         end
         a
-      CODE
+      CRYSTAL
     end
 
     it "interprets yield with splat, block with splat" do
-      interpret(<<-CODE).should eq((((1 - 2) * 3) - 4) * 5)
+      interpret(<<-CRYSTAL).should eq((((1 - 2) * 3) - 4) * 5)
         def foo
           t = {1, 2, 3}
           yield *t, 4, 5
@@ -625,11 +625,11 @@ describe Crystal::Repl::Interpreter do
           a = (((x1 - x[0]) * x[1]) - x[2]) * x5
         end
         a
-      CODE
+      CRYSTAL
     end
 
     it "interprets yield with splat, block with splat (#12227)" do
-      interpret(<<-CODE).should eq(1)
+      interpret(<<-CRYSTAL).should eq(1)
         def foo
           yield *{ {3, 2} }
         end
@@ -637,11 +637,11 @@ describe Crystal::Repl::Interpreter do
         foo do |x, y|
           x &- y
         end
-      CODE
+      CRYSTAL
     end
 
     it "considers block arg without type as having NoReturn type (#12270)" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
         def bar
           if ptr = nil
             yield ptr
@@ -657,11 +657,11 @@ describe Crystal::Repl::Interpreter do
         end
 
         foo
-      CODE
+      CRYSTAL
     end
 
     it "considers block arg without type as having NoReturn type (2) (#12270)" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
         def bar
           if ptr = nil
             yield ptr
@@ -677,11 +677,11 @@ describe Crystal::Repl::Interpreter do
         end
 
         foo
-      CODE
+      CRYSTAL
     end
 
     it "caches method with captured block (#12276)" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
         def execute(x, &block : -> Int32)
           if x
             execute(false) do
@@ -695,7 +695,7 @@ describe Crystal::Repl::Interpreter do
         execute(true) do
           42
         end
-      CODE
+      CRYSTAL
     end
   end
 end

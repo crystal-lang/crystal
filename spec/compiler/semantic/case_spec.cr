@@ -648,17 +648,17 @@ describe "semantic: case" do
 end
 
 private def bool_case_eq
-  <<-CODE
+  <<-CRYSTAL
   struct Bool
     def ===(other)
       true
     end
   end
-  CODE
+  CRYSTAL
 end
 
 private def enum_eq
-  <<-CODE
+  <<-CRYSTAL
   struct Enum
     def ==(other : self)
       value == other.value
@@ -668,5 +668,5 @@ private def enum_eq
       true
     end
   end
-  CODE
+  CRYSTAL
 end

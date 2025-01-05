@@ -2,6 +2,8 @@ require "./tcp_socket"
 
 # A Transmission Control Protocol (TCP/IP) server.
 #
+# NOTE: To use `TCPServer`, you must explicitly import it with `require "socket"`
+#
 # Usage example:
 # ```
 # require "socket"
@@ -64,7 +66,7 @@ class TCPServer < TCPSocket
   # server socket when the block returns.
   #
   # Returns the value of the block.
-  def self.open(host, port, backlog = SOMAXCONN, reuse_port = false)
+  def self.open(host, port, backlog = SOMAXCONN, reuse_port = false, &)
     server = new(host, port, backlog, reuse_port: reuse_port)
     begin
       yield server
@@ -77,7 +79,7 @@ class TCPServer < TCPSocket
   # block. Eventually closes the server socket when the block returns.
   #
   # Returns the value of the block.
-  def self.open(port : Int, backlog = SOMAXCONN, reuse_port = false)
+  def self.open(port : Int, backlog = SOMAXCONN, reuse_port = false, &)
     server = new(port, backlog, reuse_port: reuse_port)
     begin
       yield server

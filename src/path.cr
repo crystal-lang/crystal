@@ -225,7 +225,9 @@ struct Path
       "."
     else # Path has a parent (ex. "a/a", "/home/user//", "C://Users/mmm")
       return String.new(slice[0, 1]) if pos == -1
-      return anchor.to_s if windows? && pos == 1 && slice.unsafe_fetch(pos) === ':' && (anchor = self.anchor)
+      if windows? && pos == 1 && slice.unsafe_fetch(pos) === ':' && (anchor = self.anchor)
+        return anchor.to_s
+      end
       String.new(slice[0, pos + 1])
     end
   end
@@ -526,7 +528,7 @@ struct Path
     PartIterator.new(self)
   end
 
-  private def each_part_separator_index
+  private def each_part_separator_index(&)
     reader = Char::Reader.new(@name)
     start_pos = reader.pos
 
@@ -623,7 +625,7 @@ struct Path
       end
 
       @reader = reader
-      return 0
+      0
     end
   end
 
@@ -1031,7 +1033,7 @@ struct Path
       end
     end
 
-    return path
+    path
   end
 
   # :ditto:
@@ -1211,9 +1213,11 @@ struct Path
     reader.next_char
 
     # 2. Consume first path component
-    # The first component is either an IP address or a hostname.
+    # The first component is either an IPv4 address or a hostname.
+    # IPv6 addresses are converted into hostnames by replacing all `:`s with
+    # `-`s, and then appending `.ipv6-literal.net`, so raw IPv6 addresses cannot
+    # appear here.
     # Hostname follows the grammar of `reg-name` in [RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986).
-    # TODO: Add support for IPv6 address grammar
     return if separators.includes?(reader.current_char)
     while true
       char = reader.current_char

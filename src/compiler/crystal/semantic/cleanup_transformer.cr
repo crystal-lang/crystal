@@ -120,10 +120,16 @@ module Crystal
       @last_is_falsey = false
     end
 
-    def compute_last_truthiness
+    def compute_last_truthiness(&)
       reset_last_status
       yield
       {@last_is_truthy, @last_is_falsey}
+    end
+
+    def transform(node : AnnotationDef)
+      @program.check_call_to_deprecated_annotation node
+
+      node
     end
 
     def transform(node : Def)
@@ -246,6 +252,54 @@ module Crystal
           end
         end
       end
+      nil
+    end
+
+    def transform(node : StringInterpolation)
+      # See if we can solve all the pieces to string literals.
+      # If that's the case, we can replace the entire interpolation
+      # with a single string literal.
+      pieces = node.expressions.dup
+      solve_string_interpolation_expressions(pieces)
+
+      if pieces.all?(StringLiteral)
+        string = pieces.join(&.as(StringLiteral).value)
+        string_literal = StringLiteral.new(string).at(node)
+        string_literal.type = @program.string
+        return string_literal
+      end
+
+      if expanded = node.expanded
+        return expanded.transform(self)
+      end
+      node
+    end
+
+    private def solve_string_interpolation_expressions(pieces : Array(ASTNode))
+      pieces.each_with_index do |piece, i|
+        replacement = solve_string_interpolation_expression(piece)
+        next unless replacement
+
+        pieces[i] = replacement
+      end
+    end
+
+    private def solve_string_interpolation_expression(piece : ASTNode) : StringLiteral?
+      if piece.is_a?(ExpandableNode)
+        if expanded = piece.expanded
+          return solve_string_interpolation_expression(expanded)
+        end
+      end
+
+      case piece
+      when Path
+        if target_const = piece.target_const
+          return solve_string_interpolation_expression(target_const.value)
+        end
+      when StringLiteral
+        return piece
+      end
+
       nil
     end
 
@@ -386,15 +440,15 @@ module Crystal
     end
 
     private def void_lib_call?(node)
-      return unless node.is_a?(Call)
+      return false unless node.is_a?(Call)
 
       obj = node.obj
-      return unless obj.is_a?(Path)
+      return false unless obj.is_a?(Path)
 
       type = obj.type?
-      return unless type.is_a?(LibType)
+      return false unless type.is_a?(LibType)
 
-      node.type?.try &.nil_type?
+      !!node.type?.try &.nil_type?
     end
 
     def transform(node : Global)
@@ -410,7 +464,9 @@ module Crystal
         return expanded.transform self
       end
 
-      @program.check_call_to_deprecated_method(node)
+      unless @current_def.try(&.annotation(@program.deprecated_annotation))
+        @program.check_call_to_deprecated_method(node)
+      end
 
       # Need to transform these manually because node.block doesn't
       # need to be transformed if it has a fun_literal
@@ -508,42 +564,43 @@ module Crystal
         return exps
       end
 
-      target_defs = node.target_defs
-      if target_defs.size == 1
-        if target_defs.first.is_a?(External)
-          check_args_are_not_closure node, "can't send closure to C function"
-        elsif obj_type && obj_type.extern? && node.name.ends_with?('=')
-          check_args_are_not_closure node, "can't set closure as C #{obj_type.type_desc} member"
-        end
-      end
-
-      current_def = @current_def
-
-      target_defs.each do |target_def|
-        if @transformed.add?(target_def)
-          node.bubbling_exception do
-            @current_def = target_def
-            @def_nest_count += 1
-            target_def.body = target_def.body.transform(self)
-            @def_nest_count -= 1
-            @current_def = current_def
+      if target_defs = node.target_defs
+        if target_defs.size == 1
+          if target_defs[0].is_a?(External)
+            check_args_are_not_closure node, "can't send closure to C function"
+          elsif obj_type && obj_type.extern? && node.name.ends_with?('=')
+            check_args_are_not_closure node, "can't set closure as C #{obj_type.type_desc} member"
           end
         end
 
-        # If the current call targets a method that raises, the method
-        # where the call happens also raises.
-        current_def.raises = true if current_def && target_def.raises?
-      end
+        current_def = @current_def
 
-      if target_defs.empty?
-        exps = [] of ASTNode
-        if obj = node.obj
-          exps.push obj
+        target_defs.each do |target_def|
+          if @transformed.add?(target_def)
+            node.bubbling_exception do
+              @current_def = target_def
+              @def_nest_count += 1
+              target_def.body = target_def.body.transform(self)
+              @def_nest_count -= 1
+              @current_def = current_def
+            end
+          end
+
+          # If the current call targets a method that raises, the method
+          # where the call happens also raises.
+          current_def.raises = true if current_def && target_def.raises?
         end
-        node.args.each { |arg| exps.push arg }
-        call_exps = Expressions.from exps
-        call_exps.set_type(exps.last.type?) unless exps.empty?
-        return call_exps
+
+        if node.target_defs.not_nil!.empty?
+          exps = [] of ASTNode
+          if obj = node.obj
+            exps.push obj
+          end
+          node.args.each { |arg| exps.push arg }
+          call_exps = Expressions.from exps
+          call_exps.set_type(exps.last.type?) unless exps.empty?
+          return call_exps
+        end
       end
 
       node.replace_splats
@@ -578,10 +635,12 @@ module Crystal
         if @a_def.vars.try &.[node.name]?.try &.closured?
           @vars << node
         end
+        false
       end
 
       def visit(node : InstanceVar)
         @vars << node
+        false
       end
 
       def visit(node : ASTNode)
@@ -723,7 +782,7 @@ module Crystal
 
       # If the yield has a no-return expression, the yield never happens:
       # replace it with a series of expressions up to the one that no-returns.
-      no_return_index = node.exps.index &.no_returns?
+      no_return_index = node.exps.index { |exp| !exp.type? || exp.no_returns? }
       if no_return_index
         exps = Expressions.new(node.exps[0, no_return_index + 1])
         exps.bind_to(exps.expressions.last)
@@ -822,7 +881,7 @@ module Crystal
       transform_is_a_or_responds_to node, &.filter_by_responds_to(node.name)
     end
 
-    def transform_is_a_or_responds_to(node)
+    def transform_is_a_or_responds_to(node, &)
       obj = node.obj
 
       if obj_type = obj.type?
@@ -946,6 +1005,23 @@ module Crystal
       node
     end
 
+    def transform(node : InstanceAlignOf)
+      exp_type = node.exp.type?
+
+      if exp_type
+        instance_type = exp_type.devirtualize
+        if instance_type.struct? || instance_type.module? || instance_type.metaclass? || instance_type.is_a?(UnionType)
+          node.exp.raise "instance_alignof can only be used with a class, but #{instance_type} is a #{instance_type.type_desc}"
+        end
+      end
+
+      if expanded = node.expanded
+        return expanded.transform self
+      end
+
+      node
+    end
+
     def transform(node : TupleLiteral)
       super
 
@@ -1002,7 +1078,7 @@ module Crystal
       # For `allocate` on a virtual abstract type we make `extra`
       # be a call to `raise` at runtime. Here we just replace the
       # "allocate" primitive with that raise call.
-      if node.name == "allocate" && extra
+      if node.name.in?("allocate", "pre_initialize") && extra
         return extra
       end
 

@@ -64,7 +64,7 @@ class Crystal::Repl::ClassVars
 
   # Yields each index of every class variable that is trivially "initialized"
   # when the program starts: those that don't have initializers.
-  def each_initialized_index
+  def each_initialized_index(&)
     @data.each_value do |value|
       yield value.index unless value.compiled_def
     end

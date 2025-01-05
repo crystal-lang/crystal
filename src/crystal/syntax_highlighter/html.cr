@@ -52,7 +52,7 @@ class Crystal::SyntaxHighlighter::HTML < Crystal::SyntaxHighlighter
     when .string?
       span "s" { ::HTML.escape(value, @io) }
     when .ident?
-      span "m", &.print value
+      span "m" { ::HTML.escape(value, @io) }
     when .keyword?, .self?
       span "k", &.print value
     when .primitive_literal?

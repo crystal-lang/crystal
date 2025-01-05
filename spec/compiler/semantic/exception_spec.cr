@@ -145,11 +145,19 @@ describe "Semantic: exception" do
   end
 
   it "errors if caught exception is not a subclass of Exception" do
-    assert_error "begin; rescue ex : Int32; end", "Int32 is not a subclass of Exception"
+    assert_error "begin; rescue ex : Int32; end", "Int32 cannot be used for `rescue`. Only subclasses of `Exception` and modules, or unions thereof, are allowed."
+  end
+
+  it "errors if caught exception is a union but not all types are valid" do
+    assert_error "begin; rescue ex : Union(Exception, String); end", "(Exception | String) cannot be used for `rescue`. Only subclasses of `Exception` and modules, or unions thereof, are allowed."
+  end
+
+  it "errors if caught exception is a nested union but not all types are valid" do
+    assert_error "begin; rescue ex : Union(Exception, Union(Exception, String)); end", "(Exception | String) cannot be used for `rescue`. Only subclasses of `Exception` and modules, or unions thereof, are allowed."
   end
 
   it "errors if caught exception is not a subclass of Exception without var" do
-    assert_error "begin; rescue Int32; end", "Int32 is not a subclass of Exception"
+    assert_error "begin; rescue Int32; end", "Int32 cannot be used for `rescue`. Only subclasses of `Exception` and modules, or unions thereof, are allowed."
   end
 
   assert_syntax_error "begin; rescue ex; rescue ex : Foo; end; ex",
@@ -695,7 +703,7 @@ describe "Semantic: exception" do
   end
 
   it "gets a non-nilable type if all rescue are unreachable (#8751)" do
-    assert_no_errors <<-CR, inject_primitives: true
+    assert_no_errors <<-CRYSTAL, inject_primitives: true
       while true
         begin
           foo = 1
@@ -707,7 +715,7 @@ describe "Semantic: exception" do
 
         foo &+ 2
       end
-      CR
+      CRYSTAL
   end
 
   it "correctly types variable assigned inside nested exception handler (#9769)" do

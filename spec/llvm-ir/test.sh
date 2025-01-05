@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# TODO: the specs in this folder still expect typed pointers and so will fail
+# on LLVM 15+ which use opaque pointers
+
 set -euo pipefail
 
 SCRIPT_PATH="$(realpath "$0")"

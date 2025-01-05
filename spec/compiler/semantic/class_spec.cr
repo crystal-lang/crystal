@@ -35,7 +35,7 @@ describe "Semantic: class" do
   end
 
   it "types generic of generic type" do
-    result = assert_type("
+    assert_type("
       class Foo(T)
         def set
           @coco = 2
@@ -381,6 +381,20 @@ describe "Semantic: class" do
       #{code}
       Mod::Foo.foo(Bar.new)
       ") { char }
+  end
+
+  it "type def does not reopen type from parent namespace (#11181)" do
+    assert_type <<-CR, inject_primitives: false { types["Baz"].types["Foo"].types["Bar"].metaclass }
+      class Foo::Bar
+      end
+
+      module Baz
+        class Foo::Bar
+        end
+      end
+
+      Baz::Foo::Bar
+      CR
   end
 
   it "finds in global scope if includes module" do
@@ -1116,7 +1130,7 @@ describe "Semantic: class" do
   end
 
   it "errors if inherits from metaclass" do
-    assert_error <<-CR, "Foo.class is not a class, it's a metaclass"
+    assert_error <<-CRYSTAL, "Foo.class is not a class, it's a metaclass"
       class Foo
       end
 
@@ -1124,7 +1138,7 @@ describe "Semantic: class" do
 
       class Bar < FooClass
       end
-      CR
+      CRYSTAL
   end
 
   it "can use short name for top-level type" do

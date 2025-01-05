@@ -5,6 +5,15 @@ require "crystal/at_exit_handlers"
 {% end %}
 
 # The standard input file descriptor. Contains data piped to the program.
+#
+# On Unix systems, if the file descriptor is a TTY, the runtime duplicates it.
+# So `STDIN.fd` might not be `0`.
+# The reason for this is to enable non-blocking reads for concurrency. Other fibers
+# can run while waiting on user input. The original file descriptor is
+# inherited from the parent process. Setting it to non-blocking mode would
+# reflect back, which can cause problems.
+#
+# On Windows, `STDIN` is always blocking.
 STDIN = IO::FileDescriptor.from_stdio(0)
 
 # The standard output file descriptor.
@@ -22,6 +31,15 @@ STDIN = IO::FileDescriptor.from_stdio(0)
 #   This is convenient but slower than with `flush_on_newline` set to `false`.
 #   If you need a bit more performance and you don't care about near real-time
 #   output you can do `STDOUT.flush_on_newline = false`.
+#
+# On Unix systems, if the file descriptor is a TTY, the runtime duplicates it.
+# So `STDOUT.fd` might not be `1`.
+# The reason for this is to enable non-blocking writes for concurrency. Other fibers
+# can run while waiting on IO. The original file descriptor is
+# inherited from the parent process. Setting it to non-blocking mode would
+# reflect back which can cause problems.
+#
+# On Windows, `STDOUT` is always blocking.
 STDOUT = IO::FileDescriptor.from_stdio(1)
 
 # The standard error file descriptor.
@@ -39,9 +57,24 @@ STDOUT = IO::FileDescriptor.from_stdio(1)
 #   This is convenient but slower than with `flush_on_newline` set to `false`.
 #   If you need a bit more performance and you don't care about near real-time
 #   output you can do `STDERR.flush_on_newline = false`.
+#
+# On Unix systems, if the file descriptor is a TTY, the runtime duplicates it.
+# So `STDERR.fd` might not be `2`.
+# The reason for this is to enable non-blocking writes for concurrency. Other fibers
+# can run while waiting on IO. The original file descriptor is
+# inherited from the parent process. Setting it to non-blocking mode would
+# reflect back which can cause problems.
+#
+# On Windows, `STDERR` is always blocking.
 STDERR = IO::FileDescriptor.from_stdio(2)
 
 # The name, the program was called with.
+#
+# The result may be a relative or absolute path (including symbolic links),
+# just the command name or the empty string.
+#
+# See `Process.executable_path` for a more convenient alternative that always
+# returns the absolute real path to the executable file (if it exists).
 PROGRAM_NAME = String.new(ARGV_UNSAFE.value)
 
 # An array of arguments passed to the program.
@@ -89,6 +122,13 @@ ARGV = Array.new(ARGC_UNSAFE - 1) { |i| String.new(ARGV_UNSAFE[1 + i]) }
 # ```
 ARGF = IO::ARGF.new(ARGV, STDIN)
 
+# The newline constant
+EOL = {% if flag?(:windows) %}
+        "\r\n"
+      {% else %}
+        "\n"
+      {% end %}
+
 # Repeatedly executes the block.
 #
 # ```
@@ -98,7 +138,7 @@ ARGF = IO::ARGF.new(ARGV, STDIN)
 #   # ...
 # end
 # ```
-def loop
+def loop(&)
   while true
     yield
   end
@@ -298,7 +338,7 @@ end
 # sprintf "%b", -123   # => "-1111011"
 # sprintf "%#b", 0     # => "0"
 # sprintf "% b", 123   # => " 1111011"
-# sprintf "%+ b", 123  # => "+ 1111011"
+# sprintf "%+ b", 123  # => "+1111011"
 # sprintf "% b", -123  # => "-1111011"
 # sprintf "%+ b", -123 # => "-1111011"
 # sprintf "%#b", 123   # => "0b1111011"
@@ -478,7 +518,16 @@ def pp(**objects)
   pp(objects) unless objects.empty?
 end
 
-# Registers the given `Proc` for execution when the program exits.
+# Registers the given `Proc` for execution when the program exits regularly.
+#
+# A regular exit happens when either
+# * the main fiber reaches the end of the program,
+# * the main fiber rescues an unhandled exception, or
+# * `::exit` is called.
+#
+# `Process.exit` does *not* trigger `at_exit` handlers, nor does external process
+# termination (see `Process.on_terminate` for handling that).
+#
 # If multiple handlers are registered, they are executed in reverse order of registration.
 #
 # ```
@@ -528,21 +577,21 @@ def abort(message = nil, status = 1) : NoReturn
   exit status
 end
 
-{% unless flag?(:preview_mt) || flag?(:wasm32) %}
+{% if !flag?(:preview_mt) && flag?(:unix) %}
   class Process
     # :nodoc:
     #
     # Hooks are defined here due to load order problems.
     def self.after_fork_child_callbacks
       @@after_fork_child_callbacks ||= [
-        # clean ups (don't depend on event loop):
-        ->Crystal::Signal.after_fork,
-        ->Crystal::SignalChildHandler.after_fork,
+        # reinit event loop first:
+        -> { Crystal::EventLoop.current.after_fork },
 
-        # reinit event loop:
-        ->Crystal::EventLoop.after_fork,
+        # reinit signal handling:
+        ->Crystal::System::Signal.after_fork,
+        ->Crystal::System::SignalChildHandler.after_fork,
 
-        # more clean ups (may depend on event loop):
+        # additional reinitialization
         ->Random::DEFAULT.new_seed,
       ] of -> Nil
     end
@@ -550,18 +599,6 @@ end
 {% end %}
 
 {% unless flag?(:interpreted) || flag?(:wasm32) %}
-  # Background loop to cleanup unused fiber stacks.
-  spawn(name: "Fiber Clean Loop") do
-    loop do
-      sleep 5
-      Fiber.stack_pool.collect
-    end
-  end
-
-  {% unless flag?(:win32) %}
-    Signal.setup_default_handlers
-  {% end %}
-
   # load debug info on start up of the program is executed with CRYSTAL_LOAD_DEBUG_INFO=1
   # this will make debug info available on print_frame that is used by Crystal's segfault handler
   #
@@ -571,7 +608,15 @@ end
   Exception::CallStack.load_debug_info if ENV["CRYSTAL_LOAD_DEBUG_INFO"]? == "1"
   Exception::CallStack.setup_crash_handler
 
-  {% if flag?(:preview_mt) %}
-    Crystal::Scheduler.init_workers
+  Crystal::Scheduler.init
+
+  {% if flag?(:win32) %}
+    Crystal::System::Process.start_interrupt_loop
+  {% else %}
+    Crystal::System::Signal.setup_default_handlers
   {% end %}
+{% end %}
+
+{% if flag?(:interpreted) && flag?(:unix) && Crystal::Interpreter.has_method?(:signal_descriptor) %}
+  Crystal::System::Signal.setup_default_handlers
 {% end %}

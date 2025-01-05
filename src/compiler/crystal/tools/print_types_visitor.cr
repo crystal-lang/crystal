@@ -39,10 +39,12 @@ module Crystal
 
     def visit(node : Var)
       output_name node
+      false
     end
 
     def visit(node : Global)
       output_name node
+      false
     end
 
     def visit(node : TypeDeclaration)
@@ -50,6 +52,7 @@ module Crystal
       if var.is_a?(Var)
         output_name var
       end
+      false
     end
 
     def visit(node : UninitializedVar)
@@ -57,6 +60,7 @@ module Crystal
       if var.is_a?(Var)
         output_name var
       end
+      false
     end
 
     def output_name(node)

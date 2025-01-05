@@ -37,7 +37,7 @@ abstract class Digest
     #   ctx.update "f"
     #   ctx.update "oo"
     # end
-    # digest.hexfinal # => "acbd18db4cc2f85cedef654fccc4a4d8"
+    # digest.hexstring # => "acbd18db4cc2f85cedef654fccc4a4d8"
     # ```
     def digest(& : self ->) : Bytes
       context = new
@@ -213,13 +213,15 @@ abstract class Digest
   # Reads the file's content and updates the digest with it.
   def file(file_name : Path | String) : self
     File.open(file_name) do |io|
+      # `#update` works with big buffers so there's no need for additional read buffering in the file
+      io.read_buffering = false
       self << io
     end
   end
 
   # Reads the io's data and updates the digest with it.
   def update(io : IO) : self
-    buffer = uninitialized UInt8[4096]
+    buffer = uninitialized UInt8[IO::DEFAULT_BUFFER_SIZE]
     while (read_bytes = io.read(buffer.to_slice)) > 0
       self << buffer.to_slice[0, read_bytes]
     end

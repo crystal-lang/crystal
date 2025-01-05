@@ -409,9 +409,6 @@ describe Path do
     assert_paths("\\\\%10%20\\share\\", nil, "\\\\%10%20\\share", &.drive)
     assert_paths("\\\\_.-~!$;=&'()*+,aB1\\ !-.@^_`{}~#$%&'()aB1\\", nil, "\\\\_.-~!$;=&'()*+,aB1\\ !-.@^_`{}~#$%&'()aB1", &.drive)
     assert_paths("\\\\127.0.0.1\\share\\", nil, "\\\\127.0.0.1\\share", &.drive)
-    pending do
-      assert_paths("\\\\2001:4860:4860::8888\\share\\", nil, "\\\\2001:4860:4860::8888\\share", &.drive)
-    end
   end
 
   describe "#root" do
@@ -934,7 +931,7 @@ describe Path do
     assert_paths_raw("foo..txt/", "foo.", &.stem)
   end
 
-  describe ".home" do
+  pending_wasm32 describe: ".home" do
     it "uses home from environment variable if set" do
       with_env({HOME_ENV_KEY => "foo/bar"}) do
         Path.home.should eq(Path.new("foo/bar"))

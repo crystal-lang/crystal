@@ -1,5 +1,7 @@
 # `StringScanner` provides for lexical scanning operations on a `String`.
 #
+# NOTE: To use `StringScanner`, you must explicitly import it with `require "string_scanner"`
+#
 # ### Example
 #
 # ```
@@ -59,7 +61,7 @@
 # * `#inspect`
 # * `#string`
 class StringScanner
-  @last_match : Regex::MatchData?
+  @last_match : Regex::MatchData | StringMatchData | Nil
 
   def initialize(@str : String)
     @byte_offset = 0
@@ -84,13 +86,25 @@ class StringScanner
   # require "string_scanner"
   #
   # s = StringScanner.new("test string")
-  # s.scan(/\w+/)   # => "test"
-  # s.scan(/\w+/)   # => nil
-  # s.scan(/\s\w+/) # => " string"
-  # s.scan(/.*/)    # => ""
+  # s.scan(/\w+/)  # => "test"
+  # s.scan(/\w+/)  # => nil
+  # s.scan(/\s\w/) # => " s"
+  # s.scan('t')    # => "t"
+  # s.scan("ring") # => "ring"
+  # s.scan(/.*/)   # => ""
   # ```
-  def scan(pattern) : String?
-    match(pattern, advance: true, options: Regex::Options::ANCHORED)
+  def scan(pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : String?
+    match(pattern, advance: true, options: options | Regex::MatchOptions::ANCHORED)
+  end
+
+  # :ditto:
+  def scan(pattern : String) : String?
+    match(pattern, advance: true, anchored: true)
+  end
+
+  # :ditto:
+  def scan(pattern : Char) : String?
+    match(pattern, advance: true, anchored: true)
   end
 
   # Scans the string _until_ the *pattern* is matched. Returns the substring up
@@ -101,15 +115,26 @@ class StringScanner
   # require "string_scanner"
   #
   # s = StringScanner.new("test string")
-  # s.scan_until(/tr/) # => "test str"
-  # s.scan_until(/tr/) # => nil
-  # s.scan_until(/g/)  # => "ing"
+  # s.scan_until(/ s/) # => "test s"
+  # s.scan_until(/ s/) # => nil
+  # s.scan_until('r')  # => "tr"
+  # s.scan_until("ng") # => "ing"
   # ```
-  def scan_until(pattern) : String?
-    match(pattern, advance: true, options: Regex::Options::None)
+  def scan_until(pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : String?
+    match(pattern, advance: true, options: options)
   end
 
-  private def match(pattern, advance = true, options = Regex::Options::ANCHORED)
+  # :ditto:
+  def scan_until(pattern : String) : String?
+    match(pattern, advance: true, anchored: false)
+  end
+
+  # :ditto:
+  def scan_until(pattern : Char) : String?
+    match(pattern, advance: true, anchored: false)
+  end
+
+  private def match(pattern : Regex, advance = true, options = Regex::MatchOptions::ANCHORED)
     match = pattern.match_at_byte_index(@str, @byte_offset, options)
     @last_match = match
     if match
@@ -123,6 +148,32 @@ class StringScanner
     end
   end
 
+  private def match(pattern : String | Char, advance = true, anchored = true)
+    @last_match = nil
+    if pattern.bytesize > @str.bytesize - @byte_offset
+      nil
+    elsif anchored
+      i = 0
+      # check string starts with string or char
+      unsafe_ptr = @str.to_unsafe + @byte_offset
+      pattern.each_byte do |byte|
+        return nil unless unsafe_ptr[i] == byte
+        i += 1
+      end
+      # ok, it starts
+      result = pattern.to_s
+      @last_match = StringMatchData.new(result)
+      @byte_offset += pattern.bytesize if advance
+      result
+    elsif (found = @str.byte_index(pattern, @byte_offset))
+      finish = found + pattern.bytesize
+      result = @str.byte_slice(@byte_offset, finish - @byte_offset)
+      @byte_offset = finish if advance
+      @last_match = StringMatchData.new(result)
+      result
+    end
+  end
+
   # Attempts to skip over the given *pattern* beginning with the scan offset.
   # In other words, the pattern is not anchored to the current scan offset.
   #
@@ -132,7 +183,19 @@ class StringScanner
   #
   # This method is the same as `#scan`, but without returning the matched
   # string.
-  def skip(pattern) : Int32?
+  def skip(pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Int32?
+    match = scan(pattern, options: options)
+    match.size if match
+  end
+
+  # :ditto:
+  def skip(pattern : String) : Int32?
+    match = scan(pattern)
+    match.size if match
+  end
+
+  # :ditto:
+  def skip(pattern : Char) : Int32?
     match = scan(pattern)
     match.size if match
   end
@@ -148,7 +211,19 @@ class StringScanner
   #
   # This method is the same as `#scan_until`, but without returning the matched
   # string.
-  def skip_until(pattern) : Int32?
+  def skip_until(pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Int32?
+    match = scan_until(pattern, options: options)
+    match.size if match
+  end
+
+  # :ditto:
+  def skip_until(pattern : String) : Int32?
+    match = scan_until(pattern)
+    match.size if match
+  end
+
+  # :ditto:
+  def skip_until(pattern : Char) : Int32?
     match = scan_until(pattern)
     match.size if match
   end
@@ -164,8 +239,18 @@ class StringScanner
   # s.check(/\w+/) # => "is"
   # s.check(/\w+/) # => "is"
   # ```
-  def check(pattern) : String?
-    match(pattern, advance: false, options: Regex::Options::ANCHORED)
+  def check(pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : String?
+    match(pattern, advance: false, options: options | Regex::MatchOptions::ANCHORED)
+  end
+
+  # :ditto:
+  def check(pattern : String) : String?
+    match(pattern, advance: false, anchored: true)
+  end
+
+  # :ditto:
+  def check(pattern : Char) : String?
+    match(pattern, advance: false, anchored: true)
   end
 
   # Returns the value that `#scan_until` would return, without advancing the
@@ -178,8 +263,18 @@ class StringScanner
   # s.check_until(/tr/) # => "test str"
   # s.check_until(/g/)  # => "test string"
   # ```
-  def check_until(pattern) : String?
-    match(pattern, advance: false, options: Regex::Options::None)
+  def check_until(pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : String?
+    match(pattern, advance: false, options: options)
+  end
+
+  # :ditto:
+  def check_until(pattern : String) : String?
+    match(pattern, advance: false, anchored: false)
+  end
+
+  # :ditto:
+  def check_until(pattern : Char) : String?
+    match(pattern, advance: false, anchored: false)
   end
 
   # Returns the *n*-th subgroup in the most recent match.
@@ -290,5 +385,39 @@ class StringScanner
     io << offset << '/' << @str.size
     start = Math.min(Math.max(offset - 2, 0), Math.max(0, @str.size - 5))
     io << " \"" << @str[start, 5] << "\" >"
+  end
+
+  # :nodoc:
+  struct StringMatchData
+    def initialize(@str : String)
+    end
+
+    def []?(n : Int) : String?
+      return unless n == 0 || n == -1
+      @str
+    end
+
+    def [](n : Int) : String
+      self[n]? || raise IndexError.new("Invalid capture group index: #{n}")
+    end
+
+    def []?(group_name : String) : String?
+      nil
+    end
+
+    def [](group_name : String) : String
+      raise KeyError.new("Capture group '#{group_name}' does not exist")
+    end
+
+    def []?(range : Range) : Array(String)?
+      start, count = Indexable.range_to_index_and_count(range, 1) || return nil
+      start, count = Indexable.normalize_start_and_count(start, count, 1) { return nil }
+      return [] of String if count == 0
+      [@str]
+    end
+
+    def [](range : Range) : Array(String)
+      self[range]? || raise IndexError.new
+    end
   end
 end

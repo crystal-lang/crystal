@@ -12,7 +12,7 @@ module Crystal
     getter stage_progress = 0
     getter stage_progress_total : Int32?
 
-    def stage(name)
+    def stage(name, &)
       @current_stage_name = name
 
       print_stats

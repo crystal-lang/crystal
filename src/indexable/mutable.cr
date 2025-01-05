@@ -259,7 +259,7 @@ module Indexable::Mutable(T)
   # a.shuffle!(Random.new(42)) # => [3, 2, 4, 5, 1]
   # a                          # => [3, 2, 4, 5, 1]
   # ```
-  def shuffle!(random = Random::DEFAULT) : self
+  def shuffle!(random : Random = Random::DEFAULT) : self
     (size - 1).downto(1) do |i|
       j = random.rand(i + 1)
       swap(i, j)
@@ -374,7 +374,7 @@ module Indexable::Mutable(T)
   # Raises `ArgumentError` if for any two elements the block returns `nil`.
   def sort!(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
-      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
 
     slice = Slice.new(size) { |i| unsafe_fetch(i) }.sort!(&block)
@@ -406,7 +406,7 @@ module Indexable::Mutable(T)
   # Raises `ArgumentError` if for any two elements the block returns `nil`.
   def unstable_sort!(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
-      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
 
     slice = Slice.new(size) { |i| unsafe_fetch(i) }.unstable_sort!(&block)

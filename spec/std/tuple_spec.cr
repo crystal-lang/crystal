@@ -225,7 +225,7 @@ describe "Tuple" do
       Tuple(Int32).from([1, 2])
     end
 
-    expect_raises(TypeCastError, /cast from String to Int32 failed/) do
+    expect_raises(TypeCastError, /[Cc]ast from String to Int32 failed/) do
       Tuple(Int32, String).from(["foo", 1])
     end
   end
@@ -239,7 +239,7 @@ describe "Tuple" do
       {Int32}.from([1, 2])
     end
 
-    expect_raises(TypeCastError, /cast from String to Int32 failed/) do
+    expect_raises(TypeCastError, /[Cc]ast from String to Int32 failed/) do
       {Int32, String}.from(["foo", 1])
     end
   end
@@ -341,4 +341,24 @@ describe "Tuple" do
     ary = Tuple.new.to_a
     ary.size.should eq(0)
   end
+
+  # Tuple#to_static_array don't compile on aarch64-darwin and
+  # aarch64-linux-musl due to a codegen error caused by LLVM < 13.0.0.
+  # See https://github.com/crystal-lang/crystal/issues/11358 for details.
+  {% unless compare_versions(Crystal::LLVM_VERSION, "13.0.0") < 0 && flag?(:aarch64) && (flag?(:musl) || flag?(:darwin) || flag?(:android)) %}
+    it "#to_static_array" do
+      ary = {1, 'a', true}.to_static_array
+      ary.should be_a(StaticArray(Int32 | Char | Bool, 3))
+      ary.should eq(StaticArray[1, 'a', true])
+      ary.size.should eq(3)
+
+      ary = Tuple.new.to_static_array
+      ary.should be_a(StaticArray(NoReturn, 0))
+      ary.size.should eq(0)
+
+      ary = Tuple(String | Int32).new(1).to_static_array
+      ary.should be_a(StaticArray(String | Int32, 1))
+      ary.should eq StaticArray[1.as(String | Int32)]
+    end
+  {% end %}
 end

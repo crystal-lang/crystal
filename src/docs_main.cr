@@ -47,17 +47,16 @@ require "./option_parser"
 require "./path"
 require "./random/**"
 require "./semantic_version"
-{% unless flag?(:win32) %}
-  require "./signal"
-{% end %}
+require "./signal"
 require "./string_pool"
 require "./string_scanner"
 require "./unicode/unicode"
 require "./uri"
+require "./uri/json"
+require "./uri/params/serializable"
 require "./uuid"
 require "./uuid/json"
 require "./syscall"
-{% unless flag?(:win32) %}
-  require "./system/*"
-{% end %}
+require "./system/*"
+require "./wait_group"
 require "./docs_pseudo_methods"

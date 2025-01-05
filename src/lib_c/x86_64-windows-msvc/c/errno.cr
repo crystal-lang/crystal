@@ -46,6 +46,7 @@ lib LibC
   ECONNRESET   = 108
   EINPROGRESS  = 112
   EISCONN      = 113
+  ELOOP        = 114
   ENOPROTOOPT  = 123
 
   alias ErrnoT = Int

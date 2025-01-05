@@ -2,7 +2,7 @@ require "../program"
 
 module Crystal
   class Program
-    def type_merge(types : Indexable(Type?)) : Type?
+    def type_merge(types : Array(Type?)) : Type?
       case types.size
       when 0
         nil
@@ -17,7 +17,7 @@ module Crystal
       end
     end
 
-    def type_merge(nodes : Indexable(ASTNode)) : Type?
+    def type_merge(nodes : Enumerable(ASTNode)) : Type?
       case nodes.size
       when 0
         nil
@@ -25,8 +25,10 @@ module Crystal
         nodes.first.type?
       when 2
         # Merging two types is the most common case, so we optimize it
-        first, second = nodes
-        type_merge(first.type?, second.type?)
+        # We use `#each_cons_pair` to avoid any intermediate allocation
+        nodes.each_cons_pair do |first, second|
+          return type_merge(first.type?, second.type?)
+        end
       else
         combined_union_of compact_types(nodes, &.type?)
       end
@@ -46,12 +48,11 @@ module Crystal
       return second if first.no_return?
       return first if second.no_return?
 
-      # Check if a non-union type is part of a union type
-      if !first.is_a?(UnionType) && second.is_a?(UnionType) && second.union_types.includes?(first)
+      if first.nil_type? && second.is_a?(UnionType) && second.union_types.includes?(first)
         return second
       end
 
-      if !second.is_a?(UnionType) && first.is_a?(UnionType) && first.union_types.includes?(second)
+      if second.nil_type? && first.is_a?(UnionType) && first.union_types.includes?(second)
         return first
       end
 
@@ -67,7 +68,7 @@ module Crystal
       compact_types(types) { |type| type }
     end
 
-    def compact_types(objects) : Array(Type)
+    def compact_types(objects, &) : Array(Type)
       all_types = Array(Type).new(objects.size)
       objects.each { |obj| add_type all_types, yield(obj) }
       all_types.reject! &.no_return? if all_types.size > 1
@@ -162,11 +163,11 @@ module Crystal
   end
 
   class Type
-    def self.merge(nodes : Indexable(ASTNode)) : Type?
+    def self.merge(nodes : Enumerable(ASTNode)) : Type?
       nodes.find(&.type?).try &.type.program.type_merge(nodes)
     end
 
-    def self.merge(types : Indexable(Type)) : Type?
+    def self.merge(types : Array(Type)) : Type?
       if types.size == 0
         nil
       else
@@ -208,7 +209,7 @@ module Crystal
 
     def self.least_common_ancestor(
       type1 : MetaclassType | GenericClassInstanceMetaclassType,
-      type2 : MetaclassType | GenericClassInstanceMetaclassType
+      type2 : MetaclassType | GenericClassInstanceMetaclassType,
     )
       return nil unless unifiable_metaclass?(type1) && unifiable_metaclass?(type2)
 
@@ -226,7 +227,7 @@ module Crystal
 
     def self.least_common_ancestor(
       type1 : NonGenericModuleType | GenericModuleInstanceType | GenericClassType,
-      type2 : NonGenericModuleType | GenericModuleInstanceType | GenericClassType
+      type2 : NonGenericModuleType | GenericModuleInstanceType | GenericClassType,
     )
       return type2 if type1.implements?(type2)
       return type1 if type2.implements?(type1)

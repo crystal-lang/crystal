@@ -11,42 +11,43 @@ class XML::Error < Exception
     super(message)
   end
 
-  # TODO: this logic isn't thread/fiber safe, but error checking is less needed than
-  # the ability to parse HTML5 and malformed documents. In any case, fix this.
-  @@errors = [] of self
+  @[Deprecated("This class accessor is deprecated. XML errors are accessible directly in the respective context via `XML::Reader#errors` and `XML::Node#errors`.")]
+  def self.errors : Array(XML::Error)?
+    {% raise "`XML::Error.errors` was removed because it leaks memory when it's not used. XML errors are accessible directly in the respective context via `XML::Reader#errors` and `XML::Node#errors`.\nSee https://github.com/crystal-lang/crystal/issues/14934 for details. " %}
+  end
 
-  LibXML.xmlSetStructuredErrorFunc nil, ->(ctx, error) {
-    @@errors << XML::Error.new(error)
-  }
-
-  LibXML.xmlSetGenericErrorFunc nil, ->(ctx, fmt) {
-    # TODO: use va_start and va_end to
-    message = String.new(fmt).chomp
-    error = XML::Error.new(message, 0)
-
-    {% if flag?(:arm) || flag?(:aarch64) %}
-      # libxml2 is likely missing ARM unwind tables (.ARM.extab and .ARM.exidx
-      # sections) which prevent raising from a libxml2 context.
-      @@errors << error
-    {% else %}
-      raise error
-    {% end %}
-  }
-
-  # :nodoc:
-  def self.set_errors(node)
-    if errors = self.errors
-      node.errors = errors
+  def self.collect(errors, &)
+    LibXML.xmlSetStructuredErrorFunc Box.box(errors), ->(ctx, error) {
+      Box(Array(XML::Error)).unbox(ctx) << XML::Error.new(error)
+    }
+    begin
+      yield
+    ensure
+      LibXML.xmlSetStructuredErrorFunc nil, nil
     end
   end
 
-  def self.errors : Array(XML::Error)?
-    if @@errors.empty?
-      nil
-    else
-      errors = @@errors.dup
-      @@errors.clear
-      errors
+  def self.collect_generic(errors, &)
+    LibXML.xmlSetGenericErrorFunc Box.box(errors), ->(ctx, fmt) {
+      # TODO: use va_start and va_end to
+      message = String.new(fmt).chomp
+      error = XML::Error.new(message, 0)
+
+      {% if flag?(:arm) || flag?(:aarch64) %}
+        # libxml2 is likely missing ARM unwind tables (.ARM.extab and .ARM.exidx
+        # sections) which prevent raising from a libxml2 context.
+        Box(Array(XML::Error)).unbox(ctx) << error
+      {% else %}
+        raise error
+      {% end %}
+    }
+
+    begin
+      collect(errors) do
+        yield
+      end
+    ensure
+      LibXML.xmlSetGenericErrorFunc nil, nil
     end
   end
 end

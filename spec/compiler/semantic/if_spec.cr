@@ -235,6 +235,34 @@ describe "Semantic: if" do
       )) { int32 }
   end
 
+  it "restricts and doesn't unify union types" do
+    assert_type(%(
+      class Foo
+      end
+
+      module M
+        def m
+          1
+        end
+      end
+
+      class Bar < Foo
+        include M
+      end
+
+      class Baz < Foo
+        include M
+      end
+
+      a = Bar.new.as(Foo)
+      if b = a.as?(M)
+        b.m
+      else
+        nil
+      end
+      )) { union_of(nil_type, int32) }
+  end
+
   it "types variable after unreachable else of && (#3360)" do
     assert_type(%(
       def test

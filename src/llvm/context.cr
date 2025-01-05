@@ -9,12 +9,7 @@ class LLVM::Context
   end
 
   def new_module(name : String) : Module
-    {% if LibLLVM::IS_38 %}
-      Module.new(LibLLVM.module_create_with_name_in_context(name, self), name, self)
-    {% else %}
-      # LLVM >= 3.9
-      Module.new(LibLLVM.module_create_with_name_in_context(name, self), self)
-    {% end %}
+    Module.new(LibLLVM.module_create_with_name_in_context(name, self), self)
   end
 
   def new_builder : Builder
@@ -56,6 +51,10 @@ class LLVM::Context
     Type.new LibLLVM.int_type_in_context(self, bits)
   end
 
+  def half : Type
+    Type.new LibLLVM.half_type_in_context(self)
+  end
+
   def float : Type
     Type.new LibLLVM.float_type_in_context(self)
   end
@@ -64,11 +63,35 @@ class LLVM::Context
     Type.new LibLLVM.double_type_in_context(self)
   end
 
-  def void_pointer : Type
-    int8.pointer
+  def x86_fp80 : Type
+    Type.new LibLLVM.x86_fp80_type_in_context(self)
   end
 
-  def struct(name : String, packed = false) : Type
+  def fp128 : Type
+    Type.new LibLLVM.fp128_type_in_context(self)
+  end
+
+  def ppc_fp128 : Type
+    Type.new LibLLVM.ppc_fp128_type_in_context(self)
+  end
+
+  def pointer(address_space = 0) : Type
+    {% if LibLLVM::IS_LT_150 %}
+      {% raise "Opaque pointers are only supported on LLVM 15.0 or above" %}
+    {% else %}
+      Type.new LibLLVM.pointer_type_in_context(self, address_space)
+    {% end %}
+  end
+
+  def void_pointer(address_space = 0) : Type
+    {% if LibLLVM::IS_LT_150 %}
+      int8.pointer(address_space)
+    {% else %}
+      pointer(address_space)
+    {% end %}
+  end
+
+  def struct(name : String, packed = false, &) : Type
     llvm_struct = LibLLVM.struct_create_named(self, name)
     the_struct = Type.new llvm_struct
     element_types = (yield the_struct).as(Array(LLVM::Type))
@@ -85,7 +108,11 @@ class LLVM::Context
   end
 
   def const_string(string : String) : Value
-    Value.new LibLLVM.const_string_in_context(self, string, string.bytesize, 0)
+    {% if LibLLVM::IS_LT_190 %}
+      Value.new LibLLVM.const_string_in_context(self, string, string.bytesize, 0)
+    {% else %}
+      Value.new LibLLVM.const_string_in_context2(self, string, string.bytesize, 0)
+    {% end %}
   end
 
   def const_struct(values : Array(LLVM::Value), packed = false) : Value
@@ -93,11 +120,11 @@ class LLVM::Context
   end
 
   def md_string(value : String) : Value
-    LLVM::Value.new LibLLVM.md_string_in_context(self, value, value.bytesize)
+    LLVM::Value.new LibLLVM.md_string_in_context2(self, value, value.bytesize)
   end
 
   def md_node(values : Array(Value)) : Value
-    Value.new LibLLVM.md_node_in_context(self, (values.to_unsafe.as(LibLLVM::ValueRef*)), values.size)
+    Value.new LibLLVM.md_node_in_context2(self, (values.to_unsafe.as(LibLLVM::ValueRef*)), values.size)
   end
 
   def parse_ir(buf : MemoryBuffer)
@@ -105,12 +132,7 @@ class LLVM::Context
     if ret != 0 && msg
       raise LLVM.string_and_dispose(msg)
     end
-    {% if LibLLVM::IS_38 %}
-      Module.new(mod, "unknown", self)
-    {% else %}
-      # LLVM >= 3.9
-      Module.new(mod, self)
-    {% end %}
+    Module.new(mod, self)
   end
 
   def ==(other : self)

@@ -155,4 +155,28 @@ describe "Semantic: static array" do
       ),
       "expected argument #1 to 'fn' to be StaticArray(Int32, 11), not StaticArray(Int32, 10)"
   end
+
+  it "doesn't crash on sizeof (#8858)" do
+    assert_error %(
+      alias BadArray = Int32[sizeof(Int32)]
+    ),
+      "can't use sizeof(Int32) as a generic type argument"
+  end
+
+  it "doesn't crash on instance_sizeof (#8858)" do
+    assert_error %(
+      alias BadArray = Int32[instance_sizeof(String)]
+    ),
+      "can't use instance_sizeof(String) as a generic type argument"
+  end
+
+  it "doesn't crash on offsetof (#8858)" do
+    assert_error %(
+      class Foo
+        @foo : Int32 = 0
+      end
+      alias BadArray = Int32[offsetof(Foo, @foo)]
+    ),
+      "can't use offsetof(Foo, @foo) as a generic type argument"
+  end
 end

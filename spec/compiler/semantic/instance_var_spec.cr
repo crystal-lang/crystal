@@ -741,8 +741,6 @@ describe "Semantic: instance var" do
 
   it "infers type from tuple literal" do
     assert_type(%(
-      require "prelude"
-
       class Foo
         def initialize
           @x = {1, "foo"}
@@ -759,8 +757,6 @@ describe "Semantic: instance var" do
 
   it "infers type from named tuple literal" do
     assert_type(%(
-      require "prelude"
-
       class Foo
         def initialize
           @x = {x: 1, y: "foo"}
@@ -776,7 +772,7 @@ describe "Semantic: instance var" do
   end
 
   it "infers type from proc literal with return type" do
-    assert_type(<<-CR) { proc_of([int32, bool, string]) }
+    assert_type(<<-CRYSTAL) { proc_of([int32, bool, string]) }
       class Foo
         def initialize
           @x = ->(x : Int32, y : Bool) : String { "" }
@@ -788,7 +784,7 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      CR
+      CRYSTAL
   end
 
   it "infers type from new expression" do
@@ -4367,7 +4363,7 @@ describe "Semantic: instance var" do
   end
 
   it "declares instance var of generic class" do
-    result = assert_type("
+    assert_type("
       class Foo(T)
         @x : T
 
@@ -4385,7 +4381,7 @@ describe "Semantic: instance var" do
   end
 
   it "declares instance var of generic class after reopen" do
-    result = assert_type("
+    assert_type("
       class Foo(T)
       end
 
@@ -5482,7 +5478,7 @@ describe "Semantic: instance var" do
   end
 
   it "errors when overriding inherited instance variable with incompatible type" do
-    assert_error <<-CR, "instance variable '@a' of A must be Int32, not (Char | Int32)"
+    assert_error <<-CRYSTAL, "instance variable '@a' of A must be Int32, not (Char | Int32)"
       class A
         @a = 1
       end
@@ -5490,11 +5486,11 @@ describe "Semantic: instance var" do
       class B < A
         @a = 'a'
       end
-      CR
+      CRYSTAL
   end
 
   it "accepts overriding inherited instance variable with compatible type" do
-    semantic <<-CR
+    semantic <<-CRYSTAL
       class A
         @a = 1
       end
@@ -5502,7 +5498,7 @@ describe "Semantic: instance var" do
       class B < A
         @a = 2
       end
-      CR
+      CRYSTAL
   end
 
   it "looks up return type restriction in defining type, not instantiated type (#11961)" do
@@ -5537,7 +5533,7 @@ describe "Semantic: instance var" do
   end
 
   it "looks up self restriction in instantiated type, not defined type" do
-    assert_type(<<-CR) { types["Foo2"] }
+    assert_type(<<-CRYSTAL) { types["Foo2"] }
       class Foo1
         def foo : self
           self
@@ -5558,7 +5554,7 @@ describe "Semantic: instance var" do
       end
 
       Bar.new.bar
-      CR
+      CRYSTAL
   end
 
   it "inferrs Proc(Void) to Proc(Nil)" do
@@ -5680,7 +5676,7 @@ describe "Semantic: instance var" do
       end
 
       it "accepts module and module, with definitions" do
-        semantic <<-CR
+        semantic <<-CRYSTAL
           module M
             @a = 1
           end
@@ -5693,11 +5689,11 @@ describe "Semantic: instance var" do
             include N
             include M
           end
-          CR
+          CRYSTAL
       end
 
       it "accepts module and module, with declarations" do
-        semantic <<-CR
+        semantic <<-CRYSTAL
           module M
             @a : Int32?
           end
@@ -5710,13 +5706,13 @@ describe "Semantic: instance var" do
             include N
             include M
           end
-          CR
+          CRYSTAL
       end
     end
 
     context "with incompatible type" do
       it "module and class, with definitions" do
-        assert_error <<-CR, "instance variable '@a' of A, with B < A, is already declared as Int32 (trying to re-declare it in B as Char)"
+        assert_error <<-CRYSTAL, "instance variable '@a' of A, with B < A, is already declared as Int32 (trying to re-declare it in B as Char)"
           module M
             @a = 'a'
           end
@@ -5728,11 +5724,11 @@ describe "Semantic: instance var" do
           class B < A
             include M
           end
-          CR
+          CRYSTAL
       end
 
       it "module and class, with declarations" do
-        assert_error <<-CR, "instance variable '@a' of A, with B < A, is already declared as Int32 (trying to re-declare it in B as Char)"
+        assert_error <<-CRYSTAL, "instance variable '@a' of A, with B < A, is already declared as Int32 (trying to re-declare it in B as Char)"
           module M
             @a : Char = 'a'
           end
@@ -5744,11 +5740,11 @@ describe "Semantic: instance var" do
           class B < A
             include M
           end
-          CR
+          CRYSTAL
       end
 
       it "errors module and module, with definitions" do
-        assert_error <<-CR, "instance variable '@a' of B must be Char, not (Char | Int32)"
+        assert_error <<-CRYSTAL, "instance variable '@a' of B must be Char, not (Char | Int32)"
           module M
             @a = 'c'
           end
@@ -5761,11 +5757,11 @@ describe "Semantic: instance var" do
             include N
             include M
           end
-          CR
+          CRYSTAL
       end
 
       it "errors module and module, with declarations" do
-        assert_error <<-CR, "instance variable '@a' of B must be Int32, not (Char | Int32)"
+        assert_error <<-CRYSTAL, "instance variable '@a' of B must be Int32, not (Char | Int32)"
           module M
             @a : Char = 'c'
           end
@@ -5778,7 +5774,7 @@ describe "Semantic: instance var" do
             include N
             include M
           end
-          CR
+          CRYSTAL
       end
     end
   end

@@ -8,21 +8,13 @@ lib LibC
   DT_LNK     = 10
 
   struct Dirent
-    {% if flag?(:freebsd11) %}
-      d_fileno : UInt
-    {% else %}
-      d_fileno : ULong
-      d_off : ULong
-    {% end %}
+    d_fileno : InoT
+    d_off : OffT
     d_reclen : UShort
     d_type : UChar
-    {% if flag?(:freebsd11) %}
-      d_namlen : UChar
-    {% else %}
-      d_pad0 : UChar
-      d_namlen : UShort
-      d_pad1 : UShort
-    {% end %}
+    d_pad0 : UChar
+    d_namlen : UShort
+    d_pad1 : UShort
     d_name : StaticArray(Char, 256)
   end
 
