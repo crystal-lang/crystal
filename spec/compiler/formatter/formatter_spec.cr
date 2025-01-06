@@ -919,6 +919,13 @@ describe Crystal::Formatter do
     CRYSTAL
 
   assert_format <<-CRYSTAL
+    def foo(
+      a, b,
+    )
+    end
+    CRYSTAL
+
+  assert_format <<-CRYSTAL
     macro foo(
       a,
       *b,
