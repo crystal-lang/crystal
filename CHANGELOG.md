@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.14.1] (2025-01-07)
+
+[1.14.1]: https://github.com/crystal-lang/crystal/releases/1.14.1
+
+### Bugfixes
+
+#### tools
+
+- *(formatter)* Handle trailing comma with multiple parameters on the same line ([#15097], thanks @Blacksmoke16)
+
+[#15097]: https://github.com/crystal-lang/crystal/pull/15097
+
 ## [1.14.0] (2024-10-09)
 
 [1.14.0]: https://github.com/crystal-lang/crystal/releases/1.14.0
