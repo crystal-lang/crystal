@@ -293,6 +293,7 @@ jobs:
             - brew-cache-v1
       - run:
           name: Setup environment
+          no_output_timeout: 40m
           command: |
             brew unlink python@2 || true
 
