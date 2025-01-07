@@ -32,7 +32,7 @@ module Crystal::System::Signal
           action.sa_flags = LibC::SA_RESTART
 
           action.sa_sigaction = LibC::SigactionHandlerT.new do |value, _, _|
-            writer.write_bytes(value) unless writer.closed?
+            FileDescriptor.write_fully(writer.fd, pointerof(value)) unless writer.closed?
           end
           LibC.sigemptyset(pointerof(action.@sa_mask))
           LibC.sigaction(signal, pointerof(action), nil)
@@ -84,7 +84,9 @@ module Crystal::System::Signal
   private def self.start_loop
     spawn(name: "signal-loop") do
       loop do
-        value = reader.read_bytes(Int32)
+        buf = uninitialized StaticArray(UInt8, 4)
+        reader.read_fully(buf.to_slice)
+        value = buf.unsafe_as(Int32)
       rescue IO::Error
         next
       else
