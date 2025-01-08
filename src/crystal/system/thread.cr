@@ -74,6 +74,10 @@ class Thread
     @@threads.try(&.unsafe_each { |thread| yield thread })
   end
 
+  def self.each(&)
+    threads.each { |thread| yield thread }
+  end
+
   def self.lock : Nil
     threads.@mutex.lock
   end
@@ -180,6 +184,11 @@ class Thread
 
   protected def name=(@name : String)
     self.system_name = name
+  end
+
+  # Changes the Thread#name property but doesn't update the system name. Useful
+  # on the main thread where we'd change the process name (e.g. top, ps, ...).
+  def internal_name=(@name : String)
   end
 
   # Holds the GC thread handler

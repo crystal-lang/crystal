@@ -104,7 +104,7 @@ module Crystal
         if (loc = @last.location) && loc.filename.is_a?(String) || is_yield
           macro_expansion_pragmas = @macro_expansion_pragmas ||= {} of Int32 => Array(Lexer::LocPragma)
           (macro_expansion_pragmas[@str.pos.to_i32] ||= [] of Lexer::LocPragma) << Lexer::LocPushPragma.new
-          @str << "begin " if is_yield
+          @str << "begin\n" if is_yield
           @last.to_s(@str, macro_expansion_pragmas: macro_expansion_pragmas, emit_doc: true)
           @str << " end" if is_yield
           (macro_expansion_pragmas[@str.pos.to_i32] ||= [] of Lexer::LocPragma) << Lexer::LocPopPragma.new

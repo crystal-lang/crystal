@@ -42,6 +42,16 @@ describe Process::Status do
     status_for(:interrupted).exit_code?.should be_nil
   end
 
+  it "#system_exit_status" do
+    Process::Status.new(exit_status(0)).system_exit_status.should eq 0_u32
+    Process::Status.new(exit_status(1)).system_exit_status.should eq({{ flag?(:unix) ? 0x0100_u32 : 1_u32 }})
+    Process::Status.new(exit_status(127)).system_exit_status.should eq({{ flag?(:unix) ? 0x7f00_u32 : 127_u32 }})
+    Process::Status.new(exit_status(128)).system_exit_status.should eq({{ flag?(:unix) ? 0x8000_u32 : 128_u32 }})
+    Process::Status.new(exit_status(255)).system_exit_status.should eq({{ flag?(:unix) ? 0xFF00_u32 : 255_u32 }})
+
+    status_for(:interrupted).system_exit_status.should eq({% if flag?(:unix) %}Signal::INT.value{% else %}LibC::STATUS_CONTROL_C_EXIT{% end %})
+  end
+
   it "#success?" do
     Process::Status.new(exit_status(0)).success?.should be_true
     Process::Status.new(exit_status(1)).success?.should be_false
@@ -99,12 +109,32 @@ describe Process::Status do
     err1.hash.should eq(err2.hash)
   end
 
+  it "#exit_signal?" do
+    Process::Status.new(exit_status(0)).exit_signal?.should be_nil
+    Process::Status.new(exit_status(1)).exit_signal?.should be_nil
+
+    status_for(:interrupted).exit_signal?.should eq({% if flag?(:unix) %}Signal::INT{% else %}nil{% end %})
+  end
+
   {% if flag?(:unix) && !flag?(:wasi) %}
     it "#exit_signal" do
       Process::Status.new(Signal::HUP.value).exit_signal.should eq Signal::HUP
       Process::Status.new(Signal::INT.value).exit_signal.should eq Signal::INT
       last_signal = Signal.values[-1]
       Process::Status.new(last_signal.value).exit_signal.should eq last_signal
+
+      unknown_signal = Signal.new(126)
+      Process::Status.new(unknown_signal.value).exit_signal.should eq unknown_signal
+    end
+
+    it "#exit_signal?" do
+      Process::Status.new(Signal::HUP.value).exit_signal?.should eq Signal::HUP
+      Process::Status.new(Signal::INT.value).exit_signal?.should eq Signal::INT
+      last_signal = Signal.values[-1]
+      Process::Status.new(last_signal.value).exit_signal?.should eq last_signal
+
+      unknown_signal = Signal.new(126)
+      Process::Status.new(unknown_signal.value).exit_signal?.should eq unknown_signal
     end
 
     it "#normal_exit? with signal code" do
@@ -118,7 +148,7 @@ describe Process::Status do
       Process::Status.new(0x00).signal_exit?.should be_false
       Process::Status.new(0x01).signal_exit?.should be_true
       Process::Status.new(0x7e).signal_exit?.should be_true
-      Process::Status.new(0x7f).signal_exit?.should be_false
+      Process::Status.new(0x7f).signal_exit?.should be_true
     end
   {% end %}
 
@@ -236,11 +266,29 @@ describe Process::Status do
       assert_prints Process::Status.new(exit_status(255)).to_s, "255"
     end
 
+    it "on abnormal exit" do
+      {% if flag?(:win32) %}
+        assert_prints status_for(:interrupted).to_s, "STATUS_CONTROL_C_EXIT"
+      {% else %}
+        assert_prints status_for(:interrupted).to_s, "INT"
+      {% end %}
+    end
+
     {% if flag?(:unix) && !flag?(:wasi) %}
       it "with exit signal" do
         assert_prints Process::Status.new(Signal::HUP.value).to_s, "HUP"
         last_signal = Signal.values[-1]
         assert_prints Process::Status.new(last_signal.value).to_s, last_signal.to_s
+
+        assert_prints Process::Status.new(Signal.new(126).value).to_s, "Signal[126]"
+      end
+    {% end %}
+
+    {% if flag?(:win32) %}
+      it "hex format" do
+        assert_prints Process::Status.new(UInt16::MAX).to_s, "0x0000FFFF"
+        assert_prints Process::Status.new(0x01234567).to_s, "0x01234567"
+        assert_prints Process::Status.new(UInt32::MAX).to_s, "0xFFFFFFFF"
       end
     {% end %}
   end
@@ -254,11 +302,30 @@ describe Process::Status do
       assert_prints Process::Status.new(exit_status(255)).inspect, "Process::Status[255]"
     end
 
+    it "on abnormal exit" do
+      {% if flag?(:win32) %}
+        assert_prints status_for(:interrupted).inspect, "Process::Status[LibC::STATUS_CONTROL_C_EXIT]"
+      {% else %}
+        assert_prints status_for(:interrupted).inspect, "Process::Status[Signal::INT]"
+      {% end %}
+    end
+
     {% if flag?(:unix) && !flag?(:wasi) %}
       it "with exit signal" do
         assert_prints Process::Status.new(Signal::HUP.value).inspect, "Process::Status[Signal::HUP]"
         last_signal = Signal.values[-1]
         assert_prints Process::Status.new(last_signal.value).inspect, "Process::Status[#{last_signal.inspect}]"
+
+        unknown_signal = Signal.new(126)
+        assert_prints Process::Status.new(unknown_signal.value).inspect, "Process::Status[Signal[126]]"
+      end
+    {% end %}
+
+    {% if flag?(:win32) %}
+      it "hex format" do
+        assert_prints Process::Status.new(UInt16::MAX).inspect, "Process::Status[0x0000FFFF]"
+        assert_prints Process::Status.new(0x01234567).inspect, "Process::Status[0x01234567]"
+        assert_prints Process::Status.new(UInt32::MAX).inspect, "Process::Status[0xFFFFFFFF]"
       end
     {% end %}
   end

@@ -104,8 +104,16 @@ end
 class Process::Status
   # Platform-specific exit status code, which usually contains either the exit code or a termination signal.
   # The other `Process::Status` methods extract the values from `exit_status`.
+  @[Deprecated("Use `#exit_reason`, `#exit_code`, or `#system_exit_status` instead")]
   def exit_status : Int32
     @exit_status.to_i32!
+  end
+
+  # Returns the exit status as indicated by the operating system.
+  #
+  # It can encode exit codes and termination signals and is platform-specific.
+  def system_exit_status : UInt32
+    @exit_status.to_u32!
   end
 
   {% if flag?(:win32) %}
@@ -142,37 +150,30 @@ class Process::Status
         @exit_status & 0xC0000000_u32 == 0 ? ExitReason::Normal : ExitReason::Unknown
       end
     {% elsif flag?(:unix) && !flag?(:wasm32) %}
-      # define __WIFEXITED(status) (__WTERMSIG(status) == 0)
-      if signal_code == 0
+      case exit_signal?
+      when Nil
         ExitReason::Normal
-      elsif signal_exit?
-        case Signal.from_value?(signal_code)
-        when Nil
-          ExitReason::Signal
-        when .abrt?, .kill?, .quit?
-          ExitReason::Aborted
-        when .hup?
-          ExitReason::TerminalDisconnected
-        when .term?
-          ExitReason::SessionEnded
-        when .int?
-          ExitReason::Interrupted
-        when .trap?
-          ExitReason::Breakpoint
-        when .segv?
-          ExitReason::AccessViolation
-        when .bus?
-          ExitReason::BadMemoryAccess
-        when .ill?
-          ExitReason::BadInstruction
-        when .fpe?
-          ExitReason::FloatException
-        else
-          ExitReason::Signal
-        end
+      when .abrt?, .kill?, .quit?
+        ExitReason::Aborted
+      when .hup?
+        ExitReason::TerminalDisconnected
+      when .term?
+        ExitReason::SessionEnded
+      when .int?
+        ExitReason::Interrupted
+      when .trap?
+        ExitReason::Breakpoint
+      when .segv?
+        ExitReason::AccessViolation
+      when .bus?
+        ExitReason::BadMemoryAccess
+      when .ill?
+        ExitReason::BadInstruction
+      when .fpe?
+        ExitReason::FloatException
       else
         # TODO: stop / continue
-        ExitReason::Unknown
+        ExitReason::Signal
       end
     {% else %}
       raise NotImplementedError.new("Process::Status#exit_reason")
@@ -180,12 +181,14 @@ class Process::Status
   end
 
   # Returns `true` if the process was terminated by a signal.
+  #
+  # NOTE: In contrast to `WIFSIGNALED` in glibc, the status code `0x7E` (`SIGSTOP`)
+  # is considered a signal.
+  #
+  # * `#abnormal_exit?` is a more portable alternative.
+  # * `#exit_signal?` provides more information about the signal.
   def signal_exit? : Bool
-    {% if flag?(:unix) %}
-      0x01 <= (@exit_status & 0x7F) <= 0x7E
-    {% else %}
-      false
-    {% end %}
+    !!exit_signal?
   end
 
   # Returns `true` if the process terminated normally.
@@ -217,9 +220,23 @@ class Process::Status
   # which also works on Windows.
   def exit_signal : Signal
     {% if flag?(:unix) && !flag?(:wasm32) %}
-      Signal.from_value(signal_code)
+      Signal.new(signal_code)
     {% else %}
       raise NotImplementedError.new("Process::Status#exit_signal")
+    {% end %}
+  end
+
+  # Returns the exit `Signal` or `nil` if there is none.
+  #
+  # On Windows returns always `nil`.
+  #
+  # * `#exit_reason` is a portable alternative.
+  def exit_signal? : Signal?
+    {% if flag?(:unix) && !flag?(:wasm32) %}
+      code = signal_code
+      unless code.zero?
+        Signal.new(code)
+      end
     {% end %}
   end
 
@@ -252,7 +269,7 @@ class Process::Status
       # define __WEXITSTATUS(status) (((status) & 0xff00) >> 8)
       (@exit_status & 0xff00) >> 8
     {% else %}
-      exit_status
+      @exit_status.to_i32!
     {% end %}
   end
 
@@ -270,40 +287,97 @@ class Process::Status
 
   # Prints a textual representation of the process status to *io*.
   #
-  # The result is equivalent to `#to_s`, but prefixed by the type name and
-  # delimited by square brackets: `Process::Status[0]`, `Process::Status[1]`,
-  # `Process::Status[Signal::HUP]`.
+  # The result is similar to `#to_s`, but prefixed by the type name,
+  # delimited by square brackets, and constants use full paths:
+  # `Process::Status[0]`, `Process::Status[1]`, `Process::Status[Signal::HUP]`,
+  # `Process::Status[LibC::STATUS_CONTROL_C_EXIT]`.
   def inspect(io : IO) : Nil
     io << "Process::Status["
-    if normal_exit?
-      exit_code.inspect(io)
-    else
-      exit_signal.inspect(io)
-    end
+    {% if flag?(:win32) %}
+      if name = name_for_win32_exit_status
+        io << "LibC::" << name
+      else
+        stringify_exit_status_windows(io)
+      end
+    {% else %}
+      if signal = exit_signal?
+        signal.inspect(io)
+      else
+        exit_code.inspect(io)
+      end
+    {% end %}
     io << "]"
+  end
+
+  private def name_for_win32_exit_status
+    case @exit_status
+    # Ignoring LibC::STATUS_SUCCESS here because we prefer its numerical representation `0`
+    when LibC::STATUS_FATAL_APP_EXIT          then "STATUS_FATAL_APP_EXIT"
+    when LibC::STATUS_DATATYPE_MISALIGNMENT   then "STATUS_DATATYPE_MISALIGNMENT"
+    when LibC::STATUS_BREAKPOINT              then "STATUS_BREAKPOINT"
+    when LibC::STATUS_ACCESS_VIOLATION        then "STATUS_ACCESS_VIOLATION"
+    when LibC::STATUS_ILLEGAL_INSTRUCTION     then "STATUS_ILLEGAL_INSTRUCTION"
+    when LibC::STATUS_FLOAT_DIVIDE_BY_ZERO    then "STATUS_FLOAT_DIVIDE_BY_ZERO"
+    when LibC::STATUS_FLOAT_INEXACT_RESULT    then "STATUS_FLOAT_INEXACT_RESULT"
+    when LibC::STATUS_FLOAT_INVALID_OPERATION then "STATUS_FLOAT_INVALID_OPERATION"
+    when LibC::STATUS_FLOAT_OVERFLOW          then "STATUS_FLOAT_OVERFLOW"
+    when LibC::STATUS_FLOAT_UNDERFLOW         then "STATUS_FLOAT_UNDERFLOW"
+    when LibC::STATUS_PRIVILEGED_INSTRUCTION  then "STATUS_PRIVILEGED_INSTRUCTION"
+    when LibC::STATUS_STACK_OVERFLOW          then "STATUS_STACK_OVERFLOW"
+    when LibC::STATUS_CANCELLED               then "STATUS_CANCELLED"
+    when LibC::STATUS_CONTROL_C_EXIT          then "STATUS_CONTROL_C_EXIT"
+    end
   end
 
   # Prints a textual representation of the process status to *io*.
   #
-  # A normal exit status prints the numerical value (`0`, `1` etc).
+  # A normal exit status prints the numerical value (`0`, `1` etc) or a named
+  # status (e.g. `STATUS_CONTROL_C_EXIT` on Windows).
   # A signal exit status prints the name of the `Signal` member (`HUP`, `INT`, etc.).
   def to_s(io : IO) : Nil
-    if normal_exit?
-      io << exit_code
-    else
-      io << exit_signal
-    end
+    {% if flag?(:win32) %}
+      if name = name_for_win32_exit_status
+        io << name
+      else
+        stringify_exit_status_windows(io)
+      end
+    {% else %}
+      if signal = exit_signal?
+        if name = signal.member_name
+          io << name
+        else
+          signal.inspect(io)
+        end
+      else
+        io << exit_code
+      end
+    {% end %}
   end
 
   # Returns a textual representation of the process status.
   #
-  # A normal exit status prints the numerical value (`0`, `1` etc).
+  # A normal exit status prints the numerical value (`0`, `1` etc) or a named
+  # status (e.g. `STATUS_CONTROL_C_EXIT` on Windows).
   # A signal exit status prints the name of the `Signal` member (`HUP`, `INT`, etc.).
   def to_s : String
-    if normal_exit?
-      exit_code.to_s
+    {% if flag?(:win32) %}
+      name_for_win32_exit_status || String.build { |io| stringify_exit_status_windows(io) }
+    {% else %}
+      if signal = exit_signal?
+        signal.member_name || signal.inspect
+      else
+        exit_code.to_s
+      end
+    {% end %}
+  end
+
+  private def stringify_exit_status_windows(io)
+    # On Windows large status codes are typically expressed in hexadecimal
+    if @exit_status >= UInt16::MAX
+      io << "0x"
+      @exit_status.to_s(base: 16, upcase: true).rjust(io, 8, '0')
     else
-      exit_signal.to_s
+      @exit_status.to_s(io)
     end
   end
 end

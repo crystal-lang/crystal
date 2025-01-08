@@ -19,13 +19,20 @@ abstract class Crystal::EventLoop
 
     # Closes the file descriptor resource.
     abstract def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
+  end
 
-    # Removes the file descriptor from the event loop. Can be used to free up
-    # memory resources associated with the file descriptor, as well as removing
-    # the file descriptor from kernel data structures.
-    #
-    # Called by `::IO::FileDescriptor#finalize` before closing the file
-    # descriptor. Errors shall be silently ignored.
-    abstract def remove(file_descriptor : Crystal::System::FileDescriptor) : Nil
+  # Removes the file descriptor from the event loop. Can be used to free up
+  # memory resources associated with the file descriptor, as well as removing
+  # the file descriptor from kernel data structures.
+  #
+  # Called by `::IO::FileDescriptor#finalize` before closing the file
+  # descriptor. Errors shall be silently ignored.
+  def self.remove(file_descriptor : Crystal::System::FileDescriptor) : Nil
+    backend_class.remove_impl(file_descriptor)
+  end
+
+  # Actual implementation for `.remove`. Must be implemented on a subclass of
+  # `Crystal::EventLoop` when needed.
+  protected def self.remove_impl(file_descriptor : Crystal::System::FileDescriptor) : Nil
   end
 end

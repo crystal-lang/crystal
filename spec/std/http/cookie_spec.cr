@@ -80,6 +80,15 @@ module HTTP
       end
     end
 
+    it "#expire" do
+      cookie = HTTP::Cookie.new("hello", "world")
+      cookie.expire
+
+      cookie.value.empty?.should be_true
+      cookie.expired?.should be_true
+      cookie.max_age.should eq(Time::Span.zero)
+    end
+
     describe "#name=" do
       it "raises on invalid name" do
         cookie = HTTP::Cookie.new("x", "")

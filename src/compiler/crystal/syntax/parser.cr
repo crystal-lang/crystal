@@ -3505,7 +3505,7 @@ module Crystal
       end
 
       a_then, a_else = a_else, a_then if is_unless
-      MacroIf.new(cond, a_then, a_else).at_end(token_end_location)
+      MacroIf.new(cond, a_then, a_else, is_unless: is_unless).at_end(token_end_location)
     end
 
     def parse_expression_inside_macro

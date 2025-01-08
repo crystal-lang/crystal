@@ -316,8 +316,7 @@ class Crystal::Command
   private def exit_message(status)
     case status.exit_reason
     when .aborted?, .session_ended?, .terminal_disconnected?
-      if status.signal_exit?
-        signal = status.exit_signal
+      if signal = status.exit_signal?
         if signal.kill?
           "Program was killed"
         else

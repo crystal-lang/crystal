@@ -2726,6 +2726,11 @@ module Crystal
       it "executes else" do
         assert_macro %({{x.else}}), "\"foo\"", {x: MacroIf.new(BoolLiteral.new(true), StringLiteral.new("test"), StringLiteral.new("foo"))}
       end
+
+      it "executes is_unless?" do
+        assert_macro %({{x.is_unless?}}), "true", {x: MacroIf.new(BoolLiteral.new(true), StringLiteral.new("test"), StringLiteral.new("foo"), is_unless: true)}
+        assert_macro %({{x.is_unless?}}), "false", {x: MacroIf.new(BoolLiteral.new(false), StringLiteral.new("test"), StringLiteral.new("foo"), is_unless: false)}
+      end
     end
 
     describe "macro for methods" do
