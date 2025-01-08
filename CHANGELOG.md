@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.14.1] (2025-01-07)
+## [1.14.1] (2025-01-08)
 
 [1.14.1]: https://github.com/crystal-lang/crystal/releases/1.14.1
 
