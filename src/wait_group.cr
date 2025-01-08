@@ -1,4 +1,5 @@
 require "fiber"
+require "fiber/waiting"
 require "crystal/spin_lock"
 require "crystal/pointer_linked_list"
 
@@ -31,17 +32,6 @@ require "crystal/pointer_linked_list"
 # wg.wait
 # ```
 class WaitGroup
-  private struct Waiting
-    include Crystal::PointerLinkedList::Node
-
-    def initialize(@fiber : Fiber)
-    end
-
-    def enqueue : Nil
-      @fiber.enqueue
-    end
-  end
-
   # Yields a `WaitGroup` instance and waits at the end of the block for all of
   # the work enqueued inside it to complete.
   #
@@ -59,7 +49,7 @@ class WaitGroup
   end
 
   def initialize(n : Int32 = 0)
-    @waiting = Crystal::PointerLinkedList(Waiting).new
+    @waiting = Crystal::PointerLinkedList(Fiber::Waiting).new
     @lock = Crystal::SpinLock.new
     @counter = Atomic(Int32).new(n)
   end
@@ -128,7 +118,7 @@ class WaitGroup
   def wait : Nil
     return if done?
 
-    waiting = Waiting.new(Fiber.current)
+    waiting = Fiber::Waiting.new(Fiber.current)
 
     @lock.sync do
       # must check again to avoid a race condition where #done may have
