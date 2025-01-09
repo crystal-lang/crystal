@@ -53,6 +53,12 @@
         raise "Recursion while initializing class variables and/or constants"
       end
     end
+
+    @[NoInline]
+    def self.once_unreachable : NoReturn
+      System.print_error "BUG: failed to initialize constant or class variable\n"
+      LibC._exit(1)
+    end
   end
 
   # :nodoc:
@@ -68,9 +74,14 @@
   # is a `fun` the function will still appear in the symbol table, though it
   # will never be called.
   @[AlwaysInline]
-  fun __crystal_once(flag : Int8*, initializer : Void*) : Nil
-    flag = flag.as(Crystal::OnceState*)
-    Crystal.once(flag, initializer) unless flag.value.initialized?
+  fun __crystal_once(flag : Crystal::OnceState*, initializer : Void*) : Nil
+    return if flag.value.initialized?
+
+    Crystal.once(flag, initializer)
+
+    # make LLVM assume that it musn't call `__crystal_once` anymore for this,
+    # also doubles as a safety check
+    Crystal.once_unreachable unless flag.value.initialized?
   end
 {% else %}
   # This implementation uses a global array to store the initialization flag
