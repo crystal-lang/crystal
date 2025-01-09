@@ -16,7 +16,7 @@
 
 #### lang
 
-- *(macros)* Crystal `Not` operators do not need parens ([#15292], thanks @Blacksmoke16)
+- *(macros)* Crystal `Not` operators do not need parens for stringification ([#15292], thanks @Blacksmoke16)
 - *(macros)* Add `MacroIf#is_unless?` AST node method ([#15304], thanks @Blacksmoke16)
 
 [#15292]: https://github.com/crystal-lang/crystal/pull/15292
@@ -39,7 +39,7 @@
 - *(numeric)* Implement `fast_float` for `String#to_f` ([#15195], thanks @HertzDevil)
 - *(runtime)* Support call stacks for MinGW-w64 builds ([#15117], thanks @HertzDevil)
 - *(runtime)* Support MSYS2's CLANGARM64 environment on ARM64 Windows ([#15159], thanks @HertzDevil)
-- *(runtime)* Crystal::Tracing improvements ([#15297], thanks @ysbaddaden)
+- *(runtime)* Improve `Crystal::Tracing` ([#15297], thanks @ysbaddaden)
 - *(runtime)* Add `Thread#internal_name=` ([#15298], thanks @ysbaddaden)
 - *(runtime)* Add `Thread::LinkedList#each` to safely iterate lists ([#15300], thanks @ysbaddaden)
 - *(system)* Add `Process::Status#exit_code?` ([#15247], thanks @straight-shoota)
@@ -359,6 +359,8 @@
 - Merge changelog entries for fixups with main PR ([#15207], thanks @straight-shoota)
 - Update link to good first issues ([#15250], thanks @BigBoyBarney)
 - Update distribution-scripts ([#15291], thanks @straight-shoota)
+- Bump NOTICE copyright year ([#15318], thanks @straight-shoota)
+- Merge `release/1.14`@1.14.1 ([#15329], thanks @straight-shoota)
 - Make `bin/crystal` work on MSYS2 ([#15094], thanks @HertzDevil)
 - Make `Makefile` work on MSYS2 ([#15102], thanks @HertzDevil)
 - Support `.exe` file extension in `Makefile` on MSYS2 ([#15123], thanks @HertzDevil)
@@ -388,6 +390,8 @@
 [#15207]: https://github.com/crystal-lang/crystal/pull/15207
 [#15250]: https://github.com/crystal-lang/crystal/pull/15250
 [#15291]: https://github.com/crystal-lang/crystal/pull/15291
+[#15318]: https://github.com/crystal-lang/crystal/pull/15318
+[#15329]: https://github.com/crystal-lang/crystal/pull/15329
 [#15094]: https://github.com/crystal-lang/crystal/pull/15094
 [#15102]: https://github.com/crystal-lang/crystal/pull/15102
 [#15123]: https://github.com/crystal-lang/crystal/pull/15123
