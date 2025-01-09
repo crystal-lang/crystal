@@ -351,7 +351,6 @@
 ### Infrastructure
 
 - Changelog for 1.15.0 ([#15277], thanks @straight-shoota)
-- Update distribution-scripts ([#15332], thanks @straight-shoota)
 - Update previous Crystal release 1.14.0 ([#15071], thanks @straight-shoota)
 - Fix remove trailing whitespace from CRYSTAL definition ([#15131], thanks @straight-shoota)
 - Make utilities posix compatible ([#15139], thanks @nanobowers)
@@ -362,6 +361,7 @@
 - Update distribution-scripts ([#15291], thanks @straight-shoota)
 - Bump NOTICE copyright year ([#15318], thanks @straight-shoota)
 - Merge `release/1.14`@1.14.1 ([#15329], thanks @straight-shoota)
+- Update distribution-scripts ([#15332], thanks @straight-shoota)
 - Make `bin/crystal` work on MSYS2 ([#15094], thanks @HertzDevil)
 - Make `Makefile` work on MSYS2 ([#15102], thanks @HertzDevil)
 - Support `.exe` file extension in `Makefile` on MSYS2 ([#15123], thanks @HertzDevil)
@@ -383,7 +383,6 @@
 - *(ci)* Run interpreter specs on Windows CI ([#15141], thanks @HertzDevil)
 
 [#15277]: https://github.com/crystal-lang/crystal/pull/15277
-[#15332]: https://github.com/crystal-lang/crystal/pull/15332
 [#15071]: https://github.com/crystal-lang/crystal/pull/15071
 [#15131]: https://github.com/crystal-lang/crystal/pull/15131
 [#15139]: https://github.com/crystal-lang/crystal/pull/15139
@@ -394,6 +393,7 @@
 [#15291]: https://github.com/crystal-lang/crystal/pull/15291
 [#15318]: https://github.com/crystal-lang/crystal/pull/15318
 [#15329]: https://github.com/crystal-lang/crystal/pull/15329
+[#15332]: https://github.com/crystal-lang/crystal/pull/15332
 [#15094]: https://github.com/crystal-lang/crystal/pull/15094
 [#15102]: https://github.com/crystal-lang/crystal/pull/15102
 [#15123]: https://github.com/crystal-lang/crystal/pull/15123
