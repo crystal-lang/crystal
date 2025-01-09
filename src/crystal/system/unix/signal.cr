@@ -84,9 +84,7 @@ module Crystal::System::Signal
   private def self.start_loop
     spawn(name: "signal-loop") do
       loop do
-        buf = uninitialized StaticArray(UInt8, 4)
-        reader.read_fully(buf.to_slice)
-        value = buf.unsafe_as(Int32)
+        value = reader.read_bytes(Int32)
       rescue IO::Error
         next
       else
