@@ -39,6 +39,13 @@
       {% else %}
         once_exec(flag, initializer)
       {% end %}
+
+      # safety check, and allows to safely call `#once_unreachable` in
+      # `__crystal_once`
+      unless flag.value.initialized?
+        System.print_error "BUG: failed to initialize constant or class variable\n"
+        LibC._exit(1)
+      end
     end
 
     private def self.once_exec(flag : OnceState*, initializer : Void*) : Nil
@@ -54,10 +61,10 @@
       end
     end
 
-    @[NoInline]
+    @[AlwaysInline]
     def self.once_unreachable : NoReturn
-      System.print_error "BUG: failed to initialize constant or class variable\n"
-      LibC._exit(1)
+      x = uninitialized NoReturn
+      x
     end
   end
 
@@ -79,8 +86,9 @@
 
     Crystal.once(flag, initializer)
 
-    # make LLVM assume that it musn't call `__crystal_once` anymore for this,
-    # also doubles as a safety check
+    # tell LLVM that it can optimize away repeated `__crystal_once` calls for
+    # this global (e.g. repeated access to constant in a single funtion);
+    # this is truly unreachable otherwise `Crystal.once` would have panicked
     Crystal.once_unreachable unless flag.value.initialized?
   end
 {% else %}
