@@ -27,7 +27,13 @@
 
     {% if flag?(:preview_mt) || flag?(:win32) %}
       @@once_mutex = uninitialized Mutex
-      class_property once_mutex : Mutex
+
+      def self.once_mutex : Mutex
+        @@once_mutex
+      end
+
+      def self.once_mutex=(@@once_mutex : Mutex)
+      end
     {% end %}
 
     # Using @[NoInline] so LLVM optimizes for the hot path (var already
