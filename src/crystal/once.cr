@@ -14,7 +14,7 @@
 # thread even without the `preview_mt` flag, and the thread can also reference
 # Crystal constants, leading to race conditions, so we always enable the mutex.
 
-{% if compare_versions(Crystal::VERSION, "1.15.0-dev") >= 0 %}
+{% if compare_versions(Crystal::VERSION, "1.16.0-dev") >= 0 %}
   # This implementation uses an enum over the initialization flag pointer for
   # each value to find infinite loops and raise an error.
 
