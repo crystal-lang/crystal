@@ -56,4 +56,5 @@ lib LibC
   fun mknod(x0 : Char*, x1 : ModeT, x2 : DevT) : Int
   fun stat(x0 : Char*, x1 : Stat*) : Int
   fun umask(x0 : ModeT) : ModeT
+  fun utimensat(x0 : Int, x1 : Char*, x2 : Timespec[2], x3 : Int) : Int
 end

@@ -185,10 +185,10 @@ module Crystal::System::File
   end
 
   def self.utime(atime : ::Time, mtime : ::Time, filename : String) : Nil
-    timevals = uninitialized LibC::Timeval[2]
-    timevals[0] = Crystal::System::Time.to_timeval(atime)
-    timevals[1] = Crystal::System::Time.to_timeval(mtime)
-    ret = LibC.utimes(filename, timevals)
+    timespecs = uninitialized LibC::Timespec[2]
+    timespecs[0] = Crystal::System::Time.to_timespec(atime)
+    timespecs[1] = Crystal::System::Time.to_timespec(mtime)
+    ret = LibC.utimensat(LibC::AT_FDCWD, filename, timespecs, 0)
     if ret != 0
       raise ::File::Error.from_errno("Error setting time on file", file: filename)
     end
