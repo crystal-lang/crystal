@@ -227,6 +227,10 @@ module Crystal::System::Signal
     altstack.ss_flags = 0
     LibC.sigaltstack(pointerof(altstack), nil)
 
+    at_exit {
+      LibC.free(altstack.ss_sp)
+    }
+
     action = LibC::Sigaction.new
     action.sa_flags = LibC::SA_ONSTACK | LibC::SA_SIGINFO
     action.sa_sigaction = @@segfault_handler
