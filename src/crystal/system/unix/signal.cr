@@ -228,7 +228,7 @@ module Crystal::System::Signal
     LibC.sigaltstack(pointerof(altstack), nil)
 
     at_exit {
-      LibC.free(altstack.ss_sp)
+      reset_signal_stack(pointerof(altstack))
     }
 
     action = LibC::Sigaction.new
@@ -238,6 +238,16 @@ module Crystal::System::Signal
 
     LibC.sigaction(::Signal::SEGV, pointerof(action), nil)
     LibC.sigaction(::Signal::BUS, pointerof(action), nil)
+  end
+
+  private def self.reset_signal_stack(altstack : Pointer(LibC::StackT))
+    default_stack = LibC::StackT.new
+    default_stack.ss_sp = nil
+    default_stack.ss_flags = 0x0004 # LibC::SS_DISABLE
+    default_stack.ss_size = 0
+    LibC.sigaltstack(pointerof(default_stack), nil)
+
+    LibC.free(altstack.value.ss_sp)
   end
 end
 
