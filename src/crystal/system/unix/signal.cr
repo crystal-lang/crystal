@@ -227,7 +227,7 @@ module Crystal::System::Signal
     altstack.ss_flags = 0
     LibC.sigaltstack(pointerof(altstack), nil)
 
-    at_exit {
+    Crystal::AtExitHandlers.__crystal_add ->(s : Int32, e : ::Exception?) {
       reset_signal_stack(pointerof(altstack))
     }
 
