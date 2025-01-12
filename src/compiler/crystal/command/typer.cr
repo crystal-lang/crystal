@@ -1,7 +1,6 @@
-# Implementation of the `crystal tool format` command
+# Implementation of the `crystal tool apply-types` command
 #
-# This is just the command-line part. The formatter
-# logic is in `crystal/tools/formatter.cr`.
+# This provides the CLI interface for `crystal/tools/typer.cr`
 
 class Crystal::Command
   private def apply_types
@@ -36,6 +35,14 @@ class Crystal::Command
         exit
       end
 
+      opts.on("--exclude [DIRECTORY]", "Exclude a directory from being typed") do |ex|
+        excludes << ex
+      end
+
+      opts.on("--error-trace", "Show full error trace") do
+        error_trace = true
+      end
+
       opts.on("--prelude [PRELUDE]", "Use given file as prelude. Use empty string to skip prelude entirely.") do |new_prelude|
         prelude = new_prelude
       end
@@ -44,12 +51,12 @@ class Crystal::Command
         type_blocks = true
       end
 
-      opts.on("--include-splats", "Enable adding types to splats") do
-        type_splats = true
-      end
-
       opts.on("--include-double-splats", "Enable adding types to double splats") do
         type_double_splats = true
+      end
+
+      opts.on("--include-splats", "Enable adding types to splats") do
+        type_splats = true
       end
 
       opts.on("--stats", "Enable statistics output") do
@@ -58,14 +65,6 @@ class Crystal::Command
 
       opts.on("--progress", "Enable progress output") do
         progress = true
-      end
-
-      opts.on("--error-trace", "Show full error trace") do
-        error_trace = true
-      end
-
-      opts.on("--exclude [DIRECTORY]", "Exclude a directory from being typed") do |ex|
-        excludes << ex
       end
     end
 
@@ -95,7 +94,6 @@ class Crystal::Command
       puts "No type restrictions added"
     else
       results.each do |filename, file_contents|
-        # pp! filename, file_contents
         File.write(filename, file_contents)
       end
     end

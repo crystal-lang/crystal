@@ -110,14 +110,6 @@ module Crystal
       formatter.added_types? ? formatter.finish : nil
     end
 
-    # If a def is already fully typed, we don't need to check / write it
-    private def fully_typed?(d : Def) : Bool
-      ret = true
-      ret &= d.args.all?(&.restriction)
-      ret &= !!d.return_type
-      ret
-    end
-
     @_signatures : Hash(String, Signature)?
 
     # Signatures represents a mapping of location => Signature for def at that location
@@ -148,11 +140,12 @@ module Crystal
 
       program.types.each { |_, t| types << t }
 
-      overridden_method_locations = [] of String
+      overridden_method_locations = {} of String => String
       while type = types.shift?
         type.types?.try &.each { |_, t| types << t }
-        # pp! type, def_overrides_parent_def(type)
-        def_overrides_parent_def(type).each { |loc| overridden_method_locations << loc }
+        def_overrides_parent_def(type).each do |child_def_loc, ancestor_def_loc|
+          overridden_method_locations[child_def_loc] = ancestor_def_loc
+        end
 
         # Check for class instance 'def's
         if type.responds_to?(:def_instances)
@@ -175,29 +168,29 @@ module Crystal
       end
 
       # Now remove all overridden methods
-      overridden_method_locations.each do |loc|
-        ret.delete(loc)
+      overridden_method_locations.each do |child_loc, ancestor_loc|
+        if ret.delete(child_loc)
+          @warnings << "Not adding type restrictions to definition at #{child_loc} as it overrides definition #{ancestor_loc}"
+        end
       end
 
       ret
     end
 
-    private def def_overrides_parent_def(type) : Array(String)
-      overriden_locations = [] of String
+    private def def_overrides_parent_def(type) : Hash(String, String)
+      overriden_locations = {} of String => String
       type.defs.try &.each_value do |defs_with_metadata|
         defs_with_metadata.each do |def_with_metadata|
-          next if def_with_metadata.def.location.to_s.starts_with?("expanded macro:")
+          next if def_with_metadata.def.location.to_s.starts_with?("expanded macro:") || def_with_metadata.def.name == "initialize"
           type.ancestors.each do |ancestor|
-            other_defs_with_metadata = ancestor.defs.try &.[def_with_metadata.def.name]?
-            other_defs_with_metadata.try &.each do |other_def_with_metadata|
-              next if other_def_with_metadata.def.location.to_s.starts_with?("expanded macro:")
+            ancestor_defs_with_metadata = ancestor.defs.try &.[def_with_metadata.def.name]?
+            ancestor_defs_with_metadata.try &.each do |ancestor_def_with_metadata|
+              next if ancestor_def_with_metadata.def.location.to_s.starts_with?("expanded macro:")
               found_def_with_same_name = true
 
-              if def_with_metadata.compare_strictness(other_def_with_metadata, self_owner: type, other_owner: ancestor) == 0
-                # puts "Method #{type}##{def_with_metadata.def.name} overrides #{ancestor}##{def_with_metadata.def.name}"
-                # Found a method with the same name and same, stricter or weaker restriction,
-                # so it overrides
-                overriden_locations << def_with_metadata.def.location.to_s
+              if def_with_metadata.compare_strictness(ancestor_def_with_metadata, self_owner: type, other_owner: ancestor) == 0
+                overriden_locations[def_with_metadata.def.location.to_s] = ancestor_def_with_metadata.def.location.to_s
+                overriden_locations[ancestor_def_with_metadata.def.location.to_s] = def_with_metadata.def.location.to_s
               end
             end
           end
@@ -576,6 +569,7 @@ module Crystal
       def visit(node : Crystal::Def)
         return false unless loc = node.location
         return false unless loc.filename && loc.line_number && loc.column_number
+        return false if fully_typed?(node)
         if node_in_def_locators(loc)
           all_defs << node
           files << loc.filename.to_s
@@ -604,6 +598,14 @@ module Crystal
 
         # Whelp, nothing matched, skip this location
         false
+      end
+
+      # If a def is already fully typed, we don't need to check / write it
+      private def fully_typed?(d : Def) : Bool
+        ret = true
+        ret &= d.args.all?(&.restriction)
+        ret &= (d.name == "initialize" || !!d.return_type)
+        ret
       end
     end
   end

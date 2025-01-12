@@ -462,6 +462,25 @@ describe Crystal::SourceTyper do
     INPUT
   end
 
+  it "doesn't type ancestor methods that are inherited" do
+    run_source_typer_spec(<<-INPUT, nil, line_number: -1)
+    class Foo
+      def test(arg)
+        arg
+      end
+    end
+
+    class Bar < Foo
+      def test(arg)
+        1
+      end
+    end
+
+    Bar.new.test(3)
+    Foo.new.test(2)
+    INPUT
+  end
+
   it "runs prelude and types everything" do
     run_source_typer_spec(<<-INPUT, <<-OUTPUT, line_number: -1, prelude: "prelude")
     # This file tries to capture each type of definition format
