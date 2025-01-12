@@ -29,7 +29,7 @@ jobs:
       - name: Install Crystal
         uses: crystal-lang/install-crystal@v1
         with:
-          crystal: "1.14.0"
+          crystal: "1.15.0"
 
       - name: Cross-compile Crystal
         run: make && make -B target=x86_64-windows-gnu release=1 interpreter=1
