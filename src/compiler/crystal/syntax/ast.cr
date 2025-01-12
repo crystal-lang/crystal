@@ -575,6 +575,7 @@ module Crystal
     include SpecialVar
 
     property name : String
+    property doc : String?
 
     def initialize(@name : String)
     end
@@ -1622,6 +1623,7 @@ module Crystal
   end
 
   class TypeDeclaration < ASTNode
+    property doc : String?
     property var : ASTNode
     property declared_type : ASTNode
     property value : ASTNode?
@@ -1917,6 +1919,7 @@ module Crystal
 
   class LibDef < ASTNode
     property name : Path
+    property doc : String?
     property body : ASTNode
     property name_location : Location?
     property visibility = Visibility::Public
@@ -1972,6 +1975,7 @@ module Crystal
 
   class TypeDef < ASTNode
     property name : String
+    property doc : String?
     property type_spec : ASTNode
     property name_location : Location?
 
@@ -1994,6 +1998,7 @@ module Crystal
   # A c struct/union definition inside a lib declaration
   class CStructOrUnionDef < ASTNode
     property name : String
+    property doc : String?
     property body : ASTNode
     property? union : Bool
 
@@ -2036,6 +2041,7 @@ module Crystal
 
   class ExternalVar < ASTNode
     property name : String
+    property doc : String?
     property type_spec : ASTNode
     property real_name : String?
 
