@@ -8,11 +8,7 @@
 # program and, for the legacy implementation, the result is passed on each call
 # to `__crystal_once`.
 #
-# In multithread mode a mutex is used to avoid race conditions between threads.
-#
-# On Win32, `Crystal::System::FileDescriptor#@@reader_thread` spawns a new
-# thread even without the `preview_mt` flag, and the thread can also reference
-# Crystal constants, leading to race conditions, so we always enable the mutex.
+# A `Mutex` is used to avoid race conditions between threads and fibers.
 
 {% if compare_versions(Crystal::VERSION, "1.16.0-dev") >= 0 %}
   # This implementation uses an enum over the initialization flag pointer for
@@ -26,15 +22,11 @@
       Initialized   = 1
     end
 
-    {% if flag?(:preview_mt) || flag?(:win32) %}
-      @@once_mutex = uninitialized Mutex
-    {% end %}
+    @@once_mutex = uninitialized Mutex
 
     # :nodoc:
     def self.once_init : Nil
-      {% if flag?(:preview_mt) || flag?(:win32) %}
-        @@once_mutex = Mutex.new(:reentrant)
-      {% end %}
+      @@once_mutex = Mutex.new(:reentrant)
     end
 
     # :nodoc:
@@ -42,30 +34,24 @@
     # initialized).
     @[NoInline]
     def self.once(flag : OnceState*, initializer : Void*) : Nil
-      {% if flag?(:preview_mt) || flag?(:win32) %}
-        @@once_mutex.synchronize { once_exec(flag, initializer) }
-      {% else %}
-        once_exec(flag, initializer)
-      {% end %}
+      @@once_mutex.synchronize do
+        case flag.value
+        in .initialized?
+          return
+        in .uninitialized?
+          flag.value = :processing
+          Proc(Nil).new(initializer, Pointer(Void).null).call
+          flag.value = :initialized
+        in .processing?
+          raise "Recursion while initializing class variables and/or constants"
+        end
+      end
 
       # safety check, and allows to safely call `Intrinsics.unreachable` in
       # `__crystal_once`
       unless flag.value.initialized?
         System.print_error "BUG: failed to initialize constant or class variable\n"
         LibC._exit(1)
-      end
-    end
-
-    private def self.once_exec(flag : OnceState*, initializer : Void*) : Nil
-      case flag.value
-      in .initialized?
-        return
-      in .uninitialized?
-        flag.value = :processing
-        Proc(Nil).new(initializer, Pointer(Void).null).call
-        flag.value = :initialized
-      in .processing?
-        raise "Recursion while initializing class variables and/or constants"
       end
     end
   end
@@ -93,11 +79,14 @@
   module Crystal
     # :nodoc:
     class OnceState
+      @mutex = Mutex.new(:reentrant)
       @rec = [] of Bool*
 
       @[NoInline]
       def once(flag : Bool*, initializer : Void*)
-        unless flag.value
+        return if flag.value
+
+        @mutex.synchronize do
           if @rec.includes?(flag)
             raise "Recursion while initializing class variables and/or constants"
           end
@@ -109,19 +98,6 @@
           @rec.pop
         end
       end
-
-      {% if flag?(:preview_mt) || flag?(:win32) %}
-        @mutex = Mutex.new(:reentrant)
-
-        @[NoInline]
-        def once(flag : Bool*, initializer : Void*)
-          unless flag.value
-            @mutex.synchronize do
-              previous_def
-            end
-          end
-        end
-      {% end %}
     end
 
     # :nodoc:
