@@ -432,7 +432,11 @@ class Object
     # end
     # ```
     #
+    # {% if macro_prefix == "class_" %}
+    # Is similar to writing (thread and fiber safety omitted):
+    # {% else %}
     # Is the same as writing:
+    # {% end %}
     #
     # ```
     # class Person
@@ -448,29 +452,71 @@ class Object
     macro {{macro_prefix}}getter(*names, &block)
       \{% if block %}
         \{% if names.size != 1 %}
-          \{{ raise "Only one argument can be passed to `getter` with a block" }}
+          \{{ raise "Only one argument can be passed to `#{macro_prefix}getter` with a block" }}
         \{% end %}
 
         \{% name = names[0] %}
 
         \{% if name.is_a?(TypeDeclaration) %}
-          {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
+          {% if macro_prefix == "class_" %}
+            {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
 
-          def {{method_prefix}}\{{name.var.id}} : \{{name.type}}
-            if (%value = {{var_prefix}}\{{name.var.id}}).nil?
-              {{var_prefix}}\{{name.var.id}} = \{{yield}}
-            else
-              %value
+            {% if compare_versions(Crystal::VERSION, "1.16.0-dev") >= 0 %}
+              {{var_prefix}}__\{{name.var.id}}_once_flag : ::Crystal::OnceState = :uninitialized
+            {% else %}
+              {{var_prefix}}__\{{name.var.id}}_once_flag : Bool = false
+            {% end %}
+
+            def {{method_prefix}}\{{name.var.id}} : \{{name.type}}
+              if %value = {{var_prefix}}\{{name.var.id}}
+                return %value
+              end
+              ::Crystal.once(pointerof({{var_prefix}}__\{{name.var.id}}_once_flag)) do
+                if {{var_prefix}}\{{name.var.id}}.nil?
+                  {{var_prefix}}\{{name.var.id}} = \{{yield}}
+                end
+              end
+              {{var_prefix}}\{{name.var.id}}.not_nil!
             end
-          end
+          {% else %}
+            {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
+
+            def {{method_prefix}}\{{name.var.id}} : \{{name.type}}
+              if (%value = {{var_prefix}}\{{name.var.id}}).nil?
+                {{var_prefix}}\{{name.var.id}} = \{{yield}}
+              else
+                %value
+              end
+            end
+          {% end %}
         \{% else %}
-          def {{method_prefix}}\{{name.id}}
-            if (%value = {{var_prefix}}\{{name.id}}).nil?
-              {{var_prefix}}\{{name.id}} = \{{yield}}
-            else
-              %value
+          {% if macro_prefix == "class_" %}
+            {% if compare_versions(Crystal::VERSION, "1.16.0-dev") >= 0 %}
+              {{var_prefix}}__\{{name.id}}_once_flag : ::Crystal::OnceState = :uninitialized
+            {% else %}
+              {{var_prefix}}__\{{name.id}}_once_flag : Bool = false
+            {% end %}
+
+            def {{method_prefix}}\{{name.id}}
+              if %value = {{var_prefix}}\{{name.id}}
+                return %value
+              end
+              ::Crystal.once(pointerof({{var_prefix}}__\{{name.id}}_once_flag)) do
+                if {{var_prefix}}\{{name.id}}.nil?
+                  {{var_prefix}}\{{name.id}} = \{{yield}}
+                end
+              end
+              {{var_prefix}}\{{name.id}}.not_nil!
             end
-          end
+          {% else %}
+            def {{method_prefix}}\{{name.id}}
+              if (%value = {{var_prefix}}\{{name.id}}).nil?
+                {{var_prefix}}\{{name.id}} = \{{yield}}
+              else
+                %value
+              end
+            end
+          {% end %}
         \{% end %}
       \{% else %}
         \{% for name in names %}
@@ -679,29 +725,71 @@ class Object
     macro {{macro_prefix}}getter?(*names, &block)
       \{% if block %}
         \{% if names.size != 1 %}
-          \{{ raise "Only one argument can be passed to `getter?` with a block" }}
+          \{{ raise "Only one argument can be passed to `#{macro_prefix}getter?` with a block" }}
         \{% end %}
 
         \{% name = names[0] %}
 
         \{% if name.is_a?(TypeDeclaration) %}
-          {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
+          {% if macro_prefix == "class_" %}
+            {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
 
-          def {{method_prefix}}\{{name.var.id}}? : \{{name.type}}
-            if (%value = {{var_prefix}}\{{name.var.id}}).nil?
-              {{var_prefix}}\{{name.var.id}} = \{{yield}}
-            else
-              %value
+            {% if compare_versions(Crystal::VERSION, "1.16.0-dev") >= 0 %}
+              {{var_prefix}}__\{{name.var.id}}_once_flag : ::Crystal::OnceState = :uninitialized
+            {% else %}
+              {{var_prefix}}__\{{name.var.id}}_once_flag : Bool = false
+            {% end %}
+
+            def {{method_prefix}}\{{name.var.id}}? : \{{name.type}}
+              if %value = {{var_prefix}}\{{name.var.id}}
+                return %value
+              end
+              ::Crystal.once(pointerof({{var_prefix}}__\{{name.var.id}}_once_flag)) do
+                if {{var_prefix}}\{{name.var.id}}.nil?
+                  {{var_prefix}}\{{name.var.id}} = \{{yield}}
+                end
+              end
+              {{var_prefix}}\{{name.var.id}}.not_nil!
             end
-          end
+          {% else %}
+            {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
+
+            def {{method_prefix}}\{{name.var.id}}? : \{{name.type}}
+              if (%value = {{var_prefix}}\{{name.var.id}}).nil?
+                {{var_prefix}}\{{name.var.id}} = \{{yield}}
+              else
+                %value
+              end
+            end
+          {% end %}
         \{% else %}
-          def {{method_prefix}}\{{name.id}}?
-            if (%value = {{var_prefix}}\{{name.id}}).nil?
-              {{var_prefix}}\{{name.id}} = \{{yield}}
-            else
-              %value
+          {% if macro_prefix == "class_" %}
+            {% if compare_versions(Crystal::VERSION, "1.16.0-dev") >= 0 %}
+              {{var_prefix}}__\{{name.id}}_once_flag : ::Crystal::OnceState = :uninitialized
+            {% else %}
+              {{var_prefix}}__\{{name.id}}_once_flag : Bool = false
+            {% end %}
+
+            def {{method_prefix}}\{{name.id}}?
+              if %value = {{var_prefix}}\{{name.id}}
+                return %value
+              end
+              ::Crystal.once(pointerof({{var_prefix}}__\{{name.id}}_once_flag)) do
+                if {{var_prefix}}\{{name.id}}.nil?
+                  {{var_prefix}}\{{name.id}} = \{{yield}}
+                end
+              end
+              {{var_prefix}}\{{name.id}}.not_nil!
             end
-          end
+          {% else %}
+            def {{method_prefix}}\{{name.id}}?
+              if (%value = {{var_prefix}}\{{name.id}}).nil?
+                {{var_prefix}}\{{name.id}} = \{{yield}}
+              else
+                %value
+              end
+            end
+          {% end %}
         \{% end %}
       \{% else %}
         \{% for name in names %}
@@ -942,7 +1030,11 @@ class Object
     # end
     # ```
     #
+    # {% if macro_prefix == "class_" %}
+    # Is similar to writing (thread and fiber safety omitted):
+    # {% else %}
     # Is the same as writing:
+    # {% end %}
     #
     # ```
     # class Person
@@ -961,32 +1053,74 @@ class Object
     macro {{macro_prefix}}property(*names, &block)
       \{% if block %}
         \{% if names.size != 1 %}
-          \{{ raise "Only one argument can be passed to `property` with a block" }}
+          \{{ raise "Only one argument can be passed to `#{macro_prefix}property` with a block" }}
         \{% end %}
 
         \{% name = names[0] %}
 
         \{% if name.is_a?(TypeDeclaration) %}
-          {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
+          {% if macro_prefix == "class_" %}
+            {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
 
-          def {{method_prefix}}\{{name.var.id}} : \{{name.type}}
-            if (%value = {{var_prefix}}\{{name.var.id}}).nil?
-              {{var_prefix}}\{{name.var.id}} = \{{yield}}
-            else
-              %value
+            {% if compare_versions(Crystal::VERSION, "1.16.0-dev") >= 0 %}
+              {{var_prefix}}__\{{name.var.id}}_once_flag : ::Crystal::OnceState = :uninitialized
+            {% else %}
+              {{var_prefix}}__\{{name.var.id}}_once_flag : Bool = false
+            {% end %}
+
+            def {{method_prefix}}\{{name.var.id}} : \{{name.type}}
+              if %value = {{var_prefix}}\{{name.var.id}}
+                return %value
+              end
+              ::Crystal.once(pointerof({{var_prefix}}__\{{name.var.id}}_once_flag)) do
+                if {{var_prefix}}\{{name.var.id}}.nil?
+                  {{var_prefix}}\{{name.var.id}} = \{{yield}}
+                end
+              end
+              {{var_prefix}}\{{name.var.id}}.not_nil!
             end
-          end
+          {% else %}
+            {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
+
+            def {{method_prefix}}\{{name.var.id}} : \{{name.type}}
+              if (%value = {{var_prefix}}\{{name.var.id}}).nil?
+                {{var_prefix}}\{{name.var.id}} = \{{yield}}
+              else
+                %value
+              end
+            end
+          {% end %}
 
           def {{method_prefix}}\{{name.var.id}}=({{var_prefix}}\{{name.var.id}} : \{{name.type}})
           end
         \{% else %}
-          def {{method_prefix}}\{{name.id}}
-            if (%value = {{var_prefix}}\{{name.id}}).nil?
-              {{var_prefix}}\{{name.id}} = \{{yield}}
-            else
-              %value
+          {% if macro_prefix == "class_" %}
+            {% if compare_versions(Crystal::VERSION, "1.16.0-dev") >= 0 %}
+              {{var_prefix}}__\{{name.id}}_once_flag : ::Crystal::OnceState = :uninitialized
+            {% else %}
+              {{var_prefix}}__\{{name.id}}_once_flag : Bool = false
+            {% end %}
+
+            def {{method_prefix}}\{{name.id}}
+              if %value = {{var_prefix}}\{{name.id}}
+                return %value
+              end
+              ::Crystal.once(pointerof({{var_prefix}}__\{{name.id}}_once_flag)) do
+                if {{var_prefix}}\{{name.id}}.nil?
+                  {{var_prefix}}\{{name.id}} = \{{yield}}
+                end
+              end
+              {{var_prefix}}\{{name.id}}.not_nil!
             end
-          end
+          {% else %}
+            def {{method_prefix}}\{{name.id}}
+              if (%value = {{var_prefix}}\{{name.id}}).nil?
+                {{var_prefix}}\{{name.id}} = \{{yield}}
+              else
+                %value
+              end
+            end
+          {% end %}
 
           def {{method_prefix}}\{{name.id}}=({{var_prefix}}\{{name.id}})
           end
@@ -1207,32 +1341,74 @@ class Object
     macro {{macro_prefix}}property?(*names, &block)
       \{% if block %}
         \{% if names.size != 1 %}
-          \{{ raise "Only one argument can be passed to `property?` with a block" }}
+          \{{ raise "Only one argument can be passed to `#{macro_prefix}property?` with a block" }}
         \{% end %}
 
         \{% name = names[0] %}
 
         \{% if name.is_a?(TypeDeclaration) %}
-          {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
+          {% if macro_prefix == "class_" %}
+            {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
 
-          def {{method_prefix}}\{{name.var.id}}? : \{{name.type}}
-            if (%value = {{var_prefix}}\{{name.var.id}}).nil?
-              {{var_prefix}}\{{name.var.id}} = \{{yield}}
-            else
-              %value
+            {% if compare_versions(Crystal::VERSION, "1.16.0-dev") >= 0 %}
+              {{var_prefix}}__\{{name.var.id}}_once_flag : ::Crystal::OnceState = :uninitialized
+            {% else %}
+              {{var_prefix}}__\{{name.var.id}}_once_flag : Bool = false
+            {% end %}
+
+            def {{method_prefix}}\{{name.var.id}}? : \{{name.type}}
+              if %value = {{var_prefix}}\{{name.var.id}}
+                return %value
+              end
+              ::Crystal.once(pointerof({{var_prefix}}__\{{name.var.id}}_once_flag)) do
+                if {{var_prefix}}\{{name.var.id}}.nil?
+                  {{var_prefix}}\{{name.var.id}} = \{{yield}}
+                end
+              end
+              {{var_prefix}}\{{name.var.id}}.not_nil!
             end
-          end
+          {% else %}
+            {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
+
+            def {{method_prefix}}\{{name.var.id}}? : \{{name.type}}
+              if (%value = {{var_prefix}}\{{name.var.id}}).nil?
+                {{var_prefix}}\{{name.var.id}} = \{{yield}}
+              else
+                %value
+              end
+            end
+          {% end %}
 
           def {{method_prefix}}\{{name.var.id}}=({{var_prefix}}\{{name.var.id}} : \{{name.type}})
           end
         \{% else %}
-          def {{method_prefix}}\{{name.id}}?
-            if (%value = {{var_prefix}}\{{name.id}}).nil?
-              {{var_prefix}}\{{name.id}} = \{{yield}}
-            else
-              %value
+          {% if macro_prefix == "class_" %}
+            {% if compare_versions(Crystal::VERSION, "1.16.0-dev") >= 0 %}
+              {{var_prefix}}__\{{name.id}}_once_flag : ::Crystal::OnceState = :uninitialized
+            {% else %}
+              {{var_prefix}}__\{{name.id}}_once_flag : Bool = false
+            {% end %}
+
+            def {{method_prefix}}\{{name.id}}?
+              if %value = {{var_prefix}}\{{name.id}}
+                return %value
+              end
+              ::Crystal.once(pointerof({{var_prefix}}__\{{name.id}}_once_flag)) do
+                if {{var_prefix}}\{{name.id}}.nil?
+                  {{var_prefix}}\{{name.id}} = \{{yield}}
+                end
+              end
+              {{var_prefix}}\{{name.id}}.not_nil!
             end
-          end
+          {% else %}
+            def {{method_prefix}}\{{name.id}}?
+              if (%value = {{var_prefix}}\{{name.id}}).nil?
+                {{var_prefix}}\{{name.id}} = \{{yield}}
+              else
+                %value
+              end
+            end
+          {% end %}
 
           def {{method_prefix}}\{{name.id}}=({{var_prefix}}\{{name.id}})
           end
