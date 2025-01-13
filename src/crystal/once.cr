@@ -14,6 +14,14 @@
 # thread even without the `preview_mt` flag, and the thread can also reference
 # Crystal constants, leading to race conditions, so we always enable the mutex.
 
+module Crystal
+  @[AlwaysInline]
+  def self.once_unreachable : NoReturn
+    x = uninitialized NoReturn
+    x
+  end
+end
+
 {% if compare_versions(Crystal::VERSION, "1.16.0-dev") >= 0 %}
   # This implementation uses an enum over the initialization flag pointer for
   # each value to find infinite loops and raise an error.
@@ -66,12 +74,6 @@
         raise "Recursion while initializing class variables and/or constants"
       end
     end
-
-    @[AlwaysInline]
-    def self.once_unreachable : NoReturn
-      x = uninitialized NoReturn
-      x
-    end
   end
 
   # :nodoc:
@@ -105,6 +107,7 @@
   class Crystal::OnceState
     @rec = [] of Bool*
 
+    @[NoInline]
     def once(flag : Bool*, initializer : Void*)
       unless flag.value
         if @rec.includes?(flag)
@@ -122,6 +125,7 @@
     {% if flag?(:preview_mt) || flag?(:win32) %}
       @mutex = Mutex.new(:reentrant)
 
+      @[NoInline]
       def once(flag : Bool*, initializer : Void*)
         unless flag.value
           @mutex.synchronize do
@@ -138,7 +142,10 @@
   end
 
   # :nodoc:
+  @[AlwaysInline]
   fun __crystal_once(state : Void*, flag : Bool*, initializer : Void*)
+    return if flag.value
     state.as(Crystal::OnceState).once(flag, initializer)
+    Crystal.once_unreachable unless flag.value
   end
 {% end %}
