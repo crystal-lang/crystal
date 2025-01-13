@@ -32,38 +32,42 @@
     end
 
     # :nodoc:
+    #
     # Identical to `__crystal_once` but takes a block with possibly closured
     # data. Used by `class_[getter|property](declaration, &block)` for example.
-    @[AlwaysInline]
-    def self.once(flag : OnceState*, &block) : Nil
+    def self.once(flag : OnceState*, &) : Nil
       return if flag.value.initialized?
-      once(flag, block.pointer, block.closure_data)
-      Intrinsics.unreachable unless flag.value.initialized?
+      once_exec(flag) { yield }
     end
 
     # :nodoc:
+    #
     # Using @[NoInline] so LLVM optimizes for the hot path (var already
     # initialized).
     @[NoInline]
     def self.once(flag : OnceState*, initializer : Void*, closure_data : Void*) : Nil
-      @@once_mutex.synchronize do
-        case flag.value
-        in .initialized?
-          return
-        in .uninitialized?
-          flag.value = :processing
-          Proc(Nil).new(initializer, closure_data).call
-          flag.value = :initialized
-        in .processing?
-          raise "Recursion while initializing class variables and/or constants"
-        end
-      end
+      once_exec(flag) { Proc(Nil).new(initializer, closure_data).call }
 
       # safety check, and allows to safely call `Intrinsics.unreachable` in
       # `__crystal_once`
       unless flag.value.initialized?
         System.print_error "BUG: failed to initialize constant or class variable\n"
         LibC._exit(1)
+      end
+    end
+
+    private def self.once_exec(flag, &)
+      @@once_mutex.synchronize do
+        case flag.value
+        in .initialized?
+          return
+        in .uninitialized?
+          flag.value = OnceState::Processing
+          yield
+          flag.value = OnceState::Initialized
+        in .processing?
+          raise "Recursion while initializing class variables and/or constants"
+        end
       end
     end
   end
@@ -101,10 +105,17 @@
       @mutex = Mutex.new(:reentrant)
       @rec = [] of Bool*
 
+      def once(flag : Bool*, &)
+        return if flag.value
+        once_exec(flag) { yield }
+      end
+
       @[NoInline]
       def once(flag : Bool*, initializer : Void*, closure_data : Void*)
-        return if flag.value
+        once_exec(flag) { Proc(Nil).new(initializer, closure_data).call }
+      end
 
+      private def once_exec(flag, &)
         @mutex.synchronize do
           return if flag.value
 
@@ -113,7 +124,7 @@
           end
           @rec << flag
 
-          Proc(Nil).new(initializer, closure_data).call
+          yield
           flag.value = true
 
           @rec.pop
@@ -128,11 +139,9 @@
     end
 
     # :nodoc:
-    @[AlwaysInline]
-    def self.once(flag : Bool*, &block) : Nil
+    def self.once(flag : Bool*, &) : Nil
       return if flag.value
-      @@once_state.once(flag, block.pointer, block.closure_data)
-      Intrinsics.unreachable unless flag.value
+      @@once_state.once(flag) { yield }
     end
   end
 
@@ -150,4 +159,12 @@
     state.as(Crystal::OnceState).once(flag, initializer, Pointer(Void).null)
     Intrinsics.unreachable unless flag.value
   end
+{% end %}
+
+{% if flag?(:interpreted) %}
+  # make sure to initialize the mutex so we can use Crystal.once in the
+  # class_[getter|property]? macros; the compiler does the call by itself, but
+  # the interpreter doesn't (it doesn't use __crystal_once to protect the
+  # initialization of constants and class vars).
+  __crystal_once_init
 {% end %}
