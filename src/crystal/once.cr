@@ -8,6 +8,9 @@
 #   initialized and is its responsibility to verify the initializer is executed
 #   only once and to fail on recursion.
 #
+# Also defines the `Crystal.once(flag, &)` method used to protect lazy
+# initialization of class getters & properties.
+#
 # A `Mutex` is used to avoid race conditions between threads and fibers.
 
 {% if compare_versions(Crystal::VERSION, "1.16.0-dev") >= 0 %}
@@ -29,17 +32,27 @@
     end
 
     # :nodoc:
+    # Identical to `__crystal_once` but takes a block with possibly closured
+    # data. Used by `class_[getter|property](declaration, &block)` for example.
+    @[AlwaysInline]
+    def self.once(flag : OnceState*, &block) : Nil
+      return if flag.value.initialized?
+      once(flag, block.pointer, block.closure_data)
+      Intrinsics.unreachable unless flag.value.initialized?
+    end
+
+    # :nodoc:
     # Using @[NoInline] so LLVM optimizes for the hot path (var already
     # initialized).
     @[NoInline]
-    def self.once(flag : OnceState*, initializer : Void*) : Nil
+    def self.once(flag : OnceState*, initializer : Void*, closure_data : Void*) : Nil
       @@once_mutex.synchronize do
         case flag.value
         in .initialized?
           return
         in .uninitialized?
           flag.value = :processing
-          Proc(Nil).new(initializer, Pointer(Void).null).call
+          Proc(Nil).new(initializer, closure_data).call
           flag.value = :initialized
         in .processing?
           raise "Recursion while initializing class variables and/or constants"
@@ -71,7 +84,7 @@
   fun __crystal_once(flag : Crystal::OnceState*, initializer : Void*) : Nil
     return if flag.value.initialized?
 
-    Crystal.once(flag, initializer)
+    Crystal.once(flag, initializer, Pointer(Void).null)
 
     # tell LLVM that it can optimize away repeated `__crystal_once` calls for
     # this global (e.g. repeated access to constant in a single funtion);
@@ -82,26 +95,44 @@
   # This implementation uses a global array to store the initialization flag
   # pointers for each value to find infinite loops and raise an error.
 
-  # :nodoc:
-  class Crystal::OnceState
-    @mutex = Mutex.new(:reentrant)
-    @rec = [] of Bool*
+  module Crystal
+    # :nodoc:
+    class OnceState
+      @mutex = Mutex.new(:reentrant)
+      @rec = [] of Bool*
 
-    @[NoInline]
-    def once(flag : Bool*, initializer : Void*)
-      return if flag.value
+      @[NoInline]
+      def once(flag : Bool*, initializer : Void*, closure_data : Void*)
+        return if flag.value
 
-      @mutex.synchronize do
-        if @rec.includes?(flag)
-          raise "Recursion while initializing class variables and/or constants"
+        @mutex.synchronize do
+          return if flag.value
+
+          if @rec.includes?(flag)
+            raise "Recursion while initializing class variables and/or constants"
+          end
+          @rec << flag
+
+          Proc(Nil).new(initializer, closure_data).call
+          flag.value = true
+
+          @rec.pop
         end
-        @rec << flag
-
-        Proc(Nil).new(initializer, Pointer(Void).null).call
-        flag.value = true
-
-        @rec.pop
       end
+    end
+
+    @@once_state = uninitialized OnceState
+
+    # :nodoc:
+    def self.once_state=(@@once_state : OnceState)
+    end
+
+    # :nodoc:
+    @[AlwaysInline]
+    def self.once(flag : Bool*, &block) : Nil
+      return if flag.value
+      @@once_state.once(flag, block.pointer, block.closure_data)
+      Intrinsics.unreachable unless flag.value
     end
   end
 
@@ -109,14 +140,14 @@
   fun __crystal_once_init : Void*
     Thread.init
     Fiber.init
-    Crystal::OnceState.new.as(Void*)
+    (Crystal.once_state = Crystal::OnceState.new).as(Void*)
   end
 
   # :nodoc:
   @[AlwaysInline]
   fun __crystal_once(state : Void*, flag : Bool*, initializer : Void*)
     return if flag.value
-    state.as(Crystal::OnceState).once(flag, initializer)
+    state.as(Crystal::OnceState).once(flag, initializer, Pointer(Void).null)
     Intrinsics.unreachable unless flag.value
   end
 {% end %}
