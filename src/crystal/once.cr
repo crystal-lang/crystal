@@ -21,8 +21,8 @@
     # :nodoc:
     enum OnceState : Int8
       Processing    = -1
-      Uninitialized = 0
-      Initialized   = 1
+      Uninitialized =  0
+      Initialized   =  1
     end
 
     @@once_mutex = uninitialized Mutex
