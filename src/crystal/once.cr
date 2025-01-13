@@ -57,6 +57,8 @@
 
   # :nodoc:
   fun __crystal_once_init : Nil
+    Thread.init
+    Fiber.init
     Crystal.once_mutex = Mutex.new(:reentrant)
   end
 
@@ -105,6 +107,8 @@
 
   # :nodoc:
   fun __crystal_once_init : Void*
+    Thread.init
+    Fiber.init
     Crystal::OnceState.new.as(Void*)
   end
 
