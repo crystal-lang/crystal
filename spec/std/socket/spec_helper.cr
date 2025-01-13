@@ -2,7 +2,11 @@ require "spec"
 require "socket"
 
 module SocketSpecHelper
-  class_getter?(supports_ipv6 : Bool) do
+  @@supports_ipv6 : Bool?
+
+  class_getter?(supports_ipv6 : Bool) { detect_supports_ipv6? }
+
+  private def self.detect_supports_ipv6? : Bool
     TCPServer.open("::1", 0) { return true }
     false
   rescue Socket::Error
