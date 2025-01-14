@@ -1,7 +1,6 @@
 require "fiber"
-require "fiber/waiting"
+require "fiber/pointer_linked_list_node"
 require "crystal/spin_lock"
-require "crystal/pointer_linked_list"
 
 # Suspend execution until a collection of fibers are finished.
 #
@@ -49,7 +48,7 @@ class WaitGroup
   end
 
   def initialize(n : Int32 = 0)
-    @waiting = Crystal::PointerLinkedList(Fiber::Waiting).new
+    @waiting = Crystal::PointerLinkedList(Fiber::PointerLinkedListNode).new
     @lock = Crystal::SpinLock.new
     @counter = Atomic(Int32).new(n)
   end
@@ -118,7 +117,7 @@ class WaitGroup
   def wait : Nil
     return if done?
 
-    waiting = Fiber::Waiting.new(Fiber.current)
+    waiting = Fiber::PointerLinkedListNode.new(Fiber.current)
 
     @lock.sync do
       # must check again to avoid a race condition where #done may have
