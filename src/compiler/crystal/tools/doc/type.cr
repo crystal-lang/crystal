@@ -82,7 +82,7 @@ class Crystal::Doc::Type
   end
 
   def visibility
-    @type.private? ? "private " : nil
+    @type.private? ? "private" : nil
   end
 
   def parents_of?(type)

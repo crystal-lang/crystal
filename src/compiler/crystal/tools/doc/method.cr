@@ -139,9 +139,9 @@ class Crystal::Doc::Method
     case @def.visibility
     in .public?
     in .protected?
-      "protected "
+      "protected"
     in .private?
-      "private "
+      "private"
     end
   end
 

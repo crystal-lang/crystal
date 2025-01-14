@@ -20,7 +20,7 @@
   <%= type.full_name.gsub("::", "::<wbr>") %>
 <% else %>
   <span class="kind">
-    <%= type.abstract? ? "abstract " : ""%><%= type.visibility %><%= type.kind %>
+    <%= type.abstract? ? "abstract " : ""%><%= type.visibility.try(&.+(" ")) %><%= type.kind %>
   </span> <%= type.full_name.gsub("::", "::<wbr>") %>
 <% end %>
 </h1>
