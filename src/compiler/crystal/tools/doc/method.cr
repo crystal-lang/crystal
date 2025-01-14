@@ -43,7 +43,7 @@ class Crystal::Doc::Method
   # This docs not include the "Description copied from ..." banner
   # in case it's needed.
   def doc
-    doc_info.doc.try &.strip.lchop(":showdoc:")
+    doc_info.doc.try &.strip.lchop(":showdoc:").strip
   end
 
   # Returns the type this method's docs are copied from, but

@@ -234,16 +234,6 @@ class Crystal::Doc::Generator
     false
   end
 
-  def showdoc?(obj)
-    return false if !@program.wants_doc?
-
-    if showdoc?(obj.doc.try &.strip)
-      return true
-    end
-
-    false
-  end
-
   def crystal_builtin?(type)
     return false unless project_info.crystal_stdlib?
     # TODO: Enabling this allows links to `NoReturn` to work, but has two `NoReturn`s show up in the sidebar
@@ -325,7 +315,7 @@ class Crystal::Doc::Generator
   end
 
   def doc(obj : Type | Method | Macro | Constant)
-    doc = obj.doc.try &.strip.lchop(":showdoc:")
+    doc = obj.doc.try &.strip.lchop(":showdoc:").strip
 
     return if !doc && !has_doc_annotations?(obj)
 
