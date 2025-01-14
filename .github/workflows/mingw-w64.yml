@@ -97,12 +97,12 @@ jobs:
       - name: Build shards release
         shell: msys2 {0}
         working-directory: ./shards
-        run: make CRYSTAL=$(pwd)/crystal/bin/crystal SHARDS=false release=1
+        run: make CRYSTAL=$(pwd)/../crystal/bin/crystal SHARDS=false release=1
 
       - name: Package Shards
         shell: msys2 {0}
         run: |
-          make install PREFIX="$(pwd)/crystal"
+          make install PREFIX="$(pwd)/../crystal"
 
       - name: Upload Crystal executable
         uses: actions/upload-artifact@v4
