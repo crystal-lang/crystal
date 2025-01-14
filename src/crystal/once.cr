@@ -15,6 +15,7 @@
 # Crystal constants, leading to race conditions, so we always enable the mutex.
 
 module Crystal
+  # :nodoc:
   @[AlwaysInline]
   def self.once_unreachable : NoReturn
     x = uninitialized NoReturn
@@ -27,6 +28,7 @@ end
   # each value to find infinite loops and raise an error.
 
   module Crystal
+    # :nodoc:
     enum OnceState : Int8
       Processing    = -1
       Uninitialized = 0
@@ -36,14 +38,17 @@ end
     {% if flag?(:preview_mt) || flag?(:win32) %}
       @@once_mutex = uninitialized Mutex
 
+      # :nodoc:
       def self.once_mutex : Mutex
         @@once_mutex
       end
 
+      # :nodoc:
       def self.once_mutex=(@@once_mutex : Mutex)
       end
     {% end %}
 
+    # :nodoc:
     # Using @[NoInline] so LLVM optimizes for the hot path (var already
     # initialized).
     @[NoInline]
