@@ -44,7 +44,9 @@ class Crystal::CodeGenVisitor
       end
 
       state = load(once_state_type, once_state_global)
-      args = [state, flag, initializer]
+      # cast Int8* to Bool* (required for LLVM 14 and below)
+      bool = bit_cast(flag, @llvm_context.int1.pointer)
+      args = [state, bool, initializer]
     end
 
     call once_fun, args
