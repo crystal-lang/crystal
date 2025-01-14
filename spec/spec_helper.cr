@@ -208,6 +208,7 @@ end
 def prepare_macro_call(macro_body, flags = nil, &)
   program = new_program
   program.flags.concat(flags.split) if flags
+  program.top_level_semantic_complete = true
   args = yield program
 
   macro_params = args.try &.keys.join(", ")
