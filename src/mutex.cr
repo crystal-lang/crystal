@@ -25,7 +25,7 @@ class Mutex
   @lock_count = 0
   @queue = Crystal::PointerLinkedList(Fiber::Waiting).new
   @queue_count = Atomic(Int32).new(0)
-  @spin = Crystal::SpinLock.new
+  @lock = Crystal::SpinLock.new
 
   enum Protection
     Checked
@@ -62,7 +62,7 @@ class Mutex
 
       waiting = Fiber::Waiting.new(Fiber.current)
 
-      @spin.sync do
+      @lock.sync do
         @queue_count.add(1)
 
         if @state.get(:relaxed) == UNLOCKED
@@ -120,7 +120,7 @@ class Mutex
     end
 
     waiting = nil
-    @spin.sync do
+    @lock.sync do
       if @queue_count.get == 0
         return
       end
