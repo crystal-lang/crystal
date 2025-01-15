@@ -123,11 +123,11 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
   # fiber interface, see Crystal::EventLoop
 
   def create_resume_event(fiber : Fiber) : FiberEvent
-    FiberEvent.new(self, fiber, :sleep)
+    FiberEvent.new(:sleep, fiber)
   end
 
   def create_timeout_event(fiber : Fiber) : FiberEvent
-    FiberEvent.new(self, fiber, :select_timeout)
+    FiberEvent.new(:select_timeout, fiber)
   end
 
   # file descriptor interface, see Crystal::EventLoop::FileDescriptor
@@ -164,7 +164,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     evented_close(file_descriptor)
   end
 
-  def remove(file_descriptor : System::FileDescriptor) : Nil
+  protected def self.remove_impl(file_descriptor : System::FileDescriptor) : Nil
     internal_remove(file_descriptor)
   end
 
@@ -267,7 +267,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     evented_close(socket)
   end
 
-  def remove(socket : ::Socket) : Nil
+  protected def self.remove_impl(socket : ::Socket) : Nil
     internal_remove(socket)
   end
 
@@ -317,7 +317,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     end
   end
 
-  private def internal_remove(io)
+  private def self.internal_remove(io)
     return unless (index = io.__evloop_data).valid?
 
     Polling.arena.free(index) do |pd|

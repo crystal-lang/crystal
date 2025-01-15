@@ -32,7 +32,7 @@ module Crystal::System::Signal
           action.sa_flags = LibC::SA_RESTART
 
           action.sa_sigaction = LibC::SigactionHandlerT.new do |value, _, _|
-            writer.write_bytes(value) unless writer.closed?
+            FileDescriptor.write_fully(writer.fd, pointerof(value)) unless writer.closed?
           end
           LibC.sigemptyset(pointerof(action.@sa_mask))
           LibC.sigaction(signal, pointerof(action), nil)
@@ -111,7 +111,7 @@ module Crystal::System::Signal
   # descriptors of the parent process and send it received signals.
   def self.after_fork
     @@pipe.each do |pipe_io|
-      Crystal::EventLoop.current.remove(pipe_io)
+      Crystal::EventLoop.remove(pipe_io)
       pipe_io.file_descriptor_close { }
     end
   ensure

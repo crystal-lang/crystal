@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        crystal_bootstrap_version: [1.7.3, 1.8.2, 1.9.2, 1.10.1, 1.11.2, 1.12.2, 1.13.3, 1.14.0]
+        crystal_bootstrap_version: [1.7.3, 1.8.2, 1.9.2, 1.10.1, 1.11.2, 1.12.2, 1.13.3, 1.14.1, 1.15.0]
         flags: [""]
         include:
           # libffi is only available starting from the 1.2.2 build images

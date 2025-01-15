@@ -20,7 +20,7 @@ module Reply::Term
     end
 
     # Switch off cursor for the block
-    def invisible(stream = STDOUT, &block)
+    def invisible(stream = STDOUT, &)
       stream.print(hide)
       yield
     ensure

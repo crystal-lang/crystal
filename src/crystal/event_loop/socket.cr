@@ -62,13 +62,20 @@ abstract class Crystal::EventLoop
 
     # Closes the socket.
     abstract def close(socket : ::Socket) : Nil
+  end
 
-    # Removes the socket from the event loop. Can be used to free up memory
-    # resources associated with the socket, as well as removing the socket from
-    # kernel data structures.
-    #
-    # Called by `::Socket#finalize` before closing the socket. Errors shall be
-    # silently ignored.
-    abstract def remove(socket : ::Socket) : Nil
+  # Removes the socket from the event loop. Can be used to free up memory
+  # resources associated with the socket, as well as removing the socket from
+  # kernel data structures.
+  #
+  # Called by `::Socket#finalize` before closing the socket. Errors shall be
+  # silently ignored.
+  def self.remove(socket : ::Socket) : Nil
+    backend_class.remove_impl(socket)
+  end
+
+  # Actual implementation for `.remove`. Must be implemented on a subclass of
+  # `Crystal::EventLoop` when needed.
+  protected def self.remove_impl(socket : ::Socket) : Nil
   end
 end
