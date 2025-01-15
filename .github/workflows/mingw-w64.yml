@@ -60,6 +60,7 @@ jobs:
             mingw-w64-ucrt-x86_64-zlib
             mingw-w64-ucrt-x86_64-llvm
             mingw-w64-ucrt-x86_64-libffi
+            mingw-w64-ucrt-x86_64-libyaml
 
       - name: Disable CRLF line ending substitution
         run: |
