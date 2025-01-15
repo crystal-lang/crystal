@@ -830,7 +830,7 @@ class Hash(K, V)
 
   # The actual number of bytes needed to allocate `@indices`.
   private def indices_malloc_size(size)
-    size * @indices_bytesize
+    size.to_u64 * @indices_bytesize
   end
 
   # Reallocates `size` number of indices for `@indices`.
