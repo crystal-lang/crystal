@@ -360,7 +360,7 @@ module Intrinsics
   # define internal void @"*Intrinsics::unreachable:NoReturn"() #12 {
   # entry:
   #   unreachable
-  #}
+  # }
   # ```
   #
   # Can be used like `@llvm.assume(i1 cond)` as `unreachable unless (assumption)`.
