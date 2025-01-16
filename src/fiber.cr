@@ -1,4 +1,5 @@
 require "crystal/system/thread_linked_list"
+require "crystal/print_buffered"
 require "./fiber/context"
 
 # :nodoc:
@@ -78,6 +79,11 @@ class Fiber
     @@fibers.try(&.unsafe_each { |fiber| yield fiber })
   end
 
+  # :nodoc:
+  def self.each(&)
+    fibers.each { |fiber| yield fiber }
+  end
+
   # Creates a new `Fiber` instance.
   #
   # When the fiber is executed, it runs *proc* in its context.
@@ -142,21 +148,11 @@ class Fiber
     GC.unlock_read
     @proc.call
   rescue ex
-    io = {% if flag?(:preview_mt) %}
-           IO::Memory.new(4096) # PIPE_BUF
-         {% else %}
-           STDERR
-         {% end %}
     if name = @name
-      io << "Unhandled exception in spawn(name: " << name << "): "
+      Crystal.print_buffered("Unhandled exception in spawn(name: %s)", name, exception: ex, to: STDERR)
     else
-      io << "Unhandled exception in spawn: "
+      Crystal.print_buffered("Unhandled exception in spawn", exception: ex, to: STDERR)
     end
-    ex.inspect_with_backtrace(io)
-    {% if flag?(:preview_mt) %}
-      STDERR.write(io.to_slice)
-    {% end %}
-    STDERR.flush
   ensure
     # Remove the current fiber from the linked list
     Fiber.inactive(self)
