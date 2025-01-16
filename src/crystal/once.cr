@@ -30,11 +30,6 @@
       @@once_mutex = uninitialized Mutex
 
       # :nodoc:
-      def self.once_mutex : Mutex
-        @@once_mutex
-      end
-
-      # :nodoc:
       def self.once_mutex=(@@once_mutex : Mutex)
       end
     {% end %}
@@ -45,7 +40,7 @@
     @[NoInline]
     def self.once(flag : OnceState*, initializer : Void*) : Nil
       {% if flag?(:preview_mt) || flag?(:win32) %}
-        Crystal.once_mutex.synchronize { once_exec(flag, initializer) }
+        @@once_mutex.synchronize { once_exec(flag, initializer) }
       {% else %}
         once_exec(flag, initializer)
       {% end %}
