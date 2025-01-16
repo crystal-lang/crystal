@@ -14,15 +14,6 @@
 # thread even without the `preview_mt` flag, and the thread can also reference
 # Crystal constants, leading to race conditions, so we always enable the mutex.
 
-module Crystal
-  # :nodoc:
-  @[AlwaysInline]
-  def self.once_unreachable : NoReturn
-    x = uninitialized NoReturn
-    x
-  end
-end
-
 {% if compare_versions(Crystal::VERSION, "1.16.0-dev") >= 0 %}
   # This implementation uses an enum over the initialization flag pointer for
   # each value to find infinite loops and raise an error.
@@ -59,7 +50,7 @@ end
         once_exec(flag, initializer)
       {% end %}
 
-      # safety check, and allows to safely call `#once_unreachable` in
+      # safety check, and allows to safely call `Intrinsics.unreachable` in
       # `__crystal_once`
       unless flag.value.initialized?
         System.print_error "BUG: failed to initialize constant or class variable\n"
@@ -102,7 +93,7 @@ end
     # tell LLVM that it can optimize away repeated `__crystal_once` calls for
     # this global (e.g. repeated access to constant in a single funtion);
     # this is truly unreachable otherwise `Crystal.once` would have panicked
-    Crystal.once_unreachable unless flag.value.initialized?
+    Intrinsics.unreachable unless flag.value.initialized?
   end
 {% else %}
   # This implementation uses a global array to store the initialization flag
@@ -151,6 +142,6 @@ end
   fun __crystal_once(state : Void*, flag : Bool*, initializer : Void*)
     return if flag.value
     state.as(Crystal::OnceState).once(flag, initializer)
-    Crystal.once_unreachable unless flag.value
+    Intrinsics.unreachable unless flag.value
   end
 {% end %}
