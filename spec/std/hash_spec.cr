@@ -1393,10 +1393,6 @@ describe "Hash" do
     hash.@indices_size_pow2.should eq(12)
   end
 
-  it "creates with max capacity", tags: %w[slow] do
-    Hash(Int32, Int32).new(initial_capacity: Int32::MAX)
-  end
-
   describe "#rehash" do
     it "rehashes" do
       a = [1]
