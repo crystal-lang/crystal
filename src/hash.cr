@@ -236,12 +236,14 @@ class Hash(K, V)
       # Translate initial capacity to the nearest power of 2, but keep it a minimum of 8.
       if initial_capacity < 8
         initial_entries_size = 8
+      elsif initial_capacity > 2**30
+        initial_entries_size = Int32::MAX
       else
         initial_entries_size = Math.pw2ceil(initial_capacity)
       end
 
       # Because we always keep indice_size >= entries_size * 2
-      initial_indices_size = initial_entries_size * 2
+      initial_indices_size = initial_entries_size.to_u64 * 2
 
       @entries = malloc_entries(initial_entries_size)
 
