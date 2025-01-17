@@ -19,11 +19,11 @@ module ExecutionContext
     # decide to support it or not (e.g. a single threaded context can accept it).
     abstract def spawn(*, name : String? = nil, same_thread : Bool, &block : ->) : Fiber
 
-    # Suspends the execution of the current fiber and resumes the next runnable
-    # fiber.
+    # Suspends the current fiber and resumes *fiber* instead.
+    # The current fiber will never be resumed; you're responsible to reenqueue it.
     #
     # Unsafe. Must only be called on `ExecutionContext.current`. Prefer
-    # `ExecutionContext.reschedule` instead.
+    # `ExecutionContext.enqueue` instead.
     protected abstract def enqueue(fiber : Fiber) : Nil
 
     # Suspends the execution of the current fiber and resumes the next runnable
