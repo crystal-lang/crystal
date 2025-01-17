@@ -253,14 +253,29 @@ describe "ASTNode#to_s" do
     {% end %}
     CR
 
-  expect_to_s %({% for foo in bar %}\n  {{ if true\n  foo\n  bar\nend }}\n{% end %})
+  expect_to_s <<-'CR', <<-'CR'
+    {% for foo in bar %}
+      {{ if true
+           foo
+           bar
+         end }}
+    {% end %}
+    CR
+    {% for foo in bar %}
+      {{ if true
+      foo
+      bar
+    end }}
+    {% end %}
+    CR
+
   expect_to_s "{% a = 1 %}"
   expect_to_s "{{ a = 1 }}"
   expect_to_s "{%\n  1\n  2\n  3\n%}"
   expect_to_s "{%\n  1\n%}"
   expect_to_s "{%\n  2 + 2\n%}"
-  expect_to_s "{%\n  a = 1 %}", "{%\n  a = 1\n%}"
-  expect_to_s "{% a = 1\n%}", "{% a = 1 %}"
+  expect_to_s "{%\n  a = 1 %}"
+  expect_to_s "{% a = 1\n%}"
 
   expect_to_s <<-'CR', <<-'CR'
     macro finished
@@ -372,6 +387,48 @@ describe "ASTNode#to_s" do
       {% verbatim do %}
         {%
           10
+        %}
+      {% end %}
+    end
+    CR
+
+  expect_to_s <<-'CR'
+    macro finished
+      {% verbatim do %}
+        {%
+
+          a = 1 %}
+      {% end %}
+    end
+    CR
+
+  expect_to_s <<-'CR'
+    macro finished
+      {% verbatim do %}
+        {%
+
+
+          a = 1
+          b = 2 %}
+      {% end %}
+    end
+    CR
+
+  expect_to_s <<-'CR', <<-'CR'
+    macro finished
+      {% verbatim do %}
+        {% a = 1
+           b = 2
+
+        %}
+      {% end %}
+    end
+    CR
+    macro finished
+      {% verbatim do %}
+        {%     a = 1
+        b = 2
+
         %}
       {% end %}
     end

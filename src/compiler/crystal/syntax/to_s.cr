@@ -17,6 +17,7 @@ module Crystal
     @str : IO
     @macro_expansion_pragmas : Hash(Int32, Array(Lexer::LocPragma))?
     @current_arg_type : DefArgType = :none
+    @write_trailing_newline : Bool = true
 
     # Inside a comma-separated list of parameters or args, this becomes true and
     # the outermost pair of parentheses are removed from type restrictions that
@@ -243,7 +244,12 @@ module Crystal
             self.write_extra_newlines((last_node || exp).end_location, exp.location) do
               append_indent unless node.keyword.paren? && i == 0
               exp.accept self
-              newline unless node.keyword.paren? && i == node.expressions.size - 1
+
+              if !@write_trailing_newline && i == node.expressions.size - 1
+                # no-op
+              else
+                newline unless node.keyword.paren? && i == node.expressions.size - 1
+              end
             end
 
             last_node = exp
@@ -751,34 +757,47 @@ module Crystal
     end
 
     def visit(node : MacroExpression)
-      # The node is considered multiline if its starting location is on a different line than its expression.
-      is_multiline = (start_loc = node.location) && (end_loc = node.exp.location) && end_loc.line_number > start_loc.line_number
+      # A node starts multiline when its starting location (`{{` or `{%`) is on a different line than the start of its expression
+      start_multiline = (start_loc = node.location) && (end_loc = node.exp.location) && end_loc.line_number > start_loc.line_number
 
-      @str << (node.output? ? "{{ " : is_multiline ? "{%" : "{% ")
+      # and similarly ends multiline if its expression end location is on a different line than its end location (`}}` or `%}`)
+      end_multiline = (body_end_loc = node.exp.end_location) && (end_loc = node.end_location) && end_loc.line_number > body_end_loc.line_number
 
-      if is_multiline
+      @str << (node.output? ? "{{ " : start_multiline ? "{%" : "{% ")
+
+      if start_multiline
         newline
         @indent += 1
       end
 
       outside_macro do
-        # If the MacroExpression consists of a single node we need to manually handle appending indent and trailing newline if *is_multiline*
-        # Otherwise, the Expressions logic handles that for us
-        if is_multiline && !node.exp.is_a?(Expressions)
-          append_indent
-        end
+        self.write_extra_newlines(node.location, node.exp.location) do
+          # If the MacroExpression consists of a single node we need to manually handle appending indent and trailing newline if *start_multiline*
+          # Otherwise, the Expressions logic handles that for us
+          if start_multiline && !node.exp.is_a?(Expressions)
+            append_indent
+          end
 
-        node.exp.accept self
+          # Only skip writing trailing newlines when the macro expressions' expression is not an Expressions.
+          # This allow Expressions that may be nested deeper in the AST to include trailing newlines.
+          @write_trailing_newline = !node.exp.is_a?(Expressions)
+          node.exp.accept self
+          @write_trailing_newline = true
+        end
       end
 
-      # If the opening tag has a newline after it, force trailing tag to have one as well
-      if is_multiline
-        @indent -= 1
-        newline if !node.exp.is_a? Expressions
+      self.write_extra_newlines(node.exp.end_location, node.end_location) { }
+
+      # After writing the expression body, de-indent if things were originally multiline.
+      # This ensures the ending control has the proper indent relative to the start.
+      @indent -= 1 if start_multiline
+
+      if end_multiline
+        newline
         append_indent
       end
 
-      @str << (node.output? ? " }}" : is_multiline ? "%}" : " %}")
+      @str << (node.output? ? " }}" : end_multiline ? "%}" : " %}")
       false
     end
 
