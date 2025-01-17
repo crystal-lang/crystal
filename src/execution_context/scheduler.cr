@@ -44,13 +44,17 @@ module ExecutionContext
 
     # Switches the thread from running the current fiber to run *fiber* instead.
     #
-    # Handles thread safety around fiber stacks: locks the GC to not start a
-    # collection while we're switching context, releases the stack of a dead
-    # fiber.
+    # Handles thread safety around fiber stacks:
     #
-    # Unsafe. Must only be called by the current scheduler. Caller must ensure
-    # that the fiber indeed belongs to the current execution context, and that
-    # the fiber can indeed be resumed.
+    # 1. locks the GC to not start a collection while we're switching context
+    # 2. memorizes a dying fiber then releases its stack after switching context
+    #
+    # These two operations mean that `Fiber#run` must also release the GC lock
+    # and check for a dead fiber!
+    #
+    # Unsafe. Must only be called by the current scheduler. The caller must
+    # ensure that the fiber indeed belongs to the current execution context and
+    # that the fiber can indeed be resumed.
     protected def swapcontext(fiber : Fiber) : Nil
       current_fiber = thread.current_fiber
 
