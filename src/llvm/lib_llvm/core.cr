@@ -17,6 +17,10 @@ lib LibLLVM
 
   fun dispose_message = LLVMDisposeMessage(message : Char*)
 
+  {% unless LibLLVM::IS_LT_160 %}
+    fun get_version = LLVMGetVersion(major : UInt*, minor : UInt*, patch : UInt*) : Void
+  {% end %}
+
   fun create_context = LLVMContextCreate : ContextRef
   fun dispose_context = LLVMContextDispose(c : ContextRef)
 

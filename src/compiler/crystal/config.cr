@@ -11,7 +11,12 @@ module Crystal
     end
 
     def self.llvm_version
-      LibLLVM::VERSION
+      {% if LibLLVM.has_method?(:get_version) %}
+        LibLLVM.get_version(out major, out minor, out patch)
+        "#{major}.#{minor}.#{patch}"
+      {% else %}
+        LibLLVM::VERSION
+      {% end %}
     end
 
     def self.description
