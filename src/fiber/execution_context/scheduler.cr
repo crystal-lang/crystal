@@ -1,8 +1,9 @@
-module ExecutionContext
+module Fiber::ExecutionContext
+  # :nodoc:
   module Scheduler
     @[AlwaysInline]
     def self.current : Scheduler
-      Thread.current.current_scheduler
+      Thread.current.scheduler
     end
 
     protected abstract def thread : Thread
@@ -82,6 +83,8 @@ module ExecutionContext
       {% end %}
     end
 
+    # Returns the current status of the scheduler. For example `"running"`,
+    # `"event-loop"` or `"parked"`.
     abstract def status : String
   end
 end

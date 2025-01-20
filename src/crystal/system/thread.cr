@@ -70,13 +70,13 @@ class Thread
 
   {% if flag?(:execution_context) %}
     # :nodoc:
-    getter! execution_context : ExecutionContext
+    getter! execution_context : Fiber::ExecutionContext
 
     # :nodoc:
-    property! current_scheduler : ExecutionContext::Scheduler
+    property! scheduler : Fiber::ExecutionContext::Scheduler
 
     # :nodoc:
-    def execution_context=(@execution_context : ExecutionContext) : ExecutionContext
+    def execution_context=(@execution_context : Fiber::ExecutionContext) : Fiber::ExecutionContext
       main_fiber.execution_context = execution_context
     end
 
@@ -86,16 +86,17 @@ class Thread
     # to another fiber: can't free/unmap nor push it to a shared stack pool;
     # that would result in a segfault.
     #
-    # Set by `ExecutionContext::Scheduler#swapcontext` before switching context
-    # from a terminating fiber to another fiber running on the same thread.
+    # Set by `Fiber::ExecutionContext::Scheduler#swapcontext` before switching
+    # context from a terminating fiber to another fiber running on the same
+    # thread.
     def dead_fiber=(@dead_fiber : Fiber) : Fiber
     end
 
     # :nodoc:
     #
-    # Checked by `ExecutionContext::Scheduler#swapcontext` after the context
-    # switch and by `Fiber#run` to release the stack of a dead fiber previously
-    # running on this thread.
+    # Checked by `Fiber::ExecutionContext::Scheduler#swapcontext` after the
+    # context switch and by `Fiber#run` to release the stack of a dead fiber
+    # previously running on this thread.
     #
     # Automatically clears `@dead_fiber`: we only need the information once.
     def dead_fiber? : Fiber?

@@ -3,7 +3,7 @@ require "channel"
 require "crystal/tracing"
 
 {% if flag?(:execution_context) %}
-  require "execution_context"
+  require "fiber/execution_context"
 {% else %}
   require "crystal/scheduler"
 {% end %}
@@ -29,7 +29,7 @@ def sleep(time : Time::Span) : Nil
 
   {% if flag?(:execution_context) %}
     Fiber.current.resume_event.add(time)
-    ExecutionContext.reschedule
+    Fiber::ExecutionContext.reschedule
   {% else %}
     Crystal::Scheduler.sleep(time)
   {% end %}
@@ -40,7 +40,7 @@ end
 # Meanwhile, other ready-to-execute fibers might start their execution.
 def sleep : Nil
   {% if flag?(:execution_context) %}
-    ExecutionContext.reschedule
+    Fiber::ExecutionContext.reschedule
   {% else %}
     Crystal::Scheduler.reschedule
   {% end %}
@@ -81,7 +81,7 @@ end
 # ```
 def spawn(*, name : String? = nil, same_thread = false, &block)
   {% if flag?(:execution_context) %}
-    ExecutionContext::Scheduler.current.spawn(name: name, same_thread: same_thread, &block)
+    Fiber::ExecutionContext::Scheduler.current.spawn(name: name, same_thread: same_thread, &block)
   {% else %}
     fiber = Fiber.new(name, &block)
     Crystal.trace :sched, "spawn", fiber: fiber

@@ -609,7 +609,7 @@ end
   Exception::CallStack.setup_crash_handler
 
   {% if flag?(:execution_context) %}
-    ExecutionContext.init_default_context
+    Fiber::ExecutionContext.init_default_context
   {% else %}
     Crystal::Scheduler.init
   {% end %}

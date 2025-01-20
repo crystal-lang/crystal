@@ -82,11 +82,11 @@ module Crystal
         end
 
         {% if flag?(:execution_context) %}
-          def write(value : ExecutionContext) : Nil
+          def write(value : Fiber::ExecutionContext) : Nil
             write value.name
           end
 
-          def write(value : ExecutionContext::Scheduler) : Nil
+          def write(value : Fiber::ExecutionContext::Scheduler) : Nil
             write value.name
           end
         {% end %}

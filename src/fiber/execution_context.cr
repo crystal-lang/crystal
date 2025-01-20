@@ -2,14 +2,17 @@ require "../crystal/event_loop"
 require "../crystal/system/thread"
 require "../crystal/system/thread_linked_list"
 require "../fiber"
-require "../fiber/stack_pool"
-require "./scheduler"
+require "./stack_pool"
+require "./execution_context/scheduler"
 
 {% raise "ERROR: execution contexts require the `preview_mt` compilation flag" unless flag?(:preview_mt) %}
+{% raise "ERROR: execution contexts require the `execution_context` compilation flag" unless flag?(:execution_context) %}
 
-module ExecutionContext
+module Fiber::ExecutionContext
   @@default : ExecutionContext?
 
+  # Returns the default `ExecutionContext` for the process, automatically
+  # started when the program started.
   @[AlwaysInline]
   def self.default : ExecutionContext
     @@default.not_nil!("expected default execution context to have been setup")
@@ -39,15 +42,19 @@ module ExecutionContext
     @@execution_contexts.try(&.unsafe_each { |execution_context| yield execution_context })
   end
 
+  # Iterates all execution contexts.
   def self.each(&) : Nil
     execution_contexts.each { |execution_context| yield execution_context }
   end
 
+  # Returns the `ExecutionContext` the current fiber is running in.
   @[AlwaysInline]
   def self.current : ExecutionContext
     Thread.current.execution_context
   end
 
+  # :nodoc:
+  #
   # Tells the current scheduler to suspend the current fiber and resume the
   # next runnable fiber. The current fiber will never be resumed; you're
   # responsible to reenqueue it.
@@ -59,6 +66,8 @@ module ExecutionContext
     Scheduler.current.reschedule
   end
 
+  # :nodoc:
+  #
   # Tells the current scheduler to suspend the current fiber and to resume
   # *fiber* instead. The current fiber will never be resumed; you're responsible
   # to reenqueue it.
@@ -84,15 +93,23 @@ module ExecutionContext
     Fiber.new(name, self, &block).tap { |fiber| enqueue(fiber) }
   end
 
+  # :nodoc:
+  #
   # Legacy support for the `same_thread` argument. Each execution context may
   # decide to support it or not (e.g. a single threaded context can accept it).
   abstract def spawn(*, name : String? = nil, same_thread : Bool, &block : ->) : Fiber
 
+  # :nodoc:
   abstract def stack_pool : Fiber::StackPool
+
+  # :nodoc:
   abstract def stack_pool? : Fiber::StackPool?
 
+  # :nodoc:
   abstract def event_loop : Crystal::EventLoop
 
+  # :nodoc:
+  #
   # Enqueues a fiber to be resumed inside the execution context.
   #
   # May be called from any ExecutionContext (i.e. must be thread-safe).
