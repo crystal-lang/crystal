@@ -6,6 +6,8 @@ require "../queue"
 require "./runnables"
 
 module Fiber::ExecutionContext
+  # :nodoc:
+  #
   # Global queue of runnable fibers.
   # Unbounded.
   # Shared by all schedulers in an execution context.
