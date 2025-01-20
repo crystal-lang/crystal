@@ -5,6 +5,9 @@ class Fiber
   class StackPool
     STACK_SIZE = 8 * 1024 * 1024
 
+    # FIXME: crystal can't infer ivars declared inside macros...
+    @lock = uninitialized Crystal::SpinLock
+
     # If *protect* is true, guards all top pages (pages with the lowest address
     # values) in the allocated stacks; accessing them triggers an error
     # condition, allowing stack overflows on non-main fibers to be detected.
