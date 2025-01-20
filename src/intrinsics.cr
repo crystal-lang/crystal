@@ -354,6 +354,23 @@ module Intrinsics
   macro va_end(ap)
     ::LibIntrinsics.va_end({{ap}})
   end
+
+  # Should codegen to the following LLVM IR (before being inlined):
+  # ```
+  # define internal void @"*Intrinsics::unreachable:NoReturn"() #12 {
+  # entry:
+  #   unreachable
+  # }
+  # ```
+  #
+  # Can be used like `@llvm.assume(i1 cond)` as `unreachable unless (assumption)`.
+  #
+  # WARNING: the behaviour of the program is undefined if the assumption is broken!
+  @[AlwaysInline]
+  def self.unreachable : NoReturn
+    x = uninitialized NoReturn
+    x
+  end
 end
 
 macro debugger
