@@ -83,11 +83,11 @@ class Thread
     # When a fiber terminates we can't release its stack until we swap context
     # to another fiber. We can't free/unmap nor push it to a shared stack pool,
     # that would result in a segfault.
-    @dead_fiber_stack = Pointer(Void)?
+    @dead_fiber_stack : Pointer(Void)?
 
     # :nodoc:
     def dying_fiber(fiber : Fiber) : Pointer(Void)?
-      stack = @dead_fiber
+      stack = @dead_fiber_stack
       @dead_fiber_stack = fiber.@stack
       stack
     end
