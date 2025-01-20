@@ -1,9 +1,9 @@
-require "../spec_helper"
+require "../../spec_helper"
 require "crystal/system/thread_wait_group"
-require "execution_context/runnables"
-require "execution_context/global_queue"
+require "fiber/execution_context/runnables"
+require "fiber/execution_context/global_queue"
 
-module ExecutionContext
+module Fiber::ExecutionContext
   class FiberCounter
     def initialize(@fiber : Fiber)
       @counter = Atomic(Int32).new(0)

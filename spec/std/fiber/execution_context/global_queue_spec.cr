@@ -1,8 +1,8 @@
 require "./spec_helper"
 
-describe ExecutionContext::GlobalQueue do
+describe Fiber::ExecutionContext::GlobalQueue do
   it "#initialize" do
-    q = ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
+    q = Fiber::ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
     q.empty?.should be_true
   end
 
@@ -11,7 +11,7 @@ describe ExecutionContext::GlobalQueue do
     f2 = Fiber.new(name: "f2") { }
     f3 = Fiber.new(name: "f3") { }
 
-    q = ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
+    q = Fiber::ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
     q.unsafe_push(f1)
     q.size.should eq(1)
 
@@ -31,17 +31,17 @@ describe ExecutionContext::GlobalQueue do
 
   describe "#unsafe_grab?" do
     it "can't grab from empty queue" do
-      q = ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
-      runnables = ExecutionContext::Runnables(6).new(q)
+      q = Fiber::ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
+      runnables = Fiber::ExecutionContext::Runnables(6).new(q)
       q.unsafe_grab?(runnables, 4).should be_nil
     end
 
     it "grabs fibers" do
-      q = ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
+      q = Fiber::ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
       fibers = 10.times.map { |i| Fiber.new(name: "f#{i}") { } }.to_a
       fibers.each { |f| q.unsafe_push(f) }
 
-      runnables = ExecutionContext::Runnables(6).new(q)
+      runnables = Fiber::ExecutionContext::Runnables(6).new(q)
       fiber = q.unsafe_grab?(runnables, 4)
 
       # returned the last enqueued fiber
@@ -60,11 +60,11 @@ describe ExecutionContext::GlobalQueue do
 
     it "can't grab more than available" do
       f = Fiber.new { }
-      q = ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
+      q = Fiber::ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
       q.unsafe_push(f)
 
       # dequeues the unique fiber
-      runnables = ExecutionContext::Runnables(6).new(q)
+      runnables = Fiber::ExecutionContext::Runnables(6).new(q)
       fiber = q.unsafe_grab?(runnables, 4)
       fiber.should be(f)
 
@@ -74,11 +74,11 @@ describe ExecutionContext::GlobalQueue do
 
     it "clamps divisor to 1" do
       f = Fiber.new { }
-      q = ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
+      q = Fiber::ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
       q.unsafe_push(f)
 
       # dequeues the unique fiber
-      runnables = ExecutionContext::Runnables(6).new(q)
+      runnables = Fiber::ExecutionContext::Runnables(6).new(q)
       fiber = q.unsafe_grab?(runnables, 0)
       fiber.should be(f)
 
@@ -90,13 +90,13 @@ describe ExecutionContext::GlobalQueue do
   # interpreter doesn't support threads yet (#14287)
   pending_interpreted describe: "thread safety" do
     it "one by one" do
-      fibers = StaticArray(ExecutionContext::FiberCounter, 763).new do |i|
-        ExecutionContext::FiberCounter.new(Fiber.new(name: "f#{i}") { })
+      fibers = StaticArray(Fiber::ExecutionContext::FiberCounter, 763).new do |i|
+        Fiber::ExecutionContext::FiberCounter.new(Fiber.new(name: "f#{i}") { })
       end
 
       n = 7
       increments = 15
-      queue = ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
+      queue = Fiber::ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
       ready = Thread::WaitGroup.new(n)
       shutdown = Thread::WaitGroup.new(n)
 
@@ -140,11 +140,11 @@ describe ExecutionContext::GlobalQueue do
       n = 7
       increments = 15
 
-      fibers = StaticArray(ExecutionContext::FiberCounter, 765).new do |i| # 765 can be divided by 3 and 5
-        ExecutionContext::FiberCounter.new(Fiber.new(name: "f#{i}") { })
+      fibers = StaticArray(Fiber::ExecutionContext::FiberCounter, 765).new do |i| # 765 can be divided by 3 and 5
+        Fiber::ExecutionContext::FiberCounter.new(Fiber.new(name: "f#{i}") { })
       end
 
-      queue = ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
+      queue = Fiber::ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
       ready = Thread::WaitGroup.new(n)
       shutdown = Thread::WaitGroup.new(n)
 
@@ -152,7 +152,7 @@ describe ExecutionContext::GlobalQueue do
         Thread.new(name: "BULK-#{i}") do |thread|
           slept = 0
 
-          r = ExecutionContext::Runnables(3).new(queue)
+          r = Fiber::ExecutionContext::Runnables(3).new(queue)
 
           batch = Fiber::Queue.new
           size = 0

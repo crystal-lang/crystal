@@ -8,10 +8,10 @@
 # - on empty: bulk grab up to half the ring from `GlobalQueue`;
 # - bulk push operation;
 
-require "../fiber/queue"
+require "../queue"
 require "./global_queue"
 
-module ExecutionContext
+module Fiber::ExecutionContext
   # :nodoc:
   #
   # Local queue or runnable fibers for schedulers.

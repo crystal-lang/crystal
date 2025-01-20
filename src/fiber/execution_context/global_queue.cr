@@ -2,10 +2,10 @@
 # BSD-like license:
 # <https://cs.opensource.google/go/go/+/release-branch.go1.23:LICENSE>
 
-require "../fiber/queue"
+require "../queue"
 require "./runnables"
 
-module ExecutionContext
+module Fiber::ExecutionContext
   # Global queue of runnable fibers.
   # Unbounded.
   # Shared by all schedulers in an execution context.
