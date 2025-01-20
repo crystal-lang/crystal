@@ -166,14 +166,6 @@ class Fiber
   def run
     GC.unlock_read
 
-    {% if flag?(:execution_context) && !flag?(:interpreted) %}
-      # if the fiber previously running on this thread has terminated, we can
-      # now safely release its stack
-      if fiber = Thread.current.dead_fiber?
-        fiber.execution_context.stack_pool.release(fiber.@stack)
-      end
-    {% end %}
-
     @proc.call
   rescue ex
     if name = @name
@@ -192,14 +184,18 @@ class Fiber
 
     @alive = false
 
-    {% unless flag?(:interpreted) || flag?(:execution_context) %}
-      # interpreted: the interpreter is managing the stacks
-      #
-      # execution context: do not prematurely release the stack before we switch
-      # to another fiber so we don't end up with a thread reusing a stack for a
-      # new fiber while the current fiber isn't fully terminated (oops); even
-      # without the pool, we can't unmap before we swap context.
-      Crystal::Scheduler.stack_pool.release(@stack)
+    # the interpreter is managing the stacks
+    {% unless flag?(:interpreted) %}
+      {% if flag?(:execution_context) %}
+        # do not prematurely release the stack before we switch to another fiber
+        if stack = Thread.current.dying_fiber(self)
+          # we can however release the stack of a previously dying fiber (we
+          # since swapped context)
+          execution_context.stack_pool.release(stack)
+        end
+      {% else %}
+        Crystal::Scheduler.stack_pool.release(@stack)
+      {% end %}
     {% end %}
 
     Fiber.suspend

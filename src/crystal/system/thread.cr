@@ -80,29 +80,23 @@ class Thread
       main_fiber.execution_context = execution_context
     end
 
-    # :nodoc:
-    #
     # When a fiber terminates we can't release its stack until we swap context
-    # to another fiber: can't free/unmap nor push it to a shared stack pool;
+    # to another fiber. We can't free/unmap nor push it to a shared stack pool,
     # that would result in a segfault.
-    #
-    # Set by `Fiber::ExecutionContext::Scheduler#swapcontext` before switching
-    # context from a terminating fiber to another fiber running on the same
-    # thread.
-    def dead_fiber=(@dead_fiber : Fiber) : Fiber
+    @dead_fiber_stack = Pointer(Void)?
+
+    # :nodoc:
+    def dying_fiber(fiber : Fiber) : Pointer(Void)?
+      stack = @dead_fiber
+      @dead_fiber_stack = fiber.@stack
+      stack
     end
 
     # :nodoc:
-    #
-    # Checked by `Fiber::ExecutionContext::Scheduler#swapcontext` after the
-    # context switch and by `Fiber#run` to release the stack of a dead fiber
-    # previously running on this thread.
-    #
-    # Automatically clears `@dead_fiber`: we only need the information once.
-    def dead_fiber? : Fiber?
-      if fiber = @dead_fiber
-        @dead_fiber = nil
-        fiber
+    def dead_fiber_stack? : Pointer(Void)?
+      if stack = @dead_fiber_stack
+        @dead_fiber_stack = nil
+        stack
       end
     end
   {% else %}

@@ -45,42 +45,24 @@ module Fiber::ExecutionContext
 
     # Switches the thread from running the current fiber to run *fiber* instead.
     #
-    # Handles thread safety around fiber stacks:
-    #
-    # 1. locks the GC to not start a collection while we're switching context
-    # 2. memorizes a dying fiber then releases its stack after switching context
-    #
-    # These two operations mean that `Fiber#run` must also release the GC lock
-    # and check for a dead fiber!
+    # Handles thread safety around fiber stacks by locking the GC, so it won't
+    # start a GC collection while we're switching context.
     #
     # Unsafe. Must only be called by the current scheduler. The caller must
     # ensure that the fiber indeed belongs to the current execution context and
     # that the fiber can indeed be resumed.
+    #
+    # WARNING: after switching context you can't trust *self* anymore (it is the
+    # scheduler that resumed *fiber* which may not be the one that suspended
+    # *fiber*) or instance variables; local variables however are the ones from
+    # before swapping context.
     protected def swapcontext(fiber : Fiber) : Nil
       current_fiber = thread.current_fiber
-
-      {% unless flag?(:interpreted) %}
-        thread.dead_fiber = current_fiber if current_fiber.dead?
-      {% end %}
 
       GC.lock_read
       thread.current_fiber = fiber
       Fiber.swapcontext(pointerof(current_fiber.@context), pointerof(fiber.@context))
       GC.unlock_read
-
-      # we switched context so we can't trust *self* anymore (it is the
-      # scheduler that rescheduled *fiber* which may be another scheduler) as
-      # well as any other local or instance variables (e.g. we must resolve
-      # `Thread.current` again)
-      #
-      # that being said, we can still trust the *current_fiber* local variable
-      # (it's the only exception)
-
-      {% unless flag?(:interpreted) %}
-        if fiber = Thread.current.dead_fiber?
-          fiber.execution_context.stack_pool.release(fiber.@stack)
-        end
-      {% end %}
     end
 
     # Returns the current status of the scheduler. For example `"running"`,
