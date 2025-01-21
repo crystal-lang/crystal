@@ -339,7 +339,7 @@ class Fiber
   # :nodoc:
   #
   # Protects `Reference#inspect` and `Reference#pretty_print` against recursion.
-  def exec_recursive(object_id : UInt64, method : Symbol, &) : Bool
+  def exec_recursive(object_id : UInt64, method : Symbol, &)
     # NOTE: can't use `Set` because of prelude require order
     hash = (@exec_recursive ||= Hash({UInt64, Symbol}, Nil).new)
     key = {object_id, method}
@@ -355,14 +355,14 @@ class Fiber
   #
   # Protects `Reference#clone` implementations against recursion. See
   # `Reference#exec_recursive_clone` for more details.
-  def exec_recursive_clone(object_id : UInt64, &) : Bool
+  def exec_recursive_clone(object_id : UInt64, &)
     # NOTE: can't use `Set` because of prelude require order
-    hash = (@exec_recursive_clone ||= Hash(UInt64, Nil).new)
-    hash.put(object_id, nil) do
-      yield
+    hash = (@exec_recursive_clone ||= Hash(UInt64, UInt64).new)
+    clone_object_id = hash[object_id]?
+    unless clone_object_id
+      clone_object_id = yield(hash).object_id
       hash.delete(object_id)
-      return true
     end
-    false
+    Pointer(Void).new(clone_object_id)
   end
 end

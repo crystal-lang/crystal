@@ -199,6 +199,7 @@ class Reference
   # end
   # ```
   private def exec_recursive_clone(&)
-    Fiber.current.exec_recursive_clone(object_id) { yield }
+    pointer = Fiber.current.exec_recursive_clone(object_id) { |hash| yield hash }
+    pointer.as(self)
   end
 end
