@@ -515,7 +515,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
   private abstract def system_run(blocking : Bool, & : Fiber ->) : Nil
 
   # Add *fd* to the polling system, setting *index* as user data.
-  protected abstract def system_add(fd : Int32, index : Index) : Nil
+  protected abstract def system_add(fd : Int32, index : Arena::Index) : Nil
 
   # Remove *fd* from the polling system. Must raise a `RuntimeError` on error.
   #
