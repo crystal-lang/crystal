@@ -162,6 +162,10 @@ class Fiber
     @timeout_event.try &.free
     @timeout_select_action = nil
 
+    # Additional cleanup (avoid stale references)
+    @exec_recursive = nil
+    @exec_recursive_clone = nil
+
     @alive = false
     {% unless flag?(:interpreted) %}
       Crystal::Scheduler.stack_pool.release(@stack)
@@ -331,4 +335,34 @@ class Fiber
       @current_thread.lazy_get
     end
   {% end %}
+
+  # :nodoc:
+  #
+  # Protects `Reference#inspect` and `Reference#pretty_print` against recursion.
+  def exec_recursive(object_id : UInt64, method : Symbol, &) : Bool
+    # NOTE: can't use `Set` because of prelude require order
+    hash = (@exec_recursive ||= Hash({UInt64, Symbol}, Nil).new)
+    key = {object_id, method}
+    hash.put(key, nil) do
+      yield
+      hash.delete(key)
+      return true
+    end
+    false
+  end
+
+  # :nodoc:
+  #
+  # Protects `Reference#clone` implementations against recursion. See
+  # `Reference#exec_recursive_clone` for more details.
+  def exec_recursive_clone(object_id : UInt64, &) : Bool
+    # NOTE: can't use `Set` because of prelude require order
+    hash = (@exec_recursive_clone ||= Hash(UInt64, Nil).new)
+    hash.put(object_id, nil) do
+      yield
+      hash.delete(object_id)
+      return true
+    end
+    false
+  end
 end
