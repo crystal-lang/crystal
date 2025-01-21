@@ -65,7 +65,7 @@ describe Crystal::Doc::Generator do
       generator.must_include?(program.types["Foo"]).should be_false
     end
 
-    it "shows all private and protected methods in a :showdoc: namespace" do
+    it "does not include documentation for private and protected methods and objects in a :showdoc: namespace" do
       program = top_level_semantic(<<-CRYSTAL, wants_doc: true).program
         # :showdoc:
         class Foo
@@ -84,17 +84,11 @@ describe Crystal::Doc::Generator do
         CRYSTAL
 
       generator = Doc::Generator.new program, [""]
-      foo_def = generator.type(program.types["Foo"]).lookup_method("foo").not_nil!
-      foo_def.doc.should eq("Some docs for `foo`")
-      foo_def.visibility.should eq("private")
 
-      bar_def = generator.type(program.types["Foo"]).lookup_method("bar").not_nil!
-      bar_def.doc.should eq("Some docs for `bar`")
-      bar_def.visibility.should eq("protected")
+      generator.type(program.types["Foo"]).lookup_method("foo").should be_nil
+      generator.type(program.types["Foo"]).lookup_method("bar").should be_nil
 
-      baz_class = generator.type(program.types["Foo"]).lookup_path("Baz").not_nil!
-      baz_class.doc.should eq("Some docs for `Baz`")
-      baz_class.visibility.should eq("private")
+      generator.must_include?(generator.type(program.types["Foo"]).lookup_path("Baz")).should be_false
     end
 
     it "doesn't show a method marked :nodoc: within a :showdoc: namespace" do
@@ -103,7 +97,7 @@ describe Crystal::Doc::Generator do
         class Foo
           # :nodoc:
           # Some docs for `foo`
-          private def foo
+          def foo
           end
         end
         CRYSTAL

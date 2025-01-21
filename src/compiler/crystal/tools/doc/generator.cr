@@ -221,17 +221,7 @@ class Crystal::Doc::Generator
   end
 
   def showdoc?(obj : Crystal::Type)
-    return false if !@program.wants_doc?
-
-    if showdoc?(obj.doc.try &.strip)
-      return true
-    end
-
-    obj.each_namespace do |ns|
-      return true if showdoc?(ns.doc.try &.strip)
-    end
-
-    false
+    showdoc?(obj.doc.try &.strip)
   end
 
   def crystal_builtin?(type)
