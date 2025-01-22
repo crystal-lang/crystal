@@ -163,8 +163,8 @@ class Fiber
     @timeout_select_action = nil
 
     # Additional cleanup (avoid stale references)
-    @exec_recursive = nil
-    @exec_recursive_clone = nil
+    @exec_recursive_hash = nil
+    @exec_recursive_clone_hash = nil
 
     @alive = false
     {% unless flag?(:interpreted) %}
@@ -338,31 +338,15 @@ class Fiber
 
   # :nodoc:
   #
-  # Protects `Reference#inspect` and `Reference#pretty_print` against recursion.
-  def exec_recursive(object_id : UInt64, method : Symbol, &)
-    # NOTE: can't use `Set` because of prelude require order
-    hash = (@exec_recursive ||= Hash({UInt64, Symbol}, Nil).new)
-    key = {object_id, method}
-    hash.put(key, nil) do
-      yield
-      hash.delete(key)
-      return true
-    end
-    false
+  # See `Reference#exec_recursive` for details.
+  def exec_recursive_hash
+    @exec_recursive_hash ||= Hash({UInt64, Symbol}, Nil).new
   end
 
   # :nodoc:
   #
-  # Protects `Reference#clone` implementations against recursion. See
-  # `Reference#exec_recursive_clone` for more details.
-  def exec_recursive_clone(object_id : UInt64, &)
-    # NOTE: can't use `Set` because of prelude require order
-    hash = (@exec_recursive_clone ||= Hash(UInt64, UInt64).new)
-    clone_object_id = hash[object_id]?
-    unless clone_object_id
-      clone_object_id = yield(hash).object_id
-      hash.delete(object_id)
-    end
-    Pointer(Void).new(clone_object_id)
+  # See `Reference#exec_recursive_clone` for details.
+  def exec_recursive_clone_hash
+    @exec_recursive_clone_hash ||= Hash(UInt64, UInt64).new
   end
 end

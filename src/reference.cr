@@ -177,7 +177,15 @@ class Reference
   end
 
   private def exec_recursive(method, &)
-    Fiber.current.exec_recursive(object_id, method) { yield }
+    # NOTE: can't use `Set` because of prelude require order
+    hash = Fiber.current.exec_recursive_hash
+    key = {object_id, method}
+    hash.put(key, nil) do
+      yield
+      hash.delete(key)
+      return true
+    end
+    false
   end
 
   # Helper method to perform clone by also checking recursiveness.
@@ -199,7 +207,13 @@ class Reference
   # end
   # ```
   private def exec_recursive_clone(&)
-    pointer = Fiber.current.exec_recursive_clone(object_id) { |hash| yield hash }
-    pointer.as(self)
+    # NOTE: can't use `Set` because of prelude require order
+    hash = Fiber.current.exec_recursive_clone_hash
+    clone_object_id = hash[object_id]?
+    unless clone_object_id
+      clone_object_id = yield(hash).object_id
+      hash.delete(object_id)
+    end
+    Pointer(Void).new(clone_object_id).as(self)
   end
 end
