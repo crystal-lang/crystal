@@ -162,6 +162,10 @@ class Fiber
     @timeout_event.try &.free
     @timeout_select_action = nil
 
+    # Additional cleanup (avoid stale references)
+    @exec_recursive_hash = nil
+    @exec_recursive_clone_hash = nil
+
     @alive = false
     {% unless flag?(:interpreted) %}
       Crystal::Scheduler.stack_pool.release(@stack)
@@ -331,4 +335,18 @@ class Fiber
       @current_thread.lazy_get
     end
   {% end %}
+
+  # :nodoc:
+  #
+  # See `Reference#exec_recursive` for details.
+  def exec_recursive_hash
+    @exec_recursive_hash ||= Hash({UInt64, Symbol}, Nil).new
+  end
+
+  # :nodoc:
+  #
+  # See `Reference#exec_recursive_clone` for details.
+  def exec_recursive_clone_hash
+    @exec_recursive_clone_hash ||= Hash(UInt64, UInt64).new
+  end
 end
