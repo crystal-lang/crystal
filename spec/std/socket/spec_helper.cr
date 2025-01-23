@@ -2,8 +2,6 @@ require "spec"
 require "socket"
 
 module SocketSpecHelper
-  @@supports_ipv6 : Bool?
-
   class_getter?(supports_ipv6 : Bool) { detect_supports_ipv6? }
 
   private def self.detect_supports_ipv6? : Bool
