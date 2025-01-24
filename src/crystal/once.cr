@@ -7,114 +7,181 @@
 # with older compiler releases. It is executed only once at the beginning of the
 # program and, for the legacy implementation, the result is passed on each call
 # to `__crystal_once`.
-#
-# A `Mutex` is used to avoid race conditions between threads and fibers.
 
-{% if compare_versions(Crystal::VERSION, "1.16.0-dev") >= 0 %}
-  # This implementation uses an enum over the initialization flag pointer for
-  # each value to find infinite loops and raise an error.
+require "crystal/pointer_linked_list"
+require "crystal/spin_lock"
 
-  module Crystal
-    # :nodoc:
-    enum OnceState : Int8
+module Crystal
+  # :nodoc:
+  module Once
+    enum State : Int8
       Processing    = -1
-      Uninitialized = 0
-      Initialized   = 1
+      Uninitialized =  0
+      Initialized   =  1
     end
 
-    @@once_mutex = uninitialized Mutex
+    {% if compare_versions(Crystal::VERSION, "1.16.0-dev") >= 0 %}
+      alias FlagT = State
+    {% else %}
+      alias FlagT = Bool
+    {% end %}
 
-    # :nodoc:
-    def self.once_init : Nil
-      @@once_mutex = Mutex.new(:reentrant)
-    end
+    struct Operation
+      include PointerLinkedList::Node
 
-    # :nodoc:
-    # Using @[NoInline] so LLVM optimizes for the hot path (var already
-    # initialized).
-    @[NoInline]
-    def self.once(flag : OnceState*, initializer : Void*) : Nil
-      @@once_mutex.synchronize do
-        case flag.value
-        in .initialized?
-          return
-        in .uninitialized?
-          flag.value = :processing
-          Proc(Nil).new(initializer, Pointer(Void).null).call
-          flag.value = :initialized
-        in .processing?
-          raise "Recursion while initializing class variables and/or constants"
-        end
+      getter fiber : Fiber
+      getter flag : FlagT*
+
+      def initialize(@flag : FlagT*, @fiber : Fiber)
+        @waiting = PointerLinkedList(Fiber::PointerLinkedListNode).new
       end
+
+      def add_waiter(node) : Nil
+        @waiting.push(node)
+      end
+
+      def resume_all : Nil
+        @waiting.each(&.value.enqueue)
+      end
+    end
+
+    @@spin = uninitialized SpinLock
+    @@operations = uninitialized PointerLinkedList(Operation)
+
+    def self.init : Nil
+      @@spin = SpinLock.new
+      @@operations = PointerLinkedList(Operation).new
+    end
+
+    protected def self.exec(flag : FlagT*, &)
+      @@spin.lock
+
+      exec_impl(flag) { yield }
 
       # safety check, and allows to safely call `Intrinsics.unreachable` in
       # `__crystal_once`
-      unless flag.value.initialized?
-        System.print_error "BUG: failed to initialize constant or class variable\n"
-        LibC._exit(1)
+      if flag.is_a?(State*)
+        return if flag.value.initialized?
+      else
+        return if flag.value
       end
+
+      System.print_error "BUG: failed to initialize constant or class variable\n"
+      LibC._exit(1)
+    end
+
+    private def self.run_initializer(flag, &)
+      if flag.is_a?(State*)
+        flag.value = State::Processing
+      end
+      operation = Operation.new(flag, Fiber.current)
+      @@operations.push pointerof(operation)
+      @@spin.unlock
+
+      yield
+
+      @@spin.lock
+      if flag.is_a?(State*)
+        flag.value = State::Initialized
+      else
+        flag.value = true
+      end
+      @@operations.delete pointerof(operation)
+      @@spin.unlock
+
+      operation.resume_all
+    end
+
+    # Searches if a fiber is already running the initializer, in which case it
+    # checks for reentrancy then suspends the fiber until the value is ready and
+    # returns true; otherwise immediately returns false.
+    private def self.wait_initializer?(flag) : Bool
+      @@operations.each do |operation|
+        next unless operation.value.flag == flag
+
+        current_fiber = Fiber.current
+
+        if operation.value.fiber == current_fiber
+          @@spin.unlock
+          raise "Recursion while initializing class variables and/or constants"
+        end
+
+        waiting = Fiber::PointerLinkedListNode.new(current_fiber)
+        operation.value.add_waiter(pointerof(waiting))
+        @@spin.unlock
+
+        Fiber.suspend
+        return true
+      end
+
+      false
     end
   end
 
   # :nodoc:
-  #
-  # Using `@[AlwaysInline]` allows LLVM to optimize const accesses. Since this
-  # is a `fun` the function will still appear in the symbol table, though it
-  # will never be called.
-  @[AlwaysInline]
-  fun __crystal_once(flag : Crystal::OnceState*, initializer : Void*) : Nil
-    return if flag.value.initialized?
-
-    Crystal.once(flag, initializer)
-
-    # tell LLVM that it can optimize away repeated `__crystal_once` calls for
-    # this global (e.g. repeated access to constant in a single funtion);
-    # this is truly unreachable otherwise `Crystal.once` would have panicked
-    Intrinsics.unreachable unless flag.value.initialized?
+  @[NoInline]
+  def self.once(flag : Once::FlagT*, initializer : Void*)
+    Once.exec(flag, &Proc(Nil).new(initializer, Pointer(Void).null))
   end
-{% else %}
-  # This implementation uses a global array to store the initialization flag
-  # pointers for each value to find infinite loops and raise an error.
+end
 
+{% if compare_versions(Crystal::VERSION, "1.16.0-dev") >= 0 %}
   module Crystal
-    # :nodoc:
-    class OnceState
-      @mutex = Mutex.new(:reentrant)
-      @rec = [] of Bool*
-
-      @[NoInline]
-      def once(flag : Bool*, initializer : Void*)
-        return if flag.value
-
-        @mutex.synchronize do
-          if @rec.includes?(flag)
-            raise "Recursion while initializing class variables and/or constants"
-          end
-          @rec << flag
-
-          Proc(Nil).new(initializer, Pointer(Void).null).call
-          flag.value = true
-
-          @rec.pop
+    module Once
+      private def self.exec_impl(flag, &)
+        case flag.value
+        in .initialized?
+          @@spin.unlock
+          return
+        in .uninitialized?
+          run_initializer(flag) { yield }
+        in .processing?
+          raise "unreachable" unless wait_initializer?(flag)
         end
       end
     end
 
     # :nodoc:
-    def self.once_init : Nil
+    def self.once(flag : Once::State*, &)
+      Once.exec(flag) { yield } unless flag.value.initialized?
+    end
+  end
+
+  # :nodoc:
+  @[AlwaysInline]
+  fun __crystal_once(flag : Crystal::Once::State*, initializer : Void*)
+    return if flag.value.initialized?
+    Crystal.once(flag, initializer)
+    Intrinsics.unreachable unless flag.value.initialized?
+  end
+{% else %}
+  module Crystal
+    module Once
+      private def self.exec_impl(flag, &)
+        if flag.value
+          @@spin.unlock
+        elsif !wait_initializer?(flag)
+          run_initializer(flag) { yield }
+        end
+      end
+    end
+
+    # :nodoc:
+    def self.once(flag : Bool*, &)
+      Once.exec(flag) { yield } unless flag.value
     end
   end
 
   # :nodoc:
   fun __crystal_once_init : Void*
-    Crystal::OnceState.new.as(Void*)
+    Pointer(Void).null
   end
 
   # :nodoc:
   @[AlwaysInline]
   fun __crystal_once(state : Void*, flag : Bool*, initializer : Void*)
     return if flag.value
-    state.as(Crystal::OnceState).once(flag, initializer)
+    Crystal.once(flag, initializer)
     Intrinsics.unreachable unless flag.value
   end
 {% end %}
