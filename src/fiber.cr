@@ -44,8 +44,16 @@ end
 # notifications that IO is ready or a timeout reached. When a fiber can be woken,
 # the event loop enqueues it in the scheduler
 class Fiber
+  @@fibers = uninitialized Thread::LinkedList(Fiber)
+
+  protected def self.fibers : Thread::LinkedList(Fiber)
+    @@fibers
+  end
+
   # :nodoc:
-  protected class_getter(fibers) { Thread::LinkedList(Fiber).new }
+  def self.init : Nil
+    @@fibers = Thread::LinkedList(Fiber).new
+  end
 
   @context : Context
   @stack : Void*

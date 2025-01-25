@@ -8,7 +8,7 @@ end
 module Crystal
   # Defines the main routine run by normal Crystal programs:
   #
-  # - Initializes the GC
+  # - Initializes runtime requirements (GC, ...)
   # - Invokes the given *block*
   # - Handles unhandled exceptions
   # - Invokes `at_exit` handlers
@@ -37,6 +37,8 @@ module Crystal
     {% if flag?(:tracing) %} Crystal::Tracing.init {% end %}
     GC.init
 
+    init_runtime
+
     status =
       begin
         yield
@@ -46,6 +48,14 @@ module Crystal
       end
 
     exit(status, ex)
+  end
+
+  # :nodoc:
+  def self.init_runtime : Nil
+    # `__crystal_once` directly or indirectly depends on `Fiber` and `Thread`
+    # so we explicitly initialize their class vars
+    Thread.init
+    Fiber.init
   end
 
   # :nodoc:
@@ -130,7 +140,10 @@ fun main(argc : Int32, argv : UInt8**) : Int32
   Crystal.main(argc, argv)
 end
 
-{% if flag?(:win32) %}
+{% if flag?(:interpreted) %}
+  # the interpreter doesn't call Crystal.main(&)
+  Crystal.init_runtime
+{% elsif flag?(:win32) %}
   require "./system/win32/wmain"
 {% elsif flag?(:wasi) %}
   require "./system/wasi/main"
