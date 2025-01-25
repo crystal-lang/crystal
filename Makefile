@@ -201,6 +201,7 @@ uninstall: ## Uninstall the compiler from DESTDIR
 
 	rm -f "$(DESTDIR)$(PREFIX)/share/bash-completion/completions/crystal"
 	rm -f "$(DESTDIR)$(PREFIX)/share/zsh/site-functions/_crystal"
+	rm -f "$(DESTDIR)$(PREFIX)/share/fish/vendor_completions.d/crystal.fish"
 
 .PHONY: install_docs
 install_docs: docs ## Install docs at DESTDIR
