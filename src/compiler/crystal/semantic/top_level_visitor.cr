@@ -824,6 +824,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     method_name = is_flags ? "includes?" : "=="
     body = Call.new(Var.new("self").at(member), method_name, Path.new(member.name).at(member)).at(member)
     a_def = Def.new("#{member.name.underscore}?", body: body).at(member)
+    a_def.doc = member.doc
     enum_type.add_def a_def
   end
 

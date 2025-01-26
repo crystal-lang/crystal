@@ -613,4 +613,16 @@ describe "Semantic: enum" do
     a_def = result.program.types["Foo"].lookup_defs("foo").first
     a_def.previous.should be_nil
   end
+
+  it "copies docs from member to helper method (#11333)" do
+    result = top_level_semantic <<-CRYSTAL, wants_doc: true
+    enum Foo
+      # These are the docs for `Bar`
+      Bar = 1
+    end
+    CRYSTAL
+
+    a_defs = result.program.types["Foo"].lookup_defs("bar?")
+    a_defs.first.doc.should eq("These are the docs for `Bar`")
+  end
 end
