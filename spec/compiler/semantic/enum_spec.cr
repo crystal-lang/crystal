@@ -623,7 +623,7 @@ describe "Semantic: enum" do
     CRYSTAL
 
     a_defs = result.program.types["Foo"].lookup_defs("bar?")
-    a_defs.first.doc.should_not be_nil
+    a_defs.first.doc.should eq("Returns `true` if this enum value equals `Bar`")
   end
 
   it "marks helper methods with `:nodoc:` if the member is `:nodoc:`" do
@@ -635,6 +635,6 @@ describe "Semantic: enum" do
     CRYSTAL
 
     a_defs = result.program.types["Foo"].lookup_defs("bar?")
-    a_defs.first.doc.try &.starts_with?(":nodoc:").should be_true
+    a_defs.first.doc.should eq(":nodoc:")
   end
 end
