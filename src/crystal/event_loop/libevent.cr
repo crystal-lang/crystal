@@ -132,6 +132,7 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
     socket.evented_wait_writable do
       raise IO::TimeoutError.new("Write timed out")
     end
+  end
 
   def receive_from(socket : ::Socket, slice : Bytes) : Tuple(Int32, ::Socket::Address)
     sockaddr = Pointer(LibC::SockaddrStorage).malloc.as(LibC::Sockaddr*)
