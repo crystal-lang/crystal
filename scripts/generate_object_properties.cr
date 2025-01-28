@@ -12,10 +12,6 @@ struct Generator
     @file.puts(message)
   end
 
-  def print(message)
-    @file.print(message)
-  end
-
   def def_vars
     <<-TEXT
           {% if name.is_a?(TypeDeclaration) %}
@@ -95,7 +91,7 @@ struct Generator
   end
 
   def gen_getter
-    print <<-TEXT
+    puts <<-TEXT
       # Defines getter methods for each of the given arguments.
       #
       # Writing:
@@ -215,12 +211,11 @@ struct Generator
     #{def_getter}
         {% end %}
       end
-
     TEXT
   end
 
   def gen_getter?
-    print <<-TEXT
+    puts <<-TEXT
       # Defines query getter methods for each of the given arguments.
       #
       # Writing:
@@ -320,12 +315,11 @@ struct Generator
     #{def_getter "?"}
         {% end %}
       end
-
     TEXT
   end
 
   def gen_property
-    print <<-TEXT
+    puts <<-TEXT
       # Defines property methods for each of the given arguments.
       #
       # Writing:
@@ -461,12 +455,11 @@ struct Generator
     #{def_setter}
         {% end %}
       end
-
     TEXT
   end
 
   def gen_property?
-    print <<-TEXT
+    puts <<-TEXT
       # Defines query property methods for each of the given arguments.
       #
       # Writing:
@@ -579,12 +572,11 @@ struct Generator
     #{def_setter}
         {% end %}
       end
-
     TEXT
   end
 
   def gen_getter!
-    print <<-TEXT
+    puts <<-TEXT
       # Defines raise-on-nil and nilable getter methods for each of the given arguments.
       #
       # Writing:
@@ -647,12 +639,11 @@ struct Generator
     #{def_getter!}
         {% end %}
       end
-
     TEXT
   end
 
   def gen_property!
-    print <<-TEXT
+    puts <<-TEXT
       # Defines raise-on-nil property methods for each of the given arguments.
       #
       # Writing:
@@ -722,12 +713,11 @@ struct Generator
     #{def_setter}
         {% end %}
       end
-
     TEXT
   end
 
   def gen_setter
-    print <<-TEXT
+    puts <<-TEXT
       # Defines setter methods for each of the given arguments.
       #
       # Writing:
@@ -830,7 +820,6 @@ struct Generator
     #{def_setter}
         {% end %}
       end
-
     TEXT
   end
 end
