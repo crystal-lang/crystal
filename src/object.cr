@@ -933,9 +933,9 @@ class Object
     # ```
     macro {{macro_prefix}}property!(*names)
       \{% for name in names %}
-        ::Crystal.def_var(\{{name}}, true)
-        ::Crystal.def_getter!(\{{@type}}, \{{name}})
-        ::Crystal.def_setter(\{{name}})
+        ::Crystal.def_{{macro_prefix}}var(\{{name}}, true)
+        ::Crystal.def_{{macro_prefix}}getter!(\{{@type}}, \{{name}})
+        ::Crystal.def_{{macro_prefix}}setter(\{{name}})
       \{% end %}
     end
 
