@@ -269,16 +269,16 @@ module Crystal::System::Thread
     {% end %}
 
   def self.sig_suspend : ::Signal
-    if GC.responds_to?(:sig_suspend)
-      GC.sig_suspend
+    if (gc = GC).responds_to?(:sig_suspend)
+      gc.sig_suspend
     else
       ::Signal.new(SIG_SUSPEND)
     end
   end
 
   def self.sig_resume : ::Signal
-    if GC.responds_to?(:sig_resume)
-      GC.sig_resume
+    if (gc = GC).responds_to?(:sig_resume)
+      gc.sig_resume
     else
       ::Signal.new(SIG_RESUME)
     end
