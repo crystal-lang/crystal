@@ -22,10 +22,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
+          token: ${{ secrets.BACKPORT_ACTION_GITHUB_PAT }}
 
       - name: Create backport PR
         uses: korthout/backport-action@be567af183754f6a5d831ae90f648954763f17f5 # v3.1.0
         with:
+          github_token: ${{ secrets.BACKPORT_ACTION_GITHUB_PAT }}
           # Config README: https://github.com/korthout/backport-action#backport-action
           copy_labels_pattern: '^(breaking-change|security|topic:.*|kind:.*|platform:.*)$'
           copy_milestone: true
