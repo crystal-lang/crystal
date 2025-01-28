@@ -450,7 +450,7 @@ class Object
       \{% raise "Only one argument can be passed to `{{macro_prefix}}getter` with a block" if block && names.size > 1 %}
       \{% for name, index in names %}
         ::Crystal.def_{{macro_prefix}}var(\{{name}}, \{{!!block}})
-        ::Crystal.def_{{macro_prefix}}getter(\{{name}}) \{% if block %} { \{{yield}} } \{% end %}
+        ::Crystal.def_{{macro_prefix}}getter(\{{name}}) \{{ block }}
       \{% end %}
     end
 
@@ -551,7 +551,7 @@ class Object
       \{% raise "Only one argument can be passed to `{{macro_prefix}}getter?` with a block" if block && names.size > 1 %}
       \{% for name, index in names %}
         ::Crystal.def_{{macro_prefix}}var(\{{name}}, \{{!!block}})
-        ::Crystal.def_{{macro_prefix}}getter?(\{{name}}) \{% if block %} { \{{yield}} } \{% end %}
+        ::Crystal.def_{{macro_prefix}}getter?(\{{name}}) \{{block}}
       \{% end %}
     end
 
@@ -687,7 +687,7 @@ class Object
       \{% raise "Only one argument can be passed to `{{macro_prefix}}property` with a block" if block && names.size > 1 %}
       \{% for name, index in names %}
         ::Crystal.def_{{macro_prefix}}var(\{{name}}, \{{!!block}})
-        ::Crystal.def_{{macro_prefix}}getter(\{{name}}) \{% if block %} { \{{yield}} } \{% end %}
+        ::Crystal.def_{{macro_prefix}}getter(\{{name}}) \{{block}}
         ::Crystal.def_{{macro_prefix}}setter(\{{name}})
       \{% end %}
     end
@@ -801,7 +801,7 @@ class Object
       \{% raise "Only one argument can be passed to `{{macro_prefix}}property?` with a block" if block && names.size > 1 %}
       \{% for name, index in names %}
         ::Crystal.def_{{macro_prefix}}var(\{{name}}, \{{!!block}})
-        ::Crystal.def_{{macro_prefix}}getter?(\{{name}}) \{% if block %} { \{{yield}} } \{% end %}
+        ::Crystal.def_{{macro_prefix}}getter?(\{{name}}) \{{block}}
         ::Crystal.def_{{macro_prefix}}setter(\{{name}})
       \{% end %}
     end
