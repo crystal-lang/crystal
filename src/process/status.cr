@@ -245,7 +245,7 @@ class Process::Status
   # Raises `RuntimeError` if the status describes an abnormal exit.
   #
   # ```
-  # Process.run("true").exit_code                                # => 1
+  # Process.run("true").exit_code                                # => 0
   # Process.run("exit 123", shell: true).exit_code               # => 123
   # Process.new("sleep", ["10"]).tap(&.terminate).wait.exit_code # RuntimeError: Abnormal exit has no exit code
   # ```
@@ -258,7 +258,7 @@ class Process::Status
   # Returns `nil` if the status describes an abnormal exit.
   #
   # ```
-  # Process.run("true").exit_code?                                # => 1
+  # Process.run("true").exit_code?                                # => 0
   # Process.run("exit 123", shell: true).exit_code?               # => 123
   # Process.new("sleep", ["10"]).tap(&.terminate).wait.exit_code? # => nil
   # ```
