@@ -67,7 +67,7 @@ struct Generator
 
   def def_getter!
     <<-TEXT
-          def #{@method_prefix}{{var_name}}? {% if type %} : {{type}}? \{% end %}
+          def #{@method_prefix}{{var_name}}? {% if type %} : {{type}}? {% end %}
             #{@var_prefix}{{var_name}}
           end
 
