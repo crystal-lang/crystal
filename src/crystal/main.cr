@@ -53,9 +53,10 @@ module Crystal
   # :nodoc:
   def self.init_runtime : Nil
     # `__crystal_once` directly or indirectly depends on `Fiber` and `Thread`
-    # so we explicitly initialize their class vars
+    # so we explicitly initialize their class vars, then init crystal/once
     Thread.init
     Fiber.init
+    Crystal.once_init
   end
 
   # :nodoc:

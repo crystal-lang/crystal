@@ -1,13 +1,13 @@
-# This file defines two functions expected by the compiler:
+# This file defines the `__crystal_once` functions expected by the compiler. It
+# is called each time a constant or class variable has to be initialized and is
+# its responsibility to verify the initializer is executed only once and to fail
+# on recursion.
 #
-# - `__crystal_once_init`: executed only once at the beginning of the program
-#   and, for the legacy implementation, the result is passed on each call to
-#   `__crystal_once`.
+# It also defines the `__crystal_once_init` function for backward compatibility
+# with older compiler releases. It is executed only once at the beginning of the
+# program and, for the legacy implementation, the result is passed on each call
+# to `__crystal_once`.
 #
-# - `__crystal_once`: called each time a constant or class variable has to be
-#   initialized and is its responsibility to verify the initializer is executed
-#   only once and to fail on recursion.
-
 # In multithread mode a mutex is used to avoid race conditions between threads.
 #
 # On Win32, `Crystal::System::FileDescriptor#@@reader_thread` spawns a new
@@ -28,11 +28,14 @@
 
     {% if flag?(:preview_mt) || flag?(:win32) %}
       @@once_mutex = uninitialized Mutex
-
-      # :nodoc:
-      def self.once_mutex=(@@once_mutex : Mutex)
-      end
     {% end %}
+
+    # :nodoc:
+    def self.once_init : Nil
+      {% if flag?(:preview_mt) || flag?(:win32) %}
+        @@once_mutex = Mutex.new(:reentrant)
+      {% end %}
+    end
 
     # :nodoc:
     # Using @[NoInline] so LLVM optimizes for the hot path (var already
@@ -68,13 +71,6 @@
   end
 
   # :nodoc:
-  fun __crystal_once_init : Nil
-    {% if flag?(:preview_mt) || flag?(:win32) %}
-      Crystal.once_mutex = Mutex.new(:reentrant)
-    {% end %}
-  end
-
-  # :nodoc:
   #
   # Using `@[AlwaysInline]` allows LLVM to optimize const accesses. Since this
   # is a `fun` the function will still appear in the symbol table, though it
@@ -94,37 +90,43 @@
   # This implementation uses a global array to store the initialization flag
   # pointers for each value to find infinite loops and raise an error.
 
-  # :nodoc:
-  class Crystal::OnceState
-    @rec = [] of Bool*
-
-    @[NoInline]
-    def once(flag : Bool*, initializer : Void*)
-      unless flag.value
-        if @rec.includes?(flag)
-          raise "Recursion while initializing class variables and/or constants"
-        end
-        @rec << flag
-
-        Proc(Nil).new(initializer, Pointer(Void).null).call
-        flag.value = true
-
-        @rec.pop
-      end
-    end
-
-    {% if flag?(:preview_mt) || flag?(:win32) %}
-      @mutex = Mutex.new(:reentrant)
+  module Crystal
+    # :nodoc:
+    class OnceState
+      @rec = [] of Bool*
 
       @[NoInline]
       def once(flag : Bool*, initializer : Void*)
         unless flag.value
-          @mutex.synchronize do
-            previous_def
+          if @rec.includes?(flag)
+            raise "Recursion while initializing class variables and/or constants"
           end
+          @rec << flag
+
+          Proc(Nil).new(initializer, Pointer(Void).null).call
+          flag.value = true
+
+          @rec.pop
         end
       end
-    {% end %}
+
+      {% if flag?(:preview_mt) || flag?(:win32) %}
+        @mutex = Mutex.new(:reentrant)
+
+        @[NoInline]
+        def once(flag : Bool*, initializer : Void*)
+          unless flag.value
+            @mutex.synchronize do
+              previous_def
+            end
+          end
+        end
+      {% end %}
+    end
+
+    # :nodoc:
+    def self.once_init : Nil
+    end
   end
 
   # :nodoc:
