@@ -425,6 +425,18 @@ describe HTTP::StaticFileHandler do
     response.status_code.should eq(404)
   end
 
+  it "does not redirect directory when directory_listing=true" do
+    response = handle HTTP::Request.new("GET", "/foo"), directory_listing: false
+    response.status_code.should eq(302)
+    response.headers["Location"].should eq "/foo/"
+  end
+
+  it "redirect directory when directory_listing=false" do
+    response = handle HTTP::Request.new("GET", "/foo"), directory_listing: true
+    response.status_code.should eq(302)
+    response.headers["Location"].should eq "/foo/"
+  end
+
   it "does not serve a not found file" do
     response = handle HTTP::Request.new("GET", "/not_found_file.txt")
     response.status_code.should eq(404)
