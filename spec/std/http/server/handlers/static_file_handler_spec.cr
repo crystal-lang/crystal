@@ -427,8 +427,7 @@ describe HTTP::StaticFileHandler do
 
   it "does not redirect directory when directory_listing=true" do
     response = handle HTTP::Request.new("GET", "/foo"), directory_listing: false
-    response.status_code.should eq(302)
-    response.headers["Location"].should eq "/foo/"
+    response.status_code.should eq(404)
   end
 
   it "redirect directory when directory_listing=false" do
