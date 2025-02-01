@@ -758,6 +758,60 @@ module Crystal
           end
           BoolLiteral.new(@value.includes?(piece))
         end
+      when "scan"
+        interpret_check_args do |arg|
+          unless arg.is_a?(RegexLiteral)
+            raise "StringLiteral#scan expects a regex, not #{arg.class_desc}"
+          end
+
+          regex_value = arg.value
+          if regex_value.is_a?(StringLiteral)
+            regex = Regex.new(regex_value.value, arg.options)
+          else
+            raise "regex interpolations not yet allowed in macros"
+          end
+
+          matches = ArrayLiteral.new(
+            of: Generic.new(
+              Path.global("Hash"),
+              [
+                Union.new([Path.global("Int32"), Path.global("String")] of ASTNode),
+                Union.new([Path.global("String"), Path.global("Nil")] of ASTNode),
+              ] of ASTNode
+            )
+          )
+
+          @value.scan(regex) do |match_data|
+            captures = HashLiteral.new(
+              of: HashLiteral::Entry.new(
+                Union.new([Path.global("Int32"), Path.global("String")] of ASTNode),
+                Union.new([Path.global("String"), Path.global("Nil")] of ASTNode),
+              )
+            )
+
+            match_data.to_h.each do |capture, substr|
+              case capture
+              in Int32
+                key = NumberLiteral.new(capture)
+              in String
+                key = StringLiteral.new(capture)
+              end
+
+              case substr
+              in String
+                value = StringLiteral.new(substr)
+              in Nil
+                value = NilLiteral.new
+              end
+
+              captures.entries << HashLiteral::Entry.new(key, value)
+            end
+
+            matches.elements << captures
+          end
+
+          matches
+        end
       when "size"
         interpret_check_args { NumberLiteral.new(@value.size) }
       when "lines"
