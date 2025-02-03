@@ -141,7 +141,7 @@ module Fiber::ExecutionContext
     # the local queue. Returns one of the stolen fibers, or `nil` on failure.
     #
     # Only executed from the owner (when the local queue is empty).
-    def steal_from(src : Runnables) : Fiber?
+    def steal_from(src : Runnables(N)) : Fiber?
       # ported from Go: runqsteal
 
       tail = @tail.get(:relaxed)
