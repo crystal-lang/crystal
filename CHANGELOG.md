@@ -19,10 +19,12 @@
 - *(system)* Fix code example in `Process::Status#exit_code` docs ([#15381], backported from [#15351], thanks @github-actions)
 
 [#15381]: https://github.com/crystal-lang/crystal/pull/15381
+[#15351]: https://github.com/crystal-lang/crystal/pull/15351
 
 ### Infrastructure
 
 - Changelog for 1.15.1 ([#15401], thanks @straight-shoota)
+- Add backports to changelog generator ([#15402], thanks @straight-shoota)
 - Update distribution-scripts ([#15385], backported from [#15368], thanks @crysbot)
 - Update distribution-scripts ([#15388], thanks @straight-shoota)
 - *(ci)* Add build shards to `mingw-w64` workflow ([#15344], thanks @straight-shoota)
@@ -30,10 +32,13 @@
 - *(ci)* Add check for shards binary in `test_dist_linux_on_docker` ([#15394], thanks @straight-shoota)
 
 [#15401]: https://github.com/crystal-lang/crystal/pull/15401
+[#15402]: https://github.com/crystal-lang/crystal/pull/15402
 [#15385]: https://github.com/crystal-lang/crystal/pull/15385
+[#15368]: https://github.com/crystal-lang/crystal/pull/15368
 [#15388]: https://github.com/crystal-lang/crystal/pull/15388
 [#15344]: https://github.com/crystal-lang/crystal/pull/15344
 [#15384]: https://github.com/crystal-lang/crystal/pull/15384
+[#15366]: https://github.com/crystal-lang/crystal/pull/15366
 [#15394]: https://github.com/crystal-lang/crystal/pull/15394
 
 ### other
@@ -44,7 +49,9 @@
 - *(system)* **[regression]** Fix GC `sig_suspend`, `sig_resume` for `gc_none` ([#15382], backported from [#15349], thanks @github-actions)
 
 [#15380]: https://github.com/crystal-lang/crystal/pull/15380
+[#15358]: https://github.com/crystal-lang/crystal/pull/15358
 [#15382]: https://github.com/crystal-lang/crystal/pull/15382
+[#15349]: https://github.com/crystal-lang/crystal/pull/15349
 
 ## [1.15.0] (2025-01-09)
 
