@@ -388,6 +388,7 @@ class ChangelogEntry
 
   def print_ref_labels(io)
     pull_requests.each { |pr| print_ref_label(io, pr) }
+    backported_from.try { |pr| print_ref_label(io, pr) }
   end
 
   def print_ref_label(io, pr)
