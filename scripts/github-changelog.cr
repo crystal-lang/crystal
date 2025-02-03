@@ -271,6 +271,10 @@ record PullRequest,
     md = title.match(/\[fixup #(.\d+)/) || return
     md[1]?.try(&.to_i)
   end
+
+  def clean_title
+    title.sub(/^\[?(?:#{type}|#{sub_topic})(?::|\]:?) /i, "")
+  end
 end
 
 def query_milestone(api_token, repository, number)
@@ -342,7 +346,7 @@ struct ChangelogEntry
     if pr.deprecated?
       io << "**[deprecation]** "
     end
-    io << pr.title.sub(/^\[?(?:#{pr.type}|#{pr.sub_topic})(?::|\]:?) /i, "")
+    io << pr.clean_title
 
     io << " ("
     pull_requests.join(io, ", ") do |pr|
