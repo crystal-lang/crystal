@@ -1,5 +1,59 @@
 # Changelog
 
+## [1.15.1] (unreleased)
+
+[1.15.1]: https://github.com/crystal-lang/crystal/releases/1.15.1
+
+### Bugfixes
+
+#### stdlib
+
+- *(networking)* Disable directory path redirect when `directory_listing=false` ([#15393], thanks @straight-shoota)
+
+[#15393]: https://github.com/crystal-lang/crystal/pull/15393
+
+### Documentation
+
+#### stdlib
+
+- *(system)* Fix code example in `Process::Status#exit_code` docs ([#15351], thanks @zw963)
+- *(system)* [Backport release/1.15] Fix code example in `Process::Status#exit_code` docs ([#15381], thanks @github-actions)
+
+[#15351]: https://github.com/crystal-lang/crystal/pull/15351
+[#15381]: https://github.com/crystal-lang/crystal/pull/15381
+
+### Infrastructure
+
+- Update distribution-scripts ([#15368], thanks @straight-shoota)
+- [Backport release/1.15] Update distribution-scripts ([#15385], thanks @crysbot)
+- Update distribution-scripts ([#15388], thanks @straight-shoota)
+- *(ci)* Add build shards to `mingw-w64` workflow ([#15344], thanks @straight-shoota)
+- *(ci)* Update shards 0.19.1 ([#15366], thanks @straight-shoota)
+- *(ci)* [Backport release/1.15] Update shards 0.19.1 ([#15384], thanks @straight-shoota)
+- *(ci)* Add check for shards binary in `test_dist_linux_on_docker` ([#15394], thanks @straight-shoota)
+
+[#15368]: https://github.com/crystal-lang/crystal/pull/15368
+[#15385]: https://github.com/crystal-lang/crystal/pull/15385
+[#15388]: https://github.com/crystal-lang/crystal/pull/15388
+[#15344]: https://github.com/crystal-lang/crystal/pull/15344
+[#15366]: https://github.com/crystal-lang/crystal/pull/15366
+[#15384]: https://github.com/crystal-lang/crystal/pull/15384
+[#15394]: https://github.com/crystal-lang/crystal/pull/15394
+
+### other
+
+#### stdlib
+
+- *(runtime)* **[regression]** Fix: abstract `EventLoop::Polling#system_add` invalid signature ([#15358], thanks @straight-shoota)
+- *(runtime)* **[regression]** [Backport release/1.15] Fix: abstract `EventLoop::Polling#system_add` invalid signature ([#15380], thanks @github-actions)
+- *(system)* **[regression]** Fix GC `sig_suspend`, `sig_resume` for `gc_none` ([#15349], thanks @ysbaddaden)
+- *(system)* **[regression]** [Backport release/1.15] Fix GC `sig_suspend`, `sig_resume` for `gc_none` ([#15382], thanks @github-actions)
+
+[#15358]: https://github.com/crystal-lang/crystal/pull/15358
+[#15380]: https://github.com/crystal-lang/crystal/pull/15380
+[#15349]: https://github.com/crystal-lang/crystal/pull/15349
+[#15382]: https://github.com/crystal-lang/crystal/pull/15382
+
 ## [1.15.0] (2025-01-09)
 
 [1.15.0]: https://github.com/crystal-lang/crystal/releases/1.15.0
