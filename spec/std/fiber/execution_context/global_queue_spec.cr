@@ -154,7 +154,7 @@ describe Fiber::ExecutionContext::GlobalQueue do
 
           r = Fiber::ExecutionContext::Runnables(3).new(queue)
 
-          batch = Fiber::Queue.new
+          batch = Fiber::List.new
           size = 0
 
           reenqueue = -> {
@@ -210,9 +210,9 @@ describe Fiber::ExecutionContext::GlobalQueue do
 
       # enqueue in batches of 5
       0.step(to: fibers.size - 1, by: 5) do |i|
-        q = Fiber::Queue.new
-        5.times { |j| q.push(fibers[i + j].@fiber) }
-        queue.bulk_push(pointerof(q))
+        list = Fiber::List.new
+        5.times { |j| list.push(fibers[i + j].@fiber) }
+        queue.bulk_push(pointerof(list))
         Thread.sleep(10.nanoseconds) if i % 4 == 3
       end
 

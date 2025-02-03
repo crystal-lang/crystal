@@ -8,7 +8,7 @@
 # - on empty: bulk grab up to half the ring from `GlobalQueue`;
 # - bulk push operation;
 
-require "../queue"
+require "../list"
 require "./global_queue"
 
 module Fiber::ExecutionContext
@@ -86,28 +86,28 @@ module Fiber::ExecutionContext
 
       # link the fibers
       n.times do |i|
-        batch.to_unsafe[i].queue_next = batch.to_unsafe[i &+ 1]
+        batch.to_unsafe[i].list_next = batch.to_unsafe[i &+ 1]
       end
-      queue = Fiber::Queue.new(batch.to_unsafe[0], batch.to_unsafe[n], size: (n &+ 1).to_i32)
+      list = Fiber::List.new(batch.to_unsafe[0], batch.to_unsafe[n], size: (n &+ 1).to_i32)
 
       # now put the batch on global queue (grabs the global lock)
-      @global_queue.bulk_push(pointerof(queue))
+      @global_queue.bulk_push(pointerof(list))
 
       true
     end
 
-    # Tries to enqueue all the fibers in `queue` into the local queue. If the
-    # queue is full, the overflow will be pushed to the global queue; in that
-    # case this will temporarily acquire the global queue lock.
+    # Tries to enqueue all the fibers in *list* into the local queue. If the
+    # local queue is full, the overflow will be pushed to the global queue; in
+    # that case this will temporarily acquire the global queue lock.
     #
     # Executed only by the owner.
-    def bulk_push(queue : Fiber::Queue*) : Nil
+    def bulk_push(list : Fiber::List*) : Nil
       # ported from Go: runqputbatch
       head = @head.get(:acquire) # sync with other consumers
       tail = @tail.get(:relaxed)
 
-      while !queue.value.empty? && (tail &- head) < N
-        fiber = queue.value.pop
+      while !list.value.empty? && (tail &- head) < N
+        fiber = list.value.pop
         @buffer.to_unsafe[tail % N] = fiber
         tail &+= 1
       end
@@ -116,7 +116,7 @@ module Fiber::ExecutionContext
       @tail.set(tail, :release)
 
       # put any overflow on global queue
-      @global_queue.bulk_push(queue) unless queue.value.empty?
+      @global_queue.bulk_push(list) unless list.value.empty?
     end
 
     # Dequeues the next runnable fiber from the local queue.

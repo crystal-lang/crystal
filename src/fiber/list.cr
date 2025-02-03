@@ -1,4 +1,4 @@
-# The queue is modeled after Go's `gQueue`, distributed under a BSD-like
+# The list is modeled after Go's `gQueue`, distributed under a BSD-like
 # license: <https://cs.opensource.google/go/go/+/release-branch.go1.23:LICENSE>
 
 class Fiber
@@ -6,45 +6,51 @@ class Fiber
   #
   # Singly-linked list of `Fiber`.
   # Last-in, first-out (LIFO) semantic.
-  # A fiber can only exist within a single `Queue` at any time.
+  # A fiber can only exist within a single `List` at any time.
   #
-  # Unlike `Crystal::PointerLinkedList` doubly-linked list, this `Queue` is
-  # meant to maintain a queue of runnable fibers, or to quickly collect an
-  # arbitrary number of fibers.
+  # This list if simpler than `Crystal::PointerLinkedList` which is a doubly
+  # linked list. It's meant to maintain a queue of runnable fibers, or to
+  # quickly collect an arbitrary number of fibers; situations where we don't
+  # need arbitrary deletions from anywhere in the list.
   #
   # Thread unsafe! An external lock is required for concurrent accesses.
-  struct Queue
+  struct List
     getter size : Int32
 
     def initialize(@head : Fiber? = nil, @tail : Fiber? = nil, @size = 0)
     end
 
+    # Appends *fiber* to the head of the list.
     def push(fiber : Fiber) : Nil
-      fiber.queue_next = @head
+      fiber.list_next = @head
       @head = fiber
       @tail = fiber if @tail.nil?
       @size += 1
     end
 
-    def bulk_unshift(queue : Queue*) : Nil
-      return unless last = queue.value.@tail
-      last.queue_next = nil
+    # Appends all the fibers from *other* to the tail of the list.
+    def bulk_unshift(other : List*) : Nil
+      return unless last = other.value.@tail
+      last.list_next = nil
 
       if tail = @tail
-        tail.queue_next = queue.value.@head
+        tail.list_next = other.value.@head
       else
-        @head = queue.value.@head
+        @head = other.value.@head
       end
       @tail = last
 
-      @size += queue.value.size
+      @size += other.value.size
     end
 
+    # Removes a fiber from the head of the list. Raises `IndexError` when
+    # empty.
     @[AlwaysInline]
     def pop : Fiber
       pop { raise IndexError.new }
     end
 
+    # Removes a fiber from the head of the list. Returns `nil` when empty.
     @[AlwaysInline]
     def pop? : Fiber?
       pop { nil }
@@ -52,10 +58,10 @@ class Fiber
 
     private def pop(&)
       if fiber = @head
-        @head = fiber.queue_next
+        @head = fiber.list_next
         @tail = nil if @head.nil?
         @size -= 1
-        fiber.queue_next = nil
+        fiber.list_next = nil
         fiber
       else
         yield
@@ -67,7 +73,7 @@ class Fiber
       @head == nil
     end
 
-    def clear
+    def clear : Nil
       @size = 0
       @head = @tail = nil
     end
@@ -76,7 +82,7 @@ class Fiber
       cursor = @head
       while cursor
         yield cursor
-        cursor = cursor.queue_next
+        cursor = cursor.list_next
       end
     end
   end

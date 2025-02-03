@@ -67,7 +67,7 @@ class Fiber
   property previous : Fiber?
 
   # :nodoc:
-  property queue_next : Fiber?
+  property list_next : Fiber?
 
   # :nodoc:
   def self.inactive(fiber : Fiber)
