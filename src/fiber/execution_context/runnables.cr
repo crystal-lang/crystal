@@ -122,8 +122,7 @@ module Fiber::ExecutionContext
     # Dequeues the next runnable fiber from the local queue.
     #
     # Executed only by the owner.
-    # TODO: rename as `#shift?`
-    def get? : Fiber?
+    def shift? : Fiber?
       # ported from Go: runqget
 
       head = @head.get(:acquire) # sync with other consumers

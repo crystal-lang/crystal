@@ -17,8 +17,8 @@ describe Fiber::ExecutionContext::Runnables do
       fibers.each { |f| r.push(f) }
 
       # local dequeue
-      fibers.each { |f| r.get?.should be(f) }
-      r.get?.should be_nil
+      fibers.each { |f| r.shift?.should be(f) }
+      r.shift?.should be_nil
 
       # didn't push to global queue
       g.pop?.should be_nil
@@ -33,8 +33,8 @@ describe Fiber::ExecutionContext::Runnables do
       fibers.each { |f| r.push(f) }
 
       # kept half of local queue
-      r.get?.should be(fibers[2])
-      r.get?.should be(fibers[3])
+      r.shift?.should be(fibers[2])
+      r.shift?.should be(fibers[3])
 
       # moved half of local queue + last push to global queue
       g.pop?.should eq(fibers[0])
@@ -49,14 +49,14 @@ describe Fiber::ExecutionContext::Runnables do
       4.times do
         # local
         4.times { r.push(Fiber.new { }) }
-        2.times { r.get? }
+        2.times { r.shift? }
         2.times { r.push(Fiber.new { }) }
 
         # overflow (2+1 fibers are sent to global queue + 1 local)
         2.times { r.push(Fiber.new { }) }
 
         # clear
-        3.times { r.get? }
+        3.times { r.shift? }
       end
 
       # on each iteration we pushed 2+1 fibers to the global queue
@@ -65,8 +65,8 @@ describe Fiber::ExecutionContext::Runnables do
       # grab fibers back from the global queue
       fiber = g.unsafe_grab?(r, divisor: 1)
       fiber.should_not be_nil
-      r.get?.should_not be_nil
-      r.get?.should be_nil
+      r.shift?.should_not be_nil
+      r.shift?.should be_nil
     end
   end
 
@@ -81,7 +81,7 @@ describe Fiber::ExecutionContext::Runnables do
       r = Fiber::ExecutionContext::Runnables(4).new(g)
       r.bulk_push(pointerof(l))
 
-      fibers.reverse_each { |f| r.get?.should be(f) }
+      fibers.reverse_each { |f| r.shift?.should be(f) }
       g.empty?.should be_true
     end
 
@@ -96,10 +96,10 @@ describe Fiber::ExecutionContext::Runnables do
       r.bulk_push(pointerof(l))
 
       # filled the local queue
-      r.get?.should eq(fibers[6])
-      r.get?.should eq(fibers[5])
-      r.get?.should be(fibers[4])
-      r.get?.should be(fibers[3])
+      r.shift?.should eq(fibers[6])
+      r.shift?.should eq(fibers[5])
+      r.shift?.should be(fibers[4])
+      r.shift?.should be(fibers[3])
 
       # moved the rest to the global queue
       g.pop?.should eq(fibers[2])
@@ -108,7 +108,7 @@ describe Fiber::ExecutionContext::Runnables do
     end
   end
 
-  describe "#get?" do
+  describe "#shift?" do
     # TODO: need specific tests (though we already use it in the above tests?)
   end
 
@@ -127,15 +127,15 @@ describe Fiber::ExecutionContext::Runnables do
 
       # stole half of the runnable fibers
       fiber.should be(fibers[2])
-      r2.get?.should be(fibers[0])
-      r2.get?.should be(fibers[1])
-      r2.get?.should be_nil
+      r2.shift?.should be(fibers[0])
+      r2.shift?.should be(fibers[1])
+      r2.shift?.should be_nil
 
       # left the other half
-      r1.get?.should be(fibers[3])
-      r1.get?.should be(fibers[4])
-      r1.get?.should be(fibers[5])
-      r1.get?.should be_nil
+      r1.shift?.should be(fibers[3])
+      r1.shift?.should be(fibers[4])
+      r1.shift?.should be(fibers[5])
+      r1.shift?.should be_nil
 
       # global queue is left untouched
       g.empty?.should be_true
@@ -155,10 +155,10 @@ describe Fiber::ExecutionContext::Runnables do
 
       # stole the fiber & local queue is still empty
       fiber.should be(lone)
-      r2.get?.should be_nil
+      r2.shift?.should be_nil
 
       # left nothing in original queue
-      r1.get?.should be_nil
+      r1.shift?.should be_nil
 
       # global queue is left untouched
       g.empty?.should be_true
@@ -171,8 +171,8 @@ describe Fiber::ExecutionContext::Runnables do
 
       fiber = r2.steal_from(r1)
       fiber.should be_nil
-      r2.get?.should be_nil
-      r1.get?.should be_nil
+      r2.shift?.should be_nil
+      r1.shift?.should be_nil
     end
   end
 
@@ -210,7 +210,7 @@ describe Fiber::ExecutionContext::Runnables do
 
           loop do
             # dequeue from local queue
-            if fiber = runnables.get?
+            if fiber = runnables.shift?
               execute.call(fiber)
               slept = 0
               next

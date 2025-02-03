@@ -49,8 +49,8 @@ describe Fiber::ExecutionContext::GlobalQueue do
 
       # enqueued the next 2 fibers
       runnables.size.should eq(2)
-      runnables.get?.should be(fibers[8])
-      runnables.get?.should be(fibers[7])
+      runnables.shift?.should be(fibers[8])
+      runnables.shift?.should be(fibers[7])
 
       # the remaining fibers are still there:
       6.downto(0).each do |i|
@@ -179,7 +179,7 @@ describe Fiber::ExecutionContext::GlobalQueue do
           ready.done
 
           loop do
-            if fiber = r.get?
+            if fiber = r.shift?
               execute.call(fiber)
               slept = 0
               next
