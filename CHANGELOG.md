@@ -9,8 +9,13 @@
 #### stdlib
 
 - *(networking)* Disable directory path redirect when `directory_listing=false` ([#15393], thanks @straight-shoota)
+- *(runtime)* **[regression]** Fix: abstract `EventLoop::Polling#system_add` invalid signature ([#15380], thanks @github-actions)
+- *(system)* **[regression]** Fix GC `sig_suspend`, `sig_resume` for `gc_none` ([#15382], backported from [#15349], thanks @ysbaddaden)
 
 [#15393]: https://github.com/crystal-lang/crystal/pull/15393
+[#15380]: https://github.com/crystal-lang/crystal/pull/15380
+[#15382]: https://github.com/crystal-lang/crystal/pull/15382
+[#15349]: https://github.com/crystal-lang/crystal/pull/15349
 
 ### Documentation
 
@@ -40,18 +45,6 @@
 [#15384]: https://github.com/crystal-lang/crystal/pull/15384
 [#15366]: https://github.com/crystal-lang/crystal/pull/15366
 [#15394]: https://github.com/crystal-lang/crystal/pull/15394
-
-### other
-
-#### stdlib
-
-- *(runtime)* **[regression]** Fix: abstract `EventLoop::Polling#system_add` invalid signature ([#15380], backported from [#15358], thanks @straight-shoota)
-- *(system)* **[regression]** Fix GC `sig_suspend`, `sig_resume` for `gc_none` ([#15382], backported from [#15349], thanks @ysbaddaden)
-
-[#15380]: https://github.com/crystal-lang/crystal/pull/15380
-[#15358]: https://github.com/crystal-lang/crystal/pull/15358
-[#15382]: https://github.com/crystal-lang/crystal/pull/15382
-[#15349]: https://github.com/crystal-lang/crystal/pull/15349
 
 ## [1.15.0] (2025-01-09)
 
