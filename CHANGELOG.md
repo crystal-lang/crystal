@@ -16,7 +16,7 @@
 
 #### stdlib
 
-- *(system)* Fix code example in `Process::Status#exit_code` docs ([#15381], [#15351], thanks @github-actions, @zw963)
+- *(system)* Fix code example in `Process::Status#exit_code` docs ([#15381], [#15351], thanks @zw963)
 
 [#15381]: https://github.com/crystal-lang/crystal/pull/15381
 [#15351]: https://github.com/crystal-lang/crystal/pull/15351
@@ -24,7 +24,7 @@
 ### Infrastructure
 
 - Changelog for 1.15.1 ([#15401], thanks @straight-shoota)
-- Update distribution-scripts ([#15385], [#15368], thanks @crysbot, @straight-shoota)
+- Update distribution-scripts ([#15385], [#15368], thanks @straight-shoota)
 - Update distribution-scripts ([#15388], thanks @straight-shoota)
 - *(ci)* Add build shards to `mingw-w64` workflow ([#15344], thanks @straight-shoota)
 - *(ci)* Update shards 0.19.1 ([#15384], [#15366], thanks @straight-shoota)
@@ -43,8 +43,8 @@
 
 #### stdlib
 
-- *(runtime)* **[regression]** Fix: abstract `EventLoop::Polling#system_add` invalid signature ([#15380], [#15358], thanks @github-actions, @straight-shoota)
-- *(system)* **[regression]** Fix GC `sig_suspend`, `sig_resume` for `gc_none` ([#15382], [#15349], thanks @github-actions, @ysbaddaden)
+- *(runtime)* **[regression]** Fix: abstract `EventLoop::Polling#system_add` invalid signature ([#15380], [#15358], thanks @straight-shoota)
+- *(system)* **[regression]** Fix GC `sig_suspend`, `sig_resume` for `gc_none` ([#15382], [#15349], thanks @ysbaddaden)
 
 [#15380]: https://github.com/crystal-lang/crystal/pull/15380
 [#15358]: https://github.com/crystal-lang/crystal/pull/15358
