@@ -86,7 +86,7 @@ module Fiber::ExecutionContext
 
       # link the fibers
       n.times do |i|
-        batch.to_unsafe[i].schedlink = batch.to_unsafe[i &+ 1]
+        batch.to_unsafe[i].queue_next = batch.to_unsafe[i &+ 1]
       end
       queue = Fiber::Queue.new(batch.to_unsafe[0], batch.to_unsafe[n], size: (n &+ 1).to_i32)
 

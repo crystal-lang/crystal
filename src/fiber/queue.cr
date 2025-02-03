@@ -20,7 +20,7 @@ class Fiber
     end
 
     def push(fiber : Fiber) : Nil
-      fiber.schedlink = @head
+      fiber.queue_next = @head
       @head = fiber
       @tail = fiber if @tail.nil?
       @size += 1
@@ -28,10 +28,10 @@ class Fiber
 
     def bulk_unshift(queue : Queue*) : Nil
       return unless last = queue.value.@tail
-      last.schedlink = nil
+      last.queue_next = nil
 
       if tail = @tail
-        tail.schedlink = queue.value.@head
+        tail.queue_next = queue.value.@head
       else
         @head = queue.value.@head
       end
@@ -52,10 +52,10 @@ class Fiber
 
     private def pop(&)
       if fiber = @head
-        @head = fiber.schedlink
+        @head = fiber.queue_next
         @tail = nil if @head.nil?
         @size -= 1
-        fiber.schedlink = nil
+        fiber.queue_next = nil
         fiber
       else
         yield
@@ -76,7 +76,7 @@ class Fiber
       cursor = @head
       while cursor
         yield cursor
-        cursor = cursor.schedlink
+        cursor = cursor.queue_next
       end
     end
   end

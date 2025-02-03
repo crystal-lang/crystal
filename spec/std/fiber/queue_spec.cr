@@ -14,8 +14,8 @@ describe Fiber::Queue do
     it "creates a filled queue" do
       f1 = Fiber.new(name: "f1") { }
       f2 = Fiber.new(name: "f2") { }
-      f1.schedlink = f2
-      f2.schedlink = nil
+      f1.queue_next = f2
+      f2.queue_next = nil
 
       q = Fiber::Queue.new(f2, f1, size: 2)
       q.@head.should be(f2)
@@ -33,31 +33,31 @@ describe Fiber::Queue do
       f3 = Fiber.new(name: "f3") { }
 
       # simulate fibers previously added to other queues
-      f1.schedlink = f3
-      f2.schedlink = f1
+      f1.queue_next = f3
+      f2.queue_next = f1
 
       # push first fiber
       q.push(f1)
       q.@head.should be(f1)
       q.@tail.should be(f1)
-      f1.schedlink.should be_nil
+      f1.queue_next.should be_nil
       q.size.should eq(1)
 
       # push second fiber
       q.push(f2)
       q.@head.should be(f2)
       q.@tail.should be(f1)
-      f2.schedlink.should be(f1)
-      f1.schedlink.should be_nil
+      f2.queue_next.should be(f1)
+      f1.queue_next.should be_nil
       q.size.should eq(2)
 
       # push third fiber
       q.push(f3)
       q.@head.should be(f3)
       q.@tail.should be(f1)
-      f3.schedlink.should be(f2)
-      f2.schedlink.should be(f1)
-      f1.schedlink.should be_nil
+      f3.queue_next.should be(f2)
+      f2.queue_next.should be(f1)
+      f1.queue_next.should be_nil
       q.size.should eq(3)
     end
   end
@@ -68,9 +68,9 @@ describe Fiber::Queue do
       f1 = Fiber.new(name: "f1") { }
       f2 = Fiber.new(name: "f2") { }
       f3 = Fiber.new(name: "f3") { }
-      f3.schedlink = f2
-      f2.schedlink = f1
-      f1.schedlink = nil
+      f3.queue_next = f2
+      f2.queue_next = f1
+      f1.queue_next = nil
       q1 = Fiber::Queue.new(f3, f1, size: 3)
 
       # push in bulk
@@ -89,14 +89,14 @@ describe Fiber::Queue do
       f5 = Fiber.new(name: "f5") { }
 
       # source queue
-      f3.schedlink = f2
-      f2.schedlink = f1
-      f1.schedlink = nil
+      f3.queue_next = f2
+      f2.queue_next = f1
+      f1.queue_next = nil
       q1 = Fiber::Queue.new(f3, f1, size: 3)
 
       # destination queue
-      f5.schedlink = f4
-      f4.schedlink = nil
+      f5.queue_next = f4
+      f4.queue_next = nil
       q2 = Fiber::Queue.new(f5, f4, size: 2)
 
       # push in bulk
@@ -105,11 +105,11 @@ describe Fiber::Queue do
       q2.@tail.should be(f1)
       q2.size.should eq(5)
 
-      f5.schedlink.should be(f4)
-      f4.schedlink.should be(f3)
-      f3.schedlink.should be(f2)
-      f2.schedlink.should be(f1)
-      f1.schedlink.should be(nil)
+      f5.queue_next.should be(f4)
+      f4.queue_next.should be(f3)
+      f3.queue_next.should be(f2)
+      f2.queue_next.should be(f1)
+      f1.queue_next.should be(nil)
     end
   end
 
@@ -118,9 +118,9 @@ describe Fiber::Queue do
       f1 = Fiber.new(name: "f1") { }
       f2 = Fiber.new(name: "f2") { }
       f3 = Fiber.new(name: "f3") { }
-      f3.schedlink = f2
-      f2.schedlink = f1
-      f1.schedlink = nil
+      f3.queue_next = f2
+      f2.queue_next = f1
+      f1.queue_next = nil
       q = Fiber::Queue.new(f3, f1, size: 3)
 
       # removes third element
@@ -152,9 +152,9 @@ describe Fiber::Queue do
       f1 = Fiber.new(name: "f1") { }
       f2 = Fiber.new(name: "f2") { }
       f3 = Fiber.new(name: "f3") { }
-      f3.schedlink = f2
-      f2.schedlink = f1
-      f1.schedlink = nil
+      f3.queue_next = f2
+      f2.queue_next = f1
+      f1.queue_next = nil
       q = Fiber::Queue.new(f3, f1, size: 3)
 
       # removes third element
