@@ -5,8 +5,10 @@ class Fiber
   class StackPool
     STACK_SIZE = 8 * 1024 * 1024
 
-    # FIXME: crystal can't infer ivars declared inside macros...
-    @lock = uninitialized Crystal::SpinLock
+    {% if flag?(:execution_context) %}
+      # must explicitly declare the variable because of the macro in #initialize
+      @lock = uninitialized Crystal::SpinLock
+    {% end %}
 
     # If *protect* is true, guards all top pages (pages with the lowest address
     # values) in the allocated stacks; accessing them triggers an error
