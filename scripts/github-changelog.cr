@@ -379,10 +379,20 @@ class ChangelogEntry
 
   def collect_authors
     authors = [] of String
-    pull_requests.each do |pr|
+
+    if backported_from = self.backported_from
+      if author = backported_from.author
+        authors << author
+      end
+    end
+
+    pull_requests.each_with_index do |pr, i|
+      next if backported_from && i.zero?
+
       author = pr.author || next
       authors << author unless authors.includes?(author)
     end
+
     authors
   end
 
