@@ -273,7 +273,15 @@ record PullRequest,
   end
 
   def clean_title
-    title.sub(/^\[?(?:#{type}|#{sub_topic})(?::|\]:?) /i, "")
+    title.sub(/^\[?(?:#{type}|#{sub_topic})(?::|\]:?) /i, "").sub(/\s*\[Backport [^\]]+\]\s*/, "")
+  end
+
+  def backported?
+    labels.any?(&.starts_with?("backport"))
+  end
+
+  def backport?
+    title.includes?("[Backport ")
   end
 end
 
@@ -316,8 +324,9 @@ end
 
 milestone = query_milestone(api_token, repository, milestone)
 
-struct ChangelogEntry
+class ChangelogEntry
   getter pull_requests : Array(PullRequest)
+  property backported_from : PullRequest?
 
   def initialize(pr : PullRequest)
     @pull_requests = [pr]
@@ -353,6 +362,11 @@ struct ChangelogEntry
       pr.link_ref(io)
     end
 
+    if backported_from = self.backported_from
+      io << ", backported from "
+      backported_from.link_ref(io)
+    end
+
     authors = collect_authors
     if authors.present?
       io << ", thanks "
@@ -384,7 +398,7 @@ struct ChangelogEntry
 end
 
 entries = milestone.pull_requests.compact_map do |pr|
-  ChangelogEntry.new(pr) unless pr.fixup?
+  ChangelogEntry.new(pr) unless pr.fixup? || pr.backported?
 end
 
 milestone.pull_requests.each do |pr|
@@ -395,6 +409,17 @@ milestone.pull_requests.each do |pr|
     parent_entry.pull_requests << pr
   else
     STDERR.puts "Unresolved fixup: ##{parent_number} for: #{pr.title} (##{pr.number})"
+  end
+end
+
+milestone.pull_requests.each do |pr|
+  next unless pr.backported?
+
+  backport = entries.find { |entry| entry.pr.backport? && entry.pr.clean_title == pr.clean_title }
+  if backport
+    backport.backported_from = pr
+  else
+    STDERR.puts "Unresolved backport: #{pr.clean_title.inspect} (##{pr.number})"
   end
 end
 
