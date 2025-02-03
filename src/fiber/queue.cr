@@ -35,7 +35,7 @@ class Fiber
       else
         @head = queue.value.@head
       end
-      @tail = queue.value.@tail
+      @tail = last
 
       @size += queue.value.size
     end
