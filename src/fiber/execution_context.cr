@@ -90,7 +90,15 @@ module Fiber::ExecutionContext
   #
   # May be called from any `ExecutionContext` (i.e. must be thread-safe).
   def spawn(*, name : String? = nil, &block : ->) : Fiber
-    Fiber.new(name, self, &block).tap { |fiber| enqueue(fiber) }
+    stack, stack_bottom =
+      {% if flag?(:interpreted) %}
+        {Pointer(Void).null, Pointer(Void).null}
+      {% else %}
+        stack_pool.checkout
+      {% end %}
+    fiber = Fiber.new(name, stack, stack_bottom, self, &block)
+    enqueue(fiber)
+    fiber
   end
 
   # :nodoc:
