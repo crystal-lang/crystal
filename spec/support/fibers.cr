@@ -31,4 +31,3 @@ def new_fake_fiber(name = nil)
     Fiber.new(name, stack, stack_bottom) { }
   {% end %}
 end
-
