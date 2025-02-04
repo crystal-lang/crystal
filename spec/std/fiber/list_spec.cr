@@ -1,4 +1,5 @@
 require "../spec_helper"
+require "../../support/fibers"
 require "fiber/list"
 
 describe Fiber::List do
@@ -12,8 +13,8 @@ describe Fiber::List do
     end
 
     it "creates a filled queue" do
-      f1 = Fiber.new(name: "f1") { }
-      f2 = Fiber.new(name: "f2") { }
+      f1 = new_fake_fiber("f1")
+      f2 = new_fake_fiber("f2")
       f1.list_next = f2
       f2.list_next = nil
 
@@ -28,9 +29,9 @@ describe Fiber::List do
   describe "#push" do
     it "to head" do
       list = Fiber::List.new
-      f1 = Fiber.new(name: "f1") { }
-      f2 = Fiber.new(name: "f2") { }
-      f3 = Fiber.new(name: "f3") { }
+      f1 = new_fake_fiber("f1")
+      f2 = new_fake_fiber("f2")
+      f3 = new_fake_fiber("f3")
 
       # simulate fibers previously added to other queues
       f1.list_next = f3
@@ -65,9 +66,9 @@ describe Fiber::List do
   describe "#bulk_unshift" do
     it "to empty queue" do
       # manually create a queue
-      f1 = Fiber.new(name: "f1") { }
-      f2 = Fiber.new(name: "f2") { }
-      f3 = Fiber.new(name: "f3") { }
+      f1 = new_fake_fiber("f1")
+      f2 = new_fake_fiber("f2")
+      f3 = new_fake_fiber("f3")
       f3.list_next = f2
       f2.list_next = f1
       f1.list_next = nil
@@ -82,11 +83,11 @@ describe Fiber::List do
     end
 
     it "to filled queue" do
-      f1 = Fiber.new(name: "f1") { }
-      f2 = Fiber.new(name: "f2") { }
-      f3 = Fiber.new(name: "f3") { }
-      f4 = Fiber.new(name: "f4") { }
-      f5 = Fiber.new(name: "f5") { }
+      f1 = new_fake_fiber("f1")
+      f2 = new_fake_fiber("f2")
+      f3 = new_fake_fiber("f3")
+      f4 = new_fake_fiber("f4")
+      f5 = new_fake_fiber("f5")
 
       # source queue
       f3.list_next = f2
@@ -115,9 +116,9 @@ describe Fiber::List do
 
   describe "#pop" do
     it "from head" do
-      f1 = Fiber.new(name: "f1") { }
-      f2 = Fiber.new(name: "f2") { }
-      f3 = Fiber.new(name: "f3") { }
+      f1 = new_fake_fiber("f1")
+      f2 = new_fake_fiber("f2")
+      f3 = new_fake_fiber("f3")
       f3.list_next = f2
       f2.list_next = f1
       f1.list_next = nil
@@ -149,9 +150,9 @@ describe Fiber::List do
 
   describe "#pop?" do
     it "from head" do
-      f1 = Fiber.new(name: "f1") { }
-      f2 = Fiber.new(name: "f2") { }
-      f3 = Fiber.new(name: "f3") { }
+      f1 = new_fake_fiber("f1")
+      f2 = new_fake_fiber("f2")
+      f3 = new_fake_fiber("f3")
       f3.list_next = f2
       f2.list_next = f1
       f1.list_next = nil

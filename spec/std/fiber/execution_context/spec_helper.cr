@@ -1,4 +1,5 @@
 require "../../spec_helper"
+require "../../../support/fibers"
 require "crystal/system/thread_wait_group"
 require "fiber/execution_context/runnables"
 require "fiber/execution_context/global_queue"

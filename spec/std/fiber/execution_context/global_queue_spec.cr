@@ -7,9 +7,9 @@ describe Fiber::ExecutionContext::GlobalQueue do
   end
 
   it "#unsafe_push and #unsafe_pop" do
-    f1 = Fiber.new(name: "f1") { }
-    f2 = Fiber.new(name: "f2") { }
-    f3 = Fiber.new(name: "f3") { }
+    f1 = new_fake_fiber("f1")
+    f2 = new_fake_fiber("f2")
+    f3 = new_fake_fiber("f3")
 
     q = Fiber::ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
     q.unsafe_push(f1)
@@ -38,7 +38,7 @@ describe Fiber::ExecutionContext::GlobalQueue do
 
     it "grabs fibers" do
       q = Fiber::ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
-      fibers = 10.times.map { |i| Fiber.new(name: "f#{i}") { } }.to_a
+      fibers = 10.times.map { |i| new_fake_fiber("f#{i}") }.to_a
       fibers.each { |f| q.unsafe_push(f) }
 
       runnables = Fiber::ExecutionContext::Runnables(6).new(q)
@@ -59,7 +59,7 @@ describe Fiber::ExecutionContext::GlobalQueue do
     end
 
     it "can't grab more than available" do
-      f = Fiber.new { }
+      f = new_fake_fiber
       q = Fiber::ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
       q.unsafe_push(f)
 
@@ -73,7 +73,7 @@ describe Fiber::ExecutionContext::GlobalQueue do
     end
 
     it "clamps divisor to 1" do
-      f = Fiber.new { }
+      f = new_fake_fiber
       q = Fiber::ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
       q.unsafe_push(f)
 
@@ -91,7 +91,7 @@ describe Fiber::ExecutionContext::GlobalQueue do
   pending_interpreted describe: "thread safety" do
     it "one by one" do
       fibers = StaticArray(Fiber::ExecutionContext::FiberCounter, 763).new do |i|
-        Fiber::ExecutionContext::FiberCounter.new(Fiber.new(name: "f#{i}") { })
+        Fiber::ExecutionContext::FiberCounter.new(new_fake_fiber("f#{i}"))
       end
 
       n = 7
@@ -101,7 +101,7 @@ describe Fiber::ExecutionContext::GlobalQueue do
       shutdown = Thread::WaitGroup.new(n)
 
       n.times do |i|
-        Thread.new(name: "ONE-#{i}") do |thread|
+        Thread.new("ONE-#{i}") do |thread|
           slept = 0
           ready.done
 
@@ -141,7 +141,7 @@ describe Fiber::ExecutionContext::GlobalQueue do
       increments = 15
 
       fibers = StaticArray(Fiber::ExecutionContext::FiberCounter, 765).new do |i| # 765 can be divided by 3 and 5
-        Fiber::ExecutionContext::FiberCounter.new(Fiber.new(name: "f#{i}") { })
+        Fiber::ExecutionContext::FiberCounter.new(new_fake_fiber("f#{i}"))
       end
 
       queue = Fiber::ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
@@ -149,7 +149,7 @@ describe Fiber::ExecutionContext::GlobalQueue do
       shutdown = Thread::WaitGroup.new(n)
 
       n.times do |i|
-        Thread.new(name: "BULK-#{i}") do |thread|
+        Thread.new("BULK-#{i}") do |thread|
           slept = 0
 
           r = Fiber::ExecutionContext::Runnables(3).new(queue)
