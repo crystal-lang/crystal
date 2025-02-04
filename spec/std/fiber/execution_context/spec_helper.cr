@@ -3,9 +3,10 @@ require "crystal/system/thread_wait_group"
 require "fiber/execution_context/runnables"
 require "fiber/execution_context/global_queue"
 
-# fake stack for `makecontext` to have somewhere to write in #initialize.
-# we don't actually run the fiber.
-FAKE_FIBER_STACK = GC.malloc(128)
+# Fake stack for `makecontext` to have somewhere to write in #initialize; We
+# don't actually run the fiber. The worst case is windows with ~300 bytes (with
+# shadow space and alignment taken into account). We allocate more to be safe.
+FAKE_FIBER_STACK = GC.malloc(512)
 
 def new_fake_fiber(name = nil)
   stack = FAKE_FIBER_STACK
