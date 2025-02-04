@@ -97,14 +97,19 @@ class Fiber
   # When the fiber is executed, it runs *proc* in its context.
   #
   # *name* is an optional and used only as an internal reference.
-  def initialize(@name : String? = nil, &@proc : ->)
-    @context = Context.new
-    @stack, @stack_bottom =
+  def self.new(name : String? = nil, &proc : ->)
+    stack, stack_bottom =
       {% if flag?(:interpreted) %}
         {Pointer(Void).null, Pointer(Void).null}
       {% else %}
         Crystal::Scheduler.stack_pool.checkout
       {% end %}
+    new(name, stack, stack_bottom, &proc)
+  end
+
+  # :nodoc:
+  def initialize(@name : String?, @stack : Void*, @stack_bottom : Void*, &@proc : ->)
+    @context = Context.new
 
     fiber_main = ->(f : Fiber) { f.run }
 
