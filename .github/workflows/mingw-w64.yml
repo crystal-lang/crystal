@@ -105,6 +105,7 @@ jobs:
         working-directory: ./shards
         run: |
           make install PREFIX="$(pwd)/../crystal"
+          ldd bin/shards.exe | grep -iv ' => /c/windows/system32' | sed 's/.* => //; s/ (.*//' | xargs -t -i /usr/bin/install -m 0755 '{}' "$(pwd)/../crystal/bin/"
 
       - name: Upload Crystal executable
         uses: actions/upload-artifact@v4
