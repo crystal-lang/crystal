@@ -528,6 +528,28 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     node.body = primitive
   end
 
+  private def process_fun_linkage_annotation(node, ann)
+    if ann.args.size != 1
+      ann.wrong_number_of_arguments "annotation Linkage", ann.args.size, 1
+    end
+
+    arg = ann.args.first
+    unless arg.is_a?(StringLiteral)
+      arg.raise "argument to Linkage must be a string"
+    end
+
+    case arg.value
+    when "internal"
+      LLVM::Linkage::Internal
+    when "external"
+      LLVM::Linkage::External
+    else
+      arg.raise "invalid linkage. Valid values are 'external' and 'internal'"
+    end
+
+    node.linkage = value
+  end
+
   def visit(node : Include)
     check_outside_exp node, "include"
     include_in current_type, node, :included
@@ -984,8 +1006,10 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         call_convention = parse_call_convention(ann, call_convention)
       elsif annotation_type == @program.primitive_annotation
         process_def_primitive_annotation(external, ann)
+      elsif annotation_type == @program.linkage_annotation
+        process_fun_linkage_annotation(external, ann)
       else
-        ann.raise "funs can only be annotated with: NoInline, AlwaysInline, Naked, ReturnsTwice, Raises, CallConvention"
+        ann.raise "funs can only be annotated with: NoInline, AlwaysInline, Naked, ReturnsTwice, Raises, CallConvention or Linkage"
       end
     end
 

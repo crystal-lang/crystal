@@ -395,6 +395,10 @@ class Crystal::CodeGenVisitor
       context.fun.call_convention = call_convention
     end
 
+    if linkage = target_def.linkage
+      context.fun.linkage = linkage
+    end
+
     i = 0
     args.each do |arg|
       param = context.fun.params[i + offset]

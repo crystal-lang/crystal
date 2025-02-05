@@ -72,6 +72,10 @@ module Crystal
       nil
     end
 
+    def linkage
+      nil
+    end
+
     @c_calling_convention : Bool? = nil
     property c_calling_convention
 

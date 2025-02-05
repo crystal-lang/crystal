@@ -239,6 +239,7 @@ module Crystal
       types["Extern"] = @extern_annotation = AnnotationType.new self, self, "Extern"
       types["Flags"] = @flags_annotation = AnnotationType.new self, self, "Flags"
       types["Link"] = @link_annotation = AnnotationType.new self, self, "Link"
+      types["Linkage"] = @linkage_annotation = AnnotationType.new self, self, "Linkage"
       types["Naked"] = @naked_annotation = AnnotationType.new self, self, "Naked"
       types["NoInline"] = @no_inline_annotation = AnnotationType.new self, self, "NoInline"
       types["Packed"] = @packed_annotation = AnnotationType.new self, self, "Packed"
@@ -534,7 +535,8 @@ module Crystal
                      packed_annotation thread_local_annotation no_inline_annotation
                      always_inline_annotation naked_annotation returns_twice_annotation
                      raises_annotation primitive_annotation call_convention_annotation
-                     flags_annotation link_annotation extern_annotation deprecated_annotation experimental_annotation) %}
+                     flags_annotation link_annotation linkage_annotation extern_annotation
+                     deprecated_annotation experimental_annotation) %}
       def {{name.id}}
         @{{name.id}}.not_nil!
       end
