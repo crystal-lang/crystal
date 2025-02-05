@@ -102,6 +102,7 @@ jobs:
 
       - name: Package Shards
         shell: msys2 {0}
+        working-directory: ./shards
         run: |
           make install PREFIX="$(pwd)/../crystal"
 
