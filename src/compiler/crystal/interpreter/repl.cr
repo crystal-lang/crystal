@@ -129,7 +129,7 @@ class Crystal::Repl
   end
 
   private def interpret_exit
-    interpret(Call.new(nil, "exit", global: true))
+    interpret(Call.new("exit", global: true))
   end
 
   private def interpret_crystal_exit(exception : EscapingException)

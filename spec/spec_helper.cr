@@ -216,7 +216,7 @@ def prepare_macro_call(macro_body, flags = nil, &)
   call_args.concat(args.values) if args
 
   a_macro = Parser.parse("macro foo(#{macro_params});#{macro_body};end").as(Macro)
-  call = Call.new(nil, "", call_args)
+  call = Call.new("", call_args)
 
   {program, a_macro, call}
 end
@@ -299,7 +299,7 @@ def run(code, filename : String? = nil, inject_primitives = true, debug = Crysta
     ast = Parser.parse(code).as(Expressions)
     last = ast.expressions.last
     assign = Assign.new(Var.new("__tempvar"), last)
-    call = Call.new(nil, "print", Var.new("__tempvar"))
+    call = Call.new("print", Var.new("__tempvar"))
     exps = Expressions.new([assign, call] of ASTNode)
     ast.expressions[-1] = exps
     code = ast.to_s
