@@ -258,6 +258,10 @@ module Crystal
       @optimization_mode.o3? && @single_module
     end
 
+    def single_module?
+      @single_module || @cross_compile || !@emit_targets.none?
+    end
+
     private def new_program(sources)
       @program = program = Program.new
       program.compiler = self
@@ -265,6 +269,7 @@ module Crystal
       program.codegen_target = codegen_target
       program.target_machine = create_target_machine
       program.flags << "release" if release?
+      program.flags << "single_module" if single_module?
       program.flags << "debug" unless debug.none?
       program.flags << "static" if static?
       program.flags.concat @flags
