@@ -258,7 +258,7 @@ module Crystal
       @optimization_mode.o3? && @single_module
     end
 
-    def single_module?
+    def single_module_compilation?
       @single_module || @cross_compile || !@emit_targets.none?
     end
 
@@ -269,7 +269,7 @@ module Crystal
       program.codegen_target = codegen_target
       program.target_machine = create_target_machine
       program.flags << "release" if release?
-      program.flags << "single_module" if single_module?
+      program.flags << "single_module" if single_module_compilation?
       program.flags << "debug" unless debug.none?
       program.flags << "static" if static?
       program.flags.concat @flags
@@ -328,7 +328,7 @@ module Crystal
     private def codegen(program, node : ASTNode, sources, output_filename)
       llvm_modules = @progress_tracker.stage("Codegen (crystal)") do
         program.codegen node, debug: debug, frame_pointers: frame_pointers,
-          single_module: @single_module || @cross_compile || !@emit_targets.none?
+          single_module: single_module_compilation?
       end
 
       output_dir = CacheDir.instance.directory_for(sources)
