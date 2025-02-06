@@ -137,7 +137,7 @@ class HTTP::Client
     {% else %}
       @tls = case tls
              when true
-               OpenSSL::SSL::Context::Client.new
+               OpenSSL::SSL::Context::Client.default
              when OpenSSL::SSL::Context::Client
                tls
              when false, nil

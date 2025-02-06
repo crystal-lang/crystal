@@ -49,6 +49,17 @@ abstract class OpenSSL::SSL::Context
       {% end %}
     end
 
+    # Returns a shared, global, default OpenSSL::SSL::Context::Client.
+    #
+    # The returned instance must not be modified. For customization,
+    # first instantiate your own OpenSSL::SSL::Context::Client.new.
+    #
+    # "A single SSL_CTX object can be used to create many connections [...]
+    # Note that you should not normally make changes to an SSL_CTX after the first
+    # SSL object has been created from it."
+    # - https://docs.openssl.org/3.4/man7/ossl-guide-libssl-introduction/
+    class_getter(default) { new }
+
     # Returns a new TLS client context with only the given method set.
     #
     # For everything else this uses the defaults of your OpenSSL.
