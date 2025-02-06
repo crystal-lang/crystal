@@ -540,14 +540,12 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     case arg.value
     when "internal"
-      LLVM::Linkage::Internal
+      node.linkage = LLVM::Linkage::Internal
     when "external"
-      LLVM::Linkage::External
+      node.linkage = LLVM::Linkage::External
     else
       arg.raise "invalid linkage. Valid values are 'external' and 'internal'"
     end
-
-    node.linkage = value
   end
 
   def visit(node : Include)
