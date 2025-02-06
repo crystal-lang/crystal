@@ -334,15 +334,23 @@ describe "Tuple" do
   end
 
   describe "#to_a" do
-    it "basic" do
-      ary = {1, 'a', true}.to_a
-      ary.should eq([1, 'a', true])
-      ary.size.should eq(3)
+    describe "without block" do
+      it "basic" do
+        ary = {1, 'a', true}.to_a
+        ary.should eq([1, 'a', true])
+        ary.size.should eq(3)
+      end
+
+      it "empty" do
+        ary = Tuple.new.to_a
+        ary.size.should eq(0)
+      end
     end
 
-    it "empty" do
-      ary = Tuple.new.to_a
-      ary.size.should eq(0)
+    describe "with block" do
+      it "basic" do
+        {-1, -2, -3}.to_a(&.abs).should eq [1, 2, 3]
+      end
     end
   end
 
