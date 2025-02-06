@@ -351,6 +351,10 @@ describe "Tuple" do
       it "basic" do
         {-1, -2, -3}.to_a(&.abs).should eq [1, 2, 3]
       end
+
+      it "different type" do
+        {1, 2, true}.to_a(&.to_s).should eq ["1", "2", "true"]
+      end
     end
   end
 
