@@ -1126,7 +1126,7 @@ describe "Semantic: annotation" do
         fun foo : Void
         end
       ),
-        "funs can only be annotated with: NoInline, AlwaysInline, Naked, ReturnsTwice, Raises, CallConvention"
+        "funs can only be annotated with: NoInline, AlwaysInline, Naked, ReturnsTwice, Raises, CallConvention or Linkage"
     end
 
     it "doesn't carry link annotation from lib to fun" do
