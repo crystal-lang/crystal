@@ -32,7 +32,6 @@
 - Changelog for 1.15.1 ([#15406], thanks @straight-shoota)
 - Update distribution-scripts ([#15385], backported from [#15368], thanks @straight-shoota)
 - Update distribution-scripts ([#15388], thanks @straight-shoota)
-- Add backports to changelog generator ([#15402], thanks @straight-shoota)
 - *(ci)* Add build shards to `mingw-w64` workflow ([#15344], thanks @straight-shoota)
 - *(ci)* Update shards 0.19.1 ([#15384], backported from [#15366], thanks @straight-shoota)
 - *(ci)* Add check for shards binary in `test_dist_linux_on_docker` ([#15394], thanks @straight-shoota)
@@ -41,7 +40,6 @@
 [#15385]: https://github.com/crystal-lang/crystal/pull/15385
 [#15368]: https://github.com/crystal-lang/crystal/pull/15368
 [#15388]: https://github.com/crystal-lang/crystal/pull/15388
-[#15402]: https://github.com/crystal-lang/crystal/pull/15402
 [#15344]: https://github.com/crystal-lang/crystal/pull/15344
 [#15384]: https://github.com/crystal-lang/crystal/pull/15384
 [#15366]: https://github.com/crystal-lang/crystal/pull/15366
