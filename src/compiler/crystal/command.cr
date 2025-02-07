@@ -396,7 +396,7 @@ class Crystal::Command
       unless no_codegen
         unless run
           opts.on("--cross-compile", "cross-compile") do |cross_compile|
-            compiler.cross_compile = true
+            compiler.cross_compile!
           end
         end
         opts.on("-d", "--debug", "Add full symbolic debug info") do
@@ -424,7 +424,7 @@ class Crystal::Command
         valid_emit_values.map!(&.gsub('_', '-').downcase)
 
         opts.on("--emit [#{valid_emit_values.join('|')}]", "Comma separated list of types of output for the compiler to emit") do |emit_values|
-          compiler.emit_targets |= validate_emit_values(emit_values.split(',').map(&.strip))
+          compiler.add_emit_targets validate_emit_values(emit_values.split(',').map(&.strip))
         end
       end
 

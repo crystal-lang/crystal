@@ -46,7 +46,7 @@ module Crystal
     # If `true`, doesn't generate an executable but instead
     # creates a `.o` file and outputs a command line to link
     # it in the target machine.
-    property? cross_compile = false
+    getter? cross_compile = false
 
     # Compiler flags. These will be true when checked in macro
     # code by the `flag?(...)` macro method.
@@ -177,7 +177,7 @@ module Crystal
     # * llvm-bc: LLVM bitcode
     # * llvm-ir: LLVM IR
     # * obj: object file
-    property emit_targets : EmitTarget = EmitTarget::None
+    getter emit_targets : EmitTarget = EmitTarget::None
 
     # Base filename to use for `emit` output.
     property emit_base_filename : String?
@@ -258,8 +258,14 @@ module Crystal
       @optimization_mode.o3? && @single_module
     end
 
-    def single_module_compilation?
-      @single_module || @cross_compile || !@emit_targets.none?
+    def cross_compile!
+      @cross_compile = true
+      @single_module = true
+    end
+
+    def add_emit_targets(emit_targets)
+      @emit_targets |= emit_targets
+      @single_module = true unless @emit_targets.none?
     end
 
     private def new_program(sources)
@@ -269,7 +275,7 @@ module Crystal
       program.codegen_target = codegen_target
       program.target_machine = create_target_machine
       program.flags << "release" if release?
-      program.flags << "single_module" if single_module_compilation?
+      program.flags << "single_module" if single_module?
       program.flags << "debug" unless debug.none?
       program.flags << "static" if static?
       program.flags.concat @flags
@@ -327,8 +333,7 @@ module Crystal
 
     private def codegen(program, node : ASTNode, sources, output_filename)
       llvm_modules = @progress_tracker.stage("Codegen (crystal)") do
-        program.codegen node, debug: debug, frame_pointers: frame_pointers,
-          single_module: single_module_compilation?
+        program.codegen node, debug: debug, frame_pointers: frame_pointers, single_module: single_module?
       end
 
       output_dir = CacheDir.instance.directory_for(sources)
