@@ -134,7 +134,6 @@ class Crystal::Program
           host_compiler.mcpu = compiler.mcpu
           host_compiler.mattr = compiler.mattr
           host_compiler.mcmodel = compiler.mcmodel
-          host_compiler.single_module = compiler.single_module?
           host_compiler.static = compiler.static?
         end
 
