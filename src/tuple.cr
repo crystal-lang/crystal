@@ -545,11 +545,7 @@ struct Tuple
   # {1, 2, 3, 4, 5}.to_a # => [1, 2, 3, 4, 5]
   # ```
   def to_a : Array(Union(*T))
-    {% if compare_versions(Crystal::VERSION, "1.1.0") < 0 %}
-      to_a(&.itself.as(Union(*T)))
-    {% else %}
-      to_a(&.itself)
-    {% end %}
+    super
   end
 
   # Returns an `Array` with the results of running *block* against each element of the tuple.
