@@ -3650,8 +3650,8 @@ module Crystal
         skip_space
         check :OP_EQ
         next_token_skip_space_or_newline
-        write " = "
-        accept value
+        write " ="
+        accept_assign_value_after_equals value
       end
       false
     end
