@@ -1,6 +1,7 @@
 require "crystal/system/thread_linked_list"
 require "crystal/print_buffered"
 require "./fiber/context"
+require "./fiber/stack"
 
 # :nodoc:
 @[NoInline]
@@ -56,12 +57,11 @@ class Fiber
   end
 
   @context : Context
-  @stack : Void*
+  @stack : Stack
   @resume_event : Crystal::EventLoop::Event?
   @timeout_event : Crystal::EventLoop::Event?
   # :nodoc:
   property timeout_select_action : Channel::TimeoutAction?
-  protected property stack_bottom : Void*
 
   # The name of the fiber, used as internal reference.
   property name : String?
@@ -98,35 +98,22 @@ class Fiber
   #
   # *name* is an optional and used only as an internal reference.
   def self.new(name : String? = nil, &proc : ->)
-    stack, stack_bottom =
-      {% if flag?(:interpreted) %}
-        {Pointer(Void).null, Pointer(Void).null}
-      {% else %}
-        Crystal::Scheduler.stack_pool.checkout
-      {% end %}
-    new(name, stack, stack_bottom, &proc)
+    new(name, Stack.new, &proc)
   end
 
   # :nodoc:
-  def initialize(@name : String?, @stack : Void*, @stack_bottom : Void*, &@proc : ->)
+  def initialize(@name : String?, @stack : Stack, &@proc : ->)
     @context = Context.new
 
     fiber_main = ->(f : Fiber) { f.run }
-
-    # point to first addressable pointer on the stack (@stack_bottom points past
-    # the stack because the stack grows down):
-    stack_ptr = @stack_bottom - sizeof(Void*)
-
-    # align the stack pointer to 16 bytes:
-    stack_ptr = Pointer(Void*).new(stack_ptr.address & ~0x0f_u64)
-
+    stack_ptr = @stack.first_addressable_pointer
     makecontext(stack_ptr, fiber_main)
 
     Fiber.fibers.push(self)
   end
 
   # :nodoc:
-  def initialize(@stack : Void*, thread)
+  def initialize(stack : Void*, thread)
     @proc = Proc(Void).new { }
 
     # TODO: should creating a new context for the main fiber also be platform specific?
@@ -138,7 +125,10 @@ class Fiber
       {% else %}
         Context.new(_fiber_get_stack_top)
       {% end %}
-    thread.gc_thread_handler, @stack_bottom = GC.current_thread_stack_bottom
+
+    thread.gc_thread_handler, stack_bottom = GC.current_thread_stack_bottom
+    @stack = Stack.new(stack, stack_bottom)
+
     @name = "main"
     {% if flag?(:preview_mt) %} @current_thread.set(thread) {% end %}
     Fiber.fibers.push(self)
@@ -169,7 +159,7 @@ class Fiber
 
     @alive = false
     {% unless flag?(:interpreted) %}
-      Crystal::Scheduler.stack_pool.release(@stack)
+      @stack.release
     {% end %}
     Fiber.suspend
   end
@@ -322,7 +312,7 @@ class Fiber
   # :nodoc:
   def push_gc_roots : Nil
     # Push the used section of the stack
-    GC.push_stack @context.stack_top, @stack_bottom
+    GC.push_stack @context.stack_top, @stack.bottom
   end
 
   {% if flag?(:preview_mt) %}
