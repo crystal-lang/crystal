@@ -13,19 +13,45 @@ struct Generator
   end
 
   def def_vars
+    def_vars do
+      <<-TEXT
+              {% if block %}
+                #{@var_prefix}{{var_name}} : {{type}}? {% if name.value %} = {{name.value}} {% end %}
+              {% else %}
+                #{@var_prefix}{{name}}
+              {% end %}
+      TEXT
+    end
+  end
+
+  def def_vars_no_macro_block
+    def_vars { "#{@var_prefix}{{name}}" }
+  end
+
+  def def_vars(&)
     <<-TEXT
           {% if name.is_a?(TypeDeclaration) %}
             {% var_name = name.var.id %}
             {% type = name.type %}
-            {% if block %}
-              #{@var_prefix}{{var_name}} : {{type}}? {% if name.value %} = {{name.value}} {% end %}
-            {% else %}
-              #{@var_prefix}{{name}}
-            {% end %}
+            #{yield.lstrip}
           {% elsif name.is_a?(Assign) %}
             {% var_name = name.target %}
             {% type = nil %}
             #{@var_prefix}{{name}}
+          {% else %}
+            {% var_name = name.id %}
+            {% type = nil %}
+          {% end %}
+
+    TEXT
+  end
+
+  def def_vars!
+    <<-TEXT
+          {% if name.is_a?(TypeDeclaration) %}
+            {% var_name = name.var.id %}
+            {% type = name.type %}
+            #{@var_prefix}{{name}}?
           {% else %}
             {% var_name = name.id %}
             {% type = nil %}
@@ -47,20 +73,6 @@ struct Generator
               #{@var_prefix}{{var_name}}
             {% end %}
           end
-
-    TEXT
-  end
-
-  def def_vars!
-    <<-TEXT
-          {% if name.is_a?(TypeDeclaration) %}
-            {% var_name = name.var.id %}
-            {% type = name.type %}
-            #{@var_prefix}{{var_name}} : {{type}}? {% if name.value %} = {{name.value}} {% end %}
-          {% else %}
-            {% var_name = name.id %}
-            {% type = nil %}
-          {% end %}
 
     TEXT
   end
@@ -805,18 +817,7 @@ struct Generator
       # ```
       macro #{@macro_prefix}setter(*names)
         {% for name in names %}
-          {% if name.is_a?(TypeDeclaration) %}
-            {% var_name = name.var.id %}
-            {% type = name.type %}
-            #{@var_prefix}{{name}}
-          {% elsif name.is_a?(Assign) %}
-            {% var_name = name.target %}
-            {% type = nil %}
-            #{@var_prefix}{{name}}
-          {% else %}
-            {% var_name = name.id %}
-            {% type = nil %}
-          {% end %}
+    #{def_vars_no_macro_block}
     #{def_setter}
         {% end %}
       end

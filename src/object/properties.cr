@@ -337,7 +337,7 @@ class Object
       {% if name.is_a?(TypeDeclaration) %}
         {% var_name = name.var.id %}
         {% type = name.type %}
-        @{{var_name}} : {{type}}? {% if name.value %} = {{name.value}} {% end %}
+        @{{name}}?
       {% else %}
         {% var_name = name.id %}
         {% type = nil %}
@@ -457,6 +457,7 @@ class Object
         {% var_name = name.id %}
         {% type = nil %}
       {% end %}
+
       def {{var_name}}=(@{{var_name}}{% if type %} : {{type}} {% end %})
       end
 
@@ -837,7 +838,7 @@ class Object
       {% if name.is_a?(TypeDeclaration) %}
         {% var_name = name.var.id %}
         {% type = name.type %}
-        @{{var_name}} : {{type}}? {% if name.value %} = {{name.value}} {% end %}
+        @{{name}}?
       {% else %}
         {% var_name = name.id %}
         {% type = nil %}
@@ -1196,7 +1197,7 @@ class Object
       {% if name.is_a?(TypeDeclaration) %}
         {% var_name = name.var.id %}
         {% type = name.type %}
-        @@{{var_name}} : {{type}}? {% if name.value %} = {{name.value}} {% end %}
+        @@{{name}}?
       {% else %}
         {% var_name = name.id %}
         {% type = nil %}
@@ -1316,6 +1317,7 @@ class Object
         {% var_name = name.id %}
         {% type = nil %}
       {% end %}
+
       def self.{{var_name}}=(@@{{var_name}}{% if type %} : {{type}} {% end %})
       end
 
@@ -1696,7 +1698,7 @@ class Object
       {% if name.is_a?(TypeDeclaration) %}
         {% var_name = name.var.id %}
         {% type = name.type %}
-        @@{{var_name}} : {{type}}? {% if name.value %} = {{name.value}} {% end %}
+        @@{{name}}?
       {% else %}
         {% var_name = name.id %}
         {% type = nil %}
