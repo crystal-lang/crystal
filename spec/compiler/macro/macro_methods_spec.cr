@@ -571,6 +571,12 @@ module Crystal
         assert_macro %({{"hello".gsub(/e|o/, "a")}}), %("halla")
       end
 
+      it "executes scan" do
+        assert_macro %({{"Crystal".scan(/(Cr)(?<name1>y)(st)(?<name2>al)/)}}), %([{0 => "Crystal", 1 => "Cr", "name1" => "y", 3 => "st", "name2" => "al"} of ::Int32 | ::String => ::String | ::Nil] of ::Hash(::Int32 | ::String, ::String | ::Nil))
+        assert_macro %({{"Crystal".scan(/(Cr)?(stal)/)}}), %([{0 => "stal", 1 => nil, 2 => "stal"} of ::Int32 | ::String => ::String | ::Nil] of ::Hash(::Int32 | ::String, ::String | ::Nil))
+        assert_macro %({{"Ruby".scan(/Crystal/)}}), %([] of ::Hash(::Int32 | ::String, ::String | ::Nil))
+      end
+
       it "executes camelcase" do
         assert_macro %({{"foo_bar".camelcase}}), %("FooBar")
       end
