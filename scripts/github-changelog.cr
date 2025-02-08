@@ -271,6 +271,18 @@ record PullRequest,
     md = title.match(/\[fixup #(.\d+)/) || return
     md[1]?.try(&.to_i)
   end
+
+  def clean_title
+    title.sub(/^\[?(?:#{type}|#{sub_topic})(?::|\]:?) /i, "").sub(/\s*\[Backport [^\]]+\]\s*/, "")
+  end
+
+  def backported?
+    labels.any?(&.starts_with?("backport"))
+  end
+
+  def backport?
+    title.includes?("[Backport ")
+  end
 end
 
 def query_milestone(api_token, repository, number)
@@ -312,8 +324,9 @@ end
 
 milestone = query_milestone(api_token, repository, milestone)
 
-struct ChangelogEntry
+class ChangelogEntry
   getter pull_requests : Array(PullRequest)
+  property backported_from : PullRequest?
 
   def initialize(pr : PullRequest)
     @pull_requests = [pr]
@@ -342,11 +355,16 @@ struct ChangelogEntry
     if pr.deprecated?
       io << "**[deprecation]** "
     end
-    io << pr.title.sub(/^\[?(?:#{pr.type}|#{pr.sub_topic})(?::|\]:?) /i, "")
+    io << pr.clean_title
 
     io << " ("
     pull_requests.join(io, ", ") do |pr|
       pr.link_ref(io)
+    end
+
+    if backported_from = self.backported_from
+      io << ", backported from "
+      backported_from.link_ref(io)
     end
 
     authors = collect_authors
@@ -361,15 +379,26 @@ struct ChangelogEntry
 
   def collect_authors
     authors = [] of String
-    pull_requests.each do |pr|
+
+    if backported_from = self.backported_from
+      if author = backported_from.author
+        authors << author
+      end
+    end
+
+    pull_requests.each_with_index do |pr, i|
+      next if backported_from && i.zero?
+
       author = pr.author || next
       authors << author unless authors.includes?(author)
     end
+
     authors
   end
 
   def print_ref_labels(io)
     pull_requests.each { |pr| print_ref_label(io, pr) }
+    backported_from.try { |pr| print_ref_label(io, pr) }
   end
 
   def print_ref_label(io, pr)
@@ -380,7 +409,7 @@ struct ChangelogEntry
 end
 
 entries = milestone.pull_requests.compact_map do |pr|
-  ChangelogEntry.new(pr) unless pr.fixup?
+  ChangelogEntry.new(pr) unless pr.fixup? || pr.backported?
 end
 
 milestone.pull_requests.each do |pr|
@@ -391,6 +420,17 @@ milestone.pull_requests.each do |pr|
     parent_entry.pull_requests << pr
   else
     STDERR.puts "Unresolved fixup: ##{parent_number} for: #{pr.title} (##{pr.number})"
+  end
+end
+
+milestone.pull_requests.each do |pr|
+  next unless pr.backported?
+
+  backport = entries.find { |entry| entry.pr.backport? && entry.pr.clean_title == pr.clean_title }
+  if backport
+    backport.backported_from = pr
+  else
+    STDERR.puts "Unresolved backport: #{pr.clean_title.inspect} (##{pr.number})"
   end
 end
 
