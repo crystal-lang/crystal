@@ -655,12 +655,7 @@ module Crystal
         interpret_check_args do |arg|
           case arg
           when RegexLiteral
-            arg_value = arg.value
-            if arg_value.is_a?(StringLiteral)
-              regex = Regex.new(arg_value.value, arg.options)
-            else
-              raise "regex interpolations not yet allowed in macros"
-            end
+            regex = regex_value(arg)
             BoolLiteral.new(!!(@value =~ regex))
           else
             BoolLiteral.new(false)
@@ -735,12 +730,7 @@ module Crystal
           raise "first argument to StringLiteral#gsub must be a regex, not #{first.class_desc}" unless first.is_a?(RegexLiteral)
           raise "second argument to StringLiteral#gsub must be a string, not #{second.class_desc}" unless second.is_a?(StringLiteral)
 
-          regex_value = first.value
-          if regex_value.is_a?(StringLiteral)
-            regex = Regex.new(regex_value.value, first.options)
-          else
-            raise "regex interpolations not yet allowed in macros"
-          end
+          regex = regex_value(first)
 
           StringLiteral.new(value.gsub(regex, second.value))
         end
@@ -764,12 +754,7 @@ module Crystal
             raise "StringLiteral#scan expects a regex, not #{arg.class_desc}"
           end
 
-          regex_value = arg.value
-          if regex_value.is_a?(StringLiteral)
-            regex = Regex.new(regex_value.value, arg.options)
-          else
-            raise "regex interpolations not yet allowed in macros"
-          end
+          regex = regex_value(arg)
 
           matches = ArrayLiteral.new(
             of: Generic.new(
@@ -911,6 +896,15 @@ module Crystal
 
     def to_macro_id
       @value
+    end
+
+    def regex_value(arg)
+      regex_value = arg.value
+      if regex_value.is_a?(StringLiteral)
+        Regex.new(regex_value.value, arg.options)
+      else
+        raise "regex interpolations not yet allowed in macros"
+      end
     end
   end
 
