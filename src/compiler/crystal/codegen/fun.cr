@@ -395,6 +395,10 @@ class Crystal::CodeGenVisitor
       context.fun.call_convention = call_convention
     end
 
+    if @single_module && mangled_name.starts_with?("__crystal_")
+      context.fun.linkage = LLVM::Linkage::Internal
+    end
+
     i = 0
     args.each do |arg|
       param = context.fun.params[i + offset]
