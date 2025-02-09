@@ -553,8 +553,8 @@ struct Tuple
   # ```
   # {1, 2, 3, 4, 5}).to_a { |i| i * 2 } # => [2, 4, 6, 8, 10]
   # ```
-  def to_a(& : Union(*T) -> _)
-    Array(Union(*T)).build(size) do |buffer|
+  def to_a(& : Union(*T) -> U) forall U
+    Array(U).build(size) do |buffer|
       {% for i in 0...T.size %}
         buffer[{{i}}] = yield self[{{i}}]
       {% end %}
