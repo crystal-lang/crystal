@@ -656,13 +656,13 @@ module Crystal
     property? args_in_brackets = false
     property? has_parentheses = false
 
-    def initialize(@obj, @name, @args : Array(ASTNode) = [] of ASTNode, @block = nil, @block_arg = nil, @named_args = nil, @global : Bool = false)
+    def initialize(@obj : ASTNode?, @name : String, @args : Array(ASTNode) = [] of ASTNode, @block = nil, @block_arg = nil, @named_args = nil, @global : Bool = false)
       if block = @block
         block.call = self
       end
     end
 
-    def self.new(obj, name, *args : ASTNode, global = false)
+    def self.new(obj : ASTNode?, name : String, *args : ASTNode, global : Bool = false)
       {% if compare_versions(Crystal::VERSION, "1.5.0") > 0 %}
         new obj, name, [*args] of ASTNode, global: global
       {% else %}
