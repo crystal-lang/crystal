@@ -396,7 +396,11 @@ class Crystal::CodeGenVisitor
     end
 
     if @single_module && mangled_name.starts_with?("__crystal_")
-      context.fun.linkage = LLVM::Linkage::Internal
+      # FIXME: macos ld fails to link when the personality fun is internal; it
+      # might work with lld so we might want to check the linker?
+      unless @program.has_flag?("darwin") && mangled_name.starts_with?("__crystal_personality")
+        context.fun.linkage = LLVM::Linkage::Internal
+      end
     end
 
     i = 0
