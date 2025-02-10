@@ -98,7 +98,14 @@ class Fiber
   #
   # *name* is an optional and used only as an internal reference.
   def self.new(name : String? = nil, &proc : ->)
-    new(name, Stack.new, &proc)
+    stack =
+      {% if flag?(:interpreted) %}
+        # the interpreter is managing the stacks
+        Stack.new(Pointer(Void).null, 0)
+      {% else %}
+        Crystal::Scheduler.stack_pool.checkout
+      {% end %}
+    new(name, stack, &proc)
   end
 
   # :nodoc:
@@ -159,7 +166,7 @@ class Fiber
 
     @alive = false
     {% unless flag?(:interpreted) %}
-      @stack.release
+      Crystal::Scheduler.stack_pool.release(@stack)
     {% end %}
     Fiber.suspend
   end
