@@ -183,7 +183,7 @@ module Crystal::System::Signal
 
     is_stack_overflow =
       begin
-        stack_top = Pointer(Void).new(::Fiber.current.@stack.pointer.address - 4096)
+        stack_top = ::Fiber.current.@stack.pointer - 4096
         stack_bottom = ::Fiber.current.@stack.bottom
         stack_top <= addr < stack_bottom
       rescue e
