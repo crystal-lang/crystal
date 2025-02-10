@@ -47,7 +47,7 @@ class Fiber
         stack
       else
         pointer = Crystal::System::Fiber.allocate_stack(STACK_SIZE, @protect)
-        Stack.new(pointer, STACK_SIZE)
+        Stack.new(pointer, STACK_SIZE, reusable: true)
       end
     end
 
