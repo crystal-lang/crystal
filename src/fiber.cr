@@ -101,7 +101,7 @@ class Fiber
     stack =
       {% if flag?(:interpreted) %}
         # the interpreter is managing the stacks
-        Stack.new(Pointer(Void).null, 0)
+        Stack.new(Pointer(Void).null, Pointer(Void).null)
       {% else %}
         Crystal::Scheduler.stack_pool.checkout
       {% end %}
