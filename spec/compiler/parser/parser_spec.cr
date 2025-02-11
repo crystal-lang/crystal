@@ -40,8 +40,8 @@ private def node_source(string, node)
   source_between(string, node.location, node.end_location)
 end
 
-private def assert_end_location(source, line_number = 1, column_number = source.size, file = __FILE__, line = __LINE__)
-  it "gets corrects end location for #{source.inspect}", file, line do
+private def assert_end_location(source, line_number = 1, column_number = source.size, file = __FILE__, line = __LINE__, *, focus : Bool = false)
+  it "gets corrects end location for #{source.inspect}", file, line, focus: focus do
     string = "#{source}; 1"
     parser = Parser.new(string)
     node = parser.parse.as(Expressions).expressions[0]
