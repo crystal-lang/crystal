@@ -87,7 +87,7 @@ class Fiber
 
     private def pop?
       {% if flag?(:execution_context) %}
-        if stack = Thread.current.dead_fiber_stack?
+        if (stack = Thread.current.dead_fiber_stack?) && stack.reusable?
           stack
         else
           @lock.sync { @deque.pop? } unless @deque.empty?
