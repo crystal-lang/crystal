@@ -5500,9 +5500,11 @@ module Crystal
 
       check :OP_RPAREN
 
+      end_location = token_end_location
+
       next_token_skip_space
 
-      Asm.new(text, outputs, inputs, clobbers, volatile, alignstack, intel, can_throw)
+      Asm.new(text, outputs, inputs, clobbers, volatile, alignstack, intel, can_throw).at_end(end_location)
     end
 
     def parse_asm_operands
