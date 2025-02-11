@@ -2844,9 +2844,11 @@ module Crystal
           a_else = parse_expressions
           skip_statement_end
           check_ident :end
+          end_location = token_end_location
           next_token
           break
         when Keyword::END
+          end_location = token_end_location
           next_token
           break
         else
@@ -2854,7 +2856,7 @@ module Crystal
         end
       end
 
-      Case.new(cond, whens, a_else, exhaustive.nil? ? false : exhaustive)
+      Case.new(cond, whens, a_else, exhaustive.nil? ? false : exhaustive).at_end(end_location)
     end
 
     def check_valid_exhaustive_expression(exp)
