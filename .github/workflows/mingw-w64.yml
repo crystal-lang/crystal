@@ -23,8 +23,8 @@ jobs:
           _llvm_major=$(wget -qO- https://raw.githubusercontent.com/msys2/MINGW-packages/refs/heads/master/mingw-w64-llvm/PKGBUILD | grep '_version=' | sed -E 's/_version=([0-9]+).*/\1/')
           sudo apt remove 'llvm-*' 'libllvm*'
           wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
-          sudo apt-add-repository -y deb http://apt.llvm.org/noble/ llvm-toolchain-noble-${_llvm_major} main
-          sudo apt install -y llvm-${_llvm_major}-dev
+          sudo apt-add-repository -y deb http://apt.llvm.org/noble/ "llvm-toolchain-noble-${_llvm_major}" main
+          sudo apt install -y "llvm-${_llvm_major}-dev"
 
       - name: Install Crystal
         uses: crystal-lang/install-crystal@v1
