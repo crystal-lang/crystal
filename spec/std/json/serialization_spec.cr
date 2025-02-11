@@ -143,6 +143,23 @@ describe "JSON serialization" do
       Hash(BigDecimal, String).from_json(%({"1234567890.123456789": "x"})).should eq({"1234567890.123456789".to_big_d => "x"})
     end
 
+    describe "Hash with union key (Union.from_json_object_key?)" do
+      it "string deprioritized" do
+        Hash(String | Int32, Nil).from_json(%({"1": null})).should eq({1 => nil})
+        Hash(String | UInt32, Nil).from_json(%({"1": null})).should eq({1 => nil})
+      end
+
+      it "string without alternative" do
+        Hash(String | Int32, Nil).from_json(%({"foo": null})).should eq({"foo" => nil})
+      end
+
+      it "no match" do
+        expect_raises JSON::ParseException, %(Can't convert "foo" into (Float64 | Int32) at line 1, column 2) do
+          Hash(Float64 | Int32, Nil).from_json(%({"foo": null}))
+        end
+      end
+    end
+
     it "raises an error Hash(String, Int32)#from_json with null value" do
       expect_raises(JSON::ParseException, "Expected Int but was Null") do
         Hash(String, Int32).from_json(%({"foo": 1, "bar": 2, "baz": null}))
