@@ -673,14 +673,14 @@ module Crystal
     it_parses "f.x &-= 2", OpAssign.new(Call.new("f".call, "x"), "&-", 2.int32)
     it_parses "f.x &*= 2", OpAssign.new(Call.new("f".call, "x"), "&*", 2.int32)
 
-    ["/", "<", "<=", "==", "!=", "=~", "!~", ">", ">=", "+", "-", "*", "/", "~", "%", "&", "|", "^", "**", "==="].each do |op|
+    %w(/ < <= == != =~ !~ > >= + - * / ~ % & | ^ ** ===).each do |op|
       it_parses "def #{op}; end;", Def.new(op)
       it_parses "def #{op}(); end;", Def.new(op)
       it_parses "def self.#{op}; end;", Def.new(op, receiver: "self".var)
       it_parses "def self.#{op}(); end;", Def.new(op, receiver: "self".var)
     end
 
-    ["<<", "<", "<=", "==", ">>", ">", ">=", "+", "-", "*", "/", "//", "%", "|", "&", "^", "**", "===", "=~", "!~", "&+", "&-", "&*", "&**"].each do |op|
+    %w(<< < <= == >> > >= + - * / // % | & ^ ** === =~ !~ &+ &- &* &**).each do |op|
       it_parses "1 #{op} 2", Call.new(1.int32, op, 2.int32)
       it_parses "n #{op} 2", Call.new("n".call, op, 2.int32)
       it_parses "foo(n #{op} 2)", Call.new(nil, "foo", Call.new("n".call, op, 2.int32))
@@ -699,7 +699,7 @@ module Crystal
     it_parses "->Foo.[](Int32)", ProcPointer.new("Foo".path, "[]", ["Int32".path] of ASTNode)
     it_parses "->Foo.[]=(Int32)", ProcPointer.new("Foo".path, "[]=", ["Int32".path] of ASTNode)
 
-    ["bar", "+", "-", "*", "/", "<", "<=", "==", ">", ">=", "%", "|", "&", "^", "**", "===", "=~", "!=", "[]=", "!~"].each do |name|
+    %w(bar + - * / < <= == > >= % | & ^ ** === =~ != []= !~).each do |name|
       it_parses "foo.#{name}", Call.new("foo".call, name)
       it_parses "foo.#{name} 1, 2", Call.new("foo".call, name, 1.int32, 2.int32)
       it_parses "foo.#{name}(1, 2)", Call.new("foo".call, name, 1.int32, 2.int32)
@@ -707,7 +707,7 @@ module Crystal
       it_parses "foo.#{name} do end", Call.new("foo".call, name, block: Block.new)
     end
 
-    ["+", "-", "*", "/", "//", "%", "|", "&", "^", "**", "<<", ">>", "&+", "&-", "&*"].each do |op|
+    %w(+ - * / // % | & ^ ** << >> &+ &- &*).each do |op|
       it_parses "a = 1; a #{op}= 1", [Assign.new("a".var, 1.int32), OpAssign.new("a".var, op, 1.int32)]
       it_parses "a = 1; a #{op}=\n1", [Assign.new("a".var, 1.int32), OpAssign.new("a".var, op, 1.int32)]
       it_parses "a.b #{op}=\n1", OpAssign.new(Call.new("a".call, "b"), op, 1.int32)
@@ -2002,8 +2002,14 @@ module Crystal
     it_parses "foo 1.bar do\nend", Call.new(nil, "foo", args: [Call.new(1.int32, "bar")] of ASTNode, block: Block.new)
     it_parses "return 1.bar do\nend", Return.new(Call.new(1.int32, "bar", block: Block.new))
 
-    %w(begin nil true false yield with abstract def macro require case if unless include extend class struct module enum while
-      until return next break lib fun alias pointerof sizeof instance_sizeof offsetof typeof private protected asm end do else elsif when rescue ensure).each do |keyword|
+    %w(
+      begin nil true false yield with abstract
+      def macro require case if unless include
+      extend class struct module enum while until return
+      next break lib fun alias pointerof sizeof
+      instance_sizeof offsetof typeof private protected asm
+      end do else elsif when rescue ensure
+    ).each do |keyword|
       it_parses "#{keyword} : Int32", TypeDeclaration.new(keyword.var, "Int32".path)
       it_parses "property #{keyword} : Int32", Call.new(nil, "property", TypeDeclaration.new(keyword.var, "Int32".path))
     end
