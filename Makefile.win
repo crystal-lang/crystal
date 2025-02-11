@@ -64,7 +64,7 @@ CRYSTAL_CONFIG_LIBRARY_PATH := $$ORIGIN\lib
 CRYSTAL_CONFIG_BUILD_COMMIT := $(shell git rev-parse --short HEAD)
 CRYSTAL_CONFIG_PATH := $$ORIGIN\src
 CRYSTAL_VERSION ?= $(shell type src\VERSION)
-SOURCE_DATE_EPOCH ?= $(shell type src/SOURCE_DATE_EPOCH || git show -s --format=%ct HEAD)
+SOURCE_DATE_EPOCH ?= $(or $(shell type src\SOURCE_DATE_EPOCH 2>NUL),$(shell git show -s --format=%ct HEAD))
 export_vars = $(eval export CRYSTAL_CONFIG_BUILD_COMMIT CRYSTAL_CONFIG_PATH SOURCE_DATE_EPOCH)
 export_build_vars = $(eval export CRYSTAL_CONFIG_LIBRARY_PATH)
 LLVM_CONFIG ?=

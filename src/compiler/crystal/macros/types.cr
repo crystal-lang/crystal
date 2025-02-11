@@ -46,7 +46,8 @@ module Crystal
 
       @macro_types["Arg"] = NonGenericMacroType.new self, "Arg", ast_node
       @macro_types["ProcNotation"] = NonGenericMacroType.new self, "ProcNotation", ast_node
-      @macro_types["Def"] = NonGenericMacroType.new self, "Def", ast_node
+      @macro_types["Def"] = def_type = NonGenericMacroType.new self, "Def", ast_node
+      @macro_types["External"] = NonGenericMacroType.new self, "External", def_type
       @macro_types["Macro"] = NonGenericMacroType.new self, "Macro", ast_node
 
       @macro_types["UnaryExpression"] = unary_expression = NonGenericMacroType.new self, "UnaryExpression", ast_node
@@ -102,7 +103,6 @@ module Crystal
       # bottom type
       @macro_types["NoReturn"] = @macro_no_return = NoReturnMacroType.new self
 
-      # unimplemented types (see https://github.com/crystal-lang/crystal/issues/3274#issuecomment-860092436)
       @macro_types["Self"] = NonGenericMacroType.new self, "Self", ast_node
       @macro_types["Underscore"] = NonGenericMacroType.new self, "Underscore", ast_node
       @macro_types["Select"] = NonGenericMacroType.new self, "Select", ast_node

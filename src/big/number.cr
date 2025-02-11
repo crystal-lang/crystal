@@ -8,18 +8,6 @@ struct BigFloat
     self.class.new(self / other)
   end
 
-  def /(other : Int::Primitive) : BigFloat
-    # Division by 0 in BigFloat is not allowed, there is no BigFloat::Infinity
-    raise DivisionByZeroError.new if other == 0
-    Int.primitive_ui_check(other) do |ui, neg_ui, _|
-      {
-        ui:     BigFloat.new { |mpf| LibGMP.mpf_div_ui(mpf, self, {{ ui }}) },
-        neg_ui: BigFloat.new { |mpf| LibGMP.mpf_div_ui(mpf, self, {{ neg_ui }}); LibGMP.mpf_neg(mpf, mpf) },
-        big_i:  BigFloat.new { |mpf| LibGMP.mpf_div(mpf, self, BigFloat.new(other)) },
-      }
-    end
-  end
-
   Number.expand_div [Float32, Float64], BigFloat
 end
 
@@ -91,70 +79,60 @@ end
 
 struct Int8
   Number.expand_div [BigInt], BigFloat
-  Number.expand_div [BigFloat], BigFloat
   Number.expand_div [BigDecimal], BigDecimal
   Number.expand_div [BigRational], BigRational
 end
 
 struct Int16
   Number.expand_div [BigInt], BigFloat
-  Number.expand_div [BigFloat], BigFloat
   Number.expand_div [BigDecimal], BigDecimal
   Number.expand_div [BigRational], BigRational
 end
 
 struct Int32
   Number.expand_div [BigInt], BigFloat
-  Number.expand_div [BigFloat], BigFloat
   Number.expand_div [BigDecimal], BigDecimal
   Number.expand_div [BigRational], BigRational
 end
 
 struct Int64
   Number.expand_div [BigInt], BigFloat
-  Number.expand_div [BigFloat], BigFloat
   Number.expand_div [BigDecimal], BigDecimal
   Number.expand_div [BigRational], BigRational
 end
 
 struct Int128
   Number.expand_div [BigInt], BigFloat
-  Number.expand_div [BigFloat], BigFloat
   Number.expand_div [BigDecimal], BigDecimal
   Number.expand_div [BigRational], BigRational
 end
 
 struct UInt8
   Number.expand_div [BigInt], BigFloat
-  Number.expand_div [BigFloat], BigFloat
   Number.expand_div [BigDecimal], BigDecimal
   Number.expand_div [BigRational], BigRational
 end
 
 struct UInt16
   Number.expand_div [BigInt], BigFloat
-  Number.expand_div [BigFloat], BigFloat
   Number.expand_div [BigDecimal], BigDecimal
   Number.expand_div [BigRational], BigRational
 end
 
 struct UInt32
   Number.expand_div [BigInt], BigFloat
-  Number.expand_div [BigFloat], BigFloat
   Number.expand_div [BigDecimal], BigDecimal
   Number.expand_div [BigRational], BigRational
 end
 
 struct UInt64
   Number.expand_div [BigInt], BigFloat
-  Number.expand_div [BigFloat], BigFloat
   Number.expand_div [BigDecimal], BigDecimal
   Number.expand_div [BigRational], BigRational
 end
 
 struct UInt128
   Number.expand_div [BigInt], BigFloat
-  Number.expand_div [BigFloat], BigFloat
   Number.expand_div [BigDecimal], BigDecimal
   Number.expand_div [BigRational], BigRational
 end

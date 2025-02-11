@@ -1,6 +1,6 @@
 require "fiber"
+require "fiber/pointer_linked_list_node"
 require "crystal/spin_lock"
-require "crystal/pointer_linked_list"
 
 # Suspend execution until a collection of fibers are finished.
 #
@@ -31,21 +31,44 @@ require "crystal/pointer_linked_list"
 # wg.wait
 # ```
 class WaitGroup
-  private struct Waiting
-    include Crystal::PointerLinkedList::Node
-
-    def initialize(@fiber : Fiber)
-    end
-
-    def enqueue : Nil
-      @fiber.enqueue
-    end
+  # Yields a `WaitGroup` instance and waits at the end of the block for all of
+  # the work enqueued inside it to complete.
+  #
+  # ```
+  # WaitGroup.wait do |wg|
+  #   items.each do |item|
+  #     wg.spawn { process item }
+  #   end
+  # end
+  # ```
+  def self.wait(&) : Nil
+    instance = new
+    yield instance
+    instance.wait
   end
 
   def initialize(n : Int32 = 0)
-    @waiting = Crystal::PointerLinkedList(Waiting).new
+    @waiting = Crystal::PointerLinkedList(Fiber::PointerLinkedListNode).new
     @lock = Crystal::SpinLock.new
     @counter = Atomic(Int32).new(n)
+  end
+
+  # Increment the counter by 1, perform the work inside the block in a separate
+  # fiber, decrementing the counter after it completes or raises. Returns the
+  # `Fiber` that was spawned.
+  #
+  # ```
+  # wg = WaitGroup.new
+  # wg.spawn { do_something }
+  # wg.wait
+  # ```
+  def spawn(*, name : String? = nil, &block) : Fiber
+    add
+    ::spawn(name: name) do
+      block.call
+    ensure
+      done
+    end
   end
 
   # Increments the counter by how many fibers we want to wait for.
@@ -94,7 +117,7 @@ class WaitGroup
   def wait : Nil
     return if done?
 
-    waiting = Waiting.new(Fiber.current)
+    waiting = Fiber::PointerLinkedListNode.new(Fiber.current)
 
     @lock.sync do
       # must check again to avoid a race condition where #done may have

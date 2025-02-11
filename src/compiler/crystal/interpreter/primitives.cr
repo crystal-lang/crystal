@@ -87,6 +87,8 @@ class Crystal::Repl::Compiler
 
       pointer_add(inner_sizeof_type(element_type), node: node)
     when "class"
+      # Should match Crystal::Repl::Value#runtime_type
+      # in src/compiler/crystal/interpreter/value.cr
       obj = obj.not_nil!
       type = obj.type.remove_indirection
 
@@ -174,6 +176,30 @@ class Crystal::Repl::Compiler
         # Pop the struct pointer
         if type.struct?
           pop(sizeof(Pointer(Void)), node: nil)
+        end
+      end
+    when "pre_initialize"
+      type =
+        if obj
+          discard_value(obj)
+          obj.type.instance_type
+        else
+          scope.instance_type
+        end
+
+      accept_call_members(node)
+
+      dup sizeof(Pointer(Void)), node: nil
+      reset_class(aligned_instance_sizeof_type(type), type_id(type), node: node)
+
+      initializer_compiled_defs = @context.type_instance_var_initializers(type)
+      unless initializer_compiled_defs.empty?
+        initializer_compiled_defs.size.times do
+          dup sizeof(Pointer(Void)), node: nil
+        end
+
+        initializer_compiled_defs.each do |compiled_def|
+          call compiled_def, node: nil
         end
       end
     when "tuple_indexer_known_index"
@@ -405,6 +431,12 @@ class Crystal::Repl::Compiler
     when "interpreter_fiber_resumable"
       accept_call_args(node)
       interpreter_fiber_resumable(node: node)
+    when "interpreter_signal_descriptor"
+      accept_call_args(node)
+      interpreter_signal_descriptor(node: node)
+    when "interpreter_signal"
+      accept_call_args(node)
+      interpreter_signal(node: node)
     when "interpreter_intrinsics_memcpy"
       accept_call_args(node)
       interpreter_intrinsics_memcpy(node: node)

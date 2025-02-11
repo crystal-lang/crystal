@@ -2,6 +2,9 @@ require "../unix/file"
 
 # :nodoc:
 module Crystal::System::File
+  protected def system_set_mode(mode : String)
+  end
+
   def self.chmod(path, mode)
     raise NotImplementedError.new "Crystal::System::File.chmod"
   end

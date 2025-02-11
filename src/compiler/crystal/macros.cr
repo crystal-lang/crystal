@@ -62,6 +62,12 @@ private macro def_string_methods(klass)
   def includes?(search : StringLiteral | CharLiteral) : BoolLiteral
   end
 
+  # Returns an array of capture hashes for each match of *regex* in this string.
+  #
+  # Capture hashes have the same form as `Regex::MatchData#to_h`.
+  def scan(regex : RegexLiteral) : ArrayLiteral(HashLiteral(NumberLiteral | StringLiteral), StringLiteral | NilLiteral)
+  end
+
   # Similar to `String#size`.
   def size : NumberLiteral
   end
@@ -800,6 +806,10 @@ module Crystal::Macros
     def []=(key : ASTNode, value : ASTNode) : ASTNode
     end
 
+    # Similar to `Hash#has_hey?`
+    def has_key?(key : ASTNode) : BoolLiteral
+    end
+
     # Returns the type specified at the end of the Hash literal, if any.
     #
     # This refers to the key type after brackets in `{} of String => Int32`.
@@ -873,6 +883,10 @@ module Crystal::Macros
 
     # Adds or replaces a key.
     def []=(key : SymbolLiteral | StringLiteral | MacroId, value : ASTNode) : ASTNode
+    end
+
+    # Similar to `NamedTuple#has_key?`
+    def has_key?(key : SymbolLiteral | StringLiteral | MacroId) : ASTNode
     end
   end
 
@@ -2353,10 +2367,16 @@ module Crystal::Macros
     end
   end
 
-  # An `if` inside a macro, e.g.
+  # An `if`/`unless` inside a macro, e.g.
   #
   # ```
   # {% if cond %}
+  #   puts "Then"
+  # {% else %}
+  #   puts "Else"
+  # {% end %}
+  #
+  # {% unless cond %}
   #   puts "Then"
   # {% else %}
   #   puts "Else"
@@ -2373,6 +2393,10 @@ module Crystal::Macros
 
     # The `else` branch of the `if`.
     def else : ASTNode
+    end
+
+    # Returns `true` if this node represents an `unless` conditional, otherwise returns `false`.
+    def is_unless? : BoolLiteral
     end
   end
 
@@ -2852,6 +2876,25 @@ module Crystal::Macros
     # Returns `true` if *other* is the same as `self` or if
     # `self` is an ancestor of *other*.
     def >=(other : TypeNode) : BoolLiteral
+    end
+
+    # Returns whether `self` contains any inner pointers.
+    #
+    # Primitive types, except `Void`, are expected to not contain inner pointers.
+    # `Proc` and `Pointer` contain inner pointers.
+    # Unions, structs and collection types (tuples, static arrays)
+    # have inner pointers if any of their contained types has inner pointers.
+    # All other types, including classes, are expected to contain inner pointers.
+    #
+    # Types that do not have inner pointers may opt to use atomic allocations,
+    # i.e. `GC.malloc_atomic` rather than `GC.malloc`. The compiler ensures
+    # that, for any type `T`:
+    #
+    # * `Pointer(T).malloc` is atomic if and only if `T` has no inner pointers;
+    # * `T.allocate` is atomic if and only if `T` is a reference type and
+    #   `ReferenceStorage(T)` has no inner pointers.
+    # NOTE: Like `#instance_vars` this method must be called from within a method. The result may be incorrect when used in top-level code.
+    def has_inner_pointers? : BoolLiteral
     end
   end
 end

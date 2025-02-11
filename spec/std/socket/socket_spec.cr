@@ -2,6 +2,12 @@ require "./spec_helper"
 require "../../support/tempfile"
 require "../../support/win32"
 
+# TODO: Windows networking in the interpreter requires #12495
+{% if flag?(:interpreted) && flag?(:win32) %}
+  pending Socket
+  {% skip_file %}
+{% end %}
+
 describe Socket, tags: "network" do
   describe ".unix" do
     it "creates a unix socket" do
@@ -18,16 +24,19 @@ describe Socket, tags: "network" do
         sock.type.should eq(Socket::Type::DGRAM)
       {% end %}
 
-      error = expect_raises(Socket::Error) do
-        TCPSocket.new(family: :unix)
-      end
-      error.os_error.should eq({% if flag?(:win32) %}
-        WinError::WSAEPROTONOSUPPORT
-      {% elsif flag?(:wasi) %}
-        WasiError::PROTONOSUPPORT
-      {% else %}
-        Errno.new(LibC::EPROTONOSUPPORT)
-      {% end %})
+      {% unless flag?(:freebsd) %}
+        # for some reason this doesn't fail on freebsd
+        error = expect_raises(Socket::Error) do
+          TCPSocket.new(family: :unix)
+        end
+        error.os_error.should eq({% if flag?(:win32) %}
+          WinError::WSAEPROTONOSUPPORT
+        {% elsif flag?(:wasi) %}
+          WasiError::PROTONOSUPPORT
+        {% else %}
+          Errno.new(LibC::EPROTONOSUPPORT)
+        {% end %})
+      {% end %}
     end
   end
 
@@ -73,11 +82,13 @@ describe Socket, tags: "network" do
     server = Socket.new(Socket::Family::INET, Socket::Type::STREAM, Socket::Protocol::TCP)
     port = unused_local_port
     server.bind("0.0.0.0", port)
-    server.read_timeout = 0.1
+    server.read_timeout = 0.1.seconds
     server.listen
 
     expect_raises(IO::TimeoutError) { server.accept }
     expect_raises(IO::TimeoutError) { server.accept? }
+  ensure
+    server.try &.close
   end
 
   it "sends messages" do
@@ -169,4 +180,32 @@ describe Socket, tags: "network" do
       socket.close_on_exec?.should be_true
     end
   {% end %}
+
+  describe "#finalize" do
+    it "does not flush" do
+      port = unused_local_port
+      server = Socket.tcp(Socket::Family::INET)
+      server.bind("127.0.0.1", port)
+      server.listen
+
+      spawn do
+        client = server.not_nil!.accept
+        client.sync = false
+        client << "foo"
+        client.flush
+        client << "bar"
+        client.finalize
+      ensure
+        client.try(&.close) rescue nil
+      end
+
+      socket = Socket.tcp(Socket::Family::INET)
+      socket.connect(Socket::IPAddress.new("127.0.0.1", port))
+
+      socket.gets.should eq "foo"
+    ensure
+      socket.try &.close
+      server.try &.close
+    end
+  end
 end

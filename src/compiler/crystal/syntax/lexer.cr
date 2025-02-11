@@ -1048,7 +1048,7 @@ module Crystal
 
         scan_ident(start)
       else
-        if current_char.ascii_uppercase?
+        if current_char.uppercase? || current_char.titlecase?
           while ident_part?(next_char)
             # Nothing to do
           end

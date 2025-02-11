@@ -18,7 +18,8 @@ class UNIXSocket < Socket
   getter path : String?
 
   # Connects a named UNIX socket, bound to a filesystem pathname.
-  def initialize(@path : String, type : Type = Type::STREAM)
+  def initialize(path : Path | String, type : Type = Type::STREAM)
+    @path = path = path.to_s
     super(Family::UNIX, type, Protocol::IP)
 
     connect(UNIXAddress.new(path)) do |error|
@@ -32,7 +33,8 @@ class UNIXSocket < Socket
   end
 
   # Creates a UNIXSocket from an already configured raw file descriptor
-  def initialize(*, fd : Handle, type : Type = Type::STREAM, @path : String? = nil)
+  def initialize(*, fd : Handle, type : Type = Type::STREAM, path : Path | String? = nil)
+    @path = path.to_s
     super fd, Family::UNIX, type, Protocol::IP
   end
 
@@ -40,7 +42,7 @@ class UNIXSocket < Socket
   # eventually closes the socket when the block returns.
   #
   # Returns the value of the block.
-  def self.open(path, type : Type = Type::STREAM, &)
+  def self.open(path : Path | String, type : Type = Type::STREAM, &)
     sock = new(path, type)
     begin
       yield sock
@@ -97,8 +99,8 @@ class UNIXSocket < Socket
     UNIXAddress.new(path.to_s)
   end
 
-  def receive
-    bytes_read, sockaddr, addrlen = recvfrom
-    {bytes_read, UNIXAddress.from(sockaddr, addrlen)}
+  def receive(max_message_size = 512) : {String, UNIXAddress}
+    message, address = super(max_message_size)
+    {message, address.as(UNIXAddress)}
   end
 end

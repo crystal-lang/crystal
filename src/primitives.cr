@@ -206,12 +206,8 @@ struct Pointer(T)
   # ```
   #
   # The implementation uses `GC.malloc` if the compiler is aware that the
-  # allocated type contains inner address pointers. Otherwise it uses
-  # `GC.malloc_atomic`. Primitive types are expected to not contain pointers,
-  # except `Void`. `Proc` and `Pointer` are expected to contain pointers.
-  # For unions, structs and collection types (tuples, static array)
-  # it depends on the contained types. All other types, including classes are
-  # expected to contain inner address pointers.
+  # allocated type contains inner address pointers. See
+  # `Crystal::Macros::TypeNode#has_inner_pointers?` for details.
   #
   # To override this implicit behaviour, `GC.malloc` and `GC.malloc_atomic`
   # can be used directly instead.
@@ -237,6 +233,20 @@ struct Pointer(T)
   # ptr.value = 42
   # ptr.value # => 42
   # ```
+  #
+  # WARNING: The pointer must be appropriately aligned, i.e. `address` must be
+  # a multiple of `alignof(T)`. It is undefined behavior to load from a
+  # misaligned pointer. Such reads should instead be done via a cast to
+  # `Pointer(UInt8)`, which is guaranteed to have byte alignment:
+  #
+  # ```
+  # # raises SIGSEGV on X86 if `ptr` is misaligned
+  # x = ptr.as(UInt128*).value
+  #
+  # # okay, `ptr` can have any alignment
+  # x = uninitialized UInt128
+  # ptr.as(UInt8*).copy_to(pointerof(x).as(UInt8*), sizeof(typeof(x)))
+  # ```
   @[Primitive(:pointer_get)]
   def value : T
   end
@@ -247,6 +257,20 @@ struct Pointer(T)
   # ptr = Pointer(Int32).malloc(4)
   # ptr.value = 42
   # ptr.value # => 42
+  # ```
+  #
+  # WARNING: The pointer must be appropriately aligned, i.e. `address` must be
+  # a multiple of `alignof(T)`. It is undefined behavior to store to a
+  # misaligned pointer. Such writes should instead be done via a cast to
+  # `Pointer(UInt8)`, which is guaranteed to have byte alignment:
+  #
+  # ```
+  # # raises SIGSEGV on X86 if `ptr` is misaligned
+  # x = 123_u128
+  # ptr.as(UInt128*).value = x
+  #
+  # # okay, `ptr` can have any alignment
+  # ptr.as(UInt8*).copy_from(pointerof(x).as(UInt8*), sizeof(typeof(x)))
   # ```
   @[Primitive(:pointer_set)]
   def value=(value : T)

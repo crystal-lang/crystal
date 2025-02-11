@@ -236,17 +236,22 @@ class Crystal::CodeGenVisitor
     # Check if this def must use the C calling convention and the return
     # value must be either casted or passed by sret
     if target_def.c_calling_convention? && target_def.abi_info?
+      return_type = target_def.body.type
+      if return_type.proc?
+        @last = check_proc_is_not_closure(@last, return_type)
+      end
+
       abi_info = abi_info(target_def)
-      ret_type = abi_info.return_type
-      if cast = ret_type.cast
+      abi_ret_type = abi_info.return_type
+      if cast = abi_ret_type.cast
         casted_last = pointer_cast @last, cast.pointer
         last = load cast, casted_last
         ret last
         return
       end
 
-      if (attr = ret_type.attr) && attr == LLVM::Attribute::StructRet
-        store load(llvm_type(target_def.body.type), @last), context.fun.params[0]
+      if (attr = abi_ret_type.attr) && attr == LLVM::Attribute::StructRet
+        store load(llvm_type(return_type), @last), context.fun.params[0]
         ret
         return
       end
@@ -332,7 +337,7 @@ class Crystal::CodeGenVisitor
       end
     end
 
-    if @single_module && !target_def.no_inline? && !target_def.is_a?(External)
+    if @single_module && !target_def.is_a?(External)
       context.fun.linkage = LLVM::Linkage::Internal
     end
 
@@ -443,11 +448,7 @@ class Crystal::CodeGenVisitor
     context.fun.add_attribute LLVM::Attribute::ReturnsTwice if target_def.returns_twice?
     context.fun.add_attribute LLVM::Attribute::Naked if target_def.naked?
     context.fun.add_attribute LLVM::Attribute::NoReturn if target_def.no_returns?
-
-    if target_def.no_inline?
-      context.fun.add_attribute LLVM::Attribute::NoInline
-      context.fun.linkage = LLVM::Linkage::External
-    end
+    context.fun.add_attribute LLVM::Attribute::NoInline if target_def.no_inline?
   end
 
   def setup_closure_vars(def_vars, closure_vars, context, closure_type, closure_ptr)
@@ -621,8 +622,7 @@ class Crystal::CodeGenVisitor
         # LLVM::Context.register(llvm_context, type_name)
 
         llvm_typer = LLVMTyper.new(@program, llvm_context)
-        llvm_mod = llvm_context.new_module(type_name)
-        llvm_mod.data_layout = self.data_layout
+        llvm_mod = configure_module(llvm_context.new_module(type_name))
         llvm_builder = new_builder(llvm_context)
 
         define_symbol_table llvm_mod, llvm_typer

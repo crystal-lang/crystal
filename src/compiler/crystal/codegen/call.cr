@@ -340,7 +340,10 @@ class Crystal::CodeGenVisitor
 
     # Create self var if available
     if node_obj
-      new_vars["%self"] = LLVMVar.new(@last, node_obj.type, true)
+      # call `#remove_indirection` here so that the downcast call in
+      # `#visit(Var)` doesn't spend time expanding module types again and again
+      # (it should be the only use site of `node_obj.type`)
+      new_vars["%self"] = LLVMVar.new(@last, node_obj.type.remove_indirection, true)
     end
 
     # Get type if of args and create arg vars
@@ -358,6 +361,10 @@ class Crystal::CodeGenVisitor
     call.name_location = node.name_location
 
     is_super = node.super?
+
+    # call `#remove_indirection` here so that the `match_type_id` below doesn't
+    # spend time expanding module types again and again
+    owner = owner.remove_indirection unless is_super
 
     with_cloned_context do
       context.vars = new_vars

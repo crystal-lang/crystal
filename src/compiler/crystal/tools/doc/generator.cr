@@ -134,7 +134,7 @@ class Crystal::Doc::Generator
   end
 
   def must_include?(type : Crystal::Type)
-    return false if type.private?
+    return false if type.private? && !showdoc?(type)
     return false if nodoc? type
     return true if crystal_builtin?(type)
 
@@ -215,8 +215,19 @@ class Crystal::Doc::Generator
     nodoc? obj.doc.try &.strip
   end
 
+  def showdoc?(str : String?) : Bool
+    return false if !str || !@program.wants_doc?
+    str.starts_with?(":showdoc:")
+  end
+
+  def showdoc?(obj : Crystal::Type)
+    showdoc?(obj.doc.try &.strip)
+  end
+
   def crystal_builtin?(type)
     return false unless project_info.crystal_stdlib?
+    # TODO: Enabling this allows links to `NoReturn` to work, but has two `NoReturn`s show up in the sidebar
+    # return true if type.is_a?(NamedType) && {"NoReturn", "Void"}.includes?(type.name)
     return false unless type.is_a?(Const) || type.is_a?(NonGenericModuleType)
 
     crystal_type = @program.types["Crystal"]
@@ -249,13 +260,6 @@ class Crystal::Doc::Generator
   def collect_subtypes(parent)
     types = [] of Type
 
-    # AliasType has defined `types?` to be the types
-    # of the aliased type, but for docs we don't want
-    # to list the nested types for aliases.
-    if parent.is_a?(AliasType)
-      return types
-    end
-
     parent.types?.try &.each_value do |type|
       case type
       when Const, LibType
@@ -272,7 +276,7 @@ class Crystal::Doc::Generator
     types = [] of Constant
 
     parent.type.types?.try &.each_value do |type|
-      if type.is_a?(Const) && must_include?(type) && !type.private?
+      if type.is_a?(Const) && must_include?(type) && (!type.private? || showdoc?(type))
         types << Constant.new(self, parent, type)
       end
     end
@@ -301,7 +305,7 @@ class Crystal::Doc::Generator
   end
 
   def doc(obj : Type | Method | Macro | Constant)
-    doc = obj.doc
+    doc = obj.doc.try &.strip.lchop(":showdoc:").strip
 
     return if !doc && !has_doc_annotations?(obj)
 

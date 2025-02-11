@@ -102,6 +102,7 @@ struct Time::Format
       ansi_c_format = current_char != ','
       next_char unless ansi_c_format
 
+      raise "Invalid date format" unless current_char.ascii_whitespace?
       whitespace
 
       ansi_c_format

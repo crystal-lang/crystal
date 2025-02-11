@@ -3,6 +3,13 @@ require "./item"
 class Crystal::Doc::Type
   include Item
 
+  PSEUDO_CLASS_PREFIX = "CRYSTAL_PSEUDO__"
+  PSEUDO_CLASS_NOTE   = <<-DOC
+
+    NOTE: This is a pseudo-class provided directly by the Crystal compiler.
+    It cannot be reopened nor overridden.
+    DOC
+
   getter type : Crystal::Type
 
   def initialize(@generator : Generator, type : Crystal::Type)
@@ -39,7 +46,11 @@ class Crystal::Doc::Type
     when Program
       "Top Level Namespace"
     when NamedType
-      type.name
+      if @generator.project_info.crystal_stdlib?
+        type.name.lchop(PSEUDO_CLASS_PREFIX)
+      else
+        type.name
+      end
     when NoReturnType
       "NoReturn"
     when VoidType
@@ -68,6 +79,10 @@ class Crystal::Doc::Type
 
   def abstract?
     @type.abstract?
+  end
+
+  def visibility
+    @type.private? ? "private" : nil
   end
 
   def parents_of?(type)
@@ -170,7 +185,7 @@ class Crystal::Doc::Type
         defs = [] of Method
         @type.defs.try &.each do |def_name, defs_with_metadata|
           defs_with_metadata.each do |def_with_metadata|
-            next unless def_with_metadata.def.visibility.public?
+            next if !def_with_metadata.def.visibility.public? && !showdoc?(def_with_metadata.def)
             next unless @generator.must_include? def_with_metadata.def
 
             defs << method(def_with_metadata.def, false)
@@ -179,6 +194,10 @@ class Crystal::Doc::Type
         defs.sort_by! { |x| sort_order(x) }
       end
     end
+  end
+
+  private def showdoc?(adef)
+    @generator.showdoc?(adef.doc.try &.strip)
   end
 
   private def sort_order(item)
@@ -194,7 +213,7 @@ class Crystal::Doc::Type
       @type.metaclass.defs.try &.each_value do |defs_with_metadata|
         defs_with_metadata.each do |def_with_metadata|
           a_def = def_with_metadata.def
-          next unless a_def.visibility.public?
+          next if !def_with_metadata.def.visibility.public? && !showdoc?(def_with_metadata.def)
 
           body = a_def.body
 
@@ -225,7 +244,9 @@ class Crystal::Doc::Type
       macros = [] of Macro
       @type.metaclass.macros.try &.each_value do |the_macros|
         the_macros.each do |a_macro|
-          if a_macro.visibility.public? && @generator.must_include? a_macro
+          next if !a_macro.visibility.public? && !showdoc?(a_macro)
+
+          if @generator.must_include? a_macro
             macros << self.macro(a_macro)
           end
         end
@@ -403,7 +424,11 @@ class Crystal::Doc::Type
   end
 
   def doc
-    @type.doc
+    if (t = type).is_a?(NamedType) && t.name.starts_with?(PSEUDO_CLASS_PREFIX)
+      "#{@type.doc}#{PSEUDO_CLASS_NOTE}"
+    else
+      @type.doc
+    end
   end
 
   def lookup_path(path_or_names : Path | Array(String))

@@ -1,5 +1,5 @@
 name: crystal
-version: 1.13.0-dev
+version: 1.16.0-dev
 
 authors:
 - Crystal Core Team <crystal@manas.tech>
@@ -14,7 +14,7 @@ dependencies:
     github: icyleaf/markd
   reply:
     github: I3oris/reply
-    commit: 90a7eb5a76048884d5d56bf6b9369f1e67fdbcd7
+    commit: 13f7eba083f138dd063c68b859c8e315f44fb523
 
 license: Apache-2.0
 

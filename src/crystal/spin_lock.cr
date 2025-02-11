@@ -1,5 +1,5 @@
 # :nodoc:
-class Crystal::SpinLock
+struct Crystal::SpinLock
   private UNLOCKED = 0
   private LOCKED   = 1
 

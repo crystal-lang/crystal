@@ -70,7 +70,7 @@ module Crystal
       when NamedTupleInstanceType
         self.entries.any? &.type.has_inner_pointers?
       when ReferenceStorageType
-        self.reference_type.has_inner_pointers?
+        self.reference_type.all_instance_vars.each_value.any? &.type.has_inner_pointers?
       when PrimitiveType
         false
       when EnumType

@@ -364,6 +364,8 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
       visibility: visibility,
     )
 
+    node.doc ||= annotations_doc @annotations
+
     if node_doc = node.doc
       generated_nodes.accept PropagateDocVisitor.new(node_doc)
     end
@@ -523,6 +525,10 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
       # ditto DeprecatedAnnotation
       ExperimentalAnnotation.from(ann)
     end
+  end
+
+  private def annotations_doc(annotations)
+    annotations.try(&.first?).try &.doc
   end
 
   def check_class_var_annotations

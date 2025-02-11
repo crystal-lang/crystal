@@ -43,7 +43,7 @@ describe TCPServer, tags: "network" do
         end
         error.os_error.should eq({% if flag?(:win32) %}
           WinError::WSATYPE_NOT_FOUND
-        {% elsif flag?(:linux) && !flag?(:android) %}
+        {% elsif (flag?(:linux) && !flag?(:android)) || flag?(:openbsd) %}
           Errno.new(LibC::EAI_SERVICE)
         {% else %}
           Errno.new(LibC::EAI_NONAME)
@@ -96,7 +96,7 @@ describe TCPServer, tags: "network" do
         # FIXME: Resolve special handling for win32. The error code handling should be identical.
         {% if flag?(:win32) %}
           [WinError::WSAHOST_NOT_FOUND, WinError::WSATRY_AGAIN].should contain err.os_error
-        {% elsif flag?(:android) %}
+        {% elsif flag?(:android) || flag?(:netbsd) || flag?(:openbsd) %}
           err.os_error.should eq(Errno.new(LibC::EAI_NODATA))
         {% else %}
           [Errno.new(LibC::EAI_NONAME), Errno.new(LibC::EAI_AGAIN)].should contain err.os_error
@@ -110,7 +110,7 @@ describe TCPServer, tags: "network" do
         # FIXME: Resolve special handling for win32. The error code handling should be identical.
         {% if flag?(:win32) %}
           [WinError::WSAHOST_NOT_FOUND, WinError::WSATRY_AGAIN].should contain err.os_error
-        {% elsif flag?(:android) %}
+        {% elsif flag?(:android) || flag?(:netbsd) || flag?(:openbsd) %}
           err.os_error.should eq(Errno.new(LibC::EAI_NODATA))
         {% else %}
           [Errno.new(LibC::EAI_NONAME), Errno.new(LibC::EAI_AGAIN)].should contain err.os_error
@@ -120,7 +120,7 @@ describe TCPServer, tags: "network" do
 
     it "binds to all interfaces" do
       port = unused_local_port
-      TCPServer.open(port) do |server|
+      TCPServer.open(Socket::IPAddress::UNSPECIFIED, port) do |server|
         server.local_address.port.should eq port
       end
     end

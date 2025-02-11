@@ -1,10 +1,14 @@
-{% skip_file if flag?(:win32) %}
-
 require "spec"
 require "system/group"
 
-GROUP_NAME         = {{ `id -gn`.stringify.chomp }}
-GROUP_ID           = {{ `id -g`.stringify.chomp }}
+{% if flag?(:win32) %}
+  GROUP_NAME = "BUILTIN\\Administrators"
+  GROUP_ID   = "S-1-5-32-544"
+{% else %}
+  GROUP_NAME = {{ `id -gn`.stringify.chomp }}
+  GROUP_ID   = {{ `id -g`.stringify.chomp }}
+{% end %}
+
 INVALID_GROUP_NAME = "this_group_does_not_exist"
 INVALID_GROUP_ID   = {% if flag?(:android) %}"8888"{% else %}"1234567"{% end %}
 

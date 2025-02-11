@@ -32,6 +32,11 @@ require "crystal/tracing"
   @[Link("gc", pkg_config: "bdw-gc")]
 {% end %}
 
+# Supported library versions:
+#
+# * libgc (8.2.0+; earlier versions require a patch for MT support)
+#
+# See https://crystal-lang.org/reference/man/required_libraries.html#other-runtime-libraries
 {% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
   @[Link(dll: "gc.dll")]
 {% end %}
@@ -161,11 +166,16 @@ lib LibGC
   alias WarnProc = LibC::Char*, Word ->
   fun set_warn_proc = GC_set_warn_proc(WarnProc)
   $warn_proc = GC_current_warn_proc : WarnProc
+
+  fun stop_world_external = GC_stop_world_external
+  fun start_world_external = GC_start_world_external
+  fun get_suspend_signal = GC_get_suspend_signal : Int
+  fun get_thr_restart_signal = GC_get_thr_restart_signal : Int
 end
 
 module GC
   {% if flag?(:preview_mt) %}
-    @@lock = Crystal::RWLock.new
+    @@lock = uninitialized Crystal::RWLock
   {% end %}
 
   # :nodoc:
@@ -195,9 +205,32 @@ module GC
     {% end %}
     LibGC.init
 
-    LibGC.set_start_callback ->do
+    {% if flag?(:preview_mt) %}
+      @@lock = Crystal::RWLock.new
+    {% end %}
+
+    LibGC.set_start_callback -> do
       GC.lock_write
     end
+
+    # pushes the stack of pending fibers when the GC wants to collect memory:
+    {% unless flag?(:interpreted) %}
+      GC.before_collect do
+        Fiber.unsafe_each do |fiber|
+          fiber.push_gc_roots unless fiber.running?
+        end
+
+        {% if flag?(:preview_mt) %}
+          Thread.unsafe_each do |thread|
+            if fiber = thread.current_fiber?
+              GC.set_stackbottom(thread.gc_thread_handler, fiber.@stack_bottom)
+            end
+          end
+        {% end %}
+
+        GC.unlock_write
+      end
+    {% end %}
 
     {% if flag?(:tracing) %}
       if ::Crystal::Tracing.enabled?(:gc)
@@ -446,28 +479,31 @@ module GC
     @@curr_push_other_roots = block
     @@prev_push_other_roots = LibGC.get_push_other_roots
 
-    LibGC.set_push_other_roots ->do
+    LibGC.set_push_other_roots -> do
       @@curr_push_other_roots.try(&.call)
       @@prev_push_other_roots.try(&.call)
     end
   end
 
-  # pushes the stack of pending fibers when the GC wants to collect memory:
-  {% unless flag?(:interpreted) %}
-    GC.before_collect do
-      Fiber.unsafe_each do |fiber|
-        fiber.push_gc_roots unless fiber.running?
-      end
+  # :nodoc:
+  def self.stop_world : Nil
+    LibGC.stop_world_external
+  end
 
-      {% if flag?(:preview_mt) %}
-        Thread.unsafe_each do |thread|
-          if fiber = thread.current_fiber?
-            GC.set_stackbottom(thread.gc_thread_handler, fiber.@stack_bottom)
-          end
-        end
-      {% end %}
+  # :nodoc:
+  def self.start_world : Nil
+    LibGC.start_world_external
+  end
 
-      GC.unlock_write
+  {% if flag?(:unix) %}
+    # :nodoc:
+    def self.sig_suspend : Signal
+      Signal.new(LibGC.get_suspend_signal)
+    end
+
+    # :nodoc:
+    def self.sig_resume : Signal
+      Signal.new(LibGC.get_thr_restart_signal)
     end
   {% end %}
 end

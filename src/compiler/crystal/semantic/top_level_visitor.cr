@@ -193,9 +193,9 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       if superclass.is_a?(GenericClassInstanceType)
         superclass.generic_type.add_subclass(type)
       end
+      scope.types[name] = type
     end
 
-    scope.types[name] = type
     node.resolved_type = type
 
     process_annotations(annotations) do |annotation_type, ann|
@@ -824,6 +824,13 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     method_name = is_flags ? "includes?" : "=="
     body = Call.new(Var.new("self").at(member), method_name, Path.new(member.name).at(member)).at(member)
     a_def = Def.new("#{member.name.underscore}?", body: body).at(member)
+
+    a_def.doc = if member.doc.try &.starts_with?(":nodoc:")
+                  ":nodoc:"
+                else
+                  "Returns `true` if this enum value #{is_flags ? "contains" : "equals"} `#{member.name}`"
+                end
+
     enum_type.add_def a_def
   end
 

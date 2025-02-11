@@ -4,6 +4,22 @@ require "c/string"
 module LLVM
   @@initialized = false
 
+  # Returns the runtime version of LLVM.
+  #
+  # Starting with LLVM 16, this method returns the version as reported by
+  # `LLVMGetVersion` at runtime. Older versions of LLVM do not expose this
+  # information, so the value falls back to `LibLLVM::VERSION` which is
+  # determined at compile time and might slightly be out of sync to the
+  # dynamic library loaded at runtime.
+  def self.version
+    {% if LibLLVM.has_method?(:get_version) %}
+      LibLLVM.get_version(out major, out minor, out patch)
+      "#{major}.#{minor}.#{patch}"
+    {% else %}
+      LibLLVM::VERSION
+    {% end %}
+  end
+
   def self.init_x86 : Nil
     return if @@initialized_x86
     @@initialized_x86 = true
@@ -138,6 +154,13 @@ module LLVM
     string = String.new(chars)
     LibLLVM.dispose_message(chars)
     string
+  end
+
+  protected def self.assert(error : LibLLVM::ErrorRef)
+    if error
+      chars = LibLLVM.get_error_message(error)
+      raise String.new(chars).tap { LibLLVM.dispose_error_message(chars) }
+    end
   end
 
   {% unless LibLLVM::IS_LT_130 %}

@@ -7,6 +7,7 @@ require "crystal/tracing"
 #
 # While this fiber is waiting this time, other ready-to-execute
 # fibers might start their execution.
+@[Deprecated("Use `::sleep(Time::Span)` instead")]
 def sleep(seconds : Number) : Nil
   if seconds < 0
     raise ArgumentError.new "Sleep seconds must be positive"
@@ -32,31 +33,35 @@ end
 
 # Spawns a new fiber.
 #
-# The newly created fiber doesn't run as soon as spawned.
+# NOTE: The newly created fiber doesn't run as soon as spawned.
 #
 # Example:
 # ```
 # # Write "1" every 1 second and "2" every 2 seconds for 6 seconds.
 #
-# ch = Channel(Nil).new
+# require "wait_group"
+#
+# wg = WaitGroup.new 2
 #
 # spawn do
 #   6.times do
-#     sleep 1
+#     sleep 1.second
 #     puts 1
 #   end
-#   ch.send(nil)
+# ensure
+#   wg.done
 # end
 #
 # spawn do
 #   3.times do
-#     sleep 2
+#     sleep 2.seconds
 #     puts 2
 #   end
-#   ch.send(nil)
+# ensure
+#   wg.done
 # end
 #
-# 2.times { ch.receive }
+# wg.wait
 # ```
 def spawn(*, name : String? = nil, same_thread = false, &block)
   fiber = Fiber.new(name, &block)

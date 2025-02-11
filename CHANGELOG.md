@@ -1,5 +1,892 @@
 # Changelog
 
+## [1.15.1] (2025-02-04)
+
+[1.15.1]: https://github.com/crystal-lang/crystal/releases/1.15.1
+
+### Bugfixes
+
+#### stdlib
+
+- *(networking)* Disable directory path redirect when `directory_listing=false` ([#15393], thanks @straight-shoota)
+- *(runtime)* **[regression]** abstract `EventLoop::Polling#system_add` invalid signature ([#15380], backported from [#15358], thanks @straight-shoota)
+- *(system)* **[regression]** Fix GC `sig_suspend`, `sig_resume` for `gc_none` ([#15382], backported from [#15349], thanks @ysbaddaden)
+
+[#15393]: https://github.com/crystal-lang/crystal/pull/15393
+[#15380]: https://github.com/crystal-lang/crystal/pull/15380
+[#15358]: https://github.com/crystal-lang/crystal/pull/15358
+[#15382]: https://github.com/crystal-lang/crystal/pull/15382
+[#15349]: https://github.com/crystal-lang/crystal/pull/15349
+
+### Documentation
+
+#### stdlib
+
+- *(system)* Fix code example in `Process::Status#exit_code` docs ([#15381], backported from [#15351], thanks @zw963)
+
+[#15381]: https://github.com/crystal-lang/crystal/pull/15381
+[#15351]: https://github.com/crystal-lang/crystal/pull/15351
+
+### Infrastructure
+
+- Changelog for 1.15.1 ([#15406], thanks @straight-shoota)
+- Update distribution-scripts ([#15385], backported from [#15368], thanks @straight-shoota)
+- Update distribution-scripts ([#15388], thanks @straight-shoota)
+- Add backports to changelog generator ([#15402], thanks @straight-shoota)
+- *(ci)* Add build shards to `mingw-w64` workflow ([#15344], thanks @straight-shoota)
+- *(ci)* Update shards 0.19.1 ([#15384], backported from [#15366], thanks @straight-shoota)
+- *(ci)* Add check for shards binary in `test_dist_linux_on_docker` ([#15394], thanks @straight-shoota)
+
+[#15406]: https://github.com/crystal-lang/crystal/pull/15406
+[#15385]: https://github.com/crystal-lang/crystal/pull/15385
+[#15368]: https://github.com/crystal-lang/crystal/pull/15368
+[#15388]: https://github.com/crystal-lang/crystal/pull/15388
+[#15402]: https://github.com/crystal-lang/crystal/pull/15402
+[#15344]: https://github.com/crystal-lang/crystal/pull/15344
+[#15384]: https://github.com/crystal-lang/crystal/pull/15384
+[#15366]: https://github.com/crystal-lang/crystal/pull/15366
+[#15394]: https://github.com/crystal-lang/crystal/pull/15394
+
+## [1.15.0] (2025-01-09)
+
+[1.15.0]: https://github.com/crystal-lang/crystal/releases/1.15.0
+
+### Breaking changes
+
+#### lang
+
+- Allow constants to start with non-ascii uppercase and titlecase ([#15148], thanks @nanobowers)
+
+[#15148]: https://github.com/crystal-lang/crystal/pull/15148
+
+### Features
+
+#### lang
+
+- *(macros)* Crystal `Not` operators do not need parens for stringification ([#15292], thanks @Blacksmoke16)
+- *(macros)* Add `MacroIf#is_unless?` AST node method ([#15304], thanks @Blacksmoke16)
+
+[#15292]: https://github.com/crystal-lang/crystal/pull/15292
+[#15304]: https://github.com/crystal-lang/crystal/pull/15304
+
+#### stdlib
+
+- *(collection)* Add `Iterator(T).empty` ([#15039], thanks @spuun)
+- *(collection)* Add `Enumerable#find_value` ([#14893], thanks @jgaskins)
+- *(concurrency)* Implement the ARM64 Windows context switch ([#15155], thanks @HertzDevil)
+- *(concurrency)* Add optional `name` parameter forward to `WaitGroup#spawn` ([#15189], thanks @spuun)
+- *(crypto)* Enable bindings for functions in LibreSSL ([#15177], thanks @straight-shoota)
+- *(log)* Add `Log` overloads for logging exceptions without giving a block ([#15257], thanks @lachlan)
+- *(networking)* Better handle explicit chunked encoding responses ([#15092], thanks @Blacksmoke16)
+- *(networking)* Support OpenSSL on MSYS2 ([#15111], thanks @HertzDevil)
+- *(networking)* Add `Socket::Address.from` without `addrlen` ([#15060], thanks @mamantoha)
+- *(networking)* Add stringification for `HTTP::Cookie` ([#15240], thanks @straight-shoota)
+- *(networking)* Add stringification for `HTTP::Cookies` ([#15246], thanks @straight-shoota)
+- *(networking)* Add `HTTP::Cookie#expire` ([#14819], thanks @a-alhusaini)
+- *(numeric)* Implement `fast_float` for `String#to_f` ([#15195], thanks @HertzDevil)
+- *(runtime)* Support call stacks for MinGW-w64 builds ([#15117], thanks @HertzDevil)
+- *(runtime)* Support MSYS2's CLANGARM64 environment on ARM64 Windows ([#15159], thanks @HertzDevil)
+- *(runtime)* Improve `Crystal::Tracing` ([#15297], thanks @ysbaddaden)
+- *(runtime)* Add `Thread#internal_name=` ([#15298], thanks @ysbaddaden)
+- *(runtime)* Add `Thread::LinkedList#each` to safely iterate lists ([#15300], thanks @ysbaddaden)
+- *(system)* Add `Process::Status#exit_code?` ([#15247], thanks @straight-shoota)
+- *(system)* Add `Process::Status#abnormal_exit?` ([#15266], thanks @straight-shoota)
+- *(system)* Improve `Process::Status#to_s` for abnormal exits on Windows ([#15283], thanks @straight-shoota)
+- *(system)* Add `Process::Status#exit_signal?` ([#15284], thanks @straight-shoota)
+- *(system)* Change `Process::Status#to_s` to hex format on Windows ([#15285], thanks @straight-shoota)
+- *(system)* Add `Process::Status#system_exit_status` ([#15296], thanks @straight-shoota)
+- *(text)* Add `Regex::CompileOptions::MULTILINE_ONLY` ([#14870], thanks @ralsina)
+- *(text)* Add type restrictions to Levenshtein ([#15168], thanks @beta-ziliani)
+- *(text)* Add `unit_separator` to `Int#humanize` and `#humanize_bytes` ([#15176], thanks @CTC97)
+- *(text)* Add `String#byte_index(Regex)` ([#15248], thanks @Zeljko-Predjeskovic)
+- *(text)* Add `Colorize::Object#ansi_escape` ([#15113], thanks @devnote-dev)
+
+[#15039]: https://github.com/crystal-lang/crystal/pull/15039
+[#14893]: https://github.com/crystal-lang/crystal/pull/14893
+[#15155]: https://github.com/crystal-lang/crystal/pull/15155
+[#15189]: https://github.com/crystal-lang/crystal/pull/15189
+[#15177]: https://github.com/crystal-lang/crystal/pull/15177
+[#15257]: https://github.com/crystal-lang/crystal/pull/15257
+[#15092]: https://github.com/crystal-lang/crystal/pull/15092
+[#15111]: https://github.com/crystal-lang/crystal/pull/15111
+[#15060]: https://github.com/crystal-lang/crystal/pull/15060
+[#15240]: https://github.com/crystal-lang/crystal/pull/15240
+[#15246]: https://github.com/crystal-lang/crystal/pull/15246
+[#14819]: https://github.com/crystal-lang/crystal/pull/14819
+[#15195]: https://github.com/crystal-lang/crystal/pull/15195
+[#15117]: https://github.com/crystal-lang/crystal/pull/15117
+[#15159]: https://github.com/crystal-lang/crystal/pull/15159
+[#15297]: https://github.com/crystal-lang/crystal/pull/15297
+[#15298]: https://github.com/crystal-lang/crystal/pull/15298
+[#15300]: https://github.com/crystal-lang/crystal/pull/15300
+[#15247]: https://github.com/crystal-lang/crystal/pull/15247
+[#15266]: https://github.com/crystal-lang/crystal/pull/15266
+[#15283]: https://github.com/crystal-lang/crystal/pull/15283
+[#15284]: https://github.com/crystal-lang/crystal/pull/15284
+[#15285]: https://github.com/crystal-lang/crystal/pull/15285
+[#15296]: https://github.com/crystal-lang/crystal/pull/15296
+[#14870]: https://github.com/crystal-lang/crystal/pull/14870
+[#15168]: https://github.com/crystal-lang/crystal/pull/15168
+[#15176]: https://github.com/crystal-lang/crystal/pull/15176
+[#15248]: https://github.com/crystal-lang/crystal/pull/15248
+[#15113]: https://github.com/crystal-lang/crystal/pull/15113
+
+#### compiler
+
+- Basic MinGW-w64 cross-compilation support ([#15070], [#15219], thanks @HertzDevil, @BlobCodes)
+- *(cli)* Support building from a MinGW-w64-based compiler ([#15077], thanks @HertzDevil)
+- *(codegen)* Add indirect branch tracking ([#15122], thanks @ysbaddaden)
+- *(codegen)* Emit position dependent code for embedded targets ([#15174], thanks @RX14)
+- *(interpreter)* Support "long format" DLL import libraries ([#15119], thanks @HertzDevil)
+- *(interpreter)* Add `cc`'s search paths to Unix dynamic library loader ([#15127], thanks @HertzDevil)
+- *(interpreter)* Basic MinGW-w64-based interpreter support ([#15140], thanks @HertzDevil)
+- *(parser)* Add `ECR::Lexer::SyntaxException` with location info ([#15222], thanks @nobodywasishere)
+
+[#15070]: https://github.com/crystal-lang/crystal/pull/15070
+[#15219]: https://github.com/crystal-lang/crystal/pull/15219
+[#15077]: https://github.com/crystal-lang/crystal/pull/15077
+[#15122]: https://github.com/crystal-lang/crystal/pull/15122
+[#15174]: https://github.com/crystal-lang/crystal/pull/15174
+[#15119]: https://github.com/crystal-lang/crystal/pull/15119
+[#15127]: https://github.com/crystal-lang/crystal/pull/15127
+[#15140]: https://github.com/crystal-lang/crystal/pull/15140
+[#15222]: https://github.com/crystal-lang/crystal/pull/15222
+
+#### tools
+
+- *(formatter)* Enable pending formatter features ([#14718], thanks @Blacksmoke16)
+- *(unreachable)* Implement `codecov` format for `unreachable` tool ([#15059], thanks @Blacksmoke16)
+
+[#14718]: https://github.com/crystal-lang/crystal/pull/14718
+[#15059]: https://github.com/crystal-lang/crystal/pull/15059
+
+### Bugfixes
+
+#### lang
+
+- *(macros)* Add location information to more MacroIf related nodes ([#15100], thanks @Blacksmoke16)
+
+[#15100]: https://github.com/crystal-lang/crystal/pull/15100
+
+#### stdlib
+
+- LibC bindings and std specs on NetBSD 10 ([#15115], thanks @ysbaddaden)
+- *(files)* Treat `WinError::ERROR_DIRECTORY` as an error for non-existent files ([#15114], thanks @HertzDevil)
+- *(files)* Replace handle atomically in `IO::FileDescriptor#close` on Windows ([#15165], thanks @HertzDevil)
+- *(llvm)* Fix `find-llvm-config` to ignore `LLVM_CONFIG`'s escape sequences ([#15076], thanks @HertzDevil)
+- *(log)* **[regression]** Fix `Log` to emit with `exception` even if block outputs `nil` ([#15253], thanks @lachlan)
+- *(macros)* Avoid identifier naming collision in `getter`, `setter`, and `property` macros ([#15239], thanks @jgaskins)
+- *(networking)* **[regression]** Fix `UNIXSocket#receive` ([#15107], thanks @straight-shoota)
+- *(numeric)* Fix `Complex#/` edge cases ([#15086], thanks @HertzDevil)
+- *(numeric)* Fix `Number#humanize` printing of `(-)Infinity` and `NaN` ([#15090], thanks @lachlan)
+- *(runtime)* Fix Deadlock with parallel stop-world/fork calls in MT ([#15096], thanks @ysbaddaden)
+- *(runtime)* **[regression]** Protect constant initializers with mutex on Windows ([#15134], thanks @HertzDevil)
+- *(runtime)* use `uninitialized LibC::SigsetT` ([#15144], thanks @straight-shoota)
+- *(runtime)* Fix static linking when using MinGW-w64 ([#15167], thanks @HertzDevil)
+- *(runtime)* register GC callbacks inside `GC.init` ([#15278], thanks @ysbaddaden)
+- *(runtime)* Cleanup nodes in `Thread::LinkedList(T)#delete` ([#15295], thanks @ysbaddaden)
+- *(runtime)* Make `Crystal::EventLoop#remove(io)` a class method ([#15282], thanks @ysbaddaden)
+- *(system)* Raise on abnormal exit in `Procss::Status#exit_code` ([#15241], thanks @straight-shoota)
+- *(system)* Fix `Process::Status` for unknown signals ([#15280], thanks @straight-shoota)
+- *(system)* Fix error handling for `LibC.clock_gettime(CLOCK_MONOTONIC)` calls ([#15309], thanks @compumike)
+- *(text)* Fix libiconv build on Windows ([#15095], thanks @HertzDevil)
+- *(text)* Change `sprintf "%c"` to support only `Char` and `Int::Primitive` ([#15142], thanks @nanobowers)
+- *(time)* Fix proper error handling for early end in `HTTP_DATE` parser ([#15232], thanks @straight-shoota)
+
+[#15115]: https://github.com/crystal-lang/crystal/pull/15115
+[#15114]: https://github.com/crystal-lang/crystal/pull/15114
+[#15165]: https://github.com/crystal-lang/crystal/pull/15165
+[#15076]: https://github.com/crystal-lang/crystal/pull/15076
+[#15253]: https://github.com/crystal-lang/crystal/pull/15253
+[#15239]: https://github.com/crystal-lang/crystal/pull/15239
+[#15107]: https://github.com/crystal-lang/crystal/pull/15107
+[#15086]: https://github.com/crystal-lang/crystal/pull/15086
+[#15090]: https://github.com/crystal-lang/crystal/pull/15090
+[#15096]: https://github.com/crystal-lang/crystal/pull/15096
+[#15134]: https://github.com/crystal-lang/crystal/pull/15134
+[#15144]: https://github.com/crystal-lang/crystal/pull/15144
+[#15167]: https://github.com/crystal-lang/crystal/pull/15167
+[#15278]: https://github.com/crystal-lang/crystal/pull/15278
+[#15295]: https://github.com/crystal-lang/crystal/pull/15295
+[#15282]: https://github.com/crystal-lang/crystal/pull/15282
+[#15241]: https://github.com/crystal-lang/crystal/pull/15241
+[#15280]: https://github.com/crystal-lang/crystal/pull/15280
+[#15309]: https://github.com/crystal-lang/crystal/pull/15309
+[#15095]: https://github.com/crystal-lang/crystal/pull/15095
+[#15142]: https://github.com/crystal-lang/crystal/pull/15142
+[#15232]: https://github.com/crystal-lang/crystal/pull/15232
+
+#### compiler
+
+- OpenBSD: fix integration and broken specs ([#15118], thanks @ysbaddaden)
+- *(interpreter)* setup signal handlers in interpreted code ([#14766], [#15178], thanks @ysbaddaden, @straight-shoota)
+- *(parser)* Fix `SyntaxHighlighter` delimiter state ([#15104], thanks @straight-shoota)
+- *(parser)* Disallow weird assignments ([#14815], thanks @FnControlOption)
+
+[#15118]: https://github.com/crystal-lang/crystal/pull/15118
+[#14766]: https://github.com/crystal-lang/crystal/pull/14766
+[#15178]: https://github.com/crystal-lang/crystal/pull/15178
+[#15104]: https://github.com/crystal-lang/crystal/pull/15104
+[#14815]: https://github.com/crystal-lang/crystal/pull/14815
+
+#### tools
+
+- Improve man and shell completion for tools ([#15082], thanks @Blacksmoke16)
+- *(docs-generator)* Fix first doc comment inside macro yield ([#15050], thanks @RX14)
+- *(implementations)* Fix `tool implementations` to handle gracefully a def with missing location ([#15273], thanks @straight-shoota)
+
+[#15082]: https://github.com/crystal-lang/crystal/pull/15082
+[#15050]: https://github.com/crystal-lang/crystal/pull/15050
+[#15273]: https://github.com/crystal-lang/crystal/pull/15273
+
+### Chores
+
+#### stdlib
+
+- Fix various typos ([#15080], thanks @kojix2)
+- *(runtime)* Make `Enum` an abstract struct ([#15274], thanks @straight-shoota)
+- *(system)* **[deprecation]** Deprecate `Process::Status#exit_status` ([#8647], thanks @jwoertink)
+- *(system)* Redefine `Process::Status#normal_exit?` on Windows ([#15255], [#15267], thanks @straight-shoota)
+- *(system)* **[breaking]** Redefine `Process::Status#signal_exit?` ([#15289], thanks @straight-shoota)
+
+[#15080]: https://github.com/crystal-lang/crystal/pull/15080
+[#15274]: https://github.com/crystal-lang/crystal/pull/15274
+[#8647]: https://github.com/crystal-lang/crystal/pull/8647
+[#15255]: https://github.com/crystal-lang/crystal/pull/15255
+[#15267]: https://github.com/crystal-lang/crystal/pull/15267
+[#15289]: https://github.com/crystal-lang/crystal/pull/15289
+
+#### compiler
+
+- *(codegen)* Link i128 constants internally if possible ([#15217], thanks @BlobCodes)
+- *(parser)* Add location to `RegexLiteral` ([#15235], thanks @straight-shoota)
+
+[#15217]: https://github.com/crystal-lang/crystal/pull/15217
+[#15235]: https://github.com/crystal-lang/crystal/pull/15235
+
+### Performance
+
+#### stdlib
+
+- *(collection)* Optimize `Slice#<=>` and `#==` with reference check ([#15234], thanks @straight-shoota)
+- *(concurrency)* Do not over-commit fiber stacks on Windows ([#15037], thanks @HertzDevil)
+- *(text)* Pre-compute `String` size after `#chomp()` if possible ([#15153], thanks @HertzDevil)
+- *(text)* Optimize `String#rchop?()` ([#15175], thanks @HertzDevil)
+- *(text)* Optimize `String#==` taking character size into account ([#15233], thanks @straight-shoota)
+
+[#15234]: https://github.com/crystal-lang/crystal/pull/15234
+[#15037]: https://github.com/crystal-lang/crystal/pull/15037
+[#15153]: https://github.com/crystal-lang/crystal/pull/15153
+[#15175]: https://github.com/crystal-lang/crystal/pull/15175
+[#15233]: https://github.com/crystal-lang/crystal/pull/15233
+
+#### compiler
+
+- *(semantic)* Inline `ASTNode` bindings dependencies and observers ([#15098], thanks @ggiraldez)
+
+[#15098]: https://github.com/crystal-lang/crystal/pull/15098
+
+### Refactor
+
+#### stdlib
+
+- Use Win32 heap functions with `-Dgc_none` ([#15173], thanks @HertzDevil)
+- *(collection)* Refactor `Enumerable#map` to delegate to `#map_with_index` ([#15210], thanks @straight-shoota)
+- *(concurrency)* Drop `Crystal::FiberChannel` ([#15245], thanks @ysbaddaden)
+- *(runtime)* Refactor uses of `LibC.dladdr` inside `Exception::CallStack` ([#15108], thanks @HertzDevil)
+- *(runtime)* Introduce `Crystal::EventLoop` namespace ([#15226], thanks @ysbaddaden)
+- *(runtime)* Change `libevent` event loop to wait forever when blocking ([#15243], thanks @ysbaddaden)
+- *(runtime)* Refactor the IOCP event loop (timers, ...) ([#15238], thanks @ysbaddaden)
+- *(runtime)* Explicit exit from main ([#15299], thanks @ysbaddaden)
+- *(serialization)* Use per-thread libxml2 global state on all platforms ([#15121], thanks @HertzDevil)
+- *(system)* Assume `getrandom` on Linux ([#15040], thanks @ysbaddaden)
+- *(system)* Refactor Lifetime Event Loop ([#14996], [#15205], [#15206], [#15215], [#15301], thanks @ysbaddaden)
+- *(system)* Refactor use of `Process::Status#exit_code` to `#exit_code?` ([#15254], thanks @straight-shoota)
+- *(system)* Refactor simplify `Process::Status#exit_reason` on Unix ([#15288], thanks @straight-shoota)
+
+[#15173]: https://github.com/crystal-lang/crystal/pull/15173
+[#15210]: https://github.com/crystal-lang/crystal/pull/15210
+[#15245]: https://github.com/crystal-lang/crystal/pull/15245
+[#15108]: https://github.com/crystal-lang/crystal/pull/15108
+[#15226]: https://github.com/crystal-lang/crystal/pull/15226
+[#15243]: https://github.com/crystal-lang/crystal/pull/15243
+[#15238]: https://github.com/crystal-lang/crystal/pull/15238
+[#15299]: https://github.com/crystal-lang/crystal/pull/15299
+[#15121]: https://github.com/crystal-lang/crystal/pull/15121
+[#15040]: https://github.com/crystal-lang/crystal/pull/15040
+[#14996]: https://github.com/crystal-lang/crystal/pull/14996
+[#15205]: https://github.com/crystal-lang/crystal/pull/15205
+[#15206]: https://github.com/crystal-lang/crystal/pull/15206
+[#15215]: https://github.com/crystal-lang/crystal/pull/15215
+[#15301]: https://github.com/crystal-lang/crystal/pull/15301
+[#15254]: https://github.com/crystal-lang/crystal/pull/15254
+[#15288]: https://github.com/crystal-lang/crystal/pull/15288
+
+#### compiler
+
+- *(semantic)* Replace uses of `AliasType#types?` by `Type#lookup_name` ([#15068], thanks @straight-shoota)
+
+[#15068]: https://github.com/crystal-lang/crystal/pull/15068
+
+### Documentation
+
+#### stdlib
+
+- Add docs for lib bindings with supported library versions ([#14900], [#15198], thanks @straight-shoota)
+- *(concurrency)* Make `Fiber.timeout` and `.cancel_timeout` nodoc ([#15184], thanks @straight-shoota)
+- *(concurrency)* Update example code for `::spawn` with `WaitGroup` ([#15191], thanks @BigBoyBarney)
+- *(numeric)* Clarify behavior of `strict` for `String`-to-number conversions ([#15199], thanks @HertzDevil)
+- *(runtime)* Make `Box` constructor and `object` getter nodoc ([#15136], thanks @straight-shoota)
+- *(runtime)* Fix `EventLoop` docs for `Socket` `read`, `write` ([#15194], thanks @straight-shoota)
+- *(system)* Add example for `Dir.glob` ([#15171], thanks @BigBoyBarney)
+- *(system)* Adjust definition of `ExitReason::Aborted` ([#15256], thanks @straight-shoota)
+- *(text)* Improve docs for `String#rindex!` ([#15132], thanks @BigBoyBarney)
+- *(text)* Add note about locale-dependent system error messages ([#15196], thanks @HertzDevil)
+
+[#14900]: https://github.com/crystal-lang/crystal/pull/14900
+[#15198]: https://github.com/crystal-lang/crystal/pull/15198
+[#15184]: https://github.com/crystal-lang/crystal/pull/15184
+[#15191]: https://github.com/crystal-lang/crystal/pull/15191
+[#15199]: https://github.com/crystal-lang/crystal/pull/15199
+[#15136]: https://github.com/crystal-lang/crystal/pull/15136
+[#15194]: https://github.com/crystal-lang/crystal/pull/15194
+[#15171]: https://github.com/crystal-lang/crystal/pull/15171
+[#15256]: https://github.com/crystal-lang/crystal/pull/15256
+[#15132]: https://github.com/crystal-lang/crystal/pull/15132
+[#15196]: https://github.com/crystal-lang/crystal/pull/15196
+
+### Specs
+
+#### stdlib
+
+- Fix failing specs on FreeBSD ([#15093], thanks @ysbaddaden)
+- Disable specs that break on MinGW-w64 ([#15116], thanks @HertzDevil)
+- *(networking)* DragonFlyBSD: std specs fixes + pending ([#15152], thanks @ysbaddaden)
+- *(networking)* Close some dangling sockets in specs ([#15163], thanks @HertzDevil)
+- *(networking)* Update specs to run with IPv6 support disabled ([#15046], thanks @Blacksmoke16)
+- *(networking)* Add specs for invalid special characters in `Cookie` ([#15244], thanks @straight-shoota)
+- *(system)* Improve `System::User` specs on Windows ([#15156], thanks @HertzDevil)
+- *(system)* Make `cmd.exe` drop `%PROCESSOR_ARCHITECTURE%` in `Process` specs ([#15158], thanks @HertzDevil)
+- *(system)* Add specs for signal exit ([#15229], thanks @straight-shoota)
+
+[#15093]: https://github.com/crystal-lang/crystal/pull/15093
+[#15116]: https://github.com/crystal-lang/crystal/pull/15116
+[#15152]: https://github.com/crystal-lang/crystal/pull/15152
+[#15163]: https://github.com/crystal-lang/crystal/pull/15163
+[#15046]: https://github.com/crystal-lang/crystal/pull/15046
+[#15244]: https://github.com/crystal-lang/crystal/pull/15244
+[#15156]: https://github.com/crystal-lang/crystal/pull/15156
+[#15158]: https://github.com/crystal-lang/crystal/pull/15158
+[#15229]: https://github.com/crystal-lang/crystal/pull/15229
+
+#### compiler
+
+- *(cli)* Remove the entire compiler code base from `external_command_spec` ([#15208], thanks @straight-shoota)
+- *(interpreter)* **[regression]** Fix `Crystal::Loader.default_search_paths` spec for macOS ([#15135], thanks @HertzDevil)
+
+[#15208]: https://github.com/crystal-lang/crystal/pull/15208
+[#15135]: https://github.com/crystal-lang/crystal/pull/15135
+
+#### tools
+
+- Use empty prelude for compiler tools specs ([#15272], thanks @straight-shoota)
+- *(docs-generator)* Allow skipping compiler tool specs that require Git ([#15125], thanks @HertzDevil)
+
+[#15272]: https://github.com/crystal-lang/crystal/pull/15272
+[#15125]: https://github.com/crystal-lang/crystal/pull/15125
+
+### Infrastructure
+
+- Changelog for 1.15.0 ([#15277], thanks @straight-shoota)
+- Update previous Crystal release 1.14.0 ([#15071], thanks @straight-shoota)
+- Fix remove trailing whitespace from CRYSTAL definition ([#15131], thanks @straight-shoota)
+- Make utilities posix compatible ([#15139], thanks @nanobowers)
+- Update `shell.nix` to `nixpkgs-24.05` and LLVM 18 ([#14651], thanks @straight-shoota)
+- Makefile: Allow custom extensions for exports and spec flags ([#15099], thanks @straight-shoota)
+- Merge changelog entries for fixups with main PR ([#15207], thanks @straight-shoota)
+- Update link to good first issues ([#15250], thanks @BigBoyBarney)
+- Update distribution-scripts ([#15291], thanks @straight-shoota)
+- Bump NOTICE copyright year ([#15318], thanks @straight-shoota)
+- Merge `release/1.14`@1.14.1 ([#15329], thanks @straight-shoota)
+- Update distribution-scripts ([#15332], thanks @straight-shoota)
+- Make `bin/crystal` work on MSYS2 ([#15094], thanks @HertzDevil)
+- Make `Makefile` work on MSYS2 ([#15102], thanks @HertzDevil)
+- Support `.exe` file extension in `Makefile` on MSYS2 ([#15123], thanks @HertzDevil)
+- Support dereferencing symlinks in `make install` ([#15138], thanks @HertzDevil)
+- *(ci)* Extract `deploy_api_docs` job into its own Workflow ([#15022], thanks @straight-shoota)
+- *(ci)* Remove pin for ancient nix version ([#15150], thanks @straight-shoota)
+- *(ci)* Migrate renovate config ([#15151], thanks @renovate)
+- *(ci)* Update GH Actions ([#15052], thanks @renovate)
+- *(ci)* Update msys2/setup-msys2 action to v2.26.0 ([#15265], thanks @renovate)
+- *(ci)* Update shards 0.19.0 ([#15290], thanks @straight-shoota)
+- *(ci)* **[security]** Restrict GitHub token permissions of CI workflows ([#15087], thanks @HertzDevil)
+- *(ci)* Do not link against `DbgHelp` for MinGW-w64 CI build ([#15160], thanks @HertzDevil)
+- *(ci)* Use MSYS2's upstream LLVM version on MinGW-w64 CI ([#15197], thanks @HertzDevil)
+- *(ci)* Add CI workflow for cross-compiling Crystal on MSYS2 ([#15110], thanks @HertzDevil)
+- *(ci)* Add MinGW-w64 CI workflow for stdlib and compiler specs ([#15124], thanks @HertzDevil)
+- *(ci)* Make MinGW-w64 build artifact a full installation ([#15204], thanks @HertzDevil)
+- *(ci)* Use official Apt respositories for LLVM CI ([#15103], thanks @HertzDevil)
+- *(ci)* Drop LLVM Apt installer script on WebAssembly CI ([#15109], thanks @HertzDevil)
+- *(ci)* Run interpreter specs on Windows CI ([#15141], thanks @HertzDevil)
+
+[#15277]: https://github.com/crystal-lang/crystal/pull/15277
+[#15071]: https://github.com/crystal-lang/crystal/pull/15071
+[#15131]: https://github.com/crystal-lang/crystal/pull/15131
+[#15139]: https://github.com/crystal-lang/crystal/pull/15139
+[#14651]: https://github.com/crystal-lang/crystal/pull/14651
+[#15099]: https://github.com/crystal-lang/crystal/pull/15099
+[#15207]: https://github.com/crystal-lang/crystal/pull/15207
+[#15250]: https://github.com/crystal-lang/crystal/pull/15250
+[#15291]: https://github.com/crystal-lang/crystal/pull/15291
+[#15318]: https://github.com/crystal-lang/crystal/pull/15318
+[#15329]: https://github.com/crystal-lang/crystal/pull/15329
+[#15332]: https://github.com/crystal-lang/crystal/pull/15332
+[#15094]: https://github.com/crystal-lang/crystal/pull/15094
+[#15102]: https://github.com/crystal-lang/crystal/pull/15102
+[#15123]: https://github.com/crystal-lang/crystal/pull/15123
+[#15138]: https://github.com/crystal-lang/crystal/pull/15138
+[#15022]: https://github.com/crystal-lang/crystal/pull/15022
+[#15150]: https://github.com/crystal-lang/crystal/pull/15150
+[#15151]: https://github.com/crystal-lang/crystal/pull/15151
+[#15052]: https://github.com/crystal-lang/crystal/pull/15052
+[#15265]: https://github.com/crystal-lang/crystal/pull/15265
+[#15290]: https://github.com/crystal-lang/crystal/pull/15290
+[#15087]: https://github.com/crystal-lang/crystal/pull/15087
+[#15160]: https://github.com/crystal-lang/crystal/pull/15160
+[#15197]: https://github.com/crystal-lang/crystal/pull/15197
+[#15110]: https://github.com/crystal-lang/crystal/pull/15110
+[#15124]: https://github.com/crystal-lang/crystal/pull/15124
+[#15204]: https://github.com/crystal-lang/crystal/pull/15204
+[#15103]: https://github.com/crystal-lang/crystal/pull/15103
+[#15109]: https://github.com/crystal-lang/crystal/pull/15109
+[#15141]: https://github.com/crystal-lang/crystal/pull/15141
+
+## [1.14.1] (2025-01-08)
+
+[1.14.1]: https://github.com/crystal-lang/crystal/releases/1.14.1
+
+### Bugfixes
+
+#### tools
+
+- *(formatter)* Handle trailing comma with multiple parameters on the same line ([#15097], thanks @Blacksmoke16)
+
+[#15097]: https://github.com/crystal-lang/crystal/pull/15097
+
+### Infrastructure
+
+- Changelog for 1.14.1 ([#15323], thanks @straight-shoota)
+- *(ci)* Update XCode 15.3.0 in circleci ([#15327], thanks @straight-shoota)
+
+[#15323]: https://github.com/crystal-lang/crystal/pull/15323
+[#15327]: https://github.com/crystal-lang/crystal/pull/15327
+
+## [1.14.0] (2024-10-09)
+
+[1.14.0]: https://github.com/crystal-lang/crystal/releases/1.14.0
+
+### Features
+
+#### lang
+
+- Allow `^` in constant numeric expressions ([#14951], thanks @HertzDevil)
+
+[#14951]: https://github.com/crystal-lang/crystal/pull/14951
+
+#### stdlib
+
+- Add support for Windows on aarch64 ([#14911], thanks @HertzDevil)
+- *(collection)* **[breaking]** Add support for negative start index in `Slice#[start, count]` ([#14778], thanks @ysbaddaden)
+- *(collection)* Add `Slice#same?` ([#14728], thanks @straight-shoota)
+- *(concurrency)* Add `WaitGroup.wait` and `WaitGroup#spawn` ([#14837], thanks @jgaskins)
+- *(concurrency)* Open non-blocking regular files as overlapped on Windows ([#14921], thanks @HertzDevil)
+- *(concurrency)* Support non-blocking `File#read` and `#write` on Windows ([#14940], thanks @HertzDevil)
+- *(concurrency)* Support non-blocking `File#read_at` on Windows ([#14958], thanks @HertzDevil)
+- *(concurrency)* Support non-blocking `Process.run` standard streams on Windows ([#14941], thanks @HertzDevil)
+- *(concurrency)* Support `IO::FileDescriptor#flock_*` on non-blocking files on Windows ([#14943], thanks @HertzDevil)
+- *(concurrency)* Emulate non-blocking `STDIN` console on Windows ([#14947], thanks @HertzDevil)
+- *(concurrency)* Async DNS resolution on Windows ([#14979], thanks @HertzDevil)
+- *(crypto)* Update `LibCrypto` bindings for LibreSSL 3.5+ ([#14872], thanks @straight-shoota)
+- *(llvm)* Expose LLVM instruction builder for `neg` and `fneg` ([#14774], thanks @JarnaChao09)
+- *(llvm)* **[experimental]** Add minimal LLVM OrcV2 bindings ([#14887], thanks @HertzDevil)
+- *(llvm)* Add `LLVM::Builder#finalize` ([#14892], thanks @JarnaChao09)
+- *(llvm)* Support LLVM 19.1 ([#14842], thanks @HertzDevil)
+- *(macros)* Add `Crystal::Macros::TypeNode#has_inner_pointers?` ([#14847], thanks @HertzDevil)
+- *(macros)* Add `HashLiteral#has_key?` and `NamedTupleLiteral#has_key?` ([#14890], thanks @kamil-gwozdz)
+- *(numeric)* Implement floating-point manipulation functions for `BigFloat` ([#11007], thanks @HertzDevil)
+- *(runtime)* Stop & start the world (undocumented API) ([#14729], thanks @ysbaddaden)
+- *(runtime)* Add `Pointer::Appender#to_slice` ([#14874], thanks @straight-shoota)
+- *(serialization)* Add `URI.from_json_object_key?` and `URI#to_json_object_key` ([#14834], thanks @nobodywasishere)
+- *(serialization)* Add `URI::Params::Serializable` ([#14684], thanks @Blacksmoke16)
+- *(system)* Enable full backtrace for exception in process spawn ([#14796], thanks @straight-shoota)
+- *(system)* Implement `System::User` on Windows ([#14933], thanks @HertzDevil)
+- *(system)* Implement `System::Group` on Windows ([#14945], thanks @HertzDevil)
+- *(system)* Add methods to `Crystal::EventLoop` ([#14977], thanks @ysbaddaden)
+- *(text)* Add `underscore_to_space` option to `String#titleize` ([#14822], thanks @Blacksmoke16)
+- *(text)* Support Unicode 16.0.0 ([#14997], thanks @HertzDevil)
+
+[#14911]: https://github.com/crystal-lang/crystal/pull/14911
+[#14778]: https://github.com/crystal-lang/crystal/pull/14778
+[#14728]: https://github.com/crystal-lang/crystal/pull/14728
+[#14837]: https://github.com/crystal-lang/crystal/pull/14837
+[#14921]: https://github.com/crystal-lang/crystal/pull/14921
+[#14940]: https://github.com/crystal-lang/crystal/pull/14940
+[#14958]: https://github.com/crystal-lang/crystal/pull/14958
+[#14941]: https://github.com/crystal-lang/crystal/pull/14941
+[#14943]: https://github.com/crystal-lang/crystal/pull/14943
+[#14947]: https://github.com/crystal-lang/crystal/pull/14947
+[#14979]: https://github.com/crystal-lang/crystal/pull/14979
+[#14872]: https://github.com/crystal-lang/crystal/pull/14872
+[#14774]: https://github.com/crystal-lang/crystal/pull/14774
+[#14887]: https://github.com/crystal-lang/crystal/pull/14887
+[#14892]: https://github.com/crystal-lang/crystal/pull/14892
+[#14842]: https://github.com/crystal-lang/crystal/pull/14842
+[#14847]: https://github.com/crystal-lang/crystal/pull/14847
+[#14890]: https://github.com/crystal-lang/crystal/pull/14890
+[#11007]: https://github.com/crystal-lang/crystal/pull/11007
+[#14729]: https://github.com/crystal-lang/crystal/pull/14729
+[#14874]: https://github.com/crystal-lang/crystal/pull/14874
+[#14834]: https://github.com/crystal-lang/crystal/pull/14834
+[#14684]: https://github.com/crystal-lang/crystal/pull/14684
+[#14796]: https://github.com/crystal-lang/crystal/pull/14796
+[#14933]: https://github.com/crystal-lang/crystal/pull/14933
+[#14945]: https://github.com/crystal-lang/crystal/pull/14945
+[#14977]: https://github.com/crystal-lang/crystal/pull/14977
+[#14822]: https://github.com/crystal-lang/crystal/pull/14822
+[#14997]: https://github.com/crystal-lang/crystal/pull/14997
+
+#### compiler
+
+- *(cli)* Adds initial support for external commands ([#14953], thanks @bcardiff)
+- *(interpreter)* Add `Crystal::Repl::Value#runtime_type` ([#14156], thanks @bcardiff)
+- *(interpreter)* Implement `Reference.pre_initialize` in the interpreter ([#14968], thanks @HertzDevil)
+- *(interpreter)* Enable the interpreter on Windows ([#14964], thanks @HertzDevil)
+
+[#14953]: https://github.com/crystal-lang/crystal/pull/14953
+[#14156]: https://github.com/crystal-lang/crystal/pull/14156
+[#14968]: https://github.com/crystal-lang/crystal/pull/14968
+[#14964]: https://github.com/crystal-lang/crystal/pull/14964
+
+### Bugfixes
+
+#### lang
+
+- Fix `Slice.literal` for multiple calls with identical signature ([#15009], thanks @HertzDevil)
+- *(macros)* Add location info to some `MacroIf` nodes ([#14885], thanks @Blacksmoke16)
+
+[#15009]: https://github.com/crystal-lang/crystal/pull/15009
+[#14885]: https://github.com/crystal-lang/crystal/pull/14885
+
+#### stdlib
+
+- *(collection)* Fix `Range#size` return type to `Int32` ([#14588], thanks @straight-shoota)
+- *(concurrency)* Update `DeallocationStack` for Windows context switch ([#15032], thanks @HertzDevil)
+- *(concurrency)* Fix race condition in `pthread_create` handle initialization ([#15043], thanks @HertzDevil)
+- *(files)* **[regression]** Fix `File#truncate` and `#lock` for Win32 append-mode files ([#14706], thanks @HertzDevil)
+- *(files)* **[breaking]** Avoid flush in finalizers for `Socket` and `IO::FileDescriptor` ([#14882], thanks @straight-shoota)
+- *(files)* Make `IO::Buffered#buffer_size=` idempotent ([#14855], thanks @jgaskins)
+- *(macros)* Implement `#sort_by` inside macros using `Enumerable#sort_by` ([#14895], thanks @HertzDevil)
+- *(macros)* Fix internal error when calling `#is_a?` on `External` nodes ([#14918], thanks @HertzDevil)
+- *(networking)* Use correct timeout for `Socket#connect` on Windows ([#14961], thanks @HertzDevil)
+- *(numeric)* Fix handle empty string in `String#to_f(whitespace: false)` ([#14902], thanks @Blacksmoke16)
+- *(numeric)* Fix exponent wrapping in `Math.frexp(BigFloat)` for very large values ([#14971], thanks @HertzDevil)
+- *(numeric)* Fix exponent overflow in `BigFloat#to_s` for very large values ([#14982], thanks @HertzDevil)
+- *(numeric)* Add missing `@[Link(dll:)]` annotation to MPIR ([#15003], thanks @HertzDevil)
+- *(runtime)* Add missing return type of `LibC.VirtualQuery` ([#15036], thanks @HertzDevil)
+- *(runtime)* Fix main stack top detection on musl-libc ([#15047], thanks @HertzDevil)
+- *(serialization)* **[breaking]** Remove `XML::Error.errors` ([#14936], thanks @straight-shoota)
+- *(specs)* **[regression]** Fix `Expectations::Be` for module type ([#14926], thanks @straight-shoota)
+- *(system)* Fix return type restriction for `ENV.fetch` ([#14919], thanks @straight-shoota)
+- *(system)* `#file_descriptor_close` should set `@closed` (UNIX) ([#14973], thanks @ysbaddaden)
+- *(system)* reinit event loop first after fork (UNIX) ([#14975], thanks @ysbaddaden)
+- *(text)* Fix avoid linking `libpcre` when unused ([#14891], thanks @kojix2)
+- *(text)* Add type restriction to `String#byte_index` `offset` parameter ([#14981], thanks @straight-shoota)
+
+[#14588]: https://github.com/crystal-lang/crystal/pull/14588
+[#15032]: https://github.com/crystal-lang/crystal/pull/15032
+[#15043]: https://github.com/crystal-lang/crystal/pull/15043
+[#14706]: https://github.com/crystal-lang/crystal/pull/14706
+[#14882]: https://github.com/crystal-lang/crystal/pull/14882
+[#14855]: https://github.com/crystal-lang/crystal/pull/14855
+[#14895]: https://github.com/crystal-lang/crystal/pull/14895
+[#14918]: https://github.com/crystal-lang/crystal/pull/14918
+[#14961]: https://github.com/crystal-lang/crystal/pull/14961
+[#14902]: https://github.com/crystal-lang/crystal/pull/14902
+[#14971]: https://github.com/crystal-lang/crystal/pull/14971
+[#14982]: https://github.com/crystal-lang/crystal/pull/14982
+[#15003]: https://github.com/crystal-lang/crystal/pull/15003
+[#15036]: https://github.com/crystal-lang/crystal/pull/15036
+[#15047]: https://github.com/crystal-lang/crystal/pull/15047
+[#14936]: https://github.com/crystal-lang/crystal/pull/14936
+[#14926]: https://github.com/crystal-lang/crystal/pull/14926
+[#14919]: https://github.com/crystal-lang/crystal/pull/14919
+[#14973]: https://github.com/crystal-lang/crystal/pull/14973
+[#14975]: https://github.com/crystal-lang/crystal/pull/14975
+[#14891]: https://github.com/crystal-lang/crystal/pull/14891
+[#14981]: https://github.com/crystal-lang/crystal/pull/14981
+
+#### compiler
+
+- *(cli)* Add error handling for linker flag sub commands ([#14932], thanks @straight-shoota)
+- *(codegen)* Allow returning `Proc`s from top-level funs ([#14917], thanks @HertzDevil)
+- *(codegen)* Fix CRT static-dynamic linking conflict in specs with C sources ([#14970], thanks @HertzDevil)
+- *(interpreter)* Fix Linux `getrandom` failure in interpreted code ([#15035], thanks @HertzDevil)
+- *(interpreter)* Fix undefined behavior in interpreter mixed union upcast ([#15042], thanks @HertzDevil)
+- *(semantic)* Fix `TopLevelVisitor` adding existing `ClassDef` type to current scope ([#15067], thanks @straight-shoota)
+
+[#14932]: https://github.com/crystal-lang/crystal/pull/14932
+[#14917]: https://github.com/crystal-lang/crystal/pull/14917
+[#14970]: https://github.com/crystal-lang/crystal/pull/14970
+[#15035]: https://github.com/crystal-lang/crystal/pull/15035
+[#15042]: https://github.com/crystal-lang/crystal/pull/15042
+[#15067]: https://github.com/crystal-lang/crystal/pull/15067
+
+#### tools
+
+- *(dependencies)* Fix `crystal tool dependencies` format flat ([#14927], thanks @straight-shoota)
+- *(dependencies)* Fix `crystal tool dependencies` filters for Windows paths ([#14928], thanks @straight-shoota)
+- *(docs-generator)* Fix doc comment above annotation with macro expansion ([#14849], thanks @Blacksmoke16)
+- *(unreachable)* Fix `crystal tool unreachable` & co visiting circular hierarchies ([#15065], thanks @straight-shoota)
+
+[#14927]: https://github.com/crystal-lang/crystal/pull/14927
+[#14928]: https://github.com/crystal-lang/crystal/pull/14928
+[#14849]: https://github.com/crystal-lang/crystal/pull/14849
+[#15065]: https://github.com/crystal-lang/crystal/pull/15065
+
+### Chores
+
+#### stdlib
+
+- **[deprecation]** Use `Time::Span` in `Benchmark.ips` ([#14805], thanks @HertzDevil)
+- **[deprecation]** Deprecate `::sleep(Number)` ([#14962], thanks @HertzDevil)
+- *(runtime)* **[deprecation]** Deprecate `Pointer.new(Int)` ([#14875], thanks @straight-shoota)
+
+[#14805]: https://github.com/crystal-lang/crystal/pull/14805
+[#14962]: https://github.com/crystal-lang/crystal/pull/14962
+[#14875]: https://github.com/crystal-lang/crystal/pull/14875
+
+#### compiler
+
+- *(interpreter)* Remove TODO in `Crystal::Loader` on Windows ([#14988], thanks @HertzDevil)
+- *(interpreter:repl)* Update REPLy version ([#14950], thanks @HertzDevil)
+
+[#14988]: https://github.com/crystal-lang/crystal/pull/14988
+[#14950]: https://github.com/crystal-lang/crystal/pull/14950
+
+### Performance
+
+#### stdlib
+
+- *(collection)* Always use unstable sort for simple types ([#14825], thanks @HertzDevil)
+- *(collection)* Optimize `Hash#transform_{keys,values}` ([#14502], thanks @jgaskins)
+- *(numeric)* Optimize arithmetic between `BigFloat` and integers ([#14944], thanks @HertzDevil)
+- *(runtime)* **[regression]** Cache `Exception::CallStack.empty` to avoid repeat `Array` allocation ([#15025], thanks @straight-shoota)
+
+[#14825]: https://github.com/crystal-lang/crystal/pull/14825
+[#14502]: https://github.com/crystal-lang/crystal/pull/14502
+[#14944]: https://github.com/crystal-lang/crystal/pull/14944
+[#15025]: https://github.com/crystal-lang/crystal/pull/15025
+
+#### compiler
+
+- Avoid unwinding the stack on hot path in method call lookups ([#15002], thanks @ggiraldez)
+- *(codegen)* Reduce calls to `Crystal::Type#remove_indirection` in module dispatch ([#14992], thanks @HertzDevil)
+- *(codegen)* Compiler: enable parallel codegen with MT ([#14748], thanks @ysbaddaden)
+
+[#15002]: https://github.com/crystal-lang/crystal/pull/15002
+[#14992]: https://github.com/crystal-lang/crystal/pull/14992
+[#14748]: https://github.com/crystal-lang/crystal/pull/14748
+
+### Refactor
+
+#### stdlib
+
+- *(concurrency)* Extract `select` from `src/channel.cr` ([#14912], thanks @straight-shoota)
+- *(concurrency)* Make `Crystal::IOCP::OverlappedOperation` abstract ([#14987], thanks @HertzDevil)
+- *(files)* Move `#evented_read`, `#evented_write` into `Crystal::LibEvent::EventLoop` ([#14883], thanks @straight-shoota)
+- *(networking)* Simplify `Socket::Addrinfo.getaddrinfo(&)` ([#14956], thanks @HertzDevil)
+- *(networking)* Add `Crystal::System::Addrinfo` ([#14957], thanks @HertzDevil)
+- *(runtime)* Add `Exception::CallStack.empty` ([#15017], thanks @straight-shoota)
+- *(system)* Refactor cancellation of `IOCP::OverlappedOperation` ([#14754], thanks @straight-shoota)
+- *(system)* Include `Crystal::System::Group` instead of extending it ([#14930], thanks @HertzDevil)
+- *(system)* Include `Crystal::System::User` instead of extending it ([#14929], thanks @HertzDevil)
+- *(system)* Fix: `Crystal::SpinLock` doesn't need to be allocated on the HEAP ([#14972], thanks @ysbaddaden)
+- *(system)* Don't involve evloop after fork in `System::Process.spawn` (UNIX) ([#14974], thanks @ysbaddaden)
+- *(system)* Refactor `EventLoop` interface for sleeps & select timeouts ([#14980], thanks @ysbaddaden)
+
+[#14912]: https://github.com/crystal-lang/crystal/pull/14912
+[#14987]: https://github.com/crystal-lang/crystal/pull/14987
+[#14883]: https://github.com/crystal-lang/crystal/pull/14883
+[#14956]: https://github.com/crystal-lang/crystal/pull/14956
+[#14957]: https://github.com/crystal-lang/crystal/pull/14957
+[#15017]: https://github.com/crystal-lang/crystal/pull/15017
+[#14754]: https://github.com/crystal-lang/crystal/pull/14754
+[#14930]: https://github.com/crystal-lang/crystal/pull/14930
+[#14929]: https://github.com/crystal-lang/crystal/pull/14929
+[#14972]: https://github.com/crystal-lang/crystal/pull/14972
+[#14974]: https://github.com/crystal-lang/crystal/pull/14974
+[#14980]: https://github.com/crystal-lang/crystal/pull/14980
+
+#### compiler
+
+- *(codegen)* Compiler: refactor codegen ([#14760], thanks @ysbaddaden)
+- *(interpreter)* Refactor interpreter stack code to avoid duplicate macro expansion ([#14876], thanks @straight-shoota)
+
+[#14760]: https://github.com/crystal-lang/crystal/pull/14760
+[#14876]: https://github.com/crystal-lang/crystal/pull/14876
+
+### Documentation
+
+#### stdlib
+
+- *(collection)* **[breaking]** Hide `Hash::Entry` from public API docs ([#14881], thanks @Blacksmoke16)
+- *(collection)* Fix typos in docs for `Set` and `Hash` ([#14889], thanks @philipp-classen)
+- *(llvm)* Add `@[Experimental]` to `LLVM::DIBuilder` ([#14854], thanks @HertzDevil)
+- *(networking)* Add documentation about synchronous DNS resolution ([#15027], thanks @straight-shoota)
+- *(networking)* Add `uri/json` to `docs_main` ([#15069], thanks @straight-shoota)
+- *(runtime)* Add docs about `Pointer`'s alignment requirement ([#14853], thanks @HertzDevil)
+- *(runtime)* Reword `Pointer#memcmp`'s documentation ([#14818], thanks @HertzDevil)
+- *(runtime)* Add documentation for `NoReturn` and `Void` ([#14817], thanks @nobodywasishere)
+
+[#14881]: https://github.com/crystal-lang/crystal/pull/14881
+[#14889]: https://github.com/crystal-lang/crystal/pull/14889
+[#14854]: https://github.com/crystal-lang/crystal/pull/14854
+[#15027]: https://github.com/crystal-lang/crystal/pull/15027
+[#15069]: https://github.com/crystal-lang/crystal/pull/15069
+[#14853]: https://github.com/crystal-lang/crystal/pull/14853
+[#14818]: https://github.com/crystal-lang/crystal/pull/14818
+[#14817]: https://github.com/crystal-lang/crystal/pull/14817
+
+### Specs
+
+#### stdlib
+
+- Remove some uses of deprecated overloads in standard library specs ([#14963], thanks @HertzDevil)
+- *(collection)* Disable `Tuple#to_static_array` spec on AArch64 ([#14844], thanks @HertzDevil)
+- *(serialization)* Add JSON parsing UTF-8 spec ([#14823], thanks @Blacksmoke16)
+- *(text)* Add specs for `String#index`, `#rindex` search for `Char::REPLACEMENT` ([#14946], thanks @straight-shoota)
+
+[#14963]: https://github.com/crystal-lang/crystal/pull/14963
+[#14844]: https://github.com/crystal-lang/crystal/pull/14844
+[#14823]: https://github.com/crystal-lang/crystal/pull/14823
+[#14946]: https://github.com/crystal-lang/crystal/pull/14946
+
+#### compiler
+
+- *(codegen)* Support return types in codegen specs ([#14888], thanks @HertzDevil)
+- *(codegen)* Fix codegen spec for `ProcPointer` of virtual type ([#14903], thanks @HertzDevil)
+- *(codegen)* Support LLVM OrcV2 codegen specs ([#14886], thanks @HertzDevil)
+- *(codegen)* Don't spawn subprocess if codegen spec uses flags but not the prelude ([#14904], thanks @HertzDevil)
+
+[#14888]: https://github.com/crystal-lang/crystal/pull/14888
+[#14903]: https://github.com/crystal-lang/crystal/pull/14903
+[#14886]: https://github.com/crystal-lang/crystal/pull/14886
+[#14904]: https://github.com/crystal-lang/crystal/pull/14904
+
+### Infrastructure
+
+- Changelog for 1.14.0 ([#14969], thanks @straight-shoota)
+- Update previous Crystal release 1.13.1 ([#14810], thanks @straight-shoota)
+- Refactor GitHub changelog generator print special infra ([#14795], thanks @straight-shoota)
+- Update distribution-scripts ([#14877], thanks @straight-shoota)
+- Update version in `shard.yml` ([#14909], thanks @straight-shoota)
+- Merge `release/1.13`@1.13.2 ([#14924], thanks @straight-shoota)
+- Update previous Crystal release 1.13.2 ([#14925], thanks @straight-shoota)
+- Merge `release/1.13`@1.13.3 ([#15012], thanks @straight-shoota)
+- Update previous Crystal release 1.13.3 ([#15016], thanks @straight-shoota)
+- **[regression]** Fix `SOURCE_DATE_EPOCH` in `Makefile.win` ([#14922], thanks @HertzDevil)
+- *(ci)* Update actions/checkout action to v4 - autoclosed ([#14896], thanks @renovate)
+- *(ci)* Update LLVM 18 for `wasm32-test` ([#14821], thanks @straight-shoota)
+- *(ci)* Pin package repos for OpenSSL packages ([#14831], thanks @straight-shoota)
+- *(ci)* Upgrade XCode 15.4.0 ([#14794], thanks @straight-shoota)
+- *(ci)* Update GH Actions ([#14535], thanks @renovate)
+- *(ci)* Add test for OpenSSL 3.3 ([#14873], thanks @straight-shoota)
+- *(ci)* Update GitHub runner to `macos-14` ([#14833], thanks @straight-shoota)
+- *(ci)* Refactor SSL workflow with job matrix ([#14899], thanks @straight-shoota)
+- *(ci)* Drop the non-release Windows compiler artifact ([#15000], thanks @HertzDevil)
+- *(ci)* Fix compiler artifact name in WindowsCI ([#15021], thanks @straight-shoota)
+- *(ci)* Restrict CI runners from runs-on to 8GB ([#15030], thanks @straight-shoota)
+- *(ci)* Increase memory for stdlib CI runners from runs-on to 16GB ([#15044], thanks @straight-shoota)
+- *(ci)* Use Cygwin to build libiconv on Windows CI ([#14999], thanks @HertzDevil)
+- *(ci)* Use our own `libffi` repository on Windows CI ([#14998], thanks @HertzDevil)
+
+[#14969]: https://github.com/crystal-lang/crystal/pull/14969
+[#14810]: https://github.com/crystal-lang/crystal/pull/14810
+[#14795]: https://github.com/crystal-lang/crystal/pull/14795
+[#14877]: https://github.com/crystal-lang/crystal/pull/14877
+[#14909]: https://github.com/crystal-lang/crystal/pull/14909
+[#14924]: https://github.com/crystal-lang/crystal/pull/14924
+[#14925]: https://github.com/crystal-lang/crystal/pull/14925
+[#15012]: https://github.com/crystal-lang/crystal/pull/15012
+[#15016]: https://github.com/crystal-lang/crystal/pull/15016
+[#14922]: https://github.com/crystal-lang/crystal/pull/14922
+[#14896]: https://github.com/crystal-lang/crystal/pull/14896
+[#14821]: https://github.com/crystal-lang/crystal/pull/14821
+[#14831]: https://github.com/crystal-lang/crystal/pull/14831
+[#14794]: https://github.com/crystal-lang/crystal/pull/14794
+[#14535]: https://github.com/crystal-lang/crystal/pull/14535
+[#14873]: https://github.com/crystal-lang/crystal/pull/14873
+[#14833]: https://github.com/crystal-lang/crystal/pull/14833
+[#14899]: https://github.com/crystal-lang/crystal/pull/14899
+[#15000]: https://github.com/crystal-lang/crystal/pull/15000
+[#15021]: https://github.com/crystal-lang/crystal/pull/15021
+[#15030]: https://github.com/crystal-lang/crystal/pull/15030
+[#15044]: https://github.com/crystal-lang/crystal/pull/15044
+[#14999]: https://github.com/crystal-lang/crystal/pull/14999
+[#14998]: https://github.com/crystal-lang/crystal/pull/14998
+
+## [1.13.3] (2024-09-18)
+
+[1.13.3]: https://github.com/crystal-lang/crystal/releases/1.13.3
+
+### Bugfixes
+
+#### stdlib
+
+- **[regression]** Fix use global paths in macro bodies ([#14965], thanks @straight-shoota)
+- *(system)* **[regression]** Fix `Process.exec` stream redirection on Windows ([#14986], thanks @HertzDevil)
+- *(text)* **[regression]** Fix `String#index` and `#rindex` for `Char::REPLACEMENT` ([#14937], thanks @HertzDevil)
+
+[#14965]: https://github.com/crystal-lang/crystal/pull/14965
+[#14986]: https://github.com/crystal-lang/crystal/pull/14986
+[#14937]: https://github.com/crystal-lang/crystal/pull/14937
+
+### Infrastructure
+
+- Changelog for 1.13.3 ([#14991], thanks @straight-shoota)
+- *(ci)* Enable runners from `runs-on.com` for Aarch64 CI ([#15007], thanks @straight-shoota)
+
+[#14991]: https://github.com/crystal-lang/crystal/pull/14991
+[#15007]: https://github.com/crystal-lang/crystal/pull/15007
+
+## [1.13.2] (2024-08-20)
+
+[1.13.2]: https://github.com/crystal-lang/crystal/releases/1.13.2
+
+### Bugfixes
+
+#### stdlib
+
+- *(collection)* Fix explicitly clear deleted `Hash::Entry` ([#14862], thanks @HertzDevil)
+
+[#14862]: https://github.com/crystal-lang/crystal/pull/14862
+
+#### compiler
+
+- *(codegen)* Fix `ReferenceStorage(T)` atomic if `T` has no inner pointers ([#14845], thanks @HertzDevil)
+- *(codegen)* Fix misaligned store in `Bool` to union upcasts ([#14906], thanks @HertzDevil)
+- *(interpreter)* Fix misaligned stack access in the interpreter ([#14843], thanks @HertzDevil)
+
+[#14845]: https://github.com/crystal-lang/crystal/pull/14845
+[#14906]: https://github.com/crystal-lang/crystal/pull/14906
+[#14843]: https://github.com/crystal-lang/crystal/pull/14843
+
+### Infrastructure
+
+- Changelog for 1.13.2 ([#14914], thanks @straight-shoota)
+
+[#14914]: https://github.com/crystal-lang/crystal/pull/14914
+
 ## [1.13.1] (2024-07-12)
 
 [1.13.1]: https://github.com/crystal-lang/crystal/releases/1.13.1

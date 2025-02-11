@@ -653,32 +653,25 @@ module Crystal
     property visibility = Visibility::Public
     property? global : Bool
     property? expansion = false
+    property? args_in_brackets = false
     property? has_parentheses = false
 
-    def initialize(@obj, @name, @args = [] of ASTNode, @block = nil, @block_arg = nil, @named_args = nil, @global : Bool = false)
+    def initialize(@obj, @name, @args : Array(ASTNode) = [] of ASTNode, @block = nil, @block_arg = nil, @named_args = nil, @global : Bool = false)
       if block = @block
         block.call = self
       end
     end
 
-    def self.new(obj, name, arg : ASTNode, global = false)
-      new obj, name, [arg] of ASTNode, global: global
+    def self.new(obj, name, *args : ASTNode, global = false)
+      {% if compare_versions(Crystal::VERSION, "1.5.0") > 0 %}
+        new obj, name, [*args] of ASTNode, global: global
+      {% else %}
+        new obj, name, args.to_a(&.as(ASTNode)), global: global
+      {% end %}
     end
 
-    def self.new(obj, name, arg1 : ASTNode, arg2 : ASTNode)
-      new obj, name, [arg1, arg2] of ASTNode
-    end
-
-    def self.new(obj, name, arg1 : ASTNode, arg2 : ASTNode, arg3 : ASTNode)
-      new obj, name, [arg1, arg2, arg3] of ASTNode
-    end
-
-    def self.global(name, arg : ASTNode)
-      new nil, name, [arg] of ASTNode, global: true
-    end
-
-    def self.global(name, arg1 : ASTNode, arg2 : ASTNode)
-      new nil, name, [arg1, arg2] of ASTNode, global: true
+    def self.global(name, *args : ASTNode)
+      new nil, name, *args, global: true
     end
 
     def name_size
@@ -2237,8 +2230,9 @@ module Crystal
     property cond : ASTNode
     property then : ASTNode
     property else : ASTNode
+    property? is_unless : Bool
 
-    def initialize(@cond, a_then = nil, a_else = nil)
+    def initialize(@cond, a_then = nil, a_else = nil, @is_unless : Bool = false)
       @then = Expressions.from a_then
       @else = Expressions.from a_else
     end
@@ -2250,10 +2244,10 @@ module Crystal
     end
 
     def clone_without_location
-      MacroIf.new(@cond.clone, @then.clone, @else.clone)
+      MacroIf.new(@cond.clone, @then.clone, @else.clone, @is_unless)
     end
 
-    def_equals_and_hash @cond, @then, @else
+    def_equals_and_hash @cond, @then, @else, @is_unless
   end
 
   # for inside a macro:

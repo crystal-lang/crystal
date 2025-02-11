@@ -2,6 +2,8 @@ name: Regex Engine CI
 
 on: [push, pull_request]
 
+permissions: {}
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
@@ -10,7 +12,7 @@ jobs:
   pcre:
     runs-on: ubuntu-latest
     name: "PCRE"
-    container: crystallang/crystal:1.12.2-alpine
+    container: crystallang/crystal:1.15.1-alpine
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v4
@@ -25,7 +27,7 @@ jobs:
   pcre2:
     runs-on: ubuntu-latest
     name: "PCRE2"
-    container: crystallang/crystal:1.12.2-alpine
+    container: crystallang/crystal:1.15.1-alpine
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v4

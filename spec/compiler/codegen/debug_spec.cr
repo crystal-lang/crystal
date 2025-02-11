@@ -160,8 +160,6 @@ describe "Code gen: debug" do
 
   it "has debug info in closure inside if (#5593)" do
     codegen(%(
-      require "prelude"
-
       def foo
         if true && true
           yield 1

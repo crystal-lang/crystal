@@ -632,5 +632,47 @@ describe "Semantic: doc" do
       type = program.lookup_macros("foo").as(Array(Macro)).first
       type.doc.should eq("Some description")
     end
+
+    it "attached to macro call" do
+      result = semantic %(
+        annotation Ann
+        end
+
+        macro gen_type
+          class Foo; end
+        end
+
+        # Some description
+        @[Ann]
+        gen_type
+      ), wants_doc: true
+      program = result.program
+      type = program.types["Foo"]
+      type.doc.should eq("Some description")
+    end
+
+    it "attached to macro call that produces multiple types" do
+      result = semantic %(
+        annotation Ann
+        end
+
+        class Foo
+          macro getter(decl)
+            @{{decl.var.id}} : {{decl.type.id}}
+
+            def {{decl.var.id}} : {{decl.type.id}}
+              @{{decl.var.id}}
+            end
+          end
+
+          # Some description
+          @[Ann]
+          getter name : String?
+        end
+      ), wants_doc: true
+      program = result.program
+      a_def = program.types["Foo"].lookup_defs("name").first
+      a_def.doc.should eq("Some description")
+    end
   end
 end

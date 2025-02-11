@@ -2,6 +2,8 @@
 module Crystal::System::Thread
   # alias Handle
 
+  # def self.init : Nil
+
   # def self.new_handle(thread_obj : ::Thread) : Handle
 
   # def self.current_handle : Handle
@@ -23,6 +25,14 @@ module Crystal::System::Thread
   # private def stack_address : Void*
 
   # private def system_name=(String) : String
+
+  # def self.init_suspend_resume : Nil
+
+  # private def system_suspend : Nil
+
+  # private def system_wait_suspended : Nil
+
+  # private def system_resume : Nil
 end
 
 {% if flag?(:wasi) %}
@@ -40,7 +50,16 @@ class Thread
   include Crystal::System::Thread
 
   # all thread objects, so the GC can see them (it doesn't scan thread locals)
-  protected class_getter(threads) { Thread::LinkedList(Thread).new }
+  @@threads = uninitialized Thread::LinkedList(Thread)
+
+  protected def self.threads : Thread::LinkedList(Thread)
+    @@threads
+  end
+
+  def self.init : Nil
+    @@threads = Thread::LinkedList(Thread).new
+    Crystal::System::Thread.init
+  end
 
   @system_handle : Crystal::System::Thread::Handle
   @exception : Exception?
@@ -66,6 +85,18 @@ class Thread
     @@threads.try(&.unsafe_each { |thread| yield thread })
   end
 
+  def self.each(&)
+    threads.each { |thread| yield thread }
+  end
+
+  def self.lock : Nil
+    threads.@mutex.lock
+  end
+
+  def self.unlock : Nil
+    threads.@mutex.unlock
+  end
+
   # Creates and starts a new system thread.
   def initialize(@name : String? = nil, &@func : Thread ->)
     @system_handle = uninitialized Crystal::System::Thread::Handle
@@ -75,7 +106,7 @@ class Thread
   # Used once to initialize the thread object representing the main thread of
   # the process (that already exists).
   def initialize
-    @func = ->(t : Thread) {}
+    @func = ->(t : Thread) { }
     @system_handle = Crystal::System::Thread.current_handle
     @current_fiber = @main_fiber = Fiber.new(stack_address, self)
 
@@ -166,8 +197,33 @@ class Thread
     self.system_name = name
   end
 
+  # Changes the Thread#name property but doesn't update the system name. Useful
+  # on the main thread where we'd change the process name (e.g. top, ps, ...).
+  def internal_name=(@name : String)
+  end
+
   # Holds the GC thread handler
   property gc_thread_handler : Void* = Pointer(Void).null
+
+  def suspend : Nil
+    system_suspend
+  end
+
+  def wait_suspended : Nil
+    system_wait_suspended
+  end
+
+  def resume : Nil
+    system_resume
+  end
+
+  def self.stop_world : Nil
+    GC.stop_world
+  end
+
+  def self.start_world : Nil
+    GC.start_world
+  end
 end
 
 require "./thread_linked_list"
