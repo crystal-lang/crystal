@@ -125,7 +125,7 @@ class Crystal::Doc::Method
   end
 
   def external_var?
-    (ext = @def).is_a?(External) && ext.external_var?
+    !!@def.as?(External).try(&.external_var?)
   end
 
   def prefix
@@ -152,7 +152,7 @@ class Crystal::Doc::Method
   end
 
   def real_name
-    if (d = @def).is_a?(External) && (real_name = d.real_name) && (real_name != d.name)
+    if (real_name = @def.as?(External).try(&.real_name) && (real_name != d.name)
       " = #{real_name}"
     end
   end
