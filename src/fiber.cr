@@ -105,7 +105,7 @@ class Fiber
   # When the fiber is executed, it runs *proc* in its context.
   #
   # *name* is an optional and used only as an internal reference.
-  def self.new(name : String? = nil, {% if flag?(:execution_context) %}execution_context : ExecutionContext = ExecutionContext.current,{% end %} &proc : ->)
+  def self.new(name : String? = nil, {% if flag?(:execution_context) %}execution_context : ExecutionContext = ExecutionContext.current,{% end %} &proc : ->) : self
     stack =
       {% if flag?(:interpreted) %}
         # the interpreter is managing the stacks
