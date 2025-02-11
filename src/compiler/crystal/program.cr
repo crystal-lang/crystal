@@ -316,7 +316,7 @@ module Crystal
       define_crystal_string_constant "VERSION", Crystal::Config.version, <<-MD
         The version of the Crystal compiler.
         MD
-      define_crystal_string_constant "LLVM_VERSION", Crystal::Config.llvm_version, <<-MD
+      define_crystal_string_constant "LLVM_VERSION", LLVM.version, <<-MD
         The version of LLVM used by the Crystal compiler.
         MD
       define_crystal_string_constant "HOST_TRIPLE", Crystal::Config.host_target.to_s, <<-MD

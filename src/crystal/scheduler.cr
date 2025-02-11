@@ -125,7 +125,7 @@ class Crystal::Scheduler
     {% elsif flag?(:interpreted) %}
       # No need to change the stack bottom!
     {% else %}
-      GC.set_stackbottom(fiber.@stack_bottom)
+      GC.set_stackbottom(fiber.@stack.bottom)
     {% end %}
 
     current, @thread.current_fiber = @thread.current_fiber, fiber

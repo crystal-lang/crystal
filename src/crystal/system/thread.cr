@@ -2,6 +2,8 @@
 module Crystal::System::Thread
   # alias Handle
 
+  # def self.init : Nil
+
   # def self.new_handle(thread_obj : ::Thread) : Handle
 
   # def self.current_handle : Handle
@@ -48,7 +50,16 @@ class Thread
   include Crystal::System::Thread
 
   # all thread objects, so the GC can see them (it doesn't scan thread locals)
-  protected class_getter(threads) { Thread::LinkedList(Thread).new }
+  @@threads = uninitialized Thread::LinkedList(Thread)
+
+  protected def self.threads : Thread::LinkedList(Thread)
+    @@threads
+  end
+
+  def self.init : Nil
+    @@threads = Thread::LinkedList(Thread).new
+    Crystal::System::Thread.init
+  end
 
   @system_handle : Crystal::System::Thread::Handle
   @exception : Exception?

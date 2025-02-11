@@ -223,7 +223,7 @@ module GC
         {% if flag?(:preview_mt) %}
           Thread.unsafe_each do |thread|
             if fiber = thread.current_fiber?
-              GC.set_stackbottom(thread.gc_thread_handler, fiber.@stack_bottom)
+              GC.set_stackbottom(thread.gc_thread_handler, fiber.@stack.bottom)
             end
           end
         {% end %}

@@ -26,6 +26,16 @@ module Crystal::System::Thread
     raise RuntimeError.from_os_error("pthread_create", Errno.new(ret)) unless ret == 0
   end
 
+  def self.init : Nil
+    {% if flag?(:musl) %}
+      @@main_handle = current_handle
+    {% elsif flag?(:openbsd) || flag?(:android) %}
+      ret = LibC.pthread_key_create(out current_key, nil)
+      raise RuntimeError.from_os_error("pthread_key_create", Errno.new(ret)) unless ret == 0
+      @@current_key = current_key
+    {% end %}
+  end
+
   def self.thread_proc(data : Void*) : Void*
     th = data.as(::Thread)
 
@@ -53,13 +63,7 @@ module Crystal::System::Thread
   # Android appears to support TLS to some degree, but executables fail with
   # an underaligned TLS segment, see https://github.com/crystal-lang/crystal/issues/13951
   {% if flag?(:openbsd) || flag?(:android) %}
-    @@current_key : LibC::PthreadKeyT
-
-    @@current_key = begin
-      ret = LibC.pthread_key_create(out current_key, nil)
-      raise RuntimeError.from_os_error("pthread_key_create", Errno.new(ret)) unless ret == 0
-      current_key
-    end
+    @@current_key = uninitialized LibC::PthreadKeyT
 
     def self.current_thread : ::Thread
       if ptr = LibC.pthread_getspecific(@@current_key)
@@ -84,10 +88,17 @@ module Crystal::System::Thread
     end
   {% else %}
     @[ThreadLocal]
-    class_property current_thread : ::Thread { ::Thread.new }
+    @@current_thread : ::Thread?
+
+    def self.current_thread : ::Thread
+      @@current_thread ||= ::Thread.new
+    end
 
     def self.current_thread? : ::Thread?
       @@current_thread
+    end
+
+    def self.current_thread=(@@current_thread : ::Thread)
     end
   {% end %}
 
@@ -169,7 +180,7 @@ module Crystal::System::Thread
   end
 
   {% if flag?(:musl) %}
-    @@main_handle : Handle = current_handle
+    @@main_handle = uninitialized Handle
 
     def self.current_is_main?
       current_handle == @@main_handle
@@ -269,16 +280,16 @@ module Crystal::System::Thread
     {% end %}
 
   def self.sig_suspend : ::Signal
-    if GC.responds_to?(:sig_suspend)
-      GC.sig_suspend
+    if (gc = GC).responds_to?(:sig_suspend)
+      gc.sig_suspend
     else
       ::Signal.new(SIG_SUSPEND)
     end
   end
 
   def self.sig_resume : ::Signal
-    if GC.responds_to?(:sig_resume)
-      GC.sig_resume
+    if (gc = GC).responds_to?(:sig_resume)
+      gc.sig_resume
     else
       ::Signal.new(SIG_RESUME)
     end
