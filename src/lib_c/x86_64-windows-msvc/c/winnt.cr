@@ -3,6 +3,8 @@ require "c/int_safe"
 lib LibC
   alias BOOLEAN = BYTE
   alias LONG = Int32
+  alias ULONG = UInt32
+  alias USHORT = UInt16
   alias LARGE_INTEGER = Int64
 
   alias CHAR = UChar
@@ -469,4 +471,7 @@ lib LibC
   alias IMAGE_NT_HEADERS = IMAGE_NT_HEADERS64
   alias IMAGE_THUNK_DATA = IMAGE_THUNK_DATA64
   IMAGE_ORDINAL_FLAG = IMAGE_ORDINAL_FLAG64
+
+  TIMER_QUERY_STATE  = 0x0001
+  TIMER_MODIFY_STATE = 0x0002
 end

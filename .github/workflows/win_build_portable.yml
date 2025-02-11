@@ -27,7 +27,7 @@ jobs:
         uses: crystal-lang/install-crystal@v1
         id: install-crystal
         with:
-          crystal: "1.14.0"
+          crystal: "1.15.1"
 
       - name: Download Crystal source
         uses: actions/checkout@v4
@@ -127,7 +127,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: crystal-lang/shards
-          ref: v0.18.0
+          ref: v0.19.1
           path: shards
 
       - name: Build shards release

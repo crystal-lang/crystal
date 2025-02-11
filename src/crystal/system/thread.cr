@@ -2,6 +2,8 @@
 module Crystal::System::Thread
   # alias Handle
 
+  # def self.init : Nil
+
   # def self.new_handle(thread_obj : ::Thread) : Handle
 
   # def self.current_handle : Handle
@@ -48,7 +50,16 @@ class Thread
   include Crystal::System::Thread
 
   # all thread objects, so the GC can see them (it doesn't scan thread locals)
-  protected class_getter(threads) { Thread::LinkedList(Thread).new }
+  @@threads = uninitialized Thread::LinkedList(Thread)
+
+  protected def self.threads : Thread::LinkedList(Thread)
+    @@threads
+  end
+
+  def self.init : Nil
+    @@threads = Thread::LinkedList(Thread).new
+    Crystal::System::Thread.init
+  end
 
   @system_handle : Crystal::System::Thread::Handle
   @exception : Exception?
@@ -72,6 +83,10 @@ class Thread
     # nothing to iterate when @@threads is nil + don't lazily allocate in a
     # method called from a GC collection callback!
     @@threads.try(&.unsafe_each { |thread| yield thread })
+  end
+
+  def self.each(&)
+    threads.each { |thread| yield thread }
   end
 
   def self.lock : Nil
@@ -180,6 +195,11 @@ class Thread
 
   protected def name=(@name : String)
     self.system_name = name
+  end
+
+  # Changes the Thread#name property but doesn't update the system name. Useful
+  # on the main thread where we'd change the process name (e.g. top, ps, ...).
+  def internal_name=(@name : String)
   end
 
   # Holds the GC thread handler

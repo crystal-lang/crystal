@@ -62,6 +62,12 @@ private macro def_string_methods(klass)
   def includes?(search : StringLiteral | CharLiteral) : BoolLiteral
   end
 
+  # Returns an array of capture hashes for each match of *regex* in this string.
+  #
+  # Capture hashes have the same form as `Regex::MatchData#to_h`.
+  def scan(regex : RegexLiteral) : ArrayLiteral(HashLiteral(NumberLiteral | StringLiteral), StringLiteral | NilLiteral)
+  end
+
   # Similar to `String#size`.
   def size : NumberLiteral
   end
@@ -2361,10 +2367,16 @@ module Crystal::Macros
     end
   end
 
-  # An `if` inside a macro, e.g.
+  # An `if`/`unless` inside a macro, e.g.
   #
   # ```
   # {% if cond %}
+  #   puts "Then"
+  # {% else %}
+  #   puts "Else"
+  # {% end %}
+  #
+  # {% unless cond %}
   #   puts "Then"
   # {% else %}
   #   puts "Else"
@@ -2381,6 +2393,10 @@ module Crystal::Macros
 
     # The `else` branch of the `if`.
     def else : ASTNode
+    end
+
+    # Returns `true` if this node represents an `unless` conditional, otherwise returns `false`.
+    def is_unless? : BoolLiteral
     end
   end
 

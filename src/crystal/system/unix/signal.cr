@@ -32,7 +32,7 @@ module Crystal::System::Signal
           action.sa_flags = LibC::SA_RESTART
 
           action.sa_sigaction = LibC::SigactionHandlerT.new do |value, _, _|
-            writer.write_bytes(value) unless writer.closed?
+            FileDescriptor.write_fully(writer.fd, pointerof(value)) unless writer.closed?
           end
           LibC.sigemptyset(pointerof(action.@sa_mask))
           LibC.sigaction(signal, pointerof(action), nil)
@@ -82,7 +82,7 @@ module Crystal::System::Signal
   end
 
   private def self.start_loop
-    spawn(name: "Signal Loop") do
+    spawn(name: "signal-loop") do
       loop do
         value = reader.read_bytes(Int32)
       rescue IO::Error
@@ -111,7 +111,7 @@ module Crystal::System::Signal
   # descriptors of the parent process and send it received signals.
   def self.after_fork
     @@pipe.each do |pipe_io|
-      Crystal::EventLoop.current.remove(pipe_io)
+      Crystal::EventLoop.remove(pipe_io)
       pipe_io.file_descriptor_close { }
     end
   ensure
@@ -183,8 +183,8 @@ module Crystal::System::Signal
 
     is_stack_overflow =
       begin
-        stack_top = Pointer(Void).new(::Fiber.current.@stack.address - 4096)
-        stack_bottom = ::Fiber.current.@stack_bottom
+        stack_top = ::Fiber.current.@stack.pointer - 4096
+        stack_bottom = ::Fiber.current.@stack.bottom
         stack_top <= addr < stack_bottom
       rescue e
         Crystal::System.print_error "Error while trying to determine if a stack overflow has occurred. Probable memory corruption\n"

@@ -1,5 +1,7 @@
 require "crystal/system/thread_linked_list"
+require "crystal/print_buffered"
 require "./fiber/context"
+require "./fiber/stack"
 
 # :nodoc:
 @[NoInline]
@@ -43,16 +45,23 @@ end
 # notifications that IO is ready or a timeout reached. When a fiber can be woken,
 # the event loop enqueues it in the scheduler
 class Fiber
+  @@fibers = uninitialized Thread::LinkedList(Fiber)
+
+  protected def self.fibers : Thread::LinkedList(Fiber)
+    @@fibers
+  end
+
   # :nodoc:
-  protected class_getter(fibers) { Thread::LinkedList(Fiber).new }
+  def self.init : Nil
+    @@fibers = Thread::LinkedList(Fiber).new
+  end
 
   @context : Context
-  @stack : Void*
+  @stack : Stack
   @resume_event : Crystal::EventLoop::Event?
   @timeout_event : Crystal::EventLoop::Event?
   # :nodoc:
   property timeout_select_action : Channel::TimeoutAction?
-  protected property stack_bottom : Void*
 
   # The name of the fiber, used as internal reference.
   property name : String?
@@ -78,48 +87,40 @@ class Fiber
     @@fibers.try(&.unsafe_each { |fiber| yield fiber })
   end
 
+  # :nodoc:
+  def self.each(&)
+    fibers.each { |fiber| yield fiber }
+  end
+
   # Creates a new `Fiber` instance.
   #
   # When the fiber is executed, it runs *proc* in its context.
   #
   # *name* is an optional and used only as an internal reference.
-  def initialize(@name : String? = nil, &@proc : ->)
-    @context = Context.new
-    @stack, @stack_bottom =
+  def self.new(name : String? = nil, &proc : ->)
+    stack =
       {% if flag?(:interpreted) %}
-        {Pointer(Void).null, Pointer(Void).null}
+        # the interpreter is managing the stacks
+        Stack.new(Pointer(Void).null, Pointer(Void).null)
       {% else %}
         Crystal::Scheduler.stack_pool.checkout
       {% end %}
+    new(name, stack, &proc)
+  end
+
+  # :nodoc:
+  def initialize(@name : String?, @stack : Stack, &@proc : ->)
+    @context = Context.new
 
     fiber_main = ->(f : Fiber) { f.run }
-
-    # FIXME: This line shouldn't be necessary (#7975)
-    stack_ptr = nil
-    {% if flag?(:win32) %}
-      # align stack bottom to 16 bytes
-      @stack_bottom = Pointer(Void).new(@stack_bottom.address & ~0x0f_u64)
-
-      # It's the caller's responsibility to allocate 32 bytes of "shadow space" on the stack right
-      # before calling the function (regardless of the actual number of parameters used)
-
-      stack_ptr = @stack_bottom - sizeof(Void*) * 6
-    {% else %}
-      # point to first addressable pointer on the stack (@stack_bottom points past
-      # the stack because the stack grows down):
-      stack_ptr = @stack_bottom - sizeof(Void*)
-    {% end %}
-
-    # align the stack pointer to 16 bytes:
-    stack_ptr = Pointer(Void*).new(stack_ptr.address & ~0x0f_u64)
-
+    stack_ptr = @stack.first_addressable_pointer
     makecontext(stack_ptr, fiber_main)
 
     Fiber.fibers.push(self)
   end
 
   # :nodoc:
-  def initialize(@stack : Void*, thread)
+  def initialize(stack : Void*, thread)
     @proc = Proc(Void).new { }
 
     # TODO: should creating a new context for the main fiber also be platform specific?
@@ -131,7 +132,10 @@ class Fiber
       {% else %}
         Context.new(_fiber_get_stack_top)
       {% end %}
-    thread.gc_thread_handler, @stack_bottom = GC.current_thread_stack_bottom
+
+    thread.gc_thread_handler, stack_bottom = GC.current_thread_stack_bottom
+    @stack = Stack.new(stack, stack_bottom)
+
     @name = "main"
     {% if flag?(:preview_mt) %} @current_thread.set(thread) {% end %}
     Fiber.fibers.push(self)
@@ -142,21 +146,11 @@ class Fiber
     GC.unlock_read
     @proc.call
   rescue ex
-    io = {% if flag?(:preview_mt) %}
-           IO::Memory.new(4096) # PIPE_BUF
-         {% else %}
-           STDERR
-         {% end %}
     if name = @name
-      io << "Unhandled exception in spawn(name: " << name << "): "
+      Crystal.print_buffered("Unhandled exception in spawn(name: %s)", name, exception: ex, to: STDERR)
     else
-      io << "Unhandled exception in spawn: "
+      Crystal.print_buffered("Unhandled exception in spawn", exception: ex, to: STDERR)
     end
-    ex.inspect_with_backtrace(io)
-    {% if flag?(:preview_mt) %}
-      STDERR.write(io.to_slice)
-    {% end %}
-    STDERR.flush
   ensure
     # Remove the current fiber from the linked list
     Fiber.inactive(self)
@@ -165,6 +159,10 @@ class Fiber
     @resume_event.try &.free
     @timeout_event.try &.free
     @timeout_select_action = nil
+
+    # Additional cleanup (avoid stale references)
+    @exec_recursive_hash = nil
+    @exec_recursive_clone_hash = nil
 
     @alive = false
     {% unless flag?(:interpreted) %}
@@ -321,7 +319,7 @@ class Fiber
   # :nodoc:
   def push_gc_roots : Nil
     # Push the used section of the stack
-    GC.push_stack @context.stack_top, @stack_bottom
+    GC.push_stack @context.stack_top, @stack.bottom
   end
 
   {% if flag?(:preview_mt) %}
@@ -335,4 +333,18 @@ class Fiber
       @current_thread.lazy_get
     end
   {% end %}
+
+  # :nodoc:
+  #
+  # See `Reference#exec_recursive` for details.
+  def exec_recursive_hash
+    @exec_recursive_hash ||= Hash({UInt64, Symbol}, Nil).new
+  end
+
+  # :nodoc:
+  #
+  # See `Reference#exec_recursive_clone` for details.
+  def exec_recursive_clone_hash
+    @exec_recursive_clone_hash ||= Hash(UInt64, UInt64).new
+  end
 end

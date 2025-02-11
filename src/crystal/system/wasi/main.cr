@@ -27,7 +27,8 @@ fun _start
   LibWasi.proc_exit(status) if status != 0
 end
 
-# `__main_argc_argv` is called by wasi-libc's `__main_void` with the program arguments.
+# `__main_argc_argv` is called by wasi-libc's `__main_void` with the program
+# arguments.
 fun __main_argc_argv(argc : Int32, argv : UInt8**) : Int32
   main(argc, argv)
 end

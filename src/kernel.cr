@@ -617,19 +617,6 @@ end
   {% end %}
 {% end %}
 
-# This is a temporary workaround to ensure there is always something in the IOCP
-# event loop being awaited, since both the interrupt loop and the fiber stack
-# pool collector are disabled in interpreted code. Without this, asynchronous
-# code that bypasses `Crystal::IOCP::OverlappedOperation` does not currently
-# work, see https://github.com/crystal-lang/crystal/pull/14949#issuecomment-2328314463
-{% if flag?(:interpreted) && flag?(:win32) %}
-  spawn(name: "Interpreter idle loop") do
-    while true
-      sleep 1.day
-    end
-  end
-{% end %}
-
 {% if flag?(:interpreted) && flag?(:unix) && Crystal::Interpreter.has_method?(:signal_descriptor) %}
   Crystal::System::Signal.setup_default_handlers
 {% end %}

@@ -456,6 +456,10 @@ end
       Socket::UNIXAddress.new("some_path").hash.should_not eq Socket::UNIXAddress.new("other_path").hash
     end
 
+    it "accepts `Path` input" do
+      Socket::UNIXAddress.new(Path.new("some_path")).should eq Socket::UNIXAddress.new("some_path")
+    end
+
     describe ".parse" do
       it "parses relative" do
         address = Socket::UNIXAddress.parse "unix://foo.sock"

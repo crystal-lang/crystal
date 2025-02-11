@@ -204,6 +204,8 @@ module Crystal
 
     it_parses "a = 1", Assign.new("a".var, 1.int32)
     it_parses "a = b = 2", Assign.new("a".var, Assign.new("b".var, 2.int32))
+    it_parses "a[] = 1", Call.new("a".call, "[]=", 1.int32)
+    it_parses "a.[] = 1", Call.new("a".call, "[]=", 1.int32)
 
     it_parses "a, b = 1, 2", MultiAssign.new(["a".var, "b".var] of ASTNode, [1.int32, 2.int32] of ASTNode)
     it_parses "a, b = 1", MultiAssign.new(["a".var, "b".var] of ASTNode, [1.int32] of ASTNode)
@@ -275,6 +277,10 @@ module Crystal
     assert_syntax_error "a {} += 1"
     assert_syntax_error "a.b() += 1"
     assert_syntax_error "a.[]() += 1"
+
+    assert_syntax_error "a.[] 0 = 1"
+    assert_syntax_error "a.[] 0 += 1"
+    assert_syntax_error "a b: 0 = 1"
 
     it_parses "def foo\n1\nend", Def.new("foo", body: 1.int32)
     it_parses "def downto(n)\n1\nend", Def.new("downto", ["n".arg], 1.int32)
@@ -524,11 +530,15 @@ module Crystal
     it_parses "foo &.+(2)", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "+", 2.int32)))
     it_parses "foo &.bar.baz", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Call.new(Var.new("__arg0"), "bar"), "baz")))
     it_parses "foo(&.bar.baz)", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Call.new(Var.new("__arg0"), "bar"), "baz")))
+    it_parses "foo &.block[]", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Call.new(Var.new("__arg0"), "block"), "[]")))
     it_parses "foo &.block[0]", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Call.new(Var.new("__arg0"), "block"), "[]", 0.int32)))
     it_parses "foo &.block=(0)", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "block=", 0.int32)))
     it_parses "foo &.block = 0", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "block=", 0.int32)))
+    it_parses "foo &.block[] = 1", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Call.new(Var.new("__arg0"), "block"), "[]=", 1.int32)))
     it_parses "foo &.block[0] = 1", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Call.new(Var.new("__arg0"), "block"), "[]=", 0.int32, 1.int32)))
+    it_parses "foo &.[]", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "[]")))
     it_parses "foo &.[0]", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "[]", 0.int32)))
+    it_parses "foo &.[] = 1", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "[]=", 1.int32)))
     it_parses "foo &.[0] = 1", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "[]=", 0.int32, 1.int32)))
     it_parses "foo(&.is_a?(T))", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], IsA.new(Var.new("__arg0"), "T".path)))
     it_parses "foo(&.!)", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Not.new(Var.new("__arg0"))))
@@ -1146,7 +1156,7 @@ module Crystal
     it_parses "macro foo;bar{% if x %}body{% else %}body2{%end%}baz;end", Macro.new("foo", [] of Arg, Expressions.from(["bar".macro_literal, MacroIf.new("x".var, "body".macro_literal, "body2".macro_literal), "baz;".macro_literal] of ASTNode))
     it_parses "macro foo;bar{% if x %}body{% elsif y %}body2{%end%}baz;end", Macro.new("foo", [] of Arg, Expressions.from(["bar".macro_literal, MacroIf.new("x".var, "body".macro_literal, MacroIf.new("y".var, "body2".macro_literal)), "baz;".macro_literal] of ASTNode))
     it_parses "macro foo;bar{% if x %}body{% elsif y %}body2{% else %}body3{%end%}baz;end", Macro.new("foo", [] of Arg, Expressions.from(["bar".macro_literal, MacroIf.new("x".var, "body".macro_literal, MacroIf.new("y".var, "body2".macro_literal, "body3".macro_literal)), "baz;".macro_literal] of ASTNode))
-    it_parses "macro foo;bar{% unless x %}body{% end %}baz;end", Macro.new("foo", [] of Arg, Expressions.from(["bar".macro_literal, MacroIf.new("x".var, Nop.new, "body".macro_literal), "baz;".macro_literal] of ASTNode))
+    it_parses "macro foo;bar{% unless x %}body{% end %}baz;end", Macro.new("foo", [] of Arg, Expressions.from(["bar".macro_literal, MacroIf.new("x".var, Nop.new, "body".macro_literal, is_unless: true), "baz;".macro_literal] of ASTNode))
 
     it_parses "macro foo;bar{% for x in y %}\\  \n   body{% end %}baz;end", Macro.new("foo", [] of Arg, Expressions.from(["bar".macro_literal, MacroFor.new(["x".var], "y".var, "body".macro_literal), "baz;".macro_literal] of ASTNode))
     it_parses "macro foo;bar{% for x in y %}\\  \n   body{% end %}\\   baz;end", Macro.new("foo", [] of Arg, Expressions.from(["bar".macro_literal, MacroFor.new(["x".var], "y".var, "body".macro_literal), "baz;".macro_literal] of ASTNode))
@@ -2226,6 +2236,31 @@ module Crystal
 
     assert_syntax_error "lib Foo%end", %(unexpected token: "%")
 
+    assert_syntax_error "foo.[]? = 1"
+    assert_syntax_error "foo.[]? += 1"
+    assert_syntax_error "foo[0]? = 1"
+    assert_syntax_error "foo[0]? += 1"
+    assert_syntax_error "foo.[0]? = 1"
+    assert_syntax_error "foo.[0]? += 1"
+    assert_syntax_error "foo &.[0]? = 1"
+    assert_syntax_error "foo &.[0]? += 1"
+
+    assert_syntax_error "foo &.[]?=(1)"
+    assert_syntax_error "foo &.[]? = 1"
+    assert_syntax_error "foo &.[]? 0 =(1)"
+    assert_syntax_error "foo &.[]? 0 = 1"
+    assert_syntax_error "foo &.[]?(0)=(1)"
+    assert_syntax_error "foo &.[]?(0) = 1"
+    assert_syntax_error "foo &.[] 0 =(1)"
+    assert_syntax_error "foo &.[] 0 = 1"
+    assert_syntax_error "foo &.[](0)=(1)"
+    assert_syntax_error "foo &.[](0) = 1"
+
+    assert_syntax_error "foo &.bar.[] 0 =(1)"
+    assert_syntax_error "foo &.bar.[] 0 = 1"
+    assert_syntax_error "foo &.bar.[](0)=(1)"
+    assert_syntax_error "foo &.bar.[](0) = 1"
+
     describe "end locations" do
       assert_end_location "nil"
       assert_end_location "false"
@@ -3020,6 +3055,18 @@ module Crystal
       source = "@[::Foo]"
       node = Parser.parse(source).as(Annotation).path
       node_source(source, node).should eq("::Foo")
+    end
+
+    it "sets args_in_brackets to false for `a.b`" do
+      parser = Parser.new("a.b")
+      node = parser.parse.as(Call)
+      node.args_in_brackets?.should be_false
+    end
+
+    it "sets args_in_brackets to true for `a[b]`" do
+      parser = Parser.new("a[b]")
+      node = parser.parse.as(Call)
+      node.args_in_brackets?.should be_true
     end
   end
 end

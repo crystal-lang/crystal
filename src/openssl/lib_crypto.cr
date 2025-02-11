@@ -246,14 +246,14 @@ lib LibCrypto
     fun evp_cipher_block_size = EVP_CIPHER_get_block_size(cipher : EVP_CIPHER) : Int32
     fun evp_cipher_key_length = EVP_CIPHER_get_key_length(cipher : EVP_CIPHER) : Int32
     fun evp_cipher_iv_length = EVP_CIPHER_get_iv_length(cipher : EVP_CIPHER) : Int32
-    fun evp_cipher_flags = EVP_CIPHER_get_flags(ctx : EVP_CIPHER_CTX) : CipherFlags
+    fun evp_cipher_flags = EVP_CIPHER_get_flags(cipher : EVP_CIPHER) : CipherFlags
   {% else %}
     fun evp_cipher_name = EVP_CIPHER_name(cipher : EVP_CIPHER) : UInt8*
     fun evp_cipher_nid = EVP_CIPHER_nid(cipher : EVP_CIPHER) : Int32
     fun evp_cipher_block_size = EVP_CIPHER_block_size(cipher : EVP_CIPHER) : Int32
     fun evp_cipher_key_length = EVP_CIPHER_key_length(cipher : EVP_CIPHER) : Int32
     fun evp_cipher_iv_length = EVP_CIPHER_iv_length(cipher : EVP_CIPHER) : Int32
-    fun evp_cipher_flags = EVP_CIPHER_flags(ctx : EVP_CIPHER_CTX) : CipherFlags
+    fun evp_cipher_flags = EVP_CIPHER_flags(cipher : EVP_CIPHER) : CipherFlags
   {% end %}
 
   fun evp_cipher_ctx_new = EVP_CIPHER_CTX_new : EVP_CIPHER_CTX
