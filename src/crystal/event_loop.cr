@@ -58,7 +58,7 @@ abstract class Crystal::EventLoop
     # Same as `#run` but collects runnable fibers into *queue* instead of
     # enqueueing in parallel, so the caller is responsible and in control for
     # when and how the fibers will be enqueued.
-    abstract def run(queue : Fiber::Queue*, blocking : Bool) : Nil
+    abstract def run(queue : Fiber::List*, blocking : Bool) : Nil
   {% end %}
 
   # Tells a blocking run loop to no longer wait for events to activate. It may

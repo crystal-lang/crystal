@@ -69,7 +69,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
 
   {% if flag?(:execution_context) %}
     # thread unsafe
-    def run(queue : Fiber::Queue*, blocking : Bool) : Nil
+    def run(queue : Fiber::List*, blocking : Bool) : Nil
       run_impl(blocking) { |fiber| queue.value.push(fiber) }
     end
   {% end %}

@@ -126,7 +126,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
 
   {% if flag?(:execution_context) %}
     # thread unsafe
-    def run(queue : Fiber::Queue*, blocking : Bool) : Nil
+    def run(queue : Fiber::List*, blocking : Bool) : Nil
       system_run(blocking) { |fiber| queue.value.push(fiber) }
     end
   {% end %}
