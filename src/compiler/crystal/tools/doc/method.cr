@@ -152,7 +152,8 @@ class Crystal::Doc::Method
   end
 
   def real_name
-    if (real_name = @def.as?(External).try(&.real_name)) && (real_name != d.name)
+    a_def = @def.as?(External)
+    if a_def && (real_name = (a_def.real_name)) && (real_name != a_def.name)
       " = #{real_name}"
     end
   end
