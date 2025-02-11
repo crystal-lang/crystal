@@ -3001,12 +3001,14 @@ module Crystal
           a_else = parse_expressions
           skip_statement_end
           check_ident :end
+          end_location = token_end_location
           next_token
           break
         when Keyword::END
           if whens.empty?
             unexpected_token "expecting when, else or end"
           end
+          end_location = token_end_location
           next_token
           break
         else
@@ -3014,7 +3016,7 @@ module Crystal
         end
       end
 
-      Select.new(whens, a_else)
+      Select.new(whens, a_else).at_end(end_location)
     end
 
     def valid_select_when?(node)
