@@ -1,4 +1,5 @@
 require "crystal/system/thread_linked_list"
+require "crystal/print_buffered"
 require "./fiber/context"
 require "./fiber/stack"
 
@@ -44,8 +45,16 @@ end
 # notifications that IO is ready or a timeout reached. When a fiber can be woken,
 # the event loop enqueues it in the scheduler
 class Fiber
+  @@fibers = uninitialized Thread::LinkedList(Fiber)
+
+  protected def self.fibers : Thread::LinkedList(Fiber)
+    @@fibers
+  end
+
   # :nodoc:
-  protected class_getter(fibers) { Thread::LinkedList(Fiber).new }
+  def self.init : Nil
+    @@fibers = Thread::LinkedList(Fiber).new
+  end
 
   @context : Context
   @stack : Stack
@@ -140,21 +149,11 @@ class Fiber
     GC.unlock_read
     @proc.call
   rescue ex
-    io = {% if flag?(:preview_mt) %}
-           IO::Memory.new(4096) # PIPE_BUF
-         {% else %}
-           STDERR
-         {% end %}
     if name = @name
-      io << "Unhandled exception in spawn(name: " << name << "): "
+      Crystal.print_buffered("Unhandled exception in spawn(name: %s)", name, exception: ex, to: STDERR)
     else
-      io << "Unhandled exception in spawn: "
+      Crystal.print_buffered("Unhandled exception in spawn", exception: ex, to: STDERR)
     end
-    ex.inspect_with_backtrace(io)
-    {% if flag?(:preview_mt) %}
-      STDERR.write(io.to_slice)
-    {% end %}
-    STDERR.flush
   ensure
     # Remove the current fiber from the linked list
     Fiber.inactive(self)
@@ -163,6 +162,10 @@ class Fiber
     @resume_event.try &.free
     @timeout_event.try &.free
     @timeout_select_action = nil
+
+    # Additional cleanup (avoid stale references)
+    @exec_recursive_hash = nil
+    @exec_recursive_clone_hash = nil
 
     @alive = false
     {% unless flag?(:interpreted) %}
@@ -333,4 +336,18 @@ class Fiber
       @current_thread.lazy_get
     end
   {% end %}
+
+  # :nodoc:
+  #
+  # See `Reference#exec_recursive` for details.
+  def exec_recursive_hash
+    @exec_recursive_hash ||= Hash({UInt64, Symbol}, Nil).new
+  end
+
+  # :nodoc:
+  #
+  # See `Reference#exec_recursive_clone` for details.
+  def exec_recursive_clone_hash
+    @exec_recursive_clone_hash ||= Hash(UInt64, UInt64).new
+  end
 end

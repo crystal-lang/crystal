@@ -53,4 +53,5 @@ lib LibC
   fun mkdir(__path : Char*, __mode : ModeT) : Int
   fun stat(__path : Char*, __buf : Stat*) : Int
   fun umask(__mask : ModeT) : ModeT
+  fun utimensat(fd : Int, path : Char*, times : Timespec[2], flag : Int) : Int
 end

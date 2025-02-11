@@ -29,7 +29,7 @@ jobs:
       - name: Install Crystal
         uses: crystal-lang/install-crystal@v1
         with:
-          crystal: "1.15.0"
+          crystal: "1.15.1"
 
       - name: Cross-compile Crystal
         run: make && make -B target=x86_64-windows-gnu release=1 interpreter=1
@@ -60,6 +60,7 @@ jobs:
             mingw-w64-ucrt-x86_64-zlib
             mingw-w64-ucrt-x86_64-llvm
             mingw-w64-ucrt-x86_64-libffi
+            mingw-w64-ucrt-x86_64-libyaml
 
       - name: Disable CRLF line ending substitution
         run: |
@@ -86,6 +87,23 @@ jobs:
         shell: msys2 {0}
         run: |
           make install install_dlls deref_symlinks=1 PREFIX="$(pwd)/crystal"
+
+      - name: Download shards release
+        uses: actions/checkout@v4
+        with:
+          repository: crystal-lang/shards
+          ref: v0.19.0
+          path: shards
+
+      - name: Build shards release
+        shell: msys2 {0}
+        working-directory: ./shards
+        run: make CRYSTAL=$(pwd)/../crystal/bin/crystal SHARDS=false release=1
+
+      - name: Package Shards
+        shell: msys2 {0}
+        run: |
+          make install PREFIX="$(pwd)/../crystal"
 
       - name: Upload Crystal executable
         uses: actions/upload-artifact@v4
