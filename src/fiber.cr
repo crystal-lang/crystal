@@ -115,11 +115,11 @@ class Fiber
       {% else %}
         Crystal::Scheduler.stack_pool.checkout
       {% end %}
-    new(name, stack, &proc)
+    new(name, stack, {% if flag?(:execution_context) %}execution_context,{% end %} &proc)
   end
 
   # :nodoc:
-  def initialize(@name : String?, @stack : Stack, {% if flag?(:execution_context) %}execution_context : ExecutionContext = ExecutionContext.current,{% end %} &@proc : ->)
+  def initialize(@name : String?, @stack : Stack, {% if flag?(:execution_context) %}@execution_context : ExecutionContext = ExecutionContext.current,{% end %} &@proc : ->)
     @context = Context.new
 
     fiber_main = ->(f : Fiber) { f.run }
