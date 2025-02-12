@@ -32,12 +32,12 @@ name: Smoke tests
 on:
   push:
     paths:
-      - 'src/lib_c/*{bsd,i386,android,solaris,dragonfly}*/**'
+      - 'src/lib_c/**'
       - 'src/crystal/system/**'
       - '.github/workflows/smoke.yml'
   pull_request:
     branches:
-      - 'src/lib_c/*{bsd,i386,android,solaris,dragonfly}*/**'
+      - 'src/lib_c/**'
       - 'src/crystal/system/**'
       - '.github/workflows/smoke.yml'
   schedule:
