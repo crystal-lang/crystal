@@ -1,6 +1,23 @@
 name: Regex Engine CI
 
-on: [push, pull_request]
+on:
+  push:
+    paths:
+      - 'src/regex.cr'
+      - 'src/regex/**'
+      - 'spec/std/regex_spec.cr'
+      - 'spec/std/regex/**'
+      - '.github/workflows/regex-engine.yml'
+  pull_request:
+    paths:
+      - 'src/regex.cr'
+      - 'src/regex/**'
+      - 'spec/std/regex_spec.cr'
+      - 'spec/std/regex/**'
+      - '.github/workflows/regex-engine.yml'
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
 
 permissions: {}
 
