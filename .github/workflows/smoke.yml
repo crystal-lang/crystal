@@ -41,7 +41,7 @@ on:
       - 'src/crystal/system/**'
       - '.github/workflows/smoke.yml'
   schedule:
-  - cron: '0 3 * * *'
+    - cron: '0 3 * * *'
   workflow_dispatch:
 
 permissions: {}
