@@ -151,7 +151,7 @@ module Crystal
       #
       # and in this case the parser has no idea about this, so the only
       # solution is to do it now.
-      if value = interpret_top_level_call?(Call.new(nil, node.name))
+      if value = interpret_top_level_call?(Call.new(node.name))
         @last = value
         return false
       end
