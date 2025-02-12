@@ -14,7 +14,7 @@ on:
       - 'spec/llvm-ir/**'
       - '.github/workflows/llvm.yml'
   schedule:
-  - cron: '0 3 * * *'
+    - cron: '0 3 * * *'
   workflow_dispatch:
 
 permissions: {}
