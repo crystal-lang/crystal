@@ -111,6 +111,8 @@ module LLVM
       init_webassembly
     {% elsif flag?(:avr) %}
       init_avr
+    {% else %}
+      {% raise "Unsupported platform" %}
     {% end %}
   end
 
