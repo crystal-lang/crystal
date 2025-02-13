@@ -81,6 +81,10 @@ class Crystal::Doc::Type
     @type.abstract?
   end
 
+  def visibility
+    @type.private? ? "private" : nil
+  end
+
   def parents_of?(type)
     return false unless type
 
@@ -181,7 +185,7 @@ class Crystal::Doc::Type
         defs = [] of Method
         @type.defs.try &.each do |def_name, defs_with_metadata|
           defs_with_metadata.each do |def_with_metadata|
-            next unless def_with_metadata.def.visibility.public?
+            next if !def_with_metadata.def.visibility.public? && !showdoc?(def_with_metadata.def)
             next unless @generator.must_include? def_with_metadata.def
 
             defs << method(def_with_metadata.def, false)
@@ -190,6 +194,10 @@ class Crystal::Doc::Type
         defs.sort_by! { |x| sort_order(x) }
       end
     end
+  end
+
+  private def showdoc?(adef)
+    @generator.showdoc?(adef.doc.try &.strip)
   end
 
   private def sort_order(item)
@@ -205,7 +213,7 @@ class Crystal::Doc::Type
       @type.metaclass.defs.try &.each_value do |defs_with_metadata|
         defs_with_metadata.each do |def_with_metadata|
           a_def = def_with_metadata.def
-          next unless a_def.visibility.public?
+          next if !def_with_metadata.def.visibility.public? && !showdoc?(def_with_metadata.def)
 
           body = a_def.body
 
@@ -236,7 +244,9 @@ class Crystal::Doc::Type
       macros = [] of Macro
       @type.metaclass.macros.try &.each_value do |the_macros|
         the_macros.each do |a_macro|
-          if a_macro.visibility.public? && @generator.must_include? a_macro
+          next if !a_macro.visibility.public? && !showdoc?(a_macro)
+
+          if @generator.must_include? a_macro
             macros << self.macro(a_macro)
           end
         end
