@@ -1,7 +1,4 @@
 # Environment configuration
-/.env
-/.pre-commit-config.yaml
-/.vscode/
 /Makefile.local
 /Makefile.win.local
 
