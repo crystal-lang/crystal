@@ -262,7 +262,7 @@ man/crystal.1: doc/man/crystal.adoc
 .PHONY: clean
 clean: clean_crystal ## Clean up built directories and files
 	rm -rf $(LLVM_EXT_OBJ)
-	rm -rf man/*.gz
+	rm -rf man/
 
 .PHONY: clean_crystal
 clean_crystal: ## Clean up crystal built files
