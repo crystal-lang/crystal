@@ -3,7 +3,7 @@
 class Crystal::Command
   private def eval
     compiler = new_compiler
-    program_source = ""
+    program_source = nil
     program_args = [] of String
 
     parse_with_crystal_opts do |opts|
