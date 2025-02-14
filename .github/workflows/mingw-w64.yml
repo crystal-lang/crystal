@@ -25,6 +25,7 @@ jobs:
             git
             make
             mingw-w64-ucrt-x86_64-pkgconf
+            mingw-w64-ucrt-x86_64-llvm
             mingw-w64-ucrt-x86_64-crystal
 
       - name: Disable CRLF line ending substitution
@@ -81,6 +82,7 @@ jobs:
             git
             make
             mingw-w64-ucrt-x86_64-pkgconf
+            mingw-w64-ucrt-x86_64-llvm
             mingw-w64-ucrt-x86_64-crystal
 
       - name: Disable CRLF line ending substitution
@@ -109,6 +111,7 @@ jobs:
             git
             make
             mingw-w64-ucrt-x86_64-pkgconf
+            mingw-w64-ucrt-x86_64-llvm
             mingw-w64-ucrt-x86_64-crystal
 
       - name: Disable CRLF line ending substitution
