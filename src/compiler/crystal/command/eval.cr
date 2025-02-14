@@ -3,23 +3,21 @@
 class Crystal::Command
   private def eval
     compiler = new_compiler
+    program_source = ""
+    program_args = [] of String
+
     parse_with_crystal_opts do |opts|
       opts.banner = "Usage: crystal eval [options] [source]\n\nOptions:"
       setup_simple_compiler_options compiler, opts
+
+      opts.unknown_args do |before_dash, after_dash|
+        program_source = before_dash.join " "
+        program_args = after_dash
+      end
     end
 
-    if options.empty?
+    if program_source.empty?
       program_source = STDIN.gets_to_end
-      program_args = [] of String
-    else
-      double_dash_index = options.index("--")
-      if double_dash_index
-        program_source = options[0...double_dash_index].join " "
-        program_args = options[double_dash_index + 1..-1]
-      else
-        program_source = options.join " "
-        program_args = [] of String
-      end
     end
 
     sources = [Compiler::Source.new("eval", program_source)]
