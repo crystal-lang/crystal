@@ -3,7 +3,7 @@
 class Crystal::Command
   private def eval
     compiler = new_compiler
-    program_source = nil
+    opt_program_source = nil
     program_args = [] of String
 
     parse_with_crystal_opts do |opts|
@@ -11,16 +11,17 @@ class Crystal::Command
       setup_simple_compiler_options compiler, opts
 
       opts.unknown_args do |before_dash, after_dash|
-        program_source = before_dash.join " "
+        opt_program_source = before_dash.join " "
         program_args = after_dash
       end
     end
 
+    program_source = opt_program_source
     if program_source.nil?
       program_source = STDIN.gets_to_end
     end
 
-    sources = [Compiler::Source.new("eval", program_source.not_nil!)]
+    sources = [Compiler::Source.new("eval", program_source)]
 
     output_filename = Crystal.temp_executable "eval"
 
