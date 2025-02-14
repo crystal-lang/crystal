@@ -16,7 +16,7 @@ class Crystal::Command
       end
     end
 
-    if program_source.empty?
+    if program_source.nil?
       program_source = STDIN.gets_to_end
     end
 
