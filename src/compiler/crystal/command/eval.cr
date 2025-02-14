@@ -20,7 +20,7 @@ class Crystal::Command
       program_source = STDIN.gets_to_end
     end
 
-    sources = [Compiler::Source.new("eval", program_source)]
+    sources = [Compiler::Source.new("eval", program_source.not_nil!)]
 
     output_filename = Crystal.temp_executable "eval"
 
