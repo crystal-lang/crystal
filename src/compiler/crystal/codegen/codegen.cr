@@ -2462,7 +2462,7 @@ module Crystal
         global.linkage = LLVM::Linkage::Private
         global.global_constant = true
         global.initializer = llvm_context.const_struct [
-          type_id(@program.string),
+          int32(@program.llvm_id.type_id(@program.string)), # in practice, should always be 1
           int32(str.bytesize),
           int32(str.size),
           llvm_context.const_string(str),
