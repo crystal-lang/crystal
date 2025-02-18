@@ -411,7 +411,16 @@ module Crystal
     end
 
     def define_symbol_table(llvm_mod, llvm_typer)
-      llvm_mod.globals.add llvm_typer.llvm_type(@program.string).array(@symbol_table_values.size), SYMBOL_TABLE_NAME
+      llvm_mod.globals[SYMBOL_TABLE_NAME]? || begin
+        global = llvm_mod.globals.add llvm_typer.llvm_type(@program.string).array(@symbol_table_values.size), SYMBOL_TABLE_NAME
+        if llvm_mod != @main_mod
+          global.linkage = LLVM::Linkage::External
+        elsif @single_module
+          global.linkage = LLVM::Linkage::Internal
+        end
+        global.global_constant = true
+        global
+      end
     end
 
     def define_slice_constant(info : Program::ConstSliceInfo)
