@@ -224,9 +224,9 @@ describe "Code gen: union type" do
 
     str = mod.to_s
     {% if LibLLVM::IS_LT_150 %}
-      str.should contain("store i512 1, i512* %2, align 8")
+      str.should match(/store i512 1, i512\* %\d+, align 8/)
     {% else %}
-      str.should contain("store i512 1, ptr %1, align 8")
+      str.should match(/store i512 1, ptr %\d+, align 8/)
     {% end %}
 
     # an i512 store defaults to 16-byte alignment, which is undefined behavior
