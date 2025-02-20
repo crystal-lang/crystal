@@ -20,7 +20,7 @@ permissions: {}
 jobs:
   shellcheck:
     name: Shellcheck
-    runs-on: ubuntu:24.04
+    runs-on: ubuntu-24.04
     steps:
       - run: shellcheck --version
       - uses: actions/checkout@v4
