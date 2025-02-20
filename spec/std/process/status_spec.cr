@@ -343,6 +343,7 @@ describe Process::Status do
     {% if flag?(:unix) && !flag?(:wasi) %}
       it "with exit signal" do
         Process::Status.new(Signal::HUP.value).description.should eq "Process terminated abnormally"
+        Process::Status.new(Signal::KILL.value).description.should eq "Process terminated abnormally"
         Process::Status.new(Signal::STOP.value).description.should eq "Process received and didn't handle signal STOP"
         last_signal = Signal.values[-1]
         Process::Status.new(last_signal.value).description.should eq "Process received and didn't handle signal #{last_signal}"
