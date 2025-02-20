@@ -68,7 +68,7 @@ class HTTP::StaticFileHandler
 
     file_path = @public_dir.join(expanded_path.to_kind(Path::Kind.native))
     file_info = File.info? file_path
-    is_dir = file_info && file_info.directory?
+    is_dir = @directory_listing && file_info && file_info.directory?
     is_file = file_info && file_info.file?
 
     if request_path != expanded_path || is_dir && !is_dir_path
@@ -85,7 +85,7 @@ class HTTP::StaticFileHandler
 
     context.response.headers["Accept-Ranges"] = "bytes"
 
-    if @directory_listing && is_dir
+    if is_dir
       context.response.content_type = "text/html; charset=utf-8"
       directory_listing(context.response, request_path, file_path)
     elsif is_file

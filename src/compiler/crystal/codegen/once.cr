@@ -5,20 +5,16 @@ class Crystal::CodeGenVisitor
 
   def once_init
     if once_init_fun = typed_fun?(@main_mod, ONCE_INIT)
+      # legacy (kept for backward compatibility): the compiler must save the
+      # state returned by __crystal_once_init
       once_init_fun = check_main_fun ONCE_INIT, once_init_fun
 
-      if once_init_fun.type.return_type.void?
-        call once_init_fun
-      else
-        # legacy (kept for backward compatibility): the compiler must save the
-        # state returned by __crystal_once_init
-        once_state_global = @main_mod.globals.add(once_init_fun.type.return_type, ONCE_STATE)
-        once_state_global.linkage = LLVM::Linkage::Internal if @single_module
-        once_state_global.initializer = once_init_fun.type.return_type.null
+      once_state_global = @main_mod.globals.add(once_init_fun.type.return_type, ONCE_STATE)
+      once_state_global.linkage = LLVM::Linkage::Internal if @single_module
+      once_state_global.initializer = once_init_fun.type.return_type.null
 
-        state = call once_init_fun
-        store state, once_state_global
-      end
+      state = call once_init_fun
+      store state, once_state_global
     end
   end
 
@@ -44,9 +40,6 @@ class Crystal::CodeGenVisitor
       end
 
       state = load(once_state_type, once_state_global)
-      {% if LibLLVM::IS_LT_150 %}
-        flag = bit_cast(flag, @llvm_context.int1.pointer) # cast Int8* to Bool*
-      {% end %}
       args = [state, flag, initializer]
     end
 

@@ -79,10 +79,10 @@ CRYSTAL_BIN := crystal$(EXE)
 
 DESTDIR ?=
 PREFIX ?= /usr/local
-BINDIR ?= $(DESTDIR)$(PREFIX)/bin
-MANDIR ?= $(DESTDIR)$(PREFIX)/share/man
-LIBDIR ?= $(DESTDIR)$(PREFIX)/lib
-DATADIR ?= $(DESTDIR)$(PREFIX)/share/crystal
+BINDIR ?= $(PREFIX)/bin
+MANDIR ?= $(PREFIX)/share/man
+LIBDIR ?= $(PREFIX)/lib
+DATADIR ?= $(PREFIX)/share/crystal
 INSTALL ?= /usr/bin/install
 
 ifeq ($(or $(TERM),$(TERM),dumb),dumb)
@@ -164,15 +164,15 @@ generate_data: ## Run generator scripts for Unicode, SSL config, ...
 
 .PHONY: install
 install: $(O)/$(CRYSTAL_BIN) man/crystal.1.gz ## Install the compiler at DESTDIR
-	$(INSTALL) -d -m 0755 "$(BINDIR)/"
-	$(INSTALL) -m 0755 "$(O)/$(CRYSTAL_BIN)" "$(BINDIR)/$(CRYSTAL_BIN)"
+	$(INSTALL) -d -m 0755 "$(DESTDIR)$(BINDIR)/"
+	$(INSTALL) -m 0755 "$(O)/$(CRYSTAL_BIN)" "$(DESTDIR)$(BINDIR)/$(CRYSTAL_BIN)"
 
-	$(INSTALL) -d -m 0755 $(DATADIR)
-	cp -R -p $(if $(deref_symlinks),-L,-P) src "$(DATADIR)/src"
-	rm -rf "$(DATADIR)/$(LLVM_EXT_OBJ)" # Don't install llvm_ext.o
+	$(INSTALL) -d -m 0755 $(DESTDIR)$(DATADIR)
+	cp -R -p $(if $(deref_symlinks),-L,-P) src "$(DESTDIR)$(DATADIR)/src"
+	rm -rf "$(DESTDIR)$(DATADIR)/$(LLVM_EXT_OBJ)" # Don't install llvm_ext.o
 
-	$(INSTALL) -d -m 0755 "$(MANDIR)/man1/"
-	$(INSTALL) -m 644 man/crystal.1.gz "$(MANDIR)/man1/crystal.1.gz"
+	$(INSTALL) -d -m 0755 "$(DESTDIR)$(MANDIR)/man1/"
+	$(INSTALL) -m 644 man/crystal.1.gz "$(DESTDIR)$(MANDIR)/man1/crystal.1.gz"
 	$(INSTALL) -d -m 0755 "$(DESTDIR)$(PREFIX)/share/licenses/crystal/"
 	$(INSTALL) -m 644 LICENSE "$(DESTDIR)$(PREFIX)/share/licenses/crystal/LICENSE"
 
@@ -186,17 +186,17 @@ install: $(O)/$(CRYSTAL_BIN) man/crystal.1.gz ## Install the compiler at DESTDIR
 ifeq ($(WINDOWS),1)
 .PHONY: install_dlls
 install_dlls: $(O)/$(CRYSTAL_BIN) ## Install the compiler's dependent DLLs at DESTDIR (Windows only)
-	$(INSTALL) -d -m 0755 "$(BINDIR)/"
-	@ldd $(O)/$(CRYSTAL_BIN) | grep -iv ' => /c/windows/system32' | sed 's/.* => //; s/ (.*//' | xargs -t -i $(INSTALL) -m 0755 '{}' "$(BINDIR)/"
+	$(INSTALL) -d -m 0755 "$(DESTDIR)$(BINDIR)/"
+	@ldd $(O)/$(CRYSTAL_BIN) | grep -iv ' => /c/windows/system32' | sed 's/.* => //; s/ (.*//' | xargs -t -i $(INSTALL) -m 0755 '{}' "$(DESTDIR)$(BINDIR)/"
 endif
 
 .PHONY: uninstall
 uninstall: ## Uninstall the compiler from DESTDIR
-	rm -f "$(BINDIR)/$(CRYSTAL_BIN)"
+	rm -f "$(DESTDIR)$(BINDIR)/$(CRYSTAL_BIN)"
 
-	rm -rf "$(DATADIR)/src"
+	rm -rf "$(DESTDIR)$(DATADIR)/src"
 
-	rm -f "$(MANDIR)/man1/crystal.1.gz"
+	rm -f "$(DESTDIR)$(MANDIR)/man1/crystal.1.gz"
 	rm -f "$(DESTDIR)$(PREFIX)/share/licenses/crystal/LICENSE"
 
 	rm -f "$(DESTDIR)$(PREFIX)/share/bash-completion/completions/crystal"
@@ -205,15 +205,15 @@ uninstall: ## Uninstall the compiler from DESTDIR
 
 .PHONY: install_docs
 install_docs: docs ## Install docs at DESTDIR
-	$(INSTALL) -d -m 0755 $(DATADIR)
+	$(INSTALL) -d -m 0755 $(DESTDIR)$(DATADIR)
 
-	cp -R -P -p docs "$(DATADIR)/docs"
-	cp -R -P -p samples "$(DATADIR)/examples"
+	cp -R -P -p docs "$(DESTDIR)$(DATADIR)/docs"
+	cp -R -P -p samples "$(DESTDIR)$(DATADIR)/examples"
 
 .PHONY: uninstall_docs
 uninstall_docs: ## Uninstall docs from DESTDIR
-	rm -rf "$(DATADIR)/docs"
-	rm -rf "$(DATADIR)/examples"
+	rm -rf "$(DESTDIR)$(DATADIR)/docs"
+	rm -rf "$(DESTDIR)$(DATADIR)/examples"
 
 $(O)/all_spec$(EXE): $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	$(call check_llvm_config)
@@ -255,6 +255,9 @@ $(LLVM_EXT_OBJ): $(LLVM_EXT_DIR)/llvm_ext.cc
 
 man/%.gz: man/%
 	gzip -c -9 $< > $@
+
+man/crystal.1: doc/man/crystal.adoc
+	SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) asciidoctor -a crystal_version=$(CRYSTAL_VERSION) $< -b manpage -o $@
 
 .PHONY: clean
 clean: clean_crystal ## Clean up built directories and files

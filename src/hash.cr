@@ -2083,7 +2083,7 @@ class Hash(K, V)
   #
   # The order of the array follows the order the keys were inserted in the Hash.
   def to_a : Array({K, V})
-    to_a(&.itself)
+    super
   end
 
   # Returns an `Array` with the results of running *block* against tuples with key and values

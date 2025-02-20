@@ -1,4 +1,4 @@
-# These jobs are smoke tests for platforms where we don't rund full tests.
+# These jobs are smoke tests for platforms where we don't run full tests.
 # They ensure that std_spec, compiler_spec and the compiler itself at least
 # compile for the target with --cross-compile. But the binaries are not linked
 # and executed. So this does not validate correct behaviour.
@@ -29,7 +29,20 @@
 # Platforms for which we currently run full tests are excluded from this workflow.
 name: Smoke tests
 
-on: [push, pull_request]
+on:
+  push:
+    paths:
+      - 'src/lib_c/**'
+      - 'src/crystal/system/**'
+      - '.github/workflows/smoke.yml'
+  pull_request:
+    branches:
+      - 'src/lib_c/**'
+      - 'src/crystal/system/**'
+      - '.github/workflows/smoke.yml'
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
 
 permissions: {}
 

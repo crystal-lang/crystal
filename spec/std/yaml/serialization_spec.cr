@@ -390,6 +390,18 @@ describe "YAML serialization" do
       Bytes.from_yaml("!!binary aGVsbG8=").should eq("hello".to_slice)
     end
 
+    describe "Union.from_yaml" do
+      it "String priorization" do
+        (Int32 | String).from_yaml(%(42)).should eq 42
+        (Int32 | String).from_yaml(%("42")).should eq "42"
+
+        (String | UInt32).from_yaml(%(42)).should eq 42
+        (String | UInt32).from_yaml(%("42")).should eq "42"
+
+        (Int32 | UInt32).from_yaml(%("42")).should eq 42
+      end
+    end
+
     describe "parse exceptions" do
       it "has correct location when raises in Nil#from_yaml" do
         ex = expect_raises(YAML::ParseException) do

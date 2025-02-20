@@ -23,6 +23,7 @@ LLVM_ALL_TARGETS = %w(
   PowerPC
   RISCV
   Sparc
+  SPIRV
   SystemZ
   VE
   WebAssembly
@@ -32,7 +33,6 @@ LLVM_ALL_TARGETS = %w(
   CSKY
   DirectX
   M68k
-  SPIRV
   Xtensa
 )
 
@@ -73,6 +73,8 @@ begin
   system_libs = %w(psapi shell32 ole32 uuid advapi32)
   # https://github.com/llvm/llvm-project/commit/a5ffabce98a4b2e9d69009fa3e60f2b154100860
   system_libs << "ws2_32" if {major, minor, patch} >= {18, 0, 0}
+  # https://github.com/llvm/llvm-project/commit/cb7690af09b95bb944baf1b5a9ffb18f86c12130
+  system_libs << "ntdll" if {major, minor, patch} >= {19, 0, 0}
 
   puts "#{major}.#{minor}.#{patch}"
   puts targets_built.join(' ')

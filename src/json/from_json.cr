@@ -440,6 +440,28 @@ def Union.new(pull : JSON::PullParser)
   {% end %}
 end
 
+def Union.from_json_object_key?(key : String)
+  {% begin %}
+    # String must come last because any key can be parsed into a String.
+    # So, we give a chance first to other types in the union to be parsed.
+    {% string_type = T.find { |type| type == ::String } %}
+
+    {% for type in T %}
+      {% unless type == string_type %}
+        if result = {{ type }}.from_json_object_key?(key)
+          return result
+        end
+      {% end %}
+    {% end %}
+
+    {% if string_type %}
+      if result = {{ string_type }}.from_json_object_key?(key)
+        return result
+      end
+    {% end %}
+  {% end %}
+end
+
 # Reads a string from JSON parser as a time formatted according to [RFC 3339](https://tools.ietf.org/html/rfc3339)
 # or other variations of [ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf).
 #

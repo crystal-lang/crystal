@@ -298,6 +298,13 @@ def Union.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
     # So, we give a chance first to types in the union to be parsed.
     {% string_type = T.find { |type| type == ::String } %}
 
+    {% if string_type %}
+      if node.as?(YAML::Nodes::Scalar).try(&.style.quoted?)
+        # do prefer String if it's a quoted scalar though
+        return String.new(ctx, node)
+      end
+    {% end %}
+
     {% for type in T %}
       {% unless type == string_type %}
         begin

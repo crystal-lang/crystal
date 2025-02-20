@@ -118,7 +118,9 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
       end
 
       if Errno.value == Errno::EAGAIN
-        target.wait_readable
+        target.evented_wait_readable do
+          raise IO::TimeoutError.new("Read timed out")
+        end
       else
         raise IO::Error.from_errno(errno_msg, target: target)
       end
@@ -136,7 +138,9 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
         end
 
         if Errno.value == Errno::EAGAIN
-          target.wait_writable
+          target.evented_wait_writable do
+            raise IO::TimeoutError.new("Write timed out")
+          end
         else
           raise IO::Error.from_errno(errno_msg, target: target)
         end

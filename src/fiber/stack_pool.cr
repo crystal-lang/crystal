@@ -12,12 +12,12 @@ class Fiber
     # Interpreter stacks grow upwards (pushing values increases the stack
     # pointer value) rather than downwards, so *protect* must be false.
     def initialize(@protect : Bool = true)
-      @deque = Deque(Void*).new
+      @deque = Deque(Stack).new
     end
 
     def finalize
       @deque.each do |stack|
-        Crystal::System::Fiber.free_stack(stack, STACK_SIZE)
+        Crystal::System::Fiber.free_stack(stack.pointer, STACK_SIZE)
       end
     end
 
@@ -26,7 +26,7 @@ class Fiber
     def collect(count = lazy_size // 2) : Nil
       count.times do
         if stack = @deque.shift?
-          Crystal::System::Fiber.free_stack(stack, STACK_SIZE)
+          Crystal::System::Fiber.free_stack(stack.pointer, STACK_SIZE)
         else
           return
         end
@@ -41,18 +41,19 @@ class Fiber
     end
 
     # Removes a stack from the bottom of the pool, or allocates a new one.
-    def checkout : {Void*, Void*}
+    def checkout : Stack
       if stack = @deque.pop?
-        Crystal::System::Fiber.reset_stack(stack, STACK_SIZE, @protect)
+        Crystal::System::Fiber.reset_stack(stack.pointer, STACK_SIZE, @protect)
+        stack
       else
-        stack = Crystal::System::Fiber.allocate_stack(STACK_SIZE, @protect)
+        pointer = Crystal::System::Fiber.allocate_stack(STACK_SIZE, @protect)
+        Stack.new(pointer, pointer + STACK_SIZE, reusable: true)
       end
-      {stack, stack + STACK_SIZE}
     end
 
     # Appends a stack to the bottom of the pool.
-    def release(stack) : Nil
-      @deque.push(stack)
+    def release(stack : Stack) : Nil
+      @deque.push(stack) if stack.reusable?
     end
 
     # Returns the approximated size of the pool. It may be equal or slightly
