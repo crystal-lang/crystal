@@ -124,7 +124,7 @@ enum Process::ExitReason
     in .float_exception?
       "Process terminated because of a floating-point system exception"
     in .signal?
-      Status::SIGNAL_REASON_DESCRIPTION
+      "Process terminated because of an unhandled signal"
     in .unknown?
       "Process terminated abnormally, the cause is unknown"
     end
@@ -411,21 +411,12 @@ class Process::Status
   #
   # `ExitReason#description` provides the specific messages for non-signal exits.
   def description
-    description = exit_reason.description
-
-    if description.same?(SIGNAL_REASON_DESCRIPTION) && (signal = exit_signal?)
-      if signal.kill?
-        "Process was killed"
-      else
-        "Process received and didn't handle signal #{signal}"
-      end
+    if exit_reason.signal? && (signal = exit_signal?)
+      "Process received and didn't handle signal #{signal}"
     else
-      description
+      exit_reason.description
     end
   end
-
-  # :nodoc:
-  SIGNAL_REASON_DESCRIPTION = "Process terminated because of an unhandled signal"
 
   private def stringify_exit_status_windows(io)
     # On Windows large status codes are typically expressed in hexadecimal
