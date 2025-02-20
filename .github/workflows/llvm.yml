@@ -1,6 +1,21 @@
 name: LLVM CI
 
-on: [push, pull_request]
+on:
+  push:
+    paths:
+      - 'src/llvm/**'
+      - 'spec/std/llvm/**'
+      - 'spec/llvm-ir/**'
+      - '.github/workflows/llvm.yml'
+  pull_request:
+    paths:
+      - 'src/llvm/**'
+      - 'spec/std/llvm/**'
+      - 'spec/llvm-ir/**'
+      - '.github/workflows/llvm.yml'
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
 
 permissions: {}
 

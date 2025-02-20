@@ -200,7 +200,7 @@ class Crystal::Def
         end
       end
 
-      call = Call.new(nil, name, new_args).at(self)
+      call = Call.new(name, new_args).at(self)
       call.expansion = true
       body << call
 
