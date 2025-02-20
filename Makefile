@@ -80,9 +80,9 @@ CRYSTAL_BIN := crystal$(EXE)
 DESTDIR ?=
 PREFIX ?= /usr/local
 BINDIR ?= $(PREFIX)/bin
-MANDIR ?= $(DATADIR)/man
 LIBDIR ?= $(PREFIX)/lib
 DATADIR ?= $(PREFIX)/share
+MANDIR ?= $(DATADIR)/man
 INSTALL ?= /usr/bin/install
 
 ifeq ($(or $(TERM),$(TERM),dumb),dumb)
