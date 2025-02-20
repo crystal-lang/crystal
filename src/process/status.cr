@@ -405,8 +405,11 @@ class Process::Status
   # Returns a textual description of this process status.
   #
   # ```
-  # Process::Status.new(0).description                             # => "Process exited normally"
-  # Process.new("sleep", ["10"]).tap(&.terminate).wait.description # => "Process received and didn't handle signal TERM (15)"
+  # Process::Status.new(0).description # => "Process exited normally"
+  # process = Process.new("sleep", ["10"])
+  # process.terminate
+  # process.wait.description
+  # # => "Process received and didn't handle signal TERM (15)"
   # ```
   #
   # `ExitReason#description` provides the specific messages for non-signal exits.
