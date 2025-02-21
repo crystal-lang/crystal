@@ -16,7 +16,6 @@ class URI
       @uri = URI.new
       @input = input.strip.to_unsafe
       @ptr = 0
-      @double_slash_is_authority = true
     end
 
     def c : UInt8
@@ -29,7 +28,6 @@ class URI
     end
 
     def parse_request_target : self
-      @double_slash_is_authority = false
       parse_no_scheme
       self
     end
@@ -37,6 +35,10 @@ class URI
     private def parse_scheme_start
       if alpha?
         parse_scheme
+      elsif c === '/' && @input[@ptr + 1] === '/'
+        @ptr += 1
+        @uri.host = ""
+        parse_authority
       else
         parse_no_scheme
       end
@@ -163,22 +165,10 @@ class URI
       case c
       when '\0'
         nil
-      when '/'
-        parse_relative_slash
       when '?'
         parse_query
       when '#'
         parse_fragment
-      else
-        parse_path
-      end
-    end
-
-    private def parse_relative_slash
-      if @double_slash_is_authority && @input[@ptr + 1] === '/'
-        @ptr += 1
-        @uri.host ||= ""
-        parse_authority
       else
         parse_path
       end
