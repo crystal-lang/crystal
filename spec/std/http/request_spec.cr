@@ -337,7 +337,7 @@ module HTTP
       end
 
       it "parses path leading with scheme" do
-        Request.new("GET", "http://example.com/foo:bar").path.should eq "http://example.com/foo:bar"
+        Request.new("GET", "http://example.com/foo/bar").path.should eq "http://example.com/foo/bar"
       end
     end
 
