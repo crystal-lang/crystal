@@ -322,7 +322,7 @@ class HTTP::Request
   end
 
   private def uri
-    @uri ||= URI::Parser.new(@resource).tap(&.parse_request_target).uri
+    @uri ||= URI::Parser.new(@resource).parse_request_target.uri
   end
 
   private def update_query_params
