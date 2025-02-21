@@ -162,7 +162,7 @@ module Crystal
         new_generic = Generic.new(Path.new(instance_type.name), generic_type_args)
         alloc = Call.new(new_generic, "allocate").at(self)
       else
-        alloc = Call.new(nil, "allocate").at(self)
+        alloc = Call.new("allocate").at(self)
       end
 
       # This creates:
@@ -235,7 +235,7 @@ module Crystal
       #      x
       #    end
       var = Var.new("x").at(loc)
-      alloc = Call.new(nil, "allocate").at(loc)
+      alloc = Call.new("allocate").at(loc)
       assign = Assign.new(var, alloc).at(loc)
 
       call = Call.new(Path.global("GC").at(loc), "add_finalizer", var.clone).at(loc)
