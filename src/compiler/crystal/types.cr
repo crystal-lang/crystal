@@ -2948,6 +2948,12 @@ module Crystal
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
+      if codegen
+        if (namespace = instance_type.namespace).is_a?(FileModule)
+          namespace.to_s_with_options(io, generic_args: false, codegen: codegen)
+          io << "::"
+        end
+      end
       io << @name
     end
 
