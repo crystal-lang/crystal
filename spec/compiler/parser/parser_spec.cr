@@ -637,7 +637,7 @@ module Crystal
               block: Block.new(body: 3.int32)
             ),
             block: Block.new(body: 4.int32))
-          )
+        )
       end
 
       describe "surprise three: arguments affect block binding (#15303)" do
