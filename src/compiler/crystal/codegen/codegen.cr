@@ -2142,7 +2142,7 @@ module Crystal
       printf_args = {printf_args, [] of LLVM::Value} if printf_args.is_a?(String)
       printf_args = {printf_args[0], [] of LLVM::Value} if printf_args.is_a?({String})
       msg, args = printf_args
-      printf("<block: #{insert_block.name || "???"} @ #{Crystal.relative_filename(file)}:#{line}> #{msg}\n", args)
+      printf("<function=#{insert_block.parent.try(&.name) || "???"} block=#{insert_block.name || "???"} source=#{Crystal.relative_filename(file)}:#{line}> #{msg}\n", args)
     end
 
     # :ditto:
