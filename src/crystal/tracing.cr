@@ -82,6 +82,16 @@ module Crystal
           write value.name || '?'
         end
 
+        {% if flag?(:execution_context) %}
+          def write(value : Fiber::ExecutionContext) : Nil
+            write value.name
+          end
+
+          def write(value : Fiber::ExecutionContext::Scheduler) : Nil
+            write value.name
+          end
+        {% end %}
+
         def write(value : Pointer) : Nil
           write "0x"
           write System.to_int_slice(@int_buf.to_slice, value.address, 16, true, 2)
