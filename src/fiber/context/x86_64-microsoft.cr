@@ -6,22 +6,23 @@ class Fiber
     # A great explanation on stack contexts for win32:
     # https://web.archive.org/web/20220527113808/https://cfsamson.gitbook.io/green-threads-explained-in-200-lines-of-rust/supporting-windows
 
-    # 8 registers + 3 qwords for NT_TIB + 1 parameter + 10 128bit XMM registers
-    @context.stack_top = (stack_ptr - (12 + 10*2)).as(Void*)
+    # 4 shadow space + (8 registers + 3 qwords for NT_TIB + 1 parameter) + 10 128bit XMM registers
+    @context.stack_top = (stack_ptr - (4 + 12 + 10*2)).as(Void*)
     @context.resumable = 1
 
     # actual stack top, not including guard pages and reserved pages
     LibC.GetNativeSystemInfo(out system_info)
-    stack_top = @stack_bottom - system_info.dwPageSize
+    stack_top = @stack.bottom - system_info.dwPageSize
 
+    stack_ptr -= 4                    # shadow space (or home space) before return address
     stack_ptr[0] = fiber_main.pointer # %rbx: Initial `resume` will `ret` to this address
     stack_ptr[-1] = self.as(Void*)    # %rcx: puts `self` as first argument for `fiber_main`
 
     # The following three values are stored in the Thread Information Block (NT_TIB)
     # and are used by Windows to track the current stack limits
-    stack_ptr[-2] = @stack        # %gs:0x1478: Win32 DeallocationStack
-    stack_ptr[-3] = stack_top     # %gs:0x10: Stack Limit
-    stack_ptr[-4] = @stack_bottom # %gs:0x08: Stack Base
+    stack_ptr[-2] = @stack.pointer # %gs:0x1478: Win32 DeallocationStack
+    stack_ptr[-3] = stack_top      # %gs:0x10: Stack Limit
+    stack_ptr[-4] = @stack.bottom  # %gs:0x08: Stack Base
   end
 
   # :nodoc:

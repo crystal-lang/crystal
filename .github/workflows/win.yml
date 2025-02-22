@@ -24,7 +24,7 @@ jobs:
         uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
 
       - name: Set up Cygwin
-        uses: cygwin/cygwin-install-action@006ad0b0946ca6d0a3ea2d4437677fa767392401 # v4
+        uses: cygwin/cygwin-install-action@f61179d72284ceddc397ed07ddb444d82bf9e559 # v5
         with:
           packages: make
           install-dir: C:\cygwin64
@@ -103,7 +103,7 @@ jobs:
         uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
 
       - name: Set up Cygwin
-        uses: cygwin/cygwin-install-action@006ad0b0946ca6d0a3ea2d4437677fa767392401 # v4
+        uses: cygwin/cygwin-install-action@f61179d72284ceddc397ed07ddb444d82bf9e559 # v5
         with:
           packages: make
           install-dir: C:\cygwin64

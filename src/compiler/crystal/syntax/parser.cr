@@ -2111,7 +2111,7 @@ module Crystal
 
       case delimiter_state.kind
       when .command?
-        result = Call.new(nil, "`", result).at(location)
+        result = Call.new("`", result).at(location)
       when .regex?
         if result.is_a?(StringLiteral) && (regex_error = Regex.error?(result.value))
           raise "invalid regex: #{regex_error}", location
@@ -4348,7 +4348,7 @@ module Crystal
 
       node =
         if block || block_arg || global
-          call = Call.new(nil, name, (args || [] of ASTNode), block, block_arg, named_args, global)
+          call = Call.new(name, (args || [] of ASTNode), block, block_arg, named_args, global)
           call.name_location = name_location
           call.has_parentheses = has_parentheses
           call
@@ -4358,7 +4358,7 @@ module Crystal
             if maybe_var
               Var.new(name)
             else
-              call = Call.new(nil, name, args, nil, nil, named_args, global)
+              call = Call.new(name, args, nil, nil, named_args, global)
               call.name_location = name_location
               call.has_parentheses = has_parentheses
               call
@@ -4386,7 +4386,7 @@ module Crystal
                 raise "can't use variable name '#{name}' inside assignment to variable '#{name}'", location
               end
 
-              call = Call.new(nil, name, [] of ASTNode, nil, nil, named_args, global)
+              call = Call.new(name, [] of ASTNode, nil, nil, named_args, global)
               call.name_location = name_location
               call.has_parentheses = has_parentheses
               call

@@ -43,7 +43,7 @@ class Crystal::Doc::Method
   # This docs not include the "Description copied from ..." banner
   # in case it's needed.
   def doc
-    doc_info.doc
+    doc_info.doc.try &.strip.lchop(":showdoc:").strip
   end
 
   # Returns the type this method's docs are copied from, but
@@ -132,6 +132,16 @@ class Crystal::Doc::Method
       "."
     else
       "#"
+    end
+  end
+
+  def visibility
+    case @def.visibility
+    in .public?
+    in .protected?
+      "protected"
+    in .private?
+      "private"
     end
   end
 
@@ -323,6 +333,7 @@ class Crystal::Doc::Method
       builder.field "doc", doc unless doc.nil?
       builder.field "summary", formatted_summary unless formatted_summary.nil?
       builder.field "abstract", abstract?
+      builder.field "visibility", visibility if visibility
       builder.field "args", args unless args.empty?
       builder.field "args_string", args_to_s unless args.empty?
       builder.field "args_html", args_to_html unless args.empty?

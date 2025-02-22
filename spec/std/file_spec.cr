@@ -1698,6 +1698,11 @@ describe "File" do
       assert_file_matches "a*", "abc"
       assert_file_matches "a*/b", "abc/b"
       assert_file_matches "*x", "xxx"
+      assert_file_matches "*.x", "a.x"
+      assert_file_matches "a/b/*.x", "a/b/c.x"
+      refute_file_matches "*.x", "a/b/c.x"
+      refute_file_matches "c.x", "a/b/c.x"
+      refute_file_matches "b/*.x", "a/b/c.x"
     end
 
     it "matches multiple expansions" do
@@ -1717,6 +1722,21 @@ describe "File" do
       refute_file_matches "a*/b", "a/c/b"
       refute_file_matches "a*b*c*d*e*/f", "axbxcxdxe/xxx/f"
       refute_file_matches "a*b*c*d*e*/f", "axbxcxdxexxx/fff"
+    end
+
+    it "**" do
+      assert_file_matches "a/b/**", "a/b/c.x"
+      assert_file_matches "a/**", "a/b/c.x"
+      assert_file_matches "a/**/d.x", "a/b/c/d.x"
+      refute_file_matches "a/**b/d.x", "a/bb/c/d.x"
+      refute_file_matches "a/b**/*", "a/bb/c/d.x"
+    end
+
+    it "** bugs (#15319)" do
+      refute_file_matches "a/**/*", "a/b/c/d.x"
+      assert_file_matches "a/b**/d.x", "a/bb/c/d.x"
+      refute_file_matches "**/*.x", "a/b/c.x"
+      assert_file_matches "**.x", "a/b/c.x"
     end
 
     it "** matches path separator" do
