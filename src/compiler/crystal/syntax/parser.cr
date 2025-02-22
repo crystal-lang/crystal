@@ -5637,6 +5637,7 @@ module Crystal
     end
 
     def parse_lib
+      doc = @token.doc
       location = @token.location
       next_token_skip_space_or_newline
 
@@ -5652,6 +5653,7 @@ module Crystal
 
       lib_def = LibDef.new(name, body).at(location).at_end(end_location)
       lib_def.name_location = name_location
+      lib_def.doc = doc
       lib_def
     end
 
@@ -5708,6 +5710,7 @@ module Crystal
         skip_statement_end
         Assign.new(ident, value)
       when .global?
+        doc = @token.doc
         location = @token.location
         name = @token.value.to_s[1..-1]
         next_token_skip_space_or_newline
@@ -5727,6 +5730,7 @@ module Crystal
 
         skip_statement_end
         ExternalVar.new(name, type, real_name)
+          .at(location).tap(&.doc=(doc))
       when .op_lcurly_lcurly?
         parse_percent_macro_expression
       when .op_lcurly_percent?
@@ -5964,6 +5968,7 @@ module Crystal
     end
 
     def parse_type_def
+      doc = @token.doc
       next_token_skip_space_or_newline
       name = check_const
       name_location = @token.location
@@ -5976,10 +5981,13 @@ module Crystal
 
       typedef = TypeDef.new name, type
       typedef.name_location = name_location
+      typedef.doc = doc
+
       typedef
     end
 
     def parse_c_struct_or_union(union : Bool)
+      doc = @token.doc
       location = @token.location
       next_token_skip_space_or_newline
       name = check_const
@@ -5989,7 +5997,9 @@ module Crystal
       end_location = token_end_location
       next_token_skip_space
 
-      CStructOrUnionDef.new(name, Expressions.from(body), union: union).at(location).at_end(end_location)
+      CStructOrUnionDef.new(name, Expressions.from(body), union: union)
+        .at(location).at_end(end_location)
+        .tap(&.doc=(doc))
     end
 
     def parse_c_struct_or_union_body
@@ -6031,6 +6041,7 @@ module Crystal
     end
 
     def parse_c_struct_or_union_fields(exps)
+      doc = @token.doc
       vars = [Var.new(@token.value.to_s).at(@token.location).at_end(token_end_location)]
 
       next_token_skip_space_or_newline
@@ -6049,6 +6060,7 @@ module Crystal
       skip_statement_end
 
       vars.each do |var|
+        var.doc = doc
         exps << TypeDeclaration.new(var, type).at(var).at_end(type)
       end
     end
