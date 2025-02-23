@@ -2012,11 +2012,11 @@ module Crystal
 
     %w(
       begin nil true false yield with abstract
-      def macro require case if unless include
+      def macro require case select if unless include
       extend class struct module enum while until return
       next break lib fun alias pointerof sizeof
       instance_sizeof offsetof typeof private protected asm
-      end do else elsif when rescue ensure
+      end self in do else elsif when rescue ensure
     ).each do |keyword|
       it_parses "#{keyword} : Int32", TypeDeclaration.new(keyword.var, "Int32".path)
       it_parses "property #{keyword} : Int32", Call.new("property", TypeDeclaration.new(keyword.var, "Int32".path))
