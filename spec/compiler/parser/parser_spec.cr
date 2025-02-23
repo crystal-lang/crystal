@@ -677,14 +677,14 @@ module Crystal
       it_parses "f.x &*= 2", OpAssign.new(Call.new("f".call, "x"), "&*", 2.int32)
     end
 
-    %w(/ < <= == != =~ !~ > >= + - * / ~ % & | ^ ** ===).each do |op|
+    ["/", "<", "<=", "==", "!=", "=~", "!~", ">", ">=", "+", "-", "*", "/", "~", "%", "&", "|", "^", "**", "==="].each do |op|
       it_parses "def #{op}; end;", Def.new(op)
       it_parses "def #{op}(); end;", Def.new(op)
       it_parses "def self.#{op}; end;", Def.new(op, receiver: "self".var)
       it_parses "def self.#{op}(); end;", Def.new(op, receiver: "self".var)
     end
 
-    %w(<< < <= == >> > >= + - * / // % | & ^ ** === =~ !~ &+ &- &* &**).each do |op|
+    ["<<", "<", "<=", "==", ">>", ">", ">=", "+", "-", "*", "/", "//", "%", "|", "&", "^", "**", "===", "=~", "!~", "&+", "&-", "&*", "&**"].each do |op|
       it_parses "1 #{op} 2", Call.new(1.int32, op, 2.int32)
       it_parses "n #{op} 2", Call.new("n".call, op, 2.int32)
       it_parses "foo(n #{op} 2)", Call.new("foo", Call.new("n".call, op, 2.int32))
@@ -697,13 +697,12 @@ module Crystal
       it_parses "->Foo.#{op}(Int32)", ProcPointer.new("Foo".path, op, ["Int32".path] of ASTNode)
     end
 
-    it_parses "foo = 1; ->foo.[](Int32)", [Assign.new("foo".var, 1.int32), ProcPointer.new("foo".var, "[]", ["Int32".path] of ASTNode)]
-    it_parses "foo = 1; ->foo.[]=(Int32)", [Assign.new("foo".var, 1.int32), ProcPointer.new("foo".var, "[]=", ["Int32".path] of ASTNode)]
+    ["[]", "[]="].each do |op|
+      it_parses "foo = 1; ->foo.#{op}(Int32)", [Assign.new("foo".var, 1.int32), ProcPointer.new("foo".var, op, ["Int32".path] of ASTNode)]
+      it_parses "->Foo.#{op}(Int32)", ProcPointer.new("Foo".path, op, ["Int32".path] of ASTNode)
+    end
 
-    it_parses "->Foo.[](Int32)", ProcPointer.new("Foo".path, "[]", ["Int32".path] of ASTNode)
-    it_parses "->Foo.[]=(Int32)", ProcPointer.new("Foo".path, "[]=", ["Int32".path] of ASTNode)
-
-    %w(bar + - * / < <= == > >= % | & ^ ** === =~ != []= !~).each do |name|
+    ["bar", "+", "-", "*", "/", "<", "<=", "==", ">", ">=", "%", "|", "&", "^", "**", "===", "=~", "!=", "[]=", "!~"].each do |name|
       it_parses "foo.#{name}", Call.new("foo".call, name)
       it_parses "foo.#{name} 1, 2", Call.new("foo".call, name, 1.int32, 2.int32)
       it_parses "foo.#{name}(1, 2)", Call.new("foo".call, name, 1.int32, 2.int32)
@@ -711,7 +710,7 @@ module Crystal
       it_parses "foo.#{name} do end", Call.new("foo".call, name, block: Block.new)
     end
 
-    %w(+ - * / // % | & ^ ** << >> &+ &- &*).each do |op|
+    ["+", "-", "*", "/", "//", "%", "|", "&", "^", "**", "<<", ">>", "&+", "&-", "&*"].each do |op|
       it_parses "a = 1; a #{op}= 1", [Assign.new("a".var, 1.int32), OpAssign.new("a".var, op, 1.int32)]
       it_parses "a = 1; a #{op}=\n1", [Assign.new("a".var, 1.int32), OpAssign.new("a".var, op, 1.int32)]
       it_parses "a.b #{op}=\n1", OpAssign.new(Call.new("a".call, "b"), op, 1.int32)
