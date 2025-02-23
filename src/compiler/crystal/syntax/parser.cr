@@ -1587,11 +1587,11 @@ module Crystal
         call ||= parse_call_block_arg_after_dot(obj)
 
         block = Block.new([Var.new(block_arg_name)], call).at(location)
+        end_location = call.end_location
       else
         block_arg = parse_op_assign
+        end_location = block_arg.end_location
       end
-
-      end_location = token_end_location
 
       if check_paren
         skip_space_or_newline
