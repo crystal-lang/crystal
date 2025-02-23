@@ -331,26 +331,28 @@ module Crystal
     assert_syntax_error "def foo=(&block); end", "setter method 'foo=' cannot have a block"
 
     # #10397
-    it_parses "def <=(other, file = 1); end", Def.new("<=", ["other".arg, Arg.new("file", 1.int32)])
-    it_parses "def >=(other, file = 1); end", Def.new(">=", ["other".arg, Arg.new("file", 1.int32)])
-    it_parses "def ==(other, file = 1); end", Def.new("==", ["other".arg, Arg.new("file", 1.int32)])
-    it_parses "def !=(other, file = 1); end", Def.new("!=", ["other".arg, Arg.new("file", 1.int32)])
-    it_parses "def []=(other, file = 1); end", Def.new("[]=", ["other".arg, Arg.new("file", 1.int32)])
-    it_parses "def ===(other, file = 1); end", Def.new("===", ["other".arg, Arg.new("file", 1.int32)])
+    describe "multiple parameters and blocks for operators ending in `=`" do
+      it_parses "def <=(other, file = 1); end", Def.new("<=", ["other".arg, Arg.new("file", 1.int32)])
+      it_parses "def >=(other, file = 1); end", Def.new(">=", ["other".arg, Arg.new("file", 1.int32)])
+      it_parses "def ==(other, file = 1); end", Def.new("==", ["other".arg, Arg.new("file", 1.int32)])
+      it_parses "def !=(other, file = 1); end", Def.new("!=", ["other".arg, Arg.new("file", 1.int32)])
+      it_parses "def []=(other, file = 1); end", Def.new("[]=", ["other".arg, Arg.new("file", 1.int32)])
+      it_parses "def ===(other, file = 1); end", Def.new("===", ["other".arg, Arg.new("file", 1.int32)])
 
-    it_parses "def <=(*args, **opts); end", Def.new("<=", ["args".arg], splat_index: 0, double_splat: "opts".arg)
-    it_parses "def >=(*args, **opts); end", Def.new(">=", ["args".arg], splat_index: 0, double_splat: "opts".arg)
-    it_parses "def ==(*args, **opts); end", Def.new("==", ["args".arg], splat_index: 0, double_splat: "opts".arg)
-    it_parses "def !=(*args, **opts); end", Def.new("!=", ["args".arg], splat_index: 0, double_splat: "opts".arg)
-    it_parses "def []=(*args, **opts); end", Def.new("[]=", ["args".arg], splat_index: 0, double_splat: "opts".arg)
-    it_parses "def ===(*args, **opts); end", Def.new("===", ["args".arg], splat_index: 0, double_splat: "opts".arg)
+      it_parses "def <=(*args, **opts); end", Def.new("<=", ["args".arg], splat_index: 0, double_splat: "opts".arg)
+      it_parses "def >=(*args, **opts); end", Def.new(">=", ["args".arg], splat_index: 0, double_splat: "opts".arg)
+      it_parses "def ==(*args, **opts); end", Def.new("==", ["args".arg], splat_index: 0, double_splat: "opts".arg)
+      it_parses "def !=(*args, **opts); end", Def.new("!=", ["args".arg], splat_index: 0, double_splat: "opts".arg)
+      it_parses "def []=(*args, **opts); end", Def.new("[]=", ["args".arg], splat_index: 0, double_splat: "opts".arg)
+      it_parses "def ===(*args, **opts); end", Def.new("===", ["args".arg], splat_index: 0, double_splat: "opts".arg)
 
-    it_parses "def <=(*args, **opts, &); end", Def.new("<=", ["args".arg], splat_index: 0, double_splat: "opts".arg, block_arg: Arg.new(""), block_arity: 0)
-    it_parses "def >=(*args, **opts, &); end", Def.new(">=", ["args".arg], splat_index: 0, double_splat: "opts".arg, block_arg: Arg.new(""), block_arity: 0)
-    it_parses "def ==(*args, **opts, &); end", Def.new("==", ["args".arg], splat_index: 0, double_splat: "opts".arg, block_arg: Arg.new(""), block_arity: 0)
-    it_parses "def !=(*args, **opts, &); end", Def.new("!=", ["args".arg], splat_index: 0, double_splat: "opts".arg, block_arg: Arg.new(""), block_arity: 0)
-    it_parses "def []=(*args, **opts, &); end", Def.new("[]=", ["args".arg], splat_index: 0, double_splat: "opts".arg, block_arg: Arg.new(""), block_arity: 0)
-    it_parses "def ===(*args, **opts, &); end", Def.new("===", ["args".arg], splat_index: 0, double_splat: "opts".arg, block_arg: Arg.new(""), block_arity: 0)
+      it_parses "def <=(*args, **opts, &); end", Def.new("<=", ["args".arg], splat_index: 0, double_splat: "opts".arg, block_arg: Arg.new(""), block_arity: 0)
+      it_parses "def >=(*args, **opts, &); end", Def.new(">=", ["args".arg], splat_index: 0, double_splat: "opts".arg, block_arg: Arg.new(""), block_arity: 0)
+      it_parses "def ==(*args, **opts, &); end", Def.new("==", ["args".arg], splat_index: 0, double_splat: "opts".arg, block_arg: Arg.new(""), block_arity: 0)
+      it_parses "def !=(*args, **opts, &); end", Def.new("!=", ["args".arg], splat_index: 0, double_splat: "opts".arg, block_arg: Arg.new(""), block_arity: 0)
+      it_parses "def []=(*args, **opts, &); end", Def.new("[]=", ["args".arg], splat_index: 0, double_splat: "opts".arg, block_arg: Arg.new(""), block_arity: 0)
+      it_parses "def ===(*args, **opts, &); end", Def.new("===", ["args".arg], splat_index: 0, double_splat: "opts".arg, block_arg: Arg.new(""), block_arity: 0)
+    end
 
     # #5895, #6042, #5997
     %w(
@@ -657,21 +659,23 @@ module Crystal
     it_parses "f.x = Foo.new", Call.new("f".call, "x=", [Call.new("Foo".path, "new")] of ASTNode)
     it_parses "f.x = - 1", Call.new("f".call, "x=", [Call.new(1.int32, "-")] of ASTNode)
 
-    it_parses "f.x += 2", OpAssign.new(Call.new("f".call, "x"), "+", 2.int32)
-    it_parses "f.x -= 2", OpAssign.new(Call.new("f".call, "x"), "-", 2.int32)
-    it_parses "f.x *= 2", OpAssign.new(Call.new("f".call, "x"), "*", 2.int32)
-    it_parses "f.x /= 2", OpAssign.new(Call.new("f".call, "x"), "/", 2.int32)
-    it_parses "f.x //= 2", OpAssign.new(Call.new("f".call, "x"), "//", 2.int32)
-    it_parses "f.x %= 2", OpAssign.new(Call.new("f".call, "x"), "%", 2.int32)
-    it_parses "f.x |= 2", OpAssign.new(Call.new("f".call, "x"), "|", 2.int32)
-    it_parses "f.x &= 2", OpAssign.new(Call.new("f".call, "x"), "&", 2.int32)
-    it_parses "f.x ^= 2", OpAssign.new(Call.new("f".call, "x"), "^", 2.int32)
-    it_parses "f.x **= 2", OpAssign.new(Call.new("f".call, "x"), "**", 2.int32)
-    it_parses "f.x <<= 2", OpAssign.new(Call.new("f".call, "x"), "<<", 2.int32)
-    it_parses "f.x >>= 2", OpAssign.new(Call.new("f".call, "x"), ">>", 2.int32)
-    it_parses "f.x &+= 2", OpAssign.new(Call.new("f".call, "x"), "&+", 2.int32)
-    it_parses "f.x &-= 2", OpAssign.new(Call.new("f".call, "x"), "&-", 2.int32)
-    it_parses "f.x &*= 2", OpAssign.new(Call.new("f".call, "x"), "&*", 2.int32)
+    describe "abbreviated assignment" do
+      it_parses "f.x += 2", OpAssign.new(Call.new("f".call, "x"), "+", 2.int32)
+      it_parses "f.x -= 2", OpAssign.new(Call.new("f".call, "x"), "-", 2.int32)
+      it_parses "f.x *= 2", OpAssign.new(Call.new("f".call, "x"), "*", 2.int32)
+      it_parses "f.x /= 2", OpAssign.new(Call.new("f".call, "x"), "/", 2.int32)
+      it_parses "f.x //= 2", OpAssign.new(Call.new("f".call, "x"), "//", 2.int32)
+      it_parses "f.x %= 2", OpAssign.new(Call.new("f".call, "x"), "%", 2.int32)
+      it_parses "f.x |= 2", OpAssign.new(Call.new("f".call, "x"), "|", 2.int32)
+      it_parses "f.x &= 2", OpAssign.new(Call.new("f".call, "x"), "&", 2.int32)
+      it_parses "f.x ^= 2", OpAssign.new(Call.new("f".call, "x"), "^", 2.int32)
+      it_parses "f.x **= 2", OpAssign.new(Call.new("f".call, "x"), "**", 2.int32)
+      it_parses "f.x <<= 2", OpAssign.new(Call.new("f".call, "x"), "<<", 2.int32)
+      it_parses "f.x >>= 2", OpAssign.new(Call.new("f".call, "x"), ">>", 2.int32)
+      it_parses "f.x &+= 2", OpAssign.new(Call.new("f".call, "x"), "&+", 2.int32)
+      it_parses "f.x &-= 2", OpAssign.new(Call.new("f".call, "x"), "&-", 2.int32)
+      it_parses "f.x &*= 2", OpAssign.new(Call.new("f".call, "x"), "&*", 2.int32)
+    end
 
     %w(/ < <= == != =~ !~ > >= + - * / ~ % & | ^ ** ===).each do |op|
       it_parses "def #{op}; end;", Def.new(op)
@@ -1271,36 +1275,38 @@ module Crystal
     assert_syntax_error "macro foo&&;end"
     assert_syntax_error "macro foo"
 
-    it_parses "macro `;end", Macro.new("`", body: Expressions.new)
-    it_parses "macro <<;end", Macro.new("<<", body: Expressions.new)
-    it_parses "macro <;end", Macro.new("<", body: Expressions.new)
-    it_parses "macro <=;end", Macro.new("<=", body: Expressions.new)
-    it_parses "macro ==;end", Macro.new("==", body: Expressions.new)
-    it_parses "macro ===;end", Macro.new("===", body: Expressions.new)
-    it_parses "macro !=;end", Macro.new("!=", body: Expressions.new)
-    it_parses "macro =~;end", Macro.new("=~", body: Expressions.new)
-    it_parses "macro !~;end", Macro.new("!~", body: Expressions.new)
-    it_parses "macro >>;end", Macro.new(">>", body: Expressions.new)
-    it_parses "macro >;end", Macro.new(">", body: Expressions.new)
-    it_parses "macro >=;end", Macro.new(">=", body: Expressions.new)
-    it_parses "macro +;end", Macro.new("+", body: Expressions.new)
-    it_parses "macro -;end", Macro.new("-", body: Expressions.new)
-    it_parses "macro *;end", Macro.new("*", body: Expressions.new)
-    it_parses "macro /;end", Macro.new("/", body: Expressions.new)
-    it_parses "macro //;end", Macro.new("//", body: Expressions.new)
-    it_parses "macro ~;end", Macro.new("~", body: Expressions.new)
-    it_parses "macro %;end", Macro.new("%", body: Expressions.new)
-    it_parses "macro &;end", Macro.new("&", body: Expressions.new)
-    it_parses "macro |;end", Macro.new("|", body: Expressions.new)
-    it_parses "macro ^;end", Macro.new("^", body: Expressions.new)
-    it_parses "macro **;end", Macro.new("**", body: Expressions.new)
-    it_parses "macro []?;end", Macro.new("[]?", body: Expressions.new)
-    it_parses "macro []=;end", Macro.new("[]=", body: Expressions.new)
-    it_parses "macro <=>;end", Macro.new("<=>", body: Expressions.new)
-    it_parses "macro &+;end", Macro.new("&+", body: Expressions.new)
-    it_parses "macro &-;end", Macro.new("&-", body: Expressions.new)
-    it_parses "macro &*;end", Macro.new("&*", body: Expressions.new)
-    it_parses "macro &**;end", Macro.new("&**", body: Expressions.new)
+    describe "operator as macro name" do
+      it_parses "macro `;end", Macro.new("`", body: Expressions.new)
+      it_parses "macro <<;end", Macro.new("<<", body: Expressions.new)
+      it_parses "macro <;end", Macro.new("<", body: Expressions.new)
+      it_parses "macro <=;end", Macro.new("<=", body: Expressions.new)
+      it_parses "macro ==;end", Macro.new("==", body: Expressions.new)
+      it_parses "macro ===;end", Macro.new("===", body: Expressions.new)
+      it_parses "macro !=;end", Macro.new("!=", body: Expressions.new)
+      it_parses "macro =~;end", Macro.new("=~", body: Expressions.new)
+      it_parses "macro !~;end", Macro.new("!~", body: Expressions.new)
+      it_parses "macro >>;end", Macro.new(">>", body: Expressions.new)
+      it_parses "macro >;end", Macro.new(">", body: Expressions.new)
+      it_parses "macro >=;end", Macro.new(">=", body: Expressions.new)
+      it_parses "macro +;end", Macro.new("+", body: Expressions.new)
+      it_parses "macro -;end", Macro.new("-", body: Expressions.new)
+      it_parses "macro *;end", Macro.new("*", body: Expressions.new)
+      it_parses "macro /;end", Macro.new("/", body: Expressions.new)
+      it_parses "macro //;end", Macro.new("//", body: Expressions.new)
+      it_parses "macro ~;end", Macro.new("~", body: Expressions.new)
+      it_parses "macro %;end", Macro.new("%", body: Expressions.new)
+      it_parses "macro &;end", Macro.new("&", body: Expressions.new)
+      it_parses "macro |;end", Macro.new("|", body: Expressions.new)
+      it_parses "macro ^;end", Macro.new("^", body: Expressions.new)
+      it_parses "macro **;end", Macro.new("**", body: Expressions.new)
+      it_parses "macro []?;end", Macro.new("[]?", body: Expressions.new)
+      it_parses "macro []=;end", Macro.new("[]=", body: Expressions.new)
+      it_parses "macro <=>;end", Macro.new("<=>", body: Expressions.new)
+      it_parses "macro &+;end", Macro.new("&+", body: Expressions.new)
+      it_parses "macro &-;end", Macro.new("&-", body: Expressions.new)
+      it_parses "macro &*;end", Macro.new("&*", body: Expressions.new)
+      it_parses "macro &**;end", Macro.new("&**", body: Expressions.new)
+    end
 
     assert_syntax_error "macro !;end", "'!' is a pseudo-method and can't be redefined"
 
@@ -1325,15 +1331,18 @@ module Crystal
     it_parses "macro foo;%var;end", Macro.new("foo", [] of Arg, Expressions.from([MacroVar.new("var"), MacroLiteral.new(";")] of ASTNode))
     it_parses "macro foo;%var{1, x} = hello;end", Macro.new("foo", [] of Arg, Expressions.from([MacroVar.new("var", [1.int32, "x".var] of ASTNode), MacroLiteral.new(" = hello;")] of ASTNode))
 
-    it_parses "macro foo;%var if true;end", Macro.new("foo", [] of Arg, Expressions.from([MacroVar.new("var"), " if true;".macro_literal] of ASTNode))
-    it_parses "macro foo;var if true;end", Macro.new("foo", [] of Arg, "var if true;".macro_literal)
-    it_parses "macro foo;if %var;true;end;end", Macro.new("foo", [] of Arg, Expressions.from(["if ".macro_literal, MacroVar.new("var"), ";true;".macro_literal, "end;".macro_literal] of ASTNode))
-    it_parses "macro foo;if var;true;end;end", Macro.new("foo", [] of Arg, Expressions.from(["if var;true;".macro_literal, "end;".macro_literal] of ASTNode))
+    # #4087
+    describe "suffix `if`/`unless` in macros after macro var" do
+      it_parses "macro foo;%var if true;end", Macro.new("foo", [] of Arg, Expressions.from([MacroVar.new("var"), " if true;".macro_literal] of ASTNode))
+      it_parses "macro foo;var if true;end", Macro.new("foo", [] of Arg, "var if true;".macro_literal)
+      it_parses "macro foo;if %var;true;end;end", Macro.new("foo", [] of Arg, Expressions.from(["if ".macro_literal, MacroVar.new("var"), ";true;".macro_literal, "end;".macro_literal] of ASTNode))
+      it_parses "macro foo;if var;true;end;end", Macro.new("foo", [] of Arg, Expressions.from(["if var;true;".macro_literal, "end;".macro_literal] of ASTNode))
 
-    it_parses "macro foo;%var unless true;end", Macro.new("foo", [] of Arg, Expressions.from([MacroVar.new("var"), " unless true;".macro_literal] of ASTNode))
-    it_parses "macro foo;var unless true;end", Macro.new("foo", [] of Arg, "var unless true;".macro_literal)
-    it_parses "macro foo;unless %var;true;end;end", Macro.new("foo", [] of Arg, Expressions.from(["unless ".macro_literal, MacroVar.new("var"), ";true;".macro_literal, "end;".macro_literal] of ASTNode))
-    it_parses "macro foo;unless var;true;end;end", Macro.new("foo", [] of Arg, Expressions.from(["unless var;true;".macro_literal, "end;".macro_literal] of ASTNode))
+      it_parses "macro foo;%var unless true;end", Macro.new("foo", [] of Arg, Expressions.from([MacroVar.new("var"), " unless true;".macro_literal] of ASTNode))
+      it_parses "macro foo;var unless true;end", Macro.new("foo", [] of Arg, "var unless true;".macro_literal)
+      it_parses "macro foo;unless %var;true;end;end", Macro.new("foo", [] of Arg, Expressions.from(["unless ".macro_literal, MacroVar.new("var"), ";true;".macro_literal, "end;".macro_literal] of ASTNode))
+      it_parses "macro foo;unless var;true;end;end", Macro.new("foo", [] of Arg, Expressions.from(["unless var;true;".macro_literal, "end;".macro_literal] of ASTNode))
+    end
 
     it_parses "a = 1; pointerof(a)", [Assign.new("a".var, 1.int32), PointerOf.new("a".var)]
     it_parses "pointerof(@a)", PointerOf.new("@a".instance_var)
@@ -2078,17 +2087,20 @@ module Crystal
 
     assert_syntax_error "return do\nend", %(unexpected token: "do")
 
-    assert_syntax_error "def foo\ndef\nend"
-    assert_syntax_error "def foo\nmacro\nend"
-    assert_syntax_error "def foo\nclass\nend"
-    assert_syntax_error "def foo\nstruct\nend"
-    assert_syntax_error "def foo\nmodule\nend"
-    assert_syntax_error "def foo\nfun\nend"
-    assert_syntax_error "def foo\nalias\nend"
-    assert_syntax_error "def foo\nabstract\nend"
-    assert_syntax_error "def foo\ninclude\nend"
-    assert_syntax_error "def foo\nextend\nend"
-    assert_syntax_error "def foo\nlib\nend"
+    # #237
+    describe "`class`, `module`, `def`, etc. inside a `def`" do
+      assert_syntax_error "def foo\ndef\nend"
+      assert_syntax_error "def foo\nmacro\nend"
+      assert_syntax_error "def foo\nclass\nend"
+      assert_syntax_error "def foo\nstruct\nend"
+      assert_syntax_error "def foo\nmodule\nend"
+      assert_syntax_error "def foo\nfun\nend"
+      assert_syntax_error "def foo\nalias\nend"
+      assert_syntax_error "def foo\nabstract\nend"
+      assert_syntax_error "def foo\ninclude\nend"
+      assert_syntax_error "def foo\nextend\nend"
+      assert_syntax_error "def foo\nlib\nend"
+    end
 
     assert_syntax_error "def foo(x = 1, y); end",
       "parameter must have a default value"
@@ -2256,35 +2268,39 @@ module Crystal
 
     assert_syntax_error "def foo(var : Foo+); end"
 
-    assert_syntax_error "foo.&&"
-    assert_syntax_error "foo.&&()"
-    assert_syntax_error "foo &.&&"
-    assert_syntax_error "foo &.&&()"
+    describe "`&&` and `||` are not methods" do
+      assert_syntax_error "foo.&&"
+      assert_syntax_error "foo.&&()"
+      assert_syntax_error "foo &.&&"
+      assert_syntax_error "foo &.&&()"
 
-    assert_syntax_error "foo.||"
-    assert_syntax_error "foo.||()"
-    assert_syntax_error "foo &.||"
-    assert_syntax_error "foo &.||()"
+      assert_syntax_error "foo.||"
+      assert_syntax_error "foo.||()"
+      assert_syntax_error "foo &.||"
+      assert_syntax_error "foo &.||()"
+    end
 
-    assert_syntax_error "def !; end", "'!' is a pseudo-method and can't be redefined"
-    assert_syntax_error "def is_a?; end", "'is_a?' is a pseudo-method and can't be redefined"
-    assert_syntax_error "def as; end", "'as' is a pseudo-method and can't be redefined"
-    assert_syntax_error "def as?; end", "'as?' is a pseudo-method and can't be redefined"
-    assert_syntax_error "def responds_to?; end", "'responds_to?' is a pseudo-method and can't be redefined"
-    assert_syntax_error "def nil?; end", "'nil?' is a pseudo-method and can't be redefined"
+    describe "redefine pseudo-method" do
+      assert_syntax_error "def !; end", "'!' is a pseudo-method and can't be redefined"
+      assert_syntax_error "def is_a?; end", "'is_a?' is a pseudo-method and can't be redefined"
+      assert_syntax_error "def as; end", "'as' is a pseudo-method and can't be redefined"
+      assert_syntax_error "def as?; end", "'as?' is a pseudo-method and can't be redefined"
+      assert_syntax_error "def responds_to?; end", "'responds_to?' is a pseudo-method and can't be redefined"
+      assert_syntax_error "def nil?; end", "'nil?' is a pseudo-method and can't be redefined"
 
-    assert_syntax_error "def self.!; end", "'!' is a pseudo-method and can't be redefined"
-    assert_syntax_error "def self.is_a?; end", "'is_a?' is a pseudo-method and can't be redefined"
-    assert_syntax_error "def self.as; end", "'as' is a pseudo-method and can't be redefined"
-    assert_syntax_error "def self.as?; end", "'as?' is a pseudo-method and can't be redefined"
-    assert_syntax_error "def self.responds_to?; end", "'responds_to?' is a pseudo-method and can't be redefined"
-    assert_syntax_error "def self.nil?; end", "'nil?' is a pseudo-method and can't be redefined"
+      assert_syntax_error "def self.!; end", "'!' is a pseudo-method and can't be redefined"
+      assert_syntax_error "def self.is_a?; end", "'is_a?' is a pseudo-method and can't be redefined"
+      assert_syntax_error "def self.as; end", "'as' is a pseudo-method and can't be redefined"
+      assert_syntax_error "def self.as?; end", "'as?' is a pseudo-method and can't be redefined"
+      assert_syntax_error "def self.responds_to?; end", "'responds_to?' is a pseudo-method and can't be redefined"
+      assert_syntax_error "def self.nil?; end", "'nil?' is a pseudo-method and can't be redefined"
 
-    assert_syntax_error "macro is_a?; end", "'is_a?' is a pseudo-method and can't be redefined"
-    assert_syntax_error "macro as; end", "'as' is a pseudo-method and can't be redefined"
-    assert_syntax_error "macro as?; end", "'as?' is a pseudo-method and can't be redefined"
-    assert_syntax_error "macro responds_to?; end", "'responds_to?' is a pseudo-method and can't be redefined"
-    assert_syntax_error "macro nil?; end", "'nil?' is a pseudo-method and can't be redefined"
+      assert_syntax_error "macro is_a?; end", "'is_a?' is a pseudo-method and can't be redefined"
+      assert_syntax_error "macro as; end", "'as' is a pseudo-method and can't be redefined"
+      assert_syntax_error "macro as?; end", "'as?' is a pseudo-method and can't be redefined"
+      assert_syntax_error "macro responds_to?; end", "'responds_to?' is a pseudo-method and can't be redefined"
+      assert_syntax_error "macro nil?; end", "'nil?' is a pseudo-method and can't be redefined"
+    end
 
     assert_syntax_error "Foo{one: :two, three: :four}", "can't use named tuple syntax for Hash-like literal"
     assert_syntax_error "{one: :two, three: :four} of Symbol => Symbol"
