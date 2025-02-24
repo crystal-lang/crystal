@@ -38,6 +38,8 @@ module Fiber::ExecutionContext
     @enqueued = false
     @waiting = false
 
+    @wait_list = Crystal::PointerLinkedList(Fiber::PointerLinkedListNode).new
+
     def initialize(@name : String, @spawn_context = ExecutionContext.default, &@func : ->)
       @mutex = Thread::Mutex.new
       @thread = uninitialized Thread
@@ -92,6 +94,8 @@ module Fiber::ExecutionContext
       end
 
       @mutex.synchronize do
+        raise RuntimeError.new("Can't resume dead fiber") unless @running
+
         @enqueued = true
 
         if @waiting
@@ -151,11 +155,28 @@ module Fiber::ExecutionContext
       Crystal.trace :sched, "started"
       @func.call
     ensure
-      @running = false
+      @mutex.synchronize do
+        @running = false
+        @wait_list.consume_each(&.value.enqueue)
+      end
       ExecutionContext.execution_contexts.delete(self)
     end
 
-    @[AlwaysInline]
+    # Blocks the calling fiber until the isolated context fiber terminates.
+    # Returns immediately if the isolated fiber has already terminated.
+    def wait : Nil
+      return unless @running
+
+      node = Fiber::PointerLinkedListNode.new(Fiber.current)
+      @mutex.synchronize do
+        @wait_list.push(pointerof(node)) if @running
+      end
+    end
+
+    # Blocks the calling thread until the isolated context thread terminates.
+    #
+    # WARNING: this will prevent fibers running on the calling thread to be
+    # resumed! Consider `#wait` to only block the calling fiber instead.
     def join : Nil
       @thread.join
     end
