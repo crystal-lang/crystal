@@ -1,5 +1,5 @@
 require "spec"
-require "../spec_helper"
+require "./spec_helper"
 require "spec/helpers/iterate"
 
 module SomeInterface; end
@@ -1369,7 +1369,7 @@ describe "Enumerable" do
     it { [1, 3].sum(0_u64).should eq(4_u64) }
     it { [1, 10000000000_u64].sum(0_u64).should eq(10000000001) }
     it "raises if union types are summed", tags: %w[slow] do
-      exc = assert_error <<-CRYSTAL,
+      assert_compile_error <<-CRYSTAL,
         require "prelude"
         [1, 10000000000_u64].sum
         CRYSTAL
@@ -1424,7 +1424,7 @@ describe "Enumerable" do
     it { [1, 3].product(3_u64).should eq(9_u64) }
     it { [1, 10000000000_u64].product(3_u64).should eq(30000000000_u64) }
     it "raises if union types are multiplied", tags: %w[slow] do
-      exc = assert_error <<-CRYSTAL,
+      assert_compile_error <<-CRYSTAL,
         require "prelude"
         [1, 10000000000_u64].product
         CRYSTAL
