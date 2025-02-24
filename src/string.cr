@@ -1370,9 +1370,7 @@ class String
   # ```
   def downcase(io : IO, options : Unicode::CaseOptions = :none) : Nil
     each_char do |char|
-      char.downcase(options) do |res|
-        io << res
-      end
+      char.downcase(io, options)
     end
   end
 
@@ -1406,9 +1404,7 @@ class String
   # ```
   def upcase(io : IO, options : Unicode::CaseOptions = :none) : Nil
     each_char do |char|
-      char.upcase(options) do |res|
-        io << res
-      end
+      char.upcase(io, options)
     end
   end
 
@@ -1451,9 +1447,9 @@ class String
   def capitalize(io : IO, options : Unicode::CaseOptions = :none) : Nil
     each_char_with_index do |char, i|
       if i.zero?
-        char.titlecase(options) { |c| io << c }
+        char.titlecase(io, options)
       else
-        char.downcase(options) { |c| io << c }
+        char.downcase(io, options)
       end
     end
   end
@@ -1514,13 +1510,13 @@ class String
     each_char_with_index do |char, i|
       if upcase_next
         upcase_next = false
-        char.titlecase(options) { |c| io << c }
+        char.titlecase(io, options)
       elsif underscore_to_space && '_' == char
         upcase_next = true
         io << ' '
       else
         upcase_next = char.whitespace?
-        char.downcase(options) { |c| io << c }
+        char.downcase(io, options)
       end
     end
   end
@@ -4405,7 +4401,7 @@ class String
       end
 
       if first
-        char.downcase(options) { |c| io << c }
+        char.downcase(io, options)
       elsif last_is_downcase && upcase
         if mem
           # This is the case of A1Bcd, we need to put 'mem' (not to need to convert as downcase
@@ -4417,7 +4413,7 @@ class String
         # This is the case of AbcDe, we need to put an underscore before the 'D'
         #                        ^
         io << '_'
-        char.downcase(options) { |c| io << c }
+        char.downcase(io, options)
       elsif (last_is_upcase || last_is_digit) && (upcase || digit)
         # This is the case of 1) A1Bcd, 2) A1BCd or 3) A1B_cd:if the next char is upcase (case 1) we need
         #                          ^         ^           ^
@@ -4427,7 +4423,7 @@ class String
         # 3) we need to append this char as downcase and then a single underscore
         if mem
           # case 2
-          mem.downcase(options) { |c| io << c }
+          mem.downcase(io, options)
         end
         mem = char
       else
@@ -4438,11 +4434,11 @@ class String
             # case 1
             io << '_'
           end
-          mem.downcase(options) { |c| io << c }
+          mem.downcase(io, options)
           mem = nil
         end
 
-        char.downcase(options) { |c| io << c }
+        char.downcase(io, options)
       end
 
       last_is_downcase = downcase
@@ -4451,7 +4447,7 @@ class String
       first = false
     end
 
-    mem.downcase(options) { |c| io << c } if mem
+    mem.downcase(io, options) if mem
   end
 
   # Converts underscores to camelcase boundaries.
@@ -4485,14 +4481,14 @@ class String
     each_char do |char|
       if first
         if lower
-          char.downcase(options) { |c| io << c }
+          char.downcase(io, options)
         else
-          char.titlecase(options) { |c| io << c }
+          char.titlecase(io, options)
         end
       elsif char == '_'
         last_is_underscore = true
       elsif last_is_underscore
-        char.titlecase(options) { |c| io << c }
+        char.titlecase(io, options)
         last_is_underscore = false
       else
         io << char
