@@ -112,22 +112,33 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     end
   {% end %}
 
-  # NOTE: thread unsafe
+  # thread unsafe
   def run(blocking : Bool) : Bool
     system_run(blocking) do |fiber|
-      Crystal::Scheduler.enqueue(fiber)
+      {% if flag?(:execution_context) %}
+        fiber.execution_context.enqueue(fiber)
+      {% else %}
+        Crystal::Scheduler.enqueue(fiber)
+      {% end %}
     end
     true
   end
 
+  {% if flag?(:execution_context) %}
+    # thread unsafe
+    def run(queue : Fiber::List*, blocking : Bool) : Nil
+      system_run(blocking) { |fiber| queue.value.push(fiber) }
+    end
+  {% end %}
+
   # fiber interface, see Crystal::EventLoop
 
   def create_resume_event(fiber : Fiber) : FiberEvent
-    FiberEvent.new(self, fiber, :sleep)
+    FiberEvent.new(:sleep, fiber)
   end
 
   def create_timeout_event(fiber : Fiber) : FiberEvent
-    FiberEvent.new(self, fiber, :select_timeout)
+    FiberEvent.new(:select_timeout, fiber)
   end
 
   # file descriptor interface, see Crystal::EventLoop::FileDescriptor
@@ -146,6 +157,12 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     end
   end
 
+  def wait_readable(file_descriptor : System::FileDescriptor) : Nil
+    wait_readable(file_descriptor, file_descriptor.@read_timeout) do
+      raise IO::TimeoutError.new
+    end
+  end
+
   def write(file_descriptor : System::FileDescriptor, slice : Bytes) : Int32
     size = evented_write(file_descriptor, slice, file_descriptor.@write_timeout)
 
@@ -160,11 +177,17 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     end
   end
 
+  def wait_writable(file_descriptor : System::FileDescriptor) : Nil
+    wait_writable(file_descriptor, file_descriptor.@write_timeout) do
+      raise IO::TimeoutError.new
+    end
+  end
+
   def close(file_descriptor : System::FileDescriptor) : Nil
     evented_close(file_descriptor)
   end
 
-  def remove(file_descriptor : System::FileDescriptor) : Nil
+  protected def self.remove_impl(file_descriptor : System::FileDescriptor) : Nil
     internal_remove(file_descriptor)
   end
 
@@ -176,10 +199,22 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     size
   end
 
+  def wait_readable(socket : ::Socket) : Nil
+    wait_readable(socket, socket.@read_timeout) do
+      raise IO::TimeoutError.new
+    end
+  end
+
   def write(socket : ::Socket, slice : Bytes) : Int32
     size = evented_write(socket, slice, socket.@write_timeout)
     raise IO::Error.from_errno("write", target: socket) if size == -1
     size
+  end
+
+  def wait_writable(socket : ::Socket) : Nil
+    wait_writable(socket, socket.@write_timeout) do
+      raise IO::TimeoutError.new
+    end
   end
 
   def accept(socket : ::Socket) : ::Socket::Handle?
@@ -267,7 +302,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     evented_close(socket)
   end
 
-  def remove(socket : ::Socket) : Nil
+  protected def self.remove_impl(socket : ::Socket) : Nil
     internal_remove(socket)
   end
 
@@ -303,13 +338,21 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     Polling.arena.free(index) do |pd|
       pd.value.@readers.ready_all do |event|
         pd.value.@event_loop.try(&.unsafe_resume_io(event) do |fiber|
-          Crystal::Scheduler.enqueue(fiber)
+          {% if flag?(:execution_context) %}
+            fiber.execution_context.enqueue(fiber)
+          {% else %}
+            Crystal::Scheduler.enqueue(fiber)
+          {% end %}
         end)
       end
 
       pd.value.@writers.ready_all do |event|
         pd.value.@event_loop.try(&.unsafe_resume_io(event) do |fiber|
-          Crystal::Scheduler.enqueue(fiber)
+          {% if flag?(:execution_context) %}
+            fiber.execution_context.enqueue(fiber)
+          {% else %}
+            Crystal::Scheduler.enqueue(fiber)
+          {% end %}
         end)
       end
 
@@ -317,7 +360,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     end
   end
 
-  private def internal_remove(io)
+  private def self.internal_remove(io)
     return unless (index = io.__evloop_data).valid?
 
     Polling.arena.free(index) do |pd|
@@ -515,7 +558,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
   private abstract def system_run(blocking : Bool, & : Fiber ->) : Nil
 
   # Add *fd* to the polling system, setting *index* as user data.
-  protected abstract def system_add(fd : Int32, index : Index) : Nil
+  protected abstract def system_add(fd : Int32, index : Arena::Index) : Nil
 
   # Remove *fd* from the polling system. Must raise a `RuntimeError` on error.
   #

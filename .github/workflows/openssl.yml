@@ -1,6 +1,21 @@
 name: OpenSSL CI
 
-on: [push, pull_request]
+on:
+  push:
+    paths:
+      - 'src/openssl/**'
+      - 'spec/std/digest/**'
+      - 'spec/std/openssl/**'
+      - '.github/workflows/openssl.yml'
+  pull_request:
+    paths:
+      - 'src/openssl/**'
+      - 'spec/std/digest/**'
+      - 'spec/std/openssl/**'
+      - '.github/workflows/openssl.yml'
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
 
 permissions: {}
 
@@ -12,7 +27,7 @@ jobs:
   libssl_test:
     runs-on: ubuntu-latest
     name: "${{ matrix.pkg }}"
-    container: crystallang/crystal:1.14.0-alpine
+    container: crystallang/crystal:1.15.1-alpine
     strategy:
       fail-fast: false
       matrix:

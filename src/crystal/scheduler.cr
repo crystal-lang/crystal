@@ -1,3 +1,5 @@
+{% skip_file if flag?(:execution_context) %}
+
 require "crystal/event_loop"
 require "crystal/system/print_error"
 require "fiber"
@@ -66,7 +68,6 @@ class Crystal::Scheduler
   end
 
   def self.sleep(time : Time::Span) : Nil
-    Crystal.trace :sched, "sleep", for: time
     Thread.current.scheduler.sleep(time)
   end
 
@@ -124,7 +125,7 @@ class Crystal::Scheduler
     {% elsif flag?(:interpreted) %}
       # No need to change the stack bottom!
     {% else %}
-      GC.set_stackbottom(fiber.@stack_bottom)
+      GC.set_stackbottom(fiber.@stack.bottom)
     {% end %}
 
     current, @thread.current_fiber = @thread.current_fiber, fiber

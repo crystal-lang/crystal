@@ -1,6 +1,21 @@
 name: LLVM CI
 
-on: [push, pull_request]
+on:
+  push:
+    paths:
+      - 'src/llvm/**'
+      - 'spec/std/llvm/**'
+      - 'spec/llvm-ir/**'
+      - '.github/workflows/llvm.yml'
+  pull_request:
+    paths:
+      - 'src/llvm/**'
+      - 'spec/std/llvm/**'
+      - 'spec/llvm-ir/**'
+      - '.github/workflows/llvm.yml'
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
 
 permissions: {}
 
@@ -25,6 +40,7 @@ jobs:
           - {llvm_version: 17, runs-on: ubuntu-24.04, codename: noble}
           - {llvm_version: 18, runs-on: ubuntu-24.04, codename: noble}
           - {llvm_version: 19, runs-on: ubuntu-24.04, codename: noble}
+          - {llvm_version: 20, runs-on: ubuntu-24.04, codename: noble}
     name: "LLVM ${{ matrix.llvm_version }}"
     steps:
       - name: Checkout Crystal source
@@ -40,7 +56,7 @@ jobs:
       - name: Install Crystal
         uses: crystal-lang/install-crystal@v1
         with:
-          crystal: "1.14.0"
+          crystal: "1.15.1"
 
       - name: Build libllvm_ext
         run: make -B deps

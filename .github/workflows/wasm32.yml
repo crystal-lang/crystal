@@ -14,7 +14,7 @@ env:
 jobs:
   wasm32-test:
     runs-on: ubuntu-24.04
-    container: crystallang/crystal:1.14.0-build
+    container: crystallang/crystal:1.15.1-build
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v4
@@ -32,7 +32,7 @@ jobs:
           wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
           apt-add-repository -y deb http://apt.llvm.org/noble/ llvm-toolchain-noble-18 main
           apt-get install -y llvm-18-dev lld-18
-          ln -s $(which wasm-ld-18) /usr/bin/wasm-ld
+          ln -s "$(which wasm-ld-18)" /usr/bin/wasm-ld
 
       - name: Download wasm32 libs
         run: |

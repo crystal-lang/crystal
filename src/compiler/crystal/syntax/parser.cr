@@ -1587,11 +1587,11 @@ module Crystal
         call ||= parse_call_block_arg_after_dot(obj)
 
         block = Block.new([Var.new(block_arg_name)], call).at(location)
+        end_location = call.end_location
       else
         block_arg = parse_op_assign
+        end_location = block_arg.end_location
       end
-
-      end_location = token_end_location
 
       if check_paren
         skip_space_or_newline
@@ -2111,7 +2111,7 @@ module Crystal
 
       case delimiter_state.kind
       when .command?
-        result = Call.new(nil, "`", result).at(location)
+        result = Call.new("`", result).at(location)
       when .regex?
         if result.is_a?(StringLiteral) && (regex_error = Regex.error?(result.value))
           raise "invalid regex: #{regex_error}", location
@@ -2834,7 +2834,9 @@ module Crystal
 
           when_body = parse_expressions
           skip_space_or_newline
-          whens << When.new(when_conds, when_body).at(location)
+          whens << When.new(when_conds, when_body)
+            .at(location)
+            .at_end(when_conds.last.end_location)
         when Keyword::ELSE
           if exhaustive
             raise "exhaustive case (case ... in) doesn't allow an 'else'"
@@ -2990,6 +2992,8 @@ module Crystal
           skip_space_or_newline
 
           whens << When.new(condition, body)
+            .at(location)
+            .at_end(condition.end_location)
         when Keyword::ELSE
           if whens.size == 0
             unexpected_token "expecting when"
@@ -4347,7 +4351,7 @@ module Crystal
 
       node =
         if block || block_arg || global
-          call = Call.new(nil, name, (args || [] of ASTNode), block, block_arg, named_args, global)
+          call = Call.new(name, (args || [] of ASTNode), block, block_arg, named_args, global)
           call.name_location = name_location
           call.has_parentheses = has_parentheses
           call
@@ -4357,7 +4361,7 @@ module Crystal
             if maybe_var
               Var.new(name)
             else
-              call = Call.new(nil, name, args, nil, nil, named_args, global)
+              call = Call.new(name, args, nil, nil, named_args, global)
               call.name_location = name_location
               call.has_parentheses = has_parentheses
               call
@@ -4385,7 +4389,7 @@ module Crystal
                 raise "can't use variable name '#{name}' inside assignment to variable '#{name}'", location
               end
 
-              call = Call.new(nil, name, [] of ASTNode, nil, nil, named_args, global)
+              call = Call.new(name, [] of ASTNode, nil, nil, named_args, global)
               call.name_location = name_location
               call.has_parentheses = has_parentheses
               call
@@ -5633,6 +5637,7 @@ module Crystal
     end
 
     def parse_lib
+      doc = @token.doc
       location = @token.location
       next_token_skip_space_or_newline
 
@@ -5648,6 +5653,7 @@ module Crystal
 
       lib_def = LibDef.new(name, body).at(location).at_end(end_location)
       lib_def.name_location = name_location
+      lib_def.doc = doc
       lib_def
     end
 
@@ -5704,6 +5710,7 @@ module Crystal
         skip_statement_end
         Assign.new(ident, value)
       when .global?
+        doc = @token.doc
         location = @token.location
         name = @token.value.to_s[1..-1]
         next_token_skip_space_or_newline
@@ -5723,6 +5730,7 @@ module Crystal
 
         skip_statement_end
         ExternalVar.new(name, type, real_name)
+          .at(location).tap(&.doc=(doc))
       when .op_lcurly_lcurly?
         parse_percent_macro_expression
       when .op_lcurly_percent?
@@ -5960,6 +5968,7 @@ module Crystal
     end
 
     def parse_type_def
+      doc = @token.doc
       next_token_skip_space_or_newline
       name = check_const
       name_location = @token.location
@@ -5972,10 +5981,13 @@ module Crystal
 
       typedef = TypeDef.new name, type
       typedef.name_location = name_location
+      typedef.doc = doc
+
       typedef
     end
 
     def parse_c_struct_or_union(union : Bool)
+      doc = @token.doc
       location = @token.location
       next_token_skip_space_or_newline
       name = check_const
@@ -5985,7 +5997,9 @@ module Crystal
       end_location = token_end_location
       next_token_skip_space
 
-      CStructOrUnionDef.new(name, Expressions.from(body), union: union).at(location).at_end(end_location)
+      CStructOrUnionDef.new(name, Expressions.from(body), union: union)
+        .at(location).at_end(end_location)
+        .tap(&.doc=(doc))
     end
 
     def parse_c_struct_or_union_body
@@ -6027,6 +6041,7 @@ module Crystal
     end
 
     def parse_c_struct_or_union_fields(exps)
+      doc = @token.doc
       vars = [Var.new(@token.value.to_s).at(@token.location).at_end(token_end_location)]
 
       next_token_skip_space_or_newline
@@ -6045,6 +6060,7 @@ module Crystal
       skip_statement_end
 
       vars.each do |var|
+        var.doc = doc
         exps << TypeDeclaration.new(var, type).at(var).at_end(type)
       end
     end

@@ -4,6 +4,22 @@ require "c/string"
 module LLVM
   @@initialized = false
 
+  # Returns the runtime version of LLVM.
+  #
+  # Starting with LLVM 16, this method returns the version as reported by
+  # `LLVMGetVersion` at runtime. Older versions of LLVM do not expose this
+  # information, so the value falls back to `LibLLVM::VERSION` which is
+  # determined at compile time and might slightly be out of sync to the
+  # dynamic library loaded at runtime.
+  def self.version
+    {% if LibLLVM.has_method?(:get_version) %}
+      LibLLVM.get_version(out major, out minor, out patch)
+      "#{major}.#{minor}.#{patch}"
+    {% else %}
+      LibLLVM::VERSION
+    {% end %}
+  end
+
   def self.init_x86 : Nil
     return if @@initialized_x86
     @@initialized_x86 = true
@@ -81,6 +97,30 @@ module LLVM
       LibLLVM.link_in_mc_jit
     {% else %}
       raise "ERROR: LLVM was built without WebAssembly target"
+    {% end %}
+  end
+
+  def self.init_native_target : Nil
+    {% if flag?(:i386) || flag?(:x86_64) %}
+      init_x86
+    {% elsif flag?(:aarch64) %}
+      init_aarch64
+    {% elsif flag?(:arm) %}
+      init_arm
+    {% elsif flag?(:wasm32) %}
+      init_webassembly
+    {% elsif flag?(:avr) %}
+      init_avr
+    {% else %}
+      {% raise "Unsupported platform" %}
+    {% end %}
+  end
+
+  def self.init_all_targets : Nil
+    {% for target in %i(x86 aarch64 arm avr webassembly) %}
+      {% if LibLLVM::BUILT_TARGETS.includes?(target) %}
+        init_{{ target.id }}
+      {% end %}
     {% end %}
   end
 

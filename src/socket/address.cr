@@ -765,7 +765,8 @@ class Socket
                       sizeof(typeof(LibC::SockaddrUn.new.sun_path)) - 1
                     {% end %}
 
-    def initialize(@path : String)
+    def initialize(path : Path | String)
+      @path = path.to_s
       if @path.bytesize > MAX_PATH_SIZE
         raise ArgumentError.new("Path size exceeds the maximum size of #{MAX_PATH_SIZE} bytes")
       end

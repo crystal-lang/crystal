@@ -655,12 +655,7 @@ module Crystal
         interpret_check_args do |arg|
           case arg
           when RegexLiteral
-            arg_value = arg.value
-            if arg_value.is_a?(StringLiteral)
-              regex = Regex.new(arg_value.value, arg.options)
-            else
-              raise "regex interpolations not yet allowed in macros"
-            end
+            regex = regex_value(arg)
             BoolLiteral.new(!!(@value =~ regex))
           else
             BoolLiteral.new(false)
@@ -735,12 +730,7 @@ module Crystal
           raise "first argument to StringLiteral#gsub must be a regex, not #{first.class_desc}" unless first.is_a?(RegexLiteral)
           raise "second argument to StringLiteral#gsub must be a string, not #{second.class_desc}" unless second.is_a?(StringLiteral)
 
-          regex_value = first.value
-          if regex_value.is_a?(StringLiteral)
-            regex = Regex.new(regex_value.value, first.options)
-          else
-            raise "regex interpolations not yet allowed in macros"
-          end
+          regex = regex_value(first)
 
           StringLiteral.new(value.gsub(regex, second.value))
         end
@@ -757,6 +747,55 @@ module Crystal
             raise "StringLiteral#includes? expects char or string, not #{arg.class_desc}"
           end
           BoolLiteral.new(@value.includes?(piece))
+        end
+      when "scan"
+        interpret_check_args do |arg|
+          unless arg.is_a?(RegexLiteral)
+            raise "StringLiteral#scan expects a regex, not #{arg.class_desc}"
+          end
+
+          regex = regex_value(arg)
+
+          matches = ArrayLiteral.new(
+            of: Generic.new(
+              Path.global("Hash"),
+              [
+                Union.new([Path.global("Int32"), Path.global("String")] of ASTNode),
+                Union.new([Path.global("String"), Path.global("Nil")] of ASTNode),
+              ] of ASTNode
+            )
+          )
+
+          @value.scan(regex) do |match_data|
+            captures = HashLiteral.new(
+              of: HashLiteral::Entry.new(
+                Union.new([Path.global("Int32"), Path.global("String")] of ASTNode),
+                Union.new([Path.global("String"), Path.global("Nil")] of ASTNode),
+              )
+            )
+
+            match_data.to_h.each do |capture, substr|
+              case capture
+              in Int32
+                key = NumberLiteral.new(capture)
+              in String
+                key = StringLiteral.new(capture)
+              end
+
+              case substr
+              in String
+                value = StringLiteral.new(substr)
+              in Nil
+                value = NilLiteral.new
+              end
+
+              captures.entries << HashLiteral::Entry.new(key, value)
+            end
+
+            matches.elements << captures
+          end
+
+          matches
         end
       when "size"
         interpret_check_args { NumberLiteral.new(@value.size) }
@@ -857,6 +896,15 @@ module Crystal
 
     def to_macro_id
       @value
+    end
+
+    def regex_value(arg)
+      regex_value = arg.value
+      if regex_value.is_a?(StringLiteral)
+        Regex.new(regex_value.value, arg.options)
+      else
+        raise "regex interpolations not yet allowed in macros"
+      end
     end
   end
 
@@ -1861,7 +1909,7 @@ module Crystal
       when "type_vars"
         interpret_check_args { TypeNode.type_vars(type) }
       when "instance_vars"
-        interpret_check_args { TypeNode.instance_vars(type) }
+        interpret_check_args { TypeNode.instance_vars(type, name_loc) }
       when "class_vars"
         interpret_check_args { TypeNode.class_vars(type) }
       when "ancestors"
@@ -2023,7 +2071,7 @@ module Crystal
           end
         end
       when "has_inner_pointers?"
-        interpret_check_args { BoolLiteral.new(type.has_inner_pointers?) }
+        interpret_check_args { TypeNode.has_inner_pointers?(type, name_loc) }
       else
         super
       end
@@ -2079,8 +2127,16 @@ module Crystal
       end
     end
 
-    def self.instance_vars(type)
+    def self.instance_vars(type, name_loc)
       if type.is_a?(InstanceVarContainer)
+        unless type.program.top_level_semantic_complete?
+          message = "`TypeNode#instance_vars` cannot be called in the top-level scope: instance vars are not yet initialized"
+          if name_loc
+            raise Crystal::TypeException.new(message, name_loc)
+          else
+            raise Crystal::TypeException.new(message)
+          end
+        end
         ArrayLiteral.map(type.all_instance_vars) do |name, ivar|
           meta_var = MetaMacroVar.new(name[1..-1], ivar.type)
           meta_var.var = ivar
@@ -2090,6 +2146,19 @@ module Crystal
       else
         empty_no_return_array
       end
+    end
+
+    def self.has_inner_pointers?(type, name_loc)
+      unless type.program.top_level_semantic_complete?
+        message = "`TypeNode#has_inner_pointers?` cannot be called in the top-level scope: instance vars are not yet initialized"
+        if name_loc
+          raise Crystal::TypeException.new(message, name_loc)
+        else
+          raise Crystal::TypeException.new(message)
+        end
+      end
+
+      BoolLiteral.new(type.has_inner_pointers?)
     end
 
     def self.class_vars(type)

@@ -39,6 +39,12 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
     end
   end
 
+  def wait_readable(file_descriptor : Crystal::System::FileDescriptor) : Nil
+    file_descriptor.evented_wait_readable(raise_if_closed: false) do
+      raise IO::TimeoutError.new("Read timed out")
+    end
+  end
+
   def write(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
     evented_write(file_descriptor, "Error writing file_descriptor") do
       LibC.write(file_descriptor.fd, slice, slice.size).tap do |return_code|
@@ -49,11 +55,14 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
     end
   end
 
-  def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
-    file_descriptor.evented_close
+  def wait_writable(file_descriptor : Crystal::System::FileDescriptor) : Nil
+    file_descriptor.evented_wait_writable(raise_if_closed: false) do
+      raise IO::TimeoutError.new("Write timed out")
+    end
   end
 
-  def remove(file_descriptor : Crystal::System::FileDescriptor) : Nil
+  def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
+    file_descriptor.evented_close
   end
 
   def read(socket : ::Socket, slice : Bytes) : Int32
@@ -62,9 +71,21 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
     end
   end
 
+  def wait_readable(socket : ::Socket) : Nil
+    socket.evented_wait_readable do
+      raise IO::TimeoutError.new("Read timed out")
+    end
+  end
+
   def write(socket : ::Socket, slice : Bytes) : Int32
     evented_write(socket, "Error writing to socket") do
       LibC.send(socket.fd, slice, slice.size, 0)
+    end
+  end
+
+  def wait_writable(socket : ::Socket) : Nil
+    socket.evented_wait_writable do
+      raise IO::TimeoutError.new("Write timed out")
     end
   end
 
@@ -88,9 +109,6 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
     socket.evented_close
   end
 
-  def remove(socket : ::Socket) : Nil
-  end
-
   def evented_read(target, errno_msg : String, &) : Int32
     loop do
       bytes_read = yield
@@ -100,7 +118,9 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
       end
 
       if Errno.value == Errno::EAGAIN
-        target.wait_readable
+        target.evented_wait_readable do
+          raise IO::TimeoutError.new("Read timed out")
+        end
       else
         raise IO::Error.from_errno(errno_msg, target: target)
       end
@@ -118,7 +138,9 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
         end
 
         if Errno.value == Errno::EAGAIN
-          target.wait_writable
+          target.evented_wait_writable do
+            raise IO::TimeoutError.new("Write timed out")
+          end
         else
           raise IO::Error.from_errno(errno_msg, target: target)
         end

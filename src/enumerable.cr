@@ -2019,9 +2019,7 @@ module Enumerable(T)
   # (1..5).to_a # => [1, 2, 3, 4, 5]
   # ```
   def to_a : Array(T)
-    ary = [] of T
-    each { |e| ary << e }
-    ary
+    to_a(&.as(T))
   end
 
   # Returns an `Array` with the results of running *block* against each element of the collection.

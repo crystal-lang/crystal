@@ -1,7 +1,7 @@
 class Crystal::EventLoop::Polling::FiberEvent
   include Crystal::EventLoop::Event
 
-  def initialize(@event_loop : EventLoop, fiber : Fiber, type : Event::Type)
+  def initialize(type : Event::Type, fiber : Fiber)
     @event = Event.new(type, fiber)
   end
 
@@ -10,15 +10,15 @@ class Crystal::EventLoop::Polling::FiberEvent
     seconds, nanoseconds = System::Time.monotonic
     now = Time::Span.new(seconds: seconds, nanoseconds: nanoseconds)
     @event.wake_at = now + timeout
-    @event_loop.add_timer(pointerof(@event))
+    EventLoop.current.add_timer(pointerof(@event))
   end
 
   # select timeout has been cancelled
   def delete : Nil
     return unless @event.wake_at?
 
-    @event.wake_at = nil
-    @event_loop.delete_timer(pointerof(@event))
+    EventLoop.current.delete_timer(pointerof(@event))
+    clear
   end
 
   # fiber died

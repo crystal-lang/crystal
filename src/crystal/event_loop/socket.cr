@@ -15,6 +15,9 @@ abstract class Crystal::EventLoop
     # Use `#receive_from` for capturing the source address of a message.
     abstract def read(socket : ::Socket, slice : Bytes) : Int32
 
+    # Blocks the current fiber until the socket is ready for read.
+    abstract def wait_readable(socket : ::Socket) : Nil
+
     # Writes at least one byte from *slice* to the socket.
     #
     # Blocks the current fiber if the socket is not ready for writing,
@@ -24,6 +27,9 @@ abstract class Crystal::EventLoop
     #
     # Use `#send_to` for sending a message to a specific target address.
     abstract def write(socket : ::Socket, slice : Bytes) : Int32
+
+    # Blocks the current fiber until the socket is ready for write.
+    abstract def wait_writable(socket : ::Socket) : Nil
 
     # Accepts an incoming TCP connection on the socket.
     #
@@ -62,13 +68,20 @@ abstract class Crystal::EventLoop
 
     # Closes the socket.
     abstract def close(socket : ::Socket) : Nil
+  end
 
-    # Removes the socket from the event loop. Can be used to free up memory
-    # resources associated with the socket, as well as removing the socket from
-    # kernel data structures.
-    #
-    # Called by `::Socket#finalize` before closing the socket. Errors shall be
-    # silently ignored.
-    abstract def remove(socket : ::Socket) : Nil
+  # Removes the socket from the event loop. Can be used to free up memory
+  # resources associated with the socket, as well as removing the socket from
+  # kernel data structures.
+  #
+  # Called by `::Socket#finalize` before closing the socket. Errors shall be
+  # silently ignored.
+  def self.remove(socket : ::Socket) : Nil
+    backend_class.remove_impl(socket)
+  end
+
+  # Actual implementation for `.remove`. Must be implemented on a subclass of
+  # `Crystal::EventLoop` when needed.
+  protected def self.remove_impl(socket : ::Socket) : Nil
   end
 end

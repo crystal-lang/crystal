@@ -20,26 +20,55 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
     event_base.loop(flags)
   end
 
+  {% if flag?(:execution_context) %}
+    def run(queue : Fiber::List*, blocking : Bool) : Nil
+      Crystal.trace :evloop, "run", fiber: fiber, blocking: blocking
+      @runnables = queue
+      run(blocking)
+    ensure
+      @runnables = nil
+    end
+
+    def callback_enqueue(fiber : Fiber) : Nil
+      if queue = @runnables
+        queue.value.push(fiber)
+      else
+        raise "BUG: libevent callback executed outside of #run(queue*, blocking) call"
+      end
+    end
+  {% end %}
+
   def interrupt : Nil
     event_base.loop_exit
   end
 
-  # Create a new resume event for a fiber.
+  # Create a new resume event for a fiber (sleep).
   def create_resume_event(fiber : Fiber) : Crystal::EventLoop::LibEvent::Event
     event_base.new_event(-1, LibEvent2::EventFlags::None, fiber) do |s, flags, data|
-      data.as(Fiber).enqueue
+      f = data.as(Fiber)
+      {% if flag?(:execution_context) %}
+        event_loop = Crystal::EventLoop.current.as(Crystal::EventLoop::LibEvent)
+        event_loop.callback_enqueue(f)
+      {% else %}
+        f.enqueue
+      {% end %}
     end
   end
 
-  # Creates a timeout_event.
+  # Creates a timeout event (timeout action of select expression).
   def create_timeout_event(fiber) : Crystal::EventLoop::LibEvent::Event
     event_base.new_event(-1, LibEvent2::EventFlags::None, fiber) do |s, flags, data|
       f = data.as(Fiber)
-      if (select_action = f.timeout_select_action)
+      if select_action = f.timeout_select_action
         f.timeout_select_action = nil
-        select_action.time_expired(f)
-      else
-        f.enqueue
+        if select_action.time_expired?
+          {% if flag?(:execution_context) %}
+            event_loop = Crystal::EventLoop.current.as(Crystal::EventLoop::LibEvent)
+            event_loop.callback_enqueue(f)
+          {% else %}
+            f.enqueue
+          {% end %}
+        end
       end
     end
   end
@@ -84,6 +113,12 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
     end
   end
 
+  def wait_readable(file_descriptor : Crystal::System::FileDescriptor) : Nil
+    file_descriptor.evented_wait_readable(raise_if_closed: false) do
+      raise IO::TimeoutError.new("Read timed out")
+    end
+  end
+
   def write(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
     evented_write(file_descriptor, "Error writing file_descriptor") do
       LibC.write(file_descriptor.fd, slice, slice.size).tap do |return_code|
@@ -94,11 +129,14 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
     end
   end
 
-  def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
-    file_descriptor.evented_close
+  def wait_writable(file_descriptor : Crystal::System::FileDescriptor) : Nil
+    file_descriptor.evented_wait_writable do
+      raise IO::TimeoutError.new("Write timed out")
+    end
   end
 
-  def remove(file_descriptor : Crystal::System::FileDescriptor) : Nil
+  def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
+    file_descriptor.evented_close
   end
 
   def read(socket : ::Socket, slice : Bytes) : Int32
@@ -107,9 +145,21 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
     end
   end
 
+  def wait_readable(socket : ::Socket) : Nil
+    socket.evented_wait_readable(raise_if_closed: false) do
+      raise IO::TimeoutError.new("Read timed out")
+    end
+  end
+
   def write(socket : ::Socket, slice : Bytes) : Int32
     evented_write(socket, "Error writing to socket") do
       LibC.send(socket.fd, slice, slice.size, 0).to_i32
+    end
+  end
+
+  def wait_writable(socket : ::Socket) : Nil
+    socket.evented_wait_writable do
+      raise IO::TimeoutError.new("Write timed out")
     end
   end
 
@@ -145,7 +195,7 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
       when Errno::EISCONN
         return
       when Errno::EINPROGRESS, Errno::EALREADY
-        socket.wait_writable(timeout: timeout) do
+        socket.evented_wait_writable(timeout: timeout) do
           return IO::TimeoutError.new("connect timed out")
         end
       else
@@ -177,7 +227,7 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
         if socket.closed?
           return
         elsif Errno.value == Errno::EAGAIN
-          socket.wait_readable(raise_if_closed: false) do
+          socket.evented_wait_readable(raise_if_closed: false) do
             raise IO::TimeoutError.new("Accept timed out")
           end
           return if socket.closed?
@@ -194,9 +244,6 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
     socket.evented_close
   end
 
-  def remove(socket : ::Socket) : Nil
-  end
-
   def evented_read(target, errno_msg : String, &) : Int32
     loop do
       bytes_read = yield
@@ -206,7 +253,9 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
       end
 
       if Errno.value == Errno::EAGAIN
-        target.wait_readable
+        target.evented_wait_readable do
+          raise IO::TimeoutError.new("Read timed out")
+        end
       else
         raise IO::Error.from_errno(errno_msg, target: target)
       end
@@ -224,7 +273,9 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
         end
 
         if Errno.value == Errno::EAGAIN
-          target.wait_writable
+          target.evented_wait_writable do
+            raise IO::TimeoutError.new("Write timed out")
+          end
         else
           raise IO::Error.from_errno(errno_msg, target: target)
         end

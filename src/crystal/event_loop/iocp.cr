@@ -55,6 +55,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     iocp
   end
 
+  # thread unsafe
   def run(blocking : Bool) : Bool
     enqueued = false
 
@@ -65,6 +66,13 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
 
     enqueued
   end
+
+  {% if flag?(:execution_context) %}
+    # thread unsafe
+    def run(queue : Fiber::List*, blocking : Bool) : Nil
+      run_impl(blocking) { |fiber| queue.value.push(fiber) }
+    end
+  {% end %}
 
   # Runs the event loop and enqueues the fiber for the next upcoming event or
   # completion.
@@ -190,6 +198,10 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     end.to_i32
   end
 
+  def wait_readable(file_descriptor : Crystal::System::FileDescriptor) : Nil
+    raise NotImplementedError.new("Crystal::System::IOCP#wait_readable(FileDescriptor)")
+  end
+
   def write(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
     System::IOCP.overlapped_operation(file_descriptor, "WriteFile", file_descriptor.write_timeout, writing: true) do |overlapped|
       ret = LibC.WriteFile(file_descriptor.windows_handle, slice, slice.size, out byte_count, overlapped)
@@ -197,11 +209,12 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     end.to_i32
   end
 
-  def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
-    LibC.CancelIoEx(file_descriptor.windows_handle, nil) unless file_descriptor.system_blocking?
+  def wait_writable(file_descriptor : Crystal::System::FileDescriptor) : Nil
+    raise NotImplementedError.new("Crystal::System::IOCP#wait_writable(FileDescriptor)")
   end
 
-  def remove(file_descriptor : Crystal::System::FileDescriptor) : Nil
+  def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
+    LibC.CancelIoEx(file_descriptor.windows_handle, nil) unless file_descriptor.system_blocking?
   end
 
   private def wsa_buffer(bytes)
@@ -223,6 +236,13 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     bytes_read.to_i32
   end
 
+  def wait_readable(socket : ::Socket) : Nil
+    # NOTE: Windows 10+ has `ProcessSocketNotifications` to associate sockets to
+    # a completion port and be notified of socket readiness. See
+    # <https://learn.microsoft.com/en-us/windows/win32/winsock/winsock-socket-state-notifications>
+    raise NotImplementedError.new("Crystal::System::IOCP#wait_readable(Socket)")
+  end
+
   def write(socket : ::Socket, slice : Bytes) : Int32
     wsabuf = wsa_buffer(slice)
 
@@ -232,6 +252,13 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     end
 
     bytes.to_i32
+  end
+
+  def wait_writable(socket : ::Socket) : Nil
+    # NOTE: Windows 10+ has `ProcessSocketNotifications` to associate sockets to
+    # a completion port and be notified of socket readiness. See
+    # <https://learn.microsoft.com/en-us/windows/win32/winsock/winsock-socket-state-notifications>
+    raise NotImplementedError.new("Crystal::System::IOCP#wait_writable(Socket)")
   end
 
   def send_to(socket : ::Socket, slice : Bytes, address : ::Socket::Address) : Int32
@@ -313,8 +340,5 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   end
 
   def close(socket : ::Socket) : Nil
-  end
-
-  def remove(socket : ::Socket) : Nil
   end
 end

@@ -43,6 +43,29 @@ describe UNIXSocket do
     end
   end
 
+  it "initializes with `Path` paths" do
+    with_tempfile("unix_socket.sock") do |path|
+      path_path = Path.new(path)
+      UNIXServer.open(path_path) do |server|
+        server.local_address.family.should eq(Socket::Family::UNIX)
+        server.local_address.path.should eq(path)
+
+        UNIXSocket.open(path_path) do |client|
+          client.local_address.family.should eq(Socket::Family::UNIX)
+          client.local_address.path.should eq(path)
+
+          server.accept do |sock|
+            sock.local_address.family.should eq(Socket::Family::UNIX)
+            sock.local_address.path.should eq(path)
+
+            sock.remote_address.family.should eq(Socket::Family::UNIX)
+            sock.remote_address.path.should eq(path)
+          end
+        end
+      end
+    end
+  end
+
   it "sync flag after accept" do
     with_tempfile("unix_socket-accept.sock") do |path|
       UNIXServer.open(path) do |server|
