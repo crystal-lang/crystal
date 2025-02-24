@@ -10,6 +10,7 @@ describe "Crystal::Command" do
       with_tempfile "crystal-external.cr" do |source_file|
         File.write source_file, <<-CRYSTAL
           puts Process.find_executable("crystal")
+          puts ENV["CRYSTAL_EXEC_PATH"]
           puts PROGRAM_NAME
           puts ARGV
           CRYSTAL
@@ -31,6 +32,7 @@ describe "Crystal::Command" do
 
       lines.should eq [
         compiler_path,
+        File.dirname(compiler_path),
         command_path,
         %(["foo", "bar"]),
       ]
