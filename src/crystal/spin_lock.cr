@@ -1,13 +1,16 @@
 # :nodoc:
-class Crystal::SpinLock
-  {% if flag?(:preview_mt) %}
-    @m = Atomic(Int32).new(0)
+struct Crystal::SpinLock
+  private UNLOCKED = 0
+  private LOCKED   = 1
+
+  {% if flag?(:preview_mt) || flag?(:win32) %}
+    @m = Atomic(Int32).new(UNLOCKED)
   {% end %}
 
   def lock
-    {% if flag?(:preview_mt) %}
-      while @m.swap(1) == 1
-        while @m.get == 1
+    {% if flag?(:preview_mt) || flag?(:win32) %}
+      while @m.swap(LOCKED, :acquire) == LOCKED
+        while @m.get(:relaxed) == LOCKED
           Intrinsics.pause
         end
       end
@@ -15,12 +18,12 @@ class Crystal::SpinLock
   end
 
   def unlock
-    {% if flag?(:preview_mt) %}
-      @m.lazy_set(0)
+    {% if flag?(:preview_mt) || flag?(:win32) %}
+      @m.set(UNLOCKED, :release)
     {% end %}
   end
 
-  def sync
+  def sync(&)
     lock
     begin
       yield
@@ -29,7 +32,7 @@ class Crystal::SpinLock
     end
   end
 
-  def unsync
+  def unsync(&)
     unlock
     begin
       yield

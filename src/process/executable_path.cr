@@ -3,13 +3,26 @@
 # - http://stackoverflow.com/questions/1023306/finding-current-executables-path-without-proc-self-exe
 
 class Process
-  PATH_DELIMITER = {% if flag?(:windows) %} ';' {% else %} ':' {% end %}
+  {% if flag?(:windows) %}
+    PATH_DELIMITER = ';'
+  {% else %}
+    PATH_DELIMITER = ':'
+  {% end %}
 
   # :nodoc:
   INITIAL_PATH = ENV["PATH"]?
 
   # :nodoc:
-  INITIAL_PWD = Dir.current
+  #
+  # Working directory at program start. Nil if working directory does not exist.
+  #
+  # Used for `Exception::CallStack::CURRENT_DIR`
+  # and `Process.executable_path_impl` on openbsd.
+  INITIAL_PWD = begin
+    Dir.current
+  rescue File::NotFoundError
+    nil
+  end
 
   # Returns an absolute path to the executable file of the currently running
   # program. This is in opposition to `PROGRAM_NAME` which may be a relative or
@@ -22,13 +35,13 @@ class Process
   def self.executable_path : String?
     if executable = executable_path_impl
       begin
-        File.real_path(executable)
+        File.realpath(executable)
       rescue File::Error
       end
     end
   end
 
-  private def self.is_executable_file?(path)
+  private def self.file_executable?(path)
     unless File.info?(path, follow_symlinks: true).try &.file?
       return false
     end
@@ -37,7 +50,7 @@ class Process
       # Windows doesn't have "executable" metadata for files, so it also doesn't have files that are "not executable".
       true
     {% else %}
-      File.executable?(path)
+      File::Info.executable?(path)
     {% end %}
   end
 
@@ -46,14 +59,12 @@ class Process
   # in *path*.
   def self.find_executable(name : Path | String, path : String? = ENV["PATH"]?, pwd : Path | String = Dir.current) : String?
     find_executable_possibilities(Path.new(name), path, pwd) do |p|
-      if is_executable_file?(p)
-        return p.to_s
-      end
+      return p.to_s if file_executable?(p)
     end
     nil
   end
 
-  private def self.find_executable_possibilities(name, path, pwd)
+  private def self.find_executable_possibilities(name, path, pwd, &)
     return if name.to_s.empty?
 
     {% if flag?(:win32) %}
@@ -84,7 +95,7 @@ class Process
     end
 
     if path && !has_separator
-      path.split(PATH_DELIMITER).each do |path_entry|
+      path.split(PATH_DELIMITER) do |path_entry|
         yield Path.new(path_entry, name)
       end
     end
@@ -166,7 +177,9 @@ end
   # openbsd, ...
   class Process
     private def self.executable_path_impl
-      find_executable(PROGRAM_NAME, INITIAL_PATH, INITIAL_PWD)
+      if pwd = INITIAL_PWD
+        find_executable(PROGRAM_NAME, INITIAL_PATH, pwd)
+      end
     end
   end
 {% end %}

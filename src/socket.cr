@@ -23,6 +23,26 @@ class Socket < IO
   getter type : Type
   getter protocol : Protocol
 
+  # The time to wait when reading before raising an `IO::TimeoutError`.
+  property read_timeout : Time::Span?
+
+  # Sets the number of seconds to wait when reading before raising an `IO::TimeoutError`.
+  @[Deprecated("Use `#read_timeout=(Time::Span?)` instead.")]
+  def read_timeout=(read_timeout : Number) : Number
+    self.read_timeout = read_timeout.seconds
+    read_timeout
+  end
+
+  # Sets the time to wait when writing before raising an `IO::TimeoutError`.
+  property write_timeout : Time::Span?
+
+  # Sets the number of seconds to wait when writing before raising an `IO::TimeoutError`.
+  @[Deprecated("Use `#write_timeout=(Time::Span?)` instead.")]
+  def write_timeout=(write_timeout : Number) : Number
+    self.write_timeout = write_timeout.seconds
+    write_timeout
+  end
+
   # Creates a TCP socket. Consider using `TCPSocket` or `TCPServer` unless you
   # need full control over the socket.
   def self.tcp(family : Family, blocking = false) : self
@@ -71,7 +91,7 @@ class Socket < IO
   # ```
   def connect(host : String, port : Int, connect_timeout = nil) : Nil
     Addrinfo.resolve(host, port, @family, @type, @protocol) do |addrinfo|
-      connect(addrinfo, timeout: connect_timeout) { |error| error }
+      connect(addrinfo, timeout: connect_timeout)
     end
   end
 
@@ -90,7 +110,9 @@ class Socket < IO
   # Tries to connect to a remote address. Yields an `IO::TimeoutError` or an
   # `Socket::ConnectError` error if the connection failed.
   def connect(addr, timeout = nil, &)
-    system_connect(addr, timeout) { |error| yield error }
+    timeout = timeout.seconds unless timeout.is_a?(::Time::Span?)
+    result = system_connect(addr, timeout)
+    yield result if result.is_a?(Exception)
   end
 
   # Binds the socket to a local address.
@@ -116,8 +138,16 @@ class Socket < IO
   # sock.bind 1234
   # ```
   def bind(port : Int)
-    Addrinfo.resolve("::", port, @family, @type, @protocol) do |addrinfo|
-      system_bind(addrinfo, "::#{port}") { |errno| errno }
+    if family.inet?
+      address = "0.0.0.0"
+      address_and_port = "0.0.0.0:#{port}"
+    else
+      address = "::"
+      address_and_port = "[::]:#{port}"
+    end
+
+    Addrinfo.resolve(address, port, @family, @type, @protocol) do |addrinfo|
+      system_bind(addrinfo, address_and_port) { |errno| errno }
     end
   end
 
@@ -140,7 +170,7 @@ class Socket < IO
 
   # Tries to listen for connections on the previously bound socket.
   # Yields an `Socket::Error` on failure.
-  def listen(backlog : Int = SOMAXCONN)
+  def listen(backlog : Int = SOMAXCONN, &)
     system_listen(backlog) { |err| yield err }
   end
 
@@ -184,6 +214,10 @@ class Socket < IO
   end
 
   # Sends a message to a previously connected remote address.
+  # Returns the number of bytes sent.
+  # Does not guarantee that the entire message is sent. That's only the case
+  # when the return value is equivalent to `message.bytesize`.
+  # `#write` ensures the entire message is sent.
   #
   # ```
   # require "socket"
@@ -197,10 +231,14 @@ class Socket < IO
   # sock.send(Bytes[0])
   # ```
   def send(message) : Int32
-    system_send(message.to_slice)
+    system_write(message.to_slice)
   end
 
   # Sends a message to the specified remote address.
+  # Returns the number of bytes sent.
+  # Does not guarantee that the entire message is sent. That's only the case
+  # when the return value is equivalent to `message.bytesize`.
+  # `#write` ensures the entire message is sent but it requires an established connection.
   #
   # ```
   # require "socket"
@@ -227,11 +265,10 @@ class Socket < IO
   def receive(max_message_size = 512) : {String, Address}
     address = nil
     message = String.new(max_message_size) do |buffer|
-      bytes_read, sockaddr, addrlen = system_receive(Slice.new(buffer, max_message_size))
-      address = Address.from(sockaddr, addrlen)
+      bytes_read, address = system_receive_from(Slice.new(buffer, max_message_size))
       {bytes_read, 0}
     end
-    {message, address.not_nil!}
+    {message, address.as(Address)}
   end
 
   # Receives a binary message from the previously bound address.
@@ -246,8 +283,7 @@ class Socket < IO
   # bytes_read, client_addr = server.receive(message)
   # ```
   def receive(message : Bytes) : {Int32, Address}
-    bytes_read, sockaddr, addrlen = system_receive(message)
-    {bytes_read, Address.from(sockaddr, addrlen)}
+    system_receive_from(message)
   end
 
   # Calls `shutdown(2)` with `SHUT_RD`
@@ -265,29 +301,30 @@ class Socket < IO
   end
 
   def send_buffer_size : Int32
-    getsockopt LibC::SO_SNDBUF, 0
+    system_send_buffer_size
   end
 
   def send_buffer_size=(val : Int32)
-    setsockopt LibC::SO_SNDBUF, val
+    self.system_send_buffer_size = val
     val
   end
 
   def recv_buffer_size : Int32
-    getsockopt LibC::SO_RCVBUF, 0
+    system_recv_buffer_size
   end
 
   def recv_buffer_size=(val : Int32)
-    setsockopt LibC::SO_RCVBUF, val
+    self.system_recv_buffer_size = val
     val
   end
 
   def reuse_address? : Bool
-    getsockopt_bool LibC::SO_REUSEADDR
+    system_reuse_address?
   end
 
   def reuse_address=(val : Bool)
-    setsockopt_bool LibC::SO_REUSEADDR, val
+    self.system_reuse_address = val
+    val
   end
 
   def reuse_port? : Bool
@@ -296,22 +333,25 @@ class Socket < IO
 
   def reuse_port=(val : Bool)
     self.system_reuse_port = val
+    val
   end
 
   def broadcast? : Bool
-    getsockopt_bool LibC::SO_BROADCAST
+    system_broadcast?
   end
 
   def broadcast=(val : Bool)
-    setsockopt_bool LibC::SO_BROADCAST, val
+    self.system_broadcast = val
+    val
   end
 
   def keepalive?
-    getsockopt_bool LibC::SO_KEEPALIVE
+    system_keepalive?
   end
 
   def keepalive=(val : Bool)
-    setsockopt_bool LibC::SO_KEEPALIVE, val
+    self.system_keepalive = val
+    val
   end
 
   def linger
@@ -333,11 +373,10 @@ class Socket < IO
 
   # Returns the modified *optval*.
   protected def getsockopt(optname, optval, level = LibC::SOL_SOCKET)
-    getsockopt(optname, optval, level) { |value| return value }
-    raise Socket::Error.from_errno("getsockopt")
+    system_getsockopt(fd, optname, optval, level)
   end
 
-  protected def getsockopt(optname, optval, level = LibC::SOL_SOCKET)
+  protected def getsockopt(optname, optval, level = LibC::SOL_SOCKET, &)
     system_getsockopt(fd, optname, optval, level) { |value| yield value }
   end
 
@@ -369,7 +408,7 @@ class Socket < IO
   end
 
   def close_on_exec=(arg : Bool)
-    system_close_on_exec = arg
+    self.system_close_on_exec = arg
   end
 
   def self.fcntl(fd, cmd, arg = 0)
@@ -380,10 +419,19 @@ class Socket < IO
     self.class.fcntl fd, cmd, arg
   end
 
+  # Finalizes the socket resource.
+  #
+  # This involves releasing the handle to the operating system, i.e. closing it.
+  # It does *not* implicitly call `#flush`, so data waiting in the buffer may be
+  # lost. By default write buffering is disabled, though (`sync? == true`).
+  # It's recommended to always close the socket explicitly via `#close`.
+  #
+  # This method is a no-op if the file descriptor has already been closed.
   def finalize
     return if closed?
 
-    close rescue nil
+    Crystal::EventLoop.remove(self)
+    socket_close { } # ignore error
   end
 
   def closed? : Bool
@@ -394,11 +442,21 @@ class Socket < IO
     system_tty?
   end
 
-  private def unbuffered_rewind
+  private def unbuffered_read(slice : Bytes) : Int32
+    system_read(slice)
+  end
+
+  private def unbuffered_write(slice : Bytes) : Nil
+    until slice.empty?
+      slice += system_write(slice)
+    end
+  end
+
+  private def unbuffered_rewind : Nil
     raise Socket::Error.new("Can't rewind")
   end
 
-  private def unbuffered_close
+  private def unbuffered_close : Nil
     return if @closed
 
     @closed = true
@@ -406,7 +464,7 @@ class Socket < IO
     system_close
   end
 
-  private def unbuffered_flush
+  private def unbuffered_flush : Nil
     # Nothing
   end
 end

@@ -2,7 +2,10 @@ require "./unix_socket"
 
 # A local interprocess communication server socket.
 #
-# Only available on UNIX and UNIX-like operating systems.
+# Available on UNIX-like operating systems, and Windows 10 Build 17063 or above.
+# Not all features are supported on Windows.
+#
+# NOTE: To use `UNIXServer`, you must explicitly import it with `require "socket"`
 #
 # Example usage:
 # ```
@@ -28,10 +31,14 @@ class UNIXServer < UNIXSocket
   #
   # The server is of stream type by default, but this can be changed for
   # another type. For example datagram messages:
+  #
   # ```
   # UNIXServer.new("/tmp/dgram.sock", Socket::Type::DGRAM)
   # ```
-  def initialize(@path : String, type : Type = Type::STREAM, backlog : Int = 128)
+  #
+  # [Only the stream type is supported on Windows](https://devblogs.microsoft.com/commandline/af_unix-comes-to-windows/#unsupportedunavailable).
+  def initialize(path : Path | String, type : Type = Type::STREAM, backlog : Int = 128)
+    @path = path = path.to_s
     super(Family::UNIX, type)
 
     system_bind(UNIXAddress.new(path), path) do |error|
@@ -39,6 +46,7 @@ class UNIXServer < UNIXSocket
       raise error
     end
 
+    return if type == Type::DGRAM
     listen(backlog) do |error|
       close
       raise error
@@ -46,15 +54,16 @@ class UNIXServer < UNIXSocket
   end
 
   # Creates a UNIXServer from an already configured raw file descriptor
-  def initialize(*, fd : Handle, type : Type = Type::STREAM, @path : String? = nil)
-    super(fd: fd, type: type, path: @path)
+  def initialize(*, fd : Handle, type : Type = Type::STREAM, path : Path | String? = nil)
+    @path = path = path.to_s
+    super(fd: fd, type: type, path: path)
   end
 
   # Creates a new UNIX server and yields it to the block. Eventually closes the
   # server socket when the block returns.
   #
   # Returns the value of the block.
-  def self.open(path, type : Type = Type::STREAM, backlog = 128)
+  def self.open(path : Path | String, type : Type = Type::STREAM, backlog = 128, &)
     server = new(path, type, backlog)
     begin
       yield server
@@ -80,7 +89,7 @@ class UNIXServer < UNIXSocket
     super()
   ensure
     if delete && (path = @path)
-      File.delete(path) if File.exists?(path)
+      File.delete?(path)
       @path = nil
     end
   end

@@ -2,7 +2,109 @@ require "spec"
 require "yaml"
 require "json"
 
+private def it_fetches_from_hash(key, *equivalent_keys)
+  it "fetches #{key.class}" do
+    any = YAML::Any.new({YAML::Any.new(key) => YAML::Any.new("bar")})
+
+    any[key].raw.should eq("bar")
+    any[YAML::Any.new(key)].raw.should eq("bar")
+
+    equivalent_keys.each do |k|
+      any[k].raw.should eq("bar")
+      # FIXME: Can't do `YAML::Any.new` with arbitrary number types (#11645)
+      if k.is_a?(YAML::Any::Type)
+        any[YAML::Any.new(k)].raw.should eq("bar")
+      end
+    end
+
+    unless key.nil?
+      expect_raises(KeyError, %(Missing hash key: nil)) do
+        any[nil]
+      end
+
+      expect_raises(KeyError, %(Missing hash key: nil)) do
+        any[YAML::Any.new(nil)]
+      end
+    end
+
+    expect_raises(KeyError, %(Missing hash key: "fox")) do
+      any["fox"]
+    end
+
+    expect_raises(KeyError, %(Missing hash key: "fox")) do
+      any[YAML::Any.new("fox")]
+    end
+
+    expect_raises(KeyError, %(Missing hash key: 2)) do
+      any[2]
+    end
+
+    expect_raises(KeyError, %(Missing hash key: 2)) do
+      any[YAML::Any.new(2i64)]
+    end
+
+    expect_raises(KeyError, %(Missing hash key: 2)) do
+      any[2.0]
+    end
+
+    expect_raises(KeyError, %(Missing hash key: 2)) do
+      any[YAML::Any.new(2.0f64)]
+    end
+
+    expect_raises(KeyError, %(Missing hash key: 'c')) do
+      any['c']
+    end
+  end
+end
+
+private def it_fetches_from_hash?(key, *equivalent_keys)
+  it "fetches #{key.class}" do
+    any = YAML::Any.new({YAML::Any.new(key) => YAML::Any.new("bar")})
+
+    any[key]?.try(&.raw).should eq("bar")
+    any[YAML::Any.new(key)]?.try(&.raw).should eq("bar")
+
+    equivalent_keys.each do |k|
+      any[k]?.try(&.raw).should eq("bar")
+      # FIXME: Can't do `YAML::Any.new` with arbitrary number types (#11645)
+      if k.is_a?(YAML::Any::Type)
+        any[YAML::Any.new(k)]?.try(&.raw).should eq("bar")
+      end
+    end
+
+    unless key.nil?
+      any[nil]?.should be_nil
+      any[YAML::Any.new(nil)]?.should be_nil
+    end
+
+    any["fox"]?.should be_nil
+    any[YAML::Any.new("fox")]?.should be_nil
+    any[2]?.should be_nil
+    any[YAML::Any.new(2i64)]?.should be_nil
+    any[2.0]?.should be_nil
+    any[YAML::Any.new(2.0f64)]?.should be_nil
+
+    any['c']?.should be_nil
+  end
+end
+
 describe YAML::Any do
+  it ".new" do
+    YAML::Any.new(nil).raw.should be_nil
+    YAML::Any.new(true).raw.should eq true
+    YAML::Any.new(1_i64).raw.should eq 1_i64
+    YAML::Any.new(1).raw.should eq 1
+    YAML::Any.new(1_u8).raw.should eq 1
+    YAML::Any.new(0.0).raw.should eq 0.0
+    YAML::Any.new(0.0_f32).raw.should eq 0.0
+    YAML::Any.new("foo").raw.should eq "foo"
+    YAML::Any.new(Time.utc(2023, 7, 2)).raw.should eq Time.utc(2023, 7, 2)
+    YAML::Any.new(Bytes[1, 2, 3]).raw.should eq Bytes[1, 2, 3]
+    YAML::Any.new([] of YAML::Any).raw.should eq [] of YAML::Any
+    YAML::Any.new({} of YAML::Any => YAML::Any).raw.should eq({} of YAML::Any => YAML::Any)
+    YAML::Any.new(Set(YAML::Any).new).raw.should eq Set(YAML::Any).new
+  end
+
   describe "casts" do
     it "gets nil" do
       YAML.parse("").as_nil.should be_nil
@@ -65,6 +167,8 @@ describe YAML::Any do
       value.should eq(1.2_f32)
       value.should be_a(Float32)
 
+      expect_raises(TypeCastError) { YAML.parse("true").as_f32 }
+
       value = YAML.parse("1.2").as_f32?
       value.should eq(1.2_f32)
       value.should be_a(Float32)
@@ -73,10 +177,22 @@ describe YAML::Any do
       value.should be_nil
     end
 
+    it "gets float32 from JSON integer (#8618)" do
+      value = YAML.parse("123").as_f32
+      value.should eq(123.0)
+      value.should be_a(Float32)
+
+      value = YAML.parse("123").as_f32?
+      value.should eq(123.0)
+      value.should be_a(Float32)
+    end
+
     it "gets float64" do
       value = YAML.parse("1.2").as_f
       value.should eq(1.2)
       value.should be_a(Float64)
+
+      expect_raises(TypeCastError) { YAML.parse("true").as_f }
 
       value = YAML.parse("1.2").as_f?
       value.should eq(1.2)
@@ -84,6 +200,16 @@ describe YAML::Any do
 
       value = YAML.parse("true").as_f?
       value.should be_nil
+    end
+
+    it "gets float64 from JSON integer (#8618)" do
+      value = YAML.parse("123").as_f
+      value.should eq(123.0)
+      value.should be_a(Float64)
+
+      value = YAML.parse("123").as_f?
+      value.should eq(123.0)
+      value.should be_a(Float64)
     end
 
     it "gets time" do
@@ -107,6 +233,45 @@ describe YAML::Any do
       value = YAML.parse("1").as_bytes?
       value.should be_nil
     end
+
+    it "gets anchor" do
+      value = YAML.parse("&foo bar").as_s
+      value.should eq "bar"
+
+      value = YAML.parse("- &foo bar\n- *foo").as_a.map(&.as_s)
+      value.should eq ["bar", "bar"]
+
+      value = YAML.parse("foo: &foo\n  bar: *foo").as_h
+      foo = {YAML::Any.new("bar") => YAML::Any.new(nil)}
+      foo[YAML::Any.new("bar")] = YAML::Any.new(foo)
+      hash = YAML::Any.new({YAML::Any.new("foo") => YAML::Any.new(foo)})
+      # FIXME: Using to_s here because comparison of recursive YAML structures seems to be broken.
+      value.to_s.should eq hash.to_s
+
+      expect_raises YAML::ParseException, "Unknown anchor 'foo' at line 1, column 1" do
+        YAML.parse("*foo")
+      end
+    end
+
+    it "gets yes/no unquoted booleans" do
+      YAML.parse("yes").as_bool.should be_true
+      YAML.parse("no").as_bool.should be_false
+      YAML.parse("'yes'").as_bool?.should be_nil
+      YAML.parse("'no'").as_bool?.should be_nil
+      YAML::Any.from_yaml("yes").as_bool.should be_true
+      YAML::Any.from_yaml("no").as_bool.should be_false
+      YAML::Any.from_yaml("'yes'").as_bool?.should be_nil
+      YAML::Any.from_yaml("'no'").as_bool?.should be_nil
+    end
+
+    it "doesn't get quoted numbers" do
+      YAML.parse("1").as_i64.should eq(1)
+      YAML.parse("'1'").as_i64?.should be_nil
+      YAML.parse("'1'").as_s?.should eq("1")
+      YAML::Any.from_yaml("1").as_i64.should eq(1)
+      YAML::Any.from_yaml("'1'").as_i64?.should be_nil
+      YAML::Any.from_yaml("'1'").as_s?.should eq("1")
+    end
   end
 
   describe "#size" do
@@ -122,14 +287,69 @@ describe YAML::Any do
   describe "#[]" do
     it "of array" do
       YAML.parse("- foo\n- bar\n")[1].raw.should eq("bar")
+
+      any = YAML::Any.new([YAML::Any.new("baz"), YAML::Any.new("bar")])
+
+      any[1i64].raw.should eq("bar")
+      any[1i32].raw.should eq("bar")
+      any[1u8].raw.should eq("bar")
+
+      expect_raises(Exception, %(Expected int key for Array#[], not Array(YAML::Any))) do
+        any[nil]
+      end
+
+      expect_raises(Exception, %(Expected int key for Array#[], not Array(YAML::Any))) do
+        any[YAML::Any.new(nil)]
+      end
+
+      expect_raises(Exception, %(Expected int key for Array#[], not Array(YAML::Any))) do
+        any["fox"]
+      end
+
+      expect_raises(Exception, %(Expected int key for Array#[], not Array(YAML::Any))) do
+        any[YAML::Any.new("fox")]
+      end
+
+      expect_raises(IndexError, %(Index out of bounds)) do
+        any[2]
+      end
+
+      expect_raises(Exception, %(Expected int key for Array#[], not Array(YAML::Any))) do
+        any[YAML::Any.new(2i64)]
+      end
+
+      expect_raises(Exception, %(Expected int key for Array#[], not Array(YAML::Any))) do
+        any[2.0f64]
+      end
+
+      expect_raises(Exception, %(Expected int key for Array#[], not Array(YAML::Any))) do
+        any[YAML::Any.new(2.0f64)]
+      end
+
+      expect_raises(Exception, %(Expected int key for Array#[], not Array(YAML::Any))) do
+        any[2.0f32]
+      end
+
+      expect_raises(Exception, %(Expected int key for Array#[], not Array(YAML::Any))) do
+        any[YAML::Any.new(2.0f32)]
+      end
+
+      expect_raises(Exception, %(Expected int key for Array#[], not Array(YAML::Any))) do
+        any['c']
+      end
     end
 
-    it "of hash" do
-      YAML.parse("foo: bar")["foo"].raw.should eq("bar")
-    end
-
-    it "of hash with integer keys" do
-      YAML.parse("1: bar")[1].raw.should eq("bar")
+    context "hash" do
+      it_fetches_from_hash nil
+      it_fetches_from_hash true
+      it_fetches_from_hash 1i64, 1.0f64, 1i32, 1u8, 1.0f32
+      it_fetches_from_hash 1.0f64, 1i64, 1i32, 1u8, 1.0f32
+      it_fetches_from_hash "foo"
+      it_fetches_from_hash Time.utc
+      it_fetches_from_hash "foo".to_slice
+      it_fetches_from_hash [YAML::Any.new("foo")]
+      it_fetches_from_hash({YAML::Any.new("foo") => YAML::Any.new("baz")})
+      it_fetches_from_hash Set{YAML::Any.new("foo")}
     end
   end
 
@@ -137,6 +357,26 @@ describe YAML::Any do
     it "of array" do
       YAML.parse("- foo\n- bar\n")[1]?.not_nil!.raw.should eq("bar")
       YAML.parse("- foo\n- bar\n")[3]?.should be_nil
+
+      any = YAML::Any.new([YAML::Any.new("baz"), YAML::Any.new("bar")])
+
+      any[1i64]?.try(&.raw).should eq("bar")
+      any[1i32]?.try(&.raw).should eq("bar")
+      any[1u8]?.try(&.raw).should eq("bar")
+      any[1.0f64]?.try(&.raw).should be_nil
+      any[1.0f32]?.try(&.raw).should be_nil
+
+      any[nil]?.should be_nil
+      any[YAML::Any.new(nil)]?.should be_nil
+      any["fox"]?.should be_nil
+      any[YAML::Any.new("fox")]?.should be_nil
+      any[2]?.should be_nil
+      any[YAML::Any.new(2i64)]?.should be_nil
+      any[2.0f64]?.should be_nil
+      any[YAML::Any.new(2.0f64)]?.should be_nil
+      any[2.0f32]?.should be_nil
+      any[YAML::Any.new(2.0f32)]?.should be_nil
+      any['c']?.should be_nil
     end
 
     it "of hash" do
@@ -147,6 +387,19 @@ describe YAML::Any do
     it "of hash with integer keys" do
       YAML.parse("1: bar")[1]?.not_nil!.raw.should eq("bar")
       YAML.parse("1: bar")[2]?.should be_nil
+    end
+
+    context "hash" do
+      it_fetches_from_hash? nil
+      it_fetches_from_hash? true
+      it_fetches_from_hash? 1i64, 1.0
+      it_fetches_from_hash? 1.0, 1i64
+      it_fetches_from_hash? "foo"
+      it_fetches_from_hash? Time.utc
+      it_fetches_from_hash? "foo".to_slice
+      it_fetches_from_hash? [YAML::Any.new("foo")]
+      it_fetches_from_hash?({YAML::Any.new("foo") => YAML::Any.new("baz")})
+      it_fetches_from_hash? Set{YAML::Any.new("foo")}
     end
   end
 

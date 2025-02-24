@@ -10,6 +10,11 @@ class Log
     @initial_level = level
   end
 
+  def finalize : Nil
+    # NOTE: workaround for https://github.com/crystal-lang/crystal/pull/14473
+    Log.builder.cleanup_collected_log(self)
+  end
+
   # :nodoc:
   def changed_level : Severity?
     @level
@@ -33,33 +38,53 @@ class Log
     @backend = value
   end
 
-  {% for method, severity in {
-                               trace:  Severity::Trace,
-                               debug:  Severity::Debug,
-                               info:   Severity::Info,
-                               notice: Severity::Notice,
-                               warn:   Severity::Warn,
-                               error:  Severity::Error,
-                               fatal:  Severity::Fatal,
-                             } %}
-    # Logs a message if the logger's current severity is lower or equal to `{{severity}}`.
+  {% for method in %w(trace debug info notice warn error fatal) %}
+    {% severity = method.id.camelcase %}
+
+    # Logs the given *exception* if the logger's current severity is lower than
+    # or equal to `Severity::{{severity}}`.
+    def {{method.id}}(*, exception : Exception) : Nil
+      severity = Severity::{{severity}}
+      if level <= severity && (backend = @backend)
+        backend.dispatch Emitter.new(@source, severity, exception).emit("")
+      end
+    end
+
+    # Logs a message if the logger's current severity is lower than or equal to
+    # `Severity::{{ severity }}`.
+    #
+    # The block is not called unless the current severity level would emit a
+    # message.
+    #
+    # Blocks which return `nil` do not emit anything:
+    #
+    # ```
+    # Log.{{method.id}} do
+    #   if false
+    #     "Nothing will be logged."
+    #   end
+    # end
+    # ```
     def {{method.id}}(*, exception : Exception? = nil)
-      severity = Severity.new({{severity}})
+      severity = Severity::{{severity}}
       return unless level <= severity
 
       return unless backend = @backend
 
       dsl = Emitter.new(@source, severity, exception)
       result = yield dsl
-      entry =
-        case result
-        when Entry
-          result
-        else
-          dsl.emit(result.to_s)
-        end
 
-      backend.dispatch entry
+      unless result.nil? && exception.nil?
+        entry =
+           case result
+           when Entry
+             result
+           else
+             dsl.emit(result.to_s)
+           end
+
+        backend.dispatch entry
+      end
     end
   {% end %}
 end

@@ -178,7 +178,7 @@ module Crystal
   end
 
   class Type
-    def each_cover
+    def each_cover(&)
       yield self
     end
 
@@ -214,7 +214,7 @@ module Crystal
   end
 
   class UnionType
-    def each_cover
+    def each_cover(&)
       @union_types.each do |union_type|
         yield union_type
       end
@@ -236,7 +236,7 @@ module Crystal
   end
 
   class VirtualType
-    def each_cover
+    def each_cover(&)
       subtypes.each do |subtype|
         yield subtype
       end
@@ -277,7 +277,7 @@ module Crystal
     delegate cover, cover_size, to: aliased_type
   end
 
-  class LiteralType
+  class AutocastType
     delegate cover, cover_size, to: (@match || literal.type)
   end
 end

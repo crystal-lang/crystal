@@ -5,7 +5,7 @@ require "base64"
 #
 # A `Digest` instance holds the state of an ongoing hash calculation.
 # It can receive new data to include in the hash via `#update`, `#<<`, or `#file`.
-# Once all data is included, use `#final` to get the hash. This will mark the
+# Once all data is included, use `#final` or `#hexfinal` to get the hash. This will mark the
 # ongoing calculation as finished. A finished calculation can't receive new data.
 #
 # A `digest.dup.final` call may be used to get an intermediate hash value.
@@ -37,7 +37,7 @@ abstract class Digest
     #   ctx.update "f"
     #   ctx.update "oo"
     # end
-    # digest.to_slice.hexstring # => "acbd18db4cc2f85cedef654fccc4a4d8"
+    # digest.hexstring # => "acbd18db4cc2f85cedef654fccc4a4d8"
     # ```
     def digest(& : self ->) : Bytes
       context = new
@@ -125,7 +125,7 @@ abstract class Digest
 
   # Returns the final digest output.
   #
-  # This method can only be called once and raises `FinalizedError` on subsequent calls.
+  # `final` or `hexfinal` can only be called once and raises `FinalizedError` on subsequent calls.
   #
   # NOTE: `.dup.final` call may be used to get an intermediate hash value.
   def final : Bytes
@@ -133,6 +133,14 @@ abstract class Digest
     final dst
   end
 
+  # Puts the final digest output into `dst`.
+  #
+  # Faster than the `Bytes` allocating version.
+  # Use when hashing in loops.
+  #
+  # `final` or `hexfinal` can only be called once and raises `FinalizedError` on subsequent calls.
+  #
+  # NOTE: `.dup.final(dst)` call may be used to get an intermediate hash value.
   def final(dst : Bytes) : Bytes
     check_finished
     @finished = true
@@ -140,6 +148,62 @@ abstract class Digest
     dst
   end
 
+  # Returns a hexadecimal-encoded digest in a new `String`.
+  #
+  # `final` or `hexfinal` can only be called once and raises `FinalizedError` on subsequent calls.
+  #
+  # NOTE: `.dup.hexfinal` call may be used to get an intermediate hash value.
+  def hexfinal : String
+    dsize = digest_size
+    string_size = dsize * 2
+    String.new(string_size) do |buffer|
+      tmp = Slice.new(buffer + dsize, dsize)
+      final tmp
+      tmp.hexstring buffer
+      {string_size, string_size}
+    end
+  end
+
+  # Writes a hexadecimal-encoded digest to `dst`.
+  #
+  # Faster than the `String` allocating version.
+  # Use when hashing in loops.
+  #
+  # `final` or `hexfinal` can only be called once and raises `FinalizedError` on subsequent calls.
+  #
+  # NOTE: `.dup.final` call may be used to get an intermediate hash value.
+  def hexfinal(dst : Bytes) : Nil
+    dsize = digest_size
+    unless dst.bytesize == dsize * 2
+      raise ArgumentError.new("Incorrect dst size: #{dst.bytesize}, expected: #{dsize * 2}")
+    end
+
+    tmp = dst[dsize, dsize]
+    final tmp
+    tmp.hexstring dst
+  end
+
+  # Writes a hexadecimal-encoded digest to `IO`.
+  #
+  # Faster than the `String` allocating version.
+  #
+  # `final` or `hexfinal` can only be called once and raises `FinalizedError` on subsequent calls.
+  #
+  # NOTE: `.dup.final` call may be used to get an intermediate hash value.
+  #
+  # This method is restricted to a maximum digest size of 64 bits. Implementations that allow
+  # a larger digest size should override this method to use a larger buffer.
+  def hexfinal(io : IO) : Nil
+    if digest_size > 64
+      raise "Digest#hexfinal(IO) can't handle digest_size over 64 bits"
+    end
+    sary = uninitialized StaticArray(UInt8, 128)
+    tmp = sary.to_slice[0, digest_size * 2]
+    hexfinal tmp
+    io << tmp
+  end
+
+  # Resets the state of this object.  Use to get another hash value without creating a new object.
   def reset : self
     reset_impl
     @finished = false
@@ -149,13 +213,15 @@ abstract class Digest
   # Reads the file's content and updates the digest with it.
   def file(file_name : Path | String) : self
     File.open(file_name) do |io|
+      # `#update` works with big buffers so there's no need for additional read buffering in the file
+      io.read_buffering = false
       self << io
     end
   end
 
   # Reads the io's data and updates the digest with it.
   def update(io : IO) : self
-    buffer = uninitialized UInt8[4096]
+    buffer = uninitialized UInt8[IO::DEFAULT_BUFFER_SIZE]
     while (read_bytes = io.read(buffer.to_slice)) > 0
       self << buffer.to_slice[0, read_bytes]
     end

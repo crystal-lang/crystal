@@ -111,7 +111,28 @@ lib LibC
 
   SIO_GET_EXTENSION_FUNCTION_POINTER = IOC_INOUT | IOC_WS2 | 6
 
-  IPPROTO_IP = 0
+  IPPROTO_IP   =  0
+  IPPROTO_IPV6 = 41
+
+  IP_MULTICAST_IF   = 9
+  IPV6_MULTICAST_IF = 9
+
+  IP_MULTICAST_TTL    = 10
+  IPV6_MULTICAST_HOPS = 10
+
+  IP_MULTICAST_LOOP   = 11
+  IPV6_MULTICAST_LOOP = 11
+
+  IP_ADD_MEMBERSHIP  = 12
+  IP_DROP_MEMBERSHIP = 13
+
+  # JOIN and LEAVE are the same as ADD and DROP
+  # https://learn.microsoft.com/en-us/windows/win32/winsock/ipproto-ipv6-socket-options
+  IPV6_ADD_MEMBERSHIP = 12
+  IPV6_JOIN_GROUP     = 12
+
+  IPV6_DROP_MEMBERSHIP = 13
+  IPV6_LEAVE_GROUP     = 13
 
   enum IPPROTO
     IPPROTO_HOPOPTS  =   0 # IPv6 Hop-by-Hop options
@@ -186,5 +207,19 @@ lib LibC
     ai_canonname : Char*
     ai_addr : Sockaddr*
     ai_next : Addrinfo*
+  end
+
+  struct ADDRINFOEXW
+    ai_flags : Int
+    ai_family : Int
+    ai_socktype : Int
+    ai_protocol : Int
+    ai_addrlen : SizeT
+    ai_canonname : LPWSTR
+    ai_addr : Sockaddr*
+    ai_blob : Void*
+    ai_bloblen : SizeT
+    ai_provider : GUID*
+    ai_next : ADDRINFOEXW*
   end
 end

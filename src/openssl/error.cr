@@ -21,5 +21,17 @@ module OpenSSL
       message = String.new(LibCrypto.err_error_string(code, nil)) unless code == 0
       {code, message || "Unknown or no error"}
     end
+
+    protected def get_reason(code)
+      {% if LibCrypto.has_constant?(:ERR_REASON_MASK) %}
+        if (code & LibCrypto::ERR_SYSTEM_FLAG) != 0
+          (code & LibCrypto::ERR_SYSTEM_MASK).to_i
+        else
+          (code & LibCrypto::ERR_REASON_MASK).to_i
+        end
+      {% else %}
+        (code & 0xFFF).to_i
+      {% end %}
+    end
   end
 end

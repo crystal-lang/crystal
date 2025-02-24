@@ -1,11 +1,11 @@
 require "spec"
 
 private class NoPeekIO < IO
-  def read(bytes : Bytes)
+  def read(slice : Bytes)
     0
   end
 
-  def write(bytes : Bytes) : Nil
+  def write(slice : Bytes) : Nil
   end
 
   def peek

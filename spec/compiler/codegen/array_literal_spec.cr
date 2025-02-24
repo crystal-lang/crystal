@@ -266,7 +266,7 @@ end
 
 private def enumerable_element_type
   %(
-    struct Enumerable(T)
+    module Enumerable(T)
       def self.element_type(x)
         x.each { |elem| return elem }
         ret = uninitialized NoReturn

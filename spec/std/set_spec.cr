@@ -21,9 +21,9 @@ describe "Set" do
 
       set_from_tuple = Set.new({1, "hello", 'x'})
       set_from_tuple.size.should eq(3)
-      set_from_tuple.to_a.includes?(1).should be_true
-      set_from_tuple.to_a.includes?("hello").should be_true
-      set_from_tuple.to_a.includes?('x').should be_true
+      set_from_tuple.to_a.should contain(1)
+      set_from_tuple.to_a.should contain("hello")
+      set_from_tuple.to_a.should contain('x')
     end
   end
 
@@ -50,7 +50,7 @@ describe "Set" do
     it "returns false when object is in the set" do
       set = Set(Int32).new
       set.add?(1).should be_true
-      set.includes?(1).should be_true
+      set.should contain(1)
       set.add?(1).should be_false
     end
   end
@@ -60,8 +60,8 @@ describe "Set" do
       set = Set{1, 2, 3}
       set.delete 2
       set.size.should eq(2)
-      set.includes?(1).should be_true
-      set.includes?(3).should be_true
+      set.should contain(1)
+      set.should contain(3)
     end
 
     it "returns true when the object was present" do
@@ -286,6 +286,10 @@ describe "Set" do
     Set{1, 2, 3}.to_a.should eq([1, 2, 3])
   end
 
+  it "does support giving a block to to_a" do
+    Set{1, 2, 3}.to_a { |x| x + 1 }.should eq([2, 3, 4])
+  end
+
   it "does to_s" do
     Set{1, 2, 3}.to_s.should eq("Set{1, 2, 3}")
     Set{"foo"}.to_s.should eq(%(Set{"foo"}))
@@ -402,13 +406,13 @@ describe "Set" do
       string = "foo"
       set = Set{string, "bar", "baz"}
       set.compare_by_identity?.should be_false
-      set.includes?(string).should be_true
+      set.should contain(string)
 
       set.compare_by_identity
       set.compare_by_identity?.should be_true
 
-      set.includes?("fo" + "o").should be_false
-      set.includes?(string).should be_true
+      set.should_not contain("fo" + "o")
+      set.should contain(string)
     end
 
     it "retains compare_by_identity on dup" do
@@ -419,6 +423,20 @@ describe "Set" do
     it "retains compare_by_identity on clone" do
       set = Set(String).new.compare_by_identity
       set.clone.compare_by_identity?.should be_true
+    end
+  end
+
+  describe "#rehash" do
+    it "rehashes" do
+      a = [1]
+      s = Set{a}
+      (10..100).each do |i|
+        s << [i]
+      end
+      a << 2
+      s.should_not contain(a)
+      s.rehash
+      s.should contain(a)
     end
   end
 end

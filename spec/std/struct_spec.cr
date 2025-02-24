@@ -1,7 +1,5 @@
 require "./spec_helper"
-{% unless flag?(:win32) %}
-  require "big"
-{% end %}
+require "big"
 
 private module StructSpec
   struct TestClass
@@ -12,14 +10,12 @@ private module StructSpec
     end
   end
 
-  {% unless flag?(:win32) %}
-    struct BigIntWrapper
-      @value : BigInt
+  struct BigIntWrapper
+    @value : BigInt
 
-      def initialize(@value : BigInt)
-      end
+    def initialize(@value : BigInt)
     end
-  {% end %}
+  end
 
   struct DupCloneStruct
     property x, y
@@ -58,7 +54,7 @@ describe "Struct" do
     s.hash.should eq(s.dup.hash)
   end
 
-  pending_win32 "does hash for struct wrapper (#1940)" do
+  it "does hash for struct wrapper (#1940)" do
     s = StructSpec::BigIntWrapper.new(BigInt.new(0))
     s.hash.should eq(s.dup.hash)
   end
@@ -88,7 +84,7 @@ describe "Struct" do
     foo = StructSpec::FooStruct.new
     bar = StructSpec::BarStruct.new
     set = Set{foo, bar}
-    set.includes?(foo).should be_true
-    set.includes?(bar).should be_true
+    set.should contain(foo)
+    set.should contain(bar)
   end
 end

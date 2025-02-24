@@ -1,101 +1,62 @@
+require "../warnings"
+
 module Crystal
   class Program
-    # Which kind of warnings wants to be detected.
-    property warnings : Warnings = Warnings::All
+    # Warning settings and all detected warnings.
+    property warnings = WarningCollection.new
 
-    # Paths to ignore for warnings detection.
-    property warnings_exclude : Array(String) = [] of String
-
-    # Detected warning failures.
-    property warning_failures = [] of String
-
-    # If `true` compiler will error if warnings are found.
-    property error_on_warnings : Bool = false
-
+    @deprecated_constants_detected = Set(String).new
     @deprecated_methods_detected = Set(String).new
     @deprecated_macros_detected = Set(String).new
+    @deprecated_annotations_detected = Set(String).new
 
-    def report_warning(node : ASTNode, message : String)
-      return unless self.warnings.all?
-      return if self.ignore_warning_due_to_location?(node.location)
+    def check_deprecated_constant(const : Const, node : Path)
+      return unless @warnings.level.all?
 
-      self.warning_failures << node.warning(message)
-    end
-
-    def report_warning_at(location : Location?, message : String)
-      return unless self.warnings.all?
-      return if self.ignore_warning_due_to_location?(location)
-
-      if location
-        message = String.build do |io|
-          exception = SyntaxException.new message, location.line_number, location.column_number, location.filename
-          exception.warning = true
-          exception.append_to_s(io, nil)
-        end
-      end
-
-      self.warning_failures << message
-    end
-
-    def ignore_warning_due_to_location?(location : Location?)
-      return false unless location
-
-      filename = location.original_filename
-      return false unless filename
-
-      @program.warnings_exclude.any? do |path|
-        filename.starts_with?(path)
-      end
+      check_deprecation(const, node, @deprecated_constants_detected)
     end
 
     def check_call_to_deprecated_macro(a_macro : Macro, call : Call)
-      return unless self.warnings.all?
+      return unless @warnings.level.all?
 
-      if (ann = a_macro.annotation(self.deprecated_annotation)) &&
-         (deprecated_annotation = DeprecatedAnnotation.from(ann))
-        call_location = call.location.try(&.macro_location) || call.location
-
-        return if self.ignore_warning_due_to_location?(call_location)
-        short_reference = a_macro.short_reference
-        warning_key = call_location.try { |l| "#{short_reference} #{l}" }
-
-        # skip warning if the call site was already informed
-        # if there is no location information just inform it.
-        return if !warning_key || @deprecated_macros_detected.includes?(warning_key)
-        @deprecated_macros_detected.add(warning_key) if warning_key
-
-        message = deprecated_annotation.message
-        message = message ? " #{message}" : ""
-
-        full_message = call.warning "Deprecated #{short_reference}.#{message}"
-
-        self.warning_failures << full_message
-      end
+      check_deprecation(a_macro, call, @deprecated_macros_detected)
     end
 
     def check_call_to_deprecated_method(node : Call)
-      return unless @warnings.all?
+      return unless @warnings.level.all?
+      return if compiler_expanded_call(node)
 
       node.target_defs.try &.each do |target_def|
-        if (ann = target_def.annotation(deprecated_annotation)) &&
-           (deprecated_annotation = DeprecatedAnnotation.from(ann))
-          return if compiler_expanded_call(node)
-          return if ignore_warning_due_to_location?(node.location)
-          short_reference = target_def.short_reference
-          warning_key = node.location.try { |l| "#{short_reference} #{l}" }
+        check_deprecation(target_def, node, @deprecated_methods_detected)
+      end
+    end
 
-          # skip warning if the call site was already informed
-          # if there is no location information just inform it.
-          return if !warning_key || @deprecated_methods_detected.includes?(warning_key)
-          @deprecated_methods_detected.add(warning_key) if warning_key
+    def check_call_to_deprecated_annotation(node : AnnotationDef) : Nil
+      return unless @warnings.level.all?
 
-          message = deprecated_annotation.message
-          message = message ? " #{message}" : ""
+      check_deprecation(node, node.name, @deprecated_annotations_detected)
+    end
 
-          full_message = node.warning "Deprecated #{short_reference}.#{message}"
+    private def check_deprecation(object, use_site, detects)
+      if (ann = object.annotation(self.deprecated_annotation)) &&
+         (deprecated_annotation = DeprecatedAnnotation.from(ann))
+        use_location = use_site.location.try(&.macro_location) || use_site.location
+        return if !use_location || @warnings.ignore_warning_due_to_location?(use_location)
 
-          self.warning_failures << full_message
+        # skip warning if the use site was already informed
+        name = object.short_reference
+        warning_key = "#{name} #{use_location}"
+        return if detects.includes?(warning_key)
+        detects.add(warning_key)
+
+        full_message = String.build do |io|
+          io << "Deprecated " << name << '.'
+          if message = deprecated_annotation.message
+            io << ' ' << message
+          end
         end
+
+        @warnings.infos << use_site.warning(full_message)
       end
     end
 
@@ -105,11 +66,17 @@ module Crystal
     end
   end
 
+  class AnnotationDef
+    def short_reference
+      "annotation #{resolved_type}"
+    end
+  end
+
   class Macro
     def short_reference
       case owner
       when Program
-        "top-level #{name}"
+        "::#{name}"
       when MetaclassType
         "#{owner.instance_type.to_s(generic_args: false)}.#{name}"
       else
@@ -155,7 +122,7 @@ module Crystal
     def short_reference
       case owner
       when Program
-        "top-level #{name}"
+        "::#{name}"
       when .metaclass?
         "#{owner.instance_type}.#{name}"
       else
@@ -164,28 +131,9 @@ module Crystal
     end
   end
 
-  class Command
-    def report_warnings
-      compiler = @compiler
-      return unless compiler
-
-      program = compiler.program?
-      return unless program
-      return if program.warning_failures.empty?
-
-      program.warning_failures.each do |message|
-        STDERR.puts message
-        STDERR.puts "\n"
-      end
-      STDERR.puts "A total of #{program.warning_failures.size} warnings were found."
-    end
-
-    def warnings_fail_on_exit?
-      compiler = @compiler
-      return false unless compiler
-
-      program = compiler.program
-      program.error_on_warnings && program.warning_failures.size > 0
+  class Const
+    def short_reference
+      to_s
     end
   end
 end

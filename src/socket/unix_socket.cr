@@ -1,6 +1,9 @@
 # A local interprocess communication clientsocket.
 #
-# Only available on UNIX and UNIX-like operating systems.
+# Available on UNIX-like operating systems, and Windows 10 Build 17063 or above.
+# Not all features are supported on Windows.
+#
+# NOTE: To use `UNIXSocket`, you must explicitly import it with `require "socket"`
 #
 # Example usage:
 # ```
@@ -15,7 +18,8 @@ class UNIXSocket < Socket
   getter path : String?
 
   # Connects a named UNIX socket, bound to a filesystem pathname.
-  def initialize(@path : String, type : Type = Type::STREAM)
+  def initialize(path : Path | String, type : Type = Type::STREAM)
+    @path = path = path.to_s
     super(Family::UNIX, type, Protocol::IP)
 
     connect(UNIXAddress.new(path)) do |error|
@@ -29,7 +33,8 @@ class UNIXSocket < Socket
   end
 
   # Creates a UNIXSocket from an already configured raw file descriptor
-  def initialize(*, fd : Handle, type : Type = Type::STREAM, @path : String? = nil)
+  def initialize(*, fd : Handle, type : Type = Type::STREAM, path : Path | String? = nil)
+    @path = path.to_s
     super fd, Family::UNIX, type, Protocol::IP
   end
 
@@ -37,7 +42,7 @@ class UNIXSocket < Socket
   # eventually closes the socket when the block returns.
   #
   # Returns the value of the block.
-  def self.open(path, type : Type = Type::STREAM)
+  def self.open(path : Path | String, type : Type = Type::STREAM, &)
     sock = new(path, type)
     begin
       yield sock
@@ -47,6 +52,8 @@ class UNIXSocket < Socket
   end
 
   # Returns a pair of unnamed UNIX sockets.
+  #
+  # [Not supported on Windows](https://devblogs.microsoft.com/commandline/af_unix-comes-to-windows/#unsupportedunavailable).
   #
   # ```
   # require "socket"
@@ -63,25 +70,18 @@ class UNIXSocket < Socket
   # left.gets # => "message"
   # ```
   def self.pair(type : Type = Type::STREAM) : {UNIXSocket, UNIXSocket}
-    fds = uninitialized Int32[2]
-
-    socktype = type.value
-    {% if LibC.has_constant?(:SOCK_CLOEXEC) %}
-      socktype |= LibC::SOCK_CLOEXEC
-    {% end %}
-
-    if LibC.socketpair(Family::UNIX, socktype, 0, fds) != 0
-      raise Socket::Error.new("socketpair:")
-    end
-
-    {UNIXSocket.new(fd: fds[0], type: type), UNIXSocket.new(fd: fds[1], type: type)}
+    Crystal::System::Socket
+      .socketpair(type, Protocol::IP)
+      .map { |fd| UNIXSocket.new(fd: fd, type: type) }
   end
 
   # Creates a pair of unnamed UNIX sockets (see `pair`) and yields them to the
   # block. Eventually closes both sockets when the block returns.
   #
   # Returns the value of the block.
-  def self.pair(type : Type = Type::STREAM)
+  #
+  # [Not supported on Windows](https://devblogs.microsoft.com/commandline/af_unix-comes-to-windows/#unsupportedunavailable).
+  def self.pair(type : Type = Type::STREAM, &)
     left, right = pair(type)
     begin
       yield left, right
@@ -99,8 +99,8 @@ class UNIXSocket < Socket
     UNIXAddress.new(path.to_s)
   end
 
-  def receive
-    bytes_read, sockaddr, addrlen = recvfrom
-    {bytes_read, UNIXAddress.from(sockaddr, addrlen)}
+  def receive(max_message_size = 512) : {String, UNIXAddress}
+    message, address = super(max_message_size)
+    {message, address.as(UNIXAddress)}
   end
 end

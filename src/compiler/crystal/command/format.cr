@@ -10,35 +10,45 @@ class Crystal::Command
     check = false
     show_backtrace = false
 
-    option_parser =
-      OptionParser.parse(options) do |opts|
-        opts.banner = "Usage: crystal tool format [options] [file or directory]\n\nOptions:"
+    OptionParser.parse(@options) do |opts|
+      opts.banner = <<-USAGE
+        Usage: crystal tool format [options] [- | file or directory ...]
 
-        opts.on("--check", "Checks that formatting code produces no changes") do |f|
-          check = true
-        end
+        Formats Crystal code in place.
 
-        opts.on("-i <path>", "--include <path>", "Include path") do |f|
-          includes << f
-        end
+        If a file or directory is omitted,
+        Crystal source files beneath the working directory are formatted.
 
-        opts.on("-e <path>", "--exclude <path>", "Exclude path (default: lib)") do |f|
-          excludes << f
-        end
+        To format STDIN to STDOUT, use '-' in place of any path arguments.
 
-        opts.on("-h", "--help", "Show this message") do
-          puts opts
-          exit
-        end
+        Options:
+        USAGE
 
-        opts.on("--no-color", "Disable colored output") do
-          @color = false
-        end
-
-        opts.on("--show-backtrace", "Show backtrace on a bug (used only for debugging)") do
-          show_backtrace = true
-        end
+      opts.on("--check", "Checks that formatting code produces no changes") do |f|
+        check = true
       end
+
+      opts.on("-i <path>", "--include <path>", "Include path") do |f|
+        includes << f
+      end
+
+      opts.on("-e <path>", "--exclude <path>", "Exclude path (default: lib)") do |f|
+        excludes << f
+      end
+
+      opts.on("-h", "--help", "Show this message") do
+        puts opts
+        exit
+      end
+
+      opts.on("--no-color", "Disable colored output") do
+        @color = false
+      end
+
+      opts.on("--show-backtrace", "Show backtrace on a bug (used only for debugging)") do
+        show_backtrace = true
+      end
+    end
 
     files = options
 
@@ -68,7 +78,7 @@ class Crystal::Command
       @show_backtrace : Bool = false,
       @color : Bool = true,
       # stdio is injectable for testing
-      @stdin : IO = STDIN, @stdout : IO = STDOUT, @stderr : IO = STDERR
+      @stdin : IO = STDIN, @stdout : IO = STDOUT, @stderr : IO = STDERR,
     )
       @format_stdin = files.size == 1 && files[0] == "-"
 
@@ -110,7 +120,7 @@ class Crystal::Command
           format_file filename
         end
       elsif Dir.exists?(filename)
-        filename = filename.chomp('/')
+        filename = ::Path[filename.chomp('/')].to_posix
         filenames = Dir["#{filename}/**/*.cr"]
         format_many filenames
       else
@@ -156,7 +166,7 @@ class Crystal::Command
 
     # This method is for mocking `Crystal.format` in test.
     private def format(filename, source)
-      result = Crystal.format(source, filename: filename)
+      Crystal.format(source, filename: filename, report_warnings: STDERR)
     end
 
     private def error(msg)

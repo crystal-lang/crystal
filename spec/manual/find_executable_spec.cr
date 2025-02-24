@@ -23,7 +23,7 @@ describe "Process.run" do
       src_fn = test_dir / "self_printer.cr"
       exe_fn = test_dir / "self_printer.exe"
       File.write(src_fn, "print #{name.inspect}")
-      Process.run("bin/crystal", ["build", "-o", exe_fn.to_s, src_fn.to_s])
+      Process.run(ENV["CRYSTAL_SPEC_COMPILER_BIN"]? || "bin/crystal", ["build", "-o", exe_fn.to_s, src_fn.to_s])
       Dir.mkdir_p((base_dir / name).parent)
       File.rename(exe_fn, base_dir / name)
     end

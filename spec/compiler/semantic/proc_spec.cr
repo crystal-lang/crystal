@@ -21,6 +21,18 @@ describe "Semantic: proc" do
     assert_type("f = ->(x : Int32) { x }; f.call(1)", inject_primitives: true) { int32 }
   end
 
+  it "types proc literal with return type (1)" do
+    assert_type("->(x : Int32) : Int32 { x }") { proc_of(int32, int32) }
+  end
+
+  it "types proc literal with return type (2)" do
+    assert_type("-> : Int32 | String { 1 }") { proc_of(union_of int32, string) }
+  end
+
+  it "types proc call with return type" do
+    assert_type("x = -> : Int32 | String { 1 }; x.call()", inject_primitives: true) { union_of int32, string }
+  end
+
   it "types proc pointer" do
     assert_type("def foo; 1; end; ->foo") { proc_of(int32) }
   end
@@ -152,7 +164,7 @@ describe "Semantic: proc" do
 
       foo ->(x : Int32) { x }
       ",
-      "no overload matches"
+      "expected argument #1 to 'foo' to be Proc(Int32, Float64), not Proc(Int32, Int32)"
   end
 
   it "has proc literal as restriction and errors if input is different" do
@@ -163,7 +175,7 @@ describe "Semantic: proc" do
 
       foo ->(x : Int64) { x.to_f }
       ",
-      "no overload matches", inject_primitives: true
+      "expected argument #1 to 'foo' to be Proc(Int32, Float64), not Proc(Int64, Float64)", inject_primitives: true
   end
 
   it "has proc literal as restriction and errors if sizes are different" do
@@ -174,7 +186,7 @@ describe "Semantic: proc" do
 
       foo ->(x : Int32, y : Int32) { x.to_f }
       ",
-      "no overload matches", inject_primitives: true
+      "expected argument #1 to 'foo' to be Proc(Int32, Float64), not Proc(Int32, Int32, Float64)", inject_primitives: true
   end
 
   it "allows passing nil as proc callback if it is a lib alias" do
@@ -227,10 +239,16 @@ describe "Semantic: proc" do
       "can't cast Proc(Int32, Float64) to Proc(Float64, Float64)", inject_primitives: true
   end
 
+  it "errors if inferred return type doesn't match return type restriction (1)" do
+    assert_error "-> : Int32 { true }", "expected Proc to return Int32, not Bool"
+  end
+
+  it "errors if inferred return type doesn't match return type restriction (2)" do
+    assert_error "->(x : Int32) : Int32 { x || 'a' }", "expected Proc to return Int32, not (Char | Int32)"
+  end
+
   it "types proc literal hard type inference (1)" do
     assert_type(%(
-      require "prelude"
-
       class Foo
         def initialize(@x : Int32)
         end
@@ -312,6 +330,20 @@ describe "Semantic: proc" do
       s.x = ->{ LibC.exit }
       s.x
       ") { proc_of(int32) }
+  end
+
+  it "allows passing NoReturn type for any return type, with Proc notation (#12126)" do
+    assert_type("
+      lib LibC
+        fun exit : NoReturn
+      end
+
+      def foo(f : Proc(Int32))
+        f.call
+      end
+
+      foo ->{ LibC.exit }
+      ", inject_primitives: true) { no_return }
   end
 
   it "allows new on proc type" do
@@ -509,8 +541,6 @@ describe "Semantic: proc" do
 
   it "types proc literal with a type that was never instantiated" do
     assert_type(%(
-      require "prelude"
-
       class Foo
         def initialize(@x : Int32)
         end
@@ -526,8 +556,6 @@ describe "Semantic: proc" do
 
   it "types proc pointer with a type that was never instantiated" do
     assert_type(%(
-      require "prelude"
-
       class Foo
         def initialize(@x : Int32)
         end
@@ -755,10 +783,17 @@ describe "Semantic: proc" do
       ), inject_primitives: true) { int32 }
   end
 
-  %w(Object Value Reference Number Int Float Struct Proc Tuple Enum StaticArray Pointer).each do |type|
+  %w(Object Value Reference Number Int Float Struct Class Proc Tuple Enum StaticArray Pointer).each do |type|
     it "disallows #{type} in procs" do
       assert_error %(
         ->(x : #{type}) { }
+        ),
+        "can't use #{type} as a Proc argument type"
+    end
+
+    it "disallows #{type} in proc return types" do
+      assert_error %(
+        -> : #{type} { }
         ),
         "can't use #{type} as a Proc argument type"
     end
@@ -782,38 +817,79 @@ describe "Semantic: proc" do
         ),
         "can't use #{type} as a Proc argument type"
     end
+
+    it "disallows #{type} in proc notation parameter type" do
+      assert_error "x : #{type} ->", "can't use #{type} as a Proc argument type"
+    end
+
+    it "disallows #{type} in proc notation return type" do
+      assert_error "x : -> #{type}", "can't use #{type} as a Proc argument type"
+    end
   end
 
-  describe "Class" do
-    # FIXME: Class reports as Object type in two of these examples.
-    # This should be fixed and the specs inlined with the above.
-    # See https://github.com/crystal-lang/crystal/pull/10688#issuecomment-852931558
-    it "disallows Class in procs" do
-      assert_error %(
-        ->(x : Class) { }
-        ),
-        "can't use Object as a Proc argument type"
-    end
+  it "allows metaclass in procs" do
+    assert_type(<<-CRYSTAL) { proc_of(types["Foo"].metaclass, types["Foo"]) }
+      class Foo
+      end
 
-    it "disallows Class in captured block" do
-      assert_error %(
-        def foo(&block : Class ->)
-        end
+      ->(x : Foo.class) { x.new }
+      CRYSTAL
+  end
 
-        foo {}
-        ),
-        "can't use Class as a Proc argument type"
-    end
+  it "allows metaclass in proc return types" do
+    assert_type(<<-CRYSTAL) { proc_of(types["Foo"].metaclass) }
+      class Foo
+      end
 
-    it "disallows Class in proc pointer" do
-      assert_error %(
-        def foo(x)
-        end
+      -> : Foo.class { Foo }
+      CRYSTAL
+  end
 
-        ->foo(Class)
-        ),
-        "can't use Object as a Proc argument type"
-    end
+  it "allows metaclass in captured block" do
+    assert_type(<<-CRYSTAL) { proc_of(types["Foo"].metaclass, types["Foo"]) }
+      class Foo
+      end
+
+      def foo(&block : Foo.class -> Foo)
+        block
+      end
+
+      foo { |x| x.new }
+      CRYSTAL
+  end
+
+  it "allows metaclass in proc pointer" do
+    assert_type(<<-CRYSTAL) { proc_of(types["Foo"].metaclass, types["Foo"]) }
+      class Foo
+      end
+
+      def foo(x : Foo.class)
+        x.new
+      end
+
+      ->foo(Foo.class)
+      CRYSTAL
+  end
+
+  it "allows metaclass in proc notation parameter type" do
+    assert_type(<<-CRYSTAL) { proc_of(types["Foo"].metaclass, nil_type) }
+      class Foo
+      end
+
+      #{proc_new}
+
+      x : Foo.class -> = Proc(Foo.class, Nil).new { }
+      x
+      CRYSTAL
+  end
+
+  it "allows metaclass in proc notation return type" do
+    assert_type(<<-CRYSTAL) { proc_of(types["Foo"].metaclass) }
+      class Foo
+      end
+      x : -> Foo.class = ->{ Foo }
+      x
+      CRYSTAL
   end
 
   it "..." do
@@ -1209,14 +1285,38 @@ describe "Semantic: proc" do
       Foo.foo
     )) { proc_of int32 }
   end
+
+  it "doesn't cause upcast bug (#8428)" do
+    assert_type(%(
+      def foo
+        if true
+          begin
+            ->{""}
+          rescue
+            return ->{}
+          end
+        end
+      end
+
+      foo
+    )) { union_of proc_of(string), proc_of(nil_type), nil_type }
+  end
+
+  it "types Proc(*T, Void) as Proc(*T, Nil)" do
+    assert_type(%(
+      #{proc_new}
+
+      Proc(Int32, Void).new { |x| x }
+      )) { proc_of(int32, nil_type) }
+  end
 end
 
 private def proc_new
-  <<-CODE
+  <<-CRYSTAL
   struct Proc
     def self.new(&block : self)
       block
     end
   end
-  CODE
+  CRYSTAL
 end

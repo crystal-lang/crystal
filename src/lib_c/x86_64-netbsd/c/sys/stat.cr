@@ -47,6 +47,7 @@ lib LibC
   end
 
   fun chmod(x0 : Char*, x1 : ModeT) : Int
+  fun fchmod(x0 : Int, x1 : ModeT) : Int
   fun fstat = __fstat50(x0 : Int, x1 : Stat*) : Int
   fun lstat = __lstat50(x0 : Char*, x1 : Stat*) : Int
   fun mkdir(x0 : Char*, x1 : ModeT) : Int
@@ -54,4 +55,5 @@ lib LibC
   fun mknod = __mknod50(x0 : Char*, x1 : ModeT, x2 : DevT) : Int
   fun stat = __stat50(x0 : Char*, x1 : Stat*) : Int
   fun umask(x0 : ModeT) : ModeT
+  fun utimensat(fd : Int, path : Char*, times : Timespec[2], flag : Int) : Int
 end

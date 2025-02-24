@@ -10,18 +10,18 @@ module Crystal
       {{ read_file("#{__DIR__}/../../VERSION").chomp }}
     end
 
-    def self.llvm_version
-      LibLLVM::VERSION
-    end
-
     def self.description
-      formatted_sha = "[#{build_commit}] " if build_commit
-      <<-DOC
-        Crystal #{version} #{formatted_sha}(#{date})
+      String.build do |io|
+        io << "Crystal " << version
+        io << " [" << build_commit << "]" if build_commit
+        io << " (" << date << ")" unless date.empty?
 
-        LLVM: #{llvm_version}
-        Default target: #{self.host_target}
-        DOC
+        io << "\n\nThe compiler was not built in release mode." unless release_mode?
+
+        io << "\n\nLLVM: " << LLVM.version
+        io << "\nDefault target: " << host_target
+        io << "\n"
+      end
     end
 
     def self.build_commit
@@ -38,6 +38,10 @@ module Crystal
       else
         ""
       end
+    end
+
+    def self.release_mode?
+      {{ flag?(:release) }}
     end
 
     @@host_target : Crystal::Codegen::Target?

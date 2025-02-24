@@ -50,14 +50,14 @@ class Compress::Gzip::Writer < IO
 
   # Creates a new writer to the given *io*, yields it to the given block,
   # and closes it at the end.
-  def self.open(io : IO, level = Compress::Gzip::DEFAULT_COMPRESSION, sync_close = false)
+  def self.open(io : IO, level = Compress::Gzip::DEFAULT_COMPRESSION, sync_close = false, &)
     writer = new(io, level: level, sync_close: sync_close)
     yield writer ensure writer.close
   end
 
   # Creates a new writer to the given *filename*, yields it to the given block,
   # and closes it at the end.
-  def self.open(filename : String, level = Compress::Gzip::DEFAULT_COMPRESSION)
+  def self.open(filename : String, level = Compress::Gzip::DEFAULT_COMPRESSION, &)
     writer = new(filename, level: level)
     yield writer ensure writer.close
   end

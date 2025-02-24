@@ -17,10 +17,12 @@ class Thread
   end
 end
 
-{% if flag?(:unix) %}
+{% if flag?(:wasi) %}
+  require "./wasi/thread_mutex"
+{% elsif flag?(:unix) %}
   require "./unix/pthread_mutex"
 {% elsif flag?(:win32) %}
   require "./win32/thread_mutex"
 {% else %}
-  {% raise "thread not supported" %}
+  {% raise "Thread mutex not supported" %}
 {% end %}

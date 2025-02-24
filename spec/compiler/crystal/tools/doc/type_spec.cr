@@ -2,7 +2,7 @@ require "../../../spec_helper"
 
 describe Doc::Type do
   it "doesn't show types for alias type" do
-    result = semantic(%(
+    program = top_level_semantic(<<-CRYSTAL, wants_doc: true).program
       class Foo
         class Bar
         end
@@ -11,9 +11,7 @@ describe Doc::Type do
       alias Alias = Foo
 
       Alias
-    ))
-
-    program = result.program
+      CRYSTAL
 
     # Set locations to types relative to the included dir
     # so they are included by the doc generator
@@ -30,14 +28,12 @@ describe Doc::Type do
   end
 
   it "finds construct when searching class method (#8095)" do
-    result = semantic(%(
+    program = top_level_semantic(<<-CRYSTAL, wants_doc: true).program
       class Foo
         def initialize(x)
         end
       end
-    ))
-
-    program = result.program
+      CRYSTAL
 
     generator = Doc::Generator.new program, [""]
     foo = generator.type(program.types["Foo"])
@@ -47,12 +43,12 @@ describe Doc::Type do
 
   describe "#node_to_html" do
     it "shows relative path" do
-      program = semantic(<<-CODE).program
+      program = semantic(<<-CRYSTAL).program
         class Foo
           class Bar
           end
         end
-        CODE
+        CRYSTAL
 
       generator = Doc::Generator.new program, [""]
       foo = generator.type(program.types["Foo"])
@@ -60,12 +56,12 @@ describe Doc::Type do
     end
 
     it "shows relative generic" do
-      program = semantic(<<-CODE).program
+      program = semantic(<<-CRYSTAL).program
         class Foo
           class Bar(T)
           end
         end
-        CODE
+        CRYSTAL
 
       generator = Doc::Generator.new program, [""]
       foo = generator.type(program.types["Foo"])
@@ -73,12 +69,12 @@ describe Doc::Type do
     end
 
     it "shows generic path with necessary colons" do
-      program = semantic(<<-CODE).program
+      program = semantic(<<-CRYSTAL).program
         class Foo
           class Foo
           end
         end
-        CODE
+        CRYSTAL
 
       generator = Doc::Generator.new program, [""]
       foo = generator.type(program.types["Foo"])
@@ -86,12 +82,12 @@ describe Doc::Type do
     end
 
     it "shows generic path with unnecessary colons" do
-      program = semantic(<<-CODE).program
+      program = semantic(<<-CRYSTAL).program
         class Foo
           class Bar
           end
         end
-        CODE
+        CRYSTAL
 
       generator = Doc::Generator.new program, [""]
       foo = generator.type(program.types["Foo"])
@@ -99,13 +95,13 @@ describe Doc::Type do
     end
 
     it "shows tuples" do
-      program = semantic(<<-CODE).program
+      program = semantic(<<-CRYSTAL).program
         class Foo
         end
 
         class Bar
         end
-        CODE
+        CRYSTAL
 
       generator = Doc::Generator.new program, [""]
       foo = generator.type(program.types["Foo"])
@@ -114,13 +110,13 @@ describe Doc::Type do
     end
 
     it "shows named tuples" do
-      program = semantic(<<-CODE).program
+      program = semantic(<<-CRYSTAL).program
         class Foo
         end
 
         class Bar
         end
-        CODE
+        CRYSTAL
 
       generator = Doc::Generator.new program, [""]
       foo = generator.type(program.types["Foo"])
@@ -130,7 +126,7 @@ describe Doc::Type do
   end
 
   it "ASTNode has no superclass" do
-    program = semantic(<<-CODE).program
+    program = semantic(<<-CRYSTAL).program
       module Crystal
         module Macros
           class ASTNode
@@ -139,7 +135,7 @@ describe Doc::Type do
           end
         end
       end
-      CODE
+      CRYSTAL
 
     generator = Doc::Generator.new program, [""]
     macros_module = program.types["Crystal"].types["Macros"]
@@ -150,7 +146,7 @@ describe Doc::Type do
   end
 
   it "ASTNode has no ancestors" do
-    program = semantic(<<-CODE).program
+    program = semantic(<<-CRYSTAL).program
       module Crystal
         module Macros
           class ASTNode
@@ -159,13 +155,61 @@ describe Doc::Type do
           end
         end
       end
-      CODE
+      CRYSTAL
 
     generator = Doc::Generator.new program, [""]
     macros_module = program.types["Crystal"].types["Macros"]
     astnode = generator.type(macros_module.types["ASTNode"])
-    astnode.ancestors.empty?.should be_true
+    astnode.ancestors.should be_empty
     # Sanity check: subclasses of ASTNode has the right ancestors
     generator.type(macros_module.types["Arg"]).ancestors.should eq([astnode])
+  end
+
+  describe "#instance_methods" do
+    it "sorts operators first" do
+      program = semantic(<<-CRYSTAL).program
+        class Foo
+          def foo; end
+          def ~; end
+          def +; end
+        end
+        CRYSTAL
+
+      generator = Doc::Generator.new program, [""]
+      type = generator.type(program.types["Foo"])
+      type.instance_methods.map(&.name).should eq ["+", "~", "foo"]
+    end
+  end
+
+  describe "#class_methods" do
+    it "sorts operators first" do
+      program = semantic(<<-CRYSTAL).program
+        class Foo
+          def self.foo; end
+          def self.~; end
+          def self.+; end
+        end
+        CRYSTAL
+
+      generator = Doc::Generator.new program, [""]
+      type = generator.type(program.types["Foo"])
+      type.class_methods.map(&.name).should eq ["+", "~", "foo"]
+    end
+  end
+
+  describe "#macros" do
+    it "sorts operators first" do
+      program = semantic(<<-CRYSTAL).program
+        class Foo
+          macro foo; end
+          macro ~; end
+          macro +; end
+        end
+        CRYSTAL
+
+      generator = Doc::Generator.new program, [""]
+      type = generator.type(program.types["Foo"])
+      type.macros.map(&.name).should eq ["+", "~", "foo"]
+    end
   end
 end

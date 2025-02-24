@@ -1,11 +1,10 @@
-@[Link("dl")]
 lib LibC
   RTLD_LAZY    = 0x1
   RTLD_NOW     = 0x2
   RTLD_GLOBAL  = 0x8
   RTLD_LOCAL   = 0x4
   RTLD_DEFAULT = Pointer(Void).new(-2)
-  RTLD_NEXT    = Pointer(Void).new(-1)
+  RTLD_NEXT    = Pointer(Void).new(-1.to_u64!)
 
   struct DlInfo
     dli_fname : Char*

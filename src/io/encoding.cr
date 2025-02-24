@@ -1,4 +1,4 @@
-{% unless flag?(:win32) %}
+{% unless flag?(:without_iconv) %}
   require "crystal/iconv"
 {% end %}
 
@@ -18,9 +18,14 @@ class IO
       end
     end
   end
+end
 
-  {% skip_file if flag?(:win32) %}
+{% if flag?(:without_iconv) %}
+  require "./encoding_stubs"
+  {% skip_file %}
+{% end %}
 
+class IO
   private class Encoder
     def initialize(@encoding_options : EncodingOptions)
       @iconv = Crystal::Iconv.new("UTF-8", encoding_options.name, encoding_options.invalid)

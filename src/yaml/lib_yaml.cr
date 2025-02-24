@@ -1,9 +1,13 @@
 require "./enums"
 
-{% if compare_versions(Crystal::VERSION, "0.35.0-0") >= 0 %}
-  @[Link("yaml", pkg_config: "yaml-0.1")]
-{% else %}
-  @[Link("yaml")]
+# Supported library versions:
+#
+# * libyaml
+#
+# See https://crystal-lang.org/reference/man/required_libraries.html#other-stdlib-libraries
+@[Link("yaml", pkg_config: "yaml-0.1")]
+{% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
+  @[Link(dll: "yaml.dll")]
 {% end %}
 lib LibYAML
   alias Int = LibC::Int

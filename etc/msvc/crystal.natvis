@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+    <Type Name="String">
+        <DisplayString>{&amp;c,[bytesize]s8}</DisplayString>
+        <StringView>&amp;c,[bytesize]s8</StringView>
+    </Type>
+
+    <Type Name="Array(*)">
+        <DisplayString>{{ size={size} }}</DisplayString>
+        <Expand>
+            <Item Name="[root_buffer]">buffer - offset_to_buffer</Item>
+            <Item Name="[remaining_capacity]">capacity - offset_to_buffer</Item>
+            <ArrayItems>
+                <Size>size</Size>
+                <ValuePointer>buffer</ValuePointer>
+            </ArrayItems>
+        </Expand>
+    </Type>
+
+    <Type Name="Hash(*,*)">
+        <DisplayString>{{ size={size} }}</DisplayString>
+        <Expand>
+            <CustomListItems MaxItemsPerView="5000">
+                <Variable Name="i" InitialValue="first"/>
+                <Loop>
+                    <Break Condition="i &gt;= size + deleted_count"/>
+                    <If Condition="entries[i].hash != 0">
+                        <Item>entries[i]</Item>
+                    </If>
+                    <Exec>i += 1</Exec>
+                </Loop>
+            </CustomListItems>
+        </Expand>
+    </Type>
+</AutoVisualizer>

@@ -1,5 +1,3 @@
-{% skip_file if flag?(:without_playground) %}
-
 module Crystal
   class Playground::AgentInstrumentorTransformer < Transformer
     class MacroDefNameCollector < Visitor
@@ -79,7 +77,7 @@ module Crystal
         if node.is_a?(TupleLiteral)
           args << ArrayLiteral.new(node.elements.map { |e| StringLiteral.new(e.to_s).as(ASTNode) })
         end
-        call = Call.new(Call.new(nil, "_p"), "i", args, Block.new([] of Var, node.as(ASTNode)))
+        call = Call.new(Call.new("_p"), "i", args, Block.new([] of Var, node.as(ASTNode)))
         call = Cast.new(call, TypeOf.new([node.clone] of ASTNode)) if add_as_typeof
         call = Splat.new(call) if splat
         call
@@ -229,7 +227,7 @@ module Crystal
       node
     end
 
-    def ignoring_line_of_node(node)
+    def ignoring_line_of_node(node, &)
       old_ignore_line = @ignore_line
       @ignore_line = node.location.try(&.line_number)
       res = yield

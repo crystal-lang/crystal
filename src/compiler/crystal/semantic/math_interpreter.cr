@@ -8,17 +8,19 @@ struct Crystal::MathInterpreter
 
   def interpret(node : NumberLiteral)
     case node.kind
-    when :i8, :i16, :i32, :i64, :u8, :u16, :u32, :u64
+    when .signed_int?, .unsigned_int?
       target_kind = @target_type.try(&.kind) || node.kind
       case target_kind
-      when :i8  then node.value.to_i8? || node.raise "invalid Int8: #{node.value}"
-      when :u8  then node.value.to_u8? || node.raise "invalid UInt8: #{node.value}"
-      when :i16 then node.value.to_i16? || node.raise "invalid Int16: #{node.value}"
-      when :u16 then node.value.to_u16? || node.raise "invalid UInt16: #{node.value}"
-      when :i32 then node.value.to_i32? || node.raise "invalid Int32: #{node.value}"
-      when :u32 then node.value.to_u32? || node.raise "invalid UInt32: #{node.value}"
-      when :i64 then node.value.to_i64? || node.raise "invalid Int64: #{node.value}"
-      when :u64 then node.value.to_u64? || node.raise "invalid UInt64: #{node.value}"
+      when .i8?   then node.value.to_i8? || node.raise "invalid Int8: #{node.value}"
+      when .u8?   then node.value.to_u8? || node.raise "invalid UInt8: #{node.value}"
+      when .i16?  then node.value.to_i16? || node.raise "invalid Int16: #{node.value}"
+      when .u16?  then node.value.to_u16? || node.raise "invalid UInt16: #{node.value}"
+      when .i32?  then node.value.to_i32? || node.raise "invalid Int32: #{node.value}"
+      when .u32?  then node.value.to_u32? || node.raise "invalid UInt32: #{node.value}"
+      when .i64?  then node.value.to_i64? || node.raise "invalid Int64: #{node.value}"
+      when .u64?  then node.value.to_u64? || node.raise "invalid UInt64: #{node.value}"
+      when .i128? then node.value.to_i128? || node.raise "invalid Int128: #{node.value}"
+      when .u128? then node.value.to_u128? || node.raise "invalid UInt128: #{node.value}"
       else
         node.raise "enum type must be an integer, not #{target_kind}"
       end
@@ -43,10 +45,11 @@ struct Crystal::MathInterpreter
         when "+" then +left
         when "-"
           case left
-          when Int8  then -left
-          when Int16 then -left
-          when Int32 then -left
-          when Int64 then -left
+          when Int8   then -left
+          when Int16  then -left
+          when Int32  then -left
+          when Int64  then -left
+          when Int128 then -left
           else
             interpret_call_macro(node)
           end
@@ -70,6 +73,7 @@ struct Crystal::MathInterpreter
         when "//" then left // right
         when "&"  then left & right
         when "|"  then left | right
+        when "^"  then left ^ right
         when "<<" then left << right
         when ">>" then left >> right
         when "%"  then left % right

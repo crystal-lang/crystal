@@ -1,3 +1,5 @@
+require "./object/properties"
+
 # `Object` is the base type of all Crystal objects.
 class Object
   # Returns `true` if this object is equal to *other*.
@@ -86,72 +88,64 @@ class Object
     hash(Crystal::Hasher.new).result
   end
 
-  # Returns a string representation of this object.
+  # Returns a nicely readable and concise string representation of this object,
+  # typically intended for users.
   #
-  # Descendants must usually **not** override this method. Instead,
-  # they must override `to_s(io)`, which must append to the given
-  # IO object.
+  # This method should usually **not** be overridden. It delegates to
+  # `#to_s(IO)` which can be overridden for custom implementations.
+  #
+  # Also see `#inspect`.
   def to_s : String
     String.build do |io|
       to_s io
     end
   end
 
-  # Appends a `String` representation of this object
-  # to the given `IO` object.
+  # Prints a nicely readable and concise string representation of this object,
+  # typically intended for users, to *io*.
   #
-  # An object must never append itself to the io argument,
-  # as this will in turn call `to_s(io)` on it.
+  # This method is called when an object is interpolated in a string literal:
+  # ```
+  # "foo #{bar} baz" # calls bar.to_io with the builder for this string
+  # ```
+  #
+  # `IO#<<` calls this method to append an object to itself:
+  # ```
+  # io << bar # calls bar.to_s(io)
+  # ```
+  #
+  # Thus implementations must not interpolate `self` in a string literal or call
+  # `io << self` which both would lead to an endless loop.
+  #
+  # Also see `#inspect(IO)`.
   abstract def to_s(io : IO) : Nil
 
-  # Returns a `String` representation of this object suitable
-  # to be embedded inside other expressions, sometimes providing
-  # more information about this object.
+  # Returns an unambiguous and information-rich string representation of this
+  # object, typically intended for developers.
   #
-  # `#inspect` (and `#inspect(io)`) are the methods used when
-  # you invoke `#to_s` or `#inspect` on an object that holds
-  # other objects and wants to show them. For example when you
-  # invoke `Array#to_s`, `#inspect` will be invoked on each element:
+  # This method should usually **not** be overridden. It delegates to
+  # `#inspect(IO)` which can be overridden for custom implementations.
   #
-  # ```
-  # ary = ["one", "two", "three, etc."]
-  # ary.inspect # => ["one", "two", "three, etc."]
-  # ```
-  #
-  # Note that if Array invoked `#to_s` on each of the elements
-  # above, the output would have been this:
-  #
-  # ```
-  # ary = ["one", "two", "three, etc."]
-  # # If inspect invoked to_s on each element...
-  # ary.inspect # => [one, two, three, etc.]
-  # ```
-  #
-  # Note that it's not clear how many elements the array has,
-  # or which are they, because `#to_s` doesn't guarantee that
-  # the string representation is clearly delimited (in the case
-  # of `String` the quotes are not shown).
-  #
-  # Also note that sometimes the output of `#inspect` will look
-  # like a Crystal expression that will compile, but this isn't
-  # always the case, nor is it necessary. Notably, `Reference#inspect`
-  # and `Struct#inspect` return values that don't compile.
-  #
-  # Classes must usually **not** override this method. Instead,
-  # they must override `inspect(io)`, which must append to the
-  # given `IO` object.
+  # Also see `#to_s`.
   def inspect : String
     String.build do |io|
       inspect io
     end
   end
 
-  # Appends a string representation of this object
-  # to the given `IO` object.
+  # Prints to *io* an unambiguous and information-rich string representation of this
+  # object, typically intended for developers.
   #
-  # Similar to `to_s(io)`, but usually appends more information
-  # about this object.
-  # See `#inspect`.
+  # It is similar to `#to_s(IO)`, but often provides more information. Ideally, it should
+  # contain sufficient information to be able to recreate an object with the same value
+  # (given an identical environment).
+  #
+  # For types that don't provide a custom implementation of this method,
+  # default implementation delegates to `#to_s(IO)`. This said, it is advisable to
+  # have an appropriate `#inspect` implementation on every type. Default
+  # implementations are provided by `Struct#inspect` and `Reference#inspect`.
+  #
+  # `::p` and `::p!` use this method to print an object in `STDOUT`.
   def inspect(io : IO) : Nil
     to_s io
   end
@@ -183,7 +177,7 @@ class Object
   #   .select { |x| x % 2 == 0 }.tap { |x| puts "evens: #{x.inspect}" }
   #   .map { |x| x*x }.tap { |x| puts "squares: #{x.inspect}" }
   # ```
-  def tap
+  def tap(&)
     yield self
     self
   end
@@ -197,7 +191,7 @@ class Object
   # # First program argument in downcase, or nil
   # ARGV[0]?.try &.downcase
   # ```
-  def try
+  def try(&)
     yield self
   end
 
@@ -219,8 +213,27 @@ class Object
   end
 
   # Returns `self`.
+  #
   # `Nil` overrides this method and raises `NilAssertionError`, see `Nil#not_nil!`.
+  #
+  # This method can be used to remove `Nil` from a union type.
+  # However, it should be avoided if possible and is often considered a code smell.
+  # Usually, you can write code in a way that the compiler can safely exclude `Nil` types,
+  # for example using [`if var`](https://crystal-lang.org/reference/syntax_and_semantics/if_var.html).
+  # `not_nil!` is only meant as a last resort when there's no other way to explain this to the compiler.
+  # Either way, consider instead raising a concrete exception with a descriptive message.
   def not_nil!
+    self
+  end
+
+  # :ditto:
+  #
+  # *message* has no effect. It is only used by `Nil#not_nil!(message = nil)`.
+  def not_nil!(message)
+    # FIXME: the above param-less overload cannot be expressed as an optional
+    # parameter here, because that would copy the receiver if it is a struct;
+    # see https://github.com/crystal-lang/crystal/issues/13263#issuecomment-1492885817
+    # and also #13265
     self
   end
 
@@ -313,952 +326,6 @@ class Object
     pointerof(x).as(T*).value
   end
 
-  {% for prefixes in { {"", "", "@", "#"}, {"class_", "self.", "@@", "."} } %}
-    {%
-      macro_prefix = prefixes[0].id
-      method_prefix = prefixes[1].id
-      var_prefix = prefixes[2].id
-      doc_prefix = prefixes[3].id
-    %}
-
-    # Defines getter methods for each of the given arguments.
-    #
-    # Writing:
-    #
-    # ```
-    # class Person
-    #   {{macro_prefix}}getter name
-    # end
-    # ```
-    #
-    # Is the same as writing:
-    #
-    # ```
-    # class Person
-    #   def {{method_prefix}}name
-    #     {{var_prefix}}name
-    #   end
-    # end
-    # ```
-    #
-    # The arguments can be string literals, symbol literals or plain names:
-    #
-    # ```
-    # class Person
-    #   {{macro_prefix}}getter :name, "age"
-    # end
-    # ```
-    #
-    # If a type declaration is given, a variable with that name
-    # is declared with that type.
-    #
-    # ```
-    # class Person
-    #   {{macro_prefix}}getter name : String
-    # end
-    # ```
-    #
-    # Is the same as writing:
-    #
-    # ```
-    # class Person
-    #   {{var_prefix}}name : String
-    #
-    #   def {{method_prefix}}name : String
-    #     {{var_prefix}}name
-    #   end
-    # end
-    # ```
-    #
-    # The type declaration can also include an initial value:
-    #
-    # ```
-    # class Person
-    #   {{macro_prefix}}getter name : String = "John Doe"
-    # end
-    # ```
-    #
-    # Is the same as writing:
-    #
-    # ```
-    # class Person
-    #   {{var_prefix}}name : String = "John Doe"
-    #
-    #   def {{method_prefix}}name : String
-    #     {{var_prefix}}name
-    #   end
-    # end
-    # ```
-    #
-    # An assignment can be passed too, but in this case the type of the
-    # variable must be easily inferable from the initial value:
-    #
-    # ```
-    # class Person
-    #   {{macro_prefix}}getter name = "John Doe"
-    # end
-    # ```
-    #
-    # Is the same as writing:
-    #
-    # ```
-    # class Person
-    #   {{var_prefix}}name = "John Doe"
-    #
-    #   def {{method_prefix}}name : String
-    #     {{var_prefix}}name
-    #   end
-    # end
-    # ```
-    #
-    # If a block is given to the macro, a getter is generated
-    # with a variable that is lazily initialized with
-    # the block's contents:
-    #
-    # ```
-    # class Person
-    #   {{macro_prefix}}getter(birth_date) { Time.local }
-    # end
-    # ```
-    #
-    # Is the same as writing:
-    #
-    # ```
-    # class Person
-    #   def {{method_prefix}}birth_date
-    #     if (value = {{var_prefix}}birth_date).nil?
-    #       {{var_prefix}}birth_date = Time.local
-    #     else
-    #       value
-    #     end
-    #   end
-    # end
-    # ```
-    macro {{macro_prefix}}getter(*names, &block)
-      \{% if block %}
-        \{% if names.size != 1 %}
-          \{{ raise "Only one argument can be passed to `getter` with a block" }}
-        \{% end %}
-
-        \{% name = names[0] %}
-
-        \{% if name.is_a?(TypeDeclaration) %}
-          {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
-
-          def {{method_prefix}}\{{name.var.id}} : \{{name.type}}
-            if (value = {{var_prefix}}\{{name.var.id}}).nil?
-              {{var_prefix}}\{{name.var.id}} = \{{yield}}
-            else
-              value
-            end
-          end
-        \{% else %}
-          def {{method_prefix}}\{{name.id}}
-            if (value = {{var_prefix}}\{{name.id}}).nil?
-              {{var_prefix}}\{{name.id}} = \{{yield}}
-            else
-              value
-            end
-          end
-        \{% end %}
-      \{% else %}
-        \{% for name in names %}
-          \{% if name.is_a?(TypeDeclaration) %}
-            {{var_prefix}}\{{name}}
-
-            def {{method_prefix}}\{{name.var.id}} : \{{name.type}}
-              {{var_prefix}}\{{name.var.id}}
-            end
-          \{% elsif name.is_a?(Assign) %}
-            {{var_prefix}}\{{name}}
-
-            def {{method_prefix}}\{{name.target.id}}
-              {{var_prefix}}\{{name.target.id}}
-            end
-          \{% else %}
-            def {{method_prefix}}\{{name.id}}
-              {{var_prefix}}\{{name.id}}
-            end
-          \{% end %}
-        \{% end %}
-      \{% end %}
-    end
-
-    # Defines raise-on-nil and nilable getter methods for each of the given arguments.
-    #
-    # Writing:
-    #
-    # ```
-    # class Person
-    #   {{macro_prefix}}getter! name
-    # end
-    # ```
-    #
-    # Is the same as writing:
-    #
-    # ```
-    # class Person
-    #   def {{method_prefix}}name?
-    #     {{var_prefix}}name
-    #   end
-    #
-    #   def {{method_prefix}}name
-    #     {{var_prefix}}name.not_nil!
-    #   end
-    # end
-    # ```
-    #
-    # The arguments can be string literals, symbol literals or plain names:
-    #
-    # ```
-    # class Person
-    #   {{macro_prefix}}getter! :name, "age"
-    # end
-    # ```
-    #
-    # If a type declaration is given, a variable with that name
-    # is declared with that type, as nilable.
-    #
-    # ```
-    # class Person
-    #   {{macro_prefix}}getter! name : String
-    # end
-    # ```
-    #
-    # is the same as writing:
-    #
-    # ```
-    # class Person
-    #   {{var_prefix}}name : String?
-    #
-    #   def {{method_prefix}}name?
-    #     {{var_prefix}}name
-    #   end
-    #
-    #   def {{method_prefix}}name
-    #     {{var_prefix}}name.not_nil!
-    #   end
-    # end
-    # ```
-    macro {{macro_prefix}}getter!(*names)
-      \{% for name in names %}
-        \{% if name.is_a?(TypeDeclaration) %}
-          {{var_prefix}}\{{name}}?
-
-          def {{method_prefix}}\{{name.var.id}}? : \{{name.type}}?
-            {{var_prefix}}\{{name.var.id}}
-          end
-
-          def {{method_prefix}}\{{name.var.id}} : \{{name.type}}
-            if (value = {{var_prefix}}\{{name.var.id}}).nil?
-              ::raise NilAssertionError.new("\{{@type}}\{{"{{doc_prefix}}".id}}\{{name.var.id}} cannot be nil")
-            else
-              value
-            end
-          end
-        \{% else %}
-          def {{method_prefix}}\{{name.id}}?
-            {{var_prefix}}\{{name.id}}
-          end
-
-          def {{method_prefix}}\{{name.id}}
-            if (value = {{var_prefix}}\{{name.id}}).nil?
-              ::raise NilAssertionError.new("\{{@type}}\{{"{{doc_prefix}}".id}}\{{name.id}} cannot be nil")
-            else
-              value
-            end
-          end
-        \{% end %}
-      \{% end %}
-    end
-
-    # Defines query getter methods for each of the given arguments.
-    #
-    # Writing:
-    #
-    # ```
-    # class Person
-    #   {{macro_prefix}}getter? happy
-    # end
-    # ```
-    #
-    # Is the same as writing:
-    #
-    # ```
-    # class Person
-    #   def {{method_prefix}}happy?
-    #     {{var_prefix}}happy
-    #   end
-    # end
-    # ```
-    #
-    # The arguments can be string literals, symbol literals or plain names:
-    #
-    # ```
-    # class Person
-    #   {{macro_prefix}}getter? :happy, "famous"
-    # end
-    # ```
-    #
-    # If a type declaration is given, a variable with that name
-    # is declared with that type.
-    #
-    # ```
-    # class Person
-    #   {{macro_prefix}}getter? happy : Bool
-    # end
-    # ```
-    #
-    # is the same as writing:
-    #
-    # ```
-    # class Person
-    #   {{var_prefix}}happy : Bool
-    #
-    #   def {{method_prefix}}happy? : Bool
-    #     {{var_prefix}}happy
-    #   end
-    # end
-    # ```
-    #
-    # The type declaration can also include an initial value:
-    #
-    # ```
-    # class Person
-    #   {{macro_prefix}}getter? happy : Bool = true
-    # end
-    # ```
-    #
-    # Is the same as writing:
-    #
-    # ```
-    # class Person
-    #   {{var_prefix}}happy : Bool = true
-    #
-    #   def {{method_prefix}}happy? : Bool
-    #     {{var_prefix}}happy
-    #   end
-    # end
-    # ```
-    #
-    # An assignment can be passed too, but in this case the type of the
-    # variable must be easily inferable from the initial value:
-    #
-    # ```
-    # class Person
-    #   {{macro_prefix}}getter? happy = true
-    # end
-    # ```
-    #
-    # Is the same as writing:
-    #
-    # ```
-    # class Person
-    #   {{var_prefix}}happy = true
-    #
-    #   def {{method_prefix}}happy?
-    #     {{var_prefix}}happy
-    #   end
-    # end
-    # ```
-    #
-    # If a block is given to the macro, a getter is generated
-    # with a variable that is lazily initialized with
-    # the block's contents, for examples see `#{{macro_prefix}}getter`.
-    macro {{macro_prefix}}getter?(*names, &block)
-      \{% if block %}
-        \{% if names.size != 1 %}
-          \{{ raise "Only one argument can be passed to `getter?` with a block" }}
-        \{% end %}
-
-        \{% name = names[0] %}
-
-        \{% if name.is_a?(TypeDeclaration) %}
-          {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
-
-          def {{method_prefix}}\{{name.var.id}}? : \{{name.type}}
-            if (value = {{var_prefix}}\{{name.var.id}}).nil?
-              {{var_prefix}}\{{name.var.id}} = \{{yield}}
-            else
-              value
-            end
-          end
-        \{% else %}
-          def {{method_prefix}}\{{name.id}}?
-            if (value = {{var_prefix}}\{{name.id}}).nil?
-              {{var_prefix}}\{{name.id}} = \{{yield}}
-            else
-              value
-            end
-          end
-        \{% end %}
-      \{% else %}
-        \{% for name in names %}
-          \{% if name.is_a?(TypeDeclaration) %}
-            {{var_prefix}}\{{name}}
-
-            def {{method_prefix}}\{{name.var.id}}? : \{{name.type}}
-              {{var_prefix}}\{{name.var.id}}
-            end
-          \{% elsif name.is_a?(Assign) %}
-            {{var_prefix}}\{{name}}
-
-            def {{method_prefix}}\{{name.target.id}}?
-              {{var_prefix}}\{{name.target.id}}
-            end
-          \{% else %}
-            def {{method_prefix}}\{{name.id}}?
-              {{var_prefix}}\{{name.id}}
-            end
-          \{% end %}
-        \{% end %}
-      \{% end %}
-    end
-
-    # Defines setter methods for each of the given arguments.
-    #
-    # Writing:
-    #
-    # ```
-    # class Person
-    #   {{macro_prefix}}setter name
-    # end
-    # ```
-    #
-    # Is the same as writing:
-    #
-    # ```
-    # class Person
-    #   def {{method_prefix}}name=({{var_prefix}}name)
-    #   end
-    # end
-    # ```
-    #
-    # The arguments can be string literals, symbol literals or plain names:
-    #
-    # ```
-    # class Person
-    #   {{macro_prefix}}setter :name, "age"
-    # end
-    # ```
-    #
-    # If a type declaration is given, a variable with that name
-    # is declared with that type.
-    #
-    # ```
-    # class Person
-    #   {{macro_prefix}}setter name : String
-    # end
-    # ```
-    #
-    # is the same as writing:
-    #
-    # ```
-    # class Person
-    #   {{var_prefix}}name : String
-    #
-    #   def {{method_prefix}}name=({{var_prefix}}name : String)
-    #   end
-    # end
-    # ```
-    #
-    # The type declaration can also include an initial value:
-    #
-    # ```
-    # class Person
-    #   {{macro_prefix}}setter name : String = "John Doe"
-    # end
-    # ```
-    #
-    # Is the same as writing:
-    #
-    # ```
-    # class Person
-    #   {{var_prefix}}name : String = "John Doe"
-    #
-    #   def {{method_prefix}}name=({{var_prefix}}name : String)
-    #   end
-    # end
-    # ```
-    #
-    # An assignment can be passed too, but in this case the type of the
-    # variable must be easily inferable from the initial value:
-    #
-    # ```
-    # class Person
-    #   {{macro_prefix}}setter name = "John Doe"
-    # end
-    # ```
-    #
-    # Is the same as writing:
-    #
-    # ```
-    # class Person
-    #   {{var_prefix}}name = "John Doe"
-    #
-    #   def {{method_prefix}}name=({{var_prefix}}name)
-    #   end
-    # end
-    # ```
-    macro {{macro_prefix}}setter(*names)
-      \{% for name in names %}
-        \{% if name.is_a?(TypeDeclaration) %}
-          {{var_prefix}}\{{name}}
-
-          def {{method_prefix}}\{{name.var.id}}=({{var_prefix}}\{{name.var.id}} : \{{name.type}})
-          end
-        \{% elsif name.is_a?(Assign) %}
-          {{var_prefix}}\{{name}}
-
-          def {{method_prefix}}\{{name.target.id}}=({{var_prefix}}\{{name.target.id}})
-          end
-        \{% else %}
-          def {{method_prefix}}\{{name.id}}=({{var_prefix}}\{{name.id}})
-          end
-        \{% end %}
-      \{% end %}
-    end
-
-    # Defines property methods for each of the given arguments.
-    #
-    # Writing:
-    #
-    # ```
-    # class Person
-    #   {{macro_prefix}}property name
-    # end
-    # ```
-    #
-    # Is the same as writing:
-    #
-    # ```
-    # class Person
-    #   def {{method_prefix}}name=({{var_prefix}}name)
-    #   end
-    #
-    #   def {{method_prefix}}name
-    #     {{var_prefix}}name
-    #   end
-    # end
-    # ```
-    #
-    # The arguments can be string literals, symbol literals or plain names:
-    #
-    # ```
-    # class Person
-    #   {{macro_prefix}}property :name, "age"
-    # end
-    # ```
-    #
-    # If a type declaration is given, a variable with that name
-    # is declared with that type.
-    #
-    # ```
-    # class Person
-    #   {{macro_prefix}}property name : String
-    # end
-    # ```
-    #
-    # Is the same as writing:
-    #
-    # ```
-    # class Person
-    #   {{var_prefix}}name : String
-    #
-    #   def {{method_prefix}}name=({{var_prefix}}name)
-    #   end
-    #
-    #   def {{method_prefix}}name
-    #     {{var_prefix}}name
-    #   end
-    # end
-    # ```
-    #
-    # The type declaration can also include an initial value:
-    #
-    # ```
-    # class Person
-    #   {{macro_prefix}}property name : String = "John Doe"
-    # end
-    # ```
-    #
-    # Is the same as writing:
-    #
-    # ```
-    # class Person
-    #   {{var_prefix}}name : String = "John Doe"
-    #
-    #   def {{method_prefix}}name=({{var_prefix}}name : String)
-    #   end
-    #
-    #   def {{method_prefix}}name
-    #     {{var_prefix}}name
-    #   end
-    # end
-    # ```
-    #
-    # An assignment can be passed too, but in this case the type of the
-    # variable must be easily inferable from the initial value:
-    #
-    # ```
-    # class Person
-    #   {{macro_prefix}}property name = "John Doe"
-    # end
-    # ```
-    #
-    # Is the same as writing:
-    #
-    # ```
-    # class Person
-    #   {{var_prefix}}name = "John Doe"
-    #
-    #   def {{method_prefix}}name=({{var_prefix}}name : String)
-    #   end
-    #
-    #   def {{method_prefix}}name
-    #     {{var_prefix}}name
-    #   end
-    # end
-    # ```
-    #
-    # If a block is given to the macro, a property is generated
-    # with a variable that is lazily initialized with
-    # the block's contents:
-    #
-    # ```
-    # class Person
-    #   {{macro_prefix}}property(birth_date) { Time.local }
-    # end
-    # ```
-    #
-    # Is the same as writing:
-    #
-    # ```
-    # class Person
-    #   def {{method_prefix}}birth_date
-    #     if (value = {{var_prefix}}birth_date).nil?
-    #       {{var_prefix}}birth_date = Time.local
-    #     else
-    #       value
-    #     end
-    #   end
-    #
-    #   def {{method_prefix}}birth_date=({{var_prefix}}birth_date)
-    #   end
-    # end
-    # ```
-    macro {{macro_prefix}}property(*names, &block)
-      \{% if block %}
-        \{% if names.size != 1 %}
-          \{{ raise "Only one argument can be passed to `property` with a block" }}
-        \{% end %}
-
-        \{% name = names[0] %}
-
-        \{% if name.is_a?(TypeDeclaration) %}
-          {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
-
-          def {{method_prefix}}\{{name.var.id}} : \{{name.type}}
-            if (value = {{var_prefix}}\{{name.var.id}}).nil?
-              {{var_prefix}}\{{name.var.id}} = \{{yield}}
-            else
-              value
-            end
-          end
-
-          def {{method_prefix}}\{{name.var.id}}=({{var_prefix}}\{{name.var.id}} : \{{name.type}})
-          end
-        \{% else %}
-          def {{method_prefix}}\{{name.id}}
-            if (value = {{var_prefix}}\{{name.id}}).nil?
-              {{var_prefix}}\{{name.id}} = \{{yield}}
-            else
-              value
-            end
-          end
-
-          def {{method_prefix}}\{{name.id}}=({{var_prefix}}\{{name.id}})
-          end
-        \{% end %}
-      \{% else %}
-        \{% for name in names %}
-          \{% if name.is_a?(TypeDeclaration) %}
-            {{var_prefix}}\{{name}}
-
-            def {{method_prefix}}\{{name.var.id}} : \{{name.type}}
-              {{var_prefix}}\{{name.var.id}}
-            end
-
-            def {{method_prefix}}\{{name.var.id}}=({{var_prefix}}\{{name.var.id}} : \{{name.type}})
-            end
-          \{% elsif name.is_a?(Assign) %}
-            {{var_prefix}}\{{name}}
-
-            def {{method_prefix}}\{{name.target.id}}
-              {{var_prefix}}\{{name.target.id}}
-            end
-
-            def {{method_prefix}}\{{name.target.id}}=({{var_prefix}}\{{name.target.id}})
-            end
-          \{% else %}
-            def {{method_prefix}}\{{name.id}}
-              {{var_prefix}}\{{name.id}}
-            end
-
-            def {{method_prefix}}\{{name.id}}=({{var_prefix}}\{{name.id}})
-            end
-          \{% end %}
-        \{% end %}
-      \{% end %}
-    end
-
-    # Defines raise-on-nil property methods for each of the given arguments.
-    #
-    # Writing:
-    #
-    # ```
-    # class Person
-    #   {{macro_prefix}}property! name
-    # end
-    # ```
-    #
-    # Is the same as writing:
-    #
-    # ```
-    # class Person
-    #   def {{method_prefix}}name=({{var_prefix}}name)
-    #   end
-    #
-    #   def {{method_prefix}}name?
-    #     {{var_prefix}}name
-    #   end
-    #
-    #   def {{method_prefix}}name
-    #     {{var_prefix}}name.not_nil!
-    #   end
-    # end
-    # ```
-    #
-    # The arguments can be string literals, symbol literals or plain names:
-    #
-    # ```
-    # class Person
-    #   {{macro_prefix}}property! :name, "age"
-    # end
-    # ```
-    #
-    # If a type declaration is given, a variable with that name
-    # is declared with that type, as nilable.
-    #
-    # ```
-    # class Person
-    #   {{macro_prefix}}property! name : String
-    # end
-    # ```
-    #
-    # Is the same as writing:
-    #
-    # ```
-    # class Person
-    #   {{var_prefix}}name : String?
-    #
-    #   def {{method_prefix}}name=({{var_prefix}}name)
-    #   end
-    #
-    #   def {{method_prefix}}name?
-    #     {{var_prefix}}name
-    #   end
-    #
-    #   def {{method_prefix}}name
-    #     {{var_prefix}}name.not_nil!
-    #   end
-    # end
-    # ```
-    macro {{macro_prefix}}property!(*names)
-      {{macro_prefix}}getter! \{{*names}}
-
-      \{% for name in names %}
-        \{% if name.is_a?(TypeDeclaration) %}
-          def {{method_prefix}}\{{name.var.id}}=({{var_prefix}}\{{name.var.id}} : \{{name.type}})
-          end
-        \{% else %}
-          def {{method_prefix}}\{{name.id}}=({{var_prefix}}\{{name.id}})
-          end
-        \{% end %}
-      \{% end %}
-    end
-
-    # Defines query property methods for each of the given arguments.
-    #
-    # Writing:
-    #
-    # ```
-    # class Person
-    #   {{macro_prefix}}property? happy
-    # end
-    # ```
-    #
-    # Is the same as writing:
-    #
-    # ```
-    # class Person
-    #   def {{method_prefix}}happy=({{var_prefix}}happy)
-    #   end
-    #
-    #   def {{method_prefix}}happy?
-    #     {{var_prefix}}happy
-    #   end
-    # end
-    # ```
-    #
-    # The arguments can be string literals, symbol literals or plain names:
-    #
-    # ```
-    # class Person
-    #   {{macro_prefix}}property? :happy, "famous"
-    # end
-    # ```
-    #
-    # If a type declaration is given, a variable with that name
-    # is declared with that type.
-    #
-    # ```
-    # class Person
-    #   {{macro_prefix}}property? happy : Bool
-    # end
-    # ```
-    #
-    # Is the same as writing:
-    #
-    # ```
-    # class Person
-    #   {{var_prefix}}happy : Bool
-    #
-    #   def {{method_prefix}}happy=({{var_prefix}}happy : Bool)
-    #   end
-    #
-    #   def {{method_prefix}}happy? : Bool
-    #     {{var_prefix}}happy
-    #   end
-    # end
-    # ```
-    #
-    # The type declaration can also include an initial value:
-    #
-    # ```
-    # class Person
-    #   {{macro_prefix}}property? happy : Bool = true
-    # end
-    # ```
-    #
-    # Is the same as writing:
-    #
-    # ```
-    # class Person
-    #   {{var_prefix}}happy : Bool = true
-    #
-    #   def {{method_prefix}}happy=({{var_prefix}}happy : Bool)
-    #   end
-    #
-    #   def {{method_prefix}}happy? : Bool
-    #     {{var_prefix}}happy
-    #   end
-    # end
-    # ```
-    #
-    # An assignment can be passed too, but in this case the type of the
-    # variable must be easily inferable from the initial value:
-    #
-    # ```
-    # class Person
-    #   {{macro_prefix}}property? happy = true
-    # end
-    # ```
-    #
-    # Is the same as writing:
-    #
-    # ```
-    # class Person
-    #   {{var_prefix}}happy = true
-    #
-    #   def {{method_prefix}}happy=({{var_prefix}}happy)
-    #   end
-    #
-    #   def {{method_prefix}}happy?
-    #     {{var_prefix}}happy
-    #   end
-    # end
-    # ```
-    #
-    # If a block is given to the macro, a property is generated
-    # with a variable that is lazily initialized with
-    # the block's contents, for examples see `#{{macro_prefix}}property`.
-    macro {{macro_prefix}}property?(*names, &block)
-      \{% if block %}
-        \{% if names.size != 1 %}
-          \{{ raise "Only one argument can be passed to `property?` with a block" }}
-        \{% end %}
-
-        \{% name = names[0] %}
-
-        \{% if name.is_a?(TypeDeclaration) %}
-          {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
-
-          def {{method_prefix}}\{{name.var.id}}? : \{{name.type}}
-            if (value = {{var_prefix}}\{{name.var.id}}).nil?
-              {{var_prefix}}\{{name.var.id}} = \{{yield}}
-            else
-              value
-            end
-          end
-
-          def {{method_prefix}}\{{name.var.id}}=({{var_prefix}}\{{name.var.id}} : \{{name.type}})
-          end
-        \{% else %}
-          def {{method_prefix}}\{{name.id}}?
-            if (value = {{var_prefix}}\{{name.id}}).nil?
-              {{var_prefix}}\{{name.id}} = \{{yield}}
-            else
-              value
-            end
-          end
-
-          def {{method_prefix}}\{{name.id}}=({{var_prefix}}\{{name.id}})
-          end
-        \{% end %}
-      \{% else %}
-        \{% for name in names %}
-          \{% if name.is_a?(TypeDeclaration) %}
-            {{var_prefix}}\{{name}}
-
-            def {{method_prefix}}\{{name.var.id}}? : \{{name.type}}
-              {{var_prefix}}\{{name.var.id}}
-            end
-
-            def {{method_prefix}}\{{name.var.id}}=({{var_prefix}}\{{name.var.id}} : \{{name.type}})
-            end
-          \{% elsif name.is_a?(Assign) %}
-            {{var_prefix}}\{{name}}
-
-            def {{method_prefix}}\{{name.target.id}}?
-              {{var_prefix}}\{{name.target.id}}
-            end
-
-            def {{method_prefix}}\{{name.target.id}}=({{var_prefix}}\{{name.target.id}})
-            end
-          \{% else %}
-            def {{method_prefix}}\{{name.id}}?
-              {{var_prefix}}\{{name.id}}
-            end
-
-            def {{method_prefix}}\{{name.id}}=({{var_prefix}}\{{name.id}})
-            end
-          \{% end %}
-        \{% end %}
-      \{% end %}
-    end
-  {% end %}
-
   # Delegate *methods* to *to*.
   #
   # Note that due to current language limitations this is only useful
@@ -1282,22 +349,43 @@ class Object
   # wrapper.capitalize     # => "Hello"
   # ```
   macro delegate(*methods, to object)
-    {% for method in methods %}
-      {% if method.id.ends_with?('=') && method.id != "[]=" %}
-        def {{method.id}}(arg)
-          {{object.id}}.{{method.id}} arg
-        end
-      {% else %}
-        def {{method.id}}(*args, **options)
-          {{object.id}}.{{method.id}}(*args, **options)
-        end
+    {% if compare_versions(::Crystal::VERSION, "1.12.0-dev") >= 0 %}
+      {% eq_operators = %w(<= >= == != []= ===) %}
+      {% for method in methods %}
+        {% if method.id.ends_with?('=') && !eq_operators.includes?(method.id.stringify) %}
+          def {{method.id}}(arg)
+            {{object.id}}.{{method.id}} arg
+          end
+        {% else %}
+          def {{method.id}}(*args, **options)
+            {{object.id}}.{{method.id}}(*args, **options)
+          end
 
-        {% if method.id != "[]=" %}
           def {{method.id}}(*args, **options)
             {{object.id}}.{{method.id}}(*args, **options) do |*yield_args|
               yield *yield_args
             end
           end
+        {% end %}
+      {% end %}
+    {% else %}
+      {% for method in methods %}
+        {% if method.id.ends_with?('=') && method.id != "[]=" %}
+          def {{method.id}}(arg)
+            {{object.id}}.{{method.id}} arg
+          end
+        {% else %}
+          def {{method.id}}(*args, **options)
+            {{object.id}}.{{method.id}}(*args, **options)
+          end
+
+          {% if method.id != "[]=" %}
+            def {{method.id}}(*args, **options)
+              {{object.id}}.{{method.id}}(*args, **options) do |*yield_args|
+                yield *yield_args
+              end
+            end
+          {% end %}
         {% end %}
       {% end %}
     {% end %}
@@ -1366,8 +454,8 @@ class Object
   # end
   # ```
   macro def_equals_and_hash(*fields)
-    def_equals {{*fields}}
-    def_hash {{*fields}}
+    def_equals {{fields.splat}}
+    def_hash {{fields.splat}}
   end
 
   # Forwards missing methods to *delegate*.
@@ -1395,18 +483,18 @@ class Object
   macro def_clone
     # Returns a copy of `self` with all instance variables cloned.
     def clone
-      \{% if @type < Reference && !@type.instance_vars.map(&.type).all? { |t| t == ::Bool || t == ::Char || t == ::Symbol || t == ::String || t < ::Number::Primitive } %}
+      \{% if @type < ::Reference && !@type.instance_vars.map(&.type).all? { |t| t == ::Bool || t == ::Char || t == ::Symbol || t == ::String || t < ::Number::Primitive } %}
         exec_recursive_clone do |hash|
           clone = \{{@type}}.allocate
           hash[object_id] = clone.object_id
           clone.initialize_copy(self)
-          GC.add_finalizer(clone) if clone.responds_to?(:finalize)
+          ::GC.add_finalizer(clone) if clone.responds_to?(:finalize)
           clone
         end
       \{% else %}
         clone = \{{@type}}.allocate
         clone.initialize_copy(self)
-        GC.add_finalizer(clone) if clone.responds_to?(:finalize)
+        ::GC.add_finalizer(clone) if clone.responds_to?(:finalize)
         clone
       \{% end %}
     end
@@ -1419,7 +507,7 @@ class Object
   end
 
   protected def self.set_crystal_type_id(ptr)
-    ptr.as(LibC::SizeT*).value = LibC::SizeT.new(crystal_instance_type_id)
+    ptr.as(Pointer(typeof(crystal_instance_type_id))).value = crystal_instance_type_id
     ptr
   end
 end

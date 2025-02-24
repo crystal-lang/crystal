@@ -2,6 +2,8 @@ require "log"
 
 # A handler that logs the request method, resource, status code, and
 # the time used to execute the next handler
+#
+# NOTE: To use `LogHandler`, you must explicitly import it with `require "http"`
 class HTTP::LogHandler
   include HTTP::Handler
 
@@ -21,18 +23,14 @@ class HTTP::LogHandler
       res = context.response
 
       addr =
-        {% begin %}
         case remote_address = req.remote_address
         when nil
           "-"
-        {% unless flag?(:win32) %}
         when Socket::IPAddress
           remote_address.address
-        {% end %}
         else
           remote_address
         end
-        {% end %}
 
       @log.info { "#{addr} - #{req.method} #{req.resource} #{req.version} - #{res.status_code} (#{elapsed_text})" }
     end

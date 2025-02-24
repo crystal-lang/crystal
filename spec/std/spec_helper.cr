@@ -2,6 +2,8 @@ require "spec"
 require "../support/tempfile"
 require "../support/fibers"
 require "../support/win32"
+require "../support/wasm32"
+require "../support/interpreted"
 
 def datapath(*components)
   File.join("spec", "std", "data", *components)
@@ -75,41 +77,56 @@ def spawn_and_check(before : Proc(_), file = __FILE__, line = __LINE__, &block :
   end
 end
 
-def compile_file(source_file, flags = %w(), file = __FILE__)
-  with_temp_executable("executable_file", file: file) do |executable_file|
-    Process.run("bin/crystal", ["build"] + flags + ["-o", executable_file, source_file])
+def compile_file(source_file, *, bin_name = "executable_file", flags = %w(), file = __FILE__, &)
+  # can't use backtick in interpreted code (#12241)
+  pending_interpreted! "Unable to compile Crystal code in interpreted code"
+
+  with_temp_executable(bin_name, file: file) do |executable_file|
+    compiler = ENV["CRYSTAL_SPEC_COMPILER_BIN"]? || "bin/crystal"
+    args = ["build"] + flags + ["-o", executable_file, source_file]
+    output = IO::Memory.new
+    status = Process.run(compiler, args, env: {
+      "CRYSTAL_PATH"         => Crystal::PATH,
+      "CRYSTAL_LIBRARY_PATH" => Crystal::LIBRARY_PATH,
+      "CRYSTAL_CACHE_DIR"    => Crystal::CACHE_DIR,
+    }, output: output, error: output)
+
+    unless status.success?
+      fail "Compiler command `#{compiler} #{args.join(" ")}` failed with status #{status}.#{"\n" if output}#{output}"
+    end
+
     File.exists?(executable_file).should be_true
 
     yield executable_file
   end
 end
 
-def compile_source(source, flags = %w(), file = __FILE__)
+def compile_source(source, flags = %w(), file = __FILE__, &)
   with_tempfile("source_file", file: file) do |source_file|
     File.write(source_file, source)
-    compile_file(source_file, flags, file: file) do |executable_file|
+    compile_file(source_file, flags: flags, file: file) do |executable_file|
       yield executable_file
     end
   end
 end
 
-def compile_and_run_file(source_file, flags = %w(), file = __FILE__)
-  compile_file(source_file, flags, file: file) do |executable_file|
+def compile_and_run_file(source_file, flags = %w(), runtime_args = %w(), file = __FILE__)
+  compile_file(source_file, flags: flags, file: file) do |executable_file|
     output, error = IO::Memory.new, IO::Memory.new
-    status = Process.run executable_file, output: output, error: error
+    status = Process.run executable_file, args: runtime_args, output: output, error: error
 
     {status, output.to_s, error.to_s}
   end
 end
 
-def compile_and_run_source(source, flags = %w(), file = __FILE__)
+def compile_and_run_source(source, flags = %w(), runtime_args = %w(), file = __FILE__)
   with_tempfile("source_file", file: file) do |source_file|
     File.write(source_file, source)
-    compile_and_run_file(source_file, flags, file: file)
+    compile_and_run_file(source_file, flags, runtime_args, file: file)
   end
 end
 
-def compile_and_run_source_with_c(c_code, crystal_code, flags = %w(--debug), file = __FILE__)
+def compile_and_run_source_with_c(c_code, crystal_code, flags = %w(--debug), file = __FILE__, &)
   with_temp_c_object_file(c_code, file: file) do |o_filename|
     yield compile_and_run_source(%(
     require "prelude"

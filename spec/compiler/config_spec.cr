@@ -3,7 +3,10 @@ require "./spec_helper"
 
 describe Crystal::Config do
   it ".host_target" do
-    Crystal::Config.host_target.should eq Crystal::Codegen::Target.new({{ `bin/crystal --version`.lines[-1] }}.lchop("Default target: "))
+    {% begin %}
+      {% host_triple = Crystal.constant("HOST_TRIPLE") || Crystal::DESCRIPTION.lines[-1].gsub(/^Default target: /, "") %}
+      Crystal::Config.host_target.should eq Crystal::Codegen::Target.new({{ host_triple }})
+    {% end %}
   end
 
   {% if flag?(:linux) %}

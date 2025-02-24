@@ -47,7 +47,7 @@ class PrettyPrinter
     when .eof?
       # We are done
     when .end_array?, .end_object?
-      raise "Bug: shouldn't happen"
+      raise "Bug: Shouldn't happen"
     end
   end
 
