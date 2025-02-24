@@ -9,7 +9,7 @@ describe "Crystal::Command" do
 
       with_tempfile "crystal-external.cr" do |source_file|
         File.write source_file, <<-CRYSTAL
-          puts Path[ENV["CRYSTAL_EXEC_PATH"], "crystal"]
+          puts Process.find_executable("crystal")
           puts PROGRAM_NAME
           puts ARGV
           CRYSTAL
