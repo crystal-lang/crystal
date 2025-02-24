@@ -112,6 +112,8 @@ describe TCPSocket, tags: "network" do
     end
 
     it "fails to connect IPv6 to IPv4 server" do
+      pending! "IPv6 is unavailable" unless SocketSpecHelper.supports_ipv6?
+
       port = unused_local_port
 
       TCPServer.open("0.0.0.0", port) do |server|
@@ -133,7 +135,7 @@ describe TCPSocket, tags: "network" do
     it "sync from server" do
       port = unused_local_port
 
-      TCPServer.open("::", port) do |server|
+      TCPServer.open(Socket::IPAddress::UNSPECIFIED, port) do |server|
         TCPSocket.open("localhost", port) do |client|
           sock = server.accept
           sock.sync?.should eq(server.sync?)
@@ -152,7 +154,7 @@ describe TCPSocket, tags: "network" do
     it "settings" do
       port = unused_local_port
 
-      TCPServer.open("::", port) do |server|
+      TCPServer.open(Socket::IPAddress::UNSPECIFIED, port) do |server|
         TCPSocket.open("localhost", port) do |client|
           # test protocol specific socket options
           (client.tcp_nodelay = true).should be_true
@@ -202,7 +204,7 @@ describe TCPSocket, tags: "network" do
 
       channel = Channel(Exception?).new
       spawn do
-        TCPServer.open("::", port) do |server|
+        TCPServer.open(Socket::IPAddress::UNSPECIFIED, port) do |server|
           channel.send nil
           sock = server.accept
           sock.read_timeout = 3.second

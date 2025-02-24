@@ -106,10 +106,10 @@ class Crystal::Repl::Context
   # Once the block returns, the stack is returned to the pool.
   # The stack is not cleared after or before it's used.
   def checkout_stack(& : UInt8* -> _)
-    stack, _ = @stack_pool.checkout
+    stack = @stack_pool.checkout
 
     begin
-      yield stack.as(UInt8*)
+      yield stack.pointer.as(UInt8*)
     ensure
       @stack_pool.release(stack)
     end
@@ -117,7 +117,7 @@ class Crystal::Repl::Context
 
   # This returns the CompiledDef that corresponds to __crystal_raise_overflow
   getter(crystal_raise_overflow_compiled_def : CompiledDef) do
-    call = Call.new(nil, "__crystal_raise_overflow", global: true)
+    call = Call.new("__crystal_raise_overflow", global: true)
     program.semantic(call)
 
     local_vars = LocalVars.new(self)

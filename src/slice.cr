@@ -825,6 +825,9 @@ struct Slice(T)
   # Bytes[1, 2] <=> Bytes[1, 2] # => 0
   # ```
   def <=>(other : Slice(U)) forall U
+    # If both slices are identical references, we can skip the memory comparison.
+    return 0 if same?(other)
+
     min_size = Math.min(size, other.size)
     {% if T == UInt8 && U == UInt8 %}
       cmp = to_unsafe.memcmp(other.to_unsafe, min_size)
@@ -847,7 +850,12 @@ struct Slice(T)
   # Bytes[1, 2] == Bytes[1, 2, 3] # => false
   # ```
   def ==(other : Slice(U)) : Bool forall U
+    # If both slices are of different sizes, they cannot be equal.
     return false if size != other.size
+
+    # If both slices are identical references, we can skip the memory comparison.
+    # Not using `same?` here because we have already compared sizes.
+    return true if to_unsafe == other.to_unsafe
 
     {% if T == UInt8 && U == UInt8 %}
       to_unsafe.memcmp(other.to_unsafe, size) == 0

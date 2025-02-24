@@ -134,7 +134,7 @@ class Crystal::Doc::Generator
   end
 
   def must_include?(type : Crystal::Type)
-    return false if type.private?
+    return false if type.private? && !showdoc?(type)
     return false if nodoc? type
     return true if crystal_builtin?(type)
 
@@ -143,8 +143,10 @@ class Crystal::Doc::Generator
       return false if nodoc? ns
     end
 
-    # Don't include lib types or types inside a lib type
-    return false if type.is_a?(Crystal::LibType) || type.namespace.is_a?(LibType)
+    # Don't include lib types or types inside a lib type unless specified with `:showdoc:`
+    if (type.is_a?(LibType) || type.namespace.is_a?(LibType)) && !showdoc?(type)
+      return false
+    end
 
     !!type.locations.try &.any? do |type_location|
       must_include? type_location
@@ -215,6 +217,15 @@ class Crystal::Doc::Generator
     nodoc? obj.doc.try &.strip
   end
 
+  def showdoc?(str : String?) : Bool
+    return false if !str || !@program.wants_doc?
+    str.starts_with?(":showdoc:")
+  end
+
+  def showdoc?(obj : Crystal::Type)
+    showdoc?(obj.doc.try &.strip)
+  end
+
   def crystal_builtin?(type)
     return false unless project_info.crystal_stdlib?
     # TODO: Enabling this allows links to `NoReturn` to work, but has two `NoReturn`s show up in the sidebar
@@ -253,7 +264,7 @@ class Crystal::Doc::Generator
 
     parent.types?.try &.each_value do |type|
       case type
-      when Const, LibType
+      when Const
         next
       else
         types << type(type) if must_include? type
@@ -267,7 +278,7 @@ class Crystal::Doc::Generator
     types = [] of Constant
 
     parent.type.types?.try &.each_value do |type|
-      if type.is_a?(Const) && must_include?(type) && !type.private?
+      if type.is_a?(Const) && must_include?(type) && (!type.private? || showdoc?(type))
         types << Constant.new(self, parent, type)
       end
     end
@@ -296,7 +307,7 @@ class Crystal::Doc::Generator
   end
 
   def doc(obj : Type | Method | Macro | Constant)
-    doc = obj.doc
+    doc = obj.doc.try &.strip.lchop(":showdoc:").strip
 
     return if !doc && !has_doc_annotations?(obj)
 

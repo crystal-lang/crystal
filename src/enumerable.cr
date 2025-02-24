@@ -1033,9 +1033,9 @@ module Enumerable(T)
   # [1, 2, 3].map { |i| i * 10 } # => [10, 20, 30]
   # ```
   def map(& : T -> U) : Array(U) forall U
-    ary = [] of U
-    each { |e| ary << yield e }
-    ary
+    map_with_index do |e|
+      yield e
+    end
   end
 
   # Like `map`, but the block gets passed both the element and its index.
@@ -2013,9 +2013,7 @@ module Enumerable(T)
   # (1..5).to_a # => [1, 2, 3, 4, 5]
   # ```
   def to_a : Array(T)
-    ary = [] of T
-    each { |e| ary << e }
-    ary
+    to_a(&.as(T))
   end
 
   # Returns an `Array` with the results of running *block* against each element of the collection.

@@ -19,6 +19,7 @@ lib LibC
   O_RDONLY   =       0o0
   O_RDWR     =       0o2
   O_WRONLY   =       0o1
+  AT_FDCWD   =      -100
 
   fun fcntl(__fd : Int, __cmd : Int, ...) : Int
   fun open(__path : Char*, __flags : Int, ...) : Int

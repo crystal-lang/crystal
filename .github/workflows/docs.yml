@@ -31,7 +31,7 @@ jobs:
         run: bin/ci with_build_env 'make crystal docs threads=1'
 
       - name: Set revision
-        run: echo $GITHUB_SHA > ./docs/revision.txt
+        run: echo "$GITHUB_SHA" > ./docs/revision.txt
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4

@@ -249,7 +249,12 @@ module LLVM
       Pointer
       Vector
       Metadata
-      X86_MMX
+      X86_MMX # deleted in LLVM 20
+      Token
+      ScalableVector
+      BFloat
+      X86_AMX
+      TargetExt
     end
   end
 

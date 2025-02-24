@@ -10,10 +10,6 @@ module Crystal
       {{ read_file("#{__DIR__}/../../VERSION").chomp }}
     end
 
-    def self.llvm_version
-      LibLLVM::VERSION
-    end
-
     def self.description
       String.build do |io|
         io << "Crystal " << version
@@ -22,7 +18,7 @@ module Crystal
 
         io << "\n\nThe compiler was not built in release mode." unless release_mode?
 
-        io << "\n\nLLVM: " << llvm_version
+        io << "\n\nLLVM: " << LLVM.version
         io << "\nDefault target: " << host_target
         io << "\n"
       end

@@ -613,4 +613,28 @@ describe "Semantic: enum" do
     a_def = result.program.types["Foo"].lookup_defs("foo").first
     a_def.previous.should be_nil
   end
+
+  it "adds docs to helper methods" do
+    result = top_level_semantic <<-CRYSTAL, wants_doc: true
+    enum Foo
+      # These are the docs for `Bar`
+      Bar = 1
+    end
+    CRYSTAL
+
+    a_defs = result.program.types["Foo"].lookup_defs("bar?")
+    a_defs.first.doc.should eq("Returns `true` if this enum value equals `Bar`")
+  end
+
+  it "marks helper methods with `:nodoc:` if the member is `:nodoc:`" do
+    result = top_level_semantic <<-CRYSTAL, wants_doc: true
+    enum Foo
+      # :nodoc:
+      Bar = 1
+    end
+    CRYSTAL
+
+    a_defs = result.program.types["Foo"].lookup_defs("bar?")
+    a_defs.first.doc.should eq(":nodoc:")
+  end
 end
