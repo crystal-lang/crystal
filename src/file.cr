@@ -852,7 +852,7 @@ class File < IO::FileDescriptor
         d.flush # need to flush in case permissions are read-only
 
         # Set the permissions after the content is written in case src permissions is read-only
-        d.chmod(s.info.permissions)
+        d.chmod(s.info.permissions) rescue nil
       end
     end
   end
