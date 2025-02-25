@@ -142,10 +142,9 @@ describe Fiber::ExecutionContext::GlobalQueue do
 
       queue = Fiber::ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
       ready = Thread::WaitGroup.new(n)
-      threads = Array(Thread).new(n)
 
-      n.times do |i|
-        threads << new_thread("BULK-#{i}") do
+      threads = Array(Thread).new(n) do |i|
+        new_thread("BULK-#{i}") do
           slept = 0
 
           r = Fiber::ExecutionContext::Runnables(3).new(queue)
