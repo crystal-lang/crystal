@@ -99,10 +99,9 @@ describe Fiber::ExecutionContext::GlobalQueue do
       increments = 15
       queue = Fiber::ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
       ready = Thread::WaitGroup.new(n)
-      threads = Array(Thread).new(n)
 
-      n.times do |i|
-        threads << new_thread("ONE-#{i}") do
+      threads = Array(Thread).new(n) do |i|
+        new_thread("ONE-#{i}") do
           slept = 0
           ready.done
 

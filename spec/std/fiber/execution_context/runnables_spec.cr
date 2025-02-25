@@ -191,14 +191,13 @@ describe Fiber::ExecutionContext::Runnables do
 
       global_queue = Fiber::ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
       ready = Thread::WaitGroup.new(n)
-      threads = Array(Thread).new(n)
 
       all_runnables = Array(Fiber::ExecutionContext::Runnables(16)).new(n) do
         Fiber::ExecutionContext::Runnables(16).new(global_queue)
       end
 
-      n.times do |i|
-        threads << new_thread("RUN-#{i}") do
+      threads = Array(Thread).new(n) do |i|
+        new_thread("RUN-#{i}") do
           runnables = all_runnables[i]
           slept = 0
 
