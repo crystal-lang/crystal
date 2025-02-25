@@ -100,6 +100,7 @@ jobs:
 
   x86_64-mingw-w64-test-compiler:
     runs-on: windows-2022
+    needs: [x86_64-mingw-w64-build]
     steps:
       - name: Setup MSYS2
         id: msys2
@@ -120,6 +121,15 @@ jobs:
 
       - name: Download Crystal source
         uses: actions/checkout@v4
+
+      - name: Download Crystal executable
+        uses: actions/download-artifact@v4
+        with:
+          name: x86_64-mingw-w64-crystal
+          path: crystal
+
+      - name: Copy compiler build into place
+        run: mkdir .build/ && cp crystal/bin/crystal.exe .build/
 
       - name: Run compiler specs
         shell: msys2 {0}
