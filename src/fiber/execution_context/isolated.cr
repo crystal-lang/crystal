@@ -5,7 +5,7 @@ module Fiber::ExecutionContext
   # ST scheduler. Owns a single thread running a single fiber.
   #
   # Concurrency is disabled. The fiber owns the thread. calls to `::spawn` will
-  # raise a `RuntimeError` unless you specify a spawn context to forward spanws
+  # raise a `RuntimeError` unless you specify a spawn context to forward spawns
   # to. Keep in mind that the fiber will still run in parallel to other fibers
   # running in other execution contexts.
   #
@@ -45,8 +45,8 @@ module Fiber::ExecutionContext
     @wait_list = Crystal::PointerLinkedList(Fiber::PointerLinkedListNode).new
     @exception : Exception?
 
-    # Starts a new thread named +name+ to execute +func+. Once +func+ returns
-    # the thread will terminate. You can optionally specify a +spawn_context+ to
+    # Starts a new thread named *name* to execute *func*. Once *func* returns
+    # the thread will terminate. You can optionally specify a *spawn_context* to
     # `::spawn` fibers into by default.
     def initialize(@name : String, @spawn_context : ExecutionContext? = nil, &@func : ->)
       @mutex = Thread::Mutex.new
