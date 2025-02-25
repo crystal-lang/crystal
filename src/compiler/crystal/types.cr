@@ -2688,19 +2688,6 @@ module Crystal
       self
     end
 
-    def add_var(name, type, real_name, thread_local)
-      setter = External.new("#{name}=", [Arg.new("value", type: type)], Primitive.new("external_var_set", type), real_name)
-      setter.set_type(type)
-      setter.thread_local = thread_local
-
-      getter = External.new("#{name}", [] of Arg, Primitive.new("external_var_get", type), real_name)
-      getter.set_type(type)
-      getter.thread_local = thread_local
-
-      add_def setter
-      add_def getter
-    end
-
     def lookup_var(name)
       a_def = lookup_first_def(name, false)
       return nil unless a_def
@@ -2948,6 +2935,12 @@ module Crystal
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
+      if codegen
+        if (namespace = instance_type.namespace).is_a?(FileModule)
+          namespace.to_s_with_options(io, generic_args: false, codegen: codegen)
+          io << "::"
+        end
+      end
       io << @name
     end
 
