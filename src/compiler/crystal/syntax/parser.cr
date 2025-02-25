@@ -3228,7 +3228,8 @@ module Crystal
         when .macro_literal?
           pieces << MacroLiteral.new(@token.value.to_s).at(@token.location).at_end(token_end_location)
         when .macro_expression_start?
-          pieces << MacroExpression.new(parse_macro_expression).at(@token.location).at_end(token_end_location)
+          location = @token.location
+          pieces << MacroExpression.new(parse_macro_expression).at(location).at_end(token_end_location)
           check_macro_expression_end
           skip_whitespace = check_macro_skip_whitespace
         when .macro_control_start?
