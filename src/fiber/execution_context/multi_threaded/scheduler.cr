@@ -66,6 +66,8 @@ module Fiber::ExecutionContext
         # fiber but thread B didn't saved its context yet); we must wait until
         # the context switch assembly saved all registers on the stack and set
         # the fiber as resumable.
+        attempts = 0
+
         until fiber.resumable?
           if fiber.dead?
             raise "BUG: tried to resume dead fiber #{fiber} (#{inspect})"
@@ -73,8 +75,8 @@ module Fiber::ExecutionContext
 
           # OPTIMIZE: if the thread saving the fiber context has been preempted,
           # this will block the current thread from progressing... shall we
-          # abort and reenqueue the fiber after MAX iterations?
-          Intrinsics.pause
+          # abort and reenqueue the fiber after MAX attempts?
+          attempts = Thread.delay(attempts)
         end
 
         swapcontext(fiber)
