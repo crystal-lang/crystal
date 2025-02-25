@@ -508,7 +508,7 @@ class Crystal::Command
         opts.on("--no-codegen", "Don't do code generation") do
           compiler.no_codegen = true
         end
-        opts.on("-o ", "Output filename") do |an_output_filename|
+        opts.on("-o FILE", "--output FILE", "Output filename") do |an_output_filename|
           opt_output_filename = an_output_filename
           specified_output = true
         end
