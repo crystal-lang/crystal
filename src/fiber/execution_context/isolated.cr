@@ -39,6 +39,7 @@ module Fiber::ExecutionContext
     @waiting = false
 
     @wait_list = Crystal::PointerLinkedList(Fiber::PointerLinkedListNode).new
+    @exception : Exception?
 
     def initialize(@name : String, @spawn_context = ExecutionContext.default, &@func : ->)
       @mutex = Thread::Mutex.new
@@ -154,6 +155,8 @@ module Fiber::ExecutionContext
     private def run
       Crystal.trace :sched, "started"
       @func.call
+    rescue exception
+      @exception = exception
     ensure
       @mutex.synchronize do
         @running = false
@@ -164,21 +167,32 @@ module Fiber::ExecutionContext
 
     # Blocks the calling fiber until the isolated context fiber terminates.
     # Returns immediately if the isolated fiber has already terminated.
+    # Re-raises unhandled exceptions raised by the fiber.
+    #
+    # For example:
+    #
+    # ```
+    # ctx = Fiber::ExecutionContext::Isolated.new("test") { raise "fail" }
+    # ctw.wait # => re-raises "fail"
+    # ```
     def wait : Nil
-      return unless @running
+      if @running
+        node = Fiber::PointerLinkedListNode.new(Fiber.current)
+        @mutex.synchronize do
+          @wait_list.push(pointerof(node)) if @running
+        end
+      end
 
-      node = Fiber::PointerLinkedListNode.new(Fiber.current)
-      @mutex.synchronize do
-        @wait_list.push(pointerof(node)) if @running
+      if exception = @exception
+        raise exception
       end
     end
 
-    # Blocks the calling thread until the isolated context thread terminates.
+    # :nodoc:
     #
-    # WARNING: this will prevent fibers running on the calling thread to be
-    # resumed! Consider `#wait` to only block the calling fiber instead.
-    def join : Nil
-      @thread.join
+    # Simple alias to ease the transition from Thread.
+    def join
+      wait
     end
 
     @[AlwaysInline]
