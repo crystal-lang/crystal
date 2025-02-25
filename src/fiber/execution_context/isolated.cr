@@ -4,23 +4,27 @@ require "../list"
 module Fiber::ExecutionContext
   # ST scheduler. Owns a single thread running a single fiber.
   #
-  # Concurrency is disabled: calls to `#spawn` will create fibers in another
-  # execution context (defaults to `ExecutionContext.default`). Any calls that
-  # result in waiting (e.g. sleep, or socket read/write) will block the thread
-  # since there are no other fibers to switch to.
+  # Concurrency is disabled. The fiber owns the thread. calls to `::spawn` will
+  # raise a `RuntimeError` unless you specify a spawn context to forward spanws
+  # to. Keep in mind that the fiber will still run in parallel to other fibers
+  # running in other execution contexts.
   #
-  # The fiber will still run in parallel to other fibers running in other
-  # execution contexts.
+  # Any calls that result in waiting (e.g. sleep, or socket read/write) will
+  # block the thread since there are no other fibers to switch to. This in turn
+  # allows to call anything that would block the thread without blocking any
+  # other fiber.
   #
   # Isolated fibers can still communicate with other fibers running in other
   # execution contexts using standard means, such as `Channel(T)`, `WaitGroup`
   # or `Mutex`. They can also execute IO operations or sleep just like any other
   # fiber.
   #
-  # Example:
+  # You can for example use an isolated fiber to run a blocking GUI loop, then
+  # only block the current fiber while waiting for the GUI application to quit:
   #
   # ```
-  # ExecutionContext::Isolated.new("Gtk") { Gtk.main }
+  # gtk = Fiber::ExecutionContext::Isolated.new("Gtk") { Gtk.main }
+  # gtk.wait
   # ```
   class Isolated
     include ExecutionContext
@@ -41,7 +45,10 @@ module Fiber::ExecutionContext
     @wait_list = Crystal::PointerLinkedList(Fiber::PointerLinkedListNode).new
     @exception : Exception?
 
-    def initialize(@name : String, @spawn_context = ExecutionContext.default, &@func : ->)
+    # Starts a new thread named +name+ to execute +func+. Once +func+ returns
+    # the thread will terminate. You can optionally specify a +spawn_context+ to
+    # `::spawn` fibers into by default.
+    def initialize(@name : String, @spawn_context : ExecutionContext? = nil, &@func : ->)
       @mutex = Thread::Mutex.new
       @thread = uninitialized Thread
       @main_fiber = uninitialized Fiber
@@ -61,7 +68,6 @@ module Fiber::ExecutionContext
     end
 
     # :nodoc:
-    @[AlwaysInline]
     def execution_context : Isolated
       self
     end
@@ -75,16 +81,18 @@ module Fiber::ExecutionContext
     def stack_pool? : Fiber::StackPool?
     end
 
-    @[AlwaysInline]
+    private def spawn_context : self
+      @spawn_context.not_nil! "Concurrency is disabled in isolated contexts, and no spawn context available."
+    end
+
     def spawn(*, name : String? = nil, &block : ->) : Fiber
-      @spawn_context.spawn(name: name, &block)
+      spawn_context.spawn(name: name, &block)
     end
 
     # :nodoc:
-    @[AlwaysInline]
     def spawn(*, name : String? = nil, same_thread : Bool, &block : ->) : Fiber
       raise ArgumentError.new("#{self.class.name}#spawn doesn't support same_thread:true") if same_thread
-      @spawn_context.spawn(name: name, &block)
+      spawn_context.spawn(name: name, &block)
     end
 
     def enqueue(fiber : Fiber) : Nil
@@ -195,7 +203,6 @@ module Fiber::ExecutionContext
       wait
     end
 
-    @[AlwaysInline]
     def inspect(io : IO) : Nil
       to_s(io)
     end
