@@ -520,7 +520,9 @@ private module ConsoleUtils
   @@bytes_read = Deque(Int32).new
   @@mtx = ::Thread::Mutex.new
   {% if flag?(:execution_context) %}
-    @@reader_thread = ::Fiber::ExecutionContext::Isolated.new("READER-LOOP") { reader_loop }
+    @@reader_thread = ::Fiber::ExecutionContext::Isolated.new("READER-LOOP", spawn_context: nil) do
+      reader_loop
+    end
   {% else %}
     @@reader_thread = ::Thread.new { reader_loop }
   {% end %}

@@ -19,11 +19,15 @@ module Fiber::ExecutionContext
   # or `Mutex`. They can also execute IO operations or sleep just like any other
   # fiber.
   #
-  # You can for example use an isolated fiber to run a blocking GUI loop, then
-  # only block the current fiber while waiting for the GUI application to quit:
+  # You can for example use an isolated fiber to run a blocking GUI loop,
+  # transparently forward `::spawn` to the default context, and eventually only
+  # block the current fiber while waiting for the GUI application to quit:
   #
   # ```
-  # gtk = Fiber::ExecutionContext::Isolated.new("Gtk") { Gtk.main }
+  # default = Fiber::ExecutionContext.default
+  # gtk = Fiber::ExecutionContext::Isolated.new("Gtk", spawn_context: default) do
+  #   Gtk.main
+  # end
   # gtk.wait
   # ```
   class Isolated
@@ -46,9 +50,12 @@ module Fiber::ExecutionContext
     @exception : Exception?
 
     # Starts a new thread named *name* to execute *func*. Once *func* returns
-    # the thread will terminate. You can optionally specify a *spawn_context* to
-    # `::spawn` fibers into by default.
-    def initialize(@name : String, @spawn_context : ExecutionContext? = nil, &@func : ->)
+    # the thread will terminate.
+    #
+    # Set *spawn_context* to `nil` for `::spawn` to raise a `RuntimeError` or
+    # pass a `Fiber::ExecutionContext` to transparently spawn fibers into that
+    # execution context.
+    def initialize(@name : String, @spawn_context : ExecutionContext?, &@func : ->)
       @mutex = Thread::Mutex.new
       @thread = uninitialized Thread
       @main_fiber = uninitialized Fiber
@@ -180,7 +187,9 @@ module Fiber::ExecutionContext
     # For example:
     #
     # ```
-    # ctx = Fiber::ExecutionContext::Isolated.new("test") { raise "fail" }
+    # ctx = Fiber::ExecutionContext::Isolated.new("test", spawn_context: nil) do
+    #   raise "fail"
+    # end
     # ctw.wait # => re-raises "fail"
     # ```
     def wait : Nil
