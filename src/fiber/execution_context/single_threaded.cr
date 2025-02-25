@@ -8,7 +8,7 @@ module Fiber::ExecutionContext
   # Fully concurrent with limited parallelism: concurrency is restricted to this
   # single thread. Fibers running in this context will never run in parallel to
   # each other but they may still run in parallel to fibers running in other
-  # contexts, this is on another thread.
+  # contexts (i.e. another thread).
   class SingleThreaded
     include ExecutionContext
     include ExecutionContext::Scheduler
@@ -60,7 +60,7 @@ module Fiber::ExecutionContext
       @stack_pool
     end
 
-    # Initializes the scheduler on the current thread (usually the executable's
+    # Initializes the scheduler on the current thread (usually the process'
     # main thread).
     private def hijack_current_thread : Thread
       thread = Thread.current
@@ -247,7 +247,6 @@ module Fiber::ExecutionContext
       end
     end
 
-    @[AlwaysInline]
     def inspect(io : IO) : Nil
       to_s(io)
     end
