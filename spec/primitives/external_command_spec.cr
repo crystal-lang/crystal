@@ -31,12 +31,12 @@ describe "Crystal::Command" do
       status = process.wait
       status.success?.should be_true, failure_message: "Running external subcommand failed.\nstderr:\n#{error}\nstdout:\n#{output}"
 
-      output.should eq [
+      output.lines.should eq [
         compiler_path,
         File.dirname(compiler_path),
         command_path,
         %(["foo", "bar"]),
-      ].join("\n")
+      ]
     end
   end
 end
