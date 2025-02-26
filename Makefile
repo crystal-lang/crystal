@@ -224,13 +224,13 @@ uninstall_compiler:
 	rm -f "$(DESTDIR)$(DATADIR)/licenses/crystal/LICENSE"
 
 .PHONY: install_man
-install_man: man/crystal.1.gz
+install_man: $(patsubst %.1,%.1.gz,$(MAN1PAGES))
 	$(INSTALL) -d -m 0755 "$(DESTDIR)$(MANDIR)/man1/"
-	$(INSTALL) -m 644 man/crystal.1.gz "$(DESTDIR)$(MANDIR)/man1/crystal.1.gz"
+	$(INSTALL) -m 644 $^ "$(DESTDIR)$(MANDIR)/man1/"
 
 .PHONY: uninstall_man
 uninstall_man:
-	rm -f "$(DESTDIR)$(MANDIR)/man1/crystal.1.gz"
+	rm -f $(patsubst man/%,$(DESTDIR)$(MANDIR)/man1/%.gz,$(MAN1PAGES))
 
 .PHONY: install_completions
 install_completions:
@@ -311,13 +311,17 @@ man/%.1: doc/man/%.adoc
 	SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) asciidoctor -a crystal_version=$(CRYSTAL_VERSION) $< -b manpage -o $@
 
 .PHONY: clean
-clean: clean_crystal ## Clean up built directories and files
+clean: clean_crystal clean_man ## Clean up built directories and files
 	rm -rf $(LLVM_EXT_OBJ)
 
 .PHONY: clean_crystal
 clean_crystal: ## Clean up crystal built files
 	rm -rf $(O)
 	rm -rf ./docs
+
+.PHONY: clean_man
+clean_man:
+	rm -rf ./man
 
 .PHONY: clean_cache
 clean_cache: ## Clean up CRYSTAL_CACHE_DIR files
