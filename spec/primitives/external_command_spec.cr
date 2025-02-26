@@ -15,28 +15,28 @@ describe "Crystal::Command" do
           puts ARGV
           CRYSTAL
 
-        Process.run(compiler_path, ["build", source_file, "-o", command_path])
+        Process.run(compiler_path, ["build", source_file, "-o", command_path], error: :inherit)
       end
 
       File.exists?(command_path).should be_true
 
-      output = IO::Memory.new
       process = Process.new(compiler_path,
         ["external", "foo", "bar"],
-        output: output, error: output,
+        output: :pipe, error: :pipe,
         env: {"PATH" => {ENV["PATH"], File.dirname(command_path)}.join(Process::PATH_DELIMITER)}
       )
 
+      output = process.output.gets_to_end
+      error = process.error.gets_to_end
       status = process.wait
-      status.success?.should be_true
+      status.success?.should be_true, failure_message: "Running external subcommand failed.\nstderr:\n#{error}\nstdout:\n#{output}"
 
-      lines = output.to_s.lines
-      lines.should eq [
+      output.should eq [
         compiler_path,
         File.dirname(compiler_path),
         command_path,
         %(["foo", "bar"]),
-      ]
+      ].join("\n")
     end
   end
 end
