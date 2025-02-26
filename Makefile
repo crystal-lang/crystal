@@ -187,7 +187,7 @@ generate_data: ## Run generator scripts for Unicode, SSL config, ...
 	$(MAKE) -B -f scripts/generate_data.mk
 
 .PHONY: install
-install: $(O)/$(CRYSTAL_BIN) man/crystal.1.gz ## Install the compiler at DESTDIR
+install: $(O)/$(CRYSTAL_BIN) $(MAN1PAGES) ## Install the compiler at DESTDIR
 	$(INSTALL) -d -m 0755 "$(DESTDIR)$(BINDIR)/"
 	$(INSTALL) -m 0755 "$(O)/$(CRYSTAL_BIN)" "$(DESTDIR)$(BINDIR)/$(CRYSTAL_BIN)"
 
@@ -196,7 +196,7 @@ install: $(O)/$(CRYSTAL_BIN) man/crystal.1.gz ## Install the compiler at DESTDIR
 	rm -rf "$(DESTDIR)$(DATADIR)/crystal/$(LLVM_EXT_OBJ)" # Don't install llvm_ext.o
 
 	$(INSTALL) -d -m 0755 "$(DESTDIR)$(MANDIR)/man1/"
-	$(INSTALL) -m 644 man/crystal.1.gz "$(DESTDIR)$(MANDIR)/man1/crystal.1.gz"
+	$(INSTALL) -m 644 $(MAN1PAGES) "$(DESTDIR)$(MANDIR)/man1/"
 	$(INSTALL) -d -m 0755 "$(DESTDIR)$(DATADIR)/licenses/crystal/"
 	$(INSTALL) -m 644 LICENSE "$(DESTDIR)$(DATADIR)/licenses/crystal/LICENSE"
 
@@ -220,7 +220,7 @@ uninstall: ## Uninstall the compiler from DESTDIR
 
 	rm -rf "$(DESTDIR)$(DATADIR)/crystal/src"
 
-	rm -f "$(DESTDIR)$(MANDIR)/man1/crystal.1.gz"
+	rm -f $(patsubst man/%,$(DESTDIR)$(MANDIR)/man1/%,$(MAN1PAGES))
 	rm -f "$(DESTDIR)$(DATADIR)/licenses/crystal/LICENSE"
 
 	rm -f "$(DESTDIR)$(DATADIR)/bash-completion/completions/crystal"
