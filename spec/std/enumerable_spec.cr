@@ -1368,7 +1368,7 @@ describe "Enumerable" do
     it { [1, 3_u64].sum(0_i32).should eq(4_u32) }
     it { [1, 3].sum(0_u64).should eq(4_u64) }
     it { [1, 10000000000_u64].sum(0_u64).should eq(10000000001) }
-    it "raises if union types are summed", tags: %w[slow] do
+    pending_wasm32 "raises if union types are summed", tags: %w[slow] do
       assert_compile_error <<-CRYSTAL,
         require "prelude"
         [1, 10000000000_u64].sum
@@ -1423,7 +1423,7 @@ describe "Enumerable" do
     it { [1, 3_u64].product(3_i32).should eq(9_u32) }
     it { [1, 3].product(3_u64).should eq(9_u64) }
     it { [1, 10000000000_u64].product(3_u64).should eq(30000000000_u64) }
-    it "raises if union types are multiplied", tags: %w[slow] do
+    pending_wasm32 "raises if union types are multiplied", tags: %w[slow] do
       assert_compile_error <<-CRYSTAL,
         require "prelude"
         [1, 10000000000_u64].product
