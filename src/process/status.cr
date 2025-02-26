@@ -408,8 +408,7 @@ class Process::Status
   # Process::Status.new(0).description # => "Process exited normally"
   # process = Process.new("sleep", ["10"])
   # process.terminate
-  # process.wait.description
-  # # => "Process received and didn't handle signal TERM (15)"
+  # process.wait.description # => "Process received and didn't handle signal TERM (15)"
   # ```
   #
   # `ExitReason#description` provides the specific messages for non-signal exits.
