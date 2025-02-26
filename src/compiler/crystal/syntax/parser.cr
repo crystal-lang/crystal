@@ -4264,6 +4264,10 @@ module Crystal
         # Not a special call, go on
       end
 
+      if @token.type.op_eq? || @token.type.assignment_operator?
+        unexpected_token
+      end
+
       name = @token.value.to_s
       name_location = @token.location
 

@@ -1512,6 +1512,8 @@ module Crystal
     assert_syntax_error "case 1\nin 1; 2", "expression of exhaustive case (case ... in) must be a constant (like `IO::Memory`), a generic (like `Array(Int32)`), a bool literal (true or false), a nil literal (nil) or a question method (like `.red?`)"
     assert_syntax_error "case 1\nin .nil?; 2", "expression of exhaustive case (case ... in) must be a constant (like `IO::Memory`), a generic (like `Array(Int32)`), a bool literal (true or false), a nil literal (nil) or a question method (like `.red?`)"
     assert_syntax_error "case 1\nin _;", "'when _' is not supported"
+    assert_syntax_error "case 1\nwhen .=(2)", %(unexpected token: "=")
+    assert_syntax_error "case 1\nwhen .+=(2)", %(unexpected token: "+=")
 
     it_parses "case 1; when 2 then /foo/; end", Case.new(1.int32, [When.new([2.int32] of ASTNode, RegexLiteral.new("foo".string))], else: nil, exhaustive: false)
 
