@@ -4236,6 +4236,8 @@ module Crystal
       end_location = token_end_location
       doc = @token.doc
 
+      check AtomicWithMethodCheck
+
       if @token.type.op_bang?
         # only trigger from `parse_when_expression`
         obj = Var.new("self").at(location)
@@ -4262,10 +4264,6 @@ module Crystal
         end
       else
         # Not a special call, go on
-      end
-
-      if @token.type.op_eq? || @token.type.assignment_operator?
-        unexpected_token
       end
 
       name = @token.value.to_s
