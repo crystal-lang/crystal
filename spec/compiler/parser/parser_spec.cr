@@ -2809,7 +2809,7 @@ module Crystal
         then_node_location.column_number.should eq 5
         then_node_location = then_node.expressions[1].end_location.should_not be_nil
         then_node_location.line_number.should eq 2
-        then_node_location.column_number.should eq 12
+        then_node_location.column_number.should eq 13
 
         else_node = node.else.should be_a Expressions
         else_node_location = else_node.location.should_not be_nil
