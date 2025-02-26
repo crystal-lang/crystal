@@ -17,7 +17,7 @@ jobs:
     steps:
       - name: Setup MSYS2
         id: msys2
-        uses: msys2/setup-msys2@d44ca8e88d8b43d56cf5670f91747359d5537f97 # v2.26.0
+        uses: msys2/setup-msys2@61f9e5e925871ba6c9e3e8da24ede83ea27fa91f # v2.27.0
         with:
           msystem: UCRT64
           update: true
@@ -74,7 +74,7 @@ jobs:
     steps:
       - name: Setup MSYS2
         id: msys2
-        uses: msys2/setup-msys2@d44ca8e88d8b43d56cf5670f91747359d5537f97 # v2.26.0
+        uses: msys2/setup-msys2@61f9e5e925871ba6c9e3e8da24ede83ea27fa91f # v2.27.0
         with:
           msystem: UCRT64
           update: true
@@ -103,7 +103,7 @@ jobs:
     steps:
       - name: Setup MSYS2
         id: msys2
-        uses: msys2/setup-msys2@d44ca8e88d8b43d56cf5670f91747359d5537f97 # v2.26.0
+        uses: msys2/setup-msys2@61f9e5e925871ba6c9e3e8da24ede83ea27fa91f # v2.27.0
         with:
           msystem: UCRT64
           update: true
