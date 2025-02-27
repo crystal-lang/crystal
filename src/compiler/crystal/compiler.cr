@@ -84,12 +84,12 @@ module Crystal
 
     # Maximum number of LLVM modules that are compiled in parallel
     property n_threads : Int32 = {% if flag?(:preview_mt) %}
-      ENV["CRYSTAL_WORKERS"]?.try(&.to_i?) || 4
-    {% elsif flag?(:win32) %}
-      1
-    {% else %}
-      8
-    {% end %}
+                                   ENV["CRYSTAL_WORKERS"]?.try(&.to_i?) || 4
+                                 {% elsif flag?(:win32) %}
+                                   1
+                                 {% else %}
+                                   8
+                                 {% end %}
 
     # Default prelude file to use. This ends up adding a
     # `require "prelude"` (or whatever name is set here) to
