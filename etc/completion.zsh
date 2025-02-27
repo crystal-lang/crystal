@@ -89,7 +89,7 @@ local -a shared_run_build; shared_run_build=(
   '(--mcpu)--mcpu[target specific cpu type]:' \
   '(--mattr)--mattr[target specific features]:' \
   "(--no-codegen)--no-codegen[don't do code generation]" \
-  '(-o)-o[output filename]:' \
+  '(-o --output)'{-o,--output}'[output filename]:' \
   '(--single-module)--single-module[generate a single llvm module]' \
   '(--threads)--threads[maximum number of threads to use]' \
   '(--verbose)--verbose[display executed commands]' \

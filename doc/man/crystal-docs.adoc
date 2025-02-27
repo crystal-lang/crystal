@@ -1,0 +1,65 @@
+= crystal-docs(1)
+:doctype: manpage
+:date: {localdate}
+:crystal_version: {crystal_version}
+:man manual: Crystal Compiler Command Line Reference Guide
+:man source: crystal {crystal_version}
+
+== Name
+crystal-doc - Generate API docs for Crystal code
+
+== Synopsis
+*crystal build* [options] [programfile] [--] [arguments]
+
+== Description
+
+Generate documentation from comments using a subset of markdown. The output
+is saved in html format on the created docs/ folder. More information about
+documentation conventions can be found at <https://crystal-lang.org/docs/conventions/documenting_code.html>.
+
+== Options
+
+*--project-name* _NAME_::
+Set the project name. The default value is extracted from
+shard.yml if available.
++
+In case no default can be found, this option is mandatory.
+*--project-version* _VERSION_::
+Set the project version. The default value is extracted from current git commit or shard.yml if available.
++
+In case no default can be found, this option is mandatory.
+*--json-config-url* _URL_::
+Set the URL pointing to a config file (used for discovering versions).
+*--source-refname* _REFNAME_::
+Set source refname (e.g. git tag, commit hash). The default value
+is extracted from current git commit if available.
++
+If this option is missing and can't be automatically determined,
+the generator can't produce source code links.
+*--source-url-pattern* _URL_::
+Set URL pattern for source code links. The default value is extracted from git remotes ("origin" or first one) if available and
+the provider's URL pattern is recognized.
++
+Supported replacement tags:
++
+--
+*%{refname}*::  commit reference
+*%{path}*::     path to source file inside the repository
+*%{filename}*::
+  basename of the source file
+*%{line}*::     line number
+--
++
+If this option is missing and can't be automatically determined,
+the generator can't produce source code links.
+*-o* _DIR_, *--output* _DIR_::
+Set the output directory (default: ./docs).
+*-b* _URL_, **--canonical-base-url** _URL_::
+Indicate the preferred URL with rel="canonical" link element.
+*-b* _URL_, *--sitemap-base-url* _URL_::
+Set the sitemap base URL. Sitemap will only be generated when
+this option is set.
+*--sitemap-priority* _PRIO_::
+Set the priority assigned to sitemap entries (default: 1.0).
+*--sitemap-changefreq* _FREQ_::
+Set the changefreq assigned to sitemap entries (default: never).
