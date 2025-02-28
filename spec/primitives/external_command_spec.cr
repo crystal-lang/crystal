@@ -3,7 +3,7 @@
 require "../support/tempfile"
 
 describe "Crystal::Command" do
-  it "exec external commands", tags: %w[slow] do
+  it "exec external commands", tags: %w[slow external_commands] do
     with_temp_executable "crystal-external" do |command_path|
       compiler_path = File.expand_path(ENV["CRYSTAL_SPEC_COMPILER_BIN"]? || "bin/crystal")
 
