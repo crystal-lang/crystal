@@ -323,13 +323,14 @@ class OptionParser
   property summary_indent : String = "    "
 
   private def append_flag(flag, description)
-    description_indent = "#{summary_indent}#{" " * summary_width} " # Adjust the indent based on summary_width
+    width = summary_width.clamp(0..)
+    description_indent = "#{summary_indent}#{" " * width} " # Adjust the indent based on summary_width
     description = description.gsub("\n", "\n#{description_indent}")
 
-    if flag.size >= summary_width
+    if flag.size >= width
       @flags << "#{summary_indent}#{flag}\n#{description_indent}#{description}"
     else
-      @flags << "#{summary_indent}#{flag}#{" " * (summary_width - flag.size)} #{description}"
+      @flags << "#{summary_indent}#{flag}#{" " * (width - flag.size)} #{description}"
     end
   end
 
