@@ -98,6 +98,37 @@ enum Process::ExitReason
   def abnormal?
     !normal?
   end
+
+  # Returns a textual description of this exit reason.
+  #
+  # ```
+  # Process::ExitReason::Normal.description  # => "Process exited normally"
+  # Process::ExitReason::Aborted.description # => "Process terminated abnormally"
+  # ```
+  #
+  # `Status#description` provides more detail for a specific process status.
+  def description
+    case self
+    in .normal?
+      "Process exited normally"
+    in .aborted?, .session_ended?, .terminal_disconnected?
+      "Process terminated abnormally"
+    in .interrupted?
+      "Process was interrupted"
+    in .breakpoint?
+      "Process hit a breakpoint and no debugger was attached"
+    in .access_violation?, .bad_memory_access?
+      "Process terminated because of an invalid memory access"
+    in .bad_instruction?
+      "Process terminated because of an invalid instruction"
+    in .float_exception?
+      "Process terminated because of a floating-point system exception"
+    in .signal?
+      "Process terminated because of an unhandled signal"
+    in .unknown?
+      "Process terminated abnormally, the cause is unknown"
+    end
+  end
 end
 
 # The status of a terminated process. Returned by `Process#wait`.
@@ -369,6 +400,24 @@ class Process::Status
         exit_code.to_s
       end
     {% end %}
+  end
+
+  # Returns a textual description of this process status.
+  #
+  # ```
+  # Process::Status.new(0).description # => "Process exited normally"
+  # process = Process.new("sleep", ["10"])
+  # process.terminate
+  # process.wait.description # => "Process received and didn't handle signal TERM (15)"
+  # ```
+  #
+  # `ExitReason#description` provides the specific messages for non-signal exits.
+  def description
+    if exit_reason.signal? && (signal = exit_signal?)
+      "Process received and didn't handle signal #{signal}"
+    else
+      exit_reason.description
+    end
   end
 
   private def stringify_exit_status_windows(io)
