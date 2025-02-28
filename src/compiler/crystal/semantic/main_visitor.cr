@@ -1607,7 +1607,7 @@ module Crystal
           const_value.type = @program.static_array_of(element_type, node.args.size)
           const = Const.new(@program, @program, const_name, const_value)
           @program.types[const_name] = const
-          @program.const_slices << Program::ConstSliceInfo.new(const_name, kind, node.args)
+          @program.const_slices[const_name] = Program::ConstSliceInfo.new(const_name, kind, node.args)
 
           # ::Slice.new(pointerof($Slice:n.@buffer), {{ args.size }}, read_only: true)
           pointer_node = PointerOf.new(ReadInstanceVar.new(Path.new(const_name).at(node), "@buffer").at(node)).at(node)

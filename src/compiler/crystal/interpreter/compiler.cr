@@ -1223,6 +1223,19 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   private def compile_pointerof_read_instance_var(obj, obj_type, name)
+    # Special handling for slice literals which have been expanded into
+    # `::Slice.new(pointerof($Slice:n.@buffer), ...)`,
+    # where `$Slice:n` is a `StaticArray`; we will build the literal contents
+    # in the context directly instead of using interpreter bytecode
+    if obj.is_a?(Path) && obj_type.is_a?(StaticArrayInstanceType) && name == "@buffer"
+      if buffer_name = obj.single_name?
+        if info = @context.program.const_slices[buffer_name]?
+          compile_pointerof_slice_literal_buffer(obj, info)
+          return false
+        end
+      end
+    end
+
     ivar = obj_type.lookup_instance_var(name)
     ivar_offset = ivar_offset(obj_type, name)
     ivar_size = inner_sizeof_type(ivar)
@@ -2537,6 +2550,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     assign_to_temporary_and_return_pointer(obj)
   end
 
+  private def compile_pointerof_slice_literal_buffer(obj : Path, info : Program::ConstSliceInfo) : Nil
+    put_ptr @context.const_slice_buffer(info), node: obj
+  end
+
   # Assigns the object's value to a temporary
   # local variable, and then produces a pointer to that local variable.
   # In this way we make sure that the memory the pointer is pointing
@@ -3246,6 +3263,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   private def put_u128(value : UInt128, *, node : ASTNode?)
     put_i128 value.to_i128!, node: node
+  end
+
+  private def put_ptr(value : Pointer, *, node : ASTNode?)
+    put_i64 value.address.to_i64!, node: node
   end
 
   private def put_string(value : String, *, node : ASTNode?)
