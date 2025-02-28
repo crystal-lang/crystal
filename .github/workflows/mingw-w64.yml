@@ -95,6 +95,7 @@ jobs:
       - name: Run stdlib specs
         shell: msys2 {0}
         run: |
+          export CRYSTAL_SPEC_COMPILER_BIN="$(which crystal.exe)"
           make std_spec
 
   x86_64-mingw-w64-test-compiler:
@@ -133,14 +134,17 @@ jobs:
       - name: Run compiler specs
         shell: msys2 {0}
         run: |
+          export CRYSTAL_SPEC_COMPILER_BIN="$(which crystal.exe)"
           make compiler_spec
 
       - name: Run interpreter specs
         shell: msys2 {0}
         run: |
+          export CRYSTAL_SPEC_COMPILER_BIN="$(which crystal.exe)"
           make interpreter_spec
 
       - name: Run primitives specs
         shell: msys2 {0}
         run: |
+          export CRYSTAL_SPEC_COMPILER_BIN="$(which crystal.exe)"
           make -o .build/crystal.exe primitives_spec # we know the compiler is fresh; do not rebuild it here
