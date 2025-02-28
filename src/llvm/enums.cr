@@ -62,7 +62,7 @@ module LLVM
     # the nil cast
     @@kind_ids = nil.as(Hash(Attribute, UInt32)?)
 
-    private def self.kind_ids
+    protected def self.kind_ids
       @@kind_ids ||= load_llvm_kinds_from_names
     end
 
@@ -73,7 +73,7 @@ module LLVM
     end
 
     def each_kind(& : UInt32 ->)
-      kind_ids = self.kind_ids
+      kind_ids = Attribute.kind_ids
       each do |member|
         yield kind_ids[member]
       end
