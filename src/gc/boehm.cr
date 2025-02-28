@@ -21,7 +21,15 @@ require "crystal/tracing"
 {% end %}
 
 {% if flag?(:freebsd) || flag?(:dragonfly) %}
-  @[Link("gc-threaded")]
+  {% if flag?(:interpreted) %}
+    # FIXME: We're not using the pkg-config name here because that would resolve the
+    # lib flags for libgc including `-lpthread` which the interpreter is not able
+    # to load on systems with modern libc where libpthread is only available as an
+    # (empty) static library.
+    @[Link("gc-threaded")]
+  {% else %}
+    @[Link("gc-threaded", pkg_config: "bdw-gc-threaded")]
+  {% end %}
 {% elsif flag?(:interpreted) %}
   # FIXME: We're not using the pkg-config name here because that would resolve the
   # lib flags for libgc including `-lpthread` which the interpreter is not able
