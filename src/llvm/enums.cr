@@ -58,12 +58,24 @@ module LLVM
     WriteOnly
     ZExt
 
-    @@kind_ids = load_llvm_kinds_from_names.as(Hash(Attribute, UInt32))
-    @@typed_attrs = load_llvm_typed_attributes.as(Array(Attribute))
+    # NOTE: enum body does not allow `class_getter` or `TypeDeclaration`, hence
+    # the nil cast
+    @@kind_ids = nil.as(Hash(Attribute, UInt32)?)
+
+    private def self.kind_ids
+      @@kind_ids ||= load_llvm_kinds_from_names
+    end
+
+    @@typed_attrs = nil.as(Array(Attribute)?)
+
+    private def self.typed_attrs
+      @@typed_attrs ||= load_llvm_typed_attributes
+    end
 
     def each_kind(& : UInt32 ->)
+      kind_ids = self.kind_ids
       each do |member|
-        yield @@kind_ids[member]
+        yield kind_ids[member]
       end
     end
 
@@ -150,16 +162,16 @@ module LLVM
     end
 
     def self.kind_for(member)
-      @@kind_ids[member]
+      kind_ids[member]
     end
 
     def self.from_kind(kind)
-      @@kind_ids.key_for(kind)
+      kind_ids.key_for(kind)
     end
 
     def self.requires_type?(kind)
       member = from_kind(kind)
-      @@typed_attrs.includes?(member)
+      typed_attrs.includes?(member)
     end
   end
 
