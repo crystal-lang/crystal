@@ -89,10 +89,10 @@ describe "Range" do
     (1.0..5.5).union(3.2..7.8).should eq(1.0..7.8)  # Overlapping float ranges
     (1.0..2.5).union(3.0..4.0).should eq(1.0...1.0) # Non-overlapping float ranges
 
-    # String ranges
-    ('a'..'e').union('c'..'g').should eq('a'..'g')  # Overlapping string ranges
-    ('a'..'c').union('e'..'f').should eq('a'...'a') # Non-overlapping string ranges
-    ('a'..'c').union('d'..'f').should eq('a'..'f')  # Adjacent string ranges
+    # Char ranges
+    ('a'..'e').union('c'..'g').should eq('a'..'g')  # Overlapping char ranges
+    ('a'..'c').union('e'..'f').should eq('a'...'a') # Non-overlapping char ranges
+    ('a'..'c').union('d'..'f').should eq('a'..'f')  # Adjacent char ranges
 
     # Time ranges
     t1 = Time.local(2024, 10, 1)
