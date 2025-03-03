@@ -81,9 +81,14 @@ describe "Range" do
 
   it "does union" do
     # Int ranges
-    (1..5).union(3..7).should eq(1..7)    # Overlapping integer ranges
-    (1..5).union(6..10).should eq(1..10)  # Adjacent ranges
-    (1..5).union(10..15).should eq(1...1) # Disjoint integer ranges
+    # Int ranges
+    (1..5).union(3..7).should eq(1..7)      # Overlapping integer ranges
+    (1..5).union(6..10).should eq(1..10)    # Adjacent ranges
+    (1...6).union(6..10).should eq(1..10)   # Adjacent ranges with an exclusive-end
+    (1..5).union(10..15).should eq(1...1)   # Disjoint integer ranges
+    (3..7).union(1..5).should eq(1..7)      # Overlapping integer ranges
+    (6..10).union(1..5).should eq(1..10)    # Adjacent ranges
+    (10..15).union(1..5).should eq(10...10) # Disjoint integer ranges
 
     # Float ranges
     (1.0..5.5).union(3.2..7.8).should eq(1.0..7.8)  # Overlapping float ranges
