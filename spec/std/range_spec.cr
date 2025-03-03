@@ -121,9 +121,9 @@ describe "Range" do
     (1.0..5.5).intersection(3.2..7.8).should eq(3.2..5.5)  # Overlapping float ranges
     (1.0..2.5).intersection(3.0..4.0).should eq(1.0...1.0) # Non-overlapping float ranges
 
-    # String ranges
-    ('a'..'e').intersection('c'..'g').should eq('c'..'e')  # Overlapping string ranges
-    ('a'..'c').intersection('d'..'f').should eq('a'...'a') # Non-overlapping string ranges
+    # Char ranges
+    ('a'..'e').intersection('c'..'g').should eq('c'..'e')  # Overlapping char ranges
+    ('a'..'c').intersection('d'..'f').should eq('a'...'a') # Non-overlapping char ranges
 
     # Time ranges
     t1 = Time.local(2024, 10, 1)
