@@ -89,8 +89,9 @@ module Crystal
       element_type : NumberKind,
       args : Array(ASTNode)
 
-    # All constant slices constructed via the `Slice.literal` primitive.
-    getter const_slices = [] of ConstSliceInfo
+    # All constant slices constructed via the `Slice.literal` compiler built-in,
+    # indexed by their buffers' internal names (e.g. `$Slice:0`).
+    getter const_slices = {} of String => ConstSliceInfo
 
     # Here we store constants, in the
     # order that they are used. They will be initialized as soon
