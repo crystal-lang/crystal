@@ -110,9 +110,9 @@ describe "Range" do
     # Exclusive ranges
     (1...5).union(5...10).should eq(1...10)           # Adjacent exclusive integer ranges
     (1.0...5.5).union(3.2...7.8).should eq(1.0...7.8) # Overlapping exclusive float ranges
+    (1.0...5.5).union(5.5...7.8).should eq(1.0...7.8) # Adjacent exclusive float ranges
     ('a'...'e').union('c'...'g').should eq('a'...'g') # Overlapping exclusive string ranges
     (t1...t2).union(t2...t3).should eq(t1...t3)       # Adjacent exclusive time ranges
-
   end
 
   it "does intersection" do
