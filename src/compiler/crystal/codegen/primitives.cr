@@ -922,7 +922,8 @@ class Crystal::CodeGenVisitor
   def codegen_primitive_symbol_to_s(node, target_def, call_args)
     string = llvm_type(@program.string)
     table_type = string.array(@symbol_table_values.size)
-    string_ptr = gep table_type, @llvm_mod.globals[SYMBOL_TABLE_NAME], int(0), call_args[0]
+    table = define_symbol_table(@llvm_mod, @llvm_typer)
+    string_ptr = gep table_type, table, int(0), call_args[0]
     load(string, string_ptr)
   end
 
