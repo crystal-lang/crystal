@@ -149,9 +149,9 @@ describe "Range" do
     (1.0..5.5).overlaps?(3.2..7.8).should eq(true)  # Overlapping float ranges
     (1.0..2.5).overlaps?(3.0..4.0).should eq(false) # Non-overlapping float ranges
 
-    # String ranges
-    ('a'..'e').overlaps?('c'..'g').should eq(true)  # Overlapping string ranges
-    ('a'..'c').overlaps?('d'..'f').should eq(false) # Non-overlapping string ranges
+    # Char ranges
+    ('a'..'e').overlaps?('c'..'g').should eq(true)  # Overlapping char ranges
+    ('a'..'c').overlaps?('d'..'f').should eq(false) # Non-overlapping char ranges
 
     # Time ranges
     t1 = Time.local(2024, 10, 1)
