@@ -117,8 +117,9 @@ describe "Range" do
 
   it "does intersection" do
     # Int ranges
-    (1..5).intersection(3..7).should eq(3..5)   # Overlapping integer ranges
-    (1..5).intersection(6..10).should eq(1...1) # Non-overlapping integer ranges
+    (1..5).intersection(3..7).should eq(3..5)    # Overlapping integer ranges
+    (1..5).intersection(6..10).should eq(1...1)  # Non-overlapping integer ranges
+    (1...6).intersection(6..10).should eq(1...1) # Adjacent integer ranges
     (1..5).intersection(5..10).should eq(5..5)
     (1...1).intersection(0..10).should eq(1...1)
 
