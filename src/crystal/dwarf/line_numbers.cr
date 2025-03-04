@@ -176,33 +176,17 @@ module Crystal
         @offset = @io.tell
         @matrix = Array(Array(Row)).new
         decode_sequences(size)
+
+        @matrix.sort_by!(&.first.address)
       end
 
       # Returns the `Row` for the given Program Counter (PC) address if found.
       def find(address)
-        matrix.each do |rows|
-          if row = rows.first?
-            next if address < row.address
-          end
+        rows = matrix.bsearch { |r| r.last.address >= address } || return
+        return unless address >= rows.first.address
 
-          if row = rows.last?
-            next if address > row.address
-          end
-
-          rows.each_with_index do |current_row, index|
-            if current_row.address == address
-              return current_row
-            end
-
-            if address < current_row.address
-              if previous_row = rows[index - 1]?
-                return previous_row
-              end
-            end
-          end
-        end
-
-        nil
+        next_row_index = rows.bsearch_index { |row| row.address > address } || rows.size
+        rows[next_row_index - 1]
       end
 
       # Decodes the compressed matrix of addresses to line numbers.
