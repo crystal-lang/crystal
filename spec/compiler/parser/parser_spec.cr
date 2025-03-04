@@ -1513,6 +1513,11 @@ module Crystal
     assert_syntax_error "case 1\nin .nil?; 2", "expression of exhaustive case (case ... in) must be a constant (like `IO::Memory`), a generic (like `Array(Int32)`), a bool literal (true or false), a nil literal (nil) or a question method (like `.red?`)"
     assert_syntax_error "case 1\nin _;", "'when _' is not supported"
 
+    atomic_methods = Crystal::Parser::AtomicWithMethodCheck.join(", ")
+    assert_syntax_error "case 1\nwhen .=(2)", "expecting any of these tokens: #{atomic_methods} (not '=')"
+    assert_syntax_error "case 1\nwhen .+=(2)", "expecting any of these tokens: #{atomic_methods} (not '+=')"
+    assert_syntax_error "case 1\nwhen .&&(2)", "expecting any of these tokens: #{atomic_methods} (not '&&')"
+
     it_parses "case 1; when 2 then /foo/; end", Case.new(1.int32, [When.new([2.int32] of ASTNode, RegexLiteral.new("foo".string))], else: nil, exhaustive: false)
 
     it_parses "select\nwhen foo\n2\nend", Select.new([When.new("foo".call, 2.int32)])
