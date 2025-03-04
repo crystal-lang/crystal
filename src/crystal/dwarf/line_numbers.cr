@@ -112,11 +112,9 @@ module Crystal
       # The decoded line number information for an instruction.
       record Row,
         address : UInt64,
-        op_index : UInt32,
         path : String,
         line : Int32,
-        column : Int32,
-        end_sequence : Bool
+        column : Int32
 
       # :nodoc:
       #
@@ -495,11 +493,9 @@ module Crystal
 
           row = Row.new(
             registers.address + @base_address,
-            registers.op_index,
             path,
             registers.line.to_i,
             registers.column.to_i,
-            registers.end_sequence
           )
 
           if rows = @current_sequence_matrix
