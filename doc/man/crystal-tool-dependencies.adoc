@@ -1,0 +1,35 @@
+= crystal-tool-dependencies(1)
+:doctype: manpage
+:date: {localdate}
+:crystal_version: {crystal_version}
+:man manual: Crystal Compiler Command Line Reference Guide
+:man source: crystal {crystal_version}
+
+== Name
+crystal-tool-dependencies - Show tree of required source files.
+
+== Synopsis
+*crystal tool dependencies* [options] [programfile]
+
+== Options
+
+*-D* _FLAG_, *--define*=_FLAG_::
+  Define a compile-time flag. This is useful to con    ditionally define types, methods, or commands based
+  on flags available at compile time. The default
+  flags are from the target triple given with *--tar*     get-triple or the hosts default, if none is given.
+*-f* _FORMAT_, *--format*=_FORMAT_::
+  Output format 'tree' (default), 'flat', 'dot', or
+  'mermaid'.
+*-i* _PATH_, *--include*=_PATH_::
+  Include path in output.
+*-e* _PATH_, *--exclude*=_PATH_::
+  Exclude path in output.
+*--error-trace*::
+  Show full error trace.
+*--prelude*::
+  Specify prelude to use. The default one initializes
+  the garbage collector. You can also use *--pre*     lude=empty to use no preludes. This can be useful
+  for checking code generation for a specific source
+  code file.
+*--verbose*::
+  Show skipped and heads of filtered paths

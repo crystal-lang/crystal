@@ -1,0 +1,25 @@
+= crystal-play(1)
+:doctype: manpage
+:date: {localdate}
+:crystal_version: {crystal_version}
+:man manual: Crystal Compiler Command Line Reference Guide
+:man source: crystal {crystal_version}
+
+== Name
+crystal-play - Run the Crystal playground
+
+== Synopsis
+*crystal play* [options] [file]
+
+== Description
+
+Starts the *crystal* playground server on port 8080, by default.
+
+== Options
+
+*-p* _PORT_, *--port* _PORT_::
+Run the playground on the specified port. Default is 8080.
+*-b* _HOST_, *--binding* _HOST_::
+Bind the playground to the specified IP.
+*-v*, *--verbose*::
+Display detailed information of the executed code.

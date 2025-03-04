@@ -1687,6 +1687,32 @@ describe "File" do
         File.same_content?(src_path, out_path).should be_true
       end
     end
+
+    it "copies read-only permission" do
+      with_tempfile("cp-permissions-src.txt", "cp-permissions-out.txt") do |src_path, out_path|
+        File.write(src_path, "foo")
+        File.chmod(src_path, 0o444)
+
+        File.copy(src_path, out_path)
+
+        File.info(out_path).permissions.should eq normalize_permissions(0o444, directory: false)
+        File.same_content?(src_path, out_path).should be_true
+      end
+    end
+
+    it "copies read-only permission over existing file" do
+      with_tempfile("cp-permissions-src.txt", "cp-permissions-out.txt") do |src_path, out_path|
+        File.write(src_path, "foo")
+        File.chmod(src_path, 0o444)
+
+        File.write(out_path, "bar")
+
+        File.copy(src_path, out_path)
+
+        File.info(out_path).permissions.should eq normalize_permissions(0o444, directory: false)
+        File.same_content?(src_path, out_path).should be_true
+      end
+    end
   end
 
   describe ".match?" do

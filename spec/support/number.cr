@@ -14,6 +14,20 @@ BUILTIN_NUMBER_TYPES_LTE_64 =
   [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Float32, Float64]
 BUILTIN_FLOAT_TYPES =
   [Float32, Float64]
+BUILTIN_NUMBER_SUFFIXES = {
+  Int8    => "i8",
+  Int16   => "i16",
+  Int32   => "i32",
+  Int64   => "i64",
+  Int128  => "i128",
+  UInt8   => "u8",
+  UInt16  => "u16",
+  UInt32  => "u32",
+  UInt64  => "u64",
+  UInt128 => "u128",
+  Float32 => "f32",
+  Float64 => "f64",
+}
 
 macro it_can_convert_between(a_types, b_types)
   {% for a_type in a_types %}

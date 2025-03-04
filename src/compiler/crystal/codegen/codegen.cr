@@ -329,7 +329,7 @@ module Crystal
         symbol_table.initializer = llvm_type(@program.string).const_array(@symbol_table_values)
       end
 
-      program.const_slices.each do |info|
+      program.const_slices.each_value do |info|
         define_slice_constant(info)
       end
 
