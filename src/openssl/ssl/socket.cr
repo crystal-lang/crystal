@@ -118,6 +118,7 @@ abstract class OpenSSL::SSL::Socket < IO
       # that don't change the BIO ref count (safe because @bio is owned by @ssl
       # and never shared with other OpenSSL objects), while the older
       # `SSL_set_bio` sometimes leads SSL_free to not free the BIO in #finalize
+      LibCrypto.BIO_up_ref(@bio)
       LibSSL.ssl_set0_rbio(@ssl, @bio)
       LibSSL.ssl_set0_wbio(@ssl, @bio)
     {% else %}

@@ -127,6 +127,7 @@ lib LibCrypto
   {% end %}
 
   fun BIO_new(BioMethod*) : Bio*
+  fun BIO_up_ref(Bio*) : Int
   fun BIO_free(Bio*) : Int
 
   {% if compare_versions(LibCrypto::OPENSSL_VERSION, "1.1.0") >= 0 || compare_versions(LibCrypto::LIBRESSL_VERSION, "2.7.0") >= 0 %}
