@@ -199,7 +199,12 @@ lib LibSSL
 
   fun ssl_get_error = SSL_get_error(handle : SSL, ret : Int) : SSLError
   fun ssl_get_servername = SSL_get_servername(ssl : SSL, host_type : TLSExt) : UInt8*
-  fun ssl_set_bio = SSL_set_bio(handle : SSL, rbio : LibCrypto::Bio*, wbio : LibCrypto::Bio*)
+  {% if compare_versions(OPENSSL_VERSION, "1.1.0") >= 0 %}
+    fun ssl_set0_rbio = SSL_set0_rbio(handle : SSL, rbio : LibCrypto::Bio*)
+    fun ssl_set0_wbio = SSL_set0_wbio(handle : SSL, wbio : LibCrypto::Bio*)
+  {% else %}
+    fun ssl_set_bio = SSL_set_bio(handle : SSL, rbio : LibCrypto::Bio*, wbio : LibCrypto::Bio*)
+  {% end %}
   fun ssl_select_next_proto = SSL_select_next_proto(output : Char**, output_len : Char*, input : Char*, input_len : Int, client : Char*, client_len : Int) : Int
   fun ssl_ctrl = SSL_ctrl(handle : SSL, cmd : Int, larg : Long, parg : Void*) : Long
   fun ssl_free = SSL_free(handle : SSL)

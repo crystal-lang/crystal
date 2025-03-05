@@ -113,7 +113,16 @@ abstract class OpenSSL::SSL::Socket < IO
     end
 
     @bio = BIO.new(io)
-    LibSSL.ssl_set_bio(@ssl, @bio, @bio)
+    {% if LibSSL.has_method?(:ssl_set0_rbio) %}
+      # prefer the new individual setters, as recommended by the OpenSSL docs,
+      # that don't change the BIO ref count (safe because @bio is owned by @ssl
+      # and never shared with other OpenSSL objects), while the older
+      # `SSL_set_bio` sometimes leads SSL_free to not free the BIO in #finalize
+      LibSSL.ssl_set0_rbio(@ssl, @bio)
+      LibSSL.ssl_set0_wbio(@ssl, @bio)
+    {% else %}
+      LibSSL.ssl_set_bio(@ssl, @bio, @bio)
+    {% end %}
   end
 
   def finalize
