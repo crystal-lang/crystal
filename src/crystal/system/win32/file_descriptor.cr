@@ -195,7 +195,11 @@ module Crystal::System::FileDescriptor
   end
 
   def file_descriptor_close(&)
-    if LibC.CloseHandle(windows_handle) == 0
+    # Clear the @volatile_fd before actually closing it in order to
+    # reduce the chance of reading an outdated handle value
+    handle = LibC::HANDLE.new(@volatile_fd.swap(LibC::INVALID_HANDLE_VALUE.address))
+
+    if LibC.CloseHandle(handle) == 0
       yield
     end
   end
@@ -485,8 +489,8 @@ private module ConsoleUtils
       @@read_requests << ReadRequest.new(
         handle: handle,
         slice: slice,
-        iocp: Crystal::EventLoop.current.iocp,
-        completion_key: Crystal::IOCP::CompletionKey.new(:stdin_read, ::Fiber.current),
+        iocp: Crystal::EventLoop.current.iocp_handle,
+        completion_key: Crystal::System::IOCP::CompletionKey.new(:stdin_read, ::Fiber.current),
       )
       @@read_cv.signal
     end
@@ -505,7 +509,11 @@ private module ConsoleUtils
     units_read.to_i32
   end
 
-  record ReadRequest, handle : LibC::HANDLE, slice : Slice(UInt16), iocp : LibC::HANDLE, completion_key : Crystal::IOCP::CompletionKey
+  record ReadRequest,
+    handle : LibC::HANDLE,
+    slice : Slice(UInt16),
+    iocp : LibC::HANDLE,
+    completion_key : Crystal::System::IOCP::CompletionKey
 
   @@read_cv = ::Thread::ConditionVariable.new
   @@read_requests = Deque(ReadRequest).new

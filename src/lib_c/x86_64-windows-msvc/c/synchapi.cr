@@ -32,4 +32,11 @@ lib LibC
 
   fun Sleep(dwMilliseconds : DWORD)
   fun WaitForSingleObject(hHandle : HANDLE, dwMilliseconds : DWORD) : DWORD
+
+  alias PTIMERAPCROUTINE = (Void*, DWORD, DWORD) ->
+  CREATE_WAITABLE_TIMER_HIGH_RESOLUTION = 0x00000002_u32
+
+  fun CreateWaitableTimerExW(lpTimerAttributes : SECURITY_ATTRIBUTES*, lpTimerName : LPWSTR, dwFlags : DWORD, dwDesiredAccess : DWORD) : HANDLE
+  fun SetWaitableTimer(hTimer : HANDLE, lpDueTime : LARGE_INTEGER*, lPeriod : LONG, pfnCompletionRoutine : PTIMERAPCROUTINE*, lpArgToCompletionRoutine : Void*, fResume : BOOL) : BOOL
+  fun CancelWaitableTimer(hTimer : HANDLE) : BOOL
 end

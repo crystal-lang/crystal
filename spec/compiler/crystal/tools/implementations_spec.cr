@@ -3,6 +3,7 @@ require "../../../spec_helper"
 private def processed_implementation_visitor(code, cursor_location)
   compiler = Compiler.new
   compiler.no_codegen = true
+  compiler.prelude = "empty"
   result = compiler.compile(Compiler::Source.new(".", code), "fake-no-build")
 
   visitor = ImplementationsVisitor.new(cursor_location)
@@ -52,7 +53,7 @@ describe "implementations" do
         1
       end
 
-      puts f‸oo
+      f‸oo
     )
   end
 
@@ -117,7 +118,6 @@ describe "implementations" do
       end
 
       while f‸oo
-        puts 2
       end
     )
   end
@@ -129,7 +129,6 @@ describe "implementations" do
       end
 
       if f‸oo
-        puts 2
       end
     )
   end
@@ -140,7 +139,7 @@ describe "implementations" do
         1
       end
 
-      puts 2 if f‸oo
+      2 if f‸oo
     )
   end
 
@@ -151,7 +150,6 @@ describe "implementations" do
       end
 
       begin
-        puts 2
       rescue
         f‸oo
       end
@@ -477,5 +475,19 @@ describe "implementations" do
 
     F‸oo
     )
+  end
+
+  it "find implementation on def with no location" do
+    _, result = processed_implementation_visitor <<-CRYSTAL, Location.new(".", 5, 5)
+      enum Foo
+        FOO
+      end
+
+      Foo.new(42)
+      CRYSTAL
+
+    result.implementations.not_nil!.map do |e|
+      Location.new(e.filename, e.line, e.column).to_s
+    end.should eq ["<unknown>:0:0"]
   end
 end

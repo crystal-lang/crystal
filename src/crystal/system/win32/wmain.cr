@@ -2,29 +2,23 @@ require "c/stringapiset"
 require "c/winnls"
 require "c/stdlib"
 
-{% begin %}
-  # we have both `main` and `wmain`, so we must choose an unambiguous entry point
+# we have both `main` and `wmain`, so we must choose an unambiguous entry point
+{% if flag?(:msvc) %}
   @[Link({{ flag?(:static) ? "libcmt" : "msvcrt" }})]
-  {% if flag?(:msvc) %}
-    @[Link(ldflags: "/ENTRY:wmainCRTStartup")]
-  {% elsif flag?(:gnu) %}
-    @[Link(ldflags: "-municode")]
-  {% end %}
+  @[Link(ldflags: "/ENTRY:wmainCRTStartup")]
+{% elsif flag?(:gnu) && !flag?(:interpreted) %}
+  @[Link(ldflags: "-municode")]
 {% end %}
 lib LibCrystalMain
 end
 
-# The actual entry point for Windows executables. This is necessary because
-# *argv* (and Win32's `GetCommandLineA`) mistranslate non-ASCII characters to
-# Windows-1252, so `PROGRAM_NAME` and `ARGV` would be garbled; to avoid that, we
-# use this Windows-exclusive entry point which contains the correctly encoded
-# UTF-16 *argv*, convert it to UTF-8, and then forward it to the original
-# `main`.
+# The actual entry point for Windows executables.
 #
-# The different main functions in `src/crystal/main.cr` need not be aware that
-# such an alternate entry point exists, nor that the original command line was
-# not UTF-8. Thus all other aspects of program initialization still occur there,
-# and uses of those main functions continue to work across platforms.
+# This is necessary because *argv* (and Win32's `GetCommandLineA`) mistranslate
+# non-ASCII characters to Windows-1252, so `PROGRAM_NAME` and `ARGV` would be
+# garbled; to avoid that, we use this Windows-exclusive entry point which
+# contains the correctly encoded UTF-16 *argv*, convert it to UTF-8, and then
+# forward it to the original `main`.
 #
 # NOTE: we cannot use anything from the standard library here, including the GC.
 fun wmain(argc : Int32, argv : UInt16**) : Int32
@@ -48,5 +42,9 @@ fun wmain(argc : Int32, argv : UInt16**) : Int32
   end
   LibC.free(utf8_argv)
 
-  status
+  # prefer explicit exit over returning the status, so we are free to resume the
+  # main thread's fiber on any thread, without occuring a weird behavior where
+  # another thread returns from main when the caller might expect the main
+  # thread to be the one returning.
+  LibC.exit(status)
 end

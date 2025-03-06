@@ -11,7 +11,7 @@ require "../../../support/ssl"
 
 describe OpenSSL::SSL::Server do
   it "sync_close" do
-    TCPServer.open(0) do |tcp_server|
+    TCPServer.open(Socket::IPAddress::UNSPECIFIED, 0) do |tcp_server|
       context = OpenSSL::SSL::Context::Server.new
       ssl_server = OpenSSL::SSL::Server.new(tcp_server, context)
 
@@ -22,7 +22,7 @@ describe OpenSSL::SSL::Server do
   end
 
   it "don't sync_close" do
-    TCPServer.open(0) do |tcp_server|
+    TCPServer.open(Socket::IPAddress::UNSPECIFIED, 0) do |tcp_server|
       context = OpenSSL::SSL::Context::Server.new
       ssl_server = OpenSSL::SSL::Server.new(tcp_server, context, sync_close: false)
       ssl_server.context.should eq context
@@ -35,7 +35,7 @@ describe OpenSSL::SSL::Server do
 
   it ".new" do
     context = OpenSSL::SSL::Context::Server.new
-    TCPServer.open(0) do |tcp_server|
+    TCPServer.open(Socket::IPAddress::UNSPECIFIED, 0) do |tcp_server|
       ssl_server = OpenSSL::SSL::Server.new tcp_server, context, sync_close: false
 
       ssl_server.context.should eq context
@@ -46,7 +46,7 @@ describe OpenSSL::SSL::Server do
 
   it ".open" do
     context = OpenSSL::SSL::Context::Server.new
-    TCPServer.open(0) do |tcp_server|
+    TCPServer.open(Socket::IPAddress::UNSPECIFIED, 0) do |tcp_server|
       ssl_server = nil
       OpenSSL::SSL::Server.open tcp_server, context do |server|
         server.wrapped.should eq tcp_server

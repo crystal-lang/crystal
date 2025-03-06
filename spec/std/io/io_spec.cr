@@ -427,7 +427,7 @@ describe IO do
 
     # pipe(2) returns bidirectional file descriptors on some platforms,
     # gate this test behind the platform flag.
-    {% unless flag?(:freebsd) || flag?(:solaris) || flag?(:openbsd) %}
+    {% unless flag?(:freebsd) || flag?(:solaris) || flag?(:openbsd) || flag?(:dragonfly) %}
       it "raises if trying to read to an IO not opened for reading" do
         IO.pipe do |r, w|
           expect_raises(IO::Error, "File not open for reading") do
@@ -576,7 +576,7 @@ describe IO do
 
     # pipe(2) returns bidirectional file descriptors on some platforms,
     # gate this test behind the platform flag.
-    {% unless flag?(:freebsd) || flag?(:solaris) || flag?(:openbsd) %}
+    {% unless flag?(:freebsd) || flag?(:solaris) || flag?(:openbsd) || flag?(:dragonfly) %}
       it "raises if trying to write to an IO not opened for writing" do
         IO.pipe do |r, w|
           # unless sync is used the flush on close triggers the exception again
@@ -736,9 +736,13 @@ describe IO do
         it "says invalid byte sequence" do
           io = SimpleIOMemory.new(Slice.new(1, 255_u8))
           io.set_encoding("EUC-JP")
-          expect_raises ArgumentError, {% if flag?(:musl) || flag?(:freebsd) || flag?(:netbsd) %}"Incomplete multibyte sequence"{% else %}"Invalid multibyte sequence"{% end %} do
-            io.read_char
-          end
+          message =
+            {% if flag?(:musl) || flag?(:freebsd) || flag?(:netbsd) || flag?(:dragonfly) %}
+              "Incomplete multibyte sequence"
+            {% else %}
+              "Invalid multibyte sequence"
+            {% end %}
+          expect_raises(ArgumentError, message) { io.read_char }
         end
 
         it "skips invalid byte sequences" do

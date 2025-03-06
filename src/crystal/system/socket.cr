@@ -1,4 +1,4 @@
-require "./event_loop/socket"
+require "../event_loop/socket"
 
 module Crystal::System::Socket
   # Creates a file descriptor / socket handle

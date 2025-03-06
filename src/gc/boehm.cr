@@ -21,7 +21,15 @@ require "crystal/tracing"
 {% end %}
 
 {% if flag?(:freebsd) || flag?(:dragonfly) %}
-  @[Link("gc-threaded")]
+  {% if flag?(:interpreted) %}
+    # FIXME: We're not using the pkg-config name here because that would resolve the
+    # lib flags for libgc including `-lpthread` which the interpreter is not able
+    # to load on systems with modern libc where libpthread is only available as an
+    # (empty) static library.
+    @[Link("gc-threaded")]
+  {% else %}
+    @[Link("gc-threaded", pkg_config: "bdw-gc-threaded")]
+  {% end %}
 {% elsif flag?(:interpreted) %}
   # FIXME: We're not using the pkg-config name here because that would resolve the
   # lib flags for libgc including `-lpthread` which the interpreter is not able
@@ -32,6 +40,11 @@ require "crystal/tracing"
   @[Link("gc", pkg_config: "bdw-gc")]
 {% end %}
 
+# Supported library versions:
+#
+# * libgc (8.2.0+; earlier versions require a patch for MT support)
+#
+# See https://crystal-lang.org/reference/man/required_libraries.html#other-runtime-libraries
 {% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
   @[Link(dll: "gc.dll")]
 {% end %}
@@ -170,7 +183,7 @@ end
 
 module GC
   {% if flag?(:preview_mt) %}
-    @@lock = Crystal::RWLock.new
+    @@lock = uninitialized Crystal::RWLock
   {% end %}
 
   # :nodoc:
@@ -200,9 +213,32 @@ module GC
     {% end %}
     LibGC.init
 
+    {% if flag?(:preview_mt) %}
+      @@lock = Crystal::RWLock.new
+    {% end %}
+
     LibGC.set_start_callback -> do
       GC.lock_write
     end
+
+    # pushes the stack of pending fibers when the GC wants to collect memory:
+    {% unless flag?(:interpreted) %}
+      GC.before_collect do
+        Fiber.unsafe_each do |fiber|
+          fiber.push_gc_roots unless fiber.running?
+        end
+
+        {% if flag?(:preview_mt) %}
+          Thread.unsafe_each do |thread|
+            if fiber = thread.current_fiber?
+              GC.set_stackbottom(thread.gc_thread_handler, fiber.@stack.bottom)
+            end
+          end
+        {% end %}
+
+        GC.unlock_write
+      end
+    {% end %}
 
     {% if flag?(:tracing) %}
       if ::Crystal::Tracing.enabled?(:gc)
@@ -456,25 +492,6 @@ module GC
       @@prev_push_other_roots.try(&.call)
     end
   end
-
-  # pushes the stack of pending fibers when the GC wants to collect memory:
-  {% unless flag?(:interpreted) %}
-    GC.before_collect do
-      Fiber.unsafe_each do |fiber|
-        fiber.push_gc_roots unless fiber.running?
-      end
-
-      {% if flag?(:preview_mt) %}
-        Thread.unsafe_each do |thread|
-          if fiber = thread.current_fiber?
-            GC.set_stackbottom(thread.gc_thread_handler, fiber.@stack_bottom)
-          end
-        end
-      {% end %}
-
-      GC.unlock_write
-    end
-  {% end %}
 
   # :nodoc:
   def self.stop_world : Nil

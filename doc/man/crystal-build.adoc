@@ -1,0 +1,105 @@
+= crystal-build(1)
+:doctype: manpage
+:date: {localdate}
+:crystal_version: {crystal_version}
+:man manual: Crystal Compiler Command Line Reference Guide
+:man source: crystal {crystal_version}
+
+== Name
+crystal-build - Compile a Crystal program
+
+== Synopsis
+*crystal build* [options] [programfile] [--] [arguments]
+
+== Options
+
+*--cross-compile*::
+Generate an object file for cross compilation and prints the command to build the executable.	The object file should be copied
+to the target system and the printed command should be executed
+there. This flag mainly exists for porting the compiler to new
+platforms, where possible run the compiler on the target platform
+directly.
+*-d*, *--debug*::
+Generate the output with symbolic debug symbols.  These are read
+when debugging the built program with tools like lldb, gdb, valgrind etc. and provide mappings to the original source code for
+those tools.
+*--no-debug*::
+Generate the output without any symbolic debug symbols.
+*-D* _FLAG_, *--define* _FLAG_::
+Define a compile-time flag. This is useful to conditionally define types, methods, or commands based on flags available at compile time. The default flags are from the target triple given
+with *--target-triple*  or the hosts default, if none is given.
+*--emit* [asm|llvm-bc|llvm-ir|obj]::
+Comma separated list of types of output for the compiler to emit.
+You can use this to see the generated LLVM IR, LLVM bitcode, assembly, and object files.
+*--frame-pointers* [auto|always|non-leaf]::
+Control the preservation of frame pointers. The default value,
+`--frame-pointers=auto`, will preserve frame pointers on debug
+builds and try to omit them on release builds (certain platforms
+require them to stay enabled). `--frame-pointers=always` will always preserve them, and non-leaf will only force their preservation on non-leaf functions.
+*-f* text|json, *--format* text|json::
+Format of output. Defaults to text. The json format can be used
+to get a more parser-friendly output.
+*--error-trace*::
+Show full error trace.
+*--ll*:: 	 Dump LLVM assembly file to output directory.
+*--link-flags* _FLAGS_::
+Pass additional flags to the linker. Though you can specify those
+flags on the source code, this is useful for passing environment
+specific information directly to the linker, like non-standard
+library paths or names. For more information on specifying linker
+flags on source, you can read the "C bindings" section of the
+documentation available on the official web site.
+*--mcpu* _CPU_::
+Specify a specific CPU to generate code for. This will pass a
+-mcpu flag to LLVM, and is only intended to be used for cross-
+compilation. For a list of available CPUs, invoke "llvm-as <
+/dev/null | llc -march=xyz -mcpu=help".  Passing --mcpu native
+will pass the host CPU name to tune performance for the host.
+*--mattr* _CPU_::
+Override or control specific attributes of the target, such as
+whether SIMD operations are enabled or not. The default set of
+attributes is set by the current CPU. This will pass a -mattr
+flag to LLVM, and is only intended to be used for cross-compilation. For a list of available attributes, invoke "llvm-as <
+/dev/null | llc -march=xyz -mattr=help".
+*--mcmodel* default|kernel|small|medium|large::
+Specifies a specific code model to generate code for. This will
+pass a --code-model flag to LLVM.
+*--no-color*::
+Disable colored output.
+*--no-codegen*::
+Don't do code generation, just parse the file.
+*-o* _FILE_, *--output* _FILE_::
+Specify output path. If a directory, the filename is derived from the first source file (default: current directory)
+*--prelude*::
+Specify prelude to use. The default one initializes the garbage
+collector. You can also use --prelude=empty to use no preludes.
+This can be useful for checking code generation for a specific
+source code file.
+*-O* _LEVEL_::  Optimization mode: 0 (default), 1, 2, 3. See *OPTIMIZATIONS* for
+details.
+*--release*::
+Compile in release mode. Equivalent to *-O3 --single-module*
+*--error-trace*::
+Show full stack trace. Disabled by default, as the full trace
+usually makes error messages less readable and not always deliver
+relevant information.
+*-s*, *--stats*::
+Print statistics about the different compiler stages for the current build. Output time and used memory for each compiler process.
+*-p*, *--progress*::
+Print statistics about the progress for the current build.
+*-t*, *--time*::
+Print statistics about the execution time.
+*--single-module*::
+Generate a single LLVM module.  By default, one LLVM module is
+created for each type in a program.  *--release* implies this option.
+*--threads* _NUM_::
+Maximum number of threads to use for code generation. The default
+is 8 threads.
+*--target* _TRIPLE_::
+Enable target triple; intended to use for cross-compilation. See
+llvm documentation for more information about target triple.
+*--verbose*::
+Display the commands executed by the system.
+*--static*::	 Create a statically linked executable.
+*--stdin-filename* _FILENAME_::
+Source file name to be read from STDIN.

@@ -30,7 +30,13 @@ struct LLVM::FunctionCollection
   end
 
   def []?(name)
-    func = LibLLVM.get_named_function(@mod, name)
+    func =
+      {% if LibLLVM::IS_LT_200 %}
+        LibLLVM.get_named_function(@mod, name)
+      {% else %}
+        LibLLVM.get_named_function_with_length(@mod, name, name.bytesize)
+      {% end %}
+
     func ? Function.new(func) : nil
   end
 

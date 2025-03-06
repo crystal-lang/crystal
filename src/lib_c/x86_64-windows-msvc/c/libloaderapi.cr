@@ -1,6 +1,6 @@
 require "c/winnt"
 
-@[Link("Kernel32")]
+@[Link("kernel32")]
 lib LibC
   alias FARPROC = Void*
 

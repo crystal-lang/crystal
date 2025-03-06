@@ -1687,6 +1687,32 @@ describe "File" do
         File.same_content?(src_path, out_path).should be_true
       end
     end
+
+    it "copies read-only permission" do
+      with_tempfile("cp-permissions-src.txt", "cp-permissions-out.txt") do |src_path, out_path|
+        File.write(src_path, "foo")
+        File.chmod(src_path, 0o444)
+
+        File.copy(src_path, out_path)
+
+        File.info(out_path).permissions.should eq normalize_permissions(0o444, directory: false)
+        File.same_content?(src_path, out_path).should be_true
+      end
+    end
+
+    it "copies read-only permission over existing file" do
+      with_tempfile("cp-permissions-src.txt", "cp-permissions-out.txt") do |src_path, out_path|
+        File.write(src_path, "foo")
+        File.chmod(src_path, 0o444)
+
+        File.write(out_path, "bar")
+
+        File.copy(src_path, out_path)
+
+        File.info(out_path).permissions.should eq normalize_permissions(0o444, directory: false)
+        File.same_content?(src_path, out_path).should be_true
+      end
+    end
   end
 
   describe ".match?" do
@@ -1698,6 +1724,11 @@ describe "File" do
       assert_file_matches "a*", "abc"
       assert_file_matches "a*/b", "abc/b"
       assert_file_matches "*x", "xxx"
+      assert_file_matches "*.x", "a.x"
+      assert_file_matches "a/b/*.x", "a/b/c.x"
+      refute_file_matches "*.x", "a/b/c.x"
+      refute_file_matches "c.x", "a/b/c.x"
+      refute_file_matches "b/*.x", "a/b/c.x"
     end
 
     it "matches multiple expansions" do
@@ -1717,6 +1748,21 @@ describe "File" do
       refute_file_matches "a*/b", "a/c/b"
       refute_file_matches "a*b*c*d*e*/f", "axbxcxdxe/xxx/f"
       refute_file_matches "a*b*c*d*e*/f", "axbxcxdxexxx/fff"
+    end
+
+    it "**" do
+      assert_file_matches "a/b/**", "a/b/c.x"
+      assert_file_matches "a/**", "a/b/c.x"
+      assert_file_matches "a/**/d.x", "a/b/c/d.x"
+      refute_file_matches "a/**b/d.x", "a/bb/c/d.x"
+      refute_file_matches "a/b**/*", "a/bb/c/d.x"
+    end
+
+    it "** bugs (#15319)" do
+      refute_file_matches "a/**/*", "a/b/c/d.x"
+      assert_file_matches "a/b**/d.x", "a/bb/c/d.x"
+      refute_file_matches "**/*.x", "a/b/c.x"
+      assert_file_matches "**.x", "a/b/c.x"
     end
 
     it "** matches path separator" do
