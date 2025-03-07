@@ -672,7 +672,7 @@ module Crystal
 
     private def consume_heredocs
       @consuming_heredocs = true
-      @lexer.heredocs.reverse!
+      @lexer.heredocs = @lexer.heredocs.reverse
       while heredoc = @lexer.heredocs.pop?
         consume_heredoc(heredoc[0], heredoc[1].as(HeredocInfo))
       end

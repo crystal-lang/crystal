@@ -26,7 +26,7 @@ module Crystal
     end
 
     # Heredocs pushed when found. Should be processed when encountering a newline
-    getter heredocs = [] of {Token::DelimiterState, HeredocItem}
+    property heredocs = [] of {Token::DelimiterState, HeredocItem}
 
     property macro_expansion_pragmas : Hash(Int32, Array(LocPragma))? = nil
 
