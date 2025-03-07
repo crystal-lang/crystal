@@ -613,6 +613,21 @@ describe "Semantic: macro" do
       CRYSTAL
   end
 
+  it "begins with {{ yield }} (#15050)" do
+    result = top_level_semantic <<-CRYSTAL, wants_doc: true
+      macro foo
+        {{yield}}
+      end
+
+      foo do
+        # doc comment
+        def test
+        end
+      end
+      CRYSTAL
+    result.program.defs.try(&.["test"][0].def.doc).should eq "doc comment"
+  end
+
   it "can return class type in macro def" do
     assert_type(<<-CRYSTAL) { types["Int32"].metaclass }
       class Foo

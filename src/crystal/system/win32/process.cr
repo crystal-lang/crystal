@@ -37,7 +37,7 @@ struct Crystal::System::Process
       LibC::JOBOBJECTINFOCLASS::AssociateCompletionPortInformation,
       LibC::JOBOBJECT_ASSOCIATE_COMPLETION_PORT.new(
         completionKey: @completion_key.as(Void*),
-        completionPort: Crystal::EventLoop.current.iocp,
+        completionPort: Crystal::EventLoop.current.iocp_handle,
       ),
     )
 
@@ -203,7 +203,7 @@ struct Crystal::System::Process
   def self.start_interrupt_loop : Nil
     return unless @@setup_interrupt_handler.test_and_set
 
-    spawn(name: "Interrupt signal loop") do
+    spawn(name: "interrupt-signal-loop") do
       while true
         @@interrupt_count.wait { sleep 50.milliseconds }
 

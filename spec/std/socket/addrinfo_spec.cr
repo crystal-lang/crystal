@@ -24,8 +24,8 @@ describe Socket::Addrinfo, tags: "network" do
     end
 
     it "raises helpful message on getaddrinfo failure" do
-      expect_raises(Socket::Addrinfo::Error, "Hostname lookup for badhostname failed: ") do
-        Socket::Addrinfo.resolve("badhostname", 80, type: Socket::Type::DGRAM)
+      expect_raises(Socket::Addrinfo::Error, "Hostname lookup for badhostname.unknown failed: ") do
+        Socket::Addrinfo.resolve("badhostname.unknown", 80, type: Socket::Type::DGRAM)
       end
     end
 

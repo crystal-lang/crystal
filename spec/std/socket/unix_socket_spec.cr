@@ -43,6 +43,29 @@ describe UNIXSocket do
     end
   end
 
+  it "initializes with `Path` paths" do
+    with_tempfile("unix_socket.sock") do |path|
+      path_path = Path.new(path)
+      UNIXServer.open(path_path) do |server|
+        server.local_address.family.should eq(Socket::Family::UNIX)
+        server.local_address.path.should eq(path)
+
+        UNIXSocket.open(path_path) do |client|
+          client.local_address.family.should eq(Socket::Family::UNIX)
+          client.local_address.path.should eq(path)
+
+          server.accept do |sock|
+            sock.local_address.family.should eq(Socket::Family::UNIX)
+            sock.local_address.path.should eq(path)
+
+            sock.remote_address.family.should eq(Socket::Family::UNIX)
+            sock.remote_address.path.should eq(path)
+          end
+        end
+      end
+    end
+  end
+
   it "sync flag after accept" do
     with_tempfile("unix_socket-accept.sock") do |path|
       UNIXServer.open(path) do |server|
@@ -57,6 +80,30 @@ describe UNIXSocket do
         UNIXSocket.open(path) do |client|
           server.accept do |sock|
             sock.sync?.should eq(server.sync?)
+          end
+        end
+      end
+    end
+  end
+
+  it "#send, #receive" do
+    with_tempfile("unix_socket-receive.sock") do |path|
+      UNIXServer.open(path) do |server|
+        UNIXSocket.open(path) do |client|
+          server.accept do |sock|
+            client.send "ping"
+            message, address = sock.receive
+            message.should eq("ping")
+            typeof(address).should eq(Socket::UNIXAddress)
+            address.path.should eq ""
+
+            sock.send "pong"
+            message, address = client.receive
+            message.should eq("pong")
+            typeof(address).should eq(Socket::UNIXAddress)
+            # The value of path seems to be system-specific. Some implementations
+            # return the socket path, others an empty path.
+            ["", path].should contain address.path
           end
         end
       end

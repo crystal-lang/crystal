@@ -1,6 +1,6 @@
 require "c/winnt"
 
-@[Link("Kernel32")]
+@[Link("kernel32")]
 lib LibC
   alias FARPROC = Void*
 
@@ -8,6 +8,9 @@ lib LibC
 
   fun LoadLibraryExW(lpLibFileName : LPWSTR, hFile : HANDLE, dwFlags : DWORD) : HMODULE
   fun FreeLibrary(hLibModule : HMODULE) : BOOL
+
+  GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT = 0x00000002
+  GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS       = 0x00000004
 
   fun GetModuleHandleExW(dwFlags : DWORD, lpModuleName : LPWSTR, phModule : HMODULE*) : BOOL
 

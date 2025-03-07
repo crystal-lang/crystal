@@ -1476,7 +1476,7 @@ module Crystal
         # this formats `def foo # ...` to `def foo(&) # ...` for yielding
         # methods before consuming the comment line
         if node.block_arity && node.args.empty? && !node.block_arg && !node.double_splat
-          write "(&)" if flag?("method_signature_yield")
+          write "(&)"
         end
 
         skip_space consume_newline: false
@@ -1523,7 +1523,7 @@ module Crystal
     end
 
     def format_def_args(node : Def | Macro)
-      yields = node.is_a?(Def) && !node.block_arity.nil? && flag?("method_signature_yield")
+      yields = node.is_a?(Def) && !node.block_arity.nil?
       format_def_args node.args, node.block_arg, node.splat_index, false, node.double_splat, yields
     end
 
@@ -1651,7 +1651,7 @@ module Crystal
       yield
 
       # Write "," before skipping spaces to prevent inserting comment between argument and comma.
-      write "," if has_more || (wrote_newline && @token.type.op_comma?) || (write_trailing_comma && flag?("def_trailing_comma"))
+      write "," if has_more || (wrote_newline && @token.type.op_comma?) || write_trailing_comma
 
       just_wrote_newline = skip_space
       if @token.type.newline?
@@ -1681,7 +1681,7 @@ module Crystal
       elsif @token.type.op_rparen? && has_more && !just_wrote_newline
         # if we found a `)` and there are still more parameters to write, it
         # must have been a missing `&` for a def that yields
-        write " " if flag?("method_signature_yield")
+        write " "
       end
 
       just_wrote_newline
@@ -3132,9 +3132,9 @@ module Crystal
         when IsA
           if body.obj.is_a?(Var)
             if body.nil_check?
-              call = Call.new(nil, "nil?")
+              call = Call.new("nil?")
             else
-              call = Call.new(nil, "is_a?", body.const)
+              call = Call.new("is_a?", body.const)
             end
             accept call
           else
@@ -3143,7 +3143,7 @@ module Crystal
           end
         when RespondsTo
           if body.obj.is_a?(Var)
-            call = Call.new(nil, "responds_to?", SymbolLiteral.new(body.name.to_s))
+            call = Call.new("responds_to?", SymbolLiteral.new(body.name.to_s))
             accept call
           else
             clear_object(body)
@@ -3151,7 +3151,7 @@ module Crystal
           end
         when Cast
           if body.obj.is_a?(Var)
-            call = Call.new(nil, "as", body.to)
+            call = Call.new("as", body.to)
             accept call
           else
             clear_object(body)
@@ -3159,7 +3159,7 @@ module Crystal
           end
         when NilableCast
           if body.obj.is_a?(Var)
-            call = Call.new(nil, "as?", body.to)
+            call = Call.new("as?", body.to)
             accept call
           else
             clear_object(body)
@@ -3167,7 +3167,7 @@ module Crystal
           end
         when ReadInstanceVar
           if body.obj.is_a?(Var)
-            call = Call.new(nil, body.name)
+            call = Call.new(body.name)
             accept call
           else
             clear_object(body)
@@ -3175,7 +3175,7 @@ module Crystal
           end
         when Not
           if body.exp.is_a?(Var)
-            call = Call.new(nil, "!")
+            call = Call.new("!")
             accept call
           else
             clear_object(body)
@@ -3964,31 +3964,31 @@ module Crystal
     end
 
     def visit(node : TypeOf)
-      visit Call.new(nil, "typeof", node.expressions)
+      visit Call.new("typeof", node.expressions)
     end
 
     def visit(node : SizeOf)
-      visit Call.new(nil, "sizeof", node.exp)
+      visit Call.new("sizeof", node.exp)
     end
 
     def visit(node : InstanceSizeOf)
-      visit Call.new(nil, "instance_sizeof", node.exp)
+      visit Call.new("instance_sizeof", node.exp)
     end
 
     def visit(node : AlignOf)
-      visit Call.new(nil, "alignof", node.exp)
+      visit Call.new("alignof", node.exp)
     end
 
     def visit(node : InstanceAlignOf)
-      visit Call.new(nil, "instance_alignof", node.exp)
+      visit Call.new("instance_alignof", node.exp)
     end
 
     def visit(node : OffsetOf)
-      visit Call.new(nil, "offsetof", [node.offsetof_type, node.offset])
+      visit Call.new("offsetof", [node.offsetof_type, node.offset])
     end
 
     def visit(node : PointerOf)
-      visit Call.new(nil, "pointerof", node.exp)
+      visit Call.new("pointerof", node.exp)
     end
 
     def visit(node : Underscore)
@@ -4273,7 +4273,7 @@ module Crystal
         skip_space_or_newline
       end
 
-      write " " if a_def.args.present? || return_type || flag?("proc_literal_whitespace") || whitespace_after_op_minus_gt
+      write " "
 
       is_do = false
       if @token.keyword?(:do)
@@ -4281,7 +4281,7 @@ module Crystal
         is_do = true
       else
         write_token :OP_LCURLY
-        write " " if a_def.body.is_a?(Nop) && (flag?("proc_literal_whitespace") || @token.type.space?)
+        write " " if a_def.body.is_a?(Nop)
       end
       skip_space
 

@@ -3,8 +3,9 @@
 require "./spec_helper"
 require "signal"
 
-# interpreted code never receives signals (#12241)
-pending_interpreted describe: "Signal" do
+{% skip_file if flag?(:interpreted) && !Crystal::Interpreter.has_method?(:signal) %}
+
+describe "Signal" do
   typeof(Signal::ABRT.reset)
   typeof(Signal::ABRT.ignore)
   typeof(Signal::ABRT.trap { 1 })
@@ -18,45 +19,61 @@ pending_interpreted describe: "Signal" do
     Signal::ABRT.should be_a(Signal)
   end
 
-  {% unless flag?(:win32) %}
+  {% if flag?(:dragonfly) %}
+    # FIXME: can't use SIGUSR1/SIGUSR2 because Boehm uses them + no
+    # SIRTMIN/SIGRTMAX support => figure which signals we could use
+    pending "runs a signal handler"
+    pending "ignores a signal"
+    pending "allows chaining of signals"
+    pending "CHLD.reset sets default Crystal child handler"
+    pending "CHLD.ignore sets default Crystal child handler"
+    pending "CHLD.trap is called after default Crystal child handler"
+    pending "CHLD.reset removes previously set trap"
+  {% end %}
+
+  {% unless flag?(:win32) || flag?(:dragonfly) %}
+    # can't use SIGUSR1/SIGUSR2 on FreeBSD because Boehm uses them to suspend/resume threads
+    signal1 = {% if flag?(:freebsd) %} Signal.new(LibC::SIGRTMAX - 1) {% else %} Signal::USR1 {% end %}
+    signal2 = {% if flag?(:freebsd) %} Signal.new(LibC::SIGRTMAX - 2) {% else %} Signal::USR2 {% end %}
+
     it "runs a signal handler" do
       ran = false
-      Signal::USR1.trap do
+      signal1.trap do
         ran = true
       end
-      Process.signal Signal::USR1, Process.pid
+      Process.signal signal1, Process.pid
       10.times do |i|
         break if ran
         sleep 0.1.seconds
       end
       ran.should be_true
     ensure
-      Signal::USR1.reset
+      signal1.reset
     end
 
     it "ignores a signal" do
-      Signal::USR2.ignore
-      Process.signal Signal::USR2, Process.pid
+      signal2.ignore
+      Process.signal signal2, Process.pid
     end
 
     it "allows chaining of signals" do
       ran_first = false
       ran_second = false
 
-      Signal::USR1.trap { ran_first = true }
-      existing = Signal::USR1.trap_handler?
+      signal1.trap { ran_first = true }
+      existing = signal1.trap_handler?
 
-      Signal::USR1.trap do |signal|
+      signal1.trap do |signal|
         existing.try &.call(signal)
         ran_second = true
       end
 
-      Process.signal Signal::USR1, Process.pid
+      Process.signal signal1, Process.pid
       sleep 0.1.seconds
       ran_first.should be_true
       ran_second.should be_true
     ensure
-      Signal::USR1.reset
+      signal1.reset
     end
 
     it "CHLD.reset sets default Crystal child handler" do

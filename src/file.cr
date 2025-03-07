@@ -165,7 +165,7 @@ class File < IO::FileDescriptor
   # *blocking* must be set to `false` on POSIX targets when the file to open
   # isn't a regular file but a character device (e.g. `/dev/tty`) or fifo. These
   # files depend on another process or thread to also be reading or writing, and
-  # system event queues will properly report readyness.
+  # system event queues will properly report readiness.
   #
   # *blocking* may also be set to `nil` in which case the blocking or
   # non-blocking flag will be determined automatically, at the expense of an
@@ -846,13 +846,17 @@ class File < IO::FileDescriptor
   # ```
   def self.copy(src : String | Path, dst : String | Path) : Nil
     open(src) do |s|
-      open(dst, "wb") do |d|
+      permissions = s.info.permissions
+      open(dst, "wb", perm: permissions) do |d|
+        # If permissions don't match, we opened a pre-existing file with
+        # different permissions and need to change them explicitly.
+        # The permission change does not have any effect on the open file descriptor d.
+        if d.info.permissions != permissions
+          d.chmod(permissions)
+        end
+
         # TODO use sendfile or copy_file_range syscall. See #8926, #8919
         IO.copy(s, d)
-        d.flush # need to flush in case permissions are read-only
-
-        # Set the permissions after the content is written in case src permissions is read-only
-        d.chmod(s.info.permissions)
       end
     end
   end

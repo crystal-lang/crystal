@@ -65,6 +65,25 @@ class Crystal::CodeGenVisitor
   end
 
   private def type_id_impl(type)
-    int(@program.llvm_id.type_id(type))
+    type_id_name = "#{type.llvm_name}:type_id"
+
+    global = @main_mod.globals[type_id_name]?
+    unless global
+      global = @main_mod.globals.add(@main_llvm_context.int32, type_id_name)
+      global.linkage = LLVM::Linkage::Internal if @single_module
+      global.initializer = @main_llvm_context.int32.const_int(@program.llvm_id.type_id(type))
+      global.global_constant = true
+    end
+
+    if @llvm_mod != @main_mod
+      global = @llvm_mod.globals[type_id_name]?
+      unless global
+        global = @llvm_mod.globals.add(@llvm_context.int32, type_id_name)
+        global.linkage = LLVM::Linkage::External
+        global.global_constant = true
+      end
+    end
+
+    load(@llvm_context.int32, global)
   end
 end

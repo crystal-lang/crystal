@@ -1,4 +1,4 @@
-x = ->{}
+x = -> { }
 x.call
 # CHECK:      extractvalue %"->" %{{[0-9]+}}, 0
 # CHECK-SAME: !dbg [[LOC:![0-9]+]]

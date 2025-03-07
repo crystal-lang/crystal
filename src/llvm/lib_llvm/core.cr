@@ -5,12 +5,21 @@ lib LibLLVM
   # counterparts (e.g. `LLVMModuleFlagBehavior` v.s. `LLVM::Module::ModFlagBehavior`)
 
   enum ModuleFlagBehavior
-    Warning = 1
+    Error        = 0
+    Warning      = 1
+    Require      = 2
+    Override     = 3
+    Append       = 4
+    AppendUnique = 5
   end
 
   alias AttributeIndex = UInt
 
   fun dispose_message = LLVMDisposeMessage(message : Char*)
+
+  {% unless LibLLVM::IS_LT_160 %}
+    fun get_version = LLVMGetVersion(major : UInt*, minor : UInt*, patch : UInt*) : Void
+  {% end %}
 
   fun create_context = LLVMContextCreate : ContextRef
   fun dispose_context = LLVMContextDispose(c : ContextRef)
@@ -41,7 +50,11 @@ lib LibLLVM
   fun get_module_context = LLVMGetModuleContext(m : ModuleRef) : ContextRef
 
   fun add_function = LLVMAddFunction(m : ModuleRef, name : Char*, function_ty : TypeRef) : ValueRef
-  fun get_named_function = LLVMGetNamedFunction(m : ModuleRef, name : Char*) : ValueRef
+  {% if LibLLVM::IS_LT_200 %}
+    fun get_named_function = LLVMGetNamedFunction(m : ModuleRef, name : Char*) : ValueRef
+  {% else %}
+    fun get_named_function_with_length = LLVMGetNamedFunctionWithLength(m : ModuleRef, name : Char*, length : SizeT) : ValueRef
+  {% end %}
   fun get_first_function = LLVMGetFirstFunction(m : ModuleRef) : ValueRef
   fun get_next_function = LLVMGetNextFunction(fn : ValueRef) : ValueRef
 
@@ -135,7 +148,11 @@ lib LibLLVM
   fun set_alignment = LLVMSetAlignment(v : ValueRef, bytes : UInt)
 
   fun add_global = LLVMAddGlobal(m : ModuleRef, ty : TypeRef, name : Char*) : ValueRef
-  fun get_named_global = LLVMGetNamedGlobal(m : ModuleRef, name : Char*) : ValueRef
+  {% if LibLLVM::IS_LT_200 %}
+    fun get_named_global = LLVMGetNamedGlobal(m : ModuleRef, name : Char*) : ValueRef
+  {% else %}
+    fun get_named_global_with_length = LLVMGetNamedGlobalWithLength(m : ModuleRef, name : Char*, length : SizeT) : ValueRef
+  {% end %}
   fun get_initializer = LLVMGetInitializer(global_var : ValueRef) : ValueRef
   fun set_initializer = LLVMSetInitializer(global_var : ValueRef, constant_val : ValueRef)
   fun is_thread_local = LLVMIsThreadLocal(global_var : ValueRef) : Bool
@@ -171,6 +188,7 @@ lib LibLLVM
   {% end %}
 
   fun get_basic_block_name = LLVMGetBasicBlockName(bb : BasicBlockRef) : Char*
+  fun get_basic_block_parent = LLVMGetBasicBlockParent(bb : BasicBlockRef) : ValueRef
   fun get_first_basic_block = LLVMGetFirstBasicBlock(fn : ValueRef) : BasicBlockRef
   fun get_next_basic_block = LLVMGetNextBasicBlock(bb : BasicBlockRef) : BasicBlockRef
   fun append_basic_block_in_context = LLVMAppendBasicBlockInContext(c : ContextRef, fn : ValueRef, name : Char*) : BasicBlockRef

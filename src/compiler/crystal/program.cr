@@ -89,8 +89,9 @@ module Crystal
       element_type : NumberKind,
       args : Array(ASTNode)
 
-    # All constant slices constructed via the `Slice.literal` primitive.
-    getter const_slices = [] of ConstSliceInfo
+    # All constant slices constructed via the `Slice.literal` compiler built-in,
+    # indexed by their buffers' internal names (e.g. `$Slice:0`).
+    getter const_slices = {} of String => ConstSliceInfo
 
     # Here we store constants, in the
     # order that they are used. They will be initialized as soon
@@ -316,7 +317,7 @@ module Crystal
       define_crystal_string_constant "VERSION", Crystal::Config.version, <<-MD
         The version of the Crystal compiler.
         MD
-      define_crystal_string_constant "LLVM_VERSION", Crystal::Config.llvm_version, <<-MD
+      define_crystal_string_constant "LLVM_VERSION", LLVM.version, <<-MD
         The version of LLVM used by the Crystal compiler.
         MD
       define_crystal_string_constant "HOST_TRIPLE", Crystal::Config.host_target.to_s, <<-MD
@@ -506,7 +507,7 @@ module Crystal
       recorded_requires << RecordedRequire.new(filename, relative_to)
     end
 
-    def run_requires(node : Require, filenames) : Nil
+    def run_requires(node : Require, filenames, &) : Nil
       dependency_printer = compiler.try(&.dependency_printer)
 
       filenames.each do |filename|

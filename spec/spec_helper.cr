@@ -208,6 +208,7 @@ end
 def prepare_macro_call(macro_body, flags = nil, &)
   program = new_program
   program.flags.concat(flags.split) if flags
+  program.top_level_semantic_complete = true
   args = yield program
 
   macro_params = args.try &.keys.join(", ")
@@ -215,14 +216,14 @@ def prepare_macro_call(macro_body, flags = nil, &)
   call_args.concat(args.values) if args
 
   a_macro = Parser.parse("macro foo(#{macro_params});#{macro_body};end").as(Macro)
-  call = Call.new(nil, "", call_args)
+  call = Call.new("", call_args)
 
   {program, a_macro, call}
 end
 
-def codegen(code, inject_primitives = true, debug = Crystal::Debug::None, filename = __FILE__)
+def codegen(code, *, inject_primitives = true, single_module = false, debug = Crystal::Debug::None, filename = __FILE__)
   result = semantic code, inject_primitives: inject_primitives, filename: filename
-  result.program.codegen(result.node, single_module: false, debug: debug)[""].mod
+  result.program.codegen(result.node, single_module: single_module, debug: debug)[""].mod
 end
 
 private def new_program
@@ -298,7 +299,7 @@ def run(code, filename : String? = nil, inject_primitives = true, debug = Crysta
     ast = Parser.parse(code).as(Expressions)
     last = ast.expressions.last
     assign = Assign.new(Var.new("__tempvar"), last)
-    call = Call.new(nil, "print", Var.new("__tempvar"))
+    call = Call.new("print", Var.new("__tempvar"))
     exps = Expressions.new([assign, call] of ASTNode)
     ast.expressions[-1] = exps
     code = ast.to_s

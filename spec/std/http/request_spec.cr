@@ -331,6 +331,14 @@ module HTTP
         request = Request.new("GET", "")
         request.path.should eq("/")
       end
+
+      it "parses path leading with double slash" do
+        Request.new("GET", "//foo:bar").path.should eq "//foo:bar"
+      end
+
+      it "parses path leading with scheme" do
+        Request.new("GET", "http://example.com/foo/bar").path.should eq "http://example.com/foo/bar"
+      end
     end
 
     describe "#path=" do
@@ -454,7 +462,7 @@ module HTTP
         request.form_params["test"].should eq("foobar")
       end
 
-      it "returns ignors invalid content-type" do
+      it "ignores invalid content-type" do
         request = Request.new("POST", "/form", nil, HTTP::Params.encode({"test" => "foobar"}))
         request.form_params?.should eq(nil)
         request.form_params.size.should eq(0)

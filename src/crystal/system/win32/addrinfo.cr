@@ -43,9 +43,9 @@ module Crystal::System::Addrinfo
       end
     end
 
-    Crystal::IOCP::GetAddrInfoOverlappedOperation.run(Crystal::EventLoop.current.iocp) do |operation|
+    IOCP::GetAddrInfoOverlappedOperation.run(Crystal::EventLoop.current.iocp_handle) do |operation|
       completion_routine = LibC::LPLOOKUPSERVICE_COMPLETION_ROUTINE.new do |dwError, dwBytes, lpOverlapped|
-        orig_operation = Crystal::IOCP::GetAddrInfoOverlappedOperation.unbox(lpOverlapped)
+        orig_operation = IOCP::GetAddrInfoOverlappedOperation.unbox(lpOverlapped)
         LibC.PostQueuedCompletionStatus(orig_operation.iocp, 0, 0, lpOverlapped)
       end
 
@@ -60,7 +60,7 @@ module Crystal::System::Addrinfo
       else
         case error = WinError.new(result.to_u32!)
         when .wsa_io_pending?
-          # used in `Crystal::IOCP::OverlappedOperation#try_cancel_getaddrinfo`
+          # used in `IOCP::OverlappedOperation#try_cancel_getaddrinfo`
           operation.cancel_handle = cancel_handle
         else
           raise ::Socket::Addrinfo::Error.from_os_error("GetAddrInfoExW", error, domain: domain, type: type, protocol: protocol, service: service)

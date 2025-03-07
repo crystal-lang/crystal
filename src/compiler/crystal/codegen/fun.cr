@@ -337,7 +337,7 @@ class Crystal::CodeGenVisitor
       end
     end
 
-    if @single_module && !target_def.no_inline? && !target_def.is_a?(External)
+    if @single_module && !target_def.is_a?(External)
       context.fun.linkage = LLVM::Linkage::Internal
     end
 
@@ -395,6 +395,14 @@ class Crystal::CodeGenVisitor
       context.fun.call_convention = call_convention
     end
 
+    if @single_module && mangled_name.starts_with?("__crystal_")
+      # FIXME: macos ld fails to link when the personality fun is internal; it
+      # might work with lld so we might want to check the linker?
+      unless @program.has_flag?("darwin") && mangled_name.starts_with?("__crystal_personality")
+        context.fun.linkage = LLVM::Linkage::Internal
+      end
+    end
+
     i = 0
     args.each do |arg|
       param = context.fun.params[i + offset]
@@ -448,11 +456,7 @@ class Crystal::CodeGenVisitor
     context.fun.add_attribute LLVM::Attribute::ReturnsTwice if target_def.returns_twice?
     context.fun.add_attribute LLVM::Attribute::Naked if target_def.naked?
     context.fun.add_attribute LLVM::Attribute::NoReturn if target_def.no_returns?
-
-    if target_def.no_inline?
-      context.fun.add_attribute LLVM::Attribute::NoInline
-      context.fun.linkage = LLVM::Linkage::External
-    end
+    context.fun.add_attribute LLVM::Attribute::NoInline if target_def.no_inline?
   end
 
   def setup_closure_vars(def_vars, closure_vars, context, closure_type, closure_ptr)
@@ -626,8 +630,7 @@ class Crystal::CodeGenVisitor
         # LLVM::Context.register(llvm_context, type_name)
 
         llvm_typer = LLVMTyper.new(@program, llvm_context)
-        llvm_mod = llvm_context.new_module(type_name)
-        llvm_mod.data_layout = self.data_layout
+        llvm_mod = configure_module(llvm_context.new_module(type_name))
         llvm_builder = new_builder(llvm_context)
 
         define_symbol_table llvm_mod, llvm_typer
