@@ -893,20 +893,10 @@ describe "OptionParser with summary_width and summary_indent" do
     output.should eq(expected_output)
   end
 
-  it "handles negative summary_width" do
+  it "raises if summary_width is negative" do
     parser = OptionParser.new
-    parser.summary_width = -10
-    parser.summary_indent = " " * 4
-
-    parser.on("--negative", "Test negative summary_width") { }
-
-    output = parser.to_s
-
-    expected_output = <<-USAGE
-        --negative
-         Test negative summary_width
-    USAGE
-
-    output.should eq(expected_output)
+    expect_raises(ArgumentError, "Negative summary width: -10") do
+      parser.summary_width = -10
+    end
   end
 end
