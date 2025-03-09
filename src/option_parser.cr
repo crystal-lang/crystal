@@ -319,6 +319,11 @@ class OptionParser
   # Width for option list portion of summary.
   property summary_width : Int32 = 32
 
+  def summary_width=(width : Int32)
+    raise ArgumentError.new("Negative summary width: #{width}") if width < 0
+    @summary_width = width
+  end
+
   # Indentation for summary.
   property summary_indent : String = "    "
 
