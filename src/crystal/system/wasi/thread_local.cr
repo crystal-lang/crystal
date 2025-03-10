@@ -1,5 +1,3 @@
-require "c/pthread"
-
 class Thread
   struct Local(T)
     @value : T?
