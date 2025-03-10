@@ -264,6 +264,7 @@ lib LibPCRE2
 
   fun jit_stack_create = pcre2_jit_stack_create_8(startsize : LibC::SizeT, maxsize : LibC::SizeT, gcontext : GeneralContext*) : JITStack*
   fun jit_stack_assign = pcre2_jit_stack_assign_8(mcontext : MatchContext*, callable_function : Void* -> JITStack*, callable_data : Void*) : Void
+  fun jit_stack_free = pcre2_jit_stack_free_8(jit_stack : JITStack*) : Void
 
   fun pattern_info = pcre2_pattern_info_8(code : Code*, what : UInt32, where : Void*) : Int
 
