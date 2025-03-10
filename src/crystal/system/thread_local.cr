@@ -4,6 +4,10 @@ class Thread
       {% raise "T must be a Reference or Pointer" unless T < Reference || T < Pointer %}
     end
 
+    def initialize(&destructor : Proc(T, Nil))
+      {% raise "T must be a Reference or Pointer" unless T < Reference || T < Pointer %}
+    end
+
     def get : T
       get? || raise KeyError.new
     end
