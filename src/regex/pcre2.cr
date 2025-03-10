@@ -1,4 +1,5 @@
 require "./lib_pcre2"
+require "crystal/system/thread_local"
 
 # :nodoc:
 module Regex::PCRE2
@@ -239,12 +240,13 @@ module Regex::PCRE2
   #
   # Only a single `match` function can run per thread at any given time, so
   # there can't be any concurrent access to the JIT stack.
-  @[ThreadLocal]
-  @@jit_stack : LibPCRE2::JITStack* | Nil
+  @@jit_stack = Thread::Local(LibPCRE2::JITStack*).new
 
   # FIXME: register a destructor to free @@match_data on thread termination!
   protected def self.jit_stack
-    @@jit_stack ||= LibPCRE2.jit_stack_create(32_768, 1_048_576, nil) || raise "Error allocating JIT stack"
+    @@jit_stack.get do
+      LibPCRE2.jit_stack_create(32_768, 1_048_576, nil) || raise "Error allocating JIT stack"
+    end
   end
 
   # Match data is unique per thread.
@@ -252,12 +254,13 @@ module Regex::PCRE2
   # Match data contains a buffer for backtracking when matching in interpreted
   # mode (non-JIT), This buffer is heap-allocated and should be re-used for
   # subsequent matches.
-  @[ThreadLocal]
-  @@match_data : LibPCRE2::MatchData* | Nil
+  @@match_data = Thread::Local(LibPCRE2::MatchData*).new
 
   # FIXME: register a destructor to free @@match_data on thread termination!
   protected def self.match_data : LibPCRE2::MatchData*
-    @@match_data ||= LibPCRE2.match_data_create(65_535, nil)
+    @@match_data.get do
+      LibPCRE2.match_data_create(65_535, nil)
+    end
   end
 
   def finalize
