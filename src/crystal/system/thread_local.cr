@@ -1,28 +1,7 @@
-{% if flag?(:win32) %}
-  require "c/processthreadsapi"
-{% else %}
-  require "c/pthread"
-{% end %}
-
 class Thread
   struct Local(T)
-    {% if flag?(:win32) %}
-      @key : LibC::DWORD
-    {% else %}
-      @key : LibC::PthreadKeyT
-    {% end %}
-
     def initialize
-      @key =
-        {% if flag?(:win32) %}
-          key = LibC.TlsAlloc()
-          raise RuntimeError.from_winerror("TlsAlloc: out of indexes") if @key == LibC::TLS_OUT_OF_INDEXES
-          key
-        {% else %}
-          err = LibC.pthread_key_create(out key, nil)
-          raise RuntimeError.from_os_error("pthread_key_create", Errno.new(err)) unless err == 0
-          key
-      {% end %}
+      {% raise "T must be a Reference or Pointer" unless T < Reference || T < Pointer %}
     end
 
     def get : T
@@ -33,25 +12,18 @@ class Thread
       get? || set(yield)
     end
 
-    def get? : T?
-      pointer =
-        {% if flag?(:win32) %}
-          LibC.TlsGetValue(@key)
-        {% else %}
-          LibC.pthread_getspecific(@key)
-        {% end %}
-      pointer.as(T) if pointer
-    end
+    # def get? : T?
 
-    def set(value : T) : T
-      {% if flag?(:win32) %}
-        ret = LibC.TlsSetValue(@key, value.as(Void*))
-        raise RuntimeError.from_winerror("TlsAlloc: no more indexes") if ret == 0
-      {% else %}
-        err = LibC.pthread_setspecific(@key, value.as(Void*))
-        raise RuntimeError.from_os_error("pthread_setspecific", Errno.new(err)) unless err == 0
-      {% end %}
-      value
-    end
+    # def set(value : T) : T
   end
 end
+
+{% if flag?(:wasi) %}
+  require "./wasi/thread_local"
+{% elsif flag?(:unix) %}
+  require "./unix/thread_local"
+{% elsif flag?(:win32) %}
+  require "./win32/thread_local"
+{% else %}
+  {% raise "Thread not supported" %}
+{% end %}
