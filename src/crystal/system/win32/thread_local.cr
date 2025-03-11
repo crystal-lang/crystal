@@ -10,13 +10,13 @@ class Thread
 
     def initialize
       {% raise "T must be a Reference or Pointer" unless T < Reference || T < Pointer %}
-      @key = LibC.TlsAlloc()
+      @key = LibC.TlsAlloc
       raise RuntimeError.from_winerror("TlsAlloc: out of indexes") if @key == LibC::TLS_OUT_OF_INDEXES
     end
 
     def initialize(&destructor : Proc(T, Nil))
       {% raise "T must be a Reference or Pointer" unless T < Reference || T < Pointer %}
-      @key = LibC.TlsAlloc()
+      @key = LibC.TlsAlloc
       raise RuntimeError.from_winerror("TlsAlloc: out of indexes") if @key == LibC::TLS_OUT_OF_INDEXES
       Thread.destructors << {@key, destructor.unsafe_as(Proc(Void*, Nil))}
     end
