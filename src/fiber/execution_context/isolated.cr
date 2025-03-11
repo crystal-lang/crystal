@@ -4,19 +4,22 @@ require "../list"
 module Fiber::ExecutionContext
   # ST scheduler. Owns a single thread running a single fiber.
   #
-  # Concurrency is disabled. The fiber owns the thread. calls to `::spawn` will
-  # raise a `RuntimeError` unless you specify a spawn context to forward spawns
-  # to. Keep in mind that the fiber will still run in parallel to other fibers
-  # running in other execution contexts.
+  # Concurrency is disabled within the thread: the fiber owns the thread and the
+  # thread can only run this fiber. Keep in mind that the fiber will still run
+  # in parallel to other fibers running in other execution contexts.
   #
-  # Any calls that result in waiting (e.g. sleep, or socket read/write) will
-  # block the thread since there are no other fibers to switch to. This in turn
-  # allows to call anything that would block the thread without blocking any
-  # other fiber.
+  # The fiber can still spawn fibers into other execution contexts. Since it can
+  # be inconvenient to pass an execution context around, calls to `::spawn` will
+  # spawn a fiber into the specified +spawn_context+ that defaults to the
+  # default execution context.
   #
-  # Isolated fibers can still communicate with other fibers running in other
-  # execution contexts using standard means, such as `Channel(T)`, `WaitGroup`
-  # or `Mutex`. They can also execute IO operations or sleep just like any other
+  # Isolated fibers can normally communicate with other fibers running in other
+  # execution contexts using `Channel(T)`, `WaitGroup` or `Mutex` for example.
+  # They can also execute IO operations or sleep just like any other fiber.
+  #
+  # Calls that result in waiting (e.g. sleep, or socket read/write) will block
+  # the thread since there are no other fibers to switch to. This in turn allows
+  # to call anything that would block the thread without blocking any other
   # fiber.
   #
   # You can for example use an isolated fiber to run a blocking GUI loop,
@@ -24,8 +27,7 @@ module Fiber::ExecutionContext
   # block the current fiber while waiting for the GUI application to quit:
   #
   # ```
-  # default = Fiber::ExecutionContext.default
-  # gtk = Fiber::ExecutionContext::Isolated.new("Gtk", spawn_context: default) do
+  # gtk = Fiber::ExecutionContext::Isolated.new("Gtk") do
   #   Gtk.main
   # end
   # gtk.wait
@@ -51,11 +53,7 @@ module Fiber::ExecutionContext
 
     # Starts a new thread named *name* to execute *func*. Once *func* returns
     # the thread will terminate.
-    #
-    # Set *spawn_context* to `nil` for `::spawn` to raise a `RuntimeError` or
-    # pass a `Fiber::ExecutionContext` to transparently spawn fibers into that
-    # execution context.
-    def initialize(@name : String, @spawn_context : ExecutionContext?, &@func : ->)
+    def initialize(@name : String, @spawn_context : ExecutionContext = ExecutionContext.default, &@func : ->)
       @mutex = Thread::Mutex.new
       @thread = uninitialized Thread
       @main_fiber = uninitialized Fiber
@@ -88,18 +86,14 @@ module Fiber::ExecutionContext
     def stack_pool? : Fiber::StackPool?
     end
 
-    private def spawn_context : self
-      @spawn_context.not_nil! "Concurrency is disabled in isolated contexts, and no spawn context available."
-    end
-
     def spawn(*, name : String? = nil, &block : ->) : Fiber
-      spawn_context.spawn(name: name, &block)
+      @spawn_context.spawn(name: name, &block)
     end
 
     # :nodoc:
     def spawn(*, name : String? = nil, same_thread : Bool, &block : ->) : Fiber
       raise ArgumentError.new("#{self.class.name}#spawn doesn't support same_thread:true") if same_thread
-      spawn_context.spawn(name: name, &block)
+      @spawn_context.spawn(name: name, &block)
     end
 
     def enqueue(fiber : Fiber) : Nil
@@ -187,10 +181,10 @@ module Fiber::ExecutionContext
     # For example:
     #
     # ```
-    # ctx = Fiber::ExecutionContext::Isolated.new("test", spawn_context: nil) do
+    # ctx = Fiber::ExecutionContext::Isolated.new("test") do
     #   raise "fail"
     # end
-    # ctw.wait # => re-raises "fail"
+    # ctx.wait # => re-raises "fail"
     # ```
     def wait : Nil
       if @running
