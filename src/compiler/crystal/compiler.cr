@@ -777,7 +777,7 @@ module Crystal
       when .zero?
         puts " - no previous .o files were reused"
         puts
-        puts("Top 10 slowest modules:")
+        puts "Top 10 slowest modules:"
         units.first(10).each do |unit|
           puts " - #{unit.compilation_time} #{unit.original_name} (#{unit.name}.bc)"
         end
