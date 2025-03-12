@@ -767,6 +767,7 @@ module Crystal
       return unless units
 
       reused = units.count(&.reused_previous_compilation?)
+      units.sort_by! { |u| u.compilation_time * -1 }
 
       puts
       puts "Codegen (bc+obj):"
@@ -775,21 +776,17 @@ module Crystal
         puts " - all previous .o files were reused"
       when .zero?
         puts " - no previous .o files were reused"
+        puts
+        puts("Top 10 slowest modules:")
+        units.first(10).each do |unit|
+          puts " - #{unit.compilation_time} #{unit.original_name} (#{unit.name}.bc)"
+        end
       else
         puts " - #{reused}/#{units.size} .o files were reused"
         puts
         puts "These modules were not reused:"
         units.each do |unit|
           next if unit.reused_previous_compilation?
-          puts " - #{unit.original_name} (#{unit.name}.bc)"
-        end
-      end
-
-      if units.size != reused
-        puts
-        puts("Top 10 slowest modules:")
-        units.sort_by! { |u| u.compilation_time * -1 }
-        units.first(10).each do |unit|
           puts " - #{unit.compilation_time} #{unit.original_name} (#{unit.name}.bc)"
         end
       end
