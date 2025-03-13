@@ -164,7 +164,7 @@ File.open(output, "w") do |f|
   g = Generator.new(f, "", "", "@", "#")
 
   f.puts <<-TEXT
-    # Defines getter method(s) to access instance variable(s).
+    # Defines getter methods to access instance variables.
     #
     # Refer to [Getters](#getters) for details.
     macro getter(*names, &block)
@@ -176,7 +176,7 @@ File.open(output, "w") do |f|
 
     # Identical to `getter` but defines query methods.
     #
-    # For example writing:
+    # For example, writing:
     #
     # ```
     # class Robot
@@ -209,7 +209,7 @@ File.open(output, "w") do |f|
     # type and `Nil`). Unlike the other `getter` methods the value is always
     # initialized to `nil`. There are no initial value or lazy initialization.
     #
-    # For example writing:
+    # For example, writing:
     #
     # ```
     # class Robot
@@ -257,9 +257,9 @@ File.open(output, "w") do |f|
   g = Generator.new(f, "class_", "self.", "@@", ".")
 
   f.puts <<-TEXT
-    # Defines getter method(s) to access class variable(s).
+    # Defines getter methods to access class variables.
     #
-    # For example writing:
+    # For example, writing:
     #
     # ```
     # class Robot
@@ -287,7 +287,7 @@ File.open(output, "w") do |f|
 
     # Identical to `class_getter` but defines query methods.
     #
-    # For example writing:
+    # For example, writing:
     #
     # ```
     # class Robot
@@ -320,7 +320,7 @@ File.open(output, "w") do |f|
     # type and `Nil`). Unlike with `class_getter` the value is always initialized
     # to `nil`. There are no initial value or lazy initialization.
     #
-    # For example writing:
+    # For example, writing:
     #
     # ```
     # class Robot
@@ -352,9 +352,9 @@ File.open(output, "w") do |f|
       {% end %}
     end
 
-    # Generates setter method(s) to set class variable(s).
+    # Generates setter methods to set class variables.
     #
-    # For example writing:
+    # For example, writing:
     #
     # ```
     # class Robot

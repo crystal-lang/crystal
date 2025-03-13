@@ -26,8 +26,8 @@ require "./object/properties"
 # end
 # ```
 #
-# For class variables we'd have called `class_getter name` that would have
-# generated a `def self.name` class method returning `@@name`.
+# Similarly, we can write `class_getter name` to define a class variable, which
+# generates a `def self.name` class method returning `@@name`.
 #
 # We can define as many variables as necessary in a single call. For example
 # `getter name, age, city` will create a getter method for each of `name`, `age`
