@@ -833,8 +833,6 @@ module Indexable(T)
   # [1, 2, 3, 4].find! { |i| i > 2 } # => 3
   # [1, 2, 3, 4].find! { |i| i > 8 } # => raises Enumerable::NotFoundError
   def find!(offset : Int = 0, & : T ->)
-    offset += size if offset < 0
-    return nil if offset < 0
     find(offset) { |i| yield i } || raise Enumerable::NotFoundError.new
   end
 
