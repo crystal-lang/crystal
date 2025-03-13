@@ -10,6 +10,7 @@ lib LibC
   MAP_SHARED            = 0x01
   MAP_ANON              = LibC::MAP_ANONYMOUS
   MAP_ANONYMOUS         = 0x20
+  MAP_POPULATE          = 0x008000
   MAP_FAILED            = Pointer(Void).new(-1.to_u64!)
   POSIX_MADV_DONTNEED   =  4
   POSIX_MADV_NORMAL     =  0
@@ -21,6 +22,7 @@ lib LibC
   MADV_RANDOM           =  1
   MADV_SEQUENTIAL       =  2
   MADV_WILLNEED         =  3
+  MADV_DONTFORK         = 10
   MADV_HUGEPAGE         = 14
   MADV_NOHUGEPAGE       = 15
 
