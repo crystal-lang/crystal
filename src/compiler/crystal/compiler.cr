@@ -702,7 +702,7 @@ module Crystal
 
         if @progress_tracker.stats?
           name = result["name"].as_s
-          unit = units.find { |unit| unit.name == name }.not_nil!
+          unit = units.find! { |unit| unit.name == name }
           unit.compilation_time = result["time"].as_f.seconds
 
           if result["reused"].as_bool
