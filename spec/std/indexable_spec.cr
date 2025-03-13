@@ -169,7 +169,7 @@ describe Indexable do
       indexable.find(3, -3) { |i| i > 15 }.should eq -3
     end
   end
-  
+
   describe "#find!" do
     it "finds the element matching the block" do
       indexable = SafeIndexable.new(4)

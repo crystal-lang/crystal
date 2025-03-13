@@ -835,7 +835,7 @@ module Indexable(T)
   def find!(offset : Int = 0, & : T ->)
     offset += size if offset < 0
     return nil if offset < 0
-    return (index(offset) { |i| yield i }).try { |i| unsafe_fetch(i) } || raise Enumerable::NotFoundError.new
+    find(offset) { |i| yield i } || raise Enumerable::NotFoundError.new
   end
 
   # Returns the last element of `self` if it's not empty, or raises `IndexError`.
