@@ -305,40 +305,12 @@ class Crystal::Command
       exit exit_code
     end
 
-    if message = exit_message(status)
-      STDERR.puts message
+    unless status.exit_reason.normal?
+      STDERR.puts status.description
       STDERR.flush
     end
 
     exit 1
-  end
-
-  private def exit_message(status)
-    case status.exit_reason
-    when .aborted?, .session_ended?, .terminal_disconnected?
-      if signal = status.exit_signal?
-        if signal.kill?
-          "Program was killed"
-        else
-          "Program received and didn't handle signal #{signal} (#{signal.value})"
-        end
-      else
-        "Program exited abnormally"
-      end
-    when .breakpoint?
-      "Program hit a breakpoint and no debugger was attached"
-    when .access_violation?, .bad_memory_access?
-      # NOTE: this only happens with the empty prelude, because the stdlib
-      # runtime catches those exceptions and then exits _normally_ with exit
-      # code 11 or 1
-      "Program exited because of an invalid memory access"
-    when .bad_instruction?
-      "Program exited because of an invalid instruction"
-    when .float_exception?
-      "Program exited because of a floating-point system exception"
-    when .unknown?
-      "Program exited abnormally, the cause is unknown"
-    end
   end
 
   record CompilerConfig,
@@ -508,7 +480,7 @@ class Crystal::Command
         opts.on("--no-codegen", "Don't do code generation") do
           compiler.no_codegen = true
         end
-        opts.on("-o ", "Output filename") do |an_output_filename|
+        opts.on("-o FILE", "--output FILE", "Output path. If a directory, the filename is derived from the first source file (default: ./)") do |an_output_filename|
           opt_output_filename = an_output_filename
           specified_output = true
         end
@@ -583,7 +555,6 @@ class Crystal::Command
 
     compiler.link_flags = link_flags.join(' ') unless link_flags.empty?
 
-    output_filename = opt_output_filename
     filenames += opt_filenames.not_nil!
     arguments = opt_arguments.not_nil!
 
@@ -604,17 +575,22 @@ class Crystal::Command
     sources.concat gather_sources(filenames)
 
     output_extension = compiler.cross_compile? ? compiler.codegen_target.object_extension : compiler.codegen_target.executable_extension
-    if output_filename
-      if File.extname(output_filename).empty?
-        output_filename += output_extension
-      end
-    else
+
+    # FIXME: The explicit cast should not be necessary (#15472)
+    output_path = ::Path[opt_output_filename.as?(String) || "./"]
+
+    if output_path.ends_with_separator? || File.directory?(output_path)
       first_filename = sources.first.filename
-      output_filename = "#{::Path[first_filename].stem}#{output_extension}"
+      output_filename = (output_path / "#{::Path[first_filename].stem}#{output_extension}").normalize.to_s
 
       # Check if we'll overwrite the main source file
       if !compiler.no_codegen? && !run && first_filename == File.expand_path(output_filename)
         error "compilation will overwrite source file '#{Crystal.relative_filename(first_filename)}', either change its extension to '.cr' or specify an output file with '-o'"
+      end
+    else
+      output_filename = output_path.to_s
+      if output_path.extension.empty?
+        output_filename += output_extension
       end
     end
 
