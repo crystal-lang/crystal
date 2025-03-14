@@ -823,7 +823,10 @@ module Indexable(T)
   def find(offset : Int = 0, if_none = nil, & : T ->)
     offset += size if offset < 0
     return nil if offset < 0
-    return (index(offset) { |i| yield i }).try { |i| unsafe_fetch(i) } || if_none
+    if idx = index(offset) { |i| yield i }
+      return unsafe_fetch(idx)
+    end
+    if_none
   end
 
   # Returns the first element in the indexable for which the passed block is truthy.
