@@ -9,7 +9,7 @@ lib LibC
   MAP_PRIVATE           = 0x02
   MAP_SHARED            = 0x01
   MAP_ANON              = LibC::MAP_ANONYMOUS
-  MAP_ANONYMOUS         = 0x20
+  MAP_ANONYMOUS         =     0x20
   MAP_POPULATE          = 0x008000
   MAP_FAILED            = Pointer(Void).new(-1.to_u64!)
   POSIX_MADV_DONTNEED   =  4

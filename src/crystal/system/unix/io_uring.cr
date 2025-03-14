@@ -58,6 +58,8 @@ class Crystal::System::IoUring
   @sq_size : UInt32
   @cq_size : UInt32
   @sqes_size : UInt32
+  @to_submit = 0_u32
+
   @sq : Void*
   @cq : Void*
 
@@ -143,6 +145,10 @@ class Crystal::System::IoUring
       sq_array = (@sq + params.@sq_off.array).as(UInt32*)
       @sq_entries.value.times { |index| sq_array[index] = index }
     end
+
+    # ring buffer of timespecs, so we can implicitely submit SQE
+    # OPTIMIZE: only needed if IORING_SETUP_SQPOLL || !IORING_FEAT_SUBMIT_STABLE
+    @timespecs = GC.malloc(sq_entries * sizeof(LibC::Timespec)).as(LibC::Timespec*)
   end
 
   def finalize
@@ -177,57 +183,66 @@ class Crystal::System::IoUring
     register(LibC::IORING_REGISTER_EVENTFD, pointerof(efd), 1)
   end
 
-  # Submit exactly +count+ submission queue entries (SQE). Submits them to the
-  # kernel when and if needed: no SQPOLL, SQ thread is sleeping, or the SQ is
-  # full.
-  #
-  # WARNING: the yielded pointer is only valid for the duration of the block!
-  def submit(count = 1, & : LibC::IoUringSqe* ->) : Nil
-    to_submit = 0_u32
+  def prepare(& : LibC::IoUringSqe* ->) : Nil
+    prepare_impl { |sqe, _| yield sqe }
+  end
 
-    # OPTIMIZE: reading tail probably doesn't need an atomic
+  def prepare(timeout : ::Time::Span, & : LibC::IoUringSqe* ->) : Nil
+    prepare_impl do |sqe, index|
+      ts = @timespecs + index
+      ts.value.tv_sec = typeof(ts.value.tv_sec).new(timeout.@seconds)
+      ts.value.tv_nsec = typeof(ts.value.tv_nsec).new(timeout.@nanoseconds)
+      sqe.value.addr = ts.address.to_u64!
+      sqe.value.len = 1
+      yield sqe
+    end
+  end
+
+  private def prepare_impl(&)
     tail = Atomic::Ops.load(@sq_tail, :monotonic, volatile: true)
+    head = Atomic::Ops.load(@sq_head, :acquire, volatile: true)
+    size = tail &- head
 
-    count.times do |i|
-      head = Atomic::Ops.load(@sq_head, :acquire, volatile: true)
-      size = tail &- head
-
-      if size >= @sq_entries.value
-        # SQ ring is full: submit pending SQE and wait for a slot
-        if i > 0
-          # make the new tail + writes to SQE visible to the kernel
-          Atomic::Ops.store(@sq_tail, tail, :release, volatile: true)
-          to_submit = 0_u32
-        end
-
-        # force submit, wake SQ thread if sleeping, and wait for at least one
-        # slot to become available
-        flags = 0_u32
-        if sq_poll?
-          flags |= LibC::IORING_ENTER_SQ_WAIT # wait until one SQE is available
-          flags |= LibC::IORING_ENTER_SQ_WAKEUP if sq_need_wakeup?
-        end
-        enter(to_submit, flags: flags)
+    # SQ ring is full? submit pending SQE and wait for a slot
+    if size >= @sq_entries.value
+      # force submit, wake SQ thread if sleeping, and wait for at least one
+      # slot to become available
+      if sq_poll?
+        submit_and_wait
+      else
+        submit
       end
 
-      # populate the io_uring_sqe*
-      sq_index = tail & @sq_mask.value
-      sqe = @sqes.as(LibC::IoUringSqe*) + sq_index
-      LibIntrinsics.memset(sqe, 0_u8, sizeof(LibC::IoUringSqe*), false)
-      yield sqe
-
-      tail &+= 1_u32
-      to_submit += 1_u32
+      @to_submit = 0_u32
     end
 
-    # make the new tail + writes to SQE visible to the kernel
-    Atomic::Ops.store(@sq_tail, tail, :release, volatile: true)
+    # populate the io_uring_sqe*
+    index = tail & @sq_mask.value
+    sqe = @sqes.as(LibC::IoUringSqe*) + index
+    LibIntrinsics.memset(sqe, 0_u8, sizeof(LibC::IoUringSqe*), false)
+    yield sqe, index
 
+    @to_submit += 1_u32
+
+    # make new tail and previous writes to SQE visible to the kernel thread
+    Atomic::Ops.store(@sq_tail, tail &+ 1_u32, :release, volatile: true)
+  end
+
+  # Submit pending SQE and wait until one SQE is available.
+  def submit_and_wait(flags : UInt32 = 0_u32) : Nil
+    flags |= LibC::IORING_ENTER_SQ_WAKEUP if sq_need_wakeup?
+    to_submit, @to_submit = @to_submit, 0_u32
+    enter(to_submit, flags: flags)
+  end
+
+  # Submit pending SQE if needed (e.g. SQPOLL thread is running).
+  def submit(flags : UInt32 = 0_u32) : Nil
     if sq_poll?
-      enter(to_submit, flags: LibC::IORING_ENTER_SQ_WAKEUP) if sq_need_wakeup?
-    else
-      enter(to_submit)
+      return unless sq_need_wakeup?
+      flags |= LibC::IORING_ENTER_SQ_WAKEUP
     end
+    to_submit, @to_submit = @to_submit, 0_u32
+    enter(to_submit, flags: flags)
   end
 
   private def sq_poll?
