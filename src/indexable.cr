@@ -837,7 +837,7 @@ module Indexable(T)
   # [1, 2, 3, 4].find! { |i| i > 2 } # => 3
   # [1, 2, 3, 4].find! { |i| i > 8 } # => raises Enumerable::NotFoundError
   def find!(offset : Int = 0, & : T ->)
-    find(nil, offset) { |i| yield i } || raise Enumerable::NotFoundError.new
+    find(offset: offset) { |i| yield i } || raise Enumerable::NotFoundError.new
   end
 
   # Returns the last element of `self` if it's not empty, or raises `IndexError`.
