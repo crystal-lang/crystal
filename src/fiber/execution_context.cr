@@ -3,7 +3,7 @@ require "../crystal/system/thread"
 require "../crystal/system/thread_linked_list"
 require "../fiber"
 require "./stack_pool"
-require "./execution_context/scheduler"
+require "./execution_context/*"
 
 {% raise "ERROR: execution contexts require the `preview_mt` compilation flag" unless flag?(:preview_mt) %}
 {% raise "ERROR: execution contexts require the `execution_context` compilation flag" unless flag?(:execution_context) %}
