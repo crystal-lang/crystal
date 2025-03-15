@@ -817,8 +817,8 @@ module Indexable(T)
   #
   # ```
   # [1, 2, 3, 4].find { |i| i > 2 }        # => 3
-  # [1, 2, 3, 4].find(-1, 2) { |i| i < 2 } # => -1
   # [1, 2, 3, 4].find(-1) { |i| i > 8 }    # => -1
+  # [1, 2, 3, 4].find(-1, 2) { |i| i < 2 } # => -1
   # ```
   def find(if_none = nil, offset : Int = 0, & : T ->)
     offset += size if offset < 0
@@ -836,6 +836,7 @@ module Indexable(T)
   # ```
   # [1, 2, 3, 4].find! { |i| i > 2 } # => 3
   # [1, 2, 3, 4].find! { |i| i > 8 } # => raises Enumerable::NotFoundError
+  # ```
   def find!(offset : Int = 0, & : T ->)
     find(offset: offset) { |i| yield i } || raise Enumerable::NotFoundError.new
   end
