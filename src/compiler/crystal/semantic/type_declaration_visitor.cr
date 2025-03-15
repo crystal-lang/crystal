@@ -150,8 +150,7 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
 
     external.set_type(return_type)
 
-    old_external = add_external external
-    old_external.dead = true if old_external
+    add_external external
 
     if current_type.is_a?(Program)
       key = DefInstanceKey.new external.object_id, external.args.map(&.type), nil, nil
@@ -181,14 +180,12 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
   def add_external(external : External)
     existing = @externals[external.real_name]?
     if existing
-      if existing.compatible_with?(external)
-        return existing
-      else
+      unless existing.compatible_with?(external)
         external.raise "fun redefinition with different signature (was `#{existing}` at #{existing.location})"
       end
+      existing.dead = true
     end
     @externals[external.real_name] = external
-    nil
   end
 
   def declare_c_struct_or_union_field(node)
