@@ -271,9 +271,18 @@ class Crystal::System::IoUring
     Atomic::Ops.store(@cq_head, head, :release, volatile: true)
   end
 
-  def enter(to_submit : UInt32 = 0_u32, to_complete = 0_u32, flags = 0_u32)
-    err = Syscall.io_uring_enter(@fd, to_submit.to_u32, to_complete.to_u32, flags, Pointer(Void).null, LibC::SizeT.zero)
-    raise RuntimeError.from_os_error("io_uring_enter", Errno.new(-err)) if err < 0
+  def enter(to_submit : UInt32 = 0, to_complete : UInt32 = 0, flags : UInt32 = 0) : Int32
+    ret = Syscall.io_uring_enter(@fd, to_submit, to_complete, flags, Pointer(Void).null, LibC::SizeT.zero)
+    if ret > 0 || ret == -LibC::EBUSY
+      ret
+    elsif ret == -LibC::EBADR
+      # CQE ring buffer overflowed, the system is running low on memory and
+      # completion entries got dropped despite of IORING_FEAT_NODROP and we
+      # can't recover from lost completions as fibers would never be resumed!
+      System.panic("io_uring_enter", Errno.new(-ret))
+    else
+      raise RuntimeError.from_os_error("io_uring_enter", Errno.new(-ret))
+    end
   end
 
   def close : Nil
