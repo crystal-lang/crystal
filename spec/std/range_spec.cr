@@ -149,7 +149,10 @@ describe "Range" do
   it "overlaps?" do
     # Int ranges
     (1..5).overlaps?(3..7).should eq(true)   # Overlapping integer ranges
+    (3..7).overlaps?(1..5).should eq(true)   # Overlapping integer ranges
+    (1..6).overlaps?(6..10).should eq(true)  # Overlapping integer ranges
     (1..5).overlaps?(6..10).should eq(false) # Non-overlapping integer ranges
+    (6..10).overlaps?(1..5).should eq(false) # Non-overlapping integer ranges
 
     # Float ranges
     (1.0..5.5).overlaps?(3.2..7.8).should eq(true)  # Overlapping float ranges
