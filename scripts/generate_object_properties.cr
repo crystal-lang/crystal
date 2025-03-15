@@ -66,20 +66,42 @@ struct Generator
   end
 
   def def_getter(suffix = "")
-    <<-TEXT
-          def #{@method_prefix}{{var_name}}#{suffix} {% if type %} : {{type}} {% end %}
-            {% if block %}
-              if (%value = #{@var_prefix}{{var_name}}).nil?
-                #{@var_prefix}{{var_name}} = {{yield}}
-              else
-                %value
-              end
-            {% else %}
-              #{@var_prefix}{{var_name}}
-            {% end %}
-          end
+    if @macro_prefix == "class_"
+      <<-TEXT
+            {% if block %} @@__{{var_name}}_flag = false {% end %}
 
-    TEXT
+            def self.{{var_name}}#{suffix} {% if type %} : {{type}} {% end %}
+              {% if block %}
+                if (%value = @@{{var_name}}).nil?
+                  ::Crystal.once(pointerof(@@__{{var_name}}_flag)) do
+                    @@{{var_name}} = {{yield}} if @@{{var_name}}.nil?
+                  end
+                  @@{{var_name}}.not_nil!
+                else
+                  %value
+                end
+              {% else %}
+                @@{{var_name}}
+              {% end %}
+            end
+
+      TEXT
+    else
+      <<-TEXT
+            def {{var_name}}#{suffix} {% if type %} : {{type}} {% end %}
+              {% if block %}
+                if (%value = @{{var_name}}).nil?
+                  @{{var_name}} = {{yield}}
+                else
+                  %value
+                end
+              {% else %}
+                @{{var_name}}
+              {% end %}
+            end
+
+      TEXT
+    end
   end
 
   def def_getter!
