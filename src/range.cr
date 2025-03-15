@@ -281,7 +281,7 @@ struct Range(B, E)
   # (1...10).intersection(7..12) # => 7...10
   # ```
   def intersection(other : Range)
-    return Range.new(self.begin, self.begin, exclusive: true) if self.end < other.begin || other.end < self.begin
+    return Range.new(self.begin, self.begin, exclusive: true) unless overlaps?(other)
 
     Range.new(
       Math.max(self.begin, other.begin),
