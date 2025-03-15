@@ -124,8 +124,9 @@ describe "Range" do
     (1...1).intersection(0..10).should eq(1...1)
 
     # Float ranges
-    (1.0..5.5).intersection(3.2..7.8).should eq(3.2..5.5)  # Overlapping float ranges
-    (1.0..2.5).intersection(3.0..4.0).should eq(1.0...1.0) # Non-overlapping float ranges
+    (1.0..5.5).intersection(3.2..7.8).should eq(3.2..5.5)   # Overlapping float ranges
+    (1.0...3.0).intersection(3.0..4.0).should eq(1.0...1.0) # Adjacent float ranges
+    (1.0..2.5).intersection(3.0..4.0).should eq(1.0...1.0)  # Non-overlapping float ranges
 
     # Char ranges
     ('a'..'e').intersection('c'..'g').should eq('c'..'e')  # Overlapping char ranges
