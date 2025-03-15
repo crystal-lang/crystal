@@ -2,11 +2,8 @@
 class Crystal::EventLoop::IoUring < Crystal::EventLoop
 end
 
-require "../system/unix/epoll"
-require "../system/unix/eventfd"
+require "c/poll"
 require "../system/unix/io_uring"
-require "../system/unix/timerfd"
-require "./timers"
 require "./io_uring/*"
 
 class Crystal::EventLoop::IoUring < Crystal::EventLoop
@@ -21,38 +18,16 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   end
 
   def initialize
-    @lock = SpinLock.new
-    # @timers = Timers(Event).new
-
-    # epoll instance to wait on
-    @epoll = System::Epoll.new
-
-    # the actual ring, notifies epoll through eventfd
     @ring = System::IoUring.new(
       sq_entries: 16,
       cq_entries: 128,
       sq_idle: (2000 if System::IoUring.supports_feature?(LibC::IORING_FEAT_SQPOLL_NONFIXED))
     )
-    @ring.register(System::EventFD.new)
-    @epoll.add(@ring.eventfd.fd, LibC::EPOLLIN, u64: @ring.eventfd.fd.to_u64!)
-
-    # notification to interrupt a run
-    @interrupted = Atomic::Flag.new
-    @eventfd = System::EventFD.new
-    @epoll.add(@eventfd.fd, LibC::EPOLLIN, u64: @eventfd.fd.to_u64!)
-
-    # we use timerfd to go below the millisecond precision of epoll_wait; it
-    # also allows to avoid locking timers before every epoll_wait call
-    @timerfd = System::TimerFD.new
-    @epoll.add(@timerfd.fd, LibC::EPOLLIN, u64: @timerfd.fd.to_u64!)
   end
 
   def after_fork_before_exec : Nil
-    @lock = SpinLock.new
     @ring.close
-    @epoll.close
     @eventfd.close
-    @timerfd.close
   end
 
   {% unless flag?(:preview_mt) %}
@@ -74,43 +49,38 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   private def system_run(blocking : Bool, & : Fiber ->) : Nil
     Crystal.trace :evloop, "run", blocking: blocking
 
-    # wait for events (indefinitely when blocking)
-    buffer = uninitialized LibC::EpollEvent[4]
-    epoll_events = @epoll.wait(buffer.to_slice, timeout: blocking ? -1 : 0)
+    # process ready cqes (avoid syscall)
+    size = 0
+    process_cqes do |fiber|
+      yield fiber
+      size += 1
+    end
 
-    # process events
-    epoll_events.size.times do |i|
-      epoll_event = epoll_events.to_unsafe + i
-      # TODO: panic if epoll_event.value.events != LibC::EPOLLIN (could be EPOLLERR or EPOLLHUP)
-
-      case epoll_event.value.data.u64
-      when @timerfd.fd
-        Crystal.trace :evloop, "timer"
-        # process_timers { |fiber| yield fiber }
-      when @eventfd.fd
-        Crystal.trace :evloop, "interrupted"
-        @eventfd.read
-        @interrupted.clear
-      else
-        process_cqes(@ring)
-      end
+    case size
+    when 0
+      # empty buffer: ask/wait for completions
+      @ring.enter(to_complete: blocking ? 1 : 0, flags: LibC::IORING_ENTER_GETEVENTS)
+      process_cqes { |fiber| yield fiber }
+    when @ring.@cq_entries.value
+      # full buffer: tell kernel that it can report pending completions
+      @ring.enter(flags: LibC::IORING_ENTER_GETEVENTS)
+      process_cqes { |fiber| yield fiber }
+    else
+      return
     end
   end
 
-  private def process_cqes
+  private def process_cqes(&)
     @ring.each_completed do |cqe|
-      if event = Pointer(Event).new(cqe.value.user_data)
-        event.res = cqe.value.res
-        yield event.value.fiber
+      next unless event = Pointer(Event).new(cqe.value.user_data)
+
+      case event.type
+      when
       end
+      event.res = cqe.value.res
+      yield event.value.fiber
     end
   end
-
-  # private def process_timers : Nil
-  # end
-
-  # private def process_timer(event : Event*, &)
-  # end
 
   def interrupt : Nil
     # the atomic makes sure we only write once (no need to write multiple times)
@@ -118,6 +88,11 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   end
 
   # fiber interface, see Crystal::EventLoop
+
+  # def sleep(duration : Time::Span) : Nil
+  #   res = async_timeout(:sleep, duration)
+  #   # assert(res == -ETIME)
+  # end
 
   def create_resume_event(fiber : Fiber) : FiberEvent
     FiberEvent.new(:sleep, fiber)
@@ -164,7 +139,9 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   end
 
   def close(file_descriptor : System::FileDescriptor) : Nil
-    # TODO: async close
+    # sync with `FileDescriptor#file_descriptor_close`
+    fd = file_descriptor.@volatile_fd.swap(-1, :relaxed)
+    async_close(fd) unless fd == -1
   end
 
   # socket interface, see Crystal::EventLoop::Socket
@@ -215,7 +192,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   end
 
   def connect(socket : ::Socket, address : ::Socket::Addrinfo | ::Socket::Address, timeout : Time::Span?) : IO::Error?
-    sockaddr = address.to_unsafe
+    sockaddr = address.to_unsafe # OPTIMIZE: #to_unsafe allocates (not needed)
     addrlen = address.size
 
     ret = async(LibC::IORING_OP_CONNECT, timeout) do |sqe|
@@ -236,7 +213,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   @@supports_sendto = supports_opcode?(LibC::IORING_OP_SEND)
 
   def send_to(socket : ::Socket, slice : Bytes, address : ::Socket::Address) : Int32
-    sockaddr = address.to_unsafe
+    sockaddr = address.to_unsafe # OPTIMIZE: #to_unsafe allocates (not needed)
     addrlen = address.size
 
     if @@supports_sendto
@@ -279,7 +256,9 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   end
 
   def close(socket : ::Socket) : Nil
-    # TODO: async close
+    # sync with `Socket#socket_close`
+    fd = socket.@volatile_fd.swap(-1, :relaxed)
+    async_close(fd) unless fd == -1
   end
 
   # internals
@@ -308,10 +287,40 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
     raise IO::Error.new("Closed stream") if socket.closed?
   end
 
+  private def async_close(fd)
+    res = async(LibC::IORING_OP_CLOSE) do |sqe|
+      sqe.value.fd = io.fd
+    end
+    return if res == 0
+
+    case res
+    when -LibC::EINTR, -LibC::EINPROGRESS
+      # ignore
+    else
+      raise IO::Error.from_os_error("Error closing file", Errno.new(-res), target: io)
+    end
+  end
+
+  private def async_timeout(type, duration, &)
+    event = Event.new(type, Fiber.current)
+    timespec = System::Time.to_timespec(duration)
+
+    @ring.prepare(event, opcode, timeout) do |sqe|
+      sqe.value.addr = pointerof(timespec).address.to_u64!
+      sqe.value.len = 1
+    end
+    @ring.submit
+
+    Fiber.suspend
+    event.res
+  end
+
   private def async(opcode, timeout = nil, &)
     event = Event.new(:async, Fiber.current)
+
     @ring.prepare(event, opcode, timeout) { |sqe| yield sqe }
     @ring.submit
+
     Fiber.suspend
     event.res
   end
