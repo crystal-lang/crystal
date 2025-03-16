@@ -297,7 +297,7 @@ struct Range(B, E)
   # (1...10).overlaps?(10..11) # => false
   # ```
   def overlaps?(other : Range) : Bool
-    !(self.end <= other.begin || other.end <= self.begin)
+    self.end >= other.begin || other.end >= self.begin
   end
 
   # Returns `true` if this range excludes the *end* element.
