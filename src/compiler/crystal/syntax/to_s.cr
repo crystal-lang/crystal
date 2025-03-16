@@ -57,15 +57,11 @@ module Crystal
     end
 
     private def write_extra_newlines(first_node_location : Location?, second_node_location : Location?, &) : Nil
-      # If any location information is missing, don't add any extra newlines.
-      if !first_node_location || !second_node_location
-        yield
-        return
-      end
-
-      # Only write the "extra" newlines. I.e. If there are more than one. The first newline is handled directly via the Expressions visitor.
-      ((second_node_location.line_number - 1) - first_node_location.line_number).times do
-        newline
+      if first_node_location && second_node_location
+        # Only write the "extra" newlines. I.e. If there are more than one. The first newline is handled directly via the Expressions visitor.
+        ((second_node_location.line_number - 1) - first_node_location.line_number).times do
+          newline
+        end
       end
 
       yield
