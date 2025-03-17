@@ -245,7 +245,7 @@ module Crystal
     record StringKey, mod : LLVM::Module, string : String
     record ModuleInfo, mod : LLVM::Module, typer : LLVMTyper, builder : CrystalLLVMBuilder
 
-    @abi : LLVM::ABI
+    @abi : ABI
     @main_ret_type : Type
     @argc : LLVM::Value
     @argv : LLVM::Value
