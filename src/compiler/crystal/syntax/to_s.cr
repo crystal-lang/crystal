@@ -56,15 +56,13 @@ module Crystal
       true
     end
 
-    private def write_extra_newlines(first_node_location : Location?, second_node_location : Location?, &) : Nil
+    private def write_extra_newlines(first_node_location : Location?, second_node_location : Location?) : Nil
       if first_node_location && second_node_location
         # Only write the "extra" newlines. I.e. If there are more than one. The first newline is handled directly via the Expressions visitor.
         ((second_node_location.line_number - 1) - first_node_location.line_number).times do
           newline
         end
       end
-
-      yield
     end
 
     def visit(node : Nop)
@@ -237,15 +235,15 @@ module Crystal
 
         node.expressions.each_with_index do |exp, i|
           unless exp.nop?
-            self.write_extra_newlines((last_node || exp).end_location, exp.location) do
-              append_indent unless node.keyword.paren? && i == 0
-              exp.accept self
+            self.write_extra_newlines (last_node || exp).end_location, exp.location
 
-              if !@write_trailing_newline && i == node.expressions.size - 1
-                # no-op
-              else
-                newline unless node.keyword.paren? && i == node.expressions.size - 1
-              end
+            append_indent unless node.keyword.paren? && i == 0
+            exp.accept self
+
+            if !@write_trailing_newline && i == node.expressions.size - 1
+              # no-op
+            else
+              newline unless node.keyword.paren? && i == node.expressions.size - 1
             end
 
             last_node = exp
@@ -767,22 +765,22 @@ module Crystal
       end
 
       outside_macro do
-        self.write_extra_newlines(node.location, node.exp.location) do
-          # If the MacroExpression consists of a single node we need to manually handle appending indent and trailing newline if *start_multiline*
-          # Otherwise, the Expressions logic handles that for us
-          if start_multiline && !node.exp.is_a?(Expressions)
-            append_indent
-          end
+        self.write_extra_newlines node.location, node.exp.location
 
-          # Only skip writing trailing newlines when the macro expressions' expression is not an Expressions.
-          # This allow Expressions that may be nested deeper in the AST to include trailing newlines.
-          @write_trailing_newline = !node.exp.is_a?(Expressions)
-          node.exp.accept self
-          @write_trailing_newline = true
+        # If the MacroExpression consists of a single node we need to manually handle appending indent and trailing newline if *start_multiline*
+        # Otherwise, the Expressions logic handles that for us
+        if start_multiline && !node.exp.is_a?(Expressions)
+          append_indent
         end
+
+        # Only skip writing trailing newlines when the macro expressions' expression is not an Expressions.
+        # This allow Expressions that may be nested deeper in the AST to include trailing newlines.
+        @write_trailing_newline = !node.exp.is_a?(Expressions)
+        node.exp.accept self
+        @write_trailing_newline = true
       end
 
-      self.write_extra_newlines(node.exp.end_location, node.end_location) { }
+      self.write_extra_newlines node.exp.end_location, node.end_location
 
       # After writing the expression body, de-indent if things were originally multiline.
       # This ensures the ending control has the proper indent relative to the start.
