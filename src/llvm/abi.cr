@@ -1,3 +1,5 @@
+# LLVM::ABI is deprecated. The compiler uses Crystal::ABI instead.
+
 # Based on https://github.com/rust-lang/rust/blob/29ac04402d53d358a1f6200bea45a301ff05b2d1/src/librustc_trans/trans/cabi.rs
 @[Deprecated("This API is now internal to the compiler and no longer updated publicly.")]
 abstract class LLVM::ABI
