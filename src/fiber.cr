@@ -265,6 +265,8 @@ class Fiber
   end
 
   # :nodoc:
+  #
+  # NOTE: optional, legacy, only needed for Crystal::EventLoop::LibEvent
   def resume_event : Crystal::EventLoop::Event
     @resume_event ||= Crystal::EventLoop.current.create_resume_event(self)
   end
@@ -331,11 +333,9 @@ class Fiber
   def self.yield : Nil
     Crystal.trace :sched, "yield"
 
-    {% if flag?(:execution_context) %}
-      Fiber.current.resume_event.add(0.seconds)
-      Fiber.suspend
-    {% else %}
-      Crystal::Scheduler.yield
+    # TODO: Fiber switching and evloop for wasm32
+    {% unless flag?(:wasi) %}
+      Crystal::EventLoop.current.sleep(0.seconds)
     {% end %}
   end
 

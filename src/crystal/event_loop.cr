@@ -73,7 +73,12 @@ abstract class Crystal::EventLoop
   #       time in parallel, but this assumption may change in the future!
   abstract def interrupt : Nil
 
+  # Suspend the current fiber for *duration*.
+  abstract def sleep(duration : Time::Span) : Nil
+
   # Create a new resume event for a fiber.
+  #
+  # NOTE: optional, legacy, only needed for Crystal::EventLoop::LibEvent
   abstract def create_resume_event(fiber : Fiber) : Event
 
   # Creates a timeout_event.
