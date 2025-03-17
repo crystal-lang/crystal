@@ -235,7 +235,7 @@ module Crystal
 
         node.expressions.each_with_index do |exp, i|
           unless exp.nop?
-            self.write_extra_newlines (last_node || exp).end_location, exp.location
+            write_extra_newlines (last_node || exp).end_location, exp.location
 
             append_indent unless node.keyword.paren? && i == 0
             exp.accept self
@@ -765,7 +765,7 @@ module Crystal
       end
 
       outside_macro do
-        self.write_extra_newlines node.location, node.exp.location
+        write_extra_newlines node.location, node.exp.location
 
         # If the MacroExpression consists of a single node we need to manually handle appending indent and trailing newline if *start_multiline*
         # Otherwise, the Expressions logic handles that for us
@@ -780,7 +780,7 @@ module Crystal
         @write_trailing_newline = true
       end
 
-      self.write_extra_newlines node.exp.end_location, node.end_location
+      write_extra_newlines node.exp.end_location, node.end_location
 
       # After writing the expression body, de-indent if things were originally multiline.
       # This ensures the ending control has the proper indent relative to the start.
