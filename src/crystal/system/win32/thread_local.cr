@@ -12,7 +12,7 @@ class Thread
 
     def initialize(&destructor : Proc(T, Nil))
       {% raise "T must be a Reference or Pointer" unless T < Reference || T < Pointer %}
-      @key = LibC.FlsAlloc(destructor.unsafe_as(Proc(Void*, Nil)))
+      @key = LibC.FlsAlloc(destructor.unsafe_as(LibC::FLS_CALLBACK_FUNCTION))
       raise RuntimeError.from_winerror("FlsAlloc: out of indexes") if @key == LibC::FLS_OUT_OF_INDEXES
     end
 

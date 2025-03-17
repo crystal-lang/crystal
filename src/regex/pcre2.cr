@@ -253,7 +253,7 @@ module Regex::PCRE2
   # Match data is unique per thread.
   #
   # Match data contains a buffer for backtracking when matching in interpreted
-  # mode (non-JIT), This buffer is heap-allocated and should be re-used for
+  # mode (non-JIT). This buffer is heap-allocated and should be re-used for
   # subsequent matches.
   @@match_data = Thread::Local(LibPCRE2::MatchData*).new do |match_data|
     LibPCRE2.match_data_free(match_data)
@@ -261,6 +261,9 @@ module Regex::PCRE2
 
   protected def self.match_data : LibPCRE2::MatchData*
     @@match_data.get do
+      # the ovector size is clamped to 65535 pairs; we declare the maximum
+      # because we allocate the match data buffer once for the thread and need
+      # to adapt to any regular expression
       LibPCRE2.match_data_create(65_535, nil)
     end
   end

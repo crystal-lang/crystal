@@ -8,16 +8,11 @@ class Thread
     #   {% raise "T must be a Reference or Pointer" unless T < Reference || T < Pointer %}
     # end
 
-    def get : T
-      get? || raise KeyError.new
-    end
-
     def get(& : -> T) : T
       get? || set(yield)
     end
 
     # def get? : T?
-
     # def set(value : T) : T
   end
 end
