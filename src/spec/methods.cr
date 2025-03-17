@@ -20,7 +20,7 @@ module Spec::Methods
     Spec.cli.root_context.describe(description.to_s, file, line, end_line, focus, tags, &block)
   end
 
-  @[Deprecated]
+  @[Deprecated("Arguments other than the first should be provided as named arguments.")]
   def describe(description = nil, file = __FILE__, line = __LINE__, end_line = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil, &block)
     Spec.cli.root_context.describe(description.to_s, file, line, end_line, focus, tags, &block)
   end
