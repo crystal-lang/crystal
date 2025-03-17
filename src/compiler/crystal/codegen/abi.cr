@@ -11,6 +11,28 @@ abstract class Crystal::ABI
     @windows = !!(triple =~ /windows/)
   end
 
+  def self.from(target_machine : LLVM::TargetMachine) : self
+    triple = target_machine.triple
+    case triple
+    when /x86_64.+windows-(?:msvc|gnu)/
+      X86_Win64.new(target_machine)
+    when /x86_64|amd64/
+      X86_64.new(target_machine)
+    when /i386|i486|i586|i686/
+      X86.new(target_machine)
+    when /aarch64|arm64/
+      AArch64.new(target_machine)
+    when /arm/
+      ARM.new(target_machine)
+    when /avr/
+      AVR.new(target_machine, target_machine.cpu)
+    when /wasm32/
+      Wasm32.new(target_machine)
+    else
+      raise "Unsupported ABI for target triple: #{triple}"
+    end
+  end
+
   abstract def abi_info(atys : Array(LLVM::Type), rty : LLVM::Type, ret_def : Bool, context : Context)
   abstract def size(type : LLVM::Type)
   abstract def align(type : LLVM::Type)
