@@ -189,6 +189,8 @@ describe "MacroExpander" do
     describe "{{ op }}" do
       {% for type in STABLE_ABI_TYPES %}
         it "gets {{ op }} {{ type.id }}" do
+          # we are not interested in the actual sizes or alignments here, these
+          # values are up to the codegen spec suite
           assert_macro %(\{{ {{ op }}({{ type.id }}).is_a?(NumberLiteral) }}), "true"
         end
       {% end %}
