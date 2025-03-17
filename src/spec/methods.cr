@@ -16,13 +16,13 @@ module Spec::Methods
   # ```
   #
   # If `focus` is `true`, only this `describe`, and others marked with `focus: true`, will run.
-  def describe(description = nil, *, file = __FILE__, line = __LINE__, end_line = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil, &block)
+  @[Deprecated("Arguments other than the first should be provided as named arguments.")]
+  def describe(_description description = nil, _file file = __FILE__, _line line = __LINE__, _end_line end_line = __END_LINE__, _focus focus : Bool = false, _tags tags : String | Enumerable(String) | Nil = nil, &block)
     Spec.cli.root_context.describe(description.to_s, file, line, end_line, focus, tags, &block)
   end
 
-  @[Deprecated("Arguments other than the first should be provided as named arguments.")]
-  def describe(description = nil, file = __FILE__, line = __LINE__, end_line = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil, &block)
-    Spec.cli.root_context.describe(description.to_s, file, line, end_line, focus, tags, &block)
+  # :ditto:
+  def describe(description : _ = nil, *, file : String = __FILE__, line : Int32 = __LINE__, end_line : Int32 = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil, &block)
   end
 
   # Defines an example group that establishes a specific context,
@@ -32,13 +32,13 @@ module Spec::Methods
   # It is functionally equivalent to `#describe`.
   #
   # If `focus` is `true`, only this `context`, and others marked with `focus: true`, will run.
-  def context(description = nil, *, file = __FILE__, line = __LINE__, end_line = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil, &block)
+  @[Deprecated("Arguments other than the first should be provided as named arguments.")]
+  def context(_description description = nil, _file file = __FILE__, _line line = __LINE__, _end_line end_line = __END_LINE__, _focus focus : Bool = false, _tags tags : String | Enumerable(String) | Nil = nil, &block)
     describe(description.to_s, file, line, end_line, focus, tags, &block)
   end
 
-  @[Deprecated]
-  def context(description = nil, file = __FILE__, line = __LINE__, end_line = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil, &block)
-    describe(description.to_s, file, line, end_line, focus, tags, &block)
+  # :ditto:
+  def context(description = nil, *, file : String = __FILE__, line : Int32 = __LINE__, end_line : Int32 = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil, &block)
   end
 
   # Defines a concrete test case.
@@ -55,13 +55,13 @@ module Spec::Methods
   # It is usually used inside a `#describe` or `#context` section.
   #
   # If `focus` is `true`, only this test, and others marked with `focus: true`, will run.
-  def it(description = "assert", *, file = __FILE__, line = __LINE__, end_line = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil, &block)
+  @[Deprecated("Arguments other than the first should be provided as named arguments.")]
+  def it(_description description = "assert", _file file = __FILE__, _line line = __LINE__, _end_line end_line = __END_LINE__, _focus focus : Bool = false, _tags tags : String | Enumerable(String) | Nil = nil, &block)
     Spec.cli.root_context.it(description.to_s, file, line, end_line, focus, tags, &block)
   end
 
-  @[Deprecated]
-  def it(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil, &block)
-    Spec.cli.root_context.it(description.to_s, file, line, end_line, focus, tags, &block)
+  # :ditto
+  def it(description : _ = "assert", *, file : String = __FILE__, line : Int32 = __LINE__, end_line : Int32 = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil, &block)
   end
 
   # Defines a pending test case.
@@ -79,37 +79,37 @@ module Spec::Methods
   # It is usually used inside a `#describe` or `#context` section.
   #
   # If `focus` is `true`, only this test, and others marked with `focus: true`, will run.
-  def pending(description = "assert", *, file = __FILE__, line = __LINE__, end_line = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil, &block)
+  @[Deprecated("Arguments other than the first should be provided as named arguments.")]
+  def pending(_description description = "assert", _file file = __FILE__, _line line = __LINE__, _end_line end_line = __END_LINE__, _focus focus : Bool = false, _tags tags : String | Enumerable(String) | Nil = nil, &block)
     pending(description, file, line, end_line, focus, tags)
   end
 
-  @[Deprecated]
-  def pending(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil, &block)
-    pending(description, file, line, end_line, focus, tags)
+  # :ditto:
+  def pending(description : _ = "assert", *, file : String = __FILE__, line : Int32 = __LINE__, end_line : Int32 = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil, &block)
   end
 
   # Defines a yet-to-be-implemented pending test case
   #
   # If `focus` is `true`, only this test, and others marked with `focus: true`, will run.
-  def pending(description = "assert", *, file = __FILE__, line = __LINE__, end_line = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil)
+  @[Deprecated("Arguments other than the first should be provided as named arguments.")]
+  def pending(_description description = "assert", _file file = __FILE__, _line line = __LINE__, _end_line end_line = __END_LINE__, _focus focus : Bool = false, _tags tags : String | Enumerable(String) | Nil = nil)
     Spec.cli.root_context.pending(description.to_s, file, line, end_line, focus, tags)
   end
 
-  @[Deprecated]
-  def pending(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil)
-    Spec.cli.root_context.pending(description.to_s, file, line, end_line, focus, tags)
+  # :ditto:
+  def pending(description : _ = "assert", *, file : String = __FILE__, line : Int32 = __LINE__, end_line : Int32 = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil)
   end
 
   # Fails an example.
   #
   # This method can be used to manually fail an example defined in an `#it` block.
-  def fail(msg, *, file = __FILE__, line = __LINE__)
+  @[Deprecated("Arguments other than the first should be provided as named arguments.")]
+  def fail(_msg msg, _file file = __FILE__, _line line = __LINE__)
     raise Spec::AssertionFailed.new(msg, file, line)
   end
 
-  @[Deprecated]
-  def fail(msg, file = __FILE__, line = __LINE__)
-    raise Spec::AssertionFailed.new(msg, file, line)
+  # :ditto:
+  def fail(msg : _, *, file : String = __FILE__, line : Int32 = __LINE__)
   end
 
   # Marks the current example pending
@@ -126,13 +126,44 @@ module Spec::Methods
   #   cmd.should end_with("git")
   # end
   # ```
-  def pending!(msg = "Cannot run example", *, file = __FILE__, line = __LINE__)
+  @[Deprecated]
+  def pending!(_msg msg = "Cannot run example", _file file = __FILE__, _line line = __LINE__)
     raise Spec::ExamplePending.new(msg, file, line)
   end
 
-  @[Deprecated]
-  def pending!(msg = "Cannot run example", file = __FILE__, line = __LINE__)
-    raise Spec::ExamplePending.new(msg, file, line)
+  # :ditto:
+  def pending!(msg : String = "Cannot run example", *, file : String = __FILE__, line : Int32 = __LINE__)
+  end
+
+  # Add included macro for above new versions
+  macro included
+    def describe(description : _ = "assert", *, file : String = __FILE__, line : Int32 = __LINE__, end_line : Int32 = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil, &block)
+      Spec.cli.root_context.describe(description.to_s, file, line, end_line, focus, tags, &block)
+    end
+
+    def context(description : _ = nil, *, file : String = __FILE__, line : Int32 = __LINE__, end_line : Int32 = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil, &block)
+      describe(description.to_s, file, line, end_line, focus, tags, &block)
+    end
+
+    def it(description : _ = "assert", *, file : String = __FILE__, line : Int32 = __LINE__, end_line : Int32 = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil, &block)
+      Spec.cli.root_context.it(description.to_s, file, line, end_line, focus, tags, &block)
+    end
+
+    def pending(description : _ = "assert", *, file : String = __FILE__, line : Int32 = __LINE__, end_line : Int32 = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil, &block)
+      pending(description, file, line, end_line, focus, tags)
+    end
+
+    def pending(description : _ = "assert", *, file : String = __FILE__, line : Int32 = __LINE__, end_line : Int32 = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil)
+      Spec.cli.root_context.pending(description.to_s, file, line, end_line, focus, tags)
+    end
+
+    def fail(msg : _, *, file : String = __FILE__, line : Int32 = __LINE__)
+      raise Spec::AssertionFailed.new(msg, file, line)
+    end
+
+    def pending!(msg : String = "Cannot run example", *, file : String = __FILE__, line : Int32 = __LINE__)
+      raise Spec::ExamplePending.new(msg, file, line)
+    end
   end
 
   # Executes the given block before each spec in the current context runs.
