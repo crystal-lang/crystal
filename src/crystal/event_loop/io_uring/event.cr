@@ -7,8 +7,9 @@ struct Crystal::EventLoop::IoUring::Event
 
   getter type : Type
   getter fiber : Fiber
-  property! cqe_res : Int32
-  # property! cqe_flags : UInt32
+
+  property! res : Int32
+  # property! flags : UInt32
 
   def initialize(@type, @fiber)
   end

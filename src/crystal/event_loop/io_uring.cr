@@ -75,9 +75,18 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
       next unless event = Pointer(Event).new(cqe.value.user_data)
 
       case event.type
-      when
+      when :async
+        event.res = cqe.value.res
+        # event.flags = cqe.value.flags
+      when :sleep
+        fiber.@resume_event.try(&.clear)
+      when :select_timeout
+        next unless select_action = fiber.timeout_select_action
+        fiber.timeout_select_action = nil
+        next unless select_action.time_expired?
+        fiber.@timeout_event.as(FiberEvent).clear
       end
-      event.res = cqe.value.res
+
       yield event.value.fiber
     end
   end
