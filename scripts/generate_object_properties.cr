@@ -73,10 +73,14 @@ struct Generator
             def self.{{var_name}}#{suffix} {% if type %} : {{type}} {% end %}
               {% if block %}
                 if (%value = @@{{var_name}}).nil?
-                  ::Crystal.once(pointerof(@@__{{var_name}}_flag)) do
-                    @@{{var_name}} = {{yield}} if @@{{var_name}}.nil?
-                  end
-                  @@{{var_name}}.not_nil!
+                  {% if flag?(:preview_mt) %}
+                    ::Crystal.once(pointerof(@@__{{var_name}}_flag)) do
+                      @@{{var_name}} = {{yield}} if @@{{var_name}}.nil?
+                    end
+                    @@{{var_name}}.not_nil!
+                  {% else %}
+                    @@{{var_name}} = {{yield}}
+                  {% end %}
                 else
                   %value
                 end
