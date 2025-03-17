@@ -835,8 +835,10 @@ module Indexable(T)
   # Raises `Enumerable::NotFoundError` if there is no element for which the block is truthy.
   #
   # ```
-  # [1, 2, 3, 4].find! { |i| i > 2 } # => 3
-  # [1, 2, 3, 4].find! { |i| i > 8 } # => raises Enumerable::NotFoundError
+  # [1, 2, 3, 4].find! { |i| i > 2 }     # => 3
+  # [1, 2, 3, 4].find!(3) { |i| i > 2 }  # => 4
+  # [1, 2, 3, 4].find! { |i| i > 8 }     # => raises Enumerable::NotFoundError
+  # [1, 2, 3, 4].find!(-5) { |i| i > 2 } # => raises Enumerable::NotFoundError
   # ```
   def find!(offset : Int = 0, & : T ->)
     find(offset: offset) { |i| yield i } || raise Enumerable::NotFoundError.new
