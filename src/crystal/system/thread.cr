@@ -220,14 +220,10 @@ class Thread
     rescue ex
       @exception = ex
     ensure
-      run_destructors
       Thread.threads.delete(self)
       Fiber.inactive(fiber)
       detach { system_close }
     end
-  end
-
-  protected def run_destructors : Nil
   end
 
   protected def name=(@name : String)
