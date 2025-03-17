@@ -830,7 +830,8 @@ module Indexable(T)
     if_none
   end
 
-  # Returns the first element in the indexable for which the passed block is truthy.
+  # Returns the first element in the indexable for which the passed block
+  # is truthy, starting from the given *offset*.
   # Raises `Enumerable::NotFoundError` if there is no element for which the block is truthy.
   #
   # ```
