@@ -1111,18 +1111,19 @@ module Crystal
     end
 
     def visit(node : Block)
-      @str << "do"
+      # If the node's body end location is on the same line as the start of the block itself, it's on a single line.
+      single_line_block = (node_loc = node.location) && (end_loc = node.body.end_location) && end_loc.line_number == node_loc.line_number
+
+      @str << (single_line_block ? '{' : "do")
 
       unless node.args.empty?
         @str << " |"
         node.args.each_with_index do |arg, i|
           @str << ", " if i > 0
           @str << '*' if i == node.splat_index
-
           if arg.name == ""
             # This is an unpack
             unpack = node.unpacks.not_nil![i]
-
             visit_unpack(unpack)
           else
             arg.accept self
@@ -1131,11 +1132,21 @@ module Crystal
         @str << '|'
       end
 
-      newline
-      accept_with_indent(node.body)
+      @str << ' ' if single_line_block
 
-      append_indent
-      @str << "end"
+      if single_line_block
+        node.body.accept self
+      else
+        newline
+        accept_with_indent node.body
+      end
+
+      if single_line_block
+        @str << ' ' << '}'
+      else
+        append_indent
+        @str << "end"
+      end
 
       false
     end
