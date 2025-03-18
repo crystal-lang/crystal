@@ -67,11 +67,6 @@ class Crystal::Scheduler
     Thread.current.scheduler.resume(fiber)
   end
 
-  def self.yield(fiber : Fiber) : Nil
-    validate_running_thread(fiber)
-    Thread.current.scheduler.yield(fiber)
-  end
-
   private def self.validate_running_thread(fiber : Fiber) : Nil
     {% if flag?(:preview_mt) %}
       if th = fiber.get_current_thread
@@ -150,11 +145,6 @@ class Crystal::Scheduler
         end
       end
     end
-  end
-
-  protected def yield(fiber : Fiber) : Nil
-    @thread.current_fiber.resume_event.add(0.seconds)
-    resume(fiber)
   end
 
   {% if flag?(:preview_mt) %}
