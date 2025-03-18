@@ -36,7 +36,7 @@ describe File do
       refute_file_matches "a*b?c*x", "abxbbxdbxebxczzy"
     end
 
-    pending "multibyte" do
+    describe "multibyte" do
       it "single-character match" do
         assert_file_matches "a?b", "a☺b"
         refute_file_matches "a???b", "a☺b"
@@ -94,7 +94,7 @@ describe File do
       end
     end
 
-    pending "invalid byte sequences" do
+    describe "invalid byte sequences" do
       it "single-character with invalid path" do
         assert_file_matches "?.txt", "\xC3.txt"         # Invalid byte sequence
         refute_file_matches "?.txt", "\xC3\x28.txt"     # Invalid byte sequence
@@ -174,10 +174,10 @@ describe File do
       refute_file_matches "ab[^c]", "abc"
       refute_file_matches "ab[^b-d]", "abc"
       assert_file_matches "ab[^e-g]", "abc"
-      refute_file_matches "a[^a]b", "a☺b"         # mulitbyte pending
-      assert_file_matches "a[^a][^a][^a]b", "a☺b" # mulitbyte pending
+      assert_file_matches "a[^a]b", "a☺b"
+      refute_file_matches "a[^a][^a][^a]b", "a☺b"
       assert_file_matches "[a-ζ]*", "α"
-      refute_file_matches "*[a-ζ]", "A" # mulitbyte pending
+      refute_file_matches "*[a-ζ]", "A"
     end
 
     it "escape" do

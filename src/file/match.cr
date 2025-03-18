@@ -276,7 +276,7 @@ class File < IO::FileDescriptor
           elsif '?' === g && @path_index < path.size
             if !separators.includes?(path[@path_index].unsafe_chr)
               @glob_index += 1
-              @path_index += 1
+              _, @path_index = consume_unicode_character(path_str, @path_index)
               next
             end
           elsif '[' === g && @path_index < path.size
@@ -293,25 +293,17 @@ class File < IO::FileDescriptor
             first = true
             is_match = false
 
-            c = path[@path_index]
+            c, new_path_index = consume_unicode_glob_character(path_str, @path_index)
 
             while @glob_index < glob.size && (first || !(']' === glob[@glob_index]))
-              low = glob[@glob_index]
-              if !unescape(pointerof(low), glob, pointerof(@glob_index))
-                raise File::BadPatternError.new("Invalid pattern")
-              end
-              @glob_index += 1
+              low, @glob_index = consume_unicode_glob_character(glob_str, @glob_index)
 
               # If there is a - and the following character is not ], read the range end character.
               if @glob_index + 1 < glob.size &&
                  glob[@glob_index] === '-' &&
                  !(glob[@glob_index + 1] === ']')
                 @glob_index += 1
-                high = glob[@glob_index]
-                if !unescape(pointerof(high), glob, pointerof(@glob_index))
-                  raise File::BadPatternError.new("Invalid pattern")
-                end
-                @glob_index += 1
+                high, @glob_index = consume_unicode_glob_character(glob_str, @glob_index)
               else
                 high = low
               end
@@ -327,7 +319,7 @@ class File < IO::FileDescriptor
             end
             @glob_index += 1
             if is_match != negated_class
-              @path_index += 1
+              @path_index = new_path_index
               next
             end
           elsif g === '{'
@@ -401,4 +393,25 @@ private def unescape(c, glob, glob_index) : Bool
   end
 
   true
+end
+
+@[AlwaysInline]
+private def consume_unicode_character(string, index) : {Char, UInt64}
+  reader = Char::Reader.new(string, index)
+  {reader.current_char, index + reader.current_char_width}
+end
+
+@[AlwaysInline]
+private def consume_unicode_glob_character(string, index) : {Char, UInt64}
+  c = string.to_unsafe[index]
+
+  if !unescape(pointerof(c), string.to_slice, pointerof(index))
+    raise File::BadPatternError.new("Invalid pattern")
+  end
+
+  if c < 0x80
+    {c.unsafe_chr, index + 1}
+  else
+    consume_unicode_character(string, index)
+  end
 end
