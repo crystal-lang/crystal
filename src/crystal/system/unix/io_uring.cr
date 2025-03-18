@@ -219,7 +219,7 @@ class Crystal::System::IoUring
     # populate the io_uring_sqe*
     index = tail & @sq_mask.value
     sqe = @sqes.as(LibC::IoUringSqe*) + index
-    LibIntrinsics.memset(sqe, 0_u8, sizeof(LibC::IoUringSqe*), false)
+    LibIntrinsics.memset(sqe, 0_u8, sizeof(LibC::IoUringSqe), false)
     yield sqe, index
 
     @to_submit += 1_u32
@@ -273,7 +273,7 @@ class Crystal::System::IoUring
 
   def enter(to_submit : UInt32 = 0, to_complete : UInt32 = 0, flags : UInt32 = 0) : Int32
     ret = Syscall.io_uring_enter(@fd, to_submit, to_complete, flags, Pointer(Void).null, LibC::SizeT.zero)
-    if ret > 0 || ret == -LibC::EBUSY
+    if ret >= 0 || ret == -LibC::EBUSY
       ret
     elsif ret == -LibC::EBADR
       # CQE ring buffer overflowed, the system is running low on memory and

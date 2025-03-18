@@ -219,6 +219,7 @@ module Crystal::System::Socket
     # Clear the @volatile_fd before actually closing it in order to
     # reduce the chance of reading an outdated fd value
     fd = @volatile_fd.swap(-1)
+    return if fd == -1
 
     ret = LibC.close(fd)
 
