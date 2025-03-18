@@ -228,12 +228,9 @@ struct Crystal::System::IOCP
 
     private def wait_for_completion(timeout)
       if timeout
-        event = ::Fiber.current.resume_event
-        event.add(timeout)
+        evloop = EventLoop.current.as(EventLoop::IOCP)
 
-        ::Fiber.suspend
-
-        if event.timed_out?
+        if evloop.timeout(timeout)
           # By the time the fiber was resumed, the operation may have completed
           # concurrently.
           return if @state.done?

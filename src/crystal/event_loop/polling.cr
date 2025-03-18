@@ -139,10 +139,6 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     Fiber.suspend
   end
 
-  def create_resume_event(fiber : Fiber) : FiberEvent
-    raise NotImplementedError.new("Crystal::EventLoop::Polling#create_resume_event")
-  end
-
   def create_timeout_event(fiber : Fiber) : FiberEvent
     FiberEvent.new(:select_timeout, fiber)
   end

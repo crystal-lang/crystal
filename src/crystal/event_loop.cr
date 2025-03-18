@@ -78,8 +78,10 @@ abstract class Crystal::EventLoop
 
   # Create a new resume event for a fiber.
   #
-  # NOTE: optional, legacy, only needed for Crystal::EventLoop::LibEvent
-  abstract def create_resume_event(fiber : Fiber) : Event
+  # NOTE: optional.
+  def create_resume_event(fiber : Fiber) : Event
+    raise NotImplementedError.new("#{self.class.name}#create_resume_event(fiber)")
+  end
 
   # Creates a timeout_event.
   abstract def create_timeout_event(fiber : Fiber) : Event

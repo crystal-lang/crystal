@@ -265,8 +265,6 @@ class Fiber
   end
 
   # :nodoc:
-  #
-  # NOTE: optional, legacy, only needed for Crystal::EventLoop::LibEvent
   def resume_event : Crystal::EventLoop::Event
     @resume_event ||= Crystal::EventLoop.current.create_resume_event(self)
   end
