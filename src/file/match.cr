@@ -1,3 +1,7 @@
+# This implementation of glob matching for `File.match?` is a port from the Rust
+# crate https://github.com/devongovett/glob-match, which is adapted from the
+# linear-time algorithm described in https://research.swtch.com/glob
+
 class File < IO::FileDescriptor
   class BadPatternError < Exception
   end
@@ -27,9 +31,6 @@ class File < IO::FileDescriptor
   #
   # NOTE: Only `/` in *pattern* matches directory separators in *path*.
   def self.match?(pattern : String, path : Path | String) : Bool
-    expanded_patterns = [] of String
-    File.expand_brace_pattern(pattern, expanded_patterns)
-
     if path.is_a?(Path)
       separators = Path.separators(path.@kind)
       path = path.to_s
@@ -37,186 +38,368 @@ class File < IO::FileDescriptor
       separators = Path.separators(Path::Kind::POSIX)
     end
 
-    expanded_patterns.each do |expanded_pattern|
-      return true if match_single_pattern(expanded_pattern, path, separators)
-    end
-    false
+    match_internal(pattern, path, separators)
   end
 
-  private def self.match_single_pattern(pattern : String, path : String, separators)
-    # linear-time algorithm adapted from https://research.swtch.com/glob
-    preader = Char::Reader.new(pattern)
-    sreader = Char::Reader.new(path)
-    next_ppos = 0
-    next_spos = 0
-    strlen = path.bytesize
-    escaped = false
+  private def self.match_internal(glob_str, path_str, separators)
+    glob = glob_str.to_slice
+    state = State.new(separators: separators.to_static_array.to_slice)
 
-    while true
-      pnext = preader.has_next?
-      snext = sreader.has_next?
+    # Store the state when we see an opening '{' brace in a stack.
+    # Up to 10 nested braces are supported.
+    brace_stack_data = uninitialized StaticArray({UInt32, UInt32}, 10)
+    brace_stack = BraceStack.new(brace_stack_data.to_slice)
 
-      return true unless pnext || snext
+    # First, check if the pattern is negated with a leading '!' character.
+    # Multiple negations can occur.
+    negated = false
 
-      if pnext
-        pchar = preader.current_char
-        char = sreader.current_char
+    while state.glob_index < glob.size && glob[state.glob_index] === '!'
+      negated = !negated
+      state.glob_index += 1
+    end
 
-        case {pchar, escaped}
-        when {'\\', false}
-          escaped = true
-          preader.next_char
-          next
-        when {'?', false}
-          if snext && !char.in?(separators)
-            preader.next_char
-            sreader.next_char
-            next
+    matched = state.match_from(glob_str, path_str, 0, brace_stack)
+
+    matched != negated
+  end
+
+  private record State,
+    separators : Slice(Char),
+    path_index = 0_u64,
+    glob_index = 0_u64,
+    brace_depth = 0_u64,
+    wildcard = Wildcard.new,
+    globstar = Wildcard.new
+
+  private record Wildcard,
+    glob_index = 0_u32,
+    path_index = 0_u32,
+    brace_depth = 0_u32 do
+    setter path_index
+  end
+
+  struct BraceStack(T)
+    def initialize(@slice : Slice(T), @size = 0)
+    end
+
+    getter size
+
+    @[AlwaysInline]
+    def push(item : T)
+      @slice[@size] = item
+      @size += 1
+    end
+
+    @[AlwaysInline]
+    def pop : T
+      @size -= 1
+      @slice[@size]
+    end
+
+    def to_slice
+      @slice[0, @size]
+    end
+  end
+
+  struct State
+    setter glob_index
+
+    @[AlwaysInline]
+    def backtrack
+      @glob_index = @wildcard.glob_index.to_u64
+      @path_index = @wildcard.path_index.to_u64
+      @brace_depth = @wildcard.brace_depth.to_u64
+    end
+
+    # Coalesce multiple ** segments into one.
+    @[AlwaysInline]
+    private def skip_globstars(glob)
+      glob_index = @glob_index + 2
+      while glob_index + 4 <= glob.size && glob[glob_index, 4] == "/**/".to_slice
+        glob_index += 3
+      end
+
+      if glob[glob_index..] == "/**".to_slice
+        glob_index += 3
+      end
+
+      @glob_index = glob_index - 2
+    end
+
+    @[AlwaysInline]
+    def skip_to_separator(path, is_end_invalid)
+      if @path_index == path.size
+        @wildcard.path_index += 1
+        return
+      end
+
+      path_index = @path_index
+      while path_index < path.size && !separators.includes?(path[path_index].unsafe_chr)
+        path_index += 1
+      end
+
+      if is_end_invalid || path_index != path.size
+        path_index += 1
+      end
+
+      @wildcard.path_index = path_index.to_u32!
+      @globstar = @wildcard
+    end
+
+    @[AlwaysInline]
+    def skip_branch(glob)
+      in_brackets = false
+      end_brace_depth = @brace_depth - 1
+
+      while @glob_index < glob.size
+        c = glob[@glob_index]
+        # Skip nested braces.
+        if c === '{' && !in_brackets
+          @brace_depth += 1
+        elsif c === '}' && !in_brackets
+          @brace_depth -= 1
+          if @brace_depth == end_brace_depth
+            @glob_index += 1
+            return
           end
-        when {'*', false}
-          double_star = preader.peek_next_char == '*'
-          if char.in?(separators) && !double_star
-            preader.next_char
-            next_spos = 0
-            next
-          else
-            next_ppos = preader.pos
-            next_spos = sreader.pos + sreader.current_char_width
-            preader.next_char
-            preader.next_char if double_star
-            next
-          end
-        when {'[', false}
-          pnext = preader.has_next?
+        elsif c === '[' && !in_brackets
+          in_brackets = true
+        elsif c === ']'
+          in_brackets = false
+        elsif c === '\\'
+          @glob_index += 1
+        end
+        @glob_index += 1
+      end
+    end
 
-          character_matched = false
-          character_set_open = true
-          escaped = false
-          inverted = false
-          case preader.peek_next_char
-          when '^'
-            inverted = true
-            preader.next_char
-          when ']'
-            raise BadPatternError.new "Invalid character set: empty character set"
-          else
-            # Nothing
-            # TODO: check if this branch is fine
-          end
+    def match_brace_branch(
+      glob : String,
+      path : String,
+      open_brace_index,
+      branch_index,
+      brace_stack,
+    )
+      brace_stack.push({open_brace_index.to_u32!, branch_index})
 
-          while pnext
-            pchar = preader.next_char
-            case {pchar, escaped}
-            when {'\\', false}
-              escaped = true
-            when {']', false}
-              character_set_open = false
-              break
-            when {'-', false}
-              raise BadPatternError.new "Invalid character set: missing range start"
-            else
-              escaped = false
-              if preader.has_next? && preader.peek_next_char == '-'
-                preader.next_char
-                range_end = preader.next_char
-                case range_end
-                when ']'
-                  raise BadPatternError.new "Invalid character set: missing range end"
-                when '\\'
-                  range_end = preader.next_char
-                else
-                  # Nothing
-                  # TODO: check if this branch is fine
-                end
-                range = (pchar..range_end)
-                character_matched = true if range.includes?(char)
-              elsif char == pchar
-                character_matched = true
-              end
+      branch_state = self.copy_with(
+        glob_index: branch_index.to_u64,
+        brace_depth: brace_stack.size.to_u64
+      )
+
+      matched = branch_state.match_from(glob, path, branch_index, brace_stack)
+
+      brace_stack.pop
+
+      matched
+    end
+
+    def match_brace(glob : String, path : String, brace_stack)
+      brace_depth = 0
+      in_brackets = false
+      open_brace_index = @glob_index
+      branch_index = 0_u32
+
+      while @glob_index < glob.bytesize
+        c = glob.to_slice[@glob_index]
+        # Skip nested braces.
+        if c === '{' && !in_brackets
+          brace_depth += 1
+          if brace_depth == 1
+            branch_index = (@glob_index + 1).to_u32!
+          end
+        elsif c === '}' && !in_brackets
+          brace_depth -= 1
+          if brace_depth == 0
+            return true if match_brace_branch(glob, path, open_brace_index, branch_index, brace_stack)
+            break
+          end
+        elsif c === ',' && brace_depth == 1
+          return true if match_brace_branch(glob, path, open_brace_index, branch_index, brace_stack)
+          branch_index = (@glob_index + 1).to_u32!
+        elsif c === '[' && !in_brackets
+          in_brackets = true
+        elsif c === ']'
+          in_brackets = false
+        elsif c === '\\'
+          @glob_index += 1
+        end
+        @glob_index += 1
+      end
+      false
+    end
+
+    def match_from(glob_str, path_str, match_start, brace_stack)
+      glob = glob_str.to_slice
+      path = path_str.to_slice
+
+      while @glob_index < glob.size || @path_index < path.size
+        if @glob_index < glob.size
+          g = glob[@glob_index]
+          if '*' === g
+            is_globstar = @glob_index + 1 < glob.size && glob[@glob_index + 1] === '*'
+
+            if is_globstar
+              skip_globstars(glob)
             end
-            pnext = preader.has_next?
-            false
-          end
-          raise BadPatternError.new "Invalid character set: unterminated character set" if character_set_open
 
-          if character_matched != inverted && snext
-            preader.next_char
-            sreader.next_char
-            next
-          end
-        else
-          escaped = false
+            @wildcard = Wildcard.new(
+              @glob_index.to_u32!,
+              @path_index.to_u32! + 1,
+              @brace_depth.to_u32!
+            )
 
-          if snext && sreader.current_char == pchar
-            preader.next_char
-            sreader.next_char
+            in_globstar = false
+            # `**` allows path separators, whereas `*` does not.
+            # However, `**` must be a full path component, i.e. `a/**/b` not `a**b`.
+            if is_globstar
+              @glob_index += 2
+              is_end_invalid = @glob_index != glob.size
+
+              if (@glob_index.to_i64 - match_start < 3 || glob[@glob_index - 3] === '/') && (!is_end_invalid || glob[@glob_index] === '/')
+                if is_end_invalid
+                  @glob_index += 1
+                end
+
+                skip_to_separator(path, is_end_invalid)
+                in_globstar = true
+              end
+            else
+              @glob_index += 1
+            end
+
+            if !in_globstar && @path_index < path.size && separators.includes?(path[@path_index].unsafe_chr)
+              @wildcard = @globstar
+            end
+
             next
+          elsif '?' === g && @path_index < path.size
+            if !separators.includes?(path[@path_index].unsafe_chr)
+              @glob_index += 1
+              @path_index += 1
+              next
+            end
+          elsif '[' === g && @path_index < path.size
+            @glob_index += 1
+
+            # Check if the character class is negated.
+            negated_class = false
+            if @glob_index < glob.size && glob[@glob_index].in?('^'.ord, '!'.ord)
+              negated_class = true
+              @glob_index += 1
+            end
+
+            # Try each range.
+            first = true
+            is_match = false
+
+            c = path[@path_index]
+
+            while @glob_index < glob.size && (first || !(']' === glob[@glob_index]))
+              low = glob[@glob_index]
+              if !unescape(pointerof(low), glob, pointerof(@glob_index))
+                raise File::BadPatternError.new("Invalid pattern")
+              end
+              @glob_index += 1
+
+              # If there is a - and the following character is not ], read the range end character.
+              if @glob_index + 1 < glob.size &&
+                 glob[@glob_index] === '-' &&
+                 !(glob[@glob_index + 1] === ']')
+                @glob_index += 1
+                high = glob[@glob_index]
+                if !unescape(pointerof(high), glob, pointerof(@glob_index))
+                  raise File::BadPatternError.new("Invalid pattern")
+                end
+                @glob_index += 1
+              else
+                high = low
+              end
+
+              if low <= c <= high
+                is_match = true
+              end
+
+              first = false
+            end
+            if @glob_index >= glob.size
+              raise BadPatternError.new "unterminated character set"
+            end
+            @glob_index += 1
+            if is_match != negated_class
+              @path_index += 1
+              next
+            end
+          elsif g === '{'
+            if brace_stack_entry = brace_stack.to_slice.find { |open_brace_index, _| open_brace_index == @glob_index }
+              _, branch_index = brace_stack_entry
+              @glob_index = branch_index.to_u64
+              @brace_depth += 1
+              next
+            end
+
+            return match_brace(glob_str, path_str, brace_stack)
+          elsif (g === '}' || g === ',') && @brace_depth > 0
+            skip_branch(glob)
+            next
+          elsif @path_index < path.size
+            c = g
+            # Match escaped characters as literals.
+            if !unescape(pointerof(c), glob, pointerof(@glob_index))
+              raise BadPatternError.new "Empty escape character"
+            end
+
+            is_match = if c === '/'
+                         separators.includes?(path[@path_index].unsafe_chr)
+                       else
+                         path[@path_index] == c
+                       end
+
+            if is_match
+              @glob_index += 1
+              @path_index += 1
+
+              if c === '/'
+                @wildcard = @globstar
+              end
+
+              next
+            end
           end
         end
+
+        # If we didn't match, restore state to the previous star pattern.
+        if @wildcard.path_index > 0 && @wildcard.path_index.to_u32! <= path.size
+          backtrack
+          next
+        end
+
+        return false
       end
 
-      if 0 < next_spos <= strlen
-        preader.pos = next_ppos
-        sreader.pos = next_spos
-        next
-      end
+      true
+    end
+  end
+end
 
-      raise BadPatternError.new "Empty escape character" if escaped
-
+@[AlwaysInline]
+private def unescape(c, glob, glob_index) : Bool
+  if '\\' === c.value
+    glob_index.value += 1
+    if glob_index.value >= glob.size
+      # Invalid pattern!
       return false
     end
+    c.value = case escaped_char = glob[glob_index.value]
+              when 'a' then 0x61_u8
+              when 'b' then 0x08_u8
+              when 'n' then '\n'.ord.to_u8!
+              when 'r' then '\r'.ord.to_u8!
+              when 't' then '\t'.ord.to_u8!
+              else          escaped_char
+              end
   end
 
-  # :nodoc:
-  def self.expand_brace_pattern(pattern : String, expanded) : Array(String)?
-    reader = Char::Reader.new(pattern)
-
-    lbrace = nil
-    rbrace = nil
-    alt_start = nil
-
-    alternatives = [] of String
-
-    nest = 0
-    escaped = false
-    reader.each do |char|
-      case {char, escaped}
-      when {'{', false}
-        lbrace = reader.pos if nest == 0
-        nest += 1
-      when {'}', false}
-        nest -= 1
-
-        if nest == 0
-          rbrace = reader.pos
-          start = (alt_start || lbrace).not_nil! + 1
-          alternatives << pattern.byte_slice(start, reader.pos - start)
-          break
-        end
-      when {',', false}
-        if nest == 1
-          start = (alt_start || lbrace).not_nil! + 1
-          alternatives << pattern.byte_slice(start, reader.pos - start)
-          alt_start = reader.pos
-        end
-      when {'\\', false}
-        escaped = true
-      else
-        escaped = false
-      end
-    end
-
-    if lbrace && rbrace
-      front = pattern.byte_slice(0, lbrace)
-      back = pattern.byte_slice(rbrace + 1)
-
-      alternatives.each do |alt|
-        brace_pattern = {front, alt, back}.join
-
-        expand_brace_pattern brace_pattern, expanded
-      end
-    else
-      expanded << pattern
-    end
-  end
+  true
 end
