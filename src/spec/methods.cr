@@ -38,7 +38,7 @@ module Spec::Methods
   end
 
   # :ditto:
-  def context(description = nil, *, file : String = __FILE__, line : Int32 = __LINE__, end_line : Int32 = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil, &block)
+  def context(description : _ = nil, *, file : String = __FILE__, line : Int32 = __LINE__, end_line : Int32 = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil, &block)
   end
 
   # Defines a concrete test case.
@@ -132,10 +132,9 @@ module Spec::Methods
   end
 
   # :ditto:
-  def pending!(msg : String = "Cannot run example", *, file : String = __FILE__, line : Int32 = __LINE__)
+  def pending!(msg : _ = "Cannot run example", *, file : String = __FILE__, line : Int32 = __LINE__)
   end
 
-  # Add included macro for above new versions
   macro included
     def describe(description : _ = "assert", *, file : String = __FILE__, line : Int32 = __LINE__, end_line : Int32 = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil, &block)
       Spec.cli.root_context.describe(description.to_s, file, line, end_line, focus, tags, &block)
@@ -161,7 +160,7 @@ module Spec::Methods
       raise Spec::AssertionFailed.new(msg, file, line)
     end
 
-    def pending!(msg : String = "Cannot run example", *, file : String = __FILE__, line : Int32 = __LINE__)
+    def pending!(msg : _ = "Cannot run example", *, file : String = __FILE__, line : Int32 = __LINE__)
       raise Spec::ExamplePending.new(msg, file, line)
     end
   end
