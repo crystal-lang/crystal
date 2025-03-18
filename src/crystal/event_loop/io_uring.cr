@@ -46,7 +46,13 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
 
   {% unless flag?(:preview_mt) %}
     def after_fork : Nil
-      raise NotImplementedError.new("Crystal::EventLoop::IoUring#after_fork isn't implemented")
+      @ring.close
+
+      @ring = System::IoUring.new(
+        sq_entries: 16,
+        cq_entries: 128,
+        # sq_idle: (2000 if System::IoUring.supports_feature?(LibC::IORING_FEAT_SQPOLL_NONFIXED))
+      )
     end
   {% end %}
 

@@ -232,7 +232,11 @@ class Crystal::System::IoUring
   def submit_and_wait(flags : UInt32 = 0_u32) : Nil
     flags |= LibC::IORING_ENTER_SQ_WAKEUP if sq_need_wakeup?
     to_submit, @to_submit = @to_submit, 0_u32
-    enter(to_submit, flags: flags)
+
+    loop do
+      ret = enter(to_submit, flags: flags)
+      break unless ret == -LibC::EINTR && (!sq_poll? || sq_need_wakeup?)
+    end
   end
 
   # Submit pending SQE if needed (e.g. SQPOLL thread is running).
@@ -242,7 +246,11 @@ class Crystal::System::IoUring
       flags |= LibC::IORING_ENTER_SQ_WAKEUP
     end
     to_submit, @to_submit = @to_submit, 0_u32
-    enter(to_submit, flags: flags)
+
+    loop do
+      ret = enter(to_submit, flags: flags)
+      break unless ret == -LibC::EINTR && (!sq_poll? || sq_need_wakeup?)
+    end
   end
 
   private def sq_poll?
@@ -273,7 +281,7 @@ class Crystal::System::IoUring
 
   def enter(to_submit : UInt32 = 0, to_complete : UInt32 = 0, flags : UInt32 = 0) : Int32
     ret = Syscall.io_uring_enter(@fd, to_submit, to_complete, flags, Pointer(Void).null, LibC::SizeT.zero)
-    if ret >= 0 || ret == -LibC::EBUSY
+    if ret >= 0 || ret == -LibC::EBUSY || ret == -LibC::EINTR
       ret
     elsif ret == -LibC::EBADR
       # CQE ring buffer overflowed, the system is running low on memory and
