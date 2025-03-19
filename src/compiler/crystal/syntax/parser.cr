@@ -2232,7 +2232,7 @@ module Crystal
 
     def consume_heredocs
       @consuming_heredocs = true
-      @heredocs.reverse!
+      @heredocs = @heredocs.reverse
       while heredoc = @heredocs.pop?
         consume_heredoc(heredoc[0], heredoc[1].as(StringInterpolation))
       end
