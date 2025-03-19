@@ -4238,6 +4238,8 @@ module Crystal
       end_location = token_end_location
       doc = @token.doc
 
+      check AtomicWithMethodCheck
+
       if @token.type.op_bang?
         # only trigger from `parse_when_expression`
         obj = Var.new("self").at(location)
