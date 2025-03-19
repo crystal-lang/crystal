@@ -4,6 +4,7 @@ require "../syntax/visitor"
 require "../semantic"
 require "../program"
 require "./llvm_builder_helper"
+require "./abi/*"
 
 module Crystal
   MAIN_NAME           = "__crystal_main"
@@ -245,7 +246,7 @@ module Crystal
     record StringKey, mod : LLVM::Module, string : String
     record ModuleInfo, mod : LLVM::Module, typer : LLVMTyper, builder : CrystalLLVMBuilder
 
-    @abi : LLVM::ABI
+    @abi : ABI
     @main_ret_type : Type
     @argc : LLVM::Value
     @argv : LLVM::Value
@@ -272,7 +273,7 @@ module Crystal
                    @debug = Debug::Default,
                    @frame_pointers : FramePointers = :auto,
                    @llvm_context : LLVM::Context = LLVM::Context.new)
-      @abi = @program.target_machine.abi
+      @abi = ABI.from(@program.target_machine)
       # LLVM::Context.register(@llvm_context, "main")
       @llvm_mod = configure_module(@llvm_context.new_module("main_module"))
       @main_mod = @llvm_mod
@@ -329,7 +330,7 @@ module Crystal
         symbol_table.initializer = llvm_type(@program.string).const_array(@symbol_table_values)
       end
 
-      program.const_slices.each do |info|
+      program.const_slices.each_value do |info|
         define_slice_constant(info)
       end
 
@@ -411,7 +412,16 @@ module Crystal
     end
 
     def define_symbol_table(llvm_mod, llvm_typer)
-      llvm_mod.globals.add llvm_typer.llvm_type(@program.string).array(@symbol_table_values.size), SYMBOL_TABLE_NAME
+      llvm_mod.globals[SYMBOL_TABLE_NAME]? || begin
+        global = llvm_mod.globals.add llvm_typer.llvm_type(@program.string).array(@symbol_table_values.size), SYMBOL_TABLE_NAME
+        if llvm_mod != @main_mod
+          global.linkage = LLVM::Linkage::External
+        elsif @single_module
+          global.linkage = LLVM::Linkage::Internal
+        end
+        global.global_constant = true
+        global
+      end
     end
 
     def define_slice_constant(info : Program::ConstSliceInfo)
@@ -2142,7 +2152,7 @@ module Crystal
       printf_args = {printf_args, [] of LLVM::Value} if printf_args.is_a?(String)
       printf_args = {printf_args[0], [] of LLVM::Value} if printf_args.is_a?({String})
       msg, args = printf_args
-      printf("<block: #{insert_block.name || "???"} @ #{Crystal.relative_filename(file)}:#{line}> #{msg}\n", args)
+      printf("<function=#{insert_block.parent.try(&.name) || "???"} block=#{insert_block.name || "???"} source=#{Crystal.relative_filename(file)}:#{line}> #{msg}\n", args)
     end
 
     # :ditto:
@@ -2429,9 +2439,9 @@ module Crystal
       target_type = type
       if type.is_a?(VirtualType)
         if type.struct?
-          if (_type = type.remove_indirection).is_a?(UnionType)
+          if (actual_type = type.remove_indirection).is_a?(UnionType)
             # For a struct we need to cast the second part of the union to the base type
-            _, value_ptr = union_type_and_value_pointer(pointer, _type)
+            value_ptr = union_value(llvm_type(actual_type), pointer)
             target_type = type.base_type
             pointer = cast_to_pointer value_ptr, target_type
           else
@@ -2462,7 +2472,7 @@ module Crystal
         global.linkage = LLVM::Linkage::Private
         global.global_constant = true
         global.initializer = llvm_context.const_struct [
-          type_id(@program.string),
+          int32(@program.llvm_id.type_id(@program.string)), # in practice, should always be 1
           int32(str.bytesize),
           int32(str.size),
           llvm_context.const_string(str),

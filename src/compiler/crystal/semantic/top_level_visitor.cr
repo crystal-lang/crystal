@@ -502,7 +502,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
       if !@method_added_running && has_hooks?(target_type.metaclass)
         @method_added_running = true
-        run_hooks target_type.metaclass, target_type, :method_added, node, Call.new(nil, "method_added", node).at(node)
+        run_hooks target_type.metaclass, target_type, :method_added, node, Call.new("method_added", node).at(node)
         @method_added_running = false
       end
     end
@@ -555,6 +555,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       type = LibType.new @program, scope, name
       scope.types[name] = type
     end
+
+    attach_doc type, node, annotations
 
     node.resolved_type = type
 
@@ -626,9 +628,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       type.extern = true
       type.extern_union = node.union?
 
-      if location = node.location
-        type.add_location(location)
-      end
+      attach_doc type, node, annotations
 
       current_type.types[node.name] = type
     end
@@ -641,15 +641,22 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   end
 
   def visit(node : TypeDef)
+    annotations = read_annotations
     type = current_type.types[node.name]?
+
     if type
       node.raise "#{node.name} is already defined"
     else
       typed_def_type = lookup_type(node.type_spec)
       typed_def_type = check_allowed_in_lib node.type_spec, typed_def_type
-      current_type.types[node.name] = TypeDefType.new @program, current_type, node.name, typed_def_type
-      false
+      type = TypeDefType.new @program, current_type, node.name, typed_def_type
+
+      attach_doc type, node, annotations
+
+      current_type.types[node.name] = type
     end
+
+    false
   end
 
   def visit(node : EnumDef)
@@ -1007,6 +1014,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     external.call_convention = call_convention
     external.varargs = node.varargs?
     external.fun_def = node
+    external.return_type = node.return_type
     node.external = external
 
     current_type.add_def(external)

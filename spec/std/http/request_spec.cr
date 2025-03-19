@@ -331,6 +331,14 @@ module HTTP
         request = Request.new("GET", "")
         request.path.should eq("/")
       end
+
+      it "parses path leading with double slash" do
+        Request.new("GET", "//foo:bar").path.should eq "//foo:bar"
+      end
+
+      it "parses path leading with scheme" do
+        Request.new("GET", "http://example.com/foo/bar").path.should eq "http://example.com/foo/bar"
+      end
     end
 
     describe "#path=" do

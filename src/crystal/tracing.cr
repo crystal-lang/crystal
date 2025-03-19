@@ -48,6 +48,7 @@ module Crystal
 
         def initialize
           @buf = uninitialized UInt8[N]
+          @int_buf = uninitialized UInt8[20] # max 64-bit integers
           @size = 0
         end
 
@@ -81,17 +82,27 @@ module Crystal
           write value.name || '?'
         end
 
+        {% if flag?(:execution_context) %}
+          def write(value : Fiber::ExecutionContext) : Nil
+            write value.name
+          end
+
+          def write(value : Fiber::ExecutionContext::Scheduler) : Nil
+            write value.name
+          end
+        {% end %}
+
         def write(value : Pointer) : Nil
           write "0x"
-          System.to_int_slice(value.address, 16, true, 2) { |bytes| write(bytes) }
+          write System.to_int_slice(@int_buf.to_slice, value.address, 16, true, 2)
         end
 
         def write(value : Int::Signed) : Nil
-          System.to_int_slice(value, 10, true, 2) { |bytes| write(bytes) }
+          write System.to_int_slice(@int_buf.to_slice, value, 10, true, 2)
         end
 
         def write(value : Int::Unsigned) : Nil
-          System.to_int_slice(value, 10, false, 2) { |bytes| write(bytes) }
+          write System.to_int_slice(@int_buf.to_slice, value, 10, false, 2)
         end
 
         def write(value : Time::Span) : Nil

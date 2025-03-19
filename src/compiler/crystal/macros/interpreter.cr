@@ -151,7 +151,7 @@ module Crystal
       #
       # and in this case the parser has no idea about this, so the only
       # solution is to do it now.
-      if value = interpret_top_level_call?(Call.new(nil, node.name))
+      if value = interpret_top_level_call?(Call.new(node.name))
         @last = value
         return false
       end
@@ -513,6 +513,70 @@ module Crystal
 
     def resolve?(node : ASTNode)
       node.raise "can't resolve #{node} (#{node.class_desc})"
+    end
+
+    def visit(node : SizeOf)
+      type_node = resolve(node.exp)
+      unless type_node.is_a?(TypeNode) && stable_abi?(type_node.type)
+        node.raise "argument to `sizeof` inside macros must be a type with a stable size"
+      end
+
+      @last = NumberLiteral.new(@program.size_of(type_node.type.sizeof_type).to_i32)
+      false
+    end
+
+    def visit(node : AlignOf)
+      type_node = resolve(node.exp)
+      unless type_node.is_a?(TypeNode) && stable_abi?(type_node.type)
+        node.raise "argument to `alignof` inside macros must be a type with a stable alignment"
+      end
+
+      @last = NumberLiteral.new(@program.align_of(type_node.type.sizeof_type).to_i32)
+      false
+    end
+
+    # Returns whether *type*'s size and alignment are stable with respect to
+    # source code augmentation, i.e. they remain unchanged at the top level even
+    # as new code is being processed by the compiler at various phases.
+    #
+    # `instance_sizeof` and `instance_alignof` are inherently unstable, as they
+    # only work on subclasses of `Reference`, and instance variables can be
+    # added to them at will.
+    #
+    # This method does not imply there is a publicly stable ABI yet!
+    private def stable_abi?(type : Type) : Bool
+      case type
+      when ReferenceStorageType
+        # instance variables may be added at will
+        false
+      when GenericType, AnnotationType
+        # no such values exist
+        false
+      when .module?
+        # ABI-equivalent to the union of all including types, which may be added
+        # at will
+        false
+      when ProcInstanceType, PointerInstanceType
+        true
+      when StaticArrayInstanceType
+        stable_abi?(type.element_type)
+      when TupleInstanceType
+        type.tuple_types.all? { |t| stable_abi?(t) }
+      when NamedTupleInstanceType
+        type.entries.all? { |entry| stable_abi?(entry.type) }
+      when InstanceVarContainer
+        # instance variables of structs may be added at will; references always
+        # have the size and alignment of a pointer
+        !type.struct?
+      when UnionType
+        type.union_types.all? { |t| stable_abi?(t) }
+      when TypeDefType
+        stable_abi?(type.typedef)
+      when AliasType
+        stable_abi?(type.aliased_type)
+      else
+        true
+      end
     end
 
     def visit(node : Splat)

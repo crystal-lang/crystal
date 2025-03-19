@@ -44,6 +44,11 @@ class Crystal::Repl::Context
   # the proc in this Hash.
   getter ffi_closure_to_compiled_def : Hash(Void*, CompiledDef)
 
+  # Cached underlying buffers for constant slices constructed via the
+  # `Slice.literal` compiler built-in, indexed by the internal buffer name
+  # (e.g. `$Slice:0`).
+  @const_slice_buffers = {} of String => UInt8*
+
   def initialize(@program : Program)
     @program.flags << "interpreted"
 
@@ -117,7 +122,7 @@ class Crystal::Repl::Context
 
   # This returns the CompiledDef that corresponds to __crystal_raise_overflow
   getter(crystal_raise_overflow_compiled_def : CompiledDef) do
-    call = Call.new(nil, "__crystal_raise_overflow", global: true)
+    call = Call.new("__crystal_raise_overflow", global: true)
     program.semantic(call)
 
     local_vars = LocalVars.new(self)
@@ -284,6 +289,36 @@ class Crystal::Repl::Context
       value = sub_interpreter.interpret(compiled_def.def.body, compiled_def.def.vars.not_nil!)
 
       value.copy_to(ret.as(UInt8*))
+    end
+  end
+
+  def const_slice_buffer(info : Program::ConstSliceInfo) : UInt8*
+    @const_slice_buffers.put_if_absent(info.name) do
+      kind = info.element_type
+      element_size = kind.bytesize // 8
+      buffer = Pointer(UInt8).malloc(info.args.size * element_size)
+      ptr = buffer
+
+      info.args.each do |arg|
+        num = arg.as(NumberLiteral)
+        case kind
+        in .i8?   then ptr.as(Int8*).value = num.value.to_i8
+        in .i16?  then ptr.as(Int16*).value = num.value.to_i16
+        in .i32?  then ptr.as(Int32*).value = num.value.to_i32
+        in .i64?  then ptr.as(Int64*).value = num.value.to_i64
+        in .i128? then ptr.as(Int128*).value = num.value.to_i128
+        in .u8?   then ptr.as(UInt8*).value = num.value.to_u8
+        in .u16?  then ptr.as(UInt16*).value = num.value.to_u16
+        in .u32?  then ptr.as(UInt32*).value = num.value.to_u32
+        in .u64?  then ptr.as(UInt64*).value = num.value.to_u64
+        in .u128? then ptr.as(UInt128*).value = num.value.to_u128
+        in .f32?  then ptr.as(Float32*).value = num.value.to_f32
+        in .f64?  then ptr.as(Float64*).value = num.value.to_f64
+        end
+        ptr += element_size
+      end
+
+      buffer
     end
   end
 

@@ -846,13 +846,17 @@ class File < IO::FileDescriptor
   # ```
   def self.copy(src : String | Path, dst : String | Path) : Nil
     open(src) do |s|
-      open(dst, "wb") do |d|
+      permissions = s.info.permissions
+      open(dst, "wb", perm: permissions) do |d|
+        # If permissions don't match, we opened a pre-existing file with
+        # different permissions and need to change them explicitly.
+        # The permission change does not have any effect on the open file descriptor d.
+        if d.info.permissions != permissions
+          d.chmod(permissions)
+        end
+
         # TODO use sendfile or copy_file_range syscall. See #8926, #8919
         IO.copy(s, d)
-        d.flush # need to flush in case permissions are read-only
-
-        # Set the permissions after the content is written in case src permissions is read-only
-        d.chmod(s.info.permissions)
       end
     end
   end

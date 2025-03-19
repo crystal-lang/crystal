@@ -659,6 +659,38 @@ describe "Code gen: class" do
       )).to_string.should eq("Baz")
   end
 
+  it "does not combine types with same name but different file scopes (#15503)" do
+    run(<<-CRYSTAL, Int32, filename: "foo.cr").should eq(11)
+      module Foo
+        def self.foo
+          1
+        end
+      end
+
+      alias Bar = Foo
+
+      {% Bar %} # forces immediate resolution of `Bar`
+
+      private module Foo
+        def self.foo
+          10
+        end
+      end
+
+      module Baz
+        def self.foo
+          100
+        end
+      end
+
+      def foo(x)
+        x.foo
+      end
+
+      foo(Foo || Baz) &+ foo(Bar || Baz)
+      CRYSTAL
+  end
+
   it "builds generic class bug" do
     codegen(%(
       abstract class Base
