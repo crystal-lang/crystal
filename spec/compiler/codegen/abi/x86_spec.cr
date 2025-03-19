@@ -1,19 +1,26 @@
+{% skip_file if flag?(:win32) %} # 32-bit windows is not supported
+
 require "spec"
 require "llvm"
+require "compiler/crystal/codegen/abi/x86"
 
-{% if LibLLVM::BUILT_TARGETS.includes?(:arm) %}
-  LLVM.init_arm
+{% if LibLLVM::BUILT_TARGETS.includes?(:x86) %}
+  LLVM.init_x86
 {% end %}
 
 private def abi
-  triple = "arm-unknown-linux-gnueabihf"
+  triple = {% if flag?(:darwin) %}
+             "i686-unknown-linux-gnu"
+           {% else %}
+             LLVM.default_target_triple.gsub(/^(.+?)-/, "i686-")
+           {% end %}
   target = LLVM::Target.from_triple(triple)
   machine = target.create_target_machine(triple)
   machine.enable_global_isel = false
-  LLVM::ABI::ARM.new(machine)
+  Crystal::ABI::X86.new(machine)
 end
 
-private def test(msg, &block : LLVM::ABI, LLVM::Context ->)
+private def test(msg, &block : Crystal::ABI, LLVM::Context ->)
   it msg do
     abi = abi()
     ctx = LLVM::Context.new
@@ -21,9 +28,9 @@ private def test(msg, &block : LLVM::ABI, LLVM::Context ->)
   end
 end
 
-class LLVM::ABI
-  describe ARM do
-    {% if LibLLVM::BUILT_TARGETS.includes?(:arm) %}
+class Crystal::ABI
+  describe X86 do
+    {% if LibLLVM::BUILT_TARGETS.includes?(:x86) %}
       describe "align" do
         test "for integer" do |abi, ctx|
           abi.align(ctx.int1).should be_a(::Int32)
@@ -31,7 +38,7 @@ class LLVM::ABI
           abi.align(ctx.int8).should eq(1)
           abi.align(ctx.int16).should eq(2)
           abi.align(ctx.int32).should eq(4)
-          abi.align(ctx.int64).should eq(8)
+          abi.align(ctx.int64).should eq(4)
         end
 
         test "for pointer" do |abi, ctx|
@@ -43,11 +50,11 @@ class LLVM::ABI
         end
 
         test "for double" do |abi, ctx|
-          abi.align(ctx.double).should eq(8)
+          abi.align(ctx.double).should eq(4)
         end
 
         test "for struct" do |abi, ctx|
-          abi.align(ctx.struct([ctx.int32, ctx.int64])).should eq(8)
+          abi.align(ctx.struct([ctx.int32, ctx.int64])).should eq(4)
           abi.align(ctx.struct([ctx.int8, ctx.int16])).should eq(2)
         end
 
@@ -83,7 +90,7 @@ class LLVM::ABI
         end
 
         test "for struct" do |abi, ctx|
-          abi.size(ctx.struct([ctx.int32, ctx.int64])).should eq(16)
+          abi.size(ctx.struct([ctx.int32, ctx.int64])).should eq(12)
           abi.size(ctx.struct([ctx.int16, ctx.int8])).should eq(4)
           abi.size(ctx.struct([ctx.int32, ctx.int8, ctx.int8])).should eq(8)
         end
@@ -117,8 +124,8 @@ class LLVM::ABI
           info = abi.abi_info(arg_types, return_type, true, ctx)
           info.arg_types.size.should eq(1)
 
-          info.arg_types[0].should eq(ArgType.direct(str, cast: ctx.int32.array(1)))
-          info.return_type.should eq(ArgType.direct(str, cast: ctx.int32))
+          info.arg_types[0].should eq(ArgType.indirect(str, attr: LLVM::Attribute::ByVal))
+          info.return_type.should eq(ArgType.indirect(str, attr: LLVM::Attribute::StructRet))
         end
 
         test "does with structs between 64 and 128 bits" do |abi, ctx|
@@ -129,8 +136,8 @@ class LLVM::ABI
           info = abi.abi_info(arg_types, return_type, true, ctx)
           info.arg_types.size.should eq(1)
 
-          info.arg_types[0].should eq(ArgType.direct(str, cast: ctx.int64.array(2)))
-          info.return_type.should eq(ArgType.indirect(str, Attribute::StructRet))
+          info.arg_types[0].should eq(ArgType.indirect(str, attr: LLVM::Attribute::ByVal))
+          info.return_type.should eq(ArgType.indirect(str, attr: LLVM::Attribute::StructRet))
         end
 
         test "does with structs between 64 and 128 bits" do |abi, ctx|
@@ -141,8 +148,8 @@ class LLVM::ABI
           info = abi.abi_info(arg_types, return_type, true, ctx)
           info.arg_types.size.should eq(1)
 
-          info.arg_types[0].should eq(ArgType.direct(str, cast: ctx.int64.array(3)))
-          info.return_type.should eq(ArgType.indirect(str, Attribute::StructRet))
+          info.arg_types[0].should eq(ArgType.indirect(str, LLVM::Attribute::ByVal))
+          info.return_type.should eq(ArgType.indirect(str, LLVM::Attribute::StructRet))
         end
       end
     {% end %}
