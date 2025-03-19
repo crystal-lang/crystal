@@ -185,6 +185,8 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   def write(file_descriptor : System::FileDescriptor, slice : Bytes) : Int32
     async_rw(LibC::IORING_OP_WRITE, file_descriptor.fd, slice, file_descriptor.@write_timeout) do |errno|
       case errno
+      when Errno::EINTR
+        # retry
       when Errno::ECANCELED
         raise IO::TimeoutError.new("Write timed out")
       when Errno::EBADF
@@ -227,6 +229,8 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   def write(socket : ::Socket, slice : Bytes) : Int32
     async_rw(LibC::IORING_OP_WRITE, socket.fd, slice, socket.@write_timeout) do |errno|
       case errno
+      when Errno::EINTR
+        # retry
       when Errno::ECANCELED
         raise IO::TimeoutError.new("Write timed out")
       else
@@ -325,17 +329,19 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   # internals
 
   private def async_rw(opcode, fd, slice, timeout, &)
-    res = async(opcode, timeout) do |sqe|
-      sqe.value.fd = fd
-      sqe.value.u1.off = -1
-      sqe.value.addr = slice.to_unsafe.address.to_u64!
-      sqe.value.len = slice.size
-    end
+    loop do
+      res = async(opcode, timeout) do |sqe|
+        sqe.value.fd = fd
+        sqe.value.u1.off = -1
+        sqe.value.addr = slice.to_unsafe.address.to_u64!
+        sqe.value.len = slice.size
+      end
 
-    if res < 0
-      yield Errno.new(-res)
-    else
-      res
+      if res >= 0
+        return res
+      else
+        yield Errno.new(-res)
+      end
     end
   end
 
