@@ -10,6 +10,8 @@ param(
 Setup-Git -Path $BuildTree -Url https://github.com/PCRE2Project/pcre2.git -Ref pcre2-$Version
 
 Run-InDirectory $BuildTree {
+    & $git submodule update --init
+
     $args = "-DPCRE2_BUILD_PCRE2GREP=OFF -DPCRE2_BUILD_TESTS=OFF -DPCRE2_SUPPORT_UNICODE=ON -DPCRE2_SUPPORT_JIT=ON -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF"
     if ($Dynamic) {
         $args = "-DBUILD_STATIC_LIBS=OFF -DBUILD_SHARED_LIBS=ON $args"

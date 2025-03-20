@@ -4,6 +4,7 @@ require "../syntax/visitor"
 require "../semantic"
 require "../program"
 require "./llvm_builder_helper"
+require "./abi/*"
 
 module Crystal
   MAIN_NAME           = "__crystal_main"
@@ -245,7 +246,7 @@ module Crystal
     record StringKey, mod : LLVM::Module, string : String
     record ModuleInfo, mod : LLVM::Module, typer : LLVMTyper, builder : CrystalLLVMBuilder
 
-    @abi : LLVM::ABI
+    @abi : ABI
     @main_ret_type : Type
     @argc : LLVM::Value
     @argv : LLVM::Value
@@ -272,7 +273,7 @@ module Crystal
                    @debug = Debug::Default,
                    @frame_pointers : FramePointers = :auto,
                    @llvm_context : LLVM::Context = LLVM::Context.new)
-      @abi = @program.target_machine.abi
+      @abi = ABI.from(@program.target_machine)
       # LLVM::Context.register(@llvm_context, "main")
       @llvm_mod = configure_module(@llvm_context.new_module("main_module"))
       @main_mod = @llvm_mod
@@ -329,7 +330,7 @@ module Crystal
         symbol_table.initializer = llvm_type(@program.string).const_array(@symbol_table_values)
       end
 
-      program.const_slices.each do |info|
+      program.const_slices.each_value do |info|
         define_slice_constant(info)
       end
 
@@ -411,7 +412,16 @@ module Crystal
     end
 
     def define_symbol_table(llvm_mod, llvm_typer)
-      llvm_mod.globals.add llvm_typer.llvm_type(@program.string).array(@symbol_table_values.size), SYMBOL_TABLE_NAME
+      llvm_mod.globals[SYMBOL_TABLE_NAME]? || begin
+        global = llvm_mod.globals.add llvm_typer.llvm_type(@program.string).array(@symbol_table_values.size), SYMBOL_TABLE_NAME
+        if llvm_mod != @main_mod
+          global.linkage = LLVM::Linkage::External
+        elsif @single_module
+          global.linkage = LLVM::Linkage::Internal
+        end
+        global.global_constant = true
+        global
+      end
     end
 
     def define_slice_constant(info : Program::ConstSliceInfo)

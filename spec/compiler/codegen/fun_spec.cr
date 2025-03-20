@@ -18,4 +18,22 @@ describe "Codegen: fun" do
     mod.functions["foo"].linkage.should eq(LLVM::Linkage::External)
     mod.functions["__crystal_foo"].linkage.should eq(LLVM::Linkage::Internal)
   end
+
+  it "defines same fun 3 or more times (#15523)" do
+    run(<<-CRYSTAL, Int32).should eq(3)
+      fun foo : Int32
+        1
+      end
+
+      fun foo : Int32
+        2
+      end
+
+      fun foo : Int32
+        3
+      end
+
+      foo
+      CRYSTAL
+  end
 end

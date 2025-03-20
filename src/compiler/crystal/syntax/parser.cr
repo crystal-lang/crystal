@@ -3228,9 +3228,11 @@ module Crystal
         when .macro_literal?
           pieces << MacroLiteral.new(@token.value.to_s).at(@token.location).at_end(token_end_location)
         when .macro_expression_start?
-          pieces << MacroExpression.new(parse_macro_expression).at(@token.location).at_end(token_end_location)
+          location = @token.location
+          exp = MacroExpression.new(parse_macro_expression).at(location)
           check_macro_expression_end
           skip_whitespace = check_macro_skip_whitespace
+          pieces << exp.at_end(token_end_location)
         when .macro_control_start?
           macro_control = parse_macro_control(start_location, macro_state)
           if macro_control
@@ -4235,6 +4237,8 @@ module Crystal
     def parse_var_or_call(global = false, force_call = false, location = @token.location)
       end_location = token_end_location
       doc = @token.doc
+
+      check AtomicWithMethodCheck
 
       if @token.type.op_bang?
         # only trigger from `parse_when_expression`
