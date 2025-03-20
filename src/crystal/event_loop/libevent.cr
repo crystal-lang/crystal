@@ -42,6 +42,11 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
     event_base.loop_exit
   end
 
+  def sleep(duration : ::Time::Span) : Nil
+    Fiber.current.resume_event.add(duration)
+    Fiber.suspend
+  end
+
   # Create a new resume event for a fiber (sleep).
   def create_resume_event(fiber : Fiber) : Crystal::EventLoop::LibEvent::Event
     event_base.new_event(-1, LibEvent2::EventFlags::None, fiber) do |s, flags, data|
