@@ -34,7 +34,7 @@ module Crystal::System::Socket
   # Yields an `Socket::BindError` if the binding failed.
   private def system_bind(addr, addrstr, &)
     unless LibC.bind(fd, addr, addr.size) == 0
-      yield ::Socket::BindError.from_errno("Could not bind to '#{addrstr}'")
+      yield ::Socket::BindError.from_errno("Could not bind to address", address: addrstr)
     end
   end
 
@@ -141,14 +141,14 @@ module Crystal::System::Socket
 
   private def system_getsockopt(fd, optname, optval, level = LibC::SOL_SOCKET)
     system_getsockopt(fd, optname, optval, level) { |value| return value }
-    raise ::Socket::Error.from_errno("getsockopt #{optname}")
+    raise ::Socket::Error.from_errno("getsockopt", optname: optname)
   end
 
   private def system_setsockopt(fd, optname, optval, level = LibC::SOL_SOCKET)
     optsize = LibC::SocklenT.new(sizeof(typeof(optval)))
 
     ret = LibC.setsockopt(fd, level, optname, pointerof(optval), optsize)
-    raise ::Socket::Error.from_errno("setsockopt #{optname}") if ret == -1
+    raise ::Socket::Error.from_errno("setsockopt", optname: optname) if ret == -1
     ret
   end
 

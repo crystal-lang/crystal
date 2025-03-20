@@ -50,7 +50,7 @@ class Socket < IO
   end
 
   class Error < IO::Error
-    private def self.new_from_os_error(message, os_error, **opts)
+    private def self.new_from_os_error(message, os_error, *, address = nil, optname = nil, **opts)
       case os_error
       when Errno::ECONNREFUSED
         Socket::ConnectError.new(message, **opts)
@@ -59,6 +59,14 @@ class Socket < IO
       else
         super message, os_error, **opts
       end
+    end
+
+    protected def self.build_message(message, *, optname) : String
+      "#{message} #{optname}"
+    end
+
+    protected def self.build_message(message, *, address) : String
+      "#{message} '#{address.inspect_unquoted}'"
     end
   end
 

@@ -107,10 +107,25 @@ module SystemError
       self.new(message, **opts)
     end
 
-    # Builds an instance of the exception from the current windows error value (`WinError.value`).
+    # Builds an instance of the exception from the current Windows error value (`WinError.value`).
     #
     # The system message corresponding to the OS error value amends the *message*.
     # Additional keyword arguments are forwarded to the exception initializer `.new_from_os_error`.
+    #
+    # WARNING: On MinGW-w64, dynamic allocations can reset the error value to
+    # `WinError::ERROR_SUCCESS` before it is retrieved in this method. This
+    # includes, but is not limited to, string interpolation and concatenation
+    # for the *message* argument:
+    #
+    # ```
+    # WinError.value = WinError::ERROR_INVALID_PARAMETER
+    # IO::Error.from_wsa_error("foobar")      # => #<IO::Error:foobar: The parameter is incorrect.>
+    # IO::Error.from_wsa_error("foo" + "bar") # => #<IO::Error:foobar: The operation completed successfully.>
+    # ```
+    #
+    # Any message formatting should be done in `.build_message` or
+    # `.os_error_message` instead, or `WinError.value` should be explicitly
+    # called before this method.
     def from_winerror(message : String?, **opts)
       from_os_error(message, WinError.value, **opts)
     end
@@ -119,6 +134,23 @@ module SystemError
     #
     # The system message corresponding to the OS error value amends the *message*.
     # Additional keyword arguments are forwarded to the exception initializer.
+    #
+    # WARNING: On MinGW-w64, dynamic allocations can reset the error value to
+    # `WinError::ERROR_SUCCESS` before it is retrieved in this method. This
+    # includes, but is not limited to, string interpolation and concatenation
+    # for the *message* argument:
+    #
+    # ```
+    # require "socket"
+    #
+    # WinError.wsa_value = WinError::WSAEBADF
+    # Socket::Error.from_wsa_error("foobar")      # => #<Socket::Error:foobar: The file handle supplied is not valid.>
+    # Socket::Error.from_wsa_error("foo" + "bar") # => #<Socket::Error:foobar: The operation completed successfully.>
+    # ```
+    #
+    # Any message formatting should be done in `.build_message` or
+    # `.os_error_message` instead, or `WinError.wsa_value` should be explicitly
+    # called before this method.
     def from_wsa_error(message : String? = nil, **opts)
       from_os_error(message, WinError.wsa_value, **opts)
     end
