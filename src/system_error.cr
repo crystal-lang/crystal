@@ -124,8 +124,8 @@ module SystemError
     # ```
     #
     # Any message formatting should be done in `.build_message` or
-    # `.os_error_message` instead, or `WinError.value` should be explicitly
-    # called before this method.
+    # `.os_error_message` instead, or `WinError.value` and `.from_os_error`
+    # should be explicitly called.
     def from_winerror(message : String?, **opts)
       from_os_error(message, WinError.value, **opts)
     end
@@ -149,8 +149,8 @@ module SystemError
     # ```
     #
     # Any message formatting should be done in `.build_message` or
-    # `.os_error_message` instead, or `WinError.wsa_value` should be explicitly
-    # called before this method.
+    # `.os_error_message` instead, or `WinError.wsa_value` and `.from_os_error`
+    # should be explicitly called.
     def from_wsa_error(message : String? = nil, **opts)
       from_os_error(message, WinError.wsa_value, **opts)
     end
