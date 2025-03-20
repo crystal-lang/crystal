@@ -10,7 +10,7 @@ module Fiber::ExecutionContext
   #
   # The fiber can still spawn fibers into other execution contexts. Since it can
   # be inconvenient to pass an execution context around, calls to `::spawn` will
-  # spawn a fiber into the specified +spawn_context+ that defaults to the
+  # spawn a fiber into the specified *spawn_context* that defaults to the
   # default execution context.
   #
   # Isolated fibers can normally communicate with other fibers running in other
