@@ -2857,6 +2857,14 @@ describe Crystal::Formatter do
     def baz; end
     CRYSTAL
 
+  # 15180
+  assert_format <<-CRYSTAL
+    x = uninitialized Foo
+    {% begin %}
+      x = foo(x)
+    {% end %}
+    CRYSTAL
+
   # CVE-2021-42574
   describe "Unicode bi-directional control characters" do
     ['\u202A', '\u202B', '\u202C', '\u202D', '\u202E', '\u2066', '\u2067', '\u2068', '\u2069'].each do |char|
