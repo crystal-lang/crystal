@@ -224,11 +224,11 @@ struct Path
       return anchor.to_s if windows? && windows_drive?
       "."
     else # Path has a parent (ex. "a/a", "/home/user//", "C://Users/mmm", "\\wsl.localhost\Debian")
-      return String.new(slice[0, 1]) if pos == -1
       if windows? && (anchor = self.anchor) && pos < anchor.to_s.bytesize
-        return anchor.to_s
+        anchor.to_s
+      else
+        @name.byte_slice(0, {pos, 0}.max + 1)
       end
-      String.new(slice[0, pos + 1])
     end
   end
 
