@@ -292,7 +292,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
       ret = LibC.WSASendTo(socket.fd, pointerof(wsabuf), 1, out bytes_sent, 0, address, address.size, overlapped, nil)
       {ret, bytes_sent}
     end
-    raise ::Socket::Error.from_wsa_error("Error sending datagram to #{address}") if bytes_written == -1
+    raise ::Socket::Error.from_wsa_error("Error sending datagram to address", address: address) if bytes_written == -1
 
     # to_i32 is fine because string/slice sizes are an Int32
     bytes_written.to_i32
