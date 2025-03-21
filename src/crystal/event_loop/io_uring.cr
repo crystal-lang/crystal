@@ -105,10 +105,8 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
       fiber = event.value.fiber
 
       case event.value.type
-      when :async
+      when :async, :sleep
         # nothing to do
-      when :sleep
-        fiber.@resume_event.as(FiberEvent).clear
       when :select_timeout
         next unless select_action = fiber.timeout_select_action
         fiber.timeout_select_action = nil
@@ -149,13 +147,9 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
 
   # fiber interface, see Crystal::EventLoop
 
-  # def sleep(duration : Time::Span) : Nil
-  #   res = async_timeout(:sleep, duration)
-  #   # assert(res == -ETIME)
-  # end
-
-  def create_resume_event(fiber : Fiber) : FiberEvent
-    FiberEvent.new(:sleep, fiber)
+  def sleep(duration : Time::Span) : Nil
+    res = async_timeout(:sleep, duration)
+    # assert(res == -ETIME)
   end
 
   def create_timeout_event(fiber : Fiber) : FiberEvent
@@ -381,14 +375,14 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
     end
   end
 
-  private def async_timeout(type, duration, &)
+  private def async_timeout(type : Event::Type, duration)
     event = Event.new(type, Fiber.current)
 
     timespec = LibC::Timespec.new
     timespec.tv_sec = typeof(timespec.tv_sec).new(duration.@seconds)
     timespec.tv_nsec = typeof(timespec.tv_nsec).new(duration.@nanoseconds)
 
-    prepare(pointerof(event), LibC::IORING_OP_TIMEOUT, timeout) do |sqe|
+    prepare(pointerof(event), LibC::IORING_OP_TIMEOUT, duration) do |sqe|
       sqe.value.addr = pointerof(timespec).address.to_u64!
       sqe.value.len = 1
     end
