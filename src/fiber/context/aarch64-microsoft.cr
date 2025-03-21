@@ -55,6 +55,9 @@ class Fiber
 
       mov     x19, sp               // current_context.stack_top = sp
       str     x19, [x0, #0]
+      {% if flag?(:execution_context) %}
+      dmb     ish                   // barrier: ensure registers are stored
+      {% end %}
       mov     x19, #1               // current_context.resumable = 1
       str     x19, [x0, #8]
 
@@ -112,6 +115,9 @@ class Fiber
 
       mov     x19, sp               // current_context.stack_top = sp
       str     x19, [$0, #0]
+      {% if flag?(:execution_context) %}
+      dmb     ish                   // barrier: ensure registers are stored
+      {% end %}
       mov     x19, #1               // current_context.resumable = 1
       str     x19, [$0, #8]
 
