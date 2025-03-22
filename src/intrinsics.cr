@@ -373,6 +373,15 @@ module Intrinsics
   end
 end
 
+# Invokes an execution trap to catch the attention of a debugger. This has the
+# same effect as placing a breakpoint in debuggers or IDEs supporting them.
+#
+# Execution is allowed to continue if the debugger instructs so. If no debugger
+# is attached, usually the current process terminates with a status that
+# corresponds to `Process::ExitReason::Breakpoint`.
+#
+# Inside an interpreter session, this drops into the REPL's pry mode instead of
+# a system debugger.
 macro debugger
   ::Intrinsics.debugtrap
 end
