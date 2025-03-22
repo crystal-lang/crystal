@@ -3657,7 +3657,11 @@ module Crystal
     end
 
     def visit(node : UninitializedVar)
-      accept node.var
+      var = node.var
+
+      @vars.last.add var.name if var.is_a?(Var)
+
+      accept var
       skip_space_or_newline
       write_token " ", :OP_EQ, " "
       skip_space_or_newline
