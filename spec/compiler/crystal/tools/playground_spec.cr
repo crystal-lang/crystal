@@ -8,11 +8,11 @@ private def instrument(source)
   instrumented.to_s
 end
 
-private def assert_agent(source, expected)
+private def assert_agent(source, expected, *, file : String = __FILE__, line : Int32 = __LINE__)
   # parse/to_s expected so block syntax and spaces do not bother
   expected = Parser.new(expected).parse.to_s
 
-  instrument(source).should contain(expected)
+  instrument(source).should contain(expected), file: file, line: line
 
   # whatever case should work before it should work with appended lines
   instrument("#{source}\n1\n").should contain(expected)
@@ -520,11 +520,7 @@ describe Playground::AgentInstrumentorTransformer do
             _p.i(5) { 'b' }
           end
         end
-        _p.i(7) do
-          baz do
-            'c'
-          end
-        end
+        _p.i(7) { baz { 'c' } }
       end
     end
     CRYSTAL

@@ -82,9 +82,7 @@ describe "Normalize: array literal" do
       __temp_2 = [2]
       __temp_3 = Foo.new
       __temp_3 << __temp_1
-      __temp_2.each do |__temp_4|
-        __temp_3 << __temp_4
-      end
+      __temp_2.each { |__temp_4| __temp_3 << __temp_4 }
       __temp_3
       CRYSTAL
   end
@@ -95,9 +93,7 @@ describe "Normalize: array literal" do
       __temp_2 = [2]
       __temp_3 = Foo(typeof(__temp_1, ::Enumerable.element_type(__temp_2))).new
       __temp_3 << __temp_1
-      __temp_2.each do |__temp_4|
-        __temp_3 << __temp_4
-      end
+      __temp_2.each { |__temp_4| __temp_3 << __temp_4 }
       __temp_3
       CRYSTAL
   end
