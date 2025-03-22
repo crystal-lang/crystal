@@ -200,10 +200,32 @@ module Crystal::System::File
 
   private def self.accessible?(path, *, check_writable, follow_symlinks)
     if follow_symlinks
-      path = realpath?(path) || return false
+      path = realpath?(path, check_exists: false) || return false
     end
 
-    attributes = LibC.GetFileAttributesW(System.to_wstr(path))
+    handle = LibC.CreateFileW(
+      System.to_wstr(path),
+      LibC::FILE_READ_ATTRIBUTES,
+      LibC::DEFAULT_SHARE_MODE,
+      nil,
+      LibC::OPEN_EXISTING,
+      LibC::FILE_FLAG_BACKUP_SEMANTICS | LibC::FILE_FLAG_OPEN_REPARSE_POINT,
+      LibC::HANDLE.null,
+    )
+    return false if handle == LibC::INVALID_HANDLE_VALUE
+
+    begin
+      info = uninitialized LibC::FILE_ATTRIBUTE_TAG_INFO
+      if LibC.GetFileInformationByHandleEx(handle, LibC::FILE_INFO_BY_HANDLE_CLASS::FileAttributeTagInfo, pointerof(info), sizeof(typeof(info))) == 0
+        # this can happen to special files like NUL and COM1, but we managed to
+        # open them anyway, so assume they are readable and writable
+        return true
+      end
+      attributes = info.fileAttributes
+    ensure
+      LibC.CloseHandle(handle)
+    end
+
     return false if attributes == LibC::INVALID_FILE_ATTRIBUTES
     return true if attributes.bits_set?(LibC::FILE_ATTRIBUTE_DIRECTORY)
     return false if check_writable && attributes.bits_set?(LibC::FILE_ATTRIBUTE_READONLY)
@@ -298,7 +320,7 @@ module Crystal::System::File
 
   private REALPATH_SYMLINK_LIMIT = 100
 
-  private def self.realpath?(path : String) : String?
+  private def self.realpath?(path : String, *, check_exists : Bool = true) : String?
     REALPATH_SYMLINK_LIMIT.times do
       win_path = System.to_wstr(path)
 
@@ -319,7 +341,7 @@ module Crystal::System::File
         next
       end
 
-      return exists?(realpath, follow_symlinks: false) ? realpath : nil
+      return !check_exists || exists?(realpath, follow_symlinks: false) ? realpath : nil
     end
 
     raise ::File::Error.from_os_error("Too many symbolic links", Errno::ELOOP, file: path)

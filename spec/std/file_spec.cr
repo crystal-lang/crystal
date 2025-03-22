@@ -223,6 +223,10 @@ describe "File" do
         File.exists?(bad_path).should be_false
       end
     end
+
+    it "gives true for null file (#15019)" do
+      File.exists?(File::NULL).should be_true
+    end
   end
 
   describe "file?" do
