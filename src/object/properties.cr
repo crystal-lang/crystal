@@ -334,15 +334,10 @@ class Object
         {% type = nil %}
       {% end %}
 
-      {% if block %} @@__{{var_name}}_flag = false {% end %}
-
       def self.{{var_name}} {% if type %} : {{type}} {% end %}
         {% if block %}
           if (%value = @@{{var_name}}).nil?
-            ::Crystal.once(pointerof(@@__{{var_name}}_flag)) do
-              @@{{var_name}} = {{yield}} if @@{{var_name}}.nil?
-            end
-            @@{{var_name}}.not_nil!
+            @@{{var_name}} = {{yield}}
           else
             %value
           end
@@ -394,15 +389,10 @@ class Object
         {% type = nil %}
       {% end %}
 
-      {% if block %} @@__{{var_name}}_flag = false {% end %}
-
       def self.{{var_name}}? {% if type %} : {{type}} {% end %}
         {% if block %}
           if (%value = @@{{var_name}}).nil?
-            ::Crystal.once(pointerof(@@__{{var_name}}_flag)) do
-              @@{{var_name}} = {{yield}} if @@{{var_name}}.nil?
-            end
-            @@{{var_name}}.not_nil!
+            @@{{var_name}} = {{yield}}
           else
             %value
           end
@@ -538,15 +528,10 @@ class Object
         {% type = nil %}
       {% end %}
 
-      {% if block %} @@__{{var_name}}_flag = false {% end %}
-
       def self.{{var_name}} {% if type %} : {{type}} {% end %}
         {% if block %}
           if (%value = @@{{var_name}}).nil?
-            ::Crystal.once(pointerof(@@__{{var_name}}_flag)) do
-              @@{{var_name}} = {{yield}} if @@{{var_name}}.nil?
-            end
-            @@{{var_name}}.not_nil!
+            @@{{var_name}} = {{yield}}
           else
             %value
           end
@@ -584,15 +569,10 @@ class Object
         {% type = nil %}
       {% end %}
 
-      {% if block %} @@__{{var_name}}_flag = false {% end %}
-
       def self.{{var_name}}? {% if type %} : {{type}} {% end %}
         {% if block %}
           if (%value = @@{{var_name}}).nil?
-            ::Crystal.once(pointerof(@@__{{var_name}}_flag)) do
-              @@{{var_name}} = {{yield}} if @@{{var_name}}.nil?
-            end
-            @@{{var_name}}.not_nil!
+            @@{{var_name}} = {{yield}}
           else
             %value
           end
