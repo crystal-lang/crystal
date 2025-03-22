@@ -209,7 +209,7 @@ module Crystal::System::File
       LibC::DEFAULT_SHARE_MODE,
       nil,
       LibC::OPEN_EXISTING,
-      LibC::FILE_FLAG_BACKUP_SEMANTICS,
+      LibC::FILE_FLAG_BACKUP_SEMANTICS | LibC::FILE_FLAG_OPEN_REPARSE_POINT,
       LibC::HANDLE.null,
     )
     return false if handle == LibC::INVALID_HANDLE_VALUE
