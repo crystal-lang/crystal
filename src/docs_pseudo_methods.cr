@@ -61,6 +61,43 @@ end
 def __crystal_pseudo_instance_sizeof(type : Class) : Int32
 end
 
+# Returns the alignment of the given type as number of bytes.
+#
+# *type* must be a constant or `typeof()` expression. It cannot be evaluated
+# at runtime.
+#
+# ```
+# alignof(Int32)        # => 4
+# alignof(Float64)      # usually 4 or 8
+# alignof(typeof(true)) # => 1
+#
+# For `Reference` types, the alignment is the same as the alignment of a pointer:
+#
+# ```
+# # On a 64 bits machine
+# alignof(Pointer(Int32)) # => 8
+# alignof(String)         # => 8
+# ```
+#
+# This is because a `Reference`'s memory is allocated on the heap and a pointer
+# to it is passed around. The alignment of a class on the heap can be determined
+# using `#instance_alignof`.
+def __crystal_pseudo_alignof(type : Class) : Int32
+end
+
+# Returns the instance alignment of the given class as number of bytes.
+#
+# *type* must be a constant or `typeof()` expression. It cannot be evaluated at runtime.
+#
+# ```
+# instance_alignof(String)    # => 4
+# instance_alignof(Exception) # => 8
+# ```
+#
+# See `alignof` for determining the size of value types.
+def __crystal_pseudo_instance_alignof(type : Class) : Int32
+end
+
 # Returns a `Pointer` to the contents of a variable.
 #
 # *variable* must be a variable (local, instance, class or library).
