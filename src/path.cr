@@ -223,12 +223,12 @@ struct Path
     when 1 # Path has no parent (ex. "hello/", "C:/", "crystal")
       return anchor.to_s if windows? && windows_drive?
       "."
-    else # Path has a parent (ex. "a/a", "/home/user//", "C://Users/mmm")
-      return String.new(slice[0, 1]) if pos == -1
-      if windows? && pos == 1 && slice.unsafe_fetch(pos) === ':' && (anchor = self.anchor)
-        return anchor.to_s
+    else # Path has a parent (ex. "a/a", "/home/user//", "C://Users/mmm", "\\wsl.localhost\Debian")
+      if windows? && (anchor = self.anchor) && pos < anchor.to_s.bytesize
+        anchor.to_s
+      else
+        @name.byte_slice(0, {pos, 0}.max + 1)
       end
-      String.new(slice[0, pos + 1])
     end
   end
 
