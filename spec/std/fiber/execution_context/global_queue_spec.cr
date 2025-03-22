@@ -1,4 +1,5 @@
 require "./spec_helper"
+require "../../../support/thread"
 
 describe Fiber::ExecutionContext::GlobalQueue do
   it "#initialize" do
@@ -98,10 +99,9 @@ describe Fiber::ExecutionContext::GlobalQueue do
       increments = 15
       queue = Fiber::ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
       ready = Thread::WaitGroup.new(n)
-      shutdown = Thread::WaitGroup.new(n)
 
-      n.times do |i|
-        Thread.new("ONE-#{i}") do |thread|
+      threads = Array(Thread).new(n) do |i|
+        new_thread("ONE-#{i}") do
           slept = 0
           ready.done
 
@@ -117,10 +117,6 @@ describe Fiber::ExecutionContext::GlobalQueue do
               break
             end
           end
-        rescue exception
-          Crystal::System.print_error "\nthread: #{thread.name}: exception: #{exception}"
-        ensure
-          shutdown.done
         end
       end
       ready.wait
@@ -130,7 +126,7 @@ describe Fiber::ExecutionContext::GlobalQueue do
         Thread.sleep(10.nanoseconds) if i % 10 == 9
       end
 
-      shutdown.wait
+      threads.each(&.join)
 
       # must have dequeued each fiber exactly X times
       fibers.each { |fc| fc.counter.should eq(increments) }
@@ -146,10 +142,9 @@ describe Fiber::ExecutionContext::GlobalQueue do
 
       queue = Fiber::ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
       ready = Thread::WaitGroup.new(n)
-      shutdown = Thread::WaitGroup.new(n)
 
-      n.times do |i|
-        Thread.new("BULK-#{i}") do |thread|
+      threads = Array(Thread).new(n) do |i|
+        new_thread("BULK-#{i}") do
           slept = 0
 
           r = Fiber::ExecutionContext::Runnables(3).new(queue)
@@ -200,10 +195,6 @@ describe Fiber::ExecutionContext::GlobalQueue do
             slept += 1
             Thread.sleep(1.nanosecond) # don't burn CPU
           end
-        rescue exception
-          Crystal::System.print_error "\nthread #{thread.name} raised: #{exception}"
-        ensure
-          shutdown.done
         end
       end
       ready.wait
@@ -216,7 +207,7 @@ describe Fiber::ExecutionContext::GlobalQueue do
         Thread.sleep(10.nanoseconds) if i % 4 == 3
       end
 
-      shutdown.wait
+      threads.each(&.join)
 
       # must have dequeued each fiber exactly X times (no less, no more)
       fibers.each { |fc| fc.counter.should eq(increments) }
