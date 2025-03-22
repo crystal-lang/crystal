@@ -268,7 +268,7 @@ describe Process do
     end
 
     describe "does not execute batch files" do
-      %w[.bat .Bat .BAT .cmd .cmD .CmD].each do |ext|
+      %w[.bat .Bat .BAT .cmd .cmD .CmD .bat\  .cmd\ ... .bat.\ .].each do |ext|
         it ext do
           with_tempfile "process_run#{ext}" do |path|
             File.write(path, "echo '#{ext}'\n")
