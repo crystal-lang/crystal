@@ -339,10 +339,17 @@ class Object
       def self.{{var_name}} {% if type %} : {{type}} {% end %}
         {% if block %}
           if (%value = @@{{var_name}}).nil?
-            ::Crystal.once(pointerof(@@__{{var_name}}_flag)) do
-              @@{{var_name}} = {{yield}} if @@{{var_name}}.nil?
-            end
-            @@{{var_name}}.not_nil!
+            # FIXME: we don't enable Crystal.once by default because it
+            # can cause type inference regressions in edge cases, see
+            # https://github.com/crystal-lang/crystal/issues/15556
+            {% if flag?(:preview_mt) %}
+              ::Crystal.once(pointerof(@@__{{var_name}}_flag)) do
+                @@{{var_name}} = {{yield}} if @@{{var_name}}.nil?
+              end
+              @@{{var_name}}.not_nil!
+            {% else %}
+              @@{{var_name}} = {{yield}}
+            {% end %}
           else
             %value
           end
@@ -399,10 +406,17 @@ class Object
       def self.{{var_name}}? {% if type %} : {{type}} {% end %}
         {% if block %}
           if (%value = @@{{var_name}}).nil?
-            ::Crystal.once(pointerof(@@__{{var_name}}_flag)) do
-              @@{{var_name}} = {{yield}} if @@{{var_name}}.nil?
-            end
-            @@{{var_name}}.not_nil!
+            # FIXME: we don't enable Crystal.once by default because it
+            # can cause type inference regressions in edge cases, see
+            # https://github.com/crystal-lang/crystal/issues/15556
+            {% if flag?(:preview_mt) %}
+              ::Crystal.once(pointerof(@@__{{var_name}}_flag)) do
+                @@{{var_name}} = {{yield}} if @@{{var_name}}.nil?
+              end
+              @@{{var_name}}.not_nil!
+            {% else %}
+              @@{{var_name}} = {{yield}}
+            {% end %}
           else
             %value
           end
@@ -543,10 +557,17 @@ class Object
       def self.{{var_name}} {% if type %} : {{type}} {% end %}
         {% if block %}
           if (%value = @@{{var_name}}).nil?
-            ::Crystal.once(pointerof(@@__{{var_name}}_flag)) do
-              @@{{var_name}} = {{yield}} if @@{{var_name}}.nil?
-            end
-            @@{{var_name}}.not_nil!
+            # FIXME: we don't enable Crystal.once by default because it
+            # can cause type inference regressions in edge cases, see
+            # https://github.com/crystal-lang/crystal/issues/15556
+            {% if flag?(:preview_mt) %}
+              ::Crystal.once(pointerof(@@__{{var_name}}_flag)) do
+                @@{{var_name}} = {{yield}} if @@{{var_name}}.nil?
+              end
+              @@{{var_name}}.not_nil!
+            {% else %}
+              @@{{var_name}} = {{yield}}
+            {% end %}
           else
             %value
           end
@@ -589,10 +610,17 @@ class Object
       def self.{{var_name}}? {% if type %} : {{type}} {% end %}
         {% if block %}
           if (%value = @@{{var_name}}).nil?
-            ::Crystal.once(pointerof(@@__{{var_name}}_flag)) do
-              @@{{var_name}} = {{yield}} if @@{{var_name}}.nil?
-            end
-            @@{{var_name}}.not_nil!
+            # FIXME: we don't enable Crystal.once by default because it
+            # can cause type inference regressions in edge cases, see
+            # https://github.com/crystal-lang/crystal/issues/15556
+            {% if flag?(:preview_mt) %}
+              ::Crystal.once(pointerof(@@__{{var_name}}_flag)) do
+                @@{{var_name}} = {{yield}} if @@{{var_name}}.nil?
+              end
+              @@{{var_name}}.not_nil!
+            {% else %}
+              @@{{var_name}} = {{yield}}
+            {% end %}
           else
             %value
           end
