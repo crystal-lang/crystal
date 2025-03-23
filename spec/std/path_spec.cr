@@ -191,6 +191,17 @@ describe Path do
     assert_paths("C:\\", ".", "C:\\", &.parent)
     assert_paths("C:/foo", "C:", "C:/", &.parent)
     assert_paths("C:\\foo", ".", "C:\\", &.parent)
+    assert_paths("\\\\.", ".", "\\\\.", &.parent)
+    assert_paths("\\/?", "\\", "\\/?", &.parent)
+    assert_paths("//.", "/", "//.", &.parent)
+    assert_paths("//./", "/", "//./", &.parent)
+    assert_paths("//.\\", "/", "//.\\", &.parent)
+    assert_paths("//./foo", "//.", "//./", &.parent)
+    assert_paths("//.\\foo", "/", "//.\\", &.parent)
+    assert_paths("//?/", "/", "//?/", &.parent)
+    assert_paths("//?\\", "/", "//?\\", &.parent)
+    assert_paths("//?/foo", "//?", "//?/", &.parent)
+    assert_paths("//?\\foo", "/", "//?\\", &.parent)
     assert_paths("/foo/C:/bar", "/foo/C:", "/foo/C:", &.parent)
     assert_paths("//some/share", "//some", "//some/share", &.parent)
     assert_paths("//some/share/", "//some", "//some/share/", &.parent)
@@ -241,6 +252,17 @@ describe Path do
     assert_paths("C:\\folder", ["."], ["C:\\"], &.parents)
     assert_paths("C:\\\\folder", ["."], ["C:\\\\"], &.parents)
     assert_paths("C:\\.", ["."], ["C:\\"], &.parents)
+    assert_paths("\\\\.", ["."], [] of String, &.parents)
+    assert_paths("\\/?", [".", "\\"], [] of String, &.parents)
+    assert_paths("//.", ["//"], [] of String, &.parents)
+    assert_paths("//./", ["//"], [] of String, &.parents)
+    assert_paths("//.\\", ["//"], [] of String, &.parents)
+    assert_paths("//./foo", ["//", "//."], ["//./"], &.parents)
+    assert_paths("//.\\foo", ["//"], ["//.\\"], &.parents)
+    assert_paths("//?/", ["//"], [] of String, &.parents)
+    assert_paths("//?\\", ["//"], [] of String, &.parents)
+    assert_paths("//?/foo", ["//", "//?"], ["//?/"], &.parents)
+    assert_paths("//?\\foo", ["//"], ["//?\\"], &.parents)
     assert_paths("//some/share", ["//", "//some"], [] of String, &.parents)
     assert_paths("//some/share/", ["//", "//some"], [] of String, &.parents)
     assert_paths("//some/share/a", ["//", "//some", "//some/share"], ["//some/share/"], &.parents)
@@ -264,6 +286,19 @@ describe Path do
     assert_paths_raw("C:", ".", "C:", &.dirname)
     assert_paths_raw("C:/", ".", "C:/", &.dirname)
     assert_paths_raw("C:\\", ".", "C:\\", &.dirname)
+    assert_paths_raw("C:/foo", "C:", "C:/", &.dirname)
+    assert_paths_raw("C:\\foo", ".", "C:\\", &.dirname)
+    assert_paths_raw("\\\\.", ".", "\\\\.", &.dirname)
+    assert_paths_raw("\\/?", "\\", "\\/?", &.dirname)
+    assert_paths_raw("//.", "/", "//.", &.dirname)
+    assert_paths_raw("//./", "/", "//./", &.dirname)
+    assert_paths_raw("//.\\", "/", "//.\\", &.dirname)
+    assert_paths_raw("//./foo", "//.", "//./", &.dirname)
+    assert_paths_raw("//.\\foo", "/", "//.\\", &.dirname)
+    assert_paths_raw("//?/", "/", "//?/", &.dirname)
+    assert_paths_raw("//?\\", "/", "//?\\", &.dirname)
+    assert_paths_raw("//?/foo", "//?", "//?/", &.dirname)
+    assert_paths_raw("//?\\foo", "/", "//?\\", &.dirname)
     assert_paths_raw("//some/share", "//some", "//some/share", &.dirname)
     assert_paths_raw("//some/share/", "//some", "//some/share/", &.dirname)
     assert_paths_raw("//some/share/a", "//some/share", "//some/share/", &.dirname)
@@ -355,6 +390,14 @@ describe Path do
     it_iterates_parts("C:\\folder", ["C:\\folder"], ["C:\\", "folder"])
     it_iterates_parts("C:\\\\folder", ["C:\\\\folder"], ["C:\\\\", "folder"])
     it_iterates_parts("C:\\.", ["C:\\."], ["C:\\", "."])
+    it_iterates_parts("//.", ["//", "."], ["//."])
+    it_iterates_parts("//?", ["//", "?"], ["//?"])
+    it_iterates_parts("\\\\.\\", ["\\\\.\\"], ["\\\\.\\"])
+    it_iterates_parts("\\\\?\\", ["\\\\?\\"], ["\\\\?\\"])
+    it_iterates_parts("\\\\.\\foo", ["\\\\.\\foo"], ["\\\\.\\", "foo"])
+    it_iterates_parts("\\\\?\\foo", ["\\\\?\\foo"], ["\\\\?\\", "foo"])
+    it_iterates_parts("\\\\.\\foo\\bar", ["\\\\.\\foo\\bar"], ["\\\\.\\", "foo", "bar"])
+    it_iterates_parts("\\\\?\\foo\\bar", ["\\\\?\\foo\\bar"], ["\\\\?\\", "foo", "bar"])
   end
 
   describe "#extension" do
@@ -386,6 +429,7 @@ describe Path do
     assert_paths_raw(".\\foo", false, &.absolute?)
     assert_paths_raw("~\\foo", false, &.absolute?)
     assert_paths_raw("C:", false, &.absolute?)
+    assert_paths_raw("C:foo", false, &.absolute?)
 
     assert_paths_raw("C:\\foo", false, true, &.absolute?)
     assert_paths_raw("C:/foo/bar", false, true, &.absolute?)
@@ -398,6 +442,13 @@ describe Path do
     assert_paths_raw("\\\\some\\share", false, false, &.absolute?)
     assert_paths_raw("//some/share/", true, true, &.absolute?)
     assert_paths_raw("\\\\some\\share\\", false, true, &.absolute?)
+
+    assert_paths_raw("//.", true, false, &.absolute?)
+    assert_paths_raw("\\\\?", false, false, &.absolute?)
+    assert_paths_raw("//./foo", true, true, &.absolute?)
+    assert_paths_raw("\\\\.\\foo", false, true, &.absolute?)
+    assert_paths_raw("//?/foo", true, true, &.absolute?)
+    assert_paths_raw("\\\\?\\foo", false, true, &.absolute?)
   end
 
   describe "#drive" do
@@ -416,6 +467,12 @@ describe Path do
     assert_paths("\\\\some\\share\\foo", nil, "\\\\some\\share", &.drive)
     assert_paths("\\\\\\not-a\\share", nil, nil, &.drive)
     assert_paths("\\\\not-a\\\\share", nil, nil, &.drive)
+    assert_paths("\\\\?\\", nil, "\\\\?", &.drive)
+    assert_paths("\\\\.\\", nil, "\\\\.", &.drive)
+    assert_paths("//?/", nil, "//?", &.drive)
+    assert_paths("//./", nil, "//.", &.drive)
+    assert_paths("//?", nil, "//?", &.drive)
+    assert_paths("//.", nil, "//.", &.drive)
 
     assert_paths("\\\\some$\\share\\", nil, "\\\\some$\\share", &.drive)
     assert_paths("\\\\%10%20\\share\\", nil, "\\\\%10%20\\share", &.drive)
@@ -435,6 +492,12 @@ describe Path do
     assert_paths("\\\\some\\share", nil, &.root)
     assert_paths("//some/share/", "/", "/", &.root)
     assert_paths("\\\\some\\share\\", nil, "\\", &.root)
+    assert_paths("\\\\?\\", nil, "\\", &.root)
+    assert_paths("\\\\.\\", nil, "\\", &.root)
+    assert_paths("//?/", "/", "/", &.root)
+    assert_paths("//./", "/", "/", &.root)
+    assert_paths("//?", "/", nil, &.root)
+    assert_paths("//.", "/", nil, &.root)
   end
 
   describe "#anchor" do
@@ -447,6 +510,12 @@ describe Path do
     assert_paths("//some/share/", "/", "//some/share/", &.anchor)
     assert_paths("\\\\some\\share", nil, "\\\\some\\share", &.anchor)
     assert_paths("\\\\some\\share\\", nil, "\\\\some\\share\\", &.anchor)
+    assert_paths("\\\\?\\", nil, "\\\\?\\", &.anchor)
+    assert_paths("\\\\.\\", nil, "\\\\.\\", &.anchor)
+    assert_paths("//?/", "/", "//?/", &.anchor)
+    assert_paths("//./", "/", "//./", &.anchor)
+    assert_paths("//?", "/", "//?", &.anchor)
+    assert_paths("//.", "/", "//.", &.anchor)
   end
 
   describe "#normalize" do
@@ -565,6 +634,13 @@ describe Path do
       it_normalizes_path("C:foo", "C:foo")
       it_normalizes_path("C:\\foo", "C:\\foo")
       it_normalizes_path("C:/foo", "C:/foo", "C:\\foo")
+    end
+
+    describe "windows local device paths" do
+      it_normalizes_path("\\\\.\\C:\\..\\D:\\foo\\.\\bar", windows: "\\\\.\\D:\\foo\\bar")
+      it_normalizes_path("//./c:/", "/c:", windows: "\\\\.\\c:\\")
+      it_normalizes_path("//?/c:", "/?/c:", windows: "\\\\?\\c:")
+      it_normalizes_path("\\/.\\c:/\\", windows: "\\\\.\\c:\\")
     end
   end
 
