@@ -681,6 +681,12 @@ class Crystal::Command
         compiler.mcpu = LLVM.host_cpu_name
       else
         compiler.mcpu = cpu
+        if cpu == "help"
+          # LLVM will display a help message the moment the target machine is
+          # created, but "help" is not a valid CPU name, so exit immediately
+          compiler.create_target_machine
+          exit
+        end
       end
     end
     opts.on("--mattr CPU", "Target specific features") do |features|
