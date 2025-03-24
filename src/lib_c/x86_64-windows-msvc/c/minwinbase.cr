@@ -46,7 +46,8 @@ lib LibC
   end
 
   enum FILE_INFO_BY_HANDLE_CLASS
-    FileBasicInfo = 0
+    FileBasicInfo        = 0
+    FileAttributeTagInfo = 9
   end
 
   LOCKFILE_FAIL_IMMEDIATELY = DWORD.new(0x00000001)
