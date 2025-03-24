@@ -65,10 +65,26 @@ struct Crystal::System::IOCP
 
     # Data structure to extend the lifetime of completion keys, in particular
     # those created by `Process.new` without an associated `#wait` call
-    class_getter all = Set(self).new
+    @@all = Set(self).new
+
+    {% if flag?(:preview_mt) %}
+      @@mutex = ::Thread::Mutex.new
+    {% end %}
+
+    def self.delete(key : self) : Nil
+      {% if flag?(:preview_mt) %}
+        @@mutex.synchronize { @@all.delete(key) }
+      {% else %}
+        @@all.delete(key)
+      {% end %}
+    end
 
     def initialize(@tag : Tag, @fiber : ::Fiber? = nil)
-      @@all << self
+      {% if flag?(:preview_mt) %}
+        @@mutex.synchronize { @@all << self }
+      {% else %}
+        @@all << self
+      {% end %}
     end
 
     def valid?(number_of_bytes_transferred)
@@ -128,7 +144,7 @@ struct Crystal::System::IOCP
       in CompletionKey
         Crystal.trace :evloop, "completion", tag: completion_key.tag.to_s, bytes: entry.dwNumberOfBytesTransferred, fiber: completion_key.fiber
 
-        CompletionKey.all.delete(completion_key)
+        CompletionKey.delete(completion_key)
         if completion_key.valid?(entry.dwNumberOfBytesTransferred)
           # if `Process` exits before a call to `#wait`, this fiber will be
           # reset already
