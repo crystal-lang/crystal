@@ -1033,7 +1033,7 @@ struct Path
       end
     end
 
-    new_instance("").join(parts)
+    new_instance(parts.join(separators[0]))
   end
 
   # :ditto:
