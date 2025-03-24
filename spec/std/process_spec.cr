@@ -104,7 +104,13 @@ describe Process do
 
     it "doesn't break if process is collected before completion", tags: %w[slow] do
       200.times { Process.new(*exit_code_command(0)) }
+
+      # run the GC multiple times to unmap as much memory as possible
       10.times { GC.collect }
+
+      # the processes above have now been queued after completion; if this last
+      # one finishes at all, nothing was broken by the GC
+      Process.run(*exit_code_command(0))
     end
   end
 
