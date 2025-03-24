@@ -59,7 +59,7 @@ module Crystal
 
           n = value.size.clamp(..remaining)
           value.to_unsafe.copy_to(@buf.to_unsafe + pos, n)
-          @size = pos + n
+          @size = pos &+ n
         end
 
         def write(value : String) : Nil
@@ -71,7 +71,7 @@ module Crystal
           i = 0
           value.each_byte do |byte|
             chars[i] = byte
-            i += 1
+            i &+= 1
           end
           write chars.to_slice[0, i]
         end
@@ -106,7 +106,7 @@ module Crystal
         end
 
         def write(value : Time::Span) : Nil
-          write(value.seconds * Time::NANOSECONDS_PER_SECOND + value.nanoseconds)
+          write(value.seconds &* Time::NANOSECONDS_PER_SECOND &+ value.nanoseconds)
         end
 
         def write(value : Bool) : Nil
@@ -204,7 +204,7 @@ module Crystal
       private def self.each_token(slice, delim = ',', &)
         while e = slice.index(delim.ord)
           yield slice[0, e]
-          slice = slice[(e + 1)..]
+          slice = slice[(e &+ 1)..]
         end
         yield slice[0..] unless slice.size == 0
       end
@@ -268,7 +268,7 @@ module Crystal
         begin
           yield
         ensure
-          duration = System::Time.ticks - time
+          duration = System::Time.ticks &- time
           Tracing.log(section.to_id, operation, time, **metadata, duration: duration)
         end
       else
