@@ -16,20 +16,18 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   @@supports_sendto = true
   @@supports_close = true
 
-  class_getter?(supported : Bool) do
-    if System::IoUring.supported?
-      @@supports_sendto = System::IoUring.supports_opcode?(LibC::IORING_OP_SEND)
-      @@supports_close = System::IoUring.supports_opcode?(LibC::IORING_OP_SEND)
+  def self.supported? : Bool
+    return false unless System::IoUring.supported?
 
-      System::IoUring.supports_feature?(LibC::IORING_FEAT_NODROP) &&
-        System::IoUring.supports_opcode?(LibC::IORING_OP_READ) &&
-        System::IoUring.supports_opcode?(LibC::IORING_OP_WRITE) &&
-        System::IoUring.supports_opcode?(LibC::IORING_OP_CONNECT) &&
-        System::IoUring.supports_opcode?(LibC::IORING_OP_ACCEPT) &&
-        System::IoUring.supports_opcode?(LibC::IORING_OP_LINK_TIMEOUT)
-    else
-      false
-    end
+    @@supports_sendto = System::IoUring.supports_opcode?(LibC::IORING_OP_SEND)
+    @@supports_close = System::IoUring.supports_opcode?(LibC::IORING_OP_CLOSE)
+
+    System::IoUring.supports_feature?(LibC::IORING_FEAT_NODROP) &&
+      System::IoUring.supports_opcode?(LibC::IORING_OP_READ) &&
+      System::IoUring.supports_opcode?(LibC::IORING_OP_WRITE) &&
+      System::IoUring.supports_opcode?(LibC::IORING_OP_CONNECT) &&
+      System::IoUring.supports_opcode?(LibC::IORING_OP_ACCEPT) &&
+      System::IoUring.supports_opcode?(LibC::IORING_OP_LINK_TIMEOUT)
   end
 
   def initialize
