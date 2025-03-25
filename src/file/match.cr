@@ -54,10 +54,11 @@ class File < IO::FileDescriptor
     # Multiple negations can occur.
     negated = false
 
-    while state.glob_index < glob.size && glob[state.glob_index] === '!'
-      negated = !negated
-      state.glob_index += 1
-    end
+    # TODO: Enable negation
+    # while state.glob_index < glob.size && glob[state.glob_index] === '!'
+    #   negated = !negated
+    #   state.glob_index += 1
+    # end
 
     matched = state.match_from(glob_str, path_str, 0, brace_stack)
 
@@ -103,8 +104,6 @@ class File < IO::FileDescriptor
   end
 
   struct State
-    setter glob_index
-
     @[AlwaysInline]
     def backtrack
       @glob_index = @wildcard.glob_index.to_u64
