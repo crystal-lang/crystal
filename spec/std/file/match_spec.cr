@@ -36,9 +36,103 @@ describe File do
       refute_file_matches "a*b?c*x", "abxbbxdbxebxczzy"
     end
 
-    it "matches unicode characters" do
-      assert_file_matches "a?b", "a☺b"
-      refute_file_matches "a???b", "a☺b"
+    describe "multibyte" do
+      it "single-character match" do
+        assert_file_matches "a?b", "a☺b"
+        refute_file_matches "a???b", "a☺b"
+      end
+
+      it "character sets" do
+        assert_file_matches "[🐶🐱🐰].jpg", "🐶.jpg"
+        refute_file_matches "[🐶🐱🐰].jpg", "🐯.jpg"
+        refute_file_matches "[🐶🐱🐰].jpg", "x.jpg"
+        assert_file_matches "[🐶🐱🐰x].jpg", "🐶.jpg"
+        refute_file_matches "[🐶🐱🐰x].jpg", "🐯.jpg"
+        assert_file_matches "[🐶🐱🐰x].jpg", "x.jpg"
+        assert_file_matches "[^🐶🐱🐰].jpg", "🐯.jpg"
+        refute_file_matches "[^🐶🐱🐰].jpg", "🐶.jpg"
+        assert_file_matches "[^🐶🐱🐰].jpg", "x.jpg"
+      end
+
+      it "character ranges" do
+        assert_file_matches "[α-ω].doc", "β.doc"
+        refute_file_matches "[α-ω].doc", "Ω.doc"
+        assert_file_matches "[Α-Ω].pdf", "Θ.pdf"
+
+        assert_file_matches "[🥇-🥉].png", "🥈.png"
+        refute_file_matches "[🥇-🥉].png", "🏆.png"
+        refute_file_matches "[🥇-🥉].png", "2.png"
+
+        assert_file_matches "[α-ω🥇-🥉].doc", "β.doc"
+        assert_file_matches "[α-ω🥇-🥉].doc", "🥈.doc"
+        refute_file_matches "[α-ω🥇-🥉].doc", "Ω.doc"
+        refute_file_matches "[α-ω🥇-🥉].doc", "🏆.doc"
+        assert_file_matches "[Α-Ω🥇-🥉].pdf", "Θ.pdf"
+      end
+
+      it "braces" do
+        assert_file_matches "{café,restaurant}.png", "café.png"
+        assert_file_matches "{🐶,🐱,🐰}.log", "🐶.log"
+        refute_file_matches "{🐶,🐱,🐰}.log", "🐯.log"
+      end
+
+      it "wildcard" do
+        assert_file_matches "重要/*/中.txt", "重要/子文件夹/中.txt"
+        refute_file_matches "重要/*/中.txt", "重要/子文/件夹/中.txt"
+      end
+
+      it "globstar" do
+        assert_file_matches "重要/**/中.txt", "重要/子文件夹/中.txt"
+        assert_file_matches "重要/**/中.txt", "重要/子文/件夹/中.txt"
+      end
+
+      it "NFC and NFD are disparate" do
+        assert_file_matches "café.txt", "café.txt"   # NFC
+        refute_file_matches "café.txt", "café.txt"  # NFD
+        refute_file_matches "cafe*.txt", "café.txt"  # NFC
+        assert_file_matches "cafe*.txt", "café.txt" # NFD
+      end
+    end
+
+    describe "invalid byte sequences" do
+      it "single-character with invalid path" do
+        assert_file_matches "?.txt", "\xC3.txt"         # Invalid byte sequence
+        refute_file_matches "?.txt", "\xC3\x28.txt"     # Invalid byte sequence
+        refute_file_matches "?.txt", "\xED\xA0\x80.txt" # Lone surrogate
+        assert_file_matches "?.txt", "\uFFFF.txt"       # Noncharacter codepoint
+      end
+
+      it "single-character with invalid pattern" do
+        refute_file_matches "\xC3\x28.txt", "a.txt"     # Invalid byte sequence
+        refute_file_matches "\xED\xA0\x80.txt", "b.txt" # Lone surrogate
+      end
+
+      it "character set with invalid path" do
+        refute_file_matches "[a-z].txt", "\xF0\x28\x8C\x28.txt" # Invalid byte sequence
+        refute_file_matches "[A-Z].txt", "\xED\xA0\x80.txt"     # Lone surrogate
+      end
+
+      it "character set with invalid pattern" do
+        refute_file_matches "[\xC3\x28].txt", "m.txt"     # Invalid byte sequence
+        refute_file_matches "[\xED\xA0\x80].txt", "A.txt" # Lone surrogate
+      end
+
+      it "character range with invalid path" do
+        refute_file_matches "[a-z].txt", "\xED\xA0\x80.txt" # Invalid byte sequence
+        refute_file_matches "[α-ω].txt", "\xED\xBF\xBF.txt" # Lone surrogate
+        refute_file_matches "[😀-🙏].png", "\xFF\xFE\xFD.png" # Invalid byte sequence
+      end
+
+      it "character range with invalid pattern" do
+        refute_file_matches "[\xF0\x28\x8C\x28].txt", "o.txt"          # Corrupt range
+        refute_file_matches "[\xED\xA0\x80-\xED\xBD\xBF].csv", "X.csv" # Invalid range of surrogates
+      end
+
+      it "invalid pattern and path" do
+        assert_file_matches "[\xED\xA0\x80-α]?.log", "\xC3\x28.log"      # Lone surrogate in pattern, bad in path
+        refute_file_matches "[😀-\uFFFF]?.json", "\xF0\x90\x28\xBC.json"  # Invalid range with corrupt UTF-8
+        refute_file_matches "[\xED\xA0\x80-\uFFFF]?", "\xED\xBD\xBF.txt" # Invalid pattern range and lone low surrogate in path
+      end
     end
 
     it "* don't match path separator" do
