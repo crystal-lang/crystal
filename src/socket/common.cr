@@ -66,7 +66,7 @@ class Socket < IO
     end
 
     protected def self.build_message(message, *, address) : String
-      "#{message} '#{address.inspect_unquoted}'"
+      "#{message} '#{address.to_s.inspect_unquoted}'"
     end
   end
 
