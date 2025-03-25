@@ -31,8 +31,13 @@ _Feature freeze: 2025-03-26_
 - *(macros)* Implement `StringLiteral#scan` ([#15398], thanks @homonoidian)
 - *(networking)* Added `Path` as possible argument type to UNIXSocket and UNIXServer ([#15260], thanks @BigBoyBarney)
 - *(networking)* Add `Cookies#==` ([#15463], thanks @straight-shoota)
+- *(runtime)* Add `Fiber::ExecutionContext::Monitor` ([#15599], thanks @ysbaddaden)
 - *(runtime)* Add `EventLoop#wait_readable`, `#wait_writable` methods methods ([#15376], thanks @ysbaddaden)
 - *(runtime)* Initialize `Fiber` with an explicit stack ([#15409], thanks @ysbaddaden)
+- *(runtime)* Add fiber queues for execution context schedulers ([#15345], thanks @ysbaddaden)
+- *(runtime)* RFC 2: Skeleton for ExecutionContext  ([#15350], [#15596], thanks @ysbaddaden)
+- *(runtime)* RFC 2: Add `Fiber::ExecutionContext::SingleThreaded` scheduler ([#15511], thanks @ysbaddaden)
+- *(runtime)* Add `Fiber::ExecutionContext::Isolated` ([#15513], thanks @ysbaddaden)
 - *(serialization)* Add `Union.from_json_object_key?` ([#15411], thanks @straight-shoota)
 - *(system)* Add `Process::Status#description` ([#15468], thanks @straight-shoota)
 - *(text)* Add `IO` overloads to `Char#upcase`, `#downcase`, `#titlecase` ([#15508], thanks @HertzDevil)
@@ -47,8 +52,14 @@ _Feature freeze: 2025-03-26_
 [#15398]: https://github.com/crystal-lang/crystal/pull/15398
 [#15260]: https://github.com/crystal-lang/crystal/pull/15260
 [#15463]: https://github.com/crystal-lang/crystal/pull/15463
+[#15599]: https://github.com/crystal-lang/crystal/pull/15599
 [#15376]: https://github.com/crystal-lang/crystal/pull/15376
 [#15409]: https://github.com/crystal-lang/crystal/pull/15409
+[#15345]: https://github.com/crystal-lang/crystal/pull/15345
+[#15350]: https://github.com/crystal-lang/crystal/pull/15350
+[#15596]: https://github.com/crystal-lang/crystal/pull/15596
+[#15511]: https://github.com/crystal-lang/crystal/pull/15511
+[#15513]: https://github.com/crystal-lang/crystal/pull/15513
 [#15411]: https://github.com/crystal-lang/crystal/pull/15411
 [#15468]: https://github.com/crystal-lang/crystal/pull/15468
 [#15508]: https://github.com/crystal-lang/crystal/pull/15508
@@ -83,21 +94,6 @@ _Feature freeze: 2025-03-26_
 [#15337]: https://github.com/crystal-lang/crystal/pull/15337
 [#15447]: https://github.com/crystal-lang/crystal/pull/15447
 
-#### other
-
-- Add Fiber::ExecutionContext::Monitor ([#15599], thanks @ysbaddaden)
-- Add fiber queues for execution context schedulers ([#15345], thanks @ysbaddaden)
-- RFC 2: Skeleton for ExecutionContext  ([#15350], [#15596], thanks @ysbaddaden)
-- RFC 2: Add `Fiber::ExecutionContext::SingleThreaded` scheduler ([#15511], thanks @ysbaddaden)
-- Add `Fiber::ExecutionContext::Isolated` ([#15513], thanks @ysbaddaden)
-
-[#15599]: https://github.com/crystal-lang/crystal/pull/15599
-[#15345]: https://github.com/crystal-lang/crystal/pull/15345
-[#15350]: https://github.com/crystal-lang/crystal/pull/15350
-[#15596]: https://github.com/crystal-lang/crystal/pull/15596
-[#15511]: https://github.com/crystal-lang/crystal/pull/15511
-[#15513]: https://github.com/crystal-lang/crystal/pull/15513
-
 ### Bugfixes
 
 #### stdlib
@@ -115,6 +111,7 @@ _Feature freeze: 2025-03-26_
 - *(networking)* **[breaking]** Fix parsing HTTP resource string that looks like absolute URL ([#15499], thanks @straight-shoota)
 - *(runtime)* Add thread safety to `at_exit` ([#15598], thanks @ysbaddaden)
 - *(runtime)* Fix `pkg_config` name for `libgc` bindings on FreeBSD ([#15532], thanks @straight-shoota)
+- *(runtime)* RFC 2: MT safe fiber context switch on AArch64 ([#15581], thanks @ysbaddaden)
 - *(serialization)* Fix `Union.from_yaml` to prioritize `String` for quoted scalar ([#15405], thanks @straight-shoota)
 - *(system)* Extend Windows `Process` completion key's lifetime ([#15597], thanks @HertzDevil)
 - *(system)* **[security]** Strip periods and spaces during batch file filtering on Windows ([#15573], thanks @GeopJr)
@@ -134,6 +131,7 @@ _Feature freeze: 2025-03-26_
 [#15499]: https://github.com/crystal-lang/crystal/pull/15499
 [#15598]: https://github.com/crystal-lang/crystal/pull/15598
 [#15532]: https://github.com/crystal-lang/crystal/pull/15532
+[#15581]: https://github.com/crystal-lang/crystal/pull/15581
 [#15405]: https://github.com/crystal-lang/crystal/pull/15405
 [#15597]: https://github.com/crystal-lang/crystal/pull/15597
 [#15573]: https://github.com/crystal-lang/crystal/pull/15573
@@ -173,10 +171,8 @@ _Feature freeze: 2025-03-26_
 #### other
 
 - Corrects Windows lib lookup in case-sensitive OSes ([#15362], thanks @luislavena)
-- RFC 2: MT safe fiber context switch on AArch64 ([#15581], thanks @ysbaddaden)
 
 [#15362]: https://github.com/crystal-lang/crystal/pull/15362
-[#15581]: https://github.com/crystal-lang/crystal/pull/15581
 
 ### Chores
 
@@ -311,6 +307,7 @@ _Feature freeze: 2025-03-26_
 
 ### Infrastructure
 
+- Changelog for 1.16.0 ([#15602], thanks @straight-shoota)
 - Update previous Crystal release 1.15.0 ([#15339], thanks @straight-shoota)
 - Fix `make uninstall` to remove fish completion ([#15367], thanks @straight-shoota)
 - Merge `release/1.15`@1.15.1 ([#15422], thanks @straight-shoota)
@@ -342,6 +339,7 @@ _Feature freeze: 2025-03-26_
 - *(ci)* Update library versions for MSVC CI ([#15554], thanks @HertzDevil)
 - *(ci)* Increase memory for `aarch64-*-test-compiler` runners to 16GB ([#15572], thanks @straight-shoota)
 
+[#15602]: https://github.com/crystal-lang/crystal/pull/15602
 [#15339]: https://github.com/crystal-lang/crystal/pull/15339
 [#15367]: https://github.com/crystal-lang/crystal/pull/15367
 [#15422]: https://github.com/crystal-lang/crystal/pull/15422
