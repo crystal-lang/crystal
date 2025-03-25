@@ -53,7 +53,7 @@ describe TCPServer, tags: "network" do
       describe "reuse_port" do
         it "raises when port is in use" do
           TCPServer.open(address, 0) do |server|
-            expect_raises(Socket::BindError, "Could not bind to '#{address}:#{server.local_address.port}': ") do
+            expect_raises(Socket::BindError, "Could not bind to address '#{address}:#{server.local_address.port}': ") do
               TCPServer.open(address, server.local_address.port) { }
             end
           end
