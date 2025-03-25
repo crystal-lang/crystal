@@ -1,5 +1,6 @@
 require "spec"
 require "llvm"
+require "compiler/crystal/codegen/abi/avr"
 
 {% if LibLLVM::BUILT_TARGETS.includes?(:avr) %}
   LLVM.init_avr
@@ -10,10 +11,10 @@ private def abi
   target = LLVM::Target.from_triple(triple)
   machine = target.create_target_machine(triple)
   machine.enable_global_isel = false
-  LLVM::ABI::AVR.new(machine)
+  Crystal::ABI::AVR.new(machine)
 end
 
-private def test(msg, &block : LLVM::ABI, LLVM::Context ->)
+private def test(msg, &block : Crystal::ABI, LLVM::Context ->)
   it msg do
     abi = abi()
     ctx = LLVM::Context.new
@@ -21,7 +22,7 @@ private def test(msg, &block : LLVM::ABI, LLVM::Context ->)
   end
 end
 
-class LLVM::ABI
+class Crystal::ABI
   describe AVR do
     {% if LibLLVM::BUILT_TARGETS.includes?(:avr) %}
       describe "align" do
@@ -104,9 +105,9 @@ class LLVM::ABI
             info = abi.abi_info([ctx.int{{bits}}], ctx.int{{bits}}, true, ctx)
             info.arg_types.size.should eq(1)
             info.arg_types[0].should eq(arg_type)
-            info.arg_types[0].kind.should eq(LLVM::ABI::ArgKind::Direct)
+            info.arg_types[0].kind.should eq(Crystal::ABI::ArgKind::Direct)
             info.return_type.should eq(arg_type)
-            info.return_type.kind.should eq(LLVM::ABI::ArgKind::Direct)
+            info.return_type.kind.should eq(Crystal::ABI::ArgKind::Direct)
           end
         {% end %}
 
@@ -115,9 +116,9 @@ class LLVM::ABI
           info = abi.abi_info([ctx.float], ctx.float, true, ctx)
           info.arg_types.size.should eq(1)
           info.arg_types[0].should eq(arg_type)
-          info.arg_types[0].kind.should eq(LLVM::ABI::ArgKind::Direct)
+          info.arg_types[0].kind.should eq(Crystal::ABI::ArgKind::Direct)
           info.return_type.should eq(arg_type)
-          info.return_type.kind.should eq(LLVM::ABI::ArgKind::Direct)
+          info.return_type.kind.should eq(Crystal::ABI::ArgKind::Direct)
         end
 
         test "double" do |abi, ctx|
@@ -125,27 +126,27 @@ class LLVM::ABI
           info = abi.abi_info([ctx.double], ctx.double, true, ctx)
           info.arg_types.size.should eq(1)
           info.arg_types[0].should eq(arg_type)
-          info.arg_types[0].kind.should eq(LLVM::ABI::ArgKind::Direct)
+          info.arg_types[0].kind.should eq(Crystal::ABI::ArgKind::Direct)
           info.return_type.should eq(arg_type)
-          info.return_type.kind.should eq(LLVM::ABI::ArgKind::Direct)
+          info.return_type.kind.should eq(Crystal::ABI::ArgKind::Direct)
         end
 
         test "multiple arguments" do |abi, ctx|
           args = 9.times.map { ctx.int16 }.to_a
           info = abi.abi_info(args, ctx.int8, false, ctx)
           info.arg_types.size.should eq(9)
-          info.arg_types.each(&.kind.should eq(LLVM::ABI::ArgKind::Direct))
+          info.arg_types.each(&.kind.should eq(Crystal::ABI::ArgKind::Direct))
         end
 
         test "multiple arguments above registers" do |abi, ctx|
           args = 5.times.map { ctx.int32 }.to_a
           info = abi.abi_info(args, ctx.int8, false, ctx)
           info.arg_types.size.should eq(5)
-          info.arg_types[0].kind.should eq(LLVM::ABI::ArgKind::Direct)
-          info.arg_types[1].kind.should eq(LLVM::ABI::ArgKind::Direct)
-          info.arg_types[2].kind.should eq(LLVM::ABI::ArgKind::Direct)
-          info.arg_types[3].kind.should eq(LLVM::ABI::ArgKind::Direct)
-          info.arg_types[4].kind.should eq(LLVM::ABI::ArgKind::Indirect)
+          info.arg_types[0].kind.should eq(Crystal::ABI::ArgKind::Direct)
+          info.arg_types[1].kind.should eq(Crystal::ABI::ArgKind::Direct)
+          info.arg_types[2].kind.should eq(Crystal::ABI::ArgKind::Direct)
+          info.arg_types[3].kind.should eq(Crystal::ABI::ArgKind::Direct)
+          info.arg_types[4].kind.should eq(Crystal::ABI::ArgKind::Indirect)
         end
 
         test "struct args within 18 bytes" do |abi, ctx|
@@ -156,9 +157,9 @@ class LLVM::ABI
           ]
           info = abi.abi_info(args, ctx.void, false, ctx)
           info.arg_types.size.should eq(3)
-          info.arg_types[0].kind.should eq(LLVM::ABI::ArgKind::Direct)
-          info.arg_types[1].kind.should eq(LLVM::ABI::ArgKind::Direct)
-          info.arg_types[2].kind.should eq(LLVM::ABI::ArgKind::Direct)
+          info.arg_types[0].kind.should eq(Crystal::ABI::ArgKind::Direct)
+          info.arg_types[1].kind.should eq(Crystal::ABI::ArgKind::Direct)
+          info.arg_types[2].kind.should eq(Crystal::ABI::ArgKind::Direct)
         end
 
         test "struct args over 18 bytes" do |abi, ctx|
@@ -169,21 +170,21 @@ class LLVM::ABI
           ]
           info = abi.abi_info(args, ctx.void, false, ctx)
           info.arg_types.size.should eq(3)
-          info.arg_types[0].kind.should eq(LLVM::ABI::ArgKind::Direct)
-          info.arg_types[1].kind.should eq(LLVM::ABI::ArgKind::Direct)
-          info.arg_types[2].kind.should eq(LLVM::ABI::ArgKind::Indirect)
+          info.arg_types[0].kind.should eq(Crystal::ABI::ArgKind::Direct)
+          info.arg_types[1].kind.should eq(Crystal::ABI::ArgKind::Direct)
+          info.arg_types[2].kind.should eq(Crystal::ABI::ArgKind::Indirect)
         end
 
         test "returns struct within 8 bytes" do |abi, ctx|
           rty = ctx.struct([ctx.int32, ctx.int32])
-          info = abi.abi_info([] of Type, rty, true, ctx)
-          info.return_type.kind.should eq(LLVM::ABI::ArgKind::Direct)
+          info = abi.abi_info([] of LLVM::Type, rty, true, ctx)
+          info.return_type.kind.should eq(Crystal::ABI::ArgKind::Direct)
         end
 
         test "returns struct over 8 bytes" do |abi, ctx|
           rty = ctx.struct([ctx.int32, ctx.int32, ctx.int8])
-          info = abi.abi_info([] of Type, rty, true, ctx)
-          info.return_type.kind.should eq(LLVM::ABI::ArgKind::Indirect)
+          info = abi.abi_info([] of LLVM::Type, rty, true, ctx)
+          info.return_type.kind.should eq(Crystal::ABI::ArgKind::Indirect)
         end
       end
     {% end %}

@@ -1,5 +1,6 @@
 require "spec"
 require "llvm"
+require "compiler/crystal/codegen/abi/aarch64"
 
 {% if LibLLVM::BUILT_TARGETS.includes?(:aarch64) %}
   LLVM.init_aarch64
@@ -10,10 +11,10 @@ private def abi
   target = LLVM::Target.from_triple(triple)
   machine = target.create_target_machine(triple)
   machine.enable_global_isel = false
-  LLVM::ABI::AArch64.new(machine)
+  Crystal::ABI::AArch64.new(machine)
 end
 
-private def test(msg, &block : LLVM::ABI, LLVM::Context ->)
+private def test(msg, &block : Crystal::ABI, LLVM::Context ->)
   it msg do
     abi = abi()
     ctx = LLVM::Context.new
@@ -21,7 +22,7 @@ private def test(msg, &block : LLVM::ABI, LLVM::Context ->)
   end
 end
 
-class LLVM::ABI
+class Crystal::ABI
   describe AArch64 do
     {% if LibLLVM::BUILT_TARGETS.includes?(:aarch64) %}
       describe "align" do
@@ -142,7 +143,7 @@ class LLVM::ABI
           info.arg_types.size.should eq(1)
 
           info.arg_types[0].should eq(ArgType.indirect(str, nil))
-          info.return_type.should eq(ArgType.indirect(str, Attribute::StructRet))
+          info.return_type.should eq(ArgType.indirect(str, LLVM::Attribute::StructRet))
         end
 
         test "does with homogeneous structs" do |abi, ctx|

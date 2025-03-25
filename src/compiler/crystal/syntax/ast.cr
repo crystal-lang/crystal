@@ -239,6 +239,7 @@ module Crystal
       super.downcase
     end
 
+    # TODO: rename to `bit_width`
     def bytesize
       case self
       in .i8?   then 8

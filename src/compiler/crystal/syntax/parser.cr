@@ -3228,9 +3228,11 @@ module Crystal
         when .macro_literal?
           pieces << MacroLiteral.new(@token.value.to_s).at(@token.location).at_end(token_end_location)
         when .macro_expression_start?
-          pieces << MacroExpression.new(parse_macro_expression).at(@token.location).at_end(token_end_location)
+          location = @token.location
+          exp = MacroExpression.new(parse_macro_expression).at(location)
           check_macro_expression_end
           skip_whitespace = check_macro_skip_whitespace
+          pieces << exp.at_end(token_end_location)
         when .macro_control_start?
           macro_control = parse_macro_control(start_location, macro_state)
           if macro_control
@@ -3999,9 +4001,11 @@ module Crystal
       do_next_token = true
       found_string_literal = false
       invalid_internal_name = nil
+      external_name_token = nil
 
       if allow_external_name && (@token.type.ident? || string_literal_start?)
         name_location = @token.location
+        external_name_token = @token.dup
         if @token.type.ident?
           if @token.keyword? && invalid_internal_name?(@token.value)
             invalid_internal_name = @token.dup
@@ -4032,6 +4036,8 @@ module Crystal
         if param_name == external_name
           raise "when specified, external name must be different than internal name", @token
         end
+
+        check_valid_param_name
 
         uses_param = false
         do_next_token = true
@@ -4101,6 +4107,10 @@ module Crystal
             raise "cannot use '#{invalid_internal_name}' as a parameter name", invalid_internal_name
           end
           param_name = external_name
+          if external_name_token.nil?
+            raise "missing external name token"
+          end
+          check_valid_param_name(external_name_token)
         else
           unexpected_token
         end
@@ -4147,6 +4157,13 @@ module Crystal
         end
       else
         false
+      end
+    end
+
+    def check_valid_param_name(token : Token = @token)
+      param_name = token.value.to_s
+      if param_name[-1]?.in?('?', '!')
+        warnings.add_warning_at(token.location, "invalid parameter name: #{param_name}")
       end
     end
 
@@ -4235,6 +4252,8 @@ module Crystal
     def parse_var_or_call(global = false, force_call = false, location = @token.location)
       end_location = token_end_location
       doc = @token.doc
+
+      check AtomicWithMethodCheck
 
       if @token.type.op_bang?
         # only trigger from `parse_when_expression`
@@ -4531,6 +4550,7 @@ module Crystal
         end
 
         param_name = @token.value.to_s
+        check_valid_param_name
 
         if all_names.includes?(param_name)
           raise "duplicated block parameter name: #{param_name}", @token

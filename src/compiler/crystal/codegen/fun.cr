@@ -414,7 +414,7 @@ class Crystal::CodeGenVisitor
         context.fun.add_attribute(attr, i + offset + 1, abi_arg_type.type)
       end
 
-      i += 1 unless abi_arg_type.kind == LLVM::ABI::ArgKind::Ignore
+      i += 1 unless abi_arg_type.kind == ABI::ArgKind::Ignore
     end
 
     # This is for sret
@@ -633,7 +633,6 @@ class Crystal::CodeGenVisitor
         llvm_mod = configure_module(llvm_context.new_module(type_name))
         llvm_builder = new_builder(llvm_context)
 
-        define_symbol_table llvm_mod, llvm_typer
         ModuleInfo.new(llvm_mod, llvm_typer, llvm_builder)
       end
     end

@@ -68,7 +68,8 @@ pass a --code-model flag to LLVM.
 Disable colored output.
 *--no-codegen*::
 Don't do code generation, just parse the file.
-*-o* _FILE_, *--output* _FILE_::  Specify filename of output.
+*-o* _FILE_, *--output* _FILE_::
+Specify output path. If a directory, the filename is derived from the first source file (default: current directory)
 *--prelude*::
 Specify prelude to use. The default one initializes the garbage
 collector. You can also use --prelude=empty to use no preludes.

@@ -10,7 +10,7 @@ concurrency:
 
 env:
   SPEC_SPLIT_DOTS: 160
-  CI_LLVM_VERSION: "18.1.1"
+  CI_LLVM_VERSION: "19.1.7"
 
 jobs:
   x86_64-windows-libs:
@@ -50,19 +50,19 @@ jobs:
           key: win-libs-${{ hashFiles('.github/workflows/win.yml', 'etc/win-ci/*.ps1') }}-msvc
       - name: Build libgc
         if: steps.cache-libs.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-gc.ps1 -BuildTree deps\gc -Version 8.2.6 -AtomicOpsVersion 7.8.2
+        run: .\etc\win-ci\build-gc.ps1 -BuildTree deps\gc -Version 8.2.8 -AtomicOpsVersion 7.8.2
       - name: Build libpcre
         if: steps.cache-libs.outputs.cache-hit != 'true'
         run: .\etc\win-ci\build-pcre.ps1 -BuildTree deps\pcre -Version 8.45
       - name: Build libpcre2
         if: steps.cache-libs.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-pcre2.ps1 -BuildTree deps\pcre2 -Version 10.43
+        run: .\etc\win-ci\build-pcre2.ps1 -BuildTree deps\pcre2 -Version 10.45
       - name: Build libiconv
         if: steps.cache-libs.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-iconv.ps1 -BuildTree deps\iconv -Version 1.17
+        run: .\etc\win-ci\build-iconv.ps1 -BuildTree deps\iconv -Version 1.18
       - name: Build libffi
         if: steps.cache-libs.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-ffi.ps1 -BuildTree deps\ffi -Version 3.4.6
+        run: .\etc\win-ci\build-ffi.ps1 -BuildTree deps\ffi -Version 3.4.7
       - name: Build zlib
         if: steps.cache-libs.outputs.cache-hit != 'true'
         run: .\etc\win-ci\build-z.ps1 -BuildTree deps\z -Version 1.3.1
@@ -74,7 +74,7 @@ jobs:
         run: .\etc\win-ci\build-yaml.ps1 -BuildTree deps\yaml -Version 0.2.5
       - name: Build libxml2
         if: steps.cache-libs.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-xml2.ps1 -BuildTree deps\xml2 -Version 2.12.5
+        run: .\etc\win-ci\build-xml2.ps1 -BuildTree deps\xml2 -Version 2.13.6
 
       - name: Cache OpenSSL
         id: cache-openssl
@@ -84,13 +84,13 @@ jobs:
             libs/crypto.lib
             libs/ssl.lib
             libs/openssl_VERSION
-          key: win-openssl-libs-3.1.0-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}-msvc
+          key: win-openssl-libs-3.4.1-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}-msvc
       - name: Set up NASM
         if: steps.cache-openssl.outputs.cache-hit != 'true'
-        uses: ilammy/setup-nasm@13cbeb366c45c4379d3478cdcbadd8295feb5028 # v1.5.1
+        uses: ilammy/setup-nasm@72793074d3c8cdda771dba85f6deafe00623038b # v1.5.2
       - name: Build OpenSSL
         if: steps.cache-openssl.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-openssl.ps1 -BuildTree deps\openssl -Version 3.1.0
+        run: .\etc\win-ci\build-openssl.ps1 -BuildTree deps\openssl -Version 3.4.1
 
   x86_64-windows-dlls:
     runs-on: windows-2022
@@ -138,19 +138,19 @@ jobs:
           key: win-dlls-${{ hashFiles('.github/workflows/win.yml', 'etc/win-ci/*.ps1') }}-msvc
       - name: Build libgc
         if: steps.cache-dlls.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-gc.ps1 -BuildTree deps\gc -Version 8.2.6 -AtomicOpsVersion 7.8.2 -Dynamic
+        run: .\etc\win-ci\build-gc.ps1 -BuildTree deps\gc -Version 8.2.8 -AtomicOpsVersion 7.8.2 -Dynamic
       - name: Build libpcre
         if: steps.cache-dlls.outputs.cache-hit != 'true'
         run: .\etc\win-ci\build-pcre.ps1 -BuildTree deps\pcre -Version 8.45 -Dynamic
       - name: Build libpcre2
         if: steps.cache-dlls.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-pcre2.ps1 -BuildTree deps\pcre2 -Version 10.43 -Dynamic
+        run: .\etc\win-ci\build-pcre2.ps1 -BuildTree deps\pcre2 -Version 10.45 -Dynamic
       - name: Build libiconv
         if: steps.cache-dlls.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-iconv.ps1 -BuildTree deps\iconv -Version 1.17 -Dynamic
+        run: .\etc\win-ci\build-iconv.ps1 -BuildTree deps\iconv -Version 1.18 -Dynamic
       - name: Build libffi
         if: steps.cache-dlls.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-ffi.ps1 -BuildTree deps\ffi -Version 3.4.6 -Dynamic
+        run: .\etc\win-ci\build-ffi.ps1 -BuildTree deps\ffi -Version 3.4.7 -Dynamic
       - name: Build zlib
         if: steps.cache-dlls.outputs.cache-hit != 'true'
         run: .\etc\win-ci\build-z.ps1 -BuildTree deps\z -Version 1.3.1 -Dynamic
@@ -162,7 +162,7 @@ jobs:
         run: .\etc\win-ci\build-yaml.ps1 -BuildTree deps\yaml -Version 0.2.5 -Dynamic
       - name: Build libxml2
         if: steps.cache-dlls.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-xml2.ps1 -BuildTree deps\xml2 -Version 2.12.5 -Dynamic
+        run: .\etc\win-ci\build-xml2.ps1 -BuildTree deps\xml2 -Version 2.13.6 -Dynamic
 
       - name: Cache OpenSSL
         id: cache-openssl-dlls
@@ -173,13 +173,13 @@ jobs:
             libs/ssl-dynamic.lib
             dlls/libcrypto-3-x64.dll
             dlls/libssl-3-x64.dll
-          key: win-openssl-dlls-3.1.0-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}-msvc
+          key: win-openssl-dlls-3.4.1-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}-msvc
       - name: Set up NASM
         if: steps.cache-openssl-dlls.outputs.cache-hit != 'true'
-        uses: ilammy/setup-nasm@13cbeb366c45c4379d3478cdcbadd8295feb5028 # v1.5.1
+        uses: ilammy/setup-nasm@72793074d3c8cdda771dba85f6deafe00623038b # v1.5.2
       - name: Build OpenSSL
         if: steps.cache-openssl-dlls.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-openssl.ps1 -BuildTree deps\openssl -Version 3.1.0 -Dynamic
+        run: .\etc\win-ci\build-openssl.ps1 -BuildTree deps\openssl -Version 3.4.1 -Dynamic
 
   x86_64-windows-llvm-libs:
     runs-on: windows-2022
@@ -235,7 +235,7 @@ jobs:
     uses: ./.github/workflows/win_build_portable.yml
     with:
       release: true
-      llvm_version: "18.1.1"
+      llvm_version: "19.1.7"
 
   x86_64-windows-test:
     runs-on: windows-2022

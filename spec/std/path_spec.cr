@@ -192,6 +192,10 @@ describe Path do
     assert_paths("C:/foo", "C:", "C:/", &.parent)
     assert_paths("C:\\foo", ".", "C:\\", &.parent)
     assert_paths("/foo/C:/bar", "/foo/C:", "/foo/C:", &.parent)
+    assert_paths("//some/share", "//some", "//some/share", &.parent)
+    assert_paths("//some/share/", "//some", "//some/share/", &.parent)
+    assert_paths("//some/share/a", "//some/share", "//some/share/", &.parent)
+    assert_paths("//some/share/a/", "//some/share", "//some/share/", &.parent)
   end
 
   describe "#parents" do
@@ -237,6 +241,10 @@ describe Path do
     assert_paths("C:\\folder", ["."], ["C:\\"], &.parents)
     assert_paths("C:\\\\folder", ["."], ["C:\\\\"], &.parents)
     assert_paths("C:\\.", ["."], ["C:\\"], &.parents)
+    assert_paths("//some/share", ["//", "//some"], [] of String, &.parents)
+    assert_paths("//some/share/", ["//", "//some"], [] of String, &.parents)
+    assert_paths("//some/share/a", ["//", "//some", "//some/share"], ["//some/share/"], &.parents)
+    assert_paths("//some/share/a/", ["//", "//some", "//some/share"], ["//some/share/"], &.parents)
   end
 
   describe "#dirname" do
@@ -256,6 +264,10 @@ describe Path do
     assert_paths_raw("C:", ".", "C:", &.dirname)
     assert_paths_raw("C:/", ".", "C:/", &.dirname)
     assert_paths_raw("C:\\", ".", "C:\\", &.dirname)
+    assert_paths_raw("//some/share", "//some", "//some/share", &.dirname)
+    assert_paths_raw("//some/share/", "//some", "//some/share/", &.dirname)
+    assert_paths_raw("//some/share/a", "//some/share", "//some/share/", &.dirname)
+    assert_paths_raw("//some/share/a/", "//some/share", "//some/share/", &.dirname)
   end
 
   describe "#basename" do
