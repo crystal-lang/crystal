@@ -284,7 +284,7 @@ class File < IO::FileDescriptor
 
             # Check if the character class is negated.
             negated_class = false
-            if @glob_index < glob.size && glob[@glob_index].in?('^'.ord, '!'.ord)
+            if @glob_index < glob.size && glob[@glob_index] === '^'
               negated_class = true
               @glob_index += 1
             end

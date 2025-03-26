@@ -215,10 +215,11 @@ describe "File .match? bash tests" do
     refute_file_matches "[^abc]", "b"
     refute_file_matches "[^abc]", "c"
     assert_file_matches "[^abc]", "d"
-    refute_file_matches "[!abc]", "a"
-    refute_file_matches "[!abc]", "b"
-    refute_file_matches "[!abc]", "c"
-    assert_file_matches "[!abc]", "d"
+    assert_file_matches "[!abc]", "a" # unsupported
+    assert_file_matches "[!abc]", "b" # unsupported
+    assert_file_matches "[!abc]", "c" # unsupported
+    refute_file_matches "[!abc]", "d" # unsupported
+    assert_file_matches "[!abc]", "!" # unsupported
     assert_file_matches "[\\!]", "!"
 
     assert_file_matches "a*b*[cy]*d*e*", "axbxcxdxexxx"
