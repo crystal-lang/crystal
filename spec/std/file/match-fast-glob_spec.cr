@@ -1148,6 +1148,7 @@ describe "File .match? bash tests" do
     refute_file_matches "a/b/**/d/**/*.*", "a/b/c/d/g/g/e.f" # bug #15319
     refute_file_matches "a/b-*/**/z.js", "a/b-c/z.js"        # bug #15319
     assert_file_matches "a/b-*/**/z.js", "a/b-c/d/e/z.js"
+
     assert_file_matches "*/*", "a/b"
     assert_file_matches "a/b/c/*.md", "a/b/c/xyz.md"
     assert_file_matches "a/*/c/*.md", "a/bb.bb/c/xyz.md"
