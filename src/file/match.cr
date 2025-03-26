@@ -10,20 +10,18 @@ class File < IO::FileDescriptor
   #
   # The pattern syntax is similar to shell filename globbing. It may contain the following metacharacters:
   #
-  # * `*` matches an unlimited number of arbitrary characters, excluding any directory separators.
-  #   * `"*"` matches all regular files.
-  #   * `"c*"` matches all files beginning with `c`.
-  #   * `"*c"` matches all files ending with `c`.
-  #   * `"*c*"` matches all files that have `c` in them (including at the beginning or end).
-  # * `**` matches directories recursively if followed by `/`.
-  #   If this path segment contains any other characters, it is the same as the usual `*`.
-  # * `?` matches one arbitrary character, excluding any directory separators.
+  # * `*`: Wildcard matches zero or more characters, except for directory separators.
+  # * `**`: Globstar matches zero or more characters, including directory separators.
+  #   It must match a complete path segment, i.e. it must be wrapped in `/`
+  #   except for the beginning and end of the pattern.
+  # * `?`: Matches a single Unicode character, except for directory separators.
   # * character sets:
-  #   * `[abc]` matches any one of these characters.
-  #   * `[^abc]` matches any one character other than these.
-  #   * `[a-z]` matches any one character in the range.
-  # * `{a,b}` matches subpattern `a` or `b`.
-  # * `\\` escapes the next character.
+  #   * `[abc]`: Character set matches one of the Unicode characters contained in the brackets.
+  #   * `[^abc]`: Negated character set matches any Unicode character _except_ those contained in the brackes.
+  #   * `[a-z]`: Character range matches one Unicode character contained in the character range.
+  # * `{a,b}`: Branches matches one of the subpatterns contained in the braces. Subpatterns
+  #   may contain any other pattern feature, including nested branches (max nesting depth is 10 levels deep).
+  # * `\\`: Backslash escapes the next character.
   #
   # If *path* is a `Path`, all directory separators supported by *path* are
   # recognized, according to the path's kind. If *path* is a `String`, only `/`
