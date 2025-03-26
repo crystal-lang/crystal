@@ -245,4 +245,13 @@ describe File do
       assert_file_matches "ab{{c,d}ef,}", "abdef"
     end
   end
+
+  it "fuzz tests" do
+    # https://github.com/devongovett/glob-match/issues/1
+    s = "{*{??*{??**,Uz*zz}w**{*{**a,z***b*[!}w??*azzzzzzzz*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!z[za,z&zz}w**z*z*}"
+    refute_file_matches s, s
+    s = "**** *{*{??*{??***\u{5} *{*{??*{??***\u{5},\0U\0}]*****\u{1},\0***\0,\0\0}w****,\0U\0}]*****\u{1},\0***\0,\0\0}w*****\u{1}***{}*.*\0\0*\0"
+    # Must use `String` overload here because `Path` raises on null byte
+    File.match?(s, s).should be_false
+  end
 end
