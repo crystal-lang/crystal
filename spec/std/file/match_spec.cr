@@ -87,10 +87,10 @@ describe File do
       end
 
       it "NFC and NFD are disparate" do
-        assert_file_matches "café.txt", "café.txt"   # NFC
-        refute_file_matches "café.txt", "café.txt"  # NFD
-        refute_file_matches "cafe*.txt", "café.txt"  # NFC
-        assert_file_matches "cafe*.txt", "café.txt" # NFD
+        assert_file_matches "café.txt", "café.txt"        # NFC
+        refute_file_matches "café.txt", "cafe\u0301.txt"  # NFD
+        refute_file_matches "cafe*.txt", "café.txt"       # NFC
+        assert_file_matches "cafe*.txt", "cafe\u0301.txt" # NFD
       end
     end
 
