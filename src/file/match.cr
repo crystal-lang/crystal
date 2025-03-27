@@ -86,7 +86,10 @@ class File < IO::FileDescriptor
 
     @[AlwaysInline]
     def push(item : T)
-      @slice[@size] = item
+      if @size >= @slice.size
+        raise BadPatternError.new("Brace nesting too deep: must not exceed 10 levels")
+      end
+      @slice.unsafe_put(@size, item)
       @size += 1
     end
 

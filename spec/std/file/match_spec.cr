@@ -244,6 +244,18 @@ describe File do
       assert_file_matches "ab{{c,d}ef,}", "abcef"
       assert_file_matches "ab{{c,d}ef,}", "abdef"
     end
+
+    describe "brace stack" do
+      it "allows up to 10 levels" do
+        assert_file_matches "{{{{{{{{{{a},b},b},b},b},b},b},b},b},b}", "a"
+      end
+
+      it "raises at more than 10 levels" do
+        expect_raises File::BadPatternError, "Brace nesting too deep: must not exceed 10 levels" do
+          File.match? "{{{{{{{{{{{a},b},b},b},b},b},b},b},b},b},b}", "b"
+        end
+      end
+    end
   end
 
   it "fuzz tests" do
