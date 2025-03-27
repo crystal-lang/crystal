@@ -63,28 +63,19 @@ struct Crystal::System::IOCP
     property fiber : ::Fiber?
     getter tag : Tag
 
+    property next : CompletionKey?
+    property previous : CompletionKey?
+
     # Data structure to extend the lifetime of completion keys, in particular
     # those created by `Process.new` without an associated `#wait` call
-    @@all = Set(self).new
-
-    {% if flag?(:preview_mt) %}
-      @@mutex = ::Thread::Mutex.new
-    {% end %}
+    @@all = ::Thread::LinkedList(CompletionKey).new
 
     def self.delete(key : self) : Nil
-      {% if flag?(:preview_mt) %}
-        @@mutex.synchronize { @@all.delete(key) }
-      {% else %}
-        @@all.delete(key)
-      {% end %}
+      @@all.delete(key)
     end
 
     def initialize(@tag : Tag, @fiber : ::Fiber? = nil)
-      {% if flag?(:preview_mt) %}
-        @@mutex.synchronize { @@all << self }
-      {% else %}
-        @@all << self
-      {% end %}
+      @@all.push(self)
     end
 
     def valid?(number_of_bytes_transferred)
