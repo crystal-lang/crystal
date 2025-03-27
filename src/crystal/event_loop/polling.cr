@@ -133,8 +133,10 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
 
   # fiber interface, see Crystal::EventLoop
 
-  def create_resume_event(fiber : Fiber) : FiberEvent
-    FiberEvent.new(:sleep, fiber)
+  def sleep(duration : ::Time::Span) : Nil
+    event = Event.new(:sleep, Fiber.current, timeout: duration)
+    add_timer(pointerof(event))
+    Fiber.suspend
   end
 
   def create_timeout_event(fiber : Fiber) : FiberEvent
@@ -536,8 +538,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
       return unless select_action.time_expired?
       fiber.@timeout_event.as(FiberEvent).clear
     when .sleep?
-      # cleanup
-      fiber.@resume_event.as(FiberEvent).clear
+      # nothing to do
     else
       raise RuntimeError.new("BUG: unexpected event in timers: #{event.value}%s\n")
     end

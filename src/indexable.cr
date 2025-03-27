@@ -822,7 +822,7 @@ module Indexable(T)
   # ```
   def find(if_none = nil, offset : Int = 0, & : T ->)
     offset += size if offset < 0
-    return nil if offset < 0
+    return if_none if offset < 0
 
     if idx = index(offset) { |i| yield i }
       return unsafe_fetch(idx)

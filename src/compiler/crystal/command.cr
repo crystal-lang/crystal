@@ -132,7 +132,19 @@ class Crystal::Command
         error "file '#{command}' does not exist"
       elsif external_command = Process.find_executable("crystal-#{command}")
         options.shift
-        Process.exec(external_command, options, env: {"CRYSTAL" => Process.executable_path})
+
+        crystal_exec_path = ENV["CRYSTAL_EXEC_PATH"]?
+        unless crystal_exec_path
+          if executable_path = Process.executable_path
+            crystal_exec_path = File.dirname(executable_path)
+          end
+        end
+        path = [crystal_exec_path, ENV["PATH"]?].compact!.join(Process::PATH_DELIMITER)
+
+        Process.exec(external_command, options, env: {
+          "PATH"              => path,
+          "CRYSTAL_EXEC_PATH" => crystal_exec_path,
+        })
       else
         error "unknown command: #{command}"
       end
@@ -681,6 +693,12 @@ class Crystal::Command
         compiler.mcpu = LLVM.host_cpu_name
       else
         compiler.mcpu = cpu
+        if cpu == "help"
+          # LLVM will display a help message the moment the target machine is
+          # created, but "help" is not a valid CPU name, so exit immediately
+          compiler.create_target_machine
+          exit
+        end
       end
     end
     opts.on("--mattr CPU", "Target specific features") do |features|

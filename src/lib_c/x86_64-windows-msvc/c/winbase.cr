@@ -72,6 +72,11 @@ lib LibC
     fileAttributes : DWORD
   end
 
+  struct FILE_ATTRIBUTE_TAG_INFO
+    fileAttributes : DWORD
+    reparseTag : DWORD
+  end
+
   fun GetFileInformationByHandleEx(hFile : HANDLE, fileInformationClass : FILE_INFO_BY_HANDLE_CLASS, lpFileInformation : Void*, dwBufferSize : DWORD) : BOOL
 
   fun LookupAccountNameW(lpSystemName : LPWSTR, lpAccountName : LPWSTR, sid : SID*, cbSid : DWORD*, referencedDomainName : LPWSTR, cchReferencedDomainName : DWORD*, peUse : SID_NAME_USE*) : BOOL
