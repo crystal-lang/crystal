@@ -159,6 +159,8 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   def read(file_descriptor : System::FileDescriptor, slice : Bytes) : Int32
     async_rw(LibC::IORING_OP_READ, file_descriptor.fd, slice, file_descriptor.@read_timeout) do |errno|
       case errno
+      when Errno::EINTR
+        # retry
       when Errno::ECANCELED
         raise IO::TimeoutError.new("Read timed out")
       when Errno::EBADF
@@ -205,6 +207,8 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   def read(socket : ::Socket, slice : Bytes) : Int32
     async_rw(LibC::IORING_OP_READ, socket.fd, slice, socket.@read_timeout) do |errno|
       case errno
+      when Errno::EINTR
+        # retry
       when Errno::ECANCELED
         raise IO::TimeoutError.new("Read timed out")
       else
