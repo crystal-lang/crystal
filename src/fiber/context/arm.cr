@@ -34,7 +34,9 @@ class Fiber
     # different strategies for atomics. By default it uses the "older"
     # architecture that relies on the libgcc __sync_* symbols; when an armv6 CPU
     # or +v6 feature is specified it uses the coprocessor instruction as used
-    # below; for armv7 / +v7 it uses the `dmb ish` instruction.
+    # below, unless the +db (data barrier) feature is set, in which case it
+    # uses the `dmb ish` instruction. The +db feature is always enabled since
+    # armv7 / +v7.
     #
     # TODO: we should do the same, but we don't know the list of CPU features
     # for the current target machine (and LLVM won't tell us).
