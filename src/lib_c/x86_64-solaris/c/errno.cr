@@ -1,5 +1,5 @@
 lib LibC
-  fun __errno_location = ___errno : Int*
+  fun ___errno : Int*
 
   E2BIG           =   7
   EACCES          =  13

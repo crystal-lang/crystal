@@ -46,26 +46,42 @@ enum Errno
 
   # returns the value of libc's errno.
   def self.value : self
-    {% if flag?(:wasi) %}
+    {% if LibC.has_method?(:__errno_location) %}
+      Errno.new LibC.__errno_location.value
+    {% elsif LibC.has_method?(:__errno) %}
+      Errno.new LibC.__errno.value
+    {% elsif LibC.has_method?(:__error) %}
+      Errno.new LibC.__error.value
+    {% elsif LibC.has_method?(:___errno) %}
+      Errno.new LibC.___errno.value
+    {% elsif flag?(:wasi) %}
       Errno.new LibC.errno
     {% elsif flag?(:win32) %}
       ret = LibC._get_errno(out errno)
       raise RuntimeError.from_os_error("_get_errno", Errno.new(ret)) unless ret == 0
       Errno.new errno
     {% else %}
-      Errno.new LibC.__errno_location.value
+      {% raise "ERROR: no errno definition for target" %}
     {% end %}
   end
 
   # Sets the value of libc's errno.
   def self.value=(errno : Errno)
-    {% if flag?(:wasi) %}
+    {% if LibC.has_method?(:__errno_location) %}
+      LibC.__errno_location.value = errno.value
+    {% elsif LibC.has_method?(:__errno) %}
+      LibC.__errno.value = errno.value
+    {% elsif LibC.has_method?(:__error) %}
+      LibC.__error.value = errno.value
+    {% elsif LibC.has_method?(:___errno) %}
+      LibC.___errno.value = errno.vaue
+    {% elsif flag?(:wasi) %}
       LibC.errno = errno.value
     {% elsif flag?(:win32) %}
       ret = LibC._set_errno(errno.value)
       raise RuntimeError.from_os_error("_set_errno", Errno.new(ret)) unless ret == 0
     {% else %}
-      LibC.__errno_location.value = errno.value
+      {% raise "ERROR: no errno definition for target" %}
     {% end %}
     errno
   end
