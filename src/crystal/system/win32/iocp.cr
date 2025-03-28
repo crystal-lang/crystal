@@ -63,7 +63,19 @@ struct Crystal::System::IOCP
     property fiber : ::Fiber?
     getter tag : Tag
 
+    property next : CompletionKey?
+    property previous : CompletionKey?
+
+    # Data structure to extend the lifetime of completion keys, in particular
+    # those created by `Process.new` without an associated `#wait` call
+    @@pending = ::Thread::LinkedList(CompletionKey).new
+
+    def self.unregister(key : self) : Nil
+      @@pending.delete(key)
+    end
+
     def initialize(@tag : Tag, @fiber : ::Fiber? = nil)
+      @@pending.push(self)
     end
 
     def valid?(number_of_bytes_transferred)
@@ -123,6 +135,7 @@ struct Crystal::System::IOCP
       in CompletionKey
         Crystal.trace :evloop, "completion", tag: completion_key.tag.to_s, bytes: entry.dwNumberOfBytesTransferred, fiber: completion_key.fiber
 
+        CompletionKey.unregister(completion_key)
         if completion_key.valid?(entry.dwNumberOfBytesTransferred)
           # if `Process` exits before a call to `#wait`, this fiber will be
           # reset already
