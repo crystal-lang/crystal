@@ -15,13 +15,17 @@ class File < IO::FileDescriptor
   #   It must match a complete path segment, i.e. it must be wrapped in `/`
   #   except for the beginning and end of the pattern.
   # * `?`: Matches a single Unicode character, except for directory separators.
-  # * character sets:
+  # * Character classes:
   #   * `[abc]`: Character set matches one of the Unicode characters contained in the brackets.
-  #   * `[^abc]`: Negated character set matches any Unicode character _except_ those contained in the brackes.
+  #   * `[^abc]`: Negated character set matches any Unicode character _except_ those contained in the brackets.
   #   * `[a-z]`: Character range matches one Unicode character contained in the character range.
+  #   * `[^a-z]`: Negated character range matches one Unicode character _except_ those contained in the character range.
   # * `{a,b}`: Branches matches one of the subpatterns contained in the braces. Subpatterns
   #   may contain any other pattern feature, including nested branches (max nesting depth is 10 levels deep).
   # * `\\`: Backslash escapes the next character.
+  #
+  # Multiple character pattern can be combined in the same brackets to define a
+  # character class (for example: `[0-9a-f]`).
   #
   # If *path* is a `Path`, all directory separators supported by *path* are
   # recognized, according to the path's kind. If *path* is a `String`, only `/`
