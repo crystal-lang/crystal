@@ -82,6 +82,18 @@ module Fiber::ExecutionContext
       @stack_pool
     end
 
+    # Starts all schedulers at once.
+    #
+    # We could lazily initialize them as needed, like we do for threads, which
+    # would be safe as long as we only mutate when the mutex is locked... but
+    # unlike @threads, we do iterate the schedulers in #steal without locking
+    # the mutex (for obvious reasons) and there are no guarantees that the new
+    # schedulers.@size will be written after the scheduler has been written to
+    # the array's buffer.
+    #
+    # OPTIMIZE: consider storing schedulers to an array-like object that would
+    # use an atomic/fence to make sure that @size can only be incremented
+    # *after* the value has been written to @buffer.
     private def start_schedulers
       capacity.times do |index|
         @schedulers << Scheduler.new(self, "#{@name}-#{index}")
