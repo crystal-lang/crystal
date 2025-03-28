@@ -29,44 +29,40 @@ module Fiber::ExecutionContext
     @spinning = Atomic(Int32).new(0)
 
     # :nodoc:
-    protected def self.default(size : Int32) : self
-      new("DEFAULT", 1..size, hijack: true)
+    protected def self.default(maximum : Int32) : self
+      new("DEFAULT", 1..maximum, hijack: true)
     end
 
-    # Starts a context with a maximum number of threads. Threads aren't started
-    # right away, but will be started as needed to increase parallelism up to
-    # the configured maximum.
-    def self.new(name : String, size : Int32) : self
-      new(name, 0..size, hijack: false)
+    # Starts a context with a *maximum* number of threads. Threads aren't started
+    # right away but will be started as needed to increase parallelism up to the
+    # configured maximum.
+    def self.new(name : String, maximum : Int32) : self
+      new(name, 0..maximum, hijack: false)
     end
 
-    # Starts a context with a maximum number of threads. Threads aren't started
-    # right away, but will be started as needed to increase parallelism up to
-    # the configured maximum.
-    def self.new(name : String, size : Range(Nil, Int32)) : self
-      new(name, 0..size.end, hijack: false)
-    end
-
-    # Starts a context with a minimum and a maximum number of threads. The
-    # minimum number of threads will be started right away, then threads will be
+    # Starts a context with a minimum and maximum number of threads. Only the
+    # minimum number of threads will be started right away. The minimum can be 0
+    # (or nil) in which case no threads will be started. More threads will be
     # started as needed to increase parallelism up to the configured maximum.
-    def self.new(name : String, size : Range(Int32, Int32)) : self
-      new(name, size, hijack: false)
+    def self.new(name : String, size : Range(B, Int32)) : self forall B
+      min = size.begin.try(&.to_i) || 0
+      new(name, Range.new(min, size.end, size.exclusive?), hijack: false)
     end
 
     protected def initialize(@name : String, @size : Range(Int32, Int32), hijack : Bool)
-      raise ArgumentError.new("#{self.class.name} needs at least one thread") if @size.end < 1
+      raise ArgumentError.new("#{self.class.name} needs at least one thread") if capacity < 1
+      raise ArgumentError.new("#{self.class.name} invalid range") if @size.begin > @size.end
 
       @mutex = Thread::Mutex.new
       @condition = Thread::ConditionVariable.new
 
       @global_queue = GlobalQueue.new(@mutex)
-      @schedulers = Array(Scheduler).new(@size.end)
-      @threads = Array(Thread).new(@size.end)
+      @schedulers = Array(Scheduler).new(capacity)
+      @threads = Array(Thread).new(capacity)
 
       @rng = Random::PCG32.new
 
-      start_schedulers(hijack)
+      start_schedulers
       start_initial_threads(hijack)
 
       ExecutionContext.execution_contexts.push(self)
@@ -79,34 +75,35 @@ module Fiber::ExecutionContext
 
     # The maximum number of threads that can be started.
     def capacity : Int32
-      @size.end
+      @size.exclusive? ? @size.end - 1 : @size.end
     end
 
     def stack_pool? : Fiber::StackPool?
       @stack_pool
     end
 
-    private def start_schedulers(hijack)
-      @size.end.times do |index|
+    private def start_schedulers
+      capacity.times do |index|
         @schedulers << Scheduler.new(self, "#{@name}-#{index}")
       end
     end
 
     private def start_initial_threads(hijack)
-      @size.begin.times do |index|
-        scheduler = @schedulers[index]
+      min = @size.begin
 
-        if hijack && index == 0
-          @threads << hijack_current_thread(scheduler, index)
-        else
-          @threads << start_thread(scheduler, index)
-        end
+      if hijack
+        @threads << hijack_current_thread(@schedulers[0])
+        min -= 1
+      end
+
+      min.times do |index|
+        @threads << start_thread(@schedulers[index])
       end
     end
 
     # Attaches *scheduler* to the current `Thread`, usually the process' main
     # thread. Starts a `Fiber` to run the scheduler loop.
-    private def hijack_current_thread(scheduler, index) : Thread
+    private def hijack_current_thread(scheduler) : Thread
       thread = Thread.current
       thread.internal_name = scheduler.name
       thread.execution_context = self
@@ -122,7 +119,7 @@ module Fiber::ExecutionContext
 
     # Starts a new `Thread` and attaches *scheduler*. Runs the scheduler loop
     # directly in the thread's main `Fiber`.
-    private def start_thread(scheduler, index) : Thread
+    private def start_thread(scheduler) : Thread
       Thread.new(name: scheduler.name) do |thread|
         thread.execution_context = self
         thread.scheduler = scheduler
@@ -244,7 +241,7 @@ module Fiber::ExecutionContext
         index = @threads.size
         return if index == @size.end # check again
 
-        @threads << start_thread(@schedulers[index], index)
+        @threads << start_thread(@schedulers[index])
       end
     end
 
