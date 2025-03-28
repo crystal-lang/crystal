@@ -101,6 +101,33 @@ def compile_file(source_file, *, bin_name = "executable_file", flags = %w(), fil
   end
 end
 
+def assert_compile_error(source, expected_error, *, flags = %w(), file = __FILE__, line = __LINE__)
+  # can't use backtick in interpreted code (#12241)
+  pending_interpreted! "Unable to compile Crystal code in interpreted code"
+
+  with_tempfile("source_file", file: file) do |source_file|
+    File.write(source_file, source)
+
+    bin_name = "executable_file"
+    with_temp_executable(bin_name, file: file) do |executable_file|
+      compiler = ENV["CRYSTAL_SPEC_COMPILER_BIN"]? || "bin/crystal"
+      args = ["build"] + flags + ["-o", executable_file, source_file]
+      output = IO::Memory.new
+      status = Process.run(compiler, args, env: {
+        "CRYSTAL_PATH"         => Crystal::PATH,
+        "CRYSTAL_LIBRARY_PATH" => Crystal::LIBRARY_PATH,
+        "CRYSTAL_CACHE_DIR"    => Crystal::CACHE_DIR,
+        "NO_COLOR"             => "1",
+      }, output: output, error: output)
+
+      output.to_s.should contain(expected_error)
+
+      status.success?.should be_false
+      File.exists?(executable_file).should be_false
+    end
+  end
+end
+
 def compile_source(source, flags = %w(), file = __FILE__, &)
   with_tempfile("source_file", file: file) do |source_file|
     File.write(source_file, source)
