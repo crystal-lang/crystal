@@ -74,7 +74,7 @@ enum Errno
     {% elsif LibC.has_method?(:__error) %}
       LibC.__error.value = errno.value
     {% elsif LibC.has_method?(:___errno) %}
-      LibC.___errno.value = errno.vaue
+      LibC.___errno.value = errno.value
     {% elsif flag?(:wasi) %}
       LibC.errno = errno.value
     {% elsif flag?(:win32) %}
