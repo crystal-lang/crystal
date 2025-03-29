@@ -198,8 +198,8 @@ documentation available on the official web site.
 .RS 4
 Specify a specific CPU to generate code for. This will pass a
 \-mcpu flag to LLVM, and is only intended to be used for cross\-
-compilation. For a list of available CPUs, invoke "llvm\-as <
-/dev/null | llc \-march=xyz \-mcpu=help".  Passing \-\-mcpu native
+compilation. For a list of available CPUs, pass \-\-mcpu help
+when building any Crystal source code.  Passing \-\-mcpu native
 will pass the host CPU name to tune performance for the host.
 .RE
 .sp

@@ -132,8 +132,9 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
 
     case timer.value.type
     in .sleep?
+      # nothing to do
+    in .timeout?
       timer.value.timed_out!
-      fiber.@resume_event.as(FiberEvent).clear
     in .select_timeout?
       return unless select_action = fiber.timeout_select_action
       fiber.timeout_select_action = nil
@@ -183,8 +184,32 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     end
   end
 
+  def sleep(duration : Time::Span) : Nil
+    timer = Timer.new(:sleep, Fiber.current, duration)
+    add_timer(pointerof(timer))
+    Fiber.suspend
+  end
+
+  # Suspend the current fiber for *duration* and returns true if the timer
+  # expired and false if the fiber was resumed early.
+  #
+  # Specific to IOCP to handle IO timeouts.
+  def timeout(duration : Time::Span) : Bool
+    event = Fiber.current.resume_event
+    event.add(duration)
+
+    Fiber.suspend
+
+    if event.timed_out?
+      true
+    else
+      event.delete
+      false
+    end
+  end
+
   def create_resume_event(fiber : Fiber) : EventLoop::Event
-    FiberEvent.new(:sleep, fiber)
+    FiberEvent.new(:timeout, fiber)
   end
 
   def create_timeout_event(fiber : Fiber) : EventLoop::Event

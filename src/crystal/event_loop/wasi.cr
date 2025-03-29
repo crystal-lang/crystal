@@ -9,9 +9,8 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
     raise NotImplementedError.new("Crystal::Wasi::EventLoop.interrupt")
   end
 
-  # Create a new resume event for a fiber.
-  def create_resume_event(fiber : Fiber) : Crystal::EventLoop::Event
-    raise NotImplementedError.new("Crystal::Wasi::EventLoop.create_resume_event")
+  def sleep(duration : ::Time::Span) : Nil
+    raise NotImplementedError.new("Crystal::Wasi::EventLoop.sleep")
   end
 
   # Creates a timeout_event.

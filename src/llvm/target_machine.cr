@@ -45,6 +45,7 @@ class LLVM::TargetMachine
     true
   end
 
+  @[Deprecated("This API is now internal to the compiler and no longer updated publicly.")]
   def abi
     triple = self.triple
     case triple

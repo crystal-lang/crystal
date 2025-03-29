@@ -4,6 +4,7 @@ require "../syntax/visitor"
 require "../semantic"
 require "../program"
 require "./llvm_builder_helper"
+require "./abi/*"
 
 module Crystal
   MAIN_NAME           = "__crystal_main"
@@ -245,7 +246,7 @@ module Crystal
     record StringKey, mod : LLVM::Module, string : String
     record ModuleInfo, mod : LLVM::Module, typer : LLVMTyper, builder : CrystalLLVMBuilder
 
-    @abi : LLVM::ABI
+    @abi : ABI
     @main_ret_type : Type
     @argc : LLVM::Value
     @argv : LLVM::Value
@@ -272,7 +273,7 @@ module Crystal
                    @debug = Debug::Default,
                    @frame_pointers : FramePointers = :auto,
                    @llvm_context : LLVM::Context = LLVM::Context.new)
-      @abi = @program.target_machine.abi
+      @abi = ABI.from(@program.target_machine)
       # LLVM::Context.register(@llvm_context, "main")
       @llvm_mod = configure_module(@llvm_context.new_module("main_module"))
       @main_mod = @llvm_mod

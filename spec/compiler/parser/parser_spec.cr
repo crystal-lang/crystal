@@ -334,6 +334,28 @@ module Crystal
       assert_syntax_error "foo { |(#{kw})| }", "cannot use '#{kw}' as a block parameter name", 1, 9
     end
 
+    # #10917
+    %w(
+      bar? bar!
+    ).each do |name|
+      assert_syntax_warning "def foo(#{name}); end", "invalid parameter name: #{name}"
+      assert_syntax_warning "def foo(foo #{name}); end", "invalid parameter name: #{name}"
+      it_parses "def foo(#{name} foo); end", Def.new("foo", [Arg.new("foo", external_name: name.to_s)])
+
+      assert_syntax_warning "macro foo(#{name}); end", "invalid parameter name: #{name}"
+      assert_syntax_warning "macro foo(foo #{name}); end", "invalid parameter name: #{name}"
+      it_parses "macro foo(#{name} foo); end", Macro.new("foo", [Arg.new("foo", external_name: name.to_s)], body: MacroLiteral.new(" "))
+
+      it_parses "foo(#{name})", Call.new(nil, "foo", [name.call] of ASTNode)
+      it_parses "foo #{name}", Call.new(nil, "foo", [name.call] of ASTNode)
+
+      assert_syntax_warning "foo { |#{name}| }", "invalid parameter name: #{name}"
+      assert_syntax_warning "foo { |foo, (#{name})| }", "invalid parameter name: #{name}"
+
+      assert_syntax_warning "foo do |foo, #{name}|\nend", "invalid parameter name: #{name}"
+      assert_syntax_warning "foo do |(#{name})|\nend", "invalid parameter name: #{name}"
+    end
+
     it_parses "def self.foo\n1\nend", Def.new("foo", body: 1.int32, receiver: "self".var)
     it_parses "def self.foo()\n1\nend", Def.new("foo", body: 1.int32, receiver: "self".var)
     it_parses "def self.foo=\n1\nend", Def.new("foo=", body: 1.int32, receiver: "self".var)
@@ -1512,6 +1534,11 @@ module Crystal
     assert_syntax_error "case 1\nin 1; 2", "expression of exhaustive case (case ... in) must be a constant (like `IO::Memory`), a generic (like `Array(Int32)`), a bool literal (true or false), a nil literal (nil) or a question method (like `.red?`)"
     assert_syntax_error "case 1\nin .nil?; 2", "expression of exhaustive case (case ... in) must be a constant (like `IO::Memory`), a generic (like `Array(Int32)`), a bool literal (true or false), a nil literal (nil) or a question method (like `.red?`)"
     assert_syntax_error "case 1\nin _;", "'when _' is not supported"
+
+    atomic_methods = Crystal::Parser::AtomicWithMethodCheck.join(", ")
+    assert_syntax_error "case 1\nwhen .=(2)", "expecting any of these tokens: #{atomic_methods} (not '=')"
+    assert_syntax_error "case 1\nwhen .+=(2)", "expecting any of these tokens: #{atomic_methods} (not '+=')"
+    assert_syntax_error "case 1\nwhen .&&(2)", "expecting any of these tokens: #{atomic_methods} (not '&&')"
 
     it_parses "case 1; when 2 then /foo/; end", Case.new(1.int32, [When.new([2.int32] of ASTNode, RegexLiteral.new("foo".string))], else: nil, exhaustive: false)
 
