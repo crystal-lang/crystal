@@ -29,6 +29,17 @@ class Fiber
     #
     # Eventually reset LR to zero to avoid the ARM unwinder to mistake the
     # context switch as a regular call.
+    #
+    # NOTE: depending on the ARM architecture (v7, v6 or older) LLVM uses
+    # different strategies for atomics. By default it uses the "older"
+    # architecture that relies on the libgcc __sync_* symbols; when an armv6 CPU
+    # or +v6 feature is specified it uses the coprocessor instruction as used
+    # below, unless the +db (data barrier) feature is set, in which case it
+    # uses the `dmb ish` instruction. The +db feature is always enabled since
+    # armv7 / +v7.
+    #
+    # TODO: we should do the same, but we don't know the list of CPU features
+    # for the current target machine (and LLVM won't tell us).
 
     {% if compare_versions(Crystal::LLVM_VERSION, "9.0.0") >= 0 %}
       asm("
@@ -42,6 +53,10 @@ class Fiber
         vstmdb sp!, {d8-d15}          // push FPU registers
         {% end %}
         str    sp, [r0, #0]           // current_context.stack_top = sp
+        {% if flag?(:execution_context) %}
+        mov    r4, #0                 // barrier: ensure registers are stored
+        mcr    p15, #0, r4, c7, c10, #5
+        {% end %}
         mov    r4, #1                 // current_context.resumable = 1
         str    r4, [r0, #4]
 
@@ -72,6 +87,10 @@ class Fiber
         vstmdb sp!, {d8-d15}          // push FPU registers
         {% end %}
         str    sp, [$0, #0]           // current_context.stack_top = sp
+        {% if flag?(:execution_context) %}
+        mov    r4, #0                 // barrier: ensure registers are stored
+        mcr    p15, #0, r4, c7, c10, #5
+        {% end %}
         mov    r4, #1                 // current_context.resumable = 1
         str    r4, [$0, #4]
 
