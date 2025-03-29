@@ -1,4 +1,6 @@
 lib LibC
+  fun __error : Int*
+
   E2BIG           =   7
   EACCES          =  13
   EADDRINUSE      =  48
