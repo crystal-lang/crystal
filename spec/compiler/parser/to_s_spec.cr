@@ -52,7 +52,7 @@ describe "ASTNode#to_s" do
   expect_to_s %(foo &.bar), %(foo(&.bar))
   expect_to_s %(foo &.bar(1, 2, 3)), %(foo(&.bar(1, 2, 3)))
   expect_to_s %(foo x: 1, y: 2, &.bar), %(foo(x: 1, y: 2, &.bar))
-  expect_to_s %(foo { |i| i.bar { i } })
+  expect_to_s %(foo { |i| i.bar { i } }), %(foo do |i| i.bar do i end end)
   expect_to_s %(foo do |k, v|\n  k.bar(1, 2, 3)\nend)
   expect_to_s %(foo(3, &.*(2)))
   expect_to_s %(return begin\n  1\n  2\nend)
@@ -108,9 +108,9 @@ describe "ASTNode#to_s" do
   expect_to_s "def foo(x, @[Foo] **args)\nend"
   expect_to_s "def foo(x, **args, &block)\nend"
   expect_to_s "def foo(@[Foo] x, @[Bar] **args, @[Baz] &block)\nend"
-  expect_to_s "{% [1, 2, 3].each { |v| pp(v) } %}"
-  expect_to_s "{%\n  [1, 2, 3].each { |v| pp(v) }\n%}"
-  expect_to_s "{% [1, 2, 3].find(&.!.even?) %}", "{% [1, 2, 3].find() { |__arg0| !__arg0.even? } %}"
+  expect_to_s "{% [1, 2, 3].each { |v| pp(v) } %}", "{% [1, 2, 3].each do |v| pp(v) end %}"
+  expect_to_s "{%\n  [1, 2, 3].each { |v| pp(v) }\n%}", "{%\n  [1, 2, 3].each do |v| pp(v) end\n%}"
+  expect_to_s "{% [1, 2, 3].find(&.!.even?) %}", "{% [1, 2, 3].find() do |__arg0| !__arg0.even? end %}"
   expect_to_s <<-'CR'
     {%
       [1, 2, 3].find do |e|
@@ -468,13 +468,13 @@ describe "ASTNode#to_s" do
   expect_to_s "->::foo(Int32, String)"
   expect_to_s "->::Foo::Bar.foo"
   expect_to_s "yield(1)"
-  expect_to_s "foo { |(x, y)| x }"
+  expect_to_s "foo { |(x, y)| x }", "foo do |(x, y)| x end"
   expect_to_s "foo do |(x, y)|\n  x\nend", <<-CODE
     foo do |(x, y)|
       x
     end
     CODE
-  expect_to_s "foo { |(x, (y, z))| x }"
+  expect_to_s "foo { |(x, (y, z))| x }", "foo do |(x, (y, z))| x end"
   expect_to_s "foo do |(x, (y, z))|\n  x\nend", <<-CODE
     foo do |(x, (y, z))|
       x

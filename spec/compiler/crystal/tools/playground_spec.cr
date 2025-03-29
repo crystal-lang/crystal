@@ -520,7 +520,7 @@ describe Playground::AgentInstrumentorTransformer do
             _p.i(5) { 'b' }
           end
         end
-        _p.i(7) { baz { 'c' } }
+        _p.i(7) do baz do 'c' end end
       end
     end
     CRYSTAL

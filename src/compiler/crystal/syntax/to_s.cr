@@ -1114,7 +1114,7 @@ module Crystal
       # If the node's body end location is on the same line as the start of the block itself, it's on a single line.
       single_line_block = (node_loc = node.location) && (end_loc = node.body.end_location) && end_loc.line_number == node_loc.line_number
 
-      @str << (single_line_block ? '{' : "do")
+      @str << "do"
 
       unless node.args.empty?
         @str << " |"
@@ -1141,11 +1141,12 @@ module Crystal
       end
 
       if single_line_block
-        @str << ' ' << '}'
+        @str << ' '
       else
         append_indent
-        @str << "end"
       end
+
+      @str << "end"
 
       false
     end
