@@ -2851,6 +2851,33 @@ module Crystal
         else_node_location.line_number.should eq 7
       end
 
+      it "sets root level Expressions keyword" do
+        parser = Parser.new(<<-CR)
+          {%
+            a = 1
+
+            if true
+              arr << 1
+              arr << 2
+            end
+
+            b = 2
+            c = 3
+          %}
+        CR
+
+        node = parser.parse.should be_a MacroExpression
+
+        node = node.exp.should be_a Expressions
+        node.keyword.should eq Expressions::Keyword::MacroExpression
+
+        node.expressions.size.should eq 4
+        node = node.expressions[1].should be_a If
+        node = node.then.should be_a Expressions
+
+        node.keyword.should eq Expressions::Keyword::None
+      end
+
       it "sets correct location of Begin within another node" do
         parser = Parser.new(<<-CR)
           macro finished

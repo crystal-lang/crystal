@@ -17,7 +17,6 @@ module Crystal
     @str : IO
     @macro_expansion_pragmas : Hash(Int32, Array(Lexer::LocPragma))?
     @current_arg_type : DefArgType = :none
-    @write_trailing_newline : Bool = true
 
     # Inside a comma-separated list of parameters or args, this becomes true and
     # the outermost pair of parentheses are removed from type restrictions that
@@ -224,7 +223,7 @@ module Crystal
         @str << "begin"
         @indent += 1
         newline
-      in .none?
+      in .none?, .macro_expression?
         # Not a special condition
       end
 
@@ -240,10 +239,11 @@ module Crystal
             append_indent unless node.keyword.paren? && i == 0
             exp.accept self
 
-            if !@write_trailing_newline && i == node.expressions.size - 1
-              # no-op
-            else
-              newline unless node.keyword.paren? && i == node.expressions.size - 1
+            if node.keyword.macro_expression? && i == node.expressions.size - 1
+              # Do not add a trailing newline after the last node in the root `Expressions` within a `MacroExpression`.
+              # This is handled by the `MacroExpression` logic.
+            elsif !(node.keyword.paren? && i == node.expressions.size - 1)
+              newline
             end
 
             last_node = exp
@@ -258,7 +258,7 @@ module Crystal
         @indent -= 1
         append_indent
         @str << "end"
-      in .none?
+      in .none?, .macro_expression?
         # Not a special condition
       end
 
@@ -773,11 +773,7 @@ module Crystal
           append_indent
         end
 
-        # Only skip writing trailing newlines when the macro expressions' expression is not an Expressions.
-        # This allow Expressions that may be nested deeper in the AST to include trailing newlines.
-        @write_trailing_newline = !node.exp.is_a?(Expressions)
         node.exp.accept self
-        @write_trailing_newline = true
       end
 
       write_extra_newlines node.exp.end_location, node.end_location
