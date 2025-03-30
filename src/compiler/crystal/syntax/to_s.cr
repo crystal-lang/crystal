@@ -294,6 +294,7 @@ module Crystal
         newline
         accept_with_indent(node.else)
       end
+      newline unless @write_trailing_newline
       append_indent
       @str << "end"
       false
@@ -1134,6 +1135,7 @@ module Crystal
       newline
       accept_with_indent(node.body)
 
+      newline unless @write_trailing_newline
       append_indent
       @str << "end"
 
