@@ -27,6 +27,7 @@ module Fiber::ExecutionContext
 
     @parked = Atomic(Int32).new(0)
     @spinning = Atomic(Int32).new(0)
+    @size : Range(Int32, Int32)
 
     # :nodoc:
     protected def self.default(maximum : Int32) : self
@@ -49,7 +50,13 @@ module Fiber::ExecutionContext
       new(name, Range.new(min, size.end, size.exclusive?), hijack: false)
     end
 
-    protected def initialize(@name : String, @size : Range(Int32, Int32), hijack : Bool)
+    protected def initialize(@name : String, size : Range(Int32, Int32), hijack : Bool)
+      @size =
+        if size.exclusive?
+          (size.begin)..(size.end - 1)
+        else
+          size
+        end
       raise ArgumentError.new("#{self.class.name} needs at least one thread") if capacity < 1
       raise ArgumentError.new("#{self.class.name} invalid range") if @size.begin > @size.end
 
@@ -75,7 +82,7 @@ module Fiber::ExecutionContext
 
     # The maximum number of threads that can be started.
     def capacity : Int32
-      @size.exclusive? ? @size.end - 1 : @size.end
+      @size.end
     end
 
     def stack_pool? : Fiber::StackPool?
@@ -101,14 +108,14 @@ module Fiber::ExecutionContext
     end
 
     private def start_initial_threads(hijack)
-      min = @size.begin
+      offset = 0
 
       if hijack
         @threads << hijack_current_thread(@schedulers[0])
-        min -= 1
+        offset += 1
       end
 
-      min.times do |index|
+      offset.upto(@size.begin - 1) do |index|
         @threads << start_thread(@schedulers[index])
       end
     end
@@ -247,11 +254,11 @@ module Fiber::ExecutionContext
       # check if we can start another thread; no need for atomics, the values
       # shall be rather stable over time and we check them again inside the
       # mutex
-      return if @threads.size == @size.end
+      return if @threads.size == capacity
 
       @mutex.synchronize do
         index = @threads.size
-        return if index == @size.end # check again
+        return if index == capacity # check again
 
         @threads << start_thread(@schedulers[index])
       end
