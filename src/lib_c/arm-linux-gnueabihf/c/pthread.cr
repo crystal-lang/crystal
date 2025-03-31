@@ -28,7 +28,7 @@ lib LibC
   fun pthread_getspecific(PthreadKeyT) : Void*
   fun pthread_equal(thread1 : PthreadT, thread2 : PthreadT) : Int
   fun pthread_join(th : PthreadT, thread_return : Void**) : Int
-  fun pthread_key_create(PthreadKeyT*, Void* ->) : Int
+  fun pthread_key_create(PthreadKeyT*, (Void*) ->) : Int
   fun pthread_key_delete(PthreadKeyT) : Int
   fun pthread_mutexattr_destroy(attr : PthreadMutexattrT*) : Int
   fun pthread_mutexattr_init(attr : PthreadMutexattrT*) : Int
