@@ -153,6 +153,8 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
 
   def read(file_descriptor : System::FileDescriptor, slice : Bytes) : Int32
     async_rw(LibC::IORING_OP_READ, file_descriptor.fd, slice, file_descriptor.@read_timeout) do |errno|
+      check_open(file_descriptor)
+
       case errno
       when Errno::EINTR
         # retry
@@ -168,11 +170,13 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
 
   def wait_readable(file_descriptor : System::FileDescriptor) : Nil
     async_poll(file_descriptor.fd, LibC::POLLOUT, file_descriptor.@read_timeout) { "Read timed out" }
-    raise IO::Error.new("Closed stream") if file_descriptor.closed?
+    check_open(file_descriptor)
   end
 
   def write(file_descriptor : System::FileDescriptor, slice : Bytes) : Int32
     async_rw(LibC::IORING_OP_WRITE, file_descriptor.fd, slice, file_descriptor.@write_timeout) do |errno|
+      check_open(file_descriptor)
+
       case errno
       when Errno::EINTR
         # retry
@@ -188,7 +192,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
 
   def wait_writable(file_descriptor : System::FileDescriptor) : Nil
     async_poll(file_descriptor.fd, LibC::POLLOUT, file_descriptor.@write_timeout) { "Write timed out" }
-    raise IO::Error.new("Closed stream") if file_descriptor.closed?
+    check_open(file_descriptor)
   end
 
   def reopened(file_descriptor : System::FileDescriptor) : Nil
@@ -205,6 +209,8 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
 
   def read(socket : ::Socket, slice : Bytes) : Int32
     async_rw(LibC::IORING_OP_READ, socket.fd, slice, socket.@read_timeout) do |errno|
+      check_open(socket)
+
       case errno
       when Errno::EINTR
         # retry
@@ -218,11 +224,13 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
 
   def wait_readable(socket : ::Socket) : Nil
     async_poll(socket.fd, LibC::POLLOUT, socket.@read_timeout) { "Read timed out" }
-    raise IO::Error.new("Closed stream") if socket.closed?
+    check_open(socket)
   end
 
   def write(socket : ::Socket, slice : Bytes) : Int32
     async_rw(LibC::IORING_OP_WRITE, socket.fd, slice, socket.@write_timeout) do |errno|
+      check_open(socket)
+
       case errno
       when Errno::EINTR
         # retry
@@ -236,7 +244,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
 
   def wait_writable(socket : ::Socket) : Nil
     async_poll(socket.fd, LibC::POLLOUT, socket.@write_timeout) { "Write timed out" }
-    raise IO::Error.new("Closed stream") if socket.closed?
+    check_open(socket)
   end
 
   def accept(socket : ::Socket) : ::Socket::Handle?
@@ -303,7 +311,6 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
       if ret == -1
         if Errno.value == Errno::EAGAIN
           wait_readable(socket)
-          raise IO::Error.new("Closed stream") if socket.closed?
         else
           raise IO::Error.from_errno("recvfrom", target: socket)
         end
@@ -320,6 +327,10 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   end
 
   # internals
+
+  private def check_open(io)
+    raise IO::Error.new("Closed stream") if io.closed?
+  end
 
   private def async_rw(opcode, fd, slice, timeout, &)
     loop do
