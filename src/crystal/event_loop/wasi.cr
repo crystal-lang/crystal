@@ -60,6 +60,10 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
     end
   end
 
+  def reopened(file_descriptor : Crystal::System::FileDescriptor) : Nil
+    file_descriptor.evented_close
+  end
+
   def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
     file_descriptor.evented_close
   end

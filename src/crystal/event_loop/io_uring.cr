@@ -196,8 +196,12 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
     raise IO::Error.new("Closed stream") if file_descriptor.closed?
   end
 
+  def reopened(file_descriptor : System::FileDescriptor) : Nil
+    # todo: do we need to interrupt pending operations on file_descriptor.fd (?)
+  end
+
   def close(file_descriptor : System::FileDescriptor) : Nil
-    # sync with `FileDescriptor#file_descriptor_close`
+    # sync with `FileDescriptor#file_descriptor_close`: prevent actual close
     fd = file_descriptor.@volatile_fd.swap(-1, :relaxed)
     async_close(fd) unless fd == -1
   end

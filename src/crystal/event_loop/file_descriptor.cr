@@ -25,6 +25,8 @@ abstract class Crystal::EventLoop
 
     # Closes the file descriptor resource.
     abstract def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
+
+    abstract def reopened(file_descriptor : Crystal::System::FileDescriptor) : Nil
   end
 
   # Removes the file descriptor from the event loop. Can be used to free up
