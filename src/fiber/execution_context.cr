@@ -30,7 +30,7 @@ module Fiber::ExecutionContext
   end
 
   # :nodoc:
-  protected class_getter(execution_contexts) { Thread::LinkedList(ExecutionContext).new }
+  protected class_getter execution_contexts = Thread::LinkedList(ExecutionContext).new
 
   # :nodoc:
   property next : ExecutionContext?
