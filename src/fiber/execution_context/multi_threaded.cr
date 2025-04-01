@@ -38,16 +38,22 @@ module Fiber::ExecutionContext
     # right away but will be started as needed to increase parallelism up to the
     # configured maximum.
     def self.new(name : String, maximum : Int32) : self
-      new(name, 0..maximum, hijack: false)
+      new(name, 0..maximum)
+    end
+
+    # Starts a context with a *maximum* number of threads. Threads aren't started
+    # right away but will be started as needed to increase parallelism up to the
+    # configured maximum.
+    def self.new(name : String, size : Range(Nil, Int32)) : self
+      new(name, Range.new(0, size.end, size.exclusive?))
     end
 
     # Starts a context with a minimum and maximum number of threads. Only the
     # minimum number of threads will be started right away. The minimum can be 0
     # (or nil) in which case no threads will be started. More threads will be
     # started as needed to increase parallelism up to the configured maximum.
-    def self.new(name : String, size : Range(B, Int32)) : self forall B
-      min = size.begin.try(&.to_i) || 0
-      new(name, Range.new(min, size.end, size.exclusive?), hijack: false)
+    def self.new(name : String, size : Range(Int32, Int32)) : self
+      new(name, size, hijack: false)
     end
 
     protected def initialize(@name : String, size : Range(Int32, Int32), hijack : Bool)
