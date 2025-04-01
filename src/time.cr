@@ -925,6 +925,36 @@ struct Time
     time - time.offset.seconds
   end
 
+  # Creates an instance representing the *week*-th *day_of_week* in the given
+  # *year* and *month*.
+  #
+  # If *week* is `5` and there are not enough weeks in the given month (e.g.
+  # February in a non-leap year), the last week of the month is used instead.
+  #
+  # Valid value ranges for the individual fields:
+  #
+  # * `year`: `1..9999`
+  # * `month`: `1..12`
+  # * `week`: `1..5`
+  # * `day_of_week`: `0..7`
+  def self.month_week_date(year : Int32, month : Int32, week : Int32, day_of_week : Int32 | DayOfWeek, hour : Int32 = 0, minute : Int32 = 0, second : Int32 = 0, *, nanosecond : Int32 = 0, location : Location = Location.local) : self
+    raise ArgumentError.new "Invalid week of month" unless week.in?(1..5)
+    raise ArgumentError.new "Invalid day of week" if day_of_week.is_a?(Int32) && !day_of_week.in?(0..7)
+
+    day_of_week = day_of_week.to_i32
+    first_day_of_week = Time.utc(year, month, 1).day_of_week.to_i32
+    day = (day_of_week - first_day_of_week) % 7 + 1
+
+    max_weeks = (Time.days_in_month(year, month) - day) // 7
+    day += {week - 1, max_weeks}.min * 7
+
+    time = Time.utc(year, month, day, hour, minute, second, nanosecond: nanosecond)
+    return time if location.utc?
+
+    time = time.in(location)
+    time - time.offset.seconds
+  end
+
   # Returns the duration between this `Time` and midnight of the same day.
   #
   # This is equivalent to creating a `Time::Span` from the time-of-day fields:
