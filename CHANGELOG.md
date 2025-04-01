@@ -23,36 +23,40 @@ _Feature freeze: 2025-03-26_
 #### stdlib
 
 - Fix `Box(Pointer).box` to not allocate pointer storage on the heap ([#15562], thanks @ysbaddaden)
-- *(collection)* Add `Indexable#find` and `#find!` ([#15552], thanks @punteek)
+- *(collection)* Add `Indexable#find` and `#find!` ([#15552], [#15589], thanks @punteek, @Sija)
 - *(llvm)* Add `LLVM.version` ([#15354], thanks @straight-shoota)
 - *(llvm)* Support LLVM 20 ([#15412], [#15418], thanks @HertzDevil, @straight-shoota)
 - *(llvm)* Add `LLVM.init_native_target` and `LLVM.init_all_targets` ([#15466], thanks @HertzDevil)
 - *(llvm)* Support `$LLVM_VERSION`, `$LLVM_TARGETS`, and `$LLVM_LDFLAGS` ([#15091], thanks @HertzDevil)
+- *(llvm)* Add `LLVM::CodeModel::Tiny` ([#15608], thanks @HertzDevil)
 - *(macros)* Implement `StringLiteral#scan` ([#15398], thanks @homonoidian)
-- *(networking)* Added `Path` as possible argument type to UNIXSocket and UNIXServer ([#15260], thanks @BigBoyBarney)
+- *(networking)* Add `Path` as possible argument type to `UNIXSocket` and `UNIXServer` ([#15260], thanks @BigBoyBarney)
 - *(networking)* Add `Cookies#==` ([#15463], thanks @straight-shoota)
-- *(runtime)* Add `Fiber::ExecutionContext::Monitor` ([#15599], thanks @ysbaddaden)
+- *(runtime)* RFC 2: Add `Fiber::ExecutionContext::MultiThreaded` ([#15517], thanks @ysbaddaden)
 - *(runtime)* Add `EventLoop#wait_readable`, `#wait_writable` methods methods ([#15376], thanks @ysbaddaden)
 - *(runtime)* Initialize `Fiber` with an explicit stack ([#15409], thanks @ysbaddaden)
 - *(runtime)* Add fiber queues for execution context schedulers ([#15345], thanks @ysbaddaden)
 - *(runtime)* RFC 2: Skeleton for ExecutionContext  ([#15350], [#15596], thanks @ysbaddaden)
 - *(runtime)* RFC 2: Add `Fiber::ExecutionContext::SingleThreaded` scheduler ([#15511], thanks @ysbaddaden)
-- *(runtime)* Add `Fiber::ExecutionContext::Isolated` ([#15513], thanks @ysbaddaden)
+- *(runtime)* RFC 2: Add `Fiber::ExecutionContext::Isolated` ([#15513], thanks @ysbaddaden)
+- *(runtime)* RFC 2: Add `Fiber::ExecutionContext::Monitor` ([#15599], thanks @ysbaddaden)
 - *(serialization)* Add `Union.from_json_object_key?` ([#15411], thanks @straight-shoota)
 - *(system)* Add `Process::Status#description` ([#15468], thanks @straight-shoota)
 - *(text)* Add `IO` overloads to `Char#upcase`, `#downcase`, `#titlecase` ([#15508], thanks @HertzDevil)
 
 [#15562]: https://github.com/crystal-lang/crystal/pull/15562
 [#15552]: https://github.com/crystal-lang/crystal/pull/15552
+[#15589]: https://github.com/crystal-lang/crystal/pull/15589
 [#15354]: https://github.com/crystal-lang/crystal/pull/15354
 [#15412]: https://github.com/crystal-lang/crystal/pull/15412
 [#15418]: https://github.com/crystal-lang/crystal/pull/15418
 [#15466]: https://github.com/crystal-lang/crystal/pull/15466
 [#15091]: https://github.com/crystal-lang/crystal/pull/15091
+[#15608]: https://github.com/crystal-lang/crystal/pull/15608
 [#15398]: https://github.com/crystal-lang/crystal/pull/15398
 [#15260]: https://github.com/crystal-lang/crystal/pull/15260
 [#15463]: https://github.com/crystal-lang/crystal/pull/15463
-[#15599]: https://github.com/crystal-lang/crystal/pull/15599
+[#15517]: https://github.com/crystal-lang/crystal/pull/15517
 [#15376]: https://github.com/crystal-lang/crystal/pull/15376
 [#15409]: https://github.com/crystal-lang/crystal/pull/15409
 [#15345]: https://github.com/crystal-lang/crystal/pull/15345
@@ -60,25 +64,26 @@ _Feature freeze: 2025-03-26_
 [#15596]: https://github.com/crystal-lang/crystal/pull/15596
 [#15511]: https://github.com/crystal-lang/crystal/pull/15511
 [#15513]: https://github.com/crystal-lang/crystal/pull/15513
+[#15599]: https://github.com/crystal-lang/crystal/pull/15599
 [#15411]: https://github.com/crystal-lang/crystal/pull/15411
 [#15468]: https://github.com/crystal-lang/crystal/pull/15468
 [#15508]: https://github.com/crystal-lang/crystal/pull/15508
 
 #### compiler
 
-- *(cli)* Respect `--mcpu=help` in the compiler ([#15595], thanks @HertzDevil)
-- *(cli)* Support `--output` in `crystal build` ([#15519], thanks @HertzDevil)
+- *(cli)* Support `--output` long option in `crystal build` ([#15519], thanks @HertzDevil)
 - *(cli)* Support  directory name in `--output` CLI option ([#15471], thanks @straight-shoota)
 - *(cli)* **[breaking]** Add compiler path to `$PATH` and `$CRYSTAL_EXEC_PATH` for subcommands ([#15186], thanks @straight-shoota)
+- *(cli)* Respect `--mcpu=help` in the compiler ([#15595], thanks @HertzDevil)
 - *(codegen)* Set linkage of `__crystal_*` funs to internal ([#15439], thanks @ysbaddaden)
 - *(codegen)* Add function name to `CRYSTAL_DEBUG_CODEGEN` log helper ([#15506], thanks @HertzDevil)
 - *(parser)* Handle properly stringifying multiline macro expressions ([#15305], thanks @Blacksmoke16)
 - *(parser)* **[breaking]** Check that def, macro, and block parameters don't end with `?` or `!` ([#12197], thanks @potomak)
 
-[#15595]: https://github.com/crystal-lang/crystal/pull/15595
 [#15519]: https://github.com/crystal-lang/crystal/pull/15519
 [#15471]: https://github.com/crystal-lang/crystal/pull/15471
 [#15186]: https://github.com/crystal-lang/crystal/pull/15186
+[#15595]: https://github.com/crystal-lang/crystal/pull/15595
 [#15439]: https://github.com/crystal-lang/crystal/pull/15439
 [#15506]: https://github.com/crystal-lang/crystal/pull/15506
 [#15305]: https://github.com/crystal-lang/crystal/pull/15305
@@ -98,45 +103,47 @@ _Feature freeze: 2025-03-26_
 
 #### stdlib
 
-- *(collection)* Return `if_none` for invalid offsets in `Indexable#find` ([#15589], thanks @Sija)
-- *(collection)* Hash `@indices` can grow larger than Int32::MAX bytes ([#15347], thanks @ysbaddaden)
+- *(collection)* Fix hash `@indices` can grow larger than `Int32::MAX` bytes ([#15347], thanks @ysbaddaden)
 - *(collection)* Fix `Tuple#to_a(&)` for arbitrary block output type ([#15431], thanks @straight-shoota)
 - *(collection)* Fix `Range#size` for unsigned edge cases ([#14978], thanks @straight-shoota)
-- *(collection)* **[breaking]** Fix the return type of `Enumerable#sum/product` for union elements ([#15314], thanks @rvprasad)
+- *(collection)* **[breaking]** Fix the return type of `Enumerable#sum`, `#product` for union elements ([#15314], thanks @rvprasad)
 - *(concurrency)* Fix `Reference#exec_recursive`, `#exec_recursive_clone` to be fiber aware ([#15361], thanks @ysbaddaden)
-- *(crypto)* libcrypto: Correct EVP_CIPHER_get_flags argument type ([#15392], thanks @miry)
+- *(concurrency)* RFC 2: MT safe fiber context switch on ARM ([#15582], thanks @ysbaddaden)
+- *(crypto)* Fix argument type for `EVP_CIPHER_get_flags` ([#15392], thanks @miry)
 - *(files)* Never remove UNC share name in `Path#dirname` ([#15583], thanks @HertzDevil)
 - *(files)* Fix `File.exists?` for special devices on Windows ([#15587], thanks @HertzDevil)
 - *(llvm)* Fix LLVM version detection for `-rc1` ([#15410], thanks @HertzDevil)
 - *(networking)* **[breaking]** Fix parsing HTTP resource string that looks like absolute URL ([#15499], thanks @straight-shoota)
-- *(runtime)* Add thread safety to `at_exit` ([#15598], thanks @ysbaddaden)
 - *(runtime)* Fix `pkg_config` name for `libgc` bindings on FreeBSD ([#15532], thanks @straight-shoota)
 - *(runtime)* RFC 2: MT safe fiber context switch on AArch64 ([#15581], thanks @ysbaddaden)
+- *(runtime)* Add thread safety to `at_exit` ([#15598], thanks @ysbaddaden)
 - *(serialization)* Fix `Union.from_yaml` to prioritize `String` for quoted scalar ([#15405], thanks @straight-shoota)
-- *(system)* Extend Windows `Process` completion key's lifetime ([#15597], thanks @HertzDevil)
-- *(system)* **[security]** Strip periods and spaces during batch file filtering on Windows ([#15573], thanks @GeopJr)
 - *(system)* signal handler musn't depend on the event loop ([#15325], thanks @ysbaddaden)
+- *(system)* Corrects Windows lib lookup in case-sensitive OSes ([#15362], thanks @luislavena)
 - *(system)* Fix permissions application in `File.copy` ([#15520], thanks @straight-shoota)
+- *(system)* **[security]** Strip periods, spaces for batch file filtering on Windows ([#15573], thanks @GeopJr)
+- *(system)* Extend Windows `Process` completion key's lifetime ([#15597], thanks @HertzDevil)
 
-[#15589]: https://github.com/crystal-lang/crystal/pull/15589
 [#15347]: https://github.com/crystal-lang/crystal/pull/15347
 [#15431]: https://github.com/crystal-lang/crystal/pull/15431
 [#14978]: https://github.com/crystal-lang/crystal/pull/14978
 [#15314]: https://github.com/crystal-lang/crystal/pull/15314
 [#15361]: https://github.com/crystal-lang/crystal/pull/15361
+[#15582]: https://github.com/crystal-lang/crystal/pull/15582
 [#15392]: https://github.com/crystal-lang/crystal/pull/15392
 [#15583]: https://github.com/crystal-lang/crystal/pull/15583
 [#15587]: https://github.com/crystal-lang/crystal/pull/15587
 [#15410]: https://github.com/crystal-lang/crystal/pull/15410
 [#15499]: https://github.com/crystal-lang/crystal/pull/15499
-[#15598]: https://github.com/crystal-lang/crystal/pull/15598
 [#15532]: https://github.com/crystal-lang/crystal/pull/15532
 [#15581]: https://github.com/crystal-lang/crystal/pull/15581
+[#15598]: https://github.com/crystal-lang/crystal/pull/15598
 [#15405]: https://github.com/crystal-lang/crystal/pull/15405
-[#15597]: https://github.com/crystal-lang/crystal/pull/15597
-[#15573]: https://github.com/crystal-lang/crystal/pull/15573
 [#15325]: https://github.com/crystal-lang/crystal/pull/15325
+[#15362]: https://github.com/crystal-lang/crystal/pull/15362
 [#15520]: https://github.com/crystal-lang/crystal/pull/15520
+[#15573]: https://github.com/crystal-lang/crystal/pull/15573
+[#15597]: https://github.com/crystal-lang/crystal/pull/15597
 
 #### compiler
 
@@ -144,6 +151,7 @@ _Feature freeze: 2025-03-26_
 - *(cli)* Fix handling of double dashes `--` in crystal `eval` command ([#15477], thanks @kojix2)
 - *(codegen)* don't set external linkage when `@[NoInline]` is specified ([#15424], thanks @ysbaddaden)
 - *(codegen)* Allow multiple redefinitions of the same top-level fun ([#15553], thanks @HertzDevil)
+- *(codegen)* Respect `$MACOSX_DEPLOYMENT_TARGET` on macOS hosts ([#15603], thanks @HertzDevil)
 - *(interpreter)* Fix `pkg_config` name for `libffi` bindings ([#15533], thanks @straight-shoota)
 - *(parser)* Lexer: Fix location of token after line continuation ([#15454], thanks @FnControlOption)
 - *(parser)* Add locations to `When` nodes ([#15481], thanks @Sija)
@@ -155,6 +163,7 @@ _Feature freeze: 2025-03-26_
 [#15477]: https://github.com/crystal-lang/crystal/pull/15477
 [#15424]: https://github.com/crystal-lang/crystal/pull/15424
 [#15553]: https://github.com/crystal-lang/crystal/pull/15553
+[#15603]: https://github.com/crystal-lang/crystal/pull/15603
 [#15533]: https://github.com/crystal-lang/crystal/pull/15533
 [#15454]: https://github.com/crystal-lang/crystal/pull/15454
 [#15481]: https://github.com/crystal-lang/crystal/pull/15481
@@ -168,12 +177,6 @@ _Feature freeze: 2025-03-26_
 
 [#15578]: https://github.com/crystal-lang/crystal/pull/15578
 
-#### other
-
-- Corrects Windows lib lookup in case-sensitive OSes ([#15362], thanks @luislavena)
-
-[#15362]: https://github.com/crystal-lang/crystal/pull/15362
-
 ### Chores
 
 #### stdlib
@@ -182,16 +185,22 @@ _Feature freeze: 2025-03-26_
 
 [#15464]: https://github.com/crystal-lang/crystal/pull/15464
 
+#### compiler
+
+- *(interpreter:repl)* Update REPLy version ([#15328], thanks @oprypin)
+
+[#15328]: https://github.com/crystal-lang/crystal/pull/15328
+
 ### Performance
 
 #### stdlib
 
-- *(files)* Optimize `Path#relative_to?` ([#15594], thanks @HertzDevil)
 - *(files)* Optimize `Path#drive`, `#root`, and `#anchor` ([#15584], thanks @HertzDevil)
+- *(files)* Optimize `Path#relative_to?` ([#15594], thanks @HertzDevil)
 - *(runtime)* Shrink `Crystal::System.print_error`'s output size ([#15490], thanks @HertzDevil)
 
-[#15594]: https://github.com/crystal-lang/crystal/pull/15594
 [#15584]: https://github.com/crystal-lang/crystal/pull/15584
+[#15594]: https://github.com/crystal-lang/crystal/pull/15594
 [#15490]: https://github.com/crystal-lang/crystal/pull/15490
 
 #### compiler
@@ -224,7 +233,7 @@ _Feature freeze: 2025-03-26_
 - *(llvm)* **[deprecation]** Make `LLVM::ABI` internal ([#15559], thanks @HertzDevil)
 - *(llvm)* Only initialize `LLVM::Attribute`'s class variables on demand ([#15534], thanks @HertzDevil)
 - *(macros)* Generate Object getter/property macros to remove duplications ([#15386], thanks @ysbaddaden)
-- *(networking)* Refactor extract `HTTP::Cookies` to its own file ([#15500], thanks @straight-shoota)
+- *(networking)* Refactor extract `HTTP::Cookies` to its own file ([#15500], [#15618], thanks @straight-shoota)
 - *(runtime)* Add `Crystal.print_buffered(io)` and `Crystal.print_error_buffered` ([#15343], thanks @ysbaddaden)
 - *(runtime)* Explicit init of Thread and Fiber class variables ([#15369], thanks @ysbaddaden)
 - *(runtime)* Add `Crystal.once_init` replacing `__crystal_once_init` ([#15371], thanks @ysbaddaden)
@@ -242,6 +251,7 @@ _Feature freeze: 2025-03-26_
 [#15534]: https://github.com/crystal-lang/crystal/pull/15534
 [#15386]: https://github.com/crystal-lang/crystal/pull/15386
 [#15500]: https://github.com/crystal-lang/crystal/pull/15500
+[#15618]: https://github.com/crystal-lang/crystal/pull/15618
 [#15343]: https://github.com/crystal-lang/crystal/pull/15343
 [#15369]: https://github.com/crystal-lang/crystal/pull/15369
 [#15371]: https://github.com/crystal-lang/crystal/pull/15371
@@ -283,11 +293,19 @@ _Feature freeze: 2025-03-26_
 
 #### compiler
 
+- *(cli)* Convert `crystal.1` manpage to asciidoc ([#15478], thanks @straight-shoota)
 - *(cli)* Split combined manpage into individual ones for each command ([#15509], thanks @straight-shoota)
 - *(debugger)* Document `::debugger` ([#15579], thanks @HertzDevil)
 
+[#15478]: https://github.com/crystal-lang/crystal/pull/15478
 [#15509]: https://github.com/crystal-lang/crystal/pull/15509
 [#15579]: https://github.com/crystal-lang/crystal/pull/15579
+
+#### other
+
+- Add sample fibonacci numbers ([#15550], thanks @666hwll)
+
+[#15550]: https://github.com/crystal-lang/crystal/pull/15550
 
 ### Specs
 
@@ -295,9 +313,13 @@ _Feature freeze: 2025-03-26_
 
 - Fix invalid returns in class getter's lazy evaluation blocks ([#15364], thanks @ysbaddaden)
 - *(specs)* Add specs for `File.match?` ([#15348], thanks @straight-shoota)
+- *(text)* Add specs for `File.match?` from fast-glob ([#15604], thanks @straight-shoota)
+- *(text)* Add specs for `File.match?` with multibyte characters ([#15601], thanks @straight-shoota)
 
 [#15364]: https://github.com/crystal-lang/crystal/pull/15364
 [#15348]: https://github.com/crystal-lang/crystal/pull/15348
+[#15604]: https://github.com/crystal-lang/crystal/pull/15604
+[#15601]: https://github.com/crystal-lang/crystal/pull/15601
 
 #### compiler
 
@@ -310,14 +332,14 @@ _Feature freeze: 2025-03-26_
 - Changelog for 1.16.0 ([#15602], thanks @straight-shoota)
 - Update previous Crystal release 1.15.0 ([#15339], thanks @straight-shoota)
 - Fix `make uninstall` to remove fish completion ([#15367], thanks @straight-shoota)
+- Merge `release/1.15`@1.15.1 ([#15414], thanks @straight-shoota)
 - Merge `release/1.15`@1.15.1 ([#15422], thanks @straight-shoota)
 - Fix: Remove reverted PR from changelog for 1.15.1 ([#15415], thanks @straight-shoota)
 - Update previous release: 1.15.1 ([#15417], thanks @straight-shoota)
 - Add backports to changelog generator ([#15413], thanks @straight-shoota)
-- Expand `DESTDIR` outside of prefixed dir variables ([#15444], thanks @straight-shoota)
+- Makefile: Expand `DESTDIR` outside of prefixed dir variables ([#15444], thanks @straight-shoota)
 - Add git mailmap ([#15396], thanks @straight-shoota)
 - Introduce actionlint to lint GitHub Actions workflows ([#15449], thanks @straight-shoota)
-- Convert `crystal.1` manpage to asciidoc ([#15478], thanks @straight-shoota)
 - Rename `find-llvm-config` to `find-llvm-config.sh` ([#15448], thanks @straight-shoota)
 - Makefile: Remove `crystal` from `DATADIR` ([#15467], thanks @straight-shoota)
 - Add `scripts/update-shards.sh` ([#15462], thanks @straight-shoota)
@@ -338,10 +360,12 @@ _Feature freeze: 2025-03-26_
 - *(ci)* Update GH Actions ([#15551], thanks @renovate)
 - *(ci)* Update library versions for MSVC CI ([#15554], thanks @HertzDevil)
 - *(ci)* Increase memory for `aarch64-*-test-compiler` runners to 16GB ([#15572], thanks @straight-shoota)
+- *(ci)* Add AArch64 Linux workflow using GitHub's runner ([#15600], thanks @HertzDevil)
 
 [#15602]: https://github.com/crystal-lang/crystal/pull/15602
 [#15339]: https://github.com/crystal-lang/crystal/pull/15339
 [#15367]: https://github.com/crystal-lang/crystal/pull/15367
+[#15414]: https://github.com/crystal-lang/crystal/pull/15414
 [#15422]: https://github.com/crystal-lang/crystal/pull/15422
 [#15415]: https://github.com/crystal-lang/crystal/pull/15415
 [#15417]: https://github.com/crystal-lang/crystal/pull/15417
@@ -349,7 +373,6 @@ _Feature freeze: 2025-03-26_
 [#15444]: https://github.com/crystal-lang/crystal/pull/15444
 [#15396]: https://github.com/crystal-lang/crystal/pull/15396
 [#15449]: https://github.com/crystal-lang/crystal/pull/15449
-[#15478]: https://github.com/crystal-lang/crystal/pull/15478
 [#15448]: https://github.com/crystal-lang/crystal/pull/15448
 [#15467]: https://github.com/crystal-lang/crystal/pull/15467
 [#15462]: https://github.com/crystal-lang/crystal/pull/15462
@@ -372,20 +395,7 @@ _Feature freeze: 2025-03-26_
 [#15551]: https://github.com/crystal-lang/crystal/pull/15551
 [#15554]: https://github.com/crystal-lang/crystal/pull/15554
 [#15572]: https://github.com/crystal-lang/crystal/pull/15572
-
-### other
-
-#### stdlib
-
-- *(macros)* **[regression]** Revert "Add thread safety to property macros with lazy initializers" ([#15557], thanks @straight-shoota)
-
-[#15557]: https://github.com/crystal-lang/crystal/pull/15557
-
-#### compiler
-
-- *(interpreter:repl)* Update REPLy version ([#15328], thanks @oprypin)
-
-[#15328]: https://github.com/crystal-lang/crystal/pull/15328
+[#15600]: https://github.com/crystal-lang/crystal/pull/15600
 
 ## [1.15.1] (2025-02-04)
 
