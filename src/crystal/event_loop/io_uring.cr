@@ -7,11 +7,6 @@ require "c/sys/socket"
 require "../system/unix/io_uring"
 require "./io_uring/*"
 
-module Crystal::System::Socket
-  # :nodoc:
-  property? must_shutdown : Bool = false
-end
-
 class Crystal::EventLoop::IoUring < Crystal::EventLoop
   @@supports_sendto = true
   @@supports_close = true
@@ -245,8 +240,6 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   end
 
   def accept(socket : ::Socket) : ::Socket::Handle?
-    socket.must_shutdown = true
-
     ret = async(LibC::IORING_OP_ACCEPT, socket.@read_timeout) do |sqe|
       sqe.value.fd = socket.fd
       sqe.value.sflags.accept_flags = LibC::SOCK_CLOEXEC
@@ -323,7 +316,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   def close(socket : ::Socket) : Nil
     # sync with `Socket#socket_close`
     fd = socket.@volatile_fd.swap(-1, :relaxed)
-    async_close(fd, socket.must_shutdown?) unless fd == -1
+    async_close(fd, shutdown_read: true) unless fd == -1
   end
 
   # internals
@@ -353,8 +346,8 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
     raise IO::TimeoutError.new(yield) if res == -LibC::ECANCELED
   end
 
-  private def async_close(fd, must_shutdown = false)
-    if must_shutdown
+  private def async_close(fd, shutdown_read = false)
+    if shutdown_read
       # we must shutdown a socket before closing it, otherwise a pending accept
       # won't be interrupted for example; the shutdown itself isn't attached to
       # an event, receiving a cqe for close is enough
@@ -363,7 +356,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
         sqe.value.flags = LibC::IOSQE_IO_LINK
         sqe.value.flags |= LibC::IOSQE_CQE_SKIP_SUCCESS # WARNING: incompatible with IOSQE_IO_DRAIN
         sqe.value.fd = fd
-        sqe.value.len = LibC::SHUT_RDWR
+        sqe.value.len = LibC::SHUT_RD
       end
     end
 
