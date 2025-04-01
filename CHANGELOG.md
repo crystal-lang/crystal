@@ -42,6 +42,7 @@ _Feature freeze: 2025-03-26_
 - *(runtime)* RFC 2: Add `Fiber::ExecutionContext::Monitor` ([#15599], thanks @ysbaddaden)
 - *(serialization)* Add `Union.from_json_object_key?` ([#15411], thanks @straight-shoota)
 - *(system)* Add `Process::Status#description` ([#15468], thanks @straight-shoota)
+- *(text)* **[breaking]** New algorithm for `File.match?` ([#15607], thanks @straight-shoota)
 - *(text)* Add `IO` overloads to `Char#upcase`, `#downcase`, `#titlecase` ([#15508], thanks @HertzDevil)
 
 [#15562]: https://github.com/crystal-lang/crystal/pull/15562
@@ -67,12 +68,13 @@ _Feature freeze: 2025-03-26_
 [#15599]: https://github.com/crystal-lang/crystal/pull/15599
 [#15411]: https://github.com/crystal-lang/crystal/pull/15411
 [#15468]: https://github.com/crystal-lang/crystal/pull/15468
+[#15607]: https://github.com/crystal-lang/crystal/pull/15607
 [#15508]: https://github.com/crystal-lang/crystal/pull/15508
 
 #### compiler
 
 - *(cli)* Support `--output` long option in `crystal build` ([#15519], thanks @HertzDevil)
-- *(cli)* Support  directory name in `--output` CLI option ([#15471], thanks @straight-shoota)
+- *(cli)* Support directory name in `--output` CLI option ([#15471], thanks @straight-shoota)
 - *(cli)* **[breaking]** Add compiler path to `$PATH` and `$CRYSTAL_EXEC_PATH` for subcommands ([#15186], thanks @straight-shoota)
 - *(cli)* Respect `--mcpu=help` in the compiler ([#15595], thanks @HertzDevil)
 - *(codegen)* Set linkage of `__crystal_*` funs to internal ([#15439], thanks @ysbaddaden)
@@ -118,7 +120,7 @@ _Feature freeze: 2025-03-26_
 - *(runtime)* RFC 2: MT safe fiber context switch on AArch64 ([#15581], thanks @ysbaddaden)
 - *(runtime)* Add thread safety to `at_exit` ([#15598], thanks @ysbaddaden)
 - *(serialization)* Fix `Union.from_yaml` to prioritize `String` for quoted scalar ([#15405], thanks @straight-shoota)
-- *(system)* signal handler musn't depend on the event loop ([#15325], thanks @ysbaddaden)
+- *(system)* signal handler mustn't depend on the event loop ([#15325], thanks @ysbaddaden)
 - *(system)* Corrects Windows lib lookup in case-sensitive OSes ([#15362], thanks @luislavena)
 - *(system)* Fix permissions application in `File.copy` ([#15520], thanks @straight-shoota)
 - *(system)* **[security]** Strip periods, spaces for batch file filtering on Windows ([#15573], thanks @GeopJr)
@@ -278,7 +280,7 @@ _Feature freeze: 2025-03-26_
 #### lang
 
 - Document `alignof` and `instance_alignof` ([#15576], thanks @HertzDevil)
-- *(macros)* Document macro `sizeof` and `alignof` ([#15575], thanks @HertzDevil)
+- *(macros)* Document macro `sizeof` and `alignof` [followup #15497] ([#15575], thanks @HertzDevil)
 
 [#15576]: https://github.com/crystal-lang/crystal/pull/15576
 [#15575]: https://github.com/crystal-lang/crystal/pull/15575
@@ -287,19 +289,19 @@ _Feature freeze: 2025-03-26_
 
 - Fix `Colorize::ObjectExtensions#colorize(r, g, b)` comment ([#15521], thanks @Sija)
 - Rework docs for `getter`, `setter` and `property` macros ([#15428], thanks @ysbaddaden)
+- *(runtime)* Document `::debugger` ([#15579], thanks @HertzDevil)
 
 [#15521]: https://github.com/crystal-lang/crystal/pull/15521
 [#15428]: https://github.com/crystal-lang/crystal/pull/15428
+[#15579]: https://github.com/crystal-lang/crystal/pull/15579
 
 #### compiler
 
 - *(cli)* Convert `crystal.1` manpage to asciidoc ([#15478], thanks @straight-shoota)
 - *(cli)* Split combined manpage into individual ones for each command ([#15509], thanks @straight-shoota)
-- *(debugger)* Document `::debugger` ([#15579], thanks @HertzDevil)
 
 [#15478]: https://github.com/crystal-lang/crystal/pull/15478
 [#15509]: https://github.com/crystal-lang/crystal/pull/15509
-[#15579]: https://github.com/crystal-lang/crystal/pull/15579
 
 #### other
 
@@ -332,14 +334,12 @@ _Feature freeze: 2025-03-26_
 - Changelog for 1.16.0 ([#15602], thanks @straight-shoota)
 - Update previous Crystal release 1.15.0 ([#15339], thanks @straight-shoota)
 - Fix `make uninstall` to remove fish completion ([#15367], thanks @straight-shoota)
-- Merge `release/1.15`@1.15.1 ([#15414], thanks @straight-shoota)
 - Merge `release/1.15`@1.15.1 ([#15422], thanks @straight-shoota)
 - Fix: Remove reverted PR from changelog for 1.15.1 ([#15415], thanks @straight-shoota)
 - Update previous release: 1.15.1 ([#15417], thanks @straight-shoota)
 - Add backports to changelog generator ([#15413], thanks @straight-shoota)
 - Makefile: Expand `DESTDIR` outside of prefixed dir variables ([#15444], thanks @straight-shoota)
 - Add git mailmap ([#15396], thanks @straight-shoota)
-- Introduce actionlint to lint GitHub Actions workflows ([#15449], thanks @straight-shoota)
 - Rename `find-llvm-config` to `find-llvm-config.sh` ([#15448], thanks @straight-shoota)
 - Makefile: Remove `crystal` from `DATADIR` ([#15467], thanks @straight-shoota)
 - Add `scripts/update-shards.sh` ([#15462], thanks @straight-shoota)
@@ -355,6 +355,7 @@ _Feature freeze: 2025-03-26_
 - *(ci)* Filter runs of regex engine workflow ([#15460], thanks @straight-shoota)
 - *(ci)* Filter runs of OpenSSL Test workflow ([#15459], thanks @straight-shoota)
 - *(ci)* Filter runs of Smoke Test workflow ([#15457], thanks @straight-shoota)
+- *(ci)* Introduce actionlint to lint GitHub Actions workflows ([#15449], thanks @straight-shoota)
 - *(ci)* Fix MinGW-W64 workflow to run compiler tests with fresh compiler ([#15522], thanks @straight-shoota)
 - *(ci)* Update GH Actions ([#15525], thanks @renovate)
 - *(ci)* Update GH Actions ([#15551], thanks @renovate)
@@ -365,14 +366,12 @@ _Feature freeze: 2025-03-26_
 [#15602]: https://github.com/crystal-lang/crystal/pull/15602
 [#15339]: https://github.com/crystal-lang/crystal/pull/15339
 [#15367]: https://github.com/crystal-lang/crystal/pull/15367
-[#15414]: https://github.com/crystal-lang/crystal/pull/15414
 [#15422]: https://github.com/crystal-lang/crystal/pull/15422
 [#15415]: https://github.com/crystal-lang/crystal/pull/15415
 [#15417]: https://github.com/crystal-lang/crystal/pull/15417
 [#15413]: https://github.com/crystal-lang/crystal/pull/15413
 [#15444]: https://github.com/crystal-lang/crystal/pull/15444
 [#15396]: https://github.com/crystal-lang/crystal/pull/15396
-[#15449]: https://github.com/crystal-lang/crystal/pull/15449
 [#15448]: https://github.com/crystal-lang/crystal/pull/15448
 [#15467]: https://github.com/crystal-lang/crystal/pull/15467
 [#15462]: https://github.com/crystal-lang/crystal/pull/15462
@@ -390,6 +389,7 @@ _Feature freeze: 2025-03-26_
 [#15460]: https://github.com/crystal-lang/crystal/pull/15460
 [#15459]: https://github.com/crystal-lang/crystal/pull/15459
 [#15457]: https://github.com/crystal-lang/crystal/pull/15457
+[#15449]: https://github.com/crystal-lang/crystal/pull/15449
 [#15522]: https://github.com/crystal-lang/crystal/pull/15522
 [#15525]: https://github.com/crystal-lang/crystal/pull/15525
 [#15551]: https://github.com/crystal-lang/crystal/pull/15551
