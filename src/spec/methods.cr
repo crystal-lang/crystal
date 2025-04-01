@@ -81,7 +81,7 @@ module Spec::Methods
   # If `focus` is `true`, only this test, and others marked with `focus: true`, will run.
   @[Deprecated("Arguments other than the first should be provided as named arguments.")]
   def pending(_description description = "assert", _file file = __FILE__, _line line = __LINE__, _end_line end_line = __END_LINE__, _focus focus : Bool = false, _tags tags : String | Enumerable(String) | Nil = nil, &block)
-    pending(description, file, line, end_line, focus, tags)
+    pending(_description: description, _file: file, _line: line, _end_line: end_line, _focus: focus, _tags: tags)
   end
 
   # :ditto:
@@ -149,7 +149,7 @@ module Spec::Methods
     end
 
     def pending(description : _ = "assert", *, file : String = __FILE__, line : Int32 = __LINE__, end_line : Int32 = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil, &block)
-      pending(description, file, line, end_line, focus, tags)
+      pending(description, file: file, line: line, end_line: end_line, focus: focus, tags: tags)
     end
 
     def pending(description : _ = "assert", *, file : String = __FILE__, line : Int32 = __LINE__, end_line : Int32 = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil)
