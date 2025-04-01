@@ -92,7 +92,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
 
   private def process_cqes(&)
     @ring.each_completed do |cqe|
-      # skip CQE for TIMEOUT, TIMEOUT_REMOVE, ...
+      # skip CQE for TIMEOUT, TIMEOUT_REMOVE, SHUTDOWN, ...
       next unless event = Pointer(Event).new(cqe.value.user_data)
 
       fiber = event.value.fiber
@@ -360,8 +360,8 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   private def async_close(fd, shutdown_read = false)
     if shutdown_read
       # we must shutdown a socket before closing it, otherwise a pending accept
-      # won't be interrupted for example; the shutdown itself isn't attached to
-      # an event, receiving a cqe for close is enough
+      # or read won't be interrupted for example; the shutdown itself isn't
+      # attached to an event, handling the cqe for close is enough
       @ring.prepare do |sqe|
         sqe.value.opcode = LibC::IORING_OP_SHUTDOWN
         sqe.value.flags = LibC::IOSQE_IO_LINK
@@ -392,7 +392,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
     timespec.tv_sec = typeof(timespec.tv_sec).new(duration.@seconds)
     timespec.tv_nsec = typeof(timespec.tv_nsec).new(duration.@nanoseconds)
 
-    prepare(pointerof(event), LibC::IORING_OP_TIMEOUT, duration) do |sqe|
+    prepare(pointerof(event), LibC::IORING_OP_TIMEOUT, nil) do |sqe|
       sqe.value.addr = pointerof(timespec).address.to_u64!
       sqe.value.len = 1
     end
