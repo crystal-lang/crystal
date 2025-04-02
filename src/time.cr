@@ -939,7 +939,7 @@ struct Time
   # * `day_of_week`: `0..7`
   def self.month_week_date(year : Int32, month : Int32, week : Int32, day_of_week : Int32 | DayOfWeek, hour : Int32 = 0, minute : Int32 = 0, second : Int32 = 0, *, nanosecond : Int32 = 0, location : Location = Location.local) : self
     raise ArgumentError.new "Invalid week of month" unless week.in?(1..5)
-    raise ArgumentError.new "Invalid day of week" if day_of_week.is_a?(Int32) && !day_of_week.in?(0..7)
+    day_of_week = DayOfWeek.from_value(day_of_week) if day_of_week.is_a?(Int32)
 
     day_of_week = day_of_week.to_i32
     first_day_of_week = Time.utc(year, month, 1).day_of_week.to_i32

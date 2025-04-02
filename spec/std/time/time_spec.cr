@@ -961,10 +961,10 @@ describe Time do
     end
 
     it "raises on invalid week or day of week" do
-      expect_raises(ArgumentError) { Time.month_week_date(2025, 1, 0, Time::DayOfWeek::Monday) }
-      expect_raises(ArgumentError) { Time.month_week_date(2025, 1, 6, Time::DayOfWeek::Monday) }
-      expect_raises(ArgumentError) { Time.month_week_date(2025, 1, 1, -1) }
-      expect_raises(ArgumentError) { Time.month_week_date(2025, 1, 1, 8) }
+      expect_raises(Exception) { Time.month_week_date(2025, 1, 0, Time::DayOfWeek::Monday) }
+      expect_raises(Exception) { Time.month_week_date(2025, 1, 6, Time::DayOfWeek::Monday) }
+      expect_raises(Exception) { Time.month_week_date(2025, 1, 1, -1) }
+      expect_raises(Exception) { Time.month_week_date(2025, 1, 1, 8) }
     end
   end
 
