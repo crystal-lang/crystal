@@ -446,10 +446,10 @@ abstract struct Enum
   # Color.from_value(0) # => Color::Red
   # Color.from_value(1) # => Color::Green
   # Color.from_value(2) # => Color::Blue
-  # Color.from_value(3) # raises Exception
+  # Color.from_value(3) # raises ArgumentError
   # ```
   def self.from_value(value : Int) : self
-    from_value?(value) || raise "Unknown enum #{self} value: #{value}"
+    from_value?(value) || raise ArgumentError.new("Unknown enum #{self} value: #{value}")
   end
 
   # Returns `true` if the given *value* is an enum member, otherwise `false`.
