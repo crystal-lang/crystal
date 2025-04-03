@@ -141,7 +141,8 @@ describe Fiber::ExecutionContext::GlobalQueue do
       end
 
       queue = Fiber::ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
-      ready = Thread::WaitGroup.new(n)
+      setup = Thread::WaitGroup.new(n)
+      start = Thread::WaitGroup.new(1)
 
       threads = Array(Thread).new(n) do |i|
         new_thread("BULK-#{i}") do
@@ -171,7 +172,8 @@ describe Fiber::ExecutionContext::GlobalQueue do
             end
           }
 
-          ready.done
+          setup.done
+          start.wait
 
           loop do
             if fiber = r.shift?
@@ -193,18 +195,25 @@ describe Fiber::ExecutionContext::GlobalQueue do
 
             reenqueue.call
             slept += 1
-            Thread.sleep(1.nanosecond) # don't burn CPU
+            Thread.yield # don't burn CPU
           end
         end
       end
-      ready.wait
+
+      setup.wait
 
       # enqueue in batches of 5
       0.step(to: fibers.size - 1, by: 5) do |i|
         list = Fiber::List.new
         5.times { |j| list.push(fibers[i + j].@fiber) }
         queue.bulk_push(pointerof(list))
-        Thread.sleep(10.nanoseconds) if i % 4 == 3
+
+        if i == 5
+          # 1st iteration: tell threads to start
+          start.done
+        elsif i % 4 == 3
+          Thread.sleep(10.nanoseconds)
+        end
       end
 
       threads.each(&.join)

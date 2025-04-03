@@ -190,7 +190,8 @@ describe Fiber::ExecutionContext::Runnables do
       end
 
       global_queue = Fiber::ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
-      ready = Thread::WaitGroup.new(n)
+      setup = Thread::WaitGroup.new(n)
+      start = Thread::WaitGroup.new(1)
 
       all_runnables = Array(Fiber::ExecutionContext::Runnables(16)).new(n) do
         Fiber::ExecutionContext::Runnables(16).new(global_queue)
@@ -206,7 +207,8 @@ describe Fiber::ExecutionContext::Runnables do
             runnables.push(fiber) if fc.increment < increments
           }
 
-          ready.done
+          setup.done
+          start.wait
 
           loop do
             # dequeue from local queue
@@ -237,18 +239,25 @@ describe Fiber::ExecutionContext::Runnables do
             end
 
             slept += 1
-            Thread.sleep(1.nanosecond) # don't burn CPU
+            Thread.yield # don't burn CPU
           end
         end
       end
-      ready.wait
+
+      setup.wait
 
       # enqueue in batches
       0.step(to: fibers.size - 1, by: 9) do |i|
         list = Fiber::List.new
         9.times { |j| list.push(fibers[i + j].@fiber) }
         global_queue.bulk_push(pointerof(list))
-        Thread.sleep(10.nanoseconds) if i % 2 == 1
+
+        if i == 9
+          # 1st iteration: tell threads to start
+          start.done
+        elsif i % 2 == 1
+          Thread.sleep(10.nanoseconds)
+        end
       end
 
       threads.map(&.join)
