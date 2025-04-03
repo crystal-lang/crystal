@@ -70,12 +70,11 @@ module Crystal::System::Dir
       return pwd
     end
 
-    String.new(PATH_MAX) do |buffer|
-      unless LibC.getcwd(buffer, PATH_MAX)
-        raise ::File::Error.from_errno("Error getting current directory", file: "./")
-      end
-      {LibC.strlen(buffer), 0}
+    buffer = uninitialized UInt8[PATH_MAX]
+    unless LibC.getcwd(buffer, buffer.size)
+      raise ::File::Error.from_errno("Error getting current directory", file: "./")
     end
+    String.new(buffer.to_unsafe)
   end
 
   def self.current=(path : String)
