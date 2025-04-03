@@ -179,6 +179,18 @@ class Thread
     Crystal::System::Thread.sleep(time)
   end
 
+  # Delays execution for a brief moment.
+  @[NoInline]
+  def self.delay(backoff : Int32) : Int32
+    if backoff < 7
+      backoff.times { Intrinsics.pause }
+      backoff &+ 1
+    else
+      Thread.yield
+      0
+    end
+  end
+
   # Returns the Thread object associated to the running system thread.
   def self.current : Thread
     Crystal::System::Thread.current_thread
