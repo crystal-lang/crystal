@@ -32,7 +32,6 @@ _Feature freeze: 2025-03-26_
 - *(macros)* Implement `StringLiteral#scan` ([#15398], thanks @homonoidian)
 - *(networking)* Add `Path` as possible argument type to `UNIXSocket` and `UNIXServer` ([#15260], thanks @BigBoyBarney)
 - *(networking)* Add `Cookies#==` ([#15463], thanks @straight-shoota)
-- *(runtime)* RFC 2: Add `Fiber::ExecutionContext::MultiThreaded` ([#15517], thanks @ysbaddaden)
 - *(runtime)* Add `EventLoop#wait_readable`, `#wait_writable` methods methods ([#15376], thanks @ysbaddaden)
 - *(runtime)* Initialize `Fiber` with an explicit stack ([#15409], thanks @ysbaddaden)
 - *(runtime)* Add fiber queues for execution context schedulers ([#15345], thanks @ysbaddaden)
@@ -40,10 +39,11 @@ _Feature freeze: 2025-03-26_
 - *(runtime)* RFC 2: Add `Fiber::ExecutionContext::SingleThreaded` scheduler ([#15511], thanks @ysbaddaden)
 - *(runtime)* RFC 2: Add `Fiber::ExecutionContext::Isolated` ([#15513], thanks @ysbaddaden)
 - *(runtime)* RFC 2: Add `Fiber::ExecutionContext::Monitor` ([#15599], thanks @ysbaddaden)
+- *(runtime)* RFC 2: Add `Fiber::ExecutionContext::MultiThreaded` ([#15517], thanks @ysbaddaden)
 - *(serialization)* Add `Union.from_json_object_key?` ([#15411], thanks @straight-shoota)
 - *(system)* Add `Process::Status#description` ([#15468], thanks @straight-shoota)
-- *(text)* **[breaking]** New algorithm for `File.match?` ([#15607], thanks @straight-shoota)
 - *(text)* Add `IO` overloads to `Char#upcase`, `#downcase`, `#titlecase` ([#15508], thanks @HertzDevil)
+- *(text)* **[breaking]** New algorithm for `File.match?` ([#15607], thanks @straight-shoota)
 
 [#15562]: https://github.com/crystal-lang/crystal/pull/15562
 [#15552]: https://github.com/crystal-lang/crystal/pull/15552
@@ -57,7 +57,6 @@ _Feature freeze: 2025-03-26_
 [#15398]: https://github.com/crystal-lang/crystal/pull/15398
 [#15260]: https://github.com/crystal-lang/crystal/pull/15260
 [#15463]: https://github.com/crystal-lang/crystal/pull/15463
-[#15517]: https://github.com/crystal-lang/crystal/pull/15517
 [#15376]: https://github.com/crystal-lang/crystal/pull/15376
 [#15409]: https://github.com/crystal-lang/crystal/pull/15409
 [#15345]: https://github.com/crystal-lang/crystal/pull/15345
@@ -66,10 +65,11 @@ _Feature freeze: 2025-03-26_
 [#15511]: https://github.com/crystal-lang/crystal/pull/15511
 [#15513]: https://github.com/crystal-lang/crystal/pull/15513
 [#15599]: https://github.com/crystal-lang/crystal/pull/15599
+[#15517]: https://github.com/crystal-lang/crystal/pull/15517
 [#15411]: https://github.com/crystal-lang/crystal/pull/15411
 [#15468]: https://github.com/crystal-lang/crystal/pull/15468
-[#15607]: https://github.com/crystal-lang/crystal/pull/15607
 [#15508]: https://github.com/crystal-lang/crystal/pull/15508
+[#15607]: https://github.com/crystal-lang/crystal/pull/15607
 
 #### compiler
 
@@ -332,8 +332,9 @@ _Feature freeze: 2025-03-26_
 ### Infrastructure
 
 - Changelog for 1.16.0 ([#15602], thanks @straight-shoota)
+- Trim `CHANGELOG.md` ([#15627], thanks @straight-shoota)
 - Update previous Crystal release 1.15.0 ([#15339], thanks @straight-shoota)
-- Fix `make uninstall` to remove fish completion ([#15367], thanks @straight-shoota)
+- Make: Fix `make uninstall` to remove fish completion ([#15367], thanks @straight-shoota)
 - Merge `release/1.15`@1.15.1 ([#15422], thanks @straight-shoota)
 - Fix: Remove reverted PR from changelog for 1.15.1 ([#15415], thanks @straight-shoota)
 - Update previous release: 1.15.1 ([#15417], thanks @straight-shoota)
@@ -364,6 +365,7 @@ _Feature freeze: 2025-03-26_
 - *(ci)* Add AArch64 Linux workflow using GitHub's runner ([#15600], thanks @HertzDevil)
 
 [#15602]: https://github.com/crystal-lang/crystal/pull/15602
+[#15627]: https://github.com/crystal-lang/crystal/pull/15627
 [#15339]: https://github.com/crystal-lang/crystal/pull/15339
 [#15367]: https://github.com/crystal-lang/crystal/pull/15367
 [#15422]: https://github.com/crystal-lang/crystal/pull/15422
