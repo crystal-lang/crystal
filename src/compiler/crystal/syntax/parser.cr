@@ -3444,6 +3444,7 @@ module Crystal
 
       @in_macro_expression = true
       exps = parse_expressions
+      exps.keyword = :macro_expression if exps.is_a? Expressions
       @in_macro_expression = false
 
       MacroExpression.new(exps, output: false).at(location).at_end(token_end_location)
