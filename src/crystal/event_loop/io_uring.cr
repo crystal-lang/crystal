@@ -7,29 +7,32 @@ require "c/sys/socket"
 require "../system/unix/io_uring"
 require "./io_uring/*"
 
+# WARNING: IOSQE_CQE_SKIP_SUCCESS is incompatible with IOSQE_IO_DRAIN!
+
 class Crystal::EventLoop::IoUring < Crystal::EventLoop
   @@supports_sendto = true
-  @@supports_close = true
 
   def self.supported? : Bool
     return false unless System::IoUring.supported?
 
     @@supports_sendto = System::IoUring.supports_opcode?(LibC::IORING_OP_SEND)
-    @@supports_close = System::IoUring.supports_opcode?(LibC::IORING_OP_CLOSE)
 
     System::IoUring.supports_feature?(LibC::IORING_FEAT_NODROP) &&
+      System::IoUring.supports_feature?(LibC::IORING_FEAT_RW_CUR_POS) &&
       System::IoUring.supports_opcode?(LibC::IORING_OP_READ) &&
       System::IoUring.supports_opcode?(LibC::IORING_OP_WRITE) &&
       System::IoUring.supports_opcode?(LibC::IORING_OP_CONNECT) &&
       System::IoUring.supports_opcode?(LibC::IORING_OP_ACCEPT) &&
-      System::IoUring.supports_opcode?(LibC::IORING_OP_LINK_TIMEOUT)
+      System::IoUring.supports_opcode?(LibC::IORING_OP_CLOSE) &&
+      System::IoUring.supports_opcode?(LibC::IORING_OP_LINK_TIMEOUT) &&
+      System::IoUring.supports_opcode?(LibC::IORING_OP_ASYNC_CANCEL)
   end
 
   def initialize
     @ring = System::IoUring.new(
       sq_entries: 16,
       cq_entries: 128,
-      # sq_idle: (2000 if System::IoUring.supports_feature?(LibC::IORING_FEAT_SQPOLL_NONFIXED))
+      sq_idle: (2000 if System::IoUring.supports_feature?(LibC::IORING_FEAT_SQPOLL_NONFIXED))
     )
   end
 
@@ -44,7 +47,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
       @ring = System::IoUring.new(
         sq_entries: 16,
         cq_entries: 128,
-        # sq_idle: (2000 if System::IoUring.supports_feature?(LibC::IORING_FEAT_SQPOLL_NONFIXED))
+        sq_idle: (2000 if System::IoUring.supports_feature?(LibC::IORING_FEAT_SQPOLL_NONFIXED))
       )
     end
   {% end %}
@@ -79,7 +82,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
     case size
     when 0
       # empty buffer: ask/wait for completions
-      @ring.enter(to_complete: blocking ? 1_u32 : 0_u32, flags: LibC::IORING_ENTER_GETEVENTS)
+      @ring.enter(min_complete: blocking ? 1_u32 : 0_u32, flags: LibC::IORING_ENTER_GETEVENTS)
       process_cqes { |fiber| yield fiber }
     when @ring.@cq_entries.value
       # full buffer: tell kernel that it can report pending completions
@@ -92,7 +95,9 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
 
   private def process_cqes(&)
     @ring.each_completed do |cqe|
-      # skip CQE for TIMEOUT, TIMEOUT_REMOVE, SHUTDOWN, ...
+      trace(cqe)
+
+      # skip CQE not associated with an event
       next unless event = Pointer(Event).new(cqe.value.user_data)
 
       fiber = event.value.fiber
@@ -108,7 +113,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
       end
 
       event.value.res = cqe.value.res
-      # event.flags = cqe.value.flags
+      # event.value.flags = cqe.value.flags
 
       yield fiber
     end
@@ -122,19 +127,27 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   # timers
 
   def add_timer(event : Event*) : Nil
-    prepare(event, LibC::IORING_OP_TIMEOUT, nil) do |sqe|
-      sqe.value.addr = pointerof(event.value.@timespec).address.to_u64!
-      sqe.value.len = 1
-    end
+    sqe, ts = @ring.next_sqe_with_timespec
+
+    ts.value.tv_sec = typeof(ts.value.tv_sec).new!(event.value.@duration.@seconds)
+    ts.value.tv_nsec = typeof(ts.value.tv_nsec).new!(event.value.@duration.@nanoseconds)
+
+    sqe.value.opcode = LibC::IORING_OP_TIMEOUT
+    sqe.value.user_data = event.address.to_u64!
+    sqe.value.addr = ts.address.to_u64!
+    sqe.value.len = 1
+    trace(sqe)
+
     @ring.submit
   end
 
   def delete_timer(event : Event*) : Nil
-    @ring.prepare do |sqe|
-      sqe.value.opcode = LibC::IORING_OP_TIMEOUT_REMOVE
-      sqe.value.flags = LibC::IOSQE_CQE_SKIP_SUCCESS # WARNING: incompatible with IOSQE_IO_DRAIN
-      sqe.value.addr = event.address.to_u64!
-    end
+    sqe = @ring.next_sqe
+    sqe.value.opcode = LibC::IORING_OP_TIMEOUT_REMOVE
+    sqe.value.flags = LibC::IOSQE_CQE_SKIP_SUCCESS
+    sqe.value.addr = event.address.to_u64!
+    trace(sqe)
+
     @ring.submit
   end
 
@@ -152,12 +165,8 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   # file descriptor interface, see Crystal::EventLoop::FileDescriptor
 
   def read(file_descriptor : System::FileDescriptor, slice : Bytes) : Int32
-    async_rw(LibC::IORING_OP_READ, file_descriptor.fd, slice, file_descriptor.@read_timeout) do |errno|
-      check_open(file_descriptor)
-
+    async_rw(LibC::IORING_OP_READ, file_descriptor, slice, file_descriptor.@read_timeout) do |errno|
       case errno
-      when Errno::EINTR
-        # retry
       when Errno::ECANCELED
         raise IO::TimeoutError.new("Read timed out")
       when Errno::EBADF
@@ -169,17 +178,12 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   end
 
   def wait_readable(file_descriptor : System::FileDescriptor) : Nil
-    async_poll(file_descriptor.fd, LibC::POLLOUT, file_descriptor.@read_timeout) { "Read timed out" }
-    check_open(file_descriptor)
+    async_poll(file_descriptor, LibC::POLLIN | LibC::POLLRDHUP, file_descriptor.@read_timeout) { "Read timed out" }
   end
 
   def write(file_descriptor : System::FileDescriptor, slice : Bytes) : Int32
-    async_rw(LibC::IORING_OP_WRITE, file_descriptor.fd, slice, file_descriptor.@write_timeout) do |errno|
-      check_open(file_descriptor)
-
+    async_rw(LibC::IORING_OP_WRITE, file_descriptor, slice, file_descriptor.@write_timeout) do |errno|
       case errno
-      when Errno::EINTR
-        # retry
       when Errno::ECANCELED
         raise IO::TimeoutError.new("Write timed out")
       when Errno::EBADF
@@ -191,29 +195,39 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   end
 
   def wait_writable(file_descriptor : System::FileDescriptor) : Nil
-    async_poll(file_descriptor.fd, LibC::POLLOUT, file_descriptor.@write_timeout) { "Write timed out" }
-    check_open(file_descriptor)
+    async_poll(file_descriptor, LibC::POLLOUT, file_descriptor.@write_timeout) { "Write timed out" }
   end
 
   def reopened(file_descriptor : System::FileDescriptor) : Nil
-    # todo: do we need to interrupt pending operations on file_descriptor.fd (?)
+    # TODO: do we need to cancel pending operations?
   end
 
   def close(file_descriptor : System::FileDescriptor) : Nil
     # sync with `FileDescriptor#file_descriptor_close`: prevent actual close
     fd = file_descriptor.@volatile_fd.swap(-1, :relaxed)
-    async_close(fd) unless fd == -1
+    return if fd == -1
+
+    async_close(fd) do |sqe|
+      # one thread closing a fd won't interrupt reads or writes happening in
+      # other threads, for example a blocked read on a fifo will keep blocking,
+      # while close would have finished and closed the fd; we thus explicitly
+      # cancel any pending operations on the fd before we try to close
+      #
+      # FIXME: with threads and multiple rings, we'll need to know which rings
+      # have pending operations for the fd (which op/event for each ring) and
+      # tell the rings to cancel said ops (can't just say to cancel all ops for
+      # fd so we can close in parallel)
+      sqe.value.opcode = LibC::IORING_OP_ASYNC_CANCEL
+      sqe.value.sflags.cancel_flags = LibC::IORING_ASYNC_CANCEL_FD
+      sqe.value.fd = fd
+    end
   end
 
   # socket interface, see Crystal::EventLoop::Socket
 
   def read(socket : ::Socket, slice : Bytes) : Int32
-    async_rw(LibC::IORING_OP_READ, socket.fd, slice, socket.@read_timeout) do |errno|
-      check_open(socket)
-
+    async_rw(LibC::IORING_OP_READ, socket, slice, socket.@read_timeout) do |errno|
       case errno
-      when Errno::EINTR
-        # retry
       when Errno::ECANCELED
         raise IO::TimeoutError.new("Read timed out")
       else
@@ -223,17 +237,12 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   end
 
   def wait_readable(socket : ::Socket) : Nil
-    async_poll(socket.fd, LibC::POLLOUT, socket.@read_timeout) { "Read timed out" }
-    check_open(socket)
+    async_poll(socket, LibC::POLLIN | LibC::POLLRDHUP, socket.@read_timeout) { "Read timed out" }
   end
 
   def write(socket : ::Socket, slice : Bytes) : Int32
-    async_rw(LibC::IORING_OP_WRITE, socket.fd, slice, socket.@write_timeout) do |errno|
-      check_open(socket)
-
+    async_rw(LibC::IORING_OP_WRITE, socket, slice, socket.@write_timeout) do |errno|
       case errno
-      when Errno::EINTR
-        # retry
       when Errno::ECANCELED
         raise IO::TimeoutError.new("Write timed out")
       else
@@ -243,8 +252,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   end
 
   def wait_writable(socket : ::Socket) : Nil
-    async_poll(socket.fd, LibC::POLLOUT, socket.@write_timeout) { "Write timed out" }
-    check_open(socket)
+    async_poll(socket, LibC::POLLOUT, socket.@write_timeout) { "Write timed out" }
   end
 
   def accept(socket : ::Socket) : ::Socket::Handle?
@@ -302,6 +310,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   end
 
   def receive_from(socket : ::Socket, slice : Bytes) : {Int32, ::Socket::Address}
+    # as of linux 6.12 there is no support for recvfrom in io_uring
     sockaddr = LibC::SockaddrStorage.new
     sockaddr.ss_family = socket.family
     addrlen = LibC::SocklenT.new(sizeof(LibC::SockaddrStorage))
@@ -323,7 +332,15 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   def close(socket : ::Socket) : Nil
     # sync with `Socket#socket_close`
     fd = socket.@volatile_fd.swap(-1, :relaxed)
-    async_close(fd, shutdown_read: true) unless fd == -1
+    return if fd == -1
+
+    async_close(fd) do |sqe|
+      # we must shutdown a socket before closing it, otherwise a pending accept
+      # or read won't be interrupted for example;
+      sqe.value.opcode = LibC::IORING_OP_SHUTDOWN
+      sqe.value.fd = fd
+      sqe.value.len = LibC::SHUT_RD # FIXME: add SHUT_WR too (?)
+    end
   end
 
   # internals
@@ -332,47 +349,49 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
     raise IO::Error.new("Closed stream") if io.closed?
   end
 
-  private def async_rw(opcode, fd, slice, timeout, &)
+  private def async_rw(opcode, io, slice, timeout, &)
     loop do
       res = async(opcode, timeout) do |sqe|
-        sqe.value.fd = fd
+        sqe.value.fd = io.fd
         sqe.value.u1.off = -1
         sqe.value.addr = slice.to_unsafe.address.to_u64!
         sqe.value.len = slice.size
       end
+      return res if res >= 0
 
-      if res >= 0
-        return res
-      else
-        yield Errno.new(-res)
-      end
+      check_open(io)
+      yield Errno.new(-res) unless res == -LibC::EINTR
     end
   end
 
-  private def async_poll(fd, poll_events, timeout)
+  private def async_poll(io, poll_events, timeout, &)
     res = async(LibC::IORING_OP_POLL_ADD, timeout) do |sqe|
-      sqe.value.fd = fd
+      sqe.value.fd = io.fd
       sqe.value.sflags.poll_events = poll_events | LibC::POLLERR | LibC::POLLHUP
     end
+    check_open(io)
     raise IO::TimeoutError.new(yield) if res == -LibC::ECANCELED
   end
 
-  private def async_close(fd, shutdown_read = false)
-    if shutdown_read
-      # we must shutdown a socket before closing it, otherwise a pending accept
-      # or read won't be interrupted for example; the shutdown itself isn't
-      # attached to an event, handling the cqe for close is enough
-      @ring.prepare do |sqe|
-        sqe.value.opcode = LibC::IORING_OP_SHUTDOWN
-        sqe.value.flags = LibC::IOSQE_IO_LINK
-        sqe.value.flags |= LibC::IOSQE_CQE_SKIP_SUCCESS # WARNING: incompatible with IOSQE_IO_DRAIN
-        sqe.value.fd = fd
-        sqe.value.len = LibC::SHUT_RD
-      end
-    end
+  private def async_close(fd, &)
+    res = async_impl do |event|
+      @ring.reserve(2)
 
-    res = async(LibC::IORING_OP_CLOSE) do |sqe|
-      sqe.value.fd = fd
+      # linux won't interrupt pending operations on a file descriptor when it
+      # closes it, we thus first create an operation to cancel any pending
+      # operations; we don't attach that cancel operation to an event: handling
+      # the CQE for close is enough
+      cancel_sqe = @ring.unsafe_next_sqe
+      cancel_sqe.value.flags = LibC::IOSQE_IO_LINK | LibC::IOSQE_IO_HARDLINK | LibC::IOSQE_CQE_SKIP_SUCCESS
+      yield cancel_sqe
+      trace(cancel_sqe)
+
+      # then we setup the close operation
+      close_sqe = @ring.unsafe_next_sqe
+      close_sqe.value.opcode = LibC::IORING_OP_CLOSE
+      close_sqe.value.user_data = event.address.to_u64!
+      close_sqe.value.fd = fd
+      trace(close_sqe)
     end
 
     case res
@@ -386,47 +405,77 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   end
 
   private def async_timeout(type : Event::Type, duration)
-    event = Event.new(type, Fiber.current)
+    async_impl(type) do |event|
+      @ring.reserve(1)
 
-    timespec = LibC::Timespec.new
-    timespec.tv_sec = typeof(timespec.tv_sec).new(duration.@seconds)
-    timespec.tv_nsec = typeof(timespec.tv_nsec).new(duration.@nanoseconds)
+      sqe, ts = @ring.unsafe_next_sqe_with_timespec
 
-    prepare(pointerof(event), LibC::IORING_OP_TIMEOUT, nil) do |sqe|
-      sqe.value.addr = pointerof(timespec).address.to_u64!
+      ts.value.tv_sec = typeof(ts.value.tv_sec).new(duration.@seconds)
+      ts.value.tv_nsec = typeof(ts.value.tv_nsec).new(duration.@nanoseconds)
+
+      sqe.value.opcode = LibC::IORING_OP_TIMEOUT
+      sqe.value.user_data = event.address.to_u64!
+      sqe.value.addr = ts.address.to_u64!
       sqe.value.len = 1
+      trace(sqe)
     end
-    @ring.submit
-
-    Fiber.suspend
-    event.res
   end
 
   private def async(opcode, timeout = nil, &)
-    event = Event.new(:async, Fiber.current)
+    async_impl do |event|
+      @ring.reserve(timeout ? 2 : 1)
 
-    prepare(pointerof(event), opcode, timeout) do |sqe|
-      yield sqe
+      # configure the operation
+      op_sqe = @ring.unsafe_next_sqe
+      op_sqe.value.opcode = opcode
+      op_sqe.value.user_data = event.address.to_u64!
+      yield op_sqe
+
+      if timeout
+        # chain the above operation with the next one
+        op_sqe.value.flags = op_sqe.value.flags | LibC::IOSQE_IO_LINK
+        trace(op_sqe)
+
+        # configure the link timeout operation (applies to the above operation)
+        link_sqe, ts = @ring.unsafe_next_sqe_with_timespec
+
+        ts.value.tv_sec = typeof(ts.value.tv_sec).new(timeout.@seconds)
+        ts.value.tv_nsec = typeof(ts.value.tv_nsec).new(timeout.@nanoseconds)
+
+        link_sqe.value.opcode = LibC::IORING_OP_LINK_TIMEOUT
+        link_sqe.value.flags = LibC::IOSQE_CQE_SKIP_SUCCESS
+        link_sqe.value.addr = ts.address.to_u64!
+        link_sqe.value.len = 1
+        trace(link_sqe)
+      else
+        trace(op_sqe)
+      end
     end
-    @ring.submit
+  end
 
+  private def async_impl(type = Event::Type::Async, &)
+    event = Event.new(type, Fiber.current)
+    yield pointerof(event)
+    @ring.submit
     Fiber.suspend
     event.res
   end
 
-  private def prepare(event, opcode, timeout, &)
-    @ring.prepare do |sqe|
-      sqe.value.opcode = opcode
-      sqe.value.user_data = event.address.to_u64!
-      sqe.value.flags = LibC::IOSQE_IO_LINK if timeout
-      yield sqe
-    end
+  private def trace(cqe : LibC::IoUringCqe*)
+    Crystal.trace :evloop, "cqe",
+      user_data: Pointer(Void).new(cqe.value.user_data),
+      res: cqe.value.res >= 0 ? cqe.value.res : Errno.new(-cqe.value.res).to_s,
+      flags: cqe.value.flags
+  end
 
-    return unless timeout
-
-    @ring.prepare(timeout) do |sqe|
-      sqe.value.opcode = LibC::IORING_OP_LINK_TIMEOUT
-      sqe.value.flags = LibC::IOSQE_CQE_SKIP_SUCCESS # WARNING: incompatible with IOSQE_IO_DRAIN
-    end
+  private def trace(sqe : LibC::IoUringSqe*)
+    Crystal.trace :evloop, "sqe",
+      user_data: Pointer(Void).new(sqe.value.user_data),
+      opcode: System::IoUring::OPCODES.new(sqe.value.opcode).to_s,
+      flags: System::IoUring::IOSQES.new(sqe.value.flags).to_s,
+      fd: sqe.value.fd,
+      addr: Pointer(Void).new(sqe.value.addr),
+      len: sqe.value.len
+    # LibC.dprintf(2, sqe.value.pretty_inspect)
   end
 end

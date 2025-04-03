@@ -2,6 +2,12 @@ require "c/linux/io_uring"
 require "./syscall"
 require "./eventfd"
 
+# WARNING: while the syscalls are thread safe, the rings and the overall
+# abstraction are not: accesses to the SQ and CQ rings aren't synchronized!
+#
+# You can, however, use one mutex to synchronize writes to the SQ ring from
+# different threads, and another mutex to synchronize reads from the CQ ring.
+
 class Crystal::System::IoUring
   @@no_sqarray = true
   @@features : UInt32?
@@ -16,7 +22,7 @@ class Crystal::System::IoUring
     fd = Syscall.io_uring_setup(1_u32, pointerof(params))
 
     if fd < 0
-      return false if fd == -LibC::ENOSYS
+      return false if fd == -LibC::ENOSYS || fd == -LibC::EPERM
       raise RuntimeError.from_os_error("io_uring_setup", Errno.new(-fd)) unless fd == -LibC::EINVAL
 
       # try again without "no sqarray" flag
@@ -58,7 +64,6 @@ class Crystal::System::IoUring
   @sq_size : UInt32
   @cq_size : UInt32
   @sqes_size : UInt32
-  @to_submit = 0_u32
 
   @sq : Void*
   @cq : Void*
@@ -85,6 +90,7 @@ class Crystal::System::IoUring
       params.flags |= LibC::IORING_SETUP_ATTACH_WQ
     end
 
+    Crystal.trace :evloop, "io_uring_setup"
     @fd = Syscall.io_uring_setup(sq_entries, pointerof(params))
     raise RuntimeError.from_os_error("io_uring_setup", Errno.new(-@fd)) if @fd < 0
 
@@ -128,14 +134,14 @@ class Crystal::System::IoUring
     end.as(LibC::IoUringSqe*)
 
     # map accessors
-    @sq_head    = (@sq + params.@sq_off.head).as(UInt32*)
-    @sq_tail    = (@sq + params.@sq_off.tail).as(UInt32*)
+    @sq_khead   = (@sq + params.@sq_off.head).as(UInt32*)
+    @sq_ktail   = (@sq + params.@sq_off.tail).as(UInt32*)
     @sq_mask    = (@sq + params.@sq_off.ring_mask).as(UInt32*)
     @sq_entries = (@sq + params.@sq_off.ring_entries).as(UInt32*)
     @sq_flags   = (@sq + params.@sq_off.flags).as(UInt32*)
 
-    @cq_head    = (@cq + params.@cq_off.head).as(UInt32*)
-    @cq_tail    = (@cq + params.@cq_off.tail).as(UInt32*)
+    @cq_khead   = (@cq + params.@cq_off.head).as(UInt32*)
+    @cq_ktail   = (@cq + params.@cq_off.tail).as(UInt32*)
     @cq_mask    = (@cq + params.@cq_off.ring_mask).as(UInt32*)
     @cq_entries = (@cq + params.@cq_off.ring_entries).as(UInt32*)
     @cqes       = (@cq + params.@cq_off.cqes).as(LibC::IoUringCqe*)
@@ -146,13 +152,12 @@ class Crystal::System::IoUring
       @sq_entries.value.times { |index| sq_array[index] = index }
     end
 
+    # the current sq tail, synchronized with @sq_ktail on submit
+    @sq_tail = 0_u32
+
     # ring buffer of timespecs, so we can implicitely submit SQE
     # OPTIMIZE: only needed if IORING_SETUP_SQPOLL || !IORING_FEAT_SUBMIT_STABLE
     @timespecs = GC.malloc(sq_entries * sizeof(LibC::Timespec)).as(LibC::Timespec*)
-  end
-
-  def finalize
-    close
   end
 
   private def mmap(size, offset, &) : Void*
@@ -172,116 +177,140 @@ class Crystal::System::IoUring
     ptr
   end
 
+  def finalize
+    close
+  end
+
+  # Closes the ring fd. Unmaps the ring buffers. Closes the registered EventFD
+  # (if any).
+  def close : Nil
+    return if (fd = @fd) == -1
+    return unless Atomic::Ops.cmpxchg(pointerof(@fd), fd, -1, :acquire, :monotonic).last
+
+    LibC.munmap(@sq, @sq_size)
+    LibC.munmap(@cq, @cq_size) unless @cq == @sq
+    LibC.munmap(@sqes, @sqes_size)
+
+    LibC.close(fd)
+    @eventfd.try(&.close)
+  end
+
+  def sq_poll? : Bool
+    (@flags & LibC::IORING_SETUP_SQPOLL) == LibC::IORING_SETUP_SQPOLL
+  end
+
+  def sq_need_wakeup? : Bool
+    sq_flags = Atomic::Ops.load(@sq_flags, :acquire, volatile: true)
+    (sq_flags & LibC::IORING_SQ_NEED_WAKEUP) == LibC::IORING_SQ_NEED_WAKEUP
+  end
+
+  # Call `io_uring_register` syscall, and raises on errno.
   def register(opcode : UInt32, arg : Pointer | Nil = nil, arg_sz = 0) : Nil
     argp = arg ? arg.as(Void*) : Pointer(Void).null
     err = Syscall.io_uring_register(@fd, opcode, argp, arg_sz.to_u32)
     raise RuntimeError.from_os_error("io_uring_register", Errno.new(-err)) if err < 0
   end
 
+  # Register an `EventFD`.
   def register(@eventfd : EventFD) : Nil
     efd = eventfd.fd
     register(LibC::IORING_REGISTER_EVENTFD, pointerof(efd), 1)
   end
 
-  def prepare(& : LibC::IoUringSqe* ->) : Nil
-    prepare_impl { |sqe, _| yield sqe }
-  end
+  # Makes sure there is at least *count* SQE available in the SQ ring so we can
+  # submit a chain of SQE at once. Submits pending SQE and waits if needed.
+  def reserve(count : Int32) : Nil
+    raise ArgumentError.new("Can't reserve more SQE than available in the SQ ring") if count > @sq_entries.value
 
-  def prepare(timeout : ::Time::Span, & : LibC::IoUringSqe* ->) : Nil
-    prepare_impl do |sqe, index|
-      ts = @timespecs + index
-      ts.value.tv_sec = typeof(ts.value.tv_sec).new(timeout.@seconds)
-      ts.value.tv_nsec = typeof(ts.value.tv_nsec).new(timeout.@nanoseconds)
-      sqe.value.addr = ts.address.to_u64!
-      sqe.value.len = 1
-      yield sqe
-    end
-  end
+    loop do
+      tail = @sq_tail # Atomic::Ops.load(@sq_ktail, :monotonic, volatile: true)
+      head = Atomic::Ops.load(@sq_khead, :monotonic, volatile: true)
+      size = tail &- head
 
-  private def prepare_impl(&)
-    tail = Atomic::Ops.load(@sq_tail, :monotonic, volatile: true)
-    head = Atomic::Ops.load(@sq_head, :acquire, volatile: true)
-    size = tail &- head
-
-    # SQ ring is full? submit pending SQE and wait for a slot
-    if size >= @sq_entries.value
-      # force submit, wake SQ thread if sleeping, and wait for at least one
-      # slot to become available
-      if sq_poll?
-        submit_and_wait
+      if (@sq_entries.value - size) >= count
+        break
       else
-        submit
+        submit(wait: true)
       end
-
-      @to_submit = 0_u32
     end
+  end
 
-    # populate the io_uring_sqe*
-    index = tail & @sq_mask.value
+  # Reserves a slot and returns the next SQE slot in the SQ ring. Submits
+  # pending submissions and waits if the ring is full.
+  def next_sqe : LibC::IoUringSqe*
+    reserve(1)
+    unsafe_next_sqe
+  end
+
+  # Identical to `#next_sqe` but also returns a stable pointer to a
+  # `LibC::Timespec` struct to associate to the SQE.
+  #
+  # This might be required with SQPOLL or when the ring doesn't support the
+  # IORING_FEAT_SUBMIT_STABLE feature.
+  def next_sqe_with_timespec : {LibC::IoUringSqe*, LibC::Timespec*}
+    reserve(1)
+    unsafe_next_sqe_with_timespec
+  end
+
+  # WARNING: must call `#reserve` before calling `#unsafe_next_sqe`!
+  def unsafe_next_sqe : LibC::IoUringSqe*
+    index = @sq_tail & @sq_mask.value
+    @sq_tail &+= 1
+
     sqe = @sqes.as(LibC::IoUringSqe*) + index
     LibIntrinsics.memset(sqe, 0_u8, sizeof(LibC::IoUringSqe), false)
-    yield sqe, index
 
-    @to_submit += 1_u32
-
-    # make new tail and previous writes to SQE visible to the kernel thread
-    Atomic::Ops.store(@sq_tail, tail &+ 1_u32, :release, volatile: true)
+    sqe
   end
 
-  # Submit pending SQE and wait until one SQE is available.
-  def submit_and_wait(flags : UInt32 = 0_u32) : Nil
-    flags |= LibC::IORING_ENTER_SQ_WAKEUP if sq_need_wakeup?
-    to_submit, @to_submit = @to_submit, 0_u32
+  # WARNING: must call `#reserve` before calling `#unsafe_next_sqe_with_timespec`!
+  def unsafe_next_sqe_with_timespec : {LibC::IoUringSqe*, LibC::Timespec*}
+    index = @sq_tail & @sq_mask.value
+    @sq_tail &+= 1
 
-    loop do
-      ret = enter(to_submit, flags: flags)
-      break unless ret == -LibC::EINTR && (!sq_poll? || sq_need_wakeup?)
-    end
+    sqe = @sqes.as(LibC::IoUringSqe*) + index
+    LibIntrinsics.memset(sqe, 0_u8, sizeof(LibC::IoUringSqe), false)
+
+    {sqe, @timespecs + index}
   end
 
-  # Submit pending SQE if needed (e.g. SQPOLL thread is running).
-  def submit(flags : UInt32 = 0_u32) : Nil
+  # Submit pending SQE in the SQ ring if needed. Wake SQPOLL thread if sleeping.
+  # Blocks until at least one SQE becomes available when *wait* is true.
+  def submit(flags : UInt32 = 0_u32, wait : Bool = false)
+    # make new tail and previous writes visible to the kernel threads
+    Atomic::Ops.store(@sq_ktail, @sq_tail, :release, volatile: true)
+
     if sq_poll?
-      return unless sq_need_wakeup?
-      flags |= LibC::IORING_ENTER_SQ_WAKEUP
+      if wait
+        flags |= LibC::IORING_ENTER_SQ_WAIT
+      elsif sq_need_wakeup?
+        flags |= LibC::IORING_ENTER_SQ_WAKEUP
+      else
+        return
+      end
     end
-    to_submit, @to_submit = @to_submit, 0_u32
 
     loop do
+      head = Atomic::Ops.load(@sq_khead, :monotonic, volatile: true)
+      to_submit = @sq_tail &- head
+
       ret = enter(to_submit, flags: flags)
       break unless ret == -LibC::EINTR && (!sq_poll? || sq_need_wakeup?)
     end
   end
 
-  private def sq_poll?
-    (@flags & LibC::IORING_SETUP_SQPOLL) == LibC::IORING_SETUP_SQPOLL
-  end
+  # Call `io_uring_enter` syscall. Panics on EBADR (can't recover from lost
+  # CQE), returns -EINTR or -EBUSY, and raises on other errnos, otherwise
+  # returns the int returned by the syscall.
+  def enter(to_submit : UInt32 = 0, min_complete : UInt32 = 0, flags : UInt32 = 0) : Int32
+    Crystal.trace :evloop, "io_uring_enter",
+      fd: @fd,
+      to_submit: to_submit,
+      min_complete: min_complete,
+      flags: ENTERS.new(flags).to_s
 
-  private def sq_need_wakeup?
-    sq_flags = Atomic::Ops.load(@sq_flags, :acquire, volatile: true)
-    (sq_flags & LibC::IORING_SQ_NEED_WAKEUP) == LibC::IORING_SQ_NEED_WAKEUP
-  end
-
-  # Iterates ready Completion Queue Entries (CQE).
-  #
-  # WARNING: the yielded pointer is only valid for the duration of the block!
-  def each_completed(& : LibC::IoUringCqe* ->) : Nil
-    head = Atomic::Ops.load(@cq_head, :monotonic, volatile: true)
-    tail = Atomic::Ops.load(@cq_tail, :acquire, volatile: true)
-    return if head == tail
-
-    until head == tail
-      yield @cqes + (head & @cq_mask.value)
-      head &+= 1
-    end
-
-    # make new head visible to the kernel
-    Atomic::Ops.store(@cq_head, head, :release, volatile: true)
-  end
-
-  def enter(to_submit : UInt32 = 0, to_complete : UInt32 = 0, flags : UInt32 = 0) : Int32
-    ret = Syscall.io_uring_enter(@fd, to_submit, to_complete, flags, Pointer(Void).null, LibC::SizeT.zero)
-    if ret >= 0 || ret == -LibC::EBUSY || ret == -LibC::EINTR
+    ret = Syscall.io_uring_enter(@fd, to_submit, min_complete, flags, Pointer(Void).null, LibC::SizeT.zero)
+    if ret >= 0 || ret == -LibC::EINTR || ret == -LibC::EBUSY
       ret
     elsif ret == -LibC::EBADR
       # CQE ring buffer overflowed, the system is running low on memory and
@@ -293,15 +322,107 @@ class Crystal::System::IoUring
     end
   end
 
-  def close : Nil
-    return if (fd = @fd) == -1
-    return unless Atomic::Ops.cmpxchg(pointerof(@fd), fd, -1, :acquire, :monotonic).last
+  # Iterates ready Completion Queue Entries (CQE).
+  #
+  # WARNING: the yielded pointer is only valid for the duration of the block!
+  def each_completed(& : LibC::IoUringCqe* ->) : Nil
+    head = Atomic::Ops.load(@cq_khead, :monotonic, volatile: true)
+    tail = Atomic::Ops.load(@cq_ktail, :acquire, volatile: true)
+    return if head == tail
 
-    LibC.munmap(@sq, @sq_size)
-    LibC.munmap(@cq, @cq_size) unless @cq == @sq
-    LibC.munmap(@sqes, @sqes_size)
+    until head == tail
+      yield @cqes + (head & @cq_mask.value)
+      head &+= 1
 
-    LibC.close(fd)
-    @eventfd.try(&.close)
+      # TODO: we could update @cq_khead on each iteration, but we'd need a
+      # maximum iterations count so we don't iterate ad infinitum
+    end
+
+    # report to kernel we've seen the CQEs
+    Atomic::Ops.store(@cq_khead, head, :release, volatile: true)
+
+    # TODO: we could check if tail changed and iterate more, until we reach the
+    # maximum iterations count
+  end
+
+  @[Flags]
+  enum IOSQES : UInt32
+    IOSQE_FIXED_FILE       = LibC::IOSQE_FIXED_FILE
+    IOSQE_IO_DRAIN         = LibC::IOSQE_IO_DRAIN
+    IOSQE_IO_LINK          = LibC::IOSQE_IO_LINK
+    IOSQE_IO_HARDLINK      = LibC::IOSQE_IO_HARDLINK
+    IOSQE_ASYNC            = LibC::IOSQE_ASYNC
+    IOSQE_BUFFER_SELECT    = LibC::IOSQE_BUFFER_SELECT
+    IOSQE_CQE_SKIP_SUCCESS = LibC::IOSQE_CQE_SKIP_SUCCESS
+  end
+
+  enum ENTERS : UInt32
+    IORING_ENTER_GETEVENTS       = LibC::IORING_ENTER_GETEVENTS
+    IORING_ENTER_SQ_WAKEUP       = LibC::IORING_ENTER_SQ_WAKEUP
+    IORING_ENTER_SQ_WAIT         = LibC::IORING_ENTER_SQ_WAIT
+    IORING_ENTER_EXT_ARG         = LibC::IORING_ENTER_EXT_ARG
+    IORING_ENTER_REGISTERED_RING = LibC::IORING_ENTER_REGISTERED_RING
+  end
+
+  enum OPCODES : UInt32
+    IORING_OP_NOP              = LibC::IORING_OP_NOP
+    IORING_OP_READV            = LibC::IORING_OP_READV
+    IORING_OP_WRITEV           = LibC::IORING_OP_WRITEV
+    IORING_OP_FSYNC            = LibC::IORING_OP_FSYNC
+    IORING_OP_READ_FIXED       = LibC::IORING_OP_READ_FIXED
+    IORING_OP_WRITE_FIXED      = LibC::IORING_OP_WRITE_FIXED
+    IORING_OP_POLL_ADD         = LibC::IORING_OP_POLL_ADD
+    IORING_OP_POLL_REMOVE      = LibC::IORING_OP_POLL_REMOVE
+    IORING_OP_SYNC_FILE_RANGE  = LibC::IORING_OP_SYNC_FILE_RANGE
+    IORING_OP_SENDMSG          = LibC::IORING_OP_SENDMSG
+    IORING_OP_RECVMSG          = LibC::IORING_OP_RECVMSG
+    IORING_OP_TIMEOUT          = LibC::IORING_OP_TIMEOUT
+    IORING_OP_TIMEOUT_REMOVE   = LibC::IORING_OP_TIMEOUT_REMOVE
+    IORING_OP_ACCEPT           = LibC::IORING_OP_ACCEPT
+    IORING_OP_ASYNC_CANCEL     = LibC::IORING_OP_ASYNC_CANCEL
+    IORING_OP_LINK_TIMEOUT     = LibC::IORING_OP_LINK_TIMEOUT
+    IORING_OP_CONNECT          = LibC::IORING_OP_CONNECT
+    IORING_OP_FALLOCATE        = LibC::IORING_OP_FALLOCATE
+    IORING_OP_OPENAT           = LibC::IORING_OP_OPENAT
+    IORING_OP_CLOSE            = LibC::IORING_OP_CLOSE
+    IORING_OP_FILES_UPDATE     = LibC::IORING_OP_FILES_UPDATE
+    IORING_OP_STATX            = LibC::IORING_OP_STATX
+    IORING_OP_READ             = LibC::IORING_OP_READ
+    IORING_OP_WRITE            = LibC::IORING_OP_WRITE
+    IORING_OP_FADVISE          = LibC::IORING_OP_FADVISE
+    IORING_OP_MADVISE          = LibC::IORING_OP_MADVISE
+    IORING_OP_SEND             = LibC::IORING_OP_SEND
+    IORING_OP_RECV             = LibC::IORING_OP_RECV
+    IORING_OP_OPENAT2          = LibC::IORING_OP_OPENAT2
+    IORING_OP_EPOLL_CTL        = LibC::IORING_OP_EPOLL_CTL
+    IORING_OP_SPLICE           = LibC::IORING_OP_SPLICE
+    IORING_OP_PROVIDE_BUFFERS  = LibC::IORING_OP_PROVIDE_BUFFERS
+    IORING_OP_REMOVE_BUFFERS   = LibC::IORING_OP_REMOVE_BUFFERS
+    IORING_OP_TEE              = LibC::IORING_OP_TEE
+    IORING_OP_SHUTDOWN         = LibC::IORING_OP_SHUTDOWN
+    IORING_OP_RENAMEAT         = LibC::IORING_OP_RENAMEAT
+    IORING_OP_UNLINKAT         = LibC::IORING_OP_UNLINKAT
+    IORING_OP_MKDIRAT          = LibC::IORING_OP_MKDIRAT
+    IORING_OP_SYMLINKAT        = LibC::IORING_OP_SYMLINKAT
+    IORING_OP_LINKAT           = LibC::IORING_OP_LINKAT
+    IORING_OP_MSG_RING         = LibC::IORING_OP_MSG_RING
+    IORING_OP_FSETXATTR        = LibC::IORING_OP_FSETXATTR
+    IORING_OP_SETXATTR         = LibC::IORING_OP_SETXATTR
+    IORING_OP_FGETXATTR        = LibC::IORING_OP_FGETXATTR
+    IORING_OP_GETXATTR         = LibC::IORING_OP_GETXATTR
+    IORING_OP_SOCKET           = LibC::IORING_OP_SOCKET
+    IORING_OP_URING_CMD        = LibC::IORING_OP_URING_CMD
+    IORING_OP_SEND_ZC          = LibC::IORING_OP_SEND_ZC
+    IORING_OP_SENDMSG_ZC       = LibC::IORING_OP_SENDMSG_ZC
+    IORING_OP_READ_MULTISHOT   = LibC::IORING_OP_READ_MULTISHOT
+    IORING_OP_WAITID           = LibC::IORING_OP_WAITID
+    IORING_OP_FUTEX_WAIT       = LibC::IORING_OP_FUTEX_WAIT
+    IORING_OP_FUTEX_WAKE       = LibC::IORING_OP_FUTEX_WAKE
+    IORING_OP_FUTEX_WAITV      = LibC::IORING_OP_FUTEX_WAITV
+    IORING_OP_FIXED_FD_INSTALL = LibC::IORING_OP_FIXED_FD_INSTALL
+    IORING_OP_FTRUNCATE        = LibC::IORING_OP_FTRUNCATE
+    IORING_OP_BIND             = LibC::IORING_OP_BIND
+    IORING_OP_LISTEN           = LibC::IORING_OP_LISTEN
+    IORING_OP_LAST             = LibC::IORING_OP_LAST
   end
 end

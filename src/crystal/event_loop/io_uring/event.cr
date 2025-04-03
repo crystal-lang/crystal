@@ -14,13 +14,11 @@ struct Crystal::EventLoop::IoUring::Event
   getter? armed : Bool
 
   def initialize(@type, @fiber)
-    @timespec = LibC::Timespec.new
+    @duration = Time::Span.zero
     @armed = false
   end
 
-  def arm(duration : Time::Span) : Nil
-    @timespec.tv_sec = typeof(@timespec.tv_sec).new(duration.@seconds)
-    @timespec.tv_nsec = typeof(@timespec.tv_nsec).new(duration.@nanoseconds)
+  def arm(@duration : Time::Span) : Nil
     @armed = true
   end
 
