@@ -50,7 +50,7 @@ require "crystal/tracing"
 {% end %}
 lib LibGC
   {% unless flag?(:win32) %}
-    {% pkg_config_name = ((ann = LibGC.annotations.find(&.["pkg_config"])) && ann["pkg_config"]) || ((ann = LibGC.annotations.find(&.[0])) && ann[0]) %}
+    {% pkg_config_name = ((ann = LibGC.annotations(Link).find(&.["pkg_config"])) && ann["pkg_config"]) || ((ann = LibGC.annotations(Link).find(&.[0])) && ann[0]) %}
     VERSION = {{ `pkg-config #{pkg_config_name} --silence-errors --modversion || printf "0.0.0"`.chomp.stringify }}
   {% end %}
 
