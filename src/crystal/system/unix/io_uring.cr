@@ -68,7 +68,7 @@ class Crystal::System::IoUring
   @sq : Void*
   @cq : Void*
 
-  def initialize(sq_entries : UInt32, *, cq_entries : UInt32? = nil, sq_idle : Int32? = nil, wq : IoUring? = nil)
+  def initialize(sq_entries : UInt32, *, cq_entries : UInt32? = nil, sq_idle : Int32? = nil, wq : Int32? = nil)
     # setup the ring
     params = LibC::IoUringParams.new
     params.flags |= LibC::IORING_SETUP_NO_SQARRAY if @@no_sqarray
@@ -86,7 +86,7 @@ class Crystal::System::IoUring
     end
 
     if wq
-      params.wq_fd = wq.fd.to_u32
+      params.wq_fd = wq.to_u32
       params.flags |= LibC::IORING_SETUP_ATTACH_WQ
     end
 
