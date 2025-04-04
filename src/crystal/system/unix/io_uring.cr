@@ -134,17 +134,17 @@ class Crystal::System::IoUring
     end.as(LibC::IoUringSqe*)
 
     # map accessors
-    @sq_khead   = (@sq + params.@sq_off.head).as(UInt32*)
-    @sq_ktail   = (@sq + params.@sq_off.tail).as(UInt32*)
-    @sq_mask    = (@sq + params.@sq_off.ring_mask).as(UInt32*)
+    @sq_khead = (@sq + params.@sq_off.head).as(UInt32*)
+    @sq_ktail = (@sq + params.@sq_off.tail).as(UInt32*)
+    @sq_mask = (@sq + params.@sq_off.ring_mask).as(UInt32*)
     @sq_entries = (@sq + params.@sq_off.ring_entries).as(UInt32*)
-    @sq_flags   = (@sq + params.@sq_off.flags).as(UInt32*)
+    @sq_flags = (@sq + params.@sq_off.flags).as(UInt32*)
 
-    @cq_khead   = (@cq + params.@cq_off.head).as(UInt32*)
-    @cq_ktail   = (@cq + params.@cq_off.tail).as(UInt32*)
-    @cq_mask    = (@cq + params.@cq_off.ring_mask).as(UInt32*)
+    @cq_khead = (@cq + params.@cq_off.head).as(UInt32*)
+    @cq_ktail = (@cq + params.@cq_off.tail).as(UInt32*)
+    @cq_mask = (@cq + params.@cq_off.ring_mask).as(UInt32*)
     @cq_entries = (@cq + params.@cq_off.ring_entries).as(UInt32*)
-    @cqes       = (@cq + params.@cq_off.cqes).as(LibC::IoUringCqe*)
+    @cqes = (@cq + params.@cq_off.cqes).as(LibC::IoUringCqe*)
 
     if (params.flags & LibC::IORING_SETUP_NO_SQARRAY) == 0
       # map SQARRAY to SQE indexes once and for all (no indirection)
