@@ -102,10 +102,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
 
       fiber = event.value.fiber
 
-      case event.value.type
-      when :async, :sleep
-        # nothing to do
-      when :select_timeout
+      if event.value.type.select_timeout?
         next unless select_action = fiber.timeout_select_action
         fiber.timeout_select_action = nil
         next unless select_action.time_expired?
@@ -126,11 +123,16 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
 
   # timers
 
+  # FIXME: with threads/multiple rings, we'll need to know which ring the
+  # timeout has been submitted to to be able to cancel it; using our own queue
+  # of timers with a single timerfd might be simpler.
+
   def add_timer(event : Event*) : Nil
     sqe, ts = @ring.next_sqe_with_timespec
 
-    ts.value.tv_sec = typeof(ts.value.tv_sec).new!(event.value.@duration.@seconds)
-    ts.value.tv_nsec = typeof(ts.value.tv_nsec).new!(event.value.@duration.@nanoseconds)
+    timeout = event.value.timeout
+    ts.value.tv_sec = typeof(ts.value.tv_sec).new!(timeout.@seconds)
+    ts.value.tv_nsec = typeof(ts.value.tv_nsec).new!(timeout.@nanoseconds)
 
     sqe.value.opcode = LibC::IORING_OP_TIMEOUT
     sqe.value.user_data = event.address.to_u64!

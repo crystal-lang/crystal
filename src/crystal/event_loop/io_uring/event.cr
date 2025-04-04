@@ -11,18 +11,12 @@ struct Crystal::EventLoop::IoUring::Event
   property! res : Int32
   # property! flags : UInt32
 
-  getter? armed : Bool
+  getter! timeout : Time::Span
 
   def initialize(@type, @fiber)
-    @duration = Time::Span.zero
     @armed = false
   end
 
-  def arm(@duration : Time::Span) : Nil
-    @armed = true
-  end
-
-  def disarm : Nil
-    @armed = false
+  def timeout=(@timeout)
   end
 end
