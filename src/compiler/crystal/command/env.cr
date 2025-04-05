@@ -19,6 +19,7 @@ class Crystal::Command
 
     vars = {
       "CRYSTAL_CACHE_DIR"    => CacheDir.instance.dir,
+      "CRYSTAL_EXEC_PATH"    => Crystal::Config.exec_path || "",
       "CRYSTAL_PATH"         => CrystalPath.default_path,
       "CRYSTAL_VERSION"      => Config.version || "",
       "CRYSTAL_LIBRARY_PATH" => CrystalLibraryPath.default_path,
