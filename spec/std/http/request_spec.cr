@@ -332,6 +332,10 @@ module HTTP
         request.path.should eq("/")
       end
 
+      it "parses with only leading with double slash" do
+        HTTP::Request.new("GET", "//").path.should eq "//"
+      end
+
       it "parses path leading with double slash" do
         Request.new("GET", "//foo:bar").path.should eq "//foo:bar"
       end
