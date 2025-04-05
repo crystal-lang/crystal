@@ -1,4 +1,6 @@
 lib LibC
+  $errno : Int
+
   E2BIG           =  1_u16
   EACCES          =  2_u16
   EADDRINUSE      =  3_u16
