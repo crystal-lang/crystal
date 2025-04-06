@@ -47,6 +47,11 @@ lib LibC
     l_linger : Int
   end
 
+  struct Iovec
+    iov_base : Void*
+    iov_len : SizeT
+  end
+
   struct Msghdr
     msg_name : Void*
     msg_namelen : SocklenT

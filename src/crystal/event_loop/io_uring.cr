@@ -4,7 +4,6 @@ end
 
 require "c/poll"
 require "c/sys/socket"
-require "c/sys/uio"
 require "../system/unix/io_uring"
 require "./io_uring/*"
 
