@@ -4,6 +4,7 @@ end
 
 require "c/poll"
 require "c/sys/socket"
+require "c/sys/uio"
 require "../system/unix/io_uring"
 require "./io_uring/*"
 
@@ -23,6 +24,8 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
       System::IoUring.supports_opcode?(LibC::IORING_OP_WRITE) &&
       System::IoUring.supports_opcode?(LibC::IORING_OP_CONNECT) &&
       System::IoUring.supports_opcode?(LibC::IORING_OP_ACCEPT) &&
+      System::IoUring.supports_opcode?(LibC::IORING_OP_SENDMSG) &&
+      System::IoUring.supports_opcode?(LibC::IORING_OP_RECVMSG) &&
       System::IoUring.supports_opcode?(LibC::IORING_OP_CLOSE) &&
       System::IoUring.supports_opcode?(LibC::IORING_OP_LINK_TIMEOUT) &&
       System::IoUring.supports_opcode?(LibC::IORING_OP_ASYNC_CANCEL)
@@ -289,46 +292,57 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
     end
   end
 
+  # TODO: support socket.@write_timeout (?)
   def send_to(socket : ::Socket, slice : Bytes, address : ::Socket::Address) : Int32
     sockaddr = address.to_unsafe # OPTIMIZE: #to_unsafe allocates (not needed)
     addrlen = address.size
 
     if @@supports_sendto
-      ret = async(LibC::IORING_OP_SEND) do |sqe|
+      res = async(LibC::IORING_OP_SEND) do |sqe|
         sqe.value.fd = socket.fd
         sqe.value.addr = slice.to_unsafe.address.to_u64!
         sqe.value.len = slice.size.to_u64!
         sqe.value.u1.addr2 = sockaddr.address.to_u64!
         sqe.value.addr_len[0] = addrlen.to_u16!
       end
-      return ret unless ret < 0
-      raise ::Socket::Error.from_os_error("Error sending datagram to #{address}", Errno.new(-ret)) unless ret == -LibC::EINVAL
+      return res unless res < 0
+
+      unless res == -LibC::EINVAL
+        raise ::Socket::Error.from_os_error("Error sending datagram to #{address}", Errno.new(-res))
+      end
       @@supports_sendto = false
     end
 
-    ret = LibC.sendto(socket.fd, slice.to_unsafe.as(Void*), slice.size, 0, sockaddr, addrlen)
-    raise ::Socket::Error.from_errno("Error sending datagram to #{address}") if ret == -1
-    ret.to_i32
+    # fallback to SENDMSG
+    iovec = LibC::Iovec.new(iov_base: slice.to_unsafe, iov_len: slice.size)
+    msghdr = LibC::Msghdr.new(msg_name: sockaddr, msg_namelen: addrlen, msg_iov: pointerof(iovec), msg_iovlen: 1)
+
+    res = async(LibC::IORING_OP_SENDMSG) do |sqe|
+      sqe.value.fd = socket.fd
+      sqe.value.addr = pointerof(msghdr).address.to_u64!
+    end
+
+    raise ::Socket::Error.from_os_error("Error sending datagram to #{address}", Errno.new(-res)) if res < 0
+    res
   end
 
+  # TODO: support socket.@read_timeout (?)
   def receive_from(socket : ::Socket, slice : Bytes) : {Int32, ::Socket::Address}
-    # as of linux 6.12 there is no support for recvfrom in io_uring
     sockaddr = LibC::SockaddrStorage.new
     sockaddr.ss_family = socket.family
     addrlen = LibC::SocklenT.new(sizeof(LibC::SockaddrStorage))
 
-    loop do
-      ret = LibC.recvfrom(socket.fd, slice, slice.size, 0, pointerof(sockaddr).as(LibC::Sockaddr*), pointerof(addrlen))
-      if ret == -1
-        if Errno.value == Errno::EAGAIN
-          wait_readable(socket)
-        else
-          raise IO::Error.from_errno("recvfrom", target: socket)
-        end
-      else
-        return {ret.to_i32, ::Socket::Address.from(pointerof(sockaddr).as(LibC::Sockaddr*), addrlen)}
-      end
+    # as of linux 6.12 there is no IORING_OP_RECVFROM
+    iovec = LibC::Iovec.new(iov_base: slice.to_unsafe, iov_len: slice.size)
+    msghdr = LibC::Msghdr.new(msg_name: pointerof(sockaddr), msg_namelen: addrlen, msg_iov: pointerof(iovec), msg_iovlen: 1)
+
+    res = async(LibC::IORING_OP_RECVMSG) do |sqe|
+      sqe.value.fd = socket.fd
+      sqe.value.addr = pointerof(msghdr).address.to_u64!
     end
+
+    raise IO::Error.from_os_error("recvfrom", Errno.new(-res), target: socket) if res < 0
+    {res, ::Socket::Address.from(pointerof(sockaddr).as(LibC::Sockaddr*), msghdr.msg_namelen)}
   end
 
   def close(socket : ::Socket) : Nil
