@@ -190,8 +190,6 @@ module Crystal::System::FileDescriptor
 
   private def system_close
     event_loop.close(self)
-
-    file_descriptor_close
   end
 
   def file_descriptor_close(&)
