@@ -159,9 +159,9 @@ describe Indexable do
       indexable.find(offset: -6) { |i| i.even? }.should eq 2
     end
 
-    it "does not receive a valid negative offset, returns nil" do
+    it "does not receive a valid negative offset, returns if_none value" do
       indexable = SafeIndexable.new(4)
-      indexable.find(offset: -10) { |i| i > 2 }.should be_nil
+      indexable.find(-1, offset: -10) { |i| i > 2 }.should eq -1
     end
 
     it "does not find the element matching the block" do

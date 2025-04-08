@@ -1009,7 +1009,7 @@ struct Path
       target_part = target_iterator.next
     end
 
-    path = new_instance("")
+    parts = [] of String
 
     # base_path is not consumed, so we go up before descending into target_path
     if base_part.is_a?(String)
@@ -1019,21 +1019,21 @@ struct Path
         return nil
       end
 
-      path /= ".." unless base_part == "."
+      parts << ".." unless base_part == "."
       base_iterator.each do
-        path /= ".."
+        parts << ".."
       end
     end
 
     # target_path is not consumed, so we append what's left to the relative path
     if target_part.is_a?(String)
-      path /= target_part
+      parts << target_part
       target_iterator.each do |part|
-        path /= part
+        parts << part
       end
     end
 
-    path
+    new_instance(parts.join(separators[0]))
   end
 
   # :ditto:

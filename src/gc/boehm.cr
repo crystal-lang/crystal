@@ -431,21 +431,21 @@ module GC
       sb.mem_base = stack_bottom
       LibGC.set_stackbottom(thread_handle, pointerof(sb))
     end
-  {% elsif LibGC.has_method?(:set_stackbottom) %}
-    # this is necessary because Boehm GC does _not_ use `GC_stackbottom` on
-    # Windows when pushing all threads' stacks; it also started crashing on
-    # Linux with libgc after v8.2.4; instead `GC_set_stackbottom` must be used
-    # to associate the new bottom with the running thread
-    def self.set_stackbottom(stack_bottom : Void*)
-      sb = LibGC::StackBase.new
-      sb.mem_base = stack_bottom
-      # `nil` represents the current thread (i.e. the only one)
-      LibGC.set_stackbottom(nil, pointerof(sb))
-    end
   {% else %}
-    # support for legacy gc releases
     def self.set_stackbottom(stack_bottom : Void*)
-      LibGC.stackbottom = stack_bottom
+      \{% if LibGC.has_method?(:set_stackbottom) %}
+        # this is necessary because Boehm GC does _not_ use `GC_stackbottom` on
+        # Windows when pushing all threads' stacks; it also started crashing on
+        # Linux with libgc after v8.2.4; instead `GC_set_stackbottom` must be used
+        # to associate the new bottom with the running thread
+        sb = LibGC::StackBase.new
+        sb.mem_base = stack_bottom
+        # `nil` represents the current thread (i.e. the only one)
+        LibGC.set_stackbottom(nil, pointerof(sb))
+      \{% else %}
+        # support for legacy gc releases
+        LibGC.stackbottom = stack_bottom
+      \{% end %}
     end
   {% end %}
 
