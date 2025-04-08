@@ -163,7 +163,7 @@ class HTTP::WebSocket
         @current_message.write @buffer[0, info.size]
         if info.final
           message = @current_message.to_s
-          @on_ping.try &.call(message)
+          do_ping(message)
           @current_message.clear
         end
       in .pong?
@@ -197,8 +197,7 @@ class HTTP::WebSocket
           end
           message = @current_message.gets_to_end
 
-          @on_close.try &.call(code, message)
-          close
+          do_close(code, message)
 
           @current_message.clear
           break
@@ -207,6 +206,16 @@ class HTTP::WebSocket
         # TODO: (asterite) I think this is good, but this case wasn't originally handled
       end
     end
+  end
+
+  private def do_close(code, message)
+    @on_close.try &.call(code, message)
+    close
+  end
+
+  private def do_ping(message)
+    @on_ping.try &.call(message)
+    pong(message) unless closed?
   end
 end
 
