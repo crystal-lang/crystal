@@ -31,6 +31,7 @@ require "crystal/spin_lock"
 # wg.wait
 # ```
 class WaitGroup
+  {% begin %}
   # Yields a `WaitGroup` instance and waits at the end of the block for all of
   # the work enqueued inside it to complete.
   #
@@ -41,17 +42,18 @@ class WaitGroup
   #   end
   # end
   # ```
-  def self.wait(&) : Nil
-    instance = new
+  def self.wait({% if flag?(:execution_context) %}execution_context : Fiber::ExecutionContext? = nil, {% end %} &) : Nil
+    instance = new(0, {% if flag?(:execution_context) %}execution_context{% end %})
     yield instance
     instance.wait
   end
 
-  def initialize(n : Int32 = 0)
+  def initialize(n : Int32 = 0, {% if flag?(:execution_context) %}@execution_context : Fiber::ExecutionContext? = nil {% end %})
     @waiting = Crystal::PointerLinkedList(Fiber::PointerLinkedListNode).new
     @lock = Crystal::SpinLock.new
     @counter = Atomic(Int32).new(n)
   end
+  {% end %}
 
   # Increment the counter by 1, perform the work inside the block in a separate
   # fiber, decrementing the counter after it completes or raises. Returns the
@@ -64,6 +66,17 @@ class WaitGroup
   # ```
   def spawn(*, name : String? = nil, &block) : Fiber
     add
+
+    {% if flag?(:execution_context) %}
+      if execution_context = @execution_context
+        return execution_context.spawn(name: name) do
+          block.call
+        ensure
+          done
+        end
+      end
+    {% end %}
+
     ::spawn(name: name) do
       block.call
     ensure
