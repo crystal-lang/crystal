@@ -6,6 +6,13 @@ abstract class Crystal::EventLoop
       # TODO: enable more targets by default (need manual tests or fixes)
       {% if flag?("evloop=libevent") %}
         Crystal::EventLoop::LibEvent
+      {% elsif flag?("evloop=io_uring") %}
+        if Crystal::EventLoop::IoUring.supported?
+          Crystal::EventLoop::IoUring
+        else
+          raise "TODO: fallback to Crystal::EventLoop::Epoll"
+          # Crystal::EventLoop::Epoll
+        end
       {% elsif flag?("evloop=epoll") || flag?(:android) || flag?(:linux) %}
         Crystal::EventLoop::Epoll
       {% elsif flag?("evloop=kqueue") || flag?(:darwin) || flag?(:freebsd) %}
@@ -115,6 +122,9 @@ end
 {% elsif flag?(:unix) %}
   {% if flag?("evloop=libevent") %}
     require "./event_loop/libevent"
+  {% elsif flag?("evloop=io_uring") %}
+    require "./event_loop/io_uring"
+    # require "./event_loop/epoll"
   {% elsif flag?("evloop=epoll") || flag?(:android) || flag?(:linux) %}
     require "./event_loop/epoll"
   {% elsif flag?("evloop=kqueue") || flag?(:darwin) || flag?(:freebsd) %}
