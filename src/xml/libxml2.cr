@@ -16,6 +16,8 @@ require "./save_options"
 lib LibXML
   alias Int = LibC::Int
 
+  $xmlParserVersion : LibC::Char*
+
   fun xmlInitParser
 
   fun __xmlIndentTreeOutput : Int*
