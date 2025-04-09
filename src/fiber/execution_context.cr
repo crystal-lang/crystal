@@ -6,7 +6,7 @@ require "./stack_pool"
 require "./execution_context/*"
 
 {% raise "ERROR: execution contexts require the `preview_mt` compilation flag" unless flag?(:preview_mt) || flag?(:docs) %}
-{% raise "ERROR: execution contexts require the `execution_context` compilation flag" unless flag?(:execution_context)  || flag?(:docs)%}
+{% raise "ERROR: execution contexts require the `execution_context` compilation flag" unless flag?(:execution_context) || flag?(:docs) %}
 
 @[Experimental]
 module Fiber::ExecutionContext
