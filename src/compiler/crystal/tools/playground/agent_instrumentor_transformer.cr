@@ -77,7 +77,7 @@ module Crystal
         if node.is_a?(TupleLiteral)
           args << ArrayLiteral.new(node.elements.map { |e| StringLiteral.new(e.to_s).as(ASTNode) })
         end
-        call = Call.new(Call.new("_p"), "i", args, Block.new([] of Var, node.as(ASTNode)))
+        call = Call.new(Call.new("_p"), "i", args, Block.new([] of Var, node.as(ASTNode)).at(node))
         call = Cast.new(call, TypeOf.new([node.clone] of ASTNode)) if add_as_typeof
         call = Splat.new(call) if splat
         call
@@ -98,7 +98,7 @@ module Crystal
       node.values = if node.values.size == 1
                       [instrument(node.values[0])] of ASTNode
                     else
-                      rhs = TupleLiteral.new(node.values)
+                      rhs = TupleLiteral.new(node.values).at(node)
                       rhs.location = node.location
                       [instrument(rhs)] of ASTNode
                     end
@@ -145,7 +145,7 @@ module Crystal
     end
 
     private def instrument_args_and_splat(node : Call)
-      args = TupleLiteral.new(node.args)
+      args = TupleLiteral.new(node.args).at(node)
       args.location = node.location
       node.args = [Splat.new(instrument(args))] of ASTNode
       node
