@@ -14,7 +14,6 @@ class HTTP::WebSocket
   def initialize(@ws : Protocol)
     @buffer = Bytes.new(4096)
     @current_message = IO::Memory.new
-    @on_ping = ->(message : String) { pong(message) unless closed? }
   end
 
   # Opens a new websocket using the information provided by the URI. This will also handle the handshake
