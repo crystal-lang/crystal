@@ -238,8 +238,13 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     raise NotImplementedError.new("Crystal::System::IOCP#wait_writable(FileDescriptor)")
   end
 
+  def reopened(file_descriptor : Crystal::System::FileDescriptor) : Nil
+    raise NotImplementedError.new("Crystal::System::IOCP#reopened(FileDescriptor)")
+  end
+
   def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
     LibC.CancelIoEx(file_descriptor.windows_handle, nil) unless file_descriptor.system_blocking?
+    file_descriptor.file_descriptor_close
   end
 
   private def wsa_buffer(bytes)
@@ -365,5 +370,6 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   end
 
   def close(socket : ::Socket) : Nil
+    raise NotImplementedError.new("Crystal::System::IOCP#close(Socket)")
   end
 end
