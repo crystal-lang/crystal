@@ -12,6 +12,9 @@ require "./save_options"
 @[Link("xml2", pkg_config: "libxml-2.0")]
 {% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
   @[Link(dll: "libxml2.dll")]
+  {% if flag?("win32") %}
+    @[Link("BCrypt")]
+  {% end %}
 {% end %}
 lib LibXML
   alias Int = LibC::Int
