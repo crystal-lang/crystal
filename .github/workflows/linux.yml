@@ -31,7 +31,7 @@ jobs:
           # libffi is only available starting from the 1.2.2 build images
           - crystal_bootstrap_version: 1.0.0
             flags: "FLAGS=-Dwithout_ffi USE_PCRE1=true"
-          - crystal_bootstrap_version: 1.15.1 # LATEST RELEASE
+          - crystal_bootstrap_version: 1.16.0 # LATEST RELEASE
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v4
