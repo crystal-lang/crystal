@@ -185,6 +185,10 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     end
   end
 
+  def reopened(file_descriptor : System::FileDescriptor) : Nil
+    evented_close(file_descriptor)
+  end
+
   def close(file_descriptor : System::FileDescriptor) : Nil
     evented_close(file_descriptor)
   end
