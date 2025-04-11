@@ -11,7 +11,9 @@ class Crystal::Command
       setup_simple_compiler_options compiler, opts
 
       opts.unknown_args do |before_dash, after_dash|
-        opt_program_source = before_dash.join " "
+        unless before_dash.empty?
+          opt_program_source = before_dash.join " "
+        end
         program_args = after_dash
       end
     end
