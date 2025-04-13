@@ -7,6 +7,10 @@ struct Crystal::EventLoop::Polling::PollDescriptor
   @readers = Waiters.new
   @writers = Waiters.new
 
+  def owned_by?(event_loop) : Bool
+    @event_loop == event_loop
+  end
+
   # Makes *event_loop* the new owner of *fd*.
   # Removes *fd* from the current event loop (if any).
   def take_ownership(event_loop : EventLoop, fd : Int32, index : Arena::Index) : Nil
