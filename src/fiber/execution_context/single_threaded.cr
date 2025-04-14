@@ -22,7 +22,10 @@ module Fiber::ExecutionContext
     @global_queue : GlobalQueue
     @runnables : Runnables(256)
 
+    # :nodoc:
     getter stack_pool : Fiber::StackPool = Fiber::StackPool.new
+
+    # :nodoc:
     getter event_loop : Crystal::EventLoop = Crystal::EventLoop.create
 
     @waiting = Atomic(Bool).new(false)
@@ -56,6 +59,7 @@ module Fiber::ExecutionContext
       self
     end
 
+    # :nodoc:
     def stack_pool? : Fiber::StackPool?
       @stack_pool
     end
@@ -89,6 +93,7 @@ module Fiber::ExecutionContext
       self.spawn(name: name, &block)
     end
 
+    # :nodoc:
     def enqueue(fiber : Fiber) : Nil
       if ExecutionContext.current == self
         # local enqueue

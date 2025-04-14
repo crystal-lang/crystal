@@ -21,7 +21,10 @@ module Fiber::ExecutionContext
     @condition : Thread::ConditionVariable
     protected getter global_queue : GlobalQueue
 
+    # :nodoc:
     getter stack_pool : Fiber::StackPool = Fiber::StackPool.new
+
+    # :nodoc:
     getter event_loop : Crystal::EventLoop = Crystal::EventLoop.create
     @event_loop_lock = Atomic(Bool).new(false)
 
@@ -91,6 +94,7 @@ module Fiber::ExecutionContext
       @size.end
     end
 
+    # :nodoc:
     def stack_pool? : Fiber::StackPool?
       @stack_pool
     end
@@ -156,11 +160,13 @@ module Fiber::ExecutionContext
       end
     end
 
+    # :nodoc:
     def spawn(*, name : String? = nil, same_thread : Bool, &block : ->) : Fiber
       raise ArgumentError.new("#{self.class.name}#spawn doesn't support same_thread:true") if same_thread
       self.spawn(name: name, &block)
     end
 
+    # :nodoc:
     def enqueue(fiber : Fiber) : Nil
       if ExecutionContext.current == self
         # local enqueue: push to local queue of current scheduler
