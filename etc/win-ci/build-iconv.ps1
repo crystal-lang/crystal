@@ -1,6 +1,7 @@
 param(
     [Parameter(Mandatory)] [string] $BuildTree,
     [Parameter(Mandatory)] [string] $Version,
+    [string] $Msys2Root,
     [switch] $Dynamic
 )
 
@@ -12,9 +13,13 @@ tar -xzf libiconv.tar.gz
 mv libiconv-* $BuildTree
 rm libiconv.tar.gz
 
+if ($Msys2Root -eq '') {
+    $Msys2Root = 'C:\msys64'
+}
+
 Run-InDirectory $BuildTree {
     $env:CHERE_INVOKING = 1
-    & 'C:\msys64\usr\bin\bash.exe' --login "$PSScriptRoot\cygwin-build-iconv.sh" "$Version" "$(if ($Dynamic) { 1 })"
+    & "$Msys2Root\usr\bin\bash.exe" --login "$PSScriptRoot\cygwin-build-iconv.sh" "$Version" "$(if ($Dynamic) { 1 })"
     if (-not $?) {
         Write-Host "Error: Failed to build libiconv" -ForegroundColor Red
         Exit 1

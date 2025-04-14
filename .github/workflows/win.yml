@@ -62,7 +62,7 @@ jobs:
         run: .\etc\win-ci\build-pcre2.ps1 -BuildTree deps\pcre2 -Version 10.45
       - name: Build libiconv
         if: steps.cache-libs.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-iconv.ps1 -BuildTree deps\iconv -Version 1.18
+        run: .\etc\win-ci\build-iconv.ps1 -BuildTree deps\iconv -Version 1.18 -Msys2Root ${{ steps.msys2.outputs.msys2-location }}
       - name: Build libffi
         if: steps.cache-libs.outputs.cache-hit != 'true'
         run: .\etc\win-ci\build-ffi.ps1 -BuildTree deps\ffi -Version 3.4.7
@@ -153,7 +153,7 @@ jobs:
         run: .\etc\win-ci\build-pcre2.ps1 -BuildTree deps\pcre2 -Version 10.45 -Dynamic
       - name: Build libiconv
         if: steps.cache-dlls.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-iconv.ps1 -BuildTree deps\iconv -Version 1.18 -Dynamic
+        run: .\etc\win-ci\build-iconv.ps1 -BuildTree deps\iconv -Version 1.18 -Msys2Root ${{ steps.msys2.outputs.msys2-location }} -Dynamic
       - name: Build libffi
         if: steps.cache-dlls.outputs.cache-hit != 'true'
         run: .\etc\win-ci\build-ffi.ps1 -BuildTree deps\ffi -Version 3.4.7 -Dynamic
