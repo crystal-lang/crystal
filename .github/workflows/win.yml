@@ -29,6 +29,7 @@ jobs:
         with:
           msystem: MSYS
           update: true
+          path-type: inherit
           install: >-
             make
 
@@ -110,6 +111,7 @@ jobs:
         with:
           msystem: MSYS
           update: true
+          path-type: inherit
           install: >-
             make
 
