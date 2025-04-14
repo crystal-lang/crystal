@@ -23,16 +23,6 @@ jobs:
       - name: Enable Developer Command Prompt
         uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
 
-      - name: Set up MSYS2
-        id: msys2
-        uses: msys2/setup-msys2@61f9e5e925871ba6c9e3e8da24ede83ea27fa91f # v2.27.0
-        with:
-          msystem: MSYS
-          update: true
-          path-type: inherit
-          install: >-
-            make
-
       - name: Download Crystal source
         uses: actions/checkout@v4
 
@@ -51,6 +41,16 @@ jobs:
             libs/yaml.lib
             libs/xml2.lib
           key: win-libs-${{ hashFiles('.github/workflows/win.yml', 'etc/win-ci/*.ps1') }}-msvc
+      - name: Set up MSYS2
+        if: steps.cache-libs.outputs.cache-hit != 'true'
+        id: msys2
+        uses: msys2/setup-msys2@61f9e5e925871ba6c9e3e8da24ede83ea27fa91f # v2.27.0
+        with:
+          msystem: MSYS
+          update: true
+          path-type: inherit
+          install: >-
+            make
       - name: Build libgc
         if: steps.cache-libs.outputs.cache-hit != 'true'
         run: .\etc\win-ci\build-gc.ps1 -BuildTree deps\gc -Version 8.2.8 -AtomicOpsVersion 7.8.2
@@ -105,16 +105,6 @@ jobs:
       - name: Enable Developer Command Prompt
         uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
 
-      - name: Set up MSYS2
-        id: msys2
-        uses: msys2/setup-msys2@61f9e5e925871ba6c9e3e8da24ede83ea27fa91f # v2.27.0
-        with:
-          msystem: MSYS
-          update: true
-          path-type: inherit
-          install: >-
-            make
-
       - name: Download Crystal source
         uses: actions/checkout@v4
 
@@ -142,6 +132,16 @@ jobs:
             dlls/yaml.dll
             dlls/libxml2.dll
           key: win-dlls-${{ hashFiles('.github/workflows/win.yml', 'etc/win-ci/*.ps1') }}-msvc
+      - name: Set up MSYS2
+        if: steps.cache-dlls.outputs.cache-hit != 'true'
+        id: msys2
+        uses: msys2/setup-msys2@61f9e5e925871ba6c9e3e8da24ede83ea27fa91f # v2.27.0
+        with:
+          msystem: MSYS
+          update: true
+          path-type: inherit
+          install: >-
+            make
       - name: Build libgc
         if: steps.cache-dlls.outputs.cache-hit != 'true'
         run: .\etc\win-ci\build-gc.ps1 -BuildTree deps\gc -Version 8.2.8 -AtomicOpsVersion 7.8.2 -Dynamic
