@@ -114,28 +114,30 @@ class Socket
     def self.new(address : String, port : Int32)
       raise Error.new("Invalid port number: #{port}") unless IPAddress.valid_port?(port)
 
-      addr_part, _, zone_part = address.partition('%')
-      if v4_fields = parse_v4_fields?(addr_part)
+      if v4_fields = parse_v4_fields?(address)
         addr = v4(v4_fields, port.to_u16!)
-      elsif v6_fields = parse_v6_fields?(addr_part)
-        # `zone_id` is only relevant for link-local addresses, i.e. beginning with "fe80:".
-        zone_id = 0u32
-        if v6_fields[0] == 0xfe80 && !zone_part.empty?
-          # Scope/Zone can be given either as a network interface name or directly as the interface index.
-          # When given a name we need to find the corresponding interface index.
-          if zone_part.to_u32?
-            zone_id_parsed = zone_part.to_u32
-            raise ArgumentError.new("Invalid IPv6 link-local zone index '#{zone_part}' in address '#{address}'") unless zone_id_parsed.positive?
-            zone_id = zone_id_parsed
-          else
-            zone_id_parsed = LibC.if_nametoindex(zone_part).not_nil!
-            raise ArgumentError.new("IPv6 link-local zone interface '#{zone_part}' not found (in address '#{address}').") unless zone_id_parsed.positive?
-            zone_id = zone_id_parsed
-          end
-        end
-        addr = v6(v6_fields, port.to_u16!, zone_id)
       else
-        raise Error.new("Invalid IP address: #{address}")
+        addr_part, _, zone_part = address.partition('%')
+        if v6_fields = parse_v6_fields?(addr_part)
+          # `zone_id` is only relevant for link-local addresses, i.e. beginning with "fe80:".
+          if !zone_part.empty? && v6_fields[0] != 0xfe80
+            raise ArgumentError.new("Zoned/scoped IPv6 addresses are only allowed for link-local (supplied '#{addr_part}' is not within fe80::/10).")
+          end
+          zone_id = 0u32
+          if v6_fields[0] == 0xfe80 && !zone_part.empty?
+            # Scope/Zone can be given either as a network interface name or directly as the interface index.
+            # When given a name we need to find the corresponding interface index.
+            if zone_id = zone_part.to_u32?
+              raise ArgumentError.new("Invalid IPv6 link-local zone index '#{zone_part}' in address '#{address}'.") unless zone_id.positive?
+            else
+              zone_id = LibC.if_nametoindex(zone_part)
+              raise ArgumentError.new("IPv6 link-local zone interface '#{zone_part}' not found (in address '#{address}').") unless zone_id.positive?
+            end
+          end
+          addr = v6(v6_fields, port.to_u16!, zone_id)
+        else
+          raise Error.new("Invalid IP address: #{address}")
+        end
       end
 
       addr
@@ -629,6 +631,7 @@ class Socket
       in LibC::In6Addr
         io << '['
         address_to_s(io, addr)
+        io << '%' << @zone_id if @zone_id.positive?
         io << ']' << ':' << port
       end
     end
@@ -769,7 +772,6 @@ class Socket
     # associated zone_id property.
     def link_local_interface : String | Nil
       return nil if @zone_id.zero?
-      return nil if @family == Socket::Family::INET
       return nil unless (@family == Socket::Family::INET6 && link_local?)
       buf = uninitialized StaticArray(UInt8, LibC::IF_NAMESIZE)
       LibC.if_indextoname(@zone_id, buf)

@@ -141,12 +141,7 @@ describe Socket::IPAddress do
       address = Socket::IPAddress.new("fe80::3333:4444%3", 8081)
       address.address.should eq "fe80::3333:4444"
       address.zone_id.should eq 3
-    end
-
-    it "ignores link-local zone identifier on non-LL addrs" do
-      address = Socket::IPAddress.new("fd00::abcd%5", 443)
-      address.address.should eq "fd00::abcd"
-      address.zone_id.should eq 0
+      address.inspect.should eq "Socket::IPAddress([fe80::3333:4444%3]:8081)"
     end
 
     it "looks up loopback interface index by name" do
@@ -159,26 +154,31 @@ describe Socket::IPAddress do
       # loopback interface "lo" is supposed to *always* be the first interface and
       # enumerated with index 1
       address = Socket::IPAddress.new("fe80::1111%#{loopback_iface}", 0)
-      ifname = address.link_local_interface
-      ifname.should eq loopback_iface
+      address.link_local_interface.should eq loopback_iface
     end
 
     it "interface name lookup returns nil in unsupported cases" do
-      Socket::IPAddress.new("fd03::3333%#{loopback_iface}", 0).link_local_interface.should eq nil
-      Socket::IPAddress.new("192.168.10.10%#{loopback_iface}", 0).link_local_interface.should eq nil
-      Socket::IPAddress.new("169.254.0.3%#{loopback_iface}", 0).link_local_interface.should eq nil
-      Socket::IPAddress.new("fe80::4545", 0).link_local_interface.should eq nil
+      Socket::IPAddress.new("fd03::3333", 0).link_local_interface.should be_nil
+      Socket::IPAddress.new("192.168.10.10", 0).link_local_interface.should be_nil
+      Socket::IPAddress.new("169.254.0.3", 0).link_local_interface.should be_nil
+      Socket::IPAddress.new("fe80::4545", 0).link_local_interface.should be_nil
+    end
+
+    it "fails link-local zone identifier on non-LL addrs" do
+      expect_raises(ArgumentError, "Zoned/scoped IPv6 addresses are only allowed for link-local (supplied 'fd00::abcd' is not within fe80::/10).") do
+        Socket::IPAddress.new("fd00::abcd%5", 443)
+      end
     end
 
     it "fails on invalid link-local zone identifier" do
-      expect_raises(ArgumentError, "Invalid IPv6 link-local zone index '0' in address 'fe80::c0ff:ee%0'") do
+      expect_raises(ArgumentError, "Invalid IPv6 link-local zone index '0' in address 'fe80::c0ff:ee%0'.") do
         Socket::IPAddress.new("fe80::c0ff:ee%0", port: 0)
       end
     end
 
     it "fails on non-existent link-local zone interface" do
       # looking up an interface index obviously requires for said interface device to exist
-      expect_raises(ArgumentError, "IPv6 link-local zone interface 'zzzzzzzzzzzzzzz' not found (in address 'fe80::0f0f:abcd%zzzzzzzzzzzzzzz'") do
+      expect_raises(ArgumentError, "IPv6 link-local zone interface 'zzzzzzzzzzzzzzz' not found (in address 'fe80::0f0f:abcd%zzzzzzzzzzzzzzz').") do
         Socket::IPAddress.new("fe80::0f0f:abcd%zzzzzzzzzzzzzzz", port: 0)
       end
     end
