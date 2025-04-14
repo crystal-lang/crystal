@@ -27,7 +27,7 @@ jobs:
         id: msys2
         uses: msys2/setup-msys2@61f9e5e925871ba6c9e3e8da24ede83ea27fa91f # v2.27.0
         with:
-          msystem: UCRT64
+          msystem: MSYS
           update: true
           install: >-
             make
@@ -108,7 +108,7 @@ jobs:
         id: msys2
         uses: msys2/setup-msys2@61f9e5e925871ba6c9e3e8da24ede83ea27fa91f # v2.27.0
         with:
-          msystem: UCRT64
+          msystem: MSYS
           update: true
           install: >-
             make
