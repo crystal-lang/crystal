@@ -102,14 +102,16 @@ class Socket
     # the port number is out of range.
     #
     # Scoped/Zoned IPv6 link-local addresses are supported per RFC4007, e.g.
-    # `fe80::abcd%eth0`.
+    # `fe80::abcd%eth0` but will always use their numerical interface index
+    # in the #inspect representation. The interface name can be retrieved later
+    # using #link_local_interface on the IPAddress object.
     #
     # ```
     # require "socket"
     #
     # Socket::IPAddress.new("127.0.0.1", 8080)                 # => Socket::IPAddress(127.0.0.1:8080)
     # Socket::IPAddress.new("fe80::2ab2:bdff:fe59:8e2c", 1234) # => Socket::IPAddress([fe80::2ab2:bdff:fe59:8e2c]:1234)
-    # Socket::IPAddress.new("fe80::4567:8:9%eth0", 443)        # => Socket::IPAddress([fe80::4567:8:9]:443)
+    # Socket::IPAddress.new("fe80::4567:8:9%eth0", 443)        # => Socket::IPAddress([fe80::4567:8:9%2]:443)
     # ```
     def self.new(address : String, port : Int32)
       raise Error.new("Invalid port number: #{port}") unless IPAddress.valid_port?(port)
