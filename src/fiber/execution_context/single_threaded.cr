@@ -3,12 +3,19 @@ require "./runnables"
 require "./scheduler"
 
 module Fiber::ExecutionContext
-  # ST scheduler. Owns a single thread.
+  # A single-threaded execution context which owns a single thread. It's fully
+  # concurrent with limited parallelism.
   #
-  # Fully concurrent with limited parallelism: concurrency is restricted to this
-  # single thread. Fibers running in this context will never run in parallel to
-  # each other but they may still run in parallel to fibers running in other
-  # contexts (i.e. another thread).
+  # Concurrency is restricted to a single thread. Fibers in the same context
+  # will never run in parallel to each other but they may still run in parallel
+  # to fibers running in other contexts (i.e. in another thread).
+  #
+  # Fibers can use simpler and faster synchronization primitives between
+  # themselves (no atomics, no thread safety). Communication with fibers in
+  # other contexts requires thread-safe primitives.
+  #
+  # A blocking fiber blocks the entire thread and all other fibers in the
+  # context.
   class SingleThreaded
     include ExecutionContext
     include ExecutionContext::Scheduler
