@@ -8,6 +8,10 @@ module Crystal::System::Socket
 
   alias Handle = Int32
 
+  def self.socket(family : ::Socket::Family, type : ::Socket::Type, protocol : ::Socket::Protocol, blocking : Bool) : Handle
+    raise NotImplementedError.new "Crystal::System::Socket.socket"
+  end
+
   private def initialize_handle(fd)
   end
 

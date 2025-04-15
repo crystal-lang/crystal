@@ -294,14 +294,6 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     wsabuf
   end
 
-  def socket(family : ::Socket::Family, type : ::Socket::Type, protocol : ::Socket::Protocol) : System::Socket::Handle
-    socket = LibC.WSASocketW(family, type, protocol, nil, 0, LibC::WSA_FLAG_OVERLAPPED)
-    raise ::Socket::Error.from_wsa_error("WSASocketW") if socket == LibC::INVALID_SOCKET
-
-    create_completion_port LibC::HANDLE.new(socket)
-    socket
-  end
-
   def read(socket : ::Socket, slice : Bytes) : Int32
     wsabuf = wsa_buffer(slice)
 

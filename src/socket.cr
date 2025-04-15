@@ -64,7 +64,8 @@ class Socket < IO
   def initialize(family : Family, type : Type, protocol : Protocol = Protocol::IP, blocking = nil)
     # This method is `#initialize` instead of `.new` because it is used as super
     # constructor from subclasses.
-    fd = event_loop.socket(family, type, protocol)
+    default_blocking = blocking.nil? ? Crystal::EventLoop.default_blocking : blocking
+    fd = Crystal::System::Socket.socket(family, type, protocol, default_blocking)
     initialize(fd, family, type, protocol, blocking)
   end
 

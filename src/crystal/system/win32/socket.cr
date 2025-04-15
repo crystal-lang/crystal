@@ -71,6 +71,13 @@ module Crystal::System::Socket
 
   initialize_extension_functions
 
+  def self.socket(family : ::Socket::Family, type : ::Socket::Type, protocol : ::Socket::Protocol, blocking : Bool) : Handle
+    socket = LibC.WSASocketW(family, type, protocol, nil, 0, LibC::WSA_FLAG_OVERLAPPED)
+    raise ::Socket::Error.from_wsa_error("WSASocketW") if socket == LibC::INVALID_SOCKET
+    Crystal::EventLoop.current.create_completion_port LibC::HANDLE.new(socket)
+    socket
+  end
+
   private def initialize_handle(handle)
     unless @family.unix?
       system_getsockopt(handle, LibC::SO_REUSEADDR, 0) do |value|
@@ -168,7 +175,7 @@ module Crystal::System::Socket
   end
 
   def system_accept(& : Handle -> Bool) : Handle?
-    client_socket = event_loop.socket(family, type, protocol)
+    client_socket = Socket.socket(family, type, protocol, blocking)
     initialize_handle(client_socket)
 
     if yield client_socket

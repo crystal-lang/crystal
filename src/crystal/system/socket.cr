@@ -1,6 +1,9 @@
 require "../event_loop/socket"
 
 module Crystal::System::Socket
+  # Creates a socket. Raises ::Socket::Error on error.
+  # def self.socket(family : ::Socket::Family, type : ::Socket::Type, protocol : ::Socket::Protocol, blocking : Bool) : Handle
+
   # Initializes a file descriptor / socket handle for use with Crystal Socket
   # private def initialize_handle(fd)
 

@@ -9,6 +9,24 @@ module Crystal::System::Socket
 
   alias Handle = Int32
 
+  def self.socket(family : ::Socket::Family, type : ::Socket::Type, protocol : ::Socket::Protocol, blocking : Bool) : Handle
+    {% if LibC.has_constant?(:SOCK_CLOEXEC) %}
+      flags = type.value | LibC::SOCK_CLOEXEC
+      flags |= LibC::SOCK_NONBLOCK unless blocking
+      fd = LibC.socket(family, flags, protocol)
+      raise ::Socket::Error.from_errno("Failed to create socket") if fd == -1
+      fd
+    {% else %}
+      Process.lock_read do
+        fd = LibC.socket(family, type, protocol)
+        raise ::Socket::Error.from_errno("Failed to create socket") if fd == -1
+        fcntl(fd, LibC::F_SETFD, LibC::FD_CLOEXEC)
+        fcntl(fd, LibC::F_SETFL, fcntl(fd, LibC::F_GETFL) | LibC::O_NONBLOCK) unless blocking
+        fd
+      end
+    {% end %}
+  end
+
   private def initialize_handle(fd)
     {% if Crystal::EventLoop.has_constant?(:Polling) %}
       @__evloop_data = Crystal::EventLoop::Polling::Arena::INVALID_INDEX

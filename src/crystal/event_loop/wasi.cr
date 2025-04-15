@@ -76,10 +76,6 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
     file_descriptor.evented_close
   end
 
-  def socket(family : ::Socket::Family, type : ::Socket::Type, protocol : ::Socket::Protocol) : System::Socket::Handle
-    raise NotImplementedError.new("Crystal::Wasi::EventLoop#socket")
-  end
-
   def read(socket : ::Socket, slice : Bytes) : Int32
     evented_read(socket, "Error reading socket") do
       LibC.recv(socket.fd, slice, slice.size, 0).to_i32

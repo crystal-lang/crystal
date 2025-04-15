@@ -4,11 +4,6 @@
 
 abstract class Crystal::EventLoop
   module Socket
-    # Creates a new socket.
-    #
-    # Returns the system socket descriptor or handle. Raises ::Socket::Error on system error.
-    abstract def socket(family : ::Socket::Family, type : ::Socket::Type, protocol : ::Socket::Protocol) : System::Socket::Handle
-
     # Reads at least one byte from the socket into *slice*.
     #
     # Blocks the current fiber if no data is available for reading, continuing
