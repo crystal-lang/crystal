@@ -170,6 +170,16 @@ describe Socket::IPAddress do
       end
     end
 
+    it "fails link-local zone identifier on v4 addrs" do
+      expect_raises(Socket::Error, "Invalid IP address: 169.254.11.11%eth0") do
+        Socket::IPAddress.new("169.254.11.11%eth0", 0)
+      end
+
+      expect_raises(Socket::Error, "Invalid IP address: 192.168.11.11%3") do
+        Socket::IPAddress.new("192.168.11.11%3", 0)
+      end
+    end
+
     it "fails on invalid link-local zone identifier" do
       expect_raises(ArgumentError, "Invalid IPv6 link-local zone index '0' in address 'fe80::c0ff:ee%0'") do
         Socket::IPAddress.new("fe80::c0ff:ee%0", port: 0)
