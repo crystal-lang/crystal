@@ -52,7 +52,7 @@ module OpenSSL::SSL::HostnameValidation
               return Result::MatchFound if v4_fields.to_slice == data
             end
           when 16
-            if v6_fields = ::Socket::IPAddress.parse_v6_fields?(hostname)
+            if v6_fields = ::Socket::IPAddress.parse_v6_fields?(hostname)[0]
               {% if IO::ByteFormat::NetworkEndian != IO::ByteFormat::SystemEndian %}
                 v6_fields.map! &.byte_swap
               {% end %}

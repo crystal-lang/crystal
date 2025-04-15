@@ -165,7 +165,7 @@ describe Socket::IPAddress do
     end
 
     it "fails link-local zone identifier on non-LL v6 addrs" do
-      expect_raises(ArgumentError, "Zoned/scoped IPv6 addresses are only allowed for link-local (supplied 'fd00::abcd' is not within fe80::/10)") do
+      expect_raises(Socket::Error, "Zoned/scoped IPv6 addresses are only allowed for link-local (supplied 'fd00::abcd' is not within fe80::/10)") do
         Socket::IPAddress.new("fd00::abcd%5", 443)
       end
     end
@@ -181,14 +181,14 @@ describe Socket::IPAddress do
     end
 
     it "fails on invalid link-local zone identifier" do
-      expect_raises(ArgumentError, "Invalid IPv6 link-local zone index '0' in address 'fe80::c0ff:ee%0'") do
+      expect_raises(Socket::Error, "Invalid IPv6 link-local zone index '0' in address 'fe80::c0ff:ee%0'") do
         Socket::IPAddress.new("fe80::c0ff:ee%0", port: 0)
       end
     end
 
     it "fails on non-existent link-local zone interface" do
       # looking up an interface index obviously requires for said interface device to exist
-      expect_raises(ArgumentError, "IPv6 link-local zone interface 'zzzzzzzzzzzzzzz' not found (in address 'fe80::0f0f:abcd%zzzzzzzzzzzzzzz')") do
+      expect_raises(Socket::Error, "IPv6 link-local zone interface 'zzzzzzzzzzzzzzz' not found (in address 'fe80::0f0f:abcd%zzzzzzzzzzzzzzz')") do
         Socket::IPAddress.new("fe80::0f0f:abcd%zzzzzzzzzzzzzzz", port: 0)
       end
     end
@@ -259,37 +259,39 @@ describe Socket::IPAddress do
   end
 
   describe ".parse_v6_fields?" do
-    it { Socket::IPAddress.parse_v6_fields?(":").should be_nil }
-    it { Socket::IPAddress.parse_v6_fields?("::").should eq UInt16.static_array(0, 0, 0, 0, 0, 0, 0, 0) }
-    it { Socket::IPAddress.parse_v6_fields?("::1").should eq UInt16.static_array(0, 0, 0, 0, 0, 0, 0, 1) }
-    it { Socket::IPAddress.parse_v6_fields?(":::").should be_nil }
-    it { Socket::IPAddress.parse_v6_fields?("192.168.1.1").should be_nil }
-    it { Socket::IPAddress.parse_v6_fields?(":192.168.1.1").should be_nil }
-    it { Socket::IPAddress.parse_v6_fields?("::192.168.1.1").should eq UInt16.static_array(0, 0, 0, 0, 0, 0, 0xc0a8, 0x0101) }
-    it { Socket::IPAddress.parse_v6_fields?("0:0:0:0:0:0:192.168.1.1").should eq UInt16.static_array(0, 0, 0, 0, 0, 0, 0xc0a8, 0x0101) }
-    it { Socket::IPAddress.parse_v6_fields?("0:0::0:0:0:192.168.1.1").should eq UInt16.static_array(0, 0, 0, 0, 0, 0, 0xc0a8, 0x0101) }
-    it { Socket::IPAddress.parse_v6_fields?("::012.34.56.78").should be_nil }
-    it { Socket::IPAddress.parse_v6_fields?(":ffff:192.168.1.1").should be_nil }
-    it { Socket::IPAddress.parse_v6_fields?("::ffff:192.168.1.1").should eq UInt16.static_array(0, 0, 0, 0, 0, 0xffff, 0xc0a8, 0x0101) }
-    it { Socket::IPAddress.parse_v6_fields?(".192.168.1.1").should be_nil }
-    it { Socket::IPAddress.parse_v6_fields?(":.192.168.1.1").should be_nil }
-    it { Socket::IPAddress.parse_v6_fields?("a:0b:00c:000d:E:F::").should eq UInt16.static_array(0xa, 0x0b, 0x00c, 0x000d, 0xE, 0xF, 0, 0) }
-    it { Socket::IPAddress.parse_v6_fields?("a:0b:00c:000d:0000e:f::").should be_nil }
-    it { Socket::IPAddress.parse_v6_fields?("1:2:3:4:5:6::").should eq UInt16.static_array(1, 2, 3, 4, 5, 6, 0, 0) }
-    it { Socket::IPAddress.parse_v6_fields?("1:2:3:4:5:6:7::").should eq UInt16.static_array(1, 2, 3, 4, 5, 6, 7, 0) }
-    it { Socket::IPAddress.parse_v6_fields?("1:2:3:4:5:6:7:8::").should be_nil }
-    it { Socket::IPAddress.parse_v6_fields?("1:2:3:4:5:6:7::9").should be_nil }
-    it { Socket::IPAddress.parse_v6_fields?("::1:2:3:4:5:6").should eq UInt16.static_array(0, 0, 1, 2, 3, 4, 5, 6) }
-    it { Socket::IPAddress.parse_v6_fields?("::1:2:3:4:5:6:7").should eq UInt16.static_array(0, 1, 2, 3, 4, 5, 6, 7) }
-    it { Socket::IPAddress.parse_v6_fields?("::1:2:3:4:5:6:7:8").should be_nil }
-    it { Socket::IPAddress.parse_v6_fields?("a:b::c:d:e:f").should eq UInt16.static_array(0xa, 0xb, 0, 0, 0xc, 0xd, 0xe, 0xf) }
-    it { Socket::IPAddress.parse_v6_fields?("ffff:c0a8:5e4").should be_nil }
-    it { Socket::IPAddress.parse_v6_fields?(":ffff:c0a8:5e4").should be_nil }
-    it { Socket::IPAddress.parse_v6_fields?("0:0:0:0:0:ffff:c0a8:5e4").should eq UInt16.static_array(0, 0, 0, 0, 0, 0xffff, 0xc0a8, 0x5e4) }
-    it { Socket::IPAddress.parse_v6_fields?("0:0:0:0:ffff:c0a8:5e4").should be_nil }
-    it { Socket::IPAddress.parse_v6_fields?("0::ffff:c0a8:5e4").should eq UInt16.static_array(0, 0, 0, 0, 0, 0xffff, 0xc0a8, 0x5e4) }
-    it { Socket::IPAddress.parse_v6_fields?("::0::ffff:c0a8:5e4").should be_nil }
-    it { Socket::IPAddress.parse_v6_fields?("c0a8").should be_nil }
+    it { Socket::IPAddress.parse_v6_fields?(":").should eq ({ nil, nil }) }
+    it { Socket::IPAddress.parse_v6_fields?("::").should eq ({ UInt16.static_array(0, 0, 0, 0, 0, 0, 0, 0), nil }) }
+    it { Socket::IPAddress.parse_v6_fields?("::1").should eq ({ UInt16.static_array(0, 0, 0, 0, 0, 0, 0, 1), nil }) }
+    it { Socket::IPAddress.parse_v6_fields?(":::").should eq ({ nil, nil }) }
+    it { Socket::IPAddress.parse_v6_fields?("192.168.1.1").should eq ({ nil, nil }) }
+    it { Socket::IPAddress.parse_v6_fields?(":192.168.1.1").should eq ({ nil, nil }) }
+    it { Socket::IPAddress.parse_v6_fields?("::192.168.1.1").should eq ({ UInt16.static_array(0, 0, 0, 0, 0, 0, 0xc0a8, 0x0101), nil }) }
+    it { Socket::IPAddress.parse_v6_fields?("0:0:0:0:0:0:192.168.1.1").should eq ({ UInt16.static_array(0, 0, 0, 0, 0, 0, 0xc0a8, 0x0101), nil }) }
+    it { Socket::IPAddress.parse_v6_fields?("0:0::0:0:0:192.168.1.1").should eq ({ UInt16.static_array(0, 0, 0, 0, 0, 0, 0xc0a8, 0x0101), nil }) }
+    it { Socket::IPAddress.parse_v6_fields?("::012.34.56.78").should eq ({ nil, nil }) }
+    it { Socket::IPAddress.parse_v6_fields?(":ffff:192.168.1.1").should eq ({ nil, nil }) }
+    it { Socket::IPAddress.parse_v6_fields?("::ffff:192.168.1.1").should eq ({ UInt16.static_array(0, 0, 0, 0, 0, 0xffff, 0xc0a8, 0x0101), nil }) }
+    it { Socket::IPAddress.parse_v6_fields?(".192.168.1.1").should eq ({ nil, nil }) }
+    it { Socket::IPAddress.parse_v6_fields?(":.192.168.1.1").should eq ({ nil, nil }) }
+    it { Socket::IPAddress.parse_v6_fields?("a:0b:00c:000d:E:F::").should eq ({ UInt16.static_array(0xa, 0x0b, 0x00c, 0x000d, 0xE, 0xF, 0, 0), nil }) }
+    it { Socket::IPAddress.parse_v6_fields?("a:0b:00c:000d:0000e:f::").should eq ({ nil, nil }) }
+    it { Socket::IPAddress.parse_v6_fields?("1:2:3:4:5:6::").should eq ({ UInt16.static_array(1, 2, 3, 4, 5, 6, 0, 0), nil }) }
+    it { Socket::IPAddress.parse_v6_fields?("1:2:3:4:5:6:7::").should eq ({ UInt16.static_array(1, 2, 3, 4, 5, 6, 7, 0), nil }) }
+    it { Socket::IPAddress.parse_v6_fields?("1:2:3:4:5:6:7:8::").should eq ({ nil, nil }) }
+    it { Socket::IPAddress.parse_v6_fields?("1:2:3:4:5:6:7::9").should eq ({ nil, nil }) }
+    it { Socket::IPAddress.parse_v6_fields?("::1:2:3:4:5:6").should eq ({ UInt16.static_array(0, 0, 1, 2, 3, 4, 5, 6), nil }) }
+    it { Socket::IPAddress.parse_v6_fields?("::1:2:3:4:5:6:7").should eq ({ UInt16.static_array(0, 1, 2, 3, 4, 5, 6, 7), nil }) }
+    it { Socket::IPAddress.parse_v6_fields?("::1:2:3:4:5:6:7:8").should eq ({ nil, nil }) }
+    it { Socket::IPAddress.parse_v6_fields?("a:b::c:d:e:f").should eq ({ UInt16.static_array(0xa, 0xb, 0, 0, 0xc, 0xd, 0xe, 0xf), nil }) }
+    it { Socket::IPAddress.parse_v6_fields?("ffff:c0a8:5e4").should eq ({ nil, nil }) }
+    it { Socket::IPAddress.parse_v6_fields?(":ffff:c0a8:5e4").should eq ({ nil, nil }) }
+    it { Socket::IPAddress.parse_v6_fields?("0:0:0:0:0:ffff:c0a8:5e4").should eq ({ UInt16.static_array(0, 0, 0, 0, 0, 0xffff, 0xc0a8, 0x5e4), nil }) }
+    it { Socket::IPAddress.parse_v6_fields?("0:0:0:0:ffff:c0a8:5e4").should eq ({ nil, nil }) }
+    it { Socket::IPAddress.parse_v6_fields?("0::ffff:c0a8:5e4").should eq ({ UInt16.static_array(0, 0, 0, 0, 0, 0xffff, 0xc0a8, 0x5e4), nil }) }
+    it { Socket::IPAddress.parse_v6_fields?("::0::ffff:c0a8:5e4").should eq ({ nil, nil }) }
+    it { Socket::IPAddress.parse_v6_fields?("c0a8").should eq ({ nil, nil }) }
+    it { Socket::IPAddress.parse_v6_fields?("fe80::a:b%eth0").should eq ({ UInt16.static_array(65152, 0, 0, 0, 0, 0, 10, 11), 9 }) }
+    it { Socket::IPAddress.parse_v6_fields?("fe80:0:0:0:ffff:c0a8:5e4%lo").should eq ({ UInt16.static_array(65152, 0, 0, 0, 65535, 49320, 1508, 0), 24 }) }
   end
 
   describe ".v4" do
