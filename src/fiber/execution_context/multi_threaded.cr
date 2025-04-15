@@ -2,7 +2,7 @@ require "./global_queue"
 require "./multi_threaded/scheduler"
 
 module Fiber::ExecutionContext
-  # A multi-threaded execution context which owns one ore more threads. It's
+  # A multi-threaded execution context which owns one or more threads. It's
   # fully concurrent and fully parallel.
   #
   # Owns multiple threads and starts a scheduler in each one. The number of
