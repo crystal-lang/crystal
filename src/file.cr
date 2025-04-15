@@ -126,11 +126,10 @@ class File < IO::FileDescriptor
   include Crystal::System::File
 
   # This constructor is for constructors to be able to initialize a `File` with
-  # a *path* and *fd*.
+  # a *path* and *fd*. Expects the non/blocking flag to have been set already
+  # for the handle (for example by the event loop).
   private def initialize(@path, fd : Int, encoding = nil, invalid = nil)
-    # don't call super because it would affect the non/blocking flag
-    @volatile_fd = Atomic.new(fd)
-    @closed = system_closed?
+    super(handle: fd)
     set_encoding(encoding, invalid: invalid) if encoding
   end
 

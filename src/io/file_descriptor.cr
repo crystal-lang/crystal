@@ -40,25 +40,16 @@ class IO::FileDescriptor < IO
     write_timeout
   end
 
-  def initialize(fd : Handle, blocking = nil, *, @close_on_finalize = true)
-    @volatile_fd = Atomic.new(fd)
+  def self.new(fd : Handle, blocking = nil, *, close_on_finalize = true)
+    io = new(handle: fd, close_on_finalize: close_on_finalize)
+    io.system_blocking_init(blocking) unless io.closed?
+    io
+  end
 
-    # TODO: Refactor to avoid calling `GetFileType` twice on Windows (once in `system_closed?` and once in `system_info`)
+  # :nodoc:
+  def initialize(*, handle : Handle, @close_on_finalize = true)
+    @volatile_fd = Atomic.new(handle)
     @closed = system_closed?
-
-    return if @closed
-
-    if blocking.nil?
-      blocking =
-        case system_info.type
-        when .pipe?, .socket?, .character_device?
-          false
-        else
-          true
-        end
-    end
-
-    system_blocking_init(blocking)
   end
 
   # :nodoc:

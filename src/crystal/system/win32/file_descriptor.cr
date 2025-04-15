@@ -16,7 +16,7 @@ module Crystal::System::FileDescriptor
   STDOUT_HANDLE = LibC.GetStdHandle(LibC::STD_OUTPUT_HANDLE).address
   STDERR_HANDLE = LibC.GetStdHandle(LibC::STD_ERROR_HANDLE).address
 
-  @system_blocking = true
+  @system_blocking = false
 
   def system_append?
     false
@@ -103,7 +103,8 @@ module Crystal::System::FileDescriptor
     end
   end
 
-  private def system_blocking_init(value)
+  def system_blocking_init(value)
+    value = false if value.nil?
     @system_blocking = value
     Crystal::EventLoop.current.create_completion_port(windows_handle) unless value
   end
