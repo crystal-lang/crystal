@@ -1,5 +1,53 @@
 # Changelog
 
+## [1.16.1] (2025-04-16)
+
+[1.16.1]: https://github.com/crystal-lang/crystal/releases/1.16.1
+
+### Bugfixes
+
+#### stdlib
+
+- *(runtime)* Correctly transfer FD ownership in polling event loop ([#15650], thanks @ysbaddaden)
+- *(runtime)* Fix `libgc` pkg-config name for version discovery ([#15636], thanks @straight-shoota)
+- *(serialization)* **[regression]** Fix link `bcrypt` with `libxml2` on Windows ([#15651], thanks @straight-shoota)
+
+[#15650]: https://github.com/crystal-lang/crystal/pull/15650
+[#15636]: https://github.com/crystal-lang/crystal/pull/15636
+[#15651]: https://github.com/crystal-lang/crystal/pull/15651
+
+#### compiler
+
+- *(cli)* **[regression]** Fix `crystal eval` read from stdin ([#15655], thanks @straight-shoota)
+
+[#15655]: https://github.com/crystal-lang/crystal/pull/15655
+
+### Documentation
+
+#### stdlib
+
+- *(runtime)* Fix mark method overrides on `ExecutionContext` as `:nodoc:` ([#15659], thanks @ysbaddaden)
+- *(runtime)* Update docs for `Fiber::ExecutionContext.default_workers_count` ([#15664], thanks @ysbaddaden)
+- *(runtime)* Enhance documentation for `ExecutionContext` ([#15665], thanks @straight-shoota)
+
+[#15659]: https://github.com/crystal-lang/crystal/pull/15659
+[#15664]: https://github.com/crystal-lang/crystal/pull/15664
+[#15665]: https://github.com/crystal-lang/crystal/pull/15665
+
+### other
+
+#### stdlib
+
+- *(runtime)* Fix error message when `PollDescriptor` can't transfer fd ([#15663], thanks @ysbaddaden)
+
+[#15663]: https://github.com/crystal-lang/crystal/pull/15663
+
+#### tools
+
+- *(docs-generator)* Enable docs for `ExecutionContext` ([#15644], thanks @straight-shoota)
+
+[#15644]: https://github.com/crystal-lang/crystal/pull/15644
+
 ## [1.16.0] (2025-04-09)
 
 [1.16.0]: https://github.com/crystal-lang/crystal/releases/1.16.0
