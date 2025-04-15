@@ -14,6 +14,10 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   @timer_packet : LibC::HANDLE?
   @timer_key : System::IOCP::CompletionKey?
 
+  def self.default_blocking : Bool
+    false
+  end
+
   def initialize
     @mutex = Thread::Mutex.new
     @timers = Timers(Timer).new

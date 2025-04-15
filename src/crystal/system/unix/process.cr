@@ -264,7 +264,7 @@ struct Crystal::System::Process
     end
 
     LibC.close(w)
-    reader_pipe = IO::FileDescriptor.new(r, blocking: false)
+    reader_pipe = IO::FileDescriptor.new(r, EventLoop.default_blocking)
 
     begin
       case reader_pipe.read_byte

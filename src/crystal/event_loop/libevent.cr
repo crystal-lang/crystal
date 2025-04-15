@@ -2,6 +2,10 @@ require "./libevent/event"
 
 # :nodoc:
 class Crystal::EventLoop::LibEvent < Crystal::EventLoop
+  def self.default_blocking : Bool
+    false
+  end
+
   private getter(event_base) { Crystal::EventLoop::LibEvent::Event::Base.new }
 
   def after_fork_before_exec : Nil

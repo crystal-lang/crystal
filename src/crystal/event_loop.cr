@@ -20,6 +20,10 @@ abstract class Crystal::EventLoop
     {% end %}
   end
 
+  def self.default_blocking : Bool
+    backend_class.default_blocking
+  end
+
   # Creates an event loop instance
   def self.create : self
     backend_class.new

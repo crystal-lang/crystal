@@ -137,7 +137,10 @@ abstract class IO
   # reader.gets # => "hello"
   # reader.gets # => "world"
   # ```
-  def self.pipe(read_blocking = false, write_blocking = false) : {IO::FileDescriptor, IO::FileDescriptor}
+  def self.pipe(read_blocking = nil, write_blocking = nil) : {IO::FileDescriptor, IO::FileDescriptor}
+    read_blocking = Crystal::EventLoop.default_blocking if read_blocking.nil?
+    write_blocking = Crystal::EventLoop.default_blocking if write_blocking.nil?
+
     Crystal::System::FileDescriptor.pipe(read_blocking, write_blocking)
   end
 
@@ -152,7 +155,7 @@ abstract class IO
   #   reader.gets # => "world"
   # end
   # ```
-  def self.pipe(read_blocking = false, write_blocking = false, &)
+  def self.pipe(read_blocking = nil, write_blocking = nil, &)
     r, w = IO.pipe(read_blocking, write_blocking)
     begin
       yield r, w

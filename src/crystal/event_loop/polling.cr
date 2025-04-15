@@ -56,6 +56,10 @@ end
 # before suspending the fiber, then after resume it will raise
 # `IO::TimeoutError` if the event timed out, and continue otherwise.
 abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
+  def self.default_blocking : Bool
+    false
+  end
+
   # The generational arena:
   #
   # 1. decorrelates the fd from the IO since the evloop only really cares about
@@ -179,8 +183,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     {% end %}
 
     # Always set O_NONBLOCK (it's a requirement).
-    status_flags = System::FileDescriptor.fcntl(fd, LibC::F_GETFL)
-    System::FileDescriptor.fcntl(fd, LibC::F_SETFL, status_flags | LibC::O_NONBLOCK)
+    System::FileDescriptor.fcntl(fd, LibC::F_SETFL, System::FileDescriptor.fcntl(fd, LibC::F_GETFL) | LibC::O_NONBLOCK)
 
     fd
   end
