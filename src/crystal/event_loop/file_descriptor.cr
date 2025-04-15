@@ -1,5 +1,14 @@
 abstract class Crystal::EventLoop
   module FileDescriptor
+    # Opens a file named *filename* from the disk.
+    #
+    # Blocks the current fiber until the file has been opened. Avoids blocking
+    # the current thread if possible, especially whebn *blocking* is `false` or
+    # `nil`.
+    #
+    # Returns the system file descriptor/handle or a system error.
+    abstract def open(filename : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : System::FileDescriptor::Handle | Errno | WinError
+
     # Reads at least one byte from the file descriptor into *slice*.
     #
     # Blocks the current fiber if no data is available for reading, continuing

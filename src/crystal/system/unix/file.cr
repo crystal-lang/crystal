@@ -3,25 +3,15 @@ require "file/error"
 
 # :nodoc:
 module Crystal::System::File
-  def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions, blocking)
+  def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions, blocking : Bool?) : FileDescriptor::Handle
     perm = ::File::Permissions.new(perm) if perm.is_a? Int32
 
-    fd, errno = open(filename, open_flag(mode), perm, blocking)
-
-    unless errno.none?
-      raise ::File::Error.from_os_error("Error opening file with mode '#{mode}'", errno, file: filename)
+    case result = EventLoop.current.open(filename, open_flag(mode), perm, blocking)
+    in FileDescriptor::Handle
+      result
+    in Errno
+      raise ::File::Error.from_os_error("Error opening file with mode '#{mode}'", result, file: filename)
     end
-
-    fd
-  end
-
-  def self.open(filename : String, flags : Int32, perm : ::File::Permissions, blocking _blocking) : {LibC::Int, Errno}
-    filename.check_no_null_byte
-    flags |= LibC::O_CLOEXEC
-
-    fd = LibC.open(filename, flags, perm)
-
-    {fd, fd < 0 ? Errno.value : Errno::NONE}
   end
 
   protected def system_set_mode(mode : String)

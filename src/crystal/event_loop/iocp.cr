@@ -216,6 +216,26 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     FiberEvent.new(:select_timeout, fiber)
   end
 
+  def open(filename : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : System::FileDescriptor::Handle | WinError
+    access, disposition, attributes = System::File.posix_to_open_opts(flags, permissions, blocking)
+
+    handle = LibC.CreateFileW(
+      System.to_wstr(filename),
+      access,
+      LibC::DEFAULT_SHARE_MODE, # UNIX semantics
+      nil,
+      disposition,
+      attributes,
+      LibC::HANDLE.null
+    )
+
+    if handle == LibC::INVALID_HANDLE_VALUE
+      WinError.value
+    else
+      handle.address
+    end
+  end
+
   def read(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
     System::IOCP.overlapped_operation(file_descriptor, "ReadFile", file_descriptor.read_timeout) do |overlapped|
       ret = LibC.ReadFile(file_descriptor.windows_handle, slice, slice.size, out byte_count, overlapped)
