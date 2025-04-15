@@ -10,7 +10,7 @@ module Fiber::ExecutionContext
   # start a fixed number of threads.
   #
   # Fibers running in this context can be resumed by any thread in the context.
-  # Fibers can run concurrently and in# parallel to each other, in addition to
+  # Fibers can run concurrently and in parallel to each other, in addition to
   # running in parallel to any other fiber running in other contexts.
   #
   # ```
