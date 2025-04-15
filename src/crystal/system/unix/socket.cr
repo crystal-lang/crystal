@@ -167,11 +167,13 @@ module Crystal::System::Socket
     r
   end
 
-  def self.socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol) : {Handle, Handle}
+  def self.socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol, blocking : Bool) : {Handle, Handle}
     fds = uninitialized Handle[2]
 
     {% if LibC.has_constant?(:SOCK_CLOEXEC) %}
-      if LibC.socketpair(::Socket::Family::UNIX, type.value | LibC::SOCK_CLOEXEC, protocol, fds) == -1
+      flags = type.value | LibC::SOCK_CLOEXEC
+      flags |= LibC::SOCK_NONBLOCK unless blocking
+      if LibC.socketpair(::Socket::Family::UNIX, flags, protocol, fds) == -1
         raise ::Socket::Error.new("socketpair() failed")
       end
     {% else %}
@@ -181,6 +183,10 @@ module Crystal::System::Socket
         end
         fcntl(fds[0], LibC::F_SETFD, LibC::FD_CLOEXEC)
         fcntl(fds[1], LibC::F_SETFD, LibC::FD_CLOEXEC)
+        unless blocking
+          fcntl(fds[0], LibC::F_SETFD, fcntl(fds[0], LibC::F_GETFL) | LibC::O_NONBLOCK)
+          fcntl(fds[1], LibC::F_SETFD, fcntl(fds[0], LibC::F_GETFL) | LibC::O_NONBLOCK)
+        end
       end
     {% end %}
 
