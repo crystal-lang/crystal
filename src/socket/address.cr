@@ -103,8 +103,8 @@ class Socket
     #
     # Scoped/Zoned IPv6 link-local addresses are supported per RFC4007, e.g.
     # `fe80::abcd%eth0` but will always use their numerical interface index
-    # in the #inspect representation. The interface name can be retrieved later
-    # using #link_local_interface on the IPAddress object.
+    # in the `#inspect` representation. The interface name can be retrieved later
+    # using `#link_local_interface` on the `IPAddress` object.
     #
     # ```
     # require "socket"
