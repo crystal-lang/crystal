@@ -42,6 +42,7 @@ module Fiber::ExecutionContext
     protected getter thread : Thread
     @main_fiber : Fiber
 
+    # :nodoc:
     getter event_loop : Crystal::EventLoop = Crystal::EventLoop.create
 
     getter? running : Bool = true
@@ -96,6 +97,7 @@ module Fiber::ExecutionContext
       @spawn_context.spawn(name: name, &block)
     end
 
+    # :nodoc:
     def enqueue(fiber : Fiber) : Nil
       Crystal.trace :sched, "enqueue", fiber: fiber, context: self
 
