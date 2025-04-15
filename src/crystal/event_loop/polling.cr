@@ -242,6 +242,22 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
 
   # socket interface, see Crystal::EventLoop::Socket
 
+  def socket(family : ::Socket::Family, type : ::Socket::Type, protocol : ::Socket::Protocol) : System::Socket::Handle
+    {% if LibC.has_constant?(:SOCK_CLOEXEC) %}
+      fd = LibC.socket(family, type.value | LibC::SOCK_CLOEXEC | LibC::SOCK_NONBLOCK, protocol)
+      raise ::Socket::Error.from_errno("Failed to create socket") if fd == -1
+      fd
+    {% else %}
+      Process.lock_read do
+        fd = LibC.socket(family, type, protocol)
+        raise ::Socket::Error.from_errno("Failed to create socket") if fd == -1
+        System::Socket.fcntl(fd, LibC::F_SETFD, LibC::FD_CLOEXEC)
+        System::Socket.fcntl(fd, LibC::F_SETFL, System::Socket.fcntl(LibC::F_GETFL) | LibC::O_NONBLOCK)
+        fd
+      end
+    {% end %}
+  end
+
   def read(socket : ::Socket, slice : Bytes) : Int32
     size = evented_read(socket, slice, socket.@read_timeout)
     raise IO::Error.from_errno("read", target: socket) if size == -1
@@ -270,7 +286,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     loop do
       client_fd =
         {% if LibC.has_method?(:accept4) %}
-          LibC.accept4(socket.fd, nil, nil, LibC::SOCK_CLOEXEC)
+          LibC.accept4(socket.fd, nil, nil, LibC::SOCK_CLOEXEC | LibC::SOCK_NONBLOCK)
         {% else %}
           # we may fail to set FD_CLOEXEC between `accept` and `fcntl` but we
           # can't call `Crystal::System::Socket.lock_read` because the socket
@@ -280,8 +296,11 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
           # we could lock when `socket.blocking?` is false, but another thread
           # could change the socket back to blocking mode between the condition
           # check and the `accept` call.
-          LibC.accept(socket.fd, nil, nil).tap do |fd|
-            System::Socket.fcntl(fd, LibC::F_SETFD, LibC::FD_CLOEXEC) unless fd == -1
+          fd = LibC.accept(socket.fd, nil, nil)
+
+          unless fd == -1
+            System::Socket.fcntl(fd, LibC::F_SETFD, LibC::FD_CLOEXEC)
+            System::Socket.fcntl(fd, LibC::F_SETFL, System::Socket.fcntl(fd, LibC::F_GETFL) | LibC::O_NONBLOCK)
           end
         {% end %}
 

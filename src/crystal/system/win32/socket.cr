@@ -71,17 +71,6 @@ module Crystal::System::Socket
 
   initialize_extension_functions
 
-  private def create_handle(family, type, protocol, blocking) : Handle
-    socket = LibC.WSASocketW(family, type, protocol, nil, 0, LibC::WSA_FLAG_OVERLAPPED)
-    if socket == LibC::INVALID_SOCKET
-      raise ::Socket::Error.from_wsa_error("WSASocketW")
-    end
-
-    Crystal::EventLoop.current.create_completion_port LibC::HANDLE.new(socket)
-
-    socket
-  end
-
   private def initialize_handle(handle)
     unless @family.unix?
       system_getsockopt(handle, LibC::SO_REUSEADDR, 0) do |value|
@@ -179,7 +168,7 @@ module Crystal::System::Socket
   end
 
   def system_accept(& : Handle -> Bool) : Handle?
-    client_socket = create_handle(family, type, protocol, blocking)
+    client_socket = event_loop.socket(family, type, protocol)
     initialize_handle(client_socket)
 
     if yield client_socket
@@ -329,7 +318,7 @@ module Crystal::System::Socket
     ret
   end
 
-  @blocking = true
+  @blocking = false
 
   # WSA does not provide a direct way to query the blocking mode of a file descriptor.
   # The best option seems to be just keeping track in an instance variable.

@@ -45,40 +45,36 @@ class Socket < IO
 
   # Creates a TCP socket. Consider using `TCPSocket` or `TCPServer` unless you
   # need full control over the socket.
-  def self.tcp(family : Family, blocking = false) : self
+  def self.tcp(family : Family, blocking = nil) : self
     new(family, Type::STREAM, Protocol::TCP, blocking)
   end
 
   # Creates an UDP socket. Consider using `UDPSocket` unless you need full
   # control over the socket.
-  def self.udp(family : Family, blocking = false)
+  def self.udp(family : Family, blocking = nil)
     new(family, Type::DGRAM, Protocol::UDP, blocking)
   end
 
   # Creates an UNIX socket. Consider using `UNIXSocket` or `UNIXServer` unless
   # you need full control over the socket.
-  def self.unix(type : Type = Type::STREAM, blocking = false) : self
+  def self.unix(type : Type = Type::STREAM, blocking = nil) : self
     new(Family::UNIX, type, blocking: blocking)
   end
 
-  def initialize(family : Family, type : Type, protocol : Protocol = Protocol::IP, blocking = false)
+  def initialize(family : Family, type : Type, protocol : Protocol = Protocol::IP, blocking = nil)
     # This method is `#initialize` instead of `.new` because it is used as super
     # constructor from subclasses.
-
-    fd = create_handle(family, type, protocol, blocking)
+    fd = event_loop.socket(family, type, protocol)
     initialize(fd, family, type, protocol, blocking)
   end
 
   # Creates a Socket from an existing socket file descriptor / handle.
-  def initialize(fd, @family : Family, @type : Type, @protocol : Protocol = Protocol::IP, blocking = false)
+  def initialize(fd, @family : Family, @type : Type, @protocol : Protocol = Protocol::IP, blocking = nil)
     @volatile_fd = Atomic.new(fd)
     @closed = false
     initialize_handle(fd)
-
     self.sync = true
-    unless blocking
-      self.blocking = false
-    end
+    self.blocking = blocking unless blocking.nil?
   end
 
   # Connects the socket to a remote host:port.
@@ -207,7 +203,7 @@ class Socket < IO
   # ```
   def accept? : Socket?
     if client_fd = system_accept
-      sock = Socket.new(client_fd, family, type, protocol, blocking)
+      sock = Socket.new(client_fd, family, type, protocol)
       sock.sync = sync?
       sock
     end

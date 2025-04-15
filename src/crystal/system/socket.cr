@@ -1,9 +1,6 @@
 require "../event_loop/socket"
 
 module Crystal::System::Socket
-  # Creates a file descriptor / socket handle
-  # private def create_handle(family, type, protocol, blocking) : Handle
-
   # Initializes a file descriptor / socket handle for use with Crystal Socket
   # private def initialize_handle(fd)
 

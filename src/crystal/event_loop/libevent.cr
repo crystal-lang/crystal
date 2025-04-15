@@ -192,6 +192,22 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
     file_descriptor.evented_close
   end
 
+  def socket(family : ::Socket::Family, type : ::Socket::Type, protocol : ::Socket::Protocol) : System::Socket::Handle
+    {% if LibC.has_constant?(:SOCK_CLOEXEC) %}
+      fd = LibC.socket(family, type.value | LibC::SOCK_CLOEXEC | LibC::SOCK_NONBLOCK, protocol)
+      raise ::Socket::Error.from_errno("Failed to create socket") if fd == -1
+      fd
+    {% else %}
+      Process.lock_read do
+        fd = LibC.socket(family, type, protocol)
+        raise ::Socket::Error.from_errno("Failed to create socket") if fd == -1
+        System::Socket.fcntl(fd, LibC::F_SETFD, LibC::FD_CLOEXEC)
+        System::Socket.fcntl(fd, LibC::F_SETFL, System::Socket.fcntl(LibC::F_GETFL) | LibC::O_NONBLOCK)
+        fd
+      end
+    {% end %}
+  end
+
   def read(socket : ::Socket, slice : Bytes) : Int32
     evented_read(socket, "Error reading socket") do
       LibC.recv(socket.fd, slice, slice.size, 0).to_i32
