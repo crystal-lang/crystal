@@ -164,21 +164,21 @@ describe Socket::IPAddress do
       Socket::IPAddress.new("fe80::4545", 0).link_local_interface.should be_nil
     end
 
-    it "fails link-local zone identifier on non-LL addrs" do
-      expect_raises(ArgumentError, "Zoned/scoped IPv6 addresses are only allowed for link-local (supplied 'fd00::abcd' is not within fe80::/10).") do
+    it "fails link-local zone identifier on non-LL v6 addrs" do
+      expect_raises(ArgumentError, "Zoned/scoped IPv6 addresses are only allowed for link-local (supplied 'fd00::abcd' is not within fe80::/10)") do
         Socket::IPAddress.new("fd00::abcd%5", 443)
       end
     end
 
     it "fails on invalid link-local zone identifier" do
-      expect_raises(ArgumentError, "Invalid IPv6 link-local zone index '0' in address 'fe80::c0ff:ee%0'.") do
+      expect_raises(ArgumentError, "Invalid IPv6 link-local zone index '0' in address 'fe80::c0ff:ee%0'") do
         Socket::IPAddress.new("fe80::c0ff:ee%0", port: 0)
       end
     end
 
     it "fails on non-existent link-local zone interface" do
       # looking up an interface index obviously requires for said interface device to exist
-      expect_raises(ArgumentError, "IPv6 link-local zone interface 'zzzzzzzzzzzzzzz' not found (in address 'fe80::0f0f:abcd%zzzzzzzzzzzzzzz').") do
+      expect_raises(ArgumentError, "IPv6 link-local zone interface 'zzzzzzzzzzzzzzz' not found (in address 'fe80::0f0f:abcd%zzzzzzzzzzzzzzz')") do
         Socket::IPAddress.new("fe80::0f0f:abcd%zzzzzzzzzzzzzzz", port: 0)
       end
     end
