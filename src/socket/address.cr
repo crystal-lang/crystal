@@ -119,21 +119,22 @@ class Socket
       if v4_fields = parse_v4_fields?(address)
         addr = v4(v4_fields, port.to_u16!)
       else
-        v6_fields, zone_sep_idx = parse_v6_fields?(address)
+        v6_fields, zone_part = parse_v6_fields?(address)
         raise Error.new("Invalid IP address: #{address}") if v6_fields.nil?
         zone_id = 0u32
-        unless zone_sep_idx.nil?
+        unless zone_part.nil?
           # `zone_id` is only relevant for link-local addresses, i.e. beginning with "fe80:".
           if v6_fields[0] != 0xfe80
-            raise Error.new("Zoned/scoped IPv6 addresses are only allowed for link-local (supplied '#{address.byte_slice(0..(zone_sep_idx-1))}' is not within fe80::/10)")
+            raise Error.new("Zoned/scoped IPv6 addresses are only allowed for link-local (supplied '#{address}' is not within fe80::/10)")
           end
           # Scope/Zone can be given either as a network interface name or directly as the interface index.
           # When given a name we need to find the corresponding interface index.
-          if zone_id = address.byte_slice(zone_sep_idx + 1).to_u32?
-            raise Error.new("Invalid IPv6 link-local zone index '#{address.byte_slice(zone_sep_idx + 1)}' in address '#{address}'") unless zone_id.positive?
+          zone = String.new(zone_part)
+          if zone_id = zone.to_u32?
+            raise Error.new("Invalid IPv6 link-local zone index '#{zone}' in address '#{address}'") unless zone_id.positive?
           else
-            zone_id = LibC.if_nametoindex(address.byte_slice(zone_sep_idx + 1))
-            raise Error.new("IPv6 link-local zone interface '#{address.byte_slice(zone_sep_idx + 1)}' not found (in address '#{address}')") unless zone_id.positive?
+            zone_id = LibC.if_nametoindex(zone)
+            raise Error.new("IPv6 link-local zone interface '#{zone}' not found (in address '#{address}')") unless zone_id.positive?
           end
         end
         addr = v6(v6_fields, port.to_u16!, zone_id)
@@ -256,7 +257,7 @@ class Socket
     end
 
     # Parses *str* as an IPv6 address and returns its fields plus the
-    # zone separator index (if present), or returns `{ nil, nil }`
+    # zone/scope subslice (if present), or returns `{ nil, nil }`
     # if *str* does not contain a valid IPv6 address.
     #
     # The format of IPv6 addresses follows
@@ -272,9 +273,9 @@ class Socket
     # Socket::IPAddress.parse_v6_fields?("a:0b:00c:000d:E:F::") # => { UInt16.static_array(10, 11, 12, 13, 14, 15, 0, 0), nil }
     # Socket::IPAddress.parse_v6_fields?("::ffff:192.168.1.1")  # => { UInt16.static_array(0, 0, 0, 0, 0, 0xffff, 0xc0a8, 0x0101), nil }
     # Socket::IPAddress.parse_v6_fields?("1::2::")              # => { nil, nil }
-    # Socket::IPAddress.parse_v6_fields?("fe80::a:b%eth0")      # => { StaticArray[65152, 0, 0, 0, 0, 0, 10, 11], 9 }
+    # Socket::IPAddress.parse_v6_fields?("fe80::a:b%eth0")      # => { StaticArray[65152, 0, 0, 0, 0, 0, 10, 11], Bytes[101, 116, 104, 48] }
     # ```
-    def self.parse_v6_fields?(str : String) : Tuple(UInt16[8]?, Int32?)
+    def self.parse_v6_fields?(str : String) : Tuple(UInt16[8]?, Slice(UInt8)?)
       parse_v6_fields?(str.to_slice)
     end
 
@@ -356,7 +357,7 @@ class Socket
         fields[7] = x2.to_u16! << 8 | x3
       end
 
-      { fields, zone_sep_idx }
+      { fields, zone_sep_idx.nil? ? nil : bytes[(zone_sep_idx + 1)..(bytes.size - 1)] }
     end
 
     private def self.from_hex(ch : UInt8)

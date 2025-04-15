@@ -165,7 +165,7 @@ describe Socket::IPAddress do
     end
 
     it "fails link-local zone identifier on non-LL v6 addrs" do
-      expect_raises(Socket::Error, "Zoned/scoped IPv6 addresses are only allowed for link-local (supplied 'fd00::abcd' is not within fe80::/10)") do
+      expect_raises(Socket::Error, "Zoned/scoped IPv6 addresses are only allowed for link-local (supplied 'fd00::abcd%5' is not within fe80::/10)") do
         Socket::IPAddress.new("fd00::abcd%5", 443)
       end
     end
@@ -290,8 +290,8 @@ describe Socket::IPAddress do
     it { Socket::IPAddress.parse_v6_fields?("0::ffff:c0a8:5e4").should eq ({ UInt16.static_array(0, 0, 0, 0, 0, 0xffff, 0xc0a8, 0x5e4), nil }) }
     it { Socket::IPAddress.parse_v6_fields?("::0::ffff:c0a8:5e4").should eq ({ nil, nil }) }
     it { Socket::IPAddress.parse_v6_fields?("c0a8").should eq ({ nil, nil }) }
-    it { Socket::IPAddress.parse_v6_fields?("fe80::a:b%eth0").should eq ({ UInt16.static_array(65152, 0, 0, 0, 0, 0, 10, 11), 9 }) }
-    it { Socket::IPAddress.parse_v6_fields?("fe80:0:0:0:ffff:c0a8:5e4%lo").should eq ({ UInt16.static_array(65152, 0, 0, 0, 65535, 49320, 1508, 0), 24 }) }
+    it { Socket::IPAddress.parse_v6_fields?("fe80::a:b%eth0").should eq ({ UInt16.static_array(65152, 0, 0, 0, 0, 0, 10, 11), Bytes[101, 116, 104, 48] }) }
+    it { Socket::IPAddress.parse_v6_fields?("fe80:0:0:0:ffff:c0a8:5e4%lo").should eq ({ UInt16.static_array(65152, 0, 0, 0, 65535, 49320, 1508, 0), Bytes[108, 111] }) }
   end
 
   describe ".v4" do
