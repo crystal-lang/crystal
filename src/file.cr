@@ -125,11 +125,13 @@ class File < IO::FileDescriptor
 
   include Crystal::System::File
 
-  # This constructor is provided for subclasses to be able to initialize an
-  # `IO::FileDescriptor` with a *path* and *fd*.
-  private def initialize(@path, fd : Int, blocking = false, encoding = nil, invalid = nil)
-    self.set_encoding(encoding, invalid: invalid) if encoding
-    super(fd, blocking)
+  # This constructor is for constructors to be able to initialize a `File` with
+  # a *path* and *fd*.
+  private def initialize(@path, fd : Int, encoding = nil, invalid = nil)
+    # don't call super because it would affect the non/blocking flag
+    @volatile_fd = Atomic.new(fd)
+    @closed = system_closed?
+    set_encoding(encoding, invalid: invalid) if encoding
   end
 
   # Opens the file named by *filename*.
@@ -169,7 +171,7 @@ class File < IO::FileDescriptor
   def self.new(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, blocking = true)
     filename = filename.to_s
     fd = Crystal::System::File.open(filename, mode, perm: perm, blocking: blocking)
-    new(filename, fd, blocking: blocking, encoding: encoding, invalid: invalid).tap { |f| f.system_set_mode(mode) }
+    new(filename, fd, encoding: encoding, invalid: invalid).tap { |f| f.system_set_mode(mode) }
   end
 
   getter path : String

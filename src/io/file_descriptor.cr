@@ -6,6 +6,7 @@ class IO::FileDescriptor < IO
   include IO::Buffered
 
   @volatile_fd : Atomic(Handle)
+  @closed = true # this is necessary so we can reference `self` in `system_closed?` (in case of an exception)
 
   # Returns the raw file-descriptor handle. Its type is platform-specific.
   def fd : Handle
@@ -41,7 +42,6 @@ class IO::FileDescriptor < IO
 
   def initialize(fd : Handle, blocking = nil, *, @close_on_finalize = true)
     @volatile_fd = Atomic.new(fd)
-    @closed = true # This is necessary so we can reference `self` in `system_closed?` (in case of an exception)
 
     # TODO: Refactor to avoid calling `GetFileType` twice on Windows (once in `system_closed?` and once in `system_info`)
     @closed = system_closed?

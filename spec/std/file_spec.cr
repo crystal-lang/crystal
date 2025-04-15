@@ -48,112 +48,39 @@ describe "File" do
   end
 
   describe "blocking" do
-    it "opens regular file as blocking" do
-      with_tempfile("regular") do |path|
-        File.open(path, "w") do |file|
-          file.blocking.should be_true
-        end
+    {% if flag?(:unix) && LibC.has_method?(:mkfifo) %}
+      # interpreter doesn't support threads yet (#14287)
+      pending_interpreted "opens fifo file" do
+        path = File.tempname("chardev")
+        ret = LibC.mkfifo(path, File::DEFAULT_CREATE_PERMISSIONS)
+        raise RuntimeError.from_errno("mkfifo") unless ret == 0
 
-        File.open(path, "w", blocking: nil) do |file|
-          file.blocking.should be_true
+        msg = "a message to pass through the fifo"
+
+        # open(2) will block when opening a fifo file until another thread or
+        # process also opened the file in the opposite mode
+        {% if flag?(:preview_mt) %}
+          # the event loops should avoid blocking the current thread when
+          # *blocking* is false
+          spawn do
+            File.open(path, "w", blocking: false) { |w| w << msg }
+          end
+        {% else %}
+          # we must open the file in a thread to not block the fibers in the
+          # current thread
+          new_thread do
+            File.open(path, "w") { |w| w << msg }
+          end
+        {% end %}
+
+        # we can block the current thread because we (will) have a writer
+        File.open(path, "r", blocking: false) do |file|
+          file.gets_to_end.should eq(msg)
         end
+      ensure
+        File.delete(path) if path && File.exists?(path)
       end
-    end
-
-    it "opens regular file as non-blocking" do
-      with_tempfile("regular") do |path|
-        File.open(path, "w", blocking: false) do |file|
-          file.blocking.should be_false
-        end
-      end
-    end
-
-    {% if flag?(:unix) %}
-      if File.exists?("/dev/tty")
-        it "opens character device" do
-          File.open("/dev/tty", "r") do |file|
-            file.blocking.should be_true
-          end
-
-          File.open("/dev/tty", "r", blocking: false) do |file|
-            file.blocking.should be_false
-          end
-
-          File.open("/dev/tty", "r", blocking: nil) do |file|
-            file.blocking.should be_false
-          end
-        rescue File::Error
-          # The TTY may not be available (e.g. Docker CI)
-        end
-      end
-
-      {% if LibC.has_method?(:mkfifo) %}
-        # interpreter doesn't support threads yet (#14287)
-        pending_interpreted "opens fifo file as non-blocking" do
-          path = File.tempname("chardev")
-          ret = LibC.mkfifo(path, File::DEFAULT_CREATE_PERMISSIONS)
-          raise RuntimeError.from_errno("mkfifo") unless ret == 0
-
-          # FIXME: open(2) will block when opening a fifo file until another
-          #        thread or process also opened the file; we should pass
-          #        O_NONBLOCK to the open(2) call itself, not afterwards
-          file = nil
-          new_thread { file = File.new(path, "w", blocking: nil) }
-
-          begin
-            File.open(path, "r", blocking: false) do |file|
-              file.blocking.should be_false
-            end
-          ensure
-            File.delete(path)
-            file.try(&.close)
-          end
-        end
-      {% end %}
     {% end %}
-
-    it "reads non-blocking file" do
-      File.open(datapath("test_file.txt"), "r", blocking: false) do |f|
-        f.gets_to_end.should eq("Hello World\n" * 20)
-      end
-    end
-
-    it "writes and reads large non-blocking file" do
-      with_tempfile("non-blocking-io.txt") do |path|
-        File.open(path, "w+", blocking: false) do |f|
-          f.puts "Hello World\n" * 40000
-          f.pos = 0
-          f.gets_to_end.should eq("Hello World\n" * 40000)
-        end
-      end
-    end
-
-    it "can append non-blocking to an existing file" do
-      with_tempfile("append-existing.txt") do |path|
-        File.write(path, "hello")
-        File.write(path, " world", mode: "a", blocking: false)
-        File.read(path).should eq("hello world")
-      end
-    end
-
-    it "returns the actual position after non-blocking append" do
-      with_tempfile("delete-file.txt") do |filename|
-        File.write(filename, "hello")
-
-        File.open(filename, "a", blocking: false) do |file|
-          file.tell.should eq(0)
-
-          file.write "12345".to_slice
-          file.tell.should eq(10)
-
-          file.seek(5, IO::Seek::Set)
-          file.write "6789".to_slice
-          file.tell.should eq(14)
-        end
-
-        File.read(filename).should eq("hello123456789")
-      end
-    end
   end
 
   it "reads entire file" do

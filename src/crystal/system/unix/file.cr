@@ -14,6 +14,42 @@ module Crystal::System::File
     end
   end
 
+  # Returns true if the file is a pipe, fifo or character device. Doesn't
+  # consider sockets because they can't be opened directly. Follows symlinks.
+  protected def self.special_file_type?(filename)
+    stat = uninitialized LibC::Stat
+
+    if stat(filename, pointerof(stat)) != -1
+      (stat.st_mode & LibC::S_IFMT).in?(LibC::S_IFIFO, LibC::S_IFCHR)
+    else
+      false
+    end
+  end
+
+  {% if flag?(:preview_mt) && !flag?(:interpreted) %}
+    protected def self.async_open(filename, flags, permissions)
+      fd = -1
+      errno = Errno::NONE
+      fiber = ::Fiber.current
+
+      ::Thread.new do
+        fd = LibC.open(filename, flags, permissions)
+        errno = Errno.value if fd == -1
+
+        {% if flag?(:execution_context) %}
+          fiber.enqueue
+        {% else %}
+          # HACK: avoid Fiber#enqueue because it would lazily create a scheduler
+          # for the thread just to send the fiber to another scheduler
+          fiber.get_current_thread.not_nil!.scheduler.send_fiber(fiber)
+        {% end %}
+      end
+      ::Fiber.suspend
+
+      {fd, errno}
+    end
+  {% end %}
+
   protected def system_set_mode(mode : String)
   end
 

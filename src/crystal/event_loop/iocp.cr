@@ -217,7 +217,9 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   end
 
   def open(filename : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : System::FileDescriptor::Handle | WinError
-    access, disposition, attributes = System::File.posix_to_open_opts(flags, permissions, blocking)
+    # we disregard the *blocking* arg because it's always `true` by default
+    # because of UNIX behavior, but we still want to read and write files async
+    access, disposition, attributes = System::File.posix_to_open_opts(flags, permissions, blocking: false)
 
     handle = LibC.CreateFileW(
       System.to_wstr(filename),
@@ -232,6 +234,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     if handle == LibC::INVALID_HANDLE_VALUE
       WinError.value
     else
+      create_completion_port(handle)
       handle.address
     end
   end
