@@ -24,7 +24,7 @@ struct Crystal::EventLoop::Polling::PollDescriptor
     # can optimize (all enqueues are local) and we don't end up with a timer
     # from evloop A to cancel an event from evloop B (currently unsafe)
     if current && !empty?
-      raise RuntimeError.new("Can't transfer fd=#{fd} to another evloop with pending reader/writer fibers")
+      raise RuntimeError.new("Can't transfer fd=#{fd} to another polling event loop with pending reader/writer fibers")
     end
 
     @event_loop = event_loop
