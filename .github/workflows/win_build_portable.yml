@@ -14,7 +14,7 @@ permissions: {}
 
 jobs:
   build:
-    runs-on: windows-2022
+    runs-on: windows-2025
     steps:
       - name: Disable CRLF line ending substitution
         run: |
