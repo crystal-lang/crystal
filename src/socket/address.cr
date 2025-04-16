@@ -119,7 +119,7 @@ class Socket
       if v4_fields = parse_v4_fields?(address)
         addr = v4(v4_fields, port.to_u16!)
       else
-        v6_fields, zone_part = parse_v6_fields?(address)
+        v6_fields, zone_part = parse_v6_fields?(address.to_slice)
         raise Error.new("Invalid IP address: #{address}") if v6_fields.nil?
         zone_id = 0u32
         unless zone_part.nil?
@@ -256,38 +256,39 @@ class Socket
       fields if ptr == finish
     end
 
-    # Parses *str* as an IPv6 address and returns its fields plus the
-    # zone/scope subslice (if present), or returns `{ nil, nil }`
+    # Parses *str* as an IPv6 address and returns its fields, or returns `nil`
     # if *str* does not contain a valid IPv6 address.
     #
     # The format of IPv6 addresses follows
     # [RFC 4291, section 2.2](https://datatracker.ietf.org/doc/html/rfc4291#section-2.2).
     # Both canonical and non-canonical forms are supported.
-    # Additionally IPv6 scoped addresses are supported as per
-    # [RFC 4007, section 11](https://datatracker.ietf.org/doc/html/rfc4007#section-11).
     #
     # ```
     # require "socket"
     #
-    # Socket::IPAddress.parse_v6_fields?("::1")                 # => { UInt16.static_array(0, 0, 0, 0, 0, 0, 0, 1), nil }
-    # Socket::IPAddress.parse_v6_fields?("a:0b:00c:000d:E:F::") # => { UInt16.static_array(10, 11, 12, 13, 14, 15, 0, 0), nil }
-    # Socket::IPAddress.parse_v6_fields?("::ffff:192.168.1.1")  # => { UInt16.static_array(0, 0, 0, 0, 0, 0xffff, 0xc0a8, 0x0101), nil }
-    # Socket::IPAddress.parse_v6_fields?("1::2::")              # => { nil, nil }
-    # Socket::IPAddress.parse_v6_fields?("fe80::a:b%eth0")      # => { StaticArray[65152, 0, 0, 0, 0, 0, 10, 11], Bytes[101, 116, 104, 48] }
+    # Socket::IPAddress.parse_v6_fields?("::1")                 # => UInt16.static_array(0, 0, 0, 0, 0, 0, 0, 1)
+    # Socket::IPAddress.parse_v6_fields?("a:0b:00c:000d:E:F::") # => UInt16.static_array(10, 11, 12, 13, 14, 15, 0, 0)
+    # Socket::IPAddress.parse_v6_fields?("::ffff:192.168.1.1")  # => UInt16.static_array(0, 0, 0, 0, 0, 0xffff, 0xc0a8, 0x0101)
+    # Socket::IPAddress.parse_v6_fields?("1::2::")              # => nil
+    # Socket::IPAddress.parse_v6_fields?("fe80::a:b%eth0")      # => StaticArray[65152, 0, 0, 0, 0, 0, 10, 11]
     # ```
-    def self.parse_v6_fields?(str : String) : Tuple(UInt16[8]?, Slice(UInt8)?)
-      parse_v6_fields?(str.to_slice)
+    def self.parse_v6_fields?(str : String) : UInt16[8]?
+      parse_v6_fields?(str.to_slice).try &.[0]
     end
 
-    private def self.parse_v6_fields?(bytes : Bytes)
+    # This private method additionally supports IPv6 scoped addresses and
+    # returns its fields plus the zone/scope subslice (if present) or returns
+    # `{ nil, nil }`.
+    #
+    # The format of IPv6 scoped addresses follows
+    # [RFC 4007, section 11](https://datatracker.ietf.org/doc/html/rfc4007#section-11).
+    private def self.parse_v6_fields?(bytes : Bytes) : Tuple(UInt16[8]?, Slice(UInt8)?)
       # port of https://git.musl-libc.org/cgit/musl/tree/src/network/inet_pton.c?id=7e13e5ae69a243b90b90d2f4b79b2a150f806335
       ptr = bytes.to_unsafe
       finish = ptr + bytes.size
-      j = 0
 
       if ptr < finish && ptr.value === ':'
         ptr += 1
-        j += 1
         return { nil, nil } unless ptr < finish && ptr.value === ':'
       end
 
@@ -302,7 +303,6 @@ class Socket
           brk = i
           fields[i] = 0
           ptr += 1
-          j += 1
           break if ptr == finish
           return { nil, nil } if i == 7
           i &+= 1
@@ -318,7 +318,6 @@ class Socket
           break unless ch <= 0x0F
           field = field.unsafe_shl(4) | ch
           ptr += 1
-          j += 1
         end
 
         return { nil, nil } if ptr == old_ptr # no field
@@ -329,7 +328,7 @@ class Socket
 
         unless ptr < finish && ptr.value === ':'
           if (ptr < finish && ptr.value === '%')
-            zone_sep_idx = j
+            zone_sep_idx = ptr - bytes.to_unsafe
             break
           end
           return { nil, nil } if !(ptr < finish && ptr.value === '.') || (i < 6 && brk < 0)
@@ -341,7 +340,6 @@ class Socket
         end
 
         ptr += 1
-        j += 1
         i &+= 1
       end
 
@@ -491,7 +489,7 @@ class Socket
 
     # Returns `true` if *address* is a valid IPv6 address.
     def self.valid_v6?(address : String) : Bool
-      !parse_v6_fields?(address)[0].nil?
+      !parse_v6_fields?(address).nil?
     end
 
     # Returns `true` if *address* is a valid IPv4 address.
