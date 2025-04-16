@@ -50,7 +50,8 @@ require "crystal/tracing"
 {% end %}
 lib LibGC
   {% unless flag?(:win32) %}
-    VERSION = {{ `pkg-config bdw-gc --silence-errors --modversion || printf "0.0.0"`.chomp.stringify }}
+    {% pkg_config_name = ((ann = LibGC.annotations(Link).find(&.["pkg_config"])) && ann["pkg_config"]) || ((ann = LibGC.annotations(Link).find(&.[0])) && ann[0]) %}
+    VERSION = {{ `pkg-config #{pkg_config_name} --silence-errors --modversion || printf "0.0.0"`.chomp.stringify }}
   {% end %}
 
   alias Int = LibC::Int

@@ -409,6 +409,9 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
       event = Event.new(type, Fiber.current, index, timeout)
 
       return false unless Polling.arena.get?(index) do |pd|
+                            unless pd.value.owned_by?(self)
+                              pd.value.take_ownership(self, io.fd, index)
+                            end
                             yield pd, pointerof(event)
                           end
     else

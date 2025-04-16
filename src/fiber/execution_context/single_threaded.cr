@@ -3,12 +3,19 @@ require "./runnables"
 require "./scheduler"
 
 module Fiber::ExecutionContext
-  # ST scheduler. Owns a single thread.
+  # A single-threaded execution context which owns a single thread. It's fully
+  # concurrent with limited parallelism.
   #
-  # Fully concurrent with limited parallelism: concurrency is restricted to this
-  # single thread. Fibers running in this context will never run in parallel to
-  # each other but they may still run in parallel to fibers running in other
-  # contexts (i.e. another thread).
+  # Concurrency is restricted to a single thread. Fibers in the same context
+  # will never run in parallel to each other but they may still run in parallel
+  # to fibers running in other contexts (i.e. in another thread).
+  #
+  # Fibers can use simpler and faster synchronization primitives between
+  # themselves (no atomics, no thread safety). Communication with fibers in
+  # other contexts requires thread-safe primitives.
+  #
+  # A blocking fiber blocks the entire thread and all other fibers in the
+  # context.
   class SingleThreaded
     include ExecutionContext
     include ExecutionContext::Scheduler
@@ -22,7 +29,10 @@ module Fiber::ExecutionContext
     @global_queue : GlobalQueue
     @runnables : Runnables(256)
 
+    # :nodoc:
     getter stack_pool : Fiber::StackPool = Fiber::StackPool.new
+
+    # :nodoc:
     getter event_loop : Crystal::EventLoop = Crystal::EventLoop.create
 
     @waiting = Atomic(Bool).new(false)
@@ -56,6 +66,7 @@ module Fiber::ExecutionContext
       self
     end
 
+    # :nodoc:
     def stack_pool? : Fiber::StackPool?
       @stack_pool
     end
@@ -89,6 +100,7 @@ module Fiber::ExecutionContext
       self.spawn(name: name, &block)
     end
 
+    # :nodoc:
     def enqueue(fiber : Fiber) : Nil
       if ExecutionContext.current == self
         # local enqueue

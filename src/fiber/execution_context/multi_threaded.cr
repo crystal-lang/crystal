@@ -2,16 +2,28 @@ require "./global_queue"
 require "./multi_threaded/scheduler"
 
 module Fiber::ExecutionContext
-  # MT scheduler.
+  # A multi-threaded execution context which owns one or more threads. It's
+  # fully concurrent and fully parallel.
   #
   # Owns multiple threads and starts a scheduler in each one. The number of
   # threads is dynamic. Setting the minimum and maximum to the same value will
   # start a fixed number of threads.
   #
-  # Fully concurrent, fully parallel: fibers running in this context can be
-  # resumed by any thread in the context; fibers can run concurrently and in
-  # parallel to each other, in addition to running in parallel to every other
-  # fibers running in other contexts.
+  # Fibers running in this context can be resumed by any thread in the context.
+  # Fibers can run concurrently and in parallel to each other, in addition to
+  # running in parallel to any other fiber running in other contexts.
+  #
+  # ```
+  # mt_context = Fiber::ExecutionContext::MultiThreaded.new("worker-threads", 4)
+  #
+  # 10.times do
+  #   mt_context.spawn do
+  #     do_something
+  #   end
+  # end
+  #
+  # sleep
+  # ```
   class MultiThreaded
     include ExecutionContext
 
@@ -21,7 +33,10 @@ module Fiber::ExecutionContext
     @condition : Thread::ConditionVariable
     protected getter global_queue : GlobalQueue
 
+    # :nodoc:
     getter stack_pool : Fiber::StackPool = Fiber::StackPool.new
+
+    # :nodoc:
     getter event_loop : Crystal::EventLoop = Crystal::EventLoop.create
     @event_loop_lock = Atomic(Bool).new(false)
 
@@ -91,6 +106,7 @@ module Fiber::ExecutionContext
       @size.end
     end
 
+    # :nodoc:
     def stack_pool? : Fiber::StackPool?
       @stack_pool
     end
@@ -156,11 +172,13 @@ module Fiber::ExecutionContext
       end
     end
 
+    # :nodoc:
     def spawn(*, name : String? = nil, same_thread : Bool, &block : ->) : Fiber
       raise ArgumentError.new("#{self.class.name}#spawn doesn't support same_thread:true") if same_thread
       self.spawn(name: name, &block)
     end
 
+    # :nodoc:
     def enqueue(fiber : Fiber) : Nil
       if ExecutionContext.current == self
         # local enqueue: push to local queue of current scheduler
