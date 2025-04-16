@@ -119,17 +119,18 @@ class Socket
       if v4_fields = parse_v4_fields?(address)
         addr = v4(v4_fields, port.to_u16!)
       else
-        v6_fields, zone_part = parse_v6_fields?(address.to_slice)
-        raise Error.new("Invalid IP address: #{address}") if v6_fields.nil?
+        v6_fields_tpl = parse_v6_fields?(address.to_slice)
+        raise Error.new("Invalid IP address: #{address}") if v6_fields_tpl.nil?
+        v6_fields, zone_slice = v6_fields_tpl
         zone_id = 0u32
-        unless zone_part.nil?
+        unless zone_slice.nil?
           # `zone_id` is only relevant for link-local addresses, i.e. beginning with "fe80:".
           if v6_fields[0] != 0xfe80
             raise Error.new("Zoned/scoped IPv6 addresses are only allowed for link-local (supplied '#{address}' is not within fe80::/10)")
           end
           # Scope/Zone can be given either as a network interface name or directly as the interface index.
           # When given a name we need to find the corresponding interface index.
-          zone = String.new(zone_part)
+          zone = String.new(zone_slice)
           if zone_id = zone.to_u32?
             raise Error.new("Invalid IPv6 link-local zone index '#{zone}' in address '#{address}'") unless zone_id.positive?
           else
@@ -277,25 +278,26 @@ class Socket
     end
 
     # This private method additionally supports IPv6 scoped addresses and
-    # returns its fields plus the zone/scope subslice (if present) or returns
-    # `{ nil, nil }`.
+    # returns its fields plus the zone/scope subslice (if present).
+    # Invalid addresses will immediately return just `nil` while correctly
+    # formatted addresses return a tuple.
     #
     # The format of IPv6 scoped addresses follows
     # [RFC 4007, section 11](https://datatracker.ietf.org/doc/html/rfc4007#section-11).
-    private def self.parse_v6_fields?(bytes : Bytes) : Tuple(UInt16[8]?, Slice(UInt8)?)
+    private def self.parse_v6_fields?(bytes : Bytes) : Tuple(UInt16[8], Slice(UInt8)?)?
       # port of https://git.musl-libc.org/cgit/musl/tree/src/network/inet_pton.c?id=7e13e5ae69a243b90b90d2f4b79b2a150f806335
       ptr = bytes.to_unsafe
       finish = ptr + bytes.size
 
       if ptr < finish && ptr.value === ':'
         ptr += 1
-        return { nil, nil } unless ptr < finish && ptr.value === ':'
+        return nil unless ptr < finish && ptr.value === ':'
       end
 
       fields = StaticArray(UInt16, 8).new(0)
       brk = -1
       need_v4 = false
-      zone_sep_idx = nil
+      zone_slice = nil
 
       i = 0
       while true
@@ -304,7 +306,7 @@ class Socket
           fields[i] = 0
           ptr += 1
           break if ptr == finish
-          return { nil, nil } if i == 7
+          return nil if i == 7
           i &+= 1
           next
         end
@@ -320,18 +322,18 @@ class Socket
           ptr += 1
         end
 
-        return { nil, nil } if ptr == old_ptr # no field
+        return nil if ptr == old_ptr # no field
 
         fields[i] = field
         break if ptr == finish && (brk >= 0 || i == 7)
-        return { nil, nil } if i == 7
+        return nil if i == 7
 
         unless ptr < finish && ptr.value === ':'
           if (ptr < finish && ptr.value === '%')
-            zone_sep_idx = ptr - bytes.to_unsafe
+            zone_slice = Bytes.new(ptr + 1, finish - ptr - 1)
             break
           end
-          return { nil, nil } if !(ptr < finish && ptr.value === '.') || (i < 6 && brk < 0)
+          return nil if !(ptr < finish && ptr.value === '.') || (i < 6 && brk < 0)
           need_v4 = true
           i &+= 1
           fields[i] = 0
@@ -350,12 +352,12 @@ class Socket
       end
 
       if need_v4
-        x0, x1, x2, x3 = parse_v4_fields?(Slice.new(ptr, finish - ptr)) || return { nil, nil }
+        x0, x1, x2, x3 = parse_v4_fields?(Slice.new(ptr, finish - ptr)) || return nil
         fields[6] = x0.to_u16! << 8 | x1
         fields[7] = x2.to_u16! << 8 | x3
       end
 
-      { fields, zone_sep_idx.nil? ? nil : bytes[(zone_sep_idx + 1)..(bytes.size - 1)] }
+      {fields, zone_slice}
     end
 
     private def self.from_hex(ch : UInt8)
