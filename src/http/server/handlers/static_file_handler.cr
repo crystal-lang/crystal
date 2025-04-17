@@ -58,15 +58,8 @@ class HTTP::StaticFileHandler
     is_dir = @directory_listing && file_info && file_info.directory?
     is_file = file_info && file_info.file?
 
-    if request_path != expanded_path || is_dir && !is_dir_path
-      redirect_path = expanded_path
-      if is_dir && !is_dir_path
-        # Append / to path if missing
-        redirect_path = expanded_path.join("")
-      end
-      redirect_to context, redirect_path
-      return
-    end
+
+    check_redirect_to_expanded_path!(context, request_path, expanded_path, file_info) || return
 
     return call_next(context) unless file_info
 
@@ -188,6 +181,19 @@ class HTTP::StaticFileHandler
     end
 
     true
+  end
+
+  private def check_redirect_to_expanded_path!(context : Server::Context, request_path : Path, expanded_path : Path, file_info) : Bool
+    if @directory_listing && file_info.try(&.directory?) && !request_path.ends_with_separator?
+      # Append / to path if missing
+      redirect_to context, expanded_path.join("")
+      return false
+    elsif request_path != expanded_path
+      redirect_to context, expanded_path
+      return false
+    end
+
+    return true
   end
 
   # TODO: Optimize without lots of intermediary strings
