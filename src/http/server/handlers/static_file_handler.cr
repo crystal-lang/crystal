@@ -45,8 +45,7 @@ class HTTP::StaticFileHandler
     check_request_method!(context) || return
 
     original_path = context.request.path.not_nil!
-    is_dir_path = original_path.ends_with?("/")
-    request_path = self.request_path(URI.decode(original_path))
+    request_path = request_path(URI.decode(original_path))
 
     check_request_path!(context, request_path) || return
 
@@ -55,9 +54,6 @@ class HTTP::StaticFileHandler
 
     file_path = @public_dir.join(expanded_path.to_kind(Path::Kind.native))
     file_info = File.info? file_path
-    is_dir = @directory_listing && file_info && file_info.directory?
-    is_file = file_info && file_info.file?
-
 
     check_redirect_to_expanded_path!(context, request_path, expanded_path, file_info) || return
 
@@ -65,10 +61,13 @@ class HTTP::StaticFileHandler
 
     context.response.headers["Accept-Ranges"] = "bytes"
 
-    if is_dir
+    if file_info.directory?
+      unless @directory_listing
+        return call_next(context)
+      end
       context.response.content_type = "text/html; charset=utf-8"
       directory_listing(context.response, request_path, file_path)
-    elsif is_file
+    elsif file_info.file?
       last_modified = file_info.modification_time
       add_cache_headers(context.response.headers, last_modified)
 
