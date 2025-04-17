@@ -48,12 +48,7 @@ class HTTP::StaticFileHandler
     is_dir_path = original_path.ends_with?("/")
     request_path = self.request_path(URI.decode(original_path))
 
-    # File path cannot contains '\0' (NUL) because all filesystem I know
-    # don't accept '\0' character as file name.
-    if request_path.includes? '\0'
-      context.response.respond_with_status(:bad_request)
-      return
-    end
+    check_request_path!(context, request_path) || return
 
     request_path = Path.posix(request_path)
     expanded_path = request_path.expand("/")
@@ -182,6 +177,17 @@ class HTTP::StaticFileHandler
     end
 
     false
+  end
+
+  private def check_request_path!(context : Server::Context, request_path : String) : Bool
+    # File path cannot contain '\0' (NUL) because all filesystem I know
+    # don't accept '\0' character as file name.
+    if request_path.includes? '\0'
+      context.response.respond_with_status(:bad_request)
+      return false
+    end
+
+    true
   end
 
   # TODO: Optimize without lots of intermediary strings
