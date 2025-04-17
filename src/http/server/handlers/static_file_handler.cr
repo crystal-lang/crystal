@@ -62,12 +62,8 @@ class HTTP::StaticFileHandler
     context.response.headers["Accept-Ranges"] = "bytes"
 
     if file_info.directory?
-      unless @directory_listing
-        return call_next(context)
-      end
-      context.response.content_type = "text/html; charset=utf-8"
-      directory_listing(context.response, request_path, file_path)
-    elsif file_info.file?
+      directory_index(context, request_path, file_path)
+    elsif is_file
       last_modified = file_info.modification_time
       add_cache_headers(context.response.headers, last_modified)
 
@@ -281,7 +277,16 @@ class HTTP::StaticFileHandler
     ECR.def_to_s "#{__DIR__}/static_file_handler.html"
   end
 
-  private def directory_listing(io, request_path, path)
+  private def directory_index(context : Server::Context, request_path : Path, path : Path)
+    unless @directory_listing
+      return call_next(context)
+    end
+
+    context.response.content_type = "text/html; charset=utf-8"
+    directory_listing(context.response, request_path, path)
+  end
+
+  private def directory_listing(io : IO, request_path : Path, path : Path)
     DirectoryListing.new(request_path.to_s, path.to_s).to_s(io)
   end
 end
