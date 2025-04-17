@@ -44,8 +44,7 @@ class HTTP::StaticFileHandler
   def call(context) : Nil
     check_request_method!(context) || return
 
-    original_path = context.request.path.not_nil!
-    request_path = request_path(URI.decode(original_path))
+    request_path = request_path(context)
 
     check_request_path!(context, request_path) || return
 
@@ -249,6 +248,12 @@ class HTTP::StaticFileHandler
       ranges << range
     end
     ranges unless ranges.empty?
+  end
+
+  private def request_path(context : Server::Context) : String
+    original_path = context.request.path.not_nil!
+
+    request_path(URI.decode(original_path))
   end
 
   # given a full path of the request, returns the path
