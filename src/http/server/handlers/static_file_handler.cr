@@ -52,8 +52,7 @@ class HTTP::StaticFileHandler
     request_path = Path.posix(request_path)
     expanded_path = request_path.expand("/")
 
-    file_path = @public_dir.join(expanded_path.to_kind(Path::Kind.native))
-    file_info = File.info? file_path
+    file_info, file_path = file_info(expanded_path)
 
     check_redirect_to_expanded_path!(context, request_path, expanded_path, file_info) || return
 
@@ -107,7 +106,13 @@ class HTTP::StaticFileHandler
     return true
   end
 
-  private def serve_file_with_cache(context : Server::Context, file_info : File::Info, file_path : Path)
+  private def file_info(expanded_path : Path)
+    file_path = @public_dir.join(expanded_path.to_kind(Path::Kind.native))
+
+    {File.info?(file_path), file_path}
+  end
+
+  private def serve_file_with_cache(context : Server::Context, file_info, file_path : Path)
     last_modified = file_info.modification_time
     add_cache_headers(context.response.headers, last_modified)
 
