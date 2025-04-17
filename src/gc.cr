@@ -47,14 +47,37 @@ fun __crystal_realloc64(ptr : Void*, size : UInt64) : Void*
 end
 
 module GC
-  record Stats,
-    # collections : UInt64,
-    # bytes_found : Int64,
-    heap_size : UInt64,
-    free_bytes : UInt64,
-    unmapped_bytes : UInt64,
-    bytes_since_gc : UInt64,
-    total_bytes : UInt64
+  struct Stats
+    # The system memory allocated by the GC for its HEAP, in bytes. The memory
+    # may or may not have been allocated by the OS (for example some pages
+    # haven't been accessed). The number can grow and shrink as needed by the
+    # process.
+    getter heap_size : UInt64
+
+    # Number of free bytes in the GC HEAP. The number is relative the
+    # `#heap_size`.
+    getter free_bytes : UInt64
+
+    # The system memory returned to the OS by the GC but that can be reallocated
+    # at any time to grow the GC HEAP. The OS may have freed the memory already,
+    # or keep it allocated until there is memory pressure.
+    getter unmapped_bytes : UInt64
+
+    # Total memory allocated by the GC into its HEAP since the last GC
+    # collection, in bytes.
+    getter bytes_since_gc : UInt64
+
+    # Total memory allocated by the GC into its HEAP since the program started,
+    # in bytes. The number keeps growing indefinitely until the integer wraps
+    # back to zero.
+    getter total_bytes : UInt64
+
+    # getter collections : UInt64
+    # getter bytes_found : Int64
+
+    def initialize(@heap_size, @free_bytes, @unmapped_bytes, @bytes_since_gc, @total_bytes)
+    end
+  end
 
   record ProfStats,
     heap_size : UInt64,
