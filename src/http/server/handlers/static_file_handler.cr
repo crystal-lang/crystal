@@ -42,15 +42,7 @@ class HTTP::StaticFileHandler
   end
 
   def call(context) : Nil
-    unless context.request.method.in?("GET", "HEAD")
-      if @fallthrough
-        call_next(context)
-      else
-        context.response.status = :method_not_allowed
-        context.response.headers.add("Allow", "GET, HEAD")
-      end
-      return
-    end
+    check_request_method!(context) || return
 
     original_path = context.request.path.not_nil!
     is_dir_path = original_path.ends_with?("/")
@@ -177,6 +169,19 @@ class HTTP::StaticFileHandler
     else # Not a normal file (FIFO/device/socket)
       call_next(context)
     end
+  end
+
+  private def check_request_method!(context : Server::Context) : Bool
+    return true if context.request.method.in?("GET", "HEAD")
+
+    if @fallthrough
+      call_next(context)
+    else
+      context.response.status = :method_not_allowed
+      context.response.headers.add("Allow", "GET, HEAD")
+    end
+
+    false
   end
 
   # TODO: Optimize without lots of intermediary strings
