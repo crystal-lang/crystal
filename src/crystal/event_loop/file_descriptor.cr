@@ -23,6 +23,11 @@ abstract class Crystal::EventLoop
     # Blocks the current fiber until the file descriptor is ready for write.
     abstract def wait_writable(file_descriptor : Crystal::System::FileDescriptor) : Nil
 
+    # Hook to react on the file descriptor after it has been reopened. For
+    # example we might want to resume all pending operations to act on the new
+    # file descriptor.
+    abstract def reopened(file_descriptor : Crystal::System::FileDescriptor) : Nil
+
     # Closes the file descriptor resource.
     abstract def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
   end

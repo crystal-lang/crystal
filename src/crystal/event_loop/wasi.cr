@@ -60,6 +60,10 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
     end
   end
 
+  def reopened(file_descriptor : Crystal::System::FileDescriptor) : Nil
+    raise NotImplementedError.new("Crystal::EventLoop#reopened(FileDescriptor)")
+  end
+
   def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
     file_descriptor.evented_close
   end
