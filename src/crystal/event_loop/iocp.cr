@@ -229,6 +229,9 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
 
   def write(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
     System::IOCP.overlapped_operation(file_descriptor, "WriteFile", file_descriptor.write_timeout, writing: true) do |overlapped|
+      if file_descriptor.is_a?(File) && file_descriptor.@system_append
+        overlapped.offset = UInt64::MAX
+      end
       ret = LibC.WriteFile(file_descriptor.windows_handle, slice, slice.size, out byte_count, overlapped)
       {ret, byte_count}
     end.to_i32

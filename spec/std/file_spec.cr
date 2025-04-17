@@ -127,6 +127,15 @@ describe "File" do
         end
       end
     end
+
+    it "can append to an existing file" do
+      with_tempfile("append-existing.txt") do |path|
+        File.write(path, "hello", blocking: false)
+        # File.read(path, blocking: false).should eq("hello")
+        File.write(path, " world", mode: "a", blocking: false)
+        File.read(path, blocking: false).should eq("hello world")
+      end
+    end
   end
 
   it "reads entire file" do

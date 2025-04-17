@@ -264,6 +264,11 @@ struct Crystal::System::IOCP
     def initialize(@handle : LibC::HANDLE)
     end
 
+    def offset=(value : UInt64?)
+      @overlapped.union.offset.offset = LibC::DWORD.new!(value)
+      @overlapped.union.offset.offsetHigh = LibC::DWORD.new!(value >> 32)
+    end
+
     def wait_for_result(timeout, & : WinError ->)
       wait_for_completion(timeout)
 
