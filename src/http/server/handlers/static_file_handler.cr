@@ -257,7 +257,7 @@ class HTTP::StaticFileHandler
     path
   end
 
-  private def redirect_to(context, url)
+  private def redirect_to(context : Server::Context, url)
     context.response.redirect url.to_s
   end
 
