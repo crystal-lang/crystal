@@ -109,7 +109,7 @@ module Crystal::System::FileDescriptor
     # Mark the handle open, since we had to have dup'd a live handle.
     @closed = false
 
-    event_loop.close(self)
+    event_loop.reopened(self)
   end
 
   private def system_close
@@ -132,6 +132,7 @@ module Crystal::System::FileDescriptor
     # Clear the @volatile_fd before actually closing it in order to
     # reduce the chance of reading an outdated fd value
     _fd = @volatile_fd.swap(-1)
+    return if _fd == -1
 
     if LibC.close(_fd) != 0
       case Errno.value
