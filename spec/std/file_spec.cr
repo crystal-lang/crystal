@@ -131,9 +131,19 @@ describe "File" do
     it "can append to an existing file" do
       with_tempfile("append-existing.txt") do |path|
         File.write(path, "hello", blocking: false)
-        # File.read(path, blocking: false).should eq("hello")
+        File.read(path, blocking: false).should eq("hello")
         File.write(path, " world", mode: "a", blocking: false)
         File.read(path, blocking: false).should eq("hello world")
+      end
+    end
+
+    it "returns the actual position with tell after append" do
+      with_tempfile("delete-file.txt") do |filename|
+        File.write(filename, "hello", blocking: false)
+        File.open(filename, "a", blocking: false) do |file|
+          file.write "12345".to_slice
+          file.tell.should eq(10)
+        end
       end
     end
   end

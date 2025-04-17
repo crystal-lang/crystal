@@ -228,10 +228,15 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   end
 
   def write(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
+    if file_descriptor.system_append?
+      # we must explicitly seek to the end of the file; trying to set the
+      # overlapped structure offset to UInt64::MAX will correctly write at the
+      # end of file, but the following seeks will report an invalid position (it
+      # only counts the written bytes)
+      file_descriptor.system_seek(0, IO::Seek::End)
+    end
+
     System::IOCP.overlapped_operation(file_descriptor, "WriteFile", file_descriptor.write_timeout, writing: true) do |overlapped|
-      if file_descriptor.is_a?(File) && file_descriptor.@system_append
-        overlapped.offset = UInt64::MAX
-      end
       ret = LibC.WriteFile(file_descriptor.windows_handle, slice, slice.size, out byte_count, overlapped)
       {ret, byte_count}
     end.to_i32
