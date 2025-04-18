@@ -38,7 +38,7 @@ class XML::Attributes
     find { |node| node.name == name }
   end
 
-  def []=(name : String, value)
+  def []=(name : String, value : String | Int32) : String | Int32
     LibXML.xmlSetProp(@node, name, value.to_s)
     value
   end
@@ -69,7 +69,7 @@ class XML::Attributes
     to_s(io)
   end
 
-  protected def props
+  protected def props : Pointer(LibXML::Attr)
     @node.to_unsafe.value.properties
   end
 end

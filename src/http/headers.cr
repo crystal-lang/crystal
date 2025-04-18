@@ -39,7 +39,7 @@ struct HTTP::Headers
       true
     end
 
-    private def normalize_byte(byte)
+    private def normalize_byte(byte : UInt8) : Int32 | UInt8
       char = byte.unsafe_chr
 
       return byte if char.ascii_lowercase? || char == '-' # Optimize the common case
@@ -57,24 +57,24 @@ struct HTTP::Headers
     @hash = Hash(Key, String | Array(String)).new
   end
 
-  def []=(key, value : String)
+  def []=(key : String | HTTP::Headers::Key, value : String) : String
     check_invalid_header_content(value)
 
     @hash[wrap(key)] = value
   end
 
-  def []=(key, value : Array(String))
+  def []=(key : String, value : Array(String)) : Array(String)
     value.each { |val| check_invalid_header_content val }
 
     @hash[wrap(key)] = value
   end
 
-  def [](key) : String
+  def [](key : String) : String
     values = @hash[wrap(key)]
     concat values
   end
 
-  def []?(key) : String?
+  def []?(key : String) : String?
     fetch(key, nil)
   end
 
@@ -87,7 +87,7 @@ struct HTTP::Headers
   # headers = HTTP::Headers{"Connection" => "keep-alive, Upgrade"}
   # headers.includes_word?("Connection", "Upgrade") # => true
   # ```
-  def includes_word?(key, word) : Bool
+  def includes_word?(key : String, word : String) : Bool
     return false if word.empty?
 
     values = @hash[wrap(key)]?
@@ -104,7 +104,7 @@ struct HTTP::Headers
     end
   end
 
-  private def includes_word_in_header_value?(word, value)
+  private def includes_word_in_header_value?(word : String, value : String) : Bool
     offset = 0
     while true
       start = value.index(word, offset)
@@ -132,31 +132,31 @@ struct HTTP::Headers
   # headers.add("Connection", "Upgrade")
   # headers["Connection"] # => "keep-alive,Upgrade"
   # ```
-  def add(key, value : String) : self
+  def add(key : String, value : String) : self
     check_invalid_header_content value
     unsafe_add(key, value)
     self
   end
 
-  def add(key, value : Array(String)) : self
+  def add(key : String, value : Array(String)) : self
     value.each { |val| check_invalid_header_content val }
     unsafe_add(key, value)
     self
   end
 
-  def add?(key, value : String) : Bool
+  def add?(key : String, value : String) : Bool
     return false unless valid_value?(value)
     unsafe_add(key, value)
     true
   end
 
-  def add?(key, value : Array(String)) : Bool
+  def add?(key : String, value : Array(String)) : Bool
     value.each { |val| return false unless valid_value?(val) }
     unsafe_add(key, value)
     true
   end
 
-  def fetch(key, default) : String?
+  def fetch(key : String, default : String?) : String?
     fetch(wrap(key)) { default }
   end
 
@@ -165,7 +165,7 @@ struct HTTP::Headers
     values ? concat(values) : yield key
   end
 
-  def has_key?(key) : Bool
+  def has_key?(key : String) : Bool
     @hash.has_key? wrap(key)
   end
 
@@ -173,12 +173,12 @@ struct HTTP::Headers
     @hash.empty?
   end
 
-  def delete(key) : String?
+  def delete(key : String) : String?
     values = @hash.delete wrap(key)
     values ? concat(values) : nil
   end
 
-  def merge!(other) : self
+  def merge!(other : Hash(String, String)) : self
     other.each do |key, value|
       self[wrap(key)] = value
     end
@@ -199,7 +199,7 @@ struct HTTP::Headers
   # HTTP::Headers{"Foo" => "bar"} == HTTP::Headers{"Foo" => ["bar"]} # => true
   # HTTP::Headers{"Foo" => "bar"} == HTTP::Headers{"Foo" => "baz"}   # => false
   # ```
-  def ==(other : self)
+  def ==(other : self) : Bool
     # Adapts `Hash#==` to treat string values equal to a single element array.
 
     return false unless @hash.size == other.@hash.size
@@ -247,11 +247,11 @@ struct HTTP::Headers
     end
   end
 
-  def get(key) : Array(String)
+  def get(key : HTTP::Headers::Key | String) : Array(String)
     cast @hash[wrap(key)]
   end
 
-  def get?(key) : Array(String)?
+  def get?(key : String) : Array(String)?
     @hash[wrap(key)]?.try { |value| cast(value) }
   end
 
@@ -263,7 +263,7 @@ struct HTTP::Headers
     dup
   end
 
-  def clone
+  def clone : HTTP::Headers
     dup
   end
 
@@ -339,13 +339,13 @@ struct HTTP::Headers
     end
   end
 
-  def valid_value?(value) : Bool
+  def valid_value?(value : String) : Bool
     invalid_value_char(value).nil?
   end
 
   forward_missing_to @hash
 
-  private def unsafe_add(key, value : String)
+  private def unsafe_add(key : String, value : String) : Array(String) | String
     key = wrap(key)
     existing = @hash[key]?
     if existing
@@ -359,7 +359,7 @@ struct HTTP::Headers
     end
   end
 
-  private def unsafe_add(key, value : Array(String))
+  private def unsafe_add(key : String, value : Array(String)) : Array(String)
     key = wrap(key)
     existing = @hash[key]?
     if existing
@@ -375,23 +375,23 @@ struct HTTP::Headers
     end
   end
 
-  private def wrap(key)
+  private def wrap(key : String | HTTP::Headers::Key) : HTTP::Headers::Key
     key.is_a?(Key) ? key : Key.new(key)
   end
 
-  private def cast(value : String)
+  private def cast(value : String) : Array(String)
     [value]
   end
 
-  private def cast(value : Array(String))
+  private def cast(value : Array(String)) : Array(String)
     value
   end
 
-  private def concat(values : String)
+  private def concat(values : String) : String
     values
   end
 
-  private def concat(values : Array(String))
+  private def concat(values : Array(String)) : String
     case values.size
     when 0
       ""
@@ -402,13 +402,13 @@ struct HTTP::Headers
     end
   end
 
-  private def check_invalid_header_content(value)
+  private def check_invalid_header_content(value : String) : Nil
     if char = invalid_value_char(value)
       raise ArgumentError.new("Header content contains invalid character #{char.inspect}")
     end
   end
 
-  private def valid_char?(char)
+  private def valid_char?(char : Char) : Bool
     # According to RFC 7230, characters accepted as HTTP header
     # are '\t', ' ', all US-ASCII printable characters and
     # range from '\x80' to '\xff' (but the last is obsoleted.)
@@ -419,7 +419,7 @@ struct HTTP::Headers
     true
   end
 
-  private def invalid_value_char(value)
+  private def invalid_value_char(value : String) : Char?
     value.each_byte do |byte|
       unless valid_char?(char = byte.unsafe_chr)
         return char

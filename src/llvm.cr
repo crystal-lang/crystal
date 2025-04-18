@@ -11,7 +11,7 @@ module LLVM
   # information, so the value falls back to `LibLLVM::VERSION` which is
   # determined at compile time and might slightly be out of sync to the
   # dynamic library loaded at runtime.
-  def self.version
+  def self.version : String
     {% if LibLLVM.has_method?(:get_version) %}
       LibLLVM.get_version(out major, out minor, out patch)
       "#{major}.#{minor}.#{patch}"
@@ -169,12 +169,12 @@ module LLVM
     normalized
   end
 
-  def self.to_io(chars, io) : Nil
+  def self.to_io(chars : Pointer(UInt8), io : String::Builder) : Nil
     io.write_string Slice.new(chars, LibC.strlen(chars))
     LibLLVM.dispose_message(chars)
   end
 
-  def self.string_and_dispose(chars) : String
+  def self.string_and_dispose(chars : Pointer(UInt8)) : String
     string = String.new(chars)
     LibLLVM.dispose_message(chars)
     string

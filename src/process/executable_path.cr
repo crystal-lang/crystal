@@ -41,7 +41,7 @@ class Process
     end
   end
 
-  private def self.file_executable?(path)
+  private def self.file_executable?(path : Path) : Bool
     unless File.info?(path, follow_symlinks: true).try &.file?
       return false
     end

@@ -11,7 +11,7 @@ class URI
   # uri.scheme                                        # => "http"
   # uri.host                                          # => "crystal-lang.org"
   # ```
-  def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+  def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : URI
     parse String.new(ctx, node)
   end
 
@@ -22,7 +22,7 @@ class URI
   #
   # URI.parse("http://example.com").to_yaml # => "--- http://example.com\n"
   # ```
-  def to_yaml(yaml : YAML::Nodes::Builder)
+  def to_yaml(yaml : YAML::Nodes::Builder) : Nil
     yaml.scalar to_s
   end
 end

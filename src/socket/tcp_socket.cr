@@ -15,7 +15,7 @@ require "./ip_socket"
 # ```
 class TCPSocket < IPSocket
   # Creates a new `TCPSocket`, waiting to be connected.
-  def self.new(family : Family = Family::INET, blocking = false)
+  def self.new(family : Family = Family::INET, blocking : Bool = false) : TCPSocket
     super(family, Type::STREAM, Protocol::TCP, blocking)
   end
 
@@ -26,7 +26,7 @@ class TCPSocket < IPSocket
   # must be in seconds (integers or floats).
   #
   # NOTE: *dns_timeout* is currently only supported on Windows.
-  def initialize(host : String, port, dns_timeout = nil, connect_timeout = nil, blocking = false)
+  def initialize(host : String, port : Int32, dns_timeout : Time::Span? = nil, connect_timeout : Time::Span? = nil, blocking : Bool = false)
     Addrinfo.tcp(host, port, timeout: dns_timeout) do |addrinfo|
       super(addrinfo.family, addrinfo.type, addrinfo.protocol, blocking)
       connect(addrinfo, timeout: connect_timeout) do |error|
@@ -36,11 +36,11 @@ class TCPSocket < IPSocket
     end
   end
 
-  protected def initialize(family : Family, type : Type, protocol : Protocol = Protocol::IP, blocking = false)
+  protected def initialize(family : Family, type : Type, protocol : Protocol = Protocol::IP, blocking : Bool = false)
     super family, type, protocol, blocking
   end
 
-  protected def initialize(fd : Handle, family : Family, type : Type, protocol : Protocol = Protocol::IP, blocking = false)
+  protected def initialize(fd : Handle, family : Family, type : Type, protocol : Protocol = Protocol::IP, blocking : Bool = false)
     super fd, family, type, protocol, blocking
   end
 
@@ -68,35 +68,35 @@ class TCPSocket < IPSocket
   end
 
   # Disables the Nagle algorithm when set to `true`, otherwise enables it.
-  def tcp_nodelay=(val : Bool)
+  def tcp_nodelay=(val : Bool) : Bool
     setsockopt_bool LibC::TCP_NODELAY, val, level: Protocol::TCP
   end
 
   # The amount of time in seconds the connection must be idle before sending keepalive probes.
-  def tcp_keepalive_idle
+  def tcp_keepalive_idle : Int32
     system_tcp_keepalive_idle
   end
 
-  def tcp_keepalive_idle=(val : Int)
+  def tcp_keepalive_idle=(val : Int) : Int32
     self.system_tcp_keepalive_idle = val
   end
 
   # The amount of time in seconds between keepalive probes.
-  def tcp_keepalive_interval
+  def tcp_keepalive_interval : Int32
     system_tcp_keepalive_interval
   end
 
-  def tcp_keepalive_interval=(val : Int)
+  def tcp_keepalive_interval=(val : Int) : Int32
     self.system_tcp_keepalive_interval = val
     val
   end
 
   # The number of probes sent, without response before dropping the connection.
-  def tcp_keepalive_count
+  def tcp_keepalive_count : Int32
     system_tcp_keepalive_count
   end
 
-  def tcp_keepalive_count=(val : Int)
+  def tcp_keepalive_count=(val : Int) : Int32
     self.system_tcp_keepalive_count = val
   end
 end

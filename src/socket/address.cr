@@ -8,7 +8,7 @@ class Socket
 
     # Returns either an `IPAddress` or `UNIXAddress` from the internal OS
     # representation. Only INET, INET6 and UNIX families are supported.
-    def self.from(sockaddr : LibC::Sockaddr*, addrlen) : Address
+    def self.from(sockaddr : LibC::Sockaddr*, addrlen : UInt32) : Address
       case family = Family.new(sockaddr.value.sa_family)
       when Family::INET6
         IPAddress.new(sockaddr.as(LibC::SockaddrIn6*), addrlen.to_i)
@@ -106,7 +106,7 @@ class Socket
     # Socket::IPAddress.new("127.0.0.1", 8080)                 # => Socket::IPAddress(127.0.0.1:8080)
     # Socket::IPAddress.new("fe80::2ab2:bdff:fe59:8e2c", 1234) # => Socket::IPAddress([fe80::2ab2:bdff:fe59:8e2c]:1234)
     # ```
-    def self.new(address : String, port : Int32)
+    def self.new(address : String, port : Int32) : Socket::IPAddress
       raise Error.new("Invalid port number: #{port}") unless IPAddress.valid_port?(port)
 
       if v4_fields = parse_v4_fields?(address)
@@ -122,7 +122,7 @@ class Socket
 
     # Creates an `IPAddress` from the internal OS representation. Supports both
     # INET and INET6 families.
-    def self.from(sockaddr : LibC::Sockaddr*, addrlen) : IPAddress
+    def self.from(sockaddr : LibC::Sockaddr*, addrlen : UInt32 | Int32) : IPAddress
       case family = Family.new(sockaddr.value.sa_family)
       when Family::INET6
         new(sockaddr.as(LibC::SockaddrIn6*), addrlen.to_i)
@@ -201,7 +201,7 @@ class Socket
       parse_v4_fields?(str.to_slice)
     end
 
-    private def self.parse_v4_fields?(bytes : Bytes)
+    private def self.parse_v4_fields?(bytes : Bytes) : StaticArray(UInt8, 4)?
       # port of https://git.musl-libc.org/cgit/musl/tree/src/network/inet_pton.c?id=7e13e5ae69a243b90b90d2f4b79b2a150f806335
       fields = StaticArray(UInt8, 4).new(0)
       ptr = bytes.to_unsafe
@@ -252,7 +252,7 @@ class Socket
       parse_v6_fields?(str.to_slice)
     end
 
-    private def self.parse_v6_fields?(bytes : Bytes)
+    private def self.parse_v6_fields?(bytes : Bytes) : StaticArray(UInt16, 8)?
       # port of https://git.musl-libc.org/cgit/musl/tree/src/network/inet_pton.c?id=7e13e5ae69a243b90b90d2f4b79b2a150f806335
       ptr = bytes.to_unsafe
       finish = ptr + bytes.size
@@ -323,7 +323,7 @@ class Socket
       fields
     end
 
-    private def self.from_hex(ch : UInt8)
+    private def self.from_hex(ch : UInt8) : UInt8
       if 0x30 <= ch <= 0x39
         ch &- 0x30
       elsif 0x41 <= ch <= 0x46
@@ -360,7 +360,7 @@ class Socket
       v4(fields, port)
     end
 
-    private def self.to_v4_field(field)
+    private def self.to_v4_field(field : Int32) : UInt8
       0 <= field <= 0xff ? field.to_u8! : raise Error.new("Invalid IPv4 field: #{field}")
     end
 
@@ -385,7 +385,7 @@ class Socket
       v6(fields, port)
     end
 
-    private def self.to_v6_field(field)
+    private def self.to_v6_field(field : Int32) : UInt16
       0 <= field <= 0xffff ? field.to_u16! : raise Error.new("Invalid IPv6 field: #{field}")
     end
 
@@ -409,7 +409,7 @@ class Socket
       v4_mapped_v6(v4_fields, port)
     end
 
-    private def self.ipv6_from_addr16(bytes : UInt16[8])
+    private def self.ipv6_from_addr16(bytes : UInt16[8]) : LibC::In6Addr
       addr = LibC::In6Addr.new
       {% if flag?(:darwin) || flag?(:bsd) %}
         addr.__u6_addr.__u6_addr16 = bytes
@@ -432,13 +432,13 @@ class Socket
       addr
     end
 
-    protected def initialize(sockaddr : LibC::SockaddrIn6*, @size)
+    protected def initialize(sockaddr : LibC::SockaddrIn6*, @size : Int32)
       @family = Family::INET6
       @addr = sockaddr.value.sin6_addr
       @port = IPAddress.endian_swap(sockaddr.value.sin6_port).to_i
     end
 
-    protected def initialize(sockaddr : LibC::SockaddrIn*, @size)
+    protected def initialize(sockaddr : LibC::SockaddrIn*, @size : Int32)
       @family = Family::INET
       @addr = sockaddr.value.sin_addr
       @port = IPAddress.endian_swap(sockaddr.value.sin_port).to_i
@@ -548,7 +548,7 @@ class Socket
     #
     # IPv4 addresses in `169.254.0.0/16` reserved by [RFC 3927](https://www.rfc-editor.org/rfc/rfc3927) and Link-Local IPv6
     # Unicast Addresses in `fe80::/10` reserved by [RFC 4291](https://tools.ietf.org/html/rfc4291) are considered link-local.
-    def link_local?
+    def link_local? : Bool
       case addr = @addr
       in LibC::InAddr
         addr.s_addr & 0x000000ffff_u32 == 0x0000fea9_u32 # 169.254.0.0/16
@@ -557,7 +557,7 @@ class Socket
       end
     end
 
-    private def ipv6_addr8(addr : LibC::In6Addr)
+    private def ipv6_addr8(addr : LibC::In6Addr) : StaticArray(UInt8, 16)
       {% if flag?(:darwin) || flag?(:bsd) %}
         addr.__u6_addr.__u6_addr8
       {% elsif flag?(:linux) && flag?(:musl) %}
@@ -577,7 +577,7 @@ class Socket
 
     def_equals_and_hash family, port, address_value
 
-    protected def address_value
+    protected def address_value : UInt128 | UInt32
       case addr = @addr
       in LibC::InAddr
         addr.s_addr
@@ -609,14 +609,14 @@ class Socket
       end
     end
 
-    private def address_to_s(io : IO, addr : LibC::InAddr)
+    private def address_to_s(io : IO, addr : LibC::InAddr) : String::Builder | IO::Memory
       io << (addr.s_addr & 0xFF)
       io << '.' << (addr.s_addr >> 8 & 0xFF)
       io << '.' << (addr.s_addr >> 16 & 0xFF)
       io << '.' << (addr.s_addr >> 24)
     end
 
-    private def address_to_s(io : IO, addr : LibC::In6Addr)
+    private def address_to_s(io : IO, addr : LibC::In6Addr) : Nil | String::Builder | IO::Memory
       bytes = ipv6_addr8(addr)
       if Slice.new(bytes.to_unsafe, 10).all?(&.zero?) && bytes[10] == 0xFF && bytes[11] == 0xFF
         io << "::ffff:" << bytes[12] << '.' << bytes[13] << '.' << bytes[14] << '.' << bytes[15]
@@ -712,7 +712,7 @@ class Socket
       end
     end
 
-    private def to_sockaddr_in6(addr)
+    private def to_sockaddr_in6(addr : LibC::In6Addr) : Pointer(LibC::Sockaddr)
       sockaddr = Pointer(LibC::SockaddrIn6).malloc
       sockaddr.value.sin6_family = family
       sockaddr.value.sin6_port = IPAddress.endian_swap(port.to_u16!)
@@ -720,7 +720,7 @@ class Socket
       sockaddr.as(LibC::Sockaddr*)
     end
 
-    private def to_sockaddr_in(addr)
+    private def to_sockaddr_in(addr : LibC::InAddr) : Pointer(LibC::Sockaddr)
       sockaddr = Pointer(LibC::SockaddrIn).malloc
       sockaddr.value.sin_family = family
       sockaddr.value.sin_port = IPAddress.endian_swap(port.to_u16!)
@@ -779,7 +779,7 @@ class Socket
     end
 
     # Creates an `UNIXSocket` from the internal OS representation.
-    def self.from(sockaddr : LibC::Sockaddr*, addrlen) : UNIXAddress
+    def self.from(sockaddr : LibC::Sockaddr*, addrlen : Int32) : UNIXAddress
       {% if flag?(:wasm32) %}
         raise NotImplementedError.new "Socket::UNIXAddress.from"
       {% else %}
@@ -865,7 +865,7 @@ class Socket
 
   # Returns `true` if the string represents a valid IPv4 or IPv6 address.
   @[Deprecated("Use `IPAddress.valid?` instead")]
-  def self.ip?(string : String)
+  def self.ip?(string : String) : Bool
     IPAddress.valid?(string)
   end
 end

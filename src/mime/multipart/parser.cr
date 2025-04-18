@@ -83,7 +83,7 @@ module MIME::Multipart
       !@state.finished? && !@state.errored?
     end
 
-    private def parse_headers(io)
+    private def parse_headers(io : IO::Delimited) : HTTP::Headers
       headers = HTTP::Headers.new
 
       while line = io.gets(chomp: false)
@@ -104,7 +104,7 @@ module MIME::Multipart
     #
     # If it's not a close delimiter, it eats the transport padding and crlf
     # after a delimiter.
-    private def close_delimiter?
+    private def close_delimiter? : Bool
       transport_padding_crlf = @io.gets("\r\n")
       fail("EOF reading delimiter") unless transport_padding_crlf
 
@@ -122,7 +122,7 @@ module MIME::Multipart
       false
     end
 
-    private def fail(msg)
+    private def fail(msg : String) : Nil
       raise Multipart::Error.new "Failed to parse multipart message: " + msg
     end
   end

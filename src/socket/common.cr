@@ -50,7 +50,7 @@ class Socket < IO
   end
 
   class Error < IO::Error
-    private def self.new_from_os_error(message, os_error, **opts)
+    private def self.new_from_os_error(message : String?, os_error : Errno | WasiError | WinError | Nil, **opts) : Socket::Error
       case os_error
       when Errno::ECONNREFUSED
         Socket::ConnectError.new(message, **opts)

@@ -85,7 +85,7 @@ module YAML
     getter line_number : Int32
     getter column_number : Int32
 
-    def initialize(message, line_number, column_number, context_info = nil)
+    def initialize(message : String | ArgumentError, line_number : Int32 | UInt64, column_number : Int32 | UInt64, context_info : Tuple(String, UInt64, UInt64)? = nil)
       @line_number = line_number.to_i
       @column_number = column_number.to_i
       if context_info
@@ -152,12 +152,12 @@ module YAML
   end
 
   # Serializes an object to YAML, returning it as a `String`.
-  def self.dump(object) : String
+  def self.dump(object : Array(String)) : String
     object.to_yaml
   end
 
   # Serializes an object to YAML, writing it to *io*.
-  def self.dump(object, io : IO) : Nil
+  def self.dump(object : Array(String), io : IO) : Nil
     object.to_yaml(io)
   end
 

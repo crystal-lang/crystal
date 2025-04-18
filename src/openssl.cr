@@ -110,7 +110,7 @@ module OpenSSL
       getter error : ErrorType
       getter? underlying_eof : Bool = false
 
-      def initialize(ssl : LibSSL::SSL, return_code : LibSSL::Int, func = nil)
+      def initialize(ssl : LibSSL::SSL, return_code : LibSSL::Int, func : String? = nil)
         @error = LibSSL.ssl_get_error(ssl, return_code)
 
         case @error

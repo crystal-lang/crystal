@@ -16,7 +16,7 @@ module OpenSSL::X509
       raise Error.new("X509_dup") if @cert.null?
     end
 
-    def finalize
+    def finalize : Nil
       LibCrypto.x509_free(@cert)
     end
 
@@ -24,7 +24,7 @@ module OpenSSL::X509
       self.class.new(@cert)
     end
 
-    def to_unsafe
+    def to_unsafe : LibCrypto::X509
       @cert
     end
 
@@ -50,11 +50,11 @@ module OpenSSL::X509
     # Sets the subject.
     #
     # Refer to `Name.parse` for the format.
-    def subject=(subject : String)
+    def subject=(subject : String) : OpenSSL::X509::Name
       self.subject = Name.parse(subject)
     end
 
-    def subject=(subject : Name)
+    def subject=(subject : Name) : OpenSSL::X509::Name
       ret = LibCrypto.x509_set_subject_name(@cert, subject)
       raise Error.new("X509_set_subject_name") if ret == 0
       subject
@@ -67,7 +67,7 @@ module OpenSSL::X509
       end
     end
 
-    def add_extension(extension : Extension)
+    def add_extension(extension : Extension) : OpenSSL::X509::Extension
       ret = LibCrypto.x509_add_ext(@cert, extension, -1)
       raise Error.new("X509_add_ext") if ret.null?
       extension

@@ -8,7 +8,7 @@ class HTTP::Client
     yield
   end
 
-  protected def emit_log(request)
+  protected def emit_log(request : HTTP::Request) : Nil
     Log.debug &.emit("Performing request",
       method: request.method,
       host: host,

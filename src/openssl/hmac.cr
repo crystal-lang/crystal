@@ -15,7 +15,7 @@ class OpenSSL::HMAC
   # It may contain non-ASCII bytes, including NUL bytes.
   #
   # *algorithm* specifies which `OpenSSL::Algorithm` is to be used.
-  def self.digest(algorithm : OpenSSL::Algorithm, key, data) : Bytes
+  def self.digest(algorithm : OpenSSL::Algorithm, key : String, data : String) : Bytes
     evp = algorithm.to_evp
     key_slice = key.to_slice
     data_slice = data.to_slice
@@ -29,7 +29,7 @@ class OpenSSL::HMAC
   # the digest where binary messages are not allowed.
   #
   # See also `#digest`.
-  def self.hexdigest(algorithm : OpenSSL::Algorithm, key, data) : String
+  def self.hexdigest(algorithm : OpenSSL::Algorithm, key : String, data : String) : String
     digest(algorithm, key, data).hexstring
   end
 end

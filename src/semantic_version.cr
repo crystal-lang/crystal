@@ -92,7 +92,7 @@ struct SemanticVersion
   # current_version.copy_with(patch: 2)        # => SemanticVersion(@build=nil, @major=1, @minor=1, @patch=2, @prerelease=SemanticVersion::Prerelease(@identifiers=["rc"]))
   # current_version.copy_with(prerelease: nil) # => SemanticVersion(@build=nil, @major=1, @minor=1, @patch=1, @prerelease=SemanticVersion::Prerelease(@identifiers=[]))
   # ```
-  def copy_with(major : Int32 = @major, minor : Int32 = @minor, patch : Int32 = @patch, prerelease : String | Prerelease | Nil = @prerelease, build : String? = @build)
+  def copy_with(major : Int32 = @major, minor : Int32 = @minor, patch : Int32 = @patch, prerelease : String | Prerelease | Nil = @prerelease, build : String? = @build) : SemanticVersion
     SemanticVersion.new major, minor, patch, prerelease, build
   end
 
@@ -104,7 +104,7 @@ struct SemanticVersion
   # current_version = SemanticVersion.new 1, 1, 1, "rc"
   # current_version.bump_major # => SemanticVersion(@build=nil, @major=2, @minor=0, @patch=0, @prerelease=SemanticVersion::Prerelease(@identifiers=[]))
   # ```
-  def bump_major
+  def bump_major : SemanticVersion
     copy_with(major: major + 1, minor: 0, patch: 0, prerelease: nil, build: nil)
   end
 
@@ -116,7 +116,7 @@ struct SemanticVersion
   # current_version = SemanticVersion.new 1, 1, 1, "rc"
   # current_version.bump_minor # => SemanticVersion(@build=nil, @major=1, @minor=2, @patch=0, @prerelease=SemanticVersion::Prerelease(@identifiers=[]))
   # ```
-  def bump_minor
+  def bump_minor : SemanticVersion
     copy_with(minor: minor + 1, patch: 0, prerelease: nil, build: nil)
   end
 
@@ -130,7 +130,7 @@ struct SemanticVersion
   # next_patch = current_version.bump_patch # => SemanticVersion(@build=nil, @major=1, @minor=1, @patch=1, @prerelease=SemanticVersion::Prerelease(@identifiers=[]))
   # next_patch.bump_patch                   # => SemanticVersion(@build=nil, @major=1, @minor=1, @patch=2, @prerelease=SemanticVersion::Prerelease(@identifiers=[]))
   # ```
-  def bump_patch
+  def bump_patch : SemanticVersion
     if prerelease.identifiers.empty?
       copy_with(patch: patch + 1, prerelease: nil, build: nil)
     else
@@ -245,19 +245,19 @@ struct SemanticVersion
       0
     end
 
-    private def compare(x : Int32, y : String)
+    private def compare(x : Int32, y : String) : Int32
       -1
     end
 
-    private def compare(x : String, y : Int32)
+    private def compare(x : String, y : Int32) : Int32
       1
     end
 
-    private def compare(x : Int32, y : Int32)
+    private def compare(x : Int32, y : Int32) : Int32
       x <=> y
     end
 
-    private def compare(x : String, y : String)
+    private def compare(x : String, y : String) : Int32
       x <=> y
     end
   end

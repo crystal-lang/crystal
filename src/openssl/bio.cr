@@ -2,7 +2,7 @@ require "./lib_crypto"
 
 # :nodoc:
 struct OpenSSL::BIO
-  def self.get_data(bio) : Void*
+  def self.get_data(bio : Pointer(LibCrypto::Bio)) : Void*
     {% if LibCrypto.has_method?(:BIO_get_data) %}
       LibCrypto.BIO_get_data(bio)
     {% else %}
@@ -10,7 +10,7 @@ struct OpenSSL::BIO
     {% end %}
   end
 
-  def self.set_data(bio, data : Void*)
+  def self.set_data(bio : Pointer(LibCrypto::Bio), data : Void*) : Nil
     {% if LibCrypto.has_method?(:BIO_set_data) %}
       LibCrypto.BIO_set_data(bio, data)
     {% else %}
@@ -129,7 +129,7 @@ struct OpenSSL::BIO
 
   getter io
 
-  def to_unsafe
+  def to_unsafe : Pointer(LibCrypto::Bio)
     @bio
   end
 end

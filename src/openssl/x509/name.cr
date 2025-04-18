@@ -31,7 +31,7 @@ module OpenSSL::X509
       raise Error.new("X509_NAME_dup") if @name.null?
     end
 
-    def finalize
+    def finalize : Nil
       LibCrypto.x509_name_free(@name)
     end
 
@@ -39,7 +39,7 @@ module OpenSSL::X509
       self.class.new(@name)
     end
 
-    def to_unsafe
+    def to_unsafe : LibCrypto::X509_NAME
       @name
     end
 

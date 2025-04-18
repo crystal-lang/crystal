@@ -31,7 +31,7 @@ class Channel(T)
   record UseDefault
 
   class ClosedError < Exception
-    def initialize(msg = "Channel is closed")
+    def initialize(msg : String = "Channel is closed")
       super(msg)
     end
   end
@@ -290,20 +290,20 @@ class Channel(T)
     pp.text inspect
   end
 
-  def self.receive_first(*channels)
+  def self.receive_first(*channels) : Int32
     receive_first channels
   end
 
-  def self.receive_first(channels : Enumerable(Channel))
+  def self.receive_first(channels : Enumerable(Channel)) : Int32
     _, value = self.select(channels.map(&.receive_select_action))
     value
   end
 
-  def self.send_first(value, *channels) : Nil
+  def self.send_first(value : Int32, *channels) : Nil
     send_first value, channels
   end
 
-  def self.send_first(value, channels : Enumerable(Channel)) : Nil
+  def self.send_first(value : Int32, channels : Enumerable(Channel)) : Nil
     self.select(channels.map(&.send_select_action(value)))
     nil
   end

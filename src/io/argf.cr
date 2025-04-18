@@ -44,7 +44,7 @@ class IO::ARGF < IO
     end
   end
 
-  private def peek_next
+  private def peek_next : Slice(UInt8)?
     if !@read_from_stdin && !@argv.empty?
       read_next_argv
       self.peek
@@ -61,7 +61,7 @@ class IO::ARGF < IO
     @path || @argv.first? || "-"
   end
 
-  private def first_initialize
+  private def first_initialize : IO
     # This is the moment where we decide
     # whether we are going to use STDIN or ARGV
     @initialized = true
@@ -73,7 +73,7 @@ class IO::ARGF < IO
     end
   end
 
-  private def read_from_current_io(current_io, slice)
+  private def read_from_current_io(current_io : IO, slice : Slice(UInt8)) : Int32
     read_count = current_io.read slice
     if read_count.zero?
       unless @read_from_stdin
@@ -89,7 +89,7 @@ class IO::ARGF < IO
     read_count
   end
 
-  private def read_next_argv
+  private def read_next_argv : File
     path = @path = @argv.shift
     @current_io = File.open(path)
   end

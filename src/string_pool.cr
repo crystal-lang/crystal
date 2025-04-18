@@ -46,7 +46,7 @@ class StringPool
   # pool = StringPool.new(256)
   # pool.size # => 0
   # ```
-  def initialize(initial_capacity = 8)
+  def initialize(initial_capacity : Int32 = 8)
     @capacity = initial_capacity >= 8 ? Math.pw2ceil(initial_capacity) : 8
     @hashes = Pointer(UInt64).malloc(@capacity, 0_u64)
     @values = Pointer(String).malloc(@capacity, "")
@@ -116,7 +116,7 @@ class StringPool
   # pool.get("hey".to_unsafe, 3)
   # pool.size # => 1
   # ```
-  def get(str : UInt8*, len) : String
+  def get(str : UInt8*, len : Int32) : String
     hash = hash(str, len)
     get(hash, str, len) do |index|
       rehash if @size >= @capacity // 4 * 3
@@ -141,7 +141,7 @@ class StringPool
   # pool.empty?                   # => false
   # pool.get?("hey".to_unsafe, 3) # => "hey"
   # ```
-  def get?(str : UInt8*, len) : String?
+  def get?(str : UInt8*, len : Int32) : String?
     hash = hash(str, len)
     get(hash, str, len) { nil }
   end
@@ -163,7 +163,7 @@ class StringPool
     yield index
   end
 
-  private def put_on_rehash(hash : UInt64, entry : String)
+  private def put_on_rehash(hash : UInt64, entry : String) : String
     mask = (@capacity - 1).to_u64
     index = hash & mask
     next_probe_offset = 1_u64
@@ -272,7 +272,7 @@ class StringPool
     end
   end
 
-  private def hash(str, len)
+  private def hash(str : Pointer(UInt8), len : Int32) : UInt64
     hasher = Crystal::Hasher.new
     hasher = str.to_slice(len).hash(hasher)
     # hash should be non-zero, so `or` it with high bit

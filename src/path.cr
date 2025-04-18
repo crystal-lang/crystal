@@ -83,7 +83,7 @@ struct Path
   SEPARATORS = separators(Kind.native)
 
   # :nodoc:
-  def self.separators(kind)
+  def self.separators(kind : Path::Kind) : Tuple(Char) | Tuple(Char, Char)
     if kind.windows?
       {'\\', '/'}
     else
@@ -169,7 +169,7 @@ struct Path
   end
 
   # Internal helper method to create a new `Path` of the same kind as `self`.
-  private def new_instance(string : String, kind = @kind) : Path
+  private def new_instance(string : String, kind : Path::Kind = @kind) : Path
     Path.new(string, kind)
   end
 
@@ -556,7 +556,7 @@ struct Path
   end
 
   # :nodoc:
-  def self.next_part_separator_index(reader : Char::Reader, last_was_separator, separators)
+  def self.next_part_separator_index(reader : Char::Reader, last_was_separator : Bool, separators : Tuple(Char) | Tuple(Char, Char)) : Tuple(Char::Reader, Bool, Int32)?
     start_pos = reader.pos
 
     reader.each do |char|
@@ -596,7 +596,7 @@ struct Path
       @path.@name.byte_slice(start_pos, @reader.pos - start_pos)
     end
 
-    private def next_pos
+    private def next_pos : Int32?
       unless @anchor_processed
         @anchor_processed = true
         if anchor_pos = process_anchor
@@ -612,7 +612,7 @@ struct Path
       start_pos
     end
 
-    private def process_anchor
+    private def process_anchor : Int32?
       anchor = @path.anchor
       return unless anchor
 
@@ -629,7 +629,7 @@ struct Path
     end
   end
 
-  private def windows_drive?
+  private def windows_drive? : Bool
     @name.byte_at?(1) === ':' && @name.char_at(0).ascii_letter?
   end
 
@@ -714,7 +714,7 @@ struct Path
   # See `#to_windows` and `#to_posix` for details.
   #
   # * `#to_native` converts to the native path semantics.
-  def to_kind(kind, *, mappings : Bool = true) : Path
+  def to_kind(kind : Path::Kind, *, mappings : Bool = true) : Path
     if kind.posix?
       to_posix(mappings: mappings)
     else
@@ -740,7 +740,7 @@ struct Path
   # If *expand_base* is `true`, *base* itself will be expanded in `Dir.current`
   # if it is not an absolute path. This guarantees the method returns an absolute
   # path (assuming that `Dir.current` is absolute).
-  def expand(base : Path | String = Dir.current, *, home : Path | String | Bool = false, expand_base = true) : Path
+  def expand(base : Path | String = Dir.current, *, home : Path | String | Bool = false, expand_base : Bool = true) : Path
     base = Path.new(base) unless base.is_a?(Path)
     base = base.to_kind(@kind)
     if base == self
@@ -809,7 +809,7 @@ struct Path
     expanded.normalize(remove_final_separator: false)
   end
 
-  private def resolve_home(home)
+  private def resolve_home(home : Bool | String | Path) : Path
     case home
     when String then home = Path[home]
     when Bool   then home = Path.home
@@ -836,7 +836,7 @@ struct Path
   # Path["a/b/"].join("")  # => Path["a/b/"]
   # Path["a/b/"].join("c") # => Path["a/b/c"]
   # ```
-  def join(part) : Path
+  def join(part : String | Path) : Path
     # If we are joining a single part we can use `String.new` instead of
     # `String.build` which avoids an extra allocation.
     # Given that `File.join(arg1, arg2)` is the most common usage
@@ -954,7 +954,7 @@ struct Path
     end
   end
 
-  private def empty?
+  private def empty? : Bool
     @name.empty? || @name == "."
   end
 
@@ -1096,7 +1096,7 @@ struct Path
   # Path.posix("foo") == Path.posix("FOO")     # => false
   # Path.windows("foo") == Path.windows("FOO") # => true
   # ```
-  def ==(other : self)
+  def ==(other : self) : Bool
     return false if @kind != other.@kind
 
     @name.compare(other.@name, case_insensitive: windows? || other.windows?) == 0
@@ -1205,7 +1205,7 @@ struct Path
     end
   end
 
-  private def unc_share?
+  private def unc_share? : Tuple(Int32, Int32 | Nil)?
     # Test for UNC share
     # path: //share/share
     # part: 1122222 33333
@@ -1322,7 +1322,7 @@ struct Path
   end
 
   # :nodoc:
-  def separators
+  def separators : Tuple(Char) | Tuple(Char, Char)
     Path.separators(@kind)
   end
 
@@ -1330,11 +1330,11 @@ struct Path
     ends_with_separator?(@name)
   end
 
-  private def ends_with_separator?(name)
+  private def ends_with_separator?(name : String) : Bool
     separators.any? { |separator| name.ends_with?(separator) }
   end
 
-  private def starts_with_separator?(name = @name)
+  private def starts_with_separator?(name : String = @name) : Bool
     separators.any? { |separator| name.starts_with?(separator) }
   end
 

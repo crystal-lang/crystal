@@ -34,7 +34,7 @@ module ENV
   # If *value* is `nil`, the environment variable is deleted.
   #
   # If *key* or *value* contains a null-byte an `ArgumentError` is raised.
-  def self.[]=(key : String, value : String?)
+  def self.[]=(key : String, value : String?) : String?
     Crystal::System::Env.set(key, value)
 
     value
@@ -52,7 +52,7 @@ module ENV
 
   # Retrieves a value corresponding to the given *key*. Raises a `KeyError` exception if the
   # key does not exist.
-  def self.fetch(key) : String
+  def self.fetch(key : String) : String
     fetch(key) do
       raise KeyError.new "Missing ENV key: #{key.inspect}"
     end
@@ -60,7 +60,7 @@ module ENV
 
   # Retrieves a value corresponding to the given *key*. Return the second argument's value
   # if the *key* does not exist.
-  def self.fetch(key, default : T) : String | T forall T
+  def self.fetch(key : String, default : T) : String | T forall T
     fetch(key) { default }
   end
 

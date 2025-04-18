@@ -28,7 +28,7 @@ module Float::FastFloat
     # in LLVM, which makes LLVM really slow. The compiler should
     # try to avoid/reuse temporary allocas.
     # Explanation: https://github.com/crystal-lang/crystal/issues/4516#issuecomment-306226171
-    private def self.put(array, value) : Nil
+    private def self.put(array : Array(UInt64), value : UInt64) : Nil
       array << value
     end
 

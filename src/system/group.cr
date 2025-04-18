@@ -59,7 +59,7 @@ class System::Group
     Crystal::System::Group.from_id?(id)
   end
 
-  def to_s(io)
+  def to_s(io : String::Builder) : String::Builder
     io << name << " (" << id << ')'
   end
 end

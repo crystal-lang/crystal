@@ -117,7 +117,7 @@ struct URI::Params
     end
 
     # :nodoc:
-    def to_www_form(builder : URI::Params::Builder, name : String)
+    def to_www_form(builder : URI::Params::Builder, name : String) : Nil
       {% for ivar in @type.instance_vars %}
         @{{ivar.name.id}}.to_www_form builder, "#{name}[#{{{ivar.name.stringify}}}]"
       {% end %}

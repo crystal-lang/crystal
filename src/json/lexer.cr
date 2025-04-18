@@ -1,11 +1,11 @@
 require "string_pool"
 
 abstract class JSON::Lexer
-  def self.new(string : String)
+  def self.new(string : String) : JSON::Lexer::StringBased
     StringBased.new(string)
   end
 
-  def self.new(io : IO)
+  def self.new(io : IO) : JSON::Lexer::IOBased
     IOBased.new(io)
   end
 
@@ -76,7 +76,7 @@ abstract class JSON::Lexer
     @token
   end
 
-  private def skip_whitespace
+  private def skip_whitespace : Nil
     while whitespace?(current_char)
       if current_char == '\n'
         @line_number += 1
@@ -86,7 +86,7 @@ abstract class JSON::Lexer
     end
   end
 
-  private def whitespace?(char)
+  private def whitespace?(char : Char) : Bool
     case char
     when ' ', '\t', '\n', '\r'
       true
@@ -95,7 +95,7 @@ abstract class JSON::Lexer
     end
   end
 
-  private def consume_true
+  private def consume_true : JSON::Token::Kind
     if next_char == 'r' && next_char == 'u' && next_char == 'e'
       next_char
       @token.kind = :true
@@ -104,7 +104,7 @@ abstract class JSON::Lexer
     end
   end
 
-  private def consume_false
+  private def consume_false : JSON::Token::Kind
     if next_char == 'a' && next_char == 'l' && next_char == 's' && next_char == 'e'
       next_char
       @token.kind = :false
@@ -113,7 +113,7 @@ abstract class JSON::Lexer
     end
   end
 
-  private def consume_null
+  private def consume_null : JSON::Token::Kind
     if next_char == 'u' && next_char == 'l' && next_char == 'l'
       next_char
       @token.kind = :null
@@ -124,7 +124,7 @@ abstract class JSON::Lexer
 
   # Since we are skipping we don't care about a
   # string's contents, so we just move forward.
-  private def consume_string_skip
+  private def consume_string_skip : Nil
     while true
       case next_char
       when '\0'
@@ -142,7 +142,7 @@ abstract class JSON::Lexer
     end
   end
 
-  private def consume_string_with_buffer
+  private def consume_string_with_buffer : String
     consume_string_with_buffer { }
   end
 
@@ -173,7 +173,7 @@ abstract class JSON::Lexer
     end
   end
 
-  private def consume_string_escape_sequence
+  private def consume_string_escape_sequence : Char
     case char = next_char
     when '\\', '"', '/'
       char
@@ -208,7 +208,7 @@ abstract class JSON::Lexer
     end
   end
 
-  private def read_hex_number
+  private def read_hex_number : Int32
     hexnum = 0
     4.times do
       char = next_char
@@ -217,7 +217,7 @@ abstract class JSON::Lexer
     hexnum
   end
 
-  private def consume_number
+  private def consume_number : String
     number_start
 
     if current_char == '-'
@@ -262,7 +262,7 @@ abstract class JSON::Lexer
     end
   end
 
-  private def consume_float
+  private def consume_float : String
     append_number_char
     char = next_char
 
@@ -283,7 +283,7 @@ abstract class JSON::Lexer
     end
   end
 
-  private def consume_exponent
+  private def consume_exponent : String
     append_number_char
 
     char = next_char
@@ -309,25 +309,25 @@ abstract class JSON::Lexer
     number_end
   end
 
-  private def next_char
+  private def next_char : Char
     @column_number += 1
     next_char_no_column_increment
   end
 
-  private def next_char(kind : Token::Kind)
+  private def next_char(kind : Token::Kind) : Char
     @token.kind = kind
     next_char
   end
 
-  private def number_end
+  private def number_end : String
     @token.raw_value = number_string
   end
 
-  private def unexpected_char(char = current_char)
+  private def unexpected_char(char : Char = current_char) : Nil
     raise "Unexpected char '#{char}'"
   end
 
-  private def raise(msg)
+  private def raise(msg : String) : Nil
     ::raise ParseException.new(msg, @line_number, @column_number)
   end
 end

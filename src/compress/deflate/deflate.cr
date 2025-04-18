@@ -23,7 +23,7 @@ module Compress::Deflate
   end
 
   class Error < Exception
-    def initialize(ret, stream)
+    def initialize(ret : LibZ::Error, stream : LibZ::ZStream)
       msg = stream.msg
       msg = LibZ.zError(ret) if msg.null?
 

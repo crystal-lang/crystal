@@ -29,12 +29,12 @@ class ECR::Lexer
     getter line_number : Int32
     getter column_number : Int32
 
-    def initialize(message, @line_number, @column_number)
+    def initialize(message : String, @line_number : Int32, @column_number : Int32)
       super(message)
     end
   end
 
-  def initialize(string)
+  def initialize(string : String)
     @reader = Char::Reader.new(string)
     @token = Token.new
     @line_number = 1
@@ -78,7 +78,7 @@ class ECR::Lexer
     consume_string
   end
 
-  private def consume_string
+  private def consume_string : ECR::Lexer::Token
     start_pos = current_pos
     while true
       case current_char
@@ -102,7 +102,7 @@ class ECR::Lexer
     @token
   end
 
-  private def consume_control(is_output, is_escape, suppress_leading)
+  private def consume_control(is_output : Bool?, is_escape : Bool?, suppress_leading : Bool) : ECR::Lexer::Token
     start_pos = current_pos
     while true
       case current_char
@@ -158,7 +158,7 @@ class ECR::Lexer
     @token
   end
 
-  private def setup_control_token(start_pos, is_escape, suppress_leading, suppress_trailing)
+  private def setup_control_token(start_pos : Int32, is_escape : Bool?, suppress_leading : Bool, suppress_trailing : Bool) : Char
     @token.suppress_leading = !is_escape && suppress_leading
     @token.suppress_trailing = !is_escape && suppress_trailing
     @token.value =
@@ -174,41 +174,41 @@ class ECR::Lexer
     next_char
   end
 
-  private def copy_location_info_to_token
+  private def copy_location_info_to_token : Int32
     @token.line_number = @line_number
     @token.column_number = @column_number
   end
 
-  private def current_char
+  private def current_char : Char
     @reader.current_char
   end
 
-  private def next_char
+  private def next_char : Char
     @column_number += 1
     next_char_no_column_increment
   end
 
-  private def next_char_no_column_increment
+  private def next_char_no_column_increment : Char
     @reader.next_char
   end
 
-  private def peek_next_char
+  private def peek_next_char : Char
     @reader.peek_next_char
   end
 
-  private def current_pos
+  private def current_pos : Int32
     @reader.pos
   end
 
-  private def string_range(start_pos)
+  private def string_range(start_pos : Int32) : String
     string_range(start_pos, current_pos)
   end
 
-  private def string_range(start_pos, end_pos)
+  private def string_range(start_pos : Int32, end_pos : Int32) : String
     @reader.string.byte_slice(start_pos, end_pos - start_pos)
   end
 
-  private def raise(message : String)
+  private def raise(message : String) : Nil
     raise SyntaxException.new(message, @line_number, @column_number)
   end
 end

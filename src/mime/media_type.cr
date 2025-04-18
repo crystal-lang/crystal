@@ -64,7 +64,7 @@ module MIME
     # mime_type["foo"] = "bar"
     # mime_type["foo"] # => "bar"
     # ```
-    def []=(key : String, value : String)
+    def []=(key : String, value : String) : String
       raise Error.new("Invalid parameter name") unless MIME::MediaType.token? key
       @params[key] = value
     end
@@ -446,7 +446,7 @@ module MIME
       return reader, value
     end
 
-    private def self.decode_rfc2231(encoded : String)
+    private def self.decode_rfc2231(encoded : String) : String?
       encoding, _, rest = encoded.partition('\'')
       _lang, _, value = rest.partition('\'')
 
@@ -475,7 +475,7 @@ module MIME
       end.rewind.gets_to_end
     end
 
-    private def self.consume_whitespace(reader)
+    private def self.consume_whitespace(reader : Char::Reader) : Char::Reader
       while reader.current_char.ascii_whitespace?
         reader.next_char
       end
@@ -488,12 +488,12 @@ module MIME
     end
 
     # :nodoc:
-    def self.token?(string) : Bool
+    def self.token?(string : String) : Bool
       string.each_char.all? { |char| token? char }
     end
 
     # :nodoc:
-    def self.quote_string(string, io) : Nil
+    def self.quote_string(string : String, io : String::Builder | IO::Memory) : Nil
       string.each_char do |char|
         case char
         when '"', '\\'

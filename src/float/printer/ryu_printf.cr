@@ -63,12 +63,12 @@ module Float::Printer::RyuPrintf
   end
 
   # Returns true if value is divisible by 5^p.
-  private def self.multiple_of_power_of_5?(value : UInt64, p : UInt32)
+  private def self.multiple_of_power_of_5?(value : UInt64, p : UInt32) : Bool
     pow5_factor(value) >= p
   end
 
   # Returns true if value is divisible by 2^p.
-  private def self.multiple_of_power_of_2?(value : UInt64, p : UInt32)
+  private def self.multiple_of_power_of_2?(value : UInt64, p : UInt32) : Bool
     value & ~(UInt64::MAX << p) == 0
   end
 
@@ -103,7 +103,7 @@ module Float::Printer::RyuPrintf
   end
 
   # Returns the low 64 bits of the high 128 bits of the 256-bit product of a and b.
-  private def self.umul256_hi128_lo64(a_hi : UInt64, a_lo : UInt64, b_hi : UInt64, b_lo : UInt64)
+  private def self.umul256_hi128_lo64(a_hi : UInt64, a_lo : UInt64, b_hi : UInt64, b_lo : UInt64) : UInt64
     b00_hi, _ = umul128(a_lo, b_lo)
     b01_hi, b01_lo = umul128(a_lo, b_hi)
     b10_hi, b10_lo = umul128(a_hi, b_lo)
@@ -143,17 +143,17 @@ module Float::Printer::RyuPrintf
     uint128_mod1e9(shiftedhigh, shiftedlow)
   end
 
-  private def self.index_for_exponent(e : UInt32)
+  private def self.index_for_exponent(e : UInt32) : UInt32
     (e &+ 15) // 16
   end
 
   private ADDITIONAL_BITS_2 = 120
 
-  private def self.pow10_bits_for_index(idx : UInt32)
+  private def self.pow10_bits_for_index(idx : UInt32) : UInt32
     idx &* 16 &+ ADDITIONAL_BITS_2
   end
 
-  private def self.length_for_index(idx : UInt32)
+  private def self.length_for_index(idx : UInt32) : UInt32
     # +1 for ceil, +16 for mantissa, +8 to round up when dividing by 9
     (log10_pow2(16 &* idx.to_i32!) &+ 25) // 9
   end
@@ -162,7 +162,7 @@ module Float::Printer::RyuPrintf
   # The caller has to guarantee that:
   #   10^(olength-1) <= digits < 10^olength
   # e.g., by passing `olength` as `decimalLength9(digits)`.
-  private def self.append_n_digits(olength : UInt32, digits : UInt32, result : UInt8*)
+  private def self.append_n_digits(olength : UInt32, digits : UInt32, result : UInt8*) : Pointer(UInt8) | UInt8
     i = 0_u32
     while digits >= 10000
       c = digits &- 10000 &* (digits // 10000)
@@ -191,7 +191,7 @@ module Float::Printer::RyuPrintf
   # dot '.' followed by the remaining digits. The caller has to guarantee that:
   #   10^(olength-1) <= digits < 10^olength
   # e.g., by passing `olength` as `decimalLength9(digits)`.
-  private def self.append_d_digits(olength : UInt32, digits : UInt32, result : UInt8*)
+  private def self.append_d_digits(olength : UInt32, digits : UInt32, result : UInt8*) : UInt8
     i = 0_u32
     while digits >= 10000
       c = digits &- 10000 &* (digits // 10000)
@@ -221,7 +221,7 @@ module Float::Printer::RyuPrintf
 
   # Convert `digits` to decimal and write the last `count` decimal digits to result.
   # If `digits` contains additional digits, then those are silently ignored.
-  private def self.append_c_digits(count : UInt32, digits : UInt32, result : UInt8*)
+  private def self.append_c_digits(count : UInt32, digits : UInt32, result : UInt8*) : UInt8?
     i = 0_u32
 
     # Copy pairs of digits from DIGIT_TABLE.
@@ -241,7 +241,7 @@ module Float::Printer::RyuPrintf
 
   # Convert `digits` to decimal and write the last 9 decimal digits to result.
   # If `digits` contains additional digits, then those are silently ignored.
-  private def self.append_nine_digits(digits : UInt32, result : UInt8*)
+  private def self.append_nine_digits(digits : UInt32, result : UInt8*) : UInt8?
     if digits == 0
       Slice.new(result, 9).fill('0'.ord.to_u8!)
       return
@@ -268,7 +268,7 @@ module Float::Printer::RyuPrintf
   EXPONENT_BITS = 11
 
   # NOTE: in Crystal *d* must be positive and finite
-  private def self.extract_float(d : Float64)
+  private def self.extract_float(d : Float64) : Tuple(Int32, UInt64)
     bits = d.unsafe_as(UInt64)
 
     ieee_mantissa = bits & ~(UInt64::MAX << MANTISSA_BITS)
@@ -285,7 +285,7 @@ module Float::Printer::RyuPrintf
     {e2, m2}
   end
 
-  def self.d2fixed_buffered_n(d : Float64, precision : UInt32, result : UInt8*)
+  def self.d2fixed_buffered_n(d : Float64, precision : UInt32, result : UInt8*) : Int32
     e2, m2 = extract_float(d)
     index = 0
     nonzero = false
@@ -424,7 +424,7 @@ module Float::Printer::RyuPrintf
     index
   end
 
-  def self.d2exp_buffered_n(d : Float64, precision : UInt32, result : UInt8*)
+  def self.d2exp_buffered_n(d : Float64, precision : UInt32, result : UInt8*) : Int32
     if d == 0
       result[0] = '0'.ord.to_u8!
       index = 1
@@ -620,7 +620,7 @@ module Float::Printer::RyuPrintf
   # * https://github.com/ulfjack/ryu/pull/185/files
   # * https://github.com/microsoft/STL/blob/a8888806c6960f1687590ffd4244794c753aa819/stl/inc/charconv#L2324
   # * https://github.com/llvm/llvm-project/blob/701f64790520790f75b1f948a752472d421ddaa3/libcxx/src/include/to_chars_floating_point.h#L836
-  def self.d2gen_buffered_n(d : Float64, precision : UInt32, result : UInt8*, alternative : Bool = false)
+  def self.d2gen_buffered_n(d : Float64, precision : UInt32, result : UInt8*, alternative : Bool = false) : Tuple(Int32, Int32)
     if d == 0
       result[0] = '0'.ord.to_u8!
       return {1, 0}
@@ -682,21 +682,21 @@ module Float::Printer::RyuPrintf
     {(significand_last - result + (exponent_last - exponent_first)).to_i32!, extra_zeros.to_i32!}
   end
 
-  def self.d2fixed(d : Float64, precision : Int)
+  def self.d2fixed(d : Float64, precision : Int) : String
     String.new(2000) do |buffer|
       len = d2fixed_buffered_n(d, precision.to_u32, buffer)
       {len, len}
     end
   end
 
-  def self.d2exp(d : Float64, precision : Int)
+  def self.d2exp(d : Float64, precision : Int) : String
     String.new(2000) do |buffer|
       len = d2exp_buffered_n(d, precision.to_u32, buffer)
       {len, len}
     end
   end
 
-  def self.d2gen(d : Float64, precision : Int)
+  def self.d2gen(d : Float64, precision : Int) : String
     String.new(773) do |buffer|
       len, _ = d2gen_buffered_n(d, precision.to_u32, buffer)
       {len, len}

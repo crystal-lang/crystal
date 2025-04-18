@@ -80,7 +80,7 @@ struct Time::Format
   end
 
   # Parses a string into a `Time`.
-  def parse(string, location = @location) : Time
+  def parse(string : String, location : Time::Location? = @location) : Time
     parser = Parser.new(string)
     parser.visit(pattern)
     parser.time(location)

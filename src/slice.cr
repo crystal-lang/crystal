@@ -67,7 +67,7 @@ struct Slice(T)
   #
   # String.new(slice) # => "abc"
   # ```
-  def initialize(@pointer : Pointer(T), size : Int, *, @read_only = false)
+  def initialize(@pointer : Pointer(T), size : Int, *, @read_only : Bool = false)
     @size = size.to_i32
   end
 
@@ -118,7 +118,7 @@ struct Slice(T)
   # slice = Slice.new(3, 10)
   # slice # => Slice[10, 10, 10]
   # ```
-  def self.new(size : Int, value : T, *, read_only = false)
+  def self.new(size : Int, value : T, *, read_only : Bool = false) : Slice(Int32) | Slice(UInt8)
     new(size, read_only: read_only) { value }
   end
 

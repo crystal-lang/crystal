@@ -11,7 +11,7 @@ require "log"
 # appropriately.
 abstract class OpenSSL::SSL::Context
   # :nodoc:
-  def self.default_method
+  def self.default_method : LibSSL::SSLMethod
     {% if LibSSL.has_method?(:tls_method) %}
       LibSSL.tls_method
     {% else %}
@@ -73,7 +73,7 @@ abstract class OpenSSL::SSL::Context
     # * `ca`: Path to a file containing the CA certificate chain or a directory containing all CA certificates.
     #    See `#ca_certificates=` and `#ca_certificates_path=`, respectively.
     #    Required if `verify_mode` is `peer`, `force-peer` or empty.
-    def self.from_hash(params) : self
+    def self.from_hash(params : Hash(String, String)) : self
       super(params)
     end
 
@@ -98,7 +98,7 @@ abstract class OpenSSL::SSL::Context
       }, hostname.as(Void*))
     end
 
-    private def alpn_protocol=(protocol : Bytes)
+    private def alpn_protocol=(protocol : Bytes) : Int32
       {% if LibSSL.has_method?(:ssl_ctx_set_alpn_protos) %}
         LibSSL.ssl_ctx_set_alpn_protos(@handle, protocol, protocol.size)
       {% else %}
@@ -156,7 +156,7 @@ abstract class OpenSSL::SSL::Context
     # * `ca`: Path to a file containing the CA certificate chain or a directory containing all CA certificates.
     #    See `#ca_certificates=` and `#ca_certificates_path=`, respectively.
     #    Required if `verify_mode` is `peer` or `force-peer`.
-    def self.from_hash(params) : self
+    def self.from_hash(params : URI::Params | Hash(String, String)) : self
       super(params)
     end
 
@@ -174,7 +174,7 @@ abstract class OpenSSL::SSL::Context
       {% end %}
     end
 
-    private def alpn_protocol=(protocol : Bytes)
+    private def alpn_protocol=(protocol : Bytes) : Nil
       {% if LibSSL.has_method?(:ssl_ctx_set_alpn_select_cb) %}
         alpn_cb = ->(ssl : LibSSL::SSL, o : LibC::Char**, olen : LibC::Char*, i : LibC::Char*, ilen : LibC::Int, data : Void*) {
           proto = Box(Bytes).unbox(data)
@@ -228,7 +228,7 @@ abstract class OpenSSL::SSL::Context
   # versions public too. So to provide insecure in the child classes, we need
   # a second constructor that we call from there without getting the
   # overridden ones of the childs.
-  protected def _initialize_insecure(method : LibSSL::SSLMethod)
+  protected def _initialize_insecure(method : LibSSL::SSLMethod) : Nil
     @handle = LibSSL.ssl_ctx_new(method)
     raise OpenSSL::Error.new("SSL_CTX_new") if @handle.null?
 
@@ -239,25 +239,25 @@ abstract class OpenSSL::SSL::Context
     {% end %}
   end
 
-  protected def self.insecure(method : LibSSL::SSLMethod)
+  protected def self.insecure(method : LibSSL::SSLMethod) : OpenSSL::SSL::Context::Client | OpenSSL::SSL::Context::Server
     obj = allocate
     obj._initialize_insecure(method)
     GC.add_finalizer(obj)
     obj
   end
 
-  def finalize
+  def finalize : Nil
     LibSSL.ssl_ctx_free(@handle)
   end
 
   # Sets the default paths for `ca_certificates=` and `ca_certificates_path=`.
-  def set_default_verify_paths
+  def set_default_verify_paths : Int32
     LibSSL.ssl_ctx_set_default_verify_paths(@handle)
   end
 
   # Sets the path to a file containing all CA certificates, in PEM format, used to
   # validate the peers certificate.
-  def ca_certificates=(file_path : String)
+  def ca_certificates=(file_path : String) : Nil
     ret = LibSSL.ssl_ctx_load_verify_locations(@handle, file_path, nil)
     raise OpenSSL::Error.new("SSL_CTX_load_verify_locations") unless ret == 1
   end
@@ -265,21 +265,21 @@ abstract class OpenSSL::SSL::Context
   # Sets the path to a directory containing all CA certificates used to
   # validate the peers certificate. The certificates should be in PEM format
   # and the `c_rehash(1)` utility must have been run in the directory.
-  def ca_certificates_path=(dir_path : String)
+  def ca_certificates_path=(dir_path : String) : Nil
     ret = LibSSL.ssl_ctx_load_verify_locations(@handle, nil, dir_path)
     raise OpenSSL::Error.new("SSL_CTX_load_verify_locations") unless ret == 1
   end
 
   # Specify the path to the certificate chain file to use. In server mode this
   # is presented to the client, in client mode this used as client certificate.
-  def certificate_chain=(file_path : String)
+  def certificate_chain=(file_path : String) : Nil
     ret = LibSSL.ssl_ctx_use_certificate_chain_file(@handle, file_path)
     raise OpenSSL::Error.new("SSL_CTX_use_certificate_chain_file") unless ret == 1
   end
 
   # Specify the path to the private key to use. The key must in PEM format.
   # The key must correspond to the entity certificate set by `certificate_chain=`.
-  def private_key=(file_path : String)
+  def private_key=(file_path : String) : Nil
     ret = LibSSL.ssl_ctx_use_privatekey_file(@handle, file_path, LibSSL::SSLFileType::PEM)
     raise OpenSSL::Error.new("SSL_CTX_use_PrivateKey_file") unless ret == 1
   end
@@ -295,7 +295,7 @@ abstract class OpenSSL::SSL::Context
   #       linked version of the system SSL library. A comprehensive list
   #       of ciphers can be found in the
   #       [OpenSSL Cipher documentation](https://www.openssl.org/docs/man3.0/man1/openssl-ciphers.html#CIPHER-STRINGS).
-  def ciphers=(ciphers : String)
+  def ciphers=(ciphers : String) : String
     ret = LibSSL.ssl_ctx_set_cipher_list(@handle, ciphers)
     raise OpenSSL::Error.new("SSL_CTX_set_cipher_list") if ret == 0
     ciphers
@@ -309,7 +309,7 @@ abstract class OpenSSL::SSL::Context
   #       linked version of the system SSL library. A comprehensive list
   #       of ciphersuites can be found in the
   #       [OpenSSL Cipher documentation](https://www.openssl.org/docs/man3.0/man1/openssl-ciphers.html#TLS-v1.3-cipher-suites).
-  def cipher_suites=(cipher_suites : String)
+  def cipher_suites=(cipher_suites : String) : String
     {% if LibSSL.has_method?(:ssl_ctx_set_ciphersuites) %}
       ret = LibSSL.ssl_ctx_set_ciphersuites(@handle, cipher_suites)
       raise OpenSSL::Error.new("SSL_CTX_set_ciphersuites") if ret == 0
@@ -325,7 +325,7 @@ abstract class OpenSSL::SSL::Context
   # WARNING: Does nothing as of Crystal 1.13.
   # WARNING: Didn't work as expected as of OpenSSL 1.1 (didn't configure TLSv1.2 and below).
   @[Deprecated("Deprecated with no replacement. Prefer #security_level, global system configuration or build your own from https://wiki.mozilla.org/Security/Server_Side_TLS")]
-  def set_modern_ciphers
+  def set_modern_ciphers : Nil
   end
 
   # Sets the current ciphers and ciphers suites to **intermediate** compatibility level as per Mozilla
@@ -334,7 +334,7 @@ abstract class OpenSSL::SSL::Context
   # WARNING: Does nothing as of Crystal 1.13.
   # WARNING: Didn't work as expected as of OpenSSL 1.1 (didn't configure TLSv1.2 and below).
   @[Deprecated("Deprecated with no replacement. Prefer #security_level, global system configuration or build your own from https://wiki.mozilla.org/Security/Server_Side_TLS")]
-  def set_intermediate_ciphers
+  def set_intermediate_ciphers : Nil
   end
 
   # Sets the current ciphers and ciphers suites to **old** compatibility level as per Mozilla
@@ -343,7 +343,7 @@ abstract class OpenSSL::SSL::Context
   # WARNING: Does nothing as of Crystal 1.13.
   # WARNING: Didn't work as expected as of OpenSSL 1.1 (didn't configure TLSv1.2 and below).
   @[Deprecated("Deprecated with no replacement. Prefer #security_level, global system configuration or build your own from https://wiki.mozilla.org/Security/Server_Side_TLS")]
-  def set_old_ciphers
+  def set_old_ciphers : Nil
   end
 
   # Returns the security level used by this TLS context.
@@ -361,7 +361,7 @@ abstract class OpenSSL::SSL::Context
   #
   # * https://www.openssl.org/docs/man1.1.1/man3/SSL_CTX_set_security_level.html
   # * https://wiki.debian.org/ContinuousIntegration/TriagingTips/openssl-1.1.1
-  def security_level=(value : Int32)
+  def security_level=(value : Int32) : Int32
     {% if LibSSL.has_method?(:ssl_ctx_set_security_level) %}
       LibSSL.ssl_ctx_set_security_level(@handle, value)
     {% else %}
@@ -372,7 +372,7 @@ abstract class OpenSSL::SSL::Context
 
   # Adds a temporary ECDH key curve to the TLS context. This is required to
   # enable the EECDH cipher suites. By default the prime256 curve will be used.
-  def set_tmp_ecdh_key(curve = LibCrypto::NID_X9_62_prime256v1) : Nil
+  def set_tmp_ecdh_key(curve : Int32 = LibCrypto::NID_X9_62_prime256v1) : Nil
     key = LibCrypto.ec_key_new_by_curve_name(curve)
     raise OpenSSL::Error.new("ec_key_new_by_curve_name") if key.null?
     LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_SET_TMP_ECDH, 0, key)
@@ -385,12 +385,12 @@ abstract class OpenSSL::SSL::Context
   end
 
   # Adds modes to the TLS context.
-  def add_modes(mode : OpenSSL::SSL::Modes)
+  def add_modes(mode : OpenSSL::SSL::Modes) : LibSSL::Modes
     OpenSSL::SSL::Modes.new LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_MODE, mode, nil)
   end
 
   # Removes modes from the TLS context.
-  def remove_modes(mode : OpenSSL::SSL::Modes)
+  def remove_modes(mode : OpenSSL::SSL::Modes) : LibSSL::Modes
     OpenSSL::SSL::Modes.new LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_CLEAR_MODE, mode, nil)
   end
 
@@ -414,7 +414,7 @@ abstract class OpenSSL::SSL::Context
   #   OpenSSL::SSL::Options::NO_SSL_V3   # disable deprecated SSLv3
   # )
   # ```
-  def add_options(options : OpenSSL::SSL::Options)
+  def add_options(options : OpenSSL::SSL::Options) : LibSSL::Options
     opts = {% if LibSSL.has_method?(:ssl_ctx_set_options) %}
              LibSSL.ssl_ctx_set_options(@handle, options)
            {% else %}
@@ -429,7 +429,7 @@ abstract class OpenSSL::SSL::Context
   # ```
   # context.remove_options(OpenSSL::SSL::Options::NO_SSL_V3)
   # ```
-  def remove_options(options : OpenSSL::SSL::Options)
+  def remove_options(options : OpenSSL::SSL::Options) : LibSSL::Options
     opts = {% if LibSSL.has_method?(:ssl_ctx_clear_options) %}
              LibSSL.ssl_ctx_clear_options(@handle, options)
            {% else %}
@@ -444,7 +444,7 @@ abstract class OpenSSL::SSL::Context
   end
 
   # Sets the verify mode. See the `SSL_CTX_set_verify(3)` manpage for more details.
-  def verify_mode=(mode : OpenSSL::SSL::VerifyMode)
+  def verify_mode=(mode : OpenSSL::SSL::VerifyMode) : Nil
     LibSSL.ssl_ctx_set_verify(@handle, mode, nil)
   end
 
@@ -458,7 +458,7 @@ abstract class OpenSSL::SSL::Context
   # ```
   # context.alpn_protocol = "h2"
   # ```
-  def alpn_protocol=(protocol : String)
+  def alpn_protocol=(protocol : String) : Int32?
     proto = Bytes.new(protocol.bytesize + 1)
     proto[0] = protocol.bytesize.to_u8
     protocol.to_slice.copy_to(proto.to_unsafe + 1, protocol.bytesize)
@@ -492,11 +492,11 @@ abstract class OpenSSL::SSL::Context
     {% end %}
   end
 
-  def to_unsafe
+  def to_unsafe : LibSSL::SSLContext
     @handle
   end
 
-  private def self.from_hash(params)
+  private def self.from_hash(params : Hash(String, String) | URI::Params) : OpenSSL::SSL::Context::Client | OpenSSL::SSL::Context::Server
     context = new
     if key = params["key"]?
       context.private_key = key

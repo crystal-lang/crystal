@@ -45,7 +45,7 @@ class IO::Memory < IO
   # io.read(slice)    # => 6
   # String.new(slice) # => "abcdef"
   # ```
-  def initialize(slice : Bytes, writeable = true)
+  def initialize(slice : Bytes, writeable : Bool = true)
     @buffer = slice.to_unsafe
     @bytesize = @capacity = slice.size.to_i
     @pos = 0
@@ -65,7 +65,7 @@ class IO::Memory < IO
   # io.gets(2)    # => "he"
   # io.print "hi" # raises IO::Error
   # ```
-  def self.new(string : String)
+  def self.new(string : String) : IO::Memory
     new string.to_slice, writeable: false
   end
 
@@ -123,7 +123,7 @@ class IO::Memory < IO
   end
 
   # :nodoc:
-  def gets(delimiter : Char, limit : Int32, chomp = false) : String?
+  def gets(delimiter : Char, limit : Int32, chomp : Bool = false) : String?
     return super if @encoding || delimiter.ord >= 128
 
     check_open
@@ -182,7 +182,7 @@ class IO::Memory < IO
   end
 
   # :nodoc:
-  def skip(bytes_count) : Nil
+  def skip(bytes_count : Int32 | UInt32) : Nil
     check_open
 
     available = @bytesize - @pos
@@ -438,19 +438,19 @@ class IO::Memory < IO
     end
   end
 
-  private def check_writeable
+  private def check_writeable : Nil
     unless @writeable
       raise IO::Error.new "Read-only stream"
     end
   end
 
-  private def check_resizeable
+  private def check_resizeable : Nil
     unless @resizeable
       raise IO::Error.new "Non-resizeable stream"
     end
   end
 
-  private def increase_capacity_by(count)
+  private def increase_capacity_by(count : Int32) : Pointer(UInt8)?
     raise IO::EOFError.new if count >= Int32::MAX - bytesize
 
     new_bytesize = @pos + count
@@ -462,7 +462,7 @@ class IO::Memory < IO
     resize_to_capacity(new_capacity)
   end
 
-  private def calculate_new_capacity(new_bytesize : Int32)
+  private def calculate_new_capacity(new_bytesize : Int32) : Int32
     # If the new bytesize is bigger than 1 << 30, the next power of two would
     # be 1 << 31, which is out of range for Int32.
     # So we limit the capacity to Int32::MAX in order to be able to use the
@@ -472,7 +472,7 @@ class IO::Memory < IO
     Math.pw2ceil(new_bytesize)
   end
 
-  private def resize_to_capacity(capacity)
+  private def resize_to_capacity(capacity : Int32) : Pointer(UInt8)
     @capacity = capacity
     @buffer = GC.realloc(@buffer, @capacity)
   end

@@ -34,7 +34,7 @@ struct Exception::CallStack
     end
   {% end %}
 
-  def self.setup_crash_handler
+  def self.setup_crash_handler : Int32?
     {% if flag?(:win32) %}
       Crystal::System::Signal.setup_seh_handler
     {% else %}
@@ -78,7 +78,7 @@ struct Exception::CallStack
       @count = 0
     end
 
-    def incr
+    def incr : Int32
       @count += 1
     end
   end
@@ -107,14 +107,14 @@ struct Exception::CallStack
     print_frame(rf)
   end
 
-  private def self.print_frame(repeated_frame)
+  private def self.print_frame(repeated_frame : Exception::CallStack::RepeatedFrame) : Nil
     Crystal::System.print_error "[%p] ", repeated_frame.ip
     print_frame_location(repeated_frame)
     Crystal::System.print_error " (%d times)", repeated_frame.count + 1 unless repeated_frame.count == 0
     Crystal::System.print_error "\n"
   end
 
-  private def self.print_frame_location(repeated_frame)
+  private def self.print_frame_location(repeated_frame : Exception::CallStack::RepeatedFrame) : Nil
     {% if flag?(:debug) %}
       if @@dwarf_loaded
         pc = CallStack.decode_address(repeated_frame.ip)
@@ -136,7 +136,7 @@ struct Exception::CallStack
     Crystal::System.print_error "???"
   end
 
-  protected def self.decode_frame(ip)
+  protected def self.decode_frame(ip : Pointer(Void)) : Tuple(Int64, String, String)?
     decode_frame(ip) do |offset, symbol, file|
       symbol = symbol ? String.new(symbol) : "??"
       file = file ? String.new(file) : "??"

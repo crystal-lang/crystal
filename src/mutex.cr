@@ -83,7 +83,7 @@ class Mutex
     @mutex_fiber = Fiber.current unless @protection.unchecked?
   end
 
-  private def try_lock
+  private def try_lock : Bool
     i = 1000
     while @state.swap(LOCKED, :acquire) != UNLOCKED
       while @state.get(:relaxed) != UNLOCKED

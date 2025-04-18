@@ -33,7 +33,7 @@ class TCPServer < TCPSocket
   end
 
   # Binds a socket to the *host* and *port* combination.
-  def initialize(host : String, port : Int, backlog : Int = SOMAXCONN, dns_timeout = nil, reuse_port : Bool = false)
+  def initialize(host : String, port : Int, backlog : Int = SOMAXCONN, dns_timeout : Nil = nil, reuse_port : Bool = false)
     Addrinfo.tcp(host, port, timeout: dns_timeout) do |addrinfo|
       super(addrinfo.family, addrinfo.type, addrinfo.protocol)
 

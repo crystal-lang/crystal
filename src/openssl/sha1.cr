@@ -7,11 +7,11 @@ require "./lib_crypto"
 # `Crypto::Bcrypt::Password`. For a generic cryptographic hash, use SHA-256 via
 # `OpenSSL::Digest.new("SHA256")`.
 class OpenSSL::SHA1
-  def self.hash(data : String)
+  def self.hash(data : String) : StaticArray(UInt8, 20)
     hash(data.to_unsafe, LibC::SizeT.new(data.bytesize))
   end
 
-  def self.hash(data : UInt8*, bytesize : LibC::SizeT)
+  def self.hash(data : UInt8*, bytesize : LibC::SizeT) : StaticArray(UInt8, 20)
     buffer = uninitialized UInt8[20]
     LibCrypto.sha1(data, bytesize, buffer)
     buffer

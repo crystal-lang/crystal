@@ -128,7 +128,7 @@ enum Signal : Int32
   #   # ...
   # end
   # ```
-  def trap_handler?
+  def trap_handler? : Proc(Signal, Nil)?
     {% if @type.has_constant?("CHLD") %}
       return Crystal::System::Signal.child_handler if self == CHLD
     {% end %}

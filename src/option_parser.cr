@@ -85,13 +85,13 @@ class OptionParser
   end
 
   class InvalidOption < Exception
-    def initialize(option)
+    def initialize(option : String)
       super("Invalid option: #{option}")
     end
   end
 
   class MissingOption < Exception
-    def initialize(option)
+    def initialize(option : String)
       super("Missing option: #{option}")
     end
   end
@@ -207,7 +207,7 @@ class OptionParser
   # Examples of valid subcommands:
   #
   # * `foo`, `run`
-  def on(flag : String, description : String, &block : String ->)
+  def on(flag : String, description : String, &block : String ->) : OptionParser::Handler
     append_flag flag, description
 
     flag, value_type = parse_flag_definition(flag)
@@ -218,7 +218,7 @@ class OptionParser
   #
   # See the other definition of `on` for examples. This method does not support
   # subcommands.
-  def on(short_flag : String, long_flag : String, description : String, &block : String ->)
+  def on(short_flag : String, long_flag : String, description : String, &block : String ->) : OptionParser::Handler
     check_starts_with_dash short_flag, "short_flag", allow_empty: true
     check_starts_with_dash long_flag, "long_flag"
 
@@ -240,7 +240,7 @@ class OptionParser
     @handlers[short_flag] = @handlers[long_flag] = handler
   end
 
-  private def parse_flag_definition(flag : String)
+  private def parse_flag_definition(flag : String) : Tuple(String, OptionParser::FlagValue)
     case flag
     when /\A--(\S+)\s+\[\S+\]\z/
       {"--#{$1}", FlagValue::Optional}
@@ -264,7 +264,7 @@ class OptionParser
   # before, and the flags registered after the call.
   #
   # This way, you can group the different options in an easier to read way.
-  def separator(message = "") : Nil
+  def separator(message : String = "") : Nil
     @flags << message.to_s
   end
 
@@ -274,21 +274,21 @@ class OptionParser
   # that your program expects (for example, filenames). The default behaviour
   # is to do nothing. The arguments can also be extracted from the *args* array
   # passed to `#parse` after parsing.
-  def unknown_args(&@unknown_args : Array(String), Array(String) ->)
+  def unknown_args(&@unknown_args : Array(String), Array(String) ->) : Proc(Array(String), Array(String), Nil)
   end
 
   # Sets a handler for when a option that expects an argument wasn't given any.
   #
   # You typically use this to display a help message.
   # The default behaviour is to raise `MissingOption`.
-  def missing_option(&@missing_option : String ->)
+  def missing_option(&@missing_option : String ->) : Proc(String, Nil)
   end
 
   # Sets a handler for option arguments that didn't match any of the setup options.
   #
   # You typically use this to display a help message.
   # The default behaviour is to raise `InvalidOption`.
-  def invalid_option(&@invalid_option : String ->)
+  def invalid_option(&@invalid_option : String ->) : Proc(String, Nil)
   end
 
   # Sets a handler which runs before each argument is parsed. This callback is
@@ -297,7 +297,7 @@ class OptionParser
   #
   # You typically use this to implement advanced option parsing behaviour such
   # as treating all options after a filename differently (along with `#stop`).
-  def before_each(&@before_each : String ->)
+  def before_each(&@before_each : String ->) : Proc(String, Nil)
   end
 
   # Stops the current parse and returns immediately, leaving the remaining flags
@@ -316,7 +316,7 @@ class OptionParser
     @flags.join io, '\n'
   end
 
-  private def append_flag(flag, description)
+  private def append_flag(flag : String, description : String) : Array(String)
     indent = " " * 37
     description = description.gsub("\n", "\n#{indent}")
     if flag.size >= 33
@@ -326,7 +326,7 @@ class OptionParser
     end
   end
 
-  private def check_starts_with_dash(arg, name, allow_empty = false)
+  private def check_starts_with_dash(arg : String, name : String, allow_empty : Bool = false) : Nil
     return if allow_empty && arg.empty?
 
     unless arg.starts_with?('-')
@@ -358,7 +358,7 @@ class OptionParser
   end
 
   # Parses the passed *args* (defaults to `ARGV`), running the handlers associated to each option.
-  def parse(args = ARGV) : Nil
+  def parse(args : Array(String) = ARGV) : Nil
     with_preserved_state do
       # List of indexes in `args` which have been handled and must be deleted
       handled_args = [] of Int32

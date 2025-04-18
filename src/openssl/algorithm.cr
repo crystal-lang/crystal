@@ -17,7 +17,7 @@ module OpenSSL
     #
     # The internal bindings to the `LibCrypto` digest operations sometimes require a hash algorithm
     # implementation to be passed as one of the arguments.
-    def to_evp
+    def to_evp : LibCrypto::EVP_MD
       case self
       when MD4       then LibCrypto.evp_md4
       when MD5       then LibCrypto.evp_md5

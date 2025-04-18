@@ -22,7 +22,7 @@ module Regex::PCRE2
   end
 
   # :nodoc:
-  def initialize(*, _source @source : String, _options @options)
+  def initialize(*, _source @source : String, _options @options : Regex::Options)
     options = pcre2_compile_options(options) | LibPCRE2::UTF | LibPCRE2::DUPNAMES | LibPCRE2::UCP
     @re = PCRE2.compile(source, options) do |error_message|
       raise ArgumentError.new(error_message)
@@ -54,14 +54,14 @@ module Regex::PCRE2
     end
   end
 
-  protected def self.get_error_message(errorcode)
+  protected def self.get_error_message(errorcode : Int32 | LibPCRE2::Error) : String
     String.new(256) do |buffer|
       bytesize = LibPCRE2.get_error_message(errorcode, buffer, 256)
       {bytesize, 0}
     end
   end
 
-  private def pcre2_compile_options(options)
+  private def pcre2_compile_options(options : Regex::Options) : Int32
     flag = 0
     Regex::CompileOptions.each do |option|
       if options.includes?(option)
@@ -92,11 +92,11 @@ module Regex::PCRE2
     flag
   end
 
-  def self.supports_compile_flag?(options)
+  def self.supports_compile_flag?(options : Regex::Options) : Bool
     true
   end
 
-  private def pcre2_match_options(options)
+  private def pcre2_match_options(options : Regex::Options) : Int32
     flag = 0
     Regex::Options.each do |option|
       if options.includes?(option)
@@ -125,7 +125,7 @@ module Regex::PCRE2
     flag
   end
 
-  private def pcre2_match_options(options : Regex::MatchOptions)
+  private def pcre2_match_options(options : Regex::MatchOptions) : Int32
     flag = 0
     Regex::MatchOptions.each do |option|
       if options.includes?(option)
@@ -146,11 +146,11 @@ module Regex::PCRE2
     flag
   end
 
-  def self.supports_match_flag?(options)
+  def self.supports_match_flag?(options : Regex::MatchOptions) : Bool
     true
   end
 
-  protected def self.error_impl(source)
+  protected def self.error_impl(source : String) : String?
     code = PCRE2.compile(source, LibPCRE2::UTF | LibPCRE2::DUPNAMES | LibPCRE2::UCP) do |error_message|
       return error_message
     end
@@ -160,20 +160,20 @@ module Regex::PCRE2
     nil
   end
 
-  private def pattern_info(what)
+  private def pattern_info(what : Int32) : UInt32
     value = uninitialized UInt32
     pattern_info(what, pointerof(value))
     value
   end
 
-  private def pattern_info(what, where)
+  private def pattern_info(what : Int32, where : Pointer(Pointer(UInt8)) | Pointer(UInt32)) : Nil
     ret = LibPCRE2.pattern_info(@re, what, where)
     if ret != 0
       raise "Error pattern_info #{what}: #{ret}"
     end
   end
 
-  private def name_table_impl
+  private def name_table_impl : Hash(Int32, String)
     lookup = Hash(Int32, String).new
 
     each_named_capture_group do |capture_number, name_entry|
@@ -200,11 +200,11 @@ module Regex::PCRE2
     end
   end
 
-  private def capture_count_impl
+  private def capture_count_impl : Int32
     pattern_info(LibPCRE2::INFO_CAPTURECOUNT).to_i32
   end
 
-  private def match_impl(str, byte_index, options)
+  private def match_impl(str : String, byte_index : Int32, options : Regex::MatchOptions | Regex::Options) : Regex::MatchData?
     match_data = match_data(str, byte_index, options) || return
 
     ovector_count = LibPCRE2.get_ovector_count(match_data)
@@ -218,7 +218,7 @@ module Regex::PCRE2
     ::Regex::MatchData.new(self, @re, str, byte_index, ovector.to_unsafe, ovector_count.to_i32 &- 1)
   end
 
-  private def matches_impl(str, byte_index, options)
+  private def matches_impl(str : String, byte_index : Int32, options : Regex::MatchOptions | Regex::Options) : Bool
     if match_data = match_data(str, byte_index, options)
       true
     else
@@ -238,7 +238,7 @@ module Regex::PCRE2
   # can't be any concurrent access to the JIT stack.
   @@jit_stack = Crystal::ThreadLocalValue(LibPCRE2::JITStack*).new
 
-  def self.jit_stack
+  def self.jit_stack : Pointer(LibPCRE2::JITStack)
     @@jit_stack.get do
       LibPCRE2.jit_stack_create(32_768, 1_048_576, nil) || raise "Error allocating JIT stack"
     end
@@ -250,20 +250,20 @@ module Regex::PCRE2
   # This buffer is heap-allocated and should be re-used for subsequent matches.
   @match_data = Crystal::ThreadLocalValue(LibPCRE2::MatchData*).new
 
-  private def match_data
+  private def match_data : Pointer(LibPCRE2::MatchData)
     @match_data.get do
       LibPCRE2.match_data_create_from_pattern(@re, nil)
     end
   end
 
-  def finalize
+  def finalize : Nil
     @match_data.consume_each do |match_data|
       LibPCRE2.match_data_free(match_data)
     end
     LibPCRE2.code_free @re
   end
 
-  private def match_data(str, byte_index, options)
+  private def match_data(str : String, byte_index : Int32, options : Regex::MatchOptions | Regex::Options) : Pointer(LibPCRE2::MatchData)?
     match_data = self.match_data
     match_count = LibPCRE2.match(@re, str, str.bytesize, byte_index, pcre2_match_options(options), match_data, PCRE2.match_context)
 

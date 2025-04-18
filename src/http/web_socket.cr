@@ -6,7 +6,7 @@ class HTTP::WebSocket
   getter? closed = false
 
   # :nodoc:
-  def initialize(io : IO, sync_close = true)
+  def initialize(io : IO, sync_close : Bool = true)
     initialize(Protocol.new(io, sync_close: sync_close))
   end
 
@@ -34,7 +34,7 @@ class HTTP::WebSocket
   # HTTP::WebSocket.new(
   #   URI.parse("ws://user:password@websocket.example.com/chat")) # Creates a new WebSocket to `websocket.example.com` with an HTTP basic auth Authorization header
   # ```
-  def self.new(uri : URI | String, headers = HTTP::Headers.new)
+  def self.new(uri : URI | String, headers : HTTP::Headers = HTTP::Headers.new) : HTTP::WebSocket
     new(Protocol.new(uri, headers: headers))
   end
 
@@ -47,7 +47,7 @@ class HTTP::WebSocket
   # HTTP::WebSocket.new("websocket.example.com", "/chat")            # Creates a new WebSocket to `websocket.example.com`
   # HTTP::WebSocket.new("websocket.example.com", "/chat", tls: true) # Creates a new WebSocket with TLS to `ẁebsocket.example.com`
   # ```
-  def self.new(host : String, path : String, port = nil, tls : HTTP::Client::TLSContext = nil, headers = HTTP::Headers.new)
+  def self.new(host : String, path : String, port : Int32? = nil, tls : HTTP::Client::TLSContext = nil, headers : HTTP::Headers = HTTP::Headers.new) : HTTP::WebSocket
     new(Protocol.new(host, path, port, tls, headers))
   end
 
@@ -62,23 +62,23 @@ class HTTP::WebSocket
   end
 
   # Called when a text message is received.
-  def on_message(&@on_message : String ->)
+  def on_message(&@on_message : String ->) : Proc(String, Nil)
   end
 
   # Called when a binary message is received.
-  def on_binary(&@on_binary : Bytes ->)
+  def on_binary(&@on_binary : Bytes ->) : Proc(Slice(UInt8), Nil)
   end
 
   # Called when the connection is closed by the other party.
-  def on_close(&@on_close : CloseCode, String ->)
+  def on_close(&@on_close : CloseCode, String ->) : Proc(HTTP::WebSocket::CloseCode, String, Nil)
   end
 
-  protected def check_open
+  protected def check_open : Nil
     raise IO::Error.new "Closed socket" if closed?
   end
 
   # Sends a message payload (message).
-  def send(message) : Nil
+  def send(message : String) : Nil
     check_open
     @ws.send(message)
   end
@@ -92,7 +92,7 @@ class HTTP::WebSocket
   end
 
   # Sends a PONG frame, which must be in response to a previously received PING frame from `#on_ping`.
-  def pong(message = nil) : Nil
+  def pong(message : String? = nil) : Nil
     check_open
     @ws.pong(message)
   end
@@ -126,7 +126,7 @@ class HTTP::WebSocket
 
   # Sends a close frame, and closes the connection.
   # The close frame may contain a body (message) that indicates the reason for closing.
-  def close(code : CloseCode | Int? = nil, message = nil) : Nil
+  def close(code : CloseCode | Int? = nil, message : String? = nil) : Nil
     return if closed?
     @closed = true
     @ws.close(code, message)

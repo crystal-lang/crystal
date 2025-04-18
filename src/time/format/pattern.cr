@@ -1,7 +1,7 @@
 struct Time::Format
   # :nodoc:
   module Pattern
-    def visit(pattern)
+    def visit(pattern : String) : Nil
       reader = Char::Reader.new(pattern)
       while reader.has_next?
         char = reader.current_char
@@ -10,7 +10,7 @@ struct Time::Format
       end
     end
 
-    private def check_char(reader, char)
+    private def check_char(reader : Char::Reader, char : Char) : Char::Reader
       case char
       when '%'
         case char = reader.next_char
@@ -171,7 +171,7 @@ struct Time::Format
       reader
     end
 
-    def date_and_time
+    def date_and_time : Int32?
       short_day_name
       char ' '
       short_month_name
@@ -183,7 +183,7 @@ struct Time::Format
       year
     end
 
-    def date
+    def date : Int32?
       month_zero_padded
       char '/'
       day_of_month_zero_padded
@@ -191,7 +191,7 @@ struct Time::Format
       year_modulo_100
     end
 
-    def year_month_day
+    def year_month_day : Int32?
       year
       char '-'
       month_zero_padded
@@ -199,7 +199,7 @@ struct Time::Format
       day_of_month_zero_padded
     end
 
-    def twelve_hour_time
+    def twelve_hour_time : Bool?
       hour_12_zero_padded
       char ':'
       minute
@@ -209,13 +209,13 @@ struct Time::Format
       am_pm_upcase
     end
 
-    def twenty_four_hour_time
+    def twenty_four_hour_time : Int32?
       hour_24_zero_padded
       char ':'
       minute
     end
 
-    def twenty_four_hour_time_with_seconds
+    def twenty_four_hour_time_with_seconds : Int32?
       hour_24_zero_padded
       char ':'
       minute

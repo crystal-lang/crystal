@@ -14993,7 +14993,7 @@ module Unicode
     hash[key] = value
   end
 
-  private def self.put(hash : Hash, key, *values) : Nil
+  private def self.put(hash : Hash, key : Int32, *values) : Nil
     hash[key] = values
   end
 end

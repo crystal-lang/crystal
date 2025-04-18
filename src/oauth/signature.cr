@@ -3,7 +3,7 @@ struct OAuth::Signature
   def initialize(@consumer_key : String, @client_shared_secret : String, @oauth_token : String? = nil, @token_shared_secret : String? = nil, @extra_params : Hash(String, String)? = nil)
   end
 
-  def base_string(request, tls, ts, nonce) : String
+  def base_string(request : HTTP::Request, tls : Nil | OpenSSL::SSL::Context::Client | Bool, ts : String, nonce : String) : String
     base_string request, tls, gather_params(request, ts, nonce)
   end
 
@@ -17,12 +17,12 @@ struct OAuth::Signature
     end
   end
 
-  def compute(request, tls, ts, nonce) : String
+  def compute(request : HTTP::Request, tls : Nil | OpenSSL::SSL::Context::Client | Bool, ts : String, nonce : String) : String
     base_string = base_string(request, tls, ts, nonce)
     Base64.strict_encode(OpenSSL::HMAC.digest :sha1, key, base_string)
   end
 
-  def authorization_header(request, tls, ts, nonce) : String
+  def authorization_header(request : HTTP::Request, tls : Nil | OpenSSL::SSL::Context::Client | Bool, ts : String, nonce : String) : String
     oauth_signature = compute request, tls, ts, nonce
 
     auth_header = AuthorizationHeader.new
@@ -39,7 +39,7 @@ struct OAuth::Signature
     auth_header.to_s
   end
 
-  private def base_string(request, tls, params)
+  private def base_string(request : HTTP::Request, tls : Nil | OpenSSL::SSL::Context::Client | Bool, params : OAuth::Params) : String
     host, port = host_and_port(request, tls)
 
     String.build do |str|
@@ -59,7 +59,7 @@ struct OAuth::Signature
     end
   end
 
-  private def gather_params(request, ts, nonce)
+  private def gather_params(request : HTTP::Request, ts : String, nonce : String) : OAuth::Params
     params = Params.new
     params.add "oauth_consumer_key", @consumer_key
     params.add "oauth_nonce", nonce
@@ -87,7 +87,7 @@ struct OAuth::Signature
     params
   end
 
-  private def host_and_port(request, tls)
+  private def host_and_port(request : HTTP::Request, tls : Nil | OpenSSL::SSL::Context::Client | Bool) : Tuple(String, Int32 | Nil)
     host_header = request.headers["Host"]
     if colon_index = host_header.index ':'
       host = host_header[0...colon_index]

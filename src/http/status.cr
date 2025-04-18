@@ -81,7 +81,7 @@ enum HTTP::Status
   # HTTP::Status.new(123)  # => 123
   # HTTP::Status.new(1000) # raises ArgumentError
   # ```
-  def self.new(status_code : Int32)
+  def self.new(status_code : Int32) : HTTP::Status
     raise ArgumentError.new("Invalid HTTP status code: #{status_code}") unless 100 <= status_code <= 999
     previous_def(status_code)
   end

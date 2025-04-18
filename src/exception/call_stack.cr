@@ -22,7 +22,7 @@ struct Exception::CallStack
 
   @@skip = [] of String
 
-  def self.skip(filename) : Nil
+  def self.skip(filename : String) : Nil
     @@skip << filename
   end
 
@@ -40,7 +40,7 @@ struct Exception::CallStack
     @backtrace ||= decode_backtrace
   end
 
-  private def decode_backtrace
+  private def decode_backtrace : Array(String)
     {% if flag?(:wasm32) %}
       [] of String
     {% else %}

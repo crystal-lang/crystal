@@ -52,7 +52,7 @@ struct Exception::CallStack
     {% end %}
   end
 
-  protected def self.read_dwarf_sections(program, base_address = 0)
+  protected def self.read_dwarf_sections(program : String, base_address : UInt64 | Int32 = 0) : Array(Tuple(UInt64, UInt64, String))?
     {{ flag?(:win32) ? Crystal::PE : Crystal::ELF }}.open(program) do |image|
       {% if flag?(:win32) %}
         base_address -= image.original_image_base
@@ -101,7 +101,7 @@ struct Exception::CallStack
     end
   end
 
-  protected def self.decode_address(ip)
+  protected def self.decode_address(ip : Pointer(Void)) : UInt64
     ip.address
   end
 end

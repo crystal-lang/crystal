@@ -80,7 +80,7 @@ class Compress::Zlib::Writer < IO
     @io.close if @sync_close
   end
 
-  private def write_header
+  private def write_header : Nil
     @wrote_header = true
 
     # CMF byte: 7 for window size, 8 for compression method (deflate)

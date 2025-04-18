@@ -86,7 +86,7 @@ class Fiber
   property list_next : Fiber?
 
   # :nodoc:
-  def self.inactive(fiber : Fiber)
+  def self.inactive(fiber : Fiber) : Nil
     fibers.delete(fiber)
   end
 
@@ -134,7 +134,7 @@ class Fiber
   {% end %}
 
   # :nodoc:
-  def initialize(stack : Void*, thread)
+  def initialize(stack : Void*, thread : Thread)
     @proc = Proc(Void).new { }
 
     # TODO: should creating a new context for the main fiber also be platform specific?
@@ -164,7 +164,7 @@ class Fiber
   end
 
   # :nodoc:
-  def run
+  def run : Nil
     GC.unlock_read
 
     @proc.call
@@ -389,14 +389,14 @@ class Fiber
   # :nodoc:
   #
   # See `Reference#exec_recursive` for details.
-  def exec_recursive_hash
+  def exec_recursive_hash : Hash(Tuple(UInt64, Symbol), Nil)
     @exec_recursive_hash ||= Hash({UInt64, Symbol}, Nil).new
   end
 
   # :nodoc:
   #
   # See `Reference#exec_recursive_clone` for details.
-  def exec_recursive_clone_hash
+  def exec_recursive_clone_hash : Hash(UInt64, UInt64)
     @exec_recursive_clone_hash ||= Hash(UInt64, UInt64).new
   end
 end

@@ -51,7 +51,7 @@ struct BitArray
     arr
   end
 
-  def ==(other : BitArray)
+  def ==(other : BitArray) : Bool
     return false if size != other.size
     # NOTE: If BitArray implements resizing, there may be more than 1 binary
     # representation and their hashes for equivalent BitArrays after a downsize as the
@@ -366,7 +366,7 @@ struct BitArray
   end
 
   @[AlwaysInline]
-  private def set_bits(bytes : Slice(UInt8), value, index, mask)
+  private def set_bits(bytes : Slice(UInt8), value : Bool, index : Int32, mask : UInt8) : UInt8
     if value
       bytes[index] |= mask
     else
@@ -376,7 +376,7 @@ struct BitArray
 
   # returns (1 << from) | (1 << (from + 1)) | ... | (1 << to)
   @[AlwaysInline]
-  private def uint8_mask(from, to)
+  private def uint8_mask(from : Int32, to : Int32) : UInt8
     (Int8::MIN >> (to - from)).to_u8! >> (7 - to)
   end
 
@@ -396,7 +396,7 @@ struct BitArray
   # ba.toggle(3)
   # ba[3] # => true
   # ```
-  def toggle(index) : Nil
+  def toggle(index : Int32) : Nil
     bit_index, sub_index = bit_index_and_sub_index(index)
     @bits[bit_index] ^= 1 << sub_index
   end
@@ -417,7 +417,7 @@ struct BitArray
   # ba.toggle(1..-2)
   # ba.to_s # => "BitArray[01110]"
   # ```
-  def toggle(range : Range)
+  def toggle(range : Range) : UInt32?
     toggle(*Indexable.range_to_index_and_count(range, size) || raise IndexError.new)
   end
 
@@ -438,7 +438,7 @@ struct BitArray
   # ba.toggle(1, 3)
   # ba.to_s # => "BitArray[01110]"
   # ```
-  def toggle(start : Int, count : Int)
+  def toggle(start : Int, count : Int) : UInt32?
     start, count = normalize_start_and_count(start, count)
     return if count == 0
 
@@ -459,7 +459,7 @@ struct BitArray
 
   # returns (1 << from) | (1 << (from + 1)) | ... | (1 << to)
   @[AlwaysInline]
-  private def uint32_mask(from, to)
+  private def uint32_mask(from : Int32, to : Int32) : UInt32
     (Int32::MIN >> (to - from)).to_u32! >> (31 - to)
   end
 
@@ -641,7 +641,7 @@ struct BitArray
     bit_array
   end
 
-  private def bit_index_and_sub_index(index)
+  private def bit_index_and_sub_index(index : Int32) : Tuple(Int32, Int32)
     bit_index_and_sub_index(index) { raise IndexError.new }
   end
 
@@ -652,17 +652,17 @@ struct BitArray
     index.divmod(32)
   end
 
-  protected def clear_unused_bits
+  protected def clear_unused_bits : UInt32?
     # There are no unused bits if `size` is a multiple of 32.
     bit_index, sub_index = @size.divmod(32)
     @bits[bit_index] &= ~(UInt32::MAX << sub_index) unless sub_index == 0
   end
 
-  private def bytesize
+  private def bytesize : Int32
     (@size - 1) // 8 + 1
   end
 
-  private def malloc_size
+  private def malloc_size : Int32
     (@size - 1) // 32 + 1
   end
 end

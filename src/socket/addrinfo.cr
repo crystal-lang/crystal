@@ -46,7 +46,7 @@ class Socket
     #
     # addrinfos = Socket::Addrinfo.resolve("example.org", "http", type: Socket::Type::STREAM, protocol: Socket::Protocol::TCP)
     # ```
-    def self.resolve(domain : String, service, family : Family? = nil, type : Type = nil, protocol : Protocol = Protocol::IP, timeout = nil) : Array(Addrinfo)
+    def self.resolve(domain : String, service : Int32, family : Family? = nil, type : Type = nil, protocol : Protocol = Protocol::IP, timeout : Nil = nil) : Array(Addrinfo)
       addrinfos = [] of Addrinfo
 
       getaddrinfo(domain, service, family, type, protocol, timeout) do |addrinfo|
@@ -102,7 +102,7 @@ class Socket
       end
 
       @[Deprecated("Use `.from_os_error` instead")]
-      def self.new(error_code : Int32, message, domain)
+      def self.new(error_code : Int32, message : String, domain : String) : Socket::Addrinfo::Error
         from_os_error(message, Errno.new(error_code), domain: domain, type: nil, service: nil, protocol: nil)
       end
 
@@ -111,19 +111,19 @@ class Socket
         new error_code, nil, domain: domain
       end
 
-      protected def self.new_from_os_error(message : String?, os_error, *, domain, type, service, protocol, **opts)
+      protected def self.new_from_os_error(message : String?, os_error : Errno, *, domain : String, type : Socket::Type?, service : Int32?, protocol : Socket::Protocol?, **opts) : Socket::Addrinfo::Error
         new(message, **opts)
       end
 
-      protected def self.new_from_os_error(message : String?, os_error, *, domain, **opts)
+      protected def self.new_from_os_error(message : String?, os_error : Errno, *, domain : String, **opts) : Socket::Addrinfo::Error
         new(message, **opts)
       end
 
-      def self.build_message(message, *, domain, **opts)
+      def self.build_message(message : String?, *, domain : String, **opts) : String
         "Hostname lookup for #{domain} failed"
       end
 
-      def self.os_error_message(os_error : Errno | WinError, *, type, service, protocol, **opts)
+      def self.os_error_message(os_error : Errno | WinError, *, type : Socket::Type?, service : Int32?, protocol : Socket::Protocol?, **opts) : String
         # when `EAI_NONAME` etc. is an integer then only `os_error.value` can
         # match; when `EAI_NONAME` is a `WinError` then `os_error` itself can
         # match
@@ -168,7 +168,7 @@ class Socket
     #
     # addrinfos = Socket::Addrinfo.tcp("example.org", 80)
     # ```
-    def self.tcp(domain : String, service, family = Family::UNSPEC, timeout = nil) : Array(Addrinfo)
+    def self.tcp(domain : String, service : Int32, family : Socket::Family = Family::UNSPEC, timeout : Nil = nil) : Array(Addrinfo)
       resolve(domain, service, family, Type::STREAM, Protocol::TCP, timeout)
     end
 
@@ -187,7 +187,7 @@ class Socket
     #
     # addrinfos = Socket::Addrinfo.udp("example.org", 53)
     # ```
-    def self.udp(domain : String, service, family = Family::UNSPEC, timeout = nil) : Array(Addrinfo)
+    def self.udp(domain : String, service : Int32, family : Socket::Family = Family::UNSPEC, timeout : Nil = nil) : Array(Addrinfo)
       resolve(domain, service, family, Type::DGRAM, Protocol::UDP, timeout)
     end
 

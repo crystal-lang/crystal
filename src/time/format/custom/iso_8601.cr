@@ -123,14 +123,14 @@ struct Time::Format
   # ```
   module ISO_8601_DATE
     # Parses a string into a `Time`.
-    def self.parse(string, location : Time::Location? = Time::Location::UTC) : Time
+    def self.parse(string : String, location : Time::Location? = Time::Location::UTC) : Time
       parser = Parser.new(string)
       parser.year_month_day_iso_8601
       parser.time(location)
     end
 
     # Formats a `Time` into the given *io*.
-    def self.format(time : Time, io : IO)
+    def self.format(time : Time, io : IO) : String::Builder
       formatter = Formatter.new(time, io)
       formatter.year_month_day_iso_8601
       io
@@ -152,14 +152,14 @@ struct Time::Format
   # ```
   module ISO_8601_DATE_TIME
     # Parses a string into a `Time`.
-    def self.parse(string, location : Time::Location? = Time::Location::UTC) : Time
+    def self.parse(string : String, location : Time::Location? = Time::Location::UTC) : Time
       parser = Parser.new(string)
       parser.date_time_iso_8601
       parser.time(location)
     end
 
     # Formats a `Time` into the given *io*.
-    def self.format(time : Time, io : IO)
+    def self.format(time : Time, io : IO) : String::Builder
       formatter = Formatter.new(time, io)
       formatter.rfc_3339
       io

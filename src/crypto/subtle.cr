@@ -9,7 +9,7 @@ module Crypto::Subtle
   # ```
   #
   # NOTE: *x* and *y* must be able to respond to `to_slice`.
-  def self.constant_time_compare(x, y) : Bool
+  def self.constant_time_compare(x : Slice(Int32) | String | Slice(UInt8), y : Slice(Int32) | String | Slice(UInt8)) : Bool
     x = x.to_slice
     y = y.to_slice
     return false if x.size != y.size
@@ -23,7 +23,7 @@ module Crypto::Subtle
     constant_time_byte_eq(v, 0) == 1
   end
 
-  def self.constant_time_byte_eq(x, y)
+  def self.constant_time_byte_eq(x : UInt8 | Int32, y : Int32 | UInt8) : UInt8 | Int32
     z = ~(x ^ y)
     z &= z >> 4
     z &= z >> 2

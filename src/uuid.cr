@@ -102,7 +102,7 @@ struct UUID
 
   # Creates UUID from 16-bytes slice. Raises if *slice* isn't 16 bytes long. See
   # `#initialize` for *variant* and *version*.
-  def self.new(slice : Slice(UInt8), variant : Variant? = nil, version : Version? = nil)
+  def self.new(slice : Slice(UInt8), variant : Variant? = nil, version : Version? = nil) : UUID
     raise ArgumentError.new "Invalid bytes length #{slice.size}, expected 16" unless slice.size == 16
 
     bytes = uninitialized UInt8[16]
@@ -113,14 +113,14 @@ struct UUID
 
   # Creates another `UUID` which is a copy of *uuid*, but allows overriding
   # *variant* or *version*.
-  def self.new(uuid : UUID, variant : Variant? = nil, version : Version? = nil)
+  def self.new(uuid : UUID, variant : Variant? = nil, version : Version? = nil) : UUID
     new(uuid.bytes, variant, version)
   end
 
   # Creates new UUID by decoding `value` string from hyphenated (ie `ba714f86-cac6-42c7-8956-bcf5105e1b81`),
   # hexstring (ie `89370a4ab66440c8add39e06f2bb6af6`) or URN (ie `urn:uuid:3f9eaf9e-cdb0-45cc-8ecb-0e5b2bfb0c20`)
   # format, raising an `ArgumentError` if the string does not match any of these formats.
-  def self.new(value : String, variant : Variant? = nil, version : Version? = nil)
+  def self.new(value : String, variant : Variant? = nil, version : Version? = nil) : UUID
     bytes = uninitialized UInt8[16]
 
     case value.size
@@ -193,13 +193,13 @@ struct UUID
 
   # Raises `ArgumentError` if string `value` at index `i` doesn't contain hex
   # digit followed by another hex digit.
-  private def self.hex_pair_at(value : String, i) : UInt8
+  private def self.hex_pair_at(value : String, i : Int32) : UInt8
     hex_pair_at?(value, i) || raise ArgumentError.new "Invalid hex character at position #{i * 2} or #{i * 2 + 1}, expected '0' to '9', 'a' to 'f' or 'A' to 'F'"
   end
 
   # Parses 2 hex digits from `value` at index `i` and `i + 1`, returning `nil`
   # if one or both are not actually hex digits.
-  private def self.hex_pair_at?(value : String, i) : UInt8?
+  private def self.hex_pair_at?(value : String, i : Int32) : UInt8?
     if (ch1 = value[i].to_u8?(16)) && (ch2 = value[i + 1].to_u8?(16))
       ch1 * 16 + ch2
     end
@@ -328,7 +328,7 @@ struct UUID
   # Generates an RFC9562-compatible v7 UUID, allowing the values to be sorted
   # chronologically (with 1ms precision) by their raw or hexstring
   # representation.
-  def self.v7(random r : Random = Random::Secure)
+  def self.v7(random r : Random = Random::Secure) : UUID
     buffer = uninitialized UInt8[18]
     value = buffer.to_slice
 

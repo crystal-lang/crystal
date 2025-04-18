@@ -116,17 +116,17 @@ module Float::Printer::Dragonbox
 
   # Utilities for fast log computation.
   private module Log
-    def self.floor_log10_pow2(e : Int)
+    def self.floor_log10_pow2(e : Int) : Int32
       # Precondition: `-2620 <= e <= 2620`
       (e &* 315653) >> 20
     end
 
-    def self.floor_log2_pow10(e : Int)
+    def self.floor_log2_pow10(e : Int) : Int32
       # Precondition: `-1233 <= e <= 1233`
       (e &* 1741647) >> 19
     end
 
-    def self.floor_log10_pow2_minus_log10_4_over_3(e : Int)
+    def self.floor_log10_pow2_minus_log10_4_over_3(e : Int) : Int32
       # Precondition: `-2985 <= e <= 2936`
       (e &* 631305 &- 261663) >> 21
     end
@@ -199,7 +199,7 @@ module Float::Printer::Dragonbox
     end
 
     # N == 1
-    def self.check_divisibility_and_divide_by_pow10_k1(n : UInt32)
+    def self.check_divisibility_and_divide_by_pow10_k1(n : UInt32) : Tuple(UInt32, Bool)
       n &*= DIVIDE_BY_POW10_INFO_F32::MAGIC_NUMBER
 
       # Mask for the lowest (divisibility_check_bits)-bits.
@@ -212,7 +212,7 @@ module Float::Printer::Dragonbox
     end
 
     # N == 2
-    def self.check_divisibility_and_divide_by_pow10_k2(n : UInt32)
+    def self.check_divisibility_and_divide_by_pow10_k2(n : UInt32) : Tuple(UInt32, Bool)
       n &*= DIVIDE_BY_POW10_INFO_F64::MAGIC_NUMBER
 
       # Mask for the lowest (divisibility_check_bits)-bits.
@@ -226,20 +226,20 @@ module Float::Printer::Dragonbox
   end
 
   private module ImplInfoMethods(D)
-    def extract_exponent_bits(u : D::CarrierUInt)
+    def extract_exponent_bits(u : D::CarrierUInt) : UInt32
       exponent_bits_mask = ~(UInt32::MAX << D::EXPONENT_BITS)
       ((u >> D::SIGNIFICAND_BITS) & exponent_bits_mask).to_u32!
     end
 
-    def remove_exponent_bits(u : D::CarrierUInt, exponent_bits)
+    def remove_exponent_bits(u : D::CarrierUInt, exponent_bits : UInt32) : UInt32 | UInt64
       u ^ (D::CarrierUInt.new!(exponent_bits) << D::SIGNIFICAND_BITS)
     end
 
-    def remove_sign_bit_and_shift(u : D::CarrierUInt)
+    def remove_sign_bit_and_shift(u : D::CarrierUInt) : UInt32 | UInt64
       u << 1
     end
 
-    def check_divisibility_and_divide_by_pow10(n : UInt32)
+    def check_divisibility_and_divide_by_pow10(n : UInt32) : Tuple(UInt32, Bool)
       {% if D::KAPPA == 1 %}
         Div.check_divisibility_and_divide_by_pow10_k1(n)
       {% elsif D::KAPPA == 2 %}

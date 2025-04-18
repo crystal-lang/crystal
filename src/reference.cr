@@ -73,7 +73,7 @@ class Reference
   end
 
   # Returns `false`: a reference is never `nil`.
-  def same?(other : Nil)
+  def same?(other : Nil) : Bool
     false
   end
 

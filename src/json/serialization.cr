@@ -268,14 +268,14 @@ module JSON
     protected def after_initialize
     end
 
-    protected def on_unknown_json_attribute(pull, key, key_location)
+    protected def on_unknown_json_attribute(pull : JSON::PullParser, key : String, key_location : Tuple(Int32, Int32)) : Nil
       pull.skip
     end
 
-    protected def on_to_json(json : ::JSON::Builder)
+    protected def on_to_json(json : ::JSON::Builder) : Nil
     end
 
-    def to_json(json : ::JSON::Builder)
+    def to_json(json : ::JSON::Builder) : Nil
       {% begin %}
         {% options = @type.annotation(::JSON::Serializable::Options) %}
         {% emit_nulls = options && options[:emit_nulls] %}
@@ -352,7 +352,7 @@ module JSON
     end
 
     module Strict
-      protected def on_unknown_json_attribute(pull, key, key_location)
+      protected def on_unknown_json_attribute(pull : JSON::PullParser, key : String, key_location : Tuple(Int32, Int32)) : Nil
         raise ::JSON::SerializableError.new("Unknown JSON attribute: #{key}", self.class.to_s, nil, *key_location, nil)
       end
     end
@@ -361,7 +361,7 @@ module JSON
       @[JSON::Field(ignore: true)]
       property json_unmapped = Hash(String, JSON::Any).new
 
-      protected def on_unknown_json_attribute(pull, key, key_location)
+      protected def on_unknown_json_attribute(pull : JSON::PullParser, key : String, key_location : Tuple(Int32, Int32)) : JSON::Any
         json_unmapped[key] = begin
           JSON::Any.new(pull)
         rescue exc : ::JSON::ParseException
@@ -369,7 +369,7 @@ module JSON
         end
       end
 
-      protected def on_to_json(json)
+      protected def on_to_json(json : JSON::Builder) : Nil
         json_unmapped.each do |key, value|
           json.field(key) { value.to_json(json) }
         end
@@ -480,7 +480,7 @@ module JSON
     getter klass : String
     getter attribute : String?
 
-    def initialize(message : String?, @klass : String, @attribute : String?, line_number : Int32, column_number : Int32, cause)
+    def initialize(message : String?, @klass : String, @attribute : String?, line_number : Int32, column_number : Int32, cause : JSON::ParseException?)
       message = String.build do |io|
         io << message
         io << "\n  parsing "

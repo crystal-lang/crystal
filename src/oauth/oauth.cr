@@ -40,17 +40,17 @@
 module OAuth
   # Sets up an `HTTP::Client` to add an OAuth authorization header to every request performed.
   # Check this module's docs for an example usage.
-  def self.authenticate(client : HTTP::Client, token, token_secret, consumer_key, consumer_secret, extra_params = nil) : Nil
+  def self.authenticate(client : HTTP::Client, token : String?, token_secret : String?, consumer_key : String, consumer_secret : String, extra_params : Hash(String, String)? = nil) : Nil
     client.before_request do |request|
       authenticate client, request, token, token_secret, consumer_key, consumer_secret, extra_params
     end
   end
 
-  private def self.authenticate(client, request, token, token_secret, consumer_key, consumer_secret, extra_params)
+  private def self.authenticate(client : HTTP::Client, request : HTTP::Request, token : String?, token_secret : String?, consumer_key : String, consumer_secret : String, extra_params : Hash(String, String)?) : String
     request.headers["Authorization"] = oauth_header(client, request, token, token_secret, consumer_key, consumer_secret, extra_params)
   end
 
-  private def self.oauth_header(client, request, token, token_secret, consumer_key, consumer_secret, extra_params)
+  private def self.oauth_header(client : HTTP::Client, request : HTTP::Request, token : String?, token_secret : String?, consumer_key : String, consumer_secret : String, extra_params : Hash(String, String)?) : String
     ts = Time.utc.to_unix.to_s
     nonce = Random::Secure.hex
 

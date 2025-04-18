@@ -1797,7 +1797,7 @@ class Hash(K, V)
   # Hash.zip(["key1", "key2", "key3"], ["value1", "value2", "value3"])
   # # => {"key1" => "value1", "key2" => "value2", "key3" => "value3"}
   # ```
-  def self.zip(ary1 : Array(K), ary2 : Array(V))
+  def self.zip(ary1 : Array(K), ary2 : Array(V)) : Hash(Int32, Char)
     hash = {} of K => V
     ary1.each_with_index do |key, i|
       hash[key] = ary2[i]

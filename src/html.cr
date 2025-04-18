@@ -121,7 +121,7 @@ module HTML
     end
   end
 
-  private def self.unescape(slice, io)
+  private def self.unescape(slice : Slice(UInt8), io : String::Builder) : Nil
     while bytesize = slice.index('&'.ord)
       io.write(slice[0, bytesize])
       slice += bytesize &+ 1
@@ -133,7 +133,7 @@ module HTML
     io.write slice
   end
 
-  private def self.unescape_entity(ptr, io)
+  private def self.unescape_entity(ptr : Pointer(UInt8), io : String::Builder) : Pointer(UInt8)
     if '#' === ptr.value
       unescape_numbered_entity(ptr, io)
     else
@@ -141,7 +141,7 @@ module HTML
     end
   end
 
-  private def self.unescape_numbered_entity(ptr, io)
+  private def self.unescape_numbered_entity(ptr : Pointer(UInt8), io : String::Builder) : Pointer(UInt8)
     start_ptr = ptr
 
     ptr += 1
@@ -194,7 +194,7 @@ module HTML
   end
 
   # see https://html.spec.whatwg.org/multipage/parsing.html#numeric-character-reference-end-state
-  private def self.decode_codepoint(codepoint)
+  private def self.decode_codepoint(codepoint : UInt32) : Char?
     case codepoint
     when 0x80..0x9F
       # Replace characters from Windows-1252 with UTF-8 equivalents.
@@ -218,7 +218,7 @@ module HTML
     end
   end
 
-  private def self.unescape_named_entity(ptr, io)
+  private def self.unescape_named_entity(ptr : Pointer(UInt8), io : String::Builder) : Pointer(UInt8)
     # Consume the maximum number of characters possible, with the
     # consumed characters matching one of the named references.
     start_ptr = ptr

@@ -10,7 +10,7 @@ class HTTP::LogHandler
   def initialize(@log = Log.for("http.server"))
   end
 
-  def call(context) : Nil
+  def call(context : HTTP::Server::Context) : Nil
     start = Time.monotonic
 
     begin
@@ -36,7 +36,7 @@ class HTTP::LogHandler
     end
   end
 
-  private def elapsed_text(elapsed)
+  private def elapsed_text(elapsed : Time::Span) : String
     minutes = elapsed.total_minutes
     return "#{minutes.round(2)}m" if minutes >= 1
 

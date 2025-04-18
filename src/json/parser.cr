@@ -15,7 +15,7 @@ class JSON::Parser
     json
   end
 
-  private def parse_value
+  private def parse_value : JSON::Any
     case token.kind
     when .int?
       value_and_next_token token.int_value
@@ -38,7 +38,7 @@ class JSON::Parser
     end
   end
 
-  private def parse_array
+  private def parse_array : JSON::Any
     next_token
 
     ary = [] of Any
@@ -66,7 +66,7 @@ class JSON::Parser
     Any.new(ary)
   end
 
-  private def parse_object
+  private def parse_object : JSON::Any
     next_token_expect_object_key
 
     object = {} of String => Any
@@ -108,20 +108,20 @@ class JSON::Parser
   private delegate next_token, to: @lexer
   private delegate next_token_expect_object_key, to: @lexer
 
-  private def value_and_next_token(value)
+  private def value_and_next_token(value : Int64 | Float64 | String | Nil | Bool) : JSON::Any
     next_token
     Any.new(value)
   end
 
-  private def check(kind : Token::Kind)
+  private def check(kind : Token::Kind) : Nil
     unexpected_token unless token.kind == kind
   end
 
-  private def unexpected_token
+  private def unexpected_token : Nil
     parse_exception "unexpected token '#{token}'"
   end
 
-  private def parse_exception(msg)
+  private def parse_exception(msg : String) : Nil
     raise ParseException.new(msg, token.line_number, token.column_number)
   end
 

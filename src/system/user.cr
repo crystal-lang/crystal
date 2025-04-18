@@ -82,7 +82,7 @@ class System::User
     Crystal::System::User.from_id?(id)
   end
 
-  def to_s(io)
+  def to_s(io : String::Builder) : String::Builder
     io << username << " (" << id << ')'
   end
 end

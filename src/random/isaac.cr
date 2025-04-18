@@ -12,11 +12,11 @@ class Random::ISAAC
   private getter bb
   private getter cc
 
-  private def random_seeds
+  private def random_seeds : StaticArray(UInt32, 8)
     Random::Secure.rand(StaticArray(UInt32, 8))
   end
 
-  def initialize(seeds = random_seeds)
+  def initialize(seeds : Array(Int32) | StaticArray(UInt32, 8) = random_seeds)
     @rsl = StaticArray(UInt32, 256).new { 0_u32 }
     @mm = StaticArray(UInt32, 256).new { 0_u32 }
     @counter = 0
@@ -37,7 +37,7 @@ class Random::ISAAC
     @rsl[counter]
   end
 
-  private def isaac
+  private def isaac : Nil
     @cc &+= 1
     @bb &+= cc
 
@@ -55,7 +55,7 @@ class Random::ISAAC
     end
   end
 
-  private def init_by_array(seeds)
+  private def init_by_array(seeds : Array(Int32) | StaticArray(UInt32, 8)) : Int32
     seed_len = seeds.size
     256.times { |i| @rsl[i] = i < seed_len ? seeds[i].to_u32 : 0_u32 }
 

@@ -89,7 +89,7 @@ struct Time::Span
   # Time::Span.new(nanoseconds: 500_000_000)   # => 00:00:00.500000000
   # Time::Span.new(nanoseconds: 5_500_000_000) # => 00:00:05.500000000
   # ```
-  def self.new(*, nanoseconds : Int)
+  def self.new(*, nanoseconds : Int) : Time::Span
     new(seconds: 0, nanoseconds: nanoseconds)
   end
 
@@ -102,14 +102,14 @@ struct Time::Span
   # Time::Span.new(days: 1, hours: 2, minutes: 3)                             # => 1.02:03:00
   # Time::Span.new(days: 1, hours: 2, minutes: 3, seconds: 4, nanoseconds: 5) # => 1.02:03:04.000000005
   # ```
-  def self.new(*, days : Int = 0, hours : Int = 0, minutes : Int = 0, seconds : Int = 0, nanoseconds : Int = 0)
+  def self.new(*, days : Int = 0, hours : Int = 0, minutes : Int = 0, seconds : Int = 0, nanoseconds : Int = 0) : Time::Span
     new(
       seconds: compute_seconds(days, hours, minutes, seconds),
       nanoseconds: nanoseconds,
     )
   end
 
-  private def self.compute_seconds(days, hours, minutes, seconds)
+  private def self.compute_seconds(days : Int32 | Int64, hours : Int32, minutes : Int32, seconds : Int32 | Int64) : Int64
     days_to_seconds = SECONDS_PER_DAY.to_i64 * days
     hours_to_seconds = SECONDS_PER_HOUR.to_i64 * hours
     minutes_to_seconds = SECONDS_PER_MINUTE.to_i64 * minutes
@@ -322,7 +322,7 @@ struct Time::Span
     total_nanoseconds.to_f64 / other.total_nanoseconds.to_f64
   end
 
-  def <=>(other : self)
+  def <=>(other : self) : Int32
     cmp = to_i <=> other.to_i
     cmp = nanoseconds <=> other.nanoseconds if cmp == 0
     cmp

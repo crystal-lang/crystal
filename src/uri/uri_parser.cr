@@ -12,7 +12,7 @@ class URI
 
     @input : UInt8*
 
-    def initialize(input)
+    def initialize(input : String)
       @uri = URI.new
       @input = input.strip.to_unsafe
       @ptr = 0
@@ -32,7 +32,7 @@ class URI
       self
     end
 
-    private def parse_scheme_start
+    private def parse_scheme_start : Nil
       if alpha?
         parse_scheme
       elsif c === '/' && @input[@ptr + 1] === '/'
@@ -44,7 +44,7 @@ class URI
       end
     end
 
-    private def parse_scheme
+    private def parse_scheme : Nil
       start = @ptr
       loop do
         if alpha? || numeric? || c === '-' || c === '.' || c === '+'
@@ -65,7 +65,7 @@ class URI
       end
     end
 
-    private def parse_path_or_authority
+    private def parse_path_or_authority : Nil
       if c === '/'
         @uri.host = ""
         parse_authority
@@ -75,7 +75,7 @@ class URI
       end
     end
 
-    private def parse_no_scheme
+    private def parse_no_scheme : Nil
       case c
       when '#'
         parse_fragment
@@ -84,7 +84,7 @@ class URI
       end
     end
 
-    private def parse_authority
+    private def parse_authority : Nil
       @ptr += 1
       start = @ptr
       loop do
@@ -100,7 +100,7 @@ class URI
       end
     end
 
-    private def parse_userinfo
+    private def parse_userinfo : Nil
       start = @ptr
       password_flag = false
       loop do
@@ -123,7 +123,7 @@ class URI
       end
     end
 
-    private def parse_host
+    private def parse_host : Nil
       start = @ptr
       bracket_flag = false
       return parse_path if c === '/'
@@ -143,7 +143,7 @@ class URI
       end
     end
 
-    private def parse_port
+    private def parse_port : Nil
       start = @ptr
       loop do
         if numeric?
@@ -161,7 +161,7 @@ class URI
       end
     end
 
-    private def parse_relative
+    private def parse_relative : Nil
       case c
       when '\0'
         nil
@@ -174,7 +174,7 @@ class URI
       end
     end
 
-    private def parse_path
+    private def parse_path : Nil
       start = @ptr
       loop do
         case c
@@ -193,7 +193,7 @@ class URI
       end
     end
 
-    private def parse_query
+    private def parse_query : Nil
       @ptr += 1
       start = @ptr
       loop do
@@ -210,7 +210,7 @@ class URI
       end
     end
 
-    private def parse_fragment
+    private def parse_fragment : Nil
       @ptr += 1
       start = @ptr
       loop do
@@ -224,20 +224,20 @@ class URI
       end
     end
 
-    private def from_input(start)
+    private def from_input(start : Int32) : String
       String.new(@input + start, @ptr - start)
     end
 
-    private def alpha?
+    private def alpha? : Bool
       ('a'.ord <= c && c <= 'z'.ord) ||
         ('A'.ord <= c && c <= 'Z'.ord)
     end
 
-    private def numeric?
+    private def numeric? : Bool
       '0'.ord <= c && c <= '9'.ord
     end
 
-    private def end_of_host?
+    private def end_of_host? : Bool
       c === '\0' || c === '/' || c === '?' || c === '#'
     end
   end

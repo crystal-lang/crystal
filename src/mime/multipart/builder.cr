@@ -33,7 +33,7 @@ module MIME::Multipart
     # builder = MIME::Multipart::Builder.new(io, "a4VF")
     # builder.content_type("mixed") # => "multipart/mixed; boundary=a4VF"
     # ```
-    def content_type(subtype = "mixed") : String
+    def content_type(subtype : String = "mixed") : String
       MIME::MediaType.new("multipart/#{subtype}", {"boundary" => @boundary}).to_s
     end
 
@@ -199,7 +199,7 @@ module MIME::Multipart
       @io.flush
     end
 
-    private def fail(msg)
+    private def fail(msg : String) : Nil
       raise Multipart::Error.new msg
     end
   end

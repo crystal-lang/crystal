@@ -54,7 +54,7 @@ module Float::Printer::Grisu3
   # representable number to the input.
   #
   # Modifies the generated digits in the buffer to approach (round towards) *w*.
-  def round_weed(buffer_ptr, length, distance_too_high_w, unsafe_interval, rest, ten_kappa, unit) : Bool
+  def round_weed(buffer_ptr : Pointer(UInt8), length : Int32, distance_too_high_w : UInt64, unsafe_interval : UInt64, rest : UInt64, ten_kappa : UInt64, unit : UInt64) : Bool
     buffer = buffer_ptr.to_slice(128)
     small_distance = distance_too_high_w - unit
     big_distance = distance_too_high_w + unit
@@ -209,7 +209,7 @@ module Float::Printer::Grisu3
   # represent 'w' we can stop. Everything inside the interval low - high
   # represents w. However we have to pay attention to low, high and w's
   # imprecision.
-  def digit_gen(low : DiyFP, w : DiyFP, high : DiyFP, buffer_p) : {Bool, Int32, Int32}
+  def digit_gen(low : DiyFP, w : DiyFP, high : DiyFP, buffer_p : Pointer(UInt8)) : {Bool, Int32, Int32}
     buffer = buffer_p.to_slice(128)
     # low, w and high are imprecise, but by less than one ulp (unit in the last
     # place).
@@ -314,7 +314,7 @@ module Float::Printer::Grisu3
   # The last digit will be closest to the actual *v*. That is, even if several
   # digits might correctly yield *v* when read again, the closest will be
   # computed.
-  def grisu3(v : Float64 | Float32, buffer_p) : {Bool, Int32, Int32}
+  def grisu3(v : Float64 | Float32, buffer_p : Pointer(UInt8)) : {Bool, Int32, Int32}
     w = DiyFP.from_f_normalized(v)
 
     # boundary_minus and boundary_plus are the boundaries between v and its

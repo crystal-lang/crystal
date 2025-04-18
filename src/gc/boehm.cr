@@ -303,13 +303,13 @@ module GC
     end
   {% end %}
 
-  def self.collect
+  def self.collect : Nil
     Crystal.trace :gc, "collect" do
       LibGC.collect
     end
   end
 
-  def self.enable
+  def self.enable : Nil
     unless LibGC.is_disabled != 0
       raise "GC is not disabled"
     end
@@ -335,7 +335,7 @@ module GC
     # Nothing
   end
 
-  private def self.add_finalizer_impl(object : T) forall T
+  private def self.add_finalizer_impl(object : T) : Nil forall T
     LibGC.register_finalizer_ignore_self(object.as(Void*),
       ->(obj, data) { obj.as(T).finalize },
       nil, nil, nil)
@@ -347,16 +347,16 @@ module GC
     roots << Pointer(Void).new(object.object_id)
   end
 
-  def self.register_disappearing_link(pointer : Void**)
+  def self.register_disappearing_link(pointer : Void**) : Int32
     base = LibGC.base(pointer.value)
     LibGC.general_register_disappearing_link(pointer, base)
   end
 
-  def self.is_heap_ptr(pointer : Void*)
+  def self.is_heap_ptr(pointer : Void*) : Bool
     LibGC.is_heap_ptr(pointer) != 0
   end
 
-  def self.stats
+  def self.stats : GC::Stats
     LibGC.get_heap_usage_safe(out heap_size, out free_bytes, out unmapped_bytes, out bytes_since_gc, out total_bytes)
     # collections = LibGC.gc_no - 1
     # bytes_found = LibGC.bytes_found
@@ -372,7 +372,7 @@ module GC
     )
   end
 
-  def self.prof_stats
+  def self.prof_stats : GC::ProfStats
     LibGC.get_prof_stats(out stats, sizeof(LibGC::ProfStats))
 
     ProfStats.new(
@@ -415,7 +415,7 @@ module GC
   {% end %}
 
   # :nodoc:
-  def self.current_thread_stack_bottom
+  def self.current_thread_stack_bottom : Tuple(Pointer(Void), Pointer(Void))
     {% if LibGC.has_method?(:get_my_stackbottom) %}
       th = LibGC.get_my_stackbottom(out sb)
       {th, sb.mem_base}
@@ -458,28 +458,28 @@ module GC
   end
 
   # :nodoc:
-  def self.unlock_read
+  def self.unlock_read : Nil
     {% if flag?(:preview_mt) %}
       @@lock.read_unlock
     {% end %}
   end
 
   # :nodoc:
-  def self.lock_write
+  def self.lock_write : Nil
     {% if flag?(:preview_mt) %}
       @@lock.write_lock
     {% end %}
   end
 
   # :nodoc:
-  def self.unlock_write
+  def self.unlock_write : Nil
     {% if flag?(:preview_mt) %}
       @@lock.write_unlock
     {% end %}
   end
 
   # :nodoc:
-  def self.push_stack(stack_top, stack_bottom) : Nil
+  def self.push_stack(stack_top : Pointer(Void), stack_bottom : Pointer(Void)) : Nil
     LibGC.push_all_eager(stack_top, stack_bottom)
   end
 

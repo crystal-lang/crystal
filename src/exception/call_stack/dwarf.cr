@@ -30,7 +30,7 @@ struct Exception::CallStack
     end
   end
 
-  protected def self.decode_line_number(pc)
+  protected def self.decode_line_number(pc : UInt64) : Tuple(String, Int32, Int32)
     load_debug_info
     if ln = @@dwarf_line_numbers
       if row = ln.find(pc)
@@ -40,7 +40,7 @@ struct Exception::CallStack
     {"??", 0, 0}
   end
 
-  protected def self.decode_function_name(pc)
+  protected def self.decode_function_name(pc : UInt64) : String?
     load_debug_info
     if fn = @@dwarf_function_names
       fn.each do |(low_pc, high_pc, function_name)|

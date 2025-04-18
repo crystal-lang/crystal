@@ -18,7 +18,7 @@ module OpenSSL
     protected def initialize(@name : String, @ctx : LibCrypto::EVP_MD_CTX)
     end
 
-    private def new_evp_mt_ctx(name)
+    private def new_evp_mt_ctx(name : String) : Pointer(LibCrypto::EVP_MD_CTX_Struct)
       md = LibCrypto.evp_get_digestbyname(name)
       unless md
         raise UnsupportedError.new("Unsupported digest algorithm: #{name}")
@@ -34,7 +34,7 @@ module OpenSSL
       ctx
     end
 
-    def finalize
+    def finalize : Nil
       LibCrypto.evp_md_ctx_free(self)
     end
 
@@ -42,7 +42,7 @@ module OpenSSL
       Digest.new(@name, dup_ctx)
     end
 
-    protected def dup_ctx
+    protected def dup_ctx : Pointer(LibCrypto::EVP_MD_CTX_Struct)
       ctx = LibCrypto.evp_md_ctx_new
       if LibCrypto.evp_md_ctx_copy(ctx, @ctx) == 0
         LibCrypto.evp_md_ctx_free(ctx)
@@ -81,11 +81,11 @@ module OpenSSL
       LibCrypto.evp_md_block_size(to_unsafe_md).to_i
     end
 
-    def to_unsafe_md
+    def to_unsafe_md : LibCrypto::EVP_MD
       LibCrypto.evp_md_ctx_md(self)
     end
 
-    def to_unsafe
+    def to_unsafe : Pointer(LibCrypto::EVP_MD_CTX_Struct)
       @ctx
     end
   end

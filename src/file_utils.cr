@@ -124,7 +124,7 @@ module FileUtils
     cp_recursive(src_path, dest_path)
   end
 
-  private def cp_recursive(src_path : Path | String, dest_path : Path | String)
+  private def cp_recursive(src_path : Path | String, dest_path : Path | String) : Nil
     if Dir.exists?(src_path)
       Dir.mkdir(dest_path) unless Dir.exists?(dest_path)
       Dir.each_child(src_path) do |entry|
@@ -257,7 +257,7 @@ module FileUtils
   # ```
   #
   # NOTE: Alias of `Dir.mkdir`
-  def mkdir(path : Path | String, mode = 0o777) : Nil
+  def mkdir(path : Path | String, mode : Int32 = 0o777) : Nil
     Dir.mkdir(path, mode)
   end
 
@@ -269,7 +269,7 @@ module FileUtils
   #
   # FileUtils.mkdir(["foo", "bar"])
   # ```
-  def mkdir(paths : Enumerable(Path | String), mode = 0o777) : Nil
+  def mkdir(paths : Enumerable(Path | String), mode : Int32 = 0o777) : Nil
     paths.each do |path|
       Dir.mkdir(path, mode)
     end
@@ -286,7 +286,7 @@ module FileUtils
   # ```
   #
   # NOTE: Alias of `Dir.mkdir_p`
-  def mkdir_p(path : Path | String, mode = 0o777) : Nil
+  def mkdir_p(path : Path | String, mode : Int32 = 0o777) : Nil
     Dir.mkdir_p(path, mode)
   end
 
@@ -299,7 +299,7 @@ module FileUtils
   #
   # FileUtils.mkdir_p(["foo", "bar", "baz", "dir1", "dir2", "dir3"])
   # ```
-  def mkdir_p(paths : Enumerable(Path | String), mode = 0o777) : Nil
+  def mkdir_p(paths : Enumerable(Path | String), mode : Int32 = 0o777) : Nil
     paths.each do |path|
       Dir.mkdir_p(path, mode)
     end

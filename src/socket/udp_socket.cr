@@ -107,7 +107,7 @@ class UDPSocket < IPSocket
 
   # Sets whether transmitted multicast packets should be copied and sent back
   # to the originator, if the host has joined the multicast group.
-  def multicast_loopback=(val : Bool)
+  def multicast_loopback=(val : Bool) : Bool
     case @family
     when Family::INET
       setsockopt_bool LibC::IP_MULTICAST_LOOP, val, LibC::IPPROTO_IP
@@ -142,7 +142,7 @@ class UDPSocket < IPSocket
   # Multicast datagrams with a `hoplimit` of `0` will not be transmitted on any
   # network, but may be delivered locally if the sending host belongs to the
   # destination group and multicast loopback is enabled.
-  def multicast_hops=(val : Int)
+  def multicast_hops=(val : Int) : Int32
     case @family
     when Family::INET
       setsockopt LibC::IP_MULTICAST_TTL, val, LibC::IPPROTO_IP
@@ -159,7 +159,7 @@ class UDPSocket < IPSocket
   # IPv4 interface address for subsequent transmissions. Setting the interface
   # to `0.0.0.0` will select the default interface.
   # Raises `Socket::Error` unless the socket is IPv4 and an IPv4 address is provided.
-  def multicast_interface(address : IPAddress)
+  def multicast_interface(address : IPAddress) : Int32
     if @family == Family::INET
       addr = address.@addr
       if addr.is_a?(LibC::InAddr)
@@ -176,7 +176,7 @@ class UDPSocket < IPSocket
   # from the primary network interface. This function overrides the default
   # IPv6 interface for subsequent transmissions. Setting the interface to
   # index `0` will select the default interface.
-  def multicast_interface(index : UInt32)
+  def multicast_interface(index : UInt32) : Int32
     if @family == Family::INET6
       setsockopt LibC::IPV6_MULTICAST_IF, index, LibC::IPPROTO_IPV6
     else
@@ -187,7 +187,7 @@ class UDPSocket < IPSocket
   # A host must become a member of a multicast group before it can receive
   # datagrams sent to the group.
   # Raises `Socket::Error` if an incompatible address is provided.
-  def join_group(address : IPAddress)
+  def join_group(address : IPAddress) : Int32
     case @family
     when Family::INET
       group_modify(address, LibC::IP_ADD_MEMBERSHIP)
@@ -201,7 +201,7 @@ class UDPSocket < IPSocket
   # Drops membership to the specified group. Memberships are automatically
   # dropped when the socket is closed or the process exits.
   # Raises `Socket::Error` if an incompatible address is provided.
-  def leave_group(address : IPAddress)
+  def leave_group(address : IPAddress) : Int32
     case @family
     when Family::INET
       group_modify(address, LibC::IP_DROP_MEMBERSHIP)
@@ -212,7 +212,7 @@ class UDPSocket < IPSocket
     end
   end
 
-  private def group_modify(ip, operation)
+  private def group_modify(ip : Socket::IPAddress, operation : Int32) : Int32
     ip_addr = ip.@addr
 
     case @family

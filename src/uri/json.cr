@@ -11,7 +11,7 @@ class URI
   # uri.scheme                                        # => "http"
   # uri.host                                          # => "crystal-lang.org"
   # ```
-  def self.new(parser : JSON::PullParser)
+  def self.new(parser : JSON::PullParser) : URI
     parse parser.read_string
   end
 
@@ -22,7 +22,7 @@ class URI
   #
   # URI.parse("http://example.com").to_json # => %("http://example.com")
   # ```
-  def to_json(builder : JSON::Builder)
+  def to_json(builder : JSON::Builder) : Nil
     builder.string self
   end
 

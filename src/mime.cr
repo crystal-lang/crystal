@@ -140,7 +140,7 @@ module MIME
     end
   end
 
-  private def self.initialize_types
+  private def self.initialize_types : Nil
     init unless @@initialized
   end
 
@@ -148,7 +148,7 @@ module MIME
   #
   # A case-sensitive search is tried first, if this yields no result, it is
   # matched case-insensitive. Returns *default* if *extension* is not registered.
-  def self.from_extension(extension : String, default) : String
+  def self.from_extension(extension : String, default : String) : String
     from_extension(extension) { default }
   end
 
@@ -182,7 +182,7 @@ module MIME
   #
   # A case-sensitive search is tried first, if this yields no result, it is
   # matched case-insensitive. Returns *default* if extension is not registered.
-  def self.from_filename(filename : String | Path, default) : String
+  def self.from_filename(filename : String | Path, default : String) : String
     from_extension(File.extname(filename.to_s), default)
   end
 

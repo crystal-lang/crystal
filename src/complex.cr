@@ -26,17 +26,17 @@ struct Complex
     @imag = imag.to_f
   end
 
-  def self.new(c : Complex)
+  def self.new(c : Complex) : Complex
     c
   end
 
   # Determines whether `self` equals *other* or not.
-  def ==(other : Complex)
+  def ==(other : Complex) : Bool
     @real == other.real && @imag == other.imag
   end
 
   # :ditto:
-  def ==(other : Number)
+  def ==(other : Number) : Bool
     @real == other && @imag.zero?
   end
 
@@ -267,7 +267,7 @@ struct Complex
     Complex.new(@real / other, @imag / other)
   end
 
-  def clone
+  def clone : Complex
     self
   end
 
@@ -306,7 +306,7 @@ struct Complex
   end
 
   # Rounds to the nearest *digits*.
-  def round(digits = 0) : Complex
+  def round(digits : Int32 = 0) : Complex
     Complex.new(@real.round(digits), @imag.round(digits))
   end
 end
@@ -322,7 +322,7 @@ struct Number
     Complex.new(0, self)
   end
 
-  def ==(other : Complex)
+  def ==(other : Complex) : Bool
     other == self
   end
 

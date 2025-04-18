@@ -21,7 +21,7 @@ module Compress::Zip
       io.write(slice)
     end
 
-    def io=(@io)
+    def io=(@io : IO | Compress::Deflate::Writer) : UInt32
       @count = 0_u32
       @crc32 = ::Digest::CRC32.initial
     end

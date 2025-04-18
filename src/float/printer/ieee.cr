@@ -82,11 +82,11 @@ module Float::Printer::IEEE
     special?(d32) && (d32 & SIGNIFICAND_MASK_32 == 0)
   end
 
-  def nan?(d64 : UInt64)
+  def nan?(d64 : UInt64) : Bool
     special?(d64) && (d64 & SIGNIFICAND_MASK_64 != 0)
   end
 
-  def nan?(d32 : UInt32)
+  def nan?(d32 : UInt32) : Bool
     special?(d32) && (d32 & SIGNIFICAND_MASK_32 != 0)
   end
 
@@ -176,13 +176,13 @@ module Float::Printer::IEEE
     (d32 & EXPONENT_MASK_32) == 0
   end
 
-  private def exponent(d64 : UInt64)
+  private def exponent(d64 : UInt64) : Int32
     return DENORMAL_EXPONENT_64 if denormal?(d64)
     biased_e = ((d64 & EXPONENT_MASK_64) >> PHYSICAL_SIGNIFICAND_SIZE_64).to_i
     biased_e - EXPONENT_BIAS_64
   end
 
-  private def exponent(d32 : UInt32)
+  private def exponent(d32 : UInt32) : Int32
     return DENORMAL_EXPONENT_32 if denormal?(d32)
     biased_e = ((d32 & EXPONENT_MASK_32) >> PHYSICAL_SIGNIFICAND_SIZE_32).to_i
     biased_e - EXPONENT_BIAS_32

@@ -20,7 +20,7 @@ class IPSocket < Socket
     @remote_address = nil
   end
 
-  def bind(addr)
+  def bind(addr : Socket::IPAddress | Int32) : Nil
     super(addr)
   ensure
     @local_address = nil

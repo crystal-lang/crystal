@@ -6,7 +6,7 @@ class XML::XPathContext
     @ctx.value.node = node.to_unsafe
   end
 
-  def evaluate(search_path : String)
+  def evaluate(search_path : String) : Bool | Float64 | String | XML::NodeSet
     xpath = XML::Error.collect_generic(@errors) { LibXML.xmlXPathEvalExpression(search_path, self) }
 
     raise XML::Error.new("Error in '#{search_path}' expression", 0) unless xpath
@@ -29,24 +29,24 @@ class XML::XPathContext
     end
   end
 
-  def register_namespaces(namespaces) : Nil
+  def register_namespaces(namespaces : Hash(String, String) | Hash(String, String | Nil)) : Nil
     namespaces.each do |prefix, uri|
       register_namespace prefix, uri
     end
   end
 
-  def register_namespace(prefix : String, uri : String?)
+  def register_namespace(prefix : String, uri : String?) : Int32
     prefix = prefix.lchop("xmlns:")
     LibXML.xmlXPathRegisterNs(self, prefix, uri.to_s)
   end
 
-  def register_variables(variables) : Nil
+  def register_variables(variables : Hash(String, Int32)) : Nil
     variables.each do |name, value|
       register_variable name, value
     end
   end
 
-  def register_variable(name, value)
+  def register_variable(name : String, value : Int32) : Int32
     case value
     when Bool
       obj = LibXML.xmlXPathNewBoolean(value ? 1 : 0)
@@ -59,7 +59,7 @@ class XML::XPathContext
     LibXML.xmlXPathRegisterVariable(self, name, obj)
   end
 
-  def to_unsafe
+  def to_unsafe : Pointer(LibXML::XPathContext)
     @ctx
   end
 end

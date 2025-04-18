@@ -16,7 +16,7 @@ module Float::Printer
   #
   # *point_range* designates the boundaries of scientific notation which is used
   # for all values whose decimal point position is outside that range.
-  def shortest(v : Float::Primitive, io : IO, *, point_range = -3..15) : Nil
+  def shortest(v : Float::Primitive, io : IO, *, point_range : Range(Nil, Nil) | Range(Int32, Int32) = -3..15) : Nil
     check_finite_float(v, io) do |pos_v|
       if pos_v.zero?
         io << "0.0"
