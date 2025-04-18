@@ -56,7 +56,7 @@ class File
     OwnerRead    = 0o400
     OwnerAll     = 0o700
 
-    def self.new(int : Int)
+    def self.new(int : Int) : File::Permissions
       new(int.to_i16)
     end
 
@@ -127,13 +127,13 @@ class File
 
     # Returns true if this `Info` represents a standard file. Shortcut for
     # `type.file?`.
-    def file?
+    def file? : Bool
       type.file?
     end
 
     # Returns true if this `Info` represents a directory. Shortcut for
     # `type.directory?`.
-    def directory?
+    def directory? : Bool
       type.directory?
     end
 

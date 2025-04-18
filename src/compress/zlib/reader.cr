@@ -27,7 +27,7 @@ class Compress::Zlib::Reader < IO
     yield reader ensure reader.close
   end
 
-  protected def self.read_header(io, dict)
+  protected def self.read_header(io : IO | IO::Memory, dict : Slice(UInt8)?) : Nil
     cmf = io.read_byte || invalid_header
 
     cm = cmf & 0xF
@@ -105,7 +105,7 @@ class Compress::Zlib::Reader < IO
     initialize(@io, @sync_close, @flate_io.dict)
   end
 
-  protected def self.invalid_header
+  protected def self.invalid_header : Nil
     raise Compress::Zlib::Error.new("Invalid header")
   end
 end

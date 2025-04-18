@@ -109,7 +109,7 @@ class Compress::Gzip::Writer < IO
     @io.close if @sync_close
   end
 
-  private def write_header
+  private def write_header : Compress::Deflate::Writer
     flate_io = @flate_io
     unless flate_io
       flate_io = @flate_io = Compress::Deflate::Writer.new(@io, level: @level)

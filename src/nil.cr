@@ -55,12 +55,12 @@ struct Nil
   end
 
   # Returns `true`: `Nil` has only one singleton value: `nil`.
-  def ==(other : Nil)
+  def ==(other : Nil) : Bool
     true
   end
 
   # Returns `true`: `Nil` has only one singleton value: `nil`.
-  def same?(other : Nil)
+  def same?(other : Nil) : Bool
     true
   end
 
@@ -127,7 +127,7 @@ struct Nil
     self
   end
 
-  def clone
+  def clone : Nil
     self
   end
 end

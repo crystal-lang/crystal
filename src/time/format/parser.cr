@@ -24,7 +24,7 @@ struct Time::Format
     @day_of_week : Time::DayOfWeek?
     @day_of_year : Int32?
 
-    def initialize(string)
+    def initialize(string : String)
       @reader = Char::Reader.new(string)
       @year = 1
       @month = 1
@@ -89,11 +89,11 @@ struct Time::Format
       time
     end
 
-    def year
+    def year : Int32
       @year = consume_number(4)
     end
 
-    def year_modulo_100
+    def year_modulo_100 : Int32
       year = consume_number(2)
       if 69 <= year <= 99
         @year = year + 1900
@@ -104,11 +104,11 @@ struct Time::Format
       end
     end
 
-    def year_divided_by_100
+    def year_divided_by_100 : Int32
       @year = consume_number(2) * 100
     end
 
-    def full_or_short_year
+    def full_or_short_year : Int32
       @year = case year = consume_number(4)
               when 0..49
                 year + 2000
@@ -119,27 +119,27 @@ struct Time::Format
               end
     end
 
-    def calendar_week_year
+    def calendar_week_year : Int32
       @calendar_week_year = consume_number(4)
     end
 
-    def calendar_week_year_modulo100
+    def calendar_week_year_modulo100 : Int32
       @calendar_week_year = consume_number(2)
     end
 
-    def month
+    def month : Int32
       @month = consume_number(2)
     end
 
-    def month_zero_padded
+    def month_zero_padded : Int32
       month
     end
 
-    def month_blank_padded
+    def month_blank_padded : Int32
       @month = consume_number_blank_padded(2)
     end
 
-    def month_name
+    def month_name : Int32
       string = consume_string
       if string.size < 3
         raise "Invalid month"
@@ -154,11 +154,11 @@ struct Time::Format
       end
     end
 
-    def month_name_upcase
+    def month_name_upcase : Int32
       month_name
     end
 
-    def short_month_name
+    def short_month_name : Int32
       string = consume_string
       if string.size != 3
         raise "Invalid month"
@@ -173,27 +173,27 @@ struct Time::Format
       end
     end
 
-    def short_month_name_upcase
+    def short_month_name_upcase : Int32
       month_name
     end
 
-    def calendar_week_week
+    def calendar_week_week : Int32
       @calendar_week_week = consume_number(2)
     end
 
-    def day_of_month
+    def day_of_month : Int32
       @day = consume_number(2)
     end
 
-    def day_of_month_zero_padded
+    def day_of_month_zero_padded : Int32
       @day = consume_number(2)
     end
 
-    def day_of_month_blank_padded
+    def day_of_month_blank_padded : Int32
       @day = consume_number_blank_padded(2)
     end
 
-    def day_name
+    def day_name : Nil
       string = consume_string
       if string.size < 3
         raise "Invalid day name"
@@ -206,15 +206,15 @@ struct Time::Format
       end
     end
 
-    def day_name_upcase
+    def day_name_upcase : Nil
       day_name
     end
 
-    def short_day_name
+    def short_day_name : Nil
       day_name
     end
 
-    def short_day_name_upcase
+    def short_day_name_upcase : Nil
       day_name
     end
 
@@ -226,51 +226,51 @@ struct Time::Format
       whitespace
     end
 
-    def day_of_year_zero_padded
+    def day_of_year_zero_padded : Int32
       @day_of_year = consume_number(3)
     end
 
-    def hour_24_zero_padded
+    def hour_24_zero_padded : Int32
       @hour_is_12 = false
       @hour = consume_number(2)
     end
 
-    def hour_24_blank_padded
+    def hour_24_blank_padded : Int32
       @hour_is_12 = false
       @hour = consume_number_blank_padded(2)
     end
 
-    def hour_12_zero_padded
+    def hour_12_zero_padded : Bool
       hour_24_zero_padded
       @hour_is_12 = true
     end
 
-    def hour_12_blank_padded
+    def hour_12_blank_padded : Int32
       @hour_is_12 = true
       @hour = consume_number_blank_padded(2)
     end
 
-    def minute
+    def minute : Int32
       @minute = consume_number(2)
     end
 
-    def second
+    def second : Int32
       @second = consume_number(2)
     end
 
-    def milliseconds
+    def milliseconds : Int32
       second_decimals 3
     end
 
-    def microseconds
+    def microseconds : Int32
       second_decimals 6
     end
 
-    def nanoseconds
+    def nanoseconds : Int32
       second_decimals 9
     end
 
-    def second_fraction
+    def second_fraction : Nil
       second_decimals 9
       # consume trailing numbers
       while current_char.ascii_number?
@@ -278,7 +278,7 @@ struct Time::Format
       end
     end
 
-    private def second_decimals(precision)
+    private def second_decimals(precision : Int32) : Int32
       pos = @reader.pos
       # Consume at most *precision* digits as i64
       decimals = consume_number_i64(precision)
@@ -290,14 +290,14 @@ struct Time::Format
       @nanosecond = (decimals * 10 ** (precision_shift + nanoseconds_shift)).to_i
     end
 
-    def second_fraction?(fraction_digits = nil)
+    def second_fraction?(fraction_digits : Int32? = nil) : Int32?
       if current_char == '.'
         next_char
         nanoseconds
       end
     end
 
-    def am_pm
+    def am_pm : Bool
       string = consume_string
       case string.downcase
       when "am"
@@ -309,19 +309,19 @@ struct Time::Format
       end
     end
 
-    def am_pm_upcase
+    def am_pm_upcase : Bool
       am_pm
     end
 
-    def day_of_week_monday_1_7
+    def day_of_week_monday_1_7 : Time::DayOfWeek
       @day_of_week = Time::DayOfWeek.from_value(consume_number(1))
     end
 
-    def day_of_week_sunday_0_6
+    def day_of_week_sunday_0_6 : Time::DayOfWeek
       @day_of_week = Time::DayOfWeek.from_value(consume_number(1))
     end
 
-    def unix_seconds
+    def unix_seconds : Int64
       negative = false
       case current_char
       when '-'
@@ -336,7 +336,7 @@ struct Time::Format
       @unix_seconds = consume_number_i64(19) * (negative ? -1 : 1)
     end
 
-    def time_zone(with_seconds = false)
+    def time_zone(with_seconds : Bool = false) : Char | Time::Location
       case current_char
       when 'Z'
         time_zone_z
@@ -354,7 +354,7 @@ struct Time::Format
       end
     end
 
-    def time_zone_z_or_offset(**options)
+    def time_zone_z_or_offset(**options) : Char | Time::Location
       case current_char
       when 'Z', 'z'
         time_zone_z
@@ -365,14 +365,14 @@ struct Time::Format
       end
     end
 
-    def time_zone_z
+    def time_zone_z : Char
       raise "Invalid timezone" unless current_char.in?('Z', 'z')
 
       @location = Location::UTC
       next_char
     end
 
-    def time_zone_offset(force_colon = false, allow_colon = true, format_seconds = false, parse_seconds = true, force_zero_padding = true, force_minutes = true)
+    def time_zone_offset(force_colon : Bool = false, allow_colon : Bool = true, format_seconds : Bool = false, parse_seconds : Bool = true, force_zero_padding : Bool = true, force_minutes : Bool = true) : Time::Location
       case current_char
       when '-'
         sign = -1
@@ -445,11 +445,11 @@ struct Time::Format
       @location = Location.fixed(sign * (3600 * hours + 60 * minutes + seconds))
     end
 
-    def time_zone_colon
+    def time_zone_colon : Char | Time::Location
       time_zone
     end
 
-    def time_zone_colon_with_seconds
+    def time_zone_colon_with_seconds : Char | Time::Location
       time_zone(with_seconds: true)
     end
 
@@ -458,7 +458,7 @@ struct Time::Format
       @location = Location::UTC
     end
 
-    def time_zone_rfc2822
+    def time_zone_rfc2822 : Time::Location
       case current_char
       when '-', '+'
         time_zone_offset(allow_colon: false)
@@ -469,11 +469,11 @@ struct Time::Format
       end
     end
 
-    def time_zone_gmt_or_rfc2822(**options)
+    def time_zone_gmt_or_rfc2822(**options) : Time::Location
       time_zone_rfc2822
     end
 
-    def time_zone_name(zone = false)
+    def time_zone_name(zone : Bool = false) : Time::Location
       case current_char
       when '-', '+'
         time_zone_offset
@@ -492,7 +492,7 @@ struct Time::Format
       end
     end
 
-    def char?(char, *alternatives)
+    def char?(char : Char, *alternatives) : Bool
       if current_char == char || alternatives.includes?(current_char)
         next_char
         true
@@ -501,7 +501,7 @@ struct Time::Format
       end
     end
 
-    def char(char, *alternatives)
+    def char(char : Char, *alternatives) : Nil
       unless @reader.has_next?
         if alternatives.empty?
           raise "Expected #{char.inspect} but the end of the input was reached"
@@ -515,19 +515,19 @@ struct Time::Format
       end
     end
 
-    def consume_number(max_digits)
+    def consume_number(max_digits : Int32) : Int32
       consume_number_i64(max_digits).to_i
     end
 
-    def consume_number?(max_digits)
+    def consume_number?(max_digits : Int32) : Int32?
       consume_number_i64?(max_digits).try(&.to_i)
     end
 
-    def consume_number_i64(max_digits)
+    def consume_number_i64(max_digits : Int32) : Int64
       consume_number_i64?(max_digits) || raise "Invalid number"
     end
 
-    def consume_number_i64?(max_digits)
+    def consume_number_i64?(max_digits : Int32) : Int64?
       n = 0_i64
       char = current_char
 
@@ -549,7 +549,7 @@ struct Time::Format
       n
     end
 
-    def consume_number_blank_padded(max_digits)
+    def consume_number_blank_padded(max_digits : Int32) : Int32
       if current_char.ascii_whitespace?
         max_digits -= 1
         next_char
@@ -558,7 +558,7 @@ struct Time::Format
       consume_number(max_digits)
     end
 
-    def consume_string
+    def consume_string : String
       start_pos = @reader.pos
       while current_char.ascii_letter?
         next_char
@@ -566,32 +566,32 @@ struct Time::Format
       @reader.string.byte_slice(start_pos, @reader.pos - start_pos)
     end
 
-    def skip_space
+    def skip_space : Char?
       next_char if current_char.ascii_whitespace?
     end
 
-    def skip_spaces
+    def skip_spaces : Nil
       while current_char.ascii_whitespace?
         next_char
       end
     end
 
-    def whitespace
+    def whitespace : Char
       unless current_char.ascii_whitespace?
         ::raise "Unexpected char: #{current_char.inspect}"
       end
       next_char
     end
 
-    def current_char
+    def current_char : Char
       @reader.current_char
     end
 
-    def next_char
+    def next_char : Char
       @reader.next_char
     end
 
-    def raise(message, pos = @reader.pos)
+    def raise(message : String | ArgumentError, pos : Int32 | Bool = @reader.pos) : Nil
       string = @reader.string
       if pos.is_a?(Int)
         string = "#{string.byte_slice(0, pos)}>>#{string.byte_slice(pos, string.bytesize - pos)}"

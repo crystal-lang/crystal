@@ -48,28 +48,28 @@ class Channel(T)
   end
 
   # :nodoc:
-  def self.select(*ops : SelectAction)
+  def self.select(*ops : SelectAction) : Tuple(Int32, String) | Tuple(Int32, Nil) | Tuple(Int32, Bool | String) | Tuple(Int32, String | Nil) | Tuple(Int32, Bool | String | Nil) | Tuple(Int32, Int32)
     self.select ops
   end
 
   # :nodoc:
-  def self.select(ops : Indexable(SelectAction))
+  def self.select(ops : Indexable(SelectAction)) : Tuple(Int32, Int32) | Tuple(Int32, Nil) | Tuple(Int32, String) | Tuple(Int32, Bool | String) | Tuple(Int32, String | Nil) | Tuple(Int32, Bool | String | Nil) | Tuple(Int32, Bool | Nil) | Tuple(Int32, Int32 | Nil)
     i, m = select_impl(ops, false)
     raise "BUG: Blocking select returned not ready status" if m.is_a?(NotReady)
     return i, m
   end
 
   # :nodoc:
-  def self.non_blocking_select(*ops : SelectAction)
+  def self.non_blocking_select(*ops : SelectAction) : Tuple(Int32, Channel::NotReady | String) | Tuple(Int32, Bool | Channel::NotReady | String) | Tuple(Int32, Channel::NotReady | String | Nil) | Tuple(Int32, Channel::NotReady | Nil)
     self.non_blocking_select ops
   end
 
   # :nodoc:
-  def self.non_blocking_select(ops : Indexable(SelectAction))
+  def self.non_blocking_select(ops : Indexable(SelectAction)) : Tuple(Int32, Channel::NotReady | String) | Tuple(Int32, Bool | Channel::NotReady | String) | Tuple(Int32, Channel::NotReady | String | Nil) | Tuple(Int32, Channel::NotReady | Nil) | Tuple(Int32, Bool | Channel::NotReady) | Tuple(Int32, Bool | Channel::NotReady | String | Nil) | Tuple(Int32, Channel::NotReady | Exception | Nil)
     select_impl(ops, true)
   end
 
-  private def self.select_impl(ops : Indexable(SelectAction), non_blocking)
+  private def self.select_impl(ops : Indexable(SelectAction), non_blocking : Bool) : Tuple(Int32, Channel::NotReady | Int32) | Tuple(Int32, Channel::NotReady | Nil) | Tuple(Int32, Channel::NotReady | String) | Tuple(Int32, Bool | Channel::NotReady | String) | Tuple(Int32, Channel::NotReady | String | Nil) | Tuple(Int32, Bool | Channel::NotReady | String | Nil) | Tuple(Int32, Bool | Channel::NotReady) | Tuple(Int32, Bool | Channel::NotReady | Nil) | Tuple(Int32, Channel::NotReady | Int32 | Nil) | Tuple(Int32, Channel::NotReady | Exception | Nil)
     # ops_locks is a duplicate of ops that can be sorted without disturbing the
     # index positions of ops
     if ops.responds_to?(:unstable_sort_by!)

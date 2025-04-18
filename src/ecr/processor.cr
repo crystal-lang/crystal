@@ -11,7 +11,7 @@ module ECR
   end
 
   # :nodoc:
-  def process_string(string, filename, buffer_name = DefaultBufferName) : String
+  def process_string(string : String, filename : String, buffer_name : String = DefaultBufferName) : String
     lexer = Lexer.new string
     token = lexer.next_token
 
@@ -65,7 +65,7 @@ module ECR
     end
   end
 
-  private def suppress_leading_indentation(token, string)
+  private def suppress_leading_indentation(token : ECR::Lexer::Token, string : String) : String
     # To suppress leading indentation we find the last index of a newline and
     # then check if all chars after that are whitespace.
     # We use a Char::Reader for this for maximum efficiency.
@@ -85,14 +85,14 @@ module ECR
     string
   end
 
-  private def suppress_trailing_whitespace(token, suppress_trailing)
+  private def suppress_trailing_whitespace(token : ECR::Lexer::Token, suppress_trailing : Bool) : String?
     if suppress_trailing && token.type.string?
       newline_index = token.value.index('\n')
       token.value = token.value[newline_index + 1..-1] if newline_index
     end
   end
 
-  private def append_loc(str, filename, line_number, column_number)
+  private def append_loc(str : String::Builder, filename : String, line_number : Int32, column_number : Int32) : String::Builder
     str << %(#<loc:")
     str << filename
     str << %(",)

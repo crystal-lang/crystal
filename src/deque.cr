@@ -96,7 +96,7 @@ class Deque(T)
   # ```
   # Deque.new([1, 2, 3]) # => Deque{1, 2, 3}
   # ```
-  def self.new(array : Array(T))
+  def self.new(array : Array(T)) : Deque(Int32) | Deque(String)
     Deque(T).new(array.size) { |i| array[i] }
   end
 

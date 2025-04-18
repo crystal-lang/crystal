@@ -11,7 +11,7 @@ struct Time::Format
   # custom time parser, probably for this same reason.
   module YAML_DATE
     # Parses a string into a `Time`.
-    def self.parse?(string) : Time?
+    def self.parse?(string : String) : Time?
       parser = Parser.new(string)
       if parser.yaml_date_time?
         parser.time(Time::Location::UTC) rescue nil
@@ -21,7 +21,7 @@ struct Time::Format
     end
 
     # Formats a `Time` into the given *io*.
-    def self.format(time : Time, io : IO)
+    def self.format(time : Time, io : IO) : Nil
       formatter = Formatter.new(time, io)
 
       if time.hour == 0 && time.minute == 0 && time.second == 0 && time.nanosecond == 0
@@ -40,7 +40,7 @@ struct Time::Format
   end
 
   struct Parser
-    def yaml_date_time?
+    def yaml_date_time? : Bool
       if (year = consume_number?(4)) && char?('-')
         @year = year
       else
@@ -78,7 +78,7 @@ struct Time::Format
       true
     end
 
-    def yaml_time?
+    def yaml_time? : Bool
       if (hour = consume_number?(2)) && char?(':')
         @hour = hour
       else
@@ -116,7 +116,7 @@ struct Time::Format
   end
 
   struct Formatter
-    def yaml_date_time
+    def yaml_date_time : Nil
       year_month_day
       char ' '
       twenty_four_hour_time_with_seconds

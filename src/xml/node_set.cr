@@ -4,7 +4,7 @@ class XML::NodeSet
   def initialize(@doc : Node, @set : LibXML::NodeSet*)
   end
 
-  def self.new(doc : Node)
+  def self.new(doc : Node) : XML::NodeSet
     new doc, LibXML.xmlXPathNodeSetCreate(nil)
   end
 
@@ -53,7 +53,7 @@ class XML::NodeSet
     @set
   end
 
-  private def internal_at(index)
+  private def internal_at(index : Int32) : XML::Node
     Node.new(@set.value.node_tab[index])
   end
 end

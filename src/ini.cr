@@ -5,7 +5,7 @@ module INI
     getter line_number : Int32
     getter column_number : Int32
 
-    def initialize(message, @line_number, @column_number)
+    def initialize(message : String, @line_number : Int32, @column_number : Int32)
       super "#{message} at line #{@line_number}, column #{@column_number}"
     end
 
@@ -66,12 +66,12 @@ module INI
   #
   # INI.build({"foo" => {"a" => "1"}}, true) # => "[foo]\na = 1\n\n"
   # ```
-  def self.build(ini, space : Bool = false) : String
+  def self.build(ini : Hash(String, Hash(String, Char) | Hash(String, Float64 | Int32) | Hash(String, String)) | NamedTuple(general: NamedTuple(log_level: Char), section1: NamedTuple(foo: Float64, bar: Int32), section2: NamedTuple("x.y.z": String)) | Hash(String, Hash(String, String)), space : Bool = false) : String
     String.build { |str| build str, ini, space }
   end
 
   # Appends INI data to the given IO.
-  def self.build(io : IO, ini, space : Bool = false) : Nil
+  def self.build(io : IO, ini : Hash(String, Hash(String, Char) | Hash(String, Float64 | Int32) | Hash(String, String)) | NamedTuple(general: NamedTuple(log_level: Char), section1: NamedTuple(foo: Float64, bar: Int32), section2: NamedTuple("x.y.z": String)) | Hash(String, Hash(String, String)), space : Bool = false) : Nil
     # An empty section has to be at first, to prevent being included in another one.
     ini[""]?.try &.each do |key, value|
       io << key << (space ? " = " : '=') << value << '\n'

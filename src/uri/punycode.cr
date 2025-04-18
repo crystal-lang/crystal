@@ -15,7 +15,7 @@ class URI
 
     private BASE36 = "abcdefghijklmnopqrstuvwxyz0123456789"
 
-    private def self.adapt(delta, numpoints, firsttime)
+    private def self.adapt(delta : UInt32 | Int32, numpoints : Int32, firsttime : Bool) : Int32
       delta //= firsttime ? DAMP : 2
       delta += delta // numpoints
       k = 0
@@ -26,11 +26,11 @@ class URI
       k + (((BASE - TMIN + 1) * delta) // (delta + SKEW))
     end
 
-    def self.encode(string) : String
+    def self.encode(string : String) : String
       String.build { |io| encode string, io }
     end
 
-    def self.encode(string, io) : Nil
+    def self.encode(string : String, io : String::Builder) : Nil
       others = [] of Char
 
       string.each_char do |c|
@@ -87,7 +87,7 @@ class URI
       end
     end
 
-    def self.decode(string) : String
+    def self.decode(string : String) : String
       output, _, rest = string.rpartition(DELIMITER)
       output = output.chars
 
@@ -138,7 +138,7 @@ class URI
       output.join
     end
 
-    def self.to_ascii(string) : String
+    def self.to_ascii(string : String) : String
       return string if string.ascii_only?
 
       String.build do |io|

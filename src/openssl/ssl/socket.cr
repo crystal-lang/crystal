@@ -1,6 +1,6 @@
 abstract class OpenSSL::SSL::Socket < IO
   class Client < Socket
-    def initialize(io, context : Context::Client = Context::Client.new, sync_close : Bool = false, hostname : String? = nil)
+    def initialize(io : TCPSocket, context : Context::Client = Context::Client.new, sync_close : Bool = false, hostname : String? = nil)
       super(io, context, sync_close)
       begin
         if hostname
@@ -56,7 +56,7 @@ abstract class OpenSSL::SSL::Socket < IO
   end
 
   class Server < Socket
-    def initialize(io, context : Context::Server = Context::Server.new,
+    def initialize(io : IO | TCPSocket, context : Context::Server = Context::Server.new,
                    sync_close : Bool = false, accept : Bool = true)
       super(io, context, sync_close)
 
@@ -97,7 +97,7 @@ abstract class OpenSSL::SSL::Socket < IO
 
   getter? closed : Bool
 
-  protected def initialize(io, context : Context, @sync_close : Bool = false)
+  protected def initialize(io : TCPSocket | IO, context : Context, @sync_close : Bool = false)
     @closed = false
 
     @ssl = LibSSL.ssl_new(context)
@@ -116,7 +116,7 @@ abstract class OpenSSL::SSL::Socket < IO
     LibSSL.ssl_set_bio(@ssl, @bio, @bio)
   end
 
-  def finalize
+  def finalize : Nil
     LibSSL.ssl_free(@ssl)
   end
 
@@ -157,7 +157,7 @@ abstract class OpenSSL::SSL::Socket < IO
 
   # Returns the negotiated ALPN protocol (eg: `"h2"`) of `nil` if no protocol was
   # negotiated.
-  def alpn_protocol
+  def alpn_protocol : String?
     {% if LibSSL.has_method?(:ssl_get0_alpn_selected) %}
       LibSSL.ssl_get0_alpn_selected(@ssl, out protocol, out len)
       String.new(protocol, len) unless protocol.null?

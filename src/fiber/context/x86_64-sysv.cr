@@ -2,7 +2,7 @@
 
 class Fiber
   # :nodoc:
-  def makecontext(stack_ptr, fiber_main) : Nil
+  def makecontext(stack_ptr : Pointer(Pointer(Void)), fiber_main : Proc(Fiber, Nil)) : Nil
     # in x86-64, the context switch push/pop 6 registers + the return address
     # that is left on the stack, we thus reserve space for 7 pointers:
     @context.stack_top = (stack_ptr - 7).as(Void*)
@@ -15,7 +15,7 @@ class Fiber
   # :nodoc:
   @[NoInline]
   @[Naked]
-  def self.swapcontext(current_context, new_context) : Nil
+  def self.swapcontext(current_context : Pointer(Fiber::Context), new_context : Pointer(Fiber::Context)) : Nil
     {% if compare_versions(Crystal::LLVM_VERSION, "9.0.0") >= 0 %}
       #                %rdi           , %rsi
       asm("

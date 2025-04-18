@@ -67,7 +67,7 @@ class Regex
     # "Crystal".match!(/r/).begin(1)     # IndexError: Invalid capture group index: 1
     # "Crystal".match!(/r(x)?/).begin(1) # IndexError: Capture group 1 was not matched
     # ```
-    def begin(n = 0) : Int32
+    def begin(n : Int32 = 0) : Int32
       @string.byte_index_to_char_index(byte_begin(n)).not_nil!
     end
 
@@ -86,7 +86,7 @@ class Regex
     # "Crystal".match!(/r/).end(1)     # IndexError: Invalid capture group index: 1
     # "Crystal".match!(/r(x)?/).end(1) # IndexError: Capture group 1 was not matched
     # ```
-    def end(n = 0) : Int32
+    def end(n : Int32 = 0) : Int32
       @string.byte_index_to_char_index(byte_end(n)).not_nil!
     end
 
@@ -105,7 +105,7 @@ class Regex
     # "Crystal".match!(/r/).byte_begin(1)     # IndexError: Invalid capture group index: 1
     # "Crystal".match!(/r(x)?/).byte_begin(1) # IndexError: Capture group 1 was not matched
     # ```
-    def byte_begin(n = 0) : Int32
+    def byte_begin(n : Int32 = 0) : Int32
       check_index_out_of_bounds n
       byte_range(n) { |normalized_n| raise_capture_group_was_not_matched(normalized_n) }.begin
     end
@@ -125,7 +125,7 @@ class Regex
     # "Crystal".match!(/r/).byte_end(1)     # IndexError: Invalid capture group index: 1
     # "Crystal".match!(/r(x)?/).byte_end(1) # IndexError: Capture group 1 was not matched
     # ```
-    def byte_end(n = 0) : Int32
+    def byte_end(n : Int32 = 0) : Int32
       check_index_out_of_bounds n
       byte_range(n) { |normalized_n| raise_capture_group_was_not_matched(normalized_n) }.end
     end
@@ -390,7 +390,7 @@ class Regex
       self
     end
 
-    def ==(other : Regex::MatchData)
+    def ==(other : Regex::MatchData) : Bool
       return false unless size == other.size
       return false unless regex == other.regex
       return false unless string == other.string
@@ -405,19 +405,19 @@ class Regex
       Slice.new(@ovector, size * 2).hash(hasher)
     end
 
-    private def check_index_out_of_bounds(index)
+    private def check_index_out_of_bounds(index : Int32) : Nil
       raise_invalid_group_index(index) unless valid_group?(index)
     end
 
-    private def valid_group?(index)
+    private def valid_group?(index : Int32) : Bool
       -size <= index < size
     end
 
-    private def raise_invalid_group_index(index)
+    private def raise_invalid_group_index(index : Int32) : Nil
       raise IndexError.new("Invalid capture group index: #{index}")
     end
 
-    private def raise_capture_group_was_not_matched(index)
+    private def raise_capture_group_was_not_matched(index : Int32) : Nil
       raise IndexError.new("Capture group #{index} was not matched")
     end
   end

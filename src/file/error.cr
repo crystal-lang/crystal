@@ -8,7 +8,7 @@ class File::Error < IO::Error
     target.not_nil!
   end
 
-  private def self.new_from_os_error(message, os_error, **opts)
+  private def self.new_from_os_error(message : String, os_error : Errno, **opts) : File::Error
     case os_error
     when Errno::ENOENT, WinError::ERROR_FILE_NOT_FOUND, WinError::ERROR_PATH_NOT_FOUND
       File::NotFoundError.new(message, **opts)
@@ -23,15 +23,15 @@ class File::Error < IO::Error
     end
   end
 
-  def initialize(message, *, file : String | Path, @other : String? = nil)
+  def initialize(message : String, *, file : String | Path, @other : String? = nil)
     super message, target: file
   end
 
-  protected def self.build_message(message, *, file : String) : String
+  protected def self.build_message(message : String, *, file : String) : String
     "#{message}: '#{file.inspect_unquoted}'"
   end
 
-  protected def self.build_message(message, *, file : String, other : String) : String
+  protected def self.build_message(message : String, *, file : String, other : String) : String
     "#{message}: '#{file.inspect_unquoted}' -> '#{other.inspect_unquoted}'"
   end
 

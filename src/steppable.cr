@@ -70,7 +70,7 @@ module Steppable
   end
 
   # :ditto:
-  def step(*, to limit = nil, by step, exclusive : Bool = false)
+  def step(*, to limit : Char | Int8 | Nil | Int32 | UInt8 | Int16 | Float64 | Time | BigInt | Time::Span = nil, by step : Int32 | Float64 | Time::Span, exclusive : Bool = false) : Steppable::StepIterator(Char, Char, Int32) | Steppable::StepIterator(Int8, Int8, Int32) | Steppable::StepIterator(Int8, Nil, Int32) | Steppable::StepIterator(UInt8, Int32, Int32) | Steppable::StepIterator(UInt8, UInt8, Int32) | Steppable::StepIterator(Int16, Int16, Int32) | Steppable::StepIterator(Int32, Int32, Int32) | Steppable::StepIterator(Float64, Int32, Float64) | Steppable::StepIterator(Int32, Float64, Int32) | Steppable::StepIterator(Int32, Nil, Int32) | Steppable::StepIterator(Float64, Float64, Int32) | Steppable::StepIterator(Float64, Float64, Float64) | Steppable::StepIterator(Float64, Int32, Int32) | Steppable::StepIterator(Time, Time, Time::Span) | Steppable::StepIterator(BigInt, BigInt, Int32) | Steppable::StepIterator(Time::Span, Time::Span, Time::Span)
     raise ArgumentError.new("Zero step size") if step.zero? && limit != self
 
     StepIterator.new(self + (step - step), limit, step, exclusive: exclusive)

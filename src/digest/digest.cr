@@ -21,7 +21,7 @@ abstract class Digest
   # The modules adds convenient class methods as `Digest::MD5.digest`, `Digest::MD5.hexdigest`.
   module ClassMethods
     # Returns the hash of *data*. *data* must respond to `#to_slice`.
-    def digest(data) : Bytes
+    def digest(data : String) : Bytes
       digest do |ctx|
         ctx.update(data.to_slice)
       end
@@ -52,7 +52,7 @@ abstract class Digest
     #
     # Digest::MD5.hexdigest("foo") # => "acbd18db4cc2f85cedef654fccc4a4d8"
     # ```
-    def hexdigest(data) : String
+    def hexdigest(data : String | Slice(UInt8) | StaticArray(UInt8, 1)) : String
       hexdigest &.update(data)
     end
 
@@ -85,7 +85,7 @@ abstract class Digest
     #
     # Digest::SHA1.base64digest("foo") # => "C+7Hteo/D9vJXQ3UfzxbwnXaijM="
     # ```
-    def base64digest(data) : String
+    def base64digest(data : String) : String
       base64digest &.update(data)
     end
 
@@ -113,7 +113,7 @@ abstract class Digest
 
   @finished = false
 
-  def update(data) : self
+  def update(data : StaticArray(UInt8, 16) | String | StaticArray(UInt8, 1)) : self
     update data.to_slice
   end
 
@@ -229,7 +229,7 @@ abstract class Digest
   end
 
   # :ditto:
-  def <<(data) : self
+  def <<(data : File | Slice(UInt8) | String | IO::FileDescriptor) : self
     update(data)
   end
 

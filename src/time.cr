@@ -714,7 +714,7 @@ struct Time
   # If the resulting date-time is ambiguous due to time zone transitions,
   # a correct time will be returned, but it does not guarantee which.
   def shift(*, years : Int = 0, months : Int = 0, weeks : Int = 0, days : Int = 0,
-            hours : Int = 0, minutes : Int = 0, seconds : Int = 0, nanoseconds : Int = 0)
+            hours : Int = 0, minutes : Int = 0, seconds : Int = 0, nanoseconds : Int = 0) : Time
     seconds = seconds.to_i64
 
     # Skip the entire month-based calculations if year and month are zero
@@ -1122,7 +1122,7 @@ struct Time
   #
   # Number of seconds decimals can be selected with *fraction_digits*.
   # Values accepted are 0 (the default, no decimals), 3 (milliseconds), 6 (microseconds) or 9 (nanoseconds).
-  def to_rfc3339(*, fraction_digits : Int = 0)
+  def to_rfc3339(*, fraction_digits : Int = 0) : String
     Format::RFC_3339.format(to_utc, fraction_digits)
   end
 
@@ -1174,7 +1174,7 @@ struct Time
   # into the given *io*.
   #
   # This is also compatible to [RFC 882](https://tools.ietf.org/html/rfc882) and [RFC 1123](https://tools.ietf.org/html/rfc1123#page-55).
-  def to_rfc2822(io : IO)
+  def to_rfc2822(io : IO) : String::Builder | IO::Memory
     Format::RFC_2822.format(to_utc, io)
   end
 
@@ -1473,7 +1473,7 @@ struct Time
   # The valid range for *year* is `1..9999` and for *month* `1..12`. The value
   # of *day*  is not validated and can exceed the number of days in the specified
   # month or even a year.
-  protected def self.absolute_days(year, month, day) : Int32
+  protected def self.absolute_days(year : Int32, month : Int32, day : Int32) : Int32
     days_per_month = leap_year?(year) ? DAYS_MONTH_LEAP : DAYS_MONTH
 
     days_in_year = day - 1
@@ -1488,11 +1488,11 @@ struct Time
     year * 365 + year // 4 - year // 100 + year // 400 + days_in_year
   end
 
-  protected def total_seconds
+  protected def total_seconds : Int64
     @seconds
   end
 
-  protected def offset_seconds
+  protected def offset_seconds : Int64
     @seconds + offset
   end
 
@@ -1545,7 +1545,7 @@ struct Time
     {year, month, day, ordinal_day_in_year}
   end
 
-  protected def self.zone_offset_at(seconds, location)
+  protected def self.zone_offset_at(seconds : Int64, location : Time::Location) : Int32
     unix = seconds - UNIX_EPOCH.total_seconds
     zone, range = location.lookup_with_boundaries(unix)
 

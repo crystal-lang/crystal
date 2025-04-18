@@ -20,7 +20,7 @@ class HTTP::WebSocketHandler
   def initialize(&@proc : WebSocket, Server::Context ->)
   end
 
-  def call(context) : Nil
+  def call(context : HTTP::Server::Context) : Nil
     unless websocket_upgrade_request? context.request
       return call_next context
     end
@@ -54,7 +54,7 @@ class HTTP::WebSocketHandler
     end
   end
 
-  private def websocket_upgrade_request?(request)
+  private def websocket_upgrade_request?(request : HTTP::Request) : Bool
     return false unless upgrade = request.headers["Upgrade"]?
     return false unless upgrade.compare("websocket", case_insensitive: true) == 0
 

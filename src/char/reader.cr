@@ -80,7 +80,7 @@ struct Char
 
     # Creates a reader with the specified *string* positioned at
     # byte index *pos*.
-    def initialize(@string : String, pos = 0)
+    def initialize(@string : String, pos : Int32 | UInt64 | Int64 | UInt8 | UInt32 = 0)
       @pos = pos.to_i
       @current_char = '\0'
       @current_char_width = 0
@@ -239,7 +239,7 @@ struct Char
     # reader.pos = 0
     # reader.current_char # => 'a'
     # ```
-    def pos=(pos)
+    def pos=(pos : Int32) : Int32
       if pos > @string.bytesize
         raise IndexError.new
       end
@@ -335,7 +335,7 @@ struct Char
     end
 
     @[AlwaysInline]
-    private def decode_current_char
+    private def decode_current_char : Char
       decode_char_at(@pos) do |code_point, width, error|
         @current_char_width = width
         @error = error
@@ -423,7 +423,7 @@ struct Char
     end
 
     @[AlwaysInline]
-    private def decode_previous_char
+    private def decode_previous_char : Char?
       return nil if @pos == 0
 
       decode_char_before(@pos) do |code_point, width, error|
@@ -434,7 +434,7 @@ struct Char
       end
     end
 
-    private def byte_at(i)
+    private def byte_at(i : Int32) : UInt32
       @string.to_unsafe[i].to_u32
     end
   end

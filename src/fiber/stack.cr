@@ -5,7 +5,7 @@ class Fiber
     getter bottom : Void*
     getter? reusable : Bool
 
-    def initialize(@pointer, @bottom, *, @reusable = false)
+    def initialize(@pointer : Pointer(Void), @bottom : Pointer(Void), *, @reusable : Bool = false)
     end
 
     def first_addressable_pointer : Void**

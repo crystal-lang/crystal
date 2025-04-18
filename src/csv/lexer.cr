@@ -15,12 +15,12 @@ require "csv"
 # ```
 abstract class CSV::Lexer
   # Creates a CSV lexer from a `String`.
-  def self.new(string : String, separator = DEFAULT_SEPARATOR, quote_char = DEFAULT_QUOTE_CHAR)
+  def self.new(string : String, separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR) : CSV::Lexer::StringBased
     StringBased.new(string, separator, quote_char)
   end
 
   # Creates a CSV lexer from an `IO`.
-  def self.new(io : IO, separator = DEFAULT_SEPARATOR, quote_char = DEFAULT_QUOTE_CHAR)
+  def self.new(io : IO, separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR) : CSV::Lexer::IOBased
     IOBased.new(io, separator, quote_char)
   end
 
@@ -101,7 +101,7 @@ abstract class CSV::Lexer
     @token
   end
 
-  private def consume_quoted_cell
+  private def consume_quoted_cell : String
     @buffer.clear
     while true
       case char = next_char
@@ -126,7 +126,7 @@ abstract class CSV::Lexer
     @buffer.to_s
   end
 
-  private def check_last_empty_column
+  private def check_last_empty_column : Bool?
     case next_char
     when '\r', '\n', '\0'
       @last_empty_column = true
@@ -135,7 +135,7 @@ abstract class CSV::Lexer
     end
   end
 
-  private def next_char
+  private def next_char : Char
     @column_number += 1
     char = next_char_no_column_increment
     if char.in?('\n', '\r')
@@ -145,7 +145,7 @@ abstract class CSV::Lexer
     char
   end
 
-  private def raise(msg)
+  private def raise(msg : String) : Nil
     ::raise CSV::MalformedCSVError.new(msg, @line_number, @column_number)
   end
 end

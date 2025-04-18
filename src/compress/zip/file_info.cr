@@ -51,7 +51,7 @@ module Compress::Zip::FileInfo
   end
 
   # :nodoc:
-  def initialize_meta(io : IO)
+  def initialize_meta(io : IO) : Tuple(UInt16, UInt16, Time)
     @general_purpose_bit_flag = read(io, UInt16)
     @compression_method = CompressionMethod.new(read(io, UInt16))
     time = read(io, UInt16)
@@ -65,7 +65,7 @@ module Compress::Zip::FileInfo
     {file_name_length, extra_field_length, time}
   end
 
-  def initialize(@filename : String, @time = Time.utc, @comment = "", @extra = Bytes.empty)
+  def initialize(@filename : String, @time : Time = Time.utc, @comment : String = "", @extra : Slice(UInt8) = Bytes.empty)
   end
 
   # Returns `true` if this entry is a directory.
@@ -78,7 +78,7 @@ module Compress::Zip::FileInfo
     !dir?
   end
 
-  protected def to_io(io : IO)
+  protected def to_io(io : IO) : Int32
     write io, SIGNATURE # 4
     write io, @version  # 2
     meta_count = meta_to_io(io)
@@ -87,7 +87,7 @@ module Compress::Zip::FileInfo
     meta_count + 6 + @filename.bytesize + extra.size
   end
 
-  protected def meta_to_io(io : IO)
+  protected def meta_to_io(io : IO) : Int32
     write io, @general_purpose_bit_flag # 2
     write io, @compression_method.value # 2
     date, time = to_dos
@@ -101,7 +101,7 @@ module Compress::Zip::FileInfo
     24                                  # the 24 bytes we just wrote
   end
 
-  protected def write_data_descriptor(io : IO)
+  protected def write_data_descriptor(io : IO) : Int32
     io.write FileInfo::DEFLATE_END_SIGNATURE # 4
     write io, @crc32                         # 4
     write io, @compressed_size               # 4
@@ -109,7 +109,7 @@ module Compress::Zip::FileInfo
     16                                       # the 16 bytes we just wrote
   end
 
-  protected def decompressor_for(io, is_sized = false)
+  protected def decompressor_for(io : IO | IO::Memory, is_sized : Bool = false) : IO
     case compression_method
     when .stored?
       io = IO::Sized.new(io, compressed_size) unless is_sized
@@ -129,7 +129,7 @@ module Compress::Zip::FileInfo
     io
   end
 
-  protected def bit_3_set?
+  protected def bit_3_set? : Bool
     (general_purpose_bit_flag & 0b1000) != 0
   end
 
@@ -142,7 +142,7 @@ module Compress::Zip::FileInfo
   # - 6 bits for minute
   # - 5 bits for seconds (0..29), precision of two seconds
 
-  private def from_dos(date, time)
+  private def from_dos(date : UInt16, time : UInt16) : Time
     year = 1980 + (date >> 9)
     month = (date >> 5) & 0b1111
     day = date & 0b11111
@@ -154,7 +154,7 @@ module Compress::Zip::FileInfo
     Time.utc(year.to_i, month.to_i, day.to_i, hour.to_i, minute.to_i, second.to_i)
   end
 
-  private def to_dos
+  private def to_dos : Tuple(UInt16, UInt16)
     date = ((@time.year - 1980) << 9) |
            (@time.month << 5) |
            @time.day
@@ -166,11 +166,11 @@ module Compress::Zip::FileInfo
     {date.to_u16, time.to_u16}
   end
 
-  private def read(io, type)
+  private def read(io : IO | IO::Memory, type : UInt16.class | UInt32.class) : UInt16 | UInt32
     io.read_bytes(type, IO::ByteFormat::LittleEndian)
   end
 
-  private def write(io, value)
+  private def write(io : IO, value : Int32 | UInt16 | UInt32) : Nil
     io.write_bytes(value, IO::ByteFormat::LittleEndian)
   end
 end

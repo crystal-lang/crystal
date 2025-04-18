@@ -4,14 +4,14 @@ require "openssl/lib_crypto"
 module OpenSSL::X509
   # :nodoc:
   class Extension
-    def self.new(oid : String, value : String, critical = false)
+    def self.new(oid : String, value : String, critical : Bool = false) : OpenSSL::X509::Extension
       nid = LibCrypto.obj_ln2nid(oid)
       nid = LibCrypto.obj_sn2nid(oid) if nid == LibCrypto::NID_undef
       raise Error.new("OBJ_sn2nid") if nid == LibCrypto::NID_undef
       new(nid, value, critical)
     end
 
-    def initialize(nid : Int32, value : String, critical = false)
+    def initialize(nid : Int32, value : String, critical : Bool = false)
       valstr = String.build do |str|
         str << "critical," if critical
         str << value
@@ -25,7 +25,7 @@ module OpenSSL::X509
       raise Error.new("X509_EXTENSION_dup") if @ext.null?
     end
 
-    def finalize
+    def finalize : Nil
       LibCrypto.x509_extension_free(@ext)
     end
 
@@ -33,7 +33,7 @@ module OpenSSL::X509
       self.class.new(@ext)
     end
 
-    def to_unsafe
+    def to_unsafe : LibCrypto::X509_EXTENSION
       @ext
     end
 

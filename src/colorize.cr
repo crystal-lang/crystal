@@ -137,7 +137,7 @@ module Colorize
   # This is determined by the environment variable called `TERM`.
   # If `TERM=dumb`, color won't be enabled.
   # If `NO_COLOR` contains any value color won't be enabled conforming to https://no-color.org
-  def self.on_tty_only!
+  def self.on_tty_only! : Bool
     self.enabled = STDOUT.tty? && STDERR.tty? && ENV["TERM"]? != "dumb" && !ENV.has_key?("NO_COLOR")
   end
 
@@ -177,13 +177,13 @@ module Colorize::ObjectExtensions
 
   # Wraps `self` in a `Colorize::Object` and colors it with the given `Color256`
   # made up from the single *fore* byte.
-  def colorize(fore : UInt8)
+  def colorize(fore : UInt8) : Colorize::Object(String)
     Colorize::Object.new(self).fore(fore)
   end
 
   # Wraps `self` in a `Colorize::Object` and colors it with the given `ColorRGB` made
   # up from the given *r*ed, *g*reen and *b*lue values.
-  def colorize(r : UInt8, g : UInt8, b : UInt8)
+  def colorize(r : UInt8, g : UInt8, b : UInt8) : Colorize::Object(String)
     Colorize::Object.new(self).fore(r, g, b)
   end
 
@@ -193,7 +193,7 @@ module Colorize::ObjectExtensions
   end
 
   # Wraps `self` in a `Colorize::Object` and colors it with the given *fore* color.
-  def colorize(fore : Symbol)
+  def colorize(fore : Symbol) : Colorize::Object(Char) | Colorize::Object(String)
     Colorize::Object.new(self).fore(fore)
   end
 end
@@ -513,7 +513,7 @@ struct Colorize::Object(T)
     end
   end
 
-  private def self.append_start(io, color)
+  private def self.append_start(io : IO::FileDescriptor | String::Builder | IO | IO::Memory, color : NamedTuple(fore: Colorize::Color256 | Colorize::ColorANSI | Colorize::ColorRGB, back: Colorize::Color256 | Colorize::ColorANSI | Colorize::ColorRGB, mode: Colorize::Mode)) : Bool
     last_color_is_default =
       @@last_color[:fore] == ColorANSI::Default &&
         @@last_color[:back] == ColorANSI::Default &&

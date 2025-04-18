@@ -240,7 +240,7 @@ class URI
     # params["email"]              # => "john@example.org"
     # params["non_existent_param"] # KeyError
     # ```
-    def [](name) : String
+    def [](name : String) : String
       fetch(name) { raise KeyError.new "Missing param name: #{name.inspect}" }
     end
 
@@ -250,7 +250,7 @@ class URI
     # params["email"]?              # => "john@example.org"
     # params["non_existent_param"]? # nil
     # ```
-    def []?(name) : String?
+    def []?(name : String) : String?
       fetch(name, nil)
     end
 
@@ -284,7 +284,7 @@ class URI
     # params["a"]           # => "e"
     # params.fetch_all("a") # => ["e", "f"]
     # ```
-    def []=(name, value : String | Array(String))
+    def []=(name : String, value : String | Array(String)) : Array(String)
       raw_params[name] =
         case value
         in String        then [value]
@@ -298,7 +298,7 @@ class URI
     # params.set_all("item", ["pencil", "book", "workbook"])
     # params.fetch_all("item") # => ["pencil", "book", "workbook"]
     # ```
-    def fetch_all(name) : Array(String)
+    def fetch_all(name : String) : Array(String)
       raw_params.fetch(name) { [] of String }
     end
 
@@ -310,7 +310,7 @@ class URI
     # params.fetch("email", "none@example.org")           # => "john@example.org"
     # params.fetch("non_existent_param", "default value") # => "default value"
     # ```
-    def fetch(name, default)
+    def fetch(name : String, default : String?) : String?
       fetch(name) { default }
     end
 
@@ -334,7 +334,7 @@ class URI
     # params.add("item", "keychain")
     # params.fetch_all("item") # => ["pencil", "book", "workbook", "keychain"]
     # ```
-    def add(name, value)
+    def add(name : String, value : String) : Array(String)
       params = raw_params.put_if_absent(name) { [] of String }
       params.clear if params.size == 1 && params[0] == ""
       params << value
@@ -346,7 +346,7 @@ class URI
     # params.set_all("item", ["keychain", "keynote"])
     # params.fetch_all("item") # => ["keychain", "keynote"]
     # ```
-    def set_all(name, values)
+    def set_all(name : String, values : Array(String)) : Array(String)
       raw_params[name] = values
     end
 
@@ -382,7 +382,7 @@ class URI
     #
     # params.delete("non_existent_param") # KeyError
     # ```
-    def delete(name) : String
+    def delete(name : String) : String
       value = raw_params[name].shift
       raw_params.delete(name) if raw_params[name].size == 0
       value
@@ -396,7 +396,7 @@ class URI
     # params.delete_all("comments") # => ["hello, world!", ":+1:"]
     # params.has_key?("comments")   # => false
     # ```
-    def delete_all(name) : Array(String)?
+    def delete_all(name : String) : Array(String)?
       raw_params.delete(name)
     end
 
@@ -456,7 +456,7 @@ class URI
     # params = URI::Params.parse("item=keychain&greeting=hello+world&email=john@example.org")
     # params.to_s(space_to_plus: false) # => "item=keychain&greeting=hello%20world&email=john%40example.org"
     # ```
-    def to_s(*, space_to_plus : Bool = true)
+    def to_s(*, space_to_plus : Bool = true) : String
       String.build do |io|
         to_s(io, space_to_plus: space_to_plus)
       end
@@ -476,7 +476,7 @@ class URI
     end
 
     # :nodoc:
-    def self.decode_one_www_form_component(query, bytesize, i, byte, char, buffer)
+    def self.decode_one_www_form_component(query : String, bytesize : Int32, i : Int32, byte : UInt8, char : Char, buffer : IO::Memory) : Int32
       URI.decode_one query, bytesize, i, byte, char, buffer, true
     end
 
@@ -494,7 +494,7 @@ class URI
       end
 
       # Adds a key-value pair to the params being built.
-      def add(key, value : String?)
+      def add(key : String, value : String?) : URI::Params::Builder
         @io << '&' unless @first
         @first = false
         URI.encode_www_form key, @io, space_to_plus: @space_to_plus
@@ -504,7 +504,7 @@ class URI
       end
 
       # Adds all of the given *values* as key-value pairs to the params being built.
-      def add(key, values : Array)
+      def add(key : String, values : Array) : URI::Params::Builder
         values.each { |value| add(key, value) }
         self
       end

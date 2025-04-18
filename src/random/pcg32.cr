@@ -39,11 +39,11 @@ class Random::PCG32
   @state : UInt64
   @inc : UInt64
 
-  def self.new
+  def self.new : Random::PCG32
     new(Random::Secure.rand(UInt64::MIN..UInt64::MAX), Random::Secure.rand(UInt64::MIN..UInt64::MAX))
   end
 
-  def initialize(initstate : UInt64, initseq = 0_u64)
+  def initialize(initstate : UInt64, initseq : UInt64 = 0_u64)
     # initialize to zeros to prevent compiler complains
     @state = 0_u64
     @inc = 0_u64
@@ -54,7 +54,7 @@ class Random::PCG32
     new_seed(Random::Secure.rand(UInt64::MIN..UInt64::MAX), Random::Secure.rand(UInt64::MIN..UInt64::MAX))
   end
 
-  def new_seed(initstate : UInt64, initseq = 0_u64) : UInt32
+  def new_seed(initstate : UInt64, initseq : UInt64 = 0_u64) : UInt32
     @state = 0_u64
     @inc = (initseq << 1) | 1
     next_u
@@ -70,7 +70,7 @@ class Random::PCG32
     UInt32.new!(xorshifted.rotate_right(rot))
   end
 
-  def jump(delta)
+  def jump(delta : Int32) : UInt64
     deltau64 = UInt64.new!(delta)
     acc_mult = 1u64
     acc_plus = 0u64

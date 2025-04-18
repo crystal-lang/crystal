@@ -220,19 +220,19 @@ class URI
   #
   # Reserved characters are ':', '/', '?', '#', '[', ']', '@', '!',
   # '$', '&', "'", '(', ')', '*', '+', ',', ';' and '='.
-  def self.reserved?(byte) : Bool
+  def self.reserved?(byte : UInt8) : Bool
     sub_delim?(byte) || gen_delim?(byte)
   end
 
   # :nodoc:
   # Returns `true` if the byte is URI gen-delims (https://datatracker.ietf.org/doc/html/rfc3986#section-2.2).
-  def self.gen_delim?(byte)
+  def self.gen_delim?(byte : UInt8) : Bool
     byte.unsafe_chr.in?('#', '/', ':', '?', '@', '[', ']')
   end
 
   # :nodoc:
   # Returns `true` if the byte is URI sub-delims (https://datatracker.ietf.org/doc/html/rfc3986#section-2.2).
-  def self.sub_delim?(byte) : Bool
+  def self.sub_delim?(byte : UInt8) : Bool
     char = byte.unsafe_chr
     '&' <= char <= ',' ||
       char.in?('!', '$', ';', '=')
@@ -242,7 +242,7 @@ class URI
   # [RFC 3986 §2.3](https://datatracker.ietf.org/doc/html/rfc3986#section-2.3).
   #
   # Unreserved characters are ASCII letters, ASCII digits, `_`, `.`, `-` and `~`.
-  def self.unreserved?(byte) : Bool
+  def self.unreserved?(byte : UInt8) : Bool
     char = byte.unsafe_chr
     char.ascii_alphanumeric? ||
       char.in?('_', '.', '-', '~')
@@ -324,7 +324,7 @@ class URI
   end
 
   # :nodoc:
-  def self.decode_one(string, bytesize, i, byte, char, io, plus_to_space = false)
+  def self.decode_one(string : String, bytesize : Int32, i : Int32, byte : UInt8, char : Char, io : IO::Memory, plus_to_space : Bool = false) : Int32
     self.decode_one(string, bytesize, i, byte, char, io, plus_to_space) { false }
   end
 

@@ -20,7 +20,7 @@ struct UUID
   # example = Example.from_json(%({"id": "ba714f86-cac6-42c7-8956-bcf5105e1b81"}))
   # example.id # => UUID(ba714f86-cac6-42c7-8956-bcf5105e1b81)
   # ```
-  def self.new(pull : JSON::PullParser)
+  def self.new(pull : JSON::PullParser) : UUID
     new(pull.read_string)
   end
 
@@ -44,7 +44,7 @@ struct UUID
   # Deserializes the given JSON *key* into a `UUID`.
   #
   # NOTE: `require "uuid/json"` is required to opt-in to this feature.
-  def self.from_json_object_key?(key : String)
+  def self.from_json_object_key?(key : String) : UUID
     UUID.new(key)
   end
 end

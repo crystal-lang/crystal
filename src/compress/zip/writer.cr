@@ -45,7 +45,7 @@ class Compress::Zip::Writer
   end
 
   # Creates a new writer to the given *filename*.
-  def self.new(filename : Path | String)
+  def self.new(filename : Path | String) : Compress::Zip::Writer
     new(::File.new(filename, "w"), sync_close: true)
   end
 
@@ -175,7 +175,7 @@ class Compress::Zip::Writer
   end
 
   # Adds a directory entry that will have the given *name*.
-  def add_dir(name) : Nil
+  def add_dir(name : String) : Nil
     name = name + '/' unless name.ends_with?('/')
     add(Entry.new(name)) { }
   end
@@ -192,7 +192,7 @@ class Compress::Zip::Writer
     @io.close if @sync_close
   end
 
-  private def write_central_directory
+  private def write_central_directory : Nil
     @entries.each do |entry|
       write Zip::CENTRAL_DIRECTORY_HEADER_SIGNATURE # 4
       write Zip::VERSION                            # version made by (2)
@@ -219,7 +219,7 @@ class Compress::Zip::Writer
     end
   end
 
-  private def write_end_of_central_directory(offset, size)
+  private def write_end_of_central_directory(offset : UInt32, size : UInt32) : IO
     write Zip::END_OF_CENTRAL_DIRECTORY_HEADER_SIGNATURE
     write 0_u16                    # number of this disk
     write 0_u16                    # disk start
@@ -231,7 +231,7 @@ class Compress::Zip::Writer
     @io << @comment                # comment
   end
 
-  private def write(value)
+  private def write(value : Int32 | UInt16 | UInt32) : Nil
     @io.write_bytes(value, IO::ByteFormat::LittleEndian)
   end
 

@@ -141,7 +141,7 @@ module Unicode
     x
   end
 
-  private def self.put1(array : Array, value) : Nil
+  private def self.put1(array : Array, value : UInt64) : Nil
     array << value
   end
 
@@ -196,7 +196,7 @@ module Unicode
     yield check_upcase_ranges(char)
   end
 
-  private def self.check_upcase_ascii(char, options)
+  private def self.check_upcase_ascii(char : Char, options : Unicode::CaseOptions) : Char?
     if (char.ascii? && options.none?) || options.ascii?
       if char.ascii_lowercase?
         return (char.ord - 32).unsafe_chr
@@ -207,7 +207,7 @@ module Unicode
     nil
   end
 
-  private def self.check_upcase_turkic(char, options)
+  private def self.check_upcase_turkic(char : Char, options : Unicode::CaseOptions) : Char?
     if options.turkic?
       case char
       when 'ı' then 'I'
@@ -219,7 +219,7 @@ module Unicode
     end
   end
 
-  private def self.check_upcase_ranges(char)
+  private def self.check_upcase_ranges(char : Char) : Char
     result = search_ranges(upcase_ranges, char.ord)
     return char + result if result
 
@@ -263,7 +263,7 @@ module Unicode
     yield check_downcase_ranges(char)
   end
 
-  private def self.check_downcase_ascii(char, options)
+  private def self.check_downcase_ascii(char : Char, options : Unicode::CaseOptions) : Char?
     if (char.ascii? && options.none?) || options.ascii?
       if char.ascii_uppercase?
         return (char.ord + 32).unsafe_chr
@@ -275,7 +275,7 @@ module Unicode
     nil
   end
 
-  private def self.check_downcase_turkic(char, options)
+  private def self.check_downcase_turkic(char : Char, options : Unicode::CaseOptions) : Char?
     if options.turkic?
       case char
       when 'I' then 'ı'
@@ -287,7 +287,7 @@ module Unicode
     end
   end
 
-  private def self.check_downcase_ranges(char)
+  private def self.check_downcase_ranges(char : Char) : Char
     result = search_ranges(downcase_ranges, char.ord)
     return char + result if result
 
@@ -362,7 +362,7 @@ module Unicode
     yield char
   end
 
-  private def self.check_foldcase(char, options)
+  private def self.check_foldcase(char : Char, options : Unicode::CaseOptions) : Tuple(Int32) | Tuple(Int32, Int32, Int32) | Nil
     if options.fold?
       result = search_ranges(casefold_ranges, char.ord)
       return {char.ord + result} if result
@@ -638,19 +638,19 @@ module Unicode
     end
   end
 
-  private def self.search_ranges(haystack, needle)
+  private def self.search_ranges(haystack : Array(Tuple(Int32, Int32, Int32)), needle : Int32) : Int32?
     search_ranges(haystack, needle) { |value| value[2] }
   end
 
-  private def self.search_alternate(haystack, needle)
+  private def self.search_alternate(haystack : Array(Tuple(Int32, Int32)), needle : Int32) : Int32?
     search_ranges(haystack, needle) { |value| value[0] }
   end
 
-  private def self.in_category?(needle, haystack)
+  private def self.in_category?(needle : Int32, haystack : Array(Tuple(Int32, Int32, Int32))) : Bool
     !!search_ranges(haystack, needle) { |value| (needle - value[0]).divisible_by?(value[2]) }
   end
 
-  private def self.in_any_category?(needle, *haystacks) : Bool
+  private def self.in_any_category?(needle : Int32, *haystacks) : Bool
     haystacks.any? { |haystack| in_category?(needle, haystack) }
   end
 end

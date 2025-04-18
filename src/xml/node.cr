@@ -29,7 +29,7 @@ class XML::Node
 
   # Sets *attribute* of this node to *value*.
   # Raises `XML::Error` if this node does not support attributes.
-  def []=(name : String, value)
+  def []=(name : String, value : String | Int32) : String | Int32
     raise XML::Error.new("Can't set attribute of #{type}", 0) unless element?
     attributes[name] = value
   end
@@ -41,7 +41,7 @@ class XML::Node
   end
 
   # Compares with *other*.
-  def ==(other : Node)
+  def ==(other : Node) : Bool
     @node == other.@node
   end
 
@@ -91,7 +91,7 @@ class XML::Node
 
   # Sets the Node's content to a Text node containing string.
   # The string gets XML escaped, not interpreted as markup.
-  def content=(content)
+  def content=(content : String) : Nil
     check_no_null_byte(content)
     LibXML.xmlNodeSetContent(self, content)
   end
@@ -265,7 +265,7 @@ class XML::Node
   end
 
   # Sets the name for this Node.
-  def name=(name)
+  def name=(name : String) : Nil
     if document? || text? || cdata? || fragment?
       raise XML::Error.new("Can't set name of XML #{type}", 0)
     end
@@ -406,7 +406,7 @@ class XML::Node
   end
 
   # Same as `#content=`.
-  def text=(text)
+  def text=(text : String) : Nil
     self.content = text
   end
 
@@ -425,7 +425,7 @@ class XML::Node
   # Serialize this Node as XML and return a `String` using default options.
   #
   # See `XML::SaveOptions.xml_default` for default options.
-  def to_xml(indent : Int = 2, indent_text = " ", options : SaveOptions = SaveOptions.xml_default) : String
+  def to_xml(indent : Int = 2, indent_text : String = " ", options : SaveOptions = SaveOptions.xml_default) : String
     String.build do |str|
       to_xml str, indent, indent_text, options
     end
@@ -437,7 +437,7 @@ class XML::Node
   # Serialize this Node as XML to *io* using default options.
   #
   # See `XML::SaveOptions.xml_default` for default options.
-  def to_xml(io : IO, indent = 2, indent_text = " ", options : SaveOptions = SaveOptions.xml_default)
+  def to_xml(io : IO, indent : Int32 = 2, indent_text : String = " ", options : SaveOptions = SaveOptions.xml_default) : String::Builder | IO::Memory
     # We need to use a mutex because we modify global libxml variables
     SAVE_MUTEX.synchronize do
       XML.with_indent_tree_output(true) do
@@ -464,7 +464,7 @@ class XML::Node
   end
 
   # Returns underlying `LibXML::Node*` instance.
-  def to_unsafe
+  def to_unsafe : Pointer(LibXML::Node)
     @node
   end
 
@@ -487,7 +487,7 @@ class XML::Node
   # (`Bool | Float64 | String | XML::NodeSet`).
   #
   # Raises `XML::Error` on evaluation error.
-  def xpath(path, namespaces = nil, variables = nil)
+  def xpath(path : String, namespaces : Nil | Hash(String, String) | Hash(String, String | Nil) = nil, variables : Hash(String, Int32)? = nil) : Bool | Float64 | String | XML::NodeSet
     ctx = XPathContext.new(self)
 
     if namespaces
@@ -511,7 +511,7 @@ class XML::Node
   #
   # doc.xpath_bool("count(//person) > 0") # => true
   # ```
-  def xpath_bool(path, namespaces = nil, variables = nil)
+  def xpath_bool(path : String, namespaces : Nil = nil, variables : Hash(String, Int32)? = nil) : Bool
     xpath(path, namespaces, variables).as(Bool)
   end
 
@@ -524,7 +524,7 @@ class XML::Node
   #
   # doc.xpath_float("count(//person)") # => 1.0
   # ```
-  def xpath_float(path, namespaces = nil, variables = nil)
+  def xpath_float(path : String, namespaces : Nil = nil, variables : Hash(String, Int32)? = nil) : Float64
     xpath(path, namespaces, variables).as(Float64)
   end
 
@@ -539,7 +539,7 @@ class XML::Node
   # nodes.class       # => XML::NodeSet
   # nodes.map(&.name) # => ["person"]
   # ```
-  def xpath_nodes(path, namespaces = nil, variables = nil)
+  def xpath_nodes(path : String, namespaces : Nil = nil, variables : Hash(String, Int32)? = nil) : XML::NodeSet
     xpath(path, namespaces, variables).as(NodeSet)
   end
 
@@ -554,7 +554,7 @@ class XML::Node
   # doc.xpath_node("//person")  # => #<XML::Node:0x2013e80 name="person">
   # doc.xpath_node("//invalid") # => nil
   # ```
-  def xpath_node(path, namespaces = nil, variables = nil)
+  def xpath_node(path : String, namespaces : Nil = nil, variables : Hash(String, Int32)? = nil) : XML::Node?
     xpath_nodes(path, namespaces, variables).first?
   end
 
@@ -567,7 +567,7 @@ class XML::Node
   #
   # doc.xpath_string("string(/persons/person[1])")
   # ```
-  def xpath_string(path, namespaces = nil, variables = nil)
+  def xpath_string(path : String, namespaces : Nil = nil, variables : Hash(String, Int32)? = nil) : String
     xpath(path, namespaces, variables).as(String)
   end
 
@@ -577,7 +577,7 @@ class XML::Node
     return @errors unless @errors.try &.empty?
   end
 
-  private def check_no_null_byte(string)
+  private def check_no_null_byte(string : String) : Nil
     if string.includes? Char::ZERO
       raise XML::Error.new("Cannot escape string containing null character", 0)
     end

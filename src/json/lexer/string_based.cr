@@ -1,6 +1,6 @@
 # :nodoc:
 class JSON::Lexer::StringBased < JSON::Lexer
-  def initialize(string)
+  def initialize(string : String)
     super()
     @reader = Char::Reader.new(string)
     @number_start = 0
@@ -39,22 +39,22 @@ class JSON::Lexer::StringBased < JSON::Lexer
     end
   end
 
-  private def consume_string_slow_path(start_pos)
+  private def consume_string_slow_path(start_pos : Int32) : String
     consume_string_with_buffer do
       @buffer.write slice_range(start_pos + 1, current_pos)
       @buffer << consume_string_escape_sequence
     end
   end
 
-  private def current_pos
+  private def current_pos : Int32
     @reader.pos
   end
 
-  def string_range(start_pos, end_pos) : String
+  def string_range(start_pos : Int32, end_pos : Int32) : String
     @reader.string.byte_slice(start_pos, end_pos - start_pos)
   end
 
-  def slice_range(start_pos, end_pos) : Bytes
+  def slice_range(start_pos : Int32, end_pos : Int32) : Bytes
     @reader.string.to_slice[start_pos, end_pos - start_pos]
   end
 

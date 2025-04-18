@@ -168,12 +168,12 @@ end
 # Prints a formatted string to `STDOUT`.
 #
 # For details on the format string, see `sprintf`.
-def printf(format_string, *args) : Nil
+def printf(format_string : String, *args) : Nil
   printf format_string, args
 end
 
 # :ditto:
-def printf(format_string, args : Array | Tuple) : Nil
+def printf(format_string : String, args : Array | Tuple) : Nil
   STDOUT.printf format_string, args
 end
 
@@ -433,12 +433,12 @@ end
 # sprintf "%+g:% g:%-g", 1.23, 1.23, 1.23     # => "+1.23: 1.23:1.23"
 # sprintf "%-3$*1$.*2$s", 10, 5, "abcdefghij" # => "abcde     "
 # ```
-def sprintf(format_string, *args) : String
+def sprintf(format_string : String, *args) : String
   sprintf format_string, args
 end
 
 # :ditto:
-def sprintf(format_string, args : Array | Tuple) : String
+def sprintf(format_string : String, args : Array | Tuple) : String
   String.build(format_string.bytesize) do |str|
     String::Formatter(typeof(args)).new(format_string, args, str).format
   end
@@ -456,7 +456,7 @@ end
 # by a newline. Returns *object*.
 #
 # See also: `Object#inspect(io)`.
-def p(object)
+def p(object : Tuple(Int32, Int32)) : Tuple(Int32, Int32)
   object.inspect(STDOUT)
   puts
   object
@@ -489,7 +489,7 @@ end
 # by a newline. Returns *object*.
 #
 # See also: `Object#pretty_print(pp)`.
-def pp(object)
+def pp(object : Tuple(Int32, Int32)) : Tuple(Int32, Int32)
   PrettyPrint.format(object, STDOUT, 79)
   puts
   object
@@ -563,7 +563,7 @@ end
 # to the invoking environment.
 #
 # Registered `at_exit` procs are executed.
-def exit(status = 0) : NoReturn
+def exit(status : Int32 = 0) : NoReturn
   status = Crystal::AtExitHandlers.run status
   Crystal.ignore_stdio_errors { STDOUT.flush }
   Crystal.ignore_stdio_errors { STDERR.flush }
@@ -572,7 +572,7 @@ end
 
 # Terminates execution immediately, printing *message* to `STDERR` and
 # then calling `exit(status)`.
-def abort(message = nil, status = 1) : NoReturn
+def abort(message = nil, status : Int32 = 1) : NoReturn
   Crystal.ignore_stdio_errors { STDERR.puts message } if message
   exit status
 end

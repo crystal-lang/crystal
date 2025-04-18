@@ -135,7 +135,7 @@ class WaitGroup
     raise RuntimeError.new("Positive WaitGroup counter (early wake up?)")
   end
 
-  private def done?
+  private def done? : Bool
     counter = @counter.get(:acquire)
     raise RuntimeError.new("Negative WaitGroup counter") if counter < 0
     counter == 0

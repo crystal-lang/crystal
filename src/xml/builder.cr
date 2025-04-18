@@ -29,7 +29,7 @@ class XML::Builder
   end
 
   # Emits the start of the document.
-  def start_document(version = nil, encoding = nil) : Nil
+  def start_document(version : Nil = nil, encoding : Nil = nil) : Nil
     call StartDocument, string_to_unsafe(version), string_to_unsafe(encoding), nil
   end
 
@@ -84,7 +84,7 @@ class XML::Builder
   end
 
   # Emits an element with the given *attributes*.
-  def element(__name__ : String, **attributes)
+  def element(__name__ : String, **attributes) : Nil
     element(__name__, attributes)
   end
 
@@ -143,12 +143,12 @@ class XML::Builder
   end
 
   # Emits an attribute with a *value*.
-  def attribute(name : String, value) : Nil
+  def attribute(name : String, value : Int32 | String) : Nil
     call WriteAttribute, string_to_unsafe(name), string_to_unsafe(value.to_s)
   end
 
   # Emits an attribute with namespace info and a *value*.
-  def attribute(prefix : String?, name : String, namespace_uri : String?, value) : Nil
+  def attribute(prefix : String?, name : String, namespace_uri : String?, value : Int32 | String) : Nil
     call WriteAttributeNS, string_to_unsafe(prefix), string_to_unsafe(name), string_to_unsafe(namespace_uri), string_to_unsafe(value.to_s)
   end
 
@@ -241,7 +241,7 @@ class XML::Builder
   end
 
   # Emits a namespace.
-  def namespace(prefix, uri) : Nil
+  def namespace(prefix : String, uri : String) : Nil
     attribute "xmlns", prefix, nil, uri
   end
 
@@ -254,7 +254,7 @@ class XML::Builder
   end
 
   # Sets the indent string.
-  def indent=(str : String)
+  def indent=(str : String) : Nil
     if str.empty?
       call SetIndent, 0
     else
@@ -264,7 +264,7 @@ class XML::Builder
   end
 
   # Sets the indent *level* (number of spaces).
-  def indent=(level : Int)
+  def indent=(level : Int) : Nil
     if level <= 0
       call SetIndent, 0
     else
@@ -274,7 +274,7 @@ class XML::Builder
   end
 
   # Sets the quote char to use, either `'` or `"`.
-  def quote_char=(char : Char)
+  def quote_char=(char : Char) : Nil
     unless char.in?('\'', '"')
       raise ArgumentError.new("Quote char must be ' or \", not #{char}")
     end
@@ -287,7 +287,7 @@ class XML::Builder
     check ret, {{@def.name.stringify}}
   end
 
-  private def check(ret, msg)
+  private def check(ret : Int32, msg : String) : Nil
     raise XML::Error.new("Error in #{msg}", 0) if ret < 0
   end
 
@@ -295,12 +295,12 @@ class XML::Builder
     raise XML::Error.new("Invalid #{element_type}: '#{name}'", 0) if LibXML.xmlValidateNameValue(unsafe_name).zero?
   end
 
-  private def string_to_unsafe(string : String)
+  private def string_to_unsafe(string : String) : Pointer(UInt8)
     raise XML::Error.new("String cannot contain null character", 0) if string.includes? '\0'
     string.to_unsafe
   end
 
-  private def string_to_unsafe(string : Nil)
+  private def string_to_unsafe(string : Nil) : Pointer(UInt8)
     Pointer(UInt8).null
   end
 end

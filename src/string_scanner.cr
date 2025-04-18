@@ -68,7 +68,7 @@ class StringScanner
   end
 
   # Sets the *position* of the scan offset.
-  def offset=(position : Int)
+  def offset=(position : Int) : Int32
     raise IndexError.new unless position >= 0
     @byte_offset = @str.char_index_to_byte_index(position) || @str.bytesize
   end
@@ -134,7 +134,7 @@ class StringScanner
     match(pattern, advance: true, anchored: false)
   end
 
-  private def match(pattern : Regex, advance = true, options = Regex::MatchOptions::ANCHORED)
+  private def match(pattern : Regex, advance : Bool = true, options : Regex::MatchOptions = Regex::MatchOptions::ANCHORED) : String?
     match = pattern.match_at_byte_index(@str, @byte_offset, options)
     @last_match = match
     if match
@@ -148,7 +148,7 @@ class StringScanner
     end
   end
 
-  private def match(pattern : String | Char, advance = true, anchored = true)
+  private def match(pattern : String | Char, advance : Bool = true, anchored : Bool = true) : String?
     @last_match = nil
     if pattern.bytesize > @str.bytesize - @byte_offset
       nil
@@ -295,7 +295,7 @@ class StringScanner
   # s["month"]    # => "Dec"
   # s["day"]      # => "12"
   # ```
-  def [](n) : String
+  def [](n : Int32 | String) : String
     @last_match.not_nil![n]
   end
 
@@ -321,7 +321,7 @@ class StringScanner
   # s.scan(/more/) # => nil
   # s[0]?          # => nil
   # ```
-  def []?(n) : String?
+  def []?(n : Int32 | String) : String?
     @last_match.try(&.[n]?)
   end
 
@@ -340,13 +340,13 @@ class StringScanner
   end
 
   # Resets the scan offset to the beginning and clears the last match.
-  def reset
+  def reset : Int32
     @last_match = nil
     @byte_offset = 0
   end
 
   # Moves the scan offset to the end of the string and clears the last match.
-  def terminate
+  def terminate : Int32
     @last_match = nil
     @byte_offset = @str.bytesize
   end
@@ -358,7 +358,7 @@ class StringScanner
 
   # Extracts a string corresponding to string[offset,*len*], without advancing
   # the scan offset.
-  def peek(len) : String
+  def peek(len : Int32) : String
     @str[offset, len]
   end
 

@@ -19,7 +19,7 @@ struct Time::Format
   # ```
   module HTTP_DATE
     # Parses a string into a `Time`.
-    def self.parse(string, location = Time::Location::UTC) : Time
+    def self.parse(string : String, location : Time::Location = Time::Location::UTC) : Time
       parser = Parser.new(string)
       parser.http_date
       parser.time(location)
@@ -28,7 +28,7 @@ struct Time::Format
     # Formats a `Time` into the given *io*.
     #
     # *time* is always converted to UTC.
-    def self.format(time : Time, io : IO)
+    def self.format(time : Time, io : IO) : String::Builder
       formatter = Formatter.new(time.to_utc, io)
       formatter.rfc_2822(time_zone_gmt: true, two_digit_day: true)
       io

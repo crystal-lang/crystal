@@ -23,7 +23,7 @@ enum WinError : UInt32
   # which signifies the error code of the previously called win32 function.
   #
   # Raises `NotImplementedError` on non-win32 platforms.
-  def self.value=(winerror : self)
+  def self.value=(winerror : self) : Nil
     {% if flag?(:win32) %}
       LibC.SetLastError(winerror.value)
     {% else %}
@@ -35,7 +35,7 @@ enum WinError : UInt32
   # which is used to retrieve the error code of the previously called Windows Socket API function.
   #
   # Raises `NotImplementedError` on non-win32 platforms.
-  def self.wsa_value
+  def self.wsa_value : Nil
     {% if flag?(:win32) %}
       WinError.new LibC.WSAGetLastError.to_u32!
     {% else %}
@@ -47,7 +47,7 @@ enum WinError : UInt32
   # which signifies the error code of the previously called Windows Socket API function.
   #
   # Raises `NotImplementedError` on non-win32 platforms.
-  def self.wsa_value=(winerror : self)
+  def self.wsa_value=(winerror : self) : Nil
     {% if flag?(:win32) %}
       LibC.WSASetLastError(winerror.value)
     {% else %}

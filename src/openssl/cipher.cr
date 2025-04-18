@@ -45,7 +45,7 @@ class OpenSSL::Cipher
   class Error < OpenSSL::Error
   end
 
-  def initialize(name)
+  def initialize(name : String)
     cipher = LibCrypto.evp_get_cipherbyname name
     raise ArgumentError.new "Unsupported cipher algorithm #{name.inspect}" unless cipher
 
@@ -67,13 +67,13 @@ class OpenSSL::Cipher
     cipherinit enc: 0
   end
 
-  def key=(key)
+  def key=(key : String) : String
     raise ArgumentError.new "Key length too short: wanted #{key_len}, got #{key.bytesize}" if key.bytesize < key_len
     cipherinit key: key
     key
   end
 
-  def iv=(iv)
+  def iv=(iv : String) : String
     raise ArgumentError.new "IV length too short: wanted #{iv_len}, got #{iv.bytesize}" if iv.bytesize < iv_len
     cipherinit iv: iv
     iv
@@ -97,7 +97,7 @@ class OpenSSL::Cipher
   end
 
   # Add the data to be encrypted or decrypted to this cipher's buffer.
-  def update(data)
+  def update(data : String | Slice(UInt8)) : Slice(UInt8)
     slice = data.to_slice
     buffer_length = slice.size + block_size
     buffer = Bytes.new(buffer_length)
@@ -148,7 +148,7 @@ class OpenSSL::Cipher
     LibCrypto.evp_cipher_iv_length cipher
   end
 
-  def finalize
+  def finalize : Pointer(Void)
     LibCrypto.evp_cipher_ctx_free(@ctx) if @ctx
     @ctx = typeof(@ctx).null
   end
@@ -157,7 +157,7 @@ class OpenSSL::Cipher
     LibCrypto.evp_cipher_flags(cipher).includes?(LibCrypto::CipherFlags::EVP_CIPH_FLAG_AEAD_CIPHER)
   end
 
-  private def cipherinit(cipher = nil, engine = nil, key = nil, iv = nil, enc = -1)
+  private def cipherinit(cipher : Pointer(Void)? = nil, engine : Nil = nil, key : String? = nil, iv : String? = nil, enc : Int32 = -1) : Nil
     if LibCrypto.evp_cipherinit_ex(@ctx, cipher, engine, key, iv, enc) != 1
       raise Error.new "EVP_CipherInit_ex"
     end
@@ -165,7 +165,7 @@ class OpenSSL::Cipher
     nil
   end
 
-  private def cipher
+  private def cipher : Pointer(Void)
     LibCrypto.evp_cipher_ctx_cipher @ctx
   end
 end

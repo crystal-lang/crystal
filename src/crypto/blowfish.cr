@@ -15,7 +15,7 @@ class Crypto::Blowfish
     @s3 = @s.to_unsafe + 768
   end
 
-  def expand_key(key) : Nil
+  def expand_key(key : Array(UInt8) | Slice(UInt8)) : Nil
     pos = 0
 
     0.upto(17) do |i|
@@ -37,7 +37,7 @@ class Crypto::Blowfish
     end
   end
 
-  def encrypt_pair(l : UInt32, r : UInt32)
+  def encrypt_pair(l : UInt32, r : UInt32) : Tuple(UInt32, UInt32)
     0.upto(@rounds - 1) do |i|
       l ^= @p.to_unsafe[i]
       r ^= f(l)
@@ -68,7 +68,7 @@ class Crypto::Blowfish
   end
 
   @[AlwaysInline]
-  private def f(x : UInt32)
+  private def f(x : UInt32) : UInt32
     d = x.to_u8!
     c = (x >> 8).to_u8!
     b = (x >> 16).to_u8!
@@ -76,7 +76,7 @@ class Crypto::Blowfish
     ((@s.to_unsafe[a] &+ @s1[b]) ^ @s2[c]) &+ @s3[d]
   end
 
-  private def next_word(data, pos)
+  private def next_word(data : Array(UInt8) | Slice(UInt8), pos : Pointer(Int32)) : UInt32
     word = 0_u32
 
     4.times do

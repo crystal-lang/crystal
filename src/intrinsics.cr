@@ -187,7 +187,7 @@ module Intrinsics
     ::LibIntrinsics.debugtrap
   end
 
-  def self.pause
+  def self.pause : Nil
     {% if flag?(:i386) || flag?(:x86_64) %}
       LibIntrinsics.pause
     {% elsif flag?(:aarch64) %}
@@ -211,59 +211,59 @@ module Intrinsics
     LibIntrinsics.read_cycle_counter
   end
 
-  def self.bitreverse8(id) : UInt8
+  def self.bitreverse8(id : UInt8 | Int8) : UInt8
     LibIntrinsics.bitreverse8(id)
   end
 
-  def self.bitreverse16(id) : UInt16
+  def self.bitreverse16(id : UInt16 | Int16) : UInt16
     LibIntrinsics.bitreverse16(id)
   end
 
-  def self.bitreverse32(id) : UInt32
+  def self.bitreverse32(id : UInt32 | Int32) : UInt32
     LibIntrinsics.bitreverse32(id)
   end
 
-  def self.bitreverse64(id) : UInt64
+  def self.bitreverse64(id : UInt64 | Int64) : UInt64
     LibIntrinsics.bitreverse64(id)
   end
 
-  def self.bitreverse128(id) : UInt128
+  def self.bitreverse128(id : UInt128 | Int128) : UInt128
     LibIntrinsics.bitreverse128(id)
   end
 
-  def self.bswap16(id) : UInt16
+  def self.bswap16(id : UInt16 | Int16) : UInt16
     LibIntrinsics.bswap16(id)
   end
 
-  def self.bswap32(id) : UInt32
+  def self.bswap32(id : UInt32 | Int32) : UInt32
     LibIntrinsics.bswap32(id)
   end
 
-  def self.bswap64(id) : UInt64
+  def self.bswap64(id : UInt64 | Int64) : UInt64
     LibIntrinsics.bswap64(id)
   end
 
-  def self.bswap128(id) : UInt128
+  def self.bswap128(id : UInt128 | Int128) : UInt128
     LibIntrinsics.bswap128(id)
   end
 
-  def self.popcount8(src) : Int8
+  def self.popcount8(src : Int8 | UInt8) : Int8
     LibIntrinsics.popcount8(src)
   end
 
-  def self.popcount16(src) : Int16
+  def self.popcount16(src : Int16 | UInt16) : Int16
     LibIntrinsics.popcount16(src)
   end
 
-  def self.popcount32(src) : Int32
+  def self.popcount32(src : UInt32 | Int32) : Int32
     LibIntrinsics.popcount32(src)
   end
 
-  def self.popcount64(src) : Int64
+  def self.popcount64(src : Int64 | UInt64) : Int64
     LibIntrinsics.popcount64(src)
   end
 
-  def self.popcount128(src)
+  def self.popcount128(src : Int128 | UInt128) : Int128
     LibIntrinsics.popcount128(src)
   end
 
@@ -307,43 +307,43 @@ module Intrinsics
     ::LibIntrinsics.counttrailing128({{src}}, {{zero_is_undef}})
   end
 
-  def self.fshl8(a, b, count) : UInt8
+  def self.fshl8(a : Int8 | UInt8, b : Int8 | UInt8, count : Int8 | UInt8) : UInt8
     LibIntrinsics.fshl8(a, b, count)
   end
 
-  def self.fshl16(a, b, count) : UInt16
+  def self.fshl16(a : Int16 | UInt16, b : Int16 | UInt16, count : Int16 | UInt16) : UInt16
     LibIntrinsics.fshl16(a, b, count)
   end
 
-  def self.fshl32(a, b, count) : UInt32
+  def self.fshl32(a : UInt32 | Int32, b : UInt32 | Int32, count : UInt32 | Int32) : UInt32
     LibIntrinsics.fshl32(a, b, count)
   end
 
-  def self.fshl64(a, b, count) : UInt64
+  def self.fshl64(a : UInt64 | Int64, b : UInt64 | Int64, count : UInt64 | Int64) : UInt64
     LibIntrinsics.fshl64(a, b, count)
   end
 
-  def self.fshl128(a, b, count) : UInt128
+  def self.fshl128(a : Int128 | UInt128, b : Int128 | UInt128, count : Int128 | UInt128) : UInt128
     LibIntrinsics.fshl128(a, b, count)
   end
 
-  def self.fshr8(a, b, count) : UInt8
+  def self.fshr8(a : Int8 | UInt8, b : Int8 | UInt8, count : Int8 | UInt8) : UInt8
     LibIntrinsics.fshr8(a, b, count)
   end
 
-  def self.fshr16(a, b, count) : UInt16
+  def self.fshr16(a : Int16 | UInt16, b : Int16 | UInt16, count : Int16 | UInt16) : UInt16
     LibIntrinsics.fshr16(a, b, count)
   end
 
-  def self.fshr32(a, b, count) : UInt32
+  def self.fshr32(a : UInt32 | Int32, b : UInt32 | Int32, count : UInt32 | Int32) : UInt32
     LibIntrinsics.fshr32(a, b, count)
   end
 
-  def self.fshr64(a, b, count) : UInt64
+  def self.fshr64(a : Int64 | UInt64, b : Int64 | UInt64, count : Int64 | UInt64) : UInt64
     LibIntrinsics.fshr64(a, b, count)
   end
 
-  def self.fshr128(a, b, count) : UInt128
+  def self.fshr128(a : Int128 | UInt128, b : Int128 | UInt128, count : Int128 | UInt128) : UInt128
     LibIntrinsics.fshr128(a, b, count)
   end
 

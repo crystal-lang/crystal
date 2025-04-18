@@ -64,7 +64,7 @@ class Dir
   # equivalent to
   # `match: File::MatchOptions.glob_default | File::MatchOptions::DotFiles`.
   @[Deprecated("Use the overload with a `match` parameter instead")]
-  def self.glob(*patterns : Path | String, match_hidden, follow_symlinks = false) : Array(String)
+  def self.glob(*patterns : Path | String, match_hidden : Bool, follow_symlinks : Bool = false) : Array(String)
     glob(patterns, match: match_hidden_to_options(match_hidden), follow_symlinks: follow_symlinks)
   end
 
@@ -127,7 +127,7 @@ class Dir
     end
   end
 
-  private def self.match_hidden_to_options(match_hidden)
+  private def self.match_hidden_to_options(match_hidden : Bool) : File::MatchOptions
     options = File::MatchOptions.glob_default
     options |= File::MatchOptions::DotFiles if match_hidden
     options
@@ -138,7 +138,7 @@ class Dir
     record DirectoriesOnly
     record ConstantEntry, path : String, merged : Bool
     record EntryMatch, pattern : String do
-      def matches?(string) : Bool
+      def matches?(string : String) : Bool
         File.match?(pattern, string)
       end
     end
@@ -146,7 +146,7 @@ class Dir
     record ConstantDirectory, path : String
     record RootDirectory
     record DirectoryMatch, pattern : String do
-      def matches?(string) : Bool
+      def matches?(string : String) : Bool
         File.match?(pattern, string)
       end
     end
@@ -173,7 +173,7 @@ class Dir
       end
     end
 
-    private def self.compile(pattern)
+    private def self.compile(pattern : String) : Array(Array(Dir::Globber::ConstantDirectory | Dir::Globber::ConstantEntry | Dir::Globber::DirectoriesOnly | Dir::Globber::DirectoryMatch | Dir::Globber::EntryMatch | Dir::Globber::RecursiveDirectories | Dir::Globber::RootDirectory))
       expanded_patterns = [] of String
       expand_brace_pattern(pattern, expanded_patterns)
 
@@ -182,7 +182,7 @@ class Dir
       end
     end
 
-    private def self.single_compile(glob)
+    private def self.single_compile(glob : String) : Array(Dir::Globber::ConstantDirectory | Dir::Globber::ConstantEntry | Dir::Globber::DirectoriesOnly | Dir::Globber::DirectoryMatch | Dir::Globber::EntryMatch | Dir::Globber::RecursiveDirectories | Dir::Globber::RootDirectory)
       list = [] of PatternType
       return list if glob.empty?
 
@@ -225,7 +225,7 @@ class Dir
       list
     end
 
-    private def self.constant_entry?(file)
+    private def self.constant_entry?(file : String) : Bool
       file.each_char do |char|
         return false if char.in?('*', '?', '[', '\\')
       end
@@ -378,11 +378,11 @@ class Dir
       end
     end
 
-    private def self.root
+    private def self.root : String
       Path[Dir.current].anchor.not_nil!.to_s
     end
 
-    private def self.dir?(path, follow_symlinks)
+    private def self.dir?(path : String, follow_symlinks : Bool) : Bool
       if info = File.info?(path, follow_symlinks: follow_symlinks)
         info.type.directory?
       else
@@ -390,7 +390,7 @@ class Dir
       end
     end
 
-    private def self.join(path, entry)
+    private def self.join(path : String?, entry : String) : String
       return entry unless path
       return "#{root}#{entry}" if path == File::SEPARATOR_STRING
 
@@ -407,7 +407,7 @@ class Dir
     rescue exc : File::NotFoundError
     end
 
-    private def self.read_entry(dir)
+    private def self.read_entry(dir : Dir) : Crystal::System::Dir::Entry?
       return unless dir
 
       # By doing this we get an Entry struct which already tells us
@@ -416,7 +416,7 @@ class Dir
       Crystal::System::Dir.next_entry(dir.@dir, dir.path)
     end
 
-    private def self.matches_file?(entry, match)
+    private def self.matches_file?(entry : Crystal::System::Dir::Entry, match : File::MatchOptions) : Bool
       return false if entry.name.starts_with?('.') && !match.dot_files?
       return false if entry.native_hidden? && !match.native_hidden?
       return false if entry.os_hidden? && !match.os_hidden?
@@ -425,7 +425,7 @@ class Dir
 
     # :nodoc:
     # FIXME: The expansion mechanism does not work for complex brace patterns.
-    private def self.expand_brace_pattern(pattern : String, expanded) : Array(String)?
+    private def self.expand_brace_pattern(pattern : String, expanded : Array(String)) : Array(String)?
       reader = Char::Reader.new(pattern)
 
       lbrace = nil

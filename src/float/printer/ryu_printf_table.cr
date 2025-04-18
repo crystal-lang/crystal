@@ -11,7 +11,7 @@ module Float::Printer::RyuPrintf
   # in LLVM, which makes LLVM really slow. The compiler should
   # try to avoid/reuse temporary allocas.
   # Explanation: https://github.com/crystal-lang/crystal/issues/4516#issuecomment-306226171
-  private def self.put(array : Array, values) : Nil
+  private def self.put(array : Array, values : UInt64) : Nil
     array << values
   end
 

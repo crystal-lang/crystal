@@ -41,7 +41,7 @@ module Base64
   # Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4g
   # Q3J5c3RhbA==
   # ```
-  def encode(data) : String
+  def encode(data : String | Slice(UInt8) | StaticArray(UInt8, 5)) : String
     slice = data.to_slice
     String.new(encode_size(slice.size, new_lines: true)) do |buf|
       appender = buf.appender
@@ -58,7 +58,7 @@ module Base64
   # ```
   # Base64.encode("Now is the time for all good coders\nto learn Crystal", STDOUT)
   # ```
-  def encode(data, io : IO)
+  def encode(data : String | Slice(UInt8) | StaticArray(UInt8, 5), io : IO) : Int32
     count = 0
     encode_with_new_lines(data.to_slice) do |byte|
       io << byte.unsafe_chr
@@ -95,11 +95,11 @@ module Base64
   # ```text
   # Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4gQ3J5c3RhbA==
   # ```
-  def strict_encode(data) : String
+  def strict_encode(data : Slice(UInt8) | StaticArray(UInt8, 5) | String | StaticArray(UInt8, 20) | StaticArray(UInt8, 16)) : String
     strict_encode data, CHARS_STD, pad: true
   end
 
-  private def strict_encode(data, alphabet, pad = false)
+  private def strict_encode(data : Slice(UInt8) | StaticArray(UInt8, 5) | String | StaticArray(UInt8, 20) | StaticArray(UInt8, 16), alphabet : String, pad : Bool = false) : String
     slice = data.to_slice
     String.new(encode_size(slice.size)) do |buf|
       appender = buf.appender
@@ -115,11 +115,11 @@ module Base64
   # ```
   # Base64.strict_encode("Now is the time for all good coders\nto learn Crystal", STDOUT)
   # ```
-  def strict_encode(data, io : IO)
+  def strict_encode(data : Slice(UInt8) | StaticArray(UInt8, 5) | String, io : IO) : Int32
     strict_encode_to_io_internal(data, io, CHARS_STD, pad: true)
   end
 
-  private def strict_encode_to_io_internal(data, io, alphabet, pad)
+  private def strict_encode_to_io_internal(data : Slice(UInt8) | StaticArray(UInt8, 5) | String, io : String::Builder | IO::Memory, alphabet : String, pad : Bool) : Int32
     count = 0
     to_base64(data.to_slice, alphabet, pad: pad) do |byte|
       count += 1
@@ -137,7 +137,7 @@ module Base64
   #
   # The *padding* parameter defaults to `true`. When `false`, enough `=` characters
   # are not added to make the output divisible by 4.
-  def urlsafe_encode(data, padding = true) : String
+  def urlsafe_encode(data : String | Slice(UInt8), padding : Bool = true) : String
     slice = data.to_slice
     String.new(encode_size(slice.size)) do |buf|
       appender = buf.appender
@@ -152,13 +152,13 @@ module Base64
   # Alphabet" in [RFC 4648](https://tools.ietf.org/html/rfc4648).
   #
   # The alphabet uses `'-'` instead of `'+'` and `'_'` instead of `'/'`.
-  def urlsafe_encode(data, io : IO)
+  def urlsafe_encode(data : String, io : IO) : Int32
     strict_encode_to_io_internal(data, io, CHARS_SAFE, pad: true)
   end
 
   # Returns the base64-decoded version of *data* as a `Bytes`.
   # This will decode either the normal or urlsafe alphabets.
-  def decode(data) : Bytes
+  def decode(data : String) : Bytes
     slice = data.to_slice
     buf = Pointer(UInt8).malloc(decode_size(slice.size))
     appender = buf.appender
@@ -168,7 +168,7 @@ module Base64
 
   # Writes the base64-decoded version of *data* to *io*.
   # This will decode either the normal or urlsafe alphabets.
-  def decode(data, io : IO)
+  def decode(data : String, io : IO) : Int32
     count = 0
     from_base64(data.to_slice) do |byte|
       io.write_byte byte
@@ -180,7 +180,7 @@ module Base64
 
   # Returns the base64-decoded version of *data* as a string.
   # This will decode either the normal or urlsafe alphabets.
-  def decode_string(data) : String
+  def decode_string(data : String) : String
     slice = data.to_slice
     String.new(decode_size(slice.size)) do |buf|
       appender = buf.appender
@@ -189,13 +189,13 @@ module Base64
     end
   end
 
-  private def encode_size(str_size, new_lines = false)
+  private def encode_size(str_size : Int32, new_lines : Bool = false) : Int32
     size = (str_size * 4 / 3.0).to_i + 4
     size += size // LINE_SIZE if new_lines
     size
   end
 
-  private def decode_size(str_size)
+  private def decode_size(str_size : Int32) : Int32
     (str_size * 3 / 4.0).to_i + 4
   end
 

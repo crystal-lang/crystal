@@ -113,7 +113,7 @@ module Math
   end
 
   # :ditto:
-  def atan2(y, x) : Float64
+  def atan2(y : Int32, x : Int32) : Float64
     atan2(y.to_f, x.to_f)
   end
 
@@ -263,7 +263,7 @@ module Math
   end
 
   # :ditto:
-  def log(value) : Float64
+  def log(value : Int32) : Float64
     log(value.to_f)
   end
 
@@ -293,7 +293,7 @@ module Math
   end
 
   # :ditto:
-  def log2(value) : Float64
+  def log2(value : Int32) : Float64
     log2(value.to_f)
   end
 
@@ -308,12 +308,12 @@ module Math
   end
 
   # :ditto:
-  def log10(value)
+  def log10(value : UInt64 | Int32 | Int64 | BigInt) : Float64
     log10(value.to_f)
   end
 
   # Calculates the logarithm of *value* to the given *base*.
-  def log(value, base)
+  def log(value : Float32 | Float64, base : Int32) : Float64
     log(value) / log(base)
   end
 
@@ -328,12 +328,12 @@ module Math
   end
 
   # :ditto:
-  def sqrt(value) : Float64
+  def sqrt(value : Int32) : Float64
     sqrt(value.to_f)
   end
 
   # Calculates the integer square root of *value*.
-  def isqrt(value : Int::Primitive)
+  def isqrt(value : Int::Primitive) : Int32 | UInt8 | UInt16 | UInt32 | UInt64 | UInt128 | Int8 | Int16 | Int64 | Int128
     raise ArgumentError.new "Input must be non-negative integer" if value < 0
     return value if value < 2
     res = value.class.zero
@@ -410,7 +410,7 @@ module Math
   end
 
   # :ditto:
-  def gamma(value) : Float64
+  def gamma(value : Int32 | Int8) : Float64
     gamma(value.to_f)
   end
 
@@ -423,7 +423,7 @@ module Math
   # ```
   # Math.log(Math.gamma(2.96).abs)
   # ```
-  def lgamma(value : Float32)
+  def lgamma(value : Float32) : Float32
     {% if flag?(:darwin) %}
       LibM.gamma_f64(value).to_f32
     {% else %}
@@ -437,12 +437,12 @@ module Math
   end
 
   # :ditto:
-  def lgamma(value) : Float64
+  def lgamma(value : Int32 | Int8) : Float64
     lgamma(value.to_f)
   end
 
   # Calculates the cylindrical Bessel function of the first kind of *value* for the given *order*.
-  def besselj(order : Int32, value : Float32)
+  def besselj(order : Int32, value : Float32) : Float32
     {% if flag?(:darwin) || flag?(:win32) %}
       LibM.besselj_f64(order, value).to_f32
     {% else %}
@@ -461,7 +461,7 @@ module Math
   end
 
   # Calculates the cylindrical Bessel function of the first kind of *value* for order 0.
-  def besselj0(value : Float32)
+  def besselj0(value : Float32) : Float32
     {% if flag?(:darwin) || flag?(:win32) %}
       LibM.besselj0_f64(value).to_f32
     {% else %}
@@ -480,7 +480,7 @@ module Math
   end
 
   # Calculates the cylindrical Bessel function of the first kind of *value* for order 1.
-  def besselj1(value : Float32)
+  def besselj1(value : Float32) : Float32
     {% if flag?(:darwin) || flag?(:win32) %}
       LibM.besselj1_f64(value).to_f32
     {% else %}
@@ -499,7 +499,7 @@ module Math
   end
 
   # Calculates the cylindrical Bessel function of the second kind of *value* for the given *order*.
-  def bessely(order : Int32, value : Float32)
+  def bessely(order : Int32, value : Float32) : Float32
     {% if flag?(:darwin) || flag?(:win32) %}
       LibM.bessely_f64(order, value).to_f32
     {% else %}
@@ -518,7 +518,7 @@ module Math
   end
 
   # Calculates the cylindrical Bessel function of the second kind of *value* for order 0.
-  def bessely0(value : Float32)
+  def bessely0(value : Float32) : Float32
     {% if flag?(:darwin) || flag?(:win32) %}
       LibM.bessely0_f64(value).to_f32
     {% else %}
@@ -537,7 +537,7 @@ module Math
   end
 
   # Calculates the cylindrical Bessel function of the second kind of *value* for order 1.
-  def bessely1(value : Float32)
+  def bessely1(value : Float32) : Float32
     {% if flag?(:darwin) || flag?(:win32) %}
       LibM.bessely1_f64(value).to_f32
     {% else %}
@@ -676,7 +676,7 @@ module Math
   end
 
   # :ditto:
-  def scalbln(value, exp) : Float64
+  def scalbln(value : Float32 | Float64, exp : Int32) : Float64
     scalbln(value.to_f, exp.to_i64)
   end
 
@@ -714,7 +714,7 @@ module Math
   end
 
   # :ditto:
-  def copysign(value1, value2)
+  def copysign(value1 : Float64 | Int32 | Float32, value2 : Int32 | Float64 | Float32) : Float64
     copysign(value1.to_f, value2.to_f)
   end
 
@@ -729,7 +729,7 @@ module Math
   end
 
   # :ditto:
-  def max(value1, value2)
+  def max(value1 : Int32 | Int64, value2 : UInt32 | UInt64 | Int32) : Int32 | UInt32 | UInt64 | Int64
     value1 >= value2 ? value1 : value2
   end
 
@@ -744,7 +744,7 @@ module Math
   end
 
   # :ditto:
-  def min(value1, value2)
+  def min(value1 : Int32 | UInt32 | UInt64 | Int16 | Int64, value2 : Int32 | Int64 | Int16 | UInt8 | UInt32) : Int32 | Int64 | UInt32 | UInt64 | Int16 | UInt8
     value1 <= value2 ? value1 : value2
   end
 
@@ -759,7 +759,7 @@ module Math
   # Math.pw2ceil(64) # => 64
   # Math.pw2ceil(-5) # => 1
   # ```
-  def pw2ceil(v : Int::Primitive)
+  def pw2ceil(v : Int::Primitive) : Int32 | Int8 | Int16 | Int64 | Int128 | UInt8 | UInt16 | UInt32 | UInt64 | UInt128
     v.next_power_of_two
   end
 end

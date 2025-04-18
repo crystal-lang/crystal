@@ -24,7 +24,7 @@ class Fiber
       {% end %}
     end
 
-    def finalize
+    def finalize : Nil
       @deque.each do |stack|
         Crystal::System::Fiber.free_stack(stack.pointer, STACK_SIZE)
       end
@@ -32,7 +32,7 @@ class Fiber
 
     # Removes and frees at most *count* stacks from the top of the pool,
     # returning memory to the operating system.
-    def collect(count = lazy_size // 2) : Nil
+    def collect(count : Int32 = lazy_size // 2) : Nil
       count.times do
         if stack = shift?
           Crystal::System::Fiber.free_stack(stack.pointer, STACK_SIZE)
@@ -42,7 +42,7 @@ class Fiber
       end
     end
 
-    def collect_loop(every = 5.seconds) : Nil
+    def collect_loop(every : Time::Span = 5.seconds) : Nil
       loop do
         sleep every
         collect
@@ -77,7 +77,7 @@ class Fiber
       @deque.size
     end
 
-    private def shift?
+    private def shift? : Fiber::Stack?
       {% if flag?(:execution_context) %}
         @lock.sync { @deque.shift? } unless @deque.empty?
       {% else %}
@@ -85,7 +85,7 @@ class Fiber
       {% end %}
     end
 
-    private def pop?
+    private def pop? : Fiber::Stack?
       {% if flag?(:execution_context) %}
         if (stack = Thread.current.dead_fiber_stack?) && stack.reusable?
           stack

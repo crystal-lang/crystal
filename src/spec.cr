@@ -96,7 +96,7 @@ module Spec
     # :nodoc:
     #
     # Implement formatter configuration.
-    def configure_formatter(formatter, output_path = nil)
+    def configure_formatter(formatter : String, output_path : String? = nil) : Array(Spec::Formatter) | Spec::DotFormatter | Spec::VerboseFormatter | Spec::JUnitFormatter | Spec::TAPFormatter | Nil
       case formatter
       when "junit"
         junit_formatter = Spec::JUnitFormatter.file(Path.new(output_path.not_nil!))
@@ -108,7 +108,7 @@ module Spec
       end
     end
 
-    def main(args)
+    def main(args : Array(String)) : Nil
       Colorize.on_tty_only!
 
       begin

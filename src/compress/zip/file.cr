@@ -44,7 +44,7 @@ class Compress::Zip::File
   end
 
   # Opens a `Zip::File` for reading from the given *filename*.
-  def self.new(filename : Path | String)
+  def self.new(filename : Path | String) : Compress::Zip::File
     new(::File.new(filename), sync_close: true)
   end
 
@@ -85,14 +85,14 @@ class Compress::Zip::File
 
   # Tries to find the directory end offset (by searching its signature)
   # in the last 64, 1024 and 65K bytes (in that order)
-  private def find_directory_end_offset
+  private def find_directory_end_offset : Int32 | Int64
     find_directory_end_offset(64) ||
       find_directory_end_offset(1024) ||
       find_directory_end_offset(65 * 1024) ||
       raise Compress::Zip::Error.new("Couldn't find directory end signature in the last 65KB")
   end
 
-  private def find_directory_end_offset(buf_size)
+  private def find_directory_end_offset(buf_size : Int32) : Int32 | Int64 | Nil
     @io.seek(0, IO::Seek::End)
     size = @io.pos
 
@@ -113,7 +113,7 @@ class Compress::Zip::File
     i == -1 ? nil : size - buf_size + i
   end
 
-  private def read_directory_end(directory_end_offset)
+  private def read_directory_end(directory_end_offset : Int32 | Int64) : Tuple(UInt16, UInt32)
     @io.pos = directory_end_offset
 
     signature = read UInt32
@@ -134,7 +134,7 @@ class Compress::Zip::File
     {entries_size, directory_offset}
   end
 
-  private def read_entries(directory_offset, entries_size)
+  private def read_entries(directory_offset : UInt32, entries_size : UInt16) : Nil
     @io.pos = directory_offset
 
     entries_size.times do
@@ -149,7 +149,7 @@ class Compress::Zip::File
     end
   end
 
-  private def read(type)
+  private def read(type : UInt32.class | UInt16.class) : UInt32 | UInt16
     @io.read_bytes(type, IO::ByteFormat::LittleEndian)
   end
 

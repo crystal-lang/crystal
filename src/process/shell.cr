@@ -64,7 +64,7 @@ class Process
     String.build { |io| quote_windows(io, args) }
   end
 
-  private def self.quote_windows(io : IO, args)
+  private def self.quote_windows(io : IO, args : Tuple(String) | Array(String)) : Nil
     args.join(io, ' ') do |arg|
       need_quotes = arg.empty? || arg.includes?(' ') || arg.includes?('\t')
 

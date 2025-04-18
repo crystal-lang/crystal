@@ -141,7 +141,7 @@ module Float::Printer::CachedPowers
 
   Pow10Cache = {0, 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000}
 
-  def self.largest_pow10(n, n_bits) : {Int32, Int32}
+  def self.largest_pow10(n : UInt32, n_bits : Int32) : {Int32, Int32}
     # 1233/4096 is approximately 1/lg(10).
     #  We increment to skip over the first entry in the powers cache.
     guess = ((n_bits + 1) * 1233 >> 12) + 1
@@ -154,7 +154,7 @@ module Float::Printer::CachedPowers
 
   # Returns a cached power-of-ten with a binary exponent in the range
   # around *exp* (boundaries included).
-  def self.get_cached_power_for_binary_exponent(exp) : {DiyFP, Int32}
+  def self.get_cached_power_for_binary_exponent(exp : Int32) : {DiyFP, Int32}
     min_exp = MIN_TARGET_EXP - (exp + DiyFP::SIGNIFICAND_SIZE)
     max_exp = MAX_TARGET_EXP - (exp + DiyFP::SIGNIFICAND_SIZE)
     k = ((min_exp + DiyFP::SIGNIFICAND_SIZE - 1) * D_1_LOG2_10).ceil

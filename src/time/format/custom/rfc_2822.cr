@@ -11,14 +11,14 @@ struct Time::Format
   # ```
   module RFC_2822
     # Parses a string into a `Time`.
-    def self.parse(string, kind = Time::Location::UTC) : Time
+    def self.parse(string : String, kind : Time::Location = Time::Location::UTC) : Time
       parser = Parser.new(string)
       parser.rfc_2822
       parser.time(kind)
     end
 
     # Formats a `Time` into the given *io*.
-    def self.format(time : Time, io : IO)
+    def self.format(time : Time, io : IO) : String::Builder | IO::Memory
       formatter = Formatter.new(time, io)
       formatter.rfc_2822
       io
@@ -33,7 +33,7 @@ struct Time::Format
   end
 
   module Pattern
-    def rfc_2822(time_zone_gmt = false, two_digit_day = false)
+    def rfc_2822(time_zone_gmt : Bool = false, two_digit_day : Bool = false) : Bool?
       cfws?
       short_day_name_with_comma?
       if two_digit_day
@@ -70,7 +70,7 @@ struct Time::Format
   end
 
   struct Parser
-    def short_day_name_with_comma?
+    def short_day_name_with_comma? : Bool?
       return unless current_char.ascii_letter?
 
       short_day_name
@@ -79,7 +79,7 @@ struct Time::Format
       cfws
     end
 
-    def seconds_with_colon?
+    def seconds_with_colon? : Int32?
       if current_char == ':'
         next_char
         cfws?
@@ -88,7 +88,7 @@ struct Time::Format
     end
 
     # comment or folding whitespace
-    def cfws?
+    def cfws? : Bool
       in_comment = false
       seen_whitespace = false
       loop do
@@ -108,29 +108,29 @@ struct Time::Format
       seen_whitespace
     end
 
-    def cfws
+    def cfws : Bool
       cfws? || raise "Invalid format"
     end
 
-    def folding_white_space
+    def folding_white_space : Char?
       skip_space
     end
   end
 
   struct Formatter
-    def seconds_with_colon?
+    def seconds_with_colon? : Nil
       char ':'
       second
     end
 
-    def cfws?
+    def cfws? : Nil
     end
 
-    def cfws
+    def cfws : IO
       folding_white_space
     end
 
-    def folding_white_space
+    def folding_white_space : IO
       io << ' '
     end
   end

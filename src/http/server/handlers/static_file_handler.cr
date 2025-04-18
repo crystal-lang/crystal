@@ -41,7 +41,7 @@ class HTTP::StaticFileHandler
     new(public_dir, fallthrough: !!fallthrough, listing: !!listing)
   end
 
-  def call(context) : Nil
+  def call(context : HTTP::Server::Context) : Nil
     unless context.request.method.in?("GET", "HEAD")
       if @fallthrough
         call_next(context)
@@ -180,7 +180,7 @@ class HTTP::StaticFileHandler
   end
 
   # TODO: Optimize without lots of intermediary strings
-  private def parse_ranges(header, file_size)
+  private def parse_ranges(header : String, file_size : Int64) : Array(Range(Int64, Int64))?
     ranges = [] of Range(Int64, Int64)
     header.split(",") do |range|
       start_string, dash, finish_string = range.lchop(' ').partition("-")
@@ -224,7 +224,7 @@ class HTTP::StaticFileHandler
     path
   end
 
-  private def redirect_to(context, url)
+  private def redirect_to(context : HTTP::Server::Context, url : Path) : Nil
     context.response.redirect url.to_s
   end
 
@@ -251,7 +251,7 @@ class HTTP::StaticFileHandler
     end
   end
 
-  private def etag(modification_time)
+  private def etag(modification_time : Time) : String
     %{W/"#{modification_time.to_unix}"}
   end
 
@@ -265,7 +265,7 @@ class HTTP::StaticFileHandler
     ECR.def_to_s "#{__DIR__}/static_file_handler.html"
   end
 
-  private def directory_listing(io, request_path, path)
+  private def directory_listing(io : HTTP::Server::Response, request_path : Path, path : Path) : Nil
     DirectoryListing.new(request_path.to_s, path.to_s).to_s(io)
   end
 end

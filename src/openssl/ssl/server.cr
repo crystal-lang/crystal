@@ -75,7 +75,7 @@ class OpenSSL::SSL::Server
     end
   end
 
-  private def new_ssl_socket(io)
+  private def new_ssl_socket(io : IO) : OpenSSL::SSL::Socket::Server
     OpenSSL::SSL::Socket::Server.new(io, @context, sync_close: @sync_close, accept: @start_immediately)
   end
 

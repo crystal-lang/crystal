@@ -34,7 +34,7 @@ class Exception
   # Returns any backtrace associated with the exception if the call stack exists.
   # The backtrace is an array of strings, each containing
   # “0xAddress: Function at File Line Column”.
-  def backtrace?
+  def backtrace? : Array(String)?
     @callstack.try &.printable_backtrace
   end
 
@@ -76,7 +76,7 @@ end
 # a[2] # raises IndexError
 # ```
 class IndexError < Exception
-  def initialize(message = "Index out of bounds")
+  def initialize(message : String = "Index out of bounds")
     super(message)
   end
 end
@@ -87,7 +87,7 @@ end
 # [1, 2, 3].first(-4) # raises ArgumentError (attempt to take negative size)
 # ```
 class ArgumentError < Exception
-  def initialize(message = "Argument error")
+  def initialize(message : String = "Argument error")
     super(message)
   end
 end
@@ -104,7 +104,7 @@ class TypeCastError < Exception
 end
 
 class InvalidByteSequenceError < Exception
-  def initialize(message = "Invalid byte sequence in UTF-8 string")
+  def initialize(message : String = "Invalid byte sequence in UTF-8 string")
     super(message)
   end
 end
@@ -124,7 +124,7 @@ end
 # 1 // 0 # raises DivisionByZeroError (Division by 0)
 # ```
 class DivisionByZeroError < Exception
-  def initialize(message = "Division by 0")
+  def initialize(message : String = "Division by 0")
     super(message)
   end
 end
@@ -138,7 +138,7 @@ end
 # Float64::MAX.to_f32 # raises OverflowError (Arithmetic overflow)
 # ```
 class OverflowError < Exception
-  def initialize(message = "Arithmetic overflow")
+  def initialize(message : String = "Arithmetic overflow")
     super(message)
   end
 end
@@ -148,7 +148,7 @@ end
 # This can be used either to stub out method bodies, or when the method is not
 # implemented on the current platform.
 class NotImplementedError < Exception
-  def initialize(item)
+  def initialize(item : String)
     super("Not Implemented: #{item}")
   end
 end
@@ -159,7 +159,7 @@ end
 # "hello".index('x').not_nil! # raises NilAssertionError ("hello" does not contain 'x')
 # ```
 class NilAssertionError < Exception
-  def initialize(message = "Nil assertion failed")
+  def initialize(message : String = "Nil assertion failed")
     super(message)
   end
 end

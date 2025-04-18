@@ -85,7 +85,7 @@ class Compress::Deflate::Writer < IO
     to_s(io)
   end
 
-  private def consume_output(flush)
+  private def consume_output(flush : LibZ::Flush) : Nil
     loop do
       @stream.next_out = @buf.to_unsafe
       @stream.avail_out = @buf.size.to_u32

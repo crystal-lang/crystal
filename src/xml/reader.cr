@@ -193,7 +193,7 @@ class XML::Reader
   end
 
   # Returns a reference to the underlying `LibXML::XMLTextReader`.
-  def to_unsafe
+  def to_unsafe : Pointer(Void)
     @reader
   end
 
@@ -201,7 +201,7 @@ class XML::Reader
     Error.collect(@errors) { yield }
   end
 
-  private def check_no_null_byte(attribute)
+  private def check_no_null_byte(attribute : String) : Nil
     if attribute.byte_index(0)
       raise XML::Error.new("Invalid attribute name: #{attribute.inspect} (contains null character)", 0)
     end

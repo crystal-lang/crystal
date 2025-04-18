@@ -1,5 +1,5 @@
 # :nodoc:
-def Object.from_www_form(params : URI::Params, name : String)
+def Object.from_www_form(params : URI::Params, name : String) : Nil | Bool | UInt8 | Int32 | Float64 | String
   return unless value = params[name]?
 
   self.from_www_form value
@@ -19,7 +19,7 @@ def Array.from_www_form(params : URI::Params, name : String)
 end
 
 # :nodoc:
-def Bool.from_www_form(value : String)
+def Bool.from_www_form(value : String) : Bool?
   case value
   when "true", "1", "yes", "on"  then true
   when "false", "0", "no", "off" then false
@@ -27,12 +27,12 @@ def Bool.from_www_form(value : String)
 end
 
 # :nodoc:
-def Number.from_www_form(value : String)
+def Number.from_www_form(value : String) : UInt8 | Int16 | Int32 | Int64 | Float32 | Float64
   new value, whitespace: false
 end
 
 # :nodoc:
-def String.from_www_form(value : String)
+def String.from_www_form(value : String) : String
   value
 end
 
@@ -42,7 +42,7 @@ def Enum.from_www_form(value : String)
 end
 
 # :nodoc:
-def Time.from_www_form(value : String)
+def Time.from_www_form(value : String) : Time
   Time::Format::ISO_8601_DATE_TIME.parse value
 end
 

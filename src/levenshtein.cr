@@ -93,7 +93,7 @@ module Levenshtein
       @tolerance = tolerance || (target.size / 5.0).ceil.to_i
     end
 
-    def test(name : String, value : String = name)
+    def test(name : String, value : String = name) : Levenshtein::Finder::Entry?
       distance = Levenshtein.distance(@target, name)
       if distance <= @tolerance
         if best_entry = @best_entry

@@ -212,11 +212,11 @@ class Time::Location
     end
   end
 
-  private def self.read_int32(io : IO)
+  private def self.read_int32(io : IO) : Int32
     io.read_bytes(Int32, IO::ByteFormat::BigEndian)
   end
 
-  private def self.read_buffer(io : IO, size : Int)
+  private def self.read_buffer(io : IO, size : Int) : IO::Memory
     buffer = Bytes.new(size)
     io.read_fully(buffer)
     IO::Memory.new(buffer)

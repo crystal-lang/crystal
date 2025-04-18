@@ -140,7 +140,7 @@ struct Char
   end
 
   # :ditto:
-  def step(*, to limit = nil, exclusive : Bool = false)
+  def step(*, to limit : Char? = nil, exclusive : Bool = false) : Steppable::StepIterator(Char, Char, Int32)
     if limit
       direction = limit <=> self
     end
@@ -681,7 +681,7 @@ struct Char
   #
   # This means characters which are `control?` or `whitespace?` (except for ` `)
   # are non-printable.
-  def printable?
+  def printable? : Bool
     !control? && (!whitespace? || self == ' ')
   end
 
@@ -746,7 +746,7 @@ struct Char
   end
 
   # :ditto:
-  def dump(io)
+  def dump(io : String::Builder | IO::Memory) : String::Builder | IO::Memory
     io << dump
   end
 
@@ -1050,11 +1050,11 @@ struct Char
   # 'c' === 99    # => true
   # 'z' === 99    # => false
   # ```
-  def ===(byte : Int)
+  def ===(byte : Int) : Bool
     ord === byte
   end
 
-  def clone
+  def clone : Char
     self
   end
 end

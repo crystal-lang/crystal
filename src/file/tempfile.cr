@@ -13,7 +13,7 @@ class File
   # user-provided values that would result in navigating the directory tree.
   #
   # The path will be placed in *dir* which defaults to the standard temporary directory `Dir.tempdir`.
-  def self.tempname(prefix : String?, suffix : String?, *, dir : String = Dir.tempdir)
+  def self.tempname(prefix : String?, suffix : String?, *, dir : String = Dir.tempdir) : String
     name = String.build do |io|
       if prefix
         io << prefix
@@ -41,7 +41,7 @@ class File
   # File.tempname          # => "/tmp/20171206-1234-449386"
   # File.tempname(".sock") # => "/tmp/20171206-1234-449386.sock"
   # ```
-  def self.tempname(suffix : String? = nil, *, dir : String = Dir.tempdir)
+  def self.tempname(suffix : String? = nil, *, dir : String = Dir.tempdir) : String
     tempname(prefix: nil, suffix: suffix, dir: dir)
   end
 
@@ -63,7 +63,7 @@ class File
   # *encoding* and *invalid* are passed to `IO#set_encoding`.
   #
   # It is the caller's responsibility to remove the file when no longer needed.
-  def self.tempfile(prefix : String?, suffix : String?, *, dir : String = Dir.tempdir, encoding = nil, invalid = nil)
+  def self.tempfile(prefix : String?, suffix : String?, *, dir : String = Dir.tempdir, encoding : Nil = nil, invalid : Nil = nil) : File
     fileno, path = Crystal::System::File.mktemp(prefix, suffix, dir)
     new(path, fileno, blocking: true, encoding: encoding, invalid: invalid)
   end
@@ -86,7 +86,7 @@ class File
   # *encoding* and *invalid* are passed to `IO#set_encoding`.
   #
   # It is the caller's responsibility to remove the file when no longer needed.
-  def self.tempfile(suffix : String? = nil, *, dir : String = Dir.tempdir, encoding = nil, invalid = nil)
+  def self.tempfile(suffix : String? = nil, *, dir : String = Dir.tempdir, encoding : Nil = nil, invalid : Nil = nil) : File
     tempfile(prefix: nil, suffix: suffix, dir: dir, encoding: encoding, invalid: invalid)
   end
 

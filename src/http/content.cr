@@ -8,12 +8,12 @@ module HTTP
     @continue_sent = false
     setter expects_continue : Bool = false
 
-    def close
+    def close : Nil
       @expects_continue = false
       super
     end
 
-    protected def ensure_send_continue
+    protected def ensure_send_continue : Bool?
       return unless @expects_continue
       return if @continue_sent
       @io << CONTINUE
@@ -73,7 +73,7 @@ module HTTP
       @io.peek
     end
 
-    def skip(bytes_count) : Nil
+    def skip(bytes_count : Int32 | UInt32) : Nil
       ensure_send_continue
       @io.skip(bytes_count)
     end
@@ -164,7 +164,7 @@ module HTTP
       peek
     end
 
-    def skip(bytes_count) : Nil
+    def skip(bytes_count : Int32 | UInt32) : Nil
       ensure_send_continue
       if bytes_count <= @chunk_remaining
         @io.skip(bytes_count)
@@ -176,7 +176,7 @@ module HTTP
 
     # Checks if the last read consumed a chunk and we
     # need to start consuming the next one.
-    private def next_chunk
+    private def next_chunk : Bool?
       return if @chunk_remaining > 0 || @received_final_chunk
 
       # As soon as we finish reading a chunk we return,
@@ -191,7 +191,7 @@ module HTTP
       end
     end
 
-    private def read_crlf
+    private def read_crlf : Nil
       char = @io.read_byte
       if char === '\r'
         char = @io.read_byte
@@ -201,7 +201,7 @@ module HTTP
       end
     end
 
-    private def read_chunk_size
+    private def read_chunk_size : Int32
       line = @io.read_line(@max_headers_size, chomp: true)
 
       if index = line.byte_index(';'.ord)
@@ -213,7 +213,7 @@ module HTTP
       chunk_size.to_i?(16) || raise IO::Error.new("Invalid HTTP chunked content: invalid chunk size")
     end
 
-    private def read_trailer
+    private def read_trailer : Nil
       max_size = @max_headers_size
 
       while true
