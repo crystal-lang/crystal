@@ -256,17 +256,20 @@ struct Crystal::System::Process
   end
 
   private def self.handle_from_io(io : IO::FileDescriptor, parent_io)
-    source_handle = blocking_handle(io, parent_io == STDIN)
-    if source_handle == LibC::INVALID_HANDLE_VALUE
+    case handle = blocking_handle(io, parent_io == STDIN)
+    when LibC::INVALID_HANDLE_VALUE
       raise IO::Error.new("Non-blocking streams are not supported in `Process.run`", target: io)
+    when io.windows_handle
+      # must duplicate handle to be able to pass it to another process
+      cur_proc = LibC.GetCurrentProcess
+      if LibC.DuplicateHandle(cur_proc, handle, cur_proc, out new_handle, 0, true, LibC::DUPLICATE_SAME_ACCESS) == 0
+        raise RuntimeError.from_winerror("DuplicateHandle")
+      end
+      new_handle
+    else
+      # already duplicated handle, and it's already inheritable
+      handle
     end
-
-    cur_proc = LibC.GetCurrentProcess
-    if LibC.DuplicateHandle(cur_proc, source_handle, cur_proc, out new_handle, 0, true, LibC::DUPLICATE_SAME_ACCESS) == 0
-      raise RuntimeError.from_winerror("DuplicateHandle")
-    end
-
-    new_handle
   end
 
   def self.spawn(command_args, env, clear_env, input, output, error, chdir)
@@ -414,28 +417,36 @@ struct Crystal::System::Process
     orig_src_fd
   end
 
-  # The arguments for *input*, *output* and *error* must be handles without
-  # `FILE_FLAG_OVERLAPPED`, so we try to get a new handle without the flag.
+  # The arguments for input, output and error must be handles without
+  # FILE_FLAG_OVERLAPPED, so we try to get a new handle without the flag.
   #
-  # TODO: consider `LibC.ReOpenFile`
+  # TODO: consider `LibC.ReOpenFile` instead
   private def self.blocking_handle(io, for_stdin)
     if io.system_blocking?
       io.windows_handle
     elsif io.is_a?(File)
       if for_stdin
         access = LibC::FILE_GENERIC_READ
-        disposition = LibC::OPEN_EXISTING
         attributes = LibC::FILE_ATTRIBUTE_READONLY
       else
         access = LibC::FILE_GENERIC_WRITE
-        disposition = LibC::OPEN_EXISTING
         attributes = 0
       end
 
-      path = System.to_wstr(io.path)
-      handle = LibC.CreateFileW(path, access, LibC::DEFAULT_SHARE_MODE, nil, disposition, attributes, LibC::HANDLE.null)
+      security_attributes = LibC::SECURITY_ATTRIBUTES.new
+      security_attributes.nLength = sizeof(LibC::SECURITY_ATTRIBUTES)
+      security_attributes.bInheritHandle = 1
 
-      unless handle == LibC::INVALID_HANDLE_VALUE
+      handle = LibC.CreateFileW(
+        System.to_wstr(io.path),
+        access,
+        LibC::DEFAULT_SHARE_MODE,
+        pointerof(security_attributes),
+        LibC::OPEN_EXISTING,
+        attributes,
+        LibC::HANDLE.null)
+
+      unless handle == LibC::INVALID_HANDLE_VALUE && io.path != "NUL"
         if io.system_append?
           LibC.SetFilePointerEx(handle, 0, nil, IO::Seek::End)
         elsif LibC.SetFilePointerEx(io.windows_handle, 0, out pos, IO::Seek::Current) != 0
