@@ -75,9 +75,6 @@ module GC
     # back to zero.
     getter total_bytes : UInt64
 
-    # getter collections : UInt64
-    # getter bytes_found : Int64
-
     def initialize(@heap_size, @free_bytes, @unmapped_bytes, @bytes_since_gc, @total_bytes)
     end
   end
