@@ -53,7 +53,9 @@ class HTTP::StaticFileHandler
 
     file_info, file_path = file_info(expanded_path)
 
-    check_redirect_to_expanded_path!(context, request_path, expanded_path, file_info) || return
+    if normalized_path = normalize_request_path(context, request_path, expanded_path, file_info)
+      return redirect_to context, normalized_path
+    end
 
     return call_next(context) unless file_info
 
@@ -92,17 +94,13 @@ class HTTP::StaticFileHandler
     true
   end
 
-  private def check_redirect_to_expanded_path!(context : Server::Context, request_path : Path, expanded_path : Path, file_info) : Bool
+  private def normalize_request_path(context : Server::Context, request_path : Path, expanded_path : Path, file_info) : Path?
     if @directory_listing && file_info.try(&.directory?) && !request_path.ends_with_separator?
       # Append / to path if missing
-      redirect_to context, expanded_path.join("")
-      return false
+      expanded_path.join("")
     elsif request_path != expanded_path
-      redirect_to context, expanded_path
-      return false
+      expanded_path
     end
-
-    return true
   end
 
   private def file_info(expanded_path : Path)
