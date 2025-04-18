@@ -502,4 +502,125 @@ describe "ASTNode#to_s" do
       end
     end
     CRYSTAL
+
+  expect_to_s %({% {id: 10} %})
+  expect_to_s <<-'CR'
+    {%
+      data = {__nil: nil}
+      data["foo"] = {
+        id: 1,
+        active: true,
+        name: "foo".upcase,
+        pie: 3.14,
+      }
+    %}
+    CR
+
+  expect_to_s <<-'CR'
+    {%
+      data = {__nil: nil}
+      data["foo"] = {
+        id: 1, active: true,
+        name: "foo".upcase,
+        pie: 3.14,
+      }
+    %}
+    CR
+
+  expect_to_s <<-'CR'
+    {%
+      data = {__nil: nil}
+      data["foo"] = {
+        id: 1, active: true,
+        name: "foo".upcase,
+        pie: 3.14, biz: "baz", blah: false,
+      }
+    %}
+    CR
+
+  expect_to_s <<-'CR'
+    {%
+      {
+        id: 1,
+
+        blah: false,
+
+        pie: 3.14,
+      }
+    %}
+    CR
+
+  expect_to_s <<-'CR', <<-'CR'
+    {%
+      {
+        id: 1,
+
+        # Foo
+        pie: 3.14,
+      }
+    %}
+    CR
+    {%
+      {
+        id: 1,
+
+
+        pie: 3.14,
+      }
+    %}
+    CR
+
+  expect_to_s <<-'CR', <<-'CR'
+    macro finished
+      {% verbatim do %}
+        {%
+          nt = {
+            id: 1,
+
+            # Foo
+            pie: 3.14,
+          }
+        %}
+      {% end %}
+    end
+    CR
+    macro finished
+      {% verbatim do %}
+        {%
+          nt = {
+            id: 1,
+
+
+            pie: 3.14,
+          }
+        %}
+      {% end %}
+    end
+    CR
+
+  expect_to_s <<-'CR'
+    {%
+      {
+        id: 1,
+        blah: false,
+        pie: 3.14}
+    %}
+    CR
+
+  expect_to_s <<-'CR'
+    {%
+      {id: 1,
+        blah: false,
+        pie: 3.14}
+    %}
+    CR
+
+  expect_to_s <<-'CR'
+    {%
+      {id: 1,
+        blah: false,
+        pie: 3.14,
+      }
+    %}
+    CR
 end
