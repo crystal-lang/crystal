@@ -104,7 +104,14 @@ module Crystal::System::FileDescriptor
   end
 
   def system_blocking_init(value)
-    value = false if value.nil?
+    if value.nil?
+      # TODO: We could determine if the HANDLE is OVERLAPPED capable by asking
+      # the file mode (FileModeInformation) with NtQueryInformationFile
+      # (ntifs.h). If the call succeeds and the file mode includes neither of
+      # FILE_SYNCHRONOUS_IO_ALERT or FILE_SYNCHRONOUS_IO_NONALERT then the
+      # HANDLE is OVERLAPPED capable.
+      value = true
+    end
     @system_blocking = value
     Crystal::EventLoop.current.create_completion_port(windows_handle) unless value
   end
