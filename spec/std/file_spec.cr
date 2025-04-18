@@ -128,22 +128,30 @@ describe "File" do
       end
     end
 
-    it "can append to an existing file" do
+    it "can append non-blocking to an existing file" do
       with_tempfile("append-existing.txt") do |path|
-        File.write(path, "hello", blocking: false)
-        File.read(path, blocking: false).should eq("hello")
+        File.write(path, "hello")
         File.write(path, " world", mode: "a", blocking: false)
-        File.read(path, blocking: false).should eq("hello world")
+        File.read(path).should eq("hello world")
       end
     end
 
-    it "returns the actual position with tell after append" do
+    it "returns the actual position after non-blocking append" do
       with_tempfile("delete-file.txt") do |filename|
-        File.write(filename, "hello", blocking: false)
+        File.write(filename, "hello")
+
         File.open(filename, "a", blocking: false) do |file|
+          file.tell.should eq(0)
+
           file.write "12345".to_slice
           file.tell.should eq(10)
+
+          file.seek(5, IO::Seek::Set)
+          file.write "6789".to_slice
+          file.tell.should eq(14)
         end
+
+        File.read(filename).should eq("hello123456789")
       end
     end
   end
