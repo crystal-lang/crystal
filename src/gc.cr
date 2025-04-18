@@ -77,6 +77,16 @@ module GC
 
     def initialize(@heap_size, @free_bytes, @unmapped_bytes, @bytes_since_gc, @total_bytes)
     end
+
+    @[Deprecated]
+    def copy_with(heap_size = @heap_size, free_bytes = @free_bytes, unmapped_bytes = @unmapped_bytes, bytes_since_gc = @bytes_since_gc, total_bytes = @total_bytes)
+      self.class.new(heap_size, free_bytes, unmapped_bytes, bytes_since_gc, total_bytes)
+    end
+
+    @[Deprecated]
+    def clone
+      self.class.new(@heap_size.clone, @free_bytes.clone, @unmapped_bytes.clone, @bytes_since_gc.clone, @total_bytes.clone)
+    end
   end
 
   record ProfStats,
