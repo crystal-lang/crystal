@@ -54,13 +54,16 @@ module GC
     # process.
     getter heap_size : UInt64
 
-    # Number of free bytes in the GC HEAP. The number is relative the
-    # `#heap_size`.
+    # Approximate number of free bytes in the GC HEAP. The number is relative to
+    # the `#heap_size`. The reported value is pessimistic, there might be more
+    # free bytes in reality.
     getter free_bytes : UInt64
 
-    # The system memory returned to the OS by the GC but that can be reallocated
-    # at any time to grow the GC HEAP. The OS may have freed the memory already,
-    # or keep it allocated until there is memory pressure.
+    # The size (in bytes) of virtual system memory that the GC returned to the
+    # OS when shrinking its HEAP. The OS may have reclaimed the memory already,
+    # reducing the resident memory usage, or may do so later (for example on
+    # memory pressure). The GC will reuse this memory when it needs to grow its
+    # HEAP again.
     getter unmapped_bytes : UInt64
 
     # Total memory allocated by the GC into its HEAP since the last GC
