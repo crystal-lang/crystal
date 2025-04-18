@@ -152,11 +152,15 @@ lib LibXML
   fun xmlNodeSetName(node : Node*, name : UInt8*)
   fun xmlUnlinkNode(node : Node*)
 
-  fun xmlGcMemSetup(free_func : Void* ->,
-                    malloc_func : LibC::SizeT -> Void*,
-                    malloc_atomic_func : LibC::SizeT -> Void*,
-                    realloc_func : Void*, LibC::SizeT -> Void*,
-                    strdup_func : UInt8* -> UInt8*) : Int
+  alias FreeFunc = Void* ->
+  alias MallocFunc = LibC::SizeT -> Void*
+  alias ReallocFunc = Void*, LibC::SizeT -> Void*
+  alias StrdupFunc = UInt8* -> UInt8*
+
+  fun xmlMemSetup(freeFunc : FreeFunc,
+                  mallocFunc : MallocFunc,
+                  reallocFunc : ReallocFunc,
+                  strdupFunc : StrdupFunc) : Int
 
   alias OutputWriteCallback = (Void*, UInt8*, Int) -> Int
   alias OutputCloseCallback = (Void*) -> Int
@@ -329,15 +333,9 @@ end
 
 LibXML.xmlInitParser
 
-LibXML.xmlGcMemSetup(
+LibXML.xmlMemSetup(
   ->GC.free,
   ->GC.malloc(LibC::SizeT),
-  # TODO(interpreted): remove this condition
-  {% if flag?(:interpreted) %}
-    ->GC.malloc(LibC::SizeT)
-  {% else %}
-    ->GC.malloc_atomic(LibC::SizeT)
-  {% end %},
   ->GC.realloc(Void*, LibC::SizeT),
   ->(str) {
     len = LibC.strlen(str) + 1
