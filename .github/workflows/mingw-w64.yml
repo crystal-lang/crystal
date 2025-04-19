@@ -13,7 +13,7 @@ env:
 
 jobs:
   x86_64-mingw-w64-build:
-    runs-on: windows-2022
+    runs-on: windows-2025
     steps:
       - name: Setup MSYS2
         id: msys2
@@ -70,7 +70,7 @@ jobs:
           path: crystal
 
   x86_64-mingw-w64-test-stdlib:
-    runs-on: windows-2022
+    runs-on: windows-2025
     steps:
       - name: Setup MSYS2
         id: msys2
@@ -99,7 +99,7 @@ jobs:
           make std_spec
 
   x86_64-mingw-w64-test-compiler:
-    runs-on: windows-2022
+    runs-on: windows-2025
     needs: [x86_64-mingw-w64-build]
     steps:
       - name: Setup MSYS2
