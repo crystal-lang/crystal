@@ -1,4 +1,5 @@
 require "spec"
+require "../support/interpreted"
 require "wait_group"
 
 private def block_until_pending_waiter(wg)
@@ -98,6 +99,64 @@ describe WaitGroup do
     end
   end
 
+  describe "#spawn" do
+    it "adds then spawns a fiber that eventually calls #done" do
+      fiber_count = 10
+      completed = Array.new(fiber_count) { false }
+
+      wg = WaitGroup.new
+      fiber_count.times do |i|
+        wg.spawn { completed[i] = true }
+      end
+
+      wg.wait
+      completed.should eq [true] * 10
+    end
+
+    {% if flag?(:execution_context) %}
+      pending_interpreted "spawns into an explicit execution context" do
+        execution_context = Fiber::ExecutionContext::SingleThreaded.new("WG")
+        wg = WaitGroup.new(0, execution_context)
+
+        actual = nil
+        fiber = wg.spawn { actual = Fiber::ExecutionContext.current }
+        fiber.execution_context.should be(execution_context)
+
+        wg.wait
+        actual.should be(execution_context)
+      end
+    {% end %}
+  end
+
+  describe ".wait" do
+    it "yields then waits" do
+      fiber_count = 10
+      completed = Array.new(fiber_count) { false }
+
+      WaitGroup.wait do |wg|
+        fiber_count.times do |i|
+          wg.spawn { completed[i] = true }
+        end
+      end
+
+      completed.should eq [true] * 10
+    end
+
+    {% if flag?(:execution_context) %}
+      pending_interpreted "takes an execution context" do
+        execution_context = Fiber::ExecutionContext::SingleThreaded.new("WG")
+        actual = nil
+
+        WaitGroup.wait(execution_context) do |wg|
+          fiber = wg.spawn { actual = Fiber::ExecutionContext.current }
+          fiber.execution_context.should be(execution_context)
+        end
+
+        actual.should be(execution_context)
+      end
+    {% end %}
+  end
+
   it "waits until concurrent executions are finished" do
     wg1 = WaitGroup.new
     wg2 = WaitGroup.new
@@ -160,39 +219,24 @@ describe WaitGroup do
     extra.get.should eq(32)
   end
 
-  it "takes a block to WaitGroup.wait" do
-    fiber_count = 10
-    completed = Array.new(fiber_count) { false }
-
-    WaitGroup.wait do |wg|
-      fiber_count.times do |i|
-        wg.spawn { completed[i] = true }
-      end
-    end
-
-    completed.should eq [true] * 10
-  end
-
   # the test takes far too much time for the interpreter to complete
-  {% unless flag?(:interpreted) %}
-    it "stress add/done/wait" do
-      wg = WaitGroup.new
+  pending_interpreted "stress add/done/wait" do
+    wg = WaitGroup.new
 
-      1000.times do
-        counter = Atomic(Int32).new(0)
+    1000.times do
+      counter = Atomic(Int32).new(0)
 
-        2.times do
-          wg.add(1)
+      2.times do
+        wg.add(1)
 
-          spawn do
-            counter.add(1)
-            wg.done
-          end
+        spawn do
+          counter.add(1)
+          wg.done
         end
-
-        wg.wait
-        counter.get.should eq(2)
       end
+
+      wg.wait
+      counter.get.should eq(2)
     end
-  {% end %}
+  end
 end
