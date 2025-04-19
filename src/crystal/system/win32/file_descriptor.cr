@@ -18,6 +18,10 @@ module Crystal::System::FileDescriptor
 
   @system_blocking = true
 
+  def system_append?
+    false
+  end
+
   private def system_read(slice : Bytes) : Int32
     handle = windows_handle
     if ConsoleUtils.console?(handle)
@@ -160,7 +164,7 @@ module Crystal::System::FileDescriptor
     FileDescriptor.system_info windows_handle
   end
 
-  private def system_seek(offset, whence : IO::Seek) : Nil
+  def system_seek(offset, whence : IO::Seek) : Nil
     if LibC.SetFilePointerEx(windows_handle, offset, nil, whence) == 0
       raise IO::Error.from_winerror("Unable to seek", target: self)
     end
