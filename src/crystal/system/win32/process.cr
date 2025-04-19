@@ -256,19 +256,14 @@ struct Crystal::System::Process
   end
 
   private def self.handle_from_io(io : IO::FileDescriptor, parent_io)
-    case handle = blocking_handle(io, parent_io == STDIN)
-    when LibC::INVALID_HANDLE_VALUE
-      raise IO::Error.new("Non-blocking streams are not supported in `Process.run`", target: io)
-    when io.windows_handle
-      # must duplicate handle to be able to pass it to another process
+    if io.is_a?(File) && !io.system_blocking?
+      reopen_file_as_blocking(io, parent_io == STDIN, "Process.run")
+    else
       cur_proc = LibC.GetCurrentProcess
-      if LibC.DuplicateHandle(cur_proc, handle, cur_proc, out new_handle, 0, true, LibC::DUPLICATE_SAME_ACCESS) == 0
+      if LibC.DuplicateHandle(cur_proc, io.windows_handle, cur_proc, out new_handle, 0, true, LibC::DUPLICATE_SAME_ACCESS) == 0
         raise RuntimeError.from_winerror("DuplicateHandle")
       end
       new_handle
-    else
-      # already duplicated handle, and it's already inheritable
-      handle
     end
   end
 
@@ -399,10 +394,14 @@ struct Crystal::System::Process
       when STDOUT then 1
       when STDERR then 2
       else
-        handle = blocking_handle(src_io, dst_fd == 0)
-        if handle == LibC::INVALID_HANDLE_VALUE
-          raise IO::Error.new("Non-blocking streams are not supported in `Process.exec`", target: src_io)
-        end
+        handle =
+          if src_io.system_blocking?
+            src_io.windows_handle
+          elsif src_io.is_a?(File)
+            reopen_file_as_blocking(src_io, dst_fd == 0, "Process.exec")
+          else
+            raise IO::Error.new("Non-blocking streams are not supported in `Process.exec`", target: src_io)
+          end
         LibC._open_osfhandle(handle, 0)
       end
 
@@ -421,7 +420,7 @@ struct Crystal::System::Process
   # FILE_FLAG_OVERLAPPED, so we try to get a new handle without the flag.
   #
   # TODO: consider `LibC.ReOpenFile` instead
-  private def self.blocking_handle(io, for_stdin)
+  private def self.reopen_file_as_blocking(io, for_stdin, method_name)
     if io.system_blocking?
       io.windows_handle
     elsif io.is_a?(File)
@@ -446,7 +445,11 @@ struct Crystal::System::Process
         attributes,
         LibC::HANDLE.null)
 
-      unless handle == LibC::INVALID_HANDLE_VALUE && io.path != "NUL"
+      if handle == LibC::INVALID_HANDLE_VALUE
+        raise IO::Error.new("Non-blocking streams are not supported in `#{method_name}`", target: io)
+      end
+
+      unless io.path == "NUL"
         if io.system_append?
           LibC.SetFilePointerEx(handle, 0, nil, IO::Seek::End)
         elsif LibC.SetFilePointerEx(io.windows_handle, 0, out pos, IO::Seek::Current) != 0
