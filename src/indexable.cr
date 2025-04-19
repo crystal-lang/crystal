@@ -824,9 +824,13 @@ module Indexable(T)
     offset += size if offset < 0
     return if_none if offset < 0
 
-    if idx = index(offset) { |i| yield i }
-      return unsafe_fetch(idx)
+    offset.upto(size - 1) do |i|
+      elem = unsafe_fetch(i)
+      if yield elem
+        return elem
+      end
     end
+
     if_none
   end
 
