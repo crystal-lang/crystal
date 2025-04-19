@@ -1,8 +1,8 @@
 require "../event_loop/socket"
 
 module Crystal::System::Socket
-  # Creates a file descriptor / socket handle
-  # private def create_handle(family, type, protocol, blocking) : Handle
+  # Creates a socket. Raises ::Socket::Error on error.
+  # def self.socket(family : ::Socket::Family, type : ::Socket::Type, protocol : ::Socket::Protocol, blocking : Bool) : Handle
 
   # Initializes a file descriptor / socket handle for use with Crystal Socket
   # private def initialize_handle(fd)
@@ -79,7 +79,7 @@ module Crystal::System::Socket
 
   # def self.fcntl(fd, cmd, arg = 0)
 
-  # def self.socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol) : {Handle, Handle}
+  # def self.socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol, blocking : Bool) : {Handle, Handle}
 
   private def system_read(slice : Bytes) : Int32
     event_loop.read(self, slice)

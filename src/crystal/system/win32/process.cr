@@ -256,14 +256,15 @@ struct Crystal::System::Process
   end
 
   private def self.handle_from_io(io : IO::FileDescriptor, parent_io)
-    source_handle = io.windows_handle
-
-    cur_proc = LibC.GetCurrentProcess
-    if LibC.DuplicateHandle(cur_proc, source_handle, cur_proc, out new_handle, 0, true, LibC::DUPLICATE_SAME_ACCESS) == 0
-      raise RuntimeError.from_winerror("DuplicateHandle")
+    if io.is_a?(File) && !io.system_blocking?
+      reopen_file_as_blocking(io, parent_io == STDIN, "Process.run")
+    else
+      cur_proc = LibC.GetCurrentProcess
+      if LibC.DuplicateHandle(cur_proc, io.windows_handle, cur_proc, out new_handle, 0, true, LibC::DUPLICATE_SAME_ACCESS) == 0
+        raise RuntimeError.from_winerror("DuplicateHandle")
+      end
+      new_handle
     end
-
-    new_handle
   end
 
   def self.spawn(command_args, env, clear_env, input, output, error, chdir)
@@ -378,19 +379,6 @@ struct Crystal::System::Process
   # `try_replace` uses the C `LibC._wexecvp` and only cares about the former.
   # Returns a duplicate of the original file descriptor
   private def self.reopen_io(src_io : IO::FileDescriptor, dst_io : IO::FileDescriptor)
-    unless src_io.system_blocking?
-      raise IO::Error.new("Non-blocking streams are not supported in `Process.exec`", target: src_io)
-    end
-
-    src_fd =
-      case src_io
-      when STDIN  then 0
-      when STDOUT then 1
-      when STDERR then 2
-      else
-        LibC._open_osfhandle(src_io.windows_handle, 0)
-      end
-
     dst_fd =
       case dst_io
       when ORIGINAL_STDIN  then 0
@@ -398,6 +386,23 @@ struct Crystal::System::Process
       when ORIGINAL_STDERR then 2
       else
         raise "BUG: Invalid destination IO"
+      end
+
+    src_fd =
+      case src_io
+      when STDIN  then 0
+      when STDOUT then 1
+      when STDERR then 2
+      else
+        handle =
+          if src_io.system_blocking?
+            src_io.windows_handle
+          elsif src_io.is_a?(File)
+            reopen_file_as_blocking(src_io, dst_fd == 0, "Process.exec")
+          else
+            raise IO::Error.new("Non-blocking streams are not supported in `Process.exec`", target: src_io)
+          end
+        LibC._open_osfhandle(handle, 0)
       end
 
     return src_fd if dst_fd == src_fd
@@ -409,6 +414,53 @@ struct Crystal::System::Process
     end
 
     orig_src_fd
+  end
+
+  # The arguments for input, output and error must be handles without
+  # FILE_FLAG_OVERLAPPED, so we try to get a new handle without the flag.
+  #
+  # TODO: consider `LibC.ReOpenFile` instead
+  private def self.reopen_file_as_blocking(io, for_stdin, method_name)
+    if io.system_blocking?
+      io.windows_handle
+    elsif io.is_a?(File)
+      if for_stdin
+        access = LibC::FILE_GENERIC_READ
+        attributes = LibC::FILE_ATTRIBUTE_READONLY
+      else
+        access = LibC::FILE_GENERIC_WRITE
+        attributes = 0
+      end
+
+      security_attributes = LibC::SECURITY_ATTRIBUTES.new
+      security_attributes.nLength = sizeof(LibC::SECURITY_ATTRIBUTES)
+      security_attributes.bInheritHandle = 1
+
+      handle = LibC.CreateFileW(
+        System.to_wstr(io.path),
+        access,
+        LibC::DEFAULT_SHARE_MODE,
+        pointerof(security_attributes),
+        LibC::OPEN_EXISTING,
+        attributes,
+        LibC::HANDLE.null)
+
+      if handle == LibC::INVALID_HANDLE_VALUE
+        raise IO::Error.new("Non-blocking streams are not supported in `#{method_name}`", target: io)
+      end
+
+      unless io.path == "NUL"
+        if io.system_append?
+          LibC.SetFilePointerEx(handle, 0, nil, IO::Seek::End)
+        elsif LibC.SetFilePointerEx(io.windows_handle, 0, out pos, IO::Seek::Current) != 0
+          LibC.SetFilePointerEx(handle, pos, nil, IO::Seek::Set)
+        end
+      end
+
+      handle
+    else
+      LibC::INVALID_HANDLE_VALUE
+    end
   end
 
   def self.chroot(path)

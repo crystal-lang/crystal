@@ -65,7 +65,7 @@ class File
   # It is the caller's responsibility to remove the file when no longer needed.
   def self.tempfile(prefix : String?, suffix : String?, *, dir : String = Dir.tempdir, encoding = nil, invalid = nil)
     fileno, path = Crystal::System::File.mktemp(prefix, suffix, dir)
-    new(path, fileno, blocking: true, encoding: encoding, invalid: invalid)
+    new(path, fileno, encoding: encoding, invalid: invalid)
   end
 
   # Creates a temporary file.

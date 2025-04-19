@@ -71,14 +71,10 @@ module Crystal::System::Socket
 
   initialize_extension_functions
 
-  private def create_handle(family, type, protocol, blocking) : Handle
+  def self.socket(family : ::Socket::Family, type : ::Socket::Type, protocol : ::Socket::Protocol, blocking : Bool) : Handle
     socket = LibC.WSASocketW(family, type, protocol, nil, 0, LibC::WSA_FLAG_OVERLAPPED)
-    if socket == LibC::INVALID_SOCKET
-      raise ::Socket::Error.from_wsa_error("WSASocketW")
-    end
-
+    raise ::Socket::Error.from_wsa_error("WSASocketW") if socket == LibC::INVALID_SOCKET
     Crystal::EventLoop.current.create_completion_port LibC::HANDLE.new(socket)
-
     socket
   end
 
@@ -179,7 +175,7 @@ module Crystal::System::Socket
   end
 
   def system_accept(& : Handle -> Bool) : Handle?
-    client_socket = create_handle(family, type, protocol, blocking)
+    client_socket = Socket.socket(family, type, protocol, blocking)
     initialize_handle(client_socket)
 
     if yield client_socket
@@ -329,7 +325,7 @@ module Crystal::System::Socket
     ret
   end
 
-  @blocking = true
+  @blocking = false
 
   # WSA does not provide a direct way to query the blocking mode of a file descriptor.
   # The best option seems to be just keeping track in an instance variable.
@@ -357,7 +353,7 @@ module Crystal::System::Socket
     raise NotImplementedError.new "Crystal::System::Socket.fcntl"
   end
 
-  def self.socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol) : {Handle, Handle}
+  def self.socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol, blocking : Bool) : {Handle, Handle}
     raise NotImplementedError.new("Crystal::System::Socket.socketpair")
   end
 

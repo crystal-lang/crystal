@@ -34,8 +34,20 @@ module Crystal::System::FileDescriptor
     fcntl(LibC::F_SETFL, new_flags) unless new_flags == current_flags
   end
 
-  private def system_blocking_init(value)
-    self.system_blocking = false unless value
+  def system_blocking_init(value)
+    if value.nil?
+      if EventLoop.default_blocking
+        value = true
+      else
+        case system_info.type
+        when .pipe?, .socket?, .character_device?
+          value = false
+        else
+          value = true
+        end
+      end
+    end
+    self.system_blocking = value
   end
 
   private def system_close_on_exec?

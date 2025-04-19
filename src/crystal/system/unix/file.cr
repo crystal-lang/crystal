@@ -3,26 +3,52 @@ require "file/error"
 
 # :nodoc:
 module Crystal::System::File
-  def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions, blocking)
+  def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions, blocking : Bool?) : FileDescriptor::Handle
     perm = ::File::Permissions.new(perm) if perm.is_a? Int32
 
-    fd, errno = open(filename, open_flag(mode), perm, blocking)
-
-    unless errno.none?
-      raise ::File::Error.from_os_error("Error opening file with mode '#{mode}'", errno, file: filename)
+    case result = EventLoop.current.open(filename, open_flag(mode), perm, blocking)
+    in FileDescriptor::Handle
+      result
+    in Errno
+      raise ::File::Error.from_os_error("Error opening file with mode '#{mode}'", result, file: filename)
     end
-
-    fd
   end
 
-  def self.open(filename : String, flags : Int32, perm : ::File::Permissions, blocking _blocking) : {LibC::Int, Errno}
-    filename.check_no_null_byte
-    flags |= LibC::O_CLOEXEC
+  # Returns true if the file is a pipe, fifo or character device. Doesn't
+  # consider sockets because they can't be opened directly. Follows symlinks.
+  protected def self.special_file_type?(filename)
+    stat = uninitialized LibC::Stat
 
-    fd = LibC.open(filename, flags, perm)
-
-    {fd, fd < 0 ? Errno.value : Errno::NONE}
+    if stat(filename, pointerof(stat)) != -1
+      (stat.st_mode & LibC::S_IFMT).in?(LibC::S_IFIFO, LibC::S_IFCHR)
+    else
+      false
+    end
   end
+
+  {% if flag?(:preview_mt) && !flag?(:interpreted) %}
+    protected def self.async_open(filename, flags, permissions)
+      fd = -1
+      errno = Errno::NONE
+      fiber = ::Fiber.current
+
+      ::Thread.new do
+        fd = LibC.open(filename, flags, permissions)
+        errno = Errno.value if fd == -1
+
+        {% if flag?(:execution_context) %}
+          fiber.enqueue
+        {% else %}
+          # HACK: avoid Fiber#enqueue because it would lazily create a scheduler
+          # for the thread just to send the fiber to another scheduler
+          fiber.get_current_thread.not_nil!.scheduler.send_fiber(fiber)
+        {% end %}
+      end
+      ::Fiber.suspend
+
+      {fd, errno}
+    end
+  {% end %}
 
   protected def system_set_mode(mode : String)
   end

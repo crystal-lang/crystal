@@ -14,6 +14,10 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   @timer_packet : LibC::HANDLE?
   @timer_key : System::IOCP::CompletionKey?
 
+  def self.default_blocking : Bool
+    false
+  end
+
   def initialize
     @mutex = Thread::Mutex.new
     @timers = Timers(Timer).new
@@ -216,6 +220,29 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     FiberEvent.new(:select_timeout, fiber)
   end
 
+  def open(filename : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : System::FileDescriptor::Handle | WinError
+    # we disregard the *blocking* arg because it's always `true` by default
+    # because of UNIX behavior, but we still want to read and write files async
+    access, disposition, attributes = System::File.posix_to_open_opts(flags, permissions, blocking: false)
+
+    handle = LibC.CreateFileW(
+      System.to_wstr(filename),
+      access,
+      LibC::DEFAULT_SHARE_MODE, # UNIX semantics
+      nil,
+      disposition,
+      attributes,
+      LibC::HANDLE.null
+    )
+
+    if handle == LibC::INVALID_HANDLE_VALUE
+      WinError.value
+    else
+      create_completion_port(handle)
+      handle.address
+    end
+  end
+
   def read(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
     System::IOCP.overlapped_operation(file_descriptor, "ReadFile", file_descriptor.read_timeout) do |overlapped|
       ret = LibC.ReadFile(file_descriptor.windows_handle, slice, slice.size, out byte_count, overlapped)
@@ -228,10 +255,24 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   end
 
   def write(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
-    System::IOCP.overlapped_operation(file_descriptor, "WriteFile", file_descriptor.write_timeout, writing: true) do |overlapped|
+    bytes_written = System::IOCP.overlapped_operation(file_descriptor, "WriteFile", file_descriptor.write_timeout, writing: true) do |overlapped|
+      overlapped.offset = UInt64::MAX if file_descriptor.system_append?
+
       ret = LibC.WriteFile(file_descriptor.windows_handle, slice, slice.size, out byte_count, overlapped)
       {ret, byte_count}
     end.to_i32
+
+    # The overlapped offset forced a write to the end of the file, but unlike
+    # synchronous writes, an asynchronous write incorrectly updates the file
+    # pointer: it merely adds the number of written bytes to the current
+    # position, disregarding that the offset might have changed it.
+    #
+    # We could seek before the async write (it works), but a concurrent fiber or
+    # parallel thread could also seek and we'd end up overwriting instead of
+    # appending; we need both the offset + explicit seek.
+    file_descriptor.system_seek(0, IO::Seek::End) if file_descriptor.system_append?
+
+    bytes_written
   end
 
   def wait_writable(file_descriptor : Crystal::System::FileDescriptor) : Nil

@@ -56,6 +56,10 @@ end
 # before suspending the fiber, then after resume it will raise
 # `IO::TimeoutError` if the event timed out, and continue otherwise.
 abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
+  def self.default_blocking : Bool
+    false
+  end
+
   # The generational arena:
   #
   # 1. decorrelates the fd from the IO since the evloop only really cares about
@@ -145,6 +149,45 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
 
   # file descriptor interface, see Crystal::EventLoop::FileDescriptor
 
+  def open(filename : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : System::FileDescriptor::Handle | Errno
+    filename.check_no_null_byte
+
+    fd = 0
+    flags |= LibC::O_CLOEXEC
+
+    # We can't reliably detect without significant overhead whether *filename*
+    # might block for a while before calling open; while O_NONBLOCK has no
+    # effect on regular disk files, special file types are a different story.
+    # Open with O_NONBLOCK will fail with ENXIO for O_WRONLY (no connected
+    # reader) but it will always succeed for O_RDONLY (regardless of a connected
+    # writer or not), then any attempt to read will return EOF, leaving no means
+    # to wait until a writer connects.
+    #
+    # We thus rely on the *blocking* arg: when false the file might be a special
+    # file type, so we check it; if it's a fifo (named pipe) or a character
+    # device, we open in another thread so we don't risk blocking the current
+    # thread (and thus other fibers) until a reader or writer is also connected.
+    #
+    # We need preview_mt to safely re-enqueue the current fiber from the thread.
+    {% if flag?(:preview_mt) && !flag?(:interpreted) %}
+      if !blocking && System::File.special_file_type?(filename)
+        fd, errno = System::File.async_open(filename, flags, permissions)
+        return errno if fd == -1
+      else
+        fd = LibC.open(filename, flags, permissions)
+        return Errno.value if fd == -1
+      end
+    {% else %}
+      fd = LibC.open(filename, flags, permissions)
+      return Errno.value if fd == -1
+    {% end %}
+
+    # Always set O_NONBLOCK (it's a requirement).
+    System::FileDescriptor.fcntl(fd, LibC::F_SETFL, System::FileDescriptor.fcntl(fd, LibC::F_GETFL) | LibC::O_NONBLOCK)
+
+    fd
+  end
+
   def read(file_descriptor : System::FileDescriptor, slice : Bytes) : Int32
     size = evented_read(file_descriptor, slice, file_descriptor.@read_timeout)
 
@@ -230,7 +273,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     loop do
       client_fd =
         {% if LibC.has_method?(:accept4) %}
-          LibC.accept4(socket.fd, nil, nil, LibC::SOCK_CLOEXEC)
+          LibC.accept4(socket.fd, nil, nil, LibC::SOCK_CLOEXEC | LibC::SOCK_NONBLOCK)
         {% else %}
           # we may fail to set FD_CLOEXEC between `accept` and `fcntl` but we
           # can't call `Crystal::System::Socket.lock_read` because the socket
@@ -240,9 +283,12 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
           # we could lock when `socket.blocking?` is false, but another thread
           # could change the socket back to blocking mode between the condition
           # check and the `accept` call.
-          LibC.accept(socket.fd, nil, nil).tap do |fd|
-            System::Socket.fcntl(fd, LibC::F_SETFD, LibC::FD_CLOEXEC) unless fd == -1
+          fd = LibC.accept(socket.fd, nil, nil)
+          unless fd == -1
+            System::Socket.fcntl(fd, LibC::F_SETFD, LibC::FD_CLOEXEC)
+            System::Socket.fcntl(fd, LibC::F_SETFL, System::Socket.fcntl(fd, LibC::F_GETFL) | LibC::O_NONBLOCK)
           end
+          fd
         {% end %}
 
       return client_fd unless client_fd == -1

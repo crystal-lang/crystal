@@ -15,7 +15,7 @@ require "./ip_socket"
 # ```
 class TCPSocket < IPSocket
   # Creates a new `TCPSocket`, waiting to be connected.
-  def self.new(family : Family = Family::INET, blocking = false)
+  def self.new(family : Family = Family::INET, blocking = nil)
     super(family, Type::STREAM, Protocol::TCP, blocking)
   end
 
@@ -26,7 +26,7 @@ class TCPSocket < IPSocket
   # must be in seconds (integers or floats).
   #
   # NOTE: *dns_timeout* is currently only supported on Windows.
-  def initialize(host : String, port, dns_timeout = nil, connect_timeout = nil, blocking = false)
+  def initialize(host : String, port, dns_timeout = nil, connect_timeout = nil, blocking = nil)
     Addrinfo.tcp(host, port, timeout: dns_timeout) do |addrinfo|
       super(addrinfo.family, addrinfo.type, addrinfo.protocol, blocking)
       connect(addrinfo, timeout: connect_timeout) do |error|
@@ -36,16 +36,16 @@ class TCPSocket < IPSocket
     end
   end
 
-  protected def initialize(family : Family, type : Type, protocol : Protocol = Protocol::IP, blocking = false)
+  protected def initialize(family : Family, type : Type, protocol : Protocol = Protocol::IP, blocking = nil)
     super family, type, protocol, blocking
   end
 
-  protected def initialize(fd : Handle, family : Family, type : Type, protocol : Protocol = Protocol::IP, blocking = false)
+  protected def initialize(fd : Handle, family : Family, type : Type, protocol : Protocol = Protocol::IP, blocking = nil)
     super fd, family, type, protocol, blocking
   end
 
   # Creates a TCPSocket from an already configured raw file descriptor
-  def initialize(*, fd : Handle, family : Family = Family::INET, blocking = false)
+  def initialize(*, fd : Handle, family : Family = Family::INET, blocking = nil)
     super fd, family, Type::STREAM, Protocol::TCP, blocking
   end
 

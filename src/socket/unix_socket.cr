@@ -71,7 +71,7 @@ class UNIXSocket < Socket
   # ```
   def self.pair(type : Type = Type::STREAM) : {UNIXSocket, UNIXSocket}
     Crystal::System::Socket
-      .socketpair(type, Protocol::IP)
+      .socketpair(type, Protocol::IP, Crystal::EventLoop.default_blocking)
       .map { |fd| UNIXSocket.new(fd: fd, type: type) }
   end
 

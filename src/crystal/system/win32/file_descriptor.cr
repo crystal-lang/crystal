@@ -16,7 +16,11 @@ module Crystal::System::FileDescriptor
   STDOUT_HANDLE = LibC.GetStdHandle(LibC::STD_OUTPUT_HANDLE).address
   STDERR_HANDLE = LibC.GetStdHandle(LibC::STD_ERROR_HANDLE).address
 
-  @system_blocking = true
+  @system_blocking = false
+
+  def system_append?
+    false
+  end
 
   private def system_read(slice : Bytes) : Int32
     handle = windows_handle
@@ -99,7 +103,15 @@ module Crystal::System::FileDescriptor
     end
   end
 
-  private def system_blocking_init(value)
+  def system_blocking_init(value)
+    if value.nil?
+      # TODO: We could determine if the HANDLE is OVERLAPPED capable by asking
+      # the file mode (FileModeInformation) with NtQueryInformationFile
+      # (ntifs.h). If the call succeeds and the file mode includes neither of
+      # FILE_SYNCHRONOUS_IO_ALERT or FILE_SYNCHRONOUS_IO_NONALERT then the
+      # HANDLE is OVERLAPPED capable.
+      value = true
+    end
     @system_blocking = value
     Crystal::EventLoop.current.create_completion_port(windows_handle) unless value
   end
@@ -160,7 +172,7 @@ module Crystal::System::FileDescriptor
     FileDescriptor.system_info windows_handle
   end
 
-  private def system_seek(offset, whence : IO::Seek) : Nil
+  def system_seek(offset, whence : IO::Seek) : Nil
     if LibC.SetFilePointerEx(windows_handle, offset, nil, whence) == 0
       raise IO::Error.from_winerror("Unable to seek", target: self)
     end
