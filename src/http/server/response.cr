@@ -1,6 +1,6 @@
-require "http/headers"
-require "http/status"
-require "http/cookie"
+require "../headers"
+require "../status"
+require "../cookie"
 
 class HTTP::Server
   # The response to configure and write to in an `HTTP::Server` handler.

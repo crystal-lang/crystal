@@ -1,6 +1,6 @@
 require "socket"
-require "http/client"
-require "http/headers"
+require "../client"
+require "../headers"
 require "base64"
 {% if flag?(:without_openssl) %}
   require "crystal/digest/sha1"
