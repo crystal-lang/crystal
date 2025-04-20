@@ -11,7 +11,7 @@ class JSON::Builder
 end
 
 struct BigInt
-  def self.new(pull : JSON::PullParser)
+  def self.new(pull : JSON::PullParser) : BigInt
     case pull.kind
     when .int?
       value = pull.raw_value
@@ -38,7 +38,7 @@ struct BigInt
 end
 
 struct BigFloat
-  def self.new(pull : JSON::PullParser)
+  def self.new(pull : JSON::PullParser) : BigFloat
     case pull.kind
     when .int?, .float?
       value = pull.raw_value
@@ -65,7 +65,7 @@ struct BigFloat
 end
 
 struct BigDecimal
-  def self.new(pull : JSON::PullParser)
+  def self.new(pull : JSON::PullParser) : BigDecimal
     case pull.kind
     when .int?, .float?
       value = pull.raw_value

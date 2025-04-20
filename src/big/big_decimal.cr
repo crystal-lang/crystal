@@ -38,7 +38,7 @@ struct BigDecimal < Number
   #
   # NOTE: Floats are fundamentally less precise than BigDecimals,
   # which makes initialization from them risky.
-  def self.new(num : Float)
+  def self.new(num : Float) : BigDecimal
     raise ArgumentError.new "Can only construct from a finite number" unless num.finite?
     new(num.to_s)
   end
@@ -47,13 +47,13 @@ struct BigDecimal < Number
   #
   # NOTE: BigRational are fundamentally more precise than BigDecimals,
   # which makes initialization from them risky.
-  def self.new(num : BigRational)
+  def self.new(num : BigRational) : BigDecimal
     num.numerator.to_big_d / num.denominator.to_big_d
   end
 
   # Returns *num*. Useful for generic code that does `T.new(...)` with `T`
   # being a `Number`.
-  def self.new(num : BigDecimal)
+  def self.new(num : BigDecimal) : BigDecimal
     num
   end
 
@@ -235,7 +235,7 @@ struct BigDecimal < Number
   # BigDecimal.new(1).div(BigDecimal.new(2))    # => BigDecimal(@value=5, @scale=2)
   # BigDecimal.new(1).div(BigDecimal.new(3), 5) # => BigDecimal(@value=33333, @scale=5)
   # ```
-  def div(other : BigDecimal, precision = DEFAULT_PRECISION) : BigDecimal
+  def div(other : BigDecimal, precision : UInt64 | Int32 = DEFAULT_PRECISION) : BigDecimal
     check_division_by_zero other
     return self if @value.zero?
     other.factor_powers_of_ten
@@ -349,7 +349,7 @@ struct BigDecimal < Number
     self <=> other.to_big_r
   end
 
-  def <=>(other : Int)
+  def <=>(other : Int) : Int32
     self <=> BigDecimal.new(other)
   end
 
@@ -772,7 +772,7 @@ struct BigDecimal < Number
   end
 
   # returns `self * 10 ** exponent`
-  protected def mul_power_of_ten(exponent : Int)
+  protected def mul_power_of_ten(exponent : Int) : BigDecimal
     if exponent <= scale
       BigDecimal.new(@value, @scale - exponent)
     else
@@ -782,7 +782,7 @@ struct BigDecimal < Number
 
   # Factors out any extra powers of ten in the internal representation.
   # For instance, value=100 scale=2 => value=1 scale=0
-  protected def factor_powers_of_ten
+  protected def factor_powers_of_ten : UInt64?
     if @scale > 0
       reduced, exp = value.factor_by(TEN_I)
       if exp <= @scale
@@ -878,7 +878,7 @@ end
 
 # :nodoc:
 struct Crystal::Hasher
-  def self.reduce_num(value : BigDecimal)
+  def self.reduce_num(value : BigDecimal) : UInt64
     v = reduce_num(value.value.abs)
 
     # v = UInt64.mulmod(v, 10_u64.powmod(-scale, HASH_MODULUS), HASH_MODULUS)

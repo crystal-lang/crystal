@@ -77,11 +77,11 @@ struct BigFloat < Float
     new(mpf)
   end
 
-  def self.default_precision
+  def self.default_precision : UInt64
     LibGMP.mpf_get_default_prec
   end
 
-  def self.default_precision=(prec : Int)
+  def self.default_precision=(prec : Int) : Nil
     LibGMP.mpf_set_default_prec(prec.to_u64)
   end
 
@@ -93,11 +93,11 @@ struct BigFloat < Float
     LibGMP.mpf_cmp_z(self, other)
   end
 
-  def <=>(other : Float::Primitive)
+  def <=>(other : Float::Primitive) : Int32?
     LibGMP.mpf_cmp_d(self, other) unless other.nan?
   end
 
-  def <=>(other : Int)
+  def <=>(other : Int) : Int32
     Int.primitive_si_ui_check(other) do |si, ui, big_i|
       {
         si:    LibGMP.mpf_cmp_si(self, {{ si }}),
@@ -357,7 +357,7 @@ struct BigFloat < Float
     LibGMP.mpf_get_ui(self).to_u64!
   end
 
-  def to_unsafe
+  def to_unsafe : Pointer(LibGMP::MPF)
     mpf
   end
 
@@ -466,7 +466,7 @@ struct BigFloat < Float
     {% end %}
   end
 
-  def clone
+  def clone : BigFloat
     self
   end
 
@@ -538,7 +538,7 @@ struct Number
 end
 
 struct Int
-  def <=>(other : BigFloat)
+  def <=>(other : BigFloat) : Int32
     -(other <=> self)
   end
 
