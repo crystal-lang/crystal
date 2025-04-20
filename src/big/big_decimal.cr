@@ -235,7 +235,7 @@ struct BigDecimal < Number
   # BigDecimal.new(1).div(BigDecimal.new(2))    # => BigDecimal(@value=5, @scale=2)
   # BigDecimal.new(1).div(BigDecimal.new(3), 5) # => BigDecimal(@value=33333, @scale=5)
   # ```
-  def div(other : BigDecimal, precision : UInt64 | Int32 = DEFAULT_PRECISION) : BigDecimal
+  def div(other : BigDecimal, precision : Int::Primitive = DEFAULT_PRECISION) : BigDecimal
     check_division_by_zero other
     return self if @value.zero?
     other.factor_powers_of_ten
@@ -782,7 +782,7 @@ struct BigDecimal < Number
 
   # Factors out any extra powers of ten in the internal representation.
   # For instance, value=100 scale=2 => value=1 scale=0
-  protected def factor_powers_of_ten : UInt64?
+  protected def factor_powers_of_ten : Nil
     if @scale > 0
       reduced, exp = value.factor_by(TEN_I)
       if exp <= @scale

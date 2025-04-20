@@ -77,7 +77,7 @@ struct BigFloat < Float
     new(mpf)
   end
 
-  def self.default_precision : UInt64
+  def self.default_precision
     LibGMP.mpf_get_default_prec
   end
 
