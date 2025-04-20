@@ -1182,6 +1182,8 @@ module Crystal
         @str << '|'
       end
 
+      write_extra_newlines node.location, node.body.location
+
       if single_line_block
         @str << ' '
         node.body.accept self

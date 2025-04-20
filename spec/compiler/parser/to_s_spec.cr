@@ -623,4 +623,28 @@ describe "ASTNode#to_s" do
       }
     %}
     CR
+
+  expect_to_s <<-'CR', <<-'CR'
+    {%
+      ({"a" => "b"} of Nil => Nil).each do |k, v|
+        # stuff and things
+        k + v
+
+        # foo bar
+
+        k + v
+      end
+    %}
+    CR
+  {%
+    ({"a" => "b"} of Nil => Nil).each do |k, v|
+
+      k + v
+
+
+
+      k + v
+    end
+  %}
+  CR
 end
