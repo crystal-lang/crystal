@@ -31,7 +31,7 @@ module Benchmark
       end
 
       # Adds code to be benchmarked
-      def report(label = "", &action) : Benchmark::IPS::Entry
+      def report(label : String = "", &action) : Benchmark::IPS::Entry
         item = Entry.new(label, action)
         @items << item
         item
@@ -175,12 +175,12 @@ module Benchmark
         cycles.times { action.call }
       end
 
-      def set_cycles(duration, iterations) : Nil
+      def set_cycles(duration : Time::Span, iterations : Int32) : Nil
         @cycles = (iterations / duration.total_milliseconds * 100).to_i
         @cycles = 1 if cycles <= 0
       end
 
-      def calculate_stats(samples) : Nil
+      def calculate_stats(samples : Array(Float64) | Array(Int32)) : Nil
         @ran = true
         @size = samples.size
         @mean = samples.sum.to_f / size.to_f
