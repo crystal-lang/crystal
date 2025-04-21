@@ -2,9 +2,10 @@ require "c/pthread"
 
 class Thread
   struct Local(T)
-    @key : LibC::PthreadKeyT
+    @key = uninitialized LibC::PthreadKeyT
 
     def initialize
+      previous_def
       @key = pthread_key_create(nil)
     end
 
@@ -20,11 +21,11 @@ class Thread
 
     def get? : T?
       pointer = LibC.pthread_getspecific(@key)
-      Box(T).unbox(pointer) unless pointer.null?
+      pointer.as(T) unless pointer.null?
     end
 
     def set(value : T) : T
-      err = LibC.pthread_setspecific(@key, Box(T).box(value))
+      err = LibC.pthread_setspecific(@key, value.as(Void*))
       raise RuntimeError.from_os_error("pthread_setspecific", Errno.new(err)) unless err == 0
       value
     end

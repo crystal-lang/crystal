@@ -2,9 +2,10 @@ require "c/fibersapi"
 
 class Thread
   struct Local(T)
-    @key : LibC::DWORD
+    @key = uninitialized LibC::DWORD
 
     def initialize
+      previous_def
       @key = fls_alloc(nil)
     end
 
@@ -20,11 +21,11 @@ class Thread
 
     def get? : T?
       pointer = LibC.FlsGetValue(@key)
-      Box(T).unbox(pointer) unless pointer.null?
+      pointer.as(T) unless pointer.null?
     end
 
     def set(value : T) : T
-      ret = LibC.FlsSetValue(@key, Box(T).box(value))
+      ret = LibC.FlsSetValue(@key, value.as(T))
       raise RuntimeError.from_winerror("FlsSetValue") if ret == 0
       value
     end

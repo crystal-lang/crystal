@@ -3,6 +3,7 @@ class Thread
     @value : T?
 
     def initialize
+      previous_def
     end
 
     def initialize(&destructor : T ->)
