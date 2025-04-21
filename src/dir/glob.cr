@@ -64,7 +64,7 @@ class Dir
   # equivalent to
   # `match: File::MatchOptions.glob_default | File::MatchOptions::DotFiles`.
   @[Deprecated("Use the overload with a `match` parameter instead")]
-  def self.glob(*patterns : Path | String, match_hidden, follow_symlinks = false) : Array(String)
+  def self.glob(*patterns : Path | String, match_hidden : Bool, follow_symlinks : Bool = false) : Array(String)
     glob(patterns, match: match_hidden_to_options(match_hidden), follow_symlinks: follow_symlinks)
   end
 
@@ -138,7 +138,7 @@ class Dir
     record DirectoriesOnly
     record ConstantEntry, path : String, merged : Bool
     record EntryMatch, pattern : String do
-      def matches?(string) : Bool
+      def matches?(string : String) : Bool
         File.match?(pattern, string)
       end
     end
@@ -146,7 +146,7 @@ class Dir
     record ConstantDirectory, path : String
     record RootDirectory
     record DirectoryMatch, pattern : String do
-      def matches?(string) : Bool
+      def matches?(string : String) : Bool
         File.match?(pattern, string)
       end
     end
