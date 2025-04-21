@@ -113,7 +113,7 @@ class CSV
   # rows.next # => ["one", "two"]
   # rows.next # => ["three"]
   # ```
-  def self.each_row(string_or_io : String | IO, separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR)
+  def self.each_row(string_or_io : String | IO, separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR) : Iterator(Array(String))
     Parser.new(string_or_io, separator, quote_char).each_row
   end
 
@@ -174,7 +174,7 @@ class CSV
   # Headers are always stripped.
   #
   # See `CSV.parse` about the *separator* and *quote_char* arguments.
-  def initialize(string_or_io : String | IO, headers = false, @strip = false, separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR)
+  def initialize(string_or_io : String | IO, headers : Bool = false, @strip : Bool = false, separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR)
     @parser = Parser.new(string_or_io, separator, quote_char)
     if headers
       headers = @parser.next_row || ([] of String)
@@ -280,7 +280,7 @@ class CSV
   # A negative index counts from the end.
   # Raises `IndexError` if any column doesn't exist
   # The behavior of returning a tuple is similar to `Hash#values_at`
-  def values_at(*columns : Int)
+  def values_at(*columns : Int) : Tuple(String, String)
     columns.map { |column| row_internal[column] }
   end
 
@@ -288,7 +288,7 @@ class CSV
   # Raises `KeyError` if any header doesn't exist.
   # Raises `CSV::Error` if headers were not requested
   # The behavior of returning a tuple is similar to `Hash#values_at`
-  def values_at(*headers : String)
+  def values_at(*headers : String) : Tuple(String, String)
     headers.map { |header| row_internal[header] }
   end
 
@@ -430,7 +430,7 @@ class CSV
     # A negative index counts from the end.
     # Raises `IndexError` if any column doesn't exist
     # The behavior of returning a tuple is similar to `Hash#values_at`
-    def values_at(*columns : Int)
+    def values_at(*columns : Int) : Tuple(String, String)
       columns.map { |column| self[column] }
     end
 
@@ -438,7 +438,7 @@ class CSV
     # Raises `KeyError` if any header doesn't exist.
     # Raises `CSV::Error` if headers were not requested
     # The behavior of returning a tuple is similar to `Hash#values_at`
-    def values_at(*headers : String)
+    def values_at(*headers : String) : Tuple(String, String)
       headers.map { |header| self[header] }
     end
 

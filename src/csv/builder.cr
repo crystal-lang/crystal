@@ -81,7 +81,7 @@ class CSV::Builder
   end
 
   # :nodoc:
-  def quote_cell(value : String)
+  def quote_cell(value : String) : Bool
     append_cell do
       @io << @quote_char
       value.each_char do |char|
@@ -146,7 +146,7 @@ class CSV::Builder
     end
 
     # :ditto:
-    def concat(*values) : Nil
+    def concat(*values : Int32) : Nil
       concat values
     end
 
