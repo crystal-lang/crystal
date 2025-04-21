@@ -39,6 +39,9 @@ end
 {% begin %}
 # Spawns a new fiber.
 #
+# When using execution contexts, the fiber spawns into the current execution
+# context (`Fiber::ExecutionContext.current`).
+#
 # NOTE: The newly created fiber doesn't run as soon as spawned.
 #
 # Example:
@@ -84,6 +87,9 @@ end
 
 # Spawns a fiber by first creating a `Proc`, passing the *call*'s
 # expressions to it, and letting the `Proc` finally invoke the *call*.
+#
+# When using execution contexts, the fiber spawns into the current execution
+# context (`Fiber::ExecutionContext.current`).
 #
 # Compare this:
 #

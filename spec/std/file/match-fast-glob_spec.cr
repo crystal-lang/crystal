@@ -25,22 +25,22 @@ end
 describe "File .match? bash tests" do
   it "webpack" do
     # Match everything
-    refute_file_matches "**/*", "foo" # bug #15319
+    assert_file_matches "**/*", "foo"
 
     # Match the end
-    refute_file_matches "**/f*", "foo" # bug #15319
+    assert_file_matches "**/f*", "foo"
 
     # Match the start
-    refute_file_matches "**/*o", "foo" # bug #15319
+    assert_file_matches "**/*o", "foo"
 
     # Match the middle
-    refute_file_matches "**/f*uck", "firetruck" # bug #15319
+    assert_file_matches "**/f*uck", "firetruck"
 
     # Don't match without Regexp 'g'
     refute_file_matches "**/uc", "firetruck"
 
     # Match zero characters
-    refute_file_matches "**/f*uck", "fuck" # bug #15319
+    assert_file_matches "**/f*uck", "fuck"
 
     # More complex matches
     assert_file_matches "**/*.min.js", "some/jquery.min.js"
@@ -72,37 +72,37 @@ describe "File .match? bash tests" do
     # Extended mode
 
     # ?: Match one character, no more and no less
-    refute_file_matches "**/f?o", "foo" # bug #15319
+    assert_file_matches "**/f?o", "foo"
     refute_file_matches "**/f?o", "fooo"
     refute_file_matches "**/f?oo", "foo"
 
     # ?: Match one character with RegExp 'g'
-    refute_file_matches "**/f?o", "foo" # bug #15319
+    assert_file_matches "**/f?o", "foo"
     refute_file_matches "**/f?o", "fooo"
-    refute_file_matches "**/f?o?", "fooo" # bug #15319
+    assert_file_matches "**/f?o?", "fooo"
     refute_file_matches "**/?fo", "fooo"
     refute_file_matches "**/f?oo", "foo"
     refute_file_matches "**/foo?", "foo"
 
     # []: Match a character range
-    refute_file_matches "**/fo[oz]", "foo" # bug #15319
-    refute_file_matches "**/fo[oz]", "foz" # bug #15319
+    assert_file_matches "**/fo[oz]", "foo"
+    assert_file_matches "**/fo[oz]", "foz"
     refute_file_matches "**/fo[oz]", "fog"
 
     # []: Match a character range and RegExp 'g' (regresion)
-    refute_file_matches "**/fo[oz]", "foo" # bug #15319
-    refute_file_matches "**/fo[oz]", "foz" # bug #15319
+    assert_file_matches "**/fo[oz]", "foo"
+    assert_file_matches "**/fo[oz]", "foz"
     refute_file_matches "**/fo[oz]", "fog"
 
     # {}: Match a choice of different substrings
-    refute_file_matches "**/foo{bar,baaz}", "foobaaz" # bug #15319
-    refute_file_matches "**/foo{bar,baaz}", "foobar"  # bug #15319
+    assert_file_matches "**/foo{bar,baaz}", "foobaaz"
+    assert_file_matches "**/foo{bar,baaz}", "foobar"
     refute_file_matches "**/foo{bar,baaz}", "foobuzz"
-    refute_file_matches "**/foo{bar,b*z}", "foobuzz" # bug #15319
+    assert_file_matches "**/foo{bar,b*z}", "foobuzz"
 
     # {}: Match a choice of different substrings and RegExp 'g' (regression)
-    refute_file_matches "**/foo{bar,baaz}", "foobaaz" # bug #15319
-    refute_file_matches "**/foo{bar,baaz}", "foobar"  # bug #15319
+    assert_file_matches "**/foo{bar,baaz}", "foobaaz"
+    assert_file_matches "**/foo{bar,baaz}", "foobar"
     refute_file_matches "**/foo{bar,baaz}", "foobuzz"
 
     # More complex extended matches
@@ -121,7 +121,7 @@ describe "File .match? bash tests" do
 
     # globstar
     assert_file_matches "some/**/{*.js,*.html}", "some/bar/jquery.min.js"
-    refute_file_matches "some/**/{*.js,*.html}", "some/bar/baz/jquery.min.js" # bug #15319
+    assert_file_matches "some/**/{*.js,*.html}", "some/bar/baz/jquery.min.js"
     assert_file_matches "some/**", "some/bar/baz/jquery.min.js"
 
     assert_file_matches "\\\\/$^+.()=!|,.*", "\\/$^+.()=!|,.*"
@@ -132,25 +132,25 @@ describe "File .match? bash tests" do
     assert_file_matches "/foo/**", "/foo/bar/baz.txt"
     assert_file_matches "/foo/*/*.txt", "/foo/bar/baz.txt"
     assert_file_matches "/foo/**/*.txt", "/foo/bar/baz.txt"
-    refute_file_matches "/foo/**/*.txt", "/foo/bar/baz/qux.txt" # bug #15319
-    refute_file_matches "/foo/**/bar.txt", "/foo/bar.txt"       # bug #15319
-    refute_file_matches "/foo/**/**/bar.txt", "/foo/bar.txt"    # bug #15319
-    refute_file_matches "/foo/**/*/baz.txt", "/foo/bar/baz.txt" # bug #15319
-    refute_file_matches "/foo/**/*.txt", "/foo/bar.txt"         # bug #15319
-    refute_file_matches "/foo/**/**/*.txt", "/foo/bar.txt"      # bug #15319
-    refute_file_matches "/foo/**/*/*.txt", "/foo/bar/baz.txt"   # bug #15319
-    refute_file_matches "**/*.txt", "/foo/bar/baz/qux.txt"      # bug #15319
-    refute_file_matches "**/foo.txt", "foo.txt"                 # bug #15319
-    refute_file_matches "**/*.txt", "foo.txt"                   # bug #15319
+    assert_file_matches "/foo/**/*.txt", "/foo/bar/baz/qux.txt"
+    assert_file_matches "/foo/**/bar.txt", "/foo/bar.txt"
+    assert_file_matches "/foo/**/**/bar.txt", "/foo/bar.txt"
+    assert_file_matches "/foo/**/*/baz.txt", "/foo/bar/baz.txt"
+    assert_file_matches "/foo/**/*.txt", "/foo/bar.txt"
+    assert_file_matches "/foo/**/**/*.txt", "/foo/bar.txt"
+    assert_file_matches "/foo/**/*/*.txt", "/foo/bar/baz.txt"
+    assert_file_matches "**/*.txt", "/foo/bar/baz/qux.txt"
+    assert_file_matches "**/foo.txt", "foo.txt"
+    assert_file_matches "**/*.txt", "foo.txt"
 
     refute_file_matches "/foo/*", "/foo/bar/baz.txt"
     refute_file_matches "/foo/*.txt", "/foo/bar/baz.txt"
     refute_file_matches "/foo/*/*.txt", "/foo/bar/baz/qux.txt"
     refute_file_matches "/foo/*/bar.txt", "/foo/bar.txt"
     refute_file_matches "/foo/*/*/baz.txt", "/foo/bar/baz.txt"
-    assert_file_matches "/foo/**.txt", "/foo/bar/baz/qux.txt" # bug #15319
+    refute_file_matches "/foo/**.txt", "/foo/bar/baz/qux.txt"
     refute_file_matches "/foo/bar**/*.txt", "/foo/bar/baz/qux.txt"
-    assert_file_matches "/foo/bar**", "/foo/bar/baz.txt" # bug #15319
+    refute_file_matches "/foo/bar**", "/foo/bar/baz.txt"
     refute_file_matches "**/.txt", "/foo/bar/baz/qux.txt"
     refute_file_matches "*/*.txt", "/foo/bar/baz/qux.txt"
     refute_file_matches "*/*.txt", "foo.txt"
@@ -219,6 +219,7 @@ describe "File .match? bash tests" do
     assert_file_matches "[!abc]", "b" # unsupported
     assert_file_matches "[!abc]", "c" # unsupported
     refute_file_matches "[!abc]", "d" # unsupported
+    assert_file_matches "[!abc]", "!" # unsupported
     assert_file_matches "[\\!]", "!"
 
     assert_file_matches "a*b*[cy]*d*e*", "axbxcxdxexxx"
@@ -270,13 +271,11 @@ describe "File .match? bash tests" do
     refute_file_matches "a/{a{a,b},b}", "a/ac"
     assert_file_matches "a/{a{a,b},b}", "a/b"
     refute_file_matches "a/{a{a,b},b}", "a/c"
-    refute_file_matches "a/{b,c[}]*}", "a/b" # bug
-    expect_raises File::BadPatternError do   # bug
-      assert_file_matches "a/{b,c[}]*}", "a/c}xx"
-    end
+    assert_file_matches "a/{b,c[}]*}", "a/b"
+    assert_file_matches "a/{b,c[}]*}", "a/c}xx"
 
     assert_file_matches "/**/*a", "/a/a"
-    refute_file_matches "**/*.js", "a/b.c/c.js" # bug #15319
+    assert_file_matches "**/*.js", "a/b.c/c.js"
     assert_file_matches "**/**/*.js", "a/b.c/c.js"
     assert_file_matches "a/**/*.d", "a/b/c.d"
     assert_file_matches "a/**/*.d", "a/.b/c.d"
@@ -479,12 +478,8 @@ describe "File .match? bash tests" do
     refute_file_matches "a*[^c]", "beware"
     refute_file_matches "a*[^c]", "BewAre"
 
-    expect_raises File::BadPatternError do # bug
-      assert_file_matches "a[X-]b", "a-b"
-    end
-    expect_raises File::BadPatternError do # bug
-      assert_file_matches "a[X-]b", "aXb"
-    end
+    assert_file_matches "a[X-]b", "a-b"
+    assert_file_matches "a[X-]b", "aXb"
 
     refute_file_matches "[a-y]*[^c]", "*"
     assert_file_matches "[a-y]*[^c]", "a*"
@@ -600,7 +595,7 @@ describe "File .match? bash tests" do
     refute_file_matches "a[\\b]c", "\\*"
     refute_file_matches "a[\\b]c", "a"
     refute_file_matches "a[\\b]c", "a/*"
-    assert_file_matches "a[\\b]c", "abc" # bug
+    refute_file_matches "a[\\b]c", "abc"
     refute_file_matches "a[\\b]c", "abd"
     refute_file_matches "a[\\b]c", "abe"
     refute_file_matches "a[\\b]c", "b"
@@ -698,20 +693,12 @@ describe "File .match? bash tests" do
   end
 
   it "bash_wildmatch" do
-    expect_raises File::BadPatternError do # bug
-      refute_file_matches "a[]-]b", "aab"
-    end
+    refute_file_matches "a[]-]b", "aab"
     refute_file_matches "[ten]", "ten"
     assert_file_matches "]", "]"
-    expect_raises File::BadPatternError do # bug
-      assert_file_matches "a[]-]b", "a-b"
-    end
-    expect_raises File::BadPatternError do # bug
-      assert_file_matches "a[]-]b", "a]b"
-    end
-    expect_raises File::BadPatternError do # bug
-      assert_file_matches "a[]]b", "a]b"
-    end
+    assert_file_matches "a[]-]b", "a-b"
+    assert_file_matches "a[]-]b", "a]b"
+    assert_file_matches "a[]]b", "a]b"
     assert_file_matches "a[\\]a\\-]b", "aab"
     assert_file_matches "t[a-g]n", "ten"
     assert_file_matches "t[^a-g]n", "ton"
@@ -947,7 +934,7 @@ describe "File .match? bash tests" do
 
     refute_file_matches "*/**/a", "a"
     refute_file_matches "*/**/a", "a/a/b"
-    refute_file_matches "*/**/a", "a/a" # bug #15319
+    assert_file_matches "*/**/a", "a/a"
     assert_file_matches "*/**/a", "a/a/a"
     assert_file_matches "*/**/a", "a/a/a/a"
     assert_file_matches "*/**/a", "a/a/a/a/a"
@@ -998,7 +985,7 @@ describe "File .match? bash tests" do
     refute_file_matches "*/*/", "foo/bar"
 
     assert_file_matches "**/..", "/home/foo/.."
-    refute_file_matches "**/a", "a" # bug #15319
+    assert_file_matches "**/a", "a"
     assert_file_matches "**", "a/a"
     assert_file_matches "a/**", "a/a"
     assert_file_matches "a/**", "a/"
@@ -1007,7 +994,7 @@ describe "File .match? bash tests" do
     # assert_file_matches "**/a/**", "a"
     # assert_file_matches "a/**", "a"
     refute_file_matches "**/", "a/a"
-    refute_file_matches "*/**/a", "a/a" # bug #15319
+    assert_file_matches "*/**/a", "a/a"
     # assert_file_matches "a/**", "a"
     assert_file_matches "*/**", "foo/"
     assert_file_matches "**/*", "foo/bar"
@@ -1026,14 +1013,14 @@ describe "File .match? bash tests" do
     refute_file_matches "foo?bar", "foo/bar"
     refute_file_matches "**/bar*", "foo/bar/baz"
     # refute_file_matches "**/bar**", "foo/bar/baz"
-    assert_file_matches "foo**bar", "foo/baz/bar" # bug #15319
+    refute_file_matches "foo**bar", "foo/baz/bar"
     refute_file_matches "foo*bar", "foo/baz/bar"
     # assert_file_matches "foo/**", "foo"
     assert_file_matches "/*", "/ab"
     assert_file_matches "/*", "/cd"
     assert_file_matches "/*", "/ef"
     assert_file_matches "a/**/j/**/z/*.md", "a/b/j/c/z/x.md"
-    refute_file_matches "a/**/j/**/z/*.md", "a/j/z/x.md" # bug #15319
+    assert_file_matches "a/**/j/**/z/*.md", "a/j/z/x.md"
 
     assert_file_matches "**/foo", "bar/baz/foo"
     assert_file_matches "**/bar/*", "deep/foo/bar/baz"
@@ -1041,32 +1028,32 @@ describe "File .match? bash tests" do
     assert_file_matches "**/bar/*/*", "deep/foo/bar/baz/x"
     assert_file_matches "foo/**/**/bar", "foo/b/a/z/bar"
     assert_file_matches "foo/**/bar", "foo/b/a/z/bar"
-    refute_file_matches "foo/**/**/bar", "foo/bar" # bug #15319
-    refute_file_matches "foo/**/bar", "foo/bar"    # bug #15319
+    assert_file_matches "foo/**/**/bar", "foo/bar"
+    assert_file_matches "foo/**/bar", "foo/bar"
     assert_file_matches "*/bar/**", "foo/bar/baz/x"
-    refute_file_matches "foo/**/**/bar", "foo/baz/bar" # bug #15319
+    assert_file_matches "foo/**/**/bar", "foo/baz/bar"
     assert_file_matches "foo/**/bar", "foo/baz/bar"
     assert_file_matches "**/foo", "XXX/foo"
   end
 
   it "globstars" do
-    refute_file_matches "**/*.js", "a/b/c/d.js" # bug #15319
-    refute_file_matches "**/*.js", "a/b/c.js"   # bug #15319
+    assert_file_matches "**/*.js", "a/b/c/d.js"
+    assert_file_matches "**/*.js", "a/b/c.js"
     assert_file_matches "**/*.js", "a/b.js"
-    refute_file_matches "a/b/**/*.js", "a/b/c/d/e/f.js" # bug #15319
-    refute_file_matches "a/b/**/*.js", "a/b/c/d/e.js"   # bug #15319
-    refute_file_matches "a/b/c/**/*.js", "a/b/c/d.js"   # bug #15319
+    assert_file_matches "a/b/**/*.js", "a/b/c/d/e/f.js"
+    assert_file_matches "a/b/**/*.js", "a/b/c/d/e.js"
+    assert_file_matches "a/b/c/**/*.js", "a/b/c/d.js"
     assert_file_matches "a/b/**/*.js", "a/b/c/d.js"
-    refute_file_matches "a/b/**/*.js", "a/b/d.js" # bug #15319
+    assert_file_matches "a/b/**/*.js", "a/b/d.js"
     refute_file_matches "a/b/**/*.js", "a/d.js"
     refute_file_matches "a/b/**/*.js", "d.js"
 
-    assert_file_matches "**c", "a/b/c"   # bug #15319
-    assert_file_matches "a/**c", "a/b/c" # bug #15319
+    refute_file_matches "**c", "a/b/c"
+    refute_file_matches "a/**c", "a/b/c"
     refute_file_matches "a/**z", "a/b/c"
-    assert_file_matches "a/**b**/c", "a/b/c/b/c" # bug #15319
+    refute_file_matches "a/**b**/c", "a/b/c/b/c"
     refute_file_matches "a/b/c**/*.js", "a/b/c/d/e.js"
-    refute_file_matches "a/**/b/**/c", "a/b/c/b/c" # bug #15319
+    assert_file_matches "a/**/b/**/c", "a/b/c/b/c"
     assert_file_matches "a/**b**/c", "a/aba/c"
     assert_file_matches "a/**b**/c", "a/b/c"
     assert_file_matches "a/b/c**/*.js", "a/b/c/d.js"
@@ -1075,9 +1062,9 @@ describe "File .match? bash tests" do
     refute_file_matches "a/**/**/*", "a"
     refute_file_matches "a/**/**/**/*", "a"
     refute_file_matches "**/a", "a/"
-    refute_file_matches "a/**/*", "a/"       # bug #15319
-    refute_file_matches "a/**/**/*", "a/"    # bug #15319
-    refute_file_matches "a/**/**/**/*", "a/" # bug #15319
+    assert_file_matches "a/**/*", "a/"
+    assert_file_matches "a/**/**/*", "a/"
+    assert_file_matches "a/**/**/**/*", "a/"
     refute_file_matches "**/a", "a/b"
     refute_file_matches "a/**/j/**/z/*.md", "a/b/c/j/e/z/c.txt"
     refute_file_matches "a/**/b", "a/bb"
@@ -1086,34 +1073,34 @@ describe "File .match? bash tests" do
     refute_file_matches "**/a", "a/x/y"
     refute_file_matches "**/a", "a/b/c/d"
     assert_file_matches "**", "a"
-    refute_file_matches "**/a", "a" # bug #15319
+    assert_file_matches "**/a", "a"
     # assert_file_matches "a/**", "a"
     assert_file_matches "**", "a/"
-    refute_file_matches "**/a/**", "a/" # bug #15319
+    assert_file_matches "**/a/**", "a/"
     assert_file_matches "a/**", "a/"
-    refute_file_matches "a/**/**", "a/" # bug #15319
+    assert_file_matches "a/**/**", "a/"
     assert_file_matches "**/a", "a/a"
     assert_file_matches "**", "a/b"
     assert_file_matches "*/*", "a/b"
     assert_file_matches "a/**", "a/b"
-    refute_file_matches "a/**/*", "a/b"       # bug #15319
-    refute_file_matches "a/**/**/*", "a/b"    # bug #15319
-    refute_file_matches "a/**/**/**/*", "a/b" # bug #15319
-    refute_file_matches "a/**/b", "a/b"       # bug #15319
+    assert_file_matches "a/**/*", "a/b"
+    assert_file_matches "a/**/**/*", "a/b"
+    assert_file_matches "a/**/**/**/*", "a/b"
+    assert_file_matches "a/**/b", "a/b"
     assert_file_matches "**", "a/b/c"
-    refute_file_matches "**/*", "a/b/c" # bug #15319
+    assert_file_matches "**/*", "a/b/c"
     assert_file_matches "**/**", "a/b/c"
     assert_file_matches "*/**", "a/b/c"
     assert_file_matches "a/**", "a/b/c"
     assert_file_matches "a/**/*", "a/b/c"
-    refute_file_matches "a/**/**/*", "a/b/c"    # bug #15319
-    refute_file_matches "a/**/**/**/*", "a/b/c" # bug #15319
+    assert_file_matches "a/**/**/*", "a/b/c"
+    assert_file_matches "a/**/**/**/*", "a/b/c"
     assert_file_matches "**", "a/b/c/d"
     assert_file_matches "a/**", "a/b/c/d"
-    refute_file_matches "a/**/*", "a/b/c/d" # bug #15319
+    assert_file_matches "a/**/*", "a/b/c/d"
     assert_file_matches "a/**/**/*", "a/b/c/d"
-    refute_file_matches "a/**/**/**/*", "a/b/c/d"      # bug #15319
-    refute_file_matches "a/b/**/c/**/*.*", "a/b/c/d.e" # bug #15319
+    assert_file_matches "a/**/**/**/*", "a/b/c/d"
+    assert_file_matches "a/b/**/c/**/*.*", "a/b/c/d.e"
     assert_file_matches "a/**/f/*.md", "a/b/c/d/e/f/g.md"
     assert_file_matches "a/**/f/**/k/*.md", "a/b/c/d/e/f/g/h/i/j/k/l.md"
     assert_file_matches "a/b/c/*.md", "a/b/c/def.md"
@@ -1123,9 +1110,9 @@ describe "File .match? bash tests" do
     assert_file_matches "a/*/c/*.md", "a/bb/c/ddd.md"
     assert_file_matches "a/*/c/*.md", "a/bbbb/c/ddd.md"
 
-    refute_file_matches "foo/bar/**/one/**/*.*", "foo/bar/baz/one/image.png" # bug #15319
+    assert_file_matches "foo/bar/**/one/**/*.*", "foo/bar/baz/one/image.png"
     assert_file_matches "foo/bar/**/one/**/*.*", "foo/bar/baz/one/two/image.png"
-    refute_file_matches "foo/bar/**/one/**/*.*", "foo/bar/baz/one/two/three/image.png" # bug #15319
+    assert_file_matches "foo/bar/**/one/**/*.*", "foo/bar/baz/one/two/three/image.png"
     refute_file_matches "a/b/**/f", "a/b/c/d/"
     # assert_file_matches "a/**", "a"
     assert_file_matches "**", "a"
@@ -1138,15 +1125,15 @@ describe "File .match? bash tests" do
     assert_file_matches "**/b/**", "a/b/c/d/"
     assert_file_matches "a/b/**", "a/b/c/d/"
     assert_file_matches "a/b/**/", "a/b/c/d/"
-    refute_file_matches "a/b/**/c/**/", "a/b/c/d/"   # bug #15319
-    refute_file_matches "a/b/**/c/**/d/", "a/b/c/d/" # bug #15319
+    assert_file_matches "a/b/**/c/**/", "a/b/c/d/"
+    assert_file_matches "a/b/**/c/**/d/", "a/b/c/d/"
     assert_file_matches "a/b/**/**/*.*", "a/b/c/d/e.f"
-    refute_file_matches "a/b/**/*.*", "a/b/c/d/e.f"        # bug #15319
-    refute_file_matches "a/b/**/c/**/d/*.*", "a/b/c/d/e.f" # bug #15319
-    refute_file_matches "a/b/**/d/**/*.*", "a/b/c/d/e.f"   # bug #15319
+    assert_file_matches "a/b/**/*.*", "a/b/c/d/e.f"
+    assert_file_matches "a/b/**/c/**/d/*.*", "a/b/c/d/e.f"
+    assert_file_matches "a/b/**/d/**/*.*", "a/b/c/d/e.f"
     assert_file_matches "a/b/**/d/**/*.*", "a/b/c/d/g/e.f"
-    refute_file_matches "a/b/**/d/**/*.*", "a/b/c/d/g/g/e.f" # bug #15319
-    refute_file_matches "a/b-*/**/z.js", "a/b-c/z.js"        # bug #15319
+    assert_file_matches "a/b/**/d/**/*.*", "a/b/c/d/g/g/e.f"
+    assert_file_matches "a/b-*/**/z.js", "a/b-c/z.js"
     assert_file_matches "a/b-*/**/z.js", "a/b-c/d/e/z.js"
 
     assert_file_matches "*/*", "a/b"
@@ -1155,7 +1142,7 @@ describe "File .match? bash tests" do
     assert_file_matches "a/*/c/*.md", "a/bb/c/xyz.md"
     assert_file_matches "a/*/c/*.md", "a/bbbb/c/xyz.md"
 
-    refute_file_matches "**/*", "a/b/c" # bug #15319
+    assert_file_matches "**/*", "a/b/c"
     assert_file_matches "**/**", "a/b/c"
     assert_file_matches "*/**", "a/b/c"
     assert_file_matches "a/**/j/**/z/*.md", "a/b/c/d/e/j/n/p/o/z/c.md"
@@ -1171,25 +1158,25 @@ describe "File .match? bash tests" do
     refute_file_matches "a/**/", "a/bb"
     refute_file_matches "a/**/", "a/cb"
     assert_file_matches "/**", "/a/b"
-    refute_file_matches "**/*", "a.b"     # bug #15319
-    refute_file_matches "**/*", "a.js"    # bug #15319
-    refute_file_matches "**/*.js", "a.js" # bug #15319
+    assert_file_matches "**/*", "a.b"
+    assert_file_matches "**/*", "a.js"
+    assert_file_matches "**/*.js", "a.js"
     # assert_file_matches "a/**/", "a/"
     assert_file_matches "**/*.js", "a/a.js"
-    refute_file_matches "**/*.js", "a/a/b.js" # bug #15319
-    refute_file_matches "a/**/b", "a/b"       # bug #15319
+    assert_file_matches "**/*.js", "a/a/b.js"
+    assert_file_matches "a/**/b", "a/b"
     assert_file_matches "a/**b", "a/b"
     assert_file_matches "**/*.md", "a/b.md"
-    refute_file_matches "**/*", "a/b/c.js"  # bug #15319
-    refute_file_matches "**/*", "a/b/c.txt" # bug #15319
+    assert_file_matches "**/*", "a/b/c.js"
+    assert_file_matches "**/*", "a/b/c.txt"
     assert_file_matches "a/**/", "a/b/c/d/"
-    refute_file_matches "**/*", "a/b/c/d/a.js" # bug #15319
+    assert_file_matches "**/*", "a/b/c/d/a.js"
     assert_file_matches "a/b/**/*.js", "a/b/c/z.js"
-    refute_file_matches "a/b/**/*.js", "a/b/z.js" # bug #15319
-    refute_file_matches "**/*", "ab"              # bug #15319
+    assert_file_matches "a/b/**/*.js", "a/b/z.js"
+    assert_file_matches "**/*", "ab"
     assert_file_matches "**/*", "ab/c"
-    refute_file_matches "**/*", "ab/c/d" # bug #15319
-    refute_file_matches "**/*", "abc.js" # bug #15319
+    assert_file_matches "**/*", "ab/c/d"
+    assert_file_matches "**/*", "abc.js"
 
     refute_file_matches "**/", "a"
     refute_file_matches "**/a/*", "a"
@@ -1210,22 +1197,22 @@ describe "File .match? bash tests" do
     refute_file_matches "**/d/*", "a/b/c/d"
     refute_file_matches "b/**", "a/b/c/d"
     assert_file_matches "**", "a"
-    refute_file_matches "**/**", "a"   # bug #15319
-    refute_file_matches "**/**/*", "a" # bug #15319
-    refute_file_matches "**/**/a", "a" # bug #15319
-    refute_file_matches "**/a", "a"    # bug #15319
+    assert_file_matches "**/**", "a"
+    assert_file_matches "**/**/*", "a"
+    assert_file_matches "**/**/a", "a"
+    assert_file_matches "**/a", "a"
     # assert_file_matches "**/a/**", "a"
     # assert_file_matches "a/**", "a"
     assert_file_matches "**", "a/b"
     assert_file_matches "**/**", "a/b"
-    refute_file_matches "**/**/*", "a/b" # bug #15319
-    refute_file_matches "**/**/b", "a/b" # bug #15319
+    assert_file_matches "**/**/*", "a/b"
+    assert_file_matches "**/**/b", "a/b"
     assert_file_matches "**/b", "a/b"
     # assert_file_matches "**/b/**", "a/b"
     # assert_file_matches "*/b/**", "a/b"
     assert_file_matches "a/**", "a/b"
-    refute_file_matches "a/**/*", "a/b"    # bug #15319
-    refute_file_matches "a/**/**/*", "a/b" # bug #15319
+    assert_file_matches "a/**/*", "a/b"
+    assert_file_matches "a/**/**/*", "a/b"
     assert_file_matches "**", "a/b/c"
     assert_file_matches "**/**", "a/b/c"
     assert_file_matches "**/**/*", "a/b/c"
@@ -1234,28 +1221,28 @@ describe "File .match? bash tests" do
     assert_file_matches "*/b/**", "a/b/c"
     assert_file_matches "a/**", "a/b/c"
     assert_file_matches "a/**/*", "a/b/c"
-    refute_file_matches "a/**/**/*", "a/b/c" # bug #15319
+    assert_file_matches "a/**/**/*", "a/b/c"
     assert_file_matches "**", "a/b/c/d"
     assert_file_matches "**/**", "a/b/c/d"
-    refute_file_matches "**/**/*", "a/b/c/d" # bug #15319
+    assert_file_matches "**/**/*", "a/b/c/d"
     assert_file_matches "**/**/d", "a/b/c/d"
     assert_file_matches "**/b/**", "a/b/c/d"
     assert_file_matches "**/b/*/*", "a/b/c/d"
     assert_file_matches "**/d", "a/b/c/d"
     assert_file_matches "*/b/**", "a/b/c/d"
     assert_file_matches "a/**", "a/b/c/d"
-    refute_file_matches "a/**/*", "a/b/c/d" # bug #15319
+    assert_file_matches "a/**/*", "a/b/c/d"
     assert_file_matches "a/**/**/*", "a/b/c/d"
 
     assert_file_matches "**/**.txt.js", "/foo/bar.txt.js"
   end
 
   it "utf8" do
-    refute_file_matches "フ*/**/*", "フォルダ/aaa.js"   # bug #15319
-    refute_file_matches "フォ*/**/*", "フォルダ/aaa.js"  # bug #15319
-    refute_file_matches "フォル*/**/*", "フォルダ/aaa.js" # bug #15319
-    refute_file_matches "フ*ル*/**/*", "フォルダ/aaa.js" # bug #15319
-    refute_file_matches "フォルダ/**/*", "フォルダ/aaa.js" # bug #15319
+    assert_file_matches "フ*/**/*", "フォルダ/aaa.js"
+    assert_file_matches "フォ*/**/*", "フォルダ/aaa.js"
+    assert_file_matches "フォル*/**/*", "フォルダ/aaa.js"
+    assert_file_matches "フ*ル*/**/*", "フォルダ/aaa.js"
+    assert_file_matches "フォルダ/**/*", "フォルダ/aaa.js"
   end
 
   pending "negation" do
@@ -1513,7 +1500,7 @@ describe "File .match? bash tests" do
     assert_file_matches "a/{a,b,c}", "a/c"
     assert_file_matches "a{b,bc}.txt", "abc.txt"
 
-    refute_file_matches "foo[{a,b}]baz", "foo{baz" # bug
+    assert_file_matches "foo[{a,b}]baz", "foo{baz"
 
     refute_file_matches "a{,b}.txt", "abc.txt"
     refute_file_matches "a{a,b,}.txt", "abc.txt"
@@ -1569,10 +1556,10 @@ describe "File .match? bash tests" do
 
     refute_file_matches "a/b/**/c{d,e}/**/xyz.md", "a/b/c/xyz.md"
     refute_file_matches "a/b/**/c{d,e}/**/xyz.md", "a/b/d/xyz.md"
-    refute_file_matches "a/b/**/c{d,e}/**/xyz.md", "a/b/cd/xyz.md" # bug #15319
-    refute_file_matches "a/b/**/{c,d,e}/**/xyz.md", "a/b/c/xyz.md" # bug #15319
-    refute_file_matches "a/b/**/{c,d,e}/**/xyz.md", "a/b/d/xyz.md" # bug #15319
-    refute_file_matches "a/b/**/{c,d,e}/**/xyz.md", "a/b/e/xyz.md" # bug #15319
+    assert_file_matches "a/b/**/c{d,e}/**/xyz.md", "a/b/cd/xyz.md"
+    assert_file_matches "a/b/**/{c,d,e}/**/xyz.md", "a/b/c/xyz.md"
+    assert_file_matches "a/b/**/{c,d,e}/**/xyz.md", "a/b/d/xyz.md"
+    assert_file_matches "a/b/**/{c,d,e}/**/xyz.md", "a/b/e/xyz.md"
 
     assert_file_matches "*{a,b}*", "xax"
     assert_file_matches "*{a,b}*", "xxax"
@@ -1657,9 +1644,9 @@ describe "File .match? bash tests" do
     assert_file_matches "a/bbb/ab??.md", "a/bbb/abcd.md"
     assert_file_matches "a/bbb/ab???md", "a/bbb/abcd.md"
 
-    refute_file_matches "{a,b}/c/{d,e}/**/*.ts", "a/c/d/one/two/three.test.ts" # bug #15319
+    assert_file_matches "{a,b}/c/{d,e}/**/*.ts", "a/c/d/one/two/three.test.ts"
     assert_file_matches "{a,{d,e}b}/c", "a/c"
-    refute_file_matches "{**/a,**/b}", "b" # bug #15319
+    assert_file_matches "{**/a,**/b}", "b"
   end
 
   it "not_paired_braces" do

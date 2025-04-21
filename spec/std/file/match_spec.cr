@@ -151,16 +151,16 @@ describe File do
     end
 
     it "** bugs (#15319)" do
-      refute_file_matches "a/**/*", "a/b/c/d.x"
-      assert_file_matches "a/b**/d.x", "a/bb/c/d.x"
-      refute_file_matches "**/*.x", "a/b/c.x"
-      assert_file_matches "**.x", "a/b/c.x"
+      assert_file_matches "a/**/*", "a/b/c/d.x"
+      refute_file_matches "a/b**/d.x", "a/bb/c/d.x"
+      assert_file_matches "**/*.x", "a/b/c.x"
+      refute_file_matches "**.x", "a/b/c.x"
     end
 
     it "** matches path separator" do
-      assert_file_matches "a**", "ab/c"
-      assert_file_matches "a**/b", "a/c/b"
-      assert_file_matches "a*b*c*d*e**/f", "axbxcxdxe/xxx/f"
+      refute_file_matches "a**", "ab/c"
+      refute_file_matches "a**/b", "a/c/b"
+      refute_file_matches "a*b*c*d*e**/f", "axbxcxdxe/xxx/f"
       assert_file_matches "a*b*c*d*e**/f", "axbxcxdxexxx/f"
       refute_file_matches "a*b*c*d*e**/f", "axbxcxdxexxx/fff"
     end
@@ -211,25 +211,14 @@ describe File do
       assert_file_matches "[\\-x]", "x"
       assert_file_matches "[\\-x]", "-"
       refute_file_matches "[\\-x]", "a"
-
-      expect_raises(File::BadPatternError, "empty character set") do
-        File.match?("[]a]", "]")
-      end
-      expect_raises(File::BadPatternError, "missing range start") do
-        File.match?("[-]", "-")
-      end
-      expect_raises(File::BadPatternError, "missing range end") do
-        File.match?("[x-]", "x")
-      end
-      expect_raises(File::BadPatternError, "missing range start") do
-        File.match?("[-x]", "x")
-      end
+      assert_file_matches "[]a]", "]"
+      assert_file_matches "[-]", "-"
+      assert_file_matches "[x-]", "x"
+      assert_file_matches "[-x]", "x"
       expect_raises(File::BadPatternError, "Empty escape character") do
         File.match?("\\", "a")
       end
-      expect_raises(File::BadPatternError, "missing range start") do
-        File.match?("[a-b-c]", "a")
-      end
+      assert_file_matches "[a-b-c]", "a"
       expect_raises(File::BadPatternError, "unterminated character set") do
         File.match?("[", "a")
       end
@@ -239,9 +228,7 @@ describe File do
       expect_raises(File::BadPatternError, "unterminated character set") do
         File.match?("[^bc", "a")
       end
-      expect_raises(File::BadPatternError, "unterminated character set") do
-        File.match?("a[", "a")
-      end
+      refute_file_matches "a[", "a"
     end
 
     it "alternates" do
@@ -257,5 +244,26 @@ describe File do
       assert_file_matches "ab{{c,d}ef,}", "abcef"
       assert_file_matches "ab{{c,d}ef,}", "abdef"
     end
+
+    describe "brace stack" do
+      it "allows up to 10 levels" do
+        assert_file_matches "{{{{{{{{{{a},b},b},b},b},b},b},b},b},b}", "a"
+      end
+
+      it "raises at more than 10 levels" do
+        expect_raises File::BadPatternError, "Brace nesting too deep: must not exceed 10 levels" do
+          File.match? "{{{{{{{{{{{a},b},b},b},b},b},b},b},b},b},b}", "b"
+        end
+      end
+    end
+  end
+
+  it "fuzz tests" do
+    # https://github.com/devongovett/glob-match/issues/1
+    s = "{*{??*{??**,Uz*zz}w**{*{**a,z***b*[!}w??*azzzzzzzz*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!z[za,z&zz}w**z*z*}"
+    refute_file_matches s, s
+    s = "**** *{*{??*{??***\u{5} *{*{??*{??***\u{5},\0U\0}]*****\u{1},\0***\0,\0\0}w****,\0U\0}]*****\u{1},\0***\0,\0\0}w*****\u{1}***{}*.*\0\0*\0"
+    # Must use `String` overload here because `Path` raises on null byte
+    File.match?(s, s).should be_false
   end
 end

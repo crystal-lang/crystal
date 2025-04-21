@@ -2,7 +2,7 @@ require "./scheduler"
 require "../list"
 
 module Fiber::ExecutionContext
-  # ST scheduler. Owns a single thread running a single fiber.
+  # Isolated execution context. Runs a single thread with a single fiber.
   #
   # Concurrency is disabled within the thread: the fiber owns the thread and the
   # thread can only run this fiber. Keep in mind that the fiber will still run
@@ -42,6 +42,7 @@ module Fiber::ExecutionContext
     protected getter thread : Thread
     @main_fiber : Fiber
 
+    # :nodoc:
     getter event_loop : Crystal::EventLoop = Crystal::EventLoop.create
 
     getter? running : Bool = true
@@ -96,6 +97,7 @@ module Fiber::ExecutionContext
       @spawn_context.spawn(name: name, &block)
     end
 
+    # :nodoc:
     def enqueue(fiber : Fiber) : Nil
       Crystal.trace :sched, "enqueue", fiber: fiber, context: self
 
