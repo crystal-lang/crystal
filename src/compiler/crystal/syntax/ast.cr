@@ -126,7 +126,6 @@ module Crystal
       None
       Paren
       Begin
-      MacroExpression
     end
 
     property expressions : Array(ASTNode)

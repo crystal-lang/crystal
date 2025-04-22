@@ -18,6 +18,9 @@ module Crystal
     @macro_expansion_pragmas : Hash(Int32, Array(Lexer::LocPragma))?
     @current_arg_type : DefArgType = :none
 
+    # Represents the root level `Expressions` instance within a `MacroExpression`.
+    @root_level_macro_expressions : Expressions? = nil
+
     # Inside a comma-separated list of parameters or args, this becomes true and
     # the outermost pair of parentheses are removed from type restrictions that
     # are `ProcNotation` nodes, so `foo(x : (T, U -> V), W)` becomes
@@ -273,7 +276,7 @@ module Crystal
         @str << "begin"
         @indent += 1
         newline
-      in .none?, .macro_expression?
+      in .none?
         # Not a special condition
       end
 
@@ -289,7 +292,7 @@ module Crystal
             append_indent unless node.keyword.paren? && i == 0
             exp.accept self
 
-            if node.keyword.macro_expression? && i == node.expressions.size - 1
+            if (root = @root_level_macro_expressions) && root.same?(node) && i == node.expressions.size - 1
               # Do not add a trailing newline after the last node in the root `Expressions` within a `MacroExpression`.
               # This is handled by the `MacroExpression` logic.
             elsif !(node.keyword.paren? && i == node.expressions.size - 1)
@@ -308,7 +311,7 @@ module Crystal
         @indent -= 1
         append_indent
         @str << "end"
-      in .none?, .macro_expression?
+      in .none?
         # Not a special condition
       end
 
@@ -812,6 +815,10 @@ module Crystal
       if start_multiline
         newline
         @indent += 1
+      end
+
+      if (exp = node.exp).is_a? Expressions
+        @root_level_macro_expressions = exp
       end
 
       outside_macro do
