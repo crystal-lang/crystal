@@ -173,7 +173,7 @@ abstract class IO
   # io << "Crystal"
   # io.to_s # => "1-Crystal"
   # ```
-  def <<(obj) : self
+  def <<(obj : T) : self forall T
     obj.to_s self
     self
   end
@@ -910,7 +910,7 @@ abstract class IO
   # io.rewind
   # io.gets(4) # => "\u{4}\u{3}\u{2}\u{1}"
   # ```
-  def write_bytes(object, format : IO::ByteFormat = IO::ByteFormat::SystemEndian) : Nil
+  def write_bytes(object : T, format : IO::ByteFormat = IO::ByteFormat::SystemEndian) : Nil forall T
     object.to_io(self, format)
   end
 
@@ -928,7 +928,7 @@ abstract class IO
   # io.rewind
   # io.read_bytes(Int32, IO::ByteFormat::LittleEndian) # => 0x01020304
   # ```
-  def read_bytes(type, format : IO::ByteFormat = IO::ByteFormat::SystemEndian)
+  def read_bytes(type : T.class, format : IO::ByteFormat = IO::ByteFormat::SystemEndian) : T forall T
     type.from_io(self, format)
   end
 
@@ -1170,7 +1170,7 @@ abstract class IO
   #
   # io2.to_s # => "hello"
   # ```
-  def self.copy(src, dst) : Int64
+  def self.copy(src : IO, dst : IO) : Int64
     buffer = uninitialized UInt8[DEFAULT_BUFFER_SIZE]
     count = 0_i64
     while (len = src.read(buffer.to_slice).to_i32) > 0

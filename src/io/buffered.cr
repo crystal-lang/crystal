@@ -121,7 +121,7 @@ module IO::Buffered
   end
 
   # :nodoc:
-  def skip(bytes_count) : Nil
+  def skip(bytes_count : Int::Primitive) : Nil
     check_open
 
     if bytes_count <= @in_buffer_rem.size
@@ -172,7 +172,7 @@ module IO::Buffered
   end
 
   # :nodoc:
-  def write_byte(byte : UInt8)
+  def write_byte(byte : UInt8) : Nil
     check_open
 
     if sync?
@@ -246,7 +246,7 @@ module IO::Buffered
   end
 
   # Flushes any buffered data and the underlying `IO`. Returns `self`.
-  def flush
+  def flush : self
     unbuffered_write(Slice.new(out_buffer, @out_count)) if @out_count > 0
     unbuffered_flush
     @out_count = 0
@@ -261,7 +261,7 @@ module IO::Buffered
   end
 
   # Rewinds the underlying `IO`. Returns `self`.
-  def rewind
+  def rewind : self
     unbuffered_rewind
     @in_buffer_rem = Bytes.empty
     self

@@ -32,7 +32,7 @@ class IO
       @closed = false
     end
 
-    def write(io, slice : Bytes) : Nil
+    def write(io : IO, slice : Bytes) : Nil
       inbuf_ptr = slice.to_unsafe
       inbytesleft = LibC::SizeT.new(slice.size)
       outbuf = uninitialized UInt8[1024]
@@ -76,7 +76,7 @@ class IO
       @closed = false
     end
 
-    def read(io) : Nil
+    def read(io : IO) : Nil
       loop do
         return unless @out_slice.empty?
 
@@ -135,7 +135,7 @@ class IO
       @in_buffer_left += LibC::SizeT.new(io.read(Slice.new(@in_buffer + @in_buffer_left, buffer_remaining)))
     end
 
-    def read_byte(io) : UInt8?
+    def read_byte(io : IO) : UInt8?
       read(io)
       if out_slice.empty?
         nil
@@ -146,7 +146,7 @@ class IO
       end
     end
 
-    def read_utf8(io, slice : Slice(UInt8)) : Int32
+    def read_utf8(io : IO, slice : Slice(UInt8)) : Int32
       count = 0
       until slice.empty?
         read(io)
@@ -161,7 +161,7 @@ class IO
       count
     end
 
-    def gets(io, delimiter : UInt8, limit : Int, chomp : Bool) : String?
+    def gets(io : IO, delimiter : UInt8, limit : Int, chomp : Bool) : String?
       read(io)
       return nil if @out_slice.empty?
 
@@ -229,17 +229,17 @@ class IO
       string
     end
 
-    def write(io : String::Builder) : Nil
+    def write(io : IO) : Nil
       io.write @out_slice
       @out_slice = Bytes.empty
     end
 
-    def write(io : String::Builder, numbytes) : Nil
+    def write(io : IO, numbytes : Int::Primitive) : Nil
       io.write @out_slice[0, numbytes]
       @out_slice += numbytes
     end
 
-    def advance(numbytes) : Nil
+    def advance(numbytes : Int::Primitive) : Nil
       @out_slice += numbytes
     end
 
