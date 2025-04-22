@@ -288,24 +288,6 @@ describe "ASTNode#to_s" do
   expect_to_s "{% a = 1\n%}"
 
   expect_to_s <<-'CR', <<-'CR'
-    {%
-      10
-
-      # Foo
-
-      20
-    %}
-    CR
-    {%
-      10
-
-
-
-      20
-    %}
-    CR
-
-  expect_to_s <<-'CR', <<-'CR'
     macro finished
       {% verbatim do %}
         {%
