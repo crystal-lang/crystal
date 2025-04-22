@@ -301,6 +301,7 @@ describe Int do
     it { assert_prints 1099511627776.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC), "1.0TB" }
     it { assert_prints 1125899906842624.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC), "1.0PB" }
     it { assert_prints 1152921504606846976.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC), "1.0EB" }
+    it { assert_prints 1.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC, unit_separator: '\u2009'), "1\u2009B" }
     it { assert_prints 1152921504606846976.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC, unit_separator: '\u2009'), "1.0\u2009EB" }
 
     it { assert_prints 1024.humanize_bytes(format: Int::BinaryPrefixFormat::IEC), "1.0kiB" }
