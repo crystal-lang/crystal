@@ -65,7 +65,7 @@ class IO::Memory < IO
   # io.gets(2)    # => "he"
   # io.print "hi" # raises IO::Error
   # ```
-  def self.new(string : String)
+  def self.new(string : String) : IO::Memory
     new string.to_slice, writeable: false
   end
 
@@ -123,7 +123,7 @@ class IO::Memory < IO
   end
 
   # :nodoc:
-  def gets(delimiter : Char, limit : Int32, chomp = false) : String?
+  def gets(delimiter : Char, limit : Int32, chomp : Bool = false) : String?
     return super if @encoding || delimiter.ord >= 128
 
     check_open
@@ -182,7 +182,7 @@ class IO::Memory < IO
   end
 
   # :nodoc:
-  def skip(bytes_count) : Nil
+  def skip(bytes_count : Int32 | UInt32) : Nil
     check_open
 
     available = @bytesize - @pos

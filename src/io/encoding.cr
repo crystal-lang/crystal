@@ -12,7 +12,7 @@ class IO
       EncodingOptions.check_invalid(invalid)
     end
 
-    def self.check_invalid(invalid) : Nil
+    def self.check_invalid(invalid : Symbol?) : Nil
       if invalid && invalid != :skip
         raise ArgumentError.new "Valid values for `invalid` option are `nil` and `:skip`, not #{invalid.inspect}"
       end
@@ -53,7 +53,7 @@ class IO
       @iconv.close
     end
 
-    def finalize
+    def finalize : Nil
       close
     end
   end
@@ -146,7 +146,7 @@ class IO
       end
     end
 
-    def read_utf8(io, slice) : Int32
+    def read_utf8(io, slice : Slice(UInt8)) : Int32
       count = 0
       until slice.empty?
         read(io)
@@ -161,7 +161,7 @@ class IO
       count
     end
 
-    def gets(io, delimiter : UInt8, limit : Int, chomp) : String?
+    def gets(io, delimiter : UInt8, limit : Int, chomp : Bool) : String?
       read(io)
       return nil if @out_slice.empty?
 
@@ -229,12 +229,12 @@ class IO
       string
     end
 
-    def write(io) : Nil
+    def write(io : String::Builder) : Nil
       io.write @out_slice
       @out_slice = Bytes.empty
     end
 
-    def write(io, numbytes) : Nil
+    def write(io : String::Builder, numbytes) : Nil
       io.write @out_slice[0, numbytes]
       @out_slice += numbytes
     end
@@ -250,7 +250,7 @@ class IO
       @iconv.close
     end
 
-    def finalize
+    def finalize : Nil
       close
     end
   end

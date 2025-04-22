@@ -137,7 +137,7 @@ abstract class IO
   # reader.gets # => "hello"
   # reader.gets # => "world"
   # ```
-  def self.pipe(read_blocking = false, write_blocking = false) : {IO::FileDescriptor, IO::FileDescriptor}
+  def self.pipe(read_blocking : Bool = false, write_blocking : Bool = false) : {IO::FileDescriptor, IO::FileDescriptor}
     Crystal::System::FileDescriptor.pipe(read_blocking, write_blocking)
   end
 
@@ -264,12 +264,12 @@ abstract class IO
 
   # Writes a formatted string to this IO.
   # For details on the format string, see top-level `::printf`.
-  def printf(format_string, *args) : Nil
+  def printf(format_string : String, *args) : Nil
     printf format_string, args
   end
 
   # :ditto:
-  def printf(format_string, args : Array | Tuple) : Nil
+  def printf(format_string : String, args : Array | Tuple) : Nil
     String::Formatter(typeof(args)).new(format_string, args, self).format
   end
 
@@ -414,7 +414,7 @@ abstract class IO
   #
   # "你".bytes # => [228, 189, 160]
   # ```
-  def read_utf8(slice : Bytes)
+  def read_utf8(slice : Bytes) : Int32
     if decoder = decoder()
       decoder.read_utf8(self, slice)
     else
@@ -594,7 +594,7 @@ abstract class IO
   # io.gets               # => "foo"
   # io.gets               # => nil
   # ```
-  def gets(chomp = true) : String?
+  def gets(chomp : Bool = true) : String?
     gets '\n', chomp: chomp
   end
 
@@ -610,7 +610,7 @@ abstract class IO
   # io.gets(3) # => "ld"
   # io.gets(3) # => nil
   # ```
-  def gets(limit : Int, chomp = false) : String?
+  def gets(limit : Int, chomp : Bool = false) : String?
     gets '\n', limit: limit, chomp: chomp
   end
 
@@ -624,7 +624,7 @@ abstract class IO
   # io.gets('z') # => "ld"
   # io.gets('w') # => nil
   # ```
-  def gets(delimiter : Char, chomp = false) : String?
+  def gets(delimiter : Char, chomp : Bool = false) : String?
     gets delimiter, Int32::MAX, chomp: chomp
   end
 
@@ -1146,7 +1146,7 @@ abstract class IO
   end
 
   # Same as `pos`.
-  def tell
+  def tell : Int64 | Int32
     pos
   end
 
@@ -1190,7 +1190,7 @@ abstract class IO
   #
   # io2.to_s # => "hel"
   # ```
-  def self.copy(src, dst, limit : Int) : Int64
+  def self.copy(src : IO, dst : IO, limit : Int) : Int64
     raise ArgumentError.new("Negative limit") if limit < 0
 
     limit = limit.to_i64
