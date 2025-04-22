@@ -173,7 +173,7 @@ abstract class IO
   # io << "Crystal"
   # io.to_s # => "1-Crystal"
   # ```
-  def <<(obj : T) : self forall T
+  def <<(obj : _) : self
     obj.to_s self
     self
   end
@@ -910,7 +910,7 @@ abstract class IO
   # io.rewind
   # io.gets(4) # => "\u{4}\u{3}\u{2}\u{1}"
   # ```
-  def write_bytes(object : T, format : IO::ByteFormat = IO::ByteFormat::SystemEndian) : Nil forall T
+  def write_bytes(object : _, format : IO::ByteFormat = IO::ByteFormat::SystemEndian) : Nil
     object.to_io(self, format)
   end
 
