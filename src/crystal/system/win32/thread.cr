@@ -1,5 +1,6 @@
 require "c/processthreadsapi"
 require "c/synchapi"
+require "../panic"
 
 module Crystal::System::Thread
   alias Handle = LibC::HANDLE
@@ -17,6 +18,16 @@ module Crystal::System::Thread
       initflag: LibC::UInt.zero,
       thrdaddr: Pointer(LibC::UInt).null,
     )
+  end
+
+  def self.init : Nil
+    {% if flag?(:gnu) %}
+      current_key = LibC.TlsAlloc
+      if current_key == LibC::TLS_OUT_OF_INDEXES
+        Crystal::System.panic("TlsAlloc()", WinError.value)
+      end
+      @@current_key = current_key
+    {% end %}
   end
 
   def self.thread_proc(data : Void*) : LibC::UInt
@@ -44,8 +55,54 @@ module Crystal::System::Thread
     LibC.SwitchToThread
   end
 
-  @[ThreadLocal]
-  class_property current_thread : ::Thread { ::Thread.new }
+  # MinGW does not support TLS correctly
+  {% if flag?(:gnu) %}
+    @@current_key = uninitialized LibC::DWORD
+
+    def self.current_thread : ::Thread
+      th = current_thread?
+      return th if th
+
+      # Thread#start sets `Thread.current` as soon it starts. Thus we know
+      # that if `Thread.current` is not set then we are in the main thread
+      self.current_thread = ::Thread.new
+    end
+
+    def self.current_thread? : ::Thread?
+      ptr = LibC.TlsGetValue(@@current_key)
+      err = WinError.value
+      unless err == WinError::ERROR_SUCCESS
+        Crystal::System.panic("TlsGetValue()", err)
+      end
+
+      ptr.as(::Thread?)
+    end
+
+    def self.current_thread=(thread : ::Thread)
+      if LibC.TlsSetValue(@@current_key, thread.as(Void*)) == 0
+        Crystal::System.panic("TlsSetValue()", WinError.value)
+      end
+      thread
+    end
+  {% else %}
+    @[ThreadLocal]
+    @@current_thread : ::Thread?
+
+    def self.current_thread : ::Thread
+      @@current_thread ||= ::Thread.new
+    end
+
+    def self.current_thread? : ::Thread?
+      @@current_thread
+    end
+
+    def self.current_thread=(@@current_thread : ::Thread)
+    end
+  {% end %}
+
+  def self.sleep(time : ::Time::Span) : Nil
+    LibC.Sleep(time.total_milliseconds.to_i.clamp(1..))
+  end
 
   private def system_join : Exception?
     if LibC.WaitForSingleObject(@system_handle, LibC::INFINITE) != LibC::WAIT_OBJECT_0
@@ -67,7 +124,9 @@ module Crystal::System::Thread
     {% else %}
       tib = LibC.NtCurrentTeb
       high_limit = tib.value.stackBase
-      LibC.VirtualQuery(tib.value.stackLimit, out mbi, sizeof(LibC::MEMORY_BASIC_INFORMATION))
+      if LibC.VirtualQuery(tib.value.stackLimit, out mbi, sizeof(LibC::MEMORY_BASIC_INFORMATION)) == 0
+        raise RuntimeError.from_winerror("VirtualQuery")
+      end
       low_limit = mbi.allocationBase
       low_limit
     {% end %}
@@ -78,5 +137,32 @@ module Crystal::System::Thread
       LibC.SetThreadDescription(@system_handle, System.to_wstr(name))
     {% end %}
     name
+  end
+
+  def self.init_suspend_resume : Nil
+  end
+
+  private def system_suspend : Nil
+    if LibC.SuspendThread(@system_handle) == -1
+      Crystal::System.panic("SuspendThread()", WinError.value)
+    end
+  end
+
+  private def system_wait_suspended : Nil
+    # context must be aligned on 16 bytes but we lack a mean to force the
+    # alignment on the struct, so we overallocate then realign the pointer:
+    local = uninitialized UInt8[sizeof(Tuple(LibC::CONTEXT, UInt8[15]))]
+    thread_context = Pointer(LibC::CONTEXT).new(local.to_unsafe.address &+ 15_u64 & ~15_u64)
+    thread_context.value.contextFlags = LibC::CONTEXT_FULL
+
+    if LibC.GetThreadContext(@system_handle, thread_context) == -1
+      Crystal::System.panic("GetThreadContext()", WinError.value)
+    end
+  end
+
+  private def system_resume : Nil
+    if LibC.ResumeThread(@system_handle) == -1
+      Crystal::System.panic("ResumeThread()", WinError.value)
+    end
   end
 end

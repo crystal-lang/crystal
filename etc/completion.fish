@@ -1,5 +1,5 @@
 set -l crystal_commands init build clear_cache docs env eval i interactive play run spec tool help version
-set -l tool_subcommands context expand flags format hierarchy implementations types
+set -l tool_subcommands context dependencies expand flags format hierarchy implementations types unreachable
 
 complete -c crystal -s h -l help -d "Show help" -x
 
@@ -25,7 +25,7 @@ complete -c crystal -n "__fish_seen_subcommand_from build" -l error-on-warnings 
 complete -c crystal -n "__fish_seen_subcommand_from build" -l exclude-warnings -d "Exclude warnings from path (default: lib)"
 complete -c crystal -n "__fish_seen_subcommand_from build" -l no-color -d "Disable colored output"
 complete -c crystal -n "__fish_seen_subcommand_from build" -l no-codegen -d "Don't do code generation"
-complete -c crystal -n "__fish_seen_subcommand_from build" -s o -d "Output filename"
+complete -c crystal -n "__fish_seen_subcommand_from build" -s o -l output -d "Output filename"
 complete -c crystal -n "__fish_seen_subcommand_from build" -l prelude -d "Use given file as prelude"
 complete -c crystal -n "__fish_seen_subcommand_from build" -l release -d "Compile in release mode"
 complete -c crystal -n "__fish_seen_subcommand_from build" -s s -l stats -d "Enable statistics output"
@@ -106,7 +106,7 @@ complete -c crystal -n "__fish_seen_subcommand_from run" -l error-on-warnings -d
 complete -c crystal -n "__fish_seen_subcommand_from run" -l exclude-warnings -d "Exclude warnings from path (default: lib)"
 complete -c crystal -n "__fish_seen_subcommand_from run" -l no-color -d "Disable colored output"
 complete -c crystal -n "__fish_seen_subcommand_from run" -l no-codegen -d "Don't do code generation"
-complete -c crystal -n "__fish_seen_subcommand_from run" -s o -d "Output filename"
+complete -c crystal -n "__fish_seen_subcommand_from run" -s o -l output -d "Output filename"
 complete -c crystal -n "__fish_seen_subcommand_from run" -l prelude -d "Use given file as prelude"
 complete -c crystal -n "__fish_seen_subcommand_from run" -l release -d "Compile in release mode"
 complete -c crystal -n "__fish_seen_subcommand_from run" -s s -l stats -d "Enable statistics output"
@@ -205,6 +205,21 @@ complete -c crystal -n "__fish_seen_subcommand_from implementations" -s s -l sta
 complete -c crystal -n "__fish_seen_subcommand_from implementations" -s p -l progress -d "Enable progress output"
 complete -c crystal -n "__fish_seen_subcommand_from implementations" -s t -l time -d "Enable execution time output"
 complete -c crystal -n "__fish_seen_subcommand_from implementations" -l stdin-filename -d "Source file name to be read from STDIN"
+
+complete -c crystal -n "__fish_seen_subcommand_from tool; and not __fish_seen_subcommand_from $tool_subcommands" -a "unreachable" -d "show methods that are never called" -x
+complete -c crystal -n "__fish_seen_subcommand_from unreachable" -s D -l define -d "Define a compile-time flag"
+complete -c crystal -n "__fish_seen_subcommand_from unreachable" -s f -l format -d "Output format text (default), json, csv, codecov" -a "text json csv codecov" -f
+complete -c crystal -n "__fish_seen_subcommand_from unreachable" -l tallies -d "Print reachable methods and their call counts as well"
+complete -c crystal -n "__fish_seen_subcommand_from unreachable" -l check -d "Exits with error if there is any unreachable code"
+complete -c crystal -n "__fish_seen_subcommand_from unreachable" -l error-trace -d "Show full error trace"
+complete -c crystal -n "__fish_seen_subcommand_from unreachable" -s i -l include -d "Include path"
+complete -c crystal -n "__fish_seen_subcommand_from unreachable" -s e -l exclude -d "Exclude path (default: lib)"
+complete -c crystal -n "__fish_seen_subcommand_from unreachable" -l no-color -d "Disable colored output"
+complete -c crystal -n "__fish_seen_subcommand_from unreachable" -l prelude -d "Use given file as prelude"
+complete -c crystal -n "__fish_seen_subcommand_from unreachable" -s s -l stats -d "Enable statistics output"
+complete -c crystal -n "__fish_seen_subcommand_from unreachable" -s p -l progress -d "Enable progress output"
+complete -c crystal -n "__fish_seen_subcommand_from unreachable" -s t -l time -d "Enable execution time output"
+complete -c crystal -n "__fish_seen_subcommand_from unreachable" -l stdin-filename -d "Source file name to be read from STDIN"
 
 complete -c crystal -n "__fish_seen_subcommand_from tool; and not __fish_seen_subcommand_from $tool_subcommands" -a "types" -d "show type of main variables" -x
 complete -c crystal -n "__fish_seen_subcommand_from types" -s D -l define -d "Define a compile-time flag"

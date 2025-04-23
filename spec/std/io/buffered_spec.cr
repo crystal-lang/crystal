@@ -72,6 +72,15 @@ describe "IO::Buffered" do
     end
   end
 
+  it "can set buffer_size to the same value after first use" do
+    io = BufferedWrapper.new(IO::Memory.new("hello\r\nworld\n"))
+    io.buffer_size = 16_384
+    io.gets
+
+    io.buffer_size = 16_384
+    io.buffer_size.should eq(16_384)
+  end
+
   it "does gets" do
     io = BufferedWrapper.new(IO::Memory.new("hello\r\nworld\n"))
     io.gets.should eq("hello")

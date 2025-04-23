@@ -239,6 +239,7 @@ module Crystal
       super.downcase
     end
 
+    # TODO: rename to `bit_width`
     def bytesize
       case self
       in .i8?   then 8
@@ -575,6 +576,7 @@ module Crystal
     include SpecialVar
 
     property name : String
+    property doc : String?
 
     def initialize(@name : String)
     end
@@ -653,32 +655,33 @@ module Crystal
     property visibility = Visibility::Public
     property? global : Bool
     property? expansion = false
+    property? args_in_brackets = false
     property? has_parentheses = false
 
-    def initialize(@obj, @name, @args = [] of ASTNode, @block = nil, @block_arg = nil, @named_args = nil, @global : Bool = false)
+    def initialize(@obj : ASTNode?, @name : String, @args : Array(ASTNode) = [] of ASTNode, @block = nil, @block_arg = nil, @named_args = nil, @global : Bool = false)
       if block = @block
         block.call = self
       end
     end
 
-    def self.new(obj, name, arg : ASTNode, global = false)
-      new obj, name, [arg] of ASTNode, global: global
+    def self.new(obj : ASTNode?, name : String, *args : ASTNode, block : Block? = nil, block_arg : ASTNode? = nil, named_args : Array(NamedArgument)? = nil, global : Bool = false)
+      {% if compare_versions(Crystal::VERSION, "1.5.0") > 0 %}
+        new obj, name, [*args] of ASTNode, block: block, block_arg: block_arg, named_args: named_args, global: global
+      {% else %}
+        new obj, name, args.to_a(&.as(ASTNode)), block: block, block_arg: block_arg, named_args: named_args, global: global
+      {% end %}
     end
 
-    def self.new(obj, name, arg1 : ASTNode, arg2 : ASTNode)
-      new obj, name, [arg1, arg2] of ASTNode
+    def self.new(name : String, args : Array(ASTNode) = [] of ASTNode, block : Block? = nil, block_arg : ASTNode? = nil, named_args : Array(NamedArgument)? = nil, global : Bool = false)
+      new(nil, name, args, block: block, block_arg: block_arg, named_args: named_args, global: global)
     end
 
-    def self.new(obj, name, arg1 : ASTNode, arg2 : ASTNode, arg3 : ASTNode)
-      new obj, name, [arg1, arg2, arg3] of ASTNode
+    def self.new(name : String, *args : ASTNode, block : Block? = nil, block_arg : ASTNode? = nil, named_args : Array(NamedArgument)? = nil, global : Bool = false)
+      new(nil, name, *args, block: block, block_arg: block_arg, named_args: named_args, global: global)
     end
 
-    def self.global(name, arg : ASTNode)
-      new nil, name, [arg] of ASTNode, global: true
-    end
-
-    def self.global(name, arg1 : ASTNode, arg2 : ASTNode)
-      new nil, name, [arg1, arg2] of ASTNode, global: true
+    def self.global(name, *args : ASTNode)
+      new nil, name, *args, global: true
     end
 
     def name_size
@@ -1322,6 +1325,10 @@ module Crystal
       @body = Expressions.from body
     end
 
+    def self.new(cond : ASTNode, body : ASTNode? = nil, exhaustive = false)
+      new([cond] of ASTNode, body, exhaustive)
+    end
+
     def accept_children(visitor)
       @conds.each &.accept visitor
       @body.accept visitor
@@ -1360,8 +1367,6 @@ module Crystal
   end
 
   class Select < ASTNode
-    record When, condition : ASTNode, body : ASTNode
-
     property whens : Array(When)
     property else : ASTNode?
 
@@ -1369,10 +1374,7 @@ module Crystal
     end
 
     def accept_children(visitor)
-      @whens.each do |select_when|
-        select_when.condition.accept visitor
-        select_when.body.accept visitor
-      end
+      @whens.each &.accept visitor
       @else.try &.accept visitor
     end
 
@@ -1630,6 +1632,7 @@ module Crystal
   end
 
   class TypeDeclaration < ASTNode
+    property doc : String?
     property var : ASTNode
     property declared_type : ASTNode
     property value : ASTNode?
@@ -1925,6 +1928,7 @@ module Crystal
 
   class LibDef < ASTNode
     property name : Path
+    property doc : String?
     property body : ASTNode
     property name_location : Location?
     property visibility = Visibility::Public
@@ -1980,6 +1984,7 @@ module Crystal
 
   class TypeDef < ASTNode
     property name : String
+    property doc : String?
     property type_spec : ASTNode
     property name_location : Location?
 
@@ -2002,6 +2007,7 @@ module Crystal
   # A c struct/union definition inside a lib declaration
   class CStructOrUnionDef < ASTNode
     property name : String
+    property doc : String?
     property body : ASTNode
     property? union : Bool
 
@@ -2044,6 +2050,7 @@ module Crystal
 
   class ExternalVar < ASTNode
     property name : String
+    property doc : String?
     property type_spec : ASTNode
     property real_name : String?
 
@@ -2238,8 +2245,9 @@ module Crystal
     property cond : ASTNode
     property then : ASTNode
     property else : ASTNode
+    property? is_unless : Bool
 
-    def initialize(@cond, a_then = nil, a_else = nil)
+    def initialize(@cond, a_then = nil, a_else = nil, @is_unless : Bool = false)
       @then = Expressions.from a_then
       @else = Expressions.from a_else
     end
@@ -2251,10 +2259,10 @@ module Crystal
     end
 
     def clone_without_location
-      MacroIf.new(@cond.clone, @then.clone, @else.clone)
+      MacroIf.new(@cond.clone, @then.clone, @else.clone, @is_unless)
     end
 
-    def_equals_and_hash @cond, @then, @else
+    def_equals_and_hash @cond, @then, @else, @is_unless
   end
 
   # for inside a macro:

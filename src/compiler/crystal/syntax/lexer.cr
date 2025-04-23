@@ -59,6 +59,7 @@ module Crystal
     def initialize(string, string_pool : StringPool? = nil, warnings : WarningCollection? = nil)
       @warnings = warnings || WarningCollection.new
       @reader = Char::Reader.new(string)
+      check_reader_error
       @token = Token.new
       @temp_token = Token.new
       @line_number = 1
@@ -156,7 +157,7 @@ module Crystal
         case next_char
         when '\r', '\n'
           handle_slash_r_slash_n_or_slash_n
-          incr_line_number
+          incr_line_number 0
           @token.passed_backslash_newline = true
           consume_whitespace
           reset_regex_flags = false
@@ -1047,7 +1048,7 @@ module Crystal
 
         scan_ident(start)
       else
-        if current_char.ascii_uppercase?
+        if current_char.uppercase? || current_char.titlecase?
           while ident_part?(next_char)
             # Nothing to do
           end
@@ -2754,11 +2755,13 @@ module Crystal
     end
 
     def next_char_no_column_increment
-      char = @reader.next_char
+      @reader.next_char.tap { check_reader_error }
+    end
+
+    private def check_reader_error
       if error = @reader.error
         ::raise InvalidByteSequenceError.new("Unexpected byte 0x#{error.to_s(16)} at position #{@reader.pos}, malformed UTF-8")
       end
-      char
     end
 
     def next_char

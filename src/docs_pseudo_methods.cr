@@ -61,6 +61,43 @@ end
 def __crystal_pseudo_instance_sizeof(type : Class) : Int32
 end
 
+# Returns the alignment of the given type as number of bytes.
+#
+# *type* must be a constant or `typeof()` expression. It cannot be evaluated
+# at runtime.
+#
+# ```
+# alignof(Int32)        # => 4
+# alignof(Float64)      # usually 4 or 8
+# alignof(typeof(true)) # => 1
+#
+# For `Reference` types, the alignment is the same as the alignment of a pointer:
+#
+# ```
+# # On a 64 bits machine
+# alignof(Pointer(Int32)) # => 8
+# alignof(String)         # => 8
+# ```
+#
+# This is because a `Reference`'s memory is allocated on the heap and a pointer
+# to it is passed around. The alignment of a class on the heap can be determined
+# using `#instance_alignof`.
+def __crystal_pseudo_alignof(type : Class) : Int32
+end
+
+# Returns the instance alignment of the given class as number of bytes.
+#
+# *type* must be a constant or `typeof()` expression. It cannot be evaluated at runtime.
+#
+# ```
+# instance_alignof(String)    # => 4
+# instance_alignof(Exception) # => 8
+# ```
+#
+# See `alignof` for determining the size of value types.
+def __crystal_pseudo_instance_alignof(type : Class) : Int32
+end
+
 # Returns a `Pointer` to the contents of a variable.
 #
 # *variable* must be a variable (local, instance, class or library).
@@ -199,4 +236,34 @@ class Object
   # ```
   def __crystal_pseudo_responds_to?(name : Symbol) : Bool
   end
+end
+
+# Some expressions won't return to the current scope and therefore have no return type.
+# This is expressed as the special return type `NoReturn`.
+#
+# Typical examples for non-returning methods and keywords are `return`, `exit`, `raise`, `next`, and `break`.
+#
+# This is for example useful for deconstructing union types:
+#
+# ```
+# string = STDIN.gets
+# typeof(string)                        # => String?
+# typeof(raise "Empty input")           # => NoReturn
+# typeof(string || raise "Empty input") # => String
+# ```
+#
+# The compiler recognizes that in case string is Nil, the right hand side of the expression `string || raise` will be evaluated.
+# Since `typeof(raise "Empty input")` is `NoReturn` the execution would not return to the current scope in that case.
+# That leaves only `String` as resulting type of the expression.
+#
+# Every expression whose code paths all result in `NoReturn` will be `NoReturn` as well.
+# `NoReturn` does not show up in a union type because it would essentially be included in every expression's type.
+# It is only used when an expression will never return to the current scope.
+#
+# `NoReturn` can be explicitly set as return type of a method or function definition but will usually be inferred by the compiler.
+struct CRYSTAL_PSEUDO__NoReturn
+end
+
+# Similar in usage to `Nil`. `Void` is preferred for C lib bindings.
+struct CRYSTAL_PSEUDO__Void
 end

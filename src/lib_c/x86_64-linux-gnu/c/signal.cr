@@ -78,6 +78,7 @@ lib LibC
 
   fun kill(pid : PidT, sig : Int) : Int
   fun pthread_sigmask(Int, SigsetT*, SigsetT*) : Int
+  fun pthread_kill(PthreadT, Int) : Int
   fun signal(sig : Int, handler : Int -> Void) : Int -> Void
   fun sigaction(x0 : Int, x1 : Sigaction*, x2 : Sigaction*) : Int
   fun sigaltstack(x0 : StackT*, x1 : StackT*) : Int
@@ -86,4 +87,5 @@ lib LibC
   fun sigaddset(SigsetT*, Int) : Int
   fun sigdelset(SigsetT*, Int) : Int
   fun sigismember(SigsetT*, Int) : Int
+  fun sigsuspend(SigsetT*) : Int
 end

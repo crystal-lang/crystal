@@ -45,8 +45,8 @@ describe "Semantic: restrictions augmenter" do
   it_augments_for_ivar "Array(String)", "::Array(::String)"
   it_augments_for_ivar "Tuple(Int32, Char)", "::Tuple(::Int32, ::Char)"
   it_augments_for_ivar "NamedTuple(a: Int32, b: Char)", "::NamedTuple(a: ::Int32, b: ::Char)"
-  it_augments_for_ivar "Proc(Int32, Char)", "(::Int32 -> ::Char)"
-  it_augments_for_ivar "Proc(Int32, Nil)", "(::Int32 -> _)"
+  it_augments_for_ivar "Proc(Int32, Char)", "::Int32 -> ::Char"
+  it_augments_for_ivar "Proc(Int32, Nil)", "::Int32 -> _"
   it_augments_for_ivar "Pointer(Void)", "::Pointer(::Void)"
   it_augments_for_ivar "StaticArray(Int32, 8)", "::StaticArray(::Int32, 8)"
   it_augments_for_ivar "Char | Int32 | String", "::Char | ::Int32 | ::String"
@@ -78,7 +78,9 @@ describe "Semantic: restrictions augmenter" do
           class Baz
           end
         end
+
         @x : Bar::Baz
+
         def initialize(value : ::Foo::Bar::Baz)
           @x = value
         end
@@ -110,7 +112,9 @@ describe "Semantic: restrictions augmenter" do
           class Baz
           end
         end
+
         @x : Bar::Baz
+
         def initialize(value : Bar::Baz)
           @x = value
         end
@@ -400,8 +404,10 @@ describe "Semantic: restrictions augmenter" do
       macro foo
         {{ yield }}
       end
+
       class Foo
       end
+
       class Bar
         @x : Foo
         def initialize(value : ::Foo)

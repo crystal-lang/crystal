@@ -62,6 +62,12 @@ private macro def_string_methods(klass)
   def includes?(search : StringLiteral | CharLiteral) : BoolLiteral
   end
 
+  # Returns an array of capture hashes for each match of *regex* in this string.
+  #
+  # Capture hashes have the same form as `Regex::MatchData#to_h`.
+  def scan(regex : RegexLiteral) : ArrayLiteral(HashLiteral(NumberLiteral | StringLiteral), StringLiteral | NilLiteral)
+  end
+
   # Similar to `String#size`.
   def size : NumberLiteral
   end
@@ -320,6 +326,43 @@ module Crystal::Macros
   # end
   # ```
   def skip_file : Nop
+  end
+
+  # Returns the size of the given *type* as number of bytes.
+  #
+  # For definition purposes, a type is considered to be **stable** if its size
+  # and alignment do not change as new code is being processed. Currently, all
+  # Crystal types are stable, _except_ the following:
+  #
+  # * Structs, e.g. `Bytes`
+  # * `ReferenceStorage` instances
+  # * Modules, e.g. `Math` (however, `Math.class` is stable)
+  # * Uninstantiated generic types, e.g. `Array`
+  # * `StaticArray`, `Tuple`, `NamedTuple` instances with unstable element types
+  # * Unions containing any unstable types
+  #
+  # *type* must be a constant referring to a stable type. It cannot be evaluated
+  # at macro evaluation time, nor a `typeof` expression.
+  #
+  # ```
+  # {{ sizeof(Int32) }} # => 4
+  # {{ sizeof(Void*) }} # usually 4 or 8
+  # ```
+  def __crystal_pseudo_sizeof(type) : NumberLiteral
+  end
+
+  # Returns the alignment of the given *type* as number of bytes.
+  #
+  # *type* must be a constant referring to a stable type. It cannot be evaluated
+  # at macro evaluation time, nor a `typeof` expression.
+  #
+  # See `sizeof` for the definition of a stable type.
+  #
+  # ```
+  # {{ alignof(Int32) }} # => 4
+  # {{ alignof(Void*) }} # usually 4 or 8
+  # ```
+  def __crystal_pseudo_alignof(type) : NumberLiteral
   end
 
   # This is the base class of all AST nodes. This methods are
@@ -800,6 +843,10 @@ module Crystal::Macros
     def []=(key : ASTNode, value : ASTNode) : ASTNode
     end
 
+    # Similar to `Hash#has_hey?`
+    def has_key?(key : ASTNode) : BoolLiteral
+    end
+
     # Returns the type specified at the end of the Hash literal, if any.
     #
     # This refers to the key type after brackets in `{} of String => Int32`.
@@ -873,6 +920,10 @@ module Crystal::Macros
 
     # Adds or replaces a key.
     def []=(key : SymbolLiteral | StringLiteral | MacroId, value : ASTNode) : ASTNode
+    end
+
+    # Similar to `NamedTuple#has_key?`
+    def has_key?(key : SymbolLiteral | StringLiteral | MacroId) : ASTNode
     end
   end
 
@@ -1577,7 +1628,7 @@ module Crystal::Macros
     end
   end
 
-  # A `when` or `in` inside a `case`.
+  # A `when` or `in` inside a `case` or `select`.
   class When < ASTNode
     # Returns the conditions of this `when`.
     def conds : ArrayLiteral
@@ -1612,8 +1663,30 @@ module Crystal::Macros
   end
 
   # A `select` expression.
-  # class Select < ASTNode
+  #
+  # Every expression `node` is equivalent to:
+  #
+  # ```
+  # select
+  # {% for when_clause in node.whens %}
+  #   {{ when_clause }}
+  # {% end %}
+  # {% else_clause = node.else %}
+  # {% unless else_clause.is_a?(Nop) %}
+  #   else
+  #     {{ else_clause }}
+  # {% end %}
   # end
+  # ```
+  class Select < ASTNode
+    # Returns the `when`s of this `select`.
+    def whens : ArrayLiteral(When)
+    end
+
+    # Returns the `else` of this `select`.
+    def else : ASTNode
+    end
+  end
 
   # Node that represents an implicit object in:
   #
@@ -2303,20 +2376,44 @@ module Crystal::Macros
     end
   end
 
-  # A macro expression,
-  # surrounded by {{ ... }} (output = true)
-  # or by {% ... %} (output = false)
-  # class MacroExpression < ASTNode
-  # end
+  # A macro expression.
+  #
+  # Every expression *node* is equivalent to:
+  #
+  # ```
+  # {% if node.output? %}
+  #   \{{ {{ node.exp }} }}
+  # {% else %}
+  #   \{% {{ node.exp }} %}
+  # {% end %}
+  # ```
+  class MacroExpression < ASTNode
+    # Returns the expression inside this node.
+    def exp : ASTNode
+    end
 
-  # Free text that is part of a macro
-  # class MacroLiteral < ASTNode
-  # end
+    # Returns whether this node interpolates the expression's result.
+    def output? : BoolLiteral
+    end
+  end
 
-  # An `if` inside a macro, e.g.
+  # Free text that is part of a macro.
+  class MacroLiteral < ASTNode
+    # Returns the text of the literal.
+    def value : MacroId
+    end
+  end
+
+  # An `if`/`unless` inside a macro, e.g.
   #
   # ```
   # {% if cond %}
+  #   puts "Then"
+  # {% else %}
+  #   puts "Else"
+  # {% end %}
+  #
+  # {% unless cond %}
   #   puts "Then"
   # {% else %}
   #   puts "Else"
@@ -2333,6 +2430,10 @@ module Crystal::Macros
 
     # The `else` branch of the `if`.
     def else : ASTNode
+    end
+
+    # Returns `true` if this node represents an `unless` conditional, otherwise returns `false`.
+    def is_unless? : BoolLiteral
     end
   end
 
@@ -2355,6 +2456,35 @@ module Crystal::Macros
     # The body of the `for` loop.
     def body : ASTNode
     end
+  end
+
+  # A macro fresh variable.
+  #
+  # Every variable `node` is equivalent to:
+  #
+  # ```
+  # {{ "%#{name}".id }}{% if expressions = node.expressions %}{{ "{#{expressions.splat}}".id }}{% end %}
+  # ```
+  class MacroVar < ASTNode
+    # Returns the name of the fresh variable.
+    def name : MacroId
+    end
+
+    # Returns the associated indices of the fresh variable.
+    def expressions : ArrayLiteral
+    end
+  end
+
+  # A verbatim expression.
+  #
+  # Every expression `node` is equivalent to:
+  #
+  # ```
+  # \{% verbatim do %}
+  #   {{ node.exp }}
+  # \{% end %}
+  # ```
+  class MacroVerbatim < UnaryExpression
   end
 
   # The `_` expression. May appear in code, such as an assignment target, and in
@@ -2755,6 +2885,18 @@ module Crystal::Macros
     def resolve? : TypeNode
     end
 
+    # Return `true` if `self` is private and `false` otherwise.
+    def private? : BoolLiteral
+    end
+
+    # Return `true` if `self` is public and `false` otherwise.
+    def public? : BoolLiteral
+    end
+
+    # Returns visibility of `self` as `:public` or `:private?`
+    def visibility : SymbolLiteral
+    end
+
     # Returns `true` if *other* is an ancestor of `self`.
     def <(other : TypeNode) : BoolLiteral
     end
@@ -2771,6 +2913,25 @@ module Crystal::Macros
     # Returns `true` if *other* is the same as `self` or if
     # `self` is an ancestor of *other*.
     def >=(other : TypeNode) : BoolLiteral
+    end
+
+    # Returns whether `self` contains any inner pointers.
+    #
+    # Primitive types, except `Void`, are expected to not contain inner pointers.
+    # `Proc` and `Pointer` contain inner pointers.
+    # Unions, structs and collection types (tuples, static arrays)
+    # have inner pointers if any of their contained types has inner pointers.
+    # All other types, including classes, are expected to contain inner pointers.
+    #
+    # Types that do not have inner pointers may opt to use atomic allocations,
+    # i.e. `GC.malloc_atomic` rather than `GC.malloc`. The compiler ensures
+    # that, for any type `T`:
+    #
+    # * `Pointer(T).malloc` is atomic if and only if `T` has no inner pointers;
+    # * `T.allocate` is atomic if and only if `T` is a reference type and
+    #   `ReferenceStorage(T)` has no inner pointers.
+    # NOTE: Like `#instance_vars` this method must be called from within a method. The result may be incorrect when used in top-level code.
+    def has_inner_pointers? : BoolLiteral
     end
   end
 end

@@ -50,10 +50,6 @@ module Crystal
 
       alias Value = Bool | Int32 | Int64 | Slice(UInt8) | String | UInt16 | UInt32 | UInt64 | UInt8 | UInt128
 
-      def read_abbreviations(io)
-        @abbreviations = Abbrev.read(io, debug_abbrev_offset)
-      end
-
       def each(&)
         end_offset = @offset + @unit_length
         attributes = [] of {AT, FORM, Value}
@@ -62,7 +58,7 @@ module Crystal
           code = DWARF.read_unsigned_leb128(@io)
           attributes.clear
 
-          if abbrev = abbreviations[code &- 1]? # abbreviations.find { |a| a.code == abbrev }
+          if abbrev = @abbreviations.try &.[code &- 1]? # @abbreviations.try &.find { |a| a.code == abbrev }
             abbrev.attributes.each do |attr|
               value = read_attribute_value(attr.form, attr)
               attributes << {attr.at, attr.form, value}

@@ -5,7 +5,7 @@ description: "Shard to create a REPL interface"
 authors:
   - I3oris <boris31.resch@gmail.com>
 
-crystal: 1.5.0
+crystal: 1.13.0
 
 license: MIT
 

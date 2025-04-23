@@ -254,7 +254,7 @@ module Reply
       reader.auto_completion.verify(open: true, entries: %w(hello hey), name_filter: "h", selection_pos: 0)
       reader.editor.verify("42.hello")
 
-      SpecHelper.send(pipe_in, "\e\t") # shit_tab
+      SpecHelper.send(pipe_in, "\e\t") # shift_tab
       reader.auto_completion.verify(open: true, entries: %w(hello hey), name_filter: "h", selection_pos: 1)
       reader.editor.verify("42.hey")
 
@@ -294,6 +294,37 @@ module Reply
       SpecHelper.send(pipe_in, '\t')
       reader.auto_completion.verify(open: true, entries: %w(hello world= hey), selection_pos: 2)
       reader.editor.verify("hey")
+
+      SpecHelper.send(pipe_in, '\0')
+    end
+
+    it "retriggers auto-completion when current word ends with ':'" do
+      reader = SpecHelper.reader(SpecReaderWithAutoCompletionRetrigger)
+      pipe_out, pipe_in = IO.pipe
+
+      spawn do
+        reader.read_next(from: pipe_out)
+      end
+
+      SpecHelper.send(pipe_in, "fo")
+      SpecHelper.send(pipe_in, '\t')
+      reader.auto_completion.verify(open: true, entries: %w(foo foobar), name_filter: "fo")
+      reader.editor.verify("foo")
+
+      SpecHelper.send(pipe_in, ':')
+      SpecHelper.send(pipe_in, ':')
+      reader.auto_completion.verify(open: true, entries: %w(foo::foo foo::foobar foo::bar), name_filter: "foo::")
+      reader.editor.verify("foo::")
+
+      SpecHelper.send(pipe_in, 'b')
+      SpecHelper.send(pipe_in, '\t')
+      reader.auto_completion.verify(open: true, entries: %w(foo::bar), name_filter: "foo::b", selection_pos: 0)
+      reader.editor.verify("foo::bar")
+
+      SpecHelper.send(pipe_in, ':')
+      SpecHelper.send(pipe_in, ':')
+      reader.auto_completion.verify(open: true, entries: %w(foo::bar::foo foo::bar::foobar foo::bar::bar), name_filter: "foo::bar::")
+      reader.editor.verify("foo::bar::")
 
       SpecHelper.send(pipe_in, '\0')
     end
@@ -589,6 +620,60 @@ module Reply
       reader.editor.verify("a")
 
       SpecHelper.send(pipe_in, '\0')
+    end
+
+    it "searches on ctrl-r" do
+      reader = SpecHelper.reader(type: SpecReaderWithSearch)
+      pipe_out, pipe_in = IO.pipe
+
+      SEARCH_ENTRIES.each { |e| reader.history << e }
+
+      spawn do
+        reader.read_next(from: pipe_out)
+      end
+
+      SpecHelper.send(pipe_in, '\u0012') # Ctrl-r (search)
+      reader.search.verify("", open: true, failed: true)
+
+      SpecHelper.send(pipe_in, 'p')
+      reader.search.verify("p", open: true, failed: false)
+      reader.editor.verify("pp! i")
+      reader.history.index.should eq 3
+
+      SpecHelper.send(pipe_in, "ut")
+      reader.search.verify("put", open: true, failed: false)
+      reader.editor.verify(<<-END)
+        while i < 10
+          puts i
+          i += 1
+        end
+        END
+      reader.history.index.should eq 2
+
+      SpecHelper.send(pipe_in, "ss")
+      reader.search.verify("putss", open: true, failed: true)
+      reader.editor.verify("")
+      reader.history.index.should eq 5
+
+      SpecHelper.send(pipe_in, '\u{7f}') # back
+      reader.search.verify("puts", open: true, failed: false)
+      reader.editor.verify(<<-END)
+        while i < 10
+          puts i
+          i += 1
+        end
+        END
+      reader.history.index.should eq 2
+
+      SpecHelper.send(pipe_in, '\e') # back
+      reader.search.verify("", open: false, failed: false)
+      reader.editor.verify(<<-END)
+        while i < 10
+          puts i
+          i += 1
+        end
+        END
+      reader.history.index.should eq 2
     end
 
     it "resets" do

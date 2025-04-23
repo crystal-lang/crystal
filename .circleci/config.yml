@@ -8,11 +8,11 @@ parameters:
   distribution-scripts-version:
     description: "Git ref for version of https://github.com/crystal-lang/distribution-scripts/"
     type: string
-    default: "46c295d14e4dc3f6b7d9598c0b4dd89e93232def"
+    default: "1ee31a42f0b06776a42fa4635b54dc9ec567e68a"
   previous_crystal_base_url:
     description: "Prefix for URLs to Crystal bootstrap compiler"
     type: string
-    default: "https://github.com/crystal-lang/crystal/releases/download/1.12.1/crystal-1.12.1-1"
+    default: "https://github.com/crystal-lang/crystal/releases/download/1.16.1/crystal-1.16.1-1"
 
 defaults:
   environment: &env
@@ -81,7 +81,7 @@ jobs:
 
   test_darwin:
     macos:
-      xcode: 13.4.1
+      xcode: 15.4.0
     environment:
       <<: *env
       TRAVIS_OS_NAME: osx
@@ -285,7 +285,7 @@ jobs:
 
   dist_darwin:
     macos:
-      xcode: 13.4.1
+      xcode: 15.3.0
     shell: /bin/bash --login -eo pipefail
     steps:
       - restore_cache:
@@ -296,12 +296,7 @@ jobs:
           command: |
             brew unlink python@2 || true
 
-            # We need ruby-install >= 0.8.3
-            brew install ruby-install
-
-            ruby-install ruby 2.7.3
-
-            brew install pkgconfig libtool
+            brew install ruby@3 libffi pkgconfig libtool automake
 
             sudo mkdir -p /opt/crystal
             sudo chown $(whoami) /opt/crystal/
@@ -312,7 +307,6 @@ jobs:
       - run:
           no_output_timeout: 40m
           command: |
-            echo "2.7.3" > /tmp/workspace/distribution-scripts/.ruby-version
             cd /tmp/workspace/distribution-scripts
             source build.env
             cd omnibus
@@ -483,6 +477,7 @@ jobs:
       - run: bin/ci prepare_system
       - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
       - run: bin/ci prepare_build
+      - run: bin/ci with_build_env 'shards --version'
       - run:
           command: bin/ci build
           no_output_timeout: 30m

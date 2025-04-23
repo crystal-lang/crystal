@@ -105,11 +105,11 @@ describe IO do
         write.puts "hello"
         slice = Bytes.new 1024
 
-        read.read_timeout = 1
+        read.read_timeout = 1.second
         read.read(slice).should eq(6)
 
         expect_raises(IO::TimeoutError) do
-          read.read_timeout = 0.0000001
+          read.read_timeout = 0.1.microseconds
           read.read(slice)
         end
       end
@@ -425,9 +425,9 @@ describe IO do
       str.read_fully?(slice).should be_nil
     end
 
-    # pipe(2) returns bidirectional file descriptors on FreeBSD and Solaris,
+    # pipe(2) returns bidirectional file descriptors on some platforms,
     # gate this test behind the platform flag.
-    {% unless flag?(:freebsd) || flag?(:solaris) %}
+    {% unless flag?(:freebsd) || flag?(:solaris) || flag?(:openbsd) || flag?(:dragonfly) %}
       it "raises if trying to read to an IO not opened for reading" do
         IO.pipe do |r, w|
           expect_raises(IO::Error, "File not open for reading") do
@@ -460,6 +460,30 @@ describe IO do
         io1 = OneByOneIO.new("hello")
         io2 = IO::Memory.new("hella")
         IO.same_content?(io2, io1).should be_false
+      end
+
+      it "refutes prefix match, one way" do
+        io1 = OneByOneIO.new("hello")
+        io2 = IO::Memory.new("hello again")
+        IO.same_content?(io1, io2).should be_false
+      end
+
+      it "refutes prefix match, second way" do
+        io1 = IO::Memory.new("hello")
+        io2 = OneByOneIO.new("hello again")
+        IO.same_content?(io1, io2).should be_false
+      end
+
+      it "refutes prefix match, one way" do
+        io1 = OneByOneIO.new("hello again")
+        io2 = IO::Memory.new("hello")
+        IO.same_content?(io1, io2).should be_false
+      end
+
+      it "refutes prefix match, second way" do
+        io1 = IO::Memory.new("hello again")
+        io2 = OneByOneIO.new("hello")
+        IO.same_content?(io1, io2).should be_false
       end
     end
   end
@@ -550,9 +574,9 @@ describe IO do
       io.read_byte.should be_nil
     end
 
-    # pipe(2) returns bidirectional file descriptors on FreeBSD and Solaris,
+    # pipe(2) returns bidirectional file descriptors on some platforms,
     # gate this test behind the platform flag.
-    {% unless flag?(:freebsd) || flag?(:solaris) %}
+    {% unless flag?(:freebsd) || flag?(:solaris) || flag?(:openbsd) || flag?(:dragonfly) %}
       it "raises if trying to write to an IO not opened for writing" do
         IO.pipe do |r, w|
           # unless sync is used the flush on close triggers the exception again
@@ -712,9 +736,13 @@ describe IO do
         it "says invalid byte sequence" do
           io = SimpleIOMemory.new(Slice.new(1, 255_u8))
           io.set_encoding("EUC-JP")
-          expect_raises ArgumentError, {% if flag?(:musl) || flag?(:freebsd) %}"Incomplete multibyte sequence"{% else %}"Invalid multibyte sequence"{% end %} do
-            io.read_char
-          end
+          message =
+            {% if flag?(:musl) || flag?(:freebsd) || flag?(:netbsd) || flag?(:dragonfly) %}
+              "Incomplete multibyte sequence"
+            {% else %}
+              "Invalid multibyte sequence"
+            {% end %}
+          expect_raises(ArgumentError, message) { io.read_char }
         end
 
         it "skips invalid byte sequences" do
@@ -792,23 +820,26 @@ describe IO do
           io.gets_to_end.should eq("\r\nFoo\nBar")
         end
 
-        it "gets ascii from socket (#9056)" do
-          server = TCPServer.new "localhost", 0
-          sock = TCPSocket.new "localhost", server.local_address.port
-          begin
-            sock.set_encoding("ascii")
-            spawn do
-              client = server.accept
-              message = client.gets
-              client << "#{message}\n"
+        # TODO: Windows networking in the interpreter requires #12495
+        {% unless flag?(:interpreted) || flag?(:win32) %}
+          it "gets ascii from socket (#9056)" do
+            server = TCPServer.new "localhost", 0
+            sock = TCPSocket.new "localhost", server.local_address.port
+            begin
+              sock.set_encoding("ascii")
+              spawn do
+                client = server.accept
+                message = client.gets
+                client << "#{message}\n"
+              end
+              sock << "K\n"
+              sock.gets.should eq("K")
+            ensure
+              server.close
+              sock.close
             end
-            sock << "K\n"
-            sock.gets.should eq("K")
-          ensure
-            server.close
-            sock.close
           end
-        end
+        {% end %}
       end
 
       describe "encode" do

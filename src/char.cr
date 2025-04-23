@@ -157,7 +157,7 @@ struct Char
 
   # Returns `true` if this char is an ASCII number in specified base.
   #
-  # Base can be from 0 to 36 with digits from '0' to '9' and 'a' to 'z' or 'A' to 'Z'.
+  # Base can be from 2 to 36 with digits from '0' to '9' and 'a' to 'z' or 'A' to 'Z'.
   #
   # ```
   # '4'.ascii_number?     # => true
@@ -407,7 +407,7 @@ struct Char
   # characters, like 'İ', than when downcased result in multiple
   # characters (in this case: 'I' and the dot mark).
   #
-  # For more correct behavior see the overload that receives a block.
+  # For more correct behavior see the overloads that receive a block or an `IO`.
   #
   # ```
   # 'Z'.downcase # => 'z'
@@ -456,6 +456,22 @@ struct Char
     end
   end
 
+  # Writes the downcase equivalent of this char to the given *io*.
+  #
+  # This method takes into account the possibility that an downcase
+  # version of a char might result in multiple chars, like for
+  # 'İ', which results in 'i' and a dot mark.
+  #
+  # ```
+  # 'Z'.downcase(STDOUT)                             # prints "z"
+  # 'ς'.downcase(STDOUT, Unicode::CaseOptions::Fold) # prints "σ"
+  # 'ẞ'.downcase(STDOUT, Unicode::CaseOptions::Fold) # prints "ss"
+  # 'ᾈ'.downcase(STDOUT, Unicode::CaseOptions::Fold) # prints "ἀι"
+  # ```
+  def downcase(io : IO, options : Unicode::CaseOptions = :none) : Nil
+    downcase(options) { |char| io << char }
+  end
+
   # Returns the upcase equivalent of this char.
   #
   # Note that this only works for characters whose upcase
@@ -463,7 +479,7 @@ struct Char
   # characters, like 'ﬄ', than when upcased result in multiple
   # characters (in this case: 'F', 'F', 'L').
   #
-  # For more correct behavior see the overload that receives a block.
+  # For more correct behavior see the overloads that receive a block or an `IO`.
   #
   # ```
   # 'z'.upcase # => 'Z'
@@ -488,6 +504,20 @@ struct Char
     Unicode.upcase(self, options) { |char| yield char }
   end
 
+  # Writes the upcase equivalent of this char to the given *io*.
+  #
+  # This method takes into account the possibility that an upcase
+  # version of a char might result in multiple chars, like for
+  # 'ﬄ', which results in 'F', 'F' and 'L'.
+  #
+  # ```
+  # 'z'.upcase(STDOUT) # prints "Z"
+  # 'ﬄ'.upcase(STDOUT) # prints "FFL"
+  # ```
+  def upcase(io : IO, options : Unicode::CaseOptions = :none) : Nil
+    upcase(options) { |char| io << char }
+  end
+
   # Returns the titlecase equivalent of this char.
   #
   # Usually this is equivalent to `#upcase`, but a few precomposed characters
@@ -499,7 +529,7 @@ struct Char
   # characters, like 'ﬄ', than when titlecased result in multiple
   # characters (in this case: 'F', 'f', 'l').
   #
-  # For more correct behavior see the overload that receives a block.
+  # For more correct behavior see the overloads that receive a block or an `IO`.
   #
   # ```
   # 'z'.titlecase # => 'Z'
@@ -529,6 +559,25 @@ struct Char
   # ```
   def titlecase(options : Unicode::CaseOptions = :none, &)
     Unicode.titlecase(self, options) { |char| yield char }
+  end
+
+  # Writes the titlecase equivalent of this char to the given *io*.
+  #
+  # Usually this is equivalent to `#upcase`, but a few precomposed characters
+  # consisting of multiple letters may yield a different character sequence
+  # where only the first letter is uppercase and the rest lowercase.
+  #
+  # This method takes into account the possibility that a titlecase
+  # version of a char might result in multiple chars, like for
+  # 'ﬄ', which results in 'F', 'f' and 'l'.
+  #
+  # ```
+  # 'z'.titlecase(STDOUT) # prints "Z"
+  # 'Ǳ'.titlecase(STDOUT) # prints "ǲ"
+  # 'ﬄ'.titlecase(STDOUT) # prints "Ffl"
+  # ```
+  def titlecase(io : IO, options : Unicode::CaseOptions = :none) : Nil
+    titlecase(options) { |char| io << char }
   end
 
   # See `Object#hash(hasher)`

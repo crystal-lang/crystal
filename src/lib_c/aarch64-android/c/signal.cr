@@ -79,6 +79,7 @@ lib LibC
 
   fun kill(__pid : PidT, __signal : Int) : Int
   fun pthread_sigmask(__how : Int, __new_set : SigsetT*, __old_set : SigsetT*) : Int
+  fun pthread_kill(__thread : PthreadT, __sig : Int) : Int
   fun sigaction(__signal : Int, __new_action : Sigaction*, __old_action : Sigaction*) : Int
   fun sigaltstack(__new_signal_stack : StackT*, __old_signal_stack : StackT*) : Int
   {% if ANDROID_API >= 21 %}
@@ -89,5 +90,6 @@ lib LibC
     fun sigaddset(__set : SigsetT*, __signal : Int) : Int
     fun sigdelset(__set : SigsetT*, __signal : Int) : Int
     fun sigismember(__set : SigsetT*, __signal : Int) : Int
+    fun sigsuspend(__mask : SigsetT*) : Int
   {% end %}
 end

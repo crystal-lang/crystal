@@ -31,7 +31,7 @@ class IO::FileDescriptor < IO
   #
   # Raises `IO::Error` if this `IO` is not a terminal device.
   def noecho! : Nil
-    system_echo(false) { return }
+    system_echo(false)
   end
 
   # Enables character echoing on this `IO`.
@@ -40,7 +40,7 @@ class IO::FileDescriptor < IO
   #
   # Raises `IO::Error` if this `IO` is not a terminal device.
   def echo! : Nil
-    system_echo(true) { return }
+    system_echo(true)
   end
 
   # Yields `self` to the given block, enables character processing for the
@@ -75,7 +75,7 @@ class IO::FileDescriptor < IO
   #
   # Raises `IO::Error` if this `IO` is not a terminal device.
   def cooked! : Nil
-    system_raw(false) { return }
+    system_raw(false)
   end
 
   # Enables raw mode on this `IO`.
@@ -86,7 +86,7 @@ class IO::FileDescriptor < IO
   #
   # Raises `IO::Error` if this `IO` is not a terminal device.
   def raw! : Nil
-    system_raw(true) { return }
+    system_raw(true)
   end
 
   @[Deprecated]

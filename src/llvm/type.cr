@@ -50,11 +50,11 @@ struct LLVM::Type
     Value.new LibLLVM.get_undef(self)
   end
 
-  def pointer : LLVM::Type
+  def pointer(address_space = 0) : LLVM::Type
     {% if LibLLVM::IS_LT_150 %}
-      Type.new LibLLVM.pointer_type(self, 0)
+      Type.new LibLLVM.pointer_type(self, address_space)
     {% else %}
-      Type.new LibLLVM.pointer_type_in_context(LibLLVM.get_type_context(self), 0)
+      Type.new LibLLVM.pointer_type_in_context(LibLLVM.get_type_context(self), address_space)
     {% end %}
   end
 

@@ -4,6 +4,22 @@ require "c/string"
 module LLVM
   @@initialized = false
 
+  # Returns the runtime version of LLVM.
+  #
+  # Starting with LLVM 16, this method returns the version as reported by
+  # `LLVMGetVersion` at runtime. Older versions of LLVM do not expose this
+  # information, so the value falls back to `LibLLVM::VERSION` which is
+  # determined at compile time and might slightly be out of sync to the
+  # dynamic library loaded at runtime.
+  def self.version
+    {% if LibLLVM.has_method?(:get_version) %}
+      LibLLVM.get_version(out major, out minor, out patch)
+      "#{major}.#{minor}.#{patch}"
+    {% else %}
+      LibLLVM::VERSION
+    {% end %}
+  end
+
   def self.init_x86 : Nil
     return if @@initialized_x86
     @@initialized_x86 = true
@@ -52,6 +68,22 @@ module LLVM
     {% end %}
   end
 
+  def self.init_avr : Nil
+    return if @@initialized_avr
+    @@initialized_avr = true
+
+    {% if LibLLVM::BUILT_TARGETS.includes?(:avr) %}
+      LibLLVM.initialize_avr_target_info
+      LibLLVM.initialize_avr_target
+      LibLLVM.initialize_avr_target_mc
+      LibLLVM.initialize_avr_asm_printer
+      LibLLVM.initialize_avr_asm_parser
+      LibLLVM.link_in_mc_jit
+    {% else %}
+      raise "ERROR: LLVM was built without AVR target"
+    {% end %}
+  end
+
   def self.init_webassembly : Nil
     return if @@initialized_webassembly
     @@initialized_webassembly = true
@@ -65,6 +97,30 @@ module LLVM
       LibLLVM.link_in_mc_jit
     {% else %}
       raise "ERROR: LLVM was built without WebAssembly target"
+    {% end %}
+  end
+
+  def self.init_native_target : Nil
+    {% if flag?(:i386) || flag?(:x86_64) %}
+      init_x86
+    {% elsif flag?(:aarch64) %}
+      init_aarch64
+    {% elsif flag?(:arm) %}
+      init_arm
+    {% elsif flag?(:wasm32) %}
+      init_webassembly
+    {% elsif flag?(:avr) %}
+      init_avr
+    {% else %}
+      {% raise "Unsupported platform" %}
+    {% end %}
+  end
+
+  def self.init_all_targets : Nil
+    {% for target in %i(x86 aarch64 arm avr webassembly) %}
+      {% if LibLLVM::BUILT_TARGETS.includes?(target) %}
+        init_{{ target.id }}
+      {% end %}
     {% end %}
   end
 
@@ -91,12 +147,6 @@ module LLVM
   def self.default_target_triple : String
     chars = LibLLVM.get_default_target_triple
     case triple = string_and_dispose(chars)
-    when .starts_with?("x86_64-apple-macosx"), .starts_with?("x86_64-apple-darwin")
-      # normalize on `macosx` and remove minimum deployment target version
-      "x86_64-apple-macosx"
-    when .starts_with?("aarch64-apple-macosx"), .starts_with?("aarch64-apple-darwin")
-      # normalize on `macosx` and remove minimum deployment target version
-      "aarch64-apple-macosx"
     when .starts_with?("aarch64-unknown-linux-android")
       # remove API version
       "aarch64-unknown-linux-android"
@@ -128,6 +178,13 @@ module LLVM
     string = String.new(chars)
     LibLLVM.dispose_message(chars)
     string
+  end
+
+  protected def self.assert(error : LibLLVM::ErrorRef)
+    if error
+      chars = LibLLVM.get_error_message(error)
+      raise String.new(chars).tap { LibLLVM.dispose_error_message(chars) }
+    end
   end
 
   {% unless LibLLVM::IS_LT_130 %}

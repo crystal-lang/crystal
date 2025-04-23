@@ -50,7 +50,7 @@ struct StaticArray(T, N)
   # * `Number.static_array` is a convenient alternative for designating a
   #   specific numerical item type.
   macro [](*args)
-    %array = uninitialized StaticArray(typeof({{args.splat}}), {{args.size}})
+    %array = uninitialized ::StaticArray(typeof({{args.splat}}), {{args.size}})
     {% for arg, i in args %}
       %array.to_unsafe[{{i}}] = {{arg}}
     {% end %}
@@ -228,7 +228,7 @@ struct StaticArray(T, N)
   # Raises `ArgumentError` if for any two elements the block returns `nil`.=
   def sort(&block : T, T -> U) : StaticArray(T, N) forall U
     {% unless U <= Int32? %}
-      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}.\nThe block is supposed to be a custom comparison operation, compatible with `Comparable#<=>`.\nDid you mean to use `#sort_by`?" %}
     {% end %}
 
     ary = dup
@@ -251,7 +251,7 @@ struct StaticArray(T, N)
   # Raises `ArgumentError` if for any two elements the block returns `nil`.
   def unstable_sort(&block : T, T -> U) : StaticArray(T, N) forall U
     {% unless U <= Int32? %}
-      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}.\nThe block is supposed to be a custom comparison operation, compatible with `Comparable#<=>`.\nDid you mean to use `#unstable_sort_by`?" %}
     {% end %}
 
     ary = dup
@@ -273,7 +273,7 @@ struct StaticArray(T, N)
   # :inherit:
   def sort!(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
-      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}.\nThe block is supposed to be a custom comparison operation, compatible with `Comparable#<=>`.\nDid you mean to use `#sort_by!`?" %}
     {% end %}
 
     to_slice.sort!(&block)
@@ -283,7 +283,7 @@ struct StaticArray(T, N)
   # :inherit:
   def unstable_sort!(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
-      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}.\nThe block is supposed to be a custom comparison operation, compatible with `Comparable#<=>`.\nDid you mean to use `#unstable_sort_by!`?" %}
     {% end %}
 
     to_slice.unstable_sort!(&block)

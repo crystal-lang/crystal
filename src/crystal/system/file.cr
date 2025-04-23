@@ -49,7 +49,7 @@ module Crystal::System::File
 
   LOWER_ALPHANUM = "0123456789abcdefghijklmnopqrstuvwxyz".to_slice
 
-  def self.mktemp(prefix : String?, suffix : String?, dir : String, random : ::Random = ::Random::DEFAULT) : {LibC::Int, String}
+  def self.mktemp(prefix : String?, suffix : String?, dir : String, random : ::Random = ::Random::DEFAULT) : {FileDescriptor::Handle, String}
     mode = LibC::O_RDWR | LibC::O_CREAT | LibC::O_EXCL
     perm = ::File::Permissions.new(0o600)
 
@@ -65,10 +65,10 @@ module Crystal::System::File
         io << suffix
       end
 
-      fd, errno = open(path, mode, perm)
+      handle, errno = open(path, mode, perm, blocking: true)
 
-      if errno.none?
-        return {fd, path}
+      if error_is_none?(errno)
+        return {handle, path}
       elsif error_is_file_exists?(errno)
         # retry
         next
@@ -80,16 +80,13 @@ module Crystal::System::File
     raise ::File::AlreadyExistsError.new("Error creating temporary file", file: "#{prefix}********#{suffix}")
   end
 
-  private def self.error_is_file_exists?(errno)
-    errno.in?(Errno::EEXIST, WinError::ERROR_ALREADY_EXISTS)
+  private def self.error_is_none?(errno)
+    errno.in?(Errno::NONE, WinError::ERROR_SUCCESS)
   end
 
-  # Closes the internal file descriptor without notifying libevent.
-  # This is directly used after the fork of a process to close the
-  # parent's Crystal::System::Signal.@@pipe reference before re initializing
-  # the event loop. In the case of a fork that will exec there is even
-  # no need to initialize the event loop at all.
-  # def file_descriptor_close
+  private def self.error_is_file_exists?(errno)
+    errno.in?(Errno::EEXIST, WinError::ERROR_FILE_EXISTS)
+  end
 end
 
 {% if flag?(:wasi) %}

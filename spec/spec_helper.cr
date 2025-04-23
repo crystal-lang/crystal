@@ -124,10 +124,16 @@ def assert_expand(from : String, to, *, flags = nil, file = __FILE__, line = __L
 end
 
 def assert_expand(from_nodes : ASTNode, to, *, flags = nil, file = __FILE__, line = __LINE__)
+  assert_expand(from_nodes, flags: flags, file: file, line: line) do |to_nodes|
+    to_nodes.to_s.strip.should eq(to.strip), file: file, line: line
+  end
+end
+
+def assert_expand(from_nodes : ASTNode, *, flags = nil, file = __FILE__, line = __LINE__, &)
   program = new_program
   program.flags.concat(flags.split) if flags
   to_nodes = LiteralExpander.new(program).expand(from_nodes)
-  to_nodes.to_s.strip.should eq(to.strip), file: file, line: line
+  yield to_nodes, program
 end
 
 def assert_expand_second(from : String, to, *, flags = nil, file = __FILE__, line = __LINE__)
@@ -202,6 +208,7 @@ end
 def prepare_macro_call(macro_body, flags = nil, &)
   program = new_program
   program.flags.concat(flags.split) if flags
+  program.top_level_semantic_complete = true
   args = yield program
 
   macro_params = args.try &.keys.join(", ")
@@ -209,14 +216,14 @@ def prepare_macro_call(macro_body, flags = nil, &)
   call_args.concat(args.values) if args
 
   a_macro = Parser.parse("macro foo(#{macro_params});#{macro_body};end").as(Macro)
-  call = Call.new(nil, "", call_args)
+  call = Call.new("", call_args)
 
   {program, a_macro, call}
 end
 
-def codegen(code, inject_primitives = true, debug = Crystal::Debug::None, filename = __FILE__)
+def codegen(code, *, inject_primitives = true, single_module = false, debug = Crystal::Debug::None, filename = __FILE__)
   result = semantic code, inject_primitives: inject_primitives, filename: filename
-  result.program.codegen(result.node, single_module: false, debug: debug)[""].mod
+  result.program.codegen(result.node, single_module: single_module, debug: debug)[""].mod
 end
 
 private def new_program
@@ -278,7 +285,7 @@ def create_spec_compiler
   compiler
 end
 
-def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::None, flags = nil, *, file = __FILE__)
+def run(code, filename : String? = nil, inject_primitives = true, debug = Crystal::Debug::None, flags = nil, *, file = __FILE__) : LLVM::GenericValue | SpecRunOutput
   if inject_primitives
     code = %(require "primitives"\n#{code})
   end
@@ -288,11 +295,11 @@ def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::
   # in the current executable!), so instead we compile
   # the program and run it, printing the last
   # expression and using that to compare the result.
-  if code.includes?(%(require "prelude")) || flags
+  if code.includes?(%(require "prelude"))
     ast = Parser.parse(code).as(Expressions)
     last = ast.expressions.last
     assign = Assign.new(Var.new("__tempvar"), last)
-    call = Call.new(nil, "print", Var.new("__tempvar"))
+    call = Call.new("print", Var.new("__tempvar"))
     exps = Expressions.new([assign, call] of ASTNode)
     ast.expressions[-1] = exps
     code = ast.to_s
@@ -309,7 +316,23 @@ def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::
       return SpecRunOutput.new(output)
     end
   else
-    new_program.run(code, filename: filename, debug: debug)
+    program = new_program
+    program.flags.concat(flags) if flags
+    program.run(code, filename: filename, debug: debug)
+  end
+end
+
+def run(code, return_type : T.class, filename : String? = nil, inject_primitives = true, debug = Crystal::Debug::None, flags = nil, *, file = __FILE__) forall T
+  if inject_primitives
+    code = %(require "primitives"\n#{code})
+  end
+
+  if code.includes?(%(require "prelude"))
+    fail "TODO: support the prelude in typed codegen specs", file: file
+  else
+    program = new_program
+    program.flags.concat(flags) if flags
+    program.run(code, return_type: T, filename: filename, debug: debug)
   end
 end
 

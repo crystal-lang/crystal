@@ -10,6 +10,8 @@ on:
         required: true
         type: string
 
+permissions: {}
+
 jobs:
   build:
     runs-on: windows-2022
@@ -23,8 +25,9 @@ jobs:
 
       - name: Install Crystal
         uses: crystal-lang/install-crystal@v1
+        id: install-crystal
         with:
-          crystal: "1.12.1"
+          crystal: "1.16.1"
 
       - name: Download Crystal source
         uses: actions/checkout@v4
@@ -51,7 +54,7 @@ jobs:
             libs/crypto.lib
             libs/ssl.lib
             libs/openssl_VERSION
-          key: win-openssl-libs-3.1.0-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}-msvc
+          key: win-openssl-libs-3.4.1-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}-msvc
           fail-on-cache-miss: true
       - name: Restore DLLs
         uses: actions/cache/restore@v4
@@ -68,7 +71,7 @@ jobs:
             libs/xml2-dynamic.lib
             dlls/pcre.dll
             dlls/pcre2-8.dll
-            dlls/libiconv.dll
+            dlls/iconv-2.dll
             dlls/gc.dll
             dlls/libffi.dll
             dlls/zlib1.dll
@@ -85,7 +88,7 @@ jobs:
             libs/ssl-dynamic.lib
             dlls/libcrypto-3-x64.dll
             dlls/libssl-3-x64.dll
-          key: win-openssl-dlls-3.1.0-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}-msvc
+          key: win-openssl-dlls-3.4.1-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}-msvc
           fail-on-cache-miss: true
       - name: Restore LLVM
         uses: actions/cache/restore@v4
@@ -114,19 +117,13 @@ jobs:
       - name: Build Crystal
         run: |
           bin/crystal.bat env
-          # TODO: the 1.11.2 compiler only understands `-Dpreview_dll`; remove this once the
-          # base compiler is updated
-          make -f Makefile.win -B FLAGS=-Dpreview_dll ${{ inputs.release && 'release=1' || '' }}
-          # TODO: 1.11.2 comes with LLVM 17's DLL and copies it to the output directory, but a
-          # dynamically linked compiler requires LLVM 18, so we must overwrite it; remove this
-          # line once the base compiler is updated
-          cp dlls/LLVM-C.dll .build/
+          make -f Makefile.win -B ${{ inputs.release && 'release=1' || '' }} interpreter=1
 
       - name: Download shards release
         uses: actions/checkout@v4
         with:
           repository: crystal-lang/shards
-          ref: v0.18.0
+          ref: v0.19.1
           path: shards
 
       - name: Build shards release
@@ -146,5 +143,5 @@ jobs:
       - name: Upload Crystal binaries
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ inputs.release && 'crystal-release' || 'crystal' }}
+          name: crystal
           path: crystal

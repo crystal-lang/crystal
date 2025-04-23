@@ -230,9 +230,7 @@ module Crystal
     end
 
     def transform(node : Select)
-      node.whens.map! do |a_when|
-        Select::When.new(a_when.condition.transform(self), a_when.body.transform(self))
-      end
+      transform_many node.whens
 
       if node_else = node.else
         node.else = node_else.transform(self)

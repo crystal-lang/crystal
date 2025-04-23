@@ -40,8 +40,16 @@ module Crystal::System::FileDescriptor
     raise NotImplementedError.new "Crystal::System::File#flock"
   end
 
+  private def system_echo(enable : Bool)
+    raise NotImplementedError.new "Crystal::System::FileDescriptor#system_echo"
+  end
+
   private def system_echo(enable : Bool, & : ->)
     raise NotImplementedError.new "Crystal::System::FileDescriptor#system_echo"
+  end
+
+  private def system_raw(enable : Bool)
+    raise NotImplementedError.new "Crystal::System::FileDescriptor#system_raw"
   end
 
   private def system_raw(enable : Bool, & : ->)

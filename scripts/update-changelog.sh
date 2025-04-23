@@ -35,10 +35,23 @@ branch="changelog/$VERSION"
 current_changelog="CHANGELOG.$VERSION.md"
 
 echo "Generating $current_changelog..."
-scripts/github-changelog.cr $VERSION > $current_changelog
+scripts/github-changelog.cr "$VERSION" > "$current_changelog"
 
 echo "Switching to branch $branch"
-git switch $branch 2>/dev/null || git switch -c $branch;
+git switch "$branch" 2>/dev/null || git switch -c "$branch";
+
+# Write release version into src/VERSION
+echo "${VERSION}" > src/VERSION
+git add src/VERSION
+
+# Update shard.yml
+sed -i -E "s/version: .*/version: ${VERSION}/" shard.yml
+git add shard.yml
+
+# Write release date into src/SOURCE_DATE_EPOCH
+release_date=$(head -n1 "$current_changelog" | grep -o -P '(?<=\()[^)]+')
+date --utc --date="${release_date}" +%s > src/SOURCE_DATE_EPOCH
+git add src/SOURCE_DATE_EPOCH
 
 if grep --silent -E "^## \[$VERSION\]" CHANGELOG.md; then
   echo "Replacing section in CHANGELOG"
@@ -57,7 +70,7 @@ else
 
   git add CHANGELOG.md
   git commit -m "Add changelog for $VERSION"
-  git push -u upstream $branch
+  git push -u upstream "$branch"
 
   gh pr create --draft --base "$base_branch" \
     --body "Preview: https://github.com/crystal-lang/crystal/blob/$branch/CHANGELOG.md" \

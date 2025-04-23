@@ -121,6 +121,14 @@ module Crystal
         it "expands macro with id call on number" do
           assert_macro "{{x.id}}", %(1), {x: 1.int32}
         end
+
+        it "expands macro with id call on path" do
+          assert_macro "{{x.id}}", %(Foo), {x: Path.new("Foo")}
+        end
+
+        it "expands macro with id call on global path" do
+          assert_macro "{{x.id}}", %(::Foo), {x: Path.new("Foo", global: true)}
+        end
       end
 
       it "executes == on numbers (true)" do
@@ -228,29 +236,29 @@ module Crystal
 
       describe "#doc" do
         it "returns an empty string if there are no docs on the node (wants_doc = false)" do
-          assert_macro "{{ x.doc }}", %(""), {x: Call.new(nil, "some_call")}
+          assert_macro "{{ x.doc }}", %(""), {x: Call.new("some_call")}
         end
 
         it "returns the call's docs if present (wants_doc = true)" do
-          assert_macro "{{ x.doc }}", %("Some docs"), {x: Call.new(nil, "some_call").tap { |c| c.doc = "Some docs" }}
+          assert_macro "{{ x.doc }}", %("Some docs"), {x: Call.new("some_call").tap { |c| c.doc = "Some docs" }}
         end
 
         it "returns a multiline comment" do
-          assert_macro "{{ x.doc }}", %("Some\\nmulti\\nline\\ndocs"), {x: Call.new(nil, "some_call").tap { |c| c.doc = "Some\nmulti\nline\ndocs" }}
+          assert_macro "{{ x.doc }}", %("Some\\nmulti\\nline\\ndocs"), {x: Call.new("some_call").tap { |c| c.doc = "Some\nmulti\nline\ndocs" }}
         end
       end
 
       describe "#doc_comment" do
         it "returns an empty MacroId if there are no docs on the node (wants_doc = false)" do
-          assert_macro "{{ x.doc_comment }}", %(), {x: Call.new(nil, "some_call")}
+          assert_macro "{{ x.doc_comment }}", %(), {x: Call.new("some_call")}
         end
 
         it "returns the call's docs if present as a MacroId (wants_doc = true)" do
-          assert_macro "{{ x.doc_comment }}", %(Some docs), {x: Call.new(nil, "some_call").tap { |c| c.doc = "Some docs" }}
+          assert_macro "{{ x.doc_comment }}", %(Some docs), {x: Call.new("some_call").tap { |c| c.doc = "Some docs" }}
         end
 
         it "ensures each newline has a `#` prefix" do
-          assert_macro "{{ x.doc_comment }}", %(Some\n# multi\n# line\n# docs), {x: Call.new(nil, "some_call").tap { |c| c.doc = "Some\nmulti\nline\ndocs" }}
+          assert_macro "{{ x.doc_comment }}", %(Some\n# multi\n# line\n# docs), {x: Call.new("some_call").tap { |c| c.doc = "Some\nmulti\nline\ndocs" }}
         end
       end
     end
@@ -563,6 +571,12 @@ module Crystal
         assert_macro %({{"hello".gsub(/e|o/, "a")}}), %("halla")
       end
 
+      it "executes scan" do
+        assert_macro %({{"Crystal".scan(/(Cr)(?<name1>y)(st)(?<name2>al)/)}}), %([{0 => "Crystal", 1 => "Cr", "name1" => "y", 3 => "st", "name2" => "al"} of ::Int32 | ::String => ::String | ::Nil] of ::Hash(::Int32 | ::String, ::String | ::Nil))
+        assert_macro %({{"Crystal".scan(/(Cr)?(stal)/)}}), %([{0 => "stal", 1 => nil, 2 => "stal"} of ::Int32 | ::String => ::String | ::Nil] of ::Hash(::Int32 | ::String, ::String | ::Nil))
+        assert_macro %({{"Ruby".scan(/Crystal/)}}), %([] of ::Hash(::Int32 | ::String, ::String | ::Nil))
+      end
+
       it "executes camelcase" do
         assert_macro %({{"foo_bar".camelcase}}), %("FooBar")
       end
@@ -581,6 +595,11 @@ module Crystal
 
       it "executes titleize" do
         assert_macro %({{"hello world".titleize}}), %("Hello World")
+      end
+
+      it "executes to_utf16" do
+        assert_macro %({{"hello".to_utf16}}), "(::Slice(::UInt16).literal(104_u16, 101_u16, 108_u16, 108_u16, 111_u16, 0_u16))[0, 5]"
+        assert_macro %({{"TEST 😐🐙 ±∀ の".to_utf16}}), "(::Slice(::UInt16).literal(84_u16, 69_u16, 83_u16, 84_u16, 32_u16, 55357_u16, 56848_u16, 55357_u16, 56345_u16, 32_u16, 177_u16, 8704_u16, 32_u16, 12398_u16, 0_u16))[0, 14]"
       end
 
       it "executes to_i" do
@@ -915,6 +934,16 @@ module Crystal
         assert_macro %({{["c".id, "b", "a".id].sort}}), %([a, "b", c])
       end
 
+      it "executes sort_by" do
+        assert_macro %({{["abc", "a", "ab"].sort_by { |x| x.size }}}), %(["a", "ab", "abc"])
+      end
+
+      it "calls block exactly once for each element in #sort_by" do
+        assert_macro <<-CRYSTAL, %(5)
+          {{ (i = 0; ["abc", "a", "ab", "abcde", "abcd"].sort_by { i += 1 }; i) }}
+          CRYSTAL
+      end
+
       it "executes uniq" do
         assert_macro %({{[1, 1, 1, 2, 3, 1, 2, 3, 4].uniq}}), %([1, 2, 3, 4])
       end
@@ -1007,10 +1036,6 @@ module Crystal
         assert_macro %({{{:a => 1, :b => 3}.size}}), "2"
       end
 
-      it "executes sort_by" do
-        assert_macro %({{["abc", "a", "ab"].sort_by { |x| x.size }}}), %(["a", "ab", "abc"])
-      end
-
       it "executes empty?" do
         assert_macro %({{{:a => 1}.empty?}}), "false"
       end
@@ -1069,6 +1094,12 @@ module Crystal
 
       it "executes of_value (nop)" do
         assert_macro %({{ {'z' => 6, 'a' => 9}.of_value }}), %()
+      end
+
+      it "executes has_key?" do
+        assert_macro %({{ {'z' => 6, 'a' => 9}.has_key?('z') }}), %(true)
+        assert_macro %({{ {'z' => 6, 'a' => 9}.has_key?('x') }}), %(false)
+        assert_macro %({{ {'z' => nil, 'a' => 9}.has_key?('z') }}), %(true)
       end
 
       it "executes type" do
@@ -1174,6 +1205,14 @@ module Crystal
       it "executes []=" do
         assert_macro %({% a = {a: 1}; a[:a] = 2 %}{{a[:a]}}), "2"
         assert_macro %({% a = {a: 1}; a["a"] = 2 %}{{a["a"]}}), "2"
+      end
+
+      it "executes has_key?" do
+        assert_macro %({{{a: 1}.has_key?("a")}}), "true"
+        assert_macro %({{{a: 1}.has_key?(:a)}}), "true"
+        assert_macro %({{{a: nil}.has_key?("a")}}), "true"
+        assert_macro %({{{a: nil}.has_key?("b")}}), "false"
+        assert_macro_error %({{{a: 1}.has_key?(true)}}), "expected 'NamedTupleLiteral#has_key?' first argument to be a SymbolLiteral, StringLiteral or MacroId, not BoolLiteral"
       end
 
       it "creates a named tuple literal with a var" do
@@ -1752,9 +1791,30 @@ module Crystal
         end
       end
 
-      it "executes instance_vars" do
-        assert_macro("{{x.instance_vars.map &.stringify}}", %(["bytesize", "length", "c"])) do |program|
-          {x: TypeNode.new(program.string)}
+      describe "#instance_vars" do
+        it "executes instance_vars" do
+          assert_macro("{{x.instance_vars.map &.stringify}}", %(["bytesize", "length", "c"])) do |program|
+            {x: TypeNode.new(program.string)}
+          end
+        end
+
+        it "errors when called from top-level scope" do
+          assert_error <<-CRYSTAL, "`TypeNode#instance_vars` cannot be called in the top-level scope: instance vars are not yet initialized"
+            class Foo
+            end
+            {{ Foo.instance_vars }}
+          CRYSTAL
+        end
+
+        it "does not error when called from def scope" do
+          assert_type <<-CRYSTAL { |program| program.string }
+            module Moo
+            end
+            def moo
+              {{ Moo.instance_vars.stringify }}
+            end
+            moo
+          CRYSTAL
         end
       end
 
@@ -2337,6 +2397,141 @@ module Crystal
           {x: TypeNode.new(program.int32)}
         end
       end
+
+      describe "executes private?" do
+        it false do
+          assert_macro("{{x.private?}}", "false") do |program|
+            klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+
+            {x: TypeNode.new(klass)}
+          end
+        end
+
+        it true do
+          assert_macro("{{x.private?}}", "true") do |program|
+            klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+            klass.private = true
+
+            {x: TypeNode.new(klass)}
+          end
+        end
+      end
+
+      describe "public?" do
+        it false do
+          assert_macro("{{x.public?}}", "false") do |program|
+            klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+            klass.private = true
+
+            {x: TypeNode.new(klass)}
+          end
+        end
+
+        it true do
+          assert_macro("{{x.public?}}", "true") do |program|
+            klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+
+            {x: TypeNode.new(klass)}
+          end
+        end
+      end
+
+      describe "visibility" do
+        it :public do
+          assert_macro("{{x.visibility}}", ":public") do |program|
+            klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+
+            {x: TypeNode.new(klass)}
+          end
+        end
+
+        it :private do
+          assert_macro("{{x.visibility}}", ":private") do |program|
+            klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+            klass.private = true
+
+            {x: TypeNode.new(klass)}
+          end
+        end
+      end
+
+      describe "#has_inner_pointers?" do
+        it "works on structs" do
+          assert_macro("{{x.has_inner_pointers?}}", %(false)) do |program|
+            klass = NonGenericClassType.new(program, program, "SomeType", program.struct)
+            klass.struct = true
+            klass.declare_instance_var("@var", program.int32)
+            {x: TypeNode.new(klass)}
+          end
+
+          assert_macro("{{x.has_inner_pointers?}}", %(true)) do |program|
+            klass = NonGenericClassType.new(program, program, "SomeType", program.struct)
+            klass.struct = true
+            klass.declare_instance_var("@var", program.string)
+            {x: TypeNode.new(klass)}
+          end
+        end
+
+        it "works on references" do
+          assert_macro("{{x.has_inner_pointers?}}", %(true)) do |program|
+            klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+            {x: TypeNode.new(klass)}
+          end
+        end
+
+        it "works on ReferenceStorage" do
+          assert_macro("{{x.has_inner_pointers?}}", %(false)) do |program|
+            reference_storage = GenericReferenceStorageType.new program, program, "ReferenceStorage", program.struct, ["T"]
+            klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+            klass.declare_instance_var("@var", program.int32)
+            {x: TypeNode.new(reference_storage.instantiate([klass] of TypeVar))}
+          end
+
+          assert_macro("{{x.has_inner_pointers?}}", %(true)) do |program|
+            reference_storage = GenericReferenceStorageType.new program, program, "ReferenceStorage", program.struct, ["T"]
+            klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+            klass.declare_instance_var("@var", program.string)
+            {x: TypeNode.new(reference_storage.instantiate([klass] of TypeVar))}
+          end
+        end
+
+        it "works on primitive values" do
+          assert_macro("{{x.has_inner_pointers?}}", %(false)) do |program|
+            {x: TypeNode.new(program.int32)}
+          end
+
+          assert_macro("{{x.has_inner_pointers?}}", %(true)) do |program|
+            {x: TypeNode.new(program.void)}
+          end
+
+          assert_macro("{{x.has_inner_pointers?}}", %(true)) do |program|
+            {x: TypeNode.new(program.pointer_of(program.int32))}
+          end
+
+          assert_macro("{{x.has_inner_pointers?}}", %(true)) do |program|
+            {x: TypeNode.new(program.proc_of(program.void))}
+          end
+        end
+
+        it "errors when called from top-level scope" do
+          assert_error <<-CRYSTAL, "`TypeNode#has_inner_pointers?` cannot be called in the top-level scope: instance vars are not yet initialized"
+            class Foo
+            end
+            {{ Foo.has_inner_pointers? }}
+          CRYSTAL
+        end
+
+        it "does not error when called from def scope" do
+          assert_type <<-CRYSTAL { |program| program.bool }
+            module Moo
+            end
+            def moo
+              {{ Moo.has_inner_pointers? }}
+            end
+            moo
+          CRYSTAL
+        end
+      end
     end
 
     describe "type declaration methods" do
@@ -2505,6 +2700,14 @@ module Crystal
       end
     end
 
+    describe External do
+      it "executes is_a?" do
+        assert_macro %({{x.is_a?(External)}}), "true", {x: External.new("foo", [] of Arg, Nop.new, "foo")}
+        assert_macro %({{x.is_a?(Def)}}), "true", {x: External.new("foo", [] of Arg, Nop.new, "foo")}
+        assert_macro %({{x.is_a?(ASTNode)}}), "true", {x: External.new("foo", [] of Arg, Nop.new, "foo")}
+      end
+    end
+
     describe Primitive do
       it "executes name" do
         assert_macro %({{x.name}}), %(:abc), {x: Primitive.new("abc")}
@@ -2546,6 +2749,17 @@ module Crystal
       end
     end
 
+    describe MacroExpression do
+      it "executes exp" do
+        assert_macro %({{x.exp}}), "nil", {x: MacroExpression.new(NilLiteral.new)}
+      end
+
+      it "executes output?" do
+        assert_macro %({{x.output?}}), "false", {x: MacroExpression.new(NilLiteral.new, output: false)}
+        assert_macro %({{x.output?}}), "true", {x: MacroExpression.new(1.int32, output: true)}
+      end
+    end
+
     describe "macro if methods" do
       it "executes cond" do
         assert_macro %({{x.cond}}), "true", {x: MacroIf.new(BoolLiteral.new(true), NilLiteral.new)}
@@ -2558,19 +2772,42 @@ module Crystal
       it "executes else" do
         assert_macro %({{x.else}}), "\"foo\"", {x: MacroIf.new(BoolLiteral.new(true), StringLiteral.new("test"), StringLiteral.new("foo"))}
       end
+
+      it "executes is_unless?" do
+        assert_macro %({{x.is_unless?}}), "true", {x: MacroIf.new(BoolLiteral.new(true), StringLiteral.new("test"), StringLiteral.new("foo"), is_unless: true)}
+        assert_macro %({{x.is_unless?}}), "false", {x: MacroIf.new(BoolLiteral.new(false), StringLiteral.new("test"), StringLiteral.new("foo"), is_unless: false)}
+      end
     end
 
     describe "macro for methods" do
       it "executes vars" do
-        assert_macro %({{x.vars}}), "[bar]", {x: MacroFor.new([Var.new("bar")], Var.new("foo"), Call.new(nil, "puts", [Var.new("bar")] of ASTNode))}
+        assert_macro %({{x.vars}}), "[bar]", {x: MacroFor.new([Var.new("bar")], Var.new("foo"), Call.new("puts", [Var.new("bar")] of ASTNode))}
       end
 
       it "executes exp" do
-        assert_macro %({{x.exp}}), "foo", {x: MacroFor.new([Var.new("bar")], Var.new("foo"), Call.new(nil, "puts", [Var.new("bar")] of ASTNode))}
+        assert_macro %({{x.exp}}), "foo", {x: MacroFor.new([Var.new("bar")], Var.new("foo"), Call.new("puts", [Var.new("bar")] of ASTNode))}
       end
 
       it "executes body" do
-        assert_macro %({{x.body}}), "puts(bar)", {x: MacroFor.new([Var.new("bar")], Var.new("foo"), Call.new(nil, "puts", [Var.new("bar")] of ASTNode))}
+        assert_macro %({{x.body}}), "puts(bar)", {x: MacroFor.new([Var.new("bar")], Var.new("foo"), Call.new("puts", [Var.new("bar")] of ASTNode))}
+      end
+    end
+
+    describe MacroLiteral do
+      it "executes value" do
+        assert_macro %({{x.value}}), "foo(1)", {x: MacroLiteral.new("foo(1)")}
+        assert_macro %({{x.value}}), "", {x: MacroLiteral.new("")}
+      end
+    end
+
+    describe MacroVar do
+      it "executes name" do
+        assert_macro %({{x.name}}), "foo", {x: MacroVar.new("foo")}
+      end
+
+      it "executes expressions" do
+        assert_macro %({{x.expressions}}), "[] of ::NoReturn", {x: MacroVar.new("foo")}
+        assert_macro %({{x.expressions}}), "[x, 1]", {x: MacroVar.new("bar", [Var.new("x"), 1.int32] of ASTNode)}
       end
     end
 
@@ -2701,7 +2938,7 @@ module Crystal
       end
 
       it "executes args" do
-        assert_macro %({{x.args}}), "[1, 3]", {x: Call.new(nil, "some_call", [1.int32, 3.int32] of ASTNode)}
+        assert_macro %({{x.args}}), "[1, 3]", {x: Call.new("some_call", [1.int32, 3.int32] of ASTNode)}
       end
 
       it "executes receiver" do
@@ -2734,7 +2971,7 @@ module Crystal
 
       it "executes global?" do
         assert_macro %({{x.global?}}), "false", {x: Call.new(1.int32, "some_call")}
-        assert_macro %({{x.global?}}), "true", {x: Call.new(nil, "some_call", global: true)}
+        assert_macro %({{x.global?}}), "true", {x: Call.new("some_call", global: true)}
       end
     end
 
@@ -2835,6 +3072,19 @@ module Crystal
         it "executes exhaustive?" do
           assert_macro %({{x.exhaustive?}}), "true", {x: case_node}
         end
+      end
+    end
+
+    describe Select do
+      it "executes whens" do
+        assert_macro %({{x.whens}}), "[when foo\n  1\n]", {x: Select.new([When.new("foo".call, 1.int32)])}
+        assert_macro %({{x.whens}}), "[when x = y\n  1\n, when bar\n]", {x: Select.new([When.new(Assign.new("x".var, "y".var), 1.int32), When.new("bar".call)])}
+      end
+
+      it "executes else" do
+        assert_macro %({{x.else}}), "", {x: Select.new([When.new("foo".call)])}
+        assert_macro %({{x.else}}), "1", {x: Select.new([When.new("foo".call)], 1.int32)}
+        assert_macro %({{x.else}}), "nil", {x: Select.new([When.new("foo".call)], NilLiteral.new)}
       end
     end
 
@@ -3695,7 +3945,7 @@ module Crystal
         assert_error <<-CRYSTAL,
           {{read_file("#{__DIR__}/../data/build_foo")}}
           CRYSTAL
-          "No such file or directory"
+          "Error opening file with mode 'r'"
       end
     end
 
@@ -3710,7 +3960,7 @@ module Crystal
         assert_error <<-CRYSTAL,
           {{read_file("spec/compiler/data/build_foo")}}
           CRYSTAL
-          "No such file or directory"
+          "Error opening file with mode 'r'"
       end
     end
   end

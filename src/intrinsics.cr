@@ -4,45 +4,57 @@ lib LibIntrinsics
   {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_debugtrap)] {% end %}
   fun debugtrap = "llvm.debugtrap"
 
-  {% if flag?(:bits64) %}
+  {% if flag?(:avr) %}
     {% if compare_versions(Crystal::LLVM_VERSION, "15.0.0") < 0 %}
-      {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memcpy)] {% end %}
-      fun memcpy = "llvm.memcpy.p0i8.p0i8.i64"(dest : Void*, src : Void*, len : UInt64, is_volatile : Bool)
-
-      {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memmove)] {% end %}
-      fun memmove = "llvm.memmove.p0i8.p0i8.i64"(dest : Void*, src : Void*, len : UInt64, is_volatile : Bool)
-
-      {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memset)] {% end %}
-      fun memset = "llvm.memset.p0i8.i64"(dest : Void*, val : UInt8, len : UInt64, is_volatile : Bool)
+      fun memcpy = "llvm.memcpy.p0i8.p0i8.i16"(dest : Void*, src : Void*, len : UInt16, is_volatile : Bool)
+      fun memmove = "llvm.memmove.p0i8.p0i8.i16"(dest : Void*, src : Void*, len : UInt16, is_volatile : Bool)
+      fun memset = "llvm.memset.p0i8.i16"(dest : Void*, val : UInt8, len : UInt16, is_volatile : Bool)
     {% else %}
-      {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memcpy)] {% end %}
-      fun memcpy = "llvm.memcpy.p0.p0.i64"(dest : Void*, src : Void*, len : UInt64, is_volatile : Bool)
-
-      {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memmove)] {% end %}
-      fun memmove = "llvm.memmove.p0.p0.i64"(dest : Void*, src : Void*, len : UInt64, is_volatile : Bool)
-
-      {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memset)] {% end %}
-      fun memset = "llvm.memset.p0.i64"(dest : Void*, val : UInt8, len : UInt64, is_volatile : Bool)
+      fun memcpy = "llvm.memcpy.p0.p0.i16"(dest : Void*, src : Void*, len : UInt16, is_volatile : Bool)
+      fun memmove = "llvm.memmove.p0.p0.i16"(dest : Void*, src : Void*, len : UInt16, is_volatile : Bool)
+      fun memset = "llvm.memset.p0.i16"(dest : Void*, val : UInt8, len : UInt16, is_volatile : Bool)
     {% end %}
   {% else %}
-    {% if compare_versions(Crystal::LLVM_VERSION, "15.0.0") < 0 %}
-      {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memcpy)] {% end %}
-      fun memcpy = "llvm.memcpy.p0i8.p0i8.i32"(dest : Void*, src : Void*, len : UInt32, is_volatile : Bool)
+    {% if flag?(:bits64) %}
+      {% if compare_versions(Crystal::LLVM_VERSION, "15.0.0") < 0 %}
+        {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memcpy)] {% end %}
+        fun memcpy = "llvm.memcpy.p0i8.p0i8.i64"(dest : Void*, src : Void*, len : UInt64, is_volatile : Bool)
 
-      {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memmove)] {% end %}
-      fun memmove = "llvm.memmove.p0i8.p0i8.i32"(dest : Void*, src : Void*, len : UInt32, is_volatile : Bool)
+        {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memmove)] {% end %}
+        fun memmove = "llvm.memmove.p0i8.p0i8.i64"(dest : Void*, src : Void*, len : UInt64, is_volatile : Bool)
 
-      {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memset)] {% end %}
-      fun memset = "llvm.memset.p0i8.i32"(dest : Void*, val : UInt8, len : UInt32, is_volatile : Bool)
+        {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memset)] {% end %}
+        fun memset = "llvm.memset.p0i8.i64"(dest : Void*, val : UInt8, len : UInt64, is_volatile : Bool)
+      {% else %}
+        {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memcpy)] {% end %}
+        fun memcpy = "llvm.memcpy.p0.p0.i64"(dest : Void*, src : Void*, len : UInt64, is_volatile : Bool)
+
+        {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memmove)] {% end %}
+        fun memmove = "llvm.memmove.p0.p0.i64"(dest : Void*, src : Void*, len : UInt64, is_volatile : Bool)
+
+        {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memset)] {% end %}
+        fun memset = "llvm.memset.p0.i64"(dest : Void*, val : UInt8, len : UInt64, is_volatile : Bool)
+      {% end %}
     {% else %}
-      {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memcpy)] {% end %}
-      fun memcpy = "llvm.memcpy.p0.p0.i32"(dest : Void*, src : Void*, len : UInt32, is_volatile : Bool)
+      {% if compare_versions(Crystal::LLVM_VERSION, "15.0.0") < 0 %}
+        {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memcpy)] {% end %}
+        fun memcpy = "llvm.memcpy.p0i8.p0i8.i32"(dest : Void*, src : Void*, len : UInt32, is_volatile : Bool)
 
-      {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memmove)] {% end %}
-      fun memmove = "llvm.memmove.p0.p0.i32"(dest : Void*, src : Void*, len : UInt32, is_volatile : Bool)
+        {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memmove)] {% end %}
+        fun memmove = "llvm.memmove.p0i8.p0i8.i32"(dest : Void*, src : Void*, len : UInt32, is_volatile : Bool)
 
-      {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memset)] {% end %}
-      fun memset = "llvm.memset.p0.i32"(dest : Void*, val : UInt8, len : UInt32, is_volatile : Bool)
+        {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memset)] {% end %}
+        fun memset = "llvm.memset.p0i8.i32"(dest : Void*, val : UInt8, len : UInt32, is_volatile : Bool)
+      {% else %}
+        {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memcpy)] {% end %}
+        fun memcpy = "llvm.memcpy.p0.p0.i32"(dest : Void*, src : Void*, len : UInt32, is_volatile : Bool)
+
+        {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memmove)] {% end %}
+        fun memmove = "llvm.memmove.p0.p0.i32"(dest : Void*, src : Void*, len : UInt32, is_volatile : Bool)
+
+        {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memset)] {% end %}
+        fun memset = "llvm.memset.p0.i32"(dest : Void*, val : UInt8, len : UInt32, is_volatile : Bool)
+      {% end %}
     {% end %}
   {% end %}
 
@@ -151,8 +163,13 @@ lib LibIntrinsics
   {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_fshr128)] {% end %}
   fun fshr128 = "llvm.fshr.i128"(a : UInt128, b : UInt128, count : UInt128) : UInt128
 
-  fun va_start = "llvm.va_start"(ap : Void*)
-  fun va_end = "llvm.va_end"(ap : Void*)
+  {% if compare_versions(Crystal::LLVM_VERSION, "19.1.0") < 0 %}
+    fun va_start = "llvm.va_start"(ap : Void*)
+    fun va_end = "llvm.va_end"(ap : Void*)
+  {% else %}
+    fun va_start = "llvm.va_start.p0"(ap : Void*)
+    fun va_end = "llvm.va_end.p0"(ap : Void*)
+  {% end %}
 
   {% if flag?(:i386) || flag?(:x86_64) %}
     {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_pause)] {% end %}
@@ -167,7 +184,7 @@ end
 
 module Intrinsics
   macro debugtrap
-    LibIntrinsics.debugtrap
+    ::LibIntrinsics.debugtrap
   end
 
   def self.pause
@@ -179,15 +196,15 @@ module Intrinsics
   end
 
   macro memcpy(dest, src, len, is_volatile)
-    LibIntrinsics.memcpy({{dest}}, {{src}}, {{len}}, {{is_volatile}})
+    ::LibIntrinsics.memcpy({{dest}}, {{src}}, {{len}}, {{is_volatile}})
   end
 
   macro memmove(dest, src, len, is_volatile)
-    LibIntrinsics.memmove({{dest}}, {{src}}, {{len}}, {{is_volatile}})
+    ::LibIntrinsics.memmove({{dest}}, {{src}}, {{len}}, {{is_volatile}})
   end
 
   macro memset(dest, val, len, is_volatile)
-    LibIntrinsics.memset({{dest}}, {{val}}, {{len}}, {{is_volatile}})
+    ::LibIntrinsics.memset({{dest}}, {{val}}, {{len}}, {{is_volatile}})
   end
 
   def self.read_cycle_counter
@@ -251,43 +268,43 @@ module Intrinsics
   end
 
   macro countleading8(src, zero_is_undef)
-    LibIntrinsics.countleading8({{src}}, {{zero_is_undef}})
+    ::LibIntrinsics.countleading8({{src}}, {{zero_is_undef}})
   end
 
   macro countleading16(src, zero_is_undef)
-    LibIntrinsics.countleading16({{src}}, {{zero_is_undef}})
+    ::LibIntrinsics.countleading16({{src}}, {{zero_is_undef}})
   end
 
   macro countleading32(src, zero_is_undef)
-    LibIntrinsics.countleading32({{src}}, {{zero_is_undef}})
+    ::LibIntrinsics.countleading32({{src}}, {{zero_is_undef}})
   end
 
   macro countleading64(src, zero_is_undef)
-    LibIntrinsics.countleading64({{src}}, {{zero_is_undef}})
+    ::LibIntrinsics.countleading64({{src}}, {{zero_is_undef}})
   end
 
   macro countleading128(src, zero_is_undef)
-    LibIntrinsics.countleading128({{src}}, {{zero_is_undef}})
+    ::LibIntrinsics.countleading128({{src}}, {{zero_is_undef}})
   end
 
   macro counttrailing8(src, zero_is_undef)
-    LibIntrinsics.counttrailing8({{src}}, {{zero_is_undef}})
+    ::LibIntrinsics.counttrailing8({{src}}, {{zero_is_undef}})
   end
 
   macro counttrailing16(src, zero_is_undef)
-    LibIntrinsics.counttrailing16({{src}}, {{zero_is_undef}})
+    ::LibIntrinsics.counttrailing16({{src}}, {{zero_is_undef}})
   end
 
   macro counttrailing32(src, zero_is_undef)
-    LibIntrinsics.counttrailing32({{src}}, {{zero_is_undef}})
+    ::LibIntrinsics.counttrailing32({{src}}, {{zero_is_undef}})
   end
 
   macro counttrailing64(src, zero_is_undef)
-    LibIntrinsics.counttrailing64({{src}}, {{zero_is_undef}})
+    ::LibIntrinsics.counttrailing64({{src}}, {{zero_is_undef}})
   end
 
   macro counttrailing128(src, zero_is_undef)
-    LibIntrinsics.counttrailing128({{src}}, {{zero_is_undef}})
+    ::LibIntrinsics.counttrailing128({{src}}, {{zero_is_undef}})
   end
 
   def self.fshl8(a, b, count) : UInt8
@@ -331,14 +348,40 @@ module Intrinsics
   end
 
   macro va_start(ap)
-    LibIntrinsics.va_start({{ap}})
+    ::LibIntrinsics.va_start({{ap}})
   end
 
   macro va_end(ap)
-    LibIntrinsics.va_end({{ap}})
+    ::LibIntrinsics.va_end({{ap}})
+  end
+
+  # Should codegen to the following LLVM IR (before being inlined):
+  # ```
+  # define internal void @"*Intrinsics::unreachable:NoReturn"() #12 {
+  # entry:
+  #   unreachable
+  # }
+  # ```
+  #
+  # Can be used like `@llvm.assume(i1 cond)` as `unreachable unless (assumption)`.
+  #
+  # WARNING: the behaviour of the program is undefined if the assumption is broken!
+  @[AlwaysInline]
+  def self.unreachable : NoReturn
+    x = uninitialized NoReturn
+    x
   end
 end
 
+# Invokes an execution trap to catch the attention of a debugger. This has the
+# same effect as placing a breakpoint in debuggers or IDEs supporting them.
+#
+# Execution is allowed to continue if the debugger instructs so. If no debugger
+# is attached, usually the current process terminates with a status that
+# corresponds to `Process::ExitReason::Breakpoint`.
+#
+# Inside an interpreter session, this drops into the REPL's pry mode instead of
+# a system debugger.
 macro debugger
-  Intrinsics.debugtrap
+  ::Intrinsics.debugtrap
 end

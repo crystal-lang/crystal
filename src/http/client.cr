@@ -343,9 +343,9 @@ class HTTP::Client
   # ```
   setter connect_timeout : Time::Span?
 
-  # **This method has no effect right now**
-  #
   # Sets the number of seconds to wait when resolving a name, before raising an `IO::TimeoutError`.
+  #
+  # NOTE: *dns_timeout* is currently only supported on Windows.
   #
   # ```
   # require "http/client"
@@ -363,9 +363,9 @@ class HTTP::Client
     self.dns_timeout = dns_timeout.seconds
   end
 
-  # **This method has no effect right now**
-  #
   # Sets the number of seconds to wait when resolving a name with a `Time::Span`, before raising an `IO::TimeoutError`.
+  #
+  # NOTE: *dns_timeout* is currently only supported on Windows.
   #
   # ```
   # require "http/client"

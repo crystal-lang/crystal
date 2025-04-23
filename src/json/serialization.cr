@@ -164,7 +164,7 @@ module JSON
       private def self.new_from_json_pull_parser(pull : ::JSON::PullParser)
         instance = allocate
         instance.initialize(__pull_for_json_serializable: pull)
-        GC.add_finalizer(instance) if instance.responds_to?(:finalize)
+        ::GC.add_finalizer(instance) if instance.responds_to?(:finalize)
         instance
       end
 
@@ -422,8 +422,8 @@ module JSON
         # Try to find the discriminator while also getting the raw
         # string value of the parsed JSON, so then we can pass it
         # to the final type.
-        json = String.build do |io|
-          JSON.build(io) do |builder|
+        json = ::String.build do |io|
+          ::JSON.build(io) do |builder|
             builder.start_object
             pull.read_object do |key|
               if key == {{field.id.stringify}}
@@ -448,7 +448,7 @@ module JSON
           end
         end
 
-        unless discriminator_value
+        if discriminator_value.nil?
           raise ::JSON::SerializableError.new("Missing JSON discriminator field '{{field.id}}'", to_s, nil, *location, nil)
         end
 

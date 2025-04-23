@@ -609,4 +609,8 @@ describe XML do
       end.should eq %[<foo><bar/></foo>\n]
     end
   end
+
+  it ".libxml2_version" do
+    XML.libxml2_version.should match /2\.\d+\.\d+/
+  end
 end

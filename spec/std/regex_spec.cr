@@ -250,6 +250,13 @@ describe "Regex" do
         end
       end
 
+      describe "multiline_only" do
+        it "anchor" do
+          ((/^foo.*$/m).match("foo\nbar")).try(&.[](0)).should eq "foo\nbar"
+          ((Regex.new("^foo.*?", Regex::Options::MULTILINE_ONLY)).match("foo\nbar")).try(&.[](0)).should eq "foo"
+        end
+      end
+
       describe "extended" do
         it "ignores white space" do
           /foo   bar/.matches?("foobar").should be_false
@@ -426,7 +433,7 @@ describe "Regex" do
       })
     end
 
-    it "alpanumeric" do
+    it "alphanumeric" do
       /(?<f1>)/.name_table.should eq({1 => "f1"})
     end
 
@@ -449,15 +456,29 @@ describe "Regex" do
   end
 
   describe "#inspect" do
-    it "with options" do
-      /foo/.inspect.should eq("/foo/")
-      /foo/im.inspect.should eq("/foo/im")
-      /foo/imx.inspect.should eq("/foo/imx")
+    context "with literal-compatible options" do
+      it "prints flags" do
+        /foo/.inspect.should eq("/foo/")
+        /foo/im.inspect.should eq("/foo/im")
+        /foo/imx.inspect.should eq("/foo/imx")
+      end
+
+      it "escapes" do
+        %r(/).inspect.should eq("/\\//")
+        %r(\/).inspect.should eq("/\\//")
+      end
     end
 
-    it "escapes" do
-      %r(/).inspect.should eq("/\\//")
-      %r(\/).inspect.should eq("/\\//")
+    context "with non-literal-compatible options" do
+      it "prints flags" do
+        Regex.new("foo", :anchored).inspect.should eq %(Regex.new("foo", Regex::Options::ANCHORED))
+        Regex.new("foo", :no_utf_check).inspect.should eq %(Regex.new("foo", Regex::Options::NO_UTF8_CHECK))
+        Regex.new("foo", Regex::CompileOptions[IGNORE_CASE, ANCHORED]).inspect.should eq %(Regex.new("foo", Regex::Options[IGNORE_CASE, ANCHORED]))
+      end
+
+      it "escapes" do
+        Regex.new(%("), :anchored).inspect.should eq %(Regex.new("\\"", Regex::Options::ANCHORED))
+      end
     end
   end
 

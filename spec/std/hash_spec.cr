@@ -1393,16 +1393,26 @@ describe "Hash" do
     hash.@indices_size_pow2.should eq(12)
   end
 
-  it "rehashes" do
-    a = [1]
-    h = {a => 0}
-    (10..100).each do |i|
-      h[[i]] = i
+  describe "#rehash" do
+    it "rehashes" do
+      a = [1]
+      h = {a => 0}
+      (10..100).each do |i|
+        h[[i]] = i
+      end
+      a << 2
+      h[a]?.should be_nil
+      h.rehash
+      h[a].should eq(0)
     end
-    a << 2
-    h[a]?.should be_nil
-    h.rehash
-    h[a].should eq(0)
+
+    it "resets @first (#14602)" do
+      h = {"a" => 1, "b" => 2}
+      h.delete("a")
+      h.rehash
+      # We cannot test direct equivalence here because `Hash#==(Hash)` does not depend on `@first`
+      h.to_s.should eq %({"b" => 2})
+    end
   end
 
   describe "some edge cases while changing the implementation to open addressing" do

@@ -1,4 +1,6 @@
 lib LibC
+  fun ___errno : Int*
+
   E2BIG           =   7
   EACCES          =  13
   EADDRINUSE      = 125

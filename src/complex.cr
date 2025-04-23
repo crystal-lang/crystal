@@ -237,14 +237,28 @@ struct Complex
 
   # Divides `self` by *other*.
   def /(other : Complex) : Complex
-    if other.real <= other.imag
-      r = other.real / other.imag
-      d = other.imag + r * other.real
-      Complex.new((@real * r + @imag) / d, (@imag * r - @real) / d)
-    else
+    if other.real.nan? || other.imag.nan?
+      Complex.new(Float64::NAN, Float64::NAN)
+    elsif other.imag.abs < other.real.abs
       r = other.imag / other.real
       d = other.real + r * other.imag
-      Complex.new((@real + @imag * r) / d, (@imag - @real * r) / d)
+
+      if d.nan? || d == 0
+        Complex.new(Float64::NAN, Float64::NAN)
+      else
+        Complex.new((@real + @imag * r) / d, (@imag - @real * r) / d)
+      end
+    elsif other.imag == 0 # other.real == 0
+      Complex.new(@real / other.real, @imag / other.real)
+    else # 0 < other.real.abs <= other.imag.abs
+      r = other.real / other.imag
+      d = other.imag + r * other.real
+
+      if d.nan? || d == 0
+        Complex.new(Float64::NAN, Float64::NAN)
+      else
+        Complex.new((@real * r + @imag) / d, (@imag * r - @real) / d)
+      end
     end
   end
 
@@ -298,10 +312,12 @@ struct Complex
 end
 
 struct Number
+  # Returns a `Complex` object with the value of `self` as the real part.
   def to_c : Complex
     Complex.new(self, 0)
   end
 
+  # Returns a `Complex` object with the value of `self` as the imaginary part.
   def i : Complex
     Complex.new(0, self)
   end
@@ -310,6 +326,9 @@ struct Number
     other == self
   end
 
+  # [Cis](https://en.wikipedia.org/wiki/Cis_(mathematics)) is a mathematical notation representing `cos x + i sin x`.
+  #
+  # Returns a `Complex` object with real part `Math.cos(self)` and imaginary part `Math.sin(self)`, where `self` represents the angle in radians.
   def cis : Complex
     Complex.new(Math.cos(self), Math.sin(self))
   end

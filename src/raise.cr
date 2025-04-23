@@ -1,5 +1,6 @@
 require "c/stdio"
 require "c/stdlib"
+require "crystal/system/print_error"
 require "exception/call_stack"
 
 Exception::CallStack.skip(__FILE__)
@@ -91,7 +92,7 @@ end
 
 {% if flag?(:interpreted) %}
   # interpreter does not need `__crystal_personality`
-{% elsif flag?(:win32) %}
+{% elsif flag?(:win32) && !flag?(:gnu) %}
   require "exception/lib_unwind"
 
   {% begin %}
@@ -181,8 +182,11 @@ end
     0u64
   end
 {% else %}
+  {% mingw = flag?(:win32) && flag?(:gnu) %}
   # :nodoc:
-  fun __crystal_personality(version : Int32, actions : LibUnwind::Action, exception_class : UInt64, exception_object : LibUnwind::Exception*, context : Void*) : LibUnwind::ReasonCode
+  fun {{ mingw ? "__crystal_personality_imp".id : "__crystal_personality".id }}(
+    version : Int32, actions : LibUnwind::Action, exception_class : UInt64, exception_object : LibUnwind::Exception*, context : Void*,
+  ) : LibUnwind::ReasonCode
     start = LibUnwind.get_region_start(context)
     ip = LibUnwind.get_ip(context)
     lsd = LibUnwind.get_language_specific_data(context)
@@ -197,9 +201,28 @@ end
 
     return LibUnwind::ReasonCode::CONTINUE_UNWIND
   end
+
+  {% if mingw %}
+    lib LibC
+      alias EXCEPTION_DISPOSITION = Int
+      alias DISPATCHER_CONTEXT = Void
+    end
+
+    # :nodoc:
+    lib LibUnwind
+      alias PersonalityFn = Int32, Action, UInt64, Exception*, Void* -> ReasonCode
+
+      fun _GCC_specific_handler(ms_exc : LibC::EXCEPTION_RECORD64*, this_frame : Void*, ms_orig_context : LibC::CONTEXT*, ms_disp : LibC::DISPATCHER_CONTEXT*, gcc_per : PersonalityFn) : LibC::EXCEPTION_DISPOSITION
+    end
+
+    # :nodoc:
+    fun __crystal_personality(ms_exc : LibC::EXCEPTION_RECORD64*, this_frame : Void*, ms_orig_context : LibC::CONTEXT*, ms_disp : LibC::DISPATCHER_CONTEXT*) : LibC::EXCEPTION_DISPOSITION
+      LibUnwind._GCC_specific_handler(ms_exc, this_frame, ms_orig_context, ms_disp, ->__crystal_personality_imp)
+    end
+  {% end %}
 {% end %}
 
-{% unless flag?(:interpreted) || flag?(:win32) || flag?(:wasm32) %}
+{% unless flag?(:interpreted) || (flag?(:win32) && !flag?(:gnu)) || flag?(:wasm32) %}
   # :nodoc:
   @[Raises]
   fun __crystal_raise(unwind_ex : LibUnwind::Exception*) : NoReturn
@@ -244,7 +267,7 @@ def raise(message : String) : NoReturn
   raise Exception.new(message)
 end
 
-{% if flag?(:win32) %}
+{% if flag?(:win32) && !flag?(:gnu) %}
   # :nodoc:
   {% if flag?(:interpreted) %} @[Primitive(:interpreter_raise_without_backtrace)] {% end %}
   def raise_without_backtrace(exception : Exception) : NoReturn
@@ -274,6 +297,7 @@ fun __crystal_raise_overflow : NoReturn
 end
 
 {% if flag?(:interpreted) %}
+  # :nodoc:
   def __crystal_raise_cast_failed(obj, type_name : String, location : String)
     raise TypeCastError.new("Cast from #{obj.class} to #{type_name} failed, at #{location}")
   end

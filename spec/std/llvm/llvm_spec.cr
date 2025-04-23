@@ -1,14 +1,11 @@
 require "spec"
-
-{% if flag?(:interpreted) && !flag?(:win32) %}
-  # TODO: figure out how to link against libstdc++ in interpreted code (#14398)
-  pending LLVM
-  {% skip_file %}
-{% end %}
-
 require "llvm"
 
 describe LLVM do
+  it ".version" do
+    LLVM.version.should eq LibLLVM::VERSION
+  end
+
   describe ".normalize_triple" do
     it "works" do
       LLVM.normalize_triple("x86_64-apple-macos").should eq("x86_64-apple-macos")
@@ -22,7 +19,7 @@ describe LLVM do
   it ".default_target_triple" do
     triple = LLVM.default_target_triple
     {% if flag?(:darwin) %}
-      triple.should match(/-apple-macosx$/)
+      triple.should match(/-apple-(darwin|macosx)/)
     {% elsif flag?(:android) %}
       triple.should match(/-android$/)
     {% elsif flag?(:linux) %}

@@ -58,6 +58,25 @@ describe StringPool do
     pool.size.should eq(1)
   end
 
+  it "#get?" do
+    pool = StringPool.new
+    str = "foo"
+
+    pool.get?(str).should be_nil
+    pool.get?(str.to_slice).should be_nil
+    pool.get?(str.to_unsafe, str.bytesize).should be_nil
+    pool.get?(IO::Memory.new(str)).should be_nil
+
+    s = pool.get(str)
+
+    pool.get?(str).should be(s)
+    pool.get?(str.to_slice).should be(s)
+    pool.get?(str.to_unsafe, str.bytesize).should be(s)
+    pool.get?(IO::Memory.new(str)).should be(s)
+
+    pool.size.should eq(1)
+  end
+
   it "puts many" do
     pool = StringPool.new
     10_000.times do |i|

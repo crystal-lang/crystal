@@ -114,77 +114,24 @@ module Crystal
       default_paths.join(Process::PATH_DELIMITER)
     end
 
-    def self.default_rpath : String
-      # do not call `CrystalPath.expand_paths`, as `$ORIGIN` inside this env
-      # variable is always expanded at run time
-      ENV.fetch("CRYSTAL_LIBRARY_RPATH", "")
-    end
-
-    # Adds the compiler itself's RPATH to the environment for the duration of
-    # the block. `$ORIGIN` in the compiler's RPATH is expanded immediately, but
-    # `$ORIGIN`s in the existing environment variable are not expanded. For
-    # example, on Linux:
-    #
-    # - CRYSTAL_LIBRARY_RPATH of the compiler: `$ORIGIN/so`
-    # - Current $CRYSTAL_LIBRARY_RPATH: `/home/foo:$ORIGIN/mylibs`
-    # - Compiler's full path: `/opt/crystal`
-    # - Generated executable's Crystal::LIBRARY_RPATH: `/home/foo:$ORIGIN/mylibs:/opt/so`
-    #
-    # On Windows we additionally append the compiler's parent directory to the
-    # list, as if by appending `$ORIGIN` to the compiler's RPATH. This directory
-    # is effectively the first search entry on any Windows executable. Example:
-    #
-    # - CRYSTAL_LIBRARY_RPATH of the compiler: `$ORIGIN\dll`
-    # - Current %CRYSTAL_LIBRARY_RPATH%: `C:\bar;$ORIGIN\mylibs`
-    # - Compiler's full path: `C:\foo\crystal.exe`
-    # - Generated executable's Crystal::LIBRARY_RPATH: `C:\bar;$ORIGIN\mylibs;C:\foo\dll;C:\foo`
-    #
-    # Combining RPATHs multiple times has no effect; the `CRYSTAL_LIBRARY_RPATH`
-    # environment variable at compiler startup is used, not really the "current"
-    # one. This can happen when running a program that also uses macro `run`s.
-    def self.add_compiler_rpath(&)
-      executable_path = Process.executable_path
-      compiler_origin = File.dirname(executable_path) if executable_path
-
-      current_rpaths = ORIGINAL_CRYSTAL_LIBRARY_RPATH.try &.split(Process::PATH_DELIMITER, remove_empty: true)
-      compiler_rpaths = Crystal::LIBRARY_RPATH.split(Process::PATH_DELIMITER, remove_empty: true)
-      CrystalPath.expand_paths(compiler_rpaths, compiler_origin)
-
-      rpaths = compiler_rpaths
-      rpaths.concat(current_rpaths) if current_rpaths
-      {% if flag?(:win32) %}
-        rpaths << compiler_origin if compiler_origin
-      {% end %}
-
-      old_env = ENV["CRYSTAL_LIBRARY_RPATH"]?
-      ENV["CRYSTAL_LIBRARY_RPATH"] = rpaths.join(Process::PATH_DELIMITER)
-      begin
-        yield
-      ensure
-        ENV["CRYSTAL_LIBRARY_RPATH"] = old_env
-      end
-    end
-
-    private ORIGINAL_CRYSTAL_LIBRARY_RPATH = ENV["CRYSTAL_LIBRARY_RPATH"]?
-
     class_getter paths : Array(String) do
       default_paths
     end
   end
 
   class Program
-    def lib_flags
-      has_flag?("windows") ? lib_flags_windows : lib_flags_posix
+    def lib_flags(cross_compiling : Bool = false)
+      has_flag?("msvc") ? lib_flags_windows(cross_compiling) : lib_flags_posix(cross_compiling)
     end
 
-    private def lib_flags_windows
+    private def lib_flags_windows(cross_compiling)
       flags = [] of String
 
       # Add CRYSTAL_LIBRARY_PATH locations, so the linker preferentially
       # searches user-given library paths.
       if has_flag?("msvc")
         CrystalLibraryPath.paths.each do |path|
-          flags << Process.quote_windows("/LIBPATH:#{path}")
+          flags << quote_flag("/LIBPATH:#{path}", cross_compiling)
         end
       end
 
@@ -194,14 +141,14 @@ module Crystal
         end
 
         if libname = ann.lib
-          flags << Process.quote_windows("#{libname}.lib")
+          flags << quote_flag("#{libname}.lib", cross_compiling)
         end
       end
 
       flags.join(" ")
     end
 
-    private def lib_flags_posix
+    private def lib_flags_posix(cross_compiling)
       flags = [] of String
       static_build = has_flag?("static")
 
@@ -211,7 +158,7 @@ module Crystal
       # Add CRYSTAL_LIBRARY_PATH locations, so the linker preferentially
       # searches user-given library paths.
       CrystalLibraryPath.paths.each do |path|
-        flags << Process.quote_posix("-L#{path}")
+        flags << quote_flag("-L#{path}", cross_compiling)
       end
 
       link_annotations.reverse_each do |ann|
@@ -226,15 +173,23 @@ module Crystal
         elsif (lib_name = ann.lib) && (flag = pkg_config(lib_name, static_build))
           flags << flag
         elsif (lib_name = ann.lib)
-          flags << Process.quote_posix("-l#{lib_name}")
+          flags << quote_flag("-l#{lib_name}", cross_compiling)
         end
 
         if framework = ann.framework
-          flags << "-framework" << Process.quote_posix(framework)
+          flags << "-framework" << quote_flag(framework, cross_compiling)
         end
       end
 
       flags.join(" ")
+    end
+
+    private def quote_flag(flag, cross_compiling)
+      if cross_compiling
+        has_flag?("windows") ? Process.quote_windows(flag) : Process.quote_posix(flag)
+      else
+        Process.quote(flag)
+      end
     end
 
     # Searches among CRYSTAL_LIBRARY_PATH, the compiler's directory, and PATH
@@ -345,8 +300,6 @@ module Crystal
 
     private def add_link_annotations(types, annotations)
       types.try &.each_value do |type|
-        next if type.is_a?(AliasType) || type.is_a?(TypeDefType)
-
         if type.is_a?(LibType) && type.used? && (link_annotations = type.link_annotations)
           annotations.concat link_annotations
         end

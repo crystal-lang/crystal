@@ -2,6 +2,7 @@ class File < IO::FileDescriptor
 end
 
 require "./file/error"
+require "./file/match"
 require "crystal/system/file"
 
 # A `File` instance represents a file entry in the local file system and allows using it as an `IO`.
@@ -165,15 +166,15 @@ class File < IO::FileDescriptor
   # *blocking* must be set to `false` on POSIX targets when the file to open
   # isn't a regular file but a character device (e.g. `/dev/tty`) or fifo. These
   # files depend on another process or thread to also be reading or writing, and
-  # system event queues will properly report readyness.
+  # system event queues will properly report readiness.
   #
   # *blocking* may also be set to `nil` in which case the blocking or
   # non-blocking flag will be determined automatically, at the expense of an
   # additional syscall.
   def self.new(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, blocking = true)
     filename = filename.to_s
-    fd = Crystal::System::File.open(filename, mode, perm: perm)
-    new(filename, fd, blocking: blocking, encoding: encoding, invalid: invalid)
+    fd = Crystal::System::File.open(filename, mode, perm: perm, blocking: blocking)
+    new(filename, fd, blocking: blocking, encoding: encoding, invalid: invalid).tap { |f| f.system_set_mode(mode) }
   end
 
   getter path : String
@@ -288,6 +289,7 @@ class File < IO::FileDescriptor
   # File.write("foo", "foo")
   # File.readable?("foo") # => true
   # ```
+  @[Deprecated("Use `File::Info.readable?` instead")]
   def self.readable?(path : Path | String) : Bool
     Crystal::System::File.readable?(path.to_s)
   end
@@ -298,6 +300,7 @@ class File < IO::FileDescriptor
   # File.write("foo", "foo")
   # File.writable?("foo") # => true
   # ```
+  @[Deprecated("Use `File::Info.writable?` instead")]
   def self.writable?(path : Path | String) : Bool
     Crystal::System::File.writable?(path.to_s)
   end
@@ -308,6 +311,7 @@ class File < IO::FileDescriptor
   # File.write("foo", "foo")
   # File.executable?("foo") # => false
   # ```
+  @[Deprecated("Use `File::Info.executable?` instead")]
   def self.executable?(path : Path | String) : Bool
     Crystal::System::File.executable?(path.to_s)
   end
@@ -462,227 +466,6 @@ class File < IO::FileDescriptor
   # ```
   def self.expand_path(path : Path | String, dir = nil, *, home = false) : String
     Path.new(path).expand(dir || Dir.current, home: home).to_s
-  end
-
-  class BadPatternError < Exception
-  end
-
-  # Matches *path* against *pattern*.
-  #
-  # The pattern syntax is similar to shell filename globbing. It may contain the following metacharacters:
-  #
-  # * `*` matches an unlimited number of arbitrary characters, excluding any directory separators.
-  #   * `"*"` matches all regular files.
-  #   * `"c*"` matches all files beginning with `c`.
-  #   * `"*c"` matches all files ending with `c`.
-  #   * `"*c*"` matches all files that have `c` in them (including at the beginning or end).
-  # * `**` matches directories recursively if followed by `/`.
-  #   If this path segment contains any other characters, it is the same as the usual `*`.
-  # * `?` matches one arbitrary character, excluding any directory separators.
-  # * character sets:
-  #   * `[abc]` matches any one of these characters.
-  #   * `[^abc]` matches any one character other than these.
-  #   * `[a-z]` matches any one character in the range.
-  # * `{a,b}` matches subpattern `a` or `b`.
-  # * `\\` escapes the next character.
-  #
-  # If *path* is a `Path`, all directory separators supported by *path* are
-  # recognized, according to the path's kind. If *path* is a `String`, only `/`
-  # is considered a directory separator.
-  #
-  # NOTE: Only `/` in *pattern* matches directory separators in *path*.
-  def self.match?(pattern : String, path : Path | String) : Bool
-    expanded_patterns = [] of String
-    File.expand_brace_pattern(pattern, expanded_patterns)
-
-    if path.is_a?(Path)
-      separators = Path.separators(path.@kind)
-      path = path.to_s
-    else
-      separators = Path.separators(Path::Kind::POSIX)
-    end
-
-    expanded_patterns.each do |expanded_pattern|
-      return true if match_single_pattern(expanded_pattern, path, separators)
-    end
-    false
-  end
-
-  private def self.match_single_pattern(pattern : String, path : String, separators)
-    # linear-time algorithm adapted from https://research.swtch.com/glob
-    preader = Char::Reader.new(pattern)
-    sreader = Char::Reader.new(path)
-    next_ppos = 0
-    next_spos = 0
-    strlen = path.bytesize
-    escaped = false
-
-    while true
-      pnext = preader.has_next?
-      snext = sreader.has_next?
-
-      return true unless pnext || snext
-
-      if pnext
-        pchar = preader.current_char
-        char = sreader.current_char
-
-        case {pchar, escaped}
-        when {'\\', false}
-          escaped = true
-          preader.next_char
-          next
-        when {'?', false}
-          if snext && !char.in?(separators)
-            preader.next_char
-            sreader.next_char
-            next
-          end
-        when {'*', false}
-          double_star = preader.peek_next_char == '*'
-          if char.in?(separators) && !double_star
-            preader.next_char
-            next_spos = 0
-            next
-          else
-            next_ppos = preader.pos
-            next_spos = sreader.pos + sreader.current_char_width
-            preader.next_char
-            preader.next_char if double_star
-            next
-          end
-        when {'[', false}
-          pnext = preader.has_next?
-
-          character_matched = false
-          character_set_open = true
-          escaped = false
-          inverted = false
-          case preader.peek_next_char
-          when '^'
-            inverted = true
-            preader.next_char
-          when ']'
-            raise BadPatternError.new "Invalid character set: empty character set"
-          else
-            # Nothing
-            # TODO: check if this branch is fine
-          end
-
-          while pnext
-            pchar = preader.next_char
-            case {pchar, escaped}
-            when {'\\', false}
-              escaped = true
-            when {']', false}
-              character_set_open = false
-              break
-            when {'-', false}
-              raise BadPatternError.new "Invalid character set: missing range start"
-            else
-              escaped = false
-              if preader.has_next? && preader.peek_next_char == '-'
-                preader.next_char
-                range_end = preader.next_char
-                case range_end
-                when ']'
-                  raise BadPatternError.new "Invalid character set: missing range end"
-                when '\\'
-                  range_end = preader.next_char
-                else
-                  # Nothing
-                  # TODO: check if this branch is fine
-                end
-                range = (pchar..range_end)
-                character_matched = true if range.includes?(char)
-              elsif char == pchar
-                character_matched = true
-              end
-            end
-            pnext = preader.has_next?
-            false
-          end
-          raise BadPatternError.new "Invalid character set: unterminated character set" if character_set_open
-
-          if character_matched != inverted && snext
-            preader.next_char
-            sreader.next_char
-            next
-          end
-        else
-          escaped = false
-
-          if snext && sreader.current_char == pchar
-            preader.next_char
-            sreader.next_char
-            next
-          end
-        end
-      end
-
-      if 0 < next_spos <= strlen
-        preader.pos = next_ppos
-        sreader.pos = next_spos
-        next
-      end
-
-      raise BadPatternError.new "Empty escape character" if escaped
-
-      return false
-    end
-  end
-
-  # :nodoc:
-  def self.expand_brace_pattern(pattern : String, expanded) : Array(String)?
-    reader = Char::Reader.new(pattern)
-
-    lbrace = nil
-    rbrace = nil
-    alt_start = nil
-
-    alternatives = [] of String
-
-    nest = 0
-    escaped = false
-    reader.each do |char|
-      case {char, escaped}
-      when {'{', false}
-        lbrace = reader.pos if nest == 0
-        nest += 1
-      when {'}', false}
-        nest -= 1
-
-        if nest == 0
-          rbrace = reader.pos
-          start = (alt_start || lbrace).not_nil! + 1
-          alternatives << pattern.byte_slice(start, reader.pos - start)
-          break
-        end
-      when {',', false}
-        if nest == 1
-          start = (alt_start || lbrace).not_nil! + 1
-          alternatives << pattern.byte_slice(start, reader.pos - start)
-          alt_start = reader.pos
-        end
-      when {'\\', false}
-        escaped = true
-      else
-        escaped = false
-      end
-    end
-
-    if lbrace && rbrace
-      front = pattern.byte_slice(0, lbrace)
-      back = pattern.byte_slice(rbrace + 1)
-
-      alternatives.each do |alt|
-        brace_pattern = {front, alt, back}.join
-
-        expand_brace_pattern brace_pattern, expanded
-      end
-    else
-      expanded << pattern
-    end
   end
 
   # Resolves the real path of *path* by following symbolic links.
@@ -843,13 +626,17 @@ class File < IO::FileDescriptor
   # ```
   def self.copy(src : String | Path, dst : String | Path) : Nil
     open(src) do |s|
-      open(dst, "wb") do |d|
+      permissions = s.info.permissions
+      open(dst, "wb", perm: permissions) do |d|
+        # If permissions don't match, we opened a pre-existing file with
+        # different permissions and need to change them explicitly.
+        # The permission change does not have any effect on the open file descriptor d.
+        if d.info.permissions != permissions
+          d.chmod(permissions)
+        end
+
         # TODO use sendfile or copy_file_range syscall. See #8926, #8919
         IO.copy(s, d)
-        d.flush # need to flush in case permissions are read-only
-
-        # Set the permissions after the content is written in case src permissions is read-only
-        d.chmod(s.info.permissions)
       end
     end
   end

@@ -57,7 +57,7 @@ describe Crystal::Command::FormatCommand do
     format_command.run
     format_command.status_code.should eq(1)
     stdout.to_s.should be_empty
-    stderr.to_s.should contain("file 'STDIN' is not a valid Crystal source file: Unexpected byte 0xff at position 1, malformed UTF-8")
+    stderr.to_s.should contain("file 'STDIN' is not a valid Crystal source file: Unexpected byte 0xfe at position 0, malformed UTF-8")
   end
 
   it "formats stdin (bug)" do
@@ -162,7 +162,7 @@ describe Crystal::Command::FormatCommand do
         format_command.status_code.should eq(1)
         stdout.to_s.should contain("Format #{Path[".", "format.cr"]}")
         stderr.to_s.should contain("syntax error in '#{Path[".", "syntax_error.cr"]}:1:3': unexpected token: EOF")
-        stderr.to_s.should contain("file '#{Path[".", "invalid_byte_sequence_error.cr"]}' is not a valid Crystal source file: Unexpected byte 0xff at position 1, malformed UTF-8")
+        stderr.to_s.should contain("file '#{Path[".", "invalid_byte_sequence_error.cr"]}' is not a valid Crystal source file: Unexpected byte 0xfe at position 0, malformed UTF-8")
 
         File.read(File.join(path, "format.cr")).should eq("if true\n  1\nend\n")
       end
@@ -226,7 +226,7 @@ describe Crystal::Command::FormatCommand do
         stderr.to_s.should_not contain("not_format.cr")
         stderr.to_s.should contain("formatting '#{Path[".", "format.cr"]}' produced changes")
         stderr.to_s.should contain("syntax error in '#{Path[".", "syntax_error.cr"]}:1:3': unexpected token: EOF")
-        stderr.to_s.should contain("file '#{Path[".", "invalid_byte_sequence_error.cr"]}' is not a valid Crystal source file: Unexpected byte 0xff at position 1, malformed UTF-8")
+        stderr.to_s.should contain("file '#{Path[".", "invalid_byte_sequence_error.cr"]}' is not a valid Crystal source file: Unexpected byte 0xfe at position 0, malformed UTF-8")
       end
     end
   end

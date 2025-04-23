@@ -19,6 +19,11 @@ class LLVM::TargetMachine
     LLVM.string_and_dispose(triple_c)
   end
 
+  def cpu : String
+    cpu_c = LibLLVM.get_target_machine_cpu(self)
+    LLVM.string_and_dispose(cpu_c)
+  end
+
   def emit_obj_to_file(llvm_mod, filename)
     emit_to_file llvm_mod, filename, LLVM::CodeGenFileType::ObjectFile
   end
@@ -40,10 +45,11 @@ class LLVM::TargetMachine
     true
   end
 
+  @[Deprecated("This API is now internal to the compiler and no longer updated publicly.")]
   def abi
     triple = self.triple
     case triple
-    when /x86_64.+windows-msvc/
+    when /x86_64.+windows-(?:msvc|gnu)/
       ABI::X86_Win64.new(self)
     when /x86_64|amd64/
       ABI::X86_64.new(self)
@@ -53,6 +59,8 @@ class LLVM::TargetMachine
       ABI::AArch64.new(self)
     when /arm/
       ABI::ARM.new(self)
+    when /avr/
+      ABI::AVR.new(self, cpu)
     when /wasm32/
       ABI::Wasm32.new(self)
     else

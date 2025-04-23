@@ -1,7 +1,7 @@
 require "../../support/syntax"
 
-private def expect_to_s(original, expected = original, emit_doc = false, file = __FILE__, line = __LINE__)
-  it "does to_s of #{original.inspect}", file, line do
+private def expect_to_s(original, expected = original, emit_doc = false, file = __FILE__, line = __LINE__, focus = false)
+  it "does to_s of #{original.inspect}", file, line, focus: focus do
     str = IO::Memory.new expected.bytesize
 
     source = original
@@ -52,7 +52,7 @@ describe "ASTNode#to_s" do
   expect_to_s %(foo &.bar), %(foo(&.bar))
   expect_to_s %(foo &.bar(1, 2, 3)), %(foo(&.bar(1, 2, 3)))
   expect_to_s %(foo x: 1, y: 2, &.bar), %(foo(x: 1, y: 2, &.bar))
-  expect_to_s %(foo { |i| i.bar { i } }), "foo do |i|\n  i.bar do\n    i\n  end\nend"
+  expect_to_s %(foo { |i| i.bar { i } }), %(foo do |i| i.bar do i end end)
   expect_to_s %(foo do |k, v|\n  k.bar(1, 2, 3)\nend)
   expect_to_s %(foo(3, &.*(2)))
   expect_to_s %(return begin\n  1\n  2\nend)
@@ -108,8 +108,38 @@ describe "ASTNode#to_s" do
   expect_to_s "def foo(x, @[Foo] **args)\nend"
   expect_to_s "def foo(x, **args, &block)\nend"
   expect_to_s "def foo(@[Foo] x, @[Bar] **args, @[Baz] &block)\nend"
-  expect_to_s "def foo(x, **args, &block : (_ -> _))\nend"
-  expect_to_s "def foo(& : (->))\nend"
+  expect_to_s "{% [1, 2, 3].each { |v| pp(v) } %}", "{% [1, 2, 3].each do |v| pp(v) end %}"
+  expect_to_s "{%\n  [1, 2, 3].each { |v| pp(v) }\n%}", "{%\n  [1, 2, 3].each do |v| pp(v) end\n%}"
+  expect_to_s "{% [1, 2, 3].find(&.!.even?) %}", "{% [1, 2, 3].find() do |__arg0| !__arg0.even? end %}"
+  expect_to_s <<-'CR'
+    {%
+      [1, 2, 3].find do |e|
+        e.even?
+      end
+    %}
+    CR
+
+  # 14216
+  expect_to_s "def foo(x, **args, &block : _ -> _)\nend"
+  expect_to_s "def foo(x, **args, &block : (_ -> _))\nend", "def foo(x, **args, &block : _ -> _)\nend"
+  expect_to_s "def foo(& : ->)\nend"
+  expect_to_s "def foo(& : (->))\nend", "def foo(& : ->)\nend"
+  expect_to_s "def foo(x : (T -> U) -> V, *args : (T -> U) -> V, y : (T -> U) -> V, **opts : (T -> U) -> V, & : (T -> U) -> V) : ((T -> U) -> V)\nend"
+  expect_to_s "foo(x : (T -> U) -> V, W)"
+  expect_to_s "foo[x : (T -> U) -> V, W]"
+  expect_to_s "foo[x : (T -> U) -> V, W] = 1"
+  expect_to_s "lib LibFoo\n  fun foo(x : (T -> U) -> V, W) : ((T -> U) -> V)\nend"
+
+  expect_to_s "lib LibFoo\n  fun foo(x : (T -> U) | V)\nend"
+  expect_to_s "lib LibFoo\n  fun foo(x : Foo((T -> U)))\nend"
+  expect_to_s "lib LibFoo\n  fun foo(x : (T -> U).class)\nend"
+  expect_to_s "def foo(x : (T -> U) | V)\nend"
+  expect_to_s "def foo(x : Foo((T -> U)))\nend"
+  expect_to_s "def foo(x : (T -> U).class)\nend"
+  expect_to_s "foo(x : (T -> U) | V)"
+  expect_to_s "foo(x : Foo((T -> U)))"
+  expect_to_s "foo(x : (T -> U).class)"
+
   expect_to_s "macro foo(@[Foo] id)\nend"
   expect_to_s "macro foo(**args)\nend"
   expect_to_s "macro foo(@[Foo] **args)\nend"
@@ -130,6 +160,7 @@ describe "ASTNode#to_s" do
   expect_to_s "1e10_f64", "1e10"
   expect_to_s "!a"
   expect_to_s "!(1 < 2)"
+  expect_to_s "!a.b && true"
   expect_to_s "(1 + 2)..3"
   expect_to_s "macro foo\n{{ @type }}\nend"
   expect_to_s "macro foo\n\\{{ @type }}\nend"
@@ -190,6 +221,9 @@ describe "ASTNode#to_s" do
   expect_to_s %(if (1 + 2\n3)\n  4\nend)
   expect_to_s "%x(whoami)", "`whoami`"
   expect_to_s %(begin\n  ()\nend)
+  expect_to_s %(begin\n  (1)\nend)
+  expect_to_s %(begin\n  (@x = x).is_a?(Foo)\nend)
+  expect_to_s %(begin\n  (1)\n  2\nend)
   expect_to_s %(if 1\n  begin\n    2\n  end\nelse\n  begin\n    3\n  end\nend)
   expect_to_s %(foo do\n  begin\n    bar\n  end\nend)
   expect_to_s %q("\e\0\""), %q("\e\u0000\"")
@@ -198,7 +232,7 @@ describe "ASTNode#to_s" do
   expect_to_s %q(%r{#{1}\/\0}), %q(/#{1}\/\0/)
   expect_to_s %q(`\n\0`), %q(`\n\u0000`)
   expect_to_s %q(`#{1}\n\0`), %q(`#{1}\n\u0000`)
-  expect_to_s Call.new(nil, "`", Call.new("String".path, "interpolation", "x".var, global: true)), %q(`#{::String.interpolation(x)}`)
+  expect_to_s Call.new("`", Call.new("String".path, "interpolation", "x".var, global: true)), %q(`#{::String.interpolation(x)}`)
   expect_to_s "macro foo\n{% verbatim do %}1{% end %}\nend"
   expect_to_s Assign.new("x".var, Expressions.new([1.int32, 2.int32] of ASTNode)), "x = (1\n2\n)"
   expect_to_s "foo.*"
@@ -212,12 +246,204 @@ describe "ASTNode#to_s" do
   expect_to_s "1.+ do\nend"
   expect_to_s "1.[](2) do\nend"
   expect_to_s "1.[]="
+  expect_to_s "1[&.foo]"
+  expect_to_s "1[&.foo]?"
+  expect_to_s "1[&.foo] = 2"
+  expect_to_s "1[2, x: 3, &.foo]"
+  expect_to_s "1[2, x: 3, &.foo]?"
+  expect_to_s "1[2, x: 3, &.foo] = 4"
   expect_to_s "1.+(a: 2)"
   expect_to_s "1.+(&block)"
   expect_to_s "1.//(2, a: 3)"
   expect_to_s "1.//(2, &block)"
-  expect_to_s %({% verbatim do %}\n  1{{ 2 }}\n  3{{ 4 }}\n{% end %})
-  expect_to_s %({% for foo in bar %}\n  {{ if true\n  foo\n  bar\nend }}\n{% end %})
+  expect_to_s <<-'CR'
+    {% verbatim do %}
+      1{{ 2 }}
+      3{{ 4 }}
+    {% end %}
+    CR
+
+  expect_to_s <<-'CR', <<-'CR'
+    {% for foo in bar %}
+      {{ if true
+           foo
+           bar
+         end }}
+    {% end %}
+    CR
+    {% for foo in bar %}
+      {{ if true
+      foo
+      bar
+    end }}
+    {% end %}
+    CR
+
+  expect_to_s "{% a = 1 %}"
+  expect_to_s "{{ a = 1 }}"
+  expect_to_s "{%\n  1\n  2\n  3\n%}"
+  expect_to_s "{%\n  1\n%}"
+  expect_to_s "{%\n  2 + 2\n%}"
+  expect_to_s "{%\n  a = 1 %}"
+  expect_to_s "{% a = 1\n%}"
+
+  expect_to_s <<-'CR', <<-'CR'
+    macro finished
+      {% verbatim do %}
+        {%
+          10
+
+          # Foo
+
+          20
+        %}
+      {% end %}
+    end
+    CR
+    macro finished
+      {% verbatim do %}
+        {%
+          10
+
+
+
+          20
+        %}
+      {% end %}
+    end
+    CR
+
+  expect_to_s <<-'CR', <<-'CR'
+    macro finished
+      {% verbatim do %}
+        {%
+          10
+
+          # Foo
+          20
+        %}
+      {% end %}
+    end
+    CR
+    macro finished
+      {% verbatim do %}
+        {%
+          10
+
+
+          20
+        %}
+      {% end %}
+    end
+    CR
+
+  expect_to_s <<-'CR', <<-'CR'
+    macro finished
+      {% verbatim do %}
+        {%
+          10
+
+          # Foo
+
+          20
+          30
+
+          # Bar
+
+          40
+        %}
+        {%
+          50
+          60
+        %}
+      {% end %}
+    end
+    CR
+    macro finished
+      {% verbatim do %}
+        {%
+          10
+
+
+
+          20
+          30
+
+
+
+          40
+        %}
+        {%
+          50
+          60
+        %}
+      {% end %}
+    end
+    CR
+
+  expect_to_s <<-'CR'
+    macro finished
+      {% verbatim do %}
+        {%
+          10
+          20
+        %}
+      {% end %}
+    end
+    CR
+
+  expect_to_s <<-'CR'
+    macro finished
+      {% verbatim do %}
+        {%
+          10
+        %}
+      {% end %}
+    end
+    CR
+
+  expect_to_s <<-'CR'
+    macro finished
+      {% verbatim do %}
+        {%
+
+          a = 1 %}
+      {% end %}
+    end
+    CR
+
+  expect_to_s <<-'CR'
+    macro finished
+      {% verbatim do %}
+        {%
+
+
+          a = 1
+          b = 2 %}
+      {% end %}
+    end
+    CR
+
+  expect_to_s <<-'CR', <<-'CR'
+    macro finished
+      {% verbatim do %}
+        {% a = 1
+           b = 2
+
+        %}
+      {% end %}
+    end
+    CR
+    macro finished
+      {% verbatim do %}
+        {%     a = 1
+        b = 2
+
+        %}
+      {% end %}
+    end
+    CR
+
   expect_to_s %(asm("nop" ::::))
   expect_to_s %(asm("nop" : "a"(1), "b"(2) : "c"(3), "d"(4) : "e", "f" : "volatile", "alignstack", "intel"))
   expect_to_s %(asm("nop" :: "c"(3), "d"(4) ::))
@@ -230,8 +456,10 @@ describe "ASTNode#to_s" do
   expect_to_s "offsetof(Foo, @bar)"
   expect_to_s "def foo(**options, &block)\nend"
   expect_to_s "macro foo\n  123\nend"
-  expect_to_s "if true\n(  1)\nend"
-  expect_to_s "begin\n(  1)\nrescue\nend"
+  expect_to_s "if true\n  (1)\nend"
+  expect_to_s "if true\n  (1)\n  2\nend"
+  expect_to_s "begin\n  (1)\nrescue\nend"
+  expect_to_s "begin\n  (1)\n  2\nrescue\nend"
   expect_to_s %[他.说("你好")]
   expect_to_s %[他.说 = "你好"]
   expect_to_s %[あ.い, う.え.お = 1, 2]
@@ -240,12 +468,14 @@ describe "ASTNode#to_s" do
   expect_to_s "->::foo(Int32, String)"
   expect_to_s "->::Foo::Bar.foo"
   expect_to_s "yield(1)"
-  expect_to_s "foo { |(x, y)| x }", <<-CODE
+  expect_to_s "foo { |(x, y)| x }", "foo do |(x, y)| x end"
+  expect_to_s "foo do |(x, y)|\n  x\nend", <<-CODE
     foo do |(x, y)|
       x
     end
     CODE
-  expect_to_s "foo { |(x, (y, z))| x }", <<-CODE
+  expect_to_s "foo { |(x, (y, z))| x }", "foo do |(x, (y, z))| x end"
+  expect_to_s "foo do |(x, (y, z))|\n  x\nend", <<-CODE
     foo do |(x, (y, z))|
       x
     end
@@ -254,4 +484,143 @@ describe "ASTNode#to_s" do
   expect_to_s "def foo(x)\n  yield\nend", "def foo(x, &)\n  yield\nend"
   expect_to_s "def foo(**x)\n  yield\nend", "def foo(**x, &)\n  yield\nend"
   expect_to_s "macro foo(x)\n  yield\nend"
+  expect_to_s <<-CRYSTAL
+    select
+    when foo
+      select
+      when bar
+        1
+      else
+        2
+      end
+    else
+      select
+      when baz
+        3
+      else
+        4
+      end
+    end
+    CRYSTAL
+
+  expect_to_s %({% {id: 10} %})
+  expect_to_s <<-'CR'
+    {%
+      data = {__nil: nil}
+      data["foo"] = {
+        id: 1,
+        active: true,
+        name: "foo".upcase,
+        pie: 3.14,
+      }
+    %}
+    CR
+
+  expect_to_s <<-'CR'
+    {%
+      data = {__nil: nil}
+      data["foo"] = {
+        id: 1, active: true,
+        name: "foo".upcase,
+        pie: 3.14,
+      }
+    %}
+    CR
+
+  expect_to_s <<-'CR'
+    {%
+      data = {__nil: nil}
+      data["foo"] = {
+        id: 1, active: true,
+        name: "foo".upcase,
+        pie: 3.14, biz: "baz", blah: false,
+      }
+    %}
+    CR
+
+  expect_to_s <<-'CR'
+    {%
+      {
+        id: 1,
+
+        blah: false,
+
+        pie: 3.14,
+      }
+    %}
+    CR
+
+  expect_to_s <<-'CR', <<-'CR'
+    {%
+      {
+        id: 1,
+
+        # Foo
+        pie: 3.14,
+      }
+    %}
+    CR
+    {%
+      {
+        id: 1,
+
+
+        pie: 3.14,
+      }
+    %}
+    CR
+
+  expect_to_s <<-'CR', <<-'CR'
+    macro finished
+      {% verbatim do %}
+        {%
+          nt = {
+            id: 1,
+
+            # Foo
+            pie: 3.14,
+          }
+        %}
+      {% end %}
+    end
+    CR
+    macro finished
+      {% verbatim do %}
+        {%
+          nt = {
+            id: 1,
+
+
+            pie: 3.14,
+          }
+        %}
+      {% end %}
+    end
+    CR
+
+  expect_to_s <<-'CR'
+    {%
+      {
+        id: 1,
+        blah: false,
+        pie: 3.14}
+    %}
+    CR
+
+  expect_to_s <<-'CR'
+    {%
+      {id: 1,
+        blah: false,
+        pie: 3.14}
+    %}
+    CR
+
+  expect_to_s <<-'CR'
+    {%
+      {id: 1,
+        blah: false,
+        pie: 3.14,
+      }
+    %}
+    CR
 end
