@@ -6,7 +6,7 @@ struct OAuth::AuthorizationHeader
     @first = true
   end
 
-  def add(key : String, value : String?) : Bool?
+  def add(key : String, value : String?) : Nil
     return unless value
 
     @str << ", " unless @first

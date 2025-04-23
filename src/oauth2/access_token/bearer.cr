@@ -1,7 +1,7 @@
 require "./access_token"
 
 class OAuth2::AccessToken::Bearer < OAuth2::AccessToken
-  def self.new(pull : JSON::PullParser) : OAuth2::AccessToken::Bearer
+  def self.new(pull : JSON::PullParser) : self
     OAuth2::AccessToken.new(pull).as(self)
   end
 
