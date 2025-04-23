@@ -12,7 +12,7 @@ module Crystal::System::File
   # On Windows we cannot rely on the system mode `FILE_APPEND_DATA` and
   # keep track of append mode explicitly. When writing data, this ensures to only
   # write at the end of the file.
-  @system_append = false
+  getter? system_append = false
 
   def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions, blocking : Bool?) : FileDescriptor::Handle
     perm = ::File::Permissions.new(perm) if perm.is_a? Int32

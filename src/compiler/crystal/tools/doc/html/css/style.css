@@ -53,6 +53,14 @@ body {
   overflow: auto;
 }
 
+p, li {
+  max-width: 42em;
+}
+
+.methods-inherited {
+  max-width: 60em;
+}
+
 .sidebar {
   width: 30em;
   color: #F8F4FD;
