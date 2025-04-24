@@ -23,7 +23,7 @@ module Crypto::Subtle
     constant_time_byte_eq(v, 0) == 1
   end
 
-  def self.constant_time_byte_eq(x : UInt8 | Int32, y : Int32 | UInt8) : UInt8 | Int32
+  def self.constant_time_byte_eq(x : UInt8, y : UInt8) : UInt8
     z = ~(x ^ y)
     z &= z >> 4
     z &= z >> 2

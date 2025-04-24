@@ -20,7 +20,7 @@ module Crypto::Bcrypt::Base64
     51, 52, 53, -1, -1, -1, -1, -1,
   ]
 
-  def self.encode(d : Slice(UInt8) | Array(UInt8), len : Int32) : String
+  def self.encode(d, len : Int32) : String
     off = 0
 
     String.build do |str|
