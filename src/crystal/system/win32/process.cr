@@ -256,15 +256,19 @@ struct Crystal::System::Process
   end
 
   private def self.handle_from_io(io : IO::FileDescriptor, parent_io)
-    if io.is_a?(File) && !io.system_blocking?
-      reopen_file_as_blocking(io, parent_io == STDIN, "Process.run")
-    else
-      cur_proc = LibC.GetCurrentProcess
-      if LibC.DuplicateHandle(cur_proc, io.windows_handle, cur_proc, out new_handle, 0, true, LibC::DUPLICATE_SAME_ACCESS) == 0
-        raise RuntimeError.from_winerror("DuplicateHandle")
+    cur_handle =
+      if io.is_a?(File) && !io.system_blocking?
+        dup_handle = reopen_file_as_blocking(io, parent_io == STDIN, "Process.run")
+      else
+        io.windows_handle
       end
-      new_handle
+
+    cur_proc = LibC.GetCurrentProcess
+    if LibC.DuplicateHandle(cur_proc, cur_handle, cur_proc, out new_handle, 0, true, LibC::DUPLICATE_SAME_ACCESS) == 0
+      raise RuntimeError.from_winerror("DuplicateHandle")
     end
+
+    {new_handle, dup_handle}
   end
 
   def self.spawn(command_args, env, clear_env, input, output, error, chdir)
@@ -272,9 +276,9 @@ struct Crystal::System::Process
     startup_info.cb = sizeof(LibC::STARTUPINFOW)
     startup_info.dwFlags = LibC::STARTF_USESTDHANDLES
 
-    startup_info.hStdInput = handle_from_io(input, STDIN)
-    startup_info.hStdOutput = handle_from_io(output, STDOUT)
-    startup_info.hStdError = handle_from_io(error, STDERR)
+    startup_info.hStdInput, dup_input = handle_from_io(input, STDIN)
+    startup_info.hStdOutput, dup_output = handle_from_io(output, STDOUT)
+    startup_info.hStdError, dup_error = handle_from_io(error, STDERR)
 
     process_info = LibC::PROCESS_INFORMATION.new
 
@@ -299,6 +303,10 @@ struct Crystal::System::Process
     close_handle(startup_info.hStdInput)
     close_handle(startup_info.hStdOutput)
     close_handle(startup_info.hStdError)
+
+    close_handle(dup_input) if dup_input
+    close_handle(dup_output) if dup_output
+    close_handle(dup_error) if dup_error
 
     process_info
   end
@@ -418,43 +426,13 @@ struct Crystal::System::Process
   end
 
   # The arguments for input, output and error must be handles without
-  # FILE_FLAG_OVERLAPPED, so we try to get a new handle without the flag.
-  #
-  # TODO: consider `LibC.ReOpenFile` instead
+  # FILE_FLAG_OVERLAPPED.
   private def self.reopen_file_as_blocking(file, for_stdin, method_name)
-    if for_stdin
-      access = LibC::FILE_GENERIC_READ
-      attributes = LibC::FILE_ATTRIBUTE_READONLY
-    else
-      access = LibC::FILE_GENERIC_WRITE
-      attributes = 0
-    end
-
-    security_attributes = LibC::SECURITY_ATTRIBUTES.new
-    security_attributes.nLength = sizeof(LibC::SECURITY_ATTRIBUTES)
-    security_attributes.bInheritHandle = 1
-
-    handle = LibC.CreateFileW(
-      System.to_wstr(file.path),
-      access,
-      LibC::DEFAULT_SHARE_MODE,
-      pointerof(security_attributes),
-      LibC::OPEN_EXISTING,
-      attributes,
-      LibC::HANDLE.null)
-
+    access = for_stdin ? LibC::FILE_GENERIC_READ : LibC::FILE_GENERIC_WRITE
+    handle = LibC.ReOpenFile(file.windows_handle, access, LibC::DEFAULT_SHARE_MODE, 0)
     if handle == LibC::INVALID_HANDLE_VALUE
       raise IO::Error.new("Non-blocking streams are not supported in `#{method_name}`", target: file)
     end
-
-    unless file.path == "NUL"
-      if file.system_append?
-        LibC.SetFilePointerEx(handle, 0, nil, IO::Seek::End)
-      elsif LibC.SetFilePointerEx(file.windows_handle, 0, out pos, IO::Seek::Current) != 0
-        LibC.SetFilePointerEx(handle, pos, nil, IO::Seek::Set)
-      end
-    end
-
     handle
   end
 
