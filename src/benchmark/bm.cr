@@ -44,7 +44,7 @@ module Benchmark
       end
 
       # Reports a single benchmark unit.
-      def report(label : String = " ", &block) : Nil
+      def report(label : String = " ", &block : ->) : Nil
         @label_width = label.size if label.size > @label_width
         @reports << {label, block}
       end
