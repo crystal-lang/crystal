@@ -134,7 +134,7 @@ class HTTP::StaticFileHandler
       end
     end
 
-    serve_file(context : Server::Context, file_info, file_path : Path, original_file_path, last_modified : Time)
+    serve_file(context, file_info, file_path, original_file_path, last_modified)
   end
 
   private def serve_file(context : Server::Context, file_info, file_path : Path, original_file_path : Path, last_modified : Time)
