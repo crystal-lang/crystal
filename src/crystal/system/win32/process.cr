@@ -257,7 +257,7 @@ struct Crystal::System::Process
 
   private def self.handle_from_io(io : IO::FileDescriptor, parent_io)
     cur_handle =
-      if io.is_a?(File) && !io.system_blocking?
+      if io.is_a?(File) && !io.system_blocking? && !io.closed?
         dup_handle = reopen_file_as_blocking(io, parent_io == STDIN, "Process.run")
       else
         io.windows_handle
@@ -404,7 +404,7 @@ struct Crystal::System::Process
       else
         handle =
           case src_io
-          when .system_blocking?
+          when .system_blocking?, .closed?
             src_io.windows_handle
           when File
             reopen_file_as_blocking(src_io, dst_fd == 0, "Process.exec")
@@ -431,7 +431,7 @@ struct Crystal::System::Process
     access = for_stdin ? LibC::FILE_GENERIC_READ : LibC::FILE_GENERIC_WRITE
     handle = LibC.ReOpenFile(file.windows_handle, access, LibC::DEFAULT_SHARE_MODE, 0)
     if handle == LibC::INVALID_HANDLE_VALUE
-      raise IO::Error.new("Non-blocking streams are not supported in `#{method_name}`", target: file)
+      raise IO::Error.from_winerror("Failed to reopen non-blocking File as blocking", target: file)
     end
     handle
   end
