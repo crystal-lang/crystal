@@ -256,7 +256,7 @@ struct Crystal::System::Process
   end
 
   private def self.handle_from_io(io : IO::FileDescriptor, parent_io)
-    cur_handle =
+    source_handle =
       if io.is_a?(File) && !io.system_blocking? && !io.closed?
         dup_handle = reopen_file_as_blocking(io, parent_io == STDIN, "Process.run")
       else
@@ -264,7 +264,7 @@ struct Crystal::System::Process
       end
 
     cur_proc = LibC.GetCurrentProcess
-    if LibC.DuplicateHandle(cur_proc, cur_handle, cur_proc, out new_handle, 0, true, LibC::DUPLICATE_SAME_ACCESS) == 0
+    if LibC.DuplicateHandle(cur_proc, source_handle, cur_proc, out new_handle, 0, true, LibC::DUPLICATE_SAME_ACCESS) == 0
       raise RuntimeError.from_winerror("DuplicateHandle")
     end
 

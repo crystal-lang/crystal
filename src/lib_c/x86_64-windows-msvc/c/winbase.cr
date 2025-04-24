@@ -79,7 +79,7 @@ lib LibC
 
   fun GetFileInformationByHandleEx(hFile : HANDLE, fileInformationClass : FILE_INFO_BY_HANDLE_CLASS, lpFileInformation : Void*, dwBufferSize : DWORD) : BOOL
 
-  fun ReOpenFile(HANDLE, DWORD, DWORD, DWORD) : HANDLE
+  fun ReOpenFile(hOriginalFile : HANDLE, dwDesiredAccess : DWORD, dwShareMode : DWORD, dwFlagsAndAttributes : DWORD) : HANDLE
 
   fun LookupAccountNameW(lpSystemName : LPWSTR, lpAccountName : LPWSTR, sid : SID*, cbSid : DWORD*, referencedDomainName : LPWSTR, cchReferencedDomainName : DWORD*, peUse : SID_NAME_USE*) : BOOL
   fun LookupAccountSidW(lpSystemName : LPWSTR, sid : SID*, name : LPWSTR, cchName : DWORD*, referencedDomainName : LPWSTR, cchReferencedDomainName : DWORD*, peUse : SID_NAME_USE*) : BOOL
