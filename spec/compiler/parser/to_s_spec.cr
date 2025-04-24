@@ -623,4 +623,44 @@ describe "ASTNode#to_s" do
       }
     %}
     CR
+
+  expect_to_s <<-'CR'
+    {%
+      vals = "foo".strip.strip.strip
+    %}
+    CR
+
+  expect_to_s <<-'CR'
+    {%
+      vals = "foo".strip.strip
+        .strip
+    %}
+    CR
+
+  expect_to_s <<-'CR'
+    {%
+      vals = "foo"
+        .strip
+        .strip.strip
+    %}
+    CR
+
+  expect_to_s <<-'CR'
+    {%
+      vals = [4, 1, 12]
+        .sort_by do |v| v end
+        .map do |v| v end
+    %}
+    CR
+
+  expect_to_s <<-'CR'
+    {%
+      vals = [4, 1, 12]
+        .sort_by do |v| v end
+        .join
+        .strip
+        .chars
+        .map do |v| v end
+    %}
+    CR
 end
