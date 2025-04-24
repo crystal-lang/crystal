@@ -439,6 +439,7 @@ module Crystal
       end
 
       need_parens = need_parens(node_obj)
+      is_multiline = false
 
       @str << "::" if node.global?
       if node_obj.is_a?(ImplicitObj)
@@ -490,7 +491,17 @@ module Crystal
         in_parenthesis(need_parens(arg), arg)
       else
         if node_obj
+          # A call is multiline if the call's name is on a diff line than the obj it's being called on.
+          is_multiline = (node_obj_end_loc = node_obj.end_location) && (name_loc = node.name_end_location) && (name_loc.line_number > node_obj_end_loc.line_number)
+
           in_parenthesis(need_parens, node_obj)
+
+          if is_multiline
+            newline
+            @indent += 1
+            append_indent
+          end
+
           @str << '.'
         end
         if Lexer.setter?(node.name)
@@ -515,6 +526,8 @@ module Crystal
         @str << ' '
         block.accept self
       end
+
+      @indent -= 1 if is_multiline
 
       false
     end
