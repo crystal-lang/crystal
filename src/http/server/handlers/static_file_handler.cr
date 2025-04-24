@@ -120,7 +120,7 @@ class HTTP::StaticFileHandler
   end
 
   private def serve_file_compressed(context : Server::Context, file_info, file_path : Path, last_modified : Time)
-    context.response.content_type = MIME.from_filename(file_path.to_s, "application/octet-stream")
+    original_file_path = file_path
 
     # Checks if pre-gzipped file can be served
     if context.request.headers.includes_word?("Accept-Encoding", "gzip")
@@ -134,10 +134,12 @@ class HTTP::StaticFileHandler
       end
     end
 
-    serve_file(context : Server::Context, file_info, file_path : Path, last_modified : Time)
+    serve_file(context : Server::Context, file_info, file_path : Path, original_file_path, last_modified : Time)
   end
 
-  private def serve_file(context : Server::Context, file_info, file_path : Path, last_modified : Time)
+  private def serve_file(context : Server::Context, file_info, file_path : Path, original_file_path : Path, last_modified : Time)
+    context.response.content_type = MIME.from_filename(original_file_path.to_s, "application/octet-stream")
+
     File.open(file_path) do |file|
       if range_header = context.request.headers["Range"]?
         serve_file_range(context, file, range_header, file_info)
