@@ -59,8 +59,6 @@ class HTTP::StaticFileHandler
 
     return call_next(context) unless file_info
 
-    context.response.headers["Accept-Ranges"] = "bytes"
-
     if file_info.directory?
       directory_index(context, request_path, file_path)
     elsif file_info.file?
@@ -140,6 +138,8 @@ class HTTP::StaticFileHandler
       if range_header = context.request.headers["Range"]?
         serve_file_range(context, file, range_header, file_info)
       else
+        context.response.headers["Accept-Ranges"] = "bytes"
+
         serve_file_full(context, file, file_info)
       end
     end
