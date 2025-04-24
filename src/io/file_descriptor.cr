@@ -78,7 +78,7 @@ class IO::FileDescriptor < IO
     system_blocking?
   end
 
-  def blocking=(value : Bool) : Int32?
+  def blocking=(value : Bool) : Nil
     self.system_blocking = value
   end
 

@@ -182,7 +182,7 @@ class IO::Memory < IO
   end
 
   # :nodoc:
-  def skip(bytes_count : Int32 | UInt32) : Nil
+  def skip(bytes_count : Int) : Nil
     check_open
 
     available = @bytesize - @pos
