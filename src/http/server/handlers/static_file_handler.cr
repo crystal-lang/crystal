@@ -124,7 +124,7 @@ class HTTP::StaticFileHandler
 
     # Checks if pre-gzipped file can be served
     if context.request.headers.includes_word?("Accept-Encoding", "gzip")
-      gz_file_path = "#{file_path}.gz"
+      gz_file_path = Path["#{file_path}.gz"]
 
       if (gz_file_info = File.info?(gz_file_path)) &&
          last_modified - gz_file_info.modification_time < TIME_DRIFT
