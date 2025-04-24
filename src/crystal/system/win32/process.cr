@@ -395,9 +395,10 @@ struct Crystal::System::Process
       when STDERR then 2
       else
         handle =
-          if src_io.system_blocking?
+          case src_io
+          when .system_blocking?
             src_io.windows_handle
-          elsif src_io.is_a?(File)
+          when File
             reopen_file_as_blocking(src_io, dst_fd == 0, "Process.exec")
           else
             raise IO::Error.new("Non-blocking streams are not supported in `Process.exec`", target: src_io)
@@ -420,47 +421,41 @@ struct Crystal::System::Process
   # FILE_FLAG_OVERLAPPED, so we try to get a new handle without the flag.
   #
   # TODO: consider `LibC.ReOpenFile` instead
-  private def self.reopen_file_as_blocking(io, for_stdin, method_name)
-    if io.system_blocking?
-      io.windows_handle
-    elsif io.is_a?(File)
-      if for_stdin
-        access = LibC::FILE_GENERIC_READ
-        attributes = LibC::FILE_ATTRIBUTE_READONLY
-      else
-        access = LibC::FILE_GENERIC_WRITE
-        attributes = 0
-      end
-
-      security_attributes = LibC::SECURITY_ATTRIBUTES.new
-      security_attributes.nLength = sizeof(LibC::SECURITY_ATTRIBUTES)
-      security_attributes.bInheritHandle = 1
-
-      handle = LibC.CreateFileW(
-        System.to_wstr(io.path),
-        access,
-        LibC::DEFAULT_SHARE_MODE,
-        pointerof(security_attributes),
-        LibC::OPEN_EXISTING,
-        attributes,
-        LibC::HANDLE.null)
-
-      if handle == LibC::INVALID_HANDLE_VALUE
-        raise IO::Error.new("Non-blocking streams are not supported in `#{method_name}`", target: io)
-      end
-
-      unless io.path == "NUL"
-        if io.system_append?
-          LibC.SetFilePointerEx(handle, 0, nil, IO::Seek::End)
-        elsif LibC.SetFilePointerEx(io.windows_handle, 0, out pos, IO::Seek::Current) != 0
-          LibC.SetFilePointerEx(handle, pos, nil, IO::Seek::Set)
-        end
-      end
-
-      handle
+  private def self.reopen_file_as_blocking(file, for_stdin, method_name)
+    if for_stdin
+      access = LibC::FILE_GENERIC_READ
+      attributes = LibC::FILE_ATTRIBUTE_READONLY
     else
-      LibC::INVALID_HANDLE_VALUE
+      access = LibC::FILE_GENERIC_WRITE
+      attributes = 0
     end
+
+    security_attributes = LibC::SECURITY_ATTRIBUTES.new
+    security_attributes.nLength = sizeof(LibC::SECURITY_ATTRIBUTES)
+    security_attributes.bInheritHandle = 1
+
+    handle = LibC.CreateFileW(
+      System.to_wstr(file.path),
+      access,
+      LibC::DEFAULT_SHARE_MODE,
+      pointerof(security_attributes),
+      LibC::OPEN_EXISTING,
+      attributes,
+      LibC::HANDLE.null)
+
+    if handle == LibC::INVALID_HANDLE_VALUE
+      raise IO::Error.new("Non-blocking streams are not supported in `#{method_name}`", target: file)
+    end
+
+    unless file.path == "NUL"
+      if file.system_append?
+        LibC.SetFilePointerEx(handle, 0, nil, IO::Seek::End)
+      elsif LibC.SetFilePointerEx(file.windows_handle, 0, out pos, IO::Seek::Current) != 0
+        LibC.SetFilePointerEx(handle, pos, nil, IO::Seek::Set)
+      end
+    end
+
+    handle
   end
 
   def self.chroot(path)
