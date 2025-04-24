@@ -47,7 +47,7 @@ struct BigInt < Int
   end
 
   # Creates a `BigInt` from the given *num*.
-  def self.new(num : Int::Primitive) : BigInt
+  def self.new(num : Int::Primitive) : self
     Int.primitive_si_ui_check(num) do |si, ui, _|
       {
         si: begin
@@ -110,23 +110,23 @@ struct BigInt < Int
   end
 
   # :ditto:
-  def self.new(num : BigFloat) : BigInt
+  def self.new(num : BigFloat) : self
     num.to_big_i
   end
 
   # :ditto:
-  def self.new(num : BigDecimal) : BigInt
+  def self.new(num : BigDecimal) : self
     num.to_big_i
   end
 
   # :ditto:
-  def self.new(num : BigRational) : BigInt
+  def self.new(num : BigRational) : self
     num.to_big_i
   end
 
   # Returns *num*. Useful for generic code that does `T.new(...)` with `T`
   # being a `Number`.
-  def self.new(num : BigInt) : BigInt
+  def self.new(num : BigInt) : self
     num
   end
 

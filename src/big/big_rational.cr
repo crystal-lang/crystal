@@ -46,23 +46,23 @@ struct BigRational < Number
   # Creates an exact representation of float as rational.
   #
   # Raises `ArgumentError` if *num* is not finite.
-  def self.new(num : Float::Primitive) : BigRational
+  def self.new(num : Float::Primitive) : self
     raise ArgumentError.new "Can only construct from a finite number" unless num.finite?
     new { |mpq| LibGMP.mpq_set_d(mpq, num) }
   end
 
   # Creates an exact representation of float as rational.
-  def self.new(num : BigFloat) : BigRational
+  def self.new(num : BigFloat) : self
     new { |mpq| LibGMP.mpq_set_f(mpq, num) }
   end
 
   # Creates a `BigRational` from the given *num*.
-  def self.new(num : BigRational) : BigRational
+  def self.new(num : BigRational) : self
     num
   end
 
   # :ditto:
-  def self.new(num : BigDecimal) : BigRational
+  def self.new(num : BigDecimal) : self
     num.to_big_r
   end
 

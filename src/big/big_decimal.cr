@@ -38,7 +38,7 @@ struct BigDecimal < Number
   #
   # NOTE: Floats are fundamentally less precise than BigDecimals,
   # which makes initialization from them risky.
-  def self.new(num : Float) : BigDecimal
+  def self.new(num : Float) : self
     raise ArgumentError.new "Can only construct from a finite number" unless num.finite?
     new(num.to_s)
   end
@@ -47,13 +47,13 @@ struct BigDecimal < Number
   #
   # NOTE: BigRational are fundamentally more precise than BigDecimals,
   # which makes initialization from them risky.
-  def self.new(num : BigRational) : BigDecimal
+  def self.new(num : BigRational) : self
     num.numerator.to_big_d / num.denominator.to_big_d
   end
 
   # Returns *num*. Useful for generic code that does `T.new(...)` with `T`
   # being a `Number`.
-  def self.new(num : BigDecimal) : BigDecimal
+  def self.new(num : BigDecimal) : self
     num
   end
 
@@ -235,7 +235,7 @@ struct BigDecimal < Number
   # BigDecimal.new(1).div(BigDecimal.new(2))    # => BigDecimal(@value=5, @scale=2)
   # BigDecimal.new(1).div(BigDecimal.new(3), 5) # => BigDecimal(@value=33333, @scale=5)
   # ```
-  def div(other : BigDecimal, precision : Int::Primitive = DEFAULT_PRECISION) : BigDecimal
+  def div(other : BigDecimal, precision : Int = DEFAULT_PRECISION) : BigDecimal
     check_division_by_zero other
     return self if @value.zero?
     other.factor_powers_of_ten
