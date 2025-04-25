@@ -42,7 +42,7 @@ module Spec
       else
         expected = expected_value.pretty_inspect
         got = actual_value.pretty_inspect
-        if expected == got
+        if expected == got || (@type_safe && actual_value.class != expected_value.class)
           expected += " : #{@expected_value.class}"
           got += " : #{actual_value.class}"
         end
