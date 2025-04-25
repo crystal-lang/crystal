@@ -16,7 +16,7 @@ module Spec
           actual_value.bytesize == expected_value.bytesize &&
           actual_value.size == expected_value.size
       else
-        actual_value == @expected_value
+        actual_value == @expected_value && @expected_value == actual_value
       end
     end
 
@@ -46,7 +46,10 @@ module Spec
           expected += " : #{@expected_value.class}"
           got += " : #{actual_value.class}"
         end
-        "Expected: #{expected}\n     got: #{got}"
+        if actual_value == @expected_value
+          inverse = "The commutative operation #{@expected_value.class}#==(#{actual_value.class}) failed.\n"
+        end
+        "#{inverse}Expected: #{expected}\n     got: #{got}"
       end
     end
 
@@ -192,13 +195,13 @@ module Spec
     def match(actual_value)
       case @op
       in .less_than?
-        actual_value < @expected_value
+        actual_value < @expected_value > actual_value
       in .less_or_equal?
-        actual_value <= @expected_value
+        actual_value <= @expected_value >= actual_value
       in .greater_than?
-        actual_value > @expected_value
+        actual_value > @expected_value < actual_value
       in .greater_or_equal?
-        actual_value >= @expected_value
+        actual_value >= @expected_value <= actual_value
       end
     end
 
