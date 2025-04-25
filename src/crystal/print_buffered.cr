@@ -31,7 +31,29 @@ module Crystal
 
     if exception
       buf << ": "
-      exception.inspect_with_backtrace(buf)
+
+      # FIXME: calling `Exception#inspect_with_backtrace` sometimes dramatically
+      # slows down compilation times, we thus manually print the backtrace
+      # instead of calling the method.
+      #
+      # See https://github.com/crystal-lang/crystal/issues/15705
+      #
+      # exception.inspect_with_backtrace(buf)
+      loop do
+        buf << exception.message << " (" << exception.class << ")\n"
+
+        if backtrace = exception.backtrace?
+          backtrace.each { |line| buf << "  from " << line << '\n' }
+        end
+
+        if ex = exception.@cause
+          buf << "Caused by: "
+          exception = ex
+          next
+        end
+
+        break
+      end
     else
       buf.puts
       backtrace.try(&.each { |line| buf << "  from " << line << '\n' })
