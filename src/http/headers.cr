@@ -57,24 +57,24 @@ struct HTTP::Headers
     @hash = Hash(Key, String | Array(String)).new
   end
 
-  def []=(key, value : String)
+  def []=(key : String | HTTP::Headers::Key, value : String) : String
     check_invalid_header_content(value)
 
     @hash[wrap(key)] = value
   end
 
-  def []=(key, value : Array(String))
+  def []=(key : String, value : Array(String)) : Array(String)
     value.each { |val| check_invalid_header_content val }
 
     @hash[wrap(key)] = value
   end
 
-  def [](key) : String
+  def [](key : String) : String
     values = @hash[wrap(key)]
     concat values
   end
 
-  def []?(key) : String?
+  def []?(key : String) : String?
     fetch(key, nil)
   end
 
@@ -87,7 +87,7 @@ struct HTTP::Headers
   # headers = HTTP::Headers{"Connection" => "keep-alive, Upgrade"}
   # headers.includes_word?("Connection", "Upgrade") # => true
   # ```
-  def includes_word?(key, word) : Bool
+  def includes_word?(key : String, word : String) : Bool
     return false if word.empty?
 
     values = @hash[wrap(key)]?
@@ -132,31 +132,31 @@ struct HTTP::Headers
   # headers.add("Connection", "Upgrade")
   # headers["Connection"] # => "keep-alive,Upgrade"
   # ```
-  def add(key, value : String) : self
+  def add(key : String, value : String) : self
     check_invalid_header_content value
     unsafe_add(key, value)
     self
   end
 
-  def add(key, value : Array(String)) : self
+  def add(key : String, value : Array(String)) : self
     value.each { |val| check_invalid_header_content val }
     unsafe_add(key, value)
     self
   end
 
-  def add?(key, value : String) : Bool
+  def add?(key : String, value : String) : Bool
     return false unless valid_value?(value)
     unsafe_add(key, value)
     true
   end
 
-  def add?(key, value : Array(String)) : Bool
+  def add?(key : String, value : Array(String)) : Bool
     value.each { |val| return false unless valid_value?(val) }
     unsafe_add(key, value)
     true
   end
 
-  def fetch(key, default) : String?
+  def fetch(key : String, default : String?) : String?
     fetch(wrap(key)) { default }
   end
 
@@ -165,7 +165,7 @@ struct HTTP::Headers
     values ? concat(values) : yield key
   end
 
-  def has_key?(key) : Bool
+  def has_key?(key : String) : Bool
     @hash.has_key? wrap(key)
   end
 
@@ -173,7 +173,7 @@ struct HTTP::Headers
     @hash.empty?
   end
 
-  def delete(key) : String?
+  def delete(key : String) : String?
     values = @hash.delete wrap(key)
     values ? concat(values) : nil
   end
@@ -199,7 +199,7 @@ struct HTTP::Headers
   # HTTP::Headers{"Foo" => "bar"} == HTTP::Headers{"Foo" => ["bar"]} # => true
   # HTTP::Headers{"Foo" => "bar"} == HTTP::Headers{"Foo" => "baz"}   # => false
   # ```
-  def ==(other : self)
+  def ==(other : self) : Bool
     # Adapts `Hash#==` to treat string values equal to a single element array.
 
     return false unless @hash.size == other.@hash.size
@@ -247,11 +247,11 @@ struct HTTP::Headers
     end
   end
 
-  def get(key) : Array(String)
+  def get(key : HTTP::Headers::Key | String) : Array(String)
     cast @hash[wrap(key)]
   end
 
-  def get?(key) : Array(String)?
+  def get?(key : String) : Array(String)?
     @hash[wrap(key)]?.try { |value| cast(value) }
   end
 
@@ -263,7 +263,7 @@ struct HTTP::Headers
     dup
   end
 
-  def clone
+  def clone : HTTP::Headers
     dup
   end
 
@@ -339,7 +339,7 @@ struct HTTP::Headers
     end
   end
 
-  def valid_value?(value) : Bool
+  def valid_value?(value : String) : Bool
     invalid_value_char(value).nil?
   end
 

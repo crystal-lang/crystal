@@ -10,7 +10,7 @@ class HTTP::Client
     getter! body_io : IO
     @cookies : Cookies?
 
-    def initialize(@status : HTTP::Status, @body : String? = nil, @headers : Headers = Headers.new, status_message = nil, @version = "HTTP/1.1", @body_io = nil)
+    def initialize(@status : HTTP::Status, @body : String? = nil, @headers : Headers = Headers.new, status_message : String? = nil, @version = "HTTP/1.1", @body_io : IO? = nil)
       @status_message = status_message || @status.description
 
       if Response.mandatory_body?(@status)
@@ -22,7 +22,7 @@ class HTTP::Client
       end
     end
 
-    def self.new(status_code : Int32, body : String? = nil, headers : Headers = Headers.new, status_message = nil, version = "HTTP/1.1", body_io = nil)
+    def self.new(status_code : Int32, body : String? = nil, headers : Headers = Headers.new, status_message : String? = nil, version : String = "HTTP/1.1", body_io : IO? = nil) : HTTP::Client::Response
       new(HTTP::Status.new(status_code), body, headers, status_message, version, body_io)
     end
 
@@ -68,7 +68,7 @@ class HTTP::Client
       end
     end
 
-    def to_io(io)
+    def to_io(io : IO)
       io << @version << ' ' << @status.code << ' ' << @status_message << "\r\n"
       cookies = @cookies
       headers = cookies ? cookies.add_response_headers(@headers) : @headers
@@ -87,11 +87,11 @@ class HTTP::Client
       !(status.informational? || status.no_content? || status.not_modified?)
     end
 
-    def self.supports_chunked?(version) : Bool
+    def self.supports_chunked?(version : String) : Bool
       version == "HTTP/1.1"
     end
 
-    def self.from_io(io, ignore_body = false, decompress = true)
+    def self.from_io(io : IO, ignore_body : Bool = false, decompress : Bool = true) : HTTP::Client::Response
       from_io?(io, ignore_body, decompress) ||
         raise("Unexpected end of http request")
     end
@@ -99,7 +99,7 @@ class HTTP::Client
     # Parses an `HTTP::Client::Response` from the given `IO`.
     # Might return `nil` if there's no data in the `IO`,
     # which probably means that the connection was closed.
-    def self.from_io?(io, ignore_body = false, decompress = true) : self?
+    def self.from_io?(io : IO, ignore_body : Bool = false, decompress : Bool = true) : self?
       from_io?(io, ignore_body: ignore_body, decompress: decompress) do |response|
         if response
           response.consume_body_io
