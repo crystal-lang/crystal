@@ -68,7 +68,7 @@ class HTTP::Client
       end
     end
 
-    def to_io(io : IO)
+    def to_io(io : IO) : Nil
       io << @version << ' ' << @status.code << ' ' << @status_message << "\r\n"
       cookies = @cookies
       headers = cookies ? cookies.add_response_headers(@headers) : @headers

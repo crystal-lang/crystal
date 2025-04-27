@@ -137,7 +137,7 @@ class HTTP::Request
     @headers["Content-Length"] = "0" if @method.in?("POST", "PUT")
   end
 
-  def to_io(io : IO)
+  def to_io(io : IO) : Nil
     io << @method << ' ' << resource << ' ' << @version << "\r\n"
     cookies = @cookies
     headers = cookies ? cookies.add_request_headers(@headers) : @headers
@@ -149,7 +149,7 @@ class HTTP::Request
 
   # Returns a `HTTP::Request` instance if successfully parsed,
   # `nil` on EOF or `HTTP::Status` otherwise.
-  def self.from_io(io, *, max_request_line_size : Int32 = HTTP::MAX_REQUEST_LINE_SIZE, max_headers_size : Int32 = HTTP::MAX_HEADERS_SIZE) : HTTP::Request | HTTP::Status | Nil
+  def self.from_io(io : IO, *, max_request_line_size : Int32 = HTTP::MAX_REQUEST_LINE_SIZE, max_headers_size : Int32 = HTTP::MAX_HEADERS_SIZE) : HTTP::Request | HTTP::Status | Nil
     line = parse_request_line(io, max_request_line_size)
     return line unless line.is_a?(RequestLine)
 

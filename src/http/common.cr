@@ -255,7 +255,7 @@ module HTTP
   end
 
   # :nodoc:
-  def self.serialize_headers_and_body(io, headers : HTTP::Headers, body : String?, body_io, version : String)
+  def self.serialize_headers_and_body(io : IO, headers : HTTP::Headers, body : String?, body_io : IO?, version : String) : Nil
     if body
       serialize_headers_and_string_body(io, headers, body)
     elsif body_io
@@ -282,7 +282,7 @@ module HTTP
     end
   end
 
-  def self.serialize_headers_and_string_body(io, headers : HTTP::Headers, body : String)
+  def self.serialize_headers_and_string_body(io : IO, headers : HTTP::Headers, body : String) : Nil
     headers["Content-Length"] = body.bytesize.to_s
     headers.serialize(io)
     io << "\r\n"
@@ -295,7 +295,7 @@ module HTTP
     io << "\r\n"
   end
 
-  def self.serialize_chunked_body(io, body : IO)
+  def self.serialize_chunked_body(io : IO, body : IO) : Nil
     buf = uninitialized UInt8[8192]
     while (buf_length = body.read(buf.to_slice)) > 0
       buf_length.to_s(io, 16)

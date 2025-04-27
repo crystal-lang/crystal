@@ -537,7 +537,7 @@ class HTTP::Server
   end
 
   # Builds all handlers as the middleware for `HTTP::Server`.
-  def self.build_middleware(handlers, last_handler : (Context ->)? = nil)
+  def self.build_middleware(handlers : Array(HTTP::Handler), last_handler : (Context ->)? = nil) : HTTP::Handler
     raise ArgumentError.new "You must specify at least one HTTP Handler." if handlers.empty?
     0.upto(handlers.size - 2) { |i| handlers[i].next = handlers[i + 1] }
     handlers.last.next = last_handler if last_handler
