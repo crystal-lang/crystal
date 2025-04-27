@@ -17,11 +17,11 @@ class Digest::CRC32 < ::Digest
     LibZ.crc32(0, nil, 0).to_u32
   end
 
-  def self.checksum(data : String) : UInt32
+  def self.checksum(data) : UInt32
     update(data, initial)
   end
 
-  def self.update(data : Slice(UInt8) | String, crc32 : UInt32) : UInt32
+  def self.update(data, crc32 : UInt32) : UInt32
     slice = data.to_slice
     LibZ.crc32(crc32, slice, slice.size).to_u32
   end
