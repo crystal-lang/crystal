@@ -1146,7 +1146,7 @@ abstract class IO
   end
 
   # Same as `pos`.
-  def tell : Int64 | Int32
+  def tell
     pos
   end
 
