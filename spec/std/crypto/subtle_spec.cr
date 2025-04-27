@@ -17,11 +17,11 @@ describe "Subtle" do
 
   it "compares constant time bytes on equality" do
     data = [
-      {"a" => 0x00_u8, "b" => 0x00_u8, "result" => 1_u8},
-      {"a" => 0x00_u8, "b" => 0x01_u8, "result" => 0_u8},
-      {"a" => 0x01_u8, "b" => 0x00_u8, "result" => 0_u8},
-      {"a" => 0xff_u8, "b" => 0xff_u8, "result" => 1_u8},
-      {"a" => 0xff_u8, "b" => 0xfe_u8, "result" => 0_u8},
+      {"a" => 0x00_u8, "b" => 0x00_u8, "result" => 1},
+      {"a" => 0x00_u8, "b" => 0x01_u8, "result" => 0},
+      {"a" => 0x01_u8, "b" => 0x00_u8, "result" => 0},
+      {"a" => 0xff_u8, "b" => 0xff_u8, "result" => 1},
+      {"a" => 0xff_u8, "b" => 0xfe_u8, "result" => 0},
     ]
 
     data.each do |test|
