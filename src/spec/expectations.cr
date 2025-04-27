@@ -298,6 +298,18 @@ module Spec
     end
   end
 
+  macro def_strict_eq
+    def eq(value)
+      Spec::EqualExpectation.new value, type_safe: true
+    end
+  end
+
+  macro def_lax_eq
+    def eq(value)
+      Spec::EqualExpectation.new value, type_safe: false
+    end
+  end
+
   # This module defines a number of methods to create expectations, which are
   # automatically included into the top level namespace.
   #
@@ -308,8 +320,13 @@ module Spec
       Spec::EqualExpectation.new value
     end
 
-    # Creates an `Expectation` that passes if actual equals *value* (`==`) and its class equals `value.class`.
+    # Creates an `Expectation` that passes if actual equals *value* (`==`).
     def eq(value)
+      Spec::EqualExpectation.new value, type_safe: {{ flag?(:strict_eq) }}
+    end
+
+    # Creates an `Expectation` that passes if actual equals *value* (`==`) and its class equals `value.class`.
+    def eq!(value)
       Spec::EqualExpectation.new value, type_safe: true
     end
 
