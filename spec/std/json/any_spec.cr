@@ -80,14 +80,14 @@ describe JSON::Any do
     end
 
     it "gets array" do
-      JSON.parse(%([1, 2, 3])).as_a.should eq([1, 2, 3])
-      JSON.parse(%([1, 2, 3])).as_a?.should eq([1, 2, 3])
+      JSON.parse(%([1, 2, 3])).as_a.should eq([JSON::Any.new(1_i64), JSON::Any.new(2_i64), JSON::Any.new(3_i64)])
+      JSON.parse(%([1, 2, 3])).as_a?.should eq([JSON::Any.new(1_i64), JSON::Any.new(2_i64), JSON::Any.new(3_i64)])
       JSON.parse("true").as_a?.should be_nil
     end
 
     it "gets hash" do
-      JSON.parse(%({"foo": "bar"})).as_h.should eq({"foo" => "bar"})
-      JSON.parse(%({"foo": "bar"})).as_h?.should eq({"foo" => "bar"})
+      JSON.parse(%({"foo": "bar"})).as_h.should eq({"foo" => JSON::Any.new("bar")})
+      JSON.parse(%({"foo": "bar"})).as_h?.should eq({"foo" => JSON::Any.new("bar")})
       JSON.parse("true").as_h?.should be_nil
     end
   end
@@ -116,13 +116,13 @@ describe JSON::Any do
     it "of array" do
       JSON.parse("[1, 2, 3]")[1]?.not_nil!.raw.should eq(2_i64)
       JSON.parse("[1, 2, 3]")[3]?.should be_nil
-      JSON.parse("[true, false]")[1]?.should eq false
+      JSON.parse("[true, false]")[1]?.should eq JSON::Any.new(false)
     end
 
     it "of hash" do
       JSON.parse(%({"foo": "bar"}))["foo"]?.not_nil!.raw.should eq("bar")
       JSON.parse(%({"foo": "bar"}))["fox"]?.should be_nil
-      JSON.parse(%q<{"foo": false}>)["foo"]?.should eq false
+      JSON.parse(%q<{"foo": false}>)["foo"]?.should eq JSON::Any.new(false)
     end
   end
 
@@ -130,8 +130,8 @@ describe JSON::Any do
     it "gets the value at given path given splat" do
       obj = JSON.parse(%({"foo": [1, {"bar": [2, 3]}]}))
 
-      obj.dig?("foo", 0).should eq(1)
-      obj.dig?("foo", 1, "bar", 1).should eq(3)
+      obj.dig?("foo", 0).should eq(JSON::Any.new(1_i64))
+      obj.dig?("foo", 1, "bar", 1).should eq(JSON::Any.new(3_i64))
     end
 
     it "returns nil if not found" do
@@ -152,8 +152,8 @@ describe JSON::Any do
     it "gets the value at given path given splat" do
       obj = JSON.parse(%({"foo": [1, {"bar": [2, 3]}]}))
 
-      obj.dig("foo", 0).should eq(1)
-      obj.dig("foo", 1, "bar", 1).should eq(3)
+      obj.dig("foo", 0).should eq(JSON::Any.new(1_i64))
+      obj.dig("foo", 1, "bar", 1).should eq(JSON::Any.new(3_i64))
     end
 
     it "raises if not found" do
@@ -178,8 +178,8 @@ describe JSON::Any do
 
   it "compares to other objects" do
     obj = JSON.parse(%([1, 2]))
-    obj.should eq([1, 2])
-    obj[0].should eq(1)
+    obj.should eq(JSON::Any.new([JSON::Any.new(1_i64), JSON::Any.new(2_i64)]))
+    obj[0].should eq(JSON::Any.new(1_i64))
   end
 
   it "can compare with ===" do

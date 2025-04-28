@@ -24,26 +24,26 @@ describe JSON::Parser do
   it_parses "null", nil
   it_parses %("\\nПривет, мир!"), "\nПривет, мир!"
 
-  it_parses "[]", [] of Int32
-  it_parses "[1]", [1]
-  it_parses "[1, 2, 3]", [1, 2, 3]
-  it_parses "[1.5]", [1.5]
-  it_parses "[null]", [nil]
-  it_parses "[true]", [true]
-  it_parses "[false]", [false]
-  it_parses %(["hello"]), ["hello"]
-  it_parses "[0]", [0]
-  it_parses " [ 0 ] ", [0]
+  it_parses "[]", [] of JSON::Any
+  it_parses "[1]", [JSON::Any.new(1)]
+  it_parses "[1, 2, 3]", [JSON::Any.new(1), JSON::Any.new(2), JSON::Any.new(3)]
+  it_parses "[1.5]", [JSON::Any.new(1.5)]
+  it_parses "[null]", [JSON::Any.new(nil)]
+  it_parses "[true]", [JSON::Any.new(true)]
+  it_parses "[false]", [JSON::Any.new(false)]
+  it_parses %(["hello"]), [JSON::Any.new("hello")]
+  it_parses "[0]", [JSON::Any.new(0)]
+  it_parses " [ 0 ] ", [JSON::Any.new(0)]
 
   it_parses "{}", {} of String => JSON::Any
-  it_parses %({"foo": 1}), {"foo" => 1}
-  it_parses %({"foo": 1, "bar": 1.5}), {"foo" => 1, "bar" => 1.5}
-  it_parses %({"fo\\no": 1}), {"fo\no" => 1}
+  it_parses %({"foo": 1}), {"foo" => JSON::Any.new(1)}
+  it_parses %({"foo": 1, "bar": 1.5}), {"foo" => JSON::Any.new(1), "bar" => JSON::Any.new(1.5)}
+  it_parses %({"fo\\no": 1}), {"fo\no" => JSON::Any.new(1)}
 
-  it_parses "[[1]]", [[1]]
-  it_parses %([{"foo": 1}]), [{"foo" => 1}]
+  it_parses "[[1]]", [JSON::Any.new([JSON::Any.new(1)])]
+  it_parses %([{"foo": 1}]), [JSON::Any.new({"foo" => JSON::Any.new(1)})]
 
-  it_parses "[\"日\"]", ["日"]
+  it_parses "[\"日\"]", [JSON::Any.new("日")]
 
   it_raises_on_parse "[1,]"
   it_raises_on_parse %({"foo": 1,})

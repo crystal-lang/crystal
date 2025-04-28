@@ -521,7 +521,7 @@ describe "JSON mapping" do
   end
 
   it "empty class with unmapped" do
-    JSONAttrEmptyClassWithUnmapped.from_json(%({"name": "John", "age": 30})).json_unmapped.should eq({"name" => "John", "age" => 30})
+    JSONAttrEmptyClassWithUnmapped.from_json(%({"name": "John", "age": 30})).json_unmapped.should eq({"name" => JSON::Any.new("John"), "age" => JSON::Any.new(30_i64)})
   end
 
   it "parses person" do
@@ -584,7 +584,7 @@ describe "JSON mapping" do
     person = JSONAttrPersonExtraFields.from_json(%({"name": "John", "age": 30, "x": "1", "y": 2, "z": [1,2,3]}))
     person.name.should eq("John")
     person.age.should eq(30)
-    person.json_unmapped.should eq({"x" => "1", "y" => 2_i64, "z" => [1, 2, 3]})
+    person.json_unmapped.should eq({"x" => JSON::Any.new("1"), "y" => JSON::Any.new(2_i64), "z" => JSON::Any.new([JSON::Any.new(1_i64), JSON::Any.new(2_i64), JSON::Any.new(3_i64)])})
   end
 
   it "should to store extra fields (JSONAttrPersonExtraFields with on_to_json)" do
@@ -713,7 +713,7 @@ describe "JSON mapping" do
   it "parses json with any" do
     json = JSONAttrWithAny.from_json(%({"name": "Hi", "any": [{"x": 1}, 2, "hey", true, false, 1.5, null]}))
     json.name.should eq("Hi")
-    json.any.raw.should eq([{"x" => 1}, 2, "hey", true, false, 1.5, nil])
+    json.any.raw.should eq([JSON::Any.new({"x" => JSON::Any.new(1_i64)}), JSON::Any.new(2_i64), JSON::Any.new("hey"), JSON::Any.new(true), JSON::Any.new(false), JSON::Any.new(1.5), JSON::Any.new(nil)])
     json.to_json.should eq(%({"name":"Hi","any":[{"x":1},2,"hey",true,false,1.5,null]}))
   end
 
