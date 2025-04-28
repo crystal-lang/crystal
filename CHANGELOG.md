@@ -1,5 +1,43 @@
 # Changelog
 
+## [1.16.2] (2025-04-29)
+
+[1.16.2]: https://github.com/crystal-lang/crystal/releases/1.16.2
+
+### Bugfixes
+
+#### stdlib
+
+- *(numeric)* Fix show `unit_separator` in `#humanize_bytes` with empty prefix ([#15683], thanks @straight-shoota)
+- *(runtime)* run win32 console reader in thread instead of isolated context ([#15714], thanks @ysbaddaden)
+- *(runtime)* Fix: `CRYSTAL_LOAD_DEBUG_INFO=1` fails with `-Dexecution_context` ([#15715], thanks @crysbot)
+
+[#15683]: https://github.com/crystal-lang/crystal/pull/15683
+[#15714]: https://github.com/crystal-lang/crystal/pull/15714
+[#15715]: https://github.com/crystal-lang/crystal/pull/15715
+
+#### compiler
+
+- *(semantic)* Do not add `ReferenceStorage` to `Value`'s subclasses twice ([#15706], thanks @HertzDevil)
+
+[#15706]: https://github.com/crystal-lang/crystal/pull/15706
+
+### Refactor
+
+#### compiler
+
+- *(codegen)* Add `__crystal_raise_cast_failed` for non-interpreted code ([#15712], backported from [#15708], thanks @HertzDevil)
+
+[#15712]: https://github.com/crystal-lang/crystal/pull/15712
+[#15708]: https://github.com/crystal-lang/crystal/pull/15708
+
+### Infrastructure
+
+- *(ci)* Only set up Cygwin on Windows CI if truly required ([#15713], backported from [#15661], thanks @HertzDevil)
+
+[#15713]: https://github.com/crystal-lang/crystal/pull/15713
+[#15661]: https://github.com/crystal-lang/crystal/pull/15661
+
 ## [1.16.1] (2025-04-16)
 
 [1.16.1]: https://github.com/crystal-lang/crystal/releases/1.16.1
