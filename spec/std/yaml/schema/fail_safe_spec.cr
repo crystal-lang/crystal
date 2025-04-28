@@ -3,7 +3,7 @@ require "yaml"
 
 private def it_parses(string, expected, file = __FILE__, line = __LINE__)
   it "parses #{string.inspect}", file, line do
-    YAML::Schema::FailSafe.parse(string).should eq(expected)
+    YAML::Schema::FailSafe.parse(string).should eq?(expected)
   end
 end
 
@@ -17,7 +17,7 @@ end
 
 private def it_parses_all(string, expected, file = __FILE__, line = __LINE__)
   it "parses all #{string.inspect}", file, line do
-    YAML::Schema::FailSafe.parse_all(string).should eq(expected)
+    YAML::Schema::FailSafe.parse_all(string).should eq?(expected)
   end
 end
 

@@ -473,7 +473,7 @@ describe "YAML::Serializable" do
   end
 
   it "empty class with unmapped" do
-    YAMLAttrEmptyClassWithUnmapped.from_yaml("---\nname: John\nage: 30\n").yaml_unmapped.should eq({"name" => "John", "age" => 30})
+    YAMLAttrEmptyClassWithUnmapped.from_yaml("---\nname: John\nage: 30\n").yaml_unmapped.should eq?({"name" => "John", "age" => 30})
   end
 
   it "parses person" do
@@ -611,7 +611,7 @@ describe "YAML::Serializable" do
         YAML
     person.name.should eq("John")
     person.age.should eq(30)
-    person.yaml_unmapped.should eq({"x" => 1_i64, "y" => "1-2", "z" => [1_i64, 2_i64, 3_i64]})
+    person.yaml_unmapped.should eq?({"x" => 1_i64, "y" => "1-2", "z" => [1_i64, 2_i64, 3_i64]})
   end
 
   it "should to store extra fields (YAMLAttrPersonExtraFields with on_to_yaml)" do

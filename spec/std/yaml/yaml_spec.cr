@@ -25,7 +25,7 @@ describe "YAML" do
 
     it "parses alias to scalar" do
       doc = YAML.parse("---\n- &x foo\n- *x\n")
-      doc.should eq(["foo", "foo"])
+      doc.should eq?(["foo", "foo"])
       doc[0].as_s.should be(doc[1].as_s)
     end
 
@@ -36,7 +36,7 @@ describe "YAML" do
           <<:
             baz: foobar
           ))
-        doc["baz"]?.should eq("foobar")
+        doc["baz"]?.should eq?("foobar")
       end
 
       it "raises if merging with missing alias" do
@@ -56,7 +56,7 @@ describe "YAML" do
           bar:
             <<: *x
           ))
-        doc["bar"].should eq({"bar" => 1, "baz" => 2})
+        doc["bar"].should eq?({"bar" => 1, "baz" => 2})
       end
 
       it "merges other mapping with array of alias" do
@@ -68,7 +68,7 @@ describe "YAML" do
           bar:
             <<: [*x, *y]
           ))
-        doc["bar"].should eq({"bar" => 1, "baz" => 2})
+        doc["bar"].should eq?({"bar" => 1, "baz" => 2})
       end
 
       it "doesn't merge explicit string key <<" do
@@ -78,7 +78,7 @@ describe "YAML" do
           bar:
             !!str '<<': *foo
         ))
-        doc.should eq({"foo" => {"hello" => "world"}, "bar" => {"<<" => {"hello" => "world"}}})
+        doc.should eq?({"foo" => {"hello" => "world"}, "bar" => {"<<" => {"hello" => "world"}}})
       end
 
       it "doesn't merge empty mapping" do
@@ -87,7 +87,7 @@ describe "YAML" do
           bar:
             <<: *foo
         ))
-        doc["bar"].should eq({"<<" => nil})
+        doc["bar"].should eq?({"<<" => nil})
       end
 
       it "doesn't merge arrays" do
@@ -97,7 +97,7 @@ describe "YAML" do
           bar:
             <<: *foo
         ))
-        doc["bar"].should eq({"<<" => [1]})
+        doc["bar"].should eq?({"<<" => [1]})
       end
 
       it "has correct line/number info (#2585)" do
@@ -146,7 +146,7 @@ describe "YAML" do
       end
 
       it "parses from IO" do
-        YAML.parse(IO::Memory.new("- foo\n- bar")).should eq(["foo", "bar"])
+        YAML.parse(IO::Memory.new("- foo\n- bar")).should eq?(["foo", "bar"])
       end
     end
   end

@@ -3,7 +3,7 @@ require "yaml"
 
 private def it_parses(string, expected, file = __FILE__, line = __LINE__)
   it "parses #{string.inspect}", file, line do
-    YAML::Schema::Core.parse(string).should eq(expected)
+    YAML::Schema::Core.parse(string).should eq?(expected), file: file, line: line
   end
 end
 
