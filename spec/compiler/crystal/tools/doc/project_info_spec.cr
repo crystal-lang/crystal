@@ -225,55 +225,55 @@ describe Crystal::Doc::ProjectInfo do
 
   describe ".read_shard_properties" do
     it "no shard.yml" do
-      ProjectInfo.read_shard_properties.should eq({nil, nil})
+      ProjectInfo.read_shard_properties.should eq?({nil, nil})
     end
 
     it "without name and version properties" do
       File.write("shard.yml", "foo: bar\n")
-      ProjectInfo.read_shard_properties.should eq({nil, nil})
+      ProjectInfo.read_shard_properties.should eq?({nil, nil})
     end
 
     it "empty properties" do
       File.write("shard.yml", "name: \nversion: ")
-      ProjectInfo.read_shard_properties.should eq({nil, nil})
+      ProjectInfo.read_shard_properties.should eq?({nil, nil})
     end
 
     it "indented properties" do
       File.write("shard.yml", "  name: bar\n  version: 1.0")
-      ProjectInfo.read_shard_properties.should eq({nil, nil})
+      ProjectInfo.read_shard_properties.should eq?({nil, nil})
     end
 
     it "only name" do
       File.write("shard.yml", "name: bar\n")
-      ProjectInfo.read_shard_properties.should eq({"bar", nil})
+      ProjectInfo.read_shard_properties.should eq?({"bar", nil})
     end
 
     it "name and version" do
       File.write("shard.yml", "name: bar\nversion: 1.0")
-      ProjectInfo.read_shard_properties.should eq({"bar", "1.0"})
+      ProjectInfo.read_shard_properties.should eq?({"bar", "1.0"})
     end
 
     it "duplicate properties uses first one" do
       File.write("shard.yml", "name: bar\nversion: 1.0\nname: foo\nversion: foo")
-      ProjectInfo.read_shard_properties.should eq({"bar", "1.0"})
+      ProjectInfo.read_shard_properties.should eq?({"bar", "1.0"})
     end
 
     it "strip whitespace" do
       File.write("shard.yml", "name: bar  \nversion: 1.0  ")
-      ProjectInfo.read_shard_properties.should eq({"bar", "1.0"})
+      ProjectInfo.read_shard_properties.should eq?({"bar", "1.0"})
     end
 
     it "strip quotes" do
       File.write("shard.yml", "name: 'bar'\nversion: '1.0'")
-      ProjectInfo.read_shard_properties.should eq({"bar", "1.0"})
+      ProjectInfo.read_shard_properties.should eq?({"bar", "1.0"})
     end
 
     it "ignores comments" do
       File.write("shard.yml", "name: bar # comment\nversion: 1.0 # comment")
-      ProjectInfo.read_shard_properties.should eq({"bar", "1.0"})
+      ProjectInfo.read_shard_properties.should eq?({"bar", "1.0"})
 
       File.write("shard.yml", "name: # comment\nversion: # comment")
-      ProjectInfo.read_shard_properties.should eq({nil, nil})
+      ProjectInfo.read_shard_properties.should eq?({nil, nil})
     end
   end
 
