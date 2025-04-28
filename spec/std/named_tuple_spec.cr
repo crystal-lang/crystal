@@ -16,8 +16,7 @@ describe "NamedTuple" do
     typeof(NamedTuple.new).new.should eq(NamedTuple.new)
 
     t = NamedTuple(foo: Int32 | String, bar: Int32 | String).new(foo: 1, bar: "a")
-    t.should eq({foo: 1, bar: "a"})
-    t.class.should_not eq(NamedTuple(foo: Int32, bar: String))
+    t.should eq({foo: 1.as(Int32 | String), bar: "a".as(Int32 | String)})
   end
 
   it "does NamedTuple.new, with hyphen in key" do
@@ -414,16 +413,16 @@ describe "NamedTuple" do
     tup1 = {a: 1, b: 'a'}
     tup2 = {b: 'a', a: 1}
     tup3 = {a: 1, b: 'b'}
-    tup1.should eq(tup2)
-    tup1.should_not eq(tup3)
+    tup1.should eq?(tup2)
+    tup1.should_not eq?(tup3)
   end
 
   it "compares with other named tuple type" do
     tup1 = {a: 1, b: 'a'}
     tup2 = {b: 'a', a: 1.0}
     tup3 = {b: 'a', a: 1.1}
-    tup1.should eq(tup2)
-    tup1.should_not eq(tup3)
+    tup1.should eq?(tup2)
+    tup1.should_not eq?(tup3)
   end
 
   it "compares with named tuple union (#5131)" do
@@ -496,7 +495,7 @@ describe "NamedTuple" do
   it "merges with other named tuple" do
     a = {one: 1, two: 2, three: 3, four: 4, five: 5, "im \"string": "works"}
     b = {two: "Two", three: true, "new one": "ok"}
-    a.merge(b).merge(four: "Four").merge(NamedTuple.new).should eq({one: 1, two: "Two", three: true, four: "Four", five: 5, "new one": "ok", "im \"string": "works"})
+    a.merge(b).merge(four: "Four").merge(NamedTuple.new).should eq?({one: 1, two: "Two", three: true, four: "Four", five: 5, "new one": "ok", "im \"string": "works"})
   end
 
   it "merges two empty named tuples" do

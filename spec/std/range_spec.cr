@@ -66,7 +66,7 @@ describe "Range" do
 
     ((1..nil) == (1..nil)).should be_true
 
-    (1..1).should eq Range(Int32?, Int32?).new(1, 1)
+    (1..1).should eq? Range(Int32?, Int32?).new(1, 1)
     ((1..1) == Range(Int32?, Int32?).new(1, 1)).should be_true
     ((1.0..1.0) == (1..1)).should be_true
   end

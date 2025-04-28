@@ -199,13 +199,13 @@ describe "YAML serialization" do
 
     it "does for named tuple with nilable fields (#8089)" do
       tuple = NamedTuple(x: Int32?, y: String).from_yaml(%({"y": "hello"}))
-      tuple.should eq({x: nil, y: "hello"})
+      tuple.should eq({x: nil.as(Int32?), y: "hello"})
       typeof(tuple).should eq(NamedTuple(x: Int32?, y: String))
     end
 
     it "does for named tuple with nilable fields and null (#8089)" do
       tuple = NamedTuple(x: Int32?, y: String).from_yaml(%({"y": "hello", "x": null}))
-      tuple.should eq({x: nil, y: "hello"})
+      tuple.should eq({x: nil.as(Int32?), y: "hello"})
       typeof(tuple).should eq(NamedTuple(x: Int32?, y: String))
     end
 
