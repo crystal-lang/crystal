@@ -86,16 +86,16 @@ describe Log::Metadata do
   it "[]" do
     md = m({a: 1, b: 2}).extend({a: 3})
 
-    md[:a].should eq(3)
-    md[:b].should eq(2)
+    md[:a].should eq(Log::Metadata::Value.new(3))
+    md[:b].should eq(Log::Metadata::Value.new(2))
     expect_raises(KeyError) { md[:c] }
   end
 
   it "[]?" do
     md = m({a: 1, b: 2}).extend({a: 3})
 
-    md[:a]?.should eq(3)
-    md[:b]?.should eq(2)
+    md[:a]?.should eq(Log::Metadata::Value.new(3))
+    md[:b]?.should eq(Log::Metadata::Value.new(2))
     md[:c]?.should be_nil
   end
 end
