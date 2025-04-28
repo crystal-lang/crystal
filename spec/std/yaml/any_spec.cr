@@ -445,8 +445,8 @@ describe YAML::Any do
 
   it "compares to other objects" do
     obj = YAML.parse("- foo\n- bar \n")
-    obj.should eq(%w(foo bar))
-    obj[0].should eq("foo")
+    obj.should eq?(%w(foo bar))
+    obj[0].should eq?("foo")
   end
 
   it "returns array of any when doing parse all" do

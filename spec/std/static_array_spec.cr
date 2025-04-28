@@ -57,9 +57,9 @@ describe "StaticArray" do
       a.should_not eq(StaticArray(Int32, 3).new { |i| i * 3 })
     end
 
-    it "compares other" do
-      (StaticArray(Int32, 0).new(0)).should_not eq(nil)
-      (StaticArray(Int32, 3).new(0)).should eq(StaticArray(Int8, 3).new(0_i8))
+    it "compares equivalence" do
+      StaticArray(Int32, 0).new(0).should_not eq?(nil)
+      StaticArray(Int32, 3).new(0).should eq?(StaticArray(Int8, 3).new(0_i8))
     end
   end
 
