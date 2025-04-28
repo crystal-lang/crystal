@@ -119,7 +119,7 @@ describe Log do
     log.error(exception: ex)
     log.fatal(exception: ex)
 
-    backend.entries.map { |e| {e.source, e.severity, e.message, e.data, e.exception} }.should eq([
+    backend.entries.map { |e| {e.source, e.severity, e.message, e.data, e.exception} }.should eq?([
       {"a", s(:warn), "", Log::Metadata.empty, ex},
       {"a", s(:error), "", Log::Metadata.empty, ex},
       {"a", s(:fatal), "", Log::Metadata.empty, ex},
