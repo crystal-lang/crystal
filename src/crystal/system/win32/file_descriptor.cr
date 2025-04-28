@@ -519,11 +519,11 @@ private module ConsoleUtils
   @@read_requests = Deque(ReadRequest).new
   @@bytes_read = Deque(Int32).new
   @@mtx = ::Thread::Mutex.new
-  {% if flag?(:execution_context) %}
-    @@reader_thread = ::Fiber::ExecutionContext::Isolated.new("READER-LOOP") { reader_loop }
-  {% else %}
-    @@reader_thread = ::Thread.new { reader_loop }
-  {% end %}
+
+  # Start a dedicated thread to block on reads from the console. Doesn't need an
+  # isolated execution context because there's no fiber communication (only
+  # thread communication) and only blocking I/O within the thread.
+  @@reader_thread = ::Thread.new { reader_loop }
 
   private def self.reader_loop
     while true
