@@ -427,6 +427,26 @@ module Crystal::System::FileDescriptor
       LibC.SetConsoleMode(windows_handle, old_mode)
     end
   end
+
+  def self.setup_console : Nil
+    # Enable UTF-8 console I/O for the duration of program execution
+    if LibC.IsValidCodePage(LibC::CP_UTF8) != 0
+      old_input_cp = LibC.GetConsoleCP
+      if LibC.SetConsoleCP(LibC::CP_UTF8) != 0
+        at_exit { LibC.SetConsoleCP(old_input_cp) }
+      end
+
+      old_output_cp = LibC.GetConsoleOutputCP
+      if LibC.SetConsoleOutputCP(LibC::CP_UTF8) != 0
+        at_exit { LibC.SetConsoleOutputCP(old_output_cp) }
+      end
+    end
+
+    # Start a dedicated thread to block on reads from the console. Doesn't need
+    # an isolated execution context because there's no fiber communication (only
+    # thread communication) and only blocking I/O within the thread.
+    @@reader_thread = ::Thread.new("CONSOLE") { ConsoleUtils.reader_loop }
+  end
 end
 
 private module ConsoleUtils
@@ -521,13 +541,8 @@ private module ConsoleUtils
   @@read_requests = Deque(ReadRequest).new
   @@bytes_read = Deque(Int32).new
   @@mtx = ::Thread::Mutex.new
-  {% if flag?(:execution_context) %}
-    @@reader_thread = ::Fiber::ExecutionContext::Isolated.new("READER-LOOP") { reader_loop }
-  {% else %}
-    @@reader_thread = ::Thread.new { reader_loop }
-  {% end %}
 
-  private def self.reader_loop
+  def self.reader_loop
     while true
       request = @@mtx.synchronize do
         loop do
@@ -545,18 +560,5 @@ private module ConsoleUtils
         LibC.PostQueuedCompletionStatus(request.iocp, LibC::JOB_OBJECT_MSG_EXIT_PROCESS, request.completion_key.object_id, nil)
       end
     end
-  end
-end
-
-# Enable UTF-8 console I/O for the duration of program execution
-if LibC.IsValidCodePage(LibC::CP_UTF8) != 0
-  old_input_cp = LibC.GetConsoleCP
-  if LibC.SetConsoleCP(LibC::CP_UTF8) != 0
-    at_exit { LibC.SetConsoleCP(old_input_cp) }
-  end
-
-  old_output_cp = LibC.GetConsoleOutputCP
-  if LibC.SetConsoleOutputCP(LibC::CP_UTF8) != 0
-    at_exit { LibC.SetConsoleOutputCP(old_output_cp) }
   end
 end

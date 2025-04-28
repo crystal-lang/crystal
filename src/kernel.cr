@@ -1,6 +1,9 @@
 require "crystal/at_exit_handlers"
 
-{% unless flag?(:win32) %}
+{% if flag?(:win32) %}
+  # Set console to UTF-8 and start thread to read from STDIN asynchronously.
+  Crystal::System::FileDescriptor.setup_console
+{% else %}
   require "c/unistd"
 {% end %}
 
