@@ -169,17 +169,17 @@ module Crystal
 
         with_file "example/shard.yml" do |shard_yml|
           parsed = YAML.parse(shard_yml)
-          parsed["name"].should eq("example")
-          parsed["version"].should eq("0.1.0")
-          parsed["authors"].should eq(["John Smith <john@smith.com>"])
-          parsed["license"].should eq("MIT")
-          parsed["crystal"].should eq(">= #{Crystal::Config.version}")
+          parsed["name"].should eq?("example")
+          parsed["version"].should eq?("0.1.0")
+          parsed["authors"].should eq?(["John Smith <john@smith.com>"])
+          parsed["license"].should eq?("MIT")
+          parsed["crystal"].should eq?(">= #{Crystal::Config.version}")
           parsed["targets"]?.should be_nil
         end
 
         with_file "example_app/shard.yml" do |shard_yml|
           parsed = YAML.parse(shard_yml)
-          parsed["targets"].should eq({"example_app" => {"main" => "src/example_app.cr"}})
+          parsed["targets"].should eq?({"example_app" => {"main" => "src/example_app.cr"}})
         end
 
         with_file "example/src/example.cr" do |example|
