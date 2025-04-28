@@ -45,27 +45,17 @@ end
 
 macro it_initializes_from_value_to(number_type)
   it "initialize from value to {{number_type}}" do
-    {{number_type}}.new(1).should be_a({{number_type}})
-    {{number_type}}.new(1).should eq(1)
-
-    {{number_type}}.new(1u32).should be_a({{number_type}})
-    {{number_type}}.new(1u32).should eq(1)
-
-    {{number_type}}.new(1.0).should be_a({{number_type}})
-    {{number_type}}.new(1.0).should eq(1)
+    {{number_type}}.new(1).should eq(1_{{ "#{number_type}".gsub(/BigInt/, "i32.to_big_i").gsub(/BigFloat/, "f64.to_big_f").gsub(/BigDecimal/, "i64.to_big_d").gsub(/BigRational/, "f64.to_big_r").gsub(/UInt/, "u").gsub(/Int/, "i").gsub(/Float/, "f").id }})
+    {{number_type}}.new(1u32).should eq(1_{{ "#{number_type}".gsub(/BigInt/, "i32.to_big_i").gsub(/BigFloat/, "f64.to_big_f").gsub(/BigDecimal/, "i64.to_big_d").gsub(/BigRational/, "f64.to_big_r").gsub(/UInt/, "u").gsub(/Int/, "i").gsub(/Float/, "f").id }})
+    {{number_type}}.new(1.0).should eq(1_{{ "#{number_type}".gsub(/BigInt/, "i32.to_big_i").gsub(/BigFloat/, "f64.to_big_f").gsub(/BigDecimal/, "i64.to_big_d").gsub(/BigRational/, "f64.to_big_r").gsub(/UInt/, "u").gsub(/Int/, "i").gsub(/Float/, "f").id }})
   end
 end
 
 macro it_unchecked_initializes_from_value_to(number_type)
   it "unchecked initialize from value to {{number_type}}" do
-    {{number_type}}.new!(1).should be_a({{number_type}})
-    {{number_type}}.new!(1).should eq(1)
-
-    {{number_type}}.new!(1u32).should be_a({{number_type}})
-    {{number_type}}.new!(1u32).should eq(1)
-
-    {{number_type}}.new!(1.0).should be_a({{number_type}})
-    {{number_type}}.new!(1.0).should eq(1)
+    {{number_type}}.new!(1).should eq(1_{{ "#{number_type}".gsub(/BigInt/, "i32.to_big_i").gsub(/BigFloat/, "f64.to_big_f").gsub(/BigDecimal/, "i64.to_big_d").gsub(/BigRational/, "f64.to_big_r").gsub(/UInt/, "u").gsub(/Int/, "i").gsub(/Float/, "f").id }})
+    {{number_type}}.new!(1u32).should eq(1_{{ "#{number_type}".gsub(/BigInt/, "i32.to_big_i").gsub(/BigFloat/, "f64.to_big_f").gsub(/BigDecimal/, "i64.to_big_d").gsub(/BigRational/, "f64.to_big_r").gsub(/UInt/, "u").gsub(/Int/, "i").gsub(/Float/, "f").id }})
+    {{number_type}}.new!(1.0).should eq(1_{{ "#{number_type}".gsub(/BigInt/, "i32.to_big_i").gsub(/BigFloat/, "f64.to_big_f").gsub(/BigDecimal/, "i64.to_big_d").gsub(/BigRational/, "f64.to_big_r").gsub(/UInt/, "u").gsub(/Int/, "i").gsub(/Float/, "f").id }})
   end
 end
 
