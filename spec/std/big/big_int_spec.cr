@@ -60,22 +60,22 @@ describe "BigInt" do
   end
 
   it "compares" do
-    1.to_big_i.should eq(1.to_big_i)
-    1.to_big_i.should eq(1)
-    1.to_big_i.should eq(1_u8)
+    1.to_big_i.should eq?(1.to_big_i)
+    1.to_big_i.should eq?(1)
+    1.to_big_i.should eq?(1_u8)
 
-    [3.to_big_i, 2.to_big_i, 10.to_big_i, 4, 8_u8].sort.should eq([2, 3, 4, 8, 10])
+    [3.to_big_i, 2.to_big_i, 10.to_big_i, 4, 8_u8].sort.should eq?([2, 3, 4, 8, 10])
   end
 
   it "compares against float" do
-    1.to_big_i.should eq(1.0)
-    1.to_big_i.should eq(1.0_f32)
-    1.to_big_i.should_not eq(1.1)
-    1.0.should eq(1.to_big_i)
-    1.0_f32.should eq(1.to_big_i)
-    1.1.should_not eq(1.to_big_i)
+    1.to_big_i.should eq?(1.0)
+    1.to_big_i.should eq?(1.0_f32)
+    1.to_big_i.should_not eq?(1.1)
+    1.0.should eq?(1.to_big_i)
+    1.0_f32.should eq?(1.to_big_i)
+    1.1.should_not eq?(1.to_big_i)
 
-    [1.1, 1.to_big_i, 3.to_big_i, 2.2].sort.should eq([1, 1.1, 2.2, 3])
+    [1.1, 1.to_big_i, 3.to_big_i, 2.2].sort.should eq?([1, 1.1, 2.2, 3])
 
     (1.to_big_i <=> Float64::NAN).should be_nil
     (1.to_big_i <=> Float32::NAN).should be_nil
