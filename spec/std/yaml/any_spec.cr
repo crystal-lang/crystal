@@ -125,14 +125,14 @@ describe YAML::Any do
     end
 
     it "gets array" do
-      YAML.parse("- foo\n- bar\n").as_a.should eq(["foo", "bar"])
-      YAML.parse("- foo\n- bar\n").as_a?.should eq(["foo", "bar"])
+      YAML.parse("- foo\n- bar\n").as_a.should eq([YAML::Any.new("foo"), YAML::Any.new("bar")])
+      YAML.parse("- foo\n- bar\n").as_a?.should eq([YAML::Any.new("foo"), YAML::Any.new("bar")])
       YAML.parse("hello").as_a?.should be_nil
     end
 
     it "gets hash" do
-      YAML.parse("foo: bar").as_h.should eq({"foo" => "bar"})
-      YAML.parse("foo: bar").as_h?.should eq({"foo" => "bar"})
+      YAML.parse("foo: bar").as_h.should eq({YAML::Any.new("foo") => YAML::Any.new("bar")})
+      YAML.parse("foo: bar").as_h?.should eq({YAML::Any.new("foo") => YAML::Any.new("bar")})
       YAML.parse("foo: bar")["foo"].as_h?.should be_nil
     end
 
@@ -397,8 +397,8 @@ describe YAML::Any do
     it "gets the value at given path given splat" do
       obj = YAML.parse("--- \nfoo: \n  bar: \n    baz: \n      - qux\n      - fox")
 
-      obj.dig?("foo", "bar", "baz").should eq(%w(qux fox))
-      obj.dig?("foo", "bar", "baz", 1).should eq("fox")
+      obj.dig?("foo", "bar", "baz").should eq(YAML::Any.new([YAML::Any.new("qux"), YAML::Any.new("fox")]))
+      obj.dig?("foo", "bar", "baz", 1).should eq(YAML::Any.new("fox"))
     end
 
     it "returns nil if not found" do
@@ -419,8 +419,8 @@ describe YAML::Any do
     it "gets the value at given path given splat" do
       obj = YAML.parse("--- \nfoo: \n  bar: \n    baz: \n      - qux\n      - fox")
 
-      obj.dig("foo", "bar", "baz").should eq(%w(qux fox))
-      obj.dig("foo", "bar", "baz", 1).should eq("fox")
+      obj.dig("foo", "bar", "baz").should eq(YAML::Any.new([YAML::Any.new("qux"), YAML::Any.new("fox")]))
+      obj.dig("foo", "bar", "baz", 1).should eq(YAML::Any.new("fox"))
     end
 
     it "raises if not found" do
