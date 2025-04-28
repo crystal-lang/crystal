@@ -528,8 +528,7 @@ describe "Slice" do
 
   it "does macro [] with numbers (#3055)" do
     slice = Bytes[1, 2, 3]
-    slice.should be_a(Bytes)
-    slice.to_a.should eq([1, 2, 3])
+    slice.should eq(Bytes[1, 2, 3])
   end
 
   it "does Bytes[]" do
@@ -547,7 +546,7 @@ describe "Slice" do
   it "reverses" do
     slice = Bytes[1, 2, 3]
     slice.reverse!
-    slice.to_a.should eq([3, 2, 1])
+    slice.should eq(Bytes[3, 2, 1])
   end
 
   it "shuffles" do
