@@ -378,11 +378,11 @@ describe BigDecimal do
     (6.6 < BigDecimal.new("7.5")).should be_true
 
     "1.0000000000000002".to_big_d.should be < 1.0.next_float
-    (1.0.to_big_d + 0.5.to_big_d ** 52).should eq(1.0.next_float)
+    (1.0.to_big_d + 0.5.to_big_d ** 52).should eq?(1.0.next_float)
     "1.0000000000000003".to_big_d.should be > 1.0.next_float
 
     1.0.next_float.should be > "1.0000000000000002".to_big_d
-    1.0.next_float.should eq(1.0.to_big_d + 0.5.to_big_d ** 52)
+    1.0.next_float.should eq?(1.0.to_big_d + 0.5.to_big_d ** 52)
     1.0.next_float.should be < "1.0000000000000003".to_big_d
 
     0.to_big_d.should be < Float64::INFINITY
@@ -398,11 +398,11 @@ describe BigDecimal do
     (BigDecimal.new("6.5") > 7).should be_false
     (BigDecimal.new("7.5") > 6).should be_true
 
-    BigDecimal.new("0.5").should eq(BigRational.new(1, 2))
+    BigDecimal.new("0.5").should eq?(BigRational.new(1, 2))
     BigDecimal.new("0.25").should eq(BigDecimal.new("0.25"))
 
-    BigRational.new(1, 2).should eq(BigDecimal.new("0.5"))
-    BigRational.new(1, 4).should eq(BigDecimal.new("0.25"))
+    BigRational.new(1, 2).should eq?(BigDecimal.new("0.5"))
+    BigRational.new(1, 4).should eq?(BigDecimal.new("0.25"))
 
     (1.to_big_d / 3).should be < BigRational.new(1, 3)
     (-(1.to_big_d / 3)).should be > BigRational.new(-1, 3)
@@ -418,10 +418,10 @@ describe BigDecimal do
     BigRational.new(1, 3).should be < (1.to_big_d / 3 + BigDecimal.new(1, BigDecimal::DEFAULT_PRECISION))
     BigRational.new(-1, 3).should be > (-(1.to_big_d / 3) - BigDecimal.new(1, BigDecimal::DEFAULT_PRECISION))
 
-    (0.5.to_big_d ** 10000).should eq(0.5.to_big_f ** 10000)
+    (0.5.to_big_d ** 10000).should eq?(0.5.to_big_f ** 10000)
     "5.0123727492064520093e-3011".to_big_d.should be > 0.5.to_big_f ** 10000
 
-    (0.5.to_big_f ** 10000).should eq(0.5.to_big_d ** 10000)
+    (0.5.to_big_f ** 10000).should eq?(0.5.to_big_d ** 10000)
     (0.5.to_big_f ** 10000).should be < "5.0123727492064520093e-3011".to_big_d
   end
 
