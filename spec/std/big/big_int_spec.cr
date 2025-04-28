@@ -92,26 +92,26 @@ describe "BigInt" do
   end
 
   it "divides and calculates the modulo" do
-    11.to_big_i.divmod(3.to_big_i).should eq({3, 2})
-    11.to_big_i.divmod(-3.to_big_i).should eq({-4, -1})
+    11.to_big_i.divmod(3.to_big_i).should eq({3.to_big_i, 2.to_big_i})
+    11.to_big_i.divmod(-3.to_big_i).should eq({-4.to_big_i, -1.to_big_i})
 
-    11.to_big_i.divmod(3_i32).should eq({3, 2})
-    11.to_big_i.divmod(-3_i32).should eq({-4, -1})
+    11.to_big_i.divmod(3_i32).should eq({3.to_big_i, 2.to_big_i})
+    11.to_big_i.divmod(-3_i32).should eq({-4.to_big_i, -1.to_big_i})
 
-    10.to_big_i.divmod(2).should eq({5, 0})
-    11.to_big_i.divmod(2).should eq({5, 1})
+    10.to_big_i.divmod(2).should eq({5.to_big_i, 0.to_big_i})
+    11.to_big_i.divmod(2).should eq({5.to_big_i, 1.to_big_i})
 
-    10.to_big_i.divmod(2.to_big_i).should eq({5, 0})
-    11.to_big_i.divmod(2.to_big_i).should eq({5, 1})
+    10.to_big_i.divmod(2.to_big_i).should eq({5.to_big_i, 0.to_big_i})
+    11.to_big_i.divmod(2.to_big_i).should eq({5.to_big_i, 1.to_big_i})
 
-    10.to_big_i.divmod(-2).should eq({-5, 0})
-    11.to_big_i.divmod(-2).should eq({-6, -1})
+    10.to_big_i.divmod(-2).should eq({-5.to_big_i, 0.to_big_i})
+    11.to_big_i.divmod(-2).should eq({-6.to_big_i, -1.to_big_i})
 
-    -10.to_big_i.divmod(2).should eq({-5, 0})
-    -11.to_big_i.divmod(2).should eq({-6, 1})
+    -10.to_big_i.divmod(2).should eq({-5.to_big_i, 0.to_big_i})
+    -11.to_big_i.divmod(2).should eq({-6.to_big_i, 1.to_big_i})
 
-    -10.to_big_i.divmod(-2).should eq({5, 0})
-    -11.to_big_i.divmod(-2).should eq({5, -1})
+    -10.to_big_i.divmod(-2).should eq({5.to_big_i, 0.to_big_i})
+    -11.to_big_i.divmod(-2).should eq({5.to_big_i, -1.to_big_i})
   end
 
   it "adds" do
@@ -206,13 +206,13 @@ describe "BigInt" do
     (10.to_big_i / 3.to_big_i).should be_close(3.3333.to_big_f, 0.0001)
     (10.to_big_i / 3).should be_close(3.3333.to_big_f, 0.0001)
     (10 / 3.to_big_i).should be_close(3.3333.to_big_f, 0.0001)
-    ((Int64::MAX.to_big_i * 2.to_big_i) / Int64::MAX).should eq(2.to_big_i)
+    ((Int64::MAX.to_big_i * 2.to_big_i) / Int64::MAX).should eq(2.0.to_big_f)
   end
 
   it "divides" do
     (10.to_big_i // 3.to_big_i).should eq(3.to_big_i)
     (10.to_big_i // 3).should eq(3.to_big_i)
-    (10 // 3.to_big_i).should eq(3.to_big_i)
+    (10 // 3.to_big_i).should eq(3)
     ((Int64::MAX.to_big_i * 2.to_big_i) // Int64::MAX).should eq(2.to_big_i)
   end
 
@@ -247,10 +247,10 @@ describe "BigInt" do
   end
 
   it "tdivs" do
-    5.to_big_i.tdiv(3).should eq(1)
-    -5.to_big_i.tdiv(3).should eq(-1)
-    5.to_big_i.tdiv(-3).should eq(-1)
-    -5.to_big_i.tdiv(-3).should eq(1)
+    5.to_big_i.tdiv(3).should eq(1.to_big_i)
+    -5.to_big_i.tdiv(3).should eq(-1.to_big_i)
+    5.to_big_i.tdiv(-3).should eq(-1.to_big_i)
+    -5.to_big_i.tdiv(-3).should eq(1.to_big_i)
   end
 
   it "does modulo" do
@@ -277,10 +277,10 @@ describe "BigInt" do
   end
 
   it "does remainder with negative numbers" do
-    5.to_big_i.remainder(3).should eq(2)
-    -5.to_big_i.remainder(3).should eq(-2)
-    5.to_big_i.remainder(-3).should eq(2)
-    -5.to_big_i.remainder(-3).should eq(-2)
+    5.to_big_i.remainder(3).should eq(2.to_big_i)
+    -5.to_big_i.remainder(3).should eq(-2.to_big_i)
+    5.to_big_i.remainder(-3).should eq(2.to_big_i)
+    -5.to_big_i.remainder(-3).should eq(-2.to_big_i)
   end
 
   it "#bit" do
@@ -312,18 +312,18 @@ describe "BigInt" do
   end
 
   it "does bitwise and" do
-    (123.to_big_i & 321).should eq(65)
-    (BigInt.new("96238761238973286532") & 86325735648).should eq(69124358272)
+    (123.to_big_i & 321).should eq(65.to_big_i)
+    (BigInt.new("96238761238973286532") & 86325735648).should eq(69124358272.to_big_i)
   end
 
   it "does bitwise or" do
-    (123.to_big_i | 4).should eq(127)
-    (BigInt.new("96238761238986532") | 8632573).should eq(96238761247506429)
+    (123.to_big_i | 4).should eq(127.to_big_i)
+    (BigInt.new("96238761238986532") | 8632573).should eq(96238761247506429.to_big_i)
   end
 
   it "does bitwise xor" do
-    (123.to_big_i ^ 50).should eq(73)
-    (BigInt.new("96238761238986532") ^ 8632573).should eq(96238761247393753)
+    (123.to_big_i ^ 50).should eq(73.to_big_i)
+    (BigInt.new("96238761238986532") ^ 8632573).should eq(96238761247393753.to_big_i)
   end
 
   it "does bitwise not" do
@@ -335,13 +335,13 @@ describe "BigInt" do
   end
 
   it "does bitwise right shift" do
-    (123.to_big_i >> 4).should eq(7)
-    (123456.to_big_i >> 8).should eq(482)
+    (123.to_big_i >> 4).should eq(7.to_big_i)
+    (123456.to_big_i >> 8).should eq(482.to_big_i)
   end
 
   it "does bitwise left shift" do
-    (123.to_big_i << 4).should eq(1968)
-    (123456.to_big_i << 8).should eq(31604736)
+    (123.to_big_i << 4).should eq(1968.to_big_i)
+    (123456.to_big_i << 8).should eq(31604736.to_big_i)
   end
 
   it "raises if divides by zero" do
@@ -679,7 +679,7 @@ describe "BigInt" do
   end
 
   it "has unsafe_shr (#8691)" do
-    BigInt.new(8).unsafe_shr(1).should eq(4)
+    BigInt.new(8).unsafe_shr(1).should eq(4.to_big_i)
   end
 
   describe "#digits" do

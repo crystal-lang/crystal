@@ -197,28 +197,28 @@ describe "BigFloat" do
   end
 
   describe "#abs" do
-    it { -5.to_big_f.abs.should eq(5) }
-    it { 5.to_big_f.abs.should eq(5) }
+    it { -5.to_big_f.abs.should eq(5.0.to_big_f) }
+    it { 5.to_big_f.abs.should eq(5.0.to_big_f) }
     it { "-0.00001".to_big_f.abs.to_s.should eq("1.0e-5") }
     it { "0.00000000001".to_big_f.abs.to_s.should eq("1.0e-11") }
   end
 
   describe "#ceil" do
-    it { 2.0.to_big_f.ceil.should eq(2) }
-    it { 2.1.to_big_f.ceil.should eq(3) }
-    it { 2.9.to_big_f.ceil.should eq(3) }
+    it { 2.0.to_big_f.ceil.should eq(2.0.to_big_f) }
+    it { 2.1.to_big_f.ceil.should eq(3.0.to_big_f) }
+    it { 2.9.to_big_f.ceil.should eq(3.0.to_big_f) }
   end
 
   describe "#floor" do
-    it { 2.1.to_big_f.floor.should eq(2) }
-    it { 2.9.to_big_f.floor.should eq(2) }
-    it { -2.9.to_big_f.floor.should eq(-3) }
+    it { 2.1.to_big_f.floor.should eq(2.0.to_big_f) }
+    it { 2.9.to_big_f.floor.should eq(2.0.to_big_f) }
+    it { -2.9.to_big_f.floor.should eq(-3.0.to_big_f) }
   end
 
   describe "#trunc" do
-    it { 2.1.to_big_f.trunc.should eq(2) }
-    it { 2.9.to_big_f.trunc.should eq(2) }
-    it { -2.9.to_big_f.trunc.should eq(-2) }
+    it { 2.1.to_big_f.trunc.should eq(2.0.to_big_f) }
+    it { 2.9.to_big_f.trunc.should eq(2.0.to_big_f) }
+    it { -2.9.to_big_f.trunc.should eq(-2.0.to_big_f) }
   end
 
   describe "#to_f" do

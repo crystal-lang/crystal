@@ -605,42 +605,42 @@ describe BigDecimal do
   end
 
   describe "#ceil" do
-    it { 2.0.to_big_d.ceil.should eq(2) }
-    it { 2.1.to_big_d.ceil.should eq(3) }
-    it { 2.9.to_big_d.ceil.should eq(3) }
+    it { 2.0.to_big_d.ceil.should eq(2.to_big_d) }
+    it { 2.1.to_big_d.ceil.should eq(3.to_big_d) }
+    it { 2.9.to_big_d.ceil.should eq(3.to_big_d) }
 
-    it { 2.01.to_big_d.ceil.should eq(3) }
-    it { 2.11.to_big_d.ceil.should eq(3) }
-    it { 2.91.to_big_d.ceil.should eq(3) }
+    it { 2.01.to_big_d.ceil.should eq(3.to_big_d) }
+    it { 2.11.to_big_d.ceil.should eq(3.to_big_d) }
+    it { 2.91.to_big_d.ceil.should eq(3.to_big_d) }
 
-    it { -2.01.to_big_d.ceil.should eq(-2) }
-    it { -2.91.to_big_d.ceil.should eq(-2) }
+    it { -2.01.to_big_d.ceil.should eq(-2.to_big_d) }
+    it { -2.91.to_big_d.ceil.should eq(-2.to_big_d) }
 
-    it { "-123.000".to_big_d.ceil.value.should eq(-123) }
-    it { "-1.1".to_big_d.ceil.value.should eq(-1) }
+    it { "-123.000".to_big_d.ceil.value.should eq(-123.to_big_i) }
+    it { "-1.1".to_big_d.ceil.value.should eq(-1.to_big_i) }
   end
 
   describe "#floor" do
-    it { 2.1.to_big_d.floor.should eq(2) }
-    it { 2.9.to_big_d.floor.should eq(2) }
-    it { -2.9.to_big_d.floor.should eq(-3) }
+    it { 2.1.to_big_d.floor.should eq(2.to_big_d) }
+    it { 2.9.to_big_d.floor.should eq(2.to_big_d) }
+    it { -2.9.to_big_d.floor.should eq(-3.to_big_d) }
 
-    it { 2.11.to_big_d.floor.should eq(2) }
-    it { 2.91.to_big_d.floor.should eq(2) }
-    it { -2.91.to_big_d.floor.should eq(-3) }
+    it { 2.11.to_big_d.floor.should eq(2.to_big_d) }
+    it { 2.91.to_big_d.floor.should eq(2.to_big_d) }
+    it { -2.91.to_big_d.floor.should eq(-3.to_big_d) }
 
-    it { "-123.000".to_big_d.floor.value.should eq(-123) }
-    it { "-1.1".to_big_d.floor.value.should eq(-2) }
+    it { "-123.000".to_big_d.floor.value.should eq(-123.to_big_i) }
+    it { "-1.1".to_big_d.floor.value.should eq(-2.to_big_i) }
   end
 
   describe "#trunc" do
-    it { 2.1.to_big_d.trunc.should eq(2) }
-    it { 2.9.to_big_d.trunc.should eq(2) }
-    it { -2.9.to_big_d.trunc.should eq(-2) }
+    it { 2.1.to_big_d.trunc.should eq(2.to_big_d) }
+    it { 2.9.to_big_d.trunc.should eq(2.to_big_d) }
+    it { -2.9.to_big_d.trunc.should eq(-2.to_big_d) }
 
-    it { 2.11.to_big_d.trunc.should eq(2) }
-    it { 2.91.to_big_d.trunc.should eq(2) }
-    it { -2.91.to_big_d.trunc.should eq(-2) }
+    it { 2.11.to_big_d.trunc.should eq(2.to_big_d) }
+    it { 2.91.to_big_d.trunc.should eq(2.to_big_d) }
+    it { -2.91.to_big_d.trunc.should eq(-2.to_big_d) }
   end
 
   describe "#round" do

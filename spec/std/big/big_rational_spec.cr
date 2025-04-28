@@ -331,36 +331,36 @@ describe BigRational do
   end
 
   it "#ceil" do
-    br(2, 1).ceil.should eq(2)
-    br(21, 10).ceil.should eq(3)
-    br(29, 10).ceil.should eq(3)
+    br(2, 1).ceil.should eq(2.to_big_r)
+    br(21, 10).ceil.should eq(3.to_big_r)
+    br(29, 10).ceil.should eq(3.to_big_r)
 
-    br(201, 100).ceil.should eq(3)
-    br(211, 100).ceil.should eq(3)
-    br(291, 100).ceil.should eq(3)
+    br(201, 100).ceil.should eq(3.to_big_r)
+    br(211, 100).ceil.should eq(3.to_big_r)
+    br(291, 100).ceil.should eq(3.to_big_r)
 
-    br(-201, 100).ceil.should eq(-2)
-    br(-291, 100).ceil.should eq(-2)
+    br(-201, 100).ceil.should eq(-2.to_big_r)
+    br(-291, 100).ceil.should eq(-2.to_big_r)
   end
 
   it "#floor" do
-    br(21, 10).floor.should eq(2)
-    br(29, 10).floor.should eq(2)
-    br(-29, 10).floor.should eq(-3)
+    br(21, 10).floor.should eq(2.to_big_r)
+    br(29, 10).floor.should eq(2.to_big_r)
+    br(-29, 10).floor.should eq(-3.to_big_r)
 
-    br(211, 100).floor.should eq(2)
-    br(291, 100).floor.should eq(2)
-    br(-291, 100).floor.should eq(-3)
+    br(211, 100).floor.should eq(2.to_big_r)
+    br(291, 100).floor.should eq(2.to_big_r)
+    br(-291, 100).floor.should eq(-3.to_big_r)
   end
 
   it "#trunc" do
-    br(21, 10).trunc.should eq(2)
-    br(29, 10).trunc.should eq(2)
-    br(-29, 10).trunc.should eq(-2)
+    br(21, 10).trunc.should eq(2.to_big_r)
+    br(29, 10).trunc.should eq(2.to_big_r)
+    br(-29, 10).trunc.should eq(-2.to_big_r)
 
-    br(211, 100).trunc.should eq(2)
-    br(291, 100).trunc.should eq(2)
-    br(-291, 100).trunc.should eq(-2)
+    br(211, 100).trunc.should eq(2.to_big_r)
+    br(291, 100).trunc.should eq(2.to_big_r)
+    br(-291, 100).trunc.should eq(-2.to_big_r)
   end
 
   describe "#round" do
