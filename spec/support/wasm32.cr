@@ -2,7 +2,7 @@ require "spec"
 
 {% if flag?(:wasm32) %}
   def pending_wasm32(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil, &block)
-    pending("#{description} [wasm32]", file, line, end_line, focus: focus, tags: tags)
+    pending(_description: "#{description} [wasm32]", _file: file, _line: line, _end_line: end_line, _focus: focus, _tags: tags)
   end
 
   def pending_wasm32(*, describe, file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
