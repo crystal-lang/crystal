@@ -8,18 +8,26 @@
 
 #### stdlib
 
-- *(numeric)* Fix show `unit_separator` in `#humanize_bytes` with empty prefix ([#15683], thanks @straight-shoota)
-- *(runtime)* run win32 console reader in thread instead of isolated context ([#15714], thanks @ysbaddaden)
+- *(numeric)* Fix show `unit_separator` in `#humanize_bytes` with empty prefix ([#15717], backported from [#15683], thanks @straight-shoota)
+- *(runtime)* Fix `Fiber::ExecutionContext::Isolated#wait` must suspend fiber ([#15723], backported from [#15720], thanks @ysbaddaden)
+- *(runtime)* Fix run win32 console reader in thread instead of isolated context ([#15714], thanks @ysbaddaden)
 - *(runtime)* Fix: `CRYSTAL_LOAD_DEBUG_INFO=1` fails with `-Dexecution_context` ([#15715], thanks @crysbot)
+- *(runtime)* Fix `-Dtracing` raises math overflows on fiber sleep ([#15725], backported from [#15722], thanks @ysbaddaden)
 
+[#15717]: https://github.com/crystal-lang/crystal/pull/15717
 [#15683]: https://github.com/crystal-lang/crystal/pull/15683
+[#15723]: https://github.com/crystal-lang/crystal/pull/15723
+[#15720]: https://github.com/crystal-lang/crystal/pull/15720
 [#15714]: https://github.com/crystal-lang/crystal/pull/15714
 [#15715]: https://github.com/crystal-lang/crystal/pull/15715
+[#15725]: https://github.com/crystal-lang/crystal/pull/15725
+[#15722]: https://github.com/crystal-lang/crystal/pull/15722
 
 #### compiler
 
-- *(semantic)* Do not add `ReferenceStorage` to `Value`'s subclasses twice ([#15706], thanks @HertzDevil)
+- *(semantic)* Do not add `ReferenceStorage` to `Value`'s subclasses twice ([#15718], backported from [#15706], thanks @HertzDevil)
 
+[#15718]: https://github.com/crystal-lang/crystal/pull/15718
 [#15706]: https://github.com/crystal-lang/crystal/pull/15706
 
 ### Refactor
@@ -33,8 +41,12 @@
 
 ### Infrastructure
 
+- Changelog for 1.16.2 ([#15716], thanks @straight-shoota)
+- *(ci)* Fix package shards on MinGW ([#15719], thanks @straight-shoota)
 - *(ci)* Only set up Cygwin on Windows CI if truly required ([#15713], backported from [#15661], thanks @HertzDevil)
 
+[#15716]: https://github.com/crystal-lang/crystal/pull/15716
+[#15719]: https://github.com/crystal-lang/crystal/pull/15719
 [#15713]: https://github.com/crystal-lang/crystal/pull/15713
 [#15661]: https://github.com/crystal-lang/crystal/pull/15661
 
