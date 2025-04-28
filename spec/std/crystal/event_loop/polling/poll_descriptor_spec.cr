@@ -38,7 +38,7 @@ describe Crystal::EventLoop::Polling::Waiters do
       pd.take_ownership(evloop, fd, index)
       pd.@event_loop.should be(evloop)
 
-      evloop.operations.should eq([
+      evloop.operations.should eq?([
         {:add, fd, index},
       ])
     end
@@ -60,7 +60,7 @@ describe Crystal::EventLoop::Polling::Waiters do
         {:add, fd, index},
         {:del, fd, false},
       ])
-      evloop2.operations.should eq([
+      evloop2.operations.should eq?([
         {:add, fd, index},
       ])
     end
@@ -91,7 +91,7 @@ describe Crystal::EventLoop::Polling::Waiters do
 
       pd.@event_loop.should be(evloop1)
 
-      evloop1.operations.should eq([
+      evloop1.operations.should eq?([
         {:add, fd, index},
       ])
       evloop2.operations.should be_empty
