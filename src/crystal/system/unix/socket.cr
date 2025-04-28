@@ -207,18 +207,13 @@ module Crystal::System::Socket
   end
 
   private def system_close
-    # Perform libevent cleanup before LibC.close.
-    # Using a file descriptor after it has been closed is never defined and can
-    # always lead to undefined results. This is not specific to libevent.
     event_loop.close(self)
-
-    socket_close
   end
 
-  private def socket_close(&)
+  def socket_close(&)
     # Clear the @volatile_fd before actually closing it in order to
     # reduce the chance of reading an outdated fd value
-    fd = @volatile_fd.swap(-1)
+    return unless fd = close_volatile_fd?
 
     ret = LibC.close(fd)
 
@@ -232,7 +227,12 @@ module Crystal::System::Socket
     end
   end
 
-  private def socket_close
+  def close_volatile_fd? : Int32?
+    fd = @volatile_fd.swap(-1)
+    fd unless fd == -1
+  end
+
+  def socket_close
     socket_close do
       raise ::Socket::Error.from_errno("Error closing socket")
     end

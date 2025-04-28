@@ -131,6 +131,9 @@ subsequent builds. This path is also used to temporarily store executables
 when Crystal programs are run with '*crystal* run' rather than '*crystal*
 build'.
 
+=== CRYSTAL_EXEC_PATH
+Determines the path where *crystal* looks for external sub-commands.
+
 === CRYSTAL_LIBRARY_PATH
 Defines paths where Crystal searches for (binary) libraries. Multiple paths
 can be separated by ":".	 These paths are passed to the linker as `-L`

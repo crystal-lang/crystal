@@ -26,28 +26,21 @@ end
 # fibers might start their execution.
 def sleep(time : Time::Span) : Nil
   Crystal.trace :sched, "sleep", for: time
-
-  {% if flag?(:execution_context) %}
-    Fiber.current.resume_event.add(time)
-    Fiber::ExecutionContext.reschedule
-  {% else %}
-    Crystal::Scheduler.sleep(time)
-  {% end %}
+  Crystal::EventLoop.current.sleep(time)
 end
 
 # Blocks the current fiber forever.
 #
 # Meanwhile, other ready-to-execute fibers might start their execution.
 def sleep : Nil
-  {% if flag?(:execution_context) %}
-    Fiber::ExecutionContext.reschedule
-  {% else %}
-    Crystal::Scheduler.reschedule
-  {% end %}
+  Fiber.suspend
 end
 
 {% begin %}
 # Spawns a new fiber.
+#
+# When using execution contexts, the fiber spawns into the current execution
+# context (`Fiber::ExecutionContext.current`).
 #
 # NOTE: The newly created fiber doesn't run as soon as spawned.
 #
@@ -94,6 +87,9 @@ end
 
 # Spawns a fiber by first creating a `Proc`, passing the *call*'s
 # expressions to it, and letting the `Proc` finally invoke the *call*.
+#
+# When using execution contexts, the fiber spawns into the current execution
+# context (`Fiber::ExecutionContext.current`).
 #
 # Compare this:
 #

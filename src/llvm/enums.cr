@@ -292,6 +292,7 @@ module LLVM
   enum CodeModel
     Default
     JITDefault
+    Tiny
     Small
     Kernel
     Medium

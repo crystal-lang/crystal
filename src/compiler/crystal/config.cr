@@ -44,6 +44,13 @@ module Crystal
       {{ flag?(:release) }}
     end
 
+    def self.exec_path
+      ENV.fetch("CRYSTAL_EXEC_PATH") do
+        executable_path = Process.executable_path || return
+        File.dirname(executable_path)
+      end
+    end
+
     @@host_target : Crystal::Codegen::Target?
 
     def self.host_target : Crystal::Codegen::Target
@@ -59,6 +66,31 @@ module Crystal
           default_libc = target.gnu? ? "-gnu" : "-musl"
 
           target = Crystal::Codegen::Target.new(target.to_s.sub(default_libc, "-#{linux_runtime_libc}"))
+        end
+
+        if target.macos?
+          # By default, LLVM infers the target macOS SDK version from the host
+          # version detected in `LLVM.default_target_triple`, and independently
+          # Clang will infer a different one from several options: `-target`,
+          # `-mtargetos`, `-mmacosx-version-min`, `$MACOSX_DEPLOYMENT_TARGET`,
+          # `-isysroot`, then finally the LLVM default (see
+          # https://github.com/llvm/llvm-project/blob/5f58f3dda8b17f664a85d4e5e3c808edde41ff46/clang/lib/Driver/ToolChains/Darwin.cpp#L2293-L2378
+          # for details). If the one we use is higher than the linker's, each
+          # object file being linked will produce a warning:
+          #
+          # > ld: warning: object file (...o0.o) was built for newer macOS version (15.0) than being linked (11.0)
+          #
+          # We have to match our SDK version with that of the linker. As long as
+          # we are not passing any of those command-line options to Clang in
+          # `Crystal::Compiler#linker_command`, the only override we need to
+          # handle ourselves is the environment variable one.
+          #
+          # Note that other platforms (e.g. iOS, tvOS) use different environment
+          # variables!
+          if min_version = ENV["MACOSX_DEPLOYMENT_TARGET"]?
+            triple = "#{target.architecture}-#{target.vendor}-macosx#{min_version}"
+            target = Crystal::Codegen::Target.new(triple)
+          end
         end
 
         target

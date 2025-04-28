@@ -125,6 +125,17 @@ module XML
       ptr.value = old
     end
   end
+
+  class_getter libxml2_version : String do
+    version_string = String.new(LibXML.xmlParserVersion)
+
+    # The version string can contain extra information after the version number,
+    # so we ignore any trailing non-numbers with `strict: false`
+    number = version_string.to_i(strict: false)
+
+    # Construct a formatted version string
+    "#{number // 10_000}.#{number % 10_000 // 100}.#{number % 100}"
+  end
 end
 
 require "./xml/*"

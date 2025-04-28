@@ -133,8 +133,10 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
 
   # fiber interface, see Crystal::EventLoop
 
-  def create_resume_event(fiber : Fiber) : FiberEvent
-    FiberEvent.new(:sleep, fiber)
+  def sleep(duration : ::Time::Span) : Nil
+    event = Event.new(:sleep, Fiber.current, timeout: duration)
+    add_timer(pointerof(event))
+    Fiber.suspend
   end
 
   def create_timeout_event(fiber : Fiber) : FiberEvent
@@ -183,8 +185,15 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     end
   end
 
+  def reopened(file_descriptor : System::FileDescriptor) : Nil
+    resume_all(file_descriptor)
+  end
+
   def close(file_descriptor : System::FileDescriptor) : Nil
-    evented_close(file_descriptor)
+    # perform cleanup before LibC.close. Using a file descriptor after it has
+    # been closed is never defined and can always lead to undefined results
+    resume_all(file_descriptor)
+    file_descriptor.file_descriptor_close
   end
 
   protected def self.remove_impl(file_descriptor : System::FileDescriptor) : Nil
@@ -299,7 +308,10 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
   end
 
   def close(socket : ::Socket) : Nil
-    evented_close(socket)
+    # perform cleanup before LibC.close. Using a file descriptor after it has
+    # been closed is never defined and can always lead to undefined results
+    resume_all(socket)
+    socket.socket_close
   end
 
   protected def self.remove_impl(socket : ::Socket) : Nil
@@ -332,7 +344,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     end
   end
 
-  protected def evented_close(io)
+  private def resume_all(io)
     return unless (index = io.__evloop_data).valid?
 
     Polling.arena.free(index) do |pd|
@@ -407,6 +419,9 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
       event = Event.new(type, Fiber.current, index, timeout)
 
       return false unless Polling.arena.get?(index) do |pd|
+                            unless pd.value.owned_by?(self)
+                              pd.value.take_ownership(self, io.fd, index)
+                            end
                             yield pd, pointerof(event)
                           end
     else
@@ -536,8 +551,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
       return unless select_action.time_expired?
       fiber.@timeout_event.as(FiberEvent).clear
     when .sleep?
-      # cleanup
-      fiber.@resume_event.as(FiberEvent).clear
+      # nothing to do
     else
       raise RuntimeError.new("BUG: unexpected event in timers: #{event.value}%s\n")
     end

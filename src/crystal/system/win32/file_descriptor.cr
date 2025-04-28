@@ -18,6 +18,10 @@ module Crystal::System::FileDescriptor
 
   @system_blocking = true
 
+  def system_append?
+    false
+  end
+
   private def system_read(slice : Bytes) : Int32
     handle = windows_handle
     if ConsoleUtils.console?(handle)
@@ -160,7 +164,7 @@ module Crystal::System::FileDescriptor
     FileDescriptor.system_info windows_handle
   end
 
-  private def system_seek(offset, whence : IO::Seek) : Nil
+  def system_seek(offset, whence : IO::Seek) : Nil
     if LibC.SetFilePointerEx(windows_handle, offset, nil, whence) == 0
       raise IO::Error.from_winerror("Unable to seek", target: self)
     end
@@ -190,8 +194,6 @@ module Crystal::System::FileDescriptor
 
   private def system_close
     event_loop.close(self)
-
-    file_descriptor_close
   end
 
   def file_descriptor_close(&)
@@ -519,7 +521,11 @@ private module ConsoleUtils
   @@read_requests = Deque(ReadRequest).new
   @@bytes_read = Deque(Int32).new
   @@mtx = ::Thread::Mutex.new
-  @@reader_thread = ::Thread.new { reader_loop }
+  {% if flag?(:execution_context) %}
+    @@reader_thread = ::Fiber::ExecutionContext::Isolated.new("READER-LOOP") { reader_loop }
+  {% else %}
+    @@reader_thread = ::Thread.new { reader_loop }
+  {% end %}
 
   private def self.reader_loop
     while true

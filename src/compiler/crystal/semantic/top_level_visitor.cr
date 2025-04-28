@@ -120,7 +120,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         when node.splat_index
           node.raise "BUG: Expected ReferenceStorageType to have no splat parameter"
         end
-        type = GenericReferenceStorageType.new @program, scope, name, @program.value, type_vars
+        type = GenericReferenceStorageType.new @program, scope, name, @program.value, type_vars, false
         type.declare_instance_var("@type_id", @program.int32)
         type.can_be_stored = false
       end

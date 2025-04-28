@@ -1,5 +1,3 @@
-require "./common"
-
 module HTTP
   # Represents a cookie with all its attributes. Provides convenient access and modification of them.
   #
@@ -352,3 +350,5 @@ module HTTP
     end
   end
 end
+
+require "./common"

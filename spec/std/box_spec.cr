@@ -15,6 +15,15 @@ describe "Box" do
     Box(String).unbox(box).should be(a)
   end
 
+  it "boxing a pointer returns the same pointer" do
+    a = 123
+    b = pointerof(a)
+    box = Box.box(b)
+    box.address.should eq(b.address)
+
+    Box(Pointer(Int32)).unbox(box).should eq(b)
+  end
+
   it "boxing a nilable reference returns the same pointer" do
     a = "foo".as(String?)
     box = Box.box(a)

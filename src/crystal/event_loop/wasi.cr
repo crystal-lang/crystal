@@ -9,9 +9,8 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
     raise NotImplementedError.new("Crystal::Wasi::EventLoop.interrupt")
   end
 
-  # Create a new resume event for a fiber.
-  def create_resume_event(fiber : Fiber) : Crystal::EventLoop::Event
-    raise NotImplementedError.new("Crystal::Wasi::EventLoop.create_resume_event")
+  def sleep(duration : ::Time::Span) : Nil
+    raise NotImplementedError.new("Crystal::Wasi::EventLoop.sleep")
   end
 
   # Creates a timeout_event.
@@ -61,8 +60,13 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
     end
   end
 
+  def reopened(file_descriptor : Crystal::System::FileDescriptor) : Nil
+    raise NotImplementedError.new("Crystal::EventLoop#reopened(FileDescriptor)")
+  end
+
   def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
     file_descriptor.evented_close
+    file_descriptor.file_descriptor_close
   end
 
   def read(socket : ::Socket, slice : Bytes) : Int32
@@ -107,6 +111,7 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
 
   def close(socket : ::Socket) : Nil
     socket.evented_close
+    socket.socket_close
   end
 
   def evented_read(target, errno_msg : String, &) : Int32
