@@ -59,7 +59,7 @@ jobs:
         shell: msys2 {0}
         working-directory: ./shards
         run: |
-          make install PREFIX="$(pwd)/../crystal"
+          make install PREFIX="$(pwd)/../crystal" SHARDS=false
           # FIXME: remove after crystal-lang/shards#668
           ldd bin/shards.exe | grep -iv ' => /c/windows/system32' | sed 's/.* => //; s/ (.*//' | xargs -t -i /usr/bin/install -m 0755 '{}' "$(pwd)/../crystal/bin/"
 
