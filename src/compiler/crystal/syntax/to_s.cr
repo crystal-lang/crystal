@@ -17,7 +17,9 @@ module Crystal
     @str : IO
     @macro_expansion_pragmas : Hash(Int32, Array(Lexer::LocPragma))?
     @current_arg_type : DefArgType = :none
-    @write_trailing_newline : Bool = true
+
+    # Represents the root level `Expressions` instance within a `MacroExpression`.
+    @root_level_macro_expressions : Expressions? = nil
 
     # Inside a comma-separated list of parameters or args, this becomes true and
     # the outermost pair of parentheses are removed from type restrictions that
@@ -290,10 +292,11 @@ module Crystal
             append_indent unless node.keyword.paren? && i == 0
             exp.accept self
 
-            if !@write_trailing_newline && i == node.expressions.size - 1
-              # no-op
-            else
-              newline unless node.keyword.paren? && i == node.expressions.size - 1
+            if (root = @root_level_macro_expressions) && root.same?(node) && i == node.expressions.size - 1
+              # Do not add a trailing newline after the last node in the root `Expressions` within a `MacroExpression`.
+              # This is handled by the `MacroExpression` logic.
+            elsif !(node.keyword.paren? && i == node.expressions.size - 1)
+              newline
             end
 
             last_node = exp
@@ -827,6 +830,10 @@ module Crystal
         @indent += 1
       end
 
+      if (exp = node.exp).is_a? Expressions
+        @root_level_macro_expressions = exp
+      end
+
       outside_macro do
         write_extra_newlines node.location, node.exp.location
 
@@ -836,11 +843,7 @@ module Crystal
           append_indent
         end
 
-        # Only skip writing trailing newlines when the macro expressions' expression is not an Expressions.
-        # This allow Expressions that may be nested deeper in the AST to include trailing newlines.
-        @write_trailing_newline = !node.exp.is_a?(Expressions)
         node.exp.accept self
-        @write_trailing_newline = true
       end
 
       write_extra_newlines node.exp.end_location, node.end_location
