@@ -453,10 +453,17 @@ describe YAML::Any do
     obj["foo"]["bar"]["baz"][1].as_s.should eq("fox")
   end
 
-  it "compares to other objects" do
-    obj = YAML.parse("- foo\n- bar \n")
-    obj.should eq(%w(foo bar))
-    obj[0].should eq("foo")
+  describe "#==" do
+    it "compares to other objects" do
+      obj = YAML.parse("- foo\n- bar \n")
+      obj.should eq(%w(foo bar))
+      obj[0].should eq("foo")
+    end
+
+    it "compares with Set" do
+      Set{1, 2, 3}.should eq YAML.parse( "!!set { 1, 2, 3 }")
+      YAML.parse( "!!set { 1, 2, 3 }").should eq Set{1, 2, 3}
+    end
   end
 
   it "returns array of any when doing parse all" do
