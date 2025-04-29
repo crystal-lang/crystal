@@ -1,5 +1,57 @@
 # Changelog
 
+## [1.16.2] (2025-04-29)
+
+[1.16.2]: https://github.com/crystal-lang/crystal/releases/1.16.2
+
+### Bugfixes
+
+#### stdlib
+
+- *(numeric)* Fix show `unit_separator` in `#humanize_bytes` with empty prefix ([#15717], backported from [#15683], thanks @straight-shoota)
+- *(runtime)* `CRYSTAL_LOAD_DEBUG_INFO=1` fails with `-Dexecution_context` ([#15715], backported from [#15704], thanks @ysbaddaden)
+- *(runtime)* Fix `-Dtracing` raises math overflows on fiber sleep ([#15725], backported from [#15722], thanks @ysbaddaden)
+- *(runtime)* Fix `Fiber::ExecutionContext::Isolated#wait` must suspend fiber ([#15723], backported from [#15720], thanks @ysbaddaden)
+- *(runtime)* Fix run win32 console reader in bare thread ([#15726], backported from [#15724], thanks @ysbaddaden)
+
+[#15717]: https://github.com/crystal-lang/crystal/pull/15717
+[#15683]: https://github.com/crystal-lang/crystal/pull/15683
+[#15715]: https://github.com/crystal-lang/crystal/pull/15715
+[#15704]: https://github.com/crystal-lang/crystal/pull/15704
+[#15725]: https://github.com/crystal-lang/crystal/pull/15725
+[#15722]: https://github.com/crystal-lang/crystal/pull/15722
+[#15723]: https://github.com/crystal-lang/crystal/pull/15723
+[#15720]: https://github.com/crystal-lang/crystal/pull/15720
+[#15726]: https://github.com/crystal-lang/crystal/pull/15726
+[#15724]: https://github.com/crystal-lang/crystal/pull/15724
+
+#### compiler
+
+- *(semantic)* Do not add `ReferenceStorage` to `Value`'s subclasses twice ([#15718], backported from [#15706], thanks @HertzDevil)
+
+[#15718]: https://github.com/crystal-lang/crystal/pull/15718
+[#15706]: https://github.com/crystal-lang/crystal/pull/15706
+
+### Refactor
+
+#### compiler
+
+- *(codegen)* Add `__crystal_raise_cast_failed` for non-interpreted code ([#15712], backported from [#15708], thanks @HertzDevil)
+
+[#15712]: https://github.com/crystal-lang/crystal/pull/15712
+[#15708]: https://github.com/crystal-lang/crystal/pull/15708
+
+### Infrastructure
+
+- Changelog for 1.16.2 ([#15716], thanks @straight-shoota)
+- *(ci)* Fix package shards on MinGW ([#15719], thanks @straight-shoota)
+- *(ci)* Only set up Cygwin on Windows CI if truly required ([#15713], backported from [#15661], thanks @HertzDevil)
+
+[#15716]: https://github.com/crystal-lang/crystal/pull/15716
+[#15719]: https://github.com/crystal-lang/crystal/pull/15719
+[#15713]: https://github.com/crystal-lang/crystal/pull/15713
+[#15661]: https://github.com/crystal-lang/crystal/pull/15661
+
 ## [1.16.1] (2025-04-16)
 
 [1.16.1]: https://github.com/crystal-lang/crystal/releases/1.16.1
