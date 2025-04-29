@@ -322,7 +322,7 @@ module Spec
 
     # Creates an `Expectation` that passes if actual equals *value* (`==`).
     def eq(value)
-      Spec::EqualExpectation.new value, type_safe: {{ flag?(:strict_eq) }}
+      Spec::EqualExpectation.new value, type_safe: {{ !flag?(:spec_weak_eq) }}
     end
 
     # Creates an `Expectation` that passes if actual equals *value* (`==`) and its class equals `value.class`.
