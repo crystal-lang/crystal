@@ -444,6 +444,68 @@ describe "ASTNode#to_s" do
     end
     CR
 
+  expect_to_s <<-CR
+    {%
+      a = 1
+
+      if true
+        b = 2
+        c = 3
+      end
+
+      d = 4
+    %}
+    CR
+
+  expect_to_s <<-CR
+    {%
+      arr.each do |c|
+        c.each do
+          to_process << 1
+          to_process << 2
+        end
+      end
+
+      to_process.each do
+        b = 2
+        a = 1
+      end
+    %}
+    CR
+
+  expect_to_s <<-CR
+    {%
+      a = 1
+
+      unless false
+        b = 2
+        c = 3
+      end
+
+      d = 4
+    %}
+    CR
+
+  expect_to_s <<-CR
+    {%
+      arr.each do
+        b = 2
+        a = 1
+      end
+
+      c = 3
+    %}
+    CR
+
+  expect_to_s <<-CR
+    {%
+      arr.each do
+        b = 2
+        a = 1
+      end
+    %}
+    CR
+
   expect_to_s %(asm("nop" ::::))
   expect_to_s %(asm("nop" : "a"(1), "b"(2) : "c"(3), "d"(4) : "e", "f" : "volatile", "alignstack", "intel"))
   expect_to_s %(asm("nop" :: "c"(3), "d"(4) ::))
@@ -621,6 +683,70 @@ describe "ASTNode#to_s" do
         blah: false,
         pie: 3.14,
       }
+    %}
+    CR
+
+  expect_to_s <<-'CR', <<-'CR'
+    {%
+      ({"a" => "b"} of Nil => Nil).each do |k, v|
+        # stuff and things
+        k + v
+
+        # foo bar
+
+        k + v
+      end
+    %}
+    CR
+  {%
+    ({"a" => "b"} of Nil => Nil).each do |k, v|
+
+      k + v
+
+
+
+      k + v
+    end
+  %}
+  CR
+
+  expect_to_s <<-'CR'
+    {%
+      vals = "foo".strip.strip.strip
+    %}
+    CR
+
+  expect_to_s <<-'CR'
+    {%
+      vals = "foo".strip.strip
+        .strip
+    %}
+    CR
+
+  expect_to_s <<-'CR'
+    {%
+      vals = "foo"
+        .strip
+        .strip.strip
+    %}
+    CR
+
+  expect_to_s <<-'CR'
+    {%
+      vals = [4, 1, 12]
+        .sort_by do |v| v end
+        .map do |v| v end
+    %}
+    CR
+
+  expect_to_s <<-'CR'
+    {%
+      vals = [4, 1, 12]
+        .sort_by do |v| v end
+        .join
+        .strip
+        .chars
+        .map do |v| v end
     %}
     CR
 end

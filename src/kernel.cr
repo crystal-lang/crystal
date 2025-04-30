@@ -599,6 +599,12 @@ end
 {% end %}
 
 {% unless flag?(:interpreted) || flag?(:wasm32) %}
+  {% if flag?(:execution_context) %}
+    Fiber::ExecutionContext.init_default_context
+  {% else %}
+    Crystal::Scheduler.init
+  {% end %}
+
   # load debug info on start up of the program is executed with CRYSTAL_LOAD_DEBUG_INFO=1
   # this will make debug info available on print_frame that is used by Crystal's segfault handler
   #
@@ -607,12 +613,6 @@ end
   # - Other values will load debug info on demand: when the backtrace of the first exception is generated
   Exception::CallStack.load_debug_info if ENV["CRYSTAL_LOAD_DEBUG_INFO"]? == "1"
   Exception::CallStack.setup_crash_handler
-
-  {% if flag?(:execution_context) %}
-    Fiber::ExecutionContext.init_default_context
-  {% else %}
-    Crystal::Scheduler.init
-  {% end %}
 
   {% if flag?(:win32) %}
     Crystal::System::Process.start_interrupt_loop
