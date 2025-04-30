@@ -26,7 +26,7 @@ class Digest::Adler32 < ::Digest
   end
 
   def self.update(data : Bytes, adler32 : UInt32) : UInt32
-    LibZ.adler32(adler32, slice, slice.size).to_u32
+    LibZ.adler32(adler32, data, data.size).to_u32
   end
 
   def self.combine(adler1 : UInt32, adler2 : UInt32, len) : UInt32
