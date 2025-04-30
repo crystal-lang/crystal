@@ -159,32 +159,16 @@ module Crystal::System::Time
     # wDayOfWeek is appropriate weekday (Sunday=0 to Saturday=6)
     # wDay is week within the month (1 to 5, where 5 is last week of the month)
     # wHour, wMinute and wSecond are absolute time
-    day = 1
-
-    time = ::Time.utc(year, systemtime.wMonth.to_i32, day, systemtime.wHour.to_i32, systemtime.wMinute.to_i32, systemtime.wSecond.to_i32)
-    i = systemtime.wDayOfWeek.to_i32 - (time.day_of_week.to_i32 % 7)
-
-    if i < 0
-      i += 7
-    end
-
-    day += i
-
-    week = systemtime.wDay - 1
-
-    if week < 4
-      day += week * 7
-    else
-      # "Last" instance of the day.
-      day += 4 * 7
-      if day > ::Time.days_in_month(year, systemtime.wMonth)
-        day -= 7
-      end
-    end
-
-    time += (day - 1).days
-
-    time.to_unix
+    ::Time.month_week_date(
+      year,
+      systemtime.wMonth.to_i32,
+      systemtime.wDay.to_i32,
+      systemtime.wDayOfWeek.to_i32,
+      systemtime.wHour.to_i32,
+      systemtime.wMinute.to_i32,
+      systemtime.wSecond.to_i32,
+      location: ::Time::Location::UTC,
+    ).to_unix
   end
 
   # Normalizes the names of the standard and dst zones.

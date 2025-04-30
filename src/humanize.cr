@@ -326,7 +326,7 @@ struct Int
   #
   # See `Number#humanize` for more details on the behaviour and arguments.
   def humanize_bytes(io : IO, precision : Int = 3, separator = '.', *, significant : Bool = true, unit_separator = nil, format : BinaryPrefixFormat = :IEC) : Nil
-    humanize(io, precision, separator, nil, base: 1024, significant: significant) do |magnitude|
+    humanize(io, precision, separator, nil, base: 1024, significant: significant, unit_separator: unit_separator) do |magnitude|
       magnitude = Number.prefix_index(magnitude)
 
       prefix = Number.si_prefix(magnitude)
@@ -334,9 +334,9 @@ struct Int
         unit = "B"
       else
         if format.iec?
-          unit = "#{unit_separator}#{prefix}iB"
+          unit = "#{prefix}iB"
         else
-          unit = "#{unit_separator}#{prefix.upcase}B"
+          unit = "#{prefix.upcase}B"
         end
       end
       {magnitude, unit, magnitude > 0}
