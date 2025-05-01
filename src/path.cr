@@ -979,18 +979,18 @@ struct Path
   # to the same roots (e.g. `\\.\C:\foo` and `C:\foo` are not equivalent, nor
   # are `\\?\UNC\server\share\foo` and `\\server\share\foo`).
   def relative_to?(base : Path) : Path?
+    # work on normalized paths otherwise we would need to backtrack on `..` parts
+    base = base.normalize
+    target = self.normalize
+
     base_anchor = base.anchor
-    target_anchor = self.anchor
+    target_anchor = target.anchor
 
     # if paths have a different anchors, there can't be a relative path between
     # them.
     if base_anchor != target_anchor
       return nil
     end
-
-    # work on normalized paths otherwise we would need to backtrack on `..` parts
-    base = base.normalize
-    target = self.normalize
 
     # check for trivial case of equal paths
     if base == target
