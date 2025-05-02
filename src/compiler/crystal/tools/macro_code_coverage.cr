@@ -173,6 +173,11 @@ module Crystal
       self.count_branches node
     end
 
+    # Workaround for a Crystal 1.0.0 compiler error
+    private def conditional_statement_branches(node : ASTNode) : Int32
+      1
+    end
+
     private def count_branches(node : Or | And) : Int32
       self.count_branches node.left, node.right
     end

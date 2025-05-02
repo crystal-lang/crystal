@@ -1,7 +1,7 @@
 require "../../../spec_helper"
 include Crystal
 
-private def assert_coverage(code, expected_coverage, *, focus : Bool = false, spec_file = __FILE__, spec_line = __LINE__)
+private def assert_coverage(code, expected_coverage, *, expected_error : String? = nil, focus : Bool = false, spec_file = __FILE__, spec_line = __LINE__)
   it focus: focus, file: spec_file, line: spec_line do
     compiler = Compiler.new true
     compiler.prelude = "empty"
@@ -18,6 +18,15 @@ private def assert_coverage(code, expected_coverage, *, focus : Bool = false, sp
       fail "Failed to generate coverage", file: spec_file, line: spec_line
     end
 
+    coverage_exception = result.program.coverage_interrupt_exception
+
+    if expected_error
+      err = coverage_exception.should_not be_nil, file: spec_file, line: spec_line
+      err.inspect_with_backtrace.should contain(expected_error), file: spec_file, line: spec_line
+    else
+      coverage_exception.should be_nil, file: spec_file, line: spec_line
+    end
+
     hits.should eq(expected_coverage), file: spec_file, line: spec_line
   end
 end
@@ -27,8 +36,16 @@ describe "macro_code_coverage" do
     {{ "foo" }}
     CR
 
-  assert_coverage <<-'CR', {1 => "1/2"}
-    {{ true ? raise("err") : 0 }}
+  assert_coverage <<-'CR', {2 => 1, 3 => 1}, expected_error: "undefined macro method 'NumberLiteral#sdfds'"
+    {%
+      a = 1
+      b = 2.sdfds
+      c = 3
+    %}
+    CR
+
+  assert_coverage <<-'CR', {1 => "1/2"}, expected_error: "oh noes im an error"
+    {{ true ? raise("oh noes im an error") : 0 }}
     CR
 
   assert_coverage <<-'CR', {1 => "1/2"}
@@ -76,18 +93,18 @@ describe "macro_code_coverage" do
     CR
 
   # 1/2 since the raise would prevent the 2nd execution
-  assert_coverage <<-'CR', {2 => "1/2"}
+  assert_coverage <<-'CR', {2 => "1/2"}, expected_error: "oh noes im an error"
     macro test(x)
-      {{ 1 == x ? raise("err") : 0 }}
+      {{ 1 == x ? raise("oh noes im an error") : 0 }}
     end
 
     test(1)
     test(2)
     CR
 
-  assert_coverage <<-'CR', {2 => "2/2"}
+  assert_coverage <<-'CR', {2 => "2/2"}, expected_error: "oh noes im an error"
     macro test(x)
-      {{ 1 == x ? raise("err") : 0 }}
+      {{ 1 == x ? raise("oh noes im an error") : 0 }}
     end
 
     test(2)
@@ -125,8 +142,8 @@ describe "macro_code_coverage" do
     {% unless false; if false; 1; else 2; end; else; if false; 4; elsif false; 5; else 6; end; end %}
     CR
 
-  assert_coverage <<-'CR', {1 => 1}
-    {% raise "foo" %}
+  assert_coverage <<-'CR', {1 => 1}, expected_error: "oh noes im an error"
+    {% raise "oh noes im an error" %}
     {{ 2 }}
     CR
 
@@ -182,10 +199,10 @@ describe "macro_code_coverage" do
     test 1
     CR
 
-  assert_coverage <<-'CR', {2 => 1, 3 => "1/2"}
+  assert_coverage <<-'CR', {2 => 1, 3 => "1/2"}, expected_error: "oh noes im an error"
     {%
       if true
-        raise "foo" if Int32 <= Number
+        raise "oh noes im an error" if Int32 <= Number
       end
     %}
     CR
@@ -202,14 +219,14 @@ describe "macro_code_coverage" do
     end
     CR
 
-  assert_coverage <<-'CR', {4 => 1, 5 => 1, 7 => 0}
+  assert_coverage <<-'CR', {4 => 1, 5 => 1, 7 => 0}, expected_error: "oh noes im an error"
     macro finished
       {% verbatim do %}
         {%
           if true
-            raise "foo"
+            raise "oh noes im an error"
           else
-            pp "foo"
+            123
           end
         %}
       {% end %}
@@ -687,9 +704,9 @@ describe "macro_code_coverage" do
     %}
     CR
 
-  assert_coverage <<-'CR', {2 => "3/3"}
+  assert_coverage <<-'CR', {2 => "3/3"}, expected_error: "oh noes im an error"
     {%
-      v = 1 && 2 && raise "Oh noes"
+      v = 1 && 2 && raise "oh noes im an error"
     %}
     CR
 
@@ -841,7 +858,7 @@ describe "macro_code_coverage" do
                 Int32 <= type ||
                 false
               )
-            id
+            1
           end
         %}
       {% end %}
@@ -857,7 +874,7 @@ describe "macro_code_coverage" do
                 Int32 <= type ||
                 (type < Int && Int8 <= Number)
               )
-            id
+            1
           end
         %}
       {% end %}
