@@ -65,7 +65,7 @@ class IO::Memory < IO
   # io.gets(2)    # => "he"
   # io.print "hi" # raises IO::Error
   # ```
-  def self.new(string : String) : IO::Memory
+  def self.new(string : String) : self
     new string.to_slice, writeable: false
   end
 

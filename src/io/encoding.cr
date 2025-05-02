@@ -234,12 +234,12 @@ class IO
       @out_slice = Bytes.empty
     end
 
-    def write(io : IO, numbytes : Int::Primitive) : Nil
+    def write(io : IO, numbytes : Int) : Nil
       io.write @out_slice[0, numbytes]
       @out_slice += numbytes
     end
 
-    def advance(numbytes : Int::Primitive) : Nil
+    def advance(numbytes : Int) : Nil
       @out_slice += numbytes
     end
 
