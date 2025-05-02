@@ -34,7 +34,7 @@ class HTTP::WebSocket
   # HTTP::WebSocket.new(
   #   URI.parse("ws://user:password@websocket.example.com/chat")) # Creates a new WebSocket to `websocket.example.com` with an HTTP basic auth Authorization header
   # ```
-  def self.new(uri : URI | String, headers : HTTP::Headers = HTTP::Headers.new) : HTTP::WebSocket
+  def self.new(uri : URI | String, headers : HTTP::Headers = HTTP::Headers.new) : self
     new(Protocol.new(uri, headers: headers))
   end
 
@@ -47,7 +47,7 @@ class HTTP::WebSocket
   # HTTP::WebSocket.new("websocket.example.com", "/chat")            # Creates a new WebSocket to `websocket.example.com`
   # HTTP::WebSocket.new("websocket.example.com", "/chat", tls: true) # Creates a new WebSocket with TLS to `ẁebsocket.example.com`
   # ```
-  def self.new(host : String, path : String, port : Int32? = nil, tls : HTTP::Client::TLSContext = nil, headers : HTTP::Headers = HTTP::Headers.new) : HTTP::WebSocket
+  def self.new(host : String, path : String, port : Int32? = nil, tls : HTTP::Client::TLSContext = nil, headers : HTTP::Headers = HTTP::Headers.new) : self
     new(Protocol.new(host, path, port, tls, headers))
   end
 

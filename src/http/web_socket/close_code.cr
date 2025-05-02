@@ -17,7 +17,7 @@ enum HTTP::WebSocket::CloseCode
 
   # Create a new instance with the given close code, or raise an
   # error if the close code given is not inside 0..4999.
-  def self.new(close_code : Int32) : HTTP::WebSocket::CloseCode
+  def self.new(close_code : Int32) : self
     unless 0 <= close_code <= 4999
       raise ArgumentError.new("Invalid HTTP::WebSocket::CloseCode: #{close_code}")
     end

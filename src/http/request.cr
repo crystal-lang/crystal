@@ -59,7 +59,7 @@ class HTTP::Request
   # This property is not used by `HTTP::Client`.
   property local_address : Socket::Address?
 
-  def self.new(method : String, resource : String, headers : Headers? = nil, body : String | Bytes | IO | Nil = nil, version : String = "HTTP/1.1") : HTTP::Request
+  def self.new(method : String, resource : String, headers : Headers? = nil, body : String | Bytes | IO | Nil = nil, version : String = "HTTP/1.1") : self
     # Duplicate headers to prevent the request from modifying data that the user might hold.
     new(method, resource, headers.try(&.dup), body, version, internal: nil)
   end

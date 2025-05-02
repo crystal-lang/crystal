@@ -100,7 +100,7 @@ class HTTP::WebSocket::Protocol
     stream_io.flush
   end
 
-  def send(data : Bytes, opcode : Opcode, flags : HTTP::WebSocket::Protocol::Flags = Flags::FINAL, flush : Bool = true) : Nil
+  def send(data : Bytes, opcode : Opcode, flags : Flags = Flags::FINAL, flush : Bool = true) : Nil
     write_header(data.size, opcode, flags)
     write_payload(data)
     @io.flush if flush
@@ -286,7 +286,7 @@ class HTTP::WebSocket::Protocol
     close(CloseCode.new(code), message)
   end
 
-  def self.new(host : String, path : String, port : Int32? = nil, tls : HTTP::Client::TLSContext = nil, headers : HTTP::Headers = HTTP::Headers.new) : HTTP::WebSocket::Protocol
+  def self.new(host : String, path : String, port : Int32? = nil, tls : HTTP::Client::TLSContext = nil, headers : HTTP::Headers = HTTP::Headers.new) : self
     {% if flag?(:without_openssl) %}
       if tls
         raise "WebSocket TLS is disabled because `-D without_openssl` was passed at compile time"
@@ -338,7 +338,7 @@ class HTTP::WebSocket::Protocol
     new(socket, masked: true)
   end
 
-  def self.new(uri : URI | String, headers : HTTP::Headers = HTTP::Headers.new) : HTTP::WebSocket::Protocol
+  def self.new(uri : URI | String, headers : HTTP::Headers = HTTP::Headers.new) : self
     uri = URI.parse(uri) if uri.is_a?(String)
 
     if (host = uri.hostname) && (path = uri.request_target)

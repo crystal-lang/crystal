@@ -22,7 +22,7 @@ class HTTP::Client
       end
     end
 
-    def self.new(status_code : Int32, body : String? = nil, headers : Headers = Headers.new, status_message : String? = nil, version : String = "HTTP/1.1", body_io : IO? = nil) : HTTP::Client::Response
+    def self.new(status_code : Int32, body : String? = nil, headers : Headers = Headers.new, status_message : String? = nil, version : String = "HTTP/1.1", body_io : IO? = nil) : self
       new(HTTP::Status.new(status_code), body, headers, status_message, version, body_io)
     end
 
@@ -91,7 +91,7 @@ class HTTP::Client
       version == "HTTP/1.1"
     end
 
-    def self.from_io(io : IO, ignore_body : Bool = false, decompress : Bool = true) : HTTP::Client::Response
+    def self.from_io(io : IO, ignore_body : Bool = false, decompress : Bool = true) : self
       from_io?(io, ignore_body, decompress) ||
         raise("Unexpected end of http request")
     end

@@ -197,7 +197,7 @@ class HTTP::Client
   #
   # This constructor will raise an exception if any scheme but HTTP or HTTPS
   # is used.
-  def self.new(uri : URI, tls : TLSContext = nil) : HTTP::Client
+  def self.new(uri : URI, tls : TLSContext = nil) : self
     tls = tls_flag(uri, tls)
     host = validate_host(uri)
     new(host, uri.port, tls)
@@ -259,7 +259,7 @@ class HTTP::Client
 
   # Configures this client to perform basic authentication in every
   # request.
-  def basic_auth(username : String, password : String) : Nil
+  def basic_auth(username, password) : Nil
     header = "Basic #{Base64.strict_encode("#{username}:#{password}")}"
     before_request do |request|
       request.headers["Authorization"] = header
