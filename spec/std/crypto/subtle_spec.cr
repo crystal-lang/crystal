@@ -3,30 +3,18 @@ require "crypto/subtle"
 
 describe "Subtle" do
   it "compares constant times" do
-    data = [
-      {"a" => Slice.new(1, 0x11), "b" => Slice.new(1, 0x11), "result" => true},
-      {"a" => Slice.new(1, 0x12), "b" => Slice.new(1, 0x11), "result" => false},
-      {"a" => Slice.new(1, 0x11), "b" => Slice.new(2) { |i| 0x11 + i }, "result" => false},
-      {"a" => Slice.new(2) { |i| 0x11 + i }, "b" => Slice.new(1, 0x11), "result" => false},
-    ]
-
-    data.each do |test|
-      Crypto::Subtle.constant_time_compare(test["a"].as(Slice(Int32)), test["b"].as(Slice(Int32))).should eq(test["result"])
-    end
+    Crypto::Subtle.constant_time_compare(Slice.new(1, 0x11), Slice.new(1, 0x11)).should be_true
+    Crypto::Subtle.constant_time_compare(Slice.new(1, 0x12), Slice.new(1, 0x11)).should be_false
+    Crypto::Subtle.constant_time_compare(Slice.new(1, 0x11), Slice.new(2) { |i| 0x11 + i }).should be_false
+    Crypto::Subtle.constant_time_compare(Slice.new(2) { |i| 0x11 + i }, Slice.new(1, 0x11)).should be_false
   end
 
   it "compares constant time bytes on equality" do
-    data = [
-      {"a" => 0x00_u8, "b" => 0x00_u8, "result" => 1},
-      {"a" => 0x00_u8, "b" => 0x01_u8, "result" => 0},
-      {"a" => 0x01_u8, "b" => 0x00_u8, "result" => 0},
-      {"a" => 0xff_u8, "b" => 0xff_u8, "result" => 1},
-      {"a" => 0xff_u8, "b" => 0xfe_u8, "result" => 0},
-    ]
-
-    data.each do |test|
-      Crypto::Subtle.constant_time_byte_eq(test["a"], test["b"]).should eq(test["result"])
-    end
+    Crypto::Subtle.constant_time_byte_eq(0x00_u8, 0x00_u8).should eq 1_u8
+    Crypto::Subtle.constant_time_byte_eq(0x00_u8, 0x01_u8).should eq 0_u8
+    Crypto::Subtle.constant_time_byte_eq(0x01_u8, 0x00_u8).should eq 0_u8
+    Crypto::Subtle.constant_time_byte_eq(0xff_u8, 0xff_u8).should eq 1_u8
+    Crypto::Subtle.constant_time_byte_eq(0xff_u8, 0xfe_u8).should eq 0_u8
   end
 
   it "compares constant time bytes bug" do

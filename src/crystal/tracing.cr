@@ -106,7 +106,7 @@ module Crystal
         end
 
         def write(value : Time::Span) : Nil
-          write(value.seconds * Time::NANOSECONDS_PER_SECOND + value.nanoseconds)
+          write(value.seconds &* Time::NANOSECONDS_PER_SECOND &+ value.nanoseconds)
         end
 
         def write(value : Bool) : Nil
