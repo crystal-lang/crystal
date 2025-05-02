@@ -749,4 +749,86 @@ describe "ASTNode#to_s" do
         .map do |v| v end
     %}
     CR
+
+  expect_to_s <<-'CR'
+    {%
+      (
+        1
+      )
+    %}
+    CR
+
+  expect_to_s <<-'CR'
+    {%
+      (
+        1
+        2
+      )
+    %}
+    CR
+
+  expect_to_s <<-'CR'
+    {%
+      (
+        true ||
+        false
+      )
+    %}
+    CR
+
+  expect_to_s <<-'CR'
+    {%
+      (
+        true ||
+        false
+      ) && true
+    %}
+    CR
+
+  expect_to_s <<-'CR'
+    {%
+      true && (
+        true ||
+        false
+      )
+    %}
+    CR
+
+  expect_to_s <<-'CR', <<-'CR'
+    {%
+      if (v = 5) &&
+        (
+          1 < v ||
+          (v < 4 && 5 < 6)
+        )
+        123
+      end
+    %}
+    CR
+    {%
+      if (v = 5) &&
+      (
+        1 < v ||
+        (v < 4 && 5 < 6)
+      )
+        123
+      end
+    %}
+    CR
+
+  expect_to_s <<-'CR', <<-'CR'
+    {%
+      if (true || false) &&
+        true
+        1
+      end
+    %}
+    CR
+    {%
+      if (true || false) &&
+      true
+        1
+      end
+    %}
+    CR
 end
