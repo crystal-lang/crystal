@@ -1,3 +1,5 @@
+require "c/wdm"
+
 lib LibC
   SYMLINK_FLAG_RELATIVE = 0x00000001
 
@@ -34,4 +36,16 @@ lib LibC
     reserved : UShort
     dummyUnionName : REPARSE_DATA_BUFFER_union
   end
+
+  struct FILE_MODE_INFORMATION
+    mode : ULONG
+  end
+
+  fun NtQueryInformationFile(
+    fileHandle : HANDLE,
+    ioStatusBlock : IO_STATUS_BLOCK*,
+    fileInformation : Void*,
+    length : ULONG,
+    fileInformationClass : FILE_INFORMATION_CLASS,
+  ) : NTSTATUS
 end
