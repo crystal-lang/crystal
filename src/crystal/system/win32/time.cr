@@ -192,10 +192,10 @@ module Crystal::System::Time
     return stdname, dstname
   end
 
-  REGISTRY_TIME_ZONES = %q(SOFTWARE\Microsoft\Windows NT\CurrentVersion\Time Zones).to_utf16
-  Std                 = "Std".to_utf16
-  Dlt                 = "Dlt".to_utf16
-  TZI                 = "TZI".to_utf16
+  REGISTRY_TIME_ZONES = System.wstr_literal %q(SOFTWARE\Microsoft\Windows NT\CurrentVersion\Time Zones)
+  Std                 = System.wstr_literal "Std"
+  Dlt                 = System.wstr_literal "Dlt"
+  TZI                 = System.wstr_literal "TZI"
 
   # Searches the registry for an English name of a time zone named *stdname* or *dstname*
   # and returns the English name.
