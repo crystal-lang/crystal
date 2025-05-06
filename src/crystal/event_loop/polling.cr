@@ -145,7 +145,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     # running the evloop and dequeue the event in parallel, so a "can't resume
     # dead fiber" can still happen in a MT execution context.
     delete_timer(pointerof(event))
-    raise "BUG: #{event.fiber} called sleep(#{duration}) but was manually resumed before the timer expired!"
+    raise "BUG: #{event.fiber} called sleep but was manually resumed before the timer expired!"
   end
 
   def create_timeout_event(fiber : Fiber) : FiberEvent
