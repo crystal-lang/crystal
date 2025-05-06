@@ -46,6 +46,6 @@ lib LibC
     ioStatusBlock : IO_STATUS_BLOCK*,
     fileInformation : Void*,
     length : ULONG,
-    fileInformationClass : FILE_INFORMATION_CLASS
+    fileInformationClass : FILE_INFORMATION_CLASS,
   ) : NTSTATUS
 end
