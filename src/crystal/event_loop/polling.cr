@@ -145,6 +145,18 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
 
   # file descriptor interface, see Crystal::EventLoop::FileDescriptor
 
+  def open(path : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : System::FileDescriptor::Handle | Errno
+    path.check_no_null_byte
+
+    fd = LibC.open(path, flags | LibC::O_CLOEXEC, permissions)
+
+    if fd == -1
+      Errno.value
+    else
+      fd
+    end
+  end
+
   def read(file_descriptor : System::FileDescriptor, slice : Bytes) : Int32
     size = evented_read(file_descriptor, slice, file_descriptor.@read_timeout)
 
