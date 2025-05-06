@@ -20,7 +20,7 @@ module Crystal::System::File
   def self.special_type?(fd)
     stat = uninitialized LibC::Stat
     ret = fstat(fd, pointerof(stat))
-    ret == -1 && (stat.st_mode & LibC::S_IFMT).in?(LibC::S_IFCHR, LibC::S_IFIFO)
+    ret != -1 && (stat.st_mode & LibC::S_IFMT).in?(LibC::S_IFCHR, LibC::S_IFIFO)
   end
 
   def self.info?(path : String, follow_symlinks : Bool) : ::File::Info?
