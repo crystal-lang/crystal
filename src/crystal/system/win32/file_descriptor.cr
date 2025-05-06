@@ -104,7 +104,7 @@ module Crystal::System::FileDescriptor
     end
   end
 
-  def system_blocking_init(blocking : Bool?)
+  protected def system_blocking_init(blocking : Bool?)
     if blocking.nil?
       # there are no official API to know whether a handle has been opened with
       # the OVERLAPPED flag, but the following call is supposed to leak the

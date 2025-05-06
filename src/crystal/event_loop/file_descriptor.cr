@@ -7,7 +7,7 @@ abstract class Crystal::EventLoop
     # `nil`.
     #
     # Returns the system file descriptor or handle, or a system error.
-    abstract def open(path : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : System::FileDescriptor::Handle | Errno | WinError
+    abstract def open(path : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : {System::FileDescriptor::Handle, Bool} | Errno | WinError
 
     # Reads at least one byte from the file descriptor into *slice*.
     #
