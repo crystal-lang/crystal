@@ -111,10 +111,37 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
   def open(path : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : {System::FileDescriptor::Handle, Bool} | Errno
     path.check_no_null_byte
 
-    fd = LibC.open(path, flags | LibC::O_CLOEXEC, permissions)
-    return Errno.value if fd == -1
+    fd = 0
+    flags |= LibC::O_CLOEXEC
+    blocking = !System::File.special_type?(path) if blocking.nil?
 
-    blocking = !System::File.special_type?(fd) if blocking.nil?
+    # We can't reliably detect without significant overhead whether the file at
+    # *path* might block for a while before calling open; while O_NONBLOCK has
+    # no effect on regular disk files, special file types are a different story.
+    # Open with O_NONBLOCK will fail with ENXIO for O_WRONLY (no connected
+    # reader) but it will always succeed for O_RDONLY (regardless of a connected
+    # writer or not), then any attempt to read will return EOF, leaving no means
+    # to wait until a writer connects.
+    #
+    # We thus rely on the *blocking* arg: when false the file might be a special
+    # file type, so we check it; if it's a fifo (named pipe) or a character
+    # device, we open in another thread so we don't risk blocking the current
+    # thread (and thus other fibers) until a reader or writer is also connected.
+    #
+    # We need preview_mt to safely re-enqueue the current fiber from the thread.
+    {% if flag?(:preview_mt) && !flag?(:interpreted) %}
+      if blocking
+        fd = LibC.open(path, flags, permissions)
+        return Errno.value if fd == -1
+      else
+        fd, errno = System::File.async_open(path, flags, permissions)
+        return errno if fd == -1
+      end
+    {% else %}
+      fd = LibC.open(path, flags, permissions)
+      return Errno.value if fd == -1
+    {% end %}
+
     unless blocking
       status_flags = System::FileDescriptor.fcntl(fd, LibC::F_GETFL)
       System::FileDescriptor.fcntl(fd, LibC::F_SETFL, status_flags | LibC::O_NONBLOCK)

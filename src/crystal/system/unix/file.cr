@@ -14,12 +14,37 @@ module Crystal::System::File
     end
   end
 
+  {% if flag?(:preview_mt) && !flag?(:interpreted) %}
+    protected def self.async_open(filename, flags, permissions)
+      fd = -1
+      errno = Errno::NONE
+      fiber = ::Fiber.current
+
+      ::Thread.new do
+        fd = LibC.open(filename, flags, permissions)
+        errno = Errno.value if fd == -1
+
+        {% if flag?(:execution_context) %}
+          fiber.enqueue
+        {% else %}
+          # HACK: avoid Fiber#enqueue because it would lazily create a scheduler
+          # for the thread just to send the fiber to another scheduler
+          fiber.get_current_thread.not_nil!.scheduler.send_fiber(fiber)
+        {% end %}
+      end
+      ::Fiber.suspend
+
+      {fd, errno}
+    end
+  {% end %}
+
   protected def system_init(mode : String, blocking : Bool) : Nil
   end
 
-  def self.special_type?(fd)
+  def self.special_type?(path : String) : Bool
+    path.check_no_null_byte
     stat = uninitialized LibC::Stat
-    ret = fstat(fd, pointerof(stat))
+    ret = stat(path, pointerof(stat))
     ret != -1 && (stat.st_mode & LibC::S_IFMT).in?(LibC::S_IFCHR, LibC::S_IFIFO)
   end
 

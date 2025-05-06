@@ -94,19 +94,25 @@ describe "File" do
           ret = LibC.mkfifo(path, File::DEFAULT_CREATE_PERMISSIONS)
           raise RuntimeError.from_errno("mkfifo") unless ret == 0
 
-          # FIXME: open(2) will block when opening a fifo file until another
-          #        thread or process also opened the file; we should pass
-          #        O_NONBLOCK to the open(2) call itself, not afterwards
-          file = nil
-          new_thread { file = File.new(path, "w", blocking: nil) }
+          # open(2) blocks when opening a pipe/fifo or chardev file until
+          # another thread or process also opened the file in the opposite mode
+          w = nil
+          {% if flag?(:preview_mt) %}
+            # the evloop handles opening the fifo file without blocking the
+            # current thread (only the current fiber)
+            spawn { w = File.open(path, "w", blocking: nil) }
+          {% else %}
+            # we must explicitly spawn a thread
+            new_thread { w = File.new(path, "w") }
+          {% end %}
 
           begin
-            File.open(path, "r", blocking: false) do |file|
-              file.blocking.should be_false
+            File.open(path, "r", blocking: false) do |r|
+              r.blocking.should be_false
             end
           ensure
             File.delete(path)
-            file.try(&.close)
+            w.try(&.close)
           end
         end
       {% end %}
