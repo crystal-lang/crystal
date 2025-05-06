@@ -1,6 +1,6 @@
 abstract class Crystal::EventLoop
   module FileDescriptor
-    # Opens a file at *path* from the disk.
+    # Opens a file at *path*.
     #
     # Blocks the current fiber until the file has been opened. Avoids blocking
     # the current thread if possible, especially when *blocking* is `false` or
