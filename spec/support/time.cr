@@ -66,9 +66,9 @@ end
     fun SetDynamicTimeZoneInformation(lpTimeZoneInformation : DYNAMIC_TIME_ZONE_INFORMATION*) : BOOL
   end
 
-  private SeTimeZonePrivilege = System.wstr_literal "SeTimeZonePrivilege"
-
   module Crystal::System::Time
+    private SeTimeZonePrivilege = System.wstr_literal "SeTimeZonePrivilege"
+
     # Enable the `SeTimeZonePrivilege` privilege before changing the system time
     # zone. This is necessary because the privilege is by default granted but
     # disabled for any new process. This only needs to be done once per run.
