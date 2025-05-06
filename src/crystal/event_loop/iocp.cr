@@ -194,7 +194,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     # running the evloop and dequeue the event in parallel, so a "can't resume
     # dead fiber" can still happen in a MT execution context.
     delete_timer(pointerof(timer))
-    raise "BUG: #{timer.fiber} called sleep(#{duration}) but was manually resumed before the timer expired!"
+    raise "BUG: #{timer.fiber} called sleep but was manually resumed before the timer expired!"
   end
 
   # Suspend the current fiber for *duration* and returns true if the timer
