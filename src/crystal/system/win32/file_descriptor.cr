@@ -1,6 +1,8 @@
 require "c/io"
 require "c/consoleapi"
 require "c/consoleapi2"
+require "c/ntifs"
+require "c/wdm"
 require "c/winnls"
 require "crystal/system/win32/iocp"
 require "crystal/system/thread"
@@ -103,9 +105,18 @@ module Crystal::System::FileDescriptor
     end
   end
 
-  private def system_blocking_init(value)
-    @system_blocking = value
-    Crystal::EventLoop.current.create_completion_port(windows_handle) unless value
+  def system_blocking_init(blocking : Bool?)
+    if blocking.nil?
+      # there are no official API to know whether a handle has been opened with
+      # the OVERLAPPED flag, but the following call is supposed to leak the
+      # information: if neither of the SYNCHRONOUS_IO flags are set then the
+      # OVERLAPPED flag has been set
+      info = LibC::FILE_MODE_INFORMATION.new
+      status = LibC.NtQueryInformationFile(windows_handle, out _, pointerof(info), sizeof(LibC::FILE_MODE_INFORMATION), LibC::FILE_INFORMATION_CLASS::FileModeInformation)
+      blocking = status != LibC::STATUS_SUCCESS || (info.mode & (LibC::FILE_SYNCHRONOUS_IO_ALERT | LibC::FILE_SYNCHRONOUS_IO_NONALERT)) != 0
+    end
+    @system_blocking = blocking
+    Crystal::EventLoop.current.create_completion_port(windows_handle) unless blocking
   end
 
   private def system_close_on_exec?
