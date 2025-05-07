@@ -381,9 +381,10 @@ module Crystal
         temp_assign = expanded.as(Expressions).expressions.first
         type = temp_assign.type?
 
-        # if the Assign node's RHS is untyped, this node is unreachable and
+        # if the Assign node's RHS is untyped, this and all following
+        # assignments are unreachable
         unless type
-          return temp_assign.transform self
+          return untyped_expression node
         end
 
         target_count = node.targets.size

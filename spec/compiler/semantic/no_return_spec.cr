@@ -334,6 +334,11 @@ describe "Semantic: NoReturn" do
         {'a', ""}
       end
 
+      def raise(msg)
+        while true
+        end
+      end
+
       def bar
         x = 1
         return true if x.is_a?(Int32)
