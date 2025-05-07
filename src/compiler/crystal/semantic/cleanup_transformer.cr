@@ -379,7 +379,13 @@ module Crystal
         # `temp_assign` is this whole Assign node and its deduced type is same
         # as the original RHS's type
         temp_assign = expanded.as(Expressions).expressions.first
-        type = temp_assign.type
+        type = temp_assign.type?
+
+        # if the Assign node's RHS is untyped, this node is unreachable and
+        unless type
+          return temp_assign.transform self
+        end
+
         target_count = node.targets.size
         has_strict_multi_assign = @program.has_flag?("strict_multi_assign")
 
