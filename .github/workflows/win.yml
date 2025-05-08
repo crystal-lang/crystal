@@ -14,7 +14,7 @@ env:
 
 jobs:
   x86_64-windows-libs:
-    runs-on: windows-2022
+    runs-on: windows-2025
     steps:
       - name: Disable CRLF line ending substitution
         run: |
@@ -93,7 +93,7 @@ jobs:
         run: .\etc\win-ci\build-openssl.ps1 -BuildTree deps\openssl -Version 3.4.1
 
   x86_64-windows-dlls:
-    runs-on: windows-2022
+    runs-on: windows-2025
     steps:
       - name: Disable CRLF line ending substitution
         run: |
@@ -182,7 +182,7 @@ jobs:
         run: .\etc\win-ci\build-openssl.ps1 -BuildTree deps\openssl -Version 3.4.1 -Dynamic
 
   x86_64-windows-llvm-libs:
-    runs-on: windows-2022
+    runs-on: windows-2025
     steps:
       - name: Enable Developer Command Prompt
         uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
@@ -205,7 +205,7 @@ jobs:
           cmake "-DCMAKE_INSTALL_PREFIX=$(pwd)\..\llvm" -P cmake_install.cmake
 
   x86_64-windows-llvm-dlls:
-    runs-on: windows-2022
+    runs-on: windows-2025
     steps:
       - name: Disable CRLF line ending substitution
         run: |
@@ -238,7 +238,7 @@ jobs:
       llvm_version: "19.1.7"
 
   x86_64-windows-test:
-    runs-on: windows-2022
+    runs-on: windows-2025
     needs: [x86_64-windows-release]
     steps:
       - name: Disable CRLF line ending substitution
@@ -286,7 +286,7 @@ jobs:
         run: make -f Makefile.win samples
 
   x86_64-windows-test-interpreter:
-    runs-on: windows-2022
+    runs-on: windows-2025
     needs: [x86_64-windows-release]
     steps:
       - name: Disable CRLF line ending substitution
@@ -322,7 +322,7 @@ jobs:
 
   x86_64-windows-installer:
     if: github.repository_owner == 'crystal-lang' && (startsWith(github.ref, 'refs/tags/') || startsWith(github.ref, 'refs/heads/ci/'))
-    runs-on: windows-2022
+    runs-on: windows-2025
     needs: [x86_64-windows-release]
     steps:
       - name: Disable CRLF line ending substitution
