@@ -105,7 +105,7 @@ module Crystal::System::Socket
     address.sin6_family = family
     address.sin6_port = 0
     unless LibC.bind(fd, pointerof(address).as(LibC::Sockaddr*), sizeof(LibC::SockaddrIn6)) == 0
-      return ::Socket::BindError.from_wsa_error("Could not bind to '*'")
+      return ::Socket::BindError.from_wsa_error("Could not bind to address '*'")
     end
 
     error = event_loop.connect(self, addr, timeout)
@@ -123,7 +123,7 @@ module Crystal::System::Socket
     # > functions are to be used on the connected socket.
     optname = LibC::SO_UPDATE_CONNECT_CONTEXT
     if LibC.setsockopt(fd, LibC::SOL_SOCKET, optname, nil, 0) == LibC::SOCKET_ERROR
-      return ::Socket::Error.from_wsa_error("setsockopt #{optname}")
+      return ::Socket::Error.from_wsa_error("setsockopt", optname: optname)
     end
   end
 
@@ -168,7 +168,7 @@ module Crystal::System::Socket
 
   private def system_bind(addr, addrstr, &)
     unless LibC.bind(fd, addr, addr.size) == 0
-      yield ::Socket::BindError.from_wsa_error("Could not bind to '#{addrstr}'")
+      yield ::Socket::BindError.from_wsa_error("Could not bind to address", address: addrstr)
     end
   end
 
@@ -317,7 +317,7 @@ module Crystal::System::Socket
 
   private def system_getsockopt(fd, optname, optval, level = LibC::SOL_SOCKET)
     system_getsockopt(fd, optname, optval, level) { |value| return value }
-    raise ::Socket::Error.from_wsa_error("getsockopt #{optname}")
+    raise ::Socket::Error.from_wsa_error("getsockopt", optname: optname)
   end
 
   # :nodoc:
@@ -325,7 +325,7 @@ module Crystal::System::Socket
     optsize = sizeof(typeof(optval))
 
     ret = LibC.setsockopt(handle, level, optname, pointerof(optval).as(UInt8*), optsize)
-    raise ::Socket::Error.from_wsa_error("setsockopt #{optname}") if ret == LibC::SOCKET_ERROR
+    raise ::Socket::Error.from_wsa_error("setsockopt", optname: optname) if ret == LibC::SOCKET_ERROR
     ret
   end
 
