@@ -238,4 +238,38 @@ describe "Semantic: pointer" do
       ),
       "type must be Foo(Char | Int32), not (Foo(Char | Int32) | Foo(Int32))", inject_primitives: true
   end
+
+  it "does not recalculate element type on multiple calls to `#value=` (#15742)" do
+    result = semantic <<-CRYSTAL
+      module Foo
+      end
+
+      class Bar1
+        include Foo
+      end
+
+      class Bar2
+        include Foo
+      end
+
+      struct Pointer(T)
+        @[Primitive(:pointer_set)]
+        def value=(value : T)
+        end
+      end
+
+      # NOTE: `typeof(v)` is `(Bar2 | Foo)*` but should most certainly be just `Foo*`
+      v = uninitialized Pointer(Bar1 | Bar2 | Foo)
+
+      a = uninitialized Bar1 | Bar2
+      v.value = a
+      b = uninitialized Foo
+      v.value = b
+
+      v
+      CRYSTAL
+
+    type = result.node.type.should be_a(PointerInstanceType)
+    type.element_type.should_not eq(result.program.types["Foo"])
+  end
 end
