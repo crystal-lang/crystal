@@ -22,7 +22,7 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
 
   {% if flag?(:execution_context) %}
     def run(queue : Fiber::List*, blocking : Bool) : Nil
-      Crystal.trace :evloop, "run", fiber: fiber, blocking: blocking
+      Crystal.trace :evloop, "run", blocking: blocking
       @runnables = queue
       run(blocking)
     ensure
