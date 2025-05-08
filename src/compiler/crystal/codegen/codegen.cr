@@ -449,7 +449,11 @@ module Crystal
       end
 
       global = @llvm_mod.globals.add(llvm_element_type.array(info.args.size), info.name)
-      global.linkage = LLVM::Linkage::Private
+      if @llvm_mod != @main_mod
+        global.linkage = LLVM::Linkage::External
+      elsif @single_module
+        global.linkage = LLVM::Linkage::Internal
+      end
       global.global_constant = true
       global.initializer = llvm_element_type.const_array(llvm_elements)
     end

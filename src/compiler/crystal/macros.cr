@@ -100,6 +100,20 @@ private macro def_string_methods(klass)
   def to_i(base = 10)
   end
 
+  # Returns an expression that evaluates to a slice literal containing the
+  # UTF-16 code units of this string, plus an extra trailing null character.
+  # This null character is not part of the slice, but ensures that calling
+  # `#to_unsafe` always results in a properly null-terminated C string.
+  #
+  # ```
+  # {{ "abc😂".to_utf16 }} # => ::Slice(::UInt16).literal(97, 98, 99, 55357, 56834, 0)[0, 5]
+  # ```
+  #
+  # WARNING: The return value is not necessarily a literal node.
+  @[Experimental("Slice literals are still under development. Join the discussion at [#2886](https://github.com/crystal-lang/crystal/issues/2886).")]
+  def to_utf16 : ASTNode
+  end
+
   # Similar to `String#tr`.
   def tr(from : StringLiteral, to : StringLiteral) : {{klass}}
   end
