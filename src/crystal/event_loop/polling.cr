@@ -133,8 +133,19 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
 
   # fiber interface, see Crystal::EventLoop
 
-  def create_resume_event(fiber : Fiber) : FiberEvent
-    FiberEvent.new(:sleep, fiber)
+  def sleep(duration : ::Time::Span) : Nil
+    event = Event.new(:sleep, Fiber.current, timeout: duration)
+    add_timer(pointerof(event))
+    Fiber.suspend
+
+    # safety check
+    return if event.timed_out?
+
+    # try to avoid a double resume if possible, but another thread might be
+    # running the evloop and dequeue the event in parallel, so a "can't resume
+    # dead fiber" can still happen in a MT execution context.
+    delete_timer(pointerof(event))
+    raise "BUG: #{event.fiber} called sleep but was manually resumed before the timer expired!"
   end
 
   def create_timeout_event(fiber : Fiber) : FiberEvent
@@ -142,6 +153,18 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
   end
 
   # file descriptor interface, see Crystal::EventLoop::FileDescriptor
+
+  def open(path : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : System::FileDescriptor::Handle | Errno
+    path.check_no_null_byte
+
+    fd = LibC.open(path, flags | LibC::O_CLOEXEC, permissions)
+
+    if fd == -1
+      Errno.value
+    else
+      fd
+    end
+  end
 
   def read(file_descriptor : System::FileDescriptor, slice : Bytes) : Int32
     size = evented_read(file_descriptor, slice, file_descriptor.@read_timeout)
@@ -183,8 +206,15 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     end
   end
 
+  def reopened(file_descriptor : System::FileDescriptor) : Nil
+    resume_all(file_descriptor)
+  end
+
   def close(file_descriptor : System::FileDescriptor) : Nil
-    evented_close(file_descriptor)
+    # perform cleanup before LibC.close. Using a file descriptor after it has
+    # been closed is never defined and can always lead to undefined results
+    resume_all(file_descriptor)
+    file_descriptor.file_descriptor_close
   end
 
   protected def self.remove_impl(file_descriptor : System::FileDescriptor) : Nil
@@ -299,7 +329,10 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
   end
 
   def close(socket : ::Socket) : Nil
-    evented_close(socket)
+    # perform cleanup before LibC.close. Using a file descriptor after it has
+    # been closed is never defined and can always lead to undefined results
+    resume_all(socket)
+    socket.socket_close
   end
 
   protected def self.remove_impl(socket : ::Socket) : Nil
@@ -332,7 +365,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     end
   end
 
-  protected def evented_close(io)
+  private def resume_all(io)
     return unless (index = io.__evloop_data).valid?
 
     Polling.arena.free(index) do |pd|
@@ -407,6 +440,9 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
       event = Event.new(type, Fiber.current, index, timeout)
 
       return false unless Polling.arena.get?(index) do |pd|
+                            unless pd.value.owned_by?(self)
+                              pd.value.take_ownership(self, io.fd, index)
+                            end
                             yield pd, pointerof(event)
                           end
     else
@@ -536,8 +572,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
       return unless select_action.time_expired?
       fiber.@timeout_event.as(FiberEvent).clear
     when .sleep?
-      # cleanup
-      fiber.@resume_event.as(FiberEvent).clear
+      event.value.timed_out!
     else
       raise RuntimeError.new("BUG: unexpected event in timers: #{event.value}%s\n")
     end

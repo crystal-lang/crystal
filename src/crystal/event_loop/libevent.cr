@@ -22,7 +22,7 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
 
   {% if flag?(:execution_context) %}
     def run(queue : Fiber::List*, blocking : Bool) : Nil
-      Crystal.trace :evloop, "run", fiber: fiber, blocking: blocking
+      Crystal.trace :evloop, "run", blocking: blocking
       @runnables = queue
       run(blocking)
     ensure
@@ -40,6 +40,11 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
 
   def interrupt : Nil
     event_base.loop_exit
+  end
+
+  def sleep(duration : ::Time::Span) : Nil
+    Fiber.current.resume_event.add(duration)
+    Fiber.suspend
   end
 
   # Create a new resume event for a fiber (sleep).
@@ -103,6 +108,18 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
     end
   end
 
+  def open(path : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : System::FileDescriptor::Handle | Errno
+    path.check_no_null_byte
+
+    fd = LibC.open(path, flags | LibC::O_CLOEXEC, permissions)
+
+    if fd == -1
+      Errno.value
+    else
+      fd
+    end
+  end
+
   def read(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
     evented_read(file_descriptor, "Error reading file_descriptor") do
       LibC.read(file_descriptor.fd, slice, slice.size).tap do |return_code|
@@ -135,8 +152,15 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
     end
   end
 
-  def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
+  def reopened(file_descriptor : Crystal::System::FileDescriptor) : Nil
     file_descriptor.evented_close
+  end
+
+  def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
+    # perform cleanup before LibC.close. Using a file descriptor after it has
+    # been closed is never defined and can always lead to undefined results
+    file_descriptor.evented_close
+    file_descriptor.file_descriptor_close
   end
 
   def read(socket : ::Socket, slice : Bytes) : Int32
@@ -241,7 +265,10 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
   end
 
   def close(socket : ::Socket) : Nil
+    # perform cleanup before LibC.close. Using a file descriptor after it has
+    # been closed is never defined and can always lead to undefined results
     socket.evented_close
+    socket.socket_close
   end
 
   def evented_read(target, errno_msg : String, &) : Int32

@@ -1,6 +1,6 @@
 require "./common"
 require "uri"
-require "http/params"
+require "./params"
 require "socket"
 
 # An HTTP request.

@@ -809,6 +809,50 @@ module Indexable(T)
     index(offset) { |e| yield e } || raise Enumerable::NotFoundError.new
   end
 
+  # Returns the first element in the indexable for which the passed block
+  # is truthy, starting from the given *offset*.
+  #
+  # Accepts an optional parameter *if_none*, to set what gets returned if
+  # no element is found (defaults to `nil`).
+  #
+  # ```
+  # [1, 2, 3, 4].find { |i| i > 2 }        # => 3
+  # [1, 2, 3, 4].find(-1) { |i| i > 8 }    # => -1
+  # [1, 2, 3, 4].find(-1, 2) { |i| i < 2 } # => -1
+  # ```
+  def find(if_none = nil, *, offset : Int, & : T ->)
+    offset += size if offset < 0
+    return if_none if offset < 0
+
+    offset.upto(size - 1) do |i|
+      elem = unsafe_fetch(i)
+      if yield elem
+        return elem
+      end
+    end
+
+    if_none
+  end
+
+  # :ditto:
+  def find(if_none, _offset offset : Int, & : T ->)
+    find(if_none, offset: offset) { |e| yield e }
+  end
+
+  # Returns the first element in the indexable for which the passed block
+  # is truthy, starting from the given *offset*.
+  # Raises `Enumerable::NotFoundError` if there is no element for which the block is truthy.
+  #
+  # ```
+  # [1, 2, 3, 4].find! { |i| i > 2 }     # => 3
+  # [1, 2, 3, 4].find!(3) { |i| i > 2 }  # => 4
+  # [1, 2, 3, 4].find! { |i| i > 8 }     # => raises Enumerable::NotFoundError
+  # [1, 2, 3, 4].find!(-5) { |i| i > 2 } # => raises Enumerable::NotFoundError
+  # ```
+  def find!(offset : Int = 0, & : T ->)
+    find(offset: offset) { |i| yield i } || raise Enumerable::NotFoundError.new
+  end
+
   # Returns the last element of `self` if it's not empty, or raises `IndexError`.
   #
   # ```

@@ -181,7 +181,7 @@ module Colorize::ObjectExtensions
     Colorize::Object.new(self).fore(fore)
   end
 
-  # Wraps `self` in a `Colorize::Object` and colors it with the given `Color256` made
+  # Wraps `self` in a `Colorize::Object` and colors it with the given `ColorRGB` made
   # up from the given *r*ed, *g*reen and *b*lue values.
   def colorize(r : UInt8, g : UInt8, b : UInt8)
     Colorize::Object.new(self).fore(r, g, b)

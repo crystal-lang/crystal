@@ -42,23 +42,8 @@ class IO::FileDescriptor < IO
   def initialize(fd : Handle, blocking = nil, *, @close_on_finalize = true)
     @volatile_fd = Atomic.new(fd)
     @closed = true # This is necessary so we can reference `self` in `system_closed?` (in case of an exception)
-
-    # TODO: Refactor to avoid calling `GetFileType` twice on Windows (once in `system_closed?` and once in `system_info`)
     @closed = system_closed?
-
-    return if @closed
-
-    if blocking.nil?
-      blocking =
-        case system_info.type
-        when .pipe?, .socket?, .character_device?
-          false
-        else
-          true
-        end
-    end
-
-    system_blocking_init(blocking)
+    system_blocking_init(blocking) unless @closed
   end
 
   # :nodoc:

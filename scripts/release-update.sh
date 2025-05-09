@@ -22,6 +22,15 @@ sed -i -E "s/version: .*/version: $(cat src/VERSION)/" shard.yml
 # Remove SOURCE_DATE_EPOCH (only used in source tree of a release)
 rm -f src/SOURCE_DATE_EPOCH
 
+# Truncate CHANGELOG.md
+sed -i -E '/^## \[/,/^## Previous Releases/{/^## Previous Releases/!d}' CHANGELOG.md
+
+if ! grep -q https://github.com/crystal-lang/crystal/blob/release/${CRYSTAL_VERSION%.*}/CHANGELOG.md CHANGELOG.md; then
+  sed -i -E "/For information on prior releases/{ N;a\
+  * [${CRYSTAL_VERSION%.*}](https://github.com/crystal-lang/crystal/blob/release/${CRYSTAL_VERSION%.*}/CHANGELOG.md)
+  }" CHANGELOG.md
+fi
+
 # Edit PREVIOUS_CRYSTAL_BASE_URL in .circleci/config.yml
 sed -i -E "s|[0-9.]+/crystal-[0-9.]+-[0-9]|$CRYSTAL_VERSION/crystal-$CRYSTAL_VERSION-1|g" .circleci/config.yml
 

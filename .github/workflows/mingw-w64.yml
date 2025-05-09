@@ -17,7 +17,7 @@ jobs:
     steps:
       - name: Setup MSYS2
         id: msys2
-        uses: msys2/setup-msys2@d44ca8e88d8b43d56cf5670f91747359d5537f97 # v2.26.0
+        uses: msys2/setup-msys2@61f9e5e925871ba6c9e3e8da24ede83ea27fa91f # v2.27.0
         with:
           msystem: UCRT64
           update: true
@@ -59,7 +59,7 @@ jobs:
         shell: msys2 {0}
         working-directory: ./shards
         run: |
-          make install PREFIX="$(pwd)/../crystal"
+          make install PREFIX="$(pwd)/../crystal" SHARDS=false
           # FIXME: remove after crystal-lang/shards#668
           ldd bin/shards.exe | grep -iv ' => /c/windows/system32' | sed 's/.* => //; s/ (.*//' | xargs -t -i /usr/bin/install -m 0755 '{}' "$(pwd)/../crystal/bin/"
 
@@ -74,7 +74,7 @@ jobs:
     steps:
       - name: Setup MSYS2
         id: msys2
-        uses: msys2/setup-msys2@d44ca8e88d8b43d56cf5670f91747359d5537f97 # v2.26.0
+        uses: msys2/setup-msys2@61f9e5e925871ba6c9e3e8da24ede83ea27fa91f # v2.27.0
         with:
           msystem: UCRT64
           update: true
@@ -100,10 +100,11 @@ jobs:
 
   x86_64-mingw-w64-test-compiler:
     runs-on: windows-2022
+    needs: [x86_64-mingw-w64-build]
     steps:
       - name: Setup MSYS2
         id: msys2
-        uses: msys2/setup-msys2@d44ca8e88d8b43d56cf5670f91747359d5537f97 # v2.26.0
+        uses: msys2/setup-msys2@61f9e5e925871ba6c9e3e8da24ede83ea27fa91f # v2.27.0
         with:
           msystem: UCRT64
           update: true
@@ -120,6 +121,15 @@ jobs:
 
       - name: Download Crystal source
         uses: actions/checkout@v4
+
+      - name: Download Crystal executable
+        uses: actions/download-artifact@v4
+        with:
+          name: x86_64-mingw-w64-crystal
+          path: crystal
+
+      - name: Copy compiler build into place
+        run: mkdir .build/ && cp crystal/bin/crystal.exe .build/
 
       - name: Run compiler specs
         shell: msys2 {0}
@@ -138,3 +148,5 @@ jobs:
         run: |
           export CRYSTAL_SPEC_COMPILER_BIN="$(which crystal.exe)"
           make -o .build/crystal.exe primitives_spec # we know the compiler is fresh; do not rebuild it here
+        env:
+          SPEC_FLAGS: --tag=~external_commands # skip exec_external_command spec because it doesn't work with this setup

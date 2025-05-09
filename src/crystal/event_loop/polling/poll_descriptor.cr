@@ -7,6 +7,10 @@ struct Crystal::EventLoop::Polling::PollDescriptor
   @readers = Waiters.new
   @writers = Waiters.new
 
+  def owned_by?(event_loop) : Bool
+    @event_loop == event_loop
+  end
+
   # Makes *event_loop* the new owner of *fd*.
   # Removes *fd* from the current event loop (if any).
   def take_ownership(event_loop : EventLoop, fd : Int32, index : Arena::Index) : Nil
@@ -20,7 +24,7 @@ struct Crystal::EventLoop::Polling::PollDescriptor
     # can optimize (all enqueues are local) and we don't end up with a timer
     # from evloop A to cancel an event from evloop B (currently unsafe)
     if current && !empty?
-      raise RuntimeError.new("BUG: transfering fd=#{fd} to another evloop with pending reader/writer fibers")
+      raise RuntimeError.new("Can't transfer fd=#{fd} to another polling event loop with pending reader/writer fibers")
     end
 
     @event_loop = event_loop

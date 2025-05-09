@@ -131,9 +131,8 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     fiber = timer.value.fiber
 
     case timer.value.type
-    in .sleep?
+    in .sleep?, .timeout?
       timer.value.timed_out!
-      fiber.@resume_event.as(FiberEvent).clear
     in .select_timeout?
       return unless select_action = fiber.timeout_select_action
       fiber.timeout_select_action = nil
@@ -183,12 +182,65 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     end
   end
 
+  def sleep(duration : Time::Span) : Nil
+    timer = Timer.new(:sleep, Fiber.current, duration)
+    add_timer(pointerof(timer))
+    Fiber.suspend
+
+    # safety check
+    return if timer.timed_out?
+
+    # try to avoid a double resume if possible, but another thread might be
+    # running the evloop and dequeue the event in parallel, so a "can't resume
+    # dead fiber" can still happen in a MT execution context.
+    delete_timer(pointerof(timer))
+    raise "BUG: #{timer.fiber} called sleep but was manually resumed before the timer expired!"
+  end
+
+  # Suspend the current fiber for *duration* and returns true if the timer
+  # expired and false if the fiber was resumed early.
+  #
+  # Specific to IOCP to handle IO timeouts.
+  def timeout(duration : Time::Span) : Bool
+    event = Fiber.current.resume_event
+    event.add(duration)
+
+    Fiber.suspend
+
+    if event.timed_out?
+      true
+    else
+      event.delete
+      false
+    end
+  end
+
   def create_resume_event(fiber : Fiber) : EventLoop::Event
-    FiberEvent.new(:sleep, fiber)
+    FiberEvent.new(:timeout, fiber)
   end
 
   def create_timeout_event(fiber : Fiber) : EventLoop::Event
     FiberEvent.new(:select_timeout, fiber)
+  end
+
+  def open(path : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : System::FileDescriptor::Handle | WinError
+    access, disposition, attributes = System::File.posix_to_open_opts(flags, permissions, blocking)
+
+    handle = LibC.CreateFileW(
+      System.to_wstr(path),
+      access,
+      LibC::DEFAULT_SHARE_MODE, # UNIX semantics
+      nil,
+      disposition,
+      attributes,
+      LibC::HANDLE.null
+    )
+
+    if handle == LibC::INVALID_HANDLE_VALUE
+      WinError.value
+    else
+      handle.address
+    end
   end
 
   def read(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
@@ -203,18 +255,37 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   end
 
   def write(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
-    System::IOCP.overlapped_operation(file_descriptor, "WriteFile", file_descriptor.write_timeout, writing: true) do |overlapped|
+    bytes_written = System::IOCP.overlapped_operation(file_descriptor, "WriteFile", file_descriptor.write_timeout, writing: true) do |overlapped|
+      overlapped.offset = UInt64::MAX if file_descriptor.system_append?
+
       ret = LibC.WriteFile(file_descriptor.windows_handle, slice, slice.size, out byte_count, overlapped)
       {ret, byte_count}
     end.to_i32
+
+    # The overlapped offset forced a write to the end of the file, but unlike
+    # synchronous writes, an asynchronous write incorrectly updates the file
+    # pointer: it merely adds the number of written bytes to the current
+    # position, disregarding that the offset might have changed it.
+    #
+    # We could seek before the async write (it works), but a concurrent fiber or
+    # parallel thread could also seek and we'd end up overwriting instead of
+    # appending; we need both the offset + explicit seek.
+    file_descriptor.system_seek(0, IO::Seek::End) if file_descriptor.system_append?
+
+    bytes_written
   end
 
   def wait_writable(file_descriptor : Crystal::System::FileDescriptor) : Nil
     raise NotImplementedError.new("Crystal::System::IOCP#wait_writable(FileDescriptor)")
   end
 
+  def reopened(file_descriptor : Crystal::System::FileDescriptor) : Nil
+    raise NotImplementedError.new("Crystal::System::IOCP#reopened(FileDescriptor)")
+  end
+
   def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
     LibC.CancelIoEx(file_descriptor.windows_handle, nil) unless file_descriptor.system_blocking?
+    file_descriptor.file_descriptor_close
   end
 
   private def wsa_buffer(bytes)
@@ -340,5 +411,6 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   end
 
   def close(socket : ::Socket) : Nil
+    raise NotImplementedError.new("Crystal::System::IOCP#close(Socket)")
   end
 end

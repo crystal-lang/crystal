@@ -117,6 +117,10 @@ describe "Array" do
       b = [4, 5, 6] * 10
       (a | b).should eq([1, 2, 3, 4, 5, 6])
     end
+
+    it "different types" do
+      ([1, 2, 3] | ["hello"]).should eq([1, 2, 3, "hello"])
+    end
   end
 
   it "does +" do

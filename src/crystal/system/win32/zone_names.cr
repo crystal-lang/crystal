@@ -489,7 +489,7 @@ module Crystal::System::Time
     put(data, "Aleutian Standard Time", "HST", "HDT")            # America/Adak
     put(data, "Alaskan Standard Time", "AKST", "AKDT")           # America/Anchorage
     put(data, "Tocantins Standard Time", "-03", "-03")           # America/Araguaina
-    put(data, "Paraguay Standard Time", "-04", "-03")            # America/Asuncion
+    put(data, "Paraguay Standard Time", "-03", "-03")            # America/Asuncion
     put(data, "Bahia Standard Time", "-03", "-03")               # America/Bahia
     put(data, "SA Pacific Standard Time", "-05", "-05")          # America/Bogota
     put(data, "Argentina Standard Time", "-03", "-03")           # America/Buenos_Aires
@@ -499,7 +499,7 @@ module Crystal::System::Time
     put(data, "Central Standard Time", "CST", "CDT")             # America/Chicago
     put(data, "Central Brazilian Standard Time", "-04", "-04")   # America/Cuiaba
     put(data, "Mountain Standard Time", "MST", "MDT")            # America/Denver
-    put(data, "Greenland Standard Time", "-03", "-02")           # America/Godthab
+    put(data, "Greenland Standard Time", "-02", "-01")           # America/Godthab
     put(data, "Turks And Caicos Standard Time", "EST", "EDT")    # America/Grand_Turk
     put(data, "Central America Standard Time", "CST", "CST")     # America/Guatemala
     put(data, "Atlantic Standard Time", "AST", "ADT")            # America/Halifax
@@ -521,7 +521,7 @@ module Crystal::System::Time
     put(data, "Newfoundland Standard Time", "NST", "NDT")        # America/St_Johns
     put(data, "Pacific Standard Time (Mexico)", "PST", "PDT")    # America/Tijuana
     put(data, "Yukon Standard Time", "MST", "MST")               # America/Whitehorse
-    put(data, "Central Asia Standard Time", "+06", "+06")        # Asia/Almaty
+    put(data, "Central Asia Standard Time", "+05", "+05")        # Asia/Almaty
     put(data, "Jordan Standard Time", "+03", "+03")              # Asia/Amman
     put(data, "Arabic Standard Time", "+03", "+03")              # Asia/Baghdad
     put(data, "Azerbaijan Standard Time", "+04", "+04")          # Asia/Baku
@@ -584,7 +584,7 @@ module Crystal::System::Time
     put(data, "UTC-09", "-09", "-09")                            # Etc/GMT+9
     put(data, "UTC+12", "+12", "+12")                            # Etc/GMT-12
     put(data, "UTC+13", "+13", "+13")                            # Etc/GMT-13
-    put(data, "UTC", "UTC", "UTC")                               # Etc/UTC
+    put(data, "UTC", "UTC", "UTC")                               # UTC
     put(data, "Astrakhan Standard Time", "+04", "+04")           # Europe/Astrakhan
     put(data, "W. Europe Standard Time", "CET", "CEST")          # Europe/Berlin
     put(data, "GTB Standard Time", "EET", "EEST")                # Europe/Bucharest

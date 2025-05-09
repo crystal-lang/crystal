@@ -100,6 +100,20 @@ private macro def_string_methods(klass)
   def to_i(base = 10)
   end
 
+  # Returns an expression that evaluates to a slice literal containing the
+  # UTF-16 code units of this string, plus an extra trailing null character.
+  # This null character is not part of the slice, but ensures that calling
+  # `#to_unsafe` always results in a properly null-terminated C string.
+  #
+  # ```
+  # {{ "abc😂".to_utf16 }} # => ::Slice(::UInt16).literal(97, 98, 99, 55357, 56834, 0)[0, 5]
+  # ```
+  #
+  # WARNING: The return value is not necessarily a literal node.
+  @[Experimental("Slice literals are still under development. Join the discussion at [#2886](https://github.com/crystal-lang/crystal/issues/2886).")]
+  def to_utf16 : ASTNode
+  end
+
   # Similar to `String#tr`.
   def tr(from : StringLiteral, to : StringLiteral) : {{klass}}
   end
@@ -326,6 +340,43 @@ module Crystal::Macros
   # end
   # ```
   def skip_file : Nop
+  end
+
+  # Returns the size of the given *type* as number of bytes.
+  #
+  # For definition purposes, a type is considered to be **stable** if its size
+  # and alignment do not change as new code is being processed. Currently, all
+  # Crystal types are stable, _except_ the following:
+  #
+  # * Structs, e.g. `Bytes`
+  # * `ReferenceStorage` instances
+  # * Modules, e.g. `Math` (however, `Math.class` is stable)
+  # * Uninstantiated generic types, e.g. `Array`
+  # * `StaticArray`, `Tuple`, `NamedTuple` instances with unstable element types
+  # * Unions containing any unstable types
+  #
+  # *type* must be a constant referring to a stable type. It cannot be evaluated
+  # at macro evaluation time, nor a `typeof` expression.
+  #
+  # ```
+  # {{ sizeof(Int32) }} # => 4
+  # {{ sizeof(Void*) }} # usually 4 or 8
+  # ```
+  def __crystal_pseudo_sizeof(type) : NumberLiteral
+  end
+
+  # Returns the alignment of the given *type* as number of bytes.
+  #
+  # *type* must be a constant referring to a stable type. It cannot be evaluated
+  # at macro evaluation time, nor a `typeof` expression.
+  #
+  # See `sizeof` for the definition of a stable type.
+  #
+  # ```
+  # {{ alignof(Int32) }} # => 4
+  # {{ alignof(Void*) }} # usually 4 or 8
+  # ```
+  def __crystal_pseudo_alignof(type) : NumberLiteral
   end
 
   # This is the base class of all AST nodes. This methods are

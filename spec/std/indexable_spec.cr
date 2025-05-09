@@ -143,6 +143,70 @@ describe Indexable do
     end
   end
 
+  describe "#find" do
+    it "finds the element matching the block" do
+      indexable = SafeIndexable.new(4)
+      indexable.find { |i| i > 2 }.should eq 3
+    end
+
+    it "finds the element matching the block after given offset" do
+      indexable = SafeIndexable.new(8)
+      indexable.find(offset: 5) { |i| i.even? }.should eq 6
+    end
+
+    it "finds the element matching the block after given negative offset" do
+      indexable = SafeIndexable.new(8)
+      indexable.find(offset: -6) { |i| i.even? }.should eq 2
+    end
+
+    it "does not receive a valid negative offset, returns if_none value" do
+      indexable = SafeIndexable.new(4)
+      indexable.find(-1, offset: -10) { |i| i > 2 }.should eq -1
+    end
+
+    it "does not find the element matching the block" do
+      indexable = SafeIndexable.new(4)
+      indexable.find { |i| i > 7 }.should be_nil
+    end
+
+    it "does not find the element matching the block, returns custom if_none value" do
+      indexable = SafeIndexable.new(4)
+      indexable.find(if_none: -1) { |i| i > 7 }.should eq -1
+    end
+
+    it "does not find the element matching the block after given offset, returns custom if_none value" do
+      indexable = SafeIndexable.new(5)
+      indexable.find(-3, 3) { |i| i > 15 }.should eq -3
+    end
+  end
+
+  describe "#find!" do
+    it "finds the element matching the block" do
+      indexable = SafeIndexable.new(4)
+      indexable.find! { |i| i > 2 }.should eq 3
+    end
+
+    it "finds the element matching the block after given offset" do
+      indexable = SafeIndexable.new(8)
+      indexable.find!(offset: 5) { |i| i.even? }.should eq 6
+    end
+
+    it "finds the element matching the block after given negative offset" do
+      indexable = SafeIndexable.new(8)
+      indexable.find!(offset: -6) { |i| i.even? }.should eq 2
+    end
+
+    it "does not receive a valid negative offset, raises not found" do
+      indexable = SafeIndexable.new(4)
+      expect_raises(Enumerable::NotFoundError) { indexable.find!(offset: -10) { |i| i > 2 } }
+    end
+
+    it "does not find the element matching the block, raises not found" do
+      indexable = SafeIndexable.new(4)
+      expect_raises(Enumerable::NotFoundError) { indexable.find! { |i| i > 7 } }
+    end
+  end
+
   describe "#rindex" do
     it "does rindex with big negative offset" do
       indexable = SafeIndexable.new(3)

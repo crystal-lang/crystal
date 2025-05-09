@@ -331,11 +331,9 @@ class Fiber
   def self.yield : Nil
     Crystal.trace :sched, "yield"
 
-    {% if flag?(:execution_context) %}
-      Fiber.current.resume_event.add(0.seconds)
-      Fiber.suspend
-    {% else %}
-      Crystal::Scheduler.yield
+    # TODO: Fiber switching and evloop for wasm32
+    {% unless flag?(:wasi) %}
+      Crystal::EventLoop.current.sleep(0.seconds)
     {% end %}
   end
 

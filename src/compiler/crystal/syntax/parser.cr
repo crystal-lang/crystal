@@ -2084,7 +2084,7 @@ module Crystal
       pieces = [] of Piece
       has_interpolation = false
 
-      delimiter_state, has_interpolation, options, token_end_location = consume_delimiter pieces, delimiter_state, has_interpolation
+      delimiter_state, has_interpolation, options, end_location = consume_delimiter pieces, delimiter_state, has_interpolation
 
       if want_skip_space && delimiter_state.kind.string?
         while true
@@ -2094,7 +2094,7 @@ module Crystal
           if passed_backslash_newline && @token.type.delimiter_start? && @token.delimiter_state.kind.string?
             next_string_token(delimiter_state)
             delimiter_state = @token.delimiter_state
-            delimiter_state, has_interpolation, options, token_end_location = consume_delimiter pieces, delimiter_state, has_interpolation
+            delimiter_state, has_interpolation, options, end_location = consume_delimiter pieces, delimiter_state, has_interpolation
           else
             break
           end
@@ -2122,7 +2122,7 @@ module Crystal
         # no special treatment
       end
 
-      result.end_location = token_end_location
+      result.end_location = end_location
 
       result
     end
@@ -2149,7 +2149,7 @@ module Crystal
 
     def consume_delimiter(pieces, delimiter_state, has_interpolation)
       options = Regex::CompileOptions::None
-      token_end_location = nil
+      end_location = nil
       while true
         case @token.type
         when .string?
@@ -2161,7 +2161,7 @@ module Crystal
           if delimiter_state.kind.regex?
             options = consume_regex_options
           end
-          token_end_location = token_end_location()
+          end_location = token_end_location
           next_token
           break
         when .eof?
@@ -2204,7 +2204,7 @@ module Crystal
         end
       end
 
-      {delimiter_state, has_interpolation, options, token_end_location}
+      {delimiter_state, has_interpolation, options, end_location}
     end
 
     def consume_regex_options
@@ -2246,19 +2246,19 @@ module Crystal
       pieces = [] of Piece
       has_interpolation = false
 
-      delimiter_state, has_interpolation, options, token_end_location = consume_delimiter pieces, delimiter_state, has_interpolation
+      delimiter_state, has_interpolation, options, end_location = consume_delimiter pieces, delimiter_state, has_interpolation
 
       if has_interpolation
         pieces = combine_interpolation_pieces(pieces, delimiter_state)
         node.expressions.concat(pieces)
       else
         string = combine_pieces(pieces, delimiter_state)
-        node.expressions.push(StringLiteral.new(string).at(node).at_end(token_end_location))
+        node.expressions.push(StringLiteral.new(string).at(node).at_end(end_location))
       end
 
       node.heredoc_indent = delimiter_state.heredoc_indent
 
-      node.end_location = token_end_location
+      node.end_location = end_location
     end
 
     def needs_heredoc_indent_removed?(delimiter_state)
@@ -2772,6 +2772,10 @@ module Crystal
           end
 
           location = @token.location
+          {% if compare_versions(Crystal::VERSION, "1.1.0") < 0 %}
+            # FIXME: Workaround for compiler bug in Crystal 1.0 and earlier (https://github.com/crystal-lang/crystal/pull/15452#issuecomment-2653266710)
+            end_location = token_end_location
+          {% end %}
           slash_is_regex!
           next_token_skip_space_or_newline
           when_conds = [] of ASTNode
@@ -2846,9 +2850,11 @@ module Crystal
           a_else = parse_expressions
           skip_statement_end
           check_ident :end
+          end_location = token_end_location
           next_token
           break
         when Keyword::END
+          end_location = token_end_location
           next_token
           break
         else
@@ -2856,7 +2862,7 @@ module Crystal
         end
       end
 
-      Case.new(cond, whens, a_else, exhaustive.nil? ? false : exhaustive)
+      Case.new(cond, whens, a_else, exhaustive.nil? ? false : exhaustive).at_end(end_location)
     end
 
     def check_valid_exhaustive_expression(exp)
@@ -2968,6 +2974,10 @@ module Crystal
       next_token_skip_space
       skip_statement_end
 
+      {% if compare_versions(Crystal::VERSION, "1.1.0") < 0 %}
+        # FIXME: Workaround for compiler bug in Crystal 1.0 and earlier (https://github.com/crystal-lang/crystal/pull/15452#issuecomment-2653266710)
+        end_location = token_end_location
+      {% end %}
       whens = [] of When
 
       while true
@@ -3003,12 +3013,14 @@ module Crystal
           a_else = parse_expressions
           skip_statement_end
           check_ident :end
+          end_location = token_end_location
           next_token
           break
         when Keyword::END
           if whens.empty?
             unexpected_token "expecting when, else or end"
           end
+          end_location = token_end_location
           next_token
           break
         else
@@ -3016,7 +3028,7 @@ module Crystal
         end
       end
 
-      Select.new(whens, a_else)
+      Select.new(whens, a_else).at_end(end_location)
     end
 
     def valid_select_when?(node)
@@ -3228,9 +3240,11 @@ module Crystal
         when .macro_literal?
           pieces << MacroLiteral.new(@token.value.to_s).at(@token.location).at_end(token_end_location)
         when .macro_expression_start?
-          pieces << MacroExpression.new(parse_macro_expression).at(@token.location).at_end(token_end_location)
+          location = @token.location
+          exp = MacroExpression.new(parse_macro_expression).at(location)
           check_macro_expression_end
           skip_whitespace = check_macro_skip_whitespace
+          pieces << exp.at_end(token_end_location)
         when .macro_control_start?
           macro_control = parse_macro_control(start_location, macro_state)
           if macro_control
@@ -3999,9 +4013,11 @@ module Crystal
       do_next_token = true
       found_string_literal = false
       invalid_internal_name = nil
+      external_name_token = nil
 
       if allow_external_name && (@token.type.ident? || string_literal_start?)
         name_location = @token.location
+        external_name_token = @token.dup
         if @token.type.ident?
           if @token.keyword? && invalid_internal_name?(@token.value)
             invalid_internal_name = @token.dup
@@ -4032,6 +4048,8 @@ module Crystal
         if param_name == external_name
           raise "when specified, external name must be different than internal name", @token
         end
+
+        check_valid_param_name
 
         uses_param = false
         do_next_token = true
@@ -4101,6 +4119,10 @@ module Crystal
             raise "cannot use '#{invalid_internal_name}' as a parameter name", invalid_internal_name
           end
           param_name = external_name
+          if external_name_token.nil?
+            raise "missing external name token"
+          end
+          check_valid_param_name(external_name_token)
         else
           unexpected_token
         end
@@ -4147,6 +4169,13 @@ module Crystal
         end
       else
         false
+      end
+    end
+
+    def check_valid_param_name(token : Token = @token)
+      param_name = token.value.to_s
+      if param_name[-1]?.in?('?', '!')
+        warnings.add_warning_at(token.location, "invalid parameter name: #{param_name}")
       end
     end
 
@@ -4235,6 +4264,8 @@ module Crystal
     def parse_var_or_call(global = false, force_call = false, location = @token.location)
       end_location = token_end_location
       doc = @token.doc
+
+      check AtomicWithMethodCheck
 
       if @token.type.op_bang?
         # only trigger from `parse_when_expression`
@@ -4531,6 +4562,7 @@ module Crystal
         end
 
         param_name = @token.value.to_s
+        check_valid_param_name
 
         if all_names.includes?(param_name)
           raise "duplicated block parameter name: #{param_name}", @token
@@ -5502,9 +5534,11 @@ module Crystal
 
       check :OP_RPAREN
 
+      end_location = token_end_location
+
       next_token_skip_space
 
-      Asm.new(text, outputs, inputs, clobbers, volatile, alignstack, intel, can_throw)
+      Asm.new(text, outputs, inputs, clobbers, volatile, alignstack, intel, can_throw).at_end(end_location)
     end
 
     def parse_asm_operands

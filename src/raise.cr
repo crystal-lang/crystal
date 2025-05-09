@@ -301,4 +301,13 @@ end
   def __crystal_raise_cast_failed(obj, type_name : String, location : String)
     raise TypeCastError.new("Cast from #{obj.class} to #{type_name} failed, at #{location}")
   end
+{% else %}
+  # :nodoc:
+  fun __crystal_raise_cast_failed(from_type : Void*, to_type : Void*, location : Void*) : NoReturn
+    if location
+      raise TypeCastError.new("Cast from #{from_type.as(String)} to #{to_type.as(String)} failed, at #{location.as(String)}")
+    else
+      raise TypeCastError.new("Cast from #{from_type.as(String)} to #{to_type.as(String)} failed")
+    end
+  end
 {% end %}

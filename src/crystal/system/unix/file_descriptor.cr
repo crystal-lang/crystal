@@ -34,8 +34,17 @@ module Crystal::System::FileDescriptor
     fcntl(LibC::F_SETFL, new_flags) unless new_flags == current_flags
   end
 
-  private def system_blocking_init(value)
-    self.system_blocking = false unless value
+  private def system_blocking_init(blocking : Bool?)
+    if blocking.nil?
+      blocking =
+        case system_info.type
+        when .pipe?, .socket?, .character_device?
+          false
+        else
+          true
+        end
+    end
+    self.system_blocking = blocking
   end
 
   private def system_close_on_exec?
@@ -109,16 +118,11 @@ module Crystal::System::FileDescriptor
     # Mark the handle open, since we had to have dup'd a live handle.
     @closed = false
 
-    event_loop.close(self)
+    event_loop.reopened(self)
   end
 
   private def system_close
-    # Perform libevent cleanup before LibC.close.
-    # Using a file descriptor after it has been closed is never defined and can
-    # always lead to undefined results. This is not specific to libevent.
     event_loop.close(self)
-
-    file_descriptor_close
   end
 
   def file_descriptor_close(&) : Nil
@@ -131,9 +135,9 @@ module Crystal::System::FileDescriptor
 
     # Clear the @volatile_fd before actually closing it in order to
     # reduce the chance of reading an outdated fd value
-    _fd = @volatile_fd.swap(-1)
+    return unless fd = close_volatile_fd?
 
-    if LibC.close(_fd) != 0
+    if LibC.close(fd) != 0
       case Errno.value
       when Errno::EINTR, Errno::EINPROGRESS
         # ignore
@@ -147,6 +151,11 @@ module Crystal::System::FileDescriptor
     file_descriptor_close do
       raise IO::Error.from_errno("Error closing file", target: self)
     end
+  end
+
+  def close_volatile_fd? : Int32?
+    fd = @volatile_fd.swap(-1)
+    fd unless fd == -1
   end
 
   private def system_flock_shared(blocking)

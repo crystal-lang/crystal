@@ -67,24 +67,6 @@ class Crystal::Scheduler
     Thread.current.scheduler.resume(fiber)
   end
 
-  def self.sleep(time : Time::Span) : Nil
-    Thread.current.scheduler.sleep(time)
-  end
-
-  def self.yield : Nil
-    Crystal.trace :sched, "yield"
-
-    # TODO: Fiber switching and libevent for wasm32
-    {% unless flag?(:wasm32) %}
-      Thread.current.scheduler.sleep(0.seconds)
-    {% end %}
-  end
-
-  def self.yield(fiber : Fiber) : Nil
-    validate_running_thread(fiber)
-    Thread.current.scheduler.yield(fiber)
-  end
-
   private def self.validate_running_thread(fiber : Fiber) : Nil
     {% if flag?(:preview_mt) %}
       if th = fiber.get_current_thread
@@ -163,16 +145,6 @@ class Crystal::Scheduler
         end
       end
     end
-  end
-
-  protected def sleep(time : Time::Span) : Nil
-    @thread.current_fiber.resume_event.add(time)
-    reschedule
-  end
-
-  protected def yield(fiber : Fiber) : Nil
-    @thread.current_fiber.resume_event.add(0.seconds)
-    resume(fiber)
   end
 
   {% if flag?(:preview_mt) %}

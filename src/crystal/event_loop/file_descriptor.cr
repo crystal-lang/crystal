@@ -1,5 +1,14 @@
 abstract class Crystal::EventLoop
   module FileDescriptor
+    # Opens a file at *path*.
+    #
+    # Blocks the current fiber until the file has been opened. Avoids blocking
+    # the current thread if possible, especially when *blocking* is `false` or
+    # `nil`.
+    #
+    # Returns the system file descriptor or handle, or a system error.
+    abstract def open(path : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : System::FileDescriptor::Handle | Errno | WinError
+
     # Reads at least one byte from the file descriptor into *slice*.
     #
     # Blocks the current fiber if no data is available for reading, continuing
@@ -22,6 +31,11 @@ abstract class Crystal::EventLoop
 
     # Blocks the current fiber until the file descriptor is ready for write.
     abstract def wait_writable(file_descriptor : Crystal::System::FileDescriptor) : Nil
+
+    # Hook to react on the file descriptor after it has been reopened. For
+    # example we might want to resume all pending operations to act on the new
+    # file descriptor.
+    abstract def reopened(file_descriptor : Crystal::System::FileDescriptor) : Nil
 
     # Closes the file descriptor resource.
     abstract def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
