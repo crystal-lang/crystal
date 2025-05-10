@@ -36,7 +36,7 @@ module IO::Evented
     if writer = @writers.get?.try &.shift?
       {% if flag?(:execution_context) && Crystal::EventLoop.has_constant?(:LibEvent) %}
         event_loop = Crystal::EventLoop.current.as(Crystal::EventLoop::LibEvent)
-        event_loop.callback_enqueue(reader)
+        event_loop.callback_enqueue(writer)
       {% else %}
         writer.enqueue
       {% end %}
