@@ -46,6 +46,7 @@ class Crystal::Command
         format                   format project, directories and/or files
         hierarchy                show type hierarchy
         implementations          show implementations for given call in location
+        macro_code_coverage      generate a macro code coverage report
         types                    show type of main variables
         unreachable              show methods that are never called
         --help, -h               show this help
@@ -209,6 +210,9 @@ class Crystal::Command
     when "unreachable".starts_with?(tool)
       options.shift
       unreachable
+    when "macro_code_coverage".starts_with?(tool)
+      options.shift
+      macro_code_coverage
     when "--help" == tool, "-h" == tool
       puts COMMANDS_USAGE
       exit
@@ -261,8 +265,8 @@ class Crystal::Command
     end
   end
 
-  private def compile_no_codegen(command, wants_doc = false, hierarchy = false, no_cleanup = false, cursor_command = false, top_level = false, path_filter = false, unreachable_command = false, allowed_formats = ["text", "json"])
-    config = create_compiler command, no_codegen: true, hierarchy: hierarchy, cursor_command: cursor_command, path_filter: path_filter, unreachable_command: unreachable_command, allowed_formats: allowed_formats
+  private def compile_no_codegen(command, wants_doc = false, hierarchy = false, no_cleanup = false, cursor_command = false, top_level = false, path_filter = false, unreachable_command = false, macro_code_coverage = false, allowed_formats = ["text", "json"])
+    config = create_compiler command, no_codegen: true, hierarchy: hierarchy, cursor_command: cursor_command, path_filter: path_filter, unreachable_command: unreachable_command, macro_code_coverage: macro_code_coverage, allowed_formats: allowed_formats
     config.compiler.no_codegen = true
     config.compiler.no_cleanup = no_cleanup
     config.compiler.wants_doc = wants_doc
@@ -349,8 +353,8 @@ class Crystal::Command
                               hierarchy = false, cursor_command = false,
                               single_file = false, dependencies = false,
                               path_filter = false, unreachable_command = false,
-                              allowed_formats = ["text", "json"])
-    compiler = new_compiler
+                              macro_code_coverage = false, allowed_formats = ["text", "json"])
+    compiler = new_compiler macro_code_coverage
     compiler.progress_tracker = @progress_tracker
     compiler.no_codegen = no_codegen
     link_flags = [] of String
@@ -803,7 +807,7 @@ class Crystal::Command
     Command.parse_with_crystal_opts(@options) { |opts| yield opts }
   end
 
-  private def new_compiler
-    @compiler = Compiler.new
+  private def new_compiler(macro_code_coverage : Bool = false)
+    @compiler = Compiler.new macro_code_coverage
   end
 end
