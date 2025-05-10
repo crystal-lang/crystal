@@ -4,13 +4,13 @@ struct OAuth::Params
     @params = [] of {String, String}
   end
 
-  def add(key, value) : Nil
+  def add(key : String, value : String?) : Nil
     if value
       @params << {URI.encode_www_form(key, space_to_plus: false), URI.encode_www_form(value, space_to_plus: false)}
     end
   end
 
-  def add_query(query) : Nil
+  def add_query(query : String) : Nil
     URI::Params.parse(query) do |key, value|
       add key, value
     end
