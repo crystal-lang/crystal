@@ -1,11 +1,11 @@
 require "./windows_registry"
 
 module Crystal::System::WindowsSDK
-  REGISTRY_WIN10_SDK_64 = %q(SOFTWARE\WOW6432Node\Microsoft\Microsoft SDKs\Windows\v10.0).to_utf16
-  REGISTRY_WIN10_SDK_32 = %q(SOFTWARE\Microsoft\Microsoft SDKs\Windows\v10.0).to_utf16
+  REGISTRY_WIN10_SDK_64 = System.wstr_literal %q(SOFTWARE\WOW6432Node\Microsoft\Microsoft SDKs\Windows\v10.0)
+  REGISTRY_WIN10_SDK_32 = System.wstr_literal %q(SOFTWARE\Microsoft\Microsoft SDKs\Windows\v10.0)
 
-  InstallationFolder = "InstallationFolder".to_utf16
-  ProductVersion     = "ProductVersion".to_utf16
+  InstallationFolder = System.wstr_literal "InstallationFolder"
+  ProductVersion     = System.wstr_literal "ProductVersion"
 
   def self.find_win10_sdk_libpath : ::Path?
     # ported from Common7\Tools\vsdevcmd\core\winsdk.bat (loaded by the MSVC
