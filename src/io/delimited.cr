@@ -25,7 +25,7 @@ class IO::Delimited < IO
   # byte sequence *read_delimiter* (interpreted as UTF-8) is found. If
   # *sync_close* is set, calling `#close` calls `#close` on the underlying
   # `IO`.
-  def self.new(io : IO, read_delimiter : String, sync_close : Bool = false)
+  def self.new(io : IO, read_delimiter : String, sync_close : Bool = false) : self
     new(io, read_delimiter.to_slice, sync_close)
   end
 
