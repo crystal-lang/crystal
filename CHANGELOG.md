@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.16.3] (2025-05-09)
+
+[1.16.3]: https://github.com/crystal-lang/crystal/releases/1.16.3
+
+### Bugfixes
+
+#### compiler
+
+- *(semantic)* **[regression]** Remove type binding on `T` for `Pointer(T)#value=` ([#15757], backported from [#15751], thanks @HertzDevil)
+
+[#15757]: https://github.com/crystal-lang/crystal/pull/15757
+[#15751]: https://github.com/crystal-lang/crystal/pull/15751
+
+### Infrastructure
+
+- Changelog for 1.16.3 ([#15758], thanks @straight-shoota)
+
+[#15758]: https://github.com/crystal-lang/crystal/pull/15758
+
 ## [1.16.2] (2025-04-29)
 
 [1.16.2]: https://github.com/crystal-lang/crystal/releases/1.16.2
