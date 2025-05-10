@@ -22,8 +22,11 @@ class Digest::CRC32 < ::Digest
   end
 
   def self.update(data, crc32 : UInt32) : UInt32
-    slice = data.to_slice
-    LibZ.crc32(crc32, slice, slice.size).to_u32
+    update data.to_slice, crc32
+  end
+
+  def self.update(data : Bytes, crc32 : UInt32) : UInt32
+    LibZ.crc32(crc32, data, data.size).to_u32
   end
 
   def self.combine(crc1 : UInt32, crc2 : UInt32, len) : UInt32
