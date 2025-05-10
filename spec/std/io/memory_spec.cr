@@ -348,14 +348,14 @@ describe IO::Memory do
     io = IO::Memory.new
     io.pos = 1000
     io.print 'a'
-    io.to_slice.to_a.should eq([0] * 1000 + [97])
+    io.to_slice.should eq(Bytes.new(1001).tap { |bytes| bytes[-1] = 97 })
   end
 
   it "writes past end with write_byte" do
     io = IO::Memory.new
     io.pos = 1000
     io.write_byte 'a'.ord.to_u8
-    io.to_slice.to_a.should eq([0] * 1000 + [97])
+    io.to_slice.should eq(Bytes.new(1001).tap { |bytes| bytes[-1] = 97 })
   end
 
   it "reads at offset" do
