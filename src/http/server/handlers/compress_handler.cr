@@ -10,7 +10,7 @@
 class HTTP::CompressHandler
   include HTTP::Handler
 
-  def call(context)
+  def call(context : HTTP::Server::Context) : Nil
     {% if flag?(:without_zlib) %}
       call_next(context)
     {% else %}
