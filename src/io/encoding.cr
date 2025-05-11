@@ -146,7 +146,7 @@ class IO
       end
     end
 
-    def read_utf8(io : IO, slice : Slice(UInt8)) : Int32
+    def read_utf8(io : IO, slice : Bytes) : Int32
       count = 0
       until slice.empty?
         read(io)

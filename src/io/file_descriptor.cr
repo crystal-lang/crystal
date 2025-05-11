@@ -94,7 +94,7 @@ class IO::FileDescriptor < IO
     Crystal::System::FileDescriptor.fcntl(fd, cmd, arg)
   end
 
-  def fcntl(cmd : Int32, arg : Int32 = 0) : Int32
+  def fcntl(cmd : Int, arg : Int = 0) : Int
     Crystal::System::FileDescriptor.fcntl(fd, cmd, arg)
   end
 
@@ -267,7 +267,7 @@ class IO::FileDescriptor < IO
     system_tty?
   end
 
-  def reopen(other : IO::FileDescriptor) : File
+  def reopen(other : IO::FileDescriptor) : IO::FileDescriptor
     return other if self.fd == other.fd
     system_reopen(other)
 
