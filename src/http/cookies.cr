@@ -77,7 +77,7 @@ module HTTP
     # request = HTTP::Request.new "GET", "/"
     # request.cookies["foo"] = "bar"
     # ```
-    def []=(key : String, value : String) : HTTP::Cookie
+    def []=(key : String, value : String) : Cookie
       self[key] = Cookie.new(key, value)
     end
 
@@ -91,7 +91,7 @@ module HTTP
     # response = HTTP::Client::Response.new(200)
     # response.cookies["foo"] = HTTP::Cookie.new("foo", "bar", "/admin", Time.utc + 12.hours, secure: true)
     # ```
-    def []=(key : String, value : Cookie) : HTTP::Cookie
+    def []=(key : String, value : Cookie) : Cookie
       unless key == value.name
         raise ArgumentError.new("Cookie name must match the given key")
       end
@@ -137,12 +137,12 @@ module HTTP
     # ```
     # response.cookies << HTTP::Cookie.new("foo", "bar", http_only: true)
     # ```
-    def <<(cookie : Cookie) : HTTP::Cookie
+    def <<(cookie : Cookie) : Cookie
       self[cookie.name] = cookie
     end
 
     # Clears the collection, removing all cookies.
-    def clear : Hash(String, HTTP::Cookie)
+    def clear : Hash(String, Cookie)
       @cookies.clear
     end
 
@@ -161,7 +161,7 @@ module HTTP
     end
 
     # Returns an iterator over the cookies of this collection.
-    def each : Iterator(HTTP::Cookie)
+    def each : Iterator(Cookie)
       @cookies.each_value
     end
 

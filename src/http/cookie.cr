@@ -253,7 +253,7 @@ module HTTP
     # cookie.value    # => ""
     # cookie.expired? # => true
     # ```
-    def expire : Time::Span
+    def expire : Nil
       self.value = ""
       self.expires = Time::UNIX_EPOCH
       self.max_age = Time::Span.zero
