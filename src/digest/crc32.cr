@@ -29,7 +29,7 @@ class Digest::CRC32 < ::Digest
     LibZ.crc32(crc32, data, data.size).to_u32
   end
 
-  def self.combine(crc1 : UInt32, crc2 : UInt32, len) : UInt32
+  def self.combine(crc1 : UInt32, crc2 : UInt32, len : Int32) : UInt32
     LibZ.crc32_combine(crc1, crc2, len).to_u32
   end
 
