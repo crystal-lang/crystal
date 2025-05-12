@@ -1,5 +1,34 @@
 # Changelog
 
+## [1.16.3] (2025-05-12)
+
+[1.16.3]: https://github.com/crystal-lang/crystal/releases/1.16.3
+
+### Bugfixes
+
+#### stdlib
+
+- *(runtime)* Fix `Crystal::EventLoop::LibEvent` and `FiberExecutionContext`  integration ([#15759], backported from [#15743], thanks @ysbaddaden)
+
+[#15759]: https://github.com/crystal-lang/crystal/pull/15759
+[#15743]: https://github.com/crystal-lang/crystal/pull/15743
+
+#### compiler
+
+- *(codegen)* Add fallback if `__crystal_raise_cast_failed` is missing ([#15769], backported from [#15762], thanks @HertzDevil)
+- *(semantic)* **[regression]** Remove type binding on `T` for `Pointer(T)#value=` ([#15757], backported from [#15751], thanks @HertzDevil)
+
+[#15769]: https://github.com/crystal-lang/crystal/pull/15769
+[#15762]: https://github.com/crystal-lang/crystal/pull/15762
+[#15757]: https://github.com/crystal-lang/crystal/pull/15757
+[#15751]: https://github.com/crystal-lang/crystal/pull/15751
+
+### Infrastructure
+
+- Changelog for 1.16.3 ([#15758], thanks @straight-shoota)
+
+[#15758]: https://github.com/crystal-lang/crystal/pull/15758
+
 ## [1.16.2] (2025-04-29)
 
 [1.16.2]: https://github.com/crystal-lang/crystal/releases/1.16.2
