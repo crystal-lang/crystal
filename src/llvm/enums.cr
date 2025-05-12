@@ -7,6 +7,7 @@ module LLVM
     ArgMemOnly
     Builtin
     ByVal
+    Captures
     Cold
     Convergent
     Dereferenceable
@@ -91,6 +92,7 @@ module LLVM
       kinds[ArgMemOnly] = kind_for_name("argmemonly")
       kinds[Builtin] = kind_for_name("builtin")
       kinds[ByVal] = kind_for_name("byval")
+      kinds[Captures] = kind_for_name("captures")
       kinds[Cold] = kind_for_name("cold")
       kinds[Convergent] = kind_for_name("convergent")
       kinds[Dereferenceable] = kind_for_name("dereferenceable")
