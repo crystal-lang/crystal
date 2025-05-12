@@ -1504,6 +1504,7 @@ module Crystal
       false
     end
 
+    # fallback for stdlib before 1.16.2 when using a 1.16.2 or later compiler
     def type_cast_exception_call(from_type, to_type, node, var_name)
       pieces = [
         StringLiteral.new("Cast from ").at(node),
