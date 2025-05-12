@@ -171,7 +171,7 @@ class File < IO::FileDescriptor
   def self.new(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, blocking = true)
     filename = filename.to_s
     fd, blocking = Crystal::System::File.open(filename, mode, perm: perm, blocking: blocking)
-    new(filename, fd, mode, !!blocking, encoding, invalid)
+    new(filename, fd, mode, blocking, encoding, invalid)
   end
 
   getter path : String

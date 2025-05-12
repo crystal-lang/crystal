@@ -20,6 +20,7 @@ module Crystal::System::File
   def self.special_type?(fd)
     stat = uninitialized LibC::Stat
     ret = fstat(fd, pointerof(stat))
+    # not checking for S_IFSOCK because we can't open(2) a socket
     ret != -1 && (stat.st_mode & LibC::S_IFMT).in?(LibC::S_IFCHR, LibC::S_IFIFO)
   end
 
