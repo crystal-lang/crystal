@@ -7,7 +7,6 @@ module LLVM
     ArgMemOnly
     Builtin
     ByVal
-    Captures
     Cold
     Convergent
     Dereferenceable
@@ -58,6 +57,7 @@ module LLVM
     WillReturn
     WriteOnly
     ZExt
+    Captures
 
     # NOTE: enum body does not allow `class_getter` or `TypeDeclaration`, hence
     # the nil cast
