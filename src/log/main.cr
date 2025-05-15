@@ -64,12 +64,12 @@ class Log
   end
 
   # Sets the current fiber logging context.
-  def self.context=(value : Log::Metadata)
+  def self.context=(value : Log::Metadata) : Log::Metadata
     Fiber.current.logging_context = value
   end
 
   # :ditto:
-  def self.context=(value : Log::Context)
+  def self.context=(value : Log::Context) : Log::Metadata
     # NOTE: There is a need for `Metadata` and `Context` setters in
     # because `Log.context` returns a `Log::Context` for allowing DSL like `Log.context.set(a: 1)`
     # but if the metadata is built manually the construct `Log.context = metadata` will be used.
@@ -162,12 +162,12 @@ class Log
     # Log.context.set extra: h
     # Log.info { %q(message with a: 1, b: 2, extra: {"c" => 3} context) }
     # ```
-    def set(**kwargs)
+    def set(**kwargs) : Log::Metadata
       extend_fiber_context(Fiber.current, kwargs)
     end
 
     # :ditto:
-    def set(values) : Nil
+    def set(values : Hash | NamedTuple) : Nil
       extend_fiber_context(Fiber.current, values)
     end
 
