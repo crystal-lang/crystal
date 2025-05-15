@@ -3,18 +3,49 @@ require "file/error"
 
 # :nodoc:
 module Crystal::System::File
-  def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions, blocking : Bool?) : FileDescriptor::Handle
+  def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions, blocking : Bool?) : {FileDescriptor::Handle, Bool}
     perm = ::File::Permissions.new(perm) if perm.is_a? Int32
 
     case result = EventLoop.current.open(filename, open_flag(mode), perm, blocking)
-    in FileDescriptor::Handle
+    in Tuple(FileDescriptor::Handle, Bool)
       result
     in Errno
       raise ::File::Error.from_os_error("Error opening file with mode '#{mode}'", result, file: filename)
     end
   end
 
-  protected def system_set_mode(mode : String)
+  {% if flag?(:preview_mt) && !flag?(:interpreted) %}
+    protected def self.async_open(filename, flags, permissions)
+      fd = -1
+      errno = Errno::NONE
+      fiber = ::Fiber.current
+
+      ::Thread.new do
+        fd = LibC.open(filename, flags, permissions)
+        errno = Errno.value if fd == -1
+
+        {% if flag?(:execution_context) %}
+          fiber.enqueue
+        {% else %}
+          # HACK: avoid Fiber#enqueue because it would lazily create a scheduler
+          # for the thread just to send the fiber to another scheduler
+          fiber.get_current_thread.not_nil!.scheduler.send_fiber(fiber)
+        {% end %}
+      end
+      ::Fiber.suspend
+
+      {fd, errno}
+    end
+  {% end %}
+
+  protected def system_init(mode : String, blocking : Bool) : Nil
+  end
+
+  def self.special_type?(path : String) : Bool
+    path.check_no_null_byte
+    stat = uninitialized LibC::Stat
+    ret = stat(path, pointerof(stat))
+    ret != -1 && (stat.st_mode & LibC::S_IFMT).in?(LibC::S_IFCHR, LibC::S_IFIFO)
   end
 
   def self.info?(path : String, follow_symlinks : Bool) : ::File::Info?
