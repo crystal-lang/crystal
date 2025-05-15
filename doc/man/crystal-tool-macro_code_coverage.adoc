@@ -1,0 +1,46 @@
+= crystal-tool-macro_code_coverage(1)
+:doctype: manpage
+:date: {localdate}
+:crystal_version: {crystal_version}
+:man manual: Crystal Compiler Command Line Reference Guide
+:man source: crystal {crystal_version}
+
+== Name
+crystal-tool-macro_code_coverage - generate a macro code coverage report.
+
+== Synopsis
+*crystal tool macro_code_coverage* [options] [programfile]
+
+== Description
+
+Generate and output a macro code coverage report to STDERR.
+Any exception raised while computing the report is written to STDOUT.
+
+== Options
+
+*-D* _FLAG_, *--define*=_FLAG_::
+  Define a compile-time flag. This is useful to con    ditionally define types, methods, or commands based
+  on flags available at compile time. The default
+  flags are from the target triple given with *--tar*     get-triple or the hosts default, if none is given.
+*-f* _FORMAT_, *--format*=_FORMAT_::
+  Output format 'codecov' (default).
+*-i* _PATH_, *--include*=_PATH_::
+  Include path in output.
+*-e* _PATH_, *--exclude*=_PATH_::
+  Exclude path in output (default: lib).
+*--error-trace*::
+  Show full error trace.
+*--prelude*::
+  Specify prelude to use. The default one initializes
+  the garbage collector. You can also use *--pre*     lude=empty to use no preludes. This can be useful
+  for checking code generation for a specific source
+  code file.
+*-s*, *--stats*::
+Print statistics about the different compiler stages for the current build. Output time and used memory for each compiler
+process.
+*-p*, *--progress*::
+Print statistics about the progress for the current build.
+*-t*, *--time*::
+Print statistics about the execution time.
+*--no-color*::
+Disable colored output.
