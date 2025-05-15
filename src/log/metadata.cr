@@ -30,7 +30,7 @@ class Log::Metadata
   # @first needs to be the last ivar of Metadata. The entries are allocated together with self
   @first = uninitialized Entry
 
-  def self.new(parent : Metadata? = nil, entries : NamedTuple | Hash = NamedTuple.new)
+  def self.new(parent : Metadata? = nil, entries : NamedTuple | Hash = NamedTuple.new) : self
     data_size = instance_sizeof(self) + sizeof(Entry) * {entries.size + (parent.try(&.max_total_size) || 0) - 1, 0}.max
     data = GC.malloc(data_size).as(self)
     data.setup(parent, entries)
@@ -162,7 +162,7 @@ class Log::Metadata
     nil
   end
 
-  def ==(other : Metadata)
+  def ==(other : Metadata) : Bool
     self_kv = self.to_a
     other_kv = other.to_a
 
@@ -216,7 +216,7 @@ class Log::Metadata
     end
 
     # :nodoc:
-    def self.to_metadata_value(value) : Metadata::Value
+    def self.to_metadata_value(value : _) : Metadata::Value
       value.is_a?(Value) ? value : Value.new(value)
     end
   end
@@ -227,7 +227,7 @@ class Fiber
   getter logging_context : Log::Metadata { Log::Metadata.empty }
 
   # :nodoc:
-  def logging_context=(value : Log::Metadata)
+  def logging_context=(value : Log::Metadata) : Log::Metadata
     @logging_context = value
   end
 end

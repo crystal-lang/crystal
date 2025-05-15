@@ -97,12 +97,12 @@ class Log
     end
 
     # Validates that at some point the indicated entry was emitted
-    def check(level : Severity, message : String, file = __FILE__, line = __LINE__) : self
+    def check(level : Severity, message : String, file : String = __FILE__, line : Int32 = __LINE__) : self
       self.check("#{level} with #{message.inspect}", file, line) { |e| e.severity == level && e.message == message }
     end
 
     # :ditto:
-    def check(level : Severity, pattern : Regex, file = __FILE__, line = __LINE__, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : self
+    def check(level : Severity, pattern : Regex, file : String = __FILE__, line : Int32 = __LINE__, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : self
       self.check("#{level} matching #{pattern.inspect}", file, line) { |e| e.severity == level && e.message.matches?(pattern, options: options) }
     end
 
@@ -122,24 +122,24 @@ class Log
     end
 
     # Validates that the indicated entry was the next one to be emitted
-    def next(level : Severity, message : String, file = __FILE__, line = __LINE__) : self
+    def next(level : Severity, message : String, file : String = __FILE__, line : Int32 = __LINE__) : self
       self.next("#{level} with #{message.inspect}", file, line) { |e| e.severity == level && e.message == message }
     end
 
     # :ditto:
-    def next(level : Severity, pattern : Regex, file = __FILE__, line = __LINE__, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : self
+    def next(level : Severity, pattern : Regex, file : String = __FILE__, line : Int32 = __LINE__, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : self
       self.next("#{level} matching #{pattern.inspect}", file, line) { |e| e.severity == level && e.message.matches?(pattern, options: options) }
     end
 
     # Clears the emitted entries so far
-    def clear
+    def clear : self
       @entry = nil
       @entries.clear
       self
     end
 
     # Validates that there are no outstanding entries
-    def empty(file = __FILE__, line = __LINE__)
+    def empty(file : String = __FILE__, line : Int32 = __LINE__) : self
       @entry = nil
       if first = @entries.first?
         fail("Expected no entries, but got #{first.severity} with #{first.message.inspect} in a total of #{@entries.size} entries", file, line)
