@@ -180,7 +180,7 @@ module Fiber::ExecutionContext
 
     # :nodoc:
     def enqueue(fiber : Fiber) : Nil
-      if ExecutionContext.current == self
+      if ExecutionContext.current? == self
         # local enqueue: push to local queue of current scheduler
         ExecutionContext::Scheduler.current.enqueue(fiber)
       else

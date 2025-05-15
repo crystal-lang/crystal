@@ -102,7 +102,7 @@ module Fiber::ExecutionContext
 
     # :nodoc:
     def enqueue(fiber : Fiber) : Nil
-      if ExecutionContext.current == self
+      if ExecutionContext.current? == self
         # local enqueue
         Crystal.trace :sched, "enqueue", fiber: fiber
         @runnables.push(fiber)
