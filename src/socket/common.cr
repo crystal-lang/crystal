@@ -5,7 +5,6 @@
 {% elsif flag?(:wasi) %}
   require "c/arpa/inet"
   require "c/netinet/in"
-  require "c/net/if"
 {% else %}
   require "c/arpa/inet"
   require "c/sys/un"
