@@ -4,7 +4,7 @@ require "./stdint"
 
 @[Link("iphlpapi")]
 lib LibC
-  NDIS_IF_MAX_STRING_SIZE = 256u16
+  NDIS_IF_MAX_STRING_SIZE = 256
   IF_NAMESIZE             = LibC::NDIS_IF_MAX_STRING_SIZE + 1 # need one more byte for terminating '\0'
 
   fun if_nametoindex(ifname : Char*) : UInt
