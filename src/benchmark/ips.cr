@@ -65,7 +65,7 @@ module Benchmark
         @items.each do |item|
           GC.collect
 
-          count = 0_i64
+          count = 0_u64
           elapsed = Time.measure do
             target = Time.monotonic + @warmup_time
 
