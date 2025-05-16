@@ -778,9 +778,9 @@ class Socket
     # This only works on properly initialized link-local IPv6 address objects.
     # In any other case this will return nil.
     #
-    # The LibC structs track the zone via a numerical interface index as
-    # enumerated by the kernel. To keep our abstraction class in line, we
-    # also only keep the interface index around.
+    # The OS tracks the zone via a numerical interface index as enumerated
+    # by the kernel. To keep our abstraction class in line, we also only
+    # keep the interface index around.
     #
     # This helper method exists to look up the interface name based on the
     # associated zone_id property.
