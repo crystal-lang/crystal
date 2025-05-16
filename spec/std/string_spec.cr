@@ -3145,6 +3145,34 @@ describe "String" do
       it { expect_raises(IndexError) { "セキロ：シャドウズ ダイ トゥワイス".delete_at(-19..1) } }
     end
   end
+
+  describe "ensure_suffix" do
+    context "with string suffix" do
+      it "adds suffix if not present" do
+        "foo".ensure_suffix("bar").should eq("foobar")
+        "foo".ensure_suffix("FOO").should eq("fooFOO")
+        "foo".ensure_suffix("").should eq("foo")
+        "foobar".ensure_suffix("arr").should eq("foobararr")
+      end
+
+      it "does not add suffix if already present" do
+        "foobar".ensure_suffix("bar").should eq("foobar")
+        "FOOBAR".ensure_suffix("BAR").should eq("FOOBAR")
+      end
+    end
+
+    context "with char suffix" do
+      it "adds suffix if not present" do
+        "foo".ensure_suffix('b').should eq("foob")
+        "foo".ensure_suffix('O').should eq("fooO")
+      end
+
+      it "does not add suffix if already present" do
+        "foob".ensure_suffix('b').should eq("foob")
+        "FOOB".ensure_suffix('B').should eq("FOOB")
+      end
+    end
+  end
 end
 
 class String
