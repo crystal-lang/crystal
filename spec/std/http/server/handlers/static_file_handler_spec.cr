@@ -436,6 +436,12 @@ describe HTTP::StaticFileHandler do
     response.headers["Location"].should eq "/foo/"
   end
 
+  it "preserves query parameters during redirect" do
+    response = handle HTTP::Request.new("GET", "/foo?ami=kept"), directory_listing: true
+    response.status_code.should eq(302)
+    response.headers["Location"].should eq "/foo/?ami=kept"
+  end
+
   it "does not serve a not found file" do
     response = handle HTTP::Request.new("GET", "/not_found_file.txt")
     response.status_code.should eq(404)
