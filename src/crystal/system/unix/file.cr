@@ -3,18 +3,25 @@ require "file/error"
 
 # :nodoc:
 module Crystal::System::File
-  def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions, blocking : Bool?) : FileDescriptor::Handle
+  def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions, blocking : Bool?) : {FileDescriptor::Handle, Bool}
     perm = ::File::Permissions.new(perm) if perm.is_a? Int32
 
     case result = EventLoop.current.open(filename, open_flag(mode), perm, blocking)
-    in FileDescriptor::Handle
+    in Tuple(FileDescriptor::Handle, Bool)
       result
     in Errno
       raise ::File::Error.from_os_error("Error opening file with mode '#{mode}'", result, file: filename)
     end
   end
 
-  protected def system_set_mode(mode : String)
+  protected def system_init(mode : String, blocking : Bool) : Nil
+  end
+
+  def self.special_type?(fd)
+    stat = uninitialized LibC::Stat
+    ret = fstat(fd, pointerof(stat))
+    # not checking for S_IFSOCK because we can't open(2) a socket
+    ret != -1 && (stat.st_mode & LibC::S_IFMT).in?(LibC::S_IFCHR, LibC::S_IFIFO)
   end
 
   def self.info?(path : String, follow_symlinks : Bool) : ::File::Info?
