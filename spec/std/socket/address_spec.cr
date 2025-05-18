@@ -157,6 +157,12 @@ describe Socket::IPAddress do
       address.link_local_interface.should eq loopback_iface
     end
 
+    it "fails interface name lookup for non-existent interfaces" do
+      expect_raises(Socket::Error, "Failed to look up interface name for index 333 (ENXIO)") do
+        Socket::IPAddress.new("fe80::d00d:1%333", 0).link_local_interface
+      end
+    end
+
     it "interface name lookup returns nil in unsupported cases" do
       Socket::IPAddress.new("fd03::3333", 0).link_local_interface.should be_nil
       Socket::IPAddress.new("192.168.10.10", 0).link_local_interface.should be_nil
