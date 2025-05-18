@@ -44,7 +44,7 @@ struct Time::TZ
     new(index, index, default_transition, default_transition)
   end
 
-  def lookup_with_boundaries(unix_seconds : Int64, location : Location) : {Location::Zone, {Int64, Int64}}
+  def lookup_with_boundaries(unix_seconds : Int, location : Location) : {Location::Zone, {Int64, Int64}}
     if @std_index == @dst_index
       # all-year standard time or DST time
       is_dst = false
