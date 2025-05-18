@@ -785,6 +785,9 @@ class Socket
     # This helper method exists to look up the interface name based on the
     # associated zone_id property.
     def link_local_interface : String | Nil
+      {% if flag?(:wasi) %}
+        raise NotImplementedError.new "Socket::Address.link_local_interface"
+      {% end %}
       return nil if @zone_id.zero?
       return nil unless (@family == Socket::Family::INET6 && link_local?)
       buf = uninitialized StaticArray(UInt8, LibC::IF_NAMESIZE)
