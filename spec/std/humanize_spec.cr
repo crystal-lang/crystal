@@ -102,8 +102,8 @@ describe Number do
     it { assert_prints (2.to_big_f ** 58).format(decimal_places: -5), "288,230,376,151,700,000" }
 
     it { assert_prints (2.to_big_f ** -16).format, "0.0000152587890625" }
-    it { assert_prints (2.to_big_f ** -16).format(decimal_places: 10), "0.00001525878906250000" }
-    it { assert_prints (2.to_big_f ** -16).format(decimal_places: -5), "0.00001526" }
+    it { assert_prints (2.to_big_f ** -16).format(decimal_places: 20), "0.00001525878906250000" }
+    it { assert_prints (2.to_big_f ** -16).format(decimal_places: 10), "0.0000152588" }
 
     it { assert_prints "12345.67890123456789012345".to_big_d.format, "12,345.67890123456789012345" }
 
