@@ -17,7 +17,7 @@ module Crystal::System::FileDescriptor
     r
   end
 
-  private def system_blocking_init(blocking : Bool?)
+  protected def system_blocking_init(blocking : Bool?)
   end
 
   private def system_reopen(other : IO::FileDescriptor)

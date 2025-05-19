@@ -223,7 +223,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     FiberEvent.new(:select_timeout, fiber)
   end
 
-  def open(path : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : System::FileDescriptor::Handle | WinError
+  def open(path : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : {System::FileDescriptor::Handle, Bool} | WinError
     access, disposition, attributes = System::File.posix_to_open_opts(flags, permissions, blocking)
 
     handle = LibC.CreateFileW(
@@ -239,7 +239,8 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     if handle == LibC::INVALID_HANDLE_VALUE
       WinError.value
     else
-      handle.address
+      create_completion_port(handle) unless blocking
+      {handle.address, !!blocking}
     end
   end
 
