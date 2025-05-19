@@ -133,7 +133,8 @@ class Crypto::Bcrypt
     blowfish = Blowfish.new(BLOWFISH_ROUNDS)
     blowfish.enhance_key_schedule(salt, password, cost)
 
-    cipher = CIPHER_TEXT.dup
+    cipher = uninitialized UInt32[6]
+    cipher.to_slice.copy_from(CIPHER_TEXT.to_slice)
     cdata = cipher.to_unsafe
 
     0.step(to: 4, by: 2) do |i|
