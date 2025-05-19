@@ -500,6 +500,15 @@ struct BigDecimal < Number
   end
 
   def to_s(io : IO) : Nil
+    to_s_impl(io, point_range: -3..15)
+  end
+
+  protected def to_s_impl(*, point_range : Range) : String
+    String.build { |io| to_s_impl(io, point_range: point_range) }
+  end
+
+  # TODO: refactor into `Float::Printer.shortest`
+  protected def to_s_impl(io : IO, *, point_range : Range) : Nil
     factor_powers_of_ten
 
     cstr = LibGMP.get_str(nil, 10, @value)
@@ -516,7 +525,7 @@ struct BigDecimal < Number
     decimal_exponent = length.to_i - @scale
     point = decimal_exponent
     exp = point
-    exp_mode = point > 15 || point < -3
+    exp_mode = !point_range.includes?(point)
     point = 1 if exp_mode
 
     # add leading zero
@@ -559,6 +568,27 @@ struct BigDecimal < Number
       io << '+' if exp > 0
       (exp - 1).to_s(io)
     end
+  end
+
+  # :inherit:
+  def format(io : IO, separator = '.', delimiter = ',', decimal_places : Int? = nil, *, group : Int = 3, only_significant : Bool = false) : Nil
+    number = self
+    if decimal_places
+      number = number.round(decimal_places)
+    end
+
+    if decimal_places && decimal_places >= 0
+      string = number.abs.to_s_impl(point_range: ..)
+      integer, _, decimals = string.partition('.')
+    else
+      string = number.to_s_impl(point_range: ..)
+      _, _, decimals = string.partition(".")
+      integer = number.trunc.to_big_i.abs.to_s
+    end
+
+    is_negative = number < 0
+
+    format_impl(io, is_negative, integer, decimals, separator, delimiter, decimal_places, group, only_significant)
   end
 
   # Converts to `BigInt`. Truncates anything on the right side of the decimal point.

@@ -94,6 +94,8 @@ describe Number do
     it { assert_prints Float64::NAN.format, "NaN" }
 
     it { assert_prints "12345.67890123456789012345".to_big_d.format, "12,345.67890123456789012345" }
+    it { assert_prints "12345.67890123456789012345e+20".to_big_d.format, "1,234,567,890,123,456,789,012,345.0" }
+    it { assert_prints "12345.67890123456789012345e-10".to_big_d.format, "0.000001234567890123456789012345" }
 
     it "extracts integer part correctly (#12997)" do
       assert_prints 1.9999998.format, "1.9999998"
