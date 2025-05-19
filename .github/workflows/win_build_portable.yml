@@ -9,6 +9,12 @@ on:
       llvm_version:
         required: true
         type: string
+      llvm_targets:
+        required: true
+        type: string
+      llvm_ldflags:
+        required: true
+        type: string
 
 permissions: {}
 
@@ -102,7 +108,10 @@ jobs:
 
       - name: Set up environment
         run: |
-          echo "CRYSTAL_LIBRARY_PATH=$(pwd)\libs" >> ${env:GITHUB_ENV}
+          Add-Content $env:GITHUB_ENV "CRYSTAL_LIBRARY_PATH=$(pwd)\libs"
+          Add-Content $env:GITHUB_ENV "LLVM_VERSION=${{ inputs.llvm_version }}"
+          Add-Content $env:GITHUB_ENV "LLVM_TARGETS=${{ inputs.llvm_targets }}"
+          Add-Content $env:GITHUB_ENV "LLVM_LDFLAGS=${{ inputs.llvm_ldflags }}"
 
       - name: Build LLVM extensions
         run: make -f Makefile.win deps
