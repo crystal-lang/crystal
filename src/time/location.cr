@@ -248,13 +248,13 @@ class Time::Location
   # since no default transition rules are assumed.
   #
   # ```
-  # location = Time::Location.tz("America/New_York", "EST5EDT,M3.2.0,M11.1.0")
+  # location = Time::Location.posix_tz("America/New_York", "EST5EDT,M3.2.0,M11.1.0")
   # Time.utc(2025, 3, 9, 6).in(location)  # => 2025-03-09 01:00:00.0 -05:00 America/New_York
   # Time.utc(2025, 3, 9, 7).in(location)  # => 2025-03-09 03:00:00.0 -04:00 America/New_York
   # Time.utc(2025, 11, 2, 5).in(location) # => 2025-11-02 01:00:00.0 -04:00 America/New_York
   # Time.utc(2025, 11, 2, 6).in(location) # => 2025-11-02 01:00:00.0 -05:00 America/New_York
   # ```
-  def self.tz(name : String, str : String) : self
+  def self.posix_tz(name : String, str : String) : self
     zones = Array(Location::Zone).new(initial_capacity: 2)
     tz = TZ.parse(str, zones, true) || raise ArgumentError.new("Invalid TZ string: #{str}")
     new(name, zones, tz: tz, tz_string: str)
@@ -377,7 +377,7 @@ class Time::Location
   #
   # * `"UTC"`, `"Etc/UTC"` and empty string (`""`) return `Location::UTC`.
   # * POSIX TZ strings (such as `"EST5EDT,M3.2.0,M11.1.0"`) are parsed using
-  #   `Location.tz`.
+  #   `Location.posix_tz`.
   # * Values beginning with a colon are implementation-defined according to
   #   POSIX, and not supported in Crystal.
   # * Any other value (such as `"Europe/Berlin"`) is tried to be resolved using
@@ -546,9 +546,9 @@ class Time::Location
 
   # Returns `true` if this location has a fixed offset.
   #
-  # Locations returned by `Location.tz` have a fixed offset if the TZ string
-  # specifies either no daylight saving time at all, or an all-year daylight
-  # saving time (e.g. `"EST5EDT,0/0,J365/25"`).
+  # Locations returned by `Location.posix_tz` have a fixed offset if the TZ
+  # string specifies either no daylight saving time at all, or an all-year
+  # daylight saving time (e.g. `"EST5EDT,0/0,J365/25"`).
   def fixed? : Bool
     zones.size <= 1
   end

@@ -2,7 +2,7 @@ require "../spec_helper"
 require "../../support/time"
 
 private def assert_tz_boundaries(tz : String, t0 : Time, t1 : Time, t2 : Time, t3 : Time, *, file = __FILE__, line = __LINE__)
-  location = Time::Location.tz("Local", tz)
+  location = Time::Location.posix_tz("Local", tz)
   std_zone = location.zones.find(&.dst?.!).should_not be_nil, file: file, line: line
   dst_zone = location.zones.find(&.dst?).should_not be_nil, file: file, line: line
   t0, t1, t2, t3 = t0.to_unix, t1.to_unix, t2.to_unix, t3.to_unix
@@ -16,7 +16,7 @@ end
 
 private def assert_tz_raises(str, *, file = __FILE__, line = __LINE__)
   expect_raises(ArgumentError, "Invalid TZ string: #{str}", file: file, line: line) do
-    Time::Location.tz("", str)
+    Time::Location.posix_tz("", str)
   end
 end
 
@@ -375,7 +375,7 @@ class Time::Location
 
     describe ".tz" do
       it "parses string with standard time only" do
-        location = Location.tz("America/New_York", "EST5")
+        location = Location.posix_tz("America/New_York", "EST5")
         location.name.should eq("America/New_York")
         location.zones.should eq [
           Location::Zone.new("EST", -18000, false),
@@ -384,7 +384,7 @@ class Time::Location
       end
 
       it "parses string with both standard time and DST" do
-        location = Location.tz("America/New_York", "EST5EDT,M3.2.0,M11.1.0")
+        location = Location.posix_tz("America/New_York", "EST5EDT,M3.2.0,M11.1.0")
         location.name.should eq("America/New_York")
         location.zones.should eq [
           Location::Zone.new("EST", -18000, false),
@@ -392,7 +392,7 @@ class Time::Location
         ]
         location.transitions.should be_empty
 
-        location = Location.tz("America/New_York", "EST5EDT-24:59:59,M3.2.0,M11.1.0")
+        location = Location.posix_tz("America/New_York", "EST5EDT-24:59:59,M3.2.0,M11.1.0")
         location.name.should eq("America/New_York")
         location.zones.should eq [
           Location::Zone.new("EST", -18000, false),
@@ -402,14 +402,14 @@ class Time::Location
       end
 
       it "parses string with all-year DST" do
-        location = Location.tz("America/New_York", "EST5EDT,0/0,J365/25")
+        location = Location.posix_tz("America/New_York", "EST5EDT,0/0,J365/25")
         location.name.should eq("America/New_York")
         location.zones.should eq [
           Location::Zone.new("EDT", -14400, true),
         ]
         location.transitions.should be_empty
 
-        location = Location.tz("America/New_York", "XXX-6EDT-4:30:10,J1/0,J365/22:30:10")
+        location = Location.posix_tz("America/New_York", "XXX-6EDT-4:30:10,J1/0,J365/22:30:10")
         location.name.should eq("America/New_York")
         location.zones.should eq [
           Location::Zone.new("EDT", 16210, true),
@@ -624,14 +624,14 @@ class Time::Location
 
       context "TZ string" do
         it "looks up location with standard time only" do
-          location = Location.tz("Local", "EST5")
+          location = Location.posix_tz("Local", "EST5")
           zone, range = location.lookup_with_boundaries(Time.utc(2025, 1, 1, 22, 6, 12).to_unix)
           zone.should eq(Zone.new("EST", -18000, false))
           range.should eq({Int64::MIN, Int64::MAX})
         end
 
         it "looks up location with all-year DST" do
-          location = Location.tz("Local", "EST5EDT4,0/0,J365/25")
+          location = Location.posix_tz("Local", "EST5EDT4,0/0,J365/25")
           zone, range = location.lookup_with_boundaries(Time.utc(2025, 1, 1, 22, 6, 12).to_unix)
           zone.should eq(Zone.new("EDT", -14400, true))
           range.should eq({Int64::MIN, Int64::MAX})
