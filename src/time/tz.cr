@@ -46,7 +46,7 @@ struct Time::TZ
     end
 
     def unix_date_in_year(year : Int) : Int64
-      Time.month_week_date(year, @month, @week, @day, location: Time::Location::UTC).to_unix
+      Time.month_week_date(year, @month.to_i32, @week.to_i32, @day.to_i32, location: Time::Location::UTC).to_unix
     end
   end
 
