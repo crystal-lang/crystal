@@ -158,10 +158,12 @@ describe Socket::IPAddress do
     end
 
     it "fails interface name lookup for non-existent interfaces" do
-      exc_suff = {% unless flag?(:windows) %}
-                   ": No such device or address"
-                 {% else %}
+      exc_suff = {% if flag?(:windows) %}
                    ""
+                 {% elsif flag?(:darwin) || flag?(:bsd) %}
+                   ": Device not configured"
+                 {% else %}
+                   ": No such device or address"
                  {% end %}
       expect_raises(Socket::Error, "Failed to look up interface name for index 333#{exc_suff}") do
         Socket::IPAddress.new("fe80::d00d:1%333", 0).link_local_interface
