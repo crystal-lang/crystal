@@ -134,7 +134,7 @@ class Socket
           if zone_id = zone.to_i?
             raise Error.new("Invalid IPv6 link-local zone index '#{zone}' in address '#{address}'") unless zone_id.positive?
           else
-            zone_id = LibC.if_nametoindex(zone)
+            zone_id = LibC.if_nametoindex(zone).to_i
             raise Error.new("IPv6 link-local zone interface '#{zone}' not found (in address '#{address}')") unless zone_id.positive?
           end
         end
@@ -403,7 +403,7 @@ class Socket
 
     # Returns the IPv6 address with the given address *fields*, *port* number
     # and scope identifier.
-    def self.v6(fields : UInt16[8], port : UInt16, zone_id : Int = 0) : self
+    def self.v6(fields : UInt16[8], port : UInt16, zone_id : Int32 = 0) : self
       fields.map! { |field| endian_swap(field) }
       addr = LibC::SockaddrIn6.new(
         sin6_family: LibC::AF_INET6,
@@ -417,7 +417,7 @@ class Socket
     # Returns the IPv6 address `[x0:x1:x2:x3:x4:x5:x6:x7]:port`.
     #
     # Raises `Socket::Error` if any field or the port number is out of range.
-    def self.v6(x0 : Int, x1 : Int, x2 : Int, x3 : Int, x4 : Int, x5 : Int, x6 : Int, x7 : Int, *, port : Int, zone_id : Int = 0) : self
+    def self.v6(x0 : Int, x1 : Int, x2 : Int, x3 : Int, x4 : Int, x5 : Int, x6 : Int, x7 : Int, *, port : Int, zone_id : Int32 = 0) : self
       fields = StaticArray[x0, x1, x2, x3, x4, x5, x6, x7].map { |field| to_v6_field(field) }
       port = valid_port?(port) ? port.to_u16! : raise Error.new("Invalid port number: #{port}")
       v6(fields, port, zone_id)
