@@ -11,7 +11,7 @@ concurrency:
 env:
   SPEC_SPLIT_DOTS: 160
   CI_LLVM_VERSION: "19.1.7"
-  CI_LLVM_TARGETS: "X86;AArch64"
+  CI_LLVM_TARGETS: "X86,AArch64"
   CI_LLVM_LDFLAGS: "psapi.lib shell32.lib ole32.lib uuid.lib advapi32.lib ws2_32.lib ntdll.lib"
 
 jobs:
@@ -215,7 +215,7 @@ jobs:
     with:
       release: true
       llvm_version: "19.1.7"
-      llvm_targets: "X86;AArch64"
+      llvm_targets: "X86,AArch64"
       llvm_ldflags: "psapi.lib shell32.lib ole32.lib uuid.lib advapi32.lib ws2_32.lib ntdll.lib"
 
   x86_64-windows-test:
