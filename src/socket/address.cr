@@ -794,7 +794,7 @@ class Socket
       result = LibC.if_indextoname(@zone_id, buf)
       if result.null?
         errno_msg = ""
-        {% if flag?(:linux) || flag?(:bsd) || flag?(:darwin) || flag?(:solaris) %}
+        {% unless flag?(:win32) %}
           errno_msg = " (#{Errno.value})" if Errno.value != Errno::NONE
         {% end %}
         raise Error.new("Failed to look up interface name for index #{@zone_id}#{errno_msg}")

@@ -158,7 +158,7 @@ describe Socket::IPAddress do
     end
 
     it "fails interface name lookup for non-existent interfaces" do
-      exc_suff = {% if flag?(:linux) || flag?(:bsd) || flag?(:darwin) || flag?(:solaris) %}
+      exc_suff = {% unless flag?(:win32) %}
                   " (ENXIO)"
                 {% else %}
                   ""
