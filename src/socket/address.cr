@@ -792,8 +792,12 @@ class Socket
       return nil unless (@family == Socket::Family::INET6 && link_local?)
       buf = uninitialized StaticArray(UInt8, LibC::IF_NAMESIZE)
       result = LibC.if_indextoname(@zone_id, buf)
-      if result.null? && Errno.value != Errno::NONE
-        raise Error.new("Failed to look up interface name for index #{@zone_id} (#{Errno.value})")
+      if result.null?
+        errno_msg = ""
+        {% unless flag?(:windows) %}
+          errno_msg = " (#{Errno.value})" if Errno.value != Errno::NONE
+        {% end %}
+        raise Error.new("Failed to look up interface name for index #{@zone_id}#{errno_msg}")
       end
       String.new(buf.to_unsafe)
     end
