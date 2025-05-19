@@ -5,26 +5,52 @@
 # [IETF RFC 9636](https://datatracker.ietf.org/doc/html/rfc9636).
 struct Time::TZ
   # `J*`: one-based ordinal day, excludes leap day
-  record Julian1, ordinal : Int32
+  record Julian1, ordinal : Int16, time : Int32 do
+    def always_jan1? : Bool
+      ordinal == 1
+    end
 
-  # `*`: zero-based ordinal day, includes leap day
-  record Julian0, ordinal : Int32
+    def always_dec31? : Bool
+      ordinal == 365
+    end
 
-  # `M*.*.*`: month-week-day, week 5 is last week
-  record MonthWeekDay, month : Int32, week : Int32, day : Int32
-
-  record Transition, date : Julian1 | Julian0 | MonthWeekDay, time : Int32 do
     def unix_date_in_year(year : Int) : Int64
-      case date = @date
-      in Julian1
-        Time.utc(year, 1, 1).to_unix + 86400_i64 * (Time.leap_year?(year) && date.ordinal >= 60 ? date.ordinal : date.ordinal - 1)
-      in Julian0
-        Time.utc(year, 1, 1).to_unix + 86400_i64 * date.ordinal
-      in MonthWeekDay
-        Time.month_week_date(year, date.month, date.week, date.day, location: Time::Location::UTC).to_unix
-      end
+      Time.utc(year, 1, 1).to_unix + 86400_i64 * (Time.leap_year?(year) && @ordinal >= 60 ? @ordinal : @ordinal - 1)
     end
   end
+
+  # `*`: zero-based ordinal day, includes leap day
+  record Julian0, ordinal : Int16, time : Int32 do
+    def always_jan1? : Bool
+      ordinal == 0
+    end
+
+    def always_dec31? : Bool
+      # `365` is December 30th in leap years
+      false
+    end
+
+    def unix_date_in_year(year : Int) : Int64
+      Time.utc(year, 1, 1).to_unix + 86400_i64 * @ordinal
+    end
+  end
+
+  # `M*.*.*`: month-week-day, week 5 is last week
+  record MonthWeekDay, month : Int8, week : Int8, day : Int8, time : Int32 do
+    def always_jan1? : Bool
+      false
+    end
+
+    def always_dec31? : Bool
+      false
+    end
+
+    def unix_date_in_year(year : Int) : Int64
+      Time.month_week_date(year, @month, @week, @day, location: Time::Location::UTC).to_unix
+    end
+  end
+
+  alias Transition = Julian1 | Julian0 | MonthWeekDay
 
   # Indices into a parent `Time::Location`'s zones array. Identical if all-year
   # standard time or DST is in effect.
@@ -40,7 +66,7 @@ struct Time::TZ
   end
 
   private def self.new(index : Int32) : self
-    default_transition = Transition.new(Julian0.new(0), 0)
+    default_transition = Julian0.new(0, 0)
     new(index, index, default_transition, default_transition)
   end
 
@@ -180,10 +206,8 @@ struct Time::TZ
 
     # all-year DST according to POSIX.1-2024 or RFC 9636 Section 3.3.1
     # (we check here so that these locations return true for `#fixed?`)
-    if transition1.date.in?(Time::TZ::Julian1.new(1), Time::TZ::Julian0.new(0)) && transition1.time == 0
-      # `Julian0` does not represent the last day in all years, so only check
-      # for `J365` exactly
-      if transition2.date == Time::TZ::Julian1.new(365) && transition2.time == 86400 + std_offset - dst_offset
+    if transition1.always_jan1? && transition1.time == 0
+      if transition2.always_dec31? && transition2.time == 86400 + std_offset - dst_offset
         return new(zone_index(dst_zone, zones))
       end
     end
@@ -202,41 +226,45 @@ struct Time::TZ
   end
 
   private def self.parse_transition(reader : Char::Reader, hours_extension : Bool) : {Char::Reader, Transition}?
-    date =
-      case reader.current_char
-      when 'J'
-        reader.next_char
-        reader, day = parse_int(reader, 365) || return
-        return unless day >= 1
-        Julian1.new(day)
-      when 'M'
-        reader.next_char
-        reader, month = parse_int(reader, 12) || return
-        return unless month >= 1
+    case reader.current_char
+    when 'J'
+      reader.next_char
+      reader, day = parse_int(reader, 365) || return
+      return unless day >= 1
 
-        return unless reader.current_char == '.'
-        reader.next_char
-        reader, week = parse_int(reader, 5) || return
-        return unless week >= 1
+      reader, time = parse_transition_time(reader, hours_extension) || return
+      {reader, Julian1.new(day.to_i16!, time)}
+    when 'M'
+      reader.next_char
+      reader, month = parse_int(reader, 12) || return
+      return unless month >= 1
 
-        return unless reader.current_char == '.'
-        reader.next_char
-        reader, day = parse_int(reader, 6) || return
+      return unless reader.current_char == '.'
+      reader.next_char
+      reader, week = parse_int(reader, 5) || return
+      return unless week >= 1
 
-        MonthWeekDay.new(month, week, day)
-      else
-        reader, day = parse_int(reader, 365) || return
-        Julian0.new(day)
-      end
+      return unless reader.current_char == '.'
+      reader.next_char
+      reader, day = parse_int(reader, 6) || return
 
+      reader, time = parse_transition_time(reader, hours_extension) || return
+      {reader, MonthWeekDay.new(month.to_i8!, week.to_i8!, day.to_i8!, time)}
+    else
+      reader, day = parse_int(reader, 365) || return
+
+      reader, time = parse_transition_time(reader, hours_extension) || return
+      {reader, Julian0.new(day.to_i16!, time)}
+    end
+  end
+
+  private def self.parse_transition_time(reader : Char::Reader, hours_extension : Bool) : {Char::Reader, Int32}?
     if reader.current_char == '/'
       reader.next_char
-      reader, time = parse_offset(reader, hours_extension ? 167 : 24, hours_extension) || return
+      parse_offset(reader, hours_extension ? 167 : 24, hours_extension)
     else
-      time = 7200 # 02:00:00
+      {reader, 7200} # 02:00:00
     end
-
-    {reader, Transition.new(date, time)}
   end
 
   private def self.parse_offset(reader : Char::Reader, hour_limit : Int, allow_sign : Bool) : {Char::Reader, Int32}?
