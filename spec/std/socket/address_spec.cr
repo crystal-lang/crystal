@@ -158,7 +158,12 @@ describe Socket::IPAddress do
     end
 
     it "fails interface name lookup for non-existent interfaces" do
-      expect_raises(Socket::Error, "Failed to look up interface name for index 333 (ENXIO)") do
+      errno = {% if flag?(:windows) %}
+                "ENOENT"
+              {% else %}
+                "ENXIO"
+              {% end %}
+      expect_raises(Socket::Error, "Failed to look up interface name for index 333 (#{errno})") do
         Socket::IPAddress.new("fe80::d00d:1%333", 0).link_local_interface
       end
     end
