@@ -158,8 +158,8 @@ describe Socket::IPAddress do
     end
 
     it "fails interface name lookup for non-existent interfaces" do
-      exc_suff = {% unless flag?(:win32) %}
-                   " (ENXIO)"
+      exc_suff = {% unless flag?(:windows) %}
+                   ": No such device or address"
                  {% else %}
                    ""
                  {% end %}

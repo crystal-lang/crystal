@@ -793,11 +793,13 @@ class Socket
       buf = uninitialized StaticArray(UInt8, LibC::IF_NAMESIZE)
       result = LibC.if_indextoname(@zone_id, buf)
       if result.null?
-        errno_msg = ""
-        {% unless flag?(:win32) %}
-          errno_msg = " (#{Errno.value})" if Errno.value != Errno::NONE
+        message = "Failed to look up interface name for index #{@zone_id}"
+        {% if flag?(:windows) %}
+          # In windows it is not possible to determine an error code here
+          raise Error.new(message)
+        {% else %}
+          raise Error.from_errno(message)
         {% end %}
-        raise Error.new("Failed to look up interface name for index #{@zone_id}#{errno_msg}")
       end
       String.new(buf.to_unsafe)
     end
