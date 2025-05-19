@@ -93,6 +93,18 @@ describe Number do
     it { assert_prints (-Float64::INFINITY).format, "-Infinity" }
     it { assert_prints Float64::NAN.format, "NaN" }
 
+    it { assert_prints "12345678.90123".to_big_f.format, "12,345,678.90123" }
+    it { assert_prints "12345678.90123".to_big_f.format(decimal_places: 10), "12,345,678.9012300000" }
+    it { assert_prints "12345678.90123".to_big_f.format(decimal_places: -4), "12,350,000" }
+
+    it { assert_prints (2.to_big_f ** 58).format, "288,230,376,151,711,744.0" }
+    it { assert_prints (2.to_big_f ** 58).format(decimal_places: 10), "288,230,376,151,711,744.0000000000" }
+    it { assert_prints (2.to_big_f ** 58).format(decimal_places: -5), "288,230,376,151,700,000" }
+
+    it { assert_prints (2.to_big_f ** -16).format, "0.0000152587890625" }
+    it { assert_prints (2.to_big_f ** -16).format(decimal_places: 10), "0.00001525878906250000" }
+    it { assert_prints (2.to_big_f ** -16).format(decimal_places: -5), "0.00001526" }
+
     it { assert_prints "12345.67890123456789012345".to_big_d.format, "12,345.67890123456789012345" }
 
     it "extracts integer part correctly (#12997)" do
