@@ -785,7 +785,7 @@ class Socket
     # This helper method exists to look up the interface name based on the
     # associated zone_id property.
     def link_local_interface : String | Nil
-      {% if flag?(:wasi) %}
+      {% unless LibC.has_method?(:if_nametoindex) %}
         raise NotImplementedError.new "Socket::Address.link_local_interface"
       {% end %}
       return nil if @zone_id.zero?
