@@ -170,6 +170,11 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
     file_descriptor.file_descriptor_close
   end
 
+  def socket(family : ::Socket::Family, type : ::Socket::Type, protocol : ::Socket::Protocol, blocking : Bool?) : {::Socket::Handle, Bool}
+    socket = System::Socket.socket(family, type, protocol, !!blocking)
+    {socket, !!blocking}
+  end
+
   def read(socket : ::Socket, slice : Bytes) : Int32
     evented_read(socket, "Error reading socket") do
       LibC.recv(socket.fd, slice, slice.size, 0).to_i32
@@ -235,11 +240,11 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
     end
   end
 
-  def accept(socket : ::Socket) : ::Socket::Handle?
+  def accept(socket : ::Socket) : {::Socket::Handle, Bool}?
     loop do
       client_fd =
         {% if LibC.has_method?(:accept4) %}
-          LibC.accept4(socket.fd, nil, nil, LibC::SOCK_CLOEXEC)
+          LibC.accept4(socket.fd, nil, nil, LibC::SOCK_CLOEXEC | LibC::SOCK_NONBLOCK)
         {% else %}
           # we may fail to set FD_CLOEXEC between `accept` and `fcntl` but we
           # can't call `Crystal::System::Socket.lock_read` because the socket
@@ -250,7 +255,10 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
           # could change the socket back to blocking mode between the condition
           # check and the `accept` call.
           fd = LibC.accept(socket.fd, nil, nil)
-          Crystal::System::Socket.fcntl(fd, LibC::F_SETFD, LibC::FD_CLOEXEC) unless fd == -1
+          unless fd == -1
+            System::Socket.fcntl(fd, LibC::F_SETFD, LibC::FD_CLOEXEC)
+            System::Socket.fcntl(fd, LibC::F_SETFL, System::Socket.fcntl(fd, LibC::F_GETFL) | LibC::O_NONBLOCK)
+          end
           fd
         {% end %}
 
@@ -266,7 +274,7 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
           raise ::Socket::Error.from_errno("accept")
         end
       else
-        return client_fd
+        return {client_fd, false}
       end
     end
   end

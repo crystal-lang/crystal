@@ -8,11 +8,7 @@ module Crystal::System::Socket
 
   alias Handle = Int32
 
-  private def create_handle(family, type, protocol, blocking) : Handle
-    raise NotImplementedError.new "Crystal::System::Socket#create_handle"
-  end
-
-  private def initialize_handle(fd)
+  private def initialize_handle(fd, blocking = nil)
   end
 
   # Tries to bind the socket to a local address.
@@ -135,7 +131,7 @@ module Crystal::System::Socket
     r
   end
 
-  def self.socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol) : {Handle, Handle}
+  def self.socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol, blocking : Bool) : {Handle, Handle}
     raise NotImplementedError.new("Crystal::System::Socket.socketpair")
   end
 

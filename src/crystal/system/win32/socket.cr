@@ -71,18 +71,20 @@ module Crystal::System::Socket
 
   initialize_extension_functions
 
-  private def create_handle(family, type, protocol, blocking) : Handle
+  def self.socket(family, type, protocol, blocking) : Handle
+    # the overlapped flag is distinct from the blocking mode in winsock (the
+    # latter acts like non-blocking BSD sockets); there's no downside to set the
+    # overlapped flag, we can do sync or async calls, and we can still change
+    # the blocking mode
     socket = LibC.WSASocketW(family, type, protocol, nil, 0, LibC::WSA_FLAG_OVERLAPPED)
-    if socket == LibC::INVALID_SOCKET
-      raise ::Socket::Error.from_wsa_error("WSASocketW")
-    end
-
-    Crystal::EventLoop.current.create_completion_port LibC::HANDLE.new(socket)
-
+    raise ::Socket::Error.from_wsa_error("WSASocketW") if socket == LibC::INVALID_SOCKET
+    set_blocking(socket, blocking) unless blocking
     socket
   end
 
-  private def initialize_handle(handle)
+  private def initialize_handle(handle, blocking = nil)
+    @blocking = blocking unless blocking.nil?
+
     unless @family.unix?
       system_getsockopt(handle, LibC::SO_REUSEADDR, 0) do |value|
         if value == 0
@@ -178,12 +180,12 @@ module Crystal::System::Socket
     end
   end
 
-  def system_accept(& : Handle -> Bool) : Handle?
-    client_socket = create_handle(family, type, protocol, blocking)
+  def system_accept(& : Handle -> Bool) : {Handle, Bool}?
+    client_socket, blocking = Crystal::EventLoop.current.socket(family, type, protocol, self.blocking)
     initialize_handle(client_socket)
 
     if yield client_socket
-      client_socket
+      {client_socket, blocking}
     else
       LibC.closesocket(client_socket)
 
@@ -340,8 +342,14 @@ module Crystal::System::Socket
   end
 
   private def system_blocking=(@blocking)
+    Socket.set_blocking(fd, blocking)
+  end
+
+  # Changes the blocking mode as per BSD sockets, has no effect on the
+  # overlapped flag.
+  def self.set_blocking(fd, blocking)
     mode = blocking ? 1_u32 : 0_u32
-    ret = LibC.WSAIoctl(fd, LibC::FIONBIO, pointerof(mode), sizeof(UInt32), nil, 0, out bytes_returned, nil, nil)
+    ret = LibC.WSAIoctl(fd, LibC::FIONBIO, pointerof(mode), sizeof(UInt32), nil, 0, out _, nil, nil)
     raise ::Socket::Error.from_wsa_error("WSAIoctl") unless ret.zero?
   end
 
@@ -357,7 +365,7 @@ module Crystal::System::Socket
     raise NotImplementedError.new "Crystal::System::Socket.fcntl"
   end
 
-  def self.socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol) : {Handle, Handle}
+  def self.socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol, blocking : Bool) : {Handle, Handle}
     raise NotImplementedError.new("Crystal::System::Socket.socketpair")
   end
 

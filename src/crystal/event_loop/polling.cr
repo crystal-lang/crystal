@@ -230,6 +230,11 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
 
   # socket interface, see Crystal::EventLoop::Socket
 
+  def socket(family : ::Socket::Family, type : ::Socket::Type, protocol : ::Socket::Protocol, blocking : Bool?) : {::Socket::Handle, Bool}
+    socket = System::Socket.socket(family, type, protocol, !!blocking)
+    {socket, !!blocking}
+  end
+
   def read(socket : ::Socket, slice : Bytes) : Int32
     size = evented_read(socket, slice, socket.@read_timeout)
     raise IO::Error.from_errno("read", target: socket) if size == -1
@@ -254,11 +259,11 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     end
   end
 
-  def accept(socket : ::Socket) : ::Socket::Handle?
+  def accept(socket : ::Socket) : {::Socket::Handle, Bool}?
     loop do
       client_fd =
         {% if LibC.has_method?(:accept4) %}
-          LibC.accept4(socket.fd, nil, nil, LibC::SOCK_CLOEXEC)
+          LibC.accept4(socket.fd, nil, nil, LibC::SOCK_CLOEXEC | LibC::SOCK_NONBLOCK)
         {% else %}
           # we may fail to set FD_CLOEXEC between `accept` and `fcntl` but we
           # can't call `Crystal::System::Socket.lock_read` because the socket
@@ -269,11 +274,14 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
           # could change the socket back to blocking mode between the condition
           # check and the `accept` call.
           LibC.accept(socket.fd, nil, nil).tap do |fd|
-            System::Socket.fcntl(fd, LibC::F_SETFD, LibC::FD_CLOEXEC) unless fd == -1
+            unless fd == -1
+              System::Socket.fcntl(fd, LibC::F_SETFD, LibC::FD_CLOEXEC)
+              System::Socket.fcntl(fd, LibC::F_SETFL, System::Socket.fcntl(fd, LibC::F_GETFL) | LibC::O_NONBLOCK)
+            end
           end
         {% end %}
 
-      return client_fd unless client_fd == -1
+      return {client_fd, false} unless client_fd == -1
       return if socket.closed?
 
       if Errno.value == Errno::EAGAIN

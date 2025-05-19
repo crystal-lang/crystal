@@ -4,6 +4,10 @@
 
 abstract class Crystal::EventLoop
   module Socket
+    # Creates a new socket file descriptor or handle and returns it, along with
+    # whether the blocking flag has been set.
+    abstract def socket(family : ::Socket::Family, type : ::Socket::Type, protocol : ::Socket::Protocol, blocking : Bool?) : {::Socket::Handle, Bool}
+
     # Reads at least one byte from the socket into *slice*.
     #
     # Blocks the current fiber if no data is available for reading, continuing
@@ -37,7 +41,7 @@ abstract class Crystal::EventLoop
     # becomes available. Otherwise returns immediately.
     #
     # Returns a handle to the socket for the new connection.
-    abstract def accept(socket : ::Socket) : ::Socket::Handle?
+    abstract def accept(socket : ::Socket) : {::Socket::Handle, Bool}?
 
     # Opens a connection on *socket* to the target *address*.
     #
