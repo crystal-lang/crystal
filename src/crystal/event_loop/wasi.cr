@@ -1,5 +1,9 @@
 # :nodoc:
 class Crystal::EventLoop::Wasi < Crystal::EventLoop
+  def self.default_socket_blocking?
+    false
+  end
+
   # Runs the event loop.
   def run(blocking : Bool) : Bool
     raise NotImplementedError.new("Crystal::Wasi::EventLoop.run")

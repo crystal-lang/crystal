@@ -10,6 +10,10 @@ require "./iocp/*"
 
 # :nodoc:
 class Crystal::EventLoop::IOCP < Crystal::EventLoop
+  def self.default_socket_blocking?
+    true
+  end
+
   @waitable_timer : System::WaitableTimer?
   @timer_packet : LibC::HANDLE?
   @timer_key : System::IOCP::CompletionKey?
