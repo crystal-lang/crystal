@@ -110,7 +110,7 @@ describe "ASTNode#to_s" do
   expect_to_s "def foo(@[Foo] x, @[Bar] **args, @[Baz] &block)\nend"
   expect_to_s "{% [1, 2, 3].each { |v| pp(v) } %}", "{% [1, 2, 3].each do |v| pp(v) end %}"
   expect_to_s "{%\n  [1, 2, 3].each { |v| pp(v) }\n%}", "{%\n  [1, 2, 3].each do |v| pp(v) end\n%}"
-  expect_to_s "{% [1, 2, 3].find(&.!.even?) %}", "{% [1, 2, 3].find() do |__arg0| !__arg0.even? end %}"
+  expect_to_s "{% [1, 2, 3].find(&.even?.!) %}", "{% [1, 2, 3].find() do |__arg0| !__arg0.even? end %}"
   expect_to_s <<-'CR'
     {%
       [1, 2, 3].find do |e|
@@ -161,6 +161,10 @@ describe "ASTNode#to_s" do
   expect_to_s "!a"
   expect_to_s "!(1 < 2)"
   expect_to_s "!a.b && true"
+  expect_to_s "x.!.foo", "(!x).foo"
+  expect_to_s "x.!.!.foo", "(!(!x)).foo"
+  expect_to_s "x.foo.!", "!x.foo"
+  expect_to_s "x.foo.!.!", "!!x.foo"
   expect_to_s "(1 + 2)..3"
   expect_to_s "macro foo\n{{ @type }}\nend"
   expect_to_s "macro foo\n\\{{ @type }}\nend"
