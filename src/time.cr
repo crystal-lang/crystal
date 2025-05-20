@@ -1086,7 +1086,7 @@ struct Time
   #
   # The name of the location is appended unless it is a fixed zone offset.
   def inspect(io : IO, with_nanoseconds = true) : Nil
-    to_s io, "%F %T"
+    to_s io, "%FT%T"
 
     if with_nanoseconds
       if @nanoseconds == 0
@@ -1097,11 +1097,10 @@ struct Time
     end
 
     if utc?
-      io << " UTC"
+      io << "Z"
     else
-      io << ' '
       zone.format(io)
-      io << ' ' << location.name unless location.fixed?
+      io << '[' << location.name << ']' unless location.fixed?
     end
   end
 
