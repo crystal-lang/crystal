@@ -213,6 +213,11 @@ class Socket < IO
   def accept? : Socket?
     if rs = Crystal::EventLoop.current.accept(self)
       sock = Socket.new(handle: rs[0], family: family, type: type, protocol: protocol, blocking: rs[1])
+      unless (blocking = self.blocking) == rs[1]
+        # FIXME: unlike the overloads in TCPServer and UNIXServer, this version
+        # carries the blocking mode from the server socket to the client socket
+        sock.blocking = blocking
+      end
       sock.sync = sync?
       sock
     end
