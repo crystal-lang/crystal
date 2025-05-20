@@ -428,7 +428,6 @@ module Crystal
 
     def define_slice_constant(info : Program::ConstSliceInfo)
       initializer = const_slice_data_array(info)
-      p! initializer
       global = @llvm_mod.globals.add(initializer.type, info.name)
       if @llvm_mod != @main_mod
         global.linkage = LLVM::Linkage::External
