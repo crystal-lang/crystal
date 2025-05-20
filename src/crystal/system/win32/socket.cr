@@ -181,7 +181,7 @@ module Crystal::System::Socket
   end
 
   def system_accept(& : Handle -> Bool) : {Handle, Bool}?
-    client_socket, blocking = Crystal::EventLoop.current.socket(family, type, protocol, self.blocking)
+    client_socket, blocking = Crystal::EventLoop.current.socket(family, type, protocol, nil)
     initialize_handle(client_socket)
 
     if yield client_socket
