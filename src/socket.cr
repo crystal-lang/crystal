@@ -72,7 +72,8 @@ class Socket < IO
   # Creates a Socket from an existing socket file descriptor / handle.
   def initialize(fd, @family : Family, @type : Type, @protocol : Protocol = Protocol::IP, blocking = nil)
     initialize(handle: fd, family: family, type: type, protocol: protocol)
-    self.blocking = blocking unless blocking.nil?
+    blocking = Crystal::EventLoop.default_socket_blocking? if blocking.nil?
+    self.blocking = blocking unless blocking
     self.sync = true
   end
 
