@@ -300,6 +300,10 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     {fd, blocking}
   end
 
+  def socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol) : Tuple({::Socket::Handle, ::Socket::Handle}, Bool)
+    raise NotImplementedError.new("Crystal::EventLoop::IOCP#socketpair")
+  end
+
   private def wsa_buffer(bytes)
     wsabuf = LibC::WSABUF.new
     wsabuf.len = bytes.size

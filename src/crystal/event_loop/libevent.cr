@@ -175,6 +175,11 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
     {socket, !!blocking}
   end
 
+  def socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol) : Tuple({::Socket::Handle, ::Socket::Handle}, Bool)
+    socket = System::Socket.socketpair(type, protocol, blocking: false)
+    {socket, false}
+  end
+
   def read(socket : ::Socket, slice : Bytes) : Int32
     evented_read(socket, "Error reading socket") do
       LibC.recv(socket.fd, slice, slice.size, 0).to_i32

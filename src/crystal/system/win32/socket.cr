@@ -365,10 +365,6 @@ module Crystal::System::Socket
     raise NotImplementedError.new "Crystal::System::Socket.fcntl"
   end
 
-  def self.socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol, blocking : Bool) : {Handle, Handle}
-    raise NotImplementedError.new("Crystal::System::Socket.socketpair")
-  end
-
   private def system_tty?
     LibC.GetConsoleMode(LibC::HANDLE.new(fd), out _) != 0
   end

@@ -235,6 +235,11 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     {socket, !!blocking}
   end
 
+  def socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol) : Tuple({::Socket::Handle, ::Socket::Handle}, Bool)
+    socket = System::Socket.socketpair(type, protocol, blocking: false)
+    {socket, false}
+  end
+
   def read(socket : ::Socket, slice : Bytes) : Int32
     size = evented_read(socket, slice, socket.@read_timeout)
     raise IO::Error.from_errno("read", target: socket) if size == -1

@@ -131,10 +131,6 @@ module Crystal::System::Socket
     r
   end
 
-  def self.socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol, blocking : Bool) : {Handle, Handle}
-    raise NotImplementedError.new("Crystal::System::Socket.socketpair")
-  end
-
   private def system_tty?
     LibC.isatty(fd) == 1
   end

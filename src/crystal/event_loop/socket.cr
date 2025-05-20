@@ -8,6 +8,10 @@ abstract class Crystal::EventLoop
     # whether the blocking flag has been set.
     abstract def socket(family : ::Socket::Family, type : ::Socket::Type, protocol : ::Socket::Protocol, blocking : Bool?) : {::Socket::Handle, Bool}
 
+    # Creates a pair of UNIX socket file descriptors or handles and returns
+    # them, along with whether the blocking mode has been set.
+    abstract def socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol) : Tuple({::Socket::Handle, ::Socket::Handle}, Bool)
+
     # Reads at least one byte from the socket into *slice*.
     #
     # Blocks the current fiber if no data is available for reading, continuing
