@@ -894,3 +894,10 @@ struct Crystal::Hasher
     v &* value.sign
   end
 end
+
+# :nodoc:
+struct String::Formatter(A)
+  def int(flags, arg : BigDecimal) : Nil
+    int(flags, arg.to_big_i)
+  end
+end

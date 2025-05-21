@@ -372,6 +372,12 @@ describe "::sprintf" do
       assert_sprintf "%300.250d", 10.to_big_i ** 200, "#{" " * 50}#{"0" * 49}1#{"0" * 200}"
       assert_sprintf "%- #300.250X", 16.to_big_i ** 200 - 1, " 0X#{"0" * 50}#{"F" * 200}#{" " * 47}"
     end
+
+    it "works with BigDecimal" do
+      assert_sprintf "%d", 123.to_big_d, "123"
+      assert_sprintf "%300.250d", 10.to_big_d ** 200, "#{" " * 50}#{"0" * 49}1#{"0" * 200}"
+      assert_sprintf "%- #300.250X", 16.to_big_d ** 200 - 1, " 0X#{"0" * 50}#{"F" * 200}#{" " * 47}"
+    end
   end
 
   it "doesn't stop at null character when doing '%'" do
