@@ -106,6 +106,16 @@ describe Number do
     it { assert_prints (2.to_big_f ** -16).format(decimal_places: 10), "0.0000152588" }
 
     it { assert_prints "12345.67890123456789012345".to_big_d.format, "12,345.67890123456789012345" }
+    it { assert_prints "12345.67890123456789012345".to_big_d.format(decimal_places: 10), "12,345.6789012346" }
+    it { assert_prints "12345.67890123456789012345".to_big_d.format(decimal_places: -2), "12,300" }
+
+    it { assert_prints "12345.67890123456789012345e+20".to_big_d.format, "1,234,567,890,123,456,789,012,345.0" }
+    it { assert_prints "12345.67890123456789012345e+20".to_big_d.format(decimal_places: 10), "1,234,567,890,123,456,789,012,345.0000000000" }
+    it { assert_prints "12345.67890123456789012345e+20".to_big_d.format(decimal_places: -20), "1,234,600,000,000,000,000,000,000" }
+
+    it { assert_prints "12345.67890123456789012345e-10".to_big_d.format, "0.000001234567890123456789012345" }
+    it { assert_prints "12345.67890123456789012345e-10".to_big_d.format(decimal_places: 40), "0.0000012345678901234567890123450000000000" }
+    it { assert_prints "12345.67890123456789012345e-10".to_big_d.format(decimal_places: 10), "0.0000012346" }
 
     it "extracts integer part correctly (#12997)" do
       assert_prints 1.9999998.format, "1.9999998"
