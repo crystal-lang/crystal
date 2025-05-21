@@ -671,3 +671,10 @@ module Math
     BigFloat.new { |mpf| LibGMP.mpf_sqrt(mpf, value) }
   end
 end
+
+# :nodoc:
+struct String::Formatter(A)
+  def int(flags, arg : BigFloat) : Nil
+    int(flags, arg.to_big_i)
+  end
+end

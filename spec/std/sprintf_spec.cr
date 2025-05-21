@@ -373,6 +373,12 @@ describe "::sprintf" do
       assert_sprintf "%- #300.250X", 16.to_big_i ** 200 - 1, " 0X#{"0" * 50}#{"F" * 200}#{" " * 47}"
     end
 
+    it "works with BigFloat" do
+      assert_sprintf "%d", 123.to_big_f, "123"
+      assert_sprintf "%80.70d", 2.to_big_i ** 200, "          0000000001606938044258990275541962092341162602522202993782792835301376"
+      assert_sprintf "%- #70.60X", 2.to_big_f ** 200 - 2.to_big_f ** 120, " 0X0000000000FFFFFFFFFFFFFFFFFFFF000000000000000000000000000000       "
+    end
+
     it "works with BigDecimal" do
       assert_sprintf "%d", 123.to_big_d, "123"
       assert_sprintf "%300.250d", 10.to_big_d ** 200, "#{" " * 50}#{"0" * 49}1#{"0" * 200}"
