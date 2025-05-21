@@ -269,31 +269,33 @@ struct String::Formatter(A)
     pad arg.to_s.size, flags if flags.right_padding?
   end
 
-  def int(flags, arg) : Nil
-    raise ArgumentError.new("Expected an integer, not #{arg.inspect}") unless arg.responds_to?(:to_i)
-    int = arg.is_a?(Int) ? arg : arg.to_i
-
-    precision = int_precision(int, flags)
-    base_str = int.to_s(flags.base, precision: precision, upcase: flags.uppercase?)
+  def int(flags, arg : Int) : Nil
+    precision = int_precision(arg, flags)
+    base_str = arg.to_s(flags.base, precision: precision, upcase: flags.uppercase?)
     str_size = base_str.bytesize
-    str_size += 1 if int >= 0 && (flags.plus || flags.space)
-    str_size += 2 if flags.sharp && flags.base != 10 && int != 0
+    str_size += 1 if arg >= 0 && (flags.plus || flags.space)
+    str_size += 2 if flags.sharp && flags.base != 10 && arg != 0
 
-    # If `int` is zero-padded, we let the precision argument do the right-justification
+    # If `arg` is zero-padded, we let the precision argument do the right-justification
     pad(str_size, flags) if flags.left_padding? && flags.padding_char != '0'
 
-    write_plus_or_space(int, flags)
+    write_plus_or_space(arg, flags)
 
-    if flags.sharp && int < 0
+    if flags.sharp && arg < 0
       @io << '-'
       write_base_prefix(flags)
       @io.write_string base_str.unsafe_byte_slice(1)
     else
-      write_base_prefix(flags) if flags.sharp && int != 0
+      write_base_prefix(flags) if flags.sharp && arg != 0
       @io << base_str
     end
 
     pad(str_size, flags) if flags.right_padding?
+  end
+
+  def int(flags, arg) : Nil
+    raise ArgumentError.new("Expected an integer, not #{arg.inspect}") unless arg.responds_to?(:to_i)
+    int(flags, arg.to_i)
   end
 
   private def write_plus_or_space(arg, flags)
