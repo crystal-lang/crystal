@@ -1086,22 +1086,22 @@ struct Time
   #
   # The name of the location is appended unless it is a fixed zone offset.
   def inspect(io : IO, with_nanoseconds = true) : Nil
-    to_s io, "%FT%T"
+    formatter = Format::Formatter.new(self, io)
+    formatter.year_month_day
+    io << "T"
+    formatter.twenty_four_hour_time_with_seconds
 
     if with_nanoseconds
       if @nanoseconds == 0
         io << ".0"
       else
-        to_s io, ".%N"
+        io << "."
+        formatter.nanoseconds
       end
     end
 
-    if utc?
-      io << "Z"
-    else
-      zone.format(io)
-      io << '[' << location.name << ']' unless location.fixed?
-    end
+    formatter.time_zone_z_or_offset(force_colon: true, format_seconds: :auto)
+    io << '[' << location.name << ']' unless location.fixed?
   end
 
   # Prints this `Time` to *io*.
