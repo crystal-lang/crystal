@@ -362,6 +362,15 @@ struct BigFloat < Float
   end
 
   def to_s(io : IO) : Nil
+    to_s_impl(io, point_range: -3..15, int_trailing_zeros: true)
+  end
+
+  protected def to_s_impl(*, point_range : Range, int_trailing_zeros : Bool) : String
+    String.build { |io| to_s_impl(io, point_range: point_range, int_trailing_zeros: int_trailing_zeros) }
+  end
+
+  # TODO: refactor into `Float::Printer.shortest`
+  protected def to_s_impl(io : IO, *, point_range : Range, int_trailing_zeros : Bool) : Nil
     cstr = LibGMP.mpf_get_str(nil, out orig_decimal_exponent, 10, 0, self)
     length = LibC.strlen(cstr)
     buffer = Slice.new(cstr, length)
@@ -377,7 +386,7 @@ struct BigFloat < Float
 
     point = decimal_exponent
     exp = point
-    exp_mode = point > 15 || point < -3
+    exp_mode = !point_range.includes?(point)
     point = 1 if exp_mode
 
     # add leading zero
@@ -394,23 +403,27 @@ struct BigFloat < Float
       buffer = buffer[point...]
     end
 
-    io << '.'
+    # omit `.0000...000` if *int_trailing_zeros* is false (used by the
+    # Ryu Printf specs only)
+    if int_trailing_zeros || !buffer.all?(&.=== '0')
+      io << '.'
 
-    # add leading zeros after point
-    if point < 0
-      (-point).times { io << '0' }
-    end
+      # add leading zeros after point
+      if point < 0
+        (-point).times { io << '0' }
+      end
 
-    # add fractional part digits
-    io.write_string buffer
+      # add fractional part digits
+      io.write_string buffer
 
-    # print trailing 0 if whole number or exp notation of power of ten
-    if (decimal_exponent >= length && !exp_mode) || (exp != point && length == 1)
-      io << '0'
+      # print trailing 0 if whole number or exp notation of power of ten
+      if (decimal_exponent >= length && !exp_mode) || ((exp != point || exp_mode) && length == 1)
+        io << '0'
+      end
     end
 
     # exp notation
-    if exp != point
+    if exp_mode
       io << 'e'
       io << '+' if exp > 0
       (exp - 1).to_s(io)
@@ -464,6 +477,27 @@ struct BigFloat < Float
       overflow_n = ((@mpf.@_mp_exp * Math.log10(256.0 ** sizeof(LibGMP::MpLimb)) - exponent10) / 256.0 ** sizeof(LibGMP::MpExp))
       exponent10.to_i64 + overflow_n.round.to_i64 * (256_i64 ** sizeof(LibGMP::MpExp))
     {% end %}
+  end
+
+  # :inherit:
+  def format(io : IO, separator = '.', delimiter = ',', decimal_places : Int? = nil, *, group : Int = 3, only_significant : Bool = false) : Nil
+    number = self
+    if decimal_places
+      number = number.round(decimal_places)
+    end
+
+    if decimal_places && decimal_places >= 0
+      string = number.abs.to_s_impl(point_range: .., int_trailing_zeros: true)
+      integer, _, decimals = string.partition('.')
+    else
+      string = number.to_s_impl(point_range: .., int_trailing_zeros: true)
+      _, _, decimals = string.partition(".")
+      integer = number.trunc.to_big_i.abs.to_s
+    end
+
+    is_negative = number < 0
+
+    format_impl(io, is_negative, integer, decimals, separator, delimiter, decimal_places, group, only_significant)
   end
 
   def clone
