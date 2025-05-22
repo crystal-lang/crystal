@@ -58,10 +58,8 @@ struct Float
     !(self == self)
   end
 
-  # Checks whether this value is infinite. Returns `nil` for finite and
-  # not-a-number values.
-  #
-  # The return value is identical to `#sign` if this value is infinite.
+  # Checks whether this value is infinite. Returns `1` if this value is positive
+  # infinity, `-1` if this value is negative infinity, or `nil` otherwise.
   def infinite? : Int32?
     # fallback implementation
     # TODO: consider using https://llvm.org/docs/LangRef.html#llvm-is-fpclass-intrinsic
