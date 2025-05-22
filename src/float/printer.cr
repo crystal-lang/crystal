@@ -25,6 +25,12 @@ module Float::Printer
 
       significand, decimal_exponent = Dragonbox.to_decimal(pos_v)
 
+      # remove trailing zeros
+      while significand.unsafe_mod(10) == 0
+        significand = significand.unsafe_div(10)
+        decimal_exponent += 1
+      end
+
       # generate `significand.to_s` in a reasonably fast manner
       str = uninitialized UInt8[BUFFER_SIZE]
       ptr = str.to_unsafe + BUFFER_SIZE
@@ -34,36 +40,63 @@ module Float::Printer
         significand = significand.unsafe_div(10)
       end
 
-      # remove trailing zeros
       buffer = str.to_slice[ptr - str.to_unsafe..]
-      while buffer.size > 1 && buffer.unsafe_fetch(buffer.size - 1) === '0'
-        buffer = buffer[..-2]
-        decimal_exponent += 1
-      end
-      length = buffer.size
+      decimal(io, buffer, decimal_exponent, point_range, :write_all)
+    end
+  end
 
-      point = decimal_exponent + length
+  # How to output the decimal part in `#decimal`.
+  enum FractionMode
+    # Writes the decimal separator and all digits that follow.
+    WriteAll
 
-      exp = point
-      exp_mode = !point_range.includes?(point)
-      point = 1 if exp_mode
+    # If there are two or more digits, removes all consecutive trailing zeros,
+    # except that the digit past the decimal separator is always kept.
+    # `.100` becomes `.1`, and `.00` becomes `.0`.
+    RemoveTrailingZeros
 
-      # add leading zero
-      io << '0' if point < 1
+    # If all the digits are zero, does not write the decimal separator nor the
+    # digits.
+    # `.100` becomes `.100`, and `.00` becomes the empty string.
+    RemoveIfZero
+  end
 
-      i = 0
+  # The general printing algorithm for decimal numbers. Writes to the given *io*
+  # the value *digits*, interpreted as an ASCII numeric string, and then
+  # multiplied by 10 to the *decimal_exponent*-th power.
+  #
+  # *digits* must not contain any leading zeros or minus signs. It may however
+  # contain redundant trailing zeros.
+  #
+  # *point_range* designates the boundaries of scientific notation which is used
+  # for all values whose decimal point position is outside that range. The
+  # scientific notation can be unconditionally enabled or disabled by passing
+  # `0...0` or `..` to this parameter.
+  #
+  # *fraction* determines if and how the decimal separator and the decimal part
+  # are written. Refer to `FractionMode` for the options available.
+  def decimal(io : IO, digits : Bytes, decimal_exponent : Int, point_range : Range, fraction : FractionMode) : Nil
+    length = digits.size
 
-      # add integer part digits
-      if decimal_exponent > 0 && !exp_mode
-        # whole number but not big enough to be exp form
-        io.write_string buffer.to_slice[i, length - i]
-        i = length
-        (point - length).times { io << '0' }
-      elsif i < point
-        io.write_string buffer.to_slice[i, point - i]
-        i = point
-      end
+    exp = decimal_exponent + length
+    exp_mode = !point_range.includes?(exp)
+    point = exp_mode ? 1 : exp
 
+    # add leading zero
+    io << '0' if point < 1
+
+    # add integer part digits
+    if decimal_exponent > 0 && !exp_mode
+      # whole number but not big enough to be exp form
+      io.write_string digits
+      digits = Bytes.empty
+      (point - length).times { io << '0' }
+    elsif point > 0
+      io.write_string digits[0, point]
+      digits = digits[point..]
+    end
+
+    unless fraction.remove_if_zero? && digits.all?(&.=== '0')
       io << '.'
 
       # add leading zeros after point
@@ -71,20 +104,27 @@ module Float::Printer
         (-point).times { io << '0' }
       end
 
+      # remove trailing zeroes
+      if fraction.remove_trailing_zeros?
+        while digits.size > 1 && digits.unsafe_fetch(digits.size - 1) === '0'
+          digits = digits[..-2]
+        end
+      end
+
       # add fractional part digits
-      io.write_string buffer.to_slice[i, length - i]
+      io.write_string digits
 
       # print trailing 0 if whole number or exp notation of power of ten
-      if (decimal_exponent >= 0 && !exp_mode) || (exp != point && length == 1)
+      if (decimal_exponent >= 0 && !exp_mode) || ((exp != point || exp_mode) && length == 1)
         io << '0'
       end
+    end
 
-      # exp notation
-      if exp != point
-        io << 'e'
-        io << '+' if exp > 0
-        (exp - 1).to_s(io)
-      end
+    # exp notation
+    if exp_mode
+      io << 'e'
+      io << '+' if exp > 0
+      (exp - 1).to_s(io)
     end
   end
 
