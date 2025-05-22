@@ -519,7 +519,7 @@ struct BigDecimal < Number
       buffer = buffer[1..]
     end
 
-    Float::Printer.decimal(io, buffer, -@scale.to_i, point_range, :remove_trailing_zeros)
+    Float::Printer.decimal(io, buffer, -@scale.to_i, point_range, :remove_extra_zeros)
   end
 
   # :inherit:

@@ -48,15 +48,17 @@ module Float::Printer
   # How to output the decimal part in `#decimal`.
   enum FractionMode
     # Writes the decimal separator and all digits that follow.
+    # Also writes `.0` if the decimal part is empty.
     WriteAll
 
     # If there are two or more digits, removes all consecutive trailing zeros,
     # except that the digit past the decimal separator is always kept.
     # `.100` becomes `.1`, and `.00` becomes `.0`.
-    RemoveTrailingZeros
+    # Also writes `.0` if the decimal part is empty.
+    RemoveExtraZeros
 
     # If all the digits are zero, does not write the decimal separator nor the
-    # digits.
+    # digits. Otherwise writes everything.
     # `.100` becomes `.100`, and `.00` becomes the empty string.
     RemoveIfZero
   end
@@ -65,8 +67,8 @@ module Float::Printer
   # the value *digits*, interpreted as an ASCII numeric string, and then
   # multiplied by 10 to the *decimal_exponent*-th power.
   #
-  # *digits* must not contain any leading zeros or minus signs. It may however
-  # contain redundant trailing zeros.
+  # *digits* must not be empty or contain any leading zeros or minus signs. It
+  # may however contain redundant trailing zeros.
   #
   # *point_range* designates the boundaries of scientific notation which is used
   # for all values whose decimal point position is outside that range. The
@@ -82,42 +84,32 @@ module Float::Printer
     exp_mode = !point_range.includes?(exp)
     point = exp_mode ? 1 : exp
 
-    # add leading zero
-    io << '0' if point < 1
-
     # add integer part digits
     if decimal_exponent > 0 && !exp_mode
       # whole number but not big enough to be exp form
       io.write_string digits
       digits = Bytes.empty
-      (point - length).times { io << '0' }
+      decimal_exponent.times { io << '0' }
     elsif point > 0
       io.write_string digits[0, point]
       digits = digits[point..]
+    else
+      # add leading zero
+      io << '0'
     end
 
     unless fraction.remove_if_zero? && digits.all?(&.=== '0')
       io << '.'
 
       # add leading zeros after point
-      if point < 0
-        (-point).times { io << '0' }
-      end
-
-      # remove trailing zeroes
-      if fraction.remove_trailing_zeros?
-        while digits.size > 1 && digits.unsafe_fetch(digits.size - 1) === '0'
-          digits = digits[..-2]
-        end
-      end
+      (-point).times { io << '0' }
 
       # add fractional part digits
-      io.write_string digits
+      digits = remove_extra_zeros(digits) if fraction.remove_extra_zeros?
+      io.write_string(digits)
 
       # print trailing 0 if whole number or exp notation of power of ten
-      if (decimal_exponent >= 0 && !exp_mode) || ((exp != point || exp_mode) && length == 1)
-        io << '0'
-      end
+      io << '0' if digits.empty?
     end
 
     # exp notation
@@ -126,6 +118,16 @@ module Float::Printer
       io << '+' if exp > 0
       (exp - 1).to_s(io)
     end
+  end
+
+  private def remove_extra_zeros(digits : Bytes) : Bytes
+    return digits if digits.empty?
+    b = digits.to_unsafe
+    e = b + digits.size - 1
+    while e > b && e.value === '0'
+      e -= 1
+    end
+    Slice.new(b, e + 1 - b)
   end
 
   # Writes *v*'s hexadecimal-significand representation to the given *io*.
