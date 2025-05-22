@@ -85,6 +85,18 @@ struct BigFloat < Float
     LibGMP.mpf_set_default_prec(prec.to_u64)
   end
 
+  # :inherit:
+  def nan? : Bool
+    # there are no NaNs in GMP
+    false
+  end
+
+  # :inherit:
+  def infinite? : Int32?
+    # there are no infinities in GMP
+    nil
+  end
+
   def <=>(other : BigFloat)
     LibGMP.mpf_cmp(self, other)
   end
