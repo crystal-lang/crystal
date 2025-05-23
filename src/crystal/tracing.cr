@@ -147,6 +147,7 @@ module Crystal
         {% if flag?(:win32) %}
           buf = uninitialized UInt16[256]
 
+          # FIXME: use `System.wstr_literal` after #15746 is available
           name = UInt16.static_array({% for chr in "CRYSTAL_TRACE".chars %}{{chr.ord}}, {% end %} 0)
           len = LibC.GetEnvironmentVariableW(name, buf, buf.size)
           parse_sections(buf.to_slice[0...len]) if len > 0
