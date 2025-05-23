@@ -2,6 +2,10 @@ require "./libevent/event"
 
 # :nodoc:
 class Crystal::EventLoop::LibEvent < Crystal::EventLoop
+  def self.default_file_blocking?
+    false
+  end
+
   def self.default_socket_blocking?
     false
   end
