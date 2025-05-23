@@ -321,7 +321,10 @@ class HTTP::Request
     @headers["Host"]?
   end
 
-  private def uri
+  # Returns the underlying URI object.
+  #
+  # Used internally to provide the components of the request uri.
+  def uri : URI
     @uri ||= URI::Parser.new(@resource).parse_request_target.uri
   end
 
