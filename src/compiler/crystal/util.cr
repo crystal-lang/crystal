@@ -44,7 +44,7 @@ module Crystal
     line_number_start = 1,
   )
     source = source.lines if source.is_a? String
-    line_number_padding = (source.size + line_number_start).to_s.chars.size
+    line_number_padding = (source.size + line_number_start).to_s.size
     source.map_with_index do |line, i|
       line = line.to_s.chomp
       line_number = "%#{line_number_padding}d" % (i + line_number_start)
