@@ -46,7 +46,7 @@ local -a exec_args; exec_args=(
 )
 
 local -a format_args; format_args=(
-  '(-f --format)'{-f,--format}'[output format text (default) or json]:'
+  '(-f --format)'{-f,--format}'[output format text (default), json, or markdown]:'
 )
 
 local -a debug_args; debug_args=(

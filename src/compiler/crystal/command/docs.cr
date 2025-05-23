@@ -4,7 +4,7 @@
 # is in `crystal/tools/doc/`
 
 class Crystal::Command
-  private VALID_OUTPUT_FORMATS = %w(html json)
+  private VALID_OUTPUT_FORMATS = %w(html json markdown)
 
   private def docs
     output_format = "html"
