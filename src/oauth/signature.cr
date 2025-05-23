@@ -3,7 +3,7 @@ struct OAuth::Signature
   def initialize(@consumer_key : String, @client_shared_secret : String, @oauth_token : String? = nil, @token_shared_secret : String? = nil, @extra_params : Hash(String, String)? = nil)
   end
 
-  def base_string(request, tls, ts, nonce) : String
+  def base_string(request : HTTP::Request, tls, ts : String, nonce : String) : String
     base_string request, tls, gather_params(request, ts, nonce)
   end
 
@@ -17,12 +17,12 @@ struct OAuth::Signature
     end
   end
 
-  def compute(request, tls, ts, nonce) : String
+  def compute(request : HTTP::Request, tls, ts : String, nonce : String) : String
     base_string = base_string(request, tls, ts, nonce)
     Base64.strict_encode(OpenSSL::HMAC.digest :sha1, key, base_string)
   end
 
-  def authorization_header(request, tls, ts, nonce) : String
+  def authorization_header(request : HTTP::Request, tls, ts : String, nonce : String) : String
     oauth_signature = compute request, tls, ts, nonce
 
     auth_header = AuthorizationHeader.new
