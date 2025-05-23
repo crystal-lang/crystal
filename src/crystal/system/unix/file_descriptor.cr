@@ -36,7 +36,7 @@ module Crystal::System::FileDescriptor
 
   protected def system_blocking_init(blocking : Bool?)
     if blocking.nil?
-      blocking =
+      blocking = Event.default_file_blocking? ||
         case system_info.type
         when .pipe?, .socket?, .character_device?
           false
