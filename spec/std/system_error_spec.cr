@@ -18,8 +18,8 @@ describe SystemError do
 
     it "avoid reset from message" do
       Errno.value = :ENOENT
-      error = ::RuntimeError.from_errno(message: "foobar".tap{ Errno.value = :EPERM })
-      error.os_error.should eq Errno::EPERM # This should be ENOENT
+      error = ::RuntimeError.from_errno(message: "foobar".tap { Errno.value = :EPERM })
+      error.os_error.should eq Errno::ENOENT
     end
   end
 end

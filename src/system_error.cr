@@ -40,6 +40,21 @@
 module SystemError
   macro included
     extend ::SystemError::ClassMethods
+
+    # Builds an instance of the exception from the current system error value (`Errno.value`).
+    #
+    # The system message corresponding to the OS error value amends the *message*.
+    # Additional keyword arguments are forwarded to the exception initializer `.new_from_os_error`.
+    macro from_errno(message, **opts)
+      # This is a macro in order to retrieve `Errno.value` first before evaluating `message` and `opts`.
+      %errno = Errno.value
+      ::\{{@type}}.from_os_error(\{{ message }}, %errno, \{{ opts.double_splat }})
+    end
+
+    @[Deprecated("Use `.from_os_error` instead")]
+    macro from_errno(message = nil, errno = nil, **opts)
+      ::\{{@type}}.from_os_error(\{{ message }}, \{{ errno }}, \{{ opts.double_splat }})
+    end
   end
 
   # The original system error wrapped by this exception
@@ -66,19 +81,6 @@ module SystemError
       self.new_from_os_error(message, os_error, **opts).tap do |e|
         e.os_error = os_error
       end
-    end
-
-    # Builds an instance of the exception from the current system error value (`Errno.value`).
-    #
-    # The system message corresponding to the OS error value amends the *message*.
-    # Additional keyword arguments are forwarded to the exception initializer `.new_from_os_error`.
-    def from_errno(message : String, **opts)
-      from_os_error(message, Errno.value, **opts)
-    end
-
-    @[Deprecated("Use `.from_os_error` instead")]
-    def from_errno(message : String? = nil, errno : Errno? = nil, **opts)
-      from_os_error(message, errno, **opts)
     end
 
     # Prepares the message that goes before the system error description.
