@@ -1,5 +1,6 @@
 require "markd"
 require "crystal/syntax_highlighter/html"
+require "./markdown_converter"
 
 class Crystal::Doc::Generator
   getter program : Program
@@ -43,6 +44,8 @@ class Crystal::Doc::Generator
 
     if @output_format == "json"
       generate_docs_json program_type, types
+    elsif @output_format == "markdown"
+      generate_docs_markdown program_type, types
     else
       generate_docs_html program_type, types
     end
@@ -72,6 +75,14 @@ class Crystal::Doc::Generator
     readme = read_readme
     json = Main.new(readme, Type.new(self, @program), project_info)
     puts json
+  end
+
+  def generate_docs_markdown(program_type, types)
+    readme = read_readme
+    json_data = Main.new(readme, Type.new(self, @program), project_info)
+    
+    markdown_converter = MarkdownConverter.new(json_data, @output_dir)
+    markdown_converter.generate
   end
 
   def generate_docs_html(program_type, types)
