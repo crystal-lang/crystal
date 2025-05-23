@@ -14,7 +14,7 @@ class Log
 
     # Creates an instance of a `Log::Formatter` that calls
     # the specified `Proc` for every entry
-    def self.new(&proc : (Log::Entry, IO) ->)
+    def self.new(&proc : (Log::Entry, IO) ->) : self
       ProcFormatter.new proc
     end
   end
@@ -69,7 +69,7 @@ class Log
     end
 
     # Write a fixed string
-    def string(str) : Nil
+    def string(str : String) : Nil
       @io << str
     end
 
@@ -96,7 +96,7 @@ class Log
     # Log.setup(:info, Log::IOBackend.new(formatter: TestFormatter))
     # Log.for("foo.bar").info { "Hello" } # => - [foo.bar] Hello
     # ```
-    def source(*, before = nil, after = nil)
+    def source(*, before : _ = nil, after : _ = nil) : Nil
       if @entry.source.size > 0
         @io << before << @entry.source << after
       end
@@ -107,7 +107,7 @@ class Log
     # It doesn't write any output if the entry data is empty.
     # Parameters `before` and `after` can be provided to be written around
     # the value.
-    def data(*, before = nil, after = nil) : Nil
+    def data(*, before : _ = nil, after : _ = nil) : Nil
       unless @entry.data.empty?
         @io << before << @entry.data << after
       end
@@ -118,7 +118,7 @@ class Log
     # It doesn't write any output if the context is empty.
     # Parameters `before` and `after` can be provided to be written around
     # the value.
-    def context(*, before = nil, after = nil)
+    def context(*, before : _ = nil, after : _ = nil) : Nil
       unless @entry.context.empty?
         @io << before << @entry.context << after
       end
@@ -130,7 +130,7 @@ class Log
     # Parameters `before` and `after` can be provided to be written around
     # the value. `before` defaults to `'\n'` so the exception is written
     # on a separate line
-    def exception(*, before = '\n', after = nil) : Nil
+    def exception(*, before : _ = '\n', after : _ = nil) : Nil
       if ex = @entry.exception
         @io << before
         ex.inspect_with_backtrace(@io)
@@ -149,7 +149,7 @@ class Log
     end
 
     # Write the `Log::Entry` to the `IO` using this pattern
-    def self.format(entry, io) : Nil
+    def self.format(entry : Log::Entry, io : IO) : Nil
       new(entry, io).run
     end
 
