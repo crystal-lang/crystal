@@ -180,6 +180,11 @@ module LLVM
     string
   end
 
+  def self.parse_command_line_options(options : Enumerable(String), overview : String = "") : Nil
+    c_strs = options.to_a(&.to_unsafe)
+    LibLLVM.parse_command_line_options(c_strs.size, c_strs, overview)
+  end
+
   protected def self.assert(error : LibLLVM::ErrorRef)
     if error
       chars = LibLLVM.get_error_message(error)
