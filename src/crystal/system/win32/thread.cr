@@ -34,7 +34,7 @@ module Crystal::System::Thread
     # ensure that even in the case of stack overflow there is enough reserved
     # stack space for recovery (for the main thread this is done in
     # `Exception::CallStack.setup_crash_handler`)
-    stack_size = Crystal::System::Fiber::RESERVED_STACK_SIZE
+    stack_size = LibC::DWORD.new(Crystal::System::Fiber::RESERVED_STACK_SIZE)
     LibC.SetThreadStackGuarantee(pointerof(stack_size))
 
     data.as(::Thread).start
