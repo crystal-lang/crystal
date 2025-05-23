@@ -15,19 +15,65 @@ class Crystal::Program
   record CompiledMacroRun, filename : String, elapsed : Time::Span, reused : Bool
   property compiled_macros_cache = {} of String => CompiledMacroRun
 
+  property? collect_covered_macro_nodes : Bool = false
+  getter covered_macro_nodes = Array({ASTNode, Location, Bool}).new
+  getter collected_covered_macro_nodes = Array(Array({ASTNode, Location, Bool})).new
+  property coverage_interrupt_exception : ::Exception? = nil
+
   def expand_macro(a_macro : Macro, call : Call, scope : Type, path_lookup : Type? = nil, a_def : Def? = nil)
     check_call_to_deprecated_macro a_macro, call
 
     interpreter = MacroInterpreter.new self, scope, path_lookup || scope, a_macro, call, a_def, in_macro: true
     a_macro.body.accept interpreter
-    {interpreter.to_s, interpreter.macro_expansion_pragmas}
+    output_str = interpreter.to_s
+
+    # if interpreter.is_test_file?
+    #   puts "1"
+    #   puts
+
+    #   puts output_str
+
+    #   puts
+    #   puts
+    # end
+    {output_str, interpreter.macro_expansion_pragmas}
+  rescue ex
+    raise ex unless self.collect_covered_macro_nodes?
+
+    raise SkipMacroCodeCoverageException.new ex
+  ensure
+    self.flush_collected_nodes
   end
 
   def expand_macro(node : ASTNode, scope : Type, path_lookup : Type? = nil, free_vars = nil, a_def : Def? = nil)
     interpreter = MacroInterpreter.new self, scope, path_lookup || scope, node.location, def: a_def, in_macro: false
     interpreter.free_vars = free_vars
     node.accept interpreter
-    {interpreter.to_s, interpreter.macro_expansion_pragmas}
+    output_str = interpreter.to_s
+
+    # if interpreter.is_test_file?
+    #   puts "2"
+    #   puts
+
+    #   puts output_str
+
+    #   puts
+    #   puts
+    # end
+    {output_str, interpreter.macro_expansion_pragmas}
+  rescue ex
+    raise ex unless self.collect_covered_macro_nodes?
+
+    raise SkipMacroCodeCoverageException.new ex
+  ensure
+    self.flush_collected_nodes
+  end
+
+  private def flush_collected_nodes : Nil
+    if self.collect_covered_macro_nodes?
+      @collected_covered_macro_nodes << @covered_macro_nodes.dup
+      @covered_macro_nodes.clear
+    end
   end
 
   def parse_macro_source(generated_source, macro_expansion_pragmas, the_macro, node, vars, current_def = nil, inside_type = false, inside_exp = false, mode : Parser::ParseMode = :normal, visibility : Visibility = :public)
