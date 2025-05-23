@@ -63,7 +63,7 @@ class Thread
 
   @system_handle : Crystal::System::Thread::Handle
   @exception : Exception?
-  @detached = Atomic::Flag.new
+  @detached = Atomic(Bool).new(false)
 
   # Returns the Fiber representing the thread's main stack.
   getter! main_fiber : Fiber
@@ -155,7 +155,7 @@ class Thread
   end
 
   private def detach(&)
-    if @detached.test_and_set
+    unless @detached.swap(true, :relaxed)
       yield
     end
   end
