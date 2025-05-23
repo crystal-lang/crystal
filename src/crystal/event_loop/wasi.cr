@@ -1,5 +1,9 @@
 # :nodoc:
 class Crystal::EventLoop::Wasi < Crystal::EventLoop
+  def self.default_file_blocking?
+    false
+  end
+
   def self.default_socket_blocking?
     false
   end

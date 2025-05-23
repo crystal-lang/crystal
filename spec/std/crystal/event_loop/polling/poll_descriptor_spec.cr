@@ -3,6 +3,10 @@
 require "spec"
 
 class Crystal::EventLoop::FakeLoop < Crystal::EventLoop::Polling
+  def self.default_file_blocking?
+    false
+  end
+
   def self.default_socket_blocking?
     false
   end

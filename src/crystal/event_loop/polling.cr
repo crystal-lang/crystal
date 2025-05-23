@@ -56,6 +56,10 @@ end
 # before suspending the fiber, then after resume it will raise
 # `IO::TimeoutError` if the event timed out, and continue otherwise.
 abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
+  def self.default_file_blocking?
+    false
+  end
+
   def self.default_socket_blocking?
     false
   end

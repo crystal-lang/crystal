@@ -10,7 +10,15 @@ require "./iocp/*"
 
 # :nodoc:
 class Crystal::EventLoop::IOCP < Crystal::EventLoop
+  def self.default_file_blocking?
+    # here, blocking refers to setting FILE_FLAG_OVERLAPPED (non blocking) or
+    # not (blocking)
+    false
+  end
+
   def self.default_socket_blocking?
+    # here, blocking refers to the (non)blocking mode of winsocks, it is
+    # independent from the WSA_FLAG_OVERLAPPED that we always set
     true
   end
 
