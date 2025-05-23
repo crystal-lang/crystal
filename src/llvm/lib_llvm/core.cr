@@ -136,6 +136,9 @@ lib LibLLVM
   {% end %}
   fun const_struct_in_context = LLVMConstStructInContext(c : ContextRef, constant_vals : ValueRef*, count : UInt, packed : Bool) : ValueRef
   fun const_array = LLVMConstArray(element_ty : TypeRef, constant_vals : ValueRef*, length : UInt) : ValueRef
+  {% unless LibLLVM::IS_LT_210 %}
+    fun const_data_array = LLVMConstDataArray(element_ty : TypeRef, data : Char*, size_in_bytes : SizeT) : ValueRef
+  {% end %}
 
   fun align_of = LLVMAlignOf(ty : TypeRef) : ValueRef
   fun size_of = LLVMSizeOf(ty : TypeRef) : ValueRef

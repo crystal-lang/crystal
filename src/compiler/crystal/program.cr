@@ -84,10 +84,35 @@ module Crystal
     # This pool is passed to the parser, macro expander, etc.
     getter string_pool = StringPool.new
 
-    record ConstSliceInfo,
-      name : String,
-      element_type : NumberKind,
-      args : Array(ASTNode)
+    record ConstSliceInfo, name : String, element_type : NumberKind, args : Array(ASTNode) do
+      def to_bytes : Bytes
+        element_size = element_type.bytesize // 8
+        bytesize = args.size * element_size
+        buffer = Pointer(UInt8).malloc(bytesize)
+        ptr = buffer
+
+        args.each do |arg|
+          num = arg.as(NumberLiteral)
+          case element_type
+          in .i8?   then ptr.as(Int8*).value = num.value.to_i8
+          in .i16?  then ptr.as(Int16*).value = num.value.to_i16
+          in .i32?  then ptr.as(Int32*).value = num.value.to_i32
+          in .i64?  then ptr.as(Int64*).value = num.value.to_i64
+          in .i128? then ptr.as(Int128*).value = num.value.to_i128
+          in .u8?   then ptr.as(UInt8*).value = num.value.to_u8
+          in .u16?  then ptr.as(UInt16*).value = num.value.to_u16
+          in .u32?  then ptr.as(UInt32*).value = num.value.to_u32
+          in .u64?  then ptr.as(UInt64*).value = num.value.to_u64
+          in .u128? then ptr.as(UInt128*).value = num.value.to_u128
+          in .f32?  then ptr.as(Float32*).value = num.value.to_f32
+          in .f64?  then ptr.as(Float64*).value = num.value.to_f64
+          end
+          ptr += element_size
+        end
+
+        buffer.to_slice(bytesize)
+      end
+    end
 
     # All constant slices constructed via the `Slice.literal` compiler built-in,
     # indexed by their buffers' internal names (e.g. `$Slice:0`).

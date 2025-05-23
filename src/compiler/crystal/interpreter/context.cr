@@ -293,33 +293,7 @@ class Crystal::Repl::Context
   end
 
   def const_slice_buffer(info : Program::ConstSliceInfo) : UInt8*
-    @const_slice_buffers.put_if_absent(info.name) do
-      kind = info.element_type
-      element_size = kind.bytesize // 8
-      buffer = Pointer(UInt8).malloc(info.args.size * element_size)
-      ptr = buffer
-
-      info.args.each do |arg|
-        num = arg.as(NumberLiteral)
-        case kind
-        in .i8?   then ptr.as(Int8*).value = num.value.to_i8
-        in .i16?  then ptr.as(Int16*).value = num.value.to_i16
-        in .i32?  then ptr.as(Int32*).value = num.value.to_i32
-        in .i64?  then ptr.as(Int64*).value = num.value.to_i64
-        in .i128? then ptr.as(Int128*).value = num.value.to_i128
-        in .u8?   then ptr.as(UInt8*).value = num.value.to_u8
-        in .u16?  then ptr.as(UInt16*).value = num.value.to_u16
-        in .u32?  then ptr.as(UInt32*).value = num.value.to_u32
-        in .u64?  then ptr.as(UInt64*).value = num.value.to_u64
-        in .u128? then ptr.as(UInt128*).value = num.value.to_u128
-        in .f32?  then ptr.as(Float32*).value = num.value.to_f32
-        in .f64?  then ptr.as(Float64*).value = num.value.to_f64
-        end
-        ptr += element_size
-      end
-
-      buffer
-    end
+    @const_slice_buffers.put_if_absent(info.name) { info.to_bytes.to_unsafe }
   end
 
   def aligned_sizeof_type(node : ASTNode) : Int32
