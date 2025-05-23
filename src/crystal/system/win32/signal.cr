@@ -47,7 +47,7 @@ module Crystal::System::Signal
     # ensure that even in the case of stack overflow there is enough reserved
     # stack space for recovery (for other threads this is done in
     # `Crystal::System::Thread.thread_proc`)
-    stack_size = LibC::DWORD.new(Crystal::System::Fiber::RESERVED_STACK_SIZE)
+    stack_size = Crystal::System::Fiber::RESERVED_STACK_SIZE
     LibC.SetThreadStackGuarantee(pointerof(stack_size))
 
     # this catches invalid argument checks inside the C runtime library
