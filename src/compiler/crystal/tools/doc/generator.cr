@@ -80,7 +80,7 @@ class Crystal::Doc::Generator
   def generate_docs_markdown(program_type, types)
     readme = read_readme
     json_data = Main.new(readme, Type.new(self, @program), project_info)
-    
+
     markdown_converter = MarkdownConverter.new(json_data, @output_dir)
     markdown_converter.generate
   end
