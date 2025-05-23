@@ -310,6 +310,10 @@ struct BigRational < Number
     to_f64!
   end
 
+  def to_i : Int32
+    to_i32
+  end
+
   delegate to_i8, to_i16, to_i32, to_i64, to_u8, to_u16, to_u32, to_u64, to: to_f64
 
   # Returns `self`.
