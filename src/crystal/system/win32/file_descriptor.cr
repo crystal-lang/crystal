@@ -302,7 +302,7 @@ module Crystal::System::FileDescriptor
 
   private PIPE_BUFFER_SIZE = 8192
 
-  def self.pipe(read_blocking, write_blocking)
+  def self.system_pipe(read_blocking, write_blocking)
     pipe_name = ::Path.windows(::File.tempname("crystal", nil, dir: %q(\\.\pipe))).normalize.to_s
     pipe_mode = 0 # PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT
 
@@ -316,11 +316,7 @@ module Crystal::System::FileDescriptor
     r_pipe = LibC.CreateFileW(System.to_wstr(pipe_name), LibC::GENERIC_READ | LibC::FILE_WRITE_ATTRIBUTES, 0, nil, LibC::OPEN_EXISTING, r_pipe_flags, nil)
     raise IO::Error.from_winerror("CreateFileW") if r_pipe == LibC::INVALID_HANDLE_VALUE
 
-    r = IO::FileDescriptor.new(r_pipe.address, read_blocking)
-    w = IO::FileDescriptor.new(w_pipe.address, write_blocking)
-    w.sync = true
-
-    {r, w}
+    {r_pipe.address, w_pipe.address}
   end
 
   def self.pread(file, buffer, offset)

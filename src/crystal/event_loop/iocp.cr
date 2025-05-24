@@ -235,6 +235,14 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     FiberEvent.new(:select_timeout, fiber)
   end
 
+  def pipe(read_blocking : Bool?, write_blocking : Bool?) : {IO::FileDescriptor, IO::FileDescriptor}
+    r, w = System::FileDescriptor.system_pipe(!!read_blocking, !!write_blocking)
+    {
+      IO::FileDescriptor.new(r, !!read_blocking),
+      IO::FileDescriptor.new(w, !!write_blocking),
+    }
+  end
+
   def open(path : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : {System::FileDescriptor::Handle, Bool} | WinError
     access, disposition, attributes = System::File.posix_to_open_opts(flags, permissions, blocking)
 

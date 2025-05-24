@@ -116,6 +116,14 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
     end
   end
 
+  def pipe(read_blocking : Bool?, write_blocking : Bool?) : {IO::FileDescriptor, IO::FileDescriptor}
+    r, w = System::FileDescriptor.system_pipe
+    {
+      IO::FileDescriptor.new(r, !!read_blocking),
+      IO::FileDescriptor.new(w, !!write_blocking),
+    }
+  end
+
   def open(path : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : {System::FileDescriptor::Handle, Bool} | Errno
     path.check_no_null_byte
 
