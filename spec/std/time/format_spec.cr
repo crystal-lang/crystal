@@ -506,9 +506,7 @@ describe Time::Format do
 
       with_zoneinfo do
         time = Time.parse!("CET", pattern)
-        time.offset.should eq 3600
-        time.utc?.should be_false
-        time.location.fixed?.should be_false
+        time.location.should eq Time::Location.load("CET")
 
         time = Time.parse!("Europe/Berlin", pattern)
         time.location.should eq Time::Location.load("Europe/Berlin")
