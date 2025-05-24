@@ -36,6 +36,10 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
     raise NotImplementedError.new("Crystal::Wasi::EventLoop.create_fd_read_event")
   end
 
+  def pipe(read_blocking : Bool?, write_blocking : Bool?) : {IO::FileDescriptor, IO::FileDescriptor}
+    raise NotImplementedError.new("Crystal::EventLoop::Wasi#pipe")
+  end
+
   def open(filename : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : {System::FileDescriptor::Handle, Bool} | Errno | WinError
     raise NotImplementedError.new("Crystal::Wasi::EventLoop#open")
   end
