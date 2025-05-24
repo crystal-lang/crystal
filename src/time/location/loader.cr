@@ -170,7 +170,7 @@ class Time::Location
       raise InvalidTZDataError.new unless zone_idx < zones.size
 
       isstd = !isstddata[transition_id]?.in?(nil, 0_u8)
-      isutc = !isstddata[transition_id]?.in?(nil, 0_u8)
+      isutc = !isutcdata[transition_id]?.in?(nil, 0_u8)
 
       ZoneTransition.new(time, zone_idx, isstd, isutc)
     end
