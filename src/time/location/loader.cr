@@ -106,7 +106,8 @@ class Time::Location
   # :nodoc:
   # Parse "zoneinfo" time zone file.
   # This is the standard file format used by most operating systems.
-  # See https://data.iana.org/time-zones/tz-link.html, https://github.com/eggert/tz, tzfile(5)
+  # See https://datatracker.ietf.org/doc/html/rfc9636, https://data.iana.org/time-zones/tz-link.html,
+  # https://github.com/eggert/tz, tzfile(5)
   def self.read_zoneinfo(location_name : String, io : IO) : Time::Location
     raise InvalidTZDataError.new unless io.read_string(4) == "TZif"
 
@@ -123,63 +124,63 @@ class Time::Location
     #	number of local time zones
     #	number of characters of time zone abbrev strings
 
-    num_utc_local = read_int32(io)
-    num_std_wall = read_int32(io)
-    num_leap_seconds = read_int32(io)
-    num_transitions = read_int32(io)
-    num_local_time_zones = read_int32(io)
-    abbrev_length = read_int32(io)
+    isutcnt = read_int32(io)
+    isstdcnt = read_int32(io)
+    leapcnt = read_int32(io)
+    timecnt = read_int32(io)
+    typecnt = read_int32(io)
+    charcnt = read_int32(io)
 
     time_size = 4
     if version != 0
       # TZif version 2+ file; skip the version 1 body and read the next header
-      io.skip(num_transitions * (time_size + 1) + num_local_time_zones * 6 + abbrev_length + num_leap_seconds * (time_size + 4) + num_std_wall + num_utc_local)
+      io.skip(timecnt * (time_size + 1) + typecnt * 6 + charcnt + leapcnt * (time_size + 4) + isstdcnt + isutcnt)
 
       raise InvalidTZDataError.new("Missing version 2+ header") unless io.read_string(4) == "TZif"
       raise InvalidTZDataError.new("Version mistmatch") unless io.read_byte == version
       io.skip(15)
 
-      num_utc_local = read_int32(io)
-      num_std_wall = read_int32(io)
-      num_leap_seconds = read_int32(io)
-      num_transitions = read_int32(io)
-      num_local_time_zones = read_int32(io)
-      abbrev_length = read_int32(io)
+      isutcnt = read_int32(io)
+      isstdcnt = read_int32(io)
+      leapcnt = read_int32(io)
+      timecnt = read_int32(io)
+      typecnt = read_int32(io)
+      charcnt = read_int32(io)
 
       time_size = 8
     end
 
-    transitionsdata = read_buffer(io, num_transitions * time_size)
+    transitionsdata = read_buffer(io, timecnt * time_size)
 
     # Time zone indices for transition times.
-    transition_indexes = Bytes.new(num_transitions)
+    transition_indexes = Bytes.new(timecnt)
     io.read_fully(transition_indexes)
 
-    zonedata = read_buffer(io, num_local_time_zones * 6)
+    zonedata = read_buffer(io, typecnt * 6)
 
-    abbreviations = read_buffer(io, abbrev_length)
+    abbreviations = read_buffer(io, charcnt)
 
-    leap_second_time_pairs = Bytes.new(num_leap_seconds * (time_size + 4))
+    leap_second_time_pairs = Bytes.new(leapcnt * (time_size + 4))
     io.read_fully(leap_second_time_pairs)
 
-    isstddata = Bytes.new(num_std_wall)
+    isstddata = Bytes.new(isstdcnt)
     io.read_fully(isstddata)
 
-    isutcdata = Bytes.new(num_utc_local)
+    isutcdata = Bytes.new(isutcnt)
     io.read_fully(isutcdata)
 
-    zones = Array(Zone).new(num_local_time_zones) do
-      offset = read_int32(zonedata)
-      is_dst = zonedata.read_byte != 0_u8
-      name_idx = zonedata.read_byte
-      raise InvalidTZDataError.new unless name_idx && name_idx < abbreviations.size
-      abbreviations.pos = name_idx
+    zones = Array(Zone).new(typecnt) do
+      utoff = read_int32(zonedata)
+      isdst = zonedata.read_byte != 0_u8
+      desigidx = zonedata.read_byte
+      raise InvalidTZDataError.new unless desigidx && desigidx < abbreviations.size
+      abbreviations.pos = desigidx
       name = abbreviations.gets(Char::ZERO, chomp: true)
       raise InvalidTZDataError.new unless name
-      Zone.new(name, offset, is_dst)
+      Zone.new(name, utoff, isdst)
     end
 
-    transitions = Array(ZoneTransition).new(num_transitions) do |transition_id|
+    transitions = Array(ZoneTransition).new(timecnt) do |transition_id|
       time = time_size == 8 ? read_int64(transitionsdata) : read_int32(transitionsdata).to_i64
       zone_idx = transition_indexes[transition_id]
       raise InvalidTZDataError.new unless zone_idx < zones.size
