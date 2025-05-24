@@ -32,6 +32,12 @@ class UNIXSocket < Socket
     super family, type, Protocol::IP
   end
 
+  # Constructor for #pair and UNIXServer#accept?
+  protected def initialize(*, handle : Handle, type : Type = Type::STREAM, path : Path | String? = nil, blocking : Bool = nil)
+    @path = path.to_s
+    super handle: handle, family: Family::UNIX, type: type, protocol: Protocol::IP, blocking: blocking
+  end
+
   # Creates a UNIXSocket from an already configured raw file descriptor
   def initialize(*, fd : Handle, type : Type = Type::STREAM, path : Path | String? = nil)
     @path = path.to_s
@@ -70,9 +76,12 @@ class UNIXSocket < Socket
   # left.gets # => "message"
   # ```
   def self.pair(type : Type = Type::STREAM) : {UNIXSocket, UNIXSocket}
-    Crystal::System::Socket
-      .socketpair(type, Protocol::IP)
-      .map { |fd| UNIXSocket.new(fd: fd, type: type) }
+    fds, blocking = Crystal::EventLoop.current.socketpair(type, Protocol::IP)
+    fds.map do |fd|
+      sock = UNIXSocket.new(handle: fd, type: type, blocking: blocking)
+      sock.sync = true
+      sock
+    end
   end
 
   # Creates a pair of unnamed UNIX sockets (see `pair`) and yields them to the

@@ -25,6 +25,14 @@ abstract class Crystal::EventLoop
     backend_class.new
   end
 
+  def self.default_file_blocking? : Bool
+    backend_class.default_file_blocking?
+  end
+
+  def self.default_socket_blocking? : Bool
+    backend_class.default_socket_blocking?
+  end
+
   @[AlwaysInline]
   def self.current : self
     {% if flag?(:execution_context) %}

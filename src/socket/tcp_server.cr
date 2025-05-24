@@ -108,8 +108,8 @@ class TCPServer < TCPSocket
   # end
   # ```
   def accept? : TCPSocket?
-    if client_fd = system_accept
-      sock = TCPSocket.new(fd: client_fd, family: family, type: type, protocol: protocol)
+    if rs = Crystal::EventLoop.current.accept(self)
+      sock = TCPSocket.new(handle: rs[0], family: family, type: type, protocol: protocol, blocking: rs[1])
       sock.sync = sync?
       sock
     end

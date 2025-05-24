@@ -10,6 +10,18 @@ require "./iocp/*"
 
 # :nodoc:
 class Crystal::EventLoop::IOCP < Crystal::EventLoop
+  def self.default_file_blocking?
+    # here, blocking refers to setting FILE_FLAG_OVERLAPPED (non blocking) or
+    # not (blocking)
+    false
+  end
+
+  def self.default_socket_blocking?
+    # here, blocking refers to the (non)blocking mode of winsocks, it is
+    # independent from the WSA_FLAG_OVERLAPPED that we always set
+    true
+  end
+
   @waitable_timer : System::WaitableTimer?
   @timer_packet : LibC::HANDLE?
   @timer_key : System::IOCP::CompletionKey?
@@ -223,6 +235,14 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     FiberEvent.new(:select_timeout, fiber)
   end
 
+  def pipe(read_blocking : Bool?, write_blocking : Bool?) : {IO::FileDescriptor, IO::FileDescriptor}
+    r, w = System::FileDescriptor.system_pipe(!!read_blocking, !!write_blocking)
+    {
+      IO::FileDescriptor.new(r, !!read_blocking),
+      IO::FileDescriptor.new(w, !!write_blocking),
+    }
+  end
+
   def open(path : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : {System::FileDescriptor::Handle, Bool} | WinError
     access, disposition, attributes = System::File.posix_to_open_opts(flags, permissions, blocking)
 
@@ -287,6 +307,17 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
     LibC.CancelIoEx(file_descriptor.windows_handle, nil) unless file_descriptor.system_blocking?
     file_descriptor.file_descriptor_close
+  end
+
+  def socket(family : ::Socket::Family, type : ::Socket::Type, protocol : ::Socket::Protocol, blocking : Bool?) : {::Socket::Handle, Bool}
+    blocking = true if blocking.nil?
+    fd = System::Socket.socket(family, type, protocol, blocking)
+    create_completion_port LibC::HANDLE.new(fd)
+    {fd, blocking}
+  end
+
+  def socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol) : Tuple({::Socket::Handle, ::Socket::Handle}, Bool)
+    raise NotImplementedError.new("Crystal::EventLoop::IOCP#socketpair")
   end
 
   private def wsa_buffer(bytes)
@@ -376,7 +407,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     end
   end
 
-  def accept(socket : ::Socket) : ::Socket::Handle?
+  def accept(socket : ::Socket) : {::Socket::Handle, Bool}?
     socket.system_accept do |client_handle|
       address_size = sizeof(LibC::SOCKADDR_STORAGE) + 16
 
