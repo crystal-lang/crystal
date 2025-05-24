@@ -130,7 +130,26 @@ class Time::Location
     num_local_time_zones = read_int32(io)
     abbrev_length = read_int32(io)
 
-    transitionsdata = read_buffer(io, num_transitions * 4)
+    time_size = 4
+    if version != 0
+      # TZif version 2+ file; skip the version 1 body and read the next header
+      io.skip(num_transitions * (time_size + 1) + num_local_time_zones * 6 + abbrev_length + num_leap_seconds * (time_size + 4) + num_std_wall + num_utc_local)
+
+      raise InvalidTZDataError.new("Missing version 2+ header") unless io.read_string(4) == "TZif"
+      raise InvalidTZDataError.new("Version mistmatch") unless io.read_byte == version
+      io.skip(15)
+
+      num_utc_local = read_int32(io)
+      num_std_wall = read_int32(io)
+      num_leap_seconds = read_int32(io)
+      num_transitions = read_int32(io)
+      num_local_time_zones = read_int32(io)
+      abbrev_length = read_int32(io)
+
+      time_size = 8
+    end
+
+    transitionsdata = read_buffer(io, num_transitions * time_size)
 
     # Time zone indices for transition times.
     transition_indexes = Bytes.new(num_transitions)
@@ -140,7 +159,7 @@ class Time::Location
 
     abbreviations = read_buffer(io, abbrev_length)
 
-    leap_second_time_pairs = Bytes.new(num_leap_seconds * 8)
+    leap_second_time_pairs = Bytes.new(num_leap_seconds * (time_size + 4))
     io.read_fully(leap_second_time_pairs)
 
     isstddata = Bytes.new(num_std_wall)
@@ -148,10 +167,6 @@ class Time::Location
 
     isutcdata = Bytes.new(num_utc_local)
     io.read_fully(isutcdata)
-
-    # If version == 2 or 3, the entire file repeats, this time using
-    # 8-byte ints for txtimes and leap seconds.
-    # We won't need those until 2106.
 
     zones = Array(Zone).new(num_local_time_zones) do
       offset = read_int32(zonedata)
@@ -165,7 +180,7 @@ class Time::Location
     end
 
     transitions = Array(ZoneTransition).new(num_transitions) do |transition_id|
-      time = read_int32(transitionsdata).to_i64
+      time = time_size == 8 ? read_int64(transitionsdata) : read_int32(transitionsdata).to_i64
       zone_idx = transition_indexes[transition_id]
       raise InvalidTZDataError.new unless zone_idx < zones.size
 
@@ -173,6 +188,13 @@ class Time::Location
       isutc = !isutcdata[transition_id]?.in?(nil, 0_u8)
 
       ZoneTransition.new(time, zone_idx, isstd, isutc)
+    end
+
+    # TODO: parse the POSIX TZ string (#15792)
+    # note that some extensions are only available for version 3+
+    if version != 0
+      raise InvalidTZDataError.new("Missing TZ footer") unless io.read_byte === '\n'
+      tz_string = io.gets
     end
 
     new(location_name, zones, transitions)
@@ -214,6 +236,10 @@ class Time::Location
 
   private def self.read_int32(io : IO)
     io.read_bytes(Int32, IO::ByteFormat::BigEndian)
+  end
+
+  private def self.read_int64(io : IO)
+    io.read_bytes(Int64, IO::ByteFormat::BigEndian)
   end
 
   private def self.read_buffer(io : IO, size : Int)
