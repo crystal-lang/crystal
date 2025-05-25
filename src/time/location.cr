@@ -92,12 +92,12 @@ class Time::Location
     # `#format`).
     #
     # Raises `InvalidTimezoneOffsetError` if *seconds* is outside the supported
-    # value range `-89_999..89_999` seconds (`-24:59:59` to `+24:59:59`).
+    # value range `-89_999..93_599` seconds (`-24:59:59` to `+25:59:59`).
     def initialize(@name : String?, @offset : Int32, @dst : Bool)
       # Maximum offsets of IANA time zone database are -12:00 and +14:00.
-      # The hours component can be up to +/-24 as required by POSIX TZ strings.
-      # (89999.seconds == 24.hours + 59.minutes + 59.seconds)
-      raise InvalidTimezoneOffsetError.new(offset) unless -89999 <= offset <= 89999
+      # The hours component can be up to -24/+25 as required by POSIX TZ
+      # strings (e.g. `EST-24:59:59EDT,...`).
+      raise InvalidTimezoneOffsetError.new(offset) unless -89999 <= offset <= 93599
     end
 
     # Returns the name of the zone.

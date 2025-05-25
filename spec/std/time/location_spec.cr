@@ -364,8 +364,8 @@ class Time::Location
       end
 
       it "raises if offset to large" do
-        expect_raises(InvalidTimezoneOffsetError, "90000") do
-          Location.fixed(90000)
+        expect_raises(InvalidTimezoneOffsetError, "93600") do
+          Location.fixed(93600)
         end
         expect_raises(InvalidTimezoneOffsetError, "-90000") do
           Location.fixed(-90000)
@@ -397,6 +397,14 @@ class Time::Location
         location.zones.should eq [
           Location::Zone.new("EST", -18000, false),
           Location::Zone.new("EDT", 89999, true),
+        ]
+        location.transitions.should be_empty
+
+        location = Location.posix_tz("America/New_York", "EST-24:59:59EDT,M3.2.0,M11.1.0")
+        location.name.should eq("America/New_York")
+        location.zones.should eq [
+          Location::Zone.new("EST", 89999, false),
+          Location::Zone.new("EDT", 93599, true),
         ]
         location.transitions.should be_empty
       end
