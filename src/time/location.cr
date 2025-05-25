@@ -1,5 +1,4 @@
 require "./location/loader"
-require "./tz"
 
 # `Location` maps time instants to the zone in use at that time.
 # It typically represents the collection of time offsets observed in
@@ -215,13 +214,6 @@ class Time::Location
   @cached_range : Tuple(Int64, Int64)
   @cached_zone : Zone
 
-  # Local time transition rules derived from a POSIX TZ string, used for times
-  # past the last defined transition.
-  @tz : TZ?
-
-  # The original TZ string that produced `@tz`, if any.
-  protected getter tz_string : String?
-
   # Creates a `Location` instance named *name* with fixed *offset* in seconds
   # from UTC.
   def self.fixed(name : String, offset : Int32) : Location
@@ -254,10 +246,10 @@ class Time::Location
   # Time.utc(2025, 11, 2, 5).in(location) # => 2025-11-02 01:00:00.0 -04:00 America/New_York
   # Time.utc(2025, 11, 2, 6).in(location) # => 2025-11-02 01:00:00.0 -05:00 America/New_York
   # ```
-  def self.posix_tz(name : String, str : String) : self
+  def self.posix_tz(name : String, str : String) : TZLocation
     zones = Array(Location::Zone).new(initial_capacity: 2)
-    tz = TZ.parse(str, zones, true) || raise ArgumentError.new("Invalid TZ string: #{str}")
-    new(name, zones, tz: tz, tz_string: str)
+    tz_args = TZLocation.parse_tz(str, zones, true) || raise ArgumentError.new("Invalid TZ string: #{str}")
+    TZLocation.new(name, zones, str, *tz_args)
   end
 
   # Loads the `Location` with the given *name*.
@@ -403,8 +395,8 @@ class Time::Location
       # > special timezone from an implementation-defined timezone database.
     else
       zones = Array(Location::Zone).new(initial_capacity: 2)
-      if tz = TZ.parse(tz_string, zones, true)
-        return new("Local", zones, tz: tz, tz_string: tz_string)
+      if tz_args = TZLocation.parse_tz(tz_string, zones, true)
+        return TZLocation.new("Local", zones, tz_string, *tz_args)
       end
 
       if zoneinfo = ENV["ZONEINFO"]?
@@ -421,7 +413,7 @@ class Time::Location
   end
 
   # :nodoc:
-  def initialize(@name : String, @zones : Array(Zone), @transitions = [] of ZoneTransition, @tz = nil, @tz_string = nil)
+  def initialize(@name : String, @zones : Array(Zone), @transitions = [] of ZoneTransition)
     @cached_zone = lookup_first_zone
     @cached_range = {Int64::MIN, @zones.size <= 1 ? Int64::MAX : Int64::MIN}
   end
@@ -445,7 +437,7 @@ class Time::Location
   #
   # Two `Location` instances are considered equal if they have the same name,
   # offset zones and transition rules.
-  def_equals_and_hash name, zones, transitions, tz_string
+  def_equals_and_hash name, zones, transitions
 
   # Returns the time zone offset observed at *time*.
   def lookup(time : Time) : Zone
@@ -470,35 +462,27 @@ class Time::Location
     when zones.empty?
       {Zone::UTC, {Int64::MIN, Int64::MAX}}
     when transitions.empty?
-      tz_lookup(unix_seconds) do
-        {lookup_first_zone, {Int64::MIN, Int64::MAX}}
-      end
+      {lookup_first_zone, {Int64::MIN, Int64::MAX}}
     when unix_seconds < transitions.first.when
       {lookup_first_zone, {Int64::MIN, transitions.first.when}}
     when unix_seconds >= transitions.last.when
-      tz_lookup(unix_seconds) do
-        transition = transitions.last
-        {zones[transition.index], {transition.when, Int64::MAX}}
-      end
+      transition = transitions.last
+      {zones[transition.index], {transition.when, Int64::MAX}}
     else
-      tx_index = transitions.bsearch_index do |transition|
-        transition.when > unix_seconds
-      end.not_nil!
-
-      tx_index -= 1 unless tx_index == 0
-      transition = transitions[tx_index]
-      range_end = transitions[tx_index + 1]?.try(&.when) || Int64::MAX
-
-      {zones[transition.index], {transition.when, range_end}}
+      lookup_within_fixed_transitions(unix_seconds)
     end
   end
 
-  private def tz_lookup(unix_seconds, &)
-    if tz = @tz
-      tz.lookup_with_boundaries(unix_seconds, self)
-    else
-      yield
-    end
+  private def lookup_within_fixed_transitions(unix_seconds)
+    tx_index = transitions.bsearch_index do |transition|
+      transition.when > unix_seconds
+    end.not_nil!
+
+    tx_index -= 1 unless tx_index == 0
+    transition = transitions[tx_index]
+    range_end = transitions[tx_index + 1]?.try(&.when) || Int64::MAX
+
+    {zones[transition.index], {transition.when, range_end}}
   end
 
   # Returns the time zone to use for times before the first transition
@@ -553,3 +537,5 @@ class Time::Location
     zones.size <= 1
   end
 end
+
+require "./tz"

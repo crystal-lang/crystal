@@ -1,11 +1,11 @@
-# :nodoc:
-# Structure that holds the local time transition rules of a TZ string as defined
-# in [POSIX.1-2024 Section 8.3](https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/V1_chap08.html).
-# Also used by TZif database files (version 2 or higher) as defined in
-# [IETF RFC 9636](https://datatracker.ietf.org/doc/html/rfc9636).
-struct Time::TZ
+# A time location capable of computing recurring time zone transitions using
+# POSIX TZ strings, as defined in [POSIX.1-2024 Section 8.3](https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/V1_chap08.html),
+# or in [IETF RFC 9636](https://datatracker.ietf.org/doc/html/rfc9636).
+#
+# These locations are returned by `Time::Location.posix_tz`.
+class Time::TZLocation < Time::Location
   # `J*`: one-based ordinal day, excludes leap day
-  record Julian1, ordinal : Int16, time : Int32 do
+  private record Julian1, ordinal : Int16, time : Int32 do
     def always_jan1? : Bool
       ordinal == 1
     end
@@ -20,7 +20,7 @@ struct Time::TZ
   end
 
   # `*`: zero-based ordinal day, includes leap day
-  record Julian0, ordinal : Int16, time : Int32 do
+  private record Julian0, ordinal : Int16, time : Int32 do
     def always_jan1? : Bool
       ordinal == 0
     end
@@ -36,7 +36,7 @@ struct Time::TZ
   end
 
   # `M*.*.*`: month-week-day, week 5 is last week
-  record MonthWeekDay, month : Int8, week : Int8, day : Int8, time : Int32 do
+  private record MonthWeekDay, month : Int8, week : Int8, day : Int8, time : Int32 do
     def always_jan1? : Bool
       false
     end
@@ -50,35 +50,52 @@ struct Time::TZ
     end
   end
 
-  alias Transition = Julian1 | Julian0 | MonthWeekDay
+  private alias Transition = Julian1 | Julian0 | MonthWeekDay
 
-  # Indices into a parent `Time::Location`'s zones array. Identical if all-year
-  # standard time or DST is in effect.
-  getter std_index : Int32
-  getter dst_index : Int32
+  # Indices into this location's zones array. Identical if all-year standard
+  # time or DST is in effect.
+  @std_index : Int32
+  @dst_index : Int32
 
   # The first and second transition times defined in the TZ string. Not
   # meaningful when `std_index == dst_index`.
-  getter transition1 : Transition
-  getter transition2 : Transition
+  @transition1 : Transition
+  @transition2 : Transition
 
-  def initialize(@std_index, @dst_index, @transition1, @transition2)
+  # The original TZ string that produced this location.
+  @tz_string : String
+
+  protected def initialize(name : String, zones : Array(Zone), @tz_string, @std_index, @dst_index, @transition1, @transition2, transitions = [] of ZoneTransition)
+    super(name, zones, transitions)
   end
 
-  private def self.new(index : Int32) : self
-    default_transition = Julian0.new(0, 0)
-    new(index, index, default_transition, default_transition)
+  def_equals_and_hash name, zones, transitions, @tz_string
+
+  # :nodoc:
+  def lookup_with_boundaries(unix_seconds : Int) : {Zone, {Int64, Int64}}
+    case
+    when zones.empty?
+      {Zone::UTC, {Int64::MIN, Int64::MAX}}
+    when transitions.empty?
+      lookup_posix_tz(unix_seconds)
+    when unix_seconds < transitions.first.when
+      {lookup_first_zone, {Int64::MIN, transitions.first.when}}
+    when unix_seconds >= transitions.last.when
+      lookup_posix_tz(unix_seconds)
+    else
+      lookup_within_fixed_transitions(unix_seconds)
+    end
   end
 
-  def lookup_with_boundaries(unix_seconds : Int, location : Location) : {Location::Zone, {Int64, Int64}}
+  private def lookup_posix_tz(unix_seconds : Int) : {Zone, {Int64, Int64}}
     if @std_index == @dst_index
       # all-year standard time or DST time
       is_dst = false
       range_begin = Int64::MIN
       range_end = Int64::MAX
     else
-      std_offset = -location.zones[@std_index].offset
-      dst_offset = -location.zones[@dst_index].offset
+      std_offset = -@zones[@std_index].offset
+      dst_offset = -@zones[@dst_index].offset
 
       # Find the local year corresponding to `unix_seconds`, except we cannot
       # rely on `Time`'s timezone facilities since that is exactly what this
@@ -141,18 +158,22 @@ struct Time::TZ
       end
     end
 
-    if last_transition = location.transitions.last?
+    if last_transition = @transitions.last?
       range_begin = {range_begin, last_transition.when}.max
     end
 
-    {location.zones[is_dst ? @dst_index : @std_index], {range_begin, range_end}}
+    {@zones[is_dst ? @dst_index : @std_index], {range_begin, range_end}}
   end
 
-  # Parses the given *tz* string. Returns `nil` if *tz* is invalid.
+  # :nodoc:
   #
-  # The returned `TZ`'s `std_index` and `dst_index` members index into the giben
-  # *zones* array, which should belong to a `Time::Location`. Missing entries in
-  # *zones* are automatically created.
+  # Parses the given *tz* string. Returns the `std_index`, `dst_index`,
+  # `transition1`, and `transition2` fields for a yet to be constructed
+  # `TZLocation`, or `nil` if *tz* is invalid.
+  #
+  # Both `std_index` and `dst_index` index into the given *zones* array, which
+  # should belong to a `Time::TZLocation`. Missing entries in *zones* are
+  # automatically created.
   #
   # *hours_extension* increases the hours range of transition time offsets from
   # 0..24 to -167..+167, according to POSIX.1-2024 or RFC 9636 Section 3.3.2
@@ -164,7 +185,7 @@ struct Time::TZ
   # * musl https://git.musl-libc.org/cgit/musl/tree/src/time/__tz.c?id=ef7d0ae21240eac9fc1e8088112bfb0fac507578#n239
   # * bionic https://android.googlesource.com/platform/bionic/+/31fc69f67fc49b1a08f5561ae62d098106da6565/libc/tzcode/localtime.c#1148
   # * wine msvcrt https://gitlab.winehq.org/wine/wine/-/blob/7f833db11ffea4f3f4fa07be31d30559aff9c5fb/dlls/msvcrt/time.c#L127
-  def self.parse(tz : String, zones : Array(Location::Zone), hours_extension : Bool) : TZ?
+  def self.parse_tz(tz : String, zones : Array(Location::Zone), hours_extension : Bool) : {Int32, Int32, Transition, Transition}?
     reader = Char::Reader.new(tz)
 
     # colon prefix: implementation-defined (not supported in Crystal)
@@ -179,7 +200,9 @@ struct Time::TZ
 
     unless reader.has_next?
       # no DST component means all-year standard time
-      return new(zone_index(std_zone, zones))
+      std_index = zone_index(std_zone, zones)
+      default_transition = Julian0.new(0, 0)
+      return std_index, std_index, default_transition, default_transition
     end
 
     reader, dst_name = parse_std_or_dst(reader) || return nil
@@ -208,13 +231,15 @@ struct Time::TZ
     # (we check here so that these locations return true for `#fixed?`)
     if transition1.always_jan1? && transition1.time == 0
       if transition2.always_dec31? && transition2.time == 86400 + std_offset - dst_offset
-        return new(zone_index(dst_zone, zones))
+        dst_index = zone_index(dst_zone, zones)
+        default_transition = Julian0.new(0, 0)
+        return dst_index, dst_index, default_transition, default_transition
       end
     end
 
     std_index = zone_index(std_zone, zones)
     dst_index = zone_index(dst_zone, zones)
-    new(std_index, dst_index, transition1, transition2)
+    {std_index, dst_index, transition1, transition2}
   end
 
   private def self.zone_index(zone : Location::Zone, zones : Array(Location::Zone)) : Int
