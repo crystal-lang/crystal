@@ -34,7 +34,7 @@ def each_ip_family(&block : Socket::Family, String, String ->)
   end
 end
 
-def unused_local_port
+def unused_local_tcp_port
   TCPServer.open(Socket::IPAddress::UNSPECIFIED, 0) do |server|
     server.local_address.port
   end
