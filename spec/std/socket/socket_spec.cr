@@ -168,7 +168,7 @@ describe Socket, tags: "network" do
         socket.close
 
         socket = UDPSocket.new family
-        socket.bind unused_local_tcp_port
+        socket.bind unused_local_udp_port
         socket.close
       end
     end

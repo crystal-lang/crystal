@@ -20,7 +20,7 @@ describe UDPSocket, tags: "network" do
 
   each_ip_family do |family, address, unspecified_address|
     it "#bind" do
-      port = unused_local_tcp_port
+      port = unused_local_udp_port
       socket = UDPSocket.new(family)
       socket.bind(address, port)
       socket.local_address.should eq(Socket::IPAddress.new(address, port))
@@ -33,7 +33,7 @@ describe UDPSocket, tags: "network" do
     end
 
     it "sends and receives messages" do
-      port = unused_local_tcp_port
+      port = unused_local_udp_port
 
       server = UDPSocket.new(family)
       server.bind(address, port)
@@ -100,7 +100,7 @@ describe UDPSocket, tags: "network" do
     else
       it "joins and transmits to multicast groups" do
         udp = UDPSocket.new(family)
-        port = unused_local_tcp_port
+        port = unused_local_udp_port
         udp.bind(unspecified_address, port)
 
         udp.multicast_loopback = false

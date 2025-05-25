@@ -39,3 +39,13 @@ def unused_local_tcp_port
     server.local_address.port
   end
 end
+
+def unused_local_udp_port
+  socket = UDPSocket.new
+  begin
+    socket.bind(Socket::IPAddress::UNSPECIFIED, 0)
+    socket.local_address.port
+  ensure
+    socket.close
+  end
+end
