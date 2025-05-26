@@ -369,65 +369,26 @@ struct BigFloat < Float
     String.build { |io| to_s_impl(io, point_range: point_range, int_trailing_zeros: int_trailing_zeros) }
   end
 
-  # TODO: refactor into `Float::Printer.shortest`
   protected def to_s_impl(io : IO, *, point_range : Range, int_trailing_zeros : Bool) : Nil
     cstr = LibGMP.mpf_get_str(nil, out orig_decimal_exponent, 10, 0, self)
-    length = LibC.strlen(cstr)
-    buffer = Slice.new(cstr, length)
-
-    decimal_exponent = fix_exponent_overflow(orig_decimal_exponent)
+    buffer = Slice.new(cstr, LibC.strlen(cstr))
 
     # add negative sign
     if buffer[0]? == 45 # '-'
       io << '-'
       buffer = buffer[1..]
-      length -= 1
     end
 
-    point = decimal_exponent
-    exp = point
-    exp_mode = !point_range.includes?(point)
-    point = 1 if exp_mode
-
-    # add leading zero
-    io << '0' if point < 1
-
-    # add integer part digits
-    if decimal_exponent > 0 && !exp_mode
-      # whole number but not big enough to be exp form
-      io.write_string buffer[0, {decimal_exponent, length}.min]
-      buffer = buffer[{decimal_exponent, length}.min...]
-      (point - length).times { io << '0' }
-    elsif point > 0
-      io.write_string buffer[0, point]
-      buffer = buffer[point...]
+    decimal_exponent = fix_exponent_overflow(orig_decimal_exponent) - buffer.size
+    if int_trailing_zeros
+      # GMP ensures `cstr` contains no trailing zeros
+      fraction = Float::Printer::FractionMode::WriteAll
+    else
+      # used by the Ryu Printf specs only
+      fraction = Float::Printer::FractionMode::RemoveIfZero
     end
 
-    # omit `.0000...000` if *int_trailing_zeros* is false (used by the
-    # Ryu Printf specs only)
-    if int_trailing_zeros || !buffer.all?(&.=== '0')
-      io << '.'
-
-      # add leading zeros after point
-      if point < 0
-        (-point).times { io << '0' }
-      end
-
-      # add fractional part digits
-      io.write_string buffer
-
-      # print trailing 0 if whole number or exp notation of power of ten
-      if (decimal_exponent >= length && !exp_mode) || ((exp != point || exp_mode) && length == 1)
-        io << '0'
-      end
-    end
-
-    # exp notation
-    if exp_mode
-      io << 'e'
-      io << '+' if exp > 0
-      (exp - 1).to_s(io)
-    end
+    Float::Printer.decimal(io, buffer, decimal_exponent, point_range, fraction)
   end
 
   # The same `LibGMP::MpExp` is used in `LibGMP::MPF` to represent a
