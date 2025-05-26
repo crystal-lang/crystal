@@ -15,6 +15,9 @@ require "./ip_socket"
 # ```
 class TCPSocket < IPSocket
   # Creates a new `TCPSocket`, waiting to be connected.
+  #
+  # NOTE: The *blocking* arg is deprecated since Crystal 1.17. Use
+  # `Socket#blocking=` to change the blocking mode after creating the socket.
   def self.new(family : Family = Family::INET, blocking = nil)
     super(family, Type::STREAM, Protocol::TCP, blocking)
   end
@@ -24,6 +27,9 @@ class TCPSocket < IPSocket
   # You may limit the DNS resolution time with `dns_timeout` and limit the
   # connection time to the remote server with `connect_timeout`. Both values
   # must be in seconds (integers or floats).
+  #
+  # NOTE: The *blocking* arg is deprecated since Crystal 1.17. Use
+  # `Socket#blocking=` to change the blocking mode after creating the socket.
   def initialize(host : String, port, dns_timeout = nil, connect_timeout = nil, blocking = nil)
     Addrinfo.tcp(host, port, timeout: dns_timeout) do |addrinfo|
       super(addrinfo.family, addrinfo.type, addrinfo.protocol, blocking)
@@ -50,6 +56,8 @@ class TCPSocket < IPSocket
   # event loop runtime requirements.
   #
   # NOTE: On Windows the handle must have been created with `WSA_FLAG_OVERLAPPED`.
+  # NOTE: The *blocking* arg is deprecated since Crystal 1.17. Use
+  # `Socket#blocking=` to change the blocking mode after creating the socket.
   def initialize(*, fd : Handle, family : Family = Family::INET, blocking = nil)
     super fd, family, Type::STREAM, Protocol::TCP, blocking
   end
