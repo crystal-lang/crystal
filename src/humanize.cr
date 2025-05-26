@@ -56,7 +56,7 @@ struct Number
       integer, _, decimals = string.partition('.')
     end
 
-    is_negative = number.is_a?(Float::Primitive) ? Math.copysign(1, number) < 0 : number < 0
+    is_negative = number.responds_to?(:sign_bit) ? number.sign_bit < 0 : number < 0
 
     format_impl(io, is_negative, integer, decimals, separator, delimiter, decimal_places, group, only_significant)
   end
