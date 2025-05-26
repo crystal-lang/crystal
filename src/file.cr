@@ -523,7 +523,9 @@ class File < IO::FileDescriptor
     end
   end
 
-  # Returns the content of *filename* as a string. Raises `File::NotFoundError` if the file at filename does not exist.
+  # Returns the content of *filename* as a string.
+  # 
+  # Raises `File::NotFoundError` if the file at filename does not exist.
   #
   # ```
   # File.read("bar") # raises File::NotFoundError
