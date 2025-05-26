@@ -43,7 +43,13 @@ class TCPSocket < IPSocket
     super(handle: handle, family: family, type: type, protocol: protocol, blocking: blocking)
   end
 
-  # Creates a TCPSocket from an already configured raw file descriptor
+  # Creates an UNIXSocket from an existing system file descriptor or socket
+  # handle.
+  #
+  # This adopts *fd* into the IO system that will reconfigure it as per the
+  # event loop runtime requirements.
+  #
+  # NOTE: On Windows the handle must have been created with `WSA_FLAG_OVERLAPPED`.
   def initialize(*, fd : Handle, family : Family = Family::INET, blocking = nil)
     super fd, family, Type::STREAM, Protocol::TCP, blocking
   end

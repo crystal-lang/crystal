@@ -13,6 +13,12 @@ class Socket < IO
   #
   # * on POSIX platforms, this is a file descriptor (`Int32`)
   # * on Windows, this is a SOCKET handle (`LibC::SOCKET`)
+  #
+  # The returned system socket has been configured as per the IO system runtime
+  # requirements. If the returned socket must be in a specific mode or have a
+  # specific set of flags set, then they must be applied, even when it feels
+  # redundant, because even the same target isn't guaranteed to have the same
+  # requirements at runtime.
   def fd
     @volatile_fd.get
   end
@@ -51,7 +57,7 @@ class Socket < IO
 
   # Creates an UDP socket. Consider using `UDPSocket` unless you need full
   # control over the socket.
-  def self.udp(family : Family, blocking = nil)
+  def self.udp(family : Family, blocking = nil) : self
     new(family, Type::DGRAM, Protocol::UDP, blocking)
   end
 
@@ -61,6 +67,8 @@ class Socket < IO
     new(Family::UNIX, type, blocking: blocking)
   end
 
+  # Creates a socket. Consider using `TCPSocket`, `TCPServer`, `UDPSocket`,
+  # `UNIXSocket` or `UNIXServer` unless you need full control over the socket.
   def initialize(family : Family, type : Type, protocol : Protocol = Protocol::IP, blocking = nil)
     # This method is `#initialize` instead of `.new` because it is used as super
     # constructor from subclasses.
@@ -69,7 +77,12 @@ class Socket < IO
     self.sync = true
   end
 
-  # Creates a Socket from an existing socket file descriptor / handle.
+  # Creates a Socket from an existing system file descriptor or socket handle.
+  #
+  # This adopts *fd* into the IO system that will reconfigure it as per the
+  # event loop runtime requirements.
+  #
+  # NOTE: On Windows the handle must have been created with `WSA_FLAG_OVERLAPPED`.
   def initialize(fd, @family : Family, @type : Type, @protocol : Protocol = Protocol::IP, blocking = nil)
     initialize(handle: fd, family: family, type: type, protocol: protocol)
     blocking = Crystal::EventLoop.default_socket_blocking? if blocking.nil?
@@ -410,6 +423,11 @@ class Socket < IO
     system_blocking?
   end
 
+  # Changes the socket's mode to blocking (true) or non blocking (false).
+  #
+  # WARNING: changing the blocking mode can break the IO system requirements and
+  # cause the event loop to misbehave, for example block the program when a
+  # fiber tries to read from this socket.
   def blocking=(value)
     self.system_blocking = value
   end
