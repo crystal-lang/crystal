@@ -137,7 +137,7 @@ class Time::Location
       io.skip(timecnt * (time_size + 1) + typecnt * 6 + charcnt + leapcnt * (time_size + 4) + isstdcnt + isutcnt)
 
       raise InvalidTZDataError.new("Missing version 2+ header") unless io.read_string(4) == "TZif"
-      raise InvalidTZDataError.new("Version mistmatch") unless io.read_byte == version
+      raise InvalidTZDataError.new("Version mismatch") unless io.read_byte == version
       io.skip(15)
 
       isutcnt = read_int32(io)
