@@ -69,7 +69,7 @@ class Log
     end
 
     # Write a fixed string
-    def string(str : String) : Nil
+    def string(str : _) : Nil
       @io << str
     end
 
