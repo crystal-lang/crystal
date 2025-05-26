@@ -214,6 +214,10 @@ struct Float32
     end
   end
 
+  def abs
+    Math.copysign(self, 1)
+  end
+
   # Rounds towards positive infinity.
   def ceil : Float32
     LibM.ceil_f32(self)

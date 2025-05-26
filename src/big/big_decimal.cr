@@ -507,67 +507,19 @@ struct BigDecimal < Number
     String.build { |io| to_s_impl(io, point_range: point_range) }
   end
 
-  # TODO: refactor into `Float::Printer.shortest`
   protected def to_s_impl(io : IO, *, point_range : Range) : Nil
     factor_powers_of_ten
 
     cstr = LibGMP.get_str(nil, 10, @value)
-    length = LibC.strlen(cstr)
-    buffer = Slice.new(cstr, length)
+    buffer = Slice.new(cstr, LibC.strlen(cstr))
 
     # add negative sign
     if buffer[0]? == 45 # '-'
       io << '-'
       buffer = buffer[1..]
-      length -= 1
     end
 
-    decimal_exponent = length.to_i - @scale
-    point = decimal_exponent
-    exp = point
-    exp_mode = !point_range.includes?(point)
-    point = 1 if exp_mode
-
-    # add leading zero
-    io << '0' if point < 1
-
-    # add integer part digits
-    if decimal_exponent > 0 && !exp_mode
-      # whole number but not big enough to be exp form
-      io.write_string buffer[0, {decimal_exponent, length}.min]
-      buffer = buffer[{decimal_exponent, length}.min...]
-      (point - length).times { io << '0' }
-    elsif point > 0
-      io.write_string buffer[0, point]
-      buffer = buffer[point...]
-    end
-
-    io << '.'
-
-    # add leading zeros after point
-    if point < 0
-      (-point).times { io << '0' }
-    end
-
-    # remove trailing zeroes
-    while buffer.size > 1 && buffer.last === '0'
-      buffer = buffer[0..-2]
-    end
-
-    # add fractional part digits
-    io.write_string buffer
-
-    # print trailing 0 if whole number or exp notation of power of ten
-    if (decimal_exponent >= length && !exp_mode) || (exp != point && length == 1)
-      io << '0'
-    end
-
-    # exp notation
-    if exp != point
-      io << 'e'
-      io << '+' if exp > 0
-      (exp - 1).to_s(io)
-    end
+    Float::Printer.decimal(io, buffer, -@scale.to_i, point_range, :remove_extra_zeros)
   end
 
   # :inherit:
@@ -922,5 +874,12 @@ struct Crystal::Hasher
     end
 
     v &* value.sign
+  end
+end
+
+# :nodoc:
+struct String::Formatter(A)
+  def int(flags, arg : BigDecimal) : Nil
+    int(flags, arg.to_big_i)
   end
 end
