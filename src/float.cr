@@ -194,6 +194,10 @@ struct Float32
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float32
   Number.expand_div [Float64], Float64
 
+  def abs
+    Math.copysign(self, 1)
+  end
+
   # Rounds towards positive infinity.
   def ceil : Float32
     LibM.ceil_f32(self)
