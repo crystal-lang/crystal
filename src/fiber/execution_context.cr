@@ -122,6 +122,10 @@ module Fiber::ExecutionContext
     Thread.current.execution_context
   end
 
+  def self.current? : ExecutionContext?
+    Thread.current.execution_context?
+  end
+
   # :nodoc:
   #
   # Tells the current scheduler to suspend the current fiber and resume the
@@ -181,6 +185,7 @@ module Fiber::ExecutionContext
   #
   # Enqueues a fiber to be resumed inside the execution context.
   #
-  # May be called from any ExecutionContext (i.e. must be thread-safe).
+  # May be called from any ExecutionContext (i.e. must be thread-safe). May also
+  # be called from bare threads (outside of an ExecutionContext).
   abstract def enqueue(fiber : Fiber) : Nil
 end

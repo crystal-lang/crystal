@@ -11,6 +11,8 @@ concurrency:
 env:
   SPEC_SPLIT_DOTS: 160
   CI_LLVM_VERSION: "19.1.7"
+  CI_LLVM_TARGETS: "X86,AArch64"
+  CI_LLVM_LDFLAGS: "psapi.lib shell32.lib ole32.lib uuid.lib advapi32.lib ws2_32.lib ntdll.lib"
 
 jobs:
   x86_64-windows-libs:
@@ -181,29 +183,6 @@ jobs:
         if: steps.cache-openssl-dlls.outputs.cache-hit != 'true'
         run: .\etc\win-ci\build-openssl.ps1 -BuildTree deps\openssl -Version 3.4.1 -Dynamic
 
-  x86_64-windows-llvm-libs:
-    runs-on: windows-2022
-    steps:
-      - name: Enable Developer Command Prompt
-        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
-
-      - name: Cache LLVM
-        id: cache-llvm-libs
-        uses: actions/cache@v4
-        with:
-          path: llvm
-          key: llvm-libs-${{ env.CI_LLVM_VERSION }}-msvc
-
-      - name: Build LLVM
-        if: steps.cache-llvm-libs.outputs.cache-hit != 'true'
-        run: |
-          git clone --config core.autocrlf=false -b llvmorg-${{ env.CI_LLVM_VERSION }} --depth 1 https://github.com/llvm/llvm-project.git
-          mkdir llvm-build
-          cd llvm-build
-          cmake ..\llvm-project\llvm -Thost=x64 -DLLVM_TARGETS_TO_BUILD="X86;AArch64" -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded -DBUILD_SHARED_LIBS=OFF -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF -DLLVM_INCLUDE_BENCHMARKS=OFF -DLLVM_INCLUDE_TESTS=OFF -DLLVM_ENABLE_ZSTD=OFF
-          cmake --build . --config Release
-          cmake "-DCMAKE_INSTALL_PREFIX=$(pwd)\..\llvm" -P cmake_install.cmake
-
   x86_64-windows-llvm-dlls:
     runs-on: windows-2022
     steps:
@@ -228,14 +207,16 @@ jobs:
           key: llvm-dlls-${{ env.CI_LLVM_VERSION }}-${{ hashFiles('etc/win-ci/build-llvm.ps1') }}-msvc
       - name: Build LLVM
         if: steps.cache-llvm-dlls.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-llvm.ps1 -BuildTree deps\llvm -Version ${{ env.CI_LLVM_VERSION }} -TargetsToBuild X86,AArch64 -Dynamic
+        run: .\etc\win-ci\build-llvm.ps1 -BuildTree deps\llvm -Version ${{ env.CI_LLVM_VERSION }} -TargetsToBuild ${{ env.CI_LLVM_TARGETS }} -Dynamic
 
   x86_64-windows-release:
-    needs: [x86_64-windows-libs, x86_64-windows-dlls, x86_64-windows-llvm-libs, x86_64-windows-llvm-dlls]
+    needs: [x86_64-windows-libs, x86_64-windows-dlls, x86_64-windows-llvm-dlls]
     uses: ./.github/workflows/win_build_portable.yml
     with:
       release: true
       llvm_version: "19.1.7"
+      llvm_targets: "X86,AArch64"
+      llvm_ldflags: "psapi.lib shell32.lib ole32.lib uuid.lib advapi32.lib ws2_32.lib ntdll.lib"
 
   x86_64-windows-test:
     runs-on: windows-2022
@@ -257,18 +238,13 @@ jobs:
           name: crystal
           path: build
 
-      - name: Restore LLVM
-        uses: actions/cache/restore@v4
-        with:
-          path: llvm
-          key: llvm-libs-${{ env.CI_LLVM_VERSION }}-msvc
-          fail-on-cache-miss: true
-
       - name: Set up environment
         run: |
           Add-Content $env:GITHUB_PATH "$(pwd)\build"
           Add-Content $env:GITHUB_ENV "CRYSTAL_SPEC_COMPILER_BIN=$(pwd)\build\crystal.exe"
-          Add-Content $env:GITHUB_ENV "LLVM_CONFIG=$(pwd)\llvm\bin\llvm-config.exe"
+          Add-Content $env:GITHUB_ENV "LLVM_VERSION=${{ env.CI_LLVM_VERSION }}"
+          Add-Content $env:GITHUB_ENV "LLVM_TARGETS=${{ env.CI_LLVM_TARGETS }}"
+          Add-Content $env:GITHUB_ENV "LLVM_LDFLAGS=${{ env.CI_LLVM_LDFLAGS }}"
 
       - name: Run stdlib specs
         run: make -f Makefile.win std_spec
@@ -302,17 +278,13 @@ jobs:
           name: crystal
           path: build
 
-      - name: Restore LLVM
-        uses: actions/cache/restore@v4
-        with:
-          path: llvm
-          key: llvm-libs-${{ env.CI_LLVM_VERSION }}-msvc
-          fail-on-cache-miss: true
-
       - name: Set up environment
         run: |
           Add-Content $env:GITHUB_PATH "$(pwd)\build"
           Add-Content $env:GITHUB_ENV "CRYSTAL_SPEC_COMPILER_BIN=$(pwd)\build\crystal.exe"
+          Add-Content $env:GITHUB_ENV "LLVM_VERSION=${{ env.CI_LLVM_VERSION }}"
+          Add-Content $env:GITHUB_ENV "LLVM_TARGETS=${{ env.CI_LLVM_TARGETS }}"
+          Add-Content $env:GITHUB_ENV "LLVM_LDFLAGS=${{ env.CI_LLVM_LDFLAGS }}"
 
       - name: Run stdlib specs with interpreter
         run: bin\crystal i spec\std_spec.cr
@@ -338,17 +310,12 @@ jobs:
           name: crystal
           path: etc/win-ci/portable
 
-      - name: Restore LLVM
-        uses: actions/cache/restore@v4
-        with:
-          path: llvm
-          key: llvm-libs-${{ env.CI_LLVM_VERSION }}-msvc
-          fail-on-cache-miss: true
-
       - name: Set up environment
         run: |
           Add-Content $env:GITHUB_PATH "$(pwd)\etc\win-ci\portable"
-          Add-Content $env:GITHUB_ENV "LLVM_CONFIG=$(pwd)\llvm\bin\llvm-config.exe"
+          Add-Content $env:GITHUB_ENV "LLVM_VERSION=${{ env.CI_LLVM_VERSION }}"
+          Add-Content $env:GITHUB_ENV "LLVM_TARGETS=${{ env.CI_LLVM_TARGETS }}"
+          Add-Content $env:GITHUB_ENV "LLVM_LDFLAGS=${{ env.CI_LLVM_LDFLAGS }}"
 
       - name: Build docs
         run: make -f Makefile.win install_docs prefix=etc\win-ci\portable

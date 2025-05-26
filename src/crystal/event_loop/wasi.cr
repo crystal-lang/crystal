@@ -1,5 +1,9 @@
 # :nodoc:
 class Crystal::EventLoop::Wasi < Crystal::EventLoop
+  def self.default_socket_blocking?
+    false
+  end
+
   # Runs the event loop.
   def run(blocking : Bool) : Bool
     raise NotImplementedError.new("Crystal::Wasi::EventLoop.run")
@@ -28,7 +32,7 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
     raise NotImplementedError.new("Crystal::Wasi::EventLoop.create_fd_read_event")
   end
 
-  def open(filename : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : System::FileDescriptor::Handle | Errno | WinError
+  def open(filename : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : {System::FileDescriptor::Handle, Bool} | Errno | WinError
     raise NotImplementedError.new("Crystal::Wasi::EventLoop#open")
   end
 
@@ -71,6 +75,14 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
   def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
     file_descriptor.evented_close
     file_descriptor.file_descriptor_close
+  end
+
+  def socket(family : ::Socket::Family, type : ::Socket::Type, protocol : ::Socket::Protocol) : {::Socket::Handle, Bool}
+    raise NotImplementedError.new("Crystal::EventLoop::Wasi#socket")
+  end
+
+  def socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol, blocking : Bool) : {Handle, Handle}
+    raise NotImplementedError.new("Crystal::EventLoop::Wasi#socketpair")
   end
 
   def read(socket : ::Socket, slice : Bytes) : Int32

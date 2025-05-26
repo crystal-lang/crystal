@@ -10,6 +10,10 @@ require "./iocp/*"
 
 # :nodoc:
 class Crystal::EventLoop::IOCP < Crystal::EventLoop
+  def self.default_socket_blocking?
+    true
+  end
+
   @waitable_timer : System::WaitableTimer?
   @timer_packet : LibC::HANDLE?
   @timer_key : System::IOCP::CompletionKey?
@@ -223,7 +227,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     FiberEvent.new(:select_timeout, fiber)
   end
 
-  def open(path : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : System::FileDescriptor::Handle | WinError
+  def open(path : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : {System::FileDescriptor::Handle, Bool} | WinError
     access, disposition, attributes = System::File.posix_to_open_opts(flags, permissions, blocking)
 
     handle = LibC.CreateFileW(
@@ -239,7 +243,8 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     if handle == LibC::INVALID_HANDLE_VALUE
       WinError.value
     else
-      handle.address
+      create_completion_port(handle) unless blocking
+      {handle.address, !!blocking}
     end
   end
 
@@ -286,6 +291,17 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
     LibC.CancelIoEx(file_descriptor.windows_handle, nil) unless file_descriptor.system_blocking?
     file_descriptor.file_descriptor_close
+  end
+
+  def socket(family : ::Socket::Family, type : ::Socket::Type, protocol : ::Socket::Protocol, blocking : Bool?) : {::Socket::Handle, Bool}
+    blocking = true if blocking.nil?
+    fd = System::Socket.socket(family, type, protocol, blocking)
+    create_completion_port LibC::HANDLE.new(fd)
+    {fd, blocking}
+  end
+
+  def socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol) : Tuple({::Socket::Handle, ::Socket::Handle}, Bool)
+    raise NotImplementedError.new("Crystal::EventLoop::IOCP#socketpair")
   end
 
   private def wsa_buffer(bytes)
@@ -375,7 +391,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     end
   end
 
-  def accept(socket : ::Socket) : ::Socket::Handle?
+  def accept(socket : ::Socket) : {::Socket::Handle, Bool}?
     socket.system_accept do |client_handle|
       address_size = sizeof(LibC::SOCKADDR_STORAGE) + 16
 
