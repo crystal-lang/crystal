@@ -206,7 +206,16 @@ class YAML::Builder
   private def yaml_emit(event_name)
     ret = LibYAML.yaml_emitter_emit(@emitter, pointerof(@event))
     if ret != 1
-      raise YAML::Error.new("Error emitting #{event_name}")
+      raise YAML::Error.new(build_libyaml_message(event_name))
+    end
+  end
+
+  private def build_libyaml_message(event_name)
+    problem = @emitter.value.problem
+    strlen = LibC.strlen(problem)
+    String.build(event_name.bytesize + strlen + 16) do |io|
+      io << "Error emitting " << event_name << ": "
+      io.write Slice.new(problem, strlen)
     end
   end
 

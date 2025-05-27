@@ -192,7 +192,7 @@ describe YAML::Builder do
   it "errors on invalid state" do
     String.build do |io|
       YAML::Builder.build(io) do |builder|
-        expect_raises YAML::Error, "Error emitting document_end" do
+        expect_raises YAML::Error, "Error emitting document_end: expected STREAM-START" do
           builder.end_document
         end
       end
