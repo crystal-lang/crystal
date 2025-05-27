@@ -436,10 +436,10 @@ describe HTTP::StaticFileHandler do
     response.headers["Location"].should eq "/foo/"
   end
 
-  it "preserves query parameters during redirect" do
-    response = handle HTTP::Request.new("GET", "/foo?ami=kept"), directory_listing: true
+  it "preserves uri components during redirect" do
+    response = handle HTTP::Request.new("GET", "/foo?ami=kept#somefragment"), directory_listing: true
     response.status_code.should eq(302)
-    response.headers["Location"].should eq "/foo/?ami=kept"
+    response.headers["Location"].should eq "/foo/?ami=kept#somefragment"
   end
 
   it "does not double encode query parameters when redirecting" do

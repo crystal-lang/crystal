@@ -267,8 +267,9 @@ class HTTP::StaticFileHandler
   end
 
   private def redirect_to(context : Server::Context, path)
+    context.request.path = URI.encode_path(path.to_s)
     # HTTP::Server::Response#redirect applies url encoding when a string is given
-    context.response.redirect URI.new(path: URI.encode_path(path.to_s), query: context.request.query)
+    context.response.redirect context.request.uri
   end
 
   private def add_cache_headers(response_headers : HTTP::Headers, last_modified : Time) : Nil
