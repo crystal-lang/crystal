@@ -112,14 +112,14 @@ describe "UUID" do
     end
 
     it "returns nil if it has the wrong number of characters" do
-      UUID.parse?("nope").should eq nil
+      UUID.parse?("nope").should be_nil
     end
 
     it "returns nil if it has incorrect characters" do
-      UUID.parse?("c20335c3-7f46-4126-aae9-f665434ad12?").should eq nil
-      UUID.parse?("lol!wut?-asdf-fork-typo-omglolwtfbbq").should eq nil
-      UUID.parse?("lol!wut?asdfforktypoomglolwtfbbq").should eq nil
-      UUID.parse?("urn:uuid:lol!wut?-asdf-fork-typo-omglolwtfbbq").should eq nil
+      UUID.parse?("c20335c3-7f46-4126-aae9-f665434ad12?").should be_nil
+      UUID.parse?("lol!wut?-asdf-fork-typo-omglolwtfbbq").should be_nil
+      UUID.parse?("lol!wut?asdfforktypoomglolwtfbbq").should be_nil
+      UUID.parse?("urn:uuid:lol!wut?-asdf-fork-typo-omglolwtfbbq").should be_nil
     end
   end
 
@@ -166,7 +166,7 @@ describe "UUID" do
   describe "v1" do
     it "returns true if UUID is v1, false otherwise" do
       uuid = UUID.v1
-      uuid.v1?.should eq(true)
+      uuid.v1?.should be_true
       uuid = UUID.v1(node_id: StaticArray(UInt8, 6).new { |i| (i*10).to_u8 })
       uuid.to_s[24..36].should eq("000a141e2832")
     end
@@ -175,7 +175,7 @@ describe "UUID" do
   describe "v2" do
     it "returns true if UUID is v2, false otherwise" do
       uuid = UUID.v2(UUID::Domain::Person, 42)
-      uuid.v2?.should eq(true)
+      uuid.v2?.should be_true
       uuid = UUID.v2(UUID::Domain::Person, 42, node_id: StaticArray(UInt8, 6).new { |i| (i*10).to_u8 })
       uuid.to_s[24..36].should eq("000a141e2832")
     end
@@ -184,20 +184,20 @@ describe "UUID" do
   describe "v4?" do
     it "returns true if UUID is v4, false otherwise" do
       uuid = UUID.random
-      uuid.v4?.should eq(true)
+      uuid.v4?.should be_true
       uuid = UUID.v4
-      uuid.v4?.should eq(true)
+      uuid.v4?.should be_true
       uuid = UUID.new("00000000-0000-0000-0000-000000000000", version: UUID::Version::V5)
-      uuid.v4?.should eq(false)
+      uuid.v4?.should be_false
     end
   end
 
   describe "v4!" do
     it "returns true if UUID is v4, raises otherwise" do
       uuid = UUID.random
-      uuid.v4!.should eq(true)
+      uuid.v4!.should be_true
       uuid = UUID.v4
-      uuid.v4!.should eq(true)
+      uuid.v4!.should be_true
       uuid = UUID.new("00000000-0000-0000-0000-000000000000", version: UUID::Version::V5)
       expect_raises(UUID::Error) { uuid.v4! }
     end
@@ -209,7 +209,7 @@ describe "UUID" do
       expected = "60a4b7b5-3333-3f1e-a2cd-30d8a2d0b83b"
       UUID.v3(data, UUID::Namespace::DNS).to_s.should eq(expected)
       UUID.v3_dns(data).to_s.should eq(expected)
-      UUID.v3_dns(data).v3?.should eq(true)
+      UUID.v3_dns(data).v3?.should be_true
     end
 
     it "generates URL based names correctly" do
@@ -217,7 +217,7 @@ describe "UUID" do
       expected = "c25c7b79-5f5f-3844-98a4-2548f5d0e7f9"
       UUID.v3(data, UUID::Namespace::URL).to_s.should eq(expected)
       UUID.v3_url(data).to_s.should eq(expected)
-      UUID.v3_url(data).v3?.should eq(true)
+      UUID.v3_url(data).v3?.should be_true
     end
 
     it "generates OID based names correctly" do
@@ -225,7 +225,7 @@ describe "UUID" do
       expected = "77bc1dc3-0a9f-3e7e-bfa5-3f611a660c80"
       UUID.v3(data, UUID::Namespace::OID).to_s.should eq(expected)
       UUID.v3_oid(data).to_s.should eq(expected)
-      UUID.v3_oid(data).v3?.should eq(true)
+      UUID.v3_oid(data).v3?.should be_true
     end
 
     it "generates X500 based names correctly" do
@@ -233,7 +233,7 @@ describe "UUID" do
       expected = "fcab1a4c-fc81-3ebc-9874-9a8b931911d3"
       UUID.v3(data, UUID::Namespace::X500).to_s.should eq(expected)
       UUID.v3_x500(data).to_s.should eq(expected)
-      UUID.v3_x500(data).v3?.should eq(true)
+      UUID.v3_x500(data).v3?.should be_true
     end
   end
 
@@ -243,7 +243,7 @@ describe "UUID" do
       expected = "11caf27c-b803-5e62-9c4b-15332b04047e"
       UUID.v5(data, UUID::Namespace::DNS).to_s.should eq(expected)
       UUID.v5_dns(data).to_s.should eq(expected)
-      UUID.v5_dns(data).v5?.should eq(true)
+      UUID.v5_dns(data).v5?.should be_true
     end
 
     it "generates URL based names correctly" do
@@ -251,7 +251,7 @@ describe "UUID" do
       expected = "29fec3f0-9ad0-5e8a-a42e-214ff695f50e"
       UUID.v5(data, UUID::Namespace::URL).to_s.should eq(expected)
       UUID.v5_url(data).to_s.should eq(expected)
-      UUID.v5_url(data).v5?.should eq(true)
+      UUID.v5_url(data).v5?.should be_true
     end
 
     it "generates OID based names correctly" do
@@ -259,7 +259,7 @@ describe "UUID" do
       expected = "6aab0456-7392-582a-b92a-ba5a7096945d"
       UUID.v5(data, UUID::Namespace::OID).to_s.should eq(expected)
       UUID.v5_oid(data).to_s.should eq(expected)
-      UUID.v5_oid(data).v5?.should eq(true)
+      UUID.v5_oid(data).v5?.should be_true
     end
 
     it "generates X500 based names correctly" do
@@ -267,15 +267,15 @@ describe "UUID" do
       expected = "bc10b2d9-f370-5c65-9561-5e3f6d9b236d"
       UUID.v5(data, UUID::Namespace::X500).to_s.should eq(expected)
       UUID.v5_x500(data).to_s.should eq(expected)
-      UUID.v5_x500(data).v5?.should eq(true)
+      UUID.v5_x500(data).v5?.should be_true
     end
   end
 
   describe "v7" do
     it "generates a v7 UUID" do
       uuid = UUID.v7
-      uuid.v7?.should eq true
-      uuid.variant.rfc9562?.should eq true
+      uuid.v7?.should be_true
+      uuid.variant.rfc9562?.should be_true
     end
 
     pending_wasm32 "generates UUIDs that are sortable with 1ms precision" do

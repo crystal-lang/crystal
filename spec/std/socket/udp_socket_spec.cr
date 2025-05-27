@@ -104,7 +104,7 @@ describe UDPSocket, tags: "network" do
         udp.bind(unspecified_address, port)
 
         udp.multicast_loopback = false
-        udp.multicast_loopback?.should eq(false)
+        udp.multicast_loopback?.should be_false
 
         udp.multicast_hops = 4
         udp.multicast_hops.should eq(4)
@@ -159,7 +159,7 @@ describe UDPSocket, tags: "network" do
         end
 
         udp.multicast_loopback = true
-        udp.multicast_loopback?.should eq(true)
+        udp.multicast_loopback?.should be_true
 
         udp.send("testing", addr)
         udp.read_timeout = 1.second
