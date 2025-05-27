@@ -2266,14 +2266,14 @@ describe "String" do
     end
 
     it "compares with == when different strings same contents" do
-      s1 = "foo#{1}"
-      s2 = "foo#{1}"
+      s1 = "foo#{1}" # ameba:disable Lint/LiteralInInterpolation
+      s2 = "foo#{1}" # ameba:disable Lint/LiteralInInterpolation
       s1.should eq(s2)
     end
 
     it "compares with == when different contents" do
-      s1 = "foo#{1}"
-      s2 = "foo#{2}"
+      s1 = "foo#{1}" # ameba:disable Lint/LiteralInInterpolation
+      s2 = "foo#{2}" # ameba:disable Lint/LiteralInInterpolation
       s1.should_not eq(s2)
     end
 
