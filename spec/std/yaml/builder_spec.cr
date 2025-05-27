@@ -15,7 +15,55 @@ private def assert_built(expected, expect_document_end = false, *, file = __FILE
   assert_prints YAML.build { |yaml| with yaml yield yaml }, expected, file: file, line: line
 end
 
+private def build_stream(&)
+  String.build do |io|
+    YAML::Builder.build(io) do |yaml|
+      yaml.stream do
+        yield yaml
+      end
+    end
+  end
+end
+
 describe YAML::Builder do
+  describe "#document" do
+    describe "implicit_start_indicator" do
+      it "explicit" do
+        build_stream do |yaml|
+          yaml.document(implicit_start_indicator: false) do
+            yaml.scalar(1)
+          end
+        end.should eq "--- 1\n"
+
+        build_stream do |yaml|
+          yaml.document(implicit_start_indicator: false) do
+            yaml.scalar(1)
+          end
+          yaml.document(implicit_start_indicator: false) do
+            yaml.scalar(2)
+          end
+        end.should eq "--- 1\n--- 2\n"
+      end
+
+      it "implicit" do
+        build_stream do |yaml|
+          yaml.document(implicit_start_indicator: true) do
+            yaml.scalar(1)
+          end
+        end.should eq "1\n"
+
+        build_stream do |yaml|
+          yaml.document(implicit_start_indicator: true) do
+            yaml.scalar(1)
+          end
+          yaml.document(implicit_start_indicator: true) do
+            yaml.scalar(2)
+          end
+        end.should eq "1\n--- 2\n"
+      end
+    end
+  end
+
   it "writes scalar" do
     assert_built("--- 1\n", expect_document_end: true) do
       scalar(1)
