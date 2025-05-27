@@ -52,6 +52,8 @@ class IO::FileDescriptor < IO
   # event loop runtime requirements.
   #
   # NOTE: On Windows the handle should have been created with `FILE_FLAG_OVERLAPPED`.
+  # NOTE: The *blocking* arg is deprecated since Crystal 1.17. Use `#blocking=`
+  # to change the blocking mode instead.
   def self.new(fd : Handle, blocking = nil, *, close_on_finalize = true)
     file_descriptor = new(handle: fd, close_on_finalize: close_on_finalize)
     file_descriptor.system_blocking_init(blocking) unless file_descriptor.closed?
