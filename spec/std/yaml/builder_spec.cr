@@ -3,16 +3,22 @@ require "yaml"
 require "spec/helpers/string"
 
 private def assert_built(expected, expect_document_end = false, *, file = __FILE__, line = __LINE__, &)
-  # libyaml 0.2.1 removed the erroneously written document end marker (`...`) after some scalars in root context (see https://github.com/yaml/libyaml/pull/18).
-  # Earlier libyaml releases still write the document end marker and this is hard to fix on Crystal's side.
-  # So we just ignore it and adopt the specs accordingly to coincide with the used libyaml version.
   if expect_document_end
-    if YAML.libyaml_version < SemanticVersion.new(0, 2, 1)
-      expected += "...\n"
-    end
+    expected = append_stream_end_indicator(expected)
   end
 
   assert_prints YAML.build { |yaml| with yaml yield yaml }, expected, file: file, line: line
+end
+
+private def append_stream_end_indicator(yaml)
+  # libyaml 0.2.1 removed the erroneously written document end marker (`...`) after some scalars in root context (see https://github.com/yaml/libyaml/pull/18).
+  # Earlier libyaml releases still write the document end marker and this is hard to fix on Crystal's side.
+  # So we just ignore it and adopt the specs accordingly to coincide with the used libyaml version.
+  if YAML.libyaml_version < SemanticVersion.new(0, 2, 1)
+    yaml + "...\n"
+  else
+    yaml
+  end
 end
 
 private def build_stream(&)
@@ -33,7 +39,7 @@ describe YAML::Builder do
           yaml.document(implicit_start_indicator: false) do
             yaml.scalar(1)
           end
-        end.should eq "--- 1\n"
+        end.should eq append_stream_end_indicator("--- 1\n")
 
         build_stream do |yaml|
           yaml.document(implicit_start_indicator: false) do
@@ -42,7 +48,7 @@ describe YAML::Builder do
           yaml.document(implicit_start_indicator: false) do
             yaml.scalar(2)
           end
-        end.should eq "--- 1\n--- 2\n"
+        end.should eq append_stream_end_indicator("--- 1\n--- 2\n")
       end
 
       it "implicit" do
@@ -50,7 +56,7 @@ describe YAML::Builder do
           yaml.document(implicit_start_indicator: true) do
             yaml.scalar(1)
           end
-        end.should eq "1\n"
+        end.should eq append_stream_end_indicator("1\n")
 
         build_stream do |yaml|
           yaml.document(implicit_start_indicator: true) do
@@ -59,7 +65,7 @@ describe YAML::Builder do
           yaml.document(implicit_start_indicator: true) do
             yaml.scalar(2)
           end
-        end.should eq "1\n--- 2\n"
+        end.should eq append_stream_end_indicator("1\n--- 2\n")
       end
     end
   end
