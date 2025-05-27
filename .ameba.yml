@@ -172,9 +172,6 @@ Style/ParenthesesAroundCondition:
 Style/PercentLiteralDelimiters:
   Enabled: false
 
-Style/RedundantBegin:
-  Enabled: false
-
 Style/RedundantNext:
   Enabled: false
 
