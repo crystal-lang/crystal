@@ -8,6 +8,12 @@ class IO::FileDescriptor < IO
   @volatile_fd : Atomic(Handle)
 
   # Returns the raw file-descriptor handle. Its type is platform-specific.
+  #
+  # The file-descriptor handle has been configured for the IO system
+  # requirements. If it must be in a specific mode or have a specific set of
+  # flags set, then they must be applied, even when when it feels redundant,
+  # because even the same target isn't guaranteed to have the same requirements
+  # at runtime.
   def fd : Handle
     @volatile_fd.get
   end
@@ -39,6 +45,13 @@ class IO::FileDescriptor < IO
     write_timeout
   end
 
+  # Creates an IO::FileDescriptor from an existing system file descriptor or
+  # handle.
+  #
+  # This adopts *fd* into the IO system that will reconfigure it as per the
+  # event loop runtime requirements.
+  #
+  # NOTE: On Windows the handle should have been created with `FILE_FLAG_OVERLAPPED`.
   def self.new(fd : Handle, blocking = nil, *, close_on_finalize = true)
     file_descriptor = new(handle: fd, close_on_finalize: close_on_finalize)
     file_descriptor.system_blocking_init(blocking) unless file_descriptor.closed?
@@ -69,6 +82,12 @@ class IO::FileDescriptor < IO
     system_blocking?
   end
 
+  # Changes the file descriptor's mode to blocking (true) or non blocking
+  # (false).
+  #
+  # WARNING: changing the blocking mode can break the IO system requirements and
+  # cause the event loop to misbehave, for example block the program when a
+  # fiber tries to read from this file descriptor.
   def blocking=(value)
     self.system_blocking = value
   end
