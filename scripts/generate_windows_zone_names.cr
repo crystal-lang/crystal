@@ -9,8 +9,10 @@ require "xml"
 require "../src/compiler/crystal/formatter"
 require "ecr"
 
-WINDOWS_ZONE_NAMES_SOURCE = "https://raw.githubusercontent.com/unicode-org/cldr/817409270794bb1538fe6b4aa3e9c79aff2c34d2/common/supplemental/windowsZones.xml"
+# CLDR-18479 Update CLDR data to TZDB 2025b. (#4593)
+WINDOWS_ZONE_NAMES_SOURCE = "https://raw.githubusercontent.com/unicode-org/cldr/f8369ba0795c79f3bac8eb89967eea359f77835e/common/supplemental/windowsZones.xml"
 TARGET_FILE               = File.join(__DIR__, "..", "src", "crystal", "system", "win32", "zone_names.cr")
+ZONEINFO_ZIP              = File.join(__DIR__, "..", "spec", "std", "data", "zoneinfo.zip")
 
 response = HTTP::Client.get(WINDOWS_ZONE_NAMES_SOURCE)
 xml = XML.parse(response.body)
@@ -27,6 +29,7 @@ iana_to_windows_items = entries.map do |tzdata_name, territory, windows_name|
   {tzdata_name, windows_name}
 end.uniq!
 
+ENV["ZONEINFO"] = ZONEINFO_ZIP
 windows_zone_names_items = entries.compact_map do |tzdata_name, territory, windows_name|
   next unless territory == "001"
   location = Time::Location.load(tzdata_name)
