@@ -10,6 +10,10 @@ require "./iocp/*"
 
 # :nodoc:
 class Crystal::EventLoop::IOCP < Crystal::EventLoop
+  def self.default_socket_blocking?
+    true
+  end
+
   @waitable_timer : System::WaitableTimer?
   @timer_packet : LibC::HANDLE?
   @timer_key : System::IOCP::CompletionKey?
@@ -289,6 +293,17 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     file_descriptor.file_descriptor_close
   end
 
+  def socket(family : ::Socket::Family, type : ::Socket::Type, protocol : ::Socket::Protocol, blocking : Bool?) : {::Socket::Handle, Bool}
+    blocking = true if blocking.nil?
+    fd = System::Socket.socket(family, type, protocol, blocking)
+    create_completion_port LibC::HANDLE.new(fd)
+    {fd, blocking}
+  end
+
+  def socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol) : Tuple({::Socket::Handle, ::Socket::Handle}, Bool)
+    raise NotImplementedError.new("Crystal::EventLoop::IOCP#socketpair")
+  end
+
   private def wsa_buffer(bytes)
     wsabuf = LibC::WSABUF.new
     wsabuf.len = bytes.size
@@ -376,7 +391,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     end
   end
 
-  def accept(socket : ::Socket) : ::Socket::Handle?
+  def accept(socket : ::Socket) : {::Socket::Handle, Bool}?
     socket.system_accept do |client_handle|
       address_size = sizeof(LibC::SOCKADDR_STORAGE) + 16
 

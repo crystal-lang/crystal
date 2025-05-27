@@ -516,6 +516,22 @@ module HTTP
       end
     end
 
+    describe "#uri" do
+      it "returns request uri object" do
+        raw_resource = "/document?something=true#fragment"
+        request = Request.from_io(IO::Memory.new("GET #{raw_resource} HTTP/1.1\r\n\r\n")).as(Request)
+        request.uri.should eq(URI.parse(raw_resource))
+      end
+
+      it "can change the results of #resource" do
+        request = Request.from_io(IO::Memory.new("GET /route HTTP/1.1\r\n\r\n")).as(Request)
+        request.resource.should eq("/route")
+
+        request.uri.path = "/some_other_route"
+        request.resource.should eq("/some_other_route")
+      end
+    end
+
     it "doesn't raise on request with multiple Content_length headers" do
       io = IO::Memory.new <<-HTTP
         GET / HTTP/1.1

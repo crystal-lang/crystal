@@ -60,6 +60,9 @@ describe Number do
     it { assert_prints -0.0.format(decimal_places: 1), "-0.0" }
     it { assert_prints -0.0.format(decimal_places: 1, only_significant: true), "-0.0" }
 
+    it { assert_prints -0.0_f32.format(decimal_places: 1), "-0.0" }
+    it { assert_prints -0.0_f32.format(decimal_places: 1, only_significant: true), "-0.0" }
+
     it { assert_prints -0.01.format(decimal_places: 1), "-0.0" }
 
     it { assert_prints -123.45.format, "-123.45" }
