@@ -2,7 +2,7 @@ require "../unix/file"
 
 # :nodoc:
 module Crystal::System::File
-  protected def system_set_mode(mode : String)
+  protected def system_init(mode : String, blocking : Bool) : Nil
   end
 
   def self.chmod(path, mode)

@@ -51,7 +51,7 @@ module Crystal::System::File
 
   LOWER_ALPHANUM = "0123456789abcdefghijklmnopqrstuvwxyz".to_slice
 
-  def self.mktemp(prefix : String?, suffix : String?, dir : String, random : ::Random = ::Random::DEFAULT) : {FileDescriptor::Handle, String}
+  def self.mktemp(prefix : String?, suffix : String?, dir : String, random : ::Random = ::Random::DEFAULT) : {FileDescriptor::Handle, String, Bool}
     flags = LibC::O_RDWR | LibC::O_CREAT | LibC::O_EXCL
     perm = ::File::Permissions.new(0o600)
 
@@ -68,8 +68,9 @@ module Crystal::System::File
       end
 
       case result = EventLoop.current.open(path, flags, perm, blocking: true)
-      when FileDescriptor::Handle
-        return {result, path}
+      when Tuple(FileDescriptor::Handle, Bool)
+        fd, blocking = result
+        return {fd, path, blocking}
       when Errno::EEXIST, WinError::ERROR_FILE_EXISTS
         # retry
       else

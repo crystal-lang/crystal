@@ -5,6 +5,7 @@ self-hosted-runner:
     - runner=*
     - family=*
     - ram=*
+    - windows-11-arm # actionlint doesn't understand this label yet
 
 # Configuration variables in array of strings defined in your repository or
 # organization. `null` means disabling configuration variables check.

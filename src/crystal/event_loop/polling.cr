@@ -56,6 +56,10 @@ end
 # before suspending the fiber, then after resume it will raise
 # `IO::TimeoutError` if the event timed out, and continue otherwise.
 abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
+  def self.default_socket_blocking?
+    false
+  end
+
   # The generational arena:
   #
   # 1. decorrelates the fd from the IO since the evloop only really cares about
@@ -154,16 +158,19 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
 
   # file descriptor interface, see Crystal::EventLoop::FileDescriptor
 
-  def open(path : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : System::FileDescriptor::Handle | Errno
+  def open(path : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : {System::FileDescriptor::Handle, Bool} | Errno
     path.check_no_null_byte
 
     fd = LibC.open(path, flags | LibC::O_CLOEXEC, permissions)
+    return Errno.value if fd == -1
 
-    if fd == -1
-      Errno.value
-    else
-      fd
+    blocking = !System::File.special_type?(fd) if blocking.nil?
+    unless blocking
+      status_flags = System::FileDescriptor.fcntl(fd, LibC::F_GETFL)
+      System::FileDescriptor.fcntl(fd, LibC::F_SETFL, status_flags | LibC::O_NONBLOCK)
     end
+
+    {fd, blocking}
   end
 
   def read(file_descriptor : System::FileDescriptor, slice : Bytes) : Int32
@@ -223,6 +230,16 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
 
   # socket interface, see Crystal::EventLoop::Socket
 
+  def socket(family : ::Socket::Family, type : ::Socket::Type, protocol : ::Socket::Protocol, blocking : Bool?) : {::Socket::Handle, Bool}
+    socket = System::Socket.socket(family, type, protocol, !!blocking)
+    {socket, !!blocking}
+  end
+
+  def socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol) : Tuple({::Socket::Handle, ::Socket::Handle}, Bool)
+    socket = System::Socket.socketpair(type, protocol, blocking: false)
+    {socket, false}
+  end
+
   def read(socket : ::Socket, slice : Bytes) : Int32
     size = evented_read(socket, slice, socket.@read_timeout)
     raise IO::Error.from_errno("read", target: socket) if size == -1
@@ -247,11 +264,11 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     end
   end
 
-  def accept(socket : ::Socket) : ::Socket::Handle?
+  def accept(socket : ::Socket) : {::Socket::Handle, Bool}?
     loop do
       client_fd =
         {% if LibC.has_method?(:accept4) %}
-          LibC.accept4(socket.fd, nil, nil, LibC::SOCK_CLOEXEC)
+          LibC.accept4(socket.fd, nil, nil, LibC::SOCK_CLOEXEC | LibC::SOCK_NONBLOCK)
         {% else %}
           # we may fail to set FD_CLOEXEC between `accept` and `fcntl` but we
           # can't call `Crystal::System::Socket.lock_read` because the socket
@@ -262,11 +279,14 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
           # could change the socket back to blocking mode between the condition
           # check and the `accept` call.
           LibC.accept(socket.fd, nil, nil).tap do |fd|
-            System::Socket.fcntl(fd, LibC::F_SETFD, LibC::FD_CLOEXEC) unless fd == -1
+            unless fd == -1
+              System::Socket.fcntl(fd, LibC::F_SETFD, LibC::FD_CLOEXEC)
+              System::Socket.fcntl(fd, LibC::F_SETFL, System::Socket.fcntl(fd, LibC::F_GETFL) | LibC::O_NONBLOCK)
+            end
           end
         {% end %}
 
-      return client_fd unless client_fd == -1
+      return {client_fd, false} unless client_fd == -1
       return if socket.closed?
 
       if Errno.value == Errno::EAGAIN

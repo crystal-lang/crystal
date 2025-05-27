@@ -14,7 +14,7 @@ module Crystal::System::File
   # write at the end of the file.
   getter? system_append = false
 
-  def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions, blocking : Bool?) : FileDescriptor::Handle
+  def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions, blocking : Bool?) : {FileDescriptor::Handle, Bool}
     perm = ::File::Permissions.new(perm) if perm.is_a? Int32
     # Only the owner writable bit is used, since windows only supports
     # the read only attribute.
@@ -25,7 +25,7 @@ module Crystal::System::File
     end
 
     case result = EventLoop.current.open(filename, open_flag(mode), ::File::Permissions.new(perm), blocking != false)
-    in FileDescriptor::Handle
+    in Tuple(FileDescriptor::Handle, Bool)
       result
     in WinError
       raise ::File::Error.from_os_error("Error opening file with mode '#{mode}'", result, file: filename)
@@ -88,8 +88,9 @@ module Crystal::System::File
     {access, disposition, attributes}
   end
 
-  protected def system_set_mode(mode : String)
+  protected def system_init(mode : String, blocking : Bool) : Nil
     @system_append = true if mode.starts_with?('a')
+    @system_blocking = blocking
   end
 
   private def write_blocking(handle, slice)

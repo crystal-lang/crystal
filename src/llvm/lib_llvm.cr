@@ -50,7 +50,7 @@
   {% end %}
   lib LibLLVM
     VERSION = {{ llvm_version.strip.gsub(/git/, "").gsub(/-?rc.*/, "") }}
-    BUILT_TARGETS = {{ llvm_targets.strip.downcase.split(' ').map(&.id.symbolize) }}
+    BUILT_TARGETS = {{ llvm_targets.strip.downcase.gsub(/;|,/, " ").split(' ').map(&.id.symbolize) }}
   end
 {% end %}
 
