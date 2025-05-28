@@ -215,7 +215,7 @@ struct Enum
   #
   # `ValueConverter.to_json` offers a different serialization strategy based on the
   # member value.
-  def to_json(json : JSON::Builder)
+  def to_json(json : JSON::Builder) : Nil
     {% if @type.annotation(Flags) %}
       json.array do
         each do |member, _value|

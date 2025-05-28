@@ -277,7 +277,7 @@ class JSON::Builder
   # Writes an object's field and value.
   # The field's name is first converted to a `String` by invoking
   # `to_s` on it.
-  def field(name, value)
+  def field(name : String | Int32, value) : Nil
     string(name)
     value.to_json(self)
   end
@@ -296,7 +296,7 @@ class JSON::Builder
   end
 
   # Sets the indent *string*.
-  def indent=(string : String)
+  def indent=(string : String) : String?
     if string.empty?
       @indent = nil
     else
@@ -305,7 +305,7 @@ class JSON::Builder
   end
 
   # Sets the indent *level* (number of spaces).
-  def indent=(level : Int)
+  def indent=(level : Int) : String?
     if level < 0
       @indent = nil
     else
