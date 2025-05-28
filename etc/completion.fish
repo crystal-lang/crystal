@@ -13,6 +13,7 @@ complete -c crystal -n "__fish_seen_subcommand_from build" -s d -l debug -d "Add
 complete -c crystal -n "__fish_seen_subcommand_from build" -l no-debug -d "Skip any symbolic debug info"
 complete -c crystal -n "__fish_seen_subcommand_from build" -s D -l define -d "Define a compile-time flag"
 complete -c crystal -n "__fish_seen_subcommand_from build" -l emit -d "Comma separated list of types of output for the compiler to emit" -a "asm obj llvm-bc llvm-ir" -f
+complete -c crystal -n "__fish_seen_subcommand_from build" -l x86-asm-syntax -d "X86 dialect for --emit=asm: att (default), intel" -a "att intel" -f
 complete -c crystal -n "__fish_seen_subcommand_from build" -s f -l format -d "Output format text (default) or json" -a "text json" -f
 complete -c crystal -n "__fish_seen_subcommand_from build" -l error-trace -d "Show full error trace"
 complete -c crystal -n "__fish_seen_subcommand_from build" -l ll -d "Dump ll to Crystal's cache directory"
@@ -94,6 +95,7 @@ complete -c crystal -n "__fish_seen_subcommand_from run" -s d -l debug -d "Add f
 complete -c crystal -n "__fish_seen_subcommand_from run" -l no-debug -d "Skip any symbolic debug info"
 complete -c crystal -n "__fish_seen_subcommand_from run" -s D -l define -d "Define a compile-time flag"
 complete -c crystal -n "__fish_seen_subcommand_from run" -l emit -d "Comma separated list of types of output for the compiler to emit" -a "asm obj llvm-bc llvm-ir" -f
+complete -c crystal -n "__fish_seen_subcommand_from run" -l x86-asm-syntax -d "X86 dialect for --emit=asm: att (default), intel" -a "att intel" -f
 complete -c crystal -n "__fish_seen_subcommand_from run" -s f -l format -d "Output format text (default) or json" -a "text json" -f
 complete -c crystal -n "__fish_seen_subcommand_from run" -l error-trace -d "Show full error trace"
 complete -c crystal -n "__fish_seen_subcommand_from run" -l ll -d "Dump ll to Crystal's cache directory"
