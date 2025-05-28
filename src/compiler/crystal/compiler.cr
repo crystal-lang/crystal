@@ -699,7 +699,7 @@ module Crystal
         if @progress_tracker.stats?
           if result["reused"].as_bool
             name = result["name"].as_s
-            unit = units.find { |unit| unit.name == name }.not_nil!
+            unit = units.find! { |unit| unit.name == name }
             unit.reused_previous_compilation = true
           end
         end
