@@ -2418,15 +2418,15 @@ describe "String" do
   end
 
   it "has match" do
-    "FooBar".match(/oo/).not_nil![0].should eq("oo")
+    "FooBar".match!(/oo/)[0].should eq("oo")
   end
 
   it "matches with position" do
-    "こんにちは".match(/./, 1).not_nil![0].should eq("ん")
+    "こんにちは".match!(/./, 1)[0].should eq("ん")
   end
 
   it "matches empty string" do
-    match = "".match(/.*/).not_nil!
+    match = "".match!(/.*/)
     match.group_size.should eq(0)
     match[0].should eq("")
   end
