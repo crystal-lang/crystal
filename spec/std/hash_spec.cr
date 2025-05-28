@@ -428,7 +428,7 @@ describe "Hash" do
     end
 
     it "works with mixed types" do
-      {1 => "a", "a" => 1, 2.0 => "a", "b" => 1.0}.values_at(1, "a", 2.0, "a").should eq({"a", 1, "a", 1.0})
+      {1 => "a", "a" => 1, 2.0 => "a", "b" => 1.0}.values_at(1, "a", 2.0, "b").should eq({"a", 1, "a", 1.0})
     end
   end
 
