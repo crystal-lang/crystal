@@ -273,7 +273,7 @@ record PullRequest,
   end
 
   def clean_title
-    title.sub(/^\[?(?:#{type}|#{sub_topic})(?::|\]:?) /i, "").sub(/\s*\[Backport [^\]]+\]\s*/, "")
+    title.sub(/\s*\[Backport [^\]]+\]\s*/, "").sub(/^\[?(?:#{type}|#{sub_topic})(?::|\]:?) /i, "")
   end
 
   def backported?

@@ -63,7 +63,19 @@ struct Crystal::System::IOCP
     property fiber : ::Fiber?
     getter tag : Tag
 
+    property next : CompletionKey?
+    property previous : CompletionKey?
+
+    # Data structure to extend the lifetime of completion keys, in particular
+    # those created by `Process.new` without an associated `#wait` call
+    @@pending = ::Thread::LinkedList(CompletionKey).new
+
+    def self.unregister(key : self) : Nil
+      @@pending.delete(key)
+    end
+
     def initialize(@tag : Tag, @fiber : ::Fiber? = nil)
+      @@pending.push(self)
     end
 
     def valid?(number_of_bytes_transferred)
@@ -73,6 +85,21 @@ struct Crystal::System::IOCP
       in .stdin_read?, .interrupt?, .timer?
         true
       end
+    end
+
+    def inspect(io : IO) : Nil
+      to_s(io)
+    end
+
+    def to_s(io : IO) : Nil
+      io << "#<" << self.class.name << ":0x"
+      object_id.to_s(io, 16)
+      io << " @fiber="
+      @fiber.inspect io
+      io << ','
+      io << " @tag="
+      @tag.inspect io
+      io << '>'
     end
   end
 
@@ -123,6 +150,7 @@ struct Crystal::System::IOCP
       in CompletionKey
         Crystal.trace :evloop, "completion", tag: completion_key.tag.to_s, bytes: entry.dwNumberOfBytesTransferred, fiber: completion_key.fiber
 
+        CompletionKey.unregister(completion_key)
         if completion_key.valid?(entry.dwNumberOfBytesTransferred)
           # if `Process` exits before a call to `#wait`, this fiber will be
           # reset already
@@ -249,6 +277,11 @@ struct Crystal::System::IOCP
 
   class IOOverlappedOperation < OverlappedOperation
     def initialize(@handle : LibC::HANDLE)
+    end
+
+    def offset=(value : UInt64)
+      @overlapped.union.offset.offset = LibC::DWORD.new!(value)
+      @overlapped.union.offset.offsetHigh = LibC::DWORD.new!(value >> 32)
     end
 
     def wait_for_result(timeout, & : WinError ->)

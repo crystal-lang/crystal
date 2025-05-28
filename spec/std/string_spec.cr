@@ -2870,7 +2870,7 @@ describe "String" do
     describe "encode" do
       it "encodes" do
         bytes = "Hello".encode("UCS-2LE")
-        bytes.to_a.should eq([72, 0, 101, 0, 108, 0, 108, 0, 111, 0])
+        bytes.should eq Bytes[72, 0, 101, 0, 108, 0, 108, 0, 111, 0]
       end
 
       {% unless flag?(:musl) || flag?(:solaris) || flag?(:freebsd) || flag?(:dragonfly) || flag?(:netbsd) %}
@@ -2908,7 +2908,7 @@ describe "String" do
       end
 
       it "doesn't raise on invalid byte sequence" do
-        "好\xff是".encode("EUC-JP", invalid: :skip).to_a.should eq([185, 165, 192, 167])
+        "好\xff是".encode("EUC-JP", invalid: :skip).should eq(Bytes[185, 165, 192, 167])
       end
 
       it "raises if incomplete byte sequence" do
@@ -2918,7 +2918,7 @@ describe "String" do
       end
 
       it "doesn't raise if incomplete byte sequence" do
-        ("好".byte_slice(0, 1) + "是").encode("EUC-JP", invalid: :skip).to_a.should eq([192, 167])
+        ("好".byte_slice(0, 1) + "是").encode("EUC-JP", invalid: :skip).should eq(Bytes[192, 167])
       end
 
       it "decodes" do

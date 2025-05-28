@@ -212,7 +212,7 @@ flag to LLVM, and is only intended to be used for cross\-compilation. For a list
 /dev/null | llc \-march=xyz \-mattr=help".
 .RE
 .sp
-\fB\-\-mcmodel\fP default|kernel|small|medium|large
+\fB\-\-mcmodel\fP default|kernel|tiny|small|medium|large
 .RS 4
 Specifies a specific code model to generate code for. This will
 pass a \-\-code\-model flag to LLVM.
@@ -411,6 +411,11 @@ prints only the value of each named variable on its own line.
 Variables:
 .sp
 \fBCRYSTAL_CACHE_DIR\fP
+.RS 4
+Please see ENVIRONMENT VARIABLES.
+.RE
+.sp
+\fBCRYSTAL_EXEC_PATH\fP
 .RS 4
 Please see ENVIRONMENT VARIABLES.
 .RE
@@ -805,6 +810,9 @@ Defines path where Crystal caches partial compilation results for faster
 subsequent builds. This path is also used to temporarily store executables
 when Crystal programs are run with \*(Aq\fBcrystal\fP run\*(Aq rather than \*(Aq\fBcrystal\fP
 build\*(Aq.
+.SS "CRYSTAL_EXEC_PATH"
+.sp
+Determines the path where crystal looks for external sub-commands.
 .SS "CRYSTAL_LIBRARY_PATH"
 .sp
 Defines paths where Crystal searches for (binary) libraries. Multiple paths

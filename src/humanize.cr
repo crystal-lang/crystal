@@ -56,10 +56,23 @@ struct Number
       integer, _, decimals = string.partition('.')
     end
 
+    is_negative = number.is_a?(Float::Primitive) ? Math.copysign(1, number) < 0 : number < 0
+
+    format_impl(io, is_negative, integer, decimals, separator, delimiter, decimal_places, group, only_significant)
+  end
+
+  # :ditto:
+  def format(separator = '.', delimiter = ',', decimal_places : Int? = nil, *, group : Int = 3, only_significant : Bool = false) : String
+    String.build do |io|
+      format(io, separator, delimiter, decimal_places, group: group, only_significant: only_significant)
+    end
+  end
+
+  private def format_impl(io, is_negative, integer, decimals, separator, delimiter, decimal_places, group, only_significant) : Nil
     int_size = integer.size
     dec_size = decimals.size
 
-    io << '-' if number.is_a?(Float::Primitive) ? Math.copysign(1, number) < 0 : number < 0
+    io << '-' if is_negative
 
     start = int_size % group
     start += group if start == 0
@@ -88,13 +101,6 @@ struct Number
           io << '0'
         end
       end
-    end
-  end
-
-  # :ditto:
-  def format(separator = '.', delimiter = ',', decimal_places : Int? = nil, *, group : Int = 3, only_significant : Bool = false) : String
-    String.build do |io|
-      format(io, separator, delimiter, decimal_places, group: group, only_significant: only_significant)
     end
   end
 
@@ -326,7 +332,7 @@ struct Int
   #
   # See `Number#humanize` for more details on the behaviour and arguments.
   def humanize_bytes(io : IO, precision : Int = 3, separator = '.', *, significant : Bool = true, unit_separator = nil, format : BinaryPrefixFormat = :IEC) : Nil
-    humanize(io, precision, separator, nil, base: 1024, significant: significant) do |magnitude|
+    humanize(io, precision, separator, nil, base: 1024, significant: significant, unit_separator: unit_separator) do |magnitude|
       magnitude = Number.prefix_index(magnitude)
 
       prefix = Number.si_prefix(magnitude)
@@ -334,9 +340,9 @@ struct Int
         unit = "B"
       else
         if format.iec?
-          unit = "#{unit_separator}#{prefix}iB"
+          unit = "#{prefix}iB"
         else
-          unit = "#{unit_separator}#{prefix.upcase}B"
+          unit = "#{prefix.upcase}B"
         end
       end
       {magnitude, unit, magnitude > 0}

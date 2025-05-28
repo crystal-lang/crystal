@@ -44,6 +44,13 @@ module Crystal
       {{ flag?(:release) }}
     end
 
+    def self.exec_path
+      ENV.fetch("CRYSTAL_EXEC_PATH") do
+        executable_path = Process.executable_path || return
+        File.dirname(executable_path)
+      end
+    end
+
     @@host_target : Crystal::Codegen::Target?
 
     def self.host_target : Crystal::Codegen::Target

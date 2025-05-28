@@ -61,7 +61,7 @@ whether SIMD operations are enabled or not. The default set of
 attributes is set by the current CPU. This will pass a -mattr
 flag to LLVM, and is only intended to be used for cross-compilation. For a list of available attributes, invoke "llvm-as <
 /dev/null | llc -march=xyz -mattr=help".
-*--mcmodel* default|kernel|small|medium|large::
+*--mcmodel* default|kernel|tiny|small|medium|large::
 Specifies a specific code model to generate code for. This will
 pass a --code-model flag to LLVM.
 *--no-color*::

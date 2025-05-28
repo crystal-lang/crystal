@@ -525,27 +525,52 @@ class String
     gen_to_ UInt128, UInt128
   end
 
-  # :nodoc:
-  CHAR_TO_DIGIT = begin
-    table = StaticArray(Int8, 256).new(-1_i8)
-    10_i8.times do |i|
-      table.to_unsafe[48 + i] = i
-    end
-    26_i8.times do |i|
-      table.to_unsafe[65 + i] = i + 10
-      table.to_unsafe[97 + i] = i + 10
-    end
-    table
-  end
+  {% if compare_versions(Crystal::VERSION, "1.16.0") >= 0 %}
+    {%
+      table = (0...256).map { -1 }
+      (0...10).each do |i|
+        table[48 + i] = i
+      end
+      (0...26).each do |i|
+        table[65 + i] = i + 10
+        table[97 + i] = i + 10
+      end
+    %}
 
-  # :nodoc:
-  CHAR_TO_DIGIT62 = begin
-    table = CHAR_TO_DIGIT.clone
-    26_i8.times do |i|
-      table.to_unsafe[65 + i] = i + 36
+    # :nodoc:
+    CHAR_TO_DIGIT = Slice(Int8).literal({{ table.splat }})
+
+    {%
+      (0...26).each do |i|
+        table[65 + i] = i + 36
+      end
+    %}
+
+    # :nodoc:
+    CHAR_TO_DIGIT62 = Slice(Int8).literal({{ table.splat }})
+  {% else %}
+    # :nodoc:
+    CHAR_TO_DIGIT = begin
+      table = StaticArray(Int8, 256).new(-1_i8)
+      10_i8.times do |i|
+        table.to_unsafe[48 + i] = i
+      end
+      26_i8.times do |i|
+        table.to_unsafe[65 + i] = i + 10
+        table.to_unsafe[97 + i] = i + 10
+      end
+      table
     end
-    table
-  end
+
+    # :nodoc:
+    CHAR_TO_DIGIT62 = begin
+      table = CHAR_TO_DIGIT.clone
+      26_i8.times do |i|
+        table.to_unsafe[65 + i] = i + 36
+      end
+      table
+    end
+  {% end %}
 
   # :nodoc:
   record ToUnsignedInfo(T),

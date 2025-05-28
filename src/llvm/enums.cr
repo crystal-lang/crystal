@@ -57,6 +57,7 @@ module LLVM
     WillReturn
     WriteOnly
     ZExt
+    Captures
 
     # NOTE: enum body does not allow `class_getter` or `TypeDeclaration`, hence
     # the nil cast
@@ -91,6 +92,7 @@ module LLVM
       kinds[ArgMemOnly] = kind_for_name("argmemonly")
       kinds[Builtin] = kind_for_name("builtin")
       kinds[ByVal] = kind_for_name("byval")
+      kinds[Captures] = kind_for_name("captures")
       kinds[Cold] = kind_for_name("cold")
       kinds[Convergent] = kind_for_name("convergent")
       kinds[Dereferenceable] = kind_for_name("dereferenceable")
@@ -292,6 +294,7 @@ module LLVM
   enum CodeModel
     Default
     JITDefault
+    Tiny
     Small
     Kernel
     Medium

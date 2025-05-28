@@ -1,4 +1,4 @@
-require "http/common"
+require "./common"
 
 module HTTP
   # :nodoc:

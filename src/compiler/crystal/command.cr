@@ -133,12 +133,7 @@ class Crystal::Command
       elsif external_command = Process.find_executable("crystal-#{command}")
         options.shift
 
-        crystal_exec_path = ENV["CRYSTAL_EXEC_PATH"]?
-        unless crystal_exec_path
-          if executable_path = Process.executable_path
-            crystal_exec_path = File.dirname(executable_path)
-          end
-        end
+        crystal_exec_path = Crystal::Config.exec_path
         path = [crystal_exec_path, ENV["PATH"]?].compact!.join(Process::PATH_DELIMITER)
 
         Process.exec(external_command, options, env: {
@@ -718,12 +713,13 @@ class Crystal::Command
     opts.on("--mcmodel MODEL", "Target specific code model") do |mcmodel|
       compiler.mcmodel = case mcmodel
                          when "default" then LLVM::CodeModel::Default
+                         when "tiny"    then LLVM::CodeModel::Tiny
                          when "small"   then LLVM::CodeModel::Small
                          when "kernel"  then LLVM::CodeModel::Kernel
                          when "medium"  then LLVM::CodeModel::Medium
                          when "large"   then LLVM::CodeModel::Large
                          else
-                           error "--mcmodel should be one of: default, kernel, small, medium, large"
+                           error "--mcmodel should be one of: default, kernel, tiny, small, medium, large"
                            raise "unreachable"
                          end
     end

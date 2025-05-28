@@ -8,11 +8,7 @@ module Crystal::System::Socket
 
   alias Handle = Int32
 
-  private def create_handle(family, type, protocol, blocking) : Handle
-    raise NotImplementedError.new "Crystal::System::Socket#create_handle"
-  end
-
-  private def initialize_handle(fd)
+  private def initialize_handle(fd, blocking = nil)
   end
 
   # Tries to bind the socket to a local address.
@@ -135,23 +131,18 @@ module Crystal::System::Socket
     r
   end
 
-  def self.socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol) : {Handle, Handle}
-    raise NotImplementedError.new("Crystal::System::Socket.socketpair")
-  end
-
   private def system_tty?
     LibC.isatty(fd) == 1
   end
 
   private def system_close
-    # Perform libevent cleanup before LibC.close.
-    # Using a file descriptor after it has been closed is never defined and can
-    # always lead to undefined results. This is not specific to libevent.
     event_loop.close(self)
+  end
 
+  def socket_close
     # Clear the @volatile_fd before actually closing it in order to
     # reduce the chance of reading an outdated fd value
-    fd = @volatile_fd.swap(-1)
+    return unless fd = close_volatile_fd?
 
     ret = LibC.close(fd)
 
@@ -163,6 +154,11 @@ module Crystal::System::Socket
         raise ::Socket::Error.from_errno("Error closing socket")
       end
     end
+  end
+
+  def close_volatile_fd? : Int32?
+    fd = @volatile_fd.swap(-1)
+    fd unless fd == -1
   end
 
   private def system_local_address
