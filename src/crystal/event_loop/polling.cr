@@ -56,6 +56,10 @@ end
 # before suspending the fiber, then after resume it will raise
 # `IO::TimeoutError` if the event timed out, and continue otherwise.
 abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
+  def self.default_file_blocking?
+    false
+  end
+
   def self.default_socket_blocking?
     false
   end
@@ -157,6 +161,14 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
   end
 
   # file descriptor interface, see Crystal::EventLoop::FileDescriptor
+
+  def pipe(read_blocking : Bool?, write_blocking : Bool?) : {IO::FileDescriptor, IO::FileDescriptor}
+    r, w = System::FileDescriptor.system_pipe
+    {
+      IO::FileDescriptor.new(r, !!read_blocking),
+      IO::FileDescriptor.new(w, !!write_blocking),
+    }
+  end
 
   def open(path : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : {System::FileDescriptor::Handle, Bool} | Errno
     path.check_no_null_byte

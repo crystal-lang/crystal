@@ -10,7 +10,15 @@ require "./iocp/*"
 
 # :nodoc:
 class Crystal::EventLoop::IOCP < Crystal::EventLoop
+  def self.default_file_blocking?
+    # here, blocking refers to setting FILE_FLAG_OVERLAPPED (non blocking) or
+    # not (blocking)
+    false
+  end
+
   def self.default_socket_blocking?
+    # here, blocking refers to the (non)blocking mode of winsocks, it is
+    # independent from the WSA_FLAG_OVERLAPPED that we always set
     true
   end
 
@@ -225,6 +233,14 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
 
   def create_timeout_event(fiber : Fiber) : EventLoop::Event
     FiberEvent.new(:select_timeout, fiber)
+  end
+
+  def pipe(read_blocking : Bool?, write_blocking : Bool?) : {IO::FileDescriptor, IO::FileDescriptor}
+    r, w = System::FileDescriptor.system_pipe(!!read_blocking, !!write_blocking)
+    {
+      IO::FileDescriptor.new(r, !!read_blocking),
+      IO::FileDescriptor.new(w, !!write_blocking),
+    }
   end
 
   def open(path : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : {System::FileDescriptor::Handle, Bool} | WinError

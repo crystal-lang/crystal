@@ -7,10 +7,6 @@ module Crystal::System::FileDescriptor
     IO::FileDescriptor.new(fd).tap(&.flush_on_newline=(true))
   end
 
-  def self.pipe(read_blocking, write_blocking)
-    raise NotImplementedError.new "Crystal::System::FileDescriptor.pipe"
-  end
-
   def self.fcntl(fd, cmd, arg = 0)
     r = LibC.fcntl(fd, cmd, arg)
     raise IO::Error.from_errno("fcntl() failed") if r == -1

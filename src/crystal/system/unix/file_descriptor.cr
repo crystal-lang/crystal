@@ -36,13 +36,13 @@ module Crystal::System::FileDescriptor
 
   protected def system_blocking_init(blocking : Bool?)
     if blocking.nil?
-      blocking =
-        case system_info.type
-        when .pipe?, .socket?, .character_device?
-          false
-        else
-          true
-        end
+      blocking = EventLoop.default_file_blocking? ||
+                 case system_info.type
+                 when .pipe?, .socket?, .character_device?
+                   false
+                 else
+                   true
+                 end
     end
     self.system_blocking = blocking
   end
@@ -210,14 +210,6 @@ module Crystal::System::FileDescriptor
     if ret != 0
       raise IO::Error.from_errno("Error syncing file", target: self)
     end
-  end
-
-  def self.pipe(read_blocking, write_blocking)
-    pipe_fds = system_pipe
-    r = IO::FileDescriptor.new(pipe_fds[0], read_blocking)
-    w = IO::FileDescriptor.new(pipe_fds[1], write_blocking)
-    w.sync = true
-    {r, w}
   end
 
   def self.system_pipe : StaticArray(LibC::Int, 2)

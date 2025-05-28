@@ -2,6 +2,10 @@ require "./libevent/event"
 
 # :nodoc:
 class Crystal::EventLoop::LibEvent < Crystal::EventLoop
+  def self.default_file_blocking?
+    false
+  end
+
   def self.default_socket_blocking?
     false
   end
@@ -110,6 +114,14 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
         io_ref.resume_read(timed_out: true)
       end
     end
+  end
+
+  def pipe(read_blocking : Bool?, write_blocking : Bool?) : {IO::FileDescriptor, IO::FileDescriptor}
+    r, w = System::FileDescriptor.system_pipe
+    {
+      IO::FileDescriptor.new(r, !!read_blocking),
+      IO::FileDescriptor.new(w, !!write_blocking),
+    }
   end
 
   def open(path : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : {System::FileDescriptor::Handle, Bool} | Errno
