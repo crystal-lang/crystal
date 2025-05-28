@@ -188,4 +188,14 @@ describe YAML::Builder do
       end
     end.should eq 1.to_yaml
   end
+
+  it "errors on invalid state" do
+    String.build do |io|
+      YAML::Builder.build(io) do |builder|
+        expect_raises YAML::Error, "Error emitting document_end" do
+          builder.end_document
+        end
+      end
+    end
+  end
 end
