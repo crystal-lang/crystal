@@ -6,7 +6,7 @@ class Time::Location
   #
   # Details on the exact cause can be found in the error message.
   class InvalidTZDataError < Time::Error
-    def self.initialize(message : String? = "Malformed time zone information", cause : Exception? = nil)
+    def initialize(message : String? = "Malformed time zone information", cause : Exception? = nil)
       super(message, cause)
     end
   end
