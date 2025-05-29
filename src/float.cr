@@ -198,6 +198,13 @@ struct Float32
     Math.copysign(self, 1)
   end
 
+  # Returns `-1` if the sign bit of this float is set, `1` otherwise.
+  #
+  # Unlike `#sign`, this works on signed zeros and not-a-numbers as well.
+  def sign_bit : Int32
+    Math.copysign(1_f32, self).to_i
+  end
+
   # Rounds towards positive infinity.
   def ceil : Float32
     LibM.ceil_f32(self)
@@ -388,6 +395,13 @@ struct Float64
 
   def abs
     Math.copysign(self, 1)
+  end
+
+  # Returns `-1` if the sign bit of this float is set, `1` otherwise.
+  #
+  # Unlike `#sign`, this works on signed zeros and not-a-numbers as well.
+  def sign_bit : Int32
+    Math.copysign(1_f64, self).to_i
   end
 
   def ceil : Float64

@@ -8,8 +8,8 @@ require "../support/number"
 # exact equality, including component signs
 private def assert_complex_eq(z1 : Complex, z2 : Complex, *, file = __FILE__, line = __LINE__)
   z1.should eq(z2), file: file, line: line
-  Math.copysign(1.0, z1.real).should eq(Math.copysign(1.0, z2.real)), file: file, line: line
-  Math.copysign(1.0, z1.imag).should eq(Math.copysign(1.0, z2.imag)), file: file, line: line
+  z1.real.sign_bit.should eq(z2.real.sign_bit), file: file, line: line
+  z1.imag.sign_bit.should eq(z2.imag.sign_bit), file: file, line: line
 end
 
 private def assert_complex_nan(z : Complex, *, file = __FILE__, line = __LINE__)
