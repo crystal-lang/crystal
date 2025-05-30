@@ -46,7 +46,7 @@ complete -c crystal -n "__fish_seen_subcommand_from docs" -l project-version -d 
 complete -c crystal -n "__fish_seen_subcommand_from docs" -l source-refname -d "Set source refname (e.g. git tag, commit hash)"
 complete -c crystal -n "__fish_seen_subcommand_from docs" -l source-url-pattern -d "Set URL pattern for source code links"
 complete -c crystal -n "__fish_seen_subcommand_from docs" -s o -l output -d "Set the output directory (default: ./docs)"
-complete -c crystal -n "__fish_seen_subcommand_from docs" -s f -l format -d "Set the output format (default: html)" -a "html json"
+complete -c crystal -n "__fish_seen_subcommand_from docs" -s f -l format -d "Set the output format (default: html)" -a "html json markdown"
 complete -c crystal -n "__fish_seen_subcommand_from docs" -l json-config-url -d "Set the URL pointing to a config file (used for discovering versions)"
 complete -c crystal -n "__fish_seen_subcommand_from docs" -l canonical-base-url -d "Indicate the preferred URL with rel="canonical" link element"
 complete -c crystal -n "__fish_seen_subcommand_from docs" -s b -l sitemap-base-url -d "Set the sitemap base URL and generates sitemap"
