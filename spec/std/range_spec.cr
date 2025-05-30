@@ -440,13 +440,13 @@ describe "Range" do
     end
 
     it "samples a range with nilable types" do
-      r = ((true ? 1 : nil)..(true ? 4 : nil))
+      r = (1.as(Int32?)..4.as(Int32?))
       x = r.sample
       r.should contain(x)
 
-      ((true ? 1 : nil)...(true ? 2 : nil)).sample.should eq(1)
+      (1.as(Int32?)...2.as(Int32?)).sample.should eq(1)
 
-      r = ((true ? 1.2 : nil)..(true ? 3.4 : nil))
+      r = (1.2.as(Float64?)..3.4.as(Float64?))
       x = r.sample
       r.should contain(x)
     end
