@@ -157,7 +157,7 @@ end
   end
 {% end %}
 
-def Float32.new(pull : JSON::PullParser) : Float32
+def Float32.new(pull : JSON::PullParser) : self
   case pull.kind
   when .int?
     value = pull.int_value.to_f32
