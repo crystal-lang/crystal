@@ -2417,18 +2417,26 @@ describe "String" do
     end
   end
 
-  it "has match" do
-    "FooBar".match(/oo/).not_nil![0].should eq("oo")
-  end
+  describe "#match" do
+    it "has match" do
+      match = "FooBar".match(/oo/).should_not be_nil
+      match[0].should eq("oo")
+    end
 
-  it "matches with position" do
-    "こんにちは".match(/./, 1).not_nil![0].should eq("ん")
-  end
+    it "matches with position" do
+      match = "こんにちは".match(/./, 1).should_not be_nil
+      match[0].should eq("ん")
+    end
 
-  it "matches empty string" do
-    match = "".match(/.*/).not_nil!
-    match.group_size.should eq(0)
-    match[0].should eq("")
+    it "matches empty string" do
+      match = "".match(/.*/).should_not be_nil
+      match.group_size.should eq(0)
+      match[0].should eq("")
+    end
+
+    it "returns nil" do
+      "foo".match(/bar/).should be_nil
+    end
   end
 
   it "matches, but returns Bool" do

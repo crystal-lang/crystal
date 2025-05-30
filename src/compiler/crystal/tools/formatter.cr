@@ -5111,7 +5111,7 @@ module Crystal
         next if doc_comment.start_line > doc_comment.end_line
 
         first_line = lines[doc_comment.start_line]
-        sharp_index = first_line.index('#').not_nil!
+        sharp_index = first_line.index!('#')
 
         comment = String.build do |str|
           (doc_comment.start_line..doc_comment.end_line).each do |i|
