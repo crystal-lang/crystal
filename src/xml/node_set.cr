@@ -37,6 +37,10 @@ class XML::NodeSet
     io << ']'
   end
 
+  def pretty_print(pp : PrettyPrint) : Nil
+    pp.list("[", self, "]")
+  end
+
   def size : Int32
     @set.value.node_nr
   end

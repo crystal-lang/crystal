@@ -6,9 +6,9 @@
 
 module Crystal::System::Time
   # These mappings from IANA to Windows time zone names are based on
-  # https://raw.githubusercontent.com/unicode-org/cldr/817409270794bb1538fe6b4aa3e9c79aff2c34d2/common/supplemental/windowsZones.xml
+  # https://raw.githubusercontent.com/unicode-org/cldr/f8369ba0795c79f3bac8eb89967eea359f77835e/common/supplemental/windowsZones.xml
   private class_getter iana_to_windows : Hash(String, String) do
-    data = Hash(String, String).new(initial_capacity: 460)
+    data = Hash(String, String).new(initial_capacity: 445)
     put(data, "Africa/Abidjan", "Greenwich Standard Time")
     put(data, "Africa/Accra", "Greenwich Standard Time")
     put(data, "Africa/Addis_Ababa", "E. Africa Standard Time")
@@ -98,6 +98,7 @@ module Crystal::System::Time
     put(data, "America/Coral_Harbour", "SA Pacific Standard Time")
     put(data, "America/Cordoba", "Argentina Standard Time")
     put(data, "America/Costa_Rica", "Central America Standard Time")
+    put(data, "America/Coyhaique", "Magallanes Standard Time")
     put(data, "America/Creston", "US Mountain Standard Time")
     put(data, "America/Cuiaba", "Central Brazilian Standard Time")
     put(data, "America/Curacao", "SA Western Standard Time")
@@ -160,11 +161,9 @@ module Crystal::System::Time
     put(data, "America/Moncton", "Atlantic Standard Time")
     put(data, "America/Monterrey", "Central Standard Time (Mexico)")
     put(data, "America/Montevideo", "Montevideo Standard Time")
-    put(data, "America/Montreal", "Eastern Standard Time")
     put(data, "America/Montserrat", "SA Western Standard Time")
     put(data, "America/Nassau", "Eastern Standard Time")
     put(data, "America/New_York", "Eastern Standard Time")
-    put(data, "America/Nipigon", "Eastern Standard Time")
     put(data, "America/Nome", "Alaskan Standard Time")
     put(data, "America/Noronha", "UTC-02")
     put(data, "America/North_Dakota/Beulah", "Central Standard Time")
@@ -172,7 +171,6 @@ module Crystal::System::Time
     put(data, "America/North_Dakota/New_Salem", "Central Standard Time")
     put(data, "America/Ojinaga", "Central Standard Time")
     put(data, "America/Panama", "SA Pacific Standard Time")
-    put(data, "America/Pangnirtung", "Eastern Standard Time")
     put(data, "America/Paramaribo", "SA Eastern Standard Time")
     put(data, "America/Phoenix", "US Mountain Standard Time")
     put(data, "America/Port-au-Prince", "Haiti Standard Time")
@@ -180,13 +178,11 @@ module Crystal::System::Time
     put(data, "America/Porto_Velho", "SA Western Standard Time")
     put(data, "America/Puerto_Rico", "SA Western Standard Time")
     put(data, "America/Punta_Arenas", "Magallanes Standard Time")
-    put(data, "America/Rainy_River", "Central Standard Time")
     put(data, "America/Rankin_Inlet", "Central Standard Time")
     put(data, "America/Recife", "SA Eastern Standard Time")
     put(data, "America/Regina", "Canada Central Standard Time")
     put(data, "America/Resolute", "Central Standard Time")
     put(data, "America/Rio_Branco", "SA Pacific Standard Time")
-    put(data, "America/Santa_Isabel", "Pacific Standard Time (Mexico)")
     put(data, "America/Santarem", "SA Eastern Standard Time")
     put(data, "America/Santiago", "Pacific SA Standard Time")
     put(data, "America/Santo_Domingo", "SA Western Standard Time")
@@ -202,7 +198,6 @@ module Crystal::System::Time
     put(data, "America/Swift_Current", "Canada Central Standard Time")
     put(data, "America/Tegucigalpa", "Central America Standard Time")
     put(data, "America/Thule", "Atlantic Standard Time")
-    put(data, "America/Thunder_Bay", "Eastern Standard Time")
     put(data, "America/Tijuana", "Pacific Standard Time (Mexico)")
     put(data, "America/Toronto", "Eastern Standard Time")
     put(data, "America/Tortola", "SA Western Standard Time")
@@ -210,7 +205,6 @@ module Crystal::System::Time
     put(data, "America/Whitehorse", "Yukon Standard Time")
     put(data, "America/Winnipeg", "Central Standard Time")
     put(data, "America/Yakutat", "Alaskan Standard Time")
-    put(data, "America/Yellowknife", "Mountain Standard Time")
     put(data, "Antarctica/Casey", "Central Pacific Standard Time")
     put(data, "Antarctica/Davis", "SE Asia Standard Time")
     put(data, "Antarctica/DumontDUrville", "West Pacific Standard Time")
@@ -223,7 +217,7 @@ module Crystal::System::Time
     put(data, "Antarctica/Vostok", "Central Asia Standard Time")
     put(data, "Arctic/Longyearbyen", "W. Europe Standard Time")
     put(data, "Asia/Aden", "Arab Standard Time")
-    put(data, "Asia/Almaty", "Central Asia Standard Time")
+    put(data, "Asia/Almaty", "West Asia Standard Time")
     put(data, "Asia/Amman", "Jordan Standard Time")
     put(data, "Asia/Anadyr", "Russia Time Zone 11")
     put(data, "Asia/Aqtau", "West Asia Standard Time")
@@ -240,7 +234,6 @@ module Crystal::System::Time
     put(data, "Asia/Brunei", "Singapore Standard Time")
     put(data, "Asia/Calcutta", "India Standard Time")
     put(data, "Asia/Chita", "Transbaikal Standard Time")
-    put(data, "Asia/Choibalsan", "Ulaanbaatar Standard Time")
     put(data, "Asia/Colombo", "Sri Lanka Standard Time")
     put(data, "Asia/Damascus", "Syria Standard Time")
     put(data, "Asia/Dhaka", "Bangladesh Standard Time")
@@ -279,7 +272,7 @@ module Crystal::System::Time
     put(data, "Asia/Pontianak", "SE Asia Standard Time")
     put(data, "Asia/Pyongyang", "North Korea Standard Time")
     put(data, "Asia/Qatar", "Arab Standard Time")
-    put(data, "Asia/Qostanay", "Central Asia Standard Time")
+    put(data, "Asia/Qostanay", "West Asia Standard Time")
     put(data, "Asia/Qyzylorda", "Qyzylorda Standard Time")
     put(data, "Asia/Rangoon", "Myanmar Standard Time")
     put(data, "Asia/Riyadh", "Arab Standard Time")
@@ -318,7 +311,6 @@ module Crystal::System::Time
     put(data, "Australia/Adelaide", "Cen. Australia Standard Time")
     put(data, "Australia/Brisbane", "E. Australia Standard Time")
     put(data, "Australia/Broken_Hill", "Cen. Australia Standard Time")
-    put(data, "Australia/Currie", "Tasmania Standard Time")
     put(data, "Australia/Darwin", "AUS Central Standard Time")
     put(data, "Australia/Eucla", "Aus Central W. Standard Time")
     put(data, "Australia/Hobart", "Tasmania Standard Time")
@@ -327,8 +319,6 @@ module Crystal::System::Time
     put(data, "Australia/Melbourne", "AUS Eastern Standard Time")
     put(data, "Australia/Perth", "W. Australia Standard Time")
     put(data, "Australia/Sydney", "AUS Eastern Standard Time")
-    put(data, "CST6CDT", "Central Standard Time")
-    put(data, "EST5EDT", "Eastern Standard Time")
     put(data, "Etc/GMT", "UTC")
     put(data, "Etc/GMT+1", "Cape Verde Standard Time")
     put(data, "Etc/GMT+10", "Hawaiian Standard Time")
@@ -407,7 +397,6 @@ module Crystal::System::Time
     put(data, "Europe/Tallinn", "FLE Standard Time")
     put(data, "Europe/Tirane", "Central Europe Standard Time")
     put(data, "Europe/Ulyanovsk", "Astrakhan Standard Time")
-    put(data, "Europe/Uzhgorod", "FLE Standard Time")
     put(data, "Europe/Vaduz", "W. Europe Standard Time")
     put(data, "Europe/Vatican", "W. Europe Standard Time")
     put(data, "Europe/Vienna", "W. Europe Standard Time")
@@ -415,7 +404,6 @@ module Crystal::System::Time
     put(data, "Europe/Volgograd", "Volgograd Standard Time")
     put(data, "Europe/Warsaw", "Central European Standard Time")
     put(data, "Europe/Zagreb", "Central European Standard Time")
-    put(data, "Europe/Zaporozhye", "FLE Standard Time")
     put(data, "Europe/Zurich", "W. Europe Standard Time")
     put(data, "Indian/Antananarivo", "E. Africa Standard Time")
     put(data, "Indian/Chagos", "Central Asia Standard Time")
@@ -428,8 +416,6 @@ module Crystal::System::Time
     put(data, "Indian/Mauritius", "Mauritius Standard Time")
     put(data, "Indian/Mayotte", "E. Africa Standard Time")
     put(data, "Indian/Reunion", "Mauritius Standard Time")
-    put(data, "MST7MDT", "Mountain Standard Time")
-    put(data, "PST8PDT", "Pacific Standard Time")
     put(data, "Pacific/Apia", "Samoa Standard Time")
     put(data, "Pacific/Auckland", "New Zealand Standard Time")
     put(data, "Pacific/Bougainville", "Bougainville Standard Time")
@@ -445,7 +431,6 @@ module Crystal::System::Time
     put(data, "Pacific/Guadalcanal", "Central Pacific Standard Time")
     put(data, "Pacific/Guam", "West Pacific Standard Time")
     put(data, "Pacific/Honolulu", "Hawaiian Standard Time")
-    put(data, "Pacific/Johnston", "Hawaiian Standard Time")
     put(data, "Pacific/Kiritimati", "Line Islands Standard Time")
     put(data, "Pacific/Kosrae", "Central Pacific Standard Time")
     put(data, "Pacific/Kwajalein", "UTC+12")
@@ -473,7 +458,7 @@ module Crystal::System::Time
   end
 
   # These mappings from Windows time zone names to tzdata abbreviations are based on
-  # https://raw.githubusercontent.com/unicode-org/cldr/817409270794bb1538fe6b4aa3e9c79aff2c34d2/common/supplemental/windowsZones.xml
+  # https://raw.githubusercontent.com/unicode-org/cldr/f8369ba0795c79f3bac8eb89967eea359f77835e/common/supplemental/windowsZones.xml
   private class_getter windows_zone_names : Hash(String, {String, String}) do
     data = Hash(String, {String, String}).new(initial_capacity: 139)
     put(data, "Egypt Standard Time", "EET", "EEST")              # Africa/Cairo
@@ -521,13 +506,13 @@ module Crystal::System::Time
     put(data, "Newfoundland Standard Time", "NST", "NDT")        # America/St_Johns
     put(data, "Pacific Standard Time (Mexico)", "PST", "PDT")    # America/Tijuana
     put(data, "Yukon Standard Time", "MST", "MST")               # America/Whitehorse
-    put(data, "Central Asia Standard Time", "+05", "+05")        # Asia/Almaty
     put(data, "Jordan Standard Time", "+03", "+03")              # Asia/Amman
     put(data, "Arabic Standard Time", "+03", "+03")              # Asia/Baghdad
     put(data, "Azerbaijan Standard Time", "+04", "+04")          # Asia/Baku
     put(data, "SE Asia Standard Time", "+07", "+07")             # Asia/Bangkok
     put(data, "Altai Standard Time", "+07", "+07")               # Asia/Barnaul
     put(data, "Middle East Standard Time", "EET", "EEST")        # Asia/Beirut
+    put(data, "Central Asia Standard Time", "+06", "+06")        # Asia/Bishkek
     put(data, "India Standard Time", "IST", "IST")               # Asia/Calcutta
     put(data, "Transbaikal Standard Time", "+09", "+09")         # Asia/Chita
     put(data, "Sri Lanka Standard Time", "+0530", "+0530")       # Asia/Colombo

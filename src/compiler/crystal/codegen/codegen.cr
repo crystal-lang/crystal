@@ -427,9 +427,34 @@ module Crystal
     end
 
     def define_slice_constant(info : Program::ConstSliceInfo)
+      initializer = const_slice_data_array(info)
+      global = @llvm_mod.globals.add(initializer.type, info.name)
+      if @llvm_mod != @main_mod
+        global.linkage = LLVM::Linkage::External
+      elsif @single_module
+        global.linkage = LLVM::Linkage::Internal
+      end
+      global.global_constant = true
+      global.initializer = initializer
+    end
+
+    private def const_slice_data_array(info : Program::ConstSliceInfo)
       args = info.args.to_unsafe
       kind = info.element_type
       llvm_element_type = llvm_type(@program.type_from_literal_kind(kind))
+
+      {% unless LibLLVM::IS_LT_210 %}
+        case kind
+        when .u8?, .u16?, .u32?, .u64?, .i8?, .i16?, .i32?, .i64?, .f32?, .f64?
+          return llvm_element_type.const_data_array(info.to_bytes)
+        end
+      {% end %}
+
+      case kind
+      when .u8?, .i8?
+        return llvm_context.const_bytes(info.to_bytes)
+      end
+
       llvm_elements = Array.new(info.args.size) do |i|
         num = args[i].as(NumberLiteral)
         case kind
@@ -447,15 +472,7 @@ module Crystal
         in .f64?  then llvm_element_type.const_double(num.value)
         end
       end
-
-      global = @llvm_mod.globals.add(llvm_element_type.array(info.args.size), info.name)
-      if @llvm_mod != @main_mod
-        global.linkage = LLVM::Linkage::External
-      elsif @single_module
-        global.linkage = LLVM::Linkage::Internal
-      end
-      global.global_constant = true
-      global.initializer = llvm_element_type.const_array(llvm_elements)
+      llvm_element_type.const_array(llvm_elements)
     end
 
     class CodegenWellKnownFunctions < Visitor
