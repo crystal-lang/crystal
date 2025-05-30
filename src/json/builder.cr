@@ -277,7 +277,7 @@ class JSON::Builder
   # Writes an object's field and value.
   # The field's name is first converted to a `String` by invoking
   # `to_s` on it.
-  def field(name : String | Int32, value : _) : Nil
+  def field(name : _, value : _) : Nil
     string(name)
     value.to_json(self)
   end
@@ -291,7 +291,7 @@ class JSON::Builder
   end
 
   # Flushes the underlying `IO`.
-  def flush : IO?
+  def flush : Nil
     @io.flush
   end
 

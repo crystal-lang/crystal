@@ -130,12 +130,12 @@ struct JSON::Any
 
   # Traverses the depth of a structure and returns the value.
   # Returns `nil` if not found.
-  def dig?(index_or_key : String | Int, *subkeys : Int | String) : JSON::Any?
+  def dig?(index_or_key : Int | String, *subkeys : Int | String) : JSON::Any?
     self[index_or_key]?.try &.dig?(*subkeys)
   end
 
   # :nodoc:
-  def dig?(index_or_key : String | Int) : JSON::Any?
+  def dig?(index_or_key : Int | String) : JSON::Any?
     case @raw
     when Hash, Array
       self[index_or_key]?
@@ -145,12 +145,12 @@ struct JSON::Any
   end
 
   # Traverses the depth of a structure and returns the value, otherwise raises.
-  def dig(index_or_key : String | Int, *subkeys : Int | String) : JSON::Any
+  def dig(index_or_key : Int | String, *subkeys : Int | String) : JSON::Any
     self[index_or_key].dig(*subkeys)
   end
 
   # :nodoc:
-  def dig(index_or_key : String | Int) : JSON::Any
+  def dig(index_or_key : Int | String) : JSON::Any
     self[index_or_key]
   end
 

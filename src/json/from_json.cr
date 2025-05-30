@@ -116,11 +116,11 @@ module Iterator(T)
   end
 end
 
-def Nil.new(pull : JSON::PullParser) : Nil
+def Nil.new(pull : JSON::PullParser) : self
   pull.read_null
 end
 
-def Bool.new(pull : JSON::PullParser) : Bool
+def Bool.new(pull : JSON::PullParser) : self
   pull.read_bool
 end
 
@@ -172,7 +172,7 @@ def Float32.from_json_object_key?(key : String) : Float32?
   key.to_f32?
 end
 
-def Float64.new(pull : JSON::PullParser) : Float64
+def Float64.new(pull : JSON::PullParser) : self
   case pull.kind
   when .int?
     value = pull.int_value.to_f
@@ -187,11 +187,11 @@ def Float64.from_json_object_key?(key : String) : Float64?
   key.to_f64?
 end
 
-def String.new(pull : JSON::PullParser) : String
+def String.new(pull : JSON::PullParser) : self
   pull.read_string
 end
 
-def Path.new(pull : JSON::PullParser) : Path
+def Path.new(pull : JSON::PullParser) : self
   new(pull.read_string)
 end
 
@@ -470,7 +470,7 @@ end
 # time value.
 #
 # See `#to_json` for reference.
-def Time.new(pull : JSON::PullParser) : Time
+def Time.new(pull : JSON::PullParser) : self
   Time::Format::ISO_8601_DATE_TIME.parse(pull.read_string)
 end
 
