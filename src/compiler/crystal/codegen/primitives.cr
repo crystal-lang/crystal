@@ -166,7 +166,7 @@ class Crystal::CodeGenVisitor
     end
 
     calc_signed = t1.signed? || t2.signed?
-    calc_width = {t1, t2}.map { |t| t.bytes * 8 + ((calc_signed && t.unsigned?) ? 1 : 0) }.max
+    calc_width = {t1, t2}.max_of { |t| t.bytes * 8 + ((calc_signed && t.unsigned?) ? 1 : 0) }
     calc_type = llvm_context.int(calc_width)
 
     e1 = t1.signed? ? builder.sext(p1, calc_type) : builder.zext(p1, calc_type)
