@@ -372,6 +372,15 @@ describe "Float" do
     f = -(1.5_f32)
     f.should eq(-1.5_f32)
     f.should be_a(Float32)
+
+    (-(0.0)).sign_bit.should eq(-1)
+    (-(-0.0)).sign_bit.should eq(1)
+
+    (-(0.0_f32)).sign_bit.should eq(-1)
+    (-(-0.0_f32)).sign_bit.should eq(1)
+
+    (-Math.copysign(Float64::NAN, 1.0)).sign_bit.should eq(-1)
+    (-Math.copysign(Float64::NAN, -1.0)).sign_bit.should eq(1)
   end
 
   it "clones" do
