@@ -269,8 +269,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     leave aligned_sizeof_type(final_type), node: Nop.new.at(node.end_location)
 
     compiled_def.closure_context = @closure_context
-
-    @instructions
   end
 
   private def move_arg_to_closure_if_closured(node : Def, arg_name : String)

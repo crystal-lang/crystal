@@ -483,7 +483,6 @@ module HTTP
   class SubClient < HTTP::Client
     def around_exec(request, &)
       raise "from subclass"
-      yield
     end
   end
 end
