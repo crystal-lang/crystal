@@ -3173,6 +3173,34 @@ describe "String" do
       end
     end
   end
+
+  describe "ensure_prefix" do
+    context "with string prefix" do
+      it "adds prefix if not present" do
+        "foo".ensure_prefix("bar").should eq("barfoo")
+        "foo".ensure_prefix("FOO").should eq("FOOfoo")
+        "foo".ensure_prefix("").should eq("foo")
+        "foo".ensure_prefix("barf").should eq("barffoo")
+      end
+
+      it "does not add prefix if already present" do
+        "foobar".ensure_prefix("foo").should eq("foobar")
+        "FOOBAR".ensure_prefix("FOO").should eq("FOOBAR")
+      end
+    end
+
+    context "with char prefix" do
+      it "adds prefix if not present" do
+        "foo".ensure_prefix('b').should eq("bfoo")
+        "foo".ensure_prefix('F').should eq("Ffoo")
+      end
+
+      it "does not add prefix if already present" do
+        "bfoo".ensure_prefix('b').should eq("bfoo")
+        "BFOO".ensure_prefix('B').should eq("BFOO")
+      end
+    end
+  end
 end
 
 class String
