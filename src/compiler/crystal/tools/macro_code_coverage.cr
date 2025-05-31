@@ -82,8 +82,6 @@ module Crystal
 
                 location = self.normalize_location(location)
 
-                # p({location, count})
-
                 @hits[location.filename][location.line_number] = case existing_hits = @hits[location.filename][location.line_number]?
                                                                  in String
                                                                    hits, _, total = existing_hits.partition '/'
@@ -95,12 +93,7 @@ module Crystal
                                                                  end
               end
             end
-          # puts ""
-          # puts "-" * 10
-          # puts ""
         end
-
-      # pp @conditional_hit_cache
 
       @hits
     end
@@ -108,12 +101,6 @@ module Crystal
     private alias NodeTuple = {ASTNode, Location, Bool}
 
     private def process_line(line : Int32, nodes : Array(NodeTuple), & : {Int32, Location, Int32?} ->) : Nil
-      # nodes.each do |(node, location, missed)|
-      #   p({node: node.to_s.gsub("\n", "|=|"), class: node.class, location: location, end_location: node.end_location, missed: missed})
-      # end
-
-      # puts ""
-
       # It's safe to use the first location since they were chunked by line.
       _, location, _ = nodes.first
 
@@ -140,8 +127,6 @@ module Crystal
                     else
                       0
                     end
-
-        # p({newly_hit: newly_hit, hit_count: hit_count, location: location, branches: branches})
 
         yield({hit_count, location, branches})
         return
