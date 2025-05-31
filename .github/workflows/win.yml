@@ -310,6 +310,11 @@ jobs:
           name: crystal
           path: etc/win-ci/portable
 
+      - name: Set up Inno Setup
+        run: |
+          Invoke-WebRequest -Uri https://jrsoftware.org/download.php/is.exe -OutFile D:\is.exe
+          D:\is.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART
+
       - name: Set up environment
         run: |
           Add-Content $env:GITHUB_PATH "$(pwd)\etc\win-ci\portable"
