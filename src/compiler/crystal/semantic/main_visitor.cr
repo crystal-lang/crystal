@@ -2528,7 +2528,6 @@ module Crystal
 
       value = @vars["value"]
 
-      scope.var.bind_to value
       node.bind_to value
     end
 

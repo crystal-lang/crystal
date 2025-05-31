@@ -1,6 +1,7 @@
 require "c/io"
 require "c/consoleapi"
 require "c/consoleapi2"
+require "c/ntifs"
 require "c/winnls"
 require "crystal/system/win32/iocp"
 require "crystal/system/thread"
@@ -103,9 +104,18 @@ module Crystal::System::FileDescriptor
     end
   end
 
-  private def system_blocking_init(value)
-    @system_blocking = value
-    Crystal::EventLoop.current.create_completion_port(windows_handle) unless value
+  protected def system_blocking_init(blocking : Bool?)
+    if blocking.nil?
+      # there are no official API to know whether a handle has been opened with
+      # the OVERLAPPED flag, but the following call is supposed to leak the
+      # information: if neither of the SYNCHRONOUS_IO flags are set then the
+      # OVERLAPPED flag has been set
+      info = LibC::FILE_MODE_INFORMATION.new
+      status = LibC.NtQueryInformationFile(windows_handle, out _, pointerof(info), sizeof(LibC::FILE_MODE_INFORMATION), LibC::FILE_INFORMATION_CLASS::FileModeInformation)
+      blocking = status != LibC::STATUS_SUCCESS || (info.mode & (LibC::FILE_SYNCHRONOUS_IO_ALERT | LibC::FILE_SYNCHRONOUS_IO_NONALERT)) != 0
+    end
+    @system_blocking = blocking
+    Crystal::EventLoop.current.create_completion_port(windows_handle) unless blocking
   end
 
   private def system_close_on_exec?
@@ -292,7 +302,7 @@ module Crystal::System::FileDescriptor
 
   private PIPE_BUFFER_SIZE = 8192
 
-  def self.pipe(read_blocking, write_blocking)
+  def self.system_pipe(read_blocking, write_blocking)
     pipe_name = ::Path.windows(::File.tempname("crystal", nil, dir: %q(\\.\pipe))).normalize.to_s
     pipe_mode = 0 # PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT
 
@@ -306,11 +316,7 @@ module Crystal::System::FileDescriptor
     r_pipe = LibC.CreateFileW(System.to_wstr(pipe_name), LibC::GENERIC_READ | LibC::FILE_WRITE_ATTRIBUTES, 0, nil, LibC::OPEN_EXISTING, r_pipe_flags, nil)
     raise IO::Error.from_winerror("CreateFileW") if r_pipe == LibC::INVALID_HANDLE_VALUE
 
-    r = IO::FileDescriptor.new(r_pipe.address, read_blocking)
-    w = IO::FileDescriptor.new(w_pipe.address, write_blocking)
-    w.sync = true
-
-    {r, w}
+    {r_pipe.address, w_pipe.address}
   end
 
   def self.pread(file, buffer, offset)

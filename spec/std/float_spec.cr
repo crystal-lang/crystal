@@ -442,15 +442,46 @@ describe "Float" do
   end
 
   it "#abs" do
-    Math.copysign(1, 0.0.abs).should eq 1
-    Math.copysign(1, -0.0.abs).should eq 1
+    0.0_f64.abs.sign_bit.should eq 1
+    -0.0_f64.abs.sign_bit.should eq 1
 
-    0.1.abs.should eq 0.1
-    -0.1.abs.should eq 0.1
+    0.1_f64.abs.should eq 0.1_f64
+    -0.1_f64.abs.should eq 0.1_f64
+
+    0.0_f32.abs.sign_bit.should eq 1_f32
+    -0.0_f32.abs.sign_bit.should eq 1_f32
+
+    0.1_f32.abs.should eq 0.1_f32
+    -0.1_f32.abs.should eq 0.1_f32
 
     Float64::MAX.abs.should eq Float64::MAX
     Float64::MIN.abs.should eq -Float64::MIN
     Float64::INFINITY.abs.should eq Float64::INFINITY
     (-Float64::INFINITY).abs.should eq Float64::INFINITY
+
+    Float32::MAX.abs.should eq Float32::MAX
+    Float32::MIN.abs.should eq -Float32::MIN
+    Float32::INFINITY.abs.should eq Float32::INFINITY
+    (-Float32::INFINITY).abs.should eq Float32::INFINITY
+  end
+
+  it "#sign_bit" do
+    1.2_f64.sign_bit.should eq(1)
+    -1.2_f64.sign_bit.should eq(-1)
+    0.0_f64.sign_bit.should eq(1)
+    -0.0_f64.sign_bit.should eq(-1)
+    Float64::INFINITY.sign_bit.should eq(1)
+    (-Float64::INFINITY).sign_bit.should eq(-1)
+    0x7ff0_0000_0000_0001_u64.unsafe_as(Float64).sign_bit.should eq(1)
+    0xfff0_0000_0000_0001_u64.unsafe_as(Float64).sign_bit.should eq(-1)
+
+    1.2_f32.sign_bit.should eq(1)
+    -1.2_f32.sign_bit.should eq(-1)
+    0.0_f32.sign_bit.should eq(1)
+    -0.0_f32.sign_bit.should eq(-1)
+    Float32::INFINITY.sign_bit.should eq(1)
+    (-Float32::INFINITY).sign_bit.should eq(-1)
+    0x7f80_0001_u32.unsafe_as(Float32).sign_bit.should eq(1)
+    0xff80_0001_u32.unsafe_as(Float32).sign_bit.should eq(-1)
   end
 end

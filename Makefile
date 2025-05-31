@@ -22,7 +22,6 @@ all:
 ##   $ make -B generate_data
 
 CRYSTAL ?= crystal## which previous crystal compiler use
-LLVM_CONFIG ?=     ## llvm-config command path to use
 
 release ?=        ## Compile in release mode
 stats ?=          ## Enable statistics output
@@ -62,8 +61,12 @@ override EXPORTS_BUILD += \
 	$(EXPORT_CC) \
 	CRYSTAL_CONFIG_LIBRARY_PATH=$(CRYSTAL_CONFIG_LIBRARY_PATH)
 SHELL = sh
-LLVM_CONFIG := $(shell src/llvm/ext/find-llvm-config.sh)
-LLVM_VERSION ?= $(if $(LLVM_CONFIG),$(shell "$(LLVM_CONFIG)" --version 2> /dev/null))
+
+ifeq ($(LLVM_VERSION),)
+  LLVM_CONFIG ?= $(shell src/llvm/ext/find-llvm-config.sh)
+  LLVM_VERSION ?= $(if $(LLVM_CONFIG),$(shell "$(LLVM_CONFIG)" --version 2> /dev/null))
+endif
+
 LLVM_EXT_DIR = src/llvm/ext
 LLVM_EXT_OBJ = $(LLVM_EXT_DIR)/llvm_ext.o
 CXXFLAGS += $(if $(debug),-g -O0)
@@ -101,8 +104,8 @@ endif
 
 check_llvm_config = $(eval \
 	check_llvm_config := $(if $(LLVM_VERSION),\
-	  $(call colorize,Using $(LLVM_CONFIG) [version=$(LLVM_VERSION)]),\
-	  $(error "Could not locate compatible llvm-config, make sure it is installed and in your PATH, or set LLVM_CONFIG. Compatible versions: $(shell cat src/llvm/ext/llvm-versions.txt)))\
+		$(call colorize,Using $(or $(LLVM_CONFIG),externally configured LLVM) [version=$(LLVM_VERSION)]),\
+		$(error "Could not locate compatible llvm-config, make sure it is installed and in your PATH, or set LLVM_VERSION / LLVM_CONFIG. Compatible versions: $(shell cat src/llvm/ext/llvm-versions.txt)))\
 	)
 
 .PHONY: all
@@ -258,7 +261,7 @@ $(O)/$(CRYSTAL_BIN): $(DEPS) $(SOURCES)
 
 $(LLVM_EXT_OBJ): $(LLVM_EXT_DIR)/llvm_ext.cc
 	$(call check_llvm_config)
-	$(CXX) -c $(CXXFLAGS) -o $@ $< $(shell $(LLVM_CONFIG) --cxxflags)
+	$(CXX) -c $(CXXFLAGS) -o $@ $< $(if $(LLVM_CONFIG),$(shell $(LLVM_CONFIG) --cxxflags))
 
 man/: $(MAN1PAGES)
 

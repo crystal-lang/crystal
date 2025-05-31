@@ -125,16 +125,13 @@ class File < IO::FileDescriptor
 
   include Crystal::System::File
 
-  # This constructor is provided for subclasses to be able to initialize an
-  # `IO::FileDescriptor` with a *path* and *fd*.
-  private def initialize(@path, fd : Int, blocking = false, encoding = nil, invalid = nil)
-    self.set_encoding(encoding, invalid: invalid) if encoding
-    super(fd, blocking)
-  end
-
-  # :nodoc:
-  def self.from_fd(path : String, fd : Int, *, blocking = false, encoding = nil, invalid = nil)
-    new(path, fd, blocking: blocking, encoding: encoding, invalid: invalid)
+  # This constructor is for constructors to be able to initialize a `File` with
+  # a *path* and *fd*. The *blocking* param is informational and must reflect
+  # the non/blocking state of the underlying fd.
+  private def initialize(@path, fd : Int, mode = "", blocking = true, encoding = nil, invalid = nil)
+    super(handle: fd)
+    system_init(mode, blocking)
+    set_encoding(encoding, invalid: invalid) if encoding
   end
 
   # Opens the file named by *filename*.
@@ -173,8 +170,8 @@ class File < IO::FileDescriptor
   # additional syscall.
   def self.new(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, blocking = true)
     filename = filename.to_s
-    fd = Crystal::System::File.open(filename, mode, perm: perm, blocking: blocking)
-    new(filename, fd, blocking: blocking, encoding: encoding, invalid: invalid).tap { |f| f.system_set_mode(mode) }
+    fd, blocking = Crystal::System::File.open(filename, mode, perm: perm, blocking: blocking)
+    new(filename, fd, mode, blocking, encoding, invalid)
   end
 
   getter path : String

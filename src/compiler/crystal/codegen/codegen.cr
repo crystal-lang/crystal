@@ -427,9 +427,34 @@ module Crystal
     end
 
     def define_slice_constant(info : Program::ConstSliceInfo)
+      initializer = const_slice_data_array(info)
+      global = @llvm_mod.globals.add(initializer.type, info.name)
+      if @llvm_mod != @main_mod
+        global.linkage = LLVM::Linkage::External
+      elsif @single_module
+        global.linkage = LLVM::Linkage::Internal
+      end
+      global.global_constant = true
+      global.initializer = initializer
+    end
+
+    private def const_slice_data_array(info : Program::ConstSliceInfo)
       args = info.args.to_unsafe
       kind = info.element_type
       llvm_element_type = llvm_type(@program.type_from_literal_kind(kind))
+
+      {% unless LibLLVM::IS_LT_210 %}
+        case kind
+        when .u8?, .u16?, .u32?, .u64?, .i8?, .i16?, .i32?, .i64?, .f32?, .f64?
+          return llvm_element_type.const_data_array(info.to_bytes)
+        end
+      {% end %}
+
+      case kind
+      when .u8?, .i8?
+        return llvm_context.const_bytes(info.to_bytes)
+      end
+
       llvm_elements = Array.new(info.args.size) do |i|
         num = args[i].as(NumberLiteral)
         case kind
@@ -447,11 +472,7 @@ module Crystal
         in .f64?  then llvm_element_type.const_double(num.value)
         end
       end
-
-      global = @llvm_mod.globals.add(llvm_element_type.array(info.args.size), info.name)
-      global.linkage = LLVM::Linkage::Private
-      global.global_constant = true
-      global.initializer = llvm_element_type.const_array(llvm_elements)
+      llvm_element_type.const_array(llvm_elements)
     end
 
     class CodegenWellKnownFunctions < Visitor
@@ -1490,7 +1511,7 @@ module Crystal
           cond cmp, matches_block, doesnt_match_block
 
           position_at_end doesnt_match_block
-          codegen_raise_cast_failed(type_id, to_type, node)
+          codegen_raise_cast_failed(last_value, type_id, obj_type, to_type, node)
 
           position_at_end matches_block
           @last = downcast last_value, resulting_type, obj_type, true
@@ -1498,6 +1519,29 @@ module Crystal
       end
 
       false
+    end
+
+    # fallback for stdlib before 1.16.2 when using a 1.16.2 or later compiler
+    def type_cast_exception_call(from_type, to_type, node, var_name)
+      pieces = [
+        StringLiteral.new("Cast from ").at(node),
+        Call.new(Var.new(var_name).at(node), "class").at(node),
+        StringLiteral.new(" to #{to_type} failed").at(node),
+      ] of ASTNode
+
+      if location = node.location
+        pieces << StringLiteral.new(", at #{location.expanded_location}:#{location.line_number}").at(node)
+      end
+
+      ex = Call.new(Path.global("TypeCastError").at(node), "new", StringInterpolation.new(pieces).at(node)).at(node)
+      call = Call.global("raise", ex).at(node)
+      call = @program.normalize(call)
+
+      meta_vars = MetaVars.new
+      meta_vars[var_name] = MetaVar.new(var_name, type: from_type)
+      visitor = MainVisitor.new(@program, meta_vars)
+      @program.visit_main call, visitor: visitor
+      call
     end
 
     def visit(node : NilableCast)
@@ -1555,26 +1599,33 @@ module Crystal
       end
     end
 
-    def codegen_raise_cast_failed(type_id, to_type, node)
+    def codegen_raise_cast_failed(value, type_id, obj_type, to_type, node)
       location = node.location
       set_current_debug_location(location) if location && @debug.line_numbers?
 
-      func = crystal_raise_cast_failed_fun
-      call_args = [
-        cast_to_void_pointer(type_id_to_class_name(type_id)),
-        cast_to_void_pointer(build_string_constant(to_type.to_s)),
-        location ? cast_to_void_pointer(build_string_constant(location.expanded_location.to_s)) : llvm_context.void_pointer.null,
-      ] of LLVM::Value
+      if func = crystal_raise_cast_failed_fun
+        call_args = [
+          cast_to_void_pointer(type_id_to_class_name(type_id)),
+          cast_to_void_pointer(build_string_constant(to_type.to_s)),
+          location ? cast_to_void_pointer(build_string_constant(location.expanded_location.to_s)) : llvm_context.void_pointer.null,
+        ] of LLVM::Value
 
-      if (rescue_block = @rescue_block)
-        invoke_out_block = new_block "invoke_out"
-        invoke func, call_args, invoke_out_block, rescue_block
-        position_at_end invoke_out_block
+        if (rescue_block = @rescue_block)
+          invoke_out_block = new_block "invoke_out"
+          invoke func, call_args, invoke_out_block, rescue_block
+          position_at_end invoke_out_block
+        else
+          call func, call_args
+        end
+
+        unreachable
       else
-        call func, call_args
+        # fallback for stdlib before 1.16.2 when using a 1.16.2 or later compiler
+        temp_var_name = @program.new_temp_var_name
+        context.vars[temp_var_name] = LLVMVar.new(value, obj_type, already_loaded: true)
+        accept type_cast_exception_call(obj_type, to_type, node, temp_var_name)
+        context.vars.delete temp_var_name
       end
-
-      unreachable
     end
 
     def type_id_to_class_name(type_id)
@@ -2353,7 +2404,7 @@ module Crystal
       if raise_cast_failed_fun = @raise_cast_failed_fun
         check_main_fun RAISE_CAST_FAILED_NAME, raise_cast_failed_fun
       else
-        raise Error.new("Missing __crystal_raise_cast_failed function, either use std-lib's prelude or define it")
+        nil
       end
     end
 
@@ -2510,7 +2561,7 @@ module Crystal
       name = "'#{name}'"
       key = StringKey.new(@llvm_mod, str)
       @strings[key] ||= begin
-        global = @llvm_mod.globals.add(@llvm_typer.llvm_string_type(str.bytesize), name)
+        global = @llvm_mod.globals.add(@llvm_typer.llvm_string_type(str.bytesize), name.gsub('\\', "\\\\"))
         global.linkage = LLVM::Linkage::Private
         global.global_constant = true
         global.initializer = llvm_context.const_struct [

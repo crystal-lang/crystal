@@ -598,9 +598,16 @@ module Crystal
             true
           end
         end
+      when Not
+        case exp = obj.exp
+        when Call
+          exp.obj.nil?
+        else
+          !obj.exp.is_a? Call
+        end
       when Var, NilLiteral, BoolLiteral, CharLiteral, NumberLiteral, StringLiteral,
            StringInterpolation, Path, Generic, InstanceVar, ClassVar, Global,
-           ImplicitObj, TupleLiteral, NamedTupleLiteral, IsA, Not
+           ImplicitObj, TupleLiteral, NamedTupleLiteral, IsA
         false
       when ArrayLiteral
         !!obj.of

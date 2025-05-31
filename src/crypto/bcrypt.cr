@@ -44,10 +44,17 @@ class Crypto::Bcrypt
   private DIGEST_SIZE     = 31
 
   # bcrypt IV: "OrpheanBeholderScryDoubt"
-  private CIPHER_TEXT = UInt32.static_array(
-    0x4f727068, 0x65616e42, 0x65686f6c,
-    0x64657253, 0x63727944, 0x6f756274,
-  )
+  {% if compare_versions(Crystal::VERSION, "1.16.0") >= 0 %}
+    private CIPHER_TEXT = Slice(UInt32).literal(
+      0x4f727068, 0x65616e42, 0x65686f6c,
+      0x64657253, 0x63727944, 0x6f756274,
+    )
+  {% else %}
+    private CIPHER_TEXT = UInt32.static_array(
+      0x4f727068, 0x65616e42, 0x65686f6c,
+      0x64657253, 0x63727944, 0x6f756274,
+    )
+  {% end %}
 
   # Hashes the *password* using bcrypt algorithm using salt obtained via `Random::Secure.random_bytes(SALT_SIZE)`.
   #
@@ -126,7 +133,8 @@ class Crypto::Bcrypt
     blowfish = Blowfish.new(BLOWFISH_ROUNDS)
     blowfish.enhance_key_schedule(salt, password, cost)
 
-    cipher = CIPHER_TEXT.dup
+    cipher = uninitialized UInt32[6]
+    cipher.to_slice.copy_from(CIPHER_TEXT.to_slice)
     cdata = cipher.to_unsafe
 
     0.step(to: 4, by: 2) do |i|

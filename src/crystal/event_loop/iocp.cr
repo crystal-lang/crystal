@@ -10,6 +10,18 @@ require "./iocp/*"
 
 # :nodoc:
 class Crystal::EventLoop::IOCP < Crystal::EventLoop
+  def self.default_file_blocking?
+    # here, blocking refers to setting FILE_FLAG_OVERLAPPED (non blocking) or
+    # not (blocking)
+    false
+  end
+
+  def self.default_socket_blocking?
+    # here, blocking refers to the (non)blocking mode of winsocks, it is
+    # independent from the WSA_FLAG_OVERLAPPED that we always set
+    true
+  end
+
   @waitable_timer : System::WaitableTimer?
   @timer_packet : LibC::HANDLE?
   @timer_key : System::IOCP::CompletionKey?
@@ -131,9 +143,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     fiber = timer.value.fiber
 
     case timer.value.type
-    in .sleep?
-      # nothing to do
-    in .timeout?
+    in .sleep?, .timeout?
       timer.value.timed_out!
     in .select_timeout?
       return unless select_action = fiber.timeout_select_action
@@ -188,6 +198,15 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     timer = Timer.new(:sleep, Fiber.current, duration)
     add_timer(pointerof(timer))
     Fiber.suspend
+
+    # safety check
+    return if timer.timed_out?
+
+    # try to avoid a double resume if possible, but another thread might be
+    # running the evloop and dequeue the event in parallel, so a "can't resume
+    # dead fiber" can still happen in a MT execution context.
+    delete_timer(pointerof(timer))
+    raise "BUG: #{timer.fiber} called sleep but was manually resumed before the timer expired!"
   end
 
   # Suspend the current fiber for *duration* and returns true if the timer
@@ -214,6 +233,35 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
 
   def create_timeout_event(fiber : Fiber) : EventLoop::Event
     FiberEvent.new(:select_timeout, fiber)
+  end
+
+  def pipe(read_blocking : Bool?, write_blocking : Bool?) : {IO::FileDescriptor, IO::FileDescriptor}
+    r, w = System::FileDescriptor.system_pipe(!!read_blocking, !!write_blocking)
+    {
+      IO::FileDescriptor.new(r, !!read_blocking),
+      IO::FileDescriptor.new(w, !!write_blocking),
+    }
+  end
+
+  def open(path : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : {System::FileDescriptor::Handle, Bool} | WinError
+    access, disposition, attributes = System::File.posix_to_open_opts(flags, permissions, blocking)
+
+    handle = LibC.CreateFileW(
+      System.to_wstr(path),
+      access,
+      LibC::DEFAULT_SHARE_MODE, # UNIX semantics
+      nil,
+      disposition,
+      attributes,
+      LibC::HANDLE.null
+    )
+
+    if handle == LibC::INVALID_HANDLE_VALUE
+      WinError.value
+    else
+      create_completion_port(handle) unless blocking
+      {handle.address, !!blocking}
+    end
   end
 
   def read(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
@@ -259,6 +307,17 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
     LibC.CancelIoEx(file_descriptor.windows_handle, nil) unless file_descriptor.system_blocking?
     file_descriptor.file_descriptor_close
+  end
+
+  def socket(family : ::Socket::Family, type : ::Socket::Type, protocol : ::Socket::Protocol, blocking : Bool?) : {::Socket::Handle, Bool}
+    blocking = true if blocking.nil?
+    fd = System::Socket.socket(family, type, protocol, blocking)
+    create_completion_port LibC::HANDLE.new(fd)
+    {fd, blocking}
+  end
+
+  def socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol) : Tuple({::Socket::Handle, ::Socket::Handle}, Bool)
+    raise NotImplementedError.new("Crystal::EventLoop::IOCP#socketpair")
   end
 
   private def wsa_buffer(bytes)
@@ -348,7 +407,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     end
   end
 
-  def accept(socket : ::Socket) : ::Socket::Handle?
+  def accept(socket : ::Socket) : {::Socket::Handle, Bool}?
     socket.system_accept do |client_handle|
       address_size = sizeof(LibC::SOCKADDR_STORAGE) + 16
 

@@ -332,6 +332,10 @@ module HTTP
         request.path.should eq("/")
       end
 
+      it "parses with only leading with double slash" do
+        HTTP::Request.new("GET", "//").path.should eq "//"
+      end
+
       it "parses path leading with double slash" do
         Request.new("GET", "//foo:bar").path.should eq "//foo:bar"
       end
@@ -509,6 +513,22 @@ module HTTP
       it "gets request host with port from the headers" do
         request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nHost: host.example.org:3000\r\nReferer:\r\n\r\n")).as(Request)
         request.host_with_port.should eq("host.example.org:3000")
+      end
+    end
+
+    describe "#uri" do
+      it "returns request uri object" do
+        raw_resource = "/document?something=true#fragment"
+        request = Request.from_io(IO::Memory.new("GET #{raw_resource} HTTP/1.1\r\n\r\n")).as(Request)
+        request.uri.should eq(URI.parse(raw_resource))
+      end
+
+      it "can change the results of #resource" do
+        request = Request.from_io(IO::Memory.new("GET /route HTTP/1.1\r\n\r\n")).as(Request)
+        request.resource.should eq("/route")
+
+        request.uri.path = "/some_other_route"
+        request.resource.should eq("/some_other_route")
       end
     end
 
