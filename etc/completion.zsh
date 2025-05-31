@@ -84,6 +84,7 @@ local -a shared_run_build; shared_run_build=(
   $debug_args \
   $release_args \
   '(--emit)--emit[comma separated list of types of output for the compiler to emit]:foo:(asm llvm-bc llvm-ir obj)' \
+  '(--x86-asm-syntax)--x86-asm-syntax[X86 dialect for --emit-asm: att (default), intel]:' \
   "(--ll)--ll[dump ll to Crystal's cache directory ]" \
   '(--link-flags)--link-flags[additional flags to pass to the linker]:' \
   '(--mcpu)--mcpu[target specific cpu type]:' \
