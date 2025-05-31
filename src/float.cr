@@ -39,7 +39,9 @@ require "./float/printer"
 struct Float
   alias Primitive = Float32 | Float64
 
+  # Negates this value's sign.
   def -
+    # fallback implementation; does not handle IEEE 754 signed zeros correctly
     self.class.zero - self
   end
 
@@ -212,6 +214,17 @@ struct Float32
     when Float32::INFINITY
       1
     end
+  end
+
+  # Negates this value's sign.
+  #
+  # Works on signed zeros and not-a-number values as well. The negation of
+  # `0.0_f32` is `-0.0_f32`, and vice versa. The negation of a not-a-number
+  # value is only observable via `#sign_bit`.
+  def - : Float32
+    # equivalent to `Math.copysign(self, -sign_bit.to_f32)`
+    # TODO: consider using the LLVM `fneg` instruction
+    (unsafe_as(UInt32) ^ 0x80000000_u32).unsafe_as(Float32)
   end
 
   def abs
@@ -422,6 +435,17 @@ struct Float64
     when Float64::INFINITY
       1
     end
+  end
+
+  # Negates this value's sign.
+  #
+  # Works on signed zeros and not-a-number values as well. The negation of
+  # `0.0` is `-0.0`, and vice versa. The negation of a not-a-number value is
+  # only observable via `#sign_bit`.
+  def - : Float64
+    # equivalent to `Math.copysign(self, -sign_bit.to_f64)`
+    # TODO: consider using the LLVM `fneg` instruction
+    (unsafe_as(UInt64) ^ 0x80000000_00000000_u64).unsafe_as(Float64)
   end
 
   def abs
