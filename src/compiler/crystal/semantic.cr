@@ -67,7 +67,11 @@ class Crystal::Program
       visitor.vars = main_visitor.vars.dup unless main_visitor.vars.empty?
 
       node.accept visitor
-      visitor.process_finished_hooks
+      begin
+        visitor.process_finished_hooks
+      rescue ex : SkipMacroCodeCoverageException
+        self.coverage_interrupt_exception = ex.cause
+      end
       visitor.new_expansions
     end
     @progress_tracker.stage("Semantic (new)") do

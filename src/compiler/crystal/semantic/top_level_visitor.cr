@@ -851,7 +851,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     node.expressions.each_with_index do |child, i|
       begin
         child.accept self
-      rescue SkipMacroException
+      rescue ex : SkipMacroException
+        @program.coverage_interrupt_exception = ex.cause if ex.is_a? SkipMacroCodeCoverageException
         node.expressions.delete_at(i..-1)
         break
       end
