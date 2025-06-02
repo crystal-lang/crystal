@@ -127,7 +127,9 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
   def open(path : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : {System::FileDescriptor::Handle, Bool} | Errno
     path.check_no_null_byte
 
-    fd = LibC.open(path, flags | LibC::O_CLOEXEC, permissions)
+    fd = ::Fiber.syscall do
+      LibC.open(path, flags | LibC::O_CLOEXEC, permissions)
+    end
     return Errno.value if fd == -1
 
     blocking = !System::File.special_type?(fd) if blocking.nil?

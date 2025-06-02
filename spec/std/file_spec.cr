@@ -1,5 +1,6 @@
 require "./spec_helper"
 require "../support/thread"
+require "wait_group"
 
 private def it_raises_on_null_byte(operation, file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
   it "errors on #{operation}", file, line, end_line do
@@ -94,19 +95,31 @@ describe "File" do
           ret = LibC.mkfifo(path, File::DEFAULT_CREATE_PERMISSIONS)
           raise RuntimeError.from_errno("mkfifo") unless ret == 0
 
-          # FIXME: open(2) will block when opening a fifo file until another
-          #        thread or process also opened the file; we should pass
-          #        O_NONBLOCK to the open(2) call itself, not afterwards
-          file = nil
-          new_thread { file = File.new(path, "w", blocking: nil) }
+          # open(2) will block when opening a fifo file until another thread or
+          # process also opened the file; we should pass O_NONBLOCK to the
+          # open(2) call itself, not afterwards
+          w = nil
 
           begin
-            File.open(path, "r", blocking: false) do |file|
-              file.blocking.should be_false
+            WaitGroup.wait do |wg|
+              {% if flag?(:execution_context) %}
+                # the fiber may block on open(2) (depending on the event loop)
+                # but the execution context must notice and replace the thread
+                wg.spawn(name: "fifo:write") { w = File.new(path, "w", blocking: nil) }
+              {% else %}
+                # must explicitly start a thread
+                new_thread { w = File.new(path, "w", blocking: nil) }
+              {% end %}
+
+              wg.spawn(name: "fifo:read") do
+                File.open(path, "r", blocking: false) do |r|
+                  r.blocking.should be_false
+                end
+              end
             end
           ensure
             File.delete(path)
-            file.try(&.close)
+            w.try(&.close)
           end
         end
       {% end %}
