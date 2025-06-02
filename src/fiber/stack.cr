@@ -3,9 +3,16 @@ class Fiber
   struct Stack
     getter pointer : Void*
     getter bottom : Void*
+    getter size : Int32
     getter? reusable : Bool
 
-    def initialize(@pointer, @bottom, *, @reusable = false)
+    def initialize(@pointer : Void*, @bottom : Void*, *, @reusable = false)
+      # NOTE: sometimes gc/boehm reports weird stacks on linux (over 2GB)
+      @size = (@bottom - @pointer).to_i32!
+    end
+
+    def initialize(@pointer : Void*, @size : Int32, *, @reusable = false)
+      @bottom = @pointer + @size
     end
 
     def first_addressable_pointer : Void**
