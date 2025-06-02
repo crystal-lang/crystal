@@ -233,11 +233,27 @@ module Fiber::ExecutionContext
     def status : String
       if @waiting
         "event-loop"
+      elsif @syscall == SYSCALL_FLAG
+        "syscall"
       elsif @running
         "running"
       else
         "shutdown"
       end
+    end
+
+    protected def enter_syscall : UInt32
+      @syscall.lazy_set(SYSCALL_FLAG)
+    end
+
+    protected def leave_syscall?(value : UInt32) : Bool
+      @syscall.lazy_set(0_u32)
+      true
+    end
+
+    # :nodoc:
+    def syscall(& : -> U) : U forall U
+      yield
     end
   end
 end

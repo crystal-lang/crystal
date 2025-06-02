@@ -91,6 +91,10 @@ module Fiber::ExecutionContext
       ExecutionContext.thread_pool.checkout(self)
     end
 
+    protected def each_scheduler(& : Scheduler ->) : Nil
+      yield self.as(Scheduler)
+    end
+
     # :nodoc:
     def spawn(*, name : String? = nil, same_thread : Bool, &block : ->) : Fiber
       # whatever the value of same_thread: the fibers will always run on the
@@ -122,14 +126,24 @@ module Fiber::ExecutionContext
       end
     end
 
+    # FIXME: duplicates MultiThreaded::Scheduler#resume
     protected def resume(fiber : Fiber) : Nil
-      unless fiber.resumable?
+      Crystal.trace :sched, "resume", fiber: fiber
+
+      # fibers should always be ready to be resumed in the ST environment,
+      # unless SYSMON moved the scheduler to another thread while the fiber was
+      # blocked on a syscall; upon return the original thread might have
+      # enqueued the fiber, but hasn't swapcontext while this thread already
+      # tries to resume it
+      attempts = 0
+
+      until fiber.resumable?
         if fiber.dead?
           raise "BUG: tried to resume dead fiber #{fiber} (#{inspect})"
-        else
-          raise "BUG: can't resume running fiber #{fiber} (#{inspect})"
         end
+        attempts = Thread.delay(attempts)
       end
+
       swapcontext(fiber)
     end
 
@@ -186,6 +200,10 @@ module Fiber::ExecutionContext
 
       # nothing to do: start spinning
       spinning do
+        # usually empty but the scheduler may have been transferred to another
+        # thread with queued fibers
+        yield @runnables.shift?
+
         yield @global_queue.grab?(@runnables, divisor: 1)
 
         @event_loop.run(pointerof(list), blocking: false)
@@ -272,6 +290,8 @@ module Fiber::ExecutionContext
         "spinning"
       elsif @waiting.get(:relaxed)
         "event-loop"
+      elsif @syscall.get(:relaxed).bits_set?(SYSCALL_FLAG)
+        "syscall"
       else
         "running"
       end
