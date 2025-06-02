@@ -80,15 +80,15 @@ class Thread
   getter name : String?
 
   {% if flag?(:execution_context) %}
-    # :nodoc:
     getter! execution_context : Fiber::ExecutionContext
+    getter! scheduler : Fiber::ExecutionContext::Scheduler
 
     # :nodoc:
-    property! scheduler : Fiber::ExecutionContext::Scheduler
+    def execution_context=(@execution_context : Fiber::ExecutionContext?)
+    end
 
     # :nodoc:
-    def execution_context=(@execution_context : Fiber::ExecutionContext) : Fiber::ExecutionContext
-      main_fiber.execution_context = execution_context
+    def scheduler=(@scheduler : Fiber::ExecutionContext::Scheduler?)
     end
 
     # When a fiber terminates we can't release its stack until we swap context
