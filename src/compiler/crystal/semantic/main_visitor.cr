@@ -2589,7 +2589,7 @@ module Crystal
         # "undefined local variable or method"
         node.exp.accept self
 
-        node.exp.raise "can't take address of #{node.exp}"
+        node.exp.raise "can't take address of #{node.exp} because it's a #{ node.exp.class_desc }. `pointerof` expects a variable or constant."
       end
 
       node.bind_to var
