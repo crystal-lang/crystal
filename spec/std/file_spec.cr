@@ -55,44 +55,53 @@ describe "File" do
       ret = LibC.mkfifo(path, File::DEFAULT_CREATE_PERMISSIONS)
       raise RuntimeError.from_errno("mkfifo") unless ret == 0
 
-      # FIXME: open(2) will block when opening a fifo file until another thread
-      #        or process also opened the file
-      writer = nil
-      thread = new_thread do
-        writer = File.new(path, "w")
-      end
-
       rbuf = Bytes.new(5120)
       wbuf = Bytes.new(5120)
       Random::Secure.random_bytes(wbuf)
 
-      File.open(path, "r") do |reader|
-        # opened fifo for read: wait for thread to open for write
-        thread.join
+      writer = nil
 
-        reader.read_timeout = 1.second
-        writer.not_nil!.write_timeout = 1.second
-
-        WaitGroup.wait do |wg|
-          wg.spawn do
-            64.times do |i|
-              reader.read_fully(rbuf)
+      WaitGroup.wait do |wg|
+        {% if flag?(:execution_context) %}
+          # one fiber may block on open(2) (depends on the event loop) but the
+          # monitor thread will notice and move the scheduler to another thread,
+          # unblocking the other fiber
+          wg.spawn(name: "fifo:write") do
+            File.open(path, "w") do |writer|
+              64.times { |i| writer.write(wbuf) }
             end
           end
 
-          wg.spawn do
-            64.times do |i|
-              writer.not_nil!.write(wbuf)
+          wg.spawn(name: "fifo:read") do
+            File.open(path, "r") do |reader|
+              64.times { |i| reader.read_fully(rbuf) }
             end
-            writer.not_nil!.close
           end
-        end
+        {% else %}
+          # open(2) will block when opening a fifo file until another thread or
+          # process also opened the file; so we must explicitly start a thread
+          thread = new_thread { writer = File.new(path, "w") }
+
+          File.open(path, "r") do |reader|
+            # opened fifo for read: wait for thread to open for write
+            thread.join
+
+            wg.spawn(name: "fifo:read") do
+              64.times { |i| reader.read_fully(rbuf) }
+            end
+
+            wg.spawn(name: "fifo:write") do
+              64.times { |i| writer.not_nil!.write(wbuf) }
+              writer.not_nil!.close
+            end
+          end
+        {% end %}
       end
 
       rbuf.should eq(wbuf)
     ensure
       File.delete(path) if path
-      writer.try(&.close)
+      writer.close if writer
     end
   {% end %}
 
