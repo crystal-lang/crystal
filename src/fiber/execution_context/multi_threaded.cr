@@ -45,8 +45,12 @@ module Fiber::ExecutionContext
     @size : Range(Int32, Int32)
 
     # :nodoc:
+    #
+    # Starts the default execution context. There can be only one for the whole
+    # process. Must be called from the main thread's main fiber; associates the
+    # current thread and fiber to the created execution context.
     protected def self.default(maximum : Int32) : self
-      new("DEFAULT", 1..maximum, hijack: true)
+      Fiber.current.execution_context = new("DEFAULT", 1..maximum, hijack: true)
     end
 
     # Starts a context with a *maximum* number of threads. Threads aren't started
@@ -86,6 +90,9 @@ module Fiber::ExecutionContext
 
       @global_queue = GlobalQueue.new(@mutex)
       @schedulers = Array(Scheduler).new(capacity)
+
+      # FIXME: invalid since schedulers will be transfered to other threads,
+      # keep a mere `@size : Int32` counter instead!
       @threads = Array(Thread).new(capacity)
 
       @rng = Random::PCG32.new
@@ -149,27 +156,17 @@ module Fiber::ExecutionContext
       thread.internal_name = scheduler.name
       thread.execution_context = self
       thread.scheduler = scheduler
-
       scheduler.thread = thread
-      scheduler.main_fiber = Fiber.new("#{scheduler.name}:loop", self) do
-        scheduler.run_loop
-      end
-
-      thread
     end
 
     # Starts a new `Thread` and attaches *scheduler*. Runs the scheduler loop
     # directly in the thread's main `Fiber`.
     private def start_thread(scheduler) : Thread
-      Thread.new(name: scheduler.name) do |thread|
-        thread.execution_context = self
-        thread.scheduler = scheduler
+      ExecutionContext.thread_pool.checkout(scheduler)
+    end
 
-        scheduler.thread = thread
-        scheduler.main_fiber = thread.main_fiber
-        scheduler.main_fiber.name = "#{scheduler.name}:loop"
-        scheduler.run_loop
-      end
+    protected def each_scheduler(& : Scheduler ->) : Nil
+      @schedulers.each { |scheduler| yield scheduler }
     end
 
     # :nodoc:
@@ -216,6 +213,8 @@ module Fiber::ExecutionContext
         Crystal.trace :sched, "park"
         @parked.add(1, :acquire_release)
 
+        # TODO: consider detaching the scheduler and returning the thread back
+        # into ExecutionContext.thread_pool instead
         @condition.wait(@mutex)
 
         # we don't decrement @parked because #wake_scheduler did
