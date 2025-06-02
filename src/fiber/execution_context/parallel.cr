@@ -172,6 +172,10 @@ module Fiber::ExecutionContext
       ExecutionContext.thread_pool.checkout(scheduler)
     end
 
+    protected def each_scheduler(& : Scheduler ->) : Nil
+      @schedulers.each { |scheduler| yield scheduler }
+    end
+
     # Resizes the context to the new *maximum* parallelism.
     #
     # The new *maximum* can grow, in which case more schedulers are created to

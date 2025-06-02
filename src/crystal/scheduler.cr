@@ -90,6 +90,9 @@ class Crystal::Scheduler
     @runnables = Deque(Fiber).new
   end
 
+  protected def each_scheduler(& : Scheduler ->) : Nil
+  end
+
   protected def enqueue(fiber : Fiber) : Nil
     @lock.sync { @runnables << fiber }
   end

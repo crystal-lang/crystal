@@ -355,6 +355,15 @@ class Fiber
     {% end %}
   end
 
+  # :nodoc:
+  def self.syscall(&)
+    {% if flag?(:execution_context) %}
+      ExecutionContext::Scheduler.current.syscall { yield }
+    {% else %}
+      yield
+    {% end %}
+  end
+
   def to_s(io : IO) : Nil
     io << "#<" << self.class.name << ":0x"
     object_id.to_s(io, 16)

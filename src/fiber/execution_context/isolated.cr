@@ -90,6 +90,10 @@ module Fiber::ExecutionContext
       self
     end
 
+    protected def each_scheduler(& : Scheduler ->) : Nil
+      yield self
+    end
+
     # :nodoc:
     def stack_pool : Fiber::StackPool
       raise RuntimeError.new("No stack pool for isolated contexts")
@@ -275,11 +279,30 @@ module Fiber::ExecutionContext
     def status : String
       if @waiting
         "event-loop"
+      elsif @syscall == SYSCALL_FLAG
+        "syscall"
       elsif @running
         "running"
       else
         "shutdown"
       end
+    end
+
+    # :nodoc:
+    #
+    # An isolated fiber is locked to its system thread and we expect blocking
+    # syscalls to block the fiber and the thread.
+    def syscall(& : -> U) : U forall U
+      yield
+    end
+
+    protected def enter_syscall : UInt32
+      @syscall.lazy_set(SYSCALL_FLAG)
+    end
+
+    protected def leave_syscall?(value : UInt32) : Bool
+      @syscall.lazy_set(0_u32)
+      true
     end
   end
 end

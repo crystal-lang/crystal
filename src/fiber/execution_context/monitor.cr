@@ -1,11 +1,25 @@
 module Fiber::ExecutionContext
   # :nodoc:
   class Monitor
-    DEFAULT_EVERY = 5.seconds
+    # :nodoc:
+    struct Timer
+      def initialize(@every : Time::Span)
+        @last = Crystal::System::Time.instant
+      end
+
+      def elapsed?(now : Time::Instant) : Bool
+        ret = @last + @every <= now
+        @last = now if ret
+        ret
+      end
+    end
+
+    DEFAULT_EVERY = 10.milliseconds
 
     @thread : Thread?
 
     def initialize(@every = DEFAULT_EVERY)
+      @stack_collect_timer = Timer.new(5.seconds)
       @thread = Thread.new(name: "SYSMON") { run_loop }
     end
 
@@ -35,7 +49,8 @@ module Fiber::ExecutionContext
     # OS.
     private def run_loop : Nil
       every do |now|
-        collect_stacks
+        transfer_schedulers_blocked_on_syscall
+        collect_stacks if @stack_collect_timer.elapsed?(now)
       end
     end
 
@@ -57,6 +72,28 @@ module Fiber::ExecutionContext
         remaining = (start + @every - stop).clamp(Time::Span.zero..)
       rescue exception
         Crystal.print_error_buffered("BUG: %s#every crashed", self.class.name, exception: exception)
+      end
+    end
+
+    # Iterates each ExecutionContext::Scheduler and transfers the Scheduler for
+    # any Thread currently blocked on a syscall.
+    #
+    # OPTIMIZE: a scheduler in a MT context might not need to be transferred if
+    # its queue is empty and another scheduler in the context is blocked on the
+    # event loop.
+    private def transfer_schedulers_blocked_on_syscall : Nil
+      ExecutionContext.each do |execution_context|
+        execution_context.each_scheduler do |scheduler|
+          next unless scheduler.detach_syscall?
+
+          Crystal.trace :sched, "reassociate",
+            scheduler: scheduler,
+            syscall: scheduler.thread.current_fiber
+
+          pool = ExecutionContext.thread_pool
+          pool.detach(scheduler.thread)
+          pool.checkout(scheduler)
+        end
       end
     end
 
