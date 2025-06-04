@@ -184,9 +184,6 @@ Style/RedundantReturn:
 Style/RedundantSelf:
   Enabled: false
 
-Style/UnlessElse:
-  Enabled: false
-
 Style/VerboseBlock:
   Enabled: false
 
