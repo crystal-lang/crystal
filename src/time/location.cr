@@ -248,7 +248,7 @@ class Time::Location
   # ```
   def self.posix_tz(name : String, str : String) : TZLocation
     zones = Array(Location::Zone).new(initial_capacity: 2)
-    tz_args = TZLocation.parse_tz(str, zones, true) || raise ArgumentError.new("Invalid TZ string: #{str}")
+    tz_args = TZ.parse(str, zones, true) || raise ArgumentError.new("Invalid TZ string: #{str}")
     TZLocation.new(name, zones, str, *tz_args)
   end
 
@@ -395,7 +395,7 @@ class Time::Location
       # > special timezone from an implementation-defined timezone database.
     else
       zones = Array(Location::Zone).new(initial_capacity: 2)
-      if tz_args = TZLocation.parse_tz(tz_string, zones, true)
+      if tz_args = TZ.parse(tz_string, zones, true)
         return TZLocation.new("Local", zones, tz_string, *tz_args)
       end
 
