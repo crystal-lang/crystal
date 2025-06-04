@@ -47,7 +47,7 @@ module SystemError
     # Additional keyword arguments are forwarded to the exception initializer `.new_from_os_error`.
     macro from_errno(message, **opts)
       # This is a macro in order to retrieve `Errno.value` first before evaluating `message` and `opts`.
-      %errno = Errno.value
+      %errno = ::Errno.value
       ::\{{@type}}.from_os_error(\{{ message }}, %errno, \{{ opts.double_splat }})
     end
 
