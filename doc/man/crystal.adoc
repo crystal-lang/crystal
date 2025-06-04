@@ -104,6 +104,8 @@ regex by using the *-e* flag.
 Show implementations for a given call. Use *--cursor*  to specify the cursor position. The format for the cursor position
 is file:line:column.
 
+*crystal-tool-macro_code_coverage*::  Generate a macro code coverage report.
+
 *crystal-tool-types*::  Show type of main variables of file.
 
 *crystal-tool-unreachable(1)*:: Identify methods that are never called
