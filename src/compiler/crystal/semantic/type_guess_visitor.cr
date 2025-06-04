@@ -396,10 +396,10 @@ module Crystal
 
     def add_type_info(vars, name, type, node)
       info = vars[name]?
-      unless info
-        info = TypeInfo.new(type, node.location.not_nil!)
-      else
+      if info
         info.type = Type.merge!(type, info.type)
+      else
+        info = TypeInfo.new(type, node.location.not_nil!)
       end
       info.outside_def = true if @outside_def
       vars[name] = info
@@ -413,10 +413,10 @@ module Crystal
       end
 
       info = vars[name]?
-      unless info
-        info = InstanceVarTypeInfo.new(node.location.not_nil!, type)
-      else
+      if info
         info.type = Type.merge!(info.type, type)
+      else
+        info = InstanceVarTypeInfo.new(node.location.not_nil!, type)
       end
       info.outside_def = true if @outside_def
       info.add_annotations(annotations) if annotations
