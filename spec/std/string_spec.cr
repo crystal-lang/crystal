@@ -2440,8 +2440,8 @@ describe "String" do
   end
 
   it "matches, but returns Bool" do
-    "foo".matches?(/foo/).should eq(true)
-    "foo".matches?(/bar/).should eq(false)
+    "foo".matches?(/foo/).should be_true
+    "foo".matches?(/bar/).should be_false
   end
 
   it "#matches_full?" do

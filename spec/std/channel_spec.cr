@@ -215,7 +215,7 @@ describe Channel do
         spawn_and_wait(-> { ch2.close }) do
           i, m = Channel.select(ch.receive_select_action?, ch2.receive_select_action?)
           i.should eq(1)
-          m.should eq(nil)
+          m.should be_nil
         end
       end
     end
@@ -237,7 +237,7 @@ describe Channel do
         spawn_and_wait(-> { ch2.close }) do
           i, m = Channel.select(ch.receive_select_action, ch2.receive_select_action?)
           i.should eq(1)
-          m.should eq(nil)
+          m.should be_nil
         end
       end
     end
@@ -327,7 +327,7 @@ describe Channel do
           i, m = Channel.select(ch.receive_select_action, timeout_select_action(0.1.seconds))
 
           i.should eq(1)
-          m.should eq(nil)
+          m.should be_nil
         end
       end
 
@@ -337,7 +337,7 @@ describe Channel do
           i, m = Channel.select(timeout_select_action(0.1.seconds), ch.receive_select_action)
 
           i.should eq(0)
-          m.should eq(nil)
+          m.should be_nil
         end
       end
 
@@ -348,7 +348,7 @@ describe Channel do
             i, m = Channel.select(ch.receive_select_action, timeout_select_action(0.1.seconds))
 
             i.should eq(1)
-            m.should eq(nil)
+            m.should be_nil
           end
         end
       end
@@ -416,7 +416,7 @@ describe Channel do
           i, m = Channel.select(ch.receive_select_action?, timeout_select_action(0.1.seconds))
 
           i.should eq(0)
-          m.should eq(nil)
+          m.should be_nil
         end
       end
     end
@@ -483,7 +483,7 @@ describe Channel do
         spawn_and_wait(-> { ch2.close }) do
           i, m = Channel.non_blocking_select(ch.receive_select_action, ch2.receive_select_action?)
           i.should eq(1)
-          m.should eq(nil)
+          m.should be_nil
         end
       end
     end
@@ -565,7 +565,7 @@ describe Channel do
           i, m = Channel.non_blocking_select(ch.receive_select_action?, timeout_select_action(0.1.seconds))
 
           i.should eq(0)
-          m.should eq(nil)
+          m.should be_nil
         end
       end
     end

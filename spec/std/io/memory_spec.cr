@@ -114,14 +114,14 @@ describe IO::Memory do
     io = IO::Memory.new("foo\r\nbar\n")
     io.gets.should eq("foo")
     io.gets.should eq("bar")
-    io.gets.should eq(nil)
+    io.gets.should be_nil
   end
 
   it "reads each line with chomp = false" do
     io = IO::Memory.new("foo\r\nbar\r\n")
     io.gets(chomp: false).should eq("foo\r\n")
     io.gets(chomp: false).should eq("bar\r\n")
-    io.gets(chomp: false).should eq(nil)
+    io.gets(chomp: false).should be_nil
   end
 
   it "gets with char as delimiter" do
@@ -129,7 +129,7 @@ describe IO::Memory do
     io.gets('w').should eq("hello w")
     io.gets('r').should eq("or")
     io.gets('r').should eq("ld")
-    io.gets('r').should eq(nil)
+    io.gets('r').should be_nil
   end
 
   it "does gets with char and limit" do
