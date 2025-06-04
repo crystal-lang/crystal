@@ -45,40 +45,46 @@ class Socket < IO
 
   # Creates a TCP socket. Consider using `TCPSocket` or `TCPServer` unless you
   # need full control over the socket.
-  def self.tcp(family : Family, blocking = false) : self
+  def self.tcp(family : Family, blocking = nil) : self
     new(family, Type::STREAM, Protocol::TCP, blocking)
   end
 
   # Creates an UDP socket. Consider using `UDPSocket` unless you need full
   # control over the socket.
-  def self.udp(family : Family, blocking = false)
+  def self.udp(family : Family, blocking = nil)
     new(family, Type::DGRAM, Protocol::UDP, blocking)
   end
 
   # Creates an UNIX socket. Consider using `UNIXSocket` or `UNIXServer` unless
   # you need full control over the socket.
-  def self.unix(type : Type = Type::STREAM, blocking = false) : self
+  def self.unix(type : Type = Type::STREAM, blocking = nil) : self
     new(Family::UNIX, type, blocking: blocking)
   end
 
-  def initialize(family : Family, type : Type, protocol : Protocol = Protocol::IP, blocking = false)
+  def initialize(family : Family, type : Type, protocol : Protocol = Protocol::IP, blocking = nil)
     # This method is `#initialize` instead of `.new` because it is used as super
     # constructor from subclasses.
-
-    fd = create_handle(family, type, protocol, blocking)
-    initialize(fd, family, type, protocol, blocking)
+    fd, blocking = Crystal::EventLoop.current.socket(family, type, protocol, blocking)
+    initialize(handle: fd, family: family, type: type, protocol: protocol, blocking: blocking)
+    self.sync = true
   end
 
   # Creates a Socket from an existing socket file descriptor / handle.
-  def initialize(fd, @family : Family, @type : Type, @protocol : Protocol = Protocol::IP, blocking = false)
-    @volatile_fd = Atomic.new(fd)
-    @closed = false
-    initialize_handle(fd)
-
+  def initialize(fd, @family : Family, @type : Type, @protocol : Protocol = Protocol::IP, blocking = nil)
+    initialize(handle: fd, family: family, type: type, protocol: protocol)
+    blocking = Crystal::EventLoop.default_socket_blocking? if blocking.nil?
+    self.blocking = blocking unless blocking
     self.sync = true
-    unless blocking
-      self.blocking = false
-    end
+  end
+
+  # :nodoc:
+  #
+  # Internal constructor to initialize the bare socket. The *blocking* arg is
+  # purely informational.
+  def initialize(*, handle, @family, @type, @protocol, blocking = nil)
+    @volatile_fd = Atomic.new(handle)
+    @closed = false
+    initialize_handle(handle, blocking)
   end
 
   # Connects the socket to a remote host:port.
@@ -206,8 +212,13 @@ class Socket < IO
   # end
   # ```
   def accept? : Socket?
-    if client_fd = system_accept
-      sock = Socket.new(client_fd, family, type, protocol, blocking)
+    if rs = Crystal::EventLoop.current.accept(self)
+      sock = Socket.new(handle: rs[0], family: family, type: type, protocol: protocol, blocking: rs[1])
+      unless (blocking = self.blocking) == rs[1]
+        # FIXME: unlike the overloads in TCPServer and UNIXServer, this version
+        # carries the blocking mode from the server socket to the client socket
+        sock.blocking = blocking
+      end
       sock.sync = sync?
       sock
     end
@@ -430,7 +441,7 @@ class Socket < IO
   def finalize
     return if closed?
 
-    event_loop?.try(&.remove(self))
+    Crystal::EventLoop.remove(self)
     socket_close { } # ignore error
   end
 

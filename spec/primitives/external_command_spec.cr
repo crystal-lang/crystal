@@ -1,34 +1,42 @@
 {% skip_file if flag?(:interpreted) %}
 
-require "../spec_helper"
+require "../support/tempfile"
 
-describe Crystal::Command do
-  it "exec external commands", tags: %w[slow] do
-    with_temp_executable "crystal-external" do |path|
+describe "Crystal::Command" do
+  it "exec external commands", tags: %w[slow external_commands] do
+    with_temp_executable "crystal-external" do |command_path|
+      compiler_path = File.expand_path(ENV["CRYSTAL_SPEC_COMPILER_BIN"]? || "bin/crystal")
+
       with_tempfile "crystal-external.cr" do |source_file|
         File.write source_file, <<-CRYSTAL
-          puts ENV["CRYSTAL"]?
+          puts Process.find_executable("crystal")
+          puts ENV["CRYSTAL_EXEC_PATH"]?
           puts PROGRAM_NAME
           puts ARGV
           CRYSTAL
 
-        Process.run(ENV["CRYSTAL_SPEC_COMPILER_BIN"]? || "bin/crystal", ["build", source_file, "-o", path])
+        Process.run(compiler_path, ["build", source_file, "-o", command_path], error: :inherit)
       end
 
-      File.exists?(path).should be_true
+      File.exists?(command_path).should be_true
 
-      process = Process.new(ENV["CRYSTAL_SPEC_COMPILER_BIN"]? || "bin/crystal",
+      process = Process.new(compiler_path,
         ["external", "foo", "bar"],
-        output: :pipe,
-        env: {"PATH" => {ENV["PATH"], File.dirname(path)}.join(Process::PATH_DELIMITER)}
+        output: :pipe, error: :pipe,
+        env: {"PATH" => {ENV["PATH"], File.dirname(command_path)}.join(Process::PATH_DELIMITER)}
       )
+
       output = process.output.gets_to_end
+      error = process.error.gets_to_end
       status = process.wait
-      status.success?.should be_true
-      lines = output.lines
-      lines[0].should match /crystal/
-      lines[1].should match /crystal-external/
-      lines[2].should eq %(["foo", "bar"])
+      status.success?.should be_true, failure_message: "Running external subcommand failed.\nstderr:\n#{error}\nstdout:\n#{output}"
+
+      output.lines.should eq [
+        compiler_path,
+        File.dirname(compiler_path),
+        command_path,
+        %(["foo", "bar"]),
+      ]
     end
   end
 end

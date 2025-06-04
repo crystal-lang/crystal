@@ -20,6 +20,8 @@
 #
 # The expressions passed as arguments to `typeof` do not evaluate. The compiler
 # only analyzes their return type.
+#
+# * See [`typeof`](https://crystal-lang.org/reference/syntax_and_semantics/typeof.html) in the language specification.
 def __crystal_pseudo_typeof(*expression) : Class
 end
 
@@ -45,6 +47,8 @@ end
 # This is because a `Reference`'s memory is allocated on the heap and a pointer
 # to it is passed around. The size of a class on the heap can be determined
 # using `#instance_sizeof`.
+#
+# * See [`sizeof`](https://crystal-lang.org/reference/syntax_and_semantics/sizeof.html) in the language specification.
 def __crystal_pseudo_sizeof(type : Class) : Int32
 end
 
@@ -58,7 +62,50 @@ end
 # ```
 #
 # See `sizeof` for determining the size of value types.
+#
+# * See [`instance_sizeof`](https://crystal-lang.org/reference/syntax_and_semantics/instance_sizeof.html) in the language specification.
 def __crystal_pseudo_instance_sizeof(type : Class) : Int32
+end
+
+# Returns the alignment of the given type as number of bytes.
+#
+# *type* must be a constant or `typeof()` expression. It cannot be evaluated
+# at runtime.
+#
+# ```
+# alignof(Int32)        # => 4
+# alignof(Float64)      # usually 4 or 8
+# alignof(typeof(true)) # => 1
+#
+# For `Reference` types, the alignment is the same as the alignment of a pointer:
+#
+# ```
+# # On a 64 bits machine
+# alignof(Pointer(Int32)) # => 8
+# alignof(String)         # => 8
+# ```
+#
+# This is because a `Reference`'s memory is allocated on the heap and a pointer
+# to it is passed around. The alignment of a class on the heap can be determined
+# using `#instance_alignof`.
+#
+# * See [`alignof`](https://crystal-lang.org/reference/syntax_and_semantics/alignof.html) in the language specification.
+def __crystal_pseudo_alignof(type : Class) : Int32
+end
+
+# Returns the instance alignment of the given class as number of bytes.
+#
+# *type* must be a constant or `typeof()` expression. It cannot be evaluated at runtime.
+#
+# ```
+# instance_alignof(String)    # => 4
+# instance_alignof(Exception) # => 8
+# ```
+#
+# See `alignof` for determining the size of value types.
+#
+# * See [`instance_alignof`](https://crystal-lang.org/reference/syntax_and_semantics/instance_alignof.html) in the language specification.
+def __crystal_pseudo_instance_alignof(type : Class) : Int32
 end
 
 # Returns a `Pointer` to the contents of a variable.
@@ -72,6 +119,8 @@ end
 #
 # a # => 2
 # ```
+#
+# * See [`pointerof`](https://crystal-lang.org/reference/syntax_and_semantics/pointerof.html) in the language specification.
 def __crystal_pseudo_pointerof(variable : T) : Pointer(T) forall T
 end
 
@@ -88,6 +137,8 @@ end
 # offsetof({Int32, Int8, Int32}, 1) # => 4
 # offsetof({Int32, Int8, Int32}, 2) # => 8
 # ```
+#
+# * See [`offsetof`](https://crystal-lang.org/reference/syntax_and_semantics/offsetof.html) in the language specification.
 def __crystal_pseudo_offsetof(type : Class, offset) : Int32
 end
 
@@ -118,6 +169,8 @@ class Object
   # a.is_a?(Number)         # => true
   # a.is_a?(Int32 | String) # => true
   # ```
+  #
+  # * See [`is_a?`](https://crystal-lang.org/reference/syntax_and_semantics/is_a.html) in the language specification.
   def __crystal_pseudo_is_a?(type : Class) : Bool
   end
 
@@ -129,6 +182,8 @@ class Object
   # ```
   #
   # This method is equivalent to `is_a?(Nil)`.
+  #
+  # * See [`nil?`](https://crystal-lang.org/reference/syntax_and_semantics/nil_question.html) in the language specification.
   def __crystal_pseudo_nil? : Bool
   end
 
@@ -159,6 +214,8 @@ class Object
   # typeof(a.as(Int32 | Bool)) # => Int32
   # a.as(Int32 | Bool)         # => 1
   # ```
+  #
+  # * See [`as`](https://crystal-lang.org/reference/syntax_and_semantics/as.html) in the language specification.
   def __crystal_pseudo_as(type : Class)
   end
 
@@ -185,6 +242,8 @@ class Object
   # typeof(a.as?(Int32 | Bool)) # => Int32 | Nil
   # a.as?(Int32 | Bool)         # => 1
   # ```
+  #
+  # * See [`#as?`](https://crystal-lang.org/reference/syntax_and_semantics/as_question.html) in the language specification.
   def __crystal_pseudo_as?(type : Class)
   end
 
@@ -197,6 +256,8 @@ class Object
   # a.responds_to?(:abs)  # => true
   # a.responds_to?(:size) # => false
   # ```
+  #
+  # * See [`#responds_to?`](https://crystal-lang.org/reference/syntax_and_semantics/responds_to.html) in the language specification.
   def __crystal_pseudo_responds_to?(name : Symbol) : Bool
   end
 end
@@ -227,6 +288,6 @@ end
 struct CRYSTAL_PSEUDO__NoReturn
 end
 
-# Similar in usage to `Nil`. `Void` is prefered for C lib bindings.
+# Similar in usage to `Nil`. `Void` is preferred for C lib bindings.
 struct CRYSTAL_PSEUDO__Void
 end

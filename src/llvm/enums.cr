@@ -57,13 +57,26 @@ module LLVM
     WillReturn
     WriteOnly
     ZExt
+    Captures
 
-    @@kind_ids = load_llvm_kinds_from_names.as(Hash(Attribute, UInt32))
-    @@typed_attrs = load_llvm_typed_attributes.as(Array(Attribute))
+    # NOTE: enum body does not allow `class_getter` or `TypeDeclaration`, hence
+    # the nil cast
+    @@kind_ids = nil.as(Hash(Attribute, UInt32)?)
+
+    protected def self.kind_ids
+      @@kind_ids ||= load_llvm_kinds_from_names
+    end
+
+    @@typed_attrs = nil.as(Array(Attribute)?)
+
+    private def self.typed_attrs
+      @@typed_attrs ||= load_llvm_typed_attributes
+    end
 
     def each_kind(& : UInt32 ->)
+      kind_ids = Attribute.kind_ids
       each do |member|
-        yield @@kind_ids[member]
+        yield kind_ids[member]
       end
     end
 
@@ -79,6 +92,7 @@ module LLVM
       kinds[ArgMemOnly] = kind_for_name("argmemonly")
       kinds[Builtin] = kind_for_name("builtin")
       kinds[ByVal] = kind_for_name("byval")
+      kinds[Captures] = kind_for_name("captures")
       kinds[Cold] = kind_for_name("cold")
       kinds[Convergent] = kind_for_name("convergent")
       kinds[Dereferenceable] = kind_for_name("dereferenceable")
@@ -150,16 +164,16 @@ module LLVM
     end
 
     def self.kind_for(member)
-      @@kind_ids[member]
+      kind_ids[member]
     end
 
     def self.from_kind(kind)
-      @@kind_ids.key_for(kind)
+      kind_ids.key_for(kind)
     end
 
     def self.requires_type?(kind)
       member = from_kind(kind)
-      @@typed_attrs.includes?(member)
+      typed_attrs.includes?(member)
     end
   end
 
@@ -249,7 +263,12 @@ module LLVM
       Pointer
       Vector
       Metadata
-      X86_MMX
+      X86_MMX # deleted in LLVM 20
+      Token
+      ScalableVector
+      BFloat
+      X86_AMX
+      TargetExt
     end
   end
 
@@ -275,6 +294,7 @@ module LLVM
   enum CodeModel
     Default
     JITDefault
+    Tiny
     Small
     Kernel
     Medium

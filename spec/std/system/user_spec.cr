@@ -2,9 +2,9 @@ require "spec"
 require "system/user"
 
 {% if flag?(:win32) %}
-  {% name, id = `whoami /USER /FO TABLE /NH`.stringify.chomp.split(" ") %}
-  USER_NAME = {{ name }}
-  USER_ID   = {{ id }}
+  {% parts = `whoami /USER /FO TABLE /NH`.stringify.chomp.split(" ") %}
+  USER_NAME = {{ parts[0..-2].join(" ") }}
+  USER_ID   = {{ parts[-1] }}
 {% else %}
   USER_NAME = {{ `id -un`.stringify.chomp }}
   USER_ID   = {{ `id -u`.stringify.chomp }}
@@ -17,8 +17,7 @@ def normalized_username(username)
   # on Windows, domain names are case-insensitive, so we unify the letter case
   # from sources like `whoami`, `hostname`, or Win32 APIs
   {% if flag?(:win32) %}
-    domain, _, user = username.partition('\\')
-    "#{domain.upcase}\\#{user}"
+    username.upcase
   {% else %}
     username
   {% end %}
@@ -68,7 +67,7 @@ describe System::User do
 
     it "returns nil on nonexistent user" do
       user = System::User.find_by?(name: INVALID_USER_NAME)
-      user.should eq(nil)
+      user.should be_nil
     end
   end
 
@@ -83,7 +82,7 @@ describe System::User do
 
     it "returns nil on nonexistent user id" do
       user = System::User.find_by?(id: INVALID_USER_ID)
-      user.should eq(nil)
+      user.should be_nil
     end
   end
 

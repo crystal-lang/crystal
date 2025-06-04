@@ -373,7 +373,7 @@ module Crystal
           var.bind_to(@program.nil_var)
           var.nil_if_read = false
 
-          meta_var.bind_to(@program.nil_var) unless meta_var.dependencies.try &.any? &.same?(@program.nil_var)
+          meta_var.bind_to(@program.nil_var) unless meta_var.dependencies.any? &.same?(@program.nil_var)
           node.bind_to(@program.nil_var)
         end
 
@@ -1283,7 +1283,7 @@ module Crystal
         # It can happen that this call is inside an ArrayLiteral or HashLiteral,
         # was expanded but isn't bound to the expansion because the call (together
         # with its expansion) was cloned.
-        if (expanded = node.expanded) && (!node.dependencies? || !node.type?)
+        if (expanded = node.expanded) && (node.dependencies.empty? || !node.type?)
           node.bind_to(expanded)
         end
 
@@ -1574,55 +1574,71 @@ module Crystal
     def check_slice_literal_call(node, obj_type)
       return false unless obj_type
       return false unless obj_type.metaclass?
+      return false unless node.name == "literal"
 
       instance_type = obj_type.instance_type.remove_typedef
 
-      if node.name == "literal"
-        case instance_type
-        when GenericClassType # Slice
-          return false unless instance_type == @program.slice
-          node.raise "TODO: implement slice_literal primitive for Slice without generic arguments"
-        when GenericClassInstanceType # Slice(T)
-          return false unless instance_type.generic_type == @program.slice
+      case instance_type
+      when GenericClassType # Slice
+        return false unless instance_type == @program.slice
 
-          element_type = instance_type.type_vars["T"].type
-          kind = case element_type
-                 when IntegerType
-                   element_type.kind
-                 when FloatType
-                   element_type.kind
-                 else
-                   node.raise "Only slice literals of primitive integer or float types can be created"
-                 end
+        element_type = nil
 
-          node.args.each do |arg|
-            arg.raise "Expected NumberLiteral, got #{arg.class_desc}" unless arg.is_a?(NumberLiteral)
-            arg.accept self
-            arg.raise "Argument out of range for a Slice(#{element_type})" unless arg.representable_in?(element_type)
+        node.args.each do |arg|
+          arg.raise "Expected NumberLiteral, got #{arg.class_desc}" unless arg.is_a?(NumberLiteral)
+          arg.accept self
+          element_type ||= arg.type
+          unless element_type == arg.type
+            arg.raise "Too many element types for slice literal without generic argument: #{element_type}, #{arg.type}"
           end
-
-          # create the internal constant `$Slice:n` to hold the slice contents
-          const_name = "$Slice:#{@program.const_slices.size}"
-          const_value = Nop.new
-          const_value.type = @program.static_array_of(element_type, node.args.size)
-          const = Const.new(@program, @program, const_name, const_value)
-          @program.types[const_name] = const
-          @program.const_slices << Program::ConstSliceInfo.new(const_name, kind, node.args)
-
-          # ::Slice.new(pointerof($Slice:n.@buffer), {{ args.size }}, read_only: true)
-          pointer_node = PointerOf.new(ReadInstanceVar.new(Path.new(const_name).at(node), "@buffer").at(node)).at(node)
-          size_node = NumberLiteral.new(node.args.size.to_s, :i32).at(node)
-          read_only_node = NamedArgument.new("read_only", BoolLiteral.new(true).at(node)).at(node)
-          expanded = Call.new(Path.global("Slice").at(node), "new", [pointer_node, size_node], named_args: [read_only_node]).at(node)
-
-          expanded.accept self
-          node.bind_to expanded
-          node.expanded = expanded
-          return true
         end
+
+        unless element_type
+          node.raise "Cannot create empty slice literal without element type"
+        end
+      when GenericClassInstanceType # Slice(T)
+        return false unless instance_type.generic_type == @program.slice
+
+        element_type = instance_type.type_vars["T"].type
+
+        node.args.each do |arg|
+          arg.raise "Expected NumberLiteral, got #{arg.class_desc}" unless arg.is_a?(NumberLiteral)
+          arg.accept self
+          arg.raise "Argument out of range for a Slice(#{element_type})" unless arg.representable_in?(element_type)
+        end
+      else
+        return false
       end
 
-      false
+      kind =
+        case element_type
+        when IntegerType
+          element_type.kind
+        when FloatType
+          element_type.kind
+        else
+          node.raise "Only slice literals of primitive integer or float types can be created"
+        end
+
+      # create the internal constant `$Slice:n` to hold the slice contents
+      const_name = "$Slice:#{@program.const_slices.size}"
+      const_value = Nop.new
+      const_value.type = @program.static_array_of(element_type, node.args.size)
+      const = Const.new(@program, @program, const_name, const_value)
+      @program.types[const_name] = const
+      @program.const_slices[const_name] = Program::ConstSliceInfo.new(const_name, kind, node.args)
+
+      # ::Slice.new(pointerof($Slice:n.@buffer), {{ args.size }}, read_only: true)
+      pointer_node = PointerOf.new(ReadInstanceVar.new(Path.new(const_name).at(node), "@buffer").at(node)).at(node)
+      size_node = NumberLiteral.new(node.args.size.to_s, :i32).at(node)
+      read_only_node = NamedArgument.new("read_only", BoolLiteral.new(true).at(node)).at(node)
+      expanded = Call.new(Path.global("Slice").at(node), "new", [pointer_node, size_node], named_args: [read_only_node]).at(node)
+
+      expanded.accept self
+      node.bind_to expanded
+      node.expanded = expanded
+
+      true
     end
 
     # Rewrite:
@@ -2512,7 +2528,6 @@ module Crystal
 
       value = @vars["value"]
 
-      scope.var.bind_to value
       node.bind_to value
     end
 
@@ -2672,7 +2687,7 @@ module Crystal
       end
     end
 
-    private def visit_size_or_align_of(node)
+    private def visit_size_or_align_of(node, &)
       @in_type_args += 1
       node.exp.accept self
       @in_type_args -= 1
@@ -2698,7 +2713,7 @@ module Crystal
       false
     end
 
-    private def visit_instance_size_or_align_of(node)
+    private def visit_instance_size_or_align_of(node, &)
       @in_type_args += 1
       node.exp.accept self
       @in_type_args -= 1

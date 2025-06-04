@@ -1,6 +1,25 @@
 name: Regex Engine CI
 
-on: [push, pull_request]
+on:
+  push:
+    paths:
+      - 'src/regex.cr'
+      - 'src/regex/**'
+      - 'spec/std/regex_spec.cr'
+      - 'spec/std/regex/**'
+      - '.github/workflows/regex-engine.yml'
+  pull_request:
+    paths:
+      - 'src/regex.cr'
+      - 'src/regex/**'
+      - 'spec/std/regex_spec.cr'
+      - 'spec/std/regex/**'
+      - '.github/workflows/regex-engine.yml'
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+permissions: {}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -10,7 +29,7 @@ jobs:
   pcre:
     runs-on: ubuntu-latest
     name: "PCRE"
-    container: crystallang/crystal:1.13.3-alpine
+    container: crystallang/crystal:1.16.3-alpine
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v4
@@ -25,7 +44,7 @@ jobs:
   pcre2:
     runs-on: ubuntu-latest
     name: "PCRE2"
-    container: crystallang/crystal:1.13.3-alpine
+    container: crystallang/crystal:1.16.3-alpine
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v4

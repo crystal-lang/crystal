@@ -534,7 +534,7 @@ describe XML do
     node = document.xpath_node("//lastname").not_nil!
     node.unlink
 
-    document.xpath_node("//lastname").should eq(nil)
+    document.xpath_node("//lastname").should be_nil
   end
 
   it "does to_s with correct encoding (#2319)" do
@@ -608,5 +608,9 @@ describe XML do
         builder.start_element "bar"
       end.should eq %[<foo><bar/></foo>\n]
     end
+  end
+
+  it ".libxml2_version" do
+    XML.libxml2_version.should match /2\.\d+\.\d+/
   end
 end

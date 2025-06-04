@@ -66,13 +66,15 @@ end
     fun SetDynamicTimeZoneInformation(lpTimeZoneInformation : DYNAMIC_TIME_ZONE_INFORMATION*) : BOOL
   end
 
-  private SeTimeZonePrivilege = Crystal::System.to_wstr("SeTimeZonePrivilege")
-
   module Crystal::System::Time
+    private SeTimeZonePrivilege = System.wstr_literal "SeTimeZonePrivilege"
+
     # Enable the `SeTimeZonePrivilege` privilege before changing the system time
     # zone. This is necessary because the privilege is by default granted but
     # disabled for any new process. This only needs to be done once per run.
-    class_getter? time_zone_privilege_enabled : Bool do
+    class_getter?(time_zone_privilege_enabled : Bool) { detect_time_zone_privilege_enabled? }
+
+    private def self.detect_time_zone_privilege_enabled? : Bool
       if LibC.LookupPrivilegeValueW(nil, SeTimeZonePrivilege, out time_zone_luid) == 0
         raise RuntimeError.from_winerror("LookupPrivilegeValueW")
       end

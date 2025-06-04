@@ -271,7 +271,7 @@ describe "NamedTuple" do
 
       h.dig(:a, :b, :c).should eq([10, 20])
       h.dig("x", "a").should eq("b")
-      h.dig("x", "c").should eq(nil)
+      h.dig("x", "c").should be_nil
     end
 
     it "raises KeyError if not found" do

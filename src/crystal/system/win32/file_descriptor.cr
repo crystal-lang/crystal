@@ -1,6 +1,7 @@
 require "c/io"
 require "c/consoleapi"
 require "c/consoleapi2"
+require "c/ntifs"
 require "c/winnls"
 require "crystal/system/win32/iocp"
 require "crystal/system/thread"
@@ -17,6 +18,10 @@ module Crystal::System::FileDescriptor
   STDERR_HANDLE = LibC.GetStdHandle(LibC::STD_ERROR_HANDLE).address
 
   @system_blocking = true
+
+  def system_append?
+    false
+  end
 
   private def system_read(slice : Bytes) : Int32
     handle = windows_handle
@@ -99,9 +104,18 @@ module Crystal::System::FileDescriptor
     end
   end
 
-  private def system_blocking_init(value)
-    @system_blocking = value
-    Crystal::EventLoop.current.create_completion_port(windows_handle) unless value
+  protected def system_blocking_init(blocking : Bool?)
+    if blocking.nil?
+      # there are no official API to know whether a handle has been opened with
+      # the OVERLAPPED flag, but the following call is supposed to leak the
+      # information: if neither of the SYNCHRONOUS_IO flags are set then the
+      # OVERLAPPED flag has been set
+      info = LibC::FILE_MODE_INFORMATION.new
+      status = LibC.NtQueryInformationFile(windows_handle, out _, pointerof(info), sizeof(LibC::FILE_MODE_INFORMATION), LibC::FILE_INFORMATION_CLASS::FileModeInformation)
+      blocking = status != LibC::STATUS_SUCCESS || (info.mode & (LibC::FILE_SYNCHRONOUS_IO_ALERT | LibC::FILE_SYNCHRONOUS_IO_NONALERT)) != 0
+    end
+    @system_blocking = blocking
+    Crystal::EventLoop.current.create_completion_port(windows_handle) unless blocking
   end
 
   private def system_close_on_exec?
@@ -160,7 +174,7 @@ module Crystal::System::FileDescriptor
     FileDescriptor.system_info windows_handle
   end
 
-  private def system_seek(offset, whence : IO::Seek) : Nil
+  def system_seek(offset, whence : IO::Seek) : Nil
     if LibC.SetFilePointerEx(windows_handle, offset, nil, whence) == 0
       raise IO::Error.from_winerror("Unable to seek", target: self)
     end
@@ -190,12 +204,14 @@ module Crystal::System::FileDescriptor
 
   private def system_close
     event_loop.close(self)
-
-    file_descriptor_close
   end
 
-  def file_descriptor_close
-    if LibC.CloseHandle(windows_handle) == 0
+  def file_descriptor_close(&)
+    # Clear the @volatile_fd before actually closing it in order to
+    # reduce the chance of reading an outdated handle value
+    handle = LibC::HANDLE.new(@volatile_fd.swap(LibC::INVALID_HANDLE_VALUE.address))
+
+    if LibC.CloseHandle(handle) == 0
       yield
     end
   end
@@ -286,7 +302,7 @@ module Crystal::System::FileDescriptor
 
   private PIPE_BUFFER_SIZE = 8192
 
-  def self.pipe(read_blocking, write_blocking)
+  def self.system_pipe(read_blocking, write_blocking)
     pipe_name = ::Path.windows(::File.tempname("crystal", nil, dir: %q(\\.\pipe))).normalize.to_s
     pipe_mode = 0 # PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT
 
@@ -300,11 +316,7 @@ module Crystal::System::FileDescriptor
     r_pipe = LibC.CreateFileW(System.to_wstr(pipe_name), LibC::GENERIC_READ | LibC::FILE_WRITE_ATTRIBUTES, 0, nil, LibC::OPEN_EXISTING, r_pipe_flags, nil)
     raise IO::Error.from_winerror("CreateFileW") if r_pipe == LibC::INVALID_HANDLE_VALUE
 
-    r = IO::FileDescriptor.new(r_pipe.address, read_blocking)
-    w = IO::FileDescriptor.new(w_pipe.address, write_blocking)
-    w.sync = true
-
-    {r, w}
+    {r_pipe.address, w_pipe.address}
   end
 
   def self.pread(file, buffer, offset)
@@ -485,8 +497,8 @@ private module ConsoleUtils
       @@read_requests << ReadRequest.new(
         handle: handle,
         slice: slice,
-        iocp: Crystal::EventLoop.current.iocp,
-        completion_key: Crystal::IOCP::CompletionKey.new(:stdin_read, ::Fiber.current),
+        iocp: Crystal::EventLoop.current.iocp_handle,
+        completion_key: Crystal::System::IOCP::CompletionKey.new(:stdin_read, ::Fiber.current),
       )
       @@read_cv.signal
     end
@@ -505,12 +517,20 @@ private module ConsoleUtils
     units_read.to_i32
   end
 
-  record ReadRequest, handle : LibC::HANDLE, slice : Slice(UInt16), iocp : LibC::HANDLE, completion_key : Crystal::IOCP::CompletionKey
+  record ReadRequest,
+    handle : LibC::HANDLE,
+    slice : Slice(UInt16),
+    iocp : LibC::HANDLE,
+    completion_key : Crystal::System::IOCP::CompletionKey
 
   @@read_cv = ::Thread::ConditionVariable.new
   @@read_requests = Deque(ReadRequest).new
   @@bytes_read = Deque(Int32).new
   @@mtx = ::Thread::Mutex.new
+
+  # Start a dedicated thread to block on reads from the console. Doesn't need an
+  # isolated execution context because there's no fiber communication (only
+  # thread communication) and only blocking I/O within the thread.
   @@reader_thread = ::Thread.new { reader_loop }
 
   private def self.reader_loop

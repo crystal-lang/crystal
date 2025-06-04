@@ -181,7 +181,7 @@ module Colorize::ObjectExtensions
     Colorize::Object.new(self).fore(fore)
   end
 
-  # Wraps `self` in a `Colorize::Object` and colors it with the given `Color256` made
+  # Wraps `self` in a `Colorize::Object` and colors it with the given `ColorRGB` made
   # up from the given *r*ed, *g*reen and *b*lue values.
   def colorize(r : UInt8, g : UInt8, b : UInt8)
     Colorize::Object.new(self).fore(r, g, b)
@@ -460,6 +460,26 @@ struct Colorize::Object(T)
     end
   end
 
+  # Prints the ANSI escape codes for an object. Note that this has no effect on a `Colorize::Object` with content,
+  # only the escape codes.
+  #
+  # ```
+  # require "colorize"
+  #
+  # Colorize.with.red.ansi_escape        # => "\e[31m"
+  # "hello world".green.bold.ansi_escape # => "\e[32;1m"
+  # ```
+  def ansi_escape : String
+    String.build do |io|
+      ansi_escape io
+    end
+  end
+
+  # Same as `ansi_escape` but writes to a given *io*.
+  def ansi_escape(io : IO) : Nil
+    self.class.ansi_escape(io, to_named_tuple)
+  end
+
   private def to_named_tuple
     {
       fore: @fore,
@@ -473,6 +493,12 @@ struct Colorize::Object(T)
     back: ColorANSI::Default.as(Color),
     mode: Mode::None,
   }
+
+  protected def self.ansi_escape(io : IO, color : {fore: Color, back: Color, mode: Mode}) : Nil
+    last_color = @@last_color
+    append_start(io, color)
+    @@last_color = last_color
+  end
 
   protected def self.surround(io, color, &)
     last_color = @@last_color

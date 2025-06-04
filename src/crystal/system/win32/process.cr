@@ -37,7 +37,7 @@ struct Crystal::System::Process
       LibC::JOBOBJECTINFOCLASS::AssociateCompletionPortInformation,
       LibC::JOBOBJECT_ASSOCIATE_COMPLETION_PORT.new(
         completionKey: @completion_key.as(Void*),
-        completionPort: Crystal::EventLoop.current.iocp,
+        completionPort: Crystal::EventLoop.current.iocp_handle,
       ),
     )
 
@@ -54,6 +54,12 @@ struct Crystal::System::Process
     if LibC.AssignProcessToJobObject(@job_object, @process_handle) == 0
       raise RuntimeError.from_winerror("AssignProcessToJobObject")
     end
+
+    if LibC.ResumeThread(process_info.hThread) == 0xFFFFFFFF_u32
+      raise RuntimeError.from_winerror("ResumeThread")
+    end
+
+    close_handle(process_info.hThread)
   end
 
   private def config_job_object(kind, info)
@@ -203,7 +209,7 @@ struct Crystal::System::Process
   def self.start_interrupt_loop : Nil
     return unless @@setup_interrupt_handler.test_and_set
 
-    spawn(name: "Interrupt signal loop") do
+    spawn(name: "interrupt-signal-loop") do
       while true
         @@interrupt_count.wait { sleep 50.milliseconds }
 
@@ -256,14 +262,19 @@ struct Crystal::System::Process
   end
 
   private def self.handle_from_io(io : IO::FileDescriptor, parent_io)
-    source_handle = io.windows_handle
+    source_handle =
+      if io.is_a?(File) && !io.system_blocking? && !io.closed?
+        dup_handle = reopen_file_as_blocking(io, parent_io == STDIN, "Process.run")
+      else
+        io.windows_handle
+      end
 
     cur_proc = LibC.GetCurrentProcess
     if LibC.DuplicateHandle(cur_proc, source_handle, cur_proc, out new_handle, 0, true, LibC::DUPLICATE_SAME_ACCESS) == 0
       raise RuntimeError.from_winerror("DuplicateHandle")
     end
 
-    new_handle
+    {new_handle, dup_handle}
   end
 
   def self.spawn(command_args, env, clear_env, input, output, error, chdir)
@@ -271,16 +282,16 @@ struct Crystal::System::Process
     startup_info.cb = sizeof(LibC::STARTUPINFOW)
     startup_info.dwFlags = LibC::STARTF_USESTDHANDLES
 
-    startup_info.hStdInput = handle_from_io(input, STDIN)
-    startup_info.hStdOutput = handle_from_io(output, STDOUT)
-    startup_info.hStdError = handle_from_io(error, STDERR)
+    startup_info.hStdInput, dup_input = handle_from_io(input, STDIN)
+    startup_info.hStdOutput, dup_output = handle_from_io(output, STDOUT)
+    startup_info.hStdError, dup_error = handle_from_io(error, STDERR)
 
     process_info = LibC::PROCESS_INFORMATION.new
 
     command_args = ::Process.quote_windows(command_args) unless command_args.is_a?(String)
 
     if LibC.CreateProcessW(
-         nil, System.to_wstr(command_args), nil, nil, true, LibC::CREATE_UNICODE_ENVIRONMENT,
+         nil, System.to_wstr(command_args), nil, nil, true, LibC::CREATE_SUSPENDED | LibC::CREATE_UNICODE_ENVIRONMENT,
          make_env_block(env, clear_env), chdir.try { |str| System.to_wstr(str) } || Pointer(UInt16).null,
          pointerof(startup_info), pointerof(process_info)
        ) == 0
@@ -293,11 +304,13 @@ struct Crystal::System::Process
       end
     end
 
-    close_handle(process_info.hThread)
-
     close_handle(startup_info.hStdInput)
     close_handle(startup_info.hStdOutput)
     close_handle(startup_info.hStdError)
+
+    close_handle(dup_input) if dup_input
+    close_handle(dup_output) if dup_output
+    close_handle(dup_error) if dup_error
 
     process_info
   end
@@ -315,7 +328,7 @@ struct Crystal::System::Process
       # > The problem is that the `cmd.exe` has complicated parsing rules for the command arguments, and programming language runtimes fail to escape the command arguments properly.
       # > Because of this, it’s possible to inject commands if someone can control the part of command arguments of the batch file.
       # https://flatt.tech/research/posts/batbadbut-you-cant-securely-execute-commands-on-windows/
-      if command.byte_slice?(-4, 4).try(&.downcase).in?(".bat", ".cmd")
+      if command.rstrip(". ").byte_slice?(-4, 4).try(&.downcase).in?(".bat", ".cmd")
         raise ::File::Error.from_os_error("Error executing process", WinError::ERROR_BAD_EXE_FORMAT, file: command)
       end
 
@@ -378,19 +391,6 @@ struct Crystal::System::Process
   # `try_replace` uses the C `LibC._wexecvp` and only cares about the former.
   # Returns a duplicate of the original file descriptor
   private def self.reopen_io(src_io : IO::FileDescriptor, dst_io : IO::FileDescriptor)
-    unless src_io.system_blocking?
-      raise IO::Error.new("Non-blocking streams are not supported in `Process.exec`", target: src_io)
-    end
-
-    src_fd =
-      case src_io
-      when STDIN  then 0
-      when STDOUT then 1
-      when STDERR then 2
-      else
-        LibC._open_osfhandle(src_io.windows_handle, 0)
-      end
-
     dst_fd =
       case dst_io
       when ORIGINAL_STDIN  then 0
@@ -398,6 +398,24 @@ struct Crystal::System::Process
       when ORIGINAL_STDERR then 2
       else
         raise "BUG: Invalid destination IO"
+      end
+
+    src_fd =
+      case src_io
+      when STDIN  then 0
+      when STDOUT then 1
+      when STDERR then 2
+      else
+        handle =
+          case src_io
+          when .system_blocking?, .closed?
+            src_io.windows_handle
+          when File
+            reopen_file_as_blocking(src_io, dst_fd == 0, "Process.exec")
+          else
+            raise IO::Error.new("Non-blocking streams are not supported in `Process.exec`", target: src_io)
+          end
+        LibC._open_osfhandle(handle, 0)
       end
 
     return src_fd if dst_fd == src_fd
@@ -409,6 +427,17 @@ struct Crystal::System::Process
     end
 
     orig_src_fd
+  end
+
+  # The arguments for input, output and error must be handles without
+  # FILE_FLAG_OVERLAPPED.
+  private def self.reopen_file_as_blocking(file, for_stdin, method_name)
+    access = for_stdin ? LibC::FILE_GENERIC_READ : LibC::FILE_GENERIC_WRITE
+    handle = LibC.ReOpenFile(file.windows_handle, access, LibC::DEFAULT_SHARE_MODE, 0)
+    if handle == LibC::INVALID_HANDLE_VALUE
+      raise IO::Error.from_winerror("Failed to reopen non-blocking File as blocking", target: file)
+    end
+    handle
   end
 
   def self.chroot(path)

@@ -166,7 +166,7 @@ class Crystal::CodeGenVisitor
     end
 
     calc_signed = t1.signed? || t2.signed?
-    calc_width = {t1, t2}.map { |t| t.bytes * 8 + ((calc_signed && t.unsigned?) ? 1 : 0) }.max
+    calc_width = {t1, t2}.max_of { |t| t.bytes * 8 + ((calc_signed && t.unsigned?) ? 1 : 0) }
     calc_type = llvm_context.int(calc_width)
 
     e1 = t1.signed? ? builder.sext(p1, calc_type) : builder.zext(p1, calc_type)
@@ -922,7 +922,8 @@ class Crystal::CodeGenVisitor
   def codegen_primitive_symbol_to_s(node, target_def, call_args)
     string = llvm_type(@program.string)
     table_type = string.array(@symbol_table_values.size)
-    string_ptr = gep table_type, @llvm_mod.globals[SYMBOL_TABLE_NAME], int(0), call_args[0]
+    table = define_symbol_table(@llvm_mod, @llvm_typer)
+    string_ptr = gep table_type, table, int(0), call_args[0]
     load(string, string_ptr)
   end
 

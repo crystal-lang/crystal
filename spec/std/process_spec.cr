@@ -32,7 +32,7 @@ end
 private def print_env_command
   {% if flag?(:win32) %}
     # cmd adds these by itself, clear them out before printing.
-    shell_command("set COMSPEC=& set PATHEXT=& set PROMPT=& set")
+    shell_command("set COMSPEC=& set PATHEXT=& set PROMPT=& set PROCESSOR_ARCHITECTURE=& set")
   {% else %}
     {"env", [] of String}
   {% end %}
@@ -100,6 +100,17 @@ describe Process do
           Process.new(command)
         end
       end
+    end
+
+    it "doesn't break if process is collected before completion", tags: %w[slow] do
+      200.times { Process.new(*exit_code_command(0)) }
+
+      # run the GC multiple times to unmap as much memory as possible
+      10.times { GC.collect }
+
+      # the processes above have now been queued after completion; if this last
+      # one finishes at all, nothing was broken by the GC
+      Process.run(*exit_code_command(0))
     end
   end
 
@@ -170,6 +181,14 @@ describe Process do
       error = IO::Memory.new
       Process.run(*shell_command("1>&2 echo hello"), error: error)
       error.to_s.should eq("hello#{newline}")
+    end
+
+    it "sends long output and error to IO" do
+      output = IO::Memory.new
+      error = IO::Memory.new
+      Process.run(*shell_command("echo #{"." * 8000}"), output: output, error: error)
+      output.to_s.should eq("." * 8000 + newline)
+      error.to_s.should be_empty
     end
 
     it "controls process in block" do
@@ -260,7 +279,7 @@ describe Process do
     end
 
     describe "does not execute batch files" do
-      %w[.bat .Bat .BAT .cmd .cmD .CmD].each do |ext|
+      %w[.bat .Bat .BAT .cmd .cmD .CmD .bat\  .cmd\ ... .bat.\ .].each do |ext|
         it ext do
           with_tempfile "process_run#{ext}" do |path|
             File.write(path, "echo '#{ext}'\n")

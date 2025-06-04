@@ -3,28 +3,25 @@ require "file/error"
 
 # :nodoc:
 module Crystal::System::File
-  def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions, blocking)
+  def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions, blocking : Bool?) : {FileDescriptor::Handle, Bool}
     perm = ::File::Permissions.new(perm) if perm.is_a? Int32
 
-    fd, errno = open(filename, open_flag(mode), perm, blocking)
-
-    unless errno.none?
-      raise ::File::Error.from_os_error("Error opening file with mode '#{mode}'", errno, file: filename)
+    case result = EventLoop.current.open(filename, open_flag(mode), perm, blocking)
+    in Tuple(FileDescriptor::Handle, Bool)
+      result
+    in Errno
+      raise ::File::Error.from_os_error("Error opening file with mode '#{mode}'", result, file: filename)
     end
-
-    fd
   end
 
-  def self.open(filename : String, flags : Int32, perm : ::File::Permissions, blocking _blocking) : {LibC::Int, Errno}
-    filename.check_no_null_byte
-    flags |= LibC::O_CLOEXEC
-
-    fd = LibC.open(filename, flags, perm)
-
-    {fd, fd < 0 ? Errno.value : Errno::NONE}
+  protected def system_init(mode : String, blocking : Bool) : Nil
   end
 
-  protected def system_set_mode(mode : String)
+  def self.special_type?(fd)
+    stat = uninitialized LibC::Stat
+    ret = fstat(fd, pointerof(stat))
+    # not checking for S_IFSOCK because we can't open(2) a socket
+    ret != -1 && (stat.st_mode & LibC::S_IFMT).in?(LibC::S_IFCHR, LibC::S_IFIFO)
   end
 
   def self.info?(path : String, follow_symlinks : Bool) : ::File::Info?
@@ -185,10 +182,19 @@ module Crystal::System::File
   end
 
   def self.utime(atime : ::Time, mtime : ::Time, filename : String) : Nil
-    timevals = uninitialized LibC::Timeval[2]
-    timevals[0] = Crystal::System::Time.to_timeval(atime)
-    timevals[1] = Crystal::System::Time.to_timeval(mtime)
-    ret = LibC.utimes(filename, timevals)
+    ret =
+      {% if LibC.has_method?("utimensat") %}
+        timespecs = uninitialized LibC::Timespec[2]
+        timespecs[0] = Crystal::System::Time.to_timespec(atime)
+        timespecs[1] = Crystal::System::Time.to_timespec(mtime)
+        LibC.utimensat(LibC::AT_FDCWD, filename, timespecs, 0)
+      {% else %}
+        timevals = uninitialized LibC::Timeval[2]
+        timevals[0] = Crystal::System::Time.to_timeval(atime)
+        timevals[1] = Crystal::System::Time.to_timeval(mtime)
+        LibC.utimes(filename, timevals)
+      {% end %}
+
     if ret != 0
       raise ::File::Error.from_errno("Error setting time on file", file: filename)
     end

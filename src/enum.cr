@@ -100,7 +100,7 @@
 #
 # Color::Red.value # : UInt8
 # ```
-struct Enum
+abstract struct Enum
   include Comparable(self)
 
   # Returns *value*.
@@ -225,7 +225,8 @@ struct Enum
     end
   end
 
-  private def member_name
+  # :nodoc:
+  def member_name : String?
     # Can't use `case` here because case with duplicate values do
     # not compile, but enums can have duplicates (such as `enum Foo; FOO = 1; BAR = 1; end`).
     {% for member in @type.constants %}
@@ -445,10 +446,10 @@ struct Enum
   # Color.from_value(0) # => Color::Red
   # Color.from_value(1) # => Color::Green
   # Color.from_value(2) # => Color::Blue
-  # Color.from_value(3) # raises Exception
+  # Color.from_value(3) # raises ArgumentError
   # ```
   def self.from_value(value : Int) : self
-    from_value?(value) || raise "Unknown enum #{self} value: #{value}"
+    from_value?(value) || raise ArgumentError.new("Unknown enum #{self} value: #{value}")
   end
 
   # Returns `true` if the given *value* is an enum member, otherwise `false`.

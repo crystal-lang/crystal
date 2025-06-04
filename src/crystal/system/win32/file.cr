@@ -12,9 +12,9 @@ module Crystal::System::File
   # On Windows we cannot rely on the system mode `FILE_APPEND_DATA` and
   # keep track of append mode explicitly. When writing data, this ensures to only
   # write at the end of the file.
-  @system_append = false
+  getter? system_append = false
 
-  def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions, blocking : Bool?) : FileDescriptor::Handle
+  def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions, blocking : Bool?) : {FileDescriptor::Handle, Bool}
     perm = ::File::Permissions.new(perm) if perm.is_a? Int32
     # Only the owner writable bit is used, since windows only supports
     # the read only attribute.
@@ -24,31 +24,15 @@ module Crystal::System::File
       perm = LibC::S_IREAD
     end
 
-    handle, error = open(filename, open_flag(mode), ::File::Permissions.new(perm), blocking != false)
-    unless error.error_success?
-      raise ::File::Error.from_os_error("Error opening file with mode '#{mode}'", error, file: filename)
+    case result = EventLoop.current.open(filename, open_flag(mode), ::File::Permissions.new(perm), blocking != false)
+    in Tuple(FileDescriptor::Handle, Bool)
+      result
+    in WinError
+      raise ::File::Error.from_os_error("Error opening file with mode '#{mode}'", result, file: filename)
     end
-
-    handle
   end
 
-  def self.open(filename : String, flags : Int32, perm : ::File::Permissions, blocking : Bool) : {FileDescriptor::Handle, WinError}
-    access, disposition, attributes = self.posix_to_open_opts flags, perm, blocking
-
-    handle = LibC.CreateFileW(
-      System.to_wstr(filename),
-      access,
-      LibC::DEFAULT_SHARE_MODE, # UNIX semantics
-      nil,
-      disposition,
-      attributes,
-      LibC::HANDLE.null
-    )
-
-    {handle.address, handle == LibC::INVALID_HANDLE_VALUE ? WinError.value : WinError::ERROR_SUCCESS}
-  end
-
-  private def self.posix_to_open_opts(flags : Int32, perm : ::File::Permissions, blocking : Bool)
+  def self.posix_to_open_opts(flags : Int32, perm : ::File::Permissions, blocking : Bool)
     access = if flags.bits_set? LibC::O_WRONLY
                LibC::FILE_GENERIC_WRITE
              elsif flags.bits_set? LibC::O_RDWR
@@ -104,8 +88,9 @@ module Crystal::System::File
     {access, disposition, attributes}
   end
 
-  protected def system_set_mode(mode : String)
+  protected def system_init(mode : String, blocking : Bool) : Nil
     @system_append = true if mode.starts_with?('a')
+    @system_blocking = blocking
   end
 
   private def write_blocking(handle, slice)
@@ -116,6 +101,7 @@ module Crystal::System::File
     WinError::ERROR_FILE_NOT_FOUND,
     WinError::ERROR_PATH_NOT_FOUND,
     WinError::ERROR_INVALID_NAME,
+    WinError::ERROR_DIRECTORY,
   }
 
   def self.check_not_found_error(message, path)
@@ -199,10 +185,32 @@ module Crystal::System::File
 
   private def self.accessible?(path, *, check_writable, follow_symlinks)
     if follow_symlinks
-      path = realpath?(path) || return false
+      path = realpath?(path, check_exists: false) || return false
     end
 
-    attributes = LibC.GetFileAttributesW(System.to_wstr(path))
+    handle = LibC.CreateFileW(
+      System.to_wstr(path),
+      LibC::FILE_READ_ATTRIBUTES,
+      LibC::DEFAULT_SHARE_MODE,
+      nil,
+      LibC::OPEN_EXISTING,
+      LibC::FILE_FLAG_BACKUP_SEMANTICS | LibC::FILE_FLAG_OPEN_REPARSE_POINT,
+      LibC::HANDLE.null,
+    )
+    return false if handle == LibC::INVALID_HANDLE_VALUE
+
+    begin
+      info = uninitialized LibC::FILE_ATTRIBUTE_TAG_INFO
+      if LibC.GetFileInformationByHandleEx(handle, LibC::FILE_INFO_BY_HANDLE_CLASS::FileAttributeTagInfo, pointerof(info), sizeof(typeof(info))) == 0
+        # this can happen to special files like NUL and COM1, but we managed to
+        # open them anyway, so assume they are readable and writable
+        return true
+      end
+      attributes = info.fileAttributes
+    ensure
+      LibC.CloseHandle(handle)
+    end
+
     return false if attributes == LibC::INVALID_FILE_ATTRIBUTES
     return true if attributes.bits_set?(LibC::FILE_ATTRIBUTE_DIRECTORY)
     return false if check_writable && attributes.bits_set?(LibC::FILE_ATTRIBUTE_READONLY)
@@ -297,7 +305,7 @@ module Crystal::System::File
 
   private REALPATH_SYMLINK_LIMIT = 100
 
-  private def self.realpath?(path : String) : String?
+  private def self.realpath?(path : String, *, check_exists : Bool = true) : String?
     REALPATH_SYMLINK_LIMIT.times do
       win_path = System.to_wstr(path)
 
@@ -318,7 +326,7 @@ module Crystal::System::File
         next
       end
 
-      return exists?(realpath, follow_symlinks: false) ? realpath : nil
+      return !check_exists || exists?(realpath, follow_symlinks: false) ? realpath : nil
     end
 
     raise ::File::Error.from_os_error("Too many symbolic links", Errno::ELOOP, file: path)

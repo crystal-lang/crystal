@@ -379,7 +379,14 @@ module Crystal
         # `temp_assign` is this whole Assign node and its deduced type is same
         # as the original RHS's type
         temp_assign = expanded.as(Expressions).expressions.first
-        type = temp_assign.type
+        type = temp_assign.type?
+
+        # if the Assign node's RHS is untyped, this and all following
+        # assignments are unreachable
+        unless type
+          return untyped_expression node
+        end
+
         target_count = node.targets.size
         has_strict_multi_assign = @program.has_flag?("strict_multi_assign")
 
@@ -1090,10 +1097,7 @@ module Crystal
       node = super
 
       unless node.type?
-        if dependencies = node.dependencies?
-          node.unbind_from node.dependencies
-        end
-
+        node.unbind_from node.dependencies
         node.bind_to node.expressions
       end
 

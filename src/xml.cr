@@ -107,12 +107,7 @@ module XML
   end
 
   protected def self.with_indent_tree_output(indent : Bool, &)
-    ptr = {% if flag?(:win32) %}
-            LibXML.__xmlIndentTreeOutput
-          {% else %}
-            pointerof(LibXML.xmlIndentTreeOutput)
-          {% end %}
-
+    ptr = LibXML.__xmlIndentTreeOutput
     old, ptr.value = ptr.value, indent ? 1 : 0
     begin
       yield
@@ -122,18 +117,24 @@ module XML
   end
 
   protected def self.with_tree_indent_string(string : String, &)
-    ptr = {% if flag?(:win32) %}
-            LibXML.__xmlTreeIndentString
-          {% else %}
-            pointerof(LibXML.xmlTreeIndentString)
-          {% end %}
-
+    ptr = LibXML.__xmlTreeIndentString
     old, ptr.value = ptr.value, string.to_unsafe
     begin
       yield
     ensure
       ptr.value = old
     end
+  end
+
+  class_getter libxml2_version : String do
+    version_string = String.new(LibXML.xmlParserVersion)
+
+    # The version string can contain extra information after the version number,
+    # so we ignore any trailing non-numbers with `strict: false`
+    number = version_string.to_i(strict: false)
+
+    # Construct a formatted version string
+    "#{number // 10_000}.#{number % 10_000 // 100}.#{number % 100}"
   end
 end
 
