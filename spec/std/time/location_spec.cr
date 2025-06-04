@@ -762,6 +762,7 @@ class Time::Location
             # "CET-1CEST,M3.5.0,M10.5.0/3"
             # last transition is in year 2037
             location = Location.load("Europe/Berlin")
+            Time.unix(location.@transitions.last.when).year.should eq(2037)
 
             assert_tz_boundaries location,
               Zone.new("CET", 3600, false), Zone.new("CEST", 7200, true),

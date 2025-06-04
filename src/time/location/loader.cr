@@ -201,7 +201,7 @@ class Time::Location
 
       unless tz_string.empty?
         hours_extension = version != '2'.ord # version 3+
-        if tz_args = TZLocation.parse_tz(tz_string, zones, hours_extension)
+        if tz_args = TZ.parse(tz_string, zones, hours_extension)
           return TZLocation.new(location_name, zones, tz_string, *tz_args, transitions)
         end
         raise InvalidTZDataError.new("Invalid TZ string: #{tz_string}")

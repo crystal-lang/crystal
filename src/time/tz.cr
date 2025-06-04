@@ -47,7 +47,7 @@ module Time::TZ
     end
 
     def unix_date_in_year(year : Int) : Int64
-      TZLocation.jan1_to_unix(year) + 86400_i64 * (Time.leap_year?((year - 1) % 400 + 1) && @ordinal >= 60 ? @ordinal : @ordinal - 1)
+      TZ.jan1_to_unix(year) + 86400_i64 * (Time.leap_year?((year - 1) % 400 + 1) && @ordinal >= 60 ? @ordinal : @ordinal - 1)
     end
   end
 
@@ -63,7 +63,7 @@ module Time::TZ
     end
 
     def unix_date_in_year(year : Int) : Int64
-      TZLocation.jan1_to_unix(year) + 86400_i64 * @ordinal
+      TZ.jan1_to_unix(year) + 86400_i64 * @ordinal
     end
   end
 
@@ -78,8 +78,9 @@ module Time::TZ
     end
 
     def unix_date_in_year(year : Int) : Int64
-      # this needs to handle years outside 1..9999; we could reduce `year`
-      # modulo 400 since the number of days in 400 years is divisible by 7
+      # this needs to handle years outside 1..9999; reduce `year` modulo 400 so
+      # that it fits into 1..2000, since the number of days per 400 years is
+      # divisible by 7
       cycles = (year - 1) // 400
       year = (year - 1) % 400 + 1
       Time.month_week_date(year, @month.to_i32, @week.to_i32, @day.to_i32, location: Time::Location::UTC).to_unix + SECONDS_PER_400_YEARS * cycles
@@ -109,15 +110,15 @@ module Time::TZ
       # rely on `Time`'s timezone facilities since that is exactly what this
       # method implements. It may differ from the UTC year by 0 or 1. musl uses
       # a similar loop.
-      utc_year = local_year = TZLocation.unix_to_year(unix_seconds)
+      utc_year = local_year = TZ.unix_to_year(unix_seconds)
 
       while true
         datetime1 = transition1.unix_date_in_year(local_year) + transition1.time + std_offset
         datetime2 = transition2.unix_date_in_year(local_year) + transition2.time + dst_offset
         new_year_is_dst = datetime2 < datetime1
 
-        local_new_year = TZLocation.jan1_to_unix(local_year) + (new_year_is_dst ? dst_offset : std_offset)
-        local_new_year_next = TZLocation.jan1_to_unix(local_year + 1) + (new_year_is_dst ? dst_offset : std_offset)
+        local_new_year = TZ.jan1_to_unix(local_year) + (new_year_is_dst ? dst_offset : std_offset)
+        local_new_year_next = TZ.jan1_to_unix(local_year + 1) + (new_year_is_dst ? dst_offset : std_offset)
         break if local_new_year <= unix_seconds < local_new_year_next
 
         if local_year == utc_year
