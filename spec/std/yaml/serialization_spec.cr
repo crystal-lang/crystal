@@ -452,16 +452,16 @@ describe "YAML serialization" do
 
   describe "to_yaml" do
     it "does for Nil" do
-      Nil.from_yaml(nil.to_yaml).should eq(nil)
+      Nil.from_yaml(nil.to_yaml).should be_nil
     end
 
     it "does for Nil (empty string)" do
-      Nil.from_yaml("").should eq(nil)
+      Nil.from_yaml("").should be_nil
     end
 
     it "does for Bool" do
-      Bool.from_yaml(true.to_yaml).should eq(true)
-      Bool.from_yaml(false.to_yaml).should eq(false)
+      Bool.from_yaml(true.to_yaml).should be_true
+      Bool.from_yaml(false.to_yaml).should be_false
     end
 
     it "does for Int32" do

@@ -297,10 +297,10 @@ describe "Complex" do
   end
 
   it "test zero?" do
-    Complex.new(0, 0).zero?.should eq true
-    Complex.new(0, 3.4).zero?.should eq false
-    Complex.new(1.2, 0).zero?.should eq false
-    Complex.new(1.2, 3.4).zero?.should eq false
+    Complex.new(0, 0).zero?.should be_true
+    Complex.new(0, 3.4).zero?.should be_false
+    Complex.new(1.2, 0).zero?.should be_false
+    Complex.new(1.2, 3.4).zero?.should be_false
   end
 
   it "test additive_identity" do

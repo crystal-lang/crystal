@@ -142,20 +142,20 @@ class URI
 
       it "return nil when there is no such param" do
         params = Params.parse("foo=bar&foo=baz&baz=qux")
-        params["non_existent_param"]?.should eq(nil)
+        params["non_existent_param"]?.should be_nil
       end
     end
 
     describe "#has_key?(name)" do
       it "returns true if param with provided name exists" do
         params = Params.parse("foo=bar&foo=baz&baz=qux")
-        params.has_key?("foo").should eq(true)
-        params.has_key?("baz").should eq(true)
+        params.has_key?("foo").should be_true
+        params.has_key?("baz").should be_true
       end
 
       it "return false if param with provided name does not exist" do
         params = Params.parse("foo=bar&foo=baz&baz=qux")
-        params.has_key?("non_existent_param").should eq(false)
+        params.has_key?("non_existent_param").should be_false
       end
     end
 

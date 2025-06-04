@@ -5584,6 +5584,36 @@ class String
     self
   end
 
+  # Returns `self` if it starts with the given *prefix*. Otherwise, returns a new
+  # `String` with the *prefix* prepended.
+  #
+  # ```
+  # "llo!".ensure_prefix("He")   # => "Hello!"
+  # "Hello!".ensure_prefix("He") # => "Hello!"
+  # "ello".ensure_prefix('H')    # => "Hello!"
+  # "Hello!".ensure_prefix('H')  # => "Hello!"
+  # ```
+  def ensure_prefix(prefix : String | Char) : self
+    return self if starts_with?(prefix)
+
+    "#{prefix}#{self}"
+  end
+
+  # Returns `self` if it ends with the given *suffix*. Otherwise, returns a new
+  # `String` with the *suffix* appended.
+  #
+  # ```
+  # "Hell".ensure_suffix("o!")   # => "Hello!"
+  # "Hello!".ensure_suffix("o!") # => "Hello!"
+  # "Hello".ensure_suffix('!')   # => "Hello!"
+  # "Hello!".ensure_suffix('!')  # => "Hello!"
+  # ```
+  def ensure_suffix(suffix : String | Char) : self
+    return self if ends_with?(suffix)
+
+    "#{self}#{suffix}"
+  end
+
   # :nodoc:
   def self.check_capacity_in_bounds(capacity) : Nil
     if capacity < 0

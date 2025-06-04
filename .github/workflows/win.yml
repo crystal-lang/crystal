@@ -328,7 +328,7 @@ jobs:
       - name: Build installer
         working-directory: ./etc/win-ci
         run: |
-          iscc.exe crystal.iss
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" crystal.iss
 
       - name: Upload Crystal installer
         uses: actions/upload-artifact@v4
