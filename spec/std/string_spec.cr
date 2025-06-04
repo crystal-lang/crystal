@@ -2266,22 +2266,15 @@ describe "String" do
     end
 
     it "compares with == when different strings same contents" do
-      s1 = "foo#{1}"
-      s2 = "foo#{1}"
-      s1.should eq(s2)
+      ("fo" + "o").should eq("fo" + "o")
     end
 
     it "compares with == when different contents" do
-      s1 = "foo#{1}"
-      s2 = "foo#{2}"
-      s1.should_not eq(s2)
+      ("fo" + "o").should_not eq("bo" + "o")
     end
 
     it "sorts strings" do
-      s1 = "foo1"
-      s2 = "foo"
-      s3 = "bar"
-      [s1, s2, s3].sort.should eq(["bar", "foo", "foo1"])
+      ["foo1", "foo", "bar"].sort.should eq(["bar", "foo", "foo1"])
     end
   end
 
