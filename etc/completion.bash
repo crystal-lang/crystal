@@ -81,7 +81,15 @@ _crystal()
                 _crystal_compgen_sources "${cur}"
             fi
             ;;
-        clear_cache|docs|eval|spec|version|help)
+        docs)
+            if [[ "${cur}" == -* ]] ; then
+                local opts="--output --format --help"
+                _crystal_compgen_options "${opts}" "${cur}"
+            else
+                _crystal_compgen_files "${cur}"
+            fi
+            ;;
+        clear_cache|eval|spec|version|help)
             # These commands do not accept any options nor subcommands
             _crystal_compgen_files "${cur}"
             ;;
