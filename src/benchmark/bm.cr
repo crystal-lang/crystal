@@ -44,13 +44,13 @@ module Benchmark
       end
 
       # Reports a single benchmark unit.
-      def report(label = " ", &block)
+      def report(label : String = " ", &block : ->) : Nil
         @label_width = label.size if label.size > @label_width
         @reports << {label, block}
       end
 
       # :nodoc:
-      def execute
+      def execute : Nil
         if @label_width > 0
           print " " * @label_width
         end
