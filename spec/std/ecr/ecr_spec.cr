@@ -62,7 +62,7 @@ describe "ECR" do
   it "does with -% inside string" do
     io = IO::Memory.new
     ECR.embed "#{__DIR__}/../data/test_template6.ecr", io
-    io.to_s.should eq("string with -%")
+    io.to_s.should eq("string with -%\n")
   end
 
   it "does with <%% %>" do
@@ -74,6 +74,7 @@ describe "ECR" do
         <%- else -%>
       Greetings!
       <%- end -%>
+
       ECR
   end
 
