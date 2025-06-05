@@ -105,7 +105,7 @@ module Fiber::ExecutionContext
         Crystal.trace :sched, "enqueue", fiber: fiber
         @runnables.push(fiber)
       else
-        # cross context enqueue
+        # cross context or detached thread enqueue
         Crystal.trace :sched, "enqueue", fiber: fiber, to_context: self
         @global_queue.push(fiber)
         wake_scheduler
