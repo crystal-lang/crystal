@@ -129,14 +129,19 @@ module Colorize
   # "hello".colorize.red.to_s # => "hello"
   # ```
   #
-  # NOTE: This is by default disabled if the environment variable `NO_COLOR` contains any value.
-  class_property? enabled : Bool { !ENV.has_key?("NO_COLOR") }
+  # NOTE: This is by default enabled according to `.on_tty_only!`.
+  class_property? enabled : Bool do
+    STDOUT.tty? && STDERR.tty? && ENV["TERM"]? != "dumb" && !ENV.has_key?("NO_COLOR")
+  end
 
   # Makes `Colorize.enabled` `true` if and only if both of `STDOUT.tty?`
   # and `STDERR.tty?` are `true` and the tty is not considered a dumb terminal.
   # This is determined by the environment variable called `TERM`.
   # If `TERM=dumb`, color won't be enabled.
   # If `NO_COLOR` contains any value color won't be enabled conforming to https://no-color.org
+  #
+  # This can be used to revert `Colorize.enabled?` to its default value after
+  # colorization is explicitly enabled or disabled.
   def self.on_tty_only!
     self.enabled = STDOUT.tty? && STDERR.tty? && ENV["TERM"]? != "dumb" && !ENV.has_key?("NO_COLOR")
   end
