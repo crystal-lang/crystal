@@ -133,7 +133,7 @@ module SystemError
 
       @[Deprecated("Use `.from_os_error` instead")]
       def from_winerror(*, winerror : WinError = WinError.value, **opts)
-        from_os_error(message, winerror, **opts)
+        from_os_error(nil, winerror, **opts)
       end
     {% end %}
   end
