@@ -102,13 +102,14 @@ module Spec
         junit_formatter = Spec::JUnitFormatter.file(Path.new(output_path.not_nil!))
         add_formatter(junit_formatter)
       when "verbose"
-        override_default_formatter(Spec::VerboseFormatter.new)
+        override_default_formatter(Spec::VerboseFormatter.new(@stdout))
       when "tap"
-        override_default_formatter(Spec::TAPFormatter.new)
+        override_default_formatter(Spec::TAPFormatter.new(@stdout))
       end
     end
 
     def main(args)
+      # TODO: should not be global state
       Colorize.on_tty_only!
 
       begin
@@ -118,12 +119,11 @@ module Spec
       end
 
       unless args.empty?
-        STDERR.puts "Error: unknown argument '#{args.first}'"
-        exit 1
+        abort "Error: unknown argument '#{args.first}'"
       end
 
       if ENV["SPEC_VERBOSE"]? == "1"
-        override_default_formatter(Spec::VerboseFormatter.new)
+        override_default_formatter(Spec::VerboseFormatter.new(@stdout))
       end
 
       add_split_filter ENV["SPEC_SPLIT"]?
