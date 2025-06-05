@@ -28,7 +28,7 @@ describe SystemError do
       it "avoid reset from message" do
         WinError.value = :ERROR_FILE_NOT_FOUND
         error = ::RuntimeError.from_winerror("foobar".tap { WinError.value = :ERROR_ACCESS_DENIED })
-        error.os_error.should eq WinError::ERROR_ACCESS_DENIED # This should be ERROR_FILE_NOT_FOUND
+        error.os_error.should eq WinError::ERROR_FILE_NOT_FOUND
       end
     end
 
@@ -36,7 +36,7 @@ describe SystemError do
       it "avoid reset from message" do
         WinError.wsa_value = :ERROR_FILE_NOT_FOUND
         error = ::RuntimeError.from_wsa_error("foobar".tap { WinError.wsa_value = :ERROR_ACCESS_DENIED })
-        error.os_error.should eq WinError::ERROR_ACCESS_DENIED # This should be ERROR_FILE_NOT_FOUND
+        error.os_error.should eq WinError::ERROR_FILE_NOT_FOUND
       end
     end
   {% end %}

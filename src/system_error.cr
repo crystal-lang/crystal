@@ -48,13 +48,43 @@ module SystemError
     macro from_errno(message, **opts)
       # This is a macro in order to retrieve `Errno.value` first before evaluating `message` and `opts`.
       %errno = ::Errno.value
-      ::\{{@type}}.from_os_error(\{{ message }}, %errno, \{{ opts.double_splat }})
+      ::\{{ @type }}.from_os_error(\{{ message }}, %errno, \{{ opts.double_splat }})
     end
 
     @[Deprecated("Use `.from_os_error` instead")]
     macro from_errno(message = nil, errno = nil, **opts)
-      ::\{{@type}}.from_os_error(\{{ message }}, \{{ errno }}, \{{ opts.double_splat }})
+      ::\{{ @type }}.from_os_error(\{{ message }}, \{{ errno }}, \{{ opts.double_splat }})
     end
+
+    # Builds an instance of the exception from the current windows error value (`WinError.value`).
+    #
+    # The system message corresponding to the OS error value amends the *message*.
+    # Additional keyword arguments are forwarded to the exception initializer `.new_from_os_error`.
+    macro from_winerror(message, **opts)
+      %error = ::WinError.value
+      ::\{{ @type }}.from_os_error(\{{ message }}, %error, \{{ opts.double_splat }})
+    end
+
+    # Builds an instance of the exception from the current Windows Socket API error value (`WinError.wsa_value`).
+    #
+    # The system message corresponding to the OS error value amends the *message*.
+    # Additional keyword arguments are forwarded to the exception initializer.
+    macro from_wsa_error(message = nil, **opts)
+      %error = ::WinError.wsa_value
+      ::\{{ @type }}.from_os_error(\{{ message }}, %error, \{{ opts.double_splat }})
+    end
+
+    {% if flag?(:win32) %}
+      @[Deprecated("Use `.from_os_error` instead")]
+      macro from_winerror(message, winerror, **opts)
+        ::\{{ @type }}.from_os_error(\{{ message }}, \{{ winerror }}, \{{ opts.double_splat }})
+      end
+
+      @[Deprecated("Use `.from_os_error` instead")]
+      macro from_winerror(*, winerror = ::WinError.value, **opts)
+        ::\{{ @type }}.from_os_error(nil, \{{ winerror }}, \{{ opts.double_splat }})
+      end
+    {% end %}
   end
 
   # The original system error wrapped by this exception
@@ -108,33 +138,5 @@ module SystemError
     protected def new_from_os_error(message : String?, os_error, **opts)
       self.new(message, **opts)
     end
-
-    # Builds an instance of the exception from the current windows error value (`WinError.value`).
-    #
-    # The system message corresponding to the OS error value amends the *message*.
-    # Additional keyword arguments are forwarded to the exception initializer `.new_from_os_error`.
-    def from_winerror(message : String?, **opts)
-      from_os_error(message, WinError.value, **opts)
-    end
-
-    # Builds an instance of the exception from the current Windows Socket API error value (`WinError.wsa_value`).
-    #
-    # The system message corresponding to the OS error value amends the *message*.
-    # Additional keyword arguments are forwarded to the exception initializer.
-    def from_wsa_error(message : String? = nil, **opts)
-      from_os_error(message, WinError.wsa_value, **opts)
-    end
-
-    {% if flag?(:win32) %}
-      @[Deprecated("Use `.from_os_error` instead")]
-      def from_winerror(message : String?, winerror : WinError, **opts)
-        from_os_error(message, winerror, **opts)
-      end
-
-      @[Deprecated("Use `.from_os_error` instead")]
-      def from_winerror(*, winerror : WinError = WinError.value, **opts)
-        from_os_error(nil, winerror, **opts)
-      end
-    {% end %}
   end
 end
