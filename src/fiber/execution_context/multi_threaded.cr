@@ -90,11 +90,7 @@ module Fiber::ExecutionContext
 
       @global_queue = GlobalQueue.new(@mutex)
       @schedulers = Array(Scheduler).new(capacity)
-
-      # FIXME: invalid since schedulers will be transfered to other threads,
-      # keep a mere `@size : Int32` counter instead!
-      @threads = Array(Thread).new(capacity)
-
+      @started = @size.begin
       @rng = Random::PCG32.new
 
       start_schedulers
@@ -105,7 +101,7 @@ module Fiber::ExecutionContext
 
     # The number of threads that have been started.
     def size : Int32
-      @threads.size
+      @started
     end
 
     # The maximum number of threads that can be started.
@@ -120,16 +116,15 @@ module Fiber::ExecutionContext
 
     # Starts all schedulers at once.
     #
-    # We could lazily initialize them as needed, like we do for threads, which
-    # would be safe as long as we only mutate when the mutex is locked... but
-    # unlike @threads, we do iterate the schedulers in #steal without locking
-    # the mutex (for obvious reasons) and there are no guarantees that the new
-    # schedulers.@size will be written after the scheduler has been written to
-    # the array's buffer.
+    # We could lazily initialize them as needed, would be safe as long as we
+    # only mutate when the mutex is locked, but we iterate the schedulers in
+    # #steal without locking the mutex (for obvious reasons) and there are no
+    # guarantees that the new schedulers.@size will be written after the
+    # scheduler has been written to the array's buffer.
     #
     # OPTIMIZE: consider storing schedulers to an array-like object that would
-    # use an atomic/fence to make sure that @size can only be incremented
-    # *after* the value has been written to @buffer.
+    # use an atomic/fence to make sure that @size is only incremented *after*
+    # the value has been written to @buffer.
     private def start_schedulers
       capacity.times do |index|
         @schedulers << Scheduler.new(self, "#{@name}-#{index}")
@@ -140,18 +135,18 @@ module Fiber::ExecutionContext
       offset = 0
 
       if hijack
-        @threads << hijack_current_thread(@schedulers[0])
+        hijack_current_thread(@schedulers[0])
         offset += 1
       end
 
       offset.upto(@size.begin - 1) do |index|
-        @threads << start_thread(@schedulers[index])
+        start_thread(@schedulers[index])
       end
     end
 
     # Attaches *scheduler* to the current `Thread`, usually the process' main
     # thread. Starts a `Fiber` to run the scheduler loop.
-    private def hijack_current_thread(scheduler) : Thread
+    private def hijack_current_thread(scheduler) : Nil
       thread = Thread.current
       thread.internal_name = scheduler.name
       thread.execution_context = self
@@ -161,7 +156,7 @@ module Fiber::ExecutionContext
 
     # Starts a new `Thread` and attaches *scheduler*. Runs the scheduler loop
     # directly in the thread's main `Fiber`.
-    private def start_thread(scheduler) : Thread
+    private def start_thread(scheduler) : Nil
       ExecutionContext.thread_pool.checkout(scheduler)
     end
 
@@ -181,7 +176,7 @@ module Fiber::ExecutionContext
         # local enqueue: push to local queue of current scheduler
         ExecutionContext::Scheduler.current.enqueue(fiber)
       else
-        # cross context: push to global queue
+        # cross context or detached thread: push to global queue
         Crystal.trace :sched, "enqueue", fiber: fiber, to_context: self
         @global_queue.push(fiber)
         wake_scheduler
@@ -213,8 +208,8 @@ module Fiber::ExecutionContext
         Crystal.trace :sched, "park"
         @parked.add(1, :acquire_release)
 
-        # TODO: consider detaching the scheduler and returning the thread back
-        # into ExecutionContext.thread_pool instead
+        # TODO: detach the scheduler and return the thread back into ThreadPool
+        # instead
         @condition.wait(@mutex)
 
         # we don't decrement @parked because #wake_scheduler did
@@ -277,13 +272,12 @@ module Fiber::ExecutionContext
       # check if we can start another thread; no need for atomics, the values
       # shall be rather stable over time and we check them again inside the
       # mutex
-      return if @threads.size == capacity
+      return if @started == capacity
 
       @mutex.synchronize do
-        index = @threads.size
+        index = @started
         return if index == capacity # check again
-
-        @threads << start_thread(@schedulers[index])
+        start_thread(@schedulers[index])
       end
     end
 
