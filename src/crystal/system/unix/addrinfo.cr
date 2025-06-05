@@ -49,7 +49,10 @@ module Crystal::System::Addrinfo
       end
     {% end %}
 
-    ret = LibC.getaddrinfo(domain, service.to_s, pointerof(hints), out ptr)
+    ptr = Pointer(LibC::Addrinfo).null
+    ret = ::Fiber.syscall do
+      LibC.getaddrinfo(domain, service.to_s, pointerof(hints), pointerof(ptr))
+    end
     unless ret.zero?
       if ret == LibC::EAI_SYSTEM
         raise ::Socket::Addrinfo::Error.from_os_error nil, Errno.value, domain: domain

@@ -40,7 +40,7 @@ module Fiber::ExecutionContext
 
     @mutex : Thread::Mutex
     protected getter thread : Thread
-    @main_fiber : Fiber
+    protected getter main_fiber : Fiber
 
     # :nodoc:
     getter event_loop : Crystal::EventLoop = Crystal::EventLoop.create
@@ -58,19 +58,23 @@ module Fiber::ExecutionContext
       @mutex = Thread::Mutex.new
       @thread = uninitialized Thread
       @main_fiber = uninitialized Fiber
+      @main_fiber = Fiber.new(@name, allocate_stack, self) { run }
       @thread = start_thread
       ExecutionContext.execution_contexts.push(self)
     end
 
+    private def allocate_stack : Stack
+      # no stack pool: we directly allocate a stack; it will be automatically
+      # released when the thread is returned to the thread pool
+      pointer = Crystal::System::Fiber.allocate_stack(StackPool::STACK_SIZE, protect: true)
+      Stack.new(pointer, StackPool::STACK_SIZE, reusable: true)
+    end
+
     private def start_thread : Thread
-      Thread.new(name: @name) do |thread|
-        @thread = thread
-        thread.execution_context = self
-        thread.scheduler = self
-        thread.main_fiber.name = @name
-        @main_fiber = thread.main_fiber
-        run
-      end
+      ExecutionContext.thread_pool.checkout(self)
+    end
+
+    protected def thread=(@thread)
     end
 
     # :nodoc:
@@ -122,6 +126,11 @@ module Fiber::ExecutionContext
 
     protected def reschedule : Nil
       Crystal.trace :sched, "reschedule"
+
+      if @main_fiber.dead?
+        ExecutionContext.thread_pool.checkin
+        return # actually unreachable
+      end
 
       loop do
         @mutex.synchronize do
@@ -189,14 +198,14 @@ module Fiber::ExecutionContext
     # ctx.wait # => re-raises "fail"
     # ```
     def wait : Nil
-      if @running
+      if running = @running
         node = Fiber::PointerLinkedListNode.new(Fiber.current)
 
         @mutex.synchronize do
-          @wait_list.push(pointerof(node)) if @running
+          @wait_list.push(pointerof(node)) if running = @running
         end
 
-        Fiber.suspend
+        Fiber.suspend if running
       end
 
       if exception = @exception
@@ -224,11 +233,27 @@ module Fiber::ExecutionContext
     def status : String
       if @waiting
         "event-loop"
+      elsif @syscall == SYSCALL_FLAG
+        "syscall"
       elsif @running
         "running"
       else
         "shutdown"
       end
+    end
+
+    protected def enter_syscall : UInt32
+      @syscall.lazy_set(SYSCALL_FLAG)
+    end
+
+    protected def leave_syscall?(value : UInt32) : Bool
+      @syscall.lazy_set(0_u32)
+      true
+    end
+
+    # :nodoc:
+    def syscall(& : -> U) : U forall U
+      yield
     end
   end
 end
