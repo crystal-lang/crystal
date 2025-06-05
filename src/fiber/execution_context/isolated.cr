@@ -189,13 +189,12 @@ module Fiber::ExecutionContext
     # ctx.wait # => re-raises "fail"
     # ```
     def wait : Nil
-      if running = @running
+      if @running
         node = Fiber::PointerLinkedListNode.new(Fiber.current)
-
-        @mutex.synchronize do
-          @wait_list.push(pointerof(node)) if running = @running
+        running = @mutex.synchronize do
+          @wait_list.push(pointerof(node)) if @running
+          @running
         end
-
         Fiber.suspend if running
       end
 
