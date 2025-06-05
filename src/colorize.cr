@@ -140,10 +140,13 @@ module Colorize
   # If `TERM=dumb`, color won't be enabled.
   # If `NO_COLOR` contains any value color won't be enabled conforming to https://no-color.org
   #
+  # Returns the new value of `Colorize.enabled?`.
+  #
   # This can be used to revert `Colorize.enabled?` to its default value after
   # colorization is explicitly enabled or disabled.
-  def self.on_tty_only!
-    self.enabled = STDOUT.tty? && STDERR.tty? && ENV["TERM"]? != "dumb" && !ENV.has_key?("NO_COLOR")
+  def self.on_tty_only! : Bool
+    @@enabled = nil
+    enabled?
   end
 
   # Resets the color and text decoration of the *io*.
