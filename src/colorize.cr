@@ -143,7 +143,7 @@ module Colorize
   # This can be used to revert `Colorize.enabled?` to its default value after
   # colorization is explicitly enabled or disabled.
   def self.on_tty_only!
-    self.enabled = STDOUT.tty? && STDERR.tty? && ENV["TERM"]? != "dumb" && !ENV.has_key?("NO_COLOR")
+    @@enabled = nil
   end
 
   # Resets the color and text decoration of the *io*.
