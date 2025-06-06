@@ -67,7 +67,13 @@ require "./execution_context/*"
 # future.
 @[Experimental]
 module Fiber::ExecutionContext
+  @@thread_pool : ThreadPool?
   @@default : ExecutionContext?
+
+  # :nodoc:
+  def self.thread_pool : ThreadPool
+    @@thread_pool.not_nil!("expected thread pool to have been setup")
+  end
 
   # Returns the default `ExecutionContext` for the process, automatically
   # started when the program started.
@@ -82,6 +88,7 @@ module Fiber::ExecutionContext
 
   # :nodoc:
   def self.init_default_context : Nil
+    @@thread_pool = ThreadPool.new
     @@default = SingleThreaded.default
     @@monitor = Monitor.new
   end

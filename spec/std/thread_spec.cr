@@ -21,7 +21,11 @@ pending_interpreted describe: Thread do
     current = nil
     thread = new_thread { current = Thread.current }
     thread.join
-    current.should be(thread)
+    {% if flag?(:execution_context) %}
+      current.should be(thread.@thread)
+    {% else %}
+      current.should be(thread)
+    {% end %}
     current.should_not be(Thread.current)
   ensure
     # avoids a "GC Warning: Finalization cycle" caused by *current*
