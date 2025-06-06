@@ -138,6 +138,15 @@ describe Time do
       time.minute.should eq(59)
       time.second.should eq(59)
       time.nanosecond.should eq(999_999_999)
+
+      time = Time.local(9999, 12, 31, 23, 59, 59, nanosecond: 999_999_999, location: Time::Location.posix_tz("Local", "EST5EDT,M3.2.0,M11.1.0"))
+      time.year.should eq(9999)
+      time.month.should eq(12)
+      time.day.should eq(31)
+      time.hour.should eq(23)
+      time.minute.should eq(59)
+      time.second.should eq(59)
+      time.nanosecond.should eq(999_999_999)
     end
 
     it "fails with negative nanosecond" do
