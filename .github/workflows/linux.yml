@@ -101,3 +101,12 @@ jobs:
 
       - name: Check Format
         run: bin/ci format
+
+  lint_ameba:
+    runs-on: ubuntu-latest
+    container: ghcr.io/crystal-ameba/ameba:sha-d861f4ed0f904e0ecdad11c26f98e968f7d95afa # 1.7.0-dev
+    steps:
+      - name: Download Crystal source
+        uses: actions/checkout@v4
+
+      - run: ameba
