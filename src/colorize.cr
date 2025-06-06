@@ -129,16 +129,18 @@ module Colorize
   # "hello".colorize.red.to_s # => "hello"
   # ```
   #
-  # NOTE: This is by default disabled if the environment variable `NO_COLOR` contains any value.
-  class_property? enabled : Bool { !ENV.has_key?("NO_COLOR") }
+  # NOTE: This is by default disabled if the environment variable `NO_COLOR`
+  # contains any non-empty value.
+  class_property? enabled : Bool { !ENV["NO_COLOR"]?.try(&.empty?.!) }
 
   # Makes `Colorize.enabled` `true` if and only if both of `STDOUT.tty?`
   # and `STDERR.tty?` are `true` and the tty is not considered a dumb terminal.
   # This is determined by the environment variable called `TERM`.
   # If `TERM=dumb`, color won't be enabled.
-  # If `NO_COLOR` contains any value color won't be enabled conforming to https://no-color.org
+  # If `NO_COLOR` contains any non-empty value, color won't be enabled
+  # conforming to https://no-color.org
   def self.on_tty_only!
-    self.enabled = STDOUT.tty? && STDERR.tty? && ENV["TERM"]? != "dumb" && !ENV.has_key?("NO_COLOR")
+    self.enabled = STDOUT.tty? && STDERR.tty? && ENV["TERM"]? != "dumb" && !ENV["NO_COLOR"]?.try(&.empty?.!)
   end
 
   # Resets the color and text decoration of the *io*.
