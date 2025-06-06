@@ -47,8 +47,6 @@ module Crystal
   class Var
     def initialize(@name : String, @type : Type)
     end
-
-    def_equals name, type?
   end
 
   # Fictitious node to represent primitives
