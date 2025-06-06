@@ -11,36 +11,20 @@ module Spec
     Comment
     Focus
     Order
+
+    def color : Colorize::Color
+      Colorize::ColorANSI::Cyan
+    end
   end
-
-  private STATUS_COLORS = {
-    Status::Success => :green,
-    Status::Fail    => :red,
-    Status::Error   => :red,
-    Status::Pending => :yellow,
-  }
-
-  private INFO_COLORS = {
-    InfoKind::Comment => :cyan,
-    InfoKind::Focus   => :cyan,
-    InfoKind::Order   => :cyan,
-  }
-
-  private LETTERS = {
-    Status::Success => '.',
-    Status::Fail    => 'F',
-    Status::Error   => 'E',
-    Status::Pending => '*',
-  }
 
   # :nodoc:
   def self.color(str, status : Status)
-    str.colorize(STATUS_COLORS[status])
+    str.colorize(status.color)
   end
 
   # :nodoc:
   def self.color(str, kind : InfoKind)
-    str.colorize(INFO_COLORS[kind])
+    str.colorize(kind.color)
   end
 
   # :nodoc:

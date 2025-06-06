@@ -116,6 +116,24 @@ module Spec
     Fail
     Error
     Pending
+
+    def color : Colorize::Color
+      case self
+      in Success then Colorize::ColorANSI::Green
+      in Fail    then Colorize::ColorANSI::Red
+      in Error   then Colorize::ColorANSI::Red
+      in Pending then Colorize::ColorANSI::Yellow
+      end
+    end
+
+    def letter : Char
+      case self
+      in Success then '.'
+      in Fail    then 'F'
+      in Error   then 'E'
+      in Pending then '*'
+      end
+    end
   end
 
   # :nodoc:

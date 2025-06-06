@@ -38,7 +38,7 @@ module Spec
     end
 
     def report(result)
-      @io << Spec.color(LETTERS[result.kind], result.kind)
+      @io << Spec.color(result.kind.letter, result.kind)
       split_lines
       @io.flush
     end
