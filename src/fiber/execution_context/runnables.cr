@@ -1,7 +1,7 @@
 # The queue is a port of Go's `runq*` functions, distributed under a BSD-like
 # license: <https://cs.opensource.google/go/go/+/release-branch.go1.23:LICENSE>
 #
-# The queue derivates from the chase-lev lock-free queue with adaptations:
+# The queue derives from the chase-lev lock-free queue with adaptations:
 #
 # - single ring buffer (per scheduler);
 # - on overflow: bulk push half the ring to `GlobalQueue`;

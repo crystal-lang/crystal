@@ -2,7 +2,7 @@
 require "./spec_helper"
 
 private macro assert_overflows(code, file = __FILE__, line = __LINE__)
-  it "overlows on {{code}}", file: {{file}}, line: {{line}} do
+  it "overflows on {{code}}", file: {{file}}, line: {{line}} do
     interpret(%(
       class OverflowError < Exception; end
 

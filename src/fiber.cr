@@ -340,7 +340,7 @@ class Fiber
   # Suspends execution of the current fiber indefinitely.
   #
   # Unlike `Fiber.yield` the current fiber is not automatically
-  # reenqueued and can only be resumed whith an explicit call to `#enqueue`.
+  # reenqueued and can only be resumed with an explicit call to `#enqueue`.
   #
   # This is equivalent to `sleep` without a time.
   #
