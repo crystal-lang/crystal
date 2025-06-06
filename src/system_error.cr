@@ -41,12 +41,14 @@ module SystemError
   macro included
     extend ::SystemError::ClassMethods
 
+    # The following are macros so we can get the `errno` or `winerror` _before_
+    # evaluating `message` and `opts` that may change the `errno` or `winerror` value.
+
     # Builds an instance of the exception from the current system error value (`Errno.value`).
     #
     # The system message corresponding to the OS error value amends the *message*.
     # Additional keyword arguments are forwarded to the exception initializer `.new_from_os_error`.
     macro from_errno(message, **opts)
-      # This is a macro in order to retrieve `Errno.value` first before evaluating `message` and `opts`.
       %errno = ::Errno.value
       ::\{{ @type }}.from_os_error(\{{ message }}, %errno, \{{ opts.double_splat }})
     end
