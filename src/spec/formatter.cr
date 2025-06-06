@@ -1,7 +1,7 @@
 module Spec
   # :nodoc:
   abstract class Formatter
-    def initialize(@io : IO = STDOUT)
+    def initialize(@io : IO)
     end
 
     def push(context)
@@ -118,18 +118,16 @@ module Spec
 
   # :nodoc:
   class CLI
-    @formatters = [Spec::DotFormatter.new] of Spec::Formatter
-
     def formatters
-      @formatters
+      @formatters ||= [Spec::DotFormatter.new(@stdout)] of Spec::Formatter
     end
 
     def override_default_formatter(formatter)
-      @formatters[0] = formatter
+      formatters[0] = formatter
     end
 
     def add_formatter(formatter)
-      @formatters << formatter
+      formatters << formatter
     end
   end
 
