@@ -37,6 +37,10 @@ describe "JSON serialization" do
       Path.from_json(%("foo/bar")).should eq(Path.new("foo/bar"))
     end
 
+    it "does Path.from_json_object_key" do
+      Hash(Path, String).from_json(%({"foo/bar": "baz"})).should eq({Path.new("foo/bar") => "baz"})
+    end
+
     {% for int in BUILTIN_INTEGER_TYPES %}
       it "does {{ int }}.from_json" do
         {{ int }}.from_json("0").should(be_a({{ int }})).should eq(0)
