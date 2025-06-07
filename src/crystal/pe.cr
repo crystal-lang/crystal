@@ -52,11 +52,11 @@ module Crystal
         if nt_header.name[0] === '/'
           # section name is longer than 8 bytes; look up the COFF string table
           name_buf = nt_header.name.to_slice + 1
-          string_offset = String.new(name_buf.to_unsafe, name_buf.index(0) || name_buf.size).to_i
+          string_offset = String.new(name_buf, null_terminated: true).to_i
           io.seek(@string_table_base + string_offset)
           name = io.gets('\0', chomp: true).not_nil!
         else
-          name = String.new(nt_header.name.to_unsafe, nt_header.name.index(0) || nt_header.name.size)
+          name = String.new(nt_header.name.to_slice, null_terminated: true)
         end
 
         SectionHeader.new(name: name, virtual_offset: nt_header.virtualAddress, offset: nt_header.pointerToRawData, size: nt_header.virtualSize)
@@ -84,7 +84,7 @@ module Crystal
           io.seek(@string_table_base + sym.n.name.long)
           name = io.gets('\0', chomp: true).not_nil!
         else
-          name = String.new(sym.n.shortName.to_slice).rstrip('\0')
+          name = String.new(sym.n.shortName.to_slice, null_terminated: true)
         end
 
         # `@coff_symbols` uses zero-based indices
