@@ -70,8 +70,9 @@ module Crystal::System::Time
   end
 
   def self.load_localtime : ::Time::Location?
-    if LibC.GetTimeZoneInformation(out info) != LibC::TIME_ZONE_ID_INVALID
-      initialize_location_from_TZI(info, "Local")
+    if LibC.GetDynamicTimeZoneInformation(out info) != LibC::TIME_ZONE_ID_INVALID
+      windows_name = String.from_utf16(info.timeZoneKeyName.to_slice[0, info.timeZoneKeyName.index(0) || info.timeZoneKeyName.size])
+      initialize_location_from_TZI(pointerof(info).as(LibC::TIME_ZONE_INFORMATION*).value, "Local", windows_name)
     end
   end
 
@@ -105,18 +106,19 @@ module Crystal::System::Time
         )
         WindowsRegistry.get_raw(sub_handle, Std, tzi.standardName.to_slice.to_unsafe_bytes)
         WindowsRegistry.get_raw(sub_handle, Dlt, tzi.daylightName.to_slice.to_unsafe_bytes)
-        initialize_location_from_TZI(tzi, iana_name)
+        initialize_location_from_TZI(tzi, iana_name, windows_name)
       end
     end
   end
 
-  private def self.initialize_location_from_TZI(info, name)
+  private def self.initialize_location_from_TZI(info, name, windows_name)
     stdname, dstname = normalize_zone_names(info)
 
-    if info.standardDate.wMonth == 0_u16
+    if info.standardDate.wMonth == 0_u16 || info.daylightDate.wMonth == 0_u16
       # No DST
       zone = ::Time::Location::Zone.new(stdname, info.bias * BIAS_TO_OFFSET_FACTOR, false)
-      return ::Time::Location.new(name, [zone])
+      default_tz_args = {0, 0, ::Time::TZ::MonthWeekDay.default, ::Time::TZ::MonthWeekDay.default}
+      return ::Time::WindowsLocation.new(name, [zone], windows_name, default_tz_args)
     end
 
     zones = [
@@ -124,51 +126,18 @@ module Crystal::System::Time
       ::Time::Location::Zone.new(dstname, (info.bias + info.daylightBias) * BIAS_TO_OFFSET_FACTOR, true),
     ]
 
-    first_date = info.standardDate
-    second_date = info.daylightDate
-    first_index = 0_u8
-    second_index = 1_u8
+    std_index = 0
+    dst_index = 1
+    transition1 = systemtime_to_mwd(info.daylightDate)
+    transition2 = systemtime_to_mwd(info.standardDate)
+    tz_args = {std_index, dst_index, transition1, transition2}
 
-    if info.standardDate.wMonth > info.daylightDate.wMonth
-      first_date, second_date = second_date, first_date
-      first_index, second_index = second_index, first_index
-    end
-
-    transitions = [] of ::Time::Location::ZoneTransition
-
-    current_year = ::Time.utc.year
-
-    (current_year - 100).upto(current_year + 100) do |year|
-      tstamp = calculate_switchdate_in_year(year, first_date) - (zones[second_index].offset)
-      transitions << ::Time::Location::ZoneTransition.new(tstamp, first_index, first_index == 0, false)
-
-      tstamp = calculate_switchdate_in_year(year, second_date) - (zones[first_index].offset)
-      transitions << ::Time::Location::ZoneTransition.new(tstamp, second_index, second_index == 0, false)
-    end
-
-    ::Time::Location.new(name, zones, transitions)
+    ::Time::WindowsLocation.new(name, zones, windows_name, tz_args)
   end
 
-  # Calculates the day of a DST switch in year *year* by extrapolating the date given in
-  # *systemtime* (for the current year).
-  #
-  # Returns the number of seconds since UNIX epoch (Jan 1 1970) in the local time zone.
-  private def self.calculate_switchdate_in_year(year, systemtime)
-    # Windows specifies daylight savings information in "day in month" format:
-    # wMonth is month number (1-12)
-    # wDayOfWeek is appropriate weekday (Sunday=0 to Saturday=6)
-    # wDay is week within the month (1 to 5, where 5 is last week of the month)
-    # wHour, wMinute and wSecond are absolute time
-    ::Time.month_week_date(
-      year,
-      systemtime.wMonth.to_i32,
-      systemtime.wDay.to_i32,
-      systemtime.wDayOfWeek.to_i32,
-      systemtime.wHour.to_i32,
-      systemtime.wMinute.to_i32,
-      systemtime.wSecond.to_i32,
-      location: ::Time::Location::UTC,
-    ).to_unix
+  private def self.systemtime_to_mwd(time)
+    seconds = 3600 * time.wHour + 60 * time.wMinute + time.wSecond
+    ::Time::TZ::MonthWeekDay.new(time.wMonth.to_i8, time.wDay.to_i8, time.wDayOfWeek.to_i8, seconds)
   end
 
   # Normalizes the names of the standard and dst zones.
