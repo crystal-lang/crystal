@@ -159,12 +159,24 @@ class String
   # This method is always safe to call, and the resulting string will have
   # the contents and size of the slice.
   #
+  # If *null_terminated* is true, only the characters up to and not including
+  # the first null character are copied.
+  #
   # ```
   # slice = Slice.new(4) { |i| ('a'.ord + i).to_u8 }
   # String.new(slice) # => "abcd"
+  #
+  # slice = UInt8.slice(102, 111, 111, 0, 98, 97, 114)
+  # String.new(slice, null_terminated: true) # => "foo"
   # ```
-  def self.new(slice : Bytes)
-    new(slice.to_unsafe, slice.size)
+  def self.new(slice : Bytes, *, null_terminated : Bool = false)
+    bytesize = slice.size
+    if null_terminated
+      if index = slice.index(0)
+        bytesize = index
+      end
+    end
+    new(slice.to_unsafe, bytesize)
   end
 
   # Creates a new `String` from the given *bytes*, which are encoded in the given *encoding*.
