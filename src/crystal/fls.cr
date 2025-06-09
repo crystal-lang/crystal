@@ -5,8 +5,12 @@ struct Crystal::FiberLocalStorage
   # create a FLS dynamically using the GC.
   include Crystal::PointerLinkedList::Node
 
+  # We need this variable to be zero-initialized,
+  # but cannot use the crystal once mechanism for that.
+  #
+  # The generated LLVM IR does initialize this variable to null.
   @[ThreadLocal(unsafe: true)]
-  @@fls : Pointer(Void) = Pointer(Void).new(0)
+  @@fls = uninitialized Pointer(Void)
 
   @@containers : Crystal::PointerLinkedList(self) = Crystal::PointerLinkedList(self).new
   @@list_lock : Mutex = Mutex.new(:unchecked)
@@ -25,6 +29,8 @@ struct Crystal::FiberLocalStorage
   # Registers a dynamic FLS section for this fiber using the GC
   @[NoInline]
   def self.register_self : Void*
+    return Pointer(Void).null if sizeof(self) == 0
+
     Crystal.trace :sched, "fls_create"
 
     container = GC.malloc(sizeof(self))
@@ -44,6 +50,8 @@ struct Crystal::FiberLocalStorage
   # if it was created using the GC
   @[NoInline]
   def self.unregister_self : Nil
+    return if sizeof(self) == 0
+
     container = @@fls
 
     return if !container.as(self*).value.previous && !container.as(self*).value.next
@@ -69,7 +77,7 @@ end
 # Example:
 # ```
 # class Foo
-#   private fiber_local cache : Array(Int32)? = nil
+#   fiber_local cache : Array(Int32)? = nil
 # end
 # ```
 macro fiber_local(var)
@@ -84,9 +92,11 @@ macro fiber_local(var)
     {% var.raise "Cannot define fiber_local variables dynamically" %}
   {% end %}
 
-  struct ::Crystal::FiberLocalStorage
-    @%var : {{var.type}} = {{var.value}}
-  end
+  {% verbatim do %}
+    struct ::Crystal::FiberLocalStorage
+      @%var : {{var.type}} = {{var.value}}
+    end
+  {% end %}
 
   def self.{{var.var.id}} : {{var.type}}
     ptr = ::Crystal::FiberLocalStorage.fls + offsetof(::Crystal::FiberLocalStorage, @%var)
