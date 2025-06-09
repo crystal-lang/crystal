@@ -111,6 +111,7 @@ class Crystal::Scheduler
     {% end %}
 
     current, @thread.current_fiber = @thread.current_fiber, fiber
+    Crystal::FiberLocalStorage.fls = fiber.fls
     Fiber.swapcontext(pointerof(current.@context), pointerof(fiber.@context))
 
     {% if flag?(:preview_mt) %}
