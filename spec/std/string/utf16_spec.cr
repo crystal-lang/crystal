@@ -80,9 +80,9 @@ describe "String UTF16" do
     end
 
     it "allows creating from a null-terminated slice" do
-      String.from_utf16(Slice(UInt16).empty, null_terminated: true).should eq("")
-      String.from_utf16(UInt16.slice(102, 111, 111, 98, 97, 114), null_terminated: true).should eq("foobar")
-      String.from_utf16(UInt16.slice(102, 111, 111, 0, 98, 97, 114), null_terminated: true).should eq("foo")
+      String.from_utf16(Slice(UInt16).empty, truncate_at_null: true).should eq("")
+      String.from_utf16(UInt16.slice(102, 111, 111, 98, 97, 114), truncate_at_null: true).should eq("foobar")
+      String.from_utf16(UInt16.slice(102, 111, 111, 0, 98, 97, 114), truncate_at_null: true).should eq("foo")
     end
   end
 end

@@ -2240,9 +2240,9 @@ describe "String" do
     end
 
     it "allows creating from a null-terminated slice" do
-      String.new(Bytes.empty, null_terminated: true).should eq("")
-      String.new(UInt8.slice(102, 111, 111, 98, 97, 114), null_terminated: true).should eq("foobar")
-      String.new(UInt8.slice(102, 111, 111, 0, 98, 97, 114), null_terminated: true).should eq("foo")
+      String.new(Bytes.empty, truncate_at_null: true).should eq("")
+      String.new(UInt8.slice(102, 111, 111, 98, 97, 114), truncate_at_null: true).should eq("foobar")
+      String.new(UInt8.slice(102, 111, 111, 0, 98, 97, 114), truncate_at_null: true).should eq("foo")
     end
   end
 

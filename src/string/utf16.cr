@@ -48,7 +48,7 @@ class String
   # Invalid values are encoded using the unicode replacement char with
   # codepoint `0xfffd`.
   #
-  # If *null_terminated* is true, only the characters up to and not including
+  # If *truncate_at_null* is true, only the characters up to and not including
   # the first null character are copied.
   #
   # ```
@@ -56,19 +56,19 @@ class String
   # String.from_utf16(slice) # => "hi 𐂥"
   #
   # slice = UInt16.slice(102, 111, 111, 0, 98, 97, 114)
-  # String.from_utf16(slice, null_terminated: true) # => "foo"
+  # String.from_utf16(slice, truncate_at_null: true) # => "foo"
   # ```
-  def self.from_utf16(slice : Slice(UInt16), *, null_terminated : Bool = false) : String
+  def self.from_utf16(slice : Slice(UInt16), *, truncate_at_null : Bool = false) : String
     bytesize = 0
     size = 0
 
-    each_utf16_char(slice, null_terminated: null_terminated) do |char|
+    each_utf16_char(slice, truncate_at_null: truncate_at_null) do |char|
       bytesize += char.bytesize
       size += 1
     end
 
     String.new(bytesize) do |buffer|
-      each_utf16_char(slice, null_terminated: null_terminated) do |char|
+      each_utf16_char(slice, truncate_at_null: truncate_at_null) do |char|
         char.each_byte do |byte|
           buffer.value = byte
           buffer += 1
@@ -118,11 +118,11 @@ class String
   # :nodoc:
   #
   # Yields each decoded char in the given slice.
-  def self.each_utf16_char(slice : Slice(UInt16), *, null_terminated : Bool = false, &)
+  def self.each_utf16_char(slice : Slice(UInt16), *, truncate_at_null : Bool = false, &)
     i = 0
     while i < slice.size
       byte = slice[i].to_i
-      break if null_terminated && byte == 0
+      break if truncate_at_null && byte == 0
       if byte < 0xd800 || byte >= 0xe000
         # One byte
         codepoint = byte

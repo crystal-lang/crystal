@@ -112,7 +112,7 @@ module Crystal::System::LibraryArchive
           section_header = uninitialized LibC::IMAGE_SECTION_HEADER
           return unless io.read_fully?(pointerof(section_header).to_slice(1).to_unsafe_bytes)
 
-          name = String.new(section_header.name.to_slice, null_terminated: true)
+          name = String.new(section_header.name.to_slice, truncate_at_null: true)
           next unless name == (msvc? ? ".idata$6" : ".idata$7")
 
           if msvc? ? section_header.characteristics.bits_set?(LibC::IMAGE_SCN_CNT_INITIALIZED_DATA) : section_header.pointerToRelocations == 0

@@ -916,7 +916,7 @@ class Socket
     {% unless flag?(:wasm32) %}
       protected def initialize(sockaddr : LibC::SockaddrUn*, size)
         @family = Family::UNIX
-        @path = String.new(sockaddr.value.sun_path.to_slice, null_terminated: true)
+        @path = String.new(sockaddr.value.sun_path.to_slice, truncate_at_null: true)
         @size = size || sizeof(LibC::SockaddrUn)
       end
     {% end %}
