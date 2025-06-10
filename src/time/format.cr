@@ -7,6 +7,9 @@ require "./format/parser"
 # being with a percent (`%`) character. Any text not listed as a directive
 # will be passed/parsed through the output/input string.
 #
+# ASCII whitespaces in the pattern string are written verbatim when formatting,
+# and consume any number of ASCII whitespace characters on parsing.
+#
 # The directives are:
 #
 # * **%a**: short day name (Sun, Mon, Tue, ...)
