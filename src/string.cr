@@ -4337,6 +4337,28 @@ class String
     end
   end
 
+  # Returns an array of the string split into lines.
+  #
+  # Both LF (line feed, `\n`) and CRLF (carriage return line feed, `\r\n`) are
+  # recognized as line delimiters.
+  #
+  # If *chomp* is true, the line separator is removed from the end of each line.
+  #
+  # ```
+  # "hello\nworld\n".lines                 # => ["hello", "world"]
+  # "hello\nworld\n".lines(chomp: false)   # => ["hello\n", "world\n"]
+  # "hello\nworld\r\n".lines               # => ["hello", "world"]
+  # "hello\nworld\r\n".lines(chomp: false) # => ["hello\n", "world\r\n"]
+  # ```
+  #
+  # A trailing line feed is not considered starting a final, empty line.  The
+  # empty string does not contain any lines.
+  #
+  # ```
+  # "hellp\n".lines # => ["hellp"]
+  # "\n".lines      # => [""]
+  # "".lines        # => [] of String
+  # ```
   def lines(chomp = true) : Array(String)
     lines = [] of String
     each_line(chomp: chomp) do |line|
@@ -4345,19 +4367,27 @@ class String
     lines
   end
 
-  # Splits the string after each newline and yields each line to a block.
+  # Splits the string after each newline and yields each line.
+  #
+  # Both LF (line feed, `\n`) and CRLF (carriage return line feed, `\r\n`) are
+  # recognized as line delimiters.
+  #
+  # If *chomp* is true, the line separator is removed from the end of each line.
   #
   # ```
-  # haiku = "the first cold shower
-  # even the monkey seems to want
-  # a little coat of straw"
-  # haiku.each_line do |stanza|
-  #   puts stanza
-  # end
-  # # output:
-  # # the first cold shower
-  # # even the monkey seems to want
-  # # a little coat of straw
+  # "hello\nworld".each_line { }                   # yields "hello", "world"
+  # "hello\nworld".each_line(chomp: false) { }     # yields "hello\n", "world"
+  # "hello\nworld\r\n".each_line { }               # yields "hello", "world"
+  # "hello\nworld\r\n".each_line(chomp: false) { } # yields "hello\n", "world\r\n"
+  # ```
+  #
+  # A trailing line feed is not considered starting a final, empty line.  The
+  # empty string does not contain any lines.
+  #
+  # ```
+  # "hello\n".each_line { } # yields "hello"
+  # "\n".each_line { }      # yields ""
+  # "".each_line { }        # does not yield
   # ```
   def each_line(chomp = true, &block : String ->) : Nil
     return if empty?
