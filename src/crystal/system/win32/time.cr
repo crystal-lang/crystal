@@ -71,7 +71,7 @@ module Crystal::System::Time
 
   def self.load_localtime : ::Time::Location?
     if LibC.GetDynamicTimeZoneInformation(out info) != LibC::TIME_ZONE_ID_INVALID
-      windows_name = String.from_utf16(info.timeZoneKeyName.to_slice[0, info.timeZoneKeyName.index(0) || info.timeZoneKeyName.size])
+      windows_name = String.from_utf16(info.timeZoneKeyName.to_slice, truncate_at_null: true)
       initialize_location_from_TZI(pointerof(info).as(LibC::TIME_ZONE_INFORMATION*).value, "Local", windows_name)
     end
   end
