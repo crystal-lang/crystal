@@ -916,7 +916,7 @@ class Socket
     {% unless flag?(:wasm32) %}
       protected def initialize(sockaddr : LibC::SockaddrUn*, size)
         @family = Family::UNIX
-        @path = String.new(sockaddr.value.sun_path.to_unsafe)
+        @path = String.new(sockaddr.value.sun_path.to_slice, truncate_at_null: true)
         @size = size || sizeof(LibC::SockaddrUn)
       end
     {% end %}
@@ -933,7 +933,7 @@ class Socket
       {% else %}
         sockaddr = Pointer(LibC::SockaddrUn).malloc
         sockaddr.value.sun_family = family
-        sockaddr.value.sun_path.to_unsafe.copy_from(@path.to_unsafe, @path.bytesize + 1)
+        sockaddr.value.sun_path.to_unsafe.copy_from(@path.to_unsafe, {@path.bytesize + 1, sockaddr.value.sun_path.size}.min)
         sockaddr.as(LibC::Sockaddr*)
       {% end %}
     end
