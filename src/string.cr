@@ -4359,7 +4359,7 @@ class String
   # "\n".lines      # => [""]
   # "".lines        # => [] of String
   # ```
-  def lines(chomp = true) : Array(String)
+  def lines(chomp : Bool = true) : Array(String)
     lines = [] of String
     each_line(chomp: chomp) do |line|
       lines << line
@@ -4389,7 +4389,7 @@ class String
   # "\n".each_line { }      # yields ""
   # "".each_line { }        # does not yield
   # ```
-  def each_line(chomp = true, &block : String ->) : Nil
+  def each_line(chomp : Bool = true, &block : String ->) : Nil
     return if empty?
 
     offset = 0
