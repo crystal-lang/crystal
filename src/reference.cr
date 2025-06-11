@@ -182,8 +182,9 @@ class Reference
     key = {object_id, method}
     hash.put(key, nil) do
       yield
-      hash.delete(key)
       return true
+    ensure
+      hash.delete(key)
     end
     false
   end
@@ -211,8 +212,11 @@ class Reference
     hash = Fiber.current.exec_recursive_clone_hash
     clone_object_id = hash[object_id]?
     unless clone_object_id
-      clone_object_id = yield(hash).object_id
-      hash.delete(object_id)
+      clone_object_id = begin
+        yield(hash).object_id
+      ensure
+        hash.delete(object_id)
+      end
     end
     Pointer(Void).new(clone_object_id).as(self)
   end
