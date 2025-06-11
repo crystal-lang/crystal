@@ -131,14 +131,15 @@ module Colorize
   #
   # NOTE: This is by default enabled according to `.on_tty_only!`.
   class_property? enabled : Bool do
-    STDOUT.tty? && STDERR.tty? && ENV["TERM"]? != "dumb" && !ENV.has_key?("NO_COLOR")
+    STDOUT.tty? && STDERR.tty? && ENV["TERM"]? != "dumb" && !ENV["NO_COLOR"]?.try(&.empty?.!)
   end
 
   # Makes `Colorize.enabled` `true` if and only if both of `STDOUT.tty?`
   # and `STDERR.tty?` are `true` and the tty is not considered a dumb terminal.
   # This is determined by the environment variable called `TERM`.
   # If `TERM=dumb`, color won't be enabled.
-  # If `NO_COLOR` contains any value color won't be enabled conforming to https://no-color.org
+  # If `NO_COLOR` contains any non-empty value, color won't be enabled
+  # conforming to https://no-color.org
   #
   # Returns the new value of `Colorize.enabled?`.
   #

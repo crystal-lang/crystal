@@ -49,7 +49,7 @@ end
 #
 # When the IO operation is ready, the fiber will eventually be resumed (one
 # fiber at a time). If it's an IO operation, the operation is tried again which
-# may block again, until the operation succeeds or an error occured (e.g.
+# may block again, until the operation succeeds or an error occurred (e.g.
 # closed, broken pipe).
 #
 # If the IO operation has a timeout, the event is also registered into `@timers`
@@ -629,7 +629,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
 
   # Remove *fd* from the polling system. Must raise a `RuntimeError` on error.
   #
-  # If *closing* is true, then it preceeds a call to `close(2)`. Some
+  # If *closing* is true, then it precedes a call to `close(2)`. Some
   # implementations may take advantage of close doing the book keeping.
   #
   # If *closing* is false then the fd must be deleted from the polling system.

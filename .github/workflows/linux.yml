@@ -101,3 +101,15 @@ jobs:
 
       - name: Check Format
         run: bin/ci format
+
+  lint_spellcheck:
+    name: Spell Check with Typos
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Actions Repository
+      uses: actions/checkout@v4
+
+    - name: Spell Check Repo
+      uses: crate-ci/typos@v1.33.1
+      env:
+        CLICOLOR: 1
