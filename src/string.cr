@@ -4359,6 +4359,8 @@ class String
   # "\n".lines      # => [""]
   # "".lines        # => [] of String
   # ```
+  #
+  # * `#each_line` yields each line without allocating an array
   def lines(chomp : Bool = true) : Array(String)
     lines = [] of String
     each_line(chomp: chomp) do |line|
@@ -4389,6 +4391,8 @@ class String
   # "\n".each_line { }      # yields ""
   # "".each_line { }        # does not yield
   # ```
+  #
+  # * `#lines` returns an array of lines
   def each_line(chomp : Bool = true, &block : String ->) : Nil
     return if empty?
 
