@@ -210,13 +210,10 @@ class Reference
   private def exec_recursive_clone(&)
     # NOTE: can't use `Set` because of prelude require order
     hash = Fiber.current.exec_recursive_clone_hash
-    clone_object_id = hash[object_id]?
-    unless clone_object_id
-      clone_object_id = begin
-        yield(hash).object_id
-      ensure
-        hash.delete(object_id)
-      end
+    clone_object_id = hash.fetch(object_id) do
+      yield(hash).object_id
+    ensure
+      hash.delete(object_id)
     end
     Pointer(Void).new(clone_object_id).as(self)
   end
