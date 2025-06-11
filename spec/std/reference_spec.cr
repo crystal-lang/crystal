@@ -52,6 +52,30 @@ private module ReferenceSpec
   class TestClassWithFinalize
     include FinalizeCounter
   end
+
+  class NestedErrorTestClass
+    @x = RaisesOnInspectAndClone.new
+
+    def_clone
+  end
+
+  class RaisesOnInspectAndClone
+    def inspect(io : IO)
+      raise RuntimeError.new("I'm shy")
+    end
+
+    def clone
+      raise RuntimeError.new("I'm unique")
+    end
+  end
+end
+
+private def expect_empty_recursive_hashes
+  Fiber.current.exec_recursive_hash.dup.should be_empty
+  Fiber.current.exec_recursive_clone_hash.dup.should be_empty
+ensure
+  Fiber.current.exec_recursive_clone_hash.clear
+  Fiber.current.exec_recursive_hash.clear
 end
 
 describe "Reference" do
@@ -75,10 +99,20 @@ describe "Reference" do
     it "does inspect" do
       r = ReferenceSpec::TestClass.new(1, "hello")
       r.inspect.should eq(%(#<ReferenceSpec::TestClass:0x#{r.object_id.to_s(16)} @x=1, @y="hello">))
+      expect_empty_recursive_hashes
     end
 
     it "does inspect for class" do
       String.inspect.should eq("String")
+      expect_empty_recursive_hashes
+    end
+
+    it "handles error" do
+      r = ReferenceSpec::NestedErrorTestClass.new
+      expect_raises RuntimeError, "I'm shy" do
+        r.inspect
+      end
+      expect_empty_recursive_hashes
     end
   end
 
@@ -131,6 +165,7 @@ describe "Reference" do
       clone = original.clone
       clone.should_not be(original)
       clone.x.should eq(original.x)
+      expect_empty_recursive_hashes
     end
 
     it "clones with def_clone (recursive type)" do
@@ -141,11 +176,21 @@ describe "Reference" do
       clone.y.should_not be(original.y)
       clone.y.should eq(original.y)
       clone.z.should be(clone)
+      expect_empty_recursive_hashes
+    end
+
+    it "handles error" do
+      r = ReferenceSpec::NestedErrorTestClass.new
+      expect_raises RuntimeError, "I'm unique" do
+        r.clone
+      end
+      expect_empty_recursive_hashes
     end
   end
 
   it "pretty_print" do
     ReferenceSpec::TestClassBase.new.pretty_inspect.should match(/\A#<ReferenceSpec::TestClassBase:0x[0-9a-f]+>\Z/)
     ReferenceSpec::TestClass.new(42, "foo").pretty_inspect.should match(/\A#<ReferenceSpec::TestClass:0x[0-9a-f]+ @x=42, @y="foo">\Z/)
+    expect_empty_recursive_hashes
   end
 end
