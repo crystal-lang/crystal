@@ -384,6 +384,17 @@ describe "YAML serialization" do
 
     it "deserializes time" do
       Time.from_yaml("2010-11-12").should eq(Time.utc(2010, 11, 12))
+
+      t = Time.local(2001, 12, 14, 21, 59, 43, nanosecond: 100000000, location: Time::Location.fixed(-18000))
+      Time.from_yaml("2001-12-14t21:59:43.10-05:00").should eq(t)
+      Time.from_yaml("2001-12-14 21:59:43.10 -5").should eq(t)
+      Time.from_yaml("2001-12-14  21:59:43.10\t\t -5").should eq(t)
+      Time.from_yaml(%(!!timestamp "2001-12-14  21:59:43.10\t\\t -5")).should eq(t)
+
+      expect_raises(YAML::ParseException) { Time.from_yaml(%(!!timestamp "2001-12-14\\f21:59:43.10 -5")) }
+      expect_raises(YAML::ParseException) { Time.from_yaml(%(!!timestamp "2001-12-14\\n21:59:43.10 -5")) }
+      expect_raises(YAML::ParseException) { Time.from_yaml(%(!!timestamp "2001-12-14\\r21:59:43.10 -5")) }
+      expect_raises(YAML::ParseException) { Time.from_yaml(%(!!timestamp "2001-12-14\\v21:59:43.10 -5")) }
     end
 
     it "deserializes bytes" do
