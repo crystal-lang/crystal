@@ -134,6 +134,7 @@ lib LibXML
   fun xmlTextReaderCurrentNode(reader : XMLTextReader) : Node*
 
   fun xmlTextReaderSetErrorHandler(reader : XMLTextReader, f : TextReaderErrorFunc) : Void
+  fun xmlTextReaderSetStructuredErrorHandler(reader : XMLTextReader, f : StructuredErrorFunc, arg : Void*) : Void
 
   fun xmlTextReaderLocatorLineNumber(XMLTextReaderLocator) : Int
 

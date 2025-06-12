@@ -31,11 +31,9 @@ class XML::Reader
   # See `XML::ParserOptions.default` for default options.
   def initialize(str : String, options : XML::ParserOptions = XML::ParserOptions.default)
     @reader = LibXML.xmlReaderForMemory(str, str.bytesize, nil, nil, options)
-    LibXML.xmlTextReaderSetErrorHandler @reader, ->(arg, msg, severity, locator) do
-      msg_str = String.new(msg).chomp
-      line_number = LibXML.xmlTextReaderLocatorLineNumber(locator)
-      raise Error.new(msg_str, line_number)
-    end
+    LibXML.xmlTextReaderSetStructuredErrorHandler(@reader, ->(_, error) {
+      raise Error.new(error)
+    }, nil)
   end
 
   # Creates a new reader from an IO.
@@ -50,11 +48,14 @@ class XML::Reader
       nil,
       options
     )
+    LibXML.xmlTextReaderSetStructuredErrorHandler(@reader, ->(arg, error) {
+      Box(Array(XML::Error)).unbox(arg) << XML::Error.new(error)
+    }, Box.box(@errors))
   end
 
   # Moves the reader to the next node.
   def read : Bool
-    collect_errors { LibXML.xmlTextReaderRead(@reader) == 1 }
+    LibXML.xmlTextReaderRead(@reader) == 1
   end
 
   # Moves the reader to the next node while skipping subtrees.
@@ -70,7 +71,7 @@ class XML::Reader
     if result == -1
       node = LibXML.xmlTextReaderCurrentNode(@reader)
       if node.null?
-        collect_errors { LibXML.xmlTextReaderRead(@reader) == 1 }
+        LibXML.xmlTextReaderRead(@reader) == 1
       elsif !node.value.next.null?
         LibXML.xmlTextReaderNext(@reader) == 1
       else
@@ -149,7 +150,7 @@ class XML::Reader
 
   # Returns the node's XML content including subtrees.
   def read_inner_xml : String
-    xml = collect_errors { LibXML.xmlTextReaderReadInnerXml(@reader) }
+    xml = LibXML.xmlTextReaderReadInnerXml(@reader)
     xml ? String.new(xml) : ""
   end
 
@@ -165,7 +166,7 @@ class XML::Reader
     # to avoid doing an extra C call each time.
     return "" if node_type.none?
 
-    xml = collect_errors { LibXML.xmlTextReaderReadOuterXml(@reader) }
+    xml = LibXML.xmlTextReaderReadOuterXml(@reader)
     xml ? String.new(xml) : ""
   end
 
@@ -195,10 +196,6 @@ class XML::Reader
   # Returns a reference to the underlying `LibXML::XMLTextReader`.
   def to_unsafe
     @reader
-  end
-
-  private def collect_errors(&)
-    Error.collect(@errors) { yield }
   end
 
   private def check_no_null_byte(attribute)
