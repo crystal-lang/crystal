@@ -75,10 +75,6 @@ Lint/SpecFilename:
 Lint/TopLevelOperatorDefinition:
   Enabled: false
 
-# Disabled: We're running typos explicitly in CI, no need for this rule.
-Lint/Typos:
-  Enabled: false
-
 # Disabled: We have an explicit CI job for `typos`. No reason to run it through
 # ameba.
 Lint/Typos:
