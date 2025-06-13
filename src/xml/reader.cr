@@ -31,9 +31,7 @@ class XML::Reader
   # See `XML::ParserOptions.default` for default options.
   def initialize(str : String, options : XML::ParserOptions = XML::ParserOptions.default)
     @reader = LibXML.xmlReaderForMemory(str, str.bytesize, nil, nil, options)
-    LibXML.xmlTextReaderSetStructuredErrorHandler(@reader, ->(_, error) {
-      raise Error.new(error)
-    }, nil)
+    LibXML.xmlTextReaderSetStructuredErrorHandler(@reader, ->Error.structured_callback, Box.box(@errors))
   end
 
   # Creates a new reader from an IO.
@@ -48,9 +46,7 @@ class XML::Reader
       nil,
       options
     )
-    LibXML.xmlTextReaderSetStructuredErrorHandler(@reader, ->(arg, error) {
-      Box(Array(XML::Error)).unbox(arg) << XML::Error.new(error)
-    }, Box.box(@errors))
+    LibXML.xmlTextReaderSetStructuredErrorHandler(@reader, ->Error.structured_callback, Box.box(@errors))
   end
 
   # Moves the reader to the next node.
