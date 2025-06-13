@@ -8,7 +8,7 @@ describe Crystal::Doc::RelativeLocation do
         "/base/dir/src"
       ).should_not be_nil
 
-      relative_location.filename.should eq ::Path["foo.cr"].to_s
+      relative_location.filename.should eq ::Path["foo.cr"].to_native.to_s
     end
 
     it "creates from a parent base directory" do
@@ -17,7 +17,7 @@ describe Crystal::Doc::RelativeLocation do
         "/base/dir"
       ).should_not be_nil
 
-      relative_location.filename.should eq ::Path["src/foo.cr"].to_s
+      relative_location.filename.should eq ::Path["src/foo.cr"].to_native.to_s
     end
 
     it "creates from a child base directory" do
@@ -26,7 +26,7 @@ describe Crystal::Doc::RelativeLocation do
         "/base/dir/src/app"
       ).should_not be_nil
 
-      relative_location.filename.should eq ::Path["../foo.cr"].to_s
+      relative_location.filename.should eq ::Path["../foo.cr"].to_native.to_s
     end
   end
 end

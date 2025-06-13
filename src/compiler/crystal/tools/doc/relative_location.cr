@@ -44,7 +44,7 @@ class Crystal::Doc::RelativeLocation
     end
 
     return unless filename.is_a?(String)
-    filename = ::Path[filename].relative_to(base_dir).to_s
+    filename = ::Path[filename].relative_to(base_dir).to_native.to_s
 
     new(filename, location.line_number)
   end
