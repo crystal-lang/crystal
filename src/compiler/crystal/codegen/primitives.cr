@@ -745,7 +745,7 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_primitive_pre_initialize(node, target_def, call_args)
-    type = node.type
+    type = context.type.instance_type
 
     base_type = type.is_a?(VirtualType) ? type.base_type : type
 
