@@ -122,25 +122,35 @@ module XML
     Node.new(doc, errors)
   end
 
-  protected def self.with_indent_tree_output(indent : Bool, &)
-    ptr = LibXML.__xmlIndentTreeOutput
-    old, ptr.value = ptr.value, indent ? 1 : 0
-    begin
-      yield
-    ensure
-      ptr.value = old
-    end
-  end
+  {% unless LibXML.has_method?(:xmlSaveSetIndentString) %}
+    # NOTE: These helpers are for internal compatibility with libxml < 2.14.
 
-  protected def self.with_tree_indent_string(string : String, &)
-    ptr = LibXML.__xmlTreeIndentString
-    old, ptr.value = ptr.value, string.to_unsafe
-    begin
-      yield
-    ensure
-      ptr.value = old
+    protected def self.with_indent_tree_output(indent : Bool, &)
+      save_indent_tree_output do
+        LibXML.__xmlIndentTreeOutput.value = indent ? 1 : 0
+        yield
+      end
     end
-  end
+
+    protected def self.save_indent_tree_output(&)
+      value = LibXML.__xmlIndentTreeOutput.value
+      begin
+        yield
+      ensure
+        LibXML.__xmlIndentTreeOutput.value = value
+      end
+    end
+
+    protected def self.with_tree_indent_string(string : String, &)
+      value = LibXML.__xmlTreeIndentString.value
+      LibXML.__xmlTreeIndentString.value = string.to_unsafe
+      begin
+        yield
+      ensure
+        LibXML.__xmlTreeIndentString.value = value
+      end
+    end
+  {% end %}
 
   class_getter libxml2_version : String do
     version_string = String.new(LibXML.xmlParserVersion)
