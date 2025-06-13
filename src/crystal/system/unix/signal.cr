@@ -206,7 +206,7 @@ module Crystal::System::Signal
     @@sigset.clear
     start_loop
 
-    {% if flag?(:interpreted) && Interpreter.has_method?(:signal_descriptor) %}
+    {% if flag?(:interpreted) && Interpreter.class.has_method?(:signal_descriptor) %}
       # replace the interpreter's writer pipe with the interpreted, so signals
       # will be received by the interpreter, but handled by the interpreted
       # signal loop
