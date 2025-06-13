@@ -752,7 +752,7 @@ class Crystal::CodeGenVisitor
     ptr = call_args[target_def.owner.passed_as_self? ? 1 : 0]
     pre_initialize_aggregate base_type, llvm_struct_type(base_type), ptr
 
-    @last = cast_to ptr, type
+    @last = type.struct? ? llvm_nil : cast_to ptr, type
   end
 
   def codegen_primitive_pointer_malloc(node, target_def, call_args)
