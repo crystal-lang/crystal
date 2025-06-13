@@ -4393,7 +4393,7 @@ class String
   # ```
   #
   # * `#lines` returns an array of lines
-  def each_line(chomp : Bool = true, &block : String ->) : Nil
+  def each_line(chomp : Bool = true, & : String ->) : Nil
     return if empty?
 
     offset = 0
