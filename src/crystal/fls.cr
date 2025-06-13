@@ -92,11 +92,9 @@ macro fiber_local(var)
     {% var.raise "Cannot define fiber_local variables dynamically" %}
   {% end %}
 
-  {% verbatim do %}
-    struct ::Crystal::FiberLocalStorage
-      @%var : {{var.type}} = {{var.value}}
-    end
-  {% end %}
+  struct ::Crystal::FiberLocalStorage
+    @%var : {{var.type}} = {{var.value}}
+  end
 
   def self.{{var.var.id}} : {{var.type}}
     ptr = ::Crystal::FiberLocalStorage.fls + offsetof(::Crystal::FiberLocalStorage, @%var)
