@@ -2234,6 +2234,16 @@ describe "String" do
     it "allows creating from an empty slice" do
       String.new(Bytes.empty).should eq("")
     end
+
+    it "allows creating from a non-empty slice" do
+      String.new(UInt8.slice(102, 111, 111, 0, 98, 97, 114)).should eq("foo\0bar")
+    end
+
+    it "allows creating from a null-terminated slice" do
+      String.new(Bytes.empty, truncate_at_null: true).should eq("")
+      String.new(UInt8.slice(102, 111, 111, 98, 97, 114), truncate_at_null: true).should eq("foobar")
+      String.new(UInt8.slice(102, 111, 111, 0, 98, 97, 114), truncate_at_null: true).should eq("foo")
+    end
   end
 
   describe "tr" do
@@ -2266,22 +2276,15 @@ describe "String" do
     end
 
     it "compares with == when different strings same contents" do
-      s1 = "foo#{1}"
-      s2 = "foo#{1}"
-      s1.should eq(s2)
+      ("fo" + "o").should eq("fo" + "o")
     end
 
     it "compares with == when different contents" do
-      s1 = "foo#{1}"
-      s2 = "foo#{2}"
-      s1.should_not eq(s2)
+      ("fo" + "o").should_not eq("bo" + "o")
     end
 
     it "sorts strings" do
-      s1 = "foo1"
-      s2 = "foo"
-      s3 = "bar"
-      [s1, s2, s3].sort.should eq(["bar", "foo", "foo1"])
+      ["foo1", "foo", "bar"].sort.should eq(["bar", "foo", "foo1"])
     end
   end
 

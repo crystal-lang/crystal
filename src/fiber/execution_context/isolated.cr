@@ -191,12 +191,11 @@ module Fiber::ExecutionContext
     def wait : Nil
       if @running
         node = Fiber::PointerLinkedListNode.new(Fiber.current)
-
-        @mutex.synchronize do
+        running = @mutex.synchronize do
           @wait_list.push(pointerof(node)) if @running
+          @running
         end
-
-        Fiber.suspend
+        Fiber.suspend if running
       end
 
       if exception = @exception

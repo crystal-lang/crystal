@@ -307,7 +307,19 @@ class Time::Location
 
           with_system_time_zone(info) do
             location = Location.load_local
-            location.zones.should eq [Time::Location::Zone.new("CET", 3600, false), Time::Location::Zone.new("CEST", 7200, true)]
+            std_zone = Time::Location::Zone.new("CET", 3600, false)
+            dst_zone = Time::Location::Zone.new("CEST", 7200, true)
+            location.zones.should eq [std_zone, dst_zone]
+
+            location.lookup(Time.utc(2000, 10, 29, 0, 59, 59)).should eq(dst_zone)
+            location.lookup(Time.utc(2000, 10, 29, 1, 0, 0)).should eq(std_zone)
+            location.lookup(Time.utc(2001, 3, 25, 0, 59, 59)).should eq(std_zone)
+            location.lookup(Time.utc(2001, 3, 25, 1, 0, 0)).should eq(dst_zone)
+
+            location.lookup(Time.utc(3000, 10, 26, 0, 59, 59)).should eq(dst_zone)
+            location.lookup(Time.utc(3000, 10, 26, 1, 0, 0)).should eq(std_zone)
+            location.lookup(Time.utc(3001, 3, 29, 0, 59, 59)).should eq(std_zone)
+            location.lookup(Time.utc(3001, 3, 29, 1, 0, 0)).should eq(dst_zone)
           end
         end
 

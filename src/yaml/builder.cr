@@ -74,7 +74,7 @@ class YAML::Builder
 
   # Starts a document.
   #
-  # If *implict_start_indicator* is true, skips printing the document start
+  # If *implicit_start_indicator* is true, skips printing the document start
   # indicator (`---`) if this is the first document in the stream.
   def start_document(*, implicit_start_indicator : Bool = false)
     emit document_start, nil, nil, nil, implicit_start_indicator.to_unsafe
@@ -87,7 +87,7 @@ class YAML::Builder
 
   # Starts a document, invokes the block, and then ends it.
   #
-  # If *implict_start_indicator* is true, skips printing the document start
+  # If *implicit_start_indicator* is true, skips printing the document start
   # indicator (`---`) if this is the first document in the stream.
   def document(*, implicit_start_indicator : Bool = false, &)
     start_document(implicit_start_indicator: implicit_start_indicator)

@@ -11,36 +11,20 @@ module Spec
     Comment
     Focus
     Order
+
+    def color : Colorize::Color
+      Colorize::ColorANSI::Cyan
+    end
   end
-
-  private STATUS_COLORS = {
-    Status::Success => :green,
-    Status::Fail    => :red,
-    Status::Error   => :red,
-    Status::Pending => :yellow,
-  }
-
-  private INFO_COLORS = {
-    InfoKind::Comment => :cyan,
-    InfoKind::Focus   => :cyan,
-    InfoKind::Order   => :cyan,
-  }
-
-  private LETTERS = {
-    Status::Success => '.',
-    Status::Fail    => 'F',
-    Status::Error   => 'E',
-    Status::Pending => '*',
-  }
 
   # :nodoc:
   def self.color(str, status : Status)
-    str.colorize(STATUS_COLORS[status])
+    str.colorize(status.color)
   end
 
   # :nodoc:
   def self.color(str, kind : InfoKind)
-    str.colorize(INFO_COLORS[kind])
+    str.colorize(kind.color)
   end
 
   # :nodoc:
@@ -220,9 +204,9 @@ module Spec
             execute_examples
           end
         rescue ex
-          STDERR.print "Unhandled exception: "
-          ex.inspect_with_backtrace(STDERR)
-          STDERR.flush
+          @stderr.print "Unhandled exception: "
+          ex.inspect_with_backtrace(@stderr)
+          @stderr.flush
           @aborted = true
         ensure
           finish_run unless list_tags?
@@ -273,7 +257,7 @@ module Spec
       return if tag_counts.empty?
       longest_name_size = tag_counts.keys.max_of(&.size)
       tag_counts.to_a.sort_by! { |k, v| {-v, k} }.each do |tag_name, count|
-        puts "#{tag_name.rjust(longest_name_size)}: #{count}"
+        @stdout.puts "#{tag_name.rjust(longest_name_size)}: #{count}"
       end
     end
 
