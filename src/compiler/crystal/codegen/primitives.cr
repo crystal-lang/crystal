@@ -158,10 +158,25 @@ class Crystal::CodeGenVisitor
 
   def codegen_addsub_with_overflow(op, t1, t2, p1, p2)
     if t1.signed? != t2.signed?
-      # convert `p1` to the opposite signedness, while simultaneously applying
+      # Convert `p1` to the opposite signedness, while simultaneously applying
       # a bias equal to half the integer range: add bias if `p1` is unsigned,
       # subtract bias if `p1` is signed, which for two's complement is
-      # equivalent to a bitwise XOR on the sign bit
+      # equivalent to a bitwise XOR on the sign bit. Thus, if `t1` is signed:
+      #
+      # ```
+      # p1_biased = (p1 ^ t1::MIN).to_unsigned!
+      # result_biased = ...(p1_biased, p2)
+      # result_biased.to_signed! ^ t1::MIN
+      # ```
+      #
+      # If `t1` is unsigned:
+      #
+      # ```
+      # bias = typeof(p1.to_signed!)::MIN
+      # p1_biased = p1.to_signed! ^ bias
+      # result_biased = ...(p1_biased, p2)
+      # (result_biased ^ bias).to_unsigned!
+      # ```
       t1_biased = @program.int_type(!t1.signed?, t1.bytes)
       sign_bit, _ = (t1.signed? ? t1 : t1_biased).range
       bias = int(sign_bit, t1)
@@ -182,6 +197,7 @@ class Crystal::CodeGenVisitor
     if t2.bytes > t1.bytes
       if t2.signed?
         # e.g. Int8+Int16
+        # t1.new(t2.new!(p1) &+ p2)
         p1 = extend_int(t1, t2, p1)
 
         # use unchecked arithmetic; the signed overflow here cannot result in
@@ -192,6 +208,7 @@ class Crystal::CodeGenVisitor
         codegen_convert(t2, t1, result, checked: true)
       else
         # e.g. UInt8+UInt16
+        # p1 + t1.new!(p2)
         p2_trunc = trunc(p2, llvm_type(t1))
         result, overflow = call_binary_overflow_fun op, t1, p1, p2_trunc
         codegen_raise_overflow_cond overflow
@@ -207,6 +224,7 @@ class Crystal::CodeGenVisitor
     else
       # e.g. Int8+Int8, UInt8+UInt8, Int16+Int8, UInt16+UInt8
       if t2.bytes < t1.bytes
+        # p1 + t1.new!(p2)
         p2 = extend_int(t2, t1, p2)
       end
 
