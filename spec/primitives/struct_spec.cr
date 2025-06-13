@@ -1,9 +1,9 @@
 require "spec"
 
-private abstract struct Base
+private abstract struct SBase
 end
 
-private struct Foo < Base
+private struct Foo < SBase
   getter i : Int64
   getter str = "abc"
 
@@ -14,7 +14,7 @@ private struct Foo < Base
   end
 end
 
-private struct Bar < Base
+private struct Bar < SBase
   getter x : UInt8[128]
 
   def initialize(@x)
@@ -31,8 +31,8 @@ end
 describe "Primitives: struct" do
   describe ".pre_initialize" do
     it "doesn't fail on complex ivar initializer if value is discarded (#14325)" do
-      bar_buffer = Pointer(Outer).malloc(1)
-      Outer.pre_initialize(bar_buffer)
+      bar = uninitialized Outer
+      Outer.pre_initialize(pointerof(bar))
       1
     end
 
@@ -59,7 +59,7 @@ describe "Primitives: struct" do
     {% if compare_versions(Crystal::VERSION, "1.2.0") >= 0 %}
       it "works with virtual type" do
         foo = uninitialized Foo
-        Foo.as(Base.class).pre_initialize(pointerof(foo))
+        Foo.as(SBase.class).pre_initialize(pointerof(foo))
         foo.str.should eq("abc")
       end
     {% else %}
@@ -67,8 +67,8 @@ describe "Primitives: struct" do
     {% end %}
 
     it "raises on abstract virtual type" do
-      expect_raises(Exception, "Can't pre-initialize abstract struct Base") do
-        Base.as(Base.class).pre_initialize(Pointer(Void).null)
+      expect_raises(Exception, "Can't pre-initialize abstract struct SBase") do
+        SBase.as(SBase.class).pre_initialize(Pointer(Void).null)
       end
     end
   end
