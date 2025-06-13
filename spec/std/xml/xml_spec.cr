@@ -159,7 +159,9 @@ describe XML do
   end
 
   it "#errors" do
-    xml = XML.parse(%(<people></foo>))
+    options = XML::ParserOptions::RECOVER | XML::ParserOptions::NONET
+
+    xml = XML.parse(%(<people></foo>), options)
     xml.root.not_nil!.name.should eq("people")
     xml.errors.try(&.map(&.to_s)).should eq ["Opening and ending tag mismatch: people line 1 and foo"]
 
