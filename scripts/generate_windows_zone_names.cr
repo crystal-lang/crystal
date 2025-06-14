@@ -45,7 +45,7 @@ windows_zone_names_items = entries.compact_map do |tzdata_name, territory, windo
 
   {windows_name, zone1.name, zone2.name, location.name}
 rescue err : Time::Location::InvalidLocationNameError
-  pp err
+  puts err
   nil
 end
 
