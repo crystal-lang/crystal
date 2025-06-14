@@ -1282,7 +1282,10 @@ require "./repl"
         push:       true,
         code:       begin
           pointer.clear(size)
-          pointer.as(Int32*).value = type_id
+          unless type_id == 0
+            # 0 stands for any non-reference type
+            pointer.as(Int32*).value = type_id
+          end
           pointer
         end,
       },

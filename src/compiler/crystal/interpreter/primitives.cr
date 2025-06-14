@@ -187,10 +187,12 @@ class Crystal::Repl::Compiler
           scope.instance_type
         end
 
-      accept_call_members(node)
+      accept_call_args(node)
 
-      dup sizeof(Pointer(Void)), node: nil
-      reset_class(aligned_instance_sizeof_type(type), type_id(type), node: node)
+      # 0 stands for any non-reference type in `reset_class`
+      # (normally 0 stands for `Nil` so there is no conflict here)
+      type_id = type.struct? ? 0 : type_id(type)
+      reset_class(aligned_instance_sizeof_type(type), type_id, node: node)
 
       initializer_compiled_defs = @context.type_instance_var_initializers(type)
       unless initializer_compiled_defs.empty?
@@ -201,6 +203,11 @@ class Crystal::Repl::Compiler
         initializer_compiled_defs.each do |compiled_def|
           call compiled_def, node: nil
         end
+      end
+
+      # `Struct.pre_initialize` does not return a pointer, so always discard it
+      if !@wants_value || type.struct?
+        pop(sizeof(Pointer(Void)), node: nil)
       end
     when "tuple_indexer_known_index"
       unless @wants_value
