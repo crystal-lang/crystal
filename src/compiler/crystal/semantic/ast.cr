@@ -546,7 +546,7 @@ module Crystal
     # Whether to access this thread-local variable
     # only with the guarantees as C11.
     # Accessing TLS inside a fiber changing its underlying
-    # thread mid-execution will result in undefied behavior.
+    # thread mid-execution will result in undefined behavior.
     property? thread_local_unsafe = false
 
     # Is this variable "unsafe" (no need to check if it was initialized)?
@@ -710,7 +710,7 @@ module Crystal
     # Whether to access this thread-local variable
     # only with the guarantees as C11.
     # Accessing TLS inside a fiber changing its underlying
-    # thread mid-execution will result in undefied behavior.
+    # thread mid-execution will result in undefined behavior.
     property? thread_local_unsafe = false
 
     def initialize(name : String, args : Array(Arg), body, @real_name : String)
