@@ -5,6 +5,13 @@ private def assert_tz_boundaries(tz : String, t0 : Time, t1 : Time, t2 : Time, t
   location = Time::Location.posix_tz("Local", tz)
   std_zone = location.zones.find(&.dst?.!).should_not be_nil, file: file, line: line
   dst_zone = location.zones.find(&.dst?).should_not be_nil, file: file, line: line
+  assert_tz_boundaries(location, std_zone, dst_zone, t0, t1, t2, t3, file: file, line: line)
+end
+
+private def assert_tz_boundaries(
+  location : Time::Location, std_zone : Time::Location::Zone, dst_zone : Time::Location::Zone,
+  t0 : Time, t1 : Time, t2 : Time, t3 : Time, *, file = __FILE__, line = __LINE__,
+)
   t0, t1, t2, t3 = t0.to_unix, t1.to_unix, t2.to_unix, t3.to_unix
 
   location.lookup_with_boundaries(t1 - 1).should eq({std_zone, {t0, t1}}), file: file, line: line
@@ -761,7 +768,41 @@ class Time::Location
         end
       end
 
-      pending "zoneinfo + POSIX TZ string"
+      context "zoneinfo + POSIX TZ string" do
+        it "looks up location beyond last transition time" do
+          with_zoneinfo do
+            # "CET-1CEST,M3.5.0,M10.5.0/3"
+            # last transition is in year 2037
+            location = Location.load("Europe/Berlin")
+            Time.unix(location.@transitions.last.when).year.should eq(2037)
+
+            assert_tz_boundaries location,
+              Zone.new("CET", 3600, false), Zone.new("CEST", 7200, true),
+              Time.utc(2037, 10, 25, 1, 0, 0), Time.utc(2038, 3, 28, 1, 0, 0),
+              Time.utc(2038, 10, 31, 1, 0, 0), Time.utc(2039, 3, 27, 1, 0, 0)
+
+            assert_tz_boundaries location,
+              Zone.new("CET", 3600, false), Zone.new("CEST", 7200, true),
+              Time.utc(3003, 10, 30, 1, 0, 0), Time.utc(3004, 3, 25, 1, 0, 0),
+              Time.utc(3004, 10, 28, 1, 0, 0), Time.utc(3005, 3, 31, 1, 0, 0)
+          end
+        end
+
+        it "looks up location if TZ string has no transitions" do
+          with_zoneinfo do
+            # Paraguay stopped observing DST since 2024
+            location = Location.load("America/Asuncion")
+
+            zone, range = location.lookup_with_boundaries(Time.utc(2024, 10, 15, 2, 59, 59).to_unix)
+            zone.should eq(Zone.new("-03", -10800, true))
+            range.should eq({Time.utc(2024, 10, 6, 4, 0, 0).to_unix, Time.utc(2024, 10, 15, 3, 0, 0).to_unix})
+
+            zone, range = location.lookup_with_boundaries(Time.utc(2024, 10, 15, 3, 0, 0).to_unix)
+            zone.should eq(Zone.new("-03", -10800, false))
+            range.should eq({Time.utc(2024, 10, 15, 3, 0, 0).to_unix, Int64::MAX})
+          end
+        end
+      end
     end
   end
 
