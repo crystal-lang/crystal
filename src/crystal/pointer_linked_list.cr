@@ -52,6 +52,9 @@ struct Crystal::PointerLinkedList(T)
     else
       @head = Pointer(T).null
     end
+
+    node.value.previous = Pointer(T).null
+    node.value.next = Pointer(T).null
   end
 
   # Removes and returns head from the list, yields if empty
