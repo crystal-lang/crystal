@@ -95,7 +95,7 @@ class OAuth2::Client
 
   # Builds an authorize URI, as specified by
   # [RFC 6749, Section 4.1.1](https://tools.ietf.org/html/rfc6749#section-4.1.1).
-  def get_authorize_uri(scope = nil, state = nil) : String
+  def get_authorize_uri(scope : String? = nil, state : String? = nil) : String
     get_authorize_uri(scope, state) { }
   end
 
@@ -139,7 +139,7 @@ class OAuth2::Client
 
   # Gets an access token using the resource owner credentials, as specified by
   # [RFC 6749, Section 4.3.2](https://tools.ietf.org/html/rfc6749#section-4.3.2).
-  def get_access_token_using_resource_owner_credentials(username : String, password : String, scope = nil) : AccessToken
+  def get_access_token_using_resource_owner_credentials(username : String, password : String, scope : String? = nil) : AccessToken
     get_access_token do |form|
       form.add("grant_type", "password")
       form.add("username", username)
@@ -150,7 +150,7 @@ class OAuth2::Client
 
   # Gets an access token using client credentials, as specified by
   # [RFC 6749, Section 4.4.2](https://tools.ietf.org/html/rfc6749#section-4.4.2).
-  def get_access_token_using_client_credentials(scope = nil) : AccessToken
+  def get_access_token_using_client_credentials(scope : String? = nil) : AccessToken
     get_access_token do |form|
       form.add("grant_type", "client_credentials")
       form.add("scope", scope) unless scope.nil?
@@ -159,7 +159,7 @@ class OAuth2::Client
 
   # Gets an access token using a refresh token, as specified by
   # [RFC 6749, Section 6](https://tools.ietf.org/html/rfc6749#section-6).
-  def get_access_token_using_refresh_token(refresh_token, scope = nil) : AccessToken
+  def get_access_token_using_refresh_token(refresh_token : String?, scope : String? = nil) : AccessToken
     get_access_token do |form|
       form.add("grant_type", "refresh_token")
       form.add("refresh_token", refresh_token)
