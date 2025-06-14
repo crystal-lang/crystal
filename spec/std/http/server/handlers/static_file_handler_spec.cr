@@ -34,6 +34,11 @@ describe HTTP::StaticFileHandler do
     File.delete(Path[datapath("static_file_handler"), Path.posix("back\\slash.txt")])
   end
 
+  it "handles long filenames" do
+    response = handle HTTP::Request.new("GET", "/#{"A" * 1_000}"), ignore_body: false
+    response.status_code.should eq 404
+  end
+
   it "adds Etag header" do
     response = handle HTTP::Request.new("GET", "/test.txt")
     response.headers["Etag"].should match(/W\/"\d+"$/)
