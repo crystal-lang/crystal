@@ -22,7 +22,7 @@ module Crystal::System::Signal
     @@mutex.synchronize do
       unless @@handlers[signal]?
         @@sigset << signal
-        {% if flag?(:interpreted) && Crystal::Interpreter.has_method?(:signal) %}
+        {% if flag?(:interpreted) && Crystal::Interpreter.class.has_method?(:signal) %}
           Crystal::Interpreter.signal(signal.value, 2)
         {% else %}
           action = LibC::Sigaction.new
@@ -66,7 +66,7 @@ module Crystal::System::Signal
     else
       @@mutex.synchronize do
         @@handlers.delete(signal)
-        {% if flag?(:interpreted) && Crystal::Interpreter.has_method?(:signal) %}
+        {% if flag?(:interpreted) && Crystal::Interpreter.class.has_method?(:signal) %}
           h = case handler
               when LibC::SIG_DFL then 0
               when LibC::SIG_IGN then 1
@@ -134,7 +134,7 @@ module Crystal::System::Signal
     ::Signal.each do |signal|
       next unless @@sigset.includes?(signal)
 
-      {% if flag?(:interpreted) && Crystal::Interpreter.has_method?(:signal) %}
+      {% if flag?(:interpreted) && Crystal::Interpreter.class.has_method?(:signal) %}
         Crystal::Interpreter.signal(signal.value, 0)
       {% else %}
         LibC.signal(signal, LibC::SIG_DFL)
@@ -206,7 +206,7 @@ module Crystal::System::Signal
     @@sigset.clear
     start_loop
 
-    {% if flag?(:interpreted) && Interpreter.has_method?(:signal_descriptor) %}
+    {% if flag?(:interpreted) && Interpreter.class.has_method?(:signal_descriptor) %}
       # replace the interpreter's writer pipe with the interpreted, so signals
       # will be received by the interpreter, but handled by the interpreted
       # signal loop
