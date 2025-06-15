@@ -191,11 +191,21 @@ class Time::Location
       ZoneTransition.new(time, zone_idx, isstd, isutc)
     end
 
-    # TODO: parse the POSIX TZ string (#15792)
-    # note that some extensions are only available for version 3+
     if version != 0
-      raise InvalidTZDataError.new("Missing TZ footer") unless io.read_byte === '\n'
-      tz_string = io.gets
+      unless io.read_byte === '\n'
+        raise InvalidTZDataError.new("Missing TZ footer")
+      end
+      unless tz_string = io.gets
+        raise InvalidTZDataError.new("Missing TZ string")
+      end
+
+      unless tz_string.empty?
+        hours_extension = version != '2'.ord # version 3+
+        if tz_args = TZ.parse(tz_string, zones, hours_extension)
+          return TZLocation.new(location_name, zones, tz_string, *tz_args, transitions)
+        end
+        raise InvalidTZDataError.new("Invalid TZ string: #{tz_string}")
+      end
     end
 
     new(location_name, zones, transitions)
