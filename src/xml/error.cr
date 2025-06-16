@@ -35,26 +35,8 @@ class XML::Error < Exception
   #
   # NOTE: This is for internal compatibility with libxml < 2.13. Do not use.
   protected def self.unsafe_collect(errors : Array(Error), &)
-    scontext = LibXML.__xmlStructuredErrorContext.value
-    shandler = LibXML.__xmlStructuredError.value
-
-    context = LibXML.__xmlGenericErrorContext.value
-    handler = LibXML.__xmlGenericError.value
-
-    LibXML.xmlSetStructuredErrorFunc(Box.box(errors), ->structured_callback)
-    LibXML.xmlSetGenericErrorFunc(Box.box(errors), ->generic_callback)
-
-    begin
-      yield
-    ensure
-      # can't call xmlSetStructuredErrorFunc or xmlSetGenericErrorFunc: the
-      # compiler complains that it's passing a closure to C (it's not)
-      LibXML.__xmlStructuredErrorContext.value = scontext
-      LibXML.__xmlStructuredError.value = shandler
-
-      LibXML.__xmlGenericErrorContext.value = context
-      LibXML.__xmlGenericError.value = handler
-    end
+    data = Box.box(errors)
+    with_handlers(data, ->structured_callback(Void*, LibXML::Error*), data, ->generic_callback(Void*, UInt8*)) { yield }
   end
 
   # Saves the current global error handlers (and user data) and restore the
@@ -69,25 +51,29 @@ class XML::Error < Exception
   #
   # NOTE: This is for internal compatibility with libxml < 2.13. Do not use.
   protected def self.default_handlers(&)
-    scontext = LibXML.__xmlStructuredErrorContext.value
-    shandler = LibXML.__xmlStructuredError.value
+    with_handlers(nil, nil, nil, nil) { yield }
+  end
 
-    context = LibXML.__xmlGenericErrorContext.value
-    handler = LibXML.__xmlGenericError.value
+  private def self.with_handlers(scontext, shandler, context, handler, &)
+    orig_scontext = LibXML.__xmlStructuredErrorContext.value
+    orig_shandler = LibXML.__xmlStructuredError.value
 
-    LibXML.xmlSetStructuredErrorFunc(nil, nil)
-    LibXML.xmlSetGenericErrorFunc(nil, nil)
+    orig_context = LibXML.__xmlGenericErrorContext.value
+    orig_handler = LibXML.__xmlGenericError.value
+
+    LibXML.xmlSetStructuredErrorFunc(scontext, shandler)
+    LibXML.xmlSetGenericErrorFunc(context, handler)
 
     begin
       yield
     ensure
       # can't call xmlSetStructuredErrorFunc or xmlSetGenericErrorFunc: the
       # compiler complains that it's passing a closure to C (it's not)
-      LibXML.__xmlStructuredErrorContext.value = scontext
-      LibXML.__xmlStructuredError.value = shandler
+      LibXML.__xmlStructuredErrorContext.value = orig_scontext
+      LibXML.__xmlStructuredError.value = orig_shandler
 
-      LibXML.__xmlGenericErrorContext.value = context
-      LibXML.__xmlGenericError.value = handler
+      LibXML.__xmlGenericErrorContext.value = orig_context
+      LibXML.__xmlGenericError.value = orig_handler
     end
   end
 

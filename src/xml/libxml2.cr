@@ -17,14 +17,17 @@ require "./save_options"
   {% end %}
 {% end %}
 lib LibXML
-   {% if (version = env("LIBXML_VERSION")) && (version.strip != "") %}
+  # The bindings default to libxml 2.9 that was released in 2012. We can safely
+  # assume at least this version is available everywhere.
+
+  {% if (version = env("LIBXML_VERSION")) && (version.strip != "") %}
      VERSION = {{env("LIBXML_VERSION")}}
    {% elsif !flag?(:win32) || flag?(:gnu) %}
-     VERSION = {{`pkg-config libxml-2.0 --silence-errors --modversion 2> /dev/null || echo 2.9.0`.strip.stringify}}
+     VERSION = {{`sh -c "pkg-config libxml-2.0 --silence-errors --modversion 2> /dev/null || echo 2.9.0"`.strip.stringify}}
    {% else %}
-     # TODO: figure out the actual libxml version on *-windows-msvc target
-     VERSION = "2.9.0"
-   {% end %}
+    # TODO: figure out the actual libxml version on *-windows-msvc target
+    VERSION = "2.9.0"
+  {% end %}
 
   alias Int = LibC::Int
 

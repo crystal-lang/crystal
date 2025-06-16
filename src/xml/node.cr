@@ -541,11 +541,10 @@ class XML::Node
   end
 
   protected def self.close_callback(data : Void*) : LibC::Int
-    {% if LibXML.has_method?(:xmlSaveSetIndentString) %}
-      Box(IO).unbox(data).flush
-    {% else %}
-      XML.save_indent_tree_output { Box(IO).unbox(data).flush }
-    {% end %}
+    # no need to save the indent tree output thread local, even though we flush
+    # and the current fiber might swapcontext: libxml is closing the output and
+    # won't write to the IO anymore
+    Box(IO).unbox(data).flush
     LibC::Int.new(0)
   end
 
