@@ -10,13 +10,13 @@ class File::Error < IO::Error
 
   private def self.new_from_os_error(message, os_error, **opts)
     case os_error
-    when Errno::ENOENT, WinError::ERROR_FILE_NOT_FOUND, WinError::ERROR_PATH_NOT_FOUND
+    when .in?(File::NotFoundError::OS_ERRORS)
       File::NotFoundError.new(message, **opts)
-    when Errno::EEXIST, WinError::ERROR_ALREADY_EXISTS
+    when .in?(File::AlreadyExistsError::OS_ERRORS)
       File::AlreadyExistsError.new(message, **opts)
-    when Errno::EACCES, WinError::ERROR_ACCESS_DENIED, WinError::ERROR_PRIVILEGE_NOT_HELD
+    when .in?(File::AccessDeniedError::OS_ERRORS)
       File::AccessDeniedError.new(message, **opts)
-    when Errno::ENOEXEC, WinError::ERROR_BAD_EXE_FORMAT
+    when .in?(File::BadExecutableError::OS_ERRORS)
       File::BadExecutableError.new(message, **opts)
     else
       super message, os_error, **opts
@@ -48,13 +48,37 @@ class File::Error < IO::Error
 end
 
 class File::NotFoundError < File::Error
+  # :nodoc:
+  OS_ERRORS = [
+    Errno::ENOENT,
+    WinError::ERROR_DIRECTORY,
+    WinError::ERROR_FILE_NOT_FOUND,
+    WinError::ERROR_INVALID_NAME,
+    WinError::ERROR_PATH_NOT_FOUND,
+  ]
 end
 
 class File::AlreadyExistsError < File::Error
+  # :nodoc:
+  OS_ERRORS = [
+    Errno::EEXIST,
+    WinError::ERROR_ALREADY_EXISTS,
+  ]
 end
 
 class File::AccessDeniedError < File::Error
+  # :nodoc:
+  OS_ERRORS = [
+    Errno::EACCES,
+    WinError::ERROR_ACCESS_DENIED,
+    WinError::ERROR_PRIVILEGE_NOT_HELD,
+  ]
 end
 
 class File::BadExecutableError < File::Error
+  # :nodoc:
+  OS_ERRORS = [
+    Errno::ENOEXEC,
+    WinError::ERROR_BAD_EXE_FORMAT,
+  ]
 end
