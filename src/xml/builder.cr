@@ -28,6 +28,10 @@ class XML::Builder
     @writer = LibXML.xmlNewTextWriter(buffer)
   end
 
+  def finalize
+    LibXML.xmlFreeTextWriter(@writer)
+  end
+
   # Emits the start of the document.
   def start_document(version = nil, encoding = nil) : Nil
     call StartDocument, string_to_unsafe(version), string_to_unsafe(encoding), nil

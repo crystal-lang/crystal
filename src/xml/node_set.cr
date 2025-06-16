@@ -1,11 +1,25 @@
 class XML::NodeSet
   include Enumerable(Node)
 
-  def initialize(@doc : Node, @set : LibXML::NodeSet*)
+  def initialize(@doc : Node, @xpath_object : LibXML::XPathObject*)
+    @set = @xpath_object.value.nodesetval
   end
 
-  def self.new(doc : Node)
-    new doc, LibXML.xmlXPathNodeSetCreate(nil)
+  def initialize(@doc : Node, @set : LibXML::NodeSet*)
+    @xpath_object = Pointer(LibXML::XPathObject).null
+  end
+
+  def initialize(@doc : Node)
+    @xpath_object = Pointer(LibXML::XPathObject).null
+    @set = LibXML.xmlXPathNodeSetCreate(nil)
+  end
+
+  def finalize
+    if @xpath_object.null?
+      LibXML.xmlXPathFreeNodeSet(@set)
+    else
+      LibXML.xmlXPathFreeObject(@xpath_object)
+    end
   end
 
   def [](index : Int) : XML::Node
@@ -58,6 +72,6 @@ class XML::NodeSet
   end
 
   private def internal_at(index)
-    Node.new(@set.value.node_tab[index])
+    Node.new(@set.value.node_tab[index], @doc)
   end
 end

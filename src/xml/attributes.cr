@@ -54,7 +54,7 @@ class XML::Attributes
 
     props = self.props
     until props.null?
-      yield Node.new(props)
+      yield Node.new(props, @node.document)
       props = props.value.next
     end
   end
