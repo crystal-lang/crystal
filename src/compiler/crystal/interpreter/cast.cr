@@ -267,7 +267,6 @@ class Crystal::Repl::Compiler
 
   private def cast_tuple(node : ASTNode, from : TupleInstanceType, to : TupleInstanceType)
     from_aligned_size = aligned_sizeof_type(from)
-    to_aligned_size = aligned_sizeof_type(to)
     to_element_offset = 0
 
     to.tuple_types.each_with_index do |to_element_type, i|
@@ -309,7 +308,6 @@ class Crystal::Repl::Compiler
 
   private def cast_named_tuple(node : ASTNode, from : NamedTupleInstanceType, to : NamedTupleInstanceType)
     from_aligned_size = aligned_sizeof_type(from)
-    to_aligned_size = aligned_sizeof_type(to)
     to_element_offset = 0
 
     from_entry_indices = to.entries.map_with_index do |to_entry, i|

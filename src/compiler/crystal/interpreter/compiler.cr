@@ -1235,9 +1235,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       end
     end
 
-    ivar = obj_type.lookup_instance_var(name)
     ivar_offset = ivar_offset(obj_type, name)
-    ivar_size = inner_sizeof_type(ivar)
 
     # Get a pointer to the object
     if obj_type.passed_by_value?
@@ -1554,8 +1552,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     var = lookup_local_var_or_closured_var(name)
     case var
     in LocalVar
-      index, type = var.index, var.type
-      pointerof_var(index, node: node)
+      pointerof_var(var.index, node: node)
     in ClosuredVar
       read_closured_var_pointer(var, node: node)
     end

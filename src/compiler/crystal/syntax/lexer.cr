@@ -2037,7 +2037,7 @@ module Crystal
     end
 
     def macro_starts_with_keyword?(beginning_of_line) : MacroKeywordState?
-      case char = current_char
+      case current_char
       when 'a'
         case next_char
         when 'b'

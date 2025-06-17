@@ -198,7 +198,7 @@ module Crystal::System::Socket
       result = yield operation
 
       if result == 0
-        case error = WinError.wsa_value
+        case WinError.wsa_value
         when .wsa_io_pending?
           # the operation is running asynchronously; do nothing
         else

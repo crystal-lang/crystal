@@ -4504,7 +4504,6 @@ module Crystal
     def parse_block_params(location)
       block_params = [] of Var
       all_names = [] of String
-      block_body = nil
       param_index = 0
       splat_index = nil
       unpacks = nil

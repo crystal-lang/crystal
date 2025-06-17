@@ -268,7 +268,7 @@ describe "Semantic: warnings" do
     end
 
     it "ignores nested calls to deprecated methods" do
-      x = assert_warning <<-CRYSTAL,
+      assert_warning <<-CRYSTAL,
         @[Deprecated]
         def foo; bar; end
 

@@ -294,8 +294,8 @@ module Fiber::ExecutionContext
           # we must also decrement the number of parked threads because another
           # thread could lock the mutex and increment @spinning again before the
           # signaled thread is resumed
-          spinning = @spinning.add(1, :acquire_release)
-          parked = @parked.sub(1, :acquire_release)
+          @spinning.add(1, :acquire_release)
+          @parked.sub(1, :acquire_release)
 
           @condition.signal
         end
