@@ -254,7 +254,7 @@ module Crystal
       source = [source] unless source.is_a?(Array)
       program = new_program(source)
       node = parse program, source
-      node, processor = program.top_level_semantic(node)
+      node, _ = program.top_level_semantic(node)
 
       @progress_tracker.clear
       print_macro_run_stats(program)
