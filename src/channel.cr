@@ -90,11 +90,16 @@ class Channel(T)
   end
 
   # Closes the channel.
-  # The method prevents any new value from being sent to / received from the channel.
-  # All fibers blocked in `send` or `receive` will be awakened with `Channel::ClosedError`
+  # The method prevents any new value from being sent to the channel.
   #
-  # Both awaiting and subsequent calls to `#send` will consider the channel closed.
-  # All items successfully sent to the channel can be received, before `#receive` considers the channel closed.
+  # All fibers blocked in `send` or `receive` will be awakened with `Channel::ClosedError`
+  # All subsequent calls to `#send` will consider the channel closed.
+  # Subsequent non-blocking calls to `#receive` will succeed
+  # Subsequent blocking calls to `#receive` will consider the channel closed.
+  #
+  # If the channel has buffered values, then subsequent calls to `receive` will succeed
+  # to consume the 'pending' values until buffer is empty (until the `receive` call would block)
+  #
   # Calling `#close` on a closed channel does not have any effect.
   #
   # It returns `true` when the channel was successfully closed, or `false` if it was already closed.
