@@ -1,19 +1,23 @@
 class XML::NodeSet
   include Enumerable(Node)
 
+  # :nodoc:
   def initialize(@doc : Node, @xpath_object : LibXML::XPathObject*)
     @set = @xpath_object.value.nodesetval
   end
 
+  # :nodoc:
   def initialize(@doc : Node, @set : LibXML::NodeSet*)
     @xpath_object = Pointer(LibXML::XPathObject).null
   end
 
+  # :nodoc:
   def initialize(@doc : Node)
     @xpath_object = Pointer(LibXML::XPathObject).null
     @set = LibXML.xmlXPathNodeSetCreate(nil)
   end
 
+  # :nodoc:
   def finalize
     if @xpath_object.null?
       LibXML.xmlXPathFreeNodeSet(@set)

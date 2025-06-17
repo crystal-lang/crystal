@@ -49,6 +49,7 @@ class XML::Reader
     LibXML.xmlTextReaderSetStructuredErrorHandler(@reader, ->Error.structured_callback, Box.box(@errors))
   end
 
+  # :nodoc:
   def finalize
     LibXML.xmlFreeTextReader(@reader)
   end

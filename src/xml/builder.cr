@@ -28,6 +28,7 @@ class XML::Builder
     @writer = LibXML.xmlNewTextWriter(buffer)
   end
 
+  # :nodoc:
   def finalize
     LibXML.xmlFreeTextWriter(@writer)
   end

@@ -3,13 +3,13 @@ require "./node"
 class XML::Attributes
   include Enumerable(Node)
 
+  # :nodoc:
   def initialize(@node : Node)
   end
 
   def empty? : Bool
     return true unless @node.element?
 
-    props = self.props
     props.null?
   end
 
@@ -54,8 +54,8 @@ class XML::Attributes
 
     props = self.props
     until props.null?
-      yield Node.new(props, @node.document)
-      props = props.value.next
+      yield Node.new(props.as(LibXML::Node*), @node.document)
+      props = props.value.next.as(LibXML::Attr*)
     end
   end
 
@@ -73,7 +73,7 @@ class XML::Attributes
     pp.list("[", self, "]")
   end
 
-  protected def props
+  protected def props : LibXML::Attr*
     @node.to_unsafe.value.properties
   end
 end

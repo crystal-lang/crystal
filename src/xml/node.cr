@@ -11,32 +11,18 @@ class XML::Node
   # and thus need to keep it alive.
   @unlinked = false
 
-  # Creates a new node.
-  def initialize(node : LibXML::Attr*, @document : Node)
-    @node = node.as(LibXML::Node*)
-  end
-
-  # :ditto:
+  # :nodoc:
   def initialize(node : LibXML::Doc*, @errors : Array(XML::Error)? = nil)
     @node = node.as(LibXML::Node*)
     @document = uninitialized Node
     @document = self
   end
 
-  # :ditto:
-  @[Deprecated("Use the XML::Node.new(doc, errors) or XML::Node.new(node, doc) constructors")]
-  def initialize(@node : LibXML::Node*)
-    unless @node.value.type.in?(Type::DOCUMENT_NODE, Type::HTML_DOCUMENT_NODE)
-      raise ArgumentError.new("XML::Node must be a document node")
-    end
-    @document = uninitialized Node
-    @document = self
-  end
-
-  # :ditto:
+  # :nodoc:
   def initialize(@node : LibXML::Node*, @document : Node)
   end
 
+  # :nodoc:
   def finalize
     if document?
       # free the document, which will recursively free the DOM tree, NS, ...

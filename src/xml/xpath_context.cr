@@ -10,6 +10,7 @@ class XML::XPathContext
     {% end %}
   end
 
+  # :nodoc:
   def finalize
     LibXML.xmlXPathFreeContext(@ctx)
   end
