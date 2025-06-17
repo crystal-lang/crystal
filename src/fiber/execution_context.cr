@@ -8,25 +8,25 @@ require "./execution_context/*"
 {% raise "ERROR: execution contexts require the `preview_mt` compilation flag" unless flag?(:preview_mt) || flag?(:docs) %}
 {% raise "ERROR: execution contexts require the `execution_context` compilation flag" unless flag?(:execution_context) || flag?(:docs) %}
 
-# An execution context creates and manages a dedicated pool of 1 or more threads
-# where fibers can be executed into. Each context manages the rules to run,
-# suspend and swap fibers internally.
+# An execution context creates and manages a dedicated pool of 1 or more
+# schedulers where fibers will be running in. Each context manages the rules to
+# run, suspend and swap fibers internally.
 #
 # EXPERIMENTAL: Execution contexts are an experimental feature, implementing
 # [RFC 2](https://github.com/crystal-lang/rfcs/pull/2). It's opt-in and requires
 # the compiler flags `-Dpreview_mt -Dexecution_context`.
 #
 # Applications can create any number of execution contexts in parallel. These
-# contexts are isolated but they can communicate with the usual thread-safe
-# synchronization primitives (e.g. `Channel`, `Mutex`).
+# contexts are isolated but they can communicate with the usual synchronization
+# primitives such as `Channel` or `Mutex`.
 #
 # An execution context groups fibers together. Instead of associating a fiber to
-# a specific thread, we associate a fiber to an execution context, abstracting
-# which thread(s) they actually run on.
+# a specific system thread, we associate a fiber to an execution context,
+# abstracting which system thread(s) the fibers will run on.
 #
 # When spawning a fiber with `::spawn`, it spawns into the execution context of
-# the current fiber. Thus child fibers execute in the same context as their
-# parent (unless told otherwise).
+# the current fiber, so child fibers execute in the same context as their parent
+# (unless told otherwise).
 #
 # Once spawned, a fiber cannot _move_ to another execution context. It always
 # resumes in the same execution context.
@@ -36,18 +36,19 @@ require "./execution_context/*"
 # The standard library provides a number of execution context implementations
 # for common use cases.
 #
-# * `ExecutionContext::SingleThreaded`: Fully concurrent with limited
-# parallelism. Fibers run concurrently in a single thread and never in parallel.
-# They can use simpler and faster synchronization primitives internally (no
-# atomics, no thread safety). Communication with fibers in other contexts
-# requires thread-safe primitives. A blocking fiber blocks the entire thread and
-# all other fibers in the context.
-# * `ExecutionContext::MultiThreaded`: Fully concurrent, fully parallel. Fibers
-# running in this context can be resumed by any thread in this context. They run
-# concurrently and in parallel to each other, in addition to running in parallel
-# to any fibers in other contexts. Schedulers steal work from each other. The
-# number of threads can grow and shrink dynamically.
-# * `ExecutionContext::Isolated`: Single fiber in a single thread without
+# * `ExecutionContext::Concurrent`: Fully concurrent with limited parallelism.
+# Fibers run concurrently, never in parallel (only one fiber at a time). They
+# can use simpler and faster synchronization primitives internally (no atomics,
+# limited thread safety). Communication with fibers in other contexts requires
+# thread-safe primitives. A blocking fiber blocks the entire thread and all
+# other fibers in the context.
+# * `ExecutionContext::Parallel`: Fully concurrent, fully parallel. Fibers
+# running in this context can be resumed by multiple system threads in this
+# context. They run concurrently and in parallel to each other (multiple fibers
+# at a time), in addition to running in parallel to any fibers in other
+# contexts. Schedulers steal work from each other. The parallelism can grow and
+# shrink dynamically.
+# * `ExecutionContext::Isolated`: Single fiber in a single system thread without
 # concurrency. This is useful for tasks that can block thread execution for a
 # long time (e.g. a GUI main loop, a game loop, or CPU heavy computation). The
 # event-loop works normally (when the fiber sleeps, it pauses the thread).
@@ -56,15 +57,15 @@ require "./execution_context/*"
 # ## The default execution context
 #
 # The Crystal runtime starts with a single threaded execution context, available
-# in `Fiber::ExecutionContext.default`.
+# as `Fiber::ExecutionContext.default`:
 #
 # ```
-# Fiber::ExecutionContext.default.class # => Fiber::ExecutionContext::SingleThreaded
+# Fiber::ExecutionContext.default.class # => Fiber::ExecutionContext::Concurrent
 # ```
 #
-# NOTE: The single threaded default context is required for backwards
-# compatibility. It may change to a multi-threaded default context in the
-# future.
+# NOTE: The default context being single threaded is required for backwards
+# compatibility. It might change to become a multi-threaded default context in
+# the future.
 @[Experimental]
 module Fiber::ExecutionContext
   @@default : ExecutionContext?
@@ -72,9 +73,9 @@ module Fiber::ExecutionContext
   # Returns the default `ExecutionContext` for the process, automatically
   # started when the program started.
   #
-  # NOTE: The default context is a `SingleThreaded` context for backwards
-  # compatibility reasons. It may change to a multi-threaded default context in
-  # the future.
+  # NOTE: The default context is a `Concurrent` context for backwards
+  # compatibility reasons. It might change to a `Parallel` context in the
+  # future.
   @[AlwaysInline]
   def self.default : ExecutionContext
     @@default.not_nil!("expected default execution context to have been setup")
@@ -82,7 +83,7 @@ module Fiber::ExecutionContext
 
   # :nodoc:
   def self.init_default_context : Nil
-    @@default = SingleThreaded.default
+    @@default = Concurrent.default
     @@monitor = Monitor.new
   end
 

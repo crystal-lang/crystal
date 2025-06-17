@@ -3,17 +3,21 @@ require "../scheduler"
 require "../runnables"
 
 module Fiber::ExecutionContext
-  class MultiThreaded
-    # MT fiber scheduler.
+  class Parallel
+    # Individual scheduler for the parallel execution context.
     #
-    # Owns a single thread inside a MT execution context.
+    # The execution context itself doesn't run the fibers. The fibers actually
+    # run in the schedulers. Each scheduler in the context increases the
+    # parallelism by one. For example a parallel context with 8 schedulers means
+    # that a maximum of 8 fibers may run at the same time in different system
+    # threads.
     class Scheduler
       include ExecutionContext::Scheduler
 
       getter name : String
 
       # :nodoc:
-      property execution_context : MultiThreaded
+      property execution_context : Parallel
       protected property! thread : Thread
       protected property! main_fiber : Fiber
 
@@ -38,10 +42,9 @@ module Fiber::ExecutionContext
         self.spawn(name: name, &block)
       end
 
-      # Unlike `ExecutionContext::MultiThreaded#enqueue` this method is only
-      # safe to call on `ExecutionContext.current` which should always be the
-      # case, since cross context enqueues must call
-      # `ExecutionContext::MultiThreaded#enqueue` through `Fiber#enqueue`.
+      # Unlike `Parallel#enqueue` this method is only safe to call on
+      # `ExecutionContext.current` which should always be the case, since cross
+      # context enqueues must call `Parallel#enqueue` through `Fiber#enqueue`.
       protected def enqueue(fiber : Fiber) : Nil
         Crystal.trace :sched, "enqueue", fiber: fiber
         @runnables.push(fiber)
@@ -183,7 +186,7 @@ module Fiber::ExecutionContext
 
         # immediately mark the scheduler as spinning (we just unparked); we
         # don't increment the number of spinning threads since
-        # `MultiThreaded#wake_scheduler` already did
+        # `Parallel#wake_scheduler` already did
         @spinning = true
       end
 
