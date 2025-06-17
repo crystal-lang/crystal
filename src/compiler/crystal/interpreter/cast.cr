@@ -48,7 +48,9 @@ class Crystal::Repl::Compiler
         compatible_type = to.union_types.find! { |union_type| type_needing_cast.implements?(union_type) }
 
         # Get the type id of the "from" union
-        from_type_id = get_union_type_id(aligned_sizeof_type(from), node: node)
+        # FIXME: This looks fishy. The variable is never used, only referenced in another comment.
+        # Can we safely drop this entire line?
+        from_type_id = get_union_type_id(aligned_sizeof_type(from), node: node) # ameba:disable Lint/UselessAssign
 
         # Check if `from_type_id` is the same as `type_needing_cast`
         put_i32 type_id(type_needing_cast), node: node
