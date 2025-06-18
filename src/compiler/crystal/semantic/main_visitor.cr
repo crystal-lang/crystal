@@ -2599,6 +2599,14 @@ module Crystal
     def pointerof_var(node)
       case exp = node.exp
       when Var
+        if exp.name == "self"
+          exp.accept self
+
+          unless exp.type.struct?
+            node.raise "can only take address of self in struct"
+          end
+        end
+
         meta_var = @meta_vars[exp.name]
         meta_var.assigned_to = true
         meta_var
