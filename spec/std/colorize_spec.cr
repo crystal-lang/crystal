@@ -1,5 +1,6 @@
 require "spec"
 require "colorize"
+require "../support/env"
 
 private def colorize(obj, *args)
   obj.colorize(*args).toggle(true)
@@ -17,7 +18,70 @@ private class ColorizeToS
   end
 end
 
+private class ColorizeTTY < IO
+  def tty? : Bool
+    true
+  end
+
+  def read(slice : Bytes)
+    0
+  end
+
+  def write(slice : Bytes) : Nil
+  end
+end
+
 describe "colorize" do
+  it ".default_enabled?" do
+    io = IO::Memory.new
+    tty = ColorizeTTY.new
+
+    with_env("TERM": nil, "NO_COLOR": nil) do
+      Colorize.default_enabled?(io).should be_false
+      Colorize.default_enabled?(tty).should be_true
+      Colorize.default_enabled?(io, io).should be_false
+      Colorize.default_enabled?(io, tty).should be_false
+      Colorize.default_enabled?(tty, io).should be_false
+      Colorize.default_enabled?(tty, tty).should be_true
+    end
+
+    with_env("TERM": nil, "NO_COLOR": "") do
+      Colorize.default_enabled?(io).should be_false
+      Colorize.default_enabled?(tty).should be_true
+      Colorize.default_enabled?(io, io).should be_false
+      Colorize.default_enabled?(io, tty).should be_false
+      Colorize.default_enabled?(tty, io).should be_false
+      Colorize.default_enabled?(tty, tty).should be_true
+    end
+
+    with_env("TERM": nil, "NO_COLOR": "1") do
+      Colorize.default_enabled?(io).should be_false
+      Colorize.default_enabled?(tty).should be_false
+      Colorize.default_enabled?(io, io).should be_false
+      Colorize.default_enabled?(io, tty).should be_false
+      Colorize.default_enabled?(tty, io).should be_false
+      Colorize.default_enabled?(tty, tty).should be_false
+    end
+
+    with_env("TERM": "xterm", "NO_COLOR": nil) do
+      Colorize.default_enabled?(io).should be_false
+      Colorize.default_enabled?(tty).should be_true
+      Colorize.default_enabled?(io, io).should be_false
+      Colorize.default_enabled?(io, tty).should be_false
+      Colorize.default_enabled?(tty, io).should be_false
+      Colorize.default_enabled?(tty, tty).should be_true
+    end
+
+    with_env("TERM": "dumb", "NO_COLOR": nil) do
+      Colorize.default_enabled?(io).should be_false
+      Colorize.default_enabled?(tty).should be_false
+      Colorize.default_enabled?(io, io).should be_false
+      Colorize.default_enabled?(io, tty).should be_false
+      Colorize.default_enabled?(tty, io).should be_false
+      Colorize.default_enabled?(tty, tty).should be_false
+    end
+  end
+
   it "colorizes without change" do
     colorize("hello").to_s.should eq("hello")
   end
