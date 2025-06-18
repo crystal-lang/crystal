@@ -92,7 +92,6 @@ class Channel(T)
   # Closes the channel.
   # The method prevents any new value from being sent to the channel.
   #
-  #
   # If the channel has buffered values, then subsequent calls to `receive` will succeed
   # and consume the buffer until it is empty.
   #
