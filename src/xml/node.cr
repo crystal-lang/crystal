@@ -487,36 +487,65 @@ class XML::Node
     end
   end
 
-  # :nodoc:
-  SAVE_MUTEX = ::Mutex.new
-
   # Serialize this Node as XML to *io* using default options.
   #
   # See `XML::SaveOptions.xml_default` for default options.
   def to_xml(io : IO, indent = 2, indent_text = " ", options : SaveOptions = SaveOptions.xml_default)
-    # We need to use a mutex because we modify global libxml variables
-    SAVE_MUTEX.synchronize do
+    {% if LibXML.has_method?(:xmlSaveSetIndentString) %}
+      # indentation is now always enabled by default (it can be disabled per
+      # save context with the XML_SAVE_NO_INDENT option); the indent string is
+      # explicitly set on the save context (no more global default)
+      ctxt = LibXML.xmlSaveToIO(
+        ->Node.write_callback,
+        ->Node.close_callback,
+        Box(IO).box(io),
+        @node.value.doc.value.encoding,
+        options)
+      LibXML.xmlSaveSetIndentString(ctxt, indent_text * indent)
+      LibXML.xmlSaveTree(ctxt, self)
+      LibXML.xmlSaveClose(ctxt)
+    {% else %}
+      # indentation is disabled by default and it can only be enabled globally
+      # for the current thread (no per context value)
       XML.with_indent_tree_output(true) do
-        XML.with_tree_indent_string(indent_text * indent) do
-          save_ctx = LibXML.xmlSaveToIO(
-            ->(ctx, buffer, len) {
-              Box(IO).unbox(ctx).write_string Slice.new(buffer, len)
-              len
-            },
-            ->(ctx) {
-              Box(IO).unbox(ctx).flush
-              0
-            },
+        # the indent string will be copied to the save context... from the
+        # default thread local value; at least we can reset the thread local
+        # immediately after creating the save context
+        ctxt = XML.with_tree_indent_string(indent_text * indent) do
+          LibXML.xmlSaveToIO(
+            ->Node.write_callback,
+            ->Node.close_callback,
             Box(IO).box(io),
             @node.value.doc.value.encoding,
             options)
-          LibXML.xmlSaveTree(save_ctx, self)
-          LibXML.xmlSaveClose(save_ctx)
         end
+        LibXML.xmlSaveTree(ctxt, self)
+        LibXML.xmlSaveClose(ctxt)
       end
-    end
+    {% end %}
 
     io
+  end
+
+  protected def self.write_callback(data : Void*, buffer : UInt8*, len : LibC::Int) : LibC::Int
+    io = Box(IO).unbox(data)
+    buf = Slice.new(buffer, len)
+
+    {% if LibXML.has_method?(:xmlSaveSetIndentString) %}
+      io.write_string(buf)
+    {% else %}
+      XML.save_indent_tree_output { io.write_string(buf) }
+    {% end %}
+
+    len
+  end
+
+  protected def self.close_callback(data : Void*) : LibC::Int
+    # no need to save the indent tree output thread local, even though we flush
+    # and the current fiber might swapcontext: libxml is closing the output and
+    # won't write to the IO anymore
+    Box(IO).unbox(data).flush
+    LibC::Int.new(0)
   end
 
   # Returns underlying `LibXML::Node*` instance.
