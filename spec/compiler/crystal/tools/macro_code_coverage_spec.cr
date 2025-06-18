@@ -3,22 +3,25 @@ include Crystal
 
 private def assert_coverage(code, expected_coverage, *, expected_error : String? = nil, focus : Bool = false, spec_file = __FILE__, spec_line = __LINE__)
   it focus: focus, file: spec_file, line: spec_line do
-    compiler = Compiler.new true
+    processor = MacroCoverageProcessor.new
+
+    compiler = Compiler.new
     compiler.prelude = "empty"
     compiler.no_codegen = true
-    result = compiler.compile(Compiler::Source.new(".", code), "fake-no-build")
+    compiler.compile_configure_program(Compiler::Source.new(".", code), "fake-no-build") do |program|
+      processor.configure program
+    end
 
-    processor = MacroCoverageProcessor.new
     processor.excludes << Path[Dir.current].to_posix.to_s
     processor.includes << "."
 
-    hits = processor.compute_coverage(result)
+    hits = processor.compute_coverage
 
     unless hits = hits["."]?
       fail "Failed to generate coverage", file: spec_file, line: spec_line
     end
 
-    coverage_exception = result.program.coverage_interrupt_exception
+    coverage_exception = processor.coverage_interrupt_exception
 
     if expected_error
       err = coverage_exception.should_not be_nil, file: spec_file, line: spec_line
@@ -233,7 +236,7 @@ describe "macro_code_coverage" do
     end
     CR
 
-  assert_coverage <<-'CR', {1 => 1, 2 => 0, 3 => 1, 4 => 1}
+  assert_coverage <<-'CR', {1 => 1, 2 => 0, 4 => 1}
     {% unless true %}
       {{0}}
     {% else %}
@@ -241,7 +244,7 @@ describe "macro_code_coverage" do
     {% end %}
     CR
 
-  assert_coverage <<-'CR', {1 => 1, 2 => 1, 3 => 0, 4 => 0}
+  assert_coverage <<-'CR', {1 => 1, 2 => 1, 4 => 0}
     {% unless false %}
       {{0}}
     {% else %}
@@ -289,7 +292,7 @@ describe "macro_code_coverage" do
     end
     CR
 
-  assert_coverage <<-'CR', {1 => 1, 2 => 1, 3 => 3, 4 => 1, 5 => 2, 6 => 0, 7 => 2, 8 => 2}
+  assert_coverage <<-'CR', {1 => 1, 2 => 1, 3 => 3, 4 => 1, 5 => 2, 6 => 0, 8 => 2}
     {% begin %}
       {% for v in {1, 2, 3} %}
         {% if v == 2 %}
@@ -345,7 +348,7 @@ describe "macro_code_coverage" do
     {% end %}
     CR
 
-  assert_coverage <<-'CR', {1 => 1, 2 => 1, 3 => 2, 4 => 1, 5 => 1, 6 => 1}
+  assert_coverage <<-'CR', {1 => 1, 2 => 1, 3 => 2, 4 => 1, 6 => 1}
     {% begin %}
       {% for vals in [[] of Int32, [1]] %}
         {% if vals.empty? %}
@@ -560,7 +563,7 @@ describe "macro_code_coverage" do
     test 1
     CR
 
-  assert_coverage <<-'CR', {2 => 1, 4 => 1, 6 => 1, 9 => 1, 10 => 1, 11 => 0, 13 => 0}
+  assert_coverage <<-'CR', {2 => 1, 4 => 1, 6 => 1, 9 => 1, 10 => 1, 13 => 0}
     macro test(v)
       {% if v > 1 %}
         {%

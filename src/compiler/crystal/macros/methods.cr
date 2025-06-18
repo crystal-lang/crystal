@@ -959,7 +959,7 @@ module Crystal
           block_arg_value = block.args[1]?
 
           if entries.empty?
-            interpreter.collect_covered_node block.body, true, true
+            interpreter.not_interpreted block.body, use_significant_node: true
           end
 
           entries.each do |entry|
@@ -976,7 +976,7 @@ module Crystal
           block_arg_value = block.args[1]?
 
           if entries.empty?
-            interpreter.collect_covered_node block.body, true, true
+            interpreter.not_interpreted block.body, use_significant_node: true
           end
 
           ArrayLiteral.map(entries) do |entry|
@@ -1065,7 +1065,7 @@ module Crystal
           block_arg_value = block.args[1]?
 
           if entries.empty?
-            interpreter.collect_covered_node block.body, true, true
+            interpreter.not_interpreted block.body, use_significant_node: true
           end
 
           entries.each do |entry|
@@ -1082,7 +1082,7 @@ module Crystal
           block_arg_value = block.args[1]?
 
           if entries.empty?
-            interpreter.collect_covered_node block.body, true, true
+            interpreter.not_interpreted block.body, use_significant_node: true
           end
 
           ArrayLiteral.map(entries) do |entry|
@@ -1183,7 +1183,7 @@ module Crystal
           range = interpret_to_range(interpreter)
 
           if range.empty?
-            interpreter.collect_covered_node block.body, true, true
+            interpreter.not_interpreted block.body, use_significant_node: true
           end
 
           range.each do |num|
@@ -1217,7 +1217,7 @@ module Crystal
       range = interpret_to_range(interpreter)
 
       if block && range.empty?
-        interpreter.collect_covered_node block.body, true, true
+        interpreter.not_interpreted block.body, use_significant_node: true
       end
 
       ArrayLiteral.map(range) do |num|
@@ -2916,7 +2916,7 @@ private def interpret_array_or_tuple_method(object, klass, method, args, named_a
       block_arg = block.args.first?
 
       if object.elements.empty?
-        interpreter.collect_covered_node block.body, true, true
+        interpreter.not_interpreted block.body, use_significant_node: true
       end
 
       Crystal::BoolLiteral.new(object.elements.any? do |elem|
@@ -2929,7 +2929,7 @@ private def interpret_array_or_tuple_method(object, klass, method, args, named_a
       block_arg = block.args.first?
 
       if object.elements.empty?
-        interpreter.collect_covered_node block.body, true, true
+        interpreter.not_interpreted block.body, use_significant_node: true
       end
 
       Crystal::BoolLiteral.new(object.elements.all? do |elem|
@@ -2960,7 +2960,7 @@ private def interpret_array_or_tuple_method(object, klass, method, args, named_a
       block_arg = block.args.first?
 
       if object.elements.empty?
-        interpreter.collect_covered_node block.body, true, true
+        interpreter.not_interpreted block.body, use_significant_node: true
       end
 
       found = object.elements.find do |elem|
@@ -2988,7 +2988,7 @@ private def interpret_array_or_tuple_method(object, klass, method, args, named_a
       block_arg = block.args.first?
 
       if object.elements.empty?
-        interpreter.collect_covered_node block.body, true, true
+        interpreter.not_interpreted block.body, use_significant_node: true
       end
 
       object.elements.each do |elem|
@@ -3004,7 +3004,7 @@ private def interpret_array_or_tuple_method(object, klass, method, args, named_a
       index_arg = block.args[1]?
 
       if object.elements.empty?
-        interpreter.collect_covered_node block.body, true, true
+        interpreter.not_interpreted block.body, use_significant_node: true
       end
 
       object.elements.each_with_index do |elem, idx|
@@ -3020,7 +3020,7 @@ private def interpret_array_or_tuple_method(object, klass, method, args, named_a
       block_arg = block.args.first?
 
       if object.elements.empty?
-        interpreter.collect_covered_node block.body, true, true
+        interpreter.not_interpreted block.body, use_significant_node: true
       end
 
       klass.map(object.elements) do |elem|
@@ -3034,7 +3034,7 @@ private def interpret_array_or_tuple_method(object, klass, method, args, named_a
       index_arg = block.args[1]?
 
       if object.elements.empty?
-        interpreter.collect_covered_node block.body, true, true
+        interpreter.not_interpreted block.body, use_significant_node: true
       end
 
       klass.map_with_index(object.elements) do |elem, idx|
@@ -3057,7 +3057,7 @@ private def interpret_array_or_tuple_method(object, klass, method, args, named_a
       value_arg = block.args[1]?
 
       if object.elements.empty?
-        interpreter.collect_covered_node block.body, true, true
+        interpreter.not_interpreted block.body, use_significant_node: true
       end
 
       if memo
@@ -3325,7 +3325,7 @@ private def filter(object, klass, block, interpreter, keep = true)
   block_arg = block.args.first?
 
   if object.elements.empty?
-    interpreter.collect_covered_node block.body, true, true
+    interpreter.not_interpreted block.body, use_significant_node: true
   end
 
   klass.new(object.elements.select do |elem|
@@ -3375,7 +3375,7 @@ private def sort_by(object, klass, block, interpreter)
   block_arg = block.args.first?
 
   if object.elements.empty?
-    interpreter.collect_covered_node block.body, true, true
+    interpreter.not_interpreted block.body, use_significant_node: true
   end
 
   klass.new(object.elements.sort_by do |elem|

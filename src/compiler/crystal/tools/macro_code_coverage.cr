@@ -5,34 +5,81 @@ require "json"
 module Crystal
   class Command
     private def macro_code_coverage
-      config, result = compile_no_codegen "tool macro_code_coverage", path_filter: true, macro_code_coverage: true, allowed_formats: ["codecov"]
-
       coverage_processor = MacroCoverageProcessor.new
+
+      config = create_compiler "tool macro_code_coverage", path_filter: true, no_codegen: true, allowed_formats: ["codecov"]
+      config.compiler.no_codegen = true
+
+      config.compile_configure_program do |program|
+        coverage_processor.configure program
+      end
 
       coverage_processor.includes.concat config.includes.map { |path| ::Path[path].expand.to_posix.to_s }
 
       coverage_processor.excludes.concat CrystalPath.default_paths.map { |path| ::Path[path].expand.to_posix.to_s }
       coverage_processor.excludes.concat config.excludes.map { |path| ::Path[path].expand.to_posix.to_s }
 
-      coverage_processor.process result
+      coverage_processor.process
     end
   end
 
-  struct MacroCoverageProcessor
+  class MacroCoverageProcessor
     private CURRENT_DIR = Dir.current
 
     @hits = Hash(String, Hash(Int32, Int32 | String)).new { |hash, key| hash[key] = Hash(Int32, Int32 | String).new(0) }
     @conditional_hit_cache = Hash(String, Hash(Int32, Set({ASTNode, Bool}))).new { |hash, key| hash[key] = Hash(Int32, Set({ASTNode, Bool})).new { |h, k| h[k] = Set({ASTNode, Bool}).new } }
 
+    @covered_macro_nodes = Array({ASTNode, Location, Bool}).new
+    @collected_covered_macro_nodes = Array(Array({ASTNode, Location, Bool})).new
+    getter coverage_interrupt_exception : ::Exception? = nil
+
+    # :nodoc:
+    def configure(program : Program) : Nil
+      program.interpreted_node_hook = ->interpreted_node_hook(ASTNode, Bool, Bool, Location?)
+      program.macro_expanded_hook = ->macro_expanded_hook
+      program.macro_expansion_error_hook = ->macro_expansion_error_hook(::Exception?)
+    end
+
+    protected def interpreted_node_hook(node : ASTNode, missed : Bool = false, use_significant_node : Bool = false, location custom_location : Location? = nil) : Nil
+      return unless location = (custom_location || node.location)
+
+      # If desired, try to find a more significant node to use for a more accurate location.
+      if use_significant_node
+        node = self.find_first_significant_node node
+        location = node.try(&.location) || location
+      end
+
+      unless location.filename.is_a? String
+        return node unless macro_location = location.macro_location
+
+        location = Location.new(
+          macro_location.filename,
+          location.line_number + macro_location.line_number,
+          location.column_number
+        )
+      end
+
+      @covered_macro_nodes << {node, location, missed}
+    end
+
+    protected def macro_expanded_hook : Nil
+      @collected_covered_macro_nodes << @covered_macro_nodes.dup
+      @covered_macro_nodes.clear
+    end
+
+    protected def macro_expansion_error_hook(exception : ::Exception?) : Nil
+      @coverage_interrupt_exception = exception unless exception.is_a?(SkipMacroException)
+    end
+
     property includes = [] of String
     property excludes = [] of String
 
-    def process(result : Compiler::Result) : Nil
+    def process : Nil
       @hits.clear
 
-      self.compute_coverage result
+      self.compute_coverage
 
-      if err = result.program.coverage_interrupt_exception
+      if err = @coverage_interrupt_exception
         puts "Encountered an error while computing coverage report:"
         puts
         err.inspect_with_backtrace STDOUT
@@ -70,8 +117,8 @@ module Crystal
     # Each group is then processed to determine if that line is a hit or miss, but may also yield more than once, such as to mark an `If` conditional as a hit, but it's `else` block as a miss.
     #
     # The coverage information is stored in a similar way as the resulting output report: https://docs.codecov.com/docs/codecov-custom-coverage-format.
-    def compute_coverage(result : Compiler::Result)
-      result.program.collected_covered_macro_nodes
+    def compute_coverage
+      @collected_covered_macro_nodes
         .select { |nodes| nodes.any? { |(_, location, _)| match_path? location.filename.as(String) } }
         .each do |nodes|
           nodes
@@ -96,6 +143,27 @@ module Crystal
         end
 
       @hits
+    end
+
+    # These overloads try to find a more significant node to mark as missed.
+    # This ensures the missed value in the report maps to an actual node
+    # instead of just `{%` in the context of a multi-line `MacroExpression`,
+    # or just some whitespace as part of a `MacroLiteral`.
+
+    private def find_first_significant_node(node : MacroExpression) : ASTNode
+      self.find_first_significant_node node.exp
+    end
+
+    private def find_first_significant_node(node : Expressions) : ASTNode
+      if n = node.expressions.reject(MacroLiteral).reject(MultiAssign).first?
+        return self.find_first_significant_node n
+      end
+
+      node
+    end
+
+    private def find_first_significant_node(node : _) : ASTNode
+      node
     end
 
     private alias NodeTuple = {ASTNode, Location, Bool}

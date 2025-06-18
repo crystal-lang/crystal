@@ -204,8 +204,6 @@ module Crystal
     # Program that was created for the last compilation.
     property! program : Program
 
-    def initialize(@collect_covered_macro_nodes : Bool = false); end
-
     # Compiles the given *source*, with *output_filename* as the name
     # of the generated executable.
     #
@@ -217,6 +215,24 @@ module Crystal
     def compile(source : Source | Array(Source), output_filename : String) : Result
       source = [source] unless source.is_a?(Array)
       program = new_program(source)
+      node = parse program, source
+      node = program.semantic node, cleanup: !no_cleanup?
+      units = codegen program, node, source, output_filename unless @no_codegen
+
+      @progress_tracker.clear
+      print_macro_run_stats(program)
+      print_codegen_stats(units)
+
+      Result.new program, node
+    end
+
+    # :ditto:
+    #
+    # Yields a `Program` instance before compiling.
+    def compile_configure_program(source : Source | Array(Source), output_filename : String, & : Program -> Nil) : Result
+      source = [source] unless source.is_a?(Array)
+      program = new_program(source)
+      yield program
       node = parse program, source
       node = program.semantic node, cleanup: !no_cleanup?
       units = codegen program, node, source, output_filename unless @no_codegen
@@ -276,7 +292,6 @@ module Crystal
       program.show_error_trace = show_error_trace?
       program.progress_tracker = @progress_tracker
       program.warnings = @warnings
-      program.collect_covered_macro_nodes = @collect_covered_macro_nodes
       program
     end
 

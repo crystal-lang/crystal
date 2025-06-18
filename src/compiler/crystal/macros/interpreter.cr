@@ -86,74 +86,26 @@ module Crystal
       @vars[name] = value
     end
 
-    def collect_covered_macro_nodes? : Bool
-      @program.collect_covered_macro_nodes?
+    # Calls the program's `interpreted_node_hook` hook with the macro ASTNode that was interpreted.
+    def interpreted(node : ASTNode, *, location custom_location : Location? = nil) : ASTNode
+      return node unless interpreted_hook = @program.interpreted_node_hook
+
+      interpreted_hook.call node, false, false, custom_location
+
+      node
     end
 
-    def collect_covered_node(exception : ::Exception) : Nil
-      @program.coverage_interrupt_exception = exception
-    end
+    # Calls the program's `interpreted_node_hook` hook with the macro ASTNode that was _not_ interpreted.
+    def not_interpreted(node : ASTNode, use_significant_node : Bool = false, *, location custom_location : Location? = nil) : ASTNode
+      return node unless interpreted_hook = @program.interpreted_node_hook
 
-    def collect_covered_node(node : ASTNode, missed : Bool = false, find_significant : Bool = false, *, location custom_location : Location? = nil) : ASTNode
-      return node unless @program.collect_covered_macro_nodes?
-      return node unless location = (custom_location || node.location)
-
-      original_node = node
-
-      # If desired, try to find a more significant node to use for a more accurate location.
-      if find_significant
-        node = self.find_first_significant_node node
-        location = node.try(&.location) || location
-      end
-
-      unless location.filename.is_a? String
-        return node unless macro_location = location.macro_location
-
-        location = Location.new(
-          macro_location.filename,
-          location.line_number + macro_location.line_number,
-          location.column_number
-        )
-      end
-
-      @program.covered_macro_nodes << {node, location, missed}
+      interpreted_hook.call node, true, use_significant_node, custom_location
 
       # If a Yield was missed, also mark the code that would have ran as missed.
-      if node.is_a?(Yield) && missed && (block = @block)
-        self.collect_covered_node block.body, true
+      if node.is_a?(Yield) && (block = @block)
+        interpreted_hook.call block.body, true, false, nil
       end
 
-      # When finding a more significant node, also mark this original missed node as missed.
-      # But only if it's not an `Expressions` or an `Expressions` and doesn't have the `paren` keyword.
-      # This ensures a `(` on its own line of a multiline parenthesized expression is skipped.
-      #
-      # This is primarily to ensure the `{% else %}` line is also marked as missed instead of just the first node of that branch.
-      # Do this after collecting the more accurate one to ensure that one is used as the primary.
-      if find_significant && (!original_node.is_a?(Expressions) || ((n = original_node).is_a?(Expressions) && !n.keyword.paren?))
-        self.collect_covered_node original_node, missed
-      end
-
-      node
-    end
-
-    # These overloads try to find a more significant node to mark as missed.
-    # This ensures the missed value in the report maps to an actual node
-    # instead of just `{%` in the context of a multi-line `MacroExpression`,
-    # or just some whitespace as part of a `MacroLiteral`.
-
-    private def find_first_significant_node(node : MacroExpression) : ASTNode
-      self.find_first_significant_node node.exp
-    end
-
-    private def find_first_significant_node(node : Expressions) : ASTNode
-      if n = node.expressions.reject(MacroLiteral).reject(MultiAssign).first?
-        return self.find_first_significant_node n
-      end
-
-      node
-    end
-
-    private def find_first_significant_node(node : _) : ASTNode
       node
     end
 
@@ -180,7 +132,7 @@ module Crystal
           @str << " end" if is_yield
           (macro_expansion_pragmas[@str.pos.to_i32] ||= [] of Lexer::LocPragma) << Lexer::LocPopPragma.new
         else
-          @last.to_s(@str, emit_location_pragmas: self.collect_covered_macro_nodes?)
+          @last.to_s(@str, emit_location_pragmas: !!@program.interpreted_node_hook)
         end
       end
 
@@ -196,16 +148,16 @@ module Crystal
       exp = node.exp
       if exp.is_a?(Expressions)
         exp.expressions.each do |subexp|
-          subexp.to_s(@str, emit_location_pragmas: self.collect_covered_macro_nodes?)
+          subexp.to_s(@str, emit_location_pragmas: !!@program.interpreted_node_hook)
         end
       else
-        exp.to_s(@str, emit_location_pragmas: self.collect_covered_macro_nodes?)
+        exp.to_s(@str, emit_location_pragmas: !!@program.interpreted_node_hook)
       end
       false
     end
 
     def visit(node : Var)
-      self.collect_covered_node node
+      self.interpreted node
 
       var = @vars[node.name]?
       if var
@@ -247,27 +199,15 @@ module Crystal
     end
 
     def visit(node : MacroIf)
-      self.collect_covered_node node
+      self.interpreted node
 
       node.cond.accept self
 
       body = if @last.truthy?
-               if node.is_unless?
-                 self.collect_covered_node node.then
-                 self.collect_covered_node node.else, true, true
-               else
-                 self.collect_covered_node node.else, true, true
-                 node.then
-               end
+               self.not_interpreted node.else, use_significant_node: true
                node.then
              else
-               if node.is_unless?
-                 self.collect_covered_node node.else
-                 self.collect_covered_node node.then, true, true
-               else
-                 self.collect_covered_node node.then, true, true
-                 self.collect_covered_node node.else
-               end
+               self.not_interpreted node.then, use_significant_node: true
                node.else
              end
 
@@ -277,7 +217,7 @@ module Crystal
     end
 
     def visit(node : MacroFor)
-      self.collect_covered_node node.exp
+      self.interpreted node.exp
 
       node.exp.accept self
 
@@ -302,7 +242,7 @@ module Crystal
         index_var = node.vars[1]?
 
         if range.empty?
-          self.collect_covered_node node.body, true, true
+          self.not_interpreted node.body, use_significant_node: true
         end
 
         range.each_with_index do |element, index|
@@ -346,7 +286,7 @@ module Crystal
       index_var = node.vars[1]?
 
       if entries.empty?
-        self.collect_covered_node node.body, true, true
+        self.not_interpreted node.body, use_significant_node: true
       end
 
       entries.each_with_index do |element, index|
@@ -367,7 +307,7 @@ module Crystal
       index_var = node.vars[2]?
 
       if entries.empty?
-        self.collect_covered_node node.body, true, true
+        self.not_interpreted node.body, use_significant_node: true
       end
 
       entries.each_with_index do |entry, i|
@@ -386,7 +326,7 @@ module Crystal
     end
 
     def visit(node : MacroVar)
-      self.collect_covered_node node
+      self.interpreted node
 
       if exps = node.exps
         exps = exps.map { |exp| accept exp }
@@ -403,7 +343,7 @@ module Crystal
     end
 
     def visit(node : Assign)
-      self.collect_covered_node node
+      self.interpreted node
 
       case target = node.target
       when Var
@@ -429,28 +369,28 @@ module Crystal
     end
 
     def visit(node : And)
-      self.collect_covered_node node
+      self.interpreted node
 
       node.left.accept self
 
       if @last.truthy?
         node.right.accept self
       else
-        self.collect_covered_node node.right, true, true
+        self.not_interpreted node.right, use_significant_node: true
       end
 
       false
     end
 
     def visit(node : Or)
-      self.collect_covered_node node
+      self.interpreted node
 
       node.left.accept self
 
       if !@last.truthy?
         node.right.accept self
       else
-        self.collect_covered_node node.right, true, true
+        self.not_interpreted node.right, use_significant_node: true
       end
 
       false
@@ -463,15 +403,15 @@ module Crystal
     end
 
     def visit(node : If)
-      self.collect_covered_node node
+      self.interpreted node
 
       node.cond.accept self
 
       body = if @last.truthy?
-               self.collect_covered_node node.else, true
+               self.not_interpreted node.else
                node.then
              else
-               self.collect_covered_node node.then, true
+               self.not_interpreted node.then
                node.else
              end
 
@@ -481,15 +421,15 @@ module Crystal
     end
 
     def visit(node : Unless)
-      self.collect_covered_node node
+      self.interpreted node
 
       node.cond.accept self
 
       body = if @last.truthy?
-               self.collect_covered_node node.then, true
+               self.not_interpreted node.then
                node.else
              else
-               self.collect_covered_node node.else, true
+               self.not_interpreted node.else
                node.then
              end
 
@@ -508,7 +448,7 @@ module Crystal
           receiver = @last
         end
 
-        self.collect_covered_node obj, location: node.name_location
+        self.interpreted obj, location: node.name_location
 
         args = node.args.map { |arg| accept arg }
         named_args = node.named_args.try &.to_h { |arg| {arg.name, accept arg.value} }
@@ -527,7 +467,7 @@ module Crystal
           node.raise ex.message
         end
       else
-        self.collect_covered_node node
+        self.interpreted node
 
         # no receiver: special calls
         # may raise `Crystal::TopLevelMacroRaiseException`
@@ -538,7 +478,7 @@ module Crystal
     end
 
     def visit(node : Yield)
-      self.collect_covered_node node
+      self.interpreted node
 
       unless @in_macro
         node.raise "can't use `{{yield}}` outside a macro"
@@ -563,7 +503,7 @@ module Crystal
     end
 
     def visit(node : Path)
-      self.collect_covered_node node
+      self.interpreted node
 
       @last = resolve(node)
       false
@@ -778,21 +718,21 @@ module Crystal
     end
 
     def visit(node : TupleLiteral)
-      self.collect_covered_node node
+      self.interpreted node
 
       @last = TupleLiteral.map(node.elements) { |element| accept element }
       false
     end
 
     def visit(node : ArrayLiteral)
-      self.collect_covered_node node
+      self.interpreted node
 
       @last = ArrayLiteral.map(node.elements) { |element| accept element }
       false
     end
 
     def visit(node : HashLiteral)
-      self.collect_covered_node node
+      self.interpreted node
 
       @last =
         HashLiteral.new(node.entries.map do |entry|
@@ -810,7 +750,7 @@ module Crystal
     end
 
     def visit(node : Nop | NilLiteral | BoolLiteral | NumberLiteral | CharLiteral | StringLiteral | SymbolLiteral | RangeLiteral | RegexLiteral | MacroId | TypeNode | Def)
-      self.collect_covered_node node
+      self.interpreted node
 
       @last = node.clone_without_location
       false

@@ -70,7 +70,7 @@ class Crystal::Program
       begin
         visitor.process_finished_hooks
       rescue ex : SkipMacroCodeCoverageException
-        self.coverage_interrupt_exception = ex.cause
+        @program.macro_expansion_error_hook.try &.call(ex.cause)
       end
       visitor.new_expansions
     end

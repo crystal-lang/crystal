@@ -852,7 +852,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       begin
         child.accept self
       rescue ex : SkipMacroException
-        @program.coverage_interrupt_exception = ex.cause if ex.is_a? SkipMacroCodeCoverageException
+        @program.macro_expansion_error_hook.try &.call(ex.cause) if ex.is_a? SkipMacroCodeCoverageException
         node.expressions.delete_at(i..-1)
         break
       end
