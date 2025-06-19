@@ -1035,6 +1035,7 @@ module Crystal
           var = MetaTypeVar.new(name, class_var.type)
           var.owner = self
           var.thread_local = class_var.thread_local?
+          var.thread_local_unsafe = class_var.thread_local_unsafe?
           var.initializer = class_var.initializer
           var.bind_to(class_var)
           self.class_vars[name] = var
@@ -3445,6 +3446,7 @@ module Crystal
         var = MetaTypeVar.new(name, class_var.type)
         var.owner = self
         var.thread_local = class_var.thread_local?
+        var.thread_local_unsafe = class_var.thread_local_unsafe?
         var.initializer = class_var.initializer
         var.bind_to(class_var)
         self.class_vars[name] = var
@@ -3523,6 +3525,7 @@ module Crystal
         var = MetaTypeVar.new(name, class_var.type)
         var.owner = self
         var.thread_local = class_var.thread_local?
+        var.thread_local_unsafe = class_var.thread_local_unsafe?
         var.initializer = class_var.initializer
         var.bind_to(class_var)
         self.class_vars[name] = var
