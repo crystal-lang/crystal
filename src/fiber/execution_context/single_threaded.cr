@@ -22,8 +22,8 @@ module Fiber::ExecutionContext
 
     getter name : String
 
-    protected getter thread : Thread
-    @main_fiber : Fiber
+    protected property thread : Thread
+    protected getter main_fiber : Fiber
 
     @mutex : Thread::Mutex
     @global_queue : GlobalQueue
@@ -41,8 +41,12 @@ module Fiber::ExecutionContext
     @tick : Int32 = 0
 
     # :nodoc:
+    #
+    # Starts the default execution context. There can be only one for the whole
+    # process. Must be called from the main thread's main fiber; associates the
+    # current thread and fiber to the created execution context.
     protected def self.default : self
-      new("DEFAULT", hijack: true)
+      Fiber.current.execution_context = new("DEFAULT", hijack: true)
     end
 
     def self.new(name : String) : self
@@ -53,9 +57,10 @@ module Fiber::ExecutionContext
       @mutex = Thread::Mutex.new
       @global_queue = GlobalQueue.new(@mutex)
       @runnables = Runnables(256).new(@global_queue)
-
       @thread = uninitialized Thread
-      @main_fiber = uninitialized Fiber
+      @main_fiber = uninitialized Thread
+
+      @main_fiber = Fiber.new("#{@name}:loop", self) { run_loop }
       @thread = hijack ? hijack_current_thread : start_thread
 
       ExecutionContext.execution_contexts.push(self)
@@ -78,19 +83,12 @@ module Fiber::ExecutionContext
       thread.internal_name = @name
       thread.execution_context = self
       thread.scheduler = self
-      @main_fiber = Fiber.new("#{@name}:loop", self) { run_loop }
       thread
     end
 
     # Creates a new thread to initialize the scheduler.
     private def start_thread : Thread
-      Thread.new(name: @name) do |thread|
-        thread.execution_context = self
-        thread.scheduler = self
-        @main_fiber = thread.main_fiber
-        @main_fiber.name = "#{@name}:loop"
-        run_loop
-      end
+      ExecutionContext.thread_pool.checkout(self)
     end
 
     # :nodoc:
@@ -107,7 +105,7 @@ module Fiber::ExecutionContext
         Crystal.trace :sched, "enqueue", fiber: fiber
         @runnables.push(fiber)
       else
-        # cross context enqueue
+        # cross context or detached thread enqueue
         Crystal.trace :sched, "enqueue", fiber: fiber, to_context: self
         @global_queue.push(fiber)
         wake_scheduler
