@@ -25,11 +25,28 @@ entries = nodes.flat_map do |node|
   end
 end.sort!
 
-iana_to_windows_items = entries.map do |tzdata_name, territory, windows_name|
-  {tzdata_name, windows_name}
+ENV["ZONEINFO"] = ZONEINFO_ZIP
+iana_to_windows_items = entries.compact_map do |tzdata_name, territory, windows_name|
+  location = Time::Location.load(tzdata_name)
+  next unless location
+
+  time = Time.local(location).at_beginning_of_year
+  zone1 = time.zone
+  zone2 = (time + 6.months).zone
+
+  # southern hemisphere
+  if zone1.offset > zone2.offset
+    zone1, zone2 = zone2, zone1
+  end
+
+  {tzdata_name, windows_name, zone1.name, zone2.name}
 end.uniq!
 
-ENV["ZONEINFO"] = ZONEINFO_ZIP
+windows_to_iana_items = entries.compact_map do |tzdata_name, territory, windows_name|
+  {windows_name, tzdata_name} if territory == "001"
+end.uniq!
+
+# TODO: remove in 1.17
 windows_zone_names_items = entries.compact_map do |tzdata_name, territory, windows_name|
   next unless territory == "001"
   location = Time::Location.load(tzdata_name)

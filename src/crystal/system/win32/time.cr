@@ -72,7 +72,15 @@ module Crystal::System::Time
   def self.load_localtime : ::Time::Location?
     if LibC.GetDynamicTimeZoneInformation(out info) != LibC::TIME_ZONE_ID_INVALID
       windows_name = String.from_utf16(info.timeZoneKeyName.to_slice, truncate_at_null: true)
-      initialize_location_from_TZI(pointerof(info).as(LibC::TIME_ZONE_INFORMATION*).value, "Local", windows_name)
+
+      if canonical_iana_name = windows_to_iana[windows_name]?
+        if (windows_info = iana_to_windows[canonical_iana_name]?).is_a?({String, String, String})
+          _, stdname, dstname = windows_info
+          zone_names = {stdname, dstname}
+        end
+      end
+
+      initialize_location_from_TZI(pointerof(info).as(LibC::TIME_ZONE_INFORMATION*).value, "Local", windows_name, zone_names)
     end
   end
 
@@ -90,7 +98,14 @@ module Crystal::System::Time
     daylightDate : LibC::SYSTEMTIME
 
   def self.load_iana_zone(iana_name : String) : ::Time::Location?
-    return unless windows_name = iana_to_windows[iana_name]?
+    return unless windows_info = iana_to_windows[iana_name]?
+
+    if windows_info.is_a?(String)
+      # TODO: remove in 1.17
+      windows_name = windows_info
+    else
+      windows_name, stdname, dstname = windows_info
+    end
 
     WindowsRegistry.open?(LibC::HKEY_LOCAL_MACHINE, REGISTRY_TIME_ZONES) do |key_handle|
       WindowsRegistry.open?(key_handle, windows_name.to_utf16) do |sub_handle|
@@ -106,13 +121,13 @@ module Crystal::System::Time
         )
         WindowsRegistry.get_raw(sub_handle, Std, tzi.standardName.to_slice.to_unsafe_bytes)
         WindowsRegistry.get_raw(sub_handle, Dlt, tzi.daylightName.to_slice.to_unsafe_bytes)
-        initialize_location_from_TZI(tzi, iana_name, windows_name)
+        initialize_location_from_TZI(tzi, iana_name, windows_name, {stdname, dstname})
       end
     end
   end
 
-  private def self.initialize_location_from_TZI(info, name, windows_name)
-    stdname, dstname = normalize_zone_names(info)
+  private def self.initialize_location_from_TZI(info, name, windows_name, zone_names = nil)
+    stdname, dstname = zone_names || normalize_zone_names(info)
 
     if info.standardDate.wMonth == 0_u16 || info.daylightDate.wMonth == 0_u16
       # No DST
@@ -141,6 +156,7 @@ module Crystal::System::Time
   end
 
   # Normalizes the names of the standard and dst zones.
+  # TODO: remove in 1.17
   private def self.normalize_zone_names(info : LibC::TIME_ZONE_INFORMATION) : Tuple(String, String)
     stdname, _ = String.from_utf16(info.standardName.to_slice.to_unsafe)
 
