@@ -28,7 +28,7 @@ _Feature freeze: 2025-06-25_
 
 #### stdlib
 
-- **[experimental]** Add `Struct.pre_initialize` ([#15896], thanks @HertzDevil)
+- Add `Colorize.default_enabled?` ([#15912], thanks @HertzDevil)
 - Make `Colorize.on_tty_only!` the default behavior ([#15881], thanks @HertzDevil)
 - *(files)* Support Windows local device paths in `Path` ([#15590], thanks @HertzDevil)
 - *(llvm)* Support LLVM 21.0 (development branch) ([#15771], thanks @HertzDevil)
@@ -47,14 +47,14 @@ _Feature freeze: 2025-06-25_
 - *(text)* **[experimental]** Add `Crystal::System.wstr_literal` on Windows ([#15747], thanks @HertzDevil)
 - *(text)* Add `String#ensure_suffix` and `String#ensure_prefix` ([#15782], thanks @MatheusRich)
 - *(text)* Add `truncate_at_null` parameter to `String.new(Bytes)` and `.from_utf16` ([#15887], thanks @HertzDevil)
-- *(time)* Support POSIX TZ strings in TZif databases ([#15863], thanks @HertzDevil)
 - *(time)* Add `Time.month_week_date` ([#15620], thanks @HertzDevil)
 - *(time)* Improve the TZif database file parser ([#15825], thanks @HertzDevil)
 - *(time)* Support POSIX TZ environment variable strings ([#15792], thanks @HertzDevil)
 - *(time)* Improve whitespace handling in `Time::Format` ([#15890], thanks @HertzDevil)
 - *(time)* Support Windows system time zone transitions in all years ([#15891], thanks @HertzDevil)
+- *(time)* Support POSIX TZ strings in TZif databases ([#15863], thanks @HertzDevil)
 
-[#15896]: https://github.com/crystal-lang/crystal/pull/15896
+[#15912]: https://github.com/crystal-lang/crystal/pull/15912
 [#15881]: https://github.com/crystal-lang/crystal/pull/15881
 [#15590]: https://github.com/crystal-lang/crystal/pull/15590
 [#15771]: https://github.com/crystal-lang/crystal/pull/15771
@@ -73,12 +73,12 @@ _Feature freeze: 2025-06-25_
 [#15747]: https://github.com/crystal-lang/crystal/pull/15747
 [#15782]: https://github.com/crystal-lang/crystal/pull/15782
 [#15887]: https://github.com/crystal-lang/crystal/pull/15887
-[#15863]: https://github.com/crystal-lang/crystal/pull/15863
 [#15620]: https://github.com/crystal-lang/crystal/pull/15620
 [#15825]: https://github.com/crystal-lang/crystal/pull/15825
 [#15792]: https://github.com/crystal-lang/crystal/pull/15792
 [#15890]: https://github.com/crystal-lang/crystal/pull/15890
 [#15891]: https://github.com/crystal-lang/crystal/pull/15891
+[#15863]: https://github.com/crystal-lang/crystal/pull/15863
 
 #### compiler
 
@@ -153,11 +153,13 @@ _Feature freeze: 2025-06-25_
 #### compiler
 
 - *(codegen)* Add file name to file-private virtual types during codegen ([#15897], thanks @HertzDevil)
+- *(interpreter)* Fix interpreter guard clauses for signal handling ([#15892], thanks @straight-shoota)
 - *(parser)* Add end locations for `Case`, `Asm`, and `Select` ([#15452], thanks @FnControlOption)
 - *(parser)* **[regression]** Fix stringification of `Not` as call receiver ([#15801], thanks @Blacksmoke16)
 - *(semantic)* Fix cleanup of one-to-many assignment with untyped RHS ([#15755], thanks @HertzDevil)
 
 [#15897]: https://github.com/crystal-lang/crystal/pull/15897
+[#15892]: https://github.com/crystal-lang/crystal/pull/15892
 [#15452]: https://github.com/crystal-lang/crystal/pull/15452
 [#15801]: https://github.com/crystal-lang/crystal/pull/15801
 [#15755]: https://github.com/crystal-lang/crystal/pull/15755
@@ -171,8 +173,10 @@ _Feature freeze: 2025-06-25_
 #### other
 
 - race condition in `Fiber::ExecutionContext::Isolated#wait` ([#15872], thanks @ysbaddaden)
+- thread specs must test `Thread`, not `Fiber::ExecutionContext::Isolated` ([#15909], thanks @ysbaddaden)
 
 [#15872]: https://github.com/crystal-lang/crystal/pull/15872
+[#15909]: https://github.com/crystal-lang/crystal/pull/15909
 
 ### Chores
 
@@ -247,8 +251,10 @@ _Feature freeze: 2025-06-25_
 #### compiler
 
 - Apply performance improvement suggestions from ameba ([#15839], thanks @straight-shoota)
+- *(codegen)* Simplify codegen of mixed-type checked integer addition and subtraction ([#15878], thanks @HertzDevil)
 
 [#15839]: https://github.com/crystal-lang/crystal/pull/15839
+[#15878]: https://github.com/crystal-lang/crystal/pull/15878
 
 ### Refactor
 
@@ -267,6 +273,7 @@ _Feature freeze: 2025-06-25_
 - *(runtime)* Extract `Exception::CallStack.decode_backtrace_frame` helper ([#15615], thanks @ysbaddaden)
 - *(runtime)* Let `Crystal::EventLoop#close` do the actual close (not just cleanup) ([#15641], thanks @ysbaddaden)
 - *(serialization)* Replace deprecated `LibXML.xmlGcMemSetup` with `.xmlMemSetup` ([#15626], thanks @straight-shoota)
+- *(serialization)* XML: modernize API when available & workaround issues with legacy versions ([#15899], thanks @ysbaddaden)
 - *(specs)* Support arbitrary `IO`s in `Spec::CLI` ([#15882], thanks @HertzDevil)
 - *(specs)* Replace some lookup hashes in `Spec` with exhaustive cases ([#15879], thanks @HertzDevil)
 - *(text)* **[experimental]** Use slice literals for `String::CHAR_TO_DIGIT` and `CHAR_TO_DIGIT62` ([#15745], thanks @HertzDevil)
@@ -287,6 +294,7 @@ _Feature freeze: 2025-06-25_
 [#15615]: https://github.com/crystal-lang/crystal/pull/15615
 [#15641]: https://github.com/crystal-lang/crystal/pull/15641
 [#15626]: https://github.com/crystal-lang/crystal/pull/15626
+[#15899]: https://github.com/crystal-lang/crystal/pull/15899
 [#15882]: https://github.com/crystal-lang/crystal/pull/15882
 [#15879]: https://github.com/crystal-lang/crystal/pull/15879
 [#15745]: https://github.com/crystal-lang/crystal/pull/15745
@@ -346,7 +354,6 @@ _Feature freeze: 2025-06-25_
 
 ### Infrastructure
 
-- Add ameba ([#15875], thanks @straight-shoota)
 - Changelog for 1.17.0 ([#15900], thanks @straight-shoota)
 - Update previous Crystal release 1.16.1 ([#15649], thanks @straight-shoota)
 - Update `release-update` script: Truncate CHANGELOG ([#15679], thanks @straight-shoota)
@@ -358,6 +365,7 @@ _Feature freeze: 2025-06-25_
 - Merge `release/1.16`@1.16.3 into master ([#15774], thanks @straight-shoota)
 - Update previous Crystal release 1.16.3 ([#15773], thanks @straight-shoota)
 - Makefile: Fix target location for `install_docs` ([#15853], thanks @straight-shoota)
+- Add ameba ([#15875], thanks @straight-shoota)
 - Allow `LLVM_VERSION` override inside `Makefile` ([#15765], thanks @HertzDevil)
 - Add build script for `spec/std/data/zoneinfo.zip` ([#15831], thanks @HertzDevil)
 - *(ci)* Drop the static LLVM libraries on Windows MSVC CI ([#15797], thanks @HertzDevil)
@@ -365,7 +373,6 @@ _Feature freeze: 2025-06-25_
 - *(ci)* Add CI workflow for MinGW-w64 ARM64 builds ([#15794], thanks @HertzDevil)
 - *(ci)* **[regression]** Use `CMAKE_MSVC_RUNTIME_LIBRARY` for the MSVC PCRE2 static library ([#15802], thanks @HertzDevil)
 
-[#15875]: https://github.com/crystal-lang/crystal/pull/15875
 [#15900]: https://github.com/crystal-lang/crystal/pull/15900
 [#15649]: https://github.com/crystal-lang/crystal/pull/15649
 [#15679]: https://github.com/crystal-lang/crystal/pull/15679
@@ -377,6 +384,7 @@ _Feature freeze: 2025-06-25_
 [#15774]: https://github.com/crystal-lang/crystal/pull/15774
 [#15773]: https://github.com/crystal-lang/crystal/pull/15773
 [#15853]: https://github.com/crystal-lang/crystal/pull/15853
+[#15875]: https://github.com/crystal-lang/crystal/pull/15875
 [#15765]: https://github.com/crystal-lang/crystal/pull/15765
 [#15831]: https://github.com/crystal-lang/crystal/pull/15831
 [#15797]: https://github.com/crystal-lang/crystal/pull/15797
