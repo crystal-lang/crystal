@@ -28,6 +28,7 @@ class Crystal::Program
   rescue ex
     raise ex if @program.macro_expansion_error_hook.nil?
 
+    # See SkipMacroCodeCoverageException's definition for more information.
     raise SkipMacroCodeCoverageException.new ex
   ensure
     @program.macro_expanded_hook.try &.call
@@ -41,6 +42,7 @@ class Crystal::Program
   rescue ex
     raise ex if @program.macro_expansion_error_hook.nil?
 
+    # See SkipMacroCodeCoverageException's definition for more information.
     raise SkipMacroCodeCoverageException.new ex
   ensure
     @program.macro_expanded_hook.try &.call
