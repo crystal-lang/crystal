@@ -3,25 +3,25 @@ require "file/error"
 
 # :nodoc:
 module Crystal::System::File
-  def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions)
+  def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions, blocking : Bool?) : {FileDescriptor::Handle, Bool}
     perm = ::File::Permissions.new(perm) if perm.is_a? Int32
 
-    fd, errno = open(filename, open_flag(mode), perm)
-
-    unless errno.none?
-      raise ::File::Error.from_os_error("Error opening file with mode '#{mode}'", errno, file: filename)
+    case result = EventLoop.current.open(filename, open_flag(mode), perm, blocking)
+    in Tuple(FileDescriptor::Handle, Bool)
+      result
+    in Errno
+      raise ::File::Error.from_os_error("Error opening file with mode '#{mode}'", result, file: filename)
     end
-
-    fd
   end
 
-  def self.open(filename : String, flags : Int32, perm : ::File::Permissions) : {LibC::Int, Errno}
-    filename.check_no_null_byte
-    flags |= LibC::O_CLOEXEC
+  protected def system_init(mode : String, blocking : Bool) : Nil
+  end
 
-    fd = LibC.open(filename, flags, perm)
-
-    {fd, fd < 0 ? Errno.value : Errno::NONE}
+  def self.special_type?(fd)
+    stat = uninitialized LibC::Stat
+    ret = fstat(fd, pointerof(stat))
+    # not checking for S_IFSOCK because we can't open(2) a socket
+    ret != -1 && (stat.st_mode & LibC::S_IFMT).in?(LibC::S_IFCHR, LibC::S_IFIFO)
   end
 
   def self.info?(path : String, follow_symlinks : Bool) : ::File::Info?
@@ -119,7 +119,7 @@ module Crystal::System::File
     end
   end
 
-  def self.fchmod(path, fd, mode)
+  private def system_chmod(path, mode)
     if LibC.fchmod(fd, mode) == -1
       raise ::File::Error.from_errno("Error changing permissions", file: path)
     end
@@ -182,25 +182,34 @@ module Crystal::System::File
   end
 
   def self.utime(atime : ::Time, mtime : ::Time, filename : String) : Nil
-    timevals = uninitialized LibC::Timeval[2]
-    timevals[0] = to_timeval(atime)
-    timevals[1] = to_timeval(mtime)
-    ret = LibC.utimes(filename, timevals)
+    ret =
+      {% if LibC.has_method?("utimensat") %}
+        timespecs = uninitialized LibC::Timespec[2]
+        timespecs[0] = Crystal::System::Time.to_timespec(atime)
+        timespecs[1] = Crystal::System::Time.to_timespec(mtime)
+        LibC.utimensat(LibC::AT_FDCWD, filename, timespecs, 0)
+      {% else %}
+        timevals = uninitialized LibC::Timeval[2]
+        timevals[0] = Crystal::System::Time.to_timeval(atime)
+        timevals[1] = Crystal::System::Time.to_timeval(mtime)
+        LibC.utimes(filename, timevals)
+      {% end %}
+
     if ret != 0
       raise ::File::Error.from_errno("Error setting time on file", file: filename)
     end
   end
 
-  def self.futimens(filename : String, fd : Int, atime : ::Time, mtime : ::Time) : Nil
+  private def system_utime(atime : ::Time, mtime : ::Time, filename : String) : Nil
     ret = {% if LibC.has_method?("futimens") %}
             timespecs = uninitialized LibC::Timespec[2]
-            timespecs[0] = to_timespec(atime)
-            timespecs[1] = to_timespec(mtime)
+            timespecs[0] = Crystal::System::Time.to_timespec(atime)
+            timespecs[1] = Crystal::System::Time.to_timespec(mtime)
             LibC.futimens(fd, timespecs)
           {% elsif LibC.has_method?("futimes") %}
             timevals = uninitialized LibC::Timeval[2]
-            timevals[0] = to_timeval(atime)
-            timevals[1] = to_timeval(mtime)
+            timevals[0] = Crystal::System::Time.to_timeval(atime)
+            timevals[1] = Crystal::System::Time.to_timeval(mtime)
             LibC.futimes(fd, timevals)
           {% else %}
             {% raise "Missing futimens & futimes" %}
@@ -211,79 +220,11 @@ module Crystal::System::File
     end
   end
 
-  private def self.to_timespec(time : ::Time)
-    t = uninitialized LibC::Timespec
-    t.tv_sec = typeof(t.tv_sec).new(time.to_unix)
-    t.tv_nsec = typeof(t.tv_nsec).new(time.nanosecond)
-    t
-  end
-
-  private def self.to_timeval(time : ::Time)
-    t = uninitialized LibC::Timeval
-    t.tv_sec = typeof(t.tv_sec).new(time.to_unix)
-    t.tv_usec = typeof(t.tv_usec).new(time.nanosecond // ::Time::NANOSECONDS_PER_MICROSECOND)
-    t
-  end
-
   private def system_truncate(size) : Nil
     flush
     code = LibC.ftruncate(fd, size)
     if code != 0
       raise ::File::Error.from_errno("Error truncating file", file: path)
-    end
-  end
-
-  private def system_flock_shared(blocking)
-    flock LibC::FlockOp::SH, blocking
-  end
-
-  private def system_flock_exclusive(blocking)
-    flock LibC::FlockOp::EX, blocking
-  end
-
-  private def system_flock_unlock
-    flock LibC::FlockOp::UN
-  end
-
-  private def flock(op : LibC::FlockOp, retry : Bool) : Nil
-    op |= LibC::FlockOp::NB
-
-    if retry
-      until flock(op)
-        sleep 0.1
-      end
-    else
-      flock(op) || raise IO::Error.from_errno("Error applying file lock: file is already locked")
-    end
-  end
-
-  private def flock(op) : Bool
-    if 0 == LibC.flock(fd, op)
-      true
-    else
-      errno = Errno.value
-      if errno.in?(Errno::EAGAIN, Errno::EWOULDBLOCK)
-        false
-      else
-        raise IO::Error.from_os_error("Error applying or removing file lock", errno)
-      end
-    end
-  end
-
-  private def system_fsync(flush_metadata = true) : Nil
-    ret =
-      if flush_metadata
-        LibC.fsync(fd)
-      else
-        {% if flag?(:dragonfly) %}
-          LibC.fsync(fd)
-        {% else %}
-          LibC.fdatasync(fd)
-        {% end %}
-      end
-
-    if ret != 0
-      raise IO::Error.from_errno("Error syncing file")
     end
   end
 end

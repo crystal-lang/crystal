@@ -103,7 +103,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     @instructions : CompiledInstructions = CompiledInstructions.new,
     scope : Type? = nil,
     @def = nil,
-    @top_level = true
+    @top_level = true,
   )
     @scope = scope || @context.program
 
@@ -138,7 +138,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     context : Context,
     compiled_def : CompiledDef,
     top_level : Bool,
-    scope : Type = compiled_def.owner
+    scope : Type = compiled_def.owner,
   )
     new(
       context: context,
@@ -269,8 +269,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     leave aligned_sizeof_type(final_type), node: Nop.new.at(node.end_location)
 
     compiled_def.closure_context = @closure_context
-
-    @instructions
   end
 
   private def move_arg_to_closure_if_closured(node : Def, arg_name : String)
@@ -389,8 +387,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     type = node.type.as(TupleInstanceType)
 
-    # A tuple potentially has the values packed (unaligned).
-    # The values in the stack are aligned, so we must adjust that:
+    # The elements inside a tuple do not follow the stack alignment.
+    # Each element expression is stack-aligned, so we must adjust that:
     # if the value in the stack has more bytes than needed, we pop
     # the extra ones; if it has less bytes that needed we pad the value
     # with zeros.
@@ -762,7 +760,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     # particularly when outside of a method.
     if is_self && !scope.is_a?(Program) && !scope.passed_as_self?
       put_type scope, node: node
-      return
+      return false
     end
 
     local_var = lookup_local_var_or_closured_var(node.name)
@@ -1101,7 +1099,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   private def dispatch_class_var(owner : Type, metaclass : Bool, node : ASTNode, &)
-    types = owner.all_subclasses.select { |t| t.is_a?(ClassVarContainer) }
+    types = [] of Crystal::Type
+    owner.all_subclasses.each { |t| types << t if t.is_a?(ClassVarContainer) }
     types.push(owner)
     types.sort_by! { |type| -type.depth }
 
@@ -1223,6 +1222,19 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   private def compile_pointerof_read_instance_var(obj, obj_type, name)
+    # Special handling for slice literals which have been expanded into
+    # `::Slice.new(pointerof($Slice:n.@buffer), ...)`,
+    # where `$Slice:n` is a `StaticArray`; we will build the literal contents
+    # in the context directly instead of using interpreter bytecode
+    if obj.is_a?(Path) && obj_type.is_a?(StaticArrayInstanceType) && name == "@buffer"
+      if buffer_name = obj.single_name?
+        if info = @context.program.const_slices[buffer_name]?
+          compile_pointerof_slice_literal_buffer(obj, info)
+          return false
+        end
+      end
+    end
+
     ivar = obj_type.lookup_instance_var(name)
     ivar_offset = ivar_offset(obj_type, name)
     ivar_size = inner_sizeof_type(ivar)
@@ -1418,6 +1430,30 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     return false unless @wants_value
 
     put_i32 inner_sizeof_type(node.exp), node: node
+
+    false
+  end
+
+  def visit(node : InstanceSizeOf)
+    return false unless @wants_value
+
+    put_i32 inner_instance_sizeof_type(node.exp), node: node
+
+    false
+  end
+
+  def visit(node : AlignOf)
+    return false unless @wants_value
+
+    put_i32 inner_alignof_type(node.exp), node: node
+
+    false
+  end
+
+  def visit(node : InstanceAlignOf)
+    return false unless @wants_value
+
+    put_i32 inner_instance_alignof_type(node.exp), node: node
 
     false
   end
@@ -1622,7 +1658,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
                      begin
                        create_compiled_def(call, target_def)
                      rescue ex : Crystal::TypeException
-                       node.raise ex, inner: ex
+                       node.raise ex.message, inner: ex
                      end
       call compiled_def, node: node
 
@@ -1663,7 +1699,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     if node.upcast?
       upcast node.obj, obj_type, node.non_nilable_type
       upcast node.obj, node.non_nilable_type, node.type
-      return
+      return false
     end
 
     # Check if obj is a `to_type`
@@ -1873,7 +1909,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
                    begin
                      create_compiled_def(node, target_def)
                    rescue ex : Crystal::TypeException
-                     node.raise ex, inner: ex
+                     node.raise ex.message, inner: ex
                    end
 
     if (block = node.block) && !block.fun_literal
@@ -2010,7 +2046,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     args = node.args
     obj_type = obj.try(&.type) || target_def.owner
 
-    if obj_type == @context.program
+    # TODO: should this use `Type#passed_as_self?` instead?
+    if obj_type == @context.program || obj_type.is_a?(FileModule)
       # Nothing
     elsif obj_type.passed_by_value?
       args_bytesize += sizeof(Pointer(UInt8))
@@ -2510,6 +2547,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   private def compile_pointerof_node(obj : ASTNode, owner : Type) : Nil
     assign_to_temporary_and_return_pointer(obj)
+  end
+
+  private def compile_pointerof_slice_literal_buffer(obj : Path, info : Program::ConstSliceInfo) : Nil
+    put_ptr @context.const_slice_buffer(info), node: obj
   end
 
   # Assigns the object's value to a temporary
@@ -3133,6 +3174,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     {% end %}
 
     call compiled_def, node: node
+    false
   end
 
   def visit(node : ASTNode)
@@ -3144,11 +3186,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     {% operands = instruction[:operands] || [] of Nil %}
 
     def {{name.id}}(
-      {% if operands.empty? %}
-        *, node : ASTNode?
-      {% else %}
-        {{*operands}}, *, node : ASTNode?
-      {% end %}
+      {{operands.splat(", ")}}*, node : ASTNode?
     ) : Nil
       node = @node_override || node
       @instructions.nodes[instructions_index] = node if node
@@ -3224,6 +3262,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   private def put_u128(value : UInt128, *, node : ASTNode?)
     put_i128 value.to_i128!, node: node
+  end
+
+  private def put_ptr(value : Pointer, *, node : ASTNode?)
+    put_i64 value.address.to_i64!, node: node
   end
 
   private def put_string(value : String, *, node : ASTNode?)
@@ -3328,7 +3370,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   private def append(value : Int8)
-    append value.unsafe_as(UInt8)
+    append value.to_u8!
   end
 
   private def append(value : Symbol)
@@ -3343,6 +3385,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   private def append(value : UInt8)
     @instructions.instructions << value
+  end
+
+  private def append(value : Enum)
+    append(value.value)
   end
 
   # Many times we need to jump or branch to an instruction for which we don't
@@ -3364,25 +3410,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     @instructions.instructions.size
   end
 
-  private def aligned_sizeof_type(node : ASTNode) : Int32
-    @context.aligned_sizeof_type(node)
-  end
-
-  private def aligned_sizeof_type(type : Type?) : Int32
-    @context.aligned_sizeof_type(type)
-  end
-
-  private def inner_sizeof_type(node : ASTNode) : Int32
-    @context.inner_sizeof_type(node)
-  end
-
-  private def inner_sizeof_type(type : Type?) : Int32
-    @context.inner_sizeof_type(type)
-  end
-
-  private def aligned_instance_sizeof_type(type : Type) : Int32
-    @context.aligned_instance_sizeof_type(type)
-  end
+  private delegate inner_sizeof_type, inner_alignof_type, aligned_sizeof_type,
+    inner_instance_sizeof_type, inner_instance_alignof_type, aligned_instance_sizeof_type,
+    to: @context
 
   private def ivar_offset(type : Type, name : String) : Int32
     if type.extern_union?

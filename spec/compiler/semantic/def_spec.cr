@@ -284,7 +284,7 @@ describe "Semantic: def" do
 
       foo
       ),
-      "method top-level foo must return Int32 but it is returning Char"
+      "method ::foo must return Int32 but it is returning Char"
   end
 
   it "errors if return type doesn't match on instance method" do

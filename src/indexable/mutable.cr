@@ -374,7 +374,7 @@ module Indexable::Mutable(T)
   # Raises `ArgumentError` if for any two elements the block returns `nil`.
   def sort!(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
-      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
 
     slice = Slice.new(size) { |i| unsafe_fetch(i) }.sort!(&block)
@@ -406,7 +406,7 @@ module Indexable::Mutable(T)
   # Raises `ArgumentError` if for any two elements the block returns `nil`.
   def unstable_sort!(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
-      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
 
     slice = Slice.new(size) { |i| unsafe_fetch(i) }.unstable_sort!(&block)

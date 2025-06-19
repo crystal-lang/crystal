@@ -165,33 +165,7 @@ class XML::Node
 
   # Returns detailed information for this node including node type, name, attributes and children.
   def inspect(io : IO) : Nil
-    io << "#<XML::"
-    case type
-    when XML::Node::Type::NONE               then io << "None"
-    when XML::Node::Type::ELEMENT_NODE       then io << "Element"
-    when XML::Node::Type::ATTRIBUTE_NODE     then io << "Attribute"
-    when XML::Node::Type::TEXT_NODE          then io << "Text"
-    when XML::Node::Type::CDATA_SECTION_NODE then io << "CData"
-    when XML::Node::Type::ENTITY_REF_NODE    then io << "EntityRef"
-    when XML::Node::Type::ENTITY_NODE        then io << "Entity"
-    when XML::Node::Type::PI_NODE            then io << "ProcessingInstruction"
-    when XML::Node::Type::COMMENT_NODE       then io << "Comment"
-    when XML::Node::Type::DOCUMENT_NODE      then io << "Document"
-    when XML::Node::Type::DOCUMENT_TYPE_NODE then io << "DocumentType"
-    when XML::Node::Type::DOCUMENT_FRAG_NODE then io << "DocumentFragment"
-    when XML::Node::Type::NOTATION_NODE      then io << "Notation"
-    when XML::Node::Type::HTML_DOCUMENT_NODE then io << "HTMLDocument"
-    when XML::Node::Type::DTD_NODE           then io << "DTD"
-    when XML::Node::Type::ELEMENT_DECL       then io << "Element"
-    when XML::Node::Type::ATTRIBUTE_DECL     then io << "AttributeDecl"
-    when XML::Node::Type::ENTITY_DECL        then io << "EntityDecl"
-    when XML::Node::Type::NAMESPACE_DECL     then io << "NamespaceDecl"
-    when XML::Node::Type::XINCLUDE_START     then io << "XIncludeStart"
-    when XML::Node::Type::XINCLUDE_END       then io << "XIncludeEnd"
-    when XML::Node::Type::DOCB_DOCUMENT_NODE then io << "DOCBDocument"
-    end
-
-    io << ":0x"
+    io << "#<XML::" << type_name << ":0x"
     object_id.to_s(io, 16)
 
     if text?
@@ -222,6 +196,88 @@ class XML::Node
     end
 
     io << '>'
+  end
+
+  def pretty_print(pp : PrettyPrint) : Nil
+    pp.surround("#<XML::#{type_name}:0x#{object_id.to_s(16)}", ">", left_break: nil, right_break: nil) do
+      if text?
+        pp.breakable
+        content.pretty_print(pp)
+      else
+        unless document?
+          pp.breakable
+          pp.group do
+            pp.text "name="
+            pp.nest do
+              pp.breakable ""
+              name.pretty_print(pp)
+            end
+          end
+        end
+
+        if attribute?
+          pp.breakable
+          pp.group do
+            pp.text "content="
+            pp.nest do
+              pp.breakable ""
+              content.pretty_print(pp)
+            end
+          end
+        else
+          attributes = self.attributes
+          unless attributes.empty?
+            pp.breakable
+            pp.group do
+              pp.text "attributes="
+              pp.nest do
+                pp.breakable ""
+                attributes.pretty_print(pp)
+              end
+            end
+          end
+
+          children = self.children
+          unless children.empty?
+            pp.breakable
+            pp.group do
+              pp.text "children="
+              pp.nest do
+                pp.breakable ""
+                children.pretty_print(pp)
+              end
+            end
+          end
+        end
+      end
+    end
+  end
+
+  private def type_name
+    case type
+    when XML::Node::Type::NONE               then "None"
+    when XML::Node::Type::ELEMENT_NODE       then "Element"
+    when XML::Node::Type::ATTRIBUTE_NODE     then "Attribute"
+    when XML::Node::Type::TEXT_NODE          then "Text"
+    when XML::Node::Type::CDATA_SECTION_NODE then "CData"
+    when XML::Node::Type::ENTITY_REF_NODE    then "EntityRef"
+    when XML::Node::Type::ENTITY_NODE        then "Entity"
+    when XML::Node::Type::PI_NODE            then "ProcessingInstruction"
+    when XML::Node::Type::COMMENT_NODE       then "Comment"
+    when XML::Node::Type::DOCUMENT_NODE      then "Document"
+    when XML::Node::Type::DOCUMENT_TYPE_NODE then "DocumentType"
+    when XML::Node::Type::DOCUMENT_FRAG_NODE then "DocumentFragment"
+    when XML::Node::Type::NOTATION_NODE      then "Notation"
+    when XML::Node::Type::HTML_DOCUMENT_NODE then "HTMLDocument"
+    when XML::Node::Type::DTD_NODE           then "DTD"
+    when XML::Node::Type::ELEMENT_DECL       then "Element"
+    when XML::Node::Type::ATTRIBUTE_DECL     then "AttributeDecl"
+    when XML::Node::Type::ENTITY_DECL        then "EntityDecl"
+    when XML::Node::Type::NAMESPACE_DECL     then "NamespaceDecl"
+    when XML::Node::Type::XINCLUDE_START     then "XIncludeStart"
+    when XML::Node::Type::XINCLUDE_END       then "XIncludeEnd"
+    when XML::Node::Type::DOCB_DOCUMENT_NODE then "DOCBDocument"
+    end
   end
 
   # Returns the next sibling node or `nil` if not found.
@@ -440,29 +496,24 @@ class XML::Node
   def to_xml(io : IO, indent = 2, indent_text = " ", options : SaveOptions = SaveOptions.xml_default)
     # We need to use a mutex because we modify global libxml variables
     SAVE_MUTEX.synchronize do
-      oldXmlIndentTreeOutput = LibXML.xmlIndentTreeOutput
-      LibXML.xmlIndentTreeOutput = 1
-
-      oldXmlTreeIndentString = LibXML.xmlTreeIndentString
-      LibXML.xmlTreeIndentString = (indent_text * indent).to_unsafe
-
-      save_ctx = LibXML.xmlSaveToIO(
-        ->(ctx, buffer, len) {
-          Box(IO).unbox(ctx).write_string Slice.new(buffer, len)
-          len
-        },
-        ->(ctx) {
-          Box(IO).unbox(ctx).flush
-          0
-        },
-        Box(IO).box(io),
-        @node.value.doc.value.encoding,
-        options)
-      LibXML.xmlSaveTree(save_ctx, self)
-      LibXML.xmlSaveClose(save_ctx)
-
-      LibXML.xmlIndentTreeOutput = oldXmlIndentTreeOutput
-      LibXML.xmlTreeIndentString = oldXmlTreeIndentString
+      XML.with_indent_tree_output(true) do
+        XML.with_tree_indent_string(indent_text * indent) do
+          save_ctx = LibXML.xmlSaveToIO(
+            ->(ctx, buffer, len) {
+              Box(IO).unbox(ctx).write_string Slice.new(buffer, len)
+              len
+            },
+            ->(ctx) {
+              Box(IO).unbox(ctx).flush
+              0
+            },
+            Box(IO).box(io),
+            @node.value.doc.value.encoding,
+            options)
+          LibXML.xmlSaveTree(save_ctx, self)
+          LibXML.xmlSaveClose(save_ctx)
+        end
+      end
     end
 
     io

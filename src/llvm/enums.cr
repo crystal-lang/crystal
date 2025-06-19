@@ -57,13 +57,26 @@ module LLVM
     WillReturn
     WriteOnly
     ZExt
+    Captures
 
-    @@kind_ids = load_llvm_kinds_from_names.as(Hash(Attribute, UInt32))
-    @@typed_attrs = load_llvm_typed_attributes.as(Array(Attribute))
+    # NOTE: enum body does not allow `class_getter` or `TypeDeclaration`, hence
+    # the nil cast
+    @@kind_ids = nil.as(Hash(Attribute, UInt32)?)
+
+    protected def self.kind_ids
+      @@kind_ids ||= load_llvm_kinds_from_names
+    end
+
+    @@typed_attrs = nil.as(Array(Attribute)?)
+
+    private def self.typed_attrs
+      @@typed_attrs ||= load_llvm_typed_attributes
+    end
 
     def each_kind(& : UInt32 ->)
+      kind_ids = Attribute.kind_ids
       each do |member|
-        yield @@kind_ids[member]
+        yield kind_ids[member]
       end
     end
 
@@ -79,6 +92,7 @@ module LLVM
       kinds[ArgMemOnly] = kind_for_name("argmemonly")
       kinds[Builtin] = kind_for_name("builtin")
       kinds[ByVal] = kind_for_name("byval")
+      kinds[Captures] = kind_for_name("captures")
       kinds[Cold] = kind_for_name("cold")
       kinds[Convergent] = kind_for_name("convergent")
       kinds[Dereferenceable] = kind_for_name("dereferenceable")
@@ -150,16 +164,16 @@ module LLVM
     end
 
     def self.kind_for(member)
-      @@kind_ids[member]
+      kind_ids[member]
     end
 
     def self.from_kind(kind)
-      @@kind_ids.key_for(kind)
+      kind_ids.key_for(kind)
     end
 
     def self.requires_type?(kind)
       member = from_kind(kind)
-      @@typed_attrs.includes?(member)
+      typed_attrs.includes?(member)
     end
   end
 
@@ -249,7 +263,12 @@ module LLVM
       Pointer
       Vector
       Metadata
-      X86_MMX
+      X86_MMX # deleted in LLVM 20
+      Token
+      ScalableVector
+      BFloat
+      X86_AMX
+      TargetExt
     end
   end
 
@@ -275,6 +294,7 @@ module LLVM
   enum CodeModel
     Default
     JITDefault
+    Tiny
     Small
     Kernel
     Medium
@@ -322,14 +342,87 @@ module LLVM
     HiUser         = 0xff
   end
 
+  enum DwarfSourceLanguage
+    C89
+    C
+    Ada83
+    C_plus_plus
+    Cobol74
+    Cobol85
+    Fortran77
+    Fortran90
+    Pascal83
+    Modula2
+
+    # New in DWARF v3:
+
+    Java
+    C99
+    Ada95
+    Fortran95
+    PLI
+    ObjC
+    ObjC_plus_plus
+    UPC
+    D
+
+    # New in DWARF v4:
+
+    Python
+
+    # New in DWARF v5:
+
+    OpenCL
+    Go
+    Modula3
+    Haskell
+    C_plus_plus_03
+    C_plus_plus_11
+    OCaml
+    Rust
+    C11
+    Swift
+    Julia
+    Dylan
+    C_plus_plus_14
+    Fortran03
+    Fortran08
+    RenderScript
+    BLISS
+
+    {% unless LibLLVM::IS_LT_160 %}
+      Kotlin
+      Zig
+      Crystal
+      C_plus_plus_17
+      C_plus_plus_20
+      C17
+      Fortran18
+      Ada2005
+      Ada2012
+    {% end %}
+
+    # Vendor extensions:
+
+    Mips_Assembler
+    GOOGLE_RenderScript
+    BORLAND_Delphi
+  end
+
   enum DIFlags : UInt32
-    Zero                = 0
-    Private             = 1
-    Protected           = 2
-    Public              = 3
-    FwdDecl             = 1 << 2
-    AppleBlock          = 1 << 3
-    BlockByrefStruct    = 1 << 4
+    Zero       = 0
+    Private    = 1
+    Protected  = 2
+    Public     = 3
+    FwdDecl    = 1 << 2
+    AppleBlock = 1 << 3
+
+    {% if LibLLVM::IS_LT_100 %}
+      BlockByrefStruct = 1 << 4
+    {% else %}
+      ReservedBit4 = 1 << 4
+    {% end %}
+
     Virtual             = 1 << 5
     Artificial          = 1 << 6
     Explicit            = 1 << 7
@@ -347,14 +440,29 @@ module LLVM
     IntroducedVirtual   = 1 << 18
     BitField            = 1 << 19
     NoReturn            = 1 << 20
-    MainSubprogram      = 1 << 21
+
+    {% if LibLLVM::IS_LT_90 %}
+      MainSubprogram = 1 << 21
+    {% end %}
+
     PassByValue         = 1 << 22
     TypePassByReference = 1 << 23
     EnumClass           = 1 << 24
     Thunk               = 1 << 25
-    NonTrivial          = 1 << 26
-    BigEndian           = 1 << 27
-    LittleEndian        = 1 << 28
+
+    {% if LibLLVM::IS_LT_90 %}
+      Trivial = 1 << 26
+    {% else %}
+      NonTrivial = 1 << 26
+    {% end %}
+
+    BigEndian    = 1 << 27
+    LittleEndian = 1 << 28
+  end
+
+  enum InlineAsmDialect
+    ATT
+    Intel
   end
 
   struct Value

@@ -157,7 +157,7 @@ module Crystal
         @github_name = "none",
         @silent = false,
         @force = false,
-        @skip_existing = false
+        @skip_existing = false,
       )
       end
 
@@ -230,7 +230,7 @@ module Crystal
       def overwrite_checks(views)
         existing_views, new_views = views.partition(&.overwriting?)
 
-        if existing_views.any? && !config.skip_existing
+        if existing_views.present? && !config.skip_existing
           raise FilesConflictError.new existing_views.map(&.path)
         end
 
@@ -238,8 +238,8 @@ module Crystal
       end
 
       def run
-        if File.file?(config.expanded_dir)
-          raise Error.new "#{config.dir.inspect} is a file"
+        if (info = File.info?(config.expanded_dir)) && !info.directory?
+          raise Error.new "#{config.dir.inspect} is a #{info.type.to_s.downcase}"
         end
 
         views = self.views

@@ -286,6 +286,10 @@ describe "Set" do
     Set{1, 2, 3}.to_a.should eq([1, 2, 3])
   end
 
+  it "does support giving a block to to_a" do
+    Set{1, 2, 3}.to_a { |x| x + 1 }.should eq([2, 3, 4])
+  end
+
   it "does to_s" do
     Set{1, 2, 3}.to_s.should eq("Set{1, 2, 3}")
     Set{"foo"}.to_s.should eq(%(Set{"foo"}))
@@ -419,6 +423,20 @@ describe "Set" do
     it "retains compare_by_identity on clone" do
       set = Set(String).new.compare_by_identity
       set.clone.compare_by_identity?.should be_true
+    end
+  end
+
+  describe "#rehash" do
+    it "rehashes" do
+      a = [1]
+      s = Set{a}
+      (10..100).each do |i|
+        s << [i]
+      end
+      a << 2
+      s.should_not contain(a)
+      s.rehash
+      s.should contain(a)
     end
   end
 end

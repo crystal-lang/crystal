@@ -113,8 +113,6 @@ describe "Code gen: var" do
 
   it "codegens assignment that can never be reached" do
     codegen(%(
-      require "prelude"
-
       if 1 == 1 && (x = nil)
         z = x
       end

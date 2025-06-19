@@ -221,6 +221,20 @@ class YAMLAttrWithTimeEpoch
   property value : Time
 end
 
+class YAMLAttrNilableWithTimeEpoch
+  include YAML::Serializable
+
+  @[YAML::Field(converter: Time::EpochConverter)]
+  property value : Time?
+end
+
+class YAMLAttrDefaultWithTimeEpoch
+  include YAML::Serializable
+
+  @[YAML::Field(converter: Time::EpochConverter)]
+  property value : Time = Time.unix(0)
+end
+
 class YAMLAttrWithTimeEpochMillis
   include YAML::Serializable
 
@@ -242,6 +256,29 @@ class YAMLAttrWithPresence
 
   @[YAML::Field(ignore: true)]
   getter? last_name_present : Bool
+end
+
+class YAMLAttrWithPresenceAndIgnoreSerialize
+  include YAML::Serializable
+
+  @[YAML::Field(presence: true, ignore_serialize: ignore_first_name?)]
+  property first_name : String?
+
+  @[YAML::Field(presence: true, ignore_serialize: last_name.nil? && !last_name_present?, emit_null: true)]
+  property last_name : String?
+
+  @[YAML::Field(ignore: true)]
+  getter? first_name_present : Bool = false
+
+  @[YAML::Field(ignore: true)]
+  getter? last_name_present : Bool = false
+
+  def initialize(@first_name : String? = nil, @last_name : String? = nil)
+  end
+
+  def ignore_first_name?
+    first_name.nil? || first_name == ""
+  end
 end
 
 class YAMLAttrWithQueryAttributes
@@ -402,6 +439,25 @@ class YAMLSomething
   include YAML::Serializable
 
   property value : YAMLSomething?
+end
+
+module YAMLDiscriminatorBug
+  abstract class Base
+    include YAML::Serializable
+
+    use_yaml_discriminator("type", {"a" => A, "b" => B, "c" => C})
+  end
+
+  class A < Base
+  end
+
+  class B < Base
+    property source : Base
+    property value : Int32 = 1
+  end
+
+  class C < B
+  end
 end
 
 describe "YAML::Serializable" do
@@ -689,6 +745,26 @@ describe "YAML::Serializable" do
     typeof(yaml.bar).should eq(Int8)
   end
 
+  it "checks that values fit into integer types" do
+    expect_raises(YAML::ParseException, /Can't read Int16/) do
+      YAMLAttrWithSmallIntegers.from_yaml(%({"foo": 21000000, "bar": 7}))
+    end
+
+    expect_raises(YAML::ParseException, /Can't read Int8/) do
+      YAMLAttrWithSmallIntegers.from_yaml(%({"foo": 21, "bar": 7000}))
+    end
+  end
+
+  it "checks that non-integer values for integer fields report the expected type" do
+    expect_raises(YAML::ParseException, /Can't read Int16/) do
+      YAMLAttrWithSmallIntegers.from_yaml(%({"foo": "a", "bar": 7}))
+    end
+
+    expect_raises(YAML::ParseException, /Can't read Int8/) do
+      YAMLAttrWithSmallIntegers.from_yaml(%({"foo": 21, "bar": "a"}))
+    end
+  end
+
   it "parses recursive" do
     yaml = <<-YAML
       --- &1
@@ -769,9 +845,10 @@ describe "YAML::Serializable" do
       yaml.a.should eq 11
       yaml.b.should eq "Haha"
 
-      yaml = YAMLAttrWithDefaults.from_yaml(%({"a":null,"b":null}))
+      yaml = YAMLAttrWithDefaults.from_yaml(%({"a":null,"b":null,"f":null}))
       yaml.a.should eq 11
       yaml.b.should eq "Haha"
+      yaml.f.should be_nil
 
       yaml = YAMLAttrWithDefaults.from_yaml(%({"b":""}))
       yaml.b.should eq ""
@@ -783,38 +860,38 @@ describe "YAML::Serializable" do
 
     it "bool" do
       yaml = YAMLAttrWithDefaults.from_yaml(%({}))
-      yaml.c.should eq true
+      yaml.c.should be_true
       typeof(yaml.c).should eq Bool
-      yaml.d.should eq false
+      yaml.d.should be_false
       typeof(yaml.d).should eq Bool
 
       yaml = YAMLAttrWithDefaults.from_yaml(%({"c":false}))
-      yaml.c.should eq false
+      yaml.c.should be_false
       yaml = YAMLAttrWithDefaults.from_yaml(%({"c":true}))
-      yaml.c.should eq true
+      yaml.c.should be_true
 
       yaml = YAMLAttrWithDefaults.from_yaml(%({"d":false}))
-      yaml.d.should eq false
+      yaml.d.should be_false
       yaml = YAMLAttrWithDefaults.from_yaml(%({"d":true}))
-      yaml.d.should eq true
+      yaml.d.should be_true
     end
 
     it "with nilable" do
       yaml = YAMLAttrWithDefaults.from_yaml(%({}))
 
-      yaml.e.should eq false
+      yaml.e.should be_false
       typeof(yaml.e).should eq(Bool | Nil)
 
       yaml.f.should eq 1
       typeof(yaml.f).should eq(Int32 | Nil)
 
-      yaml.g.should eq nil
+      yaml.g.should be_nil
       typeof(yaml.g).should eq(Int32 | Nil)
 
       yaml = YAMLAttrWithDefaults.from_yaml(%({"e":false}))
-      yaml.e.should eq false
+      yaml.e.should be_false
       yaml = YAMLAttrWithDefaults.from_yaml(%({"e":true}))
-      yaml.e.should eq true
+      yaml.e.should be_true
     end
 
     it "create new array every time" do
@@ -826,6 +903,16 @@ describe "YAML::Serializable" do
       yaml = YAMLAttrWithDefaults.from_yaml(%({}))
       yaml.h.should eq [1, 2, 3]
     end
+  end
+
+  it "converter with null value (#13655)" do
+    YAMLAttrNilableWithTimeEpoch.from_yaml(%({"value": null})).value.should be_nil
+    YAMLAttrNilableWithTimeEpoch.from_yaml(%({"value":1459859781})).value.should eq Time.unix(1459859781)
+  end
+
+  it "converter with default value" do
+    YAMLAttrDefaultWithTimeEpoch.from_yaml(%({"value": null})).value.should eq Time.unix(0)
+    YAMLAttrDefaultWithTimeEpoch.from_yaml(%({"value":1459859781})).value.should eq Time.unix(1459859781)
   end
 
   it "uses Time::EpochConverter" do
@@ -891,6 +978,53 @@ describe "YAML::Serializable" do
       yaml.first_name_present?.should be_true
       yaml.last_name.should be_nil
       yaml.last_name_present?.should be_false
+    end
+  end
+
+  describe "serializes YAML with presence markers and ignore_serialize" do
+    context "ignore_serialize is set to a method which returns true when value is nil or empty string" do
+      it "ignores field when value is empty string" do
+        yaml = YAMLAttrWithPresenceAndIgnoreSerialize.from_yaml(%({"first_name": ""}))
+        yaml.first_name_present?.should be_true
+        yaml.to_yaml.should eq("--- {}\n")
+      end
+
+      it "ignores field when value is nil" do
+        yaml = YAMLAttrWithPresenceAndIgnoreSerialize.from_yaml(%({"first_name": null}))
+        yaml.first_name_present?.should be_true
+        yaml.to_yaml.should eq("--- {}\n")
+      end
+    end
+
+    context "ignore_serialize is set to conditional expressions 'last_name.nil? && !last_name_present?'" do
+      it "emits null when value is null and @last_name_present is true" do
+        yaml = YAMLAttrWithPresenceAndIgnoreSerialize.from_yaml(%({"last_name": null}))
+        yaml.last_name_present?.should be_true
+
+        # libyaml 0.2.5 removes trailing space for empty scalar nodes
+        if YAML.libyaml_version >= SemanticVersion.new(0, 2, 5)
+          yaml.to_yaml.should eq("---\nlast_name:\n")
+        else
+          yaml.to_yaml.should eq("---\nlast_name: \n")
+        end
+      end
+      it "does not emit null when value is null and @last_name_present is false" do
+        yaml = YAMLAttrWithPresenceAndIgnoreSerialize.from_yaml(%({}))
+        yaml.last_name_present?.should be_false
+        yaml.to_yaml.should eq("--- {}\n")
+      end
+
+      it "emits field when value is not nil and @last_name_present is false" do
+        yaml = YAMLAttrWithPresenceAndIgnoreSerialize.new(last_name: "something")
+        yaml.last_name_present?.should be_false
+        yaml.to_yaml.should eq("---\nlast_name: something\n")
+      end
+
+      it "emits field when value is not nil and @last_name_present is true" do
+        yaml = YAMLAttrWithPresenceAndIgnoreSerialize.from_yaml(%({"last_name":"something"}))
+        yaml.last_name_present?.should be_true
+        yaml.to_yaml.should eq("---\nlast_name: something\n")
+      end
     end
   end
 
@@ -1004,6 +1138,14 @@ describe "YAML::Serializable" do
       bar = bar.should be_a(YAMLStrictDiscriminatorBar)
       bar.x.should be_a(YAMLStrictDiscriminatorFoo)
       bar.y.should be_a(YAMLStrictDiscriminatorFoo)
+    end
+
+    it "deserializes with discriminator, another recursive type, fixes: #13429" do
+      c = YAMLDiscriminatorBug::Base.from_yaml %q({"type": "c", "source": {"type": "a"}, "value": 2})
+      c.as(YAMLDiscriminatorBug::C).value.should eq 2
+
+      c = YAMLDiscriminatorBug::Base.from_yaml %q({"type": "c", "source": {"type": "a"}})
+      c.as(YAMLDiscriminatorBug::C).value.should eq 1
     end
   end
 

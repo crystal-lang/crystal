@@ -73,8 +73,11 @@ class YAML::Builder
   end
 
   # Starts a document.
-  def start_document
-    emit document_start, nil, nil, nil, 0
+  #
+  # If *implicit_start_indicator* is true, skips printing the document start
+  # indicator (`---`) if this is the first document in the stream.
+  def start_document(*, implicit_start_indicator : Bool = false)
+    emit document_start, nil, nil, nil, implicit_start_indicator.to_unsafe
   end
 
   # Ends a document.
@@ -83,8 +86,11 @@ class YAML::Builder
   end
 
   # Starts a document, invokes the block, and then ends it.
-  def document(&)
-    start_document
+  #
+  # If *implicit_start_indicator* is true, skips printing the document start
+  # indicator (`---`) if this is the first document in the stream.
+  def document(*, implicit_start_indicator : Bool = false, &)
+    start_document(implicit_start_indicator: implicit_start_indicator)
     yield.tap { end_document }
   end
 
@@ -199,14 +205,23 @@ class YAML::Builder
   end
 
   private macro emit(event_name, *args)
-    LibYAML.yaml_{{event_name}}_event_initialize(pointerof(@event), {{*args}})
+    LibYAML.yaml_{{event_name}}_event_initialize(pointerof(@event), {{args.splat}})
     yaml_emit({{event_name.stringify}})
   end
 
   private def yaml_emit(event_name)
     ret = LibYAML.yaml_emitter_emit(@emitter, pointerof(@event))
     if ret != 1
-      raise YAML::Error.new("Error emitting #{event_name}")
+      raise YAML::Error.new(build_libyaml_message(event_name))
+    end
+  end
+
+  private def build_libyaml_message(event_name)
+    problem = @emitter.value.problem
+    strlen = LibC.strlen(problem)
+    String.build(event_name.bytesize + strlen + 16) do |io|
+      io << "Error emitting " << event_name << ": "
+      io.write Slice.new(problem, strlen)
     end
   end
 

@@ -46,6 +46,10 @@ struct Crystal::System::Process
   # previously set interrupt handler.
   # def self.on_interrupt(&handler : ->)
 
+  # Installs *handler* as the new handler for termination signals. Removes any
+  # previously set handler.
+  # def self.on_terminate(&handler : ::Process::ExitReason ->)
+
   # Ignores all interrupt requests. Removes any custom interrupt handler set
   # def self.ignore_interrupts!
 
@@ -80,9 +84,9 @@ struct Crystal::System::Process
 end
 
 module Crystal::System
-  ORIGINAL_STDIN  = IO::FileDescriptor.new(0, blocking: true)
-  ORIGINAL_STDOUT = IO::FileDescriptor.new(1, blocking: true)
-  ORIGINAL_STDERR = IO::FileDescriptor.new(2, blocking: true)
+  ORIGINAL_STDIN  = IO::FileDescriptor.new(Crystal::System::FileDescriptor::STDIN_HANDLE, blocking: true)
+  ORIGINAL_STDOUT = IO::FileDescriptor.new(Crystal::System::FileDescriptor::STDOUT_HANDLE, blocking: true)
+  ORIGINAL_STDERR = IO::FileDescriptor.new(Crystal::System::FileDescriptor::STDERR_HANDLE, blocking: true)
 end
 
 {% if flag?(:wasi) %}

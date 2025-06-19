@@ -33,6 +33,13 @@ private class MockIterator
 end
 
 describe Iterator do
+  describe "Iterator.empty" do
+    it "creates empty iterator" do
+      iter = Iterator(String).empty
+      iter.next.should be_a(Iterator::Stop)
+    end
+  end
+
   describe "Iterator.of" do
     it "creates singleton" do
       iter = Iterator.of(42)
@@ -163,6 +170,11 @@ describe Iterator do
       iter.next.should eq('a')
       iter.next.should eq('b')
       iter.next.should be_a(Iterator::Stop)
+    end
+
+    # NOTE: This spec would only fail in release mode.
+    it "does not experience tuple upcase bug of #13411" do
+      [{true}].each.chain([{1}].each).first(3).to_a.should eq [{true}, {1}]
     end
 
     describe "chain indeterminate number of iterators" do
@@ -651,7 +663,7 @@ describe Iterator do
 
   describe "uniq" do
     it "without block" do
-      iter = (1..8).each.map { |x| x % 3 }.uniq
+      iter = (1..8).each.map { |x| x % 3 }.uniq # ameba:disable Performance/ChainedCallWithNoBang
       iter.next.should eq(1)
       iter.next.should eq(2)
       iter.next.should eq(0)
@@ -667,38 +679,10 @@ describe Iterator do
     end
   end
 
-  describe "with_index" do
-    it "does with_index from range" do
-      iter = (1..3).each.with_index
-      iter.next.should eq({1, 0})
-      iter.next.should eq({2, 1})
-      iter.next.should eq({3, 2})
-      iter.next.should be_a(Iterator::Stop)
-    end
-
-    it "does with_index with offset from range" do
-      iter = (1..3).each.with_index(10)
-      iter.next.should eq({1, 10})
-      iter.next.should eq({2, 11})
-      iter.next.should eq({3, 12})
-      iter.next.should be_a(Iterator::Stop)
-    end
-
-    it "does with_index from range, with block" do
-      tuples = [] of {Int32, Int32}
-      (1..3).each.with_index do |value, index|
-        tuples << {value, index}
-      end
-      tuples.should eq([{1, 0}, {2, 1}, {3, 2}])
-    end
-
-    it "does with_index from range, with block with offset" do
-      tuples = [] of {Int32, Int32}
-      (1..3).each.with_index(10) do |value, index|
-        tuples << {value, index}
-      end
-      tuples.should eq([{1, 10}, {2, 11}, {3, 12}])
-    end
+  describe "#with_index" do
+    it_iterates "with default offset", [{1, 0}, {2, 1}, {3, 2}], (1..3).each.with_index, tuple: true
+    it_iterates "with explicit offset", [{1, 10}, {2, 11}, {3, 12}], (1..3).each.with_index(10), tuple: true
+    it_iterates "with non-Int32 offset", [{1, Int64::MIN}, {2, Int64::MIN + 1}, {3, Int64::MIN + 2}], (1..3).each.with_index(Int64::MIN), tuple: true
   end
 
   describe "with object" do
@@ -822,7 +806,7 @@ describe Iterator do
     end
 
     it "flattens nested struct iterators with internal state being value types" do
-      iter = (1..2).each.map { |i| StructIter.new(10 * i + 1, 10 * i + 3) }.flatten
+      iter = (1..2).each.map { |i| StructIter.new(10 * i + 1, 10 * i + 3) }.flatten # ameba:disable Performance/FlattenAfterMap
 
       iter.next.should eq(11)
       iter.next.should eq(12)

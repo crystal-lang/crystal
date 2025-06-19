@@ -212,6 +212,20 @@ class JSONAttrWithTimeEpoch
   property value : Time
 end
 
+class JSONAttrNilableWithTimeEpoch
+  include JSON::Serializable
+
+  @[JSON::Field(converter: Time::EpochConverter)]
+  property value : Time?
+end
+
+class JSONAttrDefaultWithTimeEpoch
+  include JSON::Serializable
+
+  @[JSON::Field(converter: Time::EpochConverter)]
+  property value : Time = Time.unix(0)
+end
+
 class JSONAttrWithTimeEpochMillis
   include JSON::Serializable
 
@@ -405,7 +419,8 @@ class JSONVariableDiscriminatorValueType
   use_json_discriminator "type", {
                                          0 => JSONVariableDiscriminatorNumber,
     "1"                                    => JSONVariableDiscriminatorString,
-    true                                   => JSONVariableDiscriminatorBool,
+    true                                   => JSONVariableDiscriminatorBoolTrue,
+    false                                  => JSONVariableDiscriminatorBoolFalse,
     JSONVariableDiscriminatorEnumFoo::Foo  => JSONVariableDiscriminatorEnum,
     JSONVariableDiscriminatorEnumFoo8::Foo => JSONVariableDiscriminatorEnum8,
   }
@@ -417,7 +432,10 @@ end
 class JSONVariableDiscriminatorString < JSONVariableDiscriminatorValueType
 end
 
-class JSONVariableDiscriminatorBool < JSONVariableDiscriminatorValueType
+class JSONVariableDiscriminatorBoolTrue < JSONVariableDiscriminatorValueType
+end
+
+class JSONVariableDiscriminatorBoolFalse < JSONVariableDiscriminatorValueType
 end
 
 class JSONVariableDiscriminatorEnum < JSONVariableDiscriminatorValueType
@@ -469,6 +487,25 @@ class JSONSomething
   include JSON::Serializable
 
   property value : JSONSomething?
+end
+
+module JsonDiscriminatorBug
+  abstract class Base
+    include JSON::Serializable
+
+    use_json_discriminator("type", {"a" => A, "b" => B, "c" => C})
+  end
+
+  class A < Base
+  end
+
+  class B < Base
+    property source : Base
+    property value : Int32 = 1
+  end
+
+  class C < B
+  end
 end
 
 describe "JSON mapping" do
@@ -719,45 +756,46 @@ describe "JSON mapping" do
       json.a.should eq 11
       json.b.should eq "Haha"
 
-      json = JSONAttrWithDefaults.from_json(%({"a":null,"b":null}))
+      json = JSONAttrWithDefaults.from_json(%({"a":null,"b":null,"f":null}))
       json.a.should eq 11
       json.b.should eq "Haha"
+      json.f.should be_nil
     end
 
     it "bool" do
       json = JSONAttrWithDefaults.from_json(%({}))
-      json.c.should eq true
+      json.c.should be_true
       typeof(json.c).should eq Bool
-      json.d.should eq false
+      json.d.should be_false
       typeof(json.d).should eq Bool
 
       json = JSONAttrWithDefaults.from_json(%({"c":false}))
-      json.c.should eq false
+      json.c.should be_false
       json = JSONAttrWithDefaults.from_json(%({"c":true}))
-      json.c.should eq true
+      json.c.should be_true
 
       json = JSONAttrWithDefaults.from_json(%({"d":false}))
-      json.d.should eq false
+      json.d.should be_false
       json = JSONAttrWithDefaults.from_json(%({"d":true}))
-      json.d.should eq true
+      json.d.should be_true
     end
 
     it "with nilable" do
       json = JSONAttrWithDefaults.from_json(%({}))
 
-      json.e.should eq false
+      json.e.should be_false
       typeof(json.e).should eq(Bool | Nil)
 
       json.f.should eq 1
       typeof(json.f).should eq(Int32 | Nil)
 
-      json.g.should eq nil
+      json.g.should be_nil
       typeof(json.g).should eq(Int32 | Nil)
 
       json = JSONAttrWithDefaults.from_json(%({"e":false}))
-      json.e.should eq false
+      json.e.should be_false
       json = JSONAttrWithDefaults.from_json(%({"e":true}))
-      json.e.should eq true
+      json.e.should be_true
     end
 
     it "create new array every time" do
@@ -769,6 +807,16 @@ describe "JSON mapping" do
       json = JSONAttrWithDefaults.from_json(%({}))
       json.h.should eq [1, 2, 3]
     end
+  end
+
+  it "converter with null value (#13655)" do
+    JSONAttrNilableWithTimeEpoch.from_json(%({"value": null})).value.should be_nil
+    JSONAttrNilableWithTimeEpoch.from_json(%({"value":1459859781})).value.should eq Time.unix(1459859781)
+  end
+
+  it "converter with default value" do
+    JSONAttrDefaultWithTimeEpoch.from_json(%({"value": null})).value.should eq Time.unix(0)
+    JSONAttrDefaultWithTimeEpoch.from_json(%({"value":1459859781})).value.should eq Time.unix(1459859781)
   end
 
   it "uses Time::EpochConverter" do
@@ -1086,7 +1134,10 @@ describe "JSON mapping" do
       object_string.should be_a(JSONVariableDiscriminatorString)
 
       object_bool = JSONVariableDiscriminatorValueType.from_json(%({"type": true}))
-      object_bool.should be_a(JSONVariableDiscriminatorBool)
+      object_bool.should be_a(JSONVariableDiscriminatorBoolTrue)
+
+      object_bool = JSONVariableDiscriminatorValueType.from_json(%({"type": false}))
+      object_bool.should be_a(JSONVariableDiscriminatorBoolFalse)
 
       object_enum = JSONVariableDiscriminatorValueType.from_json(%({"type": 4}))
       object_enum.should be_a(JSONVariableDiscriminatorEnum)
@@ -1103,6 +1154,14 @@ describe "JSON mapping" do
       bar = bar.should be_a(JSONStrictDiscriminatorBar)
       bar.x.should be_a(JSONStrictDiscriminatorFoo)
       bar.y.should be_a(JSONStrictDiscriminatorFoo)
+    end
+
+    it "deserializes with discriminator, another recursive type, fixes: #13429" do
+      c = JsonDiscriminatorBug::Base.from_json %q({"type": "c", "source": {"type": "a"}, "value": 2})
+      c.as(JsonDiscriminatorBug::C).value.should eq 2
+
+      c = JsonDiscriminatorBug::Base.from_json %q({"type": "c", "source": {"type": "a"}})
+      c.as(JsonDiscriminatorBug::C).value.should eq 1
     end
   end
 

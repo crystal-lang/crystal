@@ -7,6 +7,7 @@ _crystal_commands() {
   commands=(
     "init:generate new crystal project"
     "build:build an executable"
+    "clear_cache:clear the compiler cache"
     "docs:generate documentation"
     "env:print Crystal environment information"
     "eval:eval code from args or standard input"
@@ -40,7 +41,8 @@ local -a exec_args; exec_args=(
   '(\*)'{-D+,--define=}'[define a compile-time flag]:' \
   '(--error-trace)--error-trace[show full error trace]' \
   '(-s --stats)'{-s,--stats}'[enable statistics output]' \
-  '(-t --time)'{-t,--time}'[enable execution time output]'
+  '(-t --time)'{-t,--time}'[enable execution time output]' \
+  '(-p --progress)'{-p,--progress}'[enable progress output]'
 )
 
 local -a format_args; format_args=(
@@ -60,6 +62,15 @@ local -a cursor_args; cursor_args=(
   '(-c --cursor)'{-c,--cursor}'[cursor location with LOC as path/to/file.cr:line:column]:LOC'
 )
 
+local -a include_exclude_args; include_exclude_args=(
+  '(-i --include)'{-i,--include}'[Include path in output]' \
+  '(-i --exclude)'{-i,--exclude}'[Exclude path in output]'
+)
+
+local -a stdin_filename_args; stdin_filename_args=(
+  '(--stdin-filename)--stdin-filename[source file name to be read from STDIN]'
+)
+
 local -a programfile; programfile='*:Crystal File:_files -g "*.cr(.)"'
 
 # TODO make 'emit' allow completion with more than one
@@ -73,12 +84,13 @@ local -a shared_run_build; shared_run_build=(
   $debug_args \
   $release_args \
   '(--emit)--emit[comma separated list of types of output for the compiler to emit]:foo:(asm llvm-bc llvm-ir obj)' \
+  '(--x86-asm-syntax)--x86-asm-syntax[X86 dialect for --emit-asm: att (default), intel]:' \
   "(--ll)--ll[dump ll to Crystal's cache directory ]" \
   '(--link-flags)--link-flags[additional flags to pass to the linker]:' \
   '(--mcpu)--mcpu[target specific cpu type]:' \
   '(--mattr)--mattr[target specific features]:' \
   "(--no-codegen)--no-codegen[don't do code generation]" \
-  '(-o)-o[output filename]:' \
+  '(-o --output)'{-o,--output}'[output filename]:' \
   '(--single-module)--single-module[generate a single llvm module]' \
   '(--threads)--threads[maximum number of threads to use]' \
   '(--verbose)--verbose[display executed commands]' \
@@ -157,11 +169,14 @@ _crystal-tool() {
 
       commands=(
         "context:show context for given location"
+        "dependencies:show tree of required source files"
         "expand:show macro expansion for given location"
+        "flags:print all macro 'flag?' values"
         "format:format project, directories and/or files"
         "hierarchy:show type hierarchy"
         "implementations:show implementations for given call in location"
         "types:show type of main variables"
+        "unreachable:show methods that are never called"
       )
 
       _describe -t commands 'Crystal tool command' commands
@@ -179,7 +194,20 @@ _crystal-tool() {
             $exec_args \
             $format_args \
             $prelude_args \
+            $stdin_filename_args \
             $cursor_args
+        ;;
+
+        (dependencies)
+          _arguments \
+            $programfile \
+            $help_args \
+            $no_color_args \
+            $exec_args \
+            '(-f --format)'{-f,--format}'[output format 'tree' (default), 'flat', 'dot', or 'mermaid']:' \
+            $prelude_args \
+            $stdin_filename_args \
+            $include_exclude_args
         ;;
 
         (expand)
@@ -190,7 +218,15 @@ _crystal-tool() {
             $exec_args \
             $format_args \
             $prelude_args \
+            $stdin_filename_args \
             $cursor_args
+        ;;
+
+        (flags)
+          _arguments \
+            $programfile \
+            $no_color_args \
+            $help_args
         ;;
 
         (format)
@@ -198,8 +234,9 @@ _crystal-tool() {
             $programfile \
             $help_args \
             $no_color_args \
-            $format_args \
+            $include_exclude_args \
             '(--check)--check[checks that formatting code produces no changes]' \
+            '(--show-backtrace)--show-backtrace[show backtrace on a bug (used only for debugging)]'
         ;;
 
         (hierarchy)
@@ -210,6 +247,7 @@ _crystal-tool() {
             $exec_args \
             $format_args \
             $prelude_args \
+            $stdin_filename_args \
             '(-e)-e[filter types by NAME regex]:'
         ;;
 
@@ -221,7 +259,22 @@ _crystal-tool() {
             $exec_args \
             $format_args \
             $prelude_args \
-            $cursor_args
+            $cursor_args \
+            $stdin_filename_args
+        ;;
+
+        (unreachable)
+          _arguments \
+            $programfile \
+            $help_args \
+            $no_color_args \
+            $exec_args \
+            $include_exclude_args \
+            '(-f --format)'{-f,--format}'[output format: text (default), json, csv, codecov]:' \
+            $prelude_args \
+            '(--check)--check[exits with error if there is any unreachable code]' \
+            '(--tallies)--tallies[print reachable methods and their call counts as well]' \
+            $stdin_filename_args
         ;;
 
         (types)
@@ -231,7 +284,8 @@ _crystal-tool() {
             $no_color_args \
             $exec_args \
             $format_args \
-            $prelude_args
+            $prelude_args \
+            $stdin_filename_args
         ;;
       esac
     ;;

@@ -15,10 +15,10 @@ bar</li>
 Type 7 HTML block followed by whitespace (#98).
 
 ```````````````````````````````` example
-<a>
+<a>  
 x
 .
-<a>
+<a>  
 x
 ````````````````````````````````
 
@@ -78,4 +78,72 @@ Issue jgm/CommonMark#468 - backslash at end of link definition
 [\]: test
 .
 <p>[]: test</p>
+````````````````````````````````
+
+Issue jgm/commonmark.js#121 - punctuation set different
+
+```````````````````````````````` example
+^_test_
+.
+<p>^<em>test</em></p>
+````````````````````````````````
+
+Issue #116 - tabs before and after ATX closing heading
+```````````````````````````````` example
+# foo→#→
+.
+<h1>foo</h1>
+````````````````````````````````
+
+commonmark/CommonMark#493 - escaped space not allowed in link destination.
+
+```````````````````````````````` example
+[link](a\ b)
+.
+<p>[link](a\ b)</p>
+````````````````````````````````
+
+Issue #527 - meta tags in inline contexts
+
+```````````````````````````````` example
+City:
+<span itemprop="contentLocation" itemscope itemtype="https://schema.org/City">
+  <meta itemprop="name" content="Springfield">
+</span>
+.
+<p>City:
+<span itemprop="contentLocation" itemscope itemtype="https://schema.org/City">
+<meta itemprop="name" content="Springfield">
+</span></p>
+````````````````````````````````
+
+Double-encoding.
+
+```````````````````````````````` example
+[XSS](javascript&amp;colon;alert%28&#039;XSS&#039;%29)
+.
+<p><a href="javascript&amp;colon;alert('XSS')">XSS</a></p>
+````````````````````````````````
+
+Issue commonamrk#517 - script, pre, style close tag without
+opener.
+
+```````````````````````````````` example
+</script>
+
+</pre>
+
+</style>
+.
+</script>
+</pre>
+</style>
+````````````````````````````````
+
+Issue #289.
+
+```````````````````````````````` example
+[a](<b) c>
+.
+<p>[a](&lt;b) c&gt;</p>
 ````````````````````````````````

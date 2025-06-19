@@ -144,6 +144,8 @@ module Crystal
         else
           contains_target(node)
         end
+      else
+        false
       end
     end
 
@@ -156,6 +158,8 @@ module Crystal
         else
           contains_target(node)
         end
+      else
+        false
       end
     end
 

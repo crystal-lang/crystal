@@ -13,11 +13,12 @@ module Regex::PCRE2
     end
   end
 
-  class_getter version_number : {Int32, Int32} = begin
+  class_getter version_number : {Int32, Int32} do
     version = self.version
     dot = version.index('.') || raise RuntimeError.new("Invalid libpcre2 version")
     space = version.index(' ', dot) || raise RuntimeError.new("Invalid libpcre2 version")
-    {version.byte_slice(0, dot).to_i, version.byte_slice(dot + 1, space - dot - 1).to_i}
+    # PCRE2 versions can contain -RC{N} which would make `.to_i` fail unless strict is set to false
+    {version.byte_slice(0, dot).to_i, version.byte_slice(dot + 1, space - dot - 1).to_i(strict: false)}
   end
 
   # :nodoc:
@@ -66,7 +67,8 @@ module Regex::PCRE2
       if options.includes?(option)
         flag |= case option
                 when .ignore_case?       then LibPCRE2::CASELESS
-                when .multiline?         then LibPCRE2::DOTALL | LibPCRE2::MULTILINE
+                when .multiline?         then LibPCRE2::MULTILINE | LibPCRE2::DOTALL
+                when .multiline_only?    then LibPCRE2::MULTILINE
                 when .dotall?            then LibPCRE2::DOTALL
                 when .extended?          then LibPCRE2::EXTENDED
                 when .anchored?          then LibPCRE2::ANCHORED
@@ -79,7 +81,7 @@ module Regex::PCRE2
                 when .endanchored?       then LibPCRE2::ENDANCHORED
                 when .match_invalid_utf? then LibPCRE2::MATCH_INVALID_UTF
                 else
-                  raise "unreachable"
+                  raise "Unreachable"
                 end
         options &= ~option
       end
@@ -88,6 +90,10 @@ module Regex::PCRE2
       raise ArgumentError.new("Unknown Regex::Option value: #{options}")
     end
     flag
+  end
+
+  def self.supports_compile_flag?(options)
+    true
   end
 
   private def pcre2_match_options(options)
@@ -108,7 +114,7 @@ module Regex::PCRE2
                 when .ucp?            then raise ArgumentError.new("Invalid regex option UCP for `pcre2_match`")
                 when .endanchored?    then LibPCRE2::ENDANCHORED
                 else
-                  raise "unreachable"
+                  raise "Unreachable"
                 end
         options &= ~option
       end
@@ -129,7 +135,7 @@ module Regex::PCRE2
                 when .no_jit?       then LibPCRE2::NO_JIT
                 when .no_utf_check? then LibPCRE2::NO_UTF_CHECK
                 else
-                  raise "unreachable"
+                  raise "Unreachable"
                 end
         options &= ~option
       end
@@ -138,6 +144,10 @@ module Regex::PCRE2
       raise ArgumentError.new("Unknown Regex::MatchOption value: #{options}")
     end
     flag
+  end
+
+  def self.supports_match_flag?(options)
+    true
   end
 
   protected def self.error_impl(source)
@@ -159,7 +169,7 @@ module Regex::PCRE2
   private def pattern_info(what, where)
     ret = LibPCRE2.pattern_info(@re, what, where)
     if ret != 0
-      raise "error pattern_info #{what}: #{ret}"
+      raise "Error pattern_info #{what}: #{ret}"
     end
   end
 

@@ -1,8 +1,9 @@
-require "c/stdlib"
 require "c/string"
+require "crystal/small_deque"
 {% unless flag?(:without_iconv) %}
   require "crystal/iconv"
 {% end %}
+require "float/fast_float"
 
 # A `String` represents an immutable sequence of UTF-8 characters.
 #
@@ -158,12 +159,24 @@ class String
   # This method is always safe to call, and the resulting string will have
   # the contents and size of the slice.
   #
+  # If *truncate_at_null* is true, only the characters up to and not including
+  # the first null character are copied.
+  #
   # ```
   # slice = Slice.new(4) { |i| ('a'.ord + i).to_u8 }
   # String.new(slice) # => "abcd"
+  #
+  # slice = UInt8.slice(102, 111, 111, 0, 98, 97, 114)
+  # String.new(slice, truncate_at_null: true) # => "foo"
   # ```
-  def self.new(slice : Bytes)
-    new(slice.to_unsafe, slice.size)
+  def self.new(slice : Bytes, *, truncate_at_null : Bool = false)
+    bytesize = slice.size
+    if truncate_at_null
+      if index = slice.index(0)
+        bytesize = index
+      end
+    end
+    new(slice.to_unsafe, bytesize)
   end
 
   # Creates a new `String` from the given *bytes*, which are encoded in the given *encoding*.
@@ -316,7 +329,9 @@ class String
   # * **whitespace**: if `true`, leading and trailing whitespaces are allowed
   # * **underscore**: if `true`, underscores in numbers are allowed
   # * **prefix**: if `true`, the prefixes `"0x"`, `"0o"` and `"0b"` override the base
-  # * **strict**: if `true`, extraneous characters past the end of the number are disallowed
+  # * **strict**: if `true`, extraneous characters past the end of the number
+  #   are disallowed, unless **whitespace** is also `true` and all the trailing
+  #   characters past the number are whitespaces
   # * **leading_zero_is_octal**: if `true`, then a number prefixed with `"0"` will be treated as an octal
   #
   # ```
@@ -522,27 +537,52 @@ class String
     gen_to_ UInt128, UInt128
   end
 
-  # :nodoc:
-  CHAR_TO_DIGIT = begin
-    table = StaticArray(Int8, 256).new(-1_i8)
-    10_i8.times do |i|
-      table.to_unsafe[48 + i] = i
-    end
-    26_i8.times do |i|
-      table.to_unsafe[65 + i] = i + 10
-      table.to_unsafe[97 + i] = i + 10
-    end
-    table
-  end
+  {% if compare_versions(Crystal::VERSION, "1.16.0") >= 0 %}
+    {%
+      table = (0...256).map { -1 }
+      (0...10).each do |i|
+        table[48 + i] = i
+      end
+      (0...26).each do |i|
+        table[65 + i] = i + 10
+        table[97 + i] = i + 10
+      end
+    %}
 
-  # :nodoc:
-  CHAR_TO_DIGIT62 = begin
-    table = CHAR_TO_DIGIT.clone
-    26_i8.times do |i|
-      table.to_unsafe[65 + i] = i + 36
+    # :nodoc:
+    CHAR_TO_DIGIT = Slice(Int8).literal({{ table.splat }})
+
+    {%
+      (0...26).each do |i|
+        table[65 + i] = i + 36
+      end
+    %}
+
+    # :nodoc:
+    CHAR_TO_DIGIT62 = Slice(Int8).literal({{ table.splat }})
+  {% else %}
+    # :nodoc:
+    CHAR_TO_DIGIT = begin
+      table = StaticArray(Int8, 256).new(-1_i8)
+      10_i8.times do |i|
+        table.to_unsafe[48 + i] = i
+      end
+      26_i8.times do |i|
+        table.to_unsafe[65 + i] = i + 10
+        table.to_unsafe[97 + i] = i + 10
+      end
+      table
     end
-    table
-  end
+
+    # :nodoc:
+    CHAR_TO_DIGIT62 = begin
+      table = CHAR_TO_DIGIT.clone
+      26_i8.times do |i|
+        table.to_unsafe[65 + i] = i + 36
+      end
+      table
+    end
+  {% end %}
 
   # :nodoc:
   record ToUnsignedInfo(T),
@@ -691,7 +731,9 @@ class String
   #
   # Options:
   # * **whitespace**: if `true`, leading and trailing whitespaces are allowed
-  # * **strict**: if `true`, extraneous characters past the end of the number are disallowed
+  # * **strict**: if `true`, extraneous characters past the end of the number
+  #   are disallowed, unless **whitespace** is also `true` and all the trailing
+  #   characters past the number are whitespaces
   #
   # ```
   # "123.45e1".to_f                # => 1234.5
@@ -716,7 +758,9 @@ class String
   #
   # Options:
   # * **whitespace**: if `true`, leading and trailing whitespaces are allowed
-  # * **strict**: if `true`, extraneous characters past the end of the number are disallowed
+  # * **strict**: if `true`, extraneous characters past the end of the number
+  #   are disallowed, unless **whitespace** is also `true` and all the trailing
+  #   characters past the number are whitespaces
   #
   # ```
   # "123.45e1".to_f?                # => 1234.5
@@ -731,10 +775,7 @@ class String
 
   # :ditto:
   def to_f64?(whitespace : Bool = true, strict : Bool = true) : Float64?
-    to_f_impl(whitespace: whitespace, strict: strict) do
-      v = LibC.strtod self, out endptr
-      {v, endptr}
-    end
+    Float::FastFloat.to_f64?(self, whitespace, strict)
   end
 
   # Same as `#to_f` but returns a Float32.
@@ -744,58 +785,7 @@ class String
 
   # Same as `#to_f?` but returns a Float32.
   def to_f32?(whitespace : Bool = true, strict : Bool = true) : Float32?
-    to_f_impl(whitespace: whitespace, strict: strict) do
-      v = LibC.strtof self, out endptr
-      {v, endptr}
-    end
-  end
-
-  private def to_f_impl(whitespace : Bool = true, strict : Bool = true, &)
-    return unless whitespace || '0' <= self[0] <= '9' || self[0].in?('-', '+')
-
-    v, endptr = yield
-
-    unless v.finite?
-      startptr = to_unsafe
-      if whitespace
-        while startptr.value.unsafe_chr.ascii_whitespace?
-          startptr += 1
-        end
-      end
-      if startptr.value.unsafe_chr.in?('+', '-')
-        startptr += 1
-      end
-
-      if v.nan?
-        return unless startptr.value.unsafe_chr.in?('n', 'N')
-      else
-        return unless startptr.value.unsafe_chr.in?('i', 'I')
-      end
-    end
-
-    string_end = to_unsafe + bytesize
-
-    # blank string
-    return if endptr == to_unsafe
-
-    if strict
-      if whitespace
-        while endptr < string_end && endptr.value.unsafe_chr.ascii_whitespace?
-          endptr += 1
-        end
-      end
-      # reached the end of the string
-      v if endptr == string_end
-    else
-      ptr = to_unsafe
-      if whitespace
-        while ptr < string_end && ptr.value.unsafe_chr.ascii_whitespace?
-          ptr += 1
-        end
-      end
-      # consumed some bytes
-      v if endptr > ptr
-    end
+    Float::FastFloat.to_f32?(self, whitespace, strict)
   end
 
   # Returns the `Char` at the given *index*.
@@ -933,12 +923,12 @@ class String
     includes?(str) ? str : nil
   end
 
-  def []?(regex : Regex) : String?
-    self[regex, 0]?
+  def []?(regex : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : String?
+    self[regex, 0, options: options]?
   end
 
-  def []?(regex : Regex, group) : String?
-    match = match(regex)
+  def []?(regex : Regex, group, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : String?
+    match = match(regex, options: options)
     match[group]? if match
   end
 
@@ -952,12 +942,12 @@ class String
     self[str]?.not_nil!
   end
 
-  def [](regex : Regex) : String
-    self[regex]?.not_nil!
+  def [](regex : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : String
+    self[regex, options: options]?.not_nil!
   end
 
-  def [](regex : Regex, group) : String
-    self[regex, group]?.not_nil!
+  def [](regex : Regex, group, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : String
+    self[regex, group, options: options]?.not_nil!
   end
 
   # Returns the `Char` at the given *index*.
@@ -1417,9 +1407,7 @@ class String
   # ```
   def downcase(io : IO, options : Unicode::CaseOptions = :none) : Nil
     each_char do |char|
-      char.downcase(options) do |res|
-        io << res
-      end
+      char.downcase(io, options)
     end
   end
 
@@ -1453,9 +1441,7 @@ class String
   # ```
   def upcase(io : IO, options : Unicode::CaseOptions = :none) : Nil
     each_char do |char|
-      char.upcase(options) do |res|
-        io << res
-      end
+      char.upcase(io, options)
     end
   end
 
@@ -1498,22 +1484,24 @@ class String
   def capitalize(io : IO, options : Unicode::CaseOptions = :none) : Nil
     each_char_with_index do |char, i|
       if i.zero?
-        char.upcase(options) { |c| io << c }
+        char.titlecase(io, options)
       else
-        char.downcase(options) { |c| io << c }
+        char.downcase(io, options)
       end
     end
   end
 
-  # Returns a new `String` with the first letter after any space converted to uppercase and every
-  # other letter converted to lowercase.
+  # Returns a new `String` with the first letter after any space converted to uppercase and every other letter converted to lowercase.
+  # Optionally, if *underscore_to_space* is `true`, underscores (`_`) will be converted to a space and the following letter converted to uppercase.
   #
   # ```
-  # "hEllO tAb\tworld".titleize      # => "Hello Tab\tWorld"
-  # "  spaces before".titleize       # => "  Spaces Before"
-  # "x-men: the last stand".titleize # => "X-men: The Last Stand"
+  # "hEllO tAb\tworld".titleize                   # => "Hello Tab\tWorld"
+  # "  spaces before".titleize                    # => "  Spaces Before"
+  # "x-men: the last stand".titleize              # => "X-men: The Last Stand"
+  # "foo_bar".titleize                            # => "Foo_bar"
+  # "foo_bar".titleize(underscore_to_space: true) # => "Foo Bar"
   # ```
-  def titleize(options : Unicode::CaseOptions = :none) : String
+  def titleize(options : Unicode::CaseOptions = :none, *, underscore_to_space : Bool = false) : String
     return self if empty?
 
     if single_byte_optimizable? && (options.none? || options.ascii?)
@@ -1524,9 +1512,15 @@ class String
           byte = to_unsafe[i]
           if byte < 0x80
             char = byte.unsafe_chr
-            replaced_char = upcase_next ? char.upcase : char.downcase
+            replaced_char, upcase_next = if upcase_next
+                                           {char.upcase, false}
+                                         elsif underscore_to_space && '_' == char
+                                           {' ', true}
+                                         else
+                                           {char.downcase, char.ascii_whitespace?}
+                                         end
+
             buffer[i] = replaced_char.ord.to_u8!
-            upcase_next = char.ascii_whitespace?
           else
             buffer[i] = byte
             upcase_next = false
@@ -1536,23 +1530,31 @@ class String
       end
     end
 
-    String.build(bytesize) { |io| titleize io, options }
+    String.build(bytesize) { |io| titleize io, options, underscore_to_space: underscore_to_space }
   end
 
   # Writes a titleized version of `self` to the given *io*.
+  # Optionally, if *underscore_to_space* is `true`, underscores (`_`) will be converted to a space and the following letter converted to uppercase.
   #
   # ```
   # io = IO::Memory.new
   # "x-men: the last stand".titleize io
   # io.to_s # => "X-men: The Last Stand"
   # ```
-  def titleize(io : IO, options : Unicode::CaseOptions = :none) : Nil
+  def titleize(io : IO, options : Unicode::CaseOptions = :none, *, underscore_to_space : Bool = false) : Nil
     upcase_next = true
 
     each_char_with_index do |char, i|
-      replaced_char = upcase_next ? char.upcase(options) : char.downcase(options)
-      io << replaced_char
-      upcase_next = char.whitespace?
+      if upcase_next
+        upcase_next = false
+        char.titlecase(io, options)
+      elsif underscore_to_space && '_' == char
+        upcase_next = true
+        io << ' '
+      else
+        upcase_next = char.whitespace?
+        char.downcase(io, options)
+      end
     end
   end
 
@@ -1643,12 +1645,12 @@ class String
     case to_unsafe[bytesize - 1]
     when '\n'
       if bytesize > 1 && to_unsafe[bytesize - 2] === '\r'
-        unsafe_byte_slice_string(0, bytesize - 2)
+        unsafe_byte_slice_string(0, bytesize - 2, @length > 0 ? @length - 2 : 0)
       else
-        unsafe_byte_slice_string(0, bytesize - 1)
+        unsafe_byte_slice_string(0, bytesize - 1, @length > 0 ? @length - 1 : 0)
       end
     when '\r'
-      unsafe_byte_slice_string(0, bytesize - 1)
+      unsafe_byte_slice_string(0, bytesize - 1, @length > 0 ? @length - 1 : 0)
     else
       self
     end
@@ -1723,8 +1725,8 @@ class String
     if single_byte_optimizable?
       unsafe_byte_slice_string(1, bytesize - 1)
     else
-      reader = Char::Reader.new(self)
-      unsafe_byte_slice_string(reader.current_char_width, bytesize - reader.current_char_width)
+      first_char_bytesize = char_bytesize_at(0)
+      unsafe_byte_slice_string(first_char_bytesize, bytesize - first_char_bytesize)
     end
   end
 
@@ -1780,11 +1782,7 @@ class String
   def rchop? : String?
     return if empty?
 
-    if to_unsafe[bytesize - 1] < 0x80 || single_byte_optimizable?
-      return unsafe_byte_slice_string(0, bytesize - 1)
-    end
-
-    self[0, size - 1]
+    unsafe_byte_slice_string(0, Char::Reader.new(at_end: self).pos, @length > 0 ? @length - 1 : 0)
   end
 
   # Returns a new `String` with *suffix* removed from the end of the string if possible, else returns `nil`.
@@ -2146,7 +2144,8 @@ class String
     remove_excess_left(excess_left)
   end
 
-  private def calc_excess_right
+  # :nodoc:
+  def calc_excess_right
     if single_byte_optimizable?
       i = bytesize - 1
       while i >= 0 && to_unsafe[i].unsafe_chr.ascii_whitespace?
@@ -2184,7 +2183,8 @@ class String
     bytesize - byte_index
   end
 
-  private def calc_excess_left
+  # :nodoc:
+  def calc_excess_left
     if single_byte_optimizable?
       excess_left = 0
       # All strings end with '\0', and it's not a whitespace
@@ -2355,8 +2355,8 @@ class String
   # ```
   # "hello".sub(/./) { |s| s[0].ord.to_s + ' ' } # => "104 ello"
   # ```
-  def sub(pattern : Regex, &) : String
-    sub_append(pattern) do |str, match, buffer|
+  def sub(pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None, &) : String
+    sub_append(pattern, options) do |str, match, buffer|
       $~ = match
       buffer << yield str, match
     end
@@ -2400,11 +2400,11 @@ class String
   #
   # Raises `IndexError` if a named group referenced in *replacement* is not present
   # in *pattern*.
-  def sub(pattern : Regex, replacement, backreferences = true) : String
+  def sub(pattern : Regex, replacement, backreferences = true, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : String
     if backreferences && replacement.is_a?(String) && replacement.has_back_references?
-      sub_append(pattern) { |_, match, buffer| scan_backreferences(replacement, match, buffer) }
+      sub_append(pattern, options) { |_, match, buffer| scan_backreferences(replacement, match, buffer) }
     else
-      sub(pattern) { replacement }
+      sub(pattern, options: options) { replacement }
     end
   end
 
@@ -2416,8 +2416,10 @@ class String
   # "hello".sub(/(he|l|o)/, {"he": "ha", "l": "la"}) # => "hallo"
   # "hello".sub(/(he|l|o)/, {"l": "la"})             # => "hello"
   # ```
-  def sub(pattern : Regex, hash : Hash(String, _) | NamedTuple) : String
-    sub(pattern) do |match|
+  def sub(pattern : Regex, hash : Hash(String, _) | NamedTuple, options : Regex::MatchOptions = Regex::MatchOptions::None) : String
+    # FIXME: The options parameter should be a named-only parameter, but that breaks overload ordering (fixed with -Dpreview_overload_ordering).
+
+    sub(pattern, options: options) do |match|
       if hash.has_key?(match)
         hash[match]
       else
@@ -2483,8 +2485,8 @@ class String
     end
   end
 
-  private def sub_append(pattern : Regex, &)
-    match = pattern.match(self)
+  private def sub_append(pattern : Regex, options : Regex::MatchOptions, &)
+    match = pattern.match(self, options: options)
     return self unless match
 
     String.build(bytesize) do |buffer|
@@ -2530,10 +2532,9 @@ class String
     index += size if index < 0
 
     byte_index = char_index_to_byte_index(index)
-    raise IndexError.new unless byte_index
+    raise IndexError.new unless byte_index && byte_index < bytesize
 
-    reader = Char::Reader.new(self, pos: byte_index)
-    width = reader.current_char_width
+    width = char_bytesize_at(byte_index)
     replacement_width = replacement.bytesize
     new_bytesize = bytesize - width + replacement_width
 
@@ -2713,8 +2714,8 @@ class String
   # ```
   # "hello".gsub(/./) { |s| s[0].ord.to_s + ' ' } # => "104 101 108 108 111 "
   # ```
-  def gsub(pattern : Regex, &) : String
-    gsub_append(pattern) do |string, match, buffer|
+  def gsub(pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None, &) : String
+    gsub_append(pattern, options) do |string, match, buffer|
       $~ = match
       buffer << yield string, match
     end
@@ -2758,11 +2759,11 @@ class String
   #
   # Raises `IndexError` if a named group referenced in *replacement* is not present
   # in *pattern*.
-  def gsub(pattern : Regex, replacement, backreferences = true) : String
+  def gsub(pattern : Regex, replacement, backreferences = true, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : String
     if backreferences && replacement.is_a?(String) && replacement.has_back_references?
-      gsub_append(pattern) { |_, match, buffer| scan_backreferences(replacement, match, buffer) }
+      gsub_append(pattern, options) { |_, match, buffer| scan_backreferences(replacement, match, buffer) }
     else
-      gsub(pattern) { replacement }
+      gsub(pattern, options: options) { replacement }
     end
   end
 
@@ -2776,8 +2777,10 @@ class String
   # # but "o" is not and so is not included
   # "hello".gsub(/(he|l|o)/, {"he": "ha", "l": "la"}) # => "halala"
   # ```
-  def gsub(pattern : Regex, hash : Hash(String, _) | NamedTuple) : String
-    gsub(pattern) do |match|
+  def gsub(pattern : Regex, hash : Hash(String, _) | NamedTuple, options : Regex::MatchOptions = Regex::MatchOptions::None) : String
+    # FIXME: The options parameter should be a named-only parameter, but that breaks overload ordering (fixed with -Dpreview_overload_ordering).
+
+    gsub(pattern, options: options) do |match|
       hash[match]?
     end
   end
@@ -2816,7 +2819,7 @@ class String
 
         if string.bytesize == 0
           # The pattern matched an empty result. We must advance one character to avoid stagnation.
-          byte_offset = index + Char::Reader.new(self, pos: byte_offset).current_char_width
+          byte_offset = index + char_bytesize_at(byte_offset)
           last_byte_offset = index
         else
           byte_offset = index + string.bytesize
@@ -2856,9 +2859,9 @@ class String
     end
   end
 
-  private def gsub_append(pattern : Regex, &)
+  private def gsub_append(pattern : Regex, options : Regex::MatchOptions, &)
     byte_offset = 0
-    match = pattern.match_at_byte_index(self, byte_offset)
+    match = pattern.match_at_byte_index(self, byte_offset, options: options)
     return self unless match
 
     last_byte_offset = 0
@@ -2874,14 +2877,14 @@ class String
 
         if str.bytesize == 0
           # The pattern matched an empty result. We must advance one character to avoid stagnation.
-          byte_offset = index + Char::Reader.new(self, pos: byte_offset).current_char_width
+          byte_offset = index + char_bytesize_at(byte_offset)
           last_byte_offset = index
         else
           byte_offset = index + str.bytesize
           last_byte_offset = byte_offset
         end
 
-        match = pattern.match_at_byte_index(self, byte_offset)
+        match = pattern.match_at_byte_index(self, byte_offset, options: options | Regex::MatchOptions::NO_UTF_CHECK)
       end
 
       if last_byte_offset < bytesize
@@ -3065,8 +3068,18 @@ class String
   # "abcdef".compare("ABCDEF", case_insensitive: true) == 0 # => true
   # ```
   def ==(other : self) : Bool
+    # Quick pointer comparison if both strings are identical references
     return true if same?(other)
-    return false unless bytesize == other.bytesize
+
+    # If the bytesize differs, they cannot be equal
+    return false if bytesize != other.bytesize
+
+    # If the character size of both strings differs, they cannot be equal.
+    # We need to exclude the case that @length of either string might not have
+    # been calculated (indicated by `0`).
+    return false if @length != other.@length && @length != 0 && other.@length != 0
+
+    # All meta data matches up, so we need to compare byte-by-byte.
     to_unsafe.memcmp(other.to_unsafe, bytesize) == 0
   end
 
@@ -3117,6 +3130,7 @@ class String
   # "abcdef".compare("ABCDEG", case_insensitive: true) # => -1
   #
   # "heIIo".compare("heııo", case_insensitive: true, options: Unicode::CaseOptions::Turkic) # => 0
+  # "Baﬄe".compare("baffle", case_insensitive: true, options: Unicode::CaseOptions::Fold)   # => 0
   # ```
   #
   # Case-sensitive only comparison is provided by the comparison operator `#<=>`.
@@ -3154,23 +3168,51 @@ class String
     else
       reader1 = Char::Reader.new(self)
       reader2 = Char::Reader.new(other)
-      char1 = reader1.current_char
-      char2 = reader2.current_char
 
-      while reader1.has_next? && reader2.has_next?
-        comparison = char1.downcase(options) <=> char2.downcase(options)
-        return comparison.sign unless comparison == 0
+      # 3 chars maximum for case folding; 2 held in temporary buffers
+      chars1 = Crystal::SmallDeque(Char, 2).new
+      chars2 = Crystal::SmallDeque(Char, 2).new
 
-        char1 = reader1.next_char
-        char2 = reader2.next_char
-      end
+      while true
+        lhs = chars1.shift do
+          next unless reader1.has_next?
+          lhs_ = nil
+          reader1.current_char.downcase(options) do |char|
+            if lhs_
+              chars1 << char
+            else
+              lhs_ = char
+            end
+          end
+          reader1.next_char
+          lhs_
+        end
 
-      if reader1.has_next?
-        1
-      elsif reader2.has_next?
-        -1
-      else
-        0
+        rhs = chars2.shift do
+          next unless reader2.has_next?
+          rhs_ = nil
+          reader2.current_char.downcase(options) do |char|
+            if rhs_
+              chars2 << char
+            else
+              rhs_ = char
+            end
+          end
+          reader2.next_char
+          rhs_
+        end
+
+        case {lhs, rhs}
+        in {Nil, Nil}
+          return 0
+        in {Nil, Char}
+          return -1
+        in {Char, Nil}
+          return 1
+        in {Char, Char}
+          comparison = lhs <=> rhs
+          return comparison.sign unless comparison == 0
+        end
       end
     end
   end
@@ -3187,14 +3229,14 @@ class String
   #
   # "Haystack" =~ 45 # => nil
   # ```
-  def =~(regex : Regex) : Int32?
-    match = regex.match(self)
+  def =~(regex : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Int32?
+    match = regex.match(self, options: options)
     $~ = match
     match.try &.begin(0)
   end
 
   # :ditto:
-  def =~(other) : Nil
+  def =~(other, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Nil
     nil
   end
 
@@ -3298,8 +3340,22 @@ class String
   # ```
   def index(search : Char, offset = 0) : Int32?
     # If it's ASCII we can delegate to slice
-    if search.ascii? && single_byte_optimizable?
-      return to_slice.fast_index(search.ord.to_u8, offset)
+    if single_byte_optimizable?
+      # With `single_byte_optimizable?` there are only ASCII characters and
+      # invalid UTF-8 byte sequences, and we can reject anything that is neither
+      # ASCII nor the replacement character.
+      case search
+      when .ascii?
+        return to_slice.fast_index(search.ord.to_u8!, offset)
+      when Char::REPLACEMENT
+        offset.upto(bytesize - 1) do |i|
+          if to_unsafe[i] >= 0x80
+            return i.to_i
+          end
+        end
+      end
+
+      return nil
     end
 
     offset += size if offset < 0
@@ -3373,18 +3429,33 @@ class String
   end
 
   # :ditto:
-  def index(search : Regex, offset = 0) : Int32?
+  def index(search : Regex, offset = 0, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Int32?
     offset += size if offset < 0
     return nil unless 0 <= offset <= size
 
-    self.match(search, offset).try &.begin
+    self.match(search, offset, options: options).try &.begin
+  end
+
+  # Returns the index of the _first_ occurrence of *search* in the string. If *offset* is present,
+  # it defines the position to start the search.
+  #
+  # Raises `Enumerable::NotFoundError` if *search* does not occur in `self`.
+  #
+  # ```
+  # "Hello, World".index!('o')    # => 4
+  # "Hello, World".index!('Z')    # raises Enumerable::NotFoundError
+  # "Hello, World".index!("o", 5) # => 8
+  # "Hello, World".index!("H", 2) # raises Enumerable::NotFoundError
+  # "Hello, World".index!(/[ ]+/) # => 6
+  # "Hello, World".index!(/\d+/)  # raises Enumerable::NotFoundError
+  # ```
+  def index!(search, offset = 0) : Int32
+    index(search, offset) || raise Enumerable::NotFoundError.new
   end
 
   # :ditto:
-  #
-  # Raises `Enumerable::NotFoundError` if *search* does not occur in `self`.
-  def index!(search, offset = 0) : Int32
-    index(search, offset) || raise Enumerable::NotFoundError.new
+  def index!(search : Regex, offset = 0, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Int32
+    index(search, offset, options: options) || raise Enumerable::NotFoundError.new
   end
 
   # Returns the index of the _last_ appearance of *search* in the string,
@@ -3394,13 +3465,27 @@ class String
   # ```
   # "Hello, World".rindex('o')    # => 8
   # "Hello, World".rindex('Z')    # => nil
-  # "Hello, World".rindex("o", 5) # => 4
-  # "Hello, World".rindex("W", 2) # => nil
+  # "Hello, World".rindex('o', 5) # => 4
+  # "Hello, World".rindex('W', 2) # => nil
   # ```
   def rindex(search : Char, offset = size - 1)
     # If it's ASCII we can delegate to slice
-    if search.ascii? && single_byte_optimizable?
-      return to_slice.rindex(search.ord.to_u8, offset)
+    if single_byte_optimizable?
+      # With `single_byte_optimizable?` there are only ASCII characters and
+      # invalid UTF-8 byte sequences, and we can reject anything that is neither
+      # ASCII nor the replacement character.
+      case search
+      when .ascii?
+        return to_slice.rindex(search.ord.to_u8!, offset)
+      when Char::REPLACEMENT
+        offset.downto(0) do |i|
+          if to_unsafe[i] >= 0x80
+            return i.to_i
+          end
+        end
+      end
+
+      return nil
     end
 
     offset += size if offset < 0
@@ -3426,7 +3511,16 @@ class String
     end
   end
 
-  # :ditto:
+  # Returns the index of the _last_ appearance of *search* in the string,
+  # If *offset* is present, it defines the position to _end_ the search
+  # (characters beyond this point are ignored).
+  #
+  # ```
+  # "Hello, World".rindex("orld")    # => 8
+  # "Hello, World".rindex("snorlax") # => nil
+  # "Hello, World".rindex("o", 5)    # => 4
+  # "Hello, World".rindex("W", 2)    # => nil
+  # ```
   def rindex(search : String, offset = size - search.size) : Int32?
     offset += size if offset < 0
     return if offset < 0
@@ -3479,13 +3573,22 @@ class String
     end
   end
 
-  # :ditto:
-  def rindex(search : Regex, offset = size) : Int32?
+  # Returns the index of the _last_ appearance of *search* in the string,
+  # If *offset* is present, it defines the position to _end_ the search
+  # (characters beyond this point are ignored).
+  #
+  # ```
+  # "Hello, World".rindex(/world/i) # => 7
+  # "Hello, World".rindex(/world/)  # => nil
+  # "Hello, World".rindex(/o/, 5)   # => 4
+  # "Hello, World".rindex(/W/, 2)   # => nil
+  # ```
+  def rindex(search : Regex, offset = size, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Int32?
     offset += size if offset < 0
     return nil unless 0 <= offset <= size
 
     match_result = nil
-    scan(search) do |match_data|
+    scan(search, options: options) do |match_data|
       break if (index = match_data.begin) && index > offset
       match_result = match_data
     end
@@ -3493,21 +3596,49 @@ class String
     match_result.try &.begin
   end
 
-  # :ditto:
-  #
+  # Returns the index of the _last_ appearance of *search* in the string,
+  # If *offset* is present, it defines the position to _end_ the search
+  # (characters beyond this point are ignored).
   # Raises `Enumerable::NotFoundError` if *search* does not occur in `self`.
-  def rindex!(search : Regex, offset = size) : Int32
+  #
+  # ```
+  # "Hello, World".rindex!('o')    # => 8
+  # "Hello, World".rindex!('Z')    # raises Enumerable::NotFoundError
+  # "Hello, World".rindex!('o', 5) # => 4
+  # "Hello, World".rindex!('W', 2) # raises Enumerable::NotFoundError
+  # ```
+  def rindex!(search : Char, offset = size - 1) : Int32
     rindex(search, offset) || raise Enumerable::NotFoundError.new
   end
 
-  # :ditto:
+  # Returns the index of the _last_ appearance of *search* in the string,
+  # If *offset* is present, it defines the position to _end_ the search
+  # (characters beyond this point are ignored).
+  # Raises `Enumerable::NotFoundError` if *search* does not occur in `self`.
+  #
+  # ```
+  # "Hello, World".rindex!("orld")    # => 8
+  # "Hello, World".rindex!("snorlax") # raises Enumerable::NotFoundError
+  # "Hello, World".rindex!("o", 5)    # => 4
+  # "Hello, World".rindex!("W", 2)    # raises Enumerable::NotFoundError
+  # ```
   def rindex!(search : String, offset = size - search.size) : Int32
     rindex(search, offset) || raise Enumerable::NotFoundError.new
   end
 
-  # :ditto:
-  def rindex!(search : Char, offset = size - 1) : Int32
-    rindex(search, offset) || raise Enumerable::NotFoundError.new
+  # Returns the index of the _last_ appearance of *search* in the string,
+  # If *offset* is present, it defines the position to _end_ the search
+  # (characters beyond this point are ignored).
+  # Raises `Enumerable::NotFoundError` if *search* does not occur in `self`.
+  #
+  # ```
+  # "Hello, World".rindex!(/world/i) # => 7
+  # "Hello, World".rindex!(/world/)  # raises Enumerable::NotFoundError
+  # "Hello, World".rindex!(/o/, 5)   # => 4
+  # "Hello, World".rindex!(/W/, 2)   # raises Enumerable::NotFoundError
+  # ```
+  def rindex!(search : Regex, offset = size, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Int32
+    rindex(search, offset, options: options) || raise Enumerable::NotFoundError.new
   end
 
   # Searches separator or pattern (`Regex`) in the string, and returns
@@ -3536,9 +3667,9 @@ class String
   end
 
   # :ditto:
-  def partition(search : Regex) : Tuple(String, String, String)
+  def partition(search : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Tuple(String, String, String)
     pre = mid = post = ""
-    case m = self.match(search)
+    case m = self.match(search, options: options)
     when .nil?
       pre = self
     else
@@ -3579,12 +3710,12 @@ class String
   end
 
   # :ditto:
-  def rpartition(search : Regex) : Tuple(String, String, String)
+  def rpartition(search : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Tuple(String, String, String)
     match_result = nil
     pos = self.size - 1
 
     while pos >= 0
-      self[pos..-1].scan(search) do |m|
+      self[pos..-1].scan(search, options: options) do |m|
         match_result = m
       end
       break unless match_result.nil?
@@ -3622,7 +3753,7 @@ class String
   # "Dizzy Miss Lizzy".byte_index('z'.ord, -4)  # => 13
   # "Dizzy Miss Lizzy".byte_index('z'.ord, -17) # => nil
   # ```
-  def byte_index(byte : Int, offset = 0) : Int32?
+  def byte_index(byte : Int, offset : Int32 = 0) : Int32?
     offset += bytesize if offset < 0
     return if offset < 0
 
@@ -3630,6 +3761,49 @@ class String
       if to_unsafe[i] == byte
         return i
       end
+    end
+    nil
+  end
+
+  # Returns the index of the _first_ occurrence of *char* in the string, or `nil` if not present.
+  # If *offset* is present, it defines the position to start the search.
+  #
+  # Negative *offset* can be used to start the search from the end of the string.
+  #
+  # ```
+  # "Hello, World".byte_index('o')          # => 4
+  # "Hello, World".byte_index('Z')          # => nil
+  # "Hello, World".byte_index('o', 5)       # => 8
+  # "Hi, 💣".byte_index('💣')                 # => 4
+  # "Dizzy Miss Lizzy".byte_index('z')      # => 2
+  # "Dizzy Miss Lizzy".byte_index('z', 3)   # => 3
+  # "Dizzy Miss Lizzy".byte_index('z', -4)  # => 13
+  # "Dizzy Miss Lizzy".byte_index('z', -17) # => nil
+  # ```
+  def byte_index(char : Char, offset = 0) : Int32?
+    return byte_index(char.ord, offset) if char.ascii?
+
+    offset += bytesize if offset < 0
+    return if offset < 0
+    return if offset + char.bytesize > bytesize
+
+    # Simplified "Rabin-Karp" algorithm
+    search_hash = 0u32
+    search_mask = 0u32
+    hash = 0u32
+    char.each_byte do |byte|
+      search_hash = (search_hash << 8) | byte
+      search_mask = (search_mask << 8) | 0xff
+      hash = (hash << 8) | to_unsafe[offset]
+      offset += 1
+    end
+
+    offset.upto(bytesize) do |i|
+      if (hash & search_mask) == search_hash
+        return i - char.bytesize
+      end
+      # rely on zero terminating byte
+      hash = (hash << 8) | to_unsafe[i]
     end
     nil
   end
@@ -3690,6 +3864,27 @@ class String
     end
 
     nil
+  end
+
+  # Returns the byte index of the regex *pattern* in the string, or `nil` if the pattern does not find a match.
+  # If *offset* is present, it defines the position to start the search.
+  #
+  # Negative *offset* can be used to start the search from the end of the string.
+  #
+  # ```
+  # "hello world".byte_index(/o/)             # => 4
+  # "hello world".byte_index(/o/, offset: 4)  # => 4
+  # "hello world".byte_index(/o/, offset: 5)  # => 7
+  # "hello world".byte_index(/o/, offset: -1) # => nil
+  # "hello world".byte_index(/y/)             # => nil
+  # ```
+  def byte_index(pattern : Regex, offset = 0, options : Regex::MatchOptions = Regex::MatchOptions::None) : Int32?
+    offset += bytesize if offset < 0
+    return if offset < 0
+
+    if match = pattern.match_at_byte_index(self, offset, options: options)
+      match.byte_begin
+    end
   end
 
   # Returns the byte index of a char index, or `nil` if out of bounds.
@@ -4060,9 +4255,9 @@ class String
   # long_river_name.split(/s+/) # => ["Mi", "i", "ippi"]
   # long_river_name.split(//)   # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
   # ```
-  def split(separator : Regex, limit = nil, *, remove_empty = false) : Array(String)
+  def split(separator : Regex, limit = nil, *, remove_empty = false, options : Regex::MatchOptions = Regex::MatchOptions::None) : Array(String)
     ary = Array(String).new
-    split(separator, limit, remove_empty: remove_empty) do |string|
+    split(separator, limit, remove_empty: remove_empty, options: options) do |string|
       ary << string
     end
     ary
@@ -4088,7 +4283,7 @@ class String
   # long_river_name.split(//) { |s| ary << s }
   # ary # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
   # ```
-  def split(separator : Regex, limit = nil, *, remove_empty = false, &block : String -> _)
+  def split(separator : Regex, limit = nil, *, remove_empty = false, options : Regex::MatchOptions = Regex::MatchOptions::None, &block : String -> _)
     if empty?
       yield "" unless remove_empty
       return
@@ -4109,7 +4304,7 @@ class String
     count = 0
     match_offset = slice_offset = 0
 
-    while match = separator.match_at_byte_index(self, match_offset)
+    while match = separator.match_at_byte_index(self, match_offset, options: options)
       index = match.byte_begin(0)
       match_bytesize = match.byte_end(0) - index
       next_offset = index + match_bytesize
@@ -4133,6 +4328,7 @@ class String
 
       break if limit && count + 1 == limit
       break if match_offset >= bytesize
+      options |= :no_utf_check
     end
 
     yield byte_slice(slice_offset) unless remove_empty && slice_offset == bytesize
@@ -4153,7 +4349,31 @@ class String
     end
   end
 
-  def lines(chomp = true) : Array(String)
+  # Returns an array of the string split into lines.
+  #
+  # Both LF (line feed, `\n`) and CRLF (carriage return line feed, `\r\n`) are
+  # recognized as line delimiters.
+  #
+  # If *chomp* is true, the line separator is removed from the end of each line.
+  #
+  # ```
+  # "hello\nworld\n".lines                 # => ["hello", "world"]
+  # "hello\nworld\n".lines(chomp: false)   # => ["hello\n", "world\n"]
+  # "hello\nworld\r\n".lines               # => ["hello", "world"]
+  # "hello\nworld\r\n".lines(chomp: false) # => ["hello\n", "world\r\n"]
+  # ```
+  #
+  # A trailing line feed is not considered starting a final, empty line.  The
+  # empty string does not contain any lines.
+  #
+  # ```
+  # "hellp\n".lines # => ["hellp"]
+  # "\n".lines      # => [""]
+  # "".lines        # => [] of String
+  # ```
+  #
+  # * `#each_line` yields each line without allocating an array
+  def lines(chomp : Bool = true) : Array(String)
     lines = [] of String
     each_line(chomp: chomp) do |line|
       lines << line
@@ -4161,21 +4381,31 @@ class String
     lines
   end
 
-  # Splits the string after each newline and yields each line to a block.
+  # Splits the string after each newline and yields each line.
+  #
+  # Both LF (line feed, `\n`) and CRLF (carriage return line feed, `\r\n`) are
+  # recognized as line delimiters.
+  #
+  # If *chomp* is true, the line separator is removed from the end of each line.
   #
   # ```
-  # haiku = "the first cold shower
-  # even the monkey seems to want
-  # a little coat of straw"
-  # haiku.each_line do |stanza|
-  #   puts stanza
-  # end
-  # # output:
-  # # the first cold shower
-  # # even the monkey seems to want
-  # # a little coat of straw
+  # "hello\nworld".each_line { }                   # yields "hello", "world"
+  # "hello\nworld".each_line(chomp: false) { }     # yields "hello\n", "world"
+  # "hello\nworld\r\n".each_line { }               # yields "hello", "world"
+  # "hello\nworld\r\n".each_line(chomp: false) { } # yields "hello\n", "world\r\n"
   # ```
-  def each_line(chomp = true, &block : String ->) : Nil
+  #
+  # A trailing line feed is not considered starting a final, empty line.  The
+  # empty string does not contain any lines.
+  #
+  # ```
+  # "hello\n".each_line { } # yields "hello"
+  # "\n".each_line { }      # yields ""
+  # "".each_line { }        # does not yield
+  # ```
+  #
+  # * `#lines` returns an array of lines
+  def each_line(chomp : Bool = true, & : String ->) : Nil
     return if empty?
 
     offset = 0
@@ -4231,18 +4461,18 @@ class String
     mem : Char? = nil
 
     each_char do |char|
-      digit = char.ascii_number?
-
-      if options.none?
+      if options.ascii?
+        digit = char.ascii_number?
         downcase = digit || char.ascii_lowercase?
         upcase = char.ascii_uppercase?
       else
+        digit = char.number?
         downcase = digit || char.lowercase?
         upcase = char.uppercase?
       end
 
       if first
-        io << char.downcase(options)
+        char.downcase(io, options)
       elsif last_is_downcase && upcase
         if mem
           # This is the case of A1Bcd, we need to put 'mem' (not to need to convert as downcase
@@ -4254,7 +4484,7 @@ class String
         # This is the case of AbcDe, we need to put an underscore before the 'D'
         #                        ^
         io << '_'
-        io << char.downcase(options)
+        char.downcase(io, options)
       elsif (last_is_upcase || last_is_digit) && (upcase || digit)
         # This is the case of 1) A1Bcd, 2) A1BCd or 3) A1B_cd:if the next char is upcase (case 1) we need
         #                          ^         ^           ^
@@ -4264,7 +4494,7 @@ class String
         # 3) we need to append this char as downcase and then a single underscore
         if mem
           # case 2
-          io << mem.downcase(options)
+          mem.downcase(io, options)
         end
         mem = char
       else
@@ -4275,11 +4505,11 @@ class String
             # case 1
             io << '_'
           end
-          io << mem.downcase(options)
+          mem.downcase(io, options)
           mem = nil
         end
 
-        io << char.downcase(options)
+        char.downcase(io, options)
       end
 
       last_is_downcase = downcase
@@ -4288,7 +4518,7 @@ class String
       first = false
     end
 
-    io << mem.downcase(options) if mem
+    mem.downcase(io, options) if mem
   end
 
   # Converts underscores to camelcase boundaries.
@@ -4321,11 +4551,15 @@ class String
 
     each_char do |char|
       if first
-        io << (lower ? char.downcase(options) : char.upcase(options))
+        if lower
+          char.downcase(io, options)
+        else
+          char.titlecase(io, options)
+        end
       elsif char == '_'
         last_is_underscore = true
       elsif last_is_underscore
-        io << char.upcase(options)
+        char.titlecase(io, options)
         last_is_underscore = false
       else
         io << char
@@ -4339,6 +4573,12 @@ class String
   # ```
   # "Argentina".reverse # => "anitnegrA"
   # "racecar".reverse   # => "racecar"
+  # ```
+  #
+  # Works on Unicode graphemes (and not codepoints) so combining characters are preserved.
+  #
+  # ```
+  # "Noe\u0308l".reverse # => "lëoN"
   # ```
   def reverse : String
     return self if bytesize <= 1
@@ -4557,8 +4797,7 @@ class String
     end
   end
 
-  # Finds match of *regex*, starting at *pos*.
-  # It also updates `$~` with the result.
+  # Finds matches of *regex* starting at *pos* and updates `$~` to the result.
   #
   # ```
   # "foo".match(/foo/) # => Regex::MatchData("foo")
@@ -4567,10 +4806,20 @@ class String
   # "foo".match(/bar/) # => nil
   # $~                 # raises Exception
   # ```
-  def match(regex : Regex, pos = 0) : Regex::MatchData?
-    match = regex.match self, pos
-    $~ = match
-    match
+  def match(regex : Regex, pos = 0, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Regex::MatchData?
+    $~ = regex.match self, pos, options: options
+  end
+
+  # Finds matches of *regex* starting at *pos* and updates `$~` to the result.
+  # Raises `Regex::Error` if there are no matches.
+  #
+  # ```
+  # "foo".match!(/foo/) # => Regex::MatchData("foo")
+  # $~                  # => Regex::MatchData("foo")
+  #
+  # "foo".match!(/bar/) # => raises Exception
+  def match!(regex : Regex, pos = 0, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Regex::MatchData
+    $~ = regex.match! self, pos, options: options
   end
 
   # Finds match of *regex* like `#match`, but it returns `Bool` value.
@@ -4583,22 +4832,65 @@ class String
   # # `$~` is not set even if last match succeeds.
   # $~ # raises Exception
   # ```
-  def matches?(regex : Regex, pos = 0) : Bool
-    regex.matches? self, pos
+  def matches?(regex : Regex, pos = 0, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Bool
+    regex.matches? self, pos, options: options
+  end
+
+  # Matches the regular expression *regex* against the entire string and returns
+  # the resulting `MatchData`.
+  # It also updates `$~` with the result.
+  #
+  # ```
+  # "foo".match_full(/foo/)  # => Regex::MatchData("foo")
+  # $~                       # => Regex::MatchData("foo")
+  # "fooo".match_full(/foo/) # => nil
+  # $~                       # raises Exception
+  # ```
+  def match_full(regex : Regex) : Regex::MatchData?
+    match(regex, options: Regex::MatchOptions::ANCHORED | Regex::MatchOptions::ENDANCHORED)
+  end
+
+  # Matches the regular expression *regex* against the entire string and returns
+  # the resulting `MatchData`.
+  # It also updates `$~` with the result.
+  # Raises `Regex::Error` if there are no matches.
+  #
+  # ```
+  # "foo".match_full!(/foo/)  # => Regex::MatchData("foo")
+  # $~                        # => Regex::MatchData("foo")
+  # "fooo".match_full!(/foo/) # Regex::Error
+  # $~                        # raises Exception
+  # ```
+  def match_full!(regex : Regex) : Regex::MatchData?
+    match!(regex, options: Regex::MatchOptions::ANCHORED | Regex::MatchOptions::ENDANCHORED)
+  end
+
+  # Returns `true` if the regular expression *regex* matches this string entirely.
+  #
+  # ```
+  # "foo".matches_full?(/foo/)  # => true
+  # "fooo".matches_full?(/foo/) # => false
+  #
+  # # `$~` is not set even if last match succeeds.
+  # $~ # raises Exception
+  # ```
+  def matches_full?(regex : Regex) : Bool
+    matches?(regex, options: Regex::MatchOptions::ANCHORED | Regex::MatchOptions::ENDANCHORED)
   end
 
   # Searches the string for instances of *pattern*,
   # yielding a `Regex::MatchData` for each match.
-  def scan(pattern : Regex, &) : self
+  def scan(pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None, &) : self
     byte_offset = 0
 
-    while match = pattern.match_at_byte_index(self, byte_offset)
+    while match = pattern.match_at_byte_index(self, byte_offset, options: options)
       index = match.byte_begin(0)
       $~ = match
       yield match
       match_bytesize = match.byte_end(0) - index
-      match_bytesize += 1 if match_bytesize == 0
+      match_bytesize += char_bytesize_at(byte_offset) if match_bytesize == 0
       byte_offset = index + match_bytesize
+      options |= :no_utf_check
     end
 
     self
@@ -4606,9 +4898,9 @@ class String
 
   # Searches the string for instances of *pattern*,
   # returning an `Array` of `Regex::MatchData` for each match.
-  def scan(pattern : Regex) : Array(Regex::MatchData)
+  def scan(pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Array(Regex::MatchData)
     matches = [] of Regex::MatchData
-    scan(pattern) do |match|
+    scan(pattern, options: options) do |match|
       matches << match
     end
     matches
@@ -5028,8 +5320,8 @@ class String
   # "h22".starts_with?(/[a-z]{2}/)  # => false
   # "hh22".starts_with?(/[a-z]{2}/) # => true
   # ```
-  def starts_with?(re : Regex) : Bool
-    !!($~ = re.match_at_byte_index(self, 0, Regex::MatchOptions::ANCHORED))
+  def starts_with?(re : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Bool
+    !!($~ = re.match_at_byte_index(self, 0, options: options | Regex::MatchOptions::ANCHORED))
   end
 
   # Returns `true` if this string ends with the given *str*.
@@ -5078,8 +5370,15 @@ class String
   # "22h".ends_with?(/[a-z]{2}/)  # => false
   # "22hh".ends_with?(/[a-z]{2}/) # => true
   # ```
-  def ends_with?(re : Regex) : Bool
-    !!($~ = /#{re}\z/.match(self))
+  def ends_with?(re : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Bool
+    if Regex.supports_match_options?(Regex::MatchOptions::ENDANCHORED)
+      result = re.match(self, options: options | Regex::MatchOptions::ENDANCHORED)
+    else
+      # Workaround when ENDANCHORED is unavailable (PCRE).
+      result = /#{re}\z/.match(self, options: options)
+    end
+    $~ = result
+    !!result
   end
 
   # Interpolates *other* into the string using top-level `::sprintf`.
@@ -5300,12 +5599,12 @@ class String
     Slice.new(to_unsafe + byte_offset, bytesize - byte_offset, read_only: true)
   end
 
-  protected def unsafe_byte_slice_string(byte_offset)
-    String.new(unsafe_byte_slice(byte_offset))
+  protected def unsafe_byte_slice_string(byte_offset, *, size = 0)
+    String.new(to_unsafe + byte_offset, bytesize - byte_offset, size)
   end
 
-  protected def unsafe_byte_slice_string(byte_offset, count)
-    String.new(unsafe_byte_slice(byte_offset, count))
+  protected def unsafe_byte_slice_string(byte_offset, count, size = 0)
+    String.new(to_unsafe + byte_offset, count, size)
   end
 
   protected def self.char_bytes_and_bytesize(char : Char)
@@ -5329,6 +5628,36 @@ class String
       raise ArgumentError.new("String #{name}contains null byte")
     end
     self
+  end
+
+  # Returns `self` if it starts with the given *prefix*. Otherwise, returns a new
+  # `String` with the *prefix* prepended.
+  #
+  # ```
+  # "llo!".ensure_prefix("He")   # => "Hello!"
+  # "Hello!".ensure_prefix("He") # => "Hello!"
+  # "ello".ensure_prefix('H')    # => "Hello!"
+  # "Hello!".ensure_prefix('H')  # => "Hello!"
+  # ```
+  def ensure_prefix(prefix : String | Char) : self
+    return self if starts_with?(prefix)
+
+    "#{prefix}#{self}"
+  end
+
+  # Returns `self` if it ends with the given *suffix*. Otherwise, returns a new
+  # `String` with the *suffix* appended.
+  #
+  # ```
+  # "Hell".ensure_suffix("o!")   # => "Hello!"
+  # "Hello!".ensure_suffix("o!") # => "Hello!"
+  # "Hello".ensure_suffix('!')   # => "Hello!"
+  # "Hello!".ensure_suffix('!')  # => "Hello!"
+  # ```
+  def ensure_suffix(suffix : String | Char) : self
+    return self if ends_with?(suffix)
+
+    "#{self}#{suffix}"
   end
 
   # :nodoc:

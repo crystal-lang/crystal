@@ -2,7 +2,7 @@
 require "./spec_helper"
 
 private macro assert_overflows(code, file = __FILE__, line = __LINE__)
-  it "overlows on {{code}}", file: {{file}}, line: {{line}} do
+  it "overflows on {{code}}", file: {{file}}, line: {{line}} do
     interpret(%(
       class OverflowError < Exception; end
 
@@ -95,7 +95,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "uses a string pool" do
-      interpret(<<-CRYSTAL).should eq(true)
+      interpret(<<-CRYSTAL).should be_true
         "a".object_id == "a".object_id
       CRYSTAL
     end
@@ -153,7 +153,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "doesn't declare variable with no type" do
-      interpret(<<-CRYSTAL).should eq(nil)
+      interpret(<<-CRYSTAL).should be_nil
       x = nil
       if x
         y = x
@@ -162,7 +162,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "doesn't declare variable with no type inside method" do
-      interpret(<<-CRYSTAL).should eq(nil)
+      interpret(<<-CRYSTAL).should be_nil
         def foo(x)
           if x
             y = x
@@ -270,20 +270,22 @@ describe Crystal::Repl::Interpreter do
         interpret("23.8_f32.to_{{target_type}}!").should eq(f.to_{{target_type}}!)
       end
 
-      it "interprets Float32#to_{{target_type}}! (negative)" do
-        f = -23.8_f32
-        interpret("-23.8_f32.to_{{target_type}}!").should eq(f.to_{{target_type}}!)
-      end
-
       it "interprets Float64#to_{{target_type}}! (positive)" do
         f = 23.8_f64
         interpret("23.8_f64.to_{{target_type}}!").should eq(f.to_{{target_type}}!)
       end
 
-      it "interprets Float64#to_{{target_type}}! (negative)" do
-        f = -23.8_f64
-        interpret("-23.8_f64.to_{{target_type}}!").should eq(f.to_{{target_type}}!)
-      end
+      {% unless target_type.starts_with?("u") %} # Do not test undefined behavior that might differ (#13736)
+        it "interprets Float32#to_{{target_type}}! (negative)" do
+          f = -23.8_f32
+          interpret("-23.8_f32.to_{{target_type}}!").should eq(f.to_{{target_type}}!)
+        end
+
+        it "interprets Float64#to_{{target_type}}! (negative)" do
+          f = -23.8_f64
+          interpret("-23.8_f64.to_{{target_type}}!").should eq(f.to_{{target_type}}!)
+        end
+      {% end %}
     {% end %}
 
     it "interprets Char#ord" do
@@ -700,7 +702,7 @@ describe Crystal::Repl::Interpreter do
 
   context "logical operations" do
     it "interprets not for nil" do
-      interpret("!nil").should eq(true)
+      interpret("!nil").should be_true
     end
 
     it "interprets not for nil type" do
@@ -708,11 +710,11 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "interprets not for bool true" do
-      interpret("!true").should eq(false)
+      interpret("!true").should be_false
     end
 
     it "interprets not for bool false" do
-      interpret("!false").should eq(true)
+      interpret("!false").should be_true
     end
 
     it "discards nil not" do
@@ -724,35 +726,35 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "interprets not for bool false" do
-      interpret("!false").should eq(true)
+      interpret("!false").should be_true
     end
 
     it "interprets not for mixed union (nil)" do
-      interpret("!(1 == 1 ? nil : 2)").should eq(true)
+      interpret("!(1 == 1 ? nil : 2)").should be_true
     end
 
     it "interprets not for mixed union (false)" do
-      interpret("!(1 == 1 ? false : 2)").should eq(true)
+      interpret("!(1 == 1 ? false : 2)").should be_true
     end
 
     it "interprets not for mixed union (true)" do
-      interpret("!(1 == 1 ? true : 2)").should eq(false)
+      interpret("!(1 == 1 ? true : 2)").should be_false
     end
 
     it "interprets not for mixed union (other)" do
-      interpret("!(1 == 1 ? 2 : true)").should eq(false)
+      interpret("!(1 == 1 ? 2 : true)").should be_false
     end
 
     it "interprets not for nilable type (false)" do
-      interpret(%(!(1 == 1 ? "hello" : nil))).should eq(false)
+      interpret(%(!(1 == 1 ? "hello" : nil))).should be_false
     end
 
     it "interprets not for nilable type (true)" do
-      interpret(%(!(1 == 1 ? nil : "hello"))).should eq(true)
+      interpret(%(!(1 == 1 ? nil : "hello"))).should be_true
     end
 
     it "interprets not for nilable proc type (true)" do
-      interpret(<<-CRYSTAL).should eq(true)
+      interpret(<<-CRYSTAL).should be_true
         a =
           if 1 == 1
             nil
@@ -764,7 +766,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "interprets not for nilable proc type (false)" do
-      interpret(<<-CRYSTAL).should eq(false)
+      interpret(<<-CRYSTAL).should be_false
         a =
           if 1 == 1
             ->{ 1 }
@@ -776,7 +778,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "interprets not for generic class instance type" do
-      interpret(<<-CRYSTAL).should eq(false)
+      interpret(<<-CRYSTAL).should be_false
         class Foo(T)
         end
 
@@ -786,7 +788,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "interprets not for nilable type (false)" do
-      interpret(<<-CRYSTAL).should eq(false)
+      interpret(<<-CRYSTAL).should be_false
         class Foo
         end
 
@@ -803,7 +805,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "interprets not for nilable type (true)" do
-      interpret(<<-CRYSTAL).should eq(true)
+      interpret(<<-CRYSTAL).should be_true
         class Foo
         end
 
@@ -820,7 +822,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "interprets not for module (#12918)" do
-      interpret(<<-CRYSTAL).should eq(false)
+      interpret(<<-CRYSTAL).should be_false
         module MyModule; end
 
         class One
@@ -832,7 +834,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "interprets not for generic module" do
-      interpret(<<-CRYSTAL).should eq(false)
+      interpret(<<-CRYSTAL).should be_false
         module MyModule(T); end
 
         class One
@@ -844,7 +846,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "interprets not for generic module metaclass" do
-      interpret(<<-CRYSTAL).should eq(false)
+      interpret(<<-CRYSTAL).should be_false
         module MyModule(T); end
 
         !MyModule(Int32)
@@ -852,7 +854,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "interprets not for generic class instance metaclass" do
-      interpret(<<-CRYSTAL).should eq(false)
+      interpret(<<-CRYSTAL).should be_false
         class MyClass(T); end
 
         !MyClass(Int32)

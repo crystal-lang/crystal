@@ -131,10 +131,24 @@ describe "Primitives: Int" do
     end
   end
 
+  describe "#unsafe_chr" do
+    it "doesn't raise on overflow" do
+      (0x41_i64 - 0x100000000_i64).unsafe_chr.should eq('A')
+      0xFFFF_FFFF_0010_FFFF_u64.unsafe_chr.should eq('\u{10FFFF}')
+    end
+  end
+
   describe "#to_f" do
     it "raises on overflow for UInt128#to_f32" do
       expect_raises(OverflowError) { UInt128::MAX.to_f32 }
       expect_raises(OverflowError) { Float32::MAX.to_u128.succ.to_f32 } # Float32::MAX == 2 ** 128 - 2 ** 104
+    end
+  end
+
+  describe "#to_f!" do
+    it "doesn't raise on overflow for UInt128#to_f32" do
+      UInt128::MAX.to_f32!.should eq(Float32::INFINITY)
+      Float32::MAX.to_u128.succ.to_f32!.should eq(Float32::MAX)
     end
   end
 end

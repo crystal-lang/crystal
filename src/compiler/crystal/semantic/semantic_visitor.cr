@@ -69,25 +69,11 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
 
     if filenames
       nodes = Array(ASTNode).new(filenames.size)
-      filenames.each do |filename|
-        if @program.requires.add?(filename)
-          parser = @program.new_parser(File.read(filename))
-          parser.filename = filename
-          parser.wants_doc = @program.wants_doc?
-          begin
-            parsed_nodes = parser.parse
-            parsed_nodes = @program.normalize(parsed_nodes, inside_exp: inside_exp?)
-            # We must type the node immediately, in case a file requires another
-            # *before* one of the files in `filenames`
-            parsed_nodes.accept self
-          rescue ex : CodeError
-            node.raise "while requiring \"#{node.string}\"", ex
-          rescue ex
-            raise Error.new "while requiring \"#{node.string}\"", ex
-          end
-          nodes << FileNode.new(parsed_nodes, filename)
-        end
+
+      @program.run_requires(node, filenames) do |filename|
+        nodes << require_file(node, filename)
       end
+
       expanded = Expressions.from(nodes)
     else
       expanded = Nop.new
@@ -96,6 +82,25 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     node.expanded = expanded
     node.bind_to(expanded)
     false
+  end
+
+  private def require_file(node : Require, filename : String)
+    parser = @program.new_parser(File.read(filename))
+    parser.filename = filename
+    parser.wants_doc = @program.wants_doc?
+    begin
+      parsed_nodes = parser.parse
+      parsed_nodes = @program.normalize(parsed_nodes, inside_exp: inside_exp?)
+      # We must type the node immediately, in case a file requires another
+      # *before* one of the files in `filenames`
+      parsed_nodes.accept self
+    rescue ex : CodeError
+      node.raise "while requiring \"#{node.string}\"", ex
+    rescue ex
+      raise Error.new "while requiring \"#{node.string}\"", ex
+    end
+
+    FileNode.new(parsed_nodes, filename)
   end
 
   def visit(node : ClassDef)
@@ -359,6 +364,8 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
       visibility: visibility,
     )
 
+    node.doc ||= annotations_doc @annotations
+
     if node_doc = node.doc
       generated_nodes.accept PropagateDocVisitor.new(node_doc)
     end
@@ -454,8 +461,24 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
 
   def eval_macro(node, &)
     yield
+  rescue ex : TopLevelMacroRaiseException
+    # If the node that caused a top level macro raise is a `Call`, it denotes it happened within the context of a macro.
+    # In this case, we want the inner most exception to be the call of the macro itself so that it's the last frame in the trace.
+    # This will make the actual `#raise` method call be the first frame.
+    if node.is_a? Call
+      ex.inner = Crystal::MacroRaiseException.for_node node, ex.message
+    end
+
+    # Otherwise, if the current node is _NOT_ a `Call`, it denotes a top level raise within a method.
+    # In this case, we want the same behavior as if it were a `Call`, but do not want to set the inner exception here since that will be handled via `Call#bubbling_exception`.
+    # So just re-raise the exception to keep the original location intact.
+    raise ex
   rescue ex : MacroRaiseException
-    node.raise ex.message, exception_type: MacroRaiseException
+    # Raise another exception on this node, keeping the original as the inner exception.
+    # This will retain the location of the node specific raise as the last frame, while also adding in this node into the trace.
+    #
+    # If the original exception does not have a location, it'll essentially be dropped and this node will take its place as the last frame.
+    node.raise ex.message, ex, exception_type: Crystal::MacroRaiseException
   rescue ex : Crystal::CodeError
     node.raise "expanding macro", ex
   end
@@ -502,6 +525,10 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
       # ditto DeprecatedAnnotation
       ExperimentalAnnotation.from(ann)
     end
+  end
+
+  private def annotations_doc(annotations)
+    annotations.try(&.first?).try &.doc
   end
 
   def check_class_var_annotations

@@ -286,6 +286,26 @@ class URI
     self.query = params.to_s
   end
 
+  # Yields the value of `#query_params` commits any modifications of the `URI::Params` instance to self.
+  # Returns the modified `URI::Params`
+  #
+  # ```
+  # require "uri"
+  # uri = URI.parse("http://foo.com?id=30&limit=5#time=1305298413")
+  # uri.update_query_params { |params| params.delete_all("limit") } # => URI::Params{"id" => ["30"]}
+  #
+  # puts uri.to_s # => "http://foo.com?id=30#time=1305298413"
+  # ```
+  def update_query_params(& : URI::Params -> _) : URI
+    params = query_params
+
+    yield params
+
+    self.query_params = params
+
+    self
+  end
+
   # Returns the authority component of this URI.
   # It is formatted as `user:pass@host:port` with missing parts being omitted.
   #

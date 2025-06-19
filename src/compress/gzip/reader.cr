@@ -129,7 +129,7 @@ class Compress::Gzip::Reader < IO
   end
 
   # Always raises `IO::Error` because this is a read-only `IO`.
-  def unbuffered_write(slice : Bytes) : Nil
+  def unbuffered_write(slice : Bytes) : NoReturn
     raise IO::Error.new("Can't write to Compress::Gzip::Reader")
   end
 

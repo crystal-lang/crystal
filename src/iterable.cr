@@ -51,6 +51,20 @@ module Iterable(T)
     each.cons_pair
   end
 
+  # Same as `each.step(n)`.
+  #
+  # See also: `Iterator#step`.
+  def each_step(n : Int)
+    each.step(n)
+  end
+
+  # Same as `each.skip(offset).step(n)`.
+  #
+  # See also: `Iterator#step`.
+  def each_step(n : Int, *, offset : Int)
+    each.skip(offset).step(n)
+  end
+
   # Same as `each.with_index(offset)`.
   #
   # See also: `Iterator#with_index(offset)`.

@@ -278,12 +278,18 @@ require "./repl"
       u128_to_f32: {
         pop_values: [value : UInt128],
         push:       true,
+        overflow:   true,
         code:       value.to_f32,
       },
       u128_to_f64: {
         pop_values: [value : UInt128],
         push:       true,
         code:       value.to_f64,
+      },
+      u128_to_f32_bang: {
+        pop_values: [value : UInt128],
+        push:       true,
+        code:       value.to_f32!,
       },
       f32_to_f64: {
         pop_values: [value : Float32],
@@ -951,14 +957,16 @@ require "./repl"
         code:       a == b ? 0 : (a < b ? -1 : 1),
       },
       cmp_f32: {
+        operands:   [predicate : Compiler::FloatPredicate],
         pop_values: [a : Float32, b : Float32],
         push:       true,
-        code:       a == b ? 0 : (a < b ? -1 : 1),
+        code:       predicate.compare(a, b),
       },
       cmp_f64: {
+        operands:   [predicate : Compiler::FloatPredicate],
         pop_values: [a : Float64, b : Float64],
         push:       true,
-        code:       a == b ? 0 : (a < b ? -1 : 1),
+        code:       predicate.compare(a, b),
       },
       cmp_eq: {
         pop_values: [cmp : Int32],
@@ -1268,6 +1276,16 @@ require "./repl"
           ptr
         end,
       },
+      reset_class: {
+        operands:   [size : Int32, type_id : Int32],
+        pop_values: [pointer : Pointer(UInt8)],
+        push:       true,
+        code:       begin
+          pointer.clear(size)
+          pointer.as(Int32*).value = type_id
+          pointer
+        end,
+      },
       put_metaclass: {
         operands:   [size : Int32, union_type : Bool],
         push:       true,
@@ -1291,7 +1309,7 @@ require "./repl"
         code:       begin
           tmp_stack = stack
           stack_grow_by(union_size - from_size)
-          (tmp_stack - from_size).copy_to(tmp_stack - from_size + type_id_bytesize, from_size)
+          (tmp_stack - from_size).move_to(tmp_stack - from_size + type_id_bytesize, from_size)
           (tmp_stack - from_size).as(Int64*).value = type_id.to_i64!
         end,
         disassemble: {
@@ -1301,6 +1319,8 @@ require "./repl"
       put_reference_type_in_union: {
         operands:   [union_size : Int32],
         code:       begin
+          # `copy_to` here is valid only when `from_size <= type_id_bytesize`,
+          # which is always true
           from_size = sizeof(Pointer(UInt8))
           reference = (stack - from_size).as(UInt8**).value
           type_id =
@@ -1444,7 +1464,7 @@ require "./repl"
       tuple_indexer_known_index: {
         operands:   [tuple_size : Int32, offset : Int32, value_size : Int32],
         code:       begin
-          (stack - tuple_size).copy_from(stack - tuple_size + offset, value_size)
+          (stack - tuple_size).move_from(stack - tuple_size + offset, value_size)
           aligned_value_size = align(value_size)
           stack_shrink_by(tuple_size - value_size)
           stack_grow_by(aligned_value_size - value_size)
@@ -1456,7 +1476,7 @@ require "./repl"
       },
       tuple_copy_element: {
         operands:   [tuple_size : Int32, old_offset : Int32, new_offset : Int32, element_size : Int32],
-        code:       (stack - tuple_size + new_offset).copy_from(stack - tuple_size + old_offset, element_size),
+        code:       (stack - tuple_size + new_offset).move_from(stack - tuple_size + old_offset, element_size),
       },
       # >>> Tuples (3)
 
@@ -1464,7 +1484,7 @@ require "./repl"
       symbol_to_s: {
         pop_values: [index : Int32],
         push:       true,
-        code:       @context.index_to_symbol(index).object_id.unsafe_as(UInt64),
+        code:       @context.index_to_symbol(index).object_id.to_u64!,
       },
       # >>> Symbol (1)
 
@@ -1648,6 +1668,20 @@ require "./repl"
       interpreter_fiber_swapcontext: {
         pop_values: [current_context : Void*, new_context : Void*],
         code:       swapcontext(current_context, new_context),
+      },
+      interpreter_fiber_resumable: {
+        pop_values: [context : Void*],
+        push:       true,
+        code:       fiber_resumable(context),
+      },
+
+      interpreter_signal_descriptor: {
+        pop_values: [fd : Int32],
+        code:       signal_descriptor(fd),
+      },
+      interpreter_signal: {
+        pop_values: [signum : Int32, handler : Int32],
+        code:       signal(signum, handler),
       },
 
       {% if flag?(:bits64) %}
@@ -1836,6 +1870,16 @@ require "./repl"
         pop_values: [value : Float64],
         push:       true,
         code:       LibM.floor_f64(value),
+      },
+      libm_fma_f32: {
+        pop_values: [value1 : Float32, value2 : Float32, value3 : Float32],
+        push:       true,
+        code:       LibM.fma_f32(value1, value2, value3),
+      },
+      libm_fma_f64: {
+        pop_values: [value1 : Float64, value2 : Float64, value3 : Float64],
+        push:       true,
+        code:       LibM.fma_f64(value1, value2, value3),
       },
       libm_log_f32: {
         pop_values: [value : Float32],

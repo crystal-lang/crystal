@@ -283,7 +283,7 @@ class XML::Builder
   end
 
   private macro call(name, *args)
-    ret = LibXML.xmlTextWriter{{name}}(@writer, {{*args}})
+    ret = LibXML.xmlTextWriter{{name}}(@writer, {{args.splat}})
     check ret, {{@def.name.stringify}}
   end
 

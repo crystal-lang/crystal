@@ -30,7 +30,8 @@ private def parse_yaml(string_or_io)
   end
 end
 
-private def parse_scalar(ctx, node, type : T.class) forall T
+private def parse_scalar(ctx, node, type : T.class,
+                         expected_type : Class = T) forall T
   ctx.read_alias(node, T) do |obj|
     return obj
   end
@@ -41,7 +42,7 @@ private def parse_scalar(ctx, node, type : T.class) forall T
       ctx.record_anchor(node, value)
       value
     else
-      node.raise "Expected #{T}, not #{node.value.inspect}"
+      node.raise "Expected #{expected_type}, not #{node.value.inspect}"
     end
   else
     node.raise "Expected scalar, not #{node.kind}"
@@ -56,9 +57,19 @@ def Bool.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   parse_scalar(ctx, node, self)
 end
 
-{% for type in %w(Int8 Int16 Int32 Int64 UInt8 UInt16 UInt32 UInt64) %}
+{% for type in %w(Int8 Int16 Int32 Int64 Int128 UInt8 UInt16 UInt32 UInt64 UInt128) %}
   def {{type.id}}.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
-    {{type.id}}.new! parse_scalar(ctx, node, Int64)
+    ctx.read_alias(node, {{type.id}}) do |obj|
+      return obj
+    end
+
+    if node.is_a?(YAML::Nodes::Scalar)
+      value = YAML::Schema::Core.parse_int(node, {{type.id}})
+      ctx.record_anchor(node, value)
+      value
+    else
+      node.raise "Expected scalar, not #{node.kind}"
+    end
   end
 {% end %}
 
@@ -286,6 +297,13 @@ def Union.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
     # String must come last because anything can be parsed into a String.
     # So, we give a chance first to types in the union to be parsed.
     {% string_type = T.find { |type| type == ::String } %}
+
+    {% if string_type %}
+      if node.as?(YAML::Nodes::Scalar).try(&.style.quoted?)
+        # do prefer String if it's a quoted scalar though
+        return String.new(ctx, node)
+      end
+    {% end %}
 
     {% for type in T %}
       {% unless type == string_type %}

@@ -69,6 +69,10 @@ class XML::Attributes
     to_s(io)
   end
 
+  def pretty_print(pp : PrettyPrint) : Nil
+    pp.list("[", self, "]")
+  end
+
   protected def props
     @node.to_unsafe.value.properties
   end

@@ -359,6 +359,11 @@ module XML
         reader.value.should eq("2")
         reader.read.should be_false
       end
+
+      it "raises if attribute contains null byte" do
+        reader = Reader.new("<root/>")
+        expect_raises(Exception) { reader.move_to_attribute("\0") }
+      end
     end
 
     describe "#[]" do
@@ -378,6 +383,11 @@ module XML
         reader.read # </root>
         reader["id"].should eq("1")
       end
+
+      it "raises if attribute contains null byte" do
+        reader = Reader.new("<root/>")
+        expect_raises(Exception) { reader["\0"] }
+      end
     end
 
     describe "#[]?" do
@@ -396,6 +406,11 @@ module XML
         reader["id"]?.should be_nil
         reader.read # </root>
         reader["id"]?.should eq("1")
+      end
+
+      it "raises if attribute contains null byte" do
+        reader = Reader.new("<root/>")
+        expect_raises(Exception) { reader["\0"]? }
       end
     end
 
@@ -561,16 +576,6 @@ module XML
       reader.expand?
 
       reader.errors.map(&.to_s).should eq ["Opening and ending tag mismatch: people line 1 and foo"]
-    end
-
-    it "adds errors to `XML::Error.errors` (deprecated)" do
-      XML::Error.errors # clear class error list
-
-      reader = XML::Reader.new(%(<people></foo>))
-      reader.read
-      reader.expand?
-
-      XML::Error.errors.try(&.map(&.to_s)).should eq ["Opening and ending tag mismatch: people line 1 and foo"]
     end
   end
 end

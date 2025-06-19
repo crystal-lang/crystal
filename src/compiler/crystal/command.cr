@@ -19,6 +19,7 @@ class Crystal::Command
     Command:
         init                     generate a new project
         build                    build an executable
+        clear_cache              clear the compiler cache
         docs                     generate documentation
         env                      print Crystal environment information
         eval                     eval code from args or standard input
@@ -39,11 +40,14 @@ class Crystal::Command
 
     Tool:
         context                  show context for given location
+        dependencies             show file dependency tree
         expand                   show macro expansion for given location
+        flags                    print all macro `flag?` values
         format                   format project, directories and/or files
         hierarchy                show type hierarchy
         implementations          show implementations for given call in location
         types                    show type of main variables
+        unreachable              show methods that are never called
         --help, -h               show this help
     USAGE
 
@@ -55,7 +59,7 @@ class Crystal::Command
   @compiler : Compiler?
 
   def initialize(@options : Array(String))
-    @color = ENV["TERM"]? != "dumb"
+    @color = ENV["TERM"]? != "dumb" && !ENV["NO_COLOR"]?.try(&.empty?.!)
     @error_trace = false
     @progress_tracker = ProgressTracker.new
   end
@@ -112,6 +116,9 @@ class Crystal::Command
     when "tool".starts_with?(command)
       options.shift
       tool
+    when command == "clear_cache"
+      options.shift
+      clear_cache
     when "help".starts_with?(command), "--help" == command, "-h" == command
       puts USAGE
       exit
@@ -123,6 +130,16 @@ class Crystal::Command
     else
       if command.ends_with?(".cr")
         error "file '#{command}' does not exist"
+      elsif external_command = Process.find_executable("crystal-#{command}")
+        options.shift
+
+        crystal_exec_path = Crystal::Config.exec_path
+        path = [crystal_exec_path, ENV["PATH"]?].compact!.join(Process::PATH_DELIMITER)
+
+        Process.exec(external_command, options, env: {
+          "PATH"              => path,
+          "CRYSTAL_EXEC_PATH" => crystal_exec_path,
+        })
       else
         error "unknown command: #{command}"
       end
@@ -171,18 +188,27 @@ class Crystal::Command
     when "format".starts_with?(tool)
       options.shift
       format
+    when "flags" == tool
+      options.shift
+      flags
     when "expand".starts_with?(tool)
       options.shift
       expand
     when "hierarchy".starts_with?(tool)
       options.shift
       hierarchy
+    when "dependencies".starts_with?(tool)
+      options.shift
+      dependencies
     when "implementations".starts_with?(tool)
       options.shift
       implementations
     when "types".starts_with?(tool)
       options.shift
       types
+    when "unreachable".starts_with?(tool)
+      options.shift
+      unreachable
     when "--help" == tool, "-h" == tool
       puts COMMANDS_USAGE
       exit
@@ -235,8 +261,8 @@ class Crystal::Command
     end
   end
 
-  private def compile_no_codegen(command, wants_doc = false, hierarchy = false, no_cleanup = false, cursor_command = false, top_level = false)
-    config = create_compiler command, no_codegen: true, hierarchy: hierarchy, cursor_command: cursor_command
+  private def compile_no_codegen(command, wants_doc = false, hierarchy = false, no_cleanup = false, cursor_command = false, top_level = false, path_filter = false, unreachable_command = false, allowed_formats = ["text", "json"])
+    config = create_compiler command, no_codegen: true, hierarchy: hierarchy, cursor_command: cursor_command, path_filter: path_filter, unreachable_command: unreachable_command, allowed_formats: allowed_formats
     config.compiler.no_codegen = true
     config.compiler.no_cleanup = no_cleanup
     config.compiler.wants_doc = wants_doc
@@ -282,59 +308,35 @@ class Crystal::Command
       puts "Execute: #{elapsed_time}"
     end
 
-    if status.exit_reason.normal? && !error_on_exit
-      exit status.exit_code
+    if (exit_code = status.exit_code?) && !error_on_exit
+      exit exit_code
     end
 
-    if message = exit_message(status)
-      STDERR.puts message
+    unless status.exit_reason.normal?
+      STDERR.puts status.description
       STDERR.flush
     end
 
     exit 1
   end
 
-  private def exit_message(status)
-    case status.exit_reason
-    when .aborted?
-      if status.signal_exit?
-        signal = status.exit_signal
-        if signal.kill?
-          "Program was killed"
-        else
-          "Program received and didn't handle signal #{signal} (#{signal.value})"
-        end
-      else
-        "Program exited abnormally"
-      end
-    when .breakpoint?
-      "Program hit a breakpoint and no debugger was attached"
-    when .access_violation?, .bad_memory_access?
-      # NOTE: this only happens with the empty prelude, because the stdlib
-      # runtime catches those exceptions and then exits _normally_ with exit
-      # code 11 or 1
-      "Program exited because of an invalid memory access"
-    when .bad_instruction?
-      "Program exited because of an invalid instruction"
-    when .float_exception?
-      "Program exited because of a floating-point system exception"
-    when .unknown?
-      "Program exited abnormally, the cause is unknown"
-    end
-  end
-
   record CompilerConfig,
     compiler : Compiler,
     sources : Array(Compiler::Source),
     output_filename : String,
-    original_output_filename : String,
+    emit_base_filename : String?,
     arguments : Array(String),
     specified_output : Bool,
     hierarchy_exp : String?,
     cursor_location : String?,
-    output_format : String? do
+    output_format : String,
+    includes : Array(String),
+    excludes : Array(String),
+    verbose : Bool,
+    check : Bool,
+    tallies : Bool do
     def compile(output_filename = self.output_filename)
-      compiler.emit_base_filename = original_output_filename
+      compiler.emit_base_filename = emit_base_filename || output_filename.rchop(File.extname(output_filename))
       compiler.compile sources, output_filename
     end
 
@@ -345,9 +347,12 @@ class Crystal::Command
 
   private def create_compiler(command, no_codegen = false, run = false,
                               hierarchy = false, cursor_command = false,
-                              single_file = false)
+                              single_file = false, dependencies = false,
+                              path_filter = false, unreachable_command = false,
+                              allowed_formats = ["text", "json"])
     compiler = new_compiler
     compiler.progress_tracker = @progress_tracker
+    compiler.no_codegen = no_codegen
     link_flags = [] of String
     filenames = [] of String
     has_stdin_filename = false
@@ -358,6 +363,11 @@ class Crystal::Command
     hierarchy_exp = nil
     cursor_location = nil
     output_format = nil
+    excludes = [] of String
+    includes = [] of String
+    verbose = false
+    check = false
+    tallies = false
 
     option_parser = parse_with_crystal_opts do |opts|
       opts.banner = "Usage: crystal #{command} [options] [programfile] [--] [arguments]\n\nOptions:"
@@ -374,6 +384,14 @@ class Crystal::Command
         opts.on("--no-debug", "Skip any symbolic debug info") do
           compiler.debug = Crystal::Debug::None
         end
+
+        opts.on("--frame-pointers auto|always|non-leaf", "Control the preservation of frame pointers") do |value|
+          if frame_pointers = FramePointers.parse?(value)
+            compiler.frame_pointers = frame_pointers
+          else
+            error "Invalid value `#{value}` for frame-pointers"
+          end
+        end
       end
 
       opts.on("-D FLAG", "--define FLAG", "Define a compile-time flag") do |flag|
@@ -386,6 +404,17 @@ class Crystal::Command
 
         opts.on("--emit [#{valid_emit_values.join('|')}]", "Comma separated list of types of output for the compiler to emit") do |emit_values|
           compiler.emit_targets |= validate_emit_values(emit_values.split(',').map(&.strip))
+        end
+
+        opts.on("--x86-asm-syntax att|intel", "X86 dialect for --emit=asm: AT&T (default), Intel") do |value|
+          case value = LLVM::InlineAsmDialect.parse?(value)
+          in Nil
+            error "Invalid value `#{value}` for x86-asm-syntax"
+          in .att?
+            # Do nothing
+          in .intel?
+            LLVM.parse_command_line_options({"", "-x86-asm-syntax=intel"})
+          end
         end
       end
 
@@ -401,8 +430,32 @@ class Crystal::Command
         end
       end
 
-      opts.on("-f text|json", "--format text|json", "Output format text (default) or json") do |f|
+      if dependencies
+        opts.on("-i <path>", "--include <path>", "Include path") do |f|
+          includes << f
+        end
+
+        opts.on("-e <path>", "--exclude <path>", "Exclude path (default: lib)") do |f|
+          excludes << f
+        end
+
+        opts.on("--verbose", "Show skipped and filtered paths") do
+          verbose = true
+        end
+      end
+
+      opts.on("-f #{allowed_formats.join("|")}", "--format #{allowed_formats.join("|")}", "Output format: #{allowed_formats[0]} (default), #{allowed_formats[1..].join(", ")}") do |f|
         output_format = f
+      end
+
+      if unreachable_command
+        opts.on("--tallies", "Print reachable methods and their call counts as well") do
+          tallies = true
+        end
+
+        opts.on("--check", "Exits with error if there is any unreachable code") do |f|
+          check = true
+        end
       end
 
       opts.on("--error-trace", "Show full error trace") do
@@ -413,6 +466,16 @@ class Crystal::Command
       opts.on("-h", "--help", "Show this message") do
         puts opts
         exit
+      end
+
+      if path_filter
+        opts.on("-i <path>", "--include <path>", "Include path") do |f|
+          includes << f
+        end
+
+        opts.on("-e <path>", "--exclude <path>", "Exclude path (default: lib)") do |f|
+          excludes << f
+        end
       end
 
       unless no_codegen
@@ -435,7 +498,7 @@ class Crystal::Command
         opts.on("--no-codegen", "Don't do code generation") do
           compiler.no_codegen = true
         end
-        opts.on("-o ", "Output filename") do |an_output_filename|
+        opts.on("-o FILE", "--output FILE", "Output path. If a directory, the filename is derived from the first source file (default: ./)") do |an_output_filename|
           opt_output_filename = an_output_filename
           specified_output = true
         end
@@ -446,8 +509,15 @@ class Crystal::Command
       end
 
       unless no_codegen
-        opts.on("--release", "Compile in release mode") do
-          compiler.release = true
+        opts.on("--release", "Compile in release mode (-O3 --single-module)") do
+          compiler.release!
+        end
+        opts.on("-O LEVEL", "Optimization mode: 0 (default), 1, 2, 3, s, z") do |level|
+          if mode = Compiler::OptimizationMode.from_level?(level)
+            compiler.optimization_mode = mode
+          else
+            raise Error.new("Invalid optimization mode: O#{level}")
+          end
         end
       end
 
@@ -468,7 +538,7 @@ class Crystal::Command
           compiler.single_module = true
         end
         opts.on("--threads NUM", "Maximum number of threads to use") do |n_threads|
-          compiler.n_threads = n_threads.to_i
+          compiler.n_threads = n_threads.to_i? || raise Error.new("Invalid thread count: #{n_threads}")
         end
         unless run
           opts.on("--target TRIPLE", "Target triple") do |triple|
@@ -503,7 +573,6 @@ class Crystal::Command
 
     compiler.link_flags = link_flags.join(' ') unless link_flags.empty?
 
-    output_filename = opt_output_filename
     filenames += opt_filenames.not_nil!
     arguments = opt_arguments.not_nil!
 
@@ -521,39 +590,55 @@ class Crystal::Command
     if has_stdin_filename
       sources << Compiler::Source.new(filenames.shift, STDIN.gets_to_end)
     end
-    sources += gather_sources(filenames)
-    first_filename = sources.first.filename
-    first_file_ext = File.extname(first_filename)
-    original_output_filename = File.basename(first_filename, first_file_ext)
+    sources.concat gather_sources(filenames)
 
-    # Check if we'll overwrite the main source file
-    if first_file_ext.empty? && !output_filename && !no_codegen && !run && first_filename == File.expand_path(original_output_filename)
-      error "compilation will overwrite source file '#{Crystal.relative_filename(first_filename)}', either change its extension to '.cr' or specify an output file with '-o'"
+    output_extension = compiler.cross_compile? ? compiler.codegen_target.object_extension : compiler.codegen_target.executable_extension
+
+    # FIXME: The explicit cast should not be necessary (#15472)
+    output_path = ::Path[opt_output_filename.as?(String) || "./"]
+
+    if output_path.ends_with_separator? || File.directory?(output_path)
+      first_filename = sources.first.filename
+      output_filename = (output_path / "#{::Path[first_filename].stem}#{output_extension}").normalize.to_s
+
+      # Check if we'll overwrite the main source file
+      if !compiler.no_codegen? && !run && first_filename == File.expand_path(output_filename)
+        error "compilation will overwrite source file '#{Crystal.relative_filename(first_filename)}', either change its extension to '.cr' or specify an output file with '-o'"
+      end
+    else
+      output_filename = output_path.to_s
+      if output_path.extension.empty?
+        output_filename += output_extension
+      end
     end
 
-    output_filename ||= original_output_filename
-    output_format ||= "text"
-    unless output_format.in?("text", "json")
-      error "You have input an invalid format, only text and JSON are supported"
+    output_format ||= allowed_formats[0]
+    unless output_format.in?(allowed_formats)
+      error "You have input an invalid format: #{output_format}. Supported formats: #{allowed_formats.join(", ")}"
     end
 
     error "maximum number of threads cannot be lower than 1" if compiler.n_threads < 1
 
-    if !no_codegen && !run && Dir.exists?(output_filename)
+    if !compiler.no_codegen? && !run && Dir.exists?(output_filename)
       error "can't use `#{output_filename}` as output filename because it's a directory"
     end
 
-    @config = CompilerConfig.new compiler, sources, output_filename, original_output_filename, arguments, specified_output, hierarchy_exp, cursor_location, output_format
+    if run
+      emit_base_filename = ::Path[sources.first.filename].stem
+    end
+
+    @config = CompilerConfig.new compiler, sources, output_filename, emit_base_filename,
+      arguments, specified_output, hierarchy_exp, cursor_location, output_format.not_nil!,
+      includes, excludes, verbose, check, tallies
   end
 
   private def gather_sources(filenames)
     filenames.map do |filename|
-      unless File.file?(filename)
-        error "file '#{filename}' does not exist"
-      end
       filename = File.expand_path(filename)
       Compiler::Source.new(filename, File.read(filename))
     end
+  rescue exc : IO::Error
+    error exc
   end
 
   private def setup_simple_compiler_options(compiler, opts)
@@ -570,8 +655,21 @@ class Crystal::Command
       @error_trace = true
       compiler.show_error_trace = true
     end
-    opts.on("--release", "Compile in release mode") do
-      compiler.release = true
+    opts.on("--release", "Compile in release mode (-O3 --single-module)") do
+      compiler.release!
+    end
+    opts.on("-O LEVEL", "Optimization mode: 0 (default), 1, 2, 3, s, z") do |level|
+      if mode = Compiler::OptimizationMode.from_level?(level)
+        compiler.optimization_mode = mode
+      else
+        raise Error.new("Invalid optimization mode: O#{level}")
+      end
+    end
+    opts.on("--single-module", "Generate a single LLVM module") do
+      compiler.single_module = true
+    end
+    opts.on("--threads NUM", "Maximum number of threads to use") do |n_threads|
+      compiler.n_threads = n_threads.to_i? || raise Error.new("Invalid thread count: #{n_threads}")
     end
     opts.on("-s", "--stats", "Enable statistics output") do
       compiler.progress_tracker.stats = true
@@ -601,6 +699,12 @@ class Crystal::Command
         compiler.mcpu = LLVM.host_cpu_name
       else
         compiler.mcpu = cpu
+        if cpu == "help"
+          # LLVM will display a help message the moment the target machine is
+          # created, but "help" is not a valid CPU name, so exit immediately
+          compiler.create_target_machine
+          exit
+        end
       end
     end
     opts.on("--mattr CPU", "Target specific features") do |features|
@@ -609,12 +713,13 @@ class Crystal::Command
     opts.on("--mcmodel MODEL", "Target specific code model") do |mcmodel|
       compiler.mcmodel = case mcmodel
                          when "default" then LLVM::CodeModel::Default
+                         when "tiny"    then LLVM::CodeModel::Tiny
                          when "small"   then LLVM::CodeModel::Small
                          when "kernel"  then LLVM::CodeModel::Kernel
                          when "medium"  then LLVM::CodeModel::Medium
                          when "large"   then LLVM::CodeModel::Large
                          else
-                           error "--mcmodel should be one of: default, kernel, small, medium, large"
+                           error "--mcmodel should be one of: default, kernel, tiny, small, medium, large"
                            raise "unreachable"
                          end
     end
@@ -657,7 +762,7 @@ class Crystal::Command
 
   private def error(msg, exit_code = 1)
     # This is for the case where the main command is wrong
-    @color = false if ARGV.includes?("--no-color") || ENV["TERM"]? == "dumb"
+    @color = false if ARGV.includes?("--no-color") || ENV["TERM"]? == "dumb" || ENV["NO_COLOR"]?.try(&.empty?.!)
     Crystal.error msg, @color, exit_code: exit_code
   end
 

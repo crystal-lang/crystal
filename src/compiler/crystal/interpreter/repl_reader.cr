@@ -1,4 +1,4 @@
-require "../../../../lib/reply/src/reply"
+require "reply"
 
 class Crystal::ReplReader < Reply::Reader
   KEYWORDS = %w(
@@ -50,7 +50,7 @@ class Crystal::ReplReader < Reply::Reader
     self.word_delimiters = {{" \n\t+-*/,;@&%<>^\\[](){}|.~".chars}}
   end
 
-  def prompt(io : IO, line_number : Int32, color? : Bool) : Nil
+  def prompt(io : IO, line_number : Int32, color : Bool) : Nil
     io << "icr:"
     io << line_number
 

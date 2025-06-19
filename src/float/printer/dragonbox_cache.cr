@@ -99,7 +99,7 @@ module Float::Printer::Dragonbox
     end
 
     CACHE = begin
-      cache = [] of WUInt::UInt128
+      cache = Array(WUInt::UInt128).new(619)
       put(cache, 0xff77b1fcbebcdc4f_u64, 0x25e8e89c13bb0f7b_u64)
       put(cache, 0x9faacf3df73609b1_u64, 0x77b191618c54e9ad_u64)
       put(cache, 0xc795830d75038c1d_u64, 0xd59df5b9ef6a2418_u64)

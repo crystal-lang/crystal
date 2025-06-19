@@ -102,8 +102,8 @@ class Log
     end
 
     # :ditto:
-    def check(level : Severity, pattern : Regex, file = __FILE__, line = __LINE__) : self
-      self.check("#{level} matching #{pattern.inspect}", file, line) { |e| e.severity == level && e.message.matches?(pattern) }
+    def check(level : Severity, pattern : Regex, file = __FILE__, line = __LINE__, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : self
+      self.check("#{level} matching #{pattern.inspect}", file, line) { |e| e.severity == level && e.message.matches?(pattern, options: options) }
     end
 
     # :nodoc:
@@ -127,8 +127,8 @@ class Log
     end
 
     # :ditto:
-    def next(level : Severity, pattern : Regex, file = __FILE__, line = __LINE__) : self
-      self.next("#{level} matching #{pattern.inspect}", file, line) { |e| e.severity == level && e.message.matches?(pattern) }
+    def next(level : Severity, pattern : Regex, file = __FILE__, line = __LINE__, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : self
+      self.next("#{level} matching #{pattern.inspect}", file, line) { |e| e.severity == level && e.message.matches?(pattern, options: options) }
     end
 
     # Clears the emitted entries so far

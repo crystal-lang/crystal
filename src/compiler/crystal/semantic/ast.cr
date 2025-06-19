@@ -47,8 +47,6 @@ module Crystal
   class Var
     def initialize(@name : String, @type : Type)
     end
-
-    def_equals name, type?
   end
 
   # Fictitious node to represent primitives
@@ -87,7 +85,7 @@ module Crystal
     end
 
     def to_macro_id
-      @type.to_s
+      @type.not_nil!.devirtualize.to_s
     end
 
     def clone_without_location
@@ -653,7 +651,7 @@ module Crystal
                    ArrayLiteral HashLiteral RegexLiteral RangeLiteral
                    Case StringInterpolation
                    MacroExpression MacroIf MacroFor MacroVerbatim MultiAssign
-                   SizeOf InstanceSizeOf OffsetOf Global Require Select) %}
+                   SizeOf InstanceSizeOf AlignOf InstanceAlignOf OffsetOf Global Require Select) %}
     class {{name.id}}
       include ExpandableNode
     end
@@ -686,6 +684,7 @@ module Crystal
   end
 
   class External < Def
+    property? external_var : Bool = false
     property real_name : String
     property! fun_def : FunDef
     property call_convention : LLVM::CallConvention?

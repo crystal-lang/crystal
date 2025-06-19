@@ -27,6 +27,10 @@ struct Tape
     @pos -= 1
     raise "pos should be > 0" if @pos < 0
   end
+
+  def set(value)
+    @tape[@pos] = value
+  end
 end
 
 class Program
@@ -43,6 +47,7 @@ class Program
       when '+'; tape.inc
       when '-'; tape.dec
       when '.'; print tape.get.chr
+      when ','; STDIN.read_byte.try { |byte| tape.set byte.to_i }
       when '['; pc = @bracket_map[pc] if tape.get == 0
       when ']'; pc = @bracket_map[pc] if tape.get != 0
       else # skip

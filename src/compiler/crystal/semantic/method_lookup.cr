@@ -122,7 +122,7 @@ module Crystal
           context.defining_type = macro_owner if macro_owner
           context.self_restriction_type = item.def.self_restriction_type
           context.def_free_vars = item.def.free_vars
-          context.free_vars.try &.clear
+          context.bound_free_vars.try &.clear
 
           match = signature.match(item, context)
 
@@ -146,7 +146,7 @@ module Crystal
             context.defining_type = path_lookup if macro_owner
             context.self_restriction_type = nil
             context.def_free_vars = nil
-            context.free_vars.try &.clear
+            context.bound_free_vars.try &.clear
           end
         end
 
@@ -369,7 +369,7 @@ module Crystal
 
       # We reuse a match context without free vars, but we create
       # new ones when there are free vars.
-      context = context.clone if context.free_vars
+      context = context.clone if context.bound_free_vars
 
       Match.new(a_def, (matched_arg_types || arg_types), context, matched_named_arg_types)
     end
@@ -481,7 +481,7 @@ module Crystal
                 end
 
                 new_subtype_matches ||= [] of Match
-                new_subtype_matches.push Match.new(cloned_def, full_subtype_match.arg_types, MatchContext.new(subtype_lookup, full_subtype_match.context.defining_type, full_subtype_match.context.free_vars), full_subtype_match.named_arg_types)
+                new_subtype_matches.push Match.new(cloned_def, full_subtype_match.arg_types, MatchContext.new(subtype_lookup, full_subtype_match.context.defining_type, full_subtype_match.context.bound_free_vars), full_subtype_match.named_arg_types)
               end
 
               # Reset the `self` restriction override

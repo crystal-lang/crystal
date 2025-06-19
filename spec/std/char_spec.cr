@@ -1,23 +1,59 @@
 require "spec"
 require "unicode"
 require "spec/helpers/iterate"
-require "../support/string"
+require "spec/helpers/string"
 
 describe "Char" do
-  describe "upcase" do
+  describe "#upcase" do
     it { 'a'.upcase.should eq('A') }
     it { '1'.upcase.should eq('1') }
+    it { assert_iterates_yielding ['F', 'F', 'L'], 'ﬄ'.upcase }
+
+    it "writes to IO" do
+      io = IO::Memory.new
+      'a'.upcase(io)
+      '1'.upcase(io)
+      'ﬄ'.upcase(io)
+      io.to_s.should eq("A1FFL")
+    end
   end
 
-  describe "downcase" do
+  describe "#downcase" do
     it { 'A'.downcase.should eq('a') }
     it { '1'.downcase.should eq('1') }
-    it do
-      actual = [] of Char
-      'ß'.downcase(Unicode::CaseOptions::Fold) { |c| actual << c }
-      actual.should eq(['s', 's'])
-    end
+    it { assert_iterates_yielding ['i', '\u{0307}'], 'İ'.downcase }
+    it { assert_iterates_yielding ['s', 's'], 'ß'.downcase(Unicode::CaseOptions::Fold) }
     it { 'Ń'.downcase(Unicode::CaseOptions::Fold).should eq('ń') }
+    it { 'ꭰ'.downcase(Unicode::CaseOptions::Fold).should eq('Ꭰ') } # U+AB70 CHEROKEE SMALL LETTER A
+    it { 'Ꭰ'.downcase(Unicode::CaseOptions::Fold).should eq('Ꭰ') } # U+13A0 CHEROKEE LETTER A
+
+    it "writes to IO" do
+      io = IO::Memory.new
+      'A'.downcase(io)
+      '1'.downcase(io)
+      'İ'.downcase(io)
+      'ß'.downcase(io, Unicode::CaseOptions::Fold)
+      'Ń'.downcase(io, Unicode::CaseOptions::Fold)
+      'ꭰ'.downcase(io, Unicode::CaseOptions::Fold)
+      'Ꭰ'.downcase(io, Unicode::CaseOptions::Fold)
+      io.to_s.should eq("a1i\u{0307}ssńᎠᎠ")
+    end
+  end
+
+  describe "#titlecase" do
+    it { 'a'.titlecase.should eq('A') }
+    it { '1'.titlecase.should eq('1') }
+    it { '\u{10D0}'.titlecase.should eq('\u{10D0}') } # GEORGIAN LETTER AN
+    it { assert_iterates_yielding ['F', 'f', 'l'], 'ﬄ'.titlecase }
+
+    it "writes to IO" do
+      io = IO::Memory.new
+      'a'.titlecase(io)
+      '1'.titlecase(io)
+      '\u{10D0}'.titlecase(io)
+      'ﬄ'.titlecase(io)
+      io.to_s.should eq("A1\u{10D0}Ffl")
+    end
   end
 
   it "#succ" do
@@ -85,6 +121,13 @@ describe "Char" do
     it { 'Á'.lowercase?.should be_false }
     it { '1'.lowercase?.should be_false }
     it { ' '.lowercase?.should be_false }
+  end
+
+  describe "#titlecase?" do
+    it { 'ǲ'.titlecase?.should be_true }
+    it { 'ᾈ'.titlecase?.should be_true }
+    it { 'A'.titlecase?.should be_false }
+    it { 'a'.titlecase?.should be_false }
   end
 
   describe "ascii_letter?" do

@@ -2,7 +2,7 @@ require "http/server"
 require "log"
 require "ecr/macros"
 require "compiler/crystal/tools/formatter"
-require "../../../../../lib/markd/src/markd"
+require "markd"
 
 module Crystal::Playground
   Log = ::Log.for("crystal.playground")
@@ -453,7 +453,7 @@ module Crystal::Playground
       public_dir = File.join(playground_dir, "public")
 
       agent_ws = PathWebSocketHandler.new "/agent" do |ws, context|
-        match_data = context.request.path.not_nil!.match(/\/(\d+)\/(\d+)$/).not_nil!
+        match_data = context.request.path.not_nil!.match!(/\/(\d+)\/(\d+)$/)
         session_key = match_data[1].to_i
         tag = match_data[2].to_i
         Log.info { "#{context.request.path} WebSocket connected (session=#{session_key}, tag=#{tag})" }

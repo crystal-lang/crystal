@@ -117,13 +117,13 @@ describe "Spec matchers" do
 
   it "detects a nesting `it`" do
     ex = expect_raises(Spec::NestingSpecError) { it { } }
-    ex.message.should eq "can't nest `it` or `pending`"
+    ex.message.should eq "Can't nest `it` or `pending`"
     ex.file.should eq __FILE__
   end
 
   it "detects a nesting `pending`" do
     ex = expect_raises(Spec::NestingSpecError) { pending }
-    ex.message.should eq "can't nest `it` or `pending`"
+    ex.message.should eq "Can't nest `it` or `pending`"
     ex.file.should eq __FILE__
   end
 

@@ -129,17 +129,25 @@ module Colorize
   # "hello".colorize.red.to_s # => "hello"
   # ```
   #
-  # NOTE: This is by default disabled on non-TTY devices because they likely don't support ANSI escape codes.
-  # This will also be disabled if the environment variable `TERM` is "dumb" or `NO_COLOR` contains any value.
-  class_property? enabled : Bool { !ENV.has_key?("NO_COLOR") }
+  # NOTE: This is by default enabled according to `.on_tty_only!`.
+  class_property? enabled : Bool do
+    STDOUT.tty? && STDERR.tty? && ENV["TERM"]? != "dumb" && !ENV["NO_COLOR"]?.try(&.empty?.!)
+  end
 
   # Makes `Colorize.enabled` `true` if and only if both of `STDOUT.tty?`
   # and `STDERR.tty?` are `true` and the tty is not considered a dumb terminal.
   # This is determined by the environment variable called `TERM`.
   # If `TERM=dumb`, color won't be enabled.
-  # If `NO_COLOR` contains any value color won't be enabled conforming to https://no-color.org
-  def self.on_tty_only!
-    self.enabled = STDOUT.tty? && STDERR.tty? && ENV["TERM"]? != "dumb" && !ENV.has_key?("NO_COLOR")
+  # If `NO_COLOR` contains any non-empty value, color won't be enabled
+  # conforming to https://no-color.org
+  #
+  # Returns the new value of `Colorize.enabled?`.
+  #
+  # This can be used to revert `Colorize.enabled?` to its default value after
+  # colorization is explicitly enabled or disabled.
+  def self.on_tty_only! : Bool
+    @@enabled = nil
+    enabled?
   end
 
   # Resets the color and text decoration of the *io*.
@@ -182,7 +190,7 @@ module Colorize::ObjectExtensions
     Colorize::Object.new(self).fore(fore)
   end
 
-  # Wraps `self` in a `Colorize::Object` and colors it with the given `Color256` made
+  # Wraps `self` in a `Colorize::Object` and colors it with the given `ColorRGB` made
   # up from the given *r*ed, *g*reen and *b*lue values.
   def colorize(r : UInt8, g : UInt8, b : UInt8)
     Colorize::Object.new(self).fore(r, g, b)
@@ -285,7 +293,7 @@ module Colorize
     Bright = 1
     # Dims the text color.
     Dim
-    # Underlines the text.
+    # Draws a line below the text.
     Underline
     # Makes the text blink slowly.
     Blink
@@ -293,16 +301,31 @@ module Colorize
     Reverse
     # Makes the text invisible.
     Hidden
+    # Italicizes the text.
+    Italic
+    # Makes the text blink quickly.
+    BlinkFast
+    # Crosses out the text.
+    Strikethrough
+    # Draws two lines below the text.
+    DoubleUnderline
+    # Draws a line above the text.
+    Overline
   end
 end
 
 private def each_code(mode : Colorize::Mode, &)
-  yield '1' if mode.bold?
-  yield '2' if mode.dim?
-  yield '4' if mode.underline?
-  yield '5' if mode.blink?
-  yield '7' if mode.reverse?
-  yield '8' if mode.hidden?
+  yield "1" if mode.bold?
+  yield "2" if mode.dim?
+  yield "3" if mode.italic?
+  yield "4" if mode.underline?
+  yield "5" if mode.blink?
+  yield "6" if mode.blink_fast?
+  yield "7" if mode.reverse?
+  yield "8" if mode.hidden?
+  yield "9" if mode.strikethrough?
+  yield "21" if mode.double_underline?
+  yield "53" if mode.overline?
 end
 
 # A colorized object. Colors and text decorations can be modified.
@@ -446,6 +469,26 @@ struct Colorize::Object(T)
     end
   end
 
+  # Prints the ANSI escape codes for an object. Note that this has no effect on a `Colorize::Object` with content,
+  # only the escape codes.
+  #
+  # ```
+  # require "colorize"
+  #
+  # Colorize.with.red.ansi_escape        # => "\e[31m"
+  # "hello world".green.bold.ansi_escape # => "\e[32;1m"
+  # ```
+  def ansi_escape : String
+    String.build do |io|
+      ansi_escape io
+    end
+  end
+
+  # Same as `ansi_escape` but writes to a given *io*.
+  def ansi_escape(io : IO) : Nil
+    self.class.ansi_escape(io, to_named_tuple)
+  end
+
   private def to_named_tuple
     {
       fore: @fore,
@@ -459,6 +502,12 @@ struct Colorize::Object(T)
     back: ColorANSI::Default.as(Color),
     mode: Mode::None,
   }
+
+  protected def self.ansi_escape(io : IO, color : {fore: Color, back: Color, mode: Mode}) : Nil
+    last_color = @@last_color
+    append_start(io, color)
+    @@last_color = last_color
+  end
 
   protected def self.surround(io, color, &)
     last_color = @@last_color

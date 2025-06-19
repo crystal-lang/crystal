@@ -3,6 +3,12 @@ require "oauth2"
 require "http/server"
 require "../http/spec_helper"
 
+# TODO: Windows networking in the interpreter requires #12495
+{% if flag?(:interpreted) && flag?(:win32) %}
+  pending OAuth2::Client
+  {% skip_file %}
+{% end %}
+
 describe OAuth2::Client do
   describe "authorization uri" do
     it "gets with default endpoint" do
@@ -40,7 +46,7 @@ describe OAuth2::Client do
     end
   end
 
-  pending_win32 describe: "get_access_token_using_*" do
+  describe "get_access_token_using_*" do
     describe "using HTTP Basic authentication to pass credentials" do
       it "#get_access_token_using_authorization_code" do
         handler = HTTP::Handler::HandlerProc.new do |context|

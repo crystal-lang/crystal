@@ -19,7 +19,7 @@ lib LibC
 
   struct OVERLAPPED_ENTRY
     lpCompletionKey : ULONG_PTR
-    lpOverlapped : WSAOVERLAPPED*
+    lpOverlapped : OVERLAPPED*
     internal : ULONG_PTR
     dwNumberOfBytesTransferred : DWORD
   end
@@ -43,6 +43,11 @@ lib LibC
   enum GET_FILEEX_INFO_LEVELS
     GetFileExInfoStandard
     GetFileExMaxInfoLevel
+  end
+
+  enum FILE_INFO_BY_HANDLE_CLASS
+    FileBasicInfo        = 0
+    FileAttributeTagInfo = 9
   end
 
   LOCKFILE_FAIL_IMMEDIATELY = DWORD.new(0x00000001)

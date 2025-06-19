@@ -1,20 +1,14 @@
-{% if flag?(:musl) %}
-  # FIXME: These thread specs occasionally fail on musl/alpine based ci, so
-  # they're disabled for now to reduce noise.
-  # See https://github.com/crystal-lang/crystal/issues/8738
-  pending Thread::ConditionVariable
-  {% skip_file %}
-{% end %}
+require "../spec_helper"
+require "../../support/thread"
 
-require "spec"
-
-describe Thread::ConditionVariable do
+# interpreter doesn't support threads yet (#14287)
+pending_interpreted describe: Thread::ConditionVariable do
   it "signals" do
     mutex = Thread::Mutex.new
     cond = Thread::ConditionVariable.new
 
     mutex.synchronize do
-      Thread.new do
+      new_thread do
         mutex.synchronize { cond.signal }
       end
 
@@ -29,7 +23,7 @@ describe Thread::ConditionVariable do
     waiting = 0
 
     5.times do
-      Thread.new do
+      new_thread do
         mutex.synchronize do
           waiting += 1
           cv1.wait(mutex)
@@ -85,7 +79,7 @@ describe Thread::ConditionVariable do
     cond = Thread::ConditionVariable.new
 
     mutex.synchronize do
-      Thread.new do
+      new_thread do
         mutex.synchronize { cond.signal }
       end
 

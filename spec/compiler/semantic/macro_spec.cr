@@ -271,39 +271,160 @@ describe "Semantic: macro" do
       CRYSTAL
   end
 
-  it "executes raise inside macro" do
-    ex = assert_error(<<-CRYSTAL, "OH NO")
-      macro foo
-        {{ raise "OH NO" }}
-      end
-
-      foo
-      CRYSTAL
-
-    ex.to_s.should_not contain("expanding macro")
-  end
-
-  it "executes raise inside macro, with node (#5669)" do
-    ex = assert_error(<<-CRYSTAL, "OH")
+  it "errors if find macros but missing argument" do
+    assert_error(<<-CRYSTAL, "wrong number of arguments for macro 'foo' (given 0, expected 1)")
       macro foo(x)
-        {{ x.raise "OH\nNO" }}
-      end
-
-      foo(1)
-      CRYSTAL
-
-    ex.to_s.should contain "NO"
-    ex.to_s.should_not contain("expanding macro")
-  end
-
-  it "executes raise inside macro, with empty message (#8631)" do
-    assert_error(<<-CRYSTAL, "")
-      macro foo
-        {{ raise "" }}
+        1
       end
 
       foo
       CRYSTAL
+
+    assert_error(<<-CRYSTAL, "wrong number of arguments for macro 'foo' (given 0, expected 1)")
+      private macro foo(x)
+        1
+      end
+
+      foo
+      CRYSTAL
+  end
+
+  describe "raise" do
+    describe "inside macro" do
+      describe "without node" do
+        it "does not contain `expanding macro`" do
+          ex = assert_error(<<-CRYSTAL, "OH NO")
+            macro foo
+              {{ raise "OH NO" }}
+            end
+
+            foo
+            CRYSTAL
+
+          ex.to_s.should_not contain("expanding macro")
+        end
+
+        it "supports an empty message (#8631)" do
+          assert_error(<<-CRYSTAL, "")
+            macro foo
+              {{ raise "" }}
+            end
+
+            foo
+          CRYSTAL
+        end
+
+        it "renders both frames (#7147)" do
+          ex = assert_error(<<-CRYSTAL, "OH NO")
+            macro macro_raise(node)
+              {% raise "OH NO" %}
+            end
+
+            macro_raise 10
+          CRYSTAL
+
+          ex.to_s.should contain "OH NO"
+          ex.to_s.should contain "error in line 2"
+          ex.to_s.should contain "error in line 5"
+          ex.to_s.scan("error in line").size.should eq 2
+        end
+      end
+
+      describe "with node" do
+        it "contains the message and not `expanding macro` (#5669)" do
+          ex = assert_error(<<-CRYSTAL, "OH")
+            macro foo(x)
+              {{ x.raise "OH\nNO" }}
+            end
+
+            foo(1)
+          CRYSTAL
+
+          ex.to_s.should contain "NO"
+          ex.to_s.should_not contain("expanding macro")
+        end
+
+        it "renders both frames (#7147)" do
+          ex = assert_error(<<-'CRYSTAL', "OH")
+            macro macro_raise_on(arg)
+              {% arg.raise "OH NO" %}
+            end
+
+            macro_raise_on 123
+          CRYSTAL
+
+          ex.to_s.should contain "OH NO"
+          ex.to_s.should contain "error in line 5"
+          ex.to_s.scan("error in line").size.should eq 2
+        end
+
+        it "pointing at the correct node in complex/nested macro (#7147)" do
+          ex = assert_error(<<-'CRYSTAL', "Value method must be an instance method")
+            class Child
+              def self.value : Nil
+              end
+            end
+
+            module ExampleModule
+              macro calculate_value
+                {% begin %}
+                  {%
+                    if method = Child.class.methods.find &.name.stringify.==("value")
+                      method.raise "Value method must be an instance method."
+                    else
+                      raise "BUG: Didn't find value method."
+                    end
+                  %}
+                {% end %}
+              end
+
+              class_getter value : Nil do
+                calculate_value
+              end
+            end
+
+            ExampleModule.value
+          CRYSTAL
+
+          ex.to_s.should contain "error in line 20"
+          ex.to_s.should contain "error in line 2"
+          ex.to_s.scan("error in line").size.should eq 2
+        end
+
+        # TODO: Remove this spec once symbols literals have their location fixed
+        it "points to caller when missing node location information (#7147)" do
+          ex = assert_error(<<-'CRYSTAL', "foo")
+            macro macro_raise_on(arg)
+              {% arg.raise "foo" %}
+            end
+
+            macro_raise_on :this
+          CRYSTAL
+
+          ex.to_s.should contain "error in line 5"
+          ex.to_s.scan("error in line").size.should eq 1
+        end
+      end
+    end
+
+    describe "inside method" do
+      describe "without node" do
+        it "renders both frames (#7147)" do
+          ex = assert_error(<<-CRYSTAL, "OH")
+            def foo(x)
+              {% raise "OH NO" %}
+            end
+
+            foo 1
+          CRYSTAL
+
+          ex.to_s.should contain "OH NO"
+          ex.to_s.should contain "error in line 2"
+          ex.to_s.should contain "error in line 5"
+          ex.to_s.scan("error in line").size.should eq 2
+        end
+      end
+    end
   end
 
   it "can specify tuple as return type" do
@@ -490,6 +611,21 @@ describe "Semantic: macro" do
         baz
       end
       CRYSTAL
+  end
+
+  it "begins with {{ yield }} (#15050)" do
+    result = top_level_semantic <<-CRYSTAL, wants_doc: true
+      macro foo
+        {{yield}}
+      end
+
+      foo do
+        # doc comment
+        def test
+        end
+      end
+      CRYSTAL
+    result.program.defs.try(&.["test"][0].def.doc).should eq "doc comment"
   end
 
   it "can return class type in macro def" do
@@ -980,6 +1116,19 @@ describe "Semantic: macro" do
       end
 
       Foo(Int32).foo("foo")
+      CRYSTAL
+  end
+
+  it "finds type for global path shared with free var" do
+    assert_type(<<-CRYSTAL) { int32 }
+      module T
+      end
+
+      def foo(x : T) forall T
+        {{ ::T.module? ? 1 : 'a' }}
+      end
+
+      foo("")
       CRYSTAL
   end
 
@@ -1554,6 +1703,41 @@ describe "Semantic: macro" do
     method.location.not_nil!.expanded_location.not_nil!.line_number.should eq(9)
   end
 
+  it "assigns to underscore" do
+    assert_no_errors <<-CRYSTAL
+      {% _ = 1 %}
+      CRYSTAL
+  end
+
+  it "unpacks block parameters inside macros (#13742)" do
+    assert_no_errors <<-CRYSTAL
+      macro foo
+        {% [{1, 2}, {3, 4}].each { |(k, v)| k } %}
+      end
+
+      foo
+      CRYSTAL
+
+    assert_no_errors <<-CRYSTAL
+      macro foo
+        {% [{1, 2}, {3, 4}].each { |(k, v)| k } %}
+      end
+
+      foo
+      foo
+      CRYSTAL
+  end
+
+  it "unpacks to underscore within block parameters inside macros" do
+    assert_type(<<-CRYSTAL) { bool }
+      {% begin %}
+        {% x = nil %}
+        {% [{1, true, 'a', ""}].each { |(_, y, _, _)| x = y } %}
+        {{ x }}
+      {% end %}
+      CRYSTAL
+  end
+
   it "executes OpAssign (#9356)" do
     assert_type(<<-CRYSTAL) { int32 }
       {% begin %}
@@ -1585,5 +1769,46 @@ describe "Semantic: macro" do
         { {{a}}, {{b}} }
       {% end %}
       CRYSTAL
+  end
+
+  it "assigns to underscore in MultiAssign" do
+    assert_type(<<-CRYSTAL) { tuple_of([char, bool]) }
+      {% begin %}
+        {% _, x, *_, y = [1, 'a', "", nil, true] %}
+        { {{x}}, {{y}} }
+      {% end %}
+      CRYSTAL
+  end
+
+  describe "@caller" do
+    it "returns an array of each call" do
+      assert_type(<<-CRYSTAL) { int32 }
+        macro test
+          {{@caller.size == 1 ? 1 : 'f'}}
+        end
+
+        test
+        CRYSTAL
+    end
+
+    it "provides access to the `Call` information" do
+      assert_type(<<-CRYSTAL) { tuple_of([int32, char] of Type) }
+        macro test(num)
+          {{@caller.first.args[0] == 1 ? 1 : 'f'}}
+        end
+
+        {test(1), test(2)}
+        CRYSTAL
+    end
+
+    it "returns nil if no stack is available" do
+      assert_type(<<-CRYSTAL) { char }
+        def test
+          {{(c = @caller) ? 1 : 'f'}}
+        end
+
+        test
+        CRYSTAL
+    end
   end
 end

@@ -111,7 +111,7 @@ def get_id(m : UInt64)
   10.times do |id|
     return id.to_u8 if bm(m, id + 50) != 0
   end
-  raise "does not have a valid identifier"
+  raise "Does not have a valid identifier"
 end
 
 def to_utf8(raw_sol)

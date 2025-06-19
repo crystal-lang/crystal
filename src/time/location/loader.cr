@@ -5,8 +5,8 @@ class Time::Location
   # time zone data.
   #
   # Details on the exact cause can be found in the error message.
-  class InvalidTZDataError < Exception
-    def self.initialize(message : String? = "Malformed time zone information", cause : Exception? = nil)
+  class InvalidTZDataError < Time::Error
+    def initialize(message : String? = "Malformed time zone information", cause : Exception? = nil)
       super(message, cause)
     end
   end
@@ -26,6 +26,13 @@ class Time::Location
   end
 
   # :nodoc:
+  def self.load_android(name : String, sources : Enumerable(String)) : Time::Location?
+    if path = find_android_tzdata_file(sources)
+      load_from_android_tzdata(name, path) || raise InvalidLocationNameError.new(name, path)
+    end
+  end
+
+  # :nodoc:
   def self.load_from_dir_or_zip(name : String, source : String) : Time::Location?
     if source.ends_with?(".zip")
       open_file_cached(name, source) do |file|
@@ -37,6 +44,23 @@ class Time::Location
       path = File.join(source, name)
       open_file_cached(name, path) do |file|
         read_zoneinfo(name, file)
+      end
+    end
+  end
+
+  # :nodoc:
+  def self.load_from_android_tzdata(name : String, path : String) : Time::Location?
+    return nil unless File.exists?(path)
+
+    mtime = File.info(path).modification_time
+    if (cache = @@location_cache[name]?) && cache[:time] == mtime
+      cache[:location]
+    else
+      File.open(path) do |file|
+        read_android_tzdata(file, false) do |location_name, location|
+          @@location_cache[location_name] = {time: mtime, location: location}
+        end
+        @@location_cache[name].try &.[:location]
       end
     end
   end
@@ -68,21 +92,28 @@ class Time::Location
         path = File.join(source, name)
       end
 
-      return source if File.exists?(path) && File.file?(path) && File.readable?(path)
+      return source if File.exists?(path) && File.file?(path) && File::Info.readable?(path)
     end
   end
 
-  # Parse "zoneinfo" time zone file.
-  # This is the standard file format used by most operating systems.
-  # See https://data.iana.org/time-zones/tz-link.html, https://github.com/eggert/tz, tzfile(5)
+  # :nodoc:
+  def self.find_android_tzdata_file(sources : Enumerable(String)) : String?
+    sources.find do |path|
+      File.exists?(path) && File.file?(path) && File::Info.readable?(path)
+    end
+  end
 
   # :nodoc:
+  # Parse "zoneinfo" time zone file.
+  # This is the standard file format used by most operating systems.
+  # See https://datatracker.ietf.org/doc/html/rfc9636, https://data.iana.org/time-zones/tz-link.html,
+  # https://github.com/eggert/tz, tzfile(5)
   def self.read_zoneinfo(location_name : String, io : IO) : Time::Location
     raise InvalidTZDataError.new unless io.read_string(4) == "TZif"
 
     # 1-byte version, then 15 bytes of padding
     version = io.read_byte
-    raise InvalidTZDataError.new unless version.in?(0_u8, '2'.ord, '3'.ord)
+    raise InvalidTZDataError.new unless version.in?(0_u8, '2'.ord, '3'.ord, '4'.ord)
     io.skip(15)
 
     # six big-endian 32-bit integers:
@@ -93,56 +124,88 @@ class Time::Location
     #	number of local time zones
     #	number of characters of time zone abbrev strings
 
-    num_utc_local = read_int32(io)
-    num_std_wall = read_int32(io)
-    num_leap_seconds = read_int32(io)
-    num_transitions = read_int32(io)
-    num_local_time_zones = read_int32(io)
-    abbrev_length = read_int32(io)
+    isutcnt = read_int32(io)
+    isstdcnt = read_int32(io)
+    leapcnt = read_int32(io)
+    timecnt = read_int32(io)
+    typecnt = read_int32(io)
+    charcnt = read_int32(io)
 
-    transitionsdata = read_buffer(io, num_transitions * 4)
+    time_size = 4
+    if version != 0
+      # TZif version 2+ file; skip the version 1 body and read the next header
+      io.skip(timecnt * (time_size + 1) + typecnt * 6 + charcnt + leapcnt * (time_size + 4) + isstdcnt + isutcnt)
 
-    # Time zone indices for transition times.
-    transition_indexes = Bytes.new(num_transitions)
-    io.read_fully(transition_indexes)
+      raise InvalidTZDataError.new("Missing version 2+ header") unless io.read_string(4) == "TZif"
+      raise InvalidTZDataError.new("Version mismatch") unless io.read_byte == version
+      io.skip(15)
 
-    zonedata = read_buffer(io, num_local_time_zones * 6)
+      isutcnt = read_int32(io)
+      isstdcnt = read_int32(io)
+      leapcnt = read_int32(io)
+      timecnt = read_int32(io)
+      typecnt = read_int32(io)
+      charcnt = read_int32(io)
 
-    abbreviations = read_buffer(io, abbrev_length)
-
-    leap_second_time_pairs = Bytes.new(num_leap_seconds)
-    io.read_fully(leap_second_time_pairs)
-
-    isstddata = Bytes.new(num_std_wall)
-    io.read_fully(isstddata)
-
-    isutcdata = Bytes.new(num_utc_local)
-    io.read_fully(isutcdata)
-
-    # If version == 2 or 3, the entire file repeats, this time using
-    # 8-byte ints for txtimes and leap seconds.
-    # We won't need those until 2106.
-
-    zones = Array(Zone).new(num_local_time_zones) do
-      offset = read_int32(zonedata)
-      is_dst = zonedata.read_byte != 0_u8
-      name_idx = zonedata.read_byte
-      raise InvalidTZDataError.new unless name_idx && name_idx < abbreviations.size
-      abbreviations.pos = name_idx
-      name = abbreviations.gets(Char::ZERO, chomp: true)
-      raise InvalidTZDataError.new unless name
-      Zone.new(name, offset, is_dst)
+      time_size = 8
     end
 
-    transitions = Array(ZoneTransition).new(num_transitions) do |transition_id|
-      time = read_int32(transitionsdata).to_i64
+    transitionsdata = read_buffer(io, timecnt * time_size)
+
+    # Time zone indices for transition times.
+    transition_indexes = Bytes.new(timecnt)
+    io.read_fully(transition_indexes)
+
+    zonedata = read_buffer(io, typecnt * 6)
+
+    abbreviations = read_buffer(io, charcnt)
+
+    leap_second_time_pairs = Bytes.new(leapcnt * (time_size + 4))
+    io.read_fully(leap_second_time_pairs)
+
+    isstddata = Bytes.new(isstdcnt)
+    io.read_fully(isstddata)
+
+    isutcdata = Bytes.new(isutcnt)
+    io.read_fully(isutcdata)
+
+    zones = Array(Zone).new(typecnt) do
+      utoff = read_int32(zonedata)
+      isdst = zonedata.read_byte != 0_u8
+      desigidx = zonedata.read_byte
+      raise InvalidTZDataError.new unless desigidx && desigidx < abbreviations.size
+      abbreviations.pos = desigidx
+      name = abbreviations.gets(Char::ZERO, chomp: true)
+      raise InvalidTZDataError.new unless name
+      Zone.new(name, utoff, isdst)
+    end
+
+    transitions = Array(ZoneTransition).new(timecnt) do |transition_id|
+      time = time_size == 8 ? read_int64(transitionsdata) : read_int32(transitionsdata).to_i64
       zone_idx = transition_indexes[transition_id]
       raise InvalidTZDataError.new unless zone_idx < zones.size
 
       isstd = !isstddata[transition_id]?.in?(nil, 0_u8)
-      isutc = !isstddata[transition_id]?.in?(nil, 0_u8)
+      isutc = !isutcdata[transition_id]?.in?(nil, 0_u8)
 
       ZoneTransition.new(time, zone_idx, isstd, isutc)
+    end
+
+    if version != 0
+      unless io.read_byte === '\n'
+        raise InvalidTZDataError.new("Missing TZ footer")
+      end
+      unless tz_string = io.gets
+        raise InvalidTZDataError.new("Missing TZ string")
+      end
+
+      unless tz_string.empty?
+        hours_extension = version != '2'.ord # version 3+
+        if tz_args = TZ.parse(tz_string, zones, hours_extension)
+          return TZLocation.new(location_name, zones, tz_string, *tz_args, transitions)
+        end
+        raise InvalidTZDataError.new("Invalid TZ string: #{tz_string}")
+      end
     end
 
     new(location_name, zones, transitions)
@@ -150,8 +213,44 @@ class Time::Location
     raise InvalidTZDataError.new(cause: exc)
   end
 
+  private ANDROID_TZDATA_NAME_LENGTH = 40
+  private ANDROID_TZDATA_ENTRY_SIZE  = ANDROID_TZDATA_NAME_LENGTH + 12
+
+  # :nodoc:
+  # Reads a packed tzdata file for Android's Bionic C runtime. Defined in
+  # https://android.googlesource.com/platform/bionic/+/master/libc/tzcode/bionic.cpp
+  def self.read_android_tzdata(io : IO, local : Bool, & : String, Time::Location ->)
+    header = io.read_string(12)
+    raise InvalidTZDataError.new unless header.starts_with?("tzdata") && header.ends_with?('\0')
+
+    index_offset = read_int32(io)
+    data_offset = read_int32(io)
+    io.skip(4) # final_offset
+    unless index_offset <= data_offset && (data_offset - index_offset).divisible_by?(ANDROID_TZDATA_ENTRY_SIZE)
+      raise InvalidTZDataError.new
+    end
+
+    io.seek(index_offset)
+    entries = Array.new((data_offset - index_offset) // ANDROID_TZDATA_ENTRY_SIZE) do
+      name = io.read_string(40).rstrip('\0')
+      start = read_int32(io)
+      length = read_int32(io)
+      io.skip(4) # unused
+      {name, start, length}
+    end
+
+    entries.each do |(name, start, length)|
+      io.seek(start + data_offset)
+      yield name, read_zoneinfo(local ? "Local" : name, read_buffer(io, length))
+    end
+  end
+
   private def self.read_int32(io : IO)
     io.read_bytes(Int32, IO::ByteFormat::BigEndian)
+  end
+
+  private def self.read_int64(io : IO)
+    io.read_bytes(Int64, IO::ByteFormat::BigEndian)
   end
 
   private def self.read_buffer(io : IO, size : Int)

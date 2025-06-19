@@ -12,7 +12,7 @@ class LLVM::ABI::X86_Win64 < LLVM::ABI::X86
         when 2 then ArgType.direct(t, context.int16)
         when 4 then ArgType.direct(t, context.int32)
         when 8 then ArgType.direct(t, context.int64)
-        else        ArgType.indirect(t, nil)
+        else        ArgType.indirect(t, LLVM::Attribute::ByVal)
         end
       else
         non_struct(t, context)

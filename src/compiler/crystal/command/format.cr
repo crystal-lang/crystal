@@ -78,7 +78,7 @@ class Crystal::Command
       @show_backtrace : Bool = false,
       @color : Bool = true,
       # stdio is injectable for testing
-      @stdin : IO = STDIN, @stdout : IO = STDOUT, @stderr : IO = STDERR
+      @stdin : IO = STDIN, @stdout : IO = STDOUT, @stderr : IO = STDERR,
     )
       @format_stdin = files.size == 1 && files[0] == "-"
 
@@ -120,7 +120,7 @@ class Crystal::Command
           format_file filename
         end
       elsif Dir.exists?(filename)
-        filename = filename.chomp('/')
+        filename = ::Path[filename.chomp('/')].to_posix
         filenames = Dir["#{filename}/**/*.cr"]
         format_many filenames
       else

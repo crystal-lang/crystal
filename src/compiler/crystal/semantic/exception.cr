@@ -11,19 +11,19 @@ module Crystal
     getter column_number : Int32
     getter size : Int32
 
-    def color=(color)
-      @color = !!color
+    def color=(@color : Bool)
       inner.try &.color=(color)
+      color
     end
 
-    def error_trace=(error_trace)
-      @error_trace = !!error_trace
+    def error_trace=(@error_trace : Bool)
       inner.try &.error_trace=(error_trace)
+      error_trace
     end
 
-    def warning=(warning)
-      super
+    def warning=(@warning : Bool)
       inner.try &.warning=(warning)
+      warning
     end
 
     def self.for_node(node, message, inner = nil)
@@ -39,14 +39,6 @@ module Crystal
     def initialize(message, @line_number, @column_number : Int32, @filename, @size, @inner = nil)
       @error_trace = true
 
-      # If the inner exception is a macro raise, we replace this exception's
-      # message with that message. In this way the error message will
-      # look like a regular message produced by the compiler, and not
-      # because of an incorrect macro expansion.
-      if inner.is_a?(MacroRaiseException)
-        message = inner.message
-        @inner = nil
-      end
       super(message)
     end
 
@@ -300,6 +292,9 @@ module Crystal
   end
 
   class MacroRaiseException < TypeException
+  end
+
+  class TopLevelMacroRaiseException < MacroRaiseException
   end
 
   class SkipMacroException < ::Exception

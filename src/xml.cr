@@ -78,7 +78,7 @@ module XML
   # See `HTMLParserOptions.default` for default options.
   def self.parse_html(string : String, options : HTMLParserOptions = HTMLParserOptions.default) : Node
     raise XML::Error.new("Document is empty", 0) if string.empty?
-    from_ptr { LibXML.htmlReadMemory(string, string.bytesize, nil, nil, options) }
+    from_ptr { LibXML.htmlReadMemory(string, string.bytesize, nil, "utf-8", options) }
   end
 
   # Parses an HTML document from *io* with *options* into an `XML::Node`.
@@ -92,7 +92,7 @@ module XML
       ->(ctx) { 0 },
       Box(IO).box(io),
       nil,
-      nil,
+      "utf-8",
       options,
     ) }
   end
@@ -104,6 +104,37 @@ module XML
     raise Error.new(LibXML.xmlGetLastError) unless doc
 
     Node.new(doc, errors)
+  end
+
+  protected def self.with_indent_tree_output(indent : Bool, &)
+    ptr = LibXML.__xmlIndentTreeOutput
+    old, ptr.value = ptr.value, indent ? 1 : 0
+    begin
+      yield
+    ensure
+      ptr.value = old
+    end
+  end
+
+  protected def self.with_tree_indent_string(string : String, &)
+    ptr = LibXML.__xmlTreeIndentString
+    old, ptr.value = ptr.value, string.to_unsafe
+    begin
+      yield
+    ensure
+      ptr.value = old
+    end
+  end
+
+  class_getter libxml2_version : String do
+    version_string = String.new(LibXML.xmlParserVersion)
+
+    # The version string can contain extra information after the version number,
+    # so we ignore any trailing non-numbers with `strict: false`
+    number = version_string.to_i(strict: false)
+
+    # Construct a formatted version string
+    "#{number // 10_000}.#{number % 10_000 // 100}.#{number % 100}"
   end
 end
 

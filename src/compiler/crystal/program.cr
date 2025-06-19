@@ -84,6 +84,40 @@ module Crystal
     # This pool is passed to the parser, macro expander, etc.
     getter string_pool = StringPool.new
 
+    record ConstSliceInfo, name : String, element_type : NumberKind, args : Array(ASTNode) do
+      def to_bytes : Bytes
+        element_size = element_type.bytesize // 8
+        bytesize = args.size * element_size
+        buffer = Pointer(UInt8).malloc(bytesize)
+        ptr = buffer
+
+        args.each do |arg|
+          num = arg.as(NumberLiteral)
+          case element_type
+          in .i8?   then ptr.as(Int8*).value = num.value.to_i8
+          in .i16?  then ptr.as(Int16*).value = num.value.to_i16
+          in .i32?  then ptr.as(Int32*).value = num.value.to_i32
+          in .i64?  then ptr.as(Int64*).value = num.value.to_i64
+          in .i128? then ptr.as(Int128*).value = num.value.to_i128
+          in .u8?   then ptr.as(UInt8*).value = num.value.to_u8
+          in .u16?  then ptr.as(UInt16*).value = num.value.to_u16
+          in .u32?  then ptr.as(UInt32*).value = num.value.to_u32
+          in .u64?  then ptr.as(UInt64*).value = num.value.to_u64
+          in .u128? then ptr.as(UInt128*).value = num.value.to_u128
+          in .f32?  then ptr.as(Float32*).value = num.value.to_f32
+          in .f64?  then ptr.as(Float64*).value = num.value.to_f64
+          end
+          ptr += element_size
+        end
+
+        buffer.to_slice(bytesize)
+      end
+    end
+
+    # All constant slices constructed via the `Slice.literal` compiler built-in,
+    # indexed by their buffers' internal names (e.g. `$Slice:0`).
+    getter const_slices = {} of String => ConstSliceInfo
+
     # Here we store constants, in the
     # order that they are used. They will be initialized as soon
     # as the program starts, before the main code.
@@ -110,7 +144,7 @@ module Crystal
     # A `ProgressTracker` object which tracks compilation progress.
     property progress_tracker = ProgressTracker.new
 
-    property codegen_target = Config.host_target
+    getter codegen_target = Config.host_target
 
     getter predefined_constants = Array(Const).new
 
@@ -197,6 +231,8 @@ module Crystal
       types["Regex"] = @regex = NonGenericClassType.new self, self, "Regex", reference
       types["Range"] = range = @range = GenericClassType.new self, self, "Range", struct_t, ["B", "E"]
       range.struct = true
+      types["Slice"] = slice = @slice = GenericClassType.new self, self, "Slice", struct_t, ["T"]
+      slice.struct = true
 
       types["Exception"] = @exception = NonGenericClassType.new self, self, "Exception", reference
 
@@ -267,36 +303,79 @@ module Crystal
     # Defines a predefined constant in the Crystal module, such as BUILD_DATE and VERSION.
     private def define_crystal_constants
       if build_commit = Crystal::Config.build_commit
-        define_crystal_string_constant "BUILD_COMMIT", build_commit
+        build_commit_const = define_crystal_string_constant "BUILD_COMMIT", build_commit
       else
-        define_crystal_nil_constant "BUILD_COMMIT"
+        build_commit_const = define_crystal_nil_constant "BUILD_COMMIT"
       end
+      build_commit_const.doc = <<-MD
+        The build commit identifier of the Crystal compiler.
+        MD
 
-      define_crystal_string_constant "BUILD_DATE", Crystal::Config.date
-      define_crystal_string_constant "CACHE_DIR", CacheDir.instance.dir
-      define_crystal_string_constant "DEFAULT_PATH", Crystal::Config.path
-      define_crystal_string_constant "DESCRIPTION", Crystal::Config.description
-      define_crystal_string_constant "PATH", Crystal::CrystalPath.default_path
-      define_crystal_string_constant "LIBRARY_PATH", Crystal::CrystalLibraryPath.default_path
-      define_crystal_string_constant "VERSION", Crystal::Config.version
-      define_crystal_string_constant "LLVM_VERSION", Crystal::Config.llvm_version
+      define_crystal_string_constant "BUILD_DATE", Crystal::Config.date, <<-MD
+        The build date of the Crystal compiler.
+        MD
+      define_crystal_string_constant "CACHE_DIR", CacheDir.instance.dir, <<-MD
+        The cache directory configured for the Crystal compiler.
+
+        The value is defined by the environment variable `CRYSTAL_CACHE_DIR` and
+        defaults to the user's configured cache directory.
+        MD
+      define_crystal_string_constant "DEFAULT_PATH", Crystal::Config.path, <<-MD
+        The default Crystal path configured in the compiler. This value is baked
+        into the compiler and usually points to the accompanying version of the
+        standard library.
+        MD
+      define_crystal_string_constant "DESCRIPTION", Crystal::Config.description, <<-MD
+        Full version information of the Crystal compiler. Equivalent to `crystal --version`.
+        MD
+      define_crystal_string_constant "PATH", Crystal::CrystalPath.default_path, <<-MD
+        Colon-separated paths where the compiler searches for required source files.
+
+        The value is defined by the environment variable `CRYSTAL_PATH`
+        and defaults to `DEFAULT_PATH`.
+        MD
+      define_crystal_string_constant "LIBRARY_PATH", Crystal::CrystalLibraryPath.default_path, <<-MD
+        Colon-separated paths where the compiler searches for (binary) libraries.
+
+        The value is defined by the environment variables `CRYSTAL_LIBRARY_PATH`.
+        MD
+      define_crystal_string_constant "VERSION", Crystal::Config.version, <<-MD
+        The version of the Crystal compiler.
+        MD
+      define_crystal_string_constant "LLVM_VERSION", LLVM.version, <<-MD
+        The version of LLVM used by the Crystal compiler.
+        MD
+      define_crystal_string_constant "HOST_TRIPLE", Crystal::Config.host_target.to_s, <<-MD
+        The LLVM target triple of the host system (the machine that the compiler runs on).
+        MD
+      define_crystal_string_constant "TARGET_TRIPLE", Crystal::Config.host_target.to_s, <<-MD
+        The LLVM target triple of the target system (the machine that the compiler builds for).
+        MD
     end
 
-    private def define_crystal_string_constant(name, value)
-      define_crystal_constant name, StringLiteral.new(value).tap(&.set_type(string))
+    private def define_crystal_string_constant(name, value, doc = nil)
+      define_crystal_constant name, StringLiteral.new(value).tap(&.set_type(string)), doc
     end
 
-    private def define_crystal_nil_constant(name)
-      define_crystal_constant name, NilLiteral.new.tap(&.set_type(self.nil))
+    private def define_crystal_nil_constant(name, doc = nil)
+      define_crystal_constant name, NilLiteral.new.tap(&.set_type(self.nil)), doc
     end
 
-    private def define_crystal_constant(name, value)
+    private def define_crystal_constant(name, value, doc = nil) : Const
       crystal.types[name] = const = Const.new self, crystal, name, value
       const.no_init_flag = true
+      const.doc = doc
+
       predefined_constants << const
+      const
     end
 
     property(target_machine : LLVM::TargetMachine) { codegen_target.to_target_machine }
+
+    def codegen_target=(@codegen_target : Codegen::Target) : Codegen::Target
+      crystal.types["TARGET_TRIPLE"].as(Const).value.as(StringLiteral).value = codegen_target.to_s
+      @codegen_target
+    end
 
     # Returns the `Type` for `Array(type)`
     def array_of(type)
@@ -453,6 +532,22 @@ module Crystal
       recorded_requires << RecordedRequire.new(filename, relative_to)
     end
 
+    def run_requires(node : Require, filenames, &) : Nil
+      dependency_printer = compiler.try(&.dependency_printer)
+
+      filenames.each do |filename|
+        unseen_file = requires.add?(filename)
+
+        dependency_printer.try(&.enter_file(filename, unseen_file))
+
+        if unseen_file
+          yield filename
+        end
+
+        dependency_printer.try(&.leave_file)
+      end
+    end
+
     # Finds *filename* in the configured CRYSTAL_PATH for this program,
     # relative to *relative_to*.
     def find_in_path(filename, relative_to = nil) : Array(String)?
@@ -461,7 +556,7 @@ module Crystal
 
     {% for name in %w(object no_return value number reference void nil bool char int int8 int16 int32 int64 int128
                      uint8 uint16 uint32 uint64 uint128 float float32 float64 string symbol pointer enumerable indexable
-                     array static_array exception tuple named_tuple proc union enum range regex crystal
+                     array static_array exception tuple named_tuple proc union enum range slice regex crystal
                      packed_annotation thread_local_annotation no_inline_annotation
                      always_inline_annotation naked_annotation returns_twice_annotation
                      raises_annotation primitive_annotation call_convention_annotation

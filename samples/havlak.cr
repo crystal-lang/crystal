@@ -51,7 +51,7 @@ class CFG
   property :basic_block_map
 
   def create_node(name)
-    node = (@basic_block_map[name] ||= BasicBlock.new(name))
+    node = @basic_block_map.put_if_absent(name) { BasicBlock.new(name) }
     @start_node ||= node
     node
   end

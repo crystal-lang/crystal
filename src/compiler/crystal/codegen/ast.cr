@@ -138,4 +138,10 @@ module Crystal
       found_extern
     end
   end
+
+  class Asm
+    def dialect : LLVM::InlineAsmDialect
+      intel? ? LLVM::InlineAsmDialect::Intel : LLVM::InlineAsmDialect::ATT
+    end
+  end
 end

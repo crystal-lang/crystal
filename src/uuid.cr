@@ -1,3 +1,14 @@
+require "time"
+require "io"
+
+{% if flag?(:without_openssl) %}
+  require "crystal/digest/sha1"
+  require "crystal/digest/md5"
+{% else %}
+  require "digest/sha1"
+  require "digest/md5"
+{% end %}
+
 # Represents a UUID (Universally Unique IDentifier).
 #
 # NOTE: To use `UUID`, you must explicitly import it with `require "uuid"`
@@ -10,8 +21,10 @@ struct UUID
     Unknown
     # Reserved by the NCS for backward compatibility.
     NCS
-    # Reserved for RFC4122 Specification (default).
+    # Reserved for RFC 4122 Specification (default).
     RFC4122
+    # Reserved for RFC 9562 Specification (default for v7).
+    RFC9562 = RFC4122
     # Reserved by Microsoft for backward compatibility.
     Microsoft
     # Reserved for future expansion.
@@ -22,7 +35,7 @@ struct UUID
   enum Version
     # Unknown version.
     Unknown = 0
-    # Date-time and MAC address.
+    # Date-time and NodeID address.
     V1 = 1
     # DCE security.
     V2 = 2
@@ -32,6 +45,33 @@ struct UUID
     V4 = 4
     # SHA1 hash and namespace.
     V5 = 5
+    # Prefixed with a UNIX timestamp with millisecond precision, filled in with randomness.
+    V7 = 7
+  end
+
+  # A Domain represents a Version 2 domain (DCE security).
+  enum Domain
+    Person = 0
+    Group  = 1
+    Org    = 2
+  end
+
+  # MAC address to be used as NodeID.
+  alias MAC = UInt8[6]
+
+  # Namespaces as defined per in the RFC 4122 Appendix C.
+  #
+  # They are used with the functions `v3` amd `v5` to generate
+  # a `UUID` based on a `name`.
+  module Namespace
+    # A UUID is generated using the provided `name`, which is assumed to be a fully qualified domain name.
+    DNS = UUID.new("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
+    # A UUID is generated using the provided `name`, which is assumed to be a URL.
+    URL = UUID.new("6ba7b811-9dad-11d1-80b4-00c04fd430c8")
+    # A UUID is generated using the provided `name`, which is assumed to be an ISO OID.
+    OID = UUID.new("6ba7b812-9dad-11d1-80b4-00c04fd430c8")
+    # A UUID is generated using the provided `name`, which is assumed to be a X.500 DN in DER or a text output format.
+    X500 = UUID.new("6ba7b814-9dad-11d1-80b4-00c04fd430c8")
   end
 
   @bytes : StaticArray(UInt8, 16)
@@ -44,7 +84,7 @@ struct UUID
       # do nothing
     when Variant::NCS
       @bytes[8] = (@bytes[8] & 0x7f)
-    when Variant::RFC4122
+    when Variant::RFC4122, Variant::RFC9562
       @bytes[8] = (@bytes[8] & 0x3f) | 0x80
     when Variant::Microsoft
       @bytes[8] = (@bytes[8] & 0x1f) | 0xc0
@@ -176,6 +216,139 @@ struct UUID
     new(new_bytes, variant, version)
   end
 
+  # Generates RFC 4122 v1 UUID.
+  #
+  # The traditional method for generating a `node_id` involves using the machine’s MAC address.
+  # However, this approach is only effective if there is only one process running on the machine
+  # and if privacy is not a concern. In modern languages, the default is to prioritize security
+  # and privacy. Therefore, a pseudo-random `node_id` is generated as described in section 4.5 of
+  # the RFC.
+  #
+  # The sequence number `clock_seq` is used to generate the UUID. This number should be
+  # monotonically increasing, with only 14 bits of the clock sequence being used effectively.
+  # The clock sequence should be stored in a stable location, such as a file. If it is not
+  # stored, a random value is used by default. If not provided the current time milliseconds
+  # are used. In case the traditional MAC address based approach should be taken the
+  # `node_id` can be provided. Otherwise secure random is used.
+  def self.v1(*, clock_seq : UInt16? = nil, node_id : MAC? = nil) : self
+    tl = Time.local
+    now = (tl.to_unix_ns / 100).to_u64 + 122192928000000000
+    seq = ((clock_seq || (tl.nanosecond/1000000).to_u16) & 0x3fff) | 0x8000
+
+    time_low = UInt32.new(now & 0xffffffff)
+    time_mid = UInt16.new((now >> 32) & 0xffff)
+    time_hi = UInt16.new((now >> 48) & 0x0fff)
+    time_hi |= 0x1000 # Version 1
+
+    uuid = uninitialized UInt8[16]
+    IO::ByteFormat::BigEndian.encode(time_low, uuid.to_slice[0..3])
+    IO::ByteFormat::BigEndian.encode(time_mid, uuid.to_slice[4..5])
+    IO::ByteFormat::BigEndian.encode(time_hi, uuid.to_slice[6..7])
+    IO::ByteFormat::BigEndian.encode(seq, uuid.to_slice[8..9])
+
+    if node_id
+      6.times do |i|
+        uuid.to_slice[10 + i] = node_id[i]
+      end
+    else
+      Random::Secure.random_bytes(uuid.to_slice[10..15])
+      # set multicast bit as recommended per section 4.5 of the RFC 4122 spec
+      # to not conflict with real MAC addresses
+      uuid[10] |= 0x01_u8
+    end
+
+    new(uuid, version: UUID::Version::V1, variant: UUID::Variant::RFC4122)
+  end
+
+  # Generates RFC 4122 v2 UUID.
+  #
+  # Version 2 UUIDs are generated using the current time, the local machine’s MAC address,
+  # and the local user or group ID. However, they are not widely used due to their limitations.
+  # For a given domain/id pair, the same token may be returned for a duration of up to 7 minutes
+  # and 10 seconds.
+  #
+  # The `id` depends on the `domain`, for the `Domain::Person` usually the local user id (uid) is
+  # used, for `Domain::Group` usually the local group id (gid) is used. In case the traditional
+  # MAC address based approach should be taken the `node_id` can be provided. Otherwise secure
+  # random is used.
+  def self.v2(domain : Domain, id : UInt32, node_id : MAC? = nil) : self
+    uuid = v1(node_id: node_id).bytes
+    uuid[6] = (uuid[6] & 0x0f) | 0x20 # Version 2
+    uuid[9] = domain.to_u8
+    IO::ByteFormat::BigEndian.encode(id, uuid.to_slice[0..3])
+    new(uuid, version: UUID::Version::V2, variant: UUID::Variant::RFC4122)
+  end
+
+  # Generates RFC 4122 v3 UUID using the `name` to generate the UUID, it can be a string of any size.
+  # The `namespace` specifies the type of the name, usually one of `Namespace`.
+  def self.v3(name : String, namespace : UUID) : self
+    klass = {% if flag?(:without_openssl) %}::Crystal::Digest::MD5{% else %}::Digest::MD5{% end %}
+    hash = klass.digest do |ctx|
+      ctx.update namespace.bytes
+      ctx.update name
+    end
+    new(hash[0...16], version: UUID::Version::V3, variant: UUID::Variant::RFC4122)
+  end
+
+  # Generates RFC 4122 v4 UUID.
+  #
+  # It is strongly recommended to use a cryptographically random source for
+  # *random*, such as `Random::Secure`.
+  def self.v4(random r : Random = Random::Secure) : self
+    random(r)
+  end
+
+  # Generates RFC 4122 v5 UUID using the `name` to generate the UUID, it can be a string of any size.
+  # The `namespace` specifies the type of the name, usually one of `Namespace`.
+  def self.v5(name : String, namespace : UUID) : self
+    klass = {% if flag?(:without_openssl) %}::Crystal::Digest::SHA1{% else %}::Digest::SHA1{% end %}
+    hash = klass.digest do |ctx|
+      ctx.update namespace.bytes
+      ctx.update name
+    end
+    new(hash[0...16], version: UUID::Version::V5, variant: UUID::Variant::RFC4122)
+  end
+
+  {% for name in %w(DNS URL OID X500).map(&.id) %}
+    # Generates RFC 4122 v3 UUID with the `Namespace::{{ name }}`.
+    #
+    # * `name`: The name used to generate the UUID, it can be a string of any size.
+    def self.v3_{{ name.downcase }}(name : String)
+      v3(name, Namespace::{{ name }})
+    end
+
+    # Generates RFC 4122 v5 UUID with the `Namespace::{{ name }}`.
+    #
+    # * `name`: The name used to generate the UUID, it can be a string of any size.
+    def self.v5_{{ name.downcase }}(name : String)
+      v5(name, Namespace::{{ name }})
+    end
+  {% end %}
+
+  # Generates an RFC9562-compatible v7 UUID, allowing the values to be sorted
+  # chronologically (with 1ms precision) by their raw or hexstring
+  # representation.
+  def self.v7(random r : Random = Random::Secure)
+    buffer = uninitialized UInt8[18]
+    value = buffer.to_slice
+
+    # Generate the first 48 bits of the UUID with the current timestamp. We
+    # allocated enough room for a 64-bit timestamp to accommodate the
+    # NetworkEndian.encode call here, but we only need 48 bits of it so we chop
+    # off the first 2 bytes.
+    IO::ByteFormat::NetworkEndian.encode Time.utc.to_unix_ms, value
+    value = value[2..]
+
+    # Fill in the rest with random bytes
+    r.random_bytes(value[6..])
+
+    # Set the version and variant
+    value[6] = (value[6] & 0x3F) | 0x70
+    value[8] = (value[8] & 0x0F) | 0x80
+
+    new(value, variant: :rfc9562, version: :v7)
+  end
+
   # Generates an empty UUID.
   #
   # ```
@@ -230,6 +403,7 @@ struct UUID
     when 3 then Version::V3
     when 4 then Version::V4
     when 5 then Version::V5
+    when 7 then Version::V7
     else        Version::Unknown
     end
   end
@@ -297,7 +471,7 @@ struct UUID
   class Error < Exception
   end
 
-  {% for v in %w(1 2 3 4 5) %}
+  {% for v in %w(1 2 3 4 5 7) %}
     # Returns `true` if UUID is a V{{ v.id }}, `false` otherwise.
     def v{{ v.id }}?
       variant == Variant::RFC4122 && version == Version::V{{ v.id }}

@@ -45,7 +45,7 @@ require "crystal/system/path"
 # * POSIX paths are generally case-sensitive, Windows paths case-insensitive
 #   (see `#<=>`).
 # * A POSIX path is absolute if it begins with a forward slash (`/`). A Windows path
-#   is absolute if it starts with a drive letter and root (`C:\`).
+#   is absolute if it starts with both a drive and a root (see `#absolute?`).
 #
 # ```
 # Path.posix("/foo/./bar").normalize   # => Path.posix("/foo/bar")
@@ -221,14 +221,14 @@ struct Path
     when 0 # Path only consists of separators
       String.new(slice[0, 1])
     when 1 # Path has no parent (ex. "hello/", "C:/", "crystal")
-      return anchor.to_s if windows? && windows_drive?
+      return anchor.to_s if windows? && (windows_drive? || dos_local_device_path?)
       "."
-    else # Path has a parent (ex. "a/a", "/home/user//", "C://Users/mmm")
-      return String.new(slice[0, 1]) if pos == -1
-      if windows? && pos == 1 && slice.unsafe_fetch(pos) === ':' && (anchor = self.anchor)
-        return anchor.to_s
+    else # Path has a parent (ex. "a/a", "/home/user//", "C://Users/mmm", "\\wsl.localhost\Debian")
+      if windows? && (anchor = self.anchor) && pos < anchor.to_s.bytesize
+        anchor.to_s
+      else
+        @name.byte_slice(0, {pos, 0}.max + 1)
       end
-      String.new(slice[0, pos + 1])
     end
   end
 
@@ -407,7 +407,11 @@ struct Path
   #
   # If the path turns to be empty, the current directory (`"."`) is returned.
   #
-  # The returned path ends in a slash only if it is the root (`"/"`, `\`, or `C:\`).
+  # The returned path ends in a slash if it is the root (`"/"`, `\`, or `C:\`),
+  # or if this path is a Windows local device path that also ends in a slash.
+  # This trailing slash is significant; `\\.\C:` refers to the _volume_ `C:`, on
+  # which most I/O functions fail, whereas `\\.\C:\` refers to the root
+  # _directory_ of said volume.
   #
   # See also Rob Pike: *[Lexical File Names in Plan 9 or Getting Dot-Dot Right](https://9p.io/sys/doc/lexnames.html)*
   def normalize(*, remove_final_separator : Bool = true) : Path
@@ -417,7 +421,7 @@ struct Path
     reader = Char::Reader.new(@name)
     dotdot = 0
     separators = self.separators
-    add_separator_at_end = !remove_final_separator && ends_with_separator?
+    add_separator_at_end = (!remove_final_separator || (windows? && dos_local_device_path?)) && ends_with_separator?
 
     new_name = String.build do |str|
       if drive
@@ -969,19 +973,24 @@ struct Path
   # Returns `nil` if `self` cannot be expressed as relative to *base* or if
   # knowing the current working directory would be necessary to resolve it. The
   # latter can be avoided by expanding the paths first.
+  #
+  # For Windows paths, the drive and the root must be identical; relative paths
+  # between different path types are not supported, even if they would resolve
+  # to the same roots (e.g. `\\.\C:\foo` and `C:\foo` are not equivalent, nor
+  # are `\\?\UNC\server\share\foo` and `\\server\share\foo`).
   def relative_to?(base : Path) : Path?
+    # work on normalized paths otherwise we would need to backtrack on `..` parts
+    base = base.normalize
+    target = self.normalize
+
     base_anchor = base.anchor
-    target_anchor = self.anchor
+    target_anchor = target.anchor
 
     # if paths have a different anchors, there can't be a relative path between
     # them.
     if base_anchor != target_anchor
       return nil
     end
-
-    # work on normalized paths otherwise we would need to backtrack on `..` parts
-    base = base.normalize
-    target = self.normalize
 
     # check for trivial case of equal paths
     if base == target
@@ -1009,7 +1018,7 @@ struct Path
       target_part = target_iterator.next
     end
 
-    path = new_instance("")
+    parts = [] of String
 
     # base_path is not consumed, so we go up before descending into target_path
     if base_part.is_a?(String)
@@ -1019,21 +1028,21 @@ struct Path
         return nil
       end
 
-      path /= ".." unless base_part == "."
+      parts << ".." unless base_part == "."
       base_iterator.each do
-        path /= ".."
+        parts << ".."
       end
     end
 
     # target_path is not consumed, so we append what's left to the relative path
     if target_part.is_a?(String)
-      path /= target_part
+      parts << target_part
       target_iterator.each do |part|
-        path /= part
+        parts << part
       end
     end
 
-    path
+    new_instance(parts.join(separators[0]))
   end
 
   # :ditto:
@@ -1118,11 +1127,18 @@ struct Path
   # ```
   # Path.windows("C:\\Program Files").drive       # => Path.windows("C:")
   # Path.windows("\\\\host\\share\\folder").drive # => Path.windows("\\\\host\\share")
+  # Path.windows("\\\\.\\NUL").drive              # => Path.windows("\\\\.")
+  # Path.windows("//?").drive                     # => Path.windows("//?")
   # ```
   #
-  # NOTE: Drives are only available for Windows paths. It can either be a drive letter (`C:`) or a UNC share (`\\host\share`).
+  # NOTE: Drives are only available for Windows paths. It can be a drive letter
+  # (`C:`), a UNC share (`\\host\share`), or a root local device path (`\\.`,
+  # `\\?`).
   def drive : Path?
-    if drive = drive_and_root[0]
+    drive_end, _ = drive_and_root_indices
+
+    if drive_end
+      drive = @name.byte_slice(0, drive_end)
       new_instance drive
     end
   end
@@ -1136,9 +1152,15 @@ struct Path
   # Path.windows("C:Program Files").root         # => nil
   # Path.windows("C:\\Program Files").root       # => Path.windows("\\")
   # Path.windows("\\\\host\\share\\folder").root # => Path.windows("\\")
+  # Path.windows("//./NUL").root                 # => Path.windows("/")
+  # Path.windows("\\\\?").root                   # => nil
   # ```
   def root : Path?
-    if root = drive_and_root[1]
+    drive_end, root_end = drive_and_root_indices
+
+    if root_end
+      root_start = drive_end || 0
+      root = @name.byte_slice(root_start, root_end - root_start)
       new_instance root
     end
   end
@@ -1150,50 +1172,68 @@ struct Path
   # Path.windows("C:Program Files").anchor         # => Path.windows("C:")
   # Path.windows("C:\\Program Files").anchor       # => Path.windows("C:\\")
   # Path.windows("\\\\host\\share\\folder").anchor # => Path.windows("\\\\host\\share\\")
+  # Path.windows("\\\\.\\NUL").anchor              # => Path.windows("\\\\.\\")
+  # Path.windows("//?").anchor                     # => Path.windows("//?")
   # ```
   def anchor : Path?
-    drive, root = drive_and_root
+    drive_end, root_end = drive_and_root_indices
+    anchor_end = root_end || drive_end
 
-    if root
-      if drive
-        new_instance({drive, root}.join)
-      else
-        new_instance(root)
-      end
-    elsif drive
-      new_instance drive
+    if anchor_end
+      new_instance(@name.byte_slice(0, anchor_end))
     end
   end
 
   # Returns a tuple of `#drive` and `#root` as strings.
   def drive_and_root : {String?, String?}
+    drive_end, root_end = drive_and_root_indices
+
+    if drive_end
+      drive = @name.byte_slice(0, drive_end)
+    end
+
+    if root_end
+      root_start = drive_end || 0
+      root = @name.byte_slice(root_start, root_end - root_start)
+    end
+
+    {drive, root}
+  end
+
+  private def drive_and_root_indices : {Int32?, Int32?}
     if windows?
       if windows_drive?
-        drive = @name.byte_slice(0, 2)
         if separators.includes?(@name.byte_at?(2).try(&.chr))
-          return drive, @name.byte_slice(2, 1)
+          {2, 3}
         else
-          return drive, nil
+          {2, nil}
+        end
+      elsif dos_local_device_path?
+        if separators.includes?(@name.byte_at?(3).try(&.chr))
+          {3, 4}
+        else
+          {3, nil}
         end
       elsif unc_share = unc_share?
-        share_end, root_end = unc_share
-        if share_end == root_end
-          root = nil
-        else
-          root = @name.byte_slice(share_end, root_end - share_end)
-        end
-
-        return @name.byte_slice(0, share_end), root
+        unc_share
       elsif starts_with_separator?
-        return nil, @name.byte_slice(0, 1)
+        {nil, 1}
       else
-        return nil, nil
+        {nil, nil}
       end
     elsif absolute? # posix
-      return nil, "/"
+      {nil, 1}
     else
-      return nil, nil
+      {nil, nil}
     end
+  end
+
+  private def dos_local_device_path?
+    # `//./`, `\\?` etc.
+    @name.size >= 3 &&
+      separators.includes?(@name.to_unsafe[0].unsafe_chr) &&
+      separators.includes?(@name.to_unsafe[1].unsafe_chr) &&
+      {'.', '?'}.includes?(@name.to_unsafe[2].unsafe_chr)
   end
 
   private def unc_share?
@@ -1261,20 +1301,29 @@ struct Path
       break unless separators.includes?(char)
     end
 
-    return share_end, reader.pos
+    unless reader.pos == share_end
+      root_end = reader.pos
+    end
+
+    return share_end, root_end
   end
 
   # Returns `true` if this path is absolute.
   #
   # A POSIX path is absolute if it begins with a forward slash (`/`).
-  # A Windows path is absolute if it begins with a drive letter and root (`C:\`)
-  # or with a UNC share (`\\server\share\`).
+  #
+  # A Windows path is absolute if it begins with a drive letter (`C:`), a UNC
+  # share (`\\server\share`), or a root local device path (`\\.`, `\\?`), which
+  # is then followed by a root path separator. Drive-relative paths (`C:foo`),
+  # rooted paths (`\foo`), and root local device paths (`\\.`) are not absolute.
   def absolute? : Bool
     separators = self.separators
     if windows?
       first_is_separator = false
       starts_with_double_separator = false
       found_share_name = false
+      found_dot_or_question_mark = false
+
       @name.each_char_with_index do |char, index|
         case index
         when 0
@@ -1290,13 +1339,20 @@ struct Path
             return false unless char == ':'
           end
         else
-          if separators.includes?(char)
+          case char
+          when .in?(separators)
             if index == 2
               return !starts_with_double_separator && !found_share_name
+            elsif index == 3 && found_dot_or_question_mark
+              return true
             elsif found_share_name
               return true
             else
               found_share_name = true
+            end
+          when '.', '?'
+            if index == 2
+              found_dot_or_question_mark = true
             end
           end
         end

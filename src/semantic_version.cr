@@ -178,7 +178,7 @@ struct SemanticVersion
     # ```
     def self.parse(str : String) : self
       identifiers = [] of String | Int32
-      str.split('.').each do |val|
+      str.split('.') do |val|
         if number = val.to_i32?
           identifiers << number
         else

@@ -6,6 +6,12 @@ class LLVM::Module
 
   getter context : Context
 
+  def self.parse(memory_buffer : MemoryBuffer, context : Context) : self
+    LibLLVM.parse_bitcode_in_context2(context, memory_buffer, out module_ref)
+    raise "BUG: failed to parse LLVM bitcode from memory buffer" unless module_ref
+    new(module_ref, context)
+  end
+
   def initialize(@unwrap : LibLLVM::ModuleRef, @context : Context)
     @owned = false
   end
@@ -39,6 +45,10 @@ class LLVM::Module
     GlobalCollection.new(self)
   end
 
+  def add_flag(module_flag : LibLLVM::ModuleFlagBehavior, key : String, val : Int32)
+    add_flag(module_flag, key, @context.int32.const_int(val))
+  end
+
   def add_flag(module_flag : LibLLVM::ModuleFlagBehavior, key : String, val : Value)
     LibLLVM.add_module_flag(
       self,
@@ -53,8 +63,9 @@ class LLVM::Module
     LibLLVM.write_bitcode_to_file self, filename
   end
 
+  @[Deprecated("ThinLTO is no longer supported; use `#write_bitcode_to_file` instead")]
   def write_bitcode_with_summary_to_file(filename : String)
-    LibLLVMExt.write_bitcode_with_summary_to_file self, filename
+    LibLLVM.write_bitcode_to_file self, filename
   end
 
   def write_bitcode_to_memory_buffer
@@ -83,6 +94,9 @@ class LLVM::Module
     self
   end
 
+  {% unless LibLLVM::IS_LT_170 %}
+    @[Deprecated("The legacy pass manager was removed in LLVM 17. Use `LLVM::PassBuilderOptions` instead")]
+  {% end %}
   def new_function_pass_manager
     FunctionPassManager.new LibLLVM.create_function_pass_manager_for_module(self)
   end

@@ -148,12 +148,12 @@ class HTTP::Server
 
   # Creates a new HTTP server with a handler chain constructed from the *handlers*
   # array and the given block.
-  def self.new(handlers : Array(HTTP::Handler), &handler : HTTP::Handler::HandlerProc) : self
+  def self.new(handlers : Indexable(HTTP::Handler), &handler : HTTP::Handler::HandlerProc) : self
     new(HTTP::Server.build_middleware(handlers, handler))
   end
 
   # Creates a new HTTP server with the *handlers* array as handler chain.
-  def self.new(handlers : Array(HTTP::Handler)) : self
+  def self.new(handlers : Indexable(HTTP::Handler)) : self
     new(HTTP::Server.build_middleware(handlers))
   end
 
@@ -445,6 +445,12 @@ class HTTP::Server
     listen
   end
 
+  # Overwrite this method to implement an alternative concurrency handler
+  # one example could be the use of a fiber pool
+  protected def dispatch(io)
+    spawn handle_client(io)
+  end
+
   # Starts the server. Blocks until the server is closed.
   def listen : Nil
     raise "Can't re-start closed server" if closed?
@@ -465,9 +471,7 @@ class HTTP::Server
           end
 
           if io
-            # a non nillable version of the closured io
-            _io = io
-            spawn handle_client(_io)
+            dispatch(io)
           else
             break
           end

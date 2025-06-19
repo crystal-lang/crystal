@@ -247,7 +247,7 @@ class Crystal::Type
             type_var.raise "can only splat tuple type, not #{splat_type}"
           end
           next
-        when SizeOf, InstanceSizeOf, OffsetOf
+        when SizeOf, InstanceSizeOf, AlignOf, InstanceAlignOf, OffsetOf
           next unless @raise
 
           type_var.raise "can't use #{type_var} as a generic type argument"

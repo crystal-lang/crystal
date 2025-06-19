@@ -325,8 +325,6 @@ describe "Code gen: pointer" do
 
   it "does pointerof class variable with class" do
     run(%(
-      require "prelude"
-
       class Bar
         def initialize(@x : Int32)
         end
@@ -406,8 +404,6 @@ describe "Code gen: pointer" do
 
   it "uses correct llvm module for typedef metaclass (#2877)" do
     run(%(
-      require "prelude"
-
       lib LibFoo
         type Foo = Void*
         type Bar = Void*
@@ -456,8 +452,6 @@ describe "Code gen: pointer" do
 
   it "generates correct code for Pointer.malloc(0) (#2905)" do
     run(%(
-      require "prelude"
-
       class Foo
         def initialize(@value : Int32)
         end
@@ -498,28 +492,33 @@ describe "Code gen: pointer" do
       )).to_b.should be_true
   end
 
-  it "takes pointerof lib external var" do
-    test_c(
-      %(
-        int external_var = 0;
-      ),
-      %(
-        lib LibFoo
-          $external_var : Int32
-        end
+  # FIXME: `$external_var` implies __declspec(dllimport), but we only have an
+  # object file, so MinGW-w64 fails linking (actually MSVC also emits an
+  # LNK4217 linker warning)
+  {% unless flag?(:win32) && flag?(:gnu) %}
+    it "takes pointerof lib external var" do
+      test_c(
+        %(
+          int external_var = 0;
+        ),
+        %(
+          lib LibFoo
+            $external_var : Int32
+          end
 
-        LibFoo.external_var = 1
+          LibFoo.external_var = 1
 
-        ptr = pointerof(LibFoo.external_var)
-        x = ptr.value
+          ptr = pointerof(LibFoo.external_var)
+          x = ptr.value
 
-        ptr.value = 10
-        y = ptr.value
+          ptr.value = 10
+          y = ptr.value
 
-        ptr.value = 100
-        z = LibFoo.external_var
+          ptr.value = 100
+          z = LibFoo.external_var
 
-        x + y + z
-      ), &.to_i.should eq(111))
-  end
+          x + y + z
+        ), &.to_i.should eq(111))
+    end
+  {% end %}
 end

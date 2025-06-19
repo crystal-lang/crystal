@@ -13,6 +13,9 @@ class Crystal::Call
   property? uses_with_scope = false
 
   class RetryLookupWithLiterals < ::Exception
+    def initialize
+      self.callstack = Exception::CallStack.empty
+    end
   end
 
   def program
@@ -489,7 +492,7 @@ class Crystal::Call
   end
 
   def tuple_indexer_helper(args, arg_types, owner, instance_type, nilable, &)
-    index = tuple_indexer_helper_index(args.first, owner, instance_type, nilable)
+    index = tuple_indexer_helper_index(owner, instance_type, nilable)
     return unless index
 
     indexer_def = yield instance_type, index
@@ -497,7 +500,7 @@ class Crystal::Call
     Matches.new([indexer_match] of Match, true)
   end
 
-  private def tuple_indexer_helper_index(arg, owner, instance_type, nilable)
+  private def tuple_indexer_helper_index(owner, instance_type, nilable)
     arg = args.first
 
     # Make it work with constants too
@@ -1040,7 +1043,7 @@ class Crystal::Call
                             when Self
                               match.context.instantiated_type
                             when Crystal::Path
-                              match.context.defining_type.lookup_type_var(output, match.context.free_vars)
+                              match.context.defining_type.lookup_type_var(output, match.context.bound_free_vars)
                             else
                               output
                             end
@@ -1091,28 +1094,39 @@ class Crystal::Call
 
   private def lookup_node_type(context, node)
     bubbling_exception do
-      context.defining_type.lookup_type(node, self_type: context.instantiated_type.instance_type, free_vars: context.free_vars, allow_typeof: false)
+      context.defining_type.lookup_type(node, self_type: context.instantiated_type.instance_type, free_vars: context.bound_free_vars, allow_typeof: false)
     end
   end
 
   private def lookup_node_type?(context, node)
-    context.defining_type.lookup_type?(node, self_type: context.instantiated_type.instance_type, free_vars: context.free_vars, allow_typeof: false)
+    context.defining_type.lookup_type?(node, self_type: context.instantiated_type.instance_type, free_vars: context.bound_free_vars, allow_typeof: false)
   end
 
   def bubbling_exception(&)
     yield
+  rescue ex : Crystal::TopLevelMacroRaiseException
+    # Sets the last frame to the method call that includes the top level macro raise re-raised within `SemanticVisitor#eval_macro`.
+    # The first frame will be the actual actual `#raise` method call.
+    ex.inner = Crystal::MacroRaiseException.for_node self, ex.message
+
+    ::raise ex
+  rescue ex : Crystal::MacroRaiseException
+    # Raise another exception on this node, keeping the original as the inner exception.
+    # This will insert this node into the trace as the new first frame.
+    self.raise ex.message, ex, exception_type: Crystal::MacroRaiseException
   rescue ex : Crystal::CodeError
-    if obj = @obj
-      if name == "initialize"
-        # Avoid putting 'initialize' in the error trace
-        # because it's most likely that this is happening
-        # inside a generated 'new' method
-        ::raise ex
-      else
-        raise "instantiating '#{obj.type}##{name}(#{args.map(&.type).join ", "})'", ex
-      end
+    if (obj = @obj) && name == "initialize"
+      # Avoid putting 'initialize' in the error trace
+      # because it's most likely that this is happening
+      # inside a generated 'new' method
+      ::raise ex
     else
-      raise "instantiating '#{name}(#{args.map(&.type).join ", "})'", ex
+      msg = String.build do |io|
+        io << "instantiating '"
+        signature(io)
+        io << "'"
+      end
+      raise msg, ex
     end
   end
 

@@ -1,7 +1,3 @@
-{% if flag?(:preview_mt) %}
-  require "crystal/thread_local_value"
-{% end %}
-
 # `Reference` is the base class of classes you define in your program.
 # It is set as a class' superclass when you don't specify one:
 #
@@ -17,6 +13,49 @@
 # The instance's memory is automatically freed (garbage-collected) when
 # the instance is no longer referred by any other entity in the program.
 class Reference
+  # Constructs an object in-place at the given *address*, forwarding *args* and
+  # *opts* to `#initialize`. Returns that object.
+  #
+  # This method can be used to decouple object allocation from initialization.
+  # For example, the instance data might come from a custom allocator, or it
+  # might reside on the stack using a type like `ReferenceStorage`.
+  #
+  # *address* must point to a suitably aligned buffer of at least
+  # `instance_sizeof(self)` bytes.
+  #
+  # WARNING: This method is unsafe, as it assumes the caller is responsible for
+  # managing the memory at the given *address* manually.
+  #
+  # ```
+  # class Foo
+  #   getter i : Int64
+  #   getter str = "abc"
+  #
+  #   def initialize(@i)
+  #   end
+  #
+  #   def finalize
+  #     puts "bye"
+  #   end
+  # end
+  #
+  # foo_buffer = uninitialized ReferenceStorage(Foo)
+  # foo = Foo.unsafe_construct(pointerof(foo_buffer), 123_i64)
+  # begin
+  #   foo # => #<Foo:0x... @i=123, @str="abc">
+  # ensure
+  #   foo.finalize if foo.responds_to?(:finalize) # prints "bye"
+  # end
+  # ```
+  #
+  # See also: `Reference.pre_initialize`.
+  @[Experimental("This API is still under development. Join the discussion about custom reference allocation at [#13481](https://github.com/crystal-lang/crystal/issues/13481).")]
+  def self.unsafe_construct(address : Pointer, *args, **opts) : self
+    obj = pre_initialize(address)
+    obj.initialize(*args, **opts)
+    obj
+  end
+
   # Returns `true` if this reference is the same as *other*. Invokes `same?`.
   def ==(other : self)
     same?(other)
@@ -137,55 +176,17 @@ class Reference
     io << '>'
   end
 
-  # :nodoc:
-  module ExecRecursive
-    alias Registry = Hash({UInt64, Symbol}, Bool)
-
-    {% if flag?(:preview_mt) %}
-      @@exec_recursive = Crystal::ThreadLocalValue(Registry).new
-    {% else %}
-      @@exec_recursive = Registry.new
-    {% end %}
-
-    def self.hash
-      {% if flag?(:preview_mt) %}
-        @@exec_recursive.get { Registry.new }
-      {% else %}
-        @@exec_recursive
-      {% end %}
-    end
-  end
-
   private def exec_recursive(method, &)
-    hash = ExecRecursive.hash
+    # NOTE: can't use `Set` because of prelude require order
+    hash = Fiber.current.exec_recursive_hash
     key = {object_id, method}
-    if hash[key]?
-      false
-    else
-      hash[key] = true
+    hash.put(key, nil) do
       yield
+      return true
+    ensure
       hash.delete(key)
-      true
     end
-  end
-
-  # :nodoc:
-  module ExecRecursiveClone
-    alias Registry = Hash(UInt64, UInt64)
-
-    {% if flag?(:preview_mt) %}
-      @@exec_recursive = Crystal::ThreadLocalValue(Registry).new
-    {% else %}
-      @@exec_recursive = Registry.new
-    {% end %}
-
-    def self.hash
-      {% if flag?(:preview_mt) %}
-        @@exec_recursive.get { Registry.new }
-      {% else %}
-        @@exec_recursive
-      {% end %}
-    end
+    false
   end
 
   # Helper method to perform clone by also checking recursiveness.
@@ -207,10 +208,11 @@ class Reference
   # end
   # ```
   private def exec_recursive_clone(&)
-    hash = ExecRecursiveClone.hash
-    clone_object_id = hash[object_id]?
-    unless clone_object_id
-      clone_object_id = yield(hash).object_id
+    # NOTE: can't use `Set` because of prelude require order
+    hash = Fiber.current.exec_recursive_clone_hash
+    clone_object_id = hash.fetch(object_id) do
+      yield(hash).object_id
+    ensure
       hash.delete(object_id)
     end
     Pointer(Void).new(clone_object_id).as(self)

@@ -1,6 +1,6 @@
 require "spec"
 require "xml"
-require "../../support/string"
+require "spec/helpers/string"
 
 describe XML do
   it "parses" do
@@ -419,6 +419,38 @@ describe XML do
     assert_prints node.to_xml, %(<p>&lt;foo&gt;</p>)
   end
 
+  it "parses HTML UTF-8 from memory (#13703)" do
+    doc = XML.parse_html("<p>České psaní</p>")
+
+    node = doc.root.try(&.children.first).should_not be_nil
+
+    node.text.should eq "České psaní"
+  end
+
+  it "parses HTML UTF-8 from IO (#13703)" do
+    doc = XML.parse_html(IO::Memory.new("<p>České psaní</p>"))
+
+    node = doc.root.try(&.children.first).should_not be_nil
+
+    node.text.should eq "České psaní"
+  end
+
+  it "parses XML UTF-8 from memory (#13703)" do
+    doc = XML.parse("<p>České psaní</p>")
+
+    node = doc.root.try(&.children.first).should_not be_nil
+
+    node.text.should eq "České psaní"
+  end
+
+  it "parses XML UTF-8 from IO (#13703)" do
+    doc = XML.parse(IO::Memory.new("<p>České psaní</p>"))
+
+    node = doc.root.try(&.children.first).should_not be_nil
+
+    node.text.should eq "České psaní"
+  end
+
   it "gets empty content" do
     doc = XML.parse("<foo/>")
     doc.children.first.content.should eq("")
@@ -502,7 +534,7 @@ describe XML do
     node = document.xpath_node("//lastname").not_nil!
     node.unlink
 
-    document.xpath_node("//lastname").should eq(nil)
+    document.xpath_node("//lastname").should be_nil
   end
 
   it "does to_s with correct encoding (#2319)" do
@@ -576,5 +608,9 @@ describe XML do
         builder.start_element "bar"
       end.should eq %[<foo><bar/></foo>\n]
     end
+  end
+
+  it ".libxml2_version" do
+    XML.libxml2_version.should match /2\.\d+\.\d+/
   end
 end

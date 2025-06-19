@@ -1,6 +1,6 @@
 require "spec"
 require "xml"
-require "../../support/string"
+require "spec/helpers/string"
 
 private def assert_built(expected, quote_char = nil, *, file = __FILE__, line = __LINE__, &)
   assert_prints XML.build(quote_char: quote_char) { |xml| with xml yield xml }, expected, file: file, line: line

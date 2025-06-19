@@ -2,7 +2,7 @@ require "../../../spec_helper"
 
 describe Doc::Type do
   it "doesn't show types for alias type" do
-    result = semantic(%(
+    program = top_level_semantic(<<-CRYSTAL, wants_doc: true).program
       class Foo
         class Bar
         end
@@ -11,9 +11,7 @@ describe Doc::Type do
       alias Alias = Foo
 
       Alias
-    ))
-
-    program = result.program
+      CRYSTAL
 
     # Set locations to types relative to the included dir
     # so they are included by the doc generator
@@ -30,14 +28,12 @@ describe Doc::Type do
   end
 
   it "finds construct when searching class method (#8095)" do
-    result = semantic(%(
+    program = top_level_semantic(<<-CRYSTAL, wants_doc: true).program
       class Foo
         def initialize(x)
         end
       end
-    ))
-
-    program = result.program
+      CRYSTAL
 
     generator = Doc::Generator.new program, [""]
     foo = generator.type(program.types["Foo"])
@@ -144,7 +140,7 @@ describe Doc::Type do
     generator = Doc::Generator.new program, [""]
     macros_module = program.types["Crystal"].types["Macros"]
     astnode = generator.type(macros_module.types["ASTNode"])
-    astnode.superclass.should eq(nil)
+    astnode.superclass.should be_nil
     # Sanity check: subclasses of ASTNode has the right superclass
     generator.type(macros_module.types["Arg"]).superclass.should eq(astnode)
   end

@@ -1,5 +1,16 @@
-{% if flag?(:win32) %}
-  @[Link({{ flag?(:preview_dll) ? "ucrt" : "libucrt" }})]
+# Supported library versions:
+#
+# * glibc (2.26+)
+# * musl libc (1.2+)
+# * system libraries of several BSDs
+# * macOS system library (11+)
+# * MSVCRT
+# * WASI
+# * bionic libc
+#
+# See https://crystal-lang.org/reference/man/required_libraries.html#system-library
+{% if flag?(:msvc) %}
+  @[Link({{ flag?(:static) ? "libucrt" : "ucrt" }})]
 {% end %}
 lib LibC
   alias Char = UInt8
@@ -27,10 +38,10 @@ lib LibC
 
   {% if flag?(:android) %}
     {% default_api_version = 31 %}
-    {% min_supported_version = 28 %}
+    {% min_supported_version = 24 %}
     {% api_version_var = env("ANDROID_PLATFORM") || env("ANDROID_NATIVE_API_LEVEL") %}
     {% api_version = api_version_var ? api_version_var.gsub(/^android-/, "").to_i : default_api_version %}
-    {% raise "TODO: support Android API level below #{min_supported_version}" unless api_version >= min_supported_version %}
+    {% raise "TODO: Support Android API level below #{min_supported_version}" unless api_version >= min_supported_version %}
     ANDROID_API = {{ api_version }}
   {% end %}
 

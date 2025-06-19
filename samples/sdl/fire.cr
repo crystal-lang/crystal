@@ -204,7 +204,7 @@ class RainbowColorPattern < ColorPattern
   end
 
   def interpolate(life)
-    raise "shouldn't reach here"
+    raise "Shouldn't reach here"
   end
 end
 

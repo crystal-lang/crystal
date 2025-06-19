@@ -220,7 +220,7 @@ class Crystal::Repl::Compiler
 
   private def upcast_distinct(node : ASTNode, from : TupleInstanceType, to : TupleInstanceType)
     # If we are here it means the tuples are different
-    unpack_tuple(node, from, to.tuple_types)
+    cast_tuple(node, from, to)
 
     # Finally, we must pop the original tuple that was casted
     pop_from_offset aligned_sizeof_type(from), aligned_sizeof_type(to), node: nil
@@ -228,7 +228,7 @@ class Crystal::Repl::Compiler
 
   private def upcast_distinct(node : ASTNode, from : NamedTupleInstanceType, to : NamedTupleInstanceType)
     # If we are here it means the tuples are different
-    unpack_named_tuple(node, from, to)
+    cast_named_tuple(node, from, to)
 
     # Finally, we must pop the original tuple that was casted
     pop_from_offset aligned_sizeof_type(from), aligned_sizeof_type(to), node: nil
@@ -236,59 +236,91 @@ class Crystal::Repl::Compiler
 
   # Unpacks a tuple into a series of types.
   # Each of the tuple elements is upcasted to the corresponding type in `to_types`.
+  # Every individual element is stack-aligned. Use `#cast_tuple` instead if they
+  # should follow their natural alignments inside a target tuple type.
   # It's the caller's responsibility to pop the original, unpacked tuple, from the
   # stack if needed.
   private def unpack_tuple(node : ASTNode, from : TupleInstanceType, to_types : Array(Type))
-    offset = aligned_sizeof_type(from)
+    from_aligned_size = aligned_sizeof_type(from)
+    to_element_offset = 0
 
     to_types.each_with_index do |to_element_type, i|
       from_element_type = from.tuple_types[i]
 
       from_inner_size = inner_sizeof_type(from_element_type)
 
+      from_element_offset = @context.offset_of(from, i)
+
       # Copy inner size bytes from the tuple.
       # The interpreter will make sure to align this value.
-      copy_from(offset, from_inner_size, node: nil)
+      # Go back `from_aligned_size` plus any elements already pushed onto the stack,
+      # but then move forward (subtracting) to reach the element in `from`.
+      copy_from(from_aligned_size - from_element_offset + to_element_offset, from_inner_size, node: nil)
 
       # Then upcast it to the target tuple element type
       upcast node, from_element_type, to_element_type
 
-      # Check the offset of this tuple element in `from`
-      current_offset =
-        @context.offset_of(from, i)
-
-      # Check what's the next offset in `from` is
-      next_offset =
-        if i == from.tuple_types.size - 1
-          aligned_sizeof_type(from)
-        else
-          @context.offset_of(from, i + 1)
-        end
-
       # Now we have element_type in front of the tuple so we must skip it
-      offset += aligned_sizeof_type(to_element_type)
-      # But we need to access the next tuple member, so we move forward
-      offset -= next_offset - current_offset
+      to_element_offset += aligned_sizeof_type(to_element_type)
     end
   end
 
-  private def unpack_named_tuple(node : ASTNode, from : NamedTupleInstanceType, to : NamedTupleInstanceType)
-    offset = aligned_sizeof_type(from)
+  private def cast_tuple(node : ASTNode, from : TupleInstanceType, to : TupleInstanceType)
+    from_aligned_size = aligned_sizeof_type(from)
+    to_aligned_size = aligned_sizeof_type(to)
+    to_element_offset = 0
 
-    to.entries.each_with_index do |to_entry, i|
-      from_entry = nil
-      from_entry_index = nil
+    to.tuple_types.each_with_index do |to_element_type, i|
+      from_element_type = from.tuple_types[i]
 
-      from.entries.each_with_index do |other_entry, j|
-        if other_entry.name == to_entry.name
-          from_entry = other_entry
-          from_entry_index = j
-          break
+      from_inner_size = inner_sizeof_type(from_element_type)
+
+      from_element_offset = @context.offset_of(from, i)
+
+      # Copy inner size bytes from the tuple.
+      # The interpreter will make sure to align this value.
+      # Go back `from_aligned_size` plus any elements already pushed onto the stack,
+      # but then move forward (subtracting) to reach the element in `from`.
+      copy_from(from_aligned_size - from_element_offset + to_element_offset, from_inner_size, node: nil)
+
+      # Then upcast it to the target tuple element type
+      upcast node, from_element_type, to_element_type
+
+      # the new value is stack-aligned; adjust as necessary to follow the
+      # element's natural alignment inside the target type
+      next_to_offset =
+        if i == to.tuple_types.size - 1
+          aligned_sizeof_type(to)
+        else
+          @context.offset_of(to, i + 1)
         end
+
+      difference = next_to_offset - to_element_offset - aligned_sizeof_type(to_element_type)
+      if difference > 0
+        push_zeros(difference, node: nil)
+      elsif difference < 0
+        pop(-difference, node: nil)
       end
 
-      from_entry = from_entry.not_nil!
-      from_entry_index = from_entry_index.not_nil!
+      # Now we have element_type in front of the tuple so we must skip it
+      to_element_offset = next_to_offset
+    end
+  end
+
+  private def cast_named_tuple(node : ASTNode, from : NamedTupleInstanceType, to : NamedTupleInstanceType)
+    from_aligned_size = aligned_sizeof_type(from)
+    to_aligned_size = aligned_sizeof_type(to)
+    to_element_offset = 0
+
+    from_entry_indices = to.entries.map_with_index do |to_entry, i|
+      from.entries.index! do |other_entry|
+        other_entry.name == to_entry.name
+      end
+    end
+
+    to.entries.each_with_index do |to_entry, i|
+      from_entry_index = from_entry_indices[i]
+      from_entry = from.entries[from_entry_index]
 
       from_element_type = from_entry.type
       to_element_type = to_entry.type
@@ -299,14 +331,31 @@ class Crystal::Repl::Compiler
 
       # Copy inner size bytes from the tuple.
       # The interpreter will make sure to align this value.
-      # Go back `offset`, but then move forward (subtracting) to reach the element in `from`.
-      copy_from(offset - from_element_offset, from_inner_size, node: nil)
+      # Go back `from_aligned_size` plus any elements already pushed onto the stack,
+      # but then move forward (subtracting) to reach the element in `from`.
+      copy_from(from_aligned_size - from_element_offset + to_element_offset, from_inner_size, node: nil)
 
       # Then upcast it to the target tuple element type
       upcast node, from_element_type, to_element_type
 
+      # the new value is stack-aligned; adjust as necessary to follow the
+      # element's natural alignment inside the target type
+      next_to_offset =
+        if i == to.entries.size - 1
+          aligned_sizeof_type(to)
+        else
+          @context.offset_of(to, i + 1)
+        end
+
+      difference = next_to_offset - to_element_offset - aligned_sizeof_type(to_element_type)
+      if difference > 0
+        push_zeros(difference, node: nil)
+      elsif difference < 0
+        pop(-difference, node: nil)
+      end
+
       # Now we have element_type in front of the tuple so we must skip it
-      offset += aligned_sizeof_type(to_element_type)
+      to_element_offset = next_to_offset
     end
   end
 

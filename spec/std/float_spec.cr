@@ -1,5 +1,5 @@
 require "spec"
-require "../support/string"
+require "spec/helpers/string"
 
 describe "Float" do
   describe "**" do
@@ -74,6 +74,23 @@ describe "Float" do
 
     it { 2.9_f32.ceil.should eq(3) }
     it { 2.9.ceil.should eq(3) }
+  end
+
+  describe "#integer?" do
+    it { 1.0_f32.integer?.should be_true }
+    it { 1.0_f64.integer?.should be_true }
+
+    it { 1.2_f32.integer?.should be_false }
+    it { 1.2_f64.integer?.should be_false }
+
+    it { Float32::MAX.integer?.should be_true }
+    it { Float64::MAX.integer?.should be_true }
+
+    it { Float32::INFINITY.integer?.should be_false }
+    it { Float64::INFINITY.integer?.should be_false }
+
+    it { Float32::NAN.integer?.should be_false }
+    it { Float64::NAN.integer?.should be_false }
   end
 
   describe "fdiv" do
@@ -208,7 +225,7 @@ describe "Float" do
 
   describe "#next_float" do
     it "does for f64" do
-      0.0.next_float.should eq(5.0e-324) # smallest denormal (not MIN_POSITIVE)
+      0.0.next_float.should eq(Float64::MIN_SUBNORMAL)
       1.0.next_float.should eq(1.0000000000000002)
       (-1.0).next_float.should eq(-0.9999999999999999)
       Float64::MAX.next_float.should eq(Float64::INFINITY)
@@ -218,7 +235,7 @@ describe "Float" do
     end
 
     it "does for f32" do
-      0.0_f32.next_float.should eq(1.0e-45_f32) # smallest denormal (not MIN_POSITIVE)
+      0.0_f32.next_float.should eq(Float32::MIN_SUBNORMAL)
       1.0_f32.next_float.should eq(1.0000001_f32)
       (-1.0_f32).next_float.should eq(-0.99999994_f32)
       Float32::MAX.next_float.should eq(Float32::INFINITY)
@@ -230,7 +247,7 @@ describe "Float" do
 
   describe "#prev_float" do
     it "does for f64" do
-      0.0.prev_float.should eq(-5.0e-324) # smallest denormal (not MIN_POSITIVE)
+      0.0.prev_float.should eq(-Float64::MIN_SUBNORMAL)
       1.0.prev_float.should eq(0.9999999999999999)
       (-1.0).prev_float.should eq(-1.0000000000000002)
       Float64::MIN.prev_float.should eq(-Float64::INFINITY)
@@ -240,7 +257,7 @@ describe "Float" do
     end
 
     it "does for f32" do
-      0.0_f32.prev_float.should eq(-1.0e-45_f32) # smallest denormal (not MIN_POSITIVE)
+      0.0_f32.prev_float.should eq(-Float32::MIN_SUBNORMAL)
       1.0_f32.prev_float.should eq(0.99999994_f32)
       (-1.0_f32).prev_float.should eq(-1.0000001_f32)
       Float32::MIN.prev_float.should eq(-Float32::INFINITY)
@@ -355,6 +372,15 @@ describe "Float" do
     f = -(1.5_f32)
     f.should eq(-1.5_f32)
     f.should be_a(Float32)
+
+    (-(0.0)).sign_bit.should eq(-1)
+    (-(-0.0)).sign_bit.should eq(1)
+
+    (-(0.0_f32)).sign_bit.should eq(-1)
+    (-(-0.0_f32)).sign_bit.should eq(1)
+
+    (-Math.copysign(Float64::NAN, 1.0)).sign_bit.should eq(-1)
+    (-Math.copysign(Float64::NAN, -1.0)).sign_bit.should eq(1)
   end
 
   it "clones" do
@@ -425,15 +451,46 @@ describe "Float" do
   end
 
   it "#abs" do
-    Math.copysign(1, 0.0.abs).should eq 1
-    Math.copysign(1, -0.0.abs).should eq 1
+    0.0_f64.abs.sign_bit.should eq 1
+    -0.0_f64.abs.sign_bit.should eq 1
 
-    0.1.abs.should eq 0.1
-    -0.1.abs.should eq 0.1
+    0.1_f64.abs.should eq 0.1_f64
+    -0.1_f64.abs.should eq 0.1_f64
+
+    0.0_f32.abs.sign_bit.should eq 1_f32
+    -0.0_f32.abs.sign_bit.should eq 1_f32
+
+    0.1_f32.abs.should eq 0.1_f32
+    -0.1_f32.abs.should eq 0.1_f32
 
     Float64::MAX.abs.should eq Float64::MAX
     Float64::MIN.abs.should eq -Float64::MIN
     Float64::INFINITY.abs.should eq Float64::INFINITY
     (-Float64::INFINITY).abs.should eq Float64::INFINITY
+
+    Float32::MAX.abs.should eq Float32::MAX
+    Float32::MIN.abs.should eq -Float32::MIN
+    Float32::INFINITY.abs.should eq Float32::INFINITY
+    (-Float32::INFINITY).abs.should eq Float32::INFINITY
+  end
+
+  it "#sign_bit" do
+    1.2_f64.sign_bit.should eq(1)
+    -1.2_f64.sign_bit.should eq(-1)
+    0.0_f64.sign_bit.should eq(1)
+    -0.0_f64.sign_bit.should eq(-1)
+    Float64::INFINITY.sign_bit.should eq(1)
+    (-Float64::INFINITY).sign_bit.should eq(-1)
+    0x7ff0_0000_0000_0001_u64.unsafe_as(Float64).sign_bit.should eq(1)
+    0xfff0_0000_0000_0001_u64.unsafe_as(Float64).sign_bit.should eq(-1)
+
+    1.2_f32.sign_bit.should eq(1)
+    -1.2_f32.sign_bit.should eq(-1)
+    0.0_f32.sign_bit.should eq(1)
+    -0.0_f32.sign_bit.should eq(-1)
+    Float32::INFINITY.sign_bit.should eq(1)
+    (-Float32::INFINITY).sign_bit.should eq(-1)
+    0x7f80_0001_u32.unsafe_as(Float32).sign_bit.should eq(1)
+    0xff80_0001_u32.unsafe_as(Float32).sign_bit.should eq(-1)
   end
 end

@@ -35,8 +35,16 @@ class Crystal::Loader
     end
   end
 
+  def initialize(@search_paths : Array(String))
+  end
+
   # Parses linker arguments in the style of `ld`.
-  def self.parse(args : Array(String), *, search_paths : Array(String) = default_search_paths) : self
+  #
+  # *dll_search_paths* has no effect. (Technically speaking, `LD_LIBRARY_PATH`
+  # goes here and `LIBRARY_PATH` goes into *search_paths*, but there is little
+  # point in doing so since the same library files are used at both compile and
+  # run time.)
+  def self.parse(args : Array(String), *, search_paths : Array(String) = default_search_paths, dll_search_paths : Array(String)? = nil) : self
     libnames = [] of String
     file_paths = [] of String
 
@@ -68,12 +76,23 @@ class Crystal::Loader
       parser.unknown_args do |args, after_dash|
         file_paths.concat args
       end
+
+      # although flags starting with `-Wl,` appear in `args` above, this is
+      # still called by `OptionParser`, so we assume it is fine to ignore these
+      # flags
+      parser.invalid_option do |arg|
+        unless arg.starts_with?("-Wl,")
+          raise LoadError.new "Not a recognized linker flag: #{arg}"
+        end
+      end
     end
 
     search_paths = extra_search_paths + search_paths
 
     begin
-      self.new(search_paths, libnames, file_paths)
+      loader = new(search_paths)
+      loader.load_all(libnames, file_paths)
+      loader
     rescue exc : LoadError
       exc.args = args
       exc.search_paths = search_paths
@@ -120,6 +139,7 @@ class Crystal::Loader
   def load_current_program_handle
     if program_handle = LibC.dlopen(nil, LibC::RTLD_LAZY | LibC::RTLD_GLOBAL)
       @handles << program_handle
+      @loaded_libraries << (Process.executable_path || "current program handle")
     end
   end
 
@@ -137,14 +157,23 @@ class Crystal::Loader
   def self.default_search_paths : Array(String)
     default_search_paths = [] of String
 
+    # TODO: respect the compiler's DT_RPATH (#13490)
+
     if env_library_path = ENV[{{ flag?(:darwin) ? "DYLD_LIBRARY_PATH" : "LD_LIBRARY_PATH" }}]?
       # TODO: Expand tokens $ORIGIN, $LIB, $PLATFORM
       default_search_paths.concat env_library_path.split(Process::PATH_DELIMITER, remove_empty: true)
     end
 
+    # TODO: respect the compiler's DT_RUNPATH
+    # TODO: respect $DYLD_FALLBACK_LIBRARY_PATH and the compiler's LC_RPATH on darwin
+
     {% if (flag?(:linux) && !flag?(:android)) || flag?(:bsd) %}
       read_ld_conf(default_search_paths)
     {% end %}
+
+    cc_each_library_path do |path|
+      default_search_paths << path
+    end
 
     {% if flag?(:darwin) %}
       default_search_paths << "/usr/lib"
@@ -163,11 +192,11 @@ class Crystal::Loader
       default_search_paths << "/usr/lib"
     {% end %}
 
-    default_search_paths
+    default_search_paths.uniq!
   end
 
   def self.read_ld_conf(array = [] of String, path = "/etc/ld.so.conf") : Nil
-    return unless File.readable?(path)
+    return unless File::Info.readable?(path)
 
     File.each_line(path) do |line|
       next if line.empty? || line.starts_with?("#")
@@ -182,6 +211,22 @@ class Crystal::Loader
         end
       else
         array << line.strip
+      end
+    end
+  end
+
+  def self.cc_each_library_path(& : String ->) : Nil
+    search_dirs = begin
+      `#{Crystal::Compiler::DEFAULT_LINKER} -print-search-dirs`
+    rescue IO::Error
+      return
+    end
+
+    search_dirs.each_line do |line|
+      if libraries = line.lchop?("libraries: =")
+        libraries.split(Process::PATH_DELIMITER) do |path|
+          yield File.expand_path(path)
+        end
       end
     end
   end

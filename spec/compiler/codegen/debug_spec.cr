@@ -160,8 +160,6 @@ describe "Code gen: debug" do
 
   it "has debug info in closure inside if (#5593)" do
     codegen(%(
-      require "prelude"
-
       def foo
         if true && true
           yield 1
@@ -303,4 +301,16 @@ describe "Code gen: debug" do
       y.bar
       ), debug: Crystal::Debug::All).to_i.should eq(123)
   end
+
+  {% unless LibLLVM::IS_LT_210 %}
+    it "supports 128-bit enumerators" do
+      codegen(<<-CRYSTAL, debug: Crystal::Debug::All).to_s.should contain(%(!DIEnumerator(name: "X", value: 1002003004005006007008009)))
+        enum Foo : Int128
+          X = 1002003004005006007008009_i128
+        end
+
+        x = Foo::X
+        CRYSTAL
+    end
+  {% end %}
 end

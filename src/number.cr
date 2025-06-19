@@ -39,6 +39,11 @@ struct Number
     new(1)
   end
 
+  # See `Object#hash(hasher)`
+  def hash(hasher)
+    hasher.number(self)
+  end
+
   # Returns `self`.
   def +
     self
@@ -54,7 +59,7 @@ struct Number
   # :nodoc:
   macro expand_div(rhs_types, result_type)
     {% for rhs in rhs_types %}
-      @[AlwaysInline]
+      @[::AlwaysInline]
       def /(other : {{rhs}}) : {{result_type}}
         {{result_type}}.new(self) / {{result_type}}.new(other)
       end
@@ -79,7 +84,7 @@ struct Number
   # [1, 2, 3, 4] of Int64 # : Array(Int64)
   # ```
   macro [](*nums)
-    Array({{@type}}).build({{nums.size}}) do |%buffer|
+    ::Array({{@type}}).build({{nums.size}}) do |%buffer|
       {% for num, i in nums %}
         %buffer[{{i}}] = {{@type}}.new({{num}})
       {% end %}
@@ -108,7 +113,7 @@ struct Number
   # Slice[1_i64, 2_i64, 3_i64, 4_i64] # : Slice(Int64)
   # ```
   macro slice(*nums, read_only = false)
-    %slice = Slice({{@type}}).new({{nums.size}}, read_only: {{read_only}})
+    %slice = ::Slice({{@type}}).new({{nums.size}}, read_only: {{read_only}})
     {% for num, i in nums %}
       %slice.to_unsafe[{{i}}] = {{@type}}.new!({{num}})
     {% end %}
@@ -134,7 +139,7 @@ struct Number
   # StaticArray[1_i64, 2_i64, 3_i64, 4_i64] # : StaticArray(Int64)
   # ```
   macro static_array(*nums)
-    %array = uninitialized StaticArray({{@type}}, {{nums.size}})
+    %array = uninitialized ::StaticArray({{@type}}, {{nums.size}})
     {% for num, i in nums %}
       %array.to_unsafe[{{i}}] = {{@type}}.new!({{num}})
     {% end %}
@@ -341,6 +346,22 @@ struct Number
     in .ties_even?
       round_even
     end
+  end
+
+  # Returns `true` if `self` is an integer.
+  #
+  # Non-integer types may return `true` as long as `self` denotes a finite value
+  # without any fractional parts.
+  #
+  # ```
+  # 1.integer?       # => true
+  # 1.0.integer?     # => true
+  # 1.2.integer?     # => false
+  # (1 / 0).integer? # => false
+  # (0 / 0).integer? # => false
+  # ```
+  def integer? : Bool
+    self % 1 == 0
   end
 
   # Returns `true` if `self` is equal to zero.

@@ -1,3 +1,6 @@
+{% unless LibLLVM::IS_LT_170 %}
+  @[Deprecated("The legacy pass manager was removed in LLVM 17. Use `LLVM::PassBuilderOptions` instead")]
+{% end %}
 class LLVM::FunctionPassManager
   def initialize(@unwrap : LibLLVM::PassManagerRef)
   end
@@ -31,6 +34,9 @@ class LLVM::FunctionPassManager
     LibLLVM.dispose_pass_manager(@unwrap)
   end
 
+  {% unless LibLLVM::IS_LT_170 %}
+    @[Deprecated("The legacy pass manager was removed in LLVM 17. Use `LLVM::PassBuilderOptions` instead")]
+  {% end %}
   struct Runner
     @fpm : FunctionPassManager
 

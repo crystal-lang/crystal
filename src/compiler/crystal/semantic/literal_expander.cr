@@ -692,7 +692,7 @@ module Crystal
       case_whens = [] of When
 
       node.whens.each_with_index do |a_when, index|
-        condition = a_when.condition
+        condition = a_when.conds.first
         case condition
         when Call
           cloned_call = condition.clone
@@ -718,7 +718,7 @@ module Crystal
       if node_else = node.else
         case_else = node_else.clone
       else
-        case_else = Call.new(nil, "raise", StringLiteral.new("BUG: invalid select index"), global: true).at(node)
+        case_else = Call.new("raise", StringLiteral.new("BUG: invalid select index"), global: true).at(node)
       end
 
       call = Call.new(
