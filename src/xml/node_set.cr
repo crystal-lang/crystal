@@ -1,53 +1,34 @@
-class XML::NodeSet
+struct XML::NodeSet
   include Enumerable(Node)
 
   # :nodoc:
-  def initialize(@doc : Node, @xpath_object : LibXML::XPathObject*)
-    @set = @xpath_object.value.nodesetval
-  end
+  def self.new(set : LibXML::NodeSet*, document : Node)
+    return NodeSet.new unless set || set.value.node_nr > 0
 
-  # :nodoc:
-  def initialize(@doc : Node, @set : LibXML::NodeSet*)
-    @xpath_object = Pointer(LibXML::XPathObject).null
-  end
-
-  # :nodoc:
-  def initialize(@doc : Node)
-    @xpath_object = Pointer(LibXML::XPathObject).null
-    @set = LibXML.xmlXPathNodeSetCreate(nil)
-  end
-
-  # :nodoc:
-  def finalize
-    if @xpath_object.null?
-      LibXML.xmlXPathFreeNodeSet(@set)
-    else
-      LibXML.xmlXPathFreeObject(@xpath_object)
+    nodes = Slice(Node).new(set.value.node_nr) do |i|
+      Node.new(set.value.node_tab[i], document)
     end
+    NodeSet.new(nodes)
   end
 
-  def [](index : Int) : XML::Node
-    index += size if index < 0
+  @nodes : Slice(Node)
 
-    unless 0 <= index < size
-      raise IndexError.new
-    end
+  # :nodoc:
+  def initialize(nodes : Slice(Node)? = nil)
+    @nodes = nodes || Slice(Node).new(0, Pointer(Void).null.as(Node))
+  end
 
-    internal_at(index)
+  def [](index : Int) : Node
+    @nodes[index]
   end
 
   def each(&) : Nil
-    size.times do |i|
-      yield internal_at(i)
-    end
+    @nodes.each { |node| yield node }
   end
 
   def empty? : Bool
-    size == 0
+    @nodes.empty?
   end
-
-  # See `Object#hash(hasher)`
-  def_hash object_id
 
   def inspect(io : IO) : Nil
     io << '['
@@ -60,22 +41,10 @@ class XML::NodeSet
   end
 
   def size : Int32
-    @set.value.node_nr
-  end
-
-  def object_id
-    @set.address
+    @nodes.size
   end
 
   def to_s(io : IO) : Nil
     join io, '\n'
-  end
-
-  def to_unsafe
-    @set
-  end
-
-  private def internal_at(index)
-    Node.new(@set.value.node_tab[index], @doc)
   end
 end

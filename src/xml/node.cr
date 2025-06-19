@@ -81,18 +81,21 @@ class XML::Node
   # Gets the list of children for this node as a `XML::NodeSet`.
   def children : XML::NodeSet
     child = @node.value.children
+    return NodeSet.new unless child
 
-    set = LibXML.xmlXPathNodeSetCreate(child)
-
-    if child
-      child = child.value.next
-      while child
-        LibXML.xmlXPathNodeSetAddUnique(set, child)
-        child = child.value.next
-      end
+    size = 1
+    while child = child.value.next
+      size += 1
     end
 
-    NodeSet.new(@document, set)
+    child = @node.value.children
+    nodes = Slice(Node).new(size) do
+      node = Node.new(child, @document)
+      child = child.value.next
+      node
+    end
+
+    NodeSet.new(nodes)
   end
 
   # Returns `true` if this is a comment node.

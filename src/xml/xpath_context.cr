@@ -42,14 +42,13 @@ class XML::XPathContext
       when LibXML::XPathObjectType::BOOLEAN
         xpath_object.value.boolval != 0
       when LibXML::XPathObjectType::NODESET
-        if xpath_object.value.nodesetval
-          # don't free xpath object: that would free the nodeset
-          return NodeSet.new(@node.document, xpath_object)
-        end
+        NodeSet.new(xpath_object.value.nodesetval, @node.document)
+      else
+        NodeSet.new
       end
 
     LibXML.xmlXPathFreeObject(xpath_object)
-    retval || NodeSet.new(@node.document)
+    retval
   end
 
   def register_namespaces(namespaces) : Nil
