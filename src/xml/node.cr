@@ -2,29 +2,75 @@ class XML::Node
   LOOKS_LIKE_XPATH = /^(\.\/|\/|\.\.|\.$)/
 
   # Every Node must keep a reference to its document Node. To keep things
-  # simple, a document Node merely references itself.
+  # simple, a document Node merely references itself. An unlinked node must
+  # still reference its original document Node until adopted into another
+  # document's tree.
   @document : Node
 
-  # Unlinked Nodes must still reference its original document Node. They don't
-  # appear in the document's tree anymore, and they won't be freed along with
-  # the document, but we still need to access some data on the document's Node,
-  # and thus need to keep it alive.
+  # Remembers subtree nodes. Avoids allocating a XML::Node twice for the same
+  # libxml node. This allows to keep centralized information about the nodes so
+  # the finalizer won't try to access the libxml node to detect some state
+  # —which is unsafe because it may have been freed already, and won't try to
+  # free an unlinked node twice (or leak unlinked libxml nodes).
+  protected getter! cache : Hash(UInt64, UInt64)?
+
+  # Unlinked Nodes must still reference their original document Node. They don't
+  # appear in the document's tree anymore and thus won't be freed along with the
+  # document, but the libxml node still referes to the libxml doc and thus need
+  # to keep the document alive.
   @unlinked = false
 
   # :nodoc:
-  def initialize(node : LibXML::Doc*, @errors : Array(XML::Error)? = nil)
-    @node = node.as(LibXML::Node*)
-    @document = uninitialized Node
-    @document = self
+  #
+  # Allocates a XML::Node for a libxml document node once, so we don't finalize
+  # a document twice. We can store the pointer right into the libxml struct
+  # because the XML::Node lives as long as the libxml doc.
+  def self.new(doc : LibXML::Doc*, errors : Array(Error)? = nil)
+    if ptr = doc.value._private
+      ptr.as(Node)
+    else
+      new(doc_: doc, errors_: errors)
+    end
   end
 
   # :nodoc:
-  def initialize(@node : LibXML::Node*, @document : Node)
+  def self.new(node : LibXML::Node*, document : self) : self
+    # should never happen, but just in case
+    return document if node == document.@node
+
+    cache = document.cache
+    if (addr = cache[node.address]?) && addr != 0
+      return Pointer(Void).new(addr).as(Node)
+    end
+
+    this = new(node_: node, document_: document)
+    cache[node.address] = this.as(Void*).address
+    this
+  end
+
+  # :nodoc:
+  @[Deprecated("Use XML::Node.new(node, document) instead.")]
+  def self.new(node : LibXML::Node*) : self
+    new(node, new(node.value.doc))
+  end
+
+  private def initialize(*, doc_ : LibXML::Doc*, errors_ : Array(Error)?)
+    @node = doc_.as(LibXML::Node*)
+    @errors = errors_
+    @cache = Hash(UInt64, UInt64).new
+    @document = uninitialized Node
+    @document = self
+    doc_.value._private = self.as(Void*)
+  end
+
+  private def initialize(*, node_ : LibXML::Node*, document_ : self)
+    @node = node_.as(LibXML::Node*)
+    @document = document_
   end
 
   # :nodoc:
   def finalize
-    if document?
+    if @document == self
       # free the document, which will recursively free the DOM tree, NS, ...
       LibXML.xmlFreeDoc(@node.as(LibXML::Doc*))
     elsif @unlinked
@@ -575,8 +621,14 @@ class XML::Node
 
   # Removes the node from the XML document.
   def unlink : Nil
-    LibXML.xmlUnlinkNode(self)
+    return if @unlinked
+
     @unlinked = true
+    LibXML.xmlUnlinkNode(self)
+  end
+
+  def unlinked? : Bool
+    @unlinked
   end
 
   # Returns `true` if this is an xml Document node.
