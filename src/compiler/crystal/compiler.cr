@@ -216,7 +216,13 @@ module Crystal
       source = [source] unless source.is_a?(Array)
       program = new_program(source)
       node = parse program, source
-      node = program.semantic node, cleanup: !no_cleanup?
+
+      begin
+        node = program.semantic node, cleanup: !no_cleanup?
+      rescue ex : SkipMacroCodeCoverageException
+        program.macro_expansion_error_hook.try &.call(ex.cause)
+      end
+
       units = codegen program, node, source, output_filename unless @no_codegen
 
       @progress_tracker.clear
@@ -234,7 +240,13 @@ module Crystal
       program = new_program(source)
       yield program
       node = parse program, source
-      node = program.semantic node, cleanup: !no_cleanup?
+
+      begin
+        node = program.semantic node, cleanup: !no_cleanup?
+      rescue ex : SkipMacroCodeCoverageException
+        program.macro_expansion_error_hook.try &.call(ex.cause)
+      end
+
       units = codegen program, node, source, output_filename unless @no_codegen
 
       @progress_tracker.clear

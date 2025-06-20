@@ -47,6 +47,29 @@ describe "macro_code_coverage" do
     %}
     CR
 
+  assert_coverage <<-'CR', {6 => 1, 7 => 1, 9 => "2/2", 11 => 1, 12 => 1}, expected_error: "Class 'Foo' is missing its name."
+    annotation Name; end
+
+    @[Name]
+    class Foo
+      def self.default_name
+        {% begin %}
+          {% if ann = @type.annotation Name %}
+            {%
+              name = (ann[0] || ann[:name])
+
+              unless name
+                ann.raise "Class '#{@type}' is missing its name."
+              end
+            %}
+          {% end %}
+        {% end %}
+      end
+    end
+
+    Foo.default_name
+    CR
+
   assert_coverage <<-'CR', {1 => "1/2"}, expected_error: "oh noes im an error"
     {{ true ? raise("oh noes im an error") : 0 }}
     CR
