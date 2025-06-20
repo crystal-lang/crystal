@@ -49,9 +49,15 @@ class XML::Node
   end
 
   # :nodoc:
-  @[Deprecated("Use XML::Node.new(node, document) instead.")]
+  @[Deprecated]
   def self.new(node : LibXML::Node*) : self
     new(node, new(node.value.doc))
+  end
+
+  # :nodoc:
+  @[Deprecated]
+  def self.new(node : LibXML::Attr*) : self
+    new(node.as(LibXML::Node*), new(node.value.doc))
   end
 
   private def initialize(*, doc_ : LibXML::Doc*, errors_ : Array(Error)?)
