@@ -42,7 +42,7 @@ class XML::XPathContext
       when LibXML::XPathObjectType::BOOLEAN
         xpath_object.value.boolval != 0
       when LibXML::XPathObjectType::NODESET
-        NodeSet.new(xpath_object.value.nodesetval, @node.document)
+        NodeSet.new(@node.document, xpath_object.value.nodesetval)
       else
         NodeSet.new
       end

@@ -2,11 +2,11 @@ struct XML::NodeSet
   include Enumerable(Node)
 
   # :nodoc:
-  def self.new(set : LibXML::NodeSet*, document : Node)
+  def self.new(doc : Node, set : LibXML::NodeSet*)
     return NodeSet.new unless set || set.value.node_nr > 0
 
     nodes = Slice(Node).new(set.value.node_nr) do |i|
-      Node.new(set.value.node_tab[i], document)
+      Node.new(set.value.node_tab[i], doc)
     end
     NodeSet.new(nodes)
   end
