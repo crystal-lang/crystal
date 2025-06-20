@@ -86,6 +86,29 @@ module Crystal
       @vars[name] = value
     end
 
+    # Calls the program's `interpreted_node_hook` hook with the macro ASTNode that was interpreted.
+    def interpreted(node : ASTNode, *, location custom_location : Location? = nil) : ASTNode
+      return node unless interpreted_hook = @program.interpreted_node_hook
+
+      interpreted_hook.call node, false, false, custom_location
+
+      node
+    end
+
+    # Calls the program's `interpreted_node_hook` hook with the macro ASTNode that was _not_ interpreted.
+    def not_interpreted(node : ASTNode, use_significant_node : Bool = false, *, location custom_location : Location? = nil) : ASTNode
+      return node unless interpreted_hook = @program.interpreted_node_hook
+
+      interpreted_hook.call node, true, use_significant_node, custom_location
+
+      # If a Yield was missed, also mark the code that would have ran as missed.
+      if node.is_a?(Yield) && (block = @block)
+        interpreted_hook.call block.body, true, false, nil
+      end
+
+      node
+    end
+
     def accept(node)
       node.accept self
       @last
@@ -109,7 +132,7 @@ module Crystal
           @str << " end" if is_yield
           (macro_expansion_pragmas[@str.pos.to_i32] ||= [] of Lexer::LocPragma) << Lexer::LocPopPragma.new
         else
-          @last.to_s(@str)
+          @last.to_s(@str, emit_location_pragmas: !!@program.interpreted_node_hook)
         end
       end
 
@@ -125,15 +148,17 @@ module Crystal
       exp = node.exp
       if exp.is_a?(Expressions)
         exp.expressions.each do |subexp|
-          subexp.to_s(@str)
+          subexp.to_s(@str, emit_location_pragmas: !!@program.interpreted_node_hook)
         end
       else
-        exp.to_s(@str)
+        exp.to_s(@str, emit_location_pragmas: !!@program.interpreted_node_hook)
       end
       false
     end
 
     def visit(node : Var)
+      self.interpreted node
+
       var = @vars[node.name]?
       if var
         @last = var
@@ -174,15 +199,26 @@ module Crystal
     end
 
     def visit(node : MacroIf)
+      self.interpreted node
+
       node.cond.accept self
 
-      body = @last.truthy? ? node.then : node.else
+      body = if @last.truthy?
+               self.not_interpreted node.else, use_significant_node: true
+               node.then
+             else
+               self.not_interpreted node.then, use_significant_node: true
+               node.else
+             end
+
       body.accept self
 
       false
     end
 
     def visit(node : MacroFor)
+      self.interpreted node.exp
+
       node.exp.accept self
 
       exp = @last
@@ -204,6 +240,10 @@ module Crystal
 
         element_var = node.vars[0]
         index_var = node.vars[1]?
+
+        if range.empty?
+          self.not_interpreted node.body, use_significant_node: true
+        end
 
         range.each_with_index do |element, index|
           @vars[element_var.name] = NumberLiteral.new(element)
@@ -245,6 +285,10 @@ module Crystal
       element_var = node.vars[0]
       index_var = node.vars[1]?
 
+      if entries.empty?
+        self.not_interpreted node.body, use_significant_node: true
+      end
+
       entries.each_with_index do |element, index|
         @vars[element_var.name] = yield element
         if index_var
@@ -262,6 +306,10 @@ module Crystal
       value_var = node.vars[1]?
       index_var = node.vars[2]?
 
+      if entries.empty?
+        self.not_interpreted node.body, use_significant_node: true
+      end
+
       entries.each_with_index do |entry, i|
         key, value = yield entry, value_var
 
@@ -278,6 +326,8 @@ module Crystal
     end
 
     def visit(node : MacroVar)
+      self.interpreted node
+
       if exps = node.exps
         exps = exps.map { |exp| accept exp }
       else
@@ -293,6 +343,8 @@ module Crystal
     end
 
     def visit(node : Assign)
+      self.interpreted node
+
       case target = node.target
       when Var
         node.value.accept self
@@ -317,18 +369,30 @@ module Crystal
     end
 
     def visit(node : And)
+      self.interpreted node
+
       node.left.accept self
+
       if @last.truthy?
         node.right.accept self
+      else
+        self.not_interpreted node.right, use_significant_node: true
       end
+
       false
     end
 
     def visit(node : Or)
+      self.interpreted node
+
       node.left.accept self
-      unless @last.truthy?
+
+      if !@last.truthy?
         node.right.accept self
+      else
+        self.not_interpreted node.right, use_significant_node: true
       end
+
       false
     end
 
@@ -339,14 +403,38 @@ module Crystal
     end
 
     def visit(node : If)
+      self.interpreted node
+
       node.cond.accept self
-      (@last.truthy? ? node.then : node.else).accept self
+
+      body = if @last.truthy?
+               self.not_interpreted node.else
+               node.then
+             else
+               self.not_interpreted node.then
+               node.else
+             end
+
+      body.accept self
+
       false
     end
 
     def visit(node : Unless)
+      self.interpreted node
+
       node.cond.accept self
-      (@last.truthy? ? node.else : node.then).accept self
+
+      body = if @last.truthy?
+               self.not_interpreted node.then
+               node.else
+             else
+               self.not_interpreted node.else
+               node.then
+             end
+
+      body.accept self
+
       false
     end
 
@@ -359,6 +447,8 @@ module Crystal
           obj.accept self
           receiver = @last
         end
+
+        self.interpreted obj, location: node.name_location
 
         args = node.args.map { |arg| accept arg }
         named_args = node.named_args.try &.to_h { |arg| {arg.name, accept arg.value} }
@@ -377,6 +467,8 @@ module Crystal
           node.raise ex.message
         end
       else
+        self.interpreted node
+
         # no receiver: special calls
         # may raise `Crystal::TopLevelMacroRaiseException`
         interpret_top_level_call node
@@ -386,6 +478,8 @@ module Crystal
     end
 
     def visit(node : Yield)
+      self.interpreted node
+
       unless @in_macro
         node.raise "can't use `{{yield}}` outside a macro"
       end
@@ -409,6 +503,8 @@ module Crystal
     end
 
     def visit(node : Path)
+      self.interpreted node
+
       @last = resolve(node)
       false
     end
@@ -622,16 +718,22 @@ module Crystal
     end
 
     def visit(node : TupleLiteral)
+      self.interpreted node
+
       @last = TupleLiteral.map(node.elements) { |element| accept element }
       false
     end
 
     def visit(node : ArrayLiteral)
+      self.interpreted node
+
       @last = ArrayLiteral.map(node.elements) { |element| accept element }
       false
     end
 
     def visit(node : HashLiteral)
+      self.interpreted node
+
       @last =
         HashLiteral.new(node.entries.map do |entry|
           HashLiteral::Entry.new(accept(entry.key), accept(entry.value))
@@ -648,6 +750,8 @@ module Crystal
     end
 
     def visit(node : Nop | NilLiteral | BoolLiteral | NumberLiteral | CharLiteral | StringLiteral | SymbolLiteral | RangeLiteral | RegexLiteral | MacroId | TypeNode | Def)
+      self.interpreted node
+
       @last = node.clone_without_location
       false
     end
