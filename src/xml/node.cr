@@ -634,10 +634,6 @@ class XML::Node
     LibXML.xmlUnlinkNode(self)
   end
 
-  def unlinked? : Bool
-    @unlinked
-  end
-
   # Returns `true` if this is an xml Document node.
   def xml?
     type == XML::Node::Type::DOCUMENT_NODE
