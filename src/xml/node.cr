@@ -13,7 +13,7 @@ class XML::Node
   # finalize a document twice for example.
   #
   # We store the reference into the libxml struct (_private) for documents
-  # because every a document's XML::Node lives as long as their libxml doc.
+  # because a document's XML::Node lives as long as its libxml doc.
   #
   # However we can lose references to subtree XML::Node, so using _private would
   # leave dangling pointers. We thus keep a cache of weak references to all
@@ -21,10 +21,11 @@ class XML::Node
   # reinstantiate a XML::Node if needed.
   protected getter! cache : Hash(LibXML::Node*, WeakRef(Node))?
 
-  # Unlinked Nodes (and all descendant nodes) don't appear in the document's
-  # tree anymore, and must be manually freed, which will free all their
-  # descendants.
-  @unlinked = false
+  # Unlinked Nodes, and all their descendant nodes, don't appear in the
+  # document's tree anymore, and must be manually freed. Yet, the finalizer
+  # can't free the libxml node immediately because it would free the whole
+  # subtree, while we may still have live XML::Node instances.
+  protected getter? unlinked = false
 
   # :nodoc:
   def self.new(doc : LibXML::Doc*, errors : Array(Error)? = nil)
@@ -63,6 +64,8 @@ class XML::Node
     new(node.as(LibXML::Node*), new(node.value.doc))
   end
 
+  # the initializers must never be called directly, use the constructors above
+
   private def initialize(*, doc_ : LibXML::Doc*, errors_ : Array(Error)?)
     @node = doc_.as(LibXML::Node*)
     @errors = errors_
@@ -79,11 +82,17 @@ class XML::Node
 
   # :nodoc:
   def finalize
-    if @document == self
-      LibXML.xmlFreeDoc(@node.as(LibXML::Doc*))
-    elsif @unlinked
-      LibXML.xmlFreeNode(@node)
+    return unless @document == self
+
+    # free unlinked nodes and their subtrees
+    cache.each do |node, ref|
+      if (obj = ref.value) && obj.unlinked?
+        LibXML.xmlFreeNode(node)
+      end
     end
+
+    # free the doc and its subtree
+    LibXML.xmlFreeDoc(@node.as(LibXML::Doc*))
   end
 
   # Gets the attribute content for the *attribute* given by name.
