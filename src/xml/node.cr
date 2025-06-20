@@ -1,30 +1,32 @@
+require "weak_ref"
+
 class XML::Node
   LOOKS_LIKE_XPATH = /^(\.\/|\/|\.\.|\.$)/
 
   # Every Node must keep a reference to its document Node. To keep things
   # simple, a document Node merely references itself. An unlinked node must
   # still reference its original document Node until adopted into another
-  # document's tree.
+  # document's tree (the libxml nodes keep a pointer to their libxml doc).
   @document : Node
 
-  # Remembers subtree nodes. Avoids allocating a XML::Node twice for the same
-  # libxml node. This allows to keep centralized information about the nodes so
-  # the finalizer won't try to access the libxml node to detect some state
-  # —which is unsafe because it may have been freed already, and won't try to
-  # free an unlinked node twice (or leak unlinked libxml nodes).
-  protected getter! cache : Hash(UInt64, UInt64)?
+  # The constructors allocate a XML::Node for a libxml node once, so we don't
+  # finalize a document twice for example.
+  #
+  # We store the reference into the libxml struct (_private) for documents
+  # because every a document's XML::Node lives as long as their libxml doc.
+  #
+  # However we can lose references to subtree XML::Node, so using _private would
+  # leave dangling pointers. We thus keep a cache of weak references to all
+  # nodes in the document, so we can still collect lost references, and at worst
+  # reinstantiate a XML::Node if needed.
+  protected getter! cache : Hash(LibXML::Node*, WeakRef(Node))?
 
-  # Unlinked Nodes must still reference their original document Node. They don't
-  # appear in the document's tree anymore and thus won't be freed along with the
-  # document, but the libxml node still referes to the libxml doc and thus need
-  # to keep the document alive.
+  # Unlinked Nodes (and all descendant nodes) don't appear in the document's
+  # tree anymore, and must be manually freed, which will free all their
+  # descendants.
   @unlinked = false
 
   # :nodoc:
-  #
-  # Allocates a XML::Node for a libxml document node once, so we don't finalize
-  # a document twice. We can store the pointer right into the libxml struct
-  # because the XML::Node lives as long as the libxml doc.
   def self.new(doc : LibXML::Doc*, errors : Array(Error)? = nil)
     if ptr = doc.value._private
       ptr.as(Node)
@@ -35,17 +37,18 @@ class XML::Node
 
   # :nodoc:
   def self.new(node : LibXML::Node*, document : self) : self
-    # should never happen, but just in case
-    return document if node == document.@node
-
-    cache = document.cache
-    if (addr = cache[node.address]?) && addr != 0
-      return Pointer(Void).new(addr).as(Node)
+    if node == document.@node
+      # should never happen, but just in case
+      return document
     end
 
-    this = new(node_: node, document_: document)
-    cache[node.address] = this.as(Void*).address
-    this
+    if (ref = document.cache[node]?) && (obj = ref.value)
+      return obj
+    end
+
+    obj = new(node_: node, document_: document)
+    document.cache[node] = WeakRef.new(obj)
+    obj
   end
 
   # :nodoc:
@@ -63,7 +66,7 @@ class XML::Node
   private def initialize(*, doc_ : LibXML::Doc*, errors_ : Array(Error)?)
     @node = doc_.as(LibXML::Node*)
     @errors = errors_
-    @cache = Hash(UInt64, UInt64).new
+    @cache = Hash(LibXML::Node*, WeakRef(Node)).new
     @document = uninitialized Node
     @document = self
     doc_.value._private = self.as(Void*)
@@ -77,10 +80,8 @@ class XML::Node
   # :nodoc:
   def finalize
     if @document == self
-      # free the document, which will recursively free the DOM tree, NS, ...
       LibXML.xmlFreeDoc(@node.as(LibXML::Doc*))
     elsif @unlinked
-      # unlinked nodes must be managed manually
       LibXML.xmlFreeNode(@node)
     end
   end
