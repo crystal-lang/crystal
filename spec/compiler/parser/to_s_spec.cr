@@ -291,6 +291,25 @@ describe "ASTNode#to_s" do
   expect_to_s "{%\n  a = 1 %}"
   expect_to_s "{% a = 1\n%}"
 
+  expect_to_s <<-'CRYSTAL'
+    {%
+      if 1
+        2
+      end
+      3
+    %}
+    CRYSTAL
+
+  expect_to_s <<-'CRYSTAL'
+    {%
+      if 1
+        2
+      end
+      3
+      4
+    %}
+    CRYSTAL
+
   expect_to_s <<-'CR', <<-'CR'
     macro finished
       {% verbatim do %}
