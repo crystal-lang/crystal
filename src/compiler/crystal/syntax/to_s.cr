@@ -885,18 +885,29 @@ module Crystal
     end
 
     def visit(node : MacroIf)
-      @str << "{% if "
+      if node.is_unless?
+        @str << "{% unless "
+        then_node = node.else
+        else_node = node.then
+      else
+        @str << "{% if "
+        then_node = node.then
+        else_node = node.else
+      end
       node.cond.accept self
       @str << " %}"
+
       inside_macro do
-        node.then.accept self
+        then_node.accept self
       end
-      unless node.else.nop?
+
+      unless else_node.nop?
         @str << "{% else %}"
         inside_macro do
-          node.else.accept self
+          else_node.accept self
         end
       end
+
       @str << "{% end %}"
       false
     end
