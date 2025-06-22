@@ -80,14 +80,12 @@ module Crystal
       self.compute_coverage
 
       if err = @coverage_interrupt_exception
-        puts "Encountered an error while computing coverage report:"
-        puts
-        err.inspect_with_backtrace STDOUT
-        puts
-        puts
+        err.inspect_with_backtrace STDERR
+        STDERR.puts
+        STDERR.puts
       end
 
-      self.write_output STDERR
+      self.write_output STDOUT
 
       exit 1 if err
     end
