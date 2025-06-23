@@ -120,6 +120,9 @@ struct Struct
   # alignment of `alignof(self)` or above. This can for example be a pointer to
   # an uninitialized instance.
   #
+  # This method only works for non-virtual constructions. Neither the struct
+  # type nor *address*'s pointee type can be an abstract struct.
+  #
   # ```
   # struct Foo
   #   getter i : Int64

@@ -2489,7 +2489,7 @@ module Crystal
       end
 
       if instance_type.abstract?
-        if instance_type.virtual?
+        if instance_type.virtual? && !instance_type.struct?
           # This is the same as `.initialize`
           base_type = instance_type.devirtualize
 
@@ -2507,11 +2507,21 @@ module Crystal
         else
           # If the type is not virtual then we know for sure that the type
           # can't be instantiated, and we can produce a compile-time error.
+          instance_type = instance_type.devirtualize
           node.raise "Can't pre-initialize abstract #{instance_type.type_desc} #{instance_type}"
         end
       end
 
-      node.type = instance_type.struct? ? @program.nil_type : instance_type
+      if instance_type.struct?
+        element_type = @vars["address"].type.as(PointerInstanceType).element_type
+        if element_type.abstract? && element_type.struct?
+          node.raise "Can't pre-initialize struct using pointer to abstract struct"
+        end
+        node.type = @program.nil_type
+      else
+        node.type = instance_type
+      end
+
       false
     end
 
