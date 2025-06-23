@@ -39,14 +39,45 @@ class XML::Attributes
   end
 
   def []=(name : String, value)
+    if prop = find_prop(name)
+      # manually unlink the prop's children if we have live references, so
+      # xmlSetProp won't free them immediately
+      @node.document.unlink_cached_children(prop)
+    end
+
     LibXML.xmlSetProp(@node, name, value.to_s)
     value
   end
 
   def delete(name : String) : String?
-    value = self[name]?.try &.content
-    res = LibXML.xmlUnsetProp(@node, name)
-    value if res == 0
+    prop = find_prop(name)
+    return unless prop
+
+    value = ""
+    if content = LibXML.xmlNodeGetContent(prop)
+      value = String.new(content)
+    end
+
+    if node = @node.document.cached?(prop)
+      # can't call xmlUnsetProp: it would free the node
+      node.unlink
+      value
+    else
+      # manually unlink the prop's children if we have live references, so
+      # xmlUnsetProp won't free them immediately
+      @node.document.unlink_cached_children(prop)
+      value if LibXML.xmlUnsetProp(@node, name) == 0
+    end
+  end
+
+  private def find_prop(name)
+    prop = @node.to_unsafe.value.properties.as(LibXML::Node*)
+    while prop
+      if String.new(prop.value.name) == name
+        return prop
+      end
+      prop = prop.value.next
+    end
   end
 
   def each(&) : Nil

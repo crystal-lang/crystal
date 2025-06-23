@@ -51,7 +51,7 @@ class XML::Node
       return document
     end
 
-    if (ref = document.cache[node]?) && (obj = ref.value)
+    if obj = document.cached?(node)
       return obj
     end
 
@@ -183,6 +183,24 @@ class XML::Node
   # The string gets XML escaped, not interpreted as markup.
   def content=(content)
     check_no_null_byte(content)
+
+    if fragment? || element? || attribute?
+      # libxml will immediately free all the children nodes, while we may have
+      # live references to a child or a descendant; explicitly unlink all the
+      # children before replacing a node's contents
+      child = @node.value.children
+      while child
+        if node = document.cached?(child)
+          node.unlink
+        else
+          document.unlinked_nodes << child
+          LibXML.xmlUnlinkNode(child)
+        end
+        Node.new(child, @document).unlink
+        child = child.value.next
+      end
+    end
+
     LibXML.xmlNodeSetContent(self, content)
   end
 
@@ -753,6 +771,24 @@ class XML::Node
   private def check_no_null_byte(string)
     if string.includes? Char::ZERO
       raise XML::Error.new("Cannot escape string containing null character", 0)
+    end
+  end
+
+  # these helpers must only be called on document nodes:
+
+  protected def cached?(node : LibXML::Node*) : Node?
+    cache[node]?.try(&.value)
+  end
+
+  protected def unlink_cached_children(node : LibXML::Node*) : Nil
+    child = node.value.children
+    while child
+      if obj = cached?(node)
+        obj.unlink
+      else
+        unlink_cached_children(child)
+      end
+      child = child.value.next
     end
   end
 end
