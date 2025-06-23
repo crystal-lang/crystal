@@ -21,6 +21,14 @@ class XML::Node
   # reinstantiate a XML::Node if needed.
   protected getter! cache : Hash(LibXML::Node*, WeakRef(Node))?
 
+  # Keep an explicit list of unlinked libxml nodes still (that still refer to
+  # the document). We can't rely on the cache because it uses weak references
+  # and the Node could be collected, leaking the libxml node and its subtree.
+  #
+  # The libxml node (and any descendant) must be removed from the list when
+  # adopted into another document.
+  protected getter! unlinked_nodes : Set(LibXML::Node*)?
+
   # Unlinked Nodes, and all their descendant nodes, don't appear in the
   # document's tree anymore, and must be manually freed. Yet, the finalizer
   # can't free the libxml node immediately because it would free the whole
@@ -70,6 +78,7 @@ class XML::Node
     @node = doc_.as(LibXML::Node*)
     @errors = errors_
     @cache = Hash(LibXML::Node*, WeakRef(Node)).new
+    @unlinked_nodes = Set(LibXML::Node*).new
     @document = uninitialized Node
     @document = self
     doc_.value._private = self.as(Void*)
@@ -85,10 +94,8 @@ class XML::Node
     return unless @document == self
 
     # free unlinked nodes and their subtrees
-    cache.each do |node, ref|
-      if (obj = ref.value) && obj.unlinked?
-        LibXML.xmlFreeNode(node)
-      end
+    unlinked_nodes.each do |node|
+      LibXML.xmlFreeNode(node)
     end
 
     # free the doc and its subtree
@@ -640,7 +647,8 @@ class XML::Node
     return if @unlinked
 
     @unlinked = true
-    LibXML.xmlUnlinkNode(self)
+    document.unlinked_nodes << @node
+    LibXML.xmlUnlinkNode(@node)
   end
 
   # Returns `true` if this is an xml Document node.
