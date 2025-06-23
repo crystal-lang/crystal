@@ -43,7 +43,7 @@ fun wmain(argc : Int32, argv : UInt16**) : Int32
   LibC.free(utf8_argv)
 
   # prefer explicit exit over returning the status, so we are free to resume the
-  # main thread's fiber on any thread, without occuring a weird behavior where
+  # main thread's fiber on any thread, without occurring a weird behavior where
   # another thread returns from main when the caller might expect the main
   # thread to be the one returning.
   LibC.exit(status)

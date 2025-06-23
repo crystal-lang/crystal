@@ -821,8 +821,8 @@ describe "Semantic: splat" do
       Foo.new.bar("test")
       CRYSTAL
     program = result.program
-    a_typ = program.types["Foo"].as(NonGenericClassType)
-    a_def = a_typ.def_instances.values[0]
+    a_type = program.types["Foo"].as(NonGenericClassType)
+    a_def = a_type.def_instances.values[0]
 
     a_def.location.should eq Location.new("", line_number: 2, column_number: 3)
     a_def.body.location.should eq Location.new("", line_number: 3, column_number: 5)

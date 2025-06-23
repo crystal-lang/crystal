@@ -199,6 +199,10 @@ def String.from_json_object_key?(key : String) : String
   key
 end
 
+def Path.from_json_object_key?(key : String) : Path
+  new(key)
+end
+
 def Array.new(pull : JSON::PullParser)
   ary = new
   new(pull) do |element|

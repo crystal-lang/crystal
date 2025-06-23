@@ -1,11 +1,8 @@
-# A time location capable of computing recurring time zone transitions using
-# POSIX TZ strings, as defined in [POSIX.1-2024 Section 8.3](https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/V1_chap08.html),
-# or in [IETF RFC 9636](https://datatracker.ietf.org/doc/html/rfc9636).
-#
-# These locations are returned by `Time::Location.posix_tz`.
-class Time::TZLocation < Time::Location
+# :nodoc:
+# Facilities for time zone lookup based on POSIX TZ strings
+module Time::TZ
   # `J*`: one-based ordinal day, excludes leap day
-  private record Julian1, ordinal : Int16, time : Int32 do
+  record Julian1, ordinal : Int16, time : Int32 do
     def always_jan1? : Bool
       ordinal == 1
     end
@@ -20,7 +17,7 @@ class Time::TZLocation < Time::Location
   end
 
   # `*`: zero-based ordinal day, includes leap day
-  private record Julian0, ordinal : Int16, time : Int32 do
+  record Julian0, ordinal : Int16, time : Int32 do
     def always_jan1? : Bool
       ordinal == 0
     end
@@ -36,7 +33,8 @@ class Time::TZLocation < Time::Location
   end
 
   # `M*.*.*`: month-week-day, week 5 is last week
-  private record MonthWeekDay, month : Int8, week : Int8, day : Int8, time : Int32 do
+  # also used for Windows system time zones (ignoring the millisecond component)
+  record MonthWeekDay, month : Int8, week : Int8, day : Int8, time : Int32 do
     def always_jan1? : Bool
       false
     end
@@ -48,54 +46,27 @@ class Time::TZLocation < Time::Location
     def unix_date_in_year(year : Int) : Int64
       Time.month_week_date(year, @month.to_i32, @week.to_i32, @day.to_i32, location: Time::Location::UTC).to_unix
     end
-  end
 
-  private alias Transition = Julian1 | Julian0 | MonthWeekDay
-
-  # Indices into this location's zones array. Identical if all-year standard
-  # time or DST is in effect.
-  @std_index : Int32
-  @dst_index : Int32
-
-  # The first and second transition times defined in the TZ string. Not
-  # meaningful when `std_index == dst_index`.
-  @transition1 : Transition
-  @transition2 : Transition
-
-  # The original TZ string that produced this location.
-  @tz_string : String
-
-  protected def initialize(name : String, zones : Array(Zone), @tz_string, @std_index, @dst_index, @transition1, @transition2, transitions = [] of ZoneTransition)
-    super(name, zones, transitions)
-  end
-
-  def_equals_and_hash name, zones, transitions, @tz_string
-
-  # :nodoc:
-  def lookup_with_boundaries(unix_seconds : Int) : {Zone, {Int64, Int64}}
-    case
-    when zones.empty?
-      {Zone::UTC, {Int64::MIN, Int64::MAX}}
-    when transitions.empty?
-      lookup_posix_tz(unix_seconds)
-    when unix_seconds < transitions.first.when
-      {lookup_first_zone, {Int64::MIN, transitions.first.when}}
-    when unix_seconds >= transitions.last.when
-      lookup_posix_tz(unix_seconds)
-    else
-      lookup_within_fixed_transitions(unix_seconds)
+    def self.default : self
+      new(0, 0, 0, 0)
     end
   end
 
-  private def lookup_posix_tz(unix_seconds : Int) : {Zone, {Int64, Int64}}
-    if @std_index == @dst_index
+  alias POSIXTransition = Julian1 | Julian0 | MonthWeekDay
+
+  def self.lookup(
+    unix_seconds : Int, zones : Array(Location::Zone),
+    std_index : Int, dst_index : Int,
+    transition1 : POSIXTransition, transition2 : POSIXTransition,
+  ) : {Location::Zone, {Int64, Int64}}
+    if std_index == dst_index
       # all-year standard time or DST time
       is_dst = false
       range_begin = Int64::MIN
       range_end = Int64::MAX
     else
-      std_offset = -@zones[@std_index].offset
-      dst_offset = -@zones[@dst_index].offset
+      std_offset = -zones[std_index].offset
+      dst_offset = -zones[dst_index].offset
 
       # Find the local year corresponding to `unix_seconds`, except we cannot
       # rely on `Time`'s timezone facilities since that is exactly what this
@@ -105,8 +76,8 @@ class Time::TZLocation < Time::Location
       utc_year = local_year = utc_time.year
 
       while true
-        datetime1 = @transition1.unix_date_in_year(local_year) + @transition1.time + std_offset
-        datetime2 = @transition2.unix_date_in_year(local_year) + @transition2.time + dst_offset
+        datetime1 = transition1.unix_date_in_year(local_year) + transition1.time + std_offset
+        datetime2 = transition2.unix_date_in_year(local_year) + transition2.time + dst_offset
         new_year_is_dst = datetime2 < datetime1
 
         local_new_year = Time.utc(local_year, 1, 1).to_unix + (new_year_is_dst ? dst_offset : std_offset)
@@ -130,12 +101,12 @@ class Time::TZLocation < Time::Location
       if new_year_is_dst
         if unix_seconds < datetime2
           is_dst = true
-          range_begin = @transition1.unix_date_in_year(local_year - 1) + @transition1.time + std_offset
+          range_begin = transition1.unix_date_in_year(local_year - 1) + transition1.time + std_offset
           range_end = datetime2
         elsif unix_seconds >= datetime1
           is_dst = true
           range_begin = datetime1
-          range_end = @transition2.unix_date_in_year(local_year + 1) + @transition2.time + dst_offset
+          range_end = transition2.unix_date_in_year(local_year + 1) + transition2.time + dst_offset
         else
           is_dst = false
           range_begin = datetime2
@@ -144,12 +115,12 @@ class Time::TZLocation < Time::Location
       else
         if unix_seconds < datetime1
           is_dst = false
-          range_begin = @transition2.unix_date_in_year(local_year - 1) + @transition2.time + dst_offset
+          range_begin = transition2.unix_date_in_year(local_year - 1) + transition2.time + dst_offset
           range_end = datetime1
         elsif unix_seconds >= datetime2
           is_dst = false
           range_begin = datetime2
-          range_end = @transition1.unix_date_in_year(local_year + 1) + @transition1.time + std_offset
+          range_end = transition1.unix_date_in_year(local_year + 1) + transition1.time + std_offset
         else
           is_dst = true
           range_begin = datetime1
@@ -158,15 +129,9 @@ class Time::TZLocation < Time::Location
       end
     end
 
-    if last_transition = @transitions.last?
-      range_begin = {range_begin, last_transition.when}.max
-    end
-
-    {@zones[is_dst ? @dst_index : @std_index], {range_begin, range_end}}
+    {zones[is_dst ? dst_index : std_index], {range_begin, range_end}}
   end
 
-  # :nodoc:
-  #
   # Parses the given *tz* string. Returns the `std_index`, `dst_index`,
   # `transition1`, and `transition2` fields for a yet to be constructed
   # `TZLocation`, or `nil` if *tz* is invalid.
@@ -185,7 +150,7 @@ class Time::TZLocation < Time::Location
   # * musl https://git.musl-libc.org/cgit/musl/tree/src/time/__tz.c?id=ef7d0ae21240eac9fc1e8088112bfb0fac507578#n239
   # * bionic https://android.googlesource.com/platform/bionic/+/31fc69f67fc49b1a08f5561ae62d098106da6565/libc/tzcode/localtime.c#1148
   # * wine msvcrt https://gitlab.winehq.org/wine/wine/-/blob/7f833db11ffea4f3f4fa07be31d30559aff9c5fb/dlls/msvcrt/time.c#L127
-  def self.parse_tz(tz : String, zones : Array(Location::Zone), hours_extension : Bool) : {Int32, Int32, Transition, Transition}?
+  def self.parse(tz : String, zones : Array(Location::Zone), hours_extension : Bool) : {Int32, Int32, POSIXTransition, POSIXTransition}?
     reader = Char::Reader.new(tz)
 
     # colon prefix: implementation-defined (not supported in Crystal)
@@ -250,7 +215,7 @@ class Time::TZLocation < Time::Location
     end
   end
 
-  private def self.parse_transition(reader : Char::Reader, hours_extension : Bool) : {Char::Reader, Transition}?
+  private def self.parse_transition(reader : Char::Reader, hours_extension : Bool) : {Char::Reader, POSIXTransition}?
     case reader.current_char
     when 'J'
       reader.next_char
@@ -361,5 +326,116 @@ class Time::TZLocation < Time::Location
 
     name = reader.string.byte_slice(start, finish - start)
     {reader, name}
+  end
+end
+
+# A time location capable of computing recurring time zone transitions in the
+# future using POSIX TZ strings, as defined in [POSIX.1-2024 Section 8.3](https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/V1_chap08.html),
+# or in [IETF RFC 9636](https://datatracker.ietf.org/doc/html/rfc9636).
+#
+# These locations are returned by `Time::Location.posix_tz`.
+class Time::TZLocation < Time::Location
+  # Indices into this location's zones array. Identical if all-year standard
+  # time or DST is in effect.
+  @std_index : Int32
+  @dst_index : Int32
+
+  # The first and second transition times defined in the TZ string. Not
+  # meaningful when `std_index == dst_index`.
+  @transition1 : TZ::POSIXTransition
+  @transition2 : TZ::POSIXTransition
+
+  # The original TZ string that produced this location.
+  @tz_string : String
+
+  protected def initialize(name : String, zones : Array(Zone), @tz_string, @std_index, @dst_index, @transition1, @transition2, transitions = [] of ZoneTransition)
+    super(name, zones, transitions)
+  end
+
+  def_equals_and_hash name, zones, transitions, @tz_string
+
+  # :nodoc:
+  def lookup_with_boundaries(unix_seconds : Int) : {Zone, {Int64, Int64}}
+    case
+    when zones.empty?
+      {Zone::UTC, {Int64::MIN, Int64::MAX}}
+    when transitions.empty?
+      lookup_posix_tz(unix_seconds)
+    when unix_seconds < transitions.first.when
+      {lookup_first_zone, {Int64::MIN, transitions.first.when}}
+    when unix_seconds >= transitions.last.when
+      lookup_posix_tz(unix_seconds)
+    else
+      lookup_within_fixed_transitions(unix_seconds)
+    end
+  end
+
+  private def lookup_posix_tz(unix_seconds : Int) : {Zone, {Int64, Int64}}
+    zone, range = TZ.lookup(unix_seconds, @zones, @std_index, @dst_index, @transition1, @transition2)
+    range_begin, range_end = range
+
+    if last_transition = @transitions.last?
+      range_begin = {range_begin, last_transition.when}.max
+    end
+
+    {zone, {range_begin, range_end}}
+  end
+end
+
+# A time location capable of computing recurring time zone transitions in the
+# past or future using definitions from the Windows Registry.
+#
+# These locations are returned by `Time::Location.load`.
+class Time::WindowsLocation < Time::Location
+  # Two sets of transition rules for times before the first transition or after
+  # the last transition. Each corresponds to a `TZLocation`'s `@std_index`,
+  # `@dst_index`, `@transition1`, and `@transition2` fields. If there are no
+  # fixed transitions then the two sets are equal.
+  @past_tz_args : {Int32, Int32, TZ::MonthWeekDay, TZ::MonthWeekDay}
+  @future_tz_args : {Int32, Int32, TZ::MonthWeekDay, TZ::MonthWeekDay}
+
+  # The original Windows Registry key name for this location.
+  @key_name : String
+
+  def initialize(name : String, zones : Array(Zone), @key_name, @past_tz_args, @future_tz_args = past_tz_args, transitions = [] of ZoneTransition)
+    super(name, zones, transitions)
+  end
+
+  def_equals_and_hash name, zones, transitions, @key_name
+
+  # :nodoc:
+  def lookup_with_boundaries(unix_seconds : Int) : {Zone, {Int64, Int64}}
+    case
+    when zones.empty?
+      {Zone::UTC, {Int64::MIN, Int64::MAX}}
+    when transitions.empty?, unix_seconds < transitions.first.when
+      lookup_past(unix_seconds)
+    when unix_seconds >= transitions.last.when
+      lookup_future(unix_seconds)
+    else
+      lookup_within_fixed_transitions(unix_seconds)
+    end
+  end
+
+  private def lookup_past(unix_seconds : Int) : {Zone, {Int64, Int64}}
+    zone, range = TZ.lookup(unix_seconds, @zones, *@past_tz_args)
+    range_begin, range_end = range
+
+    if first_transition = @transitions.first?
+      range_end = {range_end, first_transition.when}.min
+    end
+
+    {zone, {range_begin, range_end}}
+  end
+
+  private def lookup_future(unix_seconds : Int) : {Zone, {Int64, Int64}}
+    zone, range = TZ.lookup(unix_seconds, @zones, *@future_tz_args)
+    range_begin, range_end = range
+
+    if last_transition = @transitions.last?
+      range_begin = {range_begin, last_transition.when}.max
+    end
+
+    {zone, {range_begin, range_end}}
   end
 end

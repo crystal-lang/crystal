@@ -60,7 +60,7 @@ class Crystal::Command
   @compiler : Compiler?
 
   def initialize(@options : Array(String))
-    @color = ENV["TERM"]? != "dumb" && !ENV.has_key?("NO_COLOR")
+    @color = ENV["TERM"]? != "dumb" && !ENV["NO_COLOR"]?.try(&.empty?.!)
     @error_trace = false
     @progress_tracker = ProgressTracker.new
   end
@@ -416,6 +416,17 @@ class Crystal::Command
         opts.on("--emit [#{valid_emit_values.join('|')}]", "Comma separated list of types of output for the compiler to emit") do |emit_values|
           compiler.emit_targets |= validate_emit_values(emit_values.split(',').map(&.strip))
         end
+
+        opts.on("--x86-asm-syntax att|intel", "X86 dialect for --emit=asm: AT&T (default), Intel") do |value|
+          case value = LLVM::InlineAsmDialect.parse?(value)
+          in Nil
+            error "Invalid value `#{value}` for x86-asm-syntax"
+          in .att?
+            # Do nothing
+          in .intel?
+            LLVM.parse_command_line_options({"", "-x86-asm-syntax=intel"})
+          end
+        end
       end
 
       if hierarchy
@@ -762,7 +773,7 @@ class Crystal::Command
 
   private def error(msg, exit_code = 1)
     # This is for the case where the main command is wrong
-    @color = false if ARGV.includes?("--no-color") || ENV["TERM"]? == "dumb" || ENV.has_key?("NO_COLOR")
+    @color = false if ARGV.includes?("--no-color") || ENV["TERM"]? == "dumb" || ENV["NO_COLOR"]?.try(&.empty?.!)
     Crystal.error msg, @color, exit_code: exit_code
   end
 

@@ -1909,12 +1909,12 @@ describe Crystal::Formatter do
 
   assert_format "<<-FOO\nFOO"
 
-  assert_format "<<-FOO\n#{"foo"}\nFOO"
-  assert_format "<<-FOO\n#{"foo"}bar\nFOO"
-  assert_format "<<-FOO\nbar#{"foo"}\nFOO"
-  assert_format "<<-FOO\nbar#{"foo"}bar\nFOO"
-  assert_format "<<-FOO\nfoo\n#{"foo"}\nFOO"
-  assert_format "<<-FOO\nfoo\n#{1}\nFOO"
+  assert_format %(<<-FOO\n\#{"foo"}\nFOO)
+  assert_format %(<<-FOO\n\#{"foo"}bar\nFOO)
+  assert_format %(<<-FOO\nbar\#{"foo"}\nFOO)
+  assert_format %(<<-FOO\nbar\#{"foo"}bar\nFOO)
+  assert_format %(<<-FOO\nfoo\n\#{"foo"}\nFOO)
+  assert_format %(<<-FOO\nfoo\n\#{1}\nFOO)
 
   assert_format "#!shebang\n1 + 2"
 
@@ -2638,7 +2638,7 @@ describe Crystal::Formatter do
 
   assert_format <<-CRYSTAL
     1 # foo
-    / #{1} /
+    / \#{1} /
     CRYSTAL
 
   assert_format <<-CRYSTAL,
