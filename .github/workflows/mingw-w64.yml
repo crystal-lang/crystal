@@ -13,11 +13,11 @@ env:
 
 jobs:
   x86_64-mingw-w64-build:
-    runs-on: windows-2022
+    runs-on: windows-2025
     steps:
       - name: Setup MSYS2
         id: msys2
-        uses: msys2/setup-msys2@61f9e5e925871ba6c9e3e8da24ede83ea27fa91f # v2.27.0
+        uses: msys2/setup-msys2@40677d36a502eb2cf0fb808cc9dec31bf6152638 # v2.28.0
         with:
           msystem: UCRT64
           update: true
@@ -70,11 +70,11 @@ jobs:
           path: crystal
 
   x86_64-mingw-w64-test-stdlib:
-    runs-on: windows-2022
+    runs-on: windows-2025
     steps:
       - name: Setup MSYS2
         id: msys2
-        uses: msys2/setup-msys2@61f9e5e925871ba6c9e3e8da24ede83ea27fa91f # v2.27.0
+        uses: msys2/setup-msys2@40677d36a502eb2cf0fb808cc9dec31bf6152638 # v2.28.0
         with:
           msystem: UCRT64
           update: true
@@ -99,12 +99,12 @@ jobs:
           make std_spec
 
   x86_64-mingw-w64-test-compiler:
-    runs-on: windows-2022
+    runs-on: windows-2025
     needs: [x86_64-mingw-w64-build]
     steps:
       - name: Setup MSYS2
         id: msys2
-        uses: msys2/setup-msys2@61f9e5e925871ba6c9e3e8da24ede83ea27fa91f # v2.27.0
+        uses: msys2/setup-msys2@40677d36a502eb2cf0fb808cc9dec31bf6152638 # v2.28.0
         with:
           msystem: UCRT64
           update: true
@@ -185,7 +185,7 @@ jobs:
     steps:
       - name: Setup MSYS2
         id: msys2
-        uses: msys2/setup-msys2@61f9e5e925871ba6c9e3e8da24ede83ea27fa91f # v2.27.0
+        uses: msys2/setup-msys2@40677d36a502eb2cf0fb808cc9dec31bf6152638 # v2.28.0
         with:
           msystem: CLANGARM64
           update: true
@@ -259,7 +259,7 @@ jobs:
     steps:
       - name: Setup MSYS2
         id: msys2
-        uses: msys2/setup-msys2@61f9e5e925871ba6c9e3e8da24ede83ea27fa91f # v2.27.0
+        uses: msys2/setup-msys2@40677d36a502eb2cf0fb808cc9dec31bf6152638 # v2.28.0
         with:
           msystem: CLANGARM64
           update: true
