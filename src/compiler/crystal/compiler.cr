@@ -213,23 +213,7 @@ module Crystal
     # Raises `InvalidByteSequenceError` if the source code is not
     # valid UTF-8.
     def compile(source : Source | Array(Source), output_filename : String) : Result
-      source = [source] unless source.is_a?(Array)
-      program = new_program(source)
-      node = parse program, source
-
-      begin
-        node = program.semantic node, cleanup: !no_cleanup?
-      rescue ex : SkipMacroCodeCoverageException
-        program.macro_expansion_error_hook.try &.call(ex.cause)
-      end
-
-      units = codegen program, node, source, output_filename unless @no_codegen
-
-      @progress_tracker.clear
-      print_macro_run_stats(program)
-      print_codegen_stats(units)
-
-      Result.new program, node
+      compile_configure_program(source, output_filename) { }
     end
 
     # :ditto:
