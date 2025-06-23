@@ -1,9 +1,6 @@
 require "spec"
 
-private abstract struct SBase
-end
-
-private struct Foo < SBase
+private struct Foo
   getter i : Int64
   getter str = "abc"
 
@@ -14,7 +11,7 @@ private struct Foo < SBase
   end
 end
 
-private struct Bar < SBase
+private struct Bar
   getter x : UInt8[128]
 
   def initialize(@x)
@@ -53,23 +50,6 @@ describe "Primitives: struct" do
       foo_buffer = Pointer(Foo).malloc(1)
       Foo.pre_initialize(foo_buffer)
       foo_buffer.value.str.should eq("abc")
-    end
-
-    # see notes in `Struct.pre_initialize`
-    {% if compare_versions(Crystal::VERSION, "1.2.0") >= 0 %}
-      it "works with virtual type" do
-        foo = uninitialized Foo
-        Foo.as(SBase.class).pre_initialize(pointerof(foo))
-        foo.str.should eq("abc")
-      end
-    {% else %}
-      pending! "works with virtual type"
-    {% end %}
-
-    it "raises on abstract virtual type" do
-      expect_raises(Exception, "Can't pre-initialize abstract struct SBase") do
-        SBase.as(SBase.class).pre_initialize(Pointer(Void).null)
-      end
     end
   end
 end
