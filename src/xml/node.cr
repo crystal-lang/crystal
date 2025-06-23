@@ -11,51 +11,10 @@ class XML::Node
   # NOTE: when a libxml node is moved to another document, then the @document
   # reference of its XML::Node and any instantiated descendant must be updated
   # to pointer to the new document Node.
-  @document : Node
+  @document : Document?
 
   # :nodoc:
-  #
-  # The constructors allocate a XML::Node for a libxml node once, so we don't
-  # finalize a document twice for example.
-  #
-  # We store the reference into the libxml struct (_private) for documents
-  # because a document's XML::Node lives as long as its libxml doc. However we
-  # can lose references to subtree XML::Node, so using _private would leave
-  # dangling pointers. We thus keep a cache of weak references to all nodes in
-  # the document, so we can still collect lost references, and at worst
-  # reinstantiate a XML::Node if needed.
-  #
-  # NOTE: when a XML::Node is moved to another document, the XML::Node and any
-  # instantiated descendant XML::Node shall be cleaned from the original
-  # document's cache, and must be added to the new document's cache.
-  protected getter! cache : Hash(LibXML::Node*, WeakRef(Node))?
-
-  # :nodoc:
-  #
-  # Unlinked libxml nodes, and all their descendant nodes, don't appear in the
-  # document's tree anymore, and must be manually freed, yet we can't merely
-  # free the libxml node in a finalizer, because it would free the whole
-  # subtree, while we may still have live XML::Node instances.
-  #
-  # We keep an explicit list of unlinked libxml nodes. We can't rely on the
-  # cache because it uses weak references and the XML::Node could be collected,
-  # leaking the libxml node and its subtree.
-  #
-  # NOTE: the libxml node, along with any descendant shall be removed from the
-  # list when relinked into a tree, be it the same document or another.
-  protected getter! unlinked_nodes : Set(LibXML::Node*)?
-
-  # :nodoc:
-  def self.new(doc : LibXML::Doc*, errors : Array(Error)? = nil)
-    if ptr = doc.value._private
-      ptr.as(Node)
-    else
-      new(doc_: doc, errors_: errors)
-    end
-  end
-
-  # :nodoc:
-  def self.new(node : LibXML::Node*, document : self) : self
+  def self.new(node : LibXML::Node*, document : Document) : self
     if node == document.@node
       # should never happen, but just in case
       return document
@@ -73,49 +32,19 @@ class XML::Node
   # :nodoc:
   @[Deprecated]
   def self.new(node : LibXML::Node*) : self
-    new(node, new(node.value.doc))
+    new(node, Document.new(node.value.doc))
   end
 
   # :nodoc:
   @[Deprecated]
   def self.new(node : LibXML::Attr*) : self
-    new(node.as(LibXML::Node*), new(node.value.doc))
+    new(node.as(LibXML::Node*), Document.new(node.value.doc))
   end
 
-  # the initializers must never be called directly, use the constructors above
-
-  private def initialize(*, doc_ : LibXML::Doc*, errors_ : Array(Error)?)
-    @node = doc_.as(LibXML::Node*)
-    @errors = errors_
-    @cache = Hash(LibXML::Node*, WeakRef(Node)).new
-    @unlinked_nodes = Set(LibXML::Node*).new
-    @document = uninitialized Node
-    @document = self
-    doc_.value._private = self.as(Void*)
-  end
-
+  # Must never be called directly, use the constructors above.
   private def initialize(*, node_ : LibXML::Node*, document_ : self)
     @node = node_.as(LibXML::Node*)
     @document = document_
-  end
-
-  # :nodoc:
-  def finalize
-    return unless @document == self
-
-    doc = @node.as(LibXML::Doc*)
-
-    # free unlinked nodes and their subtrees
-    unlinked_nodes.each do |node|
-      if node.value.doc == doc
-        LibXML.xmlFreeNode(node)
-      else
-        # the node has been adopted into another document, don't free!
-      end
-    end
-
-    # free the doc and its subtree
-    LibXML.xmlFreeDoc(@node.as(LibXML::Doc*))
   end
 
   # Gets the attribute content for the *attribute* given by name.
@@ -175,7 +104,7 @@ class XML::Node
 
     child = @node.value.children
     nodes = Slice(Node).new(size) do
-      node = Node.new(child, @document)
+      node = Node.new(child, document)
       child = child.value.next
       node
     end
@@ -219,9 +148,9 @@ class XML::Node
     LibXML.xmlNodeSetContent(self, content)
   end
 
-  # Gets the document for this Node as a `XML::Node`.
-  def document : XML::Node
-    @document
+  # Gets the document for this node.
+  def document : Document
+    @document.as(Document)
   end
 
   # Returns `true` if this is a Document or HTML Document node.
@@ -237,16 +166,12 @@ class XML::Node
 
   # Returns the encoding of this node's document.
   def encoding : String?
-    if encoding = @document.@node.as(LibXML::Doc*).value.encoding
-      String.new(encoding)
-    end
+    document.encoding
   end
 
   # Returns the version of this node's document.
   def version : String?
-    if version = @document.@node.as(LibXML::Doc*).value.version
-      String.new(version)
-    end
+    document.version
   end
 
   # Returns `true` if this is an Element node.
@@ -260,7 +185,7 @@ class XML::Node
     child = @node.value.children
     while child
       if child.value.type == XML::Node::Type::ELEMENT_NODE
-        return Node.new(child, @document)
+        return Node.new(child, document)
       end
       child = child.value.next
     end
@@ -400,7 +325,7 @@ class XML::Node
   # Returns the next sibling node or `nil` if not found.
   def next : XML::Node?
     next_node = @node.value.next
-    next_node ? Node.new(next_node, @document) : nil
+    next_node ? Node.new(next_node, document) : nil
   end
 
   # :ditto:
@@ -413,7 +338,7 @@ class XML::Node
     next_node = @node.value.next
     while next_node
       if next_node.value.type == XML::Node::Type::ELEMENT_NODE
-        return Node.new(next_node, @document)
+        return Node.new(next_node, document)
       end
       next_node = next_node.value.next
     end
@@ -463,7 +388,7 @@ class XML::Node
       nil
     else
       ns = @node.value.ns
-      ns ? Namespace.new(@document, ns) : nil
+      ns ? Namespace.new(document, ns) : nil
     end
   end
 
@@ -473,7 +398,7 @@ class XML::Node
 
     ns = @node.value.ns_def
     while ns
-      namespaces << Namespace.new(@document, ns)
+      namespaces << Namespace.new(document, ns)
       ns = ns.value.next
     end
 
@@ -521,7 +446,7 @@ class XML::Node
 
     if ns_list
       while ns_list.value
-        yield Namespace.new(@document, ns_list.value)
+        yield Namespace.new(document, ns_list.value)
         ns_list += 1
       end
     end
@@ -535,13 +460,13 @@ class XML::Node
   # Returns the parent node or `nil` if not found.
   def parent : XML::Node?
     parent = @node.value.parent
-    parent ? Node.new(parent, @document) : nil
+    parent ? Node.new(parent, document) : nil
   end
 
   # Returns the previous sibling node or `nil` if not found.
   def previous : XML::Node?
     prev_node = @node.value.prev
-    prev_node ? Node.new(prev_node, @document) : nil
+    prev_node ? Node.new(prev_node, document) : nil
   end
 
   # Returns the previous sibling node that is an element or `nil` if not found.
@@ -549,7 +474,7 @@ class XML::Node
     prev_node = @node.value.prev
     while prev_node
       if prev_node.value.type == XML::Node::Type::ELEMENT_NODE
-        return Node.new(prev_node, @document)
+        return Node.new(prev_node, document)
       end
       prev_node = prev_node.value.prev
     end
@@ -570,7 +495,7 @@ class XML::Node
   # Returns the root node for this document or `nil`.
   def root : XML::Node?
     root = LibXML.xmlDocGetRootElement(@node.value.doc)
-    root ? Node.new(root, @document) : nil
+    root ? Node.new(root, document) : nil
   end
 
   # Same as `#content`.
@@ -774,10 +699,9 @@ class XML::Node
     xpath(path, namespaces, variables).as(String)
   end
 
-  # Returns the list of `XML::Error` found when parsing this document.
-  # Returns `nil` if no errors were found.
+  @[Deprecated("Use XML::Document#errors instead.")]
   def errors : Array(XML::Error)?
-    return @errors unless @errors.try &.empty?
+    document.errors
   end
 
   private def check_no_null_byte(string)
