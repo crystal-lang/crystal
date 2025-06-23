@@ -73,14 +73,11 @@ module Crystal::System::Time
     if LibC.GetDynamicTimeZoneInformation(out info) != LibC::TIME_ZONE_ID_INVALID
       windows_name = String.from_utf16(info.timeZoneKeyName.to_slice, truncate_at_null: true)
 
-      if canonical_iana_name = windows_to_iana[windows_name]?
-        if (windows_info = iana_to_windows[canonical_iana_name]?).is_a?({String, String, String})
-          _, stdname, dstname = windows_info
-          zone_names = {stdname, dstname}
-        end
-      end
+      return unless canonical_iana_name = windows_to_iana[windows_name]?
+      return unless windows_info = iana_to_windows[canonical_iana_name]?
+      _, stdname, dstname = windows_info
 
-      initialize_location_from_TZI(pointerof(info).as(LibC::TIME_ZONE_INFORMATION*).value, "Local", windows_name, zone_names)
+      initialize_location_from_TZI(pointerof(info).as(LibC::TIME_ZONE_INFORMATION*).value, "Local", windows_name, stdname, dstname)
     end
   end
 
@@ -99,13 +96,7 @@ module Crystal::System::Time
 
   def self.load_iana_zone(iana_name : String) : ::Time::Location?
     return unless windows_info = iana_to_windows[iana_name]?
-
-    if windows_info.is_a?(String)
-      # TODO: remove in 1.17
-      windows_name = windows_info
-    else
-      windows_name, stdname, dstname = windows_info
-    end
+    windows_name, stdname, dstname = windows_info
 
     WindowsRegistry.open?(LibC::HKEY_LOCAL_MACHINE, REGISTRY_TIME_ZONES) do |key_handle|
       WindowsRegistry.open?(key_handle, windows_name.to_utf16) do |sub_handle|
@@ -121,14 +112,12 @@ module Crystal::System::Time
         )
         WindowsRegistry.get_raw(sub_handle, Std, tzi.standardName.to_slice.to_unsafe_bytes)
         WindowsRegistry.get_raw(sub_handle, Dlt, tzi.daylightName.to_slice.to_unsafe_bytes)
-        initialize_location_from_TZI(tzi, iana_name, windows_name, {stdname, dstname})
+        initialize_location_from_TZI(tzi, iana_name, windows_name, stdname, dstname)
       end
     end
   end
 
-  private def self.initialize_location_from_TZI(info, name, windows_name, zone_names = nil)
-    stdname, dstname = zone_names || normalize_zone_names(info)
-
+  private def self.initialize_location_from_TZI(info, name, windows_name, stdname, dstname)
     if info.standardDate.wMonth == 0_u16 || info.daylightDate.wMonth == 0_u16
       # No DST
       zone = ::Time::Location::Zone.new(stdname, info.bias * BIAS_TO_OFFSET_FACTOR, false)
@@ -153,28 +142,6 @@ module Crystal::System::Time
   private def self.systemtime_to_mwd(time)
     seconds = 3600 * time.wHour + 60 * time.wMinute + time.wSecond
     ::Time::TZ::MonthWeekDay.new(time.wMonth.to_i8, time.wDay.to_i8, time.wDayOfWeek.to_i8, seconds)
-  end
-
-  # Normalizes the names of the standard and dst zones.
-  # TODO: remove in 1.17
-  private def self.normalize_zone_names(info : LibC::TIME_ZONE_INFORMATION) : Tuple(String, String)
-    stdname, _ = String.from_utf16(info.standardName.to_slice.to_unsafe)
-
-    if normalized_names = windows_zone_names[stdname]?
-      return normalized_names
-    end
-
-    dstname, _ = String.from_utf16(info.daylightName.to_slice.to_unsafe)
-
-    if english_name = translate_zone_name(stdname, dstname)
-      if normalized_names = windows_zone_names[english_name]?
-        return normalized_names
-      end
-    end
-
-    # As a last resort, return the raw names as provided by TIME_ZONE_INFORMATION.
-    # They are most probably localized and we couldn't find a translation.
-    return stdname, dstname
   end
 
   REGISTRY_TIME_ZONES = System.wstr_literal %q(SOFTWARE\Microsoft\Windows NT\CurrentVersion\Time Zones)
