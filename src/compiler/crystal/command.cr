@@ -60,7 +60,7 @@ class Crystal::Command
   @compiler : Compiler?
 
   def initialize(@options : Array(String))
-    @color = ENV["TERM"]? != "dumb" && !ENV["NO_COLOR"]?.try(&.empty?.!)
+    @color = Colorize.default_enabled?(STDOUT, STDERR)
     @error_trace = false
     @progress_tracker = ProgressTracker.new
   end
@@ -773,7 +773,7 @@ class Crystal::Command
 
   private def error(msg, exit_code = 1)
     # This is for the case where the main command is wrong
-    @color = false if ARGV.includes?("--no-color") || ENV["TERM"]? == "dumb" || ENV["NO_COLOR"]?.try(&.empty?.!)
+    @color = false if ARGV.includes?("--no-color") || !Colorize.default_enabled?(STDOUT, STDERR)
     Crystal.error msg, @color, exit_code: exit_code
   end
 

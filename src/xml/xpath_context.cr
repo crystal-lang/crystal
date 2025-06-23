@@ -4,12 +4,29 @@ class XML::XPathContext
   def initialize(node : Node)
     @ctx = LibXML.xmlXPathNewContext(node.to_unsafe.value.doc)
     @ctx.value.node = node.to_unsafe
+
+    {% if LibXML.has_method?(:xmlXPathSetErrorHandler) %}
+      LibXML.xmlXPathSetErrorHandler(@ctx, ->Error.structured_callback, Box.box(@errors))
+    {% end %}
   end
 
   def evaluate(search_path : String)
-    xpath = XML::Error.collect_generic(@errors) { LibXML.xmlXPathEvalExpression(search_path, self) }
+    xpath =
+      {% if LibXML.has_method?(:xmlXPathSetErrorHandler) %}
+        LibXML.xmlXPathEvalExpression(search_path, self)
+      {% else %}
+        XML::Error.unsafe_collect(errors) do
+          LibXML.xmlXPathEvalExpression(search_path, self)
+        end
+      {% end %}
 
-    raise XML::Error.new("Error in '#{search_path}' expression", 0) unless xpath
+    unless xpath
+      if error = @errors.first?
+        raise error
+      else
+        raise XML::Error.new("Error in '#{search_path}' expression", 0)
+      end
+    end
 
     case xpath.value.type
     when LibXML::XPathObjectType::STRING
