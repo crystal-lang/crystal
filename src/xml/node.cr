@@ -658,7 +658,7 @@ class XML::Node
     LibC::Int.new(0)
   end
 
-  # Returns underlying `LibXML::Node*` instance.
+  # :nodoc:
   def to_unsafe
     @node
   end

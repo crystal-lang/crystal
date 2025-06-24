@@ -81,6 +81,7 @@ class XML::XPathContext
     LibXML.xmlXPathRegisterVariable(self, name, obj)
   end
 
+  # :nodoc:
   def to_unsafe
     @ctx
   end

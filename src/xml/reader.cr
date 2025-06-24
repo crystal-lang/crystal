@@ -202,7 +202,7 @@ class XML::Reader
     value ? String.new(value) : ""
   end
 
-  # Returns a reference to the underlying `LibXML::XMLTextReader`.
+  # :nodoc:
   def to_unsafe
     @reader
   end
