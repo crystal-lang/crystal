@@ -196,7 +196,6 @@ class XML::Node
           document.unlinked_nodes << child
           LibXML.xmlUnlinkNode(child)
         end
-        Node.new(child, @document).unlink
         child = child.value.next
       end
     end
