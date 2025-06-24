@@ -9,6 +9,8 @@ class XML::Node
   # document's tree (the libxml nodes keep a pointer to their libxml doc).
   @document : Node
 
+  # :nodoc:
+  #
   # The constructors allocate a XML::Node for a libxml node once, so we don't
   # finalize a document twice for example.
   #
@@ -21,6 +23,8 @@ class XML::Node
   # reinstantiate a XML::Node if needed.
   protected getter! cache : Hash(LibXML::Node*, WeakRef(Node))?
 
+  # :nodoc:
+  #
   # Unlinked Nodes, and all their descendant nodes, don't appear in the
   # document's tree anymore, and must be manually freed, yet we can't merely
   # free the libxml node in a finalizer, because it would free the whole
@@ -30,8 +34,8 @@ class XML::Node
   # cache because it uses weak references and the Node could be collected,
   # leaking the libxml node and its subtree.
   #
-  # NOTE: the libxml node, along with any descendant must be removed from the
-  # list when adopted into another document!
+  # WARNING: the libxml node, along with any descendant shall be removed from
+  # the list when relinked into a tree, be it the same document or another.
   protected getter! unlinked_nodes : Set(LibXML::Node*)?
 
   # :nodoc:
