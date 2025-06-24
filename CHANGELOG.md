@@ -16,11 +16,13 @@ _Feature freeze: 2025-06-25_
 
 #### lang
 
+- *(macros)* Support `{% if ...; end; ... %}` macro expressions ([#15917], thanks @HertzDevil)
 - *(macros)* Handle properly stringifying single line blocks ([#15568], thanks @Blacksmoke16)
 - *(macros)* Handle properly stringifying multiline named tuple literals ([#15566], thanks @Blacksmoke16)
 - *(macros)* Handle properly stringifying multiline calls ([#15691], thanks @Blacksmoke16)
 - *(macros)* Handle significant whitespace before a blocks body ([#15692], thanks @Blacksmoke16)
 
+[#15917]: https://github.com/crystal-lang/crystal/pull/15917
 [#15568]: https://github.com/crystal-lang/crystal/pull/15568
 [#15566]: https://github.com/crystal-lang/crystal/pull/15566
 [#15691]: https://github.com/crystal-lang/crystal/pull/15691
@@ -28,8 +30,9 @@ _Feature freeze: 2025-06-25_
 
 #### stdlib
 
-- Add `Colorize.default_enabled?` ([#15912], thanks @HertzDevil)
+- **[experimental]** Add `Struct.pre_initialize` ([#15896], thanks @HertzDevil)
 - Make `Colorize.on_tty_only!` the default behavior ([#15881], thanks @HertzDevil)
+- Add `Colorize.default_enabled?` ([#15912], thanks @HertzDevil)
 - *(files)* Support Windows local device paths in `Path` ([#15590], thanks @HertzDevil)
 - *(llvm)* Support LLVM 21.0 (development branch) ([#15771], thanks @HertzDevil)
 - *(networking)* Extract `WebSocket#do_ping`, `#do_close` helper methods for overrides ([#15545], thanks @luislavena)
@@ -54,8 +57,9 @@ _Feature freeze: 2025-06-25_
 - *(time)* Support Windows system time zone transitions in all years ([#15891], thanks @HertzDevil)
 - *(time)* Support POSIX TZ strings in TZif databases ([#15863], thanks @HertzDevil)
 
-[#15912]: https://github.com/crystal-lang/crystal/pull/15912
+[#15896]: https://github.com/crystal-lang/crystal/pull/15896
 [#15881]: https://github.com/crystal-lang/crystal/pull/15881
+[#15912]: https://github.com/crystal-lang/crystal/pull/15912
 [#15590]: https://github.com/crystal-lang/crystal/pull/15590
 [#15771]: https://github.com/crystal-lang/crystal/pull/15771
 [#15545]: https://github.com/crystal-lang/crystal/pull/15545
@@ -84,20 +88,26 @@ _Feature freeze: 2025-06-25_
 
 - *(cli)* Support `--x86-asm-syntax` for emitting Intel style assembly ([#15612], thanks @HertzDevil)
 - *(debugger)* Support debug info of 128-bit enum members ([#15770], thanks @HertzDevil)
+- *(parser)* Stringify `MacroIf` `unless` nodes properly ([#15919], thanks @HertzDevil)
+- *(parser)* Support `elsif` when stringifying `If` nodes ([#15918], thanks @HertzDevil)
 - *(parser)* More robust trailing expressions newline implementation ([#15614], thanks @Blacksmoke16)
 - *(parser)* Handle properly stringifying multiline (boolean) expressions ([#15709], thanks @Blacksmoke16)
 - *(semantic)* Improve error message for `pointerof` ([#15876], thanks @straight-shoota)
 
 [#15612]: https://github.com/crystal-lang/crystal/pull/15612
 [#15770]: https://github.com/crystal-lang/crystal/pull/15770
+[#15919]: https://github.com/crystal-lang/crystal/pull/15919
+[#15918]: https://github.com/crystal-lang/crystal/pull/15918
 [#15614]: https://github.com/crystal-lang/crystal/pull/15614
 [#15709]: https://github.com/crystal-lang/crystal/pull/15709
 [#15876]: https://github.com/crystal-lang/crystal/pull/15876
 
 #### tools
 
+- Macro code coverage tool ([#15738], thanks @Blacksmoke16)
 - *(docs-generator)* Limit paragraph `max-width` in API docs ([#15672], thanks @straight-shoota)
 
+[#15738]: https://github.com/crystal-lang/crystal/pull/15738
 [#15672]: https://github.com/crystal-lang/crystal/pull/15672
 
 ### Bugfixes
@@ -368,6 +378,8 @@ _Feature freeze: 2025-06-25_
 - Add ameba ([#15875], thanks @straight-shoota)
 - Allow `LLVM_VERSION` override inside `Makefile` ([#15765], thanks @HertzDevil)
 - Add build script for `spec/std/data/zoneinfo.zip` ([#15831], thanks @HertzDevil)
+- *(ci)* Update GH Actions ([#15668], thanks @renovate)
+- *(ci)* Update library versions for MSVC CI ([#15921], thanks @HertzDevil)
 - *(ci)* Drop the static LLVM libraries on Windows MSVC CI ([#15797], thanks @HertzDevil)
 - *(ci)* Set up Inno Setup explicitly on MSVC CI ([#15851], [#15861], thanks @HertzDevil)
 - *(ci)* Add CI workflow for MinGW-w64 ARM64 builds ([#15794], thanks @HertzDevil)
@@ -387,9 +399,19 @@ _Feature freeze: 2025-06-25_
 [#15875]: https://github.com/crystal-lang/crystal/pull/15875
 [#15765]: https://github.com/crystal-lang/crystal/pull/15765
 [#15831]: https://github.com/crystal-lang/crystal/pull/15831
+[#15668]: https://github.com/crystal-lang/crystal/pull/15668
+[#15921]: https://github.com/crystal-lang/crystal/pull/15921
 [#15797]: https://github.com/crystal-lang/crystal/pull/15797
 [#15851]: https://github.com/crystal-lang/crystal/pull/15851
 [#15861]: https://github.com/crystal-lang/crystal/pull/15861
 [#15794]: https://github.com/crystal-lang/crystal/pull/15794
 [#15802]: https://github.com/crystal-lang/crystal/pull/15802
+
+### other
+
+#### stdlib
+
+- *(time)* Fix IANA time zone names for Windows system time zones ([#15914], thanks @HertzDevil)
+
+[#15914]: https://github.com/crystal-lang/crystal/pull/15914
 
