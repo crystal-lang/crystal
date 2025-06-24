@@ -92,9 +92,15 @@ class XML::Node
   def finalize
     return unless @document == self
 
+    doc = @node.as(LibXML::Doc*)
+
     # free unlinked nodes and their subtrees
     unlinked_nodes.each do |node|
-      LibXML.xmlFreeNode(node)
+      if node.value.doc == doc
+        LibXML.xmlFreeNode(node)
+      else
+        # the node has been adopted into another document, don't free!
+      end
     end
 
     # free the doc and its subtree
