@@ -109,9 +109,6 @@ module Spec
     end
 
     def main(args)
-      # TODO: should not be global state
-      Colorize.on_tty_only!
-
       begin
         option_parser.parse(args)
       rescue e : OptionParser::InvalidOption

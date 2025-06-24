@@ -13,7 +13,7 @@ module Spec
     def before_example(description)
     end
 
-    def report(result)
+    def report(result, cli)
     end
 
     def finish(elapsed_time, aborted)
@@ -37,8 +37,8 @@ module Spec
       end
     end
 
-    def report(result)
-      @io << Spec.color(result.kind.letter, result.kind)
+    def report(result, cli)
+      @io << cli.colorize(result.kind.letter, result.kind)
       split_lines
       @io.flush
     end
@@ -105,10 +105,10 @@ module Spec
       @last_description = description
     end
 
-    def report(result)
+    def report(result, cli)
       @io << '\r'
       print_indent
-      @io.puts Spec.color(@last_description, result.kind)
+      @io.puts cli.colorize(@last_description, result.kind)
     end
 
     def should_print_summary?

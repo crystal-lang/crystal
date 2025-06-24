@@ -8,7 +8,7 @@ module Spec
     @results = [] of Spec::Result
     @summary = {} of Status => Int32
 
-    def report(result)
+    def report(result, cli)
       current = @summary[result.kind]? || 0
       @summary[result.kind] = current + 1
       @results << result
