@@ -21,19 +21,18 @@ class XML::Node
   # reinstantiate a XML::Node if needed.
   protected getter! cache : Hash(LibXML::Node*, WeakRef(Node))?
 
-  # Keep an explicit list of unlinked libxml nodes still (that still refer to
-  # the document). We can't rely on the cache because it uses weak references
-  # and the Node could be collected, leaking the libxml node and its subtree.
-  #
-  # The libxml node (and any descendant) must be removed from the list when
-  # adopted into another document.
-  protected getter! unlinked_nodes : Set(LibXML::Node*)?
-
   # Unlinked Nodes, and all their descendant nodes, don't appear in the
-  # document's tree anymore, and must be manually freed. Yet, the finalizer
-  # can't free the libxml node immediately because it would free the whole
+  # document's tree anymore, and must be manually freed, yet we can't merely
+  # free the libxml node in a finalizer, because it would free the whole
   # subtree, while we may still have live XML::Node instances.
-  protected getter? unlinked = false
+  #
+  # We keep an explicit list of unlinked libxml nodes. We can't rely on the
+  # cache because it uses weak references and the Node could be collected,
+  # leaking the libxml node and its subtree.
+  #
+  # NOTE: the libxml node, along with any descendant must be removed from the
+  # list when adopted into another document!
+  protected getter! unlinked_nodes : Set(LibXML::Node*)?
 
   # :nodoc:
   def self.new(doc : LibXML::Doc*, errors : Array(Error)? = nil)
@@ -187,7 +186,7 @@ class XML::Node
     if fragment? || element? || attribute?
       # libxml will immediately free all the children nodes, while we may have
       # live references to a child or a descendant; explicitly unlink all the
-      # children before replacing a node's contents
+      # children before replacing the node's contents
       child = @node.value.children
       while child
         if node = document.cached?(child)
@@ -661,9 +660,6 @@ class XML::Node
 
   # Removes the node from the XML document.
   def unlink : Nil
-    return if @unlinked
-
-    @unlinked = true
     document.unlinked_nodes << @node
     LibXML.xmlUnlinkNode(@node)
   end
