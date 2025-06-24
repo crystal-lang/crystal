@@ -3,10 +3,14 @@ require "weak_ref"
 class XML::Node
   LOOKS_LIKE_XPATH = /^(\.\/|\/|\.\.|\.$)/
 
-  # Every Node must keep a reference to its document Node. To keep things
-  # simple, a document Node merely references itself. An unlinked node must
-  # still reference its original document Node until adopted into another
+  # Every Node must keep a reference to its document XML::Node. To keep things
+  # simple, a document XML::Node merely references itself. An unlinked node must
+  # still reference its original document XML::Node until adopted into another
   # document's tree (the libxml nodes keep a pointer to their libxml doc).
+  #
+  # NOTE: when a libxml node is moved to another document, then the @document
+  # reference of its XML::Node and any instantiated descendant must be updated
+  # to pointer to the new document Node.
   @document : Node
 
   # :nodoc:
@@ -15,27 +19,30 @@ class XML::Node
   # finalize a document twice for example.
   #
   # We store the reference into the libxml struct (_private) for documents
-  # because a document's XML::Node lives as long as its libxml doc.
-  #
-  # However we can lose references to subtree XML::Node, so using _private would
-  # leave dangling pointers. We thus keep a cache of weak references to all
-  # nodes in the document, so we can still collect lost references, and at worst
+  # because a document's XML::Node lives as long as its libxml doc. However we
+  # can lose references to subtree XML::Node, so using _private would leave
+  # dangling pointers. We thus keep a cache of weak references to all nodes in
+  # the document, so we can still collect lost references, and at worst
   # reinstantiate a XML::Node if needed.
+  #
+  # NOTE: when a XML::Node is moved to another document, the XML::Node and any
+  # instantiated descendant XML::Node shall be cleaned from the original
+  # document's cache, and must be added to the new document's cache.
   protected getter! cache : Hash(LibXML::Node*, WeakRef(Node))?
 
   # :nodoc:
   #
-  # Unlinked Nodes, and all their descendant nodes, don't appear in the
+  # Unlinked libxml nodes, and all their descendant nodes, don't appear in the
   # document's tree anymore, and must be manually freed, yet we can't merely
   # free the libxml node in a finalizer, because it would free the whole
   # subtree, while we may still have live XML::Node instances.
   #
   # We keep an explicit list of unlinked libxml nodes. We can't rely on the
-  # cache because it uses weak references and the Node could be collected,
+  # cache because it uses weak references and the XML::Node could be collected,
   # leaking the libxml node and its subtree.
   #
-  # WARNING: the libxml node, along with any descendant shall be removed from
-  # the list when relinked into a tree, be it the same document or another.
+  # NOTE: the libxml node, along with any descendant shall be removed from the
+  # list when relinked into a tree, be it the same document or another.
   protected getter! unlinked_nodes : Set(LibXML::Node*)?
 
   # :nodoc:
