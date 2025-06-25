@@ -511,19 +511,23 @@ abstract struct Enum
     return parse_slow?(string) if string.bytesize > 100
 
     {% begin %}
-      buffer = uninitialized UInt8[100]
-      buffer_index = 0i64
-      string.each_char do |char|
+      # FIXME: There is no `StringLiteral#bytesize` or any other adequate means
+      # to figure out how much space we actually need. Maybe some regex could
+      # work. For now just play it safe.
+      # FIXME: We might want to establish some upper limit in case a member name
+      # is exorbitantly long.
+      buffer = uninitialized UInt8[{{ @type.constants.map(&.size).sort.last * 4 + 1 }}]
+      max_size = {{ @type.constants.map(&.size).sort.last }}
+      appender = buffer.to_slice.to_unsafe.appender
+      string.each_char_with_index do |char, index|
+        return nil if index >= max_size
         next if char == '-' || char == '_'
-        char.downcase do |lower|
-          lower.each_byte do |byte|
-            buffer[buffer_index] = byte
-            buffer_index &+= 1
-          end
+        char.downcase &.each_byte do |byte|
+          appender << byte
         end
       end
 
-      case buffer.to_slice[0...buffer_index]
+      case appender.to_slice
       # Temporarily map all constants to their normalized value in order to
       # avoid duplicates in the `case` conditions.
       # `FOO` and `Foo` members would both generate `when "foo"` which creates a compile time error.
