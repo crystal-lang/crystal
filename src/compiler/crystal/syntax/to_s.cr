@@ -334,16 +334,35 @@ module Crystal
         return false
       end
 
-      visit_if_or_unless "if", node
+      while true
+        @str << "if "
+        node.cond.accept self
+        newline
+        accept_with_indent(node.then)
+        append_indent
+
+        # combine `else if` into `elsif` (does not apply to `unless` or `? :`)
+        if (else_node = node.else).is_a?(If) && !else_node.ternary?
+          @str << "els"
+          node = else_node
+        else
+          break
+        end
+      end
+
+      unless else_node.nop?
+        @str << "else"
+        newline
+        accept_with_indent(node.else)
+        append_indent
+      end
+
+      @str << "end"
+      false
     end
 
     def visit(node : Unless)
-      visit_if_or_unless "unless", node
-    end
-
-    def visit_if_or_unless(prefix, node)
-      @str << prefix
-      @str << ' '
+      @str << "unless "
       node.cond.accept self
       newline
       accept_with_indent(node.then)
@@ -885,18 +904,29 @@ module Crystal
     end
 
     def visit(node : MacroIf)
-      @str << "{% if "
+      if node.is_unless?
+        @str << "{% unless "
+        then_node = node.else
+        else_node = node.then
+      else
+        @str << "{% if "
+        then_node = node.then
+        else_node = node.else
+      end
       node.cond.accept self
       @str << " %}"
+
       inside_macro do
-        node.then.accept self
+        then_node.accept self
       end
-      unless node.else.nop?
+
+      unless else_node.nop?
         @str << "{% else %}"
         inside_macro do
-          node.else.accept self
+          else_node.accept self
         end
       end
+
       @str << "{% end %}"
       false
     end

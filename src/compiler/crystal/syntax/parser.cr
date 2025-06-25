@@ -3477,10 +3477,13 @@ module Crystal
         else
           node = parse_if_after_condition cond, location, true
         end
+        skip_statement_end
+        exps = parse_expressions
         @in_macro_expression = false
-        skip_space_or_newline
         check :OP_PERCENT_RCURLY
-        return MacroExpression.new(node, output: false).at_end(token_end_location)
+
+        exps = Expressions.concat!(node, exps)
+        return MacroExpression.new(exps, output: false).at_end(token_end_location)
       end
 
       check :OP_PERCENT_RCURLY

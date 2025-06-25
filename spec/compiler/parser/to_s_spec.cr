@@ -63,6 +63,8 @@ describe "ASTNode#to_s" do
   expect_to_s %({{ foo }})
   expect_to_s %({% if foo %}\n  foo_then\n{% end %})
   expect_to_s %({% if foo %}\n  foo_then\n{% else %}\n  foo_else\n{% end %})
+  expect_to_s %({% unless foo %}\n  foo_then\n{% end %})
+  expect_to_s %({% unless foo %}\n  foo_then\n{% else %}\n  foo_else\n{% end %})
   expect_to_s %({% for foo in bar %}\n  {{ foo }}\n{% end %})
   expect_to_s %(macro foo\n  {% for foo in bar %}\n    {{ foo }}\n  {% end %}\nend)
   expect_to_s %[1.as(Int32)]
@@ -229,6 +231,59 @@ describe "ASTNode#to_s" do
   expect_to_s %(begin\n  (@x = x).is_a?(Foo)\nend)
   expect_to_s %(begin\n  (1)\n  2\nend)
   expect_to_s %(if 1\n  begin\n    2\n  end\nelse\n  begin\n    3\n  end\nend)
+
+  expect_to_s <<-CRYSTAL
+    if 1
+      2
+    elsif 3
+      4
+    elsif 5
+    elsif 6
+    else
+      7
+    end
+    CRYSTAL
+
+  expect_to_s <<-CRYSTAL, <<-CRYSTAL
+    if 1
+      2
+    else
+      if 3
+      end
+    end
+    CRYSTAL
+    if 1
+      2
+    elsif 3
+    end
+    CRYSTAL
+
+  expect_to_s <<-CRYSTAL
+    if 1
+      2
+    else
+      unless 3
+      end
+    end
+    CRYSTAL
+
+  expect_to_s <<-CRYSTAL
+    if 1
+      2
+    else
+      3 ? 4 : 5
+    end
+    CRYSTAL
+
+  expect_to_s <<-CRYSTAL
+    unless 1
+      2
+    else
+      if 3
+      end
+    end
+    CRYSTAL
+
   expect_to_s %(foo do\n  begin\n    bar\n  end\nend)
   expect_to_s %q("\e\0\""), %q("\e\u0000\"")
   expect_to_s %q("#{1}\0"), %q("#{1}\u0000")
@@ -290,6 +345,25 @@ describe "ASTNode#to_s" do
   expect_to_s "{%\n  2 + 2\n%}"
   expect_to_s "{%\n  a = 1 %}"
   expect_to_s "{% a = 1\n%}"
+
+  expect_to_s <<-'CRYSTAL'
+    {%
+      if 1
+        2
+      end
+      3
+    %}
+    CRYSTAL
+
+  expect_to_s <<-'CRYSTAL'
+    {%
+      if 1
+        2
+      end
+      3
+      4
+    %}
+    CRYSTAL
 
   expect_to_s <<-'CR', <<-'CR'
     macro finished
