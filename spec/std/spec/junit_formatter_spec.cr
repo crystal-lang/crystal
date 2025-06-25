@@ -8,11 +8,17 @@ end
 private class MyException < Exception
 end
 
+private class SpecCLIStub
+  def colorize(str, obj)
+    str
+  end
+end
+
 describe "JUnit Formatter" do
   it "reports successful results" do
     output = build_report_with_no_timestamp do |f|
-      f.report Spec::Result.new(:success, "should do something", "spec/some_spec.cr", 33, nil, nil)
-      f.report Spec::Result.new(:success, "should do something else", "spec/some_spec.cr", 50, nil, nil)
+      f.report Spec::Result.new(:success, "should do something", "spec/some_spec.cr", 33, nil, nil), SpecCLIStub.new
+      f.report Spec::Result.new(:success, "should do something else", "spec/some_spec.cr", 50, nil, nil), SpecCLIStub.new
     end
 
     expected = <<-XML
@@ -28,7 +34,7 @@ describe "JUnit Formatter" do
 
   it "reports skipped" do
     output = build_report_with_no_timestamp do |f|
-      f.report Spec::Result.new(:pending, "should do something", "spec/some_spec.cr", 33, nil, nil)
+      f.report Spec::Result.new(:pending, "should do something", "spec/some_spec.cr", 33, nil, nil), SpecCLIStub.new
     end
 
     expected = <<-XML
@@ -45,7 +51,7 @@ describe "JUnit Formatter" do
 
   it "reports failures" do
     output = build_report_with_no_timestamp do |f|
-      f.report Spec::Result.new(:fail, "should do something", "spec/some_spec.cr", 33, nil, nil)
+      f.report Spec::Result.new(:fail, "should do something", "spec/some_spec.cr", 33, nil, nil), SpecCLIStub.new
     end
 
     expected = <<-XML
@@ -62,7 +68,7 @@ describe "JUnit Formatter" do
 
   it "reports errors" do
     output = build_report_with_no_timestamp do |f|
-      f.report Spec::Result.new(:error, "should do something", "spec/some_spec.cr", 33, nil, MyException.new("foo"))
+      f.report Spec::Result.new(:error, "should do something", "spec/some_spec.cr", 33, nil, MyException.new("foo")), SpecCLIStub.new
     end
 
     expected = <<-XML
@@ -79,10 +85,10 @@ describe "JUnit Formatter" do
 
   it "reports mixed results" do
     output = build_report_with_no_timestamp do |f|
-      f.report Spec::Result.new(:success, "should do something1", "spec/some_spec.cr", 33, 2.seconds, nil)
-      f.report Spec::Result.new(:fail, "should do something2", "spec/some_spec.cr", 50, 0.5.seconds, nil)
-      f.report Spec::Result.new(:error, "should do something3", "spec/some_spec.cr", 65, nil, nil)
-      f.report Spec::Result.new(:pending, "should do something4", "spec/some_spec.cr", 80, nil, nil)
+      f.report Spec::Result.new(:success, "should do something1", "spec/some_spec.cr", 33, 2.seconds, nil), SpecCLIStub.new
+      f.report Spec::Result.new(:fail, "should do something2", "spec/some_spec.cr", 50, 0.5.seconds, nil), SpecCLIStub.new
+      f.report Spec::Result.new(:error, "should do something3", "spec/some_spec.cr", 65, nil, nil), SpecCLIStub.new
+      f.report Spec::Result.new(:pending, "should do something4", "spec/some_spec.cr", 80, nil, nil), SpecCLIStub.new
     end
 
     expected = <<-XML
@@ -106,7 +112,7 @@ describe "JUnit Formatter" do
 
   it "encodes class names from the relative file path" do
     output = build_report do |f|
-      f.report Spec::Result.new(:success, "foo", __FILE__, __LINE__, nil, nil)
+      f.report Spec::Result.new(:success, "foo", __FILE__, __LINE__, nil, nil), SpecCLIStub.new
     end
 
     classname = XML.parse(output).xpath_string("string(//testsuite/testcase[1]/@classname)")
@@ -117,7 +123,7 @@ describe "JUnit Formatter" do
     now = Time.utc
 
     output = build_report(timestamp: now) do |f|
-      f.report Spec::Result.new(:success, "foo", __FILE__, __LINE__, nil, nil)
+      f.report Spec::Result.new(:success, "foo", __FILE__, __LINE__, nil, nil), SpecCLIStub.new
     end
 
     classname = XML.parse(output).xpath_string("string(//testsuite[1]/@timestamp)")
@@ -126,8 +132,8 @@ describe "JUnit Formatter" do
 
   it "escapes spec names" do
     output = build_report do |f|
-      f.report Spec::Result.new(:success, %(complicated " <n>'&ame), __FILE__, __LINE__, nil, nil)
-      f.report Spec::Result.new(:success, %(ctrl characters follow - \r\n), __FILE__, __LINE__, nil, nil)
+      f.report Spec::Result.new(:success, %(complicated " <n>'&ame), __FILE__, __LINE__, nil, nil), SpecCLIStub.new
+      f.report Spec::Result.new(:success, %(ctrl characters follow - \r\n), __FILE__, __LINE__, nil, nil), SpecCLIStub.new
     end
 
     name = XML.parse(output).xpath_string("string(//testsuite/testcase[1]/@name)")
@@ -141,7 +147,7 @@ describe "JUnit Formatter" do
     cause = exception_with_backtrace("Something happened")
 
     output = build_report do |f|
-      f.report Spec::Result.new(:fail, "foo", __FILE__, __LINE__, nil, cause)
+      f.report Spec::Result.new(:fail, "foo", __FILE__, __LINE__, nil, cause), SpecCLIStub.new
     end
 
     xml = XML.parse(output)
@@ -156,7 +162,7 @@ describe "JUnit Formatter" do
     cause = exception_with_backtrace("Something happened")
 
     output = build_report do |f|
-      f.report Spec::Result.new(:error, "foo", __FILE__, __LINE__, nil, cause)
+      f.report Spec::Result.new(:error, "foo", __FILE__, __LINE__, nil, cause), SpecCLIStub.new
     end
 
     xml = XML.parse(output)
