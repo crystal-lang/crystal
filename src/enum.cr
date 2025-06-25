@@ -515,11 +515,11 @@ abstract struct Enum
       buffer_index = 0i64
       string.each_char do |char|
         next if char == '-' || char == '_'
-        char = char.downcase
-
-        char.each_byte do |byte|
-          buffer[buffer_index] = byte
-          buffer_index &+= 1
+        char.downcase do |lower|
+          lower.each_byte do |byte|
+            buffer[buffer_index] = byte
+            buffer_index &+= 1
+          end
         end
       end
 
