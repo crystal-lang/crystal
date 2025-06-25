@@ -1271,6 +1271,19 @@ module Crystal
     assert_syntax_error "{% unless 1; 2; elsif 3; 4; end %}"
     assert_syntax_error "{% unless 1 %} 2 {% elsif 3 %} 3 {% end %}"
 
+    it_parses "{% if 1; 2; end; %}", MacroExpression.new(If.new(1.int32, 2.int32), output: false)
+    it_parses "{% if 1; 2; end; 3 %}", MacroExpression.new(Expressions.new([If.new(1.int32, 2.int32), 3.int32]), output: false)
+    it_parses "{%\nif 1; 2; end; 3\n%}", MacroExpression.new(Expressions.new([If.new(1.int32, 2.int32), 3.int32]), output: false)
+    it_parses "{% 2 if 1; 3 %}", MacroExpression.new(Expressions.new([If.new(1.int32, 2.int32), 3.int32]), output: false)
+    it_parses "{%\n2 if 1; 3\n%}", MacroExpression.new(Expressions.new([If.new(1.int32, 2.int32), 3.int32]), output: false)
+    it_parses "{% if 1; 2; elsif 3; 4; else; 5; end; 6 %}", MacroExpression.new(Expressions.new([If.new(1.int32, 2.int32, If.new(3.int32, 4.int32, 5.int32)), 6.int32]), output: false)
+
+    it_parses "{% unless 1; 2; end; %}", MacroExpression.new(Unless.new(1.int32, 2.int32), output: false)
+    it_parses "{% unless 1; 2; end; 3 %}", MacroExpression.new(Expressions.new([Unless.new(1.int32, 2.int32), 3.int32]), output: false)
+    it_parses "{%\nunless 1; 2; end; 3\n%}", MacroExpression.new(Expressions.new([Unless.new(1.int32, 2.int32), 3.int32]), output: false)
+    it_parses "{% 2 unless 1; 3 %}", MacroExpression.new(Expressions.new([Unless.new(1.int32, 2.int32), 3.int32]), output: false)
+    it_parses "{%\n2 unless 1; 3\n%}", MacroExpression.new(Expressions.new([Unless.new(1.int32, 2.int32), 3.int32]), output: false)
+
     it_parses "{{ 1 // 2 }}", MacroExpression.new(Expressions.from([Call.new(1.int32, "//", 2.int32)] of ASTNode))
     it_parses "{{ //.options }}", MacroExpression.new(Expressions.from([Call.new(RegexLiteral.new(StringLiteral.new("")), "options")] of ASTNode))
 

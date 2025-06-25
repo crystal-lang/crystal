@@ -540,9 +540,33 @@ describe "macro_code_coverage" do
     end
     CR
 
+  assert_coverage <<-'CR', {4 => 1, 7 => 1}
+    macro finished
+      {% verbatim do %}
+        {%
+          unless false
+            # Some comment
+            # Another comment
+            10
+          end
+        %}
+      {% end %}
+    end
+    CR
+
   assert_coverage <<-'CR', {2 => 1, 5 => 1}
     {%
       if true
+        # Some comment
+        # Another comment
+        10
+      end
+    %}
+    CR
+
+  assert_coverage <<-'CR', {2 => 1, 5 => 1}
+    {%
+      unless false
         # Some comment
         # Another comment
         10

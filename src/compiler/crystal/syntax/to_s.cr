@@ -324,6 +324,12 @@ module Crystal
       false
     end
 
+    private def emit_loc_pragma(for location : Location?) : Nil
+      if @emit_location_pragmas && (loc = location) && (filename = loc.filename).is_a?(String)
+        @str << %(#<loc:"#{filename}",#{loc.line_number},#{loc.column_number}>)
+      end
+    end
+
     def visit(node : If)
       if node.ternary?
         node.cond.accept self
@@ -334,26 +340,51 @@ module Crystal
         return false
       end
 
-      visit_if_or_unless "if", node
+      self.emit_loc_pragma node.location
+
+      while true
+        @str << "if "
+        node.cond.accept self
+        newline
+
+        self.emit_loc_pragma node.then.location
+
+        accept_with_indent(node.then)
+        append_indent
+
+        # combine `else if` into `elsif` (does not apply to `unless` or `? :`)
+        if (else_node = node.else).is_a?(If) && !else_node.ternary?
+          @str << "els"
+          node = else_node
+        else
+          break
+        end
+      end
+
+      unless else_node.nop?
+        @str << "else"
+        newline
+
+        self.emit_loc_pragma node.else.location
+
+        accept_with_indent(node.else)
+        append_indent
+      end
+
+      self.emit_loc_pragma node.end_location
+
+      @str << "end"
+      false
     end
 
     def visit(node : Unless)
-      visit_if_or_unless "unless", node
-    end
+      self.emit_loc_pragma node.location
 
-    def visit_if_or_unless(prefix, node)
-      if @emit_location_pragmas && (loc = node.location) && (filename = loc.filename).is_a?(String)
-        @str << %(#<loc:"#{filename}",#{loc.line_number},#{loc.column_number}>)
-      end
-
-      @str << prefix
-      @str << ' '
+      @str << "unless "
       node.cond.accept self
       newline
 
-      if @emit_location_pragmas && (loc = node.then.location) && (filename = loc.filename).is_a?(String)
-        @str << %(#<loc:"#{filename}",#{loc.line_number},#{loc.column_number}>)
-      end
+      self.emit_loc_pragma node.then.location
 
       accept_with_indent(node.then)
       unless node.else.nop?
@@ -361,17 +392,13 @@ module Crystal
         @str << "else"
         newline
 
-        if @emit_location_pragmas && (loc = node.else.location) && (filename = loc.filename).is_a?(String)
-          @str << %(#<loc:"#{filename}",#{loc.line_number},#{loc.column_number}>)
-        end
+        self.emit_loc_pragma node.else.location
 
         accept_with_indent(node.else)
       end
       append_indent
 
-      if @emit_location_pragmas && (loc = node.end_location) && (filename = loc.filename).is_a?(String)
-        @str << %(#<loc:"#{filename}",#{loc.line_number},#{loc.column_number}>)
-      end
+      self.emit_loc_pragma node.end_location
 
       @str << "end"
 
@@ -905,18 +932,29 @@ module Crystal
     end
 
     def visit(node : MacroIf)
-      @str << "{% if "
+      if node.is_unless?
+        @str << "{% unless "
+        then_node = node.else
+        else_node = node.then
+      else
+        @str << "{% if "
+        then_node = node.then
+        else_node = node.else
+      end
       node.cond.accept self
       @str << " %}"
+
       inside_macro do
-        node.then.accept self
+        then_node.accept self
       end
-      unless node.else.nop?
+
+      unless else_node.nop?
         @str << "{% else %}"
         inside_macro do
-          node.else.accept self
+          else_node.accept self
         end
       end
+
       @str << "{% end %}"
       false
     end
