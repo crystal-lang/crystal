@@ -508,26 +508,40 @@ abstract struct Enum
   #
   # If multiple members match the same normalized string, the first one is returned.
   def self.parse?(string : String) : self?
-    {% begin %}
-      case string.gsub('-', '_').camelcase.downcase
-      # Temporarily map all constants to their normalized value in order to
-      # avoid duplicates in the `case` conditions.
-      # `FOO` and `Foo` members would both generate `when "foo"` which creates a compile time error.
-      # The first matching member is chosen, like with symbol autocasting.
-      # That's different from the predicate methods which return true for the last matching member.
-      {% constants = {} of _ => _ %}
-      {% for member in @type.constants %}
-        {% key = member.stringify.camelcase.downcase %}
-        {% constants[key] = member unless constants[key] %}
-      {% end %}
-      {% for name, member in constants %}
-        when {{name}}
-          new({{@type.constant(member)}})
-      {% end %}
-      else
-        nil
+    chars_to_skip = {'-', '_'}
+    {% for member in @type.constants %}
+      member_chars_skipped = 0
+      string_chars_skipped = 0
+      string_index = 0
+      matched = true
+
+      "{{member}}".each_char_with_index do |member_char, index|
+        next unless matched
+
+        if member_char.in? chars_to_skip
+          member_chars_skipped += 1
+          next
+        end
+
+        string_index = index - member_chars_skipped + string_chars_skipped
+        while (string_char = string[string_index]?) && string_char.in?(chars_to_skip)
+          string_chars_skipped += 1
+          string_index = index - member_chars_skipped + string_chars_skipped
+        end
+        # If we went past the end of the input string, this member is not a match
+        break if string_char.nil?
+
+        if member_char.downcase != string_char.downcase
+          matched = false
+          break
+        end
+      end
+      if matched && string_index == string.size - 1
+        return {{@type}}::{{member}}
       end
     {% end %}
+
+    nil
   end
 
   def clone
