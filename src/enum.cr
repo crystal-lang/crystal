@@ -537,7 +537,7 @@ abstract struct Enum
         end
       end
       if matched && string_index == string.size - 1
-        return {{@type}}::{{member}}
+        return new({{@type.constant(member)}})
       end
     {% end %}
 
