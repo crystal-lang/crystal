@@ -508,8 +508,6 @@ abstract struct Enum
   #
   # If multiple members match the same normalized string, the first one is returned.
   def self.parse?(string : String) : self?
-    return parse_slow?(string) if string.bytesize > 100
-
     {% begin %}
       # FIXME: There is no `StringLiteral#bytesize` or any other adequate means
       # to figure out how much space we actually need. Maybe some regex could
@@ -520,14 +518,12 @@ abstract struct Enum
       max_size = {{ @type.constants.map(&.size).sort.last }}
       appender = buffer.to_slice.to_unsafe.appender
       string.each_char_with_index do |char, index|
-        return nil if index >= max_size
+        return nil if index > max_size
         next if char == '-' || char == '_'
         char.downcase &.each_byte do |byte|
           appender << byte
         end
       end
-
-      case appender.to_slice
       # Temporarily map all constants to their normalized value in order to
       # avoid duplicates in the `case` conditions.
       # `FOO` and `Foo` members would both generate `when "foo"` which creates a compile time error.
@@ -538,6 +534,8 @@ abstract struct Enum
         {% key = member.stringify.camelcase.downcase %}
         {% constants[key] = member unless constants[key] %}
       {% end %}
+
+      case appender.to_slice
       {% for name, member in constants %}
         when {{name}}.to_slice
           new({{@type.constant(member)}})
