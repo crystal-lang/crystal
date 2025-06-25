@@ -508,40 +508,63 @@ abstract struct Enum
   #
   # If multiple members match the same normalized string, the first one is returned.
   def self.parse?(string : String) : self?
-    chars_to_skip = {'-', '_'}
-    {% for member in @type.constants %}
-      member_chars_skipped = 0
-      string_chars_skipped = 0
-      string_index = 0
-      matched = true
+    return parse_slow?(string) if string.bytesize > 100
 
-      "{{member}}".each_char_with_index do |member_char, index|
-        next unless matched
+    {% begin %}
+      buffer = uninitialized UInt8[100]
+      buffer_index = 0i64
+      string.each_char do |char|
+        next if char == '-' || char == '_'
+        char = char.downcase
 
-        if member_char.in? chars_to_skip
-          member_chars_skipped += 1
-          next
-        end
-
-        string_index = index - member_chars_skipped + string_chars_skipped
-        while (string_char = string[string_index]?) && string_char.in?(chars_to_skip)
-          string_chars_skipped += 1
-          string_index = index - member_chars_skipped + string_chars_skipped
-        end
-        # If we went past the end of the input string, this member is not a match
-        break if string_char.nil?
-
-        if member_char.downcase != string_char.downcase
-          matched = false
-          break
+        char.each_byte do |byte|
+          buffer[buffer_index] = byte
+          buffer_index &+= 1
         end
       end
-      if matched && string_index == string.size - 1
-        return new({{@type.constant(member)}})
+
+      case buffer.to_slice[0...buffer_index]
+      # Temporarily map all constants to their normalized value in order to
+      # avoid duplicates in the `case` conditions.
+      # `FOO` and `Foo` members would both generate `when "foo"` which creates a compile time error.
+      # The first matching member is chosen, like with symbol autocasting.
+      # That's different from the predicate methods which return true for the last matching member.
+      {% constants = {} of _ => _ %}
+      {% for member in @type.constants %}
+        {% key = member.stringify.camelcase.downcase %}
+        {% constants[key] = member unless constants[key] %}
+      {% end %}
+      {% for name, member in constants %}
+        when {{name}}.to_slice
+          new({{@type.constant(member)}})
+      {% end %}
+      else
+        nil
       end
     {% end %}
+  end
 
-    nil
+  private def self.parse_slow?(string : String) : self?
+    {% begin %}
+      case string.gsub('-', '_').camelcase.downcase
+      # Temporarily map all constants to their normalized value in order to
+      # avoid duplicates in the `case` conditions.
+      # `FOO` and `Foo` members would both generate `when "foo"` which creates a compile time error.
+      # The first matching member is chosen, like with symbol autocasting.
+      # That's different from the predicate methods which return true for the last matching member.
+      {% constants = {} of _ => _ %}
+      {% for member in @type.constants %}
+        {% key = member.stringify.camelcase.downcase %}
+        {% constants[key] = member unless constants[key] %}
+      {% end %}
+      {% for name, member in constants %}
+        when {{name}}
+          new({{@type.constant(member)}})
+      {% end %}
+      else
+        nil
+      end
+    {% end %}
   end
 
   def clone
