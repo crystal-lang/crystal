@@ -546,29 +546,6 @@ abstract struct Enum
     {% end %}
   end
 
-  private def self.parse_slow?(string : String) : self?
-    {% begin %}
-      case string.gsub('-', '_').camelcase.downcase
-      # Temporarily map all constants to their normalized value in order to
-      # avoid duplicates in the `case` conditions.
-      # `FOO` and `Foo` members would both generate `when "foo"` which creates a compile time error.
-      # The first matching member is chosen, like with symbol autocasting.
-      # That's different from the predicate methods which return true for the last matching member.
-      {% constants = {} of _ => _ %}
-      {% for member in @type.constants %}
-        {% key = member.stringify.camelcase.downcase %}
-        {% constants[key] = member unless constants[key] %}
-      {% end %}
-      {% for name, member in constants %}
-        when {{name}}
-          new({{@type.constant(member)}})
-      {% end %}
-      else
-        nil
-      end
-    {% end %}
-  end
-
   def clone
     self
   end
