@@ -924,8 +924,8 @@ module Crystal
         end
 
         # combine `{% else %}{% if %}` into `{% elsif %}` (does not apply to
-        # `{% unless %}`, nor when there is whitespace inbetween which as that
-        # would show up as a `MacroLiteral`)
+        # `{% unless %}`, nor when there is whitespace inbetween, as that would
+        # show up as a `MacroLiteral`)
         if !node.is_unless? && else_node.is_a?(MacroIf) && !else_node.is_unless?
           node = else_node
         else
