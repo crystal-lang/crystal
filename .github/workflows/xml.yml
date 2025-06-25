@@ -39,7 +39,7 @@ jobs:
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v4
-      - name: Uninstall openssl and conflicts
+      - name: Uninstall libxml2 and conflicts
         run: apk del libxml2-dev
       - name: Install ${{ matrix.pkg }}
         run: apk add "${{ matrix.pkg }}" --repository=${{ matrix.repository }}
