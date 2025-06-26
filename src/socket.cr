@@ -433,15 +433,17 @@ class Socket < IO
     optval
   end
 
+  # Returns where the socket's  mode is blocking (true) or non blocking (false).
   def blocking
     system_blocking?
   end
 
   # Changes the socket's mode to blocking (true) or non blocking (false).
   #
-  # WARNING: changing the blocking mode can break the IO system requirements and
-  # cause the event loop to misbehave, for example block the program when a
-  # fiber tries to read from this socket.
+  # WARNING: the socket has been configured to behave correctly with the event
+  # loop runtime requirements. Changing the blocking mode can cause the event
+  # loop to misbehave, for example block the entire program when a fiber tries
+  # to read from this socket.
   def blocking=(value)
     self.system_blocking = value
   end
