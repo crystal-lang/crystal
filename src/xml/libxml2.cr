@@ -149,6 +149,7 @@ lib LibXML
   fun xmlTextReaderReadOuterXml(reader : XMLTextReader) : UInt8*
   fun xmlTextReaderExpand(reader : XMLTextReader) : Node*
   fun xmlTextReaderCurrentNode(reader : XMLTextReader) : Node*
+  fun xmlTextReaderCurrentDoc(reader : XMLTextReader) : Doc*
 
   fun xmlTextReaderSetErrorHandler(reader : XMLTextReader, f : TextReaderErrorFunc) : Void
   fun xmlTextReaderSetStructuredErrorHandler(reader : XMLTextReader, f : StructuredErrorFunc, arg : Void*) : Void
@@ -372,18 +373,14 @@ lib LibXML
   {% if compare_versions(LibXML::VERSION, "2.14.0") >= 0 %}
     fun xmlSaveSetIndentString(SaveCtxPtr, UInt8*)
   {% end %}
+
+  fun xmlFreeDoc(Doc*)
+  fun xmlFreeNode(Node*)
+  fun xmlFreeTextReader(XMLTextReader)
+  fun xmlFreeTextWriter(TextWriter)
+  fun xmlXPathFreeContext(XPathContext*)
+  fun xmlXPathFreeNodeSet(NodeSet*)
+  fun xmlXPathFreeObject(XPathObject*)
 end
 
 LibXML.xmlInitParser
-
-LibXML.xmlMemSetup(
-  ->GC.free,
-  ->GC.malloc(LibC::SizeT),
-  ->GC.realloc(Void*, LibC::SizeT),
-  ->(str) {
-    len = LibC.strlen(str) + 1
-    copy = Pointer(UInt8).malloc(len)
-    copy.copy_from(str, len)
-    copy
-  }
-)

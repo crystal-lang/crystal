@@ -49,6 +49,11 @@ class XML::Reader
     LibXML.xmlTextReaderSetStructuredErrorHandler(@reader, ->Error.structured_callback, Box.box(@errors))
   end
 
+  # :nodoc:
+  def finalize
+    LibXML.xmlFreeTextReader(@reader)
+  end
+
   # Moves the reader to the next node.
   def read : Bool
     LibXML.xmlTextReaderRead(@reader) == 1
@@ -180,7 +185,15 @@ class XML::Reader
   # Returns `nil` if the node could not be expanded.
   def expand? : XML::Node?
     xml = LibXML.xmlTextReaderExpand(@reader)
-    XML::Node.new(xml) if xml
+    XML::Node.new(xml, document) if xml
+  end
+
+  def document
+    @document ||= if doc = LibXML.xmlTextReaderCurrentDoc(@reader)
+                    Node.new(doc)
+                  else
+                    raise XML::Error.new("Failed to get current doc for XML::Reader", 0)
+                  end
   end
 
   # Returns the text content of the node.
@@ -189,7 +202,7 @@ class XML::Reader
     value ? String.new(value) : ""
   end
 
-  # Returns a reference to the underlying `LibXML::XMLTextReader`.
+  # :nodoc:
   def to_unsafe
     @reader
   end

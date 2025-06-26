@@ -1,6 +1,7 @@
 class XML::Namespace
   getter document : Node
 
+  # :nodoc:
   def initialize(@document : Node, @ns : LibXML::NS*)
   end
 
