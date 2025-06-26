@@ -33,6 +33,7 @@ class UNIXSocket < Socket
   end
 
   # Internal constructor for UNIXSocket#pair and UNIXServer#accept?
+  # The *blocking* arg is purely informational.
   protected def initialize(*, handle : Handle, type : Type = Type::STREAM, path : Path | String? = nil, blocking : Bool = nil)
     @path = path.to_s
     super handle: handle, family: Family::UNIX, type: type, protocol: Protocol::IP, blocking: blocking
