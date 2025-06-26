@@ -55,7 +55,7 @@ class Socket < IO
     new(family, Type::STREAM, Protocol::TCP)
   end
 
-  @[Deprecated("The blocking argument is deprecated. Use #blocking= to change it after creating the socket.")]
+  @[Deprecated("The blocking argument is deprecated. Use Socket.set_blocking instead.")]
   def self.tcp(family : Family, blocking) : self
     new(family, Type::STREAM, Protocol::TCP, blocking)
   end
@@ -66,7 +66,7 @@ class Socket < IO
     new(family, Type::DGRAM, Protocol::UDP)
   end
 
-  @[Deprecated("The blocking argument is deprecated. Use #blocking= to change it after creating the socket.")]
+  @[Deprecated("The blocking argument is deprecated. Use Socket.set_blocking instead.")]
   def self.udp(family : Family, blocking) : self
     new(family, Type::DGRAM, Protocol::UDP, blocking)
   end
@@ -74,8 +74,8 @@ class Socket < IO
   # Creates an UNIX socket. Consider using `UNIXSocket` or `UNIXServer` unless
   # you need full control over the socket.
   #
-  # NOTE: The *blocking* argument is deprecated. Use `#blocking=` to change it
-  # after creating the socket.
+  # NOTE: The *blocking* argument is deprecated since Crystal 1.17. Use
+  # `Socket.set_blocking` to change it after creating the socket.
   def self.unix(type : Type = Type::STREAM, blocking = nil) : self
     new(Family::UNIX, type, blocking: blocking)
   end
@@ -84,7 +84,7 @@ class Socket < IO
   # `UNIXSocket` or `UNIXServer` unless you need full control over the socket.
   #
   # NOTE: The *blocking* argument is deprecated since Crystal 1.17. Use
-  # `#blocking=` to change it after creating the socket.
+  # `Socket.set_blocking` to change it after creating the socket.
   def initialize(family : Family, type : Type, protocol : Protocol = Protocol::IP, blocking = nil)
     # This method is `#initialize` instead of `.new` because it is used as super
     # constructor from subclasses.
@@ -100,7 +100,7 @@ class Socket < IO
   #
   # NOTE: On Windows the handle must have been created with `WSA_FLAG_OVERLAPPED`.
   # NOTE: The *blocking* argument is deprecated since Crystal 1.17. Use
-  # `#blocking=` to change it after creating the socket.
+  # `Socket.set_blocking` to change it after creating the socket.
   def initialize(fd, @family : Family, @type : Type, @protocol : Protocol = Protocol::IP, blocking = nil)
     initialize(handle: fd, family: family, type: type, protocol: protocol)
     blocking = Crystal::EventLoop.default_socket_blocking? if blocking.nil?
