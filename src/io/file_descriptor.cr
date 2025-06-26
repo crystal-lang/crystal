@@ -58,7 +58,7 @@ class IO::FileDescriptor < IO
     file_descriptor
   end
 
-  @[Deprecated("The blocking argument is deprecated. Use #blocking= to change it after creating the file descriptor.")]
+  @[Deprecated("The blocking argument is deprecated with no replacement.")]
   def self.new(fd : Handle, blocking, *, close_on_finalize = true)
     file_descriptor = new(handle: fd, close_on_finalize: close_on_finalize)
     file_descriptor.system_blocking_init(blocking) unless file_descriptor.closed?
