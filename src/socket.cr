@@ -449,9 +449,15 @@ class Socket < IO
   # loop runtime requirements. Changing the blocking mode can cause the event
   # loop to misbehave, for example block the entire program when a fiber tries
   # to read from this socket.
-  @[Deprecated("There are no replacement.")]
+  @[Deprecated("Use Socket.set_blocking(fd, value) instead.")]
   def blocking=(value)
     self.system_blocking = value
+  end
+
+  # Changes the blocking mode of *fd* to be blocking (true) or non blocking
+  # (false).
+  def self.set_blocking(fd : Handle, value : Bool)
+    Crystal::System::Socket.set_blocking(fd, value)
   end
 
   def close_on_exec?
