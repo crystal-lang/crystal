@@ -347,7 +347,7 @@ module Crystal::System::Socket
 
   # Changes the blocking mode as per BSD sockets, has no effect on the
   # overlapped flag.
-  def self.set_blocking(fd, blocking)
+  protected def self.set_blocking(fd, blocking)
     mode = blocking ? 1_u32 : 0_u32
     ret = LibC.WSAIoctl(fd, LibC::FIONBIO, pointerof(mode), sizeof(UInt32), nil, 0, out _, nil, nil)
     raise ::Socket::Error.from_wsa_error("WSAIoctl") unless ret.zero?
