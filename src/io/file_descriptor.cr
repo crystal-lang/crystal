@@ -87,8 +87,9 @@ class IO::FileDescriptor < IO
   # Changes the file descriptor's mode to blocking (true) or non blocking
   # (false).
   #
-  # WARNING: changing the blocking mode can break the IO system requirements and
-  # cause the event loop to misbehave, for example block the program when a
+  # WARNING: the file descriptor has been configured to behave correctly with
+  # the event loop runtime requirements. Changing the blocking mode can cause
+  # the event loop to misbehave, for example block the entire program when a
   # fiber tries to read from this file descriptor.
   def blocking=(value)
     self.system_blocking = value
