@@ -89,6 +89,7 @@ class IO::FileDescriptor < IO
   # This might be different from the internal file descriptor. For example, when
   # `STDIN` is a terminal on Windows, this returns `false` since the underlying
   # blocking reads are done on a completely separate thread.
+  @[Deprecated("There are no replacement.")]
   def blocking
     emulated = emulated_blocking?
     return emulated unless emulated.nil?
@@ -102,6 +103,7 @@ class IO::FileDescriptor < IO
   # the event loop runtime requirements. Changing the blocking mode can cause
   # the event loop to misbehave, for example block the entire program when a
   # fiber tries to read from this file descriptor.
+  @[Deprecated("There are no replacement.")]
   def blocking=(value)
     self.system_blocking = value
   end
