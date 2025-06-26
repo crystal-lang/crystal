@@ -176,13 +176,8 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     fd = LibC.open(path, flags | LibC::O_CLOEXEC, permissions)
     return Errno.value if fd == -1
 
-    blocking = !System::File.special_type?(fd) if blocking.nil?
-    unless blocking
-      status_flags = System::FileDescriptor.fcntl(fd, LibC::F_GETFL)
-      System::FileDescriptor.fcntl(fd, LibC::F_SETFL, status_flags | LibC::O_NONBLOCK)
-    end
-
-    {fd, blocking}
+    System::FileDescriptor.set_blocking(fd, false) unless blocking
+    {fd, !!blocking}
   end
 
   def read(file_descriptor : System::FileDescriptor, slice : Bytes) : Int32
