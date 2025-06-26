@@ -438,6 +438,7 @@ class Socket < IO
   end
 
   # Returns where the socket's  mode is blocking (true) or non blocking (false).
+  @[Deprecated("There are no replacement.")]
   def blocking
     system_blocking?
   end
@@ -448,6 +449,7 @@ class Socket < IO
   # loop runtime requirements. Changing the blocking mode can cause the event
   # loop to misbehave, for example block the entire program when a fiber tries
   # to read from this socket.
+  @[Deprecated("There are no replacement.")]
   def blocking=(value)
     self.system_blocking = value
   end
