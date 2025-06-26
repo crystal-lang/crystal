@@ -46,6 +46,7 @@ class Crystal::Command
         format                   format project, directories and/or files
         hierarchy                show type hierarchy
         implementations          show implementations for given call in location
+        macro_code_coverage      generate a macro code coverage report
         types                    show type of main variables
         unreachable              show methods that are never called
         --help, -h               show this help
@@ -209,6 +210,9 @@ class Crystal::Command
     when "unreachable".starts_with?(tool)
       options.shift
       unreachable
+    when "macro_code_coverage".starts_with?(tool)
+      options.shift
+      macro_code_coverage
     when "--help" == tool, "-h" == tool
       puts COMMANDS_USAGE
       exit
@@ -338,6 +342,13 @@ class Crystal::Command
     def compile(output_filename = self.output_filename)
       compiler.emit_base_filename = emit_base_filename || output_filename.rchop(File.extname(output_filename))
       compiler.compile sources, output_filename
+    end
+
+    def compile_configure_program(output_filename = self.output_filename, &)
+      compiler.emit_base_filename = emit_base_filename || output_filename.rchop(File.extname(output_filename))
+      compiler.compile_configure_program sources, output_filename do |program|
+        yield program
+      end
     end
 
     def top_level_semantic

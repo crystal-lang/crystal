@@ -7,8 +7,8 @@ module Crystal
       to_s(io)
     end
 
-    def to_s(io : IO, macro_expansion_pragmas = nil, emit_doc = false) : Nil
-      visitor = ToSVisitor.new(io, macro_expansion_pragmas: macro_expansion_pragmas, emit_doc: emit_doc)
+    def to_s(io : IO, macro_expansion_pragmas = nil, emit_doc = false, emit_location_pragmas : Bool = false) : Nil
+      visitor = ToSVisitor.new(io, macro_expansion_pragmas: macro_expansion_pragmas, emit_doc: emit_doc, emit_location_pragmas: emit_location_pragmas)
       self.accept visitor
     end
   end
@@ -35,7 +35,7 @@ module Crystal
       BLOCK_ARG
     end
 
-    def initialize(@str = IO::Memory.new, @macro_expansion_pragmas = nil, @emit_doc = false)
+    def initialize(@str = IO::Memory.new, @macro_expansion_pragmas = nil, @emit_doc = false, @emit_location_pragmas : Bool = false)
       @indent = 0
       @inside_macro = 0
     end
@@ -324,6 +324,12 @@ module Crystal
       false
     end
 
+    private def emit_loc_pragma(for location : Location?) : Nil
+      if @emit_location_pragmas && (loc = location) && (filename = loc.filename).is_a?(String)
+        @str << %(#<loc:"#{filename}",#{loc.line_number},#{loc.column_number}>)
+      end
+    end
+
     def visit(node : If)
       if node.ternary?
         node.cond.accept self
@@ -334,10 +340,15 @@ module Crystal
         return false
       end
 
+      self.emit_loc_pragma node.location
+
       while true
         @str << "if "
         node.cond.accept self
         newline
+
+        self.emit_loc_pragma node.then.location
+
         accept_with_indent(node.then)
         append_indent
 
@@ -353,27 +364,44 @@ module Crystal
       unless else_node.nop?
         @str << "else"
         newline
+
+        self.emit_loc_pragma node.else.location
+
         accept_with_indent(node.else)
         append_indent
       end
+
+      self.emit_loc_pragma node.end_location
 
       @str << "end"
       false
     end
 
     def visit(node : Unless)
+      self.emit_loc_pragma node.location
+
       @str << "unless "
       node.cond.accept self
       newline
+
+      self.emit_loc_pragma node.then.location
+
       accept_with_indent(node.then)
       unless node.else.nop?
         append_indent
         @str << "else"
         newline
+
+        self.emit_loc_pragma node.else.location
+
         accept_with_indent(node.else)
       end
       append_indent
+
+      self.emit_loc_pragma node.end_location
+
       @str << "end"
+
       false
     end
 
