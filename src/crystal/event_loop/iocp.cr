@@ -240,8 +240,8 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     create_completion_port(r) unless read_blocking
     create_completion_port(w) unless write_blocking
     {
-      IO::FileDescriptor.new(handle: r, blocking: !!read_blocking)
-      IO::FileDescriptor.new(handle: w, blocking: !!write_blocking)
+      IO::FileDescriptor.new(handle: r, blocking: !!read_blocking),
+      IO::FileDescriptor.new(handle: w, blocking: !!write_blocking),
     }
   end
 
