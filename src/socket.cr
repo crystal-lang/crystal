@@ -104,7 +104,7 @@ class Socket < IO
   def initialize(fd, @family : Family, @type : Type, @protocol : Protocol = Protocol::IP, blocking = nil)
     initialize(handle: fd, family: family, type: type, protocol: protocol)
     blocking = Crystal::EventLoop.default_socket_blocking? if blocking.nil?
-    self.blocking = blocking unless blocking
+    Crystal::System::Socket.set_blocking(fd, blocking) unless blocking
     self.sync = true
   end
 
@@ -245,10 +245,10 @@ class Socket < IO
   def accept? : Socket?
     if rs = Crystal::EventLoop.current.accept(self)
       sock = Socket.new(handle: rs[0], family: family, type: type, protocol: protocol, blocking: rs[1])
-      unless (blocking = self.blocking) == rs[1]
+      unless (blocking = system_blocking?) == rs[1]
         # FIXME: unlike the overloads in TCPServer and UNIXServer, this version
         # carries the blocking mode from the server socket to the client socket
-        sock.blocking = blocking
+        Crystal::System::Socket.set_blocking(fd, blocking)
       end
       sock.sync = sync?
       sock
