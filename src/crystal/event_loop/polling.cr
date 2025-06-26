@@ -164,10 +164,14 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
 
   def pipe(read_blocking : Bool?, write_blocking : Bool?) : {IO::FileDescriptor, IO::FileDescriptor}
     r, w = System::FileDescriptor.system_pipe
-    {
-      IO::FileDescriptor.new(r, !!read_blocking),
-      IO::FileDescriptor.new(w, !!write_blocking),
-    }
+
+    reader = IO::FileDescriptor.new(handle: r)
+    reader.blocking = !!read_blocking
+
+    writer = IO::FileDescriptor.new(handle: w)
+    writer.blocking = !!write_blocking
+
+    {reader, writer}
   end
 
   def open(path : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : {System::FileDescriptor::Handle, Bool} | Errno

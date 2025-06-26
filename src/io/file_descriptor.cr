@@ -52,19 +52,30 @@ class IO::FileDescriptor < IO
   # event loop runtime requirements.
   #
   # NOTE: On Windows the handle should have been created with `FILE_FLAG_OVERLAPPED`.
-  # NOTE: The *blocking* arg is deprecated since Crystal 1.17. Use `#blocking=`
-  # to change the blocking mode instead.
-  def self.new(fd : Handle, blocking = nil, *, close_on_finalize = true)
+  def self.new(fd : Handle, *, close_on_finalize = true)
+    file_descriptor = new(handle: fd, close_on_finalize: close_on_finalize)
+    file_descriptor.system_blocking_init(nil) unless file_descriptor.closed?
+    file_descriptor
+  end
+
+  @[Deprecated("The blocking argument is deprecated. Use #blocking= to change it after creating the file descriptor.")]
+  def self.new(fd : Handle, blocking, *, close_on_finalize = true)
     file_descriptor = new(handle: fd, close_on_finalize: close_on_finalize)
     file_descriptor.system_blocking_init(blocking) unless file_descriptor.closed?
     file_descriptor
   end
 
   # :nodoc:
-  def initialize(*, handle : Handle, @close_on_finalize = true)
+  #
+  # Internal constructor to wrap a system *handle*. The *blocking* arg is purely
+  # informational.
+  def initialize(*, handle : Handle, @close_on_finalize = true, blocking = nil)
     @volatile_fd = Atomic.new(handle)
     @closed = true # This is necessary so we can reference `self` in `system_closed?` (in case of an exception)
     @closed = system_closed?
+    {% if flag?(:win32) %}
+      @system_blocking = !!blocking
+    {% end %}
   end
 
   # :nodoc:
