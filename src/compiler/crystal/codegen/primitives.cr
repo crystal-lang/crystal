@@ -823,14 +823,14 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_primitive_pre_initialize(node, target_def, call_args)
-    type = node.type
+    type = context.type.instance_type
 
     base_type = type.is_a?(VirtualType) ? type.base_type : type
 
     ptr = call_args[target_def.owner.passed_as_self? ? 1 : 0]
     pre_initialize_aggregate base_type, llvm_struct_type(base_type), ptr
 
-    @last = cast_to ptr, type
+    @last = type.struct? ? llvm_nil : cast_to ptr, type
   end
 
   def codegen_primitive_pointer_malloc(node, target_def, call_args)

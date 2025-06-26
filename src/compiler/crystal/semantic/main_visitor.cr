@@ -2364,17 +2364,22 @@ module Crystal
     end
 
     def visit(node : Primitive)
+      case node.name
+      when "pre_initialize"
+        return visit_pre_initialize node
+      end
+
       # If the method where this primitive is defined has a return type, use it
       if return_type = typed_def.return_type
         node.type = (path_lookup || scope).lookup_type(return_type, free_vars: free_vars)
         return false
       end
 
+      # TODO: move these into the case expression above and add return types to
+      # their corresponding methods
       case node.name
       when "allocate"
         visit_allocate node
-      when "pre_initialize"
-        visit_pre_initialize node
       when "pointer_malloc"
         visit_pointer_malloc node
       when "pointer_set"
@@ -2478,35 +2483,46 @@ module Crystal
 
       case instance_type
       when GenericClassType
-        node.raise "Can't pre-initialize instance of generic class #{instance_type} without specifying its type vars"
+        node.raise "Can't pre-initialize instance of #{instance_type.type_desc} #{instance_type} without specifying its type vars"
       when UnionType
         node.raise "Can't pre-initialize instance of a union type"
-      else
-        if instance_type.abstract?
-          if instance_type.virtual?
-            # This is the same as `.initialize`
-            base_type = instance_type.devirtualize
+      end
 
-            extra = Call.new(
-              nil,
-              "raise",
-              StringLiteral.new("Can't pre-initialize abstract class #{base_type}"),
-              global: true).at(node)
-            extra.accept self
+      if instance_type.abstract?
+        if instance_type.virtual? && !instance_type.struct?
+          # This is the same as `.initialize`
+          base_type = instance_type.devirtualize
 
-            # This `extra` will replace the Primitive node in CleanupTransformer later on.
-            node.extra = extra
-            node.type = @program.no_return
-            return
-          else
-            # If the type is not virtual then we know for sure that the type
-            # can't be instantiated, and we can produce a compile-time error.
-            node.raise "Can't pre-initialize abstract class #{instance_type}"
-          end
+          extra = Call.new(
+            nil,
+            "raise",
+            StringLiteral.new("Can't pre-initialize abstract #{base_type.type_desc} #{base_type}"),
+            global: true).at(node)
+          extra.accept self
+
+          # This `extra` will replace the Primitive node in CleanupTransformer later on.
+          node.extra = extra
+          node.type = @program.no_return
+          return false
+        else
+          # If the type is not virtual then we know for sure that the type
+          # can't be instantiated, and we can produce a compile-time error.
+          instance_type = instance_type.devirtualize
+          node.raise "Can't pre-initialize abstract #{instance_type.type_desc} #{instance_type}"
         end
+      end
 
+      if instance_type.struct?
+        element_type = @vars["address"].type.as(PointerInstanceType).element_type
+        if element_type.abstract? && element_type.struct?
+          node.raise "Can't pre-initialize struct using pointer to abstract struct"
+        end
+        node.type = @program.nil_type
+      else
         node.type = instance_type
       end
+
+      false
     end
 
     def visit_pointer_malloc(node)
