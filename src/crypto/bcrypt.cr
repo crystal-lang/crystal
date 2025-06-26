@@ -72,10 +72,12 @@ class Crypto::Bcrypt
 
   # Creates a new `Crypto::Bcrypt` object from the given *password* with *salt* and *cost*.
   #
+  # *salt* must be a base64 encoded string of 16 bytes (128 bits).
+  #
   # ```
   # require "crypto/bcrypt"
   #
-  # password = Crypto::Bcrypt.new "secret", "salt_of_16_chars"
+  # password = Crypto::Bcrypt.new "secret", "0102030405060708090a0b0c0d0e0f10"
   # password.digest
   # ```
   def self.new(password : String, salt : String, cost = DEFAULT_COST)
