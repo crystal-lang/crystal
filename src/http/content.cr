@@ -8,7 +8,7 @@ module HTTP
     @continue_sent = false
     setter expects_continue : Bool = false
 
-    def close
+    def close : Nil
       @expects_continue = false
       super
     end
@@ -73,7 +73,7 @@ module HTTP
       @io.peek
     end
 
-    def skip(bytes_count) : Nil
+    def skip(bytes_count : Int) : Nil
       ensure_send_continue
       @io.skip(bytes_count)
     end
@@ -164,7 +164,7 @@ module HTTP
       peek
     end
 
-    def skip(bytes_count) : Nil
+    def skip(bytes_count : Int) : Nil
       ensure_send_continue
       if bytes_count <= @chunk_remaining
         @io.skip(bytes_count)
