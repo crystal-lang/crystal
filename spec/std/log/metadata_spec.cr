@@ -128,4 +128,11 @@ describe Log::Metadata::Value do
   it "json" do
     v({a: 1}).to_json.should eq(%({"a":1}))
   end
+
+  describe "#==" do
+    it "compares with String" do
+      v("foo").should eq "foo"
+      "foo".should eq v("foo")
+    end
+  end
 end
