@@ -67,6 +67,14 @@ class Time::Location
           location.utc?.should be_false
           location.fixed?.should be_false
         end
+
+        it "uses IANA zone names for Windows system time zones (#15911)" do
+          location = Location.load("Europe/Lisbon")
+          std_zone = location.zones.find(&.dst?.!).should_not be_nil
+          dst_zone = location.zones.find(&.dst?).should_not be_nil
+          std_zone.name.should eq("WET")
+          dst_zone.name.should eq("WEST")
+        end
       {% end %}
 
       it "invalid timezone identifier" do
