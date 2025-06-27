@@ -1,5 +1,6 @@
 require "./spec_helper"
 require "../support/thread"
+require "wait_group"
 
 private def it_raises_on_null_byte(operation, file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
   it "errors on #{operation}", file, line, end_line do
@@ -47,112 +48,64 @@ describe "File" do
     end
   end
 
-  describe "blocking" do
-    it "opens regular file as blocking" do
-      with_tempfile("regular") do |path|
-        File.open(path, "w") do |file|
-          file.blocking.should be_true
-        end
+  {% if LibC.has_method?(:mkfifo) %}
+    # interpreter doesn't support threads yet (#14287)
+    pending_interpreted "can read/write fifo file without blocking" do
+      path = File.tempname("chardev")
+      ret = LibC.mkfifo(path, File::DEFAULT_CREATE_PERMISSIONS)
+      raise RuntimeError.from_errno("mkfifo") unless ret == 0
 
-        File.open(path, "w", blocking: nil) do |file|
-          file.blocking.should be_true
-        end
-      end
-    end
+      # FIXME: open(2) will block when opening a fifo file until another thread
+      #        or process also opened the file
+      writer = nil
+      new_thread { writer = File.new(path, "w") }
 
-    it "opens regular file as non-blocking" do
-      with_tempfile("regular") do |path|
-        File.open(path, "w", blocking: false) do |file|
-          file.blocking.should be_false
-        end
-      end
-    end
+      rbuf = Bytes.new(5120)
+      wbuf = Bytes.new(5120)
+      Random::DEFAULT.random_bytes(wbuf)
 
-    {% if flag?(:unix) %}
-      if File.exists?("/dev/tty")
-        it "opens character device" do
-          File.open("/dev/tty", "r") do |file|
-            file.blocking.should be_true
-          end
-
-          File.open("/dev/tty", "r", blocking: false) do |file|
-            file.blocking.should be_false
-          end
-
-          File.open("/dev/tty", "r", blocking: nil) do |file|
-            file.blocking.should be_false
-          end
-        rescue File::Error
-          # The TTY may not be available (e.g. Docker CI)
-        end
-      end
-
-      {% if LibC.has_method?(:mkfifo) %}
-        # interpreter doesn't support threads yet (#14287)
-        pending_interpreted "opens fifo file as non-blocking" do
-          path = File.tempname("chardev")
-          ret = LibC.mkfifo(path, File::DEFAULT_CREATE_PERMISSIONS)
-          raise RuntimeError.from_errno("mkfifo") unless ret == 0
-
-          # FIXME: open(2) will block when opening a fifo file until another
-          #        thread or process also opened the file; we should pass
-          #        O_NONBLOCK to the open(2) call itself, not afterwards
-          file = nil
-          new_thread { file = File.new(path, "w", blocking: nil) }
-
-          begin
-            File.open(path, "r", blocking: false) do |file|
-              file.blocking.should be_false
+      File.open(path, "r") do |reader|
+        WaitGroup.wait do |wg|
+          wg.spawn do
+            64.times do |i|
+              reader.read_fully(rbuf)
             end
-          ensure
-            File.delete(path)
-            file.try(&.close)
+          end
+
+          wg.spawn do
+            64.times do |i|
+              writer.not_nil!.write(wbuf)
+            end
+            writer.not_nil!.close
           end
         end
-      {% end %}
-    {% end %}
-
-    it "reads non-blocking file" do
-      File.open(datapath("test_file.txt"), "r", blocking: false) do |f|
-        f.gets_to_end.should eq("Hello World\n" * 20)
       end
+
+      rbuf.should eq(wbuf)
+    ensure
+      File.delete(path) if path
+      writer.try(&.close)
     end
+  {% end %}
 
-    it "writes and reads large non-blocking file" do
-      with_tempfile("non-blocking-io.txt") do |path|
-        File.open(path, "w+", blocking: false) do |f|
-          f.puts "Hello World\n" * 40000
-          f.pos = 0
-          f.gets_to_end.should eq("Hello World\n" * 40000)
-        end
+  # This test verifies that the workaround for a win32 bug with the O_APPEND
+  # equivalent with OVERLAPPED operations is working as expected.
+  it "returns the actual position after append" do
+    with_tempfile("delete-file.txt") do |filename|
+      File.write(filename, "hello")
+
+      File.open(filename, "a") do |file|
+        file.tell.should eq(0)
+
+        file.write "12345".to_slice
+        file.tell.should eq(10)
+
+        file.seek(5, IO::Seek::Set)
+        file.write "6789".to_slice
+        file.tell.should eq(14)
       end
-    end
 
-    it "can append non-blocking to an existing file" do
-      with_tempfile("append-existing.txt") do |path|
-        File.write(path, "hello")
-        File.write(path, " world", mode: "a", blocking: false)
-        File.read(path).should eq("hello world")
-      end
-    end
-
-    it "returns the actual position after non-blocking append" do
-      with_tempfile("delete-file.txt") do |filename|
-        File.write(filename, "hello")
-
-        File.open(filename, "a", blocking: false) do |file|
-          file.tell.should eq(0)
-
-          file.write "12345".to_slice
-          file.tell.should eq(10)
-
-          file.seek(5, IO::Seek::Set)
-          file.write "6789".to_slice
-          file.tell.should eq(14)
-        end
-
-        File.read(filename).should eq("hello123456789")
-      end
+      File.read(filename).should eq("hello123456789")
     end
   end
 
