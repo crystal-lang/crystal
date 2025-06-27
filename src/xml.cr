@@ -54,7 +54,7 @@ module XML
   # Parses an XML document from *string* with *options* into an `XML::Node`.
   #
   # See `ParserOptions.default` for default options.
-  def self.parse(string : String, options : ParserOptions = ParserOptions.default) : Node
+  def self.parse(string : String, options : ParserOptions = ParserOptions.default) : Document
     raise XML::Error.new("Document is empty", 0) if string.empty?
     ctxt = LibXML.xmlNewParserCtxt
     from_ptr(ctxt) do
@@ -65,7 +65,7 @@ module XML
   # Parses an XML document from *io* with *options* into an `XML::Node`.
   #
   # See `ParserOptions.default` for default options.
-  def self.parse(io : IO, options : ParserOptions = ParserOptions.default) : Node
+  def self.parse(io : IO, options : ParserOptions = ParserOptions.default) : Document
     ctxt = LibXML.xmlNewParserCtxt
     from_ptr(ctxt) do
       LibXML.xmlCtxtReadIO(ctxt, ->read_callback, ->close_callback, Box(IO).box(io), nil, nil, options)
@@ -75,7 +75,7 @@ module XML
   # Parses an HTML document from *string* with *options* into an `XML::Node`.
   #
   # See `HTMLParserOptions.default` for default options.
-  def self.parse_html(string : String, options : HTMLParserOptions = HTMLParserOptions.default) : Node
+  def self.parse_html(string : String, options : HTMLParserOptions = HTMLParserOptions.default) : Document
     raise XML::Error.new("Document is empty", 0) if string.empty?
     ctxt = LibXML.htmlNewParserCtxt
     from_ptr(ctxt) do
@@ -86,7 +86,7 @@ module XML
   # Parses an HTML document from *io* with *options* into an `XML::Node`.
   #
   # See `HTMLParserOptions.default` for default options.
-  def self.parse_html(io : IO, options : HTMLParserOptions = HTMLParserOptions.default) : Node
+  def self.parse_html(io : IO, options : HTMLParserOptions = HTMLParserOptions.default) : Document
     ctxt = LibXML.htmlNewParserCtxt
     from_ptr(ctxt) do
       LibXML.htmlCtxtReadIO(ctxt, ->read_callback, ->close_callback, Box(IO).box(io), nil, "utf-8", options)
@@ -119,7 +119,7 @@ module XML
       {% end %}
     raise Error.new(LibXML.xmlGetLastError) unless doc
 
-    Node.new(doc, errors)
+    Document.new(doc, errors)
   end
 
   {% unless LibXML.has_method?(:xmlSaveSetIndentString) %}
