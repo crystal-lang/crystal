@@ -52,7 +52,13 @@ class TCPServer < TCPSocket
     end
   end
 
-  # Creates a TCPServer from an already configured raw file descriptor
+  # Creates a TCPServer from an existing system file descriptor or socket
+  # handle.
+  #
+  # This adopts *fd* into the IO system that will reconfigure it as per the
+  # event loop runtime requirements.
+  #
+  # NOTE: On Windows the handle must have been created with `WSA_FLAG_OVERLAPPED`.
   def initialize(*, fd : Handle, family : Family = Family::INET)
     super(fd: fd, family: family)
   end

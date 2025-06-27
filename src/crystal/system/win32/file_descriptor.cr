@@ -99,7 +99,7 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_blocking=(blocking)
-    unless blocking == self.blocking
+    unless blocking == system_blocking?
       raise IO::Error.new("Cannot reconfigure `IO::FileDescriptor#blocking` after creation")
     end
   end
