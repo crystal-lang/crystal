@@ -78,7 +78,7 @@ class Crypto::Bcrypt
   # require "crypto/bcrypt"
   #
   # password = Crypto::Bcrypt.new "secret", "CJjskaIgXR32DJYjVyNPdA=="
-  # password.digest
+  # password.to_s # => "$2a$11$CJjskaIgXR32DJYjVyNPd./ajV3Yj6GiP0IAI6rR.fMnjRgozqqqG"
   # ```
   def self.new(password : String, salt : String, cost = DEFAULT_COST)
     # We make a clone here to we don't keep a mutable reference to the original string
