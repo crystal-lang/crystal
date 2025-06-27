@@ -100,7 +100,7 @@ describe Fiber::ExecutionContext::GlobalQueue do
       queue = Fiber::ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
       ready = Thread::WaitGroup.new(n)
 
-      threads = Array(Thread).new(n) do |i|
+      threads = n.times.map do |i|
         new_thread("ONE-#{i}") do
           slept = 0
           ready.done
@@ -118,7 +118,7 @@ describe Fiber::ExecutionContext::GlobalQueue do
             end
           end
         end
-      end
+      end.to_a
       ready.wait
 
       fibers.each_with_index do |fc, i|
@@ -143,7 +143,7 @@ describe Fiber::ExecutionContext::GlobalQueue do
       queue = Fiber::ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
       ready = Thread::WaitGroup.new(n)
 
-      threads = Array(Thread).new(n) do |i|
+      threads = n.times.map do |i|
         new_thread("BULK-#{i}") do
           slept = 0
 
@@ -196,7 +196,7 @@ describe Fiber::ExecutionContext::GlobalQueue do
             Thread.sleep(1.nanosecond) # don't burn CPU
           end
         end
-      end
+      end.to_a
       ready.wait
 
       # enqueue in batches of 5

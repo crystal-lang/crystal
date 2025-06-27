@@ -1,8 +1,7 @@
 {% begin %}
-  def new_thread(name = nil, &block) : Thread
+  def new_thread(name = nil, &block)
     {% if flag?(:execution_context) %}
-      ctx = Fiber::ExecutionContext::Isolated.new(name: name || "SPEC") { block.call }
-      ctx.@thread
+      Fiber::ExecutionContext::Isolated.new(name: name || "SPEC") { block.call }
     {% else %}
       Thread.new(name) { block.call }
     {% end %}
