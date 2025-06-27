@@ -26,6 +26,8 @@ class XML::Reader
   # Returns the errors reported while parsing.
   getter errors = [] of XML::Error
 
+  @io : IO?
+
   # Creates a new reader from a string.
   #
   # See `XML::ParserOptions.default` for default options.
@@ -37,16 +39,18 @@ class XML::Reader
   # Creates a new reader from an IO.
   #
   # See `XML::ParserOptions.default` for default options.
-  def initialize(io : IO, options : XML::ParserOptions = XML::ParserOptions.default)
-    @reader = LibXML.xmlReaderForIO(
-      ->(context, buffer, length) { Box(IO).unbox(context).read(Slice.new(buffer, length)).to_i },
-      ->(context) { Box(IO).unbox(context).close; 0 },
-      Box(IO).box(io),
-      nil,
-      nil,
-      options
-    )
+  def initialize(@io : IO, options : XML::ParserOptions = XML::ParserOptions.default)
+    @reader = LibXML.xmlReaderForIO(->Reader.read_callback, ->Reader.close_callback, Box(IO).box(io), nil, nil, options)
     LibXML.xmlTextReaderSetStructuredErrorHandler(@reader, ->Error.structured_callback, Box.box(@errors))
+  end
+
+  protected def self.read_callback(data : Void*, buffer : UInt8*, length : Int32) : Int32
+    Box(IO).unbox(data).read(Slice.new(buffer, length)).to_i
+  end
+
+  protected def self.close_callback(data : Void*) : Int32
+    Box(IO).unbox(data).close
+    0
   end
 
   # :nodoc:
