@@ -48,6 +48,7 @@ class XML::Document < XML::Node
     @errors = errors_
     @cache = Hash(LibXML::Node*, WeakRef(Node)).new
     @unlinked_nodes = Set(LibXML::Node*).new
+    @document = self
     doc_.value._private = self.as(Void*)
   end
 

@@ -11,7 +11,7 @@ class XML::Node
   # NOTE: when a libxml node is moved to another document, then the @document
   # reference of its XML::Node and any instantiated descendant must be updated
   # to pointer to the new document Node.
-  @document : Document?
+  @document : Document
 
   # :nodoc:
   def self.new(node : LibXML::Node*, document : Document) : self
@@ -150,7 +150,7 @@ class XML::Node
 
   # Gets the document for this node.
   def document : Document
-    @document.as(Document)
+    @document
   end
 
   # Returns `true` if this is a Document or HTML Document node.
