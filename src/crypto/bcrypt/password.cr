@@ -76,6 +76,14 @@ class Crypto::Bcrypt::Password
     Crypto::Subtle.constant_time_compare(@digest, hashed_password_digest)
   end
 
+  # Returns the bcrypt hash, suitable for storage and use in `Crypto::Bcrypt::Password.new`.
+  #
+  # ```
+  # require "crypto/bcrypt/password"
+  #
+  # password = Crypto::Bcrypt::Password.create("super secret")
+  # password.to_s # => "$2a$11$zs8yeubYXMGGJmWyIYdFtO9aOrx44g5rarvixyBfl1klr3dZPG8Ma"
+  # ```
   def to_s(io : IO) : Nil
     io << @raw_hash
   end
