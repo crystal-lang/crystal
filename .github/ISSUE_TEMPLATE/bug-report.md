@@ -2,6 +2,7 @@
 name: "\U0001F41B Bug Report"
 about: I want to report a bug.
 labels: kind:bug
+type: Bug
 ---
 
 ## Bug Report

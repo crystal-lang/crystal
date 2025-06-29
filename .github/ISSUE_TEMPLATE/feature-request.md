@@ -2,6 +2,7 @@
 name: "\U0001F680 Feature Request"
 about: I want to propose a new language feature.
 labels: kind:feature
+type: Feature
 ---
 
 ## Feature Request
