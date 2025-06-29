@@ -238,6 +238,12 @@ struct Time
   end
 end
 
+class Time::Location
+  def to_yaml(yaml : YAML::Nodes::Builder) : Nil
+    yaml.scalar to_s
+  end
+end
+
 struct Time::Format
   def to_yaml(value : Time, yaml : YAML::Nodes::Builder) : Nil
     yaml.scalar format(value)

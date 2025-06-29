@@ -171,6 +171,12 @@ struct NamedTuple
   end
 end
 
+class Time::Location
+  def to_json(json : JSON::Builder) : Nil
+    json.string(to_s)
+  end
+end
+
 struct Time::Format
   def to_json(value : Time, json : JSON::Builder) : Nil
     json.string do |io|
