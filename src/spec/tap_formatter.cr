@@ -2,7 +2,7 @@
 class Spec::TAPFormatter < Spec::Formatter
   @counter = 0
 
-  def report(result)
+  def report(result, cli)
     case result.kind
     in .success?
       @io << "ok"

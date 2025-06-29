@@ -18,16 +18,6 @@ module Spec
   end
 
   # :nodoc:
-  def self.color(str, status : Status)
-    str.colorize(status.color)
-  end
-
-  # :nodoc:
-  def self.color(str, kind : InfoKind)
-    str.colorize(kind.color)
-  end
-
-  # :nodoc:
   class SpecError < Exception
     getter file : String
     getter line : Int32
@@ -212,6 +202,14 @@ module Spec
           finish_run unless list_tags?
         end
       end
+    end
+
+    def colorize(str, status : Status)
+      str.colorize(status.color).toggle(@color)
+    end
+
+    def colorize(str, kind : InfoKind)
+      str.colorize(kind.color).toggle(@color)
     end
 
     def execute_examples

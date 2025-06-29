@@ -1,5 +1,11 @@
 require "spec"
 
+private class SpecCLIStub
+  def colorize(str, obj)
+    str
+  end
+end
+
 private def build_report(&)
   String.build do |io|
     formatter = Spec::TAPFormatter.new(io)
@@ -17,8 +23,8 @@ end
 describe Spec::TAPFormatter do
   it "reports successful results" do
     output = build_report do |f|
-      f.report Spec::Result.new(:success, "should do something", "spec/some_spec.cr", 33, nil, nil)
-      f.report Spec::Result.new(:success, "should do something else", "spec/some_spec.cr", 50, nil, nil)
+      f.report Spec::Result.new(:success, "should do something", "spec/some_spec.cr", 33, nil, nil), SpecCLIStub.new
+      f.report Spec::Result.new(:success, "should do something else", "spec/some_spec.cr", 50, nil, nil), SpecCLIStub.new
     end
 
     output.chomp.should eq <<-TAP
@@ -30,7 +36,7 @@ describe Spec::TAPFormatter do
 
   it "reports failures" do
     output = build_report do |f|
-      f.report Spec::Result.new(:fail, "should do something", "spec/some_spec.cr", 33, nil, nil)
+      f.report Spec::Result.new(:fail, "should do something", "spec/some_spec.cr", 33, nil, nil), SpecCLIStub.new
     end
 
     output.chomp.should eq <<-TAP
@@ -41,7 +47,7 @@ describe Spec::TAPFormatter do
 
   it "reports errors" do
     output = build_report do |f|
-      f.report Spec::Result.new(:error, "should do something", "spec/some_spec.cr", 33, nil, nil)
+      f.report Spec::Result.new(:error, "should do something", "spec/some_spec.cr", 33, nil, nil), SpecCLIStub.new
     end
 
     output.chomp.should eq <<-TAP
@@ -52,7 +58,7 @@ describe Spec::TAPFormatter do
 
   it "reports pending" do
     output = build_report do |f|
-      f.report Spec::Result.new(:pending, "should do something", "spec/some_spec.cr", 33, nil, nil)
+      f.report Spec::Result.new(:pending, "should do something", "spec/some_spec.cr", 33, nil, nil), SpecCLIStub.new
     end
 
     output.chomp.should eq <<-TAP
@@ -63,11 +69,11 @@ describe Spec::TAPFormatter do
 
   it "reports mixed results" do
     output = build_report do |f|
-      f.report Spec::Result.new(:success, "should do something1", "spec/some_spec.cr", 33, 2.seconds, nil)
-      f.report Spec::Result.new(:fail, "should do something2", "spec/some_spec.cr", 50, 0.5.seconds, nil)
-      f.report Spec::Result.new(:error, "should do something3", "spec/some_spec.cr", 65, nil, nil)
-      f.report Spec::Result.new(:error, "should do something4", "spec/some_spec.cr", 80, nil, nil)
-      f.report Spec::Result.new(:pending, "should do something5", "spec/some_spec.cr", 33, nil, nil)
+      f.report Spec::Result.new(:success, "should do something1", "spec/some_spec.cr", 33, 2.seconds, nil), SpecCLIStub.new
+      f.report Spec::Result.new(:fail, "should do something2", "spec/some_spec.cr", 50, 0.5.seconds, nil), SpecCLIStub.new
+      f.report Spec::Result.new(:error, "should do something3", "spec/some_spec.cr", 65, nil, nil), SpecCLIStub.new
+      f.report Spec::Result.new(:error, "should do something4", "spec/some_spec.cr", 80, nil, nil), SpecCLIStub.new
+      f.report Spec::Result.new(:pending, "should do something5", "spec/some_spec.cr", 33, nil, nil), SpecCLIStub.new
     end
 
     output.chomp.should eq <<-TAP
