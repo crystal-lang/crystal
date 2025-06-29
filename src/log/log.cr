@@ -25,7 +25,7 @@ class Log
   end
 
   # Change this log severity level filter.
-  def level=(value : Severity)
+  def level=(value : Severity) : Log::Severity
     @level = value
     if (backend = @backend).responds_to?(:level=)
       backend.level = value
@@ -34,7 +34,7 @@ class Log
   end
 
   # :nodoc:
-  def backend=(value : Backend?)
+  def backend=(value : Backend?) : Backend?
     @backend = value
   end
 
