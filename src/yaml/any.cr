@@ -44,7 +44,19 @@ struct YAML::Any
       hash = {} of YAML::Any => YAML::Any
 
       node.each do |key, value|
-        hash[new(ctx, key)] = new(ctx, value)
+        if value.is_a?(YAML::Nodes::Alias) && key.is_a?(YAML::Nodes::Scalar) && key.value == "<<"
+          unless target_value = value.value
+            raise "YAML::Nodes::Alias misses anchor value"
+          end
+          any_alias = new(ctx, target_value)
+          if aliased_hash = any_alias.as_h?
+            hash.merge!(aliased_hash)
+          else
+            hash[new(ctx, key)] = any_alias
+          end
+        else
+          hash[new(ctx, key)] = new(ctx, value)
+        end
       end
 
       new hash
