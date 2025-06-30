@@ -48,7 +48,7 @@ describe "File" do
     end
   end
 
-  {% if LibC.has_method?(:mkfifo) %}
+  {% if LibC.has_method?(:mkfifo) && !flag?(:darwin) %}
     # interpreter doesn't support threads yet (#14287)
     pending_interpreted "can read/write fifo file without blocking" do
       path = File.tempname("chardev")
