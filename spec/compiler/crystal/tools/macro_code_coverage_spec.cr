@@ -942,4 +942,75 @@ describe "macro_code_coverage" do
       end
     %}
     CR
+
+  assert_coverage <<-'CR', {2 => 1, 3 => 1, 5 => 0}
+    def default(type : T.class) forall T
+      {% if T.nilable? %}
+        {% 0 %}
+      {% else %}
+        {% 1 %}
+      {% end %}
+    end
+
+    default Int32?
+    CR
+
+  assert_coverage <<-'CR', {2 => 2, 3 => 1, 5 => 1}
+    def default(type : T.class) forall T
+      {% if T.nilable? %}
+        {% 0 %}
+      {% else %}
+        {% 1 %}
+      {% end %}
+    end
+
+    default Int32
+    default Int32?
+    CR
+
+  assert_coverage <<-'CR', {2 => 1, 4 => 0}
+    def default(type : T.class) forall T
+      {% if T.nilable? %}
+        0
+      {% else %}
+        1
+      {% end %}
+    end
+
+    default Int32?
+    CR
+
+  assert_coverage <<-'CR', {2 => 1, 4 => 1}
+    def default(type : T.class) forall T
+      {% if T.nilable? %}
+        0
+      {% else %}
+        1
+      {% end %}
+    end
+
+    default Int32
+    CR
+
+  assert_coverage <<-'CR', {2 => 2, 4 => 1}
+    def default(type : T.class) forall T
+      {% if T.nilable? %}
+        0
+      {% else %}
+        1
+      {% end %}
+    end
+
+    default Int32
+    default Int32?
+    CR
+
+  assert_coverage <<-'CR', {2 => "2/2"}
+    def default(type : T.class) forall T
+      {% if T.nilable? %} 0 {% else %} 1 {% end %}
+    end
+
+    default Int32
+    default Int32?
+    CR
 end
