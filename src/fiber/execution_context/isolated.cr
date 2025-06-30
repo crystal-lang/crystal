@@ -11,7 +11,7 @@ module Fiber::ExecutionContext
   # Keep in mind that the fiber will still run in parallel to other fibers
   # running in other execution contexts at the same time.
   #
-  # Concurrency is disabled, so an an isolated fiber can't spawn fibers into the
+  # Concurrency is disabled, so an isolated fiber can't spawn fibers into the
   # context, but it can spawn fibers into other execution contexts. Since it can
   # be inconvenient to pass an execution context around, calls to `::spawn` will
   # spawn a fiber into the specified *spawn_context* during initialization,

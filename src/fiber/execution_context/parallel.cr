@@ -4,7 +4,7 @@ require "./parallel/scheduler"
 module Fiber::ExecutionContext
   # Parallel execution context.
   #
-  # Fibers running in this context run both concurrently and in parallel to each
+  # Fibers running in the same context run both concurrently and in parallel to each
   # others, in addition to the other fibers running in other execution contexts.
   #
   # The context internally keeps a number of fiber schedulers, each scheduler

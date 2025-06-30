@@ -63,9 +63,9 @@ require "./execution_context/*"
 # Fiber::ExecutionContext.default.class # => Fiber::ExecutionContext::Concurrent
 # ```
 #
-# NOTE: The default context being single threaded is required for backwards
-# compatibility. It might change to become a multi-threaded default context in
-# the future.
+# NOTE: The default context is a `Concurrent` context for backwards
+# compatibility reasons. It might change to a `Parallel` context in the
+# future.
 @[Experimental]
 module Fiber::ExecutionContext
   @@default : ExecutionContext?

@@ -5,7 +5,7 @@ require "./scheduler"
 module Fiber::ExecutionContext
   # Concurrent-only execution context.
   #
-  # Fibers running in this context can only run concurrently and never in
+  # Fibers running in the same context can only run concurrently and never in
   # parallel to each others. However, they still run in parallel to fibers
   # running in other execution contexts.
   #
@@ -15,7 +15,7 @@ module Fiber::ExecutionContext
   # communication with fibers in other contexts requires safe primitives, for
   # example `Channel`.
   #
-  # A blocking fiber blocks will block the entire context, and thus all the
+  # A blocking fiber blocks the entire context, and thus all the
   # other fibers in the context.
   #
   # For example: we can start a concurrent context to run consumer fibers, while
