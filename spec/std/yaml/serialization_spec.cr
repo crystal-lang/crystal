@@ -397,6 +397,10 @@ describe "YAML serialization" do
       expect_raises(YAML::ParseException) { Time.from_yaml(%(!!timestamp "2001-12-14\\v21:59:43.10 -5")) }
     end
 
+    it "deserializes Time::Location" do
+      Time::Location.from_yaml("UTC").should eq(Time::Location.load("UTC"))
+    end
+
     it "deserializes bytes" do
       Bytes.from_yaml("!!binary aGVsbG8=").should eq("hello".to_slice)
     end
@@ -663,6 +667,11 @@ describe "YAML serialization" do
     it "does for utc time with nanoseconds" do
       time = Time.utc(2010, 11, 12, 1, 2, 3, nanosecond: 456_000_000)
       assert_yaml_document_end(time.to_yaml, "--- 2010-11-12 01:02:03.456000000\n")
+    end
+
+    it "does for time location" do
+      location = Time::Location.load("UTC")
+      assert_yaml_document_end(location.to_yaml, "--- UTC\n")
     end
 
     it "does for bytes" do
