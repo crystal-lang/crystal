@@ -514,6 +514,9 @@ abstract struct Enum
       # work. For now just play it safe.
       # FIXME: We might want to establish some upper limit in case a member name
       # is exorbitantly long.
+
+      # The following is an optimized normalization. It is equivalent to
+      # `string.gsub('-', '_').camelcase.downcase` but does not allocate.
       buffer = uninitialized UInt8[{{ @type.constants.map(&.size).sort.last * 4 + 1 }}]
       max_size = {{ @type.constants.map(&.size).sort.last }}
       appender = buffer.to_slice.to_unsafe.appender
