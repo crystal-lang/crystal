@@ -58,13 +58,21 @@ describe "File" do
       # FIXME: open(2) will block when opening a fifo file until another thread
       #        or process also opened the file
       writer = nil
-      new_thread { writer = File.new(path, "w") }
+      thread = new_thread do
+        writer = File.new(path, "w")
+      end
 
       rbuf = Bytes.new(5120)
       wbuf = Bytes.new(5120)
       Random::DEFAULT.random_bytes(wbuf)
 
       File.open(path, "r") do |reader|
+        # opened fifo for read: wait for thread to open for write
+        thread.join
+
+        reader.read_timeout = 1.second
+        writer.not_nil!.write_timeout = 1.second
+
         WaitGroup.wait do |wg|
           wg.spawn do
             64.times do |i|
