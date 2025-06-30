@@ -176,6 +176,12 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     fd = LibC.open(path, flags | LibC::O_CLOEXEC, permissions)
     return Errno.value if fd == -1
 
+    {% if flag?(:darwin) %}
+      # FIXME: poll of non-blocking fifo fd on darwin appears to be broken, so
+      # we default to blocking for the time being
+      blocking = true if blocking.nil?
+    {% end %}
+
     System::FileDescriptor.set_blocking(fd, false) unless blocking
     {fd, !!blocking}
   end
