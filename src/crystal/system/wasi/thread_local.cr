@@ -7,6 +7,7 @@ class Thread
     end
 
     def initialize(&destructor : T ->)
+      previous_def(&destructor)
     end
 
     def get? : T?

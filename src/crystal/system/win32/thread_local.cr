@@ -10,6 +10,7 @@ class Thread
     end
 
     def initialize(&destructor : Proc(T, Nil))
+      previous_def(&destructor)
       @key = fls_alloc(destructor.unsafe_as(LibC::FLS_CALLBACK_FUNCTION))
     end
 
