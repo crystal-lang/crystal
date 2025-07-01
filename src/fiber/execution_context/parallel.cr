@@ -175,6 +175,66 @@ module Fiber::ExecutionContext
       end
     end
 
+    # Resizes the context to the new *maximum* parallelism.
+    #
+    # The new *maximum* can grow, in which case more schedulers are created to
+    # eventually increase the parallelism.
+    #
+    # The new *maximum* can also shrink, in which case the overflow schedulers
+    # are removed and told to shutdown immediately. The actual shutdown is
+    # cooperative, so running schedulers won't stop until their current fiber
+    # tries to switch to another fiber.
+    def resize(maximum : Int32) : Nil
+      maximum = maximum.clamp(1..) # FIXME: raise if maximum < 1
+      removed_schedulers = nil
+
+      @mutex.synchronize do
+        # can run in parallel to #steal that dereferences @schedulers (once)
+        # without locking the mutex, so we dup the schedulers, mutate the copy,
+        # and eventually assign the copy as @schedulers; this way #steal can
+        # safely access the array (never mutated).
+        new_schedulers = nil
+        new_capacity = maximum
+        old_threads = @threads
+        old_schedulers = @schedulers
+        old_capacity = capacity
+
+        if new_capacity > old_capacity
+          @schedulers = Array(Scheduler).new(new_capacity) do |index|
+            old_schedulers[index]? || Scheduler.new(self, "#{@name}-#{index}")
+          end
+          threads = Array(Thread).new(new_capacity)
+          old_threads.each { |thread| threads << thread }
+          @threads = threads
+        elsif new_capacity < old_capacity
+          # tell the overflow schedulers to shutdown
+          removed_schedulers = old_schedulers[new_capacity..]
+          removed_schedulers.each(&.shutdown(:now))
+
+          # resize
+          @schedulers = old_schedulers[0...new_capacity]
+          @threads = old_threads[0...new_capacity]
+
+          # makes sure that the above writes to @schedulers and @threads are
+          # executed before continuing (maybe not needed, but let's err on the
+          # safe side)
+          Atomic.fence(:acquire_release)
+
+          # wakeup all waiting schedulers so they can shutdown
+          @condition.broadcast
+          @event_loop.interrupt
+        end
+      end
+
+      return unless removed_schedulers
+
+      # drain the local queues of removed schedulers since they're no longer
+      # available for stealing
+      removed_schedulers.each do |scheduler|
+        scheduler.@runnables.drain
+      end
+    end
+
     # :nodoc:
     def spawn(*, name : String? = nil, same_thread : Bool, &block : ->) : Fiber
       raise ArgumentError.new("#{self.class.name}#spawn doesn't support same_thread:true") if same_thread
@@ -199,11 +259,12 @@ module Fiber::ExecutionContext
     protected def steal(& : Scheduler ->) : Nil
       return if capacity == 1
 
+      schedulers = @schedulers
       i = @rng.next_int
-      n = @schedulers.size
+      n = schedulers.size
 
       n.times do |j|
-        if scheduler = @schedulers[(i &+ j) % n]?
+        if scheduler = schedulers[(i &+ j) % n]?
           yield scheduler
         end
       end
@@ -281,11 +342,11 @@ module Fiber::ExecutionContext
       # check if we can start another thread; no need for atomics, the values
       # shall be rather stable over time and we check them again inside the
       # mutex
-      return if @threads.size == capacity
+      return if @threads.size >= capacity
 
       @mutex.synchronize do
         index = @threads.size
-        return if index == capacity # check again
+        return if index >= capacity # check again
 
         @threads << start_thread(@schedulers[index])
       end
