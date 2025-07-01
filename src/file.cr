@@ -164,7 +164,7 @@ class File < IO::FileDescriptor
   # change it anymore.
   #
   # NOTE: On macOS files are always opened in blocking mode because non-blocking
-  # FIFO files don't work —the OS exhibits issues with readiness notifications.
+  # FIFO files don't work — the OS exhibits issues with readiness notifications.
   def self.new(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, blocking = nil)
     filename = filename.to_s
     fd, blocking = Crystal::System::File.open(filename, mode, perm: perm, blocking: blocking)
