@@ -159,8 +159,12 @@ class File < IO::FileDescriptor
   # NOTE: The *blocking* arg is deprecated since Crystal 1.17. It used to be
   # true by default to denote a regular disk file (always ready in system event
   # loops) and could be set to false when the file was known to be a fifo, pipe,
-  # or character device (for example `/dev/tty`). Event loops now properly
-  # handle this and there are no reasons to change the blocking mode anymore.
+  # or character device (for example `/dev/tty`). The event loop now chooses
+  # the appropriate blocking mode automatically and there are no reasons to
+  # change it anymore.
+  #
+  # NOTE: On macOS files are always opened in blocking mode because non-blocking
+  # FIFO files don't work —the OS exhibits issues with readiness notifications.
   def self.new(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, blocking = nil)
     filename = filename.to_s
     fd, blocking = Crystal::System::File.open(filename, mode, perm: perm, blocking: blocking)
