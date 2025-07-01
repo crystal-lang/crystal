@@ -69,56 +69,35 @@ module Fiber::ExecutionContext
 
     @parked = Atomic(Int32).new(0)
     @spinning = Atomic(Int32).new(0)
-    @size : Range(Int32, Int32)
+    @capacity : Int32
 
     # :nodoc:
     protected def self.default(maximum : Int32) : self
-      new("DEFAULT", 1..maximum, hijack: true)
+      new("DEFAULT", maximum, hijack: true)
     end
 
-    # Starts a context with a *maximum* number of threads. Threads aren't started
-    # right away but will be started as needed to increase parallelism up to the
-    # configured maximum.
+    # Starts a context with a *maximum* parallelism. The context starts with an
+    # initial parallelism of zero. It will grow to one when a fiber is spawned,
+    # then the actual parallelism will keep increasing and decreasing as needed,
+    # but will never go past the configured *maximum*.
     def self.new(name : String, maximum : Int32) : self
-      new(name, 0..maximum)
+      new(name, maximum, hijack: false)
     end
 
-    # Starts a context with a *maximum* number of threads. Threads aren't started
-    # right away but will be started as needed to increase parallelism up to the
-    # configured maximum.
-    def self.new(name : String, size : Range(Nil, Int32)) : self
-      new(name, Range.new(0, size.end, size.exclusive?))
-    end
-
-    # Starts a context with a minimum and maximum number of threads. Only the
-    # minimum number of threads will be started right away. The minimum can be 0
-    # (or nil) in which case no threads will be started. More threads will be
-    # started as needed to increase parallelism up to the configured maximum.
-    def self.new(name : String, size : Range(Int32, Int32)) : self
-      new(name, size, hijack: false)
-    end
-
-    protected def initialize(@name : String, size : Range(Int32, Int32), hijack : Bool)
-      @size =
-        if size.exclusive?
-          (size.begin)..(size.end - 1)
-        else
-          size
-        end
-      raise ArgumentError.new("#{self.class.name} needs at least one thread") if capacity < 1
-      raise ArgumentError.new("#{self.class.name} invalid range") if @size.begin > @size.end
+    protected def initialize(@name : String, capacity : Int32, hijack : Bool)
+      @capacity = capacity.clamp(1..)
 
       @mutex = Thread::Mutex.new
       @condition = Thread::ConditionVariable.new
 
       @global_queue = GlobalQueue.new(@mutex)
-      @schedulers = Array(Scheduler).new(capacity)
-      @threads = Array(Thread).new(capacity)
+      @schedulers = Array(Scheduler).new(@capacity)
+      @threads = Array(Thread).new(@capacity)
 
       @rng = Random::PCG32.new
 
       start_schedulers
-      start_initial_threads(hijack)
+      @threads << hijack_current_thread(@schedulers.first) if hijack
 
       ExecutionContext.execution_contexts.push(self)
     end
@@ -130,7 +109,7 @@ module Fiber::ExecutionContext
 
     # The maximum number of threads that can be started.
     def capacity : Int32
-      @size.end
+      @capacity
     end
 
     # :nodoc:
@@ -153,19 +132,6 @@ module Fiber::ExecutionContext
     private def start_schedulers
       capacity.times do |index|
         @schedulers << Scheduler.new(self, "#{@name}-#{index}")
-      end
-    end
-
-    private def start_initial_threads(hijack)
-      offset = 0
-
-      if hijack
-        @threads << hijack_current_thread(@schedulers[0])
-        offset += 1
-      end
-
-      offset.upto(@size.begin - 1) do |index|
-        @threads << start_thread(@schedulers[index])
       end
     end
 
@@ -221,7 +187,7 @@ module Fiber::ExecutionContext
     # Picks a scheduler at random then iterates all schedulers to try to steal
     # fibers from.
     protected def steal(& : Scheduler ->) : Nil
-      return if size == 1
+      return if capacity == 1
 
       i = @rng.next_int
       n = @schedulers.size
