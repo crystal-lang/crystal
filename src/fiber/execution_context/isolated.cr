@@ -26,7 +26,7 @@ module Fiber::ExecutionContext
   # to call anything that would block the thread without blocking any other
   # fiber.
   #
-  # For example you can use start an isolated fiber to run a blocking GUI loop,
+  # For example you can start an isolated fiber to run a blocking GUI loop,
   # transparently forward `::spawn` to the default context, then keep the main
   # fiber to wait until the GUI application quit:
   #
