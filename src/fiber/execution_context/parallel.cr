@@ -69,7 +69,6 @@ module Fiber::ExecutionContext
 
     @parked = Atomic(Int32).new(0)
     @spinning = Atomic(Int32).new(0)
-    @capacity : Int32
 
     # :nodoc:
     protected def self.default(maximum : Int32) : self
@@ -102,12 +101,12 @@ module Fiber::ExecutionContext
       @condition = Thread::ConditionVariable.new
 
       @global_queue = GlobalQueue.new(@mutex)
-      @schedulers = Array(Scheduler).new(@capacity)
-      @threads = Array(Thread).new(@capacity)
+      @schedulers = Array(Scheduler).new(capacity)
+      @threads = Array(Thread).new(capacity)
 
       @rng = Random::PCG32.new
 
-      start_schedulers
+      start_schedulers(capacity)
       @threads << hijack_current_thread(@schedulers.first) if hijack
 
       ExecutionContext.execution_contexts.push(self)
@@ -120,7 +119,7 @@ module Fiber::ExecutionContext
 
     # The maximum number of threads that can be started.
     def capacity : Int32
-      @capacity
+      @schedulers.size
     end
 
     # :nodoc:
@@ -140,7 +139,7 @@ module Fiber::ExecutionContext
     # OPTIMIZE: consider storing schedulers to an array-like object that would
     # use an atomic/fence to make sure that @size can only be incremented
     # *after* the value has been written to @buffer.
-    private def start_schedulers
+    private def start_schedulers(capacity)
       capacity.times do |index|
         @schedulers << Scheduler.new(self, "#{@name}-#{index}")
       end
