@@ -182,7 +182,7 @@ module Spec
     end
 
     def report_formatters(result)
-      cli.formatters.each(&.report(result, cli))
+      cli.formatters.each(&.report(result))
     end
 
     def succeeded

@@ -2,29 +2,31 @@
 class Spec::TAPFormatter < Spec::Formatter
   @counter = 0
 
-  def report(result, cli)
+  def report(result)
+    io = @cli.stdout
+
     case result.kind
     in .success?
-      @io << "ok"
+      io << "ok"
     in .fail?, .error?
-      @io << "not ok"
+      io << "not ok"
     in .pending?
-      @io << "ok"
+      io << "ok"
     end
 
     @counter += 1
 
-    @io << ' ' << @counter << " -"
+    io << ' ' << @counter << " -"
     if result.kind.pending?
-      @io << " # SKIP"
+      io << " # SKIP"
     end
-    @io << ' ' << result.description
+    io << ' ' << result.description
 
-    @io.puts
+    io.puts
   end
 
   def finish(elapsed_time, aborted)
-    @io << "1.." << @counter
-    @io.puts
+    @cli.stdout << "1.." << @counter
+    @cli.stdout.puts
   end
 end

@@ -8,14 +8,18 @@ module Spec
     @results = [] of Spec::Result
     @summary = {} of Status => Int32
 
-    def report(result, cli)
+    def initialize(cli : CLI, @file : IO)
+      super(cli)
+    end
+
+    def report(result)
       current = @summary[result.kind]? || 0
       @summary[result.kind] = current + 1
       @results << result
     end
 
     def finish(elapsed_time, aborted)
-      io = @io
+      io = @file
       io.puts %(<?xml version="1.0"?>)
       io << %(<testsuite tests=") << @results.size
       io << %(" skipped=") << (@summary[Status::Pending]? || 0)
@@ -34,14 +38,14 @@ module Spec
       io.close
     end
 
-    def self.file(output_path : Path)
+    def self.file(cli : CLI, output_path : Path)
       if output_path.extension != ".xml"
         output_path = output_path.join("output.xml")
       end
 
       Dir.mkdir_p(output_path.dirname)
       file = File.new(output_path, "w")
-      JUnitFormatter.new(file)
+      JUnitFormatter.new(cli, file)
     end
 
     private def escape_xml_attr(value)

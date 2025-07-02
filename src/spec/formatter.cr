@@ -1,7 +1,7 @@
 module Spec
   # :nodoc:
   abstract class Formatter
-    def initialize(@io : IO)
+    def initialize(@cli : CLI)
     end
 
     def push(context)
@@ -13,7 +13,7 @@ module Spec
     def before_example(description)
     end
 
-    def report(result, cli)
+    def report(result)
     end
 
     def finish(elapsed_time, aborted)
@@ -37,22 +37,22 @@ module Spec
       end
     end
 
-    def report(result, cli)
-      @io << cli.colorize(result.kind.letter, result.kind)
+    def report(result)
+      @cli.stdout << @cli.colorize(result.kind.letter, result.kind)
       split_lines
-      @io.flush
+      @cli.stdout.flush
     end
 
     private def split_lines
       return unless @split > 0
       if (@count += 1) >= @split
-        @io.puts
+        @cli.stdout.puts
         @count = 0
       end
     end
 
     def finish(elapsed_time, aborted)
-      @io.puts
+      @cli.stdout.puts
     end
 
     def should_print_summary?
@@ -91,7 +91,7 @@ module Spec
     end
 
     def print_indent
-      self.class.print_indent(@io, @indent)
+      self.class.print_indent(@cli.stdout, @indent)
     end
 
     def self.print_indent(io, indent)
@@ -99,16 +99,16 @@ module Spec
     end
 
     def before_example(description)
-      @items.each &.print(@io)
+      @items.each &.print(@cli.stdout)
       print_indent
-      @io << description
+      @cli.stdout << description
       @last_description = description
     end
 
-    def report(result, cli)
-      @io << '\r'
+    def report(result)
+      @cli.stdout << '\r'
       print_indent
-      @io.puts cli.colorize(@last_description, result.kind)
+      @cli.stdout.puts @cli.colorize(@last_description, result.kind)
     end
 
     def should_print_summary?
@@ -119,7 +119,7 @@ module Spec
   # :nodoc:
   class CLI
     def formatters
-      @formatters ||= [Spec::DotFormatter.new(@stdout)] of Spec::Formatter
+      @formatters ||= [Spec::DotFormatter.new(self)] of Spec::Formatter
     end
 
     def override_default_formatter(formatter)
