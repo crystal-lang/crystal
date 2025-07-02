@@ -128,7 +128,7 @@ class File < IO::FileDescriptor
   # This constructor is for constructors to be able to initialize a `File` with
   # a *path* and *fd*. The *blocking* param is informational and must reflect
   # the non/blocking state of the underlying fd.
-  private def initialize(@path, fd : Int, mode = "", blocking = true, encoding = nil, invalid = nil)
+  private def initialize(@path, fd : Int, mode = "", blocking = nil, encoding = nil, invalid = nil)
     super(handle: fd)
     system_init(mode, blocking)
     set_encoding(encoding, invalid: invalid) if encoding
@@ -156,19 +156,16 @@ class File < IO::FileDescriptor
   # Line endings are preserved on all platforms. The `b` mode flag has no
   # effect; it is provided only for POSIX compatibility.
   #
-  # *blocking* is set to `true` by default because system event queues (e.g.
-  # epoll, kqueue) will always report the file descriptor of regular disk files
-  # as ready.
+  # NOTE: The *blocking* arg is deprecated since Crystal 1.17. It used to be
+  # true by default to denote a regular disk file (always ready in system event
+  # loops) and could be set to false when the file was known to be a fifo, pipe,
+  # or character device (for example `/dev/tty`). The event loop now chooses
+  # the appropriate blocking mode automatically and there are no reasons to
+  # change it anymore.
   #
-  # *blocking* must be set to `false` on POSIX targets when the file to open
-  # isn't a regular file but a character device (e.g. `/dev/tty`) or fifo. These
-  # files depend on another process or thread to also be reading or writing, and
-  # system event queues will properly report readiness.
-  #
-  # *blocking* may also be set to `nil` in which case the blocking or
-  # non-blocking flag will be determined automatically, at the expense of an
-  # additional syscall.
-  def self.new(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, blocking = true)
+  # NOTE: On macOS files are always opened in blocking mode because non-blocking
+  # FIFO files don't work — the OS exhibits issues with readiness notifications.
+  def self.new(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, blocking = nil)
     filename = filename.to_s
     fd, blocking = Crystal::System::File.open(filename, mode, perm: perm, blocking: blocking)
     new(filename, fd, mode, blocking, encoding, invalid)
@@ -505,7 +502,7 @@ class File < IO::FileDescriptor
   # permissions may be set using the *perm* parameter.
   #
   # See `self.new` for what *mode* can be.
-  def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, blocking = true) : self
+  def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, blocking = nil) : self
     new filename, mode, perm, encoding, invalid, blocking
   end
 
@@ -514,7 +511,7 @@ class File < IO::FileDescriptor
   # file as an argument, the file will be automatically closed when the block returns.
   #
   # See `self.new` for what *mode* can be.
-  def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, blocking = true, &)
+  def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, blocking = nil, &)
     file = new filename, mode, perm, encoding, invalid, blocking
     begin
       yield file
@@ -529,7 +526,7 @@ class File < IO::FileDescriptor
   # File.write("bar", "foo")
   # File.read("bar") # => "foo"
   # ```
-  def self.read(filename : Path | String, encoding = nil, invalid = nil, blocking = true) : String
+  def self.read(filename : Path | String, encoding = nil, invalid = nil, blocking = nil) : String
     open(filename, "r", blocking: blocking) do |file|
       if encoding
         file.set_encoding(encoding, invalid: invalid)
@@ -558,7 +555,7 @@ class File < IO::FileDescriptor
   # end
   # array # => ["foo", "bar"]
   # ```
-  def self.each_line(filename : Path | String, encoding = nil, invalid = nil, chomp = true, blocking = true, &)
+  def self.each_line(filename : Path | String, encoding = nil, invalid = nil, chomp = true, blocking = nil, &)
     open(filename, "r", encoding: encoding, invalid: invalid, blocking: blocking) do |file|
       file.each_line(chomp: chomp) do |line|
         yield line
@@ -572,7 +569,7 @@ class File < IO::FileDescriptor
   # File.write("foobar", "foo\nbar")
   # File.read_lines("foobar") # => ["foo", "bar"]
   # ```
-  def self.read_lines(filename : Path | String, encoding = nil, invalid = nil, chomp = true, blocking = true) : Array(String)
+  def self.read_lines(filename : Path | String, encoding = nil, invalid = nil, chomp = true, blocking = nil) : Array(String)
     lines = [] of String
     each_line(filename, encoding: encoding, invalid: invalid, chomp: chomp, blocking: blocking) do |line|
       lines << line
@@ -597,7 +594,7 @@ class File < IO::FileDescriptor
   # (the result of invoking `to_s` on *content*).
   #
   # See `self.new` for what *mode* can be.
-  def self.write(filename : Path | String, content, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, mode = "w", blocking = true)
+  def self.write(filename : Path | String, content, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, mode = "w", blocking = nil)
     open(filename, mode, perm, encoding: encoding, invalid: invalid, blocking: blocking) do |file|
       case content
       when Bytes

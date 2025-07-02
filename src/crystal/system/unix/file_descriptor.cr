@@ -24,14 +24,18 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_blocking=(value)
-    current_flags = fcntl(LibC::F_GETFL)
+    FileDescriptor.set_blocking(fd, value)
+  end
+
+  protected def self.set_blocking(fd, value)
+    current_flags = fcntl(fd, LibC::F_GETFL)
     new_flags = current_flags
     if value
       new_flags &= ~LibC::O_NONBLOCK
     else
       new_flags |= LibC::O_NONBLOCK
     end
-    fcntl(LibC::F_SETFL, new_flags) unless new_flags == current_flags
+    fcntl(fd, LibC::F_SETFL, new_flags) unless new_flags == current_flags
   end
 
   protected def system_blocking_init(blocking : Bool?)
