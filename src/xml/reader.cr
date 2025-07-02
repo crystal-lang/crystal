@@ -192,9 +192,9 @@ class XML::Reader
     XML::Node.new(xml, document) if xml
   end
 
-  def document
+  def document : Document
     @document ||= if doc = LibXML.xmlTextReaderCurrentDoc(@reader)
-                    Node.new(doc)
+                    Document.new(doc)
                   else
                     raise XML::Error.new("Failed to get current doc for XML::Reader", 0)
                   end
