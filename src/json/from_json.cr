@@ -478,6 +478,10 @@ def Time.new(pull : JSON::PullParser)
   Time::Format::ISO_8601_DATE_TIME.parse(pull.read_string)
 end
 
+def Time::Location.new(pull : JSON::PullParser)
+  load(pull.read_string)
+end
+
 struct Time::Format
   def from_json(pull : JSON::PullParser) : Time
     string = pull.read_string
