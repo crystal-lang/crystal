@@ -69,44 +69,12 @@ module Crystal
     end
 
     def compact_types(objects, &) : Array(Type)
-      # Use Set for O(1) uniqueness checking instead of O(n) Array#includes?
-      type_set = Set(Type).new
-      objects.each { |obj| add_type_to_set type_set, yield(obj) }
-      all_types = type_set.to_a
+      all_types = Array(Type).new(objects.size)
+      objects.each { |obj| add_type all_types, yield(obj) }
       all_types.reject! &.no_return? if all_types.size > 1
       all_types
     end
 
-    def add_type_to_set(type_set, type : UnionType)
-      type.union_types.each do |subtype|
-        add_type_to_set type_set, subtype
-      end
-    end
-
-    def add_type_to_set(type_set, type : AliasType)
-      aliased = type.remove_alias
-      if aliased == type
-        type_set.add(type)
-      else
-        add_type_to_set type_set, aliased
-      end
-    end
-
-    # When Void participates in a union, it becomes Nil
-    # (users shouldn't deal with real Void values)
-    def add_type_to_set(type_set, type : VoidType)
-      add_type_to_set(type_set, nil_type)
-    end
-
-    def add_type_to_set(type_set, type : Type)
-      type_set.add(type)
-    end
-
-    def add_type_to_set(type_set, type : Nil)
-      # Nothing to do
-    end
-
-    # Keep original add_type methods for compatibility with other callers
     def add_type(types, type : UnionType)
       type.union_types.each do |subtype|
         add_type types, subtype
