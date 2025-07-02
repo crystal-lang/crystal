@@ -1,16 +1,9 @@
 require "spec"
 
-private class SpecCLIStub
-  def colorize(str, obj)
-    str
-  end
-end
-
 private def build_report(&)
   String.build do |io|
     cli = Spec::CLI.new(io)
     formatter = Spec::TAPFormatter.new(cli)
-    cli.add_formatter(formatter)
     yield formatter
     formatter.finish(Time::Span.zero, false)
   end

@@ -8,12 +8,6 @@ end
 private class MyException < Exception
 end
 
-private class SpecCLIStub
-  def colorize(str, obj)
-    str
-  end
-end
-
 describe "JUnit Formatter" do
   it "reports successful results" do
     output = build_report_with_no_timestamp do |f|
@@ -179,7 +173,6 @@ private def build_report(timestamp = nil, &)
   cli = Spec::CLI.new
   formatter = Spec::JUnitFormatter.new(cli, output)
   formatter.started_at = timestamp if timestamp
-  cli.add_formatter(formatter)
   yield formatter
   formatter.finish(Time::Span.zero, false)
   output.to_s.chomp
