@@ -72,9 +72,9 @@ module Crystal::System::Time
   # Many systems use /usr/share/zoneinfo, Solaris 2 has
   # /usr/share/lib/zoneinfo, IRIX 6 has /usr/lib/locale/TZ.
   ZONE_SOURCES = {
-    "/usr/share/zoneinfo/",
-    "/usr/share/lib/zoneinfo/",
-    "/usr/lib/locale/TZ/",
+    "/usr/share/zoneinfo",
+    "/usr/share/lib/zoneinfo",
+    "/usr/lib/locale/TZ",
   }
 
   # Android Bionic C-specific locations. These are files rather than directories
@@ -133,9 +133,34 @@ module Crystal::System::Time
     def self.load_localtime : ::Time::Location?
       if ::File.file?(LOCALTIME) && ::File::Info.readable?(LOCALTIME)
         ::File.open(LOCALTIME) do |file|
-          ::Time::Location.read_zoneinfo("Local", file)
-        rescue ::Time::Location::InvalidTZDataError
-          nil
+          name = "Local"
+
+          # Try to defer the name of the zoneinfo file from the link target.
+          # If the links target (e.g. `/usr/share/zoneinfo/Europe/Berlin`)
+          # has a known location of the zoneinfo database (e.g.
+          # `/usr/share/zoneinfo`) as prefix, the remaining path is the name of
+          # the location (e.g. `Europe/Berlin`).
+          if realpath = (File.readlink("/etc/localtime") rescue nil)
+            realpath = ::Path[realpath]
+            realpath.each_parent do |parent|
+              if ZONE_SOURCES.includes?(parent.to_s)
+                name = realpath.relative_to(parent).to_s
+                break
+              end
+            end
+          end
+
+          # Normalize to `Location::UTC`, same as in `Location.load` and
+          # `Location.load_local`, and required by `Location#utc?`.
+          if name.in?("UTC", "Etc/UTC")
+            return ::Time::Location::UTC
+          end
+
+          begin
+            ::Time::Location.read_zoneinfo(name, file)
+          rescue ::Time::Location::InvalidTZDataError
+            nil
+          end
         end
       end
     end
