@@ -174,7 +174,7 @@ module Crystal
       if match = has_conditional_node?(nodes)
         conditional_node, branches = match
 
-        # Keep track of what specific conditional branches were hit and missed as to enure a proper partial count.
+        # Keep track of what specific conditional branches were hit and missed as to ensure a proper partial count.
         # In certain cases there may be more than 1 missed node, in which case we'll use the last non-missed node.
         # Otherwise if there are none that are missed or only one, it's safe to just use the last node.
         node, _, missed = case missed_count = nodes.count { |(_, _, missed)| missed }
