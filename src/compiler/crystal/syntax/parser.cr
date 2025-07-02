@@ -3257,12 +3257,13 @@ module Crystal
           end
         when .macro_var?
           macro_var_name = @token.value.to_s
+          location = @token.location
           if current_char == '{'
             macro_var_exps = parse_macro_var_exps
           else
             macro_var_exps = nil
           end
-          pieces << MacroVar.new(macro_var_name, macro_var_exps)
+          pieces << MacroVar.new(macro_var_name, macro_var_exps).at(location).at_end(token_end_location)
         when .macro_end?
           break
         when .eof?

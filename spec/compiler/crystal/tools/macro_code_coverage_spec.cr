@@ -1013,4 +1013,17 @@ describe "macro_code_coverage" do
     default Int32
     default Int32?
     CR
+
+  assert_coverage <<-'CR', {2 => 2, 3 => 1, 5 => 1}
+    macro test(val)
+      {% if val == 1 %}
+        %a = {{val.id}}
+      {% else %}
+        %a = {{val.id}}
+      {% end %}
+    end
+
+    test 1
+    test 2
+    CR
 end

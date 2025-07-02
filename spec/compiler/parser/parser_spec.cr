@@ -52,6 +52,13 @@ private def assert_end_location(source, line_number = 1, column_number = source.
   end
 end
 
+private def assert_location(node : ASTNode, start_line_number : Int32, end_line_number : Int32) : Nil
+  location = node.location.should_not be_nil
+  location.line_number.should eq start_line_number
+  location = node.end_location.should_not be_nil
+  location.line_number.should eq end_line_number
+end
+
 module Crystal
   describe "Parser" do
     it_parses "nil", NilLiteral.new
@@ -3217,6 +3224,28 @@ module Crystal
       location.line_number.should eq 7
       location = value.end_location.should_not be_nil
       location.line_number.should eq 7
+    end
+
+    it "sets correct locations of MacroVar in MacroIf / else" do
+      parser = Parser.new(<<-CR)
+        {% if true %}
+          %a = {{ 1 + 1 }}
+        {% else %}
+          %b = {{ 2 + 2 }}
+        {% end %}
+        CR
+
+      node = parser.parse.should be_a MacroIf
+
+      assert_location node.cond, 1, 1
+
+      then_node = node.then.should be_a Expressions
+      then_node = then_node.expressions[1].should be_a MacroVar
+      assert_location then_node, 2, 2
+
+      else_node = node.else.should be_a Expressions
+      else_node = else_node.expressions[1].should be_a MacroVar
+      assert_location else_node, 4, 4
     end
 
     it "sets correct location of trailing ensure" do
