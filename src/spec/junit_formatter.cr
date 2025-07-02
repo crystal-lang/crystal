@@ -8,10 +8,6 @@ module Spec
     @results = [] of Spec::Result
     @summary = {} of Status => Int32
 
-    def initialize(cli : CLI, @file : IO)
-      super(cli)
-    end
-
     def report(result)
       current = @summary[result.kind]? || 0
       @summary[result.kind] = current + 1
@@ -19,7 +15,7 @@ module Spec
     end
 
     def finish(elapsed_time, aborted)
-      io = @file
+      io = @io
       io.puts %(<?xml version="1.0"?>)
       io << %(<testsuite tests=") << @results.size
       io << %(" skipped=") << (@summary[Status::Pending]? || 0)
