@@ -85,7 +85,7 @@ module Fiber::ExecutionContext
     end
 
     protected def initialize(@name : String, @capacity : Int32, hijack : Bool)
-      raise ArgumentError.new("Parallelism must be at least one.") if @capacity < 1
+      raise ArgumentError.new("Parallelism can't be less than one.") if @capacity < 1
 
       @mutex = Thread::Mutex.new
       @condition = Thread::ConditionVariable.new
