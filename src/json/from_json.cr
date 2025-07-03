@@ -482,6 +482,10 @@ def Time::Location.new(pull : JSON::PullParser)
   load(pull.read_string)
 end
 
+def Time::Location.from_json_object_key?(key : String) : Time::Location
+  load(key)
+end
+
 struct Time::Format
   def from_json(pull : JSON::PullParser) : Time
     string = pull.read_string
