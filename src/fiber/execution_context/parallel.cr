@@ -84,8 +84,8 @@ module Fiber::ExecutionContext
       new(name, maximum, hijack: false)
     end
 
-    protected def initialize(@name : String, capacity : Int32, hijack : Bool)
-      @capacity = capacity.clamp(1..)
+    protected def initialize(@name : String, @capacity : Int32, hijack : Bool)
+      raise ArgumentError.new("Parallelism can't be less than one.") if @capacity < 1
 
       @mutex = Thread::Mutex.new
       @condition = Thread::ConditionVariable.new
