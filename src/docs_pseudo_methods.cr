@@ -76,6 +76,7 @@ end
 # alignof(Int32)        # => 4
 # alignof(Float64)      # usually 4 or 8
 # alignof(typeof(true)) # => 1
+# ```
 #
 # For `Reference` types, the alignment is the same as the alignment of a pointer:
 #
