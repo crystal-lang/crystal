@@ -48,6 +48,14 @@ describe "UInt" do
       x = &-18446744073709551615_u64
       x.should eq(1_u64)
       x.should be_a(UInt64)
+
+      x = &-1_u128
+      x.should eq(UInt128::MAX) # TODO: Change to literal once supported
+      x.should be_a(UInt128)
+
+      x = &-(UInt128::MAX) # TODO: Change to literal once supported
+      x.should eq(1_u128)
+      x.should be_a(UInt128)
     end
   end
 end

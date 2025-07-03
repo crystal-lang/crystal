@@ -1,7 +1,7 @@
 require "c/winnt"
 
 lib LibC
-  INVALID_HANDLE_VALUE = HANDLE.new(-1)
+  INVALID_HANDLE_VALUE = HANDLE.new(-1.to_u64!)
 
   fun CloseHandle(hObject : HANDLE) : BOOL
 

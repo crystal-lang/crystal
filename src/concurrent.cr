@@ -1,17 +1,23 @@
 require "fiber"
 require "channel"
-require "crystal/scheduler"
+require "crystal/tracing"
+
+{% if flag?(:execution_context) %}
+  require "fiber/execution_context"
+{% else %}
+  require "crystal/scheduler"
+{% end %}
 
 # Blocks the current fiber for the specified number of seconds.
 #
 # While this fiber is waiting this time, other ready-to-execute
 # fibers might start their execution.
+@[Deprecated("Use `::sleep(Time::Span)` instead")]
 def sleep(seconds : Number) : Nil
   if seconds < 0
     raise ArgumentError.new "Sleep seconds must be positive"
   end
-
-  Crystal::Scheduler.sleep(seconds.seconds)
+  sleep(seconds.seconds)
 end
 
 # Blocks the current Fiber for the specified time span.
@@ -19,55 +25,71 @@ end
 # While this fiber is waiting this time, other ready-to-execute
 # fibers might start their execution.
 def sleep(time : Time::Span) : Nil
-  Crystal::Scheduler.sleep(time)
+  Crystal.trace :sched, "sleep", for: time
+  Crystal::EventLoop.current.sleep(time)
 end
 
 # Blocks the current fiber forever.
 #
 # Meanwhile, other ready-to-execute fibers might start their execution.
 def sleep : Nil
-  Crystal::Scheduler.reschedule
+  Fiber.suspend
 end
 
+{% begin %}
 # Spawns a new fiber.
 #
-# The newly created fiber doesn't run as soon as spawned.
+# When using execution contexts, the fiber spawns into the current execution
+# context (`Fiber::ExecutionContext.current`).
+#
+# NOTE: The newly created fiber doesn't run as soon as spawned.
 #
 # Example:
 # ```
 # # Write "1" every 1 second and "2" every 2 seconds for 6 seconds.
 #
-# ch = Channel(Nil).new
+# require "wait_group"
+#
+# wg = WaitGroup.new 2
 #
 # spawn do
 #   6.times do
-#     sleep 1
+#     sleep 1.second
 #     puts 1
 #   end
-#   ch.send(nil)
+# ensure
+#   wg.done
 # end
 #
 # spawn do
 #   3.times do
-#     sleep 2
+#     sleep 2.seconds
 #     puts 2
 #   end
-#   ch.send(nil)
+# ensure
+#   wg.done
 # end
 #
-# 2.times { ch.receive }
+# wg.wait
 # ```
 def spawn(*, name : String? = nil, same_thread = false, &block)
-  fiber = Fiber.new(name, &block)
-  if same_thread
-    fiber.@current_thread.set(Thread.current)
-  end
-  Crystal::Scheduler.enqueue fiber
-  fiber
+  {% if flag?(:execution_context) %}
+    Fiber::ExecutionContext::Scheduler.current.spawn(name: name, same_thread: same_thread, &block)
+  {% else %}
+    fiber = Fiber.new(name, &block)
+    Crystal.trace :sched, "spawn", fiber: fiber
+    {% if flag?(:preview_mt) %} fiber.set_current_thread if same_thread {% end %}
+    fiber.enqueue
+    fiber
+  {% end %}
 end
+{% end %}
 
 # Spawns a fiber by first creating a `Proc`, passing the *call*'s
 # expressions to it, and letting the `Proc` finally invoke the *call*.
+#
+# When using execution contexts, the fiber spawns into the current execution
+# context (`Fiber::ExecutionContext.current`).
 #
 # Compare this:
 #

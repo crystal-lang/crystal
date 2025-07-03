@@ -22,7 +22,7 @@ end
 
 # Creates a temporary directory, cd to it and run the block inside it.
 # The directory and its content is deleted when the block return.
-private def within_temporary_directory
+private def within_temporary_directory(&)
   with_tempfile "init_spec_tmp" do |tmp_path|
     Dir.mkdir_p(tmp_path)
     Dir.cd(tmp_path) do
@@ -31,7 +31,7 @@ private def within_temporary_directory
   end
 end
 
-private def with_file(name)
+private def with_file(name, &)
   yield File.read(name)
 end
 
@@ -41,15 +41,23 @@ private def run_init_project(skeleton_type, name, author, email, github_name, di
   ).run
 end
 
+private def git_available?
+  Process.run(Crystal::Git.executable).success?
+rescue IO::Error
+  false
+end
+
 module Crystal
   describe Init::InitProject do
     it "correctly uses git config" do
+      pending! "Git is not available" unless git_available?
+
       within_temporary_directory do
-        File.write(".gitconfig", <<-CONTENT)
+        File.write(".gitconfig", <<-INI)
         [user]
           email = dorian@dorianmarie.fr
           name = Dorian Marié
-        CONTENT
+        INI
 
         with_env("GIT_CONFIG": "#{FileUtils.pwd}/.gitconfig") do
           exec_init("example", "example", "app")
@@ -118,7 +126,7 @@ module Crystal
           readme.should contain("# example")
 
           readme.should contain(%{1. Add the dependency to your `shard.yml`:})
-          readme.should contain(<<-EOF
+          readme.should contain(<<-MARKDOWN
 
            ```yaml
            dependencies:
@@ -126,7 +134,7 @@ module Crystal
                github: jsmith/example
            ```
 
-        EOF
+        MARKDOWN
           )
           readme.should contain(%{2. Run `shards install`})
           readme.should contain(%{TODO: Write a description here})
@@ -142,7 +150,7 @@ module Crystal
           readme.should contain(%{TODO: Write a description here})
 
           readme.should_not contain(%{1. Add the dependency to your `shard.yml`:})
-          readme.should_not contain(<<-EOF
+          readme.should_not contain(<<-MARKDOWN
 
            ```yaml
            dependencies:
@@ -150,7 +158,7 @@ module Crystal
                github: jsmith/example
            ```
 
-        EOF
+        MARKDOWN
           )
           readme.should_not contain(%{2. Run `shards install`})
           readme.should contain(%{TODO: Write installation instructions here})
@@ -165,7 +173,7 @@ module Crystal
           parsed["version"].should eq("0.1.0")
           parsed["authors"].should eq(["John Smith <john@smith.com>"])
           parsed["license"].should eq("MIT")
-          parsed["crystal"].should eq(Crystal::Config.version)
+          parsed["crystal"].should eq(">= #{Crystal::Config.version}")
           parsed["targets"]?.should be_nil
         end
 
@@ -175,7 +183,7 @@ module Crystal
         end
 
         with_file "example/src/example.cr" do |example|
-          example.should eq(<<-EOF
+          example.should eq(<<-CRYSTAL
         # TODO: Write documentation for `Example`
         module Example
           VERSION = "0.1.0"
@@ -183,21 +191,21 @@ module Crystal
           # TODO: Put your code here
         end
 
-        EOF
+        CRYSTAL
           )
         end
 
         with_file "example/spec/spec_helper.cr" do |example|
-          example.should eq(<<-EOF
+          example.should eq(<<-CRYSTAL
         require "spec"
         require "../src/example"
 
-        EOF
+        CRYSTAL
           )
         end
 
         with_file "example/spec/example_spec.cr" do |example|
-          example.should eq(<<-EOF
+          example.should eq(<<-CRYSTAL
         require "./spec_helper"
 
         describe Example do
@@ -208,13 +216,15 @@ module Crystal
           end
         end
 
-        EOF
+        CRYSTAL
           )
         end
 
-        with_file "example/.git/config" { }
+        if git_available?
+          with_file "example/.git/config" { }
 
-        with_file "other-example-directory/.git/config" { }
+          with_file "other-example-directory/.git/config" { }
+        end
       end
     end
   end
@@ -309,7 +319,7 @@ module Crystal
       config.expanded_dir.should eq ::Path[Dir.current, "foo", "bar"]
     end
 
-    pending_win32 "DIR (relative to home)" do
+    it "DIR (relative to home)" do
       path = ::Path["~", "foo"].to_s
       config = Crystal::Init.parse_args(["lib", path])
       config.name.should eq "foo"
@@ -398,7 +408,7 @@ module Crystal
     it "namespace is divided by hyphen" do
       Crystal::Init::View.module_name("my-proj-name").should eq "My::Proj::Name"
     end
-    it "hyphen follwed by non-ascii letter is replaced by its character" do
+    it "hyphen followed by non-ascii letter is replaced by its character" do
       Crystal::Init::View.module_name("my-proj-1").should eq "My::Proj1"
     end
     it "underscore is ignored" do

@@ -127,7 +127,7 @@ describe "Semantic: exception" do
       rescue
       end
       a
-      ") { nilable int32 }
+      ", inject_primitives: true) { nilable int32 }
   end
 
   it "types var as nilable if previously nilable (2)" do
@@ -141,15 +141,23 @@ describe "Semantic: exception" do
         a = 2
       end
       a
-      ") { nilable int32 }
+      ", inject_primitives: true) { nilable int32 }
   end
 
   it "errors if caught exception is not a subclass of Exception" do
-    assert_error "begin; rescue ex : Int32; end", "Int32 is not a subclass of Exception"
+    assert_error "begin; rescue ex : Int32; end", "Int32 cannot be used for `rescue`. Only subclasses of `Exception` and modules, or unions thereof, are allowed."
+  end
+
+  it "errors if caught exception is a union but not all types are valid" do
+    assert_error "begin; rescue ex : Union(Exception, String); end", "(Exception | String) cannot be used for `rescue`. Only subclasses of `Exception` and modules, or unions thereof, are allowed."
+  end
+
+  it "errors if caught exception is a nested union but not all types are valid" do
+    assert_error "begin; rescue ex : Union(Exception, Union(Exception, String)); end", "(Exception | String) cannot be used for `rescue`. Only subclasses of `Exception` and modules, or unions thereof, are allowed."
   end
 
   it "errors if caught exception is not a subclass of Exception without var" do
-    assert_error "begin; rescue Int32; end", "Int32 is not a subclass of Exception"
+    assert_error "begin; rescue Int32; end", "Int32 cannot be used for `rescue`. Only subclasses of `Exception` and modules, or unions thereof, are allowed."
   end
 
   assert_syntax_error "begin; rescue ex; rescue ex : Foo; end; ex",
@@ -263,6 +271,29 @@ describe "Semantic: exception" do
     mod = result.program
     a_def = mod.lookup_first_def("foo", false)
     a_def.not_nil!.raises?.should be_true
+  end
+
+  it "marks method that calls another method that raises as raises, recursively" do
+    result = assert_type(%(
+      @[Raises]
+      def foo
+        1
+      end
+
+      def bar
+        foo
+      end
+
+      def baz
+        bar
+      end
+
+      foo
+      bar
+      baz
+      )) { int32 }
+    call = result.node.as(Expressions).expressions.last.as(Call)
+    call.target_defs.not_nil!.first.raises?.should be_true
   end
 
   it "marks proc literal as raises" do
@@ -628,7 +659,7 @@ describe "Semantic: exception" do
           end
         end
       end
-    )) { nil_type }
+    ), inject_primitives: true) { nil_type }
   end
 
   it "can use next inside block inside ensure (#4470)" do
@@ -672,7 +703,7 @@ describe "Semantic: exception" do
   end
 
   it "gets a non-nilable type if all rescue are unreachable (#8751)" do
-    semantic(%(
+    assert_no_errors <<-CRYSTAL, inject_primitives: true
       while true
         begin
           foo = 1
@@ -684,6 +715,86 @@ describe "Semantic: exception" do
 
         foo &+ 2
       end
-      ))
+      CRYSTAL
+  end
+
+  it "correctly types variable assigned inside nested exception handler (#9769)" do
+    assert_type(%(
+      int = 1
+      begin
+        begin
+          int = "a"
+        rescue
+        end
+      rescue
+      end
+      int
+    )) { union_of(int32, string) }
+  end
+
+  it "types a var after begin rescue as having all possible types and nil in begin if read (2)" do
+    assert_type(%(
+      begin
+        a = 2
+        a = 'a'
+      rescue
+      end
+      a
+      )) { union_of [int32, char, nil_type] of Type }
+  end
+
+  it "types a var after begin rescue as having all possible types in begin and rescue" do
+    assert_type(%(
+      a = 1.5
+      begin
+        a = 2
+        a = 'a'
+        a = "hello"
+      rescue ex
+        a = false
+      end
+      a
+      )) { union_of [float64, int32, char, string, bool] of Type }
+  end
+
+  it "types a var after begin rescue as having all possible types in begin and rescue (2)" do
+    assert_type(%(
+      b = 2
+      begin
+        a = 2
+        a = 'a'
+        a = "hello"
+      rescue ex
+        b = a
+      end
+      b
+      )) { union_of [int32, char, string, nil_type] of Type }
+  end
+
+  it "types a var after begin rescue with no-return in rescue" do
+    assert_type(%(
+      lib LibC
+        fun exit : NoReturn
+      end
+
+      begin
+        a = 2
+        a = 'a'
+        a = "hello"
+      rescue ex
+        LibC.exit
+      end
+      a
+      )) { string }
+  end
+
+  it "types a var after rescue as being nilable" do
+    assert_type(%(
+      begin
+      rescue
+        a = 1
+      end
+      a
+      )) { nilable int32 }
   end
 end

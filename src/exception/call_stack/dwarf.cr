@@ -10,13 +10,18 @@ struct Exception::CallStack
   @@dwarf_line_numbers : Crystal::DWARF::LineNumbers?
   @@dwarf_function_names : Array(Tuple(LibC::SizeT, LibC::SizeT, String))?
 
+  {% if flag?(:win32) %}
+    @@coff_symbols : Hash(Int32, Array(Crystal::PE::COFFSymbol))?
+  {% end %}
+
   # :nodoc:
-  def self.load_dwarf
+  def self.load_debug_info : Nil
+    return if ENV["CRYSTAL_LOAD_DEBUG_INFO"]? == "0"
+
     unless @@dwarf_loaded
       @@dwarf_loaded = true
       begin
-        return if ENV["CRYSTAL_LOAD_DWARF"]? == "0"
-        load_dwarf_impl
+        load_debug_info_impl
       rescue ex
         @@dwarf_line_numbers = nil
         @@dwarf_function_names = nil
@@ -26,18 +31,17 @@ struct Exception::CallStack
   end
 
   protected def self.decode_line_number(pc)
-    load_dwarf
+    load_debug_info
     if ln = @@dwarf_line_numbers
       if row = ln.find(pc)
-        path = "#{row.directory}/#{row.file}"
-        return {path, row.line, row.column}
+        return {row.path, row.line, row.column}
       end
     end
     {"??", 0, 0}
   end
 
   protected def self.decode_function_name(pc)
-    load_dwarf
+    load_debug_info
     if fn = @@dwarf_function_names
       fn.each do |(low_pc, high_pc, function_name)|
         return function_name if low_pc <= pc <= high_pc
@@ -45,7 +49,7 @@ struct Exception::CallStack
     end
   end
 
-  protected def self.parse_function_names_from_dwarf(info, strings)
+  protected def self.parse_function_names_from_dwarf(info, strings, line_strings, &)
     info.each do |code, abbrev, attributes|
       next unless abbrev && abbrev.tag.subprogram?
       name = low_pc = high_pc = nil
@@ -54,6 +58,7 @@ struct Exception::CallStack
         case at
         when Crystal::DWARF::AT::DW_AT_name
           value = strings.try(&.decode(value.as(UInt32 | UInt64))) if form.strp?
+          value = line_strings.try(&.decode(value.as(UInt32 | UInt64))) if form.line_strp?
           name = value.as(String)
         when Crystal::DWARF::AT::DW_AT_low_pc
           low_pc = value.as(LibC::SizeT)

@@ -87,7 +87,7 @@ describe "Semantic: alias" do
       alias Type = Nil | Pointer(Type)
       p = Pointer(Type).malloc(1_u64)
       1
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "errors if alias already defined" do
@@ -177,6 +177,22 @@ describe "Semantic: alias" do
 
         Bar.bar
         )) { int32 }
+    end
+
+    it "reopens #{type} through alias within itself" do
+      assert_type <<-CRYSTAL { int32 }
+        #{type} Foo
+          alias Bar = Foo
+
+          #{type} Bar
+            def self.bar
+              1
+            end
+          end
+        end
+
+        Foo.bar
+        CRYSTAL
     end
   end
 
@@ -332,7 +348,7 @@ describe "Semantic: alias" do
 
       f = ->(x : Rec) {}
       f.call(a.itself)
-      )) { nil_type }
+      ), inject_primitives: true) { nil_type }
   end
 
   it "overloads union type through alias" do
@@ -348,6 +364,6 @@ describe "Semantic: alias" do
       end
 
       foo(1)
-     ), inject_primitives: false) { int32 }
+     )) { int32 }
   end
 end

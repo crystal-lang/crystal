@@ -85,6 +85,13 @@ describe "Pointer" do
       p1.copy_to(p2 || p3, 4)
       4.times { |i| p2[i].should eq(p1[i]) }
     end
+
+    it "doesn't raise OverflowError on unsigned size and different target type" do
+      p1 = Pointer.malloc(4, 1)
+      p2 = Pointer.malloc(4, 0 || nil)
+      p1.copy_to(p2, 4_u32)
+      4.times { |i| p2[i].should eq(p1[i]) }
+    end
   end
 
   describe "move_from" do
@@ -211,7 +218,7 @@ describe "Pointer" do
     (a[0] + a[1] + a[2]).should eq(6)
 
     3.times do |i|
-      a.to_slice(3).includes?(i + 1).should be_true
+      a.to_slice(3).should contain(i + 1)
     end
   end
 

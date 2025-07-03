@@ -5,7 +5,7 @@ private SPEC_TIMEOUT = 15.seconds
 Spec.around_each do |example|
   done = Channel(Exception?).new
 
-  spawn(same_thread: true) do
+  spawn(same_thread: !{{flag?(:execution_context)}}) do
     begin
       example.run
     rescue e
@@ -15,12 +15,17 @@ Spec.around_each do |example|
     end
   end
 
+  timeout = SPEC_TIMEOUT
+  if example.example.all_tags.includes?("slow")
+    timeout *= 4
+  end
+
   select
   when res = done.receive
     raise res if res
-  when timeout(SPEC_TIMEOUT)
+  when timeout(timeout)
     _it = example.example
-    ex = Spec::AssertionFailed.new("spec timeout", _it.file, _it.line)
-    _it.parent.report(:fail, _it.description, _it.file, _it.line, SPEC_TIMEOUT, ex)
+    ex = Spec::AssertionFailed.new("spec timed out after #{timeout}", _it.file, _it.line)
+    _it.parent.report(:fail, _it.description, _it.file, _it.line, timeout, ex)
   end
 end

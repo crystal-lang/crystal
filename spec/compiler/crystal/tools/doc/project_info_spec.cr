@@ -5,6 +5,8 @@ private alias ProjectInfo = Crystal::Doc::ProjectInfo
 
 private def run_git(command)
   Process.run(%(git -c user.email="" -c user.name="spec" #{command}), shell: true)
+rescue IO::Error
+  pending! "Git is not available"
 end
 
 private def assert_with_defaults(initial, expected, *, file = __FILE__, line = __LINE__)
@@ -33,7 +35,7 @@ describe Crystal::Doc::ProjectInfo do
         File.write("shard.yml", "name: foo\nversion: 1.0")
       end
 
-      pending_win32 "git missing" do
+      it "git missing" do
         Crystal::Git.executable = "git-missing-executable"
 
         assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", "1.0", refname: nil))
@@ -52,7 +54,7 @@ describe Crystal::Doc::ProjectInfo do
       it "git but no commit" do
         run_git "init"
 
-        assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", nil, refname: nil))
+        assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", "1.0", refname: nil))
         assert_with_defaults(ProjectInfo.new("bar", "2.0"), ProjectInfo.new("bar", "2.0", refname: nil))
         assert_with_defaults(ProjectInfo.new(nil, "2.0"), ProjectInfo.new("foo", "2.0", refname: nil))
       end
@@ -92,6 +94,7 @@ describe Crystal::Doc::ProjectInfo do
 
       it "git non-tagged commit" do
         run_git "init"
+        run_git "checkout -B master"
         run_git "add shard.yml"
         run_git "commit -m \"Initial commit\" --no-gpg-sign"
         commit_sha = `git rev-parse HEAD`.chomp
@@ -104,6 +107,7 @@ describe Crystal::Doc::ProjectInfo do
 
       it "git non-tagged commit dirty" do
         run_git "init"
+        run_git "checkout -B master"
         run_git "add shard.yml"
         run_git "commit -m \"Initial commit\" --no-gpg-sign"
         File.write("shard.yml", "\n", mode: "a")
@@ -118,7 +122,7 @@ describe Crystal::Doc::ProjectInfo do
         run_git "remote add origin git@github.com:foo/bar"
 
         url_pattern = "https://github.com/foo/bar/blob/%{refname}/%{path}#L%{line}"
-        assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", nil, refname: nil, source_url_pattern: url_pattern))
+        assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", "1.0", refname: nil, source_url_pattern: url_pattern))
         assert_with_defaults(ProjectInfo.new("bar", "2.0"), ProjectInfo.new("bar", "2.0", refname: nil, source_url_pattern: url_pattern))
         assert_with_defaults(ProjectInfo.new(nil, "2.0"), ProjectInfo.new("foo", "2.0", refname: nil, source_url_pattern: url_pattern))
         assert_with_defaults(ProjectInfo.new(nil, "2.0", source_url_pattern: "foo_bar"), ProjectInfo.new("foo", "2.0", refname: nil, source_url_pattern: "foo_bar"))
@@ -145,6 +149,7 @@ describe Crystal::Doc::ProjectInfo do
 
     # Empty git directory
     run_git "init"
+    run_git "checkout -B master"
     ProjectInfo.find_git_version.should be_nil
 
     # Non-tagged commit

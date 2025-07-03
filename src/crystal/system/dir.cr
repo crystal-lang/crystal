@@ -4,17 +4,19 @@ module Crystal::System::Dir
   #
   # Information about a directory entry.
   #
-  # In particular we only care about the name and whether its
-  # a directory or not to improve the performance of Dir.glob
-  # by avoid having to call File.info on every directory entry.
+  # In particular we only care about the name, whether it's a directory, and
+  # whether any hidden file attributes are set to improve the performance of
+  # `Dir.glob` by not having to call `File.info` on every directory entry.
   # If dir is nil, the type is unknown.
   # In the future we might change Dir's API to expose these entries
   # with more info but right now it's not necessary.
   struct Entry
-    getter name
-    getter? dir
+    getter name : String
+    getter? dir : Bool?
+    getter? native_hidden : Bool
+    getter? os_hidden : Bool
 
-    def initialize(@name : String, @dir : Bool?)
+    def initialize(@name, @dir, @native_hidden, @os_hidden = false)
     end
   end
 
@@ -51,7 +53,9 @@ module Crystal::System::Dir
   # def self.delete(path : String) : Nil
 end
 
-{% if flag?(:unix) %}
+{% if flag?(:wasi) %}
+  require "./wasi/dir"
+{% elsif flag?(:unix) %}
   require "./unix/dir"
 {% elsif flag?(:win32) %}
   require "./win32/dir"

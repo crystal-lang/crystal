@@ -76,6 +76,15 @@ describe HTTP::Server::Response do
     io.to_s.should eq("HTTP/1.1 304 Not Modified\r\nContent-Length: 5\r\n\r\n")
   end
 
+  it "allow explicitly configuring a `Transfer-Encoding` response" do
+    io = IO::Memory.new
+    response = Response.new(io)
+    response.headers["Transfer-Encoding"] = "chunked"
+    response.print "Hello"
+    response.close
+    io.to_s.should eq("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nHello\r\n0\r\n\r\n")
+  end
+
   it "prints less then buffer's size" do
     io = IO::Memory.new
     response = Response.new(io)
@@ -96,13 +105,15 @@ describe HTTP::Server::Response do
     io = IO::Memory.new
     response = Response.new(io)
     str = "1234567890"
-    1000.times do
+    slices = (IO::DEFAULT_BUFFER_SIZE // 10)
+    slices.times do
       response.print(str)
     end
+    response.print(str)
     response.close
-    first_chunk = str * 819
-    second_chunk = str * 181
-    io.to_s.should eq("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n1ffe\r\n#{first_chunk}\r\n712\r\n#{second_chunk}\r\n0\r\n\r\n")
+    first_chunk = str * slices
+    second_chunk = str
+    io.to_s.should eq("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n#{(first_chunk.bytesize).to_s(16)}\r\n#{first_chunk}\r\n#{(second_chunk.bytesize).to_s(16)}\r\n#{second_chunk}\r\n0\r\n\r\n")
   end
 
   it "prints with content length" do
@@ -151,12 +162,28 @@ describe HTTP::Server::Response do
     io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\n\r\nHello")
   end
 
+  it "sets content type after headers sent" do
+    io = IO::Memory.new
+    response = Response.new(io)
+    response.print("Hello")
+    response.flush
+    expect_raises(IO::Error, "Headers already sent") do
+      response.content_type = "text/plain"
+    end
+  end
+
   it "sets status code" do
     io = IO::Memory.new
     response = Response.new(io)
     return_value = response.status_code = 201
     return_value.should eq 201
     response.status.should eq HTTP::Status::CREATED
+    response.status_message.should eq "Created"
+    response.print("Hello")
+    response.flush
+    expect_raises(IO::Error, "Headers already sent") do
+      response.status_code = 201
+    end
   end
 
   it "retrieves status code" do
@@ -166,6 +193,20 @@ describe HTTP::Server::Response do
     response.status_code.should eq 201
   end
 
+  it "changes status message" do
+    io = IO::Memory.new
+    response = Response.new(io)
+    response.status = :not_found
+    response.status_message = "Custom status"
+    response.close
+    io.to_s.should eq("HTTP/1.1 404 Custom status\r\nContent-Length: 0\r\n\r\n")
+    response.status_message.should eq "Custom status"
+
+    expect_raises(IO::Error, "Closed stream") do
+      response.status_message = "Other status"
+    end
+  end
+
   it "changes status and others" do
     io = IO::Memory.new
     response = Response.new(io)
@@ -173,6 +214,31 @@ describe HTTP::Server::Response do
     response.version = "HTTP/1.0"
     response.close
     io.to_s.should eq("HTTP/1.0 404 Not Found\r\nContent-Length: 0\r\n\r\n")
+  end
+
+  it "changes status and others after headers sent" do
+    io = IO::Memory.new
+    response = Response.new(io)
+    response.print("Foo")
+    response.flush
+    expect_raises(IO::Error, "Headers already sent") do
+      response.status = :not_found
+    end
+    expect_raises(IO::Error, "Headers already sent") do
+      response.version = "HTTP/1.0"
+    end
+  end
+
+  it "closes gracefully with replaced output that syncs close (#11389)" do
+    output = IO::Memory.new
+    response = HTTP::Server::Response.new(output)
+
+    response.output = IO::Stapled.new(response.output, response.output, sync_close: true)
+    response.print "some body"
+
+    response.close
+
+    output.rewind.gets_to_end.should eq "HTTP/1.1 200 OK\r\nContent-Length: 9\r\n\r\nsome body"
   end
 
   it "flushes" do
@@ -207,9 +273,13 @@ describe HTTP::Server::Response do
     response = Response.new(io)
     response.headers["Foo"] = "Bar"
     response.cookies["Bar"] = "Foo"
+    response.status = HTTP::Status::USE_PROXY
+    response.status_message = "Baz"
     response.reset
-    response.headers.empty?.should be_true
-    response.cookies.empty?.should be_true
+    response.headers.should be_empty
+    response.cookies.should be_empty
+    response.status.should eq HTTP::Status::OK
+    response.status_message.should eq "OK"
   end
 
   it "writes cookie headers" do
@@ -245,6 +315,7 @@ describe HTTP::Server::Response do
       response.content_type = "text/html"
       response.respond_with_status(500)
       io.to_s.should eq("HTTP/1.1 500 Internal Server Error\r\nContent-Type: text/plain\r\nContent-Length: 26\r\n\r\n500 Internal Server Error\n")
+      response.status_message.should eq "Internal Server Error"
     end
 
     it "sends custom code and message" do
@@ -252,6 +323,7 @@ describe HTTP::Server::Response do
       response = Response.new(io)
       response.respond_with_status(400, "Request Error")
       io.to_s.should eq("HTTP/1.1 400 Request Error\r\nContent-Type: text/plain\r\nContent-Length: 18\r\n\r\n400 Request Error\n")
+      response.status_message.should eq "Request Error"
     end
 
     it "sends HTTP::Status" do
@@ -259,6 +331,7 @@ describe HTTP::Server::Response do
       response = Response.new(io)
       response.respond_with_status(HTTP::Status::URI_TOO_LONG)
       io.to_s.should eq("HTTP/1.1 414 URI Too Long\r\nContent-Type: text/plain\r\nContent-Length: 17\r\n\r\n414 URI Too Long\n")
+      response.status_message.should eq "URI Too Long"
     end
 
     it "sends HTTP::Status and custom message" do
@@ -266,6 +339,7 @@ describe HTTP::Server::Response do
       response = Response.new(io)
       response.respond_with_status(HTTP::Status::URI_TOO_LONG, "Request Error")
       io.to_s.should eq("HTTP/1.1 414 Request Error\r\nContent-Type: text/plain\r\nContent-Length: 18\r\n\r\n414 Request Error\n")
+      response.status_message.should eq "Request Error"
     end
 
     it "raises when response is closed" do
@@ -284,6 +358,67 @@ describe HTTP::Server::Response do
       response.flush
       expect_raises(IO::Error, "Headers already sent") do
         response.respond_with_status(400)
+      end
+    end
+  end
+
+  describe "#redirect" do
+    ["/path", URI.parse("/path")].each do |location|
+      it "#{location.class} location" do
+        io = IO::Memory.new
+        response = Response.new(io)
+        response.redirect(location)
+        io.to_s.should eq("HTTP/1.1 302 Found\r\nLocation: /path\r\nContent-Length: 0\r\n\r\n")
+      end
+    end
+
+    it "encodes special characters" do
+      io = IO::Memory.new
+      response = Response.new(io)
+      response.redirect("https://example.com/path\nfoo bar")
+      io.to_s.should eq("HTTP/1.1 302 Found\r\nLocation: https://example.com/path%0Afoo%20bar\r\nContent-Length: 0\r\n\r\n")
+    end
+
+    it "doesn't encode URIs twice" do
+      io = IO::Memory.new
+      response = Response.new(io)
+      u = URI.new "https", host: "example.com", path: "auth",
+        query: URI::Params.new({"redirect_uri" => ["http://example.com/callback"]})
+      response.redirect(u)
+      io.to_s.should eq("HTTP/1.1 302 Found\r\nLocation: https://example.com/auth?redirect_uri=http%3A%2F%2Fexample.com%2Fcallback\r\nContent-Length: 0\r\n\r\n")
+    end
+
+    it "permanent redirect" do
+      io = IO::Memory.new
+      response = Response.new(io)
+      response.redirect("/path", status: :moved_permanently)
+      io.to_s.should eq("HTTP/1.1 301 Moved Permanently\r\nLocation: /path\r\nContent-Length: 0\r\n\r\n")
+    end
+
+    it "with header" do
+      io = IO::Memory.new
+      response = Response.new(io)
+      response.headers["Foo"] = "Bar"
+      response.redirect("/path", status: :moved_permanently)
+      io.to_s.should eq("HTTP/1.1 301 Moved Permanently\r\nFoo: Bar\r\nLocation: /path\r\nContent-Length: 0\r\n\r\n")
+    end
+
+    it "fails if headers already sent" do
+      io = IO::Memory.new
+      response = Response.new(io)
+      response.puts "foo"
+      response.flush
+      expect_raises(IO::Error, "Headers already sent") do
+        response.redirect("/path")
+      end
+    end
+
+    it "fails if closed" do
+      io = IO::Memory.new
+      response = Response.new(io)
+      response.close
+      expect_raises(IO::Error, "Closed stream") do
+        response.redirect("/path")
       end
     end
   end

@@ -7,6 +7,9 @@ require "./format/parser"
 # being with a percent (`%`) character. Any text not listed as a directive
 # will be passed/parsed through the output/input string.
 #
+# ASCII whitespaces in the pattern string are written verbatim when formatting,
+# and consume any number of ASCII whitespace characters on parsing.
+#
 # The directives are:
 #
 # * **%a**: short day name (Sun, Mon, Tue, ...)
@@ -40,6 +43,7 @@ require "./format/parser"
 # * **%3N**: milliseconds, zero padded (000, 001, ..., 999) (same as **%L**)
 # * **%6N**: microseconds, zero padded (000000, 000001, ..., 999999)
 # * **%9N**: nanoseconds, zero padded (000000000, 000000001, ..., 999999999)
+# * **%n**: same as the newline character (`\n`)
 # * **%N**: second fraction, zero padded. (Same as `%9N` but may consume more than 9 digits while parsing)
 # * **%p**: am-pm (lowercase)
 # * **%P**: AM-PM (uppercase)
@@ -47,6 +51,7 @@ require "./format/parser"
 # * **%R**: 24-hour time (13:04)
 # * **%s**: seconds since unix epoch (see `Time#to_unix`)
 # * **%S**: seconds, zero padded (00, 01, ..., 59)
+# * **%t**: same as the tab character (`\t`)
 # * **%T**: 24-hour time (13:04:05)
 # * **%u**: day of week (Monday is 1, 1..7)
 # * **%V**: ISO calendar week number of the week-based year (01..53)

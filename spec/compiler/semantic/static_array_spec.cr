@@ -93,7 +93,7 @@ describe "Semantic: static array" do
       SIZE = OTHER * 20 // 2
       x = StaticArray(Char, SIZE).new
       x
-      )) { static_array_of(char, 100) }
+      ), inject_primitives: true) { static_array_of(char, 100) }
   end
 
   it "types static array new with size being a computed constant, and use N (bug)" do
@@ -108,7 +108,7 @@ describe "Semantic: static array" do
       x = uninitialized UInt8[SIZE]
       x.size
       a = 1
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "doesn't crash on restriction (#584)" do
@@ -153,6 +153,30 @@ describe "Semantic: static array" do
       n = uninitialized StaticArray(Int32, 10)
       fn(n)
       ),
-      "no overload matches"
+      "expected argument #1 to 'fn' to be StaticArray(Int32, 11), not StaticArray(Int32, 10)"
+  end
+
+  it "doesn't crash on sizeof (#8858)" do
+    assert_error %(
+      alias BadArray = Int32[sizeof(Int32)]
+    ),
+      "can't use sizeof(Int32) as a generic type argument"
+  end
+
+  it "doesn't crash on instance_sizeof (#8858)" do
+    assert_error %(
+      alias BadArray = Int32[instance_sizeof(String)]
+    ),
+      "can't use instance_sizeof(String) as a generic type argument"
+  end
+
+  it "doesn't crash on offsetof (#8858)" do
+    assert_error %(
+      class Foo
+        @foo : Int32 = 0
+      end
+      alias BadArray = Int32[offsetof(Foo, @foo)]
+    ),
+      "can't use offsetof(Foo, @foo) as a generic type argument"
   end
 end

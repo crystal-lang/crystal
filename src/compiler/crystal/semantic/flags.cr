@@ -25,6 +25,10 @@ class Crystal::Program
     codegen_target.pointer_bit_width == 64
   end
 
+  def size_bit_width
+    codegen_target.size_bit_width
+  end
+
   private def flags_for_target(target)
     flags = Set(String).new
 
@@ -45,10 +49,27 @@ class Crystal::Program
       flags.add "freebsd#{target.freebsd_version}"
     end
     flags.add "netbsd" if target.netbsd?
-    flags.add "openbsd" if target.openbsd?
+
+    if target.openbsd?
+      flags.add "openbsd"
+
+      case target.architecture
+      when "aarch64"
+        flags.add "branch-protection=bti" unless flags.any?(&.starts_with?("branch-protection="))
+      when "x86_64", "i386"
+        flags.add "cf-protection=branch" unless flags.any?(&.starts_with?("cf-protection="))
+      end
+    end
+
     flags.add "dragonfly" if target.dragonfly?
+    flags.add "solaris" if target.solaris?
+    flags.add "android" if target.android?
 
     flags.add "bsd" if target.bsd?
+
+    if target.avr? && (cpu = target_machine.cpu.presence)
+      flags.add cpu
+    end
 
     flags
   end

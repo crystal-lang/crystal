@@ -1,6 +1,6 @@
-require "http/headers"
-require "http/status"
-require "http/cookie"
+require "../headers"
+require "../status"
+require "../cookie"
 
 class HTTP::Server
   # The response to configure and write to in an `HTTP::Server` handler.
@@ -27,11 +27,19 @@ class HTTP::Server
     property output : IO
 
     # :nodoc:
-    setter version : String
+    def version=(version : String)
+      check_headers
+      @version = version
+    end
 
     # The status code of this response, which must be set before writing the response
     # body. If not set, the default value is 200 (OK).
-    property status : HTTP::Status
+    getter status : HTTP::Status
+
+    def status=(status : HTTP::Status)
+      check_headers
+      @status = status
+    end
 
     # :nodoc:
     property upgrade_handler : (IO ->)?
@@ -53,6 +61,7 @@ class HTTP::Server
       @headers.clear
       @cookies = nil
       @status = :ok
+      @status_message = nil
       @wrote_headers = false
       @output = @original_output
       @original_output.reset
@@ -60,11 +69,13 @@ class HTTP::Server
 
     # Convenience method to set the `Content-Type` header.
     def content_type=(content_type : String)
+      check_headers
       headers["Content-Type"] = content_type
     end
 
     # Convenience method to set the `Content-Length` header.
     def content_length=(content_length : Int)
+      check_headers
       headers["Content-Length"] = content_length.to_s
     end
 
@@ -121,7 +132,18 @@ class HTTP::Server
       @output.closed?
     end
 
-    @status_message : String?
+    # Sets the status message.
+    def status_message=(status_message : String?)
+      check_headers
+      @status_message = status_message
+    end
+
+    # Returns the status message.
+    #
+    # Defaults to description of `#status`.
+    def status_message : String?
+      @status_message || @status.description
+    end
 
     # Sends *status* and *message* as response.
     #
@@ -149,15 +171,43 @@ class HTTP::Server
       respond_with_status(HTTP::Status.new(status), message)
     end
 
+    # Sends a redirect to *location*.
+    #
+    # The value of *location* gets encoded with `URI.encode`.
+    #
+    # The *status* determines the HTTP status code which can be
+    # `HTTP::Status::FOUND` (`302`) for a temporary redirect or
+    # `HTTP::Status::MOVED_PERMANENTLY` (`301`) for a permanent redirect.
+    #
+    # The response gets closed.
+    #
+    # Raises `IO::Error` if the response is closed or headers were already
+    # sent.
+    def redirect(location : String | URI, status : HTTP::Status = :found)
+      check_headers
+
+      self.status = status
+      headers["Location"] = if location.is_a? URI
+                              location.to_s
+                            else
+                              String.build do |io|
+                                URI.encode(location.to_s, io) do |byte|
+                                  URI.reserved?(byte) || URI.unreserved?(byte)
+                                end
+                              end
+                            end
+      close
+    end
+
     private def check_headers
-      check_open
+      raise IO::Error.new "Closed stream" if @original_output.closed?
       if wrote_headers?
         raise IO::Error.new("Headers already sent")
       end
     end
 
     protected def write_headers
-      @io << @version << ' ' << @status.code << ' ' << (@status_message || @status.description) << "\r\n"
+      @io << @version << ' ' << @status.code << ' ' << status_message << "\r\n"
       headers.each do |name, values|
         values.each do |value|
           @io << name << ": " << value << "\r\n"
@@ -198,14 +248,16 @@ class HTTP::Server
         @closed = false
       end
 
-      private def unbuffered_read(slice : Bytes)
+      private def unbuffered_read(slice : Bytes) : Int32
         raise "Can't read from HTTP::Server::Response"
       end
 
-      private def unbuffered_write(slice : Bytes)
+      private def unbuffered_write(slice : Bytes) : Nil
         return if slice.empty?
 
-        unless response.wrote_headers?
+        if response.headers["Transfer-Encoding"]? == "chunked"
+          @chunked = true
+        elsif !response.wrote_headers?
           if response.version != "HTTP/1.0" && !response.headers.has_key?("Content-Length")
             response.headers["Transfer-Encoding"] = "chunked"
             @chunked = true
@@ -239,7 +291,7 @@ class HTTP::Server
         status = response.status
         set_content_length = !(status.not_modified? || status.no_content? || status.informational?)
 
-        if !response.wrote_headers? && !response.headers.has_key?("Content-Length") && set_content_length
+        if !response.wrote_headers? && !response.headers.has_key?("Transfer-Encoding") && !response.headers.has_key?("Content-Length") && set_content_length
           response.content_length = @out_count
         end
 
@@ -263,15 +315,15 @@ class HTTP::Server
         end
       end
 
-      private def unbuffered_close
+      private def unbuffered_close : Nil
         @closed = true
       end
 
-      private def unbuffered_rewind
+      private def unbuffered_rewind : Nil
         raise "Can't rewind to HTTP::Server::Response"
       end
 
-      private def unbuffered_flush
+      private def unbuffered_flush : Nil
         @io.flush
       rescue ex : IO::Error
         unbuffered_close

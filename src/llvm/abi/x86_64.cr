@@ -1,39 +1,83 @@
 require "../abi"
 
 # Based on https://github.com/rust-lang/rust/blob/29ac04402d53d358a1f6200bea45a301ff05b2d1/src/librustc_trans/trans/cabi_x86_64.rs
+# See also, section 3.2.3 of the System V Application Binary Interface AMD64 Architecture Processor Supplement
 class LLVM::ABI::X86_64 < LLVM::ABI
+  MAX_INT_REGS = 6 # %rdi, %rsi, %rdx, %rcx, %r8, %r9
+  MAX_SSE_REGS = 8 # %xmm0-%xmm7
+
   def abi_info(atys : Array(Type), rty : Type, ret_def : Bool, context : Context) : LLVM::ABI::FunctionType
-    arg_tys = Array(LLVM::Type).new(atys.size)
-    arg_tys = atys.map do |arg_type|
-      x86_64_type(arg_type, Attribute::ByVal, context) { |cls| pass_by_val?(cls) }
-    end
+    # registers available to pass arguments directly: int_regs can hold integers
+    # and pointers, sse_regs can hold floats and doubles
+    available_int_regs = MAX_INT_REGS
+    available_sse_regs = MAX_SSE_REGS
 
     if ret_def
-      ret_ty = x86_64_type(rty, Attribute::StructRet, context) { |cls| sret?(cls) }
+      ret_ty, _, _ = x86_64_type(rty, Attribute::StructRet, context) { |cls| sret?(cls) }
+      if ret_ty.kind.indirect?
+        # return value is a caller-allocated struct which is passed in %rdi,
+        # so we have 1 less register available for passing arguments
+        available_int_regs -= 1
+      end
     else
       ret_ty = ArgType.direct(context.void)
+    end
+
+    arg_tys = atys.map do |arg_type|
+      abi_type, needed_int_regs, needed_sse_regs = x86_64_type(arg_type, Attribute::ByVal, context) { |cls| pass_by_val?(cls) }
+      if available_int_regs >= needed_int_regs && available_sse_regs >= needed_sse_regs
+        available_int_regs -= needed_int_regs
+        available_sse_regs -= needed_sse_regs
+        abi_type
+      elsif !register?(arg_type)
+        # no available registers to pass the argument, but only mark aggregates
+        # as indirect byval types because LLVM will automatically pass register
+        # types in the stack
+        ArgType.indirect(arg_type, Attribute::ByVal)
+      else
+        abi_type
+      end
     end
 
     FunctionType.new arg_tys, ret_ty
   end
 
-  def x86_64_type(type, ind_attr, context)
-    if register?(type)
+  # returns the LLVM type (with attributes) and the number of integer and SSE
+  # registers needed to pass this value directly (ie. not using the stack)
+  def x86_64_type(type, ind_attr, context, &) : Tuple(ArgType, Int32, Int32)
+    if int_register?(type)
       attr = type == context.int1 ? Attribute::ZExt : nil
-      ArgType.direct(type, attr: attr)
+      {ArgType.direct(type, attr: attr), 1, 0}
+    elsif sse_register?(type)
+      {ArgType.direct(type), 0, 1}
     else
       cls = classify(type)
       if yield cls
-        ArgType.indirect(type, ind_attr)
+        {ArgType.indirect(type, ind_attr), 0, 0}
       else
-        ArgType.direct(type, llreg(context, cls))
+        needed_int_regs = cls.count(&.int?)
+        needed_sse_regs = cls.count(&.sse?)
+        {ArgType.direct(type, llreg(context, cls)), needed_int_regs, needed_sse_regs}
       end
     end
   end
 
   def register?(type) : Bool
+    int_register?(type) || sse_register?(type)
+  end
+
+  def int_register?(type) : Bool
     case type.kind
-    when Type::Kind::Integer, Type::Kind::Float, Type::Kind::Double, Type::Kind::Pointer
+    when Type::Kind::Integer, Type::Kind::Pointer
+      true
+    else
+      false
+    end
+  end
+
+  def sse_register?(type) : Bool
+    case type.kind
+    when Type::Kind::Float, Type::Kind::Double
       true
     else
       false
@@ -44,7 +88,7 @@ class LLVM::ABI::X86_64 < LLVM::ABI
     return false if cls.empty?
 
     cl = cls.first
-    cl == RegClass::Memory || cl == RegClass::X87 || cl == RegClass::ComplexX87
+    cl.in?(RegClass::Memory, RegClass::X87, RegClass::ComplexX87)
   end
 
   def sret?(cls) : Bool
@@ -56,7 +100,7 @@ class LLVM::ABI::X86_64 < LLVM::ABI
   def classify(type)
     words = (size(type) + 7) // 8
     reg_classes = Array.new(words, RegClass::NoClass)
-    if words > 4
+    if words > 4 || has_misaligned_fields?(type)
       all_mem(reg_classes)
     else
       classify(type, reg_classes, 0, 0)
@@ -106,7 +150,7 @@ class LLVM::ABI::X86_64 < LLVM::ABI
   def classify_struct(tys, cls, i, off, packed) : Nil
     field_off = off
     tys.each do |ty|
-      field_off = align(field_off, ty) unless packed
+      field_off = align_offset(field_off, ty) unless packed
       classify(ty, cls, i, field_off)
       field_off += size(ty)
     end
@@ -116,7 +160,7 @@ class LLVM::ABI::X86_64 < LLVM::ABI
     i = 0
     ty_kind = ty.kind
     e = cls.size
-    if e > 2 && (ty_kind == Type::Kind::Struct || ty_kind == Type::Kind::Array)
+    if e > 2 && ty_kind.in?(Type::Kind::Struct, Type::Kind::Array)
       if cls[i].sse?
         i += 1
         while i < e
@@ -224,61 +268,21 @@ class LLVM::ABI::X86_64 < LLVM::ABI
   end
 
   def align(type : Type) : Int32
-    case type.kind
-    when Type::Kind::Integer
-      (type.int_width + 7) // 8
-    when Type::Kind::Float
-      4
-    when Type::Kind::Double
-      8
-    when Type::Kind::Pointer
-      8
-    when Type::Kind::Struct
-      if type.packed_struct?
-        1
-      else
-        type.struct_element_types.reduce(1) do |memo, elem|
-          Math.max(memo, align(elem))
-        end
-      end
-    when Type::Kind::Array
-      align type.element_type
-    else
-      raise "Unhandled Type::Kind in align: #{type.kind}"
-    end
+    align(type, 8)
   end
 
   def size(type : Type) : Int32
-    case type.kind
-    when Type::Kind::Integer
-      (type.int_width + 7) // 8
-    when Type::Kind::Float
-      4
-    when Type::Kind::Double
-      8
-    when Type::Kind::Pointer
-      8
-    when Type::Kind::Struct
-      if type.packed_struct?
-        type.struct_element_types.reduce(0) do |memo, elem|
-          memo + size(elem)
-        end
-      else
-        size = type.struct_element_types.reduce(0) do |memo, elem|
-          align(memo, elem) + size(elem)
-        end
-        align(size, type)
-      end
-    when Type::Kind::Array
-      size(type.element_type) * type.array_size
-    else
-      raise "Unhandled Type::Kind in size: #{type.kind}"
-    end
+    size(type, 8)
   end
 
-  def align(offset, type) : Int32
-    align = align(type)
-    (offset + align - 1) // align * align
+  def has_misaligned_fields?(type : Type) : Bool
+    return false unless type.packed_struct?
+    offset = 0
+    type.struct_element_types.each do |elem|
+      return true unless offset.divisible_by?(align(elem))
+      offset += size(elem)
+    end
+    false
   end
 
   enum RegClass

@@ -319,7 +319,7 @@ describe "Semantic: const" do
    "1 + 2", "1 + ZED", "ZED - 1", "ZED * 2", "ZED // 2",
    "1 &+ ZED", "ZED &- 1", "ZED &* 2"].each do |node|
     it "doesn't errors if constant depends on another one defined later through method, but constant is simple (#{node})" do
-      semantic(%(
+      assert_no_errors <<-CRYSTAL, inject_primitives: true
         ZED = 10
 
         struct Int32
@@ -337,7 +337,7 @@ describe "Semantic: const" do
         end
 
         CONST1
-        ))
+        CRYSTAL
     end
   end
 
@@ -451,6 +451,22 @@ describe "Semantic: const" do
       "A is not a type, it's a constant"
   end
 
+  it "errors if using const in proc notation parameter type" do
+    assert_error <<-CRYSTAL, "A is not a type, it's a constant"
+      A = 1
+
+      x : A ->
+      CRYSTAL
+  end
+
+  it "errors if using const in proc notation return type" do
+    assert_error <<-CRYSTAL, "A is not a type, it's a constant"
+      A = 1
+
+      x : -> A
+      CRYSTAL
+  end
+
   it "errors if using return inside constant value (#5391)" do
     assert_error %(
       class Foo
@@ -461,7 +477,7 @@ describe "Semantic: const" do
 
       Foo::A
       ),
-      "can't return from constant"
+      "can't return from constant", inject_primitives: true
   end
 
   it "errors if constant has NoReturn type (#6139)" do

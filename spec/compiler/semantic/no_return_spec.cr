@@ -10,11 +10,11 @@ describe "Semantic: NoReturn" do
   end
 
   it "types union of NoReturn and something else" do
-    assert_type("lib LibC; fun exit : NoReturn; end; 1 == 1 ? LibC.exit : 1") { int32 }
+    assert_type("lib LibC; fun exit : NoReturn; end; 1 == 1 ? LibC.exit : 1", inject_primitives: true) { int32 }
   end
 
   it "types union of NoReturns" do
-    assert_type("lib LibC; fun exit : NoReturn; end; 1 == 2 ? LibC.exit : LibC.exit") { no_return }
+    assert_type("lib LibC; fun exit : NoReturn; end; 1 == 2 ? LibC.exit : LibC.exit", inject_primitives: true) { no_return }
   end
 
   it "types with no return even if code follows" do
@@ -326,5 +326,26 @@ describe "Semantic: NoReturn" do
 
       typeof(raise("").foo)
       )) { no_return.metaclass }
+  end
+
+  it "types as NoReturn if followed by one-to-many assignment (#15638)" do
+    assert_type(<<-CRYSTAL) { bool }
+      def foo(x)
+        {'a', ""}
+      end
+
+      def raise(msg)
+        while true
+        end
+      end
+
+      def bar
+        x = 1
+        return true if x.is_a?(Int32)
+        a, b = foo(x)
+      end
+
+      bar
+      CRYSTAL
   end
 end

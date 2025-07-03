@@ -17,7 +17,7 @@ function ModalDialog(options) {
 
   $("body").append(
     this.modalDom = $("<div>").addClass("modal modal-fixed-footer")
-      .append(this.modalContenDom = $("<div>").addClass("modal-content"))
+      .append(this.modalContentDom = $("<div>").addClass("modal-content"))
       .append($("<div>").addClass("modal-footer")
         .append($("<a>").text("Close")
           .addClass("modal-action modal-close waves-effect waves-green btn-flat")
@@ -39,7 +39,7 @@ function ModalDialog(options) {
 
   this.append = function() {
     for(var i = 0; i < arguments.length; i++) {
-      this.modalContenDom.append(arguments[i]);
+      this.modalContentDom.append(arguments[i]);
     }
     return this;
   }.bind(this);
@@ -60,7 +60,7 @@ Playground.RunButtons = function(options) {
     return $("<a>").addClass("run-button btn-floating btn-large waves-effect waves-light tooltipped")
       .attr("href", "#")
       .attr("data-position", "left").attr("data-delay", "50").attr("data-tooltip", tooltip)
-      .append($("<span>").addClass("mega-octicon " + octicon));
+      .append(`<svg viewBox="0 0 16 16" class="mega-octicon"><use xlink:href="/vendor/octicons-19.5.0/octicons.svg#${octicon}-16"></use></svg>`);
   }
 
   var buildProgress = function() {
@@ -81,8 +81,8 @@ Playground.RunButtons = function(options) {
   var mac = /Mac/.test(navigator.platform);
 
   options.container
-    .prepend(this.stopButton = buildAnchor("Stops code", "octicon-primitive-square"))
-    .prepend(this.playButton = buildAnchor(mac ? "⌘ + Enter" : "Ctrl + Enter", "octicon-triangle-right"))
+    .prepend(this.stopButton = buildAnchor("Stops code", "square-fill"))
+    .prepend(this.playButton = buildAnchor(mac ? "⌘ + Enter" : "Ctrl + Enter", "triangle-right"))
     .prepend(this.progress = buildProgress());
 
   this.stopButton.hide().tooltip();
@@ -129,8 +129,6 @@ Playground.RunButtons = function(options) {
 Playground.OutputIndicator = function(dom) {
   this.dom = dom;
   this.blinkTimeout = null;
-
-  this.dom.addClass("octicon octicon-terminal");
 
   this.turnOnWithBlink = function () {
     this.dom.removeClass('teal-text red-text');
@@ -294,7 +292,22 @@ Playground.Session = function(options) {
     tabSize: 2,
     viewportMargin: Infinity,
     dragDrop: false, // dragDrop functionality is implemented to capture drop anywhere and replace source
-    value: options.source
+    value: options.source,
+    // indent using spaces, see https://github.com/codemirror/codemirror5/issues/988
+    extraKeys: {
+      Tab: (cm) => {
+        if (cm.getMode().name === 'null') {
+          cm.execCommand('insertTab');
+        } else {
+          if (cm.somethingSelected()) {
+            cm.execCommand('indentMore');
+          } else {
+            cm.execCommand('insertSoftTab');
+          }
+        }
+      },
+      'Shift-Tab': (cm) => cm.execCommand('indentLess')
+    }
   });
   this.editor._playgroundSession = this;
 
@@ -616,11 +629,6 @@ Playground.Session = function(options) {
       evt.preventDefault();
       run();
     });
-
-    var iconCont = btn.getElementsByClassName('icon')[0];
-    if (iconCont) {
-      iconCont.classList.add('octicon', 'octicon-checklist');
-    }
 
     function run() {
       if (isRunning) {

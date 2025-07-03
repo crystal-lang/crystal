@@ -26,14 +26,14 @@ class Compress::Zlib::Writer < IO
 
   # Creates a new writer to the given *io*, yields it to the given block,
   # and closes it at the end.
-  def self.open(io : IO, level = Zlib::DEFAULT_COMPRESSION, sync_close = false, dict : Bytes? = nil)
+  def self.open(io : IO, level = Zlib::DEFAULT_COMPRESSION, sync_close = false, dict : Bytes? = nil, &)
     writer = new(io, level: level, sync_close: sync_close, dict: dict)
     yield writer ensure writer.close
   end
 
   # Creates a new writer to the given *filename*, yields it to the given block,
   # and closes it at the end.
-  def self.open(filename : String, level = Zlib::DEFAULT_COMPRESSION, dict : Bytes? = nil)
+  def self.open(filename : String, level = Zlib::DEFAULT_COMPRESSION, dict : Bytes? = nil, &)
     writer = new(filename, level: level, dict: dict)
     yield writer ensure writer.close
   end

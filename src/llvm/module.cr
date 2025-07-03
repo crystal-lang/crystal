@@ -6,41 +6,31 @@ class LLVM::Module
 
   getter context : Context
 
-  {% if LibLLVM::IS_38 %}
-    def initialize(@unwrap : LibLLVM::ModuleRef, @name : String, @context : Context)
-      @owned = false
-    end
+  def self.parse(memory_buffer : MemoryBuffer, context : Context) : self
+    LibLLVM.parse_bitcode_in_context2(context, memory_buffer, out module_ref)
+    raise "BUG: failed to parse LLVM bitcode from memory buffer" unless module_ref
+    new(module_ref, context)
+  end
 
-    def name : String
-      @name
-    end
-  {% else %}
-    # LLVM >= 3.9
-    def initialize(@unwrap : LibLLVM::ModuleRef, @context : Context)
-      @owned = false
-    end
+  def initialize(@unwrap : LibLLVM::ModuleRef, @context : Context)
+    @owned = false
+  end
 
-    def name : String
-      bytes = LibLLVM.get_module_identifier(self, out bytesize)
-      String.new(Slice.new(bytes, bytesize))
-    end
+  def name : String
+    bytes = LibLLVM.get_module_identifier(self, out bytesize)
+    String.new(Slice.new(bytes, bytesize))
+  end
 
-    def name=(name : String)
-      LibLLVM.set_module_identifier(self, name, name.bytesize)
-    end
-  {% end %}
+  def name=(name : String)
+    LibLLVM.set_module_identifier(self, name, name.bytesize)
+  end
 
   def target=(target)
     LibLLVM.set_target(self, target)
   end
 
   def data_layout=(data : TargetData)
-    {% if LibLLVM::IS_38 %}
-      LibLLVM.set_data_layout(self, data.to_data_layout_string)
-    {% else %}
-      # LLVM >= 3.9
-      LibLLVM.set_module_data_layout(self, data)
-    {% end %}
+    LibLLVM.set_module_data_layout(self, data)
   end
 
   def dump
@@ -55,15 +45,28 @@ class LLVM::Module
     GlobalCollection.new(self)
   end
 
+  def add_flag(module_flag : LibLLVM::ModuleFlagBehavior, key : String, val : Int32)
+    add_flag(module_flag, key, @context.int32.const_int(val))
+  end
+
+  def add_flag(module_flag : LibLLVM::ModuleFlagBehavior, key : String, val : Value)
+    LibLLVM.add_module_flag(
+      self,
+      module_flag,
+      key,
+      key.bytesize,
+      LibLLVM.value_as_metadata(val.to_unsafe)
+    )
+  end
+
   def write_bitcode_to_file(filename : String)
     LibLLVM.write_bitcode_to_file self, filename
   end
 
-  {% unless LibLLVM::IS_38 || LibLLVM::IS_39 %}
-    def write_bitcode_with_summary_to_file(filename : String)
-      LibLLVMExt.write_bitcode_with_summary_to_file self, filename
-    end
-  {% end %}
+  @[Deprecated("ThinLTO is no longer supported; use `#write_bitcode_to_file` instead")]
+  def write_bitcode_with_summary_to_file(filename : String)
+    LibLLVM.write_bitcode_to_file self, filename
+  end
 
   def write_bitcode_to_memory_buffer
     MemoryBuffer.new(LibLLVM.write_bitcode_to_memory_buffer self)
@@ -91,12 +94,11 @@ class LLVM::Module
     self
   end
 
+  {% unless LibLLVM::IS_LT_170 %}
+    @[Deprecated("The legacy pass manager was removed in LLVM 17. Use `LLVM::PassBuilderOptions` instead")]
+  {% end %}
   def new_function_pass_manager
     FunctionPassManager.new LibLLVM.create_function_pass_manager_for_module(self)
-  end
-
-  def add_named_metadata_operand(name : String, value : Value) : Nil
-    LibLLVM.add_named_metadata_operand(self, name, value)
   end
 
   def ==(other : self)
@@ -112,7 +114,7 @@ class LLVM::Module
     @unwrap
   end
 
-  def take_ownership
+  def take_ownership(&)
     if @owned
       yield
     else

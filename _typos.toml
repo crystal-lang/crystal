@@ -1,0 +1,60 @@
+[default.extend-words]
+flate = "flate"
+
+[default.extend-identifiers]
+ACCES = "ACCES"
+ba = "ba"
+ba2 = "ba2"
+bui = "bui"
+category_Nd = "category_Nd"
+DW_AT_endianity = "DW_AT_endianity"
+EXTA = "EXTA"
+GC_get_thr_restart_signal = "GC_get_thr_restart_signal"
+get_thr_restart_signal = "get_thr_restart_signal"
+IPPROTO_ND = "IPPROTO_ND"
+IST = "IST"
+iTolen = "iTolen"
+iy = "iy"
+larg = "larg"
+Nd = "Nd"
+numer = "numer"
+OLT = "OLT"
+RELA = "RELA"
+RPC_S_CALL_FAILED_DNE = "RPC_S_CALL_FAILED_DNE"
+SEH = "SEH"
+setup_seh_handler = "setup_seh_handler"
+usri4_parms = "usri4_parms"
+
+[default]
+extend-ignore-re = [
+  # numeric literals
+  '0x[0-9a-fA-F_\.\+]+([fiu](8|16|32|64|128))?',
+  '\\u\{[0-9a-fA-F]+\}',
+  # proper names
+  'FLE Standard Time',
+  'Universally Unique IDentifier',
+  # constants
+  'ERROR_\w+',
+  'EVP_CIPH.*',
+  # fixed test values
+  'FOO|/Fo',
+  'rCVZVOThsIa97pEDOxvGu',
+  '\w*AAAAAAAA\w*',
+  # several string specs
+  '"(Fo-ur|thi|abd|alo|tro|tring|ue)"',
+  '"(aGFo|hel|Hel|thr|noe|Noe|BaR|fo|FO)', '(hel|Hel|worl|Worl|fo)"',
+  '/fo|/FO', "'fo", "/\\(fo",
+  'tr‸ue|fo‸o',
+  "\"[^\"]+\"\\.to_slice\\s*=> [\"']\\\\u", # src/html/entities.cr
+  " ([a-zA-Z.]{8} ){4}->", # src/bit_array.cr
+]
+
+[files]
+extend-exclude = [
+  ".git/**",
+  "lib/**",
+  "man/**",
+  "spec/compiler/semantic/did_you_mean_spec.cr",
+  "spec/std/data/**",
+  "src/compiler/crystal/tools/playground/public/vendor/",
+]

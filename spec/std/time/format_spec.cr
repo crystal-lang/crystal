@@ -1,5 +1,6 @@
-require "./spec_helper"
-require "../../support/string"
+require "../spec_helper"
+require "../../support/time"
+require "spec/helpers/string"
 
 def parse_time(format, string)
   Time.parse_utc(format, string)
@@ -136,8 +137,8 @@ describe Time::Format do
       # TODO %U
       # TODO %W
       # TODO %s
-      # TODO %n
-      # TODO %t
+      assert_prints t.to_s("%n"), "\n"
+      assert_prints t.to_s("%t"), "\t"
       # TODO %%
 
       assert_prints t.to_s("%%"), "%"
@@ -202,6 +203,12 @@ describe Time::Format do
     end
     Time.parse("2017-12-01 20:15:13", "%F %T", Time::Location.local).to_s("%F %T").should eq "2017-12-01 20:15:13"
     Time.parse!("2017-12-01 20:15:13 +01:00", "%F %T %:z").to_s("%F %T %:z").should eq "2017-12-01 20:15:13 +01:00"
+  end
+
+  it "gives nice error message when end of input is reached (#12047)" do
+    expect_raises(Time::Format::Error, "Expected '-' but the end of the input was reached") do
+      Time.parse!("2021-01", "%F")
+    end
   end
 
   it "parses" do
@@ -499,9 +506,7 @@ describe Time::Format do
 
       with_zoneinfo do
         time = Time.parse!("CET", pattern)
-        time.offset.should eq 3600
-        time.utc?.should be_false
-        time.location.fixed?.should be_false
+        time.location.should eq Time::Location.load("CET")
 
         time = Time.parse!("Europe/Berlin", pattern)
         time.location.should eq Time::Location.load("Europe/Berlin")
@@ -522,6 +527,37 @@ describe Time::Format do
     end
   end
 
+  it "parses day of year" do
+    parse_time("2006-001", "%Y-%j").should eq(Time.utc(2006, 1, 1))
+    parse_time("2006-032", "%Y-%j").should eq(Time.utc(2006, 2, 1))
+    parse_time("2006-059", "%Y-%j").should eq(Time.utc(2006, 2, 28))
+    parse_time("2006-060", "%Y-%j").should eq(Time.utc(2006, 3, 1))
+    parse_time("2006-200", "%Y-%j").should eq(Time.utc(2006, 7, 19))
+    parse_time("2006-365", "%Y-%j").should eq(Time.utc(2006, 12, 31))
+
+    parse_time("2004-001", "%Y-%j").should eq(Time.utc(2004, 1, 1))
+    parse_time("2004-032", "%Y-%j").should eq(Time.utc(2004, 2, 1))
+    parse_time("2004-059", "%Y-%j").should eq(Time.utc(2004, 2, 28))
+    parse_time("2004-060", "%Y-%j").should eq(Time.utc(2004, 2, 29))
+    parse_time("2004-061", "%Y-%j").should eq(Time.utc(2004, 3, 1))
+    parse_time("2004-200", "%Y-%j").should eq(Time.utc(2004, 7, 18))
+    parse_time("2004-365", "%Y-%j").should eq(Time.utc(2004, 12, 30))
+    parse_time("2004-366", "%Y-%j").should eq(Time.utc(2004, 12, 31))
+
+    expect_raises(Time::Format::Error, "Invalid day of year") do
+      parse_time("2006-000", "%Y-%j")
+    end
+    expect_raises(Time::Format::Error, "Invalid day of year") do
+      parse_time("2004-000", "%Y-%j")
+    end
+    expect_raises(Time::Format::Error, "Invalid day of year") do
+      parse_time("2006-366", "%Y-%j")
+    end
+    expect_raises(Time::Format::Error, "Invalid day of year") do
+      parse_time("2004-367", "%Y-%j")
+    end
+  end
+
   # TODO %Z
   # TODO %G
   # TODO %g
@@ -529,8 +565,26 @@ describe Time::Format do
   # TODO %U
   # TODO %W
   # TODO %s
-  # TODO %n
-  # TODO %t
+
+  it "parses whitespace" do
+    [" ", "\t", "\n", "\v", "\f", "\r", "%n", "%t"].each do |space|
+      parse_time("20250530", "%Y#{space}%m#{space}%d").should eq(Time.utc(2025, 5, 30))
+      parse_time("2025  05  30", "%Y#{space}%m#{space}%d").should eq(Time.utc(2025, 5, 30))
+      parse_time("2025 \t\n\v\f\r05 \t\n\v\f\r30", "%Y#{space}%m#{space}%d").should eq(Time.utc(2025, 5, 30))
+    end
+
+    parse_time("20250530", "%Y \t\n\v\f\r%n%t%m \t\n\v\f\r%n%t%d").should eq(Time.utc(2025, 5, 30))
+    parse_time("2025  05  30", "%Y \t\n\v\f\r%n%t%m \t\n\v\f\r%n%t%d").should eq(Time.utc(2025, 5, 30))
+    parse_time("2025 \t\n\v\f\r05 \t\n\v\f\r30", "%Y \t\n\v\f\r%n%t%m \t\n\v\f\r%n%t%d").should eq(Time.utc(2025, 5, 30))
+
+    parse_time("Fri  Oct  31  23:00:24  2014", "%c").should eq(Time.utc(2014, 10, 31, 23, 0, 24))
+    parse_time("Fri\tOct\n31\v23:00:24\f\r 2014", "%c").should eq(Time.utc(2014, 10, 31, 23, 0, 24))
+
+    parse_time("11:14:01PM", "%r").should eq(Time.utc(1, 1, 1, 23, 14, 1))
+    parse_time("11:14:01  PM", "%r").should eq(Time.utc(1, 1, 1, 23, 14, 1))
+    parse_time("11:14:01 \t\n\v\f\rPM", "%r").should eq(Time.utc(1, 1, 1, 23, 14, 1))
+  end
+
   # TODO %%
   # TODO %v
 

@@ -1,8 +1,9 @@
-# NOTE: breakpoint on line 1 + next does not work
-a = 42 # break
-# lldb-command: print a
+# print: a
 # lldb-check: (int) $0 = 0
-# lldb-command: n
-# lldb-command: print a
+# gdb-check: $1 = 0
+debugger
+a = 42
+# print: a
 # lldb-check: (int) $1 = 42
-b = 0
+# gdb-check: $2 = 42
+debugger

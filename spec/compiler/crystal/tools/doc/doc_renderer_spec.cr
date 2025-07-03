@@ -57,6 +57,12 @@ describe Doc::MarkdDocRenderer do
         def foo
         end
       end
+
+      class A
+        def foo; end
+        def bar; end
+        def self.baz; end
+      end
       ", wants_doc: true).program
     generator = Doc::Generator.new(program, [""])
 
@@ -66,6 +72,8 @@ describe Doc::MarkdDocRenderer do
     sub_foo = sub.lookup_method("foo").not_nil!
     nested = generator.type(program.types["Base"].types["Nested"])
     nested_foo = nested.lookup_method("foo").not_nil!
+    single_char_class = generator.type(program.types["A"])
+    single_char_class_foo = single_char_class.lookup_method("foo").not_nil!
 
     it "finds sibling methods" do
       {base, base_foo}.each do |obj|
@@ -78,6 +86,22 @@ describe Doc::MarkdDocRenderer do
       {base, base_foo}.each do |obj|
         assert_code_link(obj, "#bar", %(<a href="Base.html#bar-instance-method">#bar</a>))
         assert_code_link(obj, ".baz", %(<a href="Base.html#baz-class-method">.baz</a>))
+      end
+    end
+
+    it "matches methods on single-character class names" do
+      {single_char_class, single_char_class_foo}.each do |obj|
+        assert_code_link(obj, "#bar", %(<a href="A.html#bar-instance-method">#bar</a>))
+        assert_code_link(obj, ".baz", %(<a href="A.html#baz-class-method">.baz</a>))
+      end
+    end
+
+    it "doesn't spuriously match range literals" do
+      {base, base_foo}.each do |obj|
+        assert_code_link(obj, "(0..baz)")
+        assert_code_link(obj, "(0...baz)")
+        assert_code_link(obj, "0..baz")
+        assert_code_link(obj, "0...baz")
       end
     end
 
@@ -129,9 +153,9 @@ describe Doc::MarkdDocRenderer do
 
     it "finds method with args" do
       {base, base_foo}.each do |obj|
-        assert_code_link(obj, "foo2(a, b)", %(<a href="Base.html#foo2(a,b)-instance-method">#foo2(a, b)</a>))
-        assert_code_link(obj, "#foo2(a, a)", %(<a href="Base.html#foo2(a,b)-instance-method">#foo2(a, a)</a>))
-        assert_code_link(obj, "Base#foo2(a, a)", %(<a href="Base.html#foo2(a,b)-instance-method">Base#foo2(a, a)</a>))
+        assert_code_link(obj, "foo2(a, b)", %(<a href="Base.html#foo2%28a%2Cb%29-instance-method">#foo2(a, b)</a>))
+        assert_code_link(obj, "#foo2(a, a)", %(<a href="Base.html#foo2%28a%2Cb%29-instance-method">#foo2(a, a)</a>))
+        assert_code_link(obj, "Base#foo2(a, a)", %(<a href="Base.html#foo2%28a%2Cb%29-instance-method">Base#foo2(a, a)</a>))
       end
     end
 
@@ -159,49 +183,49 @@ describe Doc::MarkdDocRenderer do
 
     it "finds method with unspecified args" do
       {base, base_foo}.each do |obj|
-        assert_code_link(obj, "foo2", %(<a href="Base.html#foo2(a,b)-instance-method">#foo2</a>))
-        assert_code_link(obj, "#foo2", %(<a href="Base.html#foo2(a,b)-instance-method">#foo2</a>))
-        assert_code_link(obj, "Base#foo2", %(<a href="Base.html#foo2(a,b)-instance-method">Base#foo2</a>))
+        assert_code_link(obj, "foo2", %(<a href="Base.html#foo2%28a%2Cb%29-instance-method">#foo2</a>))
+        assert_code_link(obj, "#foo2", %(<a href="Base.html#foo2%28a%2Cb%29-instance-method">#foo2</a>))
+        assert_code_link(obj, "Base#foo2", %(<a href="Base.html#foo2%28a%2Cb%29-instance-method">Base#foo2</a>))
       end
     end
 
     it "finds method with args even with empty brackets" do
       {base, base_foo}.each do |obj|
-        assert_code_link(obj, "foo2()", %(<a href="Base.html#foo2(a,b)-instance-method">#foo2()</a>))
-        assert_code_link(obj, "#foo2()", %(<a href="Base.html#foo2(a,b)-instance-method">#foo2()</a>))
-        assert_code_link(obj, "Base#foo2()", %(<a href="Base.html#foo2(a,b)-instance-method">Base#foo2()</a>))
+        assert_code_link(obj, "foo2()", %(<a href="Base.html#foo2%28a%2Cb%29-instance-method">#foo2()</a>))
+        assert_code_link(obj, "#foo2()", %(<a href="Base.html#foo2%28a%2Cb%29-instance-method">#foo2()</a>))
+        assert_code_link(obj, "Base#foo2()", %(<a href="Base.html#foo2%28a%2Cb%29-instance-method">Base#foo2()</a>))
       end
     end
 
     it "finds method with question mark" do
       {base, base_foo}.each do |obj|
-        assert_code_link(obj, "que?", %(<a href="Base.html#que?-instance-method">#que?</a>))
-        assert_code_link(obj, "#que?", %(<a href="Base.html#que?-instance-method">#que?</a>))
-        assert_code_link(obj, "Base#que?", %(<a href="Base.html#que?-instance-method">Base#que?</a>))
+        assert_code_link(obj, "que?", %(<a href="Base.html#que%3F-instance-method">#que?</a>))
+        assert_code_link(obj, "#que?", %(<a href="Base.html#que%3F-instance-method">#que?</a>))
+        assert_code_link(obj, "Base#que?", %(<a href="Base.html#que%3F-instance-method">Base#que?</a>))
       end
     end
 
     it "finds method with exclamation mark" do
       {base, base_foo}.each do |obj|
-        assert_code_link(obj, "one!(one)", %(<a href="Base.html#one!(one)-instance-method">#one!(one)</a>))
-        assert_code_link(obj, "#one!(one)", %(<a href="Base.html#one!(one)-instance-method">#one!(one)</a>))
-        assert_code_link(obj, "Base#one!(one)", %(<a href="Base.html#one!(one)-instance-method">Base#one!(one)</a>))
+        assert_code_link(obj, "one!(one)", %(<a href="Base.html#one%21%28one%29-instance-method">#one!(one)</a>))
+        assert_code_link(obj, "#one!(one)", %(<a href="Base.html#one%21%28one%29-instance-method">#one!(one)</a>))
+        assert_code_link(obj, "Base#one!(one)", %(<a href="Base.html#one%21%28one%29-instance-method">Base#one!(one)</a>))
       end
     end
 
     it "finds operator method" do
       {base, base_foo}.each do |obj|
-        assert_code_link(obj, "<=(other)", %(<a href="Base.html#%3C=(other)-instance-method">#<=(other)</a>))
-        assert_code_link(obj, "#<=(other)", %(<a href="Base.html#%3C=(other)-instance-method">#<=(other)</a>))
-        assert_code_link(obj, "Base#<=(other)", %(<a href="Base.html#%3C=(other)-instance-method">Base#<=(other)</a>))
+        assert_code_link(obj, "<=(other)", %(<a href="Base.html#%3C%3D%28other%29-instance-method">#<=(other)</a>))
+        assert_code_link(obj, "#<=(other)", %(<a href="Base.html#%3C%3D%28other%29-instance-method">#<=(other)</a>))
+        assert_code_link(obj, "Base#<=(other)", %(<a href="Base.html#%3C%3D%28other%29-instance-method">Base#<=(other)</a>))
       end
     end
 
     it "finds operator method with unspecified args" do
       {base, base_foo}.each do |obj|
-        assert_code_link(obj, "<=", %(<a href="Base.html#%3C=(other)-instance-method">#<=</a>))
-        assert_code_link(obj, "#<=", %(<a href="Base.html#%3C=(other)-instance-method">#<=</a>))
-        assert_code_link(obj, "Base#<=", %(<a href="Base.html#%3C=(other)-instance-method">Base#<=</a>))
+        assert_code_link(obj, "<=", %(<a href="Base.html#%3C%3D%28other%29-instance-method">#<=</a>))
+        assert_code_link(obj, "#<=", %(<a href="Base.html#%3C%3D%28other%29-instance-method">#<=</a>))
+        assert_code_link(obj, "Base#<=", %(<a href="Base.html#%3C%3D%28other%29-instance-method">Base#<=</a>))
       end
     end
 
@@ -236,7 +260,7 @@ describe Doc::MarkdDocRenderer do
     it "finds multiple methods with brackets" do
       {base, base_foo}.each do |obj|
         assert_code_link(obj, "#foo2(a, a) and Base#foo3(a,b,  c)",
-          %(<a href="Base.html#foo2(a,b)-instance-method">#foo2(a, a)</a> and <a href="Base.html#foo3(a,b,c)-instance-method">Base#foo3(a,b,  c)</a>))
+          %(<a href="Base.html#foo2%28a%2Cb%29-instance-method">#foo2(a, a)</a> and <a href="Base.html#foo3%28a%2Cb%2Cc%29-instance-method">Base#foo3(a,b,  c)</a>))
       end
     end
 
@@ -288,7 +312,7 @@ describe Doc::MarkdDocRenderer do
     it "finds multiple kinds of things" do
       {base, base_foo}.each do |obj|
         assert_code_link(obj, "Base#foo2(a, a) and #foo3 and Base",
-          %(<a href="Base.html#foo2(a,b)-instance-method">Base#foo2(a, a)</a> and <a href="Base.html#foo3(a,b,c)-instance-method">#foo3</a> and <a href="Base.html">Base</a>))
+          %(<a href="Base.html#foo2%28a%2Cb%29-instance-method">Base#foo2(a, a)</a> and <a href="Base.html#foo3%28a%2Cb%2Cc%29-instance-method">#foo3</a> and <a href="Base.html">Base</a>))
       end
     end
 
@@ -306,6 +330,10 @@ describe Doc::MarkdDocRenderer do
     it_renders nil, "```crystal\nHello\nWorld\n```", %(<pre><code class="language-crystal"><span class="t">Hello</span>\n<span class="t">World</span></code></pre>)
     it_renders nil, "```cr\nHello\nWorld\n```", %(<pre><code class="language-crystal"><span class="t">Hello</span>\n<span class="t">World</span></code></pre>)
     it_renders nil, "```\nHello\nWorld\n```", %(<pre><code class="language-crystal"><span class="t">Hello</span>\n<span class="t">World</span></code></pre>)
+  end
+
+  describe "renders code spans" do
+    it_renders nil, "`<style>`", %(<p><code>&lt;style&gt;</code></p>)
   end
 
   describe "renders links" do

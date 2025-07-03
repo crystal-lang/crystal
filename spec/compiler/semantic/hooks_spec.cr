@@ -235,7 +235,7 @@ describe "Semantic: hooks" do
       a1 = A1.new("x")
       a2 = A2.new(1)
       {a1.x, a2.y}
-      ), inject_primitives: false) { tuple_of([string, int32]) }
+      )) { tuple_of([string, int32]) }
   end
 
   it "does inherited macro through generic instance type (#9693)" do

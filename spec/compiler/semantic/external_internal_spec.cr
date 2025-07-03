@@ -42,7 +42,7 @@ describe "Semantic: external/internal" do
       end
 
       foo(bar: 1) + foo(baz: 1)
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   context "macros" do

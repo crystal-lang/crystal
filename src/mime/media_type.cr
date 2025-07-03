@@ -354,7 +354,7 @@ module MIME
       MediaType.new mediatype, params
     end
 
-    private def self.parse_parameter_value(reader)
+    private def self.parse_parameter_value(reader, &)
       reader = consume_whitespace(reader)
 
       # Quoted value.
@@ -447,8 +447,8 @@ module MIME
     end
 
     private def self.decode_rfc2231(encoded : String)
-      encoding, split1, rest = encoded.partition('\'')
-      lang, split2, value = rest.partition('\'')
+      encoding, _, rest = encoded.partition('\'')
+      _lang, _, value = rest.partition('\'')
 
       return if encoding.empty? || value.empty?
 

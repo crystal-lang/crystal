@@ -30,7 +30,7 @@ describe "Compiler" do
 
   it "treats all arguments post-filename as program arguments" do
     with_tempfile "args_test" do |path|
-      `bin/crystal #{Process.quote(File.join(compiler_datapath, "args_test"))} -Dother_flag -- bar #{Process.quote(path)}`
+      Process.run(ENV["CRYSTAL_SPEC_COMPILER_BIN"]? || "bin/crystal", [File.join(compiler_datapath, "args_test"), "-Dother_flag", "--", "bar", path])
 
       File.read(path).should eq(<<-FILE)
         ["-Dother_flag", "--", "bar"]

@@ -15,10 +15,14 @@ there's no more room for discussion. We'll anyway close the issue after some day
 
 If something is missing from the language it might be that it's not yet implemented or that it was purposely left out. If in doubt, just ask.
 
+Substantial changes go through an [RFC process](https://github.com/crystal-lang/rfcs).
+
+The best place to start an open discussion about potential changes is the [Crystal forum](https://forum.crystal-lang.org/c/crystal-contrib/6).
+
 ### What's needed right now
 
-You can find a list of tasks that we consider suitable for a first time contribution at
-the [newcomer label](https://github.com/crystal-lang/crystal/issues?q=is%3Aissue+is%3Aopen+label%3Acommunity%3Anewcomer).
+You can find a list of tasks that we consider suitable for a first time contribution with
+the [good first issue label](https://github.com/crystal-lang/crystal/contribute).
 
 As you feel more confident, you can keep an eye out for open issues with the following labels:
 * [`community:to-research`](https://github.com/crystal-lang/crystal/issues?utf8=%E2%9C%93&q=is%3Aissue%20is%3Aopen%20label%3Acommunity%3Ato-research): Help needed on **researching and investigating** the issue at hand; could be from going through an RFC to figure out how something _should_ be working, to go through details on a C-library we'd like to bind.
@@ -40,7 +44,7 @@ Issue tracker labels are sorted by category: community, kind, pr, status and top
 
 These are the issues where help from the community is most welcome. See above for a description on `newcomer`, `to-research`, `to-design`, `to-implement` and `to-document`.
 
-Label `in-progress` is used to signal that someone from the community is already working on the issue (since Github does not allow for a non-team member to be _assigned_ to an issue).
+Label `in-progress` is used to signal that someone from the community is already working on the issue (since GitHub does not allow for a non-team member to be _assigned_ to an issue).
 
 The label `shard-idea` refers to a feature proposal that, albeit good, is better suited as a separate shard rather than as part of the core library; so if you are looking for a shard of your own to start working on, these issues are good starting points.
 
@@ -122,6 +126,7 @@ Executing `make crystal` builds the compiler into `.build/compiler` and you can 
 The script sets up the proper environment variables that the compiler can find the standard library source files in `src/`.
 
 `make compiler_spec` runs the compiler specs. `make std_spec` runs the standard library specs.
+`make primitives_spec` runs the specs for primitive methods with an up-to-date Crystal compiler.
 You can use `make help` for a list of available make targets.
 
 ## This guide
@@ -150,25 +155,59 @@ If changes introduced to `master` branch result in conflicts, it should be merge
 5. Any change affecting the compiler or performance-critical features in the standard library
    should be checked with benchmarks how it affects performance.
 
-### Approval Process
+### Reviews
 
-1. To be accepted, a pull request requires recent approvals from at least two core team members; if the author is a core team
-   member, this counts as one approval. Approvals only count when based on the current code version (except for minor changes like fixing a typo).
-2. When the required approvals are given and CI is satisfied, a core team member can add the pull request to the
-   current development milestone. This signals that it is scheduled to be merged soon and gives another chance for final reviews.
-3. The wait time in this state depends on the gravity of the change and the activity of the previous discussion,
-   but it should at least be a full business day after the milestone was added.
-4. Before merging, make sure the pull request is properly labeled and its title appropriately describes the change.
-4. Finally, the pull request can be merged. Use squash merge to not pollute the version history of the main branch with
-   details of the pull request process. For non-trivial changes, the merge commit should contain a short description.
+Reviews are conducted by community members to validate a contribution and ensure quality standards are met.
+Approvals from Core Team members are required for accepting a pull requests. Other community members are encouraged to do reviews as well. Leave suggestions for improvements or approve a change when it looks good to you.
 
-This process is a guideline and not a strict rule so there might be occasional exceptions within reason.
-Urgent infrastructure fixes for example can be expected to skip the line.
+1. Make sure the [formal minimum requirements](#minimum-requirements) are met, for the change itself and the PR. Cross check with the referenced issue(s).
+2. Check if CI is successful. If not, try to figure out what's wrong and add a comment about it. If a failure seems unrelated, maintainers can try to rerun the job.
+3. Leave inline comments when you want to request changes or ask for clarification. Suggestions are often understood as requirements, so make it clear if a proposal is optional or you're just asking for feedback.
+
+### Accepting a Pull Request
+
+The process of accepting a pull request entails the following check list:
+
+1. At least two approvals by Core Team members; one approval if the author is a Core Team member. Only approvals based on the most recent code version count (ignoring minor changes like fixing a typo).
+2. There are no outstanding questions nor requested changes in the pull request and associated issues.
+3. Title and description appropriately represent the final state of the change.
+4. Proper labels are applied (usually at least a `topic:` and `kind:` label).
+5. Change is based on a fairly recent commit of the `master` branch. When in doubt, merge `master` and wait for CI.
+6. CI is green.
+
+When these conditions are met, a Core Team member can mark the pull request as accepted by adding it to the current development milestone.
+This signals that the PR is scheduled to be merged soon and gives another chance for final reviews.
+
+The current [development milestone](https://github.com/crystal-lang/crystal/milestones) is typically the milestone for the next release.
+During the freeze period of a release, feature enhancements are added to the milestone of the next release.
+Freeze periods are announced on the community forums and usually span two weeks before the scheduled date of a minor release.
+
+### Merge Queue
+
+The current [development milestone](https://github.com/crystal-lang/crystal/milestones) serves as a merge queue. Open pull requests on that milestone
+are eligible for being merged.
+
+Pending pull requests should usually stay in the queue for at least one full business day, allowing other reviewers to take a final look at it.
+This wait time can be extended, for example for big changes or when there was a lot of recent activity in the discussion.
+Urgent bug and regression fixes can skip the line.
+
+If reasonable objection or questions arise while waiting for merge, the pull request must be removed from the milestone until they are resolved.
+
+It's good practice to have a single maintainer responsible for operating the merge queue.
+
+### Merging
+
+Before merging, make sure the pull request has been on the merge queue for some time (usually 1+ business days) and there has not been any
+more recent discussion that questions the current state of the change.
+If conditions are met, the pull request can finally be merged. Use squash merge to not pollute the version history of the main branch with
+details of the pull request process. For non-trivial changes, the merge commit should contain a short description.
 
 ### For maintainers with push access
 
 1. Do not directly commit to the `master` branch. Always create a feature branch and pull request.
 2. Feature branches should typically be created in your fork. The main repo should only contain essential branches.
+   * CI changes affecting circle CI only run for branches on the main repo. They should be prefixed `ci/` to trigger a maintenance release.
+   * Long-running feature branches that accept contributions must be pushed to the main repo in order to allow PRs targeting that branch.
 
 ## Git pre-commit hook
 

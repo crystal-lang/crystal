@@ -50,7 +50,7 @@ describe "Semantic: generic class" do
       end
 
       Bar(Int32).new.t
-      ), inject_primitives: false) { int32.metaclass }
+      )) { int32.metaclass }
   end
 
   it "inherits from generic with forwarding (2)" do
@@ -143,7 +143,7 @@ describe "Semantic: generic class" do
       end
 
       Bar(Baz).new.foo.baz
-      ), inject_primitives: false) { int32 }
+      )) { int32 }
   end
 
   it "inherits non-generic to generic (1)" do
@@ -319,7 +319,7 @@ describe "Semantic: generic class" do
       ptr = Pointer(Foo(Int32)).malloc(1_u64)
       ptr.value = Bar.new
       ptr.value.foo
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "creates pointer of generic type and uses it (2)" do
@@ -336,7 +336,7 @@ describe "Semantic: generic class" do
       ptr = Pointer(Foo(Int32)).malloc(1_u64)
       ptr.value = Bar(Int32).new
       ptr.value.foo
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "errors if inheriting generic type and not specifying type vars (#460)" do
@@ -509,7 +509,7 @@ describe "Semantic: generic class" do
       "use a more specific type"
   end
 
-  pending_win32 "errors on too nested generic instance" do
+  it "errors on too nested generic instance" do
     assert_error %(
       class Foo(T)
       end
@@ -523,7 +523,7 @@ describe "Semantic: generic class" do
       "generic type too nested"
   end
 
-  pending_win32 "errors on too nested generic instance, with union type" do
+  it "errors on too nested generic instance, with union type" do
     assert_error %(
       class Foo(T)
       end
@@ -537,7 +537,7 @@ describe "Semantic: generic class" do
       "generic type too nested"
   end
 
-  pending_win32 "errors on too nested tuple instance" do
+  it "errors on too nested tuple instance" do
     assert_error %(
       def foo
         {typeof(foo)}
@@ -654,16 +654,15 @@ describe "Semantic: generic class" do
       )) { nilable int32 }
   end
 
-  it "doesn't duplicate overload on generic class class method (#2385)" do
-    error = assert_error <<-CR,
+  it "doesn't duplicate overload on generic class with class method (#2385)" do
+    error = assert_error <<-CRYSTAL
       class Foo(T)
         def self.foo(x : Int32)
         end
       end
 
       Foo(String).foo(35.7)
-      CR
-      inject_primitives: false
+      CRYSTAL
 
     error.to_s.lines.count(" - Foo(T).foo(x : Int32)").should eq(1)
   end
@@ -938,7 +937,7 @@ describe "Semantic: generic class" do
       a = Pointer(At).malloc(1_u64)
       a.value = Bt(Int32).new
       a.value.foo
-      )) { string }
+      ), inject_primitives: true) { string }
   end
 
   it "unifies generic metaclass types" do
@@ -964,7 +963,7 @@ describe "Semantic: generic class" do
 
       Gen(3).new("a")
       ),
-      "no overload matches"
+      "expected argument #1 to 'Gen(3).new' to be T, not String"
   end
 
   it "doesn't crash when matching restriction against number literal (2) (#3157)" do
@@ -1020,7 +1019,7 @@ describe "Semantic: generic class" do
       end
 
       Foo::Bar.new(:a).a
-      ), inject_primitives: false) { symbol }
+      )) { symbol }
   end
 
   it "restricts virtual generic instance type against generic (#3351)" do
@@ -1149,6 +1148,19 @@ describe "Semantic: generic class" do
       )) { generic_class "Foo", 1.int32 }
   end
 
+  it "can use type var that resolves to number in restriction using Int128" do
+    assert_type(%(
+      class Foo(N)
+        def foo : Foo(N)
+          self
+        end
+      end
+
+      f = Foo(1_i128).new
+      f.foo
+      )) { generic_class "Foo", 1.int128 }
+  end
+
   it "doesn't consider unbound generic instantiations as concrete (#7200)" do
     assert_type(%(
       module Moo
@@ -1197,7 +1209,7 @@ describe "Semantic: generic class" do
 
       Gen(String).new
       ),
-      "method Gen(String)#valid? must return Bool but it is returning Nil"
+      "method Gen(String)#valid? must return Bool but it is returning Nil", inject_primitives: true
   end
 
   it "resolves T through metaclass inheritance (#7914)" do
@@ -1268,6 +1280,6 @@ describe "Semantic: generic class" do
       end
 
       Bar(Int32).new.@foo
-      ), inject_primitives: false) { generic_class("Foo", generic_class("Parent", int32).virtual_type.metaclass) }
+      )) { generic_class("Foo", generic_class("Parent", int32).virtual_type.metaclass) }
   end
 end

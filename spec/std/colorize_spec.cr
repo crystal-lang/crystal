@@ -1,5 +1,6 @@
 require "spec"
 require "colorize"
+require "../support/env"
 
 private def colorize(obj, *args)
   obj.colorize(*args).toggle(true)
@@ -17,7 +18,70 @@ private class ColorizeToS
   end
 end
 
+private class ColorizeTTY < IO
+  def tty? : Bool
+    true
+  end
+
+  def read(slice : Bytes)
+    0
+  end
+
+  def write(slice : Bytes) : Nil
+  end
+end
+
 describe "colorize" do
+  it ".default_enabled?" do
+    io = IO::Memory.new
+    tty = ColorizeTTY.new
+
+    with_env("TERM": nil, "NO_COLOR": nil) do
+      Colorize.default_enabled?(io).should be_false
+      Colorize.default_enabled?(tty).should be_true
+      Colorize.default_enabled?(io, io).should be_false
+      Colorize.default_enabled?(io, tty).should be_false
+      Colorize.default_enabled?(tty, io).should be_false
+      Colorize.default_enabled?(tty, tty).should be_true
+    end
+
+    with_env("TERM": nil, "NO_COLOR": "") do
+      Colorize.default_enabled?(io).should be_false
+      Colorize.default_enabled?(tty).should be_true
+      Colorize.default_enabled?(io, io).should be_false
+      Colorize.default_enabled?(io, tty).should be_false
+      Colorize.default_enabled?(tty, io).should be_false
+      Colorize.default_enabled?(tty, tty).should be_true
+    end
+
+    with_env("TERM": nil, "NO_COLOR": "1") do
+      Colorize.default_enabled?(io).should be_false
+      Colorize.default_enabled?(tty).should be_false
+      Colorize.default_enabled?(io, io).should be_false
+      Colorize.default_enabled?(io, tty).should be_false
+      Colorize.default_enabled?(tty, io).should be_false
+      Colorize.default_enabled?(tty, tty).should be_false
+    end
+
+    with_env("TERM": "xterm", "NO_COLOR": nil) do
+      Colorize.default_enabled?(io).should be_false
+      Colorize.default_enabled?(tty).should be_true
+      Colorize.default_enabled?(io, io).should be_false
+      Colorize.default_enabled?(io, tty).should be_false
+      Colorize.default_enabled?(tty, io).should be_false
+      Colorize.default_enabled?(tty, tty).should be_true
+    end
+
+    with_env("TERM": "dumb", "NO_COLOR": nil) do
+      Colorize.default_enabled?(io).should be_false
+      Colorize.default_enabled?(tty).should be_false
+      Colorize.default_enabled?(io, io).should be_false
+      Colorize.default_enabled?(io, tty).should be_false
+      Colorize.default_enabled?(tty, io).should be_false
+      Colorize.default_enabled?(tty, tty).should be_false
+    end
+  end
+
   it "colorizes without change" do
     colorize("hello").to_s.should eq("hello")
   end
@@ -43,10 +107,14 @@ describe "colorize" do
 
   it "colorizes foreground with 8-bit color" do
     colorize("hello").fore(Colorize::Color256.new(123u8)).to_s.should eq("\e[38;5;123mhello\e[0m")
+    colorize("hello").fore(123u8).to_s.should eq("\e[38;5;123mhello\e[0m")
+    colorize("hello", 123_u8).to_s.should eq("\e[38;5;123mhello\e[0m")
   end
 
   it "colorizes foreground with true color" do
     colorize("hello").fore(Colorize::ColorRGB.new(12u8, 34u8, 56u8)).to_s.should eq("\e[38;2;12;34;56mhello\e[0m")
+    colorize("hello").fore(12u8, 34u8, 56u8).to_s.should eq("\e[38;2;12;34;56mhello\e[0m")
+    colorize("hello", 12u8, 34u8, 56u8).to_s.should eq("\e[38;2;12;34;56mhello\e[0m")
   end
 
   it "colorizes background" do
@@ -70,20 +138,47 @@ describe "colorize" do
 
   it "colorizes background with 8-bit color" do
     colorize("hello").back(Colorize::Color256.new(123u8)).to_s.should eq("\e[48;5;123mhello\e[0m")
+    colorize("hello").back(123u8).to_s.should eq("\e[48;5;123mhello\e[0m")
   end
 
   it "colorizes background with true color" do
     colorize("hello").back(Colorize::ColorRGB.new(12u8, 34u8, 56u8)).to_s.should eq("\e[48;2;12;34;56mhello\e[0m")
+    colorize("hello").back(12u8, 34u8, 56u8).to_s.should eq("\e[48;2;12;34;56mhello\e[0m")
   end
 
   it "colorizes mode" do
     colorize("hello").bold.to_s.should eq("\e[1mhello\e[0m")
     colorize("hello").bright.to_s.should eq("\e[1mhello\e[0m")
     colorize("hello").dim.to_s.should eq("\e[2mhello\e[0m")
+    colorize("hello").italic.to_s.should eq("\e[3mhello\e[0m")
     colorize("hello").underline.to_s.should eq("\e[4mhello\e[0m")
     colorize("hello").blink.to_s.should eq("\e[5mhello\e[0m")
+    colorize("hello").blink_fast.to_s.should eq("\e[6mhello\e[0m")
     colorize("hello").reverse.to_s.should eq("\e[7mhello\e[0m")
     colorize("hello").hidden.to_s.should eq("\e[8mhello\e[0m")
+    colorize("hello").strikethrough.to_s.should eq("\e[9mhello\e[0m")
+    colorize("hello").double_underline.to_s.should eq("\e[21mhello\e[0m")
+    colorize("hello").overline.to_s.should eq("\e[53mhello\e[0m")
+  end
+
+  it "prints colorize ANSI escape codes" do
+    Colorize.with.bold.ansi_escape.should eq("\e[1m")
+    Colorize.with.bright.ansi_escape.should eq("\e[1m")
+    Colorize.with.dim.ansi_escape.should eq("\e[2m")
+    Colorize.with.italic.ansi_escape.should eq("\e[3m")
+    Colorize.with.underline.ansi_escape.should eq("\e[4m")
+    Colorize.with.blink.ansi_escape.should eq("\e[5m")
+    Colorize.with.blink_fast.ansi_escape.should eq("\e[6m")
+    Colorize.with.reverse.ansi_escape.should eq("\e[7m")
+    Colorize.with.hidden.ansi_escape.should eq("\e[8m")
+    Colorize.with.strikethrough.ansi_escape.should eq("\e[9m")
+    Colorize.with.double_underline.ansi_escape.should eq("\e[21m")
+    Colorize.with.overline.ansi_escape.should eq("\e[53m")
+  end
+
+  it "only prints colorize ANSI escape codes" do
+    colorize("hello").red.bold.ansi_escape.should eq("\e[31;1m")
+    colorize("hello").bold.dim.underline.blink.reverse.hidden.ansi_escape.should eq("\e[1;2;4;5;7;8m")
   end
 
   it "colorizes mode combination" do
@@ -116,12 +211,6 @@ describe "colorize" do
   it "raises on unknown background color" do
     expect_raises ArgumentError, "Unknown color: brown" do
       colorize("hello").back(:brown)
-    end
-  end
-
-  it "raises on unknown mode" do
-    expect_raises ArgumentError, "Unknown mode: bad" do
-      colorize("hello").mode(:bad)
     end
   end
 

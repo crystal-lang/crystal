@@ -441,6 +441,22 @@ describe "Code gen: class" do
       )).to_i.should eq('a'.ord)
   end
 
+  it "never considers read instance var as closure (#12181)" do
+    codegen(%(
+      class Foo
+        @x = 1
+      end
+
+      def bug
+        ->{
+          Foo.new.@x
+        }
+      end
+
+      bug
+      ))
+  end
+
   it "runs with nilable instance var" do
     run("
       struct Nil
@@ -643,6 +659,104 @@ describe "Code gen: class" do
       )).to_string.should eq("Baz")
   end
 
+  it "does not combine metaclass types with same name but different file scopes (#15503)" do
+    run(<<-CRYSTAL, Int32, filename: "foo.cr").should eq(11)
+      module Foo
+        def self.foo
+          1
+        end
+      end
+
+      alias Bar = Foo
+
+      {% Bar %} # forces immediate resolution of `Bar`
+
+      private module Foo
+        def self.foo
+          10
+        end
+      end
+
+      module Baz
+        def self.foo
+          100
+        end
+      end
+
+      def foo(x)
+        x.foo
+      end
+
+      foo(Foo || Baz) &+ foo(Bar || Baz)
+      CRYSTAL
+  end
+
+  it "does not combine virtual types with same name but different file scopes" do
+    run(<<-CRYSTAL, Int32, filename: "foo.cr").should eq(101)
+      class Foo
+        def foo
+          1
+        end
+      end
+
+      class Bar1 < Foo
+        def foo
+          10
+        end
+      end
+
+      alias Fred = Foo
+      {% Fred %} # forces immediate resolution of `Foo`
+
+      private class Foo
+        def foo
+          100
+        end
+      end
+
+      private class Bar2 < Foo
+        def foo
+          1000
+        end
+      end
+
+      Fred.new.as(Fred).foo &+ Foo.new.as(Foo).foo
+      CRYSTAL
+  end
+
+  it "does not combine virtual metaclass types with same name but different file scopes" do
+    run(<<-CRYSTAL, Int32, filename: "foo.cr").should eq(101)
+      class Foo
+        def self.foo
+          1
+        end
+      end
+
+      class Bar1 < Foo
+        def self.foo
+          10
+        end
+      end
+
+      alias Fred = Foo
+      {% Fred %} # forces immediate resolution of `Foo`
+
+      private class Foo
+        def self.foo
+          100
+        end
+      end
+
+      private class Bar2 < Foo
+        def self.foo
+          1000
+        end
+      end
+
+      Fred.as(Fred.class).foo &+ Foo.as(Foo.class).foo
+      CRYSTAL
+  end
+
   it "builds generic class bug" do
     codegen(%(
       abstract class Base
@@ -841,8 +955,6 @@ describe "Code gen: class" do
 
   it "codegens singleton (#718)" do
     run(%(
-      require "prelude"
-
       class Singleton
         @@instance = new
 
@@ -1196,5 +1308,107 @@ describe "Code gen: class" do
 
       Foo(Int32).new.x
       )).to_i.should eq(42)
+  end
+
+  pending "codegens assignment of generic metaclasses (1) (#10394)" do
+    run(%(
+      class Class
+        def name : String
+          {{ @type.name.stringify }}
+        end
+      end
+
+      class Foo(T); end
+      class Bar(T) < Foo(T); end
+
+      x = Foo
+      x = Bar
+      x.name
+      )).to_string.should eq("Bar(T)")
+  end
+
+  pending "codegens assignment of generic metaclasses (2) (#10394)" do
+    run(%(
+      class Class
+        def name : String
+          {{ @type.name.stringify }}
+        end
+      end
+
+      class Foo(T); end
+      class Bar(T) < Foo(T); end
+
+      x = Foo
+      x = Bar(Int32)
+      x.name
+      )).to_string.should eq("Bar(Int32)")
+  end
+
+  it "codegens assignment of generic metaclasses (3) (#10394)" do
+    run(%(
+      class Class
+        def name : String
+          {{ @type.name.stringify }}
+        end
+      end
+
+      class Foo(T); end
+      class Bar(T) < Foo(T); end
+
+      x = Foo(Int32)
+      x = Bar(Int32)
+      x.name
+      )).to_string.should eq("Bar(Int32)")
+  end
+
+  it "codegens assignment of generic metaclasses (4) (#10394)" do
+    run(%(
+      class Class
+        def name : String
+          {{ @type.name.stringify }}
+        end
+      end
+
+      class Foo(T); end
+      class Bar(T) < Foo(T); end
+
+      x = Foo(String)
+      x = Bar(Int32)
+      x.name
+      )).to_string.should eq("Bar(Int32)")
+  end
+
+  it "codegens assignment of generic metaclasses, base is non-generic (1) (#10394)" do
+    run(%(
+      class Class
+        def name : String
+          {{ @type.name.stringify }}
+        end
+      end
+
+      class Foo; end
+      class Bar(T) < Foo; end
+
+      x = Foo
+      x = Bar
+      x.name
+      )).to_string.should eq("Bar(T)")
+  end
+
+  it "codegens assignment of generic metaclasses, base is non-generic (2) (#10394)" do
+    run(%(
+      class Class
+        def name : String
+          {{ @type.name.stringify }}
+        end
+      end
+
+      class Foo; end
+      class Bar(T) < Foo; end
+
+      x = Foo
+      x = Bar(Int32)
+      x.name
+      )).to_string.should eq("Bar(Int32)")
   end
 end

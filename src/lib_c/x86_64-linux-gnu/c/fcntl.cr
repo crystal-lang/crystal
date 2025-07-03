@@ -10,6 +10,7 @@ lib LibC
   FD_CLOEXEC =         1
   O_CLOEXEC  = 0o2000000
   O_CREAT    =     0o100
+  O_EXCL     =     0o200
   O_NOFOLLOW =  0o400000
   O_TRUNC    =    0o1000
   O_APPEND   =    0o2000
@@ -18,6 +19,7 @@ lib LibC
   O_RDONLY   =       0o0
   O_RDWR     =       0o2
   O_WRONLY   =       0o1
+  AT_FDCWD   =      -100
 
   struct Flock
     l_type : Short

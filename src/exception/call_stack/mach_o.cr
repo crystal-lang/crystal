@@ -9,18 +9,30 @@ end
 struct Exception::CallStack
   @@image_slide : LibC::Long?
 
-  protected def self.load_dwarf_impl
+  protected def self.load_debug_info_impl : Nil
     read_dwarf_sections
   end
 
-  protected def self.read_dwarf_sections
+  protected def self.read_dwarf_sections : Nil
     locate_dsym_bundle do |mach_o|
-      mach_o.read_section?("__debug_line") do |sh, io|
-        @@dwarf_line_numbers = Crystal::DWARF::LineNumbers.new(io, sh.size)
+      line_strings = mach_o.read_section?("__debug_line_str") do |sh, io|
+        Crystal::DWARF::Strings.new(io, sh.offset, sh.size)
       end
 
       strings = mach_o.read_section?("__debug_str") do |sh, io|
         Crystal::DWARF::Strings.new(io, sh.offset, sh.size)
+      end
+
+      mach_o.read_section?("__debug_line") do |sh, io|
+        @@dwarf_line_numbers = Crystal::DWARF::LineNumbers.new(io, sh.size, strings: strings, line_strings: line_strings)
+      end
+
+      abbrevs_tables = mach_o.read_section?("__debug_abbrev") do |sh, io|
+        all = {} of Int64 => Array(Crystal::DWARF::Abbrev)
+        while (offset = io.pos - sh.offset) < sh.size
+          all[offset] = Crystal::DWARF::Abbrev.read(io)
+        end
+        all
       end
 
       mach_o.read_section?("__debug_info") do |sh, io|
@@ -29,11 +41,13 @@ struct Exception::CallStack
         while (offset = io.pos - sh.offset) < sh.size
           info = Crystal::DWARF::Info.new(io, offset)
 
-          mach_o.read_section?("__debug_abbrev") do |sh, io|
-            info.read_abbreviations(io)
+          if abbrevs_tables
+            if abbreviations = abbrevs_tables[info.debug_abbrev_offset]?
+              info.abbreviations = abbreviations
+            end
           end
 
-          parse_function_names_from_dwarf(info, strings) do |low_pc, high_pc, name|
+          parse_function_names_from_dwarf(info, strings, line_strings) do |low_pc, high_pc, name|
             names << {low_pc, high_pc, name}
           end
         end
@@ -57,7 +71,7 @@ struct Exception::CallStack
   # or within a `foo.dSYM` bundle for a program named `foo`.
   #
   # See <http://wiki.dwarfstd.org/index.php?title=Apple%27s_%22Lazy%22_DWARF_Scheme> for details.
-  private def self.locate_dsym_bundle
+  private def self.locate_dsym_bundle(&)
     program = Process.executable_path
     return unless program
 
@@ -97,10 +111,10 @@ struct Exception::CallStack
       end
     end
 
-    program = String.new(buffer)
+    program = File.realpath(String.new(buffer))
 
     LibC._dyld_image_count.times do |i|
-      if program == String.new(LibC._dyld_get_image_name(i))
+      if program == File.realpath(String.new(LibC._dyld_get_image_name(i)))
         return LibC._dyld_get_image_vmaddr_slide(i)
       end
     end

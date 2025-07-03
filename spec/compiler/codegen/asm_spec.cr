@@ -3,6 +3,14 @@ require "../../spec_helper"
 describe "Code gen: asm" do
   # TODO: arm asm tests
   {% if flag?(:i386) || flag?(:x86_64) %}
+    it "passes correct string length to LLVM" do
+      run <<-CRYSTAL
+        asm("// 😂😂
+        nop
+        nop")
+        CRYSTAL
+    end
+
     it "codegens without inputs" do
       run(%(
         dst = uninitialized Int32
@@ -43,6 +51,14 @@ describe "Code gen: asm" do
           )
         c
         )).to_i.should eq(42)
+    end
+
+    it "codegens with intel dialect" do
+      run(<<-CRYSTAL).to_i.should eq(1234)
+        dst = uninitialized Int32
+        asm("mov dword ptr [$0], 1234" :: "r"(pointerof(dst)) :: "intel")
+        dst
+        CRYSTAL
     end
   {% end %}
 end

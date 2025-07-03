@@ -98,7 +98,7 @@ end
 
 def parse_rectangles
   rects = [] of Rectangle
-  lines = File.read("#{__DIR__}/tv.txt").split('\n').map { |line| line.rstrip }
+  lines = File.read("#{__DIR__}/tv.txt").split('\n').map(&.rstrip)
   lines.each_with_index do |line, y|
     x = 0
     line.each_char do |c|
@@ -133,7 +133,7 @@ puts "Rects: #{rects.size}"
 begin
   while true
     SDL.poll_events do |event|
-      if event.type == LibSDL::QUIT || event.type == LibSDL::KEYDOWN
+      if event.type.in?(LibSDL::QUIT, LibSDL::KEYDOWN)
         ms = SDL.ticks - start
         puts "#{frames} frames in #{ms} ms"
         puts "Average FPS: #{frames / (ms * 0.001)}"
@@ -146,7 +146,7 @@ begin
 
     (height // 10).times do |h|
       (width // 10).times do |w|
-        rect = rects.find { |rect| rect.contains?(w, h) }
+        rect = rects.find(&.contains?(w, h))
         10.times do |y|
           10.times do |x|
             surface[x + 10 * w, y + 10 * h] = rect ? (rect.light? ? color_maker.light_color : color_maker.dark_color) : color_maker.black_color
