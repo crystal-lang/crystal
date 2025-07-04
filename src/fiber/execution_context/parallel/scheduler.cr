@@ -98,6 +98,23 @@ module Fiber::ExecutionContext
         if fiber = @runnables.shift?
           return fiber
         end
+
+        # the following dequeues ain't so quick and will block the current fiber
+        # (may have already been stolen and waiting for resumable), but that's
+        # not a problem with only one scheduler, so let's spare a switch to the
+        # run loop
+        if @execution_context.capacity == 1
+          # try to refill local queue
+          if fiber = @global_queue.grab?(@runnables, divisor: @execution_context.size)
+            return fiber
+          end
+
+          # run the event loop to see if any event is activable
+          list = Fiber::List.new
+          if @execution_context.lock_evloop? { @event_loop.run(pointerof(list), blocking: false) }
+            return enqueue_many(pointerof(list))
+          end
+        end
       end
 
       protected def run_loop : Nil
