@@ -3,17 +3,21 @@ require "../scheduler"
 require "../runnables"
 
 module Fiber::ExecutionContext
-  class MultiThreaded
-    # MT fiber scheduler.
+  class Parallel
+    # Individual scheduler for the parallel execution context.
     #
-    # Owns a single thread inside a MT execution context.
+    # The execution context itself doesn't run the fibers. The fibers actually
+    # run in the schedulers. Each scheduler in the context increases the
+    # parallelism by one. For example a parallel context with 8 schedulers means
+    # that a maximum of 8 fibers may run at the same time in different system
+    # threads.
     class Scheduler
       include ExecutionContext::Scheduler
 
       getter name : String
 
       # :nodoc:
-      property execution_context : MultiThreaded
+      property execution_context : Parallel
       protected property! thread : Thread
       protected property! main_fiber : Fiber
 
@@ -25,6 +29,7 @@ module Fiber::ExecutionContext
       @spinning = false
       @waiting = false
       @parked = false
+      @shutdown = Shutdown::NO
 
       protected def initialize(@execution_context, @name)
         @global_queue = @execution_context.global_queue
@@ -33,15 +38,23 @@ module Fiber::ExecutionContext
       end
 
       # :nodoc:
+      enum Shutdown
+        NO  = 0
+        NOW
+      end
+
+      protected def shutdown(@shutdown : Shutdown) : Nil
+      end
+
+      # :nodoc:
       def spawn(*, name : String? = nil, same_thread : Bool, &block : ->) : Fiber
         raise RuntimeError.new("#{self.class.name}#spawn doesn't support same_thread:true") if same_thread
         self.spawn(name: name, &block)
       end
 
-      # Unlike `ExecutionContext::MultiThreaded#enqueue` this method is only
-      # safe to call on `ExecutionContext.current` which should always be the
-      # case, since cross context enqueues must call
-      # `ExecutionContext::MultiThreaded#enqueue` through `Fiber#enqueue`.
+      # Unlike `Parallel#enqueue` this method is only safe to call on
+      # `ExecutionContext.current` which should always be the case, since cross
+      # context enqueues must call `Parallel#enqueue` through `Fiber#enqueue`.
       protected def enqueue(fiber : Fiber) : Nil
         Crystal.trace :sched, "enqueue", fiber: fiber
         @runnables.push(fiber)
@@ -83,6 +96,8 @@ module Fiber::ExecutionContext
       end
 
       private def quick_dequeue? : Fiber?
+        return if @shutdown == Shutdown::NOW
+
         # every once in a while: dequeue from global queue to avoid two fibers
         # constantly respawing each other to completely occupy the local queue
         if (@tick &+= 1) % 61 == 0
@@ -101,6 +116,18 @@ module Fiber::ExecutionContext
         Crystal.trace :sched, "started"
 
         loop do
+          if @shutdown == Shutdown::NOW
+            @runnables.drain
+
+            # we may have been the last running scheduler, waiting on the event
+            # loop while there are pending events for example; we shall resume a
+            # scheduler in our stead
+            @execution_context.wake_scheduler
+
+            Crystal.trace :sched, "shutdown"
+            break
+          end
+
           if fiber = find_next_runnable
             spin_stop if @spinning
             resume fiber
@@ -169,10 +196,12 @@ module Fiber::ExecutionContext
         # loop: park the thread until another scheduler or another context
         # enqueues a fiber
         @execution_context.park_thread do
+          # don't park the thread when told to shutdown
+          return unless @shutdown == Shutdown::NO
+
           # by the time we acquire the lock, another thread may have enqueued
           # fiber(s) and already tried to wakeup a thread (race) so we must
           # check again; we don't check the scheduler's local queue (it's empty)
-
           yield @global_queue.unsafe_grab?(@runnables, divisor: @execution_context.size)
           yield try_steal?
 
@@ -183,7 +212,7 @@ module Fiber::ExecutionContext
 
         # immediately mark the scheduler as spinning (we just unparked); we
         # don't increment the number of spinning threads since
-        # `MultiThreaded#wake_scheduler` already did
+        # `Parallel#wake_scheduler` already did
         @spinning = true
       end
 

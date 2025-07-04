@@ -1,30 +1,57 @@
 require "./global_queue"
-require "./multi_threaded/scheduler"
+require "./parallel/scheduler"
 
 module Fiber::ExecutionContext
-  # A multi-threaded execution context which owns one or more threads. It's
-  # fully concurrent and fully parallel.
+  # Parallel execution context.
   #
-  # Owns multiple threads and starts a scheduler in each one. The number of
-  # threads is dynamic. Setting the minimum and maximum to the same value will
-  # start a fixed number of threads.
+  # Fibers running in this context run both concurrently and in parallel to each
+  # others, in addition to the other fibers running in other execution contexts.
   #
-  # Fibers running in this context can be resumed by any thread in the context.
-  # Fibers can run concurrently and in parallel to each other, in addition to
-  # running in parallel to any other fiber running in other contexts.
+  # The context internally keeps a number of fiber schedulers, each scheduler
+  # being able to start running on a system thread, so multiple schedulers can
+  # run in parallel. The fibers are resumable by any scheduler in the context,
+  # they can thus move from one system thread to another at any time.
+  #
+  # The actual parallelism is controlled by the execution context. As the need
+  # for parallelism increases, for example more fibers running longer, the more
+  # schedulers will start (and thus system threads), as the need decreases, for
+  # example not enough fibers, the schedulers will pause themselves and
+  # parallelism will decrease.
+  #
+  # For example: we can start a parallel context to run consumer fibers, while
+  # the default context produces values. Because the consumer fibers can run in
+  # parallel, we must protect accesses to the shared *value* variable. Running
+  # the example without `Atomic#add` would produce a different result every
+  # time!
   #
   # ```
-  # mt_context = Fiber::ExecutionContext::MultiThreaded.new("worker-threads", 4)
+  # require "wait_group"
   #
-  # 10.times do
-  #   mt_context.spawn do
-  #     do_something
+  # consumers = Fiber::ExecutionContext::Parallel.new("consumers", 8)
+  # channel = Channel(Int32).new(64)
+  # wg = WaitGroup.new(32)
+  #
+  # result = Atomic.new(0)
+  #
+  # 32.times do
+  #   consumers.spawn do
+  #     while value = channel.receive?
+  #       result.add(value)
+  #     end
+  #   ensure
+  #     wg.done
   #   end
   # end
   #
-  # sleep
+  # 1024.times { |i| channel.send(i) }
+  # channel.close
+  #
+  # # wait for all workers to be done
+  # wg.wait
+  #
+  # p result.get # => 523776
   # ```
-  class MultiThreaded
+  class Parallel
     include ExecutionContext
 
     getter name : String
@@ -42,44 +69,22 @@ module Fiber::ExecutionContext
 
     @parked = Atomic(Int32).new(0)
     @spinning = Atomic(Int32).new(0)
-    @size : Range(Int32, Int32)
 
     # :nodoc:
     protected def self.default(maximum : Int32) : self
-      new("DEFAULT", 1..maximum, hijack: true)
+      new("DEFAULT", maximum, hijack: true)
     end
 
-    # Starts a context with a *maximum* number of threads. Threads aren't started
-    # right away but will be started as needed to increase parallelism up to the
-    # configured maximum.
+    # Starts a context with a *maximum* parallelism. The context starts with an
+    # initial parallelism of zero. It will grow to one when a fiber is spawned,
+    # then the actual parallelism will keep increasing and decreasing as needed,
+    # but will never go past the configured *maximum*.
     def self.new(name : String, maximum : Int32) : self
-      new(name, 0..maximum)
+      new(name, maximum, hijack: false)
     end
 
-    # Starts a context with a *maximum* number of threads. Threads aren't started
-    # right away but will be started as needed to increase parallelism up to the
-    # configured maximum.
-    def self.new(name : String, size : Range(Nil, Int32)) : self
-      new(name, Range.new(0, size.end, size.exclusive?))
-    end
-
-    # Starts a context with a minimum and maximum number of threads. Only the
-    # minimum number of threads will be started right away. The minimum can be 0
-    # (or nil) in which case no threads will be started. More threads will be
-    # started as needed to increase parallelism up to the configured maximum.
-    def self.new(name : String, size : Range(Int32, Int32)) : self
-      new(name, size, hijack: false)
-    end
-
-    protected def initialize(@name : String, size : Range(Int32, Int32), hijack : Bool)
-      @size =
-        if size.exclusive?
-          (size.begin)..(size.end - 1)
-        else
-          size
-        end
-      raise ArgumentError.new("#{self.class.name} needs at least one thread") if capacity < 1
-      raise ArgumentError.new("#{self.class.name} invalid range") if @size.begin > @size.end
+    protected def initialize(@name : String, capacity : Int32, hijack : Bool)
+      capacity = capacity.clamp(1..)
 
       @mutex = Thread::Mutex.new
       @condition = Thread::ConditionVariable.new
@@ -90,8 +95,8 @@ module Fiber::ExecutionContext
 
       @rng = Random::PCG32.new
 
-      start_schedulers
-      start_initial_threads(hijack)
+      start_schedulers(capacity)
+      @threads << hijack_current_thread(@schedulers.first) if hijack
 
       ExecutionContext.execution_contexts.push(self)
     end
@@ -103,7 +108,7 @@ module Fiber::ExecutionContext
 
     # The maximum number of threads that can be started.
     def capacity : Int32
-      @size.end
+      @schedulers.size
     end
 
     # :nodoc:
@@ -123,22 +128,9 @@ module Fiber::ExecutionContext
     # OPTIMIZE: consider storing schedulers to an array-like object that would
     # use an atomic/fence to make sure that @size can only be incremented
     # *after* the value has been written to @buffer.
-    private def start_schedulers
+    private def start_schedulers(capacity)
       capacity.times do |index|
         @schedulers << Scheduler.new(self, "#{@name}-#{index}")
-      end
-    end
-
-    private def start_initial_threads(hijack)
-      offset = 0
-
-      if hijack
-        @threads << hijack_current_thread(@schedulers[0])
-        offset += 1
-      end
-
-      offset.upto(@size.begin - 1) do |index|
-        @threads << start_thread(@schedulers[index])
       end
     end
 
@@ -172,6 +164,61 @@ module Fiber::ExecutionContext
       end
     end
 
+    # Resizes the context to the new *maximum* parallelism.
+    #
+    # The new *maximum* can grow, in which case more schedulers are started to
+    # eventually increase the parallelism.
+    #
+    # The new *maximum* can also shrink, in which case the overflow schedulers
+    # are removed and told to shutdown immediately. The actual shutdown is
+    # cooperative, so running schedulers won't stop until their current fiber
+    # tries to switch to another fiber.
+    def resize(maximum : Int32) : Nil
+      maximum = maximum.clamp(1..) # FIXME: raise if maximum < 1
+      removed_schedulers = nil
+
+      @mutex.synchronize do
+        # can run in parallel to #steal that dereferences @schedulers (once)
+        # without locking the mutex, so we dup the schedulers, mutate the copy,
+        # and eventually assign the copy as @schedulers; this way #steal should
+        # only ever saw a complete and valid array.
+        new_schedulers = nil
+        new_capacity = maximum
+        old_threads = @threads
+        old_schedulers = @schedulers
+        old_capacity = capacity
+
+        if new_capacity > old_capacity
+          @schedulers = Array(Scheduler).new(new_capacity) do |index|
+            old_schedulers[index]? || Scheduler.new(self, "#{@name}-#{index}")
+          end
+          threads = Array(Thread).new(new_capacity)
+          old_threads.each { |thread| threads << thread }
+          @threads = threads
+        elsif new_capacity < old_capacity
+          # tell the overflow schedulers to shutdown
+          removed_schedulers = old_schedulers[new_capacity..]
+          removed_schedulers.each(&.shutdown(:now))
+
+          # resize
+          @schedulers = old_schedulers[0...new_capacity]
+          @threads = old_threads[0...new_capacity]
+
+          # wakeup all waiting schedulers so they can shutdown
+          @condition.broadcast
+          @event_loop.interrupt
+        end
+      end
+
+      return unless removed_schedulers
+
+      # drain the local queues of removed schedulers because they're no longer
+      # available for stealing
+      removed_schedulers.each do |scheduler|
+        scheduler.@runnables.drain
+      end
+    end
+
     # :nodoc:
     def spawn(*, name : String? = nil, same_thread : Bool, &block : ->) : Fiber
       raise ArgumentError.new("#{self.class.name}#spawn doesn't support same_thread:true") if same_thread
@@ -194,13 +241,14 @@ module Fiber::ExecutionContext
     # Picks a scheduler at random then iterates all schedulers to try to steal
     # fibers from.
     protected def steal(& : Scheduler ->) : Nil
-      return if size == 1
+      return if capacity == 1
 
+      schedulers = @schedulers
       i = @rng.next_int
-      n = @schedulers.size
+      n = schedulers.size
 
       n.times do |j|
-        if scheduler = @schedulers[(i &+ j) % n]?
+        if scheduler = schedulers[(i &+ j) % n]?
           yield scheduler
         end
       end
@@ -278,11 +326,11 @@ module Fiber::ExecutionContext
       # check if we can start another thread; no need for atomics, the values
       # shall be rather stable over time and we check them again inside the
       # mutex
-      return if @threads.size == capacity
+      return if @threads.size >= capacity
 
       @mutex.synchronize do
         index = @threads.size
-        return if index == capacity # check again
+        return if index >= capacity # check again
 
         @threads << start_thread(@schedulers[index])
       end
