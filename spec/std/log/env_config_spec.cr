@@ -53,6 +53,24 @@ describe "Log.setup_from_env" do
       end
     end
 
+    it "is used if LOG_LEVEL is empty" do
+      with_env "LOG_LEVEL": "" do
+        builder = Log::Builder.new
+        Log.setup_from_env(builder: builder)
+
+        builder.for("").initial_level.should eq(s(:info))
+      end
+    end
+
+    it "is used if LOG_LEVEL is just whitespace" do
+      with_env "LOG_LEVEL": "  " do
+        builder = Log::Builder.new
+        Log.setup_from_env(builder: builder)
+
+        builder.for("").initial_level.should eq(s(:info))
+      end
+    end
+
     it "is not used if LOG_LEVEL is set" do
       with_env "LOG_LEVEL": "DEBUG" do
         builder = Log::Builder.new
