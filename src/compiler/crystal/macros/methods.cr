@@ -549,7 +549,7 @@ module Crystal
       when "to_number"
         interpret_check_args { MacroId.new(to_number.to_s) }
       when "zero?"
-        interpret_check_args { BoolLiteral.new(zero?) }
+        interpret_check_args { BoolLiteral.new(to_number.zero?) }
       else
         super
       end
