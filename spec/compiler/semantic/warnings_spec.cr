@@ -91,6 +91,18 @@ describe "Semantic: warnings" do
         CRYSTAL
         "warning in line 8\nWarning: Deprecated Bar. Use Foo::Bar."
     end
+
+    it "doesn't deprecate the aliased type" do
+      assert_no_warning <<-CRYSTAL
+        class Foo
+        end
+
+        @[Deprecated("Use Foo.")]
+        alias Bar = Foo
+
+        Foo.new
+        CRYSTAL
+    end
   end
 
   describe "deprecated annotations" do
