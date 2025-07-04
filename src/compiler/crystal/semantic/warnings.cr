@@ -6,6 +6,7 @@ module Crystal
     property warnings = WarningCollection.new
 
     @deprecated_constants_detected = Set(String).new
+    @deprecated_types_detected = Set(String).new
     @deprecated_methods_detected = Set(String).new
     @deprecated_macros_detected = Set(String).new
     @deprecated_annotations_detected = Set(String).new
@@ -14,6 +15,16 @@ module Crystal
       return unless @warnings.level.all?
 
       check_deprecation(const, node, @deprecated_constants_detected)
+    end
+
+    def check_deprecated_type(type : Type, node : Path)
+      return unless @warnings.level.all?
+
+      unless check_deprecation(type, node, @deprecated_types_detected)
+        if type.is_a?(AliasType)
+          check_deprecation(type.aliased_type, node, @deprecated_types_detected)
+        end
+      end
     end
 
     def check_call_to_deprecated_macro(a_macro : Macro, call : Call)
@@ -44,7 +55,11 @@ module Crystal
         return if !use_location || @warnings.ignore_warning_due_to_location?(use_location)
 
         # skip warning if the use site was already informed
-        name = object.short_reference
+        name = if object.responds_to?(:short_reference)
+                 object.short_reference
+               else
+                 object.to_s
+               end
         warning_key = "#{name} #{use_location}"
         return if detects.includes?(warning_key)
         detects.add(warning_key)
@@ -57,6 +72,9 @@ module Crystal
         end
 
         @warnings.infos << use_site.warning(full_message)
+        true
+      else
+        false
       end
     end
 
