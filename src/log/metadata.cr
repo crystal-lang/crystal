@@ -231,3 +231,15 @@ class Fiber
     @logging_context = value
   end
 end
+
+class String
+  def ==(other : Log::Metadata::Value)
+    other == self
+  end
+end
+
+struct Value
+  def ==(other : Log::Metadata::Value)
+    other == self
+  end
+end
