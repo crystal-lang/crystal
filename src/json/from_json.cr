@@ -8,7 +8,7 @@
 # Int32.from_json("1")                # => 1
 # Array(Int32).from_json("[1, 2, 3]") # => [1, 2, 3]
 # ```
-def Object.from_json(string_or_io)
+def Object.from_json(string_or_io : String | IO) : Object
   parser = JSON::PullParser.new(string_or_io)
   new parser
 end
@@ -21,7 +21,7 @@ end
 # ```
 # Int32.from_json(%({"main": 1}), root: "main") # => 1
 # ```
-def Object.from_json(string_or_io, root : String)
+def Object.from_json(string_or_io : String | IO, root : String) : Object
   parser = JSON::PullParser.new(string_or_io)
   parser.on_key!(root) do
     new parser
@@ -116,11 +116,11 @@ module Iterator(T)
   end
 end
 
-def Nil.new(pull : JSON::PullParser)
+def Nil.new(pull : JSON::PullParser) : self
   pull.read_null
 end
 
-def Bool.new(pull : JSON::PullParser)
+def Bool.new(pull : JSON::PullParser) : self
   pull.read_bool
 end
 
@@ -157,7 +157,7 @@ end
   end
 {% end %}
 
-def Float32.new(pull : JSON::PullParser)
+def Float32.new(pull : JSON::PullParser) : self
   case pull.kind
   when .int?
     value = pull.int_value.to_f32
@@ -172,7 +172,7 @@ def Float32.from_json_object_key?(key : String) : Float32?
   key.to_f32?
 end
 
-def Float64.new(pull : JSON::PullParser)
+def Float64.new(pull : JSON::PullParser) : self
   case pull.kind
   when .int?
     value = pull.int_value.to_f
@@ -187,11 +187,11 @@ def Float64.from_json_object_key?(key : String) : Float64?
   key.to_f64?
 end
 
-def String.new(pull : JSON::PullParser)
+def String.new(pull : JSON::PullParser) : self
   pull.read_string
 end
 
-def Path.new(pull : JSON::PullParser)
+def Path.new(pull : JSON::PullParser) : self
   new(pull.read_string)
 end
 
@@ -319,7 +319,7 @@ end
 # See `#to_json` for reference.
 #
 # Raises `JSON::ParseException` if the deserialization fails.
-def Enum.new(pull : JSON::PullParser)
+def Enum.new(pull : JSON::PullParser) : self
   {% if @type.annotation(Flags) %}
     value = {{ @type }}::None
     pull.read_array do
@@ -474,7 +474,7 @@ end
 # time value.
 #
 # See `#to_json` for reference.
-def Time.new(pull : JSON::PullParser)
+def Time.new(pull : JSON::PullParser) : self
   Time::Format::ISO_8601_DATE_TIME.parse(pull.read_string)
 end
 
