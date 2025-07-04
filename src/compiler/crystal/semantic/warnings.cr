@@ -52,7 +52,7 @@ module Crystal
       if (ann = object.annotation(self.deprecated_annotation)) &&
          (deprecated_annotation = DeprecatedAnnotation.from(ann))
         use_location = use_site.location.try(&.macro_location) || use_site.location
-        return if !use_location || @warnings.ignore_warning_due_to_location?(use_location)
+        return false if !use_location || @warnings.ignore_warning_due_to_location?(use_location)
 
         # skip warning if the use site was already informed
         name = if object.responds_to?(:short_reference)
@@ -61,7 +61,7 @@ module Crystal
                  object.to_s
                end
         warning_key = "#{name} #{use_location}"
-        return if detects.includes?(warning_key)
+        return true if detects.includes?(warning_key)
         detects.add(warning_key)
 
         full_message = String.build do |io|
