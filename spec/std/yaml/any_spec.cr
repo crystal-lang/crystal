@@ -253,6 +253,25 @@ describe YAML::Any do
       end
     end
 
+    it "splats anchor" do
+      value = YAML::Any.from_yaml <<-YAML
+      map: &an
+        inner: 4
+      aliased: *an
+      splatted:
+        <<: *an
+        extra: 5
+      YAML
+      h = value["splatted"].as_h
+      h.keys.should eq(["inner", "extra"])
+      h["inner"].should eq(4)
+      h["extra"].should eq(5)
+
+      h = value["aliased"].as_h
+      h.keys.should eq(["inner"])
+      h["inner"].should eq(4)
+    end
+
     it "gets yes/no unquoted booleans" do
       YAML.parse("yes").as_bool.should be_true
       YAML.parse("no").as_bool.should be_false
