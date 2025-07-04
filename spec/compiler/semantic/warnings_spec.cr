@@ -36,6 +36,21 @@ describe "Semantic: warnings" do
         "warning in line 5\nWarning: Deprecated Foo."
     end
 
+    it "doesn't check superclass when the class is deprecated" do
+      assert_warning <<-CRYSTAL,
+        @[Deprecated]
+        class Foo
+        end
+
+        @[Deprecated]
+        class Bar < Foo
+        end
+
+        Bar.new
+        CRYSTAL
+        "warning in line 9\nWarning: Deprecated Bar."
+    end
+
     it "detects deprecated through alias" do
       assert_warning <<-CRYSTAL,
         @[Deprecated]
