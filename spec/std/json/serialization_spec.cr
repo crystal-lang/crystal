@@ -41,6 +41,11 @@ describe "JSON serialization" do
       Hash(Path, String).from_json(%({"foo/bar": "baz"})).should eq({Path.new("foo/bar") => "baz"})
     end
 
+    it "does Time::Location.from_json_object_key" do
+      Hash(Time::Location, String).from_json(%({"UTC": "foo"}))
+        .should eq({Time::Location::UTC => "foo"})
+    end
+
     {% for int in BUILTIN_INTEGER_TYPES %}
       it "does {{ int }}.from_json" do
         {{ int }}.from_json("0").should(be_a({{ int }})).should eq(0)
