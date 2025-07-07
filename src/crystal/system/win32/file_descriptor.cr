@@ -366,7 +366,7 @@ module Crystal::System::FileDescriptor
     # `blocking` must be set to `true` because the underlying handles never
     # support overlapped I/O; instead, `#emulated_blocking?` should return
     # `false` for `STDIN` as it uses a separate thread
-    io = IO::FileDescriptor.new(handle.address, blocking: true)
+    io = IO::FileDescriptor.new(handle: handle.address, blocking: true)
 
     # Set sync or flush_on_newline as described in STDOUT and STDERR docs.
     # See https://crystal-lang.org/api/toplevel.html#STDERR
