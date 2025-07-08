@@ -41,6 +41,9 @@ require "openssl"
 #
 #   io.gets_to_end
 # end
+#
+# encrypted_data = encrypt("Encrypted", key, iv) # => Bytes[95, 182, 21, 86, 193, 155, 149, 164, 82, 102, 171, 182, 56, 153, 223, 33]
+# decrypted_data = decrypt(encrypted_data, key, iv) # => "Encrypted"
 # ```
 class OpenSSL::Cipher
   class Error < OpenSSL::Error
