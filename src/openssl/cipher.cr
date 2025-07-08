@@ -14,7 +14,7 @@ require "openssl"
 # key = Random::Secure.random_bytes(64) # You can also use OpenSSL::Cipher#random_key to do this same thing
 # iv = Random::Secure.random_bytes(32)  # You can also use OpenSSL::Cipher#random_iv to do this same thing
 #
-# def encrypt(data)
+# def encrypt(data, key, iv)
 #   cipher = OpenSSL::Cipher.new("aes-256-cbc")
 #   cipher.encrypt
 #   cipher.key = key
@@ -28,7 +28,7 @@ require "openssl"
 #   io.to_slice
 # end
 #
-# def decrypt(data)
+# def decrypt(data, key, iv)
 #   cipher = OpenSSL::Cipher.new("aes-256-cbc")
 #   cipher.decrypt
 #   cipher.key = key
