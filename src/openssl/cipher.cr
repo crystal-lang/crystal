@@ -9,6 +9,7 @@ require "openssl"
 #
 # ```
 # require "random/secure"
+# require "openssl"
 #
 # key = Random::Secure.random_bytes(64) # You can also use OpenSSL::Cipher#random_key to do this same thing
 # iv = Random::Secure.random_bytes(32)  # You can also use OpenSSL::Cipher#random_iv to do this same thing
