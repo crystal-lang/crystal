@@ -32,7 +32,7 @@ class Log
                           default_sources = "*",
                           log_level_env = "LOG_LEVEL",
                           backend = Log::IOBackend.new)
-    level = ENV[log_level_env]?.nil? || ENV[log_level_env].lstrip.empty? ? default_level : Log::Severity.parse(ENV[log_level_env])
+    level = ENV[log_level_env]?.try { |v| Log::Severity.parse(v) unless v.blank? } ||default_level
 
     Log.setup(default_sources, level, backend, builder: builder)
   end
