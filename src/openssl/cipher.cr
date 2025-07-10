@@ -42,7 +42,7 @@ require "openssl"
 # key = Random::Secure.random_bytes(64) # You can also use OpenSSL::Cipher#random_key to do this same thing
 # iv = Random::Secure.random_bytes(32)  # You can also use OpenSSL::Cipher#random_iv to do this same thing
 #
-# encrypted_data = encrypt("Encrypted", key, iv) # => Bytes[95, 182, 21, 86, 193, 155, 149, 164, 82, 102, 171, 182, 56, 153, 223, 33]
+# encrypted_data = encrypt("Encrypted", key, iv)    # => Bytes[95, 182, 21, 86, 193, 155, 149, 164, 82, 102, 171, 182, 56, 153, 223, 33]
 # decrypted_data = decrypt(encrypted_data, key, iv) # => "Encrypted"
 # ```
 class OpenSSL::Cipher
