@@ -313,4 +313,12 @@ describe "Code gen: debug" do
         CRYSTAL
     end
   {% end %}
+
+  it "doesn't fail if no top-level code follows discarded class var initializer (#15970)" do
+    codegen <<-CRYSTAL, debug: Crystal::Debug::All
+      module Foo
+        @@x = 1
+      end
+      CRYSTAL
+  end
 end
