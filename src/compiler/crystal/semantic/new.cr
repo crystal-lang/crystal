@@ -159,7 +159,7 @@ module Crystal
           arg = Splat.new(arg).at(self) if instance_type.splat_index == i
           arg
         end
-        new_generic = Generic.new(Path.new(instance_type.name), generic_type_args)
+        new_generic = Generic.new(Path.new(instance_type.name), generic_type_args).at(self)
         alloc = Call.new(new_generic, "allocate").at(self)
       else
         alloc = Call.new("allocate").at(self)
