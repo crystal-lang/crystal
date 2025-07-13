@@ -84,6 +84,16 @@ module Fiber::ExecutionContext
       new(name, maximum, hijack: false)
     end
 
+    @[Deprecated("Use Fiber::ExecutionContext::Parallel.new(String, Int32) instead.")]
+    def self.new(name : String, size : Range(Nil, Int32)) : self
+      new(name, size.end, hijack: false)
+    end
+
+    @[Deprecated("Use Fiber::ExecutionContext::Parallel.new(String, Int32) instead.")]
+    def self.new(name : String, size : Range(Int32, Int32)) : self
+      new(name, size.end, hijack: false)
+    end
+
     protected def initialize(@name : String, @capacity : Int32, hijack : Bool)
       raise ArgumentError.new("Parallelism can't be less than one.") if @capacity < 1
 
