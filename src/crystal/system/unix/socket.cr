@@ -163,7 +163,7 @@ module Crystal::System::Socket
     Socket.set_blocking(fd, value)
   end
 
-  def self.set_blocking(fd, value)
+  def self.set_blocking(fd : Handle, value : Bool)
     flags = fcntl(fd, LibC::F_GETFL)
     if value
       flags &= ~LibC::O_NONBLOCK

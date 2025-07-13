@@ -98,6 +98,10 @@ module Crystal::System::FileDescriptor
     @system_blocking
   end
 
+  def self.set_blocking(fd : Handle, value : Bool)
+    raise NotImplementedError.new("Cannot change the blocking mode of an `IO::FileDescriptor` after creation")
+  end
+
   private def system_blocking=(blocking)
     unless blocking == system_blocking?
       raise IO::Error.new("Cannot reconfigure `IO::FileDescriptor#blocking` after creation")
