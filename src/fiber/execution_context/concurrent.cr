@@ -318,4 +318,7 @@ module Fiber::ExecutionContext
       end
     end
   end
+
+  @[Deprecated("Use Fiber::ExecutionContext::Concurrent instead.")]
+  alias SingleThreaded = Concurrent
 end

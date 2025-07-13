@@ -341,4 +341,7 @@ module Fiber::ExecutionContext
       io << ' ' << name << '>'
     end
   end
+
+  @[Deprecated("Use Fiber::ExecutionContext::Parallel instead.")]
+  alias MultiThreaded = Parallel
 end
