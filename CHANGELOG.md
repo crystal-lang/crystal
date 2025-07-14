@@ -9,6 +9,7 @@ _Feature freeze: 2025-07-02_
 #### stdlib
 
 - Make `Colorize.on_tty_only!` the default behavior ([#15881], thanks @HertzDevil)
+- *(concurrency)* Rename execution contexts + improve their docs ([#15936], thanks @ysbaddaden)
 - *(files)* Refactor `IO.pipe` blocking mode ([#15823], thanks @ysbaddaden)
 - *(files)* Fix: set `IO::Stapled.pipe` blocking args to nil, as per `IO.pipe` ([#15925], thanks @ysbaddaden)
 - *(networking)* Refactor `Socket` blocking mode ([#15804], thanks @ysbaddaden)
@@ -17,6 +18,7 @@ _Feature freeze: 2025-07-02_
 - *(system)* Turn `SystemError.from_errno` into a macro ([#15874], thanks @straight-shoota)
 
 [#15881]: https://github.com/crystal-lang/crystal/pull/15881
+[#15936]: https://github.com/crystal-lang/crystal/pull/15936
 [#15823]: https://github.com/crystal-lang/crystal/pull/15823
 [#15925]: https://github.com/crystal-lang/crystal/pull/15925
 [#15804]: https://github.com/crystal-lang/crystal/pull/15804
@@ -189,6 +191,9 @@ _Feature freeze: 2025-07-02_
 
 #### compiler
 
+- *(codegen)* Clear debug location of top-level implicit return ([#15972], thanks @HertzDevil)
+- *(codegen)* Add file name to file-private generic instance metaclass types during codegen ([#15974], thanks @HertzDevil)
+- *(codegen)* Add debug locations to metaclass nodes and `typeof` ([#15971], thanks @HertzDevil)
 - *(codegen)* Add file name to file-private virtual types during codegen ([#15897], thanks @HertzDevil)
 - *(interpreter)* Fix interpreter guard clauses for signal handling ([#15892], thanks @straight-shoota)
 - *(parser)* Add end locations for `Case`, `Asm`, and `Select` ([#15452], thanks @FnControlOption)
@@ -196,6 +201,9 @@ _Feature freeze: 2025-07-02_
 - *(semantic)* Fix cleanup of one-to-many assignment with untyped RHS ([#15755], thanks @HertzDevil)
 - *(semantic)* Do not consider type in `Crystal::Var#==` ([#15884], thanks @HertzDevil)
 
+[#15972]: https://github.com/crystal-lang/crystal/pull/15972
+[#15974]: https://github.com/crystal-lang/crystal/pull/15974
+[#15971]: https://github.com/crystal-lang/crystal/pull/15971
 [#15897]: https://github.com/crystal-lang/crystal/pull/15897
 [#15892]: https://github.com/crystal-lang/crystal/pull/15892
 [#15452]: https://github.com/crystal-lang/crystal/pull/15452
@@ -220,6 +228,7 @@ _Feature freeze: 2025-07-02_
 - Remove unused code ([#15845], thanks @straight-shoota)
 - Remove shadowed method arguments ([#15846], thanks @straight-shoota)
 - Replace some `not_nil!` calls with bang methods ([#15847], thanks @straight-shoota)
+- Remove useless condition literal ([#15859], thanks @straight-shoota)
 - Use `be_nil` and `be_true`/`be_false` everywhere in specs ([#15867], thanks @straight-shoota)
 - Remove trailing whitespace ([#15869], thanks @straight-shoota)
 - Add trailing newlines ([#15870], thanks @straight-shoota)
@@ -232,6 +241,7 @@ _Feature freeze: 2025-07-02_
 [#15845]: https://github.com/crystal-lang/crystal/pull/15845
 [#15846]: https://github.com/crystal-lang/crystal/pull/15846
 [#15847]: https://github.com/crystal-lang/crystal/pull/15847
+[#15859]: https://github.com/crystal-lang/crystal/pull/15859
 [#15867]: https://github.com/crystal-lang/crystal/pull/15867
 [#15869]: https://github.com/crystal-lang/crystal/pull/15869
 [#15870]: https://github.com/crystal-lang/crystal/pull/15870
@@ -247,10 +257,8 @@ _Feature freeze: 2025-07-02_
 
 #### other
 
-- Remove useless condition literal ([#15859], thanks @straight-shoota)
 - Fix typos and add `typos` integration ([#15873], thanks @straight-shoota)
 
-[#15859]: https://github.com/crystal-lang/crystal/pull/15859
 [#15873]: https://github.com/crystal-lang/crystal/pull/15873
 
 ### Performance
@@ -335,21 +343,25 @@ _Feature freeze: 2025-07-02_
 
 - *(crypto)* Add type restrictions to `Digest` ([#15696], thanks @Vici37)
 - *(crypto)* Add documentation for `Crypto::Bcrypt::Password#to_s` ([#15935], thanks @hugopl)
+- *(crypto)* Improve docs for `OpenSSL::Cipher` ([#15964], thanks @Fijxu)
 - *(macros)* **[experimental]** Document `Crystal::Macros::StringLiteral#to_utf16` ([#15748], thanks @HertzDevil)
 - *(runtime)* Document `GC::Stats` properties ([#15676], thanks @ysbaddaden)
 - *(runtime)* Add links to language specification in docs for pseudo methods ([#15864], thanks @straight-shoota)
 - *(runtime)* Fix unclosed codeblock in `__crystal_pseudo_alignof` docs ([#15945], thanks @syeopite)
 - *(serialization)* Add type restrictions to `CSV` ([#15695], thanks @Vici37)
+- *(specs)* Clarify docs in regards to what `be_nil` expectation does ([#15954], thanks @Blacksmoke16)
 - *(system)* Add type restrictions to `Dir` ([#15697], thanks @Vici37)
 - *(text)* Improve docs for `String#lines` and `#each_line` ([#15894], thanks @straight-shoota)
 
 [#15696]: https://github.com/crystal-lang/crystal/pull/15696
 [#15935]: https://github.com/crystal-lang/crystal/pull/15935
+[#15964]: https://github.com/crystal-lang/crystal/pull/15964
 [#15748]: https://github.com/crystal-lang/crystal/pull/15748
 [#15676]: https://github.com/crystal-lang/crystal/pull/15676
 [#15864]: https://github.com/crystal-lang/crystal/pull/15864
 [#15945]: https://github.com/crystal-lang/crystal/pull/15945
 [#15695]: https://github.com/crystal-lang/crystal/pull/15695
+[#15954]: https://github.com/crystal-lang/crystal/pull/15954
 [#15697]: https://github.com/crystal-lang/crystal/pull/15697
 [#15894]: https://github.com/crystal-lang/crystal/pull/15894
 
@@ -358,12 +370,6 @@ _Feature freeze: 2025-07-02_
 - *(parser)* Improve examples for the syntax highlighter documentation ([#15699], thanks @tamdaz)
 
 [#15699]: https://github.com/crystal-lang/crystal/pull/15699
-
-#### other
-
-- Rename execution contexts + improve their docs ([#15936], thanks @ysbaddaden)
-
-[#15936]: https://github.com/crystal-lang/crystal/pull/15936
 
 ### Specs
 
@@ -400,6 +406,7 @@ _Feature freeze: 2025-07-02_
 ### Infrastructure
 
 - Changelog for 1.17.0 ([#15900], thanks @straight-shoota)
+- Support debug builds for the MSVC Boehm GC libraries ([#15968], thanks @HertzDevil)
 - Update previous Crystal release 1.16.1 ([#15649], thanks @straight-shoota)
 - Update `release-update` script: Truncate CHANGELOG ([#15679], thanks @straight-shoota)
 - Merge `release/1.16` into master ([#15729], thanks @straight-shoota)
@@ -414,6 +421,7 @@ _Feature freeze: 2025-07-02_
 - Allow `LLVM_VERSION` override inside `Makefile` ([#15765], thanks @HertzDevil)
 - Add build script for `spec/std/data/zoneinfo.zip` ([#15831], thanks @HertzDevil)
 - *(ci)* Add `fail-fast: false` for strategy CI jobs ([#15960], thanks @straight-shoota)
+- *(ci)* Update cygwin/cygwin-install-action action to v6 ([#15965], thanks @renovate)
 - *(ci)* Update GH Actions ([#15668], thanks @renovate)
 - *(ci)* Add `XML CI` workflow ([#15923], thanks @straight-shoota)
 - *(ci)* Update typos 1.34.0 ([#15950], thanks @straight-shoota)
@@ -425,6 +433,7 @@ _Feature freeze: 2025-07-02_
 - *(ci)* **[regression]** Use `CMAKE_MSVC_RUNTIME_LIBRARY` for the MSVC PCRE2 static library ([#15802], thanks @HertzDevil)
 
 [#15900]: https://github.com/crystal-lang/crystal/pull/15900
+[#15968]: https://github.com/crystal-lang/crystal/pull/15968
 [#15649]: https://github.com/crystal-lang/crystal/pull/15649
 [#15679]: https://github.com/crystal-lang/crystal/pull/15679
 [#15729]: https://github.com/crystal-lang/crystal/pull/15729
@@ -439,6 +448,7 @@ _Feature freeze: 2025-07-02_
 [#15765]: https://github.com/crystal-lang/crystal/pull/15765
 [#15831]: https://github.com/crystal-lang/crystal/pull/15831
 [#15960]: https://github.com/crystal-lang/crystal/pull/15960
+[#15965]: https://github.com/crystal-lang/crystal/pull/15965
 [#15668]: https://github.com/crystal-lang/crystal/pull/15668
 [#15923]: https://github.com/crystal-lang/crystal/pull/15923
 [#15950]: https://github.com/crystal-lang/crystal/pull/15950
