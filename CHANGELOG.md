@@ -191,20 +191,20 @@ _Feature freeze: 2025-07-02_
 
 #### compiler
 
+- *(codegen)* Add file name to file-private virtual types during codegen ([#15897], thanks @HertzDevil)
 - *(codegen)* Clear debug location of top-level implicit return ([#15972], thanks @HertzDevil)
 - *(codegen)* Add file name to file-private generic instance metaclass types during codegen ([#15974], thanks @HertzDevil)
 - *(codegen)* Add debug locations to metaclass nodes and `typeof` ([#15971], thanks @HertzDevil)
-- *(codegen)* Add file name to file-private virtual types during codegen ([#15897], thanks @HertzDevil)
 - *(interpreter)* Fix interpreter guard clauses for signal handling ([#15892], thanks @straight-shoota)
 - *(parser)* Add end locations for `Case`, `Asm`, and `Select` ([#15452], thanks @FnControlOption)
 - *(parser)* **[regression]** Fix stringification of `Not` as call receiver ([#15801], thanks @Blacksmoke16)
 - *(semantic)* Fix cleanup of one-to-many assignment with untyped RHS ([#15755], thanks @HertzDevil)
 - *(semantic)* Do not consider type in `Crystal::Var#==` ([#15884], thanks @HertzDevil)
 
+[#15897]: https://github.com/crystal-lang/crystal/pull/15897
 [#15972]: https://github.com/crystal-lang/crystal/pull/15972
 [#15974]: https://github.com/crystal-lang/crystal/pull/15974
 [#15971]: https://github.com/crystal-lang/crystal/pull/15971
-[#15897]: https://github.com/crystal-lang/crystal/pull/15897
 [#15892]: https://github.com/crystal-lang/crystal/pull/15892
 [#15452]: https://github.com/crystal-lang/crystal/pull/15452
 [#15801]: https://github.com/crystal-lang/crystal/pull/15801
@@ -351,6 +351,7 @@ _Feature freeze: 2025-07-02_
 - *(serialization)* Add type restrictions to `CSV` ([#15695], thanks @Vici37)
 - *(specs)* Clarify docs in regards to what `be_nil` expectation does ([#15954], thanks @Blacksmoke16)
 - *(system)* Add type restrictions to `Dir` ([#15697], thanks @Vici37)
+- *(system)* Improve docs for `Socket` and `IO::FileDescriptor` handles ([#15977], thanks @straight-shoota)
 - *(text)* Improve docs for `String#lines` and `#each_line` ([#15894], thanks @straight-shoota)
 
 [#15696]: https://github.com/crystal-lang/crystal/pull/15696
@@ -363,6 +364,7 @@ _Feature freeze: 2025-07-02_
 [#15695]: https://github.com/crystal-lang/crystal/pull/15695
 [#15954]: https://github.com/crystal-lang/crystal/pull/15954
 [#15697]: https://github.com/crystal-lang/crystal/pull/15697
+[#15977]: https://github.com/crystal-lang/crystal/pull/15977
 [#15894]: https://github.com/crystal-lang/crystal/pull/15894
 
 #### compiler
@@ -406,7 +408,6 @@ _Feature freeze: 2025-07-02_
 ### Infrastructure
 
 - Changelog for 1.17.0 ([#15900], thanks @straight-shoota)
-- Support debug builds for the MSVC Boehm GC libraries ([#15968], thanks @HertzDevil)
 - Update previous Crystal release 1.16.1 ([#15649], thanks @straight-shoota)
 - Update `release-update` script: Truncate CHANGELOG ([#15679], thanks @straight-shoota)
 - Merge `release/1.16` into master ([#15729], thanks @straight-shoota)
@@ -418,14 +419,14 @@ _Feature freeze: 2025-07-02_
 - Update previous Crystal release 1.16.3 ([#15773], thanks @straight-shoota)
 - Makefile: Fix target location for `install_docs` ([#15853], thanks @straight-shoota)
 - Add ameba ([#15875], thanks @straight-shoota)
+- Allow-list Crystal's funding.json from the project ([#15969], thanks @matiasgarciaisaia)
 - Allow `LLVM_VERSION` override inside `Makefile` ([#15765], thanks @HertzDevil)
 - Add build script for `spec/std/data/zoneinfo.zip` ([#15831], thanks @HertzDevil)
-- *(ci)* Add `fail-fast: false` for strategy CI jobs ([#15960], thanks @straight-shoota)
-- *(ci)* Update cygwin/cygwin-install-action action to v6 ([#15965], thanks @renovate)
 - *(ci)* Update GH Actions ([#15668], thanks @renovate)
 - *(ci)* Add `XML CI` workflow ([#15923], thanks @straight-shoota)
 - *(ci)* Update typos 1.34.0 ([#15950], thanks @straight-shoota)
 - *(ci)* Update korthout/backport-action action to v3.2.1 ([#15949], thanks @renovate)
+- *(ci)* Update cygwin/cygwin-install-action action to v6 ([#15965], thanks @renovate)
 - *(ci)* Drop the static LLVM libraries on Windows MSVC CI ([#15797], thanks @HertzDevil)
 - *(ci)* Set up Inno Setup explicitly on MSVC CI ([#15851], [#15861], thanks @HertzDevil)
 - *(ci)* Update library versions for MSVC CI ([#15921], thanks @HertzDevil)
@@ -433,7 +434,6 @@ _Feature freeze: 2025-07-02_
 - *(ci)* **[regression]** Use `CMAKE_MSVC_RUNTIME_LIBRARY` for the MSVC PCRE2 static library ([#15802], thanks @HertzDevil)
 
 [#15900]: https://github.com/crystal-lang/crystal/pull/15900
-[#15968]: https://github.com/crystal-lang/crystal/pull/15968
 [#15649]: https://github.com/crystal-lang/crystal/pull/15649
 [#15679]: https://github.com/crystal-lang/crystal/pull/15679
 [#15729]: https://github.com/crystal-lang/crystal/pull/15729
@@ -445,14 +445,14 @@ _Feature freeze: 2025-07-02_
 [#15773]: https://github.com/crystal-lang/crystal/pull/15773
 [#15853]: https://github.com/crystal-lang/crystal/pull/15853
 [#15875]: https://github.com/crystal-lang/crystal/pull/15875
+[#15969]: https://github.com/crystal-lang/crystal/pull/15969
 [#15765]: https://github.com/crystal-lang/crystal/pull/15765
 [#15831]: https://github.com/crystal-lang/crystal/pull/15831
-[#15960]: https://github.com/crystal-lang/crystal/pull/15960
-[#15965]: https://github.com/crystal-lang/crystal/pull/15965
 [#15668]: https://github.com/crystal-lang/crystal/pull/15668
 [#15923]: https://github.com/crystal-lang/crystal/pull/15923
 [#15950]: https://github.com/crystal-lang/crystal/pull/15950
 [#15949]: https://github.com/crystal-lang/crystal/pull/15949
+[#15965]: https://github.com/crystal-lang/crystal/pull/15965
 [#15797]: https://github.com/crystal-lang/crystal/pull/15797
 [#15851]: https://github.com/crystal-lang/crystal/pull/15851
 [#15861]: https://github.com/crystal-lang/crystal/pull/15861
