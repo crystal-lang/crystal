@@ -184,7 +184,7 @@ end
 
 def assert_no_warning(code, *, file = __FILE__, line = __LINE__)
   warning_failures = warnings_result(code)
-  warning_failures.size.should eq(0), file: file, line: line
+  warning_failures.should be_empty, file: file, line: line
 end
 
 def assert_macro(macro_body, expected, args = nil, *, expected_pragmas = nil, flags = nil, file = __FILE__, line = __LINE__)
