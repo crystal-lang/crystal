@@ -519,6 +519,7 @@ module Crystal
     end
 
     def finish
+      clear_current_debug_location if @debug.line_numbers?
       codegen_return @main_ret_type
 
       # If there are no instructions in the alloca block and the

@@ -659,7 +659,7 @@ describe "Code gen: class" do
       )).to_string.should eq("Baz")
   end
 
-  it "does not combine metaclass types with same name but different file scopes (#15503)" do
+  it "does not combine module metaclass types with same name but different file scopes (#15503)" do
     run(<<-CRYSTAL, Int32, filename: "foo.cr").should eq(11)
       module Foo
         def self.foo
@@ -754,6 +754,65 @@ describe "Code gen: class" do
       end
 
       Fred.as(Fred.class).foo &+ Foo.as(Foo.class).foo
+      CRYSTAL
+  end
+
+  it "does not combine generic virtual metaclass types with same name but different file scopes" do
+    run(<<-CRYSTAL, Int32, filename: "foo.cr").should eq(11)
+      module Foo
+        def self.foo
+          1
+        end
+      end
+
+      alias Bar = Foo
+
+      {% Bar %} # forces immediate resolution of `Bar`
+
+      private module Foo
+        def self.foo
+          10
+        end
+      end
+
+      abstract class Base
+      end
+
+      class Gen(T) < Base
+        def self.x
+          T.foo
+        end
+      end
+
+      Gen(Foo).as(Base.class).x &+ Gen(Bar).as(Base.class).x
+      CRYSTAL
+  end
+
+  it "does not combine generic module metaclass types with same name but different file scopes" do
+    run(<<-CRYSTAL, Int32, filename: "foo.cr").should eq(11)
+      module Foo
+        def self.foo
+          1
+        end
+      end
+
+      alias Bar = Foo
+
+      {% Bar %} # forces immediate resolution of `Bar`
+
+      private module Foo
+        def self.foo
+          10
+        end
+      end
+
+      module Gen(T)
+        def self.x
+          T.foo
+        end
+      end
+
+      (Gen(Foo) || Gen(Bar)).x &+ (Gen(Bar) || Gen(Foo)).x
       CRYSTAL
   end
 
