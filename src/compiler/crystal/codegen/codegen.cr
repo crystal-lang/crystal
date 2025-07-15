@@ -964,6 +964,7 @@ module Crystal
     def visit(node : TypeOf)
       # convert virtual metaclasses to non-virtual ones, because only the
       # non-virtual type IDs are needed
+      set_current_debug_location(node) if @debug.line_numbers?
       @last = type_id(node.type.devirtualize)
       false
     end
@@ -1723,6 +1724,7 @@ module Crystal
         accept replacement
       else
         node_type = node.type
+        set_current_debug_location(node) if @debug.line_numbers?
         # Special case: if the type is a type tuple we need to create a tuple for it
         if node_type.is_a?(TupleInstanceType)
           @last = allocate_tuple(node_type) do |tuple_type, i|
@@ -1736,6 +1738,7 @@ module Crystal
     end
 
     def visit(node : Generic)
+      set_current_debug_location(node) if @debug.line_numbers?
       @last = type_id(node.type)
       false
     end
