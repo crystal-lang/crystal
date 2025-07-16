@@ -23,6 +23,8 @@ jobs:
           arch: x86_64-darwin
         - runs-on: macos-14
           arch: aarch64-darwin
+        - runs-on: macos-15
+          arch: aarch64-darwin
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v4
