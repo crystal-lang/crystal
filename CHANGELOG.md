@@ -1,3 +1,5 @@
+# Changelog
+
 ## [1.17.0] (2025-07-16)
 
 [1.17.0]: https://github.com/crystal-lang/crystal/releases/1.17.0
@@ -405,7 +407,7 @@
 
 ### Infrastructure
 
-- Changelog for 1.17.0 ([#15900], thanks @straight-shoota)
+- Changelog for 1.17.0 ([#15900], [#15983], thanks @straight-shoota)
 - Update previous Crystal release 1.16.1 ([#15649], thanks @straight-shoota)
 - Update `release-update` script: Truncate CHANGELOG ([#15679], thanks @straight-shoota)
 - Merge `release/1.16` into master ([#15729], thanks @straight-shoota)
@@ -432,6 +434,7 @@
 - *(ci)* **[regression]** Use `CMAKE_MSVC_RUNTIME_LIBRARY` for the MSVC PCRE2 static library ([#15802], thanks @HertzDevil)
 
 [#15900]: https://github.com/crystal-lang/crystal/pull/15900
+[#15983]: https://github.com/crystal-lang/crystal/pull/15983
 [#15649]: https://github.com/crystal-lang/crystal/pull/15649
 [#15679]: https://github.com/crystal-lang/crystal/pull/15679
 [#15729]: https://github.com/crystal-lang/crystal/pull/15729
@@ -458,3 +461,10 @@
 [#15794]: https://github.com/crystal-lang/crystal/pull/15794
 [#15802]: https://github.com/crystal-lang/crystal/pull/15802
 
+## Previous Releases
+
+For information on prior releases, refer to their changelogs:
+
+* [1.16](https://github.com/crystal-lang/crystal/blob/release/1.16/CHANGELOG.md)
+* [1.0 to 1.15](https://github.com/crystal-lang/crystal/blob/release/1.15/CHANGELOG.md)
+* [before 1.0](https://github.com/crystal-lang/crystal/blob/release/0.36/CHANGELOG.md)
