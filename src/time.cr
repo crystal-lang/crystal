@@ -5,7 +5,7 @@ require "crystal/system/time"
 # observed in a specific time zone.
 #
 # The calendaric calculations are based on the rules of the proleptic Gregorian
-# calendar as specified in [ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf).
+# calendar as specified in [ISO 8601](https://web.archive.org/web/20250306154328/http://xml.coverpages.org/ISO-FDIS-8601.pdf).
 # Leap seconds are ignored.
 #
 # Internally, the time is stored as an `Int64` representing seconds from epoch
@@ -286,7 +286,7 @@ struct Time
   # ```
   #
   # Each member is identified by its ordinal number starting from `Monday = 1`
-  # according to [ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf).
+  # according to [ISO 8601](https://web.archive.org/web/20250306154328/http://xml.coverpages.org/ISO-FDIS-8601.pdf).
   #
   # `#value` returns this ordinal number. It can easily be converted to the also
   # common numbering based on `Sunday = 0` using `value % 7`.
@@ -1140,7 +1140,7 @@ struct Time
     Format.new(format).format(self, io)
   end
 
-  # Format this time using the format specified by [RFC 3339](https://tools.ietf.org/html/rfc3339) ([ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
+  # Format this time using the format specified by [RFC 3339](https://tools.ietf.org/html/rfc3339) ([ISO 8601](https://web.archive.org/web/20250306154328/http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
   #
   # ```
   # Time.utc(2016, 2, 15).to_rfc3339 # => "2016-02-15T00:00:00Z"
@@ -1156,7 +1156,7 @@ struct Time
     Format::RFC_3339.format(to_utc, fraction_digits)
   end
 
-  # Format this time using the format specified by [RFC 3339](https://tools.ietf.org/html/rfc3339) ([ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
+  # Format this time using the format specified by [RFC 3339](https://tools.ietf.org/html/rfc3339) ([ISO 8601](https://web.archive.org/web/20250306154328/http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
   # into the given *io*.
   #
   #
@@ -1166,7 +1166,7 @@ struct Time
     Format::RFC_3339.format(to_utc, io, fraction_digits)
   end
 
-  # Parse time format specified by [RFC 3339](https://tools.ietf.org/html/rfc3339) ([ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
+  # Parse time format specified by [RFC 3339](https://tools.ietf.org/html/rfc3339) ([ISO 8601](https://web.archive.org/web/20250306154328/http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
   #
   # ```
   # Time.parse_rfc3339("2016-02-15T04:35:50Z") # => 2016-02-15 04:35:50.0 UTC
@@ -1175,7 +1175,7 @@ struct Time
     Format::RFC_3339.parse(time)
   end
 
-  # Parse datetime format specified by [ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf).
+  # Parse datetime format specified by [ISO 8601](https://web.archive.org/web/20250306154328/http://xml.coverpages.org/ISO-FDIS-8601.pdf).
   #
   # This is similar to `.parse_rfc3339` but RFC 3339 defines a more strict format.
   # In ISO 8601 for examples, field delimiters (`-`, `:`) are optional.
