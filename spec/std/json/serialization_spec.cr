@@ -496,6 +496,10 @@ describe "JSON serialization" do
       Time.from_json(%("20161116T095548-03:00")).to_utc.should eq(Time.utc(2016, 11, 16, 12, 55, 48))
     end
 
+    it "deserializes Time::Location" do
+      Time::Location.from_json(%("UTC")).should eq(Time::Location.load("UTC"))
+    end
+
     describe "parse exceptions" do
       it "has correct location when raises in NamedTuple#from_json" do
         ex = expect_raises(JSON::ParseException) do
@@ -813,6 +817,12 @@ describe "JSON serialization" do
       it "omit sub-second precision" do
         Time.utc(2016, 11, 16, 12, 55, 48, nanosecond: 123456789).to_json.should eq(%("2016-11-16T12:55:48Z"))
       end
+    end
+  end
+
+  describe "Time::Location" do
+    it "#to_json" do
+      Time::Location.load("UTC").to_json.should eq(%("UTC"))
     end
   end
 

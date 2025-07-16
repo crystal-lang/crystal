@@ -26,8 +26,6 @@ end
 
 alias YamlRec = Int32 | Array(YamlRec) | Hash(YamlRec, YamlRec)
 
-puts YAML.libyaml_version
-
 # libyaml 0.2.1 removed the erroneously written document end marker (`...`) after some scalars in root context (see https://github.com/yaml/libyaml/pull/18).
 # Earlier libyaml releases still write the document end marker and this is hard to fix on Crystal's side.
 # So we just ignore it and adopt the specs accordingly to coincide with the used libyaml version.
@@ -397,6 +395,10 @@ describe "YAML serialization" do
       expect_raises(YAML::ParseException) { Time.from_yaml(%(!!timestamp "2001-12-14\\v21:59:43.10 -5")) }
     end
 
+    it "deserializes Time::Location" do
+      Time::Location.from_yaml("UTC").should eq(Time::Location.load("UTC"))
+    end
+
     it "deserializes bytes" do
       Bytes.from_yaml("!!binary aGVsbG8=").should eq("hello".to_slice)
     end
@@ -663,6 +665,11 @@ describe "YAML serialization" do
     it "does for utc time with nanoseconds" do
       time = Time.utc(2010, 11, 12, 1, 2, 3, nanosecond: 456_000_000)
       assert_yaml_document_end(time.to_yaml, "--- 2010-11-12 01:02:03.456000000\n")
+    end
+
+    it "does for time location" do
+      location = Time::Location.load("UTC")
+      assert_yaml_document_end(location.to_yaml, "--- UTC\n")
     end
 
     it "does for bytes" do

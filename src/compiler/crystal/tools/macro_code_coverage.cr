@@ -168,15 +168,22 @@ module Crystal
 
     private def process_line(line : Int32, nodes : Array(NodeTuple), & : {Int32, Location, Int32?} ->) : Nil
       # It's safe to use the first location since they were chunked by line.
-      _, location, _ = nodes.first
+      first_node, location, _ = nodes.first
 
       # Check for conditional hits first so that suffix conditionals are still treated as `1/2`.
       if match = has_conditional_node?(nodes)
         conditional_node, branches = match
 
-        # Keep track of what specific conditional branches were hit and missed as to enure a proper partial count
-        # We'll use the last missed node, or the last one if none were missed.
-        node, _, missed = nodes.reverse.find(nodes.last) { |_, _, is_missed| !is_missed }
+        # Keep track of what specific conditional branches were hit and missed as to ensure a proper partial count.
+        # In certain cases there may be more than 1 missed node, in which case we'll use the last non-missed node.
+        # Otherwise if there are none that are missed or only one, it's safe to just use the last node.
+        node, _, missed = case missed_count = nodes.count { |(_, _, missed)| missed }
+                          when 0, 1
+                            nodes.last
+                          else
+                            nodes.reverse.find(nodes.last) { |_, _, is_missed| !is_missed }
+                          end
+
         newly_hit = @conditional_hit_cache[location.filename][location.line_number].add?({node, missed})
 
         hit_count = if newly_hit
@@ -201,6 +208,18 @@ module Crystal
       # If no nodes on this line were missed, we can be assured it was a hit
       if nodes.none? { |(_, _, missed)| missed }
         yield({1, location, nil})
+        return
+      end
+
+      # For `MacroIf` nodes whose both then and else bodies consist only of a single `MacroLiteral`, the cond and then's body will both have the same start location.
+      # We need to handle the edge case of if the then body was missed by marking the cond as hit, and the `else` control line as hit (which is the end location of then's body.
+      # This will at least indicate the else block executed as we can't actually mark any line in either body as hit since they're non-macro code.
+      if first_node.is_a?(MacroIf) && (last_node = nodes.last?) && last_node[0].is_a?(MacroLiteral) && last_node[2]
+        yield({1, location, nil})
+
+        if end_loc = last_node[0].end_location
+          yield({1, end_loc, nil})
+        end
         return
       end
 

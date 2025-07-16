@@ -519,6 +519,7 @@ module Crystal
     end
 
     def finish
+      clear_current_debug_location if @debug.line_numbers?
       codegen_return @main_ret_type
 
       # If there are no instructions in the alloca block and the
@@ -963,6 +964,7 @@ module Crystal
     def visit(node : TypeOf)
       # convert virtual metaclasses to non-virtual ones, because only the
       # non-virtual type IDs are needed
+      set_current_debug_location(node) if @debug.line_numbers?
       @last = type_id(node.type.devirtualize)
       false
     end
@@ -1629,38 +1631,26 @@ module Crystal
     end
 
     def type_id_to_class_name(type_id)
-      fun_name = "~type_id_to_class_name"
-      func = typed_fun?(@main_mod, fun_name) || create_type_id_to_class_name_fun(fun_name)
-      func = check_main_fun fun_name, func
-      call func, type_id
+      map = llvm_mod.globals["__crystal_type_id_to_class_name_map"]? || create_type_id_to_class_name_map("__crystal_type_id_to_class_name_map")
+
+      str_ptr = gep llvm_type(@program.string), map, type_id
+      load llvm_type(@program.string), str_ptr
     end
 
-    # See also: `#create_metaclass_fun`
-    def create_type_id_to_class_name_fun(name)
-      in_main do
-        define_main_function(name, [llvm_context.int32], llvm_type(@program.string)) do |func|
-          set_internal_fun_debug_location(func, name)
-
-          arg = func.params.first
-
-          current_block = insert_block
-
-          cases = {} of LLVM::Value => LLVM::BasicBlock
-          @program.llvm_id.@ids.each do |type, (_, type_id)|
-            block = new_block "type_#{type_id}"
-            cases[int32(type_id)] = block
-            position_at_end block
-            ret build_string_constant(type.to_s)
-          end
-
-          otherwise = new_block "otherwise"
-          position_at_end otherwise
-          unreachable
-
-          position_at_end current_block
-          @builder.switch arg, otherwise, cases
-        end
+    def create_type_id_to_class_name_map(name)
+      ids = @program.llvm_id.@ids
+      id_map = Array(LLVM::Value).new(size: ids.size, value: LLVM::Value.null)
+      ids.each do |type, (_, type_id)|
+        id_map[type_id] = build_string_constant(type.to_s)
       end
+
+      type = llvm_type(@program.string).array(ids.size)
+
+      global = @llvm_mod.globals.add(type, name)
+      global.linkage = LLVM::Linkage::Private
+      global.global_constant = true
+      global.initializer = llvm_type(@program.string).const_array(id_map)
+      global
     end
 
     def visit(node : IsA)
@@ -1734,6 +1724,7 @@ module Crystal
         accept replacement
       else
         node_type = node.type
+        set_current_debug_location(node) if @debug.line_numbers?
         # Special case: if the type is a type tuple we need to create a tuple for it
         if node_type.is_a?(TupleInstanceType)
           @last = allocate_tuple(node_type) do |tuple_type, i|
@@ -1747,6 +1738,7 @@ module Crystal
     end
 
     def visit(node : Generic)
+      set_current_debug_location(node) if @debug.line_numbers?
       @last = type_id(node.type)
       false
     end

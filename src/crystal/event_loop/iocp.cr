@@ -244,7 +244,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   end
 
   def open(path : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : {System::FileDescriptor::Handle, Bool} | WinError
-    access, disposition, attributes = System::File.posix_to_open_opts(flags, permissions, blocking)
+    access, disposition, attributes = System::File.posix_to_open_opts(flags, permissions, !!blocking)
 
     handle = LibC.CreateFileW(
       System.to_wstr(path),
