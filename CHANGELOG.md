@@ -407,7 +407,7 @@
 
 ### Infrastructure
 
-- Changelog for 1.17.0 ([#15900], thanks @straight-shoota)
+- Changelog for 1.17.0 ([#15900], [#15983], thanks @straight-shoota)
 - Update previous Crystal release 1.16.1 ([#15649], thanks @straight-shoota)
 - Update `release-update` script: Truncate CHANGELOG ([#15679], thanks @straight-shoota)
 - Merge `release/1.16` into master ([#15729], thanks @straight-shoota)
@@ -446,6 +446,8 @@
 [#15853]: https://github.com/crystal-lang/crystal/pull/15853
 [#15875]: https://github.com/crystal-lang/crystal/pull/15875
 [#15969]: https://github.com/crystal-lang/crystal/pull/15969
+[#15900]: https://github.com/crystal-lang/crystal/pull/15900
+[#15983]: https://github.com/crystal-lang/crystal/pull/15983
 [#15765]: https://github.com/crystal-lang/crystal/pull/15765
 [#15831]: https://github.com/crystal-lang/crystal/pull/15831
 [#15668]: https://github.com/crystal-lang/crystal/pull/15668
