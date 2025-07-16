@@ -95,7 +95,7 @@ class Channel(T)
   # If the channel has buffered values, then subsequent calls to `receive` will succeed
   # and consume the buffer until it is empty.
   #
-  # All fibers blocked in `send` or `receive` will be awakened with `Channel::ClosedError`
+  # All fibers blocked in `send` or `receive` will be awakened with `Channel::ClosedError`.
   # All subsequent calls to `#send` will consider the channel closed.
   # Subsequent calls to `#receive` will consider the channel closed if the buffer is empty.
   #
