@@ -1,7 +1,5 @@
 ## [1.17.0] (2025-07-16)
 
-_Feature freeze: 2025-07-02_
-
 [1.17.0]: https://github.com/crystal-lang/crystal/releases/1.17.0
 
 ### Breaking changes
