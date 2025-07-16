@@ -1,6 +1,6 @@
 name: Windows CI
 
-on: [push, pull_request]
+on: [push, pull_request, workflow_dispatch]
 
 permissions: {}
 
@@ -312,8 +312,8 @@ jobs:
 
       - name: Set up Inno Setup
         run: |
-          Invoke-WebRequest -Uri https://jrsoftware.org/download.php/is.exe -OutFile D:\is.exe
-          D:\is.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART
+          Invoke-WebRequest -Uri https://jrsoftware.org/download.php/is.exe -OutFile C:\is.exe
+          C:\is.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART
 
       - name: Set up environment
         run: |
