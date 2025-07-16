@@ -434,6 +434,7 @@
 - *(ci)* **[regression]** Use `CMAKE_MSVC_RUNTIME_LIBRARY` for the MSVC PCRE2 static library ([#15802], thanks @HertzDevil)
 
 [#15900]: https://github.com/crystal-lang/crystal/pull/15900
+[#15983]: https://github.com/crystal-lang/crystal/pull/15983
 [#15649]: https://github.com/crystal-lang/crystal/pull/15649
 [#15679]: https://github.com/crystal-lang/crystal/pull/15679
 [#15729]: https://github.com/crystal-lang/crystal/pull/15729
@@ -446,8 +447,6 @@
 [#15853]: https://github.com/crystal-lang/crystal/pull/15853
 [#15875]: https://github.com/crystal-lang/crystal/pull/15875
 [#15969]: https://github.com/crystal-lang/crystal/pull/15969
-[#15900]: https://github.com/crystal-lang/crystal/pull/15900
-[#15983]: https://github.com/crystal-lang/crystal/pull/15983
 [#15765]: https://github.com/crystal-lang/crystal/pull/15765
 [#15831]: https://github.com/crystal-lang/crystal/pull/15831
 [#15668]: https://github.com/crystal-lang/crystal/pull/15668
