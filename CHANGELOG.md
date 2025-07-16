@@ -1,3 +1,5 @@
+# Changelog
+
 ## [1.17.0] (2025-07-16)
 
 [1.17.0]: https://github.com/crystal-lang/crystal/releases/1.17.0
@@ -458,3 +460,10 @@
 [#15794]: https://github.com/crystal-lang/crystal/pull/15794
 [#15802]: https://github.com/crystal-lang/crystal/pull/15802
 
+## Previous Releases
+
+For information on prior releases, refer to their changelogs:
+
+* [1.16](https://github.com/crystal-lang/crystal/blob/release/1.16/CHANGELOG.md)
+* [1.0 to 1.15](https://github.com/crystal-lang/crystal/blob/release/1.15/CHANGELOG.md)
+* [before 1.0](https://github.com/crystal-lang/crystal/blob/release/0.36/CHANGELOG.md)
