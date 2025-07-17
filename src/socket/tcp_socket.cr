@@ -44,7 +44,7 @@ class TCPSocket < IPSocket
     super family, type, protocol
   end
 
-  # Internal constructor for TCPServer#accept?
+  # Internal constructor for `TCPServer#accept?`.
   # The *blocking* arg is purely informational.
   protected def initialize(*, handle, family, type, protocol, blocking)
     super(handle: handle, family: family, type: type, protocol: protocol, blocking: blocking)
