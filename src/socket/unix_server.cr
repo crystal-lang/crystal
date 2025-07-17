@@ -53,13 +53,14 @@ class UNIXServer < UNIXSocket
     end
   end
 
-  # Creates an UNIXServer from an existing system file descriptor or socket
+  # Creates a UNIXServer from an existing system file descriptor or socket
   # handle.
   #
   # This adopts *fd* into the IO system that will reconfigure it as per the
   # event loop runtime requirements.
   #
-  # NOTE: On Windows the handle must have been created with `WSA_FLAG_OVERLAPPED`.
+  # NOTE: On Windows, the handle must have been created with
+  # `WSA_FLAG_OVERLAPPED`.
   def initialize(*, fd : Handle, type : Type = Type::STREAM, path : Path | String? = nil)
     @path = path = path.to_s
     super(fd: fd, type: type, path: path)

@@ -51,7 +51,8 @@ class IO::FileDescriptor < IO
   # This adopts *fd* into the IO system that will reconfigure it as per the
   # event loop runtime requirements.
   #
-  # NOTE: On Windows the handle should have been created with `FILE_FLAG_OVERLAPPED`.
+  # NOTE: On Windows, the handle should have been created with
+  # `FILE_FLAG_OVERLAPPED`.
   def self.new(fd : Handle, *, close_on_finalize = true)
     file_descriptor = new(handle: fd, close_on_finalize: close_on_finalize)
     file_descriptor.system_blocking_init(nil) unless file_descriptor.closed?
@@ -107,7 +108,7 @@ class IO::FileDescriptor < IO
   # Changes the file descriptor's mode to blocking (true) or non blocking
   # (false).
   #
-  # WARNING: the file descriptor has been configured to behave correctly with
+  # WARNING: The file descriptor has been configured to behave correctly with
   # the event loop runtime requirements. Changing the blocking mode can cause
   # the event loop to misbehave, for example block the entire program when a
   # fiber tries to read from this file descriptor.

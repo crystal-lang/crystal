@@ -98,7 +98,8 @@ class Socket < IO
   # This adopts *fd* into the IO system that will reconfigure it as per the
   # event loop runtime requirements.
   #
-  # NOTE: On Windows the handle must have been created with `WSA_FLAG_OVERLAPPED`.
+  # NOTE: On Windows, the handle must have been created with
+  # `WSA_FLAG_OVERLAPPED`.
   # NOTE: The *blocking* argument is deprecated since Crystal 1.17. Use
   # `Socket.set_blocking` to change it after creating the socket.
   def initialize(fd, @family : Family, @type : Type, @protocol : Protocol = Protocol::IP, blocking = nil)
@@ -437,7 +438,7 @@ class Socket < IO
     optval
   end
 
-  # Returns where the socket's  mode is blocking (true) or non blocking (false).
+  # Returns whether the socket's mode is blocking (true) or non blocking (false).
   @[Deprecated("There are no replacement.")]
   def blocking
     system_blocking?
@@ -445,7 +446,7 @@ class Socket < IO
 
   # Changes the socket's mode to blocking (true) or non blocking (false).
   #
-  # WARNING: the socket has been configured to behave correctly with the event
+  # WARNING: The socket has been configured to behave correctly with the event
   # loop runtime requirements. Changing the blocking mode can cause the event
   # loop to misbehave, for example block the entire program when a fiber tries
   # to read from this socket.

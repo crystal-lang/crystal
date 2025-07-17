@@ -56,7 +56,8 @@ class TCPSocket < IPSocket
   # This adopts *fd* into the IO system that will reconfigure it as per the
   # event loop runtime requirements.
   #
-  # NOTE: On Windows the handle must have been created with `WSA_FLAG_OVERLAPPED`.
+  # NOTE: On Windows, the handle must have been created with
+  # `WSA_FLAG_OVERLAPPED`.
   # NOTE: The *blocking* argument is deprecated since Crystal 1.17. Use
   # `Socket.set_blocking` to change it after creating the socket.
   def initialize(*, fd : Handle, family : Family = Family::INET, blocking = nil)

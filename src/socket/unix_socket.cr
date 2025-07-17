@@ -32,7 +32,7 @@ class UNIXSocket < Socket
     super family, type, Protocol::IP
   end
 
-  # Internal constructor for UNIXSocket#pair and UNIXServer#accept?
+  # Internal constructor for `UNIXSocket#pair` and `UNIXServer#accept?`
   # The *blocking* arg is purely informational.
   protected def initialize(*, handle : Handle, type : Type = Type::STREAM, path : Path | String? = nil, blocking : Bool = nil)
     @path = path.to_s
@@ -42,10 +42,11 @@ class UNIXSocket < Socket
   # Creates an UNIXSocket from an existing system file descriptor or socket
   # handle.
   #
-  # This adopts the system socket into the IO system that will reconfigure it
-  # as per the event loop runtime requirements.
+  # This adopts the system socket into the IO system that will reconfigure it as
+  # per the event loop runtime requirements.
   #
-  # NOTE: On Windows the handle must have been created with `WSA_FLAG_OVERLAPPED`.
+  # NOTE: On Windows, the handle must have been created with
+  # `WSA_FLAG_OVERLAPPED`.
   def initialize(*, fd : Handle, type : Type = Type::STREAM, path : Path | String? = nil)
     @path = path.to_s
     super fd, Family::UNIX, type, Protocol::IP
