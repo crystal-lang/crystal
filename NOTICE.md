@@ -4,7 +4,8 @@ Copyright 2012-2025 Manas Technology Solutions.
 
 This product includes software developed at Manas Technology Solutions (<https://manas.tech/>).
 
-Apache License v2.0 applies to all works.
+Apache License v2.0 with Swift exception applies to all works unless specified
+otherwise.
 
 Please see [LICENSE](/LICENSE) for additional copyright and licensing information.
 
