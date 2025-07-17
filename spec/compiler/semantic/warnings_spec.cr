@@ -51,6 +51,32 @@ describe "Semantic: warnings" do
         "warning in line 9\nWarning: Deprecated Bar."
     end
 
+    it "only affects the type not the namespace" do
+      assert_no_warning <<-CRYSTAL
+        @[Deprecated]
+        class Foo
+          class Bar
+          end
+        end
+
+        Foo::Bar.new
+        CRYSTAL
+    end
+
+    it "doesn't deprecate instance methods (constructors already warn)" do
+      assert_warning <<-CRYSTAL,
+        @[Deprecated]
+        class Foo
+          def do_something
+          end
+        end
+
+        foo = Foo.new
+        foo.do_something
+        CRYSTAL
+        "warning in line 7\nWarning: Deprecated Foo."
+    end
+
     it "detects deprecated through alias" do
       assert_warning <<-CRYSTAL,
         @[Deprecated]
