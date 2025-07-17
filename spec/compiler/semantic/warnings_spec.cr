@@ -51,6 +51,21 @@ describe "Semantic: warnings" do
         "warning in line 9\nWarning: Deprecated Bar."
     end
 
+    it "detects deprecated type reference" do
+      assert_warning <<-CRYSTAL,
+        @[Deprecated]
+        class Foo
+        end
+
+        def p(x)
+          x
+        end
+
+        p Foo
+        CRYSTAL
+        "warning in line 9\nWarning: Deprecated Foo."
+    end
+
     it "only affects the type not the namespace" do
       assert_no_warning <<-CRYSTAL
         @[Deprecated]
