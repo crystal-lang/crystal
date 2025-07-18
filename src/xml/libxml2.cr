@@ -17,6 +17,18 @@ require "./save_options"
   {% end %}
 {% end %}
 lib LibXML
+  # The bindings default to libxml 2.9 that was released in 2012. We can safely
+  # assume at least this version is available everywhere.
+
+  {% if (version = env("LIBXML_VERSION")) && (version.strip != "") %}
+     VERSION = {{env("LIBXML_VERSION")}}
+   {% elsif !flag?(:win32) || flag?(:gnu) %}
+     VERSION = {{`sh -c "pkg-config libxml-2.0 --silence-errors --modversion 2> /dev/null || echo 2.9.0"`.strip.stringify}}
+   {% else %}
+    # TODO: figure out the actual libxml version on *-windows-msvc target
+    VERSION = "2.9.0"
+  {% end %}
+
   alias Int = LibC::Int
 
   $xmlParserVersion : LibC::Char*
@@ -69,6 +81,8 @@ lib LibXML
     properties : Int
   end
 
+  alias HTMLDoc = Doc
+
   struct Attr
     include NodeCommon
     ns : NS*
@@ -96,6 +110,9 @@ lib LibXML
   alias InputBuffer = Void*
   alias XMLTextReader = Void*
   alias XMLTextReaderLocator = Void*
+
+  alias ParserCtxt = Void*
+  alias HTMLParserCtxt = ParserCtxt
 
   enum ParserSeverity
     VALIDITY_WARNING = 1
@@ -132,9 +149,10 @@ lib LibXML
   fun xmlTextReaderReadOuterXml(reader : XMLTextReader) : UInt8*
   fun xmlTextReaderExpand(reader : XMLTextReader) : Node*
   fun xmlTextReaderCurrentNode(reader : XMLTextReader) : Node*
+  fun xmlTextReaderCurrentDoc(reader : XMLTextReader) : Doc*
 
   fun xmlTextReaderSetErrorHandler(reader : XMLTextReader, f : TextReaderErrorFunc) : Void
-
+  fun xmlTextReaderSetStructuredErrorHandler(reader : XMLTextReader, f : StructuredErrorFunc, arg : Void*) : Void
   fun xmlTextReaderLocatorLineNumber(XMLTextReaderLocator) : Int
 
   fun xmlReadMemory(buffer : UInt8*, size : Int, url : UInt8*, encoding : UInt8*, options : XML::ParserOptions) : Doc*
@@ -145,6 +163,14 @@ lib LibXML
 
   fun xmlReadIO(ioread : InputReadCallback, ioclose : InputCloseCallback, ioctx : Void*, url : UInt8*, encoding : UInt8*, options : XML::ParserOptions) : Doc*
   fun htmlReadIO(ioread : InputReadCallback, ioclose : InputCloseCallback, ioctx : Void*, url : UInt8*, encoding : UInt8*, options : XML::HTMLParserOptions) : Doc*
+
+  fun xmlNewParserCtxt : ParserCtxt
+  fun xmlCtxtReadIO(ParserCtxt, ioread : InputReadCallback, ioclose : InputCloseCallback, ioctx : Void*, url : UInt8*, encoding : UInt8*, options : XML::ParserOptions) : Doc*
+  fun xmlCtxtReadMemory(ParserCtxt, buffer : UInt8*, size : Int, url : UInt8*, encoding : UInt8*, options : XML::ParserOptions) : Doc*
+
+  fun htmlNewParserCtxt : HTMLParserCtxt
+  fun htmlCtxtReadMemory(HTMLParserCtxt, buffer : UInt8*, size : Int, url : UInt8*, encoding : UInt8*, options : XML::HTMLParserOptions) : Doc*
+  fun htmlCtxtReadIO(HTMLParserCtxt, ioread : InputReadCallback, ioclose : InputCloseCallback, ioctx : Void*, url : UInt8*, encoding : UInt8*, options : XML::HTMLParserOptions) : Doc*
 
   fun xmlDocGetRootElement(doc : Doc*) : Node*
   fun xmlXPathNodeSetCreate(node : Node*) : NodeSet*
@@ -321,8 +347,15 @@ lib LibXML
   alias StructuredErrorFunc = (Void*, Error*) ->
   alias GenericErrorFunc = (Void*, UInt8*) ->
 
-  fun xmlSetStructuredErrorFunc(ctx : Void*, f : StructuredErrorFunc)
+  # deprecated
   fun xmlSetGenericErrorFunc(ctx : Void*, f : GenericErrorFunc)
+  fun __xmlGenericError : GenericErrorFunc*
+  fun __xmlGenericErrorContext : Void**
+
+  # deprecated since 2.13
+  fun xmlSetStructuredErrorFunc(ctx : Void*, f : StructuredErrorFunc)
+  fun __xmlStructuredError : StructuredErrorFunc*
+  fun __xmlStructuredErrorContext : Void**
 
   fun xmlGetNsList(doc : Doc*, node : Node*) : NS**
 
@@ -331,18 +364,23 @@ lib LibXML
   fun xmlUnsetProp(node : Node*, name : UInt8*) : Int
 
   fun xmlValidateNameValue(value : UInt8*) : Int
+
+  {% if compare_versions(LibXML::VERSION, "2.13.0") >= 0 %}
+    fun xmlCtxtSetErrorHandler(ctxt : ParserCtxt, handler : StructuredErrorFunc, data : Void*)
+    fun xmlXPathSetErrorHandler(ctxt : XPathContext*, handler : StructuredErrorFunc, data : Void*)
+  {% end %}
+
+  {% if compare_versions(LibXML::VERSION, "2.14.0") >= 0 %}
+    fun xmlSaveSetIndentString(SaveCtxPtr, UInt8*)
+  {% end %}
+
+  fun xmlFreeDoc(Doc*)
+  fun xmlFreeNode(Node*)
+  fun xmlFreeTextReader(XMLTextReader)
+  fun xmlFreeTextWriter(TextWriter)
+  fun xmlXPathFreeContext(XPathContext*)
+  fun xmlXPathFreeNodeSet(NodeSet*)
+  fun xmlXPathFreeObject(XPathObject*)
 end
 
 LibXML.xmlInitParser
-
-LibXML.xmlMemSetup(
-  ->GC.free,
-  ->GC.malloc(LibC::SizeT),
-  ->GC.realloc(Void*, LibC::SizeT),
-  ->(str) {
-    len = LibC.strlen(str) + 1
-    copy = Pointer(UInt8).malloc(len)
-    copy.copy_from(str, len)
-    copy
-  }
-)

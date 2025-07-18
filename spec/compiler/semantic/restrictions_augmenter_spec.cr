@@ -1,8 +1,8 @@
 require "../../spec_helper"
 
-private def expect_augment(before : String, after : String)
+private def expect_augment(before : String, after : String, *, file : String = __FILE__, line : Int32 = __LINE__)
   result = semantic(before)
-  result.node.to_s.chomp.should eq(after.chomp)
+  result.node.to_s.chomp.should eq(after.chomp), file: file, line: line
 end
 
 private def expect_no_augment(code : String, flags = nil)
@@ -30,7 +30,7 @@ private def it_augments_for_ivar(ivar_type : String, expected_type : String, fil
       end
       CRYSTAL
 
-    expect_augment before, after
+    expect_augment before, after, file: file, line: line
   end
 end
 

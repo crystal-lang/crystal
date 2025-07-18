@@ -122,6 +122,7 @@ lib LibYAML
 
   struct Emitter
     error : Int
+    problem : LibC::Char*
   end
 
   alias WriteHandler = (Void*, LibC::Char*, LibC::SizeT) -> Int

@@ -227,7 +227,7 @@ abstract class OpenSSL::SSL::Context
   # makes it either impossible to access the parent versions or makes the parent
   # versions public too. So to provide insecure in the child classes, we need
   # a second constructor that we call from there without getting the
-  # overridden ones of the childs.
+  # overridden ones of the children.
   protected def _initialize_insecure(method : LibSSL::SSLMethod)
     @handle = LibSSL.ssl_ctx_new(method)
     raise OpenSSL::Error.new("SSL_CTX_new") if @handle.null?

@@ -1,5 +1,14 @@
 abstract class Crystal::EventLoop
   module FileDescriptor
+    # Opens an unidirectional pipe.
+    #
+    # The implementation shall respect the specified blocking arguments for each
+    # end of the pipe, and follow its internal blocking requirements when a
+    # blocking arg is nil.
+    #
+    # Returns a tuple with the reader and writer IO objects.
+    abstract def pipe(read_blocking : Bool?, write_blocking : Bool?) : {IO::FileDescriptor, IO::FileDescriptor}
+
     # Opens a file at *path*.
     #
     # Blocks the current fiber until the file has been opened. Avoids blocking

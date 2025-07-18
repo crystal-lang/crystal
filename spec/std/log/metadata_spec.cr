@@ -118,10 +118,10 @@ describe Log::Metadata::Value do
     v("a").as_s.should eq("a")
     v(1).as_s?.should be_nil
 
-    v(true).as_bool.should eq(true)
-    v(false).as_bool.should eq(false)
-    v(true).as_bool?.should eq(true)
-    v(false).as_bool?.should eq(false)
+    v(true).as_bool.should be_true
+    v(false).as_bool.should be_false
+    v(true).as_bool?.should be_true
+    v(false).as_bool?.should be_false
     v(nil).as_bool?.should be_nil
   end
 

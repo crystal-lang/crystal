@@ -573,12 +573,12 @@ describe "Enumerable" do
     end
 
     it "returns the default value if there are no truthy block results" do
-      {1, 2, 3}.find_value { |i| "4" if i == 4 }.should eq nil
+      {1, 2, 3}.find_value { |i| "4" if i == 4 }.should be_nil
       {1, 2, 3}.find_value "nope" { |i| "4" if i == 4 }.should eq "nope"
-      ([] of Int32).find_value false { true }.should eq false
+      ([] of Int32).find_value false { true }.should be_false
 
       # Same as above but returns `false` instead of `nil`.
-      {1, 2, 3}.find_value { |i| i == 4 && "4" }.should eq nil
+      {1, 2, 3}.find_value { |i| i == 4 && "4" }.should be_nil
       {1, 2, 3}.find_value "nope" { |i| i == 4 && "4" }.should eq "nope"
     end
   end
@@ -716,7 +716,7 @@ describe "Enumerable" do
     end
 
     it "returns nil if no object could be found" do
-      ["Alice", "Bob"].index { |name| name.size < 3 }.should eq nil
+      ["Alice", "Bob"].index { |name| name.size < 3 }.should be_nil
     end
   end
 
@@ -1137,8 +1137,8 @@ describe "Enumerable" do
   end
 
   describe "none?" do
-    it { [1, 2, 2, 3].none? { |x| x == 1 }.should eq(false) }
-    it { [1, 2, 2, 3].none? { |x| x == 0 }.should eq(true) }
+    it { [1, 2, 2, 3].none? { |x| x == 1 }.should be_false }
+    it { [1, 2, 2, 3].none? { |x| x == 0 }.should be_true }
   end
 
   describe "none? without block" do
@@ -1152,9 +1152,9 @@ describe "Enumerable" do
   end
 
   describe "one?" do
-    it { [1, 2, 2, 3].one? { |x| x == 1 }.should eq(true) }
-    it { [1, 2, 2, 3].one? { |x| x == 2 }.should eq(false) }
-    it { [1, 2, 2, 3].one? { |x| x == 0 }.should eq(false) }
+    it { [1, 2, 2, 3].one? { |x| x == 1 }.should be_true }
+    it { [1, 2, 2, 3].one? { |x| x == 2 }.should be_false }
+    it { [1, 2, 2, 3].one? { |x| x == 0 }.should be_false }
     it { [1, 2, false].one?.should be_false }
     it { [1, false, false].one?.should be_true }
     it { [false].one?.should be_false }

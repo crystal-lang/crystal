@@ -468,7 +468,7 @@ end
 # See also: `Object#inspect(io)`.
 def p(*objects)
   objects.each do |obj|
-    p obj
+    p obj # ameba:disable Lint/DebugCalls
   end
   objects
 end
@@ -482,7 +482,7 @@ end
 #
 # See `Object#inspect(io)`
 def p(**objects)
-  p(objects) unless objects.empty?
+  p(objects) unless objects.empty? # ameba:disable Lint/DebugCalls
 end
 
 # Pretty prints *object* to `STDOUT` followed
@@ -501,7 +501,7 @@ end
 # See also: `Object#pretty_print(pp)`.
 def pp(*objects)
   objects.each do |obj|
-    pp obj
+    pp obj # ameba:disable Lint/DebugCalls
   end
   objects
 end
@@ -515,7 +515,7 @@ end
 #
 # See `Object#pretty_print(pp)`
 def pp(**objects)
-  pp(objects) unless objects.empty?
+  pp(objects) unless objects.empty? # ameba:disable Lint/DebugCalls
 end
 
 # Registers the given `Proc` for execution when the program exits regularly.
@@ -621,6 +621,6 @@ end
   {% end %}
 {% end %}
 
-{% if flag?(:interpreted) && flag?(:unix) && Crystal::Interpreter.has_method?(:signal_descriptor) %}
+{% if flag?(:interpreted) && flag?(:unix) && Crystal::Interpreter.class.has_method?(:signal_descriptor) %}
   Crystal::System::Signal.setup_default_handlers
 {% end %}

@@ -154,6 +154,21 @@ class Thread
     Thread.threads.push(self)
   end
 
+  def inspect(io : IO) : Nil
+    to_s(io)
+  end
+
+  def to_s(io : IO) : Nil
+    io << "#<" << self.class.name << ":0x"
+    object_id.to_s(io, 16)
+    io << " @system_handle="
+    @system_handle.inspect io
+    io << ','
+    io << " @name="
+    @name.inspect io
+    io << '>'
+  end
+
   private def detach(&)
     if @detached.test_and_set
       yield

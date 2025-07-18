@@ -333,7 +333,7 @@ module Spec
       Spec::BeFalseyExpectation.new
     end
 
-    # Creates an `Expectation` that passes if actual is nil (`== nil`).
+    # Creates an `Expectation` that passes if actual is nil (`Object#nil?`).
     def be_nil
       Spec::BeNilExpectation.new
     end

@@ -1,35 +1,34 @@
-class XML::NodeSet
+struct XML::NodeSet
   include Enumerable(Node)
 
-  def initialize(@doc : Node, @set : LibXML::NodeSet*)
-  end
+  # :nodoc:
+  def self.new(doc : Node, set : LibXML::NodeSet*)
+    return NodeSet.new unless set || set.value.node_nr > 0
 
-  def self.new(doc : Node)
-    new doc, LibXML.xmlXPathNodeSetCreate(nil)
-  end
-
-  def [](index : Int) : XML::Node
-    index += size if index < 0
-
-    unless 0 <= index < size
-      raise IndexError.new
+    nodes = Slice(Node).new(set.value.node_nr) do |i|
+      Node.new(set.value.node_tab[i], doc)
     end
+    NodeSet.new(nodes)
+  end
 
-    internal_at(index)
+  @nodes : Slice(Node)
+
+  # :nodoc:
+  def initialize(nodes : Slice(Node)? = nil)
+    @nodes = nodes || Slice(Node).new(0, Pointer(Void).null.as(Node))
+  end
+
+  def [](index : Int) : Node
+    @nodes[index]
   end
 
   def each(&) : Nil
-    size.times do |i|
-      yield internal_at(i)
-    end
+    @nodes.each { |node| yield node }
   end
 
   def empty? : Bool
-    size == 0
+    @nodes.empty?
   end
-
-  # See `Object#hash(hasher)`
-  def_hash object_id
 
   def inspect(io : IO) : Nil
     io << '['
@@ -37,23 +36,15 @@ class XML::NodeSet
     io << ']'
   end
 
-  def size : Int32
-    @set.value.node_nr
+  def pretty_print(pp : PrettyPrint) : Nil
+    pp.list("[", self, "]")
   end
 
-  def object_id
-    @set.address
+  def size : Int32
+    @nodes.size
   end
 
   def to_s(io : IO) : Nil
     join io, '\n'
-  end
-
-  def to_unsafe
-    @set
-  end
-
-  private def internal_at(index)
-    Node.new(@set.value.node_tab[index])
   end
 end

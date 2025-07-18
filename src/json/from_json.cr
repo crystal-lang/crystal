@@ -199,6 +199,10 @@ def String.from_json_object_key?(key : String) : String
   key
 end
 
+def Path.from_json_object_key?(key : String) : Path
+  new(key)
+end
+
 def Array.new(pull : JSON::PullParser)
   ary = new
   new(pull) do |element|
@@ -472,6 +476,14 @@ end
 # See `#to_json` for reference.
 def Time.new(pull : JSON::PullParser)
   Time::Format::ISO_8601_DATE_TIME.parse(pull.read_string)
+end
+
+def Time::Location.new(pull : JSON::PullParser)
+  load(pull.read_string)
+end
+
+def Time::Location.from_json_object_key?(key : String) : Time::Location
+  load(key)
 end
 
 struct Time::Format

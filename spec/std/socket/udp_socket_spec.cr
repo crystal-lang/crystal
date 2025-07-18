@@ -20,7 +20,7 @@ describe UDPSocket, tags: "network" do
 
   each_ip_family do |family, address, unspecified_address|
     it "#bind" do
-      port = unused_local_port
+      port = unused_local_udp_port
       socket = UDPSocket.new(family)
       socket.bind(address, port)
       socket.local_address.should eq(Socket::IPAddress.new(address, port))
@@ -33,7 +33,7 @@ describe UDPSocket, tags: "network" do
     end
 
     it "sends and receives messages" do
-      port = unused_local_port
+      port = unused_local_udp_port
 
       server = UDPSocket.new(family)
       server.bind(address, port)
@@ -100,11 +100,11 @@ describe UDPSocket, tags: "network" do
     else
       it "joins and transmits to multicast groups" do
         udp = UDPSocket.new(family)
-        port = unused_local_port
+        port = unused_local_udp_port
         udp.bind(unspecified_address, port)
 
         udp.multicast_loopback = false
-        udp.multicast_loopback?.should eq(false)
+        udp.multicast_loopback?.should be_false
 
         udp.multicast_hops = 4
         udp.multicast_hops.should eq(4)
@@ -159,7 +159,7 @@ describe UDPSocket, tags: "network" do
         end
 
         udp.multicast_loopback = true
-        udp.multicast_loopback?.should eq(true)
+        udp.multicast_loopback?.should be_true
 
         udp.send("testing", addr)
         udp.read_timeout = 1.second
@@ -186,7 +186,7 @@ describe UDPSocket, tags: "network" do
 
   {% if flag?(:linux) || flag?(:win32) %}
     it "sends broadcast message" do
-      port = unused_local_port
+      port = unused_local_tcp_port
 
       client = UDPSocket.new(Socket::Family::INET)
       client.bind("localhost", 0)

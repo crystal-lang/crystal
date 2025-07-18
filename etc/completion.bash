@@ -46,7 +46,7 @@ _crystal()
             ;;
         build)
             if [[ "${cur}" == -* ]] ; then
-                local opts="--cross-compile --debug --emit --error-on-warnings --exclude-warnings --ll --link-flags --mcpu --no-color --no-codegen --output --prelude --release --single-module --threads --target --verbose --warnings --help"
+                local opts="--cross-compile --debug --emit --error-on-warnings --exclude-warnings --ll --link-flags --mcpu --no-color --no-codegen --output --prelude --release --single-module --threads --target --verbose --warnings --x86-asm-syntax --help"
                 _crystal_compgen_options "${opts}" "${cur}"
             else
                 _crystal_compgen_sources "${cur}"
@@ -54,7 +54,7 @@ _crystal()
             ;;
         run)
             if [[ "${cur}" == -* ]] ; then
-                local opts="--debug --define --emit --error-on-warnings --exclude-warnings --format --help --ll --link-flags --mcpu --no-color --no-codegen --output --prelude --release --stats --single-module --threads --verbose --warnings"
+                local opts="--debug --define --emit --error-on-warnings --exclude-warnings --format --help --ll --link-flags --mcpu --no-color --no-codegen --output --prelude --release --stats --single-module --threads --verbose --warnings --x86-asm-syntax"
                 _crystal_compgen_options "${opts}" "${cur}"
             else
                 _crystal_compgen_sources "${cur}"
@@ -66,7 +66,7 @@ _crystal()
                 _crystal_compgen_options "${opts}" "${cur}"
             else
                 if [[ "${prev}" == "tool" ]] ; then
-                    local subcommands="context dependencies expand flags format hierarchy implementations types unreachable"
+                    local subcommands="context dependencies expand flags format hierarchy implementations macro_code_coverage types unreachable"
                     _crystal_compgen_options "${subcommands}" "${cur}"
                 else
                     _crystal_compgen_sources "${cur}"

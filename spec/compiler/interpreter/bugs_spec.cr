@@ -136,7 +136,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "does multidispatch on virtual struct" do
-      interpret(<<-CRYSTAL).should eq(true)
+      interpret(<<-CRYSTAL).should be_true
         abstract struct Base
         end
 
@@ -187,7 +187,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "does multidispatch on virtual struct union nil" do
-      interpret(<<-CRYSTAL).should eq(true)
+      interpret(<<-CRYSTAL).should be_true
         abstract struct Foo
           @value = 1
         end
