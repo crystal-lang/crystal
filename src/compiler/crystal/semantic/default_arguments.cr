@@ -108,6 +108,7 @@ class Crystal::Def
     if owner = self.owner?
       expansion.owner = owner
     end
+    expansion.original_name = original_name? || name
 
     if retain_body
       new_body = [] of ASTNode
