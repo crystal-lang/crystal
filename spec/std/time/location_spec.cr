@@ -260,10 +260,18 @@ class Time::Location
     describe ".load_local" do
       it "with unset TZ" do
         with_tz(nil) do
-          # This should generally be `Local`, but if `/etc/localtime` doesn't exist,
-          # `Crystal::System::Time.load_localtime` can't resolve a local time zone,
-          # making the return value default to `UTC`.
-          {"Local", "UTC"}.should contain Location.load_local.name
+          local = Location.load_local
+
+          {% if flag?(:win32) %}
+            # On Windows, a system time zone should always be present, and it
+            # should map to a canonical IANA time zone name.
+            local.name.should_not eq "Local"
+          {% else %}
+            # This should generally be `Local`, but if `/etc/localtime` doesn't exist,
+            # `Crystal::System::Time.load_localtime` can't resolve a local time zone,
+            # making the return value default to `UTC`.
+            {"Local", "UTC"}.should contain local.name
+          {% end %}
         end
       end
 

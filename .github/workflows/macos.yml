@@ -25,6 +25,7 @@ jobs:
           arch: aarch64-darwin
         - runs-on: macos-15
           arch: aarch64-darwin
+      fail-fast: false
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v4

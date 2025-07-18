@@ -27,7 +27,7 @@ jobs:
   libssl_test:
     runs-on: ubuntu-latest
     name: "${{ matrix.pkg }}"
-    container: crystallang/crystal:1.16.3-alpine
+    container: crystallang/crystal:1.17.0-alpine
     strategy:
       fail-fast: false
       matrix:
