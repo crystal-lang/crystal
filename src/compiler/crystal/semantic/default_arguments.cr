@@ -70,6 +70,7 @@ class Crystal::Def
 
           splat_arg = Arg.new(splat_name)
           splat_arg.annotations = arg.annotations.dup
+          splat_arg.original_name = arg.original_name
 
           new_args << splat_arg
         end
@@ -95,10 +96,14 @@ class Crystal::Def
           if matching_arg
             new_arg = Arg.new(matching_arg.name, external_name: named_arg)
             new_arg.annotations = matching_arg.annotations.dup
+            new_arg.original_name = matching_arg.original_name
             new_args << new_arg
           else
             new_arg = Arg.new(temp_name, external_name: named_arg)
-            new_arg.annotations = double_splat.try(&.annotations.dup)
+            if double_splat = self.double_splat
+              new_arg.annotations = double_splat.annotations.dup
+              new_arg.original_name = double_splat.original_name
+            end
             new_args << new_arg
           end
         end
