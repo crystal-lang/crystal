@@ -471,10 +471,6 @@ module Crystal
         return expanded.transform self
       end
 
-      unless @current_def.try(&.annotation(@program.deprecated_annotation))
-        @program.check_call_to_deprecated_method(node)
-      end
-
       # Need to transform these manually because node.block doesn't
       # need to be transformed if it has a fun_literal
       # ~~~
@@ -619,6 +615,11 @@ module Crystal
           node.args << named_arg.value
         end
         node.named_args = nil
+      end
+
+      # Check deprecations last, after the arguments have been flattened.
+      unless @current_def.try(&.annotation(@program.deprecated_annotation))
+        @program.check_call_to_deprecated_method(node)
       end
 
       node
