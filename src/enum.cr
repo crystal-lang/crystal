@@ -517,11 +517,11 @@ abstract struct Enum
 
       # The following is an optimized normalization. It is equivalent to
       # `string.gsub('-', '_').camelcase.downcase` but does not allocate.
-      buffer = uninitialized UInt8[{{ @type.constants.map(&.size).sort.last * 4 + 1 }}]
-      max_size = {{ @type.constants.map(&.size).sort.last }}
+      {% max_size = @type.constants.map(&.size).sort.last %}
+      buffer = uninitialized UInt8[{{ max_size * 4 + 1 }}]
       appender = buffer.to_slice.to_unsafe.appender
       string.each_char_with_index do |char, index|
-        return nil if index > max_size
+        return nil if index > {{max_size}}
         next if char == '-' || char == '_'
         char.downcase &.each_byte do |byte|
           appender << byte
