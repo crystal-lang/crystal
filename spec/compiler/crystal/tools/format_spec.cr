@@ -93,8 +93,8 @@ describe Crystal::Command::FormatCommand do
     with_tempfile("format_files") do |path|
       FileUtils.mkdir_p path
       Dir.cd(path) do
-        File.write File.join(path, "format.cr"), "if true\n1\nend"
-        File.write File.join(path, "not_format.cr"), "if true\n  1\nend\n"
+        File.write "format.cr", "if true\n1\nend"
+        File.write "not_format.cr", "if true\n  1\nend\n"
 
         format_command = Crystal::Command::FormatCommand.new([] of String, color: false, stdin: stdin, stdout: stdout, stderr: stderr)
         format_command.run
@@ -103,7 +103,7 @@ describe Crystal::Command::FormatCommand do
         stdout.to_s.should_not contain("Format #{Path[".", "not_format.cr"]}")
         stderr.to_s.should be_empty
 
-        File.read(File.join(path, "format.cr")).should eq("if true\n  1\nend\n")
+        File.read("format.cr").should eq("if true\n  1\nend\n")
       end
     end
   end
@@ -116,10 +116,10 @@ describe Crystal::Command::FormatCommand do
     with_tempfile("format_files_dir") do |path|
       FileUtils.mkdir_p File.join(path, "dir")
       Dir.cd(path) do
-        File.write File.join(path, "format.cr"), "if true\n1\nend"
-        File.write File.join(path, "not_format.cr"), "if true\n  1\nend\n"
-        File.write File.join(path, "dir", "format.cr"), "if true\n1\nend"
-        File.write File.join(path, "dir", "not_format.cr"), "if true\n  1\nend\n"
+        File.write "format.cr", "if true\n1\nend"
+        File.write "not_format.cr", "if true\n  1\nend\n"
+        File.write File.join("dir", "format.cr"), "if true\n1\nend"
+        File.write File.join("dir", "not_format.cr"), "if true\n  1\nend\n"
 
         format_command = Crystal::Command::FormatCommand.new(["dir"], color: false, stdin: stdin, stdout: stdout, stderr: stderr)
         format_command.run
@@ -139,8 +139,8 @@ describe Crystal::Command::FormatCommand do
         stdout.to_s.should_not contain("Format #{Path[".", "dir", "not_format.cr"]}")
         stderr.to_s.should be_empty
 
-        File.read(File.join(path, "format.cr")).should eq("if true\n  1\nend\n")
-        File.read(File.join(path, "dir", "format.cr")).should eq("if true\n  1\nend\n")
+        File.read("format.cr").should eq("if true\n  1\nend\n")
+        File.read(File.join("dir", "format.cr")).should eq("if true\n  1\nend\n")
       end
     end
   end
@@ -153,9 +153,9 @@ describe Crystal::Command::FormatCommand do
     with_tempfile("format_files_error") do |path|
       FileUtils.mkdir_p path
       Dir.cd(path) do
-        File.write File.join(path, "format.cr"), "if true\n1\nend"
-        File.write File.join(path, "syntax_error.cr"), "if"
-        File.write File.join(path, "invalid_byte_sequence_error.cr"), "\xfe\xff"
+        File.write "format.cr", "if true\n1\nend"
+        File.write "syntax_error.cr", "if"
+        File.write "invalid_byte_sequence_error.cr", "\xfe\xff"
 
         format_command = Crystal::Command::FormatCommand.new([] of String, color: false, stdin: stdin, stdout: stdout, stderr: stderr)
         format_command.run
@@ -164,7 +164,7 @@ describe Crystal::Command::FormatCommand do
         stderr.to_s.should contain("syntax error in '#{Path[".", "syntax_error.cr"]}:1:3': unexpected token: EOF")
         stderr.to_s.should contain("file '#{Path[".", "invalid_byte_sequence_error.cr"]}' is not a valid Crystal source file: Unexpected byte 0xfe at position 0, malformed UTF-8")
 
-        File.read(File.join(path, "format.cr")).should eq("if true\n  1\nend\n")
+        File.read("format.cr").should eq("if true\n  1\nend\n")
       end
     end
   end
@@ -177,7 +177,7 @@ describe Crystal::Command::FormatCommand do
     with_tempfile("format_files_bug") do |path|
       FileUtils.mkdir_p path
       Dir.cd(path) do
-        File.write File.join(path, "empty.cr"), ""
+        File.write "empty.cr", ""
 
         format_command = BuggyFormatCommand.new([] of String, color: false, stdin: stdin, stdout: stdout, stderr: stderr)
         format_command.run
@@ -195,7 +195,7 @@ describe Crystal::Command::FormatCommand do
     with_tempfile("format_files_bug_show_stacktrace") do |path|
       FileUtils.mkdir_p path
       Dir.cd(path) do
-        File.write File.join(path, "empty.cr"), ""
+        File.write "empty.cr", ""
 
         format_command = BuggyFormatCommand.new([] of String, show_backtrace: true, color: false, stdin: stdin, stdout: stdout, stderr: stderr)
         format_command.run
@@ -214,10 +214,10 @@ describe Crystal::Command::FormatCommand do
     with_tempfile("check_files_format") do |path|
       FileUtils.mkdir_p path
       Dir.cd(path) do
-        File.write File.join(path, "format.cr"), "if true\n1\nend"
-        File.write File.join(path, "not_format.cr"), "if true\n  1\nend\n"
-        File.write File.join(path, "syntax_error.cr"), "if"
-        File.write File.join(path, "invalid_byte_sequence_error.cr"), "\xfe\xff"
+        File.write "format.cr", "if true\n1\nend"
+        File.write "not_format.cr", "if true\n  1\nend\n"
+        File.write "syntax_error.cr", "if"
+        File.write "invalid_byte_sequence_error.cr", "\xfe\xff"
 
         format_command = Crystal::Command::FormatCommand.new([] of String, check: true, color: false, stdin: stdin, stdout: stdout, stderr: stderr)
         format_command.run
@@ -239,8 +239,8 @@ describe Crystal::Command::FormatCommand do
     with_tempfile("check_files_format_ok") do |path|
       FileUtils.mkdir_p path
       Dir.cd(path) do
-        File.write File.join(path, "format1.cr"), "if true\n  1\nend\n"
-        File.write File.join(path, "format2.cr"), "if true\n  2\nend\n"
+        File.write "format1.cr", "if true\n  1\nend\n"
+        File.write "format2.cr", "if true\n  2\nend\n"
 
         format_command = Crystal::Command::FormatCommand.new([] of String, check: true, color: false, stdin: stdin, stdout: stdout, stderr: stderr)
         format_command.run
@@ -259,8 +259,8 @@ describe Crystal::Command::FormatCommand do
     with_tempfile("check_files_format_excludes") do |path|
       FileUtils.mkdir_p path
       Dir.cd(path) do
-        File.write File.join(path, "format.cr"), "if true\n1\nend"
-        File.write File.join(path, "not_format.cr"), "if true\n  1\nend\n"
+        File.write "format.cr", "if true\n1\nend"
+        File.write "not_format.cr", "if true\n  1\nend\n"
 
         format_command = Crystal::Command::FormatCommand.new([] of String, check: true, excludes: ["format.cr"], color: false, stdin: stdin, stdout: stdout, stderr: stderr)
         format_command.run
@@ -279,8 +279,8 @@ describe Crystal::Command::FormatCommand do
     with_tempfile("check_files_format_excludes_includes") do |path|
       FileUtils.mkdir_p path
       Dir.cd(path) do
-        File.write File.join(path, "format.cr"), "if true\n1\nend"
-        File.write File.join(path, "not_format.cr"), "if true\n  1\nend\n"
+        File.write "format.cr", "if true\n1\nend"
+        File.write "not_format.cr", "if true\n  1\nend\n"
 
         format_command = Crystal::Command::FormatCommand.new([] of String, check: true, excludes: ["format.cr"], includes: ["format.cr"], color: false, stdin: stdin, stdout: stdout, stderr: stderr)
         format_command.run
