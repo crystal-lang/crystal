@@ -27,7 +27,18 @@ module Crystal
       return if compiler_expanded_call(node)
 
       node.target_defs.try &.each do |target_def|
-        check_deprecation(target_def, node, @deprecated_methods_detected)
+        unless check_deprecation(target_def, node, @deprecated_methods_detected)
+          # can't annotate fun arguments
+          next if target_def.is_a?(External)
+
+          # skip calls in expanded default arguments def (it's calling the final
+          # def with all the default args, that would always trigger a warning)
+          next if node.expansion?
+
+          node.args.zip(target_def.args) do |arg, def_arg|
+            break if check_deprecation(def_arg, arg, @deprecated_methods_detected)
+          end
+        end
       end
     end
 
@@ -38,15 +49,25 @@ module Crystal
     end
 
     private def check_deprecation(object, use_site, detects)
+      check_deprecation(object, use_site, detects) do
+        if object.responds_to?(:short_reference)
+          object.short_reference
+        else
+          object.to_s
+        end
+      end
+    end
+
+    private def check_deprecation(object, use_site, detects, &)
       if (ann = object.annotation(self.deprecated_annotation)) &&
          (deprecated_annotation = DeprecatedAnnotation.from(ann))
         use_location = use_site.location.try(&.macro_location) || use_site.location
-        return if !use_location || @warnings.ignore_warning_due_to_location?(use_location)
+        return false if !use_location || @warnings.ignore_warning_due_to_location?(use_location)
 
         # skip warning if the use site was already informed
-        name = object.short_reference
+        name = yield
         warning_key = "#{name} #{use_location}"
-        return if detects.includes?(warning_key)
+        return true if detects.includes?(warning_key)
         detects.add(warning_key)
 
         full_message = String.build do |io|
@@ -57,6 +78,9 @@ module Crystal
         end
 
         @warnings.infos << use_site.warning(full_message)
+        true
+      else
+        false
       end
     end
 
@@ -128,6 +152,12 @@ module Crystal
       else
         "#{owner}##{name}"
       end
+    end
+  end
+
+  class Arg
+    def short_reference
+      "argument #{original_name}"
     end
   end
 
