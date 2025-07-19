@@ -279,6 +279,38 @@ struct JSON::Any
   end
 
   def inspect(io : IO) : Nil
+    # == Why do we need exec_recursive_hash here? ==
+    # Our goal is to produce something like "JSON::Any([1,2,3])", with the tag only
+    # on the outside. A naive implementation would result in
+    # "JSON::Any([JSON::Any(1), JSON::Any(2), JSON::Any(3)])", because we need to
+    # do raw recursion through Array#inspect and Hash#inspect, which contain more
+    # JSON::Any objects, and there is no way to know whether we are "at the root".
+    # The two options we have are: set a stack-scoped flag indicating that we
+    # shouldn't wrap with "JSON::Any(", or re-implement Array#inspect and
+    # Hash#inspect, both of which require exec_recursive anyways.
+
+    # Once we have a more general method of setting fiber-local variables and flags,
+    # this could be significantly simplified.
+
+    hash = Fiber.current.exec_recursive_hash
+
+    # Here the key doesn't matter, we want to mask *all* invocations
+    # of JSON::Any#inspect below this stack frame
+    inspect_key = {0_u64, :__json_inspect__}
+
+    hash.put(inspect_key, nil) do
+      begin
+        # here's the root case, where we wrap with JSON::Any(...)
+        io << "JSON::Any("
+        @raw.inspect(io)
+        io << ")"
+        return
+      ensure
+        hash.delete(inspect_key)
+      end
+    end
+
+    # This is the non-root case, where we don't wrap with anything.
     @raw.inspect(io)
   end
 
