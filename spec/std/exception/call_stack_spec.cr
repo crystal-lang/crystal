@@ -79,14 +79,11 @@ describe "Backtrace" do
       source_file = datapath("blank_test_file.txt")
       compile_file(source_file) do |executable_file|
         output, error = IO::Memory.new, IO::Memory.new
-        with_tempfile("non-existent") do |path|
-          Dir.mkdir path
-          Dir.cd(path) do
-            Dir.delete(path)
-            status = Process.run executable_file
+        with_tempdir("non-existent") do
+          Dir.delete(Dir.current)
+          status = Process.run executable_file
 
-            status.success?.should be_true
-          end
+          status.success?.should be_true
         end
       end
     end
