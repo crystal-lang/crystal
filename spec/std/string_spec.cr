@@ -3212,6 +3212,10 @@ describe "String" do
       end
     end
   end
+
+  it ".additive_identity" do
+    String.additive_identity.should be ""
+  end
 end
 
 class String

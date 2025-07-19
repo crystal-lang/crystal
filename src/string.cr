@@ -5859,6 +5859,11 @@ class String
       {% end %}
     end
   end
+
+  # Returns the empty string.
+  def self.additive_identity : String
+    ""
+  end
 end
 
 require "./string/*"

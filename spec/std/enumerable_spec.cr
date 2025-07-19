@@ -1394,6 +1394,7 @@ describe "Enumerable" do
 
     it "strings" do
       ["foo", "bar"].sum.should eq "foobar"
+      [1, 2, 3].sum(&.to_s).should eq "123"
     end
 
     it "float" do
