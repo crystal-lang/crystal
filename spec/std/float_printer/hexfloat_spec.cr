@@ -1,9 +1,11 @@
 # This file contains test cases derived from Microsoft's STL:
 # https://github.com/microsoft/STL/tree/main/tests/std/tests/P0067R5_charconv
 #
+# REUSE-IgnoreStart
 # Original license:
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+# REUSE-IgnoreEnd
 
 require "spec"
 require "spec/helpers/string"

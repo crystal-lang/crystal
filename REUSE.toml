@@ -1,0 +1,23 @@
+version = 1
+
+# All original code in this repository is licensed under Apache 2.0 with Swift
+# exception.
+[[annotations]]
+path = ["**"]
+SPDX-FileCopyrightText = "Copyright 2012-2025 Manas Technology Solutions."
+SPDX-License-Identifier = "Apache-2.0 WITH Swift-exception"
+
+# Unset license information for vendored libraries ("shards"). They either
+# provide their own information or there's a specific section in this file.
+[[annotations]]
+path = ["lib/*/**"]
+
+[[annotations]]
+path = "lib/markd/**"
+SPDX-FileCopyrightText = "Copyright (c) 2017-present icyleaf"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = "lib/reply/**"
+SPDX-FileCopyrightText = "Copyright (c) 2022 I3oris <boris31.resch@gmail.com>"
+SPDX-License-Identifier = "MIT"
