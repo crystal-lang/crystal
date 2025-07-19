@@ -16,11 +16,13 @@ module Spec
     property? focus = false
     getter? dry_run = false
     getter? list_tags = false
+    getter? color : Bool
 
     getter stdout : IO
     getter stderr : IO
 
     def initialize(@stdout : IO = STDOUT, @stderr : IO = STDERR)
+      @color = Colorize.default_enabled?(@stdout, @stderr)
     end
 
     def add_location(file, line)
@@ -107,12 +109,10 @@ module Spec
           configure_formatter("tap")
         end
         opts.on("--color", "Enabled ANSI colored output") do
-          # TODO: should not be global state
-          Colorize.enabled = true
+          @color = true
         end
         opts.on("--no-color", "Disable ANSI colored output") do
-          # TODO: should not be global state
-          Colorize.enabled = false
+          @color = false
         end
         opts.on("--dry-run", "Pass all tests without execution") do
           @dry_run = true
