@@ -323,6 +323,88 @@ describe "File" do
     it "reads link" do
       File.readlink(datapath("symlink.txt")).should eq "test_file.txt"
     end
+
+    it "raises when not a link" do
+      expect_raises File::Error, "Cannot read link: '#{datapath("test_file.txt").inspect_unquoted}'" do
+        File.readlink(datapath("test_file.txt"))
+      end
+    end
+
+    it "raises when non-existent" do
+      expect_raises File::NotFoundError, "Cannot read link: '#{datapath("nonexistent.txt").inspect_unquoted}'" do
+        File.readlink(datapath("nonexistent.txt"))
+      end
+    end
+
+    it "returns non-existent target" do
+      with_tempfile("target-nonexistent") do |path|
+        Dir.mkdir_p(path)
+        Dir.cd(path) do
+          File.symlink("nonexistent.txt", "symlink.txt")
+
+          File.readlink("symlink.txt").should eq "nonexistent.txt"
+        end
+      end
+    end
+
+    it "raises when inaccessible" do
+      # Crystal does not expose ways to make a file unreadable on Windows
+      pending! if {{ flag?(:win32) }}
+      pending_if_superuser!
+
+      with_tempfile("readlink-inaccessible") do |path|
+        Dir.mkdir_p(path)
+        symlink = File.join(path, "symlink.txt")
+        File.symlink("nonexistent.txt", symlink)
+        File.chmod(path, File::Permissions::None)
+
+        expect_raises File::AccessDeniedError, "Cannot read link: '#{symlink.inspect_unquoted}'" do
+          File.readlink(symlink)
+        end
+      end
+    end
+  end
+
+  describe ".readlink?" do
+    it "reads link" do
+      File.readlink?(datapath("symlink.txt")).should eq "test_file.txt"
+    end
+
+    it "returns nil when not a link" do
+      File.readlink?(datapath("test_file.txt")).should be_nil
+    end
+
+    it "returns nil when non-existent" do
+      File.readlink?(datapath("nonexistent.txt")).should be_nil
+    end
+
+    it "raises when target non-existent" do
+      with_tempfile("target-nonexistent") do |path|
+        Dir.mkdir_p(path)
+        Dir.cd(path) do
+          File.symlink("nonexistent.txt", "symlink.txt")
+
+          File.readlink?("symlink.txt").should eq "nonexistent.txt"
+        end
+      end
+    end
+
+    it "raises when inaccessible" do
+      # Crystal does not expose ways to make a file unreadable on Windows
+      pending! if {{ flag?(:win32) }}
+      pending_if_superuser!
+
+      with_tempfile("readlinkq-inaccessible") do |path|
+        Dir.mkdir_p(path)
+        symlink = File.join(path, "symlink.txt")
+        File.symlink("nonexistent.txt", symlink)
+        File.chmod(path, File::Permissions::None)
+
+        expect_raises File::AccessDeniedError, "Cannot read link: '#{symlink.inspect_unquoted}'" do
+          File.readlink?(symlink)
+        end
+      end
+    end
   end
 
   it "gets dirname" do

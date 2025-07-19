@@ -154,7 +154,7 @@ module Crystal::System::File
     ret
   end
 
-  def self.readlink(path) : String
+  def self.readlink(path, &) : String
     buf = Bytes.new 256
     # First pass at 256 bytes handles all normal occurrences in 1 system call.
     # Second pass at 1024 bytes handles outliers?
@@ -162,6 +162,10 @@ module Crystal::System::File
     3.times do |iter|
       bytesize = LibC.readlink(path, buf, buf.bytesize)
       if bytesize == -1
+        if Errno.value.in?(Errno::EINVAL, Errno::ENOENT, Errno::ENOTDIR)
+          yield
+        end
+
         raise ::File::Error.from_errno("Cannot read link", file: path)
       elsif bytesize == buf.bytesize
         break if iter >= 2
