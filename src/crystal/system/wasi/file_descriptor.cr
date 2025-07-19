@@ -13,6 +13,10 @@ module Crystal::System::FileDescriptor
     r
   end
 
+  def self.set_blocking(fd : Handle, value : Bool)
+    raise NotImplementedError.new("Crystal::System::FileDescriptor.set_blocking")
+  end
+
   protected def system_blocking_init(blocking : Bool?)
   end
 

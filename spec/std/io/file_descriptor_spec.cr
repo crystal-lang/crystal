@@ -189,6 +189,20 @@ describe IO::FileDescriptor do
     end
   {% end %}
 
+  {% if flag?(:unix) %}
+    it ".set_blocking" do
+      File.open(datapath("test_file.txt"), "r") do |file|
+        fd = file.fd
+
+        IO::FileDescriptor.set_blocking(fd, false)
+        IO::FileDescriptor.fcntl(fd, LibC::F_GETFL).bits_set?(LibC::O_NONBLOCK).should be_true
+
+        IO::FileDescriptor.set_blocking(fd, true)
+        IO::FileDescriptor.fcntl(fd, LibC::F_GETFL).bits_set?(LibC::O_NONBLOCK).should be_false
+      end
+    end
+  {% end %}
+
   typeof(STDIN.noecho { })
   typeof(STDIN.noecho!)
   typeof(STDIN.echo { })

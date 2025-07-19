@@ -238,9 +238,11 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
 
   def pipe(read_blocking : Bool?, write_blocking : Bool?) : {IO::FileDescriptor, IO::FileDescriptor}
     r, w = System::FileDescriptor.system_pipe(!!read_blocking, !!write_blocking)
+    create_completion_port(LibC::HANDLE.new(r)) unless read_blocking
+    create_completion_port(LibC::HANDLE.new(w)) unless write_blocking
     {
-      IO::FileDescriptor.new(r, !!read_blocking),
-      IO::FileDescriptor.new(w, !!write_blocking),
+      IO::FileDescriptor.new(handle: r, blocking: !!read_blocking),
+      IO::FileDescriptor.new(handle: w, blocking: !!write_blocking),
     }
   end
 

@@ -51,24 +51,40 @@ class Socket < IO
 
   # Creates a TCP socket. Consider using `TCPSocket` or `TCPServer` unless you
   # need full control over the socket.
-  def self.tcp(family : Family, blocking = nil) : self
+  def self.tcp(family : Family) : self
+    new(family, Type::STREAM, Protocol::TCP)
+  end
+
+  @[Deprecated("The blocking argument is deprecated. Use Socket.set_blocking instead.")]
+  def self.tcp(family : Family, blocking) : self
     new(family, Type::STREAM, Protocol::TCP, blocking)
   end
 
   # Creates an UDP socket. Consider using `UDPSocket` unless you need full
   # control over the socket.
-  def self.udp(family : Family, blocking = nil)
+  def self.udp(family : Family) : self
+    new(family, Type::DGRAM, Protocol::UDP)
+  end
+
+  @[Deprecated("The blocking argument is deprecated. Use Socket.set_blocking instead.")]
+  def self.udp(family : Family, blocking) : self
     new(family, Type::DGRAM, Protocol::UDP, blocking)
   end
 
   # Creates an UNIX socket. Consider using `UNIXSocket` or `UNIXServer` unless
   # you need full control over the socket.
+  #
+  # NOTE: The *blocking* argument is deprecated since Crystal 1.17. Use
+  # `Socket.set_blocking` to change it after creating the socket.
   def self.unix(type : Type = Type::STREAM, blocking = nil) : self
     new(Family::UNIX, type, blocking: blocking)
   end
 
   # Creates a socket. Consider using `TCPSocket`, `TCPServer`, `UDPSocket`,
   # `UNIXSocket` or `UNIXServer` unless you need full control over the socket.
+  #
+  # NOTE: The *blocking* argument is deprecated since Crystal 1.17. Use
+  # `Socket.set_blocking` to change it after creating the socket.
   def initialize(family : Family, type : Type, protocol : Protocol = Protocol::IP, blocking = nil)
     # This method is `#initialize` instead of `.new` because it is used as super
     # constructor from subclasses.
@@ -84,10 +100,12 @@ class Socket < IO
   #
   # NOTE: On Windows, the handle must have been created with
   # `WSA_FLAG_OVERLAPPED`.
+  # NOTE: The *blocking* argument is deprecated since Crystal 1.17. Use
+  # `Socket.set_blocking` to change it after creating the socket.
   def initialize(fd, @family : Family, @type : Type, @protocol : Protocol = Protocol::IP, blocking = nil)
     initialize(handle: fd, family: family, type: type, protocol: protocol)
     blocking = Crystal::EventLoop.default_socket_blocking? if blocking.nil?
-    self.blocking = blocking unless blocking
+    Crystal::System::Socket.set_blocking(fd, blocking) unless blocking
     self.sync = true
   end
 
@@ -228,10 +246,10 @@ class Socket < IO
   def accept? : Socket?
     if rs = Crystal::EventLoop.current.accept(self)
       sock = Socket.new(handle: rs[0], family: family, type: type, protocol: protocol, blocking: rs[1])
-      unless (blocking = self.blocking) == rs[1]
+      unless (blocking = system_blocking?) == rs[1]
         # FIXME: unlike the overloads in TCPServer and UNIXServer, this version
         # carries the blocking mode from the server socket to the client socket
-        sock.blocking = blocking
+        Crystal::System::Socket.set_blocking(fd, blocking)
       end
       sock.sync = sync?
       sock
@@ -421,6 +439,7 @@ class Socket < IO
   end
 
   # Returns whether the socket's mode is blocking (true) or non blocking (false).
+  @[Deprecated("There are no replacement.")]
   def blocking
     system_blocking?
   end
@@ -431,8 +450,15 @@ class Socket < IO
   # loop runtime requirements. Changing the blocking mode can cause the event
   # loop to misbehave, for example block the entire program when a fiber tries
   # to read from this socket.
+  @[Deprecated("Use Socket.set_blocking(fd, value) instead.")]
   def blocking=(value)
     self.system_blocking = value
+  end
+
+  # Changes the blocking mode of *fd* to be blocking (true) or non blocking
+  # (false).
+  def self.set_blocking(fd : Handle, value : Bool)
+    Crystal::System::Socket.set_blocking(fd, value)
   end
 
   def close_on_exec?

@@ -98,8 +98,12 @@ module Crystal::System::FileDescriptor
     @system_blocking
   end
 
+  def self.set_blocking(fd : Handle, value : Bool)
+    raise NotImplementedError.new("Cannot change the blocking mode of an `IO::FileDescriptor` after creation")
+  end
+
   private def system_blocking=(blocking)
-    unless blocking == self.blocking
+    unless blocking == system_blocking?
       raise IO::Error.new("Cannot reconfigure `IO::FileDescriptor#blocking` after creation")
     end
   end
@@ -366,7 +370,7 @@ module Crystal::System::FileDescriptor
     # `blocking` must be set to `true` because the underlying handles never
     # support overlapped I/O; instead, `#emulated_blocking?` should return
     # `false` for `STDIN` as it uses a separate thread
-    io = IO::FileDescriptor.new(handle.address, blocking: true)
+    io = IO::FileDescriptor.new(handle: handle.address, blocking: true)
 
     # Set sync or flush_on_newline as described in STDOUT and STDERR docs.
     # See https://crystal-lang.org/api/toplevel.html#STDERR
