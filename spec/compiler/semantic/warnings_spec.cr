@@ -127,7 +127,7 @@ describe "Semantic: warnings" do
 
         foo(a: 2)
         CRYSTAL
-        "warning in line 5\nWarning: Deprecated ::foo:a."
+        "warning in line 5\nWarning: Deprecated ::foo."
     end
 
     it "detects deprecated initialize" do
