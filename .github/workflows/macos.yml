@@ -15,13 +15,15 @@ env:
 jobs:
   darwin-test:
     runs-on: ${{ matrix.runs-on }}
-    name: ${{ matrix.arch }}
+    name: "${{ matrix.runs-on }} (${{ matrix.arch }})"
     strategy:
       matrix:
         include:
         - runs-on: macos-13
           arch: x86_64-darwin
         - runs-on: macos-14
+          arch: aarch64-darwin
+        - runs-on: macos-15
           arch: aarch64-darwin
       fail-fast: false
     steps:

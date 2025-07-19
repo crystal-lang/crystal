@@ -74,11 +74,13 @@ describe UDPSocket, tags: "network" do
       server.close
     end
 
-    if {{ flag?(:darwin) }} && family == Socket::Family::INET6
+    if {{ flag?(:darwin) }}
       # Darwin is failing to join IPv6 multicast groups on older versions.
       # However this is known to work on macOS Mojave with Darwin 18.2.0.
       # Darwin also has a bug that prevents selecting the "default" interface.
       # https://lists.apple.com/archives/darwin-kernel/2014/Mar/msg00012.html
+      # Since macOS Sequoia (version 15), the ability to send UDP multicasts
+      # seems to have some extra requirements.
       pending "joins and transmits to multicast groups"
     elsif {{ flag?(:dragonfly) }} && family == Socket::Family::INET6
       # TODO: figure out why updating `multicast_loopback` produces a
