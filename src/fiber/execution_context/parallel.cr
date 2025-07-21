@@ -86,12 +86,13 @@ module Fiber::ExecutionContext
 
     @[Deprecated("Use Fiber::ExecutionContext::Parallel.new(String, Int32) instead.")]
     def self.new(name : String, size : Range(Nil, Int32)) : self
-      new(name, size.end, hijack: false)
+      new(name, size.exclusive? ? size.end - 1 : size.end, hijack: false)
     end
 
     @[Deprecated("Use Fiber::ExecutionContext::Parallel.new(String, Int32) instead.")]
     def self.new(name : String, size : Range(Int32, Int32)) : self
-      new(name, size.end, hijack: false)
+      raise ArgumentError.new("invalid range") if size.begin > size.end
+      new(name, size.exclusive? ? size.end - 1 : size.end, hijack: false)
     end
 
     protected def initialize(@name : String, @capacity : Int32, hijack : Bool)
