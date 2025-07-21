@@ -278,11 +278,21 @@ module Crystal
             # When **opts is expanded for named arguments, we must use internal
             # names that won't clash with local variables defined in the method.
             temp_name = instance_type.program.new_temp_var_name
-            def_args << Arg.new(temp_name, external_name: named_arg)
-            i += 1
+            def_arg = Arg.new(temp_name, external_name: named_arg)
+
+            if matching_arg = args.find { |arg| arg.external_name == named_arg }
+              def_arg.annotations = matching_arg.annotations.dup
+              def_arg.original_name = matching_arg.original_name
+            elsif double_splat = self.double_splat
+              def_arg.annotations = double_splat.annotations.dup
+              def_arg.original_name = double_splat.original_name
+            end
+
+            def_args << def_arg
           end
         end
       else
+        splat_index = nil
         name = "new"
       end
 
