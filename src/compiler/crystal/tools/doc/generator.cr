@@ -320,7 +320,9 @@ class Crystal::Doc::Generator
 
   def doc(context, string)
     string = isolate_flag_lines string
-    string += build_flag_lines_from_annotations context
+    if annotations = build_flag_lines_from_annotations context
+      string += "\n\n" + annotations
+    end
     markdown = render_markdown(context, string)
     generate_flags markdown
   end
@@ -364,20 +366,15 @@ class Crystal::Doc::Generator
   end
 
   def build_flag_lines_from_annotations(context)
-    first = true
     String.build do |io|
       if anns = context.annotations(@program.deprecated_annotation)
         anns.each do |ann|
-          io << "\n\n" if first
-          first = false
           io << "DEPRECATED: #{DeprecatedAnnotation.from(ann).message}\n\n"
         end
       end
 
       if anns = context.annotations(@program.experimental_annotation)
         anns.each do |ann|
-          io << "\n\n" if first
-          first = false
           io << "EXPERIMENTAL: #{ExperimentalAnnotation.from(ann).message}\n\n"
         end
       end
