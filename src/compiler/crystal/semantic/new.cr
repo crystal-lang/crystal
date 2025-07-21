@@ -267,6 +267,7 @@ module Crystal
       before_splat_size.times do |i|
         new_arg = Arg.new("__arg#{i}")
         new_arg.annotations = args[i].annotations
+        new_arg.original_name = args[i].original_name
         def_args << new_arg
       end
 
@@ -282,6 +283,7 @@ module Crystal
         splat_size.times do |i|
           new_arg = Arg.new("__arg#{i}")
           new_arg.annotations = splat_arg.annotations
+          new_arg.original_name = splat_arg.original_name
           def_args << new_arg
         end
       end
