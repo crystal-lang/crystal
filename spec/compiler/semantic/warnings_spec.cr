@@ -317,7 +317,7 @@ describe "Semantic: warnings" do
 
           foo(1, 2, 3)
         CRYSTAL
-        "warning in line 4\nWarning: Deprecated argument b."
+          "warning in line 4\nWarning: Deprecated argument b."
       end
 
       it "warns when a deprecated keyword argument is passed" do
@@ -327,7 +327,7 @@ describe "Semantic: warnings" do
 
           foo(0, a: 1, b: 2)
         CRYSTAL
-        "warning in line 4\nWarning: Deprecated argument b."
+          "warning in line 4\nWarning: Deprecated argument b."
       end
 
       it "warns when a deprecated splat argument is passed" do
@@ -337,7 +337,7 @@ describe "Semantic: warnings" do
 
           foo(1, 2)
         CRYSTAL
-        "warning in line 4\nWarning: Deprecated argument args."
+          "warning in line 4\nWarning: Deprecated argument args."
       end
 
       it "warns when a deprecated double splat argument is passed" do
@@ -347,7 +347,7 @@ describe "Semantic: warnings" do
 
           foo(a: 1, bad: 2)
         CRYSTAL
-        "warning in line 4\nWarning: Deprecated argument opts."
+          "warning in line 4\nWarning: Deprecated argument opts."
       end
 
       it "warns when a deprecated default positional argument is passed" do
@@ -357,7 +357,7 @@ describe "Semantic: warnings" do
 
           foo(1, 2)
         CRYSTAL
-        "warning in line 4\nWarning: Deprecated argument b."
+          "warning in line 4\nWarning: Deprecated argument b."
       end
 
       it "warns when a deprecated default keyword argument is passed" do
@@ -367,7 +367,7 @@ describe "Semantic: warnings" do
 
           foo(a: 1, b: 2)
         CRYSTAL
-        "warning in line 4\nWarning: Deprecated argument b."
+          "warning in line 4\nWarning: Deprecated argument b."
       end
 
       it "doesn't warn when a deprecated default positional argument isn't explicitly passed" do
@@ -399,7 +399,7 @@ describe "Semantic: warnings" do
 
           foo(1)
         CRYSTAL
-        "warning in line 4\nWarning: Deprecated argument x."
+          "warning in line 4\nWarning: Deprecated argument x."
 
         assert_warning <<-CRYSTAL,
           def bar(@[Deprecated] x)
@@ -410,7 +410,7 @@ describe "Semantic: warnings" do
 
           foo(1, 2)
         CRYSTAL
-        "warning in line 7\nWarning: Deprecated argument b."
+          "warning in line 7\nWarning: Deprecated argument b."
       end
 
       pending "doesn't warn when a deprecated arg default value calls a method with a deprecated arg" do
@@ -436,7 +436,7 @@ describe "Semantic: warnings" do
 
           Foo.new(1, 2, 3)
         CRYSTAL
-        "warning in line 6\nWarning: Deprecated argument b."
+          "warning in line 6\nWarning: Deprecated argument b."
       end
 
       it "warns when a deprecated keyword argument is passed" do
@@ -448,7 +448,7 @@ describe "Semantic: warnings" do
 
           Foo.new(0, a: 1, b: 2)
         CRYSTAL
-        "warning in line 6\nWarning: Deprecated argument b."
+          "warning in line 6\nWarning: Deprecated argument b."
       end
 
       it "warns when a deprecated splat argument is passed" do
@@ -460,7 +460,7 @@ describe "Semantic: warnings" do
 
           Foo.new(1, 2)
         CRYSTAL
-        "warning in line 6\nWarning: Deprecated argument args."
+          "warning in line 6\nWarning: Deprecated argument args."
       end
 
       it "warns when a deprecated double splat argument is passed" do
@@ -472,7 +472,7 @@ describe "Semantic: warnings" do
 
           Foo.new(a: 1, bad: 2)
         CRYSTAL
-        "warning in line 6\nWarning: Deprecated argument opts."
+          "warning in line 6\nWarning: Deprecated argument opts."
       end
     end
   end
