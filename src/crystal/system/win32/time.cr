@@ -77,6 +77,9 @@ module Crystal::System::Time
       return unless windows_info = iana_to_windows[canonical_iana_name]?
       _, stdname, dstname = windows_info
 
+      # In Crystal, we use only `UTC` as name for the UTC time zone
+      canonical_iana_name = "UTC" if canonical_iana_name == "Etc/UTC"
+
       initialize_location_from_TZI(pointerof(info).as(LibC::TIME_ZONE_INFORMATION*).value, canonical_iana_name, windows_name, stdname, dstname)
     end
   end
