@@ -394,7 +394,7 @@ describe "File" do
       pending! if {{ flag?(:win32) }}
       pending_if_superuser!
 
-      with_tempfile("readlinkq-inaccessible") do |path|
+      with_tempfile("readlink-inaccessible") do |path|
         Dir.mkdir_p(path)
         symlink = File.join(path, "symlink.txt")
         File.symlink("nonexistent.txt", symlink)
