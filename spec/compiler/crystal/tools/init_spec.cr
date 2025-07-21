@@ -325,7 +325,7 @@ module Crystal
     end
 
     it "DIR = ." do
-      with_tempdir("DIR=.") do
+      with_tempdir("dir-dot") do
         config = Crystal::Init.parse_args(["lib", "."])
         config.name.should eq File.basename(Dir.current)
         config.dir.should eq "."
