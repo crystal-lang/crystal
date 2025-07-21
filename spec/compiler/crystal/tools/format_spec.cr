@@ -110,7 +110,7 @@ describe Crystal::Command::FormatCommand do
     stdout = IO::Memory.new
     stderr = IO::Memory.new
 
-    with_temdir do
+    with_tempdir do
       Dir.mkdir "dir"
       File.write "format.cr", "if true\n1\nend"
       File.write "not_format.cr", "if true\n  1\nend\n"
