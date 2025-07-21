@@ -412,12 +412,12 @@ describe "Semantic: warnings" do
       "warning in line 7\nWarning: Deprecated argument b."
     end
 
-    pending "doesn't warn when default value calls method with deprecated arg using a deprecated arg" do
+    pending "doesn't warn when a deprecated arg default value calls a method with a deprecated arg" do
       assert_no_warning <<-CRYSTAL
         def bar(@[Deprecated] x)
         end
 
-        def foo(@[Deprecated] a = 1, @[Deprecated] b = bar(a))
+        def foo(@[Deprecated] b = bar(1))
         end
 
         foo
