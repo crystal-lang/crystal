@@ -278,7 +278,7 @@ module Crystal
         splat_size = 0 if splat_size < 0
 
         splat_size.times do |i|
-          new_arg = Arg.new("__arg#{i}")
+          new_arg = Arg.new("__arg#{before_splat_size + i}")
           new_arg.annotations = splat_arg.annotations
           def_args << new_arg
         end
