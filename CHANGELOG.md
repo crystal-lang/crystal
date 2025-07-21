@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.17.1] (2025-07-22)
+
+[1.17.1]: https://github.com/crystal-lang/crystal/releases/1.17.1
+
+### other
+
+#### tools
+
+- *(docs-generator)* **[regression]** Revert "Handle doc locations when file is in parent directory" ([#15996], thanks @Blacksmoke16)
+
+[#15996]: https://github.com/crystal-lang/crystal/pull/15996
+
 ## [1.17.0] (2025-07-16)
 
 [1.17.0]: https://github.com/crystal-lang/crystal/releases/1.17.0
