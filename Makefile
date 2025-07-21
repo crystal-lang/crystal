@@ -138,7 +138,7 @@ interpreter_spec: $(O)/interpreter_spec$(EXE) ## Run interpreter specs
 smoke_test: ## Build specs as a smoke test
 smoke_test: $(O)/std_spec$(EXE) $(O)/compiler_spec$(EXE) $(O)/$(CRYSTAL_BIN)
 
-SHELLCHECK_SOURCES := $(wildcard **/*.sh) bin/crystal bin/ci bin/check-compiler-flag scripts/git/pre-commit
+SHELLCHECK_SOURCES := $(wildcard **/*.sh) $(wildcard **/*.bash) bin/crystal bin/ci bin/check-compiler-flag scripts/git/pre-commit
 
 .PHONY: lint-shellcheck
 lint-shellcheck:

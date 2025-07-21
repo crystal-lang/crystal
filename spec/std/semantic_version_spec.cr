@@ -45,6 +45,32 @@ describe SemanticVersion do
     end
   end
 
+  it "#valid?" do
+    SemanticVersion.valid?("1.2.3").should be_true
+    SemanticVersion.valid?("1.2.3-2").should be_true
+    SemanticVersion.valid?("1.2.3-10").should be_true
+    SemanticVersion.valid?("1.2.3-alpha").should be_true
+    SemanticVersion.valid?("1.2.3-alpha.2").should be_true
+    SemanticVersion.valid?("1.2.3-alpha.10").should be_true
+
+    SemanticVersion.valid?("").should be_false
+    SemanticVersion.valid?("1").should be_false
+    SemanticVersion.valid?("foo").should be_false
+  end
+
+  it "#parse?" do
+    SemanticVersion.parse?("1.2.3").should eq SemanticVersion.new(1, 2, 3)
+    SemanticVersion.parse?("1.2.3-2").should eq SemanticVersion.new(1, 2, 3, "2")
+    SemanticVersion.parse?("1.2.3-10").should eq SemanticVersion.new(1, 2, 3, "10")
+    SemanticVersion.parse?("1.2.3-alpha").should eq SemanticVersion.new(1, 2, 3, "alpha")
+    SemanticVersion.parse?("1.2.3-alpha.2").should eq SemanticVersion.new(1, 2, 3, SemanticVersion::Prerelease.parse("alpha.2"))
+    SemanticVersion.parse?("1.2.3-alpha.10").should eq SemanticVersion.new(1, 2, 3, SemanticVersion::Prerelease.parse("alpha.10"))
+
+    SemanticVersion.parse?("").should be_nil
+    SemanticVersion.parse?("1").should be_nil
+    SemanticVersion.parse?("foo").should be_nil
+  end
+
   it "does not accept bad versions" do
     sversions = %w(
       1
@@ -84,6 +110,8 @@ describe SemanticVersion do
       99999999999999999999999.999999999999999999.99999999999999999----RC-SNAPSHOT.12.09.1--------------------------------..12
     )
     sversions.each do |s|
+      SemanticVersion.valid?(s).should be_false
+      SemanticVersion.parse?(s).should be_nil
       expect_raises(ArgumentError) { SemanticVersion.parse(s) }
     end
   end
