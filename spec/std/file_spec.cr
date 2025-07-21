@@ -379,7 +379,7 @@ describe "File" do
     end
 
     it "raises when target non-existent" do
-      with_tempfile("target-nonexistent") do |path|
+      with_tempfile("target-nonexistent2") do |path|
         Dir.mkdir_p(path)
         Dir.cd(path) do
           File.symlink("nonexistent.txt", "symlink.txt")
@@ -394,7 +394,7 @@ describe "File" do
       pending! if {{ flag?(:win32) }}
       pending_if_superuser!
 
-      with_tempfile("readlink-inaccessible") do |path|
+      with_tempfile("readlink-inaccessible2") do |path|
         Dir.mkdir_p(path)
         symlink = File.join(path, "symlink.txt")
         File.symlink("nonexistent.txt", symlink)
