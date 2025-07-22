@@ -133,6 +133,9 @@ describe Log::Metadata::Value do
     it "compares with String" do
       v("foo").should eq "foo"
       "foo".should eq v("foo")
+
+      v("foo").should_not eq "bar"
+      "foo".should_not eq v("bar")
     end
   end
 end
