@@ -119,6 +119,34 @@ describe "Semantic: warnings" do
         CRYSTAL
         "warning in line 8\nWarning: Deprecated Foo. Do not use me"
     end
+
+    it "detects deprecated constant in include" do
+      assert_warning <<-CRYSTAL,
+        @[Deprecated("Do not use me")]
+        module Foo
+        end
+
+        class Bar
+          include Foo
+        end
+
+        Bar.new
+        CRYSTAL
+        "warning in line 6\nWarning: Deprecated Foo. Do not use me"
+    end
+
+    it "detects deprecated constant in extend" do
+      assert_warning <<-CRYSTAL,
+        @[Deprecated("Do not use me")]
+        module Foo
+        end
+
+        class Bar
+          extend Foo
+        end
+        CRYSTAL
+        "warning in line 6\nWarning: Deprecated Foo. Do not use me"
+    end
   end
 
   describe "deprecated alias" do

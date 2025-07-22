@@ -1130,6 +1130,10 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       node_name.raise "#{type} is not a module, it's a #{type.type_desc}"
     end
 
+    if node_name.is_a?(Path)
+      @program.check_deprecated_type(type, node_name)
+    end
+
     begin
       current_type.as(ModuleType).include type
       run_hooks hook_type(type), current_type, kind, node
