@@ -47,8 +47,6 @@ module Crystal
   class Var
     def initialize(@name : String, @type : Type)
     end
-
-    def_equals name, type?
   end
 
   # Fictitious node to represent primitives
@@ -163,6 +161,9 @@ module Crystal
     # Is this a `new` method that was expanded from an initialize?
     property? new = false
 
+    # Name of the original def if this def has been expanded (default arguments)
+    property? original_name : String?
+
     @macro_owner : Type?
 
     # Used to override the meaning of `self` in restrictions
@@ -177,6 +178,10 @@ module Crystal
 
     def macro_owner?
       @macro_owner
+    end
+
+    def original_name
+      @original_name || @name
     end
 
     def add_special_var(name)
@@ -216,6 +221,7 @@ module Crystal
       a_def.naked = naked?
       a_def.annotations = annotations
       a_def.new = new?
+      a_def.original_name = original_name?
       a_def
     end
 

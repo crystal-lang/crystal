@@ -10,12 +10,20 @@ require "./iocp/*"
 
 # :nodoc:
 class Crystal::EventLoop::IOCP < Crystal::EventLoop
+  def self.default_file_blocking?
+    # here, blocking refers to setting FILE_FLAG_OVERLAPPED (non blocking) or
+    # not (blocking)
+    false
+  end
+
   def self.default_socket_blocking?
+    # here, blocking refers to the (non)blocking mode of winsocks, it is
+    # independent from the WSA_FLAG_OVERLAPPED that we always set
     true
   end
 
   @waitable_timer : System::WaitableTimer?
-  @timer_packet : LibC::HANDLE?
+  @timer_packet = LibC::HANDLE.null
   @timer_key : System::IOCP::CompletionKey?
 
   def initialize
@@ -169,14 +177,15 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
 
   protected def rearm_waitable_timer(time : Time::Span?, interruptible : Bool) : Nil
     if waitable_timer = @waitable_timer
-      status = @iocp.cancel_wait_completion_packet(@timer_packet.not_nil!, true)
+      raise "BUG: @timer_packet was not initialized!" unless @timer_packet
+      status = @iocp.cancel_wait_completion_packet(@timer_packet, true)
       if time
         waitable_timer.set(time)
         if status == LibC::STATUS_PENDING
           interrupt
         else
           # STATUS_CANCELLED, STATUS_SUCCESS
-          @iocp.associate_wait_completion_packet(@timer_packet.not_nil!, waitable_timer.handle, @timer_key.not_nil!)
+          @iocp.associate_wait_completion_packet(@timer_packet, waitable_timer.handle, @timer_key.not_nil!)
         end
       else
         waitable_timer.cancel
@@ -227,8 +236,16 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     FiberEvent.new(:select_timeout, fiber)
   end
 
+  def pipe(read_blocking : Bool?, write_blocking : Bool?) : {IO::FileDescriptor, IO::FileDescriptor}
+    r, w = System::FileDescriptor.system_pipe(!!read_blocking, !!write_blocking)
+    {
+      IO::FileDescriptor.new(r, !!read_blocking),
+      IO::FileDescriptor.new(w, !!write_blocking),
+    }
+  end
+
   def open(path : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : {System::FileDescriptor::Handle, Bool} | WinError
-    access, disposition, attributes = System::File.posix_to_open_opts(flags, permissions, blocking)
+    access, disposition, attributes = System::File.posix_to_open_opts(flags, permissions, !!blocking)
 
     handle = LibC.CreateFileW(
       System.to_wstr(path),

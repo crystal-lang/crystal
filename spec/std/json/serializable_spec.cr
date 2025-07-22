@@ -764,38 +764,38 @@ describe "JSON mapping" do
 
     it "bool" do
       json = JSONAttrWithDefaults.from_json(%({}))
-      json.c.should eq true
+      json.c.should be_true
       typeof(json.c).should eq Bool
-      json.d.should eq false
+      json.d.should be_false
       typeof(json.d).should eq Bool
 
       json = JSONAttrWithDefaults.from_json(%({"c":false}))
-      json.c.should eq false
+      json.c.should be_false
       json = JSONAttrWithDefaults.from_json(%({"c":true}))
-      json.c.should eq true
+      json.c.should be_true
 
       json = JSONAttrWithDefaults.from_json(%({"d":false}))
-      json.d.should eq false
+      json.d.should be_false
       json = JSONAttrWithDefaults.from_json(%({"d":true}))
-      json.d.should eq true
+      json.d.should be_true
     end
 
     it "with nilable" do
       json = JSONAttrWithDefaults.from_json(%({}))
 
-      json.e.should eq false
+      json.e.should be_false
       typeof(json.e).should eq(Bool | Nil)
 
       json.f.should eq 1
       typeof(json.f).should eq(Int32 | Nil)
 
-      json.g.should eq nil
+      json.g.should be_nil
       typeof(json.g).should eq(Int32 | Nil)
 
       json = JSONAttrWithDefaults.from_json(%({"e":false}))
-      json.e.should eq false
+      json.e.should be_false
       json = JSONAttrWithDefaults.from_json(%({"e":true}))
-      json.e.should eq true
+      json.e.should be_true
     end
 
     it "create new array every time" do

@@ -2,6 +2,10 @@ require "./libevent/event"
 
 # :nodoc:
 class Crystal::EventLoop::LibEvent < Crystal::EventLoop
+  def self.default_file_blocking?
+    false
+  end
+
   def self.default_socket_blocking?
     false
   end
@@ -112,19 +116,28 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
     end
   end
 
+  def pipe(read_blocking : Bool?, write_blocking : Bool?) : {IO::FileDescriptor, IO::FileDescriptor}
+    r, w = System::FileDescriptor.system_pipe
+    {
+      IO::FileDescriptor.new(r, !!read_blocking),
+      IO::FileDescriptor.new(w, !!write_blocking),
+    }
+  end
+
   def open(path : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : {System::FileDescriptor::Handle, Bool} | Errno
     path.check_no_null_byte
 
     fd = LibC.open(path, flags | LibC::O_CLOEXEC, permissions)
     return Errno.value if fd == -1
 
-    blocking = !System::File.special_type?(fd) if blocking.nil?
-    unless blocking
-      status_flags = System::FileDescriptor.fcntl(fd, LibC::F_GETFL)
-      System::FileDescriptor.fcntl(fd, LibC::F_SETFL, status_flags | LibC::O_NONBLOCK)
-    end
+    {% if flag?(:darwin) %}
+      # FIXME: poll of non-blocking fifo fd on darwin appears to be broken, so
+      # we default to blocking for the time being
+      blocking = true if blocking.nil?
+    {% end %}
 
-    {fd, blocking}
+    System::FileDescriptor.set_blocking(fd, false) unless blocking
+    {fd, !!blocking}
   end
 
   def read(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32

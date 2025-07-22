@@ -451,4 +451,57 @@ describe "Semantic: primitives" do
         CRYSTAL
     end
   end
+
+  describe "Struct.pre_initialize" do
+    def_struct_pre_initialize = <<-CRYSTAL
+      struct Struct
+        @[Primitive(:pre_initialize)]
+        def self.pre_initialize(address : Pointer) : Nil
+          {% @type %}
+        end
+      end
+      CRYSTAL
+
+    it "errors on abstract type" do
+      assert_error <<-CRYSTAL, "Can't pre-initialize abstract struct Foo"
+        #{def_struct_pre_initialize}
+
+        abstract struct Foo
+        end
+
+        x = 1
+        Foo.pre_initialize(pointerof(x))
+        CRYSTAL
+    end
+
+    it "errors on virtual abstract type" do
+      assert_error <<-CRYSTAL, "Can't pre-initialize abstract struct Foo"
+        #{def_struct_pre_initialize}
+
+        abstract struct Foo
+        end
+
+        struct Bar < Foo
+        end
+
+        x = 1
+        Bar.as(Foo.class).pre_initialize(pointerof(x))
+        CRYSTAL
+    end
+
+    it "errors on abstract pointee type" do
+      assert_error <<-CRYSTAL, "Can't pre-initialize struct using pointer to abstract struct"
+        #{def_struct_pre_initialize}
+
+        abstract struct Foo
+        end
+
+        struct Bar < Foo
+        end
+
+        x = uninitialized Foo
+        Bar.pre_initialize(pointerof(x))
+        CRYSTAL
+    end
+  end
 end

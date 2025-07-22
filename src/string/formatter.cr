@@ -391,7 +391,7 @@ struct String::Formatter(A)
       printf_size = Float::Printer::RyuPrintf.d2fixed_buffered_n(float, printf_precision, printf_buf.to_unsafe)
       printf_slice = printf_buf.to_slice[0, printf_size]
       dot_index = printf_slice.index('.'.ord)
-      sign = Math.copysign(1.0, float)
+      sign = float.sign_bit
 
       str_size = printf_size + trailing_zeros
       str_size += 1 if sign < 0 || flags.plus || flags.space
@@ -431,7 +431,7 @@ struct String::Formatter(A)
       printf_slice = printf_buf.to_slice[0, printf_size]
       dot_index = printf_slice.index('.'.ord)
       e_index = printf_slice.rindex!('e'.ord)
-      sign = Math.copysign(1.0, float)
+      sign = float.sign_bit
 
       printf_slice[e_index] = 'E'.ord.to_u8! if flags.uppercase?
 
@@ -469,7 +469,7 @@ struct String::Formatter(A)
       printf_slice = printf_buf.to_slice[0, printf_size]
       dot_index = printf_slice.index('.'.ord)
       e_index = printf_slice.rindex('e'.ord)
-      sign = Math.copysign(1.0, float)
+      sign = float.sign_bit
 
       printf_slice[e_index] = 'E'.ord.to_u8! if e_index && flags.uppercase?
 
@@ -499,7 +499,7 @@ struct String::Formatter(A)
 
     # Formats floats with `%a` or `%A`
     private def float_hex(float, flags)
-      sign = Math.copysign(1.0, float)
+      sign = float.sign_bit
       float = float.abs
 
       str_size = Float::Printer::Hexfloat(Float64, UInt64).to_s_size(float,

@@ -1,5 +1,9 @@
 # :nodoc:
 class Crystal::EventLoop::Wasi < Crystal::EventLoop
+  def self.default_file_blocking?
+    false
+  end
+
   def self.default_socket_blocking?
     false
   end
@@ -30,6 +34,10 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
   # Creates a read event for a file descriptor.
   def create_fd_read_event(io : IO::Evented, edge_triggered : Bool = false) : Crystal::EventLoop::Event
     raise NotImplementedError.new("Crystal::Wasi::EventLoop.create_fd_read_event")
+  end
+
+  def pipe(read_blocking : Bool?, write_blocking : Bool?) : {IO::FileDescriptor, IO::FileDescriptor}
+    raise NotImplementedError.new("Crystal::EventLoop::Wasi#pipe")
   end
 
   def open(filename : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : {System::FileDescriptor::Handle, Bool} | Errno | WinError

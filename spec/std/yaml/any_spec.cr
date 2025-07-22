@@ -91,7 +91,7 @@ end
 describe YAML::Any do
   it ".new" do
     YAML::Any.new(nil).raw.should be_nil
-    YAML::Any.new(true).raw.should eq true
+    YAML::Any.new(true).raw.should be_true
     YAML::Any.new(1_i64).raw.should eq 1_i64
     YAML::Any.new(1).raw.should eq 1
     YAML::Any.new(1_u8).raw.should eq 1
@@ -251,6 +251,25 @@ describe YAML::Any do
       expect_raises YAML::ParseException, "Unknown anchor 'foo' at line 1, column 1" do
         YAML.parse("*foo")
       end
+    end
+
+    it "splats anchor" do
+      value = YAML::Any.from_yaml <<-YAML
+      map: &an
+        inner: 4
+      aliased: *an
+      splatted:
+        <<: *an
+        extra: 5
+      YAML
+      h = value["splatted"].as_h
+      h.keys.should eq(["inner", "extra"])
+      h["inner"].should eq(4)
+      h["extra"].should eq(5)
+
+      h = value["aliased"].as_h
+      h.keys.should eq(["inner"])
+      h["inner"].should eq(4)
     end
 
     it "gets yes/no unquoted booleans" do

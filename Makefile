@@ -86,6 +86,7 @@ PREFIX ?= /usr/local
 BINDIR ?= $(PREFIX)/bin
 LIBDIR ?= $(PREFIX)/lib
 DATADIR ?= $(PREFIX)/share
+DOCDIR ?= $(DATADIR)/doc/crystal
 MANDIR ?= $(DATADIR)/man
 INSTALL ?= /usr/bin/install
 
@@ -137,7 +138,7 @@ interpreter_spec: $(O)/interpreter_spec$(EXE) ## Run interpreter specs
 smoke_test: ## Build specs as a smoke test
 smoke_test: $(O)/std_spec$(EXE) $(O)/compiler_spec$(EXE) $(O)/$(CRYSTAL_BIN)
 
-SHELLCHECK_SOURCES := $(wildcard **/*.sh) bin/crystal bin/ci bin/check-compiler-flag scripts/git/pre-commit
+SHELLCHECK_SOURCES := $(wildcard **/*.sh) $(wildcard **/*.bash) bin/crystal bin/ci bin/check-compiler-flag scripts/git/pre-commit
 
 .PHONY: lint-shellcheck
 lint-shellcheck:
@@ -215,15 +216,15 @@ uninstall: ## Uninstall the compiler from DESTDIR
 
 .PHONY: install_docs
 install_docs: docs ## Install docs at DESTDIR
-	$(INSTALL) -d -m 0755 $(DESTDIR)$(DATADIR)
+	$(INSTALL) -d -m 0755 $(DESTDIR)$(DOCDIR)
 
-	cp -R -P -p docs "$(DESTDIR)$(DATADIR)/docs"
-	cp -R -P -p samples "$(DESTDIR)$(DATADIR)/examples"
+	cp -R -P -p docs "$(DESTDIR)$(DOCDIR)/docs"
+	cp -R -P -p samples "$(DESTDIR)$(DOCDIR)/examples"
 
 .PHONY: uninstall_docs
 uninstall_docs: ## Uninstall docs from DESTDIR
-	rm -rf "$(DESTDIR)$(DATADIR)/docs"
-	rm -rf "$(DESTDIR)$(DATADIR)/examples"
+	rm -rf "$(DESTDIR)$(DOCDIR)/docs"
+	rm -rf "$(DESTDIR)$(DOCDIR)/examples"
 
 $(O)/all_spec$(EXE): $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	$(call check_llvm_config)

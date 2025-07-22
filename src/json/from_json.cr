@@ -199,6 +199,10 @@ def String.from_json_object_key?(key : String) : String
   key
 end
 
+def Path.from_json_object_key?(key : String) : Path
+  new(key)
+end
+
 def Array.new(pull : JSON::PullParser)
   ary = new
   new(pull) do |element|
@@ -463,7 +467,7 @@ def Union.from_json_object_key?(key : String)
 end
 
 # Reads a string from JSON parser as a time formatted according to [RFC 3339](https://tools.ietf.org/html/rfc3339)
-# or other variations of [ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf).
+# or other variations of [ISO 8601](https://web.archive.org/web/20250306154328/http://xml.coverpages.org/ISO-FDIS-8601.pdf).
 #
 # The JSON format itself does not specify a time data type, this method just
 # assumes that a string holding a ISO 8601 time format can be interpreted as a
@@ -472,6 +476,14 @@ end
 # See `#to_json` for reference.
 def Time.new(pull : JSON::PullParser)
   Time::Format::ISO_8601_DATE_TIME.parse(pull.read_string)
+end
+
+def Time::Location.new(pull : JSON::PullParser)
+  load(pull.read_string)
+end
+
+def Time::Location.from_json_object_key?(key : String) : Time::Location
+  load(key)
 end
 
 struct Time::Format

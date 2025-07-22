@@ -2,29 +2,33 @@ require "./scheduler"
 require "../list"
 
 module Fiber::ExecutionContext
-  # Isolated execution context. Runs a single thread with a single fiber.
+  # Isolated execution context to run a single fiber.
   #
-  # Concurrency is disabled within the thread: the fiber owns the thread and the
-  # thread can only run this fiber. Keep in mind that the fiber will still run
-  # in parallel to other fibers running in other execution contexts.
+  # Concurrency and parallelism are disabled. The context guarantees that the
+  # fiber will always run on the same system thread until it terminates; the
+  # fiber owns the system thread for its whole lifetime.
   #
-  # The fiber can still spawn fibers into other execution contexts. Since it can
+  # Keep in mind that the fiber will still run in parallel to other fibers
+  # running in other execution contexts at the same time.
+  #
+  # Concurrency is disabled, so an isolated fiber can't spawn fibers into the
+  # context, but it can spawn fibers into other execution contexts. Since it can
   # be inconvenient to pass an execution context around, calls to `::spawn` will
-  # spawn a fiber into the specified *spawn_context* that defaults to the
-  # default execution context.
+  # spawn a fiber into the specified *spawn_context* during initialization,
+  # which defaults to `Fiber::ExecutionContext.default`.
   #
   # Isolated fibers can normally communicate with other fibers running in other
-  # execution contexts using `Channel(T)`, `WaitGroup` or `Mutex` for example.
-  # They can also execute IO operations or sleep just like any other fiber.
+  # execution contexts using `Channel`, `WaitGroup` or `Mutex` for example. They
+  # can also execute `IO` operations or `sleep` just like any other fiber.
   #
   # Calls that result in waiting (e.g. sleep, or socket read/write) will block
   # the thread since there are no other fibers to switch to. This in turn allows
   # to call anything that would block the thread without blocking any other
   # fiber.
   #
-  # You can for example use an isolated fiber to run a blocking GUI loop,
-  # transparently forward `::spawn` to the default context, and eventually only
-  # block the current fiber while waiting for the GUI application to quit:
+  # For example you can start an isolated fiber to run a blocking GUI loop,
+  # transparently forward `::spawn` to the default context, then keep the main
+  # fiber to wait until the GUI application quit:
   #
   # ```
   # gtk = Fiber::ExecutionContext::Isolated.new("Gtk") do
@@ -191,12 +195,11 @@ module Fiber::ExecutionContext
     def wait : Nil
       if @running
         node = Fiber::PointerLinkedListNode.new(Fiber.current)
-
-        @mutex.synchronize do
+        running = @mutex.synchronize do
           @wait_list.push(pointerof(node)) if @running
+          @running
         end
-
-        Fiber.suspend
+        Fiber.suspend if running
       end
 
       if exception = @exception
