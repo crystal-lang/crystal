@@ -493,9 +493,16 @@ class File < IO::FileDescriptor
     end
   end
 
-  # Returns value of a symbolic link .
+  # Returns the target of a symbolic link.
   def self.readlink(path : Path | String) : String
-    Crystal::System::File.readlink(path.to_s)
+    Crystal::System::File.readlink(path.to_s) { }
+  end
+
+  # Returns the target of a symbolic link.
+  #
+  # Returns `nil` if *path* does not exist or is not a symbolic link.
+  def self.readlink?(path : Path | String) : String?
+    Crystal::System::File.readlink(path.to_s) { return nil }
   end
 
   # Opens the file named by *filename*. If a file is being created, its initial
