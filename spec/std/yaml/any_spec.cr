@@ -464,7 +464,7 @@ describe YAML::Any do
       Set{1, 2, 3}.should eq YAML.parse("!!set { 1, 2, 3 }")
       YAML.parse("!!set { 1, 2, 3 }").should eq Set{1, 2, 3}
 
-      Set{1, 2,}.should_not eq YAML.parse("!!set { 1, 2, 3 }")
+      Set{1, 2}.should_not eq YAML.parse("!!set { 1, 2, 3 }")
       YAML.parse("!!set { 1, 2 }").should_not eq Set{1, 2, 3}
     end
   end
