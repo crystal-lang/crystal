@@ -125,6 +125,8 @@ module Crystal
       # and must be preserved when cloned
       arg.set_type @type
 
+      arg.annotations = @annotations.dup
+
       arg
     end
   end
