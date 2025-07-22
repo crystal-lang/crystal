@@ -315,9 +315,9 @@ class Crystal::Doc::Generator
   end
 
   def has_doc_annotations?(obj)
-    obj.annotations(@program.deprecated_annotation) || obj.annotations(@program.experimental_annotation) || if obj.is_a?(Method)
-      obj.def.args.any? { |arg| has_doc_annotations?(arg) }
-    end
+    obj.annotations(@program.deprecated_annotation) ||
+      obj.annotations(@program.experimental_annotation) ||
+      obj.as?(Method).try &.def.args.any? { |arg| has_doc_annotations?(arg) }
   end
 
   def doc(context, string)
