@@ -455,6 +455,12 @@ module Crystal
       node
     end
 
+    def transform(node : Generic)
+      transform_many node.type_vars
+
+      node
+    end
+
     private def void_lib_call?(node)
       return false unless node.is_a?(Call)
 

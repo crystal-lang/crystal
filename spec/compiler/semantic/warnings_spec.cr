@@ -105,6 +105,20 @@ describe "Semantic: warnings" do
         CRYSTAL
         "warning in line 8\nWarning: Deprecated Foo."
     end
+
+    it "detects deprecated constant in generic argument" do
+      assert_warning <<-CRYSTAL,
+        @[Deprecated("Do not use me")]
+        class Foo
+        end
+
+        class Bar(T)
+        end
+
+        Bar(Foo)
+        CRYSTAL
+        "warning in line 8\nWarning: Deprecated Foo. Do not use me"
+    end
   end
 
   describe "deprecated alias" do
