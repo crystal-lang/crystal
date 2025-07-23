@@ -547,7 +547,8 @@ describe HTTP::StaticFileHandler do
   it "returns 404 for unreadable file" do
     with_tempdir do
       File.write("forbidden.txt", "not for your eyes")
-      File.chmod("forbidden.txt", 0x222)
+      File.chmod("forbidden.txt", 0x000)
+      pending! if File.info("forbidden.txt").permissions.owner_read?
       response = handle HTTP::Request.new("GET", "/forbidden.txt"), directory: "."
       response.status_code.should eq(404)
     end
