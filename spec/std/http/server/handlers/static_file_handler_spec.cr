@@ -548,7 +548,7 @@ describe HTTP::StaticFileHandler do
     with_tempdir do
       File.write("forbidden.txt", "not for your eyes")
       File.chmod("forbidden.txt", 0x000)
-      pending! if File.info("forbidden.txt").permissions.owner_read?
+      pending! if File.info("forbidden.txt").permissions.owner_read? || (File.read("forbidden.txt") rescue nil)
       p! File.info("forbidden.txt").permissions
       puts `ls -l`
       response = handle HTTP::Request.new("GET", "/forbidden.txt"), directory: "."
