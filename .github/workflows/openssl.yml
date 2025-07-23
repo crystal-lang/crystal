@@ -27,7 +27,7 @@ jobs:
   libssl_test:
     runs-on: ubuntu-latest
     name: "${{ matrix.pkg }}"
-    container: crystallang/crystal:1.17.0-alpine
+    container: crystallang/crystal:1.17.1-alpine
     strategy:
       fail-fast: false
       matrix:
@@ -38,12 +38,16 @@ jobs:
             repository: http://dl-cdn.alpinelinux.org/alpine/v3.17/main
           - pkg: "openssl-dev=~3.3"
             repository: http://dl-cdn.alpinelinux.org/alpine/v3.20/main
+          - pkg: "openssl-dev"
+            repository: http://dl-cdn.alpinelinux.org/alpine/edge/main
           - pkg: "libressl-dev=~3.4"
             repository: http://dl-cdn.alpinelinux.org/alpine/v3.15/community
           - pkg: "libressl-dev=~3.5"
             repository: http://dl-cdn.alpinelinux.org/alpine/v3.16/community
           - pkg: "libressl-dev=~3.8"
             repository: http://dl-cdn.alpinelinux.org/alpine/v3.20/community
+          - pkg: "libressl-dev"
+            repository: http://dl-cdn.alpinelinux.org/alpine/edge/community
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v4

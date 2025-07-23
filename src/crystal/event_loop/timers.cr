@@ -20,7 +20,9 @@ struct Crystal::EventLoop::Timers(T)
 
   # Returns the time of the next ready timer (if any).
   def next_ready? : Time::Span?
-    @heap.first?.try(&.value.wake_at)
+    if event = @heap.first?
+      event.value.wake_at
+    end
   end
 
   # Dequeues and yields each ready timer (their `#wake_at` is lower than

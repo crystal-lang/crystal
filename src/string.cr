@@ -4861,7 +4861,7 @@ class String
   # "fooo".match_full!(/foo/) # Regex::Error
   # $~                        # raises Exception
   # ```
-  def match_full!(regex : Regex) : Regex::MatchData?
+  def match_full!(regex : Regex) : Regex::MatchData
     match!(regex, options: Regex::MatchOptions::ANCHORED | Regex::MatchOptions::ENDANCHORED)
   end
 

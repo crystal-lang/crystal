@@ -100,7 +100,7 @@ describe Crystal::PointerPairingHeap do
     [2, 4, 5, 6, 8].each do |i|
       heap.shift?.should eq(nodes.to_unsafe + i)
     end
-    heap.shift?.should be_nil
+    heap.shift?.null?.should be_true
   end
 
   it "adds 1000 nodes then shifts them in order" do
@@ -116,7 +116,7 @@ describe Crystal::PointerPairingHeap do
     end
     i.should eq(1000)
 
-    heap.shift?.should be_nil
+    heap.shift?.null?.should be_true
   end
 
   it "randomly shift while we add nodes" do

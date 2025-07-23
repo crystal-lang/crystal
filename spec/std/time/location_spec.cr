@@ -48,7 +48,7 @@ class Time::Location
           location.utc?.should be_false
           location.fixed?.should be_false
 
-          with_tz(nil) do
+          with_tz("UTC") do
             location.local?.should be_false
           end
 
@@ -258,23 +258,34 @@ class Time::Location
     end
 
     describe ".load_local" do
-      it "with unset TZ" do
-        with_tz(nil) do
-          # This should generally be `Local`, but if `/etc/localtime` doesn't exist,
-          # `Crystal::System::Time.load_localtime` can't resolve a local time zone,
-          # making the return value default to `UTC`.
-          {"Local", "UTC"}.should contain Location.load_local.name
+      context "with unset TZ" do
+        it "is #local?" do
+          with_tz(nil) do
+            Location.load_local.local?.should be_true
+          end
+        end
+
+        it "derives location name from system (e.g. /etc/localtime)" do
+          with_tz(nil) do
+            local = Location.load_local
+
+            # This expectation might fail on unix in case /etc/localtime is not
+            # a symlink into the zoneinfo database.
+            local.name.should_not eq "Local"
+
+            local.should eq Location.load(local.name)
+          end
         end
       end
 
       it "with TZ" do
-        with_zoneinfo do
-          with_tz("Europe/Berlin") do
+        with_tz("Europe/Berlin") do
+          with_zoneinfo do
             Location.load_local.name.should eq "Europe/Berlin"
           end
         end
-        with_zoneinfo(datapath("zoneinfo")) do
-          with_tz("Foo/Bar") do
+        with_tz("Foo/Bar") do
+          with_zoneinfo(datapath("zoneinfo")) do
             Location.load_local.name.should eq "Foo/Bar"
           end
         end

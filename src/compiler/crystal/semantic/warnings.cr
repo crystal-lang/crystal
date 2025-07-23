@@ -122,11 +122,11 @@ module Crystal
     def short_reference
       case owner
       when Program
-        "::#{name}"
+        "::#{original_name}"
       when .metaclass?
-        "#{owner.instance_type}.#{name}"
+        "#{owner.instance_type}.#{original_name}"
       else
-        "#{owner}##{name}"
+        "#{owner}##{original_name}"
       end
     end
   end

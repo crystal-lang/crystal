@@ -2159,6 +2159,13 @@ module Crystal
       @vars.each do |name, while_var|
         before_cond_var = before_cond_vars[name]?
         after_cond_var = after_cond_vars[name]?
+
+        # Check if no types were changed in the condition or the body
+        if while_var.same?(before_cond_var) && while_var.same?(after_cond_var)
+          after_while_vars[name] = while_var
+          next
+        end
+
         after_while_vars[name] = after_while_var = MetaVar.new(name)
 
         # After while's body, bind variables *before* the condition to the
