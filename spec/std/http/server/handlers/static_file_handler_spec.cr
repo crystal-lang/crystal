@@ -1,12 +1,13 @@
 require "../../../spec_helper"
 require "http/server/handler"
 require "http/client/response"
+require "../../../../support/tempfile"
 
-private def handle(request, fallthrough = true, directory_listing = true, ignore_body = false, decompress = true)
+private def handle(request, *, fallthrough = true, directory_listing = true, ignore_body = false, decompress = true, directory = datapath("static_file_handler"))
   io = IO::Memory.new
   response = HTTP::Server::Response.new(io)
   context = HTTP::Server::Context.new(request, response)
-  handler = HTTP::StaticFileHandler.new datapath("static_file_handler"), fallthrough, directory_listing
+  handler = HTTP::StaticFileHandler.new directory, fallthrough, directory_listing
   handler.call context
   response.close
   io.rewind
@@ -460,7 +461,7 @@ describe HTTP::StaticFileHandler do
     %w(POST PUT DELETE).each do |method|
       response = handle HTTP::Request.new(method, "/test.txt")
       response.status_code.should eq(404)
-      response = handle HTTP::Request.new(method, "/test.txt"), false
+      response = handle HTTP::Request.new(method, "/test.txt"), fallthrough: false
       response.status_code.should eq(405)
       response.headers["Allow"].should eq("GET, HEAD")
     end
@@ -536,5 +537,19 @@ describe HTTP::StaticFileHandler do
     headers = HTTP::Headers{"Accept-Encoding" => "gzip"}
     response = handle HTTP::Request.new("GET", "/test.txt", headers)
     response.headers["Content-Encoding"]?.should be_nil
+  end
+
+  it "returns 404 for file error" do
+    response = handle HTTP::Request.new("GET", "/broken_symlink.txt")
+    response.status_code.should eq(404)
+  end
+
+  it "returns 404 for unreadable file" do
+    with_tempdir do
+      File.write("forbidden.txt", "not for your eyes")
+      File.chmod("forbidden.txt", 0x222)
+      response = handle HTTP::Request.new("GET", "/forbidden.txt"), directory: "."
+      response.status_code.should eq(404)
+    end
   end
 end
