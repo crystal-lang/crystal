@@ -35,7 +35,7 @@ module Crystal::System::File
     if ret == 0
       ::File::Info.new(stat)
     else
-      if ::File::NotFoundError::OS_ERRORS.includes?(Errno.value)
+      if ::File::NotFoundError.os_error?(Errno.value)
         nil
       else
         raise ::File::Error.from_errno("Unable to get file info", file: path)
@@ -129,7 +129,7 @@ module Crystal::System::File
     err = LibC.unlink(path.check_no_null_byte)
     if err != -1
       true
-    elsif !raise_on_missing && ::File::NotFoundError::OS_ERRORS.includes?(Errno.value)
+    elsif !raise_on_missing && ::File::NotFoundError.os_error?(Errno.value)
       false
     else
       raise ::File::Error.from_errno("Error deleting file", file: path)
@@ -162,7 +162,7 @@ module Crystal::System::File
     3.times do |iter|
       bytesize = LibC.readlink(path, buf, buf.bytesize)
       if bytesize == -1
-        if ::File::NotFoundError::OS_ERRORS.includes?(Errno.value) || Errno.value == Errno::EINVAL
+        if ::File::NotFoundError.os_error?(Errno.value) || Errno.value == Errno::EINVAL
           yield
         end
 

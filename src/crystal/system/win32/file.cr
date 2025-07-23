@@ -99,7 +99,7 @@ module Crystal::System::File
 
   def self.check_not_found_error(message, path)
     error = WinError.value
-    if ::File::NotFoundError::OS_ERRORS.includes?(error)
+    if ::File::NotFoundError.os_error?(error)
       nil
     else
       raise ::File::Error.from_os_error(message, error, file: path)
@@ -422,7 +422,7 @@ module Crystal::System::File
     info = symlink_info?(path)
     unless info
       {% begin %}
-        if ::File::NotFoundError::OS_ERRORS.includes?(WinError.value) || WinError.value == WinError::ERROR_NOT_A_REPARSE_POINT
+        if ::File::NotFoundError.os_error?(WinError.value) || WinError.value == WinError::ERROR_NOT_A_REPARSE_POINT
           yield
         end
       {% end %}

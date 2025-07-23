@@ -296,8 +296,8 @@ struct Crystal::System::Process
          pointerof(startup_info), pointerof(process_info)
        ) == 0
       error = WinError.value
-      case error
-      when .in?(::File::NotFoundError::OS_ERRORS), .in?(::File::AccessDeniedError::OS_ERRORS), WinError::ERROR_BAD_EXE_FORMAT
+      case
+      when ::File::NotFoundError.os_error?(error) || ::File::AccessDeniedError.os_error?(error) || error == WinError::ERROR_BAD_EXE_FORMAT
         raise ::File::Error.from_os_error("Error executing process", error, file: command_args)
       else
         raise IO::Error.from_os_error("Error executing process: '#{command_args}'", error)
@@ -379,8 +379,7 @@ struct Crystal::System::Process
   end
 
   private def self.raise_exception_from_errno(command, errno = Errno.value)
-    case errno
-    when .in?(::File::NotFoundError::OS_ERRORS), .in?(::File::AccessDeniedError::OS_ERRORS)
+    if ::File::NotFoundError.os_error?(errno) || ::File::AccessDeniedError.os_error?(errno)
       raise ::File::Error.from_os_error("Error executing process", errno, file: command)
     else
       raise IO::Error.from_os_error("Error executing process: '#{command}'", errno)
