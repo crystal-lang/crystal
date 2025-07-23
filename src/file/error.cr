@@ -72,6 +72,7 @@ class File::AlreadyExistsError < File::Error
   OS_ERRORS = [
     Errno::EEXIST,
     WinError::ERROR_ALREADY_EXISTS,
+    WinError::ERROR_FILE_EXISTS,
   ]
 end
 
