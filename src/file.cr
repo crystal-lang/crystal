@@ -509,6 +509,8 @@ class File < IO::FileDescriptor
   # permissions may be set using the *perm* parameter.
   #
   # See `self.new` for what *mode* can be.
+  #
+  # NOTE: The *blocking* arg is deprecated since Crystal 1.17.
   def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, blocking = nil) : self
     new filename, mode, perm, encoding, invalid, blocking
   end
@@ -518,6 +520,8 @@ class File < IO::FileDescriptor
   # file as an argument, the file will be automatically closed when the block returns.
   #
   # See `self.new` for what *mode* can be.
+  #
+  # NOTE: The *blocking* arg is deprecated since Crystal 1.17.
   def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, blocking = nil, &)
     file = new filename, mode, perm, encoding, invalid, blocking
     begin
@@ -533,6 +537,8 @@ class File < IO::FileDescriptor
   # File.write("bar", "foo")
   # File.read("bar") # => "foo"
   # ```
+  #
+  # NOTE: The *blocking* arg is deprecated since Crystal 1.17.
   def self.read(filename : Path | String, encoding = nil, invalid = nil, blocking = nil) : String
     open(filename, "r", blocking: blocking) do |file|
       if encoding
@@ -562,6 +568,8 @@ class File < IO::FileDescriptor
   # end
   # array # => ["foo", "bar"]
   # ```
+  #
+  # NOTE: The *blocking* arg is deprecated since Crystal 1.17.
   def self.each_line(filename : Path | String, encoding = nil, invalid = nil, chomp = true, blocking = nil, &)
     open(filename, "r", encoding: encoding, invalid: invalid, blocking: blocking) do |file|
       file.each_line(chomp: chomp) do |line|
@@ -576,6 +584,8 @@ class File < IO::FileDescriptor
   # File.write("foobar", "foo\nbar")
   # File.read_lines("foobar") # => ["foo", "bar"]
   # ```
+  #
+  # NOTE: The *blocking* arg is deprecated since Crystal 1.17.
   def self.read_lines(filename : Path | String, encoding = nil, invalid = nil, chomp = true, blocking = nil) : Array(String)
     lines = [] of String
     each_line(filename, encoding: encoding, invalid: invalid, chomp: chomp, blocking: blocking) do |line|
@@ -601,6 +611,8 @@ class File < IO::FileDescriptor
   # (the result of invoking `to_s` on *content*).
   #
   # See `self.new` for what *mode* can be.
+  #
+  # NOTE: The *blocking* arg is deprecated since Crystal 1.17.
   def self.write(filename : Path | String, content, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, mode = "w", blocking = nil)
     open(filename, mode, perm, encoding: encoding, invalid: invalid, blocking: blocking) do |file|
       case content

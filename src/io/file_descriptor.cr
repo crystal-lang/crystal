@@ -53,7 +53,14 @@ class IO::FileDescriptor < IO
   #
   # NOTE: On Windows, the handle should have been created with
   # `FILE_FLAG_OVERLAPPED`.
-  def self.new(fd : Handle, blocking = nil, *, close_on_finalize = true)
+  def self.new(fd : Handle, *, close_on_finalize = true)
+    file_descriptor = new(handle: fd, close_on_finalize: close_on_finalize)
+    file_descriptor.system_blocking_init(nil) unless file_descriptor.closed?
+    file_descriptor
+  end
+
+  @[Deprecated("The blocking argument is deprecated with no replacement.")]
+  def self.new(fd : Handle, blocking, *, close_on_finalize = true)
     file_descriptor = new(handle: fd, close_on_finalize: close_on_finalize)
     file_descriptor.system_blocking_init(blocking) unless file_descriptor.closed?
     file_descriptor
@@ -61,11 +68,15 @@ class IO::FileDescriptor < IO
 
   # :nodoc:
   #
-  # Internal constructor to wrap a system *handle*.
-  def initialize(*, handle : Handle, @close_on_finalize = true)
+  # Internal constructor to wrap a system *handle*. The *blocking* arg is purely
+  # informational.
+  def initialize(*, handle : Handle, @close_on_finalize = true, blocking = nil)
     @volatile_fd = Atomic.new(handle)
     @closed = true # This is necessary so we can reference `self` in `system_closed?` (in case of an exception)
     @closed = system_closed?
+    {% if flag?(:win32) %}
+      @system_blocking = !!blocking
+    {% end %}
   end
 
   # :nodoc:
@@ -79,10 +90,19 @@ class IO::FileDescriptor < IO
   # This might be different from the internal file descriptor. For example, when
   # `STDIN` is a terminal on Windows, this returns `false` since the underlying
   # blocking reads are done on a completely separate thread.
+  @[Deprecated("There are no replacement.")]
   def blocking
     emulated = emulated_blocking?
     return emulated unless emulated.nil?
     system_blocking?
+  end
+
+  # Changes the blocking mode of *fd* to be blocking (true) or non blocking
+  # (false).
+  #
+  # NOTE: Only implemented on UNIX targets. Raises on Windows.
+  def self.set_blocking(fd : Handle, value : Bool)
+    Crystal::System::FileDescriptor.set_blocking(fd, value)
   end
 
   # Changes the file descriptor's mode to blocking (true) or non blocking
@@ -92,6 +112,7 @@ class IO::FileDescriptor < IO
   # the event loop runtime requirements. Changing the blocking mode can cause
   # the event loop to misbehave, for example block the entire program when a
   # fiber tries to read from this file descriptor.
+  @[Deprecated("Use IO::FileDescriptor.set_blocking(fd, value) instead.")]
   def blocking=(value)
     self.system_blocking = value
   end
