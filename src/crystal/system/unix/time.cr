@@ -137,7 +137,7 @@ module Crystal::System::Time
       # We do not load the actual target file, only extract the name so the
       # resulting location is exactly the same as when loading it explicitly
       # as `Time::Location.load("Europe/Berlin")`.
-      if ::File.symlink?("/etc/localtime") && (realpath = (File.readlink("/etc/localtime") rescue nil))
+      if ::File.symlink?("/etc/localtime") && (realpath = ::File.readlink?("/etc/localtime"))
         if pos = realpath.rindex("zoneinfo/")
           name = realpath[(pos + "zoneinfo/".size)..]
           return ::Time::Location.load(name)
