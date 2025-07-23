@@ -217,6 +217,22 @@ describe Doc::Generator do
           doc_type.formatted_doc.should eq %(<p><span class="flag #{color}">#{ann.upcase}</span>  lorem ipsum</p>)
         end
       end
+
+      describe "with #{ann} annotation in parameter" do
+        it "should generate the #{ann} tag" do
+          program = Program.new
+          generator = Doc::Generator.new program, ["."]
+          doc_type = Doc::Type.new generator, program
+
+          a_def = Def.new "foo"
+          a_def.doc = "Some Method"
+          arg = Arg.new("bar")
+          arg.add_annotation(program.types[ann].as(Crystal::AnnotationType), Annotation.new(Crystal::Path.new(ann), ["lorem ipsum".string] of ASTNode))
+          a_def.args << arg
+          doc_method = Doc::Method.new generator, doc_type, a_def, false
+          doc_method.formatted_doc.should eq %(<p>Some Method</p>\n<p><span class="flag #{color}">#{ann.upcase} parameter <code>bar</code></span>  lorem ipsum</p>)
+        end
+      end
     end
 
     describe "with no annotation, and no docs" do

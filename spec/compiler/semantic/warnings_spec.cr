@@ -314,7 +314,7 @@ describe "Semantic: warnings" do
 
         foo(a: 2)
         CRYSTAL
-        "warning in line 5\nWarning: Deprecated ::foo:a."
+        "warning in line 5\nWarning: Deprecated ::foo."
     end
 
     it "detects deprecated initialize" do
@@ -415,42 +415,40 @@ describe "Semantic: warnings" do
     end
 
     it "ignore deprecation excluded locations" do
-      with_tempfile("check_warnings_excludes") do |path|
-        FileUtils.mkdir_p File.join(path, "lib")
+      with_tempdir("check_warnings_excludes") do
+        Dir.mkdir "lib"
 
         # NOTE tempfile might be created in symlinked folder
         # which affects how to match current dir /var/folders/...
         # with the real path /private/var/folders/...
-        path = File.realpath(path)
+        path = File.realpath(".")
 
         main_filename = File.join(path, "main.cr")
         output_filename = File.join(path, "main")
 
-        Dir.cd(path) do
-          File.write main_filename, <<-CRYSTAL
-            require "./lib/foo"
+        File.write main_filename, <<-CRYSTAL
+          require "./lib/foo"
 
-            bar
+          bar
+          foo
+          CRYSTAL
+        File.write File.join(path, "lib", "foo.cr"), <<-CRYSTAL
+          @[Deprecated("Do not use me")]
+          def foo
+          end
+
+          def bar
             foo
-            CRYSTAL
-          File.write File.join(path, "lib", "foo.cr"), <<-CRYSTAL
-            @[Deprecated("Do not use me")]
-            def foo
-            end
+          end
+          CRYSTAL
 
-            def bar
-              foo
-            end
-            CRYSTAL
+        compiler = create_spec_compiler
+        compiler.warnings.level = :all
+        compiler.warnings.exclude_lib_path = true
+        compiler.prelude = "empty"
+        compiler.compile Compiler::Source.new(main_filename, File.read(main_filename)), output_filename
 
-          compiler = create_spec_compiler
-          compiler.warnings.level = :all
-          compiler.warnings.exclude_lib_path = true
-          compiler.prelude = "empty"
-          compiler.compile Compiler::Source.new(main_filename, File.read(main_filename)), output_filename
-
-          compiler.warnings.infos.size.should eq(1)
-        end
+        compiler.warnings.infos.size.should eq(1)
       end
     end
 
@@ -597,42 +595,40 @@ describe "Semantic: warnings" do
     end
 
     it "ignore deprecation excluded locations" do
-      with_tempfile("check_warnings_excludes") do |path|
-        FileUtils.mkdir_p File.join(path, "lib")
+      with_tempdir("check_warnings_excludes") do
+        Dir.mkdir_p "lib"
 
         # NOTE tempfile might be created in symlinked folder
         # which affects how to match current dir /var/folders/...
         # with the real path /private/var/folders/...
-        path = File.realpath(path)
+        path = File.realpath(".")
 
         main_filename = File.join(path, "main.cr")
         output_filename = File.join(path, "main")
 
-        Dir.cd(path) do
-          File.write main_filename, %(
-            require "./lib/foo"
+        File.write main_filename, %(
+          require "./lib/foo"
 
-            bar
+          bar
+          foo
+        )
+        File.write File.join(path, "lib", "foo.cr"), %(
+          @[Deprecated("Do not use me")]
+          macro foo
+          end
+
+          macro bar
             foo
-          )
-          File.write File.join(path, "lib", "foo.cr"), %(
-            @[Deprecated("Do not use me")]
-            macro foo
-            end
+          end
+        )
 
-            macro bar
-              foo
-            end
-          )
+        compiler = create_spec_compiler
+        compiler.warnings.level = :all
+        compiler.warnings.exclude_lib_path = true
+        compiler.prelude = "empty"
+        compiler.compile Compiler::Source.new(main_filename, File.read(main_filename)), output_filename
 
-          compiler = create_spec_compiler
-          compiler.warnings.level = :all
-          compiler.warnings.exclude_lib_path = true
-          compiler.prelude = "empty"
-          compiler.compile Compiler::Source.new(main_filename, File.read(main_filename)), output_filename
-
-          compiler.warnings.infos.size.should eq(1)
-        end
+        compiler.warnings.infos.size.should eq(1)
       end
     end
 

@@ -40,6 +40,11 @@ Lint/DebuggerStatement:
 Lint/ElseNil:
   Enabled: false
 
+# Disabled: We have an explicit CI job for testing the formatter (both latest
+# and head). No reason to run it through ameba.
+Lint/Formatting:
+  Enabled: false
+
 Lint/LiteralInCondition:
   Excluded:
   # Samples may legitimately use literals in conditions
