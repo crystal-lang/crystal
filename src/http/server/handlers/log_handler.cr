@@ -10,7 +10,7 @@ class HTTP::LogHandler
   def initialize(@log = Log.for("http.server"))
   end
 
-  def call(context) : Nil
+  def call(context : HTTP::Server::Context) : Nil
     start = Time.monotonic
 
     begin
