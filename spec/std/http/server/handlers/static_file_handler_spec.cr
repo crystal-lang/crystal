@@ -549,7 +549,10 @@ describe HTTP::StaticFileHandler do
       File.write("forbidden.txt", "not for your eyes")
       File.chmod("forbidden.txt", 0x000)
       pending! if File.info("forbidden.txt").permissions.owner_read?
+      p! File.info("forbidden.txt").permissions
+      puts `ls -l`
       response = handle HTTP::Request.new("GET", "/forbidden.txt"), directory: "."
+      p! response.headers, response.body
       response.status_code.should eq(404)
     end
   end
