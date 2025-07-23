@@ -68,6 +68,12 @@ describe Process do
       end
     end
 
+    it "raises for long path" do
+      expect_raises(File::NotFoundError, "Error executing process: 'aaaaaaa") do
+        Process.new("a" * 1000)
+      end
+    end
+
     it "accepts nilable string for `chdir` (#13767)" do
       expect_raises(File::NotFoundError, "Error executing process: 'foobarbaz'") do
         Process.new("foobarbaz", chdir: nil.as(String?))

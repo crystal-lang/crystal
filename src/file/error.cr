@@ -49,12 +49,21 @@ end
 
 class File::NotFoundError < File::Error
   # :nodoc:
+  # See https://github.com/crystal-lang/crystal/issues/15905#issuecomment-2975820840
   OS_ERRORS = [
+    Errno::ENAMETOOLONG,
     Errno::ENOENT,
+    Errno::ENOTDIR,
+    WinError::ERROR_BAD_NETPATH,
+    WinError::ERROR_BAD_NET_NAME,
+    WinError::ERROR_BAD_PATHNAME,
     WinError::ERROR_DIRECTORY,
     WinError::ERROR_FILE_NOT_FOUND,
+    WinError::ERROR_FILENAME_EXCED_RANGE,
+    WinError::ERROR_INVALID_DRIVE,
     WinError::ERROR_INVALID_NAME,
     WinError::ERROR_PATH_NOT_FOUND,
+    WinError::WSAENAMETOOLONG,
   ]
 end
 
