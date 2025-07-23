@@ -2,22 +2,22 @@ require "c/pthread"
 
 class Thread
   struct Local(T)
-    @key = uninitialized LibC::PthreadKeyT
-
-    def initialize
-      previous_def
-      @key = pthread_key_create(nil)
-    end
-
-    def initialize(&destructor : Proc(T, Nil))
-      previous_def(&destructor)
-      @key = pthread_key_create(destructor.unsafe_as(Proc(Void*, Nil)))
-    end
-
-    private def pthread_key_create(destructor)
-      err = LibC.pthread_key_create(out key, destructor)
+    def self.new : self
+      err = LibC.pthread_key_create(out key, nil)
       raise RuntimeError.from_os_error("pthread_key_create", Errno.new(err)) unless err == 0
-      key
+      new(key)
+    end
+
+    def self.new(&destructor : Proc(T, Nil)) : self
+      err = LibC.pthread_key_create(out key, destructor.unsafe_as(Proc(Void*, Nil)))
+      raise RuntimeError.from_os_error("pthread_key_create", Errno.new(err)) unless err == 0
+      new(key)
+    end
+
+    def initialize(@key : LibC::PthreadKeyT)
+      {% unless T < Reference || T < Pointer || T.union_types.all? { |t| t == Nil || t < Reference } %}
+        {% raise "Can only create Thread::Local with reference types, nilable reference types, or pointer types, not {{T}}" %}
+      {% end %}
     end
 
     def get? : T?
