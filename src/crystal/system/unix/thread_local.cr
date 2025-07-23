@@ -11,8 +11,7 @@ class Thread
 
     def initialize(&destructor : Proc(T, Nil))
       previous_def(&destructor)
-      ptr = destructor.unsafe_as(Proc(Void*, Nil))
-      @key = pthread_key_create(ptr)
+      @key = pthread_key_create(destructor.unsafe_as(Proc(Void*, Nil)))
     end
 
     private def pthread_key_create(destructor)
