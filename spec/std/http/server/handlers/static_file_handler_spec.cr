@@ -547,12 +547,12 @@ describe HTTP::StaticFileHandler do
   it "returns 404 for unreadable file" do
     with_tempdir do
       File.write("forbidden.txt", "not for your eyes")
-      File.chmod("forbidden.txt", 0x000)
+      File.chmod("forbidden.txt", File::Permissions::None)
+
+      # FIXME: Setting permissions does not work on all systems. Even the
+      # permissions recheck is not sufficient (see https://github.com/crystal-lang/crystal/pull/16025#issuecomment-3112225515).
       pending! if File.info("forbidden.txt").permissions.owner_read? || (File.read("forbidden.txt") rescue nil)
-      p! File.info("forbidden.txt").permissions
-      puts `ls -l`
       response = handle HTTP::Request.new("GET", "/forbidden.txt"), directory: "."
-      p! response.headers, response.body
       response.status_code.should eq(404)
     end
   end
