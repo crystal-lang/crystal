@@ -4246,7 +4246,6 @@ module Crystal
 
     def visit(node : ProcLiteral)
       write_token :OP_MINUS_GT
-      whitespace_after_op_minus_gt = @token.type.space?
       skip_space_or_newline
 
       a_def = node.def

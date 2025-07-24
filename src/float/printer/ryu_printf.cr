@@ -128,7 +128,7 @@ module Float::Printer::RyuPrintf
   end
 
   private def self.mulshift_mod1e9(m : UInt64, mul : {UInt64, UInt64, UInt64}, j : Int32) : UInt32
-    high0, low0 = umul128(m, mul[0])
+    high0, _ = umul128(m, mul[0])
     high1, low1 = umul128(m, mul[1])
     high2, low2 = umul128(m, mul[2])
 

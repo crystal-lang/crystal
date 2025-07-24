@@ -44,7 +44,6 @@ class File < IO::FileDescriptor
   end
 
   private def self.match_internal(glob_str, path_str, separators)
-    glob = glob_str.to_slice
     state = State.new(separators: separators.to_static_array.to_slice)
 
     # Store the state when we see an opening '{' brace in a stack.

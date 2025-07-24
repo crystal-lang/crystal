@@ -375,7 +375,7 @@ module Crystal
       @json.field "kind", type.struct? ? "struct" : "class"
 
       if type_size = type_size(type)
-        @json.field "size_in_bytes", type_size(type)
+        @json.field "size_in_bytes", type_size
       end
     end
 
