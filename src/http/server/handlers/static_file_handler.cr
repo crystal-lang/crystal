@@ -140,14 +140,22 @@ class HTTP::StaticFileHandler
   private def serve_file(context : Server::Context, file_info, file_path : Path, original_file_path : Path, last_modified : Time)
     context.response.content_type = MIME.from_filename(original_file_path.to_s, "application/octet-stream")
 
-    File.open(file_path) do |file|
-      if range_header = context.request.headers["Range"]?
-        serve_file_range(context, file, range_header, file_info)
-      else
-        context.response.headers["Accept-Ranges"] = "bytes"
+    begin
+      File.open(file_path) do |file|
+        if range_header = context.request.headers["Range"]?
+          serve_file_range(context, file, range_header, file_info)
+        else
+          context.response.headers["Accept-Ranges"] = "bytes"
 
-        serve_file_full(context, file, file_info)
+          serve_file_full(context, file, file_info)
+        end
       end
+    rescue File::Error
+      # If there's any file error, we report the file as not existing.
+      # Even if it exists but is not readable, we don't want to disclose its
+      # existence.
+      context.response.respond_with_status(:not_found)
+      return
     end
   end
 
