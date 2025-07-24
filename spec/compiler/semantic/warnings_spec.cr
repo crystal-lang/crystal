@@ -1,6 +1,193 @@
 require "../spec_helper"
 
 describe "Semantic: warnings" do
+  describe "deprecated types" do
+    it "detects deprecated class methods" do
+      assert_warning <<-CRYSTAL,
+        @[Deprecated]
+        class Foo
+        end
+
+        Foo.new
+        CRYSTAL
+        "warning in line 5\nWarning: Deprecated Foo."
+
+      assert_warning <<-CRYSTAL,
+        @[Deprecated]
+        module Foo::Bar
+          def self.baz
+          end
+        end
+
+        Foo::Bar.baz
+        CRYSTAL
+        "warning in line 7\nWarning: Deprecated Foo::Bar."
+    end
+
+    it "detects deprecated superclass" do
+      assert_warning <<-CRYSTAL,
+        @[Deprecated]
+        class Foo
+        end
+
+        class Bar < Foo
+        end
+        CRYSTAL
+        "warning in line 5\nWarning: Deprecated Foo."
+    end
+
+    it "doesn't check superclass when the class is deprecated" do
+      assert_warning <<-CRYSTAL,
+        @[Deprecated]
+        class Foo
+        end
+
+        @[Deprecated]
+        class Bar < Foo
+        end
+
+        Bar.new
+        CRYSTAL
+        "warning in line 9\nWarning: Deprecated Bar."
+    end
+
+    it "detects deprecated type reference" do
+      assert_warning <<-CRYSTAL,
+        @[Deprecated]
+        class Foo
+        end
+
+        def p(x)
+          x
+        end
+
+        p Foo
+        CRYSTAL
+        "warning in line 9\nWarning: Deprecated Foo."
+    end
+
+    it "only affects the type not the namespace" do
+      assert_no_warning <<-CRYSTAL
+        @[Deprecated]
+        class Foo
+          class Bar
+          end
+        end
+
+        Foo::Bar.new
+        CRYSTAL
+    end
+
+    it "doesn't deprecate instance methods (constructors already warn)" do
+      assert_warning <<-CRYSTAL,
+        @[Deprecated]
+        class Foo
+          def do_something
+          end
+        end
+
+        foo = Foo.new
+        foo.do_something
+        CRYSTAL
+        "warning in line 7\nWarning: Deprecated Foo."
+    end
+
+    it "detects deprecated through alias" do
+      assert_warning <<-CRYSTAL,
+        @[Deprecated]
+        class Foo
+        end
+
+        alias Bar = Foo
+        alias Baz = Bar
+
+        Baz.new
+        CRYSTAL
+        "warning in line 8\nWarning: Deprecated Foo."
+    end
+
+    it "detects deprecated constant in generic argument" do
+      assert_warning <<-CRYSTAL,
+        @[Deprecated("Do not use me")]
+        class Foo
+        end
+
+        class Bar(T)
+        end
+
+        Bar(Foo)
+        CRYSTAL
+        "warning in line 8\nWarning: Deprecated Foo. Do not use me"
+    end
+
+    it "detects deprecated constant in include" do
+      assert_warning <<-CRYSTAL,
+        @[Deprecated("Do not use me")]
+        module Foo
+        end
+
+        class Bar
+          include Foo
+        end
+
+        Bar.new
+        CRYSTAL
+        "warning in line 6\nWarning: Deprecated Foo. Do not use me"
+    end
+
+    it "detects deprecated constant in extend" do
+      assert_warning <<-CRYSTAL,
+        @[Deprecated("Do not use me")]
+        module Foo
+        end
+
+        class Bar
+          extend Foo
+        end
+        CRYSTAL
+        "warning in line 6\nWarning: Deprecated Foo. Do not use me"
+    end
+  end
+
+  describe "deprecated alias" do
+    it "detects deprecated class method calls" do
+      assert_warning <<-CRYSTAL,
+        class Foo
+        end
+
+        @[Deprecated("Use Foo.")]
+        alias Bar = Foo
+
+        Bar.new
+        CRYSTAL
+        "warning in line 7\nWarning: Deprecated Bar. Use Foo."
+
+      assert_warning <<-CRYSTAL,
+        module Foo::Bar
+          def self.baz; end
+        end
+
+        @[Deprecated("Use Foo::Bar.")]
+        alias Bar = Foo::Bar
+
+        Bar.baz
+        CRYSTAL
+        "warning in line 8\nWarning: Deprecated Bar. Use Foo::Bar."
+    end
+
+    it "doesn't deprecate the aliased type" do
+      assert_no_warning <<-CRYSTAL
+        class Foo
+        end
+
+        @[Deprecated("Use Foo.")]
+        alias Bar = Foo
+
+        Foo.new
+        CRYSTAL
+    end
+  end
+
   describe "deprecated annotations" do
     it "detects deprecated annotations" do
       assert_warning <<-CRYSTAL,
