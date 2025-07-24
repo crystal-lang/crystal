@@ -164,6 +164,27 @@ describe Crystal::TextHierarchyPrinter do
                      @x : Proc(Nil) (8 bytes)\n
       EOS
   end
+
+  it "shows extern unions" do
+    assert_text_hierarchy <<-CRYSTAL, "Foo", <<-EOS
+      lib Lib
+        union Foo
+          x : Int32
+          y : Float64
+        end
+      end
+      CRYSTAL
+      - class Object (4 bytes)
+        |
+        +- struct Value (0 bytes)
+           |
+           +- struct Struct (0 bytes)
+              |
+              +- union Lib::Foo (8 bytes)
+                     @x : Int32   (4 bytes)
+                     @y : Float64 (8 bytes)\n
+      EOS
+  end
 end
 
 describe Crystal::JSONHierarchyPrinter do
@@ -194,6 +215,57 @@ describe Crystal::JSONHierarchyPrinter do
                     "name": "Bar",
                     "kind": "class",
                     "size_in_bytes": 4,
+                    "sub_types": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+      JSON
+  end
+
+  it "shows extern unions" do
+    assert_json_hierarchy <<-CRYSTAL, "Foo", <<-JSON
+      lib Lib
+        union Foo
+          x : Int32
+          y : Float64
+        end
+      end
+      CRYSTAL
+      {
+        "name": "Object",
+        "kind": "class",
+        "size_in_bytes": 4,
+        "sub_types": [
+          {
+            "name": "Value",
+            "kind": "struct",
+            "size_in_bytes": 0,
+            "sub_types": [
+              {
+                "name": "Struct",
+                "kind": "struct",
+                "size_in_bytes": 0,
+                "sub_types": [
+                  {
+                    "name": "Lib::Foo",
+                    "kind": "union",
+                    "size_in_bytes": 8,
+                    "instance_vars": [
+                      {
+                        "name": "@x",
+                        "type": "Int32",
+                        "size_in_bytes": 4
+                      },
+                      {
+                        "name": "@y",
+                        "type": "Float64",
+                        "size_in_bytes": 8
+                      }
+                    ],
                     "sub_types": []
                   }
                 ]
