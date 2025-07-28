@@ -58,7 +58,7 @@ lib LibC
     si_errno : Int
     si_code : Int
     __pad0 : Int
-    si_addr : Void*  # Assuming the sigfault form of siginfo_t
+    si_addr : Void*  # Assuming the segfault form of siginfo_t
     __pad1 : Int[26] # SI_MAX_SIZE (128) / sizeof(int) - ...
   end
 

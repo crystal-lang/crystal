@@ -8,7 +8,7 @@
 # `scripts/github-changelog.cr`.
 # The section is then inserted into `CHANGELOG.md`, overwriting any previous
 # content for this milestone.
-# Finally, the changes are commited and pushed to `changelog/$VERSION`.
+# Finally, the changes are committed and pushed to `changelog/$VERSION`.
 # If the changelog section is *new*, also creates a draft PR for this branch.
 #
 # Usage:

@@ -15,12 +15,23 @@ class Crystal::Program
   record CompiledMacroRun, filename : String, elapsed : Time::Span, reused : Bool
   property compiled_macros_cache = {} of String => CompiledMacroRun
 
+  property interpreted_node_hook : Proc(ASTNode, Bool, Bool, Location?, Nil)? = nil
+  property macro_expanded_hook : Proc(Nil)? = nil
+  property macro_expansion_error_hook : Proc(::Exception?, Nil)? = nil
+
   def expand_macro(a_macro : Macro, call : Call, scope : Type, path_lookup : Type? = nil, a_def : Def? = nil)
     check_call_to_deprecated_macro a_macro, call
 
     interpreter = MacroInterpreter.new self, scope, path_lookup || scope, a_macro, call, a_def, in_macro: true
     a_macro.body.accept interpreter
     {interpreter.to_s, interpreter.macro_expansion_pragmas}
+  rescue ex
+    raise ex if @program.macro_expansion_error_hook.nil?
+
+    # See SkipMacroCodeCoverageException's definition for more information.
+    raise SkipMacroCodeCoverageException.new ex
+  ensure
+    @program.macro_expanded_hook.try &.call
   end
 
   def expand_macro(node : ASTNode, scope : Type, path_lookup : Type? = nil, free_vars = nil, a_def : Def? = nil)
@@ -28,6 +39,13 @@ class Crystal::Program
     interpreter.free_vars = free_vars
     node.accept interpreter
     {interpreter.to_s, interpreter.macro_expansion_pragmas}
+  rescue ex
+    raise ex if @program.macro_expansion_error_hook.nil?
+
+    # See SkipMacroCodeCoverageException's definition for more information.
+    raise SkipMacroCodeCoverageException.new ex
+  ensure
+    @program.macro_expanded_hook.try &.call
   end
 
   def parse_macro_source(generated_source, macro_expansion_pragmas, the_macro, node, vars, current_def = nil, inside_type = false, inside_exp = false, mode : Parser::ParseMode = :normal, visibility : Visibility = :public)

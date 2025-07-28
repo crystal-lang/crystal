@@ -159,12 +159,24 @@ class String
   # This method is always safe to call, and the resulting string will have
   # the contents and size of the slice.
   #
+  # If *truncate_at_null* is true, only the characters up to and not including
+  # the first null character are copied.
+  #
   # ```
   # slice = Slice.new(4) { |i| ('a'.ord + i).to_u8 }
   # String.new(slice) # => "abcd"
+  #
+  # slice = UInt8.slice(102, 111, 111, 0, 98, 97, 114)
+  # String.new(slice, truncate_at_null: true) # => "foo"
   # ```
-  def self.new(slice : Bytes)
-    new(slice.to_unsafe, slice.size)
+  def self.new(slice : Bytes, *, truncate_at_null : Bool = false)
+    bytesize = slice.size
+    if truncate_at_null
+      if index = slice.index(0)
+        bytesize = index
+      end
+    end
+    new(slice.to_unsafe, bytesize)
   end
 
   # Creates a new `String` from the given *bytes*, which are encoded in the given *encoding*.
@@ -4337,7 +4349,31 @@ class String
     end
   end
 
-  def lines(chomp = true) : Array(String)
+  # Returns an array of the string split into lines.
+  #
+  # Both LF (line feed, `\n`) and CRLF (carriage return line feed, `\r\n`) are
+  # recognized as line delimiters.
+  #
+  # If *chomp* is true, the line separator is removed from the end of each line.
+  #
+  # ```
+  # "hello\nworld\n".lines                 # => ["hello", "world"]
+  # "hello\nworld\n".lines(chomp: false)   # => ["hello\n", "world\n"]
+  # "hello\nworld\r\n".lines               # => ["hello", "world"]
+  # "hello\nworld\r\n".lines(chomp: false) # => ["hello\n", "world\r\n"]
+  # ```
+  #
+  # A trailing line feed is not considered starting a final, empty line.  The
+  # empty string does not contain any lines.
+  #
+  # ```
+  # "hellp\n".lines # => ["hellp"]
+  # "\n".lines      # => [""]
+  # "".lines        # => [] of String
+  # ```
+  #
+  # * `#each_line` yields each line without allocating an array
+  def lines(chomp : Bool = true) : Array(String)
     lines = [] of String
     each_line(chomp: chomp) do |line|
       lines << line
@@ -4345,21 +4381,31 @@ class String
     lines
   end
 
-  # Splits the string after each newline and yields each line to a block.
+  # Splits the string after each newline and yields each line.
+  #
+  # Both LF (line feed, `\n`) and CRLF (carriage return line feed, `\r\n`) are
+  # recognized as line delimiters.
+  #
+  # If *chomp* is true, the line separator is removed from the end of each line.
   #
   # ```
-  # haiku = "the first cold shower
-  # even the monkey seems to want
-  # a little coat of straw"
-  # haiku.each_line do |stanza|
-  #   puts stanza
-  # end
-  # # output:
-  # # the first cold shower
-  # # even the monkey seems to want
-  # # a little coat of straw
+  # "hello\nworld".each_line { }                   # yields "hello", "world"
+  # "hello\nworld".each_line(chomp: false) { }     # yields "hello\n", "world"
+  # "hello\nworld\r\n".each_line { }               # yields "hello", "world"
+  # "hello\nworld\r\n".each_line(chomp: false) { } # yields "hello\n", "world\r\n"
   # ```
-  def each_line(chomp = true, &block : String ->) : Nil
+  #
+  # A trailing line feed is not considered starting a final, empty line.  The
+  # empty string does not contain any lines.
+  #
+  # ```
+  # "hello\n".each_line { } # yields "hello"
+  # "\n".each_line { }      # yields ""
+  # "".each_line { }        # does not yield
+  # ```
+  #
+  # * `#lines` returns an array of lines
+  def each_line(chomp : Bool = true, & : String ->) : Nil
     return if empty?
 
     offset = 0
@@ -4815,7 +4861,7 @@ class String
   # "fooo".match_full!(/foo/) # Regex::Error
   # $~                        # raises Exception
   # ```
-  def match_full!(regex : Regex) : Regex::MatchData?
+  def match_full!(regex : Regex) : Regex::MatchData
     match!(regex, options: Regex::MatchOptions::ANCHORED | Regex::MatchOptions::ENDANCHORED)
   end
 
@@ -5584,6 +5630,36 @@ class String
     self
   end
 
+  # Returns `self` if it starts with the given *prefix*. Otherwise, returns a new
+  # `String` with the *prefix* prepended.
+  #
+  # ```
+  # "llo!".ensure_prefix("He")   # => "Hello!"
+  # "Hello!".ensure_prefix("He") # => "Hello!"
+  # "ello".ensure_prefix('H')    # => "Hello!"
+  # "Hello!".ensure_prefix('H')  # => "Hello!"
+  # ```
+  def ensure_prefix(prefix : String | Char) : self
+    return self if starts_with?(prefix)
+
+    "#{prefix}#{self}"
+  end
+
+  # Returns `self` if it ends with the given *suffix*. Otherwise, returns a new
+  # `String` with the *suffix* appended.
+  #
+  # ```
+  # "Hell".ensure_suffix("o!")   # => "Hello!"
+  # "Hello!".ensure_suffix("o!") # => "Hello!"
+  # "Hello".ensure_suffix('!')   # => "Hello!"
+  # "Hello!".ensure_suffix('!')  # => "Hello!"
+  # ```
+  def ensure_suffix(suffix : String | Char) : self
+    return self if ends_with?(suffix)
+
+    "#{self}#{suffix}"
+  end
+
   # :nodoc:
   def self.check_capacity_in_bounds(capacity) : Nil
     if capacity < 0
@@ -5782,6 +5858,11 @@ class String
         end
       {% end %}
     end
+  end
+
+  # Returns the empty string.
+  def self.additive_identity : String
+    ""
   end
 end
 

@@ -269,8 +269,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     leave aligned_sizeof_type(final_type), node: Nop.new.at(node.end_location)
 
     compiled_def.closure_context = @closure_context
-
-    @instructions
   end
 
   private def move_arg_to_closure_if_closured(node : Def, arg_name : String)
@@ -1101,7 +1099,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   private def dispatch_class_var(owner : Type, metaclass : Bool, node : ASTNode, &)
-    types = owner.all_subclasses.select { |t| t.is_a?(ClassVarContainer) }
+    types = [] of Crystal::Type
+    owner.all_subclasses.each { |t| types << t if t.is_a?(ClassVarContainer) }
     types.push(owner)
     types.sort_by! { |type| -type.depth }
 

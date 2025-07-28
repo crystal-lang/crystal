@@ -67,7 +67,7 @@ describe System::User do
 
     it "returns nil on nonexistent user" do
       user = System::User.find_by?(name: INVALID_USER_NAME)
-      user.should eq(nil)
+      user.should be_nil
     end
   end
 
@@ -82,7 +82,7 @@ describe System::User do
 
     it "returns nil on nonexistent user id" do
       user = System::User.find_by?(id: INVALID_USER_ID)
-      user.should eq(nil)
+      user.should be_nil
     end
   end
 

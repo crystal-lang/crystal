@@ -53,18 +53,27 @@ class Crystal::Def
     end
 
     # Splat arg
-    if splat_index && !args[splat_index].external_name.empty?
-      splat_names = [] of String
+    splat_size = 0
 
-      splat_size = args_size - splat_index
-      splat_size = 0 if splat_size < 0
-      splat_size.times do |index|
-        splat_name = program.new_temp_var_name
-        splat_names << splat_name
-        new_args << Arg.new(splat_name)
+    if splat_index
+      arg = args[splat_index]
+
+      unless arg.external_name.empty?
+        splat_names = [] of String
+
+        splat_size = args_size - splat_index
+        splat_size = 0 if splat_size < 0
+
+        splat_size.times do |index|
+          splat_name = program.new_temp_var_name
+          splat_names << splat_name
+
+          splat_arg = Arg.new(splat_name)
+          splat_arg.annotations = arg.annotations.dup
+
+          new_args << splat_arg
+        end
       end
-    else
-      splat_size = 0
     end
 
     if named_args
@@ -84,9 +93,13 @@ class Crystal::Def
           # If a named argument matches an argument's external name, use the internal name
           matching_arg = args.find { |arg| arg.external_name == named_arg }
           if matching_arg
-            new_args << Arg.new(matching_arg.name, external_name: named_arg)
+            new_arg = Arg.new(matching_arg.name, external_name: named_arg)
+            new_arg.annotations = matching_arg.annotations.dup
+            new_args << new_arg
           else
-            new_args << Arg.new(temp_name, external_name: named_arg)
+            new_arg = Arg.new(temp_name, external_name: named_arg)
+            new_arg.annotations = double_splat.try(&.annotations.dup)
+            new_args << new_arg
           end
         end
       end
@@ -108,6 +121,7 @@ class Crystal::Def
     if owner = self.owner?
       expansion.owner = owner
     end
+    expansion.original_name = original_name
 
     if retain_body
       new_body = [] of ASTNode

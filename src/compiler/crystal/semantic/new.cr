@@ -159,7 +159,7 @@ module Crystal
           arg = Splat.new(arg).at(self) if instance_type.splat_index == i
           arg
         end
-        new_generic = Generic.new(Path.new(instance_type.name), generic_type_args)
+        new_generic = Generic.new(Path.new(instance_type.name), generic_type_args).at(self)
         alloc = Call.new(new_generic, "allocate").at(self)
       else
         alloc = Call.new("allocate").at(self)
@@ -256,18 +256,40 @@ module Crystal
 
     def expand_new_default_arguments(instance_type, args_size, named_args)
       def_args = [] of Arg
-      splat_index = nil
 
-      i = 0
-      args_size.times do
-        def_args << Arg.new("__arg#{i}")
-        i += 1
+      # Positional args
+      if splat_index = self.splat_index
+        before_splat_size = Math.min(args_size, splat_index)
+      else
+        before_splat_size = args_size
       end
+
+      before_splat_size.times do |i|
+        new_arg = Arg.new("__arg#{i}")
+        new_arg.annotations = args[i].annotations
+        def_args << new_arg
+      end
+
+      # Splat args
+      if splat_index
+        splat_arg = args[splat_index]
+
+        splat_size = args_size - splat_index
+        splat_size = 0 if splat_size < 0
+
+        splat_size.times do |i|
+          new_arg = Arg.new("__arg#{before_splat_size + i}")
+          new_arg.annotations = splat_arg.annotations
+          def_args << new_arg
+        end
+      end
+
+      # Named args & double splat arg
+      new_splat_index = nil
 
       if named_args
         def_args << Arg.new("")
-        splat_index = i
-        i += 1
+        new_splat_index = args_size
 
         name = String.build do |str|
           str << "new"
@@ -278,15 +300,22 @@ module Crystal
             # When **opts is expanded for named arguments, we must use internal
             # names that won't clash with local variables defined in the method.
             temp_name = instance_type.program.new_temp_var_name
-            def_args << Arg.new(temp_name, external_name: named_arg)
-            i += 1
+            def_arg = Arg.new(temp_name, external_name: named_arg)
+
+            if matching_arg = args.find { |arg| arg.external_name == named_arg }
+              def_arg.annotations = matching_arg.annotations.dup
+            elsif double_splat = self.double_splat
+              def_arg.annotations = double_splat.annotations.dup
+            end
+
+            def_args << def_arg
           end
         end
       else
         name = "new"
       end
 
-      expansion = Def.new(name, def_args, Nop.new, splat_index: splat_index).at(self)
+      expansion = Def.new(name, def_args, Nop.new, splat_index: new_splat_index).at(self)
       expansion.block_arity = block_arity
       expansion.visibility = visibility
       expansion.annotations = annotations
@@ -304,9 +333,9 @@ module Crystal
 
       # Remove the splat index: we just needed it so that named arguments
       # are passed as named arguments to the initialize call
-      if splat_index
+      if new_splat_index
         expansion.splat_index = nil
-        expansion.args.delete_at(splat_index)
+        expansion.args.delete_at(new_splat_index)
       end
 
       expansion

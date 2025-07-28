@@ -25,7 +25,7 @@ jobs:
           token: ${{ secrets.BACKPORT_ACTION_GITHUB_PAT }}
 
       - name: Create backport PR
-        uses: korthout/backport-action@436145e922f9561fc5ea157ff406f21af2d6b363 # v3.2.0
+        uses: korthout/backport-action@0193454f0c5947491d348f33a275c119f30eb736 # v3.2.1
         with:
           github_token: ${{ secrets.BACKPORT_ACTION_GITHUB_PAT }}
           # Config README: https://github.com/korthout/backport-action#backport-action
