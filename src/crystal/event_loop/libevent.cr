@@ -327,23 +327,21 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
   end
 
   def evented_write(target, errno_msg : String, &) : Int32
-    begin
-      loop do
-        bytes_written = yield
-        if bytes_written != -1
-          return bytes_written.to_i32
-        end
-
-        if Errno.value == Errno::EAGAIN
-          target.evented_wait_writable do
-            raise IO::TimeoutError.new("Write timed out")
-          end
-        else
-          raise IO::Error.from_errno(errno_msg, target: target)
-        end
+    loop do
+      bytes_written = yield
+      if bytes_written != -1
+        return bytes_written.to_i32
       end
-    ensure
-      target.evented_resume_pending_writers
+
+      if Errno.value == Errno::EAGAIN
+        target.evented_wait_writable do
+          raise IO::TimeoutError.new("Write timed out")
+        end
+      else
+        raise IO::Error.from_errno(errno_msg, target: target)
+      end
     end
+  ensure
+    target.evented_resume_pending_writers
   end
 end

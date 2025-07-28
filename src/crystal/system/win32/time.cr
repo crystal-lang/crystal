@@ -77,7 +77,10 @@ module Crystal::System::Time
       return unless windows_info = iana_to_windows[canonical_iana_name]?
       _, stdname, dstname = windows_info
 
-      initialize_location_from_TZI(pointerof(info).as(LibC::TIME_ZONE_INFORMATION*).value, "Local", windows_name, stdname, dstname)
+      # In Crystal, we use only `UTC` as name for the UTC time zone
+      canonical_iana_name = "UTC" if canonical_iana_name == "Etc/UTC"
+
+      initialize_location_from_TZI(pointerof(info).as(LibC::TIME_ZONE_INFORMATION*).value, canonical_iana_name, windows_name, stdname, dstname)
     end
   end
 
@@ -148,22 +151,4 @@ module Crystal::System::Time
   Std                 = System.wstr_literal "Std"
   Dlt                 = System.wstr_literal "Dlt"
   TZI                 = System.wstr_literal "TZI"
-
-  # Searches the registry for an English name of a time zone named *stdname* or *dstname*
-  # and returns the English name.
-  private def self.translate_zone_name(stdname, dstname)
-    WindowsRegistry.open?(LibC::HKEY_LOCAL_MACHINE, REGISTRY_TIME_ZONES) do |key_handle|
-      WindowsRegistry.each_name(key_handle) do |name|
-        WindowsRegistry.open?(key_handle, name) do |sub_handle|
-          # TODO: Implement reading MUI
-          std = WindowsRegistry.get_string(sub_handle, Std)
-          dlt = WindowsRegistry.get_string(sub_handle, Dlt)
-
-          if std == stdname || dlt == dstname
-            return String.from_utf16(name)
-          end
-        end
-      end
-    end
-  end
 end

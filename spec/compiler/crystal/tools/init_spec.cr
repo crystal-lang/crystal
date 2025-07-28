@@ -20,17 +20,6 @@ private def exec_init(project_name, project_dir = nil, type = "lib", force = fal
   Crystal::Init::InitProject.new(config).run
 end
 
-# Creates a temporary directory, cd to it and run the block inside it.
-# The directory and its content is deleted when the block return.
-private def within_temporary_directory(&)
-  with_tempfile "init_spec_tmp" do |tmp_path|
-    Dir.mkdir_p(tmp_path)
-    Dir.cd(tmp_path) do
-      yield
-    end
-  end
-end
-
 private def with_file(name, &)
   yield File.read(name)
 end
@@ -52,7 +41,7 @@ module Crystal
     it "correctly uses git config" do
       pending! "Git is not available" unless git_available?
 
-      within_temporary_directory do
+      with_tempdir("git-config") do
         File.write(".gitconfig", <<-INI)
         [user]
           email = dorian@dorianmarie.fr
@@ -70,7 +59,7 @@ module Crystal
     end
 
     it "has proper contents" do
-      within_temporary_directory do
+      with_tempdir("proper-contents") do
         run_init_project("lib", "example", "John Smith", "john@smith.com", "jsmith")
         run_init_project("app", "example_app", "John Smith", "john@smith.com", "jsmith")
         run_init_project("app", "num-followed-hyphen-1", "John Smith", "john@smith.com", "jsmith")
@@ -231,7 +220,7 @@ module Crystal
 
   describe "Init invocation" do
     it "produces valid yaml file" do
-      within_temporary_directory do
+      with_tempdir("valid-yaml") do
         exec_init("example", "example", "app")
 
         with_file "example/shard.yml" do |file|
@@ -241,7 +230,7 @@ module Crystal
     end
 
     it "prints error if a file is already present" do
-      within_temporary_directory do
+      with_tempdir("already-present") do
         existing_file = "existing-file"
         File.touch(existing_file)
         expect_raises(Crystal::Init::Error, "#{existing_file.inspect} is a file") do
@@ -251,7 +240,7 @@ module Crystal
     end
 
     it "honors the custom set directory name" do
-      within_temporary_directory do
+      with_tempdir("directory-name") do
         project_name = "my_project"
         project_dir = "project_dir"
 
@@ -266,7 +255,7 @@ module Crystal
     end
 
     it "errors if files will be overwritten by a generated file" do
-      within_temporary_directory do
+      with_tempdir("generated-file") do
         File.write("README.md", "content before init")
 
         ex = expect_raises(Crystal::Init::FilesConflictError) do
@@ -280,7 +269,7 @@ module Crystal
     end
 
     it "doesn't error if files will be overwritten by a generated file and --force is used" do
-      within_temporary_directory do
+      with_tempdir("generated-force") do
         File.write("README.md", "content before init")
         File.exists?("README.md").should be_true
 
@@ -292,7 +281,7 @@ module Crystal
     end
 
     it "doesn't error when asked to skip existing files" do
-      within_temporary_directory do
+      with_tempdir("skip-existing") do
         File.write("README.md", "content before init")
 
         exec_init("my_lib", ".", skip_existing: true)
@@ -336,7 +325,7 @@ module Crystal
     end
 
     it "DIR = ." do
-      within_temporary_directory do
+      with_tempdir("dir-dot") do
         config = Crystal::Init.parse_args(["lib", "."])
         config.name.should eq File.basename(Dir.current)
         config.dir.should eq "."

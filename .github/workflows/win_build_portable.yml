@@ -33,7 +33,7 @@ jobs:
         uses: crystal-lang/install-crystal@v1
         id: install-crystal
         with:
-          crystal: "1.16.3"
+          crystal: "1.17.1"
 
       - name: Download Crystal source
         uses: actions/checkout@v4

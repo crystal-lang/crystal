@@ -202,7 +202,7 @@ module Spec
         io.puts
         io.puts "Pending:"
         pendings.each do |pending|
-          io.puts Spec.color("  #{pending.description}", :pending)
+          io.puts cli.colorize("  #{pending.description}", :pending)
         end
       end
 
@@ -223,7 +223,7 @@ module Spec
             if ex.is_a?(SpecError)
               source_line = Spec.read_line(ex.file, ex.line)
               if source_line
-                io.puts Spec.color("     Failure/Error: #{source_line.strip}", :error)
+                io.puts cli.colorize("     Failure/Error: #{source_line.strip}", :error)
               end
             end
             io.puts
@@ -231,12 +231,12 @@ module Spec
             message = ex.is_a?(SpecError) ? ex.to_s : ex.inspect_with_backtrace
             message.split('\n') do |line|
               io.print "       "
-              io.puts Spec.color(line, :error)
+              io.puts cli.colorize(line, :error)
             end
 
             if ex.is_a?(SpecError)
               io.puts
-              io.puts Spec.color("     # #{Path[ex.file].relative_to(cwd)}:#{ex.line}", :comment)
+              io.puts cli.colorize("     # #{Path[ex.file].relative_to(cwd)}:#{ex.line}", :comment)
             end
           end
         end
@@ -252,7 +252,7 @@ module Spec
         top_n.each do |res|
           io.puts "  #{res.description}"
           res_elapsed = res.elapsed.not_nil!.total_seconds.humanize
-          io.puts "    #{res_elapsed.colorize.bold} seconds #{Path[res.file].relative_to(cwd)}:#{res.line}"
+          io.puts "    #{res_elapsed.colorize.bold.toggle(cli.color?)} seconds #{Path[res.file].relative_to(cwd)}:#{res.line}"
         end
       end
 
@@ -268,18 +268,18 @@ module Spec
                      else                                        Status::Success
                      end
 
-      io.puts "Aborted!".colorize.red if aborted
+      io.puts "Aborted!".colorize.red.toggle(cli.color?) if aborted
       io.puts "Finished in #{Spec.to_human(elapsed_time)}"
-      io.puts Spec.color("#{total} examples, #{failures.size} failures, #{errors.size} errors, #{pendings.size} pending", final_status)
-      io.puts Spec.color("Only running `focus: true`", :focus) if cli.focus?
+      io.puts cli.colorize("#{total} examples, #{failures.size} failures, #{errors.size} errors, #{pendings.size} pending", final_status)
+      io.puts cli.colorize("Only running `focus: true`", :focus) if cli.focus?
 
       unless failures_and_errors.empty?
         io.puts
         io.puts "Failed examples:"
         io.puts
         failures_and_errors.each do |fail|
-          io.print Spec.color("crystal spec #{Path[fail.file].relative_to(cwd)}:#{fail.line}", :error)
-          io.puts Spec.color(" # #{fail.description}", :comment)
+          io.print cli.colorize("crystal spec #{Path[fail.file].relative_to(cwd)}:#{fail.line}", :error)
+          io.puts cli.colorize(" # #{fail.description}", :comment)
         end
       end
 
@@ -288,7 +288,7 @@ module Spec
 
     def print_order_message(io : IO)
       if randomizer_seed = cli.randomizer_seed
-        io.puts Spec.color("Randomized with seed: #{randomizer_seed}", :order)
+        io.puts cli.colorize("Randomized with seed: #{randomizer_seed}", :order)
       end
     end
 

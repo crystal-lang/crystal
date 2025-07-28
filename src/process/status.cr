@@ -249,6 +249,7 @@ class Process::Status
   #
   # NOTE: `#exit_reason` is preferred over this method as a portable alternative
   # which also works on Windows.
+  @[Deprecated("Use `#exit_signal?` instead.")]
   def exit_signal : Signal
     {% if flag?(:unix) && !flag?(:wasm32) %}
       Signal.new(signal_code)

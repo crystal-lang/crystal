@@ -23,7 +23,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   end
 
   @waitable_timer : System::WaitableTimer?
-  @timer_packet : LibC::HANDLE?
+  @timer_packet = LibC::HANDLE.null
   @timer_key : System::IOCP::CompletionKey?
 
   def initialize
@@ -177,14 +177,15 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
 
   protected def rearm_waitable_timer(time : Time::Span?, interruptible : Bool) : Nil
     if waitable_timer = @waitable_timer
-      status = @iocp.cancel_wait_completion_packet(@timer_packet.not_nil!, true)
+      raise "BUG: @timer_packet was not initialized!" unless @timer_packet
+      status = @iocp.cancel_wait_completion_packet(@timer_packet, true)
       if time
         waitable_timer.set(time)
         if status == LibC::STATUS_PENDING
           interrupt
         else
           # STATUS_CANCELLED, STATUS_SUCCESS
-          @iocp.associate_wait_completion_packet(@timer_packet.not_nil!, waitable_timer.handle, @timer_key.not_nil!)
+          @iocp.associate_wait_completion_packet(@timer_packet, waitable_timer.handle, @timer_key.not_nil!)
         end
       else
         waitable_timer.cancel
