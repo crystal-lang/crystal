@@ -16,7 +16,7 @@ class Thread
       alias Key = LibC::PthreadKeyT
 
       def self.create(destructor : Destructor? = nil) : Key
-        LibC.pthread_key_create(out key, destructor)
+        err = LibC.pthread_key_create(out key, destructor)
         raise RuntimeError.from_os_error("pthread_key_create", Errno.new(err)) unless err == 0
         key
       end
