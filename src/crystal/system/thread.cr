@@ -45,6 +45,8 @@ end
   {% raise "Thread not supported" %}
 {% end %}
 
+require "./thread_local_storage"
+
 # :nodoc:
 class Thread
   include Crystal::System::Thread
@@ -137,6 +139,10 @@ class Thread
   def self.unlock : Nil
     threads.@mutex.unlock
   end
+
+  {% if LocalStorage.has_constant?(:Table) %}
+    property local_storage = Pointer(LocalStorage::Table).null
+  {% end %}
 
   # Creates and starts a new system thread.
   def initialize(@name : String? = nil, &@func : Thread ->)
@@ -250,6 +256,7 @@ class Thread
       Thread.threads.delete(self)
       Fiber.inactive(fiber)
       detach { system_close }
+      LocalStorage.call_destructors
     end
   end
 
