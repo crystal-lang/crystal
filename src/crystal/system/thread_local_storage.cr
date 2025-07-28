@@ -1,3 +1,7 @@
+{% if flag?(:win32) && flag?(:gnu) %}
+  require "c/fibersapi"
+{% end %}
+
 # :nodoc:
 class Thread
   # :nodoc:
@@ -27,7 +31,6 @@ class Thread
         value
       end
 
-      @[AlwaysInline]
       def self.call_destructors : Nil
       end
     {% elsif flag?(:win32) && flag?(:gnu) %}
