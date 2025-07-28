@@ -69,15 +69,17 @@ class Socket < IO
 
   # Creates a socket. Consider using `TCPSocket`, `TCPServer`, `UDPSocket`,
   # `UNIXSocket` or `UNIXServer` unless you need full control over the socket.
-  def self.new(family : Family, type : Type, protocol : Protocol = Protocol::IP, @[Deprecated("Use Socket.set_blocking instead.")] blocking = nil)
-    new(af: family, type: type, protocol: protocol, blocking: blocking)
+  def initialize(family : Family, type : Type, protocol : Protocol = Protocol::IP, @[Deprecated("Use Socket.set_blocking instead.")] blocking = nil)
+    # This method is `#initialize` instead of `.new` because it is used as super
+    # constructor from subclasses.
+    initialize(af: family, type: type, protocol: protocol, blocking: blocking)
   end
 
   # :nodoc:
   #
-  # This method is `#initialize` instead of `.new` because it is used as super
-  # constructor from subclasses.
-  protected def initialize(*, af : Family, type : Type, protocol : Protocol, blocking : Bool?)
+  # Internal initializer for the above constructors to avoid deprecation
+  # warnings on the blocking arg.
+  protected def initialize(*, af : Family, type : Type, protocol : Protocol, blocking)
     fd, blocking = Crystal::EventLoop.current.socket(af, type, protocol, blocking)
     initialize(handle: fd, family: af, type: type, protocol: protocol, blocking: blocking)
     self.sync = true

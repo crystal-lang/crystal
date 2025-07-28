@@ -53,7 +53,7 @@ class IO::FileDescriptor < IO
   #
   # NOTE: On Windows, the handle should have been created with
   # `FILE_FLAG_OVERLAPPED`.
-  def self.new(fd : Handle, @[Deprecated("The blocking argument is deprecated with no replacement.")] blocking = nil, *, close_on_finalize = true)
+  def self.new(fd : Handle, @[Deprecated("Use IO::FileDescriptor.set_blocking instead.")] blocking = nil, *, close_on_finalize = true)
     file_descriptor = new(handle: fd, close_on_finalize: close_on_finalize)
     file_descriptor.system_blocking_init(blocking) unless file_descriptor.closed?
     file_descriptor
@@ -105,7 +105,7 @@ class IO::FileDescriptor < IO
   # the event loop runtime requirements. Changing the blocking mode can cause
   # the event loop to misbehave, for example block the entire program when a
   # fiber tries to read from this file descriptor.
-  @[Deprecated("Use IO::FileDescriptor.set_blocking(fd, value) instead.")]
+  @[Deprecated("Use IO::FileDescriptor.set_blocking instead.")]
   def blocking=(value)
     self.system_blocking = value
   end

@@ -15,7 +15,7 @@ require "./ip_socket"
 # ```
 class TCPSocket < IPSocket
   # Creates a new `TCPSocket`, waiting to be connected.
-  def self.new(family : Family = Family::INET, @[Deprecated("The blocking argument is deprecated. Use Socket.set_blocking instead.")] blocking = nil)
+  def self.new(family : Family = Family::INET, @[Deprecated("Use Socket.set_blocking instead.")] blocking = nil)
     super(family, Type::STREAM, Protocol::TCP, blocking)
   end
 
@@ -24,7 +24,7 @@ class TCPSocket < IPSocket
   # You may limit the DNS resolution time with `dns_timeout` and limit the
   # connection time to the remote server with `connect_timeout`. Both values
   # must be in seconds (integers or floats).
-  def initialize(host : String, port, dns_timeout = nil, connect_timeout = nil, @[Deprecated("The blocking argument is deprecated. Use Socket.set_blocking instead.")] blocking = nil)
+  def initialize(host : String, port, dns_timeout = nil, connect_timeout = nil, @[Deprecated("Use Socket.set_blocking instead.")] blocking = nil)
     Addrinfo.tcp(host, port, timeout: dns_timeout) do |addrinfo|
       super(addrinfo.family, addrinfo.type, addrinfo.protocol, blocking)
       connect(addrinfo, timeout: connect_timeout) do |error|
@@ -52,7 +52,7 @@ class TCPSocket < IPSocket
   #
   # NOTE: On Windows, the handle must have been created with
   # `WSA_FLAG_OVERLAPPED`.
-  def initialize(*, fd : Handle, family : Family = Family::INET, @[Deprecated("The blocking argument is deprecated. Use Socket.set_blocking instead.")] blocking = nil)
+  def initialize(*, fd : Handle, family : Family = Family::INET, @[Deprecated("Use Socket.set_blocking instead.")] blocking = nil)
     super fd, family, Type::STREAM, Protocol::TCP, blocking
   end
 
