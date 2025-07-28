@@ -6,6 +6,7 @@ module Crystal
     property warnings = WarningCollection.new
 
     @deprecated_constants_detected = Set(String).new
+    @deprecated_types_detected = Set(String).new
     @deprecated_methods_detected = Set(String).new
     @deprecated_macros_detected = Set(String).new
     @deprecated_annotations_detected = Set(String).new
@@ -14,6 +15,16 @@ module Crystal
       return unless @warnings.level.all?
 
       check_deprecation(const, node, @deprecated_constants_detected)
+    end
+
+    def check_deprecated_type(type : Type, node : Path)
+      return unless @warnings.level.all?
+
+      unless check_deprecation(type, node, @deprecated_types_detected)
+        if type.is_a?(AliasType)
+          check_deprecation(type.aliased_type, node, @deprecated_types_detected)
+        end
+      end
     end
 
     def check_call_to_deprecated_macro(a_macro : Macro, call : Call)
@@ -50,23 +61,17 @@ module Crystal
     end
 
     private def check_deprecation(object, use_site, detects)
-      check_deprecation(object, use_site, detects) do
-        if object.responds_to?(:short_reference)
-          object.short_reference
-        else
-          object.to_s
-        end
-      end
-    end
-
-    private def check_deprecation(object, use_site, detects, &)
       if (ann = object.annotation(self.deprecated_annotation)) &&
          (deprecated_annotation = DeprecatedAnnotation.from(ann))
         use_location = use_site.location.try(&.macro_location) || use_site.location
         return false if !use_location || @warnings.ignore_warning_due_to_location?(use_location)
 
         # skip warning if the use site was already informed
-        name = yield
+        name = if object.responds_to?(:short_reference)
+                 object.short_reference
+               else
+                 object.to_s
+               end
         warning_key = "#{name} #{use_location}"
         return true if detects.includes?(warning_key)
         detects.add(warning_key)
@@ -147,11 +152,11 @@ module Crystal
     def short_reference
       case owner
       when Program
-        "::#{name}"
+        "::#{original_name}"
       when .metaclass?
-        "#{owner.instance_type}.#{name}"
+        "#{owner.instance_type}.#{original_name}"
       else
-        "#{owner}##{name}"
+        "#{owner}##{original_name}"
       end
     end
   end

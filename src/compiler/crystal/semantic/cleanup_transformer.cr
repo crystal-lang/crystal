@@ -140,6 +140,13 @@ module Crystal
     def transform(node : ClassDef)
       super
 
+      # check superclass for deprecation if the node isn't deprecated
+      if (type = node.type.lookup_type?(node.name)) && !type.annotation(@program.deprecated_annotation)
+        if ((superclass = node.superclass).is_a?(Path) && (stype = superclass.type? || node.type.lookup_type?(superclass)))
+          @program.check_deprecated_type(stype, superclass)
+        end
+      end
+
       node.hook_expansions.try &.map! &.transform self
       node
     end
@@ -441,7 +448,15 @@ module Crystal
           const.value = const.value.transform self
           const.cleaned_up = true
         end
+      elsif type = node.target_type
+        @program.check_deprecated_type(type, node)
       end
+
+      node
+    end
+
+    def transform(node : Generic)
+      transform_many node.type_vars
 
       node
     end

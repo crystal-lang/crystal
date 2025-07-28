@@ -4861,7 +4861,7 @@ class String
   # "fooo".match_full!(/foo/) # Regex::Error
   # $~                        # raises Exception
   # ```
-  def match_full!(regex : Regex) : Regex::MatchData?
+  def match_full!(regex : Regex) : Regex::MatchData
     match!(regex, options: Regex::MatchOptions::ANCHORED | Regex::MatchOptions::ENDANCHORED)
   end
 
@@ -5858,6 +5858,11 @@ class String
         end
       {% end %}
     end
+  end
+
+  # Returns the empty string.
+  def self.additive_identity : String
+    ""
   end
 end
 

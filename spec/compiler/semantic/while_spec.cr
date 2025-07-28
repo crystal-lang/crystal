@@ -448,4 +448,28 @@ describe "Semantic: while" do
       foo
       )) { union_of nil_type.metaclass, char }
   end
+
+  it "doesn't modify variables unchanged in condition and body" do
+    assert_no_errors <<-CRYSTAL
+      abstract class Base; end
+
+      class A < Base; end
+
+      class B < Base; end
+
+      class C < Base; end
+
+      def foo(x : A | B)
+      end
+
+      el = A.new.as(Base)
+      if el.is_a?(A) || el.is_a?(B)
+        while false
+          break
+        end
+
+        foo(el)
+      end
+      CRYSTAL
+  end
 end
