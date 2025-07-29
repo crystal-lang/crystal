@@ -51,29 +51,45 @@ class Socket < IO
 
   # Creates a TCP socket. Consider using `TCPSocket` or `TCPServer` unless you
   # need full control over the socket.
-  def self.tcp(family : Family, blocking = nil) : self
-    new(family, Type::STREAM, Protocol::TCP, blocking)
+  {% begin %}
+  def self.tcp(family : Family, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated("Use Socket.set_blocking instead.")] {% end %} blocking = nil) : self
+    new(af: family, type: Type::STREAM, protocol: Protocol::TCP, blocking: blocking)
   end
+  {% end %}
 
   # Creates an UDP socket. Consider using `UDPSocket` unless you need full
   # control over the socket.
-  def self.udp(family : Family, blocking = nil)
-    new(family, Type::DGRAM, Protocol::UDP, blocking)
+  {% begin %}
+  def self.udp(family : Family, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated("Use Socket.set_blocking instead.")] {% end %} blocking = nil) : self
+    new(af: family, type: Type::DGRAM, protocol: Protocol::UDP, blocking: blocking)
   end
+  {% end %}
 
   # Creates an UNIX socket. Consider using `UNIXSocket` or `UNIXServer` unless
   # you need full control over the socket.
-  def self.unix(type : Type = Type::STREAM, blocking = nil) : self
-    new(Family::UNIX, type, blocking: blocking)
+  {% begin %}
+  def self.unix(type : Type = Type::STREAM, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated("Use Socket.set_blocking instead.")] {% end %} blocking = nil) : self
+    new(af: Family::UNIX, type: type, protocol: Protocol::IP, blocking: blocking)
   end
+  {% end %}
 
   # Creates a socket. Consider using `TCPSocket`, `TCPServer`, `UDPSocket`,
   # `UNIXSocket` or `UNIXServer` unless you need full control over the socket.
-  def initialize(family : Family, type : Type, protocol : Protocol = Protocol::IP, blocking = nil)
+  {% begin %}
+  def initialize(family : Family, type : Type, protocol : Protocol = Protocol::IP, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated("Use Socket.set_blocking instead.")] {% end %} blocking = nil)
     # This method is `#initialize` instead of `.new` because it is used as super
     # constructor from subclasses.
-    fd, blocking = Crystal::EventLoop.current.socket(family, type, protocol, blocking)
-    initialize(handle: fd, family: family, type: type, protocol: protocol, blocking: blocking)
+    initialize(af: family, type: type, protocol: protocol, blocking: blocking)
+  end
+  {% end %}
+
+  # :nodoc:
+  #
+  # Internal initializer for the above constructors to avoid deprecation
+  # warnings on the blocking arg.
+  protected def initialize(*, af : Family, type : Type, protocol : Protocol, blocking)
+    fd, blocking = Crystal::EventLoop.current.socket(af, type, protocol, blocking)
+    initialize(handle: fd, family: af, type: type, protocol: protocol, blocking: blocking)
     self.sync = true
   end
 
@@ -84,12 +100,14 @@ class Socket < IO
   #
   # NOTE: On Windows, the handle must have been created with
   # `WSA_FLAG_OVERLAPPED`.
-  def initialize(fd, @family : Family, @type : Type, @protocol : Protocol = Protocol::IP, blocking = nil)
+  {% begin %}
+  def initialize(fd, @family : Family, @type : Type, @protocol : Protocol = Protocol::IP, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated("Use Socket.set_blocking instead.")] {% end %} blocking = nil)
     initialize(handle: fd, family: family, type: type, protocol: protocol)
     blocking = Crystal::EventLoop.default_socket_blocking? if blocking.nil?
     self.blocking = blocking unless blocking
     self.sync = true
   end
+  {% end %}
 
   # :nodoc:
   #

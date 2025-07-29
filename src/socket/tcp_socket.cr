@@ -15,16 +15,19 @@ require "./ip_socket"
 # ```
 class TCPSocket < IPSocket
   # Creates a new `TCPSocket`, waiting to be connected.
-  def self.new(family : Family = Family::INET, blocking = nil)
+  {% begin %}
+  def self.new(family : Family = Family::INET, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated("Use Socket.set_blocking instead.")] {% end %} blocking = nil)
     super(family, Type::STREAM, Protocol::TCP, blocking)
   end
+  {% end %}
 
   # Creates a new TCP connection to a remote TCP server.
   #
   # You may limit the DNS resolution time with `dns_timeout` and limit the
   # connection time to the remote server with `connect_timeout`. Both values
   # must be in seconds (integers or floats).
-  def initialize(host : String, port, dns_timeout = nil, connect_timeout = nil, blocking = nil)
+  {% begin %}
+  def initialize(host : String, port, dns_timeout = nil, connect_timeout = nil, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated("Use Socket.set_blocking instead.")] {% end %} blocking = nil)
     Addrinfo.tcp(host, port, timeout: dns_timeout) do |addrinfo|
       super(addrinfo.family, addrinfo.type, addrinfo.protocol, blocking)
       connect(addrinfo, timeout: connect_timeout) do |error|
@@ -33,12 +36,14 @@ class TCPSocket < IPSocket
       end
     end
   end
+  {% end %}
 
   protected def initialize(family : Family, type : Type, protocol : Protocol = Protocol::IP)
     super family, type, protocol
   end
 
   # Internal constructor for `TCPServer#accept?`.
+  # The *blocking* arg is purely informational.
   protected def initialize(*, handle, family, type, protocol, blocking)
     super(handle: handle, family: family, type: type, protocol: protocol, blocking: blocking)
   end
@@ -51,9 +56,11 @@ class TCPSocket < IPSocket
   #
   # NOTE: On Windows, the handle must have been created with
   # `WSA_FLAG_OVERLAPPED`.
-  def initialize(*, fd : Handle, family : Family = Family::INET, blocking = nil)
+  {% begin %}
+  def initialize(*, fd : Handle, family : Family = Family::INET, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated("Use Socket.set_blocking instead.")] {% end %} blocking = nil)
     super fd, family, Type::STREAM, Protocol::TCP, blocking
   end
+  {% end %}
 
   # Opens a TCP socket to a remote TCP server, yields it to the block, then
   # eventually closes the socket when the block returns.

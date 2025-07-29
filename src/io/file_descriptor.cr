@@ -53,11 +53,13 @@ class IO::FileDescriptor < IO
   #
   # NOTE: On Windows, the handle should have been created with
   # `FILE_FLAG_OVERLAPPED`.
-  def self.new(fd : Handle, blocking = nil, *, close_on_finalize = true)
+  {% begin %}
+  def self.new(fd : Handle, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated("Use IO::FileDescriptor.set_blocking instead.")] {% end %} blocking = nil, *, close_on_finalize = true)
     file_descriptor = new(handle: fd, close_on_finalize: close_on_finalize)
     file_descriptor.system_blocking_init(blocking) unless file_descriptor.closed?
     file_descriptor
   end
+  {% end %}
 
   # :nodoc:
   #
