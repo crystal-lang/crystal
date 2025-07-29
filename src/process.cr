@@ -173,7 +173,7 @@ class Process
   # By default the process is configured without input, output or error.
   #
   # Raises `IO::Error` if executing the command fails (for example if the executable doesn't exist).
-  def self.run(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
+  def self.run(command : String, args : Enumerable(String)? = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
                input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil) : Process::Status
     status = new(command, args, env, clear_env, shell, input, output, error, chdir).wait
     $? = status
@@ -188,7 +188,7 @@ class Process
   # Returns the block's value.
   #
   # Raises `IO::Error` if executing the command fails (for example if the executable doesn't exist).
-  def self.run(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
+  def self.run(command : String, args : Enumerable(String)? = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
                input : Stdio = Redirect::Pipe, output : Stdio = Redirect::Pipe, error : Stdio = Redirect::Pipe, chdir : Path | String? = nil, &)
     process = new(command, args, env, clear_env, shell, input, output, error, chdir)
     begin
@@ -204,7 +204,7 @@ class Process
   # Replaces the current process with a new one. This function never returns.
   #
   # Raises `IO::Error` if executing the command fails (for example if the executable doesn't exist).
-  def self.exec(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
+  def self.exec(command : String, args : Enumerable(String)? = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
                 input : ExecStdio = Redirect::Inherit, output : ExecStdio = Redirect::Inherit, error : ExecStdio = Redirect::Inherit, chdir : Path | String? = nil) : NoReturn
     command_args = Crystal::System::Process.prepare_args(command, args, shell)
 
@@ -269,7 +269,7 @@ class Process
   #   process, and passing *args* is not supported.
   #
   # Raises `IO::Error` if executing the command fails (for example if the executable doesn't exist).
-  def initialize(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
+  def initialize(command : String, args : Enumerable(String)? = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
                  input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil)
     command_args = Crystal::System::Process.prepare_args(command, args, shell)
 
@@ -497,7 +497,7 @@ end
 # ```text
 # LICENSE shard.yml Readme.md spec src
 # ```
-def system(command : String, args = nil) : Bool
+def system(command : String, args : Enumerable(String)? = nil) : Bool
   status = Process.run(command, args, shell: true, input: Process::Redirect::Inherit, output: Process::Redirect::Inherit, error: Process::Redirect::Inherit)
   $? = status
   status.success?
