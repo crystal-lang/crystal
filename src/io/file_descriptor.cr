@@ -63,11 +63,15 @@ class IO::FileDescriptor < IO
 
   # :nodoc:
   #
-  # Internal constructor to wrap a system *handle*.
-  def initialize(*, handle : Handle, @close_on_finalize = true)
+  # Internal constructor to wrap a system *handle*. The *blocking* arg is purely
+  # informational.
+  def initialize(*, handle : Handle, @close_on_finalize = true, blocking = nil)
     @volatile_fd = Atomic.new(handle)
     @closed = true # This is necessary so we can reference `self` in `system_closed?` (in case of an exception)
     @closed = system_closed?
+    {% if flag?(:win32) %}
+      @system_blocking = !!blocking
+    {% end %}
   end
 
   # :nodoc:
