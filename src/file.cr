@@ -165,11 +165,13 @@ class File < IO::FileDescriptor
   #
   # NOTE: On macOS files are always opened in blocking mode because non-blocking
   # FIFO files don't work — the OS exhibits issues with readiness notifications.
-  def self.new(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, @[Deprecated] blocking = nil)
+  {% begin %}
+  def self.new(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated] {% end %} blocking = nil)
     filename = filename.to_s
     fd, blocking = Crystal::System::File.open(filename, mode, perm: perm, blocking: blocking)
     new(filename, fd, mode, blocking, encoding, invalid)
   end
+  {% end %}
 
   getter path : String
 
@@ -509,16 +511,19 @@ class File < IO::FileDescriptor
   # permissions may be set using the *perm* parameter.
   #
   # See `self.new` for what *mode* can be.
-  def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, @[Deprecated] blocking = nil) : self
+  {% begin %}
+  def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated] {% end %} blocking = nil) : self
     new filename, mode, perm, encoding, invalid, blocking
   end
+  {% end %}
 
   # Opens the file named by *filename*. If a file is being created, its initial
   # permissions may be set using the *perm* parameter. Then given block will be passed the opened
   # file as an argument, the file will be automatically closed when the block returns.
   #
   # See `self.new` for what *mode* can be.
-  def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, @[Deprecated] blocking = nil, &)
+  {% begin %}
+  def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated] {% end %} blocking = nil, &)
     file = new filename, mode, perm, encoding, invalid, blocking
     begin
       yield file
@@ -526,6 +531,7 @@ class File < IO::FileDescriptor
       file.close
     end
   end
+  {% end %}
 
   # Returns the content of *filename* as a string.
   #
@@ -533,7 +539,8 @@ class File < IO::FileDescriptor
   # File.write("bar", "foo")
   # File.read("bar") # => "foo"
   # ```
-  def self.read(filename : Path | String, encoding = nil, invalid = nil, @[Deprecated] blocking = nil) : String
+  {% begin %}
+  def self.read(filename : Path | String, encoding = nil, invalid = nil, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated] {% end %} blocking = nil) : String
     open(filename, "r", blocking: blocking) do |file|
       if encoding
         file.set_encoding(encoding, invalid: invalid)
@@ -550,6 +557,7 @@ class File < IO::FileDescriptor
       end
     end
   end
+  {% end %}
 
   # Yields each line in *filename* to the given block.
   #
@@ -562,13 +570,15 @@ class File < IO::FileDescriptor
   # end
   # array # => ["foo", "bar"]
   # ```
-  def self.each_line(filename : Path | String, encoding = nil, invalid = nil, chomp = true, @[Deprecated] blocking = nil, &)
+  {% begin %}
+  def self.each_line(filename : Path | String, encoding = nil, invalid = nil, chomp = true, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated] {% end %} blocking = nil, &)
     open(filename, "r", encoding: encoding, invalid: invalid, blocking: blocking) do |file|
       file.each_line(chomp: chomp) do |line|
         yield line
       end
     end
   end
+  {% end %}
 
   # Returns all lines in *filename* as an array of strings.
   #
@@ -576,13 +586,15 @@ class File < IO::FileDescriptor
   # File.write("foobar", "foo\nbar")
   # File.read_lines("foobar") # => ["foo", "bar"]
   # ```
-  def self.read_lines(filename : Path | String, encoding = nil, invalid = nil, chomp = true, @[Deprecated] blocking = nil) : Array(String)
+  {% begin %}
+  def self.read_lines(filename : Path | String, encoding = nil, invalid = nil, chomp = true, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated] {% end %} blocking = nil) : Array(String)
     lines = [] of String
     each_line(filename, encoding: encoding, invalid: invalid, chomp: chomp, blocking: blocking) do |line|
       lines << line
     end
     lines
   end
+  {% end %}
 
   # Writes the given *content* to *filename*.
   #
@@ -601,7 +613,8 @@ class File < IO::FileDescriptor
   # (the result of invoking `to_s` on *content*).
   #
   # See `self.new` for what *mode* can be.
-  def self.write(filename : Path | String, content, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, mode = "w", @[Deprecated] blocking = nil)
+  {% begin %}
+  def self.write(filename : Path | String, content, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, mode = "w", {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated] {% end %} blocking = nil)
     open(filename, mode, perm, encoding: encoding, invalid: invalid, blocking: blocking) do |file|
       case content
       when Bytes
@@ -615,6 +628,7 @@ class File < IO::FileDescriptor
       end
     end
   end
+  {% end %}
 
   # Copies the file *src* to the file *dst*.
   # Permission bits are copied too.
