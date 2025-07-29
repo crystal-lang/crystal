@@ -181,6 +181,23 @@ describe Socket, tags: "network" do
     end
   {% end %}
 
+  it ".set_blocking" do
+    # we can't check the blocking mode on windows; we thus merely check that the
+    # methods compile and run without errors
+    socket = Socket.tcp(Socket::Family::INET)
+    fd = socket.fd
+
+    Socket.set_blocking(fd, true)
+    {% unless flag?(:win32) %}
+      Socket.fcntl(fd, LibC::F_GETFL).bits_set?(LibC::O_NONBLOCK).should be_false
+    {% end %}
+
+    Socket.set_blocking(fd, false)
+    {% unless flag?(:win32) %}
+      IO::FileDescriptor.fcntl(fd, LibC::F_GETFL).bits_set?(LibC::O_NONBLOCK).should be_true
+    {% end %}
+  end
+
   describe "#finalize" do
     it "does not flush" do
       port = unused_local_tcp_port

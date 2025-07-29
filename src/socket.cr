@@ -87,7 +87,7 @@ class Socket < IO
   def initialize(fd, @family : Family, @type : Type, @protocol : Protocol = Protocol::IP, blocking = nil)
     initialize(handle: fd, family: family, type: type, protocol: protocol)
     blocking = Crystal::EventLoop.default_socket_blocking? if blocking.nil?
-    self.blocking = blocking unless blocking
+    Crystal::System::Socket.set_blocking(fd, blocking) unless blocking
     self.sync = true
   end
 
@@ -228,10 +228,10 @@ class Socket < IO
   def accept? : Socket?
     if rs = Crystal::EventLoop.current.accept(self)
       sock = Socket.new(handle: rs[0], family: family, type: type, protocol: protocol, blocking: rs[1])
-      unless (blocking = self.blocking) == rs[1]
+      unless (blocking = system_blocking?) == rs[1]
         # FIXME: unlike the overloads in TCPServer and UNIXServer, this version
         # carries the blocking mode from the server socket to the client socket
-        sock.blocking = blocking
+        Crystal::System::Socket.set_blocking(fd, blocking)
       end
       sock.sync = sync?
       sock
@@ -421,6 +421,7 @@ class Socket < IO
   end
 
   # Returns whether the socket's mode is blocking (true) or non blocking (false).
+  @[Deprecated("There are no replacement.")]
   def blocking
     system_blocking?
   end
@@ -431,8 +432,15 @@ class Socket < IO
   # loop runtime requirements. Changing the blocking mode can cause the event
   # loop to misbehave, for example block the entire program when a fiber tries
   # to read from this socket.
+  @[Deprecated("Use Socket.set_blocking(fd, value) instead.")]
   def blocking=(value)
     self.system_blocking = value
+  end
+
+  # Changes the blocking mode of *fd* to be blocking (true) or non blocking
+  # (false).
+  def self.set_blocking(fd : Handle, value : Bool)
+    Crystal::System::Socket.set_blocking(fd, value)
   end
 
   def close_on_exec?
