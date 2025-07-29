@@ -165,7 +165,7 @@ class File < IO::FileDescriptor
   #
   # NOTE: On macOS files are always opened in blocking mode because non-blocking
   # FIFO files don't work — the OS exhibits issues with readiness notifications.
-  def self.new(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, blocking = nil)
+  def self.new(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, @[Deprecated] blocking = nil)
     filename = filename.to_s
     fd, blocking = Crystal::System::File.open(filename, mode, perm: perm, blocking: blocking)
     new(filename, fd, mode, blocking, encoding, invalid)
@@ -509,9 +509,7 @@ class File < IO::FileDescriptor
   # permissions may be set using the *perm* parameter.
   #
   # See `self.new` for what *mode* can be.
-  #
-  # NOTE: The *blocking* arg is deprecated since Crystal 1.17.
-  def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, blocking = nil) : self
+  def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, @[Deprecated] blocking = nil) : self
     new filename, mode, perm, encoding, invalid, blocking
   end
 
@@ -520,9 +518,7 @@ class File < IO::FileDescriptor
   # file as an argument, the file will be automatically closed when the block returns.
   #
   # See `self.new` for what *mode* can be.
-  #
-  # NOTE: The *blocking* arg is deprecated since Crystal 1.17.
-  def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, blocking = nil, &)
+  def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, @[Deprecated] blocking = nil, &)
     file = new filename, mode, perm, encoding, invalid, blocking
     begin
       yield file
@@ -537,9 +533,7 @@ class File < IO::FileDescriptor
   # File.write("bar", "foo")
   # File.read("bar") # => "foo"
   # ```
-  #
-  # NOTE: The *blocking* arg is deprecated since Crystal 1.17.
-  def self.read(filename : Path | String, encoding = nil, invalid = nil, blocking = nil) : String
+  def self.read(filename : Path | String, encoding = nil, invalid = nil, @[Deprecated] blocking = nil) : String
     open(filename, "r", blocking: blocking) do |file|
       if encoding
         file.set_encoding(encoding, invalid: invalid)
@@ -568,9 +562,7 @@ class File < IO::FileDescriptor
   # end
   # array # => ["foo", "bar"]
   # ```
-  #
-  # NOTE: The *blocking* arg is deprecated since Crystal 1.17.
-  def self.each_line(filename : Path | String, encoding = nil, invalid = nil, chomp = true, blocking = nil, &)
+  def self.each_line(filename : Path | String, encoding = nil, invalid = nil, chomp = true, @[Deprecated] blocking = nil, &)
     open(filename, "r", encoding: encoding, invalid: invalid, blocking: blocking) do |file|
       file.each_line(chomp: chomp) do |line|
         yield line
@@ -584,9 +576,7 @@ class File < IO::FileDescriptor
   # File.write("foobar", "foo\nbar")
   # File.read_lines("foobar") # => ["foo", "bar"]
   # ```
-  #
-  # NOTE: The *blocking* arg is deprecated since Crystal 1.17.
-  def self.read_lines(filename : Path | String, encoding = nil, invalid = nil, chomp = true, blocking = nil) : Array(String)
+  def self.read_lines(filename : Path | String, encoding = nil, invalid = nil, chomp = true, @[Deprecated] blocking = nil) : Array(String)
     lines = [] of String
     each_line(filename, encoding: encoding, invalid: invalid, chomp: chomp, blocking: blocking) do |line|
       lines << line
@@ -611,9 +601,7 @@ class File < IO::FileDescriptor
   # (the result of invoking `to_s` on *content*).
   #
   # See `self.new` for what *mode* can be.
-  #
-  # NOTE: The *blocking* arg is deprecated since Crystal 1.17.
-  def self.write(filename : Path | String, content, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, mode = "w", blocking = nil)
+  def self.write(filename : Path | String, content, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, mode = "w", @[Deprecated] blocking = nil)
     open(filename, mode, perm, encoding: encoding, invalid: invalid, blocking: blocking) do |file|
       case content
       when Bytes
