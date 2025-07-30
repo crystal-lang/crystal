@@ -37,8 +37,20 @@ module Crystal
       return unless @warnings.level.all?
       return if compiler_expanded_call(node)
 
+      # check if method if deprecated, otherwise check if any arg is deprecated
       node.target_defs.try &.each do |target_def|
-        check_deprecation(target_def, node, @deprecated_methods_detected)
+        next if check_deprecation(target_def, node, @deprecated_methods_detected)
+
+        # can't annotate fun arguments
+        next if target_def.is_a?(External)
+
+        # skip last call in expanded default arguments def (it's calling the def
+        # with all the default args, and it would always trigger a warning)
+        next if node.expansion?
+
+        node.args.zip(target_def.args) do |arg, def_arg|
+          break if check_deprecation(def_arg, arg, @deprecated_methods_detected)
+        end
       end
     end
 
@@ -146,6 +158,12 @@ module Crystal
       else
         "#{owner}##{original_name}"
       end
+    end
+  end
+
+  class Arg
+    def short_reference
+      "argument #{original_name}"
     end
   end
 

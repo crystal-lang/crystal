@@ -267,10 +267,13 @@ module Crystal
       before_splat_size.times do |i|
         new_arg = Arg.new("__arg#{i}")
         new_arg.annotations = args[i].annotations
+        new_arg.original_name = args[i].original_name
         def_args << new_arg
       end
 
       # Splat args
+      splat_size = 0
+
       if splat_index
         splat_arg = args[splat_index]
 
@@ -280,6 +283,7 @@ module Crystal
         splat_size.times do |i|
           new_arg = Arg.new("__arg#{before_splat_size + i}")
           new_arg.annotations = splat_arg.annotations
+          new_arg.original_name = splat_arg.original_name
           def_args << new_arg
         end
       end
@@ -304,8 +308,10 @@ module Crystal
 
             if matching_arg = args.find { |arg| arg.external_name == named_arg }
               def_arg.annotations = matching_arg.annotations.dup
+              def_arg.original_name = matching_arg.original_name
             elsif double_splat = self.double_splat
               def_arg.annotations = double_splat.annotations.dup
+              def_arg.original_name = double_splat.original_name
             end
 
             def_args << def_arg

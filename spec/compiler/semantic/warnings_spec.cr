@@ -493,6 +493,176 @@ describe "Semantic: warnings" do
     end
   end
 
+  describe "deprecated method args" do
+    describe "defs" do
+      it "warns when a deprecated positional argument is passed" do
+        assert_warning <<-CRYSTAL,
+          def foo(a, @[Deprecated] b, c)
+          end
+
+          foo(1, 2, 3)
+        CRYSTAL
+          "warning in line 4\nWarning: Deprecated argument b."
+      end
+
+      it "warns when a deprecated keyword argument is passed" do
+        assert_warning <<-CRYSTAL,
+          def foo(x, *, a, @[Deprecated] b)
+          end
+
+          foo(0, a: 1, b: 2)
+        CRYSTAL
+          "warning in line 4\nWarning: Deprecated argument b."
+      end
+
+      it "warns when a deprecated splat argument is passed" do
+        assert_warning <<-CRYSTAL,
+          def foo(a, @[Deprecated] *args)
+          end
+
+          foo(1, 2)
+        CRYSTAL
+          "warning in line 4\nWarning: Deprecated argument args."
+      end
+
+      it "warns when a deprecated double splat argument is passed" do
+        assert_warning <<-CRYSTAL,
+          def foo(*, a, @[Deprecated] **opts)
+          end
+
+          foo(a: 1, bad: 2)
+        CRYSTAL
+          "warning in line 4\nWarning: Deprecated argument opts."
+      end
+
+      it "warns when a deprecated default positional argument is passed" do
+        assert_warning <<-CRYSTAL,
+          def foo(a, @[Deprecated] b = nil, c = nil)
+          end
+
+          foo(1, 2)
+        CRYSTAL
+          "warning in line 4\nWarning: Deprecated argument b."
+      end
+
+      it "warns when a deprecated default keyword argument is passed" do
+        assert_warning <<-CRYSTAL,
+          def foo(*, a, @[Deprecated] b = nil)
+          end
+
+          foo(a: 1, b: 2)
+        CRYSTAL
+          "warning in line 4\nWarning: Deprecated argument b."
+      end
+
+      it "doesn't warn when a deprecated default positional argument isn't explicitly passed" do
+        assert_no_warning <<-CRYSTAL
+          def foo(a, @[Deprecated] b = nil, c = nil)
+          end
+
+          foo(1)
+          foo(1, c: 3)
+        CRYSTAL
+      end
+
+      it "doesn't warn when a deprecated default keyword argument isn't explicitly passed" do
+        assert_no_warning <<-CRYSTAL
+          def foo(*, a, @[Deprecated] b = nil)
+          end
+
+          foo(a: 1)
+        CRYSTAL
+      end
+
+      it "warns when a default value calls a method with a deprecated arg" do
+        assert_warning <<-CRYSTAL,
+          def bar(@[Deprecated] x)
+          end
+
+          def foo(a, @[Deprecated] b = bar(a))
+          end
+
+          foo(1)
+        CRYSTAL
+          "warning in line 4\nWarning: Deprecated argument x."
+
+        assert_warning <<-CRYSTAL,
+          def bar(@[Deprecated] x)
+          end
+
+          def foo(a, @[Deprecated] b = bar(a))
+          end
+
+          foo(1, 2)
+        CRYSTAL
+          "warning in line 7\nWarning: Deprecated argument b."
+      end
+
+      it "warns when a deprecated arg default value calls a method with a deprecated arg" do
+        assert_warning <<-CRYSTAL,
+          def bar(@[Deprecated] x)
+          end
+
+          def foo(@[Deprecated] b = bar(1))
+          end
+
+          foo
+        CRYSTAL
+          "warning in line 4\nWarning: Deprecated argument x."
+      end
+    end
+
+    describe "constructors" do
+      it "warns when a deprecated positional arg is passed" do
+        assert_warning <<-CRYSTAL,
+          class Foo
+            def initialize(a, @[Deprecated] b, c)
+            end
+          end
+
+          Foo.new(1, 2, 3)
+        CRYSTAL
+          "warning in line 6\nWarning: Deprecated argument b."
+      end
+
+      it "warns when a deprecated keyword argument is passed" do
+        assert_warning <<-CRYSTAL,
+          class Foo
+            def initialize(x, *, a, @[Deprecated] b)
+            end
+          end
+
+          Foo.new(0, a: 1, b: 2)
+        CRYSTAL
+          "warning in line 6\nWarning: Deprecated argument b."
+      end
+
+      it "warns when a deprecated splat argument is passed" do
+        assert_warning <<-CRYSTAL,
+          class Foo
+            def initialize(a, @[Deprecated] *args)
+            end
+          end
+
+          Foo.new(1, 2)
+        CRYSTAL
+          "warning in line 6\nWarning: Deprecated argument args."
+      end
+
+      it "warns when a deprecated double splat argument is passed" do
+        assert_warning <<-CRYSTAL,
+          class Foo
+            def initialize(*, a, @[Deprecated] **opts)
+            end
+          end
+
+          Foo.new(a: 1, bad: 2)
+        CRYSTAL
+          "warning in line 6\nWarning: Deprecated argument opts."
+      end
+    end
+  end
+
   describe "deprecated macros" do
     it "detects top-level deprecated macros" do
       assert_warning %(
