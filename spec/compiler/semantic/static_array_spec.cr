@@ -27,6 +27,11 @@ describe "Semantic: static array" do
       x = uninitialized Char[Int32]
       ),
       "can't instantiate StaticArray(T, N) with N = Int32 (N must be an integer)"
+
+    assert_error <<-CRYSTAL,
+      StaticArray(UInt8, 1.2)
+      CRYSTAL
+      "can't instantiate StaticArray(T, N) with N = 1.2 (N must be an integer)"
   end
 
   it "allows instantiating static array instance var in initialize of generic type" do
