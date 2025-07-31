@@ -459,7 +459,7 @@ end
 # end
 #
 # timestamp = Timestamp.from_json(%({"value": 1459860483856}))
-# timestamp.value   # => 2016-04-05 12:48:03.856 UTC
+# timestamp.value   # => 2016-04-05T12:48:03.856Z
 # timestamp.to_json # => %({"value":1459860483856})
 # ```
 module Time::EpochMillisConverter

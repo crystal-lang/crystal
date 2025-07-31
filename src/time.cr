@@ -9,7 +9,7 @@ require "crystal/system/time"
 # Leap seconds are ignored.
 #
 # Internally, the time is stored as an `Int64` representing seconds from epoch
-# (`0001-01-01 00:00:00.0 UTC`) and an `Int32` representing
+# (`0001-01-01T00:00:00.0Z`) and an `Int32` representing
 # nanosecond-of-second with value range `0..999_999_999`.
 #
 # The supported date range is `0001-01-01 00:00:00.0` to
@@ -94,7 +94,7 @@ require "crystal/system/time"
 #
 # ```
 # time = Time.utc(2018, 3, 8, 22, 5, 13)
-# time          # => 2018-03-08 22:05:13.0 UTC
+# time          # => 2018-03-08T22:05:13.0Z
 # time.location # => #<Time::Location UTC>
 # time.zone     # => #<Time::Location::Zone UTC +00:00 (0s) STD>
 # time.offset   # => 0
@@ -267,7 +267,7 @@ struct Time
   # :nodoc:
   DAYS_PER_4_YEARS = 365*4 + 1
 
-  # This constant is defined to be "1970-01-01 00:00:00 UTC".
+  # This constant is defined as `1970-01-01T00:00:00.0Z`".
   # Can be used to create a `Time::Span` that represents an Unix Epoch time duration.
   #
   # ```
@@ -379,7 +379,7 @@ struct Time
   #
   # ```
   # time = Time.local(2016, 2, 15, 10, 20, 30, location: Time::Location.load("Europe/Berlin"))
-  # time.inspect # => "2016-02-15 10:20:30.0 +01:00 Europe/Berlin"
+  # time.inspect # => "2016-02-15T10:20:30.0+01:00[Europe/Berlin]"
   # ```
   #
   # Valid value ranges for the individual fields:
@@ -470,7 +470,7 @@ struct Time
   end
 
   # Creates a new `Time` instance that corresponds to the number of *seconds*
-  # and *nanoseconds* elapsed from epoch (`0001-01-01 00:00:00.0 UTC`)
+  # and *nanoseconds* elapsed from epoch (`0001-01-01T00:00:00.0`)
   # observed in *location*.
   #
   # Valid range for *seconds* is `0..315_537_897_599`.
@@ -493,7 +493,7 @@ struct Time
   end
 
   # Creates a new `Time` instance that corresponds to the number of *seconds*
-  # and *nanoseconds* elapsed from epoch (`0001-01-01 00:00:00.0 UTC`)
+  # and *nanoseconds* elapsed from epoch (`0001-01-01T00:00:00.0Z`)
   # in UTC.
   #
   # Valid range for *seconds* is `0..315_537_897_599`.
@@ -512,7 +512,7 @@ struct Time
   {% end %}
 
   # Creates a new `Time` instance that corresponds to the number of
-  # *seconds* elapsed since the Unix epoch (`1970-01-01 00:00:00 UTC`).
+  # *seconds* elapsed since the Unix epoch (`1970-01-01T00:00:00.0Z`).
   #
   # The time zone is always UTC.
   #
@@ -524,12 +524,12 @@ struct Time
   end
 
   # Creates a new `Time` instance that corresponds to the number of
-  # *milliseconds* elapsed since the Unix epoch (`1970-01-01 00:00:00 UTC`).
+  # *milliseconds* elapsed since the Unix epoch (`1970-01-01T00:00:00.0Z`).
   #
   # The time zone is always UTC.
   #
   # ```
-  # time = Time.unix_ms(981173106789) # => 2001-02-03 04:05:06.789 UTC
+  # time = Time.unix_ms(981173106789) # => 2001-02-03T04:05:06.789Z
   # time.millisecond                  # => 789
   # ```
   def self.unix_ms(milliseconds : Int) : Time
@@ -540,12 +540,12 @@ struct Time
   end
 
   # Creates a new `Time` instance that corresponds to the number of
-  # *nanoseconds* elapsed since the Unix epoch (`1970-01-01 00:00:00.000000000 UTC`).
+  # *nanoseconds* elapsed since the Unix epoch (`1970-01-01T00:00:00.0Z`).
   #
   # The time zone is always UTC.
   #
   # ```
-  # time = Time.unix_ns(981173106789479273) # => 2001-02-03 04:05:06.789479273 UTC
+  # time = Time.unix_ns(981173106789479273) # => 2001-02-03T04:05:06.789479273Z
   # time.nanosecond                         # => 789479273
   # ```
   def self.unix_ns(nanoseconds : Int) : Time
@@ -566,8 +566,8 @@ struct Time
   # new_year = Time.utc(2019, 1, 1, 0, 0, 0)
   # tokyo = new_year.to_local_in(Time::Location.load("Asia/Tokyo"))
   # new_york = new_year.to_local_in(Time::Location.load("America/New_York"))
-  # tokyo.inspect    # => "2019-01-01 00:00:00.0 +09:00 Asia/Tokyo"
-  # new_york.inspect # => "2019-01-01 00:00:00.0 -05:00 America/New_York"
+  # tokyo.inspect    # => "2019-01-01T00:00:00.0+09:00[Asia/Tokyo]"
+  # new_york.inspect # => "2019-01-01T00:00:00.0-05:00[America/New_York]"
   # ```
   def to_local_in(location : Location) : Time
     local_seconds = offset_seconds
@@ -1168,7 +1168,7 @@ struct Time
   # Parse time format specified by [RFC 3339](https://tools.ietf.org/html/rfc3339) ([ISO 8601](https://web.archive.org/web/20250306154328/http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
   #
   # ```
-  # Time.parse_rfc3339("2016-02-15T04:35:50Z") # => 2016-02-15 04:35:50.0 UTC
+  # Time.parse_rfc3339("2016-02-15T04:35:50Z") # => 2016-02-15T04:35:50.0Z
   # ```
   def self.parse_rfc3339(time : String) : self
     Format::RFC_3339.parse(time)
@@ -1182,7 +1182,7 @@ struct Time
   # Use `#to_rfc3339` to format a `Time` according to .
   #
   # ```
-  # Time.parse_iso8601("2016-02-15T04:35:50Z") # => 2016-02-15 04:35:50.0 UTC
+  # Time.parse_iso8601("2016-02-15T04:35:50Z") # => 2016-02-15T04:35:50.0Z
   # ```
   def self.parse_iso8601(time : String)
     Format::ISO_8601_DATE_TIME.parse(time)
@@ -1212,7 +1212,7 @@ struct Time
   # This is also compatible to [RFC 882](https://tools.ietf.org/html/rfc882) and [RFC 1123](https://tools.ietf.org/html/rfc1123#page-55).
   #
   # ```
-  # Time.parse_rfc2822("Mon, 15 Feb 2016 04:35:50 UTC") # => 2016-02-15 04:35:50.0 UTC
+  # Time.parse_rfc2822("Mon, 15 Feb 2016 04:35:50 UTC") # => 2016-02-15T04:35:50.0Z
   # ```
   def self.parse_rfc2822(time : String) : self
     Format::RFC_2822.parse(time)
@@ -1223,7 +1223,7 @@ struct Time
   # See `Time::Format` for details.
   #
   # ```
-  # Time.parse("2016-04-05", "%F", Time::Location.load("Europe/Berlin")) # => 2016-04-05 00:00:00.0 +02:00 Europe/Berlin
+  # Time.parse("2016-04-05", "%F", Time::Location.load("Europe/Berlin")) # => 2016-04-05T00:00:00.0+02:00[Europe/Berlin]
   # ```
   #
   # If there is no time zone information in the formatted time, *location* will
@@ -1281,7 +1281,7 @@ struct Time
   end
 
   # Returns the number of seconds since the Unix epoch
-  # (`1970-01-01 00:00:00 UTC`).
+  # (`1970-01-01T00:00:00.0Z`).
   #
   # ```
   # time = Time.utc(2016, 1, 12, 3, 4, 5)
@@ -1292,7 +1292,7 @@ struct Time
   end
 
   # Returns the number of milliseconds since the Unix epoch
-  # (`1970-01-01 00:00:00 UTC`).
+  # (`1970-01-01T00:00:00.0Z`).
   #
   # ```
   # time = Time.utc(2016, 1, 12, 3, 4, 5, nanosecond: 678_000_000)
@@ -1303,7 +1303,7 @@ struct Time
   end
 
   # Returns the number of nanoseconds since the Unix epoch
-  # (`1970-01-01 00:00:00.000000000 UTC`).
+  # (`1970-01-01T00:00:00.0Z`).
   #
   # ```
   # time = Time.utc(2016, 1, 12, 3, 4, 5, nanosecond: 678_910_123)
@@ -1314,7 +1314,7 @@ struct Time
   end
 
   # Returns the number of seconds since the Unix epoch
-  # (`1970-01-01 00:00:00 UTC`) as `Float64` with nanosecond precision.
+  # (`1970-01-01T00:00:00.0Z`) as `Float64` with nanosecond precision.
   #
   # ```
   # time = Time.utc(2016, 1, 12, 3, 4, 5, nanosecond: 678_000_000)

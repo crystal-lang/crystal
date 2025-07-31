@@ -447,7 +447,7 @@ class Time::Location
   # Returns the time zone offset observed at *unix_seconds*.
   #
   # *unix_seconds* expresses the number of seconds since UNIX epoch
-  # (`1970-01-01 00:00:00 UTC`).
+  # (`1970-01-01T00:00:00.0Z`).
   def lookup(unix_seconds : Int) : Zone
     unless @cached_range[0] <= unix_seconds < @cached_range[1]
       @cached_zone, @cached_range = lookup_with_boundaries(unix_seconds)
