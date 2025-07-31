@@ -437,7 +437,6 @@ class Socket < IO
     self.system_blocking = value
   end
 
-
   # Returns whether the blocking mode of *fd* is blocking (true) or non blocking
   # (false).
   #
