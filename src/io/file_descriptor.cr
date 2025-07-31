@@ -53,19 +53,25 @@ class IO::FileDescriptor < IO
   #
   # NOTE: On Windows, the handle should have been created with
   # `FILE_FLAG_OVERLAPPED`.
-  def self.new(fd : Handle, blocking = nil, *, close_on_finalize = true)
+  {% begin %}
+  def self.new(fd : Handle, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated("Use IO::FileDescriptor.set_blocking instead.")] {% end %} blocking = nil, *, close_on_finalize = true)
     file_descriptor = new(handle: fd, close_on_finalize: close_on_finalize)
     file_descriptor.system_blocking_init(blocking) unless file_descriptor.closed?
     file_descriptor
   end
+  {% end %}
 
   # :nodoc:
   #
-  # Internal constructor to wrap a system *handle*.
-  def initialize(*, handle : Handle, @close_on_finalize = true)
+  # Internal constructor to wrap a system *handle*. The *blocking* arg is purely
+  # informational.
+  def initialize(*, handle : Handle, @close_on_finalize = true, blocking = nil)
     @volatile_fd = Atomic.new(handle)
     @closed = true # This is necessary so we can reference `self` in `system_closed?` (in case of an exception)
     @closed = system_closed?
+    {% if flag?(:win32) %}
+      @system_blocking = !!blocking
+    {% end %}
   end
 
   # :nodoc:
