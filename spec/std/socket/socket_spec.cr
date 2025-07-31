@@ -181,20 +181,22 @@ describe Socket, tags: "network" do
     end
   {% end %}
 
-  it ".set_blocking" do
-    # we can't check the blocking mode on windows; we thus merely check that the
-    # methods compile and run without errors
+  it ".set_blocking and .get_blocking" do
     socket = Socket.tcp(Socket::Family::INET)
     fd = socket.fd
 
     Socket.set_blocking(fd, true)
-    {% unless flag?(:win32) %}
-      Socket.fcntl(fd, LibC::F_GETFL).bits_set?(LibC::O_NONBLOCK).should be_false
+    {% if flag?(:win32) %}
+      expect_raises(NotImplementedError) { IO::FileDescriptor.get_blocking(fd) }
+    {% else %}
+      Socket.get_blocking(fd).should be_true
     {% end %}
 
     Socket.set_blocking(fd, false)
-    {% unless flag?(:win32) %}
-      IO::FileDescriptor.fcntl(fd, LibC::F_GETFL).bits_set?(LibC::O_NONBLOCK).should be_true
+    {% if flag?(:win32) %}
+      expect_raises(NotImplementedError) { IO::FileDescriptor.get_blocking(fd) }
+    {% else %}
+      Socket.get_blocking(fd).should be_false
     {% end %}
   end
 

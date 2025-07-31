@@ -421,7 +421,7 @@ class Socket < IO
   end
 
   # Returns whether the socket's mode is blocking (true) or non blocking (false).
-  @[Deprecated("There are no replacement.")]
+  @[Deprecated("Use Socket.get_blocking instead.")]
   def blocking
     system_blocking?
   end
@@ -432,9 +432,18 @@ class Socket < IO
   # loop runtime requirements. Changing the blocking mode can cause the event
   # loop to misbehave, for example block the entire program when a fiber tries
   # to read from this socket.
-  @[Deprecated("Use Socket.set_blocking(fd, value) instead.")]
+  @[Deprecated("Use Socket.set_blocking instead.")]
   def blocking=(value)
     self.system_blocking = value
+  end
+
+
+  # Returns whether the blocking mode of *fd* is blocking (true) or non blocking
+  # (false).
+  #
+  # NOTE: Only implemented on UNIX targets. Raises on Windows.
+  def self.get_blocking(fd : Handle) : Bool
+    Crystal::System::Socket.get_blocking(fd)
   end
 
   # Changes the blocking mode of *fd* to be blocking (true) or non blocking

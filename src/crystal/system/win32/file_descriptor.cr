@@ -98,6 +98,10 @@ module Crystal::System::FileDescriptor
     @system_blocking
   end
 
+  def self.get_blocking(fd : Handle)
+    raise NotImplementedError.new("Cannot query the blocking mode of an `IO::FileDescriptor`")
+  end
+
   def self.set_blocking(fd : Handle, value : Bool)
     raise NotImplementedError.new("Cannot change the blocking mode of an `IO::FileDescriptor` after creation")
   end

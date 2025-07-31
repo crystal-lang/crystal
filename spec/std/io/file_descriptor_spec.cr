@@ -189,19 +189,23 @@ describe IO::FileDescriptor do
     end
   {% end %}
 
-  {% if flag?(:unix) %}
-    it ".set_blocking" do
-      File.open(datapath("test_file.txt"), "r") do |file|
-        fd = file.fd
+  it ".set_blocking and .get_blocking" do
+    File.open(datapath("test_file.txt"), "r") do |file|
+      fd = file.fd
 
+      {% if flag?(:win32) %}
+        expect_raises(NotImplementedError) { IO::FileDescriptor.set_blocking(fd, false) }
+        expect_raises(NotImplementedError) { IO::FileDescriptor.set_blocking(fd, true) }
+        expect_raises(NotImplementedError) { IO::FileDescriptor.get_blocking(fd) }
+      {% else %}
         IO::FileDescriptor.set_blocking(fd, false)
-        IO::FileDescriptor.fcntl(fd, LibC::F_GETFL).bits_set?(LibC::O_NONBLOCK).should be_true
+        IO::FileDescriptor.get_blocking(fd).should be_false
 
         IO::FileDescriptor.set_blocking(fd, true)
-        IO::FileDescriptor.fcntl(fd, LibC::F_GETFL).bits_set?(LibC::O_NONBLOCK).should be_false
-      end
+        IO::FileDescriptor.get_blocking(fd).should be_true
+      {% end %}
     end
-  {% end %}
+  end
 
   typeof(STDIN.noecho { })
   typeof(STDIN.noecho!)

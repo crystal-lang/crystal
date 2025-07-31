@@ -345,6 +345,10 @@ module Crystal::System::Socket
     Socket.set_blocking(fd, blocking)
   end
 
+  def self.get_blocking(fd : Handle)
+    raise NotImplementedError.new("Cannot query the blocking mode of a `Socket`")
+  end
+
   # Changes the blocking mode as per BSD sockets, has no effect on the
   # overlapped flag.
   def self.set_blocking(fd : Handle, value : Bool)
