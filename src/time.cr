@@ -84,7 +84,7 @@ require "crystal/system/time"
 #
 # ```
 # time = Time.local(2018, 3, 8, 22, 5, 13, location: Time::Location.load("Europe/Berlin"))
-# time          # => 2018-03-08 22:05:13 +01:00 Europe/Berlin
+# time          # => 2018-03-08T22:05:13+01:00[Europe/Berlin]
 # time.location # => #<Time::Location Europe/Berlin>
 # time.zone     # => #<Time::Location::Zone CET +01:00 (3600s) STD>
 # time.offset   # => 3600
@@ -106,8 +106,8 @@ require "crystal/system/time"
 # ```
 # time_de = Time.local(2018, 3, 8, 22, 5, 13, location: Time::Location.load("Europe/Berlin"))
 # time_ar = time_de.in Time::Location.load("America/Buenos_Aires")
-# time_de # => 2018-03-08 22:05:13 +01:00 Europe/Berlin
-# time_ar # => 2018-03-08 18:05:13 -03:00 America/Buenos_Aires
+# time_de # => 2018-03-08T22:05:13+01:00[Europe/Berlin]
+# time_ar # => 2018-03-08T18:05:13-03:00[America/Buenos_Aires]
 # ```
 #
 # Both `Time` instances show a different local date-time, but they represent
@@ -115,8 +115,8 @@ require "crystal/system/time"
 # equal:
 #
 # ```
-# time_de.to_utc     # => 2018-03-08 21:05:13 UTC
-# time_ar.to_utc     # => 2018-03-08 21:05:13 UTC
+# time_de.to_utc     # => 2018-03-08T21:05:13Z
+# time_ar.to_utc     # => 2018-03-08T21:05:13Z
 # time_de == time_ar # => true
 # ```
 #
@@ -517,7 +517,7 @@ struct Time
   # The time zone is always UTC.
   #
   # ```
-  # Time.unix(981173106) # => 2001-02-03 04:05:06 UTC
+  # Time.unix(981173106) # => 2001-02-03T04:05:06Z
   # ```
   def self.unix(seconds : Int) : Time
     utc(seconds: UNIX_EPOCH.total_seconds + seconds, nanoseconds: 0)
@@ -1028,8 +1028,8 @@ struct Time
   # time_de == time_ar # => true
   #
   # # both times represent the same instant:
-  # time_de.to_utc # => 2018-03-08 21:05:13 UTC
-  # time_ar.to_utc # => 2018-03-08 21:05:13 UTC
+  # time_de.to_utc # => 2018-03-08T21:05:13Z
+  # time_ar.to_utc # => 2018-03-08T21:05:13Z
   # ```
   def ==(other : Time) : Bool
     total_seconds == other.total_seconds && nanosecond == other.nanosecond
@@ -1337,8 +1337,8 @@ struct Time
   # ```
   # time_de = Time.local(2018, 3, 8, 22, 5, 13, location: Time::Location.load("Europe/Berlin"))
   # time_ar = time_de.in Time::Location.load("America/Buenos_Aires")
-  # time_de # => 2018-03-08 22:05:13 +01:00 Europe/Berlin
-  # time_ar # => 2018-03-08 18:05:13 -03:00 America/Buenos_Aires
+  # time_de # => 2018-03-08T22:05:13+01:00[Europe/Berlin]
+  # time_ar # => 2018-03-08T18:05:13-03:00[America/Buenos_Aires]
   # ```
   #
   # In contrast, `#to_local_in` changes to a different location while
@@ -1422,9 +1422,9 @@ struct Time
   #
   # ```
   # now = Time.utc(2023, 5, 16, 17, 53, 22)
-  # now.at_beginning_of_week             # => 2023-05-15 00:00:00 UTC
-  # now.at_beginning_of_week(:sunday)    # => 2023-05-14 00:00:00 UTC
-  # now.at_beginning_of_week(:wednesday) # => 2023-05-10 00:00:00 UTC
+  # now.at_beginning_of_week             # => 2023-05-15T00:00:00Z
+  # now.at_beginning_of_week(:sunday)    # => 2023-05-14T00:00:00Z
+  # now.at_beginning_of_week(:wednesday) # => 2023-05-10T00:00:00Z
   # ```
   # TODO: Ensure correctness in local time-line.
   def at_beginning_of_week(start_day : Time::DayOfWeek = :monday) : Time
