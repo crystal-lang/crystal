@@ -83,7 +83,7 @@ class IO::FileDescriptor < IO
   # This might be different from the internal file descriptor. For example, when
   # `STDIN` is a terminal on Windows, this returns `false` since the underlying
   # blocking reads are done on a completely separate thread.
-  @[Deprecated("There are no replacement.")]
+  @[Deprecated("There is no replacement.")]
   def blocking
     emulated = emulated_blocking?
     return emulated unless emulated.nil?
