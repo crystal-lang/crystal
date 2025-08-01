@@ -571,7 +571,7 @@ struct Time
   # ```
   #
   # If the given wall clock is a gap or fold in the target location, no
-  # unambiguous equivalent representation exists..
+  # unambiguous equivalent representation exists.
   #
   # * In case of a gap, the clock jumps to the smaller offset and shows a time
   # _before_ the gap. The wall clock is different from `self`.
