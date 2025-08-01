@@ -17,7 +17,7 @@ class TCPSocket < IPSocket
   # Creates a new `TCPSocket`, waiting to be connected.
   {% begin %}
   def self.new(family : Family = Family::INET, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated("Use Socket.set_blocking instead.")] {% end %} blocking = nil)
-    super(family, Type::STREAM, Protocol::TCP, blocking)
+    super(af: family, type: Type::STREAM, protocol: Protocol::TCP, blocking: blocking)
   end
   {% end %}
 
@@ -29,7 +29,7 @@ class TCPSocket < IPSocket
   {% begin %}
   def initialize(host : String, port, dns_timeout = nil, connect_timeout = nil, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated("Use Socket.set_blocking instead.")] {% end %} blocking = nil)
     Addrinfo.tcp(host, port, timeout: dns_timeout) do |addrinfo|
-      super(addrinfo.family, addrinfo.type, addrinfo.protocol, blocking)
+      super(af: addrinfo.family, type: addrinfo.type, protocol: addrinfo.protocol, blocking: blocking)
       connect(addrinfo, timeout: connect_timeout) do |error|
         close
         error
