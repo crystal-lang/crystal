@@ -63,4 +63,26 @@ describe "Codegen: thread local" do
     0
   ))
   end
+
+  it "works in unsafe mode" do
+    run(%(
+    require "prelude"
+
+    class Foo
+      @[ThreadLocal(unsafe: true)]
+      @@var = 123
+
+      def self.var
+        @@var
+      end
+
+      def self.var=(@@var)
+      end
+    end
+
+    Thread.new { Foo.var = 456 }.join
+
+    Foo.var
+  )).to_i.should eq(123)
+  end
 end
