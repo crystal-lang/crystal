@@ -20,7 +20,7 @@ class Crystal::Repl::Context
   getter! class_vars : ClassVars
 
   # libffi information about external functions.
-  getter lib_functions : Hash(External, LibFunction)
+  getter lib_functions : Hash(Void*, LibFunction)
 
   # Cache of multidispatch expansions.
   getter multidispatchs : Hash(MultidispatchKey, Def)
@@ -57,8 +57,7 @@ class Crystal::Repl::Context
     @defs = {} of Def => CompiledDef
     @defs.compare_by_identity
 
-    @lib_functions = {} of External => LibFunction
-    @lib_functions.compare_by_identity
+    @lib_functions = {} of Void* => LibFunction
 
     @symbol_to_index = {} of String => Int32
     @symbols = [] of String

@@ -1928,6 +1928,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   private def compile_lib_call(node : Call)
     target_def = node.target_def
     external = target_def.as(External)
+    symbol = @context.c_function(external.real_name)
 
     args_bytesizes = [] of Int32
     args_ffi_types = [] of FFI::Type
@@ -2001,7 +2002,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     if external.varargs?
       lib_function = LibFunction.new(
-        symbol: @context.c_function(external.real_name),
+        symbol: symbol,
         call_interface: FFI::CallInterface.variadic(
           external.type.ffi_type,
           args_ffi_types,
@@ -2012,15 +2013,17 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       )
       @context.add_gc_reference(lib_function)
     else
-      lib_function = @context.lib_functions[external] ||= LibFunction.new(
-        symbol: @context.c_function(external.real_name),
-        call_interface: FFI::CallInterface.new(
-          external.type.ffi_type,
-          args_ffi_types
-        ),
-        args_bytesizes: args_bytesizes,
-        return_bytesize: return_bytesize,
-      )
+      lib_function = @context.lib_functions.put_if_absent(symbol) do
+        LibFunction.new(
+          symbol: symbol,
+          call_interface: FFI::CallInterface.new(
+            external.type.ffi_type,
+            args_ffi_types
+          ),
+          args_bytesizes: args_bytesizes,
+          return_bytesize: return_bytesize,
+        )
+      end
     end
 
     lib_call(lib_function, node: node)
