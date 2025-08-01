@@ -63,7 +63,7 @@ class Crypto::Bcrypt
   #
   # Crypto::Bcrypt.hash_secret "secret"
   # ```
-  def self.hash_secret(password, cost = DEFAULT_COST) : String
+  def self.hash_secret(password : String, cost : Int32 = DEFAULT_COST) : String
     # We make a clone here to we don't keep a mutable reference to the original string
     passwordb = password.to_unsafe.to_slice(password.bytesize + 1).clone # include leading 0
     saltb = Random::Secure.random_bytes(SALT_SIZE)
@@ -80,7 +80,7 @@ class Crypto::Bcrypt
   # password = Crypto::Bcrypt.new "secret", "CJjskaIgXR32DJYjVyNPdA=="
   # password.to_s # => "$2a$11$CJjskaIgXR32DJYjVyNPd./ajV3Yj6GiP0IAI6rR.fMnjRgozqqqG"
   # ```
-  def self.new(password : String, salt : String, cost = DEFAULT_COST)
+  def self.new(password : String, salt : String, cost : Int32 = DEFAULT_COST) : self
     # We make a clone here to we don't keep a mutable reference to the original string
     passwordb = password.to_unsafe.to_slice(password.bytesize + 1).clone # include leading 0
     saltb = Base64.decode(salt, SALT_SIZE)
