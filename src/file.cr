@@ -167,11 +167,15 @@ class File < IO::FileDescriptor
   # FIFO files don't work — the OS exhibits issues with readiness notifications.
   {% begin %}
   def self.new(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated] {% end %} blocking = nil)
+    new_internal filename, mode, perm, encoding, invalid, blocking
+  end
+  {% end %}
+
+  protected def self.new_internal(filename, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, blocking = nil)
     filename = filename.to_s
     fd, blocking = Crystal::System::File.open(filename, mode, perm: perm, blocking: blocking)
     new(filename, fd, mode, blocking, encoding, invalid)
   end
-  {% end %}
 
   getter path : String
 
@@ -245,8 +249,8 @@ class File < IO::FileDescriptor
   # File.same_content?("file.cr", "bar.cr") # => true
   # ```
   def self.same_content?(path1 : Path | String, path2 : Path | String) : Bool
-    open(path1, "rb") do |file1|
-      open(path2, "rb") do |file2|
+    open_internal(path1, "rb") do |file1|
+      open_internal(path2, "rb") do |file2|
         return false unless file1.size == file2.size
 
         same_content?(file1, file2)
@@ -513,7 +517,7 @@ class File < IO::FileDescriptor
   # See `self.new` for what *mode* can be.
   {% begin %}
   def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated] {% end %} blocking = nil) : self
-    new filename, mode, perm, encoding, invalid, blocking
+    new_internal(filename.to_s, mode, perm, encoding, invalid, blocking)
   end
   {% end %}
 
@@ -524,14 +528,18 @@ class File < IO::FileDescriptor
   # See `self.new` for what *mode* can be.
   {% begin %}
   def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated] {% end %} blocking = nil, &)
-    file = new filename, mode, perm, encoding, invalid, blocking
+    open_internal(filename.to_s, mode, perm, encoding, invalid, blocking) { |file| yield file }
+  end
+  {% end %}
+
+  protected def self.open_internal(filename, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, blocking = nil, &)
+    file = new_internal(filename, mode, perm, encoding, invalid, blocking)
     begin
       yield file
     ensure
       file.close
     end
   end
-  {% end %}
 
   # Returns the content of *filename* as a string.
   #
@@ -541,7 +549,7 @@ class File < IO::FileDescriptor
   # ```
   {% begin %}
   def self.read(filename : Path | String, encoding = nil, invalid = nil, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated] {% end %} blocking = nil) : String
-    open(filename, "r", blocking: blocking) do |file|
+    open_internal(filename, "r", blocking: blocking) do |file|
       if encoding
         file.set_encoding(encoding, invalid: invalid)
         file.gets_to_end
@@ -572,7 +580,7 @@ class File < IO::FileDescriptor
   # ```
   {% begin %}
   def self.each_line(filename : Path | String, encoding = nil, invalid = nil, chomp = true, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated] {% end %} blocking = nil, &)
-    open(filename, "r", encoding: encoding, invalid: invalid, blocking: blocking) do |file|
+    open_internal(filename, "r", encoding: encoding, invalid: invalid, blocking: blocking) do |file|
       file.each_line(chomp: chomp) do |line|
         yield line
       end
@@ -589,8 +597,10 @@ class File < IO::FileDescriptor
   {% begin %}
   def self.read_lines(filename : Path | String, encoding = nil, invalid = nil, chomp = true, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated] {% end %} blocking = nil) : Array(String)
     lines = [] of String
-    each_line(filename, encoding: encoding, invalid: invalid, chomp: chomp, blocking: blocking) do |line|
-      lines << line
+    open_internal(filename, "r", encoding: encoding, invalid: invalid, blocking: blocking) do |file|
+      file.each_line(chomp: chomp) do |line|
+        lines << line
+      end
     end
     lines
   end
@@ -615,7 +625,7 @@ class File < IO::FileDescriptor
   # See `self.new` for what *mode* can be.
   {% begin %}
   def self.write(filename : Path | String, content, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, mode = "w", {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated] {% end %} blocking = nil)
-    open(filename, mode, perm, encoding: encoding, invalid: invalid, blocking: blocking) do |file|
+    open_internal(filename, mode, perm, encoding: encoding, invalid: invalid, blocking: blocking) do |file|
       case content
       when Bytes
         file.sync = true
@@ -640,9 +650,9 @@ class File < IO::FileDescriptor
   # File.info("afile_copy").permissions.value # => 0o600
   # ```
   def self.copy(src : String | Path, dst : String | Path) : Nil
-    open(src) do |s|
+    open_internal(src) do |s|
       permissions = s.info.permissions
-      open(dst, "wb", perm: permissions) do |d|
+      open_internal(dst, "wb", perm: permissions) do |d|
         # If permissions don't match, we opened a pre-existing file with
         # different permissions and need to change them explicitly.
         # The permission change does not have any effect on the open file descriptor d.
@@ -714,7 +724,7 @@ class File < IO::FileDescriptor
   #
   # Use `#touch` if the `File` is already open.
   def self.touch(filename : Path | String, time : Time = Time.utc) : Nil
-    open(filename, "a") { } unless exists?(filename)
+    open_internal(filename, "a") { } unless exists?(filename)
     utime time, time, filename
   end
 
