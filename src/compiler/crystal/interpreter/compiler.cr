@@ -1931,6 +1931,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     args_bytesizes = [] of Int32
     args_ffi_types = [] of FFI::Type
+    return_bytesize = inner_sizeof_type(external.type)
 
     node.args.each_with_index do |arg, i|
       arg_type = arg.type
@@ -2000,7 +2001,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     if external.varargs?
       lib_function = LibFunction.new(
-        def: external,
         symbol: @context.c_function(external.real_name),
         call_interface: FFI::CallInterface.variadic(
           external.type.ffi_type,
@@ -2008,17 +2008,18 @@ class Crystal::Repl::Compiler < Crystal::Visitor
           fixed_args: external.args.size
         ),
         args_bytesizes: args_bytesizes,
+        return_bytesize: return_bytesize,
       )
       @context.add_gc_reference(lib_function)
     else
       lib_function = @context.lib_functions[external] ||= LibFunction.new(
-        def: external,
         symbol: @context.c_function(external.real_name),
         call_interface: FFI::CallInterface.new(
           external.type.ffi_type,
           args_ffi_types
         ),
         args_bytesizes: args_bytesizes,
+        return_bytesize: return_bytesize,
       )
     end
 
