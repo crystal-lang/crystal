@@ -49,6 +49,14 @@ class Crystal::Repl::Context
   # (e.g. `$Slice:0`).
   @const_slice_buffers = {} of String => UInt8*
 
+  # A cache of object IDs of the `CompiledDef`s corresponding to `ProcLiteral`s.
+  # Used to determine whether such an object ID or a raw function pointer is
+  # passed to `Proc.new`.
+  getter compiled_procs = Set(UInt64).new
+
+  # A cache from C proc pointers to `CompiledDef`s, formed using `Proc.new`.
+  getter extern_proc_wrappers = {} of Void* => CompiledDef
+
   def initialize(@program : Program)
     @program.flags << "interpreted"
 
@@ -249,6 +257,23 @@ class Crystal::Repl::Context
       {value.index, value.compiled_def}
     else
       nil
+    end
+  end
+
+  def extern_proc_wrapper(proc_type : ProcInstanceType, symbol : Void*) : CompiledDef
+    extern_proc_wrappers.put_if_absent(symbol) do
+      crystal_args_bytesize = proc_type.arg_types.sum { |arg| aligned_sizeof_type(arg) }
+      target_def = proc_type.lookup_first_def("call", false).not_nil!
+      compiled_def = CompiledDef.new(self, target_def, proc_type, crystal_args_bytesize)
+
+      proc_type.arg_types.each_with_index do |arg_type, i|
+        compiled_def.local_vars.declare("arg#{i}", arg_type)
+      end
+
+      compiler = Compiler.new(self, compiled_def, top_level: false)
+      compiler.compile_extern_proc_wrapper(target_def, proc_type, symbol)
+
+      compiled_def
     end
   end
 
