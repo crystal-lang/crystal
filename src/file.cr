@@ -542,10 +542,14 @@ class File < IO::FileDescriptor
   end
 
   # Returns the content of *filename* as a string.
+  # 
+  # Raises `File::NotFoundError` if the file at filename does not exist.
   #
   # ```
   # File.write("bar", "foo")
   # File.read("bar") # => "foo"
+  #
+  # File.read("notexist") # raises File::NotFoundError
   # ```
   {% begin %}
   def self.read(filename : Path | String, encoding = nil, invalid = nil, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated] {% end %} blocking = nil) : String
