@@ -63,9 +63,8 @@ class Crystal::ReplReader < Reply::Reader
   end
 
   def continue?(expression : String) : Bool
-    new_parser(expression).parse
-    @incomplete = false
-    false
+    ast = new_parser(expression).parse
+    @incomplete = annotations_only?(ast)
   rescue e : CodeError
     @incomplete = e.message.in?(CONTINUE_ERROR)
     if (message = e.message) && message.matches? /Unterminated heredoc: can't find ".*" anywhere before the end of file/
@@ -127,5 +126,9 @@ class Crystal::ReplReader < Reply::Reader
     else
       Parser.new(source)
     end
+  end
+
+  private def annotations_only?(ast)
+    ast.is_a?(Annotation) || (ast.is_a?(Expressions) && ast.expressions.all?(Annotation))
   end
 end
