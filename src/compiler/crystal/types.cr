@@ -2290,7 +2290,11 @@ module Crystal
           raise TypeException.new "can't instantiate StaticArray(T, N) with N = #{n.type} (N must be an integer)"
         end
 
-        value = n.value.to_i
+        value = n.value.to_i?
+        unless value
+          raise TypeException.new "can't instantiate StaticArray(T, N) with N = #{n} (N must be an integer)"
+        end
+
         if value < 0
           raise TypeException.new "can't instantiate StaticArray(T, N) with N = #{value} (N must be positive)"
         end
