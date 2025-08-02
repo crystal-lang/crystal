@@ -134,41 +134,41 @@ class File < IO::FileDescriptor
     set_encoding(encoding, invalid: invalid) if encoding
   end
 
-  # Opens the file named by *filename*.
-  #
-  # *mode* must be one of the following file open modes:
-  #
-  # ```text
-  # Mode       | Description
-  # -----------+------------------------------------------------------
-  # r rb       | Read-only, starts at the beginning of the file.
-  # r+ r+b rb+ | Read-write, starts at the beginning of the file.
-  # w wb       | Write-only, truncates existing file to zero length or
-  #            | creates a new file if the file doesn't exist.
-  # w+ w+b wb+ | Read-write, truncates existing file to zero length or
-  #            | creates a new file if the file doesn't exist.
-  # a ab       | Write-only, all writes seek to the end of the file,
-  #            | creates a new file if the file doesn't exist.
-  # a+ a+b ab+ | Read-write, all writes seek to the end of the file,
-  #            | creates a new file if the file doesn't exist.
-  # ```
-  #
-  # Line endings are preserved on all platforms. The `b` mode flag has no
-  # effect; it is provided only for POSIX compatibility.
-  #
-  # NOTE: The *blocking* arg is deprecated since Crystal 1.17. It used to be
-  # true by default to denote a regular disk file (always ready in system event
-  # loops) and could be set to false when the file was known to be a fifo, pipe,
-  # or character device (for example `/dev/tty`). The event loop now chooses
-  # the appropriate blocking mode automatically and there are no reasons to
-  # change it anymore.
-  #
-  # NOTE: On macOS files are always opened in blocking mode because non-blocking
-  # FIFO files don't work — the OS exhibits issues with readiness notifications.
   {% begin %}
-  def self.new(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated] {% end %} blocking = nil)
-    new_internal filename, mode, perm, encoding, invalid, blocking
-  end
+    # Opens the file named by *filename*.
+    #
+    # *mode* must be one of the following file open modes:
+    #
+    # ```text
+    # Mode       | Description
+    # -----------+------------------------------------------------------
+    # r rb       | Read-only, starts at the beginning of the file.
+    # r+ r+b rb+ | Read-write, starts at the beginning of the file.
+    # w wb       | Write-only, truncates existing file to zero length or
+    #            | creates a new file if the file doesn't exist.
+    # w+ w+b wb+ | Read-write, truncates existing file to zero length or
+    #            | creates a new file if the file doesn't exist.
+    # a ab       | Write-only, all writes seek to the end of the file,
+    #            | creates a new file if the file doesn't exist.
+    # a+ a+b ab+ | Read-write, all writes seek to the end of the file,
+    #            | creates a new file if the file doesn't exist.
+    # ```
+    #
+    # Line endings are preserved on all platforms. The `b` mode flag has no
+    # effect; it is provided only for POSIX compatibility.
+    #
+    # NOTE: The *blocking* arg is deprecated since Crystal 1.17. It used to be
+    # true by default to denote a regular disk file (always ready in system event
+    # loops) and could be set to false when the file was known to be a fifo, pipe,
+    # or character device (for example `/dev/tty`). The event loop now chooses
+    # the appropriate blocking mode automatically and there are no reasons to
+    # change it anymore.
+    #
+    # NOTE: On macOS files are always opened in blocking mode because non-blocking
+    # FIFO files don't work — the OS exhibits issues with readiness notifications.
+    def self.new(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated] {% end %} blocking = nil)
+      new_internal filename, mode, perm, encoding, invalid, blocking
+    end
   {% end %}
 
   protected def self.new_internal(filename, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, blocking = nil)
@@ -511,25 +511,25 @@ class File < IO::FileDescriptor
     Crystal::System::File.readlink(path.to_s) { return nil }
   end
 
-  # Opens the file named by *filename*. If a file is being created, its initial
-  # permissions may be set using the *perm* parameter.
-  #
-  # See `self.new` for what *mode* can be.
   {% begin %}
-  def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated] {% end %} blocking = nil) : self
-    new_internal(filename.to_s, mode, perm, encoding, invalid, blocking)
-  end
+    # Opens the file named by *filename*. If a file is being created, its initial
+    # permissions may be set using the *perm* parameter.
+    #
+    # See `self.new` for what *mode* can be.
+    def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated] {% end %} blocking = nil) : self
+      new_internal(filename.to_s, mode, perm, encoding, invalid, blocking)
+    end
   {% end %}
 
-  # Opens the file named by *filename*. If a file is being created, its initial
-  # permissions may be set using the *perm* parameter. Then given block will be passed the opened
-  # file as an argument, the file will be automatically closed when the block returns.
-  #
-  # See `self.new` for what *mode* can be.
   {% begin %}
-  def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated] {% end %} blocking = nil, &)
-    open_internal(filename.to_s, mode, perm, encoding, invalid, blocking) { |file| yield file }
-  end
+    # Opens the file named by *filename*. If a file is being created, its initial
+    # permissions may be set using the *perm* parameter. Then given block will be passed the opened
+    # file as an argument, the file will be automatically closed when the block returns.
+    #
+    # See `self.new` for what *mode* can be.
+    def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated] {% end %} blocking = nil, &)
+      open_internal(filename.to_s, mode, perm, encoding, invalid, blocking) { |file| yield file }
+    end
   {% end %}
 
   protected def self.open_internal(filename, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, blocking = nil, &)
@@ -541,103 +541,103 @@ class File < IO::FileDescriptor
     end
   end
 
-  # Returns the content of *filename* as a string.
-  #
-  # ```
-  # File.write("bar", "foo")
-  # File.read("bar") # => "foo"
-  # ```
   {% begin %}
-  def self.read(filename : Path | String, encoding = nil, invalid = nil, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated] {% end %} blocking = nil) : String
-    open_internal(filename, "r", blocking: blocking) do |file|
-      if encoding
-        file.set_encoding(encoding, invalid: invalid)
-        file.gets_to_end
-      else
-        # We try to read a string with an initialize capacity
-        # equal to the file's size, but the size might not be
-        # correct or even be zero (for example for /proc files)
-        size = file.size.to_i
-        size = 256 if size == 0
-        String.build(size) do |io|
-          IO.copy(file, io)
+    # Returns the content of *filename* as a string.
+    #
+    # ```
+    # File.write("bar", "foo")
+    # File.read("bar") # => "foo"
+    # ```
+    def self.read(filename : Path | String, encoding = nil, invalid = nil, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated] {% end %} blocking = nil) : String
+      open_internal(filename, "r", blocking: blocking) do |file|
+        if encoding
+          file.set_encoding(encoding, invalid: invalid)
+          file.gets_to_end
+        else
+          # We try to read a string with an initialize capacity
+          # equal to the file's size, but the size might not be
+          # correct or even be zero (for example for /proc files)
+          size = file.size.to_i
+          size = 256 if size == 0
+          String.build(size) do |io|
+            IO.copy(file, io)
+          end
         end
       end
     end
-  end
   {% end %}
 
-  # Yields each line in *filename* to the given block.
-  #
-  # ```
-  # File.write("foobar", "foo\nbar")
-  #
-  # array = [] of String
-  # File.each_line("foobar") do |line|
-  #   array << line
-  # end
-  # array # => ["foo", "bar"]
-  # ```
   {% begin %}
-  def self.each_line(filename : Path | String, encoding = nil, invalid = nil, chomp = true, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated] {% end %} blocking = nil, &)
-    open_internal(filename, "r", encoding: encoding, invalid: invalid, blocking: blocking) do |file|
-      file.each_line(chomp: chomp) do |line|
-        yield line
+    # Yields each line in *filename* to the given block.
+    #
+    # ```
+    # File.write("foobar", "foo\nbar")
+    #
+    # array = [] of String
+    # File.each_line("foobar") do |line|
+    #   array << line
+    # end
+    # array # => ["foo", "bar"]
+    # ```
+    def self.each_line(filename : Path | String, encoding = nil, invalid = nil, chomp = true, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated] {% end %} blocking = nil, &)
+      open_internal(filename, "r", encoding: encoding, invalid: invalid, blocking: blocking) do |file|
+        file.each_line(chomp: chomp) do |line|
+          yield line
+        end
       end
     end
-  end
   {% end %}
 
-  # Returns all lines in *filename* as an array of strings.
-  #
-  # ```
-  # File.write("foobar", "foo\nbar")
-  # File.read_lines("foobar") # => ["foo", "bar"]
-  # ```
   {% begin %}
-  def self.read_lines(filename : Path | String, encoding = nil, invalid = nil, chomp = true, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated] {% end %} blocking = nil) : Array(String)
-    lines = [] of String
-    open_internal(filename, "r", encoding: encoding, invalid: invalid, blocking: blocking) do |file|
-      file.each_line(chomp: chomp) do |line|
-        lines << line
+    # Returns all lines in *filename* as an array of strings.
+    #
+    # ```
+    # File.write("foobar", "foo\nbar")
+    # File.read_lines("foobar") # => ["foo", "bar"]
+    # ```
+    def self.read_lines(filename : Path | String, encoding = nil, invalid = nil, chomp = true, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated] {% end %} blocking = nil) : Array(String)
+      lines = [] of String
+      open_internal(filename, "r", encoding: encoding, invalid: invalid, blocking: blocking) do |file|
+        file.each_line(chomp: chomp) do |line|
+          lines << line
+        end
       end
+      lines
     end
-    lines
-  end
   {% end %}
 
-  # Writes the given *content* to *filename*.
-  #
-  # By default, an existing file will be overwritten.
-  #
-  # *filename* will be created if it does not already exist.
-  #
-  # ```
-  # File.write("foo", "bar")
-  # File.write("foo", "baz", mode: "a")
-  # ```
-  #
-  # NOTE: If the content is a `Slice(UInt8)`, those bytes will be written.
-  # If it's an `IO`, all bytes from the `IO` will be written.
-  # Otherwise, the string representation of *content* will be written
-  # (the result of invoking `to_s` on *content*).
-  #
-  # See `self.new` for what *mode* can be.
   {% begin %}
-  def self.write(filename : Path | String, content, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, mode = "w", {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated] {% end %} blocking = nil)
-    open_internal(filename, mode, perm, encoding: encoding, invalid: invalid, blocking: blocking) do |file|
-      case content
-      when Bytes
-        file.sync = true
-        file.write(content)
-      when IO
-        file.sync = true
-        IO.copy(content, file)
-      else
-        file.print(content)
+    # Writes the given *content* to *filename*.
+    #
+    # By default, an existing file will be overwritten.
+    #
+    # *filename* will be created if it does not already exist.
+    #
+    # ```
+    # File.write("foo", "bar")
+    # File.write("foo", "baz", mode: "a")
+    # ```
+    #
+    # NOTE: If the content is a `Slice(UInt8)`, those bytes will be written.
+    # If it's an `IO`, all bytes from the `IO` will be written.
+    # Otherwise, the string representation of *content* will be written
+    # (the result of invoking `to_s` on *content*).
+    #
+    # See `self.new` for what *mode* can be.
+    def self.write(filename : Path | String, content, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, mode = "w", {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated] {% end %} blocking = nil)
+      open_internal(filename, mode, perm, encoding: encoding, invalid: invalid, blocking: blocking) do |file|
+        case content
+        when Bytes
+          file.sync = true
+          file.write(content)
+        when IO
+          file.sync = true
+          IO.copy(content, file)
+        else
+          file.print(content)
+        end
       end
     end
-  end
   {% end %}
 
   # Copies the file *src* to the file *dst*.
