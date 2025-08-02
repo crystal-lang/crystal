@@ -128,7 +128,14 @@ class Crystal::ReplReader < Reply::Reader
     end
   end
 
-  private def annotations_only?(ast)
-    ast.is_a?(Annotation) || (ast.is_a?(Expressions) && ast.expressions.all?(Annotation))
+  private def annotations_only?(ast : ASTNode) : Bool
+    case ast
+    when Annotation
+      true
+    when Expressions
+      ast.expressions.all? { |e| annotations_only?(e) }
+    else
+      false
+    end
   end
 end
