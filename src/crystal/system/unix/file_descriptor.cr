@@ -27,7 +27,11 @@ module Crystal::System::FileDescriptor
     FileDescriptor.set_blocking(fd, value)
   end
 
-  protected def self.set_blocking(fd, value)
+  protected def self.get_blocking(fd : Handle)
+    fcntl(fd, LibC::F_GETFL) & LibC::O_NONBLOCK == 0
+  end
+
+  protected def self.set_blocking(fd : Handle, value : Bool)
     current_flags = fcntl(fd, LibC::F_GETFL)
     new_flags = current_flags
     if value

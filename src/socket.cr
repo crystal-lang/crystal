@@ -104,7 +104,7 @@ class Socket < IO
   def initialize(fd, @family : Family, @type : Type, @protocol : Protocol = Protocol::IP, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated("Use Socket.set_blocking instead.")] {% end %} blocking = nil)
     initialize(handle: fd, family: family, type: type, protocol: protocol)
     blocking = Crystal::EventLoop.default_socket_blocking? if blocking.nil?
-    self.blocking = blocking unless blocking
+    Crystal::System::Socket.set_blocking(fd, blocking) unless blocking
     self.sync = true
   end
   {% end %}
@@ -246,10 +246,10 @@ class Socket < IO
   def accept? : Socket?
     if rs = Crystal::EventLoop.current.accept(self)
       sock = Socket.new(handle: rs[0], family: family, type: type, protocol: protocol, blocking: rs[1])
-      unless (blocking = self.blocking) == rs[1]
+      unless (blocking = system_blocking?) == rs[1]
         # FIXME: unlike the overloads in TCPServer and UNIXServer, this version
         # carries the blocking mode from the server socket to the client socket
-        sock.blocking = blocking
+        Crystal::System::Socket.set_blocking(fd, blocking)
       end
       sock.sync = sync?
       sock
@@ -439,6 +439,7 @@ class Socket < IO
   end
 
   # Returns whether the socket's mode is blocking (true) or non blocking (false).
+  @[Deprecated("Use Socket.get_blocking instead.")]
   def blocking
     system_blocking?
   end
@@ -449,8 +450,23 @@ class Socket < IO
   # loop runtime requirements. Changing the blocking mode can cause the event
   # loop to misbehave, for example block the entire program when a fiber tries
   # to read from this socket.
+  @[Deprecated("Use Socket.set_blocking instead.")]
   def blocking=(value)
     self.system_blocking = value
+  end
+
+  # Returns whether the blocking mode of *fd* is blocking (true) or non blocking
+  # (false).
+  #
+  # NOTE: Only implemented on UNIX targets. Raises on Windows.
+  def self.get_blocking(fd : Handle) : Bool
+    Crystal::System::Socket.get_blocking(fd)
+  end
+
+  # Changes the blocking mode of *fd* to be blocking (true) or non blocking
+  # (false).
+  def self.set_blocking(fd : Handle, value : Bool)
+    Crystal::System::Socket.set_blocking(fd, value)
   end
 
   def close_on_exec?

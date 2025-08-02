@@ -181,6 +181,25 @@ describe Socket, tags: "network" do
     end
   {% end %}
 
+  it ".set_blocking and .get_blocking" do
+    socket = Socket.tcp(Socket::Family::INET)
+    fd = socket.fd
+
+    Socket.set_blocking(fd, true)
+    {% if flag?(:win32) %}
+      expect_raises(NotImplementedError) { IO::FileDescriptor.get_blocking(fd) }
+    {% else %}
+      Socket.get_blocking(fd).should be_true
+    {% end %}
+
+    Socket.set_blocking(fd, false)
+    {% if flag?(:win32) %}
+      expect_raises(NotImplementedError) { IO::FileDescriptor.get_blocking(fd) }
+    {% else %}
+      Socket.get_blocking(fd).should be_false
+    {% end %}
+  end
+
   describe "#finalize" do
     it "does not flush" do
       port = unused_local_tcp_port

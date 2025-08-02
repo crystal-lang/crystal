@@ -296,7 +296,7 @@ class Process
       # regular files will report an error and those require a separate pipe
       # (https://github.com/crystal-lang/crystal/pull/13362#issuecomment-1519082712)
       {% if flag?(:win32) %}
-        unless stdio.blocking || stdio.info.type.pipe?
+        unless stdio.system_blocking? || stdio.info.type.pipe?
           return io_to_fd(stdio, for: dst_io)
         end
       {% end %}
