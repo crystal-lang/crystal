@@ -1100,8 +1100,6 @@ module Crystal
     end
 
     def visit(node : Generic)
-      name = node.name
-
       node.name.accept self
 
       printed_arg = false

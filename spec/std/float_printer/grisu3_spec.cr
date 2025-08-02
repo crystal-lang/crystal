@@ -90,7 +90,7 @@ describe "grisu3" do
     it "failure case" do
       # grisu should not be able to do this number
       # this number is reused to ensure the fallback works
-      status, point, str = test_grisu 3.5844466002796428e+298
+      status, _, str = test_grisu 3.5844466002796428e+298
       status.should be_false
       str.should_not eq "35844466002796428"
     end

@@ -24,7 +24,7 @@ private def run_context_tool(code, &)
   code = code.delete('‸')
 
   if cursor_location
-    visitor, result = processed_context_visitor(code, cursor_location)
+    _, result = processed_context_visitor(code, cursor_location)
 
     yield result
   else

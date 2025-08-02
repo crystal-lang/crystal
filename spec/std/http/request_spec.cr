@@ -444,7 +444,6 @@ module HTTP
 
       it "is affected when #query is modified" do
         request = Request.from_io(IO::Memory.new("GET /api/v3/some/resource?foo=bar&foo=baz&baz=qux HTTP/1.1\r\n\r\n")).as(Request)
-        params = request.query_params
 
         new_query = "foo=not-bar&foo=not-baz&not-baz=hello&name=world"
         request.query = new_query

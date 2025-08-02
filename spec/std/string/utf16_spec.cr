@@ -75,7 +75,7 @@ describe "String UTF16" do
       pointer = input.to_unsafe
       string, pointer = String.from_utf16(pointer)
       string.should eq("")
-      string, pointer = String.from_utf16(pointer)
+      string, _ = String.from_utf16(pointer)
       string.should eq("hello\u{d7ff}")
     end
 
