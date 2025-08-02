@@ -96,12 +96,8 @@ else
   colorize = $(shell printf "\033[33m%s\033[0m\n" "$1" >&2)
 endif
 
-DEPS = $(LLVM_EXT_OBJ)
-ifneq ($(LLVM_VERSION),)
-  ifeq ($(shell test $(firstword $(subst ., ,$(LLVM_VERSION))) -ge 18; echo $$?),0)
-    DEPS =
-  endif
-endif
+# When LLVM_VERSION < 18 we need $(LLVM_EXT_OBJ) as dependency.
+DEPS = $(call check_llvm_config)$(if $(filter 1,$(shell expr $(firstword $(subst ., ,$(LLVM_VERSION))) \< 18)),$(LLVM_EXT_OBJ),)
 
 check_llvm_config = $(eval \
 	check_llvm_config := $(if $(LLVM_VERSION),\
