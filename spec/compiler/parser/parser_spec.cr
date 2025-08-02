@@ -2659,6 +2659,8 @@ module Crystal
     assert_syntax_error "%Q(", "Unterminated string literal"
     assert_syntax_error "<<-HEREDOC", "Unexpected EOF on heredoc identifier"
     assert_syntax_error "<<-HEREDOC\n", "Unterminated heredoc"
+    assert_syntax_error "<<-'HEREDOC'", "Unexpected EOF on heredoc identifier"
+    assert_syntax_error "<<-'HEREDOC'\n", "Unterminated heredoc"
 
     assert_syntax_error "[1\n,2]", "expecting token ']', not ','"
     assert_syntax_error "{1\n,2}", "expecting token '}', not ','"
