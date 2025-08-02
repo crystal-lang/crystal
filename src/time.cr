@@ -1112,11 +1112,15 @@ struct Time
   # When the location is `UTC`, the offset is replaced with the string `UTC`.
   # Offset seconds are omitted if `0`.
   def to_s(io : IO) : Nil
-    to_s(io, "%F %T ")
+    formatter = Format::Formatter.new(self, io)
+    formatter.year_month_day
+    io << " "
+    formatter.twenty_four_hour_time_with_seconds
 
     if utc?
-      io << "UTC"
+      io << " UTC"
     else
+      io << " "
       zone.format(io)
     end
   end
