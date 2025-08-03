@@ -321,18 +321,32 @@ module Colorize
   end
 end
 
-private def each_code(mode : Colorize::Mode, unset : Bool = false, &)
-  yield (unset ? "22" : "1") if mode.bold?
-  yield (unset ? "22" : "2") if mode.dim?
-  yield (unset ? "23" : "3") if mode.italic?
-  yield (unset ? "24" : "4") if mode.underline?
-  yield (unset ? "25" : "5") if mode.blink?
-  yield (unset ? "26" : "6") if mode.blink_fast?
-  yield (unset ? "27" : "7") if mode.reverse?
-  yield (unset ? "28" : "8") if mode.hidden?
-  yield (unset ? "29" : "9") if mode.strikethrough?
-  yield (unset ? "24" : "21") if mode.double_underline?
-  yield (unset ? "55" : "53") if mode.overline?
+private def apply_each_code(mode : Colorize::Mode, &)
+  yield "1" if mode.bold?
+  yield "2" if mode.dim?
+  yield "3" if mode.italic?
+  yield "4" if mode.underline?
+  yield "5" if mode.blink?
+  yield "6" if mode.blink_fast?
+  yield "7" if mode.reverse?
+  yield "8" if mode.hidden?
+  yield "9" if mode.strikethrough?
+  yield "21" if mode.double_underline?
+  yield "53" if mode.overline?
+end
+
+private def reset_each_code(mode : Colorize::Mode, &)
+  yield "22" if mode.bold?
+  yield "22" if mode.dim?
+  yield "23" if mode.italic?
+  yield "24" if mode.underline?
+  yield "25" if mode.blink?
+  yield "26" if mode.blink_fast?
+  yield "27" if mode.reverse?
+  yield "28" if mode.hidden?
+  yield "29" if mode.strikethrough?
+  yield "24" if mode.double_underline?
+  yield "55" if mode.overline?
 end
 
 # A colorized object. Colors and text decorations can be modified.
@@ -524,12 +538,12 @@ struct Colorize::Object(T)
     begin
       yield io
     ensure
-      append_start(io, last_color, true) if must_append_end
+      append_start(io, last_color) if must_append_end
       @@last_color = last_color
     end
   end
 
-  private def self.append_start(io, color, unset : Bool = false)
+  private def self.append_start(io, color)
     last_color_is_default =
       @@last_color[:fore] == ColorANSI::Default &&
         @@last_color[:back] == ColorANSI::Default &&
@@ -562,7 +576,7 @@ struct Colorize::Object(T)
         end
 
         unless @@last_color[:mode].none?
-          each_code(@@last_color[:mode], true) do |code|
+          reset_each_code(@@last_color[:mode]) do |code|
             io << ';' if printed
             io << code
             printed = true
@@ -582,7 +596,7 @@ struct Colorize::Object(T)
         printed = true
       end
 
-      each_code(mode) do |code|
+      apply_each_code(mode) do |code|
         io << ';' if printed
         io << code
         printed = true
