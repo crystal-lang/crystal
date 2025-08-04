@@ -627,10 +627,10 @@ class Crystal::Repl::Interpreter
   end
 
   private macro lib_call(lib_function)
-    %target_def = lib_function.def
     %cif = lib_function.call_interface
     %fn = lib_function.symbol
     %args_bytesizes = lib_function.args_bytesizes
+    %return_bytesize = lib_function.return_bytesize
 
     # Assume C calls don't have more than 100 arguments
     # TODO: use the stack for this?
@@ -649,7 +649,6 @@ class Crystal::Repl::Interpreter
     rescue ex : EscapingException
       raise_exception(ex.exception_pointer)
     else
-      %return_bytesize = inner_sizeof_type(%target_def.type)
       %aligned_return_bytesize = align(%return_bytesize)
 
       (stack - %offset).move_from(stack, %return_bytesize)

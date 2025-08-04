@@ -1925,12 +1925,73 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     false
   end
 
+  def compile_extern_proc_wrapper(node, proc_type, symbol)
+    proc_type.arg_types.each_with_index do |arg_type, i|
+      index = @local_vars.name_to_index("arg#{i}", 0)
+
+      case arg_type
+      when NilType
+        # Nil is used to mean Pointer.null
+        put_i64 0, node: nil
+      when StaticArrayInstanceType
+        # Static arrays are passed as pointers to C
+        pointerof_var index, node: nil
+      else
+        get_local index, aligned_sizeof_type(arg_type), node: nil
+        if arg_type.is_a?(ProcInstanceType)
+          proc_to_c_fun arg_type.ffi_call_interface, node: nil
+        end
+      end
+    end
+
+    lib_function = @context.lib_functions.put_if_absent(symbol) do
+      args_bytesizes = [] of Int32
+      args_ffi_types = [] of FFI::Type
+      return_bytesize = inner_sizeof_type(proc_type.return_type)
+
+      proc_type.arg_types.each do |arg_type|
+        case arg_type
+        when NilType
+          args_bytesizes << sizeof(Pointer(Void))
+          args_ffi_types << FFI::Type.pointer
+        when ProcInstanceType
+          args_bytesizes << sizeof(Void*)
+          args_ffi_types << FFI::Type.pointer
+        when StaticArrayInstanceType
+          # Static arrays are passed as pointers to C
+          args_bytesizes << sizeof(Void*)
+          args_ffi_types << FFI::Type.pointer
+        else
+          args_bytesizes << aligned_sizeof_type(arg_type)
+          args_ffi_types << arg_type.ffi_arg_type
+        end
+      end
+
+      LibFunction.new(
+        symbol: symbol,
+        call_interface: FFI::CallInterface.new(
+          proc_type.return_type.ffi_type,
+          args_ffi_types,
+        ),
+        args_bytesizes: args_bytesizes,
+        return_bytesize: return_bytesize,
+      )
+    end
+
+    lib_call(lib_function, node: node)
+
+    # Use a dummy node so that pry stops at `end`
+    leave aligned_sizeof_type(proc_type.return_type), node: Nop.new.at(node.end_location)
+  end
+
   private def compile_lib_call(node : Call)
     target_def = node.target_def
     external = target_def.as(External)
+    symbol = @context.c_function(external.real_name)
 
     args_bytesizes = [] of Int32
     args_ffi_types = [] of FFI::Type
+    return_bytesize = inner_sizeof_type(external.type)
 
     node.args.each_with_index do |arg, i|
       arg_type = arg.type
@@ -2000,26 +2061,28 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     if external.varargs?
       lib_function = LibFunction.new(
-        def: external,
-        symbol: @context.c_function(external.real_name),
+        symbol: symbol,
         call_interface: FFI::CallInterface.variadic(
           external.type.ffi_type,
           args_ffi_types,
           fixed_args: external.args.size
         ),
         args_bytesizes: args_bytesizes,
+        return_bytesize: return_bytesize,
       )
       @context.add_gc_reference(lib_function)
     else
-      lib_function = @context.lib_functions[external] ||= LibFunction.new(
-        def: external,
-        symbol: @context.c_function(external.real_name),
-        call_interface: FFI::CallInterface.new(
-          external.type.ffi_type,
-          args_ffi_types
-        ),
-        args_bytesizes: args_bytesizes,
-      )
+      lib_function = @context.lib_functions.put_if_absent(symbol) do
+        LibFunction.new(
+          symbol: symbol,
+          call_interface: FFI::CallInterface.new(
+            external.type.ffi_type,
+            args_ffi_types
+          ),
+          args_bytesizes: args_bytesizes,
+          return_bytesize: return_bytesize,
+        )
+      end
     end
 
     lib_call(lib_function, node: node)
@@ -2824,6 +2887,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     compiler = Compiler.new(@context, compiled_def, scope: scope, top_level: false)
     begin
       compiler.compile_def(compiled_def, is_closure ? @closure_context : nil)
+      @context.compiled_procs << compiled_def.object_id
     rescue ex : Crystal::CodeError
       node.raise "compiling #{node}", inner: ex
     end
