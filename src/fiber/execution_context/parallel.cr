@@ -185,7 +185,7 @@ module Fiber::ExecutionContext
     # cooperative, so running schedulers won't stop until their current fiber
     # tries to switch to another fiber.
     def resize(maximum : Int32) : Nil
-      maximum = maximum.clamp(1..) # FIXME: raise if maximum < 1
+      raise ArgumentError.new("Parallelism can't be less than one.") if maximum < 1
       removed_schedulers = nil
 
       @mutex.synchronize do
