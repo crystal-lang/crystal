@@ -148,7 +148,7 @@ struct Time::Format
   #
   # ```
   # Time::Format::ISO_8601_DATE_TIME.format(Time.utc(2016, 2, 15, 4, 35, 50)) # => "2016-02-15 04:35:50Z"
-  # Time::Format::ISO_8601_DATE_TIME.parse("2016-02-15 04:35:50Z")            # => 2016-02-15 04:35:50Z
+  # Time::Format::ISO_8601_DATE_TIME.parse("2016-02-15T04:35:50Z")            # => 2016-02-15 04:35:50Z
   # ```
   module ISO_8601_DATE_TIME
     # Parses a string into a `Time`.

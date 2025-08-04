@@ -2,9 +2,9 @@ struct Time::Format
   # The [RFC 3339](https://tools.ietf.org/html/rfc3339) datetime format ([ISO 8601](https://web.archive.org/web/20250306154328/http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
   #
   # ```
-  # Time::Format::RFC_3339.format(Time.utc(2016, 2, 15, 4, 35, 50)) # => "2016-02-15 04:35:50Z"
+  # Time::Format::RFC_3339.format(Time.utc(2016, 2, 15, 4, 35, 50)) # => "2016-02-15T04:35:50Z"
   #
-  # Time::Format::RFC_3339.parse("2016-02-15 04:35:50Z") # => 2016-02-15 04:35:50Z
+  # Time::Format::RFC_3339.parse("2016-02-15T04:35:50Z") # => 2016-02-15 04:35:50Z
   # Time::Format::RFC_3339.parse("2016-02-15 04:35:50Z") # => 2016-02-15 04:35:50Z
   # ```
   module RFC_3339

@@ -1169,7 +1169,7 @@ struct Time
   # Parse time format specified by [RFC 3339](https://tools.ietf.org/html/rfc3339) ([ISO 8601](https://web.archive.org/web/20250306154328/http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
   #
   # ```
-  # Time.parse_rfc3339("2016-02-15 04:35:50Z") # => 2016-02-15 04:35:50Z
+  # Time.parse_rfc3339("2016-02-15T04:35:50Z") # => 2016-02-15 04:35:50Z
   # ```
   def self.parse_rfc3339(time : String) : self
     Format::RFC_3339.parse(time)
@@ -1183,7 +1183,7 @@ struct Time
   # Use `#to_rfc3339` to format a `Time` according to .
   #
   # ```
-  # Time.parse_iso8601("2016-02-15 04:35:50Z") # => 2016-02-15 04:35:50Z
+  # Time.parse_iso8601("2016-02-15T04:35:50Z") # => 2016-02-15 04:35:50Z
   # ```
   def self.parse_iso8601(time : String)
     Format::ISO_8601_DATE_TIME.parse(time)
