@@ -1101,17 +1101,7 @@ struct Time
   # Time.local(2014, 1, 2, 3, 4, 5, location: Time::Location.fixed(3601))           # => 2014-01-02 03:04:05+01:00:01
   # ```
   def inspect(io : IO, with_nanoseconds = true) : Nil
-    formatter = Format::Formatter.new(self, io)
-    formatter.year_month_day
-    io << " "
-    formatter.twenty_four_hour_time_with_seconds
-
-    if with_nanoseconds && !@nanoseconds.zero?
-      io << "."
-      formatter.nanoseconds
-    end
-
-    formatter.time_zone_z_or_offset(force_colon: true, format_seconds: :auto)
+    Format::RFC_3339.format(self, io, fraction_digits: (with_nanoseconds && !nanosecond.zero?) ? 9 : 0, preferred_separator: ' ')
     io << '[' << location.name << ']' unless location.fixed?
   end
 
