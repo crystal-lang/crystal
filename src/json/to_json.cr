@@ -310,7 +310,7 @@ end
 # end
 #
 # timestamp = TimestampArray.from_json(%({"dates":[1459859781,1567628762]}))
-# timestamp.dates   # => [2016-04-05T12:36:21Z, 2019-09-04T20:26:02Z]
+# timestamp.dates   # => [2016-04-05 12:36:21Z, 2019-09-04 20:26:02Z]
 # timestamp.to_json # => %({"dates":[1459859781,1567628762]})
 # ```
 #
@@ -328,7 +328,7 @@ end
 # end
 #
 # timestamp = TimestampArray.from_json(%({"dates":["Apr 5, 2016","Sep 4, 2019"]}))
-# timestamp.dates   # => [2016-04-05T00:00:00Z, 2019-09-04T00:00:00Z]
+# timestamp.dates   # => [2016-04-05 00:00:00Z, 2019-09-04 00:00:00Z]
 # timestamp.to_json # => %({"dates":["Apr 5, 2016","Sep 4, 2019"]})
 # ```
 #
@@ -371,7 +371,7 @@ end
 # end
 #
 # timestamp = TimestampHash.from_json(%({"birthdays":{"foo":1459859781,"bar":1567628762}}))
-# timestamp.birthdays # => {"foo" => 2016-04-05T12:36:21Z, "bar" => 2019-09-04T20:26:02Z}
+# timestamp.birthdays # => {"foo" => 2016-04-05 12:36:21Z, "bar" => 2019-09-04 20:26:02Z}
 # timestamp.to_json   # => %({"birthdays":{"foo":1459859781,"bar":1567628762}})
 # ```
 #
@@ -389,7 +389,7 @@ end
 # end
 #
 # timestamp = TimestampHash.from_json(%({"birthdays":{"foo":"Apr 5, 2016","bar":"Sep 4, 2019"}}))
-# timestamp.birthdays # => {"foo" => 2016-04-05T00:00:00Z, "bar" => 2019-09-04T00:00:00Z}
+# timestamp.birthdays # => {"foo" => 2016-04-05 00:00:00Z, "bar" => 2019-09-04 00:00:00Z}
 # timestamp.to_json   # => %({"birthdays":{"foo":"Apr 5, 2016","bar":"Sep 4, 2019"}})
 # ```
 #
@@ -435,7 +435,7 @@ end
 # end
 #
 # person = Person.from_json(%({"birth_date": 1459859781}))
-# person.birth_date # => 2016-04-05T12:36:21Z
+# person.birth_date # => 2016-04-05 12:36:21Z
 # person.to_json    # => %({"birth_date":1459859781})
 # ```
 module Time::EpochConverter
@@ -459,7 +459,7 @@ end
 # end
 #
 # timestamp = Timestamp.from_json(%({"value": 1459860483856}))
-# timestamp.value   # => 2016-04-05T12:48:03.856Z
+# timestamp.value   # => 2016-04-05 12:48:03.856Z
 # timestamp.to_json # => %({"value":1459860483856})
 # ```
 module Time::EpochMillisConverter

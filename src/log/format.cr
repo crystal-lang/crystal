@@ -184,17 +184,17 @@ end
 #
 # It writes log entries with the following format:
 # ```
-# 2020-05-07T17:40:07.994508000Z   INFO - my.source: Initializing everything
+# 2020-05-07 17:40:07.994508000Z   INFO - my.source: Initializing everything
 # ```
 #
 # When the entries have context data it's also written to the output:
 # ```
-# 2020-05-07T17:40:07.994508000Z   INFO - my.source: Initializing everything -- {"data" => 123}
+# 2020-05-07 17:40:07.994508000Z   INFO - my.source: Initializing everything -- {"data" => 123}
 # ```
 #
 # Exceptions are written in a separate line:
 # ```
-# 2020-05-07T17:40:07.994508000Z  ERROR - my.source: Something failed
+# 2020-05-07 17:40:07.994508000Z  ERROR - my.source: Something failed
 # Oh, no (Exception)
 #   from ...
 # ```
