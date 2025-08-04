@@ -4,8 +4,8 @@ struct Time::Format
   # ```
   # Time::Format::RFC_3339.format(Time.utc(2016, 2, 15, 4, 35, 50)) # => "2016-02-15T04:35:50Z"
   #
-  # Time::Format::RFC_3339.parse("2016-02-15T04:35:50Z") # => 2016-02-15T04:35:50.0Z
-  # Time::Format::RFC_3339.parse("2016-02-15 04:35:50Z") # => 2016-02-15T04:35:50.0Z
+  # Time::Format::RFC_3339.parse("2016-02-15T04:35:50Z") # => 2016-02-15T04:35:50Z
+  # Time::Format::RFC_3339.parse("2016-02-15 04:35:50Z") # => 2016-02-15T04:35:50Z
   # ```
   module RFC_3339
     # Parses a string into a `Time`.
