@@ -421,11 +421,9 @@ module Crystal::System::File
   def self.readlink(path, &) : String
     info = symlink_info?(path)
     unless info
-      {% begin %}
-        if ::File::NotFoundError.os_error?(WinError.value) || WinError.value == WinError::ERROR_NOT_A_REPARSE_POINT
-          yield
-        end
-      {% end %}
+      if ::File::NotFoundError.os_error?(WinError.value) || WinError.value == WinError::ERROR_NOT_A_REPARSE_POINT
+        yield
+      end
 
       raise ::File::Error.from_winerror("Cannot read link", file: path)
     end
