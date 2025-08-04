@@ -1080,11 +1080,26 @@ struct Time
 
   # Prints this `Time` to *io*.
   #
-  # The local date-time is formatted as date string `YYYY-MM-DD HH:mm:ss.nnnnnnnnn +ZZ:ZZ:ZZ`.
-  # Nanoseconds are omitted if *with_nanoseconds* is `false`.
-  # When the location is `UTC`, the offset is omitted. Offset seconds are omitted if `0`.
+  # It's formatted according to the Internet Extended Date/Time Format (IXDTF)
+  # as specified in [RFC 9557](https://datatracker.ietf.org/doc/html/rfc9557):
+  # An [RFC 3339](https://tools.ietf.org/html/rfc3339) formatted local date-time
+  # string with nanosecond precision followed by a time zone name suffix.
   #
-  # The name of the location is appended unless it is a fixed zone offset.
+  # It is similar to the format `%FT%T.%N%::z[%Z]`. Some parts may be omitted or
+  # shortened.
+  #
+  # Nanoseconds are omitted if *with_nanoseconds* is `false` or `nanoseconds`
+  # are zero. Zero offset seconds are omitted.  The name of the location is
+  # omitted for fixed zone offset.
+  #
+  # ```
+  # Time.utc(2014, 1, 2, 3, 4, 5)                      # => 2014-01-02 03:04:05Z
+  # Time.utc(2014, 1, 2, 3, 4, 5, nanosecond: 123_456) # => 2014-01-02 03:04:05.123456000Z
+  #
+  # Time.local(2014, 1, 2, 3, 4, 5, location: Time::Location.load("Europe/Berlin")) # => 2014-01-02 03:04:05+01:00[Europe/Berlin]
+  # Time.local(2014, 1, 2, 3, 4, 5, location: Time::Location.fixed(3600))           # => 2014-01-02 03:04:05+01:00
+  # Time.local(2014, 1, 2, 3, 4, 5, location: Time::Location.fixed(3601))           # => 2014-01-02 03:04:05+01:00:01
+  # ```
   def inspect(io : IO, with_nanoseconds = true) : Nil
     formatter = Format::Formatter.new(self, io)
     formatter.year_month_day
