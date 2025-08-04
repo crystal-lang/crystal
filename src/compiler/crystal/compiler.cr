@@ -1000,6 +1000,8 @@ module Crystal
         return true unless File.exists?(bc_name)
         return true unless File.exists?(object_name)
 
+        # If the user cancelled a previous compilation
+        # it might be that the .o file is empty
         return true if File.size(object_name) == 0
 
         memory_buffer = generate_bitcode
