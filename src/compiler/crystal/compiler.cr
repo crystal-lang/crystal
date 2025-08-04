@@ -1008,7 +1008,8 @@ module Crystal
         memory_io = IO::Memory.new(memory_buffer.to_slice)
 
         changed = File.open(bc_name) { |bc_file| !IO.same_content?(bc_file, memory_io) }
-        memory_buffer.dispose
+
+        memory_buffer.dispose unless changed
 
         changed
       end
