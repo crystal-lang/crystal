@@ -168,6 +168,8 @@ module Fiber::ExecutionContext
 
         # nothing to do: start spinning
         spinning do
+          return if @shutdown.now?
+
           yield @global_queue.grab?(@runnables, divisor: @execution_context.size)
 
           if @execution_context.lock_evloop? { @event_loop.run(pointerof(list), blocking: false) }
