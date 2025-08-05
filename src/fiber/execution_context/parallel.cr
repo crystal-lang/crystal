@@ -220,7 +220,10 @@ module Fiber::ExecutionContext
           # safe side)
           Atomic.fence(:acquire_release)
 
-          # wakeup all waiting schedulers so they can shutdown
+          # wake waiting schedulers so they can shutdown; we must also reset
+          # @parked (all parked threads will be woken); we don't touch @spinning
+          # because the threads might shutdown instead of spinning
+          @parked.set(0, :relaxed)
           @condition.broadcast
           @event_loop.interrupt
         end
