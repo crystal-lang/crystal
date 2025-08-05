@@ -80,7 +80,7 @@ module Fiber::ExecutionContext
 
       # append fiber to the batch and push to global queue
       batch.to_unsafe[n] = fiber
-      push_to_global_queue(batch.to_unsafe, n + 1)
+      push_to_global_queue(batch.to_unsafe, n &+ 1)
       true
     end
 
