@@ -97,7 +97,7 @@ else
 endif
 
 # When LLVM_VERSION < 18 we need $(LLVM_EXT_OBJ) as dependency.
-DEPS = $(call check_llvm_config)$(if $(filter 1,$(shell expr $(firstword $(subst ., ,$(LLVM_VERSION))) \< 18)),$(LLVM_EXT_OBJ),)
+DEPS = $(if $(filter 1,$(shell expr $(firstword $(subst ., ,$(LLVM_VERSION)) 18) \< 18 2> /dev/null)),$(LLVM_EXT_OBJ),)
 
 check_llvm_config = $(eval \
 	check_llvm_config := $(if $(LLVM_VERSION),\
