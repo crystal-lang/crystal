@@ -29,7 +29,7 @@ module Fiber::ExecutionContext
       @spinning = false
       @waiting = false
       @parked = false
-      @shutdown = Shutdown::NO
+      @shutdown = Shutdown.new(-1)
 
       protected def initialize(@execution_context, @name)
         @global_queue = @execution_context.global_queue
@@ -39,8 +39,7 @@ module Fiber::ExecutionContext
 
       # :nodoc:
       enum Shutdown
-        NO  = 0
-        NOW
+        NOW = 1
       end
 
       protected def shutdown(@shutdown : Shutdown) : Nil
@@ -96,7 +95,7 @@ module Fiber::ExecutionContext
       end
 
       private def quick_dequeue? : Fiber?
-        return if @shutdown == Shutdown::NOW
+        return if @shutdown.now?
 
         # every once in a while: dequeue from global queue to avoid two fibers
         # constantly respawing each other to completely occupy the local queue
@@ -133,12 +132,12 @@ module Fiber::ExecutionContext
         Crystal.trace :sched, "started"
 
         loop do
-          if @shutdown == Shutdown::NOW
+          if @shutdown.now?
             @runnables.drain
 
             # we may have been the last running scheduler, waiting on the event
-            # loop while there are pending events for example; we shall resume a
-            # scheduler in our stead
+            # loop while there are pending events for example; let's resume a
+            # scheduler to take our place
             @execution_context.wake_scheduler
 
             Crystal.trace :sched, "shutdown"
@@ -214,7 +213,7 @@ module Fiber::ExecutionContext
         # enqueues a fiber
         @execution_context.park_thread do
           # don't park the thread when told to shutdown
-          return unless @shutdown == Shutdown::NO
+          return if @shutdown.now?
 
           # by the time we acquire the lock, another thread may have enqueued
           # fiber(s) and already tried to wakeup a thread (race) so we must
