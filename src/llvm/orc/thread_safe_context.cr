@@ -33,7 +33,9 @@ class LLVM::Orc::ThreadSafeContext
     end
   end
 
-  @[Deprecated("This function is removed in LLVM 21.")]
+  {% unless LibLLVM::IS_LT_210 %}
+    @[Deprecated("This function is removed in LLVM 21.")]
+  {% end %}
   def context : LLVM::Context
     {% if LibLLVM.has_method?(:orc_thread_safe_context_get_context) %}
       LLVM::Context.new(LibLLVM.orc_thread_safe_context_get_context(self), false)
