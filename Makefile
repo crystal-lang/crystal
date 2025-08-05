@@ -158,7 +158,8 @@ docs: ## Generate standard library documentation
 crystal: $(O)/$(CRYSTAL_BIN) ## Build the compiler
 
 .PHONY: deps llvm_ext
-deps: $(DEPS) ## Build dependencies
+deps: ## Build dependencies
+	$(if $(DEPS),$(MAKE) $(DEPS),)
 llvm_ext: $(LLVM_EXT_OBJ)
 
 .PHONY: format
@@ -222,31 +223,31 @@ uninstall_docs: ## Uninstall docs from DESTDIR
 	rm -rf "$(DESTDIR)$(DOCDIR)/docs"
 	rm -rf "$(DESTDIR)$(DOCDIR)/examples"
 
-$(O)/all_spec$(EXE): $(DEPS) $(SOURCES) $(SPEC_SOURCES)
+$(O)/all_spec$(EXE): deps $(SOURCES) $(SPEC_SOURCES)
 	$(call check_llvm_config)
 	@mkdir -p $(O)
 	$(EXPORT_CC) $(EXPORTS) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/all_spec.cr
 
-$(O)/std_spec$(EXE): $(DEPS) $(SOURCES) $(SPEC_SOURCES)
+$(O)/std_spec$(EXE): deps $(SOURCES) $(SPEC_SOURCES)
 	$(call check_llvm_config)
 	@mkdir -p $(O)
 	$(EXPORT_CC) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/std_spec.cr
 
-$(O)/compiler_spec$(EXE): $(DEPS) $(SOURCES) $(SPEC_SOURCES)
+$(O)/compiler_spec$(EXE): deps $(SOURCES) $(SPEC_SOURCES)
 	$(call check_llvm_config)
 	@mkdir -p $(O)
 	$(EXPORT_CC) $(EXPORTS) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/compiler_spec.cr --release
 
-$(O)/primitives_spec$(EXE): $(O)/$(CRYSTAL_BIN) $(DEPS) $(SOURCES) $(SPEC_SOURCES)
+$(O)/primitives_spec$(EXE): $(O)/$(CRYSTAL_BIN) deps $(SOURCES) $(SPEC_SOURCES)
 	@mkdir -p $(O)
 	$(EXPORT_CC) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/primitives_spec.cr
 
-$(O)/interpreter_spec$(EXE): $(DEPS) $(SOURCES) $(SPEC_SOURCES)
+$(O)/interpreter_spec$(EXE): deps $(SOURCES) $(SPEC_SOURCES)
 	$(eval interpreter=1)
 	@mkdir -p $(O)
 	$(EXPORT_CC) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/compiler/interpreter_spec.cr
 
-$(O)/$(CRYSTAL_BIN): $(DEPS) $(SOURCES)
+$(O)/$(CRYSTAL_BIN): deps $(SOURCES)
 	$(call check_llvm_config)
 	@mkdir -p $(O)
 	@# NOTE: USE_PCRE1 is only used for testing compatibility with legacy environments that don't provide libpcre2.
