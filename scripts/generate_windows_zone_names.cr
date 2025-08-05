@@ -46,26 +46,6 @@ windows_to_iana_items = entries.compact_map do |tzdata_name, territory, windows_
   {windows_name, tzdata_name} if territory == "001"
 end.uniq!
 
-# TODO: remove in 1.17
-windows_zone_names_items = entries.compact_map do |tzdata_name, territory, windows_name|
-  next unless territory == "001"
-  location = Time::Location.load(tzdata_name)
-  next unless location
-  time = Time.local(location).at_beginning_of_year
-  zone1 = time.zone
-  zone2 = (time + 6.months).zone
-
-  # southern hemisphere
-  if zone1.offset > zone2.offset
-    zone1, zone2 = zone2, zone1
-  end
-
-  {windows_name, zone1.name, zone2.name, location.name}
-rescue err : Time::Location::InvalidLocationNameError
-  puts err
-  nil
-end
-
 source = ECR.render "#{__DIR__}/windows_zone_names.ecr"
 source = Crystal.format(source)
 File.write(TARGET_FILE, source)

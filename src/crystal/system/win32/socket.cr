@@ -331,7 +331,7 @@ module Crystal::System::Socket
     ret
   end
 
-  @blocking = true
+  @blocking : Bool = true
 
   # WSA does not provide a direct way to query the blocking mode of a file descriptor.
   # The best option seems to be just keeping track in an instance variable.
@@ -345,10 +345,14 @@ module Crystal::System::Socket
     Socket.set_blocking(fd, blocking)
   end
 
+  def self.get_blocking(fd : Handle)
+    raise NotImplementedError.new("Cannot query the blocking mode of a `Socket`")
+  end
+
   # Changes the blocking mode as per BSD sockets, has no effect on the
   # overlapped flag.
-  def self.set_blocking(fd, blocking)
-    mode = blocking ? 1_u32 : 0_u32
+  def self.set_blocking(fd : Handle, value : Bool)
+    mode = value ? 1_u32 : 0_u32
     ret = LibC.WSAIoctl(fd, LibC::FIONBIO, pointerof(mode), sizeof(UInt32), nil, 0, out _, nil, nil)
     raise ::Socket::Error.from_wsa_error("WSAIoctl") unless ret.zero?
   end

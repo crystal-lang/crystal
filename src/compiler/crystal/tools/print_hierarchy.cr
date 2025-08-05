@@ -102,6 +102,10 @@ module Crystal
       false
     end
 
+    def type_kind(type)
+      type.extern_union? ? "union" : type.struct? ? "struct" : "class"
+    end
+
     def type_size(type)
       return nil unless constant_type_size?(type)
 
@@ -246,7 +250,7 @@ module Crystal
     def print_type_name(type)
       print_indent
       @io << "+" unless @indents.empty?
-      @io << "- " << (type.struct? ? "struct" : "class") << " " << type
+      @io << "- " << type_kind(type) << " " << type
 
       if type_size = type_size(type)
         with_color.light_gray.surround(@io) do
@@ -372,7 +376,7 @@ module Crystal
 
     def print_type_name(type)
       @json.field "name", type.to_s
-      @json.field "kind", type.struct? ? "struct" : "class"
+      @json.field "kind", type_kind(type)
 
       if type_size = type_size(type)
         @json.field "size_in_bytes", type_size

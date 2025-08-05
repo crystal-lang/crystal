@@ -114,8 +114,15 @@ module Crystal
   class Arg
     include Annotatable
 
+    # Name of the original arg if its def has been expanded (default arguments)
+    property? original_name : String?
+
     def initialize(@name : String, @default_value : ASTNode? = nil, @restriction : ASTNode? = nil, external_name : String? = nil, @type : Type? = nil)
       @external_name = external_name || @name
+    end
+
+    def original_name
+      @original_name || @name
     end
 
     def clone_without_location
@@ -124,6 +131,9 @@ module Crystal
       # An arg's type can sometimes be used as a restriction,
       # and must be preserved when cloned
       arg.set_type @type
+
+      arg.annotations = @annotations.dup
+      arg.original_name = original_name
 
       arg
     end

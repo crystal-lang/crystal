@@ -137,13 +137,13 @@ class JSON::PullParser
   end
 
   # Reads the beginning of an array.
-  def read_begin_array
+  def read_begin_array : JSON::PullParser::Kind
     expect_kind :begin_array
     read_next
   end
 
   # Reads the end of an array.
-  def read_end_array
+  def read_end_array : JSON::PullParser::Kind
     expect_kind :end_array
     read_next
   end
@@ -163,13 +163,13 @@ class JSON::PullParser
   end
 
   # Reads the beginning of an object.
-  def read_begin_object
+  def read_begin_object : JSON::PullParser::Kind
     expect_kind :begin_object
     read_next
   end
 
   # Reads the end of an object.
-  def read_end_object
+  def read_end_object : JSON::PullParser::Kind
     expect_kind :end_object
     read_next
   end
@@ -268,7 +268,7 @@ class JSON::PullParser
   # Reads the new value and fill the a JSON builder with it.
   #
   # Use this method with a `JSON::Builder` to read a JSON while building another one.
-  def read_raw(json) : Nil
+  def read_raw(json : JSON::Builder) : Nil
     case @kind
     when .null?
       read_next

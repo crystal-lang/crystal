@@ -421,6 +421,9 @@ class Crystal::Repl::Compiler
       else
         pointer_set(inner_sizeof_type(ivar.type), node: node)
       end
+    when "interpreter_proc_new"
+      accept_call_args(node)
+      interpreter_proc_new(type_id(owner.instance_type), node: node)
     when "interpreter_call_stack_unwind"
       interpreter_call_stack_unwind(node: node)
     when "interpreter_raise_without_backtrace"
