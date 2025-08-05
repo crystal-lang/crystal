@@ -9,6 +9,7 @@ class LLVM::Orc::ThreadSafeContext
     new(LibLLVM.orc_create_new_thread_safe_context)
   end
 
+  # This constructor is only available with LLVM 21 and above.
   def self.new(ctx : LLVM::Context)
     {% if LibLLVM.has_method?(:orc_create_new_thread_safe_context_from_llvm_context) %}
       new(LibLLVM.orc_create_new_thread_safe_context_from_llvm_context(ctx))
