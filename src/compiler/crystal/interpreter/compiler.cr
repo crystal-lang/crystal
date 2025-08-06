@@ -2231,7 +2231,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       bytesize_after_block_local_vars = @local_vars.current_bytesize
 
-      block_args_bytesize = block.args.sum { |arg| aligned_sizeof_type(arg) }
+      block_args_bytesize = block.args.sum do |arg|
+        arg.name == "_" ? 0 : aligned_sizeof_type(arg)
+      end
 
       # If it's `with ... yield` we pass the "with" scope
       # as the first block argument, so we must count it too
@@ -3012,8 +3014,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       request_value(with_scope)
     end
 
-    pop_obj = nil
-
     # Check if tuple unpacking is needed.
     # This happens when a yield has only one expression that's a tuple
     # type, and the block arguments are more than one.
@@ -3064,16 +3064,28 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       # Accept the tuple
       request_value exp
 
+      # Compute which block var types we need to unpack to,
+      # and what's their total size
+      block_var_types = [] of Type?
+      block_var_types_size = 0
+
       # We need to cast to the block var, not arg
       # (the var might have more types in it if it's assigned other values)
-      block_var_types = block.args.map do |arg|
-        block.vars.not_nil![arg.name].type
+      block.args.each do |block_arg|
+        if block_arg.name == "_"
+          block_var_types << nil
+        else
+          block_var = block.vars.not_nil![block_arg.name]
+          block_var_type = block_var.type
+          block_var_types << block_var_type
+          block_var_types_size += aligned_sizeof_type(block_var_type)
+        end
       end
 
       unpack_tuple exp, tuple_type, block_var_types
 
       # We need to discard the tuple value that comes before the unpacked values
-      pop_obj = tuple_type
+      pop_from_offset aligned_sizeof_type(tuple_type), block_var_types_size, node: nil
     else
       block_arg_index = 0
 
@@ -3128,14 +3140,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     call_block compiled_block, node: node
 
-    if @wants_value
-      pop_from_offset aligned_sizeof_type(pop_obj), aligned_sizeof_type(node), node: nil if pop_obj
-    else
-      if pop_obj
-        pop aligned_sizeof_type(node) + aligned_sizeof_type(pop_obj), node: nil
-      else
-        pop aligned_sizeof_type(node), node: nil
-      end
+    unless @wants_value
+      pop aligned_sizeof_type(node), node: nil
     end
 
     false
