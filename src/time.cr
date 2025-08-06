@@ -582,10 +582,10 @@ struct Time
   # nyc = Time::Location.load("America/New_York")
   #
   # # gap on 2025-03-09 local time: 02:00:00 STD -> 03:00:00 DST
-  # Time.utc(2025, 3, 9, 2, 12, 34).to_local_in(nyc) # => 2025-03-09 01:12:34.0 -05:00 America/New_York
+  # Time.utc(2025, 3, 9, 2, 12, 34).to_local_in(nyc) # => 2025-03-09 01:12:34.0-05:00[America/New_York]
   #
   # # overlap on 2025-11-02 local time: 02:00:00 DST -> 01:00:00 STD
-  # Time.utc(2025, 11, 2, 1, 12, 34).to_local_in(nyc) # => 2025-11-02 01:12:34.0 -04:00 America/New_York
+  # Time.utc(2025, 11, 2, 1, 12, 34).to_local_in(nyc) # => 2025-11-02 01:12:34.0-04:00[America/New_York]
   # ```
   def to_local_in(location : Location) : Time
     local_seconds = offset_seconds
