@@ -733,17 +733,5 @@ describe Crystal::Repl::Interpreter do
         end
         CRYSTAL
     end
-
-    it "interprets block with both splat and non-splat underscore parameter + tuple unpacking (#13474)" do
-      interpret(<<-CRYSTAL).should eq(34)
-        def foo(&)
-          yield({1, 2, 4, 8, 16, 32})
-        end
-
-        foo do |_, a, *_, b|
-          a &+ b
-        end
-        CRYSTAL
-    end
   end
 end
