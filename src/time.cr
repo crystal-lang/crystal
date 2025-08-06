@@ -569,6 +569,24 @@ struct Time
   # tokyo.inspect    # => "2019-01-01 00:00:00+09:00[Asia/Tokyo]"
   # new_york.inspect # => "2019-01-01 00:00:00-05:00[America/New_York]"
   # ```
+  #
+  # If the given wall clock is a gap or fold in the target location, no
+  # unambiguous equivalent representation exists.
+  #
+  # * In case of a gap, the clock jumps to the smaller offset and shows a time
+  # _before_ the gap. The wall clock is different from `self`.
+  # * In case of a fold, the clock chooses the bigger offset and shows a time
+  # _after_ the fold. The wall clock is identical to `self`.
+  #
+  # ```
+  # nyc = Time::Location.load("America/New_York")
+  #
+  # # gap on 2025-03-09 local time: 02:00:00 STD -> 03:00:00 DST
+  # Time.utc(2025, 3, 9, 2, 12, 34).to_local_in(nyc) # => 2025-03-09 01:12:34.0 -05:00 America/New_York
+  #
+  # # overlap on 2025-11-02 local time: 02:00:00 DST -> 01:00:00 STD
+  # Time.utc(2025, 11, 2, 1, 12, 34).to_local_in(nyc) # => 2025-11-02 01:12:34.0 -04:00 America/New_York
+  # ```
   def to_local_in(location : Location) : Time
     local_seconds = offset_seconds
     local_seconds -= Time.zone_offset_at(local_seconds, location)
@@ -1112,11 +1130,15 @@ struct Time
   # When the location is `UTC`, the offset is replaced with the string `UTC`.
   # Offset seconds are omitted if `0`.
   def to_s(io : IO) : Nil
-    to_s(io, "%F %T ")
+    formatter = Format::Formatter.new(self, io)
+    formatter.year_month_day
+    io << " "
+    formatter.twenty_four_hour_time_with_seconds
 
     if utc?
-      io << "UTC"
+      io << " UTC"
     else
+      io << " "
       zone.format(io)
     end
   end

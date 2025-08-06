@@ -2,12 +2,6 @@ require "./spec_helper"
 require "../../support/tempfile"
 require "../../support/win32"
 
-# TODO: Windows networking in the interpreter requires #12495
-{% if flag?(:interpreted) && flag?(:win32) %}
-  pending Socket
-  {% skip_file %}
-{% end %}
-
 describe Socket, tags: "network" do
   describe ".unix" do
     it "creates a unix socket" do
@@ -180,6 +174,25 @@ describe Socket, tags: "network" do
       socket.close_on_exec?.should be_true
     end
   {% end %}
+
+  it ".set_blocking and .get_blocking" do
+    socket = Socket.tcp(Socket::Family::INET)
+    fd = socket.fd
+
+    Socket.set_blocking(fd, true)
+    {% if flag?(:win32) %}
+      expect_raises(NotImplementedError) { IO::FileDescriptor.get_blocking(fd) }
+    {% else %}
+      Socket.get_blocking(fd).should be_true
+    {% end %}
+
+    Socket.set_blocking(fd, false)
+    {% if flag?(:win32) %}
+      expect_raises(NotImplementedError) { IO::FileDescriptor.get_blocking(fd) }
+    {% else %}
+      Socket.get_blocking(fd).should be_false
+    {% end %}
+  end
 
   describe "#finalize" do
     it "does not flush" do

@@ -1766,21 +1766,25 @@ module Crystal
 
         # Now assign exp values to block arguments
         if splat_index
-          j = 0
+          exp_index = 0
           block.args.each_with_index do |arg, i|
-            block_var = block_context.vars[arg.name]
-            if i == splat_index
-              exp_value = allocate_tuple(arg.type.as(TupleInstanceType)) do
-                exp_value2, exp_type = exp_values[j]
-                j += 1
-                {exp_type, exp_value2}
+            if arg.name != "_"
+              block_var = block_context.vars[arg.name]
+              if i == splat_index
+                exp_value = allocate_tuple(arg.type.as(TupleInstanceType)) do
+                  exp_value2, exp_type = exp_values[exp_index]
+                  exp_index += 1
+                  {exp_type, exp_value2}
+                end
+                exp_type = arg.type
+              else
+                exp_value, exp_type = exp_values[exp_index]
+                exp_index += 1
               end
-              exp_type = arg.type
+              assign block_var.pointer, block_var.type, exp_type, exp_value
             else
-              exp_value, exp_type = exp_values[j]
-              j += 1
+              exp_index += (i == splat_index ? arg.type.as(TupleInstanceType).size : 1)
             end
-            assign block_var.pointer, block_var.type, exp_type, exp_value
           end
         else
           # Check if tuple unpacking is needed
