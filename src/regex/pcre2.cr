@@ -238,7 +238,7 @@ module Regex::PCRE2
   # can't be any concurrent access to the JIT stack.
   @@jit_stack = Crystal::ThreadLocalValue(LibPCRE2::JITStack*).new
 
-  def self.jit_stack : Pointer(LibPCRE2::JITStack)
+  def self.jit_stack
     @@jit_stack.get do
       LibPCRE2.jit_stack_create(32_768, 1_048_576, nil) || raise "Error allocating JIT stack"
     end
