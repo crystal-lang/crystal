@@ -92,7 +92,7 @@ module Regex::PCRE2
     flag
   end
 
-  def self.supports_compile_flag?(options)
+  def self.supports_compile_flag?(options : Regex::Options) : Bool
     true
   end
 
@@ -146,7 +146,7 @@ module Regex::PCRE2
     flag
   end
 
-  def self.supports_match_flag?(options)
+  def self.supports_match_flag?(options : Regex::MatchOptions) : Bool
     true
   end
 
@@ -238,7 +238,7 @@ module Regex::PCRE2
   # can't be any concurrent access to the JIT stack.
   @@jit_stack = Crystal::ThreadLocalValue(LibPCRE2::JITStack*).new
 
-  def self.jit_stack
+  def self.jit_stack : Pointer(LibPCRE2::JITStack)
     @@jit_stack.get do
       LibPCRE2.jit_stack_create(32_768, 1_048_576, nil) || raise "Error allocating JIT stack"
     end
@@ -256,7 +256,7 @@ module Regex::PCRE2
     end
   end
 
-  def finalize
+  def finalize : Nil
     @match_data.consume_each do |match_data|
       LibPCRE2.match_data_free(match_data)
     end
