@@ -32,7 +32,7 @@ module Spec
 
   class RootContext
     # :nodoc:
-    def run_filters(pattern = nil, line = nil, locations = nil, split_filter = nil, focus = nil, tags = nil, anti_tags = nil)
+    def run_filters(pattern : Regex? = nil, line : Int32? = nil, locations : Hash(String, Array(Int32))? = nil, split_filter : Spec::SplitFilter? = nil, focus : Bool? = nil, tags : Set(String)? = nil, anti_tags : Set(String)? = nil) : Array(Spec::Example | Spec::ExampleGroup)?
       filter_by_pattern(pattern) if pattern
       filter_by_line(line) if line
       filter_by_locations(locations) if locations
@@ -43,32 +43,32 @@ module Spec
     end
 
     # :nodoc:
-    def filter_by_pattern(pattern : Regex)
+    def filter_by_pattern(pattern : Regex) : Array(Spec::Example | Spec::ExampleGroup)
       children.select!(&.filter_by_pattern(pattern))
     end
 
     # :nodoc:
-    def filter_by_line(line : Int32)
+    def filter_by_line(line : Int32) : Array(Spec::Example | Spec::ExampleGroup)
       children.select!(&.filter_by_line(line))
     end
 
     # :nodoc:
-    def filter_by_locations(locations : Hash(String, Array(Int32)))
+    def filter_by_locations(locations : Hash(String, Array(Int32))) : Array(Spec::Example | Spec::ExampleGroup)
       children.select!(&.filter_by_locations(locations))
     end
 
     # :nodoc:
-    def filter_by_focus
+    def filter_by_focus : Array(Spec::Example | Spec::ExampleGroup)
       children.select!(&.filter_by_focus)
     end
 
     # :nodoc:
-    def filter_by_tags(tags : Set(String))
+    def filter_by_tags(tags : Set(String)) : Array(Spec::Example | Spec::ExampleGroup)
       children.select!(&.filter_by_tags(tags))
     end
 
     # :nodoc:
-    def filter_by_anti_tags(anti_tags : Set(String))
+    def filter_by_anti_tags(anti_tags : Set(String)) : Array(Spec::Example | Spec::ExampleGroup)
       children.select!(&.filter_by_anti_tags(anti_tags))
     end
 

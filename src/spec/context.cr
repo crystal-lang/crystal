@@ -8,7 +8,7 @@ module Spec
 
     protected abstract def cli : CLI
 
-    def randomize(randomizer)
+    def randomize(randomizer : Random) : Array(Spec::Example | Spec::ExampleGroup)
       children.each do |child|
         child.randomize(randomizer) if child.is_a?(ExampleGroup)
       end
@@ -159,7 +159,7 @@ module Spec
 
     protected getter cli : CLI
 
-    def results_for(status : Status)
+    def results_for(status : Status) : Array(Spec::Result)
       @results[status]
     end
 
@@ -357,7 +357,7 @@ module Spec
     end
 
     # :nodoc:
-    def run
+    def run : Nil
       cli.formatters.each(&.push(self))
 
       ran = run_around_all_hooks(ExampleGroup::Procsy.new(self) { internal_run })

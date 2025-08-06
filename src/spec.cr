@@ -96,7 +96,7 @@ module Spec
     # :nodoc:
     #
     # Implement formatter configuration.
-    def configure_formatter(formatter, output_path = nil)
+    def configure_formatter(formatter : String, output_path : String? = nil)
       case formatter
       when "junit"
         junit_formatter = Spec::JUnitFormatter.file(self, Path.new(output_path.not_nil!))
@@ -108,7 +108,7 @@ module Spec
       end
     end
 
-    def main(args)
+    def main(args : Array(String)) : Nil
       begin
         option_parser.parse(args)
       rescue e : OptionParser::InvalidOption

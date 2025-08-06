@@ -12,7 +12,7 @@ module Spec
 
       # Executes the wrapped example group, possibly executing other
       # `around_all` hooks before that.
-      def run
+      def run : Nil
         @proc.call
       end
     end

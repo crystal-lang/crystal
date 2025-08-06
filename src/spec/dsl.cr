@@ -40,7 +40,7 @@ module Spec
   end
 
   # :nodoc:
-  def self.to_human(span : Time::Span)
+  def self.to_human(span : Time::Span) : String
     total_milliseconds = span.total_milliseconds
     if total_milliseconds < 1
       return "#{(span.total_milliseconds * 1000).round.to_i} microseconds"
@@ -162,14 +162,14 @@ module Spec
   class CLI
     @aborted = false
 
-    def abort!
+    def abort! : Nil
       @aborted = true
       finish_run
     end
 
     @split_filter : SplitFilter? = nil
 
-    def add_split_filter(filter)
+    def add_split_filter(filter : String?) : Spec::SplitFilter?
       if filter
         r, _, m = filter.partition('%')
         @split_filter = SplitFilter.new(remainder: r.to_i, quotient: m.to_i)
@@ -180,7 +180,7 @@ module Spec
 
     @start_time : Time::Span? = nil
 
-    def run
+    def run : Nil
       @start_time = Time.monotonic
 
       at_exit do |status|
@@ -204,22 +204,22 @@ module Spec
       end
     end
 
-    def colorize(str, status : Status)
+    def colorize(str : String | Char, status : Status) : Colorize::Object(String) | Colorize::Object(Char)
       str.colorize(status.color).toggle(@color)
     end
 
-    def colorize(str, kind : InfoKind)
+    def colorize(str : String, kind : InfoKind) : Colorize::Object(String)
       str.colorize(kind.color).toggle(@color)
     end
 
-    def execute_examples
+    def execute_examples : Nil
       log_setup
       maybe_randomize
       run_filters
       root_context.run
     end
 
-    def execute_list_tags
+    def execute_list_tags : Nil
       run_filters
       tag_counts = collect_tags(root_context)
       print_list_tags(tag_counts)
@@ -287,21 +287,21 @@ module Spec
       end
     end
 
-    def finish_run
+    def finish_run : Nil
       elapsed_time = Time.monotonic - @start_time.not_nil!
       root_context.finish(elapsed_time, @aborted)
       exit 1 if !root_context.succeeded || @aborted || (focus? && ENV["SPEC_FOCUS_NO_FAIL"]? != "1")
     end
 
     # :nodoc:
-    def maybe_randomize
+    def maybe_randomize : Nil
       if randomizer = @randomizer
         root_context.randomize(randomizer)
       end
     end
 
     # :nodoc:
-    def run_filters
+    def run_filters : Nil
       root_context.run_filters(@pattern, @line, @locations, @split_filter, @focus, @tags, @anti_tags)
     end
   end

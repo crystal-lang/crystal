@@ -17,7 +17,7 @@ module Spec
     end
 
     # :nodoc:
-    def run
+    def run : Nil
       @parent.cli.root_context.check_nesting_spec(file, line) do
         @parent.cli.formatters.each(&.before_example(description))
 

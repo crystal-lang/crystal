@@ -67,7 +67,7 @@ module Spec
         @printed = false
       end
 
-      def print(io)
+      def print(io : IO) : Nil
         return if @printed
         @printed = true
 
@@ -90,15 +90,15 @@ module Spec
       @indent -= 1
     end
 
-    def print_indent
+    def print_indent : Nil
       self.class.print_indent(@io, @indent)
     end
 
-    def self.print_indent(io, indent)
+    def self.print_indent(io : IO, indent : Int32) : Nil
       indent.times { io << "  " }
     end
 
-    def before_example(description)
+    def before_example(description : String) : String
       @items.each &.print(@io)
       print_indent
       @io << description
@@ -118,15 +118,15 @@ module Spec
 
   # :nodoc:
   class CLI
-    def formatters
+    def formatters : Array(Spec::Formatter)
       @formatters ||= [Spec::DotFormatter.new(self)] of Spec::Formatter
     end
 
-    def override_default_formatter(formatter)
+    def override_default_formatter(formatter : Spec::Formatter) : Spec::Formatter
       formatters[0] = formatter
     end
 
-    def add_formatter(formatter)
+    def add_formatter(formatter : Spec::Formatter) : Array(Spec::Formatter)
       formatters << formatter
     end
   end

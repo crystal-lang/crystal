@@ -85,45 +85,45 @@ module Spec
 
   # :nodoc:
   struct BeTruthyExpectation
-    def match(actual_value)
+    def match(actual_value) : Bool
       !!actual_value
     end
 
-    def failure_message(actual_value)
+    def failure_message(actual_value) : String
       "Expected: #{actual_value.pretty_inspect} to be truthy"
     end
 
-    def negative_failure_message(actual_value)
+    def negative_failure_message(actual_value : Bool?) : String
       "Expected: #{actual_value.pretty_inspect} not to be truthy"
     end
   end
 
   # :nodoc:
   struct BeFalseyExpectation
-    def match(actual_value)
+    def match(actual_value) : Bool
       !actual_value
     end
 
-    def failure_message(actual_value)
+    def failure_message(actual_value : Bool?) : String
       "Expected: #{actual_value.pretty_inspect} to be falsey"
     end
 
-    def negative_failure_message(actual_value)
+    def negative_failure_message(actual_value) : String
       "Expected: #{actual_value.pretty_inspect} not to be falsey"
     end
   end
 
   # :nodoc:
   struct BeNilExpectation
-    def match(actual_value)
+    def match(actual_value) : Bool
       actual_value.nil?
     end
 
-    def failure_message(actual_value)
+    def failure_message(actual_value) : String
       "Expected: #{actual_value.pretty_inspect} to be nil"
     end
 
-    def negative_failure_message(actual_value)
+    def negative_failure_message(actual_value) : String
       "Expected: #{actual_value.pretty_inspect} not to be nil"
     end
   end
@@ -285,15 +285,15 @@ module Spec
 
   # :nodoc:
   struct BeEmptyExpectation
-    def match(actual_value)
+    def match(actual_value) : Bool
       actual_value.empty?
     end
 
-    def failure_message(actual_value)
+    def failure_message(actual_value) : String
       "Expected: #{actual_value.pretty_inspect} to be empty"
     end
 
-    def negative_failure_message(actual_value)
+    def negative_failure_message(actual_value) : String
       "Expected: #{actual_value.pretty_inspect} not to be empty"
     end
   end
@@ -314,27 +314,27 @@ module Spec
     end
 
     # Creates an `Expectation` that passes if actual is true (`== true`).
-    def be_true
+    def be_true : Spec::EqualExpectation(Bool)
       eq true
     end
 
     # Creates an `Expectation` that passes if actual is false (`== false`).
-    def be_false
+    def be_false : Spec::EqualExpectation(Bool)
       eq false
     end
 
     # Creates an `Expectation` that passes if actual is truthy (neither `nil` nor `false`).
-    def be_truthy
+    def be_truthy : Spec::BeTruthyExpectation
       Spec::BeTruthyExpectation.new
     end
 
     # Creates an `Expectation` that passes if actual is falsy (`nil` or `false`).
-    def be_falsey
+    def be_falsey : Spec::BeFalseyExpectation
       Spec::BeFalseyExpectation.new
     end
 
     # Creates an `Expectation` that passes if actual is nil (`Object#nil?`).
-    def be_nil
+    def be_nil : Spec::BeNilExpectation
       Spec::BeNilExpectation.new
     end
 
@@ -349,35 +349,35 @@ module Spec
     # * passes if actual is lesser than or equal *value*: `be <= value`
     # * passes if actual is greater than *value*: `be > value`
     # * passes if actual is greater than or equal *value*: `be >= value`
-    def be
+    def be : Spec::Be.class
       Spec::Be
     end
 
     # Creates an `Expectation` that passes if actual matches *value* (`=~`).
-    def match(value)
+    def match(value : T) : Spec::MatchExpectation(T) forall T
       Spec::MatchExpectation.new(value)
     end
 
     # Creates an `Expectation` that passes if actual includes *expected* (`.includes?`).
     # Works on collections and `String`.
-    def contain(expected)
+    def contain(expected : T) : Spec::ContainExpectation(T) forall T
       Spec::ContainExpectation.new(expected)
     end
 
     # Creates an `Expectation` that passes if actual starts with *expected* (`.starts_with?`).
     # Works on `String`.
-    def start_with(expected)
+    def start_with(expected : T) : Spec::StartWithExpectation(T) forall T
       Spec::StartWithExpectation.new(expected)
     end
 
     # Creates an `Expectation` that passes if actual ends with *expected* (`.ends_with?`).
     # Works on `String`.
-    def end_with(expected)
+    def end_with(expected : T) : Spec::EndWithExpectation(T) forall T
       Spec::EndWithExpectation.new(expected)
     end
 
     # Creates an `Expectation` that passes if actual is empty (`.empty?`).
-    def be_empty
+    def be_empty : Spec::BeEmptyExpectation
       Spec::BeEmptyExpectation.new
     end
 
@@ -452,7 +452,7 @@ module Spec
     # ```
     #
     # See `Spec::Expectations` for available expectations.
-    def should(expectation : BeAExpectation(T), failure_message : String? = nil, *, file = __FILE__, line = __LINE__) : T forall T
+    def should(expectation : BeAExpectation(T), failure_message : String? = nil, *, file : String = __FILE__, line : Int32 = __LINE__) : T forall T
       if expectation.match self
         self.is_a?(T) ? self : (raise "Bug: expected #{self} to be a #{T}")
       else
@@ -464,7 +464,7 @@ module Spec
     # Validates an expectation and fails the example if it does not match.
     #
     # See `Spec::Expectations` for available expectations.
-    def should(expectation, failure_message : String? = nil, *, file = __FILE__, line = __LINE__)
+    def should(expectation, failure_message : String? = nil, *, file : String = __FILE__, line : Int32 = __LINE__) : Nil
       unless expectation.match self
         failure_message ||= expectation.failure_message(self)
         fail(failure_message, file, line)
@@ -484,7 +484,7 @@ module Spec
     # ```
     #
     # See `Spec::Expectations` for available expectations.
-    def should_not(expectation : BeAExpectation(T), failure_message : String? = nil, *, file = __FILE__, line = __LINE__) forall T
+    def should_not(expectation : BeAExpectation(T), failure_message : String? = nil, *, file : String = __FILE__, line : Int32 = __LINE__) forall T
       if expectation.match self
         failure_message ||= expectation.negative_failure_message(self)
         fail(failure_message, file, line)
@@ -505,7 +505,7 @@ module Spec
     # ```
     #
     # See `Spec::Expectations` for available expectations.
-    def should_not(expectation : BeNilExpectation, failure_message : String? = nil, *, file = __FILE__, line = __LINE__)
+    def should_not(expectation : BeNilExpectation, failure_message : String? = nil, *, file : String = __FILE__, line : Int32 = __LINE__)
       if expectation.match self
         failure_message ||= expectation.negative_failure_message(self)
         fail(failure_message, file, line)
@@ -517,7 +517,7 @@ module Spec
     # Validates an expectation and fails the example if it matches.
     #
     # See `Spec::Expectations` for available expectations.
-    def should_not(expectation, failure_message : String? = nil, *, file = __FILE__, line = __LINE__)
+    def should_not(expectation, failure_message : String? = nil, *, file : String = __FILE__, line : Int32 = __LINE__) : Nil
       if expectation.match self
         failure_message ||= expectation.negative_failure_message(self)
         fail(failure_message, file, line)

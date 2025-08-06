@@ -25,12 +25,12 @@ module Spec
       @color = Colorize.default_enabled?(@stdout, @stderr)
     end
 
-    def add_location(file, line)
+    def add_location(file : String, line : Int32) : Array(Int32)
       locations = @locations ||= {} of String => Array(Int32)
       locations.put_if_absent(File.expand_path(file)) { [] of Int32 } << line
     end
 
-    def add_tag(tag)
+    def add_tag(tag : String) : Set(String)
       if anti_tag = tag.lchop?('~')
         (@anti_tags ||= Set(String).new) << anti_tag
       else
@@ -41,7 +41,7 @@ module Spec
     getter randomizer_seed : UInt64?
     getter randomizer : Random::PCG32?
 
-    def order=(mode)
+    def order=(mode : String | UInt64) : Nil
       seed =
         case mode
         when "default"

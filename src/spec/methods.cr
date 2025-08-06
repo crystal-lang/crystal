@@ -16,7 +16,7 @@ module Spec::Methods
   # ```
   #
   # If `focus` is `true`, only this `describe`, and others marked with `focus: true`, will run.
-  def describe(description = nil, file = __FILE__, line = __LINE__, end_line = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil, &block)
+  def describe(description = nil, file : String = __FILE__, line : Int32 = __LINE__, end_line : Int32 = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil, &block) : Nil
     Spec.cli.root_context.describe(description.to_s, file, line, end_line, focus, tags, &block)
   end
 
@@ -27,7 +27,7 @@ module Spec::Methods
   # It is functionally equivalent to `#describe`.
   #
   # If `focus` is `true`, only this `context`, and others marked with `focus: true`, will run.
-  def context(description = nil, file = __FILE__, line = __LINE__, end_line = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil, &block)
+  def context(description : String? = nil, file : String = __FILE__, line : Int32 = __LINE__, end_line : Int32 = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil, &block) : Nil
     describe(description.to_s, file, line, end_line, focus, tags, &block)
   end
 
@@ -45,7 +45,7 @@ module Spec::Methods
   # It is usually used inside a `#describe` or `#context` section.
   #
   # If `focus` is `true`, only this test, and others marked with `focus: true`, will run.
-  def it(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil, &block)
+  def it(description = "assert", file : String = __FILE__, line : Int32 = __LINE__, end_line : Int32 = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil, &block) : Array(Spec::Example | Spec::ExampleGroup)
     Spec.cli.root_context.it(description.to_s, file, line, end_line, focus, tags, &block)
   end
 
@@ -71,14 +71,14 @@ module Spec::Methods
   # Defines a yet-to-be-implemented pending test case
   #
   # If `focus` is `true`, only this test, and others marked with `focus: true`, will run.
-  def pending(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil)
+  def pending(description : String = "assert", file : String = __FILE__, line : Int32 = __LINE__, end_line : Int32 = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil) : Array(Spec::Example | Spec::ExampleGroup)
     Spec.cli.root_context.pending(description.to_s, file, line, end_line, focus, tags)
   end
 
   # Fails an example.
   #
   # This method can be used to manually fail an example defined in an `#it` block.
-  def fail(msg, file = __FILE__, line = __LINE__)
+  def fail(msg : String, file : String = __FILE__, line : Int32 = __LINE__) : Nil
     raise Spec::AssertionFailed.new(msg, file, line)
   end
 
@@ -96,7 +96,7 @@ module Spec::Methods
   #   cmd.should end_with("git")
   # end
   # ```
-  def pending!(msg = "Cannot run example", file = __FILE__, line = __LINE__)
+  def pending!(msg : String = "Cannot run example", file : String = __FILE__, line : Int32 = __LINE__) : Nil
     raise Spec::ExamplePending.new(msg, file, line)
   end
 
@@ -123,7 +123,7 @@ module Spec::Methods
   #   it "sample_b" { }
   # end
   # ```
-  def before_each(&block)
+  def before_each(&block) : Nil
     if Spec.cli.current_context.is_a?(RootContext)
       raise "Can't call `before_each` outside of a describe/context"
     end
@@ -153,7 +153,7 @@ module Spec::Methods
   #   it "sample_b" { }
   # end
   # ```
-  def after_each(&block)
+  def after_each(&block) : Nil
     if Spec.cli.current_context.is_a?(RootContext)
       raise "Can't call `after_each` outside of a describe/context"
     end
@@ -183,7 +183,7 @@ module Spec::Methods
   #   it "sample_b" { }
   # end
   # ```
-  def before_all(&block)
+  def before_all(&block) : Nil
     if Spec.cli.current_context.is_a?(RootContext)
       raise "Can't call `before_all` outside of a describe/context"
     end
@@ -213,7 +213,7 @@ module Spec::Methods
   #   it "sample_b" { }
   # end
   # ```
-  def after_all(&block)
+  def after_all(&block) : Nil
     if Spec.cli.current_context.is_a?(RootContext)
       raise "Can't call `after_all` outside of a describe/context"
     end
@@ -251,7 +251,7 @@ module Spec::Methods
   #   it "sample_b" { }
   # end
   # ```
-  def around_each(&block : Example::Procsy ->)
+  def around_each(&block : Example::Procsy ->) : Nil
     if Spec.cli.current_context.is_a?(RootContext)
       raise "Can't call `around_each` outside of a describe/context"
     end
@@ -296,7 +296,7 @@ module Spec::Methods
   #   end
   # end
   # ```
-  def around_all(&block : ExampleGroup::Procsy ->)
+  def around_all(&block : ExampleGroup::Procsy ->) : Nil
     if Spec.cli.current_context.is_a?(RootContext)
       raise "Can't call `around_all` outside of a describe/context"
     end

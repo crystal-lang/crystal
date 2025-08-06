@@ -34,7 +34,7 @@ module Spec
       io.close
     end
 
-    def self.file(cli : CLI, output_path : Path)
+    def self.file(cli : CLI, output_path : Path) : Spec::JUnitFormatter
       if output_path.extension != ".xml"
         output_path = output_path.join("output.xml")
       end
