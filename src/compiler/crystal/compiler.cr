@@ -995,6 +995,8 @@ module Crystal
       end
 
       private def must_compile?
+        memory_buffer = generate_bitcode
+
         return true unless compiler.emit_targets.none?
         return true if @bc_flags_changed
         return true unless File.exists?(bc_name)
@@ -1004,7 +1006,6 @@ module Crystal
         # it might be that the .o file is empty
         return true if File.size(object_name) == 0
 
-        memory_buffer = generate_bitcode
         memory_io = IO::Memory.new(memory_buffer.to_slice)
 
         changed = File.open(bc_name) { |bc_file| !IO.same_content?(bc_file, memory_io) }
