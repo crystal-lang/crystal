@@ -54,6 +54,45 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
     Fiber.suspend
   end
 
+  class TimeoutData
+    property fiber : Fiber
+    property cancelation_token : Fiber::CancelationToken
+    property? expired : Bool = false
+
+    def initialize(@fiber, @cancelation_token)
+    end
+  end
+
+  def timeout(until time : Time::Instant, token : Fiber::CancelationToken) : Bool
+    arg = TimeoutData.new(Fiber.current, token)
+
+    event = event_base.new_event(-1, LibEvent2::EventFlags::None, arg) do |s, flags, data|
+      d = data.as(TimeoutData)
+      f = d.fiber
+      if f.resolve_timer?(d.cancelation_token)
+        d.expired = true
+        {% if !flag?(:without_mt) %}
+          event_loop = Crystal::EventLoop.current.as(Crystal::EventLoop::LibEvent)
+          event_loop.callback_enqueue(f)
+        {% else %}
+          f.enqueue
+        {% end %}
+      end
+    end
+
+    begin
+      event.add(time - Time.instant)
+
+      Fiber.suspend
+    ensure
+      # dequeues event if needed and frees its allocation before returning;
+      # at worst event_free will wait if the event callback is running in parallel
+      event.free
+    end
+
+    arg.expired?
+  end
+
   # Create a new resume event for a fiber (sleep).
   def create_resume_event(fiber : Fiber) : Crystal::EventLoop::LibEvent::Event
     event_base.new_event(-1, LibEvent2::EventFlags::None, fiber) do |s, flags, data|
@@ -69,9 +108,9 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
 
   # Creates a timeout event (timeout action of select expression).
   def create_timeout_event(fiber) : Crystal::EventLoop::LibEvent::Event
-    data = Crystal::EventLoop::LibEvent::TimeoutData.new(fiber)
+    data = Crystal::EventLoop::LibEvent::SelectTimeoutData.new(fiber)
     event_base.new_event(-1, LibEvent2::EventFlags::None, data) do |s, flags, data|
-      timeout_data = data.as(Crystal::EventLoop::LibEvent::TimeoutData)
+      timeout_data = data.as(Crystal::EventLoop::LibEvent::SelectTimeoutData)
       if select_action = timeout_data.timeout_select_action
         if select_action.time_expired?
           {% if !flag?(:without_mt) %}

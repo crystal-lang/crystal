@@ -23,4 +23,57 @@ describe Fiber do
       end
     end
   end
+
+  describe ".timeout" do
+    it "expires" do
+      cancelation_token = nil
+      channel = Channel(Fiber::TimeoutResult).new
+
+      spawn do
+        result = Fiber.timeout(10.milliseconds) { |token| cancelation_token = token }
+        channel.send(result)
+      end
+
+      channel.receive.should eq(Fiber::TimeoutResult::EXPIRED)
+    end
+
+    it "is canceled" do
+      cancelation_token = nil
+      channel = Channel(Fiber::TimeoutResult).new
+
+      fiber = spawn do
+        result = Fiber.timeout(1.second) { |token| cancelation_token = token }
+        channel.send(result)
+      end
+
+      until cancelation_token
+        Fiber.yield
+      end
+
+      if fiber.resolve_timer?(cancelation_token.not_nil!)
+        fiber.enqueue
+      end
+
+      channel.receive.should eq(Fiber::TimeoutResult::CANCELED)
+    end
+
+    it "expires or is canceled" do
+      tokens = Channel(Fiber::CancelationToken).new(1)
+      results = Channel(Fiber::TimeoutResult).new(1)
+
+      200_000.times do
+        suspended_fiber = spawn do
+          result = Fiber.timeout(10.microseconds) { |token| tokens.send(token) }
+          results.send(result)
+        end
+
+        token = tokens.receive
+        sleep rand(9..11).microseconds
+
+        canceled = suspended_fiber.resolve_timer?(token)
+        suspended_fiber.enqueue if canceled
+        results.receive.should eq(canceled ? Fiber::TimeoutResult::CANCELED : Fiber::TimeoutResult::EXPIRED)
+      end
+    end
+  end
 end

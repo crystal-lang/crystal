@@ -25,6 +25,10 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
     System::Thread.sleep(duration)
   end
 
+  def timeout(until time : Time::Instant, token : Fiber::CancelationToken) : Bool
+    raise NotImplementedError.new("Crystal::Wasi::EventLoop#timeout")
+  end
+
   # Creates a timeout_event.
   def create_timeout_event(fiber) : Crystal::EventLoop::Event
     raise NotImplementedError.new("Crystal::Wasi::EventLoop.create_timeout_event")

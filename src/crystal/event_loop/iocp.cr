@@ -224,7 +224,10 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     fiber = timer.value.fiber
 
     case timer.value.type
-    in .sleep?, .timeout?
+    in .sleep?
+      timer.value.timed_out!
+    in .timeout?
+      return unless fiber.resolve_timer?(timer.value.cancelation_token)
       timer.value.timed_out!
     in .select_timeout?
       return unless select_action = timer.value.timeout_select_action
@@ -248,10 +251,11 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     end
   end
 
-  protected def delete_timer(timer : Pointer(Timer)) : Nil
+  protected def delete_timer(timer : Pointer(Timer)) : Bool
     @timers_mutex.synchronize do
-      _, was_next_ready = @timers.delete(timer)
+      dequeued, was_next_ready = @timers.delete(timer)
       rearm_waitable_timer(@timers.next_ready?, interruptible: false) if was_next_ready
+      dequeued
     end
   end
 
@@ -290,10 +294,26 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     raise "BUG: #{timer.fiber} called sleep but was manually resumed before the timer expired!"
   end
 
+  def timeout(until time : Time::Instant, token : Fiber::CancelationToken) : Bool
+    # allocate *timer* in GC HEAP as it may outlive this function
+    timer = Pointer(Timer).malloc
+    timer.value.initialize(:timeout, Fiber.current)
+    timer.value.wake_at = time
+    timer.value.cancelation_token = token
+    add_timer(timer)
+
+    Fiber.suspend
+
+    delete_timer(timer) unless timer.value.timed_out?
+    timer.value.timed_out?
+  end
+
   # Suspend the current fiber for *duration* and returns true if the timer
   # expired and false if the fiber was resumed early.
   #
   # Specific to IOCP to handle IO timeouts.
+  #
+  # FIXME: use timeout(time, token) instead
   def timeout(duration : Time::Span) : Bool
     event = Fiber.current.resume_event
     event.add(duration)
@@ -309,7 +329,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   end
 
   def create_resume_event(fiber : Fiber) : EventLoop::Event
-    FiberEvent.new(:timeout, fiber)
+    FiberEvent.new(:sleep, fiber)
   end
 
   def create_timeout_event(fiber : Fiber) : EventLoop::Event

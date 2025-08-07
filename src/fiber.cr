@@ -265,6 +265,120 @@ class Fiber
     @resume_event ||= Crystal::EventLoop.current.create_resume_event(self)
   end
 
+  struct CancelationToken
+    # :nodoc:
+    getter value : UInt32
+
+    def initialize(@value : UInt32)
+    end
+  end
+
+  enum TimeoutResult
+    EXPIRED
+    CANCELED
+  end
+
+  private TIMEOUT_FLAG    = 1_u32 # bit 1 states if the timeout is set or unset
+  private TIMEOUT_COUNTER = 2_u32 # bits 2..32 is a counter to avoid ABA issues
+  @timer = Atomic(UInt32).new(0_u32)
+
+  # Suspends the current `Fiber` for *duration*.
+  #
+  # Yields a `CancelationToken` before suspending the fiber. The token can be
+  # used to manually cancel the timer before *duration* expires to resume the
+  # fiber before *duration*. See `#resolve_timer?` for details.
+  #
+  # The fiber will be resumed once, either because the timer expired (*duration*
+  # has elapsed) or because the timer has been canceled. The returned
+  # `TimeoutResult` can be used to determine what happened and act accordingly,
+  # for example do some cleanup or raise an exception if the timer expired.
+  #
+  # ```
+  # result = Fiber.timeout(5.seconds) do |cancelation_token|
+  #   enqueue_waiter(Fiber.current, cancelation_token)
+  # end
+  #
+  # if result.expired?
+  #   dequeue_waiter(Fiber.current)
+  # end
+  # ```
+  def self.timeout(duration : Time::Span, & : CancelationToken ->) : TimeoutResult
+    timeout(until: Time.instant + duration) { |token| yield token }
+  end
+
+  # Identical to `.timeout` but suspends the fiber until an absolute time, as
+  # per the monotonic clock, is reached.
+  #
+  # For example, we can retry something until 5 seconds have elapsed:
+  #
+  # ```
+  # time = Time.monotonic + 5.seconds
+  # loop do
+  #   break if try_something?
+  #   result = Fiber.timeout(until: time) { |token| add_waiter(token) }
+  #   raise "timeout" if result.expired?
+  # end
+  # ```
+  def self.timeout(*, until time : Time::Instant, & : CancelationToken ->) : TimeoutResult
+    token = Fiber.current.new_cancelation_token
+    yield token
+    result = Crystal::EventLoop.current.timeout(time, token)
+    result ? TimeoutResult::EXPIRED : TimeoutResult::CANCELED
+  end
+
+  # Sets the timeout flag and increments the counter to avoid ABA issues with
+  # parallel threads trying to resolve the timer while the timer was unset then
+  # set again (new timer). Since the current fiber is the only one that can set
+  # the timer, we can merely set the atomic (no need for CAS).
+  protected def new_cancelation_token : CancelationToken
+    value = (@timer.get(:relaxed) | TIMEOUT_FLAG) &+ TIMEOUT_COUNTER
+    @timer.set(value, :relaxed)
+    CancelationToken.new(value)
+  end
+
+  # Tries to resolve the timeout previously set on `Fiber` using the cancelation
+  # *token*. See `Fiber.timeout` for details on setting the timeout.
+  #
+  # Returns true when the timer has been resolved, false otherwise.
+  #
+  # On success, the caller owns the fiber and must eventually enqueue it.
+  # Failing to do so means that the fiber will never be resumed.
+  #
+  # On failure, the caller must skip the fiber. Trying to enqueue the fiber
+  # would lead to resume the fiber twice.
+  #
+  # ```
+  # require "wait_group"
+  #
+  # WaitGroup.wait do |wg|
+  #   cancelation_token = nil
+  #
+  #   suspended_fiber = wg.spawn do
+  #     result = Fiber.timeout(5.seconds) do |token|
+  #       # save the token so another fiber can try to cancel the timer
+  #       cancelation_token = token
+  #     end
+  #
+  #     # prints either EXPIRED or CANCELED
+  #     puts result
+  #   end
+  #
+  #   sleep rand(4..6).seconds
+  #
+  #   # let's try to cancel
+  #   if suspended_fiber.resolve_timer?(cancelation_token.not_nil!)
+  #     # canceled: we must enqueue the fiber
+  #     suspended_fiber.enqueue
+  #   else
+  #     # expired: do nothing
+  #   end
+  # end
+  # ```
+  def resolve_timer?(token : CancelationToken) : Bool
+    _, success = @timer.compare_and_set(token.value, token.value & ~TIMEOUT_FLAG, :relaxed, :relaxed)
+    success
+  end
+
   # Yields to the scheduler and allows it to swap execution to other
   # waiting fibers.
   #

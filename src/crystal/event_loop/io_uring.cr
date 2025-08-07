@@ -456,6 +456,9 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
         next unless select_action = event.value.timeout_select_action
         next unless select_action.time_expired?
         event.value.wake_at = nil
+      when .timeout?
+        next unless fiber.resolve_timer?(event.value.cancelation_token)
+        event.value.timed_out = true
       when .sleep?
         event.value.timed_out = true
       else
@@ -568,6 +571,20 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
     # dead fiber" can still happen in a MT execution context.
     delete_timer(pointerof(event))
     raise "BUG: #{event.fiber} called sleep but was manually resumed before the timer expired!"
+  end
+
+  def timeout(until time : Time::Instant, token : Fiber::CancelationToken) : Bool
+    # allocate *event* in GC HEAP as it may outlive this function
+    event = Pointer(Event).malloc
+    event.value.initialize(:timeout, Fiber.current)
+    event.value.wake_at = time
+    event.value.cancelation_token = token
+    add_timer(event)
+
+    Fiber.suspend
+
+    delete_timer(event) unless event.value.timed_out?
+    event.value.timed_out?
   end
 
   def create_timeout_event(fiber : Fiber) : FiberEvent
