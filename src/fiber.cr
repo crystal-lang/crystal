@@ -300,6 +300,123 @@ class Fiber
     Fiber.current.cancel_timeout
   end
 
+  struct TimeoutToken
+    # :nodoc:
+    getter value : UInt32
+
+    def initialize(@value : UInt32)
+    end
+  end
+
+  enum TimeoutResult
+    EXPIRED
+    CANCELED
+  end
+
+  private TIMEOUT_FLAG    = 1_u32
+  private TIMEOUT_COUNTER = 2_u32
+
+  @timeout = Atomic(UInt32).new(0_u32)
+
+  # Suspends the current `Fiber` for *duration*.
+  #
+  # Yields a `TimeoutToken` before suspending the fiber. The token is required
+  # to manually cancel the timeout before *duration* expires. See
+  # `#resolve_timeout?` for details.
+  #
+  # The fiber will be automatically resumed after *duration* has elapsed, but it
+  # may be resumed earlier if the timeout has been manually canceled, yet the
+  # fiber will only ever be resumed once. The returned `TimeoutResult` can be
+  # used to determine what happened and act accordingly, for example do some
+  # cleanup or raise an exception if the timeout expired.
+  #
+  # ```
+  # result = Fiber.timeout(5.seconds) do |cancelation_token|
+  #   enqueue_waiter(Fiber.current, cancelation_token)
+  # end
+  #
+  # if result.expired?
+  #   dequeue_waiter(Fiber.current)
+  # end
+  # ```
+  #
+  # Consider `::sleep` if you don't need to cancel the timeout.
+  def self.timeout(duration : Time::Span, & : TimeoutToken ->) : TimeoutResult
+    timeout(until: Time.monotonic + duration) { |token| yield token }
+  end
+
+  # Identical to `.timeout` but suspending the fiber until an absolute time, as
+  # per the monotonic clock, is reached.
+  #
+  # For example, we can retry something until 5 seconds have elapsed:
+  #
+  # ```
+  # time = Time.monotonic + 5.seconds
+  # loop do
+  #   break if try_something?
+  #   result = Fiber.timeout(until: time) { |token| add_waiter(token) }
+  #   raise "timeout" if result.expired?
+  # end
+  # ```
+  def self.timeout(*, until time : Time::Span, & : TimeoutToken ->) : TimeoutResult
+    token = Fiber.current.create_timeout
+    yield token
+    result = Crystal::EventLoop.current.timeout(time, token)
+    result ? TimeoutResult::EXPIRED : TimeoutResult::CANCELED
+  end
+
+  # Sets the timeout flag and increments the counter to avoid ABA issues with
+  # parallel threads trying to resolve the timeout while the timeout was unset
+  # then set again (new timeout). Since the current fiber is the only one that
+  # can set the timeout, we can merely set the atomic (no need for CAS).
+  protected def create_timeout : TimeoutToken
+    value = (@timeout.get(:relaxed) | TIMEOUT_FLAG) &+ TIMEOUT_COUNTER
+    @timeout.set(value, :relaxed)
+    TimeoutToken.new(value)
+  end
+
+  # Tries to resolve the timeout previously set on `Fiber` using the cancelation
+  # *token*. See `Fiber.timeout` for details on setting the timeout.
+  #
+  # Returns true when the timeout has been resolved, false otherwise.
+  #
+  # The caller that succeeded to resolve the timeout owns the fiber and must
+  # eventually enqueue it. Failing to do so means that the fiber will never be
+  # resumed.
+  #
+  # A caller that failed to resolve the timeout must skip the fiber. Trying to
+  # enqueue the fiber would lead the fiber to be resumed twice!
+  #
+  # ```
+  # require "wait_group"
+  #
+  # WaitGroup.wait do |wg|
+  #   cancelation_token = nil
+  #
+  #   suspended_fiber = wg.spawn do
+  #     result = Fiber.timeout(5.seconds) do |token|
+  #       # save the token so another fiber can try to cancel the timeout
+  #       cancelation_token = token
+  #     end
+  #
+  #     # prints either EXPIRED or CANCELED
+  #     puts result
+  #   end
+  #
+  #   sleep rand(4..6).seconds
+  #
+  #   # let's try to cancel the timeout
+  #   if suspended_fiber.resolve_timeout?(cancelation_token.not_nil!)
+  #     # canceled: we must enqueue the fiber
+  #     suspended_fiber.enqueue
+  #   end
+  # end
+  # ```
+  def resolve_timeout?(token : TimeoutToken) : Bool
+    _, success = @timeout.compare_and_set(token.value, token.value & ~TIMEOUT_FLAG, :relaxed, :relaxed)
+    success
+  end
+
   # Yields to the scheduler and allows it to swap execution to other
   # waiting fibers.
   #
