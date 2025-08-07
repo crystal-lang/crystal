@@ -55,6 +55,39 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
     Fiber.suspend
   end
 
+  class TimeoutData
+    property fiber : Fiber
+    property timeout_token : Fiber::TimeoutToken
+    property? expired : Bool = false
+
+    def initialize(@fiber, @timeout_token)
+    end
+  end
+
+  def timeout(time : ::Time::Span, token : Fiber::TimeoutToken) : Bool
+    arg = TimeoutData.new(Fiber.current, token)
+
+    event = event_base.new_event(-1, LibEvent2::EventFlags::None, arg) do |s, flags, data|
+      d = data.as(TimeoutData)
+      f = d.fiber
+      if f.resolve_timeout?(d.timeout_token)
+        d.expired = true
+        {% if flag?(:execution_context) %}
+          event_loop = Crystal::EventLoop.current.as(Crystal::EventLoop::LibEvent)
+          event_loop.callback_enqueue(f)
+        {% else %}
+          f.enqueue
+        {% end %}
+      end
+    end
+    event.add(time - Time.monotonic)
+
+    Fiber.suspend
+
+    event.delete unless arg.expired?
+    arg.expired?
+  end
+
   # Create a new resume event for a fiber (sleep).
   def create_resume_event(fiber : Fiber) : Crystal::EventLoop::LibEvent::Event
     event_base.new_event(-1, LibEvent2::EventFlags::None, fiber) do |s, flags, data|

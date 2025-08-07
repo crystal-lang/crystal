@@ -156,6 +156,25 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     raise "BUG: #{event.fiber} called sleep but was manually resumed before the timer expired!"
   end
 
+  def timeout(time : ::Time::Span, token : Fiber::TimeoutToken) : Bool
+    event = Event.new(:timeout, Fiber.current)
+    event.wake_at = time
+    event.timeout_token = token
+    add_timer(pointerof(event))
+
+    Fiber.suspend
+
+    unless event.timed_out? || delete_timer(pointerof(event))
+      # the timeout was canceled while another thread dequeued the timer while
+      # running the event loop: we must synchronize with #process_timer
+      # (otherwise *event* might go out of scope); by rule the timer will always
+      # enqueue the fiber and we must suspend again.
+      Fiber.suspend
+    end
+
+    event.timed_out?
+  end
+
   def create_timeout_event(fiber : Fiber) : FiberEvent
     FiberEvent.new(:select_timeout, fiber)
   end
@@ -606,6 +625,11 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
       fiber.timeout_select_action = nil
       return unless select_action.time_expired?
       fiber.@timeout_event.as(FiberEvent).clear
+    when .timeout?
+      # the timeout might have been canceled already, and we must synchronize
+      # with the resumed `#timeout` fiber; by rule we must always resume the
+      # fiber, regardless of whether we resolve the timeout or not.
+      event.value.timed_out! if fiber.resolve_timeout?(event.value.timeout_token)
     when .sleep?
       event.value.timed_out!
     else

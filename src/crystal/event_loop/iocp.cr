@@ -143,8 +143,17 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     fiber = timer.value.fiber
 
     case timer.value.type
-    in .sleep?, .timeout?
+    in .sleep?
       timer.value.timed_out!
+    in .timeout?
+      if token = timer.value.timeout_token?
+        # the timeout might have been canceled already, and we must synchronize
+        # with the resumed `#timeout` fiber; by rule we must always resume the
+        # fiber, regardless of whether we resolve the timeout or not.
+        timer.value.timed_out! if fiber.resolve_timeout?(token)
+      else
+        timer.value.timed_out!
+      end
     in .select_timeout?
       return unless select_action = fiber.timeout_select_action
       fiber.timeout_select_action = nil
@@ -168,10 +177,11 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     end
   end
 
-  protected def delete_timer(timer : Pointer(Timer)) : Nil
+  protected def delete_timer(timer : Pointer(Timer)) : Bool
     @mutex.synchronize do
-      _, was_next_ready = @timers.delete(timer)
+      dequeued, was_next_ready = @timers.delete(timer)
       rearm_waitable_timer(@timers.next_ready?, interruptible: false) if was_next_ready
+      dequeued
     end
   end
 
@@ -208,6 +218,25 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     # dead fiber" can still happen in a MT execution context.
     delete_timer(pointerof(timer))
     raise "BUG: #{timer.fiber} called sleep but was manually resumed before the timer expired!"
+  end
+
+  def timeout(time : ::Time::Span, token : Fiber::TimeoutToken) : Bool
+    timer = Timer.new(:timeout, Fiber.current)
+    timer.wake_at = time
+    timer.timeout_token = token
+    add_timer(pointerof(timer))
+
+    Fiber.suspend
+
+    unless timer.timed_out? || delete_timer(pointerof(timer))
+      # the timeout was canceled while another thread dequeued the timer while
+      # running the event loop: we must synchronize with #process_timer
+      # (otherwise *event* might go out of scope); by rule the timer will always
+      # enqueue the fiber and we must suspend again.
+      Fiber.suspend
+    end
+
+    timer.timed_out?
   end
 
   # Suspend the current fiber for *duration* and returns true if the timer
