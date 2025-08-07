@@ -40,7 +40,7 @@ class Crypto::Blowfish
     end
   end
 
-  def encrypt_pair(l : UInt32, r : UInt32)
+  def encrypt_pair(l : UInt32, r : UInt32) : Tuple(UInt32, UInt32)
     0.upto(@rounds - 1) do |i|
       l ^= @p.to_unsafe[i]
       r ^= f(l)
