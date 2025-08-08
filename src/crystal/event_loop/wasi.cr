@@ -21,7 +21,7 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
     raise NotImplementedError.new("Crystal::Wasi::EventLoop.sleep")
   end
 
-  def timeout(time : ::Time::Span, token : Fiber::TimeoutToken) : Bool
+  def timeout(until time : Time::Span, token : Fiber::TimeoutToken) : Bool
     raise NotImplementedError.new("Crystal::Wasi::EventLoop#timeout")
   end
 

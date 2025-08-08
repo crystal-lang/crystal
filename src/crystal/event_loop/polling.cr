@@ -156,7 +156,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     raise "BUG: #{event.fiber} called sleep but was manually resumed before the timer expired!"
   end
 
-  def timeout(time : ::Time::Span, token : Fiber::TimeoutToken) : Bool
+  def timeout(until time : Time::Span, token : Fiber::TimeoutToken) : Bool
     event = Event.new(:timeout, Fiber.current)
     event.wake_at = time
     event.timeout_token = token

@@ -220,7 +220,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     raise "BUG: #{timer.fiber} called sleep but was manually resumed before the timer expired!"
   end
 
-  def timeout(time : ::Time::Span, token : Fiber::TimeoutToken) : Bool
+  def timeout(until time : Time::Span, token : Fiber::TimeoutToken) : Bool
     timer = Timer.new(:timeout, Fiber.current)
     timer.wake_at = time
     timer.timeout_token = token

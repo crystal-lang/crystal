@@ -88,8 +88,8 @@ abstract class Crystal::EventLoop
   # monotonic clock). Must resolve the timeout using `Fiber.resolve_timeout?`
   # and *token* before resuming the fiber.
   #
-  # Returns true if the timer expired, false otherwise.
-  abstract def timeout(time : Time::Span, token : Fiber::TimeoutToken) : Bool
+  # Returns true if the timer expired, false if it was canceled.
+  abstract def timeout(until time : Time::Span, token : Fiber::TimeoutToken) : Bool
 
   # Create a new resume event for a fiber.
   #

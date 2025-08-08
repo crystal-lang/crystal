@@ -64,7 +64,7 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
     end
   end
 
-  def timeout(time : ::Time::Span, token : Fiber::TimeoutToken) : Bool
+  def timeout(until time : Time::Span, token : Fiber::TimeoutToken) : Bool
     arg = TimeoutData.new(Fiber.current, token)
 
     event = event_base.new_event(-1, LibEvent2::EventFlags::None, arg) do |s, flags, data|
