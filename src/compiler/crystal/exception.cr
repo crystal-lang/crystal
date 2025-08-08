@@ -149,14 +149,13 @@ module Crystal
 
     def format_error_from_file(filename : String)
       lines = File.read_lines(filename)
-      formatted_error = format_error(
+      format_error(
         filename: @filename,
         lines: lines,
         line_number: @line_number,
         column_number: @column_number,
         size: @size
       )
-      "In #{formatted_error}"
     end
 
     def format_macro_error(virtual_file : VirtualFile)
