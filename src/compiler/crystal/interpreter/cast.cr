@@ -237,14 +237,17 @@ class Crystal::Repl::Compiler
   # Unpacks a tuple into a series of types.
   # Each of the tuple elements is upcasted to the corresponding type in `to_types`.
   # Every individual element is stack-aligned. Use `#cast_tuple` instead if they
-  # should follow their natural alignments inside a target tuple type.
+  # should follow their natural alignments inside a target tuple type. Nils
+  # inside `to_types` are discarded.
   # It's the caller's responsibility to pop the original, unpacked tuple, from the
   # stack if needed.
-  private def unpack_tuple(node : ASTNode, from : TupleInstanceType, to_types : Array(Type))
+  private def unpack_tuple(node : ASTNode, from : TupleInstanceType, to_types : Array(Type?))
     from_aligned_size = aligned_sizeof_type(from)
     to_element_offset = 0
 
     to_types.each_with_index do |to_element_type, i|
+      next unless to_element_type
+
       from_element_type = from.tuple_types[i]
 
       from_inner_size = inner_sizeof_type(from_element_type)

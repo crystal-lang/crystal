@@ -1,6 +1,6 @@
 class LLVM::Context
-  def self.new
-    new(LibLLVM.create_context)
+  def self.new(*, dispose_on_finalize : Bool = true)
+    new(LibLLVM.create_context, dispose_on_finalize)
   end
 
   def initialize(@unwrap : LibLLVM::ContextRef, @dispose_on_finalize = true)

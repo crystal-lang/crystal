@@ -3,7 +3,7 @@ struct XML::NodeSet
 
   # :nodoc:
   def self.new(doc : Node, set : LibXML::NodeSet*)
-    return NodeSet.new unless set || set.value.node_nr > 0
+    return NodeSet.new unless set && set.value.node_nr > 0
 
     nodes = Slice(Node).new(set.value.node_nr) do |i|
       Node.new(set.value.node_tab[i], doc)

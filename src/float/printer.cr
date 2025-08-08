@@ -148,19 +148,17 @@ module Float::Printer
 
   # If *v* is finite, yields its absolute value, otherwise writes *v* to *io*.
   private def check_finite_float(v : Float::Primitive, io : IO, &)
-    d = IEEE.to_uint(v)
-
-    if IEEE.nan?(d)
+    if v.nan?
       io << "NaN"
       return
     end
 
-    if IEEE.sign(d) < 0
+    if v.sign_bit < 0
       io << '-'
       v = -v
     end
 
-    if IEEE.inf?(d)
+    if v.infinite?
       io << "Infinity"
     else
       yield v

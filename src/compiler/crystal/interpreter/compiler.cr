@@ -176,6 +176,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     # And we have to do them starting from the end because it's a stack.
     node.args.reverse_each do |arg|
       block_var = node.vars.not_nil![arg.name]
+      next if block_var.name == "_"
 
       # If any block argument is closured, we need to store it in the closure
       if block_var.closure_in?(node)
@@ -2203,6 +2204,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       end
 
       block.vars.try &.each do |name, var|
+        next if var.name == "_"
+
         # Special vars don't have scopes like regular block vars do
         next if var.special_var?
 
@@ -2225,7 +2228,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       bytesize_after_block_local_vars = @local_vars.current_bytesize
 
-      block_args_bytesize = block.args.sum { |arg| aligned_sizeof_type(arg) }
+      block_args_bytesize = block.args.sum do |arg|
+        arg.name == "_" ? 0 : aligned_sizeof_type(arg)
+      end
 
       # If it's `with ... yield` we pass the "with" scope
       # as the first block argument, so we must count it too
@@ -2296,45 +2301,53 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     splat_arg = node.args[splat_index]
     tuple_type = splat_arg.type.as(TupleInstanceType)
 
-    temp_var_names = tuple_type.tuple_types.map do
-      @context.program.new_temp_var_name
-    end
-
-    # Go from |x, *y, z| to |x, temp1, temp2, temp3|
-    node.args[splat_index..splat_index] = temp_var_names.map_with_index do |temp_var_name, i|
-      Var.new(temp_var_name, type: tuple_type.tuple_types[i])
-    end
-
-    # Create y = {temp1, temp2, temp3}
-    assign_var = Var.new(splat_arg.name, type: tuple_type)
-    tuple_vars = temp_var_names.map_with_index do |temp_var_name, i|
-      Var.new(temp_var_name, type: tuple_type.tuple_types[i]).as(ASTNode)
-    end
-    tuple_literal = TupleLiteral.new(tuple_vars)
-    tuple_literal.type = tuple_type
-
-    assign = Assign.new(assign_var, tuple_literal)
-    assign.type = tuple_type
-
-    # Replace the block body
-    block_body = node.body
-    unless block_body
-      block_body = NilLiteral.new
-      block_body.type = @context.program.nil_type
-    end
-
-    exps = Expressions.new([assign, block_body] of ASTNode)
-    exps.type = block_body.type
-    node.body = exps
-
     # Remove the fact that the block has a splat
     node.splat_index = nil
 
-    # We also need to declare the vars in the block
-    temp_var_names.each_with_index do |temp_var_name, i|
-      meta_var = MetaVar.new(temp_var_name, tuple_type.tuple_types[i])
-      meta_var.context = node
-      node.vars.not_nil![temp_var_name] = meta_var
+    if splat_arg.name != "_"
+      temp_var_names = Array.new(tuple_type.size) do
+        @context.program.new_temp_var_name
+      end
+
+      # Go from |x, *y, z| to |x, temp1, temp2, temp3, z|
+      node.args[splat_index..splat_index] = temp_var_names.map_with_index do |temp_var_name, i|
+        Var.new(temp_var_name, type: tuple_type.tuple_types[i])
+      end
+
+      # Create y = {temp1, temp2, temp3}
+      assign_var = Var.new(splat_arg.name, type: tuple_type)
+      tuple_vars = temp_var_names.map_with_index do |temp_var_name, i|
+        Var.new(temp_var_name, type: tuple_type.tuple_types[i]).as(ASTNode)
+      end
+      tuple_literal = TupleLiteral.new(tuple_vars)
+      tuple_literal.type = tuple_type
+
+      assign = Assign.new(assign_var, tuple_literal)
+      assign.type = tuple_type
+
+      # Replace the block body
+      block_body = node.body
+      unless block_body
+        block_body = NilLiteral.new
+        block_body.type = @context.program.nil_type
+      end
+
+      exps = Expressions.new([assign, block_body] of ASTNode)
+      exps.type = block_body.type
+      node.body = exps
+
+      # We also need to declare the vars in the block
+      temp_var_names.each_with_index do |temp_var_name, i|
+        meta_var = MetaVar.new(temp_var_name, tuple_type.tuple_types[i])
+        meta_var.context = node
+        node.vars.not_nil![temp_var_name] = meta_var
+      end
+    else
+      # Go from |x, *_, z| to |x, _, _, _, z|
+      # the block body remains unchanged
+      node.args[splat_index..splat_index] = Array.new(tuple_type.size) do
+        Var.new("_")
+      end
     end
   end
 
@@ -2998,8 +3011,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       request_value(with_scope)
     end
 
-    pop_obj = nil
-
     # Check if tuple unpacking is needed.
     # This happens when a yield has only one expression that's a tuple
     # type, and the block arguments are more than one.
@@ -3050,16 +3061,28 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       # Accept the tuple
       request_value exp
 
+      # Compute which block var types we need to unpack to,
+      # and what's their total size
+      block_var_types = [] of Type?
+      block_var_types_size = 0
+
       # We need to cast to the block var, not arg
       # (the var might have more types in it if it's assigned other values)
-      block_var_types = block.args.map do |arg|
-        block.vars.not_nil![arg.name].type
+      block.args.each do |block_arg|
+        if block_arg.name == "_"
+          block_var_types << nil
+        else
+          block_var = block.vars.not_nil![block_arg.name]
+          block_var_type = block_var.type
+          block_var_types << block_var_type
+          block_var_types_size += aligned_sizeof_type(block_var_type)
+        end
       end
 
       unpack_tuple exp, tuple_type, block_var_types
 
       # We need to discard the tuple value that comes before the unpacked values
-      pop_obj = tuple_type
+      pop_from_offset aligned_sizeof_type(tuple_type), block_var_types_size, node: nil
     else
       block_arg_index = 0
 
@@ -3072,17 +3095,19 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
           # Compute which block var types we need to unpack to,
           # and what's their total size
-          block_var_types = [] of Type
+          block_var_types = [] of Type?
           block_var_types_size = 0
 
           tuple_element_index = 0
-          while block_arg_index < block.args.size && tuple_element_index < tuple_type.tuple_types.size
-            block_arg = block.args[block_arg_index]
-            block_var = block.vars.not_nil![block_arg.name]
-            block_var_type = block_var.type
-
-            block_var_types << block_var_type
-            block_var_types_size += aligned_sizeof_type(block_var_type)
+          while (block_arg = block.args[block_arg_index]?) && tuple_element_index < tuple_type.tuple_types.size
+            if block_arg.name == "_"
+              block_var_types << nil
+            else
+              block_var = block.vars.not_nil![block_arg.name]
+              block_var_type = block_var.type
+              block_var_types << block_var_type
+              block_var_types_size += aligned_sizeof_type(block_var_type)
+            end
 
             block_arg_index += 1
             tuple_element_index += 1
@@ -3093,12 +3118,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
           # Now we need to pop the tuple
           pop_from_offset aligned_sizeof_type(tuple_type), block_var_types_size, node: nil
         else
-          if block_arg_index < block.args.size
+          if (block_arg = block.args[block_arg_index]?) && block_arg.name != "_"
             request_value(exp)
 
             # We need to cast to the block var, not arg
             # (the var might have more types in it if it's assigned other values)
-            block_arg = block.args[block_arg_index]
             block_var = block.vars.not_nil![block_arg.name]
 
             upcast exp, exp.type, block_var.type
@@ -3113,14 +3137,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     call_block compiled_block, node: node
 
-    if @wants_value
-      pop_from_offset aligned_sizeof_type(pop_obj), aligned_sizeof_type(node), node: nil if pop_obj
-    else
-      if pop_obj
-        pop aligned_sizeof_type(node) + aligned_sizeof_type(pop_obj), node: nil
-      else
-        pop aligned_sizeof_type(node), node: nil
-      end
+    unless @wants_value
+      pop aligned_sizeof_type(node), node: nil
     end
 
     false
