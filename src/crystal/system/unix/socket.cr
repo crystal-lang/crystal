@@ -210,8 +210,9 @@ module Crystal::System::Socket
         fcntl(fds[0], LibC::F_SETFD, LibC::FD_CLOEXEC)
         fcntl(fds[1], LibC::F_SETFD, LibC::FD_CLOEXEC)
         unless blocking
-          fcntl(fds[0], LibC::F_SETFL, fcntl(fds[0], LibC::F_GETFL) | LibC::O_NONBLOCK)
-          fcntl(fds[1], LibC::F_SETFL, fcntl(fds[1], LibC::F_GETFL) | LibC::O_NONBLOCK)
+          flags = fcntl(fds[0], LibC::F_GETFL) | LibC::O_NONBLOCK
+          fcntl(fds[0], LibC::F_SETFL, flags)
+          fcntl(fds[1], LibC::F_SETFL, flags)
         end
       end
     {% end %}
