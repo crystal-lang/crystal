@@ -146,7 +146,7 @@ class Crystal::CodeGenVisitor
   end
 
   def create_initialize_const_function(fun_name, const)
-    global, initialized_flag = declare_const_and_initialized_flag(const)
+    global, _ = declare_const_and_initialized_flag(const)
 
     in_main do
       define_main_function(fun_name, ([] of LLVM::Type), llvm_context.void, needs_alloca: true) do |func|

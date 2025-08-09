@@ -389,7 +389,6 @@ class Crystal::Repl::Compiler
       ivar_name = '@' + node.name.rchop # remove the '=' suffix
       ivar = type.lookup_instance_var(ivar_name)
       ivar_offset = ivar_offset(type, ivar_name)
-      ivar_size = inner_sizeof_type(type.lookup_instance_var(ivar_name))
 
       # pointer_set needs first arg, then obj
       request_value(arg)

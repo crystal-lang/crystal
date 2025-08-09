@@ -234,7 +234,6 @@ class Program
   def add_cells_init(mod, bb)
     builder.position_at_end bb
 
-    calloc = mod.functions["calloc"]
     call_args = [@ctx.int32.const_int(NUM_CELLS), @ctx.int32.const_int(CELL_SIZE_IN_BYTES)]
     @cells_ptr = call_c_function "calloc", call_args, "cells"
 

@@ -725,7 +725,6 @@ struct BigInt < Int
     end
 
     x = T.zero
-    preshift_limit = T::MAX >> bits_per_limb
     limbs.reverse_each do |limb|
       x <<= bits_per_limb
       x |= limb

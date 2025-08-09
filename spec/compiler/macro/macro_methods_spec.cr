@@ -1773,7 +1773,7 @@ module Crystal
         it "does not include trailing + for virtual type" do
           assert_macro("{{klass.id}}", "Foo") do |program|
             foo = NonGenericClassType.new(program, program, "Foo", program.reference)
-            bar = NonGenericClassType.new(program, program, "Bar", foo)
+            NonGenericClassType.new(program, program, "Bar", foo)
             {klass: TypeNode.new(foo.virtual_type)}
           end
         end

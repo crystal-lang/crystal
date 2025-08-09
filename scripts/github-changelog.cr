@@ -338,7 +338,7 @@ class ChangelogEntry
 
   def to_s(io : IO)
     if sub_topic = pr.sub_topic
-      io << "*(" << pr.sub_topic << ")* "
+      io << "*(" << sub_topic << ")* "
     end
     if pr.labels.includes?("security")
       io << "**[security]** "

@@ -48,7 +48,7 @@ class Crystal::Repl::Compiler
         compatible_type = to.union_types.find! { |union_type| type_needing_cast.implements?(union_type) }
 
         # Get the type id of the "from" union
-        from_type_id = get_union_type_id(aligned_sizeof_type(from), node: node)
+        get_union_type_id(aligned_sizeof_type(from), node: node)
 
         # Check if `from_type_id` is the same as `type_needing_cast`
         put_i32 type_id(type_needing_cast), node: node
@@ -270,7 +270,6 @@ class Crystal::Repl::Compiler
 
   private def cast_tuple(node : ASTNode, from : TupleInstanceType, to : TupleInstanceType)
     from_aligned_size = aligned_sizeof_type(from)
-    to_aligned_size = aligned_sizeof_type(to)
     to_element_offset = 0
 
     to.tuple_types.each_with_index do |to_element_type, i|
@@ -312,7 +311,6 @@ class Crystal::Repl::Compiler
 
   private def cast_named_tuple(node : ASTNode, from : NamedTupleInstanceType, to : NamedTupleInstanceType)
     from_aligned_size = aligned_sizeof_type(from)
-    to_aligned_size = aligned_sizeof_type(to)
     to_element_offset = 0
 
     from_entry_indices = to.entries.map_with_index do |to_entry, i|
