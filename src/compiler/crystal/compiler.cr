@@ -997,24 +997,22 @@ module Crystal
       private def must_compile?
         memory_buffer = generate_bitcode
 
-        can_reuse_previous_compilation =
-          compiler.emit_targets.none? && !@bc_flags_changed && File.exists?(bc_name) && File.exists?(object_name)
+        return true unless compiler.emit_targets.none?
+        return true if @bc_flags_changed
+        return true unless File.exists?(bc_name)
+        return true unless File.exists?(object_name)
 
-        if can_reuse_previous_compilation
-          memory_io = IO::Memory.new(memory_buffer.to_slice)
-          changed = File.open(bc_name) { |bc_file| !IO.same_content?(bc_file, memory_io) }
+        # If the user cancelled a previous compilation
+        # it might be that the .o file is empty
+        return true if File.size(object_name) == 0
 
-          # If the user cancelled a previous compilation
-          # it might be that the .o file is empty
-          if !changed && File.size(object_name) > 0
-            memory_buffer.dispose
-            return false
-          else
-            # We need to compile, so we'll write the memory buffer to file
-          end
-        end
+        memory_io = IO::Memory.new(memory_buffer.to_slice)
 
-        true
+        changed = File.open(bc_name) { |bc_file| !IO.same_content?(bc_file, memory_io) }
+
+        memory_buffer.dispose unless changed
+
+        changed
       end
 
       # Parse the previously generated bitcode into the LLVM module using a
