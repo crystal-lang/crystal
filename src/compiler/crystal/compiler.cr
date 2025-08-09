@@ -213,10 +213,24 @@ module Crystal
     # Raises `InvalidByteSequenceError` if the source code is not
     # valid UTF-8.
     def compile(source : Source | Array(Source), output_filename : String) : Result
+      compile_configure_program(source, output_filename) { }
+    end
+
+    # :ditto:
+    #
+    # Yields a `Program` instance before compiling.
+    def compile_configure_program(source : Source | Array(Source), output_filename : String, & : Program -> Nil) : Result
       source = [source] unless source.is_a?(Array)
       program = new_program(source)
+      yield program
       node = parse program, source
-      node = program.semantic node, cleanup: !no_cleanup?
+
+      begin
+        node = program.semantic node, cleanup: !no_cleanup?
+      rescue ex : SkipMacroCodeCoverageException
+        program.macro_expansion_error_hook.try &.call(ex.cause)
+      end
+
       units = codegen program, node, source, output_filename unless @no_codegen
 
       @progress_tracker.clear
@@ -699,7 +713,7 @@ module Crystal
         if @progress_tracker.stats?
           if result["reused"].as_bool
             name = result["name"].as_s
-            unit = units.find { |unit| unit.name == name }.not_nil!
+            unit = units.find! { |unit| unit.name == name }
             unit.reused_previous_compilation = true
           end
         end

@@ -307,7 +307,7 @@ class Array(T)
     end
 
     Array(T | U).build(size + other.size) do |buffer|
-      set = Set(T).new
+      set = Set(T | U).new
       appender = buffer.appender
       each do |obj|
         appender << obj if set.add?(obj)

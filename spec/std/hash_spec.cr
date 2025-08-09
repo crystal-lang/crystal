@@ -172,7 +172,7 @@ describe "Hash" do
   describe "#put" do
     it "puts in a small hash" do
       a = {} of Int32 => Int32
-      a.put(1, 2) { nil }.should eq(nil)
+      a.put(1, 2) { nil }.should be_nil
       a.put(1, 3) { nil }.should eq(2)
     end
 
@@ -181,7 +181,7 @@ describe "Hash" do
       100.times do |i|
         a[i] = i
       end
-      a.put(100, 2) { nil }.should eq(nil)
+      a.put(100, 2) { nil }.should be_nil
       a.put(100, 3) { nil }.should eq(2)
     end
 
@@ -381,7 +381,7 @@ describe "Hash" do
 
       h.dig("a", "b", "c").should eq([10, 20])
       h.dig(ary, "a").should eq("b")
-      h.dig(ary, "c").should eq(nil)
+      h.dig(ary, "c").should be_nil
     end
 
     it "raises KeyError if not found" do
@@ -428,7 +428,7 @@ describe "Hash" do
     end
 
     it "works with mixed types" do
-      {1 => "a", "a" => 1, 2.0 => "a", "a" => 1.0}.values_at(1, "a", 2.0, "a").should eq({"a", 1, "a", 1.0})
+      {1 => "a", "a" => 1, 2.0 => "a", "b" => 1.0}.values_at(1, "a", 2.0, "b").should eq({"a", 1, "a", 1.0})
     end
   end
 
@@ -467,8 +467,8 @@ describe "Hash" do
 
     it "returns nil if no key pairs with the given value" do
       hash = {"foo" => "bar", "baz" => "qux"}
-      hash.key_for?("foobar").should eq nil
-      hash.key_for?("bazqux").should eq nil
+      hash.key_for?("foobar").should be_nil
+      hash.key_for?("bazqux").should be_nil
     end
   end
 

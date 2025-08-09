@@ -118,14 +118,24 @@ describe Log::Metadata::Value do
     v("a").as_s.should eq("a")
     v(1).as_s?.should be_nil
 
-    v(true).as_bool.should eq(true)
-    v(false).as_bool.should eq(false)
-    v(true).as_bool?.should eq(true)
-    v(false).as_bool?.should eq(false)
+    v(true).as_bool.should be_true
+    v(false).as_bool.should be_false
+    v(true).as_bool?.should be_true
+    v(false).as_bool?.should be_false
     v(nil).as_bool?.should be_nil
   end
 
   it "json" do
     v({a: 1}).to_json.should eq(%({"a":1}))
+  end
+
+  describe "#==" do
+    it "compares with String" do
+      v("foo").should eq "foo"
+      "foo".should eq v("foo")
+
+      v("foo").should_not eq "bar"
+      "foo".should_not eq v("bar")
+    end
   end
 end

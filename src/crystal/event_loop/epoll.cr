@@ -9,7 +9,7 @@ class Crystal::EventLoop::Epoll < Crystal::EventLoop::Polling
     @epoll = System::Epoll.new
 
     # notification to interrupt a run
-    @interrupted = Atomic::Flag.new
+    @interrupted = Atomic(Bool).new(false)
     @eventfd = System::EventFD.new
     @epoll.add(@eventfd.fd, LibC::EPOLLIN, u64: @eventfd.fd.to_u64!)
 
@@ -41,7 +41,7 @@ class Crystal::EventLoop::Epoll < Crystal::EventLoop::Polling
       # create new fds
       @epoll = System::Epoll.new
 
-      @interrupted.clear
+      @interrupted.set(false, :relaxed)
       @eventfd = System::EventFD.new
       @epoll.add(@eventfd.fd, LibC::EPOLLIN, u64: @eventfd.fd.to_u64!)
 
@@ -72,7 +72,7 @@ class Crystal::EventLoop::Epoll < Crystal::EventLoop::Polling
         # TODO: panic if epoll_event.value.events != LibC::EPOLLIN (could be EPOLLERR or EPLLHUP)
         Crystal.trace :evloop, "interrupted"
         @eventfd.read
-        @interrupted.clear
+        @interrupted.set(false, :relaxed)
       when @timerfd.fd
         # TODO: panic if epoll_event.value.events != LibC::EPOLLIN (could be EPOLLERR or EPLLHUP)
         Crystal.trace :evloop, "timer"
@@ -113,7 +113,7 @@ class Crystal::EventLoop::Epoll < Crystal::EventLoop::Polling
 
   def interrupt : Nil
     # the atomic makes sure we only write once
-    @eventfd.write(1) if @interrupted.test_and_set
+    @eventfd.write(1) unless @interrupted.swap(true, :relaxed)
   end
 
   protected def system_add(fd : Int32, index : Polling::Arena::Index) : Nil

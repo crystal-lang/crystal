@@ -2095,6 +2095,8 @@ module Crystal
               type_var_type.to_s_with_options(io, skip_union_parens: true, codegen: codegen)
             end
           else
+            # `type_var` could only be a non-type such as `NumberLiteral`, no
+            # need to use `#to_s_with_options` here
             io << ", " unless first
             first = false
             type_var.to_s(io)
@@ -2288,7 +2290,11 @@ module Crystal
           raise TypeException.new "can't instantiate StaticArray(T, N) with N = #{n.type} (N must be an integer)"
         end
 
-        value = n.value.to_i
+        value = n.value.to_i?
+        unless value
+          raise TypeException.new "can't instantiate StaticArray(T, N) with N = #{n} (N must be an integer)"
+        end
+
         if value < 0
           raise TypeException.new "can't instantiate StaticArray(T, N) with N = #{value} (N must be positive)"
         end
@@ -3014,7 +3020,7 @@ module Crystal
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
-      instance_type.to_s(io)
+      instance_type.to_s_with_options(io, codegen: codegen)
       io << ".class"
     end
 
@@ -3068,7 +3074,7 @@ module Crystal
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
-      instance_type.to_s(io)
+      instance_type.to_s_with_options(io, codegen: codegen)
       io << ".class"
     end
 
@@ -3466,7 +3472,7 @@ module Crystal
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
-      base_type.to_s(io)
+      base_type.to_s_with_options(io, codegen: codegen)
       io << '+'
     end
 

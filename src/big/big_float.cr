@@ -85,6 +85,18 @@ struct BigFloat < Float
     LibGMP.mpf_set_default_prec(prec.to_u64)
   end
 
+  # :inherit:
+  def nan? : Bool
+    # there are no NaNs in GMP
+    false
+  end
+
+  # :inherit:
+  def infinite? : Int32?
+    # there are no infinities in GMP
+    nil
+  end
+
   def <=>(other : BigFloat)
     LibGMP.mpf_cmp(self, other)
   end
@@ -362,59 +374,33 @@ struct BigFloat < Float
   end
 
   def to_s(io : IO) : Nil
-    cstr = LibGMP.mpf_get_str(nil, out orig_decimal_exponent, 10, 0, self)
-    length = LibC.strlen(cstr)
-    buffer = Slice.new(cstr, length)
+    to_s_impl(io, point_range: -3..15, int_trailing_zeros: true)
+  end
 
-    decimal_exponent = fix_exponent_overflow(orig_decimal_exponent)
+  protected def to_s_impl(*, point_range : Range, int_trailing_zeros : Bool) : String
+    String.build { |io| to_s_impl(io, point_range: point_range, int_trailing_zeros: int_trailing_zeros) }
+  end
+
+  protected def to_s_impl(io : IO, *, point_range : Range, int_trailing_zeros : Bool) : Nil
+    cstr = LibGMP.mpf_get_str(nil, out orig_decimal_exponent, 10, 0, self)
+    buffer = Slice.new(cstr, LibC.strlen(cstr))
 
     # add negative sign
     if buffer[0]? == 45 # '-'
       io << '-'
       buffer = buffer[1..]
-      length -= 1
     end
 
-    point = decimal_exponent
-    exp = point
-    exp_mode = point > 15 || point < -3
-    point = 1 if exp_mode
-
-    # add leading zero
-    io << '0' if point < 1
-
-    # add integer part digits
-    if decimal_exponent > 0 && !exp_mode
-      # whole number but not big enough to be exp form
-      io.write_string buffer[0, {decimal_exponent, length}.min]
-      buffer = buffer[{decimal_exponent, length}.min...]
-      (point - length).times { io << '0' }
-    elsif point > 0
-      io.write_string buffer[0, point]
-      buffer = buffer[point...]
+    decimal_exponent = fix_exponent_overflow(orig_decimal_exponent) - buffer.size
+    if int_trailing_zeros
+      # GMP ensures `cstr` contains no trailing zeros
+      fraction = Float::Printer::FractionMode::WriteAll
+    else
+      # used by the Ryu Printf specs only
+      fraction = Float::Printer::FractionMode::RemoveIfZero
     end
 
-    io << '.'
-
-    # add leading zeros after point
-    if point < 0
-      (-point).times { io << '0' }
-    end
-
-    # add fractional part digits
-    io.write_string buffer
-
-    # print trailing 0 if whole number or exp notation of power of ten
-    if (decimal_exponent >= length && !exp_mode) || (exp != point && length == 1)
-      io << '0'
-    end
-
-    # exp notation
-    if exp != point
-      io << 'e'
-      io << '+' if exp > 0
-      (exp - 1).to_s(io)
-    end
+    Float::Printer.decimal(io, buffer, decimal_exponent, point_range, fraction)
   end
 
   # The same `LibGMP::MpExp` is used in `LibGMP::MPF` to represent a
@@ -464,6 +450,27 @@ struct BigFloat < Float
       overflow_n = ((@mpf.@_mp_exp * Math.log10(256.0 ** sizeof(LibGMP::MpLimb)) - exponent10) / 256.0 ** sizeof(LibGMP::MpExp))
       exponent10.to_i64 + overflow_n.round.to_i64 * (256_i64 ** sizeof(LibGMP::MpExp))
     {% end %}
+  end
+
+  # :inherit:
+  def format(io : IO, separator = '.', delimiter = ',', decimal_places : Int? = nil, *, group : Int = 3, only_significant : Bool = false) : Nil
+    number = self
+    if decimal_places
+      number = number.round(decimal_places)
+    end
+
+    if decimal_places && decimal_places >= 0
+      string = number.abs.to_s_impl(point_range: .., int_trailing_zeros: true)
+      integer, _, decimals = string.partition('.')
+    else
+      string = number.to_s_impl(point_range: .., int_trailing_zeros: true)
+      _, _, decimals = string.partition(".")
+      integer = number.trunc.to_big_i.abs.to_s
+    end
+
+    is_negative = number < 0
+
+    format_impl(io, is_negative, integer, decimals, separator, delimiter, decimal_places, group, only_significant)
   end
 
   def clone : BigFloat
@@ -669,5 +676,12 @@ module Math
   # ```
   def sqrt(value : BigFloat) : BigFloat
     BigFloat.new { |mpf| LibGMP.mpf_sqrt(mpf, value) }
+  end
+end
+
+# :nodoc:
+struct String::Formatter(A)
+  def int(flags, arg : BigFloat) : Nil
+    int(flags, arg.to_big_i)
   end
 end

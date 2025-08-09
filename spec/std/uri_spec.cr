@@ -401,7 +401,7 @@ describe "URI" do
     end
 
     it "returns nil for unknown schemes" do
-      URI.default_port("xyz").should eq(nil)
+      URI.default_port("xyz").should be_nil
     end
 
     it "treats scheme case insensitively" do
@@ -422,7 +422,7 @@ describe "URI" do
       old_port = URI.default_port("ftp")
       begin
         URI.set_default_port("ftp", nil)
-        URI.default_port("ftp").should eq(nil)
+        URI.default_port("ftp").should be_nil
       ensure
         URI.set_default_port("ftp", old_port)
       end

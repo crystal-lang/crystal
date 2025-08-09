@@ -12,141 +12,20 @@ env:
   SPEC_SPLIT_DOTS: 160
 
 jobs:
-  x86_64-mingw-w64-build:
-    runs-on: windows-2022
-    steps:
-      - name: Setup MSYS2
-        id: msys2
-        uses: msys2/setup-msys2@61f9e5e925871ba6c9e3e8da24ede83ea27fa91f # v2.27.0
-        with:
-          msystem: UCRT64
-          update: true
-          install: >-
-            git
-            make
-            mingw-w64-ucrt-x86_64-pkgconf
-            mingw-w64-ucrt-x86_64-llvm
-            mingw-w64-ucrt-x86_64-crystal
+  x86_64-mingw-w64:
+    name: UCRT64
+    uses: ./.github/workflows/mingw-w64-steps.yml
+    with:
+      arch: x86_64
+      runs-on: windows-2025
+      msystem: UCRT64
+      mingw-package-prefix: mingw-w64-ucrt-x86_64
 
-      - name: Disable CRLF line ending substitution
-        run: |
-          git config --global core.autocrlf false
-
-      - name: Download Crystal source
-        uses: actions/checkout@v4
-
-      - name: Build Crystal
-        shell: msys2 {0}
-        run: make crystal interpreter=1 release=1
-
-      - name: Package Crystal
-        shell: msys2 {0}
-        run: make install install_dlls deref_symlinks=1 PREFIX="$(pwd)/crystal"
-
-      - name: Download shards release
-        uses: actions/checkout@v4
-        with:
-          repository: crystal-lang/shards
-          ref: v0.19.1
-          path: shards
-
-      - name: Build shards release
-        shell: msys2 {0}
-        working-directory: ./shards
-        run: make CRYSTAL=$(pwd)/../crystal/bin/crystal SHARDS=false release=1
-
-      - name: Package Shards
-        shell: msys2 {0}
-        working-directory: ./shards
-        run: |
-          make install PREFIX="$(pwd)/../crystal"
-          # FIXME: remove after crystal-lang/shards#668
-          ldd bin/shards.exe | grep -iv ' => /c/windows/system32' | sed 's/.* => //; s/ (.*//' | xargs -t -i /usr/bin/install -m 0755 '{}' "$(pwd)/../crystal/bin/"
-
-      - name: Upload Crystal executable
-        uses: actions/upload-artifact@v4
-        with:
-          name: x86_64-mingw-w64-crystal
-          path: crystal
-
-  x86_64-mingw-w64-test-stdlib:
-    runs-on: windows-2022
-    steps:
-      - name: Setup MSYS2
-        id: msys2
-        uses: msys2/setup-msys2@61f9e5e925871ba6c9e3e8da24ede83ea27fa91f # v2.27.0
-        with:
-          msystem: UCRT64
-          update: true
-          install: >-
-            git
-            make
-            mingw-w64-ucrt-x86_64-pkgconf
-            mingw-w64-ucrt-x86_64-llvm
-            mingw-w64-ucrt-x86_64-crystal
-
-      - name: Disable CRLF line ending substitution
-        run: |
-          git config --global core.autocrlf false
-
-      - name: Download Crystal source
-        uses: actions/checkout@v4
-
-      - name: Run stdlib specs
-        shell: msys2 {0}
-        run: |
-          export CRYSTAL_SPEC_COMPILER_BIN="$(which crystal.exe)"
-          make std_spec
-
-  x86_64-mingw-w64-test-compiler:
-    runs-on: windows-2022
-    needs: [x86_64-mingw-w64-build]
-    steps:
-      - name: Setup MSYS2
-        id: msys2
-        uses: msys2/setup-msys2@61f9e5e925871ba6c9e3e8da24ede83ea27fa91f # v2.27.0
-        with:
-          msystem: UCRT64
-          update: true
-          install: >-
-            git
-            make
-            mingw-w64-ucrt-x86_64-pkgconf
-            mingw-w64-ucrt-x86_64-llvm
-            mingw-w64-ucrt-x86_64-crystal
-
-      - name: Disable CRLF line ending substitution
-        run: |
-          git config --global core.autocrlf false
-
-      - name: Download Crystal source
-        uses: actions/checkout@v4
-
-      - name: Download Crystal executable
-        uses: actions/download-artifact@v4
-        with:
-          name: x86_64-mingw-w64-crystal
-          path: crystal
-
-      - name: Copy compiler build into place
-        run: mkdir .build/ && cp crystal/bin/crystal.exe .build/
-
-      - name: Run compiler specs
-        shell: msys2 {0}
-        run: |
-          export CRYSTAL_SPEC_COMPILER_BIN="$(which crystal.exe)"
-          make compiler_spec
-
-      - name: Run interpreter specs
-        shell: msys2 {0}
-        run: |
-          export CRYSTAL_SPEC_COMPILER_BIN="$(which crystal.exe)"
-          make interpreter_spec
-
-      - name: Run primitives specs
-        shell: msys2 {0}
-        run: |
-          export CRYSTAL_SPEC_COMPILER_BIN="$(which crystal.exe)"
-          make -o .build/crystal.exe primitives_spec # we know the compiler is fresh; do not rebuild it here
-        env:
-          SPEC_FLAGS: --tag=~external_commands # skip exec_external_command spec because it doesn't work with this setup
+  aarch64-mingw-w64:
+    name: CLANGARM64
+    uses: ./.github/workflows/mingw-w64-steps.yml
+    with:
+      arch: aarch64
+      runs-on: windows-11-arm
+      msystem: CLANGARM64
+      mingw-package-prefix: mingw-w64-clang-aarch64

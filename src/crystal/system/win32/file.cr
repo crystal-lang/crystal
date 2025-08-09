@@ -14,7 +14,7 @@ module Crystal::System::File
   # write at the end of the file.
   getter? system_append = false
 
-  def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions, blocking : Bool?) : FileDescriptor::Handle
+  def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions, blocking : Bool?) : {FileDescriptor::Handle, Bool}
     perm = ::File::Permissions.new(perm) if perm.is_a? Int32
     # Only the owner writable bit is used, since windows only supports
     # the read only attribute.
@@ -24,31 +24,15 @@ module Crystal::System::File
       perm = LibC::S_IREAD
     end
 
-    handle, error = open(filename, open_flag(mode), ::File::Permissions.new(perm), blocking != false)
-    unless error.error_success?
-      raise ::File::Error.from_os_error("Error opening file with mode '#{mode}'", error, file: filename)
+    case result = EventLoop.current.open(filename, open_flag(mode), ::File::Permissions.new(perm), blocking != false)
+    in Tuple(FileDescriptor::Handle, Bool)
+      result
+    in WinError
+      raise ::File::Error.from_os_error("Error opening file with mode '#{mode}'", result, file: filename)
     end
-
-    handle
   end
 
-  def self.open(filename : String, flags : Int32, perm : ::File::Permissions, blocking : Bool) : {FileDescriptor::Handle, WinError}
-    access, disposition, attributes = self.posix_to_open_opts flags, perm, blocking
-
-    handle = LibC.CreateFileW(
-      System.to_wstr(filename),
-      access,
-      LibC::DEFAULT_SHARE_MODE, # UNIX semantics
-      nil,
-      disposition,
-      attributes,
-      LibC::HANDLE.null
-    )
-
-    {handle.address, handle == LibC::INVALID_HANDLE_VALUE ? WinError.value : WinError::ERROR_SUCCESS}
-  end
-
-  private def self.posix_to_open_opts(flags : Int32, perm : ::File::Permissions, blocking : Bool)
+  def self.posix_to_open_opts(flags : Int32, perm : ::File::Permissions, blocking : Bool)
     access = if flags.bits_set? LibC::O_WRONLY
                LibC::FILE_GENERIC_WRITE
              elsif flags.bits_set? LibC::O_RDWR
@@ -104,8 +88,9 @@ module Crystal::System::File
     {access, disposition, attributes}
   end
 
-  protected def system_set_mode(mode : String)
+  protected def system_init(mode : String, blocking : Bool) : Nil
     @system_append = true if mode.starts_with?('a')
+    @system_blocking = blocking
   end
 
   private def write_blocking(handle, slice)
@@ -440,8 +425,17 @@ module Crystal::System::File
     end
   end
 
-  def self.readlink(path) : String
-    info = symlink_info?(path) || raise ::File::Error.new("Cannot read link", file: path)
+  def self.readlink(path, &) : String
+    info = symlink_info?(path)
+    unless info
+      {% begin %}
+      if WinError.value.in?({{ NOT_FOUND_ERRORS.splat }}, WinError::ERROR_NOT_A_REPARSE_POINT)
+        yield
+      end
+      {% end %}
+
+      raise ::File::Error.from_winerror("Cannot read link", file: path)
+    end
     path, _is_relative = info
     path
   end

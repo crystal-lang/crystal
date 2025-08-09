@@ -84,6 +84,7 @@ local -a shared_run_build; shared_run_build=(
   $debug_args \
   $release_args \
   '(--emit)--emit[comma separated list of types of output for the compiler to emit]:foo:(asm llvm-bc llvm-ir obj)' \
+  '(--x86-asm-syntax)--x86-asm-syntax[X86 dialect for --emit-asm: att (default), intel]:' \
   "(--ll)--ll[dump ll to Crystal's cache directory ]" \
   '(--link-flags)--link-flags[additional flags to pass to the linker]:' \
   '(--mcpu)--mcpu[target specific cpu type]:' \
@@ -174,6 +175,7 @@ _crystal-tool() {
         "format:format project, directories and/or files"
         "hierarchy:show type hierarchy"
         "implementations:show implementations for given call in location"
+        "macro_code_coverage:generate a macro code coverage report"
         "types:show type of main variables"
         "unreachable:show methods that are never called"
       )
@@ -273,6 +275,18 @@ _crystal-tool() {
             $prelude_args \
             '(--check)--check[exits with error if there is any unreachable code]' \
             '(--tallies)--tallies[print reachable methods and their call counts as well]' \
+            $stdin_filename_args
+        ;;
+
+        (macro_code_coverage)
+          _arguments \
+            $programfile \
+            $help_args \
+            $no_color_args \
+            $exec_args \
+            $include_exclude_args \
+            '(-f --format)'{-f,--format}'[output format: codecov (default)]:' \
+            $prelude_args \
             $stdin_filename_args
         ;;
 

@@ -966,6 +966,7 @@ describe Path do
       it_relativizes("C:\\Projects", "c:\\projects\\src", "../c:\\projects\\src", "src")
       it_relativizes("C:\\Projects", "c:\\projects", "../c:\\projects", ".")
       it_relativizes("C:\\Projects\\a\\..", "c:\\projects", "../c:\\projects", ".")
+      it_relativizes("C:\\foo", "C:/bar", "../C:/bar", "..\\bar")
     end
   end
 

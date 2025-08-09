@@ -15,7 +15,7 @@ jobs:
   test-interpreter_spec:
     runs-on: ubuntu-24.04
     container:
-      image: crystallang/crystal:1.16.1-build
+      image: crystallang/crystal:1.17.1-build
     name: "Test Interpreter"
     steps:
       - uses: actions/checkout@v4
@@ -26,7 +26,7 @@ jobs:
   build-interpreter:
     runs-on: ubuntu-24.04
     container:
-      image: crystallang/crystal:1.16.1-build
+      image: crystallang/crystal:1.17.1-build
     name: Build interpreter
     steps:
       - uses: actions/checkout@v4
@@ -45,16 +45,17 @@ jobs:
     needs: build-interpreter
     runs-on: ubuntu-24.04
     container:
-      image: crystallang/crystal:1.16.1-build
+      image: crystallang/crystal:1.17.1-build
     strategy:
       matrix:
         part: [0, 1, 2, 3]
+      fail-fast: false
     name: "Test std_spec with interpreter (${{ matrix.part }})"
     steps:
       - uses: actions/checkout@v4
 
       - name: Download compiler artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: crystal-interpreter
           path: .build/
@@ -69,13 +70,13 @@ jobs:
     needs: build-interpreter
     runs-on: ubuntu-24.04
     container:
-      image: crystallang/crystal:1.16.1-build
+      image: crystallang/crystal:1.17.1-build
     name: "Test primitives_spec with interpreter"
     steps:
       - uses: actions/checkout@v4
 
       - name: Download compiler artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: crystal-interpreter
           path: .build/
