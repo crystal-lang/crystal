@@ -107,7 +107,7 @@ describe Fiber::ExecutionContext::GlobalQueue do
 
           loop do
             if fiber = queue.pop?
-              fc = fibers.find { |x| x.@fiber == fiber }.not_nil!
+              fc = fibers.find! { |x| x.@fiber == fiber }
               queue.push(fiber) if fc.increment < increments
               slept = 0
             elsif slept < 100
@@ -163,7 +163,7 @@ describe Fiber::ExecutionContext::GlobalQueue do
           }
 
           execute = ->(fiber : Fiber) {
-            fc = fibers.find { |x| x.@fiber == fiber }.not_nil!
+            fc = fibers.find! { |x| x.@fiber == fiber }
 
             if fc.increment < increments
               batch.push(fc.@fiber)

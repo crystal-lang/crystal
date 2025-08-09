@@ -20,7 +20,7 @@ describe "Subtle" do
   it "compares constant time bytes bug" do
     h1 = "$2a$05$LEC1XBXgXECzKUO2LBDhKOa9lH9zigNKnksVaDwViFNgPU4WkrD53J"
     h2 = "$2a$05$LEC1XBXgXECzKUO2LBDhKOaHlSGFuDDwMuVg6gOzdxQ0xN4rFOwMUn"
-    Crypto::Subtle.constant_time_compare(h1, h2).should eq(false)
+    Crypto::Subtle.constant_time_compare(h1, h2).should be_false
   end
 
   it "compares constant time and slices strings" do

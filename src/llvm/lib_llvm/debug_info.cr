@@ -60,6 +60,11 @@ lib LibLLVM
       builder : DIBuilderRef, name : Char*, name_len : SizeT, value : Int64, is_unsigned : Bool,
     ) : MetadataRef
   {% end %}
+  {% unless LibLLVM::IS_LT_210 %}
+    fun di_builder_create_enumerator_of_arbitrary_precision = LLVMDIBuilderCreateEnumeratorOfArbitraryPrecision(
+      builder : DIBuilderRef, name : Char*, name_len : SizeT, size_in_bits : UInt64, words : UInt64*, is_unsigned : Bool,
+    ) : MetadataRef
+  {% end %}
   fun di_builder_create_enumeration_type = LLVMDIBuilderCreateEnumerationType(
     builder : DIBuilderRef, scope : MetadataRef, name : Char*, name_len : SizeT, file : MetadataRef,
     line_number : UInt, size_in_bits : UInt64, align_in_bits : UInt32,

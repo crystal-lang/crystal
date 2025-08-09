@@ -332,6 +332,10 @@ module HTTP
         request.path.should eq("/")
       end
 
+      it "parses with only leading with double slash" do
+        HTTP::Request.new("GET", "//").path.should eq "//"
+      end
+
       it "parses path leading with double slash" do
         Request.new("GET", "//foo:bar").path.should eq "//foo:bar"
       end
@@ -451,20 +455,20 @@ module HTTP
     describe "#form_params" do
       it "returns can safely be called on get requests" do
         request = Request.from_io(IO::Memory.new("GET /api/v3/some/resource HTTP/1.1\r\n\r\n")).as(Request)
-        request.form_params?.should eq(nil)
+        request.form_params?.should be_nil
         request.form_params.size.should eq(0)
       end
 
       it "returns parsed HTTP::Params" do
         request = Request.new("POST", "/form", HTTP::Headers{"Content-Type" => "application/x-www-form-urlencoded"}, HTTP::Params.encode({"test" => "foobar"}))
-        request.form_params?.should_not eq(nil)
+        request.form_params?.should_not be_nil
         request.form_params.size.should eq(1)
         request.form_params["test"].should eq("foobar")
       end
 
       it "ignores invalid content-type" do
         request = Request.new("POST", "/form", nil, HTTP::Params.encode({"test" => "foobar"}))
-        request.form_params?.should eq(nil)
+        request.form_params?.should be_nil
         request.form_params.size.should eq(0)
       end
     end
@@ -509,6 +513,22 @@ module HTTP
       it "gets request host with port from the headers" do
         request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nHost: host.example.org:3000\r\nReferer:\r\n\r\n")).as(Request)
         request.host_with_port.should eq("host.example.org:3000")
+      end
+    end
+
+    describe "#uri" do
+      it "returns request uri object" do
+        raw_resource = "/document?something=true#fragment"
+        request = Request.from_io(IO::Memory.new("GET #{raw_resource} HTTP/1.1\r\n\r\n")).as(Request)
+        request.uri.should eq(URI.parse(raw_resource))
+      end
+
+      it "can change the results of #resource" do
+        request = Request.from_io(IO::Memory.new("GET /route HTTP/1.1\r\n\r\n")).as(Request)
+        request.resource.should eq("/route")
+
+        request.uri.path = "/some_other_route"
+        request.resource.should eq("/some_other_route")
       end
     end
 

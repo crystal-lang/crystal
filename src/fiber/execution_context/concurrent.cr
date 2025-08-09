@@ -3,20 +3,59 @@ require "./runnables"
 require "./scheduler"
 
 module Fiber::ExecutionContext
-  # A single-threaded execution context which owns a single thread. It's fully
-  # concurrent with limited parallelism.
+  # Concurrent-only execution context.
   #
-  # Concurrency is restricted to a single thread. Fibers in the same context
-  # will never run in parallel to each other but they may still run in parallel
-  # to fibers running in other contexts (i.e. in another thread).
+  # Fibers running in the same context can only run concurrently and never in
+  # parallel to each others. However, they still run in parallel to fibers
+  # running in other execution contexts.
   #
-  # Fibers can use simpler and faster synchronization primitives between
-  # themselves (no atomics, no thread safety). Communication with fibers in
-  # other contexts requires thread-safe primitives.
+  # Fibers in this context can use simpler and faster synchronization primitives
+  # between themselves (for example no atomics or thread safety required), but
+  # data shared with other contexts needs to be protected (e.g. `Mutex`), and
+  # communication with fibers in other contexts requires safe primitives, for
+  # example `Channel`.
   #
-  # A blocking fiber blocks the entire thread and all other fibers in the
-  # context.
-  class SingleThreaded
+  # A blocking fiber blocks the entire context, and thus all the
+  # other fibers in the context.
+  #
+  # For example: we can start a concurrent context to run consumer fibers, while
+  # the default context produces values. Because the consumer fibers will never
+  # run in parallel and don't yield between reading *result* then writing it, we
+  # are not required to synchronize accesses to the value:
+  #
+  # ```
+  # require "wait_group"
+  #
+  # consumers = Fiber::ExecutionContext::Concurrent.new("consumers")
+  # channel = Channel(Int32).new(64)
+  # wg = WaitGroup.new(32)
+  #
+  # result = 0
+  #
+  # 32.times do
+  #   consumers.spawn do
+  #     while value = channel.receive?
+  #       # safe, but only for this example:
+  #       result = result + value
+  #     end
+  #   ensure
+  #     wg.done
+  #   end
+  # end
+  #
+  # 1024.times { |i| channel.send(i) }
+  # channel.close
+  #
+  # # wait for all workers to be done
+  # wg.wait
+  #
+  # p result # => 523776
+  # ```
+  #
+  # In practice, we still recommended to always protect shared accesses to a
+  # variable, for example using `Atomic#add` to increment *result* or a `Mutex`
+  # for more complex operations.
+  class Concurrent
     include ExecutionContext
     include ExecutionContext::Scheduler
 
@@ -102,7 +141,7 @@ module Fiber::ExecutionContext
 
     # :nodoc:
     def enqueue(fiber : Fiber) : Nil
-      if ExecutionContext.current == self
+      if ExecutionContext.current? == self
         # local enqueue
         Crystal.trace :sched, "enqueue", fiber: fiber
         @runnables.push(fiber)
@@ -279,4 +318,7 @@ module Fiber::ExecutionContext
       end
     end
   end
+
+  @[Deprecated("Use Fiber::ExecutionContext::Concurrent instead.")]
+  alias SingleThreaded = Concurrent
 end

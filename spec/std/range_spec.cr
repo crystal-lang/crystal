@@ -138,9 +138,9 @@ describe "Range" do
       (0...ary.size).bsearch { |i| ary[i] >= 6 }.should eq 2
       (0...ary.size).bsearch { |i| ary[i] >= 8 }.should eq 3
       (0...ary.size).bsearch { |i| ary[i] >= 10 }.should eq 4
-      (0...ary.size).bsearch { |i| ary[i] >= 100 }.should eq nil
+      (0...ary.size).bsearch { |i| ary[i] >= 100 }.should be_nil
       (0...ary.size).bsearch { |i| true }.should eq 0
-      (0...ary.size).bsearch { |i| false }.should eq nil
+      (0...ary.size).bsearch { |i| false }.should be_nil
 
       (0...ary.size).bsearch { |i| ary[i] >= 10 ? 1 : nil }.should eq 4
 
@@ -148,13 +148,13 @@ describe "Range" do
       (0...ary.size).bsearch { |i| ary[i] >= 100 }.should eq 1
 
       (0_i8..10_i8).bsearch { |x| x >= 10 }.should eq 10_i8
-      (0_i8...10_i8).bsearch { |x| x >= 10 }.should eq nil
+      (0_i8...10_i8).bsearch { |x| x >= 10 }.should be_nil
       (-10_i8...10_i8).bsearch { |x| x >= -5 }.should eq -5_i8
 
       (0_u8..10_u8).bsearch { |x| x >= 10 }.should eq 10_u8
-      (0_u8...10_u8).bsearch { |x| x >= 10 }.should eq nil
+      (0_u8...10_u8).bsearch { |x| x >= 10 }.should be_nil
       (0_u32..10_u32).bsearch { |x| x >= 10 }.should eq 10_u32
-      (0_u32...10_u32).bsearch { |x| x >= 10 }.should eq nil
+      (0_u32...10_u32).bsearch { |x| x >= 10 }.should be_nil
     end
 
     it "BigInt" do
@@ -222,7 +222,7 @@ describe "Range" do
       range = 0..-1
       any = false
       range.each { any = true }
-      any.should eq(false)
+      any.should be_false
     end
 
     it "endless" do
@@ -274,7 +274,7 @@ describe "Range" do
       range = 0..-1
       any = false
       range.reverse_each { any = true }
-      any.should eq(false)
+      any.should be_false
     end
 
     it "raises on endless range" do
@@ -440,13 +440,13 @@ describe "Range" do
     end
 
     it "samples a range with nilable types" do
-      r = ((true ? 1 : nil)..(true ? 4 : nil))
+      r = (1.as(Int32?)..4.as(Int32?))
       x = r.sample
       r.should contain(x)
 
-      ((true ? 1 : nil)...(true ? 2 : nil)).sample.should eq(1)
+      (1.as(Int32?)...2.as(Int32?)).sample.should eq(1)
 
-      r = ((true ? 1.2 : nil)..(true ? 3.4 : nil))
+      r = (1.2.as(Float64?)..3.4.as(Float64?))
       x = r.sample
       r.should contain(x)
     end

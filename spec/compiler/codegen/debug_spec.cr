@@ -301,4 +301,34 @@ describe "Code gen: debug" do
       y.bar
       ), debug: Crystal::Debug::All).to_i.should eq(123)
   end
+
+  {% unless LibLLVM::IS_LT_210 %}
+    it "supports 128-bit enumerators" do
+      codegen(<<-CRYSTAL, debug: Crystal::Debug::All).to_s.should contain(%(!DIEnumerator(name: "X", value: 1002003004005006007008009)))
+        enum Foo : Int128
+          X = 1002003004005006007008009_i128
+        end
+
+        x = Foo::X
+        CRYSTAL
+    end
+  {% end %}
+
+  it "doesn't fail if no top-level code follows discarded class var initializer (#15970)" do
+    codegen <<-CRYSTAL, debug: Crystal::Debug::All
+      module Foo
+        @@x = 1
+      end
+      CRYSTAL
+  end
+
+  it "doesn't fail if class var initializer is followed by metaclass (#15970)" do
+    codegen <<-CRYSTAL, debug: Crystal::Debug::All
+      module Foo
+        @@x = 1
+      end
+
+      Int32
+      CRYSTAL
+  end
 end

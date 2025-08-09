@@ -106,7 +106,7 @@ module Crystal
 
       # Check if it's a wildcard.
       if filename.ends_with?("/*") || (recursive = filename.ends_with?("/**"))
-        filename_dir_index = filename.rindex('/').not_nil!
+        filename_dir_index = filename.rindex!('/')
         filename_dir = filename[0..filename_dir_index]
         relative_dir = "#{relative_to}/#{filename_dir}"
         if File.exists?(relative_dir)
@@ -129,7 +129,7 @@ module Crystal
     def each_file_expansion(filename, relative_to, &)
       relative_filename = "#{relative_to}/#{filename}"
       # Check if .cr file exists.
-      yield relative_filename.ends_with?(".cr") ? relative_filename : "#{relative_filename}.cr"
+      yield relative_filename.ensure_suffix(".cr")
 
       filename_is_relative = filename.starts_with?('.')
 

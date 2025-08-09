@@ -6,12 +6,6 @@ require "http/server"
 require "http/log"
 require "log/spec"
 
-# TODO: Windows networking in the interpreter requires #12495
-{% if flag?(:interpreted) && flag?(:win32) %}
-  pending HTTP::Client
-  {% skip_file %}
-{% end %}
-
 private def test_server(host, port, read_time = 0.seconds, content_type = "text/plain", write_response = true, &)
   server = TCPServer.new(host, port)
   begin
@@ -317,6 +311,27 @@ module HTTP
       end
     end
 
+    it "retry does not call before_request callback again" do
+      server = HTTP::Server.new do |context|
+        io = context.response.@io.as(Socket)
+        io.linger = 0 # with linger 0 the socket will be RST on close
+        io.close
+      end
+      address = server.bind_unused_port "127.0.0.1"
+
+      run_server(server) do
+        callback_counts = 0
+        client = HTTP::Client.new("127.0.0.1", address.port)
+        client.before_request do
+          callback_counts += 1
+        end
+        expect_raises(IO::Error) do
+          client.get(path: "/")
+        end
+        callback_counts.should eq 1
+      end
+    end
+
     it "doesn't read the body if request was HEAD" do
       resp_get = test_server("localhost", 0, 0.seconds) do |server|
         client = Client.new("localhost", server.local_address.port)
@@ -483,7 +498,6 @@ module HTTP
   class SubClient < HTTP::Client
     def around_exec(request, &)
       raise "from subclass"
-      yield
     end
   end
 end

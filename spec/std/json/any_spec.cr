@@ -5,7 +5,7 @@ require "yaml"
 describe JSON::Any do
   it ".new" do
     JSON::Any.new(nil).raw.should be_nil
-    JSON::Any.new(true).raw.should eq true
+    JSON::Any.new(true).raw.should be_true
     JSON::Any.new(1_i64).raw.should eq 1_i64
     JSON::Any.new(1).raw.should eq 1
     JSON::Any.new(1_u8).raw.should eq 1
@@ -118,13 +118,13 @@ describe JSON::Any do
     it "of array" do
       JSON.parse("[1, 2, 3]")[1]?.not_nil!.raw.should eq(2)
       JSON.parse("[1, 2, 3]")[3]?.should be_nil
-      JSON.parse("[true, false]")[1]?.should eq false
+      JSON.parse("[true, false]")[1]?.should be_false
     end
 
     it "of hash" do
       JSON.parse(%({"foo": "bar"}))["foo"]?.not_nil!.raw.should eq("bar")
       JSON.parse(%({"foo": "bar"}))["fox"]?.should be_nil
-      JSON.parse(%q<{"foo": false}>)["foo"]?.should eq false
+      JSON.parse(%q<{"foo": false}>)["foo"]?.should be_false
     end
   end
 

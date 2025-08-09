@@ -160,6 +160,13 @@ Comma separated list of types of output for the compiler to emit.
 You can use this to see the generated LLVM IR, LLVM bitcode, assembly, and object files.
 .RE
 .sp
+\fB\-\-x86\-asm\-syntax\fP [att|intel]
+.RS 4
+Select the assembly dialect for \fB\-\-emit=asm\fP. The default is \f(CRatt\fP, which stands
+for the AT&T syntax supported by tools like the GNU Assembler. \f(CRintel\fP selects
+the Intel syntax which is preferred for Windows tools.
+.RE
+.sp
 \fB\-\-frame\-pointers\fP [auto|always|non\-leaf]
 .RS 4
 Control the preservation of frame pointers. The default value,

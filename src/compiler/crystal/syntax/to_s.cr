@@ -7,8 +7,8 @@ module Crystal
       to_s(io)
     end
 
-    def to_s(io : IO, macro_expansion_pragmas = nil, emit_doc = false) : Nil
-      visitor = ToSVisitor.new(io, macro_expansion_pragmas: macro_expansion_pragmas, emit_doc: emit_doc)
+    def to_s(io : IO, macro_expansion_pragmas = nil, emit_doc = false, emit_location_pragmas : Bool = false) : Nil
+      visitor = ToSVisitor.new(io, macro_expansion_pragmas: macro_expansion_pragmas, emit_doc: emit_doc, emit_location_pragmas: emit_location_pragmas)
       self.accept visitor
     end
   end
@@ -35,7 +35,7 @@ module Crystal
       BLOCK_ARG
     end
 
-    def initialize(@str = IO::Memory.new, @macro_expansion_pragmas = nil, @emit_doc = false)
+    def initialize(@str = IO::Memory.new, @macro_expansion_pragmas = nil, @emit_doc = false, @emit_location_pragmas : Bool = false)
       @indent = 0
       @inside_macro = 0
     end
@@ -269,9 +269,13 @@ module Crystal
     end
 
     def visit(node : Expressions)
+      is_multiline = false
+
       case node.keyword
       in .paren?
-        @str << '('
+        # Handled via dedicated #in_parenthesis call below
+        is_multiline = (loc = node.location) && (first_loc = node.expressions.first?.try &.location) && (first_loc.line_number > loc.line_number)
+        append_indent if is_multiline
       in .begin?
         @str << "begin"
         @indent += 1
@@ -280,33 +284,35 @@ module Crystal
         # Not a special condition
       end
 
-      if @inside_macro > 0
-        node.expressions.each &.accept self
-      else
-        last_node = nil
+      in_parenthesis node.keyword.paren?, is_multiline do
+        if @inside_macro > 0
+          node.expressions.each &.accept self
+        else
+          last_node = nil
 
-        node.expressions.each_with_index do |exp, i|
-          unless exp.nop?
-            write_extra_newlines (last_node || exp).end_location, exp.location
+          node.expressions.each_with_index do |exp, i|
+            unless exp.nop?
+              write_extra_newlines (last_node || exp).end_location, exp.location
 
-            append_indent unless node.keyword.paren? && i == 0
-            exp.accept self
+              append_indent unless node.keyword.paren? && i == 0
+              exp.accept self
 
-            if (root = @root_level_macro_expressions) && root.same?(node) && i == node.expressions.size - 1
-              # Do not add a trailing newline after the last node in the root `Expressions` within a `MacroExpression`.
-              # This is handled by the `MacroExpression` logic.
-            elsif !(node.keyword.paren? && i == node.expressions.size - 1)
-              newline
+              if (root = @root_level_macro_expressions) && root.same?(node) && i == node.expressions.size - 1
+                # Do not add a trailing newline after the last node in the root `Expressions` within a `MacroExpression`.
+                # This is handled by the `MacroExpression` logic.
+              elsif !(node.keyword.paren? && i == node.expressions.size - 1)
+                newline
+              end
+
+              last_node = exp
             end
-
-            last_node = exp
           end
         end
       end
 
       case node.keyword
       in .paren?
-        @str << ')'
+        # Handled via dedicated #in_parenthesis call above
       in .begin?
         @indent -= 1
         append_indent
@@ -316,6 +322,12 @@ module Crystal
       end
 
       false
+    end
+
+    private def emit_loc_pragma(for location : Location?) : Nil
+      if @emit_location_pragmas && (loc = location) && (filename = loc.filename).is_a?(String)
+        @str << %(#<loc:"#{filename}",#{loc.line_number},#{loc.column_number}>)
+      end
     end
 
     def visit(node : If)
@@ -328,27 +340,68 @@ module Crystal
         return false
       end
 
-      visit_if_or_unless "if", node
+      self.emit_loc_pragma node.location
+
+      while true
+        @str << "if "
+        node.cond.accept self
+        newline
+
+        self.emit_loc_pragma node.then.location
+
+        accept_with_indent(node.then)
+        append_indent
+
+        # combine `else if` into `elsif` (does not apply to `unless` or `? :`)
+        if (else_node = node.else).is_a?(If) && !else_node.ternary?
+          @str << "els"
+          node = else_node
+        else
+          break
+        end
+      end
+
+      unless else_node.nop?
+        @str << "else"
+        newline
+
+        self.emit_loc_pragma node.else.location
+
+        accept_with_indent(node.else)
+        append_indent
+      end
+
+      self.emit_loc_pragma node.end_location
+
+      @str << "end"
+      false
     end
 
     def visit(node : Unless)
-      visit_if_or_unless "unless", node
-    end
+      self.emit_loc_pragma node.location
 
-    def visit_if_or_unless(prefix, node)
-      @str << prefix
-      @str << ' '
+      @str << "unless "
       node.cond.accept self
       newline
+
+      self.emit_loc_pragma node.then.location
+
       accept_with_indent(node.then)
       unless node.else.nop?
         append_indent
         @str << "else"
         newline
+
+        self.emit_loc_pragma node.else.location
+
         accept_with_indent(node.else)
       end
       append_indent
+
+      self.emit_loc_pragma node.end_location
+
       @str << "end"
+
       false
     end
 
@@ -572,9 +625,16 @@ module Crystal
             true
           end
         end
+      when Not
+        case exp = obj.exp
+        when Call
+          exp.obj.nil?
+        else
+          !obj.exp.is_a? Call
+        end
       when Var, NilLiteral, BoolLiteral, CharLiteral, NumberLiteral, StringLiteral,
            StringInterpolation, Path, Generic, InstanceVar, ClassVar, Global,
-           ImplicitObj, TupleLiteral, NamedTupleLiteral, IsA, Not
+           ImplicitObj, TupleLiteral, NamedTupleLiteral, IsA
         false
       when ArrayLiteral
         !!obj.of
@@ -585,18 +645,28 @@ module Crystal
       end
     end
 
-    def in_parenthesis(need_parens, &)
-      if need_parens
-        @str << '('
-        yield
-        @str << ')'
-      else
-        yield
+    def in_parenthesis(need_parens, is_multiline = false, &)
+      @str << '(' if need_parens
+
+      if is_multiline
+        newline
+        @indent += 1
+        append_indent
       end
+
+      yield
+
+      if is_multiline
+        newline
+        @indent -= 1
+        append_indent
+      end
+
+      @str << ')' if need_parens
     end
 
-    def in_parenthesis(need_parens, node)
-      in_parenthesis(need_parens) do
+    def in_parenthesis(need_parens, node, is_multiline = false)
+      in_parenthesis(need_parens, is_multiline) do
         if node.is_a?(Expressions) && node.expressions.size == 1
           node.expressions.first.accept self
         else
@@ -862,18 +932,42 @@ module Crystal
     end
 
     def visit(node : MacroIf)
-      @str << "{% if "
-      node.cond.accept self
-      @str << " %}"
-      inside_macro do
-        node.then.accept self
-      end
-      unless node.else.nop?
-        @str << "{% else %}"
+      else_node = nil
+
+      while true
+        if node.is_unless?
+          @str << "{% unless "
+          then_node = node.else
+          else_node = node.then
+        else
+          @str << (else_node ? "{% elsif " : "{% if ")
+          then_node = node.then
+          else_node = node.else
+        end
+        node.cond.accept self
+        @str << " %}"
+
         inside_macro do
-          node.else.accept self
+          then_node.accept self
+        end
+
+        # combine `{% else %}{% if %}` into `{% elsif %}` (does not apply to
+        # `{% unless %}`, nor when there is whitespace inbetween, as that would
+        # show up as a `MacroLiteral`)
+        if !node.is_unless? && else_node.is_a?(MacroIf) && !else_node.is_unless?
+          node = else_node
+        else
+          break
         end
       end
+
+      unless else_node.nop?
+        @str << "{% else %}"
+        inside_macro do
+          else_node.accept self
+        end
+      end
+
       @str << "{% end %}"
       false
     end
@@ -1269,14 +1363,23 @@ module Crystal
 
     def to_s_binary(node, op)
       left_needs_parens = need_parens(node.left)
-      in_parenthesis(left_needs_parens, node.left)
+      left_parens_multiline = left_needs_parens && (begin_loc = node.left.location) && (end_loc = node.left.end_location) && (end_loc.line_number > begin_loc.line_number)
+      in_parenthesis(left_needs_parens, node.left, left_parens_multiline)
 
       @str << ' '
       @str << op
-      @str << ' '
+
+      if (right_loc = node.right.location) && (left_end_loc = node.left.end_location) && (right_loc.line_number > left_end_loc.line_number)
+        newline
+        append_indent
+      else
+        @str << ' '
+      end
 
       right_needs_parens = need_parens(node.right)
-      in_parenthesis(right_needs_parens, node.right)
+      right_parens_multiline = right_needs_parens && (begin_loc = node.right.location) && (end_loc = node.right.end_location) && (end_loc.line_number > begin_loc.line_number)
+      in_parenthesis(right_needs_parens, node.right, right_parens_multiline)
+
       false
     end
 

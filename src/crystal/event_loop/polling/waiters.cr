@@ -37,7 +37,7 @@ struct Crystal::EventLoop::Polling::Waiters
   # Removes one pending event or marks the list as ready when there are no
   # pending events (we got notified of readiness before a thread enqueued).
   def ready_one(& : Pointer(Event) -> Bool) : Nil
-    # loop until the block succesfully processes an event (it may have to
+    # loop until the block successfully processes an event (it may have to
     # dequeue the timeout from timers)
     loop do
       if event = @list.shift?
