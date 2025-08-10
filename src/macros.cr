@@ -73,10 +73,13 @@ macro record(__name name, *properties, **kwargs)
   struct {{name.id}}
     {% for property in properties %}
       {% if property.is_a?(Assign) %}
+        # {{property.doc_comment}}
         getter({{property.target.id}})
       {% elsif property.is_a?(TypeDeclaration) %}
+        # {{property.doc_comment}}
         getter({{property}})
       {% else %}
+        # {{property.doc_comment}}
         getter(:{{property.id}})
       {% end %}
     {% end %}
