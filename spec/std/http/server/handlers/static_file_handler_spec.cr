@@ -552,8 +552,11 @@ describe HTTP::StaticFileHandler do
   end
 
   it "returns 404 for file error" do
-    response = handle HTTP::Request.new("GET", "/broken_symlink.txt")
-    response.status_code.should eq(404)
+    with_tempdir do
+      File.symlink("nonexistent.txt", "broken-symlink.txt")
+      response = handle HTTP::Request.new("GET", "/broken-symlink.txt")
+      response.status_code.should eq(404)
+    end
   end
 
   it "returns 404 for unreadable file" do
