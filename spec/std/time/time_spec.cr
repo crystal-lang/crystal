@@ -930,7 +930,7 @@ describe Time do
         Time.week_date(*CALENDAR_WEEK_TEST_DATA[0][1], 11, 57, 32, nanosecond: 123_567, location: location).should eq(
           Time.local(*CALENDAR_WEEK_TEST_DATA[0][0], 11, 57, 32, nanosecond: 123_567, location: location))
 
-        location = Time::Location.load("America/Buenos_Aires")
+        location = Time::Location.load("America/Argentina/Buenos_Aires")
         Time.week_date(*CALENDAR_WEEK_TEST_DATA[0][1], 11, 57, 32, nanosecond: 123_567, location: location).should eq(
           Time.local(*CALENDAR_WEEK_TEST_DATA[0][0], 11, 57, 32, nanosecond: 123_567, location: location))
       end
@@ -963,7 +963,7 @@ describe Time do
         Time.month_week_date(2025, 3, 3, 7, 11, 57, 32, nanosecond: 123_567, location: location).should eq(
           Time.local(2025, 3, 16, 11, 57, 32, nanosecond: 123_567, location: location))
 
-        location = Time::Location.load("America/Buenos_Aires")
+        location = Time::Location.load("America/Argentina/Buenos_Aires")
         Time.month_week_date(2025, 3, 3, 7, 11, 57, 32, nanosecond: 123_567, location: location).should eq(
           Time.local(2025, 3, 16, 11, 57, 32, nanosecond: 123_567, location: location))
       end
