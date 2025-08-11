@@ -85,6 +85,18 @@ struct BigFloat < Float
     LibGMP.mpf_set_default_prec(prec.to_u64)
   end
 
+  # :inherit:
+  def nan? : Bool
+    # there are no NaNs in GMP
+    false
+  end
+
+  # :inherit:
+  def infinite? : Int32?
+    # there are no infinities in GMP
+    nil
+  end
+
   def <=>(other : BigFloat)
     LibGMP.mpf_cmp(self, other)
   end
@@ -115,16 +127,58 @@ struct BigFloat < Float
     BigFloat.new { |mpf| LibGMP.mpf_neg(mpf, self) }
   end
 
+  def +(other : Int::Primitive) : BigFloat
+    Int.primitive_ui_check(other) do |ui, neg_ui, big_i|
+      {
+        ui:     BigFloat.new { |mpf| LibGMP.mpf_add_ui(mpf, self, {{ ui }}) },
+        neg_ui: BigFloat.new { |mpf| LibGMP.mpf_sub_ui(mpf, self, {{ neg_ui }}) },
+        big_i:  self + {{ big_i }},
+      }
+    end
+  end
+
   def +(other : Number) : BigFloat
     BigFloat.new { |mpf| LibGMP.mpf_add(mpf, self, other.to_big_f) }
+  end
+
+  def -(other : Int::Primitive) : BigFloat
+    Int.primitive_ui_check(other) do |ui, neg_ui, big_i|
+      {
+        ui:     BigFloat.new { |mpf| LibGMP.mpf_sub_ui(mpf, self, {{ ui }}) },
+        neg_ui: BigFloat.new { |mpf| LibGMP.mpf_add_ui(mpf, self, {{ neg_ui }}) },
+        big_i:  self - {{ big_i }},
+      }
+    end
   end
 
   def -(other : Number) : BigFloat
     BigFloat.new { |mpf| LibGMP.mpf_sub(mpf, self, other.to_big_f) }
   end
 
+  def *(other : Int::Primitive) : BigFloat
+    Int.primitive_ui_check(other) do |ui, neg_ui, big_i|
+      {
+        ui:     BigFloat.new { |mpf| LibGMP.mpf_mul_ui(mpf, self, {{ ui }}) },
+        neg_ui: BigFloat.new { |mpf| LibGMP.mpf_mul_ui(mpf, self, {{ neg_ui }}); LibGMP.mpf_neg(mpf, mpf) },
+        big_i:  self + {{ big_i }},
+      }
+    end
+  end
+
   def *(other : Number) : BigFloat
     BigFloat.new { |mpf| LibGMP.mpf_mul(mpf, self, other.to_big_f) }
+  end
+
+  def /(other : Int::Primitive) : BigFloat
+    # Division by 0 in BigFloat is not allowed, there is no BigFloat::Infinity
+    raise DivisionByZeroError.new if other == 0
+    Int.primitive_ui_check(other) do |ui, neg_ui, _|
+      {
+        ui:     BigFloat.new { |mpf| LibGMP.mpf_div_ui(mpf, self, {{ ui }}) },
+        neg_ui: BigFloat.new { |mpf| LibGMP.mpf_div_ui(mpf, self, {{ neg_ui }}); LibGMP.mpf_neg(mpf, mpf) },
+        big_i:  BigFloat.new { |mpf| LibGMP.mpf_div(mpf, self, BigFloat.new(other)) },
+      }
+    end
   end
 
   def /(other : BigFloat) : BigFloat
@@ -320,57 +374,103 @@ struct BigFloat < Float
   end
 
   def to_s(io : IO) : Nil
-    cstr = LibGMP.mpf_get_str(nil, out decimal_exponent, 10, 0, self)
-    length = LibC.strlen(cstr)
-    buffer = Slice.new(cstr, length)
+    to_s_impl(io, point_range: -3..15, int_trailing_zeros: true)
+  end
+
+  protected def to_s_impl(*, point_range : Range, int_trailing_zeros : Bool) : String
+    String.build { |io| to_s_impl(io, point_range: point_range, int_trailing_zeros: int_trailing_zeros) }
+  end
+
+  protected def to_s_impl(io : IO, *, point_range : Range, int_trailing_zeros : Bool) : Nil
+    cstr = LibGMP.mpf_get_str(nil, out orig_decimal_exponent, 10, 0, self)
+    buffer = Slice.new(cstr, LibC.strlen(cstr))
 
     # add negative sign
     if buffer[0]? == 45 # '-'
       io << '-'
       buffer = buffer[1..]
-      length -= 1
     end
 
-    point = decimal_exponent
-    exp = point
-    exp_mode = point > 15 || point < -3
-    point = 1 if exp_mode
-
-    # add leading zero
-    io << '0' if point < 1
-
-    # add integer part digits
-    if decimal_exponent > 0 && !exp_mode
-      # whole number but not big enough to be exp form
-      io.write_string buffer[0, {decimal_exponent, length}.min]
-      buffer = buffer[{decimal_exponent, length}.min...]
-      (point - length).times { io << '0' }
-    elsif point > 0
-      io.write_string buffer[0, point]
-      buffer = buffer[point...]
+    decimal_exponent = fix_exponent_overflow(orig_decimal_exponent) - buffer.size
+    if int_trailing_zeros
+      # GMP ensures `cstr` contains no trailing zeros
+      fraction = Float::Printer::FractionMode::WriteAll
+    else
+      # used by the Ryu Printf specs only
+      fraction = Float::Printer::FractionMode::RemoveIfZero
     end
 
-    io << '.'
+    Float::Printer.decimal(io, buffer, decimal_exponent, point_range, fraction)
+  end
 
-    # add leading zeros after point
-    if point < 0
-      (-point).times { io << '0' }
+  # The same `LibGMP::MpExp` is used in `LibGMP::MPF` to represent a
+  # `BigFloat`'s exponent in base `256 ** sizeof(LibGMP::MpLimb)`, and to return
+  # a base-10 exponent in `LibGMP.mpf_get_str`. The latter is around 9.6x the
+  # former when `MpLimb` is 32-bit, or around 19.3x when `MpLimb` is 64-bit.
+  # This means the base-10 exponent will overflow for the majority of `MpExp`'s
+  # domain, even though `BigFloat`s will work correctly in this exponent range
+  # otherwise. This method exists to recover the original exponent for `#to_s`.
+  #
+  # Note that if `MpExp` is 64-bit, which is the case for non-Windows 64-bit
+  # targets, then `mpf_get_str` will simply crash for values above
+  # `2 ** 0x1_0000_0000_0000_0080`; here `exponent10` is around 5.553e+18, and
+  # never overflows. Thus there is no need to check for overflow in that case.
+  private def fix_exponent_overflow(exponent10)
+    {% if LibGMP::MpExp == Int64 %}
+      exponent10
+    {% else %}
+      # When `self` is non-zero,
+      #
+      #     @mpf.@_mp_exp == Math.log(abs, 256.0 ** sizeof(LibGMP::MpLimb)).floor + 1
+      #     @mpf.@_mp_exp - 1 <= Math.log(abs, 256.0 ** sizeof(LibGMP::MpLimb)) < @mpf.@_mp_exp
+      #     @mpf.@_mp_exp - 1 <= Math.log10(abs) / Math.log10(256.0 ** sizeof(LibGMP::MpLimb)) < @mpf.@_mp_exp
+      #     Math.log10(abs) >= (@mpf.@_mp_exp - 1) * Math.log10(256.0 ** sizeof(LibGMP::MpLimb))
+      #     Math.log10(abs) <   @mpf.@_mp_exp      * Math.log10(256.0 ** sizeof(LibGMP::MpLimb))
+      #
+      # And also,
+      #
+      #     exponent10 == Math.log10(abs).floor + 1
+      #     exponent10 - 1 <= Math.log10(abs) < exponent10
+      #
+      # When `exponent10` overflows, it differs from its real value by an
+      # integer multiple of `256.0 ** sizeof(LibGMP::MpExp)`. We have to recover
+      # the integer `overflow_n` such that:
+      #
+      #     LibGMP::MpExp::MIN <= exponent10 <= LibGMP::MpExp::MAX
+      #     Math.log10(abs) ~= exponent10 + overflow_n * 256.0 ** sizeof(LibGMP::MpExp)
+      #                     ~= @mpf.@_mp_exp * Math.log10(256.0 ** sizeof(LibGMP::MpLimb))
+      #
+      # Because the possible intervals for the real `exponent10` are so far apart,
+      # it suffices to approximate `overflow_n` as follows:
+      #
+      #     overflow_n ~= (@mpf.@_mp_exp * Math.log10(256.0 ** sizeof(LibGMP::MpLimb)) - exponent10) / 256.0 ** sizeof(LibGMP::MpExp)
+      #
+      # This value will be very close to an integer, which we then obtain with
+      # `#round`.
+      overflow_n = ((@mpf.@_mp_exp * Math.log10(256.0 ** sizeof(LibGMP::MpLimb)) - exponent10) / 256.0 ** sizeof(LibGMP::MpExp))
+      exponent10.to_i64 + overflow_n.round.to_i64 * (256_i64 ** sizeof(LibGMP::MpExp))
+    {% end %}
+  end
+
+  # :inherit:
+  def format(io : IO, separator = '.', delimiter = ',', decimal_places : Int? = nil, *, group : Int = 3, only_significant : Bool = false) : Nil
+    number = self
+    if decimal_places
+      number = number.round(decimal_places)
     end
 
-    # add fractional part digits
-    io.write_string buffer
-
-    # print trailing 0 if whole number or exp notation of power of ten
-    if (decimal_exponent >= length && !exp_mode) || (exp != point && length == 1)
-      io << '0'
+    if decimal_places && decimal_places >= 0
+      string = number.abs.to_s_impl(point_range: .., int_trailing_zeros: true)
+      integer, _, decimals = string.partition('.')
+    else
+      string = number.to_s_impl(point_range: .., int_trailing_zeros: true)
+      _, _, decimals = string.partition(".")
+      integer = number.trunc.to_big_i.abs.to_s
     end
 
-    # exp notation
-    if exp != point
-      io << 'e'
-      io << '+' if exp > 0
-      (exp - 1).to_s(io)
-    end
+    is_negative = number < 0
+
+    format_impl(io, is_negative, integer, decimals, separator, delimiter, decimal_places, group, only_significant)
   end
 
   def clone
@@ -448,6 +548,29 @@ struct Int
   def <=>(other : BigFloat)
     -(other <=> self)
   end
+
+  def -(other : BigFloat) : BigFloat
+    Int.primitive_ui_check(self) do |ui, neg_ui, _|
+      {
+        ui:     BigFloat.new { |mpf| LibGMP.mpf_neg(mpf, other); LibGMP.mpf_add_ui(mpf, mpf, {{ ui }}) },
+        neg_ui: BigFloat.new { |mpf| LibGMP.mpf_neg(mpf, other); LibGMP.mpf_sub_ui(mpf, mpf, {{ neg_ui }}) },
+        big_i:  BigFloat.new { |mpf| LibGMP.mpf_sub(mpf, BigFloat.new(self), other) },
+      }
+    end
+  end
+
+  def /(other : BigFloat) : BigFloat
+    # Division by 0 in BigFloat is not allowed, there is no BigFloat::Infinity
+    raise DivisionByZeroError.new if other == 0
+
+    Int.primitive_ui_check(self) do |ui, neg_ui, _|
+      {
+        ui:     BigFloat.new { |mpf| LibGMP.mpf_ui_div(mpf, {{ ui }}, other) },
+        neg_ui: BigFloat.new { |mpf| LibGMP.mpf_ui_div(mpf, {{ neg_ui }}, other); LibGMP.mpf_neg(mpf, mpf) },
+        big_i:  BigFloat.new { |mpf| LibGMP.mpf_div(mpf, BigFloat.new(self), other) },
+      }
+    end
+  end
 end
 
 struct Float
@@ -470,17 +593,78 @@ class String
 end
 
 module Math
-  # Decomposes the given floating-point *value* into a normalized fraction and an integral power of two.
-  def frexp(value : BigFloat) : {BigFloat, Int64}
-    LibGMP.mpf_get_d_2exp(out exp, value) # we need BigFloat frac, so will skip Float64 one.
-    frac = BigFloat.new do |mpf|
+  # Returns the unbiased base 2 exponent of the given floating-point *value*.
+  #
+  # Raises `ArgumentError` if *value* is zero.
+  def ilogb(value : BigFloat) : Int64
+    raise ArgumentError.new "Cannot get exponent of zero" if value.zero?
+    leading_zeros = value.@mpf._mp_d[value.@mpf._mp_size.abs - 1].leading_zeros_count
+    8_i64 * sizeof(LibGMP::MpLimb) * value.@mpf._mp_exp - leading_zeros - 1
+  end
+
+  # Returns the unbiased radix-independent exponent of the given floating-point *value*.
+  #
+  # For `BigFloat` this is equivalent to `ilogb`.
+  #
+  # Raises `ArgumentError` is *value* is zero.
+  def logb(value : BigFloat) : BigFloat
+    ilogb(value).to_big_f
+  end
+
+  # Multiplies the given floating-point *value* by 2 raised to the power *exp*.
+  def ldexp(value : BigFloat, exp : Int) : BigFloat
+    BigFloat.new do |mpf|
       if exp >= 0
-        LibGMP.mpf_div_2exp(mpf, value, exp)
+        LibGMP.mpf_mul_2exp(mpf, value, exp.to_u64)
       else
-        LibGMP.mpf_mul_2exp(mpf, value, -exp)
+        LibGMP.mpf_div_2exp(mpf, value, exp.abs.to_u64)
       end
     end
-    {frac, exp.to_i64}
+  end
+
+  # Returns the floating-point *value* with its exponent raised by *exp*.
+  #
+  # For `BigFloat` this is equivalent to `ldexp`.
+  def scalbn(value : BigFloat, exp : Int) : BigFloat
+    ldexp(value, exp)
+  end
+
+  # :ditto:
+  def scalbln(value : BigFloat, exp : Int) : BigFloat
+    ldexp(value, exp)
+  end
+
+  # Decomposes the given floating-point *value* into a normalized fraction and an integral power of two.
+  def frexp(value : BigFloat) : {BigFloat, Int64}
+    return {BigFloat.zero, 0_i64} if value.zero?
+
+    # We compute this ourselves since `LibGMP.mpf_get_d_2exp` only returns a
+    # `LibC::Long` exponent, which is not sufficient for 32-bit `LibC::Long` and
+    # 32-bit `LibGMP::MpExp`, e.g. on 64-bit Windows.
+    # Since `0.5 <= frac.abs < 1.0`, the radix point should be just above the
+    # most significant limb, and there should be no leading zeros in that limb.
+    leading_zeros = value.@mpf._mp_d[value.@mpf._mp_size.abs - 1].leading_zeros_count
+    exp = 8_i64 * sizeof(LibGMP::MpLimb) * value.@mpf._mp_exp - leading_zeros
+
+    frac = BigFloat.new do |mpf|
+      # remove leading zeros in the most significant limb
+      LibGMP.mpf_mul_2exp(mpf, value, leading_zeros)
+      # reset the exponent manually
+      mpf.value._mp_exp = 0
+    end
+
+    {frac, exp}
+  end
+
+  # Returns the floating-point value with the magnitude of *value1* and the sign of *value2*.
+  #
+  # `BigFloat` does not support signed zeros; if `value2 == 0`, the returned value is non-negative.
+  def copysign(value1 : BigFloat, value2 : BigFloat) : BigFloat
+    if value1.negative? != value2.negative? # opposite signs
+      -value1
+    else
+      value1
+    end
   end
 
   # Calculates the square root of *value*.
@@ -496,19 +680,8 @@ module Math
 end
 
 # :nodoc:
-struct Crystal::Hasher
-  def self.reduce_num(value : BigFloat)
-    float_normalize_wrap(value) do |value|
-      # more exact version of `Math.frexp`
-      LibGMP.mpf_get_d_2exp(out exp, value)
-      frac = BigFloat.new do |mpf|
-        if exp >= 0
-          LibGMP.mpf_div_2exp(mpf, value, exp)
-        else
-          LibGMP.mpf_mul_2exp(mpf, value, -exp)
-        end
-      end
-      float_normalize_reference(value, frac, exp)
-    end
+struct String::Formatter(A)
+  def int(flags, arg : BigFloat) : Nil
+    int(flags, arg.to_big_i)
   end
 end

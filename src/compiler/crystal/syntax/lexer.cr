@@ -157,7 +157,7 @@ module Crystal
         case next_char
         when '\r', '\n'
           handle_slash_r_slash_n_or_slash_n
-          incr_line_number
+          incr_line_number 0
           @token.passed_backslash_newline = true
           consume_whitespace
           reset_regex_flags = false
@@ -1048,7 +1048,7 @@ module Crystal
 
         scan_ident(start)
       else
-        if current_char.ascii_uppercase?
+        if current_char.uppercase? || current_char.titlecase?
           while ident_part?(next_char)
             # Nothing to do
           end
@@ -2498,7 +2498,8 @@ module Crystal
           if char == '\''
             found_closing_single_quote = true
             end_here = current_pos
-            next_char
+            char = next_char
+            raise "Unexpected EOF on heredoc identifier" if char == '\0'
             break
           else
             # wait until another quote

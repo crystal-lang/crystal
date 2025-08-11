@@ -1,7 +1,14 @@
 class XML::Namespace
-  getter document : Node
+  getter document : Document
 
-  def initialize(@document : Node, @ns : LibXML::NS*)
+  # :nodoc:
+  @[Deprecated]
+  def self.new(document : Node, ns : LibXML::NS*)
+    new(document.as(Document), ns)
+  end
+
+  # :nodoc:
+  def initialize(@document : Document, @ns : LibXML::NS*)
   end
 
   # See `Object#hash(hasher)`
@@ -38,5 +45,31 @@ class XML::Namespace
 
   def inspect(io : IO) : Nil
     to_s io
+  end
+
+  def pretty_print(pp : PrettyPrint) : Nil
+    pp.surround("#<XML::Namespace:0x#{object_id.to_s(16)}", ">", left_break: nil, right_break: nil) do
+      if prefix = self.prefix
+        pp.breakable
+        pp.group do
+          pp.text "prefix="
+          pp.nest do
+            pp.breakable ""
+            prefix.pretty_print(pp)
+          end
+        end
+      end
+
+      if href = self.href
+        pp.breakable
+        pp.group do
+          pp.text "href="
+          pp.nest do
+            pp.breakable ""
+            href.pretty_print(pp)
+          end
+        end
+      end
+    end
   end
 end

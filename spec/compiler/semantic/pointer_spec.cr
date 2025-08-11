@@ -63,11 +63,15 @@ describe "Semantic: pointer" do
   end
 
   it "pointer of class raises error" do
-    assert_error "pointerof(Int32)", "can't take address of Int32"
+    assert_error "pointerof(Int32)", "can't take address of Int32 because it's a Path. `pointerof` expects a variable or constant."
+  end
+
+  it "pointer of class raises error" do
+    assert_error "def foo; foo; end; pointerof(foo)", "can't take address of foo because it's a Call. `pointerof` expects a variable or constant."
   end
 
   it "pointer of value error" do
-    assert_error "pointerof(1)", "can't take address of 1"
+    assert_error "pointerof(1)", "can't take address of 1 because it's a NumberLiteral. `pointerof` expects a variable or constant."
   end
 
   it "types pointer value on typedef" do
@@ -237,5 +241,39 @@ describe "Semantic: pointer" do
       ptr.value = Foo(Int32).new || Foo(Char | Int32).new
       ),
       "type must be Foo(Char | Int32), not (Foo(Char | Int32) | Foo(Int32))", inject_primitives: true
+  end
+
+  it "does not recalculate element type on multiple calls to `#value=` (#15742)" do
+    result = semantic <<-CRYSTAL
+      module Foo
+      end
+
+      class Bar1
+        include Foo
+      end
+
+      class Bar2
+        include Foo
+      end
+
+      struct Pointer(T)
+        @[Primitive(:pointer_set)]
+        def value=(value : T)
+        end
+      end
+
+      # NOTE: `typeof(v)` is `(Bar2 | Foo)*` but should most certainly be just `Foo*`
+      v = uninitialized Pointer(Bar1 | Bar2 | Foo)
+
+      a = uninitialized Bar1 | Bar2
+      v.value = a
+      b = uninitialized Foo
+      v.value = b
+
+      v
+      CRYSTAL
+
+    type = result.node.type.should be_a(PointerInstanceType)
+    type.element_type.should_not eq(result.program.types["Foo"])
   end
 end

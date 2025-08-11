@@ -1,16 +1,19 @@
 require "c/netdb"
 require "c/netinet/tcp"
 require "c/sys/socket"
-require "io/evented"
 
 module Crystal::System::Socket
-  include IO::Evented
+  {% if IO.has_constant?(:Evented) %}
+    include IO::Evented
+  {% end %}
 
   alias Handle = Int32
 
-  private def create_handle(family, type, protocol, blocking) : Handle
+  def self.socket(family, type, protocol, blocking) : Handle
     {% if LibC.has_constant?(:SOCK_CLOEXEC) %}
-      fd = LibC.socket(family, type.value | LibC::SOCK_CLOEXEC, protocol)
+      flags = type.value | LibC::SOCK_CLOEXEC
+      flags |= LibC::SOCK_NONBLOCK unless blocking
+      fd = LibC.socket(family, flags, protocol)
       raise ::Socket::Error.from_errno("Failed to create socket") if fd == -1
       fd
     {% else %}
@@ -18,12 +21,16 @@ module Crystal::System::Socket
         fd = LibC.socket(family, type, protocol)
         raise ::Socket::Error.from_errno("Failed to create socket") if fd == -1
         Socket.fcntl(fd, LibC::F_SETFD, LibC::FD_CLOEXEC)
+        Socket.fcntl(fd, LibC::F_SETFL, Socket.fcntl(fd, LibC::F_GETFL) | LibC::O_NONBLOCK) unless blocking
         fd
       end
     {% end %}
   end
 
-  private def initialize_handle(fd)
+  private def initialize_handle(fd, blocking = nil)
+    {% if Crystal::EventLoop.has_constant?(:Polling) %}
+      @__evloop_data = Crystal::EventLoop::Polling::Arena::INVALID_INDEX
+    {% end %}
   end
 
   # Tries to bind the socket to a local address.
@@ -149,17 +156,25 @@ module Crystal::System::Socket
   end
 
   private def system_blocking?
-    fcntl(LibC::F_GETFL) & LibC::O_NONBLOCK == 0
+    Socket.get_blocking(fd)
   end
 
   private def system_blocking=(value)
-    flags = fcntl(LibC::F_GETFL)
+    Socket.set_blocking(fd, value)
+  end
+
+  def self.get_blocking(fd : Handle)
+    fcntl(fd, LibC::F_GETFL) & LibC::O_NONBLOCK == 0
+  end
+
+  def self.set_blocking(fd : Handle, value : Bool)
+    flags = fcntl(fd, LibC::F_GETFL)
     if value
       flags &= ~LibC::O_NONBLOCK
     else
       flags |= LibC::O_NONBLOCK
     end
-    fcntl(LibC::F_SETFL, flags)
+    fcntl(fd, LibC::F_SETFL, flags)
   end
 
   private def system_close_on_exec?
@@ -178,11 +193,13 @@ module Crystal::System::Socket
     r
   end
 
-  def self.socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol) : {Handle, Handle}
+  def self.socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol, blocking : Bool) : {Handle, Handle}
     fds = uninitialized Handle[2]
 
     {% if LibC.has_constant?(:SOCK_CLOEXEC) %}
-      if LibC.socketpair(::Socket::Family::UNIX, type.value | LibC::SOCK_CLOEXEC, protocol, fds) == -1
+      flags = type.value | LibC::SOCK_CLOEXEC
+      flags |= LibC::SOCK_NONBLOCK unless blocking
+      if LibC.socketpair(::Socket::Family::UNIX, flags, protocol, fds) == -1
         raise ::Socket::Error.new("socketpair() failed")
       end
     {% else %}
@@ -192,6 +209,10 @@ module Crystal::System::Socket
         end
         fcntl(fds[0], LibC::F_SETFD, LibC::FD_CLOEXEC)
         fcntl(fds[1], LibC::F_SETFD, LibC::FD_CLOEXEC)
+        unless blocking
+          fcntl(fds[0], LibC::F_SETFL, fcntl(fds[0], LibC::F_GETFL) | LibC::O_NONBLOCK)
+          fcntl(fds[1], LibC::F_SETFL, fcntl(fds[0], LibC::F_GETFL) | LibC::O_NONBLOCK)
+        end
       end
     {% end %}
 
@@ -203,18 +224,13 @@ module Crystal::System::Socket
   end
 
   private def system_close
-    # Perform libevent cleanup before LibC.close.
-    # Using a file descriptor after it has been closed is never defined and can
-    # always lead to undefined results. This is not specific to libevent.
     event_loop.close(self)
-
-    socket_close
   end
 
-  private def socket_close(&)
+  def socket_close(&)
     # Clear the @volatile_fd before actually closing it in order to
     # reduce the chance of reading an outdated fd value
-    fd = @volatile_fd.swap(-1)
+    return unless fd = close_volatile_fd?
 
     ret = LibC.close(fd)
 
@@ -228,7 +244,12 @@ module Crystal::System::Socket
     end
   end
 
-  private def socket_close
+  def close_volatile_fd? : Int32?
+    fd = @volatile_fd.swap(-1)
+    fd unless fd == -1
+  end
+
+  def socket_close
     socket_close do
       raise ::Socket::Error.from_errno("Error closing socket")
     end

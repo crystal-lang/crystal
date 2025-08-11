@@ -1,6 +1,9 @@
 module Crystal::System::Thread
   alias Handle = Nil
 
+  def self.init : Nil
+  end
+
   def self.new_handle(thread_obj : ::Thread) : Handle
     raise NotImplementedError.new("Crystal::System::Thread.new_handle")
   end
@@ -13,7 +16,16 @@ module Crystal::System::Thread
     raise NotImplementedError.new("Crystal::System::Thread.yield_current")
   end
 
-  class_property current_thread : ::Thread { ::Thread.new }
+  def self.current_thread : ::Thread
+    @@current_thread ||= ::Thread.new
+  end
+
+  def self.current_thread? : ::Thread?
+    @@current_thread
+  end
+
+  def self.current_thread=(@@current_thread : ::Thread)
+  end
 
   def self.sleep(time : ::Time::Span) : Nil
     req = uninitialized LibC::Timespec

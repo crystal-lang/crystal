@@ -21,7 +21,7 @@ struct JSON::Any
   alias Type = Nil | Bool | Int64 | Float64 | String | Array(JSON::Any) | Hash(String, JSON::Any)
 
   # Reads a `JSON::Any` value from the given pull parser.
-  def self.new(pull : JSON::PullParser)
+  def self.new(pull : JSON::PullParser) : self
     case pull.kind
     when .null?
       new pull.read_null
@@ -58,13 +58,13 @@ struct JSON::Any
   end
 
   # :ditto:
-  def self.new(raw : Int)
+  def self.new(raw : Int) : self
     # FIXME: Workaround for https://github.com/crystal-lang/crystal/issues/11645
     new(raw.to_i64)
   end
 
   # :ditto:
-  def self.new(raw : Float)
+  def self.new(raw : Float) : self
     # FIXME: Workaround for https://github.com/crystal-lang/crystal/issues/11645
     new(raw.to_f64)
   end
@@ -130,12 +130,12 @@ struct JSON::Any
 
   # Traverses the depth of a structure and returns the value.
   # Returns `nil` if not found.
-  def dig?(index_or_key : String | Int, *subkeys) : JSON::Any?
+  def dig?(index_or_key : Int | String, *subkeys : Int | String) : JSON::Any?
     self[index_or_key]?.try &.dig?(*subkeys)
   end
 
   # :nodoc:
-  def dig?(index_or_key : String | Int) : JSON::Any?
+  def dig?(index_or_key : Int | String) : JSON::Any?
     case @raw
     when Hash, Array
       self[index_or_key]?
@@ -145,12 +145,12 @@ struct JSON::Any
   end
 
   # Traverses the depth of a structure and returns the value, otherwise raises.
-  def dig(index_or_key : String | Int, *subkeys) : JSON::Any
+  def dig(index_or_key : Int | String, *subkeys : Int | String) : JSON::Any
     self[index_or_key].dig(*subkeys)
   end
 
   # :nodoc:
-  def dig(index_or_key : String | Int) : JSON::Any
+  def dig(index_or_key : Int | String) : JSON::Any
     self[index_or_key]
   end
 
@@ -305,7 +305,7 @@ struct JSON::Any
   def_hash raw
 
   # :nodoc:
-  def to_json(json : JSON::Builder)
+  def to_json(json : JSON::Builder) : Nil
     raw.to_json(json)
   end
 
@@ -319,7 +319,7 @@ struct JSON::Any
   end
 
   # Returns a new JSON::Any instance with the `raw` value `clone`ed.
-  def clone
+  def clone : JSON::Any
     JSON::Any.new(raw.clone)
   end
 end

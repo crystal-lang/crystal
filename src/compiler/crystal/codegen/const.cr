@@ -46,12 +46,16 @@ class Crystal::CodeGenVisitor
              @main_mod.globals.add(@main_llvm_typer.llvm_type(const.value.type), global_name)
 
     type = const.value.type
-    # TODO: there's an LLVM bug that prevents us from having internal globals of type i128 or u128:
+    # TODO: LLVM < 9.0.0 has a bug that prevents us from having internal globals of type i128 or u128:
     # https://bugs.llvm.org/show_bug.cgi?id=42932
-    # so we just use global.
-    if @single_module && !(type.is_a?(IntegerType) && (type.kind.i128? || type.kind.u128?))
+    # so we just use global in that case.
+    {% if compare_versions(Crystal::LLVM_VERSION, "9.0.0") < 0 %}
+      if @single_module && !(type.is_a?(IntegerType) && (type.kind.i128? || type.kind.u128?))
+        global.linkage = LLVM::Linkage::Internal
+      end
+    {% else %}
       global.linkage = LLVM::Linkage::Internal if @single_module
-    end
+    {% end %}
 
     global
   end

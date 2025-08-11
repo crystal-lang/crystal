@@ -2,6 +2,8 @@ name: Linux CI
 
 on: [push, pull_request]
 
+permissions: {}
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
@@ -11,6 +13,10 @@ env:
   SPEC_SPLIT_DOTS: 160
 
 jobs:
+  # Test against latest release and the earliest supported Crystal version for forward compatibility.
+  #
+  # A more advanced test which runs against *each* supported version is available in `forward-compatibility.yml` and
+  # runs regularly on a nightly schedule.
   x86_64-gnu-test:
     env:
       ARCH: x86_64
@@ -18,25 +24,14 @@ jobs:
       DOCKER_TEST_PREFIX: crystallang/crystal:${{ matrix.crystal_bootstrap_version }}
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        crystal_bootstrap_version: [1.7.3, 1.8.2, 1.9.2, 1.10.1, 1.11.2, 1.12.2, 1.13.1]
         flags: [""]
         include:
           # libffi is only available starting from the 1.2.2 build images
           - crystal_bootstrap_version: 1.0.0
             flags: "FLAGS=-Dwithout_ffi USE_PCRE1=true"
-          - crystal_bootstrap_version: 1.1.1
-            flags: "FLAGS=-Dwithout_ffi USE_PCRE1=true"
-          - crystal_bootstrap_version: 1.2.2
-            flags: "USE_PCRE1=true"
-          - crystal_bootstrap_version: 1.3.2
-            flags: "USE_PCRE1=true"
-          - crystal_bootstrap_version: 1.4.1
-            flags: "USE_PCRE1=true"
-          - crystal_bootstrap_version: 1.5.1
-            flags: "USE_PCRE1=true"
-          - crystal_bootstrap_version: 1.6.2
-            flags: "USE_PCRE1=true"
+          - crystal_bootstrap_version: 1.17.1 # LATEST RELEASE
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v4
@@ -107,35 +102,23 @@ jobs:
       - name: Check Format
         run: bin/ci format
 
-  deploy_api_docs:
-    if: github.repository_owner == 'crystal-lang' && github.event_name == 'push' && github.ref == 'refs/heads/master'
-    env:
-      ARCH: x86_64
-      ARCH_CMD: linux64
+  lint_spellcheck:
+    name: Spell Check with Typos
     runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Actions Repository
+      uses: actions/checkout@v4
+
+    - name: Spell Check Repo
+      uses: crate-ci/typos@v1.35.2
+      env:
+        CLICOLOR: 1
+
+  lint_ameba:
+    runs-on: ubuntu-latest
+    container: ghcr.io/crystal-ameba/ameba:sha-d861f4ed0f904e0ecdad11c26f98e968f7d95afa # 1.7.0-dev
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v4
 
-      - name: Prepare System
-        run: bin/ci prepare_system
-
-      - name: Prepare Build
-        run: bin/ci prepare_build
-
-      - name: Build docs
-        run: bin/ci with_build_env 'make crystal docs threads=1'
-
-      - name: Set revision
-        run: echo $GITHUB_SHA > ./docs/revision.txt
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-
-      - name: Deploy API docs to S3
-        run: |
-          aws s3 sync ./docs s3://crystal-api/api/master --delete
+      - run: ameba

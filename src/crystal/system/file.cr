@@ -1,5 +1,7 @@
 # :nodoc:
 module Crystal::System::File
+  # def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions, blocking : Bool?) : FileDescriptor::Handle
+
   # Helper method for calculating file open modes on systems with posix-y `open`
   # calls.
   private def self.open_flag(mode)
@@ -49,8 +51,8 @@ module Crystal::System::File
 
   LOWER_ALPHANUM = "0123456789abcdefghijklmnopqrstuvwxyz".to_slice
 
-  def self.mktemp(prefix : String?, suffix : String?, dir : String, random : ::Random = ::Random::DEFAULT) : {FileDescriptor::Handle, String}
-    mode = LibC::O_RDWR | LibC::O_CREAT | LibC::O_EXCL
+  def self.mktemp(prefix : String?, suffix : String?, dir : String, random : ::Random = ::Random::DEFAULT) : {FileDescriptor::Handle, String, Bool}
+    flags = LibC::O_RDWR | LibC::O_CREAT | LibC::O_EXCL
     perm = ::File::Permissions.new(0o600)
 
     prefix = ::File.join(dir, prefix || "")
@@ -65,27 +67,18 @@ module Crystal::System::File
         io << suffix
       end
 
-      handle, errno = open(path, mode, perm)
-
-      if error_is_none?(errno)
-        return {handle, path}
-      elsif error_is_file_exists?(errno)
+      case result = EventLoop.current.open(path, flags, perm, blocking: true)
+      when Tuple(FileDescriptor::Handle, Bool)
+        fd, blocking = result
+        return {fd, path, blocking}
+      when Errno::EEXIST, WinError::ERROR_FILE_EXISTS
         # retry
-        next
       else
-        raise ::File::Error.from_os_error("Error creating temporary file", errno, file: path)
+        raise ::File::Error.from_os_error("Error creating temporary file", result, file: path)
       end
     end
 
     raise ::File::AlreadyExistsError.new("Error creating temporary file", file: "#{prefix}********#{suffix}")
-  end
-
-  private def self.error_is_none?(errno)
-    errno.in?(Errno::NONE, WinError::ERROR_SUCCESS)
-  end
-
-  private def self.error_is_file_exists?(errno)
-    errno.in?(Errno::EEXIST, WinError::ERROR_FILE_EXISTS)
   end
 end
 

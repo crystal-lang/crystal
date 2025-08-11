@@ -596,7 +596,7 @@ describe "Code gen: macro" do
         end
       end
       Foo(1).new.foo
-    )).to_b.should eq(true)
+    )).to_b.should be_true
   end
 
   it "can access type variables of a tuple" do
@@ -1867,7 +1867,7 @@ describe "Code gen: macro" do
       end
 
       Foo.new.bar
-      )).to_b.should eq(true)
+      )).to_b.should be_true
   end
 
   it "does block unpacking inside macro expression (#13707)" do
@@ -1884,5 +1884,10 @@ describe "Code gen: macro" do
         {{ value }}
       {% end %}
       )).to_i.should eq(10)
+  end
+
+  it "accepts compile-time flags" do
+    run("{{ flag?(:foo) ? 1 : 0 }}", flags: %w(foo)).to_i.should eq(1)
+    run("{{ flag?(:foo) ? 1 : 0 }}", Int32, flags: %w(foo)).should eq(1)
   end
 end

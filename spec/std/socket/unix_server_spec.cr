@@ -27,6 +27,18 @@ describe UNIXServer do
       end
     end
 
+    it "creates the socket file from `Path`" do
+      with_tempfile("unix_server.sock") do |path|
+        path = Path.new(path)
+        UNIXServer.open(path) do
+          File.exists?(path).should be_true
+          File.info(path).type.socket?.should be_true
+        end
+
+        File.exists?(path).should be_false
+      end
+    end
+
     it "deletes socket file on close" do
       with_tempfile("unix_server-close.sock") do |path|
         server = UNIXServer.new(path)

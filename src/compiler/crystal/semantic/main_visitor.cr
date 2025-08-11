@@ -373,7 +373,7 @@ module Crystal
           var.bind_to(@program.nil_var)
           var.nil_if_read = false
 
-          meta_var.bind_to(@program.nil_var) unless meta_var.dependencies.try &.any? &.same?(@program.nil_var)
+          meta_var.bind_to(@program.nil_var) unless meta_var.dependencies.any? &.same?(@program.nil_var)
           node.bind_to(@program.nil_var)
         end
 
@@ -1283,7 +1283,7 @@ module Crystal
         # It can happen that this call is inside an ArrayLiteral or HashLiteral,
         # was expanded but isn't bound to the expansion because the call (together
         # with its expansion) was cloned.
-        if (expanded = node.expanded) && (!node.dependencies? || !node.type?)
+        if (expanded = node.expanded) && (node.dependencies.empty? || !node.type?)
           node.bind_to(expanded)
         end
 
@@ -1311,6 +1311,10 @@ module Crystal
           check_lib_call node, obj.type?
 
           if check_special_new_call(node, obj.type?)
+            return false
+          end
+
+          if check_slice_literal_call(node, obj.type?)
             return false
           end
         end
@@ -1565,6 +1569,76 @@ module Crystal
       end
 
       false
+    end
+
+    def check_slice_literal_call(node, obj_type)
+      return false unless obj_type
+      return false unless obj_type.metaclass?
+      return false unless node.name == "literal"
+
+      instance_type = obj_type.instance_type.remove_typedef
+
+      case instance_type
+      when GenericClassType # Slice
+        return false unless instance_type == @program.slice
+
+        element_type = nil
+
+        node.args.each do |arg|
+          arg.raise "Expected NumberLiteral, got #{arg.class_desc}" unless arg.is_a?(NumberLiteral)
+          arg.accept self
+          element_type ||= arg.type
+          unless element_type == arg.type
+            arg.raise "Too many element types for slice literal without generic argument: #{element_type}, #{arg.type}"
+          end
+        end
+
+        unless element_type
+          node.raise "Cannot create empty slice literal without element type"
+        end
+      when GenericClassInstanceType # Slice(T)
+        return false unless instance_type.generic_type == @program.slice
+
+        element_type = instance_type.type_vars["T"].type
+
+        node.args.each do |arg|
+          arg.raise "Expected NumberLiteral, got #{arg.class_desc}" unless arg.is_a?(NumberLiteral)
+          arg.accept self
+          arg.raise "Argument out of range for a Slice(#{element_type})" unless arg.representable_in?(element_type)
+        end
+      else
+        return false
+      end
+
+      kind =
+        case element_type
+        when IntegerType
+          element_type.kind
+        when FloatType
+          element_type.kind
+        else
+          node.raise "Only slice literals of primitive integer or float types can be created"
+        end
+
+      # create the internal constant `$Slice:n` to hold the slice contents
+      const_name = "$Slice:#{@program.const_slices.size}"
+      const_value = Nop.new
+      const_value.type = @program.static_array_of(element_type, node.args.size)
+      const = Const.new(@program, @program, const_name, const_value)
+      @program.types[const_name] = const
+      @program.const_slices[const_name] = Program::ConstSliceInfo.new(const_name, kind, node.args)
+
+      # ::Slice.new(pointerof($Slice:n.@buffer), {{ args.size }}, read_only: true)
+      pointer_node = PointerOf.new(ReadInstanceVar.new(Path.new(const_name).at(node), "@buffer").at(node)).at(node)
+      size_node = NumberLiteral.new(node.args.size.to_s, :i32).at(node)
+      read_only_node = NamedArgument.new("read_only", BoolLiteral.new(true).at(node)).at(node)
+      expanded = Call.new(Path.global("Slice").at(node), "new", [pointer_node, size_node], named_args: [read_only_node]).at(node)
+
+      expanded.accept self
+      node.bind_to expanded
+      node.expanded = expanded
+
+      true
     end
 
     # Rewrite:
@@ -2085,6 +2159,13 @@ module Crystal
       @vars.each do |name, while_var|
         before_cond_var = before_cond_vars[name]?
         after_cond_var = after_cond_vars[name]?
+
+        # Check if no types were changed in the condition or the body
+        if while_var.same?(before_cond_var) && while_var.same?(after_cond_var)
+          after_while_vars[name] = while_var
+          next
+        end
+
         after_while_vars[name] = after_while_var = MetaVar.new(name)
 
         # After while's body, bind variables *before* the condition to the
@@ -2290,17 +2371,22 @@ module Crystal
     end
 
     def visit(node : Primitive)
+      case node.name
+      when "pre_initialize"
+        return visit_pre_initialize node
+      end
+
       # If the method where this primitive is defined has a return type, use it
       if return_type = typed_def.return_type
         node.type = (path_lookup || scope).lookup_type(return_type, free_vars: free_vars)
         return false
       end
 
+      # TODO: move these into the case expression above and add return types to
+      # their corresponding methods
       case node.name
       when "allocate"
         visit_allocate node
-      when "pre_initialize"
-        visit_pre_initialize node
       when "pointer_malloc"
         visit_pointer_malloc node
       when "pointer_set"
@@ -2308,7 +2394,7 @@ module Crystal
       when "pointer_new"
         visit_pointer_new node
       when "slice_literal"
-        visit_slice_literal node
+        node.raise "BUG: Slice literal should have been expanded"
       when "argc"
         # Already typed
       when "argv"
@@ -2404,35 +2490,46 @@ module Crystal
 
       case instance_type
       when GenericClassType
-        node.raise "Can't pre-initialize instance of generic class #{instance_type} without specifying its type vars"
+        node.raise "Can't pre-initialize instance of #{instance_type.type_desc} #{instance_type} without specifying its type vars"
       when UnionType
         node.raise "Can't pre-initialize instance of a union type"
-      else
-        if instance_type.abstract?
-          if instance_type.virtual?
-            # This is the same as `.initialize`
-            base_type = instance_type.devirtualize
+      end
 
-            extra = Call.new(
-              nil,
-              "raise",
-              StringLiteral.new("Can't pre-initialize abstract class #{base_type}"),
-              global: true).at(node)
-            extra.accept self
+      if instance_type.abstract?
+        if instance_type.virtual? && !instance_type.struct?
+          # This is the same as `.initialize`
+          base_type = instance_type.devirtualize
 
-            # This `extra` will replace the Primitive node in CleanupTransformer later on.
-            node.extra = extra
-            node.type = @program.no_return
-            return
-          else
-            # If the type is not virtual then we know for sure that the type
-            # can't be instantiated, and we can produce a compile-time error.
-            node.raise "Can't pre-initialize abstract class #{instance_type}"
-          end
+          extra = Call.new(
+            nil,
+            "raise",
+            StringLiteral.new("Can't pre-initialize abstract #{base_type.type_desc} #{base_type}"),
+            global: true).at(node)
+          extra.accept self
+
+          # This `extra` will replace the Primitive node in CleanupTransformer later on.
+          node.extra = extra
+          node.type = @program.no_return
+          return false
+        else
+          # If the type is not virtual then we know for sure that the type
+          # can't be instantiated, and we can produce a compile-time error.
+          instance_type = instance_type.devirtualize
+          node.raise "Can't pre-initialize abstract #{instance_type.type_desc} #{instance_type}"
         end
+      end
 
+      if instance_type.struct?
+        element_type = @vars["address"].type.as(PointerInstanceType).element_type
+        if element_type.abstract? && element_type.struct?
+          node.raise "Can't pre-initialize struct using pointer to abstract struct"
+        end
+        node.type = @program.nil_type
+      else
         node.type = instance_type
       end
+
+      false
     end
 
     def visit_pointer_malloc(node)
@@ -2454,7 +2551,6 @@ module Crystal
 
       value = @vars["value"]
 
-      scope.var.bind_to value
       node.bind_to value
     end
 
@@ -2464,51 +2560,6 @@ module Crystal
       end
 
       node.type = scope.instance_type
-    end
-
-    def visit_slice_literal(node)
-      call = self.call.not_nil!
-
-      case slice_type = scope.instance_type
-      when GenericClassType # Slice
-        call.raise "TODO: implement slice_literal primitive for Slice without generic arguments"
-      when GenericClassInstanceType # Slice(T)
-        element_type = slice_type.type_vars["T"].type
-        kind = case element_type
-               when IntegerType
-                 element_type.kind
-               when FloatType
-                 element_type.kind
-               else
-                 call.raise "Only slice literals of primitive integer or float types can be created"
-               end
-
-        call.args.each do |arg|
-          arg.raise "Expected NumberLiteral, got #{arg.class_desc}" unless arg.is_a?(NumberLiteral)
-          arg.raise "Argument out of range for a Slice(#{element_type})" unless arg.representable_in?(element_type)
-        end
-
-        # create the internal constant `$Slice:n` to hold the slice contents
-        const_name = "$Slice:#{@program.const_slices.size}"
-        const_value = Nop.new
-        const_value.type = @program.static_array_of(element_type, call.args.size)
-        const = Const.new(@program, @program, const_name, const_value)
-        @program.types[const_name] = const
-        @program.const_slices << Program::ConstSliceInfo.new(const_name, kind, call.args)
-
-        # ::Slice.new(pointerof($Slice:n.@buffer), {{ args.size }}, read_only: true)
-        pointer_node = PointerOf.new(ReadInstanceVar.new(Path.new(const_name).at(node), "@buffer").at(node)).at(node)
-        size_node = NumberLiteral.new(call.args.size.to_s, :i32).at(node)
-        read_only_node = NamedArgument.new("read_only", BoolLiteral.new(true).at(node)).at(node)
-        extra = Call.new(Path.global("Slice").at(node), "new", [pointer_node, size_node], named_args: [read_only_node]).at(node)
-
-        extra.accept self
-        node.extra = extra
-        node.type = slice_type
-        call.expanded = extra
-      else
-        node.raise "BUG: Unknown scope for slice_literal primitive"
-      end
     end
 
     def visit_struct_or_union_set(node)
@@ -2561,7 +2612,7 @@ module Crystal
         # "undefined local variable or method"
         node.exp.accept self
 
-        node.exp.raise "can't take address of #{node.exp}"
+        node.exp.raise "can't take address of #{node.exp} because it's a #{node.exp.class_desc}. `pointerof` expects a variable or constant."
       end
 
       node.bind_to var
@@ -2659,7 +2710,7 @@ module Crystal
       end
     end
 
-    private def visit_size_or_align_of(node)
+    private def visit_size_or_align_of(node, &)
       @in_type_args += 1
       node.exp.accept self
       @in_type_args -= 1
@@ -2685,7 +2736,7 @@ module Crystal
       false
     end
 
-    private def visit_instance_size_or_align_of(node)
+    private def visit_instance_size_or_align_of(node, &)
       @in_type_args += 1
       node.exp.accept self
       @in_type_args -= 1

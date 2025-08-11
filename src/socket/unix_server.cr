@@ -37,7 +37,8 @@ class UNIXServer < UNIXSocket
   # ```
   #
   # [Only the stream type is supported on Windows](https://devblogs.microsoft.com/commandline/af_unix-comes-to-windows/#unsupportedunavailable).
-  def initialize(@path : String, type : Type = Type::STREAM, backlog : Int = 128)
+  def initialize(path : Path | String, type : Type = Type::STREAM, backlog : Int = 128)
+    @path = path = path.to_s
     super(Family::UNIX, type)
 
     system_bind(UNIXAddress.new(path), path) do |error|
@@ -52,16 +53,24 @@ class UNIXServer < UNIXSocket
     end
   end
 
-  # Creates a UNIXServer from an already configured raw file descriptor
-  def initialize(*, fd : Handle, type : Type = Type::STREAM, @path : String? = nil)
-    super(fd: fd, type: type, path: @path)
+  # Creates a UNIXServer from an existing system file descriptor or socket
+  # handle.
+  #
+  # This adopts *fd* into the IO system that will reconfigure it as per the
+  # event loop runtime requirements.
+  #
+  # NOTE: On Windows, the handle must have been created with
+  # `WSA_FLAG_OVERLAPPED`.
+  def initialize(*, fd : Handle, type : Type = Type::STREAM, path : Path | String? = nil)
+    @path = path = path.to_s
+    super(fd: fd, type: type, path: path)
   end
 
   # Creates a new UNIX server and yields it to the block. Eventually closes the
   # server socket when the block returns.
   #
   # Returns the value of the block.
-  def self.open(path, type : Type = Type::STREAM, backlog = 128, &)
+  def self.open(path : Path | String, type : Type = Type::STREAM, backlog = 128, &)
     server = new(path, type, backlog)
     begin
       yield server
@@ -75,8 +84,8 @@ class UNIXServer < UNIXSocket
   # Returns the client socket or `nil` if the server is closed after invoking
   # this method.
   def accept? : UNIXSocket?
-    if client_fd = system_accept
-      sock = UNIXSocket.new(fd: client_fd, type: type, path: @path)
+    if rs = Crystal::EventLoop.current.accept(self)
+      sock = UNIXSocket.new(handle: rs[0], type: type, path: @path, blocking: rs[1])
       sock.sync = sync?
       sock
     end

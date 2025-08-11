@@ -28,7 +28,7 @@ describe HTTP::LogHandler do
     backend = Log::MemoryBackend.new
     log = Log.new("custom", backend, :info)
     handler = HTTP::LogHandler.new(log)
-    handler.next = ->(ctx : HTTP::Server::Context) {}
+    handler.next = ->(ctx : HTTP::Server::Context) { }
     handler.call(context)
 
     logs = Log::EntriesChecker.new(backend.entries)

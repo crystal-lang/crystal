@@ -266,6 +266,64 @@ describe "Semantic: primitives" do
       end
       CRYSTAL
 
+    context "without element type" do
+      it "types primitive int literal" do
+        assert_type(<<-CRYSTAL) { generic_class "Slice", int32 }
+          #{def_slice_literal}
+          Slice.literal(0, 1, 4, 9)
+          CRYSTAL
+
+        assert_type(<<-CRYSTAL) { generic_class "Slice", uint8 }
+          #{def_slice_literal}
+          Slice.literal(1_u8, 2_u8)
+          CRYSTAL
+      end
+
+      it "types primitive float literal" do
+        assert_type(<<-CRYSTAL) { generic_class "Slice", float64 }
+          #{def_slice_literal}
+          Slice.literal(1.2, 3.4)
+          CRYSTAL
+
+        assert_type(<<-CRYSTAL) { generic_class "Slice", float32 }
+          #{def_slice_literal}
+          Slice.literal(5.6_f32)
+          CRYSTAL
+      end
+
+      it "errors if empty" do
+        assert_error <<-CRYSTAL, "Cannot create empty slice literal without element type"
+          #{def_slice_literal}
+          Slice.literal
+          CRYSTAL
+      end
+
+      it "errors if multiple element types are found" do
+        assert_error <<-CRYSTAL, "Too many element types for slice literal without generic argument: Int32, UInt8"
+          #{def_slice_literal}
+          Slice.literal(1, 2_u8)
+          CRYSTAL
+
+        assert_error <<-CRYSTAL, "Too many element types for slice literal without generic argument: Float32, Float64"
+          #{def_slice_literal}
+          Slice.literal(3.0f32, 4.0)
+          CRYSTAL
+      end
+
+      it "errors if element is not number literal" do
+        assert_error <<-CRYSTAL, "Expected NumberLiteral, got StringLiteral"
+          #{def_slice_literal}
+          Slice.literal("")
+          CRYSTAL
+
+        assert_error <<-CRYSTAL, "Expected NumberLiteral, got Var"
+          #{def_slice_literal}
+          x = 1
+          Slice.literal(x)
+          CRYSTAL
+      end
+    end
+
     context "with element type" do
       it "types primitive int literal" do
         assert_type(<<-CRYSTAL) { generic_class "Slice", uint8 }
@@ -390,6 +448,59 @@ describe "Semantic: primitives" do
 
         x = 1
         Foo.pre_initialize(pointerof(x))
+        CRYSTAL
+    end
+  end
+
+  describe "Struct.pre_initialize" do
+    def_struct_pre_initialize = <<-CRYSTAL
+      struct Struct
+        @[Primitive(:pre_initialize)]
+        def self.pre_initialize(address : Pointer) : Nil
+          {% @type %}
+        end
+      end
+      CRYSTAL
+
+    it "errors on abstract type" do
+      assert_error <<-CRYSTAL, "Can't pre-initialize abstract struct Foo"
+        #{def_struct_pre_initialize}
+
+        abstract struct Foo
+        end
+
+        x = 1
+        Foo.pre_initialize(pointerof(x))
+        CRYSTAL
+    end
+
+    it "errors on virtual abstract type" do
+      assert_error <<-CRYSTAL, "Can't pre-initialize abstract struct Foo"
+        #{def_struct_pre_initialize}
+
+        abstract struct Foo
+        end
+
+        struct Bar < Foo
+        end
+
+        x = 1
+        Bar.as(Foo.class).pre_initialize(pointerof(x))
+        CRYSTAL
+    end
+
+    it "errors on abstract pointee type" do
+      assert_error <<-CRYSTAL, "Can't pre-initialize struct using pointer to abstract struct"
+        #{def_struct_pre_initialize}
+
+        abstract struct Foo
+        end
+
+        struct Bar < Foo
+        end
+
+        x = uninitialized Foo
+        Bar.pre_initialize(pointerof(x))
         CRYSTAL
     end
   end

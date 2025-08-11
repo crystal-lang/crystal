@@ -84,13 +84,39 @@ module Crystal
     # This pool is passed to the parser, macro expander, etc.
     getter string_pool = StringPool.new
 
-    record ConstSliceInfo,
-      name : String,
-      element_type : NumberKind,
-      args : Array(ASTNode)
+    record ConstSliceInfo, name : String, element_type : NumberKind, args : Array(ASTNode) do
+      def to_bytes : Bytes
+        element_size = element_type.bytesize // 8
+        bytesize = args.size * element_size
+        buffer = Pointer(UInt8).malloc(bytesize)
+        ptr = buffer
 
-    # All constant slices constructed via the `Slice.literal` primitive.
-    getter const_slices = [] of ConstSliceInfo
+        args.each do |arg|
+          num = arg.as(NumberLiteral)
+          case element_type
+          in .i8?   then ptr.as(Int8*).value = num.value.to_i8
+          in .i16?  then ptr.as(Int16*).value = num.value.to_i16
+          in .i32?  then ptr.as(Int32*).value = num.value.to_i32
+          in .i64?  then ptr.as(Int64*).value = num.value.to_i64
+          in .i128? then ptr.as(Int128*).value = num.value.to_i128
+          in .u8?   then ptr.as(UInt8*).value = num.value.to_u8
+          in .u16?  then ptr.as(UInt16*).value = num.value.to_u16
+          in .u32?  then ptr.as(UInt32*).value = num.value.to_u32
+          in .u64?  then ptr.as(UInt64*).value = num.value.to_u64
+          in .u128? then ptr.as(UInt128*).value = num.value.to_u128
+          in .f32?  then ptr.as(Float32*).value = num.value.to_f32
+          in .f64?  then ptr.as(Float64*).value = num.value.to_f64
+          end
+          ptr += element_size
+        end
+
+        buffer.to_slice(bytesize)
+      end
+    end
+
+    # All constant slices constructed via the `Slice.literal` compiler built-in,
+    # indexed by their buffers' internal names (e.g. `$Slice:0`).
+    getter const_slices = {} of String => ConstSliceInfo
 
     # Here we store constants, in the
     # order that they are used. They will be initialized as soon
@@ -205,6 +231,8 @@ module Crystal
       types["Regex"] = @regex = NonGenericClassType.new self, self, "Regex", reference
       types["Range"] = range = @range = GenericClassType.new self, self, "Range", struct_t, ["B", "E"]
       range.struct = true
+      types["Slice"] = slice = @slice = GenericClassType.new self, self, "Slice", struct_t, ["T"]
+      slice.struct = true
 
       types["Exception"] = @exception = NonGenericClassType.new self, self, "Exception", reference
 
@@ -314,7 +342,7 @@ module Crystal
       define_crystal_string_constant "VERSION", Crystal::Config.version, <<-MD
         The version of the Crystal compiler.
         MD
-      define_crystal_string_constant "LLVM_VERSION", Crystal::Config.llvm_version, <<-MD
+      define_crystal_string_constant "LLVM_VERSION", LLVM.version, <<-MD
         The version of LLVM used by the Crystal compiler.
         MD
       define_crystal_string_constant "HOST_TRIPLE", Crystal::Config.host_target.to_s, <<-MD
@@ -504,7 +532,7 @@ module Crystal
       recorded_requires << RecordedRequire.new(filename, relative_to)
     end
 
-    def run_requires(node : Require, filenames) : Nil
+    def run_requires(node : Require, filenames, &) : Nil
       dependency_printer = compiler.try(&.dependency_printer)
 
       filenames.each do |filename|
@@ -528,7 +556,7 @@ module Crystal
 
     {% for name in %w(object no_return value number reference void nil bool char int int8 int16 int32 int64 int128
                      uint8 uint16 uint32 uint64 uint128 float float32 float64 string symbol pointer enumerable indexable
-                     array static_array exception tuple named_tuple proc union enum range regex crystal
+                     array static_array exception tuple named_tuple proc union enum range slice regex crystal
                      packed_annotation thread_local_annotation no_inline_annotation
                      always_inline_annotation naked_annotation returns_twice_annotation
                      raises_annotation primitive_annotation call_convention_annotation

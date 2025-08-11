@@ -170,7 +170,8 @@ end
 
 private def build_report(timestamp = nil, &)
   output = String::Builder.new
-  formatter = Spec::JUnitFormatter.new(output)
+  cli = Spec::CLI.new
+  formatter = Spec::JUnitFormatter.new(cli, output)
   formatter.started_at = timestamp if timestamp
   yield formatter
   formatter.finish(Time::Span.zero, false)

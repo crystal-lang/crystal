@@ -1,5 +1,4 @@
 require "c/fcntl"
-require "io/evented"
 require "termios"
 {% if flag?(:android) && LibC::ANDROID_API < 28 %}
   require "c/sys/ioctl"
@@ -7,7 +6,9 @@ require "termios"
 
 # :nodoc:
 module Crystal::System::FileDescriptor
-  include IO::Evented
+  {% if IO.has_constant?(:Evented) %}
+    include IO::Evented
+  {% end %}
 
   # Platform-specific type to represent a file descriptor handle to the operating
   # system.
@@ -23,18 +24,35 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_blocking=(value)
-    current_flags = fcntl(LibC::F_GETFL)
+    FileDescriptor.set_blocking(fd, value)
+  end
+
+  protected def self.get_blocking(fd : Handle)
+    fcntl(fd, LibC::F_GETFL) & LibC::O_NONBLOCK == 0
+  end
+
+  protected def self.set_blocking(fd : Handle, value : Bool)
+    current_flags = fcntl(fd, LibC::F_GETFL)
     new_flags = current_flags
     if value
       new_flags &= ~LibC::O_NONBLOCK
     else
       new_flags |= LibC::O_NONBLOCK
     end
-    fcntl(LibC::F_SETFL, new_flags) unless new_flags == current_flags
+    fcntl(fd, LibC::F_SETFL, new_flags) unless new_flags == current_flags
   end
 
-  private def system_blocking_init(value)
-    self.system_blocking = false unless value
+  protected def system_blocking_init(blocking : Bool?)
+    if blocking.nil?
+      blocking = EventLoop.default_file_blocking? ||
+                 case system_info.type
+                 when .pipe?, .socket?, .character_device?
+                   false
+                 else
+                   true
+                 end
+    end
+    self.system_blocking = blocking
   end
 
   private def system_close_on_exec?
@@ -108,24 +126,26 @@ module Crystal::System::FileDescriptor
     # Mark the handle open, since we had to have dup'd a live handle.
     @closed = false
 
-    event_loop.close(self)
+    event_loop.reopened(self)
   end
 
   private def system_close
-    # Perform libevent cleanup before LibC.close.
-    # Using a file descriptor after it has been closed is never defined and can
-    # always lead to undefined results. This is not specific to libevent.
     event_loop.close(self)
-
-    file_descriptor_close
   end
 
   def file_descriptor_close(&) : Nil
+    # It would usually be set by IO::Buffered#unbuffered_close but we sometimes
+    # close file descriptors directly (i.e. signal/process pipes) and the IO
+    # object wouldn't be marked as closed, leading IO::FileDescriptor#finalize
+    # to try to close the fd again (pointless) and lead to other issues if we
+    # try to do more cleanup in the finalizer (error)
+    @closed = true
+
     # Clear the @volatile_fd before actually closing it in order to
     # reduce the chance of reading an outdated fd value
-    _fd = @volatile_fd.swap(-1)
+    return unless fd = close_volatile_fd?
 
-    if LibC.close(_fd) != 0
+    if LibC.close(fd) != 0
       case Errno.value
       when Errno::EINTR, Errno::EINPROGRESS
         # ignore
@@ -139,6 +159,11 @@ module Crystal::System::FileDescriptor
     file_descriptor_close do
       raise IO::Error.from_errno("Error closing file", target: self)
     end
+  end
+
+  def close_volatile_fd? : Int32?
+    fd = @volatile_fd.swap(-1)
+    fd unless fd == -1
   end
 
   private def system_flock_shared(blocking)
@@ -158,7 +183,7 @@ module Crystal::System::FileDescriptor
 
     if retry
       until flock(op)
-        sleep 0.1
+        sleep 0.1.seconds
       end
     else
       flock(op) || raise IO::Error.from_errno("Error applying file lock: file is already locked", target: self)
@@ -195,7 +220,7 @@ module Crystal::System::FileDescriptor
     end
   end
 
-  def self.pipe(read_blocking, write_blocking)
+  def self.system_pipe : StaticArray(LibC::Int, 2)
     pipe_fds = uninitialized StaticArray(LibC::Int, 2)
 
     {% if LibC.has_method?(:pipe2) %}
@@ -212,18 +237,14 @@ module Crystal::System::FileDescriptor
       end
     {% end %}
 
-    r = IO::FileDescriptor.new(pipe_fds[0], read_blocking)
-    w = IO::FileDescriptor.new(pipe_fds[1], write_blocking)
-    w.sync = true
-
-    {r, w}
+    pipe_fds
   end
 
-  def self.pread(fd, buffer, offset)
-    bytes_read = LibC.pread(fd, buffer, buffer.size, offset).to_i64
+  def self.pread(file, buffer, offset)
+    bytes_read = LibC.pread(file.fd, buffer, buffer.size, offset).to_i64
 
     if bytes_read == -1
-      raise IO::Error.from_errno "Error reading file"
+      raise IO::Error.from_errno("Error reading file", target: file)
     end
 
     bytes_read
@@ -246,6 +267,20 @@ module Crystal::System::FileDescriptor
     io = IO::FileDescriptor.new(clone_fd)
     io.sync = true
     io
+  end
+
+  # Helper to write *size* values at *pointer* to a given *fd*.
+  def self.write_fully(fd : LibC::Int, pointer : Pointer, size : Int32 = 1) : Nil
+    write_fully(fd, Slice.new(pointer, size).unsafe_slice_of(UInt8))
+  end
+
+  # Helper to fully write a slice to a given *fd*.
+  def self.write_fully(fd : LibC::Int, slice : Slice(UInt8)) : Nil
+    until slice.size == 0
+      size = LibC.write(fd, slice, slice.size)
+      break if size == -1
+      slice += size
+    end
   end
 
   private def system_echo(enable : Bool, mode = nil)

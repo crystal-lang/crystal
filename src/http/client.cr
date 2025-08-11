@@ -343,9 +343,9 @@ class HTTP::Client
   # ```
   setter connect_timeout : Time::Span?
 
-  # **This method has no effect right now**
-  #
   # Sets the number of seconds to wait when resolving a name, before raising an `IO::TimeoutError`.
+  #
+  # NOTE: *dns_timeout* is currently only supported on Windows.
   #
   # ```
   # require "http/client"
@@ -363,9 +363,9 @@ class HTTP::Client
     self.dns_timeout = dns_timeout.seconds
   end
 
-  # **This method has no effect right now**
-  #
   # Sets the number of seconds to wait when resolving a name with a `Time::Span`, before raising an `IO::TimeoutError`.
+  #
+  # NOTE: *dns_timeout* is currently only supported on Windows.
   #
   # ```
   # require "http/client"
@@ -580,6 +580,10 @@ class HTTP::Client
 
   private def exec_internal(request)
     implicit_compression = implicit_compression?(request)
+
+    set_defaults request
+    run_before_request_callbacks(request)
+
     begin
       response = exec_internal_single(request, implicit_compression: implicit_compression)
     rescue exc : IO::Error
@@ -628,6 +632,10 @@ class HTTP::Client
 
   private def exec_internal(request, &block : Response -> T) : T forall T
     implicit_compression = implicit_compression?(request)
+
+    set_defaults request
+    run_before_request_callbacks(request)
+
     exec_internal_single(request, ignore_io_error: true, implicit_compression: implicit_compression) do |response|
       if response
         return handle_response(response) { yield response }
@@ -665,8 +673,6 @@ class HTTP::Client
   end
 
   private def send_request(request)
-    set_defaults request
-    run_before_request_callbacks(request)
     request.to_io(io)
     io.flush
   end

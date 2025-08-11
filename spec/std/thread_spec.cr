@@ -1,12 +1,5 @@
 require "./spec_helper"
-
-{% if flag?(:musl) %}
-  # FIXME: These thread specs occasionally fail on musl/alpine based ci, so
-  # they're disabled for now to reduce noise.
-  # See https://github.com/crystal-lang/crystal/issues/8738
-  pending Thread
-  {% skip_file %}
-{% end %}
+require "../support/thread"
 
 # interpreter doesn't support threads yet (#14287)
 pending_interpreted describe: Thread do
@@ -52,9 +45,13 @@ pending_interpreted describe: Thread do
   end
 
   it "names the thread" do
-    Thread.current.name.should be_nil
-    name = nil
+    {% if flag?(:execution_context) %}
+      Thread.current.name.should eq("DEFAULT")
+    {% else %}
+      Thread.current.name.should be_nil
+    {% end %}
 
+    name = nil
     thread = Thread.new(name: "some-name") do
       name = Thread.current.name
     end

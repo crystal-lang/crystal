@@ -113,7 +113,7 @@ class Crystal::Repl::Interpreter
   def initialize(
     @context : Context,
     # TODO: what if the stack is exhausted?
-    @stack : UInt8* = Pointer(Void).malloc(8 * 1024 * 1024).as(UInt8*)
+    @stack : UInt8* = Pointer(Void).malloc(8 * 1024 * 1024).as(UInt8*),
   )
     @local_vars = LocalVars.new(@context)
     @argv = [] of String
@@ -627,10 +627,10 @@ class Crystal::Repl::Interpreter
   end
 
   private macro lib_call(lib_function)
-    %target_def = lib_function.def
     %cif = lib_function.call_interface
     %fn = lib_function.symbol
     %args_bytesizes = lib_function.args_bytesizes
+    %return_bytesize = lib_function.return_bytesize
 
     # Assume C calls don't have more than 100 arguments
     # TODO: use the stack for this?
@@ -649,7 +649,6 @@ class Crystal::Repl::Interpreter
     rescue ex : EscapingException
       raise_exception(ex.exception_pointer)
     else
-      %return_bytesize = inner_sizeof_type(%target_def.type)
       %aligned_return_bytesize = align(%return_bytesize)
 
       (stack - %offset).move_from(stack, %return_bytesize)
@@ -1172,6 +1171,38 @@ class Crystal::Repl::Interpreter
   private def fiber_resumable(context : Void*) : LibC::Long
     fiber = context.as(Fiber*).value
     fiber.@context.resumable
+  end
+
+  private def signal_descriptor(fd : Int32) : Nil
+    {% if flag?(:unix) %}
+      # replace the interpreter's signal writer so that the interpreted code
+      # will receive signals from now on
+      writer = IO::FileDescriptor.new(fd)
+      writer.sync = true
+      Crystal::System::Signal.writer = writer
+    {% else %}
+      raise "BUG: interpreter doesn't support signals on this target"
+    {% end %}
+  end
+
+  private def signal(signum : Int32, handler : Int32) : Nil
+    {% if flag?(:unix) %}
+      signal = ::Signal.new(signum)
+      case handler
+      when 0
+        signal.reset
+      when 1
+        signal.ignore
+      else
+        # register the signal for the OS so the process will receive them;
+        # registers a fake handler since the interpreter won't handle the signal:
+        # the interpreted code will receive it and will execute the interpreted
+        # handler
+        signal.trap { }
+      end
+    {% else %}
+      raise "BUG: interpreter doesn't support signals on this target"
+    {% end %}
   end
 
   private def pry(ip, instructions, stack_bottom, stack)

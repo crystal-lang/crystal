@@ -11,8 +11,8 @@ require "./benchmark/**"
 # require "benchmark"
 #
 # Benchmark.ips do |x|
-#   x.report("short sleep") { sleep 0.01 }
-#   x.report("shorter sleep") { sleep 0.001 }
+#   x.report("short sleep") { sleep 10.milliseconds }
+#   x.report("shorter sleep") { sleep 1.millisecond }
 # end
 # ```
 #
@@ -31,7 +31,7 @@ require "./benchmark/**"
 # require "benchmark"
 #
 # Benchmark.ips(warmup: 4, calculation: 10) do |x|
-#   x.report("sleep") { sleep 0.01 }
+#   x.report("sleep") { sleep 10.milliseconds }
 # end
 # ```
 #

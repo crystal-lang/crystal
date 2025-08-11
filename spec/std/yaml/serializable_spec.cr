@@ -860,38 +860,38 @@ describe "YAML::Serializable" do
 
     it "bool" do
       yaml = YAMLAttrWithDefaults.from_yaml(%({}))
-      yaml.c.should eq true
+      yaml.c.should be_true
       typeof(yaml.c).should eq Bool
-      yaml.d.should eq false
+      yaml.d.should be_false
       typeof(yaml.d).should eq Bool
 
       yaml = YAMLAttrWithDefaults.from_yaml(%({"c":false}))
-      yaml.c.should eq false
+      yaml.c.should be_false
       yaml = YAMLAttrWithDefaults.from_yaml(%({"c":true}))
-      yaml.c.should eq true
+      yaml.c.should be_true
 
       yaml = YAMLAttrWithDefaults.from_yaml(%({"d":false}))
-      yaml.d.should eq false
+      yaml.d.should be_false
       yaml = YAMLAttrWithDefaults.from_yaml(%({"d":true}))
-      yaml.d.should eq true
+      yaml.d.should be_true
     end
 
     it "with nilable" do
       yaml = YAMLAttrWithDefaults.from_yaml(%({}))
 
-      yaml.e.should eq false
+      yaml.e.should be_false
       typeof(yaml.e).should eq(Bool | Nil)
 
       yaml.f.should eq 1
       typeof(yaml.f).should eq(Int32 | Nil)
 
-      yaml.g.should eq nil
+      yaml.g.should be_nil
       typeof(yaml.g).should eq(Int32 | Nil)
 
       yaml = YAMLAttrWithDefaults.from_yaml(%({"e":false}))
-      yaml.e.should eq false
+      yaml.e.should be_false
       yaml = YAMLAttrWithDefaults.from_yaml(%({"e":true}))
-      yaml.e.should eq true
+      yaml.e.should be_true
     end
 
     it "create new array every time" do
@@ -1001,7 +1001,7 @@ describe "YAML::Serializable" do
         yaml = YAMLAttrWithPresenceAndIgnoreSerialize.from_yaml(%({"last_name": null}))
         yaml.last_name_present?.should be_true
 
-        # libyaml 0.2.5 removes traling space for empty scalar nodes
+        # libyaml 0.2.5 removes trailing space for empty scalar nodes
         if YAML.libyaml_version >= SemanticVersion.new(0, 2, 5)
           yaml.to_yaml.should eq("---\nlast_name:\n")
         else

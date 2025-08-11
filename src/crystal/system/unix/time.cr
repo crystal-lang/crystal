@@ -39,9 +39,8 @@ module Crystal::System::Time
       nanoseconds = total_nanoseconds.remainder(NANOSECONDS_PER_SECOND)
       {seconds.to_i64, nanoseconds.to_i32}
     {% else %}
-      if LibC.clock_gettime(LibC::CLOCK_MONOTONIC, out tp) == 1
-        raise RuntimeError.from_errno("clock_gettime(CLOCK_MONOTONIC)")
-      end
+      ret = LibC.clock_gettime(LibC::CLOCK_MONOTONIC, out tp)
+      raise RuntimeError.from_errno("clock_gettime(CLOCK_MONOTONIC)") unless ret == 0
       {tp.tv_sec.to_i64, tp.tv_nsec.to_i32}
     {% end %}
   end
@@ -132,11 +131,29 @@ module Crystal::System::Time
     private LOCALTIME = "/etc/localtime"
 
     def self.load_localtime : ::Time::Location?
+      # Try to defer the name of the zoneinfo file from the link target (e.g.
+      # `/usr/share/zoneinfo/Europe/Berlin`) and load the corresponding
+      # location.
+      # We do not load the actual target file, only extract the name so the
+      # resulting location is exactly the same as when loading it explicitly
+      # as `Time::Location.load("Europe/Berlin")`.
+      if ::File.symlink?("/etc/localtime") && (realpath = ::File.readlink?("/etc/localtime"))
+        if pos = realpath.rindex("zoneinfo/")
+          name = realpath[(pos + "zoneinfo/".size)..]
+          return ::Time::Location.load(name)
+        end
+      end
+
+      # Only when /etc/localtime is not a symlink or doesn't point to a
+      # zoneinfo/ directory, we read the TZif data from the actual target file
+      # as a fallback.
       if ::File.file?(LOCALTIME) && ::File::Info.readable?(LOCALTIME)
         ::File.open(LOCALTIME) do |file|
-          ::Time::Location.read_zoneinfo("Local", file)
-        rescue ::Time::Location::InvalidTZDataError
-          nil
+          begin
+            ::Time::Location.read_zoneinfo("Local", file)
+          rescue ::Time::Location::InvalidTZDataError
+            nil
+          end
         end
       end
     end

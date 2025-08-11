@@ -12,9 +12,9 @@ describe "Backtrace" do
 
     _, output, _ = compile_and_run_file(source_file)
 
-    # resolved file:line:column (no column for windows PDB because of poor
-    # support in general)
-    {% if flag?(:win32) %}
+    # resolved file:line:column (no column for MSVC PDB because of poor support
+    # by external tooling in general)
+    {% if flag?(:msvc) %}
       output.should match(/^#{Regex.escape(source_file)}:3 in 'callee1'/m)
       output.should match(/^#{Regex.escape(source_file)}:13 in 'callee3'/m)
     {% else %}
@@ -55,14 +55,19 @@ describe "Backtrace" do
     error.to_s.should contain("IndexError")
   end
 
-  it "prints crash backtrace to stderr", tags: %w[slow] do
-    sample = datapath("crash_backtrace_sample")
+  {% if flag?(:openbsd) %}
+    # FIXME: the segfault handler doesn't work on OpenBSD
+    pending "prints crash backtrace to stderr"
+  {% else %}
+    it "prints crash backtrace to stderr", tags: %w[slow] do
+      sample = datapath("crash_backtrace_sample")
 
-    _, output, error = compile_and_run_file(sample)
+      _, output, error = compile_and_run_file(sample)
 
-    output.to_s.should be_empty
-    error.to_s.should contain("Invalid memory access")
-  end
+      output.to_s.should be_empty
+      error.to_s.should contain("Invalid memory access")
+    end
+  {% end %}
 
   # Do not test this on platforms that cannot remove the current working
   # directory of the process:
@@ -74,14 +79,11 @@ describe "Backtrace" do
       source_file = datapath("blank_test_file.txt")
       compile_file(source_file) do |executable_file|
         output, error = IO::Memory.new, IO::Memory.new
-        with_tempfile("non-existent") do |path|
-          Dir.mkdir path
-          Dir.cd(path) do
-            Dir.delete(path)
-            status = Process.run executable_file
+        with_tempdir("non-existent") do
+          Dir.delete(Dir.current)
+          status = Process.run executable_file
 
-            status.success?.should be_true
-          end
+          status.success?.should be_true
         end
       end
     end

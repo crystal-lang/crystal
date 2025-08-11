@@ -30,6 +30,10 @@ class LLVM::Orc::LLJIT
     JITDylib.new(LibLLVM.orc_lljit_get_main_jit_dylib(self))
   end
 
+  def global_prefix : Char
+    LibLLVM.orc_lljit_get_global_prefix(self).unsafe_chr
+  end
+
   def add_llvm_ir_module(dylib : JITDylib, tsm : ThreadSafeModule) : Nil
     tsm.take_ownership { raise "Failed to take ownership of LLVM::Orc::ThreadSafeModule" }
     LLVM.assert LibLLVM.orc_lljit_add_llvm_ir_module(self, dylib, tsm)

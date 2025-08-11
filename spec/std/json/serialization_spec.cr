@@ -37,6 +37,15 @@ describe "JSON serialization" do
       Path.from_json(%("foo/bar")).should eq(Path.new("foo/bar"))
     end
 
+    it "does Path.from_json_object_key" do
+      Hash(Path, String).from_json(%({"foo/bar": "baz"})).should eq({Path.new("foo/bar") => "baz"})
+    end
+
+    it "does Time::Location.from_json_object_key" do
+      Hash(Time::Location, String).from_json(%({"UTC": "foo"}))
+        .should eq({Time::Location::UTC => "foo"})
+    end
+
     {% for int in BUILTIN_INTEGER_TYPES %}
       it "does {{ int }}.from_json" do
         {{ int }}.from_json("0").should(be_a({{ int }})).should eq(0)
@@ -141,6 +150,23 @@ describe "JSON serialization" do
 
     it "does Hash(BigDecimal, String)#from_json" do
       Hash(BigDecimal, String).from_json(%({"1234567890.123456789": "x"})).should eq({"1234567890.123456789".to_big_d => "x"})
+    end
+
+    describe "Hash with union key (Union.from_json_object_key?)" do
+      it "string deprioritized" do
+        Hash(String | Int32, Nil).from_json(%({"1": null})).should eq({1 => nil})
+        Hash(String | UInt32, Nil).from_json(%({"1": null})).should eq({1 => nil})
+      end
+
+      it "string without alternative" do
+        Hash(String | Int32, Nil).from_json(%({"foo": null})).should eq({"foo" => nil})
+      end
+
+      it "no match" do
+        expect_raises JSON::ParseException, %(Can't convert "foo" into (Float64 | Int32) at line 1, column 2) do
+          Hash(Float64 | Int32, Nil).from_json(%({"foo": null}))
+        end
+      end
     end
 
     it "raises an error Hash(String, Int32)#from_json with null value" do
@@ -475,6 +501,10 @@ describe "JSON serialization" do
       Time.from_json(%("20161116T095548-03:00")).to_utc.should eq(Time.utc(2016, 11, 16, 12, 55, 48))
     end
 
+    it "deserializes Time::Location" do
+      Time::Location.from_json(%("UTC")).should eq(Time::Location.load("UTC"))
+    end
+
     describe "parse exceptions" do
       it "has correct location when raises in NamedTuple#from_json" do
         ex = expect_raises(JSON::ParseException) do
@@ -792,6 +822,12 @@ describe "JSON serialization" do
       it "omit sub-second precision" do
         Time.utc(2016, 11, 16, 12, 55, 48, nanosecond: 123456789).to_json.should eq(%("2016-11-16T12:55:48Z"))
       end
+    end
+  end
+
+  describe "Time::Location" do
+    it "#to_json" do
+      Time::Location.load("UTC").to_json.should eq(%("UTC"))
     end
   end
 

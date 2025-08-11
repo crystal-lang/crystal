@@ -1,0 +1,31 @@
+name: MinGW-w64 CI
+
+on: [push, pull_request]
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+env:
+  SPEC_SPLIT_DOTS: 160
+
+jobs:
+  x86_64-mingw-w64:
+    name: UCRT64
+    uses: ./.github/workflows/mingw-w64-steps.yml
+    with:
+      arch: x86_64
+      runs-on: windows-2025
+      msystem: UCRT64
+      mingw-package-prefix: mingw-w64-ucrt-x86_64
+
+  aarch64-mingw-w64:
+    name: CLANGARM64
+    uses: ./.github/workflows/mingw-w64-steps.yml
+    with:
+      arch: aarch64
+      runs-on: windows-11-arm
+      msystem: CLANGARM64
+      mingw-package-prefix: mingw-w64-clang-aarch64

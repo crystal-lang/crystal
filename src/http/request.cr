@@ -1,6 +1,6 @@
 require "./common"
 require "uri"
-require "http/params"
+require "./params"
 require "socket"
 
 # An HTTP request.
@@ -321,8 +321,11 @@ class HTTP::Request
     @headers["Host"]?
   end
 
-  private def uri
-    (@uri ||= URI.parse(@resource)).not_nil!
+  # Returns the underlying URI object.
+  #
+  # Used internally to provide the components of the request uri.
+  def uri : URI
+    @uri ||= URI::Parser.new(@resource).parse_request_target.uri
   end
 
   private def update_query_params

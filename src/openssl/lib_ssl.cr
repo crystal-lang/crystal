@@ -4,9 +4,15 @@ require "./lib_crypto"
   {% raise "The `without_openssl` flag is preventing you to use the LibSSL module" %}
 {% end %}
 
+# Supported library versions:
+#
+# * openssl (1.1.0–3.3+)
+# * libressl (2.0–4.0+)
+#
+# See https://crystal-lang.org/reference/man/required_libraries.html#tls
 {% begin %}
   lib LibSSL
-    {% if flag?(:win32) %}
+    {% if flag?(:msvc) %}
       {% from_libressl = false %}
       {% ssl_version = nil %}
       {% for dir in Crystal::LIBRARY_PATH.split(Crystal::System::Process::HOST_PATH_DELIMITER) %}
@@ -19,10 +25,12 @@ require "./lib_crypto"
       {% end %}
       {% ssl_version ||= "0.0.0" %}
     {% else %}
-      {% from_libressl = (`hash pkg-config 2> /dev/null || printf %s false` != "false") &&
-                         (`test -f $(pkg-config --silence-errors --variable=includedir libssl)/openssl/opensslv.h || printf %s false` != "false") &&
-                         (`printf "#include <openssl/opensslv.h>\nLIBRESSL_VERSION_NUMBER" | ${CC:-cc} $(pkg-config --cflags --silence-errors libssl || true) -E -`.chomp.split('\n').last != "LIBRESSL_VERSION_NUMBER") %}
-      {% ssl_version = `hash pkg-config 2> /dev/null && pkg-config --silence-errors --modversion libssl || printf %s 0.0.0`.split.last.gsub(/[^0-9.]/, "") %}
+      # these have to be wrapped in `sh -c` since for MinGW-w64 the compiler
+      # passes the command string to `LibC.CreateProcessW`
+      {% from_libressl = (`sh -c 'hash pkg-config 2> /dev/null || printf %s false'` != "false") &&
+                         (`sh -c 'test -f $(pkg-config --silence-errors --variable=includedir libssl)/openssl/opensslv.h || printf %s false'` != "false") &&
+                         (`sh -c 'printf "#include <openssl/opensslv.h>\nLIBRESSL_VERSION_NUMBER" | ${CC:-cc} $(pkg-config --cflags --silence-errors libssl || true) -E -'`.chomp.split('\n').last != "LIBRESSL_VERSION_NUMBER") %}
+      {% ssl_version = `sh -c 'hash pkg-config 2> /dev/null && pkg-config --silence-errors --modversion libssl || printf %s 0.0.0'`.split.last.gsub(/[^0-9.]/, "") %}
     {% end %}
 
     {% if from_libressl %}
@@ -137,7 +145,7 @@ lib LibSSL
     NETSCAPE_DEMO_CIPHER_CHANGE_BUG = 0x40000000
     CRYPTOPRO_TLSEXT_BUG            = 0x80000000
 
-    {% if compare_versions(OPENSSL_VERSION, "1.1.0") >= 0 %}
+    {% if compare_versions(OPENSSL_VERSION, "1.1.0") >= 0 || compare_versions(LIBRESSL_VERSION, "2.3.0") >= 0 %}
       MICROSOFT_SESS_ID_BUG            = 0x00000000
       NETSCAPE_CHALLENGE_BUG           = 0x00000000
       NETSCAPE_REUSE_CIPHER_CHANGE_BUG = 0x00000000
@@ -235,6 +243,7 @@ lib LibSSL
     fun ssl_get_peer_certificate = SSL_get_peer_certificate(handle : SSL) : LibCrypto::X509
   {% end %}
 
+  # In LibreSSL these functions are implemented as macros
   {% if compare_versions(OPENSSL_VERSION, "1.1.0") >= 0 %}
     fun ssl_ctx_get_options = SSL_CTX_get_options(ctx : SSLContext) : ULong
     fun ssl_ctx_set_options = SSL_CTX_set_options(ctx : SSLContext, larg : ULong) : ULong
@@ -249,12 +258,13 @@ lib LibSSL
   fun ssl_ctx_set_cert_verify_callback = SSL_CTX_set_cert_verify_callback(ctx : SSLContext, callback : CertVerifyCallback, arg : Void*)
 
   # control TLS 1.3 session ticket generation
+  # LibreSSL does not seem to implement these functions
   {% if compare_versions(OPENSSL_VERSION, "1.1.1") >= 0 %}
     fun ssl_ctx_set_num_tickets = SSL_CTX_set_num_tickets(ctx : SSLContext, larg : LibC::SizeT) : Int
     fun ssl_set_num_tickets = SSL_set_num_tickets(ctx : SSL, larg : LibC::SizeT) : Int
   {% end %}
 
-  {% if compare_versions(OPENSSL_VERSION, "1.1.0") >= 0 %}
+  {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 || compare_versions(LibSSL::LIBRESSL_VERSION, "2.3.0") >= 0 %}
     fun tls_method = TLS_method : SSLMethod
   {% else %}
     fun ssl_library_init = SSL_library_init
@@ -262,7 +272,7 @@ lib LibSSL
     fun sslv23_method = SSLv23_method : SSLMethod
   {% end %}
 
-  {% if compare_versions(OPENSSL_VERSION, "1.0.2") >= 0 || compare_versions(LIBRESSL_VERSION, "2.5.0") >= 0 %}
+  {% if compare_versions(OPENSSL_VERSION, "1.0.2") >= 0 || compare_versions(LIBRESSL_VERSION, "2.1.0") >= 0 %}
     alias ALPNCallback = (SSL, Char**, Char*, Char*, Int, Void*) -> Int
 
     fun ssl_get0_alpn_selected = SSL_get0_alpn_selected(handle : SSL, data : Char**, len : LibC::UInt*) : Void
@@ -270,7 +280,7 @@ lib LibSSL
     fun ssl_ctx_set_alpn_protos = SSL_CTX_set_alpn_protos(ctx : SSLContext, protos : Char*, protos_len : Int) : Int
   {% end %}
 
-  {% if compare_versions(OPENSSL_VERSION, "1.0.2") >= 0 %}
+  {% if compare_versions(OPENSSL_VERSION, "1.0.2") >= 0 || compare_versions(LIBRESSL_VERSION, "2.7.0") >= 0 %}
     alias X509VerifyParam = LibCrypto::X509VerifyParam
 
     fun dtls_method = DTLS_method : SSLMethod
@@ -280,7 +290,7 @@ lib LibSSL
     fun ssl_ctx_set1_param = SSL_CTX_set1_param(ctx : SSLContext, param : X509VerifyParam) : Int
   {% end %}
 
-  {% if compare_versions(OPENSSL_VERSION, "1.1.0") >= 0 %}
+  {% if compare_versions(OPENSSL_VERSION, "1.1.0") >= 0 || compare_versions(LIBRESSL_VERSION, "3.6.0") >= 0 %}
     fun ssl_ctx_set_security_level = SSL_CTX_set_security_level(ctx : SSLContext, level : Int) : Void
     fun ssl_ctx_get_security_level = SSL_CTX_get_security_level(ctx : SSLContext) : Int
   {% end %}
@@ -291,7 +301,7 @@ lib LibSSL
   {% end %}
 end
 
-{% unless compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
+{% if LibSSL.has_method?(:ssl_library_init) %}
   LibSSL.ssl_library_init
   LibSSL.ssl_load_error_strings
   LibCrypto.openssl_add_all_algorithms

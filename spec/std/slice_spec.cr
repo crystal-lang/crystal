@@ -503,6 +503,20 @@ describe "Slice" do
     end
   end
 
+  it "#same?" do
+    slice = Slice[1, 2, 3]
+
+    slice.should be slice
+    slice.should_not be slice.dup
+    slice.should_not be Slice[1, 2, 3]
+
+    (slice + 1).should be slice + 1
+    slice.should_not be slice + 1
+
+    (slice[0, 2]).should be slice[0, 2]
+    slice.should_not be slice[0, 2]
+  end
+
   it "does macro []" do
     slice = Slice[1, 'a', "foo"]
     slice.should be_a(Slice(Int32 | Char | String))
@@ -515,7 +529,7 @@ describe "Slice" do
   it "does macro [] with numbers (#3055)" do
     slice = Bytes[1, 2, 3]
     slice.should be_a(Bytes)
-    slice.to_a.should eq([1, 2, 3])
+    slice.should eq(Bytes[1, 2, 3])
   end
 
   it "does Bytes[]" do
@@ -533,7 +547,7 @@ describe "Slice" do
   it "reverses" do
     slice = Bytes[1, 2, 3]
     slice.reverse!
-    slice.to_a.should eq([3, 2, 1])
+    slice.should eq(Bytes[3, 2, 1])
   end
 
   it "shuffles" do

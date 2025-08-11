@@ -12,6 +12,6 @@ describe "Code gen: regex literal spec" do
         end
       end
       Foo.check_regex
-      )).to_b.should eq(true)
+      )).to_b.should be_true
   end
 end

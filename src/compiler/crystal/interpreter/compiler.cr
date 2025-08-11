@@ -103,7 +103,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     @instructions : CompiledInstructions = CompiledInstructions.new,
     scope : Type? = nil,
     @def = nil,
-    @top_level = true
+    @top_level = true,
   )
     @scope = scope || @context.program
 
@@ -138,7 +138,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     context : Context,
     compiled_def : CompiledDef,
     top_level : Bool,
-    scope : Type = compiled_def.owner
+    scope : Type = compiled_def.owner,
   )
     new(
       context: context,
@@ -176,6 +176,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     # And we have to do them starting from the end because it's a stack.
     node.args.reverse_each do |arg|
       block_var = node.vars.not_nil![arg.name]
+      next if block_var.name == "_"
 
       # If any block argument is closured, we need to store it in the closure
       if block_var.closure_in?(node)
@@ -269,8 +270,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     leave aligned_sizeof_type(final_type), node: Nop.new.at(node.end_location)
 
     compiled_def.closure_context = @closure_context
-
-    @instructions
   end
 
   private def move_arg_to_closure_if_closured(node : Def, arg_name : String)
@@ -1101,7 +1100,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   private def dispatch_class_var(owner : Type, metaclass : Bool, node : ASTNode, &)
-    types = owner.all_subclasses.select { |t| t.is_a?(ClassVarContainer) }
+    types = [] of Crystal::Type
+    owner.all_subclasses.each { |t| types << t if t.is_a?(ClassVarContainer) }
     types.push(owner)
     types.sort_by! { |type| -type.depth }
 
@@ -1223,6 +1223,19 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   private def compile_pointerof_read_instance_var(obj, obj_type, name)
+    # Special handling for slice literals which have been expanded into
+    # `::Slice.new(pointerof($Slice:n.@buffer), ...)`,
+    # where `$Slice:n` is a `StaticArray`; we will build the literal contents
+    # in the context directly instead of using interpreter bytecode
+    if obj.is_a?(Path) && obj_type.is_a?(StaticArrayInstanceType) && name == "@buffer"
+      if buffer_name = obj.single_name?
+        if info = @context.program.const_slices[buffer_name]?
+          compile_pointerof_slice_literal_buffer(obj, info)
+          return false
+        end
+      end
+    end
+
     ivar = obj_type.lookup_instance_var(name)
     ivar_offset = ivar_offset(obj_type, name)
     ivar_size = inner_sizeof_type(ivar)
@@ -1913,12 +1926,73 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     false
   end
 
+  def compile_extern_proc_wrapper(node, proc_type, symbol)
+    proc_type.arg_types.each_with_index do |arg_type, i|
+      index = @local_vars.name_to_index("arg#{i}", 0)
+
+      case arg_type
+      when NilType
+        # Nil is used to mean Pointer.null
+        put_i64 0, node: nil
+      when StaticArrayInstanceType
+        # Static arrays are passed as pointers to C
+        pointerof_var index, node: nil
+      else
+        get_local index, aligned_sizeof_type(arg_type), node: nil
+        if arg_type.is_a?(ProcInstanceType)
+          proc_to_c_fun arg_type.ffi_call_interface, node: nil
+        end
+      end
+    end
+
+    lib_function = @context.lib_functions.put_if_absent(symbol) do
+      args_bytesizes = [] of Int32
+      args_ffi_types = [] of FFI::Type
+      return_bytesize = inner_sizeof_type(proc_type.return_type)
+
+      proc_type.arg_types.each do |arg_type|
+        case arg_type
+        when NilType
+          args_bytesizes << sizeof(Pointer(Void))
+          args_ffi_types << FFI::Type.pointer
+        when ProcInstanceType
+          args_bytesizes << sizeof(Void*)
+          args_ffi_types << FFI::Type.pointer
+        when StaticArrayInstanceType
+          # Static arrays are passed as pointers to C
+          args_bytesizes << sizeof(Void*)
+          args_ffi_types << FFI::Type.pointer
+        else
+          args_bytesizes << aligned_sizeof_type(arg_type)
+          args_ffi_types << arg_type.ffi_arg_type
+        end
+      end
+
+      LibFunction.new(
+        symbol: symbol,
+        call_interface: FFI::CallInterface.new(
+          proc_type.return_type.ffi_type,
+          args_ffi_types,
+        ),
+        args_bytesizes: args_bytesizes,
+        return_bytesize: return_bytesize,
+      )
+    end
+
+    lib_call(lib_function, node: node)
+
+    # Use a dummy node so that pry stops at `end`
+    leave aligned_sizeof_type(proc_type.return_type), node: Nop.new.at(node.end_location)
+  end
+
   private def compile_lib_call(node : Call)
     target_def = node.target_def
     external = target_def.as(External)
+    symbol = @context.c_function(external.real_name)
 
     args_bytesizes = [] of Int32
     args_ffi_types = [] of FFI::Type
+    return_bytesize = inner_sizeof_type(external.type)
 
     node.args.each_with_index do |arg, i|
       arg_type = arg.type
@@ -1988,26 +2062,28 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     if external.varargs?
       lib_function = LibFunction.new(
-        def: external,
-        symbol: @context.c_function(external.real_name),
+        symbol: symbol,
         call_interface: FFI::CallInterface.variadic(
           external.type.ffi_type,
           args_ffi_types,
           fixed_args: external.args.size
         ),
         args_bytesizes: args_bytesizes,
+        return_bytesize: return_bytesize,
       )
       @context.add_gc_reference(lib_function)
     else
-      lib_function = @context.lib_functions[external] ||= LibFunction.new(
-        def: external,
-        symbol: @context.c_function(external.real_name),
-        call_interface: FFI::CallInterface.new(
-          external.type.ffi_type,
-          args_ffi_types
-        ),
-        args_bytesizes: args_bytesizes,
-      )
+      lib_function = @context.lib_functions.put_if_absent(symbol) do
+        LibFunction.new(
+          symbol: symbol,
+          call_interface: FFI::CallInterface.new(
+            external.type.ffi_type,
+            args_ffi_types
+          ),
+          args_bytesizes: args_bytesizes,
+          return_bytesize: return_bytesize,
+        )
+      end
     end
 
     lib_call(lib_function, node: node)
@@ -2131,6 +2207,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       end
 
       block.vars.try &.each do |name, var|
+        next if var.name == "_"
+
         # Special vars don't have scopes like regular block vars do
         next if var.special_var?
 
@@ -2153,7 +2231,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       bytesize_after_block_local_vars = @local_vars.current_bytesize
 
-      block_args_bytesize = block.args.sum { |arg| aligned_sizeof_type(arg) }
+      block_args_bytesize = block.args.sum do |arg|
+        arg.name == "_" ? 0 : aligned_sizeof_type(arg)
+      end
 
       # If it's `with ... yield` we pass the "with" scope
       # as the first block argument, so we must count it too
@@ -2224,45 +2304,53 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     splat_arg = node.args[splat_index]
     tuple_type = splat_arg.type.as(TupleInstanceType)
 
-    temp_var_names = tuple_type.tuple_types.map do
-      @context.program.new_temp_var_name
-    end
-
-    # Go from |x, *y, z| to |x, temp1, temp2, temp3|
-    node.args[splat_index..splat_index] = temp_var_names.map_with_index do |temp_var_name, i|
-      Var.new(temp_var_name, type: tuple_type.tuple_types[i])
-    end
-
-    # Create y = {temp1, temp2, temp3}
-    assign_var = Var.new(splat_arg.name, type: tuple_type)
-    tuple_vars = temp_var_names.map_with_index do |temp_var_name, i|
-      Var.new(temp_var_name, type: tuple_type.tuple_types[i]).as(ASTNode)
-    end
-    tuple_literal = TupleLiteral.new(tuple_vars)
-    tuple_literal.type = tuple_type
-
-    assign = Assign.new(assign_var, tuple_literal)
-    assign.type = tuple_type
-
-    # Replace the block body
-    block_body = node.body
-    unless block_body
-      block_body = NilLiteral.new
-      block_body.type = @context.program.nil_type
-    end
-
-    exps = Expressions.new([assign, block_body] of ASTNode)
-    exps.type = block_body.type
-    node.body = exps
-
     # Remove the fact that the block has a splat
     node.splat_index = nil
 
-    # We also need to declare the vars in the block
-    temp_var_names.each_with_index do |temp_var_name, i|
-      meta_var = MetaVar.new(temp_var_name, tuple_type.tuple_types[i])
-      meta_var.context = node
-      node.vars.not_nil![temp_var_name] = meta_var
+    if splat_arg.name != "_"
+      temp_var_names = Array.new(tuple_type.size) do
+        @context.program.new_temp_var_name
+      end
+
+      # Go from |x, *y, z| to |x, temp1, temp2, temp3, z|
+      node.args[splat_index..splat_index] = temp_var_names.map_with_index do |temp_var_name, i|
+        Var.new(temp_var_name, type: tuple_type.tuple_types[i])
+      end
+
+      # Create y = {temp1, temp2, temp3}
+      assign_var = Var.new(splat_arg.name, type: tuple_type)
+      tuple_vars = temp_var_names.map_with_index do |temp_var_name, i|
+        Var.new(temp_var_name, type: tuple_type.tuple_types[i]).as(ASTNode)
+      end
+      tuple_literal = TupleLiteral.new(tuple_vars)
+      tuple_literal.type = tuple_type
+
+      assign = Assign.new(assign_var, tuple_literal)
+      assign.type = tuple_type
+
+      # Replace the block body
+      block_body = node.body
+      unless block_body
+        block_body = NilLiteral.new
+        block_body.type = @context.program.nil_type
+      end
+
+      exps = Expressions.new([assign, block_body] of ASTNode)
+      exps.type = block_body.type
+      node.body = exps
+
+      # We also need to declare the vars in the block
+      temp_var_names.each_with_index do |temp_var_name, i|
+        meta_var = MetaVar.new(temp_var_name, tuple_type.tuple_types[i])
+        meta_var.context = node
+        node.vars.not_nil![temp_var_name] = meta_var
+      end
+    else
+      # Go from |x, *_, z| to |x, _, _, _, z|
+      # the block body remains unchanged
+      node.args[splat_index..splat_index] = Array.new(tuple_type.size) do
+        Var.new("_")
+      end
     end
   end
 
@@ -2537,6 +2625,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     assign_to_temporary_and_return_pointer(obj)
   end
 
+  private def compile_pointerof_slice_literal_buffer(obj : Path, info : Program::ConstSliceInfo) : Nil
+    put_ptr @context.const_slice_buffer(info), node: obj
+  end
+
   # Assigns the object's value to a temporary
   # local variable, and then produces a pointer to that local variable.
   # In this way we make sure that the memory the pointer is pointing
@@ -2808,6 +2900,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     compiler = Compiler.new(@context, compiled_def, scope: scope, top_level: false)
     begin
       compiler.compile_def(compiled_def, is_closure ? @closure_context : nil)
+      @context.compiled_procs << compiled_def.object_id
     rescue ex : Crystal::CodeError
       node.raise "compiling #{node}", inner: ex
     end
@@ -2921,8 +3014,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       request_value(with_scope)
     end
 
-    pop_obj = nil
-
     # Check if tuple unpacking is needed.
     # This happens when a yield has only one expression that's a tuple
     # type, and the block arguments are more than one.
@@ -2973,16 +3064,28 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       # Accept the tuple
       request_value exp
 
+      # Compute which block var types we need to unpack to,
+      # and what's their total size
+      block_var_types = [] of Type?
+      block_var_types_size = 0
+
       # We need to cast to the block var, not arg
       # (the var might have more types in it if it's assigned other values)
-      block_var_types = block.args.map do |arg|
-        block.vars.not_nil![arg.name].type
+      block.args.each do |block_arg|
+        if block_arg.name == "_"
+          block_var_types << nil
+        else
+          block_var = block.vars.not_nil![block_arg.name]
+          block_var_type = block_var.type
+          block_var_types << block_var_type
+          block_var_types_size += aligned_sizeof_type(block_var_type)
+        end
       end
 
       unpack_tuple exp, tuple_type, block_var_types
 
       # We need to discard the tuple value that comes before the unpacked values
-      pop_obj = tuple_type
+      pop_from_offset aligned_sizeof_type(tuple_type), block_var_types_size, node: nil
     else
       block_arg_index = 0
 
@@ -2995,17 +3098,19 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
           # Compute which block var types we need to unpack to,
           # and what's their total size
-          block_var_types = [] of Type
+          block_var_types = [] of Type?
           block_var_types_size = 0
 
           tuple_element_index = 0
-          while block_arg_index < block.args.size && tuple_element_index < tuple_type.tuple_types.size
-            block_arg = block.args[block_arg_index]
-            block_var = block.vars.not_nil![block_arg.name]
-            block_var_type = block_var.type
-
-            block_var_types << block_var_type
-            block_var_types_size += aligned_sizeof_type(block_var_type)
+          while (block_arg = block.args[block_arg_index]?) && tuple_element_index < tuple_type.tuple_types.size
+            if block_arg.name == "_"
+              block_var_types << nil
+            else
+              block_var = block.vars.not_nil![block_arg.name]
+              block_var_type = block_var.type
+              block_var_types << block_var_type
+              block_var_types_size += aligned_sizeof_type(block_var_type)
+            end
 
             block_arg_index += 1
             tuple_element_index += 1
@@ -3016,12 +3121,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
           # Now we need to pop the tuple
           pop_from_offset aligned_sizeof_type(tuple_type), block_var_types_size, node: nil
         else
-          if block_arg_index < block.args.size
+          if (block_arg = block.args[block_arg_index]?) && block_arg.name != "_"
             request_value(exp)
 
             # We need to cast to the block var, not arg
             # (the var might have more types in it if it's assigned other values)
-            block_arg = block.args[block_arg_index]
             block_var = block.vars.not_nil![block_arg.name]
 
             upcast exp, exp.type, block_var.type
@@ -3036,14 +3140,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     call_block compiled_block, node: node
 
-    if @wants_value
-      pop_from_offset aligned_sizeof_type(pop_obj), aligned_sizeof_type(node), node: nil if pop_obj
-    else
-      if pop_obj
-        pop aligned_sizeof_type(node) + aligned_sizeof_type(pop_obj), node: nil
-      else
-        pop aligned_sizeof_type(node), node: nil
-      end
+    unless @wants_value
+      pop aligned_sizeof_type(node), node: nil
     end
 
     false
@@ -3246,6 +3344,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   private def put_u128(value : UInt128, *, node : ASTNode?)
     put_i128 value.to_i128!, node: node
+  end
+
+  private def put_ptr(value : Pointer, *, node : ASTNode?)
+    put_i64 value.address.to_i64!, node: node
   end
 
   private def put_string(value : String, *, node : ASTNode?)

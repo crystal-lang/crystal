@@ -17,4 +17,5 @@ lib LibLLVM
   {% end %}
   type OperandBundleRef = Void*
   type AttributeRef = Void*
+  type DbgRecordRef = Void*
 end

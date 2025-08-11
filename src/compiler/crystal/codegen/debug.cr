@@ -40,19 +40,15 @@ module Crystal
     def push_debug_info_metadata(mod)
       di_builder(mod).end
 
-      if @program.has_flag?("windows")
+      if @program.has_flag?("msvc")
         # Windows uses CodeView instead of DWARF
-        mod.add_flag(
-          LibLLVM::ModuleFlagBehavior::Warning,
-          "CodeView",
-          mod.context.int32.const_int(1)
-        )
+        mod.add_flag(LibLLVM::ModuleFlagBehavior::Warning, "CodeView", 1)
       end
 
       mod.add_flag(
         LibLLVM::ModuleFlagBehavior::Warning,
         "Debug Info Version",
-        mod.context.int32.const_int(LLVM::DEBUG_METADATA_VERSION)
+        LLVM::DEBUG_METADATA_VERSION
       )
     end
 
@@ -132,16 +128,8 @@ module Crystal
 
     def create_debug_type(type : EnumType, original_type : Type)
       elements = type.types.map do |name, item|
-        str_value = item.as?(Const).try &.value.as?(NumberLiteral).try &.value
-
-        value =
-          if type.base_type.kind.unsigned_int?
-            str_value.try(&.to_u64?) || 0_u64
-          else
-            str_value.try(&.to_i64?) || 0_i64
-          end
-
-        di_builder.create_enumerator(name, value)
+        value = item.as?(Const).try &.value.as?(NumberLiteral).try &.integer_value
+        di_builder.create_enumerator(name, value || 0)
       end
 
       size_in_bits = type.base_type.kind.bytesize
@@ -367,12 +355,28 @@ module Crystal
       old_debug_location = @current_debug_location
       set_current_debug_location location
       if builder.current_debug_location != llvm_nil && (ptr = alloca)
+        # FIXME: When debug records are used instead of debug intrinsics, it
+        # seems inserting them into an empty BasicBlock will instead place them
+        # in a totally different (next?) function where the variable doesn't
+        # exist, leading to a "function-local metadata used in wrong function"
+        # validation error. This might happen when e.g. all variables inside a
+        # block are closured. Ideally every debug record should immediately
+        # follow the variable it declares.
+        {% unless LibLLVM::IS_LT_190 %}
+          call(do_nothing_fun) if block.instructions.empty?
+        {% end %}
         di_builder.insert_declare_at_end(ptr, var, expr, builder.current_debug_location_metadata, block)
         set_current_debug_location old_debug_location
         true
       else
         set_current_debug_location old_debug_location
         false
+      end
+    end
+
+    private def do_nothing_fun
+      fetch_typed_fun(@llvm_mod, "llvm.donothing") do
+        LLVM::Type.function([] of LLVM::Type, @llvm_context.void)
       end
     end
 

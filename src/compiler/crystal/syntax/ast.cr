@@ -150,6 +150,30 @@ module Crystal
       obj
     end
 
+    # Concatenates two AST nodes into a single `Expressions` node, removing
+    # `Nop`s and merging keyword-less expressions into a single node.
+    #
+    # *x* and *y* may be modified in-place if they are already `Expressions`
+    # nodes.
+    def self.concat!(x : ASTNode, y : ASTNode) : ASTNode
+      return x if y.is_a?(Nop)
+      return y if x.is_a?(Nop)
+
+      if x.is_a?(Expressions) && x.keyword.none?
+        if y.is_a?(Expressions) && y.keyword.none?
+          x.expressions.concat(y.expressions)
+        else
+          x.expressions << y
+        end
+        x.at_end(y.end_location)
+      elsif y.is_a?(Expressions) && y.keyword.none?
+        y.expressions.unshift(x)
+        y.at(x.location)
+      else
+        Expressions.new([x, y] of ASTNode).at(x.location).at_end(y.end_location)
+      end
+    end
+
     def initialize(@expressions = [] of ASTNode)
     end
 
@@ -239,6 +263,7 @@ module Crystal
       super.downcase
     end
 
+    # TODO: rename to `bit_width`
     def bytesize
       case self
       in .i8?   then 8
@@ -575,6 +600,7 @@ module Crystal
     include SpecialVar
 
     property name : String
+    property doc : String?
 
     def initialize(@name : String)
     end
@@ -653,32 +679,33 @@ module Crystal
     property visibility = Visibility::Public
     property? global : Bool
     property? expansion = false
+    property? args_in_brackets = false
     property? has_parentheses = false
 
-    def initialize(@obj, @name, @args = [] of ASTNode, @block = nil, @block_arg = nil, @named_args = nil, @global : Bool = false)
+    def initialize(@obj : ASTNode?, @name : String, @args : Array(ASTNode) = [] of ASTNode, @block = nil, @block_arg = nil, @named_args = nil, @global : Bool = false)
       if block = @block
         block.call = self
       end
     end
 
-    def self.new(obj, name, arg : ASTNode, global = false)
-      new obj, name, [arg] of ASTNode, global: global
+    def self.new(obj : ASTNode?, name : String, *args : ASTNode, block : Block? = nil, block_arg : ASTNode? = nil, named_args : Array(NamedArgument)? = nil, global : Bool = false)
+      {% if compare_versions(Crystal::VERSION, "1.5.0") > 0 %}
+        new obj, name, [*args] of ASTNode, block: block, block_arg: block_arg, named_args: named_args, global: global
+      {% else %}
+        new obj, name, args.to_a(&.as(ASTNode)), block: block, block_arg: block_arg, named_args: named_args, global: global
+      {% end %}
     end
 
-    def self.new(obj, name, arg1 : ASTNode, arg2 : ASTNode)
-      new obj, name, [arg1, arg2] of ASTNode
+    def self.new(name : String, args : Array(ASTNode) = [] of ASTNode, block : Block? = nil, block_arg : ASTNode? = nil, named_args : Array(NamedArgument)? = nil, global : Bool = false)
+      new(nil, name, args, block: block, block_arg: block_arg, named_args: named_args, global: global)
     end
 
-    def self.new(obj, name, arg1 : ASTNode, arg2 : ASTNode, arg3 : ASTNode)
-      new obj, name, [arg1, arg2, arg3] of ASTNode
+    def self.new(name : String, *args : ASTNode, block : Block? = nil, block_arg : ASTNode? = nil, named_args : Array(NamedArgument)? = nil, global : Bool = false)
+      new(nil, name, *args, block: block, block_arg: block_arg, named_args: named_args, global: global)
     end
 
-    def self.global(name, arg : ASTNode)
-      new nil, name, [arg] of ASTNode, global: true
-    end
-
-    def self.global(name, arg1 : ASTNode, arg2 : ASTNode)
-      new nil, name, [arg1, arg2] of ASTNode, global: true
+    def self.global(name, *args : ASTNode)
+      new nil, name, *args, global: true
     end
 
     def name_size
@@ -1629,6 +1656,7 @@ module Crystal
   end
 
   class TypeDeclaration < ASTNode
+    property doc : String?
     property var : ASTNode
     property declared_type : ASTNode
     property value : ASTNode?
@@ -1924,6 +1952,7 @@ module Crystal
 
   class LibDef < ASTNode
     property name : Path
+    property doc : String?
     property body : ASTNode
     property name_location : Location?
     property visibility = Visibility::Public
@@ -1979,6 +2008,7 @@ module Crystal
 
   class TypeDef < ASTNode
     property name : String
+    property doc : String?
     property type_spec : ASTNode
     property name_location : Location?
 
@@ -2001,6 +2031,7 @@ module Crystal
   # A c struct/union definition inside a lib declaration
   class CStructOrUnionDef < ASTNode
     property name : String
+    property doc : String?
     property body : ASTNode
     property? union : Bool
 
@@ -2043,6 +2074,7 @@ module Crystal
 
   class ExternalVar < ASTNode
     property name : String
+    property doc : String?
     property type_spec : ASTNode
     property real_name : String?
 
@@ -2237,8 +2269,9 @@ module Crystal
     property cond : ASTNode
     property then : ASTNode
     property else : ASTNode
+    property? is_unless : Bool
 
-    def initialize(@cond, a_then = nil, a_else = nil)
+    def initialize(@cond, a_then = nil, a_else = nil, @is_unless : Bool = false)
       @then = Expressions.from a_then
       @else = Expressions.from a_else
     end
@@ -2250,10 +2283,10 @@ module Crystal
     end
 
     def clone_without_location
-      MacroIf.new(@cond.clone, @then.clone, @else.clone)
+      MacroIf.new(@cond.clone, @then.clone, @else.clone, @is_unless)
     end
 
-    def_equals_and_hash @cond, @then, @else
+    def_equals_and_hash @cond, @then, @else, @is_unless
   end
 
   # for inside a macro:

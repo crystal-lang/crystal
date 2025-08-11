@@ -298,6 +298,13 @@ def Union.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
     # So, we give a chance first to types in the union to be parsed.
     {% string_type = T.find { |type| type == ::String } %}
 
+    {% if string_type %}
+      if node.as?(YAML::Nodes::Scalar).try(&.style.quoted?)
+        # do prefer String if it's a quoted scalar though
+        return String.new(ctx, node)
+      end
+    {% end %}
+
     {% for type in T %}
       {% unless type == string_type %}
         begin
@@ -322,6 +329,14 @@ end
 
 def Time.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   parse_scalar(ctx, node, Time)
+end
+
+def Time::Location.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+  unless node.is_a?(YAML::Nodes::Scalar)
+    node.raise "Expected scalar, not #{node.kind}"
+  end
+
+  load(node.value)
 end
 
 struct Time::Format

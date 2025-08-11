@@ -34,14 +34,14 @@ struct Slice(T)
   macro [](*args, read_only = false)
     # TODO: there should be a better way to check this, probably
     # asking if @type was instantiated or if T is defined
-    {% if @type.name != "Slice(T)" && T < Number %}
+    {% if @type.name != "Slice(T)" && T < ::Number %}
       {{T}}.slice({{args.splat(", ")}}read_only: {{read_only}})
     {% else %}
-      %ptr = Pointer(typeof({{args.splat}})).malloc({{args.size}})
+      %ptr = ::Pointer(typeof({{args.splat}})).malloc({{args.size}})
       {% for arg, i in args %}
         %ptr[{{i}}] = {{arg}}
       {% end %}
-      Slice.new(%ptr, {{args.size}}, read_only: {{read_only}})
+      ::Slice.new(%ptr, {{args.size}}, read_only: {{read_only}})
     {% end %}
   end
 
@@ -825,6 +825,9 @@ struct Slice(T)
   # Bytes[1, 2] <=> Bytes[1, 2] # => 0
   # ```
   def <=>(other : Slice(U)) forall U
+    # If both slices are identical references, we can skip the memory comparison.
+    return 0 if same?(other)
+
     min_size = Math.min(size, other.size)
     {% if T == UInt8 && U == UInt8 %}
       cmp = to_unsafe.memcmp(other.to_unsafe, min_size)
@@ -847,7 +850,12 @@ struct Slice(T)
   # Bytes[1, 2] == Bytes[1, 2, 3] # => false
   # ```
   def ==(other : Slice(U)) : Bool forall U
+    # If both slices are of different sizes, they cannot be equal.
     return false if size != other.size
+
+    # If both slices are identical references, we can skip the memory comparison.
+    # Not using `same?` here because we have already compared sizes.
+    return true if to_unsafe == other.to_unsafe
 
     {% if T == UInt8 && U == UInt8 %}
       to_unsafe.memcmp(other.to_unsafe, size) == 0
@@ -857,6 +865,21 @@ struct Slice(T)
       end
       true
     {% end %}
+  end
+
+  # Returns `true` if `self` and *other* point to the same memory, i.e. pointer
+  # and size are identical.
+  #
+  # ```
+  # slice = Slice[1, 2, 3]
+  # slice.same?(slice)           # => true
+  # slice == Slice[1, 2, 3]      # => false
+  # slice.same?(slice + 1)       # => false
+  # (slice + 1).same?(slice + 1) # => true
+  # slice.same?(slice[0, 2])     # => false
+  # ```
+  def same?(other : self) : Bool
+    to_unsafe == other.to_unsafe && size == other.size
   end
 
   def to_slice : self
