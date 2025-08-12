@@ -283,30 +283,28 @@ describe "Code gen: primitives" do
       end
 
       it "works with C code" do
-        test_c(
-          %(
-            extern int foo_f(int,...);
-            int foo() {
-              return foo_f(3,1,2,3);
-            }
-          ),
-          %(
-            lib LibFoo
-              fun foo() : LibC::Int
-            end
+        test_c(<<-C, <<-CRYSTAL, &.to_i.should eq(6))
+          extern int foo_f(int,...);
+          int foo() {
+            return foo_f(3,1,2,3);
+          }
+          C
+          lib LibFoo
+            fun foo() : LibC::Int
+          end
 
-            fun foo_f(count : Int32, ...) : LibC::Int
-              sum = 0
-              VaList.open do |list|
-                count.times do |i|
-                  sum += list.next(Int32)
-                end
+          fun foo_f(count : Int32, ...) : LibC::Int
+            sum = 0
+            VaList.open do |list|
+              count.times do |i|
+                sum += list.next(Int32)
               end
-              sum
             end
+            sum
+          end
 
-            LibFoo.foo
-          ), &.to_i.should eq(6))
+          LibFoo.foo
+          CRYSTAL
       end
     {% end %}
   end
