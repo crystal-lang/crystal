@@ -57,7 +57,7 @@ describe "Codegen: special vars" do
   end
 
   it "codegens $~ two levels" do
-    run(%(
+    run(<<-CRYSTAL).to_string.should eq("hey")
       class Object; def not_nil!; self; end; end
 
       def foo
@@ -71,11 +71,11 @@ describe "Codegen: special vars" do
 
       bar
       $?
-      )).to_string.should eq("hey")
+      CRYSTAL
   end
 
   it "works lazily" do
-    run(%(
+    run(<<-CRYSTAL).to_string.should eq("bar")
       require "prelude"
 
       class Foo
@@ -98,11 +98,11 @@ describe "Codegen: special vars" do
         end
       end
       block.call(Foo.new("foo-bar"))
-      )).to_string.should eq("bar")
+      CRYSTAL
   end
 
   it "codegens in block" do
-    run(%(
+    run(<<-CRYSTAL).to_string.should eq("hey")
       require "prelude"
 
       class Object; def not_nil!; self; end; end
@@ -117,11 +117,11 @@ describe "Codegen: special vars" do
         a = $~
       end
       a.not_nil!
-      )).to_string.should eq("hey")
+      CRYSTAL
   end
 
   it "codegens in block with nested block" do
-    run(%(
+    run(<<-CRYSTAL).to_string.should eq("hey")
       require "prelude"
 
       class Object; def not_nil!; self; end; end
@@ -142,11 +142,11 @@ describe "Codegen: special vars" do
         a = $~
       end
       a.not_nil!
-      )).to_string.should eq("hey")
+      CRYSTAL
   end
 
   it "codegens after block" do
-    run(%(
+    run(<<-CRYSTAL).to_string.should eq("hey")
       require "prelude"
 
       class Object; def not_nil!; self; end; end
@@ -159,11 +159,11 @@ describe "Codegen: special vars" do
       a = nil
       foo {}
       $~
-      )).to_string.should eq("hey")
+      CRYSTAL
   end
 
   it "codegens after block 2" do
-    run(%(
+    run(<<-CRYSTAL).to_string.should eq("bye")
       class Object; def not_nil!; self; end; end
 
       def baz
@@ -178,11 +178,11 @@ describe "Codegen: special vars" do
 
       foo do
       end
-      )).to_string.should eq("bye")
+      CRYSTAL
   end
 
   it "codegens with default argument" do
-    run(%(
+    run(<<-CRYSTAL).to_string.should eq("bye")
       class Object; def not_nil!; self; end; end
 
       def baz(x = 1)
@@ -191,11 +191,11 @@ describe "Codegen: special vars" do
 
       baz
       $~
-      )).to_string.should eq("bye")
+      CRYSTAL
   end
 
   it "preserves special vars in macro expansion with call with default arguments (#824)" do
-    run(%(
+    run(<<-CRYSTAL).to_string.should eq("yes")
       class Object; def not_nil!; self; end; end
 
       def bar(x = 0)
@@ -208,11 +208,11 @@ describe "Codegen: special vars" do
       end
 
       foo
-      )).to_string.should eq("yes")
+      CRYSTAL
   end
 
   it "allows with primitive" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(123)
       class Object; def not_nil!; self; end; end
 
       def foo
@@ -223,11 +223,11 @@ describe "Codegen: special vars" do
 
       v = $~
       v || 456
-    )).to_i.should eq(123)
+      CRYSTAL
   end
 
   it "allows with struct" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(123)
       class Object; def not_nil!; self; end; end
 
       struct Foo
@@ -251,11 +251,11 @@ describe "Codegen: special vars" do
       else
         456
       end
-    )).to_i.should eq(123)
+      CRYSTAL
   end
 
   it "preserves special vars if initialized inside block (#2194)" do
-    run(%(
+    run(<<-CRYSTAL).to_string.should eq("foo")
       class Object; def not_nil!; self; end; end
 
       def foo
@@ -276,6 +276,6 @@ describe "Codegen: special vars" do
       else
         "bar"
       end
-      )).to_string.should eq("foo")
+      CRYSTAL
   end
 end

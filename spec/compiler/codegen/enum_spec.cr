@@ -2,17 +2,17 @@ require "../../spec_helper"
 
 describe "Code gen: enum" do
   it "codegens enum" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       enum Foo
         A = 1
       end
 
       Foo::A
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens enum without explicit value" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       enum Foo
         A
         B
@@ -20,43 +20,43 @@ describe "Code gen: enum" do
       end
 
       Foo::C
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "codegens enum value" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       enum Foo
         A = 1
       end
 
       Foo::A.value
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "creates enum from value" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       enum Foo
         A
         B
       end
 
       Foo.new(1).value
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens enum bitflags (1)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       @[Flags]
       enum Foo
         A
       end
 
       Foo::A
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens enum bitflags (2)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       @[Flags]
       enum Foo
         A
@@ -64,11 +64,11 @@ describe "Code gen: enum" do
       end
 
       Foo::B
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "codegens enum bitflags (4)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(4)
       @[Flags]
       enum Foo
         A
@@ -77,22 +77,22 @@ describe "Code gen: enum" do
       end
 
       Foo::C
-      )).to_i.should eq(4)
+      CRYSTAL
   end
 
   it "codegens enum bitflags None" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(0)
       @[Flags]
       enum Foo
         A
       end
 
       Foo::None
-      )).to_i.should eq(0)
+      CRYSTAL
   end
 
   it "codegens enum bitflags All" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1 + 2 + 4)
       @[Flags]
       enum Foo
         A
@@ -101,11 +101,11 @@ describe "Code gen: enum" do
       end
 
       Foo::All
-      )).to_i.should eq(1 + 2 + 4)
+      CRYSTAL
   end
 
   it "codegens enum None redefined" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(10)
       lib Lib
         @[Flags]
         enum Foo
@@ -115,11 +115,11 @@ describe "Code gen: enum" do
       end
 
       Lib::Foo::None
-      )).to_i.should eq(10)
+      CRYSTAL
   end
 
   it "codegens enum All redefined" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(10)
       lib Lib
         @[Flags]
         enum Foo
@@ -129,11 +129,11 @@ describe "Code gen: enum" do
       end
 
       Lib::Foo::All
-      )).to_i.should eq(10)
+      CRYSTAL
   end
 
   it "allows class vars in enum" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       enum Foo
         A
 
@@ -145,11 +145,11 @@ describe "Code gen: enum" do
       end
 
       Foo.class_var
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "automatically defines question method for each enum member (false case)" do
-    run(%(
+    run(<<-CRYSTAL).to_b.should be_false
       struct Enum
         def ==(other : self)
           value == other.value
@@ -163,11 +163,11 @@ describe "Code gen: enum" do
 
       day = Day::SomeTuesday
       day.some_monday?
-      )).to_b.should be_false
+      CRYSTAL
   end
 
   it "automatically defines question method for each enum member (true case)" do
-    run(%(
+    run(<<-CRYSTAL).to_b.should be_true
       struct Enum
         def ==(other : self)
           value == other.value
@@ -181,11 +181,11 @@ describe "Code gen: enum" do
 
       day = Day::SomeTuesday
       day.some_tuesday?
-      )).to_b.should be_true
+      CRYSTAL
   end
 
   it "automatically defines question method for each enum member (flags, false case)" do
-    run(%(
+    run(<<-CRYSTAL).to_b.should be_false
       struct Enum
         def includes?(other : self)
           (value & other.value) != 0
@@ -201,11 +201,11 @@ describe "Code gen: enum" do
 
       day = Day.new(3)
       day.some_wednesday?
-      )).to_b.should be_false
+      CRYSTAL
   end
 
   it "automatically defines question method for each enum member (flags, true case)" do
-    run(%(
+    run(<<-CRYSTAL).to_b.should be_true
       struct Enum
         def includes?(other : self)
           (value & other.value) != 0
@@ -221,21 +221,21 @@ describe "Code gen: enum" do
 
       day = Day.new(3)
       day.some_tuesday?
-      )).to_b.should be_true
+      CRYSTAL
   end
 
   it "does ~ at compile time for enum member" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(~1)
       enum Foo
         Bar = ~1
       end
 
       Foo::Bar.value
-      )).to_i.should eq(~1)
+      CRYSTAL
   end
 
   it "uses enum value before declaration (hoisting)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       x = Bar.bar
 
       enum Foo
@@ -249,11 +249,11 @@ describe "Code gen: enum" do
       end
 
       x
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "casts All value to base type" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(-1073741824)
       @[Flags]
       enum Foo
         A = 1 << 30
@@ -261,11 +261,11 @@ describe "Code gen: enum" do
       end
 
       Foo::All.value
-      )).to_i.should eq(-1073741824)
+      CRYSTAL
   end
 
   it "can use macro calls inside enum value (#424)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(30)
       enum Foo
         macro bar
           10 + 20
@@ -275,11 +275,11 @@ describe "Code gen: enum" do
       end
 
       Foo::A.value
-      )).to_i.should eq(30)
+      CRYSTAL
   end
 
   it "can use macro calls inside enum value, macro defined outside enum (#424)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(30)
       macro bar
         10 + 20
       end
@@ -289,11 +289,11 @@ describe "Code gen: enum" do
       end
 
       Foo::A.value
-      )).to_i.should eq(30)
+      CRYSTAL
   end
 
   it "can use macro calls inside enum value, with receiver (#424)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(30)
       module Moo
         macro bar
           10 + 20
@@ -305,11 +305,11 @@ describe "Code gen: enum" do
       end
 
       Foo::A.value
-      )).to_i.should eq(30)
+      CRYSTAL
   end
 
   it "adds a none? method to flags enum" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       @[Flags]
       enum Foo
         A
@@ -320,11 +320,11 @@ describe "Code gen: enum" do
       x &+= 1 if Foo::None.none?
       x &+= 2 if Foo::A.none?
       x
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "can redefine Enum.new and use previous_def" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       enum Foo
         FOO = 1
         BAR = 2
@@ -335,7 +335,7 @@ describe "Code gen: enum" do
       end
 
       Foo.new(1)
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "can define flags enum : UInt64 with more than 32 values (#7268)" do
@@ -361,7 +361,7 @@ describe "Code gen: enum" do
   end
 
   it "can define flags enum : UInt128 with compile-time interpreted values" do
-    run(%(
+    run(<<-CRYSTAL).to_u64.should eq(1 << 6)
       enum Foo : UInt128
         A = 1_u128 << 6
         B = 1_u128 << 20
@@ -369,6 +369,6 @@ describe "Code gen: enum" do
       end
 
       Foo::A.value.to_u64!
-      )).to_u64.should eq(1 << 6)
+      CRYSTAL
   end
 end

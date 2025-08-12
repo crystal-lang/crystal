@@ -2,23 +2,23 @@ require "../spec_helper"
 
 describe "Code gen: experimental" do
   it "compiles with no argument" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       @[Experimental]
       def foo
       end
 
       2
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "compiles with single string argument" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       @[Experimental("lorem ipsum")]
       def foo
       end
 
       2
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "errors if invalid argument type" do

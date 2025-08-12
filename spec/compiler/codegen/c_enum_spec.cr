@@ -53,7 +53,7 @@ describe "Code gen: c enum" do
   end
 
   it "codegens enum that refers to another enum constant" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(3)
       lib LibFoo
         enum Bar
           A = 1
@@ -63,11 +63,11 @@ describe "Code gen: c enum" do
       end
 
       LibFoo::Bar::C
-      ").to_i.should eq(3)
+      CRYSTAL
   end
 
   it "codegens enum that refers to another constant" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(12)
       lib LibFoo
         X = 10
         enum Bar
@@ -78,6 +78,6 @@ describe "Code gen: c enum" do
       end
 
       LibFoo::Bar::C
-      ").to_i.should eq(12)
+      CRYSTAL
   end
 end
