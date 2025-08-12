@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Code gen: magic constants" do
   it "does __LINE__" do
-    run(<<-CRYSTAL, inject_primitives: false).to_i.should eq(6)
+    run(<<-CRYSTAL, inject_primitives: false).to_i.should eq(5)
       def foo(x = __LINE__)
         x
       end
@@ -32,7 +32,7 @@ describe "Code gen: magic constants" do
   end
 
   it "does __LINE__ with dispatch" do
-    run(<<-CRYSTAL, inject_primitives: false).to_i.should eq(11)
+    run(<<-CRYSTAL, inject_primitives: false).to_i.should eq(10)
       def foo(z : Int32, x = __LINE__)
         x
       end
@@ -47,7 +47,7 @@ describe "Code gen: magic constants" do
   end
 
   it "does __LINE__ when specifying one default arg with __FILE__" do
-    run(<<-CRYSTAL, inject_primitives: false).to_i.should eq(6)
+    run(<<-CRYSTAL, inject_primitives: false).to_i.should eq(5)
       def foo(x, file = __FILE__, line = __LINE__)
         line
       end
@@ -57,7 +57,7 @@ describe "Code gen: magic constants" do
   end
 
   it "does __LINE__ when specifying one normal default arg" do
-    run(<<-CRYSTAL, inject_primitives: false).to_i.should eq(28)
+    run(<<-CRYSTAL, inject_primitives: false).to_i.should eq(27)
       require "primitives"
 
       def foo(x, z = 10, line = __LINE__)
@@ -69,7 +69,7 @@ describe "Code gen: magic constants" do
   end
 
   it "does __LINE__ when specifying one middle argument" do
-    run(<<-CRYSTAL, inject_primitives: false).to_i.should eq(28)
+    run(<<-CRYSTAL, inject_primitives: false).to_i.should eq(27)
       require "primitives"
 
       def foo(x, line = __LINE__, z = 1)
@@ -81,7 +81,7 @@ describe "Code gen: magic constants" do
   end
 
   it "does __LINE__ in macro" do
-    run(<<-CRYSTAL, inject_primitives: false).to_i.should eq(6)
+    run(<<-CRYSTAL, inject_primitives: false).to_i.should eq(5)
       macro foo(line = __LINE__)
         {{line}}
       end
@@ -111,7 +111,7 @@ describe "Code gen: magic constants" do
   end
 
   it "does __END_LINE__ without block" do
-    run(<<-CRYSTAL, inject_primitives: false).to_i.should eq(6)
+    run(<<-CRYSTAL, inject_primitives: false).to_i.should eq(5)
       def foo(x = __END_LINE__)
         x
       end
@@ -121,7 +121,7 @@ describe "Code gen: magic constants" do
   end
 
   it "does __END_LINE__ with block" do
-    run(<<-CRYSTAL, inject_primitives: false).to_i.should eq(9)
+    run(<<-CRYSTAL, inject_primitives: false).to_i.should eq(8)
       def foo(x = __END_LINE__)
         yield
         x
@@ -134,7 +134,7 @@ describe "Code gen: magic constants" do
   end
 
   it "does __END_LINE__ in macro without block" do
-    run(<<-CRYSTAL, inject_primitives: false).to_i.should eq(6)
+    run(<<-CRYSTAL, inject_primitives: false).to_i.should eq(5)
       macro foo(line = __END_LINE__)
         {{line}}
       end
@@ -144,7 +144,7 @@ describe "Code gen: magic constants" do
   end
 
   it "does __END_LINE__ in macro with block" do
-    run(<<-CRYSTAL, inject_primitives: false).to_i.should eq(8)
+    run(<<-CRYSTAL, inject_primitives: false).to_i.should eq(7)
       macro foo(line = __END_LINE__)
         {{line}}
       end

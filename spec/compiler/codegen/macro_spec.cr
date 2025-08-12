@@ -1657,7 +1657,7 @@ describe "Code gen: macro" do
   end
 
   it "forwards line number" do
-    run(<<-CRYSTAL, filename: "somedir/bar.cr", inject_primitives: false).to_i.should eq(10)
+    run(<<-CRYSTAL, filename: "somedir/bar.cr", inject_primitives: false).to_i.should eq(9)
       macro foo
         bar
       end
@@ -1671,7 +1671,7 @@ describe "Code gen: macro" do
   end
 
   it "keeps line number with no block" do
-    run(<<-CRYSTAL, filename: "somedir/bar.cr", inject_primitives: false).to_i.should eq(7)
+    run(<<-CRYSTAL, filename: "somedir/bar.cr", inject_primitives: false).to_i.should eq(6)
       macro foo
         {{ yield }}
         __LINE__
@@ -1682,7 +1682,7 @@ describe "Code gen: macro" do
   end
 
   it "keeps line number with a block" do
-    run(<<-CRYSTAL, filename: "somedir/bar.cr", inject_primitives: false).to_i.should eq(7)
+    run(<<-CRYSTAL, filename: "somedir/bar.cr", inject_primitives: false).to_i.should eq(6)
       macro foo
         {{ yield }}
         __LINE__

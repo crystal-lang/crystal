@@ -133,7 +133,7 @@ describe "Code gen: primitives" do
   end
 
   it "codegens __LINE__" do
-    run(<<-CRYSTAL, inject_primitives: false).to_i.should eq(3)
+    run(<<-CRYSTAL, inject_primitives: false).to_i.should eq(2)
 
       __LINE__
       CRYSTAL
