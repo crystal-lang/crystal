@@ -33,9 +33,9 @@ describe "Code gen: sizeof" do
   end
 
   it "gets sizeof union" do
-    size = run(<<-CRYSTAL)
+    size = run(<<-CRYSTAL).to_i
       sizeof(Int32 | Float64)
-      CRYSTAL.to_i
+      CRYSTAL
 
     # This union is represented as:
     #
@@ -126,7 +126,7 @@ describe "Code gen: sizeof" do
   end
 
   it "can use sizeof of virtual type" do
-    size = run(<<-CRYSTAL)
+    size = run(<<-CRYSTAL).to_i
       class Foo
         @x = 1
       end
@@ -137,7 +137,7 @@ describe "Code gen: sizeof" do
 
       foo = Bar.new.as(Foo)
       sizeof(typeof(foo))
-      CRYSTAL.to_i
+      CRYSTAL
 
     {% if flag?(:bits64) %}
       size.should eq(8)
@@ -186,7 +186,7 @@ describe "Code gen: sizeof" do
   end
 
   it "returns correct sizeof for abstract struct (#4319)" do
-    size = run(<<-CRYSTAL)
+    size = run(<<-CRYSTAL).to_i
         abstract struct Entry
         end
 
@@ -203,7 +203,7 @@ describe "Code gen: sizeof" do
         end
 
         sizeof(Entry)
-        CRYSTAL.to_i
+        CRYSTAL
 
     size.should eq(16)
   end

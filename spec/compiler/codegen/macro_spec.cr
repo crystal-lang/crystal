@@ -1785,7 +1785,7 @@ describe "Code gen: macro" do
   end
 
   it "expands macro with op assign inside assign (#5568)" do
-    run(<<-CRYSTAL)
+    run(<<-CRYSTAL).to_string.chomp.should eq("2")
       require "prelude"
 
       macro expand
@@ -1800,7 +1800,7 @@ describe "Code gen: macro" do
         x = foo[:foo] += 1
         puts x
       end
-      CRYSTAL.to_string.chomp.should eq("2")
+      CRYSTAL
   end
 
   it "devirtualizes @type" do

@@ -122,14 +122,14 @@ describe "Code gen: union type" do
   end
 
   it "assigns union to larger union when source is nilable 1" do
-    value = run(<<-CRYSTAL)
+    value = run(<<-CRYSTAL).to_string
       require "prelude"
       a = 1
       b = nil
       b = Reference.new
       a = b
       a.to_s
-      CRYSTAL.to_string
+      CRYSTAL
     value.should contain("Reference")
   end
 
@@ -192,7 +192,7 @@ describe "Code gen: union type" do
   end
 
   it "codegens union to_s" do
-    str = run(<<-CRYSTAL)
+    str = run(<<-CRYSTAL).to_string
       require "prelude"
 
       def foo(x : T) forall T
@@ -201,7 +201,7 @@ describe "Code gen: union type" do
 
       a = 1 || 1.5
       foo(a)
-      CRYSTAL.to_string
+      CRYSTAL
     str.in?("(Int32 | Float64)", "(Float64 | Int32)").should be_true
   end
 
