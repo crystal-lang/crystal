@@ -1020,7 +1020,7 @@ describe "Code gen: proc" do
   end
 
   it "doesn't crash when taking a proc pointer to a virtual type (#9823)" do
-    run(%(
+    run(<<-CRYSTAL, Proc(Int32, Int32, Int32))
       abstract struct Parent
         abstract def work(a : Int32, b : Int32)
 
@@ -1042,7 +1042,7 @@ describe "Code gen: proc" do
       end
 
       Child1.new.as(Parent).get
-    ), Proc(Int32, Int32, Int32))
+      CRYSTAL
   end
 
   it "doesn't crash when taking a proc pointer that multidispatches on the top-level (#3822)" do

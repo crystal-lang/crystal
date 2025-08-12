@@ -38,43 +38,43 @@ describe "Code gen: tuple" do
   end
 
   it "codegens tuple [0..0]" do
-    run("
+    run(<<-CRYSTAL).to_b.should be_true
       #{range_new}
 
       val = {1, true}[0..0]
       val.is_a?(Tuple(Int32)) && val[0] == 1
-      ").to_b.should be_true
+      CRYSTAL
   end
 
   it "codegens tuple [0..1]" do
-    run("
+    run(<<-CRYSTAL).to_b.should be_true
       #{range_new}
 
       val = {1, true}[0..1]
       val.is_a?(Tuple(Int32, Bool)) && val[0] == 1 && val[1] == true
-      ").to_b.should be_true
+      CRYSTAL
   end
 
   it "codegens tuple [0..2]" do
-    run("
+    run(<<-CRYSTAL).to_b.should be_true
       #{range_new}
 
       val = {1, true}[0..2]
       val.is_a?(Tuple(Int32, Bool)) && val[0] == 1&& val[1] == true
-      ").to_b.should be_true
+      CRYSTAL
   end
 
   it "codegens tuple [1..1]" do
-    run("
+    run(<<-CRYSTAL).to_b.should be_true
       #{range_new}
 
       val = {1, true}[1..1]
       val.is_a?(Tuple(Bool)) && val[0] == true
-      ").to_b.should be_true
+      CRYSTAL
   end
 
   it "codegens tuple [1..0]" do
-    run("
+    run(<<-CRYSTAL).to_b.should be_true
       #{range_new}
 
       def empty(*args)
@@ -82,11 +82,11 @@ describe "Code gen: tuple" do
       end
 
       {1, true}[1..0].is_a?(typeof(empty))
-      ").to_b.should be_true
+      CRYSTAL
   end
 
   it "codegens tuple [2..2]" do
-    run("
+    run(<<-CRYSTAL).to_b.should be_true
       #{range_new}
 
       def empty(*args)
@@ -94,47 +94,47 @@ describe "Code gen: tuple" do
       end
 
       {1, true}[2..2].is_a?(typeof(empty))
-      ").to_b.should be_true
+      CRYSTAL
   end
 
   it "codegens tuple [0..0]?" do
-    run("
+    run(<<-CRYSTAL).to_b.should be_true
       #{range_new}
 
       val = {1, true}[0..0]?
       val.is_a?(Tuple(Int32)) && val[0] == 1
-      ").to_b.should be_true
+      CRYSTAL
   end
 
   it "codegens tuple [0..1]?" do
-    run("
+    run(<<-CRYSTAL).to_b.should be_true
       #{range_new}
 
       val = {1, true}[0..1]?
       val.is_a?(Tuple(Int32, Bool)) && val[0] == 1 && val[1] == true
-      ").to_b.should be_true
+      CRYSTAL
   end
 
   it "codegens tuple [0..2]?" do
-    run("
+    run(<<-CRYSTAL).to_b.should be_true
       #{range_new}
 
       val = {1, true}[0..2]?
       val.is_a?(Tuple(Int32, Bool)) && val[0] == 1&& val[1] == true
-      ").to_b.should be_true
+      CRYSTAL
   end
 
   it "codegens tuple [1..1]?" do
-    run("
+    run(<<-CRYSTAL).to_b.should be_true
       #{range_new}
 
       val = {1, true}[1..1]?
       val.is_a?(Tuple(Bool)) && val[0] == true
-      ").to_b.should be_true
+      CRYSTAL
   end
 
   it "codegens tuple [1..0]?" do
-    run("
+    run(<<-CRYSTAL).to_b.should be_true
       #{range_new}
 
       def empty(*args)
@@ -142,11 +142,11 @@ describe "Code gen: tuple" do
       end
 
       {1, true}[1..0]?.is_a?(typeof(empty))
-      ").to_b.should be_true
+      CRYSTAL
   end
 
   it "codegens tuple [2..2]?" do
-    run("
+    run(<<-CRYSTAL).to_b.should be_true
       #{range_new}
 
       def empty(*args)
@@ -154,7 +154,7 @@ describe "Code gen: tuple" do
       end
 
       {1, true}[2..2]?.is_a?(typeof(empty))
-      ").to_b.should be_true
+      CRYSTAL
   end
 
   it "codegens tuple [3..2]?" do
@@ -174,14 +174,15 @@ describe "Code gen: tuple" do
   end
 
   it "codegens tuple metaclass [1..0]" do
-    run("
+    run(<<-CRYSTAL).to_b.should be_true
       #{range_new}
 
       def empty(*args)
         args.class
       end
 
-      Tuple(Int32, Char)[1..0].is_a?(typeof(empty))").to_b.should be_true
+      Tuple(Int32, Char)[1..0].is_a?(typeof(empty))
+      CRYSTAL
   end
 
   it "codegens tuple metaclass [3..2]?" do

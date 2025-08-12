@@ -55,7 +55,7 @@ describe "Semantic: macro" do
   end
 
   it "allows subclasses of return type for macro def" do
-    run(%{
+    run(<<-CRYSTAL).to_i.should eq(2)
       class Foo
         def foo
           1
@@ -76,11 +76,11 @@ describe "Semantic: macro" do
       end
 
       Baz.new.foobar.foo
-    }).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "allows return values that include the return type of the macro def" do
-    run(%{
+    run(<<-CRYSTAL).to_i.should eq(2)
       module Foo
         def foo
           1
@@ -103,11 +103,11 @@ describe "Semantic: macro" do
       end
 
       Baz.new.foobar.foo
-    }).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "allows generic return types for macro def" do
-    run(%{
+    run(<<-CRYSTAL).to_i.should eq(2)
       class Foo(T)
         def foo
           @foo
@@ -125,7 +125,7 @@ describe "Semantic: macro" do
       end
 
       Baz.new.foobar.foo
-    }).to_i.should eq(2)
+      CRYSTAL
 
     assert_error(<<-CRYSTAL, "method Bar#bar must return Foo(String) but it is returning Foo(Int32)")
       class Foo(T)

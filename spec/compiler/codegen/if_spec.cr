@@ -196,14 +196,14 @@ describe "Code gen: if" do
 
   {% if flag?(:bits64) %}
     it "codegens if with pointer 0x100000000 pointer" do
-      run(%(
+      run(<<-CRYSTAL).to_i.should eq(1)
         ptr = Pointer(Void).new(0x100000000_u64)
         if ptr
           1
         else
           2
         end
-      )).to_i.should eq(1)
+        CRYSTAL
     end
   {% end %}
 

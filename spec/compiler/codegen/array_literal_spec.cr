@@ -178,7 +178,7 @@ describe "Code gen: array literal spec" do
   end
 
   it "creates custom non-generic array, with splats" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(123456)
       #{enumerable_element_type}
 
       class Foo
@@ -211,11 +211,11 @@ describe "Code gen: array literal spec" do
 
       custom = Custom {1, *Foo.new(2), 4, *Foo.new(5)}
       custom.value
-      )).to_i.should eq(123456)
+      CRYSTAL
   end
 
   it "creates custom generic array, with splats" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(123456)
       #{enumerable_element_type}
 
       class Foo
@@ -248,7 +248,7 @@ describe "Code gen: array literal spec" do
 
       custom = Custom {1, *Foo.new(2), 4, *Foo.new(5)}
       custom.value
-      )).to_i.should eq(123456)
+      CRYSTAL
   end
 
   it "creates typed array" do

@@ -3,7 +3,7 @@ require "../../spec_helper"
 describe "Codegen: special vars" do
   ["$~", "$?"].each do |name|
     it "codegens #{name}" do
-      run(%(
+      run(<<-CRYSTAL).to_string.should eq("hey")
         class Object; def not_nil!; self; end; end
 
         def foo(z)
@@ -12,11 +12,11 @@ describe "Codegen: special vars" do
 
         foo(2)
         #{name}
-        )).to_string.should eq("hey")
+        CRYSTAL
     end
 
     it "codegens #{name} with nilable (1)" do
-      run(%(
+      run(<<-CRYSTAL).to_string.should eq("ouch")
         require "prelude"
 
         def foo
@@ -32,11 +32,11 @@ describe "Codegen: special vars" do
         rescue ex
           "ouch"
         end
-        )).to_string.should eq("ouch")
+        CRYSTAL
     end
 
     it "codegens #{name} with nilable (2)" do
-      run(%(
+      run(<<-CRYSTAL).to_string.should eq("foo")
         require "prelude"
 
         def foo
@@ -52,7 +52,7 @@ describe "Codegen: special vars" do
         rescue ex
           "ouch"
         end
-        )).to_string.should eq("foo")
+        CRYSTAL
     end
   end
 

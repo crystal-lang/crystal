@@ -267,7 +267,7 @@ describe "Code gen: primitives" do
     # On Windows and AArch64 llvm's va_arg instruction works incorrectly.
     {% unless flag?(:win32) || flag?(:aarch64) %}
       it "uses llvm's va_arg instruction" do
-        mod = codegen(%(
+        mod = codegen(<<-CRYSTAL)
           struct VaList
             @[Primitive(:va_arg)]
             def next(type)
@@ -276,7 +276,7 @@ describe "Code gen: primitives" do
 
           list = VaList.new
           list.next(Int32)
-        ))
+          CRYSTAL
         type = {% if LibLLVM::IS_LT_150 %} "%VaList*" {% else %} "ptr" {% end %}
         str = mod.to_s
         str.should contain("va_arg #{type} %list")

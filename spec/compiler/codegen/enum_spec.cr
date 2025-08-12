@@ -339,25 +339,25 @@ describe "Code gen: enum" do
   end
 
   it "can define flags enum : UInt64 with more than 32 values (#7268)" do
-    run(%(
+    run(<<-CRYSTAL).to_u64.should eq(1_u64 << 32)
       @[Flags]
       enum Foo : UInt64
         #{Array.new(33) { |i| "V#{i + 1}" }.join "\n"}
       end
 
       Foo::V33.value
-      )).to_u64.should eq(1_u64 << 32)
+      CRYSTAL
   end
 
   it "can define flags enum : UInt128 with 128 values" do
-    run(%(
+    run(<<-CRYSTAL).to_u64.should eq(1_u64 << 63)
       @[Flags]
       enum Foo : UInt128
         #{Array.new(128) { |i| "V#{i + 1}" }.join "\n"}
       end
 
       Foo::V64.value.to_u64!
-      )).to_u64.should eq(1_u64 << 63)
+      CRYSTAL
   end
 
   it "can define flags enum : UInt128 with compile-time interpreted values" do

@@ -40,7 +40,7 @@ describe "Code gen: c enum" do
     {"10 % 3", 1},
   ].each do |(code, expected)|
     it "codegens enum with #{code} " do
-      run("
+      run(<<-CRYSTAL).to_i.should eq(expected)
         lib LibFoo
           enum Bar
             X = #{code}
@@ -48,7 +48,7 @@ describe "Code gen: c enum" do
         end
 
         LibFoo::Bar::X
-        ").to_i.should eq(expected)
+        CRYSTAL
     end
   end
 
