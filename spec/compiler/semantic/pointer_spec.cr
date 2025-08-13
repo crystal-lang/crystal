@@ -56,7 +56,7 @@ describe "Semantic: pointer" do
   end
 
   it "types pointer of constant" do
-    result = assert_type("
+    assert_type("
       FOO = 1
       pointerof(FOO)
     ") { pointer_of(int32) }
