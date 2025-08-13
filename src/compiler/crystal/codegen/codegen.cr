@@ -84,11 +84,13 @@ module Crystal
       llvm_context =
         {% if LibLLVM::IS_LT_110 %}
           LLVM::Context.new
-        {% else %}
+        {% elsif LibLLVM::IS_LT_210 %}
           begin
             ts_ctx = LLVM::Orc::ThreadSafeContext.new
             ts_ctx.context
           end
+        {% else %}
+          LLVM::Context.new(dispose_on_finalize: false)
         {% end %}
 
       visitor = CodeGenVisitor.new self, node, single_module: true, debug: debug, llvm_context: llvm_context
@@ -132,6 +134,10 @@ module Crystal
       {% else %}
         lljit_builder = LLVM::Orc::LLJITBuilder.new
         lljit = LLVM::Orc::LLJIT.new(lljit_builder)
+
+        {% unless LibLLVM::IS_LT_210 %}
+          ts_ctx = LLVM::Orc::ThreadSafeContext.new(llvm_context)
+        {% end %}
 
         dylib = lljit.main_jit_dylib
         dylib.link_symbols_from_current_process(lljit.global_prefix)
