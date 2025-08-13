@@ -4363,7 +4363,7 @@ describe "Semantic: instance var" do
   end
 
   it "declares instance var of generic class" do
-    assert_type("
+    assert_type(<<-CRYSTAL
       class Foo(T)
         @x : T
 
@@ -4372,7 +4372,8 @@ describe "Semantic: instance var" do
       end
 
       Foo(Int32).new(1)
-      ") do
+      CRYSTAL
+    ) do
       foo = types["Foo"].as(GenericClassType)
       foo_i32 = foo.instantiate([int32] of TypeVar)
       foo_i32.lookup_instance_var("@x").type.should eq(int32)
@@ -4381,7 +4382,7 @@ describe "Semantic: instance var" do
   end
 
   it "declares instance var of generic class after reopen" do
-    assert_type("
+    assert_type(<<-CRYSTAL
       class Foo(T)
       end
 
@@ -4394,7 +4395,9 @@ describe "Semantic: instance var" do
         end
       end
 
-      f") do
+      f
+      CRYSTAL
+    ) do
       foo = types["Foo"].as(GenericClassType)
       foo_i32 = foo.instantiate([int32] of TypeVar)
       foo_i32.lookup_instance_var("@x").type.should eq(int32)

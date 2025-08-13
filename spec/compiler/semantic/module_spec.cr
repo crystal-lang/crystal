@@ -176,11 +176,12 @@ describe "Semantic: module" do
   end
 
   it "declares module automatically if not previously declared when declaring a class" do
-    assert_type("
+    assert_type(<<-CRYSTAL
       class Foo::Bar
       end
       Foo
-      ") do
+      CRYSTAL
+    ) do
       foo = types["Foo"]
       foo.module?.should be_true
       foo.metaclass
@@ -188,11 +189,12 @@ describe "Semantic: module" do
   end
 
   it "declares module automatically if not previously declared when declaring a module" do
-    assert_type("
+    assert_type(<<-CRYSTAL
       module Foo::Bar
       end
       Foo
-      ") do
+      CRYSTAL
+    ) do
       foo = types["Foo"]
       foo.module?.should be_true
       foo.metaclass

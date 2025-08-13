@@ -340,7 +340,7 @@ describe "Semantic: tuples" do
   end
 
   it "types T as a tuple of metaclasses" do
-    assert_type("
+    assert_type(<<-CRYSTAL
       struct Tuple
         def type_args
           T
@@ -349,7 +349,8 @@ describe "Semantic: tuples" do
 
       x = {1, 1.5, 'a'}
       x.type_args
-      ") do
+      CRYSTAL
+    ) do
       meta = tuple_of([int32, float64, char]).metaclass
       meta.metaclass?.should be_true
       meta
@@ -562,9 +563,10 @@ describe "Semantic: tuples" do
   end
 
   it "doesn't unify tuple metaclasses (#5384)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL
       Tuple(Int32) || Tuple(String)
-      )) {
+      CRYSTAL
+    ) {
       union_of(
         tuple_of([int32] of Type).metaclass,
         tuple_of([string] of Type).metaclass,

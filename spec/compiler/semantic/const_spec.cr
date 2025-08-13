@@ -46,10 +46,11 @@ describe "Semantic: const" do
   end
 
   it "creates container module if not exist when using Path" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL
       Foo::Bar = 1
       Foo
-    )) do
+      CRYSTAL
+    ) do
       foo = types["Foo"]
       foo.module?.should be_true
       foo.metaclass
@@ -57,37 +58,40 @@ describe "Semantic: const" do
   end
 
   it "keeps type of container when using Path" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL
       class Foo
       end
 
       Foo::Const = 1
       Foo
-    )) do
+      CRYSTAL
+    ) do
       foo = types["Foo"]
       foo.class?.should be_true
       foo.metaclass
     end
 
-    assert_type(%(
+    assert_type(<<-CRYSTAL
       struct Foo
       end
 
       Foo::Const = 1
       Foo
-    )) do
+      CRYSTAL
+    ) do
       foo = types["Foo"]
       foo.struct?.should be_true
       foo.metaclass
     end
 
-    assert_type(%(
+    assert_type(<<-CRYSTAL
       module Foo
       end
 
       Foo::Const = 1
       Foo
-    )) do
+      CRYSTAL
+    ) do
       foo = types["Foo"]
       foo.module?.should be_true
       foo.metaclass

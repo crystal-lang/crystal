@@ -2,11 +2,12 @@ require "../../spec_helper"
 
 describe "Semantic: struct" do
   it "types struct declaration" do
-    assert_type("
+    assert_type(<<-CRYSTAL
       struct Foo
       end
       Foo
-      ") do
+      CRYSTAL
+    ) do
       str = types["Foo"].as(NonGenericClassType)
       str.struct?.should be_true
       str.metaclass
@@ -14,11 +15,12 @@ describe "Semantic: struct" do
   end
 
   it "types generic struct declaration" do
-    assert_type("
+    assert_type(<<-CRYSTAL
       struct Foo(T)
       end
       Foo(Int32)
-      ") do
+      CRYSTAL
+    ) do
       str = types["Foo"].as(GenericClassType)
       str.struct?.should be_true
 
@@ -58,12 +60,13 @@ describe "Semantic: struct" do
   end
 
   it "can't be nilable" do
-    assert_type("
+    assert_type(<<-CRYSTAL
       struct Foo
       end
 
       Foo.new || nil
-      ") do
+      CRYSTAL
+    ) do
       type = nilable types["Foo"]
       type.should_not be_a(NilableType)
       type

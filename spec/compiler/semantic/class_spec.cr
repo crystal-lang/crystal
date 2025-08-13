@@ -35,7 +35,7 @@ describe "Semantic: class" do
   end
 
   it "types generic of generic type" do
-    assert_type("
+    assert_type(<<-CRYSTAL
       class Foo(T)
         def set
           @coco = 2
@@ -45,7 +45,8 @@ describe "Semantic: class" do
       f = Foo(Foo(Int32)).new
       f.set
       f
-    ") do
+      CRYSTAL
+    ) do
       foo = types["Foo"].as(GenericClassType)
       foo_i32 = foo.instantiate([int32] of TypeVar)
       foo_foo_i32 = foo.instantiate([foo_i32] of TypeVar)

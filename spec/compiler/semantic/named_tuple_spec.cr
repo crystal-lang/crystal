@@ -284,7 +284,7 @@ describe "Semantic: named tuples" do
   end
 
   it "types T as a tuple of metaclasses" do
-    assert_type("
+    assert_type(<<-CRYSTAL
       struct NamedTuple
         def named_args
           T
@@ -293,7 +293,8 @@ describe "Semantic: named tuples" do
 
       x = {a: 1, b: 1.5, c: 'a'}
       x.named_args
-      ") do
+      CRYSTAL
+    ) do
       meta = named_tuple_of({"a": int32, "b": float64, "c": char}).metaclass
       meta.metaclass?.should be_true
       meta
@@ -331,9 +332,10 @@ describe "Semantic: named tuples" do
   end
 
   it "doesn't unify named tuple metaclasses (#5384)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL
       NamedTuple(a: Int32) || NamedTuple(a: String)
-      )) {
+      CRYSTAL
+    ) {
       union_of(
         named_tuple_of({"a": int32}).metaclass,
         named_tuple_of({"a": string}).metaclass,
