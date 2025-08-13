@@ -156,14 +156,14 @@ module Crystal::System::File
 
   def self.readlink(path, &) : String
     buf = uninitialized UInt8[4096]
-    bytesize = LibC.readlink(path, buf, buf.bytesize)
+    bytesize = LibC.readlink(path, buf, buf.size)
     if bytesize == -1
       if Errno.value.in?(Errno::EINVAL, Errno::ENOENT, Errno::ENOTDIR)
         yield
       end
 
       raise ::File::Error.from_errno("Cannot read link", file: path)
-    elsif bytesize == buf.bytesize
+    elsif bytesize == buf.size
       raise ::File::Error.from_os_error("Cannot read link", Errno::ENAMETOOLONG, file: path)
     else
       return String.new(buf.to_unsafe, bytesize)
