@@ -70,9 +70,10 @@ module Crystal
       # the formal argument in `Foo(T2)`, and we solve it to return `Int32`. On
       # the other hand, looking up `T1` under `Bar`'s context will return `nil`.
       if type.is_a?(TypeParameter)
-        if solved = type.solve?(self).as?(Var)
+        solved = type.solve?(self)
+        if solved.is_a?(Var)
           return solved.type
-        elsif !solved.nil?
+        elsif solved
           # If the context were `Bar(1)` instead, then `solved` is that AST node
           # itself (i.e. `1`), rather than a `Var` with the type of the solved
           # type argument.
