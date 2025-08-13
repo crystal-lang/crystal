@@ -221,7 +221,7 @@ describe Crystal::System::File do
         Dir.mkdir tempdir
         File.touch Path[tempdir, "A789abcdeZ"]
         expect_raises(File::AlreadyExistsError, "Error creating temporary file") do
-          fd, path, _ = Crystal::System::File.mktemp("A", "Z", dir: tempdir, random: TestRNG.new([7, 8, 9, 10, 11, 12, 13, 14]))
+          fd, _, _ = Crystal::System::File.mktemp("A", "Z", dir: tempdir, random: TestRNG.new([7, 8, 9, 10, 11, 12, 13, 14]))
         ensure
           IO::FileDescriptor.new(fd).close if fd
         end

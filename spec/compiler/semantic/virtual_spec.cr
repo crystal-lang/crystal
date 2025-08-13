@@ -107,7 +107,7 @@ describe "Semantic: virtual" do
       x.foo
       ")
     result = semantic nodes
-    mod, nodes = result.program, result.node.as(Expressions)
+    _, nodes = result.program, result.node.as(Expressions)
     nodes.last.as(Call).target_defs.not_nil!.size.should eq(1)
   end
 
@@ -130,7 +130,7 @@ describe "Semantic: virtual" do
       x.foo
       ")
     result = semantic nodes
-    mod, nodes = result.program, result.node.as(Expressions)
+    _, nodes = result.program, result.node.as(Expressions)
     nodes.last.as(Call).target_defs.not_nil!.size.should eq(2)
   end
 

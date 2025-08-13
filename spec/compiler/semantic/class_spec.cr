@@ -49,7 +49,7 @@ describe "Semantic: class" do
     ) do
       foo = types["Foo"].as(GenericClassType)
       foo_i32 = foo.instantiate([int32] of TypeVar)
-      foo_foo_i32 = foo.instantiate([foo_i32] of TypeVar)
+      _foo_foo_i32 = foo.instantiate([foo_i32] of TypeVar)
     end
   end
 

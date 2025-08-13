@@ -1020,8 +1020,6 @@ module Crystal
 
       before_block_vars = node.vars.try(&.dup) || MetaVars.new
 
-      body_exps = node.body.as?(Expressions).try(&.expressions)
-
       # Variables that we don't want to get their type merged
       # with local variables before the block occurrence:
       # mainly block arguments (locally override vars), but

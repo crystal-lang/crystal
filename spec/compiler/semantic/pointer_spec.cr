@@ -56,7 +56,7 @@ describe "Semantic: pointer" do
   end
 
   it "types pointer of constant" do
-    result = assert_type(<<-CRYSTAL) { pointer_of(int32) }
+    assert_type(<<-CRYSTAL) { pointer_of(int32) }
       FOO = 1
       pointerof(FOO)
       CRYSTAL
