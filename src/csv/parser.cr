@@ -84,8 +84,10 @@ class CSV::Parser
   end
 
   private def parse_row_to_h_internal(headers : Array(String), row : Array(String)) : Hash(String, String) | Nil
-    h = {} of String => String
-    row.empty? ? return nil : headers.each_with_index { |header, i| h[header] = row[i] }
+    return nil if row.empty?
+
+    h = Hash(String, String).new(initial_capacity: headers.size)
+    headers.each_with_index { |header, i| h[header] = row[i] }
     return h
   end
 
