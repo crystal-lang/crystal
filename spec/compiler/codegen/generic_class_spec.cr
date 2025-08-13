@@ -490,7 +490,7 @@ describe "Code gen: generic class type" do
   end
 
   it "accesses generic type argument from superclass, def context (#10834)" do
-    run(%(
+    run(<<-CRYSTAL, Int32).should eq(7)
       class Foo(T)
       end
 
@@ -501,11 +501,11 @@ describe "Code gen: generic class type" do
       end
 
       Bar(7).new.t
-      )).to_i.should eq(7)
+      CRYSTAL
   end
 
   it "accesses generic type argument from superclass, metaclass context" do
-    run(%(
+    run(<<-CRYSTAL, Int32).should eq(7)
       struct Int32
         def self.new(x : Int32)
           x
@@ -520,11 +520,11 @@ describe "Code gen: generic class type" do
       end
 
       Bar(Int32).new.@x
-      )).to_i.should eq(7)
+      CRYSTAL
   end
 
   it "accesses generic type argument from superclass, macro context" do
-    run(%(
+    run(<<-CRYSTAL, Int32).should eq(1)
       class Foo(T)
       end
 
@@ -535,7 +535,7 @@ describe "Code gen: generic class type" do
       end
 
       Bar(7).new.t
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens compile-time interpreted generic int128" do

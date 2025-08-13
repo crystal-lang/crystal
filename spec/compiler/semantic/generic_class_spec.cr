@@ -69,7 +69,7 @@ describe "Semantic: generic class" do
   end
 
   it "accesses generic type argument from superclass, def context (#10834)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: false) { int32.metaclass }
       class Foo(T)
       end
 
@@ -80,11 +80,11 @@ describe "Semantic: generic class" do
       end
 
       Bar(Int32).new.t
-      ), inject_primitives: false) { int32.metaclass }
+      CRYSTAL
   end
 
   it "accesses generic type argument from superclass, metaclass context" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: false) { int32 }
       struct Int32
         def self.new(x : Int32)
           x
@@ -99,11 +99,11 @@ describe "Semantic: generic class" do
       end
 
       Bar(Int32).new.@x
-      ), inject_primitives: false) { int32 }
+      CRYSTAL
   end
 
   it "accesses generic type argument from superclass, macro context" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: false) { char }
       class Foo(M)
       end
 
@@ -114,11 +114,11 @@ describe "Semantic: generic class" do
       end
 
       Bar(1).new.t
-      ), inject_primitives: false) { char }
+      CRYSTAL
   end
 
   it "accesses generic type argument from superclass, def restriction" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: false) { int32 }
       class Foo(T)
       end
 
@@ -129,11 +129,11 @@ describe "Semantic: generic class" do
       end
 
       Bar(Int32).new.foo(1)
-      ), inject_primitives: false) { int32 }
+      CRYSTAL
   end
 
   it "uses inherited #initialize from superclass when generic type parameters are identical" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: false) { int32 }
       class Foo(T)
         def initialize(@value : T)
         end
@@ -143,11 +143,11 @@ describe "Semantic: generic class" do
       end
 
       Bar.new(25).@value
-      ), inject_primitives: false) { int32 }
+      CRYSTAL
   end
 
   pending "accesses generic type argument from superclass, inherited #initialize (1) (#5243)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: false) { int32 }
       class Foo(T)
         def initialize(@value : T)
         end
@@ -157,11 +157,11 @@ describe "Semantic: generic class" do
       end
 
       Bar.new(25).@value
-      ), inject_primitives: false) { int32 }
+      CRYSTAL
   end
 
   it "accesses generic type argument from superclass, inherited #initialize (2) (#5243)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: false) { int32 }
       class Foo(T)
         def initialize(@value : T)
         end
@@ -171,7 +171,7 @@ describe "Semantic: generic class" do
       end
 
       Bar(Int32).new(25).@value
-      ), inject_primitives: false) { int32 }
+      CRYSTAL
   end
 
   it "inherits from generic with instantiation with instance var" do
