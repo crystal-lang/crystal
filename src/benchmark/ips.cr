@@ -31,7 +31,7 @@ module Benchmark
       end
 
       # Adds code to be benchmarked
-      def report(label = "", &action) : Benchmark::IPS::Entry
+      def report(label : String = "", &action : ->) : Benchmark::IPS::Entry
         item = Entry.new(label, action)
         @items << item
         item

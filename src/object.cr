@@ -102,7 +102,7 @@ require "./object/properties"
 #   @city : City?
 #
 #   def city : City
-#     if (city == @city).nil?
+#     if (city = @city).nil?
 #       @city = City.unspecified
 #     else
 #       city

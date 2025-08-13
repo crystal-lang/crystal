@@ -389,7 +389,6 @@ class Crystal::Repl::Compiler
       ivar_name = '@' + node.name.rchop # remove the '=' suffix
       ivar = type.lookup_instance_var(ivar_name)
       ivar_offset = ivar_offset(type, ivar_name)
-      ivar_size = inner_sizeof_type(type.lookup_instance_var(ivar_name))
 
       # pointer_set needs first arg, then obj
       request_value(arg)
@@ -422,6 +421,9 @@ class Crystal::Repl::Compiler
       else
         pointer_set(inner_sizeof_type(ivar.type), node: node)
       end
+    when "interpreter_proc_new"
+      accept_call_args(node)
+      interpreter_proc_new(type_id(owner.instance_type), node: node)
     when "interpreter_call_stack_unwind"
       interpreter_call_stack_unwind(node: node)
     when "interpreter_raise_without_backtrace"

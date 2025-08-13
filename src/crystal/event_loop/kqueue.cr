@@ -15,7 +15,7 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
     @kqueue = System::Kqueue.new
 
     # notification to interrupt a run
-    @interrupted = Atomic::Flag.new
+    @interrupted = Atomic(Bool).new(false)
 
     {% if LibC.has_constant?(:EVFILT_USER) %}
       @kqueue.kevent(
@@ -50,7 +50,7 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
       @kqueue.close
       @kqueue = System::Kqueue.new
 
-      @interrupted.clear
+      @interrupted.set(false, :relaxed)
 
       {% if LibC.has_constant?(:EVFILT_USER) %}
         @kqueue.kevent(
@@ -100,7 +100,7 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
   private def process_interrupt?(kevent)
     {% if LibC.has_constant?(:EVFILT_USER) %}
       if kevent.value.filter == LibC::EVFILT_USER
-        @interrupted.clear if kevent.value.ident == INTERRUPT_IDENTIFIER
+        @interrupted.set(false, :relaxed) if kevent.value.ident == INTERRUPT_IDENTIFIER
         return true
       end
     {% else %}
@@ -108,7 +108,7 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
         ident = 0
         ret = LibC.read(@pipe[0], pointerof(ident), sizeof(Int32))
         raise RuntimeError.from_errno("read") if ret == -1
-        @interrupted.clear if ident == INTERRUPT_IDENTIFIER
+        @interrupted.set(false, :relaxed) if ident == INTERRUPT_IDENTIFIER
         return true
       end
     {% end %}
@@ -156,7 +156,7 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
   end
 
   def interrupt : Nil
-    return unless @interrupted.test_and_set
+    return if @interrupted.swap(true, :relaxed)
 
     {% if LibC.has_constant?(:EVFILT_USER) %}
       @kqueue.kevent(INTERRUPT_IDENTIFIER, LibC::EVFILT_USER, 0, LibC::NOTE_TRIGGER)

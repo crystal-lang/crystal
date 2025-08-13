@@ -291,7 +291,7 @@ class Time::Location
       file.skip 6
       compression_method = file.read_bytes(Int16, IO::ByteFormat::LittleEndian)
       file.skip 12
-      uncompressed_size = file.read_bytes(Int32, IO::ByteFormat::LittleEndian)
+      _uncompressed_size = file.read_bytes(Int32, IO::ByteFormat::LittleEndian)
       filename_length = file.read_bytes(Int16, IO::ByteFormat::LittleEndian)
       extra_field_length = file.read_bytes(Int16, IO::ByteFormat::LittleEndian)
       file_comment_length = file.read_bytes(Int16, IO::ByteFormat::LittleEndian)

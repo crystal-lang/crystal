@@ -192,14 +192,12 @@ module Crystal::Playground
               length = io.read_utf8(Slice.new(buffer, 4096))
               {length, 0}
             end
-            unless output.empty?
-              send_with_json_builder do |json|
-                json.field "type", "output"
-                json.field "tag", tag
-                json.field "content", output
-              end
-            else
-              break
+            break if output.empty?
+
+            send_with_json_builder do |json|
+              json.field "type", "output"
+              json.field "tag", tag
+              json.field "content", output
             end
           rescue
             break

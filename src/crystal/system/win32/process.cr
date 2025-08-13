@@ -22,7 +22,7 @@ struct Crystal::System::Process
   @@interrupt_handler : Proc(::Process::ExitReason, Nil)?
   @@interrupt_count = Crystal::AtomicSemaphore.new
   @@win32_interrupt_handler : LibC::PHANDLER_ROUTINE?
-  @@setup_interrupt_handler = Atomic::Flag.new
+  @@setup_interrupt_handler = Atomic(Bool).new(false)
   @@last_interrupt = ::Process::ExitReason::Interrupted
 
   def initialize(process_info)
@@ -207,7 +207,7 @@ struct Crystal::System::Process
   end
 
   def self.start_interrupt_loop : Nil
-    return unless @@setup_interrupt_handler.test_and_set
+    return if @@setup_interrupt_handler.swap(true, :relaxed)
 
     spawn(name: "interrupt-signal-loop") do
       while true

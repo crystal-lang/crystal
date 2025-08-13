@@ -49,47 +49,65 @@ class Socket < IO
     write_timeout
   end
 
-  # Creates a TCP socket. Consider using `TCPSocket` or `TCPServer` unless you
-  # need full control over the socket.
-  def self.tcp(family : Family, blocking = nil) : self
-    new(family, Type::STREAM, Protocol::TCP, blocking)
-  end
+  {% begin %}
+    # Creates a TCP socket. Consider using `TCPSocket` or `TCPServer` unless you
+    # need full control over the socket.
+    def self.tcp(family : Family, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated("Use Socket.set_blocking instead.")] {% end %} blocking = nil) : self
+      new(af: family, type: Type::STREAM, protocol: Protocol::TCP, blocking: blocking)
+    end
+  {% end %}
 
-  # Creates an UDP socket. Consider using `UDPSocket` unless you need full
-  # control over the socket.
-  def self.udp(family : Family, blocking = nil)
-    new(family, Type::DGRAM, Protocol::UDP, blocking)
-  end
+  {% begin %}
+    # Creates an UDP socket. Consider using `UDPSocket` unless you need full
+    # control over the socket.
+    def self.udp(family : Family, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated("Use Socket.set_blocking instead.")] {% end %} blocking = nil) : self
+      new(af: family, type: Type::DGRAM, protocol: Protocol::UDP, blocking: blocking)
+    end
+  {% end %}
 
-  # Creates an UNIX socket. Consider using `UNIXSocket` or `UNIXServer` unless
-  # you need full control over the socket.
-  def self.unix(type : Type = Type::STREAM, blocking = nil) : self
-    new(Family::UNIX, type, blocking: blocking)
-  end
+  {% begin %}
+    # Creates an UNIX socket. Consider using `UNIXSocket` or `UNIXServer` unless
+    # you need full control over the socket.
+    def self.unix(type : Type = Type::STREAM, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated("Use Socket.set_blocking instead.")] {% end %} blocking = nil) : self
+      new(af: Family::UNIX, type: type, protocol: Protocol::IP, blocking: blocking)
+    end
+  {% end %}
 
-  # Creates a socket. Consider using `TCPSocket`, `TCPServer`, `UDPSocket`,
-  # `UNIXSocket` or `UNIXServer` unless you need full control over the socket.
-  def initialize(family : Family, type : Type, protocol : Protocol = Protocol::IP, blocking = nil)
-    # This method is `#initialize` instead of `.new` because it is used as super
-    # constructor from subclasses.
-    fd, blocking = Crystal::EventLoop.current.socket(family, type, protocol, blocking)
-    initialize(handle: fd, family: family, type: type, protocol: protocol, blocking: blocking)
+  {% begin %}
+    # Creates a socket. Consider using `TCPSocket`, `TCPServer`, `UDPSocket`,
+    # `UNIXSocket` or `UNIXServer` unless you need full control over the socket.
+    def initialize(family : Family, type : Type, protocol : Protocol = Protocol::IP, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated("Use Socket.set_blocking instead.")] {% end %} blocking = nil)
+      # This method is `#initialize` instead of `.new` because it is used as super
+      # constructor from subclasses.
+      initialize(af: family, type: type, protocol: protocol, blocking: blocking)
+    end
+  {% end %}
+
+  # :nodoc:
+  #
+  # Internal initializer for the above constructors to avoid deprecation
+  # warnings on the blocking arg.
+  protected def initialize(*, af : Family, type : Type, protocol : Protocol, blocking)
+    fd, blocking = Crystal::EventLoop.current.socket(af, type, protocol, blocking)
+    initialize(handle: fd, family: af, type: type, protocol: protocol, blocking: blocking)
     self.sync = true
   end
 
-  # Creates a Socket from an existing system file descriptor or socket handle.
-  #
-  # This adopts *fd* into the IO system that will reconfigure it as per the
-  # event loop runtime requirements.
-  #
-  # NOTE: On Windows, the handle must have been created with
-  # `WSA_FLAG_OVERLAPPED`.
-  def initialize(fd, @family : Family, @type : Type, @protocol : Protocol = Protocol::IP, blocking = nil)
-    initialize(handle: fd, family: family, type: type, protocol: protocol)
-    blocking = Crystal::EventLoop.default_socket_blocking? if blocking.nil?
-    self.blocking = blocking unless blocking
-    self.sync = true
-  end
+  {% begin %}
+    # Creates a Socket from an existing system file descriptor or socket handle.
+    #
+    # This adopts *fd* into the IO system that will reconfigure it as per the
+    # event loop runtime requirements.
+    #
+    # NOTE: On Windows, the handle must have been created with
+    # `WSA_FLAG_OVERLAPPED`.
+    def initialize(fd, @family : Family, @type : Type, @protocol : Protocol = Protocol::IP, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated("Use Socket.set_blocking instead.")] {% end %} blocking = nil)
+      initialize(handle: fd, family: family, type: type, protocol: protocol)
+      blocking = Crystal::EventLoop.default_socket_blocking? if blocking.nil?
+      Crystal::System::Socket.set_blocking(fd, blocking) unless blocking
+      self.sync = true
+    end
+  {% end %}
 
   # :nodoc:
   #
@@ -228,10 +246,10 @@ class Socket < IO
   def accept? : Socket?
     if rs = Crystal::EventLoop.current.accept(self)
       sock = Socket.new(handle: rs[0], family: family, type: type, protocol: protocol, blocking: rs[1])
-      unless (blocking = self.blocking) == rs[1]
+      unless (blocking = system_blocking?) == rs[1]
         # FIXME: unlike the overloads in TCPServer and UNIXServer, this version
         # carries the blocking mode from the server socket to the client socket
-        sock.blocking = blocking
+        Crystal::System::Socket.set_blocking(fd, blocking)
       end
       sock.sync = sync?
       sock
@@ -421,6 +439,7 @@ class Socket < IO
   end
 
   # Returns whether the socket's mode is blocking (true) or non blocking (false).
+  @[Deprecated("Use Socket.get_blocking instead.")]
   def blocking
     system_blocking?
   end
@@ -431,8 +450,23 @@ class Socket < IO
   # loop runtime requirements. Changing the blocking mode can cause the event
   # loop to misbehave, for example block the entire program when a fiber tries
   # to read from this socket.
+  @[Deprecated("Use Socket.set_blocking instead.")]
   def blocking=(value)
     self.system_blocking = value
+  end
+
+  # Returns whether the blocking mode of *fd* is blocking (true) or non blocking
+  # (false).
+  #
+  # NOTE: Only implemented on UNIX targets. Raises on Windows.
+  def self.get_blocking(fd : Handle) : Bool
+    Crystal::System::Socket.get_blocking(fd)
+  end
+
+  # Changes the blocking mode of *fd* to be blocking (true) or non blocking
+  # (false).
+  def self.set_blocking(fd : Handle, value : Bool)
+    Crystal::System::Socket.set_blocking(fd, value)
   end
 
   def close_on_exec?
