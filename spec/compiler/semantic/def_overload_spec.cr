@@ -537,12 +537,12 @@ describe "Semantic: def overload" do
   end
 
   it "types a call with overload with yield after typing another call without yield" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       def foo; yield; 1; end
       def foo; 2.5; end
       foo
       foo {}
-    ") { int32 }
+      CRYSTAL
   end
 
   it "types a call with overload with yield the other way" do
@@ -558,7 +558,7 @@ describe "Semantic: def overload" do
   end
 
   it "types a call with overload Object type first overload" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { float64 }
       class Foo
       end
 
@@ -574,7 +574,7 @@ describe "Semantic: def overload" do
       end
 
       foo(Foo.new)
-      ") { float64 }
+      CRYSTAL
   end
 
   it "types a call with overload selecting the most restrictive" do
@@ -582,7 +582,7 @@ describe "Semantic: def overload" do
   end
 
   it "types a call with overload selecting the most restrictive 2" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { char }
       def foo(x, y : Int)
         1
       end
@@ -596,11 +596,11 @@ describe "Semantic: def overload" do
       end
 
       foo(1, 1)
-    ") { char }
+      CRYSTAL
   end
 
   it "types a call with overload matches virtual" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo; end
 
       def foo(x : Object)
@@ -608,11 +608,11 @@ describe "Semantic: def overload" do
       end
 
       foo(Foo.new)
-    ") { int32 }
+      CRYSTAL
   end
 
   it "types a call with overload matches virtual 2" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { float64 }
       class Foo
       end
 
@@ -628,11 +628,11 @@ describe "Semantic: def overload" do
       end
 
       foo(Bar.new)
-    ") { float64 }
+      CRYSTAL
   end
 
   it "types a call with overload matches virtual 3" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
       end
 
@@ -648,11 +648,11 @@ describe "Semantic: def overload" do
       end
 
       foo(Foo.new)
-    ") { int32 }
+      CRYSTAL
   end
 
   it "types a call with overload self" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def foo(x : self)
           1
@@ -665,11 +665,11 @@ describe "Semantic: def overload" do
 
       a = Foo.new
       a.foo(a)
-    ") { int32 }
+      CRYSTAL
   end
 
   it "types a call with overload self other match" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { float64 }
       class Foo
         def foo(x : self)
           1
@@ -682,11 +682,11 @@ describe "Semantic: def overload" do
 
       a = Foo.new
       a.foo(1)
-    ") { float64 }
+      CRYSTAL
   end
 
   it "types a call with overload self in included module" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       module Foo
         def foo(x : self)
           1
@@ -705,11 +705,11 @@ describe "Semantic: def overload" do
 
       b = Baz.new
       b.foo(b)
-    ") { int32 }
+      CRYSTAL
   end
 
   it "types a call with overload self in included module other type" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { float64 }
       module Foo
         def foo(x : self)
           1
@@ -728,11 +728,11 @@ describe "Semantic: def overload" do
 
       b = Baz.new
       b.foo(Bar.new)
-    ") { float64 }
+      CRYSTAL
   end
 
   it "types a call with overload self with inherited type" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def foo(x : self)
           1
@@ -744,12 +744,12 @@ describe "Semantic: def overload" do
 
       a = Foo.new
       a.foo(Bar.new)
-    ") { int32 }
+      CRYSTAL
   end
 
   it "matches types with free variables" do
-    assert_type("
-      require \"prelude\"
+    assert_type(<<-CRYSTAL) { int32 }
+      require "prelude"
       def foo(x : Array(T), y : T) forall T
         1
       end
@@ -759,7 +759,7 @@ describe "Semantic: def overload" do
       end
 
       foo([1], 1)
-    ") { int32 }
+      CRYSTAL
   end
 
   it "does not consider global paths as free variables (1)" do
@@ -784,8 +784,8 @@ describe "Semantic: def overload" do
   end
 
   it "prefers more specific overload than one with free variables" do
-    assert_type("
-      require \"prelude\"
+    assert_type(<<-CRYSTAL) { float64 }
+      require "prelude"
       def foo(x : Array(T), y : T)
         1
       end
@@ -795,21 +795,21 @@ describe "Semantic: def overload" do
       end
 
       foo([1], 1)
-    ") { float64 }
+      CRYSTAL
   end
 
   it "accepts overload with nilable type restriction" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       def foo(x : Int?)
         1
       end
 
       foo(1)
-    ") { int32 }
+      CRYSTAL
   end
 
   it "dispatch call to def with restrictions" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { union_of(int32, float64) }
       def foo(x : Value)
         1.1
       end
@@ -820,11 +820,11 @@ describe "Semantic: def overload" do
 
       a = 1 || 1.1
       foo(a)
-    ") { union_of(int32, float64) }
+      CRYSTAL
   end
 
   it "dispatch call to def with restrictions" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { generic_class "Foo", int32 }
       class Foo(T)
       end
 
@@ -833,11 +833,11 @@ describe "Semantic: def overload" do
       end
 
       foo 1
-    ") { generic_class "Foo", int32 }
+      CRYSTAL
   end
 
   it "can call overload with generic restriction" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo(T)
       end
 
@@ -846,11 +846,11 @@ describe "Semantic: def overload" do
       end
 
       foo(Foo(Int32).new)
-    ") { int32 }
+      CRYSTAL
   end
 
   it "can call overload with aliased generic restriction" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo(T)
       end
 
@@ -861,21 +861,21 @@ describe "Semantic: def overload" do
       end
 
       foo(Foo(Int32).new)
-    ") { int32 }
+      CRYSTAL
   end
 
   it "restrict matches to minimum necessary 1" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       def coco(x : Int, y); 1; end
       def coco(x, y : Int); 1.5; end
       def coco(x, y); 'a'; end
 
       coco 1, 1
-    ") { int32 }
+      CRYSTAL
   end
 
   it "single type restriction wins over union" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo; end
       class Bar < Foo ;end
 
@@ -888,11 +888,11 @@ describe "Semantic: def overload" do
       end
 
       foo(Foo.new || Bar.new)
-    ") { int32 }
+      CRYSTAL
   end
 
   it "compare self type with others" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def foo(x : Int)
           1.1
@@ -904,11 +904,11 @@ describe "Semantic: def overload" do
       end
 
       x = Foo.new.foo(Foo.new)
-    ") { int32 }
+      CRYSTAL
   end
 
   it "uses method defined in base class if the restriction doesn't match" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def foo(x)
           1
@@ -922,11 +922,11 @@ describe "Semantic: def overload" do
       end
 
       Bar.new.foo(1)
-    ") { int32 }
+      CRYSTAL
   end
 
   it "lookup matches in virtual type inside union" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { union_of(int32, char) }
       class Foo
         def foo
           1
@@ -944,11 +944,11 @@ describe "Semantic: def overload" do
 
       a = Foo.new || Bar.new || Baz.new
       a.foo
-    ") { union_of(int32, char) }
+      CRYSTAL
   end
 
   it "filter union type with virtual" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { union_of(int32, float64) }
       class Foo
       end
 
@@ -967,11 +967,11 @@ describe "Semantic: def overload" do
       end
 
       foo(nil || Foo.new || Bar.new)
-    ") { union_of(int32, float64) }
+      CRYSTAL
   end
 
   it "restrict virtual type with virtual type" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       def foo(x : T, y : T) forall T
         1
       end
@@ -984,11 +984,11 @@ describe "Semantic: def overload" do
 
       x = Foo.new || Bar.new
       foo(x, x)
-    ") { int32 }
+      CRYSTAL
   end
 
   it "restricts union to generic class" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { union_of(int32, char) }
       class Foo(T)
       end
 
@@ -1002,12 +1002,12 @@ describe "Semantic: def overload" do
 
       x = 1 || Foo(Int32).new
       foo(x)
-    ") { union_of(int32, char) }
+      CRYSTAL
   end
 
   it "matches on partial union" do
-    assert_type("
-      require \"prelude\"
+    assert_type(<<-CRYSTAL) { union_of(int32, char) }
+      require "prelude"
 
       def foo(x : Int32 | Float64)
         x.abs
@@ -1020,12 +1020,12 @@ describe "Semantic: def overload" do
       end
 
       foo 1 || 1.5 || 'a'
-    ") { union_of(int32, char) }
+      CRYSTAL
   end
 
   pending "restricts on generic type with free type arg" do
-    assert_type("
-      require \"reference\"
+    assert_type(<<-CRYSTAL) { union_of(bool, int32) }
+      require "reference"
 
       class Object
         def equal(expectation)
@@ -1041,12 +1041,12 @@ describe "Semantic: def overload" do
 
       a = Foo(Int).new
       a.equal(a)
-      ") { union_of(bool, int32) }
+      CRYSTAL
   end
 
   pending "restricts on generic type without type arg" do
-    assert_type("
-      require \"reference\"
+    assert_type(<<-CRYSTAL) { union_of(bool, int32) }
+      require "reference"
 
       class Object
         def equal(expectation)
@@ -1062,12 +1062,12 @@ describe "Semantic: def overload" do
 
       a = Foo(Int).new
       a.equal(a)
-    ") { union_of(bool, int32) }
+      CRYSTAL
   end
 
   it "matches generic class instance type with another one" do
-    assert_type("
-      require \"prelude\"
+    assert_type(<<-CRYSTAL) { int32 }
+      require "prelude"
       class Foo
       end
 
@@ -1077,7 +1077,7 @@ describe "Semantic: def overload" do
       a = [] of Array(Foo)
       a.push [Foo.new, Bar.new]
       1
-      ") { int32 }
+      CRYSTAL
   end
 
   it "errors if generic type doesn't match" do
@@ -1094,37 +1094,37 @@ describe "Semantic: def overload" do
   end
 
   it "gets free variable from union restriction" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32.metaclass }
       def foo(x : Nil | U) forall U
         U
       end
 
       foo(1 || nil)
-      ") { int32.metaclass }
+      CRYSTAL
   end
 
   it "gets free variable from union restriction (2)" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32.metaclass }
       def foo(x : Nil | U) forall U
         U
       end
 
       foo(nil || 1)
-      ") { int32.metaclass }
+      CRYSTAL
   end
 
   it "gets free variable from union restriction without a union" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32.metaclass }
       def foo(x : Nil | U) forall U
         U
       end
 
       foo(1)
-      ") { int32.metaclass }
+      CRYSTAL
   end
 
   it "matches a generic module argument" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       module Bar(T)
       end
 
@@ -1137,11 +1137,11 @@ describe "Semantic: def overload" do
       end
 
       foo(Foo.new)
-      ") { int32 }
+      CRYSTAL
   end
 
   it "matches a generic module argument with free var" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32.metaclass }
       module Bar(T)
       end
 
@@ -1154,11 +1154,11 @@ describe "Semantic: def overload" do
       end
 
       foo(Foo.new)
-      ") { int32.metaclass }
+      CRYSTAL
   end
 
   it "matches a generic module argument with free var (2)" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32.metaclass }
       module Bar(T)
       end
 
@@ -1171,54 +1171,54 @@ describe "Semantic: def overload" do
       end
 
       foo(Foo(Int32).new)
-      ") { int32.metaclass }
+      CRYSTAL
   end
 
   it "matches a union argument with free var" do
     each_union_variant("T", "Nil") do |restriction|
-      assert_type(%(
+      assert_type(<<-CRYSTAL) { tuple_of([int32.metaclass, int32.metaclass]) }
         def foo(x : #{restriction}) forall T
           T
         end
 
         {foo(1), foo(1 || nil)}
-        )) { tuple_of([int32.metaclass, int32.metaclass]) }
+        CRYSTAL
     end
   end
 
   it "matches a union metaclass argument with free var (#8071)" do
     each_union_variant("T", "Nil") do |restriction|
-      assert_type(%(
+      assert_type(<<-CRYSTAL) { tuple_of([string.metaclass, string.metaclass]) }
         def foo(x : (#{restriction}).class) forall T
           T
         end
 
         {foo(String), foo(String?)}
-        )) { tuple_of([string.metaclass, string.metaclass]) }
+        CRYSTAL
     end
   end
 
   it "matches a union argument with free var, more types (1)" do
     each_union_variant("T", "Nil") do |restriction|
-      assert_type(%(
+      assert_type(<<-CRYSTAL) { union_of(int32, string).metaclass }
         def foo(x : #{restriction}) forall T
           T
         end
 
         foo(1 || "" || nil)
-        )) { union_of(int32, string).metaclass }
+        CRYSTAL
     end
   end
 
   it "matches a union argument with free var, more types (2)" do
     each_union_variant("T", "(Int32 | String)") do |restriction|
-      assert_type(%(
+      assert_type(<<-CRYSTAL) { char.metaclass }
         def foo(x : #{restriction}) forall T
           T
         end
 
         foo(1 || "" || 'a')
-        )) { char.metaclass }
+        CRYSTAL
     end
   end
 
@@ -1247,7 +1247,7 @@ describe "Semantic: def overload" do
   end
 
   it "matches virtual type to union" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       abstract class Foo
       end
 
@@ -1263,7 +1263,7 @@ describe "Semantic: def overload" do
 
       node = Bar.new || Baz.new
       foo(node)
-      ") { int32 }
+      CRYSTAL
   end
 
   it "doesn't match tuples of different sizes" do
@@ -1278,7 +1278,7 @@ describe "Semantic: def overload" do
   end
 
   it "matches tuples of different sizes" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { union_of(int32, char) }
       def foo(x : {X, Y}) forall X, Y
         1
       end
@@ -1289,27 +1289,27 @@ describe "Semantic: def overload" do
 
       x = {1, 2} || {1, 2, 3}
       foo x
-      ") { union_of(int32, char) }
+      CRYSTAL
   end
 
   it "matches tuples and uses free var" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { float64.metaclass }
       def foo(x : {X, Y}) forall X, Y
         Y
       end
 
       foo({1, 2.5})
-      ") { float64.metaclass }
+      CRYSTAL
   end
 
   it "matches tuple with underscore" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { tuple_of([int32, float64] of Type) }
       def foo(x : {_, _})
         x
       end
 
       foo({1, 2.5})
-      ") { tuple_of([int32, float64] of Type) }
+      CRYSTAL
   end
 
   it "gives correct error message, looking up parent defs, when no overload matches" do
@@ -1365,7 +1365,7 @@ describe "Semantic: def overload" do
   end
 
   it "finds method after including module in generic module (#1201)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { char }
       module Bar
         def foo
           'a'
@@ -1388,7 +1388,7 @@ describe "Semantic: def overload" do
       end
 
       Foo.new.foo
-      )) { char }
+      CRYSTAL
   end
 
   it "reports no overload matches with correct method owner (#2083)" do
@@ -1452,7 +1452,7 @@ describe "Semantic: def overload" do
   end
 
   it "dispatches with named arg" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of bool, char }
       def f(a : Int32, b : Int32)
         true
       end
@@ -1463,7 +1463,7 @@ describe "Semantic: def overload" do
 
       a = 1 || nil
       f(a: a, b: 2)
-      )) { union_of bool, char }
+      CRYSTAL
   end
 
   it "uses long name when no overload matches and name is the same (#1030)" do
@@ -1480,7 +1480,7 @@ describe "Semantic: def overload" do
   end
 
   it "overloads on metaclass (#2916)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([int32, char]) }
       def foo(x : String.class)
         1
       end
@@ -1490,11 +1490,11 @@ describe "Semantic: def overload" do
       end
 
       {foo(String), foo(typeof("" || nil))}
-      )) { tuple_of([int32, char]) }
+      CRYSTAL
   end
 
   it "overloads on metaclass (2) (#2916)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { char }
       def foo(x : String.class)
         1
       end
@@ -1504,11 +1504,11 @@ describe "Semantic: def overload" do
       end
 
       foo(String)
-      )) { char }
+      CRYSTAL
   end
 
   it "overloads on metaclass (3) (#2916)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([char, int32]) }
       class Foo
       end
 
@@ -1524,11 +1524,11 @@ describe "Semantic: def overload" do
       end
 
       {foo(Bar), foo(Foo)}
-      )) { tuple_of([char, int32]) }
+      CRYSTAL
   end
 
   it "doesn't crash on unknown metaclass" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       def foo(x : Foo.class)
       end
 
@@ -1536,11 +1536,11 @@ describe "Semantic: def overload" do
       end
 
       1
-      )) { int32 }
+      CRYSTAL
   end
 
   it "overloads union against non-union (#2904)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([char, bool]) }
       def foo(x : Int32?)
         true
       end
@@ -1550,7 +1550,7 @@ describe "Semantic: def overload" do
       end
 
       {foo(1), foo(nil)}
-      )) { tuple_of([char, bool]) }
+      CRYSTAL
   end
 
   it "errors when binding free variable to different types" do
@@ -1577,23 +1577,23 @@ describe "Semantic: def overload" do
   end
 
   it "overloads with named argument (#4465)" do
-    assert_type(%(
-			def do_something(value : Int32)
-			  value + 1
-			  1.5
-			end
+    assert_type(<<-CRYSTAL, inject_primitives: true) { union_of float64, bool }
+\t\t\tdef do_something(value : Int32)
+\t\t\t  value + 1
+\t\t\t  1.5
+\t\t\tend
 
-			def do_something(value : Char)
-			  value.ord
-			  false
-			end
+\t\t\tdef do_something(value : Char)
+\t\t\t  value.ord
+\t\t\t  false
+\t\t\tend
 
-			do_something value: 7.as(Int32 | Char)
-			), inject_primitives: true) { union_of float64, bool }
+\t\t\tdo_something value: 7.as(Int32 | Char)
+CRYSTAL
   end
 
   it "resets free vars after a partial match is rejected (#10270)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { bool }
       def foo(x : T, y : String) forall T
         1
       end
@@ -1603,11 +1603,11 @@ describe "Semantic: def overload" do
       end
 
       foo('a', 1)
-      )) { bool }
+      CRYSTAL
   end
 
   it "resets free vars after a partial match is rejected (2) (#10185)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { named_tuple_of({a: int32, b: string}).metaclass }
       def foo(*x : *T) forall T
         T
       end
@@ -1617,7 +1617,7 @@ describe "Semantic: def overload" do
       end
 
       foo(**{a: 1, b: ""})
-      )) { named_tuple_of({a: int32, b: string}).metaclass }
+      CRYSTAL
   end
 
   it "considers NamedTuple in a module's including types (#10380)" do

@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Semantic: virtual" do
   it "types two classes without a shared virtual" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { union_of(types["Foo"], types["Bar"]) }
       class Foo
       end
 
@@ -10,11 +10,11 @@ describe "Semantic: virtual" do
       end
 
       a = Foo.new || Bar.new
-      ") { union_of(types["Foo"], types["Bar"]) }
+      CRYSTAL
   end
 
   it "types class and subclass as one type" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { types["Foo"].virtual_type }
       class Foo
       end
 
@@ -22,11 +22,11 @@ describe "Semantic: virtual" do
       end
 
       a = Foo.new || Bar.new
-      ") { types["Foo"].virtual_type }
+      CRYSTAL
   end
 
   it "types two subclasses" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { types["Foo"].virtual_type }
       class Foo
       end
 
@@ -37,11 +37,11 @@ describe "Semantic: virtual" do
       end
 
       a = Bar.new || Baz.new
-      ") { types["Foo"].virtual_type }
+      CRYSTAL
   end
 
   it "types class and two subclasses" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { types["Foo"].virtual_type }
       class Foo
       end
 
@@ -52,11 +52,11 @@ describe "Semantic: virtual" do
       end
 
       a = Foo.new || Bar.new || Baz.new
-      ") { types["Foo"].virtual_type }
+      CRYSTAL
   end
 
   it "types method call of virtual type" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def foo
           1
@@ -68,11 +68,11 @@ describe "Semantic: virtual" do
 
       a = Foo.new || Bar.new
       a.foo
-      ") { int32 }
+      CRYSTAL
   end
 
   it "types method call of virtual type with override" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { union_of(int32, float64) }
       class Foo
         def foo
           1
@@ -87,7 +87,7 @@ describe "Semantic: virtual" do
 
       a = Foo.new || Bar.new
       a.foo
-      ") { union_of(int32, float64) }
+      CRYSTAL
   end
 
   it "dispatches virtual method" do
@@ -158,7 +158,7 @@ describe "Semantic: virtual" do
   end
 
   it "doesn't check cover for subclasses" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { union_of(int32, float64) }
       class Foo
         def foo(other)
           1
@@ -173,7 +173,7 @@ describe "Semantic: virtual" do
 
       f = Foo.new || Bar.new
       x = f.foo(f)
-      ") { union_of(int32, float64) }
+      CRYSTAL
   end
 
   it "removes instance var from subclasses" do
@@ -208,14 +208,14 @@ describe "Semantic: virtual" do
   end
 
   it "types inspect" do
-    assert_type("
-      require \"prelude\"
+    assert_type(<<-CRYSTAL) { string }
+      require "prelude"
 
       class Foo
       end
 
       Foo.new.inspect
-      ") { string }
+      CRYSTAL
   end
 
   it "reports no matches for virtual type" do
@@ -235,7 +235,7 @@ describe "Semantic: virtual" do
   end
 
   it "doesn't check methods on abstract classes" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { union_of(int32, float64) }
       abstract class Foo
       end
 
@@ -253,11 +253,11 @@ describe "Semantic: virtual" do
 
       f = Bar1.new || Bar2.new
       x = f.foo
-      ") { union_of(int32, float64) }
+      CRYSTAL
   end
 
   it "doesn't check methods on abstract classes 2" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { union_of(int32, float64, char) }
       abstract class Foo
       end
 
@@ -284,7 +284,7 @@ describe "Semantic: virtual" do
 
       f = Bar2.new || Bar3.new || Baz.new
       x = f.foo
-      ") { union_of(int32, float64, char) }
+      CRYSTAL
   end
 
   it "reports undefined method in subclass of abstract class" do
@@ -317,7 +317,7 @@ describe "Semantic: virtual" do
   end
 
   it "doesn't check cover for abstract classes" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { union_of(int32, float64, char) }
       abstract class Foo
         def foo(other)
           1
@@ -350,7 +350,7 @@ describe "Semantic: virtual" do
 
       f = Bar1.new || Bar2.new || Baz.new
       foo(f)
-      ") { union_of(int32, float64, char) }
+      CRYSTAL
   end
 
   it "reports missing cover for subclass of abstract class" do
@@ -388,7 +388,7 @@ describe "Semantic: virtual" do
   end
 
   it "checks cover in every concrete subclass" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { nil_type }
       abstract class Foo
       end
 
@@ -415,7 +415,7 @@ describe "Semantic: virtual" do
 
       f = Bar1.new || Bar2.new || Baz.new
       f.foo(f)
-      ") { nil_type }
+      CRYSTAL
   end
 
   it "checks cover in every concrete subclass 2" do
@@ -450,7 +450,7 @@ describe "Semantic: virtual" do
   end
 
   it "checks cover in every concrete subclass 3" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { nil_type }
       abstract class Foo
       end
 
@@ -474,11 +474,11 @@ describe "Semantic: virtual" do
 
       f = Bar1.new || Bar2.new || Baz.new
       f.foo(f)
-      ") { nil_type }
+      CRYSTAL
   end
 
   it "checks method in every concrete subclass but method in Object" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { nil_type }
       class Object
         def foo
         end
@@ -495,7 +495,7 @@ describe "Semantic: virtual" do
 
       f = Bar1.new || Bar2.new
       f.foo
-      ") { nil_type }
+      CRYSTAL
   end
 
   # it "recalculates virtual type when subclass is added" do
@@ -529,7 +529,7 @@ describe "Semantic: virtual" do
   # end
 
   it "finds overloads of union of virtual, class and nil" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { union_of(int32, float64) }
       class Foo
       end
 
@@ -546,11 +546,11 @@ describe "Semantic: virtual" do
 
       f = Foo.new || Bar.new || Reference.new || nil
       foo(f)
-      ") { union_of(int32, float64) }
+      CRYSTAL
   end
 
   it "finds overloads of union of virtual, class and nil with abstract class" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { union_of(int32, float64) }
       abstract class Foo
       end
 
@@ -570,11 +570,11 @@ describe "Semantic: virtual" do
 
       f = Bar.new || Baz.new || Reference.new || nil
       foo(f)
-      ") { union_of(int32, float64) }
+      CRYSTAL
   end
 
   it "restricts with union and doesn't merge to super type" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { union_of(int32, char, string) }
       abstract class Foo
       end
 
@@ -598,16 +598,16 @@ describe "Semantic: virtual" do
       end
 
       def foo(x)
-        \"hello\"
+        "hello"
       end
 
       f = Bar.new || Baz.new || Bag.new
       foo(f)
-      ") { union_of(int32, char, string) }
+      CRYSTAL
   end
 
   it "uses virtual type as generic type if class is abstract" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { generic_class "Bar", types["Foo"].virtual_type }
       abstract class Foo
       end
 
@@ -615,11 +615,11 @@ describe "Semantic: virtual" do
       end
 
       Bar(Foo).new
-      ") { generic_class "Bar", types["Foo"].virtual_type }
+      CRYSTAL
   end
 
   it "uses virtual type as generic type if class is abstract even in union" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { generic_class "Bar", union_of(types["Foo"].virtual_type, int32) }
       abstract class Foo
       end
 
@@ -630,20 +630,20 @@ describe "Semantic: virtual" do
       end
 
       Bar(Foo | Int32).new
-      ") { generic_class "Bar", union_of(types["Foo"].virtual_type, int32) }
+      CRYSTAL
   end
 
   it "automatically does virtual for generic type if there are subclasses" do
-    assert_type("
+    assert_type(<<-CRYSTAL, inject_primitives: true) { pointer_of(types["Foo"].virtual_type) }
       class Foo; end
       class Bar < Foo; end
 
       Pointer(Foo).malloc(1_u64)
-      ", inject_primitives: true) { pointer_of(types["Foo"].virtual_type) }
+      CRYSTAL
   end
 
   it "types instance var as virtual when using type declaration and has subclasses" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Foo"].virtual_type! }
       class Foo
       end
 
@@ -660,6 +660,6 @@ describe "Semantic: virtual" do
       end
 
       Bar.new.foo
-      )) { types["Foo"].virtual_type! }
+      CRYSTAL
   end
 end

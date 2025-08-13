@@ -79,43 +79,43 @@ describe "Semantic: named args" do
   end
 
   it "sends one regular argument as named argument" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       def foo(x)
         x
       end
 
       foo x: 1
-      )) { int32 }
+      CRYSTAL
   end
 
   it "sends two regular arguments as named arguments" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       def foo(x, y)
         x + y
       end
 
       foo x: 1, y: 2
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "sends two regular arguments as named arguments in inverted position (1)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { string }
       def foo(x, y)
         x
       end
 
       foo y: 1, x: "foo"
-      )) { string }
+      CRYSTAL
   end
 
   it "sends two regular arguments as named arguments in inverted position (2)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       def foo(x, y)
         y
       end
 
       foo y: 1, x: "foo"
-      )) { int32 }
+      CRYSTAL
   end
 
   it "errors if named arg matches single splat argument" do
@@ -139,13 +139,13 @@ describe "Semantic: named args" do
   end
 
   it "allows named arg if there's a splat" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([char, tuple_of([int32])]) }
       def foo(*y, x)
         { x, y }
       end
 
       foo 1, x: 'a'
-      )) { tuple_of([char, tuple_of([int32])]) }
+      CRYSTAL
   end
 
   it "errors if missing one argument" do
@@ -203,7 +203,7 @@ describe "Semantic: named args" do
   end
 
   it "overloads based on required named args" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([int32, char]) }
       def foo(x, *, y)
         1
       end
@@ -216,11 +216,11 @@ describe "Semantic: named args" do
       b = foo(1, z: 2)
 
       {a, b}
-      )) { tuple_of([int32, char]) }
+      CRYSTAL
   end
 
   it "overloads based on required named args, with restrictions" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([int32, char]) }
       def foo(x, *, z : Int32)
         1
       end
@@ -233,22 +233,22 @@ describe "Semantic: named args" do
       b = foo(1, z: 1.5)
 
       {a, b}
-      )) { tuple_of([int32, char]) }
+      CRYSTAL
   end
 
   it "uses bare splat in new" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Foo"] }
       class Foo
         def initialize(*, y = nil)
         end
       end
 
       Foo.new
-      )) { types["Foo"] }
+      CRYSTAL
   end
 
   it "passes #2696" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Bar"] }
       class Bar
         def bar
           yield
@@ -263,11 +263,11 @@ describe "Semantic: named args" do
       end
 
       Foo.foo(count: 3).bar { }
-      )) { types["Bar"] }
+      CRYSTAL
   end
 
   it "matches specific overload with named arguments (#2753)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { bool }
       def foo(x : Nil, y)
         foo 1, y
         true
@@ -279,11 +279,11 @@ describe "Semantic: named args" do
       end
 
       foo nil, y: 2
-      ), inject_primitives: true) { bool }
+      CRYSTAL
   end
 
   it "matches specific overload with named arguments (2) (#2753)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { bool }
       def foo(x : Nil, y, z)
         foo 1, y, z
         true
@@ -295,7 +295,7 @@ describe "Semantic: named args" do
       end
 
       foo nil, z: 1, y: 2
-      ), inject_primitives: true) { bool }
+      CRYSTAL
   end
 
   it "gives correct error message with external names (#3934)" do
@@ -320,7 +320,7 @@ describe "Semantic: named args" do
   end
 
   it "doesn't fail on named argument with NoReturn type (#7760)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { no_return }
       lib LibC
         fun exit : NoReturn
       end
@@ -333,6 +333,6 @@ describe "Semantic: named args" do
       LibC.exit if x.is_a?(Int32)
 
       foo(x: x)
-      )) { no_return }
+      CRYSTAL
   end
 end

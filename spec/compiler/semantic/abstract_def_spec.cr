@@ -21,7 +21,7 @@ describe "Semantic: abstract def" do
   end
 
   it "works on abstract method on abstract class" do
-    assert_type %(
+    assert_type <<-CRYSTAL { int32 }
       abstract class Foo
         abstract def foo
       end
@@ -40,11 +40,11 @@ describe "Semantic: abstract def" do
 
       b = Bar.new || Baz.new
       b.foo
-      ) { int32 }
+      CRYSTAL
   end
 
   it "works on abstract def on sub-subclass" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       abstract class Foo
         abstract def foo
       end
@@ -62,7 +62,7 @@ describe "Semantic: abstract def" do
       p.value = Bar.new
       p.value = Baz.new
       p.value.foo
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "errors if using abstract def on subclass that also defines it as abstract" do
@@ -523,7 +523,7 @@ describe "Semantic: abstract def" do
   end
 
   it "can return a more specific type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Child"] }
       class Parent
       end
 
@@ -542,7 +542,7 @@ describe "Semantic: abstract def" do
       end
 
       Bar.new.foo
-      )) { types["Child"] }
+      CRYSTAL
   end
 
   it "matches instantiated generic types" do

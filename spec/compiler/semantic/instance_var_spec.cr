@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Semantic: instance var" do
   it "declares instance var" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         @x : Int32
 
@@ -17,11 +17,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "declares instance var multiple times, last one wins" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of(int32, float64) }
       class Foo
         @x : Int32
         @x : Int32 | Float64
@@ -37,11 +37,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { union_of(int32, float64) }
+      CRYSTAL
   end
 
   it "doesn't error when redeclaring subclass variable with the same type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         @x : Int32
 
@@ -60,7 +60,7 @@ describe "Semantic: instance var" do
       end
 
       Bar.new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "errors when redeclaring subclass variable with a different type" do
@@ -88,7 +88,7 @@ describe "Semantic: instance var" do
   end
 
   it "declares instance var in module, inherits to type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       module Moo
         @x : Int32
 
@@ -107,11 +107,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "declares instance var in module, inherits to type recursively" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       module Moo
         @x : Int32
 
@@ -134,11 +134,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "declares instance var of generic type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo(T)
         @x : T
 
@@ -151,11 +151,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new(1).x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "declares instance var of generic type, with no type parameter" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo(T)
         @x : Int32
 
@@ -168,11 +168,11 @@ describe "Semantic: instance var" do
       end
 
       Foo(Char).new(1).x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "declares instance var of generic type, with generic type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { generic_class "Gen", int32 }
       class Gen(T)
       end
 
@@ -188,11 +188,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new(Gen(Int32).new).x
-      )) { generic_class "Gen", int32 }
+      CRYSTAL
   end
 
   it "declares instance var of generic type, with union" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of int32, char }
       class Foo(T)
         @x : T | Char
 
@@ -205,11 +205,11 @@ describe "Semantic: instance var" do
       end
 
       Foo(Int32).new(1).x
-      )) { union_of int32, char }
+      CRYSTAL
   end
 
   it "declares instance var of generic type, with proc" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { proc_of([char, char, int32]) }
       class Foo(T)
         @x : T, T -> Int32
 
@@ -222,11 +222,11 @@ describe "Semantic: instance var" do
       end
 
       Foo(Char).new(->(x : Char, y : Char) { 1 }).x
-      )) { proc_of([char, char, int32]) }
+      CRYSTAL
   end
 
   it "declares instance var of generic type, with tuple" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([char, int32, char]) }
       class Foo(T)
         @x : {T, Int32, T}
 
@@ -239,11 +239,11 @@ describe "Semantic: instance var" do
       end
 
       Foo(Char).new({'a', 1, 'b'}).x
-      )) { tuple_of([char, int32, char]) }
+      CRYSTAL
   end
 
   it "declares instance var of generic type, with metaclass" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32.metaclass }
       class Foo(T)
         @x : T.class
 
@@ -256,11 +256,11 @@ describe "Semantic: instance var" do
       end
 
       Foo(Int32).new(Int32).x
-      )) { int32.metaclass }
+      CRYSTAL
   end
 
   it "declares instance var of generic type, with virtual metaclass" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Bar"].virtual_type!.metaclass }
       class Bar; end
       class Baz < Bar; end
 
@@ -276,11 +276,11 @@ describe "Semantic: instance var" do
       end
 
       Foo(Bar).new(Bar).x
-      )) { types["Bar"].virtual_type!.metaclass }
+      CRYSTAL
   end
 
   it "declares instance var of generic type, with static array" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { static_array_of(uint8, 3) }
       class Foo(T)
         @x : UInt8[T]
 
@@ -294,11 +294,11 @@ describe "Semantic: instance var" do
 
       z = uninitialized UInt8[3]
       Foo(3).new(z).x
-      )) { static_array_of(uint8, 3) }
+      CRYSTAL
   end
 
   it "declares instance var of generic type, with splat" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { generic_class "Gen", int32, string }
       class Gen(*T)
       end
 
@@ -314,11 +314,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new(Gen(Int32, String).new).x
-      )) { generic_class "Gen", int32, string }
+      CRYSTAL
   end
 
   it "declares instance var of generic type, with splat inside Tuple" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([int32, string]) }
       class Foo(*T)
         @x : Tuple(*T)
 
@@ -331,11 +331,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new({1, ""}).x
-      )) { tuple_of([int32, string]) }
+      CRYSTAL
   end
 
   it "declares instance var of generic type, with splat inside Proc" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { proc_of([int32, string, bool]) }
       class Foo(R, *T)
         @x : Proc(*T, R)
 
@@ -348,11 +348,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new(->(x : Int32, y : String) { true }).x
-      )) { proc_of([int32, string, bool]) }
+      CRYSTAL
   end
 
   it "declares instance var with self, on generic" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable generic_class("Foo", int32) }
       class Foo(T)
         @x : self | Nil
 
@@ -362,7 +362,7 @@ describe "Semantic: instance var" do
       end
 
       Foo(Int32).new.x
-      )) { nilable generic_class("Foo", int32) }
+      CRYSTAL
   end
 
   it "errors if declaring variable with number" do
@@ -384,7 +384,7 @@ describe "Semantic: instance var" do
   end
 
   it "declares instance var of generic type through module" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       module Moo
         @x : Int32
 
@@ -403,11 +403,11 @@ describe "Semantic: instance var" do
       end
 
       Foo(Float64).new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "declares instance var of generic type subclass" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo(T)
         @x : T
 
@@ -423,11 +423,11 @@ describe "Semantic: instance var" do
       end
 
       Bar(Int32).new(1).x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "declares instance var of generic module" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       module Moo(T)
         @x : T
 
@@ -446,11 +446,11 @@ describe "Semantic: instance var" do
       end
 
       Foo(Int32).new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "declares instance var of generic module (2)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       module Moo(U)
         @x : U
 
@@ -469,11 +469,11 @@ describe "Semantic: instance var" do
       end
 
       Foo(Int32).new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "declares instance var of generic module from non-generic module" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       module Moo
         @x : Int32
 
@@ -500,11 +500,11 @@ describe "Semantic: instance var" do
       end
 
       Foo(Float64).new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "infers type from number literal" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def initialize
           @x = 1
@@ -516,11 +516,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "infers type from char literal" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { char }
       class Foo
         def initialize
           @x = 'a'
@@ -532,11 +532,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { char }
+      CRYSTAL
   end
 
   it "infers type from bool literal" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { bool }
       class Foo
         def initialize
           @x = true
@@ -548,11 +548,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { bool }
+      CRYSTAL
   end
 
   it "infers type from string literal" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { string }
       class Foo
         def initialize
           @x = "hi"
@@ -564,11 +564,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { string }
+      CRYSTAL
   end
 
   it "infers type from string interpolation" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { string }
       require "prelude"
 
       class Foo
@@ -582,11 +582,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { string }
+      CRYSTAL
   end
 
   it "infers type from symbol literal" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { symbol }
       class Foo
         def initialize
           @x = :hi
@@ -598,11 +598,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { symbol }
+      CRYSTAL
   end
 
   it "infers type from array literal with of" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { array_of int32 }
       class Foo
         def initialize
           @x = [] of Int32
@@ -614,11 +614,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { array_of int32 }
+      CRYSTAL
   end
 
   it "infers type from array literal with of metaclass" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { array_of int32.metaclass }
       class Foo
         def initialize
           @x = [] of Int32.class
@@ -630,11 +630,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { array_of int32.metaclass }
+      CRYSTAL
   end
 
   it "infers type from array literal from its literals" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { array_of union_of(int32, char) }
       require "prelude"
 
       class Foo
@@ -648,11 +648,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { array_of union_of(int32, char) }
+      CRYSTAL
   end
 
   it "infers type from hash literal with of" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { hash_of int32, string }
       class Foo
         def initialize
           @x = {} of Int32 => String
@@ -664,11 +664,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { hash_of int32, string }
+      CRYSTAL
   end
 
   it "infers type from hash literal from elements" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { hash_of(union_of(int32, char), union_of(string, bool)) }
       require "prelude"
 
       class Foo
@@ -682,11 +682,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { hash_of(union_of(int32, char), union_of(string, bool)) }
+      CRYSTAL
   end
 
   it "infers type from range literal" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { range_of(int32, char) }
       require "prelude"
 
       class Foo
@@ -700,11 +700,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { range_of(int32, char) }
+      CRYSTAL
   end
 
   it "infers type from regex literal" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Regex"] }
       require "prelude"
 
       class Foo
@@ -718,11 +718,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { types["Regex"] }
+      CRYSTAL
   end
 
   it "infers type from regex literal with interpolation" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Regex"] }
       require "prelude"
 
       class Foo
@@ -736,11 +736,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { types["Regex"] }
+      CRYSTAL
   end
 
   it "infers type from tuple literal" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([int32, string]) }
       class Foo
         def initialize
           @x = {1, "foo"}
@@ -752,11 +752,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { tuple_of([int32, string]) }
+      CRYSTAL
   end
 
   it "infers type from named tuple literal" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { named_tuple_of({"x": int32, "y": string}) }
       class Foo
         def initialize
           @x = {x: 1, y: "foo"}
@@ -768,7 +768,7 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { named_tuple_of({"x": int32, "y": string}) }
+      CRYSTAL
   end
 
   it "infers type from proc literal with return type" do
@@ -788,7 +788,7 @@ describe "Semantic: instance var" do
   end
 
   it "infers type from new expression" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Bar"] }
       class Bar
       end
 
@@ -803,11 +803,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { types["Bar"] }
+      CRYSTAL
   end
 
   it "infers type from as" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       class Foo
         def initialize
           @x = (1 + 2).as(Int32)
@@ -819,11 +819,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "infers type from as?" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { nilable int32 }
       class Foo
         def initialize
           @x = (1 + 2).as?(Int32)
@@ -835,11 +835,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      ), inject_primitives: true) { nilable int32 }
+      CRYSTAL
   end
 
   it "infers type from argument restriction" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable int32 }
       class Foo
         def x=(@x : Int32)
         end
@@ -850,11 +850,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { nilable int32 }
+      CRYSTAL
   end
 
   it "infers type from argument default value" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable int32 }
       class Foo
         def set(@x = 1)
         end
@@ -865,11 +865,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { nilable int32 }
+      CRYSTAL
   end
 
   it "infers type from lib fun call" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["LibFoo"].types["Bar"] }
       lib LibFoo
         struct Bar
           x : Int32
@@ -889,11 +889,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { types["LibFoo"].types["Bar"] }
+      CRYSTAL
   end
 
   it "infers type from lib variable" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["LibFoo"].types["Bar"] }
       lib LibFoo
         struct Bar
           x : Int32
@@ -913,11 +913,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { types["LibFoo"].types["Bar"] }
+      CRYSTAL
   end
 
   it "infers type from ||" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of(int32, bool) }
       class Foo
         def initialize
           @x = 1 || true
@@ -929,11 +929,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { union_of(int32, bool) }
+      CRYSTAL
   end
 
   it "infers type from &&" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of(int32, bool) }
       class Foo
         def initialize
           @x = 1 && true
@@ -945,11 +945,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { union_of(int32, bool) }
+      CRYSTAL
   end
 
   it "infers type from ||=" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable int32 }
       class Foo
         def x
           @x ||= 1
@@ -957,11 +957,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.@x
-      )) { nilable int32 }
+      CRYSTAL
   end
 
   it "infers type from ||= inside another assignment" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable int32 }
       class Foo
         def x
           x = @x ||= 1
@@ -969,11 +969,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.@x
-      )) { nilable int32 }
+      CRYSTAL
   end
 
   it "infers type from if" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { union_of(int32, bool) }
       class Foo
         def initialize
           @x = 1 == 1 ? 1 : true
@@ -985,11 +985,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      ), inject_primitives: true) { union_of(int32, bool) }
+      CRYSTAL
   end
 
   it "infers type from case" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of(char, bool) }
       require "prelude"
 
       class Foo
@@ -1008,11 +1008,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { union_of(char, bool) }
+      CRYSTAL
   end
 
   it "infers type from unless" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { union_of(int32, bool) }
       class Foo
         def initialize
           @x = unless 1 == 1
@@ -1028,11 +1028,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      ), inject_primitives: true) { union_of(int32, bool) }
+      CRYSTAL
   end
 
   it "infers type from begin" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def initialize
           @x = begin
@@ -1047,11 +1047,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "infers type from assign (1)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def initialize
           @x = @y = 1
@@ -1063,11 +1063,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "infers type from assign (2)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def initialize
           @x = @y = 1
@@ -1079,11 +1079,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.y
-      )) { int32 }
+      CRYSTAL
   end
 
   it "infers type from block argument" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable proc_of(int32, int32) }
       class Foo
         def set(&@x : Int32 -> Int32)
         end
@@ -1094,11 +1094,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { nilable proc_of(int32, int32) }
+      CRYSTAL
   end
 
   it "infers type from block argument without restriction" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable proc_of(void) }
       class Foo
         def set(&@x)
         end
@@ -1109,11 +1109,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { nilable proc_of(void) }
+      CRYSTAL
   end
 
   it "infers type from !" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { bool }
       class Foo
         def initialize
           @x = !1
@@ -1125,11 +1125,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { bool }
+      CRYSTAL
   end
 
   it "infers type from is_a?" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { bool }
       class Foo
         def initialize
           @x = 1.is_a?(Char)
@@ -1141,11 +1141,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { bool }
+      CRYSTAL
   end
 
   it "infers type from responds_to?" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { bool }
       class Foo
         def initialize
           @x = 1.responds_to?(:foo)
@@ -1157,11 +1157,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { bool }
+      CRYSTAL
   end
 
   it "infers type from sizeof" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def initialize
           @x = sizeof(Int32)
@@ -1173,11 +1173,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "infers type from instance_sizeof" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def initialize
           @x = instance_sizeof(Foo)
@@ -1189,11 +1189,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "infers type from offsetof" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def initialize
           @x = offsetof(Bar, @x)
@@ -1209,11 +1209,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "infers type from path that is a type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Bar"].virtual_type!.metaclass }
       class Bar; end
       class Baz < Bar; end
 
@@ -1228,11 +1228,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { types["Bar"].virtual_type!.metaclass }
+      CRYSTAL
   end
 
   it "infers type from path that is a constant" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       CONST = 1
 
       class Foo
@@ -1246,11 +1246,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "doesn't infer type from redefined method" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable char }
       class Foo
         def foo
           @x = 1
@@ -1266,11 +1266,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { nilable char }
+      CRYSTAL
   end
 
   it "infers type from redefined method if calls previous_def" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of(nil_type, int32, char) }
       class Foo
         def foo
           @x = 1
@@ -1287,11 +1287,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { union_of(nil_type, int32, char) }
+      CRYSTAL
   end
 
   it "infers type in multi assign" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([int32, char]) }
       class Foo
         def initialize
           @x, @y = 1, 'a'
@@ -1307,11 +1307,11 @@ describe "Semantic: instance var" do
       end
 
       {Foo.new.x, Foo.new.y}
-      )) { tuple_of([int32, char]) }
+      CRYSTAL
   end
 
   it "infers type from enum member" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Color"] }
       enum Color
         Red
         Green
@@ -1329,11 +1329,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { types["Color"] }
+      CRYSTAL
   end
 
   it "infers type from two literals" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of int32, float64 }
       class Foo
         def initialize
           @x = 1
@@ -1346,11 +1346,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { union_of int32, float64 }
+      CRYSTAL
   end
 
   it "infers type from literal outside def" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         @x = 1
 
@@ -1360,11 +1360,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "infers type from literal outside def with initialize and type restriction" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         @x : Int32
         @x = 1
@@ -1378,11 +1378,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "infers type from lib out (1)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["LibFoo"].types["Bar"] }
       lib LibFoo
         struct Bar
           x : Int32
@@ -1402,11 +1402,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.two
-      )) { types["LibFoo"].types["Bar"] }
+      CRYSTAL
   end
 
   it "infers type from lib out (2)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { float64 }
       lib LibFoo
         fun foo(x : Int32, y : Float64*) : Int32
       end
@@ -1422,11 +1422,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.two
-      )) { float64 }
+      CRYSTAL
   end
 
   it "infers type from lib out (3)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       lib LibFoo
         fun foo(x : Int32, y : Float64*) : Int32
       end
@@ -1442,11 +1442,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.err
-      )) { int32 }
+      CRYSTAL
   end
 
   it "infers type from uninitialized" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def initialize
           @x = uninitialized Int32
@@ -1458,7 +1458,7 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "doesn't infer for subclass if assigns another type (1)" do
@@ -1511,7 +1511,7 @@ describe "Semantic: instance var" do
   end
 
   it "infers type from included module" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       module Moo
         def initialize
           @x = 1
@@ -1527,11 +1527,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "infers type from included module, outside def" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       module Moo
         @x = 1
 
@@ -1545,11 +1545,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "infers type from included module recursively" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       module Moo
         def initialize
           @x = 1
@@ -1569,11 +1569,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "infers type for generic class, with literal" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo(T)
         def initialize
           @x = 1
@@ -1585,11 +1585,11 @@ describe "Semantic: instance var" do
       end
 
       Foo(Float64).new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "infers type for generic class, with T.new" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Bar"] }
       class Bar
       end
 
@@ -1604,11 +1604,11 @@ describe "Semantic: instance var" do
       end
 
       Foo(Bar).new.x
-      )) { types["Bar"] }
+      CRYSTAL
   end
 
   it "infers type for generic class, with T.new and literal" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of types["Bar"], int32 }
       class Bar
       end
 
@@ -1624,11 +1624,11 @@ describe "Semantic: instance var" do
       end
 
       Foo(Bar).new.x
-      )) { union_of types["Bar"], int32 }
+      CRYSTAL
   end
 
   it "infers type for generic class, with lib call" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["LibFoo"].types["Bar"] }
       lib LibFoo
         struct Bar
           x : Int32
@@ -1648,11 +1648,11 @@ describe "Semantic: instance var" do
       end
 
       Foo(Float64).new.x
-      )) { types["LibFoo"].types["Bar"] }
+      CRYSTAL
   end
 
   it "infers type for generic class, with &&" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of(types["Foo"], types["Bar"]) }
       class Foo
       end
 
@@ -1670,11 +1670,11 @@ describe "Semantic: instance var" do
       end
 
       Gen(Bar).new.x
-      )) { union_of(types["Foo"], types["Bar"]) }
+      CRYSTAL
   end
 
   it "infers type for generic class, with begin" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Foo"] }
       class Foo
       end
 
@@ -1692,11 +1692,11 @@ describe "Semantic: instance var" do
       end
 
       Gen(Foo).new.x
-      )) { types["Foo"] }
+      CRYSTAL
   end
 
   it "infers type for generic class, with if" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { union_of(types["Foo"], types["Bar"]) }
       class Foo
       end
 
@@ -1714,11 +1714,11 @@ describe "Semantic: instance var" do
       end
 
       Gen(Bar).new.x
-      ), inject_primitives: true) { union_of(types["Foo"], types["Bar"]) }
+      CRYSTAL
   end
 
   it "infers type for generic class, with case" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { union_of(types["Foo"], types["Bar"]) }
       class Object
         def ===(other)
           self == other
@@ -1745,11 +1745,11 @@ describe "Semantic: instance var" do
       end
 
       Gen(Bar).new.x
-      ), inject_primitives: true) { union_of(types["Foo"], types["Bar"]) }
+      CRYSTAL
   end
 
   it "infers type for generic class, with assign (1)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Foo"] }
       class Foo
       end
 
@@ -1764,11 +1764,11 @@ describe "Semantic: instance var" do
       end
 
       Gen(Foo).new.x
-      )) { types["Foo"] }
+      CRYSTAL
   end
 
   it "infers type for generic class, with assign (2)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Foo"] }
       class Foo
       end
 
@@ -1783,11 +1783,11 @@ describe "Semantic: instance var" do
       end
 
       Gen(Foo).new.y
-      )) { types["Foo"] }
+      CRYSTAL
   end
 
   it "infers type for non-generic class, with assign" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         @x : Int32
         @y : Int32
@@ -1802,11 +1802,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.y
-      )) { int32 }
+      CRYSTAL
   end
 
   it "infers type for generic module" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Foo"] }
       class Foo
       end
 
@@ -1825,11 +1825,11 @@ describe "Semantic: instance var" do
       end
 
       Gen(Foo).new.x
-      )) { types["Foo"] }
+      CRYSTAL
   end
 
   it "infers type to be nilable if not initialized" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable int32 }
       class Foo
         def x
           @x = 1
@@ -1838,11 +1838,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { nilable int32 }
+      CRYSTAL
   end
 
   it "infers type to be non-nilable if initialized in all initialize" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def initialize
           @x = 1
@@ -1857,7 +1857,7 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "errors if not initialized in all initialize" do
@@ -1881,7 +1881,7 @@ describe "Semantic: instance var" do
   end
 
   it "doesn't error if not initializes in all initialize because declared as nilable" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable int32 }
       class Foo
         @x : Int32?
 
@@ -1898,11 +1898,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { nilable int32 }
+      CRYSTAL
   end
 
   it "infers type from argument with restriction, in generic" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo(T)
         def initialize(@x : T)
         end
@@ -1913,7 +1913,7 @@ describe "Semantic: instance var" do
       end
 
       Foo.new(1).x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "says undefined instance variable on read" do
@@ -1953,7 +1953,7 @@ describe "Semantic: instance var" do
   end
 
   it "doesn't if declaring nilable instance var and turns out to be nilable" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable int32 }
       class Foo
         @x : Int32?
 
@@ -1963,7 +1963,7 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { nilable int32 }
+      CRYSTAL
   end
 
   it "errors if declaring instance var and turns out to be nilable, in generic type" do
@@ -1989,7 +1989,7 @@ describe "Semantic: instance var" do
   end
 
   it "doesn't error if declaring instance var and doesn't out to be nilable, in generic module type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       module Moo(T)
         @x : T
 
@@ -2007,7 +2007,7 @@ describe "Semantic: instance var" do
 
       foo = Foo.new(1)
       foo.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "errors if declaring instance var and turns out to be nilable, in generic module type in generic type" do
@@ -2024,7 +2024,7 @@ describe "Semantic: instance var" do
   end
 
   it "doesn't error if not initializing variables but calling super" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         @x : Int32
 
@@ -2044,11 +2044,11 @@ describe "Semantic: instance var" do
       end
 
       Bar.new(10).x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "doesn't error if not initializing variables but calling previous_def (#3210)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Some
         def initialize
           @a = 1
@@ -2064,11 +2064,11 @@ describe "Semantic: instance var" do
       end
 
       Some.new.a
-      )) { int32 }
+      CRYSTAL
   end
 
   it "doesn't error if not initializing variables but calling super and previous_def" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         @x : Int32
 
@@ -2092,11 +2092,11 @@ describe "Semantic: instance var" do
       end
 
       Bar.new(10).x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "doesn't error if not initializing variables but calling previous_def (2) (#3210)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       class Some
         def initialize
           @a = 1
@@ -2118,7 +2118,7 @@ describe "Semantic: instance var" do
       end
 
       Some.new.a + Some.new.b
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "errors if not initializing super variables" do
@@ -2193,7 +2193,7 @@ describe "Semantic: instance var" do
   end
 
   it "doesn't error if not calling super but initializing all variables" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         @x : Int32
 
@@ -2213,11 +2213,11 @@ describe "Semantic: instance var" do
       end
 
       Bar.new(10).x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "doesn't error if not initializing variables but calling super in parent parent" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         @x : Int32
 
@@ -2240,11 +2240,11 @@ describe "Semantic: instance var" do
       end
 
       Baz.new(10).x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "doesn't error if not initializing variables but calling super for module" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       module Moo
         @x : Int32
 
@@ -2266,11 +2266,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new(10).x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "doesn't error if not initializing variables but calling super for generic module" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       module Moo(T)
         @x : T
 
@@ -2291,11 +2291,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new(10).x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "ignores redefined initialize (#456)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       class Foo
         def initialize
           @a = 1
@@ -2317,11 +2317,11 @@ describe "Semantic: instance var" do
 
       a = Foo.new
       a.a + a.b
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "ignores super module initialize (#456)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       module Moo
         def initialize
           @a = 1
@@ -2347,11 +2347,11 @@ describe "Semantic: instance var" do
 
       a = Foo.new
       a.a + a.b
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "obeys super module initialize (#456)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       module Moo
         def initialize
           @a = 1
@@ -2377,11 +2377,11 @@ describe "Semantic: instance var" do
 
       b = Foo.new
       b.a + b.b
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "doesn't error if initializing var in superclass, and then empty initialize" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         @x : Int32
         @x = 1
@@ -2397,11 +2397,11 @@ describe "Semantic: instance var" do
       end
 
       Bar.new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "doesn't error if calling initialize from another initialize (1)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def initialize(@x : Int32)
         end
@@ -2416,11 +2416,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "doesn't error if calling initialize from another initialize (2)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable int32 }
       class Foo
         def initialize(@x : Int32)
           @y = nil
@@ -2437,11 +2437,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.y
-      )) { nilable int32 }
+      CRYSTAL
   end
 
   it "infers nilable instance var of generic type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable int32 }
       class Foo(T)
         def set
           @coco = 2
@@ -2454,11 +2454,11 @@ describe "Semantic: instance var" do
 
       f = Foo(Int32).new
       f.coco
-      )) { nilable int32 }
+      CRYSTAL
   end
 
   it "infers nilable instance var of generic module" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable int32 }
       module Moo(T)
         def set
           @coco = 2
@@ -2475,11 +2475,11 @@ describe "Semantic: instance var" do
 
       f = Foo(Int32).new
       f.coco
-      )) { nilable int32 }
+      CRYSTAL
   end
 
   it "infers type to be nilable if self is used before assigning to a variable" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable int32 }
       class Foo
         def initialize
           self
@@ -2492,11 +2492,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { nilable int32 }
+      CRYSTAL
   end
 
   it "infers type to be nilable if self is used in same assign" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable int32 }
       def foo(x)
       end
 
@@ -2511,11 +2511,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { nilable int32 }
+      CRYSTAL
   end
 
   it "doesn't infer type to be nilable if using self.class" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       class Foo
         def initialize
           self.class
@@ -2528,11 +2528,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   pending "doesn't infer type to be nilable if using self.class in call in assign" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       def foo(x)
       end
 
@@ -2547,11 +2547,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "doesn't error if not initializing nilable var in subclass" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable int32 }
       class Foo
         @x : Int32?
 
@@ -2569,11 +2569,11 @@ describe "Semantic: instance var" do
       end
 
       Bar.new.x
-      )) { nilable int32 }
+      CRYSTAL
   end
 
   it "considers var as assigned in multi-assign" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       def some
         {1, 2}
       end
@@ -2597,11 +2597,11 @@ describe "Semantic: instance var" do
 
       foo = Foo.new
       foo.x + foo.y
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "infers from another instance var" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def initialize
           @x = 1
@@ -2614,11 +2614,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.y
-      )) { int32 }
+      CRYSTAL
   end
 
   it "infers from another instance var with type declaration" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         @x : Int32
 
@@ -2632,11 +2632,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new(1).y
-      )) { int32 }
+      CRYSTAL
   end
 
   it "infers from another instance var in generic type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Bar"] }
       class Bar
       end
 
@@ -2652,11 +2652,11 @@ describe "Semantic: instance var" do
       end
 
       Foo(Bar).new.y
-      )) { types["Bar"] }
+      CRYSTAL
   end
 
   it "infers from another instance var in generic type with type declaration" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Bar"] }
       class Bar
       end
 
@@ -2673,7 +2673,7 @@ describe "Semantic: instance var" do
       end
 
       Foo(Bar).new(Bar.new).y
-      )) { types["Bar"] }
+      CRYSTAL
   end
 
   it "errors on undefined instance var and subclass calling super" do
@@ -2701,7 +2701,7 @@ describe "Semantic: instance var" do
   end
 
   it "infers type from array literal in generic type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { array_of(int32) }
       class Foo(T)
         def initialize
           @array = [] of T
@@ -2713,11 +2713,11 @@ describe "Semantic: instance var" do
       end
 
       Foo(Int32).new.array
-      )) { array_of(int32) }
+      CRYSTAL
   end
 
   it "infers type from hash literal in generic type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { hash_of(int32, float64) }
       class Foo(T)
         def initialize
           @array = {} of T => Float64
@@ -2729,11 +2729,11 @@ describe "Semantic: instance var" do
       end
 
       Foo(Int32).new.array
-      )) { hash_of(int32, float64) }
+      CRYSTAL
   end
 
   it "infers type from array literal with literals in generic type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { array_of(int32) }
       require "prelude"
 
       class Foo(T)
@@ -2747,11 +2747,11 @@ describe "Semantic: instance var" do
       end
 
       Foo(Float64).new.array
-      )) { array_of(int32) }
+      CRYSTAL
   end
 
   it "infers type from hash literal with literals in generic type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { hash_of(int32, symbol) }
       require "prelude"
 
       class Foo(T)
@@ -2765,11 +2765,11 @@ describe "Semantic: instance var" do
       end
 
       Foo(Float64).new.hash
-      )) { hash_of(int32, symbol) }
+      CRYSTAL
   end
 
   it "infers from restriction using virtual type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Foo"].virtual_type! }
       class Foo; end
       class Bar < Foo; end
 
@@ -2783,7 +2783,7 @@ describe "Semantic: instance var" do
       end
 
       Baz.new(Foo.new).x
-      )) { types["Foo"].virtual_type! }
+      CRYSTAL
   end
 
   it "doesn't duplicate instance var in subclass" do
@@ -2810,7 +2810,7 @@ describe "Semantic: instance var" do
   end
 
   it "infers type from custom array literal" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Foo"] }
       class Foo
         def initialize
         end
@@ -2830,11 +2830,11 @@ describe "Semantic: instance var" do
       end
 
       Bar.new.x
-      )) { types["Foo"] }
+      CRYSTAL
   end
 
   it "infers type from custom generic array literal" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { generic_class "Foo", int32 }
       class Foo(T)
         def initialize
         end
@@ -2854,11 +2854,11 @@ describe "Semantic: instance var" do
       end
 
       Bar.new.x
-      )) { generic_class "Foo", int32 }
+      CRYSTAL
   end
 
   it "infers type from custom hash literal" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Foo"] }
       class Foo
         def initialize
         end
@@ -2878,11 +2878,11 @@ describe "Semantic: instance var" do
       end
 
       Bar.new.x
-      )) { types["Foo"] }
+      CRYSTAL
   end
 
   it "infers type from custom generic hash literal" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { generic_class "Foo", int32, string }
       class Foo(K, V)
         def initialize
         end
@@ -2902,11 +2902,11 @@ describe "Semantic: instance var" do
       end
 
       Bar.new.x
-      )) { generic_class "Foo", int32, string }
+      CRYSTAL
   end
 
   it "infers type from custom array literal in generic" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Foo"] }
       class Foo
         def initialize
         end
@@ -2926,11 +2926,11 @@ describe "Semantic: instance var" do
       end
 
       Bar(Int32).new.x
-      )) { types["Foo"] }
+      CRYSTAL
   end
 
   it "infers type from custom hash literal in generic" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Foo"] }
       class Foo
         def initialize
         end
@@ -2950,7 +2950,7 @@ describe "Semantic: instance var" do
       end
 
       Bar(Int32).new.x
-      )) { types["Foo"] }
+      CRYSTAL
   end
 
   it "says can't infer type if only nil was assigned" do
@@ -2988,7 +2988,7 @@ describe "Semantic: instance var" do
   end
 
   it "allows nil instance var because it's a generic type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nil_type }
       class Foo(T)
         def initialize(@x : T)
         end
@@ -2999,11 +2999,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new(nil).x
-      )) { nil_type }
+      CRYSTAL
   end
 
   it "uses virtual types in fun" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { proc_of(types["Node"].virtual_type, types["Node"].virtual_type) }
       class Node; end
       class SubNode < Node; end
 
@@ -3017,11 +3017,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new(->(x : Node) { x }).x
-      )) { proc_of(types["Node"].virtual_type, types["Node"].virtual_type) }
+      CRYSTAL
   end
 
   it "uses virtual types in union" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of(types["Node"].virtual_type, int32) }
       class Node; end
       class SubNode < Node; end
 
@@ -3035,11 +3035,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new(1).x
-      )) { union_of(types["Node"].virtual_type, int32) }
+      CRYSTAL
   end
 
   it "uses virtual types in self" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable types["Node"].virtual_type }
       class Node
         def initialize
           @x = nil
@@ -3056,11 +3056,11 @@ describe "Semantic: instance var" do
       class SubNode < Node; end
 
       Node.new.x
-      )) { nilable types["Node"].virtual_type }
+      CRYSTAL
   end
 
   it "infers from Pointer.malloc" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { pointer_of(int32) }
       class Foo
         def initialize
           @x = Pointer(Int32).malloc(1_u64)
@@ -3072,11 +3072,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      ), inject_primitives: true) { pointer_of(int32) }
+      CRYSTAL
   end
 
   it "infers from Pointer.malloc with two arguments" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { pointer_of(uint8) }
       require "prelude"
 
       class Foo
@@ -3090,11 +3090,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { pointer_of(uint8) }
+      CRYSTAL
   end
 
   it "infers from Pointer.null" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { pointer_of(int32) }
       require "prelude"
 
       class Foo
@@ -3108,11 +3108,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { pointer_of(int32) }
+      CRYSTAL
   end
 
   it "infers from Pointer.malloc in generic type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { pointer_of(int32) }
       class Foo(T)
         def initialize
           @x = Pointer(T).malloc(1_u64)
@@ -3124,11 +3124,11 @@ describe "Semantic: instance var" do
       end
 
       Foo(Int32).new.x
-      ), inject_primitives: true) { pointer_of(int32) }
+      CRYSTAL
   end
 
   it "infers from Pointer.null in generic type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { pointer_of(int32) }
       require "prelude"
 
       class Foo(T)
@@ -3142,11 +3142,11 @@ describe "Semantic: instance var" do
       end
 
       Foo(Int32).new.x
-      )) { pointer_of(int32) }
+      CRYSTAL
   end
 
   it "infers from Pointer.malloc with two arguments in generic type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { pointer_of(uint8) }
       require "prelude"
 
       class Foo(T)
@@ -3160,7 +3160,7 @@ describe "Semantic: instance var" do
       end
 
       Foo(Int32).new.x
-      )) { pointer_of(uint8) }
+      CRYSTAL
   end
 
   it "doesn't infer generic type without type argument inside generic" do
@@ -3201,7 +3201,7 @@ describe "Semantic: instance var" do
   end
 
   it "doesn't complain if not initialized in one initialize, but has initializer (#2465)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         @x = 1
 
@@ -3217,11 +3217,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "can declare type even if included module has a guessed var" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of int32, float64 }
       module Moo
         def foo
           @x = 1
@@ -3243,11 +3243,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { union_of int32, float64 }
+      CRYSTAL
   end
 
   it "doesn't complain if declared type is recursive alias that's nilable" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Rec"] }
       class Bar(T)
       end
 
@@ -3262,11 +3262,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { types["Rec"] }
+      CRYSTAL
   end
 
   it "infers from assign to local var (#2467)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def initialize
           @x = x = 1
@@ -3278,11 +3278,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "infers from assign to local var in generic type (#2467)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo(T)
         def initialize
           @x = x = 1
@@ -3294,11 +3294,11 @@ describe "Semantic: instance var" do
       end
 
       Foo(Float64).new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "infers from class method that has type annotation" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Bar"] }
       class Bar
         def self.bar : Bar
           Bar.new
@@ -3316,11 +3316,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.bar
-      )) { types["Bar"] }
+      CRYSTAL
   end
 
   it "infers from class method that has type annotation, in generic class" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Bar"] }
       class Bar
         def self.bar : Bar
           Bar.new
@@ -3338,11 +3338,11 @@ describe "Semantic: instance var" do
       end
 
       Foo(Int32).new.bar
-      )) { types["Bar"] }
+      CRYSTAL
   end
 
   it "infers from generic class method that has type annotation" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { generic_class "Bar", int32 }
       class Bar(T)
         def self.bar : self
           Bar(T).new
@@ -3360,11 +3360,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.bar
-      )) { generic_class "Bar", int32 }
+      CRYSTAL
   end
 
   it "infers from generic class method that has type annotation, without instantiating" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Bar(T)
         def self.bar : Int32
           1
@@ -3382,11 +3382,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.bar
-      )) { int32 }
+      CRYSTAL
   end
 
   it "infers from class method that has type annotation, with overload" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Bar"] }
       class Baz
       end
 
@@ -3416,11 +3416,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.bar
-      )) { types["Bar"] }
+      CRYSTAL
   end
 
   it "infers from class method that has type annotation, with multiple overloads matching, all with the same type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Bar"] }
       class Bar
         def self.bar(x : Int32) : Bar
           Bar.new
@@ -3442,11 +3442,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new(1).bar
-      )) { types["Bar"] }
+      CRYSTAL
   end
 
   it "infers from new with return type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def self.new : Int32
           1
@@ -3464,11 +3464,11 @@ describe "Semantic: instance var" do
       end
 
       Bar.new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "infers from new with return type in generic type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def self.new : Int32
           1
@@ -3486,11 +3486,11 @@ describe "Semantic: instance var" do
       end
 
       Bar(Float64).new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "infers from new with return type returning generic" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { generic_class "Bar", int32 }
       class Foo(T)
         def self.new : Bar(T)
           Bar(T).new
@@ -3511,11 +3511,11 @@ describe "Semantic: instance var" do
       end
 
       Baz.new.x
-      )) { generic_class "Bar", int32 }
+      CRYSTAL
   end
 
   it "guesses from new on abstract class" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Bar"] }
       abstract class Foo
         def self.new : Bar
           Bar.new(1)
@@ -3538,7 +3538,7 @@ describe "Semantic: instance var" do
       end
 
       Baz.new.foo
-      )) { types["Bar"] }
+      CRYSTAL
   end
 
   it "errors on undefined constant" do
@@ -3555,7 +3555,7 @@ describe "Semantic: instance var" do
   end
 
   it "infers from class method that invokes new" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Bar"] }
       class Foo
         def initialize
           @x = Bar.create
@@ -3573,11 +3573,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { types["Bar"] }
+      CRYSTAL
   end
 
   it "infers from class method that has number literal" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def initialize
           @x = Bar.default_num
@@ -3595,11 +3595,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "infers from class method that refers to constant" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Bar"] }
       class Foo
         def initialize
           @x = Bar.default_instance
@@ -3619,11 +3619,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { types["Bar"] }
+      CRYSTAL
   end
 
   it "infer from class method with multiple statements and return" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { nilable int32 }
       class Foo
         def initialize
           @x = Bar.default
@@ -3644,7 +3644,7 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      ), inject_primitives: true) { nilable int32 }
+      CRYSTAL
   end
 
   it "doesn't infer from class method with multiple statements and return, on non-easy return" do
@@ -3703,7 +3703,7 @@ describe "Semantic: instance var" do
   end
 
   it "infer from class method where new is redefined" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def initialize
           @x = Bar.default
@@ -3725,7 +3725,7 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "doesn't crash on recursive method call" do
@@ -3756,7 +3756,7 @@ describe "Semantic: instance var" do
   end
 
   it "infers in multiple assign for tuple type (1)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def initialize
           @x, @y = Bar.method
@@ -3774,7 +3774,7 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "says can't infer (#2536)" do
@@ -3816,7 +3816,7 @@ describe "Semantic: instance var" do
   end
 
   it "infers from method on integer literal, with type annotation" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { char }
       struct Int32
         def foo : Char
           'a'
@@ -3834,11 +3834,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { char }
+      CRYSTAL
   end
 
   it "infers from method in generic type, with type annotation" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { generic_class "Gen", int32 }
       class Gen(T)
         def foo : Gen(T)
           self
@@ -3852,11 +3852,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.@x
-      )) { generic_class "Gen", int32 }
+      CRYSTAL
   end
 
   it "infers type by removing nil from || left side" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       struct Int32
         def foo : Int32?
           1
@@ -3870,11 +3870,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.@x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "infers type from all call matches" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of int32, char }
       class Base
         def foo : Int32
           1
@@ -3900,11 +3900,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new(Base.new).@x
-      )) { union_of int32, char }
+      CRYSTAL
   end
 
   it "guesses inside macro if" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       {% if true %}
         class Foo
           def initialize
@@ -3918,19 +3918,19 @@ describe "Semantic: instance var" do
       {% end %}
 
       Foo.new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "guesses inside macro expression" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       {{ "class Foo; def initialize; @x = 1; end; def x; @x; end; end".id }}
 
       Foo.new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "guesses inside macro for" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       {% for name in %w(Foo) %}
         class {{name.id}}
           def initialize
@@ -3944,7 +3944,7 @@ describe "Semantic: instance var" do
       {% end %}
 
       Foo.new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "can't infer type from initializer" do
@@ -4016,7 +4016,7 @@ describe "Semantic: instance var" do
   end
 
   it "infers type from self (#2575)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Foo"] }
       class Foo
         def initialize
           @x = self
@@ -4028,11 +4028,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { types["Foo"] }
+      CRYSTAL
   end
 
   it "infers type from self as virtual type (#2575)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Foo"].virtual_type! }
       class Foo
         def initialize
           @x = self
@@ -4047,11 +4047,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { types["Foo"].virtual_type! }
+      CRYSTAL
   end
 
   it "declares as named tuple" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { named_tuple_of({"x": int32, "y": char}) }
       class Foo
         @x : NamedTuple(x: Int32, y: Char)
 
@@ -4066,11 +4066,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { named_tuple_of({"x": int32, "y": char}) }
+      CRYSTAL
   end
 
   it "doesn't complain in second part of #2575" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         @a : Int32
 
@@ -4091,11 +4091,11 @@ describe "Semantic: instance var" do
       end
 
       Bar.new.a
-      )) { int32 }
+      CRYSTAL
   end
 
   it "guesses from as.(typeof(...))" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def initialize(x : Int32)
           a = 1
@@ -4108,11 +4108,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new(1).x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "guesses from as.(typeof(...)) in generic type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo(T)
         def initialize(x : Int32)
           a = 1
@@ -4125,7 +4125,7 @@ describe "Semantic: instance var" do
       end
 
       Foo(Float64).new(1).x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "errors if can't find lib call, before erroring on instance var (#2579)" do
@@ -4165,7 +4165,7 @@ describe "Semantic: instance var" do
   end
 
   it "doesn't error when using Class but specifying type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Foo"].metaclass }
       class Foo
         @x : Foo.class
 
@@ -4178,11 +4178,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new(Foo).x
-      )) { types["Foo"].metaclass }
+      CRYSTAL
   end
 
   it "doesn't error when using generic because guessed elsewhere" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { generic_class "Bar", int32 }
       class Foo
         @x = Bar(Int32).new
 
@@ -4204,11 +4204,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { generic_class "Bar", int32 }
+      CRYSTAL
   end
 
   it "doesn't error when using generic in generic type because guessed elsewhere" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { generic_class "Bar", int32 }
       class Foo(T)
         @x = Bar(Int32).new
 
@@ -4230,7 +4230,7 @@ describe "Semantic: instance var" do
       end
 
       Foo(Int32).new.x
-      )) { generic_class "Bar", int32 }
+      CRYSTAL
   end
 
   %w(Object Reference Class).each do |type|
@@ -4307,7 +4307,7 @@ describe "Semantic: instance var" do
   end
 
   it "shouldn't error when accessing instance var in initialized that's always initialized (#2953)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         @baz = Baz.new
 
@@ -4336,7 +4336,7 @@ describe "Semantic: instance var" do
       end
 
       Bar.new.baz.x
-      )) { int32 }
+      CRYSTAL
   end
 
   # -----------------
@@ -4344,7 +4344,7 @@ describe "Semantic: instance var" do
   # vvv           vvv
 
   it "declares instance var which appears in initialize" do
-    result = assert_type("
+    result = assert_type(<<-CRYSTAL) { types["Foo"] }
       class Foo
         @x : Int32
 
@@ -4354,7 +4354,7 @@ describe "Semantic: instance var" do
       end
 
       Foo.new
-      ") { types["Foo"] }
+      CRYSTAL
 
     mod = result.program
 
@@ -4403,7 +4403,7 @@ describe "Semantic: instance var" do
   end
 
   it "declares instance var with initial value" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         @x = 0
 
@@ -4413,11 +4413,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      ") { int32 }
+      CRYSTAL
   end
 
   it "declares instance var with initial value, with subclass" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         @x = 0
 
@@ -4434,7 +4434,7 @@ describe "Semantic: instance var" do
       end
 
       Bar.new.x
-      ") { int32 }
+      CRYSTAL
   end
 
   it "errors if declaring generic type without type vars" do
@@ -4461,7 +4461,7 @@ describe "Semantic: instance var" do
   end
 
   it "declares instance var with union type with a virtual member" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { nilable types["Parent"].virtual_type! }
       class Parent; end
       class Child < Parent; end
 
@@ -4473,11 +4473,12 @@ describe "Semantic: instance var" do
         end
       end
 
-      Foo.new.x") { nilable types["Parent"].virtual_type! }
+      Foo.new.x
+      CRYSTAL
   end
 
   it "declares with `self`" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Foo"] }
       class Foo
         @foo : self
 
@@ -4491,11 +4492,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.foo
-      )) { types["Foo"] }
+      CRYSTAL
   end
 
   it "guesses from array literal with of, with subclass" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { array_of(generic_class("Foo", int32).virtual_type!) }
       class Foo(T)
       end
 
@@ -4511,11 +4512,11 @@ describe "Semantic: instance var" do
       end
 
       Some.new.some
-      )) { array_of(generic_class("Foo", int32).virtual_type!) }
+      CRYSTAL
   end
 
   it "guesses from hash literal with of, with subclass" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { hash_of(generic_class("Foo", int32).virtual_type!, generic_class("Foo", int32).virtual_type!) }
       class Foo(T)
       end
 
@@ -4531,22 +4532,22 @@ describe "Semantic: instance var" do
       end
 
       Some.new.some
-      )) { hash_of(generic_class("Foo", int32).virtual_type!, generic_class("Foo", int32).virtual_type!) }
+      CRYSTAL
   end
 
   it "guesses from splat (#3149)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { generic_class "Args", int32, char }
       class Args(*T)
         def initialize(*@args : *T)
         end
       end
 
       Args.new(1, 'a')
-      )) { generic_class "Args", int32, char }
+      CRYSTAL
   end
 
   it "guesses from splat (2) (#3149)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([int32, char]) }
       class Args(*T)
         def initialize(*@args : *T)
         end
@@ -4557,11 +4558,11 @@ describe "Semantic: instance var" do
       end
 
       Args.new(1, 'a').args
-      )) { tuple_of([int32, char]) }
+      CRYSTAL
   end
 
   it "transfers initializer from generic module to class" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       module Moo(T)
         @x = 1
 
@@ -4575,11 +4576,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "transfers initializer from module to generic class" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       module Moo
         @x = 1
 
@@ -4593,7 +4594,7 @@ describe "Semantic: instance var" do
       end
 
       Foo(Int32).new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "doesn't consider self.initialize as initializer (#3239)" do
@@ -4623,7 +4624,7 @@ describe "Semantic: instance var" do
   end
 
   it "is more permissive with macro def initialize" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Foo"] }
       class Foo
         @x : Int32
 
@@ -4635,7 +4636,7 @@ describe "Semantic: instance var" do
       end
 
       Foo.new
-      )) { types["Foo"] }
+      CRYSTAL
   end
 
   it "is more permissive with macro def initialize, bug with named args" do
@@ -4654,7 +4655,7 @@ describe "Semantic: instance var" do
   end
 
   it "is more permissive with macro def initialize, other initialize" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Foo"] }
       class Foo
         @x : Int32
         @y : Int32
@@ -4670,11 +4671,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new
-      )) { types["Foo"] }
+      CRYSTAL
   end
 
   it "is more permissive with macro def initialize, multiple" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         @x : Int32
 
@@ -4699,7 +4700,7 @@ describe "Semantic: instance var" do
 
       Foo.new
       Foo.new(1).x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "errors with macro def but another def doesn't initialize all" do
@@ -4740,7 +4741,7 @@ describe "Semantic: instance var" do
   end
 
   it "doesn't error if initializes via super in macro def" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Bar"] }
       class Foo
         def initialize(@x : Int32)
         end
@@ -4755,11 +4756,11 @@ describe "Semantic: instance var" do
       end
 
       Bar.new(1)
-      )) { types["Bar"] }
+      CRYSTAL
   end
 
   it "doesn't error if uses typeof(@var)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Foo"] }
       struct Int32
         def self.zero
           0
@@ -4775,11 +4776,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new
-      )) { types["Foo"] }
+      CRYSTAL
   end
 
   it "doesn't error if not initialized in macro def but outside it" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Foo"] }
       class Foo
         @x = 1
 
@@ -4789,11 +4790,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new
-      )) { types["Foo"] }
+      CRYSTAL
   end
 
   it "doesn't error if inheriting generic instance (#3635)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { bool }
       module Core(T)
         @a : Bool
       end
@@ -4811,11 +4812,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.a
-      )) { bool }
+      CRYSTAL
   end
 
   it "doesn't consider var as nilable if conditionally assigned inside initialize, but has initializer (#3669)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       class Foo
         @x = 0
 
@@ -4829,11 +4830,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "types generic instance as virtual type if generic type has subclasses (#3805)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { types["Qux"] }
       class Foo(T)
       end
 
@@ -4852,7 +4853,7 @@ describe "Semantic: instance var" do
 
       Bar(Int32).new
       Qux.new
-      ), inject_primitives: true) { types["Qux"] }
+      CRYSTAL
   end
 
   it "errors if unknown ivar through macro (#4050)" do
@@ -4895,7 +4896,7 @@ describe "Semantic: instance var" do
   end
 
   it "instance variables initializers are used in class variables initialized objects (#3988)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
        class Foo
          @@foo = Foo.new
 
@@ -4909,11 +4910,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.@never_nil
-      )) { int32 }
+      CRYSTAL
   end
 
   it "allow usage of instance variable initializer from instance variable initializer" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([int32, int32]) }
       class Foo
         @bar = Bar.new
         @never_nil = 1
@@ -4936,7 +4937,7 @@ describe "Semantic: instance var" do
       end
 
       {Foo.new.@never_nil, Bar.new.@never_nil}
-    )) { tuple_of([int32, int32]) }
+      CRYSTAL
   end
 
   it "errors when assigning instance variable at top level block" do
@@ -4962,7 +4963,7 @@ describe "Semantic: instance var" do
   end
 
   it "doesn't check call of non-self instance (#4830)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Container"] }
       class Container
         def initialize(other : Container, x)
           initialize(other)
@@ -4983,7 +4984,7 @@ describe "Semantic: instance var" do
 
       container = Container.new("foo", nil)
       Container.new(container, "foo2")
-      )) { types["Container"] }
+      CRYSTAL
   end
 
   it "errors when assigning instance variable inside nested expression" do
@@ -5013,7 +5014,7 @@ describe "Semantic: instance var" do
   end
 
   it "doesn't consider instance var as nilable if assigned before self access (#4981)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       def f(x)
       end
 
@@ -5030,11 +5031,11 @@ describe "Semantic: instance var" do
       end
 
       A.new.a
-      )) { int32 }
+      CRYSTAL
   end
 
   it "doesn't combine union of Number and Number subclass (#5073)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { generic_class "Gen", union_of(int32, types["A"]) }
       class Gen(T)
       end
 
@@ -5052,11 +5053,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.@foo
-    )) { generic_class "Gen", union_of(int32, types["A"]) }
+      CRYSTAL
   end
 
   it "uses T.new (#4291)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Foo"] }
       class Foo
       end
 
@@ -5069,11 +5070,11 @@ describe "Semantic: instance var" do
       end
 
       Gen(Foo).new.x
-      )) { types["Foo"] }
+      CRYSTAL
   end
 
   it "can type ivar from module included by generic class (#5281)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Baz"] }
       module Foo
         def initialize(@x = "foo")
         end
@@ -5088,11 +5089,11 @@ describe "Semantic: instance var" do
       class Baz < Bar(String); end
 
       Baz.new
-      )) { types["Baz"] }
+      CRYSTAL
   end
 
   it "can type ivar from class inherited by generic class (#5281)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Baz"] }
       class Foo
         def initialize(@x = "foo")
         end
@@ -5105,11 +5106,11 @@ describe "Semantic: instance var" do
       class Baz < Bar(String); end
 
       Baz.new
-      )) { types["Baz"] }
+      CRYSTAL
   end
 
   it "can guess the type from splat argument with splatted type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([int32]) }
       class Foo
         def initialize(*@foo : *{Int32})
         end
@@ -5120,11 +5121,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new(1).foo
-    )) { tuple_of([int32]) }
+      CRYSTAL
   end
 
   it "can guess the type from splat argument with splatted type variable" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([int32, int32]) }
       class Foo(T)
         def initialize(*@foo : *T)
         end
@@ -5135,7 +5136,7 @@ describe "Semantic: instance var" do
       end
 
       Foo.new(1, 2).foo
-    )) { tuple_of([int32, int32]) }
+      CRYSTAL
   end
 
   it "cannot guess the type from splat argument with not splatted type" do
@@ -5155,7 +5156,7 @@ describe "Semantic: instance var" do
   end
 
   it "can guess the type from double-splat argument with double-splatted type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { named_tuple_of({"foo": int32}) }
       class Foo
         def initialize(**@foo : **{foo: Int32})
         end
@@ -5166,11 +5167,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new(foo: 1).foo
-    )) { named_tuple_of({"foo": int32}) }
+      CRYSTAL
   end
 
   it "can guess the type from double-splat argument with double-splatted type variable" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { named_tuple_of({"foo": int32, "bar": int32}) }
       class Foo(T)
         def initialize(**@foo : **T)
         end
@@ -5181,7 +5182,7 @@ describe "Semantic: instance var" do
       end
 
       Foo.new(foo: 1, bar: 2).foo
-    )) { named_tuple_of({"foo": int32, "bar": int32}) }
+      CRYSTAL
   end
 
   it "cannot guess the type from double-splat argument with not double-splatted type" do
@@ -5233,7 +5234,7 @@ describe "Semantic: instance var" do
   end
 
   it "guesses virtual array type (1) (#5342)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { array_of(array_of(int32).virtual_type).virtual_type }
       require "prelude"
 
       class First(T) < Array(T)
@@ -5248,11 +5249,11 @@ describe "Semantic: instance var" do
       end
 
       Second.new.ary
-      )) { array_of(array_of(int32).virtual_type).virtual_type }
+      CRYSTAL
   end
 
   it "guesses virtual array type (2) (#5342)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { array_of(array_of(int32).virtual_type).virtual_type }
       require "prelude"
 
       class First(T) < Array(T)
@@ -5267,11 +5268,11 @@ describe "Semantic: instance var" do
       end
 
       Second.new.ary
-      )) { array_of(array_of(int32).virtual_type).virtual_type }
+      CRYSTAL
   end
 
   it "guesses virtual array type (3) (#5342)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { array_of(array_of(int32).virtual_type).virtual_type }
       require "prelude"
 
       class First(T) < Array(T)
@@ -5286,11 +5287,11 @@ describe "Semantic: instance var" do
       end
 
       Second.new.ary
-      )) { array_of(array_of(int32).virtual_type).virtual_type }
+      CRYSTAL
   end
 
   it "guesses virtual hash type (1) (#5342)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { hash_of(hash_of(int32, int32).virtual_type, int32).virtual_type }
       require "prelude"
 
       class First(K, V) < Hash(K, V)
@@ -5305,11 +5306,11 @@ describe "Semantic: instance var" do
       end
 
       Second.new.hash
-      )) { hash_of(hash_of(int32, int32).virtual_type, int32).virtual_type }
+      CRYSTAL
   end
 
   it "guesses virtual hash type (2) (#5342)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { hash_of(hash_of(int32, int32).virtual_type, int32).virtual_type }
       require "prelude"
 
       class First(K, V) < Hash(K, V)
@@ -5324,11 +5325,11 @@ describe "Semantic: instance var" do
       end
 
       Second.new.hash
-      )) { hash_of(hash_of(int32, int32).virtual_type, int32).virtual_type }
+      CRYSTAL
   end
 
   it "guesses virtual array type (3) (#5342)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { hash_of(hash_of(int32, int32).virtual_type, int32).virtual_type }
       require "prelude"
 
       class First(K, V) < Hash(K, V)
@@ -5343,7 +5344,7 @@ describe "Semantic: instance var" do
       end
 
       Second.new.hash
-      )) { hash_of(hash_of(int32, int32).virtual_type, int32).virtual_type }
+      CRYSTAL
   end
 
   it "doesn't solve instance var initializer in instance context (1) (#5876)" do
@@ -5396,7 +5397,7 @@ describe "Semantic: instance var" do
   end
 
   it "solves instance var initializer in metaclass context (#5876)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         @x : Int32 = bar
 
@@ -5410,7 +5411,7 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "doesn't infer unbound generic type on non-generic call (#6390)" do
@@ -5502,7 +5503,7 @@ describe "Semantic: instance var" do
   end
 
   it "looks up return type restriction in defining type, not instantiated type (#11961)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       module Foo(T)
         def foo : T
           x = uninitialized T
@@ -5529,7 +5530,7 @@ describe "Semantic: instance var" do
       end
 
       Test.new.@foo
-      )) { int32 }
+      CRYSTAL
   end
 
   it "looks up self restriction in instantiated type, not defined type" do
@@ -5558,7 +5559,7 @@ describe "Semantic: instance var" do
   end
 
   it "inferrs Proc(Void) to Proc(Nil)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { proc_of(nil_type) }
       struct Proc
         def self.new(&block : self)
           block
@@ -5572,13 +5573,13 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.@proc
-      )) { proc_of(nil_type) }
+      CRYSTAL
   end
 
   describe "instance variable inherited from multiple parents" do
     context "with compatible type" do
       it "module and class, with declarations" do
-        result = assert_type(%(
+        result = assert_type(<<-CRYSTAL) { int32 }
           module M
             @a : Int32 = 1
           end
@@ -5592,7 +5593,7 @@ describe "Semantic: instance var" do
           end
 
           B.new.@a
-          )) { int32 }
+          CRYSTAL
 
         program = result.program
         program.types["A"].instance_vars.size.should eq(1)
@@ -5600,7 +5601,7 @@ describe "Semantic: instance var" do
       end
 
       it "module and class, with declarations (2)" do
-        result = assert_type(%(
+        result = assert_type(<<-CRYSTAL) { int32 }
           module M
             @a = 1
           end
@@ -5614,7 +5615,7 @@ describe "Semantic: instance var" do
           end
 
           B.new.@a
-          )) { int32 }
+          CRYSTAL
 
         program = result.program
         program.types["A"].instance_vars.size.should eq(1)
@@ -5622,7 +5623,7 @@ describe "Semantic: instance var" do
       end
 
       it "module and class, with declarations (3)" do
-        result = assert_type(%(
+        result = assert_type(<<-CRYSTAL) { tuple_of [int32, int32] }
           module M
             @a = 1
           end
@@ -5644,7 +5645,7 @@ describe "Semantic: instance var" do
           end
 
           {B.new.@a, D.new.@a}
-          )) { tuple_of [int32, int32] }
+          CRYSTAL
 
         program = result.program
         program.types["A"].instance_vars.size.should eq(1)
@@ -5654,7 +5655,7 @@ describe "Semantic: instance var" do
       end
 
       it "module and class, with definitions" do
-        result = assert_type(%(
+        result = assert_type(<<-CRYSTAL) { int32 }
           module M
             @a = 1
           end
@@ -5668,7 +5669,7 @@ describe "Semantic: instance var" do
           end
 
           B.new.@a
-          )) { int32 }
+          CRYSTAL
 
         program = result.program
         program.types["A"].instance_vars.size.should eq(1)

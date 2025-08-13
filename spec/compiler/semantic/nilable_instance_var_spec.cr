@@ -189,7 +189,7 @@ describe "Semantic: nilable instance var" do
   end
 
   it "doesn't consider as nil if initialized with catch-all" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       class Test
         @a = 0
 
@@ -203,7 +203,7 @@ describe "Semantic: nilable instance var" do
       end
 
       Test.new.a
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "marks instance var as nilable if assigned inside captured block (#1696)" do

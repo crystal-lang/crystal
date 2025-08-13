@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Semantic: hooks" do
   it "does inherited macro" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         macro inherited
           def self.{{@type.name.downcase.id}}
@@ -15,11 +15,11 @@ describe "Semantic: hooks" do
       end
 
       Bar.bar
-      ") { int32 }
+      CRYSTAL
   end
 
   it "does included macro" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       module Foo
         macro included
           def self.{{@type.name.downcase.id}}
@@ -33,11 +33,11 @@ describe "Semantic: hooks" do
       end
 
       Bar.bar
-      ") { int32 }
+      CRYSTAL
   end
 
   it "does extended macro" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       module Foo
         macro extended
           def self.{{@type.name.downcase.id}}
@@ -51,11 +51,11 @@ describe "Semantic: hooks" do
       end
 
       Bar.bar
-      ") { int32 }
+      CRYSTAL
   end
 
   it "does added method macro" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         macro method_added(d)
           def self.{{d.name.downcase.id}}
@@ -67,11 +67,11 @@ describe "Semantic: hooks" do
       end
 
       Foo.foo
-      ") { int32 }
+      CRYSTAL
   end
 
   it "does not invoke 'method_added' hook recursively" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         macro method_added(d)
           def {{d.name.id}}
@@ -85,7 +85,7 @@ describe "Semantic: hooks" do
       end
 
       Foo.new.foo
-      ") { int32 }
+      CRYSTAL
   end
 
   it "errors if wrong inherited params size" do
@@ -116,7 +116,7 @@ describe "Semantic: hooks" do
   end
 
   it "types initializer in inherited" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { string }
       abstract class Foo
         macro inherited
           @@bar = new
@@ -137,7 +137,7 @@ describe "Semantic: hooks" do
       end
 
       Bar.bar.name
-      )) { string }
+      CRYSTAL
   end
 
   it "errors if wrong extended params length" do
@@ -167,7 +167,7 @@ describe "Semantic: hooks" do
   end
 
   it "does included macro for generic module" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       module Mod(T)
         macro included
           def self.method
@@ -181,11 +181,11 @@ describe "Semantic: hooks" do
       end
 
       Klass.method
-      )) { int32 }
+      CRYSTAL
   end
 
   it "does inherited macro for generic class" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo(T)
         macro inherited
           def self.method
@@ -198,7 +198,7 @@ describe "Semantic: hooks" do
       end
 
       Klass.method
-      )) { int32 }
+      CRYSTAL
   end
 
   it "errors if wrong finished params length" do
@@ -211,7 +211,7 @@ describe "Semantic: hooks" do
   end
 
   it "types macro finished hook bug regarding initialize (#3964)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([string, int32]) }
       class A1
         macro finished
           @x : String
@@ -235,11 +235,11 @@ describe "Semantic: hooks" do
       a1 = A1.new("x")
       a2 = A2.new(1)
       {a1.x, a2.y}
-      )) { tuple_of([string, int32]) }
+      CRYSTAL
   end
 
   it "does inherited macro through generic instance type (#9693)" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo(X)
         macro inherited
           def self.{{@type.name.downcase.id}}
@@ -255,6 +255,6 @@ describe "Semantic: hooks" do
       end
 
       Baz.baz
-      ") { int32 }
+      CRYSTAL
   end
 end

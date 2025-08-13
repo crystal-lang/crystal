@@ -16,25 +16,25 @@ describe "Semantic: const" do
   end
 
   it "types a constant using Path" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       Foo::Bar = 1
 
       Foo::Bar
-      )) { int32 }
+      CRYSTAL
   end
 
   it "types a nested constant using Path" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         Bar::Baz = 1
       end
 
       Foo::Bar::Baz
-      )) { int32 }
+      CRYSTAL
   end
 
   it "types a nested type with same name" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         class Foo
           A = 1
@@ -42,7 +42,7 @@ describe "Semantic: const" do
       end
 
       Foo::Foo::A
-      )) { int32 }
+      CRYSTAL
   end
 
   it "creates container module if not exist when using Path" do
@@ -95,7 +95,7 @@ describe "Semantic: const" do
   end
 
   it "types a constant inside a def" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         A = 1
 
@@ -105,11 +105,11 @@ describe "Semantic: const" do
       end
 
       Foo.new.foo
-      ") { int32 }
+      CRYSTAL
   end
 
   it "finds nearest constant first" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { float64 }
       CONST = 1
 
       class Foo
@@ -121,11 +121,11 @@ describe "Semantic: const" do
       end
 
       Foo.new.foo
-      ") { float64 }
+      CRYSTAL
   end
 
   it "finds current type first" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         class Bar
           def self.foo
@@ -139,11 +139,11 @@ describe "Semantic: const" do
       end
 
       Foo::Bar.foo
-      ") { int32 }
+      CRYSTAL
   end
 
   it "finds current type before parents (#4086)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         class Bar
           class Baz < Foo
@@ -162,11 +162,11 @@ describe "Semantic: const" do
       end
 
       Foo::Bar::Baz.foo
-      )) { int32 }
+      CRYSTAL
   end
 
   it "doesn't count parent types as current type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
       end
 
@@ -185,7 +185,7 @@ describe "Semantic: const" do
       end
 
       Bar::Baz.bar.foo
-      )) { int32 }
+      CRYSTAL
   end
 
   it "finds current type only for first path item (1)" do
@@ -218,7 +218,7 @@ describe "Semantic: const" do
   end
 
   it "types a global constant reference in method" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { float64 }
       FOO = 2.5
 
       class Bar
@@ -230,11 +230,11 @@ describe "Semantic: const" do
       end
 
       Bar.new.foo
-      ") { float64 }
+      CRYSTAL
   end
 
   it "types a global constant reference in static method" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       CONST = 2.5
 
       class Bar
@@ -246,7 +246,7 @@ describe "Semantic: const" do
       end
 
       Bar.foo
-      ") { int32 }
+      CRYSTAL
   end
 
   it "doesn't share variables with global scope" do
@@ -255,7 +255,7 @@ describe "Semantic: const" do
   end
 
   it "finds const from restriction" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { char }
       struct Int32
         FOO = 'a'
       end
@@ -265,11 +265,11 @@ describe "Semantic: const" do
       end
 
       foo 1
-      ") { char }
+      CRYSTAL
   end
 
   it "doesn't crash with const used in initialize (bug)" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       COCO = init_coco
 
       def init_coco
@@ -285,11 +285,11 @@ describe "Semantic: const" do
       Foo.new
 
       COCO
-      ") { int32 }
+      CRYSTAL
   end
 
   it "finds constant in module that includes module (#205)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { bool }
       module Foo
         CONSTANT = true
       end
@@ -299,11 +299,11 @@ describe "Semantic: const" do
       end
 
       Moo::CONSTANT
-      )) { bool }
+      CRYSTAL
   end
 
   it "finds constant in class that extends class (#205)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { bool }
       class Foo
         CONSTANT = true
       end
@@ -312,7 +312,7 @@ describe "Semantic: const" do
       end
 
       Bar::CONSTANT
-      )) { bool }
+      CRYSTAL
   end
 
   ["nil", "true", "1", "'a'", %("foo"), "+ 1", "- 2", "~ 2",
@@ -342,7 +342,7 @@ describe "Semantic: const" do
   end
 
   it "doesn't error if using c enum" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["LibC"].types["Foo"] }
       lib LibC
         enum Foo
           A = 1
@@ -350,7 +350,7 @@ describe "Semantic: const" do
       end
 
       LibC::Foo::A
-      )) { types["LibC"].types["Foo"] }
+      CRYSTAL
   end
 
   it "errors on dynamic constant assignment inside block" do
@@ -376,7 +376,7 @@ describe "Semantic: const" do
   end
 
   it "can use constant defined later (#2906)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Foo"] }
       FOO = Foo.new
 
       class Foo
@@ -391,7 +391,7 @@ describe "Semantic: const" do
       end
 
       FOO
-      )) { types["Foo"] }
+      CRYSTAL
   end
 
   it "errors if can't infer constant type (#3240, #3948)" do

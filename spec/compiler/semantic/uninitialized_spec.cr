@@ -10,7 +10,7 @@ describe "Semantic: uninitialized" do
   end
 
   it "declares an instance variable in initialize as uninitialized" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def initialize
           @x = uninitialized Int32
@@ -22,7 +22,7 @@ describe "Semantic: uninitialized" do
       end
 
       Foo.new.x
-      ") { int32 }
+      CRYSTAL
   end
 
   it "errors if declaring generic type without type vars (with instance var)" do
@@ -75,7 +75,7 @@ describe "Semantic: uninitialized" do
   end
 
   it "can uninitialize variable outside initialize (#2828)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         @x = uninitialized Int32
 
@@ -85,11 +85,11 @@ describe "Semantic: uninitialized" do
       end
 
       Foo.new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "can uninitialize variable outside initialize, generic (#2828)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo(T)
         @x = uninitialized T
 
@@ -99,11 +99,11 @@ describe "Semantic: uninitialized" do
       end
 
       Foo(Int32).new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "can use uninitialized with class type (#2940)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32.metaclass }
       class Foo(U)
         def initialize
           @x = uninitialized U
@@ -115,7 +115,7 @@ describe "Semantic: uninitialized" do
       end
 
       Foo(Int32.class).new.x
-      )) { int32.metaclass }
+      CRYSTAL
   end
 
   %w(Object Value Reference Number Int Float Struct Class Enum).each do |type|
@@ -128,7 +128,7 @@ describe "Semantic: uninitialized" do
   end
 
   it "works with uninitialized NoReturn (#3314)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nil_type }
       def foo
         x = uninitialized typeof(yield)
       end
@@ -138,17 +138,17 @@ describe "Semantic: uninitialized" do
       end
 
       bar
-      )) { nil_type }
+      CRYSTAL
   end
 
   it "has type (#3641)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       x = uninitialized Int32
-      )) { int32 }
+      CRYSTAL
   end
 
   it "uses virtual type for uninitialized (#8216)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Base"].virtual_type! }
       class Base
       end
 
@@ -157,6 +157,6 @@ describe "Semantic: uninitialized" do
 
       u = uninitialized Base
       u
-      )) { types["Base"].virtual_type! }
+      CRYSTAL
   end
 end

@@ -31,7 +31,7 @@ describe "Semantic: cast" do
   end
 
   it "casts to compatible type and use it" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
       end
 
@@ -44,27 +44,27 @@ describe "Semantic: cast" do
       a = Foo.new || Bar.new
       b = a.as(Bar)
       b.coco
-    ") { int32 }
+      CRYSTAL
   end
 
   it "casts pointer of one type to another type" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { pointer_of(float64) }
       a = 1
       p = pointerof(a)
       p.as(Float64*)
-    ") { pointer_of(float64) }
+      CRYSTAL
   end
 
   it "casts pointer to another type" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { types["String"] }
       a = 1
       p = pointerof(a)
       p.as(String)
-    ") { types["String"] }
+      CRYSTAL
   end
 
   it "casts to module" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { union_of(types["Bar"].virtual_type, types["Baz"].virtual_type) }
       module Moo
       end
 
@@ -81,20 +81,20 @@ describe "Semantic: cast" do
 
       f = Foo.new || Bar.new || Baz.new
       f.as(Moo)
-      ") { union_of(types["Bar"].virtual_type, types["Baz"].virtual_type) }
+      CRYSTAL
   end
 
   it "allows casting object to void pointer" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { pointer_of(void) }
       class Foo
       end
 
       Foo.new.as(Void*)
-      ") { pointer_of(void) }
+      CRYSTAL
   end
 
   it "allows casting reference union to void pointer" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { pointer_of(void) }
       class Foo
       end
 
@@ -103,7 +103,7 @@ describe "Semantic: cast" do
 
       foo = Foo.new || Bar.new
       foo.as(Void*)
-      ") { pointer_of(void) }
+      CRYSTAL
   end
 
   it "disallows casting int to pointer" do
@@ -130,17 +130,17 @@ describe "Semantic: cast" do
   end
 
   it "doesn't error if casting to a generic type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { generic_class "Foo", int32 }
       class Foo(T)
       end
 
       foo = Foo(Int32).new
       foo.as(Foo)
-      )) { generic_class "Foo", int32 }
+      CRYSTAL
   end
 
   it "casts to base class making it virtual (1)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Foo"].virtual_type! }
       class Foo
       end
 
@@ -148,11 +148,11 @@ describe "Semantic: cast" do
       end
 
       Bar.new.as(Foo)
-      )) { types["Foo"].virtual_type! }
+      CRYSTAL
   end
 
   it "casts to base class making it virtual (2)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of(int32, char) }
       class Foo
         def foo
           1
@@ -167,13 +167,13 @@ describe "Semantic: cast" do
 
       bar = Bar.new
       bar.as(Foo).foo
-      )) { union_of(int32, char) }
+      CRYSTAL
   end
 
   it "casts to bigger union" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of(int32, char) }
       1.as(Int32 | Char)
-      )) { union_of(int32, char) }
+      CRYSTAL
   end
 
   it "errors on cast inside a call that can't be instantiated" do
@@ -187,7 +187,7 @@ describe "Semantic: cast" do
   end
 
   it "casts to target type even if can't infer casted value type (obsolete)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { array_of(int32) }
       require "prelude"
 
       class Foo
@@ -199,7 +199,7 @@ describe "Semantic: cast" do
 
       Foo.new.x = 1
       b
-      )) { array_of(int32) }
+      CRYSTAL
   end
 
   it "should error if can't cast even if not instantiated" do
@@ -216,13 +216,13 @@ describe "Semantic: cast" do
   end
 
   it "can cast to metaclass (bug)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32.metaclass }
       Int32.as(Int32.class)
-      )) { int32.metaclass }
+      CRYSTAL
   end
 
   it "can cast to metaclass (2) (#11121)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["A"].virtual_type.metaclass }
       class A
       end
 
@@ -230,7 +230,7 @@ describe "Semantic: cast" do
       end
 
       A.as(A.class)
-      )) { types["A"].virtual_type.metaclass }
+      CRYSTAL
   end
 
   # Later we might want casting something to Object to have a meaning
@@ -259,13 +259,13 @@ describe "Semantic: cast" do
   end
 
   it "allows casting NoReturn to any type (#2132)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { no_return }
       def foo
         foo
       end
 
       foo.as(Int32)
-      )) { no_return }
+      CRYSTAL
   end
 
   it "errors if casting nil to Object inside typeof (#2403)" do
@@ -292,7 +292,7 @@ describe "Semantic: cast" do
   end
 
   it "can cast from Void* to virtual type (#3014)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Foo"].virtual_type! }
       abstract class Foo
       end
 
@@ -300,11 +300,11 @@ describe "Semantic: cast" do
       end
 
       Bar.new.as(Void*).as(Foo)
-      )) { types["Foo"].virtual_type! }
+      CRYSTAL
   end
 
   it "casts to generic virtual type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { generic_class("Foo", int32).virtual_type! }
       class Foo(T)
       end
 
@@ -312,24 +312,24 @@ describe "Semantic: cast" do
       end
 
       Bar(Int32).new.as(Foo(Int32))
-      )) { generic_class("Foo", int32).virtual_type! }
+      CRYSTAL
   end
 
   it "doesn't cast to virtual primitive (bug)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       1.as(Int)
-      )) { int32 }
+      CRYSTAL
   end
 
   it "doesn't crash with typeof no-type (#7441)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { string }
       a = 1
       if a.is_a?(Char)
         1.as(typeof(a))
       else
         ""
       end
-      )) { string }
+      CRYSTAL
   end
 
   it "doesn't cast to unbound generic type (as) (#5927)" do
@@ -353,7 +353,7 @@ describe "Semantic: cast" do
   end
 
   it "doesn't cast to unbound generic type (as?) (#5927)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nil_type }
       class Gen(T)
         def foo
           sizeof(T)
@@ -369,21 +369,21 @@ describe "Semantic: cast" do
 
       x = 1.as?(Gen)
       x.foo if x
-      )) { nil_type }
+      CRYSTAL
   end
 
   it "considers else to be unreachable (#9658)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       case 1
       in Int32
         v = 1
       end
       v
-      )) { int32 }
+      CRYSTAL
   end
 
   it "casts uninstantiated generic class to itself (#10882)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable types["Bar"] }
       class Foo
       end
 
@@ -394,17 +394,17 @@ describe "Semantic: cast" do
       if x.is_a?(Bar)
         x.as(Bar)
       end
-      )) { nilable types["Bar"] }
+      CRYSTAL
   end
 
   it "doesn't eagerly try to check cast type (#12268)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       bar = 1
       if bar.is_a?(Char)
         pointerof(bar).as(Pointer(typeof(bar)))
       else
         bar
       end
-      )) { int32 }
+      CRYSTAL
   end
 end

@@ -11,7 +11,7 @@ describe "Semantic: module" do
   end
 
   it "includes module in a module" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       module Moo
         def foo
           1
@@ -27,11 +27,11 @@ describe "Semantic: module" do
       end
 
       Foo.new.foo
-      ") { int32 }
+      CRYSTAL
   end
 
   it "finds in module when included" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       module Moo
         class B
           def foo; 1; end
@@ -41,11 +41,11 @@ describe "Semantic: module" do
       include Moo
 
       B.new.foo
-    ") { int32 }
+      CRYSTAL
   end
 
   it "includes generic module with type" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       module Foo(T)
         def foo(x : T)
           x
@@ -57,7 +57,7 @@ describe "Semantic: module" do
       end
 
       Bar.new.foo(1)
-      ") { int32 }
+      CRYSTAL
   end
 
   it "includes generic module and errors in call" do
@@ -114,7 +114,7 @@ describe "Semantic: module" do
   end
 
   it "includes generic module explicitly" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       module Foo(T)
         def foo(x : T)
           x
@@ -126,7 +126,7 @@ describe "Semantic: module" do
       end
 
       Bar(Int32).new.foo(1)
-      ") { int32 }
+      CRYSTAL
   end
 
   it "includes generic module explicitly and errors" do
@@ -152,8 +152,8 @@ describe "Semantic: module" do
   end
 
   it "works with int including enumerable" do
-    assert_type("
-      require \"prelude\"
+    assert_type(<<-CRYSTAL) { array_of(float64) }
+      require "prelude"
 
       struct Int32
         include Enumerable(Int32)
@@ -165,14 +165,14 @@ describe "Semantic: module" do
       end
 
       1.map { |x| x * 0.5 }
-      ") { array_of(float64) }
+      CRYSTAL
   end
 
   it "works with range and map" do
-    assert_type("
-      require \"prelude\"
+    assert_type(<<-CRYSTAL) { array_of(float64) }
+      require "prelude"
       (1..3).map { |x| x * 0.5 }
-      ") { array_of(float64) }
+      CRYSTAL
   end
 
   it "declares module automatically if not previously declared when declaring a class" do
@@ -200,7 +200,7 @@ describe "Semantic: module" do
   end
 
   it "includes generic module with another generic type" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { generic_class("Baz", int32).metaclass }
       module Foo(T)
         def foo
           T
@@ -215,11 +215,11 @@ describe "Semantic: module" do
       end
 
       Bar(Int32).new.foo
-      ") { generic_class("Baz", int32).metaclass }
+      CRYSTAL
   end
 
   it "includes generic module with self" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { generic_class("Bar", int32).metaclass }
       module Foo(T)
         def foo
           T
@@ -231,11 +231,11 @@ describe "Semantic: module" do
       end
 
       Bar(Int32).new.foo
-      ") { generic_class("Bar", int32).metaclass }
+      CRYSTAL
   end
 
   it "includes generic module with self, and inherits it" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { generic_class("Bar", int32).metaclass }
       module Foo(T)
         def foo
           T
@@ -250,11 +250,11 @@ describe "Semantic: module" do
       end
 
       Baz.new.foo
-      ") { generic_class("Bar", int32).metaclass }
+      CRYSTAL
   end
 
   it "includes generic module with self (check argument type, success)" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { generic_class("Bar", int32) }
       module Foo(T)
         def foo(x : T)
           x
@@ -266,11 +266,11 @@ describe "Semantic: module" do
       end
 
       Bar(Int32).new.foo Bar(Int32).new
-      ") { generic_class("Bar", int32) }
+      CRYSTAL
   end
 
   it "includes generic module with self (check argument superclass type, success)" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { types["Baz"] }
       module Foo(T)
         def foo(x : T)
           x
@@ -285,7 +285,7 @@ describe "Semantic: module" do
       end
 
       Bar(Int32).new.foo Baz.new
-      ") { types["Baz"] }
+      CRYSTAL
   end
 
   it "includes generic module with self (check argument type, error)" do
@@ -312,7 +312,7 @@ describe "Semantic: module" do
   end
 
   it "includes generic module with self (check argument superclass type, success)" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { types["Baz2"] }
       module Foo(T)
         def foo(x : T)
           x
@@ -330,11 +330,11 @@ describe "Semantic: module" do
       end
 
       Baz1.new.foo Baz2.new
-      ") { types["Baz2"] }
+      CRYSTAL
   end
 
   it "includes generic module with self (check return type, success)" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { generic_class("Bar", int32) }
       module Foo(T)
         def foo : T
           Bar(Int32).new
@@ -346,11 +346,11 @@ describe "Semantic: module" do
       end
 
       Bar(Int32).new.foo
-      ") { generic_class("Bar", int32) }
+      CRYSTAL
   end
 
   it "includes generic module with self (check return subclass type, success)" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { types["Baz"] }
       module Foo(T)
         def foo : T
           Baz.new
@@ -365,7 +365,7 @@ describe "Semantic: module" do
       end
 
       Bar(Int32).new.foo
-      ") { types["Baz"] }
+      CRYSTAL
   end
 
   it "includes generic module with self (check return type, error)" do
@@ -426,7 +426,7 @@ describe "Semantic: module" do
   end
 
   it "extends a module" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       module Foo
         def foo
           1
@@ -438,11 +438,11 @@ describe "Semantic: module" do
       end
 
       Bar.foo
-      ") { int32 }
+      CRYSTAL
   end
 
   it "extends self" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       module Foo
         extend self
 
@@ -452,7 +452,7 @@ describe "Semantic: module" do
       end
 
       Foo.foo
-      ") { int32 }
+      CRYSTAL
   end
 
   it "gives error when including self" do
@@ -540,7 +540,7 @@ describe "Semantic: module" do
   end
 
   it "finds types close to included module" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { types["Foo"].types["T"].metaclass }
       module Foo
         class T
         end
@@ -558,11 +558,11 @@ describe "Semantic: module" do
       end
 
       Bar.new.foo
-      ") { types["Foo"].types["T"].metaclass }
+      CRYSTAL
   end
 
   it "finds nested type inside method in block inside module" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { types["Foo"].types["Bar"].metaclass }
       def foo
         yield
       end
@@ -579,11 +579,11 @@ describe "Semantic: module" do
       end
 
       Foo.x
-      ") { types["Foo"].types["Bar"].metaclass }
+      CRYSTAL
   end
 
   it "finds class method in block" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       def foo
         yield
       end
@@ -602,11 +602,11 @@ describe "Semantic: module" do
       end
 
       Foo.x
-      ") { int32 }
+      CRYSTAL
   end
 
   it "types pointer of module" do
-    assert_type("
+    assert_type(<<-CRYSTAL, inject_primitives: true) { types["Moo"] }
       module Moo
       end
 
@@ -621,11 +621,11 @@ describe "Semantic: module" do
       p = Pointer(Moo).malloc(1_u64)
       p.value = Foo.new
       p.value
-      ", inject_primitives: true) { types["Moo"] }
+      CRYSTAL
   end
 
   it "types pointer of module with method" do
-    assert_type("
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       module Moo
       end
 
@@ -640,11 +640,11 @@ describe "Semantic: module" do
       p = Pointer(Moo).malloc(1_u64)
       p.value = Foo.new
       p.value.foo
-      ", inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "types pointer of module with method with two including types" do
-    assert_type("
+    assert_type(<<-CRYSTAL, inject_primitives: true) { union_of(int32, char) }
       module Moo
       end
 
@@ -668,11 +668,11 @@ describe "Semantic: module" do
       p.value = Foo.new
       p.value = Bar.new
       p.value.foo
-      ", inject_primitives: true) { union_of(int32, char) }
+      CRYSTAL
   end
 
   it "types pointer of module with generic type" do
-    assert_type("
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       module Moo
       end
 
@@ -687,11 +687,11 @@ describe "Semantic: module" do
       p = Pointer(Moo).malloc(1_u64)
       p.value = Foo(Int32).new
       p.value.foo
-      ", inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "types pointer of module with generic type" do
-    assert_type("
+    assert_type(<<-CRYSTAL, inject_primitives: true) { union_of(int32, char) }
       module Moo
       end
 
@@ -722,11 +722,11 @@ describe "Semantic: module" do
       p.value = Foo(Baz).new
 
       x
-      ", inject_primitives: true) { union_of(int32, char) }
+      CRYSTAL
   end
 
   it "allows overloading with included generic module" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of(int32, string) }
       module Foo(T)
         def foo(x : T)
           bar(x)
@@ -747,11 +747,11 @@ describe "Semantic: module" do
       end
 
       Bar.new.foo(1 || "hello")
-      )) { union_of(int32, string) }
+      CRYSTAL
   end
 
   it "finds constant in generic module included in another module" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32.metaclass }
       module Foo(T)
         def foo
           T
@@ -767,11 +767,11 @@ describe "Semantic: module" do
       end
 
       Baz.new.foo
-      )) { int32.metaclass }
+      CRYSTAL
   end
 
   it "calls super on included generic module" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       module Foo(T)
         def foo
           1
@@ -787,11 +787,11 @@ describe "Semantic: module" do
       end
 
       Bar.new.foo
-      )) { int32 }
+      CRYSTAL
   end
 
   it "calls super on included generic module and finds type var" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32.metaclass }
       module Foo(T)
         def foo
           T
@@ -807,11 +807,11 @@ describe "Semantic: module" do
       end
 
       Bar(Int32).new.foo
-      )) { int32.metaclass }
+      CRYSTAL
   end
 
   it "calls super on included generic module and finds type var (2)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32.metaclass }
       module Foo(T)
         def foo
           T
@@ -831,11 +831,11 @@ describe "Semantic: module" do
       end
 
       Baz(Int32).new.foo
-      )) { int32.metaclass }
+      CRYSTAL
   end
 
   it "types union of module and class that includes it" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of(types["Bar"].metaclass, types["Moo"].metaclass) }
       module Moo
         def self.foo
           1
@@ -851,11 +851,11 @@ describe "Semantic: module" do
       end
 
       Bar || Moo
-      )) { union_of(types["Bar"].metaclass, types["Moo"].metaclass) }
+      CRYSTAL
   end
 
   it "works ok in a case where a typed-def type has an underlying type that has an included generic module (bug)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       lib LibC
         type X = Void*
         fun x : X
@@ -879,11 +879,11 @@ describe "Semantic: module" do
 
       p = Pointer(Void).malloc(1_u64)
       p.bar(p)
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "finds inner class from inherited one (#476)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Foo"].types["Bar"].types["Baz"].metaclass }
       class Foo
         class Bar
           class Baz
@@ -895,7 +895,7 @@ describe "Semantic: module" do
       end
 
       Quz::Bar::Baz
-      )) { types["Foo"].types["Bar"].types["Baz"].metaclass }
+      CRYSTAL
   end
 
   it "type def does not reopen type from parent namespace (#11181)" do
@@ -913,7 +913,7 @@ describe "Semantic: module" do
   end
 
   it "correctly types type var in included module, with a restriction with a free var (bug)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32.metaclass }
       module Moo(T)
       end
 
@@ -926,11 +926,11 @@ describe "Semantic: module" do
       end
 
       Foo(Int32).new.foo(Foo(Char).new)
-      )) { int32.metaclass }
+      CRYSTAL
   end
 
   it "types proc of module after type changes" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       module Moo
       end
 
@@ -944,11 +944,11 @@ describe "Semantic: module" do
 
       z = ->(x : Moo) { x.foo }
       z.call(Foo(Int32).new)
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "types proc of module with generic class" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { char }
       module Moo
       end
 
@@ -962,7 +962,7 @@ describe "Semantic: module" do
 
       z = ->(x : Moo) { x.foo }
       z.call(Foo(Int32).new)
-      ), inject_primitives: true) { char }
+      CRYSTAL
   end
 
   it "errors if declares module inside if" do
@@ -1090,7 +1090,7 @@ describe "Semantic: module" do
   end
 
   it "uses type declaration inside module" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       module Moo
         @x : Int32
 
@@ -1108,7 +1108,7 @@ describe "Semantic: module" do
       end
 
       Foo.new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "uses type declaration inside module and gives error" do
@@ -1170,7 +1170,7 @@ describe "Semantic: module" do
   end
 
   it "initializes variable in module" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       module Moo
         @x = 1
 
@@ -1184,11 +1184,11 @@ describe "Semantic: module" do
       end
 
       Foo.new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "initializes variable in module, recursive" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       module Moo
         @x = 1
 
@@ -1206,11 +1206,11 @@ describe "Semantic: module" do
       end
 
       Foo.new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "inherits instance var type annotation from generic to concrete" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable int32 }
       module Foo(T)
         @x : Int32?
 
@@ -1224,11 +1224,11 @@ describe "Semantic: module" do
       end
 
       Bar.new.x
-      )) { nilable int32 }
+      CRYSTAL
   end
 
   it "inherits instance var type annotation from generic to concrete with T" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable int32 }
       module Foo(T)
         @x : T?
 
@@ -1242,11 +1242,11 @@ describe "Semantic: module" do
       end
 
       Bar.new.x
-      )) { nilable int32 }
+      CRYSTAL
   end
 
   it "inherits instance var type annotation from generic to generic to concrete" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable int32 }
       module Foo(T)
         @x : Int32?
 
@@ -1264,11 +1264,11 @@ describe "Semantic: module" do
       end
 
       Baz.new.x
-      )) { nilable int32 }
+      CRYSTAL
   end
 
   it "instantiates generic variadic module, accesses T from instance method" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([int32, char]).metaclass }
       module Moo(*T)
         def t
           T
@@ -1280,11 +1280,11 @@ describe "Semantic: module" do
       end
 
       Foo.new.t
-      )) { tuple_of([int32, char]).metaclass }
+      CRYSTAL
   end
 
   it "instantiates generic variadic module, accesses T from class method" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([int32, char]).metaclass }
       module Moo(*T)
         def t
           T
@@ -1296,11 +1296,11 @@ describe "Semantic: module" do
       end
 
       Foo.t
-      )) { tuple_of([int32, char]).metaclass }
+      CRYSTAL
   end
 
   it "instantiates generic variadic module, accesses T from instance method through generic include" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([int32, char]).metaclass }
       module Moo(*T)
         def t
           T
@@ -1312,11 +1312,11 @@ describe "Semantic: module" do
       end
 
       Foo(Int32, Char).new.t
-      )) { tuple_of([int32, char]).metaclass }
+      CRYSTAL
   end
 
   it "instantiates generic variadic module, accesses T from class method through generic extend" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([int32, char]).metaclass }
       module Moo(*T)
         def t
           T
@@ -1328,11 +1328,11 @@ describe "Semantic: module" do
       end
 
       Foo(Int32, Char).t
-      )) { tuple_of([int32, char]).metaclass }
+      CRYSTAL
   end
 
   it "instantiates generic variadic module, accesses T from instance method, more args" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([int32.metaclass, tuple_of([float64, char]).metaclass, string.metaclass]) }
       module Moo(A, *T, B)
         def t
           {A, T, B}
@@ -1344,11 +1344,11 @@ describe "Semantic: module" do
       end
 
       Foo.new.t
-      )) { tuple_of([int32.metaclass, tuple_of([float64, char]).metaclass, string.metaclass]) }
+      CRYSTAL
   end
 
   it "instantiates generic variadic module, accesses T from instance method through generic include, more args" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([int32.metaclass, tuple_of([float64, char]).metaclass, string.metaclass]) }
       module Moo(A, *T, B)
         def t
           {A, T, B}
@@ -1360,11 +1360,11 @@ describe "Semantic: module" do
       end
 
       Foo(Float64, Char).new.t
-      )) { tuple_of([int32.metaclass, tuple_of([float64, char]).metaclass, string.metaclass]) }
+      CRYSTAL
   end
 
   it "includes module with Union(T*)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of(int32, char).metaclass }
       module Foo(U)
         def u
           U
@@ -1376,7 +1376,7 @@ describe "Semantic: module" do
       end
 
       {1, 'a'}.u
-      )) { union_of(int32, char).metaclass }
+      CRYSTAL
   end
 
   it "doesn't lookup type in ancestor when matches in current type (#2982)" do
@@ -1399,7 +1399,7 @@ describe "Semantic: module" do
   end
 
   it "can restrict module with module (#3029)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       module Foo
       end
 
@@ -1411,20 +1411,20 @@ describe "Semantic: module" do
       end
 
       foo(Gen(Foo).new)
-      )) { int32 }
+      CRYSTAL
   end
 
   it "can instantiate generic module" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { generic_module("Foo", int32).metaclass }
       module Foo(T)
       end
 
       Foo(Int32)
-      )) { generic_module("Foo", int32).metaclass }
+      CRYSTAL
   end
 
   it "can use generic module as instance variable type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of int32, char }
       module Moo(T)
         def foo
           1
@@ -1454,11 +1454,11 @@ describe "Semantic: module" do
 
       mooer = Mooer.new(Foo.new)
       mooer.moo
-      )) { union_of int32, char }
+      CRYSTAL
   end
 
   it "can use generic module as instance variable type (2)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of int32, char }
       module Moo(T)
         def foo
           1
@@ -1489,7 +1489,7 @@ describe "Semantic: module" do
       mooer = Mooer.new(Foo(Int32).new)
       mooer = Mooer.new(Bar(Int32).new)
       mooer.moo
-      )) { union_of int32, char }
+      CRYSTAL
   end
 
   it "errors when extending module that defines instance vars (#4065)" do
@@ -1636,7 +1636,7 @@ describe "Semantic: module" do
   end
 
   it "extends module from generic class and calls class method (#7167)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       module Foo
         def foo
           1
@@ -1648,11 +1648,11 @@ describe "Semantic: module" do
       end
 
       Gen(Int32).foo
-      )) { int32 }
+      CRYSTAL
   end
 
   it "extends generic module from generic class and calls class method (#7167)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32.metaclass }
       module Foo(T)
         def foo
           T
@@ -1664,11 +1664,11 @@ describe "Semantic: module" do
       end
 
       Gen(Int32).foo
-      )) { int32.metaclass }
+      CRYSTAL
   end
 
   it "extends generic module from generic module and calls class method (#7167)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32.metaclass }
       module Foo(T)
         def foo
           T
@@ -1680,7 +1680,7 @@ describe "Semantic: module" do
       end
 
       Gen(Int32).foo
-      )) { int32.metaclass }
+      CRYSTAL
   end
 
   it "doesn't look up initialize past module that defines initialize (#7007)" do

@@ -155,7 +155,7 @@ describe "Semantic: initialize" do
   end
 
   it "types instance var as not-nilable if assigned in block but previously assigned" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       def bar
         yield if 1 == 2
       end
@@ -175,7 +175,7 @@ describe "Semantic: initialize" do
 
       foo = Foo.new
       foo.x
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "types instance var as nilable if used before assignment" do
@@ -198,7 +198,7 @@ describe "Semantic: initialize" do
   end
 
   it "types instance var as non-nilable if calls super and super defines it" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       class Parent
         def initialize
           @x = 1
@@ -218,11 +218,11 @@ describe "Semantic: initialize" do
 
       foo = Foo.new
       foo.x
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "types instance var as non-nilable if calls super and super defines it, with one level of indirection" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       class Parent
         def initialize
           @x = 1
@@ -245,11 +245,11 @@ describe "Semantic: initialize" do
 
       foo = Foo.new
       foo.x
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "doesn't type instance var as nilable if out" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       lib LibC
         fun foo(x : Int32*)
       end
@@ -267,7 +267,7 @@ describe "Semantic: initialize" do
 
       foo = Foo.new
       foo.x
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "types instance var as nilable if used after method call that reads var" do
@@ -322,7 +322,7 @@ describe "Semantic: initialize" do
   end
 
   it "doesn't type instance var as nilable if used after global method call" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       def foo
       end
 
@@ -339,11 +339,11 @@ describe "Semantic: initialize" do
 
       foo = Foo.new
       foo.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "doesn't type instance var as nilable if used after method call inside typeof" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def initialize
           typeof(foo)
@@ -361,11 +361,11 @@ describe "Semantic: initialize" do
 
       foo = Foo.new
       foo.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "doesn't type instance var as nilable if used after method call that doesn't read var" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def initialize
           foo
@@ -382,7 +382,7 @@ describe "Semantic: initialize" do
 
       foo = Foo.new
       foo.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "types instance var as nilable if used after method call that reads var through other calls" do
@@ -421,7 +421,7 @@ describe "Semantic: initialize" do
   end
 
   it "doesn't type instance var as nilable if used after method call that assigns var" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def initialize
           foo
@@ -439,11 +439,11 @@ describe "Semantic: initialize" do
 
       foo = Foo.new
       foo.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "finishes when analyzing recursive calls" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def initialize
           foo
@@ -465,11 +465,11 @@ describe "Semantic: initialize" do
 
       foo = Foo.new
       foo.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "doesn't type instance var as nilable if not used in method call" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def initialize
           @y = 2
@@ -488,7 +488,7 @@ describe "Semantic: initialize" do
 
       foo = Foo.new
       foo.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "types instance var as nilable if used in first of two method calls" do
@@ -515,7 +515,7 @@ describe "Semantic: initialize" do
   end
 
   it "doesn't type instance var as nilable if assigned before method call" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def initialize
           @x = 1
@@ -534,7 +534,7 @@ describe "Semantic: initialize" do
 
       foo = Foo.new
       foo.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "marks instance variable as nilable in initialize if using self in method" do
@@ -565,7 +565,7 @@ describe "Semantic: initialize" do
   end
 
   it "marks instance variable as nilable in initialize if using self" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { nilable int32 }
       class Foo
         def initialize
           Other.new(self)
@@ -583,11 +583,11 @@ describe "Semantic: initialize" do
       end
 
       Foo.new.foo
-      ") { nilable int32 }
+      CRYSTAL
   end
 
   it "marks instance variable as nilable in initialize if assigning self" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable int32 }
       class Foo
         def initialize
           a = self
@@ -605,11 +605,11 @@ describe "Semantic: initialize" do
       end
 
       Foo.new.foo
-      )) { nilable int32 }
+      CRYSTAL
   end
 
   it "marks instance variable as nilable when using self in super" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { nilable int32 }
       class Parent
         def initialize(foo)
         end
@@ -627,7 +627,7 @@ describe "Semantic: initialize" do
       end
 
       Foo.new.foo
-      ") { nilable int32 }
+      CRYSTAL
   end
 
   it "errors if found matches for initialize but doesn't cover all (bug #204)" do
@@ -645,7 +645,7 @@ describe "Semantic: initialize" do
   end
 
   it "doesn't mark instance variable as nilable when using self.class" do
-    assert_type("
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       class Foo
         def initialize
           self.class.foo
@@ -661,11 +661,11 @@ describe "Semantic: initialize" do
       end
 
       Foo.new.foo
-      ", inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "doesn't mark instance variable as nilable when using self.class in method" do
-    assert_type("
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       class Foo
         def initialize
           bar
@@ -685,11 +685,11 @@ describe "Semantic: initialize" do
       end
 
       Foo.new.foo
-      ", inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "types initializer of recursive generic type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       class Foo(T)
         @x = 1
 
@@ -701,11 +701,11 @@ describe "Semantic: initialize" do
       alias Rec = Foo(Rec)
 
       Foo(Rec).new.x + 1
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "types initializer of generic type after instantiated" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       class Foo(T)
       end
 
@@ -720,7 +720,7 @@ describe "Semantic: initialize" do
       end
 
       Foo(Int32).new.x + 1
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "errors on default new when using named arguments (#2245)" do
@@ -734,7 +734,7 @@ describe "Semantic: initialize" do
   end
 
   it "doesn't type ivar as nilable if super call present and parent has already typed ivar (#4764)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Bar"] }
       class Foo
         def initialize(@a = 1)
         end
@@ -749,11 +749,11 @@ describe "Semantic: initialize" do
       end
 
       Bar.new
-    )) { types["Bar"] }
+      CRYSTAL
   end
 
   it "doesn't type ivar having initializer as nilable even if it is used before assigned inside initialize (#5112)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         @x = 42
 
@@ -767,6 +767,6 @@ describe "Semantic: initialize" do
       end
 
       Foo.new.x
-      )) { int32 }
+      CRYSTAL
   end
 end
