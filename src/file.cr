@@ -524,14 +524,14 @@ class File < IO::FileDescriptor
   end
 
   # Returns the content of *filename* as a string.
-  # 
-  # Raises `File::NotFoundError` if the file at filename does not exist.
+  #
+  # Raises `File::Error` if the file cannot be read.
   #
   # ```
   # File.write("bar", "foo")
   # File.read("bar") # => "foo"
   #
-  # File.read("notexist") # raises File::NotFoundError
+  # File.read("non-existent") # raises File::NotFoundError
   # ```
   def self.read(filename : Path | String, encoding = nil, invalid = nil, blocking = true) : String
     open(filename, "r", blocking: blocking) do |file|
