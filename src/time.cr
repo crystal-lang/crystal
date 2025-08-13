@@ -105,9 +105,9 @@ require "crystal/system/time"
 #
 # ```
 # time_de = Time.local(2018, 3, 8, 22, 5, 13, location: Time::Location.load("Europe/Berlin"))
-# time_ar = time_de.in Time::Location.load("America/Buenos_Aires")
+# time_ar = time_de.in Time::Location.load("America/Argentina/Buenos_Aires")
 # time_de # => 2018-03-08 22:05:13 +01:00 Europe/Berlin
-# time_ar # => 2018-03-08 18:05:13 -03:00 America/Buenos_Aires
+# time_ar # => 2018-03-08 18:05:13 -03:00 America/Argentina/Buenos_Aires
 # ```
 #
 # Both `Time` instances show a different local date-time, but they represent
@@ -1042,7 +1042,7 @@ struct Time
   #
   # ```
   # time_de = Time.local(2018, 3, 8, 22, 5, 13, location: Time::Location.load("Europe/Berlin"))
-  # time_ar = Time.local(2018, 3, 8, 18, 5, 13, location: Time::Location.load("America/Buenos_Aires"))
+  # time_ar = Time.local(2018, 3, 8, 18, 5, 13, location: Time::Location.load("America/Argentina/Buenos_Aires"))
   # time_de == time_ar # => true
   #
   # # both times represent the same instant:
@@ -1359,9 +1359,9 @@ struct Time
   #
   # ```
   # time_de = Time.local(2018, 3, 8, 22, 5, 13, location: Time::Location.load("Europe/Berlin"))
-  # time_ar = time_de.in Time::Location.load("America/Buenos_Aires")
+  # time_ar = time_de.in Time::Location.load("America/Argentina/Buenos_Aires")
   # time_de # => 2018-03-08 22:05:13 +01:00 Europe/Berlin
-  # time_ar # => 2018-03-08 18:05:13 -03:00 America/Buenos_Aires
+  # time_ar # => 2018-03-08 18:05:13 -03:00 America/Argentina/Buenos_Aires
   # ```
   #
   # In contrast, `#to_local_in` changes to a different location while
