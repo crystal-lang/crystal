@@ -499,7 +499,7 @@ describe "Semantic: virtual" do
   end
 
   # it "recalculates virtual type when subclass is added" do
-  #   assert_type("
+  #   assert_type(<<-CRYSTAL) { union_of(nil_type, int32, char) }
   #     class Foo
   #       def foo
   #         nil
@@ -525,7 +525,7 @@ describe "Semantic: virtual" do
 
   #     a2 = Foo.new || Bar.new('a')
   #     b2 = coco(a2)
-  #     ") { union_of(nil_type, int32, char) }
+  #     CRYSTAL
   # end
 
   it "finds overloads of union of virtual, class and nil" do

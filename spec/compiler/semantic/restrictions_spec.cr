@@ -220,7 +220,7 @@ describe "Restrictions" do
     describe "Metaclass vs Path" do
       {% for type in [Object, Value, Class] %}
         it "inserts metaclass before {{ type }}" do
-          assert_type(%(
+          assert_type(<<-CRYSTAL) { bool }
             def foo(a : {{ type }})
               1
             end
@@ -230,11 +230,11 @@ describe "Restrictions" do
             end
 
             foo(Int32)
-            )) { bool }
+            CRYSTAL
         end
 
         it "keeps metaclass before {{ type }}" do
-          assert_type(%(
+          assert_type(<<-CRYSTAL) { bool }
             def foo(a : Int32.class)
               true
             end
@@ -244,7 +244,7 @@ describe "Restrictions" do
             end
 
             foo(Int32)
-            )) { bool }
+            CRYSTAL
         end
       {% end %}
 
