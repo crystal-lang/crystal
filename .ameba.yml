@@ -56,8 +56,8 @@ Lint/LiteralInInterpolation:
 
 Lint/LiteralsComparison:
   Excluded:
-  # Explicit tests for case equality on tuple literals
-  - spec/std/tuple_spec.cr
+  # Explicit tests for case equality on literals
+  - spec/std/{array,char,int,number,regex,string,symbol,tuple,uint}_spec.cr
 
 # TODO: Investigate if some `not_nil!` calls can be avoided.
 Lint/NotNil:
