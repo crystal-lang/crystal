@@ -1578,18 +1578,18 @@ describe "Semantic: def overload" do
 
   it "overloads with named argument (#4465)" do
     assert_type(<<-CRYSTAL, inject_primitives: true) { union_of float64, bool }
-\t\t\tdef do_something(value : Int32)
-\t\t\t  value + 1
-\t\t\t  1.5
-\t\t\tend
+      def do_something(value : Int32)
+        value + 1
+        1.5
+      end
 
-\t\t\tdef do_something(value : Char)
-\t\t\t  value.ord
-\t\t\t  false
-\t\t\tend
+      def do_something(value : Char)
+        value.ord
+        false
+      end
 
-\t\t\tdo_something value: 7.as(Int32 | Char)
-CRYSTAL
+      do_something value: 7.as(Int32 | Char)
+      CRYSTAL
   end
 
   it "resets free vars after a partial match is rejected (#10270)" do
