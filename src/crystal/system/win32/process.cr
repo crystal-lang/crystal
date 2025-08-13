@@ -22,7 +22,7 @@ struct Crystal::System::Process
   @@interrupt_handler : Proc(::Process::ExitReason, Nil)?
   @@interrupt_count = Crystal::AtomicSemaphore.new
   @@win32_interrupt_handler : LibC::PHANDLER_ROUTINE?
-  @@setup_interrupt_handler = Atomic::Flag.new
+  @@setup_interrupt_handler = Atomic(Bool).new(false)
   @@last_interrupt = ::Process::ExitReason::Interrupted
 
   def initialize(process_info)
@@ -54,6 +54,12 @@ struct Crystal::System::Process
     if LibC.AssignProcessToJobObject(@job_object, @process_handle) == 0
       raise RuntimeError.from_winerror("AssignProcessToJobObject")
     end
+
+    if LibC.ResumeThread(process_info.hThread) == 0xFFFFFFFF_u32
+      raise RuntimeError.from_winerror("ResumeThread")
+    end
+
+    close_handle(process_info.hThread)
   end
 
   private def config_job_object(kind, info)
@@ -201,7 +207,7 @@ struct Crystal::System::Process
   end
 
   def self.start_interrupt_loop : Nil
-    return unless @@setup_interrupt_handler.test_and_set
+    return if @@setup_interrupt_handler.swap(true, :relaxed)
 
     spawn(name: "interrupt-signal-loop") do
       while true
@@ -285,7 +291,7 @@ struct Crystal::System::Process
     command_args = ::Process.quote_windows(command_args) unless command_args.is_a?(String)
 
     if LibC.CreateProcessW(
-         nil, System.to_wstr(command_args), nil, nil, true, LibC::CREATE_UNICODE_ENVIRONMENT,
+         nil, System.to_wstr(command_args), nil, nil, true, LibC::CREATE_SUSPENDED | LibC::CREATE_UNICODE_ENVIRONMENT,
          make_env_block(env, clear_env), chdir.try { |str| System.to_wstr(str) } || Pointer(UInt16).null,
          pointerof(startup_info), pointerof(process_info)
        ) == 0
@@ -297,8 +303,6 @@ struct Crystal::System::Process
         raise IO::Error.from_os_error("Error executing process: '#{command_args}'", error)
       end
     end
-
-    close_handle(process_info.hThread)
 
     close_handle(startup_info.hStdInput)
     close_handle(startup_info.hStdOutput)

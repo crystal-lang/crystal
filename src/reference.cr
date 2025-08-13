@@ -182,8 +182,9 @@ class Reference
     key = {object_id, method}
     hash.put(key, nil) do
       yield
-      hash.delete(key)
       return true
+    ensure
+      hash.delete(key)
     end
     false
   end
@@ -209,9 +210,9 @@ class Reference
   private def exec_recursive_clone(&)
     # NOTE: can't use `Set` because of prelude require order
     hash = Fiber.current.exec_recursive_clone_hash
-    clone_object_id = hash[object_id]?
-    unless clone_object_id
-      clone_object_id = yield(hash).object_id
+    clone_object_id = hash.fetch(object_id) do
+      yield(hash).object_id
+    ensure
       hash.delete(object_id)
     end
     Pointer(Void).new(clone_object_id).as(self)

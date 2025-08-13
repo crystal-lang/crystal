@@ -315,12 +315,16 @@ class Crystal::Doc::Generator
   end
 
   def has_doc_annotations?(obj)
-    obj.annotations(@program.deprecated_annotation) || obj.annotations(@program.experimental_annotation)
+    obj.annotations(@program.deprecated_annotation) ||
+      obj.annotations(@program.experimental_annotation) ||
+      obj.as?(Method).try &.def.args.any? { |arg| has_doc_annotations?(arg) }
   end
 
   def doc(context, string)
     string = isolate_flag_lines string
-    string += build_flag_lines_from_annotations context
+    if annotations = build_flag_lines_from_annotations context
+      string += "\n\n" + annotations
+    end
     markdown = render_markdown(context, string)
     generate_flags markdown
   end
@@ -341,9 +345,10 @@ class Crystal::Doc::Generator
   # Assumes that flag keywords are at the beginning of respective `p` element
   def generate_flags(string)
     FLAGS.reduce(string) do |str, flag|
-      flag_regexp = /<p>\s*#{flag}:?/
-      element_sub = %(<p><span class="flag #{FLAG_COLORS[flag]}">#{flag}</span> )
-      str.gsub(flag_regexp, element_sub)
+      # "DEPRECATED(parameter foo):"
+      str.gsub(/<p>\s*#{flag}\((.*)\):/, %(<p><span class="flag #{FLAG_COLORS[flag]}">#{flag} \\1</span> ))
+        # "DEPRECATED:"
+        .gsub(/<p>\s*#{flag}:?/, %(<p><span class="flag #{FLAG_COLORS[flag]}">#{flag}</span> ))
     end
   end
 
@@ -364,21 +369,32 @@ class Crystal::Doc::Generator
   end
 
   def build_flag_lines_from_annotations(context)
-    first = true
     String.build do |io|
       if anns = context.annotations(@program.deprecated_annotation)
         anns.each do |ann|
-          io << "\n\n" if first
-          first = false
           io << "DEPRECATED: #{DeprecatedAnnotation.from(ann).message}\n\n"
         end
       end
 
       if anns = context.annotations(@program.experimental_annotation)
         anns.each do |ann|
-          io << "\n\n" if first
-          first = false
           io << "EXPERIMENTAL: #{ExperimentalAnnotation.from(ann).message}\n\n"
+        end
+      end
+
+      if context.is_a?(Method)
+        context.def.args.each do |arg|
+          if anns = arg.annotations(@program.deprecated_annotation)
+            anns.each do |ann|
+              io << "DEPRECATED(parameter `#{arg.name}`): #{DeprecatedAnnotation.from(ann).message}\n\n"
+            end
+          end
+
+          if anns = arg.annotations(@program.experimental_annotation)
+            anns.each do |ann|
+              io << "EXPERIMENTAL(parameter `#{arg.name}`): #{ExperimentalAnnotation.from(ann).message}\n\n"
+            end
+          end
         end
       end
     end

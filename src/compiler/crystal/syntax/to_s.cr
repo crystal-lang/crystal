@@ -7,8 +7,8 @@ module Crystal
       to_s(io)
     end
 
-    def to_s(io : IO, macro_expansion_pragmas = nil, emit_doc = false) : Nil
-      visitor = ToSVisitor.new(io, macro_expansion_pragmas: macro_expansion_pragmas, emit_doc: emit_doc)
+    def to_s(io : IO, macro_expansion_pragmas = nil, emit_doc = false, emit_location_pragmas : Bool = false) : Nil
+      visitor = ToSVisitor.new(io, macro_expansion_pragmas: macro_expansion_pragmas, emit_doc: emit_doc, emit_location_pragmas: emit_location_pragmas)
       self.accept visitor
     end
   end
@@ -35,7 +35,7 @@ module Crystal
       BLOCK_ARG
     end
 
-    def initialize(@str = IO::Memory.new, @macro_expansion_pragmas = nil, @emit_doc = false)
+    def initialize(@str = IO::Memory.new, @macro_expansion_pragmas = nil, @emit_doc = false, @emit_location_pragmas : Bool = false)
       @indent = 0
       @inside_macro = 0
     end
@@ -324,6 +324,12 @@ module Crystal
       false
     end
 
+    private def emit_loc_pragma(for location : Location?) : Nil
+      if @emit_location_pragmas && (loc = location) && (filename = loc.filename).is_a?(String)
+        @str << %(#<loc:"#{filename}",#{loc.line_number},#{loc.column_number}>)
+      end
+    end
+
     def visit(node : If)
       if node.ternary?
         node.cond.accept self
@@ -334,27 +340,68 @@ module Crystal
         return false
       end
 
-      visit_if_or_unless "if", node
+      self.emit_loc_pragma node.location
+
+      while true
+        @str << "if "
+        node.cond.accept self
+        newline
+
+        self.emit_loc_pragma node.then.location
+
+        accept_with_indent(node.then)
+        append_indent
+
+        # combine `else if` into `elsif` (does not apply to `unless` or `? :`)
+        if (else_node = node.else).is_a?(If) && !else_node.ternary?
+          @str << "els"
+          node = else_node
+        else
+          break
+        end
+      end
+
+      unless else_node.nop?
+        @str << "else"
+        newline
+
+        self.emit_loc_pragma node.else.location
+
+        accept_with_indent(node.else)
+        append_indent
+      end
+
+      self.emit_loc_pragma node.end_location
+
+      @str << "end"
+      false
     end
 
     def visit(node : Unless)
-      visit_if_or_unless "unless", node
-    end
+      self.emit_loc_pragma node.location
 
-    def visit_if_or_unless(prefix, node)
-      @str << prefix
-      @str << ' '
+      @str << "unless "
       node.cond.accept self
       newline
+
+      self.emit_loc_pragma node.then.location
+
       accept_with_indent(node.then)
       unless node.else.nop?
         append_indent
         @str << "else"
         newline
+
+        self.emit_loc_pragma node.else.location
+
         accept_with_indent(node.else)
       end
       append_indent
+
+      self.emit_loc_pragma node.end_location
+
       @str << "end"
+
       false
     end
 
@@ -885,18 +932,42 @@ module Crystal
     end
 
     def visit(node : MacroIf)
-      @str << "{% if "
-      node.cond.accept self
-      @str << " %}"
-      inside_macro do
-        node.then.accept self
-      end
-      unless node.else.nop?
-        @str << "{% else %}"
+      else_node = nil
+
+      while true
+        if node.is_unless?
+          @str << "{% unless "
+          then_node = node.else
+          else_node = node.then
+        else
+          @str << (else_node ? "{% elsif " : "{% if ")
+          then_node = node.then
+          else_node = node.else
+        end
+        node.cond.accept self
+        @str << " %}"
+
         inside_macro do
-          node.else.accept self
+          then_node.accept self
+        end
+
+        # combine `{% else %}{% if %}` into `{% elsif %}` (does not apply to
+        # `{% unless %}`, nor when there is whitespace inbetween, as that would
+        # show up as a `MacroLiteral`)
+        if !node.is_unless? && else_node.is_a?(MacroIf) && !else_node.is_unless?
+          node = else_node
+        else
+          break
         end
       end
+
+      unless else_node.nop?
+        @str << "{% else %}"
+        inside_macro do
+          else_node.accept self
+        end
+      end
+
       @str << "{% end %}"
       false
     end
@@ -1029,8 +1100,6 @@ module Crystal
     end
 
     def visit(node : Generic)
-      name = node.name
-
       node.name.accept self
 
       printed_arg = false

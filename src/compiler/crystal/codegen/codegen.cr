@@ -84,11 +84,13 @@ module Crystal
       llvm_context =
         {% if LibLLVM::IS_LT_110 %}
           LLVM::Context.new
-        {% else %}
+        {% elsif LibLLVM::IS_LT_210 %}
           begin
             ts_ctx = LLVM::Orc::ThreadSafeContext.new
             ts_ctx.context
           end
+        {% else %}
+          LLVM::Context.new(dispose_on_finalize: false)
         {% end %}
 
       visitor = CodeGenVisitor.new self, node, single_module: true, debug: debug, llvm_context: llvm_context
@@ -132,6 +134,10 @@ module Crystal
       {% else %}
         lljit_builder = LLVM::Orc::LLJITBuilder.new
         lljit = LLVM::Orc::LLJIT.new(lljit_builder)
+
+        {% unless LibLLVM::IS_LT_210 %}
+          ts_ctx = LLVM::Orc::ThreadSafeContext.new(llvm_context)
+        {% end %}
 
         dylib = lljit.main_jit_dylib
         dylib.link_symbols_from_current_process(lljit.global_prefix)
@@ -427,9 +433,34 @@ module Crystal
     end
 
     def define_slice_constant(info : Program::ConstSliceInfo)
+      initializer = const_slice_data_array(info)
+      global = @llvm_mod.globals.add(initializer.type, info.name)
+      if @llvm_mod != @main_mod
+        global.linkage = LLVM::Linkage::External
+      elsif @single_module
+        global.linkage = LLVM::Linkage::Internal
+      end
+      global.global_constant = true
+      global.initializer = initializer
+    end
+
+    private def const_slice_data_array(info : Program::ConstSliceInfo)
       args = info.args.to_unsafe
       kind = info.element_type
       llvm_element_type = llvm_type(@program.type_from_literal_kind(kind))
+
+      {% unless LibLLVM::IS_LT_210 %}
+        case kind
+        when .u8?, .u16?, .u32?, .u64?, .i8?, .i16?, .i32?, .i64?, .f32?, .f64?
+          return llvm_element_type.const_data_array(info.to_bytes)
+        end
+      {% end %}
+
+      case kind
+      when .u8?, .i8?
+        return llvm_context.const_bytes(info.to_bytes)
+      end
+
       llvm_elements = Array.new(info.args.size) do |i|
         num = args[i].as(NumberLiteral)
         case kind
@@ -447,15 +478,7 @@ module Crystal
         in .f64?  then llvm_element_type.const_double(num.value)
         end
       end
-
-      global = @llvm_mod.globals.add(llvm_element_type.array(info.args.size), info.name)
-      if @llvm_mod != @main_mod
-        global.linkage = LLVM::Linkage::External
-      elsif @single_module
-        global.linkage = LLVM::Linkage::Internal
-      end
-      global.global_constant = true
-      global.initializer = llvm_element_type.const_array(llvm_elements)
+      llvm_element_type.const_array(llvm_elements)
     end
 
     class CodegenWellKnownFunctions < Visitor
@@ -502,6 +525,7 @@ module Crystal
     end
 
     def finish
+      clear_current_debug_location if @debug.line_numbers?
       codegen_return @main_ret_type
 
       # If there are no instructions in the alloca block and the
@@ -538,29 +562,10 @@ module Crystal
         mod.verify
       end
 
-      dump_type_id if ENV["CRYSTAL_DUMP_TYPE_ID"]? == "1"
-    end
-
-    private def dump_type_id
-      ids = @program.llvm_id.@ids.to_a
-      ids.sort_by! { |_, (min, max)| {min, -max} }
-
-      puts "CRYSTAL_DUMP_TYPE_ID"
-      parent_ids = [] of {Int32, Int32}
-      ids.each do |type, (min, max)|
-        while parent_id = parent_ids.last?
-          break if min >= parent_id[0] && max <= parent_id[1]
-          parent_ids.pop
-        end
-        indent = " " * (2 * parent_ids.size)
-
-        show_generic_args = type.is_a?(GenericInstanceType) ||
-                            type.is_a?(GenericClassInstanceMetaclassType) ||
-                            type.is_a?(GenericModuleInstanceMetaclassType)
-        puts "#{indent}{#{min} - #{max}}: #{type.to_s(generic_args: show_generic_args)}"
-        parent_ids << {min, max}
+      if type_info_path = ENV["CRYSTAL_DUMP_TYPE_INFO"]?.presence
+        dump_type_info(type_info_path)
       end
-      puts
+      dump_type_id if ENV["CRYSTAL_DUMP_TYPE_ID"]? == "1"
     end
 
     def visit(node : Annotation)
@@ -946,6 +951,7 @@ module Crystal
     def visit(node : TypeOf)
       # convert virtual metaclasses to non-virtual ones, because only the
       # non-virtual type IDs are needed
+      set_current_debug_location(node) if @debug.line_numbers?
       @last = type_id(node.type.devirtualize)
       false
     end
@@ -1612,38 +1618,26 @@ module Crystal
     end
 
     def type_id_to_class_name(type_id)
-      fun_name = "~type_id_to_class_name"
-      func = typed_fun?(@main_mod, fun_name) || create_type_id_to_class_name_fun(fun_name)
-      func = check_main_fun fun_name, func
-      call func, type_id
+      map = llvm_mod.globals["__crystal_type_id_to_class_name_map"]? || create_type_id_to_class_name_map("__crystal_type_id_to_class_name_map")
+
+      str_ptr = gep llvm_type(@program.string), map, type_id
+      load llvm_type(@program.string), str_ptr
     end
 
-    # See also: `#create_metaclass_fun`
-    def create_type_id_to_class_name_fun(name)
-      in_main do
-        define_main_function(name, [llvm_context.int32], llvm_type(@program.string)) do |func|
-          set_internal_fun_debug_location(func, name)
-
-          arg = func.params.first
-
-          current_block = insert_block
-
-          cases = {} of LLVM::Value => LLVM::BasicBlock
-          @program.llvm_id.@ids.each do |type, (_, type_id)|
-            block = new_block "type_#{type_id}"
-            cases[int32(type_id)] = block
-            position_at_end block
-            ret build_string_constant(type.to_s)
-          end
-
-          otherwise = new_block "otherwise"
-          position_at_end otherwise
-          unreachable
-
-          position_at_end current_block
-          @builder.switch arg, otherwise, cases
-        end
+    def create_type_id_to_class_name_map(name)
+      ids = @program.llvm_id.@ids
+      id_map = Array(LLVM::Value).new(size: ids.size, value: LLVM::Value.null)
+      ids.each do |type, (_, type_id)|
+        id_map[type_id] = build_string_constant(type.to_s)
       end
+
+      type = llvm_type(@program.string).array(ids.size)
+
+      global = @llvm_mod.globals.add(type, name)
+      global.linkage = LLVM::Linkage::Private
+      global.global_constant = true
+      global.initializer = llvm_type(@program.string).const_array(id_map)
+      global
     end
 
     def visit(node : IsA)
@@ -1717,6 +1711,7 @@ module Crystal
         accept replacement
       else
         node_type = node.type
+        set_current_debug_location(node) if @debug.line_numbers?
         # Special case: if the type is a type tuple we need to create a tuple for it
         if node_type.is_a?(TupleInstanceType)
           @last = allocate_tuple(node_type) do |tuple_type, i|
@@ -1730,6 +1725,7 @@ module Crystal
     end
 
     def visit(node : Generic)
+      set_current_debug_location(node) if @debug.line_numbers?
       @last = type_id(node.type)
       false
     end
@@ -1776,21 +1772,25 @@ module Crystal
 
         # Now assign exp values to block arguments
         if splat_index
-          j = 0
+          exp_index = 0
           block.args.each_with_index do |arg, i|
-            block_var = block_context.vars[arg.name]
-            if i == splat_index
-              exp_value = allocate_tuple(arg.type.as(TupleInstanceType)) do
-                exp_value2, exp_type = exp_values[j]
-                j += 1
-                {exp_type, exp_value2}
+            if arg.name != "_"
+              block_var = block_context.vars[arg.name]
+              if i == splat_index
+                exp_value = allocate_tuple(arg.type.as(TupleInstanceType)) do
+                  exp_value2, exp_type = exp_values[exp_index]
+                  exp_index += 1
+                  {exp_type, exp_value2}
+                end
+                exp_type = arg.type
+              else
+                exp_value, exp_type = exp_values[exp_index]
+                exp_index += 1
               end
-              exp_type = arg.type
+              assign block_var.pointer, block_var.type, exp_type, exp_value
             else
-              exp_value, exp_type = exp_values[j]
-              j += 1
+              exp_index += (i == splat_index ? arg.type.as(TupleInstanceType).size : 1)
             end
-            assign block_var.pointer, block_var.type, exp_type, exp_value
           end
         else
           # Check if tuple unpacking is needed

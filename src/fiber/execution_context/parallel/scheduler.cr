@@ -3,17 +3,21 @@ require "../scheduler"
 require "../runnables"
 
 module Fiber::ExecutionContext
-  class MultiThreaded
-    # MT fiber scheduler.
+  class Parallel
+    # Individual scheduler for the parallel execution context.
     #
-    # Owns a single thread inside a MT execution context.
+    # The execution context itself doesn't run the fibers. The fibers actually
+    # run in the schedulers. Each scheduler in the context increases the
+    # parallelism by one. For example a parallel context with 8 schedulers means
+    # that a maximum of 8 fibers may run at the same time in different system
+    # threads.
     class Scheduler
       include ExecutionContext::Scheduler
 
       getter name : String
 
       # :nodoc:
-      property execution_context : MultiThreaded
+      property execution_context : Parallel
       protected property! thread : Thread
       protected property! main_fiber : Fiber
 
@@ -38,10 +42,9 @@ module Fiber::ExecutionContext
         self.spawn(name: name, &block)
       end
 
-      # Unlike `ExecutionContext::MultiThreaded#enqueue` this method is only
-      # safe to call on `ExecutionContext.current` which should always be the
-      # case, since cross context enqueues must call
-      # `ExecutionContext::MultiThreaded#enqueue` through `Fiber#enqueue`.
+      # Unlike `Parallel#enqueue` this method is only safe to call on
+      # `ExecutionContext.current` which should always be the case, since cross
+      # context enqueues must call `Parallel#enqueue` through `Fiber#enqueue`.
       protected def enqueue(fiber : Fiber) : Nil
         Crystal.trace :sched, "enqueue", fiber: fiber
         @runnables.push(fiber)
@@ -94,6 +97,23 @@ module Fiber::ExecutionContext
         # dequeue from local queue
         if fiber = @runnables.shift?
           return fiber
+        end
+
+        # the following dequeues ain't so quick and will block the current fiber
+        # (may have already been stolen and waiting for resumable), but that's
+        # not a problem with only one scheduler, so let's spare a switch to the
+        # run loop
+        if @execution_context.capacity == 1
+          # try to refill local queue
+          if fiber = @global_queue.grab?(@runnables, divisor: @execution_context.size)
+            return fiber
+          end
+
+          # run the event loop to see if any event is activable
+          list = Fiber::List.new
+          if @execution_context.lock_evloop? { @event_loop.run(pointerof(list), blocking: false) }
+            return enqueue_many(pointerof(list))
+          end
         end
       end
 
@@ -183,7 +203,7 @@ module Fiber::ExecutionContext
 
         # immediately mark the scheduler as spinning (we just unparked); we
         # don't increment the number of spinning threads since
-        # `MultiThreaded#wake_scheduler` already did
+        # `Parallel#wake_scheduler` already did
         @spinning = true
       end
 

@@ -150,6 +150,30 @@ module Crystal
       obj
     end
 
+    # Concatenates two AST nodes into a single `Expressions` node, removing
+    # `Nop`s and merging keyword-less expressions into a single node.
+    #
+    # *x* and *y* may be modified in-place if they are already `Expressions`
+    # nodes.
+    def self.concat!(x : ASTNode, y : ASTNode) : ASTNode
+      return x if y.is_a?(Nop)
+      return y if x.is_a?(Nop)
+
+      if x.is_a?(Expressions) && x.keyword.none?
+        if y.is_a?(Expressions) && y.keyword.none?
+          x.expressions.concat(y.expressions)
+        else
+          x.expressions << y
+        end
+        x.at_end(y.end_location)
+      elsif y.is_a?(Expressions) && y.keyword.none?
+        y.expressions.unshift(x)
+        y.at(x.location)
+      else
+        Expressions.new([x, y] of ASTNode).at(x.location).at_end(y.end_location)
+      end
+    end
+
     def initialize(@expressions = [] of ASTNode)
     end
 

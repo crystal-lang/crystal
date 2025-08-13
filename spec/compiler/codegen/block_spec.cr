@@ -1422,6 +1422,30 @@ describe "Code gen: block" do
       )).to_i.should eq(3)
   end
 
+  it "works if block has both splat and non-splat underscore parameters" do
+    run(<<-CRYSTAL, Int32).should eq(34)
+      def foo(&)
+        yield 1, 2, 4, 8, 16, 32
+      end
+
+      foo do |_, a, *_, b|
+        a &+ b
+      end
+      CRYSTAL
+  end
+
+  it "works if block has both splat parameter and multiple non-splat underscore parameters" do
+    run(<<-CRYSTAL, Int32).should eq(40)
+      def foo(&)
+        yield 1, 2, 4, 8, "", 32
+      end
+
+      foo do |_, *a, _, b|
+         a[2] &+ b
+      end
+      CRYSTAL
+  end
+
   it "auto-unpacks tuple" do
     run(%(
       def foo

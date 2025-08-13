@@ -119,7 +119,7 @@ class URI
         i += digit * w
         t = k <= bias ? TMIN : k >= bias + TMAX ? TMAX : k - bias
 
-        unless digit < t
+        if digit >= t
           w *= BASE - t
           k += BASE
         else

@@ -20,7 +20,7 @@ abstract class Log::Backend
   end
 
   # :nodoc:
-  def dispatch(entry : Entry)
+  def dispatch(entry : Entry) : Nil
     @dispatcher.dispatch entry, self
   end
 end

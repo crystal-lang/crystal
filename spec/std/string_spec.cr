@@ -2234,6 +2234,16 @@ describe "String" do
     it "allows creating from an empty slice" do
       String.new(Bytes.empty).should eq("")
     end
+
+    it "allows creating from a non-empty slice" do
+      String.new(UInt8.slice(102, 111, 111, 0, 98, 97, 114)).should eq("foo\0bar")
+    end
+
+    it "allows creating from a null-terminated slice" do
+      String.new(Bytes.empty, truncate_at_null: true).should eq("")
+      String.new(UInt8.slice(102, 111, 111, 98, 97, 114), truncate_at_null: true).should eq("foobar")
+      String.new(UInt8.slice(102, 111, 111, 0, 98, 97, 114), truncate_at_null: true).should eq("foo")
+    end
   end
 
   describe "tr" do
@@ -2266,22 +2276,15 @@ describe "String" do
     end
 
     it "compares with == when different strings same contents" do
-      s1 = "foo#{1}"
-      s2 = "foo#{1}"
-      s1.should eq(s2)
+      ("fo" + "o").should eq("fo" + "o")
     end
 
     it "compares with == when different contents" do
-      s1 = "foo#{1}"
-      s2 = "foo#{2}"
-      s1.should_not eq(s2)
+      ("fo" + "o").should_not eq("bo" + "o")
     end
 
     it "sorts strings" do
-      s1 = "foo1"
-      s2 = "foo"
-      s3 = "bar"
-      [s1, s2, s3].sort.should eq(["bar", "foo", "foo1"])
+      ["foo1", "foo", "bar"].sort.should eq(["bar", "foo", "foo1"])
     end
   end
 
@@ -2417,23 +2420,31 @@ describe "String" do
     end
   end
 
-  it "has match" do
-    "FooBar".match(/oo/).not_nil![0].should eq("oo")
-  end
+  describe "#match" do
+    it "has match" do
+      match = "FooBar".match(/oo/).should_not be_nil
+      match[0].should eq("oo")
+    end
 
-  it "matches with position" do
-    "こんにちは".match(/./, 1).not_nil![0].should eq("ん")
-  end
+    it "matches with position" do
+      match = "こんにちは".match(/./, 1).should_not be_nil
+      match[0].should eq("ん")
+    end
 
-  it "matches empty string" do
-    match = "".match(/.*/).not_nil!
-    match.group_size.should eq(0)
-    match[0].should eq("")
+    it "matches empty string" do
+      match = "".match(/.*/).should_not be_nil
+      match.group_size.should eq(0)
+      match[0].should eq("")
+    end
+
+    it "returns nil" do
+      "foo".match(/bar/).should be_nil
+    end
   end
 
   it "matches, but returns Bool" do
-    "foo".matches?(/foo/).should eq(true)
-    "foo".matches?(/bar/).should eq(false)
+    "foo".matches?(/foo/).should be_true
+    "foo".matches?(/bar/).should be_false
   end
 
   it "#matches_full?" do
@@ -3144,6 +3155,66 @@ describe "String" do
       it { expect_raises(IndexError) { "セキロ：シャドウズ ダイ トゥワイス".delete_at(19..1) } }
       it { expect_raises(IndexError) { "セキロ：シャドウズ ダイ トゥワイス".delete_at(-19..1) } }
     end
+  end
+
+  describe "ensure_suffix" do
+    context "with string suffix" do
+      it "adds suffix if not present" do
+        "foo".ensure_suffix("bar").should eq("foobar")
+        "foo".ensure_suffix("FOO").should eq("fooFOO")
+        "foo".ensure_suffix("").should eq("foo")
+        "foobar".ensure_suffix("arr").should eq("foobararr")
+      end
+
+      it "does not add suffix if already present" do
+        "foobar".ensure_suffix("bar").should eq("foobar")
+        "FOOBAR".ensure_suffix("BAR").should eq("FOOBAR")
+      end
+    end
+
+    context "with char suffix" do
+      it "adds suffix if not present" do
+        "foo".ensure_suffix('b').should eq("foob")
+        "foo".ensure_suffix('O').should eq("fooO")
+      end
+
+      it "does not add suffix if already present" do
+        "foob".ensure_suffix('b').should eq("foob")
+        "FOOB".ensure_suffix('B').should eq("FOOB")
+      end
+    end
+  end
+
+  describe "ensure_prefix" do
+    context "with string prefix" do
+      it "adds prefix if not present" do
+        "foo".ensure_prefix("bar").should eq("barfoo")
+        "foo".ensure_prefix("FOO").should eq("FOOfoo")
+        "foo".ensure_prefix("").should eq("foo")
+        "foo".ensure_prefix("barf").should eq("barffoo")
+      end
+
+      it "does not add prefix if already present" do
+        "foobar".ensure_prefix("foo").should eq("foobar")
+        "FOOBAR".ensure_prefix("FOO").should eq("FOOBAR")
+      end
+    end
+
+    context "with char prefix" do
+      it "adds prefix if not present" do
+        "foo".ensure_prefix('b').should eq("bfoo")
+        "foo".ensure_prefix('F').should eq("Ffoo")
+      end
+
+      it "does not add prefix if already present" do
+        "bfoo".ensure_prefix('b').should eq("bfoo")
+        "BFOO".ensure_prefix('B').should eq("BFOO")
+      end
+    end
+  end
+
+  it ".additive_identity" do
+    String.additive_identity.should be ""
   end
 end
 

@@ -56,18 +56,22 @@ describe "Semantic: pointer" do
   end
 
   it "types pointer of constant" do
-    result = assert_type("
+    assert_type("
       FOO = 1
       pointerof(FOO)
     ") { pointer_of(int32) }
   end
 
   it "pointer of class raises error" do
-    assert_error "pointerof(Int32)", "can't take address of Int32"
+    assert_error "pointerof(Int32)", "can't take address of Int32 because it's a Path. `pointerof` expects a variable or constant."
+  end
+
+  it "pointer of class raises error" do
+    assert_error "def foo; foo; end; pointerof(foo)", "can't take address of foo because it's a Call. `pointerof` expects a variable or constant."
   end
 
   it "pointer of value error" do
-    assert_error "pointerof(1)", "can't take address of 1"
+    assert_error "pointerof(1)", "can't take address of 1 because it's a NumberLiteral. `pointerof` expects a variable or constant."
   end
 
   it "types pointer value on typedef" do

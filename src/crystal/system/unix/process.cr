@@ -264,7 +264,7 @@ struct Crystal::System::Process
     end
 
     LibC.close(w)
-    reader_pipe = IO::FileDescriptor.new(r, blocking: false)
+    reader_pipe = IO::FileDescriptor.new(r)
 
     begin
       case reader_pipe.read_byte
@@ -361,7 +361,7 @@ struct Crystal::System::Process
       ret = LibC.dup2(src_io.fd, dst_io.fd)
       raise IO::Error.from_errno("dup2") if ret == -1
 
-      dst_io.blocking = true
+      FileDescriptor.set_blocking(dst_io.fd, true)
       dst_io.close_on_exec = false
     end
   end

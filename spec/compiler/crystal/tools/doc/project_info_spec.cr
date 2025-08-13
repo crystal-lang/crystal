@@ -16,11 +16,8 @@ end
 
 describe Crystal::Doc::ProjectInfo do
   around_each do |example|
-    with_tempfile("docs-project") do |tempdir|
-      Dir.mkdir tempdir
-      Dir.cd(tempdir) do
-        example.run
-      end
+    with_tempdir("docs-project") do
+      example.run
     end
   end
 
