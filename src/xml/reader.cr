@@ -1,31 +1,61 @@
 require "./libxml2"
 require "./parser_options"
 
+# `XML::Reader` is a parser for XML that iterates a XML document.
+#
+# ```
+# require "xml"
+#
+# reader = XML::Reader.new(<<-XML)
+#   <message>Hello XML!</message>
+#   XML
+# reader.read
+# reader.name # => "message"
+# reader.read
+# reader.value # => "Hello XML!"
+# ```
+#
+# This is an alternative approach to `XML.parse` which parses an entire document
+# into an XML data structure.
+# `XML::Reader` offers more control and does not need to store the XML document
+# in memory entirely. The latter is especially useful for large documents with
+# the `IO`-based constructor.
+#
+# WARNING: This type is not concurrency-safe.
 class XML::Reader
+  # Returns the errors reported while parsing.
+  getter errors = [] of XML::Error
+
+  @io : IO?
+
   # Creates a new reader from a string.
   #
   # See `XML::ParserOptions.default` for default options.
   def initialize(str : String, options : XML::ParserOptions = XML::ParserOptions.default)
     @reader = LibXML.xmlReaderForMemory(str, str.bytesize, nil, nil, options)
-    LibXML.xmlTextReaderSetErrorHandler @reader, ->(arg, msg, severity, locator) do
-      msg_str = String.new(msg).chomp
-      line_number = LibXML.xmlTextReaderLocatorLineNumber(locator)
-      raise Error.new(msg_str, line_number)
-    end
+    LibXML.xmlTextReaderSetStructuredErrorHandler(@reader, ->Error.structured_callback, Box.box(@errors))
   end
 
   # Creates a new reader from an IO.
   #
   # See `XML::ParserOptions.default` for default options.
-  def initialize(io : IO, options : XML::ParserOptions = XML::ParserOptions.default)
-    @reader = LibXML.xmlReaderForIO(
-      ->(context, buffer, length) { Box(IO).unbox(context).read(Slice.new(buffer, length)).to_i },
-      ->(context) { Box(IO).unbox(context).close; 0 },
-      Box(IO).box(io),
-      nil,
-      nil,
-      options
-    )
+  def initialize(@io : IO, options : XML::ParserOptions = XML::ParserOptions.default)
+    @reader = LibXML.xmlReaderForIO(->Reader.read_callback, ->Reader.close_callback, Box(IO).box(io), nil, nil, options)
+    LibXML.xmlTextReaderSetStructuredErrorHandler(@reader, ->Error.structured_callback, Box.box(@errors))
+  end
+
+  protected def self.read_callback(data : Void*, buffer : UInt8*, length : Int32) : Int32
+    Box(IO).unbox(data).read(Slice.new(buffer, length)).to_i
+  end
+
+  protected def self.close_callback(data : Void*) : Int32
+    Box(IO).unbox(data).close
+    0
+  end
+
+  # :nodoc:
+  def finalize
+    LibXML.xmlFreeTextReader(@reader)
   end
 
   # Moves the reader to the next node.
@@ -95,6 +125,7 @@ class XML::Reader
 
   # Moves to the `XML::Reader::Type::ATTRIBUTE` with the specified name.
   def move_to_attribute(name : String) : Bool
+    check_no_null_byte(name)
     LibXML.xmlTextReaderMoveToAttribute(@reader, name) == 1
   end
 
@@ -107,6 +138,7 @@ class XML::Reader
   # Gets the attribute content for the *attribute* given by name.
   # Returns `nil` if attribute is not found.
   def []?(attribute : String) : String?
+    check_no_null_byte(attribute)
     value = LibXML.xmlTextReaderGetAttribute(@reader, attribute)
     String.new(value) if value
   end
@@ -157,7 +189,15 @@ class XML::Reader
   # Returns `nil` if the node could not be expanded.
   def expand? : XML::Node?
     xml = LibXML.xmlTextReaderExpand(@reader)
-    XML::Node.new(xml) if xml
+    XML::Node.new(xml, document) if xml
+  end
+
+  def document : Document
+    @document ||= if doc = LibXML.xmlTextReaderCurrentDoc(@reader)
+                    Document.new(doc)
+                  else
+                    raise XML::Error.new("Failed to get current doc for XML::Reader", 0)
+                  end
   end
 
   # Returns the text content of the node.
@@ -166,8 +206,14 @@ class XML::Reader
     value ? String.new(value) : ""
   end
 
-  # Returns a reference to the underlying `LibXML::XMLTextReader`.
+  # :nodoc:
   def to_unsafe
     @reader
+  end
+
+  private def check_no_null_byte(attribute)
+    if attribute.byte_index(0)
+      raise XML::Error.new("Invalid attribute name: #{attribute.inspect} (contains null character)", 0)
+    end
   end
 end

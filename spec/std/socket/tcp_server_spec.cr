@@ -1,13 +1,12 @@
 {% skip_file if flag?(:wasm32) %}
 
 require "./spec_helper"
-require "../../support/win32"
 
 describe TCPServer, tags: "network" do
   describe ".new" do
     each_ip_family do |family, address|
       it "listens on local address" do
-        port = unused_local_port
+        port = unused_local_tcp_port
 
         server = TCPServer.new(address, port)
 
@@ -42,11 +41,17 @@ describe TCPServer, tags: "network" do
         error = expect_raises(Socket::Addrinfo::Error) do
           TCPServer.new(address, -12)
         end
-        error.os_error.should eq({% if flag?(:linux) %}Errno.new(LibC::EAI_SERVICE){% elsif flag?(:win32) %}WinError::WSATYPE_NOT_FOUND{% else %}Errno.new(LibC::EAI_NONAME){% end %})
+        error.os_error.should eq({% if flag?(:win32) %}
+          WinError::WSATYPE_NOT_FOUND
+        {% elsif (flag?(:linux) && !flag?(:android)) || flag?(:openbsd) %}
+          Errno.new(LibC::EAI_SERVICE)
+        {% else %}
+          Errno.new(LibC::EAI_NONAME)
+        {% end %})
       end
 
       describe "reuse_port" do
-        pending_win32 "raises when port is in use" do
+        it "raises when port is in use" do
           TCPServer.open(address, 0) do |server|
             expect_raises(Socket::BindError, "Could not bind to '#{address}:#{server.local_address.port}': ") do
               TCPServer.open(address, server.local_address.port) { }
@@ -54,7 +59,7 @@ describe TCPServer, tags: "network" do
           end
         end
 
-        pending_win32 "raises when not binding with reuse_port" do
+        it "raises when not binding with reuse_port" do
           TCPServer.open(address, 0, reuse_port: true) do |server|
             expect_raises(Socket::BindError) do
               TCPServer.open(address, server.local_address.port) { }
@@ -62,7 +67,7 @@ describe TCPServer, tags: "network" do
           end
         end
 
-        pending_win32 "raises when port is not ready to be reused" do
+        it "raises when port is not ready to be reused" do
           TCPServer.open(address, 0) do |server|
             expect_raises(Socket::BindError) do
               TCPServer.open(address, server.local_address.port, reuse_port: true) { }
@@ -70,7 +75,7 @@ describe TCPServer, tags: "network" do
           end
         end
 
-        pending_win32 "binds to used port with reuse_port = true" do
+        it "binds to used port with reuse_port = true" do
           TCPServer.open(address, 0, reuse_port: true) do |server|
             TCPServer.open(address, server.local_address.port, reuse_port: true) { }
           end
@@ -80,7 +85,7 @@ describe TCPServer, tags: "network" do
 
     describe "address resolution" do
       it "binds to localhost" do
-        server = TCPServer.new("localhost", unused_local_port)
+        server = TCPServer.new("localhost", unused_local_tcp_port)
         server.close
       end
 
@@ -88,33 +93,59 @@ describe TCPServer, tags: "network" do
         err = expect_raises(Socket::Error, "Hostname lookup for doesnotexist.example.org. failed") do
           TCPServer.new("doesnotexist.example.org.", 12345)
         end
-        err.os_error.should eq({% if flag?(:win32) %}WinError::WSAHOST_NOT_FOUND{% else %}Errno.new(LibC::EAI_NONAME){% end %})
+        # FIXME: Resolve special handling for win32. The error code handling should be identical.
+        {% if flag?(:win32) %}
+          [WinError::WSAHOST_NOT_FOUND, WinError::WSATRY_AGAIN].should contain err.os_error
+        {% elsif flag?(:android) || flag?(:netbsd) || flag?(:openbsd) %}
+          err.os_error.should eq(Errno.new(LibC::EAI_NODATA))
+        {% else %}
+          [Errno.new(LibC::EAI_NONAME), Errno.new(LibC::EAI_AGAIN)].should contain err.os_error
+        {% end %}
       end
 
       it "raises (rather than segfault on darwin) when host doesn't exist and port is 0" do
         err = expect_raises(Socket::Error, "Hostname lookup for doesnotexist.example.org. failed") do
           TCPServer.new("doesnotexist.example.org.", 0)
         end
-        err.os_error.should eq({% if flag?(:win32) %}WinError::WSAHOST_NOT_FOUND{% else %}Errno.new(LibC::EAI_NONAME){% end %})
+        # FIXME: Resolve special handling for win32. The error code handling should be identical.
+        {% if flag?(:win32) %}
+          [WinError::WSAHOST_NOT_FOUND, WinError::WSATRY_AGAIN].should contain err.os_error
+        {% elsif flag?(:android) || flag?(:netbsd) || flag?(:openbsd) %}
+          err.os_error.should eq(Errno.new(LibC::EAI_NODATA))
+        {% else %}
+          [Errno.new(LibC::EAI_NONAME), Errno.new(LibC::EAI_AGAIN)].should contain err.os_error
+        {% end %}
       end
     end
 
     it "binds to all interfaces" do
-      port = unused_local_port
-      TCPServer.open(port) do |server|
+      port = unused_local_tcp_port
+      TCPServer.open(Socket::IPAddress::UNSPECIFIED, port) do |server|
         server.local_address.port.should eq port
       end
     end
   end
 
-  {% if flag?(:linux) %}
+  {% if flag?(:linux) || flag?(:solaris) %}
     pending "settings"
   {% else %}
     it "settings" do
-      TCPServer.open("::", unused_local_port) do |server|
+      TCPServer.open("::", unused_local_tcp_port) do |server|
         (server.recv_buffer_size = 42).should eq 42
         server.recv_buffer_size.should eq 42
       end
     end
   {% end %}
+
+  describe "accept" do
+    it "sets close on exec flag" do
+      TCPServer.open("localhost", 0) do |server|
+        TCPSocket.open("localhost", server.local_address.port) do |client|
+          server.accept? do |sock|
+            sock.close_on_exec?.should eq CLOSE_ON_EXEC_AVAILABLE
+          end
+        end
+      end
+    end
+  end
 end

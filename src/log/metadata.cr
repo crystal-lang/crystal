@@ -30,11 +30,15 @@ class Log::Metadata
   # @first needs to be the last ivar of Metadata. The entries are allocated together with self
   @first = uninitialized Entry
 
-  def self.new(parent : Metadata? = nil, entries : NamedTuple | Hash = NamedTuple.new)
+  def self.new(parent : Metadata? = nil, entries : NamedTuple | Hash = NamedTuple.new) : self
     data_size = instance_sizeof(self) + sizeof(Entry) * {entries.size + (parent.try(&.max_total_size) || 0) - 1, 0}.max
     data = GC.malloc(data_size).as(self)
     data.setup(parent, entries)
     data
+  end
+
+  def dup : self
+    self
   end
 
   protected def setup(@parent : Metadata?, entries : NamedTuple | Hash)
@@ -136,7 +140,7 @@ class Log::Metadata
     fetch(key) { nil }
   end
 
-  def fetch(key)
+  def fetch(key, &)
     entry = find_entry(key)
     entry ? entry[:value] : yield key
   end
@@ -158,7 +162,7 @@ class Log::Metadata
     nil
   end
 
-  def ==(other : Metadata)
+  def ==(other : Metadata) : Bool
     self_kv = self.to_a
     other_kv = other.to_a
 
@@ -195,7 +199,7 @@ class Log::Metadata
   end
 
   struct Value
-    Crystal.datum types: {nil: Nil, bool: Bool, i: Int32, i64: Int64, f: Float32, f64: Float64, s: String, time: Time}, hash_key_type: String, immutable: false, target_type: Log::Metadata::Value
+    Crystal.datum types: {nil: Nil, bool: Bool, i: Int32, i64: Int64, u: UInt32, u64: UInt64, f: Float32, f64: Float64, s: String, time: Time}, hash_key_type: String, immutable: false, target_type: Log::Metadata::Value
 
     # Creates `Log::Metadata` from the given *values*.
     # All keys are converted to `String`
@@ -212,7 +216,7 @@ class Log::Metadata
     end
 
     # :nodoc:
-    def self.to_metadata_value(value) : Metadata::Value
+    def self.to_metadata_value(value : _) : Metadata::Value
       value.is_a?(Value) ? value : Value.new(value)
     end
   end
@@ -223,7 +227,19 @@ class Fiber
   getter logging_context : Log::Metadata { Log::Metadata.empty }
 
   # :nodoc:
-  def logging_context=(value : Log::Metadata)
+  def logging_context=(value : Log::Metadata) : Log::Metadata
     @logging_context = value
+  end
+end
+
+class String
+  def ==(other : Log::Metadata::Value)
+    other == self
+  end
+end
+
+struct Value
+  def ==(other : Log::Metadata::Value)
+    other == self
   end
 end

@@ -1,12 +1,13 @@
 require "../../../spec_helper"
 require "http/server/handler"
 require "http/client/response"
+require "../../../../support/tempfile"
 
-private def handle(request, fallthrough = true, directory_listing = true, ignore_body = false, decompress = true)
+private def handle(request, *, fallthrough = true, directory_listing = true, ignore_body = false, decompress = true, directory = datapath("static_file_handler"))
   io = IO::Memory.new
   response = HTTP::Server::Response.new(io)
   context = HTTP::Server::Context.new(request, response)
-  handler = HTTP::StaticFileHandler.new datapath("static_file_handler"), fallthrough, directory_listing
+  handler = HTTP::StaticFileHandler.new directory, fallthrough, directory_listing
   handler.call context
   response.close
   io.rewind
@@ -30,6 +31,8 @@ describe HTTP::StaticFileHandler do
     File.touch(Path[datapath("static_file_handler"), Path.posix("back\\slash.txt")])
     response = handle HTTP::Request.new("GET", "/back\\slash.txt"), ignore_body: false
     response.status_code.should eq 200
+  ensure
+    File.delete(Path[datapath("static_file_handler"), Path.posix("back\\slash.txt")])
   end
 
   it "adds Etag header" do
@@ -175,6 +178,243 @@ describe HTTP::StaticFileHandler do
     end
   end
 
+  context "when a Range header is provided" do
+    context "int range" do
+      it "serves a byte range" do
+        headers = HTTP::Headers{"Range" => "bytes=0-2"}
+        response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+        response.status_code.should eq(206)
+        response.headers["Content-Range"]?.should eq "bytes 0-2/12"
+        response.body.should eq "Hel"
+      end
+
+      it "serves a single byte" do
+        headers = HTTP::Headers{"Range" => "bytes=0-0"}
+        response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+        response.status_code.should eq(206)
+        response.headers["Content-Range"]?.should eq "bytes 0-0/12"
+        response.body.should eq "H"
+      end
+
+      it "serves zero bytes" do
+        headers = HTTP::Headers{"Range" => "bytes=0-0"}
+        response = handle HTTP::Request.new("GET", "/empty.txt", headers)
+
+        response.status_code.should eq(416)
+        response.headers["Content-Range"]?.should eq "bytes */0"
+        response.body.should eq ""
+      end
+
+      it "serves an open-ended byte range" do
+        headers = HTTP::Headers{"Range" => "bytes=6-"}
+        response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+        response.status_code.should eq(206)
+        response.headers["Content-Range"]?.should eq "bytes 6-11/12"
+        response.body.should eq "world\n"
+      end
+
+      it "serves multiple byte ranges (separator without whitespace)" do
+        headers = HTTP::Headers{"Range" => "bytes=0-1,6-7"}
+
+        response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+        response.status_code.should eq(206)
+        response.headers["Content-Range"]?.should be_nil
+        count = 0
+        MIME::Multipart.parse(response) do |headers, part|
+          chunk = part.gets_to_end
+          case range = headers["Content-Range"]
+          when "bytes 0-1/12"
+            chunk.should eq "He"
+          when "bytes 6-7/12"
+            chunk.should eq "wo"
+          else
+            fail "Unknown range: #{range.inspect}"
+          end
+          count += 1
+        end
+        count.should eq 2
+      end
+
+      it "serves multiple byte ranges (separator with whitespace)" do
+        headers = HTTP::Headers{"Range" => "bytes=0-1, 6-7"}
+
+        response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+        response.status_code.should eq(206)
+        response.headers["Content-Range"]?.should be_nil
+        count = 0
+        MIME::Multipart.parse(response) do |headers, part|
+          chunk = part.gets_to_end
+          case range = headers["Content-Range"]
+          when "bytes 0-1/12"
+            chunk.should eq "He"
+          when "bytes 6-7/12"
+            chunk.should eq "wo"
+          else
+            fail "Unknown range: #{range.inspect}"
+          end
+          count += 1
+        end
+        count.should eq 2
+      end
+
+      it "end of the range is larger than the file size" do
+        headers = HTTP::Headers{"Range" => "bytes=6-14"}
+
+        response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+        response.status_code.should eq 206
+        response.headers["Content-Range"]?.should eq "bytes 6-11/12"
+        response.body.should eq "world\n"
+      end
+
+      it "start of the range is larger than the file size" do
+        headers = HTTP::Headers{"Range" => "bytes=14-15"}
+
+        response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+        response.status_code.should eq 416
+        response.headers["Content-Range"]?.should eq "bytes */12"
+      end
+
+      it "start >= file_size" do
+        headers = HTTP::Headers{"Range" => "bytes=12-"}
+        response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+        response.status_code.should eq(416)
+        response.headers["Content-Range"]?.should eq "bytes */12"
+      end
+    end
+
+    describe "suffix range" do
+      it "partial" do
+        headers = HTTP::Headers{"Range" => "bytes=-6"}
+
+        response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+        response.status_code.should eq(206)
+        response.headers["Content-Range"]?.should eq "bytes 6-11/12"
+        response.body.should eq "world\n"
+      end
+
+      it "more bytes than content" do
+        headers = HTTP::Headers{"Range" => "bytes=-15"}
+
+        response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+        response.status_code.should eq(206)
+        response.headers["Content-Range"]?.should eq "bytes 0-11/12"
+        response.body.should eq "Hello world\n"
+      end
+
+      it "zero" do
+        headers = HTTP::Headers{"Range" => "bytes=-0"}
+
+        response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+        response.status_code.should eq(400)
+        response.headers["Content-Range"]?.should be_nil
+      end
+
+      it "zero" do
+        headers = HTTP::Headers{"Range" => "bytes=-0"}
+
+        response = handle HTTP::Request.new("GET", "/empty.txt", headers)
+
+        response.status_code.should eq(400)
+        response.headers["Content-Range"]?.should be_nil
+      end
+
+      it "empty file" do
+        headers = HTTP::Headers{"Range" => "bytes=-1"}
+
+        response = handle HTTP::Request.new("GET", "/empty.txt", headers)
+
+        response.status_code.should eq(200)
+        response.headers["Content-Range"]?.should be_nil
+      end
+
+      it "negative size" do
+        headers = HTTP::Headers{"Range" => "bytes=--2"}
+
+        response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+        response.status_code.should eq(400)
+        response.headers["Content-Range"]?.should be_nil
+      end
+    end
+
+    describe "invalid Range syntax" do
+      it "byte number without dash" do
+        headers = HTTP::Headers{"Range" => "bytes=1"}
+        response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+        response.status_code.should eq(400)
+      end
+
+      it "start > end" do
+        headers = HTTP::Headers{"Range" => "bytes=2-1"}
+        response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+        response.status_code.should eq(400)
+      end
+
+      it "negative end" do
+        headers = HTTP::Headers{"Range" => "bytes=1--2"}
+        response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+        response.status_code.should eq(400)
+      end
+
+      it "open range with negative end" do
+        headers = HTTP::Headers{"Range" => "bytes=--2"}
+        response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+        response.status_code.should eq(400)
+      end
+
+      it "open range with negative end" do
+        headers = HTTP::Headers{"Range" => "bytes=--2"}
+        response = handle HTTP::Request.new("GET", "/empty.txt", headers)
+
+        response.status_code.should eq(400)
+      end
+
+      it "unsupported unit" do
+        headers = HTTP::Headers{"Range" => "chars=1-2"}
+        response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+        response.status_code.should eq(416)
+        response.headers["Content-Range"]?.should eq "bytes */12"
+      end
+
+      it "multiple dashes" do
+        headers = HTTP::Headers{"Range" => "bytes=1-2-3"}
+        response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+        response.status_code.should eq(400)
+      end
+
+      it "not a number" do
+        headers = HTTP::Headers{"Range" => "bytes=a-b"}
+        response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+        response.status_code.should eq(400)
+      end
+
+      it "not a range" do
+        headers = HTTP::Headers{"Range" => "bytes=-"}
+        response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+        response.status_code.should eq(400)
+      end
+    end
+  end
+
   it "lists directory's entries" do
     response = handle HTTP::Request.new("GET", "/")
     response.status_code.should eq(200)
@@ -184,6 +424,29 @@ describe HTTP::StaticFileHandler do
   it "does not list directory's entries when directory_listing is set to false" do
     response = handle HTTP::Request.new("GET", "/"), directory_listing: false
     response.status_code.should eq(404)
+  end
+
+  it "does not redirect directory when directory_listing=false" do
+    response = handle HTTP::Request.new("GET", "/foo"), directory_listing: false
+    response.status_code.should eq(404)
+  end
+
+  it "redirect directory when directory_listing=true" do
+    response = handle HTTP::Request.new("GET", "/foo"), directory_listing: true
+    response.status_code.should eq(302)
+    response.headers["Location"].should eq "/foo/"
+  end
+
+  it "preserves uri components during redirect" do
+    response = handle HTTP::Request.new("GET", "/foo?ami=kept#somefragment"), directory_listing: true
+    response.status_code.should eq(302)
+    response.headers["Location"].should eq "/foo/?ami=kept#somefragment"
+  end
+
+  it "does not double encode query parameters when redirecting" do
+    response = handle HTTP::Request.new("GET", "/foo?k=%26k%3Dv"), directory_listing: true
+    response.status_code.should eq(302)
+    response.headers["Location"].should eq "/foo/?k=%26k%3Dv"
   end
 
   it "does not serve a not found file" do
@@ -210,7 +473,7 @@ describe HTTP::StaticFileHandler do
     %w(POST PUT DELETE).each do |method|
       response = handle HTTP::Request.new(method, "/test.txt")
       response.status_code.should eq(404)
-      response = handle HTTP::Request.new(method, "/test.txt"), false
+      response = handle HTTP::Request.new(method, "/test.txt"), fallthrough: false
       response.status_code.should eq(405)
       response.headers["Allow"].should eq("GET, HEAD")
     end
@@ -272,7 +535,7 @@ describe HTTP::StaticFileHandler do
 
   it "still serve compressed content when modification time is very close" do
     modification_time = File.info(datapath("static_file_handler", "test.txt")).modification_time
-    File.touch datapath("static_file_handler", "test.txt.gz"), modification_time - 1.microsecond
+    File.touch datapath("static_file_handler", "test.txt.gz"), modification_time - 1.millisecond
 
     headers = HTTP::Headers{"Accept-Encoding" => "gzip"}
     response = handle HTTP::Request.new("GET", "/test.txt", headers), decompress: false
@@ -286,5 +549,26 @@ describe HTTP::StaticFileHandler do
     headers = HTTP::Headers{"Accept-Encoding" => "gzip"}
     response = handle HTTP::Request.new("GET", "/test.txt", headers)
     response.headers["Content-Encoding"]?.should be_nil
+  end
+
+  it "returns 404 for file error" do
+    with_tempdir do
+      File.symlink("nonexistent.txt", "broken-symlink.txt")
+      response = handle HTTP::Request.new("GET", "/broken-symlink.txt")
+      response.status_code.should eq(404)
+    end
+  end
+
+  it "returns 404 for unreadable file" do
+    with_tempdir do
+      File.write("forbidden.txt", "not for your eyes")
+      File.chmod("forbidden.txt", File::Permissions::None)
+
+      # FIXME: Setting permissions does not work on all systems. Even the
+      # permissions recheck is not sufficient (see https://github.com/crystal-lang/crystal/pull/16025#issuecomment-3112225515).
+      pending! if File.info("forbidden.txt").permissions.owner_read? || (File.read("forbidden.txt") rescue nil)
+      response = handle HTTP::Request.new("GET", "/forbidden.txt"), directory: "."
+      response.status_code.should eq(404)
+    end
   end
 end

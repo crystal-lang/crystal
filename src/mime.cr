@@ -2,6 +2,8 @@ require "crystal/system/mime"
 
 # This module implements a global MIME registry.
 #
+# NOTE: To use `MIME`, you must explicitly import it with `require "mime"`
+#
 # ```
 # require "mime"
 #
@@ -146,7 +148,7 @@ module MIME
   #
   # A case-sensitive search is tried first, if this yields no result, it is
   # matched case-insensitive. Returns *default* if *extension* is not registered.
-  def self.from_extension(extension : String, default) : String
+  def self.from_extension(extension : String, default : String) : String
     from_extension(extension) { default }
   end
 
@@ -180,7 +182,7 @@ module MIME
   #
   # A case-sensitive search is tried first, if this yields no result, it is
   # matched case-insensitive. Returns *default* if extension is not registered.
-  def self.from_filename(filename : String | Path, default) : String
+  def self.from_filename(filename : String | Path, default : String) : String
     from_extension(File.extname(filename.to_s), default)
   end
 
@@ -230,8 +232,7 @@ module MIME
     @@types[extension] = type
     @@types_lower[extension.downcase] = type
 
-    type_extensions = @@extensions[mediatype] ||= Set(String).new
-    type_extensions << extension
+    @@extensions.put_if_absent(mediatype) { Set(String).new } << extension
   end
 
   # Returns all extensions registered for *type*.

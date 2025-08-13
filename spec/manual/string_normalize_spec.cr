@@ -1,6 +1,6 @@
 require "spec"
 require "http/client"
-require "../support/string"
+require "spec/helpers/string"
 
 UCD_ROOT = "http://www.unicode.org/Public/#{Unicode::VERSION}/ucd/"
 
@@ -27,31 +27,9 @@ private struct CodepointsEqualExpectation
   end
 end
 
-# same as `assert_prints`, but uses `CodepointsEqualExpectation` instead of `eq`
 private macro assert_prints_codepoints(call, str, desc, *, file = __FILE__, line = __LINE__)
   %expectation = CodepointsEqualExpectation.new(({{ str }}).as(String), {{ desc }})
-
-  %result = {{ call }}
-  %result.should be_a(String), file: {{ file }}, line: {{ line }}
-  %result.should %expectation, file: {{ file }}, line: {{ line }}
-
-  String.build do |io|
-    {% if call.receiver %}{{ call.receiver }}.{% end %}{{ call.name }}(
-      io,
-      {% for arg in call.args %} {{ arg }}, {% end %}
-      {% if call.named_args %} {% for narg in call.named_args %} {{ narg.name }}: {{ narg.value }}, {% end %} {% end %}
-    ) {{ call.block }}
-  end.should %expectation, file: {{ file }}, line: {{ line }}
-
-  {% unless flag?(:win32) %}
-    string_build_via_utf16 do |io|
-      {% if call.receiver %}{{ call.receiver }}.{% end %}{{ call.name }}(
-        io,
-        {% for arg in call.args %} {{ arg }}, {% end %}
-        {% if call.named_args %} {% for narg in call.named_args %} {{ narg.name }}: {{ narg.value }}, {% end %} {% end %}
-      ) {{ call.block }}
-    end.should %expectation, file: {{ file }}, line: {{ line }}
-  {% end %}
+  assert_prints({{ call }}, should: %expectation, file: {{ file }}, line: {{ line }})
 end
 
 private def assert_normalized(source, target, form : Unicode::NormalizationForm, *, file = __FILE__, line = __LINE__)

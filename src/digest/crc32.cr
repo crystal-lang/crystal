@@ -2,6 +2,8 @@ require "lib_z"
 require "./digest"
 
 # Implements the CRC32 checksum algorithm.
+#
+# NOTE: To use `CRC32`, you must explicitly import it with `require "digest/crc32"`
 class Digest::CRC32 < ::Digest
   extend ClassMethods
 
@@ -20,11 +22,14 @@ class Digest::CRC32 < ::Digest
   end
 
   def self.update(data, crc32 : UInt32) : UInt32
-    slice = data.to_slice
-    LibZ.crc32(crc32, slice, slice.size).to_u32
+    update data.to_slice, crc32
   end
 
-  def self.combine(crc1 : UInt32, crc2 : UInt32, len) : UInt32
+  def self.update(data : Bytes, crc32 : UInt32) : UInt32
+    LibZ.crc32(crc32, data, data.size).to_u32
+  end
+
+  def self.combine(crc1 : UInt32, crc2 : UInt32, len : Int32) : UInt32
     LibZ.crc32_combine(crc1, crc2, len).to_u32
   end
 

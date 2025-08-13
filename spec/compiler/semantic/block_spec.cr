@@ -676,6 +676,16 @@ describe "Block inference" do
       "expected block type to be a function type, not Int32"
   end
 
+  it "errors if proc is not instantiated" do
+    assert_error <<-CR, "can't create an instance of generic class Proc(*T, R) without specifying its type vars"
+      def capture(&block : Proc)
+        block
+      end
+
+      capture { }
+      CR
+  end
+
   it "passes #262" do
     assert_type(%(
       require "prelude"
@@ -1318,7 +1328,7 @@ describe "Block inference" do
   end
 
   it "auto-unpacks tuple, captured empty block" do
-    assert_no_errors <<-CR, inject_primitives: true
+    assert_no_errors <<-CRYSTAL, inject_primitives: true
       def foo(&block : {Int32, Char} -> _)
         tup = {1, 'a'}
         block.call tup
@@ -1326,7 +1336,7 @@ describe "Block inference" do
 
       foo do |x, y|
       end
-      CR
+      CRYSTAL
   end
 
   it "auto-unpacks tuple, captured block with multiple statements" do
@@ -1457,18 +1467,18 @@ describe "Block inference" do
   end
 
   it "reports mismatch with generic argument type in output type" do
-    assert_error(<<-CR, "expected block to return String, not Int32")
+    assert_error(<<-CRYSTAL, "expected block to return String, not Int32")
       class Foo(T)
         def foo(&block : -> T)
         end
       end
 
       Foo(String).new.foo { 1 }
-      CR
+      CRYSTAL
   end
 
   it "reports mismatch with generic argument type in input type" do
-    assert_error(<<-CR, "argument #1 of yield expected to be String, not Int32")
+    assert_error(<<-CRYSTAL, "argument #1 of yield expected to be String, not Int32")
       class Foo(T)
         def foo(&block : T -> )
           yield 1
@@ -1476,7 +1486,19 @@ describe "Block inference" do
       end
 
       Foo(String).new.foo {}
-      CR
+      CRYSTAL
+  end
+
+  it "unpacks block argument" do
+    assert_type(%(
+      def foo
+        yield({1, 'a'})
+      end
+
+      foo do |(x, y)|
+        {x, y}
+      end
+      )) { tuple_of([int32, char]) }
   end
 
   it "correctly types unpacked tuple block arg after block (#3339)" do
@@ -1522,14 +1544,14 @@ describe "Block inference" do
   end
 
   it "doesn't crash on cleaning up typeof node without dependencies (#8669)" do
-    assert_no_errors <<-CR
+    assert_no_errors <<-CRYSTAL
       def foo(&)
       end
 
       foo do
         typeof(bar)
       end
-      CR
+      CRYSTAL
   end
 
   it "respects block arg restriction when block has a splat parameter (#6473)" do
@@ -1565,7 +1587,7 @@ describe "Block inference" do
   end
 
   it "allows underscore in block return type even if the return type can't be computed" do
-    assert_no_errors <<-CR
+    assert_no_errors <<-CRYSTAL
       def foo(& : -> _)
         yield
       end
@@ -1577,11 +1599,11 @@ describe "Block inference" do
       end
 
       recursive
-      CR
+      CRYSTAL
   end
 
   it "doesn't fail with 'already had enclosing call' (#11200)" do
-    assert_no_errors <<-CR
+    assert_no_errors <<-CRYSTAL
       def capture(&block)
         block
       end
@@ -1606,6 +1628,17 @@ describe "Block inference" do
 
       foo = Bar(Bool).new.as(Foo)
       foo.foo
+      CRYSTAL
+  end
+
+  it "renders expected block return type of a free variable on mismatch" do
+    assert_error(<<-CR, "expected block to return Int64, not String")
+      struct Foo
+        def bar(arg : U, &block : -> U) forall U
+        end
+      end
+
+      Foo.new.bar(1_i64) { "hi" }
       CR
   end
 end

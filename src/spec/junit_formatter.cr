@@ -34,14 +34,14 @@ module Spec
       io.close
     end
 
-    def self.file(output_path : Path)
+    def self.file(cli : CLI, output_path : Path)
       if output_path.extension != ".xml"
         output_path = output_path.join("output.xml")
       end
 
       Dir.mkdir_p(output_path.dirname)
       file = File.new(output_path, "w")
-      JUnitFormatter.new(file)
+      JUnitFormatter.new(cli, file)
     end
 
     private def escape_xml_attr(value)
@@ -67,6 +67,8 @@ module Spec
       HTML.escape(classname(result), io)
       io << %(" name=")
       HTML.escape(escape_xml_attr(result.description), io)
+      io << %(" line=")
+      io << result.line
 
       if elapsed = result.elapsed
         io << %(" time=")

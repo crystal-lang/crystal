@@ -1130,12 +1130,12 @@ describe "Semantic: annotation" do
     end
 
     it "doesn't carry link annotation from lib to fun" do
-      assert_no_errors <<-CR
+      assert_no_errors <<-CRYSTAL
         @[Link("foo")]
         lib LibFoo
           fun foo
         end
-        CR
+        CRYSTAL
     end
 
     it "finds annotation in generic parent (#7885)" do
@@ -1271,13 +1271,13 @@ describe "Semantic: annotation" do
   end
 
   it "doesn't bleed annotation from class into class variable (#8314)" do
-    assert_no_errors <<-CR
+    assert_no_errors <<-CRYSTAL
       annotation Attr; end
 
       @[Attr]
       class Bar
         @@x = 0
       end
-      CR
+      CRYSTAL
   end
 end

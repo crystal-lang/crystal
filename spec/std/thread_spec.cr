@@ -1,16 +1,8 @@
-{% skip_file if flag?(:win32) %} # FIXME: enable after #11647
+require "./spec_helper"
+require "../support/thread"
 
-require "spec"
-
-{% if flag?(:musl) %}
-  # FIXME: These thread specs occasionally fail on musl/alpine based ci, so
-  # they're disabled for now to reduce noise.
-  # See https://github.com/crystal-lang/crystal/issues/8738
-  pending Thread
-  {% skip_file %}
-{% end %}
-
-describe Thread do
+# interpreter doesn't support threads yet (#14287)
+pending_interpreted describe: Thread do
   it "allows passing an argumentless fun to execute" do
     a = 0
     thread = Thread.new { a = 1; 10 }
@@ -50,5 +42,22 @@ describe Thread do
     end
 
     thread.join
+  end
+
+  it "names the thread" do
+    {% if flag?(:execution_context) %}
+      Thread.current.name.should eq("DEFAULT")
+    {% else %}
+      Thread.current.name.should be_nil
+    {% end %}
+
+    name = nil
+    thread = Thread.new(name: "some-name") do
+      name = Thread.current.name
+    end
+    thread.name.should eq("some-name")
+
+    thread.join
+    name.should eq("some-name")
   end
 end

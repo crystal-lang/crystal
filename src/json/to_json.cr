@@ -98,6 +98,14 @@ class Array
   end
 end
 
+struct StaticArray
+  def to_json(json : JSON::Builder) : Nil
+    json.array do
+      each &.to_json(json)
+    end
+  end
+end
+
 class Deque
   def to_json(json : JSON::Builder) : Nil
     json.array do
@@ -163,9 +171,17 @@ struct NamedTuple
   end
 end
 
+class Time::Location
+  def to_json(json : JSON::Builder) : Nil
+    json.string(to_s)
+  end
+end
+
 struct Time::Format
   def to_json(value : Time, json : JSON::Builder) : Nil
-    format(value).to_json(json)
+    json.string do |io|
+      format(value, io)
+    end
   end
 end
 
@@ -205,7 +221,7 @@ struct Enum
   #
   # `ValueConverter.to_json` offers a different serialization strategy based on the
   # member value.
-  def to_json(json : JSON::Builder)
+  def to_json(json : JSON::Builder) : Nil
     {% if @type.annotation(Flags) %}
       json.array do
         each do |member, _value|
@@ -266,7 +282,7 @@ end
 
 struct Time
   # Emits a string formatted according to [RFC 3339](https://tools.ietf.org/html/rfc3339)
-  # ([ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
+  # ([ISO 8601](https://web.archive.org/web/20250306154328/http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
   #
   # The JSON format itself does not specify a time data type, this method just
   # assumes that a string holding a RFC 3339 time format will be interpreted as
@@ -274,7 +290,9 @@ struct Time
   #
   # See `#from_json` for reference.
   def to_json(json : JSON::Builder) : Nil
-    json.string(Time::Format::RFC_3339.format(self, fraction_digits: 0))
+    json.string do |io|
+      Time::Format::RFC_3339.format(self, io, fraction_digits: 0)
+    end
   end
 end
 
@@ -353,8 +371,8 @@ end
 # end
 #
 # timestamp = TimestampHash.from_json(%({"birthdays":{"foo":1459859781,"bar":1567628762}}))
-# timestamp.birthdays # => {"foo" => 2016-04-05 12:36:21 UTC, "bar" => 2019-09-04 20:26:02 UTC)}
-# timestamp.to_json   # => {"birthdays":{"foo":1459859781,"bar":1567628762}}
+# timestamp.birthdays # => {"foo" => 2016-04-05 12:36:21 UTC, "bar" => 2019-09-04 20:26:02 UTC}
+# timestamp.to_json   # => %({"birthdays":{"foo":1459859781,"bar":1567628762}})
 # ```
 #
 # `JSON::HashValueConverter.new` should be used if the nested converter is also
@@ -371,8 +389,8 @@ end
 # end
 #
 # timestamp = TimestampHash.from_json(%({"birthdays":{"foo":"Apr 5, 2016","bar":"Sep 4, 2019"}}))
-# timestamp.birthdays # => {"foo" => 2016-04-05 00:00:00 UTC, "bar" => 2019-09-04 00:00:00 UTC)}
-# timestamp.to_json   # => {"birthdays":{"foo":"Apr 5, 2016","bar":"Sep 4, 2019"}}
+# timestamp.birthdays # => {"foo" => 2016-04-05 00:00:00 UTC, "bar" => 2019-09-04 00:00:00 UTC}
+# timestamp.to_json   # => %({"birthdays":{"foo":"Apr 5, 2016","bar":"Sep 4, 2019"}})
 # ```
 #
 # This implies that `JSON::HashValueConverter(T)` and

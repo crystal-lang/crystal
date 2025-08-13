@@ -18,6 +18,17 @@ describe IO::Memory do
     io.gets_to_end.should eq(s)
   end
 
+  it "write raises EOFError" do
+    io = IO::Memory.new
+    initial_capacity = io.@capacity
+    expect_raises(IO::EOFError) do
+      io.write Slice.new(Pointer(UInt8).null, Int32::MAX)
+    end
+    # nothing get's written
+    io.bytesize.should eq 0
+    io.@capacity.should eq initial_capacity
+  end
+
   it "reads byte" do
     io = IO::Memory.new("abc")
     io.read_byte.should eq('a'.ord)
@@ -103,14 +114,14 @@ describe IO::Memory do
     io = IO::Memory.new("foo\r\nbar\n")
     io.gets.should eq("foo")
     io.gets.should eq("bar")
-    io.gets.should eq(nil)
+    io.gets.should be_nil
   end
 
   it "reads each line with chomp = false" do
     io = IO::Memory.new("foo\r\nbar\r\n")
     io.gets(chomp: false).should eq("foo\r\n")
     io.gets(chomp: false).should eq("bar\r\n")
-    io.gets(chomp: false).should eq(nil)
+    io.gets(chomp: false).should be_nil
   end
 
   it "gets with char as delimiter" do
@@ -118,7 +129,7 @@ describe IO::Memory do
     io.gets('w').should eq("hello w")
     io.gets('r').should eq("or")
     io.gets('r').should eq("ld")
-    io.gets('r').should eq(nil)
+    io.gets('r').should be_nil
   end
 
   it "does gets with char and limit" do
@@ -337,14 +348,14 @@ describe IO::Memory do
     io = IO::Memory.new
     io.pos = 1000
     io.print 'a'
-    io.to_slice.to_a.should eq([0] * 1000 + [97])
+    io.to_slice.should eq(Bytes.new(1001).tap { |bytes| bytes[-1] = 97 })
   end
 
   it "writes past end with write_byte" do
     io = IO::Memory.new
     io.pos = 1000
     io.write_byte 'a'.ord.to_u8
-    io.to_slice.to_a.should eq([0] * 1000 + [97])
+    io.to_slice.should eq(Bytes.new(1001).tap { |bytes| bytes[-1] = 97 })
   end
 
   it "reads at offset" do
@@ -494,4 +505,26 @@ describe IO::Memory do
       end
     end
   {% end %}
+
+  it "allocates for > 1 GB", tags: %w[slow] do
+    io = IO::Memory.new
+    mbstring = "a" * 1024 * 1024
+    1024.times { io << mbstring }
+
+    io.bytesize.should eq(1 << 30)
+    io.@capacity.should eq 1 << 30
+
+    io << mbstring
+
+    io.bytesize.should eq (1 << 30) + (1 << 20)
+    io.@capacity.should eq Int32::MAX
+
+    1022.times { io << mbstring }
+
+    io.write mbstring.to_slice[0..-4]
+    io << "a"
+    expect_raises(IO::EOFError) do
+      io << "a"
+    end
+  end
 end

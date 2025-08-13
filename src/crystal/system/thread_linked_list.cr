@@ -15,12 +15,19 @@ class Thread
     # stop-the-world situations, where a paused thread could have acquired the
     # lock to push/delete a node, while still being "safe" to iterate (but only
     # during a stop-the-world).
-    def unsafe_each : Nil
+    def unsafe_each(&) : Nil
       node = @head
 
       while node
         yield node
         node = node.next
+      end
+    end
+
+    # Safely iterates the list.
+    def each(&) : Nil
+      @mutex.synchronize do
+        unsafe_each { |node| yield node }
       end
     end
 
@@ -47,16 +54,21 @@ class Thread
     # `#unsafe_each` until the method has returned.
     def delete(node : T) : Nil
       @mutex.synchronize do
-        if previous = node.previous
-          previous.next = node.next
+        previous = node.previous
+        _next = node.next
+
+        if previous
+          node.previous = nil
+          previous.next = _next
         else
-          @head = node.next
+          @head = _next
         end
 
-        if _next = node.next
-          _next.previous = node.previous
+        if _next
+          node.next = nil
+          _next.previous = previous
         else
-          @tail = node.previous
+          @tail = previous
         end
       end
     end

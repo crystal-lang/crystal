@@ -39,7 +39,9 @@ require "./float/printer"
 struct Float
   alias Primitive = Float32 | Float64
 
+  # Negates this value's sign.
   def -
+    # fallback implementation; does not handle IEEE 754 signed zeros correctly
     self.class.zero - self
   end
 
@@ -51,11 +53,18 @@ struct Float
     modulo(other)
   end
 
+  # Returns whether this value is a not-a-number.
+  #
+  # This includes both quiet and signalling NaNs from IEEE 754.
   def nan? : Bool
     !(self == self)
   end
 
+  # Checks whether this value is infinite. Returns `1` if this value is positive
+  # infinity, `-1` if this value is negative infinity, or `nil` otherwise.
   def infinite? : Int32?
+    # fallback implementation
+    # TODO: consider using https://llvm.org/docs/LangRef.html#llvm-is-fpclass-intrinsic
     if nan? || self == 0 || self != 2 * self
       nil
     else
@@ -63,6 +72,8 @@ struct Float
     end
   end
 
+  # Returns whether this value is finite, i.e. it is neither infinite nor a
+  # not-a-number.
   def finite? : Bool
     !nan? && !infinite?
   end
@@ -86,11 +97,6 @@ struct Float
 
       mod - other
     end
-  end
-
-  # See `Object#hash(hasher)`
-  def hash(hasher)
-    hasher.float(self)
   end
 
   # Writes this float to the given *io* in the given *format*.
@@ -129,8 +135,10 @@ struct Float32
   MIN_10_EXP = -37
   # The maximum possible power of 10 exponent (such that 10**MAX_10_EXP is representable)
   MAX_10_EXP = 38
-  # Smallest representable positive value
+  # Smallest normal positive value, whose previous representable value is subnormal
   MIN_POSITIVE = 1.17549435e-38_f32
+  # Smallest representable positive value, whose previous representable value is zero
+  MIN_SUBNORMAL = 1.0e-45_f32
 
   # Returns a `Float32` by invoking `String#to_f32` on *value*.
   #
@@ -152,8 +160,83 @@ struct Float32
     value.to_f32!
   end
 
+  # Returns a `Float32` by parsing *str* as a hexadecimal-significand string, or
+  # `nil` if parsing fails.
+  #
+  # The string format is defined in section 5.12.3 of IEEE 754-2008, and is the
+  # same as the `%a` specifier for `sprintf`. Unlike e.g. `String#to_f`,
+  # whitespace and underscores are not allowed. Non-finite values are also
+  # recognized.
+  #
+  # ```
+  # Float32.parse_hexfloat?("0x123.456p7")     # => 37282.6875_f32
+  # Float32.parse_hexfloat?("0x1.fffffep+127") # => Float32::MAX
+  # Float32.parse_hexfloat?("-inf")            # => -Float32::INFINITY
+  # Float32.parse_hexfloat?("0x1")             # => nil
+  # Float32.parse_hexfloat?("a.bp+3")          # => nil
+  # ```
+  def self.parse_hexfloat?(str : String) : self?
+    Float::Printer::Hexfloat(self, UInt32).to_f(str) { nil }
+  end
+
+  # Returns a `Float32` by parsing *str* as a hexadecimal-significand string.
+  #
+  # The string format is defined in section 5.12.3 of IEEE 754-2008, and is the
+  # same as the `%a` specifier for `sprintf`. Unlike e.g. `String#to_f`,
+  # whitespace and underscores are not allowed. Non-finite values are also
+  # recognized.
+  #
+  # Raises `ArgumentError` if *str* is not a valid hexadecimal-significand
+  # string.
+  #
+  # ```
+  # Float32.parse_hexfloat("0x123.456p7")     # => 37282.6875_f32
+  # Float32.parse_hexfloat("0x1.fffffep+127") # => Float32::MAX
+  # Float32.parse_hexfloat("-inf")            # => -Float32::INFINITY
+  # Float32.parse_hexfloat("0x1")             # Invalid hexfloat: expected 'p' or 'P' (ArgumentError)
+  # Float32.parse_hexfloat("a.bp+3")          # Invalid hexfloat: expected '0' (ArgumentError)
+  # ```
+  def self.parse_hexfloat(str : String) : self
+    Float::Printer::Hexfloat(self, UInt32).to_f(str) do |err|
+      raise ArgumentError.new("Invalid hexfloat: #{err}")
+    end
+  end
+
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float32
   Number.expand_div [Float64], Float64
+
+  # :inherit:
+  def infinite? : Int32?
+    # TODO: consider using https://llvm.org/docs/LangRef.html#llvm-is-fpclass-intrinsic
+    case self
+    when -Float32::INFINITY
+      -1
+    when Float32::INFINITY
+      1
+    end
+  end
+
+  # Negates this value's sign.
+  #
+  # Works on signed zeros and not-a-number values as well. The negation of
+  # `0.0_f32` is `-0.0_f32`, and vice versa. The negation of a not-a-number
+  # value is only observable via `#sign_bit`.
+  def - : Float32
+    # equivalent to `Math.copysign(self, -sign_bit.to_f32)`
+    # TODO: consider using the LLVM `fneg` instruction
+    (unsafe_as(UInt32) ^ 0x80000000_u32).unsafe_as(Float32)
+  end
+
+  def abs
+    Math.copysign(self, 1)
+  end
+
+  # Returns `-1` if the sign bit of this float is set, `1` otherwise.
+  #
+  # Unlike `#sign`, this works on signed zeros and not-a-numbers as well.
+  def sign_bit : Int32
+    Math.copysign(1_f32, self).to_i
+  end
 
   # Rounds towards positive infinity.
   def ceil : Float32
@@ -212,12 +295,36 @@ struct Float32
 
   def to_s : String
     String.build(22) do |buffer|
-      Printer.print(self, buffer)
+      Printer.shortest(self, buffer)
     end
   end
 
   def to_s(io : IO) : Nil
-    Printer.print(self, io)
+    Printer.shortest(self, io)
+  end
+
+  # Returns the hexadecimal-significand representation of `self`.
+  #
+  # The string format is defined in section 5.12.3 of IEEE 754-2008, and is the
+  # same as the `%a` specifier for `sprintf`. The integral part of the returned
+  # string is `0` if `self` is subnormal, otherwise `1`. The fractional part
+  # contains only significant digits.
+  #
+  # ```
+  # 1234.0625_f32.to_hexfloat          # => "0x1.3484p+10"
+  # Float32::MAX.to_hexfloat           # => "0x1.fffffep+127"
+  # Float32::MIN_SUBNORMAL.to_hexfloat # => "0x0.000002p-126"
+  # ```
+  def to_hexfloat : String
+    # the longest `Float64` strings are of the form `-0x1.234567p-127`
+    String.build(16) do |buffer|
+      Printer.hexfloat(self, buffer)
+    end
+  end
+
+  # Writes `self`'s hexadecimal-significand representation to the given *io*.
+  def to_hexfloat(io : IO) : Nil
+    Printer.hexfloat(self, io)
   end
 
   def clone
@@ -249,8 +356,10 @@ struct Float64
   MIN_10_EXP = -307
   # The maximum possible power of 10 exponent (such that 10**MAX_10_EXP is representable)
   MAX_10_EXP = 308
-  # Smallest representable positive value
+  # Smallest normal positive value, whose previous representable value is subnormal
   MIN_POSITIVE = 2.2250738585072014e-308_f64
+  # Smallest representable positive value, whose previous representable value is zero
+  MIN_SUBNORMAL = 5.0e-324_f64
 
   # Returns a `Float64` by invoking `String#to_f64` on *value*.
   #
@@ -272,11 +381,82 @@ struct Float64
     value.to_f64!
   end
 
+  # Returns a `Float32` by parsing *str* as a hexadecimal-significand string, or
+  # `nil` if parsing fails.
+  #
+  # The string format is defined in section 5.12.3 of IEEE 754-2008, and is the
+  # same as the `%a` specifier for `sprintf`. Unlike e.g. `String#to_f`,
+  # whitespace and underscores are not allowed. Non-finite values are also
+  # recognized.
+  #
+  # ```
+  # Float64.parse_hexfloat?("0x123.456p7")     # => 37282.6875
+  # Float64.parse_hexfloat?("0x1.fffffep+127") # => Float64::MAX
+  # Float64.parse_hexfloat?("-inf")            # => -Float64::INFINITY
+  # Float64.parse_hexfloat?("0x1")             # => nil
+  # Float64.parse_hexfloat?("a.bp+3")          # => nil
+  # ```
+  def self.parse_hexfloat?(str : String) : self?
+    Float::Printer::Hexfloat(self, UInt64).to_f(str) { nil }
+  end
+
+  # Returns a `Float32` by parsing *str* as a hexadecimal-significand string.
+  #
+  # The string format is defined in section 5.12.3 of IEEE 754-2008, and is the
+  # same as the `%a` specifier for `sprintf`. Unlike e.g. `String#to_f`,
+  # whitespace and underscores are not allowed. Non-finite values are also
+  # recognized.
+  #
+  # Raises `ArgumentError` if *str* is not a valid hexadecimal-significand
+  # string.
+  #
+  # ```
+  # Float64.parse_hexfloat("0x123.456p7")             # => 37282.6875
+  # Float64.parse_hexfloat("0x1.fffffffffffffp+1023") # => Float64::MAX
+  # Float64.parse_hexfloat("-inf")                    # => -Float64::INFINITY
+  # Float64.parse_hexfloat("0x1")                     # Invalid hexfloat: expected 'p' or 'P' (ArgumentError)
+  # Float64.parse_hexfloat("a.bp+3")                  # Invalid hexfloat: expected '0' (ArgumentError)
+  # ```
+  def self.parse_hexfloat(str : String) : self
+    Float::Printer::Hexfloat(self, UInt64).to_f(str) do |err|
+      raise ArgumentError.new("Invalid hexfloat: #{err}")
+    end
+  end
+
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
   Number.expand_div [Float32], Float64
 
+  # :inherit:
+  def infinite? : Int32?
+    # TODO: consider using https://llvm.org/docs/LangRef.html#llvm-is-fpclass-intrinsic
+    case self
+    when -Float64::INFINITY
+      -1
+    when Float64::INFINITY
+      1
+    end
+  end
+
+  # Negates this value's sign.
+  #
+  # Works on signed zeros and not-a-number values as well. The negation of
+  # `0.0` is `-0.0`, and vice versa. The negation of a not-a-number value is
+  # only observable via `#sign_bit`.
+  def - : Float64
+    # equivalent to `Math.copysign(self, -sign_bit.to_f64)`
+    # TODO: consider using the LLVM `fneg` instruction
+    (unsafe_as(UInt64) ^ 0x80000000_00000000_u64).unsafe_as(Float64)
+  end
+
   def abs
     Math.copysign(self, 1)
+  end
+
+  # Returns `-1` if the sign bit of this float is set, `1` otherwise.
+  #
+  # Unlike `#sign`, this works on signed zeros and not-a-numbers as well.
+  def sign_bit : Int32
+    Math.copysign(1_f64, self).to_i
   end
 
   def ceil : Float64
@@ -334,12 +514,36 @@ struct Float64
   def to_s : String
     # the longest `Float64` strings are of the form `-1.2345678901234567e+123`
     String.build(24) do |buffer|
-      Printer.print(self, buffer)
+      Printer.shortest(self, buffer)
     end
   end
 
   def to_s(io : IO) : Nil
-    Printer.print(self, io)
+    Printer.shortest(self, io)
+  end
+
+  # Returns the hexadecimal-significand representation of `self`.
+  #
+  # The string format is defined in section 5.12.3 of IEEE 754-2008, and is the
+  # same as the `%a` specifier for `sprintf`. The integral part of the returned
+  # string is `0` if `self` is subnormal, otherwise `1`. The fractional part
+  # contains only significant digits.
+  #
+  # ```
+  # 1234.0625.to_hexfloat              # => "0x1.3484p+10"
+  # Float64::MAX.to_hexfloat           # => "0x1.fffffffffffffp+1023"
+  # Float64::MIN_SUBNORMAL.to_hexfloat # => "0x0.0000000000001p-1022"
+  # ```
+  def to_hexfloat : String
+    # the longest `Float64` strings are of the form `-0x1.23456789abcdep-1023`
+    String.build(24) do |buffer|
+      Printer.hexfloat(self, buffer)
+    end
+  end
+
+  # Writes `self`'s hexadecimal-significand representation to the given *io*.
+  def to_hexfloat(io : IO) : Nil
+    Printer.hexfloat(self, io)
   end
 
   def clone

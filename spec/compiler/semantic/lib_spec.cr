@@ -345,7 +345,55 @@ describe "Semantic: lib" do
       lib LibFoo
       end
       ),
-      "unknown link argument: 'boo' (valid arguments are 'lib', 'ldflags', 'static', 'pkg_config', 'framework', and 'wasm_import_module')"
+      "unknown link argument: 'boo' (valid arguments are 'lib', 'ldflags', 'static', 'pkg_config', 'framework', 'wasm_import_module', and 'dll')"
+  end
+
+  it "allows dll argument" do
+    assert_no_errors <<-CRYSTAL
+      @[Link(dll: "foo.dll")]
+      lib LibFoo
+      end
+      CRYSTAL
+
+    assert_no_errors <<-CRYSTAL
+      @[Link(dll: "BAR.DLL")]
+      lib LibFoo
+      end
+      CRYSTAL
+  end
+
+  it "errors if dll argument contains directory separators" do
+    assert_error <<-CRYSTAL, "'dll' link argument must not include directory separators"
+      @[Link(dll: "foo/bar.dll")]
+      lib LibFoo
+      end
+      CRYSTAL
+
+    assert_error <<-CRYSTAL, "'dll' link argument must not include directory separators"
+      @[Link(dll: %q(foo\\bar.dll))]
+      lib LibFoo
+      end
+      CRYSTAL
+  end
+
+  it "errors if dll argument does not end with '.dll'" do
+    assert_error <<-CRYSTAL, "'dll' link argument must use a '.dll' file extension"
+      @[Link(dll: "foo")]
+      lib LibFoo
+      end
+      CRYSTAL
+
+    assert_error <<-CRYSTAL, "'dll' link argument must use a '.dll' file extension"
+      @[Link(dll: "foo.dylib")]
+      lib LibFoo
+      end
+      CRYSTAL
+
+    assert_error <<-CRYSTAL, "'dll' link argument must use a '.dll' file extension"
+      @[Link(dll: "")]
+      lib LibFoo
+      end
+      CRYSTAL
   end
 
   it "errors if lib already specified with positional argument" do
@@ -377,20 +425,20 @@ describe "Semantic: lib" do
   end
 
   it "warns if @[Link(static: true)] is specified" do
-    assert_warning <<-CR,
+    assert_warning <<-CRYSTAL,
       @[Link("foo", static: true)]
       lib Foo
       end
-      CR
+      CRYSTAL
       "warning in line 1\nWarning: specifying static linking for individual libraries is deprecated"
   end
 
   it "warns if Link annotations use positional arguments" do
-    assert_warning <<-CR,
+    assert_warning <<-CRYSTAL,
       @[Link("foo", "bar")]
       lib Foo
       end
-      CR
+      CRYSTAL
       "warning in line 1\nWarning: using non-named arguments for Link annotations is deprecated"
   end
 
@@ -961,5 +1009,19 @@ describe "Semantic: lib" do
       bar(LibFoo.foo)
       ),
       "passing Void return value of lib fun call has no effect"
+  end
+
+  it "can list lib functions at the top level (#12395)" do
+    assert_type(%(
+      lib LibFoo
+        fun foo
+      end
+
+      {% if LibFoo.methods.size == 1 %}
+        true
+      {% else %}
+        1
+      {% end %}
+      )) { bool }
   end
 end

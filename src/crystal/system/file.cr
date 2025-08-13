@@ -1,5 +1,7 @@
 # :nodoc:
 module Crystal::System::File
+  # def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions, blocking : Bool?) : FileDescriptor::Handle
+
   # Helper method for calculating file open modes on systems with posix-y `open`
   # calls.
   private def self.open_flag(mode)
@@ -47,12 +49,37 @@ module Crystal::System::File
     m | o
   end
 
-  # Closes the internal file descriptor without notifying libevent.
-  # This is directly used after the fork of a process to close the
-  # parent's Crystal::Signal.@@pipe reference before re initializing
-  # the event loop. In the case of a fork that will exec there is even
-  # no need to initialize the event loop at all.
-  # def file_descriptor_close
+  LOWER_ALPHANUM = "0123456789abcdefghijklmnopqrstuvwxyz".to_slice
+
+  def self.mktemp(prefix : String?, suffix : String?, dir : String, random : ::Random = ::Random::DEFAULT) : {FileDescriptor::Handle, String, Bool}
+    flags = LibC::O_RDWR | LibC::O_CREAT | LibC::O_EXCL
+    perm = ::File::Permissions.new(0o600)
+
+    prefix = ::File.join(dir, prefix || "")
+    bytesize = prefix.bytesize + 8 + (suffix.try(&.bytesize) || 0)
+
+    100.times do
+      path = String.build(bytesize) do |io|
+        io << prefix
+        8.times do
+          io.write_byte LOWER_ALPHANUM.sample(random)
+        end
+        io << suffix
+      end
+
+      case result = EventLoop.current.open(path, flags, perm, blocking: true)
+      when Tuple(FileDescriptor::Handle, Bool)
+        fd, blocking = result
+        return {fd, path, blocking}
+      when Errno::EEXIST, WinError::ERROR_FILE_EXISTS
+        # retry
+      else
+        raise ::File::Error.from_os_error("Error creating temporary file", result, file: path)
+      end
+    end
+
+    raise ::File::AlreadyExistsError.new("Error creating temporary file", file: "#{prefix}********#{suffix}")
+  end
 end
 
 {% if flag?(:wasi) %}

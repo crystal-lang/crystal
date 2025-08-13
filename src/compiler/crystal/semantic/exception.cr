@@ -11,19 +11,19 @@ module Crystal
     getter column_number : Int32
     getter size : Int32
 
-    def color=(color)
-      @color = !!color
+    def color=(@color : Bool)
       inner.try &.color=(color)
+      color
     end
 
-    def error_trace=(error_trace)
-      @error_trace = !!error_trace
+    def error_trace=(@error_trace : Bool)
       inner.try &.error_trace=(error_trace)
+      error_trace
     end
 
-    def warning=(warning)
-      super
+    def warning=(@warning : Bool)
       inner.try &.warning=(warning)
+      warning
     end
 
     def self.for_node(node, message, inner = nil)
@@ -39,14 +39,6 @@ module Crystal
     def initialize(message, @line_number, @column_number : Int32, @filename, @size, @inner = nil)
       @error_trace = true
 
-      # If the inner exception is a macro raise, we replace this exception's
-      # message with that message. In this way the error message will
-      # look like a regular message produced by the compiler, and not
-      # because of an incorrect macro expansion.
-      if inner.is_a?(MacroRaiseException)
-        message = inner.message
-        @inner = nil
-      end
       super(message)
     end
 
@@ -140,7 +132,7 @@ module Crystal
 
     def default_message
       if line_number = @line_number
-        "#{@warning ? "warning" : "error"} in line #{@line_number}"
+        "#{@warning ? "warning" : "error"} in line #{line_number}"
       end
     end
 
@@ -302,12 +294,31 @@ module Crystal
   class MacroRaiseException < TypeException
   end
 
+  class TopLevelMacroRaiseException < MacroRaiseException
+  end
+
   class SkipMacroException < ::Exception
     getter expanded_before_skip : String
     getter macro_expansion_pragmas : Hash(Int32, Array(Lexer::LocPragma))?
 
     def initialize(@expanded_before_skip, @macro_expansion_pragmas)
       super()
+    end
+  end
+
+  # Raised when another exception is raised when calculating macro code coverage.
+  # Extends `SkipMacroException` to ensure it's also treated as a somewhat non-failure exception.
+  #
+  # Rescuing this exception allows the macro code coverage tool to run on the code that was collected up to before the exception was raised, while not resulting in an error/running all the other code after it.
+  # The exception's message/trace is printed to STDOUT while the report is written to STDERR.
+  # This is especially useful for testing error flows of custom macro logic as it allows the code to assert the proper error was raised, while still allowing to save the coverage report.
+  # I.e. the report JSON/exception outputs are not co-mingled.
+  # The main benefit of this is preventing the need to run these kind of tests twice, once for the coverage report and once for the actual test assertions.
+  class SkipMacroCodeCoverageException < SkipMacroException
+    def initialize(exception : ::Exception)
+      super "", nil
+      @message = exception.message
+      @cause = exception
     end
   end
 

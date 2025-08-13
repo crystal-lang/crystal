@@ -1,4 +1,32 @@
 require "spec"
+require "spec/helpers/iterate"
+
+module OtherInterface; end
+
+private record Three do
+  include OtherInterface
+end
+
+private record Four do
+  include OtherInterface
+end
+
+private struct InterfaceIndexable
+  include Indexable(OtherInterface)
+
+  def size
+    2
+  end
+
+  def unsafe_fetch(index : Int) : OtherInterface
+    case index
+    when 0 then Three.new
+    when 1 then Four.new
+    else
+      raise ""
+    end
+  end
+end
 
 private class SafeIndexable
   include Indexable(Int32)
@@ -115,6 +143,70 @@ describe Indexable do
     end
   end
 
+  describe "#find" do
+    it "finds the element matching the block" do
+      indexable = SafeIndexable.new(4)
+      indexable.find { |i| i > 2 }.should eq 3
+    end
+
+    it "finds the element matching the block after given offset" do
+      indexable = SafeIndexable.new(8)
+      indexable.find(offset: 5) { |i| i.even? }.should eq 6
+    end
+
+    it "finds the element matching the block after given negative offset" do
+      indexable = SafeIndexable.new(8)
+      indexable.find(offset: -6) { |i| i.even? }.should eq 2
+    end
+
+    it "does not receive a valid negative offset, returns if_none value" do
+      indexable = SafeIndexable.new(4)
+      indexable.find(-1, offset: -10) { |i| i > 2 }.should eq -1
+    end
+
+    it "does not find the element matching the block" do
+      indexable = SafeIndexable.new(4)
+      indexable.find { |i| i > 7 }.should be_nil
+    end
+
+    it "does not find the element matching the block, returns custom if_none value" do
+      indexable = SafeIndexable.new(4)
+      indexable.find(if_none: -1) { |i| i > 7 }.should eq -1
+    end
+
+    it "does not find the element matching the block after given offset, returns custom if_none value" do
+      indexable = SafeIndexable.new(5)
+      indexable.find(-3, 3) { |i| i > 15 }.should eq -3
+    end
+  end
+
+  describe "#find!" do
+    it "finds the element matching the block" do
+      indexable = SafeIndexable.new(4)
+      indexable.find! { |i| i > 2 }.should eq 3
+    end
+
+    it "finds the element matching the block after given offset" do
+      indexable = SafeIndexable.new(8)
+      indexable.find!(offset: 5) { |i| i.even? }.should eq 6
+    end
+
+    it "finds the element matching the block after given negative offset" do
+      indexable = SafeIndexable.new(8)
+      indexable.find!(offset: -6) { |i| i.even? }.should eq 2
+    end
+
+    it "does not receive a valid negative offset, raises not found" do
+      indexable = SafeIndexable.new(4)
+      expect_raises(Enumerable::NotFoundError) { indexable.find!(offset: -10) { |i| i > 2 } }
+    end
+
+    it "does not find the element matching the block, raises not found" do
+      indexable = SafeIndexable.new(4)
+      expect_raises(Enumerable::NotFoundError) { indexable.find! { |i| i > 7 } }
+    end
+  end
+
   describe "#rindex" do
     it "does rindex with big negative offset" do
       indexable = SafeIndexable.new(3)
@@ -130,6 +222,28 @@ describe Indexable do
       indexable = SafeIndexable.new(3)
       indexable.rindex(1, 2_i64).should eq 1
       indexable.rindex(1, 2_i64).should be_a(Int64)
+    end
+  end
+
+  describe "#rindex!" do
+    it "does rindex with big negative offset" do
+      indexable = SafeIndexable.new(3)
+      expect_raises Enumerable::NotFoundError do
+        indexable.rindex!(0, -100)
+      end
+    end
+
+    it "does rindex with big offset" do
+      indexable = SafeIndexable.new(3)
+      expect_raises Enumerable::NotFoundError do
+        indexable.rindex!(0, 100)
+      end
+    end
+
+    it "offset type" do
+      indexable = SafeIndexable.new(3)
+      indexable.rindex!(1, 2_i64).should eq 1
+      indexable.rindex!(1, 2_i64).should be_a(Int64)
     end
   end
 
@@ -788,6 +902,17 @@ describe Indexable do
         b.should eq(comb)
       end
       iter.next.should be_a(Iterator::Stop)
+    end
+
+    describe "n > size (#14088)" do
+      it_iterates "#each_repeated_combination", [[1, 1, 1], [1, 1, 2], [1, 2, 2], [2, 2, 2]], SafeIndexable.new(2, 1).each_repeated_combination(3)
+      it_iterates "#each_repeated_combination", [[1, 1, 1, 1], [1, 1, 1, 2], [1, 1, 2, 2], [1, 2, 2, 2], [2, 2, 2, 2]], SafeIndexable.new(2, 1).each_repeated_combination(4)
+    end
+  end
+
+  describe "#to_a" do
+    it "without a block of an interface type" do
+      InterfaceIndexable.new.to_a.should eq [Three.new, Four.new]
     end
   end
 end

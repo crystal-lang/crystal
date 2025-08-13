@@ -16,6 +16,33 @@ describe "Code gen: debug" do
       ), debug: Crystal::Debug::All)
   end
 
+  it "codegens lib union (#7335)" do
+    codegen <<-CRYSTAL, debug: Crystal::Debug::All
+      lib Foo
+        union Bar
+          a : Int32
+          b : Int16
+          c : Int8
+        end
+      end
+
+      x = Foo::Bar.new
+      CRYSTAL
+  end
+
+  it "codegens extern union (#7335)" do
+    codegen <<-CRYSTAL, debug: Crystal::Debug::All
+      @[Extern(union: true)]
+      struct Foo
+        @a = uninitialized Int32
+        @b = uninitialized Int16
+        @c = uninitialized Int8
+      end
+
+      x = Foo.new
+      CRYSTAL
+  end
+
   it "inlines instance var access through getter in debug mode" do
     run(%(
       struct Bar
@@ -133,8 +160,6 @@ describe "Code gen: debug" do
 
   it "has debug info in closure inside if (#5593)" do
     codegen(%(
-      require "prelude"
-
       def foo
         if true && true
           yield 1
@@ -275,5 +300,35 @@ describe "Code gen: debug" do
       y = Bar{*x}
       y.bar
       ), debug: Crystal::Debug::All).to_i.should eq(123)
+  end
+
+  {% unless LibLLVM::IS_LT_210 %}
+    it "supports 128-bit enumerators" do
+      codegen(<<-CRYSTAL, debug: Crystal::Debug::All).to_s.should contain(%(!DIEnumerator(name: "X", value: 1002003004005006007008009)))
+        enum Foo : Int128
+          X = 1002003004005006007008009_i128
+        end
+
+        x = Foo::X
+        CRYSTAL
+    end
+  {% end %}
+
+  it "doesn't fail if no top-level code follows discarded class var initializer (#15970)" do
+    codegen <<-CRYSTAL, debug: Crystal::Debug::All
+      module Foo
+        @@x = 1
+      end
+      CRYSTAL
+  end
+
+  it "doesn't fail if class var initializer is followed by metaclass (#15970)" do
+    codegen <<-CRYSTAL, debug: Crystal::Debug::All
+      module Foo
+        @@x = 1
+      end
+
+      Int32
+      CRYSTAL
   end
 end

@@ -59,11 +59,11 @@ module Crystal
       a_def = Def.new(signature.name, args_nodes_names.map { |ext_name, name| Arg.new(name, external_name: ext_name) })
       a_def.splat_index = signature.arg_types.size if signature.named_args
 
-      call = Call.new(nil, signature.name,
+      call = Call.new(signature.name,
         args: args_nodes,
         named_args: named_args_nodes,
         block: block_node.is_a?(Block) ? block_node : nil)
-      fake_call = Call.new(nil, "method_missing", call)
+      fake_call = Call.new("method_missing", call)
 
       expanded_macro, macro_expansion_pragmas = program.expand_macro method_missing, fake_call, self, self
 
@@ -93,7 +93,7 @@ module Crystal
         end
 
         a_def.body = generated_nodes
-        a_def.yields = block.try &.args.size
+        a_def.block_arity = block.try &.args.size
       end
 
       owner = self

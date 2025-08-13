@@ -178,6 +178,22 @@ describe "Semantic: alias" do
         Bar.bar
         )) { int32 }
     end
+
+    it "reopens #{type} through alias within itself" do
+      assert_type <<-CRYSTAL { int32 }
+        #{type} Foo
+          alias Bar = Foo
+
+          #{type} Bar
+            def self.bar
+              1
+            end
+          end
+        end
+
+        Foo.bar
+        CRYSTAL
+    end
   end
 
   %w(class struct).each do |type|

@@ -138,9 +138,9 @@ describe "Range" do
       (0...ary.size).bsearch { |i| ary[i] >= 6 }.should eq 2
       (0...ary.size).bsearch { |i| ary[i] >= 8 }.should eq 3
       (0...ary.size).bsearch { |i| ary[i] >= 10 }.should eq 4
-      (0...ary.size).bsearch { |i| ary[i] >= 100 }.should eq nil
+      (0...ary.size).bsearch { |i| ary[i] >= 100 }.should be_nil
       (0...ary.size).bsearch { |i| true }.should eq 0
-      (0...ary.size).bsearch { |i| false }.should eq nil
+      (0...ary.size).bsearch { |i| false }.should be_nil
 
       (0...ary.size).bsearch { |i| ary[i] >= 10 ? 1 : nil }.should eq 4
 
@@ -148,13 +148,13 @@ describe "Range" do
       (0...ary.size).bsearch { |i| ary[i] >= 100 }.should eq 1
 
       (0_i8..10_i8).bsearch { |x| x >= 10 }.should eq 10_i8
-      (0_i8...10_i8).bsearch { |x| x >= 10 }.should eq nil
+      (0_i8...10_i8).bsearch { |x| x >= 10 }.should be_nil
       (-10_i8...10_i8).bsearch { |x| x >= -5 }.should eq -5_i8
 
       (0_u8..10_u8).bsearch { |x| x >= 10 }.should eq 10_u8
-      (0_u8...10_u8).bsearch { |x| x >= 10 }.should eq nil
+      (0_u8...10_u8).bsearch { |x| x >= 10 }.should be_nil
       (0_u32..10_u32).bsearch { |x| x >= 10 }.should eq 10_u32
-      (0_u32...10_u32).bsearch { |x| x >= 10 }.should eq nil
+      (0_u32...10_u32).bsearch { |x| x >= 10 }.should be_nil
     end
 
     it "BigInt" do
@@ -203,7 +203,7 @@ describe "Range" do
     end
   end
 
-  describe "each" do
+  describe "#each" do
     it "gives correct values with inclusive range" do
       range = -1..3
       arr = [] of Int32
@@ -222,7 +222,7 @@ describe "Range" do
       range = 0..-1
       any = false
       range.each { any = true }
-      any.should eq(false)
+      any.should be_false
     end
 
     it "endless" do
@@ -236,10 +236,14 @@ describe "Range" do
     end
 
     it "raises on beginless" do
-      range = (true ? nil : 1)..4
       expect_raises(ArgumentError, "Can't each beginless range") do
-        range.each { }
+        (..4).each { }
       end
+      typeof((..4).each { |x| break x }).should eq Nil
+      expect_raises(ArgumentError, "Can't each beginless range") do
+        (nil.as(Int32?)..4).each { }
+      end
+      typeof((nil.as(Int32?)..4).each { |x| break x }).should eq Int32?
     end
 
     it "doesn't have Nil as a type for endless each" do
@@ -251,7 +255,7 @@ describe "Range" do
     end
   end
 
-  describe "reverse_each" do
+  describe "#reverse_each" do
     it "gives correct values with inclusive range" do
       range = 'a'..'c'
       arr = [] of Char
@@ -270,13 +274,15 @@ describe "Range" do
       range = 0..-1
       any = false
       range.reverse_each { any = true }
-      any.should eq(false)
+      any.should be_false
     end
 
     it "raises on endless range" do
-      range = (3..(true ? nil : 1))
       expect_raises(ArgumentError, "Can't reverse_each endless range") do
-        range.reverse_each { }
+        (3..).reverse_each { }
+      end
+      expect_raises(ArgumentError, "Can't reverse_each endless range") do
+        (3..nil.as(Int32?)).reverse_each { }
       end
     end
 
@@ -291,7 +297,7 @@ describe "Range" do
     end
   end
 
-  describe "each iterator" do
+  describe "#each iterator" do
     it "does next with inclusive range" do
       a = 1..3
       iter = a.each
@@ -317,9 +323,11 @@ describe "Range" do
     end
 
     it "raises on beginless range" do
-      r = (true ? nil : 1)..3
       expect_raises(ArgumentError, "Can't each beginless range") do
-        r.each
+        (..3).each
+      end
+      expect_raises(ArgumentError, "Can't each beginless range") do
+        (nil.as(Int32?)..3).each
       end
     end
 
@@ -344,7 +352,7 @@ describe "Range" do
     end
   end
 
-  describe "reverse_each iterator" do
+  describe "#reverse_each iterator" do
     it "does next with inclusive range" do
       a = 1..3
       iter = a.reverse_each
@@ -393,21 +401,33 @@ describe "Range" do
 
     it "raises on endless range" do
       expect_raises(ArgumentError, "Can't reverse_each endless range") do
-        (1..(true ? nil : 1)).reverse_each
+        (1..).reverse_each
+      end
+      expect_raises(ArgumentError, "Can't reverse_each endless range") do
+        (1..nil.as(Int32?)).reverse_each
       end
     end
   end
 
-  describe "sample" do
+  describe "#sample" do
     it "raises on open range" do
       expect_raises(ArgumentError, "Can't sample an open range") do
-        (1..(true ? nil : 1)).sample
+        (1..).sample
       end
       expect_raises(ArgumentError, "Can't sample an open range") do
-        ((true ? nil : 1)..1).sample
+        (1..nil.as(Int32?)).sample
       end
       expect_raises(ArgumentError, "Can't sample an open range") do
-        ((true ? nil : 1)..(true ? nil : 1)).sample
+        (..1).sample
+      end
+      expect_raises(ArgumentError, "Can't sample an open range") do
+        (nil.as(Int32?)..1).sample
+      end
+      expect_raises(ArgumentError, "Can't sample an open range") do
+        (..).sample
+      end
+      expect_raises(ArgumentError, "Can't sample an open range") do
+        (nil.as(Int32?)..nil.as(Int32?)).sample
       end
     end
 
@@ -420,13 +440,13 @@ describe "Range" do
     end
 
     it "samples a range with nilable types" do
-      r = ((true ? 1 : nil)..(true ? 4 : nil))
+      r = (1.as(Int32?)..4.as(Int32?))
       x = r.sample
       r.should contain(x)
 
-      ((true ? 1 : nil)...(true ? 2 : nil)).sample.should eq(1)
+      (1.as(Int32?)...2.as(Int32?)).sample.should eq(1)
 
-      r = ((true ? 1.2 : nil)..(true ? 3.4 : nil))
+      r = (1.2.as(Float64?)..3.4.as(Float64?))
       x = r.sample
       r.should contain(x)
     end
@@ -648,11 +668,50 @@ describe "Range" do
     end
   end
 
-  describe "size" do
-    it "optimizes for int range" do
-      (5..12).size.should eq(8)
-      (5...12).size.should eq(7)
-      (5..4).size.should eq(0)
+  describe "#size" do
+    describe "Int" do
+      it { (5..12).size.should eq(8) }
+      it { (5...12).size.should eq(7) }
+      it { (5..4).size.should eq(0) }
+      it { (0..0).size.should eq(1) }
+      it { (0...0).size.should eq(0) }
+      it { (1..1).size.should eq(1) }
+      it { (1...1).size.should eq(0) }
+
+      it { (-12..-5).size.should eq(8) }
+      it { (-12...-5).size.should eq(7) }
+      it { (-4..-5).size.should eq(0) }
+      it { (-1..-1).size.should eq(1) }
+      it { (-1...-1).size.should eq(0) }
+
+      it { (-3..3).size.should eq(7) }
+      it { (-3...3).size.should eq(6) }
+      it { (-3..0).size.should eq(4) }
+      it { (-3...0).size.should eq(3) }
+      it { (3..-3).size.should eq(0) }
+      it { (3...-3).size.should eq(0) }
+      it { (-128_i8..0_i8).size.should eq(129) }
+      it { (-128_i8...0_i8).size.should eq(128) }
+
+      it { (Int32::MAX..Int32::MAX).size.should eq(1) }
+      it { (Int32::MAX...Int32::MAX).size.should eq(0) }
+      it { (-Int32::MAX..-Int32::MAX).size.should eq(1) }
+      it { (-Int32::MAX...-Int32::MAX).size.should eq(0) }
+
+      it { (5_u8..12_u8).size.should eq(8) }
+      it { (5_u8...12_u8).size.should eq(7) }
+      it { (5_u8..4_u8).size.should eq(0) }
+      it { (0_u8..0_u8).size.should eq(1) }
+      it { (0_u8...0_u8).size.should eq(0) }
+      it { (1_u8..1_u8).size.should eq(1) }
+      it { (1_u8...1_u8).size.should eq(0) }
+      it { (UInt8::MAX..UInt8::MAX).size.should eq(1) }
+      it { (UInt8::MAX...UInt8::MAX).size.should eq(0) }
+
+      it { (-32768_i16..254_u8).size.should eq(33023) }
+      it { (-128_i8..127_i8).size.should eq(256) }
+      it { (Int32::MIN..-127_i8).size.should eq(2_147_483_522) }
+      it { ((Int16::MIN.to_i32 - 1)..127_i16).size.should eq(32897) }
     end
 
     it "works for other types" do
@@ -661,13 +720,19 @@ describe "Range" do
 
     it "raises on beginless range" do
       expect_raises(ArgumentError, "Can't calculate size of an open range") do
-        ((true ? nil : 1)..3).size
+        (..3).size
+      end
+      expect_raises(ArgumentError, "Can't calculate size of an open range") do
+        (nil.as(Int32?)..3).size
       end
     end
 
     it "raises on endless range" do
       expect_raises(ArgumentError, "Can't calculate size of an open range") do
-        (3..(true ? nil : 1)).size
+        (3..).size
+      end
+      expect_raises(ArgumentError, "Can't calculate size of an open range") do
+        (3..nil.as(Int32?)).size
       end
     end
   end

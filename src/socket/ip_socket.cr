@@ -1,3 +1,4 @@
+# NOTE: To use `IPSocket`, you must explicitly import it with `require "socket/ip_socket"`
 class IPSocket < Socket
   # Returns the `IPAddress` for the local end of the IP socket.
   getter local_address : Socket::IPAddress { system_local_address }

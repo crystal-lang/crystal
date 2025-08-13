@@ -12,6 +12,8 @@ end
 # Value contains the actual value, and scale tells the decimal point place.
 # E.g. when value is `1234` and scale `2`, the result is `12.34`.
 #
+# NOTE: To use `BigDecimal`, you must explicitly import it with `require "big"`
+#
 # The general idea and some of the arithmetic algorithms were adapted from
 # the MIT/APACHE-licensed [bigdecimal-rs](https://github.com/akubera/bigdecimal-rs).
 struct BigDecimal < Number
@@ -37,6 +39,7 @@ struct BigDecimal < Number
   # NOTE: Floats are fundamentally less precise than BigDecimals,
   # which makes initialization from them risky.
   def self.new(num : Float)
+    raise ArgumentError.new "Can only construct from a finite number" unless num.finite?
     new(num.to_s)
   end
 
@@ -198,6 +201,22 @@ struct BigDecimal < Number
     self * BigDecimal.new(other)
   end
 
+  def %(other : BigDecimal) : BigDecimal
+    if @scale > other.scale
+      scaled = other.scale_to(self)
+      BigDecimal.new(@value % scaled.value, @scale)
+    elsif @scale < other.scale
+      scaled = scale_to(other)
+      BigDecimal.new(scaled.value % other.value, other.scale)
+    else
+      BigDecimal.new(@value % other.value, @scale)
+    end
+  end
+
+  def %(other : Int)
+    self % BigDecimal.new(other)
+  end
+
   def /(other : BigDecimal) : BigDecimal
     div other
   end
@@ -208,8 +227,9 @@ struct BigDecimal < Number
   # Divides `self` with another `BigDecimal`, with an optionally configurable
   # *precision*.
   #
-  # When the division is inexact, the returned value's scale is never greater
-  # than `scale - other.scale + precision`.
+  # When the division is inexact, the returned value rounds towards negative
+  # infinity, and its scale is never greater than
+  # `scale - other.scale + precision`.
   #
   # ```
   # BigDecimal.new(1).div(BigDecimal.new(2))    # => BigDecimal(@value=5, @scale=2)
@@ -306,7 +326,30 @@ struct BigDecimal < Number
     end
   end
 
-  def <=>(other : Int | Float | BigRational)
+  def <=>(other : BigRational) : Int32
+    if @scale == 0
+      @value <=> other
+    else
+      # `@value / power_ten_to(@scale) <=> other.numerator / other.denominator`
+      @value * other.denominator <=> power_ten_to(@scale) * other.numerator
+    end
+  end
+
+  def <=>(other : Float::Primitive) : Int32?
+    return nil if other.nan?
+
+    if sign = other.infinite?
+      return -sign
+    end
+
+    self <=> other.to_big_r
+  end
+
+  def <=>(other : BigFloat) : Int32
+    self <=> other.to_big_r
+  end
+
+  def <=>(other : Int)
     self <=> BigDecimal.new(other)
   end
 
@@ -398,7 +441,7 @@ struct BigDecimal < Number
     round_impl { |rem, rem_range| rem.abs >= rem_range // 2 }
   end
 
-  private def round_impl
+  private def round_impl(&)
     return self if @scale <= 0 || zero?
 
     # `self == @value / 10 ** @scale == mantissa + (rem / 10 ** @scale)`
@@ -416,56 +459,88 @@ struct BigDecimal < Number
     BigDecimal.new(mantissa, 0)
   end
 
+  # :inherit:
+  def integer? : Bool
+    factor_powers_of_ten
+    scale == 0
+  end
+
   def round(digits : Number, base = 10, *, mode : RoundingMode = :ties_even) : BigDecimal
-    return self if (base == 10 && @scale <= digits) || zero?
+    return self if zero?
 
-    # the following is same as the overload in `Number` except `base.to_f`
-    # becomes `.to_big_d`
-    if digits < 0
-      multiplier = base.to_big_d ** digits.abs
-      shifted = self / multiplier
+    if base == 10
+      return self if @scale <= digits
+
+      # optimized version that skips `#div` completely, always exact
+      shifted = mul_power_of_ten(digits)
+      rounded = shifted.round(mode)
+      rounded.mul_power_of_ten(-digits)
     else
-      multiplier = base.to_big_d ** digits
-      shifted = self * multiplier
+      # the following is same as the overload in `Number` except `base.to_f`
+      # becomes `base.to_big_d`; note that the `#/` calls always use
+      # `DEFAULT_PRECISION`
+      if digits < 0
+        multiplier = base.to_big_d ** digits.abs
+        shifted = self / multiplier
+      else
+        multiplier = base.to_big_d ** digits
+        shifted = self * multiplier
+      end
+
+      rounded = shifted.round(mode)
+
+      if digits < 0
+        result = rounded * multiplier
+      else
+        result = rounded / multiplier
+      end
+
+      BigDecimal.new result
     end
-
-    rounded = shifted.round(mode)
-
-    if digits < 0
-      result = rounded * multiplier
-    else
-      result = rounded / multiplier
-    end
-
-    BigDecimal.new result
   end
 
   def to_s(io : IO) : Nil
+    to_s_impl(io, point_range: -3..15)
+  end
+
+  protected def to_s_impl(*, point_range : Range) : String
+    String.build { |io| to_s_impl(io, point_range: point_range) }
+  end
+
+  protected def to_s_impl(io : IO, *, point_range : Range) : Nil
     factor_powers_of_ten
 
-    s = @value.to_s
-    if @scale == 0
-      io << s
-      return
+    cstr = LibGMP.get_str(nil, 10, @value)
+    buffer = Slice.new(cstr, LibC.strlen(cstr))
+
+    # add negative sign
+    if buffer[0]? == 45 # '-'
+      io << '-'
+      buffer = buffer[1..]
     end
 
-    if @scale >= s.size && @value >= 0
-      io << "0."
-      (@scale - s.size).times do
-        io << '0'
-      end
-      io << s
-    elsif @scale >= s.size && @value < 0
-      io << "-0.0"
-      (@scale - s.size).times do
-        io << '0'
-      end
-      io << s[1..-1]
-    elsif (offset = s.size - @scale) == 1 && @value < 0
-      io << "-0." << s[offset..-1]
-    else
-      io << s[0...offset] << '.' << s[offset..-1]
+    Float::Printer.decimal(io, buffer, -@scale.to_i, point_range, :remove_extra_zeros)
+  end
+
+  # :inherit:
+  def format(io : IO, separator = '.', delimiter = ',', decimal_places : Int? = nil, *, group : Int = 3, only_significant : Bool = false) : Nil
+    number = self
+    if decimal_places
+      number = number.round(decimal_places)
     end
+
+    if decimal_places && decimal_places >= 0
+      string = number.abs.to_s_impl(point_range: ..)
+      integer, _, decimals = string.partition('.')
+    else
+      string = number.to_s_impl(point_range: ..)
+      _, _, decimals = string.partition(".")
+      integer = number.trunc.to_big_i.abs.to_s
+    end
+
+    is_negative = number < 0
+
+    format_impl(io, is_negative, integer, decimals, separator, delimiter, decimal_places, group, only_significant)
   end
 
   # Converts to `BigInt`. Truncates anything on the right side of the decimal point.
@@ -660,10 +735,6 @@ struct BigDecimal < Number
     self
   end
 
-  def hash(hasher)
-    hasher.string(to_s)
-  end
-
   # Returns the *quotient* as absolutely negative if `self` and *other* have
   # different signs, otherwise returns the *quotient*.
   def normalize_quotient(other : BigDecimal, quotient : BigInt) : BigInt
@@ -680,6 +751,15 @@ struct BigDecimal < Number
 
   private def power_ten_to(x : Int) : Int
     TEN_I ** x
+  end
+
+  # returns `self * 10 ** exponent`
+  protected def mul_power_of_ten(exponent : Int)
+    if exponent <= scale
+      BigDecimal.new(@value, @scale - exponent)
+    else
+      BigDecimal.new(@value * power_ten_to(exponent - scale), 0_u64)
+    end
   end
 
   # Factors out any extra powers of ten in the internal representation.
@@ -731,7 +811,8 @@ struct Float
   include Comparable(BigDecimal)
 
   def <=>(other : BigDecimal)
-    to_big_d <=> other
+    cmp = other <=> self
+    -cmp if cmp
   end
 
   # Converts `self` to `BigDecimal`.
@@ -747,11 +828,17 @@ struct Float
   end
 end
 
+struct BigFloat
+  def <=>(other : BigDecimal)
+    -(other <=> self)
+  end
+end
+
 struct BigRational
   include Comparable(BigDecimal)
 
   def <=>(other : BigDecimal)
-    to_big_d <=> other
+    -(other <=> self)
   end
 
   # Converts `self` to `BigDecimal`.
@@ -768,5 +855,31 @@ class String
   # ```
   def to_big_d : BigDecimal
     BigDecimal.new(self)
+  end
+end
+
+# :nodoc:
+struct Crystal::Hasher
+  def self.reduce_num(value : BigDecimal)
+    v = reduce_num(value.value.abs)
+
+    # v = UInt64.mulmod(v, 10_u64.powmod(-scale, HASH_MODULUS), HASH_MODULUS)
+    # TODO: consider #7516 or similar
+    scale = value.scale
+    x = 0x1ccc_cccc_cccc_cccc_u64 # 10^-1 (mod HASH_MODULUS)
+    while scale > 0
+      v = UInt64.mulmod(v, x, HASH_MODULUS) if scale.bits_set?(1)
+      scale = scale.unsafe_shr(1)
+      x = UInt64.mulmod(x, x, HASH_MODULUS)
+    end
+
+    v &* value.sign
+  end
+end
+
+# :nodoc:
+struct String::Formatter(A)
+  def int(flags, arg : BigDecimal) : Nil
+    int(flags, arg.to_big_i)
   end
 end

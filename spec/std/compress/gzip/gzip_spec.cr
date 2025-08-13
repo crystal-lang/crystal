@@ -1,4 +1,4 @@
-require "spec"
+require "../../spec_helper"
 require "compress/gzip"
 
 private SAMPLE_TIME     = Time.utc(2016, 1, 2)
@@ -56,5 +56,42 @@ describe Compress::Gzip do
 
     gzip.rewind
     gzip.gets_to_end.should eq(SAMPLE_CONTENTS)
+  end
+
+  it "reads file with extra fields from file system" do
+    File.open(datapath("test.gz")) do |file|
+      Compress::Gzip::Reader.open(file) do |gzip|
+        header = gzip.header.not_nil!
+        header.modification_time.to_utc.should eq(Time.utc(2012, 9, 4, 22, 6, 5))
+        header.os.should eq(3_u8)
+        header.extra.should eq(Bytes[1, 2, 3, 4, 5])
+        header.name.should eq("test.txt")
+        header.comment.should eq("happy birthday")
+        gzip.gets_to_end.should eq("One\nTwo")
+      end
+    end
+  end
+
+  it "writes and reads file with extra fields" do
+    io = IO::Memory.new
+    Compress::Gzip::Writer.open(io) do |gzip|
+      header = gzip.header
+      header.modification_time = Time.utc(2012, 9, 4, 22, 6, 5)
+      header.os = 3_u8
+      header.extra = Bytes[1, 2, 3, 4, 5]
+      header.name = "test.txt"
+      header.comment = "happy birthday"
+      gzip << "One\nTwo"
+    end
+    io.rewind
+    Compress::Gzip::Reader.open(io) do |gzip|
+      header = gzip.header.not_nil!
+      header.modification_time.to_utc.should eq(Time.utc(2012, 9, 4, 22, 6, 5))
+      header.os.should eq(3_u8)
+      header.extra.should eq(Bytes[1, 2, 3, 4, 5])
+      header.name.should eq("test.txt")
+      header.comment.should eq("happy birthday")
+      gzip.gets_to_end.should eq("One\nTwo")
+    end
   end
 end

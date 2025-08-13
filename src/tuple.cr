@@ -339,7 +339,7 @@ struct Tuple
   # tuple.at(0) { 10 } # => 1
   # tuple.at(3) { 10 } # => 10
   # ```
-  def at(index : Int)
+  def at(index : Int, &)
     index += size if index < 0
     {% for i in 0...T.size %}
       return self[{{i}}] if {{i}} == index
@@ -539,13 +539,45 @@ struct Tuple
     to_s
   end
 
-  def to_a
-    Array(Union(*T)).build(size) do |buffer|
+  # Returns an `Array` with all the elements in the tuple.
+  #
+  # ```
+  # {1, 2, 3, 4, 5}.to_a # => [1, 2, 3, 4, 5]
+  # ```
+  def to_a : Array(Union(*T))
+    super
+  end
+
+  # Returns an `Array` with the results of running *block* against each element of the tuple.
+  #
+  # ```
+  # {1, 2, 3, 4, 5}).to_a { |i| i * 2 } # => [2, 4, 6, 8, 10]
+  # ```
+  def to_a(& : Union(*T) -> U) forall U
+    Array(U).build(size) do |buffer|
       {% for i in 0...T.size %}
-        buffer[{{i}}] = self[{{i}}]
+        buffer[{{i}}] = yield self[{{i}}]
       {% end %}
       size
     end
+  end
+
+  # Returns a `StaticArray` with the same elements.
+  #
+  # The element type is `Union(*T)`.
+  #
+  # ```
+  # {1, 'a', true}.to_static_array # => StaticArray[1, 'a', true]
+  # ```
+  @[AlwaysInline]
+  def to_static_array : StaticArray
+    {% begin %}
+      ary = uninitialized StaticArray(Union(*T), {{ T.size }})
+      each_with_index do |value, i|
+        ary.to_unsafe[i] = value
+      end
+      ary
+    {% end %}
   end
 
   # Appends a string representation of this tuple to the given `IO`.
@@ -589,7 +621,7 @@ struct Tuple
   #
   # Accepts an optional *offset* parameter, which tells it to start counting
   # from there.
-  def map_with_index(offset = 0)
+  def map_with_index(offset = 0, &)
     {% begin %}
       Tuple.new(
         {% for i in 0...T.size %}
@@ -639,7 +671,7 @@ struct Tuple
   end
 
   # :inherit:
-  def reduce
+  def reduce(&)
     {% if T.empty? %}
       raise Enumerable::EmptyError.new
     {% else %}
@@ -652,7 +684,7 @@ struct Tuple
   end
 
   # :inherit:
-  def reduce(memo)
+  def reduce(memo, &)
     {% for i in 0...T.size %}
       memo = yield memo, self[{{ i }}]
     {% end %}
@@ -660,7 +692,7 @@ struct Tuple
   end
 
   # :inherit:
-  def reduce?
+  def reduce?(&)
     {% unless T.empty? %}
       reduce { |memo, elem| yield memo, elem }
     {% end %}

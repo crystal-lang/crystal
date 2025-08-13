@@ -12,7 +12,7 @@ private def unix_request(path)
 end
 
 private def unused_port
-  TCPServer.open(0) do |server|
+  TCPServer.open(Socket::IPAddress::UNSPECIFIED, 0) do |server|
     server.local_address.port
   end
 end
@@ -45,12 +45,9 @@ describe HTTP::Server do
     server = HTTP::Server.new { }
     server.bind_unused_port
 
-    spawn do
+    run_server(server) do
       server.close
-      sleep 0.001
     end
-
-    server.listen
   end
 
   it "closes the server" do
@@ -68,20 +65,20 @@ describe HTTP::Server do
     while !server.listening?
       Fiber.yield
     end
-    sleep 0.1
+    sleep 0.1.seconds
 
     schedule_timeout ch
 
     TCPSocket.open(address.address, address.port) { }
 
     # wait before closing the server
-    sleep 0.1
+    sleep 0.1.seconds
     server.close
 
-    ch.receive.end?.should be_true
+    ch.receive.should eq SpecChannelStatus::End
   end
 
-  pending_win32 "reuses the TCP port (SO_REUSEPORT)" do
+  it "reuses the TCP port (SO_REUSEPORT)" do
     s1 = HTTP::Server.new { |ctx| }
     address = s1.bind_unused_port(reuse_port: true)
 
@@ -121,12 +118,12 @@ describe HTTP::Server do
 
     run_server(server) do
       TCPSocket.open(address.address, address.port) do |socket|
-        socket << requestize(<<-REQUEST
+        socket << requestize(<<-HTTP
           POST / HTTP/1.1
           Expect: 100-continue
           Content-Length: 5
 
-          REQUEST
+          HTTP
         )
         socket << "\r\n"
         socket.flush
@@ -153,12 +150,12 @@ describe HTTP::Server do
 
     run_server(server) do
       TCPSocket.open(address.address, address.port) do |socket|
-        socket << requestize(<<-REQUEST
+        socket << requestize(<<-HTTP
           POST / HTTP/1.1
           Expect: 100-continue
           Content-Length: 5
 
-          REQUEST
+          HTTP
         )
         socket << "\r\n"
         socket.flush
@@ -271,7 +268,6 @@ describe HTTP::Server do
         server = HTTP::Server.new { }
 
         private_key = datapath("openssl", "openssl.key")
-        certificate = datapath("openssl", "openssl.crt")
 
         begin
           expect_raises(ArgumentError, "missing private key") { server.bind "tls://127.0.0.1:8081" }
@@ -430,7 +426,7 @@ describe HTTP::Server do
       begin
         ch.receive
         client = HTTP::Client.new(address.address, address.port, client_context)
-        client.read_timeout = client.connect_timeout = 3
+        client.read_timeout = client.connect_timeout = 3.seconds
         client.get("/").body.should eq "ok"
       ensure
         ch.send nil
@@ -472,7 +468,7 @@ describe HTTP::Server do
     end
   end
 
-  pending_win32 describe: "#remote_address / #local_address" do
+  describe "#remote_address / #local_address" do
     it "for http server" do
       remote_address = nil
       local_address = nil

@@ -24,12 +24,12 @@ module Benchmark
       def initialize(@utime, @stime, @cutime, @cstime, @real, @label)
       end
 
-      # Total time, that is utime + stime + cutime + cstime
+      # Total time, that is `utime` + `stime` + `cutime` + `cstime`
       def total : Float64
         utime + stime + cutime + cstime
       end
 
-      # Prints *utime*, *stime*, *total* and *real* to the given IO.
+      # Prints `utime`, `stime`, `total` and `real` to *io*.
       def to_s(io : IO) : Nil
         io.printf "  %.6f   %.6f   %.6f (  %.6f)", utime, stime, total, real
       end
@@ -44,13 +44,13 @@ module Benchmark
       end
 
       # Reports a single benchmark unit.
-      def report(label = " ", &block)
+      def report(label : String = " ", &block : ->) : Nil
         @label_width = label.size if label.size > @label_width
         @reports << {label, block}
       end
 
       # :nodoc:
-      def execute
+      def execute : Nil
         if @label_width > 0
           print " " * @label_width
         end

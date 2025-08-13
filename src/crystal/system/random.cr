@@ -13,8 +13,13 @@ end
 {% if flag?(:wasi) %}
   require "./wasi/random"
 {% elsif flag?(:linux) %}
-  require "./unix/getrandom"
-{% elsif flag?(:openbsd) || flag?(:netbsd) %}
+  require "c/sys/random"
+  \{% if LibC.has_method?(:getrandom) %}
+    require "./unix/getrandom"
+  \{% else %}
+    require "./unix/urandom"
+  \{% end %}
+{% elsif flag?(:bsd) || flag?(:darwin) %}
   require "./unix/arc4random"
 {% elsif flag?(:unix) %}
   require "./unix/urandom"

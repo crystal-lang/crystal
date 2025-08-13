@@ -22,7 +22,7 @@ module Crystal::System::WindowsRegistry
     end
   end
 
-  def self.open?(handle : LibC::HKEY, name : Slice(UInt16), sam = LibC::REGSAM::READ)
+  def self.open?(handle : LibC::HKEY, name : Slice(UInt16), sam = LibC::REGSAM::READ, &)
     key_handle = open?(handle, name, sam)
 
     return unless key_handle

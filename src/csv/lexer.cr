@@ -15,12 +15,12 @@ require "csv"
 # ```
 abstract class CSV::Lexer
   # Creates a CSV lexer from a `String`.
-  def self.new(string : String, separator = DEFAULT_SEPARATOR, quote_char = DEFAULT_QUOTE_CHAR)
+  def self.new(string : String, separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR) : self
     StringBased.new(string, separator, quote_char)
   end
 
   # Creates a CSV lexer from an `IO`.
-  def self.new(io : IO, separator = DEFAULT_SEPARATOR, quote_char = DEFAULT_QUOTE_CHAR)
+  def self.new(io : IO, separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR) : self
     IOBased.new(io, separator, quote_char)
   end
 
@@ -138,7 +138,7 @@ abstract class CSV::Lexer
   private def next_char
     @column_number += 1
     char = next_char_no_column_increment
-    if char == '\n' || char == '\r'
+    if char.in?('\n', '\r')
       @column_number = 0
       @line_number += 1
     end

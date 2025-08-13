@@ -8,7 +8,7 @@ describe "YAML" do
     it { YAML.parse_all("---\nfoo\n---\nbar\n").should eq(["foo", "bar"]) }
     it { YAML.parse("foo: bar").should eq({"foo" => "bar"}) }
     it { YAML.parse("--- []\n").should eq([] of YAML::Any) }
-    it { YAML.parse("---\n...").should eq nil }
+    it { YAML.parse("---\n...").should eq YAML::Any.new(nil) }
 
     it "parses recursive sequence" do
       doc = YAML.parse("--- &foo\n- *foo\n")
@@ -137,11 +137,11 @@ describe "YAML" do
 
       it "has correct message (#4006)" do
         expect_raises YAML::ParseException, "could not find expected ':' at line 4, column 1, while scanning a simple key at line 3, column 5" do
-          YAML.parse <<-END
+          YAML.parse <<-YAML
             a:
               - "b": >
                 c
-            END
+            YAML
         end
       end
 

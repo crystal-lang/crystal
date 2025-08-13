@@ -4,18 +4,18 @@ require "./spec_helper"
 describe Crystal::Repl::Interpreter do
   context "is_a?" do
     it "does is_a? from NilableType to NonGenericClassType (true)" do
-      interpret(<<-CODE).should eq("hello")
+      interpret(<<-CRYSTAL).should eq("hello")
         a = "hello" || nil
         if a.is_a?(String)
           a
         else
           "bar"
         end
-        CODE
+        CRYSTAL
     end
 
     it "does is_a? from NilableType to NonGenericClassType (false)" do
-      interpret(<<-CODE).should eq("bar")
+      interpret(<<-CRYSTAL).should eq("bar")
         a = 1 == 1 ? nil : "hello"
         if a.is_a?(String)
           a
@@ -23,11 +23,11 @@ describe Crystal::Repl::Interpreter do
           z = a
           "bar"
         end
-        CODE
+        CRYSTAL
     end
 
     it "does is_a? from NilableType to GenericClassInstanceType (true)" do
-      interpret(<<-CODE).should eq(1)
+      interpret(<<-CRYSTAL).should eq(1)
         class Foo(T)
           def initialize(@x : T)
           end
@@ -43,11 +43,11 @@ describe Crystal::Repl::Interpreter do
         else
           2
         end
-        CODE
+        CRYSTAL
     end
 
     it "does is_a? from NilableType to GenericClassInstanceType (false)" do
-      interpret(<<-CODE).should eq(2)
+      interpret(<<-CRYSTAL).should eq(2)
         class Foo(T)
           def initialize(@x : T)
           end
@@ -64,11 +64,11 @@ describe Crystal::Repl::Interpreter do
           z = a
           2
         end
-        CODE
+        CRYSTAL
     end
 
     it "does is_a? from NilableReferenceUnionType to NonGenericClassType (true)" do
-      interpret(<<-CODE).should eq("hello")
+      interpret(<<-CRYSTAL).should eq("hello")
         class Foo
         end
 
@@ -78,11 +78,11 @@ describe Crystal::Repl::Interpreter do
         else
           "bar"
         end
-        CODE
+        CRYSTAL
     end
 
     it "does is_a? from NilableReferenceUnionType to NonGenericClassType (false)" do
-      interpret(<<-CODE).should eq("baz")
+      interpret(<<-CRYSTAL).should eq("baz")
         class Foo
         end
 
@@ -92,11 +92,11 @@ describe Crystal::Repl::Interpreter do
         else
           "baz"
         end
-        CODE
+        CRYSTAL
     end
 
     it "does is_a? from VirtualType to NonGenericClassType (true)" do
-      interpret(<<-CODE).should eq(2)
+      interpret(<<-CRYSTAL).should eq(2)
         class Foo
           def x
             1
@@ -115,11 +115,11 @@ describe Crystal::Repl::Interpreter do
         else
           20
         end
-        CODE
+        CRYSTAL
     end
 
     it "does is_a? from VirtualType to NonGenericClassType (false)" do
-      interpret(<<-CODE).should eq(20)
+      interpret(<<-CRYSTAL).should eq(20)
         class Foo
           def x
             1
@@ -138,29 +138,29 @@ describe Crystal::Repl::Interpreter do
         else
           20
         end
-        CODE
+        CRYSTAL
     end
 
     it "does is_a? from NilableProcType to Nil" do
-      interpret(<<-CODE).should eq(10)
+      interpret(<<-CRYSTAL).should eq(10)
         proc = 1 == 1 ? nil : ->{ 1 }
         if proc.nil?
           10
         else
           20
         end
-        CODE
+        CRYSTAL
     end
 
     it "does is_a? from NilableProcType to non-Nil" do
-      interpret(<<-CODE).should eq(10)
+      interpret(<<-CRYSTAL).should eq(10)
         proc = 1 == 2 ? nil : ->{ 10 }
         if proc.is_a?(Proc)
           proc.call
         else
           20
         end
-        CODE
+        CRYSTAL
     end
   end
 end

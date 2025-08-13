@@ -3,6 +3,8 @@ require "../subtle"
 
 # Generate, read and verify `Crypto::Bcrypt` hashes.
 #
+# NOTE: To use `Password`, you must explicitly import it with `require "crypto/bcrypt/password"`
+#
 # ```
 # require "crypto/bcrypt/password"
 #
@@ -25,7 +27,7 @@ class Crypto::Bcrypt::Password
   # password = Crypto::Bcrypt::Password.create("super secret", cost: 10)
   # # => $2a$10$rI4xRiuAN2fyiKwynO6PPuorfuoM4L2PVv6hlnVJEmNLjqcibAfHq
   # ```
-  def self.create(password, cost = DEFAULT_COST) : self
+  def self.create(password : String, cost : Int32 = DEFAULT_COST) : self
     new(Bcrypt.hash_secret(password, cost).to_s)
   end
 
@@ -74,6 +76,14 @@ class Crypto::Bcrypt::Password
     Crypto::Subtle.constant_time_compare(@digest, hashed_password_digest)
   end
 
+  # Returns the bcrypt hash, suitable for storage and use in `Crypto::Bcrypt::Password.new`.
+  #
+  # ```
+  # require "crypto/bcrypt/password"
+  #
+  # password = Crypto::Bcrypt::Password.create("super secret")
+  # password.to_s # => "$2a$11$zs8yeubYXMGGJmWyIYdFtO9aOrx44g5rarvixyBfl1klr3dZPG8Ma"
+  # ```
   def to_s(io : IO) : Nil
     io << @raw_hash
   end

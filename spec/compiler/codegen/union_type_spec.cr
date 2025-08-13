@@ -202,7 +202,7 @@ describe "Code gen: union type" do
       a = 1 || 1.5
       foo(a)
       )).to_string
-    (str == "(Int32 | Float64)" || str == "(Float64 | Int32)").should be_true
+    str.in?("(Int32 | Float64)", "(Float64 | Int32)").should be_true
   end
 
   it "provides T as a tuple literal" do
@@ -214,5 +214,24 @@ describe "Code gen: union type" do
       end
       Union(Nil, Int32).foo
       )).to_string.should eq("TupleLiteral")
+  end
+
+  it "respects union payload alignment when upcasting Bool (#14898)" do
+    mod = codegen(<<-CRYSTAL)
+      x = uninitialized Bool | UInt8[64]
+      x = true
+      CRYSTAL
+
+    str = mod.to_s
+    {% if LibLLVM::IS_LT_150 %}
+      str.should match(/store i512 1, i512\* %\d+, align 8/)
+    {% else %}
+      str.should match(/store i512 1, ptr %\d+, align 8/)
+    {% end %}
+
+    # an i512 store defaults to 16-byte alignment, which is undefined behavior
+    # as it overestimates the actual alignment of `x`'s data field (x86 in
+    # particular segfaults on misaligned 16-byte stores)
+    str.should_not contain("align 16")
   end
 end

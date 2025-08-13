@@ -55,10 +55,10 @@ describe Crystal::SyntaxHighlighter::Colorize do
       def if else elsif end class module include
       extend while until do yield return unless next break
       begin lib fun type struct union enum macro out require
-      case when select then of rescue ensure is_a? alias sizeof
+      case when select then of rescue ensure is_a? alias sizeof alignof
       as as? typeof for in with super private asm
       nil? abstract pointerof
-      protected uninitialized instance_sizeof offsetof
+      protected uninitialized instance_sizeof instance_alignof offsetof
       annotation verbatim
     ).each do |kw|
       it_highlights kw, %(\e[91m#{kw}\e[0m)
@@ -127,13 +127,13 @@ describe Crystal::SyntaxHighlighter::Colorize do
 
     it_highlights "Set{1, 2, 3}", %(\e[36mSet\e[0m{\e[35m1\e[0m, \e[35m2\e[0m, \e[35m3\e[0m})
 
-    it_highlights <<-CR, <<-ANSI
+    it_highlights <<-CRYSTAL, <<-ANSI
       foo, bar = <<-FOO, <<-BAR
         foo
         FOO
         bar
         BAR
-      CR
+      CRYSTAL
       foo, bar \e[91m=\e[0m \e[93m<<-FOO\e[0m, \e[93m<<-BAR\e[0m
       \e[93m  foo
         FOO\e[0m
@@ -145,16 +145,16 @@ describe Crystal::SyntaxHighlighter::Colorize do
   describe ".highlight!" do
     it_highlights! %(foo = bar("baz\#{PI + 1}") # comment), %(foo \e[91m=\e[0m bar(\e[93m"baz\#{\e[0m\e[36mPI\e[0m \e[91m+\e[0m \e[35m1\e[0m\e[93m}"\e[0m) \e[90m# comment\e[0m)
 
-    it_highlights! <<-CR
+    it_highlights! <<-CRYSTAL
       foo, bar = <<-FOO, <<-BAR
         foo
         FOO
-      CR
+      CRYSTAL
 
-    it_highlights! <<-CR
+    it_highlights! <<-CRYSTAL
       foo, bar = <<-FOO, <<-BAR
         foo
-      CR
+      CRYSTAL
 
     it_highlights! "\"foo"
     it_highlights! "%w[foo"

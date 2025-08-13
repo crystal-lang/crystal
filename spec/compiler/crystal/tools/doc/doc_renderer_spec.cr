@@ -57,6 +57,12 @@ describe Doc::MarkdDocRenderer do
         def foo
         end
       end
+
+      class A
+        def foo; end
+        def bar; end
+        def self.baz; end
+      end
       ", wants_doc: true).program
     generator = Doc::Generator.new(program, [""])
 
@@ -66,6 +72,8 @@ describe Doc::MarkdDocRenderer do
     sub_foo = sub.lookup_method("foo").not_nil!
     nested = generator.type(program.types["Base"].types["Nested"])
     nested_foo = nested.lookup_method("foo").not_nil!
+    single_char_class = generator.type(program.types["A"])
+    single_char_class_foo = single_char_class.lookup_method("foo").not_nil!
 
     it "finds sibling methods" do
       {base, base_foo}.each do |obj|
@@ -78,6 +86,22 @@ describe Doc::MarkdDocRenderer do
       {base, base_foo}.each do |obj|
         assert_code_link(obj, "#bar", %(<a href="Base.html#bar-instance-method">#bar</a>))
         assert_code_link(obj, ".baz", %(<a href="Base.html#baz-class-method">.baz</a>))
+      end
+    end
+
+    it "matches methods on single-character class names" do
+      {single_char_class, single_char_class_foo}.each do |obj|
+        assert_code_link(obj, "#bar", %(<a href="A.html#bar-instance-method">#bar</a>))
+        assert_code_link(obj, ".baz", %(<a href="A.html#baz-class-method">.baz</a>))
+      end
+    end
+
+    it "doesn't spuriously match range literals" do
+      {base, base_foo}.each do |obj|
+        assert_code_link(obj, "(0..baz)")
+        assert_code_link(obj, "(0...baz)")
+        assert_code_link(obj, "0..baz")
+        assert_code_link(obj, "0...baz")
       end
     end
 

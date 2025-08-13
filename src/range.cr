@@ -108,11 +108,7 @@ struct Range(B, E)
   # (10..15).each { |n| print n, ' ' }
   # # prints: 10 11 12 13 14 15
   # ```
-  def each : Nil
-    {% if B == Nil %}
-      {% raise "Can't each beginless range" %}
-    {% end %}
-
+  def each(&) : Nil
     current = @begin
     if current.nil?
       raise ArgumentError.new("Can't each beginless range")
@@ -142,10 +138,6 @@ struct Range(B, E)
   # (1..3).each.skip(1).to_a # => [2, 3]
   # ```
   def each
-    {% if B == Nil %}
-      {% raise "Can't each beginless range" %}
-    {% end %}
-
     if @begin.nil?
       raise ArgumentError.new("Can't each beginless range")
     end
@@ -160,11 +152,7 @@ struct Range(B, E)
   # (10...15).reverse_each { |n| print n, ' ' }
   # # prints: 14 13 12 11 10
   # ```
-  def reverse_each : Nil
-    {% if E == Nil %}
-      {% raise "Can't reverse_each endless range" %}
-    {% end %}
-
+  def reverse_each(&) : Nil
     end_value = @end
     if end_value.nil?
       raise ArgumentError.new("Can't reverse_each endless range")
@@ -175,17 +163,15 @@ struct Range(B, E)
     yield end_value if !@exclusive && (begin_value.nil? || !(end_value < begin_value))
     current = end_value
 
-    # TODO: The macro interpolations are a workaround until #9324 is fixed.
-
     {% if B == Nil %}
       while true
         current = current.pred
-        {{ "yield current".id }}
+        yield current
       end
     {% else %}
       while begin_value.nil? || begin_value < current
         current = current.pred
-        {{ "yield current".id }}
+        yield current
       end
     {% end %}
   end
@@ -196,10 +182,6 @@ struct Range(B, E)
   # (1..3).reverse_each.skip(1).to_a # => [2, 1]
   # ```
   def reverse_each
-    {% if E == Nil %}
-      {% raise "Can't reverse_each endless range" %}
-    {% end %}
-
     if @end.nil?
       raise ArgumentError.new("Can't reverse_each endless range")
     end
@@ -362,11 +344,7 @@ struct Range(B, E)
   # the method simply calls `random.rand(self)`.
   #
   # Raises `ArgumentError` if `self` is an open range.
-  def sample(random = Random::DEFAULT)
-    {% if B == Nil || E == Nil %}
-      {% raise "Can't sample an open range" %}
-    {% end %}
-
+  def sample(random : Random = Random::DEFAULT)
     {% if B < Int && E < Int %}
       random.rand(self)
     {% elsif B < Float && E < Float %}
@@ -391,10 +369,6 @@ struct Range(B, E)
   # once. Thus, *random* will be left in a different state compared to the
   # implementation in `Enumerable`.
   def sample(n : Int, random = Random::DEFAULT)
-    {% if B == Nil || E == Nil %}
-      {% raise "Can't sample an open range" %}
-    {% end %}
-
     if self.begin.nil? || self.end.nil?
       raise ArgumentError.new("Can't sample an open range")
     end
@@ -506,19 +480,26 @@ struct Range(B, E)
   # (3..8).size  # => 6
   # (3...8).size # => 5
   # ```
-  def size
-    {% if B == Nil || E == Nil %}
-      {% raise "Can't calculate size of an open range" %}
-    {% end %}
-
+  #
+  # Raises `OverflowError` if the difference is bigger than `Int32`.
+  # Raises `ArgumentError` if either `begin` or `end` are `nil`.
+  def size : Int32
     b = self.begin
     e = self.end
 
     # Optimized implementation for int range
     if b.is_a?(Int) && e.is_a?(Int)
-      e -= 1 if @exclusive
-      n = e - b + 1
-      n < 0 ? 0 : n
+      return 0 if e < b
+
+      # Convert `e` to `Int32` in order to ensure that `e &- b` doesn't get
+      # truncated due to the smaller type of `e`.
+      if e.is_a?(UInt8 | Int8 | UInt16 | Int16)
+        e = e.to_i32!
+      end
+
+      diff = (e &- b).to_i32.abs
+      diff &+= 1 unless @exclusive
+      diff
     else
       if b.nil? || e.nil?
         raise ArgumentError.new("Can't calculate size of an open range")
@@ -576,7 +557,7 @@ struct Range(B, E)
       begin_value = @range.begin
 
       return stop if !begin_value.nil? && @current <= begin_value
-      return @current = @current.pred
+      @current = @current.pred
     end
   end
 

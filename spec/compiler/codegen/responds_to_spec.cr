@@ -51,6 +51,18 @@ describe "Codegen: responds_to?" do
       )).to_b.should be_false
   end
 
+  it "doesn't error if result is discarded (#14113)" do
+    run(<<-CRYSTAL).to_i.should eq(1)
+      class Foo
+        def foo
+        end
+      end
+
+      (Foo.new || "").responds_to?(:foo)
+      1
+      CRYSTAL
+  end
+
   it "works with virtual type" do
     run(%(
       class Foo

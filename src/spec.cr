@@ -91,45 +91,48 @@ require "./spec/cli"
 # value can be used to rerun the specs in that same order by passing the seed
 # value to `--order`.
 module Spec
-end
+  # :nodoc:
+  class CLI
+    # :nodoc:
+    #
+    # Implement formatter configuration.
+    def configure_formatter(formatter, output_path = nil)
+      case formatter
+      when "junit"
+        junit_formatter = Spec::JUnitFormatter.file(self, Path.new(output_path.not_nil!))
+        add_formatter(junit_formatter)
+      when "verbose"
+        override_default_formatter(Spec::VerboseFormatter.new(self))
+      when "tap"
+        override_default_formatter(Spec::TAPFormatter.new(self))
+      end
+    end
 
-Colorize.on_tty_only!
+    def main(args)
+      begin
+        option_parser.parse(args)
+      rescue e : OptionParser::InvalidOption
+        abort("Error: #{e.message}")
+      end
 
-# :nodoc:
-#
-# Implement formatter configuration.
-def Spec.configure_formatter(formatter, output_path = nil)
-  case formatter
-  when "junit"
-    junit_formatter = Spec::JUnitFormatter.file(Path.new(output_path.not_nil!))
-    Spec.add_formatter(junit_formatter)
-  when "verbose"
-    Spec.override_default_formatter(Spec::VerboseFormatter.new)
-  when "tap"
-    Spec.override_default_formatter(Spec::TAPFormatter.new)
+      unless args.empty?
+        abort "Error: unknown argument '#{args.first}'"
+      end
+
+      if ENV["SPEC_VERBOSE"]? == "1"
+        override_default_formatter(Spec::VerboseFormatter.new(self))
+      end
+
+      add_split_filter ENV["SPEC_SPLIT"]?
+
+      {% unless flag?(:wasm32) %}
+        # TODO(wasm): Enable this once `Process.on_terminate` is implemented
+        Process.on_terminate { abort! }
+      {% end %}
+
+      run
+    end
   end
 end
 
-begin
-  Spec.option_parser.parse(ARGV)
-rescue e : OptionParser::InvalidOption
-  abort("Error: #{e.message}")
-end
-
-unless ARGV.empty?
-  STDERR.puts "Error: unknown argument '#{ARGV.first}'"
-  exit 1
-end
-
-if ENV["SPEC_VERBOSE"]? == "1"
-  Spec.override_default_formatter(Spec::VerboseFormatter.new)
-end
-
-Spec.add_split_filter ENV["SPEC_SPLIT"]?
-
-{% unless flag?(:win32) || flag?(:wasm32) %}
-  # TODO(windows): re-enable this once Signal is ported
-  Signal::INT.trap { Spec.abort! }
-{% end %}
-
-Spec.run
+Spec.cli.main(ARGV)

@@ -174,4 +174,35 @@ describe "Lexer: location" do
     (loc1 < loc2).should be_false
     (loc2 < loc1).should be_false
   end
+
+  describe "Location.parse" do
+    it "parses location from string" do
+      Location.parse("foo:1:2").should eq(Location.new("foo", 1, 2))
+      Location.parse("foo:bar/baz:345:6789").should eq(Location.new("foo:bar/baz", 345, 6789))
+      Location.parse(%q(C:\foo\bar:1:2)).should eq(Location.new(%q(C:\foo\bar), 1, 2))
+    end
+
+    it "raises ArgumentError if missing colon" do
+      expect_raises(ArgumentError, "cursor location must be file:line:column") { Location.parse("foo") }
+      expect_raises(ArgumentError, "cursor location must be file:line:column") { Location.parse("foo:1") }
+    end
+
+    it "raises ArgumentError if missing part" do
+      expect_raises(ArgumentError, "cursor location must be file:line:column") { Location.parse(":1:2") }
+      expect_raises(ArgumentError, "cursor location must be file:line:column") { Location.parse("foo::2") }
+      expect_raises(ArgumentError, "cursor location must be file:line:column") { Location.parse("foo:1:") }
+    end
+
+    it "raises ArgumentError if line number is invalid" do
+      expect_raises(ArgumentError, "line must be a positive integer, not a") { Location.parse("foo:a:2") }
+      expect_raises(ArgumentError, "line must be a positive integer, not 0") { Location.parse("foo:0:2") }
+      expect_raises(ArgumentError, "line must be a positive integer, not -1") { Location.parse("foo:-1:2") }
+    end
+
+    it "raises ArgumentError if column number is invalid" do
+      expect_raises(ArgumentError, "column must be a positive integer, not a") { Location.parse("foo:2:a") }
+      expect_raises(ArgumentError, "column must be a positive integer, not 0") { Location.parse("foo:2:0") }
+      expect_raises(ArgumentError, "column must be a positive integer, not -1") { Location.parse("foo:2:-1") }
+    end
+  end
 end

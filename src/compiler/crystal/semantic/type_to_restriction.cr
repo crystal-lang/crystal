@@ -93,7 +93,6 @@ module Crystal
     end
 
     def convert(type : GenericInstanceType)
-      generic_type = type.generic_type
       path = type_to_path(type.generic_type)
       type_vars = type.type_vars.map do |name, type_var|
         if type_var.is_a?(NumberLiteral)

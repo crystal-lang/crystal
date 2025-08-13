@@ -24,7 +24,6 @@
 # ```
 class Crystal::AbstractDefChecker
   def initialize(@program : Program)
-    @all_checked = Set(Type).new
   end
 
   def run
@@ -41,9 +40,6 @@ class Crystal::AbstractDefChecker
   end
 
   def check_single(type)
-    return if @all_checked.includes?(type)
-    @all_checked << type
-
     if type.abstract? || type.module?
       type.defs.try &.each_value do |defs_with_metadata|
         defs_with_metadata.each do |def_with_metadata|
@@ -140,7 +136,7 @@ class Crystal::AbstractDefChecker
   def implements?(target_type : Type, t1 : Type, m1 : Def, free_vars1, t2 : Type, m2 : Def, free_vars2)
     return false if m1.abstract?
     return false unless m1.name == m2.name
-    return false unless m1.yields == m2.yields
+    return false unless m1.block_arity == m2.block_arity
 
     m1_args, m1_kargs = def_arg_ranges(m1)
     m2_args, m2_kargs = def_arg_ranges(m2)

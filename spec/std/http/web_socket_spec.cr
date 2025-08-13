@@ -565,7 +565,7 @@ describe HTTP::WebSocket do
   typeof(HTTP::WebSocket.new(URI.parse("ws://localhost"), headers: HTTP::Headers{"X-TEST_HEADER" => "some-text"}))
 end
 
-private def integration_setup
+private def integration_setup(&)
   bin_ch = Channel(Bytes).new
   txt_ch = Channel(String).new
   ws_handler = HTTP::WebSocketHandler.new do |ws, ctx|
@@ -588,7 +588,7 @@ describe "Websocket integration tests" do
   it "streams less than the buffer frame size" do
     integration_setup do |wsoc, bin_ch, _|
       bytes = "hello test world".to_slice
-      wsoc.stream(frame_size: 1024) { |io| io.write bytes }
+      wsoc.stream(frame_size: 1024, &.write(bytes))
       received = bin_ch.receive
       received.should eq bytes
     end
@@ -598,7 +598,7 @@ describe "Websocket integration tests" do
     integration_setup do |wsoc, bin_ch, _|
       bytes = ("hello test world" * 80).to_slice
       bytes.size.should be > 1024
-      wsoc.stream(frame_size: 1024) { |io| io.write bytes }
+      wsoc.stream(frame_size: 1024, &.write(bytes))
       received = bin_ch.receive
       received.should eq bytes
     end

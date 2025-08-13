@@ -27,6 +27,7 @@ lib LibC
   SHUT_WR        =          1
   SHUT_RDWR      =          2
   SOCK_CLOEXEC   = 0x10000000
+  SOCK_NONBLOCK  = 0x20000000
 
   alias SocklenT = UInt
   alias SaFamilyT = UInt8
@@ -51,6 +52,7 @@ lib LibC
   end
 
   fun accept(x0 : Int, x1 : Sockaddr*, x2 : SocklenT*) : Int
+  fun accept4(x0 : Int, x1 : Sockaddr*, x2 : SocklenT*, x3 : Int) : Int
   fun bind(x0 : Int, x1 : Sockaddr*, x2 : SocklenT) : Int
   fun connect(x0 : Int, x1 : Sockaddr*, x2 : SocklenT) : Int
   fun getpeername(x0 : Int, x1 : Sockaddr*, x2 : SocklenT*) : Int

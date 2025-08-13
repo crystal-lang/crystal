@@ -86,6 +86,7 @@ module Crystal
       end
 
       check_var_is_self(node)
+      false
     end
 
     def visit(node : UninitializedVar)
@@ -114,6 +115,7 @@ module Crystal
           # TODO: can this be reached?
         end
       end
+      false
     end
 
     def visit(node : Assign)
@@ -394,15 +396,13 @@ module Crystal
 
     def add_type_info(vars, name, type, node)
       info = vars[name]?
-      unless info
-        info = TypeInfo.new(type, node.location.not_nil!)
-        info.outside_def = true if @outside_def
-        vars[name] = info
-      else
+      if info
         info.type = Type.merge!(type, info.type)
-        info.outside_def = true if @outside_def
-        vars[name] = info
+      else
+        info = TypeInfo.new(type, node.location.not_nil!)
       end
+      info.outside_def = true if @outside_def
+      vars[name] = info
     end
 
     def add_instance_var_type_info(vars, name, type : Type, node)
@@ -413,17 +413,14 @@ module Crystal
       end
 
       info = vars[name]?
-      unless info
-        info = InstanceVarTypeInfo.new(node.location.not_nil!, type)
-        info.outside_def = true if @outside_def
-        info.add_annotations(annotations) if annotations
-        vars[name] = info
-      else
+      if info
         info.type = Type.merge!(info.type, type)
-        info.outside_def = true if @outside_def
-        info.add_annotations(annotations) if annotations
-        vars[name] = info
+      else
+        info = InstanceVarTypeInfo.new(node.location.not_nil!, type)
       end
+      info.outside_def = true if @outside_def
+      info.add_annotations(annotations) if annotations
+      vars[name] = info
     end
 
     def guess_type(node : NumberLiteral)
@@ -667,7 +664,7 @@ module Crystal
       # If it's Pointer(T).malloc or Pointer(T).null, guess it to Pointer(T)
       if obj.is_a?(Generic) &&
          (name = obj.name).is_a?(Path) && name.single?("Pointer") &&
-         (node.name == "malloc" || node.name == "null")
+         node.name.in?("malloc", "null")
         type = lookup_type?(obj)
         return type if type.is_a?(PointerInstanceType)
       end
@@ -769,7 +766,7 @@ module Crystal
 
       defs = metaclass.lookup_defs(node.name)
       defs = defs.select do |a_def|
-        a_def_has_block = !!a_def.yields
+        a_def_has_block = !!a_def.block_arity
         call_has_block = !!(node.block || node.block_arg)
         next unless a_def_has_block == call_has_block
 
@@ -813,7 +810,6 @@ module Crystal
 
       # Try to guess from the method's body, but now
       # the current lookup type is obj_type
-      type = nil
       old_type_override = @type_override
       @type_override = obj_type
 
@@ -1078,6 +1074,14 @@ module Crystal
       @program.int32
     end
 
+    def guess_type(node : AlignOf)
+      @program.int32
+    end
+
+    def guess_type(node : InstanceAlignOf)
+      @program.int32
+    end
+
     def guess_type(node : OffsetOf)
       @program.int32
     end
@@ -1276,7 +1280,7 @@ module Crystal
       false
     end
 
-    def visit(node : InstanceSizeOf | SizeOf | OffsetOf | TypeOf | PointerOf)
+    def visit(node : InstanceSizeOf | SizeOf | InstanceAlignOf | AlignOf | OffsetOf | TypeOf | PointerOf)
       false
     end
 
@@ -1346,6 +1350,7 @@ module Crystal
       if node.name == "self"
         @has_self = true
       end
+      false
     end
 
     def visit(node : ASTNode)

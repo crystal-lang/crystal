@@ -8,7 +8,7 @@
 # Int32.from_json("1")                # => 1
 # Array(Int32).from_json("[1, 2, 3]") # => [1, 2, 3]
 # ```
-def Object.from_json(string_or_io)
+def Object.from_json(string_or_io : String | IO) : Object
   parser = JSON::PullParser.new(string_or_io)
   new parser
 end
@@ -21,7 +21,7 @@ end
 # ```
 # Int32.from_json(%({"main": 1}), root: "main") # => 1
 # ```
-def Object.from_json(string_or_io, root : String)
+def Object.from_json(string_or_io : String | IO, root : String) : Object
   parser = JSON::PullParser.new(string_or_io)
   parser.on_key!(root) do
     new parser
@@ -50,7 +50,7 @@ end
 # ```
 #
 # To parse and get an `Array`, use the block-less overload.
-def Array.from_json(string_or_io) : Nil
+def Array.from_json(string_or_io, &) : Nil
   parser = JSON::PullParser.new(string_or_io)
   new(parser) do |element|
     yield element
@@ -58,7 +58,7 @@ def Array.from_json(string_or_io) : Nil
   nil
 end
 
-def Deque.from_json(string_or_io) : Nil
+def Deque.from_json(string_or_io, &) : Nil
   parser = JSON::PullParser.new(string_or_io)
   new(parser) do |element|
     yield element
@@ -116,28 +116,31 @@ module Iterator(T)
   end
 end
 
-def Nil.new(pull : JSON::PullParser)
+def Nil.new(pull : JSON::PullParser) : self
   pull.read_null
 end
 
-def Bool.new(pull : JSON::PullParser)
+def Bool.new(pull : JSON::PullParser) : self
   pull.read_bool
 end
 
 {% for type, method in {
-                         "Int8"   => "i8",
-                         "Int16"  => "i16",
-                         "Int32"  => "i32",
-                         "Int64"  => "i64",
-                         "UInt8"  => "u8",
-                         "UInt16" => "u16",
-                         "UInt32" => "u32",
-                         "UInt64" => "u64",
+                         "Int8"    => "i8",
+                         "Int16"   => "i16",
+                         "Int32"   => "i32",
+                         "Int64"   => "i64",
+                         "Int128"  => "i128",
+                         "UInt8"   => "u8",
+                         "UInt16"  => "u16",
+                         "UInt32"  => "u32",
+                         "UInt64"  => "u64",
+                         "UInt128" => "u128",
                        } %}
   def {{type.id}}.new(pull : JSON::PullParser)
+    # TODO: use `PullParser#read?` instead
     location = pull.location
     value =
-      {% if type == "UInt64" %}
+      {% if type == "UInt64" || type == "UInt128" || type == "Int128" %}
         pull.read_raw
       {% else %}
         pull.read_int
@@ -154,7 +157,7 @@ end
   end
 {% end %}
 
-def Float32.new(pull : JSON::PullParser)
+def Float32.new(pull : JSON::PullParser) : self
   case pull.kind
   when .int?
     value = pull.int_value.to_f32
@@ -169,7 +172,7 @@ def Float32.from_json_object_key?(key : String) : Float32?
   key.to_f32?
 end
 
-def Float64.new(pull : JSON::PullParser)
+def Float64.new(pull : JSON::PullParser) : self
   case pull.kind
   when .int?
     value = pull.int_value.to_f
@@ -184,16 +187,20 @@ def Float64.from_json_object_key?(key : String) : Float64?
   key.to_f64?
 end
 
-def String.new(pull : JSON::PullParser)
+def String.new(pull : JSON::PullParser) : self
   pull.read_string
 end
 
-def Path.new(pull : JSON::PullParser)
+def Path.new(pull : JSON::PullParser) : self
   new(pull.read_string)
 end
 
 def String.from_json_object_key?(key : String) : String
   key
+end
+
+def Path.from_json_object_key?(key : String) : Path
+  new(key)
 end
 
 def Array.new(pull : JSON::PullParser)
@@ -204,7 +211,7 @@ def Array.new(pull : JSON::PullParser)
   ary
 end
 
-def Array.new(pull : JSON::PullParser)
+def Array.new(pull : JSON::PullParser, &)
   pull.read_array do
     yield T.new(pull)
   end
@@ -218,7 +225,7 @@ def Deque.new(pull : JSON::PullParser)
   ary
 end
 
-def Deque.new(pull : JSON::PullParser)
+def Deque.new(pull : JSON::PullParser, &)
   pull.read_array do
     yield T.new(pull)
   end
@@ -312,15 +319,17 @@ end
 # See `#to_json` for reference.
 #
 # Raises `JSON::ParseException` if the deserialization fails.
-def Enum.new(pull : JSON::PullParser)
+def Enum.new(pull : JSON::PullParser) : self
   {% if @type.annotation(Flags) %}
     value = {{ @type }}::None
     pull.read_array do
-      value |= parse?(pull.read_string) || pull.raise "Unknown enum #{self} value: #{pull.string_value.inspect}"
+      string = pull.read_string
+      value |= parse?(string) || pull.raise "Unknown enum #{self} value: #{string.inspect}"
     end
     value
   {% else %}
-    parse?(pull.read_string) || pull.raise "Unknown enum #{self} value: #{pull.string_value.inspect}"
+    string = pull.read_string
+    parse?(string) || pull.raise "Unknown enum #{self} value: #{string.inspect}"
   {% end %}
 end
 
@@ -397,7 +406,7 @@ def Union.new(pull : JSON::PullParser)
       return pull.read_string
     {% end %}
     when .int?
-    {% type_order = [Int64, UInt64, Int32, UInt32, Int16, UInt16, Int8, UInt8, Float64, Float32] %}
+    {% type_order = [Int128, UInt128, Int64, UInt64, Int32, UInt32, Int16, UInt16, Int8, UInt8, Float64, Float32] %}
     {% for type in type_order.select { |t| T.includes? t } %}
       value = pull.read?({{type}})
       return value unless value.nil?
@@ -435,16 +444,46 @@ def Union.new(pull : JSON::PullParser)
   {% end %}
 end
 
+def Union.from_json_object_key?(key : String)
+  {% begin %}
+    # String must come last because any key can be parsed into a String.
+    # So, we give a chance first to other types in the union to be parsed.
+    {% string_type = T.find { |type| type == ::String } %}
+
+    {% for type in T %}
+      {% unless type == string_type %}
+        if result = {{ type }}.from_json_object_key?(key)
+          return result
+        end
+      {% end %}
+    {% end %}
+
+    {% if string_type %}
+      if result = {{ string_type }}.from_json_object_key?(key)
+        return result
+      end
+    {% end %}
+  {% end %}
+end
+
 # Reads a string from JSON parser as a time formatted according to [RFC 3339](https://tools.ietf.org/html/rfc3339)
-# or other variations of [ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf).
+# or other variations of [ISO 8601](https://web.archive.org/web/20250306154328/http://xml.coverpages.org/ISO-FDIS-8601.pdf).
 #
 # The JSON format itself does not specify a time data type, this method just
 # assumes that a string holding a ISO 8601 time format can be interpreted as a
 # time value.
 #
 # See `#to_json` for reference.
-def Time.new(pull : JSON::PullParser)
+def Time.new(pull : JSON::PullParser) : self
   Time::Format::ISO_8601_DATE_TIME.parse(pull.read_string)
+end
+
+def Time::Location.new(pull : JSON::PullParser)
+  load(pull.read_string)
+end
+
+def Time::Location.from_json_object_key?(key : String) : Time::Location
+  load(key)
 end
 
 struct Time::Format

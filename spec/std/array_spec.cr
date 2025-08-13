@@ -117,6 +117,10 @@ describe "Array" do
       b = [4, 5, 6] * 10
       (a | b).should eq([1, 2, 3, 4, 5, 6])
     end
+
+    it "different types" do
+      ([1, 2, 3] | ["hello"]).should eq([1, 2, 3, "hello"])
+    end
   end
 
   it "does +" do
@@ -445,6 +449,24 @@ describe "Array" do
       a[3..] = [4, 5, 6]
       a.should eq([1, 2, 3, 4, 5, 6])
     end
+
+    it "reuses the buffer if possible" do
+      a = [1, 2, 3, 4, 5]
+      a.pop
+      a[4, 0] = [6]
+      a.should eq([1, 2, 3, 4, 6])
+      a.@capacity.should eq(5)
+      a.@offset_to_buffer.should eq(0)
+    end
+
+    it "resizes the buffer if capacity is not enough" do
+      a = [1, 2, 3, 4, 5]
+      a.shift
+      a[4, 0] = [6, 7, 8, 9]
+      a.should eq([2, 3, 4, 5, 6, 7, 8, 9])
+      a.@capacity.should eq(10)
+      a.@offset_to_buffer.should eq(1)
+    end
   end
 
   describe "values_at" do
@@ -539,6 +561,20 @@ describe "Array" do
       a = [] of Int32
       a.concat(1..4)
       a.@capacity.should eq(6)
+    end
+
+    it "concats indexable" do
+      a = [1, 2, 3]
+      a.concat(Slice.new(97) { |i| i + 4 })
+      a.should eq((1..100).to_a)
+
+      a = [1, 2, 3]
+      a.concat(StaticArray(Int32, 97).new { |i| i + 4 })
+      a.should eq((1..100).to_a)
+
+      a = [1, 2, 3]
+      a.concat(Deque.new(97) { |i| i + 4 })
+      a.should eq((1..100).to_a)
     end
 
     it "concats a union of arrays" do
@@ -841,6 +877,76 @@ describe "Array" do
     end
   end
 
+  describe "insert_all" do
+    it "inserts with index 0" do
+      a = [2, 3]
+      a.insert_all(0, [0, 1]).should be a
+      a.should eq([0, 1, 2, 3])
+    end
+
+    it "inserts with positive index" do
+      a = [1, 2, 5, 6]
+      a.insert_all(2, [3, 4]).should be a
+      a.should eq([1, 2, 3, 4, 5, 6])
+    end
+
+    it "inserts with index of #size" do
+      a = [1, 2, 3]
+      a.insert_all(a.size, [4, 5]).should be a
+      a.should eq([1, 2, 3, 4, 5])
+    end
+
+    it "inserts with negative index" do
+      a = [1, 2, 3]
+      a.insert_all(-1, [4, 5]).should be a
+      a.should eq([1, 2, 3, 4, 5])
+    end
+
+    it "inserts with negative index (2)" do
+      a = [1, 2, 5, 6]
+      a.insert_all(-3, [3, 4]).should be a
+      a.should eq([1, 2, 3, 4, 5, 6])
+    end
+
+    it "inserts when empty" do
+      a = [] of Int32
+      a.insert_all(0, [1, 2, 3]).should be a
+      a.should eq([1, 2, 3])
+    end
+
+    it "inserts when other is empty" do
+      a = [1, 2, 3]
+      a.insert_all(1, [] of Int32).should be a
+      a.should eq([1, 2, 3])
+    end
+
+    it "raises with index greater than size" do
+      a = [1, 2, 3]
+      expect_raises IndexError do
+        a.insert_all(4, [4, 5])
+      end
+    end
+
+    it "raises with negative index greater than size" do
+      a = [1, 2, 3]
+      expect_raises IndexError do
+        a.insert_all(-5, [4, 5])
+      end
+    end
+
+    it "inserts indexable" do
+      a = [1, 9, 10]
+      a.insert_all(1, Slice.new(3, 8)).should be a
+      a.should eq([1, 8, 8, 8, 9, 10])
+
+      a.insert_all(-6, StaticArray(Int32, 3).new { |i| i + 2 }).should be a
+      a.should eq([1, 2, 3, 4, 8, 8, 8, 9, 10])
+
+      a.insert_all(4, Deque{5, 6, 7}).should be a
+      a.should eq([1, 2, 3, 4, 5, 6, 7, 8, 8, 8, 9, 10])
+    end
+  end
+
   describe "inspect" do
     it { [1, 2, 3].inspect.should eq("[1, 2, 3]") }
   end
@@ -960,11 +1066,51 @@ describe "Array" do
     end
   end
 
-  it "does replace" do
-    a = [1, 2, 3]
-    b = [1]
-    b.replace a
-    b.should eq(a)
+  describe "#replace" do
+    it "replaces all elements" do
+      a = [1, 2, 3]
+      b = [4, 5, 6]
+      a.replace(b).should be(a)
+      a.should eq(b)
+    end
+
+    it "reuses the buffer if possible" do
+      a = [1, 2, 3, 4, 5]
+      a.shift
+      b = [6, 7, 8, 9, 10]
+      a.replace(b).should be(a)
+      a.should eq(b)
+      a.@capacity.should eq(5)
+      a.@offset_to_buffer.should eq(0)
+
+      a = [1, 2, 3, 4, 5]
+      a.shift(2)
+      b = [6, 7, 8, 9]
+      a.replace(b).should be(a)
+      a.should eq(b)
+      a.@capacity.should eq(5)
+      a.@offset_to_buffer.should eq(1)
+    end
+
+    it "resizes the buffer if capacity is not enough" do
+      a = [1, 2, 3, 4, 5]
+      b = [6, 7, 8, 9, 10, 11]
+      a.replace(b).should be(a)
+      a.should eq(b)
+      a.@capacity.should eq(10)
+      a.@offset_to_buffer.should eq(0)
+    end
+
+    it "clears unused elements if new size is smaller" do
+      a = [1, 2, 3, 4, 5]
+      b = [6, 7, 8]
+      a.replace(b).should be(a)
+      a.should eq(b)
+      a.@capacity.should eq(5)
+      a.@offset_to_buffer.should eq(0)
+      a.unsafe_fetch(3).should eq(0)
+      a.unsafe_fetch(4).should eq(0)
+    end
   end
 
   it "does reverse with an odd number of elements" do
@@ -2044,7 +2190,9 @@ describe "Array" do
     t = [4, 5, 6, [7, 8]]
     u = [9, [10, 11].each]
     a = [s, t, u, 12, 13]
-    a.flatten.to_a.should eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13])
+    result = a.flatten.to_a
+    result.should eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13])
+    result.should be_a(Array(Int32))
   end
 
   it "#skip" do

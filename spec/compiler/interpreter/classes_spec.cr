@@ -4,7 +4,7 @@ require "./spec_helper"
 describe Crystal::Repl::Interpreter do
   context "classes" do
     it "does allocate, set instance var and get instance var" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
         class Foo
           @x = 0
 
@@ -19,11 +19,11 @@ describe Crystal::Repl::Interpreter do
         foo = Foo.allocate
         foo.x = 42
         foo.x
-      CODE
+      CRYSTAL
     end
 
     it "does constructor" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
         class Foo
           def initialize(@x : Int32)
           end
@@ -35,7 +35,7 @@ describe Crystal::Repl::Interpreter do
 
         foo = Foo.new(42)
         foo.x
-      CODE
+      CRYSTAL
     end
 
     it "interprets read instance var" do
@@ -43,17 +43,17 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "discards allocate" do
-      interpret(<<-CODE).should eq(3)
+      interpret(<<-CRYSTAL).should eq(3)
         class Foo
         end
 
         Foo.allocate
         3
-      CODE
+      CRYSTAL
     end
 
     it "calls implicit class self method" do
-      interpret(<<-CODE).should eq(10)
+      interpret(<<-CRYSTAL).should eq(10)
         class Foo
           def initialize
             @x = 10
@@ -70,11 +70,11 @@ describe Crystal::Repl::Interpreter do
 
         foo = Foo.new
         foo.foo
-      CODE
+      CRYSTAL
     end
 
     it "calls explicit struct self method" do
-      interpret(<<-CODE).should eq(10)
+      interpret(<<-CRYSTAL).should eq(10)
         struct Foo
           def initialize
             @x = 10
@@ -91,11 +91,11 @@ describe Crystal::Repl::Interpreter do
 
         foo = Foo.new
         foo.foo
-      CODE
+      CRYSTAL
     end
 
     it "calls implicit struct self method" do
-      interpret(<<-CODE).should eq(10)
+      interpret(<<-CRYSTAL).should eq(10)
         struct Foo
           def initialize
             @x = 10
@@ -112,11 +112,11 @@ describe Crystal::Repl::Interpreter do
 
         foo = Foo.new
         foo.foo
-      CODE
+      CRYSTAL
     end
 
     it "does object_id" do
-      interpret(<<-CODE).should be_true
+      interpret(<<-CRYSTAL).should be_true
         class Foo
         end
 
@@ -124,12 +124,12 @@ describe Crystal::Repl::Interpreter do
         object_id = foo.object_id
         address = foo.as(Void*).address
         object_id == address
-      CODE
+      CRYSTAL
     end
   end
 
   it "inlines instance var access from virtual type with a single type (#39520)" do
-    interpret(<<-CODE).should eq(1)
+    interpret(<<-CRYSTAL).should eq(1)
         struct Int32
           def foo
             1
@@ -157,11 +157,11 @@ describe Crystal::Repl::Interpreter do
 
         expression = ValueExpression.new.as(Expression)
         expression.value.foo
-      CODE
+      CRYSTAL
   end
 
   it "downcasts virtual type to its only type (#12351)" do
-    interpret(<<-CODE).should eq(1)
+    interpret(<<-CRYSTAL).should eq(1)
       abstract class A
       end
 
@@ -177,6 +177,6 @@ describe Crystal::Repl::Interpreter do
 
       b = B.new.as(A)
       foo(b)
-      CODE
+      CRYSTAL
   end
 end

@@ -77,11 +77,13 @@ module Crystal
 
     def visit(node : Call)
       return false if node.obj.nil? && node.name == "raise"
-      node.target_defs.each do |typed_def|
-        typed_def.accept(self)
-        next unless @context_visitor.def_with_yield.not_nil!.location == typed_def.location
-        @context_visitor.inside_typed_def do
-          typed_def.accept(@context_visitor)
+      node.target_defs.try do |defs|
+        defs.each do |typed_def|
+          typed_def.accept(self)
+          next unless @context_visitor.def_with_yield.not_nil!.location == typed_def.location
+          @context_visitor.inside_typed_def do
+            typed_def.accept(@context_visitor)
+          end
         end
       end
       true
@@ -110,7 +112,7 @@ module Crystal
       @found_untyped_def = false
     end
 
-    def inside_typed_def
+    def inside_typed_def(&)
       @inside_typed_def = true
       yield.tap { @inside_typed_def = false }
     end
@@ -161,21 +163,21 @@ module Crystal
 
       if @contexts.empty?
         if @found_untyped_def
-          return ContextResult.new("failed", "no context information found (methods which are never called don't have a context)")
+          ContextResult.new("failed", "no context information found (methods which are never called don't have a context)")
         else
-          return ContextResult.new("failed", "no context information found")
+          ContextResult.new("failed", "no context information found")
         end
       else
         res = ContextResult.new("ok", "#{@contexts.size} possible context#{@contexts.size > 1 ? "s" : ""} found")
         res.contexts = @contexts
-        return res
+        res
       end
     end
 
     def visit(node : Def)
       return false unless contains_target(node)
 
-      if @def_with_yield.nil? && !node.yields.nil?
+      if @def_with_yield.nil? && !node.block_arity.nil?
         @def_with_yield = node
         return false
       end

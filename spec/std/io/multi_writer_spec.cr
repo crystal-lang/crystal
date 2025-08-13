@@ -37,7 +37,7 @@ describe "IO::MultiWriter" do
         writer.puts "foo"
       end
 
-      io.closed?.should eq(false)
+      io.closed?.should be_false
       io.to_s.should eq("")
     end
 
@@ -47,7 +47,7 @@ describe "IO::MultiWriter" do
 
       writer.close
 
-      io.closed?.should eq(true)
+      io.closed?.should be_true
     end
   end
 

@@ -1,3 +1,5 @@
+#! /usr/bin/env crystal
+#
 # This script generates the file src/unicode/data.cr
 # that contains compact representations of the UnicodeData.txt
 # file from the unicode specification.
@@ -100,7 +102,7 @@ def new_alternate_range(first_codepoint, last_codepoint)
   AlternateRange.new(first_codepoint, last_codepoint.not_nil! + 1)
 end
 
-def strides(entries, targets)
+def strides(entries, targets, &)
   strides = [] of Stride
 
   entries = entries.select { |entry| targets.includes?(yield entry) }
@@ -147,6 +149,7 @@ end
 
 entries = [] of Entry
 special_cases_downcase = [] of SpecialCase
+special_cases_titlecase = [] of SpecialCase
 special_cases_upcase = [] of SpecialCase
 special_cases_casefold = [] of SpecialCase
 casefold_mapping = Hash(Int32, Int32).new
@@ -171,7 +174,7 @@ body.each_line do |line|
     casefold = nil
   end
   if casefold
-    while casefold.size < 4
+    while casefold.size < 3
       casefold << 0
     end
     special_cases_casefold << SpecialCase.new(codepoint, casefold)
@@ -200,6 +203,7 @@ body.each_line do |line|
   end
   upcase = pieces[12].to_i?(16)
   downcase = pieces[13].to_i?(16)
+  titlecase = pieces[14].to_i?(16)
   casefold = casefold_mapping[codepoint]?
   entries << Entry.new(
     codepoint: codepoint,
@@ -211,6 +215,9 @@ body.each_line do |line|
     downcase: downcase,
     casefold: casefold,
   )
+  if titlecase && titlecase != upcase
+    special_cases_titlecase << SpecialCase.new(codepoint, [titlecase, 0, 0])
+  end
 end
 
 url = "#{UCD_ROOT}SpecialCasing.txt"
@@ -223,21 +230,29 @@ body.each_line do |line|
 
   pieces = line.split(';')
   codepoint = pieces[0].to_i(16)
+
   downcase = pieces[1].split.map(&.to_i(16))
-  upcase = pieces[3].split.map(&.to_i(16))
-  downcase = nil if downcase.size == 1
-  upcase = nil if upcase.size == 1
-  if downcase
+  if downcase.size > 1
     while downcase.size < 3
       downcase << 0
     end
     special_cases_downcase << SpecialCase.new(codepoint, downcase)
   end
-  if upcase
+
+  upcase = pieces[3].split.map(&.to_i(16))
+  if upcase.size > 1
     while upcase.size < 3
       upcase << 0
     end
     special_cases_upcase << SpecialCase.new(codepoint, upcase)
+  end
+
+  titlecase = pieces[2].split.map(&.to_i(16))
+  if titlecase.size > 1
+    while titlecase.size < 3
+      titlecase << 0
+    end
+    special_cases_titlecase << SpecialCase.new(codepoint, titlecase)
   end
 end
 
@@ -282,6 +297,11 @@ upcase_ranges.select! { |r| r.delta != -1 }
 
 alternate_ranges = alternate_ranges(downcase_one_ranges)
 
+special_cases_downcase.sort_by! &.codepoint
+special_cases_upcase.sort_by! &.codepoint
+special_cases_titlecase.reject! &.in?(special_cases_upcase)
+special_cases_titlecase.sort_by! &.codepoint
+
 casefold_ranges = case_ranges entries, &.casefold
 
 all_strides = {} of String => Array(Stride)
@@ -296,7 +316,7 @@ canonical_combining_classes.sort_by! &.low
 canonical_decompositions = entries.compact_map do |entry|
   next unless entry.decomposition_type.canonical?
   mapping = entry.decomposition_mapping.not_nil!
-  raise "BUG: mapping longer than 2 codepoints" unless mapping.size <= 2
+  raise "BUG: Mapping longer than 2 codepoints" unless mapping.size <= 2
   {entry.codepoint, mapping[0], mapping[1]? || 0}
 end
 

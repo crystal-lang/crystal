@@ -13,10 +13,6 @@ module Crystal
       super(message)
     end
 
-    def color=(color)
-      @color = !!color
-    end
-
     def has_location?
       @filename || @line_number
     end

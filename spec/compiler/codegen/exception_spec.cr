@@ -1319,4 +1319,164 @@ describe "Code gen: exception" do
       end
     ))
   end
+
+  it "handles rescuing module type" do
+    run(%(
+      require "prelude"
+
+      module Foo; end
+
+      class Ex1 < Exception
+        include Foo
+      end
+
+      x = 0
+      begin
+        raise Ex1.new
+      rescue Foo
+        x = 1
+      end
+      x
+      )).to_i.should eq(1)
+  end
+
+  it "handles rescuing union between module type and class type" do
+    run(%(
+      require "prelude"
+
+      module Foo; end
+
+      abstract class BaseError < Exception; end
+      class Ex2 < BaseError; end
+
+      class Ex1 < BaseError
+        include Foo
+      end
+
+      x = 0
+      begin
+        raise Ex1.new
+      rescue Foo | BaseError
+        x = 1
+      end
+      x
+      )).to_i.should eq(1)
+  end
+
+  it "handles rescuing union between module types" do
+    run(%(
+      require "prelude"
+
+      module Foo; end
+      module Bar; end
+
+      class Ex1 < Exception
+        include Foo
+      end
+
+      class Ex2 < Exception
+        include Bar
+      end
+
+      x = 0
+      begin
+        raise Ex1.new
+      rescue Foo | Bar
+        x = 1
+      end
+      x
+      )).to_i.should eq(1)
+  end
+
+  it "does not rescue just any module" do
+    run(%(
+      require "prelude"
+
+      module Foo; end
+      module Bar; end
+
+      class Ex < Exception
+        include Foo
+      end
+
+      x = 0
+      begin
+        begin
+          raise Ex.new("oh no")
+        rescue Bar
+          x = 1
+        end
+      rescue ex
+        x = 2
+      end
+      x
+      )).to_i.should eq(2)
+  end
+
+  it "rescues a valid union" do
+    run(%(
+      require "prelude"
+
+      module Foo; end
+      module Bar; end
+
+      class Ex < Exception
+        include Foo
+      end
+
+      x = 0
+      begin
+        raise Ex.new("oh no")
+      rescue Union(Foo, Bar)
+        x = 1
+      end
+      x
+      )).to_i.should eq(1)
+  end
+
+  it "rescues a valid nested union" do
+    run(%(
+      require "prelude"
+
+      module Foo; end
+      module Bar; end
+      module Baz; end
+
+      class Ex < Exception
+        include Foo
+      end
+
+      x = 0
+      begin
+        raise Ex.new("oh no")
+      rescue Union(Baz, Union(Foo, Bar))
+        x = 1
+      end
+      x
+      )).to_i.should eq(1)
+  end
+
+  it "does not rescue just any union" do
+    run(%(
+      require "prelude"
+
+      module Foo; end
+      module Bar; end
+      module Baz; end
+
+      class Ex < Exception
+        include Foo
+      end
+
+      x = 0
+      begin
+        raise Ex.new("oh no")
+      rescue Union(Bar, Baz)
+        x = 1
+      rescue
+        x = 2
+      end
+      x
+      )).to_i.should eq(2)
+  end
 end
