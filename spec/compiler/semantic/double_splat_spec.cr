@@ -24,37 +24,34 @@ describe "Semantic: double splat" do
   end
 
   it "errors if duplicate keys on call side with two double splats" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "duplicate key: x"
       def foo(**args)
       end
 
       t1 = {x: 1, y: 2}
       t2 = {z: 3, x: 4}
       foo **t1, **t2
-      ),
-      "duplicate key: x"
+      CRYSTAL
   end
 
   it "errors if duplicate keys on call side with double splat and named args" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "duplicate key: x"
       def foo(**args)
       end
 
       t1 = {x: 1, y: 2}
       foo **t1, z: 3, x: 4
-      ),
-      "duplicate key: x"
+      CRYSTAL
   end
 
   it "errors missing argument with double splat" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "missing argument: y"
       def foo(x, y)
       end
 
       tup = {x: 1}
       foo **tup
-      ),
-      "missing argument: y"
+      CRYSTAL
   end
 
   it "matches double splat on method (empty)" do
@@ -116,33 +113,30 @@ describe "Semantic: double splat" do
   end
 
   it "uses restriction on double splat, doesn't match with empty named tuple" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "no overload matches"
       def foo(**options : Int32)
       end
 
       foo
-      ),
-      "no overload matches"
+      CRYSTAL
   end
 
   it "uses restriction on double splat, doesn't match with empty named tuple (2)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "no overload matches"
       def foo(x, **options : Int32)
       end
 
       foo x: 1
-      ),
-      "no overload matches"
+      CRYSTAL
   end
 
   it "uses restriction on double splat, means all types must be that type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "no overload matches"
       def foo(**options : Int32)
       end
 
       foo x: 1, y: 'a'
-      ),
-      "no overload matches"
+      CRYSTAL
   end
 
   it "overloads based on double splat restriction" do
@@ -182,15 +176,14 @@ describe "Semantic: double splat" do
   end
 
   it "uses double splat restriction with concrete type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "no overload matches"
       struct NamedTuple(T)
         def self.foo(**options : **T)
         end
       end
 
       NamedTuple(x: Int32, y: Char).foo(x: 1, y: true)
-      ),
-      "no overload matches"
+      CRYSTAL
   end
 
   it "matches named args producing an empty double splat (#2678)" do

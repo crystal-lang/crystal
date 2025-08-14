@@ -345,7 +345,7 @@ describe "Semantic: exception" do
   end
 
   it "types instance variable as nilable if assigned inside an exception handler (#1845)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "instance variable '@bar' of Foo must be Int32, not Nil"
       class Foo
         def initialize
           begin
@@ -361,8 +361,7 @@ describe "Semantic: exception" do
 
       foo = Foo.new
       foo.bar
-      ),
-      "instance variable '@bar' of Foo must be Int32, not Nil"
+      CRYSTAL
   end
 
   it "doesn't type instance variable as nilable if assigned inside an exception handler after being assigned" do
@@ -432,7 +431,7 @@ describe "Semantic: exception" do
   end
 
   it "marks instance variable as nilable if assigned inside rescue inside initialize" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "instance variable '@x' of Foo must be Int32, not Nil"
       require "prelude"
 
       class Coco < Exception
@@ -449,8 +448,7 @@ describe "Semantic: exception" do
       end
 
       Foo.new
-      ),
-      "instance variable '@x' of Foo must be Int32, not Nil"
+      CRYSTAL
   end
 
   it "assigns var inside ensure (1) (#3919)" do
@@ -509,7 +507,7 @@ describe "Semantic: exception" do
   end
 
   it "can't return from ensure (#4470)" do
-    assert_error(%(
+    assert_error(<<-CRYSTAL, "can't return from ensure")
       def foo
         return 1
       ensure
@@ -517,11 +515,11 @@ describe "Semantic: exception" do
       end
 
       foo
-    ), "can't return from ensure")
+      CRYSTAL
   end
 
   it "can't return from block inside ensure (#4470)" do
-    assert_error(%(
+    assert_error(<<-CRYSTAL, "can't return from ensure")
       def once
         yield
       end
@@ -535,11 +533,11 @@ describe "Semantic: exception" do
       end
 
       foo
-    ), "can't return from ensure")
+      CRYSTAL
   end
 
   it "can't return from while inside ensure (#4470)" do
-    assert_error(%(
+    assert_error(<<-CRYSTAL, "can't return from ensure")
       def foo
         return 1
       ensure
@@ -549,11 +547,11 @@ describe "Semantic: exception" do
       end
 
       foo
-    ), "can't return from ensure")
+      CRYSTAL
   end
 
   it "can't use break inside while inside ensure (#4470)" do
-    assert_error(%(
+    assert_error(<<-CRYSTAL, "can't use break inside ensure")
       while true
         begin
           break
@@ -561,7 +559,7 @@ describe "Semantic: exception" do
           break
         end
       end
-    ), "can't use break inside ensure")
+      CRYSTAL
   end
 
   it "can use break inside while inside ensure (#4470)" do
@@ -579,7 +577,7 @@ describe "Semantic: exception" do
   end
 
   it "can't use break inside block inside ensure (#4470)" do
-    assert_error(%(
+    assert_error(<<-CRYSTAL, "can't use break inside ensure")
       def loop
         while true
           yield
@@ -593,7 +591,7 @@ describe "Semantic: exception" do
           break
         end
       end
-    ), "can't use break inside ensure")
+      CRYSTAL
   end
 
   it "can use break inside block inside ensure (#4470)" do
@@ -617,7 +615,7 @@ describe "Semantic: exception" do
   end
 
   it "can't use next inside while inside ensure (#4470)" do
-    assert_error(%(
+    assert_error(<<-CRYSTAL, "can't use next inside ensure")
       while true
         begin
           break
@@ -625,11 +623,11 @@ describe "Semantic: exception" do
           next
         end
       end
-    ), "can't use next inside ensure")
+      CRYSTAL
   end
 
   it "can't use next inside block inside ensure (#4470)" do
-    assert_error(%(
+    assert_error(<<-CRYSTAL, "can't use next inside ensure")
       def loop
         while true
           yield
@@ -643,7 +641,7 @@ describe "Semantic: exception" do
           next
         end
       end
-    ), "can't use next inside ensure")
+      CRYSTAL
   end
 
   it "can use next inside while inside ensure (#4470)" do

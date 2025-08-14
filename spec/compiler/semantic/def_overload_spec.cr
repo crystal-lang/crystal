@@ -1081,7 +1081,7 @@ describe "Semantic: def overload" do
   end
 
   it "errors if generic type doesn't match" do
-    assert_error "
+    assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to be Foo(Int32), not Foo(Float64 | Int32)"
       class Foo(T)
       end
 
@@ -1089,8 +1089,7 @@ describe "Semantic: def overload" do
       end
 
       foo Foo(Int32 | Float64).new
-      ",
-      "expected argument #1 to 'foo' to be Foo(Int32), not Foo(Float64 | Int32)"
+      CRYSTAL
   end
 
   it "gets free variable from union restriction" do
@@ -1224,25 +1223,23 @@ describe "Semantic: def overload" do
 
   it "errors if union restriction has multiple free vars" do
     each_union_variant("T", "U") do |restriction|
-      assert_error "
+      assert_error <<-CRYSTAL, "can't specify more than one free var in union restriction"
         def foo(x : #{restriction}) forall T, U
         end
 
         foo(1)
-        ",
-        "can't specify more than one free var in union restriction"
+        CRYSTAL
     end
   end
 
   it "errors if union restriction has multiple free vars (2)" do
     each_union_variant("T", "U") do |restriction|
-      assert_error "
+      assert_error <<-CRYSTAL, "can't specify more than one free var in union restriction"
         def foo(x : #{restriction}) forall T, U
         end
 
         foo(1 || 'a')
-        ",
-        "can't specify more than one free var in union restriction"
+        CRYSTAL
     end
   end
 
@@ -1267,14 +1264,13 @@ describe "Semantic: def overload" do
   end
 
   it "doesn't match tuples of different sizes" do
-    assert_error "
+    assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to be ::Tuple(X, Y, Z), not Tuple(Int32, Int32)"
       def foo(x : {X, Y, Z})
         'a'
       end
 
       foo({1, 2})
-      ",
-      "expected argument #1 to 'foo' to be ::Tuple(X, Y, Z), not Tuple(Int32, Int32)"
+      CRYSTAL
   end
 
   it "matches tuples of different sizes" do
@@ -1313,7 +1309,7 @@ describe "Semantic: def overload" do
   end
 
   it "gives correct error message, looking up parent defs, when no overload matches" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #1 to 'Bar#foo' to be Int32, not Float64"
       class Foo
         def foo(x : Int32)
         end
@@ -1325,12 +1321,11 @@ describe "Semantic: def overload" do
       end
 
       Bar.new.foo(1.5)
-      ),
-      "expected argument #1 to 'Bar#foo' to be Int32, not Float64"
+      CRYSTAL
   end
 
   it "doesn't match with wrong number of type arguments (#313)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "wrong number of type vars for Foo(A, B) (given 1, expected 2)"
       class Foo(A, B)
       end
 
@@ -1338,30 +1333,27 @@ describe "Semantic: def overload" do
       end
 
       foo Foo(Int32, Int32).new
-      ),
-      "wrong number of type vars for Foo(A, B) (given 1, expected 2)"
+      CRYSTAL
   end
 
   it "includes splat symbol in error message" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "foo(x : Int32, *bar)"
       def foo(x : Int32, *bar)
       end
 
       foo 'a'
-      ),
-      "foo(x : Int32, *bar)"
+      CRYSTAL
   end
 
   it "says `no overload matches` instead of `can't instantiate abstract class` on wrong argument in new method" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #1 to 'Foo.new' to be Int, not Char"
       abstract class Foo
         def self.new(x : Int)
         end
       end
 
       Foo.new('a')
-      ),
-      "expected argument #1 to 'Foo.new' to be Int, not Char"
+      CRYSTAL
   end
 
   it "finds method after including module in generic module (#1201)" do
@@ -1414,7 +1406,7 @@ describe "Semantic: def overload" do
   end
 
   it "gives better error message with consecutive arguments sizes" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "wrong number of arguments for 'foo' (given 3, expected 0..2)"
       def foo
       end
 
@@ -1425,30 +1417,27 @@ describe "Semantic: def overload" do
       end
 
       foo 1, 2, 3
-      ),
-      "wrong number of arguments for 'foo' (given 3, expected 0..2)"
+      CRYSTAL
   end
 
   it "errors if no overload matches on union against named arg (#2640)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument 'a' to 'f' to be Int32, not (Int32 | Nil)"
       def f(a : Int32)
       end
 
       a = 1 || nil
       f(a: a)
-      ),
-      "expected argument 'a' to 'f' to be Int32, not (Int32 | Nil)"
+      CRYSTAL
   end
 
   it "errors if no overload matches on union against named arg with external param name (#10516)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument 'a' to 'f' to be Int32, not (Int32 | Nil)"
       def f(a b : Int32)
       end
 
       a = 1 || nil
       f(a: a)
-      ),
-      "expected argument 'a' to 'f' to be Int32, not (Int32 | Nil)"
+      CRYSTAL
   end
 
   it "dispatches with named arg" do
@@ -1467,7 +1456,7 @@ describe "Semantic: def overload" do
   end
 
   it "uses long name when no overload matches and name is the same (#1030)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, " - Moo::String.foo(a : Moo::String, b : Bool)"
       module Moo::String
         def self.foo(a : String, b : Bool)
           puts a if b
@@ -1475,8 +1464,7 @@ describe "Semantic: def overload" do
       end
 
       Moo::String.foo("Hello, World!", true)
-      ),
-      " - Moo::String.foo(a : Moo::String, b : Bool)"
+      CRYSTAL
   end
 
   it "overloads on metaclass (#2916)" do
@@ -1554,17 +1542,16 @@ describe "Semantic: def overload" do
   end
 
   it "errors when binding free variable to different types" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #2 to 'foo' to be Int32, not Char"
       def foo(x : T, y : T) forall T
       end
 
       foo(1, 'a')
-      ),
-      "expected argument #2 to 'foo' to be Int32, not Char"
+      CRYSTAL
   end
 
   it "errors when binding free variable to different types (2)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #2 to 'foo' to be Gen(Int32), not Gen(Char)"
       class Gen(T)
       end
 
@@ -1572,8 +1559,7 @@ describe "Semantic: def overload" do
       end
 
       foo(1, Gen(Char).new)
-      ),
-      "expected argument #2 to 'foo' to be Gen(Int32), not Gen(Char)"
+      CRYSTAL
   end
 
   it "overloads with named argument (#4465)" do
@@ -1621,7 +1607,7 @@ describe "Semantic: def overload" do
   end
 
   it "considers NamedTuple in a module's including types (#10380)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to be Bar, not Foo"
       module Foo
       end
 
@@ -1641,8 +1627,7 @@ describe "Semantic: def overload" do
 
       x = uninitialized Foo
       foo(x)
-      ),
-      "expected argument #1 to 'foo' to be Bar, not Foo"
+      CRYSTAL
   end
 
   it "treats single splats with same restriction as equivalent (#12579)" do

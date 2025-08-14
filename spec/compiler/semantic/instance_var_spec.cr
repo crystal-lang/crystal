@@ -64,7 +64,7 @@ describe "Semantic: instance var" do
   end
 
   it "errors when redeclaring subclass variable with a different type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "instance variable '@x' of Foo, with Bar < Foo, is already declared as Int32"
       class Foo
         @x : Int32
 
@@ -83,8 +83,7 @@ describe "Semantic: instance var" do
       end
 
       Bar.new.x
-      ),
-      "instance variable '@x' of Foo, with Bar < Foo, is already declared as Int32"
+      CRYSTAL
   end
 
   it "declares instance var in module, inherits to type" do
@@ -366,7 +365,7 @@ describe "Semantic: instance var" do
   end
 
   it "errors if declaring variable with number" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't declare variable with NumberLiteral"
       class Foo(T)
         @x : T
 
@@ -379,8 +378,7 @@ describe "Semantic: instance var" do
       end
 
       Foo(3).new(3).x
-      ),
-      "can't declare variable with NumberLiteral"
+      CRYSTAL
   end
 
   it "declares instance var of generic type through module" do
@@ -1462,7 +1460,7 @@ describe "Semantic: instance var" do
   end
 
   it "doesn't infer for subclass if assigns another type (1)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "instance variable '@x' of Foo must be Int32, not Float64"
       class Foo
         def initialize
           @x = 1
@@ -1480,12 +1478,11 @@ describe "Semantic: instance var" do
       end
 
       Bar.new.foo
-      ),
-      "instance variable '@x' of Foo must be Int32, not Float64"
+      CRYSTAL
   end
 
   it "doesn't infer for subclass if assigns another type (2)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "instance variable '@x' of Foo must be Int32, not Float64"
       class Foo
       end
 
@@ -1506,8 +1503,7 @@ describe "Semantic: instance var" do
       end
 
       Bar.new.foo
-      ),
-      "instance variable '@x' of Foo must be Int32, not Float64"
+      CRYSTAL
   end
 
   it "infers type from included module" do
@@ -1861,7 +1857,7 @@ describe "Semantic: instance var" do
   end
 
   it "errors if not initialized in all initialize" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "this 'initialize' doesn't explicitly initialize instance variable '@x' of Foo, rendering it nilable"
       class Foo
         def initialize
           @x = 1
@@ -1876,8 +1872,7 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      ),
-      "this 'initialize' doesn't explicitly initialize instance variable '@x' of Foo, rendering it nilable"
+      CRYSTAL
   end
 
   it "doesn't error if not initializes in all initialize because declared as nilable" do
@@ -1917,7 +1912,7 @@ describe "Semantic: instance var" do
   end
 
   it "says undefined instance variable on read" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't infer the type of instance variable '@x' of Foo"
       class Foo
         def x
           @x
@@ -1925,12 +1920,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      ),
-      "can't infer the type of instance variable '@x' of Foo"
+      CRYSTAL
   end
 
   it "says undefined instance variable on assign" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't infer the type of instance variable '@x' of Foo"
       class Foo
         def x
           a = 1
@@ -1939,17 +1933,15 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      ),
-      "can't infer the type of instance variable '@x' of Foo"
+      CRYSTAL
   end
 
   it "errors if declaring instance var and turns out to be nilable" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "instance variable '@x' of Foo was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported."
       class Foo
         @x : Int32
       end
-      ),
-      "instance variable '@x' of Foo was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported."
+      CRYSTAL
   end
 
   it "doesn't if declaring nilable instance var and turns out to be nilable" do
@@ -1967,16 +1959,15 @@ describe "Semantic: instance var" do
   end
 
   it "errors if declaring instance var and turns out to be nilable, in generic type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "instance variable '@x' of Foo(T) was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported."
       class Foo(T)
         @x : T
       end
-      ),
-      "instance variable '@x' of Foo(T) was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported."
+      CRYSTAL
   end
 
   it "errors if declaring instance var and turns out to be nilable, in generic module type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "instance variable '@x' of Foo was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported."
       module Moo(T)
         @x : T
       end
@@ -1984,8 +1975,7 @@ describe "Semantic: instance var" do
       class Foo
         include Moo(Int32)
       end
-      ),
-      "instance variable '@x' of Foo was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported."
+      CRYSTAL
   end
 
   it "doesn't error if declaring instance var and doesn't out to be nilable, in generic module type" do
@@ -2011,7 +2001,7 @@ describe "Semantic: instance var" do
   end
 
   it "errors if declaring instance var and turns out to be nilable, in generic module type in generic type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "instance variable '@x' of Foo(T) was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported."
       module Moo(T)
         @x : T
       end
@@ -2019,8 +2009,7 @@ describe "Semantic: instance var" do
       class Foo(T)
         include Moo(T)
       end
-      ),
-      "instance variable '@x' of Foo(T) was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported."
+      CRYSTAL
   end
 
   it "doesn't error if not initializing variables but calling super" do
@@ -2122,7 +2111,7 @@ describe "Semantic: instance var" do
   end
 
   it "errors if not initializing super variables" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "this 'initialize' doesn't initialize instance variable '@x' of Foo, with Bar < Foo, rendering it nilable"
       class Foo
         @x : Int32
 
@@ -2135,12 +2124,11 @@ describe "Semantic: instance var" do
         def initialize
         end
       end
-      ),
-      "this 'initialize' doesn't initialize instance variable '@x' of Foo, with Bar < Foo, rendering it nilable"
+      CRYSTAL
   end
 
   it "errors if not initializing super variables (2)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "this 'initialize' doesn't initialize instance variable '@x' of Foo, with Bar < Foo, rendering it nilable"
       class Foo
         @x : Int32
 
@@ -2154,12 +2142,11 @@ describe "Semantic: instance var" do
           @y = 2
         end
       end
-      ),
-      "this 'initialize' doesn't initialize instance variable '@x' of Foo, with Bar < Foo, rendering it nilable"
+      CRYSTAL
   end
 
   it "errors if not initializing super variables (3)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "this 'initialize' doesn't initialize instance variable '@x' of Foo, with Bar < Foo, rendering it nilable"
       class Foo
         def initialize
           @x = 1
@@ -2171,12 +2158,11 @@ describe "Semantic: instance var" do
           @y = 2
         end
       end
-      ),
-      "this 'initialize' doesn't initialize instance variable '@x' of Foo, with Bar < Foo, rendering it nilable"
+      CRYSTAL
   end
 
   it "errors if not initializing super variable in generic" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "this 'initialize' doesn't initialize instance variable '@x' of Foo(T), with Bar(T) < Foo(T), rendering it nilable"
       class Foo(T)
         def initialize
           @x = 1
@@ -2188,8 +2174,7 @@ describe "Semantic: instance var" do
           @y = 2
         end
       end
-      ),
-      "this 'initialize' doesn't initialize instance variable '@x' of Foo(T), with Bar(T) < Foo(T), rendering it nilable"
+      CRYSTAL
   end
 
   it "doesn't error if not calling super but initializing all variables" do
@@ -2677,7 +2662,7 @@ describe "Semantic: instance var" do
   end
 
   it "errors on undefined instance var and subclass calling super" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't infer the type of instance variable '@x' of Bar"
       class Foo
         def initialize(@x)
         end
@@ -2696,8 +2681,7 @@ describe "Semantic: instance var" do
 
       point = Bar.new(1)
       Foo.new(1).x
-      ),
-      "can't infer the type of instance variable '@x' of Bar"
+      CRYSTAL
   end
 
   it "infers type from array literal in generic type" do
@@ -2954,7 +2938,7 @@ describe "Semantic: instance var" do
   end
 
   it "says can't infer type if only nil was assigned" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "instance variable @x of Foo was inferred to be Nil, but Nil alone provides no information"
       class Foo
         def initialize
           @x = nil
@@ -2966,12 +2950,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      ),
-      "instance variable @x of Foo was inferred to be Nil, but Nil alone provides no information"
+      CRYSTAL
   end
 
   it "says can't infer type if only nil was assigned, in generic type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "instance variable @x of Foo(T) was inferred to be Nil, but Nil alone provides no information"
       class Foo(T)
         def initialize
           @x = nil
@@ -2983,8 +2966,7 @@ describe "Semantic: instance var" do
       end
 
       Foo(Int32).new.x
-      ),
-      "instance variable @x of Foo(T) was inferred to be Nil, but Nil alone provides no information"
+      CRYSTAL
   end
 
   it "allows nil instance var because it's a generic type" do
@@ -3164,7 +3146,7 @@ describe "Semantic: instance var" do
   end
 
   it "doesn't infer generic type without type argument inside generic" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't infer the type parameter T for the generic class Bar(T)"
       class Bar(T)
       end
 
@@ -3179,12 +3161,11 @@ describe "Semantic: instance var" do
       end
 
       Foo(Int32).new.bar
-      ),
-      "can't infer the type parameter T for the generic class Bar(T)"
+      CRYSTAL
   end
 
   it "doesn't crash on missing var on subclass, with superclass not specifying a type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "this 'initialize' doesn't initialize instance variable '@x', rendering it nilable"
       class Foo
         def initialize(@x)
         end
@@ -3196,8 +3177,7 @@ describe "Semantic: instance var" do
       end
 
       Bar.new
-      ),
-      "this 'initialize' doesn't initialize instance variable '@x', rendering it nilable"
+      CRYSTAL
   end
 
   it "doesn't complain if not initialized in one initialize, but has initializer (#2465)" do
@@ -3542,7 +3522,7 @@ describe "Semantic: instance var" do
   end
 
   it "errors on undefined constant" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined constant Bar"
       class Foo
         def initialize
           @x = Bar.new
@@ -3550,8 +3530,7 @@ describe "Semantic: instance var" do
       end
 
       Foo.new
-      ),
-      "undefined constant Bar"
+      CRYSTAL
   end
 
   it "infers from class method that invokes new" do
@@ -3729,7 +3708,7 @@ describe "Semantic: instance var" do
   end
 
   it "doesn't crash on recursive method call" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't infer the type of instance variable '@x' of Foo"
       class Foo
         def initialize
           @x = Bar.default
@@ -3751,8 +3730,7 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      ),
-      "can't infer the type of instance variable '@x' of Foo"
+      CRYSTAL
   end
 
   it "infers in multiple assign for tuple type (1)" do
@@ -3778,7 +3756,7 @@ describe "Semantic: instance var" do
   end
 
   it "says can't infer (#2536)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't infer the type of instance variable '@foo' of Foo(Int32)"
       require "prelude"
 
       class Foo(T)
@@ -3797,12 +3775,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new(3).foo
-      ),
-      "can't infer the type of instance variable '@foo' of Foo(Int32)"
+      CRYSTAL
   end
 
   it "doesn't crash when inferring from new without matches (#2538)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "wrong number of arguments for 'Foo.new'"
       class Foo
         @@default = Foo.new
 
@@ -3811,8 +3788,7 @@ describe "Semantic: instance var" do
       end
 
       Foo.new("aaaa")
-      ),
-      "wrong number of arguments for 'Foo.new'"
+      CRYSTAL
   end
 
   it "infers from method on integer literal, with type annotation" do
@@ -3948,7 +3924,7 @@ describe "Semantic: instance var" do
   end
 
   it "can't infer type from initializer" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't infer the type of instance variable '@x' of Foo"
       class Foo
         @x = 1 + 2
 
@@ -3958,12 +3934,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      ),
-      "can't infer the type of instance variable '@x' of Foo"
+      CRYSTAL
   end
 
   it "can't infer type from initializer in non-generic module" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't infer the type of instance variable '@x' of Moo"
       module Moo
         @x = 1 + 2
 
@@ -3977,12 +3952,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      ),
-      "can't infer the type of instance variable '@x' of Moo"
+      CRYSTAL
   end
 
   it "can't infer type from initializer in generic module type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't infer the type of instance variable '@x' of Moo(T)"
       module Moo(T)
         @x = 1 + 2
 
@@ -3996,12 +3970,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      ),
-      "can't infer the type of instance variable '@x' of Moo(T)"
+      CRYSTAL
   end
 
   it "can't infer type from initializer in generic class type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't infer the type of instance variable '@x' of Foo(T)"
       class Foo(T)
         @x = 1 + 2
 
@@ -4011,8 +3984,7 @@ describe "Semantic: instance var" do
       end
 
       Foo(Int32).new.x
-      ),
-      "can't infer the type of instance variable '@x' of Foo(T)"
+      CRYSTAL
   end
 
   it "infers type from self (#2575)" do
@@ -4129,7 +4101,7 @@ describe "Semantic: instance var" do
   end
 
   it "errors if can't find lib call, before erroring on instance var (#2579)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined fun 'nope' for LibFoo"
       lib LibFoo
       end
 
@@ -4140,28 +4112,25 @@ describe "Semantic: instance var" do
       end
 
       Foo.new
-      ),
-      "undefined fun 'nope' for LibFoo"
+      CRYSTAL
   end
 
   it "errors when using Class (#2605)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use Class as the type of instance variable '@class' of Foo, use a more specific type"
       class Foo
         def initialize(@class : Class)
         end
       end
-      ),
-      "can't use Class as the type of instance variable '@class' of Foo, use a more specific type"
+      CRYSTAL
   end
 
   it "errors when using Class in generic type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use Class as the type of instance variable '@class' of Foo(T), use a more specific type"
       class Foo(T)
         def initialize(@class : Class)
         end
       end
-      ),
-      "can't use Class as the type of instance variable '@class' of Foo(T), use a more specific type"
+      CRYSTAL
   end
 
   it "doesn't error when using Class but specifying type" do
@@ -4235,12 +4204,11 @@ describe "Semantic: instance var" do
 
   %w(Object Reference Class).each do |type|
     it "errors if declaring var in #{type}" do
-      assert_error %(
+      assert_error <<-CRYSTAL, "can't declare instance variables in #{type}"
         class #{type}
           @x : Int32?
         end
-        ),
-        "can't declare instance variables in #{type}"
+        CRYSTAL
     end
   end
 
@@ -4251,17 +4219,16 @@ describe "Semantic: instance var" do
     "Proc(*T, R)", "Union(*T)",
   ].each do |type|
     it "errors if declaring var in #{type}" do
-      assert_error %(
+      assert_error <<-CRYSTAL, "can't declare instance variables in #{type}"
         struct #{type}
           @x : Int32?
         end
-        ),
-        "can't declare instance variables in #{type}"
+        CRYSTAL
     end
   end
 
   it "errors if declaring instance variable in module included in Object" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't declare instance variables in Object"
       module Moo
         @x : Int32?
       end
@@ -4269,22 +4236,20 @@ describe "Semantic: instance var" do
       class Object
         include Moo
       end
-      ),
-      "can't declare instance variables in Object"
+      CRYSTAL
   end
 
   it "errors if adds instance variable to Object via guess" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't declare instance variables in Object"
       class Object
         def foo(@foo : Int32)
         end
       end
-      ),
-      "can't declare instance variables in Object"
+      CRYSTAL
   end
 
   it "errors if adds instance variable to Object via guess via included module" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't declare instance variables in Object"
       module Moo
         def foo(@foo : Int32)
         end
@@ -4293,17 +4258,15 @@ describe "Semantic: instance var" do
       class Object
         include Moo
       end
-      ),
-      "can't declare instance variables in Object"
+      CRYSTAL
   end
 
   it "gives correct error when trying to use Int as an instance variable type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use Int as the type of an instance variable yet, use a more specific type"
       class Foo
         @x : Int
       end
-      ),
-      "can't use Int as the type of an instance variable yet, use a more specific type"
+      CRYSTAL
   end
 
   it "shouldn't error when accessing instance var in initialized that's always initialized (#2953)" do
@@ -4438,26 +4401,24 @@ describe "Semantic: instance var" do
   end
 
   it "errors if declaring generic type without type vars" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't declare variable of generic non-instantiated type Foo"
       class Foo(T)
       end
 
       class Baz
         @x : Foo
       end
-      ),
-      "can't declare variable of generic non-instantiated type Foo"
+      CRYSTAL
   end
 
   it "errors when typing an instance variable inside a method" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "declaring the type of an instance variable must be done at the class level"
       def foo
         @x : Int32
       end
 
       foo
-      ),
-      "declaring the type of an instance variable must be done at the class level"
+      CRYSTAL
   end
 
   it "declares instance var with union type with a virtual member" do
@@ -4597,7 +4558,7 @@ describe "Semantic: instance var" do
   end
 
   it "doesn't consider self.initialize as initializer (#3239)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "@instance_vars are not yet allowed in metaclasses: use @@class_vars instead"
       class Foo
         def self.initialize
           @d = 5
@@ -4609,17 +4570,15 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.test
-      ),
-      "@instance_vars are not yet allowed in metaclasses: use @@class_vars instead"
+      CRYSTAL
   end
 
   it "doesn't crash on #3580" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined local variable or method"
       class Hoge
         @hoge_dir : String = "~/.hoge" ? "~/.hoge" : default_hoge_dir
       end
-      ),
-      "undefined local variable or method"
+      CRYSTAL
   end
 
   it "is more permissive with macro def initialize" do
@@ -4639,7 +4598,7 @@ describe "Semantic: instance var" do
   end
 
   it "is more permissive with macro def initialize, bug with named args" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "instance variable '@x' of Foo was not initialized"
       class Foo
         @x : Int32
 
@@ -4649,8 +4608,7 @@ describe "Semantic: instance var" do
       end
 
       Foo.new(x: 1)
-      ),
-      "instance variable '@x' of Foo was not initialized"
+      CRYSTAL
   end
 
   it "is more permissive with macro def initialize, other initialize" do
@@ -4703,7 +4661,7 @@ describe "Semantic: instance var" do
   end
 
   it "errors with macro def but another def doesn't initialize all" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "instance variable '@y' of Foo was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported."
       class Foo
         @x : Int32
         @y : Int32
@@ -4719,12 +4677,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new
-      ),
-      "instance variable '@y' of Foo was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported."
+      CRYSTAL
   end
 
   it "errors if finally not initialized in macro def" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "instance variable '@x' of Foo was not initialized in this 'initialize', rendering it nilable"
       class Foo
         @x : Int32
 
@@ -4735,8 +4692,7 @@ describe "Semantic: instance var" do
       end
 
       Foo.new
-      ),
-      "instance variable '@x' of Foo was not initialized in this 'initialize', rendering it nilable"
+      CRYSTAL
   end
 
   it "doesn't error if initializes via super in macro def" do
@@ -4856,7 +4812,7 @@ describe "Semantic: instance var" do
   end
 
   it "errors if unknown ivar through macro (#4050)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't infer the type of instance variable '@bar' of Foo"
       class Foo
         def initialize(**attributes)
           {% for var in @type.instance_vars %}
@@ -4875,8 +4831,7 @@ describe "Semantic: instance var" do
       end
 
       Bar.new
-      ),
-      "can't infer the type of instance variable '@bar' of Foo"
+      CRYSTAL
   end
 
   it "can't infer type when using operation on const (#4054)" do
@@ -4940,7 +4895,7 @@ describe "Semantic: instance var" do
   end
 
   it "errors when assigning instance variable at top level block" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use instance variables at the top level"
       def foo
         yield
       end
@@ -4948,17 +4903,15 @@ describe "Semantic: instance var" do
       foo do
         @foo = 1
       end
-      ),
-      "can't use instance variables at the top level"
+      CRYSTAL
   end
 
   it "errors when assigning instance variable at top level control block" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use instance variables at the top level"
       if true
         @foo = 1
       end
-      ),
-      "can't use instance variables at the top level"
+      CRYSTAL
   end
 
   it "doesn't check call of non-self instance (#4830)" do
@@ -4987,18 +4940,17 @@ describe "Semantic: instance var" do
   end
 
   it "errors when assigning instance variable inside nested expression" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use instance variables at the top level"
       class Foo
         if true
           @foo = 1
         end
       end
-      ),
-      "can't use instance variables at the top level"
+      CRYSTAL
   end
 
   it "doesn't find T in generic type that's not the current type (#4460)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't infer the type of instance variable '@x' of Foo"
       class Gen(T)
         def self.new
           Gen(T).new
@@ -5008,8 +4960,7 @@ describe "Semantic: instance var" do
       class Foo
         @x = Gen.new
       end
-      ),
-      "can't infer the type of instance variable '@x' of Foo"
+      CRYSTAL
   end
 
   it "doesn't consider instance var as nilable if assigned before self access (#4981)" do
@@ -5139,7 +5090,7 @@ describe "Semantic: instance var" do
   end
 
   it "cannot guess the type from splat argument with not splatted type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't infer the type of instance variable '@foo' of Foo"
       class Foo
         def initialize(*@foo : Int32)
         end
@@ -5150,8 +5101,7 @@ describe "Semantic: instance var" do
       end
 
       Foo.new(1).foo
-    ),
-      "can't infer the type of instance variable '@foo' of Foo"
+      CRYSTAL
   end
 
   it "can guess the type from double-splat argument with double-splatted type" do
@@ -5185,7 +5135,7 @@ describe "Semantic: instance var" do
   end
 
   it "cannot guess the type from double-splat argument with not double-splatted type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't infer the type of instance variable '@foo' of Foo"
       class Foo
         def initialize(**@foo : Int32)
         end
@@ -5196,12 +5146,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new(foo: 1).foo
-    ),
-      "can't infer the type of instance variable '@foo' of Foo"
+      CRYSTAL
   end
 
   it "cannot guess type from argument assigned in body" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't infer the type of instance variable '@x' of Foo"
       class Foo
         def initialize(x : String)
           x = 1
@@ -5210,12 +5159,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new "foo"
-      ),
-      "can't infer the type of instance variable '@x' of Foo"
+      CRYSTAL
   end
 
   it "can't infer type of generic method that returns self (#5383)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "method Gen(T).new must return Gen(T) but it is returning Nil"
       class Gen(T)
         def self.new(&block : -> T) : self
         end
@@ -5228,8 +5176,7 @@ describe "Semantic: instance var" do
       end
 
       Foo.new
-      ),
-      "method Gen(T).new must return Gen(T) but it is returning Nil"
+      CRYSTAL
   end
 
   it "guesses virtual array type (1) (#5342)" do
@@ -5347,7 +5294,7 @@ describe "Semantic: instance var" do
   end
 
   it "doesn't solve instance var initializer in instance context (1) (#5876)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined local variable or method 'bar'"
       class Foo
         @x : Int32 = bar
 
@@ -5357,12 +5304,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new
-      ),
-      "undefined local variable or method 'bar'"
+      CRYSTAL
   end
 
   it "doesn't solve instance var initializer in instance context (2) (#5876)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined local variable or method 'bar'"
       class Foo(T)
         @x : T = bar
 
@@ -5372,12 +5318,11 @@ describe "Semantic: instance var" do
       end
 
       Foo(Int32).new
-      ),
-      "undefined local variable or method 'bar'"
+      CRYSTAL
   end
 
   it "doesn't solve instance var initializer in instance context (3) (#5876)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined local variable or method 'bar'"
       module Moo(T)
         @x : T = bar
 
@@ -5391,8 +5336,7 @@ describe "Semantic: instance var" do
       end
 
       Foo.new
-      ),
-      "undefined local variable or method 'bar'"
+      CRYSTAL
   end
 
   it "solves instance var initializer in metaclass context (#5876)" do
@@ -5414,7 +5358,7 @@ describe "Semantic: instance var" do
   end
 
   it "doesn't infer unbound generic type on non-generic call (#6390)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't infer the type parameter T for the generic class Gen(T)"
       class Gen(T)
         def self.new(&block)
           Gen(T).build
@@ -5431,12 +5375,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new
-      ),
-      "can't infer the type parameter T for the generic class Gen(T)"
+      CRYSTAL
   end
 
   it "doesn't infer unbound generic type on generic method called from generic's subclass" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't infer the type of instance variable '@x' of Foo"
       class Gen(T)
         def self.new(x : T)
           Gen(T).build
@@ -5454,12 +5397,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new
-      ),
-      "can't infer the type of instance variable '@x' of Foo"
+      CRYSTAL
   end
 
   it "doesn't infer unbound generic type on generic method called from generic's subclass, metaclass context" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't infer the type of instance variable '@x' of Foo"
       class Gen(T)
         def self.new(x : T)
           Gen(T).build
@@ -5473,8 +5415,7 @@ describe "Semantic: instance var" do
       class Foo < Gen(Int32)
         @x = Gen.new('a')
       end
-      ),
-      "can't infer the type of instance variable '@x' of Foo"
+      CRYSTAL
   end
 
   it "errors when overriding inherited instance variable with incompatible type" do

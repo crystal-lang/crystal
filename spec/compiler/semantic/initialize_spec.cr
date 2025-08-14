@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Semantic: initialize" do
   it "types instance vars as nilable if doesn't invoke super in initialize" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "this 'initialize' doesn't initialize instance variable '@baz' of Foo, with Bar < Foo, rendering it nilable"
       class Foo
         def initialize
           @baz = Baz.new
@@ -21,12 +21,11 @@ describe "Semantic: initialize" do
 
       foo = Foo.new
       bar = Bar.new
-      ),
-      "this 'initialize' doesn't initialize instance variable '@baz' of Foo, with Bar < Foo, rendering it nilable"
+      CRYSTAL
   end
 
   it "types instance vars as nilable if doesn't invoke super in initialize with deep subclass" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "this 'initialize' doesn't initialize instance variable '@baz' of Foo, with BarBar < Foo, rendering it nilable"
       class Foo
         def initialize
           @baz = Baz.new
@@ -51,8 +50,7 @@ describe "Semantic: initialize" do
 
       foo = Foo.new
       bar = Bar.new
-      ),
-      "this 'initialize' doesn't initialize instance variable '@baz' of Foo, with BarBar < Foo, rendering it nilable"
+      CRYSTAL
   end
 
   it "types instance vars as nilable if doesn't invoke super with default arguments" do
@@ -84,7 +82,7 @@ describe "Semantic: initialize" do
   end
 
   it "checks instance vars of included modules" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "instance variable '@x' of Foo must be (Char | Nil), not Int32"
       module Lala
         def lala
           @x = 'a'
@@ -106,8 +104,7 @@ describe "Semantic: initialize" do
       b = Bar.new
       f = Foo.new
       f.lala
-      ),
-      "instance variable '@x' of Foo must be (Char | Nil), not Int32"
+      CRYSTAL
   end
 
   it "types instance var as nilable if not always assigned" do
@@ -179,7 +176,7 @@ describe "Semantic: initialize" do
   end
 
   it "types instance var as nilable if used before assignment" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "Instance variable '@x' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
       class Foo
         def initialize
           x = @x
@@ -193,8 +190,7 @@ describe "Semantic: initialize" do
 
       foo = Foo.new
       foo.x
-      ),
-      "Instance variable '@x' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
+      CRYSTAL
   end
 
   it "types instance var as non-nilable if calls super and super defines it" do
@@ -271,7 +267,7 @@ describe "Semantic: initialize" do
   end
 
   it "types instance var as nilable if used after method call that reads var" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "Instance variable '@x' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
       class Foo
         def initialize
           foo
@@ -289,12 +285,11 @@ describe "Semantic: initialize" do
 
       foo = Foo.new
       foo.x
-      ),
-      "Instance variable '@x' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
+      CRYSTAL
   end
 
   it "types instance var as nilable if used after method call that reads var (2)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "Instance variable '@x' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
       class Bar
         def bar
         end
@@ -317,8 +312,7 @@ describe "Semantic: initialize" do
 
       foo = Foo.new
       foo.x
-      ),
-      "Instance variable '@x' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
+      CRYSTAL
   end
 
   it "doesn't type instance var as nilable if used after global method call" do
@@ -386,7 +380,7 @@ describe "Semantic: initialize" do
   end
 
   it "types instance var as nilable if used after method call that reads var through other calls" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "Instance variable '@x' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
       class Foo
         def initialize
           foo
@@ -416,8 +410,7 @@ describe "Semantic: initialize" do
 
       foo = Foo.new
       foo.x
-      ),
-      "Instance variable '@x' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
+      CRYSTAL
   end
 
   it "doesn't type instance var as nilable if used after method call that assigns var" do
@@ -492,7 +485,7 @@ describe "Semantic: initialize" do
   end
 
   it "types instance var as nilable if used in first of two method calls" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "Instance variable '@x' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
       class Foo
         def initialize
           foo
@@ -510,8 +503,7 @@ describe "Semantic: initialize" do
 
       foo = Foo.new
       foo.x
-      ),
-      "Instance variable '@x' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
+      CRYSTAL
   end
 
   it "doesn't type instance var as nilable if assigned before method call" do
@@ -538,7 +530,7 @@ describe "Semantic: initialize" do
   end
 
   it "marks instance variable as nilable in initialize if using self in method" do
-    assert_error "
+    assert_error <<-CRYSTAL, "'self' was used before initializing instance variable '@foo', rendering it nilable"
       class Foo
         def initialize
           do_something
@@ -560,8 +552,7 @@ describe "Semantic: initialize" do
       end
 
       Foo.new.foo
-      ",
-      "'self' was used before initializing instance variable '@foo', rendering it nilable"
+      CRYSTAL
   end
 
   it "marks instance variable as nilable in initialize if using self" do
@@ -724,13 +715,12 @@ describe "Semantic: initialize" do
   end
 
   it "errors on default new when using named arguments (#2245)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "no parameter named 'x'"
       class Foo
       end
 
       Foo.new(x: 1)
-      ),
-      "no parameter named 'x'"
+      CRYSTAL
   end
 
   it "doesn't type ivar as nilable if super call present and parent has already typed ivar (#4764)" do

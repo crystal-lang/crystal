@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Semantic: abstract def" do
   it "errors if using abstract def on subclass" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "abstract `def Foo#foo()` must be implemented by Baz"
       abstract class Foo
         abstract def foo
       end
@@ -17,7 +17,7 @@ describe "Semantic: abstract def" do
       end
 
       (Bar.new || Baz.new).foo
-      ), "abstract `def Foo#foo()` must be implemented by Baz"
+      CRYSTAL
   end
 
   it "works on abstract method on abstract class" do
@@ -66,7 +66,7 @@ describe "Semantic: abstract def" do
   end
 
   it "errors if using abstract def on subclass that also defines it as abstract" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "abstract `def Foo#foo()` must be implemented by Baz"
       abstract class Foo
         abstract def foo
       end
@@ -77,11 +77,11 @@ describe "Semantic: abstract def" do
 
       class Baz < Bar
       end
-      ), "abstract `def Foo#foo()` must be implemented by Baz"
+      CRYSTAL
   end
 
   it "gives correct error when no overload matches, when an abstract method is implemented (#1406)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #1 to 'Bar#foo' to be Int32, not (Char | Int32)"
       abstract class Foo
         abstract def foo(x : Int32)
       end
@@ -93,26 +93,23 @@ describe "Semantic: abstract def" do
       end
 
       Bar.new.foo(1 || 'a')
-      ),
-      "expected argument #1 to 'Bar#foo' to be Int32, not (Char | Int32)"
+      CRYSTAL
   end
 
   it "errors if using abstract def on non-abstract class" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't define abstract def on non-abstract class"
       class Foo
         abstract def foo
       end
-      ),
-      "can't define abstract def on non-abstract class"
+      CRYSTAL
   end
 
   it "errors if using abstract def on metaclass" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't define abstract def on metaclass"
       class Foo
         abstract def self.foo
       end
-      ),
-      "can't define abstract def on metaclass"
+      CRYSTAL
   end
 
   it "errors if abstract method is not implemented by subclass" do
@@ -130,19 +127,18 @@ describe "Semantic: abstract def" do
   end
 
   it "errors if abstract method with arguments is not implemented by subclass" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "abstract `def Foo#foo(x, y)` must be implemented by Bar"
       abstract class Foo
         abstract def foo(x, y)
       end
 
       class Bar < Foo
       end
-      ),
-      "abstract `def Foo#foo(x, y)` must be implemented by Bar"
+      CRYSTAL
   end
 
   it "errors if abstract method with arguments is not implemented by subclass (wrong number of arguments)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "abstract `def Foo#foo(x)` must be implemented by Bar"
       abstract class Foo
         abstract def foo(x)
       end
@@ -151,12 +147,11 @@ describe "Semantic: abstract def" do
         def foo(x, y)
         end
       end
-      ),
-      "abstract `def Foo#foo(x)` must be implemented by Bar"
+      CRYSTAL
   end
 
   it "errors if abstract method with arguments is not implemented by subclass (wrong type)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "abstract `def Foo#foo(x, y : Int32)` must be implemented by Bar"
       abstract class Foo
         abstract def foo(x, y : Int32)
       end
@@ -165,12 +160,11 @@ describe "Semantic: abstract def" do
         def foo(x, y : Float64)
         end
       end
-      ),
-      "abstract `def Foo#foo(x, y : Int32)` must be implemented by Bar"
+      CRYSTAL
   end
 
   it "errors if abstract method with arguments is not implemented by subclass (block difference)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "abstract `def Foo#foo()` must be implemented by Bar"
       abstract class Foo
         abstract def foo
       end
@@ -180,8 +174,7 @@ describe "Semantic: abstract def" do
           yield
         end
       end
-      ),
-      "abstract `def Foo#foo()` must be implemented by Bar"
+      CRYSTAL
   end
 
   it "doesn't error if abstract method is implemented by subclass" do
@@ -251,7 +244,7 @@ describe "Semantic: abstract def" do
   end
 
   it "errors if abstract method is not implemented by subclass of subclass" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "abstract `def Foo#foo()` must be implemented by Baz"
       abstract class Foo
         abstract def foo
       end
@@ -261,8 +254,7 @@ describe "Semantic: abstract def" do
 
       class Baz < Bar
       end
-      ),
-      "abstract `def Foo#foo()` must be implemented by Baz"
+      CRYSTAL
   end
 
   it "doesn't error if abstract method is implemented by subclass via module inclusion" do
@@ -283,7 +275,7 @@ describe "Semantic: abstract def" do
   end
 
   it "errors if abstract method is not implemented by including class" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "abstract `def Foo#foo()` must be implemented by Bar"
       module Foo
         abstract def foo
       end
@@ -291,8 +283,7 @@ describe "Semantic: abstract def" do
       class Bar
         include Foo
       end
-      ),
-      "abstract `def Foo#foo()` must be implemented by Bar"
+      CRYSTAL
   end
 
   it "doesn't error if abstract method is implemented by including class" do
@@ -335,7 +326,7 @@ describe "Semantic: abstract def" do
   end
 
   it "errors if abstract method is not implemented by subclass (nested in module)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "abstract `def Moo::Foo#foo()` must be implemented by Bar"
       module Moo
         abstract class Foo
           abstract def foo
@@ -344,8 +335,7 @@ describe "Semantic: abstract def" do
 
       class Bar < Moo::Foo
       end
-      ),
-      "abstract `def Moo::Foo#foo()` must be implemented by Bar"
+      CRYSTAL
   end
 
   it "doesn't error if abstract method with args is implemented by subclass (with one default arg)" do
@@ -776,7 +766,7 @@ describe "Semantic: abstract def" do
   end
 
   it "errors if implementation doesn't have default value" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "abstract `def Foo#foo(x = 1)` must be implemented by Bar"
       abstract class Foo
         abstract def foo(x = 1)
       end
@@ -785,12 +775,11 @@ describe "Semantic: abstract def" do
         def foo(x)
         end
       end
-      ),
-      "abstract `def Foo#foo(x = 1)` must be implemented by Bar"
+      CRYSTAL
   end
 
   it "errors if implementation doesn't have the same default value" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "abstract `def Foo#foo(x = 1)` must be implemented by Bar"
       abstract class Foo
         abstract def foo(x = 1)
       end
@@ -799,12 +788,11 @@ describe "Semantic: abstract def" do
         def foo(x = 2)
         end
       end
-      ),
-      "abstract `def Foo#foo(x = 1)` must be implemented by Bar"
+      CRYSTAL
   end
 
   it "errors if implementation adds type restriction" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "abstract `def Foo#foo(x)` must be implemented by Bar"
       abstract class Foo
         abstract def foo(x)
       end
@@ -813,11 +801,11 @@ describe "Semantic: abstract def" do
         def foo(x : Int32)
         end
       end
-    ), "abstract `def Foo#foo(x)` must be implemented by Bar"
+      CRYSTAL
   end
 
   it "errors if implementation doesn't have keyword arguments" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "abstract `def Foo#foo(*, x)` must be implemented by Bar"
       abstract class Foo
         abstract def foo(*, x)
       end
@@ -826,12 +814,11 @@ describe "Semantic: abstract def" do
         def foo(a = 0, b = 0)
         end
       end
-      ),
-      "abstract `def Foo#foo(*, x)` must be implemented by Bar"
+      CRYSTAL
   end
 
   it "errors if implementation doesn't have a keyword argument" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "abstract `def Foo#foo(*, x)` must be implemented by Bar"
       abstract class Foo
         abstract def foo(*, x)
       end
@@ -840,8 +827,7 @@ describe "Semantic: abstract def" do
         def foo(*, y)
         end
       end
-      ),
-      "abstract `def Foo#foo(*, x)` must be implemented by Bar"
+      CRYSTAL
   end
 
   it "doesn't error if implementation matches keyword argument" do
@@ -858,7 +844,7 @@ describe "Semantic: abstract def" do
   end
 
   it "errors if implementation doesn't match keyword argument type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "abstract `def Foo#foo(*, x : Int32)` must be implemented by Bar"
       abstract class Foo
         abstract def foo(*, x : Int32)
       end
@@ -867,8 +853,7 @@ describe "Semantic: abstract def" do
         def foo(*, x : String)
         end
       end
-      ),
-      "abstract `def Foo#foo(*, x : Int32)` must be implemented by Bar"
+      CRYSTAL
   end
 
   it "doesn't error if implementation have keyword arguments in different order" do
@@ -885,7 +870,7 @@ describe "Semantic: abstract def" do
   end
 
   it "errors if implementation has more keyword arguments" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "abstract `def Foo#foo(*, x)` must be implemented by Bar"
       abstract class Foo
         abstract def foo(*, x)
       end
@@ -894,8 +879,7 @@ describe "Semantic: abstract def" do
         def foo(*, x, y)
         end
       end
-      ),
-      "abstract `def Foo#foo(*, x)` must be implemented by Bar"
+      CRYSTAL
   end
 
   it "doesn't error if implementation has more keyword arguments with default values" do
@@ -912,7 +896,7 @@ describe "Semantic: abstract def" do
   end
 
   it "errors if implementation doesn't have a splat" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "abstract `def Foo#foo(*args)` must be implemented by Bar"
       abstract class Foo
         abstract def foo(*args)
       end
@@ -921,12 +905,11 @@ describe "Semantic: abstract def" do
         def foo(x = 1)
         end
       end
-      ),
-      "abstract `def Foo#foo(*args)` must be implemented by Bar"
+      CRYSTAL
   end
 
   it "errors if implementation doesn't match splat type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "abstract `def Foo#foo(*args : Int32)` must be implemented by Bar"
       abstract class Foo
         abstract def foo(*args : Int32)
       end
@@ -935,8 +918,7 @@ describe "Semantic: abstract def" do
         def foo(*args : String)
         end
       end
-      ),
-      "abstract `def Foo#foo(*args : Int32)` must be implemented by Bar"
+      CRYSTAL
   end
 
   it "doesn't error with splat" do
@@ -979,7 +961,7 @@ describe "Semantic: abstract def" do
   end
 
   it "errors if keyword argument doesn't have the same default value" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "abstract `def Foo#foo(*, foo = 1)` must be implemented by Bar"
       abstract class Foo
         abstract def foo(*, foo = 1)
       end
@@ -988,7 +970,7 @@ describe "Semantic: abstract def" do
         def foo(*, foo = 2)
         end
       end
-    ), "abstract `def Foo#foo(*, foo = 1)` must be implemented by Bar"
+      CRYSTAL
   end
 
   it "allow double splat argument" do
@@ -1018,7 +1000,7 @@ describe "Semantic: abstract def" do
   end
 
   it "errors if implementation misses the double splat" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "abstract `def Foo#foo(**kargs)` must be implemented by Bar"
       abstract class Foo
         abstract def foo(**kargs)
       end
@@ -1027,11 +1009,11 @@ describe "Semantic: abstract def" do
         def foo
         end
       end
-    ), "abstract `def Foo#foo(**kargs)` must be implemented by Bar"
+      CRYSTAL
   end
 
   it "errors if double splat type doesn't match" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "abstract `def Foo#foo(**kargs : Int32)` must be implemented by Bar"
       abstract class Foo
         abstract def foo(**kargs : Int32)
       end
@@ -1040,7 +1022,7 @@ describe "Semantic: abstract def" do
         def foo(**kargs : String)
         end
       end
-    ), "abstract `def Foo#foo(**kargs : Int32)` must be implemented by Bar"
+      CRYSTAL
   end
 
   it "allow splat instead of keyword argument" do
@@ -1057,7 +1039,7 @@ describe "Semantic: abstract def" do
   end
 
   it "extra keyword arguments must have compatible type to double splat" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "abstract `def Foo#foo(**kargs : String)` must be implemented by Bar"
       abstract class Foo
         abstract def foo(**kargs : String)
       end
@@ -1066,11 +1048,11 @@ describe "Semantic: abstract def" do
         def foo(*, foo : Int32 = 0, **kargs)
         end
       end
-    ), "abstract `def Foo#foo(**kargs : String)` must be implemented by Bar"
+      CRYSTAL
   end
 
   it "double splat must match keyword argument type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "abstract `def Foo#foo(*, foo : Int32)` must be implemented by Bar"
       abstract class Foo
         abstract def foo(*, foo : Int32)
       end
@@ -1079,7 +1061,7 @@ describe "Semantic: abstract def" do
         def foo(**kargs : String)
         end
       end
-    ), "abstract `def Foo#foo(*, foo : Int32)` must be implemented by Bar"
+      CRYSTAL
   end
 
   it "doesn't error if free var in arg restriction shadows another type (#10153)" do

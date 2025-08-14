@@ -32,14 +32,13 @@ describe "Semantic: automatic cast" do
   end
 
   it "casts literal integer (Int64 -> Int32, too big)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to be Int32, not Int64"
       def foo(x : Int32)
         x
       end
 
       foo(2147483648_i64)
-      ),
-      "expected argument #1 to 'foo' to be Int32, not Int64"
+      CRYSTAL
   end
 
   it "casts literal integer (Int32 -> Float32)" do
@@ -119,7 +118,7 @@ describe "Semantic: automatic cast" do
   end
 
   it "says ambiguous call for integer" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "ambiguous call, implicit cast of 1 matches all of Int8, UInt8, Int16"
       def foo(x : Int8)
         x
       end
@@ -133,23 +132,21 @@ describe "Semantic: automatic cast" do
       end
 
       foo(1)
-      ),
-      "ambiguous call, implicit cast of 1 matches all of Int8, UInt8, Int16"
+      CRYSTAL
   end
 
   it "says ambiguous call for integer (2)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "ambiguous call, implicit cast of 1 matches all of Int8, UInt8"
       def foo(x : Int8 | UInt8)
         x
       end
 
       foo(1)
-      ),
-      "ambiguous call, implicit cast of 1 matches all of Int8, UInt8"
+      CRYSTAL
   end
 
   it "says ambiguous call for integer on alias (#6620)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "ambiguous call, implicit cast of 1 matches all of Int8, UInt8"
       alias A = Int8 | UInt8
 
       def foo(x : A)
@@ -157,8 +154,7 @@ describe "Semantic: automatic cast" do
       end
 
       foo(1)
-      ),
-      "ambiguous call, implicit cast of 1 matches all of Int8, UInt8"
+      CRYSTAL
   end
 
   it "casts symbol literal to enum" do
@@ -195,7 +191,7 @@ describe "Semantic: automatic cast" do
   end
 
   it "errors if symbol name doesn't match enum member" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to match a member of enum Foo"
       enum Foo
         One
         Two
@@ -207,12 +203,11 @@ describe "Semantic: automatic cast" do
       end
 
       foo(:four)
-      ),
-      "expected argument #1 to 'foo' to match a member of enum Foo"
+      CRYSTAL
   end
 
   it "says ambiguous call for symbol" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "ambiguous call, implicit cast of :one matches all of Foo, Foo2"
       enum Foo
         One
         Two
@@ -234,8 +229,7 @@ describe "Semantic: automatic cast" do
       end
 
       foo(:one)
-      ),
-      "ambiguous call, implicit cast of :one matches all of Foo, Foo2"
+      CRYSTAL
   end
 
   it "casts Int32 to Int64 in ivar assignment" do
@@ -424,7 +418,7 @@ describe "Semantic: automatic cast" do
   end
 
   it "doesn't say 'ambiguous call' when there's an exact match for symbol (#6601)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #1 to 'Zed#+' to be Char, not Symbol"
       enum Color1
         Red
       end
@@ -448,8 +442,7 @@ describe "Semantic: automatic cast" do
 
       a = 1 || Zed.new
       a + :red
-      ),
-      "expected argument #1 to 'Zed#+' to be Char, not Symbol"
+      CRYSTAL
   end
 
   it "can use automatic cast with `with ... yield` (#7736)" do
@@ -614,7 +607,7 @@ describe "Semantic: automatic cast" do
   end
 
   it "says ambiguous call for integer var to larger type (#9565)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "ambiguous call, implicit cast of UInt8 matches all of Int32, Int64"
       def foo(x : Int32)
         x
       end
@@ -625,32 +618,29 @@ describe "Semantic: automatic cast" do
 
       x = 1_u8
       foo(x)
-      ),
-      "ambiguous call, implicit cast of UInt8 matches all of Int32, Int64"
+      CRYSTAL
   end
 
   it "says ambiguous call for integer var to union type (#9565)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "ambiguous call, implicit cast of UInt8 matches all of Int32, UInt32"
       def foo(x : Int32 | UInt32)
         x
       end
 
       x = 1_u8
       foo(x)
-      ),
-      "ambiguous call, implicit cast of UInt8 matches all of Int32, UInt32"
+      CRYSTAL
   end
 
   it "can't cast integer to another type when it doesn't fit (#9565)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to be Int32, not Int64"
       def foo(x : Int32)
         x
       end
 
       x = 1_i64
       foo(x)
-      ),
-      "expected argument #1 to 'foo' to be Int32, not Int64"
+      CRYSTAL
   end
 
   it "doesn't cast integer variable to larger type (not #9565)" do
@@ -677,14 +667,13 @@ describe "Semantic: automatic cast" do
   end
 
   it "says ambiguous call on union (#8655)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "ambiguous call, implicit cast of 255 matches all of UInt64, Int64"
       def foo(x : UInt64 | Int64, y : Float64)
         x
       end
 
       foo(255, 60)
-      ),
-      "ambiguous call, implicit cast of 255 matches all of UInt64, Int64"
+      CRYSTAL
   end
 
   it "autocasts integer variable to float type (#9565)" do

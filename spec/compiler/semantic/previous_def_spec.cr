@@ -2,13 +2,13 @@ require "../../spec_helper"
 
 describe "Semantic: previous_def" do
   it "errors if there's no previous def" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "there is no previous definition of 'foo'"
       def foo
         previous_def
       end
 
       foo
-      ), "there is no previous definition of 'foo'"
+      CRYSTAL
   end
 
   it "types previous def" do
@@ -184,7 +184,7 @@ describe "Semantic: previous_def" do
   end
 
   it "says wrong number of arguments for previous_def (#1223)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "wrong number of arguments"
       class Foo
         def x
         end
@@ -195,7 +195,6 @@ describe "Semantic: previous_def" do
       end
 
       Foo.new.x
-      ),
-      "wrong number of arguments"
+      CRYSTAL
   end
 end

@@ -238,23 +238,23 @@ describe "Semantic: super" do
   end
 
   it "errors no superclass method in top-level" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "there's no superclass in this scope"
       super
-      ), "there's no superclass in this scope"
+      CRYSTAL
   end
 
   it "errors no superclass method in top-level def" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "there's no superclass in this scope"
       def foo
         super
       end
 
       foo
-      ), "there's no superclass in this scope"
+      CRYSTAL
   end
 
   it "errors no superclass method" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined method 'foo'"
       require "prelude"
 
       class Foo
@@ -264,7 +264,7 @@ describe "Semantic: super" do
       end
 
       Foo.new.foo(1)
-      ), "undefined method 'foo'"
+      CRYSTAL
   end
 
   it "finds super initialize if not explicitly defined in superclass, 1 (#273)" do
@@ -295,7 +295,7 @@ describe "Semantic: super" do
   end
 
   it "says correct error message when no overload matches in super call (#272)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #1 to 'Foo#initialize' to be Char, not Int32"
       abstract class Foo
         def initialize(x : Char)
         end
@@ -308,8 +308,7 @@ describe "Semantic: super" do
       end
 
       Bar.new(1, 2)
-      ),
-      "expected argument #1 to 'Foo#initialize' to be Char, not Int32"
+      CRYSTAL
   end
 
   it "calls super in module method (1) (#556)" do
@@ -390,7 +389,7 @@ describe "Semantic: super" do
   end
 
   it "errors if calling super on module method and not found" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined method 'a'"
       module Mod
         def a
           super
@@ -402,8 +401,7 @@ describe "Semantic: super" do
       end
 
       Child.new.a
-      ),
-      "undefined method 'a'"
+      CRYSTAL
   end
 
   it "calls super in generic module method" do
@@ -453,7 +451,7 @@ describe "Semantic: super" do
   end
 
   it "errors if invoking super and match isn't found in direct superclass in initialize (even though it's find in one superclass)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "wrong number of argument"
       class Foo
         def initialize
         end
@@ -471,11 +469,11 @@ describe "Semantic: super" do
       end
 
       Baz.new
-      ), "wrong number of argument"
+      CRYSTAL
   end
 
   it "gives correct error when calling super and target is abstract method (#2675)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined method 'Base#method()'"
       abstract class Base
         abstract def method
       end
@@ -487,21 +485,19 @@ describe "Semantic: super" do
       end
 
       Sub.new.method
-      ),
-      "undefined method 'Base#method()'"
+      CRYSTAL
   end
 
   it "errors on super outside method (#4481)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use 'super' outside method"
       class Foo
         super
       end
-      ),
-      "can't use 'super' outside method"
+      CRYSTAL
   end
 
   it "errors on super where only target would be a top level method (#5201)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "no overload matches 'bar'"
       def bar
       end
 
@@ -512,8 +508,7 @@ describe "Semantic: super" do
       end
 
       Foo.new.bar
-      ),
-      "no overload matches 'bar'"
+      CRYSTAL
   end
 
   it "invokes super inside macro (#6636)" do

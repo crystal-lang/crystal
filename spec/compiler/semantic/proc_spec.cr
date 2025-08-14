@@ -157,14 +157,13 @@ describe "Semantic: proc" do
   end
 
   it "has proc literal as restriction and errors if output is different" do
-    assert_error "
+    assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to be Proc(Int32, Float64), not Proc(Int32, Int32)"
       def foo(x : Int32 -> Float64)
         x.call(1)
       end
 
       foo ->(x : Int32) { x }
-      ",
-      "expected argument #1 to 'foo' to be Proc(Int32, Float64), not Proc(Int32, Int32)"
+      CRYSTAL
   end
 
   it "has proc literal as restriction and errors if input is different" do
@@ -201,11 +200,10 @@ describe "Semantic: proc" do
   end
 
   it "disallows casting a proc type to one accepting more arguments" do
-    assert_error("
+    assert_error(<<-CRYSTAL, "can't cast", inject_primitives: true)
       f = ->(x : Int32) { x.to_f }
       f.as(Int32, Int32 -> Float64)
-      ",
-      "can't cast", inject_primitives: true)
+      CRYSTAL
   end
 
   it "allows casting a proc type to one with void argument" do
@@ -377,13 +375,12 @@ describe "Semantic: proc" do
   end
 
   it "says wrong number of block params in new on proc type" do
-    assert_error "
+    assert_error <<-CRYSTAL, "wrong number of block parameters (given 2, expected 1)"
       #{proc_new}
 
       alias Alias = Int32 -> Int32
       Alias.new { |x, y| }
-      ",
-      "wrong number of block parameters (given 2, expected 1)"
+      CRYSTAL
   end
 
   it "says wrong return type in new on proc type" do
@@ -515,14 +512,13 @@ describe "Semantic: proc" do
   end
 
   it "gives correct error message when proc return type is incorrect (#219)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "argument 'f' of 'LibFoo#bar' must be a Proc returning Int32, not Float64"
       lib LibFoo
         fun bar(f : Int32 -> Int32)
       end
 
       LibFoo.bar ->(x) { 1.1 }
-      ),
-      "argument 'f' of 'LibFoo#bar' must be a Proc returning Int32, not Float64"
+      CRYSTAL
   end
 
   it "doesn't capture closured var if using typeof" do
@@ -645,7 +641,7 @@ describe "Semantic: proc" do
   end
 
   it "uses array argument of proc arg (4)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected block to return Foo, not Int32"
       require "prelude"
 
       class Foo
@@ -660,12 +656,11 @@ describe "Semantic: proc" do
 
       block = foo { |elems| 1 }
       block.call [Foo.new, Bar.new]
-      ),
-      "expected block to return Foo, not Int32"
+      CRYSTAL
   end
 
   it "doesn't let passing an non-covariant generic argument" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "no overload matches"
       require "prelude"
 
       class Foo
@@ -680,8 +675,7 @@ describe "Semantic: proc" do
 
       f = ->(x : Array(Foo)) {}
       f.call [Bar.new]
-      ),
-      "no overload matches"
+      CRYSTAL
   end
 
   it "allows invoking a function with a generic subtype (1)" do
@@ -785,37 +779,33 @@ describe "Semantic: proc" do
 
   %w(Object Value Reference Number Int Float Struct Class Proc Tuple Enum StaticArray Pointer).each do |type|
     it "disallows #{type} in procs" do
-      assert_error %(
+      assert_error <<-CRYSTAL, "can't use #{type} as a Proc argument type"
         ->(x : #{type}) { }
-        ),
-        "can't use #{type} as a Proc argument type"
+        CRYSTAL
     end
 
     it "disallows #{type} in proc return types" do
-      assert_error %(
+      assert_error <<-CRYSTAL, "can't use #{type} as a Proc argument type"
         -> : #{type} { }
-        ),
-        "can't use #{type} as a Proc argument type"
+        CRYSTAL
     end
 
     it "disallows #{type} in captured block" do
-      assert_error %(
+      assert_error <<-CRYSTAL, "can't use #{type} as a Proc argument type"
         def foo(&block : #{type} ->)
         end
 
         foo {}
-        ),
-        "can't use #{type} as a Proc argument type"
+        CRYSTAL
     end
 
     it "disallows #{type} in proc pointer" do
-      assert_error %(
+      assert_error <<-CRYSTAL, "can't use #{type} as a Proc argument type"
         def foo(x)
         end
 
         ->foo(#{type})
-        ),
-        "can't use #{type} as a Proc argument type"
+        CRYSTAL
     end
 
     it "disallows #{type} in proc notation parameter type" do
@@ -1134,43 +1124,40 @@ describe "Semantic: proc" do
   end
 
   it "errors when using macro as proc value (top-level) (#7465)" do
-    ex = assert_error %(
-      macro bar
-      end
+    ex = assert_error <<-CRYSTAL, "undefined method 'bar'"
+           macro bar
+           end
 
-      ->bar
-      ),
-      "undefined method 'bar'"
+           ->bar
+           CRYSTAL
 
     ex.to_s.should contain "'bar' exists as a macro, but macros can't be used in proc pointers"
   end
 
   it "errors when using macro as proc value (top-level with obj) (#7465)" do
-    ex = assert_error %(
-      class Foo
-        macro bar
-        end
-      end
+    ex = assert_error <<-CRYSTAL, "undefined method 'bar' for Foo.class"
+           class Foo
+             macro bar
+             end
+           end
 
-      ->Foo.bar
-      ),
-      "undefined method 'bar' for Foo.class"
+           ->Foo.bar
+           CRYSTAL
 
     ex.to_s.should contain "'bar' exists as a macro, but macros can't be used in proc pointers"
   end
 
   it "errors when using macro as proc value (inside method) (#7465)" do
-    ex = assert_error %(
-      macro bar
-      end
+    ex = assert_error <<-CRYSTAL, "undefined method 'bar'\n\n"
+           macro bar
+           end
 
-      def foo
-        ->bar
-      end
+           def foo
+             ->bar
+           end
 
-      foo
-      ),
-      "undefined method 'bar'\n\n"
+           foo
+           CRYSTAL
 
     ex.to_s.should contain "'bar' exists as a macro, but macros can't be used in proc pointers"
   end

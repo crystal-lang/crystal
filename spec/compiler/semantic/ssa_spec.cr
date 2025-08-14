@@ -615,11 +615,10 @@ describe "Semantic: ssa" do
   end
 
   it "errors if accessing variable declared inside typeof" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined local variable or method 'x'"
       typeof(x = 1)
       x
-      ),
-      "undefined local variable or method 'x'"
+      CRYSTAL
   end
 
   it "doesn't error if same variable is declared in multiple typeofs" do

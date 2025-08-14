@@ -181,7 +181,7 @@ describe "Semantic: private" do
   end
 
   it "doesn't find module private macro outside the module" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "private macro 'foo' called for Foo"
       class Foo
         private macro foo
           1
@@ -189,7 +189,7 @@ describe "Semantic: private" do
       end
 
       Foo.foo
-    ), "private macro 'foo' called for Foo"
+      CRYSTAL
   end
 
   it "finds private def when invoking from inside macro (#2082)" do
@@ -412,15 +412,14 @@ describe "Semantic: private" do
   end
 
   it "gives private constant error in macro" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "private constant Foo::Bar referenced"
       class Foo
         private class Bar
         end
       end
 
       {{ Foo::Bar }}
-      ),
-      "private constant Foo::Bar referenced"
+      CRYSTAL
   end
 
   it "doesn't find private constant in another file (#7850)" do
@@ -437,7 +436,7 @@ describe "Semantic: private" do
   end
 
   it "doesn't find private class defined through macro (#8715)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "private constant Foo::Bar referenced"
       macro bar
         class Bar
         end
@@ -448,12 +447,11 @@ describe "Semantic: private" do
       end
 
       Foo::Bar
-      ),
-      "private constant Foo::Bar referenced"
+      CRYSTAL
   end
 
   it "doesn't find private module defined through macro (#8715)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "private constant Foo::Bar referenced"
       macro bar
         module Bar
         end
@@ -464,12 +462,11 @@ describe "Semantic: private" do
       end
 
       Foo::Bar
-      ),
-      "private constant Foo::Bar referenced"
+      CRYSTAL
   end
 
   it "doesn't find private macro defined through macro (#8715)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "private macro 'bar' called for Foo"
       macro bar
         macro bar
         end
@@ -480,12 +477,11 @@ describe "Semantic: private" do
       end
 
       Foo.bar
-      ),
-      "private macro 'bar' called for Foo"
+      CRYSTAL
   end
 
   it "doesn't find private thing defined through recursive macro (#8715)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "private constant Foo::Bar referenced"
       macro bar
         baz
       end
@@ -500,8 +496,7 @@ describe "Semantic: private" do
       end
 
       Foo::Bar
-      ),
-      "private constant Foo::Bar referenced"
+      CRYSTAL
   end
 
   it "doesn't inherit visibility from class node in macro hook (#8794)" do

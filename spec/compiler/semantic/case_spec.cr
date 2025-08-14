@@ -11,12 +11,11 @@ describe "semantic: case" do
   end
 
   it "checks exhaustiveness of single type" do
-    assert_error %(
-        case 1
-        in Nil
-        end
-      ),
-      "case is not exhaustive.\n\nMissing types:\n - Int32"
+    assert_error <<-CRYSTAL, "case is not exhaustive.\n\nMissing types:\n - Int32"
+      case 1
+      in Nil
+      end
+      CRYSTAL
   end
 
   it "checks exhaustiveness of single type (T.class)" do
@@ -50,16 +49,15 @@ describe "semantic: case" do
   end
 
   it "errors if casing against a constant" do
-    assert_error %(
-        #{bool_case_eq}
+    assert_error <<-CRYSTAL, "can't use constant values in exhaustive case, only constant types"
+      #{bool_case_eq}
 
-        FOO = false
+      FOO = false
 
-        case true
-        in FOO
-        end
-      ),
-      "can't use constant values in exhaustive case, only constant types"
+      case true
+      in FOO
+      end
+      CRYSTAL
   end
 
   it "covers all types" do
@@ -73,25 +71,23 @@ describe "semantic: case" do
   end
 
   it "checks exhaustiveness of bool type (missing true)" do
-    assert_error %(
-        #{bool_case_eq}
+    assert_error <<-CRYSTAL, "case is not exhaustive.\n\nMissing cases:\n - true"
+      #{bool_case_eq}
 
-        case false
-        in false
-        end
-      ),
-      "case is not exhaustive.\n\nMissing cases:\n - true"
+      case false
+      in false
+      end
+      CRYSTAL
   end
 
   it "checks exhaustiveness of bool type (missing false)" do
-    assert_error %(
-        #{bool_case_eq}
+    assert_error <<-CRYSTAL, "case is not exhaustive.\n\nMissing cases:\n - false"
+      #{bool_case_eq}
 
-        case false
-        in true
-        end
-      ),
-      "case is not exhaustive.\n\nMissing cases:\n - false"
+      case false
+      in true
+      end
+      CRYSTAL
   end
 
   it "checks exhaustiveness of enum via question method" do
@@ -113,21 +109,20 @@ describe "semantic: case" do
   end
 
   it "checks exhaustiveness of enum via const" do
-    assert_error %(
-        #{enum_eq}
+    assert_error <<-CRYSTAL, "case is not exhaustive for enum Color.\n\nMissing members:\n - Green\n - Blue"
+      #{enum_eq}
 
-        enum Color
-          Red
-          Green
-          Blue
-        end
+      enum Color
+        Red
+        Green
+        Blue
+      end
 
-        e = Color::Red
-        case e
-        in Color::Red
-        end
-      ),
-      "case is not exhaustive for enum Color.\n\nMissing members:\n - Green\n - Blue"
+      e = Color::Red
+      case e
+      in Color::Red
+      end
+      CRYSTAL
   end
 
   it "checks exhaustiveness of enum (all cases covered)" do
@@ -184,19 +179,18 @@ describe "semantic: case" do
   end
 
   it "checks exhaustiveness of union type with virtual type" do
-    assert_error %(
-        class Foo
-        end
+    assert_error <<-CRYSTAL, "case is not exhaustive.\n\nMissing types:\n - Int32"
+      class Foo
+      end
 
-        class Bar < Foo
-        end
+      class Bar < Foo
+      end
 
-        a = 1 || Foo.new || Bar.new
-        case a
-        in Foo
-        end
-      ),
-      "case is not exhaustive.\n\nMissing types:\n - Int32"
+      a = 1 || Foo.new || Bar.new
+      case a
+      in Foo
+      end
+      CRYSTAL
   end
 
   it "checks exhaustiveness, covers in base type covers" do
@@ -360,15 +354,14 @@ describe "semantic: case" do
   end
 
   it "checks exhaustiveness of union with bool" do
-    assert_error %(
-        #{bool_case_eq}
+    assert_error <<-CRYSTAL, "case is not exhaustive.\n\nMissing cases:\n - false\n - Int32"
+      #{bool_case_eq}
 
-        e = 1 || true
-        case e
-        in true
-        end
-      ),
-      "case is not exhaustive.\n\nMissing cases:\n - false\n - Int32"
+      e = 1 || true
+      case e
+      in true
+      end
+      CRYSTAL
   end
 
   it "checks exhaustiveness for tuple literal, and passes" do
@@ -386,43 +379,40 @@ describe "semantic: case" do
   end
 
   it "checks exhaustiveness for tuple literal of 2 elements, and warns" do
-    assert_error %(
-        a = 1 || 'a'
+    assert_error <<-CRYSTAL, "case is not exhaustive.\n\nMissing cases:\n - {Char, Int32}"
+      a = 1 || 'a'
 
-        case {a, a}
-        in {Int32, Char}
-        in {Int32, Int32}
-        in {Char, Char}
-        end
-      ),
-      "case is not exhaustive.\n\nMissing cases:\n - {Char, Int32}"
+      case {a, a}
+      in {Int32, Char}
+      in {Int32, Int32}
+      in {Char, Char}
+      end
+      CRYSTAL
   end
 
   it "checks exhaustiveness for tuple literal of 3 elements, and warns" do
-    assert_error %(
-        a = 1 || 'a'
+    assert_error <<-CRYSTAL, "case is not exhaustive.\n\nMissing cases:\n - {Char, Int32, Char}\n - {Int32, Int32, Char}"
+      a = 1 || 'a'
 
-        case {a, a, a}
-        in {Int32, Int32, Int32}
-        in {Int32, Char, Int32}
-        in {Int32, Char, Char}
-        in {Char, Int32, Int32}
-        in {Char, Char, Int32}
-        in {Char, Char, Char}
-        end
-      ),
-      "case is not exhaustive.\n\nMissing cases:\n - {Char, Int32, Char}\n - {Int32, Int32, Char}"
+      case {a, a, a}
+      in {Int32, Int32, Int32}
+      in {Int32, Char, Int32}
+      in {Int32, Char, Char}
+      in {Char, Int32, Int32}
+      in {Char, Char, Int32}
+      in {Char, Char, Char}
+      end
+      CRYSTAL
   end
 
   it "checks exhaustiveness for tuple literal of 2 elements, first is bool" do
-    assert_error %(
-        #{bool_case_eq}
+    assert_error <<-CRYSTAL, "case is not exhaustive.\n\nMissing cases:\n - {false, Char}"
+      #{bool_case_eq}
 
-        case {true, 'a'}
-        in {true, Char}
-        end
-      ),
-      "case is not exhaustive.\n\nMissing cases:\n - {false, Char}"
+      case {true, 'a'}
+      in {true, Char}
+      end
+      CRYSTAL
   end
 
   it "checks exhaustiveness for tuple literal of 3 elements, all bool" do
@@ -490,88 +480,81 @@ describe "semantic: case" do
   end
 
   it "checks exhaustiveness for tuple literal with types and underscore at first position" do
-    assert_error %(
-        a = 1 || 'a'
+    assert_error <<-CRYSTAL, "case is not exhaustive.\n\nMissing cases:\n - {Char, Char}\n - {Int32, Char}"
+      a = 1 || 'a'
 
-        case {a, a}
-        in {_, Int32}
-        end
-      ),
-      "case is not exhaustive.\n\nMissing cases:\n - {Char, Char}\n - {Int32, Char}"
+      case {a, a}
+      in {_, Int32}
+      end
+      CRYSTAL
   end
 
   it "checks exhaustiveness for tuple literal with types and underscore at second position" do
-    assert_error %(
-        a = 1 || 'a'
+    assert_error <<-CRYSTAL, "case is not exhaustive.\n\nMissing cases:\n - {Char, Char}\n - {Char, Int32}"
+      a = 1 || 'a'
 
-        case {a, a}
-        in {Int32, _}
-        end
-      ),
-      "case is not exhaustive.\n\nMissing cases:\n - {Char, Char}\n - {Char, Int32}"
+      case {a, a}
+      in {Int32, _}
+      end
+      CRYSTAL
   end
 
   it "checks exhaustiveness for tuple literal with bool and underscore at first position" do
-    assert_error %(
-        #{bool_case_eq}
+    assert_error <<-CRYSTAL, "case is not exhaustive.\n\nMissing cases:\n - {Bool, Char}"
+      #{bool_case_eq}
 
-        case {true, 1 || 'a'}
-        in {_, Int32}
-        end
-      ),
-      "case is not exhaustive.\n\nMissing cases:\n - {Bool, Char}"
+      case {true, 1 || 'a'}
+      in {_, Int32}
+      end
+      CRYSTAL
   end
 
   it "checks exhaustiveness for tuple literal with bool and underscore at first position, with partial match" do
-    assert_error %(
-        #{bool_case_eq}
+    assert_error <<-CRYSTAL, "case is not exhaustive.\n\nMissing cases:\n - {true, Char}"
+      #{bool_case_eq}
 
-        case {true, 1 || 'a'}
-        in {_, Int32}
-        in {false, Char}
-        end
-      ),
-      "case is not exhaustive.\n\nMissing cases:\n - {true, Char}"
+      case {true, 1 || 'a'}
+      in {_, Int32}
+      in {false, Char}
+      end
+      CRYSTAL
   end
 
   it "checks exhaustiveness for tuple literal with bool and underscore at second position" do
-    assert_error %(
-        #{bool_case_eq}
+    assert_error <<-CRYSTAL, "case is not exhaustive.\n\nMissing cases:\n - {Char, Bool}"
+      #{bool_case_eq}
 
-        case {1 || 'a', true}
-        in {Int32, _}
-        end
-      ),
-      "case is not exhaustive.\n\nMissing cases:\n - {Char, Bool}"
+      case {1 || 'a', true}
+      in {Int32, _}
+      end
+      CRYSTAL
   end
 
   it "checks exhaustiveness for tuple literal with bool and underscore at second position, with partial match" do
-    assert_error %(
-        #{bool_case_eq}
+    assert_error <<-CRYSTAL, "case is not exhaustive.\n\nMissing cases:\n - {Char, true}"
+      #{bool_case_eq}
 
-        case {1 || 'a', true}
-        in {Int32, _}
-        in {Char, false}
-        end
-      ),
-      "case is not exhaustive.\n\nMissing cases:\n - {Char, true}"
+      case {1 || 'a', true}
+      in {Int32, _}
+      in {Char, false}
+      end
+      CRYSTAL
   end
 
   it "checks exhaustiveness for tuple literal with bool and underscore at first position" do
-    assert_error %(
-        #{enum_eq}
+    assert_error <<-CRYSTAL, "case is not exhaustive.\n\nMissing cases:\n - {Color, Char}"
+      #{enum_eq}
 
-        enum Color
-          Red
-          Green
-          Blue
-        end
+      enum Color
+        Red
+        Green
+        Blue
+      end
 
-        case {Color::Red, 1 || 'a'}
-        in {_, Int32}
-        end
-      ),
-      "case is not exhaustive.\n\nMissing cases:\n - {Color, Char}"
+      case {Color::Red, 1 || 'a'}
+      in {_, Int32}
+      end
+      CRYSTAL
   end
 
   it "checks exhaustiveness for tuple literal with bool and underscore at first position, partial match" do
@@ -593,20 +576,19 @@ describe "semantic: case" do
   end
 
   it "checks exhaustiveness for tuple literal with bool and underscore at second position" do
-    assert_error %(
-        #{enum_eq}
+    assert_error <<-CRYSTAL, "case is not exhaustive.\n\nMissing cases:\n - {Char, Color}"
+      #{enum_eq}
 
-        enum Color
-          Red
-          Green
-          Blue
-        end
+      enum Color
+        Red
+        Green
+        Blue
+      end
 
-        case {1 || 'a', Color::Red}
-        in {Int32, _}
-        end
-      ),
-      "case is not exhaustive.\n\nMissing cases:\n - {Char, Color}"
+      case {1 || 'a', Color::Red}
+      in {Int32, _}
+      end
+      CRYSTAL
   end
 
   it "checks exhaustiveness for tuple literal with bool and underscore at second position, partial match" do

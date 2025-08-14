@@ -231,19 +231,18 @@ describe "Semantic: closure" do
   end
 
   it "errors if sending closured proc literal to C" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't send closure to C function (closured vars: a)"
       lib LibC
         fun foo(callback : ->)
       end
 
       a = 1
       LibC.foo(-> { a })
-      ),
-      "can't send closure to C function (closured vars: a)"
+      CRYSTAL
   end
 
   it "errors if sending closured proc pointer to C (1)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't send closure to C function (closured vars: self)"
       lib LibC
         fun foo(callback : ->)
       end
@@ -258,12 +257,11 @@ describe "Semantic: closure" do
       end
 
       Foo.new.foo
-      ),
-      "can't send closure to C function (closured vars: self)"
+      CRYSTAL
   end
 
   it "errors if sending closured proc pointer to C (1.2)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't send closure to C function (closured vars: self)"
       lib LibC
         fun foo(callback : ->)
       end
@@ -278,12 +276,11 @@ describe "Semantic: closure" do
       end
 
       Foo.new.foo
-      ),
-      "can't send closure to C function (closured vars: self)"
+      CRYSTAL
   end
 
   it "errors if sending closured proc pointer to C (2)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't send closure to C function (closured vars: foo)"
       lib LibC
         fun foo(callback : ->)
       end
@@ -295,12 +292,11 @@ describe "Semantic: closure" do
 
       foo = Foo.new
       LibC.foo(->foo.bar)
-      ),
-      "can't send closure to C function (closured vars: foo)"
+      CRYSTAL
   end
 
   it "errors if sending closured proc pointer to C (3)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't send closure to C function (closured vars: @a)"
       lib LibC
         fun foo(callback : ->)
       end
@@ -316,8 +312,7 @@ describe "Semantic: closure" do
       end
 
       Foo.new.foo
-      ),
-      "can't send closure to C function (closured vars: @a)"
+      CRYSTAL
   end
 
   it "transforms block to proc literal" do
@@ -382,7 +377,7 @@ describe "Semantic: closure" do
   end
 
   it "errors if giving more block args when transforming block to proc literal" do
-    assert_error "
+    assert_error <<-CRYSTAL, "wrong number of block parameters (given 1, expected 0)"
       def foo(&block : -> U)
         block.call
       end
@@ -390,8 +385,7 @@ describe "Semantic: closure" do
       foo do |x|
         x.to_f
       end
-      ",
-      "wrong number of block parameters (given 1, expected 0)"
+      CRYSTAL
   end
 
   it "allows giving less block args when transforming block to proc literal" do
@@ -516,7 +510,7 @@ describe "Semantic: closure" do
   end
 
   it "says can't send closure to C with new notation" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't send closure to C function (closured vars: a)"
       struct Proc
         def self.new(&block : self)
           block
@@ -531,12 +525,11 @@ describe "Semantic: closure" do
       LibC.foo(Proc(Void).new do
         a
       end)
-      ),
-      "can't send closure to C function (closured vars: a)"
+      CRYSTAL
   end
 
   it "says can't send closure to C with captured block" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't send closure to C function (closured vars: a)"
       def capture(&block : -> Int32)
         block
       end
@@ -549,12 +542,11 @@ describe "Semantic: closure" do
       LibC.foo(capture do
         a
       end)
-      ),
-      "can't send closure to C function (closured vars: a)"
+      CRYSTAL
   end
 
   it "doesn't crash for non-existing variable (#3789)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't send closure to C function (closured vars: x)"
       lib LibFoo
         fun foo(->)
       end
@@ -565,8 +557,7 @@ describe "Semantic: closure" do
           data
         }
       })
-      ),
-      "can't send closure to C function (closured vars: x)"
+      CRYSTAL
   end
 
   it "doesn't closure typeof local var" do
@@ -741,7 +732,7 @@ describe "Semantic: closure" do
   end
 
   it "is considered as closure if assigned once but comes from a method arg" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined method '&+'"
       def capture(&block)
         block
       end
@@ -752,8 +743,7 @@ describe "Semantic: closure" do
         x = 1 == 2 ? 1 : nil
       end
       foo(1)
-      ),
-      "undefined method '&+'"
+      CRYSTAL
   end
 
   it "considers var as closure-readonly if it was assigned multiple times before it was closured" do

@@ -26,7 +26,7 @@ describe "Semantic: uninitialized" do
   end
 
   it "errors if declaring generic type without type vars (with instance var)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't declare variable of generic non-instantiated type Foo"
       class Foo(T)
       end
 
@@ -37,12 +37,11 @@ describe "Semantic: uninitialized" do
       end
 
       Bar.new
-      ),
-      "can't declare variable of generic non-instantiated type Foo"
+      CRYSTAL
   end
 
   it "errors if declaring generic type without type vars (with class var)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't declare variable of generic non-instantiated type Foo"
       class Foo(T)
       end
 
@@ -51,16 +50,14 @@ describe "Semantic: uninitialized" do
       end
 
       Bar.new
-      ),
-      "can't declare variable of generic non-instantiated type Foo"
+      CRYSTAL
   end
 
   it "errors if declares var and then assigns other type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "type must be Int32, not (Char | Int32)"
       x = uninitialized Int32
       x = 'a'
-      ),
-      "type must be Int32, not (Char | Int32)"
+      CRYSTAL
   end
 
   it "errors if declaring variable multiple times with different types (#917)" do
@@ -120,10 +117,9 @@ describe "Semantic: uninitialized" do
 
   %w(Object Value Reference Number Int Float Struct Class Enum).each do |type|
     it "disallows declaring var of type #{type}" do
-      assert_error %(
+      assert_error <<-CRYSTAL, "use a more specific type"
         x = uninitialized #{type}
-        ),
-        "use a more specific type"
+        CRYSTAL
     end
   end
 

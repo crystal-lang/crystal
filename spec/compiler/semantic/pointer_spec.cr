@@ -86,20 +86,18 @@ describe "Semantic: pointer" do
   end
 
   it "detects recursive pointerof expansion (#551) (#553)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "recursive pointerof expansion"
       x = 1
       x = pointerof(x)
-      ),
-      "recursive pointerof expansion"
+      CRYSTAL
   end
 
   it "detects recursive pointerof expansion (2) (#1654)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "recursive pointerof expansion"
       x = 1
       pointer = pointerof(x)
       x = pointerof(pointer)
-      ),
-      "recursive pointerof expansion"
+      CRYSTAL
   end
 
   it "detects recursive pointerof expansion (3)" do
@@ -162,10 +160,9 @@ describe "Semantic: pointer" do
   end
 
   it "errors if doing Pointer.allocate" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't create instance of a pointer type"
       Pointer(Int32).allocate
-      ),
-      "can't create instance of a pointer type"
+      CRYSTAL
   end
 
   it "takes pointerof lib external var" do
@@ -179,10 +176,9 @@ describe "Semantic: pointer" do
   end
 
   it "says undefined variable (#7556)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined local variable or method 'foo'"
       pointerof(foo)
-      ),
-      "undefined local variable or method 'foo'"
+      CRYSTAL
   end
 
   it "can assign pointerof virtual type (#8216)" do
