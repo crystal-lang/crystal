@@ -100,26 +100,24 @@ describe "Code gen: lib" do
   end
 
   it "can use tuple as fun return" do
-    test_c(
-      %(
-        struct s {
-          int x;
-          int y;
-        };
+    test_c(<<-C, <<-CRYSTAL, &.to_i.should eq(3))
+      struct s {
+        int x;
+        int y;
+      };
 
-        struct s foo() {
-          struct s a = {1, 2};
-          return a;
-        }
-      ),
-      %(
-        lib LibFoo
-          fun foo : {Int32, Int32}
-        end
+      struct s foo() {
+        struct s a = {1, 2};
+        return a;
+      }
+      C
+      lib LibFoo
+        fun foo : {Int32, Int32}
+      end
 
-        tuple = LibFoo.foo
-        tuple[0] + tuple[1]
-      ), &.to_i.should eq(3))
+      tuple = LibFoo.foo
+      tuple[0] + tuple[1]
+      CRYSTAL
   end
 
   it "get fun field from struct (#672)" do

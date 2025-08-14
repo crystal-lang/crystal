@@ -343,11 +343,11 @@ end
 
 def test_c(c_code, crystal_code, *, file = __FILE__, &)
   with_temp_c_object_file(c_code, file: file) do |o_filename|
-    yield run(%(
-    require "prelude"
+    yield run(<<-CRYSTAL)
+      require "prelude"
 
-    @[Link(ldflags: #{o_filename.inspect})]
-    #{crystal_code}
-    ))
+      @[Link(ldflags: #{o_filename.inspect})]
+      #{crystal_code}
+      CRYSTAL
   end
 end
