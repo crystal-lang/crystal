@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Prepare System
         run: bin/ci prepare_system
