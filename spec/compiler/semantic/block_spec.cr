@@ -1406,7 +1406,7 @@ describe "Block inference" do
   end
 
   it "doesn't crash on #2531" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(10)
       def foo
         yield
       end
@@ -1416,7 +1416,7 @@ describe "Block inference" do
         value ? nil : nil
       end
       value ? 10 : 20
-      )).to_i.should eq(10)
+      CRYSTAL
   end
 
   it "yields in overload, matches type" do

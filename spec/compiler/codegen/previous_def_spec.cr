@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "codegen: previous_def" do
   it "codegens previous def" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       def foo
         1
       end
@@ -12,11 +12,11 @@ describe "codegen: previous_def" do
       end
 
       foo
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "codegens previous def when inside fun and forwards args" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(6)
       def foo(z)
         z &+ 1
       end
@@ -27,11 +27,11 @@ describe "codegen: previous_def" do
 
       x = foo(2)
       x.call(3)
-      )).to_i.should eq(6)
+      CRYSTAL
   end
 
   it "codegens previous def when inside fun with self" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Foo
         def initialize
           @x = 1
@@ -49,11 +49,11 @@ describe "codegen: previous_def" do
       end
 
       Foo.new.bar.call
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "correctly passes named arguments" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(4)
       def foo(x, *args, other = 1)
         other
       end
@@ -63,6 +63,6 @@ describe "codegen: previous_def" do
       end
 
       foo(1, 2, 3, other: 4)
-      )).to_i.should eq(4)
+      CRYSTAL
   end
 end

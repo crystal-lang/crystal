@@ -2,18 +2,18 @@ require "../../spec_helper"
 
 describe "Code gen: lib" do
   pending "codegens lib var set and get" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       lib LibC
         $errno : Int32
       end
 
       LibC.errno = 1
       LibC.errno
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "call to void function" do
-    run("
+    run(<<-CRYSTAL)
       lib LibC
         fun srand(x : UInt32) : Void
       end
@@ -23,11 +23,11 @@ describe "Code gen: lib" do
       end
 
       foo
-    ")
+      CRYSTAL
   end
 
   it "allows passing type to LibC if it has a converter with to_unsafe" do
-    codegen("
+    codegen(<<-CRYSTAL)
       lib LibC
         fun foo(x : Int32) : Int32
       end
@@ -39,11 +39,11 @@ describe "Code gen: lib" do
       end
 
       LibC.foo Foo.new
-      ")
+      CRYSTAL
   end
 
   it "allows passing type to LibC if it has a converter with to_unsafe (bug)" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       require "prelude"
 
       lib LibC
@@ -55,11 +55,11 @@ describe "Code gen: lib" do
       end
 
       LibC.foo(foo &.to_s)
-      ))
+      CRYSTAL
   end
 
   it "allows setting/getting external variable as function pointer" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       require "prelude"
 
       lib LibC
@@ -68,11 +68,11 @@ describe "Code gen: lib" do
 
       LibC.x = ->{}
       LibC.x.call
-      ))
+      CRYSTAL
   end
 
   it "can use enum as fun argument" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       enum Foo
         A
       end
@@ -82,11 +82,11 @@ describe "Code gen: lib" do
       end
 
       LibC.foo(Foo::A)
-      ))
+      CRYSTAL
   end
 
   it "can use enum as fun return" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       enum Foo
         A
       end
@@ -96,7 +96,7 @@ describe "Code gen: lib" do
       end
 
       LibC.foo
-      ))
+      CRYSTAL
   end
 
   it "can use tuple as fun return" do
@@ -123,7 +123,7 @@ describe "Code gen: lib" do
   end
 
   it "get fun field from struct (#672)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(10)
       require "prelude"
 
       lib Moo
@@ -135,11 +135,11 @@ describe "Code gen: lib" do
       p = Pointer(Moo::Type).malloc(1)
       p.value.func = -> (t: Moo::Type*) { 10 }
       p.value.func.call(p)
-      )).to_i.should eq(10)
+      CRYSTAL
   end
 
   it "get fun field from union (#672)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(10)
       require "prelude"
 
       lib Moo
@@ -151,50 +151,50 @@ describe "Code gen: lib" do
       p = Pointer(Moo::Type).malloc(1)
       p.value.func = -> (t: Moo::Type*) { 10 }
       p.value.func.call(p)
-      )).to_i.should eq(10)
+      CRYSTAL
   end
 
   it "refers to lib type (#960)" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       lib Thing
       end
 
       Thing
-      ))
+      CRYSTAL
   end
 
   it "allows invoking out with underscore " do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       lib Lib
         fun foo(x : Int32*) : Float64
       end
 
       Lib.foo out _
-      ))
+      CRYSTAL
   end
 
   it "passes int as another float type in literal" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       lib LibFoo
         fun foo(x : Int32)
       end
 
       LibFoo.foo 1234.5
-      ))
+      CRYSTAL
   end
 
   it "passes nil to varargs (#1570)" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       lib LibFoo
         fun foo(...)
       end
 
       LibFoo.foo(nil)
-      ))
+      CRYSTAL
   end
 
   it "casts C fun to Crystal proc when accessing instance var (#2515)" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       require "prelude"
 
       lib LibFoo
@@ -204,37 +204,37 @@ describe "Code gen: lib" do
       end
 
       LibFoo::Some.new.to_s
-      ))
+      CRYSTAL
   end
 
   it "doesn't crash when casting -1 to UInt32 (#3594)" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       lib LibFoo
         fun foo(x : UInt32) : Nil
       end
 
       LibFoo.foo(-1)
-      ))
+      CRYSTAL
   end
 
   it "doesn't crash with nil and varargs (#4414)" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       lib LibFoo
         fun foo(Void*, ...)
       end
 
       x = nil
       LibFoo.foo(x)
-      ))
+      CRYSTAL
   end
 
   it "uses static array in lib extern (#5688)" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       lib LibFoo
         $x : Int32[10]
       end
 
       LibFoo.x
-      ))
+      CRYSTAL
   end
 end

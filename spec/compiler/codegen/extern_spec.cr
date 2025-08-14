@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Codegen: extern struct" do
   it "declares extern struct with no constructor" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(0)
       @[Extern]
       struct Foo
         @x = uninitialized Int32
@@ -13,11 +13,11 @@ describe "Codegen: extern struct" do
       end
 
       Foo.new.x
-      )).to_i.should eq(0)
+      CRYSTAL
   end
 
   it "declares extern struct with no constructor, assigns var" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(10)
       @[Extern]
       struct Foo
         @x = uninitialized Int32
@@ -33,11 +33,11 @@ describe "Codegen: extern struct" do
       foo = Foo.new
       foo.x = 10
       foo.x
-      )).to_i.should eq(10)
+      CRYSTAL
   end
 
   it "declares extern union with no constructor" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1069547520)
       @[Extern(union: true)]
       struct Foo
         @x = uninitialized Int32
@@ -58,11 +58,11 @@ describe "Codegen: extern struct" do
       foo.x = 1
       foo.y = 1.5_f32
       foo.x
-      )).to_i.should eq(1069547520)
+      CRYSTAL
   end
 
   it "declares extern struct, sets and gets instance var" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(42)
       @[Extern]
       struct Foo
         @y = uninitialized Float64
@@ -75,11 +75,11 @@ describe "Codegen: extern struct" do
       end
 
       Foo.new.foo
-      )).to_i.should eq(42)
+      CRYSTAL
   end
 
   it "declares extern union, sets and gets instance var" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1069547520)
       @[Extern(union: true)]
       struct Foo
         @x = uninitialized Int32
@@ -93,11 +93,11 @@ describe "Codegen: extern struct" do
       end
 
       Foo.new.foo
-      )).to_i.should eq(1069547520)
+      CRYSTAL
   end
 
   it "sets callback on extern struct" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(42)
       require "prelude"
 
       @[Extern]
@@ -116,11 +116,11 @@ describe "Codegen: extern struct" do
       foo = Foo.new
       foo.set
       foo.get
-      )).to_i.should eq(42)
+      CRYSTAL
   end
 
   it "sets callback on extern union" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(42)
       require "prelude"
 
       @[Extern(union: true)]
@@ -140,11 +140,11 @@ describe "Codegen: extern struct" do
       foo = Foo.new
       foo.set
       foo.get
-      )).to_i.should eq(42)
+      CRYSTAL
   end
 
   it "codegens extern proc call twice (#4982)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(3)
       @[Extern]
       struct Data
         def initialize(@foo : Int32)
@@ -161,7 +161,7 @@ describe "Codegen: extern struct" do
       y = f.call(Data.new(2))
 
       x &+ y
-      )).to_i.should eq(3)
+      CRYSTAL
   end
 
   it "codegens proc that takes and returns large extern struct by value" do
@@ -502,84 +502,84 @@ describe "Codegen: extern struct" do
     end
 
     it "doesn't crash with proc with extern struct that's a closure" do
-      codegen(%(
-          lib LibMylib
-            struct Struct
-              x : Int64
-              y : Int64
-              z : Int64
-            end
+      codegen(<<-CRYSTAL)
+        lib LibMylib
+          struct Struct
+            x : Int64
+            y : Int64
+            z : Int64
           end
+        end
 
-          a = 1
-          f = ->(s : LibMylib::Struct) {
-            a
-          }
+        a = 1
+        f = ->(s : LibMylib::Struct) {
+          a
+        }
 
-          s = LibMylib::Struct.new
-          f.call(s)
-          ))
+        s = LibMylib::Struct.new
+        f.call(s)
+        CRYSTAL
     end
 
     it "invokes proc with extern struct" do
-      run(%(
-          lib LibMylib
-            struct Struct
-              x : Int32
-              y : Int32
-            end
+      run(<<-CRYSTAL).to_i.should eq(30)
+        lib LibMylib
+          struct Struct
+            x : Int32
+            y : Int32
+          end
+        end
+
+        class Global
+          @@x = 0
+
+          def self.x=(@@x)
           end
 
-          class Global
-            @@x = 0
-
-            def self.x=(@@x)
-            end
-
-            def self.x
-              @@x
-            end
+          def self.x
+            @@x
           end
+        end
 
-          f = ->(s : LibMylib::Struct) {
-            Global.x &+= s.x
-            Global.x &+= s.y
-          }
+        f = ->(s : LibMylib::Struct) {
+          Global.x &+= s.x
+          Global.x &+= s.y
+        }
 
-          s = LibMylib::Struct.new
-          s.x = 10
-          s.y = 20
-          f.call(s)
+        s = LibMylib::Struct.new
+        s.x = 10
+        s.y = 20
+        f.call(s)
 
-          Global.x
-          )).to_i.should eq(30)
+        Global.x
+        CRYSTAL
     end
 
     it "invokes proc with extern struct with sret" do
-      run(%(
-          lib LibMylib
-            struct Struct
-              x : Int32
-              y : Int32
-              z : Int32
-              w : Int32
-              a : Int32
-            end
+      run(<<-CRYSTAL).to_i.should eq(15)
+        lib LibMylib
+          struct Struct
+            x : Int32
+            y : Int32
+            z : Int32
+            w : Int32
+            a : Int32
           end
+        end
 
-          f = ->{
-            s = LibMylib::Struct.new
-            s.x = 1
-            s.y = 2
-            s.z = 3
-            s.w = 4
-            s.a = 5
-            s
-          }
+        f = ->{
+          s = LibMylib::Struct.new
+          s.x = 1
+          s.y = 2
+          s.z = 3
+          s.w = 4
+          s.a = 5
+          s
+        }
 
-          s = f.call
-          s.x &+ s.y &+ s.z &+ s.w &+ s.a
-          )).to_i.should eq(15)
+        s = f.call
+        s.x &+ s.y &+ s.z &+ s.w &+ s.a
+        CRYSTAL
     end
   {% end %}
 end
