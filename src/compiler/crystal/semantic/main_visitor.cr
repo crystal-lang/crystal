@@ -1269,20 +1269,18 @@ module Crystal
             call.wrong_number_of_arguments "'#{call.full_name(obj.type)}'", node.args.size, matching_fun.args.size
           end
 
-          if node.args.size == matching_fun.args.size
-            node.args.each_with_index do |node_arg, i|
-              node_arg.accept self
-              node_arg.type = node_arg_type = node_arg.type.instance_type
-              fun_arg_type = matching_fun.args[i].type
-              unless node_arg_type.compatible_with?(fun_arg_type) || node_arg_type.implicitly_converted_in_c_to?(fun_arg_type)
-                # Incompatible parameter type found; expand the pointer just
-                # like for non-lib types. This works for non-extern types as
-                # well; `->LibC.free(Bytes)` will compile, and
-                # `->LibC.getenv(Array(Int32))` will emit the same compiler
-                # error as a direct fun call.
-                expand(node)
-                return false
-              end
+          node.args.each_with_index do |node_arg, i|
+            node_arg.accept self
+            node_arg.type = node_arg_type = node_arg.type.instance_type
+            fun_arg_type = matching_fun.args[i].type
+            unless node_arg_type.compatible_with?(fun_arg_type) || node_arg_type.implicitly_converted_in_c_to?(fun_arg_type)
+              # Incompatible parameter type found; expand the pointer just
+              # like for non-lib types. This works for non-extern types as
+              # well; `->LibC.free(Bytes)` will compile, and
+              # `->LibC.getenv(Array(Int32))` will emit the same compiler
+              # error as a direct fun call.
+              expand(node)
+              return false
             end
           end
 
