@@ -61,14 +61,13 @@ describe "Semantic: uninitialized" do
   end
 
   it "errors if declaring variable multiple times with different types (#917)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "variable 'buf' already declared with type Int32", inject_primitives: true
       if 1 == 0
         buf = uninitialized Int32
       else
         buf = uninitialized Float64
       end
-      ),
-      "variable 'buf' already declared with type Int32", inject_primitives: true
+      CRYSTAL
   end
 
   it "can uninitialize variable outside initialize (#2828)" do

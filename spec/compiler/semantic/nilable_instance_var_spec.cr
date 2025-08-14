@@ -21,7 +21,7 @@ describe "Semantic: nilable instance var" do
   end
 
   it "says instance var was not initialized in all of the initialize methods (2)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't infer the type of instance variable '@foo' of Foo", inject_primitives: true
       abstract class Foo
         def foo
           @foo
@@ -41,8 +41,7 @@ describe "Semantic: nilable instance var" do
       p.value = Bar.new
       p.value = Baz.new
       p.value.foo + 1
-      ),
-      "can't infer the type of instance variable '@foo' of Foo", inject_primitives: true
+      CRYSTAL
   end
 
   it "says instance var was not initialized in all of the initialize methods, with var declaration" do

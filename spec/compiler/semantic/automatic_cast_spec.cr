@@ -404,7 +404,7 @@ describe "Semantic: automatic cast" do
   end
 
   it "doesn't say 'ambiguous call' when there's an exact match for integer (#6601)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #1 to 'Zed#+' to be Char, not Int32", inject_primitives: true
       class Zed
         def +(other : Char)
         end
@@ -412,9 +412,7 @@ describe "Semantic: automatic cast" do
 
       a = 1 || Zed.new
       a + 2
-      ),
-      "expected argument #1 to 'Zed#+' to be Char, not Int32",
-      inject_primitives: true
+      CRYSTAL
   end
 
   it "doesn't say 'ambiguous call' when there's an exact match for symbol (#6601)" do
@@ -644,16 +642,14 @@ describe "Semantic: automatic cast" do
   end
 
   it "doesn't cast integer variable to larger type (not #9565)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to be Int64, not Int32", flags: "no_number_autocast"
       def foo(x : Int64)
         x
       end
 
       x = 1_i32
       foo(x)
-      ),
-      "expected argument #1 to 'foo' to be Int64, not Int32",
-      flags: "no_number_autocast"
+      CRYSTAL
   end
 
   it "doesn't autocast number on union (#8655)" do

@@ -91,21 +91,20 @@ describe "semantic: case" do
   end
 
   it "checks exhaustiveness of enum via question method" do
-    assert_error %(
-        #{enum_eq}
+    assert_error <<-CRYSTAL, "case is not exhaustive for enum Color.\n\nMissing members:\n - Green\n - Blue", inject_primitives: true
+      #{enum_eq}
 
-        enum Color
-          Red
-          Green
-          Blue
-        end
+      enum Color
+        Red
+        Green
+        Blue
+      end
 
-        e = Color::Red
-        case e
-        in .red?
-        end
-      ),
-      "case is not exhaustive for enum Color.\n\nMissing members:\n - Green\n - Blue", inject_primitives: true
+      e = Color::Red
+      case e
+      in .red?
+      end
+      CRYSTAL
   end
 
   it "checks exhaustiveness of enum via const" do
@@ -251,28 +250,27 @@ describe "semantic: case" do
   end
 
   it "can't prove case is exhaustive for @[Flags] enum" do
-    assert_error %(
-        #{enum_eq}
+    assert_error <<-CRYSTAL, <<-ERROR
+      #{enum_eq}
 
-        struct Enum
-          def includes?(other : self)
-            false
-          end
+      struct Enum
+        def includes?(other : self)
+          false
         end
+      end
 
-        @[Flags]
-        enum Color
-          Red
-          Green
-          Blue
-        end
+      @[Flags]
+      enum Color
+        Red
+        Green
+        Blue
+      end
 
-        e = Color::Red
-        case e
-        in .red?
-        end
-      ),
-      <<-ERROR
+      e = Color::Red
+      case e
+      in .red?
+      end
+      CRYSTAL
       case is not exhaustive.
 
       Missing cases:
@@ -302,28 +300,27 @@ describe "semantic: case" do
   end
 
   it "can't prove case is exhaustive for @[Flags] enum, tuple case" do
-    assert_error %(
-        #{enum_eq}
+    assert_error <<-CRYSTAL, <<-ERROR
+      #{enum_eq}
 
-        struct Enum
-          def includes?(other : self)
-            false
-          end
+      struct Enum
+        def includes?(other : self)
+          false
         end
+      end
 
-        @[Flags]
-        enum Color
-          Red
-          Green
-          Blue
-        end
+      @[Flags]
+      enum Color
+        Red
+        Green
+        Blue
+      end
 
-        e = Color::Red
-        case {e}
-        in {.red?}
-        end
-      ),
-      <<-ERROR
+      e = Color::Red
+      case {e}
+      in {.red?}
+      end
+      CRYSTAL
       case is not exhaustive.
 
       Missing cases:
@@ -335,22 +332,21 @@ describe "semantic: case" do
   end
 
   it "checks exhaustiveness of enum combined with another type" do
-    assert_error %(
-        #{enum_eq}
+    assert_error <<-CRYSTAL, "case is not exhaustive for enum Color.\n\nMissing members:\n - Green\n - Blue", inject_primitives: true
+      #{enum_eq}
 
-        enum Color
-          Red
-          Green
-          Blue
-        end
+      enum Color
+        Red
+        Green
+        Blue
+      end
 
-        e = Color::Red || 1
-        case e
-        in Int32
-        in .red?
-        end
-      ),
-      "case is not exhaustive for enum Color.\n\nMissing members:\n - Green\n - Blue", inject_primitives: true
+      e = Color::Red || 1
+      case e
+      in Int32
+      in .red?
+      end
+      CRYSTAL
   end
 
   it "checks exhaustiveness of union with bool" do
@@ -416,14 +412,13 @@ describe "semantic: case" do
   end
 
   it "checks exhaustiveness for tuple literal of 3 elements, all bool" do
-    assert_error %(
-        #{bool_case_eq}
+    assert_error <<-CRYSTAL, <<-ERROR
+      #{bool_case_eq}
 
-        case {true, true, true}
-        in {true, true, true}
-        end
-      ),
-      <<-ERROR
+      case {true, true, true}
+      in {true, true, true}
+      end
+      CRYSTAL
       case is not exhaustive.
 
       Missing cases:
@@ -434,38 +429,36 @@ describe "semantic: case" do
   end
 
   it "checks exhaustiveness for tuple literal of 2 elements, first is enum" do
-    assert_error %(
-        #{enum_eq}
+    assert_error <<-CRYSTAL, "case is not exhaustive.\n\nMissing cases:\n - {Color::Green, Char}", inject_primitives: true
+      #{enum_eq}
 
-        enum Color
-          Red
-          Green
-          Blue
-        end
+      enum Color
+        Red
+        Green
+        Blue
+      end
 
-        case {Color::Red, 'a'}
-        in {.red?, Char}
-        in {.blue?, Char}
-        end
-      ),
-      "case is not exhaustive.\n\nMissing cases:\n - {Color::Green, Char}", inject_primitives: true
+      case {Color::Red, 'a'}
+      in {.red?, Char}
+      in {.blue?, Char}
+      end
+      CRYSTAL
   end
 
   it "checks exhaustiveness for tuple literal of 3 elements, all enums" do
-    assert_error %(
-        #{enum_eq}
+    assert_error <<-CRYSTAL, <<-ERROR, inject_primitives: true
+      #{enum_eq}
 
-        enum Color
-          Red
-          Green
-          Blue
-        end
+      enum Color
+        Red
+        Green
+        Blue
+      end
 
-        case {Color::Red, Color::Red, Color::Red}
-        in {.red?, .green?, .blue?}
-        end
-      ),
-      <<-ERROR,
+      case {Color::Red, Color::Red, Color::Red}
+      in {.red?, .green?, .blue?}
+      end
+      CRYSTAL
       case is not exhaustive.
 
       Missing cases:
@@ -476,7 +469,6 @@ describe "semantic: case" do
        - {Color::Green, Color, Color}
        - {Color::Blue, Color, Color}
       ERROR
-      inject_primitives: true
   end
 
   it "checks exhaustiveness for tuple literal with types and underscore at first position" do
@@ -558,21 +550,20 @@ describe "semantic: case" do
   end
 
   it "checks exhaustiveness for tuple literal with bool and underscore at first position, partial match" do
-    assert_error %(
-        #{enum_eq}
+    assert_error <<-CRYSTAL, "case is not exhaustive.\n\nMissing cases:\n - {Color::Red, Char}\n - {Color::Green, Char}", inject_primitives: true
+      #{enum_eq}
 
-        enum Color
-          Red
-          Green
-          Blue
-        end
+      enum Color
+        Red
+        Green
+        Blue
+      end
 
-        case {Color::Red, 1 || 'a'}
-        in {_, Int32}
-        in {.blue?, Char}
-        end
-      ),
-      "case is not exhaustive.\n\nMissing cases:\n - {Color::Red, Char}\n - {Color::Green, Char}", inject_primitives: true
+      case {Color::Red, 1 || 'a'}
+      in {_, Int32}
+      in {.blue?, Char}
+      end
+      CRYSTAL
   end
 
   it "checks exhaustiveness for tuple literal with bool and underscore at second position" do
@@ -592,21 +583,20 @@ describe "semantic: case" do
   end
 
   it "checks exhaustiveness for tuple literal with bool and underscore at second position, partial match" do
-    assert_error %(
-        #{enum_eq}
+    assert_error <<-CRYSTAL, "case is not exhaustive.\n\nMissing cases:\n - {Char, Color::Red}\n - {Char, Color::Green}", inject_primitives: true
+      #{enum_eq}
 
-        enum Color
-          Red
-          Green
-          Blue
-        end
+      enum Color
+        Red
+        Green
+        Blue
+      end
 
-        case {1 || 'a', Color::Red}
-        in {Int32, _}
-        in {Char, .blue?}
-        end
-      ),
-      "case is not exhaustive.\n\nMissing cases:\n - {Char, Color::Red}\n - {Char, Color::Green}", inject_primitives: true
+      case {1 || 'a', Color::Red}
+      in {Int32, _}
+      in {Char, .blue?}
+      end
+      CRYSTAL
   end
 
   it "checks exhaustiveness for tuple literal, with call" do

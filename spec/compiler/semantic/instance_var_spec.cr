@@ -3627,7 +3627,7 @@ describe "Semantic: instance var" do
   end
 
   it "doesn't infer from class method with multiple statements and return, on non-easy return" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't infer the type of instance variable '@x' of Foo", inject_primitives: true
       class Foo
         def initialize
           @x = Bar.default
@@ -3649,12 +3649,11 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      ),
-      "can't infer the type of instance variable '@x' of Foo", inject_primitives: true
+      CRYSTAL
   end
 
   it "doesn't infer from class method with multiple statements and return, on non-easy return (2)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't infer the type of instance variable '@x' of Foo", inject_primitives: true
       class Foo
         def initialize
           @x = Bar.default
@@ -3677,8 +3676,7 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      ),
-      "can't infer the type of instance variable '@x' of Foo", inject_primitives: true
+      CRYSTAL
   end
 
   it "infer from class method where new is redefined" do
@@ -4835,7 +4833,7 @@ describe "Semantic: instance var" do
   end
 
   it "can't infer type when using operation on const (#4054)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't infer the type of instance variable '@baz' of Foo", inject_primitives: true
       class Foo
         BAR = 5
 
@@ -4845,8 +4843,7 @@ describe "Semantic: instance var" do
       end
 
       Foo.new
-      ),
-      "can't infer the type of instance variable '@baz' of Foo", inject_primitives: true
+      CRYSTAL
   end
 
   it "instance variables initializers are used in class variables initialized objects (#3988)" do

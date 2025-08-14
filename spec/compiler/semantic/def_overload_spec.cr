@@ -1384,7 +1384,7 @@ describe "Semantic: def overload" do
   end
 
   it "reports no overload matches with correct method owner (#2083)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, <<-MSG
       class Foo
         def foo(x : Int32)
           x + 1
@@ -1398,8 +1398,7 @@ describe "Semantic: def overload" do
       end
 
       Bar.new.foo("hello")
-      ),
-      <<-MSG
+      CRYSTAL
        - Bar#foo(x : Int32)
        - Foo#foo(x : Int32)
       MSG

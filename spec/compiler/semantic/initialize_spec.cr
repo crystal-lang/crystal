@@ -108,7 +108,7 @@ describe "Semantic: initialize" do
   end
 
   it "types instance var as nilable if not always assigned" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "instance variable '@x' of Foo must be Int32, not Nil", inject_primitives: true
       class Foo
         def initialize
           if 1 == 2
@@ -123,12 +123,11 @@ describe "Semantic: initialize" do
 
       foo = Foo.new
       foo.x
-      ),
-      "instance variable '@x' of Foo must be Int32, not Nil", inject_primitives: true
+      CRYSTAL
   end
 
   it "types instance var as nilable if assigned in block" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "Instance variable '@x' was used before it was initialized in one of the 'initialize' methods, rendering it nilable", inject_primitives: true
       def bar
         yield if 1 == 2
       end
@@ -147,8 +146,7 @@ describe "Semantic: initialize" do
 
       foo = Foo.new
       foo.x
-      ),
-      "Instance variable '@x' was used before it was initialized in one of the 'initialize' methods, rendering it nilable", inject_primitives: true
+      CRYSTAL
   end
 
   it "types instance var as not-nilable if assigned in block but previously assigned" do
@@ -622,7 +620,7 @@ describe "Semantic: initialize" do
   end
 
   it "errors if found matches for initialize but doesn't cover all (bug #204)" do
-    assert_error "
+    assert_error <<-CRYSTAL, "expected argument #1 to 'Foo.new' to be Int32, not (Int32 | Nil)", inject_primitives: true
       class Foo
         def initialize(x : Int32)
         end
@@ -630,9 +628,7 @@ describe "Semantic: initialize" do
 
       a = 1 > 0 ? nil : 1
       Foo.new(a)
-      ",
-      "expected argument #1 to 'Foo.new' to be Int32, not (Int32 | Nil)",
-      inject_primitives: true
+      CRYSTAL
   end
 
   it "doesn't mark instance variable as nilable when using self.class" do

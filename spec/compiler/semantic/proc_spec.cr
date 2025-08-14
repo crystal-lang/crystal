@@ -167,25 +167,23 @@ describe "Semantic: proc" do
   end
 
   it "has proc literal as restriction and errors if input is different" do
-    assert_error "
+    assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to be Proc(Int32, Float64), not Proc(Int64, Float64)", inject_primitives: true
       def foo(x : Int32 -> Float64)
         x.call(1)
       end
 
       foo ->(x : Int64) { x.to_f }
-      ",
-      "expected argument #1 to 'foo' to be Proc(Int32, Float64), not Proc(Int64, Float64)", inject_primitives: true
+      CRYSTAL
   end
 
   it "has proc literal as restriction and errors if sizes are different" do
-    assert_error "
+    assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to be Proc(Int32, Float64), not Proc(Int32, Int32, Float64)", inject_primitives: true
       def foo(x : Int32 -> Float64)
         x.call(1)
       end
 
       foo ->(x : Int32, y : Int32) { x.to_f }
-      ",
-      "expected argument #1 to 'foo' to be Proc(Int32, Float64), not Proc(Int32, Int32, Float64)", inject_primitives: true
+      CRYSTAL
   end
 
   it "allows passing nil as proc callback if it is a lib alias" do
@@ -214,27 +212,24 @@ describe "Semantic: proc" do
   end
 
   it "disallows casting a proc type to one accepting less arguments" do
-    assert_error "
+    assert_error <<-CRYSTAL, "can't cast Proc(Int32, Float64) to Proc(Float64)", inject_primitives: true
       f = ->(x : Int32) { x.to_f }
       f.as(-> Float64)
-      ",
-      "can't cast Proc(Int32, Float64) to Proc(Float64)", inject_primitives: true
+      CRYSTAL
   end
 
   it "disallows casting a proc type to one accepting same size argument but different output" do
-    assert_error "
+    assert_error <<-CRYSTAL, "can't cast Proc(Int32, Float64) to Proc(Int32, Int32)", inject_primitives: true
       f = ->(x : Int32) { x.to_f }
       f.as(Int32 -> Int32)
-      ",
-      "can't cast Proc(Int32, Float64) to Proc(Int32, Int32)", inject_primitives: true
+      CRYSTAL
   end
 
   it "disallows casting a proc type to one accepting same size argument but different input" do
-    assert_error "
+    assert_error <<-CRYSTAL, "can't cast Proc(Int32, Float64) to Proc(Float64, Float64)", inject_primitives: true
       f = ->(x : Int32) { x.to_f }
       f.as(Float64 -> Float64)
-      ",
-      "can't cast Proc(Int32, Float64) to Proc(Float64, Float64)", inject_primitives: true
+      CRYSTAL
   end
 
   it "errors if inferred return type doesn't match return type restriction (1)" do
@@ -384,13 +379,12 @@ describe "Semantic: proc" do
   end
 
   it "says wrong return type in new on proc type" do
-    assert_error "
+    assert_error <<-CRYSTAL, "expected block to return Int32, not Float64", inject_primitives: true
       #{proc_new}
 
       alias Alias = Int32 -> Int32
       Alias.new &.to_f
-      ",
-      "expected block to return Int32, not Float64", inject_primitives: true
+      CRYSTAL
   end
 
   it "errors if missing argument type in proc literal" do
@@ -949,10 +943,9 @@ describe "Semantic: proc" do
   end
 
   it "says wrong number of arguments" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "no overload matches", inject_primitives: true
       ->(x : Int32) { }.call
-      ),
-      "no overload matches", inject_primitives: true
+      CRYSTAL
   end
 
   it "finds method of object" do

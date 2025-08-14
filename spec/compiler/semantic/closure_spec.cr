@@ -340,7 +340,7 @@ describe "Semantic: closure" do
   end
 
   it "errors when transforming block to proc literal if type mismatch" do
-    assert_error "
+    assert_error <<-CRYSTAL, "expected block to return Int32, not Float64", inject_primitives: true
       def foo(&block : Int32 -> Int32)
         block.call(1)
       end
@@ -348,8 +348,7 @@ describe "Semantic: closure" do
       foo do |x|
         x.to_f
       end
-      ",
-      "expected block to return Int32, not Float64", inject_primitives: true
+      CRYSTAL
   end
 
   it "transforms block to proc literal with free var" do
@@ -418,27 +417,25 @@ describe "Semantic: closure" do
   end
 
   it "errors if forwarding block param doesn't match input type" do
-    assert_error "
+    assert_error <<-CRYSTAL, "expected block argument's parameter #1 to be Int32, not Int64", inject_primitives: true
       def foo(&block : Int32 -> U)
         block
       end
 
       f = ->(x : Int64) { x + 1 }
       foo &f
-      ",
-      "expected block argument's parameter #1 to be Int32, not Int64", inject_primitives: true
+      CRYSTAL
   end
 
   it "errors if forwarding block param doesn't match input type size" do
-    assert_error "
+    assert_error <<-CRYSTAL, "wrong number of block argument's parameters (given 1, expected 2)", inject_primitives: true
       def foo(&block : Int32, Int32 -> U)
         block
       end
 
       f = ->(x : Int32) { x + 1 }
       foo &f
-      ",
-      "wrong number of block argument's parameters (given 1, expected 2)", inject_primitives: true
+      CRYSTAL
   end
 
   it "lookups return type in correct scope" do
@@ -586,7 +583,7 @@ describe "Semantic: closure" do
   end
 
   it "correctly detects previous var as closured (#5609)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined method '&+' for String", inject_primitives: true
       def block(&block)
         block.call
       end
@@ -603,8 +600,7 @@ describe "Semantic: closure" do
           x = "hello"
         end
       end
-      ),
-      "undefined method '&+' for String", inject_primitives: true
+      CRYSTAL
   end
 
   it "doesn't assign all types to metavar if closured but only assigned to once" do
@@ -622,7 +618,7 @@ describe "Semantic: closure" do
   end
 
   it "does assign all types to metavar if closured but only assigned to once in a loop" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined method '&+'", inject_primitives: true
       def capture(&block)
         block
       end
@@ -634,12 +630,11 @@ describe "Semantic: closure" do
           end
         end
       end
-      ),
-      "undefined method '&+'", inject_primitives: true
+      CRYSTAL
   end
 
   it "does assign all types to metavar if closured but only assigned to once in a loop through block" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined method '&+'", inject_primitives: true
       def capture(&block)
         block
       end
@@ -659,12 +654,11 @@ describe "Semantic: closure" do
           end
         end
       end
-      ),
-      "undefined method '&+'", inject_primitives: true
+      CRYSTAL
   end
 
   it "does assign all types to metavar if closured but only assigned to once in a loop through captured block" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined method '&+'", inject_primitives: true
       def capture(&block)
         block
       end
@@ -684,8 +678,7 @@ describe "Semantic: closure" do
           end
         end
       end
-      ),
-      "undefined method '&+'", inject_primitives: true
+      CRYSTAL
   end
 
   it "doesn't assign all types to metavar if closured but declared inside block and never re-assigned" do

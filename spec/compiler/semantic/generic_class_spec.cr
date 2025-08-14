@@ -1164,7 +1164,7 @@ describe "Semantic: generic class" do
   end
 
   it "shows error due to generic instantiation (#7083)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "method Gen(String)#valid? must return Bool but it is returning Nil", inject_primitives: true
       abstract class Base
       end
 
@@ -1184,8 +1184,7 @@ describe "Semantic: generic class" do
       x.value.valid?
 
       Gen(String).new
-      ),
-      "method Gen(String)#valid? must return Bool but it is returning Nil", inject_primitives: true
+      CRYSTAL
   end
 
   it "resolves T through metaclass inheritance (#7914)" do

@@ -242,7 +242,7 @@ describe "Semantic: def" do
   end
 
   it "fixes bug #165" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to be Pointer(Node), not Node", inject_primitives: true
       abstract class Node
       end
 
@@ -252,9 +252,7 @@ describe "Semantic: def" do
 
       a = Pointer(Node).new(0_u64)
       foo a
-      ),
-      "expected argument #1 to 'foo' to be Pointer(Node), not Node",
-      inject_primitives: true
+      CRYSTAL
   end
 
   it "says can only defined def on types and self" do
@@ -365,7 +363,7 @@ describe "Semantic: def" do
   end
 
   it "gives correct error for methods in Class" do
-    assert_error %(
+    assert_error <<-CRYSTAL, <<-ERROR
       class Class
         def foo
           1
@@ -376,8 +374,7 @@ describe "Semantic: def" do
       end
 
       Foo.foo(1)
-      ),
-      <<-ERROR
+      CRYSTAL
       wrong number of arguments for 'Foo.foo' (given 1, expected 0)
 
       Overloads are:
@@ -386,7 +383,7 @@ describe "Semantic: def" do
   end
 
   it "gives correct error for methods in Class (2)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, <<-ERROR
       class Class
         def self.foo
           1
@@ -397,8 +394,7 @@ describe "Semantic: def" do
       end
 
       Foo.foo(1)
-      ),
-      <<-ERROR
+      CRYSTAL
       wrong number of arguments for 'Foo.foo' (given 1, expected 0)
 
       Overloads are:
@@ -515,15 +511,14 @@ describe "Semantic: def" do
   end
 
   it "shows free variables if no overload matches" do
-    assert_error %(
+    assert_error <<-CRYSTAL, <<-ERROR
       class Foo(T)
         def foo(x : T, y : U, z : V) forall U, V
         end
       end
 
       Foo(Int32).new.foo("", "", "")
-      ),
-      <<-ERROR
+      CRYSTAL
       Overloads are:
        - Foo(T)#foo(x : T, y : U, z : V) forall U, V
       ERROR

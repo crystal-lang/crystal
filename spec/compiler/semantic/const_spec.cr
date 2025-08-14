@@ -458,7 +458,7 @@ describe "Semantic: const" do
   end
 
   it "errors if using return inside constant value (#5391)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't return from constant", inject_primitives: true
       class Foo
         A = begin
           return if 1 == 2
@@ -466,8 +466,7 @@ describe "Semantic: const" do
       end
 
       Foo::A
-      ),
-      "can't return from constant", inject_primitives: true
+      CRYSTAL
   end
 
   it "errors if constant has NoReturn type (#6139)" do

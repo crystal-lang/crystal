@@ -581,7 +581,7 @@ describe "Semantic: class" do
   end
 
   it "doesn't use initialize from base class with virtual type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "wrong number of arguments for 'Bar#initialize' (given 1, expected 2)", inject_primitives: true
       class Foo
         def initialize(x)
         end
@@ -594,8 +594,7 @@ describe "Semantic: class" do
 
       klass = 1 == 1 ? Foo : Bar
       klass.new(1)
-      ),
-      "wrong number of arguments for 'Bar#initialize' (given 1, expected 2)", inject_primitives: true
+      CRYSTAL
   end
 
   it "errors if using underscore in generic class" do

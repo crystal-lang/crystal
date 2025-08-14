@@ -118,15 +118,14 @@ describe "Semantic: lib" do
   end
 
   it "reports error if using out with an already declared variable" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "variable 'x' is already defined, `out` must be used to define a variable, use another name", inject_primitives: true
       lib Lib
         fun foo(x : Int32*)
       end
 
       x = Pointer(Int32).malloc(1_u64)
       Lib.foo out x
-      ),
-      "variable 'x' is already defined, `out` must be used to define a variable, use another name", inject_primitives: true
+      CRYSTAL
   end
 
   it "allows invoking out with underscore " do
@@ -455,15 +454,14 @@ describe "Semantic: lib" do
   end
 
   it "disallows passing nil or pointer to arg expecting pointer" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "argument 'x' of 'Foo#foo' must be Pointer(Int32), not (Pointer(Int32) | Nil)", inject_primitives: true
       lib Foo
         fun foo(x : Int32*) : Int64
       end
 
       a = 1 == 1 ? nil : Pointer(Int32).malloc(1_u64)
       Foo.foo(a)
-      ),
-      "argument 'x' of 'Foo#foo' must be Pointer(Int32), not (Pointer(Int32) | Nil)", inject_primitives: true
+      CRYSTAL
   end
 
   it "correctly attached link flags if there's a macro if" do

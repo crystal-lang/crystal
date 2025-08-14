@@ -104,14 +104,13 @@ describe "Semantic: var" do
   end
 
   it "declares local variable but doesn't assign it in all branches" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "type must be Int32", inject_primitives: true
       a : Int32
       if 1 == 2
         a = 0
       end
       a
-      ),
-      "type must be Int32", inject_primitives: true
+      CRYSTAL
   end
 
   it "declares local variable and assigns wrong type" do
