@@ -2,17 +2,17 @@ require "../../spec_helper"
 
 describe "Code gen: def with default value" do
   it "codegens def with one default value" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       def foo(x = 1)
         x
       end
 
       foo
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens def new with one default value" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Foo
         def initialize(@x = 1)
         end
@@ -23,11 +23,11 @@ describe "Code gen: def with default value" do
       end
 
       Foo.new.x
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "considers first the one with more arguments" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       def foo(x, y = 1)
         1
       end
@@ -37,11 +37,11 @@ describe "Code gen: def with default value" do
       end
 
       foo 1, "hello"
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "considers first the one with a restriction" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       def foo(x : String, y = "")
         1
       end
@@ -51,7 +51,7 @@ describe "Code gen: def with default value" do
       end
 
       foo "hello"
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "doesn't mix types of instance vars with initialize and new" do

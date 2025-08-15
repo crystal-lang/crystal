@@ -2957,7 +2957,7 @@ module Crystal
     end
 
     it "sets correct locations of macro if / else" do
-      parser = Parser.new(<<-CR)
+      parser = Parser.new(<<-CRYSTAL)
         {% if 1 == val %}
           "one!"
           "bar"
@@ -2965,7 +2965,7 @@ module Crystal
           "not one"
           "bar"
         {% end %}
-      CR
+        CRYSTAL
 
       node = parser.parse.as MacroIf
 
@@ -2986,7 +2986,7 @@ module Crystal
     end
 
     it "sets correct locations of macro if / elsif" do
-      parser = Parser.new(<<-CR)
+      parser = Parser.new(<<-CRYSTAL)
         {% if 1 == val %}
           "one!"
           "bar"
@@ -2994,7 +2994,7 @@ module Crystal
           "not one"
           "bar"
         {% end %}
-      CR
+        CRYSTAL
 
       node = parser.parse.as MacroIf
 
@@ -3015,7 +3015,7 @@ module Crystal
     end
 
     it "sets correct locations of macro if / else / elsif" do
-      parser = Parser.new(<<-CR)
+      parser = Parser.new(<<-CRYSTAL)
         {% if 1 == val %}
           "one!"
           "bar"
@@ -3026,7 +3026,7 @@ module Crystal
           "biz"
           "blah"
         {% end %}
-      CR
+        CRYSTAL
 
       node = parser.parse.as MacroIf
 
@@ -3047,7 +3047,7 @@ module Crystal
     end
 
     it "sets the correct location for MacroExpressions in a MacroIf" do
-      parser = Parser.new(<<-CR)
+      parser = Parser.new(<<-CRYSTAL)
         {% if 1 == 2 %}
           {{2 * 2}}
         {% else %}
@@ -3056,12 +3056,12 @@ module Crystal
              2 + 2
            %}
         {% end %}
-      CR
+        CRYSTAL
 
       node = parser.parse.should be_a MacroIf
       location = node.location.should_not be_nil
       location.line_number.should eq 1
-      location.column_number.should eq 3
+      location.column_number.should eq 1
 
       then_node = node.then.should be_a Expressions
       then_node_location = then_node.location.should_not be_nil
@@ -3071,10 +3071,10 @@ module Crystal
 
       then_node_location = then_node.expressions[1].location.should_not be_nil
       then_node_location.line_number.should eq 2
-      then_node_location.column_number.should eq 5
+      then_node_location.column_number.should eq 3
       then_node_location = then_node.expressions[1].end_location.should_not be_nil
       then_node_location.line_number.should eq 2
-      then_node_location.column_number.should eq 13
+      then_node_location.column_number.should eq 11
 
       else_node = node.else.should be_a Expressions
       else_node_location = else_node.location.should_not be_nil
@@ -3090,7 +3090,7 @@ module Crystal
     end
 
     it "sets correct location of Begin within another node" do
-      parser = Parser.new(<<-CR)
+      parser = Parser.new(<<-CRYSTAL)
         macro finished
           {% begin %}
             {{2 * 2}}
@@ -3100,7 +3100,7 @@ module Crystal
              %}
           {% end %}
         end
-      CR
+        CRYSTAL
 
       node = parser.parse.should be_a Macro
       node = node.body.should be_a Expressions
@@ -3113,7 +3113,7 @@ module Crystal
     end
 
     it "sets correct location of MacroIf within another node" do
-      parser = Parser.new(<<-CR)
+      parser = Parser.new(<<-CRYSTAL)
         macro finished
           {% if false %}
             {{2 * 2}}
@@ -3123,7 +3123,7 @@ module Crystal
              %}
           {% end %}
         end
-      CR
+        CRYSTAL
 
       node = parser.parse.should be_a Macro
       node = node.body.should be_a Expressions
@@ -3136,7 +3136,7 @@ module Crystal
     end
 
     it "sets correct location of MacroIf (unless) within another node" do
-      parser = Parser.new(<<-CR)
+      parser = Parser.new(<<-CRYSTAL)
         macro finished
           {% unless false %}
             {{2 * 2}}
@@ -3146,7 +3146,7 @@ module Crystal
              %}
           {% end %}
         end
-      CR
+        CRYSTAL
 
       node = parser.parse.should be_a Macro
       node = node.body.should be_a Expressions
@@ -3159,14 +3159,14 @@ module Crystal
     end
 
     it "sets correct location for output macro expression in for loop" do
-      parser = Parser.new(<<-CR)
+      parser = Parser.new(<<-CRYSTAL)
         {% for foo in bar %}
           {{ if true
                 foo
                 bar
               end }}
         {% end %}
-      CR
+        CRYSTAL
 
       node = parser.parse.should be_a MacroFor
       node = node.body.should be_a Expressions
@@ -3187,7 +3187,7 @@ module Crystal
     end
 
     it "sets correct location for single node within another node" do
-      parser = Parser.new(<<-CR)
+      parser = Parser.new(<<-CRYSTAL)
         macro finished
           {% verbatim do %}
             {%
@@ -3195,7 +3195,7 @@ module Crystal
               a = 1 %}
           {% end %}
         end
-      CR
+        CRYSTAL
 
       node = parser.parse.should be_a Macro
       node = node.body.should be_a Expressions
@@ -3231,7 +3231,7 @@ module Crystal
     end
 
     it "sets correct location for multiple nodes within another node" do
-      parser = Parser.new(<<-CR)
+      parser = Parser.new(<<-CRYSTAL)
         macro finished
           {% verbatim do %}
             {%
@@ -3241,7 +3241,7 @@ module Crystal
               b = 2 %}
           {% end %}
         end
-      CR
+        CRYSTAL
 
       node = parser.parse.should be_a Macro
       node = node.body.should be_a Expressions
@@ -3299,13 +3299,13 @@ module Crystal
     end
 
     it "sets correct locations of MacroVar in MacroIf / else" do
-      parser = Parser.new(<<-CR)
+      parser = Parser.new(<<-CRYSTAL)
         {% if true %}
           %a = {{ 1 + 1 }}
         {% else %}
           %b = {{ 2 + 2 }}
         {% end %}
-        CR
+        CRYSTAL
 
       node = parser.parse.should be_a MacroIf
 

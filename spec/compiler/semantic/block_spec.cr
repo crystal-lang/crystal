@@ -677,13 +677,13 @@ describe "Block inference" do
   end
 
   it "errors if proc is not instantiated" do
-    assert_error <<-CR, "can't create an instance of generic class Proc(*T, R) without specifying its type vars"
+    assert_error <<-CRYSTAL, "can't create an instance of generic class Proc(*T, R) without specifying its type vars"
       def capture(&block : Proc)
         block
       end
 
       capture { }
-      CR
+      CRYSTAL
   end
 
   it "passes #262" do
@@ -1406,7 +1406,7 @@ describe "Block inference" do
   end
 
   it "doesn't crash on #2531" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(10)
       def foo
         yield
       end
@@ -1416,7 +1416,7 @@ describe "Block inference" do
         value ? nil : nil
       end
       value ? 10 : 20
-      )).to_i.should eq(10)
+      CRYSTAL
   end
 
   it "yields in overload, matches type" do
@@ -1632,13 +1632,13 @@ describe "Block inference" do
   end
 
   it "renders expected block return type of a free variable on mismatch" do
-    assert_error(<<-CR, "expected block to return Int64, not String")
+    assert_error(<<-CRYSTAL, "expected block to return Int64, not String")
       struct Foo
         def bar(arg : U, &block : -> U) forall U
         end
       end
 
       Foo.new.bar(1_i64) { "hi" }
-      CR
+      CRYSTAL
   end
 end

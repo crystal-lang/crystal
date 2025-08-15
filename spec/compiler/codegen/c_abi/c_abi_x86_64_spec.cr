@@ -3,7 +3,7 @@ require "../../../spec_helper"
 
 describe "Code gen: C ABI x86_64" do
   it "passes struct less than 64 bits as { i64 }" do
-    mod = codegen(%(
+    mod = codegen(<<-CRYSTAL)
       lib LibFoo
         struct Struct
           x : Int8
@@ -15,14 +15,14 @@ describe "Code gen: C ABI x86_64" do
 
       s = LibFoo::Struct.new
       LibFoo.foo(s)
-      ))
+      CRYSTAL
     str = mod.to_s
     str.should contain("call void @foo({ i64 }")
     str.should contain("declare void @foo({ i64 })")
   end
 
   it "passes struct less than 64 bits as { i64 } in varargs" do
-    mod = codegen(%(
+    mod = codegen(<<-CRYSTAL)
       lib LibFoo
         struct Struct
           x : Int8
@@ -34,13 +34,13 @@ describe "Code gen: C ABI x86_64" do
 
       s = LibFoo::Struct.new
       LibFoo.foo(s)
-      ))
+      CRYSTAL
     str = mod.to_s
     str.should contain("call void (...)")
   end
 
   it "passes struct between 64 and 128 bits as { i64, i64 }" do
-    mod = codegen(%(
+    mod = codegen(<<-CRYSTAL)
       lib LibFoo
         struct Struct
           x : Int64
@@ -52,14 +52,14 @@ describe "Code gen: C ABI x86_64" do
 
       s = LibFoo::Struct.new
       LibFoo.foo(s)
-      ))
+      CRYSTAL
     str = mod.to_s
     str.should contain("call void @foo({ i64, i64 }")
     str.should contain("declare void @foo({ i64, i64 })")
   end
 
   it "passes struct between 64 and 128 bits as { i64, i64 } (with multiple modules/contexts)" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       require "prelude"
 
       lib LibFoo
@@ -79,11 +79,11 @@ describe "Code gen: C ABI x86_64" do
       end
 
       Moo.moo
-      ))
+      CRYSTAL
   end
 
   it "passes struct bigger than128 bits with byval" do
-    mod = codegen(%(
+    mod = codegen(<<-CRYSTAL)
       lib LibFoo
         struct Struct
           x : Int64
@@ -96,13 +96,13 @@ describe "Code gen: C ABI x86_64" do
 
       s = LibFoo::Struct.new
       LibFoo.foo(s)
-      ))
+      CRYSTAL
     str = mod.to_s
     str.scan(/byval/).size.should eq(2)
   end
 
   it "returns struct less than 64 bits as { i64 }" do
-    mod = codegen(%(
+    mod = codegen(<<-CRYSTAL)
       lib LibFoo
         struct Struct
           x : Int8
@@ -113,14 +113,14 @@ describe "Code gen: C ABI x86_64" do
       end
 
       str = LibFoo.foo
-      ))
+      CRYSTAL
     str = mod.to_s
     str.should contain("call { i64 } @foo()")
     str.should contain("declare { i64 } @foo()")
   end
 
   it "returns struct between 64 and 128 bits as { i64, i64 }" do
-    mod = codegen(%(
+    mod = codegen(<<-CRYSTAL)
       lib LibFoo
         struct Struct
           x : Int64
@@ -131,14 +131,14 @@ describe "Code gen: C ABI x86_64" do
       end
 
       str = LibFoo.foo
-      ))
+      CRYSTAL
     str = mod.to_s
     str.should contain("call { i64, i64 } @foo()")
     str.should contain("declare { i64, i64 } @foo()")
   end
 
   it "returns struct bigger than 128 bits with sret" do
-    mod = codegen(%(
+    mod = codegen(<<-CRYSTAL)
       lib LibFoo
         struct Struct
           x : Int64
@@ -150,7 +150,7 @@ describe "Code gen: C ABI x86_64" do
       end
 
       str = LibFoo.foo(1)
-      ))
+      CRYSTAL
     str = mod.to_s
     str.scan(/sret/).size.should eq(2)
 

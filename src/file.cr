@@ -544,9 +544,13 @@ class File < IO::FileDescriptor
   {% begin %}
     # Returns the content of *filename* as a string.
     #
+    # Raises `File::Error` if the file cannot be read.
+    #
     # ```
     # File.write("bar", "foo")
     # File.read("bar") # => "foo"
+    #
+    # File.read("non-existent") # raises File::NotFoundError
     # ```
     def self.read(filename : Path | String, encoding = nil, invalid = nil, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated] {% end %} blocking = nil) : String
       open_internal(filename, "r", blocking: blocking) do |file|

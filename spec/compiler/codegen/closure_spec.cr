@@ -2,36 +2,36 @@ require "../../spec_helper"
 
 describe "Code gen: closure" do
   it "codegens simple closure at global scope" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       a = 1
       foo = ->{ a }
       foo.call
-    ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens simple closure in function" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       def foo
         a = 1
         ->{ a }
       end
 
       foo.call
-    ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens simple closure in function with argument" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       def foo(a)
         ->{ a }
       end
 
       foo(1).call
-    ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens simple closure in block" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       def foo
         yield
       end
@@ -42,11 +42,11 @@ describe "Code gen: closure" do
       end
 
       f.call
-    ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens closured nested in block" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(3)
       def foo
         yield
       end
@@ -57,11 +57,11 @@ describe "Code gen: closure" do
         -> { a &+ b }
       end
       f.call
-    ").to_i.should eq(3)
+      CRYSTAL
   end
 
   it "codegens closured nested in block with a call with a closure with same names" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(4)
       def foo
         a = 3
         f = -> { a }
@@ -73,11 +73,11 @@ describe "Code gen: closure" do
         -> { a &+ x }
       end
       f.call
-    ").to_i.should eq(4)
+      CRYSTAL
   end
 
   it "codegens closure with block that declares same var" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(3)
       def foo
         a = 1
         yield a
@@ -88,11 +88,11 @@ describe "Code gen: closure" do
         -> { a &+ x }
       end
       f.call
-      ").to_i.should eq(3)
+      CRYSTAL
   end
 
   it "codegens closure with def that has an if" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       def foo
         yield 1 if 1
         yield 2
@@ -102,11 +102,11 @@ describe "Code gen: closure" do
         -> { x }
       end
       f.call
-      ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "codegens multiple nested blocks" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(9)
       def foo
         yield 1
         yield 2
@@ -122,11 +122,11 @@ describe "Code gen: closure" do
         end
       end
       f.call
-      ").to_i.should eq(9)
+      CRYSTAL
   end
 
   it "codegens closure with nested context without new closured vars" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       def foo
         yield
       end
@@ -136,11 +136,11 @@ describe "Code gen: closure" do
         -> { a }
       end
       f.call
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens closure with nested context without new closured vars" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       def foo
         yield
       end
@@ -157,11 +157,11 @@ describe "Code gen: closure" do
         end
       end
       f.call
-      ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "codegens closure with nested context without new closured vars but with block arg" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       def foo
         yield
       end
@@ -179,31 +179,31 @@ describe "Code gen: closure" do
         end
       end
       f.call
-      ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "unifies types of closured var" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       a = 1
       f = -> { a }
       a = 2.5
       f.call.to_i!
-      ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "codegens closure with block" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       def foo
         yield
       end
 
       a = 1
       ->{ foo { a } }.call
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens closure with self and var" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(3)
       class Foo
         def initialize(@x : Int32)
         end
@@ -219,11 +219,11 @@ describe "Code gen: closure" do
       end
 
       Foo.new(1).foo.call
-      ").to_i.should eq(3)
+      CRYSTAL
   end
 
   it "codegens closure with implicit self and var" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(3)
       class Foo
         def initialize(@x : Int32)
         end
@@ -239,11 +239,11 @@ describe "Code gen: closure" do
       end
 
       Foo.new(1).foo.call
-      ").to_i.should eq(3)
+      CRYSTAL
   end
 
   it "codegens closure with instance var and var" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(3)
       class Foo
         def initialize(@x : Int32)
         end
@@ -255,11 +255,11 @@ describe "Code gen: closure" do
       end
 
       Foo.new(1).foo.call
-      ").to_i.should eq(3)
+      CRYSTAL
   end
 
   it "codegens closure with instance var" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Foo
         def initialize(@x : Int32)
         end
@@ -270,11 +270,11 @@ describe "Code gen: closure" do
       end
 
       Foo.new(1).foo.call
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens closure with instance var and block" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(3)
       def bar
         yield
       end
@@ -292,11 +292,11 @@ describe "Code gen: closure" do
       end
 
       Foo.new(1).foo.call
-      ").to_i.should eq(3)
+      CRYSTAL
   end
 
   it "codegen closure in instance method without self closured" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Foo
         def foo
           ->(a : Int32) { a }
@@ -304,11 +304,11 @@ describe "Code gen: closure" do
       end
 
       Foo.new.foo.call(1)
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens closure inside initialize inside block with self" do
-    run("
+    run(<<-CRYSTAL)
       def foo
         yield
       end
@@ -322,11 +322,11 @@ describe "Code gen: closure" do
       foo do
         Foo.new
       end
-      ")
+      CRYSTAL
   end
 
   it "doesn't free closure memory (bug)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1249975000_i64)
       require "prelude"
 
       def foo
@@ -348,57 +348,57 @@ describe "Code gen: closure" do
         a += func.call
       end
       a
-      )).to_i.should eq(1249975000_i64)
+      CRYSTAL
   end
 
   it "codegens nested closure" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       a = 1
       ->{ ->{ a } }.call.call
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens super nested closure" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       a = 1
       ->{ ->{ -> { -> { a } } } }.call.call.call.call
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens nested closure with block (1)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       def foo
         yield
       end
 
       a = 1
       ->{ foo { ->{ a } } }.call.call
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens nested closure with block (2)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       def foo
         yield
       end
 
       a = 1
       ->{ ->{ foo { a } } }.call.call
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens nested closure with nested closured variable" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(3)
       a = 1
       ->{
         b = 2
         ->{ a &+ b }
       }.call.call
-      )).to_i.should eq(3)
+      CRYSTAL
   end
 
   it "codegens super nested closure with nested closured variable" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(10)
       def foo
         yield 4
       end
@@ -419,11 +419,11 @@ describe "Code gen: closure" do
           }
         }
       }.call.call.call.call.call
-      )).to_i.should eq(10)
+      CRYSTAL
   end
 
   it "codegens proc literal with struct" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       struct Foo
         def initialize(@x : Int32)
         end
@@ -437,11 +437,11 @@ describe "Code gen: closure" do
 
       obj = Foo.new(2)
       f.call(obj)
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "codegens closure with struct" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(3)
       struct Foo
         def initialize(@x : Int32)
         end
@@ -458,11 +458,11 @@ describe "Code gen: closure" do
 
       obj = Foo.new(2)
       f.call(obj)
-      )).to_i.should eq(3)
+      CRYSTAL
   end
 
   it "codegens closure with self and arguments" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(3)
       class Foo
         def initialize(@x : Int32)
         end
@@ -478,22 +478,22 @@ describe "Code gen: closure" do
 
       f = Foo.new(1).bar
       f.call(2)
-      )).to_i.should eq(3)
+      CRYSTAL
   end
 
   it "codegens nested closure that mentions var in both contexts" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       a = 1
       f = ->{
         a
         -> { a }
       }
       f.call.call
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "transforms block to proc literal" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       def foo(&block : Int32 -> Int32)
         block.call(1)
       end
@@ -502,11 +502,11 @@ describe "Code gen: closure" do
       foo do |x|
         x &+ a
       end
-      ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "transforms block to proc literal with free var" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(10)
       def foo(&block : Int32 -> U) forall U
         block
       end
@@ -515,11 +515,11 @@ describe "Code gen: closure" do
       g = foo { |x| x &+ a }
       h = foo { |x| x.to_f + a }
       (g.call(3) + h.call(5)).to_i!
-      ").to_i.should eq(10)
+      CRYSTAL
   end
 
   it "allows passing block as proc literal to new and to initialize" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       class Foo
         def initialize(&block : Int32 -> Float64)
           @block = block
@@ -533,11 +533,11 @@ describe "Code gen: closure" do
       a = 1
       foo = Foo.new { |x| x.to_f! + a }
       foo.block.call(1).to_i!
-      ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "allows giving less block args when transforming block to proc literal" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       def foo(&block : Int32 -> U) forall U
         block.call(1)
       end
@@ -547,11 +547,11 @@ describe "Code gen: closure" do
         1.5 + a
       end
       v.to_i!
-      ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "allows passing proc literal to def that captures block with &" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       def foo(&block : Int32 -> Int32)
         block.call(1)
       end
@@ -559,11 +559,11 @@ describe "Code gen: closure" do
       a = 1
       f = ->(x : Int32) { x &+ a }
       foo &f
-      ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "allows mixing yield and block.call" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(3)
       def foo(&block : Int32 ->)
         yield 1
         block.call 2
@@ -572,11 +572,11 @@ describe "Code gen: closure" do
       a = 0
       foo { |x| a &+= x }
       a
-      )).to_i.should eq(3)
+      CRYSTAL
   end
 
   it "closures struct self" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       struct Foo
         def initialize(@x : Int32)
         end
@@ -587,11 +587,11 @@ describe "Code gen: closure" do
       end
 
       Foo.new(1).foo.call
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "doesn't form a closure if invoking class method" do
-    run(%(
+    run(<<-CRYSTAL).to_b.should be_false
       require "prelude"
 
       class Foo
@@ -604,11 +604,11 @@ describe "Code gen: closure" do
       end
 
       Foo.foo
-      )).to_b.should be_false
+      CRYSTAL
   end
 
   it "doesn't form a closure if invoking class method with self" do
-    run(%(
+    run(<<-CRYSTAL).to_b.should be_false
       require "prelude"
 
       class Foo
@@ -621,11 +621,11 @@ describe "Code gen: closure" do
       end
 
       Foo.foo
-      )).to_b.should be_false
+      CRYSTAL
   end
 
   it "captures block and accesses local variable (#2050)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       require "prelude"
 
       def capture(&block)
@@ -637,11 +637,11 @@ describe "Code gen: closure" do
         coco
       end
       coco
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens closured self in block (#3388)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(42)
       class Foo
         def initialize(@x : Int32)
         end
@@ -659,11 +659,11 @@ describe "Code gen: closure" do
       foo = Foo.new(42)
       foo2 = foo.foo { }
       foo2.call.x
-      )).to_i.should eq(42)
+      CRYSTAL
   end
 
   it "doesn't incorrectly consider local as closured (#4948)" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       arg = 1
 
       f1 = ->{
@@ -679,12 +679,12 @@ describe "Code gen: closure" do
       f2 = ->{ local.to_i! }
 
       f1.call &+ f2.call
-    ))
+      CRYSTAL
   end
 
   it "ensures it can raise from the closure check" do
     expect_raises(Exception, "::raise must be of NoReturn return type!") do
-      codegen(%(
+      codegen(<<-CRYSTAL)
         def raise(m : String)
         end
 
@@ -694,12 +694,12 @@ describe "Code gen: closure" do
         value = 1
         p = ->{ value }
         a(p)
-      ))
+        CRYSTAL
     end
   end
 
   it "allows passing an external function along" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       require "prelude"
 
 
@@ -710,11 +710,11 @@ describe "Code gen: closure" do
       fun b(a : Void* -> Void*)
         LibA.a(a)
       end
-    ))
+      CRYSTAL
   end
 
   it "allows passing an external function along (2)" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       lib LibFoo
         struct S
           callback : ->
@@ -723,6 +723,6 @@ describe "Code gen: closure" do
 
       s = LibFoo::S.new
       s.callback = nil
-    ))
+      CRYSTAL
   end
 end

@@ -28,7 +28,7 @@ describe "Code gen: c union" do
   end
 
   it "codegens struct inside union" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(10)
       lib LibFoo
         struct Baz
           lele : Int64
@@ -46,11 +46,11 @@ describe "Code gen: c union" do
       a.value.z = LibFoo::Baz.new
       a.value.z.lala = 10
       a.value.z.lala
-      ").to_i.should eq(10)
+      CRYSTAL
   end
 
   it "codegens assign c union to union" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(10)
       lib LibFoo
         union Bar
           x : Int32
@@ -65,11 +65,11 @@ describe "Code gen: c union" do
       else
         1
       end
-      ").to_i.should eq(10)
+      CRYSTAL
   end
 
   it "builds union setter with fun type" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       require "prelude"
 
       lib LibC
@@ -80,11 +80,11 @@ describe "Code gen: c union" do
 
       foo = LibC::Foo.new
       foo.x = -> { }
-      ))
+      CRYSTAL
   end
 
   it "does to_s" do
-    run(%(
+    run(<<-CRYSTAL).to_string.should eq("LibNVG::Color(@array=0)")
       require "prelude"
 
       lib LibNVG
@@ -95,11 +95,11 @@ describe "Code gen: c union" do
 
       color = LibNVG::Color.new
       color.to_s
-      )).to_string.should eq("LibNVG::Color(@array=0)")
+      CRYSTAL
   end
 
   it "automatically converts numeric type in field assignment" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(57)
       lib LibFoo
         union Foo
           x : Int8
@@ -111,11 +111,11 @@ describe "Code gen: c union" do
       foo = LibFoo::Foo.new
       foo.x = a
       foo.x
-      )).to_i.should eq(57)
+      CRYSTAL
   end
 
   it "automatically converts numeric union type in field assignment" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(57)
       lib LibFoo
         union Foo
           x : Int8
@@ -127,11 +127,11 @@ describe "Code gen: c union" do
       foo = LibFoo::Foo.new
       foo.x = a
       foo.x
-      )).to_i.should eq(57)
+      CRYSTAL
   end
 
   it "automatically converts by invoking to_unsafe" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(123)
       lib LibFoo
         union Foo
           x : Int32
@@ -147,11 +147,11 @@ describe "Code gen: c union" do
       foo = LibFoo::Foo.new
       foo.x = Foo.new
       foo.x
-      )).to_i.should eq(123)
+      CRYSTAL
   end
 
   it "aligns to the member with biggest align requirements" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(0x5858)
       lib LibFoo
         union Foo
           bytes : UInt8[4]
@@ -173,11 +173,11 @@ describe "Code gen: c union" do
       str = "00XX0"
       foo = str.to_unsafe.as(LibFoo::Bar*)
       foo.value.b.short.to_i
-      )).to_i.should eq(0x5858)
+      CRYSTAL
   end
 
   it "fills union type to the max size" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(6)
       lib LibFoo
         union Foo
           bytes : UInt8[4]
@@ -191,11 +191,11 @@ describe "Code gen: c union" do
       end
 
       sizeof(LibFoo::Bar)
-      )).to_i.should eq(6)
+      CRYSTAL
   end
 
   it "reads union instance var" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(42)
       lib LibFoo
         union Foo
           char : Char
@@ -212,11 +212,11 @@ describe "Code gen: c union" do
       foo = LibFoo::Foo.new
       foo.int = 42
       foo.read_int
-      )).to_i.should eq(42)
+      CRYSTAL
   end
 
   it "moves unions around correctly (#12550)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq((1..6).sum)
       require "prelude"
 
       lib Lib
@@ -238,6 +238,6 @@ describe "Code gen: c union" do
       end
 
       foo.padding.sum
-      )).to_i.should eq((1..6).sum)
+      CRYSTAL
   end
 end

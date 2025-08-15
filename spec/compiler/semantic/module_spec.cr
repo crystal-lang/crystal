@@ -901,7 +901,7 @@ describe "Semantic: module" do
   end
 
   it "type def does not reopen type from parent namespace (#11181)" do
-    assert_type <<-CR, inject_primitives: false { types["Baz"].types["Foo"].types["Bar"].metaclass }
+    assert_type <<-CRYSTAL, inject_primitives: false { types["Baz"].types["Foo"].types["Bar"].metaclass }
       module Foo::Bar
       end
 
@@ -911,7 +911,7 @@ describe "Semantic: module" do
       end
 
       Baz::Foo::Bar
-      CR
+      CRYSTAL
   end
 
   it "correctly types type var in included module, with a restriction with a free var (bug)" do
