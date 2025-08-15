@@ -15,7 +15,7 @@ describe "Semantic: annotation" do
   describe "arguments" do
     describe "#args" do
       it "returns an empty TupleLiteral if there are none defined" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { int32 }
           annotation Foo
           end
 
@@ -28,11 +28,11 @@ describe "Semantic: annotation" do
           {% else %}
             'a'
           {% end %}
-        )) { int32 }
+          CRYSTAL
       end
 
       it "returns a TupleLiteral if there are positional arguments defined" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { int32 }
           annotation Foo
           end
 
@@ -45,13 +45,13 @@ describe "Semantic: annotation" do
           {% else %}
             'a'
           {% end %}
-        )) { int32 }
+          CRYSTAL
       end
     end
 
     describe "#named_args" do
       it "returns an empty NamedTupleLiteral if there are none defined" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { int32 }
           annotation Foo
           end
 
@@ -64,11 +64,11 @@ describe "Semantic: annotation" do
           {% else %}
             'a'
           {% end %}
-        )) { int32 }
+          CRYSTAL
       end
 
       it "returns a NamedTupleLiteral if there are named arguments defined" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { int32 }
           annotation Foo
           end
 
@@ -81,12 +81,12 @@ describe "Semantic: annotation" do
           {% else %}
             'a'
           {% end %}
-        )) { int32 }
+          CRYSTAL
       end
     end
 
     it "returns a correctly with named and positional args" do
-      assert_type(%(
+      assert_type(<<-CRYSTAL) { int32 }
         annotation Foo
         end
 
@@ -99,14 +99,14 @@ describe "Semantic: annotation" do
         {% else %}
           'a'
         {% end %}
-      )) { int32 }
+        CRYSTAL
     end
   end
 
   describe "#annotations" do
     describe "all types" do
       it "returns an empty array if there are none defined" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { int32 }
           annotation Foo; end
 
           module Moo
@@ -117,11 +117,11 @@ describe "Semantic: annotation" do
           {% else %}
             'a'
           {% end %}
-        )) { int32 }
+          CRYSTAL
       end
 
       it "finds annotations on a module" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { int32 }
           annotation Foo; end
           annotation Bar; end
 
@@ -135,11 +135,11 @@ describe "Semantic: annotation" do
           {% else %}
             'a'
           {% end %}
-        )) { int32 }
+          CRYSTAL
       end
 
       it "finds annotations on a class" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { int32 }
           annotation Foo; end
           annotation Bar; end
 
@@ -153,11 +153,11 @@ describe "Semantic: annotation" do
           {% else %}
             'a'
           {% end %}
-        )) { int32 }
+          CRYSTAL
       end
 
       it "finds annotations on a struct" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { int32 }
           annotation Foo; end
           annotation Bar; end
 
@@ -171,11 +171,11 @@ describe "Semantic: annotation" do
           {% else %}
             'a'
           {% end %}
-        )) { int32 }
+          CRYSTAL
       end
 
       it "finds annotations on a enum" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { int32 }
           annotation Foo; end
           annotation Bar; end
 
@@ -190,11 +190,11 @@ describe "Semantic: annotation" do
           {% else %}
             'a'
           {% end %}
-        )) { int32 }
+          CRYSTAL
       end
 
       it "finds annotations on a lib" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { int32 }
           annotation Foo; end
           annotation Bar; end
 
@@ -209,11 +209,11 @@ describe "Semantic: annotation" do
           {% else %}
             'a'
           {% end %}
-        )) { int32 }
+          CRYSTAL
       end
 
       it "finds annotations in instance var (declaration)" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { int32 }
           annotation Foo; end
           annotation Bar; end
 
@@ -232,11 +232,11 @@ describe "Semantic: annotation" do
           end
 
           Moo.new.foo
-        )) { int32 }
+          CRYSTAL
       end
 
       it "finds annotations in instance var (declaration, generic)" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { int32 }
           annotation Foo; end
           annotation Bar; end
 
@@ -258,11 +258,11 @@ describe "Semantic: annotation" do
           end
 
           Moo.new(1).foo
-        )) { int32 }
+          CRYSTAL
       end
 
       it "adds annotations on def" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { int32 }
           annotation Foo; end
           annotation Bar; end
 
@@ -278,11 +278,11 @@ describe "Semantic: annotation" do
           {% else %}
             'a'
           {% end %}
-        )) { int32 }
+          CRYSTAL
       end
 
       it "finds annotations in generic parent (#7885)" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { int32 }
           annotation Foo; end
           annotation Bar; end
 
@@ -299,11 +299,11 @@ describe "Semantic: annotation" do
           {% else %}
             'a'
           {% end %}
-        )) { int32 }
+          CRYSTAL
       end
 
       it "find annotations on method parameters" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { int32 }
           annotation Foo; end
           annotation Bar; end
 
@@ -317,13 +317,13 @@ describe "Semantic: annotation" do
           {% else %}
             'a'
           {% end %}
-        )) { int32 }
+          CRYSTAL
       end
     end
 
     describe "of a specific type" do
       it "returns an empty array if there are none defined" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { int32 }
           annotation Foo
           end
 
@@ -335,11 +335,11 @@ describe "Semantic: annotation" do
           {% else %}
             'a'
           {% end %}
-        )) { int32 }
+          CRYSTAL
       end
 
       it "finds annotations on a module" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { int32 }
           annotation Foo
           end
 
@@ -353,11 +353,11 @@ describe "Semantic: annotation" do
           {% else %}
             'a'
           {% end %}
-        )) { int32 }
+          CRYSTAL
       end
 
       it "uses annotations value, positional" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { int32 }
           annotation Foo
           end
 
@@ -371,11 +371,11 @@ describe "Semantic: annotation" do
           {% else %}
             'a'
           {% end %}
-        )) { int32 }
+          CRYSTAL
       end
 
       it "uses annotations value, keyword" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { int32 }
           annotation Foo
           end
 
@@ -389,11 +389,11 @@ describe "Semantic: annotation" do
           {% else %}
             'a'
           {% end %}
-        )) { int32 }
+          CRYSTAL
       end
 
       it "finds annotations in class" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { int32 }
           annotation Foo
           end
 
@@ -408,11 +408,11 @@ describe "Semantic: annotation" do
           {% else %}
             'a'
           {% end %}
-        )) { int32 }
+          CRYSTAL
       end
 
       it "finds annotations in struct" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { int32 }
           annotation Foo
           end
 
@@ -428,11 +428,11 @@ describe "Semantic: annotation" do
           {% else %}
             'a'
           {% end %}
-        )) { int32 }
+          CRYSTAL
       end
 
       it "finds annotations in enum" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { int32 }
           annotation Foo
           end
 
@@ -446,11 +446,11 @@ describe "Semantic: annotation" do
           {% else %}
             'a'
           {% end %}
-        )) { int32 }
+          CRYSTAL
       end
 
       it "finds annotations in lib" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { int32 }
           annotation Foo
           end
 
@@ -465,11 +465,11 @@ describe "Semantic: annotation" do
           {% else %}
             'a'
           {% end %}
-        )) { int32 }
+          CRYSTAL
       end
 
       it "can't find annotations in instance var" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { char }
           annotation Foo
           end
 
@@ -486,11 +486,11 @@ describe "Semantic: annotation" do
           end
 
           Moo.new.foo
-        )) { char }
+          CRYSTAL
       end
 
       it "can't find annotations in instance var, when other annotations are present" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { char }
           annotation Foo
           end
 
@@ -511,11 +511,11 @@ describe "Semantic: annotation" do
           end
 
           Moo.new.foo
-        )) { char }
+          CRYSTAL
       end
 
       it "finds annotations in instance var (declaration)" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { int32 }
           annotation Foo
           end
 
@@ -534,11 +534,11 @@ describe "Semantic: annotation" do
           end
 
           Moo.new.foo
-        )) { int32 }
+          CRYSTAL
       end
 
       it "finds annotations in instance var (declaration, generic)" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { int32 }
           annotation Foo
           end
 
@@ -559,11 +559,11 @@ describe "Semantic: annotation" do
           end
 
           Moo.new(1).foo
-        )) { int32 }
+          CRYSTAL
       end
 
       it "collects annotations values in type" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { int32 }
           annotation Foo
           end
 
@@ -580,11 +580,11 @@ describe "Semantic: annotation" do
           {% else %}
             'a'
           {% end %}
-        )) { int32 }
+          CRYSTAL
       end
 
       it "overrides annotations value in type" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { int32 }
           annotation Foo
           end
 
@@ -607,11 +607,11 @@ describe "Semantic: annotation" do
           end
 
           Moo.new.foo
-        )) { int32 }
+          CRYSTAL
       end
 
       it "adds annotations on def" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { int32 }
           annotation Foo
           end
 
@@ -627,11 +627,11 @@ describe "Semantic: annotation" do
           {% else %}
             'a'
           {% end %}
-        )) { int32 }
+          CRYSTAL
       end
 
       it "can't find annotations on def" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { char }
           annotation Foo
           end
 
@@ -645,11 +645,11 @@ describe "Semantic: annotation" do
           {% else %}
             'a'
           {% end %}
-        )) { char }
+          CRYSTAL
       end
 
       it "can't find annotations on def, when other annotations are present" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { char }
           annotation Foo
           end
 
@@ -667,11 +667,11 @@ describe "Semantic: annotation" do
           {% else %}
             'a'
           {% end %}
-        )) { char }
+          CRYSTAL
       end
 
       it "finds annotations in generic parent (#7885)" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { int32 }
           annotation Ann
           end
 
@@ -683,11 +683,11 @@ describe "Semantic: annotation" do
           end
 
           {{ Child.superclass.annotations(Ann)[0][0] }}
-        )) { int32 }
+          CRYSTAL
       end
 
       it "find annotations on method parameters" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { int32 }
           annotation Foo; end
           annotation Bar; end
 
@@ -701,14 +701,14 @@ describe "Semantic: annotation" do
           {% else %}
             'a'
           {% end %}
-        )) { int32 }
+          CRYSTAL
       end
     end
   end
 
   describe "#annotation" do
     it "can't find annotation in module" do
-      assert_type(%(
+      assert_type(<<-CRYSTAL) { char }
         annotation Foo
         end
 
@@ -720,11 +720,11 @@ describe "Semantic: annotation" do
         {% else %}
           'a'
         {% end %}
-    )) { char }
+        CRYSTAL
     end
 
     it "can't find annotation in module, when other annotations are present" do
-      assert_type(%(
+      assert_type(<<-CRYSTAL) { char }
         annotation Foo
         end
 
@@ -740,11 +740,11 @@ describe "Semantic: annotation" do
         {% else %}
           'a'
         {% end %}
-    )) { char }
+        CRYSTAL
     end
 
     it "finds annotation in module" do
-      assert_type(%(
+      assert_type(<<-CRYSTAL) { int32 }
         annotation Foo
         end
 
@@ -757,11 +757,11 @@ describe "Semantic: annotation" do
         {% else %}
           'a'
         {% end %}
-    )) { int32 }
+        CRYSTAL
     end
 
     it "uses annotation value, positional" do
-      assert_type(%(
+      assert_type(<<-CRYSTAL) { int32 }
         annotation Foo
         end
 
@@ -774,11 +774,11 @@ describe "Semantic: annotation" do
         {% else %}
           'a'
         {% end %}
-    )) { int32 }
+        CRYSTAL
     end
 
     it "uses annotation value, keyword" do
-      assert_type(%(
+      assert_type(<<-CRYSTAL) { int32 }
         annotation Foo
         end
 
@@ -791,11 +791,11 @@ describe "Semantic: annotation" do
         {% else %}
           'a'
         {% end %}
-    )) { int32 }
+        CRYSTAL
     end
 
     it "finds annotation in class" do
-      assert_type(%(
+      assert_type(<<-CRYSTAL) { int32 }
         annotation Foo
         end
 
@@ -808,11 +808,11 @@ describe "Semantic: annotation" do
         {% else %}
           'a'
         {% end %}
-    )) { int32 }
+        CRYSTAL
     end
 
     it "finds annotation in struct" do
-      assert_type(%(
+      assert_type(<<-CRYSTAL) { int32 }
         annotation Foo
         end
 
@@ -825,11 +825,11 @@ describe "Semantic: annotation" do
         {% else %}
           'a'
         {% end %}
-    )) { int32 }
+        CRYSTAL
     end
 
     it "finds annotation in enum" do
-      assert_type(%(
+      assert_type(<<-CRYSTAL) { int32 }
         annotation Foo
         end
 
@@ -843,11 +843,11 @@ describe "Semantic: annotation" do
         {% else %}
           'a'
         {% end %}
-    )) { int32 }
+        CRYSTAL
     end
 
     it "finds annotation in lib" do
-      assert_type(%(
+      assert_type(<<-CRYSTAL) { int32 }
         annotation Foo
         end
 
@@ -861,11 +861,11 @@ describe "Semantic: annotation" do
         {% else %}
           'a'
         {% end %}
-    )) { int32 }
+        CRYSTAL
     end
 
     it "can't find annotation in instance var" do
-      assert_type(%(
+      assert_type(<<-CRYSTAL) { char }
         annotation Foo
         end
 
@@ -882,11 +882,11 @@ describe "Semantic: annotation" do
         end
 
         Moo.new.foo
-    )) { char }
+        CRYSTAL
     end
 
     it "can't find annotation in instance var, when other annotations are present" do
-      assert_type(%(
+      assert_type(<<-CRYSTAL) { char }
         annotation Foo
         end
 
@@ -907,11 +907,11 @@ describe "Semantic: annotation" do
         end
 
         Moo.new.foo
-    )) { char }
+        CRYSTAL
     end
 
     it "finds annotation in instance var (declaration)" do
-      assert_type(%(
+      assert_type(<<-CRYSTAL) { int32 }
         annotation Foo
         end
 
@@ -929,11 +929,11 @@ describe "Semantic: annotation" do
         end
 
         Moo.new.foo
-    )) { int32 }
+        CRYSTAL
     end
 
     it "finds annotation in instance var (assignment)" do
-      assert_type(%(
+      assert_type(<<-CRYSTAL) { int32 }
         annotation Foo
         end
 
@@ -951,11 +951,11 @@ describe "Semantic: annotation" do
         end
 
         Moo.new.foo
-    )) { int32 }
+        CRYSTAL
     end
 
     it "finds annotation in instance var (declaration, generic)" do
-      assert_type(%(
+      assert_type(<<-CRYSTAL) { int32 }
         annotation Foo
         end
 
@@ -976,11 +976,11 @@ describe "Semantic: annotation" do
         end
 
         Moo.new(1).foo
-    )) { int32 }
+        CRYSTAL
     end
 
     it "overrides annotation value in type" do
-      assert_type(%(
+      assert_type(<<-CRYSTAL) { int32 }
         annotation Foo
         end
 
@@ -997,11 +997,11 @@ describe "Semantic: annotation" do
         {% else %}
           'a'
         {% end %}
-    )) { int32 }
+        CRYSTAL
     end
 
     it "overrides annotation in instance var" do
-      assert_type(%(
+      assert_type(<<-CRYSTAL) { int32 }
         annotation Foo
         end
 
@@ -1024,7 +1024,7 @@ describe "Semantic: annotation" do
         end
 
         Moo.new.foo
-    )) { int32 }
+        CRYSTAL
     end
 
     it "errors if annotation doesn't exist" do
@@ -1059,7 +1059,7 @@ describe "Semantic: annotation" do
     end
 
     it "adds annotation on def" do
-      assert_type(%(
+      assert_type(<<-CRYSTAL) { int32 }
         annotation Foo
         end
 
@@ -1074,11 +1074,11 @@ describe "Semantic: annotation" do
         {% else %}
           'a'
         {% end %}
-      )) { int32 }
+        CRYSTAL
     end
 
     it "can't find annotation on def" do
-      assert_type(%(
+      assert_type(<<-CRYSTAL) { char }
         annotation Foo
         end
 
@@ -1092,11 +1092,11 @@ describe "Semantic: annotation" do
         {% else %}
           'a'
         {% end %}
-      )) { char }
+        CRYSTAL
     end
 
     it "can't find annotation on def, when other annotations are present" do
-      assert_type(%(
+      assert_type(<<-CRYSTAL) { char }
         annotation Foo
         end
 
@@ -1114,7 +1114,7 @@ describe "Semantic: annotation" do
         {% else %}
           'a'
         {% end %}
-      )) { char }
+        CRYSTAL
     end
 
     it "errors if using invalid annotation on fun" do
@@ -1139,7 +1139,7 @@ describe "Semantic: annotation" do
     end
 
     it "finds annotation in generic parent (#7885)" do
-      assert_type(%(
+      assert_type(<<-CRYSTAL) { int32 }
         annotation Ann
         end
 
@@ -1151,11 +1151,11 @@ describe "Semantic: annotation" do
         end
 
         {{ Child.superclass.annotation(Ann)[0] }}
-      )) { int32 }
+        CRYSTAL
     end
 
     it "finds annotation on method arg" do
-      assert_type(%(
+      assert_type(<<-CRYSTAL) { int32 }
         annotation Ann; end
 
         def foo(
@@ -1168,11 +1168,11 @@ describe "Semantic: annotation" do
         {% else %}
           'a'
         {% end %}
-      )) { int32 }
+        CRYSTAL
     end
 
     it "finds annotation on method splat arg" do
-      assert_type(%(
+      assert_type(<<-CRYSTAL) { int32 }
         annotation Ann; end
 
         def foo(
@@ -1186,11 +1186,11 @@ describe "Semantic: annotation" do
         {% else %}
           'a'
         {% end %}
-      )) { int32 }
+        CRYSTAL
     end
 
     it "finds annotation on method double splat arg" do
-      assert_type(%(
+      assert_type(<<-CRYSTAL) { int32 }
         annotation Ann; end
 
         def foo(
@@ -1204,11 +1204,11 @@ describe "Semantic: annotation" do
         {% else %}
           'a'
         {% end %}
-      )) { int32 }
+        CRYSTAL
     end
 
     it "finds annotation on an restricted method block arg" do
-      assert_type(%(
+      assert_type(<<-CRYSTAL) { int32 }
         annotation Ann; end
 
         def foo(
@@ -1223,7 +1223,7 @@ describe "Semantic: annotation" do
         {% else %}
           'a'
         {% end %}
-      )) { int32 }
+        CRYSTAL
     end
   end
 

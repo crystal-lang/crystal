@@ -10,7 +10,7 @@ describe "Semantic: static array" do
   end
 
   it "types static array with type as size" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { static_array_of(char, 1) }
       class Foo(N)
         def self.foo
           x = uninitialized Char[N]
@@ -19,7 +19,7 @@ describe "Semantic: static array" do
       end
 
       Foo(1).foo
-      ") { static_array_of(char, 1) }
+      CRYSTAL
   end
 
   it "errors if trying to instantiate static array with N not an integer" do
@@ -35,7 +35,7 @@ describe "Semantic: static array" do
   end
 
   it "allows instantiating static array instance var in initialize of generic type" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { static_array_of(char, 1) }
       class Foo(N)
         def initialize
           @x = uninitialized Char[N]
@@ -47,7 +47,7 @@ describe "Semantic: static array" do
       end
 
       Foo(1).new.x
-      ") { static_array_of(char, 1) }
+      CRYSTAL
   end
 
   it "errors on negative static array size" do
@@ -58,15 +58,15 @@ describe "Semantic: static array" do
   end
 
   it "types static array new with size being a constant" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { static_array_of(char, 3) }
       SIZE = 3
       x = StaticArray(Char, SIZE).new
       x
-      )) { static_array_of(char, 3) }
+      CRYSTAL
   end
 
   it "types static array new with size being a nested constant inside type declaration (#5426)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { static_array_of(char, 3) }
       module Moo
         SIZE = 3
       end
@@ -83,11 +83,11 @@ describe "Semantic: static array" do
       end
 
       Foo.new(StaticArray(Char, Moo::SIZE).new).x
-      )) { static_array_of(char, 3) }
+      CRYSTAL
   end
 
   it "types static array new with size being a computed constant" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { static_array_of(char, 100) }
       struct Int
         def //(other : Int)
           0
@@ -98,11 +98,11 @@ describe "Semantic: static array" do
       SIZE = OTHER * 20 // 2
       x = StaticArray(Char, SIZE).new
       x
-      ), inject_primitives: true) { static_array_of(char, 100) }
+      CRYSTAL
   end
 
   it "types static array new with size being a computed constant, and use N (bug)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       struct StaticArray(T, N)
         def size
           N
@@ -113,7 +113,7 @@ describe "Semantic: static array" do
       x = uninitialized UInt8[SIZE]
       x.size
       a = 1
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "doesn't crash on restriction (#584)" do
@@ -128,25 +128,25 @@ describe "Semantic: static array" do
   end
 
   it "can match N type argument of static array (#1203)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       def fn(a : StaticArray(T, N)) forall T, N
         N
       end
 
       n = uninitialized StaticArray(Int32, 10)
       fn(n)
-      )) { int32 }
+      CRYSTAL
   end
 
   it "can match number type argument of static array (#1203)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       def fn(a : StaticArray(T, 10)) forall T
         10
       end
 
       n = uninitialized StaticArray(Int32, 10)
       fn(n)
-      )) { int32 }
+      CRYSTAL
   end
 
   it "doesn't match other number type argument of static array (#1203)" do

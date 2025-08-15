@@ -46,7 +46,7 @@ describe "Semantic: proc" do
   end
 
   it "types proc pointer to instance method" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { proc_of(int32) }
       class Foo
         def initialize
           @x = 1
@@ -59,7 +59,7 @@ describe "Semantic: proc" do
 
       foo = Foo.new
       ->foo.coco
-    ") { proc_of(int32) }
+      CRYSTAL
   end
 
   it "types proc type spec" do
@@ -67,7 +67,7 @@ describe "Semantic: proc" do
   end
 
   it "allows passing proc type if it is a lib alias" do
-    assert_type("
+    assert_type(<<-CRYSTAL, inject_primitives: true) { float64 }
       lib LibC
         alias Callback = Int32 -> Int32
         fun foo(x : Callback) : Float64
@@ -75,11 +75,11 @@ describe "Semantic: proc" do
 
       f = ->(x : Int32) { x + 1 }
       LibC.foo f
-      ", inject_primitives: true) { float64 }
+      CRYSTAL
   end
 
   it "allows passing proc type if it is typedef'd" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { float64 }
       lib LibC
         type Callback = Int32 -> Int32
         fun foo : Callback
@@ -87,7 +87,7 @@ describe "Semantic: proc" do
       end
 
       LibC.bar LibC.foo
-      ") { float64 }
+      CRYSTAL
   end
 
   it "errors when using local variable with proc argument name" do
@@ -96,64 +96,64 @@ describe "Semantic: proc" do
   end
 
   it "allows implicit cast of proc to return void in LibC function" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       lib LibC
         fun atexit(fun : -> ) : Int32
       end
 
       LibC.atexit ->{ 1 }
-      ") { int32 }
+      CRYSTAL
   end
 
   it "passes proc pointer as block" do
-    assert_type("
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       def foo
         yield
       end
 
       f = -> { 1 }
       foo &f
-      ", inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "passes proc pointer as block with arguments" do
-    assert_type("
+    assert_type(<<-CRYSTAL, inject_primitives: true) { float64 }
       def foo
         yield 1
       end
 
       f = ->(x : Int32) { x.to_f }
       foo &f
-      ", inject_primitives: true) { float64 }
+      CRYSTAL
   end
 
   it "binds proc literal to arguments and body" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { proc_of(union_of(int32, char)) }
       x = 1
       f = -> { x }
       x = 'a'
       f
-    ") { proc_of(union_of(int32, char)) }
+      CRYSTAL
   end
 
   it "has proc literal as restriction and works" do
-    assert_type("
+    assert_type(<<-CRYSTAL, inject_primitives: true) { float64 }
       def foo(x : Int32 -> Float64)
         x.call(1)
       end
 
       foo ->(x : Int32) { x.to_f }
-      ", inject_primitives: true) { float64 }
+      CRYSTAL
   end
 
   it "has proc literal as restriction and works when output not specified" do
-    assert_type("
+    assert_type(<<-CRYSTAL, inject_primitives: true) { nil_type }
       def foo(x : Int32 -> )
         x.call(1)
       end
 
       foo ->(x : Int32) { x.to_f }
-      ", inject_primitives: true) { nil_type }
+      CRYSTAL
   end
 
   it "has proc literal as restriction and errors if output is different" do
@@ -190,14 +190,14 @@ describe "Semantic: proc" do
   end
 
   it "allows passing nil as proc callback if it is a lib alias" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       lib LibC
         alias Cb = Int32 ->
         fun bla(x : Cb) : Int32
       end
 
       LibC.bla(nil)
-      ") { int32 }
+      CRYSTAL
   end
 
   it "disallows casting a proc type to one accepting more arguments" do
@@ -209,10 +209,10 @@ describe "Semantic: proc" do
   end
 
   it "allows casting a proc type to one with void argument" do
-    assert_type("
+    assert_type(<<-CRYSTAL, inject_primitives: true) { proc_of [int32, void] }
       f = ->(x : Int32) { x.to_f }
       f.as(Int32 -> Void)
-      ", inject_primitives: true) { proc_of [int32, void] }
+      CRYSTAL
   end
 
   it "disallows casting a proc type to one accepting less arguments" do
@@ -248,7 +248,7 @@ describe "Semantic: proc" do
   end
 
   it "types proc literal hard type inference (1)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { proc_of(types["Foo"], tuple_of([types["Foo"], int32])) }
       class Foo
         def initialize(@x : Int32)
         end
@@ -261,21 +261,21 @@ describe "Semantic: proc" do
       ->(f : Foo) do
         {Foo.new(f.x), 0}
       end
-      )) { proc_of(types["Foo"], tuple_of([types["Foo"], int32])) }
+      CRYSTAL
   end
 
   it "allows implicit cast of proc to return void in non-generic restriction" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { proc_of(void) }
       def foo(x : ->)
         x
       end
 
       foo ->{ 1 }
-      ") { proc_of(void) }
+      CRYSTAL
   end
 
   it "allows implicit cast of proc to return void in generic restriction" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { proc_of(void) }
       class Foo(T)
         def foo(x : T)
           x
@@ -284,7 +284,7 @@ describe "Semantic: proc" do
 
       foo = Foo(->).new
       foo.foo ->{ 1 }
-      ") { proc_of(void) }
+      CRYSTAL
   end
 
   it "types nil or proc type" do
@@ -293,7 +293,7 @@ describe "Semantic: proc" do
   end
 
   it "allows passing NoReturn type for any return type (1)" do
-    assert_type("
+    assert_type(<<-CRYSTAL, inject_primitives: true) { no_return }
       lib LibC
         fun exit : NoReturn
       end
@@ -303,22 +303,22 @@ describe "Semantic: proc" do
       end
 
       foo ->{ LibC.exit }
-      ", inject_primitives: true) { no_return }
+      CRYSTAL
   end
 
   it "allows passing NoReturn type for any return type (2)" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       lib LibC
         fun exit : NoReturn
         fun foo(x : -> Int32) : Int32
       end
 
       LibC.foo ->{ LibC.exit }
-      ") { int32 }
+      CRYSTAL
   end
 
   it "allows passing NoReturn type for any return type (3)" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { proc_of(int32) }
       lib LibC
         fun exit : NoReturn
         struct S
@@ -329,11 +329,11 @@ describe "Semantic: proc" do
       s = LibC::S.new
       s.x = ->{ LibC.exit }
       s.x
-      ") { proc_of(int32) }
+      CRYSTAL
   end
 
   it "allows passing NoReturn type for any return type, with Proc notation (#12126)" do
-    assert_type("
+    assert_type(<<-CRYSTAL, inject_primitives: true) { no_return }
       lib LibC
         fun exit : NoReturn
       end
@@ -343,20 +343,20 @@ describe "Semantic: proc" do
       end
 
       foo ->{ LibC.exit }
-      ", inject_primitives: true) { no_return }
+      CRYSTAL
   end
 
   it "allows new on proc type" do
-    assert_type("
+    assert_type(<<-CRYSTAL, inject_primitives: true) { proc_of(int32, int32) }
       #{proc_new}
 
       alias Func = Int32 -> Int32
       Func.new { |x| x + 1 }
-      ", inject_primitives: true) { proc_of(int32, int32) }
+      CRYSTAL
   end
 
   it "allows new on proc type that is a lib alias" do
-    assert_type("
+    assert_type(<<-CRYSTAL, inject_primitives: true) { proc_of(int32, int32) }
       #{proc_new}
 
       lib LibC
@@ -364,16 +364,16 @@ describe "Semantic: proc" do
       end
 
       LibC::F.new { |x| x + 1 }
-      ", inject_primitives: true) { proc_of(int32, int32) }
+      CRYSTAL
   end
 
   it "allows new on proc type with less block params" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { proc_of(int32, int32) }
       #{proc_new}
 
       alias Func = Int32 -> Int32
       Func.new { 1 }
-      ") { proc_of(int32, int32) }
+      CRYSTAL
   end
 
   it "says wrong number of block params in new on proc type" do
@@ -402,17 +402,17 @@ describe "Semantic: proc" do
   end
 
   it "allows passing function to LibC without specifying types" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { float64 }
       lib LibC
         fun foo(x : Int32 -> Int32) : Float64
       end
 
       LibC.foo ->(x) { x + 1 }
-      ), inject_primitives: true) { float64 }
+      CRYSTAL
   end
 
   it "allows passing function to LibC without specifying types, using a global method" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { float64 }
       lib LibC
         fun foo(x : Int32 -> Int32) : Float64
       end
@@ -422,11 +422,11 @@ describe "Semantic: proc" do
       end
 
       LibC.foo ->callback
-      ), inject_primitives: true) { float64 }
+      CRYSTAL
   end
 
   it "allows passing function to LibC without specifying types, using a class method" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { float64 }
       lib LibC
         fun foo(x : Int32 -> Int32) : Float64
       end
@@ -438,47 +438,47 @@ describe "Semantic: proc" do
       end
 
       LibC.foo ->Foo.callback
-      ), inject_primitives: true) { float64 }
+      CRYSTAL
   end
 
   it "allows writing a function type with Proc" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { proc_of(int32, int32).metaclass }
       Proc(Int32, Int32)
-      )) { proc_of(int32, int32).metaclass }
+      CRYSTAL
   end
 
   it "allows using Proc as restriction (1)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       def foo(x : Proc(Int32, Int32))
         x.call(2)
       end
 
       foo ->(x : Int32) { x + 1 }
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "allows using Proc as restriction (2)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       def foo(x : Proc)
         x.call(2)
       end
 
       foo ->(x : Int32) { x + 1 }
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "allows using Proc as restriction (3)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32.metaclass }
       def foo(x : Proc(T, U)) forall T, U
         T
       end
 
       foo ->(x : Int32) { x + 1 }
-      ), inject_primitives: true) { int32.metaclass }
+      CRYSTAL
   end
 
   it "forwards block and computes correct type (bug)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { string }
       def foo(&block : -> _)
         bar &block
       end
@@ -489,11 +489,11 @@ describe "Semantic: proc" do
 
       foo { 1 }
       foo { "hello" }.call
-      ), inject_primitives: true) { string }
+      CRYSTAL
   end
 
   it "doesn't need to deduce type of block if return is void" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { proc_of(types["Foo"], nil_type) }
       class Foo
         def initialize
           @bar = 1
@@ -511,7 +511,7 @@ describe "Semantic: proc" do
       f = foo { |f| f.bar }
       Foo.new
       f
-      )) { proc_of(types["Foo"], nil_type) }
+      CRYSTAL
   end
 
   it "gives correct error message when proc return type is incorrect (#219)" do
@@ -526,7 +526,7 @@ describe "Semantic: proc" do
   end
 
   it "doesn't capture closured var if using typeof" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       lib LibFoo
         fun foo(x : ->) : Int32
       end
@@ -536,11 +536,11 @@ describe "Semantic: proc" do
         typeof(a)
         2
       }
-      )) { int32 }
+      CRYSTAL
   end
 
   it "types proc literal with a type that was never instantiated" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { proc_of(types["Foo"], int32) }
       class Foo
         def initialize(@x : Int32)
         end
@@ -551,11 +551,11 @@ describe "Semantic: proc" do
       end
 
       ->(s : Foo) { s.x }
-      )) { proc_of(types["Foo"], int32) }
+      CRYSTAL
   end
 
   it "types proc pointer with a type that was never instantiated" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { proc_of(types["Foo"], types["Foo"]) }
       class Foo
         def initialize(@x : Int32)
         end
@@ -570,19 +570,19 @@ describe "Semantic: proc" do
       end
 
       ->foo(Foo)
-      )) { proc_of(types["Foo"], types["Foo"]) }
+      CRYSTAL
   end
 
   it "allows using proc arg name shadowing local variable" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       a = 1
       f = ->(a : String) { }
       a
-      )) { int32 }
+      CRYSTAL
   end
 
   it "uses array argument of proc arg (1)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nil_type }
       require "prelude"
 
       class Foo
@@ -597,11 +597,11 @@ describe "Semantic: proc" do
       block = foo { |elems| elems[0] }
       elems = [Foo.new, Bar.new]
       block
-      )) { nil_type }
+      CRYSTAL
   end
 
   it "uses array argument of proc arg (2)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { proc_of(array_of(types["Foo"].virtual_type), types["Foo"].virtual_type) }
       require "prelude"
 
       class Foo
@@ -617,11 +617,11 @@ describe "Semantic: proc" do
       block = foo { |elems| elems[0] }
       elems = [Foo.new, Bar.new]
       block
-      )) { proc_of(array_of(types["Foo"].virtual_type), types["Foo"].virtual_type) }
+      CRYSTAL
   end
 
   it "uses array argument of proc arg (3)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { proc_of(array_of(types["Foo"].virtual_type), types["Foo"].virtual_type) }
       require "prelude"
 
       class Foo
@@ -641,7 +641,7 @@ describe "Semantic: proc" do
       block = foo { |elems| Bar.new(elems[0].as(Bar).value) }
       elems = [Foo.new, Bar.new(1)]
       block
-      )) { proc_of(array_of(types["Foo"].virtual_type), types["Foo"].virtual_type) }
+      CRYSTAL
   end
 
   it "uses array argument of proc arg (4)" do
@@ -685,7 +685,7 @@ describe "Semantic: proc" do
   end
 
   it "allows invoking a function with a generic subtype (1)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       module Moo
         def foo
           1
@@ -703,11 +703,11 @@ describe "Semantic: proc" do
       foo = Foo(Int32).new
       f = func { |moo| moo.foo }
       f.call foo
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "allows invoking a function with a generic subtype (2)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       module Moo(T)
         def foo
           1
@@ -725,21 +725,21 @@ describe "Semantic: proc" do
       foo = Foo(Int32).new
       f = func { |moo| moo.foo }
       f.call foo
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "gets pointer to lib fun without specifying types" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { proc_of(int32, float64) }
       lib LibFoo
         fun foo(x : Int32) : Float64
       end
 
       ->LibFoo.foo
-      )) { proc_of(int32, float64) }
+      CRYSTAL
   end
 
   it "allows passing union including module to proc" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       module Moo
         def moo
           1
@@ -758,11 +758,11 @@ describe "Semantic: proc" do
 
       foo = Foo.new || Bar.new
       proc.call(foo)
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "allows passing virtual type including module to proc" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       module Moo
         def moo
           1
@@ -780,7 +780,7 @@ describe "Semantic: proc" do
 
       foo = Foo.new || Bar.new
       proc.call(foo)
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   %w(Object Value Reference Number Int Float Struct Class Proc Tuple Enum StaticArray Pointer).each do |type|
@@ -893,36 +893,36 @@ describe "Semantic: proc" do
   end
 
   it "..." do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       def foo
         ->{ a = 1; return 0 }.call
       end
 
       foo
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "doesn't crash on constant to proc pointer" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       lib LibC
         fun foo
       end
 
       FOO = ->LibC.foo
       1
-      )) { int32 }
+      CRYSTAL
   end
 
   it "sets proc type as void if explicitly told so, when using new" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { proc_of(int32, nil_type) }
       #{proc_new}
 
       Proc(Int32, Void).new { 1 }
-      )) { proc_of(int32, nil_type) }
+      CRYSTAL
   end
 
   it "unpacks tuple but doesn't override local variables, when using new (#9813)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       #{proc_new}
 
       i = 1
@@ -930,11 +930,11 @@ describe "Semantic: proc" do
 
       end.call({'a'})
       i
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "accesses T and R" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([tuple_of([int32]).metaclass, char.metaclass]) }
       struct Proc
         def t
           {T, R}
@@ -942,11 +942,11 @@ describe "Semantic: proc" do
       end
 
       ->(x : Int32) { 'a' }.t
-      )) { tuple_of([tuple_of([int32]).metaclass, char.metaclass]) }
+      CRYSTAL
   end
 
   it "can match *T in block argument" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { bool.metaclass }
       struct Tuple
         def foo(&block : *T -> U) forall T, U
           yield self[0], self[1]
@@ -955,7 +955,7 @@ describe "Semantic: proc" do
       end
 
       {1, 'a'}.foo { |x, y| true }
-      )) { bool.metaclass }
+      CRYSTAL
   end
 
   it "says wrong number of arguments" do
@@ -966,7 +966,7 @@ describe "Semantic: proc" do
   end
 
   it "finds method of object" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Object
         def foo
           1
@@ -974,41 +974,41 @@ describe "Semantic: proc" do
       end
 
       ->{}.foo
-      )) { int32 }
+      CRYSTAL
   end
 
   it "accesses T inside variadic generic" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([tuple_of([int32, float64]).metaclass, char.metaclass]) }
       def foo(proc : Proc(*T, R)) forall T, R
         {T, R}
       end
 
       foo(->(x : Int32, y : Float64) { 'a' })
-      )) { tuple_of([tuple_of([int32, float64]).metaclass, char.metaclass]) }
+      CRYSTAL
   end
 
   it "accesses T inside variadic generic (2)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([tuple_of([int32]).metaclass, char.metaclass]) }
       def foo(proc : Proc(*T, R)) forall T, R
         {T, R}
       end
 
       foo(->(x : Int32) { 'a' })
-      )) { tuple_of([tuple_of([int32]).metaclass, char.metaclass]) }
+      CRYSTAL
   end
 
   it "accesses T inside variadic generic, in proc notation" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([tuple_of([int32, float64]).metaclass, char.metaclass]) }
       def foo(proc : *T -> R) forall T, R
         {T, R}
       end
 
       foo(->(x : Int32, y : Float64) { 'a' })
-      )) { tuple_of([tuple_of([int32, float64]).metaclass, char.metaclass]) }
+      CRYSTAL
   end
 
   it "declares an instance variable with splat in proc notation" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { proc_of([int32, char, string]) }
       class Foo
         @x : *{Int32, Char} -> String
 
@@ -1022,11 +1022,11 @@ describe "Semantic: proc" do
       end
 
       Foo.new.x
-      )) { proc_of([int32, char, string]) }
+      CRYSTAL
   end
 
   it "can assign NoReturn proc to other proc (#3032)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { proc_of(int32) }
       lib LibC
         fun exit : NoReturn
       end
@@ -1044,19 +1044,19 @@ describe "Semantic: proc" do
       end
 
       Foo.new.x
-      )) { proc_of(int32) }
+      CRYSTAL
   end
 
   it "*doesn't* merge Proc that returns Nil with another one that returns something else (#3655) (this was reverted)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of proc_of(int32, int32), proc_of(int32, nil_type) }
       a = ->(x : Int32) { 1 }
       b = ->(x : Int32) { nil }
       a || b
-      )) { union_of proc_of(int32, int32), proc_of(int32, nil_type) }
+      CRYSTAL
   end
 
   it "*doesn't* merge Proc that returns NoReturn with another one that returns something else (#9971)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of proc_of(int32, int32), proc_of(int32, no_return) }
       lib LibC
         fun exit : NoReturn
       end
@@ -1064,19 +1064,19 @@ describe "Semantic: proc" do
       a = ->(x : Int32) { 1 }
       b = ->(x : Int32) { LibC.exit }
       a || b
-      )) { union_of proc_of(int32, int32), proc_of(int32, no_return) }
+      CRYSTAL
   end
 
   it "merges return type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { nilable int32 }
       a = ->(x : Int32) { 1 }
       b = ->(x : Int32) { nil }
       (a || b).call(1)
-      ), inject_primitives: true) { nilable int32 }
+      CRYSTAL
   end
 
   it "can assign proc that returns anything to proc that returns nil, with instance var (#3655)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { proc_of(nil_type) }
       class Foo
         @block : -> Nil
 
@@ -1090,11 +1090,11 @@ describe "Semantic: proc" do
       end
 
       Foo.new.block
-      )) { proc_of(nil_type) }
+      CRYSTAL
   end
 
   it "can assign proc that returns anything to proc that returns nil, with class var (#3655)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { proc_of(nil_type) }
       module Moo
         @@block : -> Nil = ->{ nil }
 
@@ -1108,11 +1108,11 @@ describe "Semantic: proc" do
 
       Moo.block = ->{ 1 }
       Moo.block
-      )) { proc_of(nil_type) }
+      CRYSTAL
   end
 
   it "can assign proc that returns anything to proc that returns nil, with local var (#3655)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { proc_of(nil_type) }
       proc : -> Nil
 
       a = ->{ 1 }
@@ -1120,17 +1120,17 @@ describe "Semantic: proc" do
       proc = a || b
 
       proc
-      )) { proc_of(nil_type) }
+      CRYSTAL
   end
 
   it "can pass proc that returns T as Void with named args (#7523)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { proc_of(nil_type) }
       def foo(proc : ->)
         proc
       end
 
       foo(proc: ->{ 1 })
-      )) { proc_of(nil_type) }
+      CRYSTAL
   end
 
   it "errors when using macro as proc value (top-level) (#7465)" do
@@ -1176,7 +1176,7 @@ describe "Semantic: proc" do
   end
 
   it "virtualizes proc type (#6789)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { proc_of(types["Foo"].virtual_type!, types["Foo"].virtual_type!) }
       class Foo
       end
 
@@ -1199,11 +1199,11 @@ describe "Semantic: proc" do
       capture do |foo|
         Foo.new
       end.block
-      )) { proc_of(types["Foo"].virtual_type!, types["Foo"].virtual_type!) }
+      CRYSTAL
   end
 
   it "virtualizes proc type with -> (#8730)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { proc_of(types["Foo"].virtual_type!, types["Foo"].virtual_type!) }
       class Foo
       end
 
@@ -1215,41 +1215,41 @@ describe "Semantic: proc" do
       end
 
       ->foo(Foo)
-      )) { proc_of(types["Foo"].virtual_type!, types["Foo"].virtual_type!) }
+      CRYSTAL
   end
 
   it "can pass Proc(T) to Proc(Nil) in type restriction (#8964)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { proc_of nil_type }
       def foo(x : Proc(Nil))
         x
       end
 
       foo(->{ 1 })
-      )) { proc_of nil_type }
+      CRYSTAL
   end
 
   it "can pass Proc(X, T) to Proc(X, Nil) in type restriction (#8964)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { proc_of string, nil_type }
       def foo(x : Proc(String, Nil))
         x
       end
 
       foo(->(x : String) { 1 })
-      )) { proc_of string, nil_type }
+      CRYSTAL
   end
 
   it "casts to Proc(Nil) when specified in return type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { proc_of nil_type }
       def foo : Proc(Nil)
         ->{ 1 }
       end
 
       foo
-      )) { proc_of nil_type }
+      CRYSTAL
   end
 
   it "can use @ivar as pointer syntax receiver (#9239)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { proc_of int32 }
       class Foo
         def foo
           1
@@ -1265,11 +1265,11 @@ describe "Semantic: proc" do
       end
 
       Bar.new.foo
-    )) { proc_of int32 }
+      CRYSTAL
   end
 
   it "can use @@cvar as pointer syntax receiver (#9239)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { proc_of int32 }
       class Foo
         @@foo = new
 
@@ -1283,11 +1283,11 @@ describe "Semantic: proc" do
       end
 
       Foo.foo
-    )) { proc_of int32 }
+      CRYSTAL
   end
 
   it "doesn't cause upcast bug (#8428)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of proc_of(string), proc_of(nil_type), nil_type }
       def foo
         if true
           begin
@@ -1299,15 +1299,15 @@ describe "Semantic: proc" do
       end
 
       foo
-    )) { union_of proc_of(string), proc_of(nil_type), nil_type }
+      CRYSTAL
   end
 
   it "types Proc(*T, Void) as Proc(*T, Nil)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { proc_of(int32, nil_type) }
       #{proc_new}
 
       Proc(Int32, Void).new { |x| x }
-      )) { proc_of(int32, nil_type) }
+      CRYSTAL
   end
 end
 

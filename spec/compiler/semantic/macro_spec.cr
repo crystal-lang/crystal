@@ -470,7 +470,7 @@ describe "Semantic: macro" do
   end
 
   it "preserves correct self in restriction when macro def is to be instantiated in subtypes (#5044)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { string }
       class Foo
         def foo(x)
           1
@@ -491,11 +491,11 @@ describe "Semantic: macro" do
       end
 
       (Baz.new || Baz2.new).foo(Baz.new)
-      )) { string }
+      CRYSTAL
   end
 
   it "doesn't affect self restrictions outside the macro def being instantiated in subtypes" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of int32, bool }
       class Foo
         def foo(other) : Bool
           {% @type %}
@@ -524,7 +524,7 @@ describe "Semantic: macro" do
       end
 
       Foo.new.as(Foo).foo(Bar1.new)
-      )) { union_of int32, bool }
+      CRYSTAL
   end
 
   it "errors if non-existent named arg" do

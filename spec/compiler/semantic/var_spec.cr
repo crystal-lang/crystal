@@ -50,10 +50,10 @@ describe "Semantic: var" do
   end
 
   it "lets type on else side of if with a Bool | Nil union" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { nilable bool }
       a = (1 == 1) || nil
       a ? nil : a
-      ), inject_primitives: true) { nilable bool }
+      CRYSTAL
   end
 
   it "errors if declaring var that is already declared" do
@@ -72,18 +72,18 @@ describe "Semantic: var" do
   end
 
   it "declares local variable with value" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       a : Int32 = 0
       a
-      )) { int32 }
+      CRYSTAL
   end
 
   it "declares local variable and then assigns it" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       a : Int32
       a = 0
       a
-      )) { int32 }
+      CRYSTAL
   end
 
   it "declares local variable and immediately reads it" do
@@ -95,7 +95,7 @@ describe "Semantic: var" do
   end
 
   it "declares local variable and assigns it with if" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       a : Int32
       if 1 == 2
         a = 0
@@ -103,7 +103,7 @@ describe "Semantic: var" do
         a = 1
       end
       a
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "declares local variable but doesn't assign it in all branches" do

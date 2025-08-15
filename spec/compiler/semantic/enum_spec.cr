@@ -2,21 +2,21 @@ require "../../spec_helper"
 
 describe "Semantic: enum" do
   it "types enum" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Foo"] }
       enum Foo
         A = 1
       end
       Foo::A
-      )) { types["Foo"] }
+      CRYSTAL
   end
 
   it "types enum value" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       enum Foo
         A = 1
       end
       Foo::A.value
-      )) { int32 }
+      CRYSTAL
   end
 
   it "disallows implicit conversion of int to enum" do
@@ -34,7 +34,7 @@ describe "Semantic: enum" do
   end
 
   it "finds method in enum type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       struct Enum
         def foo
           1
@@ -46,11 +46,11 @@ describe "Semantic: enum" do
       end
 
       Foo::A.foo
-      )) { int32 }
+      CRYSTAL
   end
 
   it "finds class method in enum type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       struct Enum
         def self.foo
           1
@@ -62,7 +62,7 @@ describe "Semantic: enum" do
       end
 
       Foo.foo
-      )) { int32 }
+      CRYSTAL
   end
 
   it "errors if using a name twice" do
@@ -76,18 +76,18 @@ describe "Semantic: enum" do
   end
 
   it "creates enum from value" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Foo"] }
       enum Foo
         A
         B
       end
 
       Foo.new(1)
-      )) { types["Foo"] }
+      CRYSTAL
   end
 
   it "defines method on enum" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       enum Foo
         A
         B
@@ -98,11 +98,11 @@ describe "Semantic: enum" do
       end
 
       Foo::A.foo
-      )) { int32 }
+      CRYSTAL
   end
 
   it "defines class method on enum" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       enum Foo
         A
         B
@@ -113,11 +113,11 @@ describe "Semantic: enum" do
       end
 
       Foo.foo
-      )) { int32 }
+      CRYSTAL
   end
 
   it "reopens an enum" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       enum Foo
         A
         B
@@ -130,7 +130,7 @@ describe "Semantic: enum" do
       end
 
       Foo::A.foo
-      )) { int32 }
+      CRYSTAL
   end
 
   it "errors if reopen but not enum" do
@@ -161,7 +161,7 @@ describe "Semantic: enum" do
   end
 
   it "has None value when defined as @[Flags]" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       @[Flags]
       enum Foo
         A
@@ -169,11 +169,11 @@ describe "Semantic: enum" do
       end
 
       Foo::None.value
-      )) { int32 }
+      CRYSTAL
   end
 
   it "has All value when defined as @[Flags]" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       @[Flags]
       enum Foo
         A
@@ -181,7 +181,7 @@ describe "Semantic: enum" do
       end
 
       Foo::All.value
-      )) { int32 }
+      CRYSTAL
   end
 
   it "doesn't break assigned values in enum flags when a member has value 0 (#5767)" do
@@ -220,7 +220,7 @@ describe "Semantic: enum" do
   end
 
   it "allows redefining None to 0 for @[Flags] enum" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       @[Flags]
       enum Foo
         None = 0
@@ -228,7 +228,7 @@ describe "Semantic: enum" do
       end
 
       Foo::None.value
-      )) { int32 }
+      CRYSTAL
   end
 
   it "disallows All value for @[Flags] enum" do
@@ -242,18 +242,18 @@ describe "Semantic: enum" do
   end
 
   it "doesn't error when defining a non-flags enum with None or All" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       enum Foo
         None
         All = 50
       end
 
       Foo::None.value
-      )) { int32 }
+      CRYSTAL
   end
 
   it "doesn't error when defining a flags enum in a lib with None or All" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       lib Lib
         @[Flags]
         enum Foo
@@ -264,11 +264,11 @@ describe "Semantic: enum" do
       end
 
       Lib::Foo::None.value
-      )) { int32 }
+      CRYSTAL
   end
 
   it "doesn't error when defining a method for an enum with flags" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Foo"] }
       @[Flags]
       enum Foo
         A
@@ -280,11 +280,11 @@ describe "Semantic: enum" do
       end
 
       Foo::A.foo
-      )) { types["Foo"] }
+      CRYSTAL
   end
 
   it "allows class vars in enum" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       enum Foo
         A
 
@@ -296,7 +296,7 @@ describe "Semantic: enum" do
       end
 
       Foo.class_var
-      )) { int32 }
+      CRYSTAL
   end
 
   it "errors if invoking private enum method" do
@@ -421,17 +421,17 @@ describe "Semantic: enum" do
   end
 
   it "can use macro expression inside enum" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Foo"] }
       enum Foo
         {{ "A".id }}
       end
 
       Foo::A
-      )) { types["Foo"] }
+      CRYSTAL
   end
 
   it "can use macro for inside enum" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Foo"] }
       enum Foo
         {% for name in %w(A B C) %}
           {{name.id}}
@@ -439,7 +439,7 @@ describe "Semantic: enum" do
       end
 
       Foo::A
-      )) { types["Foo"] }
+      CRYSTAL
   end
 
   it "errors if inheriting Enum (#3592)" do
@@ -518,7 +518,7 @@ describe "Semantic: enum" do
   end
 
   it "can redefine Enum.new" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { string }
       enum Foo
         FOO = 1
 
@@ -528,7 +528,7 @@ describe "Semantic: enum" do
       end
 
       Foo.new(1)
-      )) { string }
+      CRYSTAL
   end
 
   it "gives error on enum overflow" do

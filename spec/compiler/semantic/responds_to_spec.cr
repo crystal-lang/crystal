@@ -20,29 +20,29 @@ describe "Semantic: responds_to?" do
   end
 
   it "restricts other types inside if else" do
-    assert_type("
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       a = 1 || 'a'
-      if a.responds_to?(:\"+\")
+      if a.responds_to?(:"+")
         a.to_i32
       else
         a.ord
       end
-      ", inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "restricts in assignment" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       a = 1 || 'a'
       if (b = a).responds_to?(:abs)
         b
       else
         2
       end
-      ") { int32 }
+      CRYSTAL
   end
 
   it "restricts virtual generic superclass to subtypes" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable union_of(char, string) }
       module Foo(T)
       end
 
@@ -66,11 +66,11 @@ describe "Semantic: responds_to?" do
       if x.responds_to?(:foo)
         x.foo
       end
-      )) { nilable union_of(char, string) }
+      CRYSTAL
   end
 
   it "restricts virtual generic module to including types (#8334)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable union_of(char, string) }
       class Foo(T)
       end
 
@@ -90,6 +90,6 @@ describe "Semantic: responds_to?" do
       if x.responds_to?(:foo)
         x.foo
       end
-      )) { nilable union_of(char, string) }
+      CRYSTAL
   end
 end

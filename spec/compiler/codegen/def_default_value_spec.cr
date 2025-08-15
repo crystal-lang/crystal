@@ -55,7 +55,7 @@ describe "Code gen: def with default value" do
   end
 
   it "doesn't mix types of instance vars with initialize and new" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def initialize(x = 1)
           @x = x
@@ -73,11 +73,11 @@ describe "Code gen: def with default value" do
       Foo.new
       Foo.new(1)
       Foo.new("hello").x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "resolves expanded call to current type, not to virtual type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def foo(x = 1)
           2
@@ -92,6 +92,6 @@ describe "Code gen: def with default value" do
 
       bar = Bar.new
       bar.foo
-      )) { int32 }
+      CRYSTAL
   end
 end

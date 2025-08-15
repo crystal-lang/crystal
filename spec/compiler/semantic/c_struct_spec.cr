@@ -27,7 +27,7 @@ describe "Semantic: struct" do
   end
 
   it "types struct getter to struct" do
-    assert_type("
+    assert_type(<<-CRYSTAL, inject_primitives: true) { types["LibFoo"].types["Baz"] }
       lib LibFoo
         struct Baz
           y : Int32
@@ -38,11 +38,11 @@ describe "Semantic: struct" do
       end
       bar = Pointer(LibFoo::Bar).malloc(1_u64)
       bar.value.x
-    ", inject_primitives: true) { types["LibFoo"].types["Baz"] }
+      CRYSTAL
   end
 
   it "types struct getter multiple levels via new" do
-    assert_type("
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       lib LibFoo
         struct Baz
           y : Int32
@@ -53,7 +53,7 @@ describe "Semantic: struct" do
       end
       bar = Pointer(LibFoo::Bar).malloc(1_u64)
       bar.value.x.y
-    ", inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "types struct getter with keyword name" do
@@ -138,7 +138,7 @@ describe "Semantic: struct" do
   end
 
   it "allows inline forward declaration" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { pointer_of(types["LibC"].types["Node"]) }
       lib LibC
         struct Node
           next : Node*
@@ -147,11 +147,11 @@ describe "Semantic: struct" do
 
       node = LibC::Node.new
       node.next
-      )) { pointer_of(types["LibC"].types["Node"]) }
+      CRYSTAL
   end
 
   it "supports macro if inside struct" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, flags: "some_flag") { int32 }
       lib LibC
         struct Foo
           {% if flag?(:some_flag) %}
@@ -163,11 +163,11 @@ describe "Semantic: struct" do
       end
 
       LibC::Foo.new.a
-      ), flags: "some_flag") { int32 }
+      CRYSTAL
   end
 
   it "includes another struct" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       lib LibC
         struct Foo
           a : Int32
@@ -179,7 +179,7 @@ describe "Semantic: struct" do
       end
 
       LibC::Bar.new.a
-      )) { int32 }
+      CRYSTAL
   end
 
   it "errors if includes non-cstruct type" do
@@ -296,7 +296,7 @@ describe "Semantic: struct" do
   end
 
   it "can access instance var from the outside (#1092)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       lib LibFoo
         struct Foo
           x : Int32
@@ -305,11 +305,11 @@ describe "Semantic: struct" do
 
       f = LibFoo::Foo.new x: 123
       f.@x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "automatically converts numeric type in struct field assignment" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       lib LibFoo
         struct Foo
           x : Int32
@@ -319,7 +319,7 @@ describe "Semantic: struct" do
       foo = LibFoo::Foo.new
       foo.x = 1_u8
       foo.x
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "errors if invoking to_i32! and got error in that call" do

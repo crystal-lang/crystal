@@ -38,11 +38,11 @@ describe "Semantic: pointer" do
   end
 
   pending "allows using pointer with subclass" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { union_of(object.virtual_type, int32) }
       a = Pointer(Object).malloc(1_u64)
       a.value = 1
       a.value
-    ") { union_of(object.virtual_type, int32) }
+      CRYSTAL
   end
 
   it "can't do Pointer.malloc without type var" do
@@ -56,10 +56,10 @@ describe "Semantic: pointer" do
   end
 
   it "types pointer of constant" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { pointer_of(int32) }
       FOO = 1
       pointerof(FOO)
-    ") { pointer_of(int32) }
+      CRYSTAL
   end
 
   it "pointer of class raises error" do
@@ -75,14 +75,14 @@ describe "Semantic: pointer" do
   end
 
   it "types pointer value on typedef" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       lib LibC
         type Foo = Int32*
         fun foo : Foo
       end
 
       LibC.foo.value
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "detects recursive pointerof expansion (#551) (#553)" do
@@ -129,24 +129,24 @@ describe "Semantic: pointer" do
   end
 
   it "can assign nil to void pointer" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { nil_type }
       ptr = Pointer(Void).malloc(1_u64)
       ptr.value = ptr.value
-      ), inject_primitives: true) { nil_type }
+      CRYSTAL
   end
 
   it "can pass any pointer to something expecting void* in lib call" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { float64 }
       lib LibFoo
         fun foo(x : Void*) : Float64
       end
 
       LibFoo.foo(Pointer(Int32).malloc(1_u64))
-      ), inject_primitives: true) { float64 }
+      CRYSTAL
   end
 
   it "can pass any pointer to something expecting void* in lib call, with to_unsafe" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { float64 }
       lib LibFoo
         fun foo(x : Void*) : Float64
       end
@@ -158,7 +158,7 @@ describe "Semantic: pointer" do
       end
 
       LibFoo.foo(Foo.new)
-      ), inject_primitives: true) { float64 }
+      CRYSTAL
   end
 
   it "errors if doing Pointer.allocate" do
@@ -169,13 +169,13 @@ describe "Semantic: pointer" do
   end
 
   it "takes pointerof lib external var" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { pointer_of(int32) }
       lib LibFoo
         $extern : Int32
       end
 
       pointerof(LibFoo.extern)
-      )) { pointer_of(int32) }
+      CRYSTAL
   end
 
   it "says undefined variable (#7556)" do

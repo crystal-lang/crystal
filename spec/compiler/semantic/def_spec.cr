@@ -192,7 +192,7 @@ describe "Semantic: def" do
   end
 
   it "types call with global scope" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       def bar
         1
       end
@@ -208,12 +208,12 @@ describe "Semantic: def" do
       end
 
       Foo.new.foo
-      ") { int32 }
+      CRYSTAL
   end
 
   it "lookups methods in super modules" do
-    assert_type("
-      require \"prelude\"
+    assert_type(<<-CRYSTAL) { int32 }
+      require "prelude"
 
       module Foo
         def lookup_matches(x = 1)
@@ -245,7 +245,7 @@ describe "Semantic: def" do
       b.push NonGenericMType.new
       b.push GenericMType.new
       b[0].lookup_matches
-      ") { int32 }
+      CRYSTAL
   end
 
   it "fixes bug #165" do
@@ -314,7 +314,7 @@ describe "Semantic: def" do
   end
 
   it "is ok if returns Int32? with explicit return" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { nilable int32 }
       def foo : Int32?
         if 1 == 2
           return nil
@@ -323,7 +323,7 @@ describe "Semantic: def" do
       end
 
       foo
-      ), inject_primitives: true) { nilable int32 }
+      CRYSTAL
   end
 
   it "says compile-time type on error" do
@@ -430,17 +430,17 @@ describe "Semantic: def" do
   end
 
   it "accesses free var of default argument (#1101)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nil_type.metaclass }
       def foo(x, y : U = nil) forall U
         U
       end
 
       foo 1
-      )) { nil_type.metaclass }
+      CRYSTAL
   end
 
   it "clones regex literal value (#2384)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       require "prelude"
 
       def foo(x : String = "")
@@ -450,7 +450,7 @@ describe "Semantic: def" do
 
       foo
       foo("")
-      )) { int32 }
+      CRYSTAL
   end
 
   it "doesn't find type in namespace through free var" do
@@ -478,48 +478,48 @@ describe "Semantic: def" do
   end
 
   it "uses free variable" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32.metaclass }
       def foo(x : Free) forall Free
         Free
       end
 
       foo(1)
-      )) { int32.metaclass }
+      CRYSTAL
   end
 
   it "uses free variable with metaclass" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32.metaclass }
       def foo(x : Free.class) forall Free
         Free
       end
 
       foo(Int32)
-      )) { int32.metaclass }
+      CRYSTAL
   end
 
   it "uses free variable with metaclass and default value" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32.metaclass }
       def foo(x : Free.class = Int32) forall Free
         Free
       end
 
       foo
-      )) { int32.metaclass }
+      CRYSTAL
   end
 
   it "uses free variable as block return type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32.metaclass }
       def foo(&block : -> Free) forall Free
         yield
         Free
       end
 
       foo { 1 }
-      )) { int32.metaclass }
+      CRYSTAL
   end
 
   it "uses free variable and doesn't conflict with top-level type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32.metaclass }
       class Free
       end
 
@@ -528,7 +528,7 @@ describe "Semantic: def" do
       end
 
       foo(1)
-      )) { int32.metaclass }
+      CRYSTAL
   end
 
   it "shows free variables if no overload matches" do

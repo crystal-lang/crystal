@@ -18,8 +18,8 @@ describe "Semantic: nil" do
   end
 
   it "marks instance variables as nil but doesn't explode on macros" do
-    assert_type("
-      require \"prelude\"
+    assert_type(<<-CRYSTAL) { int32 }
+      require "prelude"
 
       class Foo
         getter :var
@@ -32,11 +32,11 @@ describe "Semantic: nil" do
 
       f = Foo.new
       f.var.last
-    ") { int32 }
+      CRYSTAL
   end
 
   it "marks instance variables as nil when not in initialize" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { nilable int32 }
       class Foo
         def initialize
           @foo = 1
@@ -54,11 +54,11 @@ describe "Semantic: nil" do
       f = Foo.new
       f.bar = 1
       f.bar
-      ") { nilable int32 }
+      CRYSTAL
   end
 
   it "marks instance variables as nil when not in initialize 2" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def initialize
           @foo = 1
@@ -80,11 +80,11 @@ describe "Semantic: nil" do
       f = Foo.new
       f.bar = 1
       f.foo
-      ") { int32 }
+      CRYSTAL
   end
 
   it "restricts type of 'if foo'" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def bar
           1
@@ -93,11 +93,11 @@ describe "Semantic: nil" do
 
       f = nil || Foo.new
       f ? f.bar : 10
-      ") { int32 }
+      CRYSTAL
   end
 
   it "restricts type of 'if foo' on assign" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def bar
           1
@@ -109,11 +109,11 @@ describe "Semantic: nil" do
       else
         10
       end
-      ") { int32 }
+      CRYSTAL
   end
 
   it "restricts type of 'while foo'" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def bar
           1
@@ -125,11 +125,11 @@ describe "Semantic: nil" do
         foo.bar
       end
       1
-      ") { int32 }
+      CRYSTAL
   end
 
   it "restricts type of 'while foo' on assign" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def bar
           1
@@ -140,26 +140,26 @@ describe "Semantic: nil" do
         foo.bar
       end
       1
-      ") { int32 }
+      CRYSTAL
   end
 
   it "doesn't check return type for nil" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nil_type }
       def foo : Nil
         1
       end
 
       foo
-      )) { nil_type }
+      CRYSTAL
   end
 
   it "doesn't check return type for void" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nil_type }
       def foo : Void
         1
       end
 
       foo
-      )) { nil_type }
+      CRYSTAL
   end
 end
