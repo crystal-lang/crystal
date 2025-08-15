@@ -133,7 +133,7 @@ describe "Semantic: new" do
   end
 
   it "errors if using self call in default argument (1)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "instance variable '@caps' of My was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported."
       class My
         @name : String
         @caps : String
@@ -149,12 +149,11 @@ describe "Semantic: new" do
       end
 
       My.new("foo")
-      ),
-      "instance variable '@caps' of My was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported."
+      CRYSTAL
   end
 
   it "errors if using self call in default argument (2)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "instance variable '@caps' of My was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported."
       class My
         @name : String
         @caps : String
@@ -169,12 +168,11 @@ describe "Semantic: new" do
       end
 
       My.new("foo")
-      ),
-      "instance variable '@caps' of My was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported."
+      CRYSTAL
   end
 
   it "errors if using self call in default argument (3)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "instance variable '@caps' of My was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported."
       class My
         @name : String
         @caps : String
@@ -188,8 +186,7 @@ describe "Semantic: new" do
       end
 
       My.new("foo")
-      ),
-      "instance variable '@caps' of My was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported."
+      CRYSTAL
   end
 
   it "inherits initialize and new methods if doesn't define new (#3238)" do
@@ -211,7 +208,7 @@ describe "Semantic: new" do
   end
 
   it "doesn't have default new for inherited class from generic type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "wrong number of arguments for 'Bar.new' (given 0, expected 1)"
       class Foo(T)
         def initialize(x : Int32)
         end
@@ -221,8 +218,7 @@ describe "Semantic: new" do
       end
 
       Bar.new
-      ),
-      "wrong number of arguments for 'Bar.new' (given 0, expected 1)"
+      CRYSTAL
   end
 
   it "uses correct receiver for `initialize` in namespaced generic classes (#4086)" do

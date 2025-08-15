@@ -219,7 +219,7 @@ describe "Semantic: virtual" do
   end
 
   it "reports no matches for virtual type" do
-    assert_error "
+    assert_error <<-CRYSTAL, "undefined method 'foo' for Foo"
       class Foo
       end
 
@@ -230,8 +230,7 @@ describe "Semantic: virtual" do
 
       x = Foo.new || Bar.new
       x.foo
-      ",
-      "undefined method 'foo' for Foo"
+      CRYSTAL
   end
 
   it "doesn't check methods on abstract classes" do
@@ -288,7 +287,7 @@ describe "Semantic: virtual" do
   end
 
   it "reports undefined method in subclass of abstract class" do
-    assert_error "
+    assert_error <<-CRYSTAL, "undefined method 'foo' for Bar3"
       abstract class Foo
       end
 
@@ -312,8 +311,7 @@ describe "Semantic: virtual" do
 
       f = Bar2.new || Bar3.new || Baz.new
       x = f.foo
-      ",
-      "undefined method 'foo' for Bar3"
+      CRYSTAL
   end
 
   it "doesn't check cover for abstract classes" do
@@ -354,7 +352,7 @@ describe "Semantic: virtual" do
   end
 
   it "reports missing cover for subclass of abstract class" do
-    assert_error "
+    assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to be Bar1 or Baz, not Foo"
       abstract class Foo
         def foo(other)
           1
@@ -383,8 +381,7 @@ describe "Semantic: virtual" do
 
       f = Bar1.new || Bar2.new || Baz.new
       foo(f)
-      ",
-      "expected argument #1 to 'foo' to be Bar1 or Baz, not Foo"
+      CRYSTAL
   end
 
   it "checks cover in every concrete subclass" do
@@ -419,7 +416,7 @@ describe "Semantic: virtual" do
   end
 
   it "checks cover in every concrete subclass 2" do
-    assert_error "
+    assert_error <<-CRYSTAL, "expected argument #1 to 'Baz#foo' to be Bar1 or Baz, not Foo"
       abstract class Foo
       end
 
@@ -445,8 +442,7 @@ describe "Semantic: virtual" do
 
       f = Bar1.new || Bar2.new || Baz.new
       f.foo(f)
-      ",
-      "expected argument #1 to 'Baz#foo' to be Bar1 or Baz, not Foo"
+      CRYSTAL
   end
 
   it "checks cover in every concrete subclass 3" do

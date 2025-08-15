@@ -803,30 +803,27 @@ describe "Semantic: warnings" do
     end
 
     it "errors if invalid argument type" do
-      assert_error %(
+      assert_error <<-CRYSTAL, "first argument must be a String"
         @[Deprecated(42)]
         macro foo
         end
-        ),
-        "first argument must be a String"
+        CRYSTAL
     end
 
     it "errors if too many arguments" do
-      assert_error %(
+      assert_error <<-CRYSTAL, "wrong number of deprecated annotation arguments (given 2, expected 1)"
         @[Deprecated("Do not use me", "extra arg")]
         macro foo
         end
-        ),
-        "wrong number of deprecated annotation arguments (given 2, expected 1)"
+        CRYSTAL
     end
 
     it "errors if invalid named argument" do
-      assert_error %(
+      assert_error <<-CRYSTAL, "too many named arguments (given 1, expected maximum 0)"
         @[Deprecated(invalid: "Do not use me")]
         macro foo
         end
-        ),
-        "too many named arguments (given 1, expected maximum 0)"
+        CRYSTAL
     end
   end
 

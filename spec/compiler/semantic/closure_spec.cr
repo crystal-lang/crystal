@@ -231,19 +231,18 @@ describe "Semantic: closure" do
   end
 
   it "errors if sending closured proc literal to C" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't send closure to C function (closured vars: a)"
       lib LibC
         fun foo(callback : ->)
       end
 
       a = 1
       LibC.foo(-> { a })
-      ),
-      "can't send closure to C function (closured vars: a)"
+      CRYSTAL
   end
 
   it "errors if sending closured proc pointer to C (1)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't send closure to C function (closured vars: self)"
       lib LibC
         fun foo(callback : ->)
       end
@@ -258,12 +257,11 @@ describe "Semantic: closure" do
       end
 
       Foo.new.foo
-      ),
-      "can't send closure to C function (closured vars: self)"
+      CRYSTAL
   end
 
   it "errors if sending closured proc pointer to C (1.2)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't send closure to C function (closured vars: self)"
       lib LibC
         fun foo(callback : ->)
       end
@@ -278,12 +276,11 @@ describe "Semantic: closure" do
       end
 
       Foo.new.foo
-      ),
-      "can't send closure to C function (closured vars: self)"
+      CRYSTAL
   end
 
   it "errors if sending closured proc pointer to C (2)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't send closure to C function (closured vars: foo)"
       lib LibC
         fun foo(callback : ->)
       end
@@ -295,12 +292,11 @@ describe "Semantic: closure" do
 
       foo = Foo.new
       LibC.foo(->foo.bar)
-      ),
-      "can't send closure to C function (closured vars: foo)"
+      CRYSTAL
   end
 
   it "errors if sending closured proc pointer to C (3)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't send closure to C function (closured vars: @a)"
       lib LibC
         fun foo(callback : ->)
       end
@@ -316,8 +312,7 @@ describe "Semantic: closure" do
       end
 
       Foo.new.foo
-      ),
-      "can't send closure to C function (closured vars: @a)"
+      CRYSTAL
   end
 
   it "transforms block to proc literal" do
@@ -345,7 +340,7 @@ describe "Semantic: closure" do
   end
 
   it "errors when transforming block to proc literal if type mismatch" do
-    assert_error "
+    assert_error <<-CRYSTAL, "expected block to return Int32, not Float64", inject_primitives: true
       def foo(&block : Int32 -> Int32)
         block.call(1)
       end
@@ -353,8 +348,7 @@ describe "Semantic: closure" do
       foo do |x|
         x.to_f
       end
-      ",
-      "expected block to return Int32, not Float64", inject_primitives: true
+      CRYSTAL
   end
 
   it "transforms block to proc literal with free var" do
@@ -382,7 +376,7 @@ describe "Semantic: closure" do
   end
 
   it "errors if giving more block args when transforming block to proc literal" do
-    assert_error "
+    assert_error <<-CRYSTAL, "wrong number of block parameters (given 1, expected 0)"
       def foo(&block : -> U)
         block.call
       end
@@ -390,8 +384,7 @@ describe "Semantic: closure" do
       foo do |x|
         x.to_f
       end
-      ",
-      "wrong number of block parameters (given 1, expected 0)"
+      CRYSTAL
   end
 
   it "allows giving less block args when transforming block to proc literal" do
@@ -424,27 +417,25 @@ describe "Semantic: closure" do
   end
 
   it "errors if forwarding block param doesn't match input type" do
-    assert_error "
+    assert_error <<-CRYSTAL, "expected block argument's parameter #1 to be Int32, not Int64", inject_primitives: true
       def foo(&block : Int32 -> U)
         block
       end
 
       f = ->(x : Int64) { x + 1 }
       foo &f
-      ",
-      "expected block argument's parameter #1 to be Int32, not Int64", inject_primitives: true
+      CRYSTAL
   end
 
   it "errors if forwarding block param doesn't match input type size" do
-    assert_error "
+    assert_error <<-CRYSTAL, "wrong number of block argument's parameters (given 1, expected 2)", inject_primitives: true
       def foo(&block : Int32, Int32 -> U)
         block
       end
 
       f = ->(x : Int32) { x + 1 }
       foo &f
-      ",
-      "wrong number of block argument's parameters (given 1, expected 2)", inject_primitives: true
+      CRYSTAL
   end
 
   it "lookups return type in correct scope" do
@@ -516,7 +507,7 @@ describe "Semantic: closure" do
   end
 
   it "says can't send closure to C with new notation" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't send closure to C function (closured vars: a)"
       struct Proc
         def self.new(&block : self)
           block
@@ -531,12 +522,11 @@ describe "Semantic: closure" do
       LibC.foo(Proc(Void).new do
         a
       end)
-      ),
-      "can't send closure to C function (closured vars: a)"
+      CRYSTAL
   end
 
   it "says can't send closure to C with captured block" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't send closure to C function (closured vars: a)"
       def capture(&block : -> Int32)
         block
       end
@@ -549,12 +539,11 @@ describe "Semantic: closure" do
       LibC.foo(capture do
         a
       end)
-      ),
-      "can't send closure to C function (closured vars: a)"
+      CRYSTAL
   end
 
   it "doesn't crash for non-existing variable (#3789)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't send closure to C function (closured vars: x)"
       lib LibFoo
         fun foo(->)
       end
@@ -565,8 +554,7 @@ describe "Semantic: closure" do
           data
         }
       })
-      ),
-      "can't send closure to C function (closured vars: x)"
+      CRYSTAL
   end
 
   it "doesn't closure typeof local var" do
@@ -595,7 +583,7 @@ describe "Semantic: closure" do
   end
 
   it "correctly detects previous var as closured (#5609)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined method '&+' for String", inject_primitives: true
       def block(&block)
         block.call
       end
@@ -612,8 +600,7 @@ describe "Semantic: closure" do
           x = "hello"
         end
       end
-      ),
-      "undefined method '&+' for String", inject_primitives: true
+      CRYSTAL
   end
 
   it "doesn't assign all types to metavar if closured but only assigned to once" do
@@ -631,7 +618,7 @@ describe "Semantic: closure" do
   end
 
   it "does assign all types to metavar if closured but only assigned to once in a loop" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined method '&+'", inject_primitives: true
       def capture(&block)
         block
       end
@@ -643,12 +630,11 @@ describe "Semantic: closure" do
           end
         end
       end
-      ),
-      "undefined method '&+'", inject_primitives: true
+      CRYSTAL
   end
 
   it "does assign all types to metavar if closured but only assigned to once in a loop through block" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined method '&+'", inject_primitives: true
       def capture(&block)
         block
       end
@@ -668,12 +654,11 @@ describe "Semantic: closure" do
           end
         end
       end
-      ),
-      "undefined method '&+'", inject_primitives: true
+      CRYSTAL
   end
 
   it "does assign all types to metavar if closured but only assigned to once in a loop through captured block" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined method '&+'", inject_primitives: true
       def capture(&block)
         block
       end
@@ -693,8 +678,7 @@ describe "Semantic: closure" do
           end
         end
       end
-      ),
-      "undefined method '&+'", inject_primitives: true
+      CRYSTAL
   end
 
   it "doesn't assign all types to metavar if closured but declared inside block and never re-assigned" do
@@ -741,7 +725,7 @@ describe "Semantic: closure" do
   end
 
   it "is considered as closure if assigned once but comes from a method arg" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined method '&+'"
       def capture(&block)
         block
       end
@@ -752,8 +736,7 @@ describe "Semantic: closure" do
         x = 1 == 2 ? 1 : nil
       end
       foo(1)
-      ),
-      "undefined method '&+'"
+      CRYSTAL
   end
 
   it "considers var as closure-readonly if it was assigned multiple times before it was closured" do

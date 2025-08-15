@@ -22,29 +22,26 @@ describe "Code gen: experimental" do
   end
 
   it "errors if invalid argument type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "first argument must be a String"
       @[Experimental(42)]
       def foo
       end
-      ),
-      "first argument must be a String"
+      CRYSTAL
   end
 
   it "errors if too many arguments" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "wrong number of experimental annotation arguments (given 2, expected 1)"
       @[Experimental("lorem ipsum", "extra arg")]
       def foo
       end
-      ),
-      "wrong number of experimental annotation arguments (given 2, expected 1)"
+      CRYSTAL
   end
 
   it "errors if missing link arguments" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "too many named arguments (given 1, expected maximum 0)"
       @[Experimental(invalid: "lorem ipsum")]
       def foo
       end
-      ),
-      "too many named arguments (given 1, expected maximum 0)"
+      CRYSTAL
   end
 end

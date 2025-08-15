@@ -1028,25 +1028,23 @@ describe "Semantic: annotation" do
     end
 
     it "errors if annotation doesn't exist" do
-      assert_error %(
+      assert_error <<-CRYSTAL, "undefined constant DoesntExist"
         @[DoesntExist]
         class Moo
         end
-      ),
-        "undefined constant DoesntExist"
+        CRYSTAL
     end
 
     it "errors if annotation doesn't point to an annotation type" do
-      assert_error %(
+      assert_error <<-CRYSTAL, "Int32 is not an annotation, it's a struct"
         @[Int32]
         class Moo
         end
-      ),
-        "Int32 is not an annotation, it's a struct"
+        CRYSTAL
     end
 
     it "errors if using annotation other than ThreadLocal for class vars" do
-      assert_error %(
+      assert_error <<-CRYSTAL, "class variables can only be annotated with ThreadLocal"
         annotation Foo
         end
 
@@ -1054,8 +1052,7 @@ describe "Semantic: annotation" do
           @[Foo]
           @@x = 0
         end
-      ),
-        "class variables can only be annotated with ThreadLocal"
+        CRYSTAL
     end
 
     it "adds annotation on def" do
@@ -1118,15 +1115,14 @@ describe "Semantic: annotation" do
     end
 
     it "errors if using invalid annotation on fun" do
-      assert_error %(
+      assert_error <<-CRYSTAL, "funs can only be annotated with: NoInline, AlwaysInline, Naked, ReturnsTwice, Raises, CallConvention"
         annotation Foo
         end
 
         @[Foo]
         fun foo : Void
         end
-      ),
-        "funs can only be annotated with: NoInline, AlwaysInline, Naked, ReturnsTwice, Raises, CallConvention"
+        CRYSTAL
     end
 
     it "doesn't carry link annotation from lib to fun" do
@@ -1228,7 +1224,7 @@ describe "Semantic: annotation" do
   end
 
   it "errors when annotate instance variable in subclass" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't annotate @x in Child because it was first defined in Base"
       annotation Foo
       end
 
@@ -1240,12 +1236,11 @@ describe "Semantic: annotation" do
         @[Foo]
         @x : Nil
       end
-      ),
-      "can't annotate @x in Child because it was first defined in Base"
+      CRYSTAL
   end
 
   it "errors if wanting to add type inside annotation (1) (#8614)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't declare type inside annotation Ann"
       annotation Ann
       end
 
@@ -1253,12 +1248,11 @@ describe "Semantic: annotation" do
       end
 
       Ann::Foo.new
-      ),
-      "can't declare type inside annotation Ann"
+      CRYSTAL
   end
 
   it "errors if wanting to add type inside annotation (2) (#8614)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't declare type inside annotation Ann"
       annotation Ann
       end
 
@@ -1266,8 +1260,7 @@ describe "Semantic: annotation" do
       end
 
       Ann::Foo::Bar.new
-      ),
-      "can't declare type inside annotation Ann"
+      CRYSTAL
   end
 
   it "doesn't bleed annotation from class into class variable (#8314)" do

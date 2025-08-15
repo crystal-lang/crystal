@@ -43,12 +43,11 @@ describe "Semantic: if" do
   end
 
   it "errors if requires inside if" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't require dynamically"
       if 1 == 2
         require "foo"
       end
-      ),
-      "can't require dynamically"
+      CRYSTAL
   end
 
   it "correctly filters type of variable if there's a raise with an interpolation that can't be typed" do
@@ -133,7 +132,7 @@ describe "Semantic: if" do
   end
 
   it "doesn't restrict with || on different vars" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined method"
       struct Int32
         def foo
           1
@@ -151,12 +150,11 @@ describe "Semantic: if" do
       if a.is_a?(Int32) || b.is_a?(Char)
         a.foo + b.bar
       end
-      ),
-      "undefined method"
+      CRYSTAL
   end
 
   it "doesn't restrict with || on var and non-restricting condition" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined method"
       struct Int32
         def foo
           1
@@ -167,8 +165,7 @@ describe "Semantic: if" do
       if a.is_a?(Int32) || 1 == 2
         a.foo
       end
-      ),
-      "undefined method"
+      CRYSTAL
   end
 
   it "restricts with || but doesn't unify types to base class" do

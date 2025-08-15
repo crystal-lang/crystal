@@ -69,14 +69,13 @@ describe "Semantic: tuples" do
     end
 
     it "gives error when indexing out of range on empty tuple" do
-      assert_error %(
+      assert_error <<-CRYSTAL, "index '0' out of bounds for empty tuple"
         def tuple(*args)
           args
         end
 
         tuple()[0]
-        ),
-        "index '0' out of bounds for empty tuple"
+        CRYSTAL
     end
   end
 
@@ -287,21 +286,19 @@ describe "Semantic: tuples" do
     end
 
     it "gives error when begin index is out of range" do
-      assert_error %(
+      assert_error <<-CRYSTAL, "begin index out of bounds for Tuple(Int32, Char) (3 not in -2..2)"
         #{range_new}
 
         {1, 'a'}[3..0]
-        ),
-        "begin index out of bounds for Tuple(Int32, Char) (3 not in -2..2)"
+        CRYSTAL
 
-      assert_error %(
+      assert_error <<-CRYSTAL, "begin index out of bounds for Tuple(Int32, Char) (-3 not in -2..2)"
         #{range_new}
 
         {1, 'a'}[-3..0]
-        ),
-        "begin index out of bounds for Tuple(Int32, Char) (-3 not in -2..2)"
+        CRYSTAL
 
-      assert_error %(
+      assert_error <<-CRYSTAL, "begin index out of bounds for Tuple() (1 not in 0..0)"
         #{range_new}
 
         def tuple(*args)
@@ -309,8 +306,7 @@ describe "Semantic: tuples" do
         end
 
         tuple()[1..0]
-        ),
-        "begin index out of bounds for Tuple() (1 not in 0..0)"
+        CRYSTAL
     end
   end
 
@@ -329,10 +325,9 @@ describe "Semantic: tuples" do
   end
 
   it "gives error when using named args on Tuple" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can only use named arguments with NamedTuple"
       Tuple(x: Int32, y: Char)
-      ),
-      "can only use named arguments with NamedTuple"
+      CRYSTAL
   end
 
   it "doesn't error if Tuple has no args" do
@@ -357,7 +352,7 @@ describe "Semantic: tuples" do
   end
 
   it "errors on recursive splat expansion (#218)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "recursive splat expansion"
       def foo(*a)
         foo(a)
       end
@@ -366,12 +361,11 @@ describe "Semantic: tuples" do
       end
 
       foo("a", "b")
-      ),
-      "recursive splat expansion"
+      CRYSTAL
   end
 
   it "errors on recursive splat expansion (1) (#361)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "recursive splat expansion"
       require "prelude"
 
       def foo(type, *args)
@@ -379,12 +373,11 @@ describe "Semantic: tuples" do
       end
 
       foo "foo", 1
-      ),
-      "recursive splat expansion"
+      CRYSTAL
   end
 
   it "errors on recursive splat expansion (2) (#361)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "recursive splat expansion"
       class Foo(T)
       end
 
@@ -393,8 +386,7 @@ describe "Semantic: tuples" do
       end
 
       foo "foo", 1
-      ),
-      "recursive splat expansion"
+      CRYSTAL
   end
 
   it "doesn't trigger recursive splat expansion error (#7164)" do
@@ -529,25 +521,23 @@ describe "Semantic: tuples" do
   end
 
   it "errors if using two splat indices on restriction" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't specify more than one splat in restriction"
       def foo(x : Tuple(*A, *B)) forall A, B
       end
 
       foo({1, 'a'})
-      ),
-      "can't specify more than one splat in restriction"
+      CRYSTAL
   end
 
   it "errors on tuple too big (#3816)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "tuple size cannot be greater than 300 (size is 302)"
       require "prelude"
 
       pos = {0, 0}
       while true
         pos += {0, 0}
       end
-      ),
-      "tuple size cannot be greater than 300 (size is 302)"
+      CRYSTAL
   end
 
   it "errors on named tuple too big" do
@@ -555,10 +545,9 @@ describe "Semantic: tuples" do
       333.times { |i| io << "key" << i << ": 0, " }
     end
 
-    assert_error %(
+    assert_error <<-CRYSTAL, "named tuple size cannot be greater than 300 (size is 333)"
       { #{named_tuple_keys} }
-      ),
-      "named tuple size cannot be greater than 300 (size is 333)"
+      CRYSTAL
   end
 
   it "doesn't unify tuple metaclasses (#5384)" do

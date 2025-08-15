@@ -19,13 +19,12 @@ describe "Semantic: splat" do
   end
 
   it "errors on zero args with named arg and splat" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "wrong number of arguments"
       def foo(x, y = 1, *z)
       end
 
       foo
-      ),
-      "wrong number of arguments"
+      CRYSTAL
   end
 
   it "redefines method with splat (bug #248)" do
@@ -47,29 +46,26 @@ describe "Semantic: splat" do
   end
 
   it "errors if splatting union" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "not yet supported"
       a = {1} || {1, 2}
       foo *a
-      ),
-      "not yet supported"
+      CRYSTAL
   end
 
   it "errors if splatting non-tuple type in call arguments" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "argument to splat must be a tuple, not Int32"
       foo *1
-      ),
-      "argument to splat must be a tuple, not Int32"
+      CRYSTAL
   end
 
   it "errors if splatting non-tuple type in return values" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "argument to splat must be a tuple, not Int32"
       def foo
         return *1
       end
 
       foo
-      ),
-      "argument to splat must be a tuple, not Int32"
+      CRYSTAL
   end
 
   it "forwards tuple with an extra argument" do
@@ -113,13 +109,12 @@ describe "Semantic: splat" do
   end
 
   it "errors if doesn't match splat with type restriction" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "no overload matches"
       def foo(*args : Int32)
       end
 
       foo 1, 2, 3, 'a'
-      ),
-      "no overload matches"
+      CRYSTAL
   end
 
   it "works if matches splat with type restriction" do
@@ -161,13 +156,12 @@ describe "Semantic: splat" do
   end
 
   it "errors if doesn't match splat with type restriction because of zero arguments" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "wrong number of arguments for 'foo' (given 0, expected 1+)"
       def foo(*args : Int32)
       end
 
       foo
-      ),
-      "wrong number of arguments for 'foo' (given 0, expected 1+)"
+      CRYSTAL
   end
 
   it "overloads with type restriction and splat (3)" do
@@ -315,7 +309,7 @@ describe "Semantic: splat" do
   end
 
   it "gives correct error when forwarding splat" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "wrong number of arguments for 'foo' (given 2, expected 1)"
       def foo(x : Int)
       end
 
@@ -324,12 +318,11 @@ describe "Semantic: splat" do
       end
 
       bar 'a', 1
-      ),
-      "wrong number of arguments for 'foo' (given 2, expected 1)"
+      CRYSTAL
   end
 
   it "gives correct error when forwarding splat (2)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to be Int, not Char"
       def foo(x : Int, y : Int, z : Int, w : Int)
       end
 
@@ -338,12 +331,11 @@ describe "Semantic: splat" do
       end
 
       bar 1, "a", 1.7
-      ),
-      "expected argument #1 to 'foo' to be Int, not Char"
+      CRYSTAL
   end
 
   it "doesn't crash on non-match (#2521)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "missing arguments: c, d"
       def test_func(a : String, *b, c, d)
       end
 
@@ -352,28 +344,25 @@ describe "Semantic: splat" do
       end
 
       test_func(val, 1, 2, 3, 4, 5)
-      ),
-      "missing arguments: c, d"
+      CRYSTAL
   end
 
   it "says no overload matches on type restrictions past the splat arg" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "missing arguments: a, b"
       def foo(*z, a : String, b : String)
       end
 
       foo(1, 2, 3, ("foo" || nil), ("bar" || nil))
-      ),
-      "missing arguments: a, b"
+      CRYSTAL
   end
 
   it "says missing argument because positional args don't match past splat" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "missing argument: z"
       def foo(x, *y, z)
       end
 
       foo 1, 2
-      ),
-      "missing argument: z"
+      CRYSTAL
   end
 
   it "allows default value after splat index" do
@@ -397,13 +386,12 @@ describe "Semantic: splat" do
   end
 
   it "uses bare *, doesn't let more args" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "no overload matches"
       def foo(x, *, y)
       end
 
       foo 10, 20, y: 30
-      ),
-      "no overload matches"
+      CRYSTAL
   end
 
   it "uses splat restriction" do
@@ -437,15 +425,14 @@ describe "Semantic: splat" do
   end
 
   it "uses splat restriction with concrete type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "no overload matches"
       struct Tuple(*T)
         def self.foo(*args : *T)
         end
       end
 
       Tuple(Int32, Char).foo(1, true)
-      ),
-      "no overload matches"
+      CRYSTAL
   end
 
   it "method with splat and optional named argument matches zero args call (#2746)" do
@@ -534,7 +521,7 @@ describe "Semantic: splat" do
   end
 
   it "doesn't match splat in generic type with unsplatted tuple (#10164)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #1 to 'method' to be Foo(Tuple(Int32, String)), not Foo(Int32, String)"
       class Foo(*T)
       end
 
@@ -544,8 +531,7 @@ describe "Semantic: splat" do
 
       foo = Foo(Int32, String).new
       method(foo)
-      ),
-      "expected argument #1 to 'method' to be Foo(Tuple(Int32, String)), not Foo(Int32, String)"
+      CRYSTAL
   end
 
   it "matches partially instantiated generic with splat in generic type" do
@@ -563,7 +549,7 @@ describe "Semantic: splat" do
   end
 
   it "errors with too few non-splat type arguments (1)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "wrong number of type vars for Foo(T, U, *V) (given 1, expected 2+)"
       class Foo(T, U, *V)
       end
 
@@ -572,12 +558,11 @@ describe "Semantic: splat" do
 
       foo = Foo(Int32, String).new
       method(foo)
-      ),
-      "wrong number of type vars for Foo(T, U, *V) (given 1, expected 2+)"
+      CRYSTAL
   end
 
   it "errors with too few non-splat type arguments (2)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "wrong number of type vars for Foo(T, U, *V) (given 1, expected 2+)"
       class Foo(T, U, *V)
       end
 
@@ -586,12 +571,11 @@ describe "Semantic: splat" do
 
       foo = Foo(Int32, String).new
       method(foo)
-      ),
-      "wrong number of type vars for Foo(T, U, *V) (given 1, expected 2+)"
+      CRYSTAL
   end
 
   it "errors with too many non-splat type arguments" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "wrong number of type vars for Foo(A) (given 2+, expected 1)"
       class Foo(A)
       end
 
@@ -600,12 +584,11 @@ describe "Semantic: splat" do
 
       foo = Foo(Int32).new
       method(foo)
-      ),
-      "wrong number of type vars for Foo(A) (given 2+, expected 1)"
+      CRYSTAL
   end
 
   it "errors if using two splat indices on restriction" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't specify more than one splat in restriction"
       class Foo(*T)
       end
 
@@ -615,8 +598,7 @@ describe "Semantic: splat" do
 
       foo = Foo(Int32, Char, String, Bool).new
       method(foo)
-      ),
-      "can't specify more than one splat in restriction"
+      CRYSTAL
   end
 
   it "matches with splat" do
@@ -739,14 +721,13 @@ describe "Semantic: splat" do
   end
 
   it "doesn't match free var type splats inside explicit Union" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to be Union(*T), not Int32"
       def foo(x : Union(*T)) forall T
         x
       end
 
       foo(1)
-      ),
-      "expected argument #1 to 'foo' to be Union(*T), not Int32"
+      CRYSTAL
   end
 
   describe Splat do

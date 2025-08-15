@@ -89,30 +89,30 @@ describe "Semantic: hooks" do
   end
 
   it "errors if wrong inherited params size" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "wrong number of parameters for macro 'inherited' (given 1, expected 0)"
       class Foo
         macro inherited(x)
         end
       end
-      ), "wrong number of parameters for macro 'inherited' (given 1, expected 0)"
+      CRYSTAL
   end
 
   it "errors if wrong included params size" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "wrong number of parameters for macro 'included' (given 1, expected 0)"
       module Foo
         macro included(x)
         end
       end
-      ), "wrong number of parameters for macro 'included' (given 1, expected 0)"
+      CRYSTAL
   end
 
   it "errors if wrong extended params size" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "wrong number of parameters for macro 'extended' (given 1, expected 0)"
       module Foo
         macro extended(x)
         end
       end
-      ), "wrong number of parameters for macro 'extended' (given 1, expected 0)"
+      CRYSTAL
   end
 
   it "types initializer in inherited" do
@@ -141,16 +141,16 @@ describe "Semantic: hooks" do
   end
 
   it "errors if wrong extended params length" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "wrong number of parameters for macro 'method_added' (given 0, expected 1)"
       class Foo
         macro method_added
         end
       end
-      ), "wrong number of parameters for macro 'method_added' (given 0, expected 1)"
+      CRYSTAL
   end
 
   it "includes error message in included hook (#889)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined macro method 'MacroId#unknown'"
       module Doable
         macro included
           def {{@type.name.unknown}}
@@ -162,8 +162,7 @@ describe "Semantic: hooks" do
       class BobWaa
         include Doable
       end
-      ),
-      "undefined macro method 'MacroId#unknown'"
+      CRYSTAL
   end
 
   it "does included macro for generic module" do
@@ -202,12 +201,12 @@ describe "Semantic: hooks" do
   end
 
   it "errors if wrong finished params length" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "wrong number of parameters for macro 'finished' (given 1, expected 0)"
       class Foo
         macro finished(x)
         end
       end
-      ), "wrong number of parameters for macro 'finished' (given 1, expected 0)"
+      CRYSTAL
   end
 
   it "types macro finished hook bug regarding initialize (#3964)" do

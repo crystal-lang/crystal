@@ -20,7 +20,7 @@ describe "Semantic: enum" do
   end
 
   it "disallows implicit conversion of int to enum" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to be Foo, not Int32"
       enum Foo
         A = 1
       end
@@ -29,8 +29,7 @@ describe "Semantic: enum" do
       end
 
       foo 1
-      ),
-      "expected argument #1 to 'foo' to be Foo, not Int32"
+      CRYSTAL
   end
 
   it "finds method in enum type" do
@@ -66,13 +65,12 @@ describe "Semantic: enum" do
   end
 
   it "errors if using a name twice" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "enum 'Foo' already contains a member named 'A'"
       enum Foo
         A
         A
       end
-      ),
-      "enum 'Foo' already contains a member named 'A'"
+      CRYSTAL
   end
 
   it "creates enum from value" do
@@ -134,7 +132,7 @@ describe "Semantic: enum" do
   end
 
   it "errors if reopen but not enum" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "Foo is not a enum, it's a class"
       class Foo
       end
 
@@ -142,12 +140,11 @@ describe "Semantic: enum" do
         A
         B
       end
-      ),
-      "Foo is not a enum, it's a class"
+      CRYSTAL
   end
 
   it "errors if reopen and tries to define constant" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't reopen enum and add more constants to it"
       enum Foo
         A
         B
@@ -156,8 +153,7 @@ describe "Semantic: enum" do
       enum Foo
         C
       end
-      ),
-      "can't reopen enum and add more constants to it"
+      CRYSTAL
   end
 
   it "has None value when defined as @[Flags]" do
@@ -200,23 +196,21 @@ describe "Semantic: enum" do
   end
 
   it "disallows redefining None to non-0 for @[Flags] enum" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "flags enum can't redefine None member to non-0"
       @[Flags]
       enum Foo
         None = 42
         Dummy
       end
-      ),
-      "flags enum can't redefine None member to non-0"
+      CRYSTAL
 
-    assert_error %(
+    assert_error <<-CRYSTAL, "flags enum can't redefine None member to non-0"
       @[Flags]
       enum Foo
         None    # 1
         Dummy
       end
-      ),
-      "flags enum can't redefine None member to non-0"
+      CRYSTAL
   end
 
   it "allows redefining None to 0 for @[Flags] enum" do
@@ -232,13 +226,12 @@ describe "Semantic: enum" do
   end
 
   it "disallows All value for @[Flags] enum" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "flags enum can't redefine All member"
       @[Flags]
       enum Foo
         All = 50
       end
-      ),
-      "flags enum can't redefine All member"
+      CRYSTAL
   end
 
   it "doesn't error when defining a non-flags enum with None or All" do
@@ -300,7 +293,7 @@ describe "Semantic: enum" do
   end
 
   it "errors if invoking private enum method" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "private method 'foo' called for Foo"
       enum Foo
         A
 
@@ -310,21 +303,19 @@ describe "Semantic: enum" do
       end
 
       Foo::A.foo
-      ),
-      "private method 'foo' called for Foo"
+      CRYSTAL
   end
 
   it "errors if enum value is too big for type (#678)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "invalid Int32: 2147486719"
       enum Foo
         A = 2147486719
       end
-      ),
-      "invalid Int32: 2147486719"
+      CRYSTAL
   end
 
   it "errors if using instance var inside enum (#991)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use instance variables inside enums (at enum Foo)"
       enum Foo
         A
 
@@ -334,8 +325,7 @@ describe "Semantic: enum" do
       end
 
       Foo::A.meth
-      ),
-      "can't use instance variables inside enums (at enum Foo)"
+      CRYSTAL
   end
 
   it "marks as flags with base type (#2185)" do
@@ -443,51 +433,46 @@ describe "Semantic: enum" do
   end
 
   it "errors if inheriting Enum (#3592)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't inherit Enum. Use the enum keyword to define enums"
       struct Foo < Enum
       end
-      ),
-      "can't inherit Enum. Use the enum keyword to define enums"
+      CRYSTAL
   end
 
   it "errors on enum without members (#3447)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "enum Foo must have at least one member"
       enum Foo
       end
-      ),
-      "enum Foo must have at least one member"
+      CRYSTAL
 
-    assert_error %(
+    assert_error <<-CRYSTAL, "enum Foo must have at least one member"
       @[Flags]
       enum Foo
         None = 0
       end
-      ),
-      "enum Foo must have at least one member"
+      CRYSTAL
   end
 
   it "errors if declaring type inside enum (#3127)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't declare type inside enum Foo"
       enum Foo
         A
       end
 
       class Foo::Bar
       end
-      ),
-      "can't declare type inside enum Foo"
+      CRYSTAL
   end
 
   it "errors if declaring type inside enum, nested (#3127)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't declare type inside enum"
       enum Foo
         A
       end
 
       class Foo::Bar::Baz
       end
-      ),
-      "can't declare type inside enum"
+      CRYSTAL
   end
 
   it "attaches annotation to enum method (#6690)" do
@@ -506,15 +491,14 @@ describe "Semantic: enum" do
   end
 
   it "errors if defining initialize in Enum (#7238)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "enums can't define an `initialize` method, try using `def self.new`"
       enum Foo
         FOO = 1
 
         def initialize
         end
       end
-      ),
-      "enums can't define an `initialize` method, try using `def self.new`"
+      CRYSTAL
   end
 
   it "can redefine Enum.new" do
@@ -532,22 +516,20 @@ describe "Semantic: enum" do
   end
 
   it "gives error on enum overflow" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "value of enum member V129 would overflow the base type Int8"
       enum Foo : Int8
         #{Array.new(129) { |i| "V#{i + 1}" }.join "\n"}
       end
-      ),
-      "value of enum member V129 would overflow the base type Int8"
+      CRYSTAL
   end
 
   it "gives error on flags enum overflow" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "value of enum member V9 would overflow the base type UInt8"
       @[Flags]
       enum Foo : UInt8
         #{Array.new(9) { |i| "V#{i + 1}" }.join "\n"}
       end
-      ),
-      "value of enum member V9 would overflow the base type UInt8"
+      CRYSTAL
   end
 
   it "gives error on enum overflow after a member with value" do

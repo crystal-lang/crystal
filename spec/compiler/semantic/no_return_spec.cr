@@ -135,7 +135,7 @@ describe "Semantic: NoReturn" do
   end
 
   it "computes NoReturn in a lazy way inside if then (#314) (5)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined method 'size' for Nil"
       require "prelude"
 
       a = 1
@@ -155,8 +155,7 @@ describe "Semantic: NoReturn" do
         x = 1
         a += 1
       end
-      ),
-      "undefined method 'size' for Nil"
+      CRYSTAL
   end
 
   it "computes NoReturn in a lazy way inside if else (#314) (1)" do
@@ -258,7 +257,7 @@ describe "Semantic: NoReturn" do
   end
 
   it "computes NoReturn in a lazy way inside if else (#314) (5)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined method 'size' for Nil"
       require "prelude"
 
       a = 1
@@ -278,8 +277,7 @@ describe "Semantic: NoReturn" do
         x = 1
         a += 1
       end
-      ),
-      "undefined method 'size' for Nil"
+      CRYSTAL
   end
 
   it "types exception handler as NoReturn if ensure is NoReturn" do

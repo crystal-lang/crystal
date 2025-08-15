@@ -84,7 +84,7 @@ describe "Semantic: extern struct" do
   end
 
   it "errors if using non-primitive for field type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "only primitive types, pointers, structs, unions, enums and tuples are allowed in extern struct declarations"
       class Bar
       end
 
@@ -92,12 +92,11 @@ describe "Semantic: extern struct" do
       struct Foo
         @x = uninitialized Bar
       end
-      ),
-      "only primitive types, pointers, structs, unions, enums and tuples are allowed in extern struct declarations"
+      CRYSTAL
   end
 
   it "errors if using non-primitive for field type via module" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "only primitive types, pointers, structs, unions, enums and tuples are allowed in extern struct declarations"
       class Bar
       end
 
@@ -109,12 +108,11 @@ describe "Semantic: extern struct" do
       struct Foo
         include Moo
       end
-      ),
-      "only primitive types, pointers, structs, unions, enums and tuples are allowed in extern struct declarations"
+      CRYSTAL
   end
 
   it "errors if using non-primitive type in constructor" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "only primitive types, pointers, structs, unions, enums and tuples are allowed in extern struct declarations"
       class Bar
       end
 
@@ -124,8 +122,7 @@ describe "Semantic: extern struct" do
           @x = Bar.new
         end
       end
-      ),
-      "only primitive types, pointers, structs, unions, enums and tuples are allowed in extern struct declarations"
+      CRYSTAL
   end
 
   it "declares extern union with no constructor" do

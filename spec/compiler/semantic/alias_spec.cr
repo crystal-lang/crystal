@@ -91,34 +91,30 @@ describe "Semantic: alias" do
   end
 
   it "errors if alias already defined" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "alias Alias is already defined"
       alias Alias = String
       alias Alias = Int32
-      ),
-      "alias Alias is already defined"
+      CRYSTAL
   end
 
   it "errors if alias is already defined as another type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't alias String because it's already defined as a class"
       alias String = Int32
-      ),
-      "can't alias String because it's already defined as a class"
+      CRYSTAL
   end
 
   it "errors if defining infinite recursive alias" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "infinite recursive definition of alias Alias"
       alias Alias = Alias
       Alias
-      ),
-      "infinite recursive definition of alias Alias"
+      CRYSTAL
   end
 
   it "errors if defining infinite recursive alias in union" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "infinite recursive definition of alias Alias"
       alias Alias = Int32 | Alias
       Alias
-      ),
-      "infinite recursive definition of alias Alias"
+      CRYSTAL
   end
 
   it "allows using generic type of recursive alias as restriction (#488)" do
@@ -149,7 +145,7 @@ describe "Semantic: alias" do
   end
 
   it "errors if trying to resolve type of recursive alias" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined constant Rec::A"
       class Foo(T)
         A = 1
       end
@@ -157,8 +153,7 @@ describe "Semantic: alias" do
       alias Rec = Int32 | Foo(Rec)
 
       Rec::A
-      ),
-      "undefined constant Rec::A"
+      CRYSTAL
   end
 
   %w(class module struct).each do |type|
@@ -234,19 +229,17 @@ describe "Semantic: alias" do
   end
 
   it "errors if declares alias inside if" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't declare alias dynamically"
       if 1 == 2
         alias Foo = Int32
       end
-      ),
-      "can't declare alias dynamically"
+      CRYSTAL
   end
 
   it "errors if trying to use typeof in alias" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use 'typeof' here"
       alias Foo = typeof(1)
-      ),
-      "can't use 'typeof' here"
+      CRYSTAL
   end
 
   it "can use .class in alias (#2835)" do
@@ -313,16 +306,15 @@ describe "Semantic: alias" do
   end
 
   it "doesn't find type parameter in alias (#3502)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined constant T"
       class A(T)
         alias B = A(T)
       end
-      ),
-      "undefined constant T"
+      CRYSTAL
   end
 
   it "doesn't crash by infinite recursion against type alias and generics (#5329)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't cast Foo(Int32) to Bar"
       class Foo(T)
         def initialize(@foo : T)
         end
@@ -331,7 +323,7 @@ describe "Semantic: alias" do
       alias Bar = Foo(Bar | Int32)
 
       Foo(Bar).new(Foo.new(1).as(Bar))
-    ), "can't cast Foo(Int32) to Bar"
+      CRYSTAL
   end
 
   it "can pass recursive alias to proc" do
