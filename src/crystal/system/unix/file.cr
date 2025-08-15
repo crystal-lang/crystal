@@ -155,27 +155,19 @@ module Crystal::System::File
   end
 
   def self.readlink(path, &) : String
-    buf = Bytes.new 256
-    # First pass at 256 bytes handles all normal occurrences in 1 system call.
-    # Second pass at 1024 bytes handles outliers?
-    # Third pass is the max or double what Linux/MacOS can store.
-    3.times do |iter|
-      bytesize = LibC.readlink(path, buf, buf.bytesize)
-      if bytesize == -1
-        if Errno.value.in?(Errno::EINVAL, Errno::ENOENT, Errno::ENOTDIR)
-          yield
-        end
-
-        raise ::File::Error.from_errno("Cannot read link", file: path)
-      elsif bytesize == buf.bytesize
-        break if iter >= 2
-        buf = Bytes.new(buf.bytesize * 4)
-      else
-        return String.new(buf.to_unsafe, bytesize)
+    buf = uninitialized UInt8[4096]
+    bytesize = LibC.readlink(path, buf, buf.size)
+    if bytesize == -1
+      if Errno.value.in?(Errno::EINVAL, Errno::ENOENT, Errno::ENOTDIR)
+        yield
       end
-    end
 
-    raise ::File::Error.from_os_error("Cannot read link", Errno::ENAMETOOLONG, file: path)
+      raise ::File::Error.from_errno("Cannot read link", file: path)
+    elsif bytesize == buf.size
+      raise ::File::Error.from_os_error("Cannot read link", Errno::ENAMETOOLONG, file: path)
+    else
+      return String.new(buf.to_unsafe, bytesize)
+    end
   end
 
   def self.rename(old_filename, new_filename) : ::File::Error?
