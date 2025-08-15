@@ -738,6 +738,88 @@ describe "Semantic: proc" do
       )) { proc_of(int32, float64) }
   end
 
+  it "gets pointer to lib fun with types" do
+    assert_type(<<-CRYSTAL) { proc_of(int32, float64) }
+      lib LibFoo
+        fun foo(x : Int32) : Float64
+      end
+
+      ->LibFoo.foo(Int32)
+      CRYSTAL
+  end
+
+  it "gets pointer to lib fun with compatible parameter types (1)" do
+    assert_type(<<-CRYSTAL) { proc_of(proc_of(float64), int32) }
+      lib LibFoo
+        fun foo(x : ->) : Int32
+      end
+
+      ->LibFoo.foo(-> Float64)
+      CRYSTAL
+  end
+
+  it "gets pointer to lib fun with compatible parameter types (2)" do
+    assert_type(<<-CRYSTAL) { proc_of(pointer_of(float64), int32) }
+      lib LibFoo
+        fun foo(x : Void*) : Int32
+      end
+
+      ->LibFoo.foo(Float64*)
+      CRYSTAL
+  end
+
+  it "gets pointer to lib fun with compatible `#to_unsafe` type" do
+    assert_type(<<-CRYSTAL) { proc_of(types["Foo"], float64) }
+      lib LibFoo
+        fun foo(x : Int32) : Float64
+      end
+
+      class Foo
+        def to_unsafe
+          1
+        end
+      end
+
+      ->LibFoo.foo(Foo)
+      CRYSTAL
+  end
+
+  it "gets pointer to variadic lib fun" do
+    assert_type(<<-CRYSTAL) { proc_of([int32, int16, int8, float64] of Type) }
+      lib LibFoo
+        fun foo(x : Int32, ...) : Float64
+      end
+
+      ->LibFoo.foo(Int32, Int16, Int8)
+      CRYSTAL
+  end
+
+  it "errors if pointer to lib fun has incompatible parameter type" do
+    assert_error <<-CRYSTAL, "argument 'x' of 'LibFoo#foo' must be Int32, not Foo (nor Char returned by 'Foo#to_unsafe')"
+      lib LibFoo
+        fun foo(x : Int32)
+      end
+
+      class Foo
+        def to_unsafe
+          'a'
+        end
+      end
+
+      ->LibFoo.foo(Foo)
+      CRYSTAL
+  end
+
+  it "errors if pointer to lib fun has incorrect number of parameters" do
+    assert_error <<-CRYSTAL, "wrong number of arguments for 'LibFoo#foo' (given 1, expected 2)"
+      lib LibFoo
+        fun foo(x : Int32, y : Int32)
+      end
+
+      ->LibFoo.foo(Int32)
+      CRYSTAL
+  end
+
   it "allows passing union including module to proc" do
     assert_type(%(
       module Moo
