@@ -384,7 +384,7 @@ describe "Semantic: class" do
   end
 
   it "type def does not reopen type from parent namespace (#11181)" do
-    assert_type <<-CR, inject_primitives: false { types["Baz"].types["Foo"].types["Bar"].metaclass }
+    assert_type <<-CRYSTAL, inject_primitives: false { types["Baz"].types["Foo"].types["Bar"].metaclass }
       class Foo::Bar
       end
 
@@ -394,7 +394,7 @@ describe "Semantic: class" do
       end
 
       Baz::Foo::Bar
-      CR
+      CRYSTAL
   end
 
   it "finds in global scope if includes module" do

@@ -1197,18 +1197,18 @@ describe "Restrictions" do
   end
 
   it "does not treat single path as free variable when given number (1) (#11859)" do
-    assert_error <<-CR, "expected argument #1 to 'Foo(1)#foo' to be Foo(1), not Foo(2)"
+    assert_error <<-CRYSTAL, "expected argument #1 to 'Foo(1)#foo' to be Foo(1), not Foo(2)"
       class Foo(T)
         def foo(x : Foo(T))
         end
       end
 
       Foo(1).new.foo(Foo(2).new)
-      CR
+      CRYSTAL
   end
 
   it "does not treat single path as free variable when given number (2) (#11859)" do
-    assert_error <<-CR, "expected argument #1 to 'foo' to be Foo(1), not Foo(2)"
+    assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to be Foo(1), not Foo(2)"
       X = 1
 
       class Foo(T)
@@ -1218,11 +1218,11 @@ describe "Restrictions" do
       end
 
       foo(Foo(2).new)
-      CR
+      CRYSTAL
   end
 
   it "matches number in bound free variable (#13605)" do
-    assert_type(<<-CR) { generic_class "Foo", 1.int32 }
+    assert_type(<<-CRYSTAL) { generic_class "Foo", 1.int32 }
       class Foo(T)
       end
 
@@ -1231,11 +1231,11 @@ describe "Restrictions" do
       end
 
       foo(Foo(1).new, Foo(1).new)
-      CR
+      CRYSTAL
   end
 
   it "sets number as unbound generic type var (#13110)" do
-    assert_type(<<-CR) { generic_class "Foo", 1.int32 }
+    assert_type(<<-CRYSTAL) { generic_class "Foo", 1.int32 }
       class Foo(T)
         def self.foo(x : Foo(T))
           x
@@ -1243,7 +1243,7 @@ describe "Restrictions" do
       end
 
       Foo.foo(Foo(1).new)
-      CR
+      CRYSTAL
   end
 
   it "restricts aliased typedef type (#9474)" do
