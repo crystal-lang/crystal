@@ -40,7 +40,7 @@ require "crystal/system/file"
 # tempfile = File.tempfile("foo")
 #
 # File.size(tempfile.path)                   # => 6
-# File.info(tempfile.path).modification_time # => 2015-10-20 13:11:12 UTC
+# File.info(tempfile.path).modification_time # => 2015-10-20 13:11:12Z
 # File.exists?(tempfile.path)                # => true
 # File.read_lines(tempfile.path)             # => ["foobar"]
 # ```
@@ -208,7 +208,7 @@ class File < IO::FileDescriptor
   # ```
   # File.write("foo", "foo")
   # File.info("foo").size              # => 3
-  # File.info("foo").modification_time # => 2015-09-23 06:24:19 UTC
+  # File.info("foo").modification_time # => 2015-09-23 06:24:19Z
   #
   # File.symlink("foo", "bar")
   # File.info("bar", follow_symlinks: false).type.symlink? # => true
