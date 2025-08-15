@@ -50,7 +50,7 @@ jobs:
             repository: http://dl-cdn.alpinelinux.org/alpine/edge/community
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Uninstall openssl and conflicts
         run: apk del openssl-dev openssl-libs-static libxml2-static
       - name: Install ${{ matrix.pkg }}

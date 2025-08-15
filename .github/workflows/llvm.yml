@@ -46,7 +46,7 @@ jobs:
     name: "LLVM ${{ matrix.llvm_version || 'Nightly' }}"
     steps:
       - name: Checkout Crystal source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install LLVM ${{ matrix.llvm_version || 'Nightly' }}
         run: |

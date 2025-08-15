@@ -34,7 +34,7 @@ jobs:
           - crystal_bootstrap_version: 1.17.1 # LATEST RELEASE
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Prepare System
         run: bin/ci prepare_system
@@ -52,7 +52,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Prepare System
         run: bin/ci prepare_system
@@ -70,7 +70,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Prepare System
         run: bin/ci prepare_system
@@ -91,7 +91,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Prepare System
         run: bin/ci prepare_system
@@ -107,10 +107,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout Actions Repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: Spell Check Repo
-      uses: crate-ci/typos@v1.35.2
+      uses: crate-ci/typos@v1.35.4
       env:
         CLICOLOR: 1
 
@@ -119,6 +119,6 @@ jobs:
     container: ghcr.io/crystal-ameba/ameba:sha-d861f4ed0f904e0ecdad11c26f98e968f7d95afa # 1.7.0-dev
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - run: ameba
