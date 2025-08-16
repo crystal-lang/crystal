@@ -2,7 +2,7 @@ require "spec"
 require "../../../src/compiler/crystal/formatter"
 
 private def assert_format(input, output = input, strict = false, flags = nil, file = __FILE__, line = __LINE__, focus = false)
-  it "formats #{input.inspect}", file, line, focus: focus do
+  it _description: "formats #{input.inspect}", _file: file, _line: line, _focus: focus do
     output = "#{output}\n" unless strict
     result = Crystal.format(input, flags: flags)
     unless result == output
