@@ -323,24 +323,7 @@ class Channel(T)
     receive_first channels, timeout: timeout
   end
 
-  # Returns the first available value received from the given *channels*, or
-  # raises `Channel::TimeoutError` if given a *timeout* that expires before a
-  # value is received.
-  #
-  # ```
-  # channels = [Channel(String).new(1), Channel(String).new(1)]
-  #
-  # channels[1].send "hello"
-  # value = Channel.receive_first channels # => receives "hello" from channels[1]
-  #
-  # begin
-  #   # will timeout after 1 second and raise Channel::TimeoutError because
-  #   # no channels are ready to receive
-  #   value = Channel.receive_first channels, timeout: 1.second
-  # rescue ex : Channel::TimeoutError
-  #   Log.error(exception: ex)
-  # end
-  # ```
+  # :ditto:
   def self.receive_first(channels : Enumerable(Channel), *, timeout : Time::Span? = nil)
     actions = channels.map(&.receive_select_action)
     actions = actions.to_a + [TimeoutAction.new(timeout)] unless timeout.nil?
@@ -372,24 +355,7 @@ class Channel(T)
     send_first value, channels, timeout: timeout
   end
 
-  # Sends the given *value* to the first channel ready to receive in *channels*,
-  # or raises `Channel::TimeoutError` if given a *timeout* that expires before
-  # a channel becomes ready to receive.
-  #
-  # ```
-  # channels = [Channel(String).new(1), Channel(String).new(1)]
-  #
-  # channels[0].send "hello"
-  # value = Channel.send_first "goodbye", channels # => sends "goodbye" to channels[1]
-  #
-  # begin
-  #   # will timeout after 1 second and raise Channel::TimeoutError because
-  #   # no channels are ready to receive
-  #   value = Channel.send_first "ciao", channels, timeout: 1.second
-  # rescue ex : Channel::TimeoutError
-  #   Log.error(exception: ex)
-  # end
-  # ```
+  # :ditto:
   def self.send_first(value, channels : Enumerable(Channel), *, timeout : Time::Span? = nil) : Nil
     actions = channels.map(&.send_select_action(value))
     actions = actions.to_a + [TimeoutAction.new(timeout)] unless timeout.nil?
