@@ -175,7 +175,7 @@ class HTTP::Server
   end
 
   # Sets the maximum permitted size for the request line in an HTTP request.
-  def max_request_line_size=(size : Int32)
+  def max_request_line_size=(size : Int32) : Int32
     @processor.max_request_line_size = size
   end
 
@@ -193,7 +193,7 @@ class HTTP::Server
   end
 
   # Sets the maximum permitted combined size for the headers in an HTTP request.
-  def max_headers_size=(size : Int32)
+  def max_headers_size=(size : Int32) : Int32
     @processor.max_headers_size = size
   end
 
@@ -537,7 +537,7 @@ class HTTP::Server
   end
 
   # Builds all handlers as the middleware for `HTTP::Server`.
-  def self.build_middleware(handlers, last_handler : (Context ->)? = nil)
+  def self.build_middleware(handlers : Indexable(HTTP::Handler), last_handler : (Context ->)? = nil) : HTTP::Handler
     raise ArgumentError.new "You must specify at least one HTTP Handler." if handlers.empty?
     0.upto(handlers.size - 2) { |i| handlers[i].next = handlers[i + 1] }
     handlers.last.next = last_handler if last_handler
