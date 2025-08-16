@@ -1,11 +1,11 @@
-require "../../spec_helper"
+require "../spec_helper"
 require "../../support/env"
 require "spec/helpers/iterate"
 
-private def assert_finds(search, results, relative_to = nil, path = __DIR__, file = __FILE__, line = __LINE__)
+private def assert_finds(search, results, relative_to = nil, path = File.expand_path(compiler_datapath("crystal_path")), file = __FILE__, line = __LINE__)
   it "finds #{search.inspect}", file, line do
-    results = results.map { |result| ::Path[__DIR__, result].normalize.to_s }
-    Dir.cd(__DIR__) do
+    results = results.map { |result| ::Path[path, result].normalize.to_s }
+    Dir.cd(File.expand_path(compiler_datapath("crystal_path"))) do
       crystal_path = Crystal::CrystalPath.new([path])
       matches = crystal_path.find search, relative_to: relative_to
       matches.should eq(results), file: file, line: line
@@ -13,9 +13,9 @@ private def assert_finds(search, results, relative_to = nil, path = __DIR__, fil
   end
 end
 
-private def assert_doesnt_find(search, relative_to = nil, path = __DIR__, expected_relative_to = nil, file = __FILE__, line = __LINE__)
+private def assert_doesnt_find(search, relative_to = nil, path = File.expand_path(compiler_datapath("crystal_path")), expected_relative_to = nil, file = __FILE__, line = __LINE__)
   it "doesn't finds #{search.inspect}", file, line do
-    Dir.cd(__DIR__) do
+    Dir.cd(File.expand_path(compiler_datapath("crystal_path"))) do
       crystal_path = Crystal::CrystalPath.new([path])
       error = expect_raises Crystal::CrystalPath::NotFoundError do
         crystal_path.find search, relative_to: relative_to
@@ -74,7 +74,7 @@ describe Crystal::CrystalPath do
 
   # For `require "foo"`:
   # 1. foo.cr (to find something in the standard library)
-  assert_finds "crystal_path_spec", ["crystal_path_spec.cr"]
+  assert_finds "simple", ["simple.cr"]
   # 2. foo/src/foo.cr (to find something in a shard)
   assert_finds "test_files", ["test_files/src/test_files.cr"]
 
