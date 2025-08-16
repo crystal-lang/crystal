@@ -96,8 +96,12 @@ else
   colorize = $(shell printf "\033[33m%s\033[0m\n" "$1" >&2)
 endif
 
-# When LLVM_VERSION < 18 we need $(LLVM_EXT_OBJ) as dependency.
-DEPS = $(if $(filter 1,$(shell expr $(firstword $(subst ., ,$(LLVM_VERSION)) 18) \< 18 2> /dev/null)),$(LLVM_EXT_OBJ),)
+DEPS = $(LLVM_EXT_OBJ)
+ifneq ($(LLVM_VERSION),)
+  ifeq ($(shell test $(firstword $(subst ., ,$(LLVM_VERSION))) -ge 18; echo $$?),0)
+    DEPS =
+  endif
+endif
 
 check_llvm_config = $(eval \
 	check_llvm_config := $(if $(LLVM_VERSION),\
@@ -158,8 +162,7 @@ docs: ## Generate standard library documentation
 crystal: $(O)/$(CRYSTAL_BIN) ## Build the compiler
 
 .PHONY: deps llvm_ext
-deps: ## Build dependencies
-	$(if $(DEPS),$(MAKE) $(DEPS),)
+deps: $(DEPS) ## Build dependencies
 llvm_ext: $(LLVM_EXT_OBJ)
 
 .PHONY: format
@@ -223,31 +226,31 @@ uninstall_docs: ## Uninstall docs from DESTDIR
 	rm -rf "$(DESTDIR)$(DOCDIR)/docs"
 	rm -rf "$(DESTDIR)$(DOCDIR)/examples"
 
-$(O)/all_spec$(EXE): deps $(SOURCES) $(SPEC_SOURCES)
+$(O)/all_spec$(EXE): $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	$(call check_llvm_config)
 	@mkdir -p $(O)
 	$(EXPORT_CC) $(EXPORTS) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/all_spec.cr
 
-$(O)/std_spec$(EXE): deps $(SOURCES) $(SPEC_SOURCES)
+$(O)/std_spec$(EXE): $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	$(call check_llvm_config)
 	@mkdir -p $(O)
 	$(EXPORT_CC) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/std_spec.cr
 
-$(O)/compiler_spec$(EXE): deps $(SOURCES) $(SPEC_SOURCES)
+$(O)/compiler_spec$(EXE): $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	$(call check_llvm_config)
 	@mkdir -p $(O)
 	$(EXPORT_CC) $(EXPORTS) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/compiler_spec.cr --release
 
-$(O)/primitives_spec$(EXE): $(O)/$(CRYSTAL_BIN) deps $(SOURCES) $(SPEC_SOURCES)
+$(O)/primitives_spec$(EXE): $(O)/$(CRYSTAL_BIN) $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@mkdir -p $(O)
 	$(EXPORT_CC) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/primitives_spec.cr
 
-$(O)/interpreter_spec$(EXE): deps $(SOURCES) $(SPEC_SOURCES)
+$(O)/interpreter_spec$(EXE): $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	$(eval interpreter=1)
 	@mkdir -p $(O)
 	$(EXPORT_CC) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/compiler/interpreter_spec.cr
 
-$(O)/$(CRYSTAL_BIN): deps $(SOURCES)
+$(O)/$(CRYSTAL_BIN): $(DEPS) $(SOURCES)
 	$(call check_llvm_config)
 	@mkdir -p $(O)
 	@# NOTE: USE_PCRE1 is only used for testing compatibility with legacy environments that don't provide libpcre2.
