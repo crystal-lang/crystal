@@ -80,6 +80,10 @@ module YAML
   # A.from_yaml("---\na: 1\n") # => A(@a=1, @b=1.0)
   # ```
   #
+  # NOTE: `YAML::Serializable` defines an internal constructor on any including
+  # type, which prevents the compiler from generating a default constructor,
+  # even when all instance variables have a default initializer.
+  #
   # ### Extensions: `YAML::Serializable::Strict` and `YAML::Serializable::Unmapped`.
   #
   # If the `YAML::Serializable::Strict` module is included, unknown properties in the YAML
