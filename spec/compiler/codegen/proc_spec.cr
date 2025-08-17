@@ -607,6 +607,101 @@ describe "Code gen: proc" do
       CRYSTAL
   end
 
+  it "gets proc to lib fun with parameter types" do
+    test_c(<<-C, <<-CRYSTAL, &.to_i.should eq(8))
+      #include <stdint.h>
+
+      int32_t foo(int32_t x, int32_t y) {
+        return x + y;
+      }
+      C
+      lib LibFoo
+        fun foo(x : Int32, y : Int32) : Int32
+      end
+
+      fn = ->LibFoo.foo(Int32, Int32)
+      fn.call(3, 5)
+      CRYSTAL
+  end
+
+  it "gets proc to lib fun with compatible parameter types" do
+    test_c(<<-C, <<-CRYSTAL, &.to_i.should eq(0x1235))
+      void *foo(void *x) {
+        return (void *)((char *)x + 1);
+      }
+      C
+      lib LibFoo
+        fun foo(x : Void*) : Void*
+      end
+
+      x = Pointer(UInt8).new(0x1234)
+      fn = ->LibFoo.foo(UInt8*)
+      fn.call(x).address
+      CRYSTAL
+  end
+
+  it "gets proc to lib fun with compatible `#to_unsafe` type" do
+    test_c(<<-C, <<-CRYSTAL, &.to_i.should eq(42))
+      #include <stdint.h>
+
+      int32_t foo(int32_t x) {
+        return x * 2;
+      }
+      C
+      lib LibFoo
+        fun foo(x : Int32) : Int32
+      end
+
+      class Foo
+        def to_unsafe
+          21
+        end
+      end
+
+      fn = ->LibFoo.foo(Foo)
+      fn.call(Foo.new)
+      CRYSTAL
+  end
+
+  it "gets proc to variadic lib fun with parameter types" do
+    test_c(<<-C, <<-CRYSTAL, &.to_i.should eq(1110))
+      #include <stdarg.h>
+      #include <stdint.h>
+
+      int32_t foo(int32_t n, ...) {
+        va_list args;
+        va_start(args, n);
+        int32_t sum = 0;
+        for (; n > 0; --n)
+          sum += va_arg(args, int32_t);
+        return sum;
+      }
+      C
+      lib LibFoo
+        fun foo(n : Int32, ...) : Int32
+      end
+
+      fn = ->LibFoo.foo(Int32, Int32, Int32, Int32)
+      fn.call(3, 10, 100, 1000)
+      CRYSTAL
+  end
+
+  it "gets same pointer from proc pointers to lib fun with compatible types" do
+    test_c(<<-C, <<-CRYSTAL, &.to_b.should be_true)
+      void foo(void *x) {
+      }
+      C
+      lib LibFoo
+        fun foo(x : Void*)
+      end
+
+      a = ->LibFoo.foo
+      b = ->LibFoo.foo(Void*)
+      c = ->LibFoo.foo(UInt8*)
+      a.pointer == b.pointer && a.pointer == c.pointer
+      CRYSTAL
+  end
+
   it "codegens proc to implicit self in constant (#647)" do
     run(<<-CRYSTAL).to_i.should eq(1)
       require "prelude"
