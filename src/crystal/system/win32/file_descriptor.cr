@@ -132,6 +132,7 @@ module Crystal::System::FileDescriptor
 
   private def system_close_on_exec=(close_on_exec)
     raise NotImplementedError.new("Crystal::System::FileDescriptor#system_close_on_exec=") if close_on_exec
+    false
   end
 
   private def system_closed? : Bool
