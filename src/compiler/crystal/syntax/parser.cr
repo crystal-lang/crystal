@@ -687,12 +687,7 @@ module Crystal
           end
 
           if @token.type.instance_var?
-            ivar_name = @token.value.to_s
-            end_location = token_end_location
-            next_token_skip_space
-
-            atomic = ReadInstanceVar.new(atomic, ivar_name).at(location)
-            atomic.end_location = end_location
+            atomic = parse_read_instance_var(atomic).at(location)
             next
           end
 
@@ -983,6 +978,17 @@ module Crystal
       end
 
       Not.new(atomic).at_end(end_location)
+    end
+
+    def parse_read_instance_var(atomic)
+      ivar_name = @token.value.to_s
+      end_location = token_end_location
+      next_token_skip_space
+
+      call = ReadInstanceVar.new(atomic, ivar_name)
+      call.end_location = end_location
+
+      call
     end
 
     def parse_atomic
@@ -1572,18 +1578,9 @@ module Crystal
           skip_space
         else
           next_token_skip_space
-
-          if @token.type.instance_var?
-            ivar_name = @token.value.to_s
-            end_location = token_end_location
-            next_token
-
-            call = ReadInstanceVar.new(obj, ivar_name).at(location)
-            call.end_location = end_location
-          end
         end
 
-        call ||= parse_call_block_arg_after_dot(obj)
+        call = parse_call_block_arg_after_dot(obj)
 
         block = Block.new([Var.new(block_arg_name)], call).at(location)
         end_location = call.end_location
@@ -1606,6 +1603,12 @@ module Crystal
 
     def parse_call_block_arg_after_dot(obj)
       location = @token.location
+
+      if @token.type.instance_var?
+        call = parse_read_instance_var(obj).at(location)
+        call = parse_atomic_method_suffix_special(call, location)
+        return call
+      end
 
       check AtomicWithMethodCheck
 
