@@ -43,15 +43,17 @@ class Log::Metadata
 
   protected def setup(@parent : Metadata?, entries : NamedTuple | Hash)
     @size = @overridden_size = entries.size
-    @max_total_size = @size + (@parent.try(&.max_total_size) || 0)
+    parent_size = (@parent.try(&.max_total_size) || 0)
+    @max_total_size = @size + parent_size
     ptr_entries = pointerof(@first)
 
+    # Use parent_size as offset to make room for parent entries when defragging
     if entries.is_a?(NamedTuple)
-      entries.each_with_index do |key, value, i|
+      entries.each_with_index(parent_size) do |key, value, i|
         ptr_entries[i] = {key: key, value: Value.to_metadata_value(value)}
       end
     else
-      entries.each_with_index do |(key, value), i|
+      entries.each_with_index(parent_size) do |(key, value), i|
         ptr_entries[i] = {key: key, value: Value.to_metadata_value(value)}
       end
     end
@@ -97,24 +99,39 @@ class Log::Metadata
     parent = @parent
     return if parent.nil?
 
-    total_size = @overridden_size
     ptr_entries = pointerof(@first)
-    next_free_entry = ptr_entries + @overridden_size
+    next_free_entry = ptr_entries
+    # Math to get @size from end
+    my_entries = ptr_entries + (@max_total_size - @size)
 
-    parent.each do |(key, value)|
-      overridden = false
-      @overridden_size.times do |i|
-        if ptr_entries[i][:key] == key
-          overridden = true
+    # Copy all parent entries to the beginning of "our" entries
+    parent_size = 0
+    parent.each_with_index do |(key, value), i|
+      next_free_entry.value = {key: key, value: value}
+      next_free_entry += 1
+      parent_size += 1
+    end
+
+    total_size = parent_size
+
+    # Move all of "our" entries, but overwrite parent if exists
+    @size.times do |i|
+      entry = my_entries[i]
+
+      overwritten = false
+      parent_size.times do |j|
+        if ptr_entries[j][:key] == entry[:key]
+          # Overwrite parent entry with our entry
+          ptr_entries[j] = {key: entry[:key], value: entry[:value]}
+          overwritten = true
           break
         end
       end
+      next if overwritten
 
-      unless overridden
-        next_free_entry.value = {key: key, value: value}
-        next_free_entry += 1
-        total_size += 1
-      end
+      next_free_entry.value = {key: entry[:key], value: entry[:value]}
+      next_free_entry += 1
+      total_size += 1
     end
 
     @size = total_size
@@ -153,8 +170,10 @@ class Log::Metadata
     parent = @parent
 
     ptr_entries = pointerof(@first)
+    # Math to get @size from end
+    my_entries = ptr_entries + (@max_total_size - @size)
     @size.times do |i|
-      return ptr_entries[i] if ptr_entries[i][:key] == key
+      return my_entries[i] if my_entries[i][:key] == key
     end
 
     return parent.find_entry(key) if parent

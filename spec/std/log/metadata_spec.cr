@@ -63,7 +63,7 @@ describe Log::Metadata do
 
   it "json" do
     m({a: 1}).to_json.should eq(%({"a":1}))
-    m({a: 1, b: 1}).extend({b: 2}).to_json.should eq(%({"b":2,"a":1}))
+    m({a: 1, b: 1}).extend({b: 2}).to_json.should eq(%({"a":1,"b":2}))
   end
 
   it "defrags" do
@@ -81,6 +81,14 @@ describe Log::Metadata do
     md.@max_total_size.should eq(2)
     md.@overridden_size.should eq(1)
     md.@parent.should be_nil
+  end
+
+  it "defrags deep" do
+    grandparent = m({x: 100, y: 200, z: 300})
+    parent = grandparent.extend({x: 101, a: 1, b: 2})
+    md = parent.extend({x: 102, b: 22, c: 3})
+
+    md.should eq(m({x: 102, y: 200, z: 300, a: 1, b: 22, c: 3}))
   end
 
   it "[]" do
