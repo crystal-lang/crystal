@@ -237,10 +237,9 @@ describe "Semantic: union" do
   end
 
   it "errors if instantiates union" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't create instance of a union type"
       Union(Int32, String).new
-      ),
-      "can't create instance of a union type"
+      CRYSTAL
   end
 
   it "finds method in Object" do

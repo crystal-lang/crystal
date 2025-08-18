@@ -832,17 +832,16 @@ describe "Restrictions" do
   end
 
   it "errors if using typeof" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use typeof in type restrictions"
       def foo(x : typeof(1))
       end
 
       foo(1)
-      ),
-      "can't use typeof in type restrictions"
+      CRYSTAL
   end
 
   it "errors if using typeof inside generic type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use typeof in type restrictions"
       class Gen(T)
       end
 
@@ -850,81 +849,75 @@ describe "Restrictions" do
       end
 
       foo(Gen(Int32).new)
-      ),
-      "can't use typeof in type restrictions"
+      CRYSTAL
   end
 
   it "errors if using typeof in block restriction" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use 'typeof' here"
       def foo(&x : typeof(1) -> )
         yield 1
       end
 
       foo {}
-      ),
-      "can't use 'typeof' here"
+      CRYSTAL
   end
 
   it "errors if using typeof in block restriction" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use typeof in type restriction"
       def foo(&x : -> typeof(1))
         yield
       end
 
       foo {}
-      ),
-      "can't use typeof in type restriction"
+      CRYSTAL
   end
 
   it "passes #278" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #1 to 'bar' to be String, not (Int32 | String)"
       def bar(x : String, y : String = nil)
       end
 
       bar(1 || "")
-      ),
-      "expected argument #1 to 'bar' to be String, not (Int32 | String)"
+      CRYSTAL
   end
 
   it "errors on T::Type that's union when used from type restriction" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined constant T::Baz"
       def foo(x : T) forall T
         T::Baz
       end
 
       foo(1 || 1.5)
-      ),
-      "undefined constant T::Baz"
+      CRYSTAL
   end
 
   it "errors on T::Type that's a union when used from block type restriction" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined constant T::Baz"
       class Foo(T)
         def self.foo(&block : T::Baz ->)
         end
       end
 
       Foo(Int32 | Float64).foo { 1 + 2 }
-      ),
-      "undefined constant T::Baz"
+      CRYSTAL
   end
 
   it "errors if can't find type on lookup" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined constant Something"
       def foo(x : Something)
       end
 
       foo 1
-      ), "undefined constant Something"
+      CRYSTAL
   end
 
   it "errors if can't find type on lookup with nested type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined constant Foo::Bar"
       def foo(x : Foo::Bar)
       end
 
       foo 1
-      ), "undefined constant Foo::Bar"
+      CRYSTAL
   end
 
   it "works with static array (#637)" do
@@ -1008,7 +1001,7 @@ describe "Restrictions" do
   end
 
   it "should not let GenericChild(Base) pass as a GenericBase(Child) (#1294)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to be GenericBase(Child), not GenericChild(Base)"
       class Base
       end
 
@@ -1025,8 +1018,7 @@ describe "Restrictions" do
       end
 
       foo GenericChild(Base).new
-      ),
-      "expected argument #1 to 'foo' to be GenericBase(Child), not GenericChild(Base)"
+      CRYSTAL
   end
 
   it "allows passing recursive type to free var (#1076)" do
@@ -1174,26 +1166,24 @@ describe "Restrictions" do
   end
 
   it "errors if using free var without forall" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined constant T"
       def foo(x : T)
         T
       end
 
       foo(1)
-      ),
-      "undefined constant T"
+      CRYSTAL
   end
 
   it "sets number as free variable (#2699)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #2 to 'foo' to be StaticArray(UInt8, 10), not StaticArray(UInt8, 11)"
       def foo(x : T[N], y : T[N]) forall T, N
       end
 
       x = uninitialized UInt8[10]
       y = uninitialized UInt8[11]
       foo(x, y)
-      ),
-      "expected argument #2 to 'foo' to be StaticArray(UInt8, 10), not StaticArray(UInt8, 11)"
+      CRYSTAL
   end
 
   it "does not treat single path as free variable when given number (1) (#11859)" do

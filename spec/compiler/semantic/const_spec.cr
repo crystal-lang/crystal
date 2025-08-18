@@ -193,7 +193,7 @@ describe "Semantic: const" do
   end
 
   it "finds current type only for first path item (1)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined constant Foo::Foo"
       class Foo
         def self.foo
           Foo::Foo
@@ -201,12 +201,11 @@ describe "Semantic: const" do
       end
 
       Foo.foo
-      ),
-      "undefined constant Foo::Foo"
+      CRYSTAL
   end
 
   it "finds current type only for first path item (2)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined constant Foo::Foo"
       class Foo
         class Foo
         end
@@ -217,8 +216,7 @@ describe "Semantic: const" do
       end
 
       Foo.foo
-      ),
-      "undefined constant Foo::Foo"
+      CRYSTAL
   end
 
   it "types a global constant reference in method" do
@@ -358,7 +356,7 @@ describe "Semantic: const" do
   end
 
   it "errors on dynamic constant assignment inside block" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't declare constant dynamically"
       def foo
         yield
       end
@@ -366,17 +364,15 @@ describe "Semantic: const" do
       foo do
         CONST = 1
       end
-      ),
-      "can't declare constant dynamically"
+      CRYSTAL
   end
 
   it "errors on dynamic constant assignment inside if" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't declare constant dynamically"
       if 1 == 1
         CONST = 1
       end
-      ),
-      "can't declare constant dynamically"
+      CRYSTAL
   end
 
   it "can use constant defined later (#2906)" do
@@ -399,60 +395,54 @@ describe "Semantic: const" do
   end
 
   it "errors if can't infer constant type (#3240, #3948)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't infer type of constant A"
       A = A.b
       A
-      ),
-      "can't infer type of constant A"
+      CRYSTAL
   end
 
   it "errors if using constant as generic type (#3240)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "Foo is not a type, it's a constant"
       Foo = Foo(Int32).new
       Foo
-      ),
-      "Foo is not a type, it's a constant"
+      CRYSTAL
   end
 
   it "errors if using const in type declaration" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "A is not a type, it's a constant"
       A = 1
 
       class Foo
         @x : A
       end
-      ),
-      "A is not a type, it's a constant"
+      CRYSTAL
   end
 
   it "errors if using const in uninitialized" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "A is not a type, it's a constant"
       A = 1
 
       x = uninitialized A
-      ),
-      "A is not a type, it's a constant"
+      CRYSTAL
   end
 
   it "errors if using const in var declaration" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "A is not a type, it's a constant"
       A = 1
 
       x : A
-      ),
-      "A is not a type, it's a constant"
+      CRYSTAL
   end
 
   it "errors if using const in restriction" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "A is not a type, it's a constant"
       A = 1
 
       def foo(x : A)
       end
 
       foo(1)
-      ),
-      "A is not a type, it's a constant"
+      CRYSTAL
   end
 
   it "errors if using const in proc notation parameter type" do
@@ -472,7 +462,7 @@ describe "Semantic: const" do
   end
 
   it "errors if using return inside constant value (#5391)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't return from constant", inject_primitives: true
       class Foo
         A = begin
           return if 1 == 2
@@ -480,12 +470,11 @@ describe "Semantic: const" do
       end
 
       Foo::A
-      ),
-      "can't return from constant", inject_primitives: true
+      CRYSTAL
   end
 
   it "errors if constant has NoReturn type (#6139)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "constant FOO has illegal type NoReturn"
       lib LibFoo
         fun foo : NoReturn
       end
@@ -493,7 +482,6 @@ describe "Semantic: const" do
       FOO = LibFoo.foo
 
       FOO
-      ),
-      "constant FOO has illegal type NoReturn"
+      CRYSTAL
   end
 end

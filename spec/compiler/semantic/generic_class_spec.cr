@@ -2,25 +2,23 @@ require "../../spec_helper"
 
 describe "Semantic: generic class" do
   it "errors if inheriting from generic when it is non-generic" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "Foo is not a generic type, it's a class"
       class Foo
       end
 
       class Bar < Foo(T)
       end
-      ),
-      "Foo is not a generic type, it's a class"
+      CRYSTAL
   end
 
   it "errors if inheriting from generic and incorrect number of type vars" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "wrong number of type vars for Foo(T) (given 2, expected 1)"
       class Foo(T)
       end
 
       class Bar < Foo(A, B)
       end
-      ),
-      "wrong number of type vars for Foo(T) (given 2, expected 1)"
+      CRYSTAL
   end
 
   it "inherits from generic with instantiation" do
@@ -373,7 +371,7 @@ describe "Semantic: generic class" do
   end
 
   it "error on T::Type with T a generic type that's a union" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined constant T::Bar"
       class Foo(T)
         def self.bar
           T::Bar
@@ -381,8 +379,7 @@ describe "Semantic: generic class" do
       end
 
       Foo(Char | String).bar
-      ),
-      "undefined constant T::Bar"
+      CRYSTAL
   end
 
   it "instantiates generic class with default argument in initialize (#394)" do
@@ -446,46 +443,41 @@ describe "Semantic: generic class" do
   end
 
   it "errors if inheriting generic type and not specifying type vars (#460)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "generic type arguments must be specified when inheriting Foo(T)"
       class Foo(T)
       end
 
       class Bar < Foo
       end
-      ),
-      "generic type arguments must be specified when inheriting Foo(T)"
+      CRYSTAL
   end
 
   %w(Object Value Reference Number Int Float Struct Class Proc Tuple Enum StaticArray Pointer).each do |type|
     it "errors if using #{type} in a generic type" do
-      assert_error %(
+      assert_error <<-CRYSTAL, "as generic type argument yet, use a more specific type"
         Pointer(#{type})
-        ),
-        "as generic type argument yet, use a more specific type"
+        CRYSTAL
     end
   end
 
   it "errors if using Number | String in a generic type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use Number in unions yet, use a more specific type"
       Pointer(Number | String)
-      ),
-      "can't use Number in unions yet, use a more specific type"
+      CRYSTAL
   end
 
   it "errors if using Number in alias" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use Number in unions yet, use a more specific type"
       alias Alias = Number | String
       Alias
-      ),
-      "can't use Number in unions yet, use a more specific type"
+      CRYSTAL
   end
 
   it "errors if using Number in recursive alias" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use Number in unions yet, use a more specific type"
       alias Alias = Number | Pointer(Alias)
       Alias
-      ),
-      "can't use Number in unions yet, use a more specific type"
+      CRYSTAL
   end
 
   it "finds generic type argument from method with default value" do
@@ -569,28 +561,25 @@ describe "Semantic: generic class" do
   end
 
   it "errors if passing integer literal to Proc as generic argument (#1120)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "argument to Proc must be a type, not 32"
       Proc(32)
-      ),
-      "argument to Proc must be a type, not 32"
+      CRYSTAL
   end
 
   it "errors if passing integer literal to Tuple as generic argument (#1120)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "argument to Tuple must be a type, not 32"
       Tuple(32)
-      ),
-      "argument to Tuple must be a type, not 32"
+      CRYSTAL
   end
 
   it "errors if passing integer literal to Union as generic argument" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "argument to Union must be a type, not 32"
       Union(32)
-      ),
-      "argument to Union must be a type, not 32"
+      CRYSTAL
   end
 
   it "disallow using a non-instantiated generic type as a generic type argument" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "use a more specific type"
       class Foo(T)
       end
 
@@ -598,12 +587,11 @@ describe "Semantic: generic class" do
       end
 
       Bar(Foo)
-      ),
-      "use a more specific type"
+      CRYSTAL
   end
 
   it "disallow using a non-instantiated module type as a generic type argument" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "use a more specific type"
       module Moo(T)
       end
 
@@ -611,12 +599,11 @@ describe "Semantic: generic class" do
       end
 
       Bar(Moo)
-      ),
-      "use a more specific type"
+      CRYSTAL
   end
 
   it "errors on too nested generic instance" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "generic type too nested"
       class Foo(T)
       end
 
@@ -625,12 +612,11 @@ describe "Semantic: generic class" do
       end
 
       foo
-      ),
-      "generic type too nested"
+      CRYSTAL
   end
 
   it "errors on too nested generic instance, with union type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "generic type too nested"
       class Foo(T)
       end
 
@@ -639,35 +625,32 @@ describe "Semantic: generic class" do
       end
 
       foo
-      ),
-      "generic type too nested"
+      CRYSTAL
   end
 
   it "errors on too nested tuple instance" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "tuple type too nested"
       def foo
         {typeof(foo)}
       end
 
       foo
-      ),
-      "tuple type too nested"
+      CRYSTAL
   end
 
   it "gives helpful error message when generic type var is missing (#1526)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't infer the type parameter T for the generic class Foo(T). Please provide it explicitly"
       class Foo(T)
         def initialize(x)
         end
       end
 
       Foo.new(1)
-      ),
-      "can't infer the type parameter T for the generic class Foo(T). Please provide it explicitly"
+      CRYSTAL
   end
 
   it "gives helpful error message when generic type var is missing in block spec (#1526)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't infer the type parameter T for the generic class Foo(T). Please provide it explicitly"
       class Foo(T)
         def initialize(&block : T -> )
           block
@@ -675,8 +658,7 @@ describe "Semantic: generic class" do
       end
 
       Foo.new { |x| }
-      ),
-      "can't infer the type parameter T for the generic class Foo(T). Please provide it explicitly"
+      CRYSTAL
   end
 
   it "can define instance var forward declared (#962)" do
@@ -802,7 +784,7 @@ describe "Semantic: generic class" do
   # However, here we will be inserting a `Child2` inside a `Child1`,
   # which is totally incorrect.
   it "doesn't allow union of generic class with module to be assigned to a generic class with module (#2425)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "instance variable '@value' of Bar must be PluginContainer(Plugin), not PluginContainer(Foo)"
       module Plugin
       end
 
@@ -821,8 +803,7 @@ describe "Semantic: generic class" do
       end
 
       Bar.new(PluginContainer(Foo).new)
-      ),
-      "instance variable '@value' of Bar must be PluginContainer(Plugin), not PluginContainer(Foo)"
+      CRYSTAL
   end
 
   it "instantiates generic variadic class, accesses T from class method" do
@@ -1059,7 +1040,7 @@ describe "Semantic: generic class" do
   end
 
   it "doesn't crash when matching restriction against number literal (#3157)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #1 to 'Gen(3).new' to be T, not String"
       class Gen(T)
         @value : String?
 
@@ -1068,19 +1049,17 @@ describe "Semantic: generic class" do
       end
 
       Gen(3).new("a")
-      ),
-      "expected argument #1 to 'Gen(3).new' to be T, not String"
+      CRYSTAL
   end
 
   it "doesn't crash when matching restriction against number literal (2) (#3157)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected type, not NumberLiteral"
       class Cls(T)
         @a : T?
       end
 
       Cls(3).new
-      ),
-      "expected type, not NumberLiteral"
+      CRYSTAL
   end
 
   it "replaces type parameters for virtual types (#3235)" do
@@ -1160,7 +1139,7 @@ describe "Semantic: generic class" do
   end
 
   it "errors if invoking new on private new in generic type (#3485)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "private method 'new' called"
       class Foo(T)
         private def self.new
           super
@@ -1168,8 +1147,7 @@ describe "Semantic: generic class" do
       end
 
       Foo(String).new
-      ),
-      "private method 'new' called"
+      CRYSTAL
   end
 
   it "never types Path as virtual outside generic type parameter (#3989)" do
@@ -1221,24 +1199,22 @@ describe "Semantic: generic class" do
   end
 
   it "doesn't find T type parameter of current type in superclass (#4604)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined constant "
       class X(T)
         abstract class A(T); end
 
         class B < A(T)
         end
       end
-      ),
-      "undefined constant "
+      CRYSTAL
   end
 
   it "doesn't find unbound type parameter in main code inside generic type (#6168)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined constant T"
       class Foo(T)
         Foo(T)
       end
-      ),
-      "undefined constant T"
+      CRYSTAL
   end
 
   it "can use type var that resolves to number in restriction (#6502)" do
@@ -1294,7 +1270,7 @@ describe "Semantic: generic class" do
   end
 
   it "shows error due to generic instantiation (#7083)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "method Gen(String)#valid? must return Bool but it is returning Nil", inject_primitives: true
       abstract class Base
       end
 
@@ -1314,8 +1290,7 @@ describe "Semantic: generic class" do
       x.value.valid?
 
       Gen(String).new
-      ),
-      "method Gen(String)#valid? must return Bool but it is returning Nil", inject_primitives: true
+      CRYSTAL
   end
 
   it "resolves T through metaclass inheritance (#7914)" do
@@ -1340,10 +1315,9 @@ describe "Semantic: generic class" do
   end
 
   it "errors if splatting a non-tuple (#9853)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "argument to splat must be a tuple type, not Int32"
       Array(*Int32)
-      ),
-      "argument to splat must be a tuple type, not Int32"
+      CRYSTAL
   end
 
   it "correctly checks argument count when target type has a splat (#9855)" do

@@ -275,31 +275,28 @@ describe "Semantic: class" do
   end
 
   it "reports wrong number of arguments for initialize" do
-    assert_error "
+    assert_error <<-CRYSTAL, "wrong number of arguments"
       class Foo
         def initialize(x, y)
         end
       end
 
       f = Foo.new
-      ",
-      "wrong number of arguments"
+      CRYSTAL
   end
 
   it "reports can't instantiate abstract class on new" do
-    assert_error "
+    assert_error <<-CRYSTAL, "can't instantiate abstract class Foo"
       abstract class Foo; end
       Foo.new
-      ",
-      "can't instantiate abstract class Foo"
+      CRYSTAL
   end
 
   it "reports can't instantiate abstract class on allocate" do
-    assert_error "
+    assert_error <<-CRYSTAL, "can't instantiate abstract class Foo"
       abstract class Foo; end
       Foo.allocate
-      ",
-      "can't instantiate abstract class Foo"
+      CRYSTAL
   end
 
   it "doesn't lookup new in supermetaclass" do
@@ -522,21 +519,19 @@ describe "Semantic: class" do
   end
 
   it "errors if reading non-existent ivar" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't infer the type of instance variable '@y' of Foo"
       class Foo
       end
 
       foo = Foo.new
       foo.@y
-      ),
-      "can't infer the type of instance variable '@y' of Foo"
+      CRYSTAL
   end
 
   it "errors if reading ivar from non-ivar container" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use instance variables inside primitive types (at Int32)"
       1.@y
-      ),
-      "can't use instance variables inside primitive types (at Int32)"
+      CRYSTAL
   end
 
   it "reads an object instance var from a union type" do
@@ -559,7 +554,7 @@ describe "Semantic: class" do
   end
 
   it "says that instance vars are not allowed in metaclass" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "@instance_vars are not yet allowed in metaclasses: use @@class_vars instead"
       module Foo
         def self.foo
           @foo
@@ -567,12 +562,11 @@ describe "Semantic: class" do
       end
 
       Foo.foo
-      ),
-      "@instance_vars are not yet allowed in metaclasses: use @@class_vars instead"
+      CRYSTAL
   end
 
   it "doesn't use initialize from base class" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "wrong number of arguments for 'Bar.new' (given 1, expected 2)"
       class Foo
         def initialize(x)
         end
@@ -584,12 +578,11 @@ describe "Semantic: class" do
       end
 
       Bar.new(1)
-      ),
-      "wrong number of arguments for 'Bar.new' (given 1, expected 2)"
+      CRYSTAL
   end
 
   it "doesn't use initialize from base class with virtual type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "wrong number of arguments for 'Bar#initialize' (given 1, expected 2)", inject_primitives: true
       class Foo
         def initialize(x)
         end
@@ -602,21 +595,20 @@ describe "Semantic: class" do
 
       klass = 1 == 1 ? Foo : Bar
       klass.new(1)
-      ),
-      "wrong number of arguments for 'Bar#initialize' (given 1, expected 2)", inject_primitives: true
+      CRYSTAL
   end
 
   it "errors if using underscore in generic class" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use underscore as generic type argument"
       class Foo(T)
       end
 
       Foo(_).new
-      ), "can't use underscore as generic type argument"
+      CRYSTAL
   end
 
   it "types bug #168 (it inherits instance var even if not mentioned in initialize)" do
-    assert_error "
+    assert_error <<-CRYSTAL, "can't infer the type of instance variable '@x' of Foo"
       class Foo
         def foo
           x = @x
@@ -634,8 +626,7 @@ describe "Semantic: class" do
       end
 
       Bar.new(Foo.new).foo
-      ",
-      "can't infer the type of instance variable '@x' of Foo"
+      CRYSTAL
   end
 
   it "doesn't mark instance variable as nilable if calling another initialize" do
@@ -659,113 +650,103 @@ describe "Semantic: class" do
   end
 
   it "says wrong number of arguments for abstract class new" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "wrong number of arguments for 'Foo.new' (given 1, expected 0)"
       abstract class Foo
       end
 
       Foo.new(1)
-      ),
-      "wrong number of arguments for 'Foo.new' (given 1, expected 0)"
+      CRYSTAL
   end
 
   it "says wrong number of arguments for abstract class new (2)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "wrong number of arguments for 'Foo.new' (given 0, expected 1)"
       abstract class Foo
         def initialize(x)
         end
       end
 
       Foo.new
-      ),
-      "wrong number of arguments for 'Foo.new' (given 0, expected 1)"
+      CRYSTAL
   end
 
   it "can't reopen as struct" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "Foo is not a struct, it's a class"
       class Foo
       end
 
       struct Foo
       end
-      ),
-      "Foo is not a struct, it's a class"
+      CRYSTAL
   end
 
   it "can't reopen as module" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "Foo is not a module, it's a class"
       class Foo
       end
 
       module Foo
       end
-      ),
-      "Foo is not a module, it's a class"
+      CRYSTAL
   end
 
   it "errors if reopening non-generic class as generic" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "Foo is not a generic class"
       class Foo
       end
 
       class Foo(T)
       end
-      ),
-      "Foo is not a generic class"
+      CRYSTAL
   end
 
   it "errors if reopening generic class with different type vars" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "type var must be T, not U"
       class Foo(T)
       end
 
       class Foo(U)
       end
-      ),
-      "type var must be T, not U"
+      CRYSTAL
   end
 
   it "errors if reopening generic class with different type vars (2)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "type vars must be A, B, not C"
       class Foo(A, B)
       end
 
       class Foo(C)
       end
-      ),
-      "type vars must be A, B, not C"
+      CRYSTAL
   end
 
   it "errors if reopening generic class with different splat index" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "type var must be A, not *A"
       class Foo(A)
       end
 
       class Foo(*A)
       end
-      ),
-      "type var must be A, not *A"
+      CRYSTAL
   end
 
   it "errors if reopening generic class with different splat index (2)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "type var must be *A, not A"
       class Foo(*A)
       end
 
       class Foo(A)
       end
-      ),
-      "type var must be *A, not A"
+      CRYSTAL
   end
 
   it "errors if reopening generic class with different splat index (3)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "type vars must be *A, B, not A, *B"
       class Foo(*A, B)
       end
 
       class Foo(A, *B)
       end
-      ),
-      "type vars must be *A, B, not A, *B"
+      CRYSTAL
   end
 
   it "allows declaring a variable in an initialize and using it" do
@@ -804,7 +785,7 @@ describe "Semantic: class" do
   end
 
   it "can't use implicit initialize if defined in parent" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "wrong number of arguments for 'Bar.new' (given 0, expected 1)"
       class Foo
         def initialize(x)
         end
@@ -814,8 +795,7 @@ describe "Semantic: class" do
       end
 
       Bar.new
-      ),
-      "wrong number of arguments for 'Bar.new' (given 0, expected 1)"
+      CRYSTAL
   end
 
   it "doesn't error on new on abstract virtual type class" do
@@ -840,15 +820,14 @@ describe "Semantic: class" do
   end
 
   it "says no overload matches for class new" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #1 to 'Foo.new' to be Int32, not Char"
       class Foo
         def self.new(x : Int32)
         end
       end
 
       Foo.new 'a'
-      ),
-      "expected argument #1 to 'Foo.new' to be Int32, not Char"
+      CRYSTAL
   end
 
   it "correctly types #680" do
@@ -873,7 +852,7 @@ describe "Semantic: class" do
   end
 
   it "correctly types #680 (2)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "instance variable '@method' of Foo must be Int32, not Nil"
       class Foo
         def initialize(@method : Int32)
         end
@@ -890,8 +869,7 @@ describe "Semantic: class" do
       end
 
       Bar.new.method
-      ),
-      "instance variable '@method' of Foo must be Int32, not Nil"
+      CRYSTAL
   end
 
   it "can invoke method on abstract type without subclasses nor instances" do
@@ -950,28 +928,26 @@ describe "Semantic: class" do
   end
 
   it "errors if declares class inside if" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't declare class dynamically"
       if 1 == 2
         class Foo; end
       end
-      ),
-      "can't declare class dynamically"
+      CRYSTAL
   end
 
   it "can mark initialize as private" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "private method 'new' called for Foo"
       class Foo
         private def initialize
         end
       end
 
       Foo.new
-      ),
-      "private method 'new' called for Foo"
+      CRYSTAL
   end
 
   it "errors if creating instance before typing instance variable" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "instance variable '@x' of Foo must be Int32"
       class Foo
         Foo.new
 
@@ -981,12 +957,11 @@ describe "Semantic: class" do
           @x = false
         end
       end
-      ),
-      "instance variable '@x' of Foo must be Int32"
+      CRYSTAL
   end
 
   it "errors if assigning superclass to declared instance var" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "instance variable '@bar' of Main must be Bar"
       class Foo
       end
 
@@ -1002,8 +977,7 @@ describe "Semantic: class" do
       end
 
       Main.new
-      ),
-      "instance variable '@bar' of Main must be Bar"
+      CRYSTAL
   end
 
   it "hoists instance variable initializer" do
@@ -1038,7 +1012,7 @@ describe "Semantic: class" do
   end
 
   it "errors if using read-instance-var with non-typed variable" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't infer the type of instance variable '@foo' of Foo"
       class Foo
         def foo
           @foo
@@ -1047,8 +1021,7 @@ describe "Semantic: class" do
 
       f = Foo.new
       f.@foo
-      ),
-      "can't infer the type of instance variable '@foo' of Foo"
+      CRYSTAL
   end
 
   it "doesn't crash with top-level initialize (#2601)" do
@@ -1090,7 +1063,7 @@ describe "Semantic: class" do
   end
 
   it "errors if inheriting Gen(self) and there's no self (#2890)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "there's no self in this scope"
       class Gen(T)
         def self.t
           T
@@ -1101,8 +1074,7 @@ describe "Semantic: class" do
       end
 
       Bar.t
-      ),
-      "there's no self in this scope"
+      CRYSTAL
   end
 
   it "preserves order of instance vars (#3050)" do
@@ -1120,14 +1092,13 @@ describe "Semantic: class" do
   end
 
   it "errors if inherits from module" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "Moo is not a class, it's a module"
       module Moo
       end
 
       class Foo < Moo
       end
-      ),
-      "Moo is not a class, it's a module"
+      CRYSTAL
   end
 
   it "errors if inherits from metaclass" do
@@ -1152,13 +1123,12 @@ describe "Semantic: class" do
   end
 
   it "errors on no method found on abstract class, class method (#2241)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined method 'bar' for Foo.class"
       abstract class Foo
       end
 
       Foo.bar
-      ),
-      "undefined method 'bar' for Foo.class"
+      CRYSTAL
   end
 
   it "inherits self twice (#5495)" do

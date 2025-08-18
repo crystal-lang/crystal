@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Semantic: class var" do
   it "declares class variable" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #1 to 'Foo.x=' to be Int32, not Bool"
       class Foo
         @@x : Int32
         @@x = 1
@@ -13,12 +13,11 @@ describe "Semantic: class var" do
       end
 
       Foo.x = true
-      ),
-      "expected argument #1 to 'Foo.x=' to be Int32, not Bool"
+      CRYSTAL
   end
 
   it "declares class variable (2)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "class variable '@@x' of Foo is not nilable (it's Int32) so it must have an initializer"
       class Foo
         @@x : Int32
 
@@ -28,8 +27,7 @@ describe "Semantic: class var" do
       end
 
       Foo.x
-      ),
-      "class variable '@@x' of Foo is not nilable (it's Int32) so it must have an initializer"
+      CRYSTAL
   end
   it "types class var" do
     assert_type(<<-CRYSTAL) { int32 }
@@ -100,13 +98,12 @@ describe "Semantic: class var" do
   end
 
   it "errors if using self as type var but there's no self" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "there's no self in this scope"
       class Bar(T)
       end
 
       Bar(self).new
-      ),
-      "there's no self in this scope"
+      CRYSTAL
   end
 
   it "allows class var in primitive types (#612)" do
@@ -212,7 +209,7 @@ describe "Semantic: class var" do
   end
 
   it "says undefined class variable" do
-    assert_error "
+    assert_error <<-CRYSTAL, "can't infer the type of class variable '@@foo' of Foo"
       class Foo
         def self.foo
           @@foo
@@ -220,43 +217,39 @@ describe "Semantic: class var" do
       end
 
       Foo.foo
-      ",
-      "can't infer the type of class variable '@@foo' of Foo"
+      CRYSTAL
   end
 
   it "errors if using class variable at the top level" do
-    assert_error "
+    assert_error <<-CRYSTAL, "can't use class variables at the top level"
       @@foo = 1
       @@foo
-      ",
-      "can't use class variables at the top level"
+      CRYSTAL
   end
 
   it "errors when typing a class variable inside a method" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "declaring the type of a class variable must be done at the class level"
       def foo
         @@x : Int32
       end
 
       foo
-      ),
-      "declaring the type of a class variable must be done at the class level"
+      CRYSTAL
   end
 
   it "errors if using local variable in initializer" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined local variable or method 'a'"
       class Foo
         @@x : Int32
 
         a = 1
         @@x = a
       end
-      ),
-      "undefined local variable or method 'a'"
+      CRYSTAL
   end
 
   it "errors on undefined constant (1)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined constant Bar"
       class Foo
         def self.foo
           @@x = Bar.new
@@ -264,19 +257,17 @@ describe "Semantic: class var" do
       end
 
       Foo.foo
-      ),
-      "undefined constant Bar"
+      CRYSTAL
   end
 
   it "errors on undefined constant (2)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined constant Bar"
       class Foo
         @@x = Bar.new
       end
 
       Foo.foo
-      ),
-      "undefined constant Bar"
+      CRYSTAL
   end
 
   it "infers in multiple assign for tuple type (1)" do
@@ -302,22 +293,20 @@ describe "Semantic: class var" do
   end
 
   it "errors when using Class (#2605)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use Class as the type of class variable '@@class' of Foo, use a more specific type"
       class Foo
         def foo(@@class : Class)
         end
       end
-      ),
-      "can't use Class as the type of class variable '@@class' of Foo, use a more specific type"
+      CRYSTAL
   end
 
   it "gives correct error when trying to use Int as a class variable type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use Int as the type of a class variable yet, use a more specific type"
       class Foo
         @@x : Int
       end
-      ),
-      "can't use Int as the type of a class variable yet, use a more specific type"
+      CRYSTAL
   end
 
   it "can find class var in subclass" do
@@ -355,7 +344,7 @@ describe "Semantic: class var" do
   end
 
   it "errors if redefining class var type in subclass" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "class variable '@@x' of Bar is already defined as Int32 in Foo"
       class Foo
         @@x : Int32
       end
@@ -363,12 +352,11 @@ describe "Semantic: class var" do
       class Bar < Foo
         @@x : Float64
       end
-      ),
-      "class variable '@@x' of Bar is already defined as Int32 in Foo"
+      CRYSTAL
   end
 
   it "errors if redefining class var type in subclass, with guess" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "class variable '@@x' of Bar is already defined as Int32 in Foo"
       class Foo
         @@x = 1
       end
@@ -376,12 +364,11 @@ describe "Semantic: class var" do
       class Bar < Foo
         @@x = 'a'
       end
-      ),
-      "class variable '@@x' of Bar is already defined as Int32 in Foo"
+      CRYSTAL
   end
 
   it "errors if redefining class var type in included module" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "class variable '@@x' of Bar is already defined as Int32 in Moo"
       module Moo
         @@x : Int32
       end
@@ -391,8 +378,7 @@ describe "Semantic: class var" do
 
         @@x : Float64
       end
-      ),
-      "class variable '@@x' of Bar is already defined as Int32 in Moo"
+      CRYSTAL
   end
 
   it "declares uninitialized (#2935)" do
@@ -470,12 +456,11 @@ describe "Semantic: class var" do
   end
 
   it "errors if class variable not nilable without initializer" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "class variable '@@foo' of Foo is not nilable (it's Int32) so it must have an initializer"
       class Foo
         @@foo : Int32
       end
-      ),
-      "class variable '@@foo' of Foo is not nilable (it's Int32) so it must have an initializer"
+      CRYSTAL
   end
 
   it "can assign to class variable if this type can be up-casted to ancestors class variable type (#4869)" do

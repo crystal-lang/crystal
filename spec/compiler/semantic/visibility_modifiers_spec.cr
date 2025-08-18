@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Visibility modifiers" do
   it "disallows invoking private method" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "private method 'foo' called for Foo"
       class Foo
         private def foo
           1
@@ -10,12 +10,11 @@ describe "Visibility modifiers" do
       end
 
       Foo.new.foo
-      ),
-      "private method 'foo' called for Foo"
+      CRYSTAL
   end
 
   it "allows setting visibility modifier to macro" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "private method 'foo' called for Foo"
       class Object
         macro x
           def foo
@@ -28,12 +27,11 @@ describe "Visibility modifiers" do
       end
 
       Foo.new.foo
-      ),
-      "private method 'foo' called for Foo"
+      CRYSTAL
   end
 
   it "allows setting visibility modifier to macro that generates many methods (1)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "private method 'foo' called for Foo"
       class Object
         macro x
           def foo
@@ -49,12 +47,11 @@ describe "Visibility modifiers" do
       end
 
       Foo.new.foo
-      ),
-      "private method 'foo' called for Foo"
+      CRYSTAL
   end
 
   it "allows setting visibility modifier to macro that generates many methods (2)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "private method 'bar' called for Foo"
       class Object
         macro x
           def foo
@@ -70,8 +67,7 @@ describe "Visibility modifiers" do
       end
 
       Foo.new.bar
-      ),
-      "private method 'bar' called for Foo"
+      CRYSTAL
   end
 
   it "allows invoking private method from the same class" do
@@ -146,19 +142,18 @@ describe "Visibility modifiers" do
   end
 
   it "errors if invoking protected method from top-level" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "protected method 'foo' called for Foo"
       class Foo
         protected def foo
         end
       end
 
       Foo.new.foo
-      ),
-      "protected method 'foo' called for Foo"
+      CRYSTAL
   end
 
   it "errors if invoking protected method from non-subclass" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "protected method 'foo' called for Foo"
       class Foo
         protected def foo
         end
@@ -171,12 +166,11 @@ describe "Visibility modifiers" do
       end
 
       Bar.new.bar
-      ),
-      "protected method 'foo' called for Foo"
+      CRYSTAL
   end
 
   it "errors if invoking protected method from non-subclass, generated with macro that generates a macro" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "protected method 'foo' called for Foo"
       class Object
         macro y
           def foo
@@ -193,17 +187,15 @@ describe "Visibility modifiers" do
       end
 
       Foo.new.foo
-      ),
-      "protected method 'foo' called for Foo"
+      CRYSTAL
   end
 
   it "errors if applying visibility modifier to non-def or non-call" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't apply visibility modifier"
       class Foo
         private 1
       end
-      ),
-      "can't apply visibility modifier"
+      CRYSTAL
   end
 
   it "allows invoking protected from instance to class" do
@@ -223,7 +215,7 @@ describe "Visibility modifiers" do
   end
 
   it "automatically makes initialize be protected" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "protected method 'initialize' called for Foo"
       class Foo
         def initialize(x)
         end
@@ -231,8 +223,7 @@ describe "Visibility modifiers" do
 
       foo = Foo.new(1)
       foo.initialize(2)
-      ),
-      "protected method 'initialize' called for Foo"
+      CRYSTAL
   end
 
   it "allows invoking private setter with self" do
@@ -395,22 +386,20 @@ describe "Visibility modifiers" do
   end
 
   it "gives correct error on unknown call (#2838)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined local variable or method 'foo'"
       private foo
-      ),
-      "undefined local variable or method 'foo'"
+      CRYSTAL
   end
 
   it "defines protected initialize (#7501)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "protected method 'new' called for Foo.class"
       class Foo
         protected def initialize
         end
       end
 
       Foo.new
-      ),
-      "protected method 'new' called for Foo.class"
+      CRYSTAL
   end
 
   it "handles virtual types (#8561)" do

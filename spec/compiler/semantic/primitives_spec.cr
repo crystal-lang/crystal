@@ -62,13 +62,13 @@ describe "Semantic: primitives" do
   end
 
   it "errors when comparing void (#225)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined method '==' for Nil"
       lib LibFoo
         fun foo
       end
 
       LibFoo.foo == 1
-      ), "undefined method '==' for Nil"
+      CRYSTAL
   end
 
   it "correctly types first hash from type vars (bug)" do
@@ -95,33 +95,30 @@ describe "Semantic: primitives" do
   end
 
   it "extends from Number and doesn't find + method" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined method"
       struct Foo < Number
       end
 
       Foo.new + 1
-      ),
-      "undefined method"
+      CRYSTAL
   end
 
   it "extends from Number and doesn't find >= method" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined method"
       struct Foo < Number
       end
 
       Foo.new >= 1
-      ),
-      "undefined method"
+      CRYSTAL
   end
 
   it "extends from Number and doesn't find to_i method" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined method"
       struct Foo < Number
       end
 
       Foo.new.to_i
-      ),
-      "undefined method"
+      CRYSTAL
   end
 
   pending "types pointer of int" do
@@ -166,7 +163,7 @@ describe "Semantic: primitives" do
   end
 
   it "errors if using instance variable inside primitive type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use instance variables inside primitive types (at Int32)"
       struct Int32
         def meth
           puts @value
@@ -174,8 +171,7 @@ describe "Semantic: primitives" do
       end
 
       1.meth
-      ),
-      "can't use instance variables inside primitive types (at Int32)"
+      CRYSTAL
   end
 
   it "types @[Primitive] method" do
@@ -191,25 +187,23 @@ describe "Semantic: primitives" do
   end
 
   it "errors if @[Primitive] has no args" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected Primitive annotation to have one argument"
       struct Int32
         @[Primitive]
         def +(other : Int32) : Int32
         end
       end
-      ),
-      "expected Primitive annotation to have one argument"
+      CRYSTAL
   end
 
   it "errors if @[Primitive] has non-symbol arg" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected Primitive argument to be a symbol literal"
       struct Int32
         @[Primitive("foo")]
         def +(other : Int32) : Int32
         end
       end
-      ),
-      "expected Primitive argument to be a symbol literal"
+      CRYSTAL
   end
 
   it "allows @[Primitive] on method that has body" do

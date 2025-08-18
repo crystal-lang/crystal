@@ -34,7 +34,7 @@ describe "Semantic: c union" do
   end
 
   it "errors if setting closure" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't set closure as C union member"
       lib LibFoo
         union Bar
           x : ->
@@ -45,33 +45,30 @@ describe "Semantic: c union" do
 
       bar = LibFoo::Bar.new
       bar.x = -> { a }
-      ),
-      "can't set closure as C union member"
+      CRYSTAL
   end
 
   it "errors on empty c union (#633)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "empty unions are disallowed"
       lib LibFoo
         union Struct
         end
       end
-      ),
-      "empty unions are disallowed"
+      CRYSTAL
   end
 
   it "errors if using void in union field type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use Void as a union field type"
       lib LibFoo
         union Struct
           x : Void
         end
       end
-      ),
-      "can't use Void as a union field type"
+      CRYSTAL
   end
 
   it "errors if using void via typedef in union field type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use Void as a union field type"
       lib LibFoo
         type MyVoid = Void
 
@@ -79,7 +76,6 @@ describe "Semantic: c union" do
           x : MyVoid
         end
       end
-      ),
-      "can't use Void as a union field type"
+      CRYSTAL
   end
 end

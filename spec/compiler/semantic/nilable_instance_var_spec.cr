@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Semantic: nilable instance var" do
   it "says instance var was not initialized in all of the initialize methods" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "this 'initialize' doesn't explicitly initialize instance variable '@foo' of Foo, rendering it nilable"
       class Foo
         def initialize
           @foo = 1
@@ -17,12 +17,11 @@ describe "Semantic: nilable instance var" do
       end
 
       Foo.new.foo + 1
-      ),
-      "this 'initialize' doesn't explicitly initialize instance variable '@foo' of Foo, rendering it nilable"
+      CRYSTAL
   end
 
   it "says instance var was not initialized in all of the initialize methods (2)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't infer the type of instance variable '@foo' of Foo", inject_primitives: true
       abstract class Foo
         def foo
           @foo
@@ -42,12 +41,11 @@ describe "Semantic: nilable instance var" do
       p.value = Bar.new
       p.value = Baz.new
       p.value.foo + 1
-      ),
-      "can't infer the type of instance variable '@foo' of Foo", inject_primitives: true
+      CRYSTAL
   end
 
   it "says instance var was not initialized in all of the initialize methods, with var declaration" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "instance variable '@foo' of Foo was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported."
       class Foo
         @foo : Int32
 
@@ -57,12 +55,11 @@ describe "Semantic: nilable instance var" do
       end
 
       Foo.new.foo
-      ),
-      "instance variable '@foo' of Foo was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported."
+      CRYSTAL
   end
 
   it "says instance var was used before initialized" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "Instance variable '@foo' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
       class Foo
         def initialize
           @foo
@@ -75,12 +72,11 @@ describe "Semantic: nilable instance var" do
       end
 
       Foo.new.foo + 1
-      ),
-      "Instance variable '@foo' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
+      CRYSTAL
   end
 
   it "says instance var was used before initialized (2)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "Instance variable '@foo' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
       class Foo
         def initialize
           foo
@@ -93,12 +89,11 @@ describe "Semantic: nilable instance var" do
       end
 
       Foo.new.foo + 1
-      ),
-      "Instance variable '@foo' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
+      CRYSTAL
   end
 
   it "says self was used before instance var was initialized" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "'self' was used before initializing instance variable '@foo', rendering it nilable"
       def baz(x)
       end
 
@@ -114,12 +109,11 @@ describe "Semantic: nilable instance var" do
       end
 
       Foo.new.foo + 1
-      ),
-      "'self' was used before initializing instance variable '@foo', rendering it nilable"
+      CRYSTAL
   end
 
   it "says self was used before instance var was initialized (2)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "'self' was used before initializing instance variable '@foo', rendering it nilable"
       class Baz
         def self.baz(x)
         end
@@ -137,12 +131,11 @@ describe "Semantic: nilable instance var" do
       end
 
       Foo.new.foo + 1
-      ),
-      "'self' was used before initializing instance variable '@foo', rendering it nilable"
+      CRYSTAL
   end
 
   it "says self was used before instance var was initialized (3)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "'self' was used before initializing instance variable '@foo', rendering it nilable"
       class Foo
         def initialize
           a = self
@@ -155,12 +148,11 @@ describe "Semantic: nilable instance var" do
       end
 
       Foo.new.foo + 1
-      ),
-      "'self' was used before initializing instance variable '@foo', rendering it nilable"
+      CRYSTAL
   end
 
   it "finds type that doesn't initialize instance var (#1222)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "this 'initialize' doesn't initialize instance variable '@x' of Base, with Unreferenced < Base, rendering it nilable"
       class Base
         def initialize
           @x = 0
@@ -184,8 +176,7 @@ describe "Semantic: nilable instance var" do
       end
 
       Derived.new.use_x
-      ),
-      "this 'initialize' doesn't initialize instance variable '@x' of Base, with Unreferenced < Base, rendering it nilable"
+      CRYSTAL
   end
 
   it "doesn't consider as nil if initialized with catch-all" do
@@ -207,7 +198,7 @@ describe "Semantic: nilable instance var" do
   end
 
   it "marks instance var as nilable if assigned inside captured block (#1696)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "Instance variable '@foo' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
       def capture(&block)
         block
       end
@@ -223,12 +214,11 @@ describe "Semantic: nilable instance var" do
       end
 
       Foo.new.foo
-      ),
-      "Instance variable '@foo' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
+      CRYSTAL
   end
 
   it "marks instance var as nilable if assigned inside proc literal" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "Instance variable '@foo' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
       class Foo
         def initialize
           ->{ @foo = 1 }
@@ -240,7 +230,6 @@ describe "Semantic: nilable instance var" do
       end
 
       Foo.new.foo
-      ),
-      "Instance variable '@foo' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
+      CRYSTAL
   end
 end

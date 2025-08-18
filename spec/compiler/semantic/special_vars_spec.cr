@@ -37,10 +37,9 @@ describe "Semantic: special vars" do
     end
 
     it "errors if assigning #{name} at top level" do
-      assert_error %(
+      assert_error <<-CRYSTAL, "'#{name}' can't be assigned at the top level"
         #{name} = "hey"
-        ),
-        "'#{name}' can't be assigned at the top level"
+        CRYSTAL
     end
   end
 

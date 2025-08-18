@@ -61,7 +61,7 @@ describe "Semantic: module" do
   end
 
   it "includes generic module and errors in call" do
-    assert_error "
+    assert_error <<-CRYSTAL, "expected argument #1 to 'Bar#foo' to be Int, not Float64"
       module Foo(T)
         def foo(x : T)
           x
@@ -73,44 +73,40 @@ describe "Semantic: module" do
       end
 
       Bar.new.foo(1.5)
-      ",
-      "expected argument #1 to 'Bar#foo' to be Int, not Float64"
+      CRYSTAL
   end
 
   it "includes module but not generic" do
-    assert_error "
+    assert_error <<-CRYSTAL, "Foo is not a generic type"
       module Foo
       end
 
       class Bar
         include Foo(Int)
       end
-      ",
-      "Foo is not a generic type"
+      CRYSTAL
   end
 
   it "includes module but wrong number of arguments" do
-    assert_error "
+    assert_error <<-CRYSTAL, "wrong number of type vars for Foo(T, U) (given 1, expected 2)"
       module Foo(T, U)
       end
 
       class Bar
         include Foo(Int)
       end
-      ",
-      "wrong number of type vars for Foo(T, U) (given 1, expected 2)"
+      CRYSTAL
   end
 
   it "errors if including generic module and not specifying type vars" do
-    assert_error "
+    assert_error <<-CRYSTAL, "generic type arguments must be specified when including Foo(T)"
       module Foo(T)
       end
 
       class Bar
         include Foo
       end
-      ",
-      "generic type arguments must be specified when including Foo(T)"
+      CRYSTAL
   end
 
   it "includes generic module explicitly" do
@@ -130,7 +126,7 @@ describe "Semantic: module" do
   end
 
   it "includes generic module explicitly and errors" do
-    assert_error "
+    assert_error <<-CRYSTAL, "expected argument #1 to 'Bar(Int32)#foo' to be Int32, not Float64"
       module Foo(T)
         def foo(x : T)
           x
@@ -142,8 +138,7 @@ describe "Semantic: module" do
       end
 
       Bar(Int32).new.foo(1.5)
-      ",
-      "expected argument #1 to 'Bar(Int32)#foo' to be Int32, not Float64"
+      CRYSTAL
   end
 
   it "reports can't use instance variables inside module" do
@@ -291,7 +286,7 @@ describe "Semantic: module" do
   end
 
   it "includes generic module with self (check argument type, error)" do
-    assert_error "
+    assert_error <<-CRYSTAL, "expected argument #1 to 'Baz1#foo' to be Bar(Int32), not Baz2"
       module Foo(T)
         def foo(x : T)
           x
@@ -309,8 +304,7 @@ describe "Semantic: module" do
       end
 
       Baz1.new.foo Baz2.new
-      ",
-      "expected argument #1 to 'Baz1#foo' to be Bar(Int32), not Baz2"
+      CRYSTAL
   end
 
   it "includes generic module with self (check argument superclass type, success)" do
@@ -371,7 +365,7 @@ describe "Semantic: module" do
   end
 
   it "includes generic module with self (check return type, error)" do
-    assert_error "
+    assert_error <<-CRYSTAL, "method Baz#foo must return Bar(Float64) but it is returning Bar(Int32)"
       module Foo(T)
         def foo : T
           Bar(Int32).new
@@ -386,11 +380,11 @@ describe "Semantic: module" do
       end
 
       Baz.new.foo
-      ", "method Baz#foo must return Bar(Float64) but it is returning Bar(Int32)"
+      CRYSTAL
   end
 
   it "includes generic module with self (check return subclass type, error)" do
-    assert_error "
+    assert_error <<-CRYSTAL, "method Baz1#foo must return Bar(Int32) but it is returning Baz2"
       module Foo(T)
         def foo : T
           Baz2.new
@@ -408,11 +402,11 @@ describe "Semantic: module" do
       end
 
       Baz1.new.foo
-      ", "method Baz1#foo must return Bar(Int32) but it is returning Baz2"
+      CRYSTAL
   end
 
   it "includes module but can't access metaclass methods" do
-    assert_error "
+    assert_error <<-CRYSTAL, "undefined method 'foo'"
       module Foo
         def self.foo
           1
@@ -424,7 +418,7 @@ describe "Semantic: module" do
       end
 
       Bar.foo
-      ", "undefined method 'foo'"
+      CRYSTAL
   end
 
   it "extends a module" do
@@ -458,15 +452,15 @@ describe "Semantic: module" do
   end
 
   it "gives error when including self" do
-    assert_error "
+    assert_error <<-CRYSTAL, "cyclic include detected"
       module Foo
         include self
       end
-      ", "cyclic include detected"
+      CRYSTAL
   end
 
   it "gives error with cyclic include" do
-    assert_error "
+    assert_error <<-CRYSTAL, "cyclic include detected"
       module Foo
       end
 
@@ -477,27 +471,27 @@ describe "Semantic: module" do
       module Foo
         include Bar
       end
-      ", "cyclic include detected"
+      CRYSTAL
   end
 
   it "gives error when including self, generic module" do
-    assert_error "
+    assert_error <<-CRYSTAL, "cyclic include detected"
       module Foo(T)
         include self
       end
-      ", "cyclic include detected"
+      CRYSTAL
   end
 
   it "gives error when including instantiation of self, generic module" do
-    assert_error "
+    assert_error <<-CRYSTAL, "cyclic include detected"
       module Foo(T)
         include Foo(Int32)
       end
-      ", "cyclic include detected"
+      CRYSTAL
   end
 
   it "gives error with cyclic include, generic module" do
-    assert_error "
+    assert_error <<-CRYSTAL, "cyclic include detected"
       module Foo(T)
       end
 
@@ -508,11 +502,11 @@ describe "Semantic: module" do
       module Foo(T)
         include Bar(T)
       end
-      ", "cyclic include detected"
+      CRYSTAL
   end
 
   it "gives error with cyclic include between non-generic and generic module" do
-    assert_error "
+    assert_error <<-CRYSTAL, "cyclic include detected"
       module Foo
       end
 
@@ -523,11 +517,11 @@ describe "Semantic: module" do
       module Foo
         include Bar(Int32)
       end
-      ", "cyclic include detected"
+      CRYSTAL
   end
 
   it "gives error with cyclic include between non-generic and generic module (2)" do
-    assert_error "
+    assert_error <<-CRYSTAL, "cyclic include detected"
       module Bar(T)
       end
 
@@ -538,7 +532,7 @@ describe "Semantic: module" do
       module Bar(T)
         include Foo
       end
-      ", "cyclic include detected"
+      CRYSTAL
   end
 
   it "finds types close to included module" do
@@ -968,127 +962,119 @@ describe "Semantic: module" do
   end
 
   it "errors if declares module inside if" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't declare module dynamically"
       if 1 == 2
         module Foo; end
       end
-      ),
-      "can't declare module dynamically"
+      CRYSTAL
   end
 
   it "can't reopen as class" do
-    assert_error "
+    assert_error <<-CRYSTAL, "Foo is not a class, it's a module"
       module Foo
       end
 
       class Foo
       end
-      ", "Foo is not a class, it's a module"
+      CRYSTAL
   end
 
   it "can't reopen as struct" do
-    assert_error "
+    assert_error <<-CRYSTAL, "Foo is not a struct, it's a module"
       module Foo
       end
 
       struct Foo
       end
-      ", "Foo is not a struct, it's a module"
+      CRYSTAL
   end
 
   it "errors if reopening non-generic module as generic" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "Foo is not a generic module"
       module Foo
       end
 
       module Foo(T)
       end
-      ),
-      "Foo is not a generic module"
+      CRYSTAL
   end
 
   it "errors if reopening generic module with different type vars" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "type var must be T, not U"
       module Foo(T)
       end
 
       module Foo(U)
       end
-      ),
-      "type var must be T, not U"
+      CRYSTAL
   end
 
   it "errors if reopening generic module with different type vars (2)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "type vars must be A, B, not C"
       module Foo(A, B)
       end
 
       module Foo(C)
       end
-      ),
-      "type vars must be A, B, not C"
+      CRYSTAL
   end
 
   it "errors if reopening generic module with different splat index" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "type var must be A, not *A"
       module Foo(A)
       end
 
       module Foo(*A)
       end
-      ),
-      "type var must be A, not *A"
+      CRYSTAL
   end
 
   it "errors if reopening generic module with different splat index (2)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "type var must be *A, not A"
       module Foo(*A)
       end
 
       module Foo(A)
       end
-      ),
-      "type var must be *A, not A"
+      CRYSTAL
   end
 
   it "errors if reopening generic module with different splat index (3)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "type vars must be *A, B, not A, *B"
       module Foo(*A, B)
       end
 
       module Foo(A, *B)
       end
-      ),
-      "type vars must be *A, B, not A, *B"
+      CRYSTAL
   end
 
   it "uses :Module name for modules in errors" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined method 'new' for Moo:Module"
       module Moo; end
 
       Moo.new
-      ),
-      "undefined method 'new' for Moo:Module"
+      CRYSTAL
   end
 
   it "gives error when trying to instantiate with new" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined local variable or method 'allocate' for Moo:Module (modules cannot be instantiated)"
       module Moo
         def initialize
         end
       end
-      Moo.new),
-      "undefined local variable or method 'allocate' for Moo:Module (modules cannot be instantiated)"
+      Moo.new
+      CRYSTAL
   end
 
   it "gives error when trying to instantiate with allocate" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined method 'allocate' for Moo:Module (modules cannot be instantiated)"
       module Moo
         def initialize
         end
       end
-      Moo.allocate),
-      "undefined method 'allocate' for Moo:Module (modules cannot be instantiated)"
+      Moo.allocate
+      CRYSTAL
   end
 
   it "uses type declaration inside module" do
@@ -1114,7 +1100,7 @@ describe "Semantic: module" do
   end
 
   it "uses type declaration inside module and gives error" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "instance variable '@x' of Foo must be Int32, not Bool"
       module Moo
         @x : Int32
 
@@ -1136,12 +1122,11 @@ describe "Semantic: module" do
       end
 
       Foo.new.moo
-      ),
-      "instance variable '@x' of Foo must be Int32, not Bool"
+      CRYSTAL
   end
 
   it "uses type declaration inside module, recursive, and gives error" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "instance variable '@x' of Foo must be Int32"
       module Moo
         @x : Int32
 
@@ -1167,8 +1152,7 @@ describe "Semantic: module" do
       end
 
       Foo.new.moo
-      ),
-      "instance variable '@x' of Foo must be Int32"
+      CRYSTAL
   end
 
   it "initializes variable in module" do
@@ -1382,7 +1366,7 @@ describe "Semantic: module" do
   end
 
   it "doesn't lookup type in ancestor when matches in current type (#2982)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined constant Qux::Bar"
       module Foo
         module Qux
           class Bar
@@ -1396,8 +1380,7 @@ describe "Semantic: module" do
       include Foo
 
       Qux::Bar
-      ),
-      "undefined constant Qux::Bar"
+      CRYSTAL
   end
 
   it "can restrict module with module (#3029)" do
@@ -1495,7 +1478,7 @@ describe "Semantic: module" do
   end
 
   it "errors when extending module that defines instance vars (#4065)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't declare instance variables in Foo because Bar extends it"
       module Foo
         @x = 0
       end
@@ -1503,12 +1486,11 @@ describe "Semantic: module" do
       module Bar
         extend Foo
       end
-      ),
-      "can't declare instance variables in Foo because Bar extends it"
+      CRYSTAL
   end
 
   it "errors when extending module that defines instance vars (2) (#4065)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't declare instance variables in Foo because Bar extends it"
       module Foo
         @x : Int32?
       end
@@ -1516,12 +1498,11 @@ describe "Semantic: module" do
       module Bar
         extend Foo
       end
-      ),
-      "can't declare instance variables in Foo because Bar extends it"
+      CRYSTAL
   end
 
   it "errors when extending generic module that defines instance vars" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't declare instance variables in Foo(T) because Bar(T) extends it"
       module Foo(T)
         @x = 0
       end
@@ -1529,12 +1510,11 @@ describe "Semantic: module" do
       module Bar(T)
         extend Foo(T)
       end
-      ),
-      "can't declare instance variables in Foo(T) because Bar(T) extends it"
+      CRYSTAL
   end
 
   it "errors when extending generic module that defines instance vars (2)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't declare instance variables in Foo(T) because Bar(T) extends it"
       module Foo(T)
         @x : T?
       end
@@ -1542,12 +1522,11 @@ describe "Semantic: module" do
       module Bar(T)
         extend Foo(T)
       end
-      ),
-      "can't declare instance variables in Foo(T) because Bar(T) extends it"
+      CRYSTAL
   end
 
   it "errors when recursively extending module that defines instance vars" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't declare instance variables in Foo because Baz extends it"
       module Foo
         @x = 0
       end
@@ -1559,12 +1538,11 @@ describe "Semantic: module" do
       module Baz
         extend Bar
       end
-      ),
-      "can't declare instance variables in Foo because Baz extends it"
+      CRYSTAL
   end
 
   it "errors when recursively extending module that defines instance vars (2)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't declare instance variables in Foo because Baz extends it"
       module Foo
         @x : Int32?
       end
@@ -1576,34 +1554,31 @@ describe "Semantic: module" do
       module Baz
         extend Bar
       end
-      ),
-      "can't declare instance variables in Foo because Baz extends it"
+      CRYSTAL
   end
 
   it "errors when extending self and self defines instance vars (#9568)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't declare instance variables in Foo because Foo extends it"
       module Foo
         extend self
 
         @x = 0
       end
-      ),
-      "can't declare instance variables in Foo because Foo extends it"
+      CRYSTAL
   end
 
   it "errors when extending self and self defines instance vars (2) (#9568)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't declare instance variables in Foo because Foo extends it"
       module Foo
         extend self
 
         @x : Int32?
       end
-      ),
-      "can't declare instance variables in Foo because Foo extends it"
+      CRYSTAL
   end
 
   it "errors when extending self and self defines instance vars (3) (#9568)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't declare instance variables in Foo because Foo extends it"
       module Foo
         extend self
 
@@ -1611,12 +1586,11 @@ describe "Semantic: module" do
           @x = 0
         end
       end
-      ),
-      "can't declare instance variables in Foo because Foo extends it"
+      CRYSTAL
   end
 
   it "can't pass module class to virtual metaclass (#6113)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #1 to 'Gen(Foo.class).foo' to be Foo.class, not Moo:Module"
       module Moo
       end
 
@@ -1633,8 +1607,7 @@ describe "Semantic: module" do
       end
 
       Gen(Foo.class).foo(Moo)
-      ),
-      "expected argument #1 to 'Gen(Foo.class).foo' to be Foo.class, not Moo:Module"
+      CRYSTAL
   end
 
   it "extends module from generic class and calls class method (#7167)" do
@@ -1686,7 +1659,7 @@ describe "Semantic: module" do
   end
 
   it "doesn't look up initialize past module that defines initialize (#7007)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "wrong number of arguments"
       module Moo
         def initialize(x)
         end
@@ -1697,12 +1670,11 @@ describe "Semantic: module" do
       end
 
       Foo.new
-      ),
-      "wrong number of arguments"
+      CRYSTAL
   end
 
   it "gives helpful error message when generic type var is missing" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't infer the type parameter T for the generic module Foo(T). Please provide it explicitly"
       module Foo(T)
         def self.foo
           T.bar
@@ -1710,12 +1682,11 @@ describe "Semantic: module" do
       end
 
       Foo.foo
-      ),
-      "can't infer the type parameter T for the generic module Foo(T). Please provide it explicitly"
+      CRYSTAL
   end
 
   it "gives helpful error message when generic type var is missing in block spec" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't infer the type parameter T for the generic module Foo(T). Please provide it explicitly"
       module Foo(T)
         def self.foo(&block : T -> )
           block
@@ -1723,7 +1694,6 @@ describe "Semantic: module" do
       end
 
       Foo.foo { |x| }
-      ),
-      "can't infer the type parameter T for the generic module Foo(T). Please provide it explicitly"
+      CRYSTAL
   end
 end

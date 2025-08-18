@@ -74,51 +74,50 @@ describe "Semantic: struct" do
   end
 
   it "can't extend struct from class" do
-    assert_error "
+    assert_error <<-CRYSTAL, "can't make struct 'Foo' inherit class 'Reference'"
       struct Foo < Reference
       end
-      ", "can't make struct 'Foo' inherit class 'Reference'"
+      CRYSTAL
   end
 
   it "can't extend class from struct" do
-    assert_error "
+    assert_error <<-CRYSTAL, "can't make class 'Bar' inherit struct 'Foo'"
       struct Foo
       end
 
       class Bar < Foo
       end
-      ", "can't make class 'Bar' inherit struct 'Foo'"
+      CRYSTAL
   end
 
   it "can't reopen as class" do
-    assert_error "
+    assert_error <<-CRYSTAL, "Foo is not a class, it's a struct"
       struct Foo
       end
 
       class Foo
       end
-      ", "Foo is not a class, it's a struct"
+      CRYSTAL
   end
 
   it "can't reopen as module" do
-    assert_error "
+    assert_error <<-CRYSTAL, "Foo is not a module, it's a struct"
       struct Foo
       end
 
       module Foo
       end
-      ", "Foo is not a module, it's a struct"
+      CRYSTAL
   end
 
   it "can't extend struct from non-abstract struct" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't extend non-abstract struct Foo"
       struct Foo
       end
 
       struct Bar < Foo
       end
-      ),
-      "can't extend non-abstract struct Foo"
+      CRYSTAL
   end
 
   it "unifies type to virtual type" do
@@ -175,13 +174,12 @@ describe "Semantic: struct" do
   end
 
   it "errors if defining finalize for struct (#3840)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "structs can't have finalizers because they are not tracked by the GC"
       struct Foo
         def finalize
         end
       end
-      ),
-      "structs can't have finalizers because they are not tracked by the GC"
+      CRYSTAL
   end
 
   it "passes subtype check with generic module type on virtual type" do

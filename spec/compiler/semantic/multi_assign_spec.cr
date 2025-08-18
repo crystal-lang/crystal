@@ -47,30 +47,30 @@ describe "Semantic: multi assign" do
 
   context "strict_multi_assign" do
     it "errors if assigning tuple to fewer targets" do
-      assert_error %(
+      assert_error <<-CRYSTAL, "cannot assign Tuple(Int32, Int32, String) to 2 targets", flags: "strict_multi_assign"
         require "prelude"
 
         x = {1, 2, ""}
         a, b = x
-        ), "cannot assign Tuple(Int32, Int32, String) to 2 targets", flags: "strict_multi_assign"
+        CRYSTAL
     end
 
     pending "errors if assigning tuple to more targets" do
-      assert_error %(
+      assert_error <<-CRYSTAL, "cannot assign Tuple(Int32) to 2 targets", flags: "strict_multi_assign"
         require "prelude"
 
         x = {1}
         a, b = x
-        ), "cannot assign Tuple(Int32) to 2 targets", flags: "strict_multi_assign"
+        CRYSTAL
     end
 
     it "errors if assigning union of tuples to fewer targets" do
-      assert_error %(
+      assert_error <<-CRYSTAL, "cannot assign (Tuple(Int32, Int32, Int32) | Tuple(Int32, Int32, Int32, Int32)) to 2 targets", flags: "strict_multi_assign"
         require "prelude"
 
         x = true ? {1, 2, 3} : {4, 5, 6, 7}
         a, b = x
-        ), "cannot assign (Tuple(Int32, Int32, Int32) | Tuple(Int32, Int32, Int32, Int32)) to 2 targets", flags: "strict_multi_assign"
+        CRYSTAL
     end
 
     it "doesn't error if some type in union matches target count" do

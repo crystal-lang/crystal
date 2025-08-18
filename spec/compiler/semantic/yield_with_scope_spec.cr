@@ -125,7 +125,7 @@ describe "Semantic: yield with scope" do
   end
 
   it "errors if using instance variable at top level" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use instance variables at the top level"
       class Foo
         def foo
           with self yield
@@ -135,8 +135,7 @@ describe "Semantic: yield with scope" do
       Foo.new.foo do
         @foo
       end
-      ),
-      "can't use instance variables at the top level"
+      CRYSTAL
   end
 
   it "uses instance variable of enclosing scope" do
@@ -188,7 +187,7 @@ describe "Semantic: yield with scope" do
   end
 
   it "mentions with yield scope and current scope in error" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined local variable or method 'baz' for Int32 (with ... yield) and Foo (current scope)"
       def foo
         with 1 yield
       end
@@ -202,7 +201,6 @@ describe "Semantic: yield with scope" do
       end
 
       Foo.new.bar
-      ),
-      "undefined local variable or method 'baz' for Int32 (with ... yield) and Foo (current scope)"
+      CRYSTAL
   end
 end

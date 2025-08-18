@@ -95,20 +95,18 @@ describe "Semantic: named tuples" do
   end
 
   it "gives error when using named args on a type other than NamedTuple" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can only use named arguments with NamedTuple"
       class Foo(T)
       end
 
       Foo(x: Int32, y: Char)
-      ),
-      "can only use named arguments with NamedTuple"
+      CRYSTAL
   end
 
   it "gives error when using positional args with NamedTuple" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can only instantiate NamedTuple with named arguments"
       NamedTuple(Int32, Char)
-      ),
-      "can only instantiate NamedTuple with named arguments"
+      CRYSTAL
   end
 
   it "doesn't error if NamedTuple has no args" do
@@ -158,26 +156,24 @@ describe "Semantic: named tuples" do
   end
 
   it "doesn't match in type restriction" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to be NamedTuple(x: Int32, y: Int32), not NamedTuple(x: Int32, y: Char)"
       def foo(x : {x: Int32, y: Int32})
         1
       end
 
       foo({x: 1, y: 'a'})
-      ),
-      "expected argument #1 to 'foo' to be NamedTuple(x: Int32, y: Int32), not NamedTuple(x: Int32, y: Char)"
+      CRYSTAL
   end
 
   it "doesn't match type restriction with instance" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #1 to 'Foo(NamedTuple(a: Int32)).foo' to be NamedTuple(a: Int32), not NamedTuple(a: Float64)"
       class Foo(T)
         def self.foo(x : T)
         end
       end
 
       Foo({a: Int32}).foo({a: 1.1})
-      ),
-      "expected argument #1 to 'Foo(NamedTuple(a: Int32)).foo' to be NamedTuple(a: Int32), not NamedTuple(a: Float64)"
+      CRYSTAL
   end
 
   it "matches in type restriction and gets free var" do

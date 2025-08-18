@@ -16,14 +16,13 @@ describe "Semantic: cast" do
   end
 
   it "casts from pointer to generic class gives error" do
-    assert_error "
+    assert_error <<-CRYSTAL, "can't cast Pointer(Int32) to Foo(T)"
       class Foo(T)
       end
 
       a = 1
       pointerof(a).as(Foo)
-      ",
-      "can't cast Pointer(Int32) to Foo(T)"
+      CRYSTAL
   end
 
   it "casts from union to compatible union" do
@@ -107,26 +106,23 @@ describe "Semantic: cast" do
   end
 
   it "disallows casting int to pointer" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't cast Int32 to Pointer(Void)"
       1.as(Void*)
-      ),
-      "can't cast Int32 to Pointer(Void)"
+      CRYSTAL
   end
 
   it "disallows casting fun to pointer" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't cast Proc(Int32) to Pointer(Void)"
       f = ->{ 1 }
       f.as(Void*)
-      ),
-      "can't cast Proc(Int32) to Pointer(Void)"
+      CRYSTAL
   end
 
   it "disallows casting pointer to fun" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't cast Pointer(Void) to Proc(Int32)"
       a = uninitialized Void*
       a.as(-> Int32)
-      ),
-      "can't cast Pointer(Void) to Proc(Int32)"
+      CRYSTAL
   end
 
   it "doesn't error if casting to a generic type" do
@@ -177,13 +173,12 @@ describe "Semantic: cast" do
   end
 
   it "errors on cast inside a call that can't be instantiated" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't cast Int32 to Bool"
       def foo(x)
       end
 
       foo 1.as(Bool)
-      ),
-      "can't cast Int32 to Bool"
+      CRYSTAL
   end
 
   it "casts to target type even if can't infer casted value type (obsolete)" do
@@ -203,7 +198,7 @@ describe "Semantic: cast" do
   end
 
   it "should error if can't cast even if not instantiated" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't cast Foo to Bar"
       class Foo
       end
 
@@ -211,8 +206,7 @@ describe "Semantic: cast" do
       end
 
       Foo.new.as(Bar)
-      ),
-      "can't cast Foo to Bar"
+      CRYSTAL
   end
 
   it "can cast to metaclass (bug)" do
@@ -236,14 +230,13 @@ describe "Semantic: cast" do
   # Later we might want casting something to Object to have a meaning
   # similar to casting to Void*, but for now it's useless.
   it "disallows casting to Object (#815)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't cast to Object yet"
       nil.as(Object)
-      ),
-      "can't cast to Object yet"
+      CRYSTAL
   end
 
   it "doesn't allow upcast of generic type var (#996)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't cast Gen(Bar) to Gen(Foo)"
       class Foo
       end
 
@@ -255,7 +248,7 @@ describe "Semantic: cast" do
 
       Gen(Foo).new
       Gen(Bar).new.as(Gen(Foo))
-      ), "can't cast Gen(Bar) to Gen(Foo)"
+      CRYSTAL
   end
 
   it "allows casting NoReturn to any type (#2132)" do
@@ -269,26 +262,23 @@ describe "Semantic: cast" do
   end
 
   it "errors if casting nil to Object inside typeof (#2403)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't cast to Object yet"
       require "prelude"
 
       puts(typeof(nil.as(Object)))
-      ),
-      "can't cast to Object yet"
+      CRYSTAL
   end
 
   it "disallows casting to Reference" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't cast to Reference yet"
       "foo".as(Reference)
-      ),
-      "can't cast to Reference yet"
+      CRYSTAL
   end
 
   it "disallows casting to Class" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't cast to Class yet"
       nil.as(Class)
-      ),
-      "can't cast to Class yet"
+      CRYSTAL
   end
 
   it "can cast from Void* to virtual type (#3014)" do
@@ -333,7 +323,7 @@ describe "Semantic: cast" do
   end
 
   it "doesn't cast to unbound generic type (as) (#5927)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't cast Int32 to Gen(T)"
       class Gen(T)
         def foo
           sizeof(T)
@@ -348,8 +338,7 @@ describe "Semantic: cast" do
       Foo.new(Gen(Int32).new)
 
       1.as(Gen).foo
-      ),
-      "can't cast Int32 to Gen(T)"
+      CRYSTAL
   end
 
   it "doesn't cast to unbound generic type (as?) (#5927)" do

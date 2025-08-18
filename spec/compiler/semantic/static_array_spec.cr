@@ -23,10 +23,9 @@ describe "Semantic: static array" do
   end
 
   it "errors if trying to instantiate static array with N not an integer" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't instantiate StaticArray(T, N) with N = Int32 (N must be an integer)"
       x = uninitialized Char[Int32]
-      ),
-      "can't instantiate StaticArray(T, N) with N = Int32 (N must be an integer)"
+      CRYSTAL
 
     assert_error <<-CRYSTAL,
       StaticArray(UInt8, 1.2)
@@ -51,10 +50,9 @@ describe "Semantic: static array" do
   end
 
   it "errors on negative static array size" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't instantiate StaticArray(T, N) with N = -1 (N must be positive)"
       x = uninitialized Int32[-1]
-      ),
-      "can't instantiate StaticArray(T, N) with N = -1 (N must be positive)"
+      CRYSTAL
   end
 
   it "types static array new with size being a constant" do
@@ -117,14 +115,13 @@ describe "Semantic: static array" do
   end
 
   it "doesn't crash on restriction (#584)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't instantiate StaticArray(T, N) with N = Int32 (N must be an integer)"
       def foo(&block : Int32[Int32] -> Int32)
         block.call([0])
       end
 
       foo { |x| 0 }
-      ),
-      "can't instantiate StaticArray(T, N) with N = Int32 (N must be an integer)"
+      CRYSTAL
   end
 
   it "can match N type argument of static array (#1203)" do
@@ -150,38 +147,34 @@ describe "Semantic: static array" do
   end
 
   it "doesn't match other number type argument of static array (#1203)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #1 to 'fn' to be StaticArray(Int32, 11), not StaticArray(Int32, 10)"
       def fn(a : StaticArray(T, 11)) forall T
         10
       end
 
       n = uninitialized StaticArray(Int32, 10)
       fn(n)
-      ),
-      "expected argument #1 to 'fn' to be StaticArray(Int32, 11), not StaticArray(Int32, 10)"
+      CRYSTAL
   end
 
   it "doesn't crash on sizeof (#8858)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use sizeof(Int32) as a generic type argument"
       alias BadArray = Int32[sizeof(Int32)]
-    ),
-      "can't use sizeof(Int32) as a generic type argument"
+      CRYSTAL
   end
 
   it "doesn't crash on instance_sizeof (#8858)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use instance_sizeof(String) as a generic type argument"
       alias BadArray = Int32[instance_sizeof(String)]
-    ),
-      "can't use instance_sizeof(String) as a generic type argument"
+      CRYSTAL
   end
 
   it "doesn't crash on offsetof (#8858)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use offsetof(Foo, @foo) as a generic type argument"
       class Foo
         @foo : Int32 = 0
       end
       alias BadArray = Int32[offsetof(Foo, @foo)]
-    ),
-      "can't use offsetof(Foo, @foo) as a generic type argument"
+      CRYSTAL
   end
 end
