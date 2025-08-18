@@ -30,16 +30,13 @@ class Channel(T)
   # :nodoc:
   record UseDefault
 
-  class Error < Exception
-  end
-
-  class ClosedError < Error
+  class ClosedError < Exception
     def initialize(msg = "Channel is closed")
       super(msg)
     end
   end
 
-  class TimeoutError < Error
+  class TimeoutError < Exception
   end
 
   private module SenderReceiverCloseAction
