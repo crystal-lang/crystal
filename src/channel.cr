@@ -322,14 +322,7 @@ class Channel(T)
 
   # :ditto:
   def self.receive_first(channels : Enumerable(Channel), *, timeout : Time::Span? = nil)
-    actions = channels.map(&.receive_select_action)
-    if timeout.nil?
-      _, value = self.select(actions)
-    else
-      index, value = self.select(*actions, TimeoutAction.new(timeout))
-      raise TimeoutError.new if index == actions.size
-    end
-    value
+    self.select_action_first(channels.map(&.receive_select_action), timeout: timeout)
   end
 
   # Sends the given *value* to the first channel ready to receive in *channels*,
@@ -357,13 +350,17 @@ class Channel(T)
 
   # :ditto:
   def self.send_first(value, channels : Enumerable(Channel), *, timeout : Time::Span? = nil) : Nil
-    actions = channels.map(&.send_select_action(value))
+    self.select_action_first(channels.map(&.send_select_action(value)), timeout: timeout)
+  end
+
+  private def self.select_action_first(actions : Enumerable(SelectAction), *, timeout : Time::Span? = nil)
     if timeout.nil?
-      self.select(actions)
+      _, value = self.select(actions)
     else
-      index, _ = self.select(*actions, TimeoutAction.new(timeout))
+      index, value = self.select(*actions, TimeoutAction.new(timeout))
       raise TimeoutError.new if index == actions.size
     end
+    value
   end
 
   # :nodoc:
