@@ -605,7 +605,7 @@ class Time::Location
 
       it "handles value after last transition" do
         with_zoneinfo do
-          location = Location.load("America/Buenos_Aires")
+          location = Location.load("America/Argentina/Buenos_Aires")
           zone = location.lookup(Time.utc(5000, 1, 1))
           zone.name.should eq "-03"
           zone.offset.should eq -3 * 3600

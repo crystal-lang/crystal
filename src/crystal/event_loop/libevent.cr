@@ -118,9 +118,11 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
 
   def pipe(read_blocking : Bool?, write_blocking : Bool?) : {IO::FileDescriptor, IO::FileDescriptor}
     r, w = System::FileDescriptor.system_pipe
+    System::FileDescriptor.set_blocking(r, false) unless read_blocking
+    System::FileDescriptor.set_blocking(w, false) unless write_blocking
     {
-      IO::FileDescriptor.new(r, !!read_blocking),
-      IO::FileDescriptor.new(w, !!write_blocking),
+      IO::FileDescriptor.new(handle: r),
+      IO::FileDescriptor.new(handle: w),
     }
   end
 
@@ -325,23 +327,21 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
   end
 
   def evented_write(target, errno_msg : String, &) : Int32
-    begin
-      loop do
-        bytes_written = yield
-        if bytes_written != -1
-          return bytes_written.to_i32
-        end
-
-        if Errno.value == Errno::EAGAIN
-          target.evented_wait_writable do
-            raise IO::TimeoutError.new("Write timed out")
-          end
-        else
-          raise IO::Error.from_errno(errno_msg, target: target)
-        end
+    loop do
+      bytes_written = yield
+      if bytes_written != -1
+        return bytes_written.to_i32
       end
-    ensure
-      target.evented_resume_pending_writers
+
+      if Errno.value == Errno::EAGAIN
+        target.evented_wait_writable do
+          raise IO::TimeoutError.new("Write timed out")
+        end
+      else
+        raise IO::Error.from_errno(errno_msg, target: target)
+      end
     end
+  ensure
+    target.evented_resume_pending_writers
   end
 end

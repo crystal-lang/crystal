@@ -84,11 +84,13 @@ module Crystal
       llvm_context =
         {% if LibLLVM::IS_LT_110 %}
           LLVM::Context.new
-        {% else %}
+        {% elsif LibLLVM::IS_LT_210 %}
           begin
             ts_ctx = LLVM::Orc::ThreadSafeContext.new
             ts_ctx.context
           end
+        {% else %}
+          LLVM::Context.new(dispose_on_finalize: false)
         {% end %}
 
       visitor = CodeGenVisitor.new self, node, single_module: true, debug: debug, llvm_context: llvm_context
@@ -132,6 +134,10 @@ module Crystal
       {% else %}
         lljit_builder = LLVM::Orc::LLJITBuilder.new
         lljit = LLVM::Orc::LLJIT.new(lljit_builder)
+
+        {% unless LibLLVM::IS_LT_210 %}
+          ts_ctx = LLVM::Orc::ThreadSafeContext.new(llvm_context)
+        {% end %}
 
         dylib = lljit.main_jit_dylib
         dylib.link_symbols_from_current_process(lljit.global_prefix)
@@ -556,29 +562,10 @@ module Crystal
         mod.verify
       end
 
-      dump_type_id if ENV["CRYSTAL_DUMP_TYPE_ID"]? == "1"
-    end
-
-    private def dump_type_id
-      ids = @program.llvm_id.@ids.to_a
-      ids.sort_by! { |_, (min, max)| {min, -max} }
-
-      puts "CRYSTAL_DUMP_TYPE_ID"
-      parent_ids = [] of {Int32, Int32}
-      ids.each do |type, (min, max)|
-        while parent_id = parent_ids.last?
-          break if min >= parent_id[0] && max <= parent_id[1]
-          parent_ids.pop
-        end
-        indent = " " * (2 * parent_ids.size)
-
-        show_generic_args = type.is_a?(GenericInstanceType) ||
-                            type.is_a?(GenericClassInstanceMetaclassType) ||
-                            type.is_a?(GenericModuleInstanceMetaclassType)
-        puts "#{indent}{#{min} - #{max}}: #{type.to_s(generic_args: show_generic_args)}"
-        parent_ids << {min, max}
+      if type_info_path = ENV["CRYSTAL_DUMP_TYPE_INFO"]?.presence
+        dump_type_info(type_info_path)
       end
-      puts
+      dump_type_id if ENV["CRYSTAL_DUMP_TYPE_ID"]? == "1"
     end
 
     def visit(node : Annotation)
@@ -1785,21 +1772,25 @@ module Crystal
 
         # Now assign exp values to block arguments
         if splat_index
-          j = 0
+          exp_index = 0
           block.args.each_with_index do |arg, i|
-            block_var = block_context.vars[arg.name]
-            if i == splat_index
-              exp_value = allocate_tuple(arg.type.as(TupleInstanceType)) do
-                exp_value2, exp_type = exp_values[j]
-                j += 1
-                {exp_type, exp_value2}
+            if arg.name != "_"
+              block_var = block_context.vars[arg.name]
+              if i == splat_index
+                exp_value = allocate_tuple(arg.type.as(TupleInstanceType)) do
+                  exp_value2, exp_type = exp_values[exp_index]
+                  exp_index += 1
+                  {exp_type, exp_value2}
+                end
+                exp_type = arg.type
+              else
+                exp_value, exp_type = exp_values[exp_index]
+                exp_index += 1
               end
-              exp_type = arg.type
+              assign block_var.pointer, block_var.type, exp_type, exp_value
             else
-              exp_value, exp_type = exp_values[j]
-              j += 1
+              exp_index += (i == splat_index ? arg.type.as(TupleInstanceType).size : 1)
             end
-            assign block_var.pointer, block_var.type, exp_type, exp_value
           end
         else
           # Check if tuple unpacking is needed

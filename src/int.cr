@@ -578,7 +578,7 @@ struct Int
     x = self
     while true
       yield x
-      return if x == to
+      return unless x < to
       x += 1
     end
   end
@@ -607,7 +607,7 @@ struct Int
     x = self
     while true
       yield x
-      return if x == to
+      return unless x > to
       x -= 1
     end
   end

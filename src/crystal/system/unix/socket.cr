@@ -156,17 +156,25 @@ module Crystal::System::Socket
   end
 
   private def system_blocking?
-    fcntl(LibC::F_GETFL) & LibC::O_NONBLOCK == 0
+    Socket.get_blocking(fd)
   end
 
   private def system_blocking=(value)
-    flags = fcntl(LibC::F_GETFL)
+    Socket.set_blocking(fd, value)
+  end
+
+  def self.get_blocking(fd : Handle)
+    fcntl(fd, LibC::F_GETFL) & LibC::O_NONBLOCK == 0
+  end
+
+  def self.set_blocking(fd : Handle, value : Bool)
+    flags = fcntl(fd, LibC::F_GETFL)
     if value
       flags &= ~LibC::O_NONBLOCK
     else
       flags |= LibC::O_NONBLOCK
     end
-    fcntl(LibC::F_SETFL, flags)
+    fcntl(fd, LibC::F_SETFL, flags)
   end
 
   private def system_close_on_exec?
@@ -203,7 +211,7 @@ module Crystal::System::Socket
         fcntl(fds[1], LibC::F_SETFD, LibC::FD_CLOEXEC)
         unless blocking
           fcntl(fds[0], LibC::F_SETFL, fcntl(fds[0], LibC::F_GETFL) | LibC::O_NONBLOCK)
-          fcntl(fds[1], LibC::F_SETFL, fcntl(fds[0], LibC::F_GETFL) | LibC::O_NONBLOCK)
+          fcntl(fds[1], LibC::F_SETFL, fcntl(fds[1], LibC::F_GETFL) | LibC::O_NONBLOCK)
         end
       end
     {% end %}

@@ -27,17 +27,6 @@ module Crystal::System::Time
     data
   end
 
-  # These mappings from Windows time zone names to tzdata abbreviations are based on
-  # <%= WINDOWS_ZONE_NAMES_SOURCE %>
-  # TODO: remove in 1.17
-  private class_getter windows_zone_names : Hash(String, {String, String}) do
-    data = Hash(String, {String, String}).new(initial_capacity: <%= windows_zone_names_items.size %>)
-    <%- windows_zone_names_items.each do |windows_name, zone1, zone2, tzdata_name| -%>
-      put(data, <%= windows_name.inspect %>, <%= zone1.inspect %>, <%= zone2.inspect %>) # <%= tzdata_name %>
-    <%- end -%>
-    data
-  end
-
   # TODO: this is needed to avoid generating lots of allocas
   # in LLVM, which makes LLVM really slow. The compiler should
   # try to avoid/reuse temporary allocas.

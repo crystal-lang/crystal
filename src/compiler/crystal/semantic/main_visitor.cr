@@ -1020,8 +1020,6 @@ module Crystal
 
       before_block_vars = node.vars.try(&.dup) || MetaVars.new
 
-      body_exps = node.body.as?(Expressions).try(&.expressions)
-
       # Variables that we don't want to get their type merged
       # with local variables before the block occurrence:
       # mainly block arguments (locally override vars), but
@@ -1248,12 +1246,51 @@ module Crystal
       end
 
       # Check if it's ->LibFoo.foo, so we deduce the type from that method
-      if node.args.empty? && obj && (obj_type = obj.type).is_a?(LibType)
-        matching_fun = obj_type.lookup_first_def(node.name, false)
-        node.raise "undefined fun '#{node.name}' for #{obj_type}" unless matching_fun
+      if obj.type.is_a?(LibType)
+        matching_fun = obj.type.lookup_first_def(node.name, false).as(External?)
+        node.raise "undefined fun '#{node.name}' for #{obj.type}" unless matching_fun
 
-        call.args = matching_fun.args.map_with_index do |arg, i|
-          Var.new("arg#{i}", arg.type).as(ASTNode)
+        if node.args.empty?
+          call.args = matching_fun.args.map_with_index do |arg, i|
+            Var.new("arg#{i}", arg.type).as(ASTNode)
+          end
+        else
+          # Variadic funs are always expanded according to input types, due to
+          # different ABIs.
+          if matching_fun.varargs?
+            expand(node)
+            return false
+          end
+
+          # If it's something like `->LibFoo.foo(Bar)`, check that the supplied
+          # parameter types are compatible with the C fun.
+          # This is partially based on `Call#check_fun_arg_type_matches`
+          unless node.args.size == matching_fun.args.size
+            call.wrong_number_of_arguments "'#{call.full_name(obj.type)}'", node.args.size, matching_fun.args.size
+          end
+
+          node.args.each_with_index do |node_arg, i|
+            node_arg.accept self
+            node_arg.type = node_arg_type = node_arg.type.instance_type
+            fun_arg_type = matching_fun.args[i].type
+            unless node_arg_type.compatible_with?(fun_arg_type) || node_arg_type.implicitly_converted_in_c_to?(fun_arg_type)
+              # Incompatible parameter type found; expand the pointer just
+              # like for non-lib types. This works for non-extern types as
+              # well; `->LibC.free(Bytes)` will compile, and
+              # `->LibC.getenv(Array(Int32))` will emit the same compiler
+              # error as a direct fun call.
+              expand(node)
+              return false
+            end
+          end
+
+          # If all parameter types are compatible, no proc literal is formed.
+          # This implies `->LibC.free` and `->LibC.free(Void*)` have exactly the
+          # same function pointer. So does `->LibC.free(UInt8*)`, although the
+          # proc type will be different here.
+          call.args = node.args.map_with_index do |arg, i|
+            Var.new("arg#{i}", arg.type).as(ASTNode)
+          end
         end
       else
         call.args = node.args.map_with_index do |arg, i|

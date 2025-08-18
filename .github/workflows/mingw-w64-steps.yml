@@ -40,7 +40,7 @@ jobs:
           git config --global core.autocrlf false
 
       - name: Download Crystal source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Build Crystal
         shell: msys2 {0}
@@ -51,7 +51,7 @@ jobs:
         run: make install install_dlls deref_symlinks=1 PREFIX="$(pwd)/crystal"
 
       - name: Download shards release
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: crystal-lang/shards
           ref: v0.19.1
@@ -97,7 +97,7 @@ jobs:
           git config --global core.autocrlf false
 
       - name: Download Crystal source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Run stdlib specs
         shell: msys2 {0}
@@ -127,10 +127,10 @@ jobs:
           git config --global core.autocrlf false
 
       - name: Download Crystal source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Download Crystal executable
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: ${{ inputs.arch }}-mingw-w64-crystal
           path: crystal

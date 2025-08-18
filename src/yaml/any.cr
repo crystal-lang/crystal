@@ -365,6 +365,12 @@ struct Value
   end
 end
 
+struct Struct
+  def ==(other : YAML::Any)
+    self == other.raw
+  end
+end
+
 class Reference
   def ==(other : YAML::Any)
     self == other.raw

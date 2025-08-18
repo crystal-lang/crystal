@@ -1593,7 +1593,7 @@ module Crystal
     describe TypeNode do
       describe "#includers" do
         it "returns an array of types `self` is directly included in" do
-          assert_type(%(
+          assert_type(<<-CRYSTAL) { tuple_of([int32, int32, int32]) }
             module Foo
             end
 
@@ -1648,7 +1648,7 @@ module Crystal
               {% if Enumt.includers.map(&.stringify).sort == %w(ChildT(String) ChildT(T) Str) %} 1 {% else %} 'a' {% end %},
               {% if Enumt(String).includers.map(&.stringify).sort == %w(ChildT(String) Str) %} 1 {% else %} 'a' {% end %},
             }
-            )) { tuple_of([int32, int32, int32]) }
+            CRYSTAL
         end
       end
 
@@ -1773,7 +1773,7 @@ module Crystal
         it "does not include trailing + for virtual type" do
           assert_macro("{{klass.id}}", "Foo") do |program|
             foo = NonGenericClassType.new(program, program, "Foo", program.reference)
-            bar = NonGenericClassType.new(program, program, "Bar", foo)
+            NonGenericClassType.new(program, program, "Bar", foo)
             {klass: TypeNode.new(foo.virtual_type)}
           end
         end
@@ -1977,7 +1977,7 @@ module Crystal
       end
 
       it "== and != devirtualize generic type arguments (#10730)" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { tuple_of([int32, char]) }
           class A
           end
 
@@ -1994,7 +1994,7 @@ module Crystal
           end
 
           Foo(A).foo
-          )) { tuple_of([int32, char]) }
+          CRYSTAL
       end
 
       it "executes <" do
