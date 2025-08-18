@@ -3,13 +3,13 @@ require "../../spec_helper"
 describe "Semantic: multi assign" do
   context "without strict_multi_assign" do
     it "doesn't error if assigning tuple to fewer targets" do
-      assert_type(%(
+      assert_type(<<-CRYSTAL) { tuple_of [int32, int32] }
         require "prelude"
 
         x = {1, 2, ""}
         a, b = x
         {a, b}
-        )) { tuple_of [int32, int32] }
+        CRYSTAL
     end
 
     it "doesn't error if assigning non-Indexable (#11414)" do
@@ -47,50 +47,50 @@ describe "Semantic: multi assign" do
 
   context "strict_multi_assign" do
     it "errors if assigning tuple to fewer targets" do
-      assert_error %(
+      assert_error <<-CRYSTAL, "cannot assign Tuple(Int32, Int32, String) to 2 targets", flags: "strict_multi_assign"
         require "prelude"
 
         x = {1, 2, ""}
         a, b = x
-        ), "cannot assign Tuple(Int32, Int32, String) to 2 targets", flags: "strict_multi_assign"
+        CRYSTAL
     end
 
     pending "errors if assigning tuple to more targets" do
-      assert_error %(
+      assert_error <<-CRYSTAL, "cannot assign Tuple(Int32) to 2 targets", flags: "strict_multi_assign"
         require "prelude"
 
         x = {1}
         a, b = x
-        ), "cannot assign Tuple(Int32) to 2 targets", flags: "strict_multi_assign"
+        CRYSTAL
     end
 
     it "errors if assigning union of tuples to fewer targets" do
-      assert_error %(
+      assert_error <<-CRYSTAL, "cannot assign (Tuple(Int32, Int32, Int32) | Tuple(Int32, Int32, Int32, Int32)) to 2 targets", flags: "strict_multi_assign"
         require "prelude"
 
         x = true ? {1, 2, 3} : {4, 5, 6, 7}
         a, b = x
-        ), "cannot assign (Tuple(Int32, Int32, Int32) | Tuple(Int32, Int32, Int32, Int32)) to 2 targets", flags: "strict_multi_assign"
+        CRYSTAL
     end
 
     it "doesn't error if some type in union matches target count" do
-      assert_type(%(
+      assert_type(<<-CRYSTAL, flags: "strict_multi_assign") { tuple_of [int32, union_of(int32, string)] }
         require "prelude"
 
         x = true ? {1, "", 3} : {4, 5}
         a, b = x
         {a, b}
-        ), flags: "strict_multi_assign") { tuple_of [int32, union_of(int32, string)] }
+        CRYSTAL
     end
 
     it "doesn't error if some type in union has no constant size" do
-      assert_type(%(
+      assert_type(<<-CRYSTAL, flags: "strict_multi_assign") { tuple_of [int32, union_of(int32, string)] }
         require "prelude"
 
         x = true ? {1, "", 3} : [4, 5]
         a, b = x
         {a, b}
-        ), flags: "strict_multi_assign") { tuple_of [int32, union_of(int32, string)] }
+        CRYSTAL
     end
 
     it "errors if assigning non-Indexable (#11414)" do

@@ -46,13 +46,13 @@ describe "Semantic: tuples" do
       assert_type("{1, 'a'}[2]?") { nil_type }
       assert_type("{1, 'a'}[-3]?") { nil_type }
 
-      assert_type(%(
+      assert_type(<<-CRYSTAL) { nil_type }
         def tuple(*args)
           args
         end
 
         tuple()[0]?
-        )) { nil_type }
+        CRYSTAL
     end
 
     it "types, metaclass index" do
@@ -69,14 +69,13 @@ describe "Semantic: tuples" do
     end
 
     it "gives error when indexing out of range on empty tuple" do
-      assert_error %(
+      assert_error <<-CRYSTAL, "index '0' out of bounds for empty tuple"
         def tuple(*args)
           args
         end
 
         tuple()[0]
-        ),
-        "index '0' out of bounds for empty tuple"
+        CRYSTAL
     end
   end
 
@@ -117,7 +116,7 @@ describe "Semantic: tuples" do
       assert_type(%(#{range_new}; {1, 'a'}[-2..1])) { tuple_of([int32, char]) }
       assert_type(%(#{range_new}; {1, 'a'}[-2..2])) { tuple_of([int32, char]) }
 
-      assert_type(%(
+      assert_type(<<-CRYSTAL) { tuple_of([] of Type) }
         #{range_new}
 
         def tuple(*args)
@@ -125,7 +124,7 @@ describe "Semantic: tuples" do
         end
 
         tuple()[0..0]
-        )) { tuple_of([] of Type) }
+        CRYSTAL
     end
 
     it "types, inbound begin, end-less" do
@@ -135,7 +134,7 @@ describe "Semantic: tuples" do
       assert_type(%(#{range_new}; {1, 'a'}[-1..])) { tuple_of([char]) }
       assert_type(%(#{range_new}; {1, 'a'}[-2..])) { tuple_of([int32, char]) }
 
-      assert_type(%(
+      assert_type(<<-CRYSTAL) { tuple_of([] of Type) }
         #{range_new}
 
         def tuple(*args)
@@ -143,7 +142,7 @@ describe "Semantic: tuples" do
         end
 
         tuple()[0..]
-        )) { tuple_of([] of Type) }
+        CRYSTAL
     end
 
     it "types, begin-less" do
@@ -154,7 +153,7 @@ describe "Semantic: tuples" do
       assert_type(%(#{range_new}; {1, 'a'}[..-2])) { tuple_of([int32]) }
       assert_type(%(#{range_new}; {1, 'a'}[..-1])) { tuple_of([int32, char]) }
 
-      assert_type(%(
+      assert_type(<<-CRYSTAL) { tuple_of([] of Type) }
         #{range_new}
 
         def tuple(*args)
@@ -162,13 +161,13 @@ describe "Semantic: tuples" do
         end
 
         tuple()[..0]
-        )) { tuple_of([] of Type) }
+        CRYSTAL
     end
 
     it "types, begin-less, end-less" do
       assert_type(%(#{range_new}; {1, 'a'}[..])) { tuple_of([int32, char]) }
 
-      assert_type(%(
+      assert_type(<<-CRYSTAL) { tuple_of([] of Type) }
         #{range_new}
 
         def tuple(*args)
@@ -176,7 +175,7 @@ describe "Semantic: tuples" do
         end
 
         tuple()[..]
-        )) { tuple_of([] of Type) }
+        CRYSTAL
     end
 
     it "types, exclusive range" do
@@ -252,7 +251,7 @@ describe "Semantic: tuples" do
       assert_type(%(#{range_new}; {1, 'a'}[-2..1]?)) { tuple_of([int32, char]) }
       assert_type(%(#{range_new}; {1, 'a'}[-2..2]?)) { tuple_of([int32, char]) }
 
-      assert_type(%(
+      assert_type(<<-CRYSTAL) { tuple_of([] of Type) }
         #{range_new}
 
         def tuple(*args)
@@ -260,14 +259,14 @@ describe "Semantic: tuples" do
         end
 
         tuple()[0..0]?
-        )) { tuple_of([] of Type) }
+        CRYSTAL
     end
 
     it "types, out of bound begin, nilable" do
       assert_type(%(#{range_new}; {1, 'a'}[-3..0]?)) { nil_type }
       assert_type(%(#{range_new}; {1, 'a'}[3..2]?)) { nil_type }
 
-      assert_type(%(
+      assert_type(<<-CRYSTAL) { nil_type }
         #{range_new}
 
         def tuple(*args)
@@ -275,7 +274,7 @@ describe "Semantic: tuples" do
         end
 
         tuple()[1..0]?
-        )) { nil_type }
+        CRYSTAL
     end
 
     it "types, metaclass index" do
@@ -287,21 +286,19 @@ describe "Semantic: tuples" do
     end
 
     it "gives error when begin index is out of range" do
-      assert_error %(
+      assert_error <<-CRYSTAL, "begin index out of bounds for Tuple(Int32, Char) (3 not in -2..2)"
         #{range_new}
 
         {1, 'a'}[3..0]
-        ),
-        "begin index out of bounds for Tuple(Int32, Char) (3 not in -2..2)"
+        CRYSTAL
 
-      assert_error %(
+      assert_error <<-CRYSTAL, "begin index out of bounds for Tuple(Int32, Char) (-3 not in -2..2)"
         #{range_new}
 
         {1, 'a'}[-3..0]
-        ),
-        "begin index out of bounds for Tuple(Int32, Char) (-3 not in -2..2)"
+        CRYSTAL
 
-      assert_error %(
+      assert_error <<-CRYSTAL, "begin index out of bounds for Tuple() (1 not in 0..0)"
         #{range_new}
 
         def tuple(*args)
@@ -309,8 +306,7 @@ describe "Semantic: tuples" do
         end
 
         tuple()[1..0]
-        ),
-        "begin index out of bounds for Tuple() (1 not in 0..0)"
+        CRYSTAL
     end
   end
 
@@ -329,10 +325,9 @@ describe "Semantic: tuples" do
   end
 
   it "gives error when using named args on Tuple" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can only use named arguments with NamedTuple"
       Tuple(x: Int32, y: Char)
-      ),
-      "can only use named arguments with NamedTuple"
+      CRYSTAL
   end
 
   it "doesn't error if Tuple has no args" do
@@ -340,7 +335,7 @@ describe "Semantic: tuples" do
   end
 
   it "types T as a tuple of metaclasses" do
-    assert_type("
+    assert_type(<<-CRYSTAL
       struct Tuple
         def type_args
           T
@@ -349,7 +344,8 @@ describe "Semantic: tuples" do
 
       x = {1, 1.5, 'a'}
       x.type_args
-      ") do
+      CRYSTAL
+    ) do
       meta = tuple_of([int32, float64, char]).metaclass
       meta.metaclass?.should be_true
       meta
@@ -357,7 +353,7 @@ describe "Semantic: tuples" do
   end
 
   it "errors on recursive splat expansion (#218)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "recursive splat expansion"
       def foo(*a)
         foo(a)
       end
@@ -366,12 +362,11 @@ describe "Semantic: tuples" do
       end
 
       foo("a", "b")
-      ),
-      "recursive splat expansion"
+      CRYSTAL
   end
 
   it "errors on recursive splat expansion (1) (#361)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "recursive splat expansion"
       require "prelude"
 
       def foo(type, *args)
@@ -379,12 +374,11 @@ describe "Semantic: tuples" do
       end
 
       foo "foo", 1
-      ),
-      "recursive splat expansion"
+      CRYSTAL
   end
 
   it "errors on recursive splat expansion (2) (#361)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "recursive splat expansion"
       class Foo(T)
       end
 
@@ -393,8 +387,7 @@ describe "Semantic: tuples" do
       end
 
       foo "foo", 1
-      ),
-      "recursive splat expansion"
+      CRYSTAL
   end
 
   it "doesn't trigger recursive splat expansion error (#7164)" do
@@ -408,7 +401,7 @@ describe "Semantic: tuples" do
   end
 
   it "allows tuple covariance" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of [types["Foo"].virtual_type!] }
       class Obj
         def initialize
           @tuple = {Foo.new}
@@ -431,11 +424,11 @@ describe "Semantic: tuples" do
       obj = Obj.new
       obj.tuple = {Bar.new}
       obj.tuple
-      )) { tuple_of [types["Foo"].virtual_type!] }
+      CRYSTAL
   end
 
   it "merges two tuple types of same size" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { tuple_of [string, nilable(int32)] }
       def foo
         if 1 == 2
           {"foo", 1}
@@ -445,11 +438,11 @@ describe "Semantic: tuples" do
       end
 
       foo
-      ), inject_primitives: true) { tuple_of [string, nilable(int32)] }
+      CRYSTAL
   end
 
   it "accept tuple in type restriction" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of [types["Bar"]] }
       class Foo
       end
 
@@ -461,11 +454,11 @@ describe "Semantic: tuples" do
       end
 
       foo({Bar.new})
-      )) { tuple_of [types["Bar"]] }
+      CRYSTAL
   end
 
   it "accepts tuple covariance in array" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of [types["Foo"].virtual_type!, types["Foo"].virtual_type!] }
       require "prelude"
 
       class Foo
@@ -477,11 +470,11 @@ describe "Semantic: tuples" do
       a = [] of {Foo, Foo}
       a << {Bar.new, Bar.new}
       a[0]
-      )) { tuple_of [types["Foo"].virtual_type!, types["Foo"].virtual_type!] }
+      CRYSTAL
   end
 
   it "can iterate T" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([int32.metaclass, string.metaclass]) }
       struct Tuple
         def self.types
           {% begin %}
@@ -494,60 +487,58 @@ describe "Semantic: tuples" do
         end
       end
       Tuple(Int32, String).types
-      )) { tuple_of([int32.metaclass, string.metaclass]) }
+      CRYSTAL
   end
 
   it "can call [] on T" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nil_type.metaclass }
       struct Tuple
         def self.types
           {{ T[0] }}
         end
       end
       Tuple(Nil, Int32).types
-      )) { nil_type.metaclass }
+      CRYSTAL
   end
 
   it "matches tuple with splat (#2932)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([int32, char]).metaclass }
       def foo(x : Tuple(*T)) forall T
         T
       end
 
       foo({1, 'a'})
-      )) { tuple_of([int32, char]).metaclass }
+      CRYSTAL
   end
 
   it "matches tuple with splat (2) (#2932)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([int32.metaclass, tuple_of([char, bool]).metaclass, float64.metaclass]) }
       def foo(x : Tuple(A, *B, C)) forall A, B, C
         {A, B, C}
       end
 
       foo({1, 'a', true, 1.5})
-      )) { tuple_of([int32.metaclass, tuple_of([char, bool]).metaclass, float64.metaclass]) }
+      CRYSTAL
   end
 
   it "errors if using two splat indices on restriction" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't specify more than one splat in restriction"
       def foo(x : Tuple(*A, *B)) forall A, B
       end
 
       foo({1, 'a'})
-      ),
-      "can't specify more than one splat in restriction"
+      CRYSTAL
   end
 
   it "errors on tuple too big (#3816)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "tuple size cannot be greater than 300 (size is 302)"
       require "prelude"
 
       pos = {0, 0}
       while true
         pos += {0, 0}
       end
-      ),
-      "tuple size cannot be greater than 300 (size is 302)"
+      CRYSTAL
   end
 
   it "errors on named tuple too big" do
@@ -555,16 +546,16 @@ describe "Semantic: tuples" do
       333.times { |i| io << "key" << i << ": 0, " }
     end
 
-    assert_error %(
+    assert_error <<-CRYSTAL, "named tuple size cannot be greater than 300 (size is 333)"
       { #{named_tuple_keys} }
-      ),
-      "named tuple size cannot be greater than 300 (size is 333)"
+      CRYSTAL
   end
 
   it "doesn't unify tuple metaclasses (#5384)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL
       Tuple(Int32) || Tuple(String)
-      )) {
+      CRYSTAL
+    ) {
       union_of(
         tuple_of([int32] of Type).metaclass,
         tuple_of([string] of Type).metaclass,
@@ -573,7 +564,7 @@ describe "Semantic: tuples" do
   end
 
   it "doesn't crash on tuple in not executed block (#6718)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nil_type }
       require "prelude"
 
       def pending(&block)
@@ -588,7 +579,7 @@ describe "Semantic: tuples" do
       pending do
         {untyped(untyped)}
       end
-    )) { nil_type }
+      CRYSTAL
   end
 end
 

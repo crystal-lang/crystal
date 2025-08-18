@@ -38,7 +38,7 @@ jobs:
             repository: http://dl-cdn.alpinelinux.org/alpine/edge/main
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Uninstall libxml2 and conflicts
         run: apk del libxml2-dev
       - name: Install ${{ matrix.pkg }}
