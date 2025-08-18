@@ -2,21 +2,21 @@ require "../../spec_helper"
 
 describe "Semantic: alias" do
   it "resolves alias type" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { types["Int32"].metaclass }
       alias Alias = Int32
       Alias
-      ") { types["Int32"].metaclass }
+      CRYSTAL
   end
 
   it "declares alias inside type" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { types["Int32"].metaclass }
       alias Foo::Bar = Int32
       Foo::Bar
-      ") { types["Int32"].metaclass }
+      CRYSTAL
   end
 
   it "works with alias type as restriction" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       alias Alias = Int32
 
       def foo(x : Alias)
@@ -24,11 +24,11 @@ describe "Semantic: alias" do
       end
 
       foo 1
-      ") { int32 }
+      CRYSTAL
   end
 
   it "allows using alias type as generic type" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo(T)
         def initialize(x : T)
           @x = x
@@ -44,17 +44,17 @@ describe "Semantic: alias" do
       f = Foo(Num).new(1)
       g = Foo(Num).new(1.5)
       1
-      ") { int32 }
+      CRYSTAL
   end
 
   it "allows defining recursive aliases" do
-    result = assert_type("
+    result = assert_type(<<-CRYSTAL) { int32 }
       class Foo(T)
       end
 
       alias Alias = Int32 | Foo(Alias)
       1
-      ") { int32 }
+      CRYSTAL
     mod = result.program
 
     foo = mod.types["Foo"].as(GenericClassType)
@@ -69,10 +69,10 @@ describe "Semantic: alias" do
   end
 
   it "allows defining recursive fun aliases" do
-    result = assert_type(%(
+    result = assert_type(<<-CRYSTAL) { int32 }
       alias Alias = Alias -> Alias
       1
-      )) { int32 }
+      CRYSTAL
 
     mod = result.program
 
@@ -83,11 +83,11 @@ describe "Semantic: alias" do
   end
 
   it "allows recursive array with alias" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       alias Type = Nil | Pointer(Type)
       p = Pointer(Type).malloc(1_u64)
       1
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "errors if alias already defined" do
@@ -122,7 +122,7 @@ describe "Semantic: alias" do
   end
 
   it "allows using generic type of recursive alias as restriction (#488)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo(T)
       end
 
@@ -134,18 +134,18 @@ describe "Semantic: alias" do
 
       foo = Foo(Rec).new
       command(foo)
-      )) { int32 }
+      CRYSTAL
   end
 
   it "resolves type through alias (#563)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       module Moo
         Foo = 1
       end
 
       alias Alias = Moo
       Alias::Foo
-      )) { int32 }
+      CRYSTAL
   end
 
   it "errors if trying to resolve type of recursive alias" do
@@ -163,7 +163,7 @@ describe "Semantic: alias" do
 
   %w(class module struct).each do |type|
     it "reopens #{type} through alias" do
-      assert_type(%(
+      assert_type(<<-CRYSTAL) { int32 }
         #{type} Foo
         end
 
@@ -176,7 +176,7 @@ describe "Semantic: alias" do
         end
 
         Bar.bar
-        )) { int32 }
+        CRYSTAL
     end
 
     it "reopens #{type} through alias within itself" do
@@ -198,7 +198,7 @@ describe "Semantic: alias" do
 
   %w(class struct).each do |type|
     it "inherits #{type} through alias" do
-      assert_type(%(
+      assert_type(<<-CRYSTAL) { int32 }
         abstract #{type} Parent
         end
 
@@ -211,12 +211,12 @@ describe "Semantic: alias" do
         end
 
         Child.bar
-        )) { int32 }
+        CRYSTAL
     end
   end
 
   it "includes module through alias" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       module Moo
         def bar
           1
@@ -230,7 +230,7 @@ describe "Semantic: alias" do
       end
 
       Foo.new.bar
-      )) { int32 }
+      CRYSTAL
   end
 
   it "errors if declares alias inside if" do
@@ -250,30 +250,30 @@ describe "Semantic: alias" do
   end
 
   it "can use .class in alias (#2835)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of(int32.metaclass, string.metaclass).metaclass }
       alias Foo = Int32.class | String.class
       Foo
-      )) { union_of(int32.metaclass, string.metaclass).metaclass }
+      CRYSTAL
   end
 
   it "uses constant in alias (#3259)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { static_array_of(uint8, 10).metaclass }
       CONST = 10
       alias Alias = UInt8[CONST]
       Alias
-      )) { static_array_of(uint8, 10).metaclass }
+      CRYSTAL
   end
 
   it "uses constant in alias with math (#3259)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { static_array_of(uint8, 10).metaclass }
       CONST = 2*3 + 4
       alias Alias = UInt8[CONST]
       Alias
-      )) { static_array_of(uint8, 10).metaclass }
+      CRYSTAL
   end
 
   it "looks up alias for macro resolution (#3548)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         class Bar
           def self.baz
@@ -285,11 +285,11 @@ describe "Semantic: alias" do
       alias Baz = Foo
 
       Baz::Bar.baz
-      )) { int32 }
+      CRYSTAL
   end
 
   it "finds type through alias (#4645)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       module FooBar
         module Foo
           A = 10
@@ -309,7 +309,7 @@ describe "Semantic: alias" do
       end
 
       Baz.new.test
-      )) { int32 }
+      CRYSTAL
   end
 
   it "doesn't find type parameter in alias (#3502)" do
@@ -335,7 +335,7 @@ describe "Semantic: alias" do
   end
 
   it "can pass recursive alias to proc" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { nil_type }
       class Object
         def itself
           self
@@ -348,11 +348,11 @@ describe "Semantic: alias" do
 
       f = ->(x : Rec) {}
       f.call(a.itself)
-      ), inject_primitives: true) { nil_type }
+      CRYSTAL
   end
 
   it "overloads union type through alias" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       alias X = Int8 | Int32
 
       def foo(x : Int32)
@@ -364,6 +364,6 @@ describe "Semantic: alias" do
       end
 
       foo(1)
-     )) { int32 }
+      CRYSTAL
   end
 end

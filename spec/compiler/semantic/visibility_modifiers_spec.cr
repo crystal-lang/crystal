@@ -75,7 +75,7 @@ describe "Visibility modifiers" do
   end
 
   it "allows invoking private method from the same class" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         private def foo
           1
@@ -87,11 +87,11 @@ describe "Visibility modifiers" do
       end
 
       Foo.new.bar
-      )) { int32 }
+      CRYSTAL
   end
 
   it "allows invoking protected method from the same class" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         protected def foo
           1
@@ -103,11 +103,11 @@ describe "Visibility modifiers" do
       end
 
       Foo.new.bar
-      )) { int32 }
+      CRYSTAL
   end
 
   it "allows invoking protected method from subclass" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         protected def foo
           1
@@ -121,11 +121,11 @@ describe "Visibility modifiers" do
       end
 
       Bar.new.bar
-      )) { int32 }
+      CRYSTAL
   end
 
   it "allows invoking protected method from subclass (2)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         protected def foo
           1
@@ -142,7 +142,7 @@ describe "Visibility modifiers" do
       end
 
       Baz.new.baz
-      )) { int32 }
+      CRYSTAL
   end
 
   it "errors if invoking protected method from top-level" do
@@ -207,7 +207,7 @@ describe "Visibility modifiers" do
   end
 
   it "allows invoking protected from instance to class" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def instance_foo
           Foo.class_foo
@@ -219,7 +219,7 @@ describe "Visibility modifiers" do
       end
 
       Foo.new.instance_foo
-      )) { int32 }
+      CRYSTAL
   end
 
   it "automatically makes initialize be protected" do
@@ -236,7 +236,7 @@ describe "Visibility modifiers" do
   end
 
   it "allows invoking private setter with self" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         private def x=(x)
           x
@@ -248,11 +248,11 @@ describe "Visibility modifiers" do
       end
 
       Foo.new.foo
-      )) { int32 }
+      CRYSTAL
   end
 
   it "allows invoking protected method from namespace to namespaced type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def foo
           Bar.new.bar
@@ -266,11 +266,11 @@ describe "Visibility modifiers" do
       end
 
       Foo.new.foo
-      )) { int32 }
+      CRYSTAL
   end
 
   it "allows invoking protected method from namespaced type to namespace" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         protected def foo
           1
@@ -284,11 +284,11 @@ describe "Visibility modifiers" do
       end
 
       Foo::Bar.new.bar
-      )) { int32 }
+      CRYSTAL
   end
 
   it "allows invoking protected method between types in the same namespace" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       module NS1
         class NS2
           class Foo
@@ -306,11 +306,11 @@ describe "Visibility modifiers" do
       end
 
       NS1::NS2::Foo.new.foo
-      )) { int32 }
+      CRYSTAL
   end
 
   it "allows invoking protected method between types in the same namespace when inheriting" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       module NS1
         class NS2
           class Foo
@@ -331,11 +331,11 @@ describe "Visibility modifiers" do
       end
 
       MyFoo.new.foo
-      )) { int32 }
+      CRYSTAL
   end
 
   it "allows invoking protected method from virtual type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of int32, float64 }
       abstract class Foo
         def foo
           bar
@@ -355,11 +355,11 @@ describe "Visibility modifiers" do
       end
 
       (Bar.new || Baz.new).foo
-      )) { union_of int32, float64 }
+      CRYSTAL
   end
 
   it "allows calling protected method from nested generic class (1)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         class Bar(U)
           def bar
@@ -373,11 +373,11 @@ describe "Visibility modifiers" do
       end
 
       Foo::Bar(Int32).new.bar
-      )) { int32 }
+      CRYSTAL
   end
 
   it "allows calling protected method from nested generic class (2)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo(T)
         class Bar(U)
           def bar
@@ -391,7 +391,7 @@ describe "Visibility modifiers" do
       end
 
       Foo::Bar(Int32).new.bar
-      )) { int32 }
+      CRYSTAL
   end
 
   it "gives correct error on unknown call (#2838)" do

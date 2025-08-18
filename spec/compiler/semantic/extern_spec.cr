@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Semantic: extern struct" do
   it "declares extern struct with no constructor" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       @[Extern]
       struct Foo
         @x = uninitialized Int32
@@ -13,11 +13,11 @@ describe "Semantic: extern struct" do
       end
 
       Foo.new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "declares with constructor" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       @[Extern]
       struct Foo
         @x = uninitialized Int32
@@ -31,11 +31,11 @@ describe "Semantic: extern struct" do
       end
 
       Foo.new(1).foo
-      )) { int32 }
+      CRYSTAL
   end
 
   it "overrides getter" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { char }
       @[Extern]
       struct Foo
         @x = uninitialized Int32
@@ -46,11 +46,11 @@ describe "Semantic: extern struct" do
       end
 
       Foo.new.x
-      )) { char }
+      CRYSTAL
   end
 
   it "can be passed to C fun" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { float64 }
       @[Extern]
       struct Foo
         @x = uninitialized Int32
@@ -61,11 +61,11 @@ describe "Semantic: extern struct" do
       end
 
       LibFoo.foo(Foo.new)
-      )) { float64 }
+      CRYSTAL
   end
 
   it "can include module" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       module Moo
         @x = uninitialized Int32
 
@@ -80,7 +80,7 @@ describe "Semantic: extern struct" do
       end
 
       Foo.new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "errors if using non-primitive for field type" do
@@ -129,7 +129,7 @@ describe "Semantic: extern struct" do
   end
 
   it "declares extern union with no constructor" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       @[Extern(union: true)]
       struct Foo
         @x = uninitialized Int32
@@ -140,11 +140,11 @@ describe "Semantic: extern struct" do
       end
 
       Foo.new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "can use extern struct in lib" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Foo"] }
       @[Extern]
       struct Foo
       end
@@ -155,11 +155,11 @@ describe "Semantic: extern struct" do
 
       foo = Foo.new
       LibFoo.foo(foo)
-      )) { types["Foo"] }
+      CRYSTAL
   end
 
   it "can new with named args" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["A"] }
       @[Extern]
       struct A
         def initialize(@x : Int32)
@@ -167,6 +167,6 @@ describe "Semantic: extern struct" do
       end
 
       A.new(x: 6)
-      )) { types["A"] }
+      CRYSTAL
   end
 end

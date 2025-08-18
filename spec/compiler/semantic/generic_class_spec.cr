@@ -24,7 +24,7 @@ describe "Semantic: generic class" do
   end
 
   it "inherits from generic with instantiation" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32.metaclass }
       class Foo(T)
         def t
           T
@@ -35,11 +35,11 @@ describe "Semantic: generic class" do
       end
 
       Bar.new.t
-      )) { int32.metaclass }
+      CRYSTAL
   end
 
   it "inherits from generic with forwarding (1)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32.metaclass }
       class Foo(T)
         def t
           T
@@ -50,11 +50,11 @@ describe "Semantic: generic class" do
       end
 
       Bar(Int32).new.t
-      )) { int32.metaclass }
+      CRYSTAL
   end
 
   it "inherits from generic with forwarding (2)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32.metaclass }
       class Foo(T)
       end
 
@@ -65,7 +65,7 @@ describe "Semantic: generic class" do
       end
 
       Bar(Int32).new.u
-      ), inject_primitives: false) { int32.metaclass }
+      CRYSTAL
   end
 
   it "accesses generic type argument from superclass, def context (#10834)" do
@@ -175,7 +175,7 @@ describe "Semantic: generic class" do
   end
 
   it "inherits from generic with instantiation with instance var" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo(T)
         def initialize(@x : T)
         end
@@ -189,11 +189,11 @@ describe "Semantic: generic class" do
       end
 
       Bar.new(1).x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "inherits twice" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def initialize
           @x = 1.5
@@ -226,11 +226,11 @@ describe "Semantic: generic class" do
 
       baz = Baz.new(1, 'a')
       baz.y
-      )) { int32 }
+      CRYSTAL
   end
 
   it "doesn't compute generic instance var initializers in formal superclass's context (#4753)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo(T)
         @foo = T.new
 
@@ -249,11 +249,11 @@ describe "Semantic: generic class" do
       end
 
       Bar(Baz).new.foo.baz
-      )) { int32 }
+      CRYSTAL
   end
 
   it "inherits non-generic to generic (1)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32.metaclass }
       class Foo(T)
         def t1
           T
@@ -268,11 +268,11 @@ describe "Semantic: generic class" do
 
       baz = Baz(Float64).new
       baz.t1
-      )) { int32.metaclass }
+      CRYSTAL
   end
 
   it "inherits non-generic to generic (2)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { float64.metaclass }
       class Foo(T)
         def t1
           T
@@ -290,11 +290,11 @@ describe "Semantic: generic class" do
 
       baz = Baz(Float64).new
       baz.t2
-      )) { float64.metaclass }
+      CRYSTAL
   end
 
   it "defines empty initialize on inherited generic class" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Nothing"] }
       class Maybe(T)
       end
 
@@ -304,11 +304,11 @@ describe "Semantic: generic class" do
       end
 
       Nothing.new
-      )) { types["Nothing"] }
+      CRYSTAL
   end
 
   it "restricts non-generic to generic" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Bar"] }
       class Foo(T)
       end
 
@@ -320,11 +320,11 @@ describe "Semantic: generic class" do
       end
 
       foo Bar.new
-      )) { types["Bar"] }
+      CRYSTAL
   end
 
   it "restricts non-generic to generic with free var" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32.metaclass }
       class Foo(T)
       end
 
@@ -336,11 +336,11 @@ describe "Semantic: generic class" do
       end
 
       foo Bar.new
-      )) { int32.metaclass }
+      CRYSTAL
   end
 
   it "restricts generic to generic with free var" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32.metaclass }
       class Foo(T)
       end
 
@@ -352,11 +352,11 @@ describe "Semantic: generic class" do
       end
 
       foo Bar(Int32).new
-      )) { int32.metaclass }
+      CRYSTAL
   end
 
   it "allows T::Type with T a generic type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["MyType"].types["Bar"] }
       class MyType
         class Bar
         end
@@ -369,7 +369,7 @@ describe "Semantic: generic class" do
       end
 
       Foo(MyType).new.bar
-      )) { types["MyType"].types["Bar"] }
+      CRYSTAL
   end
 
   it "error on T::Type with T a generic type that's a union" do
@@ -386,18 +386,18 @@ describe "Semantic: generic class" do
   end
 
   it "instantiates generic class with default argument in initialize (#394)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { generic_class "Foo", int32 }
       class Foo(T)
         def initialize(x = 1)
         end
       end
 
       Foo(Int32).new
-      )) { generic_class "Foo", int32 }
+      CRYSTAL
   end
 
   it "inherits class methods from generic class" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo(T)
         def self.foo
           1
@@ -408,11 +408,11 @@ describe "Semantic: generic class" do
       end
 
       Bar.foo
-      )) { int32 }
+      CRYSTAL
   end
 
   it "creates pointer of generic type and uses it" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       abstract class Foo(T)
       end
 
@@ -425,11 +425,11 @@ describe "Semantic: generic class" do
       ptr = Pointer(Foo(Int32)).malloc(1_u64)
       ptr.value = Bar.new
       ptr.value.foo
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "creates pointer of generic type and uses it (2)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       abstract class Foo(T)
       end
 
@@ -442,7 +442,7 @@ describe "Semantic: generic class" do
       ptr = Pointer(Foo(Int32)).malloc(1_u64)
       ptr.value = Bar(Int32).new
       ptr.value.foo
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "errors if inheriting generic type and not specifying type vars (#460)" do
@@ -489,7 +489,7 @@ describe "Semantic: generic class" do
   end
 
   it "finds generic type argument from method with default value" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32.metaclass }
       module It(T)
         def foo(x = 0)
           T
@@ -501,11 +501,11 @@ describe "Semantic: generic class" do
       end
 
       Foo(Int32).new.foo
-      )) { int32.metaclass }
+      CRYSTAL
   end
 
   it "allows initializing instance variable (#665)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class SomeType(T)
         @x = 0
 
@@ -515,11 +515,11 @@ describe "Semantic: generic class" do
       end
 
       SomeType(Char).new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "allows initializing instance variable in inherited generic type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo(T)
         @x = 1
 
@@ -533,11 +533,11 @@ describe "Semantic: generic class" do
       end
 
       Bar(Char).new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "calls super on generic type when superclass has no initialize (#933)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { generic_class "Bar", float32 }
       class Foo(T)
       end
 
@@ -548,11 +548,11 @@ describe "Semantic: generic class" do
       end
 
       Bar(Float32).new
-    )) { generic_class "Bar", float32 }
+      CRYSTAL
   end
 
   it "initializes instance variable of generic type using type var (#961)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { generic_class "Bar", int32 }
       class Bar(T)
       end
 
@@ -565,7 +565,7 @@ describe "Semantic: generic class" do
       end
 
       Foo(Int32).new.bar
-      )) { generic_class "Bar", int32 }
+      CRYSTAL
   end
 
   it "errors if passing integer literal to Proc as generic argument (#1120)" do
@@ -680,7 +680,7 @@ describe "Semantic: generic class" do
   end
 
   it "can define instance var forward declared (#962)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int64 }
       class ClsA
         @c : ClsB(Int32)
 
@@ -703,11 +703,11 @@ describe "Semantic: generic class" do
 
       foo = ClsA.new
       foo.c.pos
-      )) { int64 }
+      CRYSTAL
   end
 
   it "inherits instance var type annotation from generic to concrete" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable int32 }
       class Foo(T)
         @x : Int32?
 
@@ -720,11 +720,11 @@ describe "Semantic: generic class" do
       end
 
       Bar.new.x
-      )) { nilable int32 }
+      CRYSTAL
   end
 
   it "inherits instance var type annotation from generic to concrete with T" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable int32 }
       class Foo(T)
         @x : T?
 
@@ -737,11 +737,11 @@ describe "Semantic: generic class" do
       end
 
       Bar.new.x
-      )) { nilable int32 }
+      CRYSTAL
   end
 
   it "inherits instance var type annotation from generic to generic to concrete" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable int32 }
       class Foo(T)
         @x : Int32?
 
@@ -757,7 +757,7 @@ describe "Semantic: generic class" do
       end
 
       Baz.new.x
-      )) { nilable int32 }
+      CRYSTAL
   end
 
   it "doesn't duplicate overload on generic class with class method (#2385)" do
@@ -826,7 +826,7 @@ describe "Semantic: generic class" do
   end
 
   it "instantiates generic variadic class, accesses T from class method" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([int32, char]).metaclass }
       class Foo(*T)
         def self.t
           T
@@ -834,11 +834,11 @@ describe "Semantic: generic class" do
       end
 
       Foo(Int32, Char).t
-      )) { tuple_of([int32, char]).metaclass }
+      CRYSTAL
   end
 
   it "instantiates generic variadic class, accesses T from instance method" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([int32, char]).metaclass }
       class Foo(*T)
         def t
           T
@@ -846,11 +846,11 @@ describe "Semantic: generic class" do
       end
 
       Foo(Int32, Char).new.t
-      )) { tuple_of([int32, char]).metaclass }
+      CRYSTAL
   end
 
   it "instantiates generic variadic class, accesses T from class method through superclass" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([int32, char]).metaclass }
       class Foo(*T)
         def self.t
           T
@@ -861,11 +861,11 @@ describe "Semantic: generic class" do
       end
 
       Bar(Int32, Char).t
-      )) { tuple_of([int32, char]).metaclass }
+      CRYSTAL
   end
 
   it "instantiates generic variadic class, accesses T from instance method through superclass" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([int32, char]).metaclass }
       class Foo(*T)
         def t
           T
@@ -876,11 +876,11 @@ describe "Semantic: generic class" do
       end
 
       Bar(Int32, Char).new.t
-      )) { tuple_of([int32, char]).metaclass }
+      CRYSTAL
   end
 
   it "splats generic type var" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([int32.metaclass, char.metaclass]) }
       class Foo(X, Y)
         def self.vars
           {X, Y}
@@ -888,11 +888,11 @@ describe "Semantic: generic class" do
       end
 
       Foo(*{Int32, Char}).vars
-      )) { tuple_of([int32.metaclass, char.metaclass]) }
+      CRYSTAL
   end
 
   it "instantiates generic variadic class, accesses T from instance method, more args" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([tuple_of([int32, float64]).metaclass, char.metaclass]) }
       class Foo(*T, R)
         def t
           {T, R}
@@ -900,11 +900,11 @@ describe "Semantic: generic class" do
       end
 
       Foo(Int32, Float64, Char).new.t
-      )) { tuple_of([tuple_of([int32, float64]).metaclass, char.metaclass]) }
+      CRYSTAL
   end
 
   it "instantiates generic variadic class, accesses T from instance method, more args (2)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([int32.metaclass, tuple_of([float64]).metaclass, char.metaclass]) }
       class Foo(A, *T, R)
         def t
           {A, T, R}
@@ -912,11 +912,11 @@ describe "Semantic: generic class" do
       end
 
       Foo(Int32, Float64, Char).new.t
-      )) { tuple_of([int32.metaclass, tuple_of([float64]).metaclass, char.metaclass]) }
+      CRYSTAL
   end
 
   it "instantiates generic variadic class, accesses T from instance method through superclass, more args" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([string.metaclass, tuple_of([int32, char]).metaclass, float64.metaclass]) }
       class Foo(A, *T, B)
         def t
           {A, T, B}
@@ -927,11 +927,11 @@ describe "Semantic: generic class" do
       end
 
       Bar(Int32, Char).new.t
-      )) { tuple_of([string.metaclass, tuple_of([int32, char]).metaclass, float64.metaclass]) }
+      CRYSTAL
   end
 
   it "virtual metaclass type implements super virtual metaclass type (#3007)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Base
       end
 
@@ -958,11 +958,11 @@ describe "Semantic: generic class" do
 
       gen = Gen(Base.class).new
       gen.foo(Child || Child1)
-      )) { int32 }
+      CRYSTAL
   end
 
   it "can use virtual type for generic class" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of int32, char }
       class Foo(T)
         def foo
           1
@@ -986,11 +986,11 @@ describe "Semantic: generic class" do
 
       baz = Baz.new(Bar(Int32).new)
       baz.foo
-      )) { union_of int32, char }
+      CRYSTAL
   end
 
   it "recomputes on new subclass" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of(int32, char) }
       class Foo(T)
         def foo
           1
@@ -1023,11 +1023,11 @@ describe "Semantic: generic class" do
 
       baz = Baz.new(Qux(Int32).new)
       baz.foo
-      )) { union_of(int32, char) }
+      CRYSTAL
   end
 
   it "types macro def with generic instance" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { string }
       class Reference
         def foo
           {{ @type.name.stringify }}
@@ -1043,11 +1043,11 @@ describe "Semantic: generic class" do
       a = Pointer(At).malloc(1_u64)
       a.value = Bt(Int32).new
       a.value.foo
-      ), inject_primitives: true) { string }
+      CRYSTAL
   end
 
   it "unifies generic metaclass types" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { generic_class("Foo", int32).metaclass.virtual_type! }
       class Foo(T)
       end
 
@@ -1055,7 +1055,7 @@ describe "Semantic: generic class" do
       end
 
       Foo(Int32) || Bar(Int32)
-      )) { generic_class("Foo", int32).metaclass.virtual_type! }
+      CRYSTAL
   end
 
   it "doesn't crash when matching restriction against number literal (#3157)" do
@@ -1084,7 +1084,7 @@ describe "Semantic: generic class" do
   end
 
   it "replaces type parameters for virtual types (#3235)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { generic_class "Array", generic_class("OutgoingPacket", types["Client"]).virtual_type! }
       abstract class Packet(T)
       end
 
@@ -1105,11 +1105,11 @@ describe "Semantic: generic class" do
       end
 
       Connection(Client).new.packets
-      )) { generic_class "Array", generic_class("OutgoingPacket", types["Client"]).virtual_type! }
+      CRYSTAL
   end
 
   it "nests generics with the same type var (#3297)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { symbol }
       class Foo(A)
         @a : A
 
@@ -1125,11 +1125,11 @@ describe "Semantic: generic class" do
       end
 
       Foo::Bar.new(:a).a
-      )) { symbol }
+      CRYSTAL
   end
 
   it "restricts virtual generic instance type against generic (#3351)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Gen(T)
       end
 
@@ -1141,11 +1141,11 @@ describe "Semantic: generic class" do
       end
 
       foo(Gen(String).new.as(Gen(String)))
-      )) { int32 }
+      CRYSTAL
   end
 
   it "subclasses twice with same generic class (#3423)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { generic_class "Bar", int32 }
       class Foo(T)
       end
 
@@ -1156,7 +1156,7 @@ describe "Semantic: generic class" do
       end
 
       Bar(Int32).new
-      )) { generic_class "Bar", int32 }
+      CRYSTAL
   end
 
   it "errors if invoking new on private new in generic type (#3485)" do
@@ -1173,7 +1173,7 @@ describe "Semantic: generic class" do
   end
 
   it "never types Path as virtual outside generic type parameter (#3989)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Base"].metaclass }
       class Base
       end
 
@@ -1193,11 +1193,11 @@ describe "Semantic: generic class" do
       end
 
       Generic(Base).new.t
-    )) { types["Base"].metaclass }
+      CRYSTAL
   end
 
   it "never types Generic as virtual outside generic type parameter (#3989)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { generic_class("Base", int32).metaclass }
       class Base(T)
       end
 
@@ -1217,7 +1217,7 @@ describe "Semantic: generic class" do
       end
 
       Generic(Base(Int32)).new.t
-    )) { generic_class("Base", int32).metaclass }
+      CRYSTAL
   end
 
   it "doesn't find T type parameter of current type in superclass (#4604)" do
@@ -1242,7 +1242,7 @@ describe "Semantic: generic class" do
   end
 
   it "can use type var that resolves to number in restriction (#6502)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { generic_class "Foo", 1.int32 }
       class Foo(N)
         def foo : Foo(N)
           self
@@ -1251,11 +1251,11 @@ describe "Semantic: generic class" do
 
       f = Foo(1).new
       f.foo
-      )) { generic_class "Foo", 1.int32 }
+      CRYSTAL
   end
 
   it "can use type var that resolves to number in restriction using Int128" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { generic_class "Foo", 1.int128 }
       class Foo(N)
         def foo : Foo(N)
           self
@@ -1264,11 +1264,11 @@ describe "Semantic: generic class" do
 
       f = Foo(1_i128).new
       f.foo
-      )) { generic_class "Foo", 1.int128 }
+      CRYSTAL
   end
 
   it "doesn't consider unbound generic instantiations as concrete (#7200)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32.metaclass }
       module Moo
       end
 
@@ -1290,7 +1290,7 @@ describe "Semantic: generic class" do
 
       moo = MooHolder.new(Bar(Int32).new)
       moo.@moo.call
-      )) { int32.metaclass }
+      CRYSTAL
   end
 
   it "shows error due to generic instantiation (#7083)" do
@@ -1319,7 +1319,7 @@ describe "Semantic: generic class" do
   end
 
   it "resolves T through metaclass inheritance (#7914)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       struct Int32
         def self.foo
           1
@@ -1336,7 +1336,7 @@ describe "Semantic: generic class" do
       end
 
       GeneralMatrix(Int32).foo
-    )) { int32 }
+      CRYSTAL
   end
 
   it "errors if splatting a non-tuple (#9853)" do
@@ -1347,16 +1347,16 @@ describe "Semantic: generic class" do
   end
 
   it "correctly checks argument count when target type has a splat (#9855)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { generic_class("T", int32, bool).metaclass }
       class T(A, B, *C)
       end
 
       T(*{Int32, Bool})
-      )) { generic_class("T", int32, bool).metaclass }
+      CRYSTAL
   end
 
   it "restricts generic type argument through alias in a non-strict way" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { generic_class "Gen", int32 }
       class Gen(T)
       end
 
@@ -1367,11 +1367,11 @@ describe "Semantic: generic class" do
       end
 
       foo(Gen(Int32).new)
-      )) { generic_class "Gen", int32 }
+      CRYSTAL
   end
 
   it "replaces type parameters in virtual metaclasses (#10691)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { generic_class("Foo", generic_class("Parent", int32).virtual_type.metaclass) }
       class Parent(T)
       end
 
@@ -1386,6 +1386,6 @@ describe "Semantic: generic class" do
       end
 
       Bar(Int32).new.@foo
-      )) { generic_class("Foo", generic_class("Parent", int32).virtual_type.metaclass) }
+      CRYSTAL
   end
 end

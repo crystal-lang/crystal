@@ -22,7 +22,7 @@ describe "Semantic: NoReturn" do
   end
 
   it "assumes if condition's type filters when else is no return" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       lib LibC
         fun exit : NoReturn
       end
@@ -37,11 +37,11 @@ describe "Semantic: NoReturn" do
       LibC.exit unless foo
 
       foo.foo
-    ") { int32 }
+      CRYSTAL
   end
 
   it "computes NoReturn in a lazy way inside if then (#314) (1)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of(int32, string) }
       require "prelude"
 
       a = 1
@@ -59,11 +59,11 @@ describe "Semantic: NoReturn" do
       end
 
       b
-      )) { union_of(int32, string) }
+      CRYSTAL
   end
 
   it "computes NoReturn in a lazy way inside if then (#314) (2)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       require "prelude"
 
       a = 1
@@ -80,11 +80,11 @@ describe "Semantic: NoReturn" do
       end
 
       b
-      )) { int32 }
+      CRYSTAL
   end
 
   it "computes NoReturn in a lazy way inside if then (#314) (3)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable(string) }
       require "prelude"
 
       a = 1
@@ -106,11 +106,11 @@ describe "Semantic: NoReturn" do
       end
 
       c
-      )) { nilable(string) }
+      CRYSTAL
   end
 
   it "computes NoReturn in a lazy way inside if then (#314) (4)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nil_type }
       require "prelude"
 
       a = 1
@@ -131,7 +131,7 @@ describe "Semantic: NoReturn" do
       end
 
       c
-      )) { nil_type }
+      CRYSTAL
   end
 
   it "computes NoReturn in a lazy way inside if then (#314) (5)" do
@@ -160,7 +160,7 @@ describe "Semantic: NoReturn" do
   end
 
   it "computes NoReturn in a lazy way inside if else (#314) (1)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of(int32, string) }
       require "prelude"
 
       a = 1
@@ -179,11 +179,11 @@ describe "Semantic: NoReturn" do
       end
 
       b
-      )) { union_of(int32, string) }
+      CRYSTAL
   end
 
   it "computes NoReturn in a lazy way inside if else (#314) (2)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       require "prelude"
 
       a = 1
@@ -201,11 +201,11 @@ describe "Semantic: NoReturn" do
       end
 
       b
-      )) { int32 }
+      CRYSTAL
   end
 
   it "computes NoReturn in a lazy way inside if else (#314) (3)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable(string) }
       require "prelude"
 
       a = 1
@@ -228,11 +228,11 @@ describe "Semantic: NoReturn" do
       end
 
       c
-      )) { nilable(string) }
+      CRYSTAL
   end
 
   it "computes NoReturn in a lazy way inside if else (#314) (4)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nil_type }
       require "prelude"
 
       a = 1
@@ -254,7 +254,7 @@ describe "Semantic: NoReturn" do
       end
 
       c
-      )) { nil_type }
+      CRYSTAL
   end
 
   it "computes NoReturn in a lazy way inside if else (#314) (5)" do
@@ -283,7 +283,7 @@ describe "Semantic: NoReturn" do
   end
 
   it "types exception handler as NoReturn if ensure is NoReturn" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { no_return }
       lib LibC
         fun foo : NoReturn
       end
@@ -293,11 +293,11 @@ describe "Semantic: NoReturn" do
       ensure
         LibC.foo
       end
-      )) { no_return }
+      CRYSTAL
   end
 
   it "types as NoReturn even if Nil return type is forced (#3096)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       lib LibC
         fun exit(Int32) : NoReturn
       end
@@ -317,15 +317,15 @@ describe "Semantic: NoReturn" do
       end
 
       baz
-      )) { int32 }
+      CRYSTAL
   end
 
   it "types as NoReturn if typeof(exp)'s exp is NoReturn" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { no_return.metaclass }
       require "prelude"
 
       typeof(raise("").foo)
-      )) { no_return.metaclass }
+      CRYSTAL
   end
 
   it "types as NoReturn if followed by one-to-many assignment (#15638)" do

@@ -30,7 +30,7 @@ describe "Semantic: method_missing" do
   end
 
   it "does method missing for generic type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo(T)
         macro method_missing(call)
           1
@@ -38,7 +38,7 @@ describe "Semantic: method_missing" do
       end
 
       Foo(Int32).new.foo
-      )) { int32 }
+      CRYSTAL
   end
 
   it "errors if method_missing expands to an incorrect method" do
@@ -75,7 +75,7 @@ describe "Semantic: method_missing" do
   end
 
   it "finds method_missing with 'with ... yield'" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         macro method_missing(call)
           1
@@ -90,7 +90,7 @@ describe "Semantic: method_missing" do
       bar do
         baz
       end
-      )) { int32 }
+      CRYSTAL
   end
 
   it "doesn't look up method_missing in with_yield_scope if call has a receiver (#12097)" do

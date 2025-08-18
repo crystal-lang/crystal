@@ -2,25 +2,25 @@ require "../../spec_helper"
 
 describe "Semantic: double splat" do
   it "double splats named argument into arguments (1)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       def foo(x, y)
         x
       end
 
       tup = {x: 1, y: 'a'}
       foo **tup
-      )) { int32 }
+      CRYSTAL
   end
 
   it "double splats named argument into arguments (2)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       def foo(x, y)
         x
       end
 
       tup = {y: 'a', x: 1}
       foo **tup
-      )) { int32 }
+      CRYSTAL
   end
 
   it "errors if duplicate keys on call side with two double splats" do
@@ -58,47 +58,47 @@ describe "Semantic: double splat" do
   end
 
   it "matches double splat on method (empty)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { named_tuple_of({} of String => Type) }
       def foo(**args)
         args
       end
 
       foo
-      )) { named_tuple_of({} of String => Type) }
+      CRYSTAL
   end
 
   it "matches double splat on method with named args" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { named_tuple_of({"x": int32, "y": char}) }
       def foo(**args)
         args
       end
 
       foo x: 1, y: 'a'
-      )) { named_tuple_of({"x": int32, "y": char}) }
+      CRYSTAL
   end
 
   it "matches double splat on method with named args and regular args" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { named_tuple_of({"y": char, "z": int32}) }
       def foo(x, **args)
         args
       end
 
       foo y: 'a', z: 3, x: "foo"
-      )) { named_tuple_of({"y": char, "z": int32}) }
+      CRYSTAL
   end
 
   it "matches double splat with regular splat" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([tuple_of([int32, char]), named_tuple_of({"x": string, "y": bool})]) }
       def foo(*args, **options)
         {args, options}
       end
 
       foo 1, 'a', x: "foo", y: true
-      )) { tuple_of([tuple_of([int32, char]), named_tuple_of({"x": string, "y": bool})]) }
+      CRYSTAL
   end
 
   it "uses double splat in new" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         @x : Int32
 
@@ -112,7 +112,7 @@ describe "Semantic: double splat" do
       end
 
       Foo.new(x: 1).x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "uses restriction on double splat, doesn't match with empty named tuple" do
@@ -146,7 +146,7 @@ describe "Semantic: double splat" do
   end
 
   it "overloads based on double splat restriction" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([string, bool]) }
       def foo(**options : Int32)
         true
       end
@@ -158,27 +158,27 @@ describe "Semantic: double splat" do
       x1 = foo x: 'a', y: 'b'
       x2 = foo x: 1, y: 2
       {x1, x2}
-      )) { tuple_of([string, bool]) }
+      CRYSTAL
   end
 
   it "uses double splat restriction" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { named_tuple_of({"x" => int32, "y" => char}).metaclass }
       def foo(**options : **T) forall T
         T
       end
 
       foo x: 1, y: 'a'
-      )) { named_tuple_of({"x" => int32, "y" => char}).metaclass }
+      CRYSTAL
   end
 
   it "uses double splat restriction, matches empty" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { named_tuple_of({} of String => Type).metaclass }
       def foo(**options : **T) forall T
         T
       end
 
       foo
-      )) { named_tuple_of({} of String => Type).metaclass }
+      CRYSTAL
   end
 
   it "uses double splat restriction with concrete type" do
@@ -194,12 +194,12 @@ describe "Semantic: double splat" do
   end
 
   it "matches named args producing an empty double splat (#2678)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { named_tuple_of({} of String => Type) }
       def test(x, **kwargs)
         kwargs
       end
 
       test(x: 7)
-      )) { named_tuple_of({} of String => Type) }
+      CRYSTAL
   end
 end

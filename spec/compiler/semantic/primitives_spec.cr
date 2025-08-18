@@ -72,7 +72,7 @@ describe "Semantic: primitives" do
   end
 
   it "correctly types first hash from type vars (bug)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { generic_class "Hash", int32, char }
       class Hash(K, V)
       end
 
@@ -83,15 +83,15 @@ describe "Semantic: primitives" do
       x = foo 1, 'a'
       y = foo 'a', 1
       x
-      )) { generic_class "Hash", int32, char }
+      CRYSTAL
   end
 
   it "computes correct hash value type if it's a function literal (#320)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { generic_class "Hash", string, proc_of(bool) }
       require "prelude"
 
       {"foo" => ->{ true }}
-      )) { generic_class "Hash", string, proc_of(bool) }
+      CRYSTAL
   end
 
   it "extends from Number and doesn't find + method" do
@@ -125,44 +125,44 @@ describe "Semantic: primitives" do
   end
 
   pending "types pointer of int" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { types["Int"] }
       p = Pointer(Int).malloc(1_u64)
       p.value = 1
       p.value
-      ") { types["Int"] }
+      CRYSTAL
   end
 
   it "can invoke cast on primitive typedef (#614)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       lib Test
         type K = Int32
         fun foo : K
       end
 
       Test.foo.to_i
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "can invoke binary on primitive typedef (#614)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { types["Test"].types["K"] }
       lib Test
         type K = Int32
         fun foo : K
       end
 
       Test.foo + 1
-      ), inject_primitives: true) { types["Test"].types["K"] }
+      CRYSTAL
   end
 
   it "can invoke binary on primitive typedef (2) (#614)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { types["Test"].types["K"] }
       lib Test
         type K = Int32
         fun foo : K
       end
 
       Test.foo.unsafe_shl 1
-      ), inject_primitives: true) { types["Test"].types["K"] }
+      CRYSTAL
   end
 
   it "errors if using instance variable inside primitive type" do
@@ -179,7 +179,7 @@ describe "Semantic: primitives" do
   end
 
   it "types @[Primitive] method" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       struct Int32
         @[Primitive(:binary)]
         def +(other : Int32) : Int32
@@ -187,7 +187,7 @@ describe "Semantic: primitives" do
       end
 
       1 + 2
-      )) { int32 }
+      CRYSTAL
   end
 
   it "errors if @[Primitive] has no args" do
@@ -224,7 +224,7 @@ describe "Semantic: primitives" do
   end
 
   it "types va_arg primitive" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       struct VaList
         @[Primitive(:va_arg)]
         def next(type)
@@ -233,7 +233,7 @@ describe "Semantic: primitives" do
 
       list = VaList.new
       list.next(Int32)
-      )) { int32 }
+      CRYSTAL
   end
 
   it "looks up return type in correct scope (#13652)" do

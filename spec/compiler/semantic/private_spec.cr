@@ -78,7 +78,7 @@ describe "Semantic: private" do
   end
 
   it "types private def correctly" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       private def foo
         1
       end
@@ -88,7 +88,7 @@ describe "Semantic: private" do
       end
 
       foo
-      )) { int32 }
+      CRYSTAL
   end
 
   it "doesn't find private macro in another file" do
@@ -147,7 +147,7 @@ describe "Semantic: private" do
   end
 
   it "find module private macro inside the module" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         private macro foo
           def bar
@@ -159,11 +159,11 @@ describe "Semantic: private" do
       end
 
       Foo.new.bar
-      )) { int32 }
+      CRYSTAL
   end
 
   it "find module private macro inside a module, which is inherited by the module" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         private macro foo
           def bar
@@ -177,7 +177,7 @@ describe "Semantic: private" do
       end
 
       Bar.new.bar
-      )) { int32 }
+      CRYSTAL
   end
 
   it "doesn't find module private macro outside the module" do
@@ -193,7 +193,7 @@ describe "Semantic: private" do
   end
 
   it "finds private def when invoking from inside macro (#2082)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       private def foo
         42
       end
@@ -201,7 +201,7 @@ describe "Semantic: private" do
       {% begin %}
         foo
       {% end %}
-      )) { int32 }
+      CRYSTAL
   end
 
   it "doesn't find private class in another file" do
@@ -258,7 +258,7 @@ describe "Semantic: private" do
   end
 
   it "can use types in private type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       private class Foo
         def initialize(@x : Int32)
         end
@@ -269,11 +269,11 @@ describe "Semantic: private" do
       end
 
       Foo.new(10).foo
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "can use class var initializer in private type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       private class Foo
         @@x = 1
 
@@ -283,11 +283,11 @@ describe "Semantic: private" do
       end
 
       Foo.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "can use instance var initializer in private type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       private class Foo
         @x = 1
 
@@ -297,11 +297,11 @@ describe "Semantic: private" do
       end
 
       Foo.new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "finds private class in macro expansion" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       private class Foo
         @x = 1
 
@@ -315,7 +315,7 @@ describe "Semantic: private" do
       end
 
       foo
-      )) { int32 }
+      CRYSTAL
   end
 
   {% for kind, decl in {
@@ -378,7 +378,7 @@ describe "Semantic: private" do
   {% end %}
 
   it "finds private type from inside namespace" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         private class Bar
           def self.foo
@@ -390,11 +390,11 @@ describe "Semantic: private" do
       end
 
       x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "finds private type from inside namespace in subclass" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         private class Bar
           def self.foo
@@ -408,7 +408,7 @@ describe "Semantic: private" do
       end
 
       x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "gives private constant error in macro" do

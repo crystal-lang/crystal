@@ -135,13 +135,13 @@ describe "Semantic: lib" do
   end
 
   it "allows invoking out with underscore " do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { float64 }
       lib Lib
         fun foo(x : Int32*) : Float64
       end
 
       Lib.foo out _
-      )) { float64 }
+      CRYSTAL
   end
 
   it "reports redefinition of fun with different signature" do
@@ -155,27 +155,27 @@ describe "Semantic: lib" do
   end
 
   it "types lib var get" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       lib LibC
         $errno : Int32
       end
 
       LibC.errno
-      ") { int32 }
+      CRYSTAL
   end
 
   it "types lib var set" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       lib LibC
         $errno : Int32
       end
 
       LibC.errno = 1
-      ") { int32 }
+      CRYSTAL
   end
 
   it "types lib var get with forward declaration" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       lib LibC
         $errno : A
 
@@ -183,22 +183,22 @@ describe "Semantic: lib" do
       end
 
       LibC.errno
-      ") { int32 }
+      CRYSTAL
   end
 
   it "defined fun with aliased type" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       lib LibC
         alias SizeT = Int32
         fun foo(x : SizeT) : SizeT
       end
 
       LibC.foo(1)
-      ") { int32 }
+      CRYSTAL
   end
 
   it "overrides definition of fun" do
-    result = assert_type("
+    result = assert_type(<<-CRYSTAL) { float64 }
       lib LibC
         fun foo(x : Int32) : Float64
       end
@@ -208,7 +208,7 @@ describe "Semantic: lib" do
       end
 
       LibC.foo(1)
-      ") { float64 }
+      CRYSTAL
     mod = result.program
     lib_type = mod.types["LibC"].as(LibType)
     foo = lib_type.lookup_first_def("foo", false).as(External)
@@ -264,25 +264,25 @@ describe "Semantic: lib" do
   end
 
   it "allows passing splat to LibC fun" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { float64 }
       lib LibC
         fun foo(x : Int32, y : Float64, ...) : Float64
       end
 
       t = {1, 2.5, 3, 4}
       LibC.foo *t
-      )) { float64 }
+      CRYSTAL
   end
 
   it "allows passing double splat to LibC fun" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { float64 }
       lib LibC
         fun foo(x : Int32, y : Float64) : Float64
       end
 
       t = {y: 2.5, x: 3}
       LibC.foo **t
-      ), inject_primitives: true) { float64 }
+      CRYSTAL
   end
 
   it "errors if missing link arguments" do
@@ -415,13 +415,13 @@ describe "Semantic: lib" do
   end
 
   it "clears annotations after lib" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       @[Link("foo")]
       lib LibFoo
         fun foo
       end
       1
-      )) { int32 }
+      CRYSTAL
   end
 
   it "warns if @[Link(static: true)] is specified" do
@@ -443,7 +443,7 @@ describe "Semantic: lib" do
   end
 
   it "allows invoking lib call without obj inside lib" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       lib LibFoo
         fun foo : Int32
 
@@ -451,7 +451,7 @@ describe "Semantic: lib" do
       end
 
       LibFoo::A
-      )) { int32 }
+      CRYSTAL
   end
 
   it "errors if lib fun call is part of dispatch" do
@@ -503,7 +503,7 @@ describe "Semantic: lib" do
   end
 
   it "supports forward references (#399)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { pointer_of(types["LibFoo"].types["Bar"]) }
       lib LibFoo
         fun foo() : Bar*
 
@@ -513,11 +513,11 @@ describe "Semantic: lib" do
       end
 
       LibFoo.foo
-      )) { pointer_of(types["LibFoo"].types["Bar"]) }
+      CRYSTAL
   end
 
   it "supports forward references with struct inside struct (#399)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { pointer_of(types["LibFoo"].types["Foo"]) }
       lib LibFoo
         struct Bar
           x : Foo*
@@ -529,7 +529,7 @@ describe "Semantic: lib" do
       end
 
       LibFoo::Bar.new.x
-      )) { pointer_of(types["LibFoo"].types["Foo"]) }
+      CRYSTAL
   end
 
   it "errors if defines def on lib" do
@@ -619,13 +619,13 @@ describe "Semantic: lib" do
   end
 
   it "can use tuple as fun return" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([int32, int32] of TypeVar) }
       lib LibC
         fun foo : {Int32, Int32}
       end
 
       LibC.foo
-      )) { tuple_of([int32, int32] of TypeVar) }
+      CRYSTAL
   end
 
   it "doesn't try to invoke unsafe for c struct/union (#1362)" do
@@ -644,35 +644,35 @@ describe "Semantic: lib" do
   end
 
   it "passes int as another integer type in variable" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { float64 }
       lib LibFoo
         fun foo(x : Int32) : Float64
       end
 
       a = 1_u8
       LibFoo.foo a
-      ), inject_primitives: true) { float64 }
+      CRYSTAL
   end
 
   it "passes float as another integer type in variable" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       lib LibFoo
         fun foo(x : Float32) : Int32
       end
 
       a = 1_f64
       LibFoo.foo a
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "passes int as another integer type with literal" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { float64 }
       lib LibFoo
         fun foo(x : Int32) : Float64
       end
 
       LibFoo.foo 1_u8
-      )) { float64 }
+      CRYSTAL
   end
 
   it "errors if invoking to_i32! and got error in that call" do
@@ -710,7 +710,7 @@ describe "Semantic: lib" do
   end
 
   it "defines lib funs before funs with body" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       fun foo : Int32
         LibX.x
       end
@@ -720,7 +720,7 @@ describe "Semantic: lib" do
       end
 
       foo
-      )) { int32 }
+      CRYSTAL
   end
 
   it "errors if using out with varargs" do
@@ -835,58 +835,58 @@ describe "Semantic: lib" do
   end
 
   it "can use named args" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       lib LibC
         fun foo(x : Int32, y : UInt8) : Int32
       end
 
       LibC.foo y: 1_u8, x: 1
-      )) { int32 }
+      CRYSTAL
   end
 
   it "can use out with named args" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       lib LibC
         fun foo(x : Int32*)
       end
 
       LibC.foo(x: out x)
       x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "types fun returning nothing as nil" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nil_type }
       lib LibFoo
         fun foo
       end
 
       LibFoo.foo
-      )) { nil_type }
+      CRYSTAL
   end
 
   it "types fun returning void as nil" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nil_type }
       lib LibFoo
         fun foo : Void
       end
 
       LibFoo.foo
-      )) { nil_type }
+      CRYSTAL
   end
 
   it "types fun returning nil as nil" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nil_type }
       lib LibFoo
         fun foo : Nil
       end
 
       LibFoo.foo
-      )) { nil_type }
+      CRYSTAL
   end
 
   it "can use macros inside lib" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       lib LibFoo
         {% begin %}
           fun foo : Int32
@@ -894,11 +894,11 @@ describe "Semantic: lib" do
       end
 
       LibFoo.foo
-      )) { int32 }
+      CRYSTAL
   end
 
   it "can use macros inside struct" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       lib LibFoo
         struct Foo
           {% begin %}
@@ -908,7 +908,7 @@ describe "Semantic: lib" do
       end
 
       LibFoo::Foo.new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "errors if defining incompatible funs with the same name in the same lib (#3045)" do
@@ -1012,7 +1012,7 @@ describe "Semantic: lib" do
   end
 
   it "can list lib functions at the top level (#12395)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { bool }
       lib LibFoo
         fun foo
       end
@@ -1022,6 +1022,6 @@ describe "Semantic: lib" do
       {% else %}
         1
       {% end %}
-      )) { bool }
+      CRYSTAL
   end
 end
