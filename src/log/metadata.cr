@@ -24,7 +24,7 @@ class Log::Metadata
   # When the metadata is defragmented @size will be increased up to
   # the actual number of entries resulting from merging the parent
   @size = uninitialized Int32
-  # Numer of parent elements we've copied on defrag
+  # Number of parent elements we've copied on defrag
   @parent_size = uninitialized Int32
 
   # @first needs to be the last ivar of Metadata. The entries are allocated together with self
