@@ -283,6 +283,49 @@ jobs:
           paths:
             - build
 
+  cross_compile_linux_aarch64:
+    docker:
+      - image: crystallang/crystal:1.17.1-build
+    resource_class: large
+    steps:
+      - checkout
+      - run: make target=aarch64-linux-gnu release=1
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .build/crystal.o
+
+  package_cross_compiled_linux_aarch64:
+    machine:
+      image: default
+    resource_class: arm.medium
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - run: |
+          sudo apt remove 'llvm-*' 'libllvm*'
+          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
+          sudo apt-add-repository -y deb http://apt.llvm.org/noble/ llvm-toolchain-noble-18 main
+          sudo apt install -y llvm-18-dev
+
+      - run: |
+          sudo apt install -y lld libgc-dev libpcre2-dev
+
+      - run: |
+          mkdir -p build/bin
+          # shellcheck disable=SC2046
+          cc .build/crystal.o -o build/bin/crystal \
+            $(pkg-config bdw-gc libpcre2-8 --libs) \
+            $(llvm-config-18 --libs --system-libs --ldflags) \
+            -lm
+           build/bin/crystal --version
+
+      - run: tar -cf crystal.tar.gz build
+      - persist_to_workspace:
+          root: .
+          paths:
+            - crystal.tar.gz
+
   dist_linux_aarch64:
     machine:
       image: default
@@ -296,7 +339,7 @@ jobs:
             cd /tmp/workspace/distribution-scripts
             source build.env
             cd linux
-            make all64 release=true
+            make all64 release=true PREVIOUS_CRYSTAL_RELEASE_LINUX64_TARGZ=crystal.tar.gz
       - store_artifacts:
           path: /tmp/workspace/distribution-scripts/linux/build
           destination: build
@@ -545,11 +588,19 @@ workflows:
           requires:
             - prepare_maintenance
             - prepare_tagged
-      - dist_linux_aarch64:
+      - cross_compile_linux_aarch64:
           filters: *release
           requires:
             - prepare_maintenance
             - prepare_tagged
+      - package_cross_compiled_linux_aarch64:
+          filters: *release
+          requires:
+            - cross_compile_linux_aarch64
+      - dist_linux_aarch64:
+          filters: *release
+          requires:
+            - package_cross_compiled_linux_aarch64
       - dist_darwin:
           filters: *release
           requires:
@@ -608,6 +659,12 @@ workflows:
       - dist_linux:
           requires:
             - prepare_nightly
+      - cross_compile_linux_aarch64:
+          requires:
+            - prepare_nightly
+      - dist_linux_aarch64:
+          requires:
+            - cross_compile_linux_aarch64
       - dist_darwin:
           requires:
             - prepare_nightly
@@ -636,10 +693,12 @@ workflows:
       - publish_nightly_artifacts:
           requires:
             - dist_linux
+            - dist_linux_aarch64
             - dist_darwin
       - dist_artifacts:
           requires:
             - dist_linux
+            - dist_linux_aarch64
             - dist_darwin
             - dist_snap
             - dist_docs
