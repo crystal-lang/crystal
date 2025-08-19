@@ -20,13 +20,13 @@ class Log::Metadata
   # When the metadata is defragmented max_total_size will be updated with size
   protected getter max_total_size : Int32
   @max_total_size = uninitialized Int32
-  # How many entries are potentially overridden from parent (ie: initial entries.size)
-  @overridden_size = uninitialized Int32
   # How many entries are stored from @first.
-  # Initially are @overridden_size, the one explicitly overridden in entries argument.
   # When the metadata is defragmented @size will be increased up to
   # the actual number of entries resulting from merging the parent
   @size = uninitialized Int32
+  # Numer of parent elements we've copied on defrag
+  @parent_size = uninitialized Int32
+
   # @first needs to be the last ivar of Metadata. The entries are allocated together with self
   @first = uninitialized Entry
 
@@ -42,18 +42,18 @@ class Log::Metadata
   end
 
   protected def setup(@parent : Metadata?, entries : NamedTuple | Hash)
-    @size = @overridden_size = entries.size
+    @size = entries.size
+    @parent_size = 0
     parent_size = (@parent.try(&.max_total_size) || 0)
     @max_total_size = @size + parent_size
     ptr_entries = pointerof(@first)
 
-    # Use parent_size as offset to make room for parent entries when defragging
     if entries.is_a?(NamedTuple)
-      entries.each_with_index(parent_size) do |key, value, i|
+      entries.each_with_index do |key, value, i|
         ptr_entries[i] = {key: key, value: Value.to_metadata_value(value)}
       end
     else
-      entries.each_with_index(parent_size) do |(key, value), i|
+      entries.each_with_index do |(key, value), i|
         ptr_entries[i] = {key: key, value: Value.to_metadata_value(value)}
       end
     end
@@ -93,57 +93,51 @@ class Log::Metadata
   # will be recomputed, but the result should be the same.
   #
   # * @parent.nil? signals if the defrag is needed/done
-  # * The values of @overridden_size, pointerof(@first) are never changed
+  # * The value of pointerof(@first) are never changed
   # * @parent is set at the very end of the method
   protected def defrag
     parent = @parent
     return if parent.nil?
 
     ptr_entries = pointerof(@first)
-    next_free_entry = ptr_entries
-    # Math to get @size from end
-    my_entries = ptr_entries + (@max_total_size - @size)
+    next_free_entry = ptr_entries + @size
+    total_size = @size
 
-    # Copy all parent entries to the beginning of "our" entries
+    # Copy parent entries that ain't overwritten
     parent_size = 0
-    parent.each_with_index do |(key, value), i|
-      next_free_entry.value = {key: key, value: value}
-      next_free_entry += 1
-      parent_size += 1
-    end
-
-    total_size = parent_size
-
-    # Move all of "our" entries, but overwrite parent if exists
-    @size.times do |i|
-      entry = my_entries[i]
-
+    parent.each do |(key, value)|
       overwritten = false
-      parent_size.times do |j|
-        if ptr_entries[j][:key] == entry[:key]
-          # Overwrite parent entry with our entry
-          ptr_entries[j] = {key: entry[:key], value: entry[:value]}
+      @size.times do |i|
+        if ptr_entries[i][:key] == key
           overwritten = true
           break
         end
       end
       next if overwritten
-
-      next_free_entry.value = {key: entry[:key], value: entry[:value]}
+      next_free_entry.value = {key: key, value: value}
+      parent_size += 1
       next_free_entry += 1
       total_size += 1
     end
 
     @size = total_size
     @max_total_size = total_size
+    @parent_size = parent_size
     @parent = nil
   end
 
   def each(& : {Symbol, Value} ->)
     defrag
     ptr_entries = pointerof(@first)
+    parent_size = @parent_size
+    local_size = @size - parent_size
 
-    @size.times do |i|
+    parent_size.times do |i|
+      entry = ptr_entries[i + local_size]
+      yield({entry[:key], entry[:value]})
+    end
+
+    local_size.times do |i|
       entry = ptr_entries[i]
       yield({entry[:key], entry[:value]})
     end
@@ -171,9 +165,9 @@ class Log::Metadata
 
     ptr_entries = pointerof(@first)
     # Math to get @size from end
-    my_entries = ptr_entries + (@max_total_size - @size)
-    @size.times do |i|
-      return my_entries[i] if my_entries[i][:key] == key
+    # my_entries = ptr_entries + (@max_total_size - @size)
+    (@size - @parent_size).times do |i|
+      return ptr_entries[i] if ptr_entries[i][:key] == key
     end
 
     return parent.find_entry(key) if parent

@@ -72,14 +72,12 @@ describe Log::Metadata do
 
     md.@size.should eq(1)
     md.@max_total_size.should eq(4)
-    md.@overridden_size.should eq(1)
     md.@parent.should be(parent)
 
     md.should eq(m({a: 3, b: 2}))
 
     md.@size.should eq(2)
     md.@max_total_size.should eq(2)
-    md.@overridden_size.should eq(1)
     md.@parent.should be_nil
   end
 
