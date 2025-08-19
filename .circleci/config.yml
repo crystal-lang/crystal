@@ -341,8 +341,8 @@ jobs:
             cd /tmp/workspace/distribution-scripts
             source build.env
             cd linux
-            cp /tmp/workspace/crystal.tar.gz files/
-            ls -l
+            mkdir -p files
+            cp /tmp/workspace/crystal.tar.gz files/crystal.tar.gz
             make all64 release=true PREVIOUS_CRYSTAL_RELEASE_LINUX64_TARGZ=files/crystal.tar.gz
       - store_artifacts:
           path: /tmp/workspace/distribution-scripts/linux/build
