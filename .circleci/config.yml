@@ -297,7 +297,7 @@ jobs:
 
   package_cross_compiled_linux_aarch64:
     machine:
-      image: default
+      image: ubuntu-2404
     resource_class: arm.medium
     steps:
       - attach_workspace:
