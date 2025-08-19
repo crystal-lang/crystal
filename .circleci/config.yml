@@ -283,6 +283,28 @@ jobs:
           paths:
             - build
 
+  dist_linux_aarch64:
+    machine:
+      image: default
+    resource_class: arm.medium
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - run:
+          no_output_timeout: 20m
+          command: |
+            cd /tmp/workspace/distribution-scripts
+            source build.env
+            cd linux
+            make all64 release=true
+      - store_artifacts:
+          path: /tmp/workspace/distribution-scripts/linux/build
+          destination: build
+      - persist_to_workspace:
+          root: /tmp/workspace/distribution-scripts/linux/
+          paths:
+            - build
+
   dist_darwin:
     macos:
       xcode: 15.3.0
@@ -523,6 +545,11 @@ workflows:
           requires:
             - prepare_maintenance
             - prepare_tagged
+      - dist_linux_aarch64:
+          filters: *release
+          requires:
+            - prepare_maintenance
+            - prepare_tagged
       - dist_darwin:
           filters: *release
           requires:
@@ -556,6 +583,7 @@ workflows:
           filters: *release
           requires:
             - dist_linux
+            - dist_linux_aarch64
             - dist_darwin
             - dist_snap
             - dist_docs
