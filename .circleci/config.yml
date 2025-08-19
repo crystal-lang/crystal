@@ -316,7 +316,7 @@ jobs:
       - run: |
           mkdir -p build/bin
           # shellcheck disable=SC2046
-          cc .build/crystal.o -o build/bin/crystal \
+          cc /tmp/workspace/.build/crystal.o -o build/bin/crystal \
             $(pkg-config bdw-gc libpcre2-8 --libs) \
             $(llvm-config-18 --libs --system-libs --ldflags) \
             -lm
