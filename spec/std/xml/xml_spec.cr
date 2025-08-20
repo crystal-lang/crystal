@@ -1,6 +1,7 @@
 require "spec"
 require "xml"
 require "spec/helpers/string"
+require "semantic_version"
 
 describe XML do
   it "parses" do
@@ -177,7 +178,11 @@ describe XML do
       XML.parse("<people></foo>", XML::ParserOptions.default & ~XML::ParserOptions::NOERROR).errors.try(&.map(&.message)).should eq ["Opening and ending tag mismatch: people line 1 and foo"]
     end
     it do
-      XML.parse("<people></foo>", XML::ParserOptions[RECOVER, NOERROR]).errors.try(&.map(&.message)).should eq ["Opening and ending tag mismatch: people line 1 and foo"]
+      if SemanticVersion.parse(XML.libxml2_version) < SemanticVersion.parse("2.13.0")
+        XML.parse("<people></foo>", XML::ParserOptions[RECOVER, NOERROR]).errors.try(&.map(&.message)).should eq ["Opening and ending tag mismatch: people line 1 and foo"]
+      else
+        XML.parse("<people></foo>", XML::ParserOptions[RECOVER, NOERROR]).errors.try(&.map(&.message)).should be_nil
+      end
     end
     it do
       XML.parse("<people></foo>", XML::ParserOptions[RECOVER]).errors.try(&.map(&.message)).should eq ["Opening and ending tag mismatch: people line 1 and foo"]
