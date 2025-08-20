@@ -63,6 +63,12 @@ describe Channel do
     expect_raises Channel::TimeoutError do
       Channel.receive_first(Channel(Int32).new, Channel(Int32).new, timeout: 1.nanosecond)
     end
+    expect_raises Channel::TimeoutError do
+      Channel.receive_first([Channel(Int32).new, Channel(Int32).new], timeout: 1.nanosecond)
+    end
+    expect_raises Channel::TimeoutError do
+      Channel.receive_first(StaticArray[Channel(Int32).new, Channel(Int32).new], timeout: 1.nanosecond)
+    end
   end
 
   it "does send_first" do
@@ -76,6 +82,12 @@ describe Channel do
   it "raises when send_first timeout exceeded" do
     expect_raises Channel::TimeoutError do
       Channel.send_first(1, Channel(Int32).new, Channel(Int32).new, timeout: 1.nanosecond)
+    end
+    expect_raises Channel::TimeoutError do
+      Channel.send_first(1, [Channel(Int32).new, Channel(Int32).new], timeout: 1.nanosecond)
+    end
+    expect_raises Channel::TimeoutError do
+      Channel.send_first(1, StaticArray[Channel(Int32).new, Channel(Int32).new], timeout: 1.nanosecond)
     end
   end
 

@@ -357,7 +357,11 @@ class Channel(T)
     if timeout.nil?
       _, value = self.select(actions)
     else
-      index, value = self.select(*actions, TimeoutAction.new(timeout))
+      if actions.is_a?(Tuple)
+        index, value = self.select(*actions, TimeoutAction.new(timeout))
+      else
+        index, value = self.select(actions.to_a + [TimeoutAction.new(timeout)])
+      end
       raise TimeoutError.new if index == actions.size
     end
     value
