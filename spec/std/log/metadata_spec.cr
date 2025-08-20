@@ -89,6 +89,20 @@ describe Log::Metadata do
     md.should eq(m({x: 102, y: 200, z: 300, a: 1, b: 22, c: 3}))
   end
 
+  it "[] find parent entry after defrag" do
+    grandparent = m({x: 100, y: 200, z: 300})
+    parent = grandparent.extend({x: 101, a: 1, b: 2})
+    md = parent.extend({x: 102, b: 22, c: 3})
+
+    _ = md.to_a
+
+    md[:y].should eq(200)
+    md[:z].should eq(300)
+    md[:x].should eq(102)
+    md[:a].should eq(1)
+    md[:b].should eq(22)
+  end
+
   it "[]" do
     md = m({a: 1, b: 2}).extend({a: 3})
 

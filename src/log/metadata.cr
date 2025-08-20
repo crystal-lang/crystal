@@ -24,7 +24,8 @@ class Log::Metadata
   # When the metadata is defragmented @size will be increased up to
   # the actual number of entries resulting from merging the parent
   @size = uninitialized Int32
-  # Number of parent elements we've copied on defrag
+  # Number of parent elements we've copied on defrag. Used to iterate parent
+  # entries first in #each.
   @parent_size = uninitialized Int32
 
   # @first needs to be the last ivar of Metadata. The entries are allocated together with self
@@ -164,9 +165,7 @@ class Log::Metadata
     parent = @parent
 
     ptr_entries = pointerof(@first)
-    # Math to get @size from end
-    # my_entries = ptr_entries + (@max_total_size - @size)
-    (@size - @parent_size).times do |i|
+    @size.times do |i|
       return ptr_entries[i] if ptr_entries[i][:key] == key
     end
 
