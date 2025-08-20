@@ -158,15 +158,30 @@ describe XML do
     person2.previous_element.should eq(person)
   end
 
-  it "#errors" do
-    options = XML::ParserOptions::RECOVER | XML::ParserOptions::NONET
+  describe "#errors" do
+    it do
+      options = XML::ParserOptions::RECOVER | XML::ParserOptions::NONET
 
-    xml = XML.parse(%(<people></foo>), options)
-    xml.root.not_nil!.name.should eq("people")
-    xml.errors.try(&.map(&.to_s)).should eq ["Opening and ending tag mismatch: people line 1 and foo"]
+      xml = XML.parse(%(<people></foo>), options)
+      xml.root.not_nil!.name.should eq("people")
+      xml.errors.try(&.map(&.to_s)).should eq ["Opening and ending tag mismatch: people line 1 and foo"]
 
-    xml = XML.parse(%(<foo></foo>))
-    xml.errors.should be_nil
+      xml = XML.parse(%(<foo></foo>))
+      xml.errors.should be_nil
+    end
+
+    it do
+      XML.parse("<people></foo>").errors.try(&.map(&.message)).should eq ["Opening and ending tag mismatch: people line 1 and foo"]
+    end
+    it do
+      XML.parse("<people></foo>", XML::ParserOptions.default & ~XML::ParserOptions::NOERROR).errors.try(&.map(&.message)).should eq ["Opening and ending tag mismatch: people line 1 and foo"]
+    end
+    it do
+      XML.parse("<people></foo>", XML::ParserOptions[RECOVER, NOERROR]).errors.try(&.map(&.message)).should eq ["Opening and ending tag mismatch: people line 1 and foo"]
+    end
+    it do
+      XML.parse("<people></foo>", XML::ParserOptions[RECOVER]).errors.try(&.map(&.message)).should eq ["Opening and ending tag mismatch: people line 1 and foo"]
+    end
   end
 
   describe "#namespace" do
