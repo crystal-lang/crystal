@@ -205,7 +205,7 @@ module Crystal
     def visit(node : NamedTupleLiteral)
       # short-circuit to handle empty named tuple context
       if node.entries.empty?
-        @str << "NamedTuple.new"
+        @str << "::NamedTuple.new"
         return false
       end
 
@@ -1243,7 +1243,7 @@ module Crystal
     def visit(node : TupleLiteral)
       first = node.elements.first?
       unless first
-        @str << "Tuple.new"
+        @str << "::Tuple.new"
         return false
       end
 
