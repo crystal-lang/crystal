@@ -2818,32 +2818,35 @@ module Crystal
         needs_space = !has_parentheses || has_args
         block_indent = base_indent
         skip_space
-        if has_parentheses && @token.type.op_comma?
-          next_token
-          wrote_newline = skip_space(block_indent, write_comma: true)
-          if wrote_newline || @token.type.newline?
-            unless wrote_newline
-              next_token_skip_space_or_newline
-              write ","
-              write_line
+        if has_parentheses
+          if @token.type.op_comma?
+            next_token
+            wrote_newline = skip_space(block_indent, write_comma: true)
+            if wrote_newline || @token.type.newline?
+              unless wrote_newline
+                next_token_skip_space_or_newline
+                write ","
+                write_line
+              end
+              needs_space = false
+              block_indent += 2 if !@token.type.op_rparen? # foo(1, ↵  &.foo) case
+              write_indent(block_indent)
+            else
+              write "," if !@token.type.op_rparen? # foo(1, &.foo) case
             end
-            needs_space = false
-            block_indent += 2 if !@token.type.op_rparen? # foo(1, ↵  &.foo) case
-            write_indent(block_indent)
-          else
-            write "," if !@token.type.op_rparen? # foo(1, &.foo) case
+          end
+          if @token.type.op_rparen?
+            if ends_with_newline
+              write_line unless found_comment || @wrote_newline
+              write_indent
+            end
+            write ")"
+            next_token_skip_space_or_newline
+            indent(block_indent) { format_block block, needs_space }
+            return false
           end
         end
-        if has_parentheses && @token.type.op_rparen?
-          if ends_with_newline
-            write_line unless found_comment || @wrote_newline
-            write_indent
-          end
-          write ")"
-          next_token_skip_space_or_newline
-          indent(block_indent) { format_block block, needs_space }
-          return false
-        end
+
         indent(block_indent) { format_block block, needs_space }
         if has_parentheses
           skip_space
