@@ -59,6 +59,21 @@ module HTTP
         cookies.has_key?("a").should be_true
       end
 
+      describe "#<<" do
+        it "overwrites existing key" do
+          cookies = Cookies{"a" => "b"}
+          cookies << Cookie.new("a", "c")
+          cookies.should eq Cookies{"a" => "c"}
+        end
+
+        it "overwrites existing key with same value" do
+          cookies = Cookies{"a" => "b"}
+          new_cookie = Cookie.new("a", "b", path: "/foo")
+          cookies << new_cookie
+          cookies.should eq Cookies{new_cookie}
+        end
+      end
+
       describe "#[]=" do
         it "disallows adding inconsistent state" do
           cookies = Cookies.new
@@ -66,6 +81,18 @@ module HTTP
           expect_raises ArgumentError do
             cookies["a"] = Cookie.new("b", "c")
           end
+        end
+
+        it "overwrites existing key" do
+          cookies = Cookies{"a" => "b"}
+          cookies["a"] = "c"
+          cookies.should eq Cookies{"a" => "c"}
+        end
+
+        it "overwrites existing key with same value" do
+          cookies = Cookies{Cookie.new("a", "b", path: "/foo")}
+          cookies["a"] = "b"
+          cookies.should eq Cookies{"a" => "b"}
         end
       end
     end
