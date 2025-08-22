@@ -1241,7 +1241,8 @@ module Crystal
     end
 
     def visit(node : TupleLiteral)
-      unless first = node.elements.first?
+      first = node.elements.first?
+      unless first
         @str << "Tuple.new"
         return false
       end
