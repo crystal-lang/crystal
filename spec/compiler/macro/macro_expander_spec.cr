@@ -68,11 +68,11 @@ describe "MacroExpander" do
   end
 
   it "expands macro with empty tuple" do
-    assert_macro "{{x}}", "Tuple.new", {x: TupleLiteral.new([] of ASTNode)}
+    assert_macro "{{x}}", "::Tuple.new", {x: TupleLiteral.new([] of ASTNode)}
   end
 
   it "expands macro with empty named tuple" do
-    assert_macro "{{x}}", "NamedTuple.new", {x: NamedTupleLiteral.new([] of NamedTupleLiteral::Entry)}
+    assert_macro "{{x}}", "::NamedTuple.new", {x: NamedTupleLiteral.new([] of NamedTupleLiteral::Entry)}
   end
 
   it "expands macro with range" do
