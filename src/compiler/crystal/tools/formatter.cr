@@ -2842,29 +2842,34 @@ module Crystal
             end
             write ")"
             next_token_skip_space_or_newline
+
             indent(block_indent) { format_block block, needs_space }
             return false
-          end
-        end
+          else
+            indent(block_indent) { format_block block, needs_space }
 
-        indent(block_indent) { format_block block, needs_space }
-        if has_parentheses
-          skip_space
-          if @token.type.newline?
-            ends_with_newline = true
+            skip_space
+            if @token.type.newline?
+              ends_with_newline = true
+            end
+            skip_space_or_newline
           end
-          skip_space_or_newline
-        end
-      end
 
-      if has_args || node.block_arg
+          finish_args(has_parentheses, has_newlines, ends_with_newline, found_comment, base_indent)
+
+          return false
+        else
+          indent(block_indent) { format_block block, needs_space }
+
+          finish_args(has_parentheses, has_newlines, ends_with_newline, found_comment, base_indent)
+
+          return false
+        end
+      else
         finish_args(has_parentheses, has_newlines, ends_with_newline, found_comment, base_indent)
-      elsif has_parentheses
-        skip_space_or_newline
-        write_token :OP_RPAREN
-      end
 
-      false
+        false
+      end
     end
 
     def format_call_args(node : ASTNode, has_parentheses, base_indent)
