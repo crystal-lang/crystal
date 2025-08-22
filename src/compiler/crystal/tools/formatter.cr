@@ -2569,10 +2569,6 @@ module Crystal
       has_newlines = false
       found_comment = false
 
-      # For special calls we want to format `.as (Int32)` into `.as(Int32)`
-      # so we remove the space between "as" and "(".
-      skip_space if pseudo_call?(node)
-
       normalize_parenthesized_single_arg(node)
 
       if @token.type.op_lparen?
@@ -2660,20 +2656,30 @@ module Crystal
     private def normalize_parenthesized_single_arg(node)
       # If the call has a single argument which is a parenthesized `Expressions`,
       # we skip whitespace between the method name and the arg. The parenthesized
-      # arg is transformed into a call with parenthesis: `foo (a)` becomes `foo(a)`.
-      if node.args.size == 1 &&
-         @token.type.space? &&
-         !node.named_args && !node.block_arg && !node.block &&
-         (expressions = node.args[0].as?(Expressions)) &&
-         expressions.keyword.paren? && expressions.expressions.size == 1
+      # arg is transformed into a call with parenthesis: `foo (a)` becomes
+      # `foo(a)`.
+      return unless @token.type.space?
+      return unless node.args.size == 1 &&
+                    !node.named_args && !node.block_arg && !node.block
+
+      case arg = node.args[0]
+      when Expressions
+        return unless arg.keyword.paren? && arg.expressions.size == 1
+        arg = arg.expressions[0]
+
         # ...except do not transform `foo ()` into `foo()`, as the former is
         # actually semantically equivalent to `foo(nil)`
-        arg = expressions.expressions[0]
-        unless arg.is_a?(Nop)
-          skip_space
-          node.args[0] = arg
-        end
+        return if arg.is_a?(Nop)
+      when Path, Generic
+        # The call is a call to a pseudo method such as `#as`.
+        return unless pseudo_call?(node)
+        # The following assignment is a nop, but we still skip space.
+      else
+        return
       end
+
+      skip_space
+      node.args[0] = arg
     end
 
     private def format_backtick_call(node)
