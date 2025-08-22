@@ -67,6 +67,10 @@ describe "MacroExpander" do
     assert_macro %({{{1, 2, 3}}}), %({1, 2, 3})
   end
 
+  it "expand macro with empty tuple" do
+    assert_macro "{{x}}", "Tuple.new", {x: TupleLiteral.new([] of ASTNode)}
+  end
+
   it "expands macro with range" do
     assert_macro %({{1..3}}), %(1..3)
   end
