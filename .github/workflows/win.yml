@@ -42,6 +42,7 @@ jobs:
             libs/mpir.lib
             libs/yaml.lib
             libs/xml2.lib
+            libs/libxml_VERSION
           key: win-libs-${{ hashFiles('.github/workflows/win.yml', 'etc/win-ci/*.ps1') }}-msvc
       - name: Set up Cygwin
         if: steps.cache-libs.outputs.cache-hit != 'true'
