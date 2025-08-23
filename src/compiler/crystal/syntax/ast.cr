@@ -2023,6 +2023,10 @@ module Crystal
       @name.size
     end
 
+    def has_no_args?
+      args.empty? && !varargs
+    end
+
     def_equals_and_hash @name, @args, @return_type, @varargs, @body, @real_name
   end
 
