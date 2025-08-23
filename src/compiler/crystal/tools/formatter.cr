@@ -3943,7 +3943,7 @@ module Crystal
       skip_space_or_newline
 
       if @token.type.op_lparen?
-        has_args = !node.args.empty? || node.named_args
+        has_args = !node.has_no_args?
         if has_args
           format_parenthesized_args(node.args, named_args: node.named_args)
         else

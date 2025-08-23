@@ -2238,6 +2238,10 @@ module Crystal
       Annotation.new(@path.clone, @args.clone, @named_args.clone)
     end
 
+    def has_no_args?
+      args.empty? && named_args.nil?
+    end
+
     def_equals_and_hash path, args, named_args
   end
 
