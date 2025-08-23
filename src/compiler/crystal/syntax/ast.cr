@@ -1196,6 +1196,10 @@ module Crystal
       m
     end
 
+    def has_no_args?
+      args.empty? && block_arg.nil?
+    end
+
     def_equals_and_hash @name, @args, @body, @block_arg, @splat_index, @double_splat
   end
 
