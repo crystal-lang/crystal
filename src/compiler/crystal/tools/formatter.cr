@@ -2544,7 +2544,7 @@ module Crystal
         # This handles unary operators written in prefix notation.
         # The relevant distinction is that the call has a receiver and the
         # current token is not that object but a unary operator.
-        if @token.type.unary_operator? && node.name == @token.type.to_s && node.args.empty?
+        if @token.type.unary_operator? && node.name == @token.type.to_s && node.has_no_args?
           write @token.type
           next_token_skip_space_or_newline
           accept obj
@@ -2765,7 +2765,7 @@ module Crystal
 
       has_parentheses = false
       ends_with_newline = false
-      has_args = !node.args.empty? || node.named_args
+      has_args = !node.has_no_args?
 
       has_newlines = false
       found_comment = false

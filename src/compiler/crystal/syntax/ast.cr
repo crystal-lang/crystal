@@ -741,6 +741,14 @@ module Crystal
       Location.new(loc.filename, loc.line_number, loc.column_number + name_size - 1)
     end
 
+    # Returns true if this call has no arguments.
+    #
+    # Does not consider a block, only block argument.
+    # `foo {}` would be `true`, but `foo(&x)` would be false.
+    def has_no_args?
+      !args.present? && named_args.nil? && block_arg.nil?
+    end
+
     def_equals_and_hash obj, name, args, block, block_arg, named_args, global?
   end
 
