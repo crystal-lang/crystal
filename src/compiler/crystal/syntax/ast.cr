@@ -1826,6 +1826,10 @@ module Crystal
     end
 
     def_equals_and_hash @obj, @name, @args, @global
+
+    def has_no_args?
+      args.empty?
+    end
   end
 
   class Union < ASTNode

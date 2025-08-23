@@ -1250,7 +1250,7 @@ module Crystal
         matching_fun = obj.type.lookup_first_def(node.name, false).as(External?)
         node.raise "undefined fun '#{node.name}' for #{obj.type}" unless matching_fun
 
-        if node.args.empty?
+        if node.has_no_args?
           call.args = matching_fun.args.map_with_index do |arg, i|
             Var.new("arg#{i}", arg.type).as(ASTNode)
           end
@@ -1566,7 +1566,7 @@ module Crystal
             end
           end
         when ProcPointer
-          next unless arg.args.empty?
+          next unless arg.has_no_args?
 
           check_lib_call_arg(method, index) do |method_arg_type|
             method_arg_type.arg_types.each do |arg_type|
