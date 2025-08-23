@@ -322,7 +322,11 @@ class Channel(T)
 
   # :ditto:
   def self.receive_first(channels : Enumerable(Channel), *, timeout : Time::Span? = nil)
-    self.select_action_first(channels.map(&.receive_select_action), timeout: timeout)
+    actions = channels.map do |channel|
+      action = channel.receive_select_action
+      action.as(Union(typeof(action) | TimeoutAction))
+    end
+    self.select_action_first(actions, timeout: timeout)
   end
 
   # Sends the given *value* to the first channel ready to receive in *channels*,
@@ -350,19 +354,24 @@ class Channel(T)
 
   # :ditto:
   def self.send_first(value, channels : Enumerable(Channel), *, timeout : Time::Span? = nil) : Nil
-    self.select_action_first(channels.map(&.send_select_action(value)), timeout: timeout)
+    actions = channels.map do |channel|
+      action = channel.send_select_action(value)
+      action.as(Union(typeof(action) | TimeoutAction))
+    end
+    self.select_action_first(actions, timeout: timeout)
   end
 
   private def self.select_action_first(actions : Enumerable(SelectAction), *, timeout : Time::Span? = nil)
     if timeout.nil?
       _, value = self.select(actions)
     else
+      timeout_action, timeout_index = TimeoutAction.new(timeout), actions.size
       if actions.is_a?(Tuple)
-        index, value = self.select(*actions, TimeoutAction.new(timeout))
+        index, value = self.select(*actions, timeout_action)
       else
-        index, value = self.select(actions.to_a + [TimeoutAction.new(timeout)])
+        index, value = self.select(actions.to_a << timeout_action)
       end
-      raise TimeoutError.new if index == actions.size
+      raise TimeoutError.new if index == timeout_index
     end
     value
   end
