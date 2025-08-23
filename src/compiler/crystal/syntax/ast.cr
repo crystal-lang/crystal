@@ -650,6 +650,10 @@ module Crystal
       Block.new(@args.clone, @body.clone, @splat_index, @unpacks.clone)
     end
 
+    def has_no_args?
+      args.empty?
+    end
+
     def_equals_and_hash args, body, splat_index, unpacks
   end
 
