@@ -207,6 +207,56 @@ describe "Code gen: primitives" do
       CRYSTAL
   end
 
+  it "can invoke binary on primitive typedef (2) (#16097)" do
+    codegen(<<-CRYSTAL)
+      lib Test
+        type K = Int32
+        fun foo : K
+      end
+
+      Test.foo == Test.foo
+      CRYSTAL
+  end
+
+  it "can invoke pointer primitives on typedef" do
+    codegen(<<-CRYSTAL)
+      lib Test
+        type K = Void*
+        fun foo : K
+      end
+
+      Test.foo + 1
+      Test.foo - Test.foo
+      Test.foo.realloc(1)
+      CRYSTAL
+  end
+
+  it "can invoke struct setter on primitive typedef" do
+    codegen(<<-CRYSTAL)
+      lib Test
+        struct Foo
+          x : Int32
+        end
+
+        type K = Foo
+        fun foo : K
+      end
+
+      Test.foo.x = 1
+      CRYSTAL
+  end
+
+  it "can invoke proc call on primitive typedef" do
+    codegen(<<-CRYSTAL)
+      lib Test
+        type K = ->
+        fun foo : K
+      end
+
+      Test.foo.call
+      CRYSTAL
+  end
+
   it "allows redefining a primitive method" do
     run(<<-CRYSTAL).to_i.should eq(42)
       struct Int32
