@@ -2,22 +2,22 @@ require "c/fibersapi"
 
 class Thread
   struct Local(T)
-    @key = uninitialized LibC::DWORD
-
-    def initialize
-      previous_def
-      @key = fls_alloc(nil)
-    end
-
-    def initialize(&destructor : Proc(T, Nil))
-      previous_def(&destructor)
-      @key = fls_alloc(destructor.unsafe_as(LibC::FLS_CALLBACK_FUNCTION))
-    end
-
-    private def fls_alloc(destructor)
-      key = LibC.FlsAlloc(destructor)
+    def self.new : self
+      key = LibC.FlsAlloc(nil)
       raise RuntimeError.from_winerror("FlsAlloc: out of indexes") if key == LibC::FLS_OUT_OF_INDEXES
-      key
+      new(key)
+    end
+
+    def self.new(&destructor : Proc(T, Nil))
+      key = LibC.FlsAlloc(destructor.unsafe_as(LibC::FLS_CALLBACK_FUNCTION))
+      raise RuntimeError.from_winerror("FlsAlloc: out of indexes") if key == LibC::FLS_OUT_OF_INDEXES
+      new(key)
+    end
+
+    def initialize(@key : LibC::DWORD)
+      {% unless T < Reference || T < Pointer || T.union_types.all? { |t| t == Nil || t < Reference } %}
+        {% raise "Can only create Thread::Local with reference types, nilable reference types, or pointer types, not {{T}}" %}
+      {% end %}
     end
 
     def get? : T?
