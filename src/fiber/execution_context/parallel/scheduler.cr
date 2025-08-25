@@ -37,7 +37,7 @@ module Fiber::ExecutionContext
         @event_loop = @execution_context.event_loop
       end
 
-      protected def shutdown : Nil
+      protected def shutdown! : Nil
         @shutdown = true
       end
 

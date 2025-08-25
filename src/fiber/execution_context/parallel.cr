@@ -208,7 +208,7 @@ module Fiber::ExecutionContext
         elsif new_capacity < old_capacity
           # tell the overflow schedulers to shutdown
           removed_schedulers = old_schedulers[new_capacity..]
-          removed_schedulers.each(&.shutdown)
+          removed_schedulers.each(&.shutdown!)
 
           # resize
           @schedulers = old_schedulers[0...new_capacity]
