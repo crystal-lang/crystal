@@ -71,8 +71,8 @@ enum XML::ParserOptions
 
   # Returns default options for parsing XML documents.
   #
-  # Default flags are: `RECOVER` | `NOERROR` | `NOWARNING` | `NONET`
+  # Default flags are: `RECOVER` | `NOWARNING` | `NONET`
   def self.default : self
-    RECOVER | NOERROR | NOWARNING | NONET
+    RECOVER | NOWARNING | NONET
   end
 end

@@ -32,8 +32,8 @@ enum XML::HTMLParserOptions
 
   # Returns default options for parsing HTML documents.
   #
-  # Default flags are: `RECOVER` | `NOERROR` | `NOWARNING`
+  # Default flags are: `RECOVER` | `NOWARNING`
   def self.default : self
-    RECOVER | NOERROR | NOWARNING
+    RECOVER | NOWARNING
   end
 end
