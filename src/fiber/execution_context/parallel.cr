@@ -215,15 +215,18 @@ module Fiber::ExecutionContext
           @schedulers = old_schedulers[0...new_capacity]
           @threads = old_threads[0...new_capacity]
 
-          # makes sure that the above writes to @schedulers and @threads are
-          # executed before continuing (maybe not needed, but let's err on the
-          # safe side)
-          Atomic.fence(:acquire_release)
-
-          # wake waiting schedulers so they can shutdown; we must also reset
-          # @parked (all parked threads will be woken); we don't touch @spinning
-          # because the threads might shutdown instead of spinning
+          # reset @parked counter (we wake all parked threads) so they can
+          # shutdown (if told to):
+          woken_threads = @parked.get(:relaxed)
           @parked.set(0, :relaxed)
+
+          # update @spinning prior to unpark threads; we use acquire release
+          # semantics to make sure that all the above stores are visible before
+          # the following wakeup calls (maybe not needed, but let's err on the
+          # safe side)
+          @spinning.add(woken_threads, :acquire_release)
+
+          # wake every waiting thread:
           @condition.broadcast
           @event_loop.interrupt
         end
@@ -334,8 +337,8 @@ module Fiber::ExecutionContext
           # we must also decrement the number of parked threads because another
           # thread could lock the mutex and increment @spinning again before the
           # signaled thread is resumed
-          spinning = @spinning.add(1, :acquire_release)
-          parked = @parked.sub(1, :acquire_release)
+          @spinning.add(1, :acquire_release)
+          @parked.sub(1, :acquire_release)
 
           @condition.signal
         end

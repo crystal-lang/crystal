@@ -129,6 +129,7 @@ module Fiber::ExecutionContext
 
         loop do
           if @shutdown
+            spin_stop
             @runnables.drain
 
             # we may have been the last running scheduler, waiting on the event
@@ -141,7 +142,7 @@ module Fiber::ExecutionContext
           end
 
           if fiber = find_next_runnable
-            spin_stop if @spinning
+            spin_stop
             resume fiber
           else
             # the event loop enqueued a fiber (or was interrupted) or the
