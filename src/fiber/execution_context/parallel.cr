@@ -193,7 +193,6 @@ module Fiber::ExecutionContext
         # without locking the mutex, so we dup the schedulers, mutate the copy,
         # and eventually assign the copy as @schedulers; this way #steal can
         # safely access the array (never mutated).
-        new_schedulers = nil
         new_capacity = maximum
         old_threads = @threads
         old_schedulers = @schedulers

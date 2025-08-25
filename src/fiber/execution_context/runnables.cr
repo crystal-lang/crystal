@@ -75,7 +75,7 @@ module Fiber::ExecutionContext
 
       # first, try to grab half of the fibers from local queue
       batch = uninitialized Fiber[N] # actually N // 2 + 1 but that doesn't compile
-      head, success = try_grab(batch.to_unsafe, head, n)
+      _, success = try_grab(batch.to_unsafe, head, n)
       return false unless success
 
       # append fiber to the batch and push to global queue
