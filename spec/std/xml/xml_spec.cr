@@ -171,21 +171,22 @@ describe XML do
       xml.errors.should be_nil
     end
 
-    it do
-      XML.parse("<people></foo>").errors.try(&.map(&.message)).should eq ["Opening and ending tag mismatch: people line 1 and foo"]
-    end
-    it do
-      XML.parse("<people></foo>", XML::ParserOptions.default & ~XML::ParserOptions::NOERROR).errors.try(&.map(&.message)).should eq ["Opening and ending tag mismatch: people line 1 and foo"]
-    end
-    it do
-      if SemanticVersion.parse(XML.libxml2_version) < SemanticVersion.parse("2.13.0")
-        XML.parse("<people></foo>", XML::ParserOptions[RECOVER, NOERROR]).errors.try(&.map(&.message)).should eq ["Opening and ending tag mismatch: people line 1 and foo"]
-      else
-        XML.parse("<people></foo>", XML::ParserOptions[RECOVER, NOERROR]).errors.try(&.map(&.message)).should be_nil
+    describe "NOERROR option (https://github.com/crystal-lang/crystal/issues/16090)" do
+      it "is unset by default" do
+        XML.parse("<people></foo>").errors.try(&.map(&.message)).should eq ["Opening and ending tag mismatch: people line 1 and foo"]
       end
-    end
-    it do
-      XML.parse("<people></foo>", XML::ParserOptions[RECOVER]).errors.try(&.map(&.message)).should eq ["Opening and ending tag mismatch: people line 1 and foo"]
+
+      it "if set, may supress context-error handler" do
+        if SemanticVersion.parse(XML.libxml2_version) < SemanticVersion.parse("2.13.0")
+          XML.parse("<people></foo>", XML::ParserOptions[RECOVER, NOERROR]).errors.try(&.map(&.message)).should eq ["Opening and ending tag mismatch: people line 1 and foo"]
+        else
+          XML.parse("<people></foo>", XML::ParserOptions[RECOVER, NOERROR]).errors.try(&.map(&.message)).should be_nil
+        end
+      end
+
+      it "explicitly unset" do
+        XML.parse("<people></foo>", XML::ParserOptions[RECOVER]).errors.try(&.map(&.message)).should eq ["Opening and ending tag mismatch: people line 1 and foo"]
+      end
     end
   end
 
