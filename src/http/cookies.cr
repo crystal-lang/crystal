@@ -78,7 +78,7 @@ module HTTP
     # request.cookies["foo"] = "bar"
     # ```
     def []=(key, value : String)
-      self[key] = Cookie.new(key, value)
+      self << Cookie.new(key, value)
     end
 
     # Sets a new cookie in the collection to the given `HTTP::Cookie`
@@ -96,7 +96,7 @@ module HTTP
         raise ArgumentError.new("Cookie name must match the given key")
       end
 
-      @cookies[key] = value
+      self << value
     end
 
     # Gets the current `HTTP::Cookie` for the given *key*.
@@ -138,7 +138,7 @@ module HTTP
     # response.cookies << HTTP::Cookie.new("foo", "bar", http_only: true)
     # ```
     def <<(cookie : Cookie)
-      self[cookie.name] = cookie
+      @cookies[cookie.name] = cookie
     end
 
     # Clears the collection, removing all cookies.
