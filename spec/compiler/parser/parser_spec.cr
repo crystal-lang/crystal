@@ -616,6 +616,10 @@ module Crystal
     it_parses "foo &.each {\n}", Call.new("foo", block: Block.new(["__arg0".var], Call.new("__arg0".var, "each", block: Block.new)))
     it_parses "foo &.each do\nend", Call.new("foo", block: Block.new(["__arg0".var], Call.new("__arg0".var, "each", block: Block.new)))
     it_parses "foo &.@bar", Call.new("foo", block: Block.new(["__arg0".var], ReadInstanceVar.new("__arg0".var, "@bar")))
+    it_parses "foo &.@bar.baz", Call.new("foo", block: Block.new(["__arg0".var], Call.new(ReadInstanceVar.new("__arg0".var, "@bar"), "baz")))
+    it_parses "foo(&.@bar.baz)", Call.new("foo", block: Block.new(["__arg0".var], Call.new(ReadInstanceVar.new("__arg0".var, "@bar"), "baz")))
+    it_parses "foo &.@bar[baz]", Call.new("foo", block: Block.new(["__arg0".var], Call.new(ReadInstanceVar.new("__arg0".var, "@bar"), "[]", Call.new("baz"))))
+    it_parses "foo &.@bar.@baz", Call.new("foo", block: Block.new(["__arg0".var], ReadInstanceVar.new(ReadInstanceVar.new("__arg0".var, "@bar"), "@baz")))
 
     it_parses "foo(&.as(T))", Call.new("foo", block: Block.new([Var.new("__arg0")], Cast.new(Var.new("__arg0"), "T".path)))
     it_parses "foo(&.as(T).bar)", Call.new("foo", block: Block.new([Var.new("__arg0")], Call.new(Cast.new(Var.new("__arg0"), "T".path), "bar")))
