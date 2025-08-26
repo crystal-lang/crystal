@@ -20,13 +20,13 @@ describe Fiber do
     resumable.should be_false
   end
 
-  describe ".timeout" do
+  describe ".sleep" do
     it "expires" do
       cancelation_token = nil
       channel = Channel(Fiber::TimeoutResult).new
 
-      fiber = spawn do
-        result = Fiber.timeout(10.milliseconds) { |token| cancelation_token = token }
+      spawn do
+        result = Fiber.sleep(10.milliseconds) { |token| cancelation_token = token }
         channel.send(result)
       end
 
@@ -38,7 +38,7 @@ describe Fiber do
       channel = Channel(Fiber::TimeoutResult).new
 
       fiber = spawn do
-        result = Fiber.timeout(1.second) { |token| cancelation_token = token }
+        result = Fiber.sleep(1.second) { |token| cancelation_token = token }
         channel.send(result)
       end
 
@@ -59,15 +59,15 @@ describe Fiber do
           cancelation_token = nil
 
           suspended_fiber = wg.spawn do
-            Fiber.timeout(10.milliseconds) do |token|
-              # save the token so another fiber can try to cancel the timeout
+            Fiber.sleep(10.milliseconds) do |token|
+              # save the token so another fiber can try to cancel the timer
               cancelation_token = token
             end
           end
 
           sleep rand(9..11).milliseconds
 
-          # let's try to cancel the timeout
+          # let's try to cancel the timer
           if suspended_fiber.resolve_timer?(cancelation_token.not_nil!)
             # canceled: we must enqueue the fiber
             suspended_fiber.enqueue
