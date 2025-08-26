@@ -519,7 +519,7 @@ abstract struct Enum
       # `string.gsub('-', '_').camelcase.downcase` but does not allocate.
       {% max_size = @type.constants.map(&.size).sort.last %}
       buffer = uninitialized UInt8[{{ max_size * 4 + 1 }}]
-      appender = buffer.to_slice.to_unsafe.appender
+      appender = buffer.to_unsafe.appender
       string.each_char_with_index do |char, index|
         return nil if index > {{max_size}}
         next if char == '-' || char == '_'
