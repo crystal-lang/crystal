@@ -176,7 +176,7 @@ describe XML do
         XML.parse("<people></foo>").errors.try(&.map(&.message)).should eq ["Opening and ending tag mismatch: people line 1 and foo"]
       end
 
-      it "if set, may supress context-error handler" do
+      it "if set, may suppress context-error handler" do
         if SemanticVersion.parse(XML.libxml2_version) < SemanticVersion.parse("2.13.0")
           XML.parse("<people></foo>", XML::ParserOptions[RECOVER, NOERROR]).errors.try(&.map(&.message)).should eq ["Opening and ending tag mismatch: people line 1 and foo"]
         else
