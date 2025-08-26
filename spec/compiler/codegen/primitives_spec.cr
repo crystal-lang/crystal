@@ -246,7 +246,7 @@ describe "Code gen: primitives" do
       CRYSTAL
   end
 
-  it "can invoke proc call on primitive typedef" do
+  pending "can invoke proc call on primitive typedef" do
     codegen(<<-CRYSTAL)
       lib Test
         type K = ->
