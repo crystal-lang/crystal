@@ -727,7 +727,7 @@ describe Time do
     at_beginning_of_week_sunday.second.should eq 0
 
     # Observes time zone (https://github.com/crystal-lang/crystal/issues/16112)
-    is = Time::Location.load("Asia/Tel_Aviv")
+    is = Time::Location.load("Asia/Jerusalem")
     Time.local(2025, 3, 27, 23, 34, location: is).at_end_of_week
       .should eq Time.local(2025, 3, 30, 23, 59, 59, nanosecond: 999_999_999, location: is)
 
