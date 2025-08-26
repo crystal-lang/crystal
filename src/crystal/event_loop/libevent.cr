@@ -50,27 +50,22 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
     event_base.loop_exit
   end
 
-  def sleep(duration : ::Time::Span) : Nil
-    Fiber.current.resume_event.add(duration)
-    Fiber.suspend
-  end
-
-  class TimeoutData
+  class SleepData
     property fiber : Fiber
-    property timeout_token : Fiber::TimeoutToken
+    property cancelation_token : Fiber::CancelationToken
     property? expired : Bool = false
 
-    def initialize(@fiber, @timeout_token)
+    def initialize(@fiber, @cancelation_token)
     end
   end
 
-  def timeout(until time : Time::Span, token : Fiber::TimeoutToken) : Bool
-    arg = TimeoutData.new(Fiber.current, token)
+  def sleep(until time : Time::Span, token : Fiber::CancelationToken) : Bool
+    arg = SleepData.new(Fiber.current, token)
 
     event = event_base.new_event(-1, LibEvent2::EventFlags::None, arg) do |s, flags, data|
-      d = data.as(TimeoutData)
+      d = data.as(SleepData)
       f = d.fiber
-      if f.resolve_timeout?(d.timeout_token)
+      if f.resolve_timer?(d.cancelation_token)
         d.expired = true
         {% if flag?(:execution_context) %}
           event_loop = Crystal::EventLoop.current.as(Crystal::EventLoop::LibEvent)

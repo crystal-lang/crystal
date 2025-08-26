@@ -46,7 +46,7 @@ describe Fiber do
         Fiber.yield
       end
 
-      if fiber.resolve_timeout?(cancelation_token.not_nil!)
+      if fiber.resolve_timer?(cancelation_token.not_nil!)
         fiber.enqueue
       end
 
@@ -68,7 +68,7 @@ describe Fiber do
           sleep rand(9..11).milliseconds
 
           # let's try to cancel the timeout
-          if suspended_fiber.resolve_timeout?(cancelation_token.not_nil!)
+          if suspended_fiber.resolve_timer?(cancelation_token.not_nil!)
             # canceled: we must enqueue the fiber
             suspended_fiber.enqueue
           end

@@ -81,15 +81,12 @@ abstract class Crystal::EventLoop
   #       time in parallel, but this assumption may change in the future!
   abstract def interrupt : Nil
 
-  # Suspend the current fiber for *duration*.
-  abstract def sleep(duration : Time::Span) : Nil
-
-  # Suspend the current fiber until the absolute *time* is reached (as per the
-  # monotonic clock). Must resolve the timeout using `Fiber.resolve_timeout?`
-  # and *token* before resuming the fiber.
+  # Suspends the current fiber until the absolute *time* is reached (as per the
+  # monotonic clock). Must resolve the timeout using `Fiber.resolve_timer?` and
+  # *token* before resuming the fiber.
   #
   # Returns true if the timer expired, false if it was canceled.
-  abstract def timeout(until time : Time::Span, token : Fiber::TimeoutToken) : Bool
+  abstract def sleep(until time : Time::Span, token : Fiber::CancelationToken) : Bool
 
   # Create a new resume event for a fiber.
   #

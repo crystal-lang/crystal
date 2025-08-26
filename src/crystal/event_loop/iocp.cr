@@ -144,16 +144,12 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
 
     case timer.value.type
     in .sleep?
-      timer.value.timed_out!
+      # the timer might have been canceled already, and we must synchronize with
+      # the resumed `#timeout` fiber; by rule we must always resume the fiber,
+      # regardless of whether we resolve the timeout or not.
+      timer.value.timed_out! if fiber.resolve_timer?(timer.value.cancelation_token)
     in .timeout?
-      if token = timer.value.timeout_token?
-        # the timeout might have been canceled already, and we must synchronize
-        # with the resumed `#timeout` fiber; by rule we must always resume the
-        # fiber, regardless of whether we resolve the timeout or not.
-        timer.value.timed_out! if fiber.resolve_timeout?(token)
-      else
-        timer.value.timed_out!
-      end
+      timer.value.timed_out!
     in .select_timeout?
       return unless select_action = fiber.timeout_select_action
       fiber.timeout_select_action = nil
@@ -205,25 +201,10 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     end
   end
 
-  def sleep(duration : Time::Span) : Nil
-    timer = Timer.new(:sleep, Fiber.current, duration)
-    add_timer(pointerof(timer))
-    Fiber.suspend
-
-    # safety check
-    return if timer.timed_out?
-
-    # try to avoid a double resume if possible, but another thread might be
-    # running the evloop and dequeue the event in parallel, so a "can't resume
-    # dead fiber" can still happen in a MT execution context.
-    delete_timer(pointerof(timer))
-    raise "BUG: #{timer.fiber} called sleep but was manually resumed before the timer expired!"
-  end
-
-  def timeout(until time : Time::Span, token : Fiber::TimeoutToken) : Bool
-    timer = Timer.new(:timeout, Fiber.current)
+  def sleep(until time : Time::Span, token : Fiber::CancelationToken) : Bool
+    timer = Timer.new(:sleep, Fiber.current)
     timer.wake_at = time
-    timer.timeout_token = token
+    timer.cancelation_token = token
     add_timer(pointerof(timer))
 
     Fiber.suspend
@@ -243,6 +224,8 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   # expired and false if the fiber was resumed early.
   #
   # Specific to IOCP to handle IO timeouts.
+  #
+  # TODO: use sleep(time, token) instead
   def timeout(duration : Time::Span) : Bool
     event = Fiber.current.resume_event
     event.add(duration)
