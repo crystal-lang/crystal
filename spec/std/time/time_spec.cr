@@ -728,10 +728,12 @@ describe Time do
 
     # Observes time zone (https://github.com/crystal-lang/crystal/issues/16112)
     is = Time::Location.load("Asia/Tel_Aviv")
-    Time.local(2025, 3, 27, 23, 34, location: is).at_end_of_week.should eq Time.local(2025, 3, 30, 23, 59, 59, nanosecond: 999_999_999, location: is)
+    Time.local(2025, 3, 27, 23, 34, location: is).at_end_of_week
+      .should eq Time.local(2025, 3, 30, 23, 59, 59, nanosecond: 999_999_999, location: is)
 
     ny = Time::Location.load("America/New_York")
-    Time.local(2024, 11, 3, 23, 34, 8, location: ny).at_beginning_of_week.should eq Time.local(2024, 10, 28, 0, location: ny)
+    Time.local(2024, 11, 3, 23, 34, 8, location: ny).at_beginning_of_week
+      .should eq Time.local(2024, 10, 28, 0, location: ny)
 
     t1.at_beginning_of_day.should eq Time.utc(2014, 11, 25)
     t1.at_beginning_of_hour.should eq Time.utc(2014, 11, 25, 10)
