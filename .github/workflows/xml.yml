@@ -3,10 +3,12 @@ name: XML CI
 on:
   push:
     paths:
+      - 'spec/std/xml/**'
       - 'src/xml/**'
       - '.github/workflows/xml.yml'
   pull_request:
     paths:
+      - 'spec/std/xml/**'
       - 'src/xml/**'
       - '.github/workflows/xml.yml'
   schedule:
