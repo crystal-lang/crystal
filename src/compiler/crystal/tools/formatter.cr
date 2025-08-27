@@ -2518,15 +2518,7 @@ module Crystal
       write_token :OP_COLON_COLON if node.global?
 
       if obj
-        # This handles unary operators written in prefix notation.
-        # The relevant distinction is that the call has a receiver and the
-        # current token is not that object but a unary operator.
-        if @token.type.unary_operator? && node.name == @token.type.to_s && !node.has_any_args?
-          write @token.type
-          next_token_skip_space_or_newline
-          accept obj
-          return false
-        end
+        return if format_unary_operator_call(node, obj)
 
         accept obj
 
@@ -2738,6 +2730,19 @@ module Crystal
       end
 
       obj
+    end
+
+    # This handles unary operators written in prefix notation.
+    # The relevant distinction is that the call has a receiver and the
+    # current token is not that object but a unary operator.
+    private def format_unary_operator_call(node, obj)
+      return false unless @token.type.unary_operator? && node.name == @token.type.to_s && !node.has_any_args?
+
+      write @token.type
+      next_token_skip_space_or_newline
+      accept obj
+
+      true
     end
 
     def format_call_args(node : ASTNode, base_indent)
