@@ -2528,13 +2528,7 @@ module Crystal
         slash_is_not_regex!
         skip_space
 
-        # It's something like `foo.bar\n
-        #                        .baz`
-        if (@token.type.newline?) || @wrote_newline
-          base_indent = @indent + 2
-          indent(base_indent) { consume_newlines }
-          write_indent(base_indent)
-        end
+        base_indent = consume_newlines_in_call(base_indent)
 
         unless @token.type.op_period?
           return if format_square_brackets_call(node)
@@ -2548,11 +2542,7 @@ module Crystal
         end
         skip_space
 
-        if (@token.type.newline?) || @wrote_newline
-          base_indent = @indent + 2
-          indent(base_indent) { consume_newlines }
-          write_indent(base_indent)
-        end
+        base_indent = consume_newlines_in_call(base_indent)
 
         write "."
 
@@ -2743,6 +2733,18 @@ module Crystal
       accept obj
 
       true
+    end
+
+    private def consume_newlines_in_call(base_indent)
+      # It's something like `foo.bar\n
+      #                        .baz`
+      if (@token.type.newline?) || @wrote_newline
+        base_indent = @indent + 2
+        indent(base_indent) { consume_newlines }
+        write_indent(base_indent)
+      end
+
+      base_indent
     end
 
     def format_call_args(node : ASTNode, base_indent)
