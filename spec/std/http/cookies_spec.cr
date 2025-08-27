@@ -22,6 +22,20 @@ module HTTP
           HTTP::Cookie.new("snicker", "doodle"),
         }
       end
+
+      # FIXME: Should handle both: https://github.com/crystal-lang/crystal/issues/16069
+      it "takes last one on duplicate keys" do
+        HTTP::Cookies.from_client_headers(
+          HTTP::Headers{"Cookie" => "foo=bar; foo=baz"}
+        ).should eq HTTP::Cookies{
+          HTTP::Cookie.new("foo", "baz"),
+        }
+        HTTP::Cookies.from_client_headers(
+          HTTP::Headers{"Cookie" => "foo=baz; foo=bar"}
+        ).should eq HTTP::Cookies{
+          HTTP::Cookie.new("foo", "bar"),
+        }
+      end
     end
 
     describe ".from_server_headers" do
@@ -40,6 +54,20 @@ module HTTP
         ).should eq HTTP::Cookies{
           HTTP::Cookie.new("ginger", "snap"),
           HTTP::Cookie.new("snicker", "doodle"),
+        }
+      end
+
+      # FIXME: Should handle both: https://github.com/crystal-lang/crystal/issues/16069
+      it "takes last one on duplicate keys" do
+        HTTP::Cookies.from_server_headers(
+          HTTP::Headers{"Set-Cookie" => ["foo=bar", "foo=baz; path=/baz"]}
+        ).should eq HTTP::Cookies{
+          HTTP::Cookie.new("foo", "baz", path: "/baz"),
+        }
+        HTTP::Cookies.from_server_headers(
+          HTTP::Headers{"Set-Cookie" => ["foo=baz; path=/baz", "foo=bar"]}
+        ).should eq HTTP::Cookies{
+          HTTP::Cookie.new("foo", "bar"),
         }
       end
     end
