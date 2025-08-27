@@ -2553,6 +2553,10 @@ module Crystal
 
       return if format_assignment(node, base_indent)
 
+      format_regular_call(node, obj, base_indent)
+    end
+
+    private def format_regular_call(node, obj, base_indent)
       write node.name
       next_token
 
