@@ -2551,36 +2551,12 @@ module Crystal
 
       return if format_square_brackets_call2(node, base_indent)
 
-      assignment = Lexer.setter?(node.name)
+      return if format_assignment(node, base_indent)
 
-      if assignment
-        write node.name.rchop
-      else
-        write node.name
-      end
+      write node.name
       next_token
 
       passed_backslash_newline = @token.passed_backslash_newline
-
-      if assignment
-        skip_space
-
-        next_token
-        if @token.type.op_lparen?
-          write "=("
-          slash_is_regex!
-          next_token
-          format_call_args(node, base_indent)
-          skip_space_or_newline
-          write_token :OP_RPAREN
-        else
-          write " ="
-          skip_space
-          accept_assign_value_after_equals node.args.last
-        end
-
-        return false
-      end
 
       has_parentheses = false
       ends_with_newline = false
@@ -3278,6 +3254,31 @@ module Crystal
       end
 
       false
+    end
+
+    def format_assignment(node, base_indent)
+      return false unless Lexer.setter?(node.name)
+
+      write node.name.rchop
+      next_token
+
+      skip_space
+
+      next_token
+      if @token.type.op_lparen?
+        write "=("
+        slash_is_regex!
+        next_token
+        format_call_args(node, base_indent)
+        skip_space_or_newline
+        write_token :OP_RPAREN
+      else
+        write " ="
+        skip_space
+        accept_assign_value_after_equals node.args.last
+      end
+
+      true
     end
 
     def format_operator_call(node, column, needs_space, passed_backslash_newline)
