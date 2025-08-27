@@ -2554,12 +2554,7 @@ module Crystal
         accept obj
 
         passed_backslash_newline = @token.passed_backslash_newline
-
-        if @token.type.space?
-          needs_space = true
-        else
-          needs_space = node.name != "*" && node.name != "/" && node.name != "**" && node.name != "//"
-        end
+        needs_space = @token.type.space? || !node.name.in?("*", "/", "**", "//")
 
         slash_is_not_regex!
         skip_space
