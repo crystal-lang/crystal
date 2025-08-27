@@ -2506,14 +2506,6 @@ module Crystal
         return false
       end
 
-      special_call =
-        case node.name
-        when "as", "as?", "is_a?", "nil?", "responds_to?"
-          true
-        else
-          false
-        end
-
       obj = node.obj
 
       # Consider the case of `&.as(...)` and similar
@@ -2522,7 +2514,7 @@ module Crystal
       end
 
       # Consider the case of `as T`, that is, casting `self` without an explicit `self`
-      if special_call && obj.is_a?(Var) && obj.name == "self" && !@token.keyword?(:self)
+      if pseudo_call?(node) && obj.is_a?(Var) && obj.name == "self" && !@token.keyword?(:self)
         obj = nil
       end
 
@@ -2632,7 +2624,7 @@ module Crystal
 
       # For special calls we want to format `.as (Int32)` into `.as(Int32)`
       # so we remove the space between "as" and "(".
-      skip_space if special_call
+      skip_space if pseudo_call?(node)
 
       # If the call has a single argument which is a parenthesized `Expressions`,
       # we skip whitespace between the method name and the arg. The parenthesized
@@ -2658,7 +2650,7 @@ module Crystal
         # If it's something like `foo.bar()` we rewrite it as `foo.bar`
         # (parentheses are not needed). Also applies for special calls
         # like `nil?` when there might not be a receiver.
-        if (obj || special_call) && !has_args && !node.block_arg && !node.block
+        if (obj || pseudo_call?(node)) && !has_args && !node.block_arg && !node.block
           skip_space_or_newline
           check :OP_RPAREN
           next_token
@@ -2727,6 +2719,10 @@ module Crystal
       end
 
       false
+    end
+
+    private def pseudo_call?(node)
+      node.name.in?("as", "as?", "is_a?", "nil?", "responds_to?")
     end
 
     def format_call_args(node : ASTNode, base_indent)
