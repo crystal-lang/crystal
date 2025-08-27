@@ -2573,22 +2573,7 @@ module Crystal
       # so we remove the space between "as" and "(".
       skip_space if pseudo_call?(node)
 
-      # If the call has a single argument which is a parenthesized `Expressions`,
-      # we skip whitespace between the method name and the arg. The parenthesized
-      # arg is transformed into a call with parenthesis: `foo (a)` becomes `foo(a)`.
-      if node.args.size == 1 &&
-         @token.type.space? &&
-         !node.named_args && !node.block_arg && !node.block &&
-         (expressions = node.args[0].as?(Expressions)) &&
-         expressions.keyword.paren? && expressions.expressions.size == 1
-        # ...except do not transform `foo ()` into `foo()`, as the former is
-        # actually semantically equivalent to `foo(nil)`
-        arg = expressions.expressions[0]
-        unless arg.is_a?(Nop)
-          skip_space
-          node.args[0] = arg
-        end
-      end
+      normalize_parenthesized_single_arg(node)
 
       if @token.type.op_lparen?
         slash_is_regex!
@@ -2670,6 +2655,25 @@ module Crystal
 
     private def pseudo_call?(node)
       node.name.in?("as", "as?", "is_a?", "nil?", "responds_to?")
+    end
+
+    private def normalize_parenthesized_single_arg(node)
+      # If the call has a single argument which is a parenthesized `Expressions`,
+      # we skip whitespace between the method name and the arg. The parenthesized
+      # arg is transformed into a call with parenthesis: `foo (a)` becomes `foo(a)`.
+      if node.args.size == 1 &&
+         @token.type.space? &&
+         !node.named_args && !node.block_arg && !node.block &&
+         (expressions = node.args[0].as?(Expressions)) &&
+         expressions.keyword.paren? && expressions.expressions.size == 1
+        # ...except do not transform `foo ()` into `foo()`, as the former is
+        # actually semantically equivalent to `foo(nil)`
+        arg = expressions.expressions[0]
+        unless arg.is_a?(Nop)
+          skip_space
+          node.args[0] = arg
+        end
+      end
     end
 
     private def format_backtick_call(node)
