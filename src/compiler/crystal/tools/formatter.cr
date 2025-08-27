@@ -2567,7 +2567,7 @@ module Crystal
           write_indent(base_indent)
         end
 
-        if !@token.type.op_period?
+        unless @token.type.op_period?
           # It's an operator
           if @token.type.op_lsquare?
             write "["
