@@ -2501,6 +2501,7 @@ module Crystal
 
     def visit(node : Call)
       return if format_backtick_call(node)
+      return if format_global_match_data_call(node)
 
       obj = node.obj
 
@@ -2517,14 +2518,6 @@ module Crystal
       column = @column
       # The indent for arguments and block belonging to this node.
       base_indent = @indent
-
-      # Special case: $1, $2, ...
-      if @token.type.global_match_data_index? && node.name.in?("[]", "[]?") && obj.is_a?(Global)
-        write "$"
-        write @token.value
-        next_token
-        return false
-      end
 
       write_token :OP_COLON_COLON if node.global?
 
@@ -2725,6 +2718,18 @@ module Crystal
       return false unless node.name == "`"
 
       accept node.args.first
+      true
+    end
+
+    private def format_global_match_data_call(node)
+      return false unless @token.type.global_match_data_index? &&
+                          node.name.in?("[]", "[]?") &&
+                          node.obj.is_a?(Global)
+
+      write "$"
+      write @token.value
+      next_token
+
       true
     end
 
