@@ -2503,17 +2503,7 @@ module Crystal
       return if format_backtick_call(node)
       return if format_global_match_data_call(node)
 
-      obj = node.obj
-
-      # Consider the case of `&.as(...)` and similar
-      if obj.is_a?(Nop)
-        obj = nil
-      end
-
-      # Consider the case of `as T`, that is, casting `self` without an explicit `self`
-      if pseudo_call?(node) && obj.is_a?(Var) && obj.name == "self" && !@token.keyword?(:self)
-        obj = nil
-      end
+      obj = resolve_call_receiver(node)
 
       column = @column
       # The indent for arguments and block belonging to this node.
@@ -2731,6 +2721,17 @@ module Crystal
       next_token
 
       true
+    end
+
+    private def resolve_call_receiver(node)
+      obj = node.obj
+      obj = nil if obj.is_a?(Nop)
+
+      if pseudo_call?(node) && obj.is_a?(Var) && obj.name == "self" && !@token.keyword?(:self)
+        obj = nil
+      end
+
+      obj
     end
 
     def format_call_args(node : ASTNode, base_indent)
