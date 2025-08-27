@@ -2500,6 +2500,12 @@ module Crystal
     end
 
     def visit(node : Call)
+      format_call(node)
+
+      false
+    end
+
+    private def format_call(node)
       return if format_backtick_call(node)
       return if format_global_match_data_call(node)
 
@@ -2542,7 +2548,7 @@ module Crystal
           return if format_square_brackets_call(node)
 
           format_operator_call(node, column, needs_space, passed_backslash_newline)
-          return false
+          return
         end
 
         @lexer.wants_def_or_macro_name do
