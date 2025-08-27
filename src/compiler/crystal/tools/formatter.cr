@@ -2500,11 +2500,7 @@ module Crystal
     end
 
     def visit(node : Call)
-      # This is the case of `...`
-      if node.name == "`"
-        accept node.args.first
-        return false
-      end
+      return if format_backtick_call(node)
 
       obj = node.obj
 
@@ -2723,6 +2719,13 @@ module Crystal
 
     private def pseudo_call?(node)
       node.name.in?("as", "as?", "is_a?", "nil?", "responds_to?")
+    end
+
+    private def format_backtick_call(node)
+      return false unless node.name == "`"
+
+      accept node.args.first
+      true
     end
 
     def format_call_args(node : ASTNode, base_indent)
