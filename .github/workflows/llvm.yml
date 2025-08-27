@@ -3,12 +3,14 @@ name: LLVM CI
 on:
   push:
     paths:
+      - 'src/compiler/crystal/codegen/**'
       - 'src/llvm/**'
       - 'spec/std/llvm/**'
       - 'spec/llvm-ir/**'
       - '.github/workflows/llvm.yml'
   pull_request:
     paths:
+      - 'src/compiler/crystal/codegen/**'
       - 'src/llvm/**'
       - 'spec/std/llvm/**'
       - 'spec/llvm-ir/**'
