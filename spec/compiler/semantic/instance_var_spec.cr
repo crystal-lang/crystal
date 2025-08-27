@@ -3425,6 +3425,36 @@ describe "Semantic: instance var" do
       CRYSTAL
   end
 
+  it "infers from multiple class method overloads with same type but different spellings" do
+    assert_type(<<-CRYSTAL) { types["Bar"] }
+      class Bar
+        def self.bar(x : Int32) : Bar
+          Bar.new
+        end
+
+        def self.bar(x : Float64) : ::Bar
+          Bar.new
+        end
+
+        def self.bar(x : String) : self
+          Bar.new
+        end
+      end
+
+      class Foo
+        def initialize(x)
+          @bar = Bar.bar(x)
+        end
+
+        def bar
+          @bar
+        end
+      end
+
+      Foo.new(1).bar
+      CRYSTAL
+  end
+
   it "infers from new with return type" do
     assert_type(<<-CRYSTAL) { int32 }
       class Foo
