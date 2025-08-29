@@ -1356,6 +1356,15 @@ describe "Semantic: def overload" do
       CRYSTAL
   end
 
+  it "says `no overload matches` instead of `use a more specific type` on union restriction that cannot be stored" do
+    assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to be Array | String, not Int32"
+      def foo(x : Array | String)
+      end
+
+      foo(1)
+      CRYSTAL
+  end
+
   it "finds method after including module in generic module (#1201)" do
     assert_type(<<-CRYSTAL) { char }
       module Bar
