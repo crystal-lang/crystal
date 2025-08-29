@@ -735,6 +735,10 @@ module Crystal
     # method solves to a method with a type annotation
     # (use the type annotation)
     def guess_type_call_with_type_annotation(node : Call)
+      if node.global?
+        return guess_type_from_class_method(@program, node)
+      end
+
       obj = node.obj
       return nil unless obj
 

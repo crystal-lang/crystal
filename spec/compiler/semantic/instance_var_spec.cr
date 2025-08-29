@@ -3277,6 +3277,52 @@ describe "Semantic: instance var" do
       CRYSTAL
   end
 
+  it "infers from top-level method that has type annotation" do
+    assert_type(<<-CRYSTAL) { types["Bar"] }
+      class Bar
+      end
+
+      def bar : Bar
+        Bar.new
+      end
+
+      class Foo
+        def initialize
+          @bar = ::bar
+        end
+
+        def bar
+          @bar
+        end
+      end
+
+      Foo.new.bar
+      CRYSTAL
+  end
+
+  it "infers from simple top-level method without type annotation" do
+    assert_type(<<-CRYSTAL) { types["Bar"] }
+      class Bar
+      end
+
+      def bar
+        Bar.new
+      end
+
+      class Foo
+        def initialize
+          @bar = ::bar
+        end
+
+        def bar
+          @bar
+        end
+      end
+
+      Foo.new.bar
+      CRYSTAL
+  end
+
   it "infers from class method that has type annotation" do
     assert_type(<<-CRYSTAL) { types["Bar"] }
       class Bar
