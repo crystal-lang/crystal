@@ -299,7 +299,26 @@ class Time::Location
   # Files are cached based on the modification time, so subsequent request for
   # the same location name will most likely return the same instance of
   # `Location`, unless the time zone database has been updated in between.
+  #
+  # - `.load?` returns `nil` if the location is unavailable.
   def self.load(name : String) : Location
+    load?(name) { |source| raise InvalidLocationNameError.new(name, source) }
+  end
+
+  # :ditto:
+  #
+  # Returns `nil` if the location is unavailable.
+  # Raises `InvalidLocationNameError` if the name is invalid.
+  # Raises `InvalidTZDataError` if the loader encounters a format error in the
+  # time zone database.
+  #
+  # - `.load` raises if the location is unavailable.
+  def self.load?(name : String) : Location?
+    load?(name) { return }
+  end
+
+  # :nodoc:
+  def self.load?(name : String, & : String? ->) : Location?
     case name
     when "", "UTC", "Etc/UTC"
       # `UTC` is a special identifier, empty string represents a fallback mechanism.
@@ -318,11 +337,11 @@ class Time::Location
         if location = load_from_dir_or_zip(name, zoneinfo)
           return location
         else
-          raise InvalidLocationNameError.new(name, zoneinfo)
+          yield zoneinfo
         end
       end
 
-      if location = load(name, Crystal::System::Time.zone_sources)
+      if location = load(name, Crystal::System::Time.zone_sources) { |source| yield source }
         return location
       end
 
@@ -341,7 +360,7 @@ class Time::Location
         return location
       end
 
-      raise InvalidLocationNameError.new(name)
+      yield nil
     end
   end
 
