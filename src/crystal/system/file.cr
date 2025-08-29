@@ -71,10 +71,12 @@ module Crystal::System::File
       when Tuple(FileDescriptor::Handle, Bool)
         fd, blocking = result
         return {fd, path, blocking}
-      when Errno::EEXIST, WinError::ERROR_FILE_EXISTS
-        # retry
       else
-        raise ::File::Error.from_os_error("Error creating temporary file", result, file: path)
+        if ::File::AlreadyExistsError.os_error?(result)
+          # retry
+        else
+          raise ::File::Error.from_os_error("Error creating temporary file", result, file: path)
+        end
       end
     end
 
