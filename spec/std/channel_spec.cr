@@ -59,12 +59,36 @@ describe Channel do
     Channel.receive_first(Channel(Int32).new, channel).should eq 1
   end
 
+  it "raises when receive_first timeout exceeded" do
+    expect_raises Channel::TimeoutError do
+      Channel.receive_first(Channel(Int32).new, Channel(Int32).new, timeout: 1.nanosecond)
+    end
+    expect_raises Channel::TimeoutError do
+      Channel.receive_first([Channel(Int32).new, Channel(Int32).new], timeout: 1.nanosecond)
+    end
+    expect_raises Channel::TimeoutError do
+      Channel.receive_first(StaticArray[Channel(Int32).new, Channel(Int32).new], timeout: 1.nanosecond)
+    end
+  end
+
   it "does send_first" do
     ch1 = Channel(Int32).new(1)
     ch2 = Channel(Int32).new(1)
     ch1.send(1)
     Channel.send_first(2, ch1, ch2)
     ch2.receive.should eq 2
+  end
+
+  it "raises when send_first timeout exceeded" do
+    expect_raises Channel::TimeoutError do
+      Channel.send_first(1, Channel(Int32).new, Channel(Int32).new, timeout: 1.nanosecond)
+    end
+    expect_raises Channel::TimeoutError do
+      Channel.send_first(1, [Channel(Int32).new, Channel(Int32).new], timeout: 1.nanosecond)
+    end
+    expect_raises Channel::TimeoutError do
+      Channel.send_first(1, StaticArray[Channel(Int32).new, Channel(Int32).new], timeout: 1.nanosecond)
+    end
   end
 
   it "does not raise or change its status when it is closed more than once" do
