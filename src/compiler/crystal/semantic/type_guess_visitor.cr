@@ -788,10 +788,10 @@ module Crystal
         # We can only infer the type if all overloads return
         # the same type (because we can't know the call
         # argument's type)
-        return_types = defs.map(&.return_type.not_nil!).uniq!
+        return_types = defs.map { |a_def| lookup_type?(a_def.return_type.not_nil!, obj_type) || return nil }.uniq!
         return unless return_types.size == 1
 
-        return lookup_type?(return_types[0], obj_type)
+        return return_types[0]
       end
 
       # If we only have one def, check the body, we might be
