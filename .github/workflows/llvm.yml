@@ -3,15 +3,19 @@ name: LLVM CI
 on:
   push:
     paths:
+      - 'src/compiler/crystal/codegen/**'
       - 'src/llvm/**'
       - 'spec/std/llvm/**'
       - 'spec/llvm-ir/**'
+      - 'spec/compiler/codegen/**'
       - '.github/workflows/llvm.yml'
   pull_request:
     paths:
+      - 'src/compiler/crystal/codegen/**'
       - 'src/llvm/**'
       - 'spec/std/llvm/**'
       - 'spec/llvm-ir/**'
+      - 'spec/compiler/codegen/**'
       - '.github/workflows/llvm.yml'
   schedule:
     - cron: '0 3 * * *'
