@@ -55,4 +55,20 @@ describe "Normalize: hash literal" do
       __temp_3
       CRYSTAL
   end
+
+  it "evaluates key and value expressions in correct order" do
+    assert_expand "{foo(1) => foo(2), foo(3) => foo(4), foo(5) => foo(6)}", <<-CRYSTAL
+      __temp_1 = foo(1)
+      __temp_4 = foo(2)
+      __temp_2 = foo(3)
+      __temp_5 = foo(4)
+      __temp_3 = foo(5)
+      __temp_6 = foo(6)
+      __temp_7 = ::Hash(typeof(__temp_1, __temp_2, __temp_3), typeof(__temp_4, __temp_5, __temp_6)).new
+      __temp_7[__temp_1] = __temp_4
+      __temp_7[__temp_2] = __temp_5
+      __temp_7[__temp_3] = __temp_6
+      __temp_7
+      CRYSTAL
+  end
 end
