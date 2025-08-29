@@ -10,13 +10,6 @@ require "./support/tempfile"
 require "./support/win32"
 require "./support/wasm32"
 
-FOO_CR_MD5 = Crystal::Digest::MD5.hexdigest("foo.cr")[0, 8]
-
-# used by normalization specs, trailing underscore is intentional
-def __temp_foo_cr_(i)
-  "__temp_#{FOO_CR_MD5}_#{i}"
-end
-
 class Crystal::Program
   def reset_temp_vars
     @temp_vars.clear

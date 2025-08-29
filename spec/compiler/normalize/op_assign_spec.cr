@@ -89,10 +89,17 @@ describe "Normalize: op assign" do
 
   it "normalizes with filename" do
     assert_normalize "a[b, c] += 1", <<-CRYSTAL, filename: "foo.cr"
-      #{__temp_foo_cr_(1)} = b
-      #{__temp_foo_cr_(2)} = c
-      #{__temp_foo_cr_(3)} = a
-      #{__temp_foo_cr_(3)}[#{__temp_foo_cr_(1)}, #{__temp_foo_cr_(2)}] = #{__temp_foo_cr_(3)}[#{__temp_foo_cr_(1)}, #{__temp_foo_cr_(2)}] + 1
+      __temp_cd6ae5dd_1 = b
+      __temp_cd6ae5dd_2 = c
+      __temp_cd6ae5dd_3 = a
+      __temp_cd6ae5dd_3[__temp_cd6ae5dd_1, __temp_cd6ae5dd_2] = __temp_cd6ae5dd_3[__temp_cd6ae5dd_1, __temp_cd6ae5dd_2] + 1
+      CRYSTAL
+
+    assert_normalize "a[b, c] += 1", <<-CRYSTAL, filename: "bar.cr"
+      __temp_fbcf3d84_1 = b
+      __temp_fbcf3d84_2 = c
+      __temp_fbcf3d84_3 = a
+      __temp_fbcf3d84_3[__temp_fbcf3d84_1, __temp_fbcf3d84_2] = __temp_fbcf3d84_3[__temp_fbcf3d84_1, __temp_fbcf3d84_2] + 1
       CRYSTAL
   end
 end
