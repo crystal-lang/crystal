@@ -20,15 +20,25 @@ class Time::Location
 
   # :nodoc:
   def self.load(name : String, sources : Enumerable(String)) : Time::Location?
+    load(name, sources) { |source| raise InvalidLocationNameError.new(name, source) }
+  end
+
+  # :nodoc:
+  def self.load(name : String, sources : Enumerable(String), &) : Time::Location?
     if source = find_zoneinfo_file(name, sources)
-      load_from_dir_or_zip(name, source) || raise InvalidLocationNameError.new(name, source)
+      load_from_dir_or_zip(name, source) || yield source
     end
   end
 
   # :nodoc:
   def self.load_android(name : String, sources : Enumerable(String)) : Time::Location?
+    load_android(name, sources) { |path| raise InvalidLocationNameError.new(name, path) }
+  end
+
+  # :nodoc:
+  def self.load_android(name : String, sources : Enumerable(String), &) : Time::Location?
     if path = find_android_tzdata_file(sources)
-      load_from_android_tzdata(name, path) || raise InvalidLocationNameError.new(name, path)
+      load_from_android_tzdata(name, path) || yield path
     end
   end
 
