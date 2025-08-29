@@ -86,6 +86,15 @@ describe "Normalize: op assign" do
     assert_name_location node.as(Call).args[1],
       1, 8
   end
+
+  it "normalizes with filename" do
+    assert_normalize "a[b, c] += 1", <<-CRYSTAL, filename: "foo.cr"
+      #{__temp_foo_cr_(1)} = b
+      #{__temp_foo_cr_(2)} = c
+      #{__temp_foo_cr_(3)} = a
+      #{__temp_foo_cr_(3)}[#{__temp_foo_cr_(1)}, #{__temp_foo_cr_(2)}] = #{__temp_foo_cr_(3)}[#{__temp_foo_cr_(1)}, #{__temp_foo_cr_(2)}] + 1
+      CRYSTAL
+  end
 end
 
 private def assert_name_location(node, line_number, column_number, spec_file = __FILE__, spec_line = __LINE__)

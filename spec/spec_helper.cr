@@ -10,6 +10,13 @@ require "./support/tempfile"
 require "./support/win32"
 require "./support/wasm32"
 
+FOO_CR_MD5 = Crystal::Digest::MD5.hexdigest("foo.cr")[0, 8]
+
+# used by normalization specs, trailing underscore is intentional
+def __temp_foo_cr_(i)
+  "__temp_#{FOO_CR_MD5}_#{i}"
+end
+
 class Crystal::Program
   def reset_temp_vars
     @temp_vars.clear
@@ -96,10 +103,10 @@ def top_level_semantic(node : ASTNode, wants_doc = false)
   SemanticResult.new(program, node)
 end
 
-def assert_normalize(from, to, flags = nil, *, file = __FILE__, line = __LINE__)
+def assert_normalize(from, to, flags = nil, *, filename = nil, file = __FILE__, line = __LINE__)
   program = new_program
   program.flags.concat(flags.split) if flags
-  from_nodes = Parser.parse(from)
+  from_nodes = parse(from, filename: filename)
   to_nodes = program.normalize(from_nodes)
   to_nodes_str = to_nodes.to_s.strip
   to_nodes_str.should eq(to.strip), file: file, line: line
