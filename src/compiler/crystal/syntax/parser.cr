@@ -240,7 +240,7 @@ module Crystal
       when Underscore, Var, InstanceVar, ClassVar, Global
         true
       when Call
-        !exp.has_parentheses? && !exp.block && (exp.nullary? || exp.name == "[]")
+        !exp.has_parentheses? && !exp.block && (!exp.has_any_args? || exp.name == "[]")
       else
         false
       end

@@ -650,8 +650,8 @@ module Crystal
       Block.new(@args.clone, @body.clone, @splat_index, @unpacks.clone)
     end
 
-    def nullary?
-      args.empty?
+    def has_any_args?
+      args.present?
     end
 
     def_equals_and_hash args, body, splat_index, unpacks
@@ -749,8 +749,8 @@ module Crystal
     #
     # Does not consider a block, only block argument.
     # `foo {}` would be `true`, but `foo(&x)` would be false.
-    def nullary?
-      !args.present? && named_args.nil? && block_arg.nil?
+    def has_any_args?
+      args.present? || !named_args.nil? || !block_arg.nil?
     end
 
     def_equals_and_hash obj, name, args, block, block_arg, named_args, global?
@@ -1164,8 +1164,8 @@ module Crystal
       location == body.location
     end
 
-    def nullary?
-      args.empty? && block_arity.nil?
+    def has_any_args?
+      args.present? || !block_arity.nil?
     end
   end
 
@@ -1200,8 +1200,8 @@ module Crystal
       m
     end
 
-    def nullary?
-      args.empty? && block_arg.nil?
+    def has_any_args?
+      args.present? || !block_arg.nil?
     end
 
     def_equals_and_hash @name, @args, @body, @block_arg, @splat_index, @double_splat
@@ -1839,8 +1839,8 @@ module Crystal
 
     def_equals_and_hash @obj, @name, @args, @global
 
-    def nullary?
-      args.empty?
+    def has_any_args?
+      args.present?
     end
   end
 
@@ -2027,8 +2027,8 @@ module Crystal
       @name.size
     end
 
-    def nullary?
-      args.empty? && !varargs
+    def has_any_args?
+      args.present? || varargs
     end
 
     def_equals_and_hash @name, @args, @return_type, @varargs, @body, @real_name
@@ -2242,8 +2242,8 @@ module Crystal
       Annotation.new(@path.clone, @args.clone, @named_args.clone)
     end
 
-    def nullary?
-      args.empty? && named_args.nil?
+    def has_any_args?
+      args.present? || !named_args.nil?
     end
 
     def_equals_and_hash path, args, named_args

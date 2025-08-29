@@ -1279,7 +1279,7 @@ module Crystal
 
       @str << "do"
 
-      unless node.nullary?
+      if node.has_any_args?
         @str << " |"
         node.args.each_with_index do |arg, i|
           @str << ", " if i > 0
