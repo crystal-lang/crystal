@@ -1031,8 +1031,8 @@ module Crystal
       raise "#{node} (#{node.class}) can't be expanded"
     end
 
-    def new_temp_var
-      @program.new_temp_var
+    def new_temp_var(key = nil)
+      @program.new_temp_var(key)
     end
   end
 end

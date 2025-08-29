@@ -11,7 +11,9 @@ require "./support/win32"
 require "./support/wasm32"
 
 class Crystal::Program
-  setter temp_var_counter
+  def reset_temp_vars
+    @temp_vars.clear
+  end
 
   def union_of(type1, type2, type3)
     union_of([type1, type2, type3] of Type).not_nil!
@@ -94,10 +96,10 @@ def top_level_semantic(node : ASTNode, wants_doc = false)
   SemanticResult.new(program, node)
 end
 
-def assert_normalize(from, to, flags = nil, *, file = __FILE__, line = __LINE__)
+def assert_normalize(from, to, flags = nil, *, filename = nil, file = __FILE__, line = __LINE__)
   program = new_program
   program.flags.concat(flags.split) if flags
-  from_nodes = Parser.parse(from)
+  from_nodes = parse(from, filename: filename)
   to_nodes = program.normalize(from_nodes)
   to_nodes_str = to_nodes.to_s.strip
   to_nodes_str.should eq(to.strip), file: file, line: line
@@ -110,7 +112,7 @@ def assert_normalize(from, to, flags = nil, *, file = __FILE__, line = __LINE__)
 
   # second idempotency check: if the normalizer mutates the original node,
   # further normalizations should not produce a different result
-  program.temp_var_counter = 0
+  program.reset_temp_vars
   to_nodes_str2 = program.normalize(from_nodes).to_s.strip
   unless to_nodes_str2 == to_nodes_str
     fail "Idempotency failed:\nBefore: #{to_nodes_str.inspect}\nAfter:  #{to_nodes_str2.inspect}", file: file, line: line
