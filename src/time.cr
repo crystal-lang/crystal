@@ -1449,9 +1449,8 @@ struct Time
   # now.at_beginning_of_week(:sunday)    # => 2023-05-14 00:00:00 UTC
   # now.at_beginning_of_week(:wednesday) # => 2023-05-10 00:00:00 UTC
   # ```
-  # TODO: Ensure correctness in local time-line.
   def at_beginning_of_week(start_day : Time::DayOfWeek = :monday) : Time
-    (self - ((day_of_week.value - start_day.value) % 7).days).at_beginning_of_day
+    self.shift(days: -((day_of_week.value - start_day.value) % 7)).at_beginning_of_day
   end
 
   def_at_end(year) { Time.local(year, 12, 31, 23, 59, 59, nanosecond: 999_999_999, location: location) }
@@ -1485,10 +1484,8 @@ struct Time
   def_at_end(month) { Time.local(year, month, Time.days_in_month(year, month), 23, 59, 59, nanosecond: 999_999_999, location: location) }
 
   # Returns a copy of this `Time` representing the end of the week.
-  #
-  # TODO: Ensure correctness in local time-line.
   def at_end_of_week : Time
-    (self + (7 - day_of_week.value).days).at_end_of_day
+    self.shift(days: 7 - day_of_week.value).at_end_of_day
   end
 
   def_at_end(day) { Time.local(year, month, day, 23, 59, 59, nanosecond: 999_999_999, location: location) }
