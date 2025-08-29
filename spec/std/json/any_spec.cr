@@ -224,4 +224,19 @@ describe JSON::Any do
 
       YAML
   end
+
+  it "#inspect" do
+    any = JSON.parse <<-JSON
+      {
+        "foo": "bar",
+        "baz": [1, 2.3, true, "qux", {"qax": "qox"}]
+      }
+    JSON
+
+    any.inspect.should eq %(JSON::Any({"foo" => "bar", "baz" => [1, 2.3, true, "qux", {"qax" => "qox"}]}))
+
+    # call multiple times to ensure state is reset properly
+    JSON.parse("null").inspect.should eq "JSON::Any(nil)"
+    JSON.parse("true").inspect.should eq "JSON::Any(true)"
+  end
 end
