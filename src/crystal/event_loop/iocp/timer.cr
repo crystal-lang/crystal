@@ -19,6 +19,8 @@ struct Crystal::EventLoop::IOCP::Timer
   # trigger. Nil for IO events without a timeout.
   getter! wake_at : Time::Span
 
+  property! cancelation_token : Fiber::CancelationToken
+
   # True if an IO event has timed out (i.e. we're past `#wake_at`).
   getter? timed_out : Bool = false
 
