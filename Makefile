@@ -35,7 +35,7 @@ target ?=         ## Cross-compilation target
 interpreter ?=    ## Enable interpreter feature
 check ?=          ## Enable only check when running format
 order ?=random    ## Enable order for spec execution (values: "default" | "random" | seed number)
-deref_symlinks ?= ## Deference symbolic links for `make install`
+deref_symlinks ?= ## Dereference symbolic links for `make install`
 
 O := .build
 SOURCES := $(shell find src -name '*.cr')
