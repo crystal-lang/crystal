@@ -391,13 +391,13 @@ describe "Semantic: tuples" do
   end
 
   it "doesn't trigger recursive splat expansion error (#7164)" do
-    assert_no_errors %(
+    assert_no_errors <<-CRYSTAL
       def call(*args)
         call({1})
       end
 
       call(1)
-      )
+      CRYSTAL
   end
 
   it "allows tuple covariance" do

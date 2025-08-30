@@ -682,7 +682,7 @@ describe "Semantic: closure" do
   end
 
   it "doesn't assign all types to metavar if closured but declared inside block and never re-assigned" do
-    assert_no_errors %(
+    assert_no_errors <<-CRYSTAL, inject_primitives: true
       def capture(&block)
         block
       end
@@ -699,11 +699,11 @@ describe "Semantic: closure" do
           end
         end
       end
-      ), inject_primitives: true
+      CRYSTAL
   end
 
   it "doesn't assign all types to metavar if closured but declared inside block and re-assigned inside the same context before the closure" do
-    assert_no_errors %(
+    assert_no_errors <<-CRYSTAL, inject_primitives: true
       def capture(&block)
         block
       end
@@ -721,7 +721,7 @@ describe "Semantic: closure" do
           end
         end
       end
-      ), inject_primitives: true
+      CRYSTAL
   end
 
   it "is considered as closure if assigned once but comes from a method arg" do
@@ -740,7 +740,7 @@ describe "Semantic: closure" do
   end
 
   it "considers var as closure-readonly if it was assigned multiple times before it was closured" do
-    assert_no_errors(%(
+    assert_no_errors(<<-CRYSTAL, inject_primitives: true)
       def capture(&block)
         block
       end
@@ -751,7 +751,7 @@ describe "Semantic: closure" do
       capture do
         x &+ 1
       end
-      ), inject_primitives: true)
+      CRYSTAL
   end
 
   it "correctly captures type of closured block arg" do

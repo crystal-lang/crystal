@@ -226,7 +226,7 @@ describe "Semantic: is_a?" do
   end
 
   it "doesn't fail on untyped is_a (#10317)" do
-    assert_no_errors(%(
+    assert_no_errors(<<-CRYSTAL)
       require "prelude"
 
       def foo(&block)
@@ -238,7 +238,7 @@ describe "Semantic: is_a?" do
       foo do
         Sup.new.is_a?(Sup)
       end
-      ))
+      CRYSTAL
   end
 
   it "does is_a? from virtual metaclass to generic metaclass (#12302)" do
