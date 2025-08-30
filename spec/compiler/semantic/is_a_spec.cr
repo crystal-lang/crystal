@@ -6,19 +6,19 @@ describe "Semantic: is_a?" do
   end
 
   it "restricts type inside if scope 1" do
-    nodes = parse "
+    nodes = parse <<-CRYSTAL
       a = 1 || 'a'
       if a.is_a?(Int)
         a
       end
-      "
+      CRYSTAL
     result = semantic nodes
     mod, nodes = result.program, result.node.as(Expressions)
     nodes.last.as(If).then.type.should eq(mod.int32)
   end
 
   it "restricts type inside if scope 2" do
-    nodes = parse "
+    nodes = parse <<-CRYSTAL
       module Bar
       end
 
@@ -30,7 +30,7 @@ describe "Semantic: is_a?" do
       if a.is_a?(Bar)
         a
       end
-      "
+      CRYSTAL
 
     result = semantic nodes
     mod, nodes = result.program, result.node.as(Expressions)
@@ -40,7 +40,7 @@ describe "Semantic: is_a?" do
   end
 
   it "restricts type inside if scope 3" do
-    nodes = parse "
+    nodes = parse <<-CRYSTAL
       class Foo
         def initialize(@x : Int32)
         end
@@ -50,7 +50,7 @@ describe "Semantic: is_a?" do
       if a.is_a?(Foo)
         a
       end
-      "
+      CRYSTAL
 
     result = semantic nodes
     mod, nodes = result.program, result.node.as(Expressions)

@@ -6,14 +6,14 @@ describe "Semantic: responds_to?" do
   end
 
   it "restricts type inside if scope 1" do
-    nodes = parse %(
+    nodes = parse <<-CRYSTAL
       require "primitives"
 
       a = 1 || 'a'
       if a.responds_to?(:"+")
         a
       end
-      )
+      CRYSTAL
     result = semantic nodes
     mod, nodes = result.program, result.node.as(Expressions)
     nodes.last.as(If).then.type.should eq(mod.int32)

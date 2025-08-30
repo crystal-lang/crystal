@@ -90,7 +90,7 @@ describe "Semantic: def" do
   end
 
   it "do not use body for the def type" do
-    input = parse %(
+    input = parse <<-CRYSTAL
       require "primitives"
 
       def foo
@@ -100,7 +100,7 @@ describe "Semantic: def" do
       end
 
       foo
-      )
+      CRYSTAL
     result = semantic input
     mod, input = result.program, result.node.as(Expressions)
 

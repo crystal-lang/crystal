@@ -54,7 +54,7 @@ describe "Semantic: class" do
   end
 
   it "types instance variable" do
-    input = parse "
+    input = parse <<-CRYSTAL
       class Foo(T)
         def set(value : T)
           @coco = value
@@ -67,7 +67,7 @@ describe "Semantic: class" do
       g = Foo(Float64).new
       g.set 2.5
       g
-    "
+      CRYSTAL
     result = semantic input
     mod, node = result.program, result.node.as(Expressions)
     foo = mod.types["Foo"].as(GenericClassType)
@@ -80,7 +80,7 @@ describe "Semantic: class" do
   end
 
   it "types instance variable on getter" do
-    input = parse("
+    input = parse(<<-CRYSTAL).as(Expressions)
       class Foo(T)
         def set(value : T)
           @coco = value
@@ -98,7 +98,7 @@ describe "Semantic: class" do
       g = Foo(Float64).new
       g.set 2.5
       g.get
-    ").as(Expressions)
+      CRYSTAL
     result = semantic input
     mod, node = result.program, result.node.as(Expressions)
 
@@ -107,7 +107,7 @@ describe "Semantic: class" do
   end
 
   it "types recursive type" do
-    input = parse("
+    input = parse(<<-CRYSTAL).as(Expressions)
       class Node
         def add
           if next_node = @next
@@ -121,7 +121,7 @@ describe "Semantic: class" do
       n = Node.new
       n.add
       n
-    ").as(Expressions)
+      CRYSTAL
     result = semantic input
     mod, input = result.program, result.node.as(Expressions)
     node = mod.types["Node"].as(NonGenericClassType)
@@ -231,7 +231,7 @@ describe "Semantic: class" do
   end
 
   it "does automatic type inference of new for nested generic type" do
-    nodes = parse("
+    nodes = parse(<<-CRYSTAL).as(Expressions)
       class Foo
         class Bar(T)
           def initialize(x : T)
@@ -241,7 +241,7 @@ describe "Semantic: class" do
       end
 
       Foo::Bar.new(1)
-      ").as(Expressions)
+      CRYSTAL
     result = semantic nodes
     mod = result.program
     type = nodes.last.type.as(GenericClassInstanceType)
@@ -337,13 +337,13 @@ describe "Semantic: class" do
   end
 
   it "allows defining classes inside modules or classes with ::" do
-    input = parse("
+    input = parse(<<-CRYSTAL)
       class Foo
       end
 
       class Foo::Bar
       end
-      ")
+      CRYSTAL
     result = semantic input
     mod = result.program
     mod.types["Foo"].types["Bar"].as(NonGenericClassType)

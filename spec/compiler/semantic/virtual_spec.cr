@@ -91,7 +91,7 @@ describe "Semantic: virtual" do
   end
 
   it "dispatches virtual method" do
-    nodes = parse("
+    nodes = parse(<<-CRYSTAL)
       class Foo
         def foo
         end
@@ -105,14 +105,14 @@ describe "Semantic: virtual" do
 
       x = Foo.new || Bar.new || Baz.new
       x.foo
-      ")
+      CRYSTAL
     result = semantic nodes
     _, nodes = result.program, result.node.as(Expressions)
     nodes.last.as(Call).target_defs.not_nil!.size.should eq(1)
   end
 
   it "dispatches virtual method with overload" do
-    nodes = parse("
+    nodes = parse(<<-CRYSTAL)
       class Foo
         def foo
         end
@@ -128,7 +128,7 @@ describe "Semantic: virtual" do
 
       x = Foo.new || Bar.new || Baz.new
       x.foo
-      ")
+      CRYSTAL
     result = semantic nodes
     _, nodes = result.program, result.node.as(Expressions)
     nodes.last.as(Call).target_defs.not_nil!.size.should eq(2)
@@ -177,7 +177,7 @@ describe "Semantic: virtual" do
   end
 
   it "removes instance var from subclasses" do
-    nodes = parse "
+    nodes = parse <<-CRYSTAL
       class Base
       end
 
@@ -196,7 +196,7 @@ describe "Semantic: virtual" do
       v = Var.new
       v.x = 1
       v
-      "
+      CRYSTAL
     result = semantic nodes
     mod = result.program
 
