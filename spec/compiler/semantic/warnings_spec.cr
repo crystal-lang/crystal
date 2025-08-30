@@ -731,7 +731,7 @@ describe "Semantic: warnings" do
     end
 
     it "informs warnings once per call site location (a)" do
-      warning_failures = warnings_result %(
+      warning_failures = warnings_result <<-CRYSTAL
         class Foo
           @[Deprecated("Do not use me")]
           macro m
@@ -744,13 +744,13 @@ describe "Semantic: warnings" do
 
         Foo.b
         Foo.b
-      )
+        CRYSTAL
 
       warning_failures.size.should eq(1)
     end
 
     it "informs warnings once per call site location (b)" do
-      warning_failures = warnings_result %(
+      warning_failures = warnings_result <<-CRYSTAL
         class Foo
           @[Deprecated("Do not use me")]
           macro m
@@ -759,7 +759,7 @@ describe "Semantic: warnings" do
 
         Foo.m
         Foo.m
-      )
+        CRYSTAL
 
       warning_failures.size.should eq(2)
     end
