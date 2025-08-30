@@ -1078,7 +1078,7 @@ describe "Semantic: class" do
   end
 
   it "preserves order of instance vars (#3050)" do
-    result = semantic("
+    result = semantic(<<-CRYSTAL)
       class Foo
         @x = uninitialized Int32
         @y : Int32
@@ -1086,7 +1086,7 @@ describe "Semantic: class" do
         def initialize(@y)
         end
       end
-      ")
+      CRYSTAL
     instance_vars = result.program.types["Foo"].instance_vars.to_a.map(&.[0])
     instance_vars.should eq(%w(@x @y))
   end
