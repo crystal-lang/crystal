@@ -665,27 +665,29 @@ describe "Semantic: warnings" do
 
   describe "deprecated macros" do
     it "detects top-level deprecated macros" do
-      assert_warning %(
+      assert_warning <<-CRYSTAL,
         @[Deprecated("Do not use me")]
         macro foo
         end
 
         foo
-      ), "warning in line 6\nWarning: Deprecated ::foo. Do not use me"
+        CRYSTAL
+        "warning in line 6\nWarning: Deprecated ::foo. Do not use me"
     end
 
     it "deprecation reason is optional" do
-      assert_warning %(
+      assert_warning <<-CRYSTAL,
         @[Deprecated]
         macro foo
         end
 
         foo
-      ), "warning in line 6\nWarning: Deprecated ::foo."
+        CRYSTAL
+        "warning in line 6\nWarning: Deprecated ::foo."
     end
 
     it "detects deprecated class macros" do
-      assert_warning %(
+      assert_warning <<-CRYSTAL,
         class Foo
           @[Deprecated("Do not use me")]
           macro m
@@ -693,11 +695,12 @@ describe "Semantic: warnings" do
         end
 
         Foo.m
-      ), "warning in line 8\nWarning: Deprecated Foo.m. Do not use me"
+        CRYSTAL
+        "warning in line 8\nWarning: Deprecated Foo.m. Do not use me"
     end
 
     it "detects deprecated generic class macros" do
-      assert_warning %(
+      assert_warning <<-CRYSTAL,
         class Foo(T)
           @[Deprecated("Do not use me")]
           macro m
@@ -705,11 +708,12 @@ describe "Semantic: warnings" do
         end
 
         Foo.m
-      ), "warning in line 8\nWarning: Deprecated Foo.m. Do not use me"
+        CRYSTAL
+        "warning in line 8\nWarning: Deprecated Foo.m. Do not use me"
     end
 
     it "detects deprecated module macros" do
-      assert_warning %(
+      assert_warning <<-CRYSTAL,
         module Foo
           @[Deprecated("Do not use me")]
           macro m
@@ -717,17 +721,19 @@ describe "Semantic: warnings" do
         end
 
         Foo.m
-      ), "warning in line 8\nWarning: Deprecated Foo.m. Do not use me"
+        CRYSTAL
+        "warning in line 8\nWarning: Deprecated Foo.m. Do not use me"
     end
 
     it "detects deprecated macros with named arguments" do
-      assert_warning %(
+      assert_warning <<-CRYSTAL,
         @[Deprecated]
         macro foo(*, a)
         end
 
         foo(a: 2)
-      ), "warning in line 6\nWarning: Deprecated ::foo."
+        CRYSTAL
+        "warning in line 6\nWarning: Deprecated ::foo."
     end
 
     it "informs warnings once per call site location (a)" do
