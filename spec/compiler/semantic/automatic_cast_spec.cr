@@ -695,7 +695,7 @@ describe "Semantic: automatic cast" do
   end
 
   it "autocasts nested type from non-nested type (#10315)" do
-    assert_no_errors(%(
+    assert_no_errors(<<-CRYSTAL)
       module Moo
         enum Color
           Red
@@ -711,7 +711,7 @@ describe "Semantic: automatic cast" do
       end
 
       Bar.new
-      ))
+      CRYSTAL
   end
 
   it "errors when autocast default value doesn't match enum member" do

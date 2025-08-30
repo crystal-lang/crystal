@@ -207,14 +207,14 @@ describe "Semantic: primitives" do
   end
 
   it "allows @[Primitive] on method that has body" do
-    assert_no_errors %(
+    assert_no_errors <<-CRYSTAL
       struct Int32
         @[Primitive(:binary)]
         def +(other : Int32) : Int32
           1
         end
       end
-      )
+      CRYSTAL
   end
 
   it "types va_arg primitive" do

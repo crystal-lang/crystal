@@ -11,19 +11,19 @@ describe "Block inference" do
   end
 
   it "infer type of block body" do
-    input = parse("
+    input = parse(<<-CRYSTAL).as(Expressions)
       def foo; yield; end
 
       foo do
         x = 1
       end
-    ").as(Expressions)
+      CRYSTAL
     result = semantic input
     input.last.as(Call).block.not_nil!.body.type.should eq(result.program.int32)
   end
 
   it "infer type of block parameter" do
-    input = parse("
+    input = parse(<<-CRYSTAL).as(Expressions)
       def foo
         yield 1
       end
@@ -31,7 +31,7 @@ describe "Block inference" do
       foo do |x|
         1
       end
-    ").as(Expressions)
+      CRYSTAL
     result = semantic input
     mod = result.program
     input.last.as(Call).block.not_nil!.args[0].type.should eq(mod.int32)

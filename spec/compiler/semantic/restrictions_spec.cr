@@ -25,45 +25,45 @@ describe "Restrictions" do
 
     it "restricts type with included module" do
       mod = Program.new
-      mod.semantic parse("
+      mod.semantic parse(<<-CRYSTAL)
         module Mod
         end
 
         class Foo
           include Mod
         end
-      ")
+        CRYSTAL
 
       mod.types["Foo"].restrict(mod.types["Mod"], MatchContext.new(mod, mod)).should eq(mod.types["Foo"])
     end
 
     it "restricts virtual type with included module 1" do
       mod = Program.new
-      mod.semantic parse("
+      mod.semantic parse(<<-CRYSTAL)
         module Moo; end
         class Foo; include Moo; end
-      ")
+        CRYSTAL
 
       mod.t("Foo+").restrict(mod.t("Moo"), MatchContext.new(mod, mod)).should eq(mod.t("Foo+"))
     end
 
     it "restricts virtual type with included module 2" do
       mod = Program.new
-      mod.semantic parse("
+      mod.semantic parse(<<-CRYSTAL)
         module Mxx; end
         class Axx; end
         class Bxx < Axx; include Mxx; end
         class Cxx < Axx; include Mxx; end
         class Dxx < Cxx; end
         class Exx < Axx; end
-      ")
+        CRYSTAL
 
       mod.t("Axx+").restrict(mod.t("Mxx"), MatchContext.new(mod, mod)).should eq(mod.union_of(mod.t("Bxx+"), mod.t("Cxx+")))
     end
 
     it "restricts module with another module" do
       mod = Program.new
-      mod.semantic parse("
+      mod.semantic parse(<<-CRYSTAL)
         module Mxx; end
         module Nxx; end
         class Axx; include Mxx; end
@@ -71,14 +71,14 @@ describe "Restrictions" do
         class Cxx; include Mxx; include Nxx; end
         class Dxx < Axx; include Nxx; end
         class Exx < Bxx; include Mxx; end
-      ")
+        CRYSTAL
 
       mod.t("Mxx").restrict(mod.t("Nxx"), MatchContext.new(mod, mod)).should eq(mod.union_of(mod.t("Cxx"), mod.t("Dxx"), mod.t("Exx")))
     end
 
     it "restricts generic module instance with another module" do
       mod = Program.new
-      mod.semantic parse("
+      mod.semantic parse(<<-CRYSTAL)
         module Mxx(T); end
         module Nxx; end
         class Axx; include Mxx(Int32); end
@@ -86,7 +86,7 @@ describe "Restrictions" do
         class Cxx; include Mxx(Int32); include Nxx; end
         class Dxx < Axx; include Nxx; end
         class Exx < Bxx; include Mxx(Int32); end
-      ")
+        CRYSTAL
 
       result = mod.generic_module("Mxx", mod.int32).restrict(mod.t("Nxx"), MatchContext.new(mod, mod))
       result.should eq(mod.union_of(mod.t("Cxx"), mod.t("Dxx"), mod.t("Exx")))
@@ -94,7 +94,7 @@ describe "Restrictions" do
 
     it "restricts generic module instance with another generic module instance" do
       mod = Program.new
-      mod.semantic parse("
+      mod.semantic parse(<<-CRYSTAL)
         module Mxx(T); end
         module Nxx(T); end
         class Axx; include Mxx(Int32); end
@@ -104,7 +104,7 @@ describe "Restrictions" do
         class Exx < Bxx; include Mxx(Int32); end
         class Fxx; include Mxx(Int32); include Nxx(Char); end
         class Gxx; include Mxx(Char); include Nxx(Int32); end
-      ")
+        CRYSTAL
 
       result = mod.generic_module("Mxx", mod.int32).restrict(mod.generic_module("Nxx", mod.int32), MatchContext.new(mod, mod))
       result.should eq(mod.union_of(mod.t("Cxx"), mod.t("Dxx"), mod.t("Exx")))
@@ -112,7 +112,7 @@ describe "Restrictions" do
 
     it "restricts generic module instance with class" do
       mod = Program.new
-      mod.semantic parse("
+      mod.semantic parse(<<-CRYSTAL)
         module Mxx(T); end
         module Nxx; end
         class Axx; include Mxx(Int32); end
@@ -120,7 +120,7 @@ describe "Restrictions" do
         class Cxx; include Mxx(Int32); include Nxx; end
         class Dxx < Axx; include Nxx; end
         class Exx < Bxx; include Mxx(Int32); end
-      ")
+        CRYSTAL
 
       result = mod.generic_module("Mxx", mod.int32).restrict(mod.t("Nxx"), MatchContext.new(mod, mod))
       result.should eq(mod.union_of(mod.t("Cxx"), mod.t("Dxx"), mod.t("Exx")))
@@ -128,22 +128,22 @@ describe "Restrictions" do
 
     it "restricts module through generic include (#4287)" do
       mod = Program.new
-      mod.semantic parse("
+      mod.semantic parse(<<-CRYSTAL)
         module Axx; end
         module Bxx(T); include Axx; end
         class Cxx; include Bxx(Int32); end
-      ")
+        CRYSTAL
 
       mod.t("Axx").restrict(mod.t("Cxx"), MatchContext.new(mod, mod)).should eq(mod.t("Cxx"))
     end
 
     it "restricts class against uninstantiated generic base class through multiple inheritance (1) (#9660)" do
       mod = Program.new
-      mod.semantic parse("
+      mod.semantic parse(<<-CRYSTAL)
         class Axx(T); end
         class Bxx(T) < Axx(T); end
         class Cxx < Bxx(Int32); end
-      ")
+        CRYSTAL
 
       result = mod.t("Cxx").restrict(mod.t("Axx"), MatchContext.new(mod, mod))
       result.should eq(mod.t("Cxx"))
@@ -151,11 +151,11 @@ describe "Restrictions" do
 
     it "restricts class against uninstantiated generic base class through multiple inheritance (2) (#9660)" do
       mod = Program.new
-      mod.semantic parse("
+      mod.semantic parse(<<-CRYSTAL)
         class Axx(T); end
         class Bxx(T) < Axx(T); end
         class Cxx(T) < Bxx(T); end
-      ")
+        CRYSTAL
 
       result = mod.generic_class("Cxx", mod.int32).restrict(mod.t("Axx"), MatchContext.new(mod, mod))
       result.should eq(mod.generic_class("Cxx", mod.int32))
@@ -163,11 +163,11 @@ describe "Restrictions" do
 
     it "restricts virtual generic class against uninstantiated generic subclass (1)" do
       mod = Program.new
-      mod.semantic parse("
+      mod.semantic parse(<<-CRYSTAL)
         class Axx(T); end
         class Bxx(T) < Axx(T); end
         class Cxx < Bxx(Int32); end
-      ")
+        CRYSTAL
 
       result = mod.generic_class("Axx", mod.int32).virtual_type.restrict(mod.generic_class("Bxx", mod.int32), MatchContext.new(mod, mod))
       result.should eq(mod.generic_class("Bxx", mod.int32).virtual_type)
@@ -175,11 +175,11 @@ describe "Restrictions" do
 
     it "restricts virtual generic class against uninstantiated generic subclass (2)" do
       mod = Program.new
-      mod.semantic parse("
+      mod.semantic parse(<<-CRYSTAL)
         class Axx(T); end
         class Bxx(T) < Axx(T); end
         class Cxx(T) < Bxx(T); end
-      ")
+        CRYSTAL
 
       result = mod.generic_class("Axx", mod.int32).virtual_type.restrict(mod.generic_class("Bxx", mod.int32), MatchContext.new(mod, mod))
       result.should eq(mod.generic_class("Bxx", mod.int32).virtual_type)

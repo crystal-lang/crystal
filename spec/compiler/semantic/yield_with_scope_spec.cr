@@ -11,13 +11,13 @@ describe "Semantic: yield with scope" do
   end
 
   it "infer type of block body" do
-    input = parse "
+    input = parse <<-CRYSTAL
       def foo; with 1 yield; end
 
       foo do
         x = 1
       end
-    "
+      CRYSTAL
     result = semantic input
     mod, input = result.program, result.node.as(Expressions)
     call = input.last.as(Call)
@@ -26,7 +26,7 @@ describe "Semantic: yield with scope" do
   end
 
   it "infer type of block body with yield scope" do
-    input = parse %(
+    input = parse <<-CRYSTAL
       require "primitives"
 
       def foo; with 1 yield; end
@@ -34,14 +34,14 @@ describe "Semantic: yield with scope" do
       foo do
         to_i64
       end
-    )
+      CRYSTAL
     result = semantic input
     mod, input = result.program, result.node.as(Expressions)
     input.last.as(Call).block.not_nil!.body.type.should eq(mod.int64)
   end
 
   it "infer type of block body with yield scope and arguments" do
-    input = parse %(
+    input = parse <<-CRYSTAL
       require "primitives"
 
       def foo; with 1 yield 1.5; end
@@ -49,7 +49,7 @@ describe "Semantic: yield with scope" do
       foo do |f|
         to_i64 + f
       end
-    )
+      CRYSTAL
     result = semantic input
     mod, input = result.program, result.node.as(Expressions)
     input.last.as(Call).block.not_nil!.body.type.should eq(mod.float64)

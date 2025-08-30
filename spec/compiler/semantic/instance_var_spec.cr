@@ -2771,7 +2771,7 @@ describe "Semantic: instance var" do
   end
 
   it "doesn't duplicate instance var in subclass" do
-    result = semantic(%(
+    result = semantic(<<-CRYSTAL)
       class Foo
         def initialize(@x : Int32)
         end
@@ -2784,7 +2784,7 @@ describe "Semantic: instance var" do
       class Bar < Foo
         @x : Int32
       end
-      ))
+      CRYSTAL
 
     foo = result.program.types["Foo"].as(NonGenericClassType)
     foo.instance_vars["@x"].type.should eq(result.program.int32)

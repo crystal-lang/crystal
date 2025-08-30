@@ -75,14 +75,14 @@ describe "Code gen: alias" do
   end
 
   it "doesn't break with alias for link attributes" do
-    result = semantic(%(
+    result = semantic(<<-CRYSTAL)
       alias Foo = Int32
 
       module Moo
         alias Bar = Foo
         alias Foo = Moo
       end
-      ))
+      CRYSTAL
     result.program.link_annotations
   end
 

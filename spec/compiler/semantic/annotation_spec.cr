@@ -2,10 +2,10 @@ require "../../spec_helper"
 
 describe "Semantic: annotation" do
   it "declares annotation" do
-    result = semantic(%(
+    result = semantic(<<-CRYSTAL)
       annotation Foo
       end
-      ))
+      CRYSTAL
 
     type = result.program.types["Foo"]
     type.should be_a(AnnotationType)

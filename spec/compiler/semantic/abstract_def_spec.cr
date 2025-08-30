@@ -352,7 +352,7 @@ describe "Semantic: abstract def" do
   end
 
   it "doesn't error if implements with parent class" do
-    assert_no_errors %(
+    assert_no_errors <<-CRYSTAL
       class Parent; end
       class Child < Parent; end
 
@@ -364,11 +364,11 @@ describe "Semantic: abstract def" do
         def foo(x : Parent)
         end
       end
-      )
+      CRYSTAL
   end
 
   it "doesn't error if implements with generic parent class instance" do
-    assert_no_errors %(
+    assert_no_errors <<-CRYSTAL
       class Parent(T); end
       class Child(T) < Parent(T); end
 
@@ -380,11 +380,11 @@ describe "Semantic: abstract def" do
         def foo(x : Parent(Int32))
         end
       end
-      )
+      CRYSTAL
   end
 
   it "doesn't error if implements with included module" do
-    assert_no_errors %(
+    assert_no_errors <<-CRYSTAL
       module Moo
       end
 
@@ -400,11 +400,11 @@ describe "Semantic: abstract def" do
         def foo(x : Moo)
         end
       end
-      )
+      CRYSTAL
   end
 
   it "doesn't error if implements with generic included module instance" do
-    assert_no_errors %(
+    assert_no_errors <<-CRYSTAL
       module Moo(T)
       end
 
@@ -420,11 +420,11 @@ describe "Semantic: abstract def" do
         def foo(x : Moo(Int32))
         end
       end
-      )
+      CRYSTAL
   end
 
   it "doesn't error if implements with parent module" do
-    assert_no_errors %(
+    assert_no_errors <<-CRYSTAL
       module Moo
       end
 
@@ -444,11 +444,11 @@ describe "Semantic: abstract def" do
         def foo(x : Moo)
         end
       end
-      )
+      CRYSTAL
   end
 
   it "doesn't error if implements a NoReturn param" do
-    assert_no_errors %(
+    assert_no_errors <<-CRYSTAL
       abstract class Foo
         abstract def foo(x : NoReturn)
       end
@@ -457,7 +457,7 @@ describe "Semantic: abstract def" do
         def foo(x : Int32)
         end
       end
-      )
+      CRYSTAL
   end
 
   it "finds implements in included module in disorder (#4052)" do
@@ -1065,7 +1065,7 @@ describe "Semantic: abstract def" do
   end
 
   it "doesn't error if free var in arg restriction shadows another type (#10153)" do
-    assert_no_errors %(
+    assert_no_errors <<-CRYSTAL
       module Foo
         abstract def foo(x : Int32, y : Array(Int32))
       end
@@ -1080,7 +1080,7 @@ describe "Semantic: abstract def" do
 
       class Quux
       end
-      )
+      CRYSTAL
   end
 
   describe "implementation is not inherited from supertype" do

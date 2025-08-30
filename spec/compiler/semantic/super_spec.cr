@@ -153,7 +153,7 @@ describe "Semantic: super" do
   end
 
   it "types super when container method is defined in parent class" do
-    nodes = parse "
+    nodes = parse <<-CRYSTAL
       class Foo
         def initialize
           @x = 1
@@ -167,7 +167,7 @@ describe "Semantic: super" do
       class Baz < Bar
       end
       Baz.new
-      "
+      CRYSTAL
     result = semantic nodes
     mod, type = result.program, result.node.type.as(NonGenericClassType)
 

@@ -183,21 +183,21 @@ describe "Semantic: struct" do
   end
 
   it "passes subtype check with generic module type on virtual type" do
-    mod = semantic(%(
+    mod = semantic(<<-CRYSTAL).program
       module Base(T)
       end
 
       abstract struct Foo
         include Base(Foo)
       end
-      )).program
+      CRYSTAL
 
     base_foo = mod.generic_module("Base", mod.types["Foo"].virtual_type!)
     mod.types["Foo"].implements?(base_foo).should be_true
   end
 
   it "passes subtype check with generic module type on virtual type (2) (#10302)" do
-    mod = semantic(%(
+    mod = semantic(<<-CRYSTAL).program
       module Base(T)
       end
 
@@ -207,21 +207,21 @@ describe "Semantic: struct" do
 
       struct Bar < Foo
       end
-      )).program
+      CRYSTAL
 
     base_foo = mod.generic_module("Base", mod.types["Foo"].virtual_type)
     mod.types["Bar"].implements?(base_foo).should be_true
   end
 
   it "passes subtype check with generic module type on virtual type (3)" do
-    mod = semantic(%(
+    mod = semantic(<<-CRYSTAL).program
       module Base(T, N)
       end
 
       abstract struct Foo
         include Base(Foo, 10)
       end
-      )).program
+      CRYSTAL
 
     mod.types["Foo"].implements?(mod.generic_module("Base", mod.types["Foo"].virtual_type!, NumberLiteral.new("10", :i32))).should be_true
     mod.types["Foo"].implements?(mod.generic_module("Base", mod.types["Foo"].virtual_type!, NumberLiteral.new("9", :i32))).should be_false

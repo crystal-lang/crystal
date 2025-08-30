@@ -54,7 +54,7 @@ describe "Semantic: initialize" do
   end
 
   it "types instance vars as nilable if doesn't invoke super with default arguments" do
-    node = parse("
+    node = parse(<<-CRYSTAL)
       class Foo
         def initialize
           @baz = Baz.new
@@ -73,7 +73,7 @@ describe "Semantic: initialize" do
 
       foo = Foo.new
       bar = Bar.new(1)
-    ")
+      CRYSTAL
     result = semantic node
     mod = result.program
     foo = mod.types["Foo"].as(NonGenericClassType)

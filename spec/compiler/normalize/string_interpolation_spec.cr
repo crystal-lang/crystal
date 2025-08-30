@@ -14,40 +14,40 @@ describe "Normalize: string interpolation" do
   end
 
   it "replaces string constant" do
-    result = semantic(%(
+    result = semantic(<<-CRYSTAL)
       def String.interpolation(*args); ""; end
 
       OBJ = "world"
 
       "hello \#{OBJ}"
-    ))
+      CRYSTAL
     node = result.node.as(Expressions).last
     string = node.should be_a(StringLiteral)
     string.value.should eq("hello world")
   end
 
   it "replaces string constant that results from macro expansion" do
-    result = semantic(%(
+    result = semantic(<<-CRYSTAL)
       def String.interpolation(*args); ""; end
 
       OBJ = {% if 1 + 1 == 2 %} "world" {% else %} "bug" {% end %}
 
       "hello \#{OBJ}"
-    ))
+      CRYSTAL
     node = result.node.as(Expressions).last
     string = node.should be_a(StringLiteral)
     string.value.should eq("hello world")
   end
 
   it "replaces through multiple levels" do
-    result = semantic(%(
+    result = semantic(<<-CRYSTAL)
       def String.interpolation(*args); ""; end
 
       OBJ1 = "ld"
       OBJ2 = "wor\#{OBJ1}"
 
       "hello \#{OBJ2}"
-    ))
+      CRYSTAL
     node = result.node.as(Expressions).last
     string = node.should be_a(StringLiteral)
     string.value.should eq("hello world")
