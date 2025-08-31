@@ -745,7 +745,7 @@ module Crystal
       Location.new(loc.filename, loc.line_number, loc.column_number + name_size - 1)
     end
 
-    # Returns true if this call has no arguments.
+    # Returns `true` if this call has any arguments.
     #
     # Does not consider a block, only block argument.
     # `foo {}` would be `true`, but `foo(&x)` would be false.
