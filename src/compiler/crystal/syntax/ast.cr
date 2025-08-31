@@ -748,7 +748,7 @@ module Crystal
     # Returns `true` if this call has any arguments.
     #
     # Does not consider a block, only block argument.
-    # `foo {}` would be `true`, but `foo(&x)` would be false.
+    # `foo {}` would be `false`, but `foo(&x)` would be `true`.
     def has_any_args?
       args.present? || !named_args.nil? || !block_arg.nil?
     end
