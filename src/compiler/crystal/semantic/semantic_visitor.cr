@@ -563,7 +563,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
       node.raise "can't declare variable of generic non-instantiated type #{type}"
     end
 
-    Crystal.check_type_can_be_stored(node, type, "can't use #{type} as the type of #{variable_kind}")
+    Crystal.check_type_can_be_stored(node, type) { "can't use #{type} as the type of #{variable_kind}" }
 
     declared_type
   end

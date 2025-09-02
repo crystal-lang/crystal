@@ -893,7 +893,7 @@ class Crystal::Call
         output_type = lookup_node_type?(match.context, output)
         if output_type
           output_type = program.nil if output_type.void?
-          Crystal.check_type_can_be_stored(output, output_type, "can't use #{output_type} as a block return type")
+          Crystal.check_type_can_be_stored(output, output_type) { "can't use #{output_type} as a block return type" }
           output_type = output_type.virtual_type
         end
       end

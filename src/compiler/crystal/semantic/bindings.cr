@@ -642,7 +642,7 @@ module Crystal
             node.raise "can't use constant as type for NamedTuple"
           end
 
-          Crystal.check_type_can_be_stored(node, node_type, "can't use #{node_type} as generic type argument")
+          Crystal.check_type_can_be_stored(node, node_type) { "can't use #{node_type} as generic type argument" }
           node_type = node_type.virtual_type
 
           entries << NamedArgumentType.new(named_arg.name, node_type)
@@ -702,7 +702,7 @@ module Crystal
                 end
               end
             else
-              Crystal.check_type_can_be_stored(node, node_type, "can't use #{node_type} as generic type argument")
+              Crystal.check_type_can_be_stored(node, node_type) { "can't use #{node_type} as generic type argument" }
               type_var = node_type.virtual_type
             end
           end

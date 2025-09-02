@@ -150,7 +150,7 @@ class Crystal::Type
         return if !@raise && !type
         type = type.not_nil!
 
-        check_type_can_be_stored(ident, type, "can't use #{type} in unions")
+        check_type_can_be_stored(ident, type) { "can't use #{type} in unions" }
 
         type.virtual_type
       end
@@ -191,7 +191,7 @@ class Crystal::Type
           return if !@raise && !type
           type = type.not_nil!
 
-          check_type_can_be_stored(subnode, type, "can't use #{type} as a generic type argument")
+          check_type_can_be_stored(subnode, type) { "can't use #{type} as a generic type argument" }
           entries << NamedArgumentType.new(named_arg.name, type.virtual_type)
         end
 
@@ -279,7 +279,7 @@ class Crystal::Type
 
         case instance_type
         when GenericUnionType, PointerType, StaticArrayType, TupleType, ProcType
-          check_type_can_be_stored(type_var, type, "can't use #{type} as a generic type argument")
+          check_type_can_be_stored(type_var, type) { "can't use #{type} as a generic type argument" }
         end
 
         type_vars << type.virtual_type
@@ -324,7 +324,7 @@ class Crystal::Type
             return if !@raise && !type
             type = type.not_nil!
 
-            check_type_can_be_stored(input, type, "can't use #{type} as proc argument")
+            check_type_can_be_stored(input, type) { "can't use #{type} as proc argument" }
 
             types << type.virtual_type
           end
@@ -336,7 +336,7 @@ class Crystal::Type
         return if !@raise && !type
         type = type.not_nil!
 
-        check_type_can_be_stored(output, type, "can't use #{type} as proc return type")
+        check_type_can_be_stored(output, type) { "can't use #{type} as proc return type" }
 
         types << type.virtual_type
       else
@@ -422,8 +422,8 @@ class Crystal::Type
       end
     end
 
-    def check_type_can_be_stored(ident, type, message)
-      Crystal.check_type_can_be_stored(ident, type, message)
+    def check_type_can_be_stored(ident, type, &)
+      Crystal.check_type_can_be_stored(ident, type) { yield }
     end
 
     def in_generic_args(&)

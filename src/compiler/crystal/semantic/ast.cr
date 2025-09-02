@@ -1,10 +1,10 @@
 require "../syntax/ast"
 
 module Crystal
-  def self.check_type_can_be_stored(node, type, msg)
+  def self.check_type_can_be_stored(node, type, &)
     return if type.can_be_stored?
 
-    node.raise "#{msg} yet, use a more specific type"
+    node.raise "#{yield} yet, use a more specific type"
   end
 
   class ASTNode
