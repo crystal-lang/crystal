@@ -3,6 +3,7 @@ require "termios"
 {% if flag?(:android) && LibC::ANDROID_API < 28 %}
   require "c/sys/ioctl"
 {% end %}
+require "crystal/fd_lock"
 
 # :nodoc:
 module Crystal::System::FileDescriptor
@@ -18,13 +19,17 @@ module Crystal::System::FileDescriptor
   STDOUT_HANDLE = 1
   STDERR_HANDLE = 2
 
+  @fd_lock = FdLock.new
+
   private def system_blocking?
-    flags = system_fcntl(LibC::F_GETFL)
+    flags = FileDescriptor.fcntl(fd, LibC::F_GETFL)
     !flags.bits_set? LibC::O_NONBLOCK
   end
 
   private def system_blocking=(value)
-    FileDescriptor.set_blocking(fd, value)
+    @fd_lock.reference do
+      FileDescriptor.set_blocking(fd, value)
+    end
   end
 
   protected def self.get_blocking(fd : Handle)
@@ -56,7 +61,7 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_close_on_exec?
-    flags = system_fcntl(LibC::F_GETFD)
+    flags = FileDescriptor.fcntl(fd, LibC::F_GETFD)
     flags.bits_set? LibC::FD_CLOEXEC
   end
 
@@ -67,6 +72,10 @@ module Crystal::System::FileDescriptor
 
   private def system_closed?
     LibC.fcntl(fd, LibC::F_GETFL) == -1
+  end
+
+  private def system_fcntl(cmd, arg)
+    @fd_lock.reference { FileDescriptor.fcntl(fd, cmd, arg) }
   end
 
   def self.fcntl(fd, cmd, arg = 0)
@@ -91,12 +100,13 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_info
-    FileDescriptor.system_info fd
+    @fd_lock.reference { FileDescriptor.system_info(fd) }
   end
 
   private def system_seek(offset, whence : IO::Seek) : Nil
-    seek_value = LibC.lseek(fd, offset, whence)
-
+    seek_value = @fd_lock.reference do
+      LibC.lseek(fd, offset, whence)
+    end
     if seek_value == -1
       raise IO::Error.from_errno "Unable to seek", target: self
     end
@@ -113,19 +123,24 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_reopen(other : IO::FileDescriptor)
-    {% if LibC.has_method?(:dup3) %}
-      flags = other.close_on_exec? ? LibC::O_CLOEXEC : 0
-      if LibC.dup3(other.fd, fd, flags) == -1
-        raise IO::Error.from_errno("Could not reopen file descriptor")
+    other.@fd_lock.reference do
+      @fd_lock.reference do
+        {% if LibC.has_method?(:dup3) %}
+          flags = other.close_on_exec? ? LibC::O_CLOEXEC : 0
+          if LibC.dup3(other.fd, fd, flags) == -1
+            raise IO::Error.from_errno("Could not reopen file descriptor")
+          end
+        {% else %}
+          Process.lock_read do
+            if LibC.dup2(other.fd, fd) == -1
+              raise IO::Error.from_errno("Could not reopen file descriptor")
+            end
+            flags = other.close_on_exec? ? LibC::FD_CLOEXEC : 0
+            FileDescriptor.fcntl(fd, LibC::F_SETFD, flags)
+          end
+        {% end %}
       end
-    {% else %}
-      Process.lock_read do
-        if LibC.dup2(other.fd, fd) == -1
-          raise IO::Error.from_errno("Could not reopen file descriptor")
-        end
-        self.close_on_exec = other.close_on_exec?
-      end
-    {% end %}
+    end
 
     # Mark the handle open, since we had to have dup'd a live handle.
     @closed = false
@@ -134,7 +149,9 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_close
-    event_loop.close(self)
+    if @fd_lock.try_close? { event_loop.before_close(self) }
+      event_loop.close(self)
+    end
   end
 
   def file_descriptor_close(&) : Nil
@@ -195,7 +212,7 @@ module Crystal::System::FileDescriptor
   end
 
   private def flock(op) : Bool
-    if 0 == LibC.flock(fd, op)
+    if 0 == @fd_lock.reference { LibC.flock(fd, op) }
       true
     else
       errno = Errno.value
@@ -208,7 +225,7 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_fsync(flush_metadata = true) : Nil
-    ret =
+    ret = @fd_lock.reference do
       if flush_metadata
         LibC.fsync(fd)
       else
@@ -218,6 +235,7 @@ module Crystal::System::FileDescriptor
           LibC.fdatasync(fd)
         {% end %}
       end
+    end
 
     if ret != 0
       raise IO::Error.from_errno("Error syncing file", target: self)
@@ -245,7 +263,9 @@ module Crystal::System::FileDescriptor
   end
 
   def self.pread(file, buffer, offset)
-    bytes_read = LibC.pread(file.fd, buffer, buffer.size, offset).to_i64
+    bytes_read = file.@fd_lock.reference do
+      LibC.pread(file.fd, buffer, buffer.size, offset).to_i64
+    end
 
     if bytes_read == -1
       raise IO::Error.from_errno("Error reading file", target: file)
@@ -349,24 +369,26 @@ module Crystal::System::FileDescriptor
 
   @[AlwaysInline]
   private def system_tcsetattr(optional_actions, termios_p)
-    {% if LibC.has_method?(:tcsetattr) %}
-      LibC.tcsetattr(fd, optional_actions, termios_p)
-    {% else %}
-      optional_actions = optional_actions.value if optional_actions.is_a?(Termios::LineControl)
-      cmd = case optional_actions
-            when LibC::TCSANOW
-              LibC::TCSETS
-            when LibC::TCSADRAIN
-              LibC::TCSETSW
-            when LibC::TCSAFLUSH
-              LibC::TCSETSF
-            else
-              Errno.value = Errno::EINVAL
-              return LibC::Int.new(-1)
-            end
+    @fd_lock.reference do
+      {% if LibC.has_method?(:tcsetattr) %}
+        LibC.tcsetattr(fd, optional_actions, termios_p)
+      {% else %}
+        optional_actions = optional_actions.value if optional_actions.is_a?(Termios::LineControl)
+        cmd = case optional_actions
+              when LibC::TCSANOW
+                LibC::TCSETS
+              when LibC::TCSADRAIN
+                LibC::TCSETSW
+              when LibC::TCSAFLUSH
+                LibC::TCSETSF
+              else
+                Errno.value = Errno::EINVAL
+                return LibC::Int.new(-1)
+              end
 
-      LibC.ioctl(fd, cmd, termios_p)
-    {% end %}
+        LibC.ioctl(fd, cmd, termios_p)
+      {% end %}
+    end
   end
 
   @[AlwaysInline]
@@ -383,5 +405,13 @@ module Crystal::System::FileDescriptor
       termios.c_cc[LibC::VTIME] = 0
     {% end %}
     termios
+  end
+
+  private def system_read(slice : Bytes) : Int32
+    @fd_lock.reference { event_loop.read(self, slice) }
+  end
+
+  private def system_write(slice : Bytes) : Int32
+    @fd_lock.reference { event_loop.write(self, slice) }
   end
 end
