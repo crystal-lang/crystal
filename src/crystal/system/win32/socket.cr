@@ -86,9 +86,9 @@ module Crystal::System::Socket
     @blocking = blocking unless blocking.nil?
 
     unless @family.unix?
-      system_getsockopt(handle, LibC::SO_REUSEADDR, 0) do |value|
+      Socket.getsockopt(handle, LibC::SO_REUSEADDR, 0) do |value|
         if value == 0
-          system_setsockopt(handle, LibC::SO_EXCLUSIVEADDRUSE, 1)
+          Socket.setsockopt(handle, LibC::SO_EXCLUSIVEADDRUSE, 1)
         end
       end
     end
@@ -310,25 +310,34 @@ module Crystal::System::Socket
     val
   end
 
-  private def system_getsockopt(handle, optname, optval, level = LibC::SOL_SOCKET, &)
+  # :nodoc:
+  def self.getsockopt(optname, optval, level = LibC::SOL_SOCKET, &)
     optsize = sizeof(typeof(optval))
-    ret = LibC.getsockopt(handle, level, optname, pointerof(optval).as(UInt8*), pointerof(optsize))
+    ret = LibC.getsockopt(fd, level, optname, pointerof(optval).as(UInt8*), pointerof(optsize))
     yield optval if ret == 0
     ret
   end
 
-  private def system_getsockopt(fd, optname, optval, level = LibC::SOL_SOCKET)
-    system_getsockopt(fd, optname, optval, level) { |value| return value }
+  private def system_getsockopt(optname, optval, level = LibC::SOL_SOCKET, &)
+    Socket.getsockopt(fd, optname, optval, level) { |value| yield value }
+  end
+
+  private def system_getsockopt(optname, optval, level = LibC::SOL_SOCKET)
+    Socket.getsockopt(fd, optname, optval, level) { |value| return value }
     raise ::Socket::Error.from_wsa_error("getsockopt #{optname}")
   end
 
   # :nodoc:
-  def system_setsockopt(handle, optname, optval, level = LibC::SOL_SOCKET)
+  def self.setsockopt(handle, optname, optval, level = LibC::SOL_SOCKET)
     optsize = sizeof(typeof(optval))
 
     ret = LibC.setsockopt(handle, level, optname, pointerof(optval).as(UInt8*), optsize)
     raise ::Socket::Error.from_wsa_error("setsockopt #{optname}") if ret == LibC::SOCKET_ERROR
     ret
+  end
+
+  private def system_setsockopt(optname, optval, level = LibC::SOL_SOCKET)
+    Socket.setsockopt(fd, optname, optval, level)
   end
 
   @blocking : Bool = true
@@ -363,6 +372,10 @@ module Crystal::System::Socket
 
   private def system_close_on_exec=(arg : Bool)
     raise NotImplementedError.new "Crystal::System::Socket#system_close_on_exec=" if arg
+  end
+
+  private def system_fcntl(cmd, arg)
+    Socket.fcntl(fd, cmd, arg)
   end
 
   def self.fcntl(fd, cmd, arg = 0)
