@@ -234,6 +234,7 @@ module Crystal::System::Socket
     if @fd_lock.try_close? { event_loop.before_close(self) }
       event_loop.close(self)
     end
+    @fd_lock.reset
   end
 
   def socket_close(&)

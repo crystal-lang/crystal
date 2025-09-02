@@ -79,4 +79,9 @@ struct Crystal::FdLock
 
     true
   end
+
+  def reset : Nil
+    @m.lazy_set(0_u32)
+    @closing = nil
+  end
 end
