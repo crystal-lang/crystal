@@ -2818,7 +2818,7 @@ module Crystal
         CRYSTAL
       node = parser.parse.as(Expressions).expressions[1]
       loc = node.location.not_nil!
-      loc.line_number.should eq(6)
+      loc.line_number.should eq(5)
     end
 
     it "gets correct location with \r\n (#1558)" do

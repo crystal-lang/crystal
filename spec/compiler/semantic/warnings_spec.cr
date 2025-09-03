@@ -672,7 +672,7 @@ describe "Semantic: warnings" do
 
         foo
         CRYSTAL
-        "warning in line 6\nWarning: Deprecated ::foo. Do not use me"
+        "warning in line 5\nWarning: Deprecated ::foo. Do not use me"
     end
 
     it "deprecation reason is optional" do
@@ -683,7 +683,7 @@ describe "Semantic: warnings" do
 
         foo
         CRYSTAL
-        "warning in line 6\nWarning: Deprecated ::foo."
+        "warning in line 5\nWarning: Deprecated ::foo."
     end
 
     it "detects deprecated class macros" do
@@ -696,7 +696,7 @@ describe "Semantic: warnings" do
 
         Foo.m
         CRYSTAL
-        "warning in line 8\nWarning: Deprecated Foo.m. Do not use me"
+        "warning in line 7\nWarning: Deprecated Foo.m. Do not use me"
     end
 
     it "detects deprecated generic class macros" do
@@ -709,7 +709,7 @@ describe "Semantic: warnings" do
 
         Foo.m
         CRYSTAL
-        "warning in line 8\nWarning: Deprecated Foo.m. Do not use me"
+        "warning in line 7\nWarning: Deprecated Foo.m. Do not use me"
     end
 
     it "detects deprecated module macros" do
@@ -722,7 +722,7 @@ describe "Semantic: warnings" do
 
         Foo.m
         CRYSTAL
-        "warning in line 8\nWarning: Deprecated Foo.m. Do not use me"
+        "warning in line 7\nWarning: Deprecated Foo.m. Do not use me"
     end
 
     it "detects deprecated macros with named arguments" do
@@ -733,7 +733,7 @@ describe "Semantic: warnings" do
 
         foo(a: 2)
         CRYSTAL
-        "warning in line 6\nWarning: Deprecated ::foo."
+        "warning in line 5\nWarning: Deprecated ::foo."
     end
 
     it "informs warnings once per call site location (a)" do
