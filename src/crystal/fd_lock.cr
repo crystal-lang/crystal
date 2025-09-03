@@ -23,8 +23,8 @@ struct Crystal::FdLock
     begin
       yield
     ensure
-      m, success = @m.compare_and_set(REF, 0_u32, :release, :relaxed)
-      decrement_slow(m) unless success
+      m = @m.sub(REF, :release)
+      handle_last_ref(m)
     end
   end
 
@@ -38,7 +38,7 @@ struct Crystal::FdLock
     end
   end
 
-  private def decrement_slow(m)
+  private def handle_last_ref(m)
     # last ref after close must resume the closing fiber
     return unless (m & CLOSED) == CLOSED && (m & MASK) == REF
     @closing.not_nil!("BUG: expected a closing fiber to resume.").enqueue
