@@ -311,18 +311,18 @@ module Crystal::System::Socket
   end
 
   # :nodoc:
-  def self.getsockopt(optname, optval, level = LibC::SOL_SOCKET, &)
+  def self.getsockopt(fd, optname, optval, level = LibC::SOL_SOCKET, &)
     optsize = sizeof(typeof(optval))
     ret = LibC.getsockopt(fd, level, optname, pointerof(optval).as(UInt8*), pointerof(optsize))
     yield optval if ret == 0
     ret
   end
 
-  private def system_getsockopt(optname, optval, level = LibC::SOL_SOCKET, &)
+  protected def system_getsockopt(optname, optval, level = LibC::SOL_SOCKET, &)
     Socket.getsockopt(fd, optname, optval, level) { |value| yield value }
   end
 
-  private def system_getsockopt(optname, optval, level = LibC::SOL_SOCKET)
+  protected def system_getsockopt(optname, optval, level = LibC::SOL_SOCKET)
     Socket.getsockopt(fd, optname, optval, level) { |value| return value }
     raise ::Socket::Error.from_wsa_error("getsockopt #{optname}")
   end
@@ -336,7 +336,7 @@ module Crystal::System::Socket
     ret
   end
 
-  private def system_setsockopt(optname, optval, level = LibC::SOL_SOCKET)
+  protected def system_setsockopt(optname, optval, level = LibC::SOL_SOCKET)
     Socket.setsockopt(fd, optname, optval, level)
   end
 
