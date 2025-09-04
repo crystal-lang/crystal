@@ -77,6 +77,8 @@ struct Crystal::FdLock
       Fiber.suspend unless (m & MASK) == REF
     end
 
+    @closing = nil
+
     true
   end
 
