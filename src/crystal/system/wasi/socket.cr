@@ -8,11 +8,7 @@ module Crystal::System::Socket
 
   alias Handle = Int32
 
-  private def create_handle(family, type, protocol, blocking) : Handle
-    raise NotImplementedError.new "Crystal::System::Socket#create_handle"
-  end
-
-  private def initialize_handle(fd)
+  private def initialize_handle(fd, blocking = nil)
   end
 
   # Tries to bind the socket to a local address.
@@ -106,17 +102,25 @@ module Crystal::System::Socket
   end
 
   private def system_blocking?
-    fcntl(LibC::F_GETFL) & LibC::O_NONBLOCK == 0
+    Socket.get_blocking(fd)
   end
 
   private def system_blocking=(value)
-    flags = fcntl(LibC::F_GETFL)
+    Socket.set_blocking(fd, value)
+  end
+
+  def self.get_blocking(fd : Handle)
+    fcntl(fd, LibC::F_GETFL) & LibC::O_NONBLOCK == 0
+  end
+
+  def self.set_blocking(fd : Handle, value : Bool)
+    flags = fcntl(fd, LibC::F_GETFL)
     if value
       flags &= ~LibC::O_NONBLOCK
     else
       flags |= LibC::O_NONBLOCK
     end
-    fcntl(LibC::F_SETFL, flags)
+    fcntl(fd, LibC::F_SETFL, flags)
   end
 
   private def system_close_on_exec?
@@ -133,10 +137,6 @@ module Crystal::System::Socket
     r = LibC.fcntl fd, cmd, arg
     raise ::Socket::Error.from_errno("fcntl() failed") if r == -1
     r
-  end
-
-  def self.socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol) : {Handle, Handle}
-    raise NotImplementedError.new("Crystal::System::Socket.socketpair")
   end
 
   private def system_tty?

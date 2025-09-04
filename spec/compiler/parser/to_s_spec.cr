@@ -63,6 +63,8 @@ describe "ASTNode#to_s" do
   expect_to_s %({{ foo }})
   expect_to_s %({% if foo %}\n  foo_then\n{% end %})
   expect_to_s %({% if foo %}\n  foo_then\n{% else %}\n  foo_else\n{% end %})
+  expect_to_s %({% unless foo %}\n  foo_then\n{% end %})
+  expect_to_s %({% unless foo %}\n  foo_then\n{% else %}\n  foo_else\n{% end %})
   expect_to_s %({% for foo in bar %}\n  {{ foo }}\n{% end %})
   expect_to_s %(macro foo\n  {% for foo in bar %}\n    {{ foo }}\n  {% end %}\nend)
   expect_to_s %[1.as(Int32)]
@@ -110,14 +112,14 @@ describe "ASTNode#to_s" do
   expect_to_s "def foo(@[Foo] x, @[Bar] **args, @[Baz] &block)\nend"
   expect_to_s "{% [1, 2, 3].each { |v| pp(v) } %}", "{% [1, 2, 3].each do |v| pp(v) end %}"
   expect_to_s "{%\n  [1, 2, 3].each { |v| pp(v) }\n%}", "{%\n  [1, 2, 3].each do |v| pp(v) end\n%}"
-  expect_to_s "{% [1, 2, 3].find(&.!.even?) %}", "{% [1, 2, 3].find() do |__arg0| !__arg0.even? end %}"
-  expect_to_s <<-'CR'
+  expect_to_s "{% [1, 2, 3].find(&.even?.!) %}", "{% [1, 2, 3].find() do |__arg0| !__arg0.even? end %}"
+  expect_to_s <<-'CRYSTAL'
     {%
       [1, 2, 3].find do |e|
         e.even?
       end
     %}
-    CR
+    CRYSTAL
 
   # 14216
   expect_to_s "def foo(x, **args, &block : _ -> _)\nend"
@@ -161,6 +163,10 @@ describe "ASTNode#to_s" do
   expect_to_s "!a"
   expect_to_s "!(1 < 2)"
   expect_to_s "!a.b && true"
+  expect_to_s "x.!.foo", "(!x).foo"
+  expect_to_s "x.!.!.foo", "(!(!x)).foo"
+  expect_to_s "x.foo.!", "!x.foo"
+  expect_to_s "x.foo.!.!", "!!x.foo"
   expect_to_s "(1 + 2)..3"
   expect_to_s "macro foo\n{{ @type }}\nend"
   expect_to_s "macro foo\n\\{{ @type }}\nend"
@@ -225,6 +231,97 @@ describe "ASTNode#to_s" do
   expect_to_s %(begin\n  (@x = x).is_a?(Foo)\nend)
   expect_to_s %(begin\n  (1)\n  2\nend)
   expect_to_s %(if 1\n  begin\n    2\n  end\nelse\n  begin\n    3\n  end\nend)
+
+  expect_to_s <<-CRYSTAL
+    if 1
+      2
+    elsif 3
+      4
+    elsif 5
+    elsif 6
+    else
+      7
+    end
+    CRYSTAL
+
+  expect_to_s <<-CRYSTAL, <<-CRYSTAL
+    if 1
+      2
+    else
+      if 3
+      end
+    end
+    CRYSTAL
+    if 1
+      2
+    elsif 3
+    end
+    CRYSTAL
+
+  expect_to_s <<-CRYSTAL
+    if 1
+      2
+    else
+      unless 3
+      end
+    end
+    CRYSTAL
+
+  expect_to_s <<-CRYSTAL
+    if 1
+      2
+    else
+      3 ? 4 : 5
+    end
+    CRYSTAL
+
+  expect_to_s <<-CRYSTAL
+    unless 1
+      2
+    else
+      if 3
+      end
+    end
+    CRYSTAL
+
+  expect_to_s <<-'CRYSTAL'
+    {% if 1 %}
+      2
+    {% elsif 3 %}
+      4
+    {% elsif 5 %}
+    {% elsif 6 %}
+    {% else %}
+      7
+    {% end %}
+    CRYSTAL
+
+  expect_to_s <<-'CRYSTAL', <<-'CRYSTAL'
+    {% if 1 %}
+      2
+    {% else %}{% if 3 %}
+    {% end %}{% end %}
+    CRYSTAL
+    {% if 1 %}
+      2
+    {% elsif 3 %}
+    {% end %}
+    CRYSTAL
+
+  expect_to_s <<-'CRYSTAL'
+    {% if 1 %}
+      2
+    {% else %}{% unless 3 %}
+    {% end %}{% end %}
+    CRYSTAL
+
+  expect_to_s <<-'CRYSTAL'
+    {% unless 1 %}
+      2
+    {% else %}{% if 3 %}
+    {% end %}{% end %}
+    CRYSTAL
+
   expect_to_s %(foo do\n  begin\n    bar\n  end\nend)
   expect_to_s %q("\e\0\""), %q("\e\u0000\"")
   expect_to_s %q("#{1}\0"), %q("#{1}\u0000")
@@ -256,28 +353,28 @@ describe "ASTNode#to_s" do
   expect_to_s "1.+(&block)"
   expect_to_s "1.//(2, a: 3)"
   expect_to_s "1.//(2, &block)"
-  expect_to_s <<-'CR'
+  expect_to_s <<-'CRYSTAL'
     {% verbatim do %}
       1{{ 2 }}
       3{{ 4 }}
     {% end %}
-    CR
+    CRYSTAL
 
-  expect_to_s <<-'CR', <<-'CR'
+  expect_to_s <<-'CRYSTAL', <<-'CRYSTAL'
     {% for foo in bar %}
       {{ if true
            foo
            bar
          end }}
     {% end %}
-    CR
+    CRYSTAL
     {% for foo in bar %}
       {{ if true
       foo
       bar
     end }}
     {% end %}
-    CR
+    CRYSTAL
 
   expect_to_s "{% a = 1 %}"
   expect_to_s "{{ a = 1 }}"
@@ -287,7 +384,26 @@ describe "ASTNode#to_s" do
   expect_to_s "{%\n  a = 1 %}"
   expect_to_s "{% a = 1\n%}"
 
-  expect_to_s <<-'CR', <<-'CR'
+  expect_to_s <<-'CRYSTAL'
+    {%
+      if 1
+        2
+      end
+      3
+    %}
+    CRYSTAL
+
+  expect_to_s <<-'CRYSTAL'
+    {%
+      if 1
+        2
+      end
+      3
+      4
+    %}
+    CRYSTAL
+
+  expect_to_s <<-'CRYSTAL', <<-'CRYSTAL'
     macro finished
       {% verbatim do %}
         {%
@@ -299,7 +415,7 @@ describe "ASTNode#to_s" do
         %}
       {% end %}
     end
-    CR
+    CRYSTAL
     macro finished
       {% verbatim do %}
         {%
@@ -311,9 +427,9 @@ describe "ASTNode#to_s" do
         %}
       {% end %}
     end
-    CR
+    CRYSTAL
 
-  expect_to_s <<-'CR', <<-'CR'
+  expect_to_s <<-'CRYSTAL', <<-'CRYSTAL'
     macro finished
       {% verbatim do %}
         {%
@@ -324,7 +440,7 @@ describe "ASTNode#to_s" do
         %}
       {% end %}
     end
-    CR
+    CRYSTAL
     macro finished
       {% verbatim do %}
         {%
@@ -335,9 +451,9 @@ describe "ASTNode#to_s" do
         %}
       {% end %}
     end
-    CR
+    CRYSTAL
 
-  expect_to_s <<-'CR', <<-'CR'
+  expect_to_s <<-'CRYSTAL', <<-'CRYSTAL'
     macro finished
       {% verbatim do %}
         {%
@@ -358,7 +474,7 @@ describe "ASTNode#to_s" do
         %}
       {% end %}
     end
-    CR
+    CRYSTAL
     macro finished
       {% verbatim do %}
         {%
@@ -379,9 +495,9 @@ describe "ASTNode#to_s" do
         %}
       {% end %}
     end
-    CR
+    CRYSTAL
 
-  expect_to_s <<-'CR'
+  expect_to_s <<-'CRYSTAL'
     macro finished
       {% verbatim do %}
         {%
@@ -390,9 +506,9 @@ describe "ASTNode#to_s" do
         %}
       {% end %}
     end
-    CR
+    CRYSTAL
 
-  expect_to_s <<-'CR'
+  expect_to_s <<-'CRYSTAL'
     macro finished
       {% verbatim do %}
         {%
@@ -400,9 +516,9 @@ describe "ASTNode#to_s" do
         %}
       {% end %}
     end
-    CR
+    CRYSTAL
 
-  expect_to_s <<-'CR'
+  expect_to_s <<-'CRYSTAL'
     macro finished
       {% verbatim do %}
         {%
@@ -410,9 +526,9 @@ describe "ASTNode#to_s" do
           a = 1 %}
       {% end %}
     end
-    CR
+    CRYSTAL
 
-  expect_to_s <<-'CR'
+  expect_to_s <<-'CRYSTAL'
     macro finished
       {% verbatim do %}
         {%
@@ -422,9 +538,9 @@ describe "ASTNode#to_s" do
           b = 2 %}
       {% end %}
     end
-    CR
+    CRYSTAL
 
-  expect_to_s <<-'CR', <<-'CR'
+  expect_to_s <<-'CRYSTAL', <<-'CRYSTAL'
     macro finished
       {% verbatim do %}
         {% a = 1
@@ -433,7 +549,7 @@ describe "ASTNode#to_s" do
         %}
       {% end %}
     end
-    CR
+    CRYSTAL
     macro finished
       {% verbatim do %}
         {%     a = 1
@@ -442,7 +558,69 @@ describe "ASTNode#to_s" do
         %}
       {% end %}
     end
-    CR
+    CRYSTAL
+
+  expect_to_s <<-CRYSTAL
+    {%
+      a = 1
+
+      if true
+        b = 2
+        c = 3
+      end
+
+      d = 4
+    %}
+    CRYSTAL
+
+  expect_to_s <<-CRYSTAL
+    {%
+      arr.each do |c|
+        c.each do
+          to_process << 1
+          to_process << 2
+        end
+      end
+
+      to_process.each do
+        b = 2
+        a = 1
+      end
+    %}
+    CRYSTAL
+
+  expect_to_s <<-CRYSTAL
+    {%
+      a = 1
+
+      unless false
+        b = 2
+        c = 3
+      end
+
+      d = 4
+    %}
+    CRYSTAL
+
+  expect_to_s <<-CRYSTAL
+    {%
+      arr.each do
+        b = 2
+        a = 1
+      end
+
+      c = 3
+    %}
+    CRYSTAL
+
+  expect_to_s <<-CRYSTAL
+    {%
+      arr.each do
+        b = 2
+        a = 1
+      end
+    %}
+    CRYSTAL
 
   expect_to_s %(asm("nop" ::::))
   expect_to_s %(asm("nop" : "a"(1), "b"(2) : "c"(3), "d"(4) : "e", "f" : "volatile", "alignstack", "intel"))
@@ -469,17 +647,17 @@ describe "ASTNode#to_s" do
   expect_to_s "->::Foo::Bar.foo"
   expect_to_s "yield(1)"
   expect_to_s "foo { |(x, y)| x }", "foo do |(x, y)| x end"
-  expect_to_s "foo do |(x, y)|\n  x\nend", <<-CODE
+  expect_to_s "foo do |(x, y)|\n  x\nend", <<-CRYSTAL
     foo do |(x, y)|
       x
     end
-    CODE
+    CRYSTAL
   expect_to_s "foo { |(x, (y, z))| x }", "foo do |(x, (y, z))| x end"
-  expect_to_s "foo do |(x, (y, z))|\n  x\nend", <<-CODE
+  expect_to_s "foo do |(x, (y, z))|\n  x\nend", <<-CRYSTAL
     foo do |(x, (y, z))|
       x
     end
-    CODE
+    CRYSTAL
   expect_to_s "def foo\n  yield\nend", "def foo(&)\n  yield\nend"
   expect_to_s "def foo(x)\n  yield\nend", "def foo(x, &)\n  yield\nend"
   expect_to_s "def foo(**x)\n  yield\nend", "def foo(**x, &)\n  yield\nend"
@@ -504,7 +682,7 @@ describe "ASTNode#to_s" do
     CRYSTAL
 
   expect_to_s %({% {id: 10} %})
-  expect_to_s <<-'CR'
+  expect_to_s <<-'CRYSTAL'
     {%
       data = {__nil: nil}
       data["foo"] = {
@@ -514,9 +692,9 @@ describe "ASTNode#to_s" do
         pie: 3.14,
       }
     %}
-    CR
+    CRYSTAL
 
-  expect_to_s <<-'CR'
+  expect_to_s <<-'CRYSTAL'
     {%
       data = {__nil: nil}
       data["foo"] = {
@@ -525,9 +703,9 @@ describe "ASTNode#to_s" do
         pie: 3.14,
       }
     %}
-    CR
+    CRYSTAL
 
-  expect_to_s <<-'CR'
+  expect_to_s <<-'CRYSTAL'
     {%
       data = {__nil: nil}
       data["foo"] = {
@@ -536,9 +714,9 @@ describe "ASTNode#to_s" do
         pie: 3.14, biz: "baz", blah: false,
       }
     %}
-    CR
+    CRYSTAL
 
-  expect_to_s <<-'CR'
+  expect_to_s <<-'CRYSTAL'
     {%
       {
         id: 1,
@@ -548,9 +726,9 @@ describe "ASTNode#to_s" do
         pie: 3.14,
       }
     %}
-    CR
+    CRYSTAL
 
-  expect_to_s <<-'CR', <<-'CR'
+  expect_to_s <<-'CRYSTAL', <<-'CRYSTAL'
     {%
       {
         id: 1,
@@ -559,7 +737,7 @@ describe "ASTNode#to_s" do
         pie: 3.14,
       }
     %}
-    CR
+    CRYSTAL
     {%
       {
         id: 1,
@@ -568,9 +746,9 @@ describe "ASTNode#to_s" do
         pie: 3.14,
       }
     %}
-    CR
+    CRYSTAL
 
-  expect_to_s <<-'CR', <<-'CR'
+  expect_to_s <<-'CRYSTAL', <<-'CRYSTAL'
     macro finished
       {% verbatim do %}
         {%
@@ -583,7 +761,7 @@ describe "ASTNode#to_s" do
         %}
       {% end %}
     end
-    CR
+    CRYSTAL
     macro finished
       {% verbatim do %}
         {%
@@ -596,35 +774,35 @@ describe "ASTNode#to_s" do
         %}
       {% end %}
     end
-    CR
+    CRYSTAL
 
-  expect_to_s <<-'CR'
+  expect_to_s <<-'CRYSTAL'
     {%
       {
         id: 1,
         blah: false,
         pie: 3.14}
     %}
-    CR
+    CRYSTAL
 
-  expect_to_s <<-'CR'
+  expect_to_s <<-'CRYSTAL'
     {%
       {id: 1,
         blah: false,
         pie: 3.14}
     %}
-    CR
+    CRYSTAL
 
-  expect_to_s <<-'CR'
+  expect_to_s <<-'CRYSTAL'
     {%
       {id: 1,
         blah: false,
         pie: 3.14,
       }
     %}
-    CR
+    CRYSTAL
 
-  expect_to_s <<-'CR', <<-'CR'
+  expect_to_s <<-'CRYSTAL', <<-'CRYSTAL'
     {%
       ({"a" => "b"} of Nil => Nil).each do |k, v|
         # stuff and things
@@ -635,7 +813,7 @@ describe "ASTNode#to_s" do
         k + v
       end
     %}
-    CR
+    CRYSTAL
   {%
     ({"a" => "b"} of Nil => Nil).each do |k, v|
 
@@ -646,38 +824,38 @@ describe "ASTNode#to_s" do
       k + v
     end
   %}
-  CR
+  CRYSTAL
 
-  expect_to_s <<-'CR'
+  expect_to_s <<-'CRYSTAL'
     {%
       vals = "foo".strip.strip.strip
     %}
-    CR
+    CRYSTAL
 
-  expect_to_s <<-'CR'
+  expect_to_s <<-'CRYSTAL'
     {%
       vals = "foo".strip.strip
         .strip
     %}
-    CR
+    CRYSTAL
 
-  expect_to_s <<-'CR'
+  expect_to_s <<-'CRYSTAL'
     {%
       vals = "foo"
         .strip
         .strip.strip
     %}
-    CR
+    CRYSTAL
 
-  expect_to_s <<-'CR'
+  expect_to_s <<-'CRYSTAL'
     {%
       vals = [4, 1, 12]
         .sort_by do |v| v end
         .map do |v| v end
     %}
-    CR
+    CRYSTAL
 
-  expect_to_s <<-'CR'
+  expect_to_s <<-'CRYSTAL'
     {%
       vals = [4, 1, 12]
         .sort_by do |v| v end
@@ -686,5 +864,87 @@ describe "ASTNode#to_s" do
         .chars
         .map do |v| v end
     %}
-    CR
+    CRYSTAL
+
+  expect_to_s <<-'CRYSTAL'
+    {%
+      (
+        1
+      )
+    %}
+    CRYSTAL
+
+  expect_to_s <<-'CRYSTAL'
+    {%
+      (
+        1
+        2
+      )
+    %}
+    CRYSTAL
+
+  expect_to_s <<-'CRYSTAL'
+    {%
+      (
+        true ||
+        false
+      )
+    %}
+    CRYSTAL
+
+  expect_to_s <<-'CRYSTAL'
+    {%
+      (
+        true ||
+        false
+      ) && true
+    %}
+    CRYSTAL
+
+  expect_to_s <<-'CRYSTAL'
+    {%
+      true && (
+        true ||
+        false
+      )
+    %}
+    CRYSTAL
+
+  expect_to_s <<-'CRYSTAL', <<-'CRYSTAL'
+    {%
+      if (v = 5) &&
+        (
+          1 < v ||
+          (v < 4 && 5 < 6)
+        )
+        123
+      end
+    %}
+    CRYSTAL
+    {%
+      if (v = 5) &&
+      (
+        1 < v ||
+        (v < 4 && 5 < 6)
+      )
+        123
+      end
+    %}
+    CRYSTAL
+
+  expect_to_s <<-'CRYSTAL', <<-'CRYSTAL'
+    {%
+      if (true || false) &&
+        true
+        1
+      end
+    %}
+    CRYSTAL
+    {%
+      if (true || false) &&
+      true
+        1
+      end
+    %}
+    CRYSTAL
 end

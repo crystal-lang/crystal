@@ -8,48 +8,30 @@ require "crystal/system/thread_linked_list"
 struct Crystal::System::IOCP
   @@wait_completion_packet_methods : Bool? = nil
 
-  {% if flag?(:interpreted) %}
-    # We can't load the symbols from interpreted code since it would create
-    # interpreted Proc. We thus merely check for the existence of the symbols,
-    # then let the interpreter load the symbols, which will create interpreter
-    # Proc (not interpreted) that can be called.
-    class_getter?(wait_completion_packet_methods : Bool) do
-      detect_wait_completion_packet_methods
-    end
+  @@_NtCreateWaitCompletionPacket = uninitialized LibNTDLL::NtCreateWaitCompletionPacketProc
+  @@_NtAssociateWaitCompletionPacket = uninitialized LibNTDLL::NtAssociateWaitCompletionPacketProc
+  @@_NtCancelWaitCompletionPacket = uninitialized LibNTDLL::NtCancelWaitCompletionPacketProc
 
-    private def self.detect_wait_completion_packet_methods : Bool
-      if handle = LibC.LoadLibraryExW(Crystal::System.to_wstr("ntdll.dll"), nil, 0)
-        !LibC.GetProcAddress(handle, "NtCreateWaitCompletionPacket").null?
-      else
-        false
-      end
-    end
-  {% else %}
-    @@_NtCreateWaitCompletionPacket = uninitialized LibNTDLL::NtCreateWaitCompletionPacketProc
-    @@_NtAssociateWaitCompletionPacket = uninitialized LibNTDLL::NtAssociateWaitCompletionPacketProc
-    @@_NtCancelWaitCompletionPacket = uninitialized LibNTDLL::NtCancelWaitCompletionPacketProc
+  class_getter?(wait_completion_packet_methods : Bool) do
+    load_wait_completion_packet_methods
+  end
 
-    class_getter?(wait_completion_packet_methods : Bool) do
-      load_wait_completion_packet_methods
-    end
+  private def self.load_wait_completion_packet_methods : Bool
+    handle = LibC.LoadLibraryExW(Crystal::System.to_wstr("ntdll.dll"), nil, 0)
+    return false if handle.null?
 
-    private def self.load_wait_completion_packet_methods : Bool
-      handle = LibC.LoadLibraryExW(Crystal::System.to_wstr("ntdll.dll"), nil, 0)
-      return false if handle.null?
+    pointer = LibC.GetProcAddress(handle, "NtCreateWaitCompletionPacket")
+    return false if pointer.null?
+    @@_NtCreateWaitCompletionPacket = LibNTDLL::NtCreateWaitCompletionPacketProc.new(pointer, Pointer(Void).null)
 
-      pointer = LibC.GetProcAddress(handle, "NtCreateWaitCompletionPacket")
-      return false if pointer.null?
-      @@_NtCreateWaitCompletionPacket = LibNTDLL::NtCreateWaitCompletionPacketProc.new(pointer, Pointer(Void).null)
+    pointer = LibC.GetProcAddress(handle, "NtAssociateWaitCompletionPacket")
+    @@_NtAssociateWaitCompletionPacket = LibNTDLL::NtAssociateWaitCompletionPacketProc.new(pointer, Pointer(Void).null)
 
-      pointer = LibC.GetProcAddress(handle, "NtAssociateWaitCompletionPacket")
-      @@_NtAssociateWaitCompletionPacket = LibNTDLL::NtAssociateWaitCompletionPacketProc.new(pointer, Pointer(Void).null)
+    pointer = LibC.GetProcAddress(handle, "NtCancelWaitCompletionPacket")
+    @@_NtCancelWaitCompletionPacket = LibNTDLL::NtCancelWaitCompletionPacketProc.new(pointer, Pointer(Void).null)
 
-      pointer = LibC.GetProcAddress(handle, "NtCancelWaitCompletionPacket")
-      @@_NtCancelWaitCompletionPacket = LibNTDLL::NtCancelWaitCompletionPacketProc.new(pointer, Pointer(Void).null)
-
-      true
-    end
-  {% end %}
+    true
+  end
 
   # :nodoc:
   class CompletionKey
@@ -85,6 +67,21 @@ struct Crystal::System::IOCP
       in .stdin_read?, .interrupt?, .timer?
         true
       end
+    end
+
+    def inspect(io : IO) : Nil
+      to_s(io)
+    end
+
+    def to_s(io : IO) : Nil
+      io << "#<" << self.class.name << ":0x"
+      object_id.to_s(io, 16)
+      io << " @fiber="
+      @fiber.inspect io
+      io << ','
+      io << " @tag="
+      @tag.inspect io
+      io << '>'
     end
   end
 
@@ -161,39 +158,23 @@ struct Crystal::System::IOCP
   def create_wait_completion_packet : LibC::HANDLE
     packet_handle = LibC::HANDLE.null
     object_attributes = Pointer(LibC::OBJECT_ATTRIBUTES).null
-    status =
-      {% if flag?(:interpreted) %}
-        LibNTDLL.NtCreateWaitCompletionPacket(pointerof(packet_handle), LibNTDLL::GENERIC_ALL, object_attributes)
-      {% else %}
-        @@_NtCreateWaitCompletionPacket.call(pointerof(packet_handle), LibNTDLL::GENERIC_ALL, object_attributes)
-      {% end %}
+    status = @@_NtCreateWaitCompletionPacket.call(pointerof(packet_handle), LibNTDLL::GENERIC_ALL, object_attributes)
     raise RuntimeError.from_os_error("NtCreateWaitCompletionPacket", WinError.from_ntstatus(status)) unless status == 0
     packet_handle
   end
 
   def associate_wait_completion_packet(wait_handle : LibC::HANDLE, target_handle : LibC::HANDLE, completion_key : CompletionKey) : Bool
     signaled = 0_u8
-    status =
-      {% if flag?(:interpreted) %}
-        LibNTDLL.NtAssociateWaitCompletionPacket(wait_handle, @handle,
-          target_handle, completion_key.as(Void*), nil, 0, nil, pointerof(signaled))
-      {% else %}
-        @@_NtAssociateWaitCompletionPacket.call(wait_handle, @handle,
-          target_handle, completion_key.as(Void*), Pointer(Void).null,
-          LibNTDLL::NTSTATUS.new!(0), Pointer(LibC::ULONG).null,
-          pointerof(signaled))
-      {% end %}
+    status = @@_NtAssociateWaitCompletionPacket.call(wait_handle, @handle,
+      target_handle, completion_key.as(Void*), Pointer(Void).null,
+      LibNTDLL::NTSTATUS.new!(0), Pointer(LibC::ULONG).null,
+      pointerof(signaled))
     raise RuntimeError.from_os_error("NtAssociateWaitCompletionPacket", WinError.from_ntstatus(status)) unless status == 0
     signaled == 1
   end
 
   def cancel_wait_completion_packet(wait_handle : LibC::HANDLE, remove_signaled : Bool) : LibNTDLL::NTSTATUS
-    status =
-      {% if flag?(:interpreted) %}
-        LibNTDLL.NtCancelWaitCompletionPacket(wait_handle, remove_signaled ? 1 : 0)
-      {% else %}
-        @@_NtCancelWaitCompletionPacket.call(wait_handle, remove_signaled ? 1_u8 : 0_u8)
-      {% end %}
+    status = @@_NtCancelWaitCompletionPacket.call(wait_handle, remove_signaled ? 1_u8 : 0_u8)
     case status
     when LibC::STATUS_CANCELLED, LibC::STATUS_SUCCESS, LibC::STATUS_PENDING
       status

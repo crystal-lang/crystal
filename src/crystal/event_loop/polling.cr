@@ -49,13 +49,21 @@ end
 #
 # When the IO operation is ready, the fiber will eventually be resumed (one
 # fiber at a time). If it's an IO operation, the operation is tried again which
-# may block again, until the operation succeeds or an error occured (e.g.
+# may block again, until the operation succeeds or an error occurred (e.g.
 # closed, broken pipe).
 #
 # If the IO operation has a timeout, the event is also registered into `@timers`
 # before suspending the fiber, then after resume it will raise
 # `IO::TimeoutError` if the event timed out, and continue otherwise.
 abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
+  def self.default_file_blocking?
+    false
+  end
+
+  def self.default_socket_blocking?
+    false
+  end
+
   # The generational arena:
   #
   # 1. decorrelates the fd from the IO since the evloop only really cares about
@@ -137,6 +145,15 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     event = Event.new(:sleep, Fiber.current, timeout: duration)
     add_timer(pointerof(event))
     Fiber.suspend
+
+    # safety check
+    return if event.timed_out?
+
+    # try to avoid a double resume if possible, but another thread might be
+    # running the evloop and dequeue the event in parallel, so a "can't resume
+    # dead fiber" can still happen in a MT execution context.
+    delete_timer(pointerof(event))
+    raise "BUG: #{event.fiber} called sleep but was manually resumed before the timer expired!"
   end
 
   def create_timeout_event(fiber : Fiber) : FiberEvent
@@ -144,6 +161,32 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
   end
 
   # file descriptor interface, see Crystal::EventLoop::FileDescriptor
+
+  def pipe(read_blocking : Bool?, write_blocking : Bool?) : {IO::FileDescriptor, IO::FileDescriptor}
+    r, w = System::FileDescriptor.system_pipe
+    System::FileDescriptor.set_blocking(r, false) unless read_blocking
+    System::FileDescriptor.set_blocking(w, false) unless write_blocking
+    {
+      IO::FileDescriptor.new(handle: r),
+      IO::FileDescriptor.new(handle: w),
+    }
+  end
+
+  def open(path : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : {System::FileDescriptor::Handle, Bool} | Errno
+    path.check_no_null_byte
+
+    fd = LibC.open(path, flags | LibC::O_CLOEXEC, permissions)
+    return Errno.value if fd == -1
+
+    {% if flag?(:darwin) %}
+      # FIXME: poll of non-blocking fifo fd on darwin appears to be broken, so
+      # we default to blocking for the time being
+      blocking = true if blocking.nil?
+    {% end %}
+
+    System::FileDescriptor.set_blocking(fd, false) unless blocking
+    {fd, !!blocking}
+  end
 
   def read(file_descriptor : System::FileDescriptor, slice : Bytes) : Int32
     size = evented_read(file_descriptor, slice, file_descriptor.@read_timeout)
@@ -202,6 +245,16 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
 
   # socket interface, see Crystal::EventLoop::Socket
 
+  def socket(family : ::Socket::Family, type : ::Socket::Type, protocol : ::Socket::Protocol, blocking : Bool?) : {::Socket::Handle, Bool}
+    socket = System::Socket.socket(family, type, protocol, !!blocking)
+    {socket, !!blocking}
+  end
+
+  def socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol) : Tuple({::Socket::Handle, ::Socket::Handle}, Bool)
+    socket = System::Socket.socketpair(type, protocol, blocking: false)
+    {socket, false}
+  end
+
   def read(socket : ::Socket, slice : Bytes) : Int32
     size = evented_read(socket, slice, socket.@read_timeout)
     raise IO::Error.from_errno("read", target: socket) if size == -1
@@ -226,11 +279,11 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     end
   end
 
-  def accept(socket : ::Socket) : ::Socket::Handle?
+  def accept(socket : ::Socket) : {::Socket::Handle, Bool}?
     loop do
       client_fd =
         {% if LibC.has_method?(:accept4) %}
-          LibC.accept4(socket.fd, nil, nil, LibC::SOCK_CLOEXEC)
+          LibC.accept4(socket.fd, nil, nil, LibC::SOCK_CLOEXEC | LibC::SOCK_NONBLOCK)
         {% else %}
           # we may fail to set FD_CLOEXEC between `accept` and `fcntl` but we
           # can't call `Crystal::System::Socket.lock_read` because the socket
@@ -241,11 +294,14 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
           # could change the socket back to blocking mode between the condition
           # check and the `accept` call.
           LibC.accept(socket.fd, nil, nil).tap do |fd|
-            System::Socket.fcntl(fd, LibC::F_SETFD, LibC::FD_CLOEXEC) unless fd == -1
+            unless fd == -1
+              System::Socket.fcntl(fd, LibC::F_SETFD, LibC::FD_CLOEXEC)
+              System::Socket.fcntl(fd, LibC::F_SETFL, System::Socket.fcntl(fd, LibC::F_GETFL) | LibC::O_NONBLOCK)
+            end
           end
         {% end %}
 
-      return client_fd unless client_fd == -1
+      return {client_fd, false} unless client_fd == -1
       return if socket.closed?
 
       if Errno.value == Errno::EAGAIN
@@ -551,7 +607,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
       return unless select_action.time_expired?
       fiber.@timeout_event.as(FiberEvent).clear
     when .sleep?
-      # nothing to do
+      event.value.timed_out!
     else
       raise RuntimeError.new("BUG: unexpected event in timers: #{event.value}%s\n")
     end
@@ -576,7 +632,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
 
   # Remove *fd* from the polling system. Must raise a `RuntimeError` on error.
   #
-  # If *closing* is true, then it preceeds a call to `close(2)`. Some
+  # If *closing* is true, then it precedes a call to `close(2)`. Some
   # implementations may take advantage of close doing the book keeping.
   #
   # If *closing* is false then the fd must be deleted from the polling system.

@@ -182,6 +182,11 @@ def assert_warning(code, message, *, file = __FILE__, line = __LINE__)
   warning_failures[0].should contain(message), file: file, line: line
 end
 
+def assert_no_warning(code, *, file = __FILE__, line = __LINE__)
+  warning_failures = warnings_result(code)
+  warning_failures.should be_empty, file: file, line: line
+end
+
 def assert_macro(macro_body, expected, args = nil, *, expected_pragmas = nil, flags = nil, file = __FILE__, line = __LINE__)
   assert_macro(macro_body, expected, expected_pragmas: expected_pragmas, flags: flags, file: file, line: line) { args }
 end
@@ -338,11 +343,11 @@ end
 
 def test_c(c_code, crystal_code, *, file = __FILE__, &)
   with_temp_c_object_file(c_code, file: file) do |o_filename|
-    yield run(%(
-    require "prelude"
+    yield run(<<-CRYSTAL)
+      require "prelude"
 
-    @[Link(ldflags: #{o_filename.inspect})]
-    #{crystal_code}
-    ))
+      @[Link(ldflags: #{o_filename.inspect})]
+      #{crystal_code}
+      CRYSTAL
   end
 end

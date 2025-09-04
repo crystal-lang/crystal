@@ -492,7 +492,7 @@ class Crystal::Call
   end
 
   def tuple_indexer_helper(args, arg_types, owner, instance_type, nilable, &)
-    index = tuple_indexer_helper_index(args.first, owner, instance_type, nilable)
+    index = tuple_indexer_helper_index(owner, instance_type, nilable)
     return unless index
 
     indexer_def = yield instance_type, index
@@ -500,7 +500,7 @@ class Crystal::Call
     Matches.new([indexer_match] of Match, true)
   end
 
-  private def tuple_indexer_helper_index(arg, owner, instance_type, nilable)
+  private def tuple_indexer_helper_index(owner, instance_type, nilable)
     arg = args.first
 
     # Make it work with constants too
@@ -1115,7 +1115,7 @@ class Crystal::Call
     # This will insert this node into the trace as the new first frame.
     self.raise ex.message, ex, exception_type: Crystal::MacroRaiseException
   rescue ex : Crystal::CodeError
-    if (obj = @obj) && name == "initialize"
+    if @obj && name == "initialize"
       # Avoid putting 'initialize' in the error trace
       # because it's most likely that this is happening
       # inside a generated 'new' method

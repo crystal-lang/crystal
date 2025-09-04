@@ -10,7 +10,7 @@ describe "Semantic: static array" do
   end
 
   it "types static array with type as size" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { static_array_of(char, 1) }
       class Foo(N)
         def self.foo
           x = uninitialized Char[N]
@@ -19,18 +19,22 @@ describe "Semantic: static array" do
       end
 
       Foo(1).foo
-      ") { static_array_of(char, 1) }
+      CRYSTAL
   end
 
   it "errors if trying to instantiate static array with N not an integer" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't instantiate StaticArray(T, N) with N = Int32 (N must be an integer)"
       x = uninitialized Char[Int32]
-      ),
-      "can't instantiate StaticArray(T, N) with N = Int32 (N must be an integer)"
+      CRYSTAL
+
+    assert_error <<-CRYSTAL,
+      StaticArray(UInt8, 1.2)
+      CRYSTAL
+      "can't instantiate StaticArray(T, N) with N = 1.2 (N must be an integer)"
   end
 
   it "allows instantiating static array instance var in initialize of generic type" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { static_array_of(char, 1) }
       class Foo(N)
         def initialize
           @x = uninitialized Char[N]
@@ -42,26 +46,25 @@ describe "Semantic: static array" do
       end
 
       Foo(1).new.x
-      ") { static_array_of(char, 1) }
+      CRYSTAL
   end
 
   it "errors on negative static array size" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't instantiate StaticArray(T, N) with N = -1 (N must be positive)"
       x = uninitialized Int32[-1]
-      ),
-      "can't instantiate StaticArray(T, N) with N = -1 (N must be positive)"
+      CRYSTAL
   end
 
   it "types static array new with size being a constant" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { static_array_of(char, 3) }
       SIZE = 3
       x = StaticArray(Char, SIZE).new
       x
-      )) { static_array_of(char, 3) }
+      CRYSTAL
   end
 
   it "types static array new with size being a nested constant inside type declaration (#5426)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { static_array_of(char, 3) }
       module Moo
         SIZE = 3
       end
@@ -78,11 +81,11 @@ describe "Semantic: static array" do
       end
 
       Foo.new(StaticArray(Char, Moo::SIZE).new).x
-      )) { static_array_of(char, 3) }
+      CRYSTAL
   end
 
   it "types static array new with size being a computed constant" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { static_array_of(char, 100) }
       struct Int
         def //(other : Int)
           0
@@ -93,11 +96,11 @@ describe "Semantic: static array" do
       SIZE = OTHER * 20 // 2
       x = StaticArray(Char, SIZE).new
       x
-      ), inject_primitives: true) { static_array_of(char, 100) }
+      CRYSTAL
   end
 
   it "types static array new with size being a computed constant, and use N (bug)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       struct StaticArray(T, N)
         def size
           N
@@ -108,75 +111,70 @@ describe "Semantic: static array" do
       x = uninitialized UInt8[SIZE]
       x.size
       a = 1
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "doesn't crash on restriction (#584)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't instantiate StaticArray(T, N) with N = Int32 (N must be an integer)"
       def foo(&block : Int32[Int32] -> Int32)
         block.call([0])
       end
 
       foo { |x| 0 }
-      ),
-      "can't instantiate StaticArray(T, N) with N = Int32 (N must be an integer)"
+      CRYSTAL
   end
 
   it "can match N type argument of static array (#1203)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       def fn(a : StaticArray(T, N)) forall T, N
         N
       end
 
       n = uninitialized StaticArray(Int32, 10)
       fn(n)
-      )) { int32 }
+      CRYSTAL
   end
 
   it "can match number type argument of static array (#1203)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       def fn(a : StaticArray(T, 10)) forall T
         10
       end
 
       n = uninitialized StaticArray(Int32, 10)
       fn(n)
-      )) { int32 }
+      CRYSTAL
   end
 
   it "doesn't match other number type argument of static array (#1203)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #1 to 'fn' to be StaticArray(Int32, 11), not StaticArray(Int32, 10)"
       def fn(a : StaticArray(T, 11)) forall T
         10
       end
 
       n = uninitialized StaticArray(Int32, 10)
       fn(n)
-      ),
-      "expected argument #1 to 'fn' to be StaticArray(Int32, 11), not StaticArray(Int32, 10)"
+      CRYSTAL
   end
 
   it "doesn't crash on sizeof (#8858)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use sizeof(Int32) as a generic type argument"
       alias BadArray = Int32[sizeof(Int32)]
-    ),
-      "can't use sizeof(Int32) as a generic type argument"
+      CRYSTAL
   end
 
   it "doesn't crash on instance_sizeof (#8858)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use instance_sizeof(String) as a generic type argument"
       alias BadArray = Int32[instance_sizeof(String)]
-    ),
-      "can't use instance_sizeof(String) as a generic type argument"
+      CRYSTAL
   end
 
   it "doesn't crash on offsetof (#8858)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use offsetof(Foo, @foo) as a generic type argument"
       class Foo
         @foo : Int32 = 0
       end
       alias BadArray = Int32[offsetof(Foo, @foo)]
-    ),
-      "can't use offsetof(Foo, @foo) as a generic type argument"
+      CRYSTAL
   end
 end

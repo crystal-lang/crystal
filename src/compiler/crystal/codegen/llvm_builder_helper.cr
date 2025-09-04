@@ -217,7 +217,7 @@ module Crystal
     end
 
     def cast_to_pointer(value : LLVM::ValueMethods, type : Type)
-      pointer_cast value, llvm_type(type).pointer
+      pointer_cast value, llvm_type(@program.pointer_of(type))
     end
 
     def cast_to_void_pointer(pointer : LLVM::ValueMethods)

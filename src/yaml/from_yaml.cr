@@ -331,6 +331,14 @@ def Time.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   parse_scalar(ctx, node, Time)
 end
 
+def Time::Location.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+  unless node.is_a?(YAML::Nodes::Scalar)
+    node.raise "Expected scalar, not #{node.kind}"
+  end
+
+  load(node.value)
+end
+
 struct Time::Format
   def from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : Time
     unless node.is_a?(YAML::Nodes::Scalar)

@@ -4246,7 +4246,6 @@ module Crystal
 
     def visit(node : ProcLiteral)
       write_token :OP_MINUS_GT
-      whitespace_after_op_minus_gt = @token.type.space?
       skip_space_or_newline
 
       a_def = node.def
@@ -5111,7 +5110,7 @@ module Crystal
         next if doc_comment.start_line > doc_comment.end_line
 
         first_line = lines[doc_comment.start_line]
-        sharp_index = first_line.index('#').not_nil!
+        sharp_index = first_line.index!('#')
 
         comment = String.build do |str|
           (doc_comment.start_line..doc_comment.end_line).each do |i|

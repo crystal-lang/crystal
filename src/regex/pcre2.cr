@@ -219,7 +219,7 @@ module Regex::PCRE2
   end
 
   private def matches_impl(str, byte_index, options)
-    if match_data = match_data(str, byte_index, options)
+    if match_data(str, byte_index, options)
       true
     else
       false

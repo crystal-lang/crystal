@@ -202,7 +202,7 @@ describe Fiber::ExecutionContext::Runnables do
           slept = 0
 
           execute = ->(fiber : Fiber) {
-            fc = fibers.find { |x| x.@fiber == fiber }.not_nil!
+            fc = fibers.find! { |x| x.@fiber == fiber }
             runnables.push(fiber) if fc.increment < increments
           }
 

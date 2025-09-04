@@ -1,9 +1,10 @@
 require "c/ntdef"
 require "c/winnt"
+require "c/ntstatus"
 
 @[Link("ntdll")]
 lib LibNTDLL
-  alias NTSTATUS = LibC::ULONG
+  alias NTSTATUS = LibC::NTSTATUS
   alias ACCESS_MASK = LibC::DWORD
 
   GENERIC_ALL = 0x10000000_u32

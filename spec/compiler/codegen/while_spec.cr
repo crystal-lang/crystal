@@ -22,7 +22,7 @@ describe "Codegen: while" do
   end
 
   it "break with value" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(4)
       struct Nil; def to_i!; 0; end; end
 
       a = 0
@@ -31,11 +31,11 @@ describe "Codegen: while" do
         break a &+ 3
       end
       b.to_i!
-      )).to_i.should eq(4)
+      CRYSTAL
   end
 
   it "conditional break with value" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(9)
       struct Nil; def to_i!; 0; end; end
 
       a = 0
@@ -44,36 +44,36 @@ describe "Codegen: while" do
         break a &+ 3 if a > 5
       end
       b.to_i!
-      )).to_i.should eq(9)
+      CRYSTAL
   end
 
   it "break with value, condition fails" do
-    run(%(
+    run(<<-CRYSTAL).to_b.should be_true
       a = while 1 == 2
         break 1
       end
       a.nil?
-      )).to_b.should be_true
+      CRYSTAL
   end
 
   it "endless break with value" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(4)
       a = 0
       while true
         a &+= 1
         break a &+ 3
       end
-      )).to_i.should eq(4)
+      CRYSTAL
   end
 
   it "endless conditional break with value" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(9)
       a = 0
       while true
         a &+= 1
         break a &+ 3 if a > 5
       end
-      )).to_i.should eq(9)
+      CRYSTAL
   end
 
   it "codegens endless while" do
@@ -81,18 +81,18 @@ describe "Codegen: while" do
   end
 
   it "codegens while with declared var 1" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(0)
       struct Nil; def to_i!; 0; end; end
 
       while 1 == 2
         a = 2
       end
       a.to_i!
-      ").to_i.should eq(0)
+      CRYSTAL
   end
 
   it "codegens while with declared var 2" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(3)
       struct Nil; def to_i!; 0; end; end
 
       while 1 == 1
@@ -103,11 +103,11 @@ describe "Codegen: while" do
         end
       end
       a.to_i!
-      ").to_i.should eq(3)
+      CRYSTAL
   end
 
   it "codegens while with declared var 3" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       struct Nil; def to_i!; 0; end; end
 
       while 1 == 1
@@ -119,11 +119,11 @@ describe "Codegen: while" do
         end
       end
       a.to_i!
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "skip block with next" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(25)
       i = 0
       x = 0
 
@@ -133,11 +133,11 @@ describe "Codegen: while" do
         x &+= i
       end
       x
-    ").to_i.should eq(25)
+      CRYSTAL
   end
 
   it "doesn't crash on a = NoReturn" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       lib LibFoo
         fun foo : NoReturn
       end
@@ -145,11 +145,11 @@ describe "Codegen: while" do
       while a = LibFoo.foo
         a
       end
-      ))
+      CRYSTAL
   end
 
   it "doesn't crash on #2767" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(10)
       lib LibC
         fun exit(Int32) : NoReturn
       end
@@ -162,11 +162,11 @@ describe "Codegen: while" do
       end
       x
       10
-      )).to_i.should eq(10)
+      CRYSTAL
   end
 
   it "doesn't crash on #2767 (2)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(10)
       lib LibC
         fun exit(Int32) : NoReturn
       end
@@ -177,11 +177,11 @@ describe "Codegen: while" do
       end
       x
       10
-      )).to_i.should eq(10)
+      CRYSTAL
   end
 
   it "doesn't crash on #2767 (3)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(10)
       lib LibC
         fun exit(Int32) : NoReturn
       end
@@ -198,11 +198,11 @@ describe "Codegen: while" do
       end
       x
       10
-      )).to_i.should eq(10)
+      CRYSTAL
   end
 
   it "doesn't crash on #2767 (4)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(10)
       lib LibC
         fun exit(Int32) : NoReturn
       end
@@ -218,11 +218,11 @@ describe "Codegen: while" do
       end
       x
       10
-      )).to_i.should eq(10)
+      CRYSTAL
   end
 
   it "doesn't crash on while true begin break rescue (#7786)" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       require "prelude"
 
       while true
@@ -233,6 +233,6 @@ describe "Codegen: while" do
         end
       end
       foo
-      ))
+      CRYSTAL
   end
 end

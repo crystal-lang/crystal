@@ -115,17 +115,16 @@ describe "Semantic: def" do
   end
 
   it "reports no overload matches" do
-    assert_error "
+    assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to be Int, not (Float64 | Int32)"
       def foo(x : Int)
       end
 
       foo 1 || 1.5
-      ",
-      "expected argument #1 to 'foo' to be Int, not (Float64 | Int32)"
+      CRYSTAL
   end
 
   it "reports no overload matches 2" do
-    assert_error "
+    assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to be Int, not (Char | Int32)"
       def foo(x : Int, y : Int)
       end
 
@@ -133,33 +132,30 @@ describe "Semantic: def" do
       end
 
       foo(1 || 'a', 1 || 1.5)
-      ",
-      "expected argument #1 to 'foo' to be Int, not (Char | Int32)"
+      CRYSTAL
   end
 
   it "reports no block given" do
-    assert_error "
+    assert_error <<-CRYSTAL, "'foo' is expected to be invoked with a block, but no block was given"
       def foo
         yield
       end
 
       foo
-      ",
-      "'foo' is expected to be invoked with a block, but no block was given"
+      CRYSTAL
   end
 
   it "reports block given" do
-    assert_error "
+    assert_error <<-CRYSTAL, "'foo' is not expected to be invoked with a block, but a block was given"
       def foo
       end
 
       foo {}
-      ",
-      "'foo' is not expected to be invoked with a block, but a block was given"
+      CRYSTAL
   end
 
   it "errors when calling two functions with nil type" do
-    assert_error "
+    assert_error <<-CRYSTAL, "undefined method"
       def bar
       end
 
@@ -167,32 +163,29 @@ describe "Semantic: def" do
       end
 
       foo.bar
-      ",
-      "undefined method"
+      CRYSTAL
   end
 
   it "errors when default value is incompatible with type restriction" do
-    assert_error "
+    assert_error <<-CRYSTAL, "can't restrict Char to Int64"
       def foo(x : Int64 = 'a')
       end
 
       foo
-      ",
-      "can't restrict Char to Int64"
+      CRYSTAL
   end
 
   it "errors when default value is incompatible with non-type restriction" do
-    assert_error "
+    assert_error <<-CRYSTAL, "can't restrict Char to Tuple(_)"
       def foo(x : Tuple(_) = 'a')
       end
 
       foo
-      ",
-      "can't restrict Char to Tuple(_)"
+      CRYSTAL
   end
 
   it "types call with global scope" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       def bar
         1
       end
@@ -208,12 +201,12 @@ describe "Semantic: def" do
       end
 
       Foo.new.foo
-      ") { int32 }
+      CRYSTAL
   end
 
   it "lookups methods in super modules" do
-    assert_type("
-      require \"prelude\"
+    assert_type(<<-CRYSTAL) { int32 }
+      require "prelude"
 
       module Foo
         def lookup_matches(x = 1)
@@ -245,11 +238,11 @@ describe "Semantic: def" do
       b.push NonGenericMType.new
       b.push GenericMType.new
       b[0].lookup_matches
-      ") { int32 }
+      CRYSTAL
   end
 
   it "fixes bug #165" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to be Pointer(Node), not Node", inject_primitives: true
       abstract class Node
       end
 
@@ -259,36 +252,32 @@ describe "Semantic: def" do
 
       a = Pointer(Node).new(0_u64)
       foo a
-      ),
-      "expected argument #1 to 'foo' to be Pointer(Node), not Node",
-      inject_primitives: true
+      CRYSTAL
   end
 
   it "says can only defined def on types and self" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "def receiver can only be a Type or self"
       class Foo
       end
 
       foo = Foo.new
       def foo.bar
       end
-      ),
-      "def receiver can only be a Type or self"
+      CRYSTAL
   end
 
   it "errors if return type doesn't match" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "method ::foo must return Int32 but it is returning Char"
       def foo : Int32
         'a'
       end
 
       foo
-      ),
-      "method ::foo must return Int32 but it is returning Char"
+      CRYSTAL
   end
 
   it "errors if return type doesn't match on instance method" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "method Foo#foo must return Int32 but it is returning Char"
       class Foo
         def foo : Int32
           'a'
@@ -296,12 +285,11 @@ describe "Semantic: def" do
       end
 
       Foo.new.foo
-      ),
-      "method Foo#foo must return Int32 but it is returning Char"
+      CRYSTAL
   end
 
   it "errors if return type doesn't match on class method" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "method Foo.foo must return Int32 but it is returning Char"
       class Foo
         def self.foo : Int32
           'a'
@@ -309,12 +297,11 @@ describe "Semantic: def" do
       end
 
       Foo.foo
-      ),
-      "method Foo.foo must return Int32 but it is returning Char"
+      CRYSTAL
   end
 
   it "is ok if returns Int32? with explicit return" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { nilable int32 }
       def foo : Int32?
         if 1 == 2
           return nil
@@ -323,11 +310,11 @@ describe "Semantic: def" do
       end
 
       foo
-      ), inject_primitives: true) { nilable int32 }
+      CRYSTAL
   end
 
   it "says compile-time type on error" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "compile-time type is Foo+"
       abstract class Foo
       end
 
@@ -342,12 +329,11 @@ describe "Semantic: def" do
 
       f = Bar.new || Baz.new
       f.bar
-      ),
-      "compile-time type is Foo+"
+      CRYSTAL
   end
 
   it "gives correct error for wrong number of arguments for program call inside type (#1024)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "wrong number of arguments for 'foo' (given 1, expected 0)"
       def foo
       end
 
@@ -358,12 +344,11 @@ describe "Semantic: def" do
       end
 
       Foo.bar
-      ),
-      "wrong number of arguments for 'foo' (given 1, expected 0)"
+      CRYSTAL
   end
 
   it "gives correct error for wrong number of arguments for program call inside type (2) (#1024)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to be String, not Int32"
       def foo(x : String)
       end
 
@@ -374,12 +359,11 @@ describe "Semantic: def" do
       end
 
       Foo.bar
-      ),
-      "expected argument #1 to 'foo' to be String, not Int32"
+      CRYSTAL
   end
 
   it "gives correct error for methods in Class" do
-    assert_error %(
+    assert_error <<-CRYSTAL, <<-ERROR
       class Class
         def foo
           1
@@ -390,8 +374,7 @@ describe "Semantic: def" do
       end
 
       Foo.foo(1)
-      ),
-      <<-ERROR
+      CRYSTAL
       wrong number of arguments for 'Foo.foo' (given 1, expected 0)
 
       Overloads are:
@@ -400,7 +383,7 @@ describe "Semantic: def" do
   end
 
   it "gives correct error for methods in Class (2)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, <<-ERROR
       class Class
         def self.foo
           1
@@ -411,8 +394,7 @@ describe "Semantic: def" do
       end
 
       Foo.foo(1)
-      ),
-      <<-ERROR
+      CRYSTAL
       wrong number of arguments for 'Foo.foo' (given 1, expected 0)
 
       Overloads are:
@@ -421,26 +403,25 @@ describe "Semantic: def" do
   end
 
   it "errors if declares def inside if" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't declare def dynamically"
       if 1 == 2
         def foo; end
       end
-      ),
-      "can't declare def dynamically"
+      CRYSTAL
   end
 
   it "accesses free var of default argument (#1101)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nil_type.metaclass }
       def foo(x, y : U = nil) forall U
         U
       end
 
       foo 1
-      )) { nil_type.metaclass }
+      CRYSTAL
   end
 
   it "clones regex literal value (#2384)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       require "prelude"
 
       def foo(x : String = "")
@@ -450,22 +431,21 @@ describe "Semantic: def" do
 
       foo
       foo("")
-      )) { int32 }
+      CRYSTAL
   end
 
   it "doesn't find type in namespace through free var" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined constant T::String"
       def foo(x : T) forall T
         T::String
       end
 
       foo(1)
-      ),
-      "undefined constant T::String"
+      CRYSTAL
   end
 
   it "errors if trying to declare method on generic class instance" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't define method in generic instance"
       class Foo(T)
       end
 
@@ -473,53 +453,52 @@ describe "Semantic: def" do
 
       def Bar.foo
       end
-      ),
-      "can't define method in generic instance"
+      CRYSTAL
   end
 
   it "uses free variable" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32.metaclass }
       def foo(x : Free) forall Free
         Free
       end
 
       foo(1)
-      )) { int32.metaclass }
+      CRYSTAL
   end
 
   it "uses free variable with metaclass" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32.metaclass }
       def foo(x : Free.class) forall Free
         Free
       end
 
       foo(Int32)
-      )) { int32.metaclass }
+      CRYSTAL
   end
 
   it "uses free variable with metaclass and default value" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32.metaclass }
       def foo(x : Free.class = Int32) forall Free
         Free
       end
 
       foo
-      )) { int32.metaclass }
+      CRYSTAL
   end
 
   it "uses free variable as block return type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32.metaclass }
       def foo(&block : -> Free) forall Free
         yield
         Free
       end
 
       foo { 1 }
-      )) { int32.metaclass }
+      CRYSTAL
   end
 
   it "uses free variable and doesn't conflict with top-level type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32.metaclass }
       class Free
       end
 
@@ -528,32 +507,31 @@ describe "Semantic: def" do
       end
 
       foo(1)
-      )) { int32.metaclass }
+      CRYSTAL
   end
 
   it "shows free variables if no overload matches" do
-    assert_error %(
+    assert_error <<-CRYSTAL, <<-ERROR
       class Foo(T)
         def foo(x : T, y : U, z : V) forall U, V
         end
       end
 
       Foo(Int32).new.foo("", "", "")
-      ),
-      <<-ERROR
+      CRYSTAL
       Overloads are:
        - Foo(T)#foo(x : T, y : U, z : V) forall U, V
       ERROR
   end
 
   it "can't use self in toplevel method" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "there's no self in this scope"
       def foo
         self
       end
 
       foo
-    ), "there's no self in this scope"
+      CRYSTAL
   end
 
   it "points error at name (#6937)" do
