@@ -4,7 +4,7 @@ require "base64"
 require "./access_token"
 
 class OAuth2::AccessToken::Mac < OAuth2::AccessToken
-  def self.new(pull : JSON::PullParser) : OAuth2::AccessToken::Mac
+  def self.new(pull : JSON::PullParser) : self
     OAuth2::AccessToken.new(pull).as(self)
   end
 
