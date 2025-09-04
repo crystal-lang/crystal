@@ -84,4 +84,8 @@ struct Crystal::FdLock
     @m.lazy_set(0_u32)
     @closing = nil
   end
+
+  def closed? : Bool
+    (@m.get(:relaxed) & CLOSED) == CLOSED
+  end
 end
