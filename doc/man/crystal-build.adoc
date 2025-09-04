@@ -44,7 +44,9 @@ require them to stay enabled). `--frame-pointers=always` will always preserve th
 Format of output. Defaults to text. The json format can be used
 to get a more parser-friendly output.
 *--error-trace*::
-Show full error trace.
+Show full error trace. Disabled by default, as the full trace
+usually makes error messages less readable and may not always deliver
+relevant information.
 *--ll*:: 	 Dump LLVM assembly file to output directory.
 *--link-flags* _FLAGS_::
 Pass additional flags to the linker. Though you can specify those
@@ -83,10 +85,6 @@ source code file.
 details.
 *--release*::
 Compile in release mode. Equivalent to *-O3 --single-module*
-*--error-trace*::
-Show full stack trace. Disabled by default, as the full trace
-usually makes error messages less readable and not always deliver
-relevant information.
 *-s*, *--stats*::
 Print statistics about the different compiler stages for the current build. Output time and used memory for each compiler process.
 *-p*, *--progress*::
