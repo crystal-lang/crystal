@@ -54,6 +54,10 @@ module Fiber::ExecutionContext
   # variable, for example using `Atomic#add` to increment *result* or a `Mutex`
   # for more complex operations.
   class Concurrent < Parallel
+    def self.default : self
+      new("DEFAULT", capacity: 1, hijack: true)
+    end
+
     def self.new(name : String) : self
       new(name, capacity: 1, hijack: false)
     end
