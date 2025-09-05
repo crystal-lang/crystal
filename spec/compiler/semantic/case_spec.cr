@@ -2,12 +2,12 @@ require "../../spec_helper"
 
 describe "semantic: case" do
   it "doesn't check exhaustiveness when using 'when'" do
-    assert_no_errors %(
-        a = 1 || nil
-        case a
-        when Int32
-        end
-      )
+    assert_no_errors <<-CRYSTAL
+      a = 1 || nil
+      case a
+      when Int32
+      end
+      CRYSTAL
   end
 
   it "checks exhaustiveness of single type" do
@@ -19,33 +19,33 @@ describe "semantic: case" do
   end
 
   it "checks exhaustiveness of single type (T.class)" do
-    assert_no_errors %(
-        case Int32
-        in Int32.class
-        end
-      )
+    assert_no_errors <<-CRYSTAL
+      case Int32
+      in Int32.class
+      end
+      CRYSTAL
   end
 
   it "checks exhaustiveness of single type (Foo(T).class)" do
-    assert_no_errors %(
-        class Foo(T)
-        end
+    assert_no_errors <<-CRYSTAL
+      class Foo(T)
+      end
 
-        case Foo(Int32)
-        in Foo(Int32).class
-        end
-      )
+      case Foo(Int32)
+      in Foo(Int32).class
+      end
+      CRYSTAL
   end
 
   it "checks exhaustiveness of single type (generic)" do
-    assert_no_errors %(
-        class Foo(T)
-        end
+    assert_no_errors <<-CRYSTAL
+      class Foo(T)
+      end
 
-        case Foo(Int32).new
-        in Foo(Int32)
-        end
-      )
+      case Foo(Int32).new
+      in Foo(Int32)
+      end
+      CRYSTAL
   end
 
   it "errors if casing against a constant" do
@@ -61,13 +61,13 @@ describe "semantic: case" do
   end
 
   it "covers all types" do
-    assert_no_errors %(
-        a = 1 || nil
-        case a
-        in Int32
-        in Nil
-        end
-      )
+    assert_no_errors <<-CRYSTAL
+      a = 1 || nil
+      case a
+      in Int32
+      in Nil
+      end
+      CRYSTAL
   end
 
   it "checks exhaustiveness of bool type (missing true)" do
@@ -125,56 +125,56 @@ describe "semantic: case" do
   end
 
   it "checks exhaustiveness of enum (all cases covered)" do
-    assert_no_errors %(
-        require "prelude"
+    assert_no_errors <<-CRYSTAL
+      require "prelude"
 
-        enum Color
-          Red
-          Green
-          Blue
-        end
+      enum Color
+        Red
+        Green
+        Blue
+      end
 
-        e = Color::Red
-        case e
-        in .red?
-        in .green?
-        in .blue?
-        end
-      )
+      e = Color::Red
+      case e
+      in .red?
+      in .green?
+      in .blue?
+      end
+      CRYSTAL
   end
 
   it "checks exhaustiveness of enum through method (all cases covered)" do
-    assert_no_errors %(
-        require "prelude"
+    assert_no_errors <<-CRYSTAL
+      require "prelude"
 
-        enum Color
-          Red
-          Green
-          Blue
-        end
+      enum Color
+        Red
+        Green
+        Blue
+      end
 
-        def foo
-          Color::Red
-        end
+      def foo
+        Color::Red
+      end
 
-        case foo
-        in .red?
-        in .green?
-        in .blue?
-        end
-      )
+      case foo
+      in .red?
+      in .green?
+      in .blue?
+      end
+      CRYSTAL
   end
 
   it "checks exhaustiveness of bool type with other types" do
-    assert_no_errors %(
-        #{bool_case_eq}
+    assert_no_errors <<-CRYSTAL
+      #{bool_case_eq}
 
-        case 1 || true
-        in Int32
-        in true
-        in false
-        end
-      )
+      case 1 || true
+      in Int32
+      in true
+      in false
+      end
+      CRYSTAL
   end
 
   it "checks exhaustiveness of union type with virtual type" do
@@ -193,60 +193,60 @@ describe "semantic: case" do
   end
 
   it "checks exhaustiveness, covers in base type covers" do
-    assert_no_errors %(
-        class Foo
-        end
+    assert_no_errors <<-CRYSTAL
+      class Foo
+      end
 
-        class Bar < Foo
-        end
+      class Bar < Foo
+      end
 
-        a = Bar.new
-        case a
-        in Foo
-        end
-      )
+      a = Bar.new
+      case a
+      in Foo
+      end
+      CRYSTAL
   end
 
   it "checks exhaustiveness, covers in base type covers (generic type)" do
-    assert_no_errors %(
-        class Foo(T)
-        end
+    assert_no_errors <<-CRYSTAL
+      class Foo(T)
+      end
 
-        a = Foo(Int32).new
-        case a
-        in Foo
-        end
-      )
+      a = Foo(Int32).new
+      case a
+      in Foo
+      end
+      CRYSTAL
   end
 
   it "checks exhaustiveness of nil type with nil literal" do
-    assert_no_errors %(
-        struct Nil
-          def ===(other)
-            true
-          end
+    assert_no_errors <<-CRYSTAL
+      struct Nil
+        def ===(other)
+          true
         end
+      end
 
-        case nil
-        in nil
-        end
-      )
+      case nil
+      in nil
+      end
+      CRYSTAL
   end
 
   it "checks exhaustiveness of nilable type with nil literal" do
-    assert_no_errors %(
-        struct Nil
-          def ===(other)
-            true
-          end
+    assert_no_errors <<-CRYSTAL
+      struct Nil
+        def ===(other)
+          true
         end
+      end
 
-        a = 1 || nil
-        case a
-        in nil
-        in Int32
-        end
-      )
+      a = 1 || nil
+      case a
+      in nil
+      in Int32
+      end
+      CRYSTAL
   end
 
   it "can't prove case is exhaustive for @[Flags] enum" do
@@ -282,21 +282,21 @@ describe "semantic: case" do
   end
 
   it "can prove case is exhaustive for @[Flags] enum when matching type" do
-    assert_no_errors %(
-        require "prelude"
+    assert_no_errors <<-CRYSTAL
+      require "prelude"
 
-        @[Flags]
-        enum Color
-          Red
-          Green
-          Blue
-        end
+      @[Flags]
+      enum Color
+        Red
+        Green
+        Blue
+      end
 
-        e = Color::Red
-        case e
-        in Color
-        end
-      )
+      e = Color::Red
+      case e
+      in Color
+      end
+      CRYSTAL
   end
 
   it "can't prove case is exhaustive for @[Flags] enum, tuple case" do
@@ -361,17 +361,17 @@ describe "semantic: case" do
   end
 
   it "checks exhaustiveness for tuple literal, and passes" do
-    assert_no_errors %(
-        a = 1 || 'a'
-        b = 1 || 'a'
+    assert_no_errors <<-CRYSTAL
+      a = 1 || 'a'
+      b = 1 || 'a'
 
-        case {a, b}
-        in {Int32, Char}
-        in {Int32, Int32}
-        in {Char, Int32}
-        in {Char, Char}
-        end
-      )
+      case {a, b}
+      in {Int32, Char}
+      in {Int32, Int32}
+      in {Char, Int32}
+      in {Char, Char}
+      end
+      CRYSTAL
   end
 
   it "checks exhaustiveness for tuple literal of 2 elements, and warns" do
@@ -600,22 +600,22 @@ describe "semantic: case" do
   end
 
   it "checks exhaustiveness for tuple literal, with call" do
-    assert_no_errors %(
-        struct Int
-          def bar
-            1 || 'a'
-          end
+    assert_no_errors <<-CRYSTAL
+      struct Int
+        def bar
+          1 || 'a'
         end
+      end
 
-        foo = 1
+      foo = 1
 
-        case {foo.bar, foo.bar}
-        in {Int32, Char}
-        in {Int32, Int32}
-        in {Char, Int32}
-        in {Char, Char}
-        end
-      )
+      case {foo.bar, foo.bar}
+      in {Int32, Char}
+      in {Int32, Int32}
+      in {Char, Int32}
+      in {Char, Char}
+      end
+      CRYSTAL
   end
 end
 

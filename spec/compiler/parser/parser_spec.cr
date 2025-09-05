@@ -2809,16 +2809,16 @@ module Crystal
     end
 
     it "gets correct location after macro with yield" do
-      parser = Parser.new(%(
+      parser = Parser.new(<<-CRYSTAL)
         macro foo
           yield
         end
 
         1 + 'a'
-        ))
+        CRYSTAL
       node = parser.parse.as(Expressions).expressions[1]
       loc = node.location.not_nil!
-      loc.line_number.should eq(6)
+      loc.line_number.should eq(5)
     end
 
     it "gets correct location with \r\n (#1558)" do
