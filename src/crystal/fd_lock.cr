@@ -39,8 +39,10 @@ struct Crystal::FdLock
   end
 
   private def handle_last_ref(m)
-    # last ref after close must resume the closing fiber
-    return unless (m & CLOSED) == CLOSED && (m & MASK) == REF
+    return unless (m & CLOSED) == CLOSED # is closed?
+    return unless (m & MASK) == REF      # was the last ref?
+
+    # the last ref after close is responsible to resume the closing fiber
     @closing.not_nil!("BUG: expected a closing fiber to resume.").enqueue
   end
 
@@ -73,7 +75,7 @@ struct Crystal::FdLock
       # before close callback
       yield
     ensure
-      # wait for the last ref... unless we're the last ref
+      # wait for the last ref... unless we're the last ref!
       Fiber.suspend unless (m & MASK) == REF
     end
 
@@ -82,6 +84,9 @@ struct Crystal::FdLock
     true
   end
 
+  # Resets the fdlock back to its pristine state so it can be used again.
+  # Assumes the caller owns the fdlock. This is required by
+  # `TCPSocket#initialize`.
   def reset : Nil
     @m.lazy_set(0_u32)
     @closing = nil
