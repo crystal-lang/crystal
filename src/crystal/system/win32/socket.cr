@@ -369,6 +369,10 @@ module Crystal::System::Socket
     raise NotImplementedError.new "Crystal::System::Socket.fcntl"
   end
 
+  private def system_fcntl(cmd, arg = 0)
+    raise NotImplementedError.new "Crystal::System::Socket#system_fcntl"
+  end
+
   private def system_tty?
     LibC.GetConsoleMode(LibC::HANDLE.new(fd), out _) != 0
   end

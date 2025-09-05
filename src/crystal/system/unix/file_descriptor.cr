@@ -19,7 +19,7 @@ module Crystal::System::FileDescriptor
   STDERR_HANDLE = 2
 
   private def system_blocking?
-    flags = fcntl(LibC::F_GETFL)
+    flags = system_fcntl(LibC::F_GETFL)
     !flags.bits_set? LibC::O_NONBLOCK
   end
 
@@ -56,12 +56,12 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_close_on_exec?
-    flags = fcntl(LibC::F_GETFD)
+    flags = system_fcntl(LibC::F_GETFD)
     flags.bits_set? LibC::FD_CLOEXEC
   end
 
   private def system_close_on_exec=(arg : Bool)
-    fcntl(LibC::F_SETFD, arg ? LibC::FD_CLOEXEC : 0)
+    system_fcntl(LibC::F_SETFD, arg ? LibC::FD_CLOEXEC : 0)
     arg
   end
 
@@ -73,6 +73,10 @@ module Crystal::System::FileDescriptor
     r = LibC.fcntl(fd, cmd, arg)
     raise IO::Error.from_errno("fcntl() failed") if r == -1
     r
+  end
+
+  private def system_fcntl(cmd, arg = 0)
+    FileDescriptor.fcntl(fd, cmd, arg)
   end
 
   def self.system_info(fd)
@@ -119,7 +123,8 @@ module Crystal::System::FileDescriptor
         if LibC.dup2(other.fd, fd) == -1
           raise IO::Error.from_errno("Could not reopen file descriptor")
         end
-        self.close_on_exec = other.close_on_exec?
+        flags = other.close_on_exec? ? LibC::FD_CLOEXEC : 0
+        FileDescriptor.fcntl(fd, LibC::F_SETFD, flags)
       end
     {% end %}
 

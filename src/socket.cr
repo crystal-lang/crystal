@@ -478,11 +478,11 @@ class Socket < IO
   end
 
   def self.fcntl(fd, cmd, arg = 0)
-    Crystal::System::Socket.fcntl(fd, cmd, arg)
+    Socket.fcntl(fd, cmd, arg)
   end
 
   def fcntl(cmd, arg = 0)
-    self.class.fcntl fd, cmd, arg
+    system_fcntl(cmd, arg)
   end
 
   # Finalizes the socket resource.

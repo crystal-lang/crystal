@@ -70,6 +70,8 @@ module Crystal::System::Socket
 
   # private def system_close_on_exec=(arg : Bool)
 
+  # private def system_fcntl(cmd, arg = 0)
+
   # def self.fcntl(fd, cmd, arg = 0)
 
   # def self.socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol, blocking : Bool) : {Handle, Handle}

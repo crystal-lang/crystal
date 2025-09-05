@@ -139,6 +139,10 @@ module Crystal::System::Socket
     r
   end
 
+  private def system_fcntl(cmd, arg = 0)
+    FileDescriptor.system_fcntl(fd, cmd, arg)
+  end
+
   private def system_tty?
     LibC.isatty(fd) == 1
   end
