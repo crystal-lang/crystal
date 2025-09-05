@@ -150,7 +150,9 @@ class Crystal::Type
         return if !@raise && !type
         type = type.not_nil!
 
-        check_type_can_be_stored(ident, type) { "can't use #{type} in unions" }
+        unless type.can_be_stored?
+          ident.raise "can't use #{type} in unions yet, use a more specific type"
+        end
 
         type.virtual_type
       end
@@ -191,7 +193,10 @@ class Crystal::Type
           return if !@raise && !type
           type = type.not_nil!
 
-          check_type_can_be_stored(subnode, type) { "can't use #{type} as a generic type argument" }
+          unless type.can_be_stored?
+            subnode.raise "can't use #{type} as a generic type argument yet, use a more specific type"
+          end
+
           entries << NamedArgumentType.new(named_arg.name, type.virtual_type)
         end
 
@@ -279,7 +284,9 @@ class Crystal::Type
 
         case instance_type
         when GenericUnionType, PointerType, StaticArrayType, TupleType, ProcType
-          check_type_can_be_stored(type_var, type) { "can't use #{type} as a generic type argument" }
+          unless type.can_be_stored?
+            type_var.raise "can't use #{type} as a generic type argument yet, use a more specific type"
+          end
         end
 
         type_vars << type.virtual_type
@@ -324,7 +331,9 @@ class Crystal::Type
             return if !@raise && !type
             type = type.not_nil!
 
-            check_type_can_be_stored(input, type) { "can't use #{type} as proc argument" }
+            unless type.can_be_stored?
+              input.raise "can't use #{type} as proc argument yet, use a more specific type"
+            end
 
             types << type.virtual_type
           end
@@ -336,7 +345,9 @@ class Crystal::Type
         return if !@raise && !type
         type = type.not_nil!
 
-        check_type_can_be_stored(output, type) { "can't use #{type} as proc return type" }
+        unless type.can_be_stored?
+          output.raise "can't use #{type} as proc return type yet, use a more specific type"
+        end
 
         types << type.virtual_type
       else
@@ -420,10 +431,6 @@ class Crystal::Type
           node.raise "can't infer the type parameter #{first_name} for the #{instance_type.type_desc} #{instance_type}. Please provide it explicitly"
         end
       end
-    end
-
-    def check_type_can_be_stored(ident, type, &)
-      Crystal.check_type_can_be_stored(ident, type) { yield }
     end
 
     def in_generic_args(&)

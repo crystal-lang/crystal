@@ -1204,7 +1204,9 @@ module Crystal
     end
 
     def self.check_type_allowed_as_proc_argument(node, type)
-      Crystal.check_type_can_be_stored(node, type) { "can't use #{type.to_s(generic_args: false)} as a Proc argument type" }
+      unless type.can_be_stored?
+        node.raise "can't use #{type.to_s(generic_args: false)} as a Proc argument type yet, use a more specific type"
+      end
     end
 
     def visit(node : ProcPointer)

@@ -1,12 +1,6 @@
 require "../syntax/ast"
 
 module Crystal
-  def self.check_type_can_be_stored(node, type, &)
-    return if type.can_be_stored?
-
-    node.raise "#{yield} yet, use a more specific type"
-  end
-
   class ASTNode
     def raise(message, inner = nil, exception_type = Crystal::TypeException)
       ::raise exception_type.for_node(self, message, inner)
