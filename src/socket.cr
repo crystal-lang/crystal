@@ -478,7 +478,7 @@ class Socket < IO
   end
 
   def self.fcntl(fd, cmd, arg = 0)
-    Socket.fcntl(fd, cmd, arg)
+    Crystal::System::Socket.fcntl(fd, cmd, arg)
   end
 
   def fcntl(cmd, arg = 0)
