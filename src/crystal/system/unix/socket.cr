@@ -87,7 +87,7 @@ module Crystal::System::Socket
   end
 
   private def system_reuse_port? : Bool
-    system_getsockopt(fd, LibC::SO_REUSEPORT, 0) do |value|
+    system_getsockopt(LibC::SO_REUSEPORT, 0) do |value|
       return value != 0
     end
 
