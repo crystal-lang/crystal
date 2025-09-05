@@ -1,5 +1,5 @@
 require "spec"
-require "crystal/fd_lock"
+require "../../../src/crystal/fd_lock"
 require "wait_group"
 
 describe Crystal::FdLock do
@@ -30,15 +30,24 @@ describe Crystal::FdLock do
       lock = Crystal::FdLock.new
 
       ready = WaitGroup.new(1)
+      release = Channel(String).new
+
       spawn do
-        ready.done
-        lock.reference { sleep 100.milliseconds }
+        lock.reference do
+          ready.done
+
+          select
+          when release.send("ok")
+          when timeout(1.second)
+            release.send("timeout")
+          end
+        end
       end
 
       ready.wait
-      elapsed = Time.measure { lock.reference { } }
+      lock.reference { }
 
-      elapsed.should be < 100.milliseconds
+      release.receive.should_not eq("timeout")
     end
 
     it "raises when closed" do
@@ -47,7 +56,7 @@ describe Crystal::FdLock do
 
       called = false
       expect_raises(IO::Error, "Closed") do
-        lock.reference { called = false }
+        lock.reference { called = true }
       end
 
       called.should be_false
@@ -85,27 +94,34 @@ describe Crystal::FdLock do
     it "waits for all references to return" do
       lock = Crystal::FdLock.new
 
-      wg = WaitGroup.new
-      exception = nil
+      ready = WaitGroup.new(10)
+      exceptions = Channel(Exception).new(10)
 
-      wg.spawn do
-        lock.try_close? { }.should eq(true)
-      rescue ex
-        exception = ex
+      WaitGroup.wait do |wg|
+        10.times do
+          wg.spawn do
+            begin
+              lock.reference do
+                ready.done
+                Fiber.yield
+              end
+            rescue ex
+              exceptions.send(ex)
+            end
+          end
+        end
+
+        ready.wait
+
+        called = false
+        lock.try_close? { called = true }.should eq(true)
+        lock.closed?.should be_true
       end
+      exceptions.close
 
-      elapsed = Time.measure do
-        lock.reference { }
-        lock.reference { sleep(10.milliseconds) }
-        wg.wait
-      end
-
-      if ex = exception
+      if ex = exceptions.receive?
         raise ex
       end
-
-      lock.closed?.should be_true
-      elapsed.should be > 10.milliseconds
     end
   end
 
