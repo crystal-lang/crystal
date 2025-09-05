@@ -11,21 +11,30 @@ struct Crystal::FdLock
   REF    = 2_u32      # the ref counter increment
   MASK   = ~(REF - 1) # mask for the ref counter
 
-  @m = Atomic(UInt32).new(0_u32)
-  @closing : Fiber?
+  {% if flag?(:preview_mt) %}
+    @m = Atomic(UInt32).new(0_u32)
+    @closing : Fiber?
+  {% else %}
+    @closed = false
+  {% end %}
 
   # Borrows a reference for the duration of the block. Raises if the fdlock is
   # closed while trying to borrow.
   def reference(& : -> F) : F forall F
-    m, success = @m.compare_and_set(0_u32, REF, :acquire, :relaxed)
-    increment_slow(m) unless success
+    {% if flag?(:preview_mt) %}
+      m, success = @m.compare_and_set(0_u32, REF, :acquire, :relaxed)
+      increment_slow(m) unless success
 
-    begin
+      begin
+        yield
+      ensure
+        m = @m.sub(REF, :release)
+        handle_last_ref(m)
+      end
+    {% else %}
+      raise IO::Error.new("Closed") if @closed
       yield
-    ensure
-      m = @m.sub(REF, :release)
-      handle_last_ref(m)
-    end
+    {% end %}
   end
 
   private def increment_slow(m)
@@ -55,44 +64,61 @@ struct Crystal::FdLock
   # doesn't own the fd and musn't close it (there might still be active
   # references).
   def try_close?(&before_close : ->) : Bool
-    m = @m.get(:relaxed)
+    {% if flag?(:preview_mt) %}
+      m = @m.get(:relaxed)
 
-    # increment ref and close (abort if already closed)
-    while true
-      if (m & CLOSED) == CLOSED
-        return false
+      # increment ref and close (abort if already closed)
+      while true
+        if (m & CLOSED) == CLOSED
+          return false
+        end
+        m, success = @m.compare_and_set(m, (m + REF) | CLOSED, :acquire, :relaxed)
+        break if success
       end
-      m, success = @m.compare_and_set(m, (m + REF) | CLOSED, :acquire, :relaxed)
-      break if success
-    end
 
-    # set the current fiber as the closing fiber (to be resumed by the last ref)
-    # then decrement ref
-    @closing = Fiber.current
-    m = @m.sub(REF, :release)
+      # set the current fiber as the closing fiber (to be resumed by the last ref)
+      # then decrement ref
+      @closing = Fiber.current
+      m = @m.sub(REF, :release)
 
-    begin
-      # before close callback
-      yield
-    ensure
-      # wait for the last ref... unless we're the last ref!
-      Fiber.suspend unless (m & MASK) == REF
-    end
+      begin
+        # before close callback
+        yield
+      ensure
+        # wait for the last ref... unless we're the last ref!
+        Fiber.suspend unless (m & MASK) == REF
+      end
 
-    @closing = nil
-
-    true
+      @closing = nil
+      true
+    {% else %}
+      if @closed
+        false
+      else
+        @closed = true
+        yield
+        true
+      end
+    {% end %}
   end
 
   # Resets the fdlock back to its pristine state so it can be used again.
   # Assumes the caller owns the fdlock. This is required by
   # `TCPSocket#initialize`.
   def reset : Nil
-    @m.lazy_set(0_u32)
-    @closing = nil
+    {% if flag?(:preview_mt) %}
+      @m.lazy_set(0_u32)
+      @closing = nil
+    {% else %}
+      @closed = false
+    {% end %}
   end
 
   def closed? : Bool
-    (@m.get(:relaxed) & CLOSED) == CLOSED
+    {% if flag?(:preview_mt) %}
+      (@m.get(:relaxed) & CLOSED) == CLOSED
+    {% else %}
+      @closed
+    {% end %}
   end
 end
