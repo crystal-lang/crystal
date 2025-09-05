@@ -84,7 +84,7 @@ module Crystal::System::Socket
   end
 
   private def system_reuse_port? : Bool
-    system_getsockopt(fd, LibC::SO_REUSEPORT, 0) do |value|
+    system_getsockopt(LibC::SO_REUSEPORT, 0) do |value|
       return value != 0
     end
 
@@ -135,19 +135,19 @@ module Crystal::System::Socket
     val
   end
 
-  private def system_getsockopt(fd, optname, optval, level = LibC::SOL_SOCKET, &)
+  private def system_getsockopt(optname, optval, level = LibC::SOL_SOCKET, &)
     optsize = LibC::SocklenT.new(sizeof(typeof(optval)))
     ret = LibC.getsockopt(fd, level, optname, pointerof(optval), pointerof(optsize))
     yield optval if ret == 0
     ret
   end
 
-  private def system_getsockopt(fd, optname, optval, level = LibC::SOL_SOCKET)
-    system_getsockopt(fd, optname, optval, level) { |value| return value }
+  private def system_getsockopt(optname, optval, level = LibC::SOL_SOCKET)
+    system_getsockopt(optname, optval, level) { |value| return value }
     raise ::Socket::Error.from_errno("getsockopt #{optname}")
   end
 
-  private def system_setsockopt(fd, optname, optval, level = LibC::SOL_SOCKET)
+  private def system_setsockopt(optname, optval, level = LibC::SOL_SOCKET)
     optsize = LibC::SocklenT.new(sizeof(typeof(optval)))
 
     ret = LibC.setsockopt(fd, level, optname, pointerof(optval), optsize)

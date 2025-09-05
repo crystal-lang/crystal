@@ -54,11 +54,11 @@ module Crystal::System::Socket
 
   # private def system_linger=(val)
 
-  # private def system_getsockopt(fd, optname, optval, level = LibC::SOL_SOCKET, &)
+  # private def system_getsockopt(optname, optval, level = LibC::SOL_SOCKET, &)
 
-  # private def system_getsockopt(fd, optname, optval, level = LibC::SOL_SOCKET)
+  # private def system_getsockopt(optname, optval, level = LibC::SOL_SOCKET)
 
-  # private def system_setsockopt(fd, optname, optval, level = LibC::SOL_SOCKET)
+  # private def system_setsockopt(optname, optval, level = LibC::SOL_SOCKET)
 
   # private def system_blocking?
 

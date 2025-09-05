@@ -89,15 +89,15 @@ module Crystal::System::Socket
     raise NotImplementedError.new "Crystal::System::Socket#system_linge="
   end
 
-  private def system_getsockopt(fd, optname, optval, level = LibC::SOL_SOCKET, &)
+  private def system_getsockopt(optname, optval, level = LibC::SOL_SOCKET, &)
     raise NotImplementedError.new "Crystal::System::Socket#system_getsockopt"
   end
 
-  private def system_getsockopt(fd, optname, optval, level = LibC::SOL_SOCKET)
+  private def system_getsockopt(optname, optval, level = LibC::SOL_SOCKET)
     raise NotImplementedError.new "Crystal::System::Socket#system_getsockopt"
   end
 
-  private def system_setsockopt(fd, optname, optval, level = LibC::SOL_SOCKET)
+  private def system_setsockopt(optname, optval, level = LibC::SOL_SOCKET)
     raise NotImplementedError.new "Crystal::System::Socket#system_setsockopt"
   end
 
