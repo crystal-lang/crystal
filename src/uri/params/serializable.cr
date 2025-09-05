@@ -59,8 +59,9 @@ struct URI::Params
   # ```
   #
   # NOTE: `URI::Params::Serializable` defines an internal constructor on any
-  # including type, which prevents the compiler from generating a default
-  # constructor, even when all instance variables have a default initializer.
+  # including type, which means the default constructor (`def initialize; end`)
+  # is absent unless explicitly defined by the user, even when all instance
+  # variables have a default initializer.
   module Serializable
     macro included
       def self.from_www_form(params : ::String)

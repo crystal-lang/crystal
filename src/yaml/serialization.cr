@@ -81,8 +81,9 @@ module YAML
   # ```
   #
   # NOTE: `YAML::Serializable` defines an internal constructor on any including
-  # type, which prevents the compiler from generating a default constructor,
-  # even when all instance variables have a default initializer.
+  # type, which means the default constructor (`def initialize; end`) is absent
+  # unless explicitly defined by the user, even when all instance variables have
+  # a default initializer.
   #
   # ### Extensions: `YAML::Serializable::Strict` and `YAML::Serializable::Unmapped`.
   #
