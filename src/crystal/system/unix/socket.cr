@@ -20,8 +20,8 @@ module Crystal::System::Socket
       Process.lock_read do
         fd = LibC.socket(family, type, protocol)
         raise ::Socket::Error.from_errno("Failed to create socket") if fd == -1
-        Socket.fcntl(fd, LibC::F_SETFD, LibC::FD_CLOEXEC)
-        Socket.fcntl(fd, LibC::F_SETFL, Socket.fcntl(fd, LibC::F_GETFL) | LibC::O_NONBLOCK) unless blocking
+        FileDescriptor.fcntl(fd, LibC::F_SETFD, LibC::FD_CLOEXEC)
+        FileDescriptor.fcntl(fd, LibC::F_SETFL, FileDescriptor.fcntl(fd, LibC::F_GETFL) | LibC::O_NONBLOCK) unless blocking
         fd
       end
     {% end %}
@@ -84,7 +84,7 @@ module Crystal::System::Socket
   end
 
   private def system_reuse_port? : Bool
-    system_getsockopt(fd, LibC::SO_REUSEPORT, 0) do |value|
+    system_getsockopt(LibC::SO_REUSEPORT, 0) do |value|
       return value != 0
     end
 
@@ -135,19 +135,19 @@ module Crystal::System::Socket
     val
   end
 
-  private def system_getsockopt(fd, optname, optval, level = LibC::SOL_SOCKET, &)
+  private def system_getsockopt(optname, optval, level = LibC::SOL_SOCKET, &)
     optsize = LibC::SocklenT.new(sizeof(typeof(optval)))
     ret = LibC.getsockopt(fd, level, optname, pointerof(optval), pointerof(optsize))
     yield optval if ret == 0
     ret
   end
 
-  private def system_getsockopt(fd, optname, optval, level = LibC::SOL_SOCKET)
-    system_getsockopt(fd, optname, optval, level) { |value| return value }
+  private def system_getsockopt(optname, optval, level = LibC::SOL_SOCKET)
+    system_getsockopt(optname, optval, level) { |value| return value }
     raise ::Socket::Error.from_errno("getsockopt #{optname}")
   end
 
-  private def system_setsockopt(fd, optname, optval, level = LibC::SOL_SOCKET)
+  private def system_setsockopt(optname, optval, level = LibC::SOL_SOCKET)
     optsize = LibC::SocklenT.new(sizeof(typeof(optval)))
 
     ret = LibC.setsockopt(fd, level, optname, pointerof(optval), optsize)
@@ -156,41 +156,37 @@ module Crystal::System::Socket
   end
 
   private def system_blocking?
-    Socket.get_blocking(fd)
+    FileDescriptor.get_blocking(fd)
   end
 
   private def system_blocking=(value)
-    Socket.set_blocking(fd, value)
+    FileDescriptor.set_blocking(fd, value)
   end
 
   def self.get_blocking(fd : Handle)
-    fcntl(fd, LibC::F_GETFL) & LibC::O_NONBLOCK == 0
+    FileDescriptor.get_blocking(fd)
   end
 
   def self.set_blocking(fd : Handle, value : Bool)
-    flags = fcntl(fd, LibC::F_GETFL)
-    if value
-      flags &= ~LibC::O_NONBLOCK
-    else
-      flags |= LibC::O_NONBLOCK
-    end
-    fcntl(fd, LibC::F_SETFL, flags)
+    FileDescriptor.set_blocking(fd, value)
   end
 
   private def system_close_on_exec?
-    flags = fcntl(LibC::F_GETFD)
+    flags = system_fcntl(LibC::F_GETFD)
     (flags & LibC::FD_CLOEXEC) == LibC::FD_CLOEXEC
   end
 
   private def system_close_on_exec=(arg : Bool)
-    fcntl(LibC::F_SETFD, arg ? LibC::FD_CLOEXEC : 0)
+    system_fcntl(LibC::F_SETFD, arg ? LibC::FD_CLOEXEC : 0)
     arg
   end
 
   def self.fcntl(fd, cmd, arg = 0)
-    r = LibC.fcntl fd, cmd, arg
-    raise ::Socket::Error.from_errno("fcntl() failed") if r == -1
-    r
+    FileDescriptor.fcntl(fd, cmd, arg)
+  end
+
+  private def system_fcntl(cmd, arg = 0)
+    FileDescriptor.fcntl(fd, cmd, arg)
   end
 
   def self.socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol, blocking : Bool) : {Handle, Handle}
@@ -207,11 +203,11 @@ module Crystal::System::Socket
         if LibC.socketpair(::Socket::Family::UNIX, type, protocol, fds) == -1
           raise ::Socket::Error.new("socketpair() failed")
         end
-        fcntl(fds[0], LibC::F_SETFD, LibC::FD_CLOEXEC)
-        fcntl(fds[1], LibC::F_SETFD, LibC::FD_CLOEXEC)
+        FileDescriptor.fcntl(fds[0], LibC::F_SETFD, LibC::FD_CLOEXEC)
+        FileDescriptor.fcntl(fds[1], LibC::F_SETFD, LibC::FD_CLOEXEC)
         unless blocking
-          fcntl(fds[0], LibC::F_SETFL, fcntl(fds[0], LibC::F_GETFL) | LibC::O_NONBLOCK)
-          fcntl(fds[1], LibC::F_SETFL, fcntl(fds[1], LibC::F_GETFL) | LibC::O_NONBLOCK)
+          FileDescriptor.fcntl(fds[0], LibC::F_SETFL, FileDescriptor.fcntl(fds[0], LibC::F_GETFL) | LibC::O_NONBLOCK)
+          FileDescriptor.fcntl(fds[1], LibC::F_SETFL, FileDescriptor.fcntl(fds[1], LibC::F_GETFL) | LibC::O_NONBLOCK)
         end
       end
     {% end %}

@@ -436,7 +436,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
         # AcceptEx does not automatically set the socket options on the accepted
         # socket to match those of the listening socket, we need to ask for that
         # explicitly with SO_UPDATE_ACCEPT_CONTEXT
-        socket.system_setsockopt client_handle, LibC::SO_UPDATE_ACCEPT_CONTEXT, socket.fd
+        System::Socket.setsockopt client_handle, LibC::SO_UPDATE_ACCEPT_CONTEXT, socket.fd
 
         true
       else
