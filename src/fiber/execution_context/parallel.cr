@@ -4,8 +4,9 @@ require "./parallel/scheduler"
 module Fiber::ExecutionContext
   # Parallel execution context.
   #
-  # Fibers running in the same context run both concurrently and in parallel to each
-  # others, in addition to the other fibers running in other execution contexts.
+  # Fibers running in the same context run both concurrently and in parallel to
+  # each others, in addition to the other fibers running in other execution
+  # contexts.
   #
   # The context internally keeps a number of fiber schedulers, each scheduler
   # being able to start running on a system thread, so multiple schedulers can
@@ -17,6 +18,9 @@ module Fiber::ExecutionContext
   # schedulers will start (and thus system threads), as the need decreases, for
   # example not enough fibers, the schedulers will pause themselves and
   # parallelism will decrease.
+  #
+  # The parallelism can be as low as 1, in which case the context becomes a
+  # concurrent context (no parallelism) until resized.
   #
   # For example: we can start a parallel context to run consumer fibers, while
   # the default context produces values. Because the consumer fibers can run in

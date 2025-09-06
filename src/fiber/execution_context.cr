@@ -56,26 +56,23 @@ require "./execution_context/*"
 #
 # ## The default execution context
 #
-# The Crystal runtime starts with a single threaded execution context, available
-# as `Fiber::ExecutionContext.default`:
+# The Crystal runtime starts a default execution context and exposed as
+# `Fiber::ExecutionContext.default`. This is where the main fiber is running.
+#
+# Its parallelism is set to 1 for backwards compatibility reasons; Crystal used
+# to be single-threaded and concurrent only. You can increase the parallelism at
+# any time using `Parallel#resize`, for example:
 #
 # ```
-# Fiber::ExecutionContext.default.class # => Fiber::ExecutionContext::Concurrent
+# count = Fiber::ExecutionContext.default_workers_count
+# Fiber::ExecutionContext.default.resize(count)
 # ```
-#
-# NOTE: The default context is a `Concurrent` context for backwards
-# compatibility reasons. It might change to a `Parallel` context in the
-# future.
 @[Experimental]
 module Fiber::ExecutionContext
   @@default : ExecutionContext?
 
   # Returns the default `ExecutionContext` for the process, automatically
   # started when the program started.
-  #
-  # NOTE: The default context is a `Concurrent` context for backwards
-  # compatibility reasons. It might change to a `Parallel` context in the
-  # future.
   @[AlwaysInline]
   def self.default : ExecutionContext
     @@default.not_nil!("expected default execution context to have been setup")
@@ -83,19 +80,16 @@ module Fiber::ExecutionContext
 
   # :nodoc:
   def self.init_default_context : Nil
-    @@default = Concurrent.default
+    @@default = Parallel.default(1)
     @@monitor = Monitor.new
   end
 
-  # Returns the number of threads to start in the default multi threaded
-  # execution context. Respects the `CRYSTAL_WORKERS` environment variable
-  # and otherwise returns the potential parallelism of the CPU (number of
-  # hardware threads).
-  #
-  # Currently unused because the default context is single threaded for
-  # now (this might change later with compilation flags).
+  # Returns the number of threads to start in the default parallel execution
+  # context. Respects the `CRYSTAL_WORKERS` environment variable, if present and
+  # valid, and otherwise defaults to the number of CPUs detected on the running
+  # computer.
   def self.default_workers_count : Int32
-    ENV["CRYSTAL_WORKERS"]?.try(&.to_i?) || Math.min(System.cpu_count.to_i, 32)
+    ENV["CRYSTAL_WORKERS"]?.try(&.to_i?) || Math.max(System.cpu_count.to_i, 1)
   end
 
   # :nodoc:
