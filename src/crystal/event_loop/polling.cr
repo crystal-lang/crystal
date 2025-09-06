@@ -232,10 +232,13 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     resume_all(file_descriptor)
   end
 
-  def close(file_descriptor : System::FileDescriptor) : Nil
+  def before_close(file_descriptor : System::FileDescriptor) : Nil
     # perform cleanup before LibC.close. Using a file descriptor after it has
     # been closed is never defined and can always lead to undefined results
     resume_all(file_descriptor)
+  end
+
+  def close(file_descriptor : System::FileDescriptor) : Nil
     file_descriptor.file_descriptor_close
   end
 
@@ -363,10 +366,13 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     end
   end
 
-  def close(socket : ::Socket) : Nil
+  def before_close(socket : ::Socket) : Nil
     # perform cleanup before LibC.close. Using a file descriptor after it has
     # been closed is never defined and can always lead to undefined results
     resume_all(socket)
+  end
+
+  def close(socket : ::Socket) : Nil
     socket.socket_close
   end
 

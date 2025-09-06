@@ -150,6 +150,10 @@ module Crystal::System::FileDescriptor
     end
   end
 
+  private def system_fcntl(cmd, arg)
+    FileDescriptor.fcntl(fd, cmd, arg)
+  end
+
   def self.fcntl(fd, cmd, arg = 0)
     raise NotImplementedError.new "Crystal::System::FileDescriptor.fcntl"
   end
