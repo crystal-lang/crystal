@@ -309,8 +309,8 @@ module Crystal
       #     tmp2 = exp2
       #     ...
       #     tmp.[]=(tmp1, tmp2, ..., tmp[tmp1, tmp2, ...] + b)
-      tmp_args = target.args.map { program.new_temp_var.as(ASTNode) }
-      tmp = program.new_temp_var
+      tmp_args = target.args.map { program.new_temp_var(node).as(ASTNode) }
+      tmp = program.new_temp_var(node)
 
       # (1) = tmp1 = exp1; tmp2 = exp2; ...; tmp = a
       tmp_assigns = Array(ASTNode).new(tmp_args.size + 1)
