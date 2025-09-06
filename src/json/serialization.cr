@@ -81,6 +81,11 @@ module JSON
   # A.from_json(%<{"a":1}>) # => A(@a=1, @b=1.0)
   # ```
   #
+  # NOTE: `JSON::Serializable` defines an internal constructor on any including
+  # type, which means the default constructor (`def initialize; end`) is absent
+  # unless explicitly defined by the user, even when all instance variables have
+  # a default initializer.
+  #
   # ### Extensions: `JSON::Serializable::Strict` and `JSON::Serializable::Unmapped`.
   #
   # If the `JSON::Serializable::Strict` module is included, unknown properties in the JSON
