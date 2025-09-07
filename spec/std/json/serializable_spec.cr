@@ -508,6 +508,30 @@ module JsonDiscriminatorBug
   end
 end
 
+abstract class SerializableFoo
+  include JSON::Serializable
+
+  module Converter
+    def self.from_json(pull : JSON::PullParser) : SerializableFoo
+      SerializableFoo.find.from_json("{}")
+    end
+  end
+
+  def self.find : SerializableFoo.class
+    SerializableBar.as(SerializableFoo.class)
+  end
+end
+
+class SerializableBar < SerializableFoo
+  @[JSON::Field(converter: SerializableFoo::Converter)]
+  getter foo : SerializableFoo = SerializableBaz.new
+end
+
+class SerializableBaz < SerializableFoo
+  def initialize
+  end
+end
+
 describe "JSON mapping" do
   it "works with record" do
     JSONAttrPoint.new(1, 2).to_json.should eq "{\"x\":1,\"y\":2}"
@@ -1175,5 +1199,9 @@ describe "JSON mapping" do
 
   it "fixes #13337" do
     JSONSomething.from_json(%({"value":{}})).value.should_not be_nil
+  end
+
+  it "fixes #16141" do
+    SerializableFoo.find.from_json("{}").should be_a(SerializableBar)
   end
 end

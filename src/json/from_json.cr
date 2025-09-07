@@ -8,7 +8,7 @@
 # Int32.from_json("1")                # => 1
 # Array(Int32).from_json("[1, 2, 3]") # => [1, 2, 3]
 # ```
-def Object.from_json(string_or_io : String | IO) : Object
+def Object.from_json(string_or_io : String | IO) : self
   parser = JSON::PullParser.new(string_or_io)
   new parser
 end
@@ -21,7 +21,7 @@ end
 # ```
 # Int32.from_json(%({"main": 1}), root: "main") # => 1
 # ```
-def Object.from_json(string_or_io : String | IO, root : String) : Object
+def Object.from_json(string_or_io : String | IO, root : String) : self
   parser = JSON::PullParser.new(string_or_io)
   parser.on_key!(root) do
     new parser
