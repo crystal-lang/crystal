@@ -176,93 +176,95 @@ module JSON
           new_from_json_pull_parser(pull)
         end
       end
-    end
 
-    def initialize(*, __pull_for_json_serializable pull : ::JSON::PullParser)
-      {% begin %}
-        {% properties = {} of Nil => Nil %}
-        {% for ivar in @type.instance_vars %}
-          {% ann = ivar.annotation(::JSON::Field) %}
-          {% unless ann && (ann[:ignore] || ann[:ignore_deserialize]) %}
-            {%
-              properties[ivar.id] = {
-                key:         ((ann && ann[:key]) || ivar).id.stringify,
-                has_default: ivar.has_default_value?,
-                default:     ivar.default_value,
-                nilable:     ivar.type.nilable?,
-                type:        ivar.type,
-                root:        ann && ann[:root],
-                converter:   ann && ann[:converter],
-                presence:    ann && ann[:presence],
-              }
-            %}
-          {% end %}
-        {% end %}
-
-        # `%var`'s type must be exact to avoid type inference issues with
-        # recursively defined serializable types
-        {% for name, value in properties %}
-          %var{name} = uninitialized ::Union({{value[:type]}})
-          %found{name} = false
-        {% end %}
-
-        %location = pull.location
-        begin
-          pull.read_begin_object
-        rescue exc : ::JSON::ParseException
-          raise ::JSON::SerializableError.new(exc.message, self.class.to_s, nil, *%location, exc)
-        end
-        until pull.kind.end_object?
-          %key_location = pull.location
-          key = pull.read_object_key
-          case key
-          {% for name, value in properties %}
-            when {{value[:key]}}
-              begin
-                {% if value[:has_default] || value[:nilable] || value[:root] %}
-                  if pull.read_null?
-                    {% if value[:nilable] %}
-                      %var{name} = nil
-                      %found{name} = true
-                    {% end %}
-                    next
-                  end
-                {% end %}
-
-                %var{name} =
-                  {% if value[:root] %} pull.on_key!({{value[:root]}}) do {% else %} begin {% end %}
-                    {% if value[:converter] %}
-                      {{value[:converter]}}.from_json(pull)
-                    {% else %}
-                      ::Union({{value[:type]}}).new(pull)
-                    {% end %}
-                  end
-                %found{name} = true
-              rescue exc : ::JSON::ParseException
-                raise ::JSON::SerializableError.new(exc.message, self.class.to_s, {{value[:key]}}, *%key_location, exc)
-              end
-          {% end %}
-          else
-            on_unknown_json_attribute(pull, key, %key_location)
-          end
-        end
-        pull.read_next
-
-        {% for name, value in properties %}
-          if %found{name}
-            @{{name}} = %var{name}
-          else
-            {% unless value[:has_default] || value[:nilable] %}
-              raise ::JSON::SerializableError.new("Missing JSON attribute: {{value[:key].id}}", self.class.to_s, nil, *%location, nil)
+      def initialize(*, __pull_for_json_serializable pull : ::JSON::PullParser)
+        {% verbatim do %}
+          {% begin %}
+            {% properties = {} of Nil => Nil %}
+            {% for ivar in @type.instance_vars %}
+              {% ann = ivar.annotation(::JSON::Field) %}
+              {% unless ann && (ann[:ignore] || ann[:ignore_deserialize]) %}
+                {%
+                  properties[ivar.id] = {
+                    key:         ((ann && ann[:key]) || ivar).id.stringify,
+                    has_default: ivar.has_default_value?,
+                    default:     ivar.default_value,
+                    nilable:     ivar.type.nilable?,
+                    type:        ivar.type,
+                    root:        ann && ann[:root],
+                    converter:   ann && ann[:converter],
+                    presence:    ann && ann[:presence],
+                  }
+                %}
+              {% end %}
             {% end %}
-          end
 
-          {% if value[:presence] %}
-            @{{name}}_present = %found{name}
+            # `%var`'s type must be exact to avoid type inference issues with
+            # recursively defined serializable types
+            {% for name, value in properties %}
+              %var{name} = uninitialized ::Union({{value[:type]}})
+              %found{name} = false
+            {% end %}
+
+            %location = pull.location
+            begin
+              pull.read_begin_object
+            rescue exc : ::JSON::ParseException
+              raise ::JSON::SerializableError.new(exc.message, self.class.to_s, nil, *%location, exc)
+            end
+            until pull.kind.end_object?
+              %key_location = pull.location
+              key = pull.read_object_key
+              case key
+              {% for name, value in properties %}
+                when {{value[:key]}}
+                  begin
+                    {% if value[:has_default] || value[:nilable] || value[:root] %}
+                      if pull.read_null?
+                        {% if value[:nilable] %}
+                          %var{name} = nil
+                          %found{name} = true
+                        {% end %}
+                        next
+                      end
+                    {% end %}
+
+                    %var{name} =
+                      {% if value[:root] %} pull.on_key!({{value[:root]}}) do {% else %} begin {% end %}
+                        {% if value[:converter] %}
+                          {{value[:converter]}}.from_json(pull)
+                        {% else %}
+                          ::Union({{value[:type]}}).new(pull)
+                        {% end %}
+                      end
+                    %found{name} = true
+                  rescue exc : ::JSON::ParseException
+                    raise ::JSON::SerializableError.new(exc.message, self.class.to_s, {{value[:key]}}, *%key_location, exc)
+                  end
+              {% end %}
+              else
+                on_unknown_json_attribute(pull, key, %key_location)
+              end
+            end
+            pull.read_next
+
+            {% for name, value in properties %}
+              if %found{name}
+                @{{name}} = %var{name}
+              else
+                {% unless value[:has_default] || value[:nilable] %}
+                  raise ::JSON::SerializableError.new("Missing JSON attribute: {{value[:key].id}}", self.class.to_s, nil, *%location, nil)
+                {% end %}
+              end
+
+              {% if value[:presence] %}
+                @{{name}}_present = %found{name}
+              {% end %}
+            {% end %}
           {% end %}
         {% end %}
-      {% end %}
-      after_initialize
+        after_initialize
+      end
     end
 
     protected def after_initialize
