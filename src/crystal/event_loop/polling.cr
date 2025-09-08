@@ -228,14 +228,11 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     end
   end
 
-  def reopened(file_descriptor : System::FileDescriptor) : Nil
-    resume_all(file_descriptor)
+  def resume_all(file_descriptor : System::FileDescriptor) : Nil
+    resume_all_impl(file_descriptor)
   end
 
   def close(file_descriptor : System::FileDescriptor) : Nil
-    # perform cleanup before LibC.close. Using a file descriptor after it has
-    # been closed is never defined and can always lead to undefined results
-    resume_all(file_descriptor)
     file_descriptor.file_descriptor_close
   end
 
@@ -363,10 +360,11 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     end
   end
 
+  def resume_all(socket : ::Socket) : Nil
+    resume_all_impl(socket)
+  end
+
   def close(socket : ::Socket) : Nil
-    # perform cleanup before LibC.close. Using a file descriptor after it has
-    # been closed is never defined and can always lead to undefined results
-    resume_all(socket)
     socket.socket_close
   end
 
@@ -400,7 +398,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     end
   end
 
-  private def resume_all(io)
+  private def resume_all_impl(io)
     return unless (index = io.__evloop_data).valid?
 
     Polling.arena.free(index) do |pd|

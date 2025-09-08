@@ -126,10 +126,13 @@ module Crystal::System::FileDescriptor
     # Mark the handle open, since we had to have dup'd a live handle.
     @closed = false
 
-    event_loop.reopened(self)
+    # resume all pending waiters so they can start waiting on the new fd
+    event_loop.resume_all(self)
   end
 
   private def system_close
+    # resume pending fibers before closing the fd
+    event_loop.resume_all(self)
     event_loop.close(self)
   end
 

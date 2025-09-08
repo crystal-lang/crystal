@@ -224,6 +224,8 @@ module Crystal::System::Socket
   end
 
   private def system_close
+    # resume pending fibers before closing the fd
+    event_loop.resume_all(self)
     event_loop.close(self)
   end
 

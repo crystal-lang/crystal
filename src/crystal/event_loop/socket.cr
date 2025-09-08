@@ -74,6 +74,13 @@ abstract class Crystal::EventLoop
     # and the source address.
     abstract def receive_from(socket : ::Socket, slice : Bytes) : Tuple(Int32, ::Socket::Address)
 
+    # Resumes fibers waiting on the socket.
+    #
+    # Optional. Only called on UNIX targets.
+    def resume_all(file_descriptor : Crystal::System::FileDescriptor) : Nil
+      raise NotImplementedError.new("#{self.class.name}#resume_all(Crystal::System::FileDescriptor)")
+    end
+
     # Closes the socket.
     abstract def close(socket : ::Socket) : Nil
   end
