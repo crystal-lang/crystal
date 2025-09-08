@@ -285,7 +285,7 @@ class HTTP::Request
   end
 
   # Sets request's query component.
-  def query=(value : String) : String
+  def query=(value : String?) : String?
     uri.query = value
     update_query_params
     value
