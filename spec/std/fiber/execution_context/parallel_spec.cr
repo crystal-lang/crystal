@@ -53,7 +53,7 @@ describe Fiber::ExecutionContext::Parallel do
 
       ctx.spawn do
         while running.get(:relaxed)
-          sleep(100.microseconds)
+          sleep(10.microseconds)
         end
       ensure
         wg.done
