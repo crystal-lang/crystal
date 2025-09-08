@@ -138,7 +138,7 @@ end
                        } %}
   def {{type.id}}.new(pull : JSON::PullParser)
     # TODO: use `PullParser#read?` instead
-    location = pull.location
+    location = pull.location_i64
     value =
       {% if type == "UInt64" || type == "UInt128" || type == "Int128" %}
         pull.read_raw
@@ -282,7 +282,7 @@ def NamedTuple.new(pull : JSON::PullParser)
       {% end %}
     {% end %}
 
-    location = pull.location
+    location = pull.location_i64
 
     pull.read_object do |key|
       case key
@@ -389,7 +389,7 @@ module Enum::ValueConverter(T)
 end
 
 def Union.new(pull : JSON::PullParser)
-  location = pull.location
+  location = pull.location_i64
 
   {% begin %}
     case pull.kind
