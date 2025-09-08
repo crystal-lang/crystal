@@ -56,7 +56,7 @@ require "./execution_context/*"
 #
 # ## The default execution context
 #
-# The Crystal runtime starts a default execution context and exposed as
+# The Crystal runtime starts a default execution context exposed as
 # `Fiber::ExecutionContext.default`. This is where the main fiber is running.
 #
 # Its parallelism is set to 1 for backwards compatibility reasons; Crystal used
