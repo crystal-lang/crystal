@@ -47,7 +47,7 @@ describe Crystal::FdLock do
       ready.wait
       lock.reference { }
 
-      release.receive.should_not eq("timeout")
+      release.receive.should eq("ok")
     end
 
     it "raises when closed" do
