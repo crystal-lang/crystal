@@ -1,5 +1,5 @@
 require "spec"
-require "../../../src/crystal/fd_lock"
+require "crystal/fd_lock"
 require "wait_group"
 
 describe Crystal::FdLock do
