@@ -123,8 +123,7 @@ module Crystal::System::FileDescriptor
         if LibC.dup2(other.fd, fd) == -1
           raise IO::Error.from_errno("Could not reopen file descriptor")
         end
-        flags = other.close_on_exec? ? LibC::FD_CLOEXEC : 0
-        FileDescriptor.fcntl(fd, LibC::F_SETFD, flags)
+        self.close_on_exec = other.close_on_exec?
       end
     {% end %}
 
