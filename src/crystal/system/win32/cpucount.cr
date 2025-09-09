@@ -7,6 +7,10 @@ module Crystal::System
   end
 
   def self.effective_cpu_count
-    -1
+    if LibC.GetProcessAffinityMask(LibC.GetCurrentProcess, out process_affinity, out _) == 0
+      -1
+    else
+      process_affinity.popcount
+    end
   end
 end
