@@ -14,7 +14,8 @@ module System
     Crystal::System.hostname
   end
 
-  # Returns the number of logical processors available to the system.
+  # Returns the number of logical processors available to the system. Returns -1
+  # when the value is unknown.
   #
   # ```
   # System.cpu_count # => 4
