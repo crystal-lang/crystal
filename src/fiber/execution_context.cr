@@ -87,15 +87,22 @@ module Fiber::ExecutionContext
     @@monitor = Monitor.new
   end
 
-  # Returns the number of threads to start in the default multi threaded
-  # execution context. Respects the `CRYSTAL_WORKERS` environment variable
-  # and otherwise returns the potential parallelism of the CPU (number of
-  # hardware threads).
+  # Returns the default maximum parallelism. Can be used to resize the default
+  # parallel execution context for example.
   #
-  # Currently unused because the default context is single threaded for
-  # now (this might change later with compilation flags).
+  # Respects the `CRYSTAL_WORKERS` environment variable if present and valid,
+  # and otherwise defaults to the minimum number of logical CPUs available to
+  # the process or available on the computer.
   def self.default_workers_count : Int32
-    ENV["CRYSTAL_WORKERS"]?.try(&.to_i?) || Math.min(System.cpu_count.to_i, 32)
+    if count = ENV["CRYSTAL_WORKERS"]?.try(&.to_i?)
+      return count.clamp(1..)
+    end
+
+    total = System.cpu_count.to_i.clamp(1..)
+    effective = Crystal::System.effective_cpu_count.to_i.clamp(1..)
+    # TODO: query for CPU limits (e.g. linux/cgroup, freebsd/rctl, ...)
+
+    Math.min(total, effective)
   end
 
   # :nodoc:
