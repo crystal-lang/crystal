@@ -22,7 +22,7 @@ module Crystal::System
   end
 
   def self.effective_cpu_count
-    {% if flag?(:linux) %}
+    {% if flag?(:linux) && !flag?(:interpreted) %}
       # we use the syscall because it returns the number of bytes to check in
       # the set, while glibc always returns 0 and would require to zero the
       # buffer and check every byte
