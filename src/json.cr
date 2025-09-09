@@ -120,21 +120,52 @@ module JSON
 
   # Exception thrown on a JSON parse error.
   class ParseException < Error
-    getter line_number : Int32
-    getter column_number : Int32
+    @line_number : Int64
+    @column_number : Int64
 
-    def initialize(message, @line_number, @column_number, cause = nil)
+    def line_number : Int32
+      JSON.saturate_to_i32(@line_number)
+    end
+
+    def column_number : Int32
+      JSON.saturate_to_i32(@column_number)
+    end
+
+    def line_number_i64 : Int64
+      @line_number
+    end
+
+    def column_number_i64
+      @column_number
+    end
+
+    def initialize(message, line_number, column_number, cause = nil)
+      @line_number = line_number.to_i64
+      @column_number = column_number.to_i64
       super "#{message} at line #{@line_number}, column #{@column_number}", cause
     end
 
     def location : {Int32, Int32}
       {line_number, column_number}
     end
+
+    def location_i64 : {Int64, Int64}
+      {line_number_i64, column_number_i64}
+    end
   end
 
   # Parses a JSON document as a `JSON::Any`.
   def self.parse(input : String | IO) : Any
     Parser.new(input).parse
+  end
+
+  # :nodoc:
+  def self.saturate_to_i32(num)
+    if num > Int32::MAX
+      Int32::MAX
+    else
+      num.to_i32
+    end
   end
 end
 
