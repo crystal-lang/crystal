@@ -416,25 +416,25 @@ class Socket < IO
 
   # Returns the modified *optval*.
   protected def getsockopt(optname, optval, level = LibC::SOL_SOCKET)
-    system_getsockopt(fd, optname, optval, level)
+    system_getsockopt(optname, optval, level)
   end
 
   protected def getsockopt(optname, optval, level = LibC::SOL_SOCKET, &)
-    system_getsockopt(fd, optname, optval, level) { |value| yield value }
+    system_getsockopt(optname, optval, level) { |value| yield value }
   end
 
   protected def setsockopt(optname, optval, level = LibC::SOL_SOCKET)
-    system_setsockopt(fd, optname, optval, level)
+    system_setsockopt(optname, optval, level)
   end
 
   private def getsockopt_bool(optname, level = LibC::SOL_SOCKET)
-    ret = getsockopt optname, 0, level
+    ret = system_getsockopt optname, 0, level
     ret != 0
   end
 
   private def setsockopt_bool(optname, optval : Bool, level = LibC::SOL_SOCKET)
     v = optval ? 1 : 0
-    setsockopt optname, v, level
+    system_setsockopt optname, v, level
     optval
   end
 
@@ -482,7 +482,7 @@ class Socket < IO
   end
 
   def fcntl(cmd, arg = 0)
-    self.class.fcntl fd, cmd, arg
+    system_fcntl(cmd, arg)
   end
 
   # Finalizes the socket resource.
