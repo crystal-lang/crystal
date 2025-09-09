@@ -89,15 +89,15 @@ module Crystal::System::Socket
     raise NotImplementedError.new "Crystal::System::Socket#system_linge="
   end
 
-  private def system_getsockopt(fd, optname, optval, level = LibC::SOL_SOCKET, &)
+  private def system_getsockopt(optname, optval, level = LibC::SOL_SOCKET, &)
     raise NotImplementedError.new "Crystal::System::Socket#system_getsockopt"
   end
 
-  private def system_getsockopt(fd, optname, optval, level = LibC::SOL_SOCKET)
+  private def system_getsockopt(optname, optval, level = LibC::SOL_SOCKET)
     raise NotImplementedError.new "Crystal::System::Socket#system_getsockopt"
   end
 
-  private def system_setsockopt(fd, optname, optval, level = LibC::SOL_SOCKET)
+  private def system_setsockopt(optname, optval, level = LibC::SOL_SOCKET)
     raise NotImplementedError.new "Crystal::System::Socket#system_setsockopt"
   end
 
@@ -137,6 +137,10 @@ module Crystal::System::Socket
     r = LibC.fcntl fd, cmd, arg
     raise ::Socket::Error.from_errno("fcntl() failed") if r == -1
     r
+  end
+
+  private def system_fcntl(cmd, arg = 0)
+    FileDescriptor.system_fcntl(fd, cmd, arg)
   end
 
   private def system_tty?
