@@ -89,7 +89,7 @@ module Fiber::ExecutionContext
   # valid, and otherwise defaults to the number of CPUs detected on the running
   # computer.
   def self.default_workers_count : Int32
-    ENV["CRYSTAL_WORKERS"]?.try(&.to_i?) || Math.max(System.cpu_count.to_i, 1)
+    ENV["CRYSTAL_WORKERS"]?.try(&.to_i?) || Math.max(System.cpu_count.to_i, 32)
   end
 
   # :nodoc:
