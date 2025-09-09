@@ -150,7 +150,10 @@ class Crystal::Type
         return if !@raise && !type
         type = type.not_nil!
 
-        check_type_can_be_stored(ident, type, "can't use #{type} in unions")
+        unless type.can_be_stored?
+          ident.raise "can't use #{type} in unions yet, use a more specific type" if @raise
+          return
+        end
 
         type.virtual_type
       end
