@@ -133,7 +133,7 @@ class IO::FileDescriptor < IO
   end
 
   def fcntl(cmd : Int, arg : Int = 0) : Int
-    Crystal::System::FileDescriptor.fcntl(fd, cmd, arg)
+    system_fcntl(cmd, arg)
   end
 
   # Returns a `File::Info` object for this file descriptor, or raises

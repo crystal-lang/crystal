@@ -1204,7 +1204,9 @@ module Crystal
     end
 
     def self.check_type_allowed_as_proc_argument(node, type)
-      Crystal.check_type_can_be_stored(node, type, "can't use #{type.to_s(generic_args: false)} as a Proc argument type")
+      unless type.can_be_stored?
+        node.raise "can't use #{type.to_s(generic_args: false)} as a Proc argument type yet, use a more specific type"
+      end
     end
 
     def visit(node : ProcPointer)
@@ -1250,7 +1252,7 @@ module Crystal
         matching_fun = obj.type.lookup_first_def(node.name, false).as(External?)
         node.raise "undefined fun '#{node.name}' for #{obj.type}" unless matching_fun
 
-        if node.args.empty?
+        if !node.has_any_args?
           call.args = matching_fun.args.map_with_index do |arg, i|
             Var.new("arg#{i}", arg.type).as(ASTNode)
           end
@@ -1566,7 +1568,7 @@ module Crystal
             end
           end
         when ProcPointer
-          next unless arg.args.empty?
+          next if arg.has_any_args?
 
           check_lib_call_arg(method, index) do |method_arg_type|
             method_arg_type.arg_types.each do |arg_type|
