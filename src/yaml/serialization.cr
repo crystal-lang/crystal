@@ -187,96 +187,98 @@ module YAML
           new_from_yaml_node(ctx, node)
         end
       end
-    end
 
-    def initialize(*, __context_for_yaml_serializable ctx : YAML::ParseContext, __node_for_yaml_serializable node : ::YAML::Nodes::Node)
-      {% begin %}
-        {% properties = {} of Nil => Nil %}
-        {% for ivar in @type.instance_vars %}
-          {% ann = ivar.annotation(::YAML::Field) %}
-          {% unless ann && (ann[:ignore] || ann[:ignore_deserialize]) %}
-            {%
-              properties[ivar.id] = {
-                key:         ((ann && ann[:key]) || ivar).id.stringify,
-                has_default: ivar.has_default_value?,
-                default:     ivar.default_value,
-                nilable:     ivar.type.nilable?,
-                type:        ivar.type,
-                converter:   ann && ann[:converter],
-                presence:    ann && ann[:presence],
-              }
-            %}
-          {% end %}
-        {% end %}
+      def initialize(*, __context_for_yaml_serializable ctx : YAML::ParseContext, __node_for_yaml_serializable node : ::YAML::Nodes::Node)
+        {% verbatim do %}
+          {% begin %}
+            {% properties = {} of Nil => Nil %}
+            {% for ivar in @type.instance_vars %}
+              {% ann = ivar.annotation(::YAML::Field) %}
+              {% unless ann && (ann[:ignore] || ann[:ignore_deserialize]) %}
+                {%
+                  properties[ivar.id] = {
+                    key:         ((ann && ann[:key]) || ivar).id.stringify,
+                    has_default: ivar.has_default_value?,
+                    default:     ivar.default_value,
+                    nilable:     ivar.type.nilable?,
+                    type:        ivar.type,
+                    converter:   ann && ann[:converter],
+                    presence:    ann && ann[:presence],
+                  }
+                %}
+              {% end %}
+            {% end %}
 
-        # `%var`'s type must be exact to avoid type inference issues with
-        # recursively defined serializable types
-        {% for name, value in properties %}
-          %var{name} = uninitialized ::Union({{value[:type]}})
-          %found{name} = false
-        {% end %}
-
-        case node
-        when YAML::Nodes::Mapping
-          YAML::Schema::Core.each(node) do |key_node, value_node|
-            unless key_node.is_a?(YAML::Nodes::Scalar)
-              key_node.raise "Expected scalar as key for mapping"
-            end
-
-            key = key_node.value
-
-            case key
+            # `%var`'s type must be exact to avoid type inference issues with
+            # recursively defined serializable types
             {% for name, value in properties %}
-              when {{value[:key]}}
-                begin
-                  {% if value[:has_default] || value[:nilable] %}
-                    if YAML::Schema::Core.parse_null?(value_node)
-                      {% if value[:nilable] %}
-                        %var{name} = nil
-                        %found{name} = true
-                      {% end %}
-                      next
-                    end
-                  {% end %}
+              %var{name} = uninitialized ::Union({{value[:type]}})
+              %found{name} = false
+            {% end %}
 
-                  %var{name} =
-                    {% if value[:converter] %}
-                      {{value[:converter]}}.from_yaml(ctx, value_node)
-                    {% else %}
-                      ::Union({{value[:type]}}).new(ctx, value_node)
-                    {% end %}
-                  %found{name} = true
+            case node
+            when YAML::Nodes::Mapping
+              YAML::Schema::Core.each(node) do |key_node, value_node|
+                unless key_node.is_a?(YAML::Nodes::Scalar)
+                  key_node.raise "Expected scalar as key for mapping"
                 end
-            {% end %}
+
+                key = key_node.value
+
+                case key
+                {% for name, value in properties %}
+                  when {{value[:key]}}
+                    begin
+                      {% if value[:has_default] || value[:nilable] %}
+                        if YAML::Schema::Core.parse_null?(value_node)
+                          {% if value[:nilable] %}
+                            %var{name} = nil
+                            %found{name} = true
+                          {% end %}
+                          next
+                        end
+                      {% end %}
+
+                      %var{name} =
+                        {% if value[:converter] %}
+                          {{value[:converter]}}.from_yaml(ctx, value_node)
+                        {% else %}
+                          ::Union({{value[:type]}}).new(ctx, value_node)
+                        {% end %}
+                      %found{name} = true
+                    end
+                {% end %}
+                else
+                  on_unknown_yaml_attribute(ctx, key, key_node, value_node)
+                end
+              end
+            when YAML::Nodes::Scalar
+              if node.value.empty? && node.style.plain? && !node.tag
+                # We consider an empty scalar as an empty mapping
+              else
+                node.raise "Expected mapping, not #{node.class}"
+              end
             else
-              on_unknown_yaml_attribute(ctx, key, key_node, value_node)
+              node.raise "Expected mapping, not #{node.class}"
             end
-          end
-        when YAML::Nodes::Scalar
-          if node.value.empty? && node.style.plain? && !node.tag
-            # We consider an empty scalar as an empty mapping
-          else
-            node.raise "Expected mapping, not #{node.class}"
-          end
-        else
-          node.raise "Expected mapping, not #{node.class}"
-        end
 
-        {% for name, value in properties %}
-          if %found{name}
-            @{{name}} = %var{name}
-          else
-            {% unless value[:has_default] || value[:nilable] %}
-              node.raise "Missing YAML attribute: {{value[:key].id}}"
+            {% for name, value in properties %}
+              if %found{name}
+                @{{name}} = %var{name}
+              else
+                {% unless value[:has_default] || value[:nilable] %}
+                  node.raise "Missing YAML attribute: {{value[:key].id}}"
+                {% end %}
+              end
+
+              {% if value[:presence] %}
+                @{{name}}_present = %found{name}
+              {% end %}
             {% end %}
-          end
-
-          {% if value[:presence] %}
-            @{{name}}_present = %found{name}
           {% end %}
         {% end %}
-      {% end %}
-      after_initialize
+        after_initialize
+      end
     end
 
     protected def after_initialize

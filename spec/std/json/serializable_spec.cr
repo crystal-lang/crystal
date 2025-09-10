@@ -386,6 +386,13 @@ struct JSONAttrPersonWithSelectiveSerialization
   end
 end
 
+struct JSONAttrWithGenericConverter(T)
+  include JSON::Serializable
+
+  @[JSON::Field(converter: T)]
+  property value : Time
+end
+
 abstract class JSONShape
   include JSON::Serializable
 
@@ -505,6 +512,16 @@ module JsonDiscriminatorBug
   end
 
   class C < B
+  end
+end
+
+class JSONInitializeOpts
+  include JSON::Serializable
+
+  property value : Int32
+
+  def initialize(**opts)
+    @value = opts.size
   end
 end
 
@@ -1175,5 +1192,13 @@ describe "JSON mapping" do
 
   it "fixes #13337" do
     JSONSomething.from_json(%({"value":{}})).value.should_not be_nil
+  end
+
+  it "works when type has constructor with double splat parameter (#16140)" do
+    JSONInitializeOpts.from_json(%({"value":123})).value.should eq(123)
+  end
+
+  it "supports generic type variables in converters" do
+    JSONAttrWithGenericConverter(Time::EpochConverter).from_json(%({"value":1459859781})).value.should eq(Time.unix(1459859781))
   end
 end
