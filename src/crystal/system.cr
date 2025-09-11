@@ -8,7 +8,7 @@ module Crystal::System
   # def self.cpu_count
 
   # Returns the number of logical processors available to the process. Should be
-  # less than or equal to `.cpu_count`. Returns -1 on errors on when unknown.
+  # less than or equal to `.cpu_count`. Returns -1 on errors or when unknown.
   def self.effective_cpu_count
     -1
   end
