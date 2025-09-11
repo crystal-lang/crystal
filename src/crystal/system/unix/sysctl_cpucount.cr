@@ -2,6 +2,10 @@
 
 require "c/sysctl"
 
+{% if flag?(:freebsd) %}
+  require "c/sys/cpuset"
+{% end %}
+
 module Crystal::System
   def self.cpu_count
     mib = Int32[LibC::CTL_HW, LibC::HW_NCPU]
