@@ -3,9 +3,15 @@ module Crystal::System
   # Returns the hostname
   # def self.hostname
 
-  # Returns the number of logical processors available to the system.
-  #
+  # Returns the number of logical processors available to the system. Returns -1
+  # on errors or when unknown.
   # def self.cpu_count
+
+  # Returns the number of logical processors available to the process. Should be
+  # less than or equal to `.cpu_count`. Returns -1 on errors on when unknown.
+  def self.effective_cpu_count
+    -1
+  end
 end
 
 {% if flag?(:wasi) %}
