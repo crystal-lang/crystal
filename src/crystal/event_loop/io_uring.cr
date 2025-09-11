@@ -169,6 +169,16 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
 
   # file descriptor interface, see Crystal::EventLoop::FileDescriptor
 
+  def pipe(read_blocking : Bool?, write_blocking : Bool?) : {IO::FileDescriptor, IO::FileDescriptor}
+    r, w = System::FileDescriptor.system_pipe
+    System::FileDescriptor.set_blocking(r, false) if read_blocking == false
+    System::FileDescriptor.set_blocking(w, false) if write_blocking == false
+    {
+      IO::FileDescriptor.new(handle: r),
+      IO::FileDescriptor.new(handle: w),
+    }
+  end
+
   def open(path : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : {System::FileDescriptor::Handle, Bool} | Errno
     flags |= LibC::O_CLOEXEC
     blocking = true if blocking.nil?
