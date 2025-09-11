@@ -260,6 +260,17 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
 
   # socket interface, see Crystal::EventLoop::Socket
 
+  def socket(family : ::Socket::Family, type : ::Socket::Type, protocol : ::Socket::Protocol, blocking : Bool?) : {::Socket::Handle, Bool}
+    blocking = true if blocking.nil?
+    socket = System::Socket.socket(family, type, protocol, blocking)
+    {socket, blocking}
+  end
+
+  def socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol) : Tuple({::Socket::Handle, ::Socket::Handle}, Bool)
+    socket = System::Socket.socketpair(type, protocol, blocking: true)
+    {socket, true}
+  end
+
   def read(socket : ::Socket, slice : Bytes) : Int32
     async_rw(LibC::IORING_OP_READ, socket, slice, socket.@read_timeout) do |errno|
       case errno
