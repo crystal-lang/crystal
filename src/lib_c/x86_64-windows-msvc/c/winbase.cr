@@ -83,4 +83,6 @@ lib LibC
 
   fun LookupAccountNameW(lpSystemName : LPWSTR, lpAccountName : LPWSTR, sid : SID*, cbSid : DWORD*, referencedDomainName : LPWSTR, cchReferencedDomainName : DWORD*, peUse : SID_NAME_USE*) : BOOL
   fun LookupAccountSidW(lpSystemName : LPWSTR, sid : SID*, name : LPWSTR, cchName : DWORD*, referencedDomainName : LPWSTR, cchReferencedDomainName : DWORD*, peUse : SID_NAME_USE*) : BOOL
+
+  fun GetProcessAffinityMask(hProcess : HANDLE, lpProcessAffinityMask : DWORD_PTR*, lpSystemAffinityMask : DWORD_PTR*) : BOOL
 end
