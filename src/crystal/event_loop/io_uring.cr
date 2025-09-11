@@ -15,6 +15,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   def self.supported? : Bool
     return false unless System::IoUring.supported?
 
+    @@supports_openat = System::IoUring.supports_opcode?(LibC::IORING_OP_OPENAT)
     @@supports_sendto = System::IoUring.supports_opcode?(LibC::IORING_OP_SEND)
 
     System::IoUring.supports_feature?(LibC::IORING_FEAT_NODROP) &&
@@ -167,6 +168,27 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   end
 
   # file descriptor interface, see Crystal::EventLoop::FileDescriptor
+
+  def open(path : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : {System::FileDescriptor::Handle, Bool} | Errno
+    flags |= LibC::O_CLOEXEC
+    blocking = true if blocking.nil?
+
+    if @@supports_openat
+      fd = async(LibC::IORING_OP_OPENAT, opcode) do |sqe|
+        sqe.value.fd = LibC::AT_FDCWD
+        sqe.value.addr = path.to_unsafe.address.to_u64!
+        sqe.value.open_flags = flags
+        sqe.value.len = permissions
+      end
+      return Errno.new(-fd) if fd < 0
+    else
+      fd = LibC.open(path, flags, permissions)
+      return Errno.value if fd == -1
+    end
+
+    System::FileDescriptor.set_blocking(fd, false) if blocking
+    {fd, blocking}
+  end
 
   def read(file_descriptor : System::FileDescriptor, slice : Bytes) : Int32
     async_rw(LibC::IORING_OP_READ, file_descriptor, slice, file_descriptor.@read_timeout) do |errno|
