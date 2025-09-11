@@ -56,7 +56,7 @@ describe System::Group do
 
     it "returns nil on nonexistent group" do
       group = System::Group.find_by?(name: INVALID_GROUP_NAME)
-      group.should eq(nil)
+      group.should be_nil
     end
   end
 
@@ -71,7 +71,7 @@ describe System::Group do
 
     it "returns nil on nonexistent group id" do
       group = System::Group.find_by?(id: INVALID_GROUP_ID)
-      group.should eq(nil)
+      group.should be_nil
     end
   end
 

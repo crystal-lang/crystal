@@ -23,7 +23,7 @@ end
 
 describe Doc::MarkdDocRenderer do
   describe "expand_code_links" do
-    program = semantic("
+    program = semantic(<<-CRYSTAL, wants_doc: true).program
       class Base
         def foo
         end
@@ -63,7 +63,7 @@ describe Doc::MarkdDocRenderer do
         def bar; end
         def self.baz; end
       end
-      ", wants_doc: true).program
+      CRYSTAL
     generator = Doc::Generator.new(program, [""])
 
     base = generator.type(program.types["Base"])

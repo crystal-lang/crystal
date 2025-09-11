@@ -273,7 +273,7 @@ record PullRequest,
   end
 
   def clean_title
-    title.sub(/^\[?(?:#{type}|#{sub_topic})(?::|\]:?) /i, "").sub(/\s*\[Backport [^\]]+\]\s*/, "")
+    title.sub(/\s*\[Backport [^\]]+\]\s*/, "").sub(/^\[?(?:#{type}|#{sub_topic})(?::|\]:?) /i, "")
   end
 
   def backported?
@@ -338,7 +338,7 @@ class ChangelogEntry
 
   def to_s(io : IO)
     if sub_topic = pr.sub_topic
-      io << "*(" << pr.sub_topic << ")* "
+      io << "*(" << sub_topic << ")* "
     end
     if pr.labels.includes?("security")
       io << "**[security]** "

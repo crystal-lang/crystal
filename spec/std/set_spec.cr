@@ -426,6 +426,22 @@ describe "Set" do
     end
   end
 
+  describe "#select!" do
+    it "keeps only elements that evaluate to true" do
+      set = Set{1, 2, 3}
+      set.select! { |n| n < 2 }.should be(set)
+      set.should eq(Set{1})
+    end
+  end
+
+  describe "#reject!" do
+    it "returns self if changes were made" do
+      set = Set{1, 2, 3}
+      set.reject! { |n| n < 2 }.should be(set)
+      set.should eq(Set{2, 3})
+    end
+  end
+
   describe "#rehash" do
     it "rehashes" do
       a = [1]

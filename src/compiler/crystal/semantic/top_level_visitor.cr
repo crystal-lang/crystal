@@ -120,7 +120,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         when node.splat_index
           node.raise "BUG: Expected ReferenceStorageType to have no splat parameter"
         end
-        type = GenericReferenceStorageType.new @program, scope, name, @program.value, type_vars
+        type = GenericReferenceStorageType.new @program, scope, name, @program.value, type_vars, false
         type.declare_instance_var("@type_id", @program.int32)
         type.can_be_stored = false
       end
@@ -364,6 +364,9 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     end
 
     alias_type = AliasType.new(@program, scope, name, node.value)
+    process_annotations(annotations) do |annotation_type, ann|
+      alias_type.add_annotation(annotation_type, ann)
+    end
     attach_doc alias_type, node, annotations
     scope.types[name] = alias_type
 
@@ -851,7 +854,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     node.expressions.each_with_index do |child, i|
       begin
         child.accept self
-      rescue SkipMacroException
+      rescue ex : SkipMacroException
+        @program.macro_expansion_error_hook.try &.call(ex.cause) if ex.is_a? SkipMacroCodeCoverageException
         node.expressions.delete_at(i..-1)
         break
       end
@@ -1124,6 +1128,10 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       # OK
     else
       node_name.raise "#{type} is not a module, it's a #{type.type_desc}"
+    end
+
+    if node_name.is_a?(Path)
+      @program.check_deprecated_type(type, node_name)
     end
 
     begin

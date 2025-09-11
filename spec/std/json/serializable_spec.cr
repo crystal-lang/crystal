@@ -386,6 +386,13 @@ struct JSONAttrPersonWithSelectiveSerialization
   end
 end
 
+struct JSONAttrWithGenericConverter(T)
+  include JSON::Serializable
+
+  @[JSON::Field(converter: T)]
+  property value : Time
+end
+
 abstract class JSONShape
   include JSON::Serializable
 
@@ -505,6 +512,16 @@ module JsonDiscriminatorBug
   end
 
   class C < B
+  end
+end
+
+class JSONInitializeOpts
+  include JSON::Serializable
+
+  property value : Int32
+
+  def initialize(**opts)
+    @value = opts.size
   end
 end
 
@@ -764,38 +781,38 @@ describe "JSON mapping" do
 
     it "bool" do
       json = JSONAttrWithDefaults.from_json(%({}))
-      json.c.should eq true
+      json.c.should be_true
       typeof(json.c).should eq Bool
-      json.d.should eq false
+      json.d.should be_false
       typeof(json.d).should eq Bool
 
       json = JSONAttrWithDefaults.from_json(%({"c":false}))
-      json.c.should eq false
+      json.c.should be_false
       json = JSONAttrWithDefaults.from_json(%({"c":true}))
-      json.c.should eq true
+      json.c.should be_true
 
       json = JSONAttrWithDefaults.from_json(%({"d":false}))
-      json.d.should eq false
+      json.d.should be_false
       json = JSONAttrWithDefaults.from_json(%({"d":true}))
-      json.d.should eq true
+      json.d.should be_true
     end
 
     it "with nilable" do
       json = JSONAttrWithDefaults.from_json(%({}))
 
-      json.e.should eq false
+      json.e.should be_false
       typeof(json.e).should eq(Bool | Nil)
 
       json.f.should eq 1
       typeof(json.f).should eq(Int32 | Nil)
 
-      json.g.should eq nil
+      json.g.should be_nil
       typeof(json.g).should eq(Int32 | Nil)
 
       json = JSONAttrWithDefaults.from_json(%({"e":false}))
-      json.e.should eq false
+      json.e.should be_false
       json = JSONAttrWithDefaults.from_json(%({"e":true}))
-      json.e.should eq true
+      json.e.should be_true
     end
 
     it "create new array every time" do
@@ -1175,5 +1192,13 @@ describe "JSON mapping" do
 
   it "fixes #13337" do
     JSONSomething.from_json(%({"value":{}})).value.should_not be_nil
+  end
+
+  it "works when type has constructor with double splat parameter (#16140)" do
+    JSONInitializeOpts.from_json(%({"value":123})).value.should eq(123)
+  end
+
+  it "supports generic type variables in converters" do
+    JSONAttrWithGenericConverter(Time::EpochConverter).from_json(%({"value":1459859781})).value.should eq(Time.unix(1459859781))
   end
 end

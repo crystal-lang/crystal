@@ -5,13 +5,13 @@ require "../support/thread"
 pending_interpreted describe: Thread do
   it "allows passing an argumentless fun to execute" do
     a = 0
-    thread = new_thread { a = 1; 10 }
+    thread = Thread.new { a = 1; 10 }
     thread.join
     a.should eq(1)
   end
 
   it "raises inside thread and gets it on join" do
-    thread = new_thread { raise "OH NO" }
+    thread = Thread.new { raise "OH NO" }
     expect_raises Exception, "OH NO" do
       thread.join
     end
@@ -19,7 +19,7 @@ pending_interpreted describe: Thread do
 
   it "returns current thread object" do
     current = nil
-    thread = new_thread { current = Thread.current }
+    thread = Thread.new { current = Thread.current }
     thread.join
     current.should be(thread)
     current.should_not be(Thread.current)
@@ -32,7 +32,7 @@ pending_interpreted describe: Thread do
   it "yields the processor" do
     done = false
 
-    thread = new_thread do
+    thread = Thread.new do
       3.times { Thread.yield }
       done = true
     end
@@ -46,13 +46,13 @@ pending_interpreted describe: Thread do
 
   it "names the thread" do
     {% if flag?(:execution_context) %}
-      Thread.current.name.should eq("DEFAULT")
+      Thread.current.name.should eq("DEFAULT-0")
     {% else %}
       Thread.current.name.should be_nil
     {% end %}
 
     name = nil
-    thread = new_thread(name: "some-name") do
+    thread = Thread.new(name: "some-name") do
       name = Thread.current.name
     end
     thread.name.should eq("some-name")

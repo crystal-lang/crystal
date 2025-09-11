@@ -160,6 +160,13 @@ Comma separated list of types of output for the compiler to emit.
 You can use this to see the generated LLVM IR, LLVM bitcode, assembly, and object files.
 .RE
 .sp
+\fB\-\-x86\-asm\-syntax\fP [att|intel]
+.RS 4
+Select the assembly dialect for \fB\-\-emit=asm\fP. The default is \f(CRatt\fP, which stands
+for the AT&T syntax supported by tools like the GNU Assembler. \f(CRintel\fP selects
+the Intel syntax which is preferred for Windows tools.
+.RE
+.sp
 \fB\-\-frame\-pointers\fP [auto|always|non\-leaf]
 .RS 4
 Control the preservation of frame pointers. The default value,
@@ -198,8 +205,8 @@ documentation available on the official web site.
 .RS 4
 Specify a specific CPU to generate code for. This will pass a
 \-mcpu flag to LLVM, and is only intended to be used for cross\-
-compilation. For a list of available CPUs, invoke "llvm\-as <
-/dev/null | llc \-march=xyz \-mcpu=help".  Passing \-\-mcpu native
+compilation. For a list of available CPUs, pass \-\-mcpu help
+when building any Crystal source code.  Passing \-\-mcpu native
 will pass the host CPU name to tune performance for the host.
 .RE
 .sp
@@ -212,7 +219,7 @@ flag to LLVM, and is only intended to be used for cross\-compilation. For a list
 /dev/null | llc \-march=xyz \-mattr=help".
 .RE
 .sp
-\fB\-\-mcmodel\fP default|kernel|small|medium|large
+\fB\-\-mcmodel\fP default|kernel|tiny|small|medium|large
 .RS 4
 Specifies a specific code model to generate code for. This will
 pass a \-\-code\-model flag to LLVM.
@@ -411,6 +418,11 @@ prints only the value of each named variable on its own line.
 Variables:
 .sp
 \fBCRYSTAL_CACHE_DIR\fP
+.RS 4
+Please see ENVIRONMENT VARIABLES.
+.RE
+.sp
+\fBCRYSTAL_EXEC_PATH\fP
 .RS 4
 Please see ENVIRONMENT VARIABLES.
 .RE
@@ -805,6 +817,9 @@ Defines path where Crystal caches partial compilation results for faster
 subsequent builds. This path is also used to temporarily store executables
 when Crystal programs are run with \*(Aq\fBcrystal\fP run\*(Aq rather than \*(Aq\fBcrystal\fP
 build\*(Aq.
+.SS "CRYSTAL_EXEC_PATH"
+.sp
+Determines the path where crystal looks for external sub-commands.
 .SS "CRYSTAL_LIBRARY_PATH"
 .sp
 Defines paths where Crystal searches for (binary) libraries. Multiple paths

@@ -128,16 +128,8 @@ module Crystal
 
     def create_debug_type(type : EnumType, original_type : Type)
       elements = type.types.map do |name, item|
-        str_value = item.as?(Const).try &.value.as?(NumberLiteral).try &.value
-
-        value =
-          if type.base_type.kind.unsigned_int?
-            str_value.try(&.to_u64?) || 0_u64
-          else
-            str_value.try(&.to_i64?) || 0_i64
-          end
-
-        di_builder.create_enumerator(name, value)
+        value = item.as?(Const).try &.value.as?(NumberLiteral).try &.integer_value
+        di_builder.create_enumerator(name, value || 0)
       end
 
       size_in_bits = type.base_type.kind.bytesize

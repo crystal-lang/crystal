@@ -104,6 +104,8 @@ regex by using the *-e* flag.
 Show implementations for a given call. Use *--cursor*  to specify the cursor position. The format for the cursor position
 is file:line:column.
 
+*crystal-tool-macro_code_coverage*::  Generate a macro code coverage report.
+
 *crystal-tool-types*::  Show type of main variables of file.
 
 *crystal-tool-unreachable(1)*:: Identify methods that are never called
@@ -130,6 +132,9 @@ Defines path where Crystal caches partial compilation results for faster
 subsequent builds. This path is also used to temporarily store executables
 when Crystal programs are run with '*crystal* run' rather than '*crystal*
 build'.
+
+=== CRYSTAL_EXEC_PATH
+Determines the path where *crystal* looks for external sub-commands.
 
 === CRYSTAL_LIBRARY_PATH
 Defines paths where Crystal searches for (binary) libraries. Multiple paths

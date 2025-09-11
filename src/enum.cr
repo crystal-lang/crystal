@@ -446,10 +446,10 @@ abstract struct Enum
   # Color.from_value(0) # => Color::Red
   # Color.from_value(1) # => Color::Green
   # Color.from_value(2) # => Color::Blue
-  # Color.from_value(3) # raises Exception
+  # Color.from_value(3) # raises ArgumentError
   # ```
   def self.from_value(value : Int) : self
-    from_value?(value) || raise "Unknown enum #{self} value: #{value}"
+    from_value?(value) || raise ArgumentError.new("Unknown enum #{self} value: #{value}")
   end
 
   # Returns `true` if the given *value* is an enum member, otherwise `false`.
@@ -509,7 +509,24 @@ abstract struct Enum
   # If multiple members match the same normalized string, the first one is returned.
   def self.parse?(string : String) : self?
     {% begin %}
-      case string.gsub('-', '_').camelcase.downcase
+      # FIXME: There is no `StringLiteral#bytesize` or any other adequate means
+      # to figure out how much space we actually need. Maybe some regex could
+      # work. For now just play it safe.
+      # FIXME: We might want to establish some upper limit in case a member name
+      # is exorbitantly long.
+
+      # The following is an optimized normalization. It is equivalent to
+      # `string.gsub('-', '_').camelcase.downcase` but does not allocate.
+      {% max_size = @type.constants.map(&.size).sort.last %}
+      buffer = uninitialized UInt8[{{ max_size * 4 + 1 }}]
+      appender = buffer.to_unsafe.appender
+      string.each_char_with_index do |char, index|
+        return nil if index > {{max_size}}
+        next if char == '-' || char == '_'
+        char.downcase &.each_byte do |byte|
+          appender << byte
+        end
+      end
       # Temporarily map all constants to their normalized value in order to
       # avoid duplicates in the `case` conditions.
       # `FOO` and `Foo` members would both generate `when "foo"` which creates a compile time error.
@@ -520,8 +537,10 @@ abstract struct Enum
         {% key = member.stringify.camelcase.downcase %}
         {% constants[key] = member unless constants[key] %}
       {% end %}
+
+      case appender.to_slice
       {% for name, member in constants %}
-        when {{name}}
+        when {{name}}.to_slice
           new({{@type.constant(member)}})
       {% end %}
       else

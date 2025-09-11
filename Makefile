@@ -22,7 +22,6 @@ all:
 ##   $ make -B generate_data
 
 CRYSTAL ?= crystal## which previous crystal compiler use
-LLVM_CONFIG ?=     ## llvm-config command path to use
 
 release ?=        ## Compile in release mode
 stats ?=          ## Enable statistics output
@@ -36,7 +35,7 @@ target ?=         ## Cross-compilation target
 interpreter ?=    ## Enable interpreter feature
 check ?=          ## Enable only check when running format
 order ?=random    ## Enable order for spec execution (values: "default" | "random" | seed number)
-deref_symlinks ?= ## Deference symbolic links for `make install`
+deref_symlinks ?= ## Dereference symbolic links for `make install`
 
 O := .build
 SOURCES := $(shell find src -name '*.cr')
@@ -62,8 +61,12 @@ override EXPORTS_BUILD += \
 	$(EXPORT_CC) \
 	CRYSTAL_CONFIG_LIBRARY_PATH=$(CRYSTAL_CONFIG_LIBRARY_PATH)
 SHELL = sh
-LLVM_CONFIG := $(shell src/llvm/ext/find-llvm-config.sh)
-LLVM_VERSION ?= $(if $(LLVM_CONFIG),$(shell "$(LLVM_CONFIG)" --version 2> /dev/null))
+
+ifeq ($(LLVM_VERSION),)
+  LLVM_CONFIG ?= $(shell src/llvm/ext/find-llvm-config.sh)
+  LLVM_VERSION ?= $(if $(LLVM_CONFIG),$(shell "$(LLVM_CONFIG)" --version 2> /dev/null))
+endif
+
 LLVM_EXT_DIR = src/llvm/ext
 LLVM_EXT_OBJ = $(LLVM_EXT_DIR)/llvm_ext.o
 CXXFLAGS += $(if $(debug),-g -O0)
@@ -83,6 +86,7 @@ PREFIX ?= /usr/local
 BINDIR ?= $(PREFIX)/bin
 LIBDIR ?= $(PREFIX)/lib
 DATADIR ?= $(PREFIX)/share
+DOCDIR ?= $(DATADIR)/doc/crystal
 MANDIR ?= $(DATADIR)/man
 INSTALL ?= /usr/bin/install
 
@@ -101,8 +105,8 @@ endif
 
 check_llvm_config = $(eval \
 	check_llvm_config := $(if $(LLVM_VERSION),\
-	  $(call colorize,Using $(LLVM_CONFIG) [version=$(LLVM_VERSION)]),\
-	  $(error "Could not locate compatible llvm-config, make sure it is installed and in your PATH, or set LLVM_CONFIG. Compatible versions: $(shell cat src/llvm/ext/llvm-versions.txt)))\
+		$(call colorize,Using $(or $(LLVM_CONFIG),externally configured LLVM) [version=$(LLVM_VERSION)]),\
+		$(error "Could not locate compatible llvm-config, make sure it is installed and in your PATH, or set LLVM_VERSION / LLVM_CONFIG. Compatible versions: $(shell cat src/llvm/ext/llvm-versions.txt)))\
 	)
 
 .PHONY: all
@@ -134,7 +138,7 @@ interpreter_spec: $(O)/interpreter_spec$(EXE) ## Run interpreter specs
 smoke_test: ## Build specs as a smoke test
 smoke_test: $(O)/std_spec$(EXE) $(O)/compiler_spec$(EXE) $(O)/$(CRYSTAL_BIN)
 
-SHELLCHECK_SOURCES := $(wildcard **/*.sh) bin/crystal bin/ci bin/check-compiler-flag scripts/git/pre-commit
+SHELLCHECK_SOURCES := $(wildcard **/*.sh) $(wildcard **/*.bash) bin/crystal bin/ci bin/check-compiler-flag scripts/git/pre-commit
 
 .PHONY: lint-shellcheck
 lint-shellcheck:
@@ -212,15 +216,15 @@ uninstall: ## Uninstall the compiler from DESTDIR
 
 .PHONY: install_docs
 install_docs: docs ## Install docs at DESTDIR
-	$(INSTALL) -d -m 0755 $(DESTDIR)$(DATADIR)
+	$(INSTALL) -d -m 0755 $(DESTDIR)$(DOCDIR)
 
-	cp -R -P -p docs "$(DESTDIR)$(DATADIR)/docs"
-	cp -R -P -p samples "$(DESTDIR)$(DATADIR)/examples"
+	cp -R -P -p docs "$(DESTDIR)$(DOCDIR)/docs"
+	cp -R -P -p samples "$(DESTDIR)$(DOCDIR)/examples"
 
 .PHONY: uninstall_docs
 uninstall_docs: ## Uninstall docs from DESTDIR
-	rm -rf "$(DESTDIR)$(DATADIR)/docs"
-	rm -rf "$(DESTDIR)$(DATADIR)/examples"
+	rm -rf "$(DESTDIR)$(DOCDIR)/docs"
+	rm -rf "$(DESTDIR)$(DOCDIR)/examples"
 
 $(O)/all_spec$(EXE): $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	$(call check_llvm_config)
@@ -258,7 +262,7 @@ $(O)/$(CRYSTAL_BIN): $(DEPS) $(SOURCES)
 
 $(LLVM_EXT_OBJ): $(LLVM_EXT_DIR)/llvm_ext.cc
 	$(call check_llvm_config)
-	$(CXX) -c $(CXXFLAGS) -o $@ $< $(shell $(LLVM_CONFIG) --cxxflags)
+	$(CXX) -c $(CXXFLAGS) -o $@ $< $(if $(LLVM_CONFIG),$(shell $(LLVM_CONFIG) --cxxflags))
 
 man/: $(MAN1PAGES)
 

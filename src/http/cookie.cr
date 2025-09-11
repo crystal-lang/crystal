@@ -1,5 +1,3 @@
-require "./common"
-
 module HTTP
   # Represents a cookie with all its attributes. Provides convenient access and modification of them.
   #
@@ -63,7 +61,7 @@ module HTTP
     # Sets the name of this cookie.
     #
     # Raises `IO::Error` if the value is invalid as per [RFC 6265 §4.1.1](https://tools.ietf.org/html/rfc6265#section-4.1.1).
-    def name=(name : String)
+    def name=(name : String) : Nil
       validate_name(name)
       @name = name
 
@@ -89,7 +87,7 @@ module HTTP
     # Sets the value of this cookie.
     #
     # Raises `IO::Error` if the value is invalid as per [RFC 6265 §4.1.1](https://tools.ietf.org/html/rfc6265#section-4.1.1).
-    def value=(value : String)
+    def value=(value : String) : String
       validate_value(value)
       @value = value
     end
@@ -180,7 +178,7 @@ module HTTP
     end
 
     # :ditto:
-    def to_cookie_header(io) : Nil
+    def to_cookie_header(io : IO) : Nil
       io << @name
       io << '='
       io << @value
@@ -199,7 +197,7 @@ module HTTP
     #
     # *time_reference* can be passed to use a different reference time for
     # comparison. Default is the current time (`Time.utc`).
-    def expired?(time_reference = Time.utc) : Bool
+    def expired?(time_reference : Time = Time.utc) : Bool
       if @max_age.try &.zero?
         true
       elsif expiration_time = self.expiration_time
@@ -255,7 +253,7 @@ module HTTP
     # cookie.value    # => ""
     # cookie.expired? # => true
     # ```
-    def expire
+    def expire : Nil
       self.value = ""
       self.expires = Time::UNIX_EPOCH
       self.max_age = Time::Span.zero
@@ -309,13 +307,13 @@ module HTTP
         end
       end
 
-      def parse_cookies(header) : Array(Cookie)
+      def parse_cookies(header : String) : Array(Cookie)
         cookies = [] of Cookie
         parse_cookies(header) { |cookie| cookies << cookie }
         cookies
       end
 
-      def parse_set_cookie(header) : Cookie?
+      def parse_set_cookie(header : String) : Cookie?
         match = header.match(SetCookieString)
         return unless match
 
@@ -352,3 +350,5 @@ module HTTP
     end
   end
 end
+
+require "./common"

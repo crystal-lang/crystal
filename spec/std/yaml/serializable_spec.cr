@@ -342,6 +342,13 @@ module YAMLAttrModuleWithSameNameClass
   end
 end
 
+struct YAMLAttrWithGenericConverter(T)
+  include YAML::Serializable
+
+  @[YAML::Field(converter: T)]
+  property value : Time
+end
+
 abstract class YAMLShape
   include YAML::Serializable
 
@@ -457,6 +464,16 @@ module YAMLDiscriminatorBug
   end
 
   class C < B
+  end
+end
+
+class YAMLInitializeOpts
+  include YAML::Serializable
+
+  property value : Int32
+
+  def initialize(**opts)
+    @value = opts.size
   end
 end
 
@@ -860,38 +877,38 @@ describe "YAML::Serializable" do
 
     it "bool" do
       yaml = YAMLAttrWithDefaults.from_yaml(%({}))
-      yaml.c.should eq true
+      yaml.c.should be_true
       typeof(yaml.c).should eq Bool
-      yaml.d.should eq false
+      yaml.d.should be_false
       typeof(yaml.d).should eq Bool
 
       yaml = YAMLAttrWithDefaults.from_yaml(%({"c":false}))
-      yaml.c.should eq false
+      yaml.c.should be_false
       yaml = YAMLAttrWithDefaults.from_yaml(%({"c":true}))
-      yaml.c.should eq true
+      yaml.c.should be_true
 
       yaml = YAMLAttrWithDefaults.from_yaml(%({"d":false}))
-      yaml.d.should eq false
+      yaml.d.should be_false
       yaml = YAMLAttrWithDefaults.from_yaml(%({"d":true}))
-      yaml.d.should eq true
+      yaml.d.should be_true
     end
 
     it "with nilable" do
       yaml = YAMLAttrWithDefaults.from_yaml(%({}))
 
-      yaml.e.should eq false
+      yaml.e.should be_false
       typeof(yaml.e).should eq(Bool | Nil)
 
       yaml.f.should eq 1
       typeof(yaml.f).should eq(Int32 | Nil)
 
-      yaml.g.should eq nil
+      yaml.g.should be_nil
       typeof(yaml.g).should eq(Int32 | Nil)
 
       yaml = YAMLAttrWithDefaults.from_yaml(%({"e":false}))
-      yaml.e.should eq false
+      yaml.e.should be_false
       yaml = YAMLAttrWithDefaults.from_yaml(%({"e":true}))
-      yaml.e.should eq true
+      yaml.e.should be_true
     end
 
     it "create new array every time" do
@@ -1159,5 +1176,13 @@ describe "YAML::Serializable" do
 
   it "fixes #13337" do
     YAMLSomething.from_yaml(%({"value":{}})).value.should_not be_nil
+  end
+
+  it "works when type has constructor with double splat parameter (#16140)" do
+    YAMLInitializeOpts.from_yaml(%({"value":123})).value.should eq(123)
+  end
+
+  it "supports generic type variables in converters" do
+    YAMLAttrWithGenericConverter(Time::EpochConverter).from_yaml(%({"value":1459859781})).value.should eq(Time.unix(1459859781))
   end
 end

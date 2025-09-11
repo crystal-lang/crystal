@@ -269,31 +269,33 @@ struct String::Formatter(A)
     pad arg.to_s.size, flags if flags.right_padding?
   end
 
-  def int(flags, arg) : Nil
-    raise ArgumentError.new("Expected an integer, not #{arg.inspect}") unless arg.responds_to?(:to_i)
-    int = arg.is_a?(Int) ? arg : arg.to_i
-
-    precision = int_precision(int, flags)
-    base_str = int.to_s(flags.base, precision: precision, upcase: flags.uppercase?)
+  def int(flags, arg : Int) : Nil
+    precision = int_precision(arg, flags)
+    base_str = arg.to_s(flags.base, precision: precision, upcase: flags.uppercase?)
     str_size = base_str.bytesize
-    str_size += 1 if int >= 0 && (flags.plus || flags.space)
-    str_size += 2 if flags.sharp && flags.base != 10 && int != 0
+    str_size += 1 if arg >= 0 && (flags.plus || flags.space)
+    str_size += 2 if flags.sharp && flags.base != 10 && arg != 0
 
-    # If `int` is zero-padded, we let the precision argument do the right-justification
+    # If `arg` is zero-padded, we let the precision argument do the right-justification
     pad(str_size, flags) if flags.left_padding? && flags.padding_char != '0'
 
-    write_plus_or_space(int, flags)
+    write_plus_or_space(arg, flags)
 
-    if flags.sharp && int < 0
+    if flags.sharp && arg < 0
       @io << '-'
       write_base_prefix(flags)
       @io.write_string base_str.unsafe_byte_slice(1)
     else
-      write_base_prefix(flags) if flags.sharp && int != 0
+      write_base_prefix(flags) if flags.sharp && arg != 0
       @io << base_str
     end
 
     pad(str_size, flags) if flags.right_padding?
+  end
+
+  def int(flags, arg) : Nil
+    raise ArgumentError.new("Expected an integer, not #{arg.inspect}") unless arg.responds_to?(:to_i)
+    int(flags, arg.to_i)
   end
 
   private def write_plus_or_space(arg, flags)
@@ -389,7 +391,7 @@ struct String::Formatter(A)
       printf_size = Float::Printer::RyuPrintf.d2fixed_buffered_n(float, printf_precision, printf_buf.to_unsafe)
       printf_slice = printf_buf.to_slice[0, printf_size]
       dot_index = printf_slice.index('.'.ord)
-      sign = Math.copysign(1.0, float)
+      sign = float.sign_bit
 
       str_size = printf_size + trailing_zeros
       str_size += 1 if sign < 0 || flags.plus || flags.space
@@ -429,7 +431,7 @@ struct String::Formatter(A)
       printf_slice = printf_buf.to_slice[0, printf_size]
       dot_index = printf_slice.index('.'.ord)
       e_index = printf_slice.rindex!('e'.ord)
-      sign = Math.copysign(1.0, float)
+      sign = float.sign_bit
 
       printf_slice[e_index] = 'E'.ord.to_u8! if flags.uppercase?
 
@@ -467,7 +469,7 @@ struct String::Formatter(A)
       printf_slice = printf_buf.to_slice[0, printf_size]
       dot_index = printf_slice.index('.'.ord)
       e_index = printf_slice.rindex('e'.ord)
-      sign = Math.copysign(1.0, float)
+      sign = float.sign_bit
 
       printf_slice[e_index] = 'E'.ord.to_u8! if e_index && flags.uppercase?
 
@@ -497,7 +499,7 @@ struct String::Formatter(A)
 
     # Formats floats with `%a` or `%A`
     private def float_hex(float, flags)
-      sign = Math.copysign(1.0, float)
+      sign = float.sign_bit
       float = float.abs
 
       str_size = Float::Printer::Hexfloat(Float64, UInt64).to_s_size(float,

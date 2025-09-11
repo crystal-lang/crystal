@@ -14,7 +14,7 @@ describe Crystal::Repl do
     repl.load_prelude
 
     success_value(repl.parse_and_interpret("1 + 2")).value.should eq(3)
-    success_value(repl.parse_and_interpret("def foo; 1 + 2; end")).value.should eq(nil)
+    success_value(repl.parse_and_interpret("def foo; 1 + 2; end")).value.should be_nil
     success_value(repl.parse_and_interpret("foo")).value.should eq(3)
   end
 

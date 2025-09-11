@@ -63,7 +63,7 @@ class Thread
 
   @system_handle : Crystal::System::Thread::Handle
   @exception : Exception?
-  @detached = Atomic::Flag.new
+  @detached = Atomic(Bool).new(false)
 
   # Returns the Fiber representing the thread's main stack.
   getter! main_fiber : Fiber
@@ -154,8 +154,23 @@ class Thread
     Thread.threads.push(self)
   end
 
+  def inspect(io : IO) : Nil
+    to_s(io)
+  end
+
+  def to_s(io : IO) : Nil
+    io << "#<" << self.class.name << ":0x"
+    object_id.to_s(io, 16)
+    io << " @system_handle="
+    @system_handle.inspect io
+    io << ','
+    io << " @name="
+    @name.inspect io
+    io << '>'
+  end
+
   private def detach(&)
-    if @detached.test_and_set
+    unless @detached.swap(true, :relaxed)
       yield
     end
   end
@@ -177,6 +192,18 @@ class Thread
   # dependent on the operating system and hardware.
   def self.sleep(time : Time::Span) : Nil
     Crystal::System::Thread.sleep(time)
+  end
+
+  # Delays execution for a brief moment.
+  @[NoInline]
+  def self.delay(backoff : Int32) : Int32
+    if backoff < 7
+      backoff.times { Intrinsics.pause }
+      backoff &+ 1
+    else
+      Thread.yield
+      0
+    end
   end
 
   # Returns the Thread object associated to the running system thread.

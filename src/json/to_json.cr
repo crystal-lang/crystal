@@ -171,6 +171,12 @@ struct NamedTuple
   end
 end
 
+class Time::Location
+  def to_json(json : JSON::Builder) : Nil
+    json.string(to_s)
+  end
+end
+
 struct Time::Format
   def to_json(value : Time, json : JSON::Builder) : Nil
     json.string do |io|
@@ -215,7 +221,7 @@ struct Enum
   #
   # `ValueConverter.to_json` offers a different serialization strategy based on the
   # member value.
-  def to_json(json : JSON::Builder)
+  def to_json(json : JSON::Builder) : Nil
     {% if @type.annotation(Flags) %}
       json.array do
         each do |member, _value|
@@ -276,7 +282,7 @@ end
 
 struct Time
   # Emits a string formatted according to [RFC 3339](https://tools.ietf.org/html/rfc3339)
-  # ([ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
+  # ([ISO 8601](https://web.archive.org/web/20250306154328/http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
   #
   # The JSON format itself does not specify a time data type, this method just
   # assumes that a string holding a RFC 3339 time format will be interpreted as

@@ -1,7 +1,7 @@
 # The queue is a port of Go's `runq*` functions, distributed under a BSD-like
 # license: <https://cs.opensource.google/go/go/+/release-branch.go1.23:LICENSE>
 #
-# The queue derivates from the chase-lev lock-free queue with adaptations:
+# The queue derives from the chase-lev lock-free queue with adaptations:
 #
 # - single ring buffer (per scheduler);
 # - on overflow: bulk push half the ring to `GlobalQueue`;
@@ -75,25 +75,54 @@ module Fiber::ExecutionContext
 
       # first, try to grab half of the fibers from local queue
       batch = uninitialized Fiber[N] # actually N // 2 + 1 but that doesn't compile
-      n.times do |i|
-        batch.to_unsafe[i] = @buffer.to_unsafe[(head &+ i) % N]
-      end
-      _, success = @head.compare_and_set(head, head &+ n, :acquire_release, :acquire)
+      _, success = try_grab(batch.to_unsafe, head, n)
       return false unless success
 
-      # append fiber to the batch
+      # append fiber to the batch and push to global queue
       batch.to_unsafe[n] = fiber
-
-      # link the fibers
-      n.times do |i|
-        batch.to_unsafe[i].list_next = batch.to_unsafe[i &+ 1]
-      end
-      list = Fiber::List.new(batch.to_unsafe[0], batch.to_unsafe[n], size: (n &+ 1).to_i32)
-
-      # now put the batch on global queue (grabs the global lock)
-      @global_queue.bulk_push(pointerof(list))
-
+      push_to_global_queue(batch.to_unsafe, n &+ 1)
       true
+    end
+
+    # Transfers every fiber in the local runnables queue to the global queue.
+    # This will grab the global lock.
+    #
+    # Can be executed by any scheduler.
+    def drain : Nil
+      batch = uninitialized Fiber[N]
+      n = 0
+
+      head = @head.get(:acquire) # sync with other consumers
+      loop do
+        tail = @tail.get(:acquire) # sync with the producer
+
+        n = (tail &- head)
+        return if n == 0 # queue is empty
+
+        # try to grab everything from local queue
+        head, success = try_grab(batch.to_unsafe, head, n)
+        break if success
+      end
+
+      push_to_global_queue(batch.to_unsafe, n)
+    end
+
+    private def try_grab(batch, head, n)
+      n.times do |i|
+        batch[i] = @buffer.to_unsafe[(head &+ i) % N]
+      end
+      @head.compare_and_set(head, head &+ n, :acquire_release, :acquire)
+    end
+
+    private def push_to_global_queue(batch, n)
+      # link the fibers
+      (n &- 1).times do |i|
+        batch[i].list_next = batch[i &+ 1]
+      end
+      list = Fiber::List.new(batch[0], batch[n &- 1], size: n.to_i32)
+
+      # and put the batch on global queue (grabs the global lock)
+      @global_queue.bulk_push(pointerof(list))
     end
 
     # Tries to enqueue all the fibers in *list* into the local queue. If the

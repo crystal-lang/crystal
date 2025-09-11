@@ -83,7 +83,7 @@ describe "Codegen: private" do
   end
 
   it "doesn't include filename for private types" do
-    run(%(
+    run(<<-CRYSTAL, filename: "foo").to_string.should eq("Foo")
       private class Foo
         def foo
           {{@type.stringify}}
@@ -91,6 +91,6 @@ describe "Codegen: private" do
       end
 
       Foo.new.foo
-      ), filename: "foo").to_string.should eq("Foo")
+      CRYSTAL
   end
 end

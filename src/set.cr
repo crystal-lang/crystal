@@ -493,6 +493,20 @@ struct Set(T)
     @hash.same?(other.@hash)
   end
 
+  # Deletes every element of the set for which the block is falsey, and returns
+  # `self`.
+  def select!(& : T ->) : self
+    @hash.select! { |k, _| yield(k) }
+    self
+  end
+
+  # Deletes every element of the set for which the block is truthy, and returns
+  # `self`.
+  def reject!(& : T ->) : self
+    @hash.reject! { |k, _| yield(k) }
+    self
+  end
+
   # Rebuilds the set based on the current elements.
   #
   # When using mutable data types as elements, modifying an elements after it

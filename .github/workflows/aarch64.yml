@@ -14,7 +14,7 @@ jobs:
     if: github.repository == 'crystal-lang/crystal'
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Build Crystal
         uses: docker://crystallang/crystal:1.13.2-alpine-84codes-build
         with:
@@ -32,9 +32,9 @@ jobs:
     if: github.repository == 'crystal-lang/crystal'
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Download Crystal executable
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: crystal-aarch64-musl
       - name: Mark downloaded compiler as executable
@@ -49,9 +49,9 @@ jobs:
     if: github.repository == 'crystal-lang/crystal'
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Download Crystal executable
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: crystal-aarch64-musl
       - name: Mark downloaded compiler as executable
@@ -65,7 +65,7 @@ jobs:
     if: github.repository == 'crystal-lang/crystal'
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Build Crystal
         uses: docker://crystallang/crystal:1.13.2-ubuntu-84codes-build
         with:
@@ -83,9 +83,9 @@ jobs:
     if: github.repository == 'crystal-lang/crystal'
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Download Crystal executable
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: crystal-aarch64-gnu
       - name: Mark downloaded compiler as executable
@@ -100,9 +100,9 @@ jobs:
     if: github.repository == 'crystal-lang/crystal'
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Download Crystal executable
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: crystal-aarch64-gnu
       - name: Mark downloaded compiler as executable

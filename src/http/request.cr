@@ -1,6 +1,6 @@
 require "./common"
 require "uri"
-require "http/params"
+require "./params"
 require "socket"
 
 # An HTTP request.
@@ -59,7 +59,7 @@ class HTTP::Request
   # This property is not used by `HTTP::Client`.
   property local_address : Socket::Address?
 
-  def self.new(method : String, resource : String, headers : Headers? = nil, body : String | Bytes | IO | Nil = nil, version = "HTTP/1.1")
+  def self.new(method : String, resource : String, headers : Headers? = nil, body : String | Bytes | IO | Nil = nil, version : String = "HTTP/1.1") : self
     # Duplicate headers to prevent the request from modifying data that the user might hold.
     new(method, resource, headers.try(&.dup), body, version, internal: nil)
   end
@@ -112,7 +112,7 @@ class HTTP::Request
     @method == "HEAD"
   end
 
-  def content_length=(length : Int)
+  def content_length=(length : Int) : String
     headers["Content-Length"] = length.to_s
   end
 
@@ -120,24 +120,24 @@ class HTTP::Request
     HTTP.content_length(headers)
   end
 
-  def body=(body : String)
+  def body=(body : String) : String
     @body = IO::Memory.new(body)
     self.content_length = body.bytesize
   end
 
-  def body=(body : Bytes)
+  def body=(body : Bytes) : String
     @body = IO::Memory.new(body)
     self.content_length = body.size
   end
 
-  def body=(@body : IO)
+  def body=(@body : IO) : IO
   end
 
-  def body=(@body : Nil)
+  def body=(@body : Nil) : Nil
     @headers["Content-Length"] = "0" if @method.in?("POST", "PUT")
   end
 
-  def to_io(io)
+  def to_io(io : IO) : Nil
     io << @method << ' ' << resource << ' ' << @version << "\r\n"
     cookies = @cookies
     headers = cookies ? cookies.add_request_headers(@headers) : @headers
@@ -149,7 +149,7 @@ class HTTP::Request
 
   # Returns a `HTTP::Request` instance if successfully parsed,
   # `nil` on EOF or `HTTP::Status` otherwise.
-  def self.from_io(io, *, max_request_line_size : Int32 = HTTP::MAX_REQUEST_LINE_SIZE, max_headers_size : Int32 = HTTP::MAX_HEADERS_SIZE) : HTTP::Request | HTTP::Status | Nil
+  def self.from_io(io : IO, *, max_request_line_size : Int32 = HTTP::MAX_REQUEST_LINE_SIZE, max_headers_size : Int32 = HTTP::MAX_HEADERS_SIZE) : HTTP::Request | HTTP::Status | Nil
     line = parse_request_line(io, max_request_line_size)
     return line unless line.is_a?(RequestLine)
 
@@ -274,7 +274,7 @@ class HTTP::Request
   end
 
   # Sets request's path component.
-  def path=(path)
+  def path=(path : String) : String
     uri.path = path
   end
 
@@ -285,7 +285,7 @@ class HTTP::Request
   end
 
   # Sets request's query component.
-  def query=(value)
+  def query=(value : String?) : String?
     uri.query = value
     update_query_params
     value
@@ -321,7 +321,10 @@ class HTTP::Request
     @headers["Host"]?
   end
 
-  private def uri
+  # Returns the underlying URI object.
+  #
+  # Used internally to provide the components of the request uri.
+  def uri : URI
     @uri ||= URI::Parser.new(@resource).parse_request_target.uri
   end
 
