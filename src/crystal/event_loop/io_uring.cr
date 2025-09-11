@@ -10,27 +10,35 @@ require "./io_uring/*"
 # WARNING: IOSQE_CQE_SKIP_SUCCESS is incompatible with IOSQE_IO_DRAIN!
 
 class Crystal::EventLoop::IoUring < Crystal::EventLoop
-  @@supports_sendto = true
+  def self.default_file_blocking?
+    false
+  end
 
+  def self.default_socket_blocking?
+    false
+  end
+
+  # While io_uring was introduced in Linux 5.1, some features and opcodes that
+  # we require have only been added between Linux 5.3 to 5.6.
   def self.supported? : Bool
     return false unless System::IoUring.supported?
 
-    @@supports_openat = System::IoUring.supports_opcode?(LibC::IORING_OP_OPENAT)
-    @@supports_sendto = System::IoUring.supports_opcode?(LibC::IORING_OP_SEND)
-
     System::IoUring.supports_feature?(LibC::IORING_FEAT_NODROP) &&
       System::IoUring.supports_feature?(LibC::IORING_FEAT_RW_CUR_POS) &&
+      System::IoUring.supports_opcode?(LibC::IORING_OP_OPENAT)
       System::IoUring.supports_opcode?(LibC::IORING_OP_READ) &&
       System::IoUring.supports_opcode?(LibC::IORING_OP_WRITE) &&
+      System::IoUring.supports_opcode?(LibC::IORING_OP_CLOSE) &&
       System::IoUring.supports_opcode?(LibC::IORING_OP_CONNECT) &&
       System::IoUring.supports_opcode?(LibC::IORING_OP_ACCEPT) &&
-      System::IoUring.supports_opcode?(LibC::IORING_OP_SENDMSG) &&
+      System::IoUring.supports_opcode?(LibC::IORING_OP_SEND)
       System::IoUring.supports_opcode?(LibC::IORING_OP_RECVMSG) &&
-      System::IoUring.supports_opcode?(LibC::IORING_OP_CLOSE) &&
       System::IoUring.supports_opcode?(LibC::IORING_OP_LINK_TIMEOUT) &&
       System::IoUring.supports_opcode?(LibC::IORING_OP_ASYNC_CANCEL)
   end
 
+  # SQPOLL without fixed files was only added in Linux 5.11 with CAP_SYS_NICE
+  # priviledge and Linux 5.13 unpriviledged.
   def initialize
     @ring = System::IoUring.new(
       sq_entries: 16,
@@ -180,22 +188,17 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   end
 
   def open(path : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : {System::FileDescriptor::Handle, Bool} | Errno
-    flags |= LibC::O_CLOEXEC
-    blocking = true if blocking.nil?
+    path.check_no_null_byte
 
-    if @@supports_openat
-      fd = async(LibC::IORING_OP_OPENAT, opcode) do |sqe|
-        sqe.value.fd = LibC::AT_FDCWD
-        sqe.value.addr = path.to_unsafe.address.to_u64!
-        sqe.value.sflags.open_flags = flags
-        sqe.value.len = permissions
-      end
-      return Errno.new(-fd) if fd < 0
-    else
-      fd = LibC.open(path, flags, permissions)
-      return Errno.value if fd == -1
+    fd = async(LibC::IORING_OP_OPENAT) do |sqe|
+      sqe.value.fd = LibC::AT_FDCWD
+      sqe.value.addr = path.to_unsafe.address.to_u64!
+      sqe.value.sflags.open_flags = flags | LibC::O_CLOEXEC
+      sqe.value.len = permissions
     end
+    return Errno.new(-fd) if fd < 0
 
+    blocking = true if blocking.nil?
     System::FileDescriptor.set_blocking(fd, false) if blocking
     {fd, blocking}
   end
@@ -301,12 +304,12 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
     async_poll(socket, LibC::POLLOUT, socket.@write_timeout) { "Write timed out" }
   end
 
-  def accept(socket : ::Socket) : ::Socket::Handle?
+  def accept(socket : ::Socket) : {::Socket::Handle, Bool}?
     ret = async(LibC::IORING_OP_ACCEPT, socket.@read_timeout) do |sqe|
       sqe.value.fd = socket.fd
       sqe.value.sflags.accept_flags = LibC::SOCK_CLOEXEC
     end
-    return ret unless ret < 0
+    return {ret, true} unless ret < 0
 
     if ret == -LibC::ECANCELED
       raise IO::TimeoutError.new("Accept timed out")
@@ -338,32 +341,20 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
     sockaddr = address.to_unsafe # OPTIMIZE: #to_unsafe allocates (not needed)
     addrlen = address.size
 
-    if @@supports_sendto
-      res = async(LibC::IORING_OP_SEND) do |sqe|
-        sqe.value.fd = socket.fd
-        sqe.value.addr = slice.to_unsafe.address.to_u64!
-        sqe.value.len = slice.size.to_u64!
-        sqe.value.u1.addr2 = sockaddr.address.to_u64!
-        sqe.value.addr_len[0] = addrlen.to_u16!
-      end
-      return res unless res < 0
-
-      unless res == -LibC::EINVAL
-        raise ::Socket::Error.from_os_error("Error sending datagram to #{address}", Errno.new(-res))
-      end
-      @@supports_sendto = false
-    end
-
-    # fallback to SENDMSG
-    iovec = LibC::Iovec.new(iov_base: slice.to_unsafe, iov_len: slice.size)
-    msghdr = LibC::Msghdr.new(msg_name: sockaddr, msg_namelen: addrlen, msg_iov: pointerof(iovec), msg_iovlen: 1)
-
-    res = async(LibC::IORING_OP_SENDMSG) do |sqe|
+    res = async(LibC::IORING_OP_SEND) do |sqe|
       sqe.value.fd = socket.fd
-      sqe.value.addr = pointerof(msghdr).address.to_u64!
+      sqe.value.addr = slice.to_unsafe.address.to_u64!
+      sqe.value.len = slice.size.to_u64!
+      sqe.value.u1.addr2 = sockaddr.address.to_u64!
+      sqe.value.addr_len[0] = addrlen.to_u16!
     end
 
-    raise ::Socket::Error.from_os_error("Error sending datagram to #{address}", Errno.new(-res)) if res < 0
+    if res == 0
+      check_open(socket)
+    elsif res < 0
+      raise ::Socket::Error.from_os_error("Error sending datagram to #{address}", Errno.new(-res))
+    end
+
     res
   end
 
@@ -382,7 +373,12 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
       sqe.value.addr = pointerof(msghdr).address.to_u64!
     end
 
-    raise IO::Error.from_os_error("recvfrom", Errno.new(-res), target: socket) if res < 0
+    if res == 0
+      check_open(socket)
+    elsif res < 0
+      raise IO::Error.from_os_error("recvfrom", Errno.new(-res), target: socket)
+    end
+
     {res, ::Socket::Address.from(pointerof(sockaddr).as(LibC::Sockaddr*), msghdr.msg_namelen)}
   end
 
