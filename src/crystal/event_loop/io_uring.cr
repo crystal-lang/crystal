@@ -187,7 +187,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
       fd = async(LibC::IORING_OP_OPENAT, opcode) do |sqe|
         sqe.value.fd = LibC::AT_FDCWD
         sqe.value.addr = path.to_unsafe.address.to_u64!
-        sqe.value.open_flags = flags
+        sqe.value.sflags.open_flags = flags
         sqe.value.len = permissions
       end
       return Errno.new(-fd) if fd < 0
