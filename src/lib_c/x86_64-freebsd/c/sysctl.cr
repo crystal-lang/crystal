@@ -7,4 +7,5 @@ lib LibC
   PATH_MAX           = 1024
 
   fun sysctl(name : Int*, namelen : UInt, oldp : Void*, oldlenp : SizeT*, newp : Void*, newlen : SizeT) : Int
+  fun sysctlbyname(name : UInt8*, oldp : Void*, oldlenp : SizeT*, newp : Void*, newlen : SizeT) : Int
 end
