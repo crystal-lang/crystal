@@ -13,7 +13,14 @@ end
   require "./system/wasi/cpucount"
 {% elsif flag?(:unix) %}
   require "./system/unix/hostname"
-  require "./system/unix/cpucount"
+  {% if flag?(:bsd) %}
+    require "./system/unix/sysctl_cpucount"
+  {% else %}
+    require "./system/unix/sysconf_cpucount"
+    {% if flag?(:linux) %}
+      require "./system/unix/linux_cpucount"
+    {% end %}
+  {% end %}
 {% elsif flag?(:win32) %}
   require "./system/win32/hostname"
   require "./system/win32/cpucount"

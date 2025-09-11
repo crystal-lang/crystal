@@ -1,28 +1,10 @@
-{% if flag?(:bsd) %}
-  require "c/sysctl"
-{% else %}
-  require "c/unistd"
-{% end %}
+{% skip_file unless flag?(:linux) %}
+
 require "./syscall"
 
 module Crystal::System
-  def self.cpu_count
-    {% if flag?(:bsd) %}
-      mib = Int32[LibC::CTL_HW, LibC::HW_NCPU]
-      ncpus = 0
-      size = sizeof(Int32).to_u64
-      if LibC.sysctl(mib, 2, pointerof(ncpus), pointerof(size), nil, 0) == 0
-        ncpus
-      else
-        -1
-      end
-    {% else %}
-      LibC.sysconf(LibC::SC_NPROCESSORS_ONLN)
-    {% end %}
-  end
-
   def self.effective_cpu_count
-    {% if flag?(:linux) && !flag?(:interpreted) %}
+    {% unless flag?(:interpreted) %}
       # we use the syscall because it returns the number of bytes to check in
       # the set, while glibc always returns 0 and would require to zero the
       # buffer and check every byte
