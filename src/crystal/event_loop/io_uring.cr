@@ -240,8 +240,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
 
   def close(file_descriptor : System::FileDescriptor) : Nil
     # sync with `FileDescriptor#file_descriptor_close`: prevent actual close
-    fd = file_descriptor.@volatile_fd.swap(-1, :relaxed)
-    return if fd == -1
+    return unless fd = file_descriptor.close_volatile_fd?
 
     async_close(fd) do |sqe|
       # one thread closing a fd won't interrupt reads or writes happening in
@@ -378,15 +377,14 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
 
   def close(socket : ::Socket) : Nil
     # sync with `Socket#socket_close`
-    fd = socket.@volatile_fd.swap(-1, :relaxed)
-    return if fd == -1
+    return unless fd = socket.close_volatile_fd?
 
     async_close(fd) do |sqe|
       # we must shutdown a socket before closing it, otherwise a pending accept
       # or read won't be interrupted for example;
       sqe.value.opcode = LibC::IORING_OP_SHUTDOWN
       sqe.value.fd = fd
-      sqe.value.len = LibC::SHUT_RD # FIXME: add SHUT_WR too (?)
+      sqe.value.len = LibC::SHUT_RDWR
     end
   end
 
