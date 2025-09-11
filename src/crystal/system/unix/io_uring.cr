@@ -155,7 +155,7 @@ class Crystal::System::IoUring
     # the current sq tail, synchronized with @sq_ktail on submit
     @sq_tail = 0_u32
 
-    # ring buffer of timespecs, so we can implicitely submit SQE
+    # ring buffer of timespecs, so we can implicitly submit SQE
     # OPTIMIZE: only needed if IORING_SETUP_SQPOLL || !IORING_FEAT_SUBMIT_STABLE
     @timespecs = GC.malloc(sq_entries * sizeof(LibC::Timespec)).as(LibC::Timespec*)
   end

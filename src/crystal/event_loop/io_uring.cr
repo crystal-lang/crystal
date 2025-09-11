@@ -25,20 +25,20 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
 
     System::IoUring.supports_feature?(LibC::IORING_FEAT_NODROP) &&
       System::IoUring.supports_feature?(LibC::IORING_FEAT_RW_CUR_POS) &&
-      System::IoUring.supports_opcode?(LibC::IORING_OP_OPENAT)
+      System::IoUring.supports_opcode?(LibC::IORING_OP_OPENAT) &&
       System::IoUring.supports_opcode?(LibC::IORING_OP_READ) &&
       System::IoUring.supports_opcode?(LibC::IORING_OP_WRITE) &&
       System::IoUring.supports_opcode?(LibC::IORING_OP_CLOSE) &&
       System::IoUring.supports_opcode?(LibC::IORING_OP_CONNECT) &&
       System::IoUring.supports_opcode?(LibC::IORING_OP_ACCEPT) &&
-      System::IoUring.supports_opcode?(LibC::IORING_OP_SEND)
+      System::IoUring.supports_opcode?(LibC::IORING_OP_SEND) &&
       System::IoUring.supports_opcode?(LibC::IORING_OP_RECVMSG) &&
       System::IoUring.supports_opcode?(LibC::IORING_OP_LINK_TIMEOUT) &&
       System::IoUring.supports_opcode?(LibC::IORING_OP_ASYNC_CANCEL)
   end
 
   # SQPOLL without fixed files was only added in Linux 5.11 with CAP_SYS_NICE
-  # priviledge and Linux 5.13 unpriviledged.
+  # privilege and Linux 5.13 unprivileged.
   def initialize
     @ring = System::IoUring.new(
       sq_entries: 16,
@@ -167,8 +167,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   # fiber interface, see Crystal::EventLoop
 
   def sleep(duration : Time::Span) : Nil
-    res = async_timeout(:sleep, duration)
-    # assert(res == -ETIME)
+    async_timeout(:sleep, duration)
   end
 
   def create_timeout_event(fiber : Fiber) : FiberEvent
