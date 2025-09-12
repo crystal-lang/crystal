@@ -183,7 +183,9 @@ to get a more parser\-friendly output.
 .sp
 \fB\-\-error\-trace\fP
 .RS 4
-Show full error trace.
+Show full error trace. Disabled by default, as the full trace
+usually makes error messages less readable and may not always deliver
+relevant information.
 .RE
 .sp
 \fB\-\-ll\fP
@@ -257,13 +259,6 @@ details.
 \fB\-\-release\fP
 .RS 4
 Compile in release mode. Equivalent to \fB\-O3 \-\-single\-module\fP
-.RE
-.sp
-\fB\-\-error\-trace\fP
-.RS 4
-Show full stack trace. Disabled by default, as the full trace
-usually makes error messages less readable and not always deliver
-relevant information.
 .RE
 .sp
 \fB\-s\fP, \fB\-\-stats\fP
