@@ -147,15 +147,10 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   # of timers with a single timerfd might be simpler.
 
   def add_timer(event : Event*) : Nil
-    sqe, ts = @ring.next_sqe_with_timespec
-
-    timeout = event.value.timeout
-    ts.value.tv_sec = typeof(ts.value.tv_sec).new!(timeout.@seconds)
-    ts.value.tv_nsec = typeof(ts.value.tv_nsec).new!(timeout.@nanoseconds)
-
+    sqe = @ring.next_sqe
     sqe.value.opcode = LibC::IORING_OP_TIMEOUT
     sqe.value.user_data = event.address.to_u64!
-    sqe.value.addr = ts.address.to_u64!
+    sqe.value.addr = event.value.timespec.address.to_u64!
     sqe.value.len = 1
     trace(sqe)
 
@@ -470,16 +465,13 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
 
   private def async_timeout(type : Event::Type, duration)
     async_impl(type) do |event|
+      event.value.timeout = duration
+
       @ring.reserve(1)
-
-      sqe, ts = @ring.unsafe_next_sqe_with_timespec
-
-      ts.value.tv_sec = typeof(ts.value.tv_sec).new(duration.@seconds)
-      ts.value.tv_nsec = typeof(ts.value.tv_nsec).new(duration.@nanoseconds)
-
+      sqe = @ring.unsafe_next_sqe
       sqe.value.opcode = LibC::IORING_OP_TIMEOUT
       sqe.value.user_data = event.address.to_u64!
-      sqe.value.addr = ts.address.to_u64!
+      sqe.value.addr = event.value.timespec.address.to_u64!
       sqe.value.len = 1
       trace(sqe)
     end
@@ -496,19 +488,17 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
       yield op_sqe
 
       if timeout
+        event.value.timeout = timeout
+
         # chain the above operation with the next one
         op_sqe.value.flags = op_sqe.value.flags | LibC::IOSQE_IO_LINK
         trace(op_sqe)
 
         # configure the link timeout operation (applies to the above operation)
-        link_sqe, ts = @ring.unsafe_next_sqe_with_timespec
-
-        ts.value.tv_sec = typeof(ts.value.tv_sec).new(timeout.@seconds)
-        ts.value.tv_nsec = typeof(ts.value.tv_nsec).new(timeout.@nanoseconds)
-
+        link_sqe = @ring.unsafe_next_sqe
         link_sqe.value.opcode = LibC::IORING_OP_LINK_TIMEOUT
         link_sqe.value.flags = LibC::IOSQE_CQE_SKIP_SUCCESS
-        link_sqe.value.addr = ts.address.to_u64!
+        link_sqe.value.addr = event.value.timespec.address.to_u64!
         link_sqe.value.len = 1
         trace(link_sqe)
       else

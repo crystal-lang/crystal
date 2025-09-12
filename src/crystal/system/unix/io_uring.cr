@@ -154,10 +154,6 @@ class Crystal::System::IoUring
 
     # the current sq tail, synchronized with @sq_ktail on submit
     @sq_tail = 0_u32
-
-    # ring buffer of timespecs, so we can implicitly submit SQE
-    # OPTIMIZE: only needed if IORING_SETUP_SQPOLL || !IORING_FEAT_SUBMIT_STABLE
-    @timespecs = GC.malloc(sq_entries * sizeof(LibC::Timespec)).as(LibC::Timespec*)
   end
 
   private def mmap(size, offset, &) : Void*
@@ -242,16 +238,6 @@ class Crystal::System::IoUring
     unsafe_next_sqe
   end
 
-  # Identical to `#next_sqe` but also returns a stable pointer to a
-  # `LibC::Timespec` struct to associate to the SQE.
-  #
-  # This might be required with SQPOLL or when the ring doesn't support the
-  # IORING_FEAT_SUBMIT_STABLE feature.
-  def next_sqe_with_timespec : {LibC::IoUringSqe*, LibC::Timespec*}
-    reserve(1)
-    unsafe_next_sqe_with_timespec
-  end
-
   # WARNING: must call `#reserve` before calling `#unsafe_next_sqe`!
   def unsafe_next_sqe : LibC::IoUringSqe*
     index = @sq_tail & @sq_mask.value
@@ -261,17 +247,6 @@ class Crystal::System::IoUring
     LibIntrinsics.memset(sqe, 0_u8, sizeof(LibC::IoUringSqe), false)
 
     sqe
-  end
-
-  # WARNING: must call `#reserve` before calling `#unsafe_next_sqe_with_timespec`!
-  def unsafe_next_sqe_with_timespec : {LibC::IoUringSqe*, LibC::Timespec*}
-    index = @sq_tail & @sq_mask.value
-    @sq_tail &+= 1
-
-    sqe = @sqes.as(LibC::IoUringSqe*) + index
-    LibIntrinsics.memset(sqe, 0_u8, sizeof(LibC::IoUringSqe), false)
-
-    {sqe, @timespecs + index}
   end
 
   # Submit pending SQE in the SQ ring if needed. Wake SQPOLL thread if sleeping.
