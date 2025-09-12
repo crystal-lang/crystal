@@ -48,6 +48,21 @@ lib LibC
     l_linger : Int
   end
 
+  struct Iovec
+    iov_base : Void*
+    iov_len : SizeT
+  end
+
+  struct Msghdr
+    msg_name : Void*
+    msg_namelen : SocklenT
+    msg_iov : Iovec*
+    msg_iovlen : SizeT
+    msg_control : Void*
+    msg_controllen : SizeT
+    msg_flags : Int
+  end
+
   fun accept(fd : Int, addr : Sockaddr*, addr_len : SocklenT*) : Int
   fun accept4(fd : Int, addr : Sockaddr*, addr_len : SocklenT*, flags : Int) : Int
   fun bind(fd : Int, addr : Sockaddr*, len : SocklenT) : Int
