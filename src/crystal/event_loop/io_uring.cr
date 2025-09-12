@@ -19,9 +19,14 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   end
 
   # While io_uring was introduced in Linux 5.1, some features and opcodes that
-  # we require have only been added between Linux 5.3 to 5.6.
+  # we require have only been added between Linux 5.3 to 5.6. We optionally use
+  # features and opcodes from Linux 5.11 and later because Linux 5.10 is SLTS
+  # until January 2031.
   def self.supported? : Bool
     return false unless System::IoUring.supported?
+
+    # async shutdown is available since Linux 5.11
+    @@supports_shutdown = System::IoUring.supports_opcode?(LibC::IORING_OP_SHUTDOWN)
 
     System::IoUring.supports_feature?(LibC::IORING_FEAT_NODROP) &&
       System::IoUring.supports_feature?(LibC::IORING_FEAT_RW_CUR_POS) &&
@@ -33,11 +38,14 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
       System::IoUring.supports_opcode?(LibC::IORING_OP_ACCEPT) &&
       System::IoUring.supports_opcode?(LibC::IORING_OP_SEND) &&
       System::IoUring.supports_opcode?(LibC::IORING_OP_RECVMSG) &&
+      System::IoUring.supports_opcode?(LibC::IORING_OP_POLL_ADD) &&
+      System::IoUring.supports_opcode?(LibC::IORING_OP_TIMEOUT) &&
+      System::IoUring.supports_opcode?(LibC::IORING_OP_TIMEOUT_REMOVE) &&
       System::IoUring.supports_opcode?(LibC::IORING_OP_LINK_TIMEOUT) &&
       System::IoUring.supports_opcode?(LibC::IORING_OP_ASYNC_CANCEL)
   end
 
-  # SQPOLL without fixed files was only added in Linux 5.11 with CAP_SYS_NICE
+  # SQPOLL without fixed files was added in Linux 5.11 with CAP_SYS_NICE
   # privilege and Linux 5.13 unprivileged.
   def initialize
     @ring = System::IoUring.new(
@@ -385,12 +393,17 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
     # sync with `Socket#socket_close`
     return unless fd = socket.close_volatile_fd?
 
-    async_close(fd) do |sqe|
-      # we must shutdown a socket before closing it, otherwise a pending accept
-      # or read won't be interrupted for example;
-      sqe.value.opcode = LibC::IORING_OP_SHUTDOWN
-      sqe.value.fd = fd
-      sqe.value.len = LibC::SHUT_RDWR
+    # we must shutdown a socket before closing it, otherwise a pending accept
+    # or read won't be interrupted for example;
+    if @@supports_shutdown
+      async_close(fd) do |sqe|
+        sqe.value.opcode = LibC::IORING_OP_SHUTDOWN
+        sqe.value.fd = fd
+        sqe.value.len = LibC::SHUT_RDWR
+      end
+    else
+      LibC.shutdown(fd, LibC::SHUT_RDWR)
+      async(LibC::IORING_OP_CLOSE) { |sqe| sqe.value.fd = fd }
     end
   end
 
