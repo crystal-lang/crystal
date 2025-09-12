@@ -70,9 +70,7 @@ module Crystal
           is_generic = type.is_a?(GenericClassType)
           inherits_from_generic = type.ancestors.any?(GenericClassInstanceType)
           if is_generic || inherits_from_generic
-            has_default_self_new = self_new_methods.any? do |a_def|
-              a_def.args.empty? && !a_def.block_arity
-            end
+            has_default_self_new = self_new_methods.any?(&.has_any_args?.!)
 
             # For a generic class type we need to define `new` even
             # if a superclass defines it, because the generated new
@@ -90,7 +88,7 @@ module Crystal
 
               initialize_methods.each do |initialize|
                 # If the type has `self.new()`, don't override it
-                if initialize.args.empty? && !initialize.block_arity && has_default_self_new
+                if !initialize.has_any_args? && has_default_self_new
                   next
                 end
 
