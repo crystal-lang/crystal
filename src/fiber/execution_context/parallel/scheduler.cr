@@ -29,11 +29,16 @@ module Fiber::ExecutionContext
       @spinning = false
       @waiting = false
       @parked = false
+      @shutdown = false
 
       protected def initialize(@execution_context, @name)
         @global_queue = @execution_context.global_queue
         @runnables = Runnables(256).new(@global_queue)
         @event_loop = @execution_context.event_loop
+      end
+
+      protected def shutdown! : Nil
+        @shutdown = true
       end
 
       # :nodoc:
@@ -86,6 +91,8 @@ module Fiber::ExecutionContext
       end
 
       private def quick_dequeue? : Fiber?
+        return if @shutdown
+
         # every once in a while: dequeue from global queue to avoid two fibers
         # constantly respawing each other to completely occupy the local queue
         if (@tick &+= 1) % 61 == 0
@@ -121,8 +128,21 @@ module Fiber::ExecutionContext
         Crystal.trace :sched, "started"
 
         loop do
+          if @shutdown
+            spin_stop
+            @runnables.drain
+
+            # we may have been the last running scheduler, waiting on the event
+            # loop while there are pending events for example; let's resume a
+            # scheduler to take our place
+            @execution_context.wake_scheduler
+
+            Crystal.trace :sched, "shutdown"
+            break
+          end
+
           if fiber = find_next_runnable
-            spin_stop if @spinning
+            spin_stop
             resume fiber
           else
             # the event loop enqueued a fiber (or was interrupted) or the
@@ -145,6 +165,8 @@ module Fiber::ExecutionContext
 
         # nothing to do: start spinning
         spinning do
+          return if @shutdown
+
           yield @global_queue.grab?(@runnables, divisor: @execution_context.size)
 
           if @execution_context.lock_evloop? { @event_loop.run(pointerof(list), blocking: false) }
@@ -189,10 +211,12 @@ module Fiber::ExecutionContext
         # loop: park the thread until another scheduler or another context
         # enqueues a fiber
         @execution_context.park_thread do
+          # don't park the thread when told to shutdown
+          return if @shutdown
+
           # by the time we acquire the lock, another thread may have enqueued
           # fiber(s) and already tried to wakeup a thread (race) so we must
           # check again; we don't check the scheduler's local queue (it's empty)
-
           yield @global_queue.unsafe_grab?(@runnables, divisor: @execution_context.size)
           yield try_steal?
 
