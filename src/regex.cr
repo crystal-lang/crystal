@@ -410,7 +410,7 @@ class Regex
   # options = Regex::CompileOptions::IGNORE_CASE | Regex::CompileOptions::EXTENDED
   # Regex.new("dog", options) # => /dog/ix
   # ```
-  def self.new(source : String, options : Options = Options::None)
+  def self.new(source : String, options : Options = Options::None) : self
     new(_source: source, _options: options)
   end
 
@@ -430,7 +430,7 @@ class Regex
   # Regex.error?("(foo|bar)") # => nil
   # Regex.error?("(foo|bar")  # => "missing ) at 8"
   # ```
-  def self.error?(source) : String?
+  def self.error?(source : String) : String?
     Engine.error_impl(source)
   end
 
@@ -461,7 +461,7 @@ class Regex
   # string = Regex.escape("*?{}.") # => "\\*\\?\\{\\}\\."
   # /#{string}/                    # => /\*\?\{\}\./
   # ```
-  def self.escape(str) : String
+  def self.escape(str : String) : String
     String.build do |result|
       str.each_byte do |byte|
         {% begin %}
@@ -526,7 +526,7 @@ class Regex
   # re.match("Skiing")   # => Regex::MatchData("Skiing")
   # re.match("sledding") # => Regex::MatchData("sledding")
   # ```
-  def +(other) : Regex
+  def +(other : Regex) : Regex
     Regex.union(self, other)
   end
 
@@ -537,7 +537,7 @@ class Regex
   # /abc/i == /ABC/i # => false
   # /abc/i == /abc/i # => true
   # ```
-  def ==(other : Regex)
+  def ==(other : Regex) : Bool
     source == other.source && options == other.options
   end
 
@@ -564,7 +564,7 @@ class Regex
   #     end
   # b # => "Upper case"
   # ```
-  def ===(other : String)
+  def ===(other : String) : Bool
     match = match(other)
     $~ = match
     !match.nil?
@@ -669,7 +669,7 @@ class Regex
 
   # :ditto:
   @[Deprecated("Use the overload with `Regex::MatchOptions` instead.")]
-  def match(str, pos = 0, *, options) : MatchData?
+  def match(str : String, pos : Int32 = 0, *, options : Regex::Options) : MatchData?
     if byte_index = str.char_index_to_byte_index(pos)
       $~ = match_at_byte_index(str, byte_index, options)
     else
@@ -718,7 +718,7 @@ class Regex
 
   # :ditto:
   @[Deprecated("Use the overload with `Regex::MatchOptions` instead.")]
-  def match_at_byte_index(str, byte_index = 0, *, options) : MatchData?
+  def match_at_byte_index(str : String, byte_index : Int32 = 0, *, options : Regex::Options) : MatchData?
     if byte_index > str.bytesize
       $~ = nil
     else
@@ -728,7 +728,7 @@ class Regex
 
   # :ditto:
   @[Deprecated("Use the overload with `Regex::MatchOptions` instead.")]
-  def match_at_byte_index(str, byte_index, _options) : MatchData?
+  def match_at_byte_index(str : String, byte_index : Int32, _options : Regex::Options) : MatchData?
     match_at_byte_index(str, byte_index, options: _options)
   end
 
@@ -752,7 +752,7 @@ class Regex
 
   # :ditto:
   @[Deprecated("Use the overload with `Regex::MatchOptions` instead.")]
-  def matches?(str, pos = 0, *, options) : Bool
+  def matches?(str : String, pos : Int32 = 0, *, options : Regex::Options) : Bool
     if byte_index = str.char_index_to_byte_index(pos)
       matches_at_byte_index?(str, byte_index, options)
     else
@@ -776,7 +776,7 @@ class Regex
 
   # :ditto:
   @[Deprecated("Use the overload with `Regex::MatchOptions` instead.")]
-  def matches_at_byte_index?(str, byte_index = 0, *, options) : Bool
+  def matches_at_byte_index?(str : String, byte_index : Int32 = 0, *, options : Regex::Options) : Bool
     return false if byte_index > str.bytesize
 
     matches_impl(str, byte_index, options)
@@ -784,7 +784,7 @@ class Regex
 
   # :ditto:
   @[Deprecated("Use the overload with `Regex::MatchOptions` instead.")]
-  def matches_at_byte_index?(str, byte_index, _options) : Bool
+  def matches_at_byte_index?(str : String, byte_index : Int32, _options : Regex::Options) : Bool
     matches_at_byte_index?(str, byte_index, options: _options)
   end
 
@@ -842,7 +842,7 @@ class Regex
   end
 
   # :nodoc:
-  def self.append_source(source, io) : Nil
+  def self.append_source(source : String, io : IO) : Nil
     reader = Char::Reader.new(source)
     while reader.has_next?
       case char = reader.current_char
@@ -862,7 +862,7 @@ class Regex
     self
   end
 
-  def clone
+  def clone : Regex
     self
   end
 end
