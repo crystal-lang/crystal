@@ -321,7 +321,7 @@ module Colorize
   end
 end
 
-private def each_code(mode : Colorize::Mode, &)
+private def apply_each_code(mode : Colorize::Mode, &)
   yield "1" if mode.bold?
   yield "2" if mode.dim?
   yield "3" if mode.italic?
@@ -333,6 +333,20 @@ private def each_code(mode : Colorize::Mode, &)
   yield "9" if mode.strikethrough?
   yield "21" if mode.double_underline?
   yield "53" if mode.overline?
+end
+
+private def reset_each_code(mode : Colorize::Mode, &)
+  yield "22" if mode.bold?
+  yield "22" if mode.dim?
+  yield "23" if mode.italic?
+  yield "24" if mode.underline?
+  yield "25" if mode.blink?
+  yield "26" if mode.blink_fast?
+  yield "27" if mode.reverse?
+  yield "28" if mode.hidden?
+  yield "29" if mode.strikethrough?
+  yield "24" if mode.double_underline?
+  yield "55" if mode.overline?
 end
 
 # A colorized object. Colors and text decorations can be modified.
@@ -550,8 +564,24 @@ struct Colorize::Object(T)
       printed = false
 
       unless last_color_is_default
-        io << '0'
-        printed = true
+        unless @@last_color[:fore] == ColorANSI::Default
+          io << 39
+          printed = true
+        end
+
+        unless @@last_color[:back] == ColorANSI::Default
+          io << ';' if printed
+          io << 49
+          printed = true
+        end
+
+        unless @@last_color[:mode].none?
+          reset_each_code(@@last_color[:mode]) do |code|
+            io << ';' if printed
+            io << code
+            printed = true
+          end
+        end
       end
 
       unless fore_is_default
@@ -566,7 +596,7 @@ struct Colorize::Object(T)
         printed = true
       end
 
-      each_code(mode) do |code|
+      apply_each_code(mode) do |code|
         io << ';' if printed
         io << code
         printed = true
