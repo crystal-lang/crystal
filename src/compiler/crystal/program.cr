@@ -1,6 +1,7 @@
 require "llvm"
 require "json"
 require "./types"
+require "crystal/digest/md5"
 
 module Crystal
   # A program contains all types and top-level methods related to one
@@ -125,6 +126,10 @@ module Crystal
 
     # The class var initializers stored to be used by the cleanup transformer
     getter class_var_initializers = [] of ClassVarInitializer
+
+    # Counters for the `__temp_*` temporary variables. Each prefix has its own
+    # counter, see `#new_temp_var_name` for details.
+    @temp_vars = Hash(String, Int32).new { |hash, prefix| hash[prefix] = 1 }
 
     # The constant for ARGC_UNSAFE
     getter! argc : Const
@@ -645,15 +650,41 @@ module Crystal
       @class.not_nil!
     end
 
-    def new_temp_var : Var
-      Var.new(new_temp_var_name)
+    def new_temp_var(node : ASTNode) : Var
+      # TODO: is it safe to add `.at(node)` here?
+      Var.new(new_temp_var_name(node))
     end
 
-    @temp_var_counter = 0
+    def new_temp_var(prefix : String? = nil) : Var
+      Var.new(new_temp_var_name(prefix))
+    end
 
-    def new_temp_var_name
-      @temp_var_counter += 1
-      "__temp_#{@temp_var_counter}"
+    # Returns a unique variable name associated with the given AST *node*.
+    #
+    # Nodes with a location include the first 8 digits of the filename's MD5
+    # digest as part of the prefix, e.g. all names originating from `foo.cr` use
+    # the prefix `__temp_cd6ae5dd_*`. This localizes the impact on incremental
+    # object file generation to all types defined or reopened in that same file.
+    def new_temp_var_name(node : ASTNode) : String
+      if filename = node.location.try(&.original_filename)
+        # the parser creates `Location`s with an empty filename by default,
+        # assume they are equivalent to `nil` to make compiler specs less noisy
+        unless filename == ""
+          prefix = "__temp_#{Crystal::Digest::MD5.hexdigest(filename)[0, 8]}_"
+        end
+      end
+
+      new_temp_var_name(prefix)
+    end
+
+    # Returns a unique variable name associated with the given *prefix*.
+    #
+    # By convention, the prefix must start with `__temp_`, and defaults to it as
+    # well.
+    def new_temp_var_name(prefix : String? = nil) : String
+      prefix ||= "__temp_"
+      id = @temp_vars.update(prefix, &.succ)
+      "#{prefix}#{id}"
     end
 
     # Colorizes the given object, depending on whether this program

@@ -22,6 +22,20 @@ module HTTP
           HTTP::Cookie.new("snicker", "doodle"),
         }
       end
+
+      # FIXME: Should handle both: https://github.com/crystal-lang/crystal/issues/16069
+      it "takes last one on duplicate keys" do
+        HTTP::Cookies.from_client_headers(
+          HTTP::Headers{"Cookie" => "foo=bar; foo=baz"}
+        ).should eq HTTP::Cookies{
+          HTTP::Cookie.new("foo", "baz"),
+        }
+        HTTP::Cookies.from_client_headers(
+          HTTP::Headers{"Cookie" => "foo=baz; foo=bar"}
+        ).should eq HTTP::Cookies{
+          HTTP::Cookie.new("foo", "bar"),
+        }
+      end
     end
 
     describe ".from_server_headers" do
@@ -42,23 +56,76 @@ module HTTP
           HTTP::Cookie.new("snicker", "doodle"),
         }
       end
+
+      # FIXME: Should handle both: https://github.com/crystal-lang/crystal/issues/16069
+      it "takes last one on duplicate keys" do
+        HTTP::Cookies.from_server_headers(
+          HTTP::Headers{"Set-Cookie" => ["foo=bar", "foo=baz; path=/baz"]}
+        ).should eq HTTP::Cookies{
+          HTTP::Cookie.new("foo", "baz", path: "/baz"),
+        }
+        HTTP::Cookies.from_server_headers(
+          HTTP::Headers{"Set-Cookie" => ["foo=baz; path=/baz", "foo=bar"]}
+        ).should eq HTTP::Cookies{
+          HTTP::Cookie.new("foo", "bar"),
+        }
+      end
     end
 
-    it "allows adding cookies and retrieving" do
-      cookies = Cookies.new
-      cookies << Cookie.new("a", "b")
-      cookies["c"] = Cookie.new("c", "d")
-      cookies["d"] = "e"
+    describe "mutating" do
+      it "allows adding cookies and retrieving" do
+        cookies = Cookies.new
+        cookies << Cookie.new("a", "b")
+        cookies["c"] = Cookie.new("c", "d")
+        cookies["d"] = "e"
 
-      cookies["a"].value.should eq "b"
-      cookies["c"].value.should eq "d"
-      cookies["d"].value.should eq "e"
-      cookies["a"]?.should_not be_nil
-      cookies["e"]?.should be_nil
-      cookies.has_key?("a").should be_true
+        cookies["a"].value.should eq "b"
+        cookies["c"].value.should eq "d"
+        cookies["d"].value.should eq "e"
+        cookies["a"]?.should_not be_nil
+        cookies["e"]?.should be_nil
+        cookies.has_key?("a").should be_true
+      end
+
+      describe "#<<" do
+        it "overwrites existing key" do
+          cookies = Cookies{"a" => "b"}
+          cookies << Cookie.new("a", "c")
+          cookies.should eq Cookies{"a" => "c"}
+        end
+
+        it "overwrites existing key with same value" do
+          cookies = Cookies{"a" => "b"}
+          new_cookie = Cookie.new("a", "b", path: "/foo")
+          cookies << new_cookie
+          cookies.should eq Cookies{new_cookie}
+        end
+      end
+
+      describe "#[]=" do
+        it "disallows adding inconsistent state" do
+          cookies = Cookies.new
+
+          expect_raises ArgumentError do
+            cookies["a"] = Cookie.new("b", "c")
+          end
+        end
+
+        it "overwrites existing key" do
+          cookies = Cookies{"a" => "b"}
+          cookies["a"] = "c"
+          cookies.should eq Cookies{"a" => "c"}
+        end
+
+        it "overwrites existing key with same value" do
+          cookies = Cookies{Cookie.new("a", "b", path: "/foo")}
+          cookies["a"] = "b"
+          cookies.should eq Cookies{"a" => "b"}
+        end
+      end
     end
 
-    it "allows retrieving the size of the cookies collection" do
+    it "#size" do
       cookies = Cookies.new
       cookies.size.should eq 0
       cookies << Cookie.new("1", "2")
@@ -67,7 +134,7 @@ module HTTP
       cookies.size.should eq 2
     end
 
-    it "allows clearing the cookies collection" do
+    it "#clear" do
       cookies = Cookies.new
       cookies << Cookie.new("test_key", "test_value")
       cookies << Cookie.new("a", "b")
@@ -76,7 +143,7 @@ module HTTP
       cookies.should be_empty
     end
 
-    it "allows deleting a particular cookie by key" do
+    it "#delete" do
       cookies = Cookies.new
       cookies << Cookie.new("the_key", "the_value")
       cookies << Cookie.new("not_the_key", "not_the_value")
@@ -87,7 +154,7 @@ module HTTP
       cookies.size.should eq 2
     end
 
-    describe "adding request headers" do
+    describe "#add_request_headers" do
       it "overwrites a pre-existing Cookie header" do
         headers = Headers.new
         headers["Cookie"] = "some_key=some_value"
@@ -134,7 +201,7 @@ module HTTP
       end
     end
 
-    describe "adding response headers" do
+    describe "#add_response_headers" do
       it "overwrites all pre-existing Set-Cookie headers" do
         headers = Headers.new
         headers.add("Set-Cookie", "a=b")
@@ -188,15 +255,7 @@ module HTTP
       end
     end
 
-    it "disallows adding inconsistent state" do
-      cookies = Cookies.new
-
-      expect_raises ArgumentError do
-        cookies["a"] = Cookie.new("b", "c")
-      end
-    end
-
-    it "allows to iterate over the cookies" do
+    it "#each" do
       cookies = Cookies.new
       cookies["a"] = "b"
       cookies.each do |cookie|
@@ -208,7 +267,7 @@ module HTTP
       cookie.should eq Cookie.new("a", "b")
     end
 
-    it "allows transform to hash" do
+    it "#to_h" do
       cookies = Cookies.new
       cookies << Cookie.new("a", "b")
       cookies["c"] = Cookie.new("c", "d")
