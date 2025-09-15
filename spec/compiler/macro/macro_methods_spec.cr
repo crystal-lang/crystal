@@ -422,6 +422,10 @@ module Crystal
         assert_macro %({{"foo" != "bar"}}), %(true)
       end
 
+      it "executes string * number" do
+        assert_macro %({{"odelay" * 3}}), "\"odelayodelayodelay\""
+      end
+
       it "executes split without arguments" do
         assert_macro %({{"1 2 3".split}}), %(["1", "2", "3"] of ::String)
       end

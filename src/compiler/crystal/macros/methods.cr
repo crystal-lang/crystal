@@ -691,6 +691,20 @@ module Crystal
           end
           StringLiteral.new(@value + piece)
         end
+      when "*"
+        interpret_check_args do |arg|
+          unless arg.is_a?(Crystal::NumberLiteral)
+            arg.raise "argument to StringLiteral#* must be a number, not #{arg.class_desc}"
+          end
+
+          num = arg.to_number
+
+          unless num.is_a?(Int)
+            arg.raise "argument to StringLiteral#* cannot be a float"
+          end
+
+          StringLiteral.new(@value * num)
+        end
       when "camelcase"
         interpret_check_args(named_params: ["lower"]) do
           lower = if named_args && (lower_arg = named_args["lower"]?)

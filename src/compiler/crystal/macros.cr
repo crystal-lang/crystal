@@ -653,6 +653,10 @@ module Crystal::Macros
     # Similar to `String#<`
     def <(other : StringLiteral | MacroId) : BoolLiteral
     end
+
+    # Similar to `String#*`.
+    def *(other : NumberLiteral) : StringLiteral
+    end
   end
 
   # An interpolated string like `"Hello, #{name}!"`.
