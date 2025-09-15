@@ -3169,6 +3169,20 @@ private def interpret_array_or_tuple_method(object, klass, method, args, named_a
       end
       klass.new(object.elements - other_elements)
     end
+  when "*"
+    interpret_check_args(node: object) do |arg|
+      unless arg.is_a?(Crystal::NumberLiteral)
+        arg.raise "argument to ArrayLiteral#* must be a number, not #{arg.class_desc}"
+      end
+
+      num = arg.to_number
+
+      unless num.is_a?(Int)
+        arg.raise "argument to ArrayLiteral#* cannot be a float"
+      end
+
+      klass.new(object.elements * num)
+    end
   else
     nil
   end

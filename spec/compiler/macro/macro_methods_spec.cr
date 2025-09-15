@@ -768,6 +768,10 @@ module Crystal
         assert_macro %({{[1, 2, 3].map { |e| e == 2 }}}), "[false, true, false]"
       end
 
+      it "executes *" do
+        assert_macro %({{["na"] * 5}}), %(["na", "na", "na", "na", "na"])
+      end
+
       it "executes reduce with no initial value" do
         assert_macro %({{[1, 2, 3].reduce { |acc, val| acc * val }}}), "6"
       end
