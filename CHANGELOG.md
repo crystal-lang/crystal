@@ -13,12 +13,10 @@ Freeze period: 2025-09-23
 - Support `ProcPointer`s of lib funs with parameter types ([#16089], thanks @HertzDevil)
 - _(annotations)_ Print deprecation warning on types and aliases ([#15962], thanks @ysbaddaden)
 - _(annotations)_ Print deprecation warnings on deprecated method argument ([#15999], thanks @ysbaddaden)
-- _(annotations)_ Continue REPL prompt if input consists entirely of annotations ([#16045], thanks @HertzDevil)
 
 [#16089]: https://github.com/crystal-lang/crystal/pull/16089
 [#15962]: https://github.com/crystal-lang/crystal/pull/15962
 [#15999]: https://github.com/crystal-lang/crystal/pull/15999
-[#16045]: https://github.com/crystal-lang/crystal/pull/16045
 
 #### stdlib
 
@@ -68,7 +66,7 @@ Freeze period: 2025-09-23
 
 #### compiler
 
-- Add the ability to dump type information to a JSON file ([#16027], thanks @HertzDevil)
+- _(cli)_ Add the ability to dump type information to a JSON file ([#16027], thanks @HertzDevil)
 - _(interpreter)_ Support `Proc.new(Void*, Void*)` in the interpreter ([#16044], thanks @HertzDevil)
 - _(semantic)_ Resolve types when guessing return type from class method overloads ([#16118], thanks @HertzDevil)
 - _(semantic)_ Guess instance variable types from global method calls ([#16119], thanks @HertzDevil)
@@ -90,7 +88,7 @@ Freeze period: 2025-09-23
 
 #### stdlib
 
-- _(files)_ Fix fcntl reference for fds[1] in socketpair setup ([#16072], thanks @kojix2)
+- _(files)_ Fix `fcntl` reference for `fds[1]` in socketpair setup ([#16072], thanks @kojix2)
 - _(log)_ Make crystal log resilient to empty LOG_LEVEL env var ([#15963], thanks @anaPerezGhiglia)
 - _(networking)_ Preserve query params in `StaticFileHandler` redirects ([#15789], thanks @syeopite)
 - _(networking)_ Fix `StaticFileHandler` to return 404 on file error ([#16025], [#16077], thanks @straight-shoota)
@@ -124,6 +122,7 @@ Freeze period: 2025-09-23
 - _(codegen)_ Never generate assignments to a block's underscore parameters ([#16057], thanks @HertzDevil)
 - _(codegen)_ Fix `@[Primitive]` codegen for typedefs ([#16110], thanks @HertzDevil)
 - _(interpreter)_ never generate assignments to a block's underscore parameters ([#16058], thanks @HertzDevil)
+- _(interpreter:repl)_ Continue REPL prompt if input consists entirely of annotations ([#16045], thanks @HertzDevil)
 - _(parser)_ Disallow unterminated escaped heredoc without trailing newline ([#16046], thanks @HertzDevil)
 - _(parser)_ Require space, semicolon, or newline after class/module/etc. header ([#13375], thanks @FnControlOption)
 - _(parser)_ Fix parsing `ReadInstanceVar` in short block syntax ([#16099], thanks @nobodywasishere)
@@ -138,6 +137,7 @@ Freeze period: 2025-09-23
 [#16057]: https://github.com/crystal-lang/crystal/pull/16057
 [#16110]: https://github.com/crystal-lang/crystal/pull/16110
 [#16058]: https://github.com/crystal-lang/crystal/pull/16058
+[#16045]: https://github.com/crystal-lang/crystal/pull/16045
 [#16046]: https://github.com/crystal-lang/crystal/pull/16046
 [#13375]: https://github.com/crystal-lang/crystal/pull/13375
 [#16099]: https://github.com/crystal-lang/crystal/pull/16099
@@ -153,6 +153,7 @@ Freeze period: 2025-09-23
 
 #### stdlib
 
+- _(files)_ **[deprecation]** Deprecate the `blocking` parameter of `File`, `Socket` and `IO::FileDescriptor` constructors ([#16034], [#16047], thanks @ysbaddaden, @Blacksmoke16)
 - _(files)_ Add type restrictions to mime ([#15834], thanks @Vici37)
 - _(log)_ Add type restrictions to Log directory ([#15777], thanks @Vici37)
 - _(networking)_ Add type restrictions to Oauth directory ([#15687], thanks @Vici37)
@@ -161,6 +162,8 @@ Freeze period: 2025-09-23
 - _(serialization)_ Add type restrictions to json ([#15840], [#16142], thanks @Vici37, @Sija)
 - _(system)_ **[deprecation]** Deprecate `Process::Status#exit_signal` ([#16003], thanks @straight-shoota)
 
+[#16034]: https://github.com/crystal-lang/crystal/pull/16034
+[#16047]: https://github.com/crystal-lang/crystal/pull/16047
 [#15834]: https://github.com/crystal-lang/crystal/pull/15834
 [#15777]: https://github.com/crystal-lang/crystal/pull/15777
 [#15687]: https://github.com/crystal-lang/crystal/pull/15687
@@ -208,7 +211,6 @@ Freeze period: 2025-09-23
 - _(runtime)_ Pass `fd` implicitly to `System::FileDescriptor` and `System::Socket` ([#16137], thanks @ysbaddaden)
 - _(runtime)_ Drop custom implementation of `Fiber::ExecutionContext::Concurrent` ([#16135], thanks @ysbaddaden)
 - _(specs)_ Keep own colorization state in `Spec::CLI` ([#15926], thanks @HertzDevil)
-- _(text)_ Use `ensure_suffix` instead of manually checking for suffixes [follow-up #15782] ([#15858], thanks @MatheusRich)
 - _(time)_ Remove the old Windows time zone name table ([#16006], thanks @HertzDevil)
 
 [#16011]: https://github.com/crystal-lang/crystal/pull/16011
@@ -219,7 +221,6 @@ Freeze period: 2025-09-23
 [#16137]: https://github.com/crystal-lang/crystal/pull/16137
 [#16135]: https://github.com/crystal-lang/crystal/pull/16135
 [#15926]: https://github.com/crystal-lang/crystal/pull/15926
-[#15858]: https://github.com/crystal-lang/crystal/pull/15858
 [#16006]: https://github.com/crystal-lang/crystal/pull/16006
 
 #### compiler
@@ -329,7 +330,7 @@ Freeze period: 2025-09-23
 - Avoid updating `forward-compatibility.yml` on release update for patch releases ([#16019], thanks @straight-shoota)
 - Disable `Lint/LiteralsComparison` in more spec files ([#16087], thanks @straight-shoota)
 - Fix typo in Makefile comment ([#16126], thanks @kojix2)
-- Fix duplicate --error-trace in man page build options ([#16133], thanks @kojix2)
+- Fix duplicate `--error-trace` option in man page ([#16133], thanks @kojix2)
 - _(ci)_ Add `fail-fast: false` for strategy CI jobs ([#15960], thanks @straight-shoota)
 - _(ci)_ Add tests for latest OpenSSL and LibreSSL in Alpine edge ([#15812], thanks @straight-shoota)
 - _(ci)_ Use MSYS2 Crystal package for ARM64 Windows CI ([#15991], thanks @HertzDevil)
@@ -371,11 +372,8 @@ Freeze period: 2025-09-23
 #### stdlib
 
 - _(concurrency)_ **[deprecation]** Deprecate `Atomic::Flag` ([#15805], thanks @ysbaddaden)
-- _(files)_ **[deprecation]** Deprecate the `blocking` parameter of `File`, `Socket` and `IO::FileDescriptor` constructors ([#16034], [#16047], thanks @ysbaddaden, @Blacksmoke16)
 
 [#15805]: https://github.com/crystal-lang/crystal/pull/15805
-[#16034]: https://github.com/crystal-lang/crystal/pull/16034
-[#16047]: https://github.com/crystal-lang/crystal/pull/16047
 
 #### compiler
 
