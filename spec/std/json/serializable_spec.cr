@@ -310,6 +310,9 @@ class JSONAttrWithQueryAttributes
 
   @[JSON::Field(ignore: true)]
   getter? bar_present : Bool
+
+  @[JSON::Field(key: "is_baz")]
+  property baz : Bool
 end
 
 module JSONAttrModule
@@ -595,6 +598,7 @@ describe "JSON mapping" do
         JSON
     end
     ex.location.should eq({4, 3})
+    ex.attribute.should eq "foo"
   end
 
   it "should parse extra fields (JSONAttrPersonExtraFields with on_unknown_json_attribute)" do
@@ -615,12 +619,13 @@ describe "JSON mapping" do
   it "raises if non-nilable attribute is nil" do
     error_message = <<-'MSG'
       Missing JSON attribute: name
-        parsing JSONAttrPerson at line 1, column 1
+        parsing JSONAttrPerson#name at line 1, column 1
       MSG
     ex = expect_raises ::JSON::SerializableError, error_message do
       JSONAttrPerson.from_json(%({"age": 30}))
     end
     ex.location.should eq({1, 1})
+    ex.attribute.should eq "name"
   end
 
   it "raises if not an object" do
@@ -650,6 +655,7 @@ describe "JSON mapping" do
         JSON
     end
     ex.location.should eq({3, 10})
+    ex.attribute.should eq "age"
   end
 
   it "doesn't emit null by default when doing to_json" do
@@ -1015,7 +1021,7 @@ describe "JSON mapping" do
 
   describe "with query attributes" do
     it "defines query getter" do
-      json = JSONAttrWithQueryAttributes.from_json(%({"foo": true}))
+      json = JSONAttrWithQueryAttributes.from_json(%({"foo": true, "is_baz": true}))
       json.foo?.should be_true
       json.bar?.should be_false
     end
@@ -1029,29 +1035,42 @@ describe "JSON mapping" do
     end
 
     it "defines non-query setter and presence methods" do
-      json = JSONAttrWithQueryAttributes.from_json(%({"foo": false}))
+      json = JSONAttrWithQueryAttributes.from_json(%({"foo": false, "is_baz": true}))
       json.bar_present?.should be_false
       json.bar = true
       json.bar?.should be_true
     end
 
     it "maps non-query attributes" do
-      json = JSONAttrWithQueryAttributes.from_json(%({"foo": false, "is_bar": false}))
+      json = JSONAttrWithQueryAttributes.from_json(%({"foo": false, "is_bar": false, "is_baz": true}))
       json.bar_present?.should be_true
       json.bar?.should be_false
       json.bar = true
-      json.to_json.should eq(%({"foo":false,"is_bar":true}))
+      json.to_json.should eq(%({"foo":false,"is_bar":true,"is_baz":true}))
     end
 
     it "raises if non-nilable attribute is nil" do
       error_message = <<-'MSG'
         Missing JSON attribute: foo
-          parsing JSONAttrWithQueryAttributes at line 1, column 1
+          parsing JSONAttrWithQueryAttributes#foo at line 1, column 1
         MSG
       ex = expect_raises ::JSON::SerializableError, error_message do
-        JSONAttrWithQueryAttributes.from_json(%({"is_bar": true}))
+        JSONAttrWithQueryAttributes.from_json(%({"is_bar": true, "is_bas": true}))
       end
       ex.location.should eq({1, 1})
+      ex.attribute.should eq "foo"
+    end
+
+    it "raises with key as attribute if non-nilable attribute is nil" do
+      error_message = <<-'MSG'
+        Missing JSON attribute: is_baz
+          parsing JSONAttrWithQueryAttributes#is_baz at line 1, column 1
+        MSG
+      ex = expect_raises ::JSON::SerializableError, error_message do
+        JSONAttrWithQueryAttributes.from_json(%({"foo": true, "is_bar": true}))
+      end
+      ex.location.should eq({1, 1})
+      ex.attribute.should eq "is_baz"
     end
   end
 
