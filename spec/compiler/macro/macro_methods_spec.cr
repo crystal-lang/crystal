@@ -422,6 +422,10 @@ module Crystal
         assert_macro %({{"foo" != "bar"}}), %(true)
       end
 
+      it "executes string * number" do
+        assert_macro %({{"odelay" * 3}}), "\"odelayodelayodelay\""
+      end
+
       it "executes split without arguments" do
         assert_macro %({{"1 2 3".split}}), %(["1", "2", "3"] of ::String)
       end
@@ -766,6 +770,10 @@ module Crystal
 
       it "executes map" do
         assert_macro %({{[1, 2, 3].map { |e| e == 2 }}}), "[false, true, false]"
+      end
+
+      it "executes *" do
+        assert_macro %({{["na"] * 5}}), %(["na", "na", "na", "na", "na"])
       end
 
       it "executes reduce with no initial value" do
