@@ -258,7 +258,7 @@ module JSON
                 @{{name}} = %var{name}
               else
                 {% unless value[:has_default] || value[:nilable] %}
-                  raise ::JSON::SerializableError.new("Missing JSON attribute: {{value[:key].id}}", self.class.to_s, nil, *%location, nil)
+                  raise ::JSON::SerializableError.new("Missing JSON attribute: {{value[:key].id}}", self.class.to_s, {{value[:key]}}, *%location, nil)
                 {% end %}
               end
 
@@ -360,7 +360,7 @@ module JSON
 
     module Strict
       protected def on_unknown_json_attribute(pull, key, key_location)
-        raise ::JSON::SerializableError.new("Unknown JSON attribute: #{key}", self.class.to_s, nil, *key_location, nil)
+        raise ::JSON::SerializableError.new("Unknown JSON attribute: #{key}", self.class.to_s, key, *key_location, nil)
       end
     end
 
