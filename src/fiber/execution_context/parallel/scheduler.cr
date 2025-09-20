@@ -25,7 +25,7 @@ module Fiber::ExecutionContext
       @runnables : Runnables(256)
       @event_loop : Crystal::EventLoop
 
-      @tick : Int32 = 0
+      @tick : UInt32 = 0
       @spinning = false
       @waiting = false
       @parked = false
