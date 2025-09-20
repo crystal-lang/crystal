@@ -276,7 +276,7 @@ end
 # end
 #
 # timestamp = Timestamp.from_yaml(%({"values":[1459859781,1567628762]}))
-# timestamp.values  # => [2016-04-05 12:36:21 UTC, 2019-09-04 20:26:02 UTC]
+# timestamp.values  # => [2016-04-05 12:36:21Z, 2019-09-04 20:26:02Z]
 # timestamp.to_yaml # => "---\nvalues:\n- 1459859781\n- 1567628762\n"
 # ```
 #
@@ -294,7 +294,7 @@ end
 # end
 #
 # timestamp = Timestamp.from_yaml(%({"values":["Apr 5, 2016","Sep 4, 2019"]}))
-# timestamp.values  # => [2016-04-05 00:00:00 UTC, 2019-09-04 00:00:00 UTC]
+# timestamp.values  # => [2016-04-05 00:00:00Z, 2019-09-04 00:00:00Z]
 # timestamp.to_yaml # => "---\nvalues:\n- Apr 5, 2016\n- Sep 4, 2019\n"
 # ```
 #
