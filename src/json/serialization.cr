@@ -207,7 +207,7 @@ module JSON
             # `%var`'s type must be exact to avoid type inference issues with
             # recursively defined serializable types
             {% for name, value in properties %}
-              %var{name} = uninitialized ::Union({{value[:type]}})
+              %var{name} = uninitialized ::Union(typeof(@{{ name }}))
               %found{name} = false
             {% end %}
 
@@ -239,7 +239,7 @@ module JSON
                         {% if value[:converter] %}
                           {{value[:converter]}}.from_json(pull)
                         {% else %}
-                          ::Union({{value[:type]}}).new(pull)
+                          ::Union(typeof(@{{ name }})).new(pull)
                         {% end %}
                       end
                     %found{name} = true

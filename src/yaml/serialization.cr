@@ -212,7 +212,7 @@ module YAML
             # `%var`'s type must be exact to avoid type inference issues with
             # recursively defined serializable types
             {% for name, value in properties %}
-              %var{name} = uninitialized ::Union({{value[:type]}})
+              %var{name} = uninitialized ::Union(typeof(@{{ name }}))
               %found{name} = false
             {% end %}
 
@@ -243,7 +243,7 @@ module YAML
                         {% if value[:converter] %}
                           {{value[:converter]}}.from_yaml(ctx, value_node)
                         {% else %}
-                          ::Union({{value[:type]}}).new(ctx, value_node)
+                          ::Union(typeof(@{{ name }})).new(ctx, value_node)
                         {% end %}
                       %found{name} = true
                     end
