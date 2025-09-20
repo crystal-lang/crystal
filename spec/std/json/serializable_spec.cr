@@ -326,6 +326,13 @@ class JSONAttrWithQueryAttributes
   getter? bar_present : Bool
 end
 
+class JSONAttrWithKeyQueryAttribute
+  include JSON::Serializable
+
+  @[JSON::Field(key: "is_foo")]
+  property? foo : Bool
+end
+
 module JSONAttrModule
   property moo : Int32 = 10
 end
@@ -647,6 +654,7 @@ describe "JSON mapping" do
         JSON
     end
     ex.location.should eq({4, 3})
+    ex.attribute.should eq "foo"
   end
 
   it "should parse extra fields (JSONAttrPersonExtraFields with on_unknown_json_attribute)" do
@@ -667,12 +675,13 @@ describe "JSON mapping" do
   it "raises if non-nilable attribute is nil" do
     error_message = <<-'MSG'
       Missing JSON attribute: name
-        parsing JSONAttrPerson at line 1, column 1
+        parsing JSONAttrPerson#name at line 1, column 1
       MSG
     ex = expect_raises ::JSON::SerializableError, error_message do
       JSONAttrPerson.from_json(%({"age": 30}))
     end
     ex.location.should eq({1, 1})
+    ex.attribute.should eq "name"
   end
 
   it "raises if not an object" do
@@ -702,6 +711,7 @@ describe "JSON mapping" do
         JSON
     end
     ex.location.should eq({3, 10})
+    ex.attribute.should eq "age"
   end
 
   it "doesn't emit null by default when doing to_json" do
@@ -1098,12 +1108,25 @@ describe "JSON mapping" do
     it "raises if non-nilable attribute is nil" do
       error_message = <<-'MSG'
         Missing JSON attribute: foo
-          parsing JSONAttrWithQueryAttributes at line 1, column 1
+          parsing JSONAttrWithQueryAttributes#foo at line 1, column 1
         MSG
       ex = expect_raises ::JSON::SerializableError, error_message do
         JSONAttrWithQueryAttributes.from_json(%({"is_bar": true}))
       end
       ex.location.should eq({1, 1})
+      ex.attribute.should eq "foo"
+    end
+
+    it "raises with key as attribute if non-nilable attribute is nil" do
+      error_message = <<-'MSG'
+        Missing JSON attribute: is_foo
+          parsing JSONAttrWithKeyQueryAttribute#is_foo at line 1, column 1
+        MSG
+      ex = expect_raises ::JSON::SerializableError, error_message do
+        JSONAttrWithKeyQueryAttribute.from_json(%({}))
+      end
+      ex.location.should eq({1, 1})
+      ex.attribute.should eq "is_foo"
     end
   end
 
