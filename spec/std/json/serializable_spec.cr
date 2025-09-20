@@ -581,7 +581,7 @@ record Namespaced::JSON::Wrapper, name : String, options : Hash(String, ::JSON::
   include ::JSON::Serializable
 end
 
-describe "JSON mapping" do
+describe "JSON::Serializable" do
   it "works with classes within `JSON` namespace" do
     Namespaced::JSON::Wrapper
       .from_json(<<-JSON)
