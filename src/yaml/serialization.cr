@@ -188,7 +188,7 @@ module YAML
         end
       end
 
-      def initialize(*, __context_for_yaml_serializable ctx : YAML::ParseContext, __node_for_yaml_serializable node : ::YAML::Nodes::Node)
+      def initialize(*, __context_for_yaml_serializable ctx : ::YAML::ParseContext, __node_for_yaml_serializable node : ::YAML::Nodes::Node)
         {% verbatim do %}
           {% begin %}
             {% properties = {} of Nil => Nil %}
@@ -217,9 +217,9 @@ module YAML
             {% end %}
 
             case node
-            when YAML::Nodes::Mapping
-              YAML::Schema::Core.each(node) do |key_node, value_node|
-                unless key_node.is_a?(YAML::Nodes::Scalar)
+            when ::YAML::Nodes::Mapping
+              ::YAML::Schema::Core.each(node) do |key_node, value_node|
+                unless key_node.is_a?(::YAML::Nodes::Scalar)
                   key_node.raise "Expected scalar as key for mapping"
                 end
 
@@ -230,7 +230,7 @@ module YAML
                   when {{value[:key]}}
                     begin
                       {% if value[:has_default] || value[:nilable] %}
-                        if YAML::Schema::Core.parse_null?(value_node)
+                        if ::YAML::Schema::Core.parse_null?(value_node)
                           {% if value[:nilable] %}
                             %var{name} = nil
                             %found{name} = true
@@ -252,7 +252,7 @@ module YAML
                   on_unknown_yaml_attribute(ctx, key, key_node, value_node)
                 end
               end
-            when YAML::Nodes::Scalar
+            when ::YAML::Nodes::Scalar
               if node.value.empty? && node.style.plain? && !node.tag
                 # We consider an empty scalar as an empty mapping
               else
@@ -353,11 +353,11 @@ module YAML
     end
 
     module Unmapped
-      @[YAML::Field(ignore: true)]
-      property yaml_unmapped = Hash(String, YAML::Any).new
+      @[::YAML::Field(ignore: true)]
+      property yaml_unmapped = Hash(String, ::YAML::Any).new
 
       protected def on_unknown_yaml_attribute(ctx, key, key_node, value_node)
-        yaml_unmapped[key] = YAML::Any.new(ctx, value_node)
+        yaml_unmapped[key] = ::YAML::Any.new(ctx, value_node)
       end
 
       protected def on_to_yaml(yaml)
