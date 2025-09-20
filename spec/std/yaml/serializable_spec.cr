@@ -477,7 +477,21 @@ class YAMLInitializeOpts
   end
 end
 
+record Namespaced::YAML::Wrapper, name : String, options : Hash(String, ::YAML::Any::Type)? = nil do
+  include ::YAML::Serializable
+end
+
 describe "YAML::Serializable" do
+  it "works with classes within `YAML` namespace" do
+    Namespaced::YAML::Wrapper
+      .from_yaml(<<-YAML)
+          name: foo
+          options:
+            foo: true
+        YAML
+      .to_yaml
+  end
+
   it "works with record" do
     YAMLAttrPoint.new(1, 2).to_yaml.should eq "---\nx: 1\ny: 2\n"
     YAMLAttrPoint.from_yaml("---\nx: 1\ny: 2\n").should eq YAMLAttrPoint.new(1, 2)

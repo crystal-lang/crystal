@@ -577,7 +577,24 @@ class JSONInitializeOpts
   end
 end
 
+record Namespaced::JSON::Wrapper, name : String, options : Hash(String, ::JSON::Any::Type)? = nil do
+  include ::JSON::Serializable
+end
+
 describe "JSON mapping" do
+  it "works with classes within `JSON` namespace" do
+    Namespaced::JSON::Wrapper
+      .from_json(<<-JSON)
+        {
+          "name": "foo",
+          "options": {
+            "foo": true
+          }
+        }
+        JSON
+      .to_json
+  end
+
   it "works with record" do
     JSONAttrPoint.new(1, 2).to_json.should eq "{\"x\":1,\"y\":2}"
     JSONAttrPoint.from_json(%({"x": 1, "y": 2})).should eq JSONAttrPoint.new(1, 2)
