@@ -92,7 +92,7 @@ module Regex::PCRE2
     flag
   end
 
-  def self.supports_compile_flag?(options)
+  def self.supports_compile_flag?(options : Regex::Options) : Bool
     true
   end
 
@@ -146,7 +146,7 @@ module Regex::PCRE2
     flag
   end
 
-  def self.supports_match_flag?(options)
+  def self.supports_match_flag?(options : Regex::MatchOptions) : Bool
     true
   end
 
@@ -256,7 +256,7 @@ module Regex::PCRE2
     end
   end
 
-  def finalize
+  def finalize : Nil
     @match_data.consume_each do |match_data|
       LibPCRE2.match_data_free(match_data)
     end
