@@ -175,7 +175,9 @@ class URI
 
   def_equals_and_hash scheme, host, port, path, query, user, password, fragment
 
-  def initialize(@scheme = nil, @host = nil, @port = nil, @path = "", query : String | Params | Nil = nil, @user = nil, @password = nil, @fragment = nil)
+  def initialize(@scheme = nil, host : String? = nil, @port = nil, @path = "", query : String | Params | Nil = nil, @user = nil, @password = nil, @fragment = nil)
+    # wrap IPv6 addresses
+    @host = host && !host.starts_with?('[') && host.includes?(':') ? "[#{host}]" : host
     @query = query.try(&.to_s)
   end
 
