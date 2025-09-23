@@ -169,6 +169,7 @@ describe "URI" do
   describe "#hostname" do
     it { URI.new("http", "www.example.com", path: "/foo").hostname.should eq("www.example.com") }
     it { URI.new("http", "[::1]", path: "foo").hostname.should eq("::1") }
+    it { URI.new("http", "::1", path: "foo").hostname.should eq("::1") }
     it { URI.new(path: "/foo").hostname.should be_nil }
   end
 
@@ -236,6 +237,9 @@ describe "URI" do
 
     it "normalizes host" do
       URI.parse("http://FoO.cOm/").normalize.should eq URI.parse("http://foo.com/")
+      uri = URI.new("http", port: 8080)
+      uri.host = "::1"
+      uri.normalize.should eq URI.parse("http://[::1]:8080")
     end
 
     it "removes default port" do
