@@ -168,9 +168,17 @@ describe "URI" do
 
   describe "#hostname" do
     it { URI.new("http", "www.example.com", path: "/foo").hostname.should eq("www.example.com") }
-    it { URI.new("http", "[::1]", path: "foo").hostname.should eq("::1") }
-    it { URI.new("http", "::1", path: "foo").hostname.should eq("::1") }
     it { URI.new(path: "/foo").hostname.should be_nil }
+
+    it "works with IPv6 address literals" do
+      uri = URI.new("http", "[::1]", path: "foo")
+      uri.hostname.should eq("::1")
+      uri.host.should eq("[::1]")
+
+      uri = URI.new("http", "::1", path: "foo")
+      uri.hostname.should eq("::1")
+      uri.host.should eq("[::1]")
+    end
   end
 
   describe "#authority" do
