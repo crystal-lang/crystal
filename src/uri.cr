@@ -402,7 +402,10 @@ class URI
   # ```
   def normalize! : URI
     @scheme = @scheme.try &.downcase
-    @host = @host.try &.downcase
+    if host = @host
+      host = host.downcase
+      @host = !host.starts_with?('[') && host.includes?(':') ? "[#{host}]" : host
+    end
     @port = nil if default_port?
     @path = remove_dot_segments(path)
 
