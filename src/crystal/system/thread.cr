@@ -140,10 +140,6 @@ class Thread
     threads.@mutex.unlock
   end
 
-  {% if LocalStorage.has_constant?(:Table) %}
-    property local_storage = Pointer(LocalStorage::Table).null
-  {% end %}
-
   # Creates and starts a new system thread.
   def initialize(@name : String? = nil, &@func : Thread ->)
     @system_handle = uninitialized Crystal::System::Thread::Handle
