@@ -186,29 +186,25 @@ describe UDPSocket, tags: "network" do
     end
   end
 
-  {% if flag?(:linux) || flag?(:win32) %}
-    it "sends broadcast message" do
-      server = UDPSocket.new(Socket::Family::INET)
-      server.bind("0.0.0.0", 0)
-      addr = Socket::IPAddress.new("255.255.255.255", server.local_address.port)
+  it "sends broadcast message" do
+    server = UDPSocket.new(Socket::Family::INET)
+    server.bind("0.0.0.0", 0)
+    addr = Socket::IPAddress.new("255.255.255.255", server.local_address.port)
 
-      client = UDPSocket.new(Socket::Family::INET)
-      client.broadcast = true
-      client.broadcast?.should be_true
+    client = UDPSocket.new(Socket::Family::INET)
+    client.broadcast = true
+    client.broadcast?.should be_true
 
-      client.send("broadcast", to: addr).should eq(9)
-      client.close
+    client.send("broadcast", to: addr).should eq(9)
+    client.close
 
-      server.read_timeout = 1.second
-      begin
-        message, _ = server.receive
-        message.should eq("broadcast")
-      rescue IO::TimeoutError
-        # Since this test doesn't run over the loopback interface, this test
-        # fails when there is a firewall in use. Don't fail in that case.
-      end
+    server.read_timeout = 1.second
+    begin
+      message, _ = server.receive
+      message.should eq("broadcast")
+    rescue IO::TimeoutError
+      # Since this test doesn't run over the loopback interface, this test
+      # fails when there is a firewall in use. Don't fail in that case.
     end
-  {% else %}
-    pending "sends broadcast message"
-  {% end %}
+  end
 end
