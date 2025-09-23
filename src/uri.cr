@@ -99,7 +99,9 @@ class URI
   getter host : String?
 
   # Sets the host component of the URI.
-  setter host : String?
+  def host=(host : String?)
+    @host = host && !host.starts_with?('[') && host.includes?(':') ? "[#{host}]" : host
+  end
 
   # Returns the port component of the URI.
   #
@@ -177,7 +179,7 @@ class URI
 
   def initialize(@scheme = nil, host : String? = nil, @port = nil, @path = "", query : String | Params | Nil = nil, @user = nil, @password = nil, @fragment = nil)
     # wrap IPv6 addresses
-    @host = host && !host.starts_with?('[') && host.includes?(':') ? "[#{host}]" : host
+    self.host = host
     @query = query.try(&.to_s)
   end
 
@@ -402,10 +404,7 @@ class URI
   # ```
   def normalize! : URI
     @scheme = @scheme.try &.downcase
-    if host = @host
-      host = host.downcase
-      @host = !host.starts_with?('[') && host.includes?(':') ? "[#{host}]" : host
-    end
+    @host = @host.try &.downcase
     @port = nil if default_port?
     @path = remove_dot_segments(path)
 
