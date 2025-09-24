@@ -207,7 +207,7 @@ module JSON
             # `%var`'s type must be exact to avoid type inference issues with
             # recursively defined serializable types
             {% for name, value in properties %}
-              %var{name} = uninitialized ::Union({{value[:type]}})
+              %var{name} = uninitialized ::Union(typeof(@{{ name }}))
               %found{name} = false
             {% end %}
 
@@ -239,7 +239,7 @@ module JSON
                         {% if value[:converter] %}
                           {{value[:converter]}}.from_json(pull)
                         {% else %}
-                          ::Union({{value[:type]}}).new(pull)
+                          ::Union(typeof(@{{ name }})).new(pull)
                         {% end %}
                       end
                     %found{name} = true
@@ -365,12 +365,12 @@ module JSON
     end
 
     module Unmapped
-      @[JSON::Field(ignore: true)]
-      property json_unmapped = Hash(String, JSON::Any).new
+      @[::JSON::Field(ignore: true)]
+      property json_unmapped = Hash(String, ::JSON::Any).new
 
       protected def on_unknown_json_attribute(pull, key, key_location)
         json_unmapped[key] = begin
-          JSON::Any.new(pull)
+          ::JSON::Any.new(pull)
         rescue exc : ::JSON::ParseException
           raise ::JSON::SerializableError.new(exc.message, self.class.to_s, key, *key_location, exc)
         end
