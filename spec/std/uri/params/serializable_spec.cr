@@ -50,6 +50,13 @@ private record ConverterType, value : Int32 do
   @value : Int32
 end
 
+private record GenericConverterType(T), value : Int32 do
+  include URI::Params::Serializable
+
+  @[URI::Params::Field(converter: T)]
+  @value : Int32
+end
+
 class ParentType
   include URI::Params::Serializable
 
@@ -57,6 +64,14 @@ class ParentType
 end
 
 class ChildType < ParentType
+end
+
+private record SimpleTypeInitializeOpts, value : Int32 do
+  include URI::Params::Serializable
+
+  def initialize(**opts)
+    @value = opts.size
+  end
 end
 
 describe URI::Params::Serializable do
@@ -129,5 +144,13 @@ describe URI::Params::Serializable do
       Parent.new(Child.new("active", GrandChild.new("Fred"))).to_www_form
         .should eq "child%5Bstatus%5D=active&child%5Bgrand_child%5D%5Bname%5D=Fred"
     end
+  end
+
+  it "works when type has constructor with double splat parameter (#16140)" do
+    SimpleTypeInitializeOpts.from_www_form("value=123").value.should eq(123)
+  end
+
+  it "supports generic type variables in converters" do
+    GenericConverterType(MyConverter).from_www_form("value=123").value.should eq(1230)
   end
 end

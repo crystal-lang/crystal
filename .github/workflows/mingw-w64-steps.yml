@@ -24,7 +24,7 @@ jobs:
     steps:
       - name: Setup MSYS2
         id: msys2
-        uses: msys2/setup-msys2@40677d36a502eb2cf0fb808cc9dec31bf6152638 # v2.28.0
+        uses: msys2/setup-msys2@fb197b72ce45fb24f17bf3f807a388985654d1f2 # v2.29.0
         with:
           msystem: ${{ inputs.msystem }}
           update: true
@@ -40,7 +40,7 @@ jobs:
           git config --global core.autocrlf false
 
       - name: Download Crystal source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Build Crystal
         shell: msys2 {0}
@@ -51,7 +51,7 @@ jobs:
         run: make install install_dlls deref_symlinks=1 PREFIX="$(pwd)/crystal"
 
       - name: Download shards release
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: crystal-lang/shards
           ref: v0.19.1
@@ -81,7 +81,7 @@ jobs:
     steps:
       - name: Setup MSYS2
         id: msys2
-        uses: msys2/setup-msys2@40677d36a502eb2cf0fb808cc9dec31bf6152638 # v2.28.0
+        uses: msys2/setup-msys2@fb197b72ce45fb24f17bf3f807a388985654d1f2 # v2.29.0
         with:
           msystem: ${{ inputs.msystem }}
           update: true
@@ -97,7 +97,7 @@ jobs:
           git config --global core.autocrlf false
 
       - name: Download Crystal source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Run stdlib specs
         shell: msys2 {0}
@@ -111,7 +111,7 @@ jobs:
     steps:
       - name: Setup MSYS2
         id: msys2
-        uses: msys2/setup-msys2@40677d36a502eb2cf0fb808cc9dec31bf6152638 # v2.28.0
+        uses: msys2/setup-msys2@fb197b72ce45fb24f17bf3f807a388985654d1f2 # v2.29.0
         with:
           msystem: ${{ inputs.msystem }}
           update: true
@@ -127,7 +127,7 @@ jobs:
           git config --global core.autocrlf false
 
       - name: Download Crystal source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Download Crystal executable
         uses: actions/download-artifact@v5

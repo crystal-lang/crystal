@@ -130,7 +130,7 @@ module HTTP::FormData
   # `multipart/form-data` is not compatible with the original definition in
   # [RFC 2183](https://tools.ietf.org/html/rfc2183), but are instead specified
   # in [RFC 2388](https://tools.ietf.org/html/rfc2388).
-  def self.parse_content_disposition(content_disposition) : {String, FileMetadata}
+  def self.parse_content_disposition(content_disposition : String) : {String, FileMetadata}
     filename = nil
     creation_time = nil
     modification_time = nil

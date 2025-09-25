@@ -90,7 +90,7 @@ class URI
 
       it "builds from named tuple with IO" do
         io = IO::Memory.new
-        encoded = Params.encode(io, {foo: "bar", baz: ["quux", "quuz"]})
+        Params.encode(io, {foo: "bar", baz: ["quux", "quuz"]})
         io.to_s.should eq("foo=bar&baz=quux&baz=quuz")
       end
     end

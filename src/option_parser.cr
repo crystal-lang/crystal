@@ -316,13 +316,25 @@ class OptionParser
     @flags.join io, '\n'
   end
 
+  # Width for option list portion of summary.
+  property summary_width : Int32 = 32
+
+  def summary_width=(width : Int32)
+    raise ArgumentError.new("Negative summary width: #{width}") if width < 0
+    @summary_width = width
+  end
+
+  # Indentation for summary.
+  property summary_indent : String = "    "
+
   private def append_flag(flag, description)
-    indent = " " * 37
-    description = description.gsub("\n", "\n#{indent}")
-    if flag.size >= 33
-      @flags << "    #{flag}\n#{indent}#{description}"
+    description_indent = "#{summary_indent}#{" " * summary_width} "
+    description = description.gsub("\n", "\n#{description_indent}")
+
+    if flag.size >= summary_width
+      @flags << "#{summary_indent}#{flag}\n#{description_indent}#{description}"
     else
-      @flags << "    #{flag}#{" " * (33 - flag.size)}#{description}"
+      @flags << "#{summary_indent}#{flag}#{" " * (summary_width - flag.size)} #{description}"
     end
   end
 
@@ -342,6 +354,8 @@ class OptionParser
     old_missing_option = @missing_option
     old_invalid_option = @invalid_option
     old_before_each = @before_each
+    old_summary_width = @summary_width
+    old_summary_indent = @summary_indent
 
     begin
       yield
@@ -354,6 +368,8 @@ class OptionParser
       @missing_option = old_missing_option
       @invalid_option = old_invalid_option
       @before_each = old_before_each
+      @summary_width = old_summary_width
+      @summary_indent = old_summary_indent
     end
   end
 

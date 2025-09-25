@@ -342,6 +342,13 @@ module YAMLAttrModuleWithSameNameClass
   end
 end
 
+struct YAMLAttrWithGenericConverter(T)
+  include YAML::Serializable
+
+  @[YAML::Field(converter: T)]
+  property value : Time
+end
+
 abstract class YAMLShape
   include YAML::Serializable
 
@@ -460,7 +467,31 @@ module YAMLDiscriminatorBug
   end
 end
 
+class YAMLInitializeOpts
+  include YAML::Serializable
+
+  property value : Int32
+
+  def initialize(**opts)
+    @value = opts.size
+  end
+end
+
+record Namespaced::YAML::Wrapper, name : String, options : Hash(String, ::YAML::Any::Type)? = nil do
+  include ::YAML::Serializable
+end
+
 describe "YAML::Serializable" do
+  it "works with classes within `YAML` namespace" do
+    Namespaced::YAML::Wrapper
+      .from_yaml(<<-YAML)
+          name: foo
+          options:
+            foo: true
+        YAML
+      .to_yaml
+  end
+
   it "works with record" do
     YAMLAttrPoint.new(1, 2).to_yaml.should eq "---\nx: 1\ny: 2\n"
     YAMLAttrPoint.from_yaml("---\nx: 1\ny: 2\n").should eq YAMLAttrPoint.new(1, 2)
@@ -1159,5 +1190,13 @@ describe "YAML::Serializable" do
 
   it "fixes #13337" do
     YAMLSomething.from_yaml(%({"value":{}})).value.should_not be_nil
+  end
+
+  it "works when type has constructor with double splat parameter (#16140)" do
+    YAMLInitializeOpts.from_yaml(%({"value":123})).value.should eq(123)
+  end
+
+  it "supports generic type variables in converters" do
+    YAMLAttrWithGenericConverter(Time::EpochConverter).from_yaml(%({"value":1459859781})).value.should eq(Time.unix(1459859781))
   end
 end

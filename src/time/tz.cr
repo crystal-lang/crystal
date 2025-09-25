@@ -31,7 +31,6 @@ module Time::TZ
     if numyears == 4 # leap
       numyears = 3
     end
-    total_days -= numyears * 365
 
     num400 * 400 + num100 * 100 + num4 * 4 + numyears + 1
   end

@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Code gen: block" do
   it "generate inline" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       def foo
         yield
       end
@@ -10,11 +10,11 @@ describe "Code gen: block" do
       foo do
         1
       end
-    ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "passes yield arguments" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       def foo
         yield 1
       end
@@ -22,11 +22,11 @@ describe "Code gen: block" do
       foo do |x|
         x &+ 1
       end
-    ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "pass arguments to yielder function" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(4)
       def foo(a)
         yield a
       end
@@ -34,11 +34,11 @@ describe "Code gen: block" do
       foo(3) do |x|
         x &+ 1
       end
-    ").to_i.should eq(4)
+      CRYSTAL
   end
 
   it "pass self to yielder function" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(4)
       struct Int
         def foo
           yield self
@@ -48,11 +48,11 @@ describe "Code gen: block" do
       3.foo do |x|
         x &+ 1
       end
-    ").to_i.should eq(4)
+      CRYSTAL
   end
 
   it "pass self and arguments to yielder function" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(5)
       struct Int
         def foo(i)
           yield self, i
@@ -62,11 +62,11 @@ describe "Code gen: block" do
       3.foo(2) do |x, i|
         x &+ i
       end
-    ").to_i.should eq(5)
+      CRYSTAL
   end
 
   it "allows access to local variables" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       def foo
         yield
       end
@@ -75,11 +75,11 @@ describe "Code gen: block" do
       foo do
         x &+ 1
       end
-    ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "can access instance vars from yielder function" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       class Foo
         def initialize
           @x = 1
@@ -92,11 +92,11 @@ describe "Code gen: block" do
       Foo.new.foo do |x|
         x &+ 1
       end
-    ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "can set instance vars from yielder function" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       class Foo
         def initialize
           @x = 1
@@ -113,11 +113,11 @@ describe "Code gen: block" do
       a = Foo.new
       a.foo { 2 }
       a.value
-    ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "can use instance methods from yielder function" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       class Foo
         def foo
           yield value
@@ -128,11 +128,11 @@ describe "Code gen: block" do
       end
 
       Foo.new.foo { |x| x &+ 1 }
-    ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "can call methods from block when yielder is an instance method" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Foo
         def foo
           yield
@@ -144,11 +144,11 @@ describe "Code gen: block" do
       end
 
       Foo.new.foo { bar }
-    ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "nested yields" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       def bar
         yield
       end
@@ -158,33 +158,33 @@ describe "Code gen: block" do
       end
 
       a = foo { 1 }
-    ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "assigns yield to argument" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       def foo(x)
         yield
         x = 1
       end
 
       foo(1) { 1 }
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "can use global constant" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       FOO = 1
       def foo
         yield
         FOO
       end
       foo { }
-    ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "return from yielder function" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       def foo
         yield
         return 1
@@ -192,11 +192,11 @@ describe "Code gen: block" do
 
       foo { }
       2
-    ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "return from block" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       def foo
         yield
       end
@@ -207,11 +207,11 @@ describe "Code gen: block" do
       end
 
       bar
-    ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "return from yielder function (2)" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       def foo
         yield
         return 1 if true
@@ -223,11 +223,11 @@ describe "Code gen: block" do
       end
 
       bar
-    ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "union value of yielder function" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       def foo
         yield
         a = 1.1
@@ -236,11 +236,11 @@ describe "Code gen: block" do
       end
 
       foo {}.to_i!
-    ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "allow return from function called from yielder function" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       def foo
         return 2
       end
@@ -252,22 +252,22 @@ describe "Code gen: block" do
       end
 
       bar {}
-    ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       def foo
         yield
         true ? return 1 : return 1.1
       end
 
       foo {}.to_i!
-    ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "return from block that always returns from function that always yields inside if block" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       def bar
         yield
         2
@@ -282,11 +282,11 @@ describe "Code gen: block" do
       end
 
       foo
-    ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "return from block that always returns from function that conditionally yields" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       def bar
         if true
           yield
@@ -299,11 +299,11 @@ describe "Code gen: block" do
       end
 
       foo
-    ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "call block from dispatch" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       def bar(y)
         yield y
       end
@@ -315,12 +315,12 @@ describe "Code gen: block" do
       end
 
       foo.to_i!
-    ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "call block from dispatch and use local vars" do
-    run("
-      require \"prelude\"
+    run(<<-CRYSTAL).to_i.should eq(4)
+      require "prelude"
 
       def bar(y)
         yield y
@@ -338,13 +338,13 @@ describe "Code gen: block" do
       end
 
       foo.to_i
-    ").to_i.should eq(4)
+      CRYSTAL
   end
 
   it "break without value returns nil" do
-    run("
-      require \"nil\"
-      require \"value\"
+    run(<<-CRYSTAL).to_b.should be_true
+      require "nil"
+      require "value"
 
       def foo
         yield
@@ -356,23 +356,23 @@ describe "Code gen: block" do
       end
 
       x.nil?
-    ").to_b.should be_true
+      CRYSTAL
   end
 
   it "break block with yielder inside while" do
-    run("
-      require \"prelude\"
+    run(<<-CRYSTAL).to_i.should eq(6)
+      require "prelude"
       a = 0
       10.times do
         a += 1
         break if a > 5
       end
       a
-    ").to_i.should eq(6)
+      CRYSTAL
   end
 
   it "break from block returns from yielder" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       def foo
         yield
         yield
@@ -381,11 +381,11 @@ describe "Code gen: block" do
       a = 0
       foo { a &+= 1; break }
       a
-    ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "break from block with value" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       def foo
         while true
           yield
@@ -396,12 +396,12 @@ describe "Code gen: block" do
       foo do
         break 1
       end
-    ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "returns from block with value" do
-    run("
-      require \"prelude\"
+    run(<<-CRYSTAL).to_i.should eq(1)
+      require "prelude"
 
       def foo
         while true
@@ -417,11 +417,11 @@ describe "Code gen: block" do
       end
 
       bar.to_i
-    ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "doesn't codegen after while that always yields and breaks" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       def foo
         while true
           yield
@@ -432,30 +432,30 @@ describe "Code gen: block" do
       foo do
         break 2
       end
-    ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "break from block with value" do
-    run("
-      require \"prelude\"
+    run(<<-CRYSTAL).to_i.should eq(20)
+      require "prelude"
       10.times { break 20 }
-    ").to_i.should eq(20)
+      CRYSTAL
   end
 
   it "doesn't codegen call if arg yields and always breaks" do
-    run("
-      require \"nil\"
+    run(<<-CRYSTAL).to_i.should eq(2)
+      require "nil"
 
       def foo
         1 &+ yield
       end
 
       foo { break 2 }.to_i!
-    ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "codegens nested return" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       def bar
         yield
         a = 1
@@ -470,11 +470,11 @@ describe "Code gen: block" do
       end
 
       z
-    ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "codegens nested break" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       def bar
         yield
         a = 1
@@ -485,11 +485,11 @@ describe "Code gen: block" do
       end
 
       foo { break 2 }
-    ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "codegens call with block with call with arg that yields" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(3)
       def bar
         yield
         a = 2
@@ -500,11 +500,11 @@ describe "Code gen: block" do
       end
 
       foo { break 3 }
-    ").to_i.should eq(3)
+      CRYSTAL
   end
 
   it "can break without value from yielder that returns nilable (1)" do
-    run(%(
+    run(<<-CRYSTAL).to_b.should be_true
       def foo
         yield
         ""
@@ -515,11 +515,11 @@ describe "Code gen: block" do
       end
 
       a.nil?
-    )).to_b.should be_true
+      CRYSTAL
   end
 
   it "can break without value from yielder that returns nilable (2)" do
-    run(%(
+    run(<<-CRYSTAL).to_b.should be_true
       def foo
         yield
         ""
@@ -530,11 +530,11 @@ describe "Code gen: block" do
       end
 
       a.nil?
-    )).to_b.should be_true
+      CRYSTAL
   end
 
   it "break with value from yielder that returns a nilable" do
-    run(%(
+    run(<<-CRYSTAL).to_b.should be_false
       def foo
         yield
         ""
@@ -546,11 +546,11 @@ describe "Code gen: block" do
       end
 
       a.nil?
-    )).to_b.should be_false
+      CRYSTAL
   end
 
   it "can use self inside a block called from dispatch" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(123)
       struct Nil; def to_i!; 0; end; end
 
       class Foo
@@ -580,11 +580,11 @@ describe "Code gen: block" do
 
       123.foo
       Global.x.to_i!
-    ").to_i.should eq(123)
+      CRYSTAL
   end
 
   it "return from block called from dispatch" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Foo
         def do; yield; end
       end
@@ -599,11 +599,11 @@ describe "Code gen: block" do
       end
 
       foo
-    ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "breaks from while in function called from block" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       def foo
         yield
       end
@@ -618,21 +618,21 @@ describe "Code gen: block" do
       foo do
         bar
       end
-    ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "allows modifying yielded value (with literal)" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       def foo
         yield 1
       end
 
       foo { |x| x = 2; x }
-    ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "allows modifying yielded value (with variable)" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       def foo
         a = 1
         yield a
@@ -640,12 +640,12 @@ describe "Code gen: block" do
       end
 
       foo { |x| x = 2; x }
-    ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "it yields nil from another call" do
-    run("
-      require \"bool\"
+    run(<<-CRYSTAL)
+      require "bool"
 
       def foo(key, default)
         foo(key) { default }
@@ -659,11 +659,11 @@ describe "Code gen: block" do
       end
 
       foo(1, nil)
-    ")
+      CRYSTAL
   end
 
   it "allows yield from dispatch call" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       def foo(x : Value)
         yield 1
       end
@@ -682,11 +682,11 @@ describe "Code gen: block" do
       x = 0
       bar { |i| x = i }
       x
-    ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "block with nilable type" do
-    run("
+    run(<<-CRYSTAL)
       class Foo
         def foo
           yield 1
@@ -702,11 +702,11 @@ describe "Code gen: block" do
 
       a = Foo.new || Bar.new
       a.foo {}
-    ")
+      CRYSTAL
   end
 
   it "block with nilable type 2" do
-    run("
+    run(<<-CRYSTAL)
       class Foo
         def foo
           yield 1
@@ -723,11 +723,11 @@ describe "Code gen: block" do
 
       a = Foo.new || Bar.new
       a.foo {}
-    ")
+      CRYSTAL
   end
 
   it "codegens block with nilable type with return (1)" do
-    run("
+    run(<<-CRYSTAL).to_b.should be_true
       def foo
         if yield
           return Reference.new
@@ -736,11 +736,11 @@ describe "Code gen: block" do
       end
 
       foo { false }.nil?
-      ").to_b.should be_true
+      CRYSTAL
   end
 
   it "codegens block with nilable type with return (2)" do
-    run("
+    run(<<-CRYSTAL).to_b.should be_false
       def foo
         if yield
           return nil
@@ -749,11 +749,11 @@ describe "Code gen: block" do
       end
 
       foo { false }.nil?
-      ").to_b.should be_false
+      CRYSTAL
   end
 
   it "codegens block with union with return" do
-    run("
+    run(<<-CRYSTAL)
       def foo
         yield
 
@@ -764,11 +764,11 @@ describe "Code gen: block" do
 
       x = foo { }
       1
-      ")
+      CRYSTAL
   end
 
   it "codegens if with call with block (ssa issue)" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(3)
       def bar
         yield
       end
@@ -784,11 +784,11 @@ describe "Code gen: block" do
       end
 
       foo
-      ").to_i.should eq(3)
+      CRYSTAL
   end
 
   it "codegens block with return and yield and no return" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       lib LibC
         fun exit : NoReturn
       end
@@ -805,11 +805,11 @@ describe "Code gen: block" do
       end
 
       foo 1
-      ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "codegens while/break inside block" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       def foo
         yield
       end
@@ -820,21 +820,21 @@ describe "Code gen: block" do
         end
         1
       end
-    ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens block with union arg (1)" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       def foo
         yield 1 || 1.5
       end
 
       foo { |x| x }.to_i!
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens block with union arg (2)" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       struct Number
         def abs
           self
@@ -855,11 +855,11 @@ describe "Code gen: block" do
       a.each do |x|
         x.abs
       end.to_i!
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens block with virtual type arg" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Var(T)
         def initialize(x : T)
           @x = x
@@ -886,23 +886,23 @@ describe "Code gen: block" do
       a.each do |x|
         x.bar
       end
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens call with blocks of different type without args" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       def foo
         yield
       end
 
       foo { 1.1 }
       foo { 1 }
-    ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens dispatch with block and break (1)" do
-    run("
-      require \"prelude\"
+    run(<<-CRYSTAL).to_i.should eq(1)
+      require "prelude"
 
       class Foo(T)
         def initialize(@x : T)
@@ -920,12 +920,12 @@ describe "Code gen: block" do
         n += x
       end
       n.to_i
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens dispatch with block and break (2)" do
-    run("
-      require \"prelude\"
+    run(<<-CRYSTAL).to_i.should eq(3)
+      require "prelude"
 
       a = [1, 2, 3] || [1.5]
       n = 0
@@ -934,11 +934,11 @@ describe "Code gen: block" do
         n += x
       end
       n.to_i
-      ").to_i.should eq(3)
+      CRYSTAL
   end
 
   it "codegens block call when argument type changes" do
-    run("
+    run(<<-CRYSTAL)
       def foo(x)
         while 1 == 2
           x = 1.5
@@ -948,11 +948,11 @@ describe "Code gen: block" do
 
       foo(1) do
       end
-      ")
+      CRYSTAL
   end
 
   it "returns void when called with block" do
-    run("
+    run(<<-CRYSTAL)
       fun foo : Void
       end
 
@@ -962,11 +962,11 @@ describe "Code gen: block" do
       end
 
       bar {}
-      ")
+      CRYSTAL
   end
 
   it "executes yield expression if no arg is given for block" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       def foo
         a = 1
         yield (a = 2)
@@ -974,11 +974,11 @@ describe "Code gen: block" do
       end
 
       foo { }
-      ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "codegens bug with block and arg and var" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(65)
       def foo
         yield 1
       end
@@ -989,11 +989,11 @@ describe "Code gen: block" do
         a = 'A'
         a.ord
       end
-      ").to_i.should eq(65)
+      CRYSTAL
   end
 
   it "allows using var as block arg with outer var" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       def foo
         yield 'a'
       end
@@ -1001,11 +1001,11 @@ describe "Code gen: block" do
       a = foo do |a|
         1
       end
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "allows initialize with yield (#224)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       class Foo
         @x : Int32
 
@@ -1022,11 +1022,11 @@ describe "Code gen: block" do
         a &+ 1
       end
       foo.x
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "uses block inside array literal (bug)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       require "prelude"
 
       def foo
@@ -1035,11 +1035,11 @@ describe "Code gen: block" do
 
       ary = [foo { |x| x.abs }]
       ary[0]
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens method invocation on a object of a captured block with a type that was never instantiated" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       class Bar
         def initialize(@bar : NoReturn)
         end
@@ -1063,11 +1063,11 @@ describe "Code gen: block" do
       foo do |bar|
         bar.baz method(bar).baz
       end
-      ))
+      CRYSTAL
   end
 
   it "codegens method invocation on a object of a captured block with a type that was never instantiated (2)" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       class Bar
         def initialize(@bar : NoReturn)
         end
@@ -1091,11 +1091,11 @@ describe "Code gen: block" do
       foo do |bar|
         baz method(bar).baz
       end
-      ))
+      CRYSTAL
   end
 
   it "codegens bug with yield not_nil! that is never not nil" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       lib LibC
         fun exit(Int32) : NoReturn
       end
@@ -1134,11 +1134,11 @@ describe "Code gen: block" do
       end
 
       extra.to_i!
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "uses block var with same name as local var" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       def foo
         yield "hello"
       end
@@ -1148,11 +1148,11 @@ describe "Code gen: block" do
         a
       end
       a
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "doesn't crash on untyped array to_s" do
-    run(%(
+    run(<<-CRYSTAL).to_string.should eq("[]")
       require "prelude"
 
       class Bar(T)
@@ -1167,11 +1167,11 @@ describe "Code gen: block" do
       end
 
       Foo(Int32).new.foo { |k| k + 1 }.to_s
-      )).to_string.should eq("[]")
+      CRYSTAL
   end
 
   it "codegens block which always breaks but never enters (#494)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(3)
       def foo
         while 1 == 2
           yield
@@ -1182,11 +1182,11 @@ describe "Code gen: block" do
       foo do
         break 10
       end
-      )).to_i.should eq(3)
+      CRYSTAL
   end
 
   it "codegens block bug with conditional next and unconditional break (1)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(6)
       def foo
         yield 1
         yield 2
@@ -1200,11 +1200,11 @@ describe "Code gen: block" do
         break
       end
       a
-      )).to_i.should eq(6)
+      CRYSTAL
   end
 
   it "codegens block bug with conditional next and unconditional break (2)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(6)
       def foo
         yield 1
         yield 2
@@ -1218,11 +1218,11 @@ describe "Code gen: block" do
         break
       end
       a
-      )).to_i.should eq(6)
+      CRYSTAL
   end
 
   it "codegens block bug with conditional next and unconditional break (3)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Global
         @@x = 0
 
@@ -1246,11 +1246,11 @@ describe "Code gen: block" do
         break 0
       end
       Global.x
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens block bug with conditional next and unconditional break (4)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Global
         @@x = 0
 
@@ -1275,11 +1275,11 @@ describe "Code gen: block" do
         break 0
       end
       Global.x
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "returns from proc literal" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(10)
       foo = ->{
         if 1 == 1
           return 10
@@ -1289,11 +1289,11 @@ describe "Code gen: block" do
       }
 
       foo.call
-      )).to_i.should eq(10)
+      CRYSTAL
   end
 
   it "does next from captured block" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(10)
       def foo(&block : -> T) forall T
         block
       end
@@ -1307,11 +1307,11 @@ describe "Code gen: block" do
       end
 
       f.call
-      )).to_i.should eq(10)
+      CRYSTAL
   end
 
   it "codegens captured block with next inside yielded block (#2097)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(123)
       def foo
         yield
       end
@@ -1326,11 +1326,11 @@ describe "Code gen: block" do
         end
         block.call
       end
-      )).to_i.should eq(123)
+      CRYSTAL
   end
 
   it "codegens captured block that returns union, but proc only returns a single type" do
-    run(%(
+    run(<<-CRYSTAL).to_string.should eq("foo")
       def run_callbacks(&block : -> Int32 | String)
         block.call
       end
@@ -1341,11 +1341,11 @@ describe "Code gen: block" do
       else
         "oops"
       end
-      )).to_string.should eq("foo")
+      CRYSTAL
   end
 
   it "yields inside yield (#682)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(4)
       def foo
         yield(1, (yield 3))
       end
@@ -1355,11 +1355,11 @@ describe "Code gen: block" do
         a &+= x
       end
       a
-      )).to_i.should eq(4)
+      CRYSTAL
   end
 
   it "yields splat" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(6)
       def foo
         tup = {1, 2, 3}
         yield *tup
@@ -1368,11 +1368,11 @@ describe "Code gen: block" do
       foo do |x, y, z|
         x &+ y &+ z
       end
-      )).to_i.should eq(6)
+      CRYSTAL
   end
 
   it "yields more exps than block arg, through splat" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       def foo
         yield *{1, 2}
       end
@@ -1380,11 +1380,11 @@ describe "Code gen: block" do
       foo do |x|
         x
       end
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "uses splat in block argument" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(6)
       def foo
         yield 1, 2, 3
       end
@@ -1392,11 +1392,11 @@ describe "Code gen: block" do
       foo do |*args|
         args[0] &+ args[1] &+ args[2]
       end
-      )).to_i.should eq(6)
+      CRYSTAL
   end
 
   it "uses splat in block argument, many args" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(((((1 + 2) * 3) - 4) * 5) - 6)
       def foo
         yield 1, 2, 3, 4, 5, 6
       end
@@ -1404,11 +1404,11 @@ describe "Code gen: block" do
       foo do |x, y, *z, w|
         ((((x &+ y) &* z[0]) &- z[1]) &* z[2]) &- w
       end
-      )).to_i.should eq(((((1 + 2) * 3) - 4) * 5) - 6)
+      CRYSTAL
   end
 
   it "uses block splat argument with union types" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(3)
       def foo
         yield 1
         yield 2.5
@@ -1419,7 +1419,7 @@ describe "Code gen: block" do
         total &+= args[0].to_i!
       end
       total
-      )).to_i.should eq(3)
+      CRYSTAL
   end
 
   it "works if block has both splat and non-splat underscore parameters" do
@@ -1447,7 +1447,7 @@ describe "Code gen: block" do
   end
 
   it "auto-unpacks tuple" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq((1 + 2) * 4)
       def foo
         tup = {1, 2, 4}
         yield tup
@@ -1456,11 +1456,11 @@ describe "Code gen: block" do
       foo do |x, y, z|
         (x &+ y) &* z
       end
-      )).to_i.should eq((1 + 2) * 4)
+      CRYSTAL
   end
 
   it "unpacks tuple but doesn't override local variables" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(10)
       def foo
         yield({10, 20}, {30, 40})
       end
@@ -1472,11 +1472,11 @@ describe "Code gen: block" do
       foo do |(x, y), (z, w)|
       end
       x &+ y &+ z &+ w
-      )).to_i.should eq(10)
+      CRYSTAL
   end
 
   it "codegens block with multiple underscores (#3054)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(3)
       def foo(&block : Int32, Int32 -> Int32)
         block.call(1, 2)
       end
@@ -1484,11 +1484,11 @@ describe "Code gen: block" do
       foo do |_, _|
         3
       end
-      )).to_i.should eq(3)
+      CRYSTAL
   end
 
   it "breaks in var assignment (#3364)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(123)
       def foo
         yield
         456
@@ -1497,11 +1497,11 @@ describe "Code gen: block" do
       foo do
         a = nil || break 123
       end
-      )).to_i.should eq(123)
+      CRYSTAL
   end
 
   it "nexts in var assignment (#3364)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(123)
       def foo
         yield
       end
@@ -1509,11 +1509,11 @@ describe "Code gen: block" do
       foo do
         a = nil || next 123
       end
-      )).to_i.should eq(123)
+      CRYSTAL
   end
 
   it "dispatches with captured and non-captured block (#3969)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(3)
       def fn(x : Int32, &block)
         x
       end
@@ -1525,20 +1525,20 @@ describe "Code gen: block" do
       a = fn(1 || 'a') { 2 }
       b = fn('a' || 1) { 2 }
       a &+ b
-      )).to_i.should eq(3)
+      CRYSTAL
   end
 
   it "codegens block with repeated underscore and different types (#4711)" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       def foo
         yield('0', 0)
       end
       foo{|_, _| }
-      ))
+      CRYSTAL
   end
 
   it "doesn't crash on yield exp without a type (#8100)" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       def foo
         x = 1
         if x.is_a?(Char)
@@ -1549,11 +1549,11 @@ describe "Code gen: block" do
       end
 
       foo { |x| }
-    ))
+      CRYSTAL
   end
 
   it "clears nilable var before inlining block method (#10087)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Foo
         @@x = 0
 
@@ -1583,11 +1583,11 @@ describe "Code gen: block" do
       Foo.bar do |z|
         Foo.foo(z) { }
       end
-    )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "(bug) doesn't set needs_value to true on every yield (#12442)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       def foo
         if true
           yield
@@ -1599,11 +1599,11 @@ describe "Code gen: block" do
       foo do
         1
       end
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "doesn't crash if yield exp has no type (#12670)" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       def foo : String?
       end
 
@@ -1616,6 +1616,6 @@ describe "Code gen: block" do
       bar do |res|
         res
       end
-      ))
+      CRYSTAL
   end
 end

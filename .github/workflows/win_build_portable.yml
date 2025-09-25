@@ -36,7 +36,7 @@ jobs:
           crystal: "1.17.1"
 
       - name: Download Crystal source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Restore libraries
         uses: actions/cache/restore@v4
@@ -51,6 +51,7 @@ jobs:
             libs/mpir.lib
             libs/yaml.lib
             libs/xml2.lib
+            libs/libxml_VERSION
           key: win-libs-${{ hashFiles('.github/workflows/win.yml', 'etc/win-ci/*.ps1') }}-msvc
           fail-on-cache-miss: true
       - name: Restore OpenSSL
@@ -122,7 +123,7 @@ jobs:
           make -f Makefile.win -B ${{ inputs.release && 'release=1' || '' }} interpreter=1
 
       - name: Download shards release
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: crystal-lang/shards
           ref: v0.19.1

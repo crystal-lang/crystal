@@ -71,6 +71,32 @@ describe Fiber::ExecutionContext::Runnables do
     end
   end
 
+  describe "#drain" do
+    it "drains the local queue into the global queue" do
+      fibers = 6.times.map { |i| new_fake_fiber("f#{i}") }.to_a
+
+      # local enqueue + overflow
+      g = Fiber::ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
+      r = Fiber::ExecutionContext::Runnables(6).new(g)
+
+      # empty
+      r.drain
+      g.size.should eq(0)
+
+      # full
+      fibers.each { |f| r.push(f) }
+      r.drain
+      r.shift?.should be_nil
+      g.size.should eq(6)
+
+      # refill half (1 pop + 2 grab) and drain again
+      g.unsafe_grab?(r, divisor: 1)
+      r.drain
+      r.shift?.should be_nil
+      g.size.should eq(5)
+    end
+  end
+
   describe "#bulk_push" do
     it "fills the local queue" do
       l = Fiber::List.new

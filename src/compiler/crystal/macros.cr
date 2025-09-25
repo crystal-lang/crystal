@@ -653,6 +653,10 @@ module Crystal::Macros
     # Similar to `String#<`
     def <(other : StringLiteral | MacroId) : BoolLiteral
     end
+
+    # Similar to `String#*`.
+    def *(other : NumberLiteral) : StringLiteral
+    end
   end
 
   # An interpolated string like `"Hello, #{name}!"`.
@@ -800,6 +804,10 @@ module Crystal::Macros
 
     # Similar to `Array#-`.
     def -(other : ArrayLiteral) : ArrayLiteral
+    end
+
+    # Similar to `Array#*`
+    def *(other : NumberLiteral) : ArrayLiteral
     end
 
     # Returns the type specified at the end of the array literal, if any.

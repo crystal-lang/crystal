@@ -453,7 +453,7 @@ describe "Semantic: warnings" do
     end
 
     it "ignores nested calls to deprecated methods" do
-      x = assert_warning <<-CRYSTAL,
+      assert_warning <<-CRYSTAL,
         @[Deprecated]
         def foo; bar; end
 
@@ -665,27 +665,29 @@ describe "Semantic: warnings" do
 
   describe "deprecated macros" do
     it "detects top-level deprecated macros" do
-      assert_warning %(
+      assert_warning <<-CRYSTAL,
         @[Deprecated("Do not use me")]
         macro foo
         end
 
         foo
-      ), "warning in line 6\nWarning: Deprecated ::foo. Do not use me"
+        CRYSTAL
+        "warning in line 5\nWarning: Deprecated ::foo. Do not use me"
     end
 
     it "deprecation reason is optional" do
-      assert_warning %(
+      assert_warning <<-CRYSTAL,
         @[Deprecated]
         macro foo
         end
 
         foo
-      ), "warning in line 6\nWarning: Deprecated ::foo."
+        CRYSTAL
+        "warning in line 5\nWarning: Deprecated ::foo."
     end
 
     it "detects deprecated class macros" do
-      assert_warning %(
+      assert_warning <<-CRYSTAL,
         class Foo
           @[Deprecated("Do not use me")]
           macro m
@@ -693,11 +695,12 @@ describe "Semantic: warnings" do
         end
 
         Foo.m
-      ), "warning in line 8\nWarning: Deprecated Foo.m. Do not use me"
+        CRYSTAL
+        "warning in line 7\nWarning: Deprecated Foo.m. Do not use me"
     end
 
     it "detects deprecated generic class macros" do
-      assert_warning %(
+      assert_warning <<-CRYSTAL,
         class Foo(T)
           @[Deprecated("Do not use me")]
           macro m
@@ -705,11 +708,12 @@ describe "Semantic: warnings" do
         end
 
         Foo.m
-      ), "warning in line 8\nWarning: Deprecated Foo.m. Do not use me"
+        CRYSTAL
+        "warning in line 7\nWarning: Deprecated Foo.m. Do not use me"
     end
 
     it "detects deprecated module macros" do
-      assert_warning %(
+      assert_warning <<-CRYSTAL,
         module Foo
           @[Deprecated("Do not use me")]
           macro m
@@ -717,21 +721,23 @@ describe "Semantic: warnings" do
         end
 
         Foo.m
-      ), "warning in line 8\nWarning: Deprecated Foo.m. Do not use me"
+        CRYSTAL
+        "warning in line 7\nWarning: Deprecated Foo.m. Do not use me"
     end
 
     it "detects deprecated macros with named arguments" do
-      assert_warning %(
+      assert_warning <<-CRYSTAL,
         @[Deprecated]
         macro foo(*, a)
         end
 
         foo(a: 2)
-      ), "warning in line 6\nWarning: Deprecated ::foo."
+        CRYSTAL
+        "warning in line 5\nWarning: Deprecated ::foo."
     end
 
     it "informs warnings once per call site location (a)" do
-      warning_failures = warnings_result %(
+      warning_failures = warnings_result <<-CRYSTAL
         class Foo
           @[Deprecated("Do not use me")]
           macro m
@@ -744,13 +750,13 @@ describe "Semantic: warnings" do
 
         Foo.b
         Foo.b
-      )
+        CRYSTAL
 
       warning_failures.size.should eq(1)
     end
 
     it "informs warnings once per call site location (b)" do
-      warning_failures = warnings_result %(
+      warning_failures = warnings_result <<-CRYSTAL
         class Foo
           @[Deprecated("Do not use me")]
           macro m
@@ -759,7 +765,7 @@ describe "Semantic: warnings" do
 
         Foo.m
         Foo.m
-      )
+        CRYSTAL
 
       warning_failures.size.should eq(2)
     end
@@ -803,30 +809,27 @@ describe "Semantic: warnings" do
     end
 
     it "errors if invalid argument type" do
-      assert_error %(
+      assert_error <<-CRYSTAL, "first argument must be a String"
         @[Deprecated(42)]
         macro foo
         end
-        ),
-        "first argument must be a String"
+        CRYSTAL
     end
 
     it "errors if too many arguments" do
-      assert_error %(
+      assert_error <<-CRYSTAL, "wrong number of deprecated annotation arguments (given 2, expected 1)"
         @[Deprecated("Do not use me", "extra arg")]
         macro foo
         end
-        ),
-        "wrong number of deprecated annotation arguments (given 2, expected 1)"
+        CRYSTAL
     end
 
     it "errors if invalid named argument" do
-      assert_error %(
+      assert_error <<-CRYSTAL, "too many named arguments (given 1, expected maximum 0)"
         @[Deprecated(invalid: "Do not use me")]
         macro foo
         end
-        ),
-        "too many named arguments (given 1, expected maximum 0)"
+        CRYSTAL
     end
   end
 

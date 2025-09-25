@@ -35,19 +35,19 @@ private def assert_coverage(code, expected_coverage, *, expected_error : String?
 end
 
 describe "macro_code_coverage" do
-  assert_coverage <<-'CR', {1 => 1}
+  assert_coverage <<-'CRYSTAL', {1 => 1}
     {{ "foo" }}
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {2 => 1, 3 => 1}, expected_error: "undefined macro method 'NumberLiteral#sdfds'"
+  assert_coverage <<-'CRYSTAL', {2 => 1, 3 => 1}, expected_error: "undefined macro method 'NumberLiteral#sdfds'"
     {%
       a = 1
       b = 2.sdfds
       c = 3
     %}
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {6 => 1, 7 => 1, 9 => "2/2", 11 => 1, 12 => 1}, expected_error: "Class 'Foo' is missing its name."
+  assert_coverage <<-'CRYSTAL', {6 => 1, 7 => 1, 9 => "2/2", 11 => 1, 12 => 1}, expected_error: "Class 'Foo' is missing its name."
     annotation Name; end
 
     @[Name]
@@ -68,36 +68,36 @@ describe "macro_code_coverage" do
     end
 
     Foo.default_name
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {1 => "1/2"}, expected_error: "oh noes im an error"
+  assert_coverage <<-'CRYSTAL', {1 => "1/2"}, expected_error: "oh noes im an error"
     {{ true ? raise("oh noes im an error") : 0 }}
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {1 => "1/2"}
+  assert_coverage <<-'CRYSTAL', {1 => "1/2"}
     {{ true ? 1 : 0 }}
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {1 => 1, 2 => "1/2"}
+  assert_coverage <<-'CRYSTAL', {1 => 1, 2 => "1/2"}
     {% begin %}
       {{true ? 1 : 0}} + {{2}}
     {% end %}
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {1 => "1/3"}
+  assert_coverage <<-'CRYSTAL', {1 => "1/3"}
     {{ true ? 1 : x == 2 ? 2 : 3 }}
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {2 => "2/3"}
+  assert_coverage <<-'CRYSTAL', {2 => "2/3"}
     macro test(x)
     {{ x == 1 ? 1 : x == 2 ? 2 : 3 }}
     end
 
     test(1)
     test(2)
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {2 => "3/3"}
+  assert_coverage <<-'CRYSTAL', {2 => "3/3"}
     macro test(x)
     {{ x == 1 ? 1 : x == 2 ? 2 : 3 }}
     end
@@ -105,9 +105,9 @@ describe "macro_code_coverage" do
     test(1)
     test(2)
     test(3)
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {2 => "3/3"}
+  assert_coverage <<-'CRYSTAL', {2 => "3/3"}
     macro test(x)
       {{ x == 1 ? 1 : x == 2 ? 2 : 3 }}
     end
@@ -116,106 +116,106 @@ describe "macro_code_coverage" do
     test(2)
     test(3)
     test(4)
-    CR
+    CRYSTAL
 
   # 1/2 since the raise would prevent the 2nd execution
-  assert_coverage <<-'CR', {2 => "1/2"}, expected_error: "oh noes im an error"
+  assert_coverage <<-'CRYSTAL', {2 => "1/2"}, expected_error: "oh noes im an error"
     macro test(x)
       {{ 1 == x ? raise("oh noes im an error") : 0 }}
     end
 
     test(1)
     test(2)
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {2 => "2/2"}, expected_error: "oh noes im an error"
+  assert_coverage <<-'CRYSTAL', {2 => "2/2"}, expected_error: "oh noes im an error"
     macro test(x)
       {{ 1 == x ? raise("oh noes im an error") : 0 }}
     end
 
     test(2)
     test(1)
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {1 => "1/2"}
+  assert_coverage <<-'CRYSTAL', {1 => "1/2"}
     {% tags = (tags = (1 + 1)) ? tags : nil %}
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {1 => 1, 2 => "1/2", 3 => 3}
+  assert_coverage <<-'CRYSTAL', {1 => 1, 2 => "1/2", 3 => 3}
     {% for type in [1, 2, 3] %}
       {% tags = (tags = type) ? tags : nil %}
       {% tags %}
     {% end %}
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {1 => "1/2"}
+  assert_coverage <<-'CRYSTAL', {1 => "1/2"}
     {% if true %}1{% else %}0{% end %}
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {1 => "1/3"}
+  assert_coverage <<-'CRYSTAL', {1 => "1/3"}
     {% if false %}1{% elsif false %}2{% else %}3{% end %}
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {1 => "1/6"}
+  assert_coverage <<-'CRYSTAL', {1 => "1/6"}
     {% if false %}{% if false %}1{% else %}2{% end %}{% elsif false %}3{% else %}{% if false %}4{% elsif false %}5{% else %}6{% end %}{% end %}
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {1 => "1/6"}
+  assert_coverage <<-'CRYSTAL', {1 => "1/6"}
     {% if false; if false; 1; else 2; end; elsif false; 3; else; if false; 4; elsif false; 5; else 6; end; end %}
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {1 => "1/5"}
+  assert_coverage <<-'CRYSTAL', {1 => "1/5"}
     {% unless false; if false; 1; else 2; end; else; if false; 4; elsif false; 5; else 6; end; end %}
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {1 => 1}, expected_error: "oh noes im an error"
+  assert_coverage <<-'CRYSTAL', {1 => 1}, expected_error: "oh noes im an error"
     {% raise "oh noes im an error" %}
     {{ 2 }}
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {1 => 1, 2 => "1/2", 3 => 1}
+  assert_coverage <<-'CRYSTAL', {1 => 1, 2 => "1/2", 3 => 1}
     {% 1 %}
     {% 2 if false %}
     {% 3 %}
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {1 => 1, 2 => "1/2", 3 => 1}
+  assert_coverage <<-'CRYSTAL', {1 => 1, 2 => "1/2", 3 => 1}
     {% 1 %}
     {% 2 if true %}
     {% 3 %}
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {1 => 1, 2 => "1/2", 3 => 1}
+  assert_coverage <<-'CRYSTAL', {1 => 1, 2 => "1/2", 3 => 1}
     {% 1 %}
     {% 2 unless true %}
     {% 3 %}
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {1 => 1, 2 => "1/2", 3 => 1}
+  assert_coverage <<-'CRYSTAL', {1 => 1, 2 => "1/2", 3 => 1}
     {% 1 %}
     {% 2 unless false %}
     {% 3 %}
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {2 => "1/2"}
+  assert_coverage <<-'CRYSTAL', {2 => "1/2"}
     macro test(v)
       {{3 if v == 1}}
     end
 
     test 0
     test 2
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {2 => "2/2"}
+  assert_coverage <<-'CRYSTAL', {2 => "2/2"}
     macro test(v)
       {{3 if v == 1}}
     end
 
     test 2
     test 1
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {2 => "2/2"}
+  assert_coverage <<-'CRYSTAL', {2 => "2/2"}
     macro test(v)
       {{3 if v == 1}}
     end
@@ -223,17 +223,17 @@ describe "macro_code_coverage" do
     test 1
     test 2
     test 1
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {2 => 1, 3 => "1/2"}, expected_error: "oh noes im an error"
+  assert_coverage <<-'CRYSTAL', {2 => 1, 3 => "1/2"}, expected_error: "oh noes im an error"
     {%
       if true
         raise "oh noes im an error" if Int32 <= Number
       end
     %}
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {4 => 1, 5 => "1/2"}
+  assert_coverage <<-'CRYSTAL', {4 => 1, 5 => "1/2"}
     macro finished
       {% verbatim do %}
         {%
@@ -243,9 +243,9 @@ describe "macro_code_coverage" do
         %}
       {% end %}
     end
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {4 => 1, 5 => 1, 7 => 0}, expected_error: "oh noes im an error"
+  assert_coverage <<-'CRYSTAL', {4 => 1, 5 => 1, 7 => 0}, expected_error: "oh noes im an error"
     macro finished
       {% verbatim do %}
         {%
@@ -257,33 +257,33 @@ describe "macro_code_coverage" do
         %}
       {% end %}
     end
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {1 => 1, 2 => 0, 4 => 1}
+  assert_coverage <<-'CRYSTAL', {1 => 1, 2 => 0, 4 => 1}
     {% unless true %}
       {{0}}
     {% else %}
       {{1}}
     {% end %}
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {1 => 1, 2 => 1, 4 => 0}
+  assert_coverage <<-'CRYSTAL', {1 => 1, 2 => 1, 4 => 0}
     {% unless false %}
       {{0}}
     {% else %}
       {{1}}
     {% end %}
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {2 => 1, 4 => 1}
+  assert_coverage <<-'CRYSTAL', {2 => 1, 4 => 1}
     {%
       a, b, c = {1, 2, 3}
 
       a + b + c
     %}
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {2 => 2, 6 => 1, 10 => 1}
+  assert_coverage <<-'CRYSTAL', {2 => 2, 6 => 1, 10 => 1}
     macro test(&)
       {{yield}}
     end
@@ -295,9 +295,9 @@ describe "macro_code_coverage" do
     test do
       {{9 + 12}}
     end
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {2 => 2, 3 => "1/2", 4 => 2, 8 => 0, 13 => 0}
+  assert_coverage <<-'CRYSTAL', {2 => 2, 3 => "1/2", 4 => 2, 8 => 0, 13 => 0}
     macro test(&)
       {{ 1 + 1 }}
       {{yield if false}}
@@ -313,9 +313,9 @@ describe "macro_code_coverage" do
       {{4 + 5}}
       {{5 + 4}}
     end
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {1 => 1, 2 => 1, 3 => 3, 4 => 1, 5 => 2, 6 => 0, 8 => 2}
+  assert_coverage <<-'CRYSTAL', {1 => 1, 2 => 1, 3 => 3, 4 => 1, 5 => 2, 6 => 0, 8 => 2}
     {% begin %}
       {% for v in {1, 2, 3} %}
         {% if v == 2 %}
@@ -327,9 +327,9 @@ describe "macro_code_coverage" do
         {% end %}
       {% end %}
     {% end %}
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {1 => 1, 2 => 1, 4 => 2, 5 => 2, 7 => 2}
+  assert_coverage <<-'CRYSTAL', {1 => 1, 2 => 1, 4 => 2, 5 => 2, 7 => 2}
     {% begin %}
       {% for v in [1, 2] %}
         {%
@@ -339,9 +339,9 @@ describe "macro_code_coverage" do
         {% 30 * 30 %}
       {% end %}
     {% end %}
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {1 => 1, 2 => 1, 4 => "1/2", 5 => 2, 7 => 2}
+  assert_coverage <<-'CRYSTAL', {1 => 1, 2 => 1, 4 => "1/2", 5 => 2, 7 => 2}
     {% begin %}
       {% for v in [1, 2] %}
         {%
@@ -351,9 +351,9 @@ describe "macro_code_coverage" do
         {% 30 * 30 %}
       {% end %}
     {% end %}
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {4 => 1, 5 => 1}
+  assert_coverage <<-'CRYSTAL', {4 => 1, 5 => 1}
     macro finished
       {% verbatim do %}
         {%
@@ -362,16 +362,16 @@ describe "macro_code_coverage" do
         %}
       {% end %}
     end
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {1 => 1, 3 => 0}
+  assert_coverage <<-'CRYSTAL', {1 => 1, 3 => 0}
     {% if false %}
       # foo
       {% 1 + 1 %}
     {% end %}
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {1 => 1, 2 => 1, 3 => 2, 4 => 1, 6 => 1}
+  assert_coverage <<-'CRYSTAL', {1 => 1, 2 => 1, 3 => 2, 4 => 1, 6 => 1}
     {% begin %}
       {% for vals in [[] of Int32, [1]] %}
         {% if vals.empty? %}
@@ -381,9 +381,9 @@ describe "macro_code_coverage" do
         {% end %}
       {% end %}
     {% end %}
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {3 => 1, 6 => 1, 7 => 1}
+  assert_coverage <<-'CRYSTAL', {3 => 1, 6 => 1, 7 => 1}
     macro finished
       {% verbatim do %}
         {% 10 * 10 %}
@@ -394,9 +394,9 @@ describe "macro_code_coverage" do
         %}
       {% end %}
     end
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {4 => 1, 7 => 1}
+  assert_coverage <<-'CRYSTAL', {4 => 1, 7 => 1}
     macro finished
       {% verbatim do %}
         {%
@@ -407,9 +407,9 @@ describe "macro_code_coverage" do
         %}
       {% end %}
     end
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {4 => 1, 8 => 1, 10 => 1}
+  assert_coverage <<-'CRYSTAL', {4 => 1, 8 => 1, 10 => 1}
     macro finished
       {% verbatim do %}
         {%
@@ -423,9 +423,9 @@ describe "macro_code_coverage" do
         %}
       {% end %}
     end
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {4 => 1, 8 => 1, 9 => 1, 13 => 1, 16 => 1, 17 => 1, 22 => 1}
+  assert_coverage <<-'CRYSTAL', {4 => 1, 8 => 1, 9 => 1, 13 => 1, 16 => 1, 17 => 1, 22 => 1}
     macro finished
       {% verbatim do %}
         {%
@@ -451,9 +451,9 @@ describe "macro_code_coverage" do
         %}
       {% end %}
     end
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {4 => 1, 5 => 3, 6 => 1, 7 => 2, 8 => 1, 10 => 1, 13 => 3}
+  assert_coverage <<-'CRYSTAL', {4 => 1, 5 => 3, 6 => 1, 7 => 2, 8 => 1, 10 => 1, 13 => 3}
     macro finished
       {% verbatim do %}
         {%
@@ -471,9 +471,9 @@ describe "macro_code_coverage" do
         %}
       {% end %}
     end
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {4 => 1, 6 => 1, 7 => 1, 8 => 1, 9 => 1}
+  assert_coverage <<-'CRYSTAL', {4 => 1, 6 => 1, 7 => 1, 8 => 1, 9 => 1}
     macro finished
       {% verbatim do %}
         {%
@@ -487,9 +487,9 @@ describe "macro_code_coverage" do
         %}
       {% end %}
     end
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {4 => 1, 5 => 1, 7 => 1, 8 => 1, 9 => 1, 10 => 1, 11 => 1, 12 => 1}
+  assert_coverage <<-'CRYSTAL', {4 => 1, 5 => 1, 7 => 1, 8 => 1, 9 => 1, 10 => 1, 11 => 1, 12 => 1}
     macro finished
       {% verbatim do %}
         {%
@@ -506,17 +506,17 @@ describe "macro_code_coverage" do
         %}
       {% end %}
     end
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {3 => 1}
+  assert_coverage <<-'CRYSTAL', {3 => 1}
     macro finished
       {% verbatim do %}
         {% [1, 2, 3].find(&.+.==(2)) %}
       {% end %}
     end
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {3 => 1, 4 => 0}
+  assert_coverage <<-'CRYSTAL', {3 => 1, 4 => 0}
     macro finished
       {% verbatim do %}
         {% if false %}
@@ -524,9 +524,9 @@ describe "macro_code_coverage" do
         {% end %}
       {% end %}
     end
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {4 => 1, 7 => 1}
+  assert_coverage <<-'CRYSTAL', {4 => 1, 7 => 1}
     macro finished
       {% verbatim do %}
         {%
@@ -538,9 +538,9 @@ describe "macro_code_coverage" do
         %}
       {% end %}
     end
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {4 => 1, 7 => 1}
+  assert_coverage <<-'CRYSTAL', {4 => 1, 7 => 1}
     macro finished
       {% verbatim do %}
         {%
@@ -552,9 +552,9 @@ describe "macro_code_coverage" do
         %}
       {% end %}
     end
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {2 => 1, 5 => 1}
+  assert_coverage <<-'CRYSTAL', {2 => 1, 5 => 1}
     {%
       if true
         # Some comment
@@ -562,9 +562,9 @@ describe "macro_code_coverage" do
         10
       end
     %}
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {2 => 1, 5 => 1}
+  assert_coverage <<-'CRYSTAL', {2 => 1, 5 => 1}
     {%
       unless false
         # Some comment
@@ -572,9 +572,9 @@ describe "macro_code_coverage" do
         10
       end
     %}
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {4 => "1/2"}
+  assert_coverage <<-'CRYSTAL', {4 => "1/2"}
     macro finished
       {% verbatim do %}
         {%
@@ -582,9 +582,9 @@ describe "macro_code_coverage" do
         %}
       {% end %}
     end
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {2 => 1, 4 => 0}
+  assert_coverage <<-'CRYSTAL', {2 => 1, 4 => 0}
     macro test(v)
       {% if v > 1 %}
         {%
@@ -594,9 +594,9 @@ describe "macro_code_coverage" do
     end
 
     test 1
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {2 => 1, 4 => 0}
+  assert_coverage <<-'CRYSTAL', {2 => 1, 4 => 0}
     macro test(v)
       {% if v > 1 %}
         {%
@@ -608,9 +608,9 @@ describe "macro_code_coverage" do
     end
 
     test 1
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {2 => 1, 4 => 1, 6 => 1, 9 => 1, 10 => 1, 13 => 0}
+  assert_coverage <<-'CRYSTAL', {2 => 1, 4 => 1, 6 => 1, 9 => 1, 10 => 1, 13 => 0}
     macro test(v)
       {% if v > 1 %}
         {%
@@ -630,115 +630,115 @@ describe "macro_code_coverage" do
     end
 
     test 2
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {1 => 1, 2 => 0}
+  assert_coverage <<-'CRYSTAL', {1 => 1, 2 => 0}
     {% for val in [] of Nil %}
       {% pp 1 %}
     {% end %}
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {1 => 1, 2 => 0}
+  assert_coverage <<-'CRYSTAL', {1 => 1, 2 => 0}
     {% for val in {} of Nil => Nil %}
       {% pp 1 %}
     {% end %}
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {1 => 1, 2 => 0}
+  assert_coverage <<-'CRYSTAL', {1 => 1, 2 => 0}
     {% for val in (0...0) %}
       {% pp 1 %}
     {% end %}
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {2 => 1, 3 => 0}
+  assert_coverage <<-'CRYSTAL', {2 => 1, 3 => 0}
     {%
       ([] of Nil).each do |v|
         pp v
         pp 123
       end
     %}
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {2 => 1, 3 => 0}
+  assert_coverage <<-'CRYSTAL', {2 => 1, 3 => 0}
     {%
       ([] of Nil).each do |(a, b, c)|
         pp v
         pp 123
       end
     %}
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {2 => 1, 3 => 0}
+  assert_coverage <<-'CRYSTAL', {2 => 1, 3 => 0}
     {%
       ({} of Nil => Nil).each do |v|
         pp v
         pp 123
       end
     %}
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {2 => 1, 3 => 0}
+  assert_coverage <<-'CRYSTAL', {2 => 1, 3 => 0}
     {%
       (0...0).each do |v|
         pp v
         pp 123
       end
     %}
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {2 => 1, 3 => 0}
+  assert_coverage <<-'CRYSTAL', {2 => 1, 3 => 0}
     {%
       ([] of Nil).map do |v|
         pp v
         pp 123
       end
     %}
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {2 => 1, 3 => 0}
+  assert_coverage <<-'CRYSTAL', {2 => 1, 3 => 0}
     {%
       ([] of Nil).find do |v|
         v > 1
       end
     %}
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {2 => "1/3"}
+  assert_coverage <<-'CRYSTAL', {2 => "1/3"}
     {%
       v = false || true || false
     %}
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {2 => "2/2"}
+  assert_coverage <<-'CRYSTAL', {2 => "2/2"}
     {%
       true && false
     %}
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {2 => "1/3"}
+  assert_coverage <<-'CRYSTAL', {2 => "1/3"}
     {%
       v = 1 || 2 || raise "Oh noes"
     %}
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {2 => "1/3"}
+  assert_coverage <<-'CRYSTAL', {2 => "1/3"}
     macro test(one, two, three)
       {{one || two || three}}
     end
 
     test true, false, false
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {2 => "2/3"}
+  assert_coverage <<-'CRYSTAL', {2 => "2/3"}
     macro test(one, two, three)
       {{one || two || three}}
     end
 
     test true, false, false
     test false, true, false
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {2 => "3/3"}
+  assert_coverage <<-'CRYSTAL', {2 => "3/3"}
     macro test(one, two, three)
       {{one || two || three}}
     end
@@ -746,21 +746,21 @@ describe "macro_code_coverage" do
     test true, false, false
     test false, true, false
     test false, false, true
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {2 => "3/3"}
+  assert_coverage <<-'CRYSTAL', {2 => "3/3"}
     {%
       v = 1 && 2 && 3
     %}
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {2 => "3/3"}, expected_error: "oh noes im an error"
+  assert_coverage <<-'CRYSTAL', {2 => "3/3"}, expected_error: "oh noes im an error"
     {%
       v = 1 && 2 && raise "oh noes im an error"
     %}
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {4 => 1, 6 => 1, 10 => 1}
+  assert_coverage <<-'CRYSTAL', {4 => 1, 6 => 1, 10 => 1}
     macro finished
       {% verbatim do %}
         {%
@@ -775,9 +775,9 @@ describe "macro_code_coverage" do
         %}
       {% end %}
     end
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {4 => 1, 6 => 1, 7 => 0, 11 => 1, 12 => 1, 15 => 1}
+  assert_coverage <<-'CRYSTAL', {4 => 1, 6 => 1, 7 => 0, 11 => 1, 12 => 1, 15 => 1}
     macro finished
       {% verbatim do %}
         {%
@@ -796,9 +796,9 @@ describe "macro_code_coverage" do
         %}
       {% end %}
     end
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {5 => 1, 6 => 1, 7 => 1, 8 => 1}
+  assert_coverage <<-'CRYSTAL', {5 => 1, 6 => 1, 7 => 1, 8 => 1}
     macro finished
       {% verbatim do %}
         {%
@@ -811,9 +811,9 @@ describe "macro_code_coverage" do
         %}
       {% end %}
     end
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {4 => 1, 5 => 1, 6 => 1}
+  assert_coverage <<-'CRYSTAL', {4 => 1, 5 => 1, 6 => 1}
     macro finished
       {% verbatim do %}
         {%
@@ -823,9 +823,9 @@ describe "macro_code_coverage" do
         %}
       {% end %}
     end
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {4 => 1, 6 => 1, 7 => 0, 9 => 1}
+  assert_coverage <<-'CRYSTAL', {4 => 1, 6 => 1, 7 => 0, 9 => 1}
     macro finished
       {% verbatim do %}
         {%
@@ -839,9 +839,9 @@ describe "macro_code_coverage" do
         %}
       {% end %}
     end
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {4 => 1, 5 => 1, 6 => 0, 8 => 1, 9 => 1}
+  assert_coverage <<-'CRYSTAL', {4 => 1, 5 => 1, 6 => 0, 8 => 1, 9 => 1}
     macro finished
       {% verbatim do %}
         {%
@@ -855,9 +855,9 @@ describe "macro_code_coverage" do
         %}
       {% end %}
     end
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {4 => 1, 5 => 1, 6 => 1, 8 => 0, 9 => 0}
+  assert_coverage <<-'CRYSTAL', {4 => 1, 5 => 1, 6 => 1, 8 => 0, 9 => 0}
     macro finished
       {% verbatim do %}
         {%
@@ -871,9 +871,9 @@ describe "macro_code_coverage" do
         %}
       {% end %}
     end
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {4 => "1/2", 5 => 1, 6 => 1}
+  assert_coverage <<-'CRYSTAL', {4 => "1/2", 5 => 1, 6 => 1}
     macro finished
       {% verbatim do %}
         {%
@@ -884,9 +884,9 @@ describe "macro_code_coverage" do
         %}
       {% end %}
     end
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {4 => "2/2", 5 => 0, 6 => 0}
+  assert_coverage <<-'CRYSTAL', {4 => "2/2", 5 => 0, 6 => 0}
     macro finished
       {% verbatim do %}
         {%
@@ -897,9 +897,9 @@ describe "macro_code_coverage" do
         %}
       {% end %}
     end
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {4 => 1, 6 => 1, 7 => 0, 9 => 1}
+  assert_coverage <<-'CRYSTAL', {4 => 1, 6 => 1, 7 => 0, 9 => 1}
     macro finished
       {% verbatim do %}
         {%
@@ -913,9 +913,9 @@ describe "macro_code_coverage" do
         %}
       {% end %}
     end
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {4 => 1, 6 => 1, 7 => 0, 9 => 1}
+  assert_coverage <<-'CRYSTAL', {4 => 1, 6 => 1, 7 => 0, 9 => 1}
     macro finished
       {% verbatim do %}
         {%
@@ -929,9 +929,9 @@ describe "macro_code_coverage" do
         %}
       {% end %}
     end
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {2 => 1, 4 => 0, 7 => 0}
+  assert_coverage <<-'CRYSTAL', {2 => 1, 4 => 0, 7 => 0}
     {%
       if (type = nil) &&
           (
@@ -941,9 +941,9 @@ describe "macro_code_coverage" do
         id
       end
     %}
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {2 => 1, 3 => 1, 5 => 0}
+  assert_coverage <<-'CRYSTAL', {2 => 1, 3 => 1, 5 => 0}
     def default(type : T.class) forall T
       {% if T.nilable? %}
         {% 0 %}
@@ -953,9 +953,9 @@ describe "macro_code_coverage" do
     end
 
     default Int32?
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {2 => 2, 3 => 1, 5 => 1}
+  assert_coverage <<-'CRYSTAL', {2 => 2, 3 => 1, 5 => 1}
     def default(type : T.class) forall T
       {% if T.nilable? %}
         {% 0 %}
@@ -966,9 +966,9 @@ describe "macro_code_coverage" do
 
     default Int32
     default Int32?
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {2 => 1, 4 => 0}
+  assert_coverage <<-'CRYSTAL', {2 => 1, 4 => 0}
     def default(type : T.class) forall T
       {% if T.nilable? %}
         0
@@ -978,9 +978,9 @@ describe "macro_code_coverage" do
     end
 
     default Int32?
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {2 => 1, 4 => 1}
+  assert_coverage <<-'CRYSTAL', {2 => 1, 4 => 1}
     def default(type : T.class) forall T
       {% if T.nilable? %}
         0
@@ -990,9 +990,9 @@ describe "macro_code_coverage" do
     end
 
     default Int32
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {2 => 2, 4 => 1}
+  assert_coverage <<-'CRYSTAL', {2 => 2, 4 => 1}
     def default(type : T.class) forall T
       {% if T.nilable? %}
         0
@@ -1003,18 +1003,18 @@ describe "macro_code_coverage" do
 
     default Int32
     default Int32?
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {2 => "2/2"}
+  assert_coverage <<-'CRYSTAL', {2 => "2/2"}
     def default(type : T.class) forall T
       {% if T.nilable? %} 0 {% else %} 1 {% end %}
     end
 
     default Int32
     default Int32?
-    CR
+    CRYSTAL
 
-  assert_coverage <<-'CR', {2 => 2, 3 => 1, 5 => 1}
+  assert_coverage <<-'CRYSTAL', {2 => 2, 3 => 1, 5 => 1}
     macro test(val)
       {% if val == 1 %}
         %a = {{val.id}}
@@ -1025,5 +1025,5 @@ describe "macro_code_coverage" do
 
     test 1
     test 2
-    CR
+    CRYSTAL
 end

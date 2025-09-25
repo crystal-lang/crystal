@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Code gen: virtual type" do
   it "call base method" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Foo
         def coco
           1
@@ -15,11 +15,11 @@ describe "Code gen: virtual type" do
       a = Foo.new
       a = Bar.new
       a.coco
-    ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "call overwritten method" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       class Foo
         def coco
           1
@@ -35,11 +35,11 @@ describe "Code gen: virtual type" do
       a = Foo.new
       a = Bar.new
       a.coco
-    ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "call base overwritten method" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Foo
         def coco
           1
@@ -55,11 +55,11 @@ describe "Code gen: virtual type" do
       a = Bar.new
       a = Foo.new
       a.coco
-    ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "dispatch call with virtual type argument" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       class Foo
       end
 
@@ -77,11 +77,11 @@ describe "Code gen: virtual type" do
       a = Bar.new
       a = Foo.new
       coco(a)
-    ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "can belong to union" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       class Foo
         def foo; 1; end
       end
@@ -94,11 +94,11 @@ describe "Code gen: virtual type" do
       x = Bar.new
       x = Baz.new
       x.foo
-    ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "lookup instance variables in parent types" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       class Foo
         def initialize
           @x = 1
@@ -116,11 +116,11 @@ describe "Code gen: virtual type" do
 
       a = Bar.new || Foo.new
       a.foo
-    ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "assign instance variable in virtual type" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Foo
         def foo
           @x = 1
@@ -132,11 +132,11 @@ describe "Code gen: virtual type" do
 
       f = Foo.new || Bar.new
       f.foo
-    ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens non-virtual call that calls virtual call to another virtual call" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Foo
         def foo
           foo2
@@ -155,11 +155,11 @@ describe "Code gen: virtual type" do
 
       bar = Bar.new
       bar.bar
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "casts virtual type to base virtual type" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Object
         def bar
           1
@@ -177,12 +177,12 @@ describe "Code gen: virtual type" do
 
       f = Foo.new || Bar.new
       f.foo
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens call to Object#to_s from virtual type" do
-    run("
-      require \"prelude\"
+    run(<<-CRYSTAL)
+      require "prelude"
 
       class Foo
       end
@@ -192,23 +192,23 @@ describe "Code gen: virtual type" do
 
       a = Foo.new || Bar.new
       a.to_s
-      ")
+      CRYSTAL
   end
 
   it "codegens call to Object#to_s from nilable type" do
-    run("
-      require \"prelude\"
+    run(<<-CRYSTAL)
+      require "prelude"
 
       class Foo
       end
 
       a = nil || Foo.new
       a.to_s
-      ")
+      CRYSTAL
   end
 
   it "codegens virtual call with explicit self" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Foo
         def foo
           self.bar
@@ -224,11 +224,11 @@ describe "Code gen: virtual type" do
 
       f = Foo.new || Bar.new
       f.foo
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens virtual call with explicit self and nilable type" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Foo
         def foo
           self.bar
@@ -250,12 +250,12 @@ describe "Code gen: virtual type" do
 
       f = Bar.new || nil
       f.foo.to_i!
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "initializes ivars to nil even if object never instantiated" do
-    run("
-      require \"prelude\"
+    run(<<-CRYSTAL)
+      require "prelude"
 
       class Ref
       end
@@ -288,11 +288,11 @@ describe "Code gen: virtual type" do
 
       f = Foo.new || Bar.new
       f.foo
-      ")
+      CRYSTAL
   end
 
   it "doesn't lookup in Value+ when virtual type is Object+" do
-    run(%(
+    run(<<-CRYSTAL).to_b.should be_true
       class Object
         def foo
           !nil?
@@ -304,11 +304,11 @@ describe "Code gen: virtual type" do
 
       a = Foo.new
       a.foo
-      )).to_b.should be_true
+      CRYSTAL
   end
 
   it "correctly dispatch call with block when the obj is a virtual type" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       class Foo
         def each
           yield self
@@ -331,11 +331,11 @@ describe "Code gen: virtual type" do
       y = 0
       a.each {|x| y = x.foo}
       y
-    ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "dispatch call with nilable virtual arg" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Foo
       end
 
@@ -356,11 +356,11 @@ describe "Code gen: virtual type" do
 
       x = lala
       foo(x)
-    ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "calls class method 1" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Foo
         def self.foo
           1
@@ -374,11 +374,11 @@ describe "Code gen: virtual type" do
       end
 
       (Foo.new || Bar.new).class.foo
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "calls class method 2" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       class Foo
         def self.foo
           1
@@ -392,11 +392,11 @@ describe "Code gen: virtual type" do
       end
 
       (Bar.new || Foo.new).class.foo
-      ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "calls class method 3" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Base
         def self.foo
           1
@@ -413,11 +413,11 @@ describe "Code gen: virtual type" do
       end
 
       (Foo.new || Base.new).class.foo
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "dispatches on virtual metaclass (1)" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Foo
         def self.coco
           1
@@ -432,11 +432,11 @@ describe "Code gen: virtual type" do
 
       some_long_var = Foo || Bar
       some_long_var.coco
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "dispatches on virtual metaclass (2)" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       class Foo
         def self.coco
           1
@@ -451,11 +451,11 @@ describe "Code gen: virtual type" do
 
       some_long_var = Bar || Foo
       some_long_var.coco
-      ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "dispatches on virtual metaclass (3)" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       class Foo
         def self.coco
           1
@@ -473,11 +473,11 @@ describe "Code gen: virtual type" do
 
       some_long_var = Baz || Foo
       some_long_var.coco
-      ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "codegens new for simple type, then for virtual" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Foo
         def initialize(@x : Int32)
         end
@@ -493,11 +493,11 @@ describe "Code gen: virtual type" do
       x = Foo.new(1)
       y = (Foo || Bar).new(1)
       y.x
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens new twice for virtual" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Foo
         def initialize(@x : Int32)
         end
@@ -513,11 +513,11 @@ describe "Code gen: virtual type" do
       y = (Foo || Bar).new(1)
       y = (Foo || Bar).new(1)
       y.x
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens allocate for virtual type with custom new" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       class Foo
         def self.new
           allocate
@@ -536,11 +536,11 @@ describe "Code gen: virtual type" do
 
       foo = (Bar || Foo).new
       foo.foo
-      ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "returns type with virtual type def type" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Foo
         def foo
           1
@@ -559,11 +559,11 @@ describe "Code gen: virtual type" do
       end
 
       foo.foo
-    ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "casts virtual type to union" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(3)
       class Foo
       end
 
@@ -589,11 +589,11 @@ describe "Code gen: virtual type" do
 
       f = Baz.new || Bar.new
       x(f)
-      ").to_i.should eq(3)
+      CRYSTAL
   end
 
   it "casts union to virtual" do
-    run("
+    run(<<-CRYSTAL).to_b.should be_true
       module Moo
       end
 
@@ -620,11 +620,11 @@ describe "Code gen: virtual type" do
 
       reference = Bar.new || Baz.new
       reference.object_id == foo(reference)
-      ").to_b.should be_true
+      CRYSTAL
   end
 
   it "codegens virtual method of abstract metaclass" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       class Foo
         def self.foo
           1
@@ -644,11 +644,11 @@ describe "Code gen: virtual type" do
       end
 
       (Bar || Foo || Baz).foo
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "codegens new for virtual class with one type" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(123)
       require "prelude"
 
       abstract class Foo
@@ -663,11 +663,11 @@ describe "Code gen: virtual type" do
       p = Pointer(Foo.class).malloc(1_u64)
       p.value = Bar
       p.value.new.foo
-      )).to_i.should eq(123)
+      CRYSTAL
   end
 
   it "codegens new for virtual class with two types" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(456)
       require "prelude"
 
       abstract class Foo
@@ -689,11 +689,11 @@ describe "Code gen: virtual type" do
       p.value = Bar
       p.value = Baz
       p.value.new.foo
-      )).to_i.should eq(456)
+      CRYSTAL
   end
 
   it "codegens new for new on virtual abstract class (#3835)" do
-    run(%(
+    run(<<-CRYSTAL).to_string.should eq("Can't instantiate abstract class Foo")
       require "prelude"
 
       abstract class Foo
@@ -711,11 +711,11 @@ describe "Code gen: virtual type" do
       rescue ex
         ex.message.not_nil!
       end
-      )).to_string.should eq("Can't instantiate abstract class Foo")
+      CRYSTAL
   end
 
   it "casts metaclass union type to virtual metaclass type (#6298)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       class Foo
         def self.x
           1
@@ -745,6 +745,6 @@ describe "Code gen: virtual type" do
 
       klass = Bar || Baz
       Moo.new(klass).foo.x
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 end

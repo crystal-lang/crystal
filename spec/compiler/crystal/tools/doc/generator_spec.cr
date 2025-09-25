@@ -209,7 +209,6 @@ describe Doc::Generator do
         it "should generate the #{ann} tag" do
           program = Program.new
           generator = Doc::Generator.new program, ["."]
-          doc_type = Doc::Type.new generator, program
 
           alias_type = AliasType.new(program, program, "Foo", Crystal::Path.new("Bar"))
           alias_type.add_annotation(program.types[ann].as(Crystal::AnnotationType), Annotation.new(Crystal::Path.new(ann), ["lorem ipsum".string] of ASTNode))

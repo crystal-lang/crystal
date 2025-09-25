@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Code gen: cast" do
   it "allows casting object to pointer and back" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Foo
         def initialize(@x : Int32)
         end
@@ -16,31 +16,31 @@ describe "Code gen: cast" do
       p = f.as(Void*)
       f = p.as(Foo)
       f.x
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "casts from int to int" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       require "prelude"
 
       a = 1
       b = a.as(Int32)
       b.abs
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "casts from union to single type" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       require "prelude"
 
       a = 1 || 'a'
       b = a.as(Int32)
       b.abs
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "casts from union to single type raises TypeCastError" do
-    run(%(
+    run(<<-CRYSTAL).to_b.should be_true
       require "prelude"
 
       a = 1 || 'a'
@@ -50,21 +50,21 @@ describe "Code gen: cast" do
       rescue ex
         ex.message.not_nil!.includes?("Cast from Int32 to Char failed") && (ex.class == TypeCastError)
       end
-      )).to_b.should be_true
+      CRYSTAL
   end
 
   it "casts from union to another union" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       require "prelude"
 
       a = 1 || 1.5 || 'a'
       b = a.as(Int32 | Float64)
       b.abs.to_i
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "casts from union to another union raises TypeCastError" do
-    run(%(
+    run(<<-CRYSTAL).to_b.should be_true
       require "prelude"
 
       a = 1 || 1.5 || 'a'
@@ -74,7 +74,7 @@ describe "Code gen: cast" do
       rescue ex
         ex.message.not_nil!.includes?("Cast from Int32 to (Char | Float64) failed") && (ex.class == TypeCastError)
       end
-      )).to_b.should be_true
+      CRYSTAL
   end
 
   it "upcasts from union to union with different alignment" do
@@ -140,7 +140,7 @@ describe "Code gen: cast" do
   end
 
   it "casts from virtual to single type" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       require "prelude"
 
       class CastSpecFoo
@@ -158,11 +158,11 @@ describe "Code gen: cast" do
       a = CastSpecBar.new || CastSpecFoo.new || CastSpecBaz.new
       b = a.as(CastSpecBar)
       b.bar
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "casts from virtual to single type raises TypeCastError" do
-    run(%(
+    run(<<-CRYSTAL).to_b.should be_true
       require "prelude"
 
       class CastSpecFoo
@@ -184,20 +184,20 @@ describe "Code gen: cast" do
       rescue ex
         ex.message.not_nil!.includes?("Cast from CastSpecBar to CastSpecBaz failed") && (ex.class == TypeCastError)
       end
-      )).to_b.should be_true
+      CRYSTAL
   end
 
   it "casts from pointer to pointer" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       require "prelude"
 
       a = 1_i64
       pointerof(a).as(Int32*).value
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "casts to module" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       require "prelude"
 
       module CastSpecMoo
@@ -227,21 +227,21 @@ describe "Code gen: cast" do
       a = CastSpecBar.new || CastSpecFoo.new || CastSpecBaz.new || CastSpecBan.new
       m = a.as(CastSpecMoo)
       m.moo
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "casts from nilable to nil" do
-    run(%(
+    run(<<-CRYSTAL).to_b.should be_true
       require "prelude"
 
       a = 1 == 2 ? Reference.new : nil
       c = a.as(Nil)
       c == nil
-      )).to_b.should be_true
+      CRYSTAL
   end
 
   it "casts from nilable to nil raises TypeCastError" do
-    run(%(
+    run(<<-CRYSTAL).to_b.should be_true
       require "prelude"
 
       a = 1 == 1 ? Reference.new : nil
@@ -251,11 +251,11 @@ describe "Code gen: cast" do
       rescue ex
         ex.message.not_nil!.includes?("Cast from Reference to Nil failed") && (ex.class == TypeCastError)
       end
-      )).to_b.should be_true
+      CRYSTAL
   end
 
   it "casts to base class making it virtual" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Foo
         def foo
           1
@@ -271,55 +271,55 @@ describe "Code gen: cast" do
       bar = Bar.new
       x = bar.as(Foo).foo
       x.to_i!
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "casts to bigger union" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       x = 1.5.as(Int32 | Float64)
       x.to_i!
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "allows casting nil to Void*" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(0)
       nil.as(Void*).address
-      )).to_i.should eq(0)
+      CRYSTAL
   end
 
   it "allows casting nilable type to Void* (1)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should_not eq(0)
       a = 1 == 1 ? Reference.new : nil
       a.as(Void*).address
-      )).to_i.should_not eq(0)
+      CRYSTAL
   end
 
   it "allows casting nilable type to Void* (2)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(0)
       a = 1 == 2 ? Reference.new : nil
       a.as(Void*).address
-      )).to_i.should eq(0)
+      CRYSTAL
   end
 
   it "allows casting nilable type to Void* (3)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should_not eq(0)
       class Foo
       end
       a = 1 == 1 ? Reference.new : (1 == 2 ? Foo.new : nil)
       a.as(Void*).address
-      )).to_i.should_not eq(0)
+      CRYSTAL
   end
 
   it "casts (bug)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(123)
       require "prelude"
       (1 || 1.1).as(Int32)
       123
-      )).to_i.should eq(123)
+      CRYSTAL
   end
 
   it "can cast from Void* to virtual type (#3014)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(42)
       abstract class Foo
         abstract def hi
       end
@@ -331,11 +331,11 @@ describe "Code gen: cast" do
       end
 
       Bar.new.as(Void*).as(Foo).hi
-      )).to_i.should eq(42)
+      CRYSTAL
   end
 
   it "upcasts from non-generic to generic" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       class Foo(T)
         def foo
           1
@@ -349,11 +349,11 @@ describe "Code gen: cast" do
       end
 
       Bar.new.as(Foo(Int32)).foo
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "upcasts type to virtual (#3304)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Foo
         def foo
           1
@@ -367,11 +367,11 @@ describe "Code gen: cast" do
       end
 
       Foo.new.as(Foo).foo
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "upcasts type to virtual (2) (#3304)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Foo
         def foo
           1
@@ -391,11 +391,11 @@ describe "Code gen: cast" do
       end
 
       Gen(Foo).cast(Foo.new).foo
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "casts with block var that changes type (#3341)" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       require "prelude"
 
       class Object
@@ -409,20 +409,20 @@ describe "Code gen: cast" do
 
       x = Foo.new.as(Int32 | Foo)
       x.try &.as(Foo)
-      ))
+      CRYSTAL
   end
 
   it "casts between union types, where union has a tuple type (#3377)" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       require "prelude"
 
       v = 1 || true || 1.0
       (v || {v}).as(Bool | Float64)
-      ))
+      CRYSTAL
   end
 
   it "codegens class method when type id is available but not a virtual type (#3490)" do
-    run(%(
+    run(<<-CRYSTAL).to_string.should eq("A")
       class Class
         def name : String
           {{ @type.name.stringify }}
@@ -449,11 +449,11 @@ describe "Code gen: cast" do
       else
         "Nope"
       end
-      )).to_string.should eq("A")
+      CRYSTAL
   end
 
   it "casts from nilable type to virtual type (#3512)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       require "prelude"
 
       class Foo
@@ -471,11 +471,11 @@ describe "Code gen: cast" do
       foo = 1 == 2 ? nil : Foo.new
       x = foo.as(Foo)
       x.foo
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "can cast to metaclass (#11121)" do
-    run(%(
+    run(<<-CRYSTAL)
       class A
       end
 
@@ -483,7 +483,7 @@ describe "Code gen: cast" do
       end
 
       A.as(A.class)
-      ))
+      CRYSTAL
   end
 
   it "cast virtual metaclass type to nilable virtual instance type (#12628)" do

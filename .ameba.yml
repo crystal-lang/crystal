@@ -56,8 +56,8 @@ Lint/LiteralInInterpolation:
 
 Lint/LiteralsComparison:
   Excluded:
-  # Explicit tests for case equality on tuple literals
-  - spec/std/tuple_spec.cr
+  # Explicit tests for case equality on literals
+  - spec/std/{array,char,int,number,regex,string,symbol,tuple,uint}_spec.cr
 
 # TODO: Investigate if some `not_nil!` calls can be avoided.
 Lint/NotNil:
@@ -93,9 +93,20 @@ Lint/UnusedArgument:
 Lint/UnusedBlockArgument:
   Enabled: false
 
-# FIXME: Investigate useless assigns.
 Lint/UselessAssign:
-  Enabled: false
+  # BUG: https://github.com/crystal-ameba/ameba/issues/447
+  # This setting is to avoid false positives from the common use of type
+  # declarations in macro arguments.
+  ExcludeTypeDeclarations: true
+  Excluded:
+    - spec/debug/**/*
+    - samples/mt_gc_test.cr
+    # BUG: https://github.com/crystal-ameba/ameba/issues/624
+    - spec/std/concurrent/select_spec.cr
+    # Generators assign top-level variables to pass to ECR templates
+    - scripts/generate_*
+    # BUG: https://github.com/crystal-ameba/ameba/issues/623
+    - scripts/github-changelog.cr
 
 # Metrics
 # =========================

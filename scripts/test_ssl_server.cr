@@ -16,7 +16,7 @@ server = HTTP::Server.new do |context|
   context.response.content_type = "text/plain"
   context.response.print "Hello world!"
 end
-server_context, client_context = ssl_context_pair
+server_context, _client_context = ssl_context_pair
 address = server.bind_tls "0.0.0.0", 0, server_context
 
 puts "== Starting HTTP server at #{address}"

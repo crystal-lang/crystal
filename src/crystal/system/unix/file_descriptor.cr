@@ -19,7 +19,7 @@ module Crystal::System::FileDescriptor
   STDERR_HANDLE = 2
 
   private def system_blocking?
-    flags = fcntl(LibC::F_GETFL)
+    flags = system_fcntl(LibC::F_GETFL)
     !flags.bits_set? LibC::O_NONBLOCK
   end
 
@@ -56,12 +56,12 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_close_on_exec?
-    flags = fcntl(LibC::F_GETFD)
+    flags = system_fcntl(LibC::F_GETFD)
     flags.bits_set? LibC::FD_CLOEXEC
   end
 
   private def system_close_on_exec=(arg : Bool)
-    fcntl(LibC::F_SETFD, arg ? LibC::FD_CLOEXEC : 0)
+    system_fcntl(LibC::F_SETFD, arg ? LibC::FD_CLOEXEC : 0)
     arg
   end
 
@@ -73,6 +73,10 @@ module Crystal::System::FileDescriptor
     r = LibC.fcntl(fd, cmd, arg)
     raise IO::Error.from_errno("fcntl() failed") if r == -1
     r
+  end
+
+  private def system_fcntl(cmd, arg = 0)
+    FileDescriptor.fcntl(fd, cmd, arg)
   end
 
   def self.system_info(fd)
@@ -284,10 +288,10 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_echo(enable : Bool, mode = nil)
-    new_mode = mode || FileDescriptor.tcgetattr(fd)
+    new_mode = mode || system_tcgetattr
     flags = LibC::ECHO | LibC::ECHOE | LibC::ECHOK | LibC::ECHONL
     new_mode.c_lflag = enable ? (new_mode.c_lflag | flags) : (new_mode.c_lflag & ~flags)
-    if FileDescriptor.tcsetattr(fd, LibC::TCSANOW, pointerof(new_mode)) != 0
+    if system_tcsetattr(LibC::TCSANOW, pointerof(new_mode)) != 0
       raise IO::Error.from_errno("tcsetattr")
     end
   end
@@ -300,7 +304,7 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_raw(enable : Bool, mode = nil)
-    new_mode = mode || FileDescriptor.tcgetattr(fd)
+    new_mode = mode || system_tcgetattr
     if enable
       new_mode = FileDescriptor.cfmakeraw(new_mode)
     else
@@ -308,7 +312,7 @@ module Crystal::System::FileDescriptor
       new_mode.c_oflag |= LibC::OPOST
       new_mode.c_lflag |= LibC::ECHO | LibC::ECHOE | LibC::ECHOK | LibC::ECHONL | LibC::ICANON | LibC::ISIG | LibC::IEXTEN
     end
-    if FileDescriptor.tcsetattr(fd, LibC::TCSANOW, pointerof(new_mode)) != 0
+    if system_tcsetattr(LibC::TCSANOW, pointerof(new_mode)) != 0
       raise IO::Error.from_errno("tcsetattr")
     end
   end
@@ -322,16 +326,16 @@ module Crystal::System::FileDescriptor
 
   @[AlwaysInline]
   private def system_console_mode(&)
-    before = FileDescriptor.tcgetattr(fd)
+    before = system_tcgetattr
     begin
       yield before
     ensure
-      FileDescriptor.tcsetattr(fd, LibC::TCSANOW, pointerof(before))
+      system_tcsetattr(LibC::TCSANOW, pointerof(before))
     end
   end
 
   @[AlwaysInline]
-  def self.tcgetattr(fd)
+  private def system_tcgetattr
     termios = uninitialized LibC::Termios
     {% if LibC.has_method?(:tcgetattr) %}
       ret = LibC.tcgetattr(fd, pointerof(termios))
@@ -344,7 +348,7 @@ module Crystal::System::FileDescriptor
   end
 
   @[AlwaysInline]
-  def self.tcsetattr(fd, optional_actions, termios_p)
+  private def system_tcsetattr(optional_actions, termios_p)
     {% if LibC.has_method?(:tcsetattr) %}
       LibC.tcsetattr(fd, optional_actions, termios_p)
     {% else %}
