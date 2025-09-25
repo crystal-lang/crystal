@@ -196,7 +196,7 @@ describe "Random" do
   end
 
   it "gets a random bool" do
-    Random::DEFAULT.next_bool.should be_a(Bool)
+    Random.default.next_bool.should be_a(Bool)
   end
 
   it "generates by accumulation" do

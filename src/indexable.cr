@@ -954,7 +954,7 @@ module Indexable(T)
   # a.sample                # => 1
   # a.sample(Random.new(1)) # => 2
   # ```
-  def sample(random : Random = Random::DEFAULT)
+  def sample(random : Random = Random.default)
     raise IndexError.new("Can't sample empty collection") if size == 0
     unsafe_fetch(random.rand(size))
   end
@@ -964,7 +964,7 @@ module Indexable(T)
   # If `self` is not empty and `n` is equal to 1, calls `sample(random)` exactly
   # once. Thus, *random* will be left in a different state compared to the
   # implementation in `Enumerable`.
-  def sample(n : Int, random : Random = Random::DEFAULT) : Array(T)
+  def sample(n : Int, random : Random = Random.default) : Array(T)
     return super unless n == 1
 
     if empty?
