@@ -376,7 +376,10 @@ module YAML::ArrayConverter(Converter)
         node.raise "Expected sequence, not #{node.kind}"
       end
 
-      ary = Array(typeof(@converter.from_yaml(ctx, node))).new
+      ary = Array(typeof(begin
+        value = uninitialized YAML::Nodes::Node
+        @converter.from_yaml(ctx, value)
+      end)).new
 
       node.each do |value|
         ary << @converter.from_yaml(ctx, value)
