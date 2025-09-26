@@ -72,7 +72,7 @@ class Thread
     def finalize
       {% for var, index in @type.class_vars %}
         {% if var.name.starts_with?("__destructor") %}
-          @@{{var.name}}.call(self) rescue nil
+          @@{{var.name}}.try(&.call(self)) rescue nil
         {% end %}
       {% end %}
     end
@@ -84,6 +84,9 @@ class Thread
     protected def self.{{decl.var.id}}(&block : -> {{decl.type}}) : {{decl.type}}
       table = ::Thread::LocalStorage.local_table
       if (value = table.%var).nil?
+        {% if destructor %}
+          ::Thread::LocalStorage.__set_destructor%var
+        {% end %}
         table.%var = yield
       else
         value
@@ -94,12 +97,22 @@ class Thread
       property %var : {{decl.type}} | Nil
 
       {% if destructor %}
-        @@__destructor%var : Proc(self, Nil) = ->(table : self) {
-          if value = table.%var
-            {{destructor}}.call(value)
-          end
-          nil
-        }
+        @@__destructor%var = uninitialized Proc(self, Nil)
+        @@__once_destructor%var = Atomic(Bool).new(false)
+
+        # delay setting the destructor to when we need it, to avoid extra
+        # dependencies just because we declared a TLS but don't use it (for
+        # example libpcre2)
+        def self.__set_destructor%var
+          return if @@__once_destructor%var.swap(true, :relaxed)
+
+          @@__destructor%var = ->(table : self) {
+            if value = table.%var
+              {{destructor}}.call(value)
+            end
+            nil
+          }
+        end
       {% end %}
     end
   end
