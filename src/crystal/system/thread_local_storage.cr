@@ -64,11 +64,27 @@ class Thread
 
     alias Destructor = Proc(Void*, Nil)
 
-    # The key is free to (re)allocate (zero memory).
-    FREE = Destructor.new(Pointer(Void).null, Pointer(Void).null)
+    {% if !flag?(:interpreted) %}
+      # The key is free to (re)allocate (zero memory).
+      FREE = Destructor.new(Pointer(Void).null, Pointer(Void).null)
 
-    # The key is allocated without a destructor (invalid proc).
-    INVALID = Destructor.new(Pointer(Void).new(-1.to_u64!), Pointer(Void).new(-1.to_u64!))
+      # The key is allocated without a destructor (invalid proc).
+      INVALID = Destructor.new(Pointer(Void).new(-1.to_u64!), Pointer(Void).new(-1.to_u64!))
+    {% else %}
+      # the interpreter can't instantiate invalid procs from whatever pointers,
+      # so we manually set the memory to zeroes or ones
+      FREE = begin
+        proc = uninitialized Destructor
+        Intrinsics.memset(pointerof(proc).as(UInt8*), 0_u8, sizeof(Destructor), false)
+        proc
+      end
+
+      INVALID = begin
+        proc = uninitialized Destructor
+        Intrinsics.memset(pointerof(proc).as(UInt8*), 1_u8, sizeof(Destructor), false)
+        proc
+      end
+    {% end %}
 
     # The maximum number of keys.
     MAX_KEYS = 128_u32
