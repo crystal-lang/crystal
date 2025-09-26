@@ -88,7 +88,7 @@ describe "record" do
   end
 
   it "expands record macro with comments during wants_doc=true (#16074)" do
-    ret = semantic(<<-CRYSTAL, wants_doc: true)
+    semantic(<<-CRYSTAL, wants_doc: true)
     require "macros"
     require "object/properties"
 
