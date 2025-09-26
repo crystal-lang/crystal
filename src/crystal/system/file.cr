@@ -51,7 +51,7 @@ module Crystal::System::File
 
   LOWER_ALPHANUM = "0123456789abcdefghijklmnopqrstuvwxyz".to_slice
 
-  def self.mktemp(prefix : String?, suffix : String?, dir : String, random : ::Random = ::Random::DEFAULT) : {FileDescriptor::Handle, String, Bool}
+  def self.mktemp(prefix : String?, suffix : String?, dir : String, random : ::Random = ::Random.default) : {FileDescriptor::Handle, String, Bool}
     flags = LibC::O_RDWR | LibC::O_CREAT | LibC::O_EXCL
     perm = ::File::Permissions.new(0o600)
 

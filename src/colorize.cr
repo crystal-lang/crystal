@@ -91,7 +91,7 @@
 # ```
 # require "colorize"
 #
-# "foo".colorize(Random::DEFAULT.next_bool ? :green : :default)
+# "foo".colorize(Random.default.next_bool ? :green : :default)
 # ```
 #
 # Available colors are:
