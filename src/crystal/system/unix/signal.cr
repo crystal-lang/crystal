@@ -12,7 +12,14 @@ module Crystal::System::Signal
 
   alias Handler = ::Signal ->
 
-  @@pipe = IO.pipe(read_blocking: false, write_blocking: true)
+  @@pipe : {IO::FileDescriptor, IO::FileDescriptor} = begin
+    IO.pipe(read_blocking: false, write_blocking: true).tap do |reader, writer|
+      # This avoids accidentally closing the pipe from the interpreter.
+      # See https://github.com/crystal-lang/crystal/issues/16040 for details.
+      writer.close_on_finalize = false
+    end
+  end
+
   @@handlers = {} of ::Signal => Handler
   @@sigset = Sigset.new
   class_property child_handler : Handler?
