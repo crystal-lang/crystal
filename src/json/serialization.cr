@@ -195,7 +195,6 @@ module JSON
                     has_default: ivar.has_default_value?,
                     default:     ivar.default_value,
                     nilable:     ivar.type.nilable?,
-                    type:        ivar.type,
                     root:        ann && ann[:root],
                     converter:   ann && ann[:converter],
                     presence:    ann && ann[:presence],

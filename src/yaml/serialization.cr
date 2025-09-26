@@ -201,7 +201,6 @@ module YAML
                     has_default: ivar.has_default_value?,
                     default:     ivar.default_value,
                     nilable:     ivar.type.nilable?,
-                    type:        ivar.type,
                     converter:   ann && ann[:converter],
                     presence:    ann && ann[:presence],
                   }
