@@ -75,7 +75,7 @@ macro record(__name name, *properties, **kwargs)
       {% if property.is_a?(Assign) %}
         getter {{property.target.id}}
       {% elsif property.is_a?(TypeDeclaration) %}
-        getter({{property}})
+        getter {{property}}
       {% else %}
         getter :{{property.id}}
       {% end %}
