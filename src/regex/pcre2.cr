@@ -1,5 +1,4 @@
 require "./lib_pcre2"
-require "crystal/thread_local_value"
 
 # :nodoc:
 module Regex::PCRE2
@@ -207,12 +206,14 @@ module Regex::PCRE2
   private def match_impl(str, byte_index, options)
     match_data = match_data(str, byte_index, options) || return
 
-    ovector_count = LibPCRE2.get_ovector_count(match_data)
+    # we reuse the same matchdata allocation, so we must "reimplement" the
+    # behavior of pcre2_match_data_create_from_pattern (get_ovector_count always
+    # returns 65535, aka the maximum):
+    ovector_count = capture_count_impl &+ 1
     ovector = Slice.new(LibPCRE2.get_ovector_pointer(match_data), ovector_count &* 2)
 
     # We need to dup the ovector because `match_data` is re-used for subsequent
-    # matches (see `@match_data`).
-    # Dup brings the ovector data into the realm of the GC.
+    # matches. Dup brings the ovector data into the realm of the GC.
     ovector = ovector.dup
 
     ::Regex::MatchData.new(self, @re, str, byte_index, ovector.to_unsafe, ovector_count.to_i32 &- 1)
@@ -228,43 +229,48 @@ module Regex::PCRE2
 
   class_getter match_context : LibPCRE2::MatchContext* do
     match_context = LibPCRE2.match_context_create(nil)
-    LibPCRE2.jit_stack_assign(match_context, ->(_data) { Regex::PCRE2.jit_stack }, nil)
+    LibPCRE2.jit_stack_assign(match_context, ->(_data) { current_jit_stack }, nil)
     match_context
   end
 
-  # Returns a JIT stack that's shared in the current thread.
+  # JIT stack is unique per thread.
   #
-  # Only a single `match` function can run per thread at any given time, so there
-  # can't be any concurrent access to the JIT stack.
-  @@jit_stack = Crystal::ThreadLocalValue(LibPCRE2::JITStack*).new
+  # Only a single `match` function can run per thread at any given time, so
+  # there can't be any concurrent access to the JIT stack.
+  Thread.thread_local(jit_stack : LibPCRE2::JITStack*, destructor: ->(ptr : LibPCRE2::JITStack*) {
+    LibPCRE2.jit_stack_free(ptr)
+  })
 
-  def self.jit_stack
-    @@jit_stack.get do
+  protected def self.current_jit_stack : LibPCRE2::JITStack*
+    jit_stack do
       LibPCRE2.jit_stack_create(32_768, 1_048_576, nil) || raise "Error allocating JIT stack"
     end
   end
 
-  # Match data is shared per instance and thread.
+  # Match data is unique per thread.
   #
-  # Match data contains a buffer for backtracking when matching in interpreted mode (non-JIT).
-  # This buffer is heap-allocated and should be re-used for subsequent matches.
-  @match_data = Crystal::ThreadLocalValue(LibPCRE2::MatchData*).new
+  # Match data contains a buffer for backtracking when matching in interpreted
+  # mode (non-JIT). This buffer is heap-allocated and should be re-used for
+  # subsequent matches.
+  Thread.thread_local(match_data : LibPCRE2::MatchData*, destructor: ->(ptr : LibPCRE2::MatchData*) {
+    LibPCRE2.match_data_free(ptr)
+  })
 
-  private def match_data
-    @match_data.get do
-      LibPCRE2.match_data_create_from_pattern(@re, nil)
+  protected def self.current_match_data : LibPCRE2::MatchData*
+    match_data do
+      # the ovector size is clamped to 65535 pairs; we declare the maximum
+      # because we allocate the match data buffer once for the thread and need
+      # to adapt to any regular expression
+      LibPCRE2.match_data_create(65_535, nil)
     end
   end
 
   def finalize
-    @match_data.consume_each do |match_data|
-      LibPCRE2.match_data_free(match_data)
-    end
     LibPCRE2.code_free @re
   end
 
   private def match_data(str, byte_index, options)
-    match_data = self.match_data
+    match_data = Regex::PCRE2.current_match_data
     match_count = LibPCRE2.match(@re, str, str.bytesize, byte_index, pcre2_match_options(options), match_data, PCRE2.match_context)
 
     if match_count < 0
