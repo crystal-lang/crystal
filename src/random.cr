@@ -52,6 +52,10 @@ require "random/pcg32"
 module Random
   DEFAULT = PCG32.new
 
+  alias Default = PCG32
+
+  thread_local(default : ::Random::Default) { ::Random::Default.new }
+
   # Initializes an instance with the given *seed* and *sequence*.
   def self.new(seed, sequence = 0_u64)
     PCG32.new(seed.to_u64, sequence)
@@ -428,12 +432,12 @@ module Random
 
   # See `#rand`.
   def self.rand : Float64
-    DEFAULT.rand
+    default.rand
   end
 
   # See `#rand(x)`.
   def self.rand(x)
-    DEFAULT.rand(x)
+    default.rand(x)
   end
 end
 
