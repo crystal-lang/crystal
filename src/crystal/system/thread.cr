@@ -45,6 +45,8 @@ end
   {% raise "Thread not supported" %}
 {% end %}
 
+require "./thread_local_storage"
+
 # :nodoc:
 class Thread
   include Crystal::System::Thread
