@@ -321,7 +321,7 @@ module Colorize
   end
 end
 
-private def apply_each_code(mode : Colorize::Mode, &)
+private def each_code(mode : Colorize::Mode, &)
   yield "1" if mode.bold?
   yield "2" if mode.dim?
   yield "3" if mode.italic?
@@ -335,7 +335,7 @@ private def apply_each_code(mode : Colorize::Mode, &)
   yield "53" if mode.overline?
 end
 
-private def reset_each_code(mode : Colorize::Mode, &)
+private def each_reset_code(mode : Colorize::Mode, &)
   yield "22" if mode.bold?
   yield "22" if mode.dim?
   yield "23" if mode.italic?
@@ -576,7 +576,7 @@ struct Colorize::Object(T)
         end
 
         unless @@last_color[:mode].none?
-          reset_each_code(@@last_color[:mode]) do |code|
+          each_reset_code(@@last_color[:mode]) do |code|
             io << ';' if printed
             io << code
             printed = true
@@ -596,7 +596,7 @@ struct Colorize::Object(T)
         printed = true
       end
 
-      apply_each_code(mode) do |code|
+      each_code(mode) do |code|
         io << ';' if printed
         io << code
         printed = true
