@@ -62,7 +62,7 @@ module Crystal::System::File
       # must resolve the default random (thread local) on each iteration because
       # `open` below may yield the current fiber and the fiber be resumed on
       # another thread:
-      rng = random || Random.default
+      rng = random || ::Random.default
 
       path = String.build(bytesize) do |io|
         io << prefix
