@@ -52,9 +52,10 @@ require "random/pcg32"
 module Random
   DEFAULT = PCG32.new
 
-  alias Default = PCG32
+  thread_local(default : ::Random) do
+    ::Random::PCG32.new.as(::Random)
+  end
 
-  thread_local(default : ::Random::Default) { ::Random::Default.new }
 
   # Initializes an instance with the given *seed* and *sequence*.
   def self.new(seed, sequence = 0_u64)
@@ -64,6 +65,11 @@ module Random
   # Initializes an instance seeded from a system source.
   def self.new
     PCG32.new
+  end
+
+  # Reseed the generator.
+  def new_seed
+    raise NotImplementedError.new("{{@type}}#new_seed")
   end
 
   # Generates a random unsigned integer.
