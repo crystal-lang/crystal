@@ -1577,7 +1577,7 @@ module Enumerable(T)
   # {1, 2, 3, 4, 5}.sample(2)                # => [3, 4]
   # {1, 2, 3, 4, 5}.sample(2, Random.new(1)) # => [1, 5]
   # ```
-  def sample(n : Int, random : Random = Random::DEFAULT) : Array(T)
+  def sample(n : Int, random : Random? = nil) : Array(T)
     raise ArgumentError.new("Can't sample negative number of elements") if n < 0
 
     # Unweighted reservoir sampling:
@@ -1587,6 +1587,10 @@ module Enumerable(T)
 
     ary = Array(T).new(n)
     return ary if n == 0
+
+    # must split the default random instance (thread local) because #each might
+    # yield the current fiber that may be resumed by another thread
+    Random.dup_and_split_default_unless(random, stack: true)
 
     each_with_index do |elem, i|
       if i < n
@@ -1613,9 +1617,13 @@ module Enumerable(T)
   # a.sample                # => 1
   # a.sample(Random.new(1)) # => 3
   # ```
-  def sample(random : Random = Random::DEFAULT) : T
+  def sample(random : Random? = nil) : T
     value = uninitialized T
     found = false
+
+    # must split the default random instance (thread local) because #each might
+    # yield the current fiber that may be resumed by another thread
+    Random.dup_and_split_default_unless(random, stack: true)
 
     each_with_index do |elem, i|
       if !found
