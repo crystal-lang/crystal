@@ -56,6 +56,30 @@ module Random
     ::Random::PCG32.new.as(::Random)
   end
 
+  # :nodoc:
+  #
+  # Unless a *random* instance is provided, the macro will dup the thread
+  # instance (on the stack when possible, hence the macro) and advance the
+  # thread instance to the next sequence (taking advantage of PCG32 sequences)
+  # so both instances will generate uncorrelated sequences.
+  macro dup_and_split_default_unless(random, stack = false)
+    unless {{random.id}}
+      {% if flag?(:preview_mt) %}
+        %thread_rng = ::Random.default.as(Random::PCG32)
+
+        if {{stack}} && {{compare_versions(Crystal::VERSION, "1.12.0") >= 0}}
+          %buf = uninitialized ::ReferenceStorage(::Random::PCG32)
+          {{random.id}} = ::Random::PCG32.unsafe_construct(pointerof(%buf), %thread_rng)
+        else
+          {{random.id}} = %thread_rng.dup
+        end
+
+        %thread_rng.next_sequence!
+      {% else %}
+        {{random.id}} = ::Random.default
+      {% end %}
+    end
+  end
 
   # Initializes an instance with the given *seed* and *sequence*.
   def self.new(seed, sequence = 0_u64)
