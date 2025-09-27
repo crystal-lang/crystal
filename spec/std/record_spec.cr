@@ -1,5 +1,4 @@
 require "spec"
-require "../spec_helper"
 
 private module RecordSpec
   record Record1,
@@ -85,18 +84,5 @@ describe "record" do
 
   it "uses the default values on the ivars" do
     CustomInitializer.new(__id: 10).active.should be_false
-  end
-
-  it "expands record macro with comments during wants_doc=true (#16074)" do
-    ret = semantic(<<-CRYSTAL, wants_doc: true)
-    require "macros"
-    require "object/properties"
-
-    record TestRecord,
-      # This is a comment
-      test : String?
-
-    TestRecord.new("test").test
-    CRYSTAL
   end
 end
