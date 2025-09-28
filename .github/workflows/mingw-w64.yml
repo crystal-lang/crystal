@@ -24,6 +24,8 @@ jobs:
   aarch64-mingw-w64:
     name: CLANGARM64
     uses: ./.github/workflows/mingw-w64-steps.yml
+    env:
+      CXX: clang++
     with:
       arch: aarch64
       runs-on: windows-11-arm
