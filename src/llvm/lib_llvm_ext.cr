@@ -33,4 +33,6 @@ lib LibLLVMExt
                                                                                name : Char*) : LibLLVM::ValueRef
 
   fun set_target_machine_global_isel = LLVMExtSetTargetMachineGlobalISel(t : LibLLVM::TargetMachineRef, enable : LibLLVM::Bool)
+
+  fun create_target_machine = LLVMExtCreateTargetMachine(t : LibLLVM::TargetRef, triple : Char*, cpu : Char*, features : Char*, level : LLVM::CodeGenOptLevel, reloc : LLVM::RelocMode, code_model : LLVM::CodeModel, emulated_tls : Int) : LibLLVM::TargetMachineRef
 end
