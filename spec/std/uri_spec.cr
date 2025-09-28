@@ -172,6 +172,42 @@ describe "URI" do
     it { URI.new(path: "/foo").hostname.should be_nil }
   end
 
+  describe "#host" do
+    it "works with IPv6 address literals" do
+      uri = URI.new("http", "[::1]", path: "foo")
+      uri.hostname.should eq("::1")
+      uri.host.should eq("[::1]")
+      uri.to_s.should eq "http://[::1]/foo"
+      uri.host = "[::1]"
+      uri.to_s.should eq "http://[::1]/foo"
+
+      uri = URI.new("http", "::1", path: "foo")
+      uri.hostname.should eq("::1")
+      uri.host.should eq("[::1]")
+      uri.to_s.should eq "http://[::1]/foo"
+      uri.host = "::1"
+      uri.to_s.should eq "http://[::1]/foo"
+    end
+
+    it "works with IPv4 addresses" do
+      uri = URI.new("http", "192.168.0.2", path: "foo")
+      uri.hostname.should eq("192.168.0.2")
+      uri.host.should eq("192.168.0.2")
+      uri.to_s.should eq "http://192.168.0.2/foo"
+      uri.host = "192.168.0.2"
+      uri.to_s.should eq "http://192.168.0.2/foo"
+    end
+
+    it "works with domain names" do
+      uri = URI.new("http", "test.domain", path: "foo")
+      uri.hostname.should eq("test.domain")
+      uri.host.should eq("test.domain")
+      uri.to_s.should eq "http://test.domain/foo"
+      uri.host = "test.domain"
+      uri.to_s.should eq "http://test.domain/foo"
+    end
+  end
+
   describe "#authority" do
     it { URI.new.authority.should be_nil }
     it { URI.new(scheme: "scheme").authority.should be_nil }
