@@ -173,7 +173,11 @@ LLVMTargetMachineRef LLVMExtCreateTargetMachine(
     if (EmulatedTLS) {
         TO.EmulatedTLS = true;
     }
+#if LLVM_VERSION_GE(21, 0)
+    return wrap(unwrap(T)->createTargetMachine(llvm::Triple(TripleStr), CPU, Features, TO, RM, CM, OL, JIT));
+#else
     return wrap(unwrap(T)->createTargetMachine(TripleStr, CPU, Features, TO, RM, CM, OL, JIT));
+#endif
 }
 
 } // extern "C"
