@@ -1,6 +1,5 @@
 #include <llvm/Config/llvm-config.h>
 #include <llvm/IR/IRBuilder.h>
-#include "llvm/MC/TargetRegistry.h"
 #include <llvm/Target/TargetMachine.h>
 #include <llvm/Target/TargetOptions.h>
 #include <llvm/Target/CodeGenCWrappers.h>
@@ -16,11 +15,18 @@ using namespace llvm;
 #include <llvm/IR/DIBuilder.h>
 #endif
 
+#if LLVM_VERSION_GE(14, 0)
+#include "llvm/MC/TargetRegistry.h"
+#else
+#include "llvm/Support/TargetRegistry.h"
+#endif
+
 #if LLVM_VERSION_GE(16, 0)
 #define makeArrayRef ArrayRef
 #endif
 
 #if !LLVM_VERSION_GE(18, 0)
+#define CodeGenOptLevel CodeGenOpt::Level
 typedef struct LLVMOpaqueOperandBundle *LLVMOperandBundleRef;
 DEFINE_SIMPLE_CONVERSION_FUNCTIONS(OperandBundleDef, LLVMOperandBundleRef)
 #endif
@@ -131,7 +137,11 @@ LLVMTargetMachineRef LLVMExtCreateTargetMachine(
     }
 
     // LLVMTargetMachineOptionsSetRelocModel()
+#if LLVM_VERSION_GE(16, 0)
     std::optional<Reloc::Model> RM;
+#else
+    Optional<Reloc::Model> RM;
+#endif
     switch (Reloc){
         case LLVMRelocStatic:
             RM = Reloc::Static;
