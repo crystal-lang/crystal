@@ -1590,20 +1590,20 @@ module Enumerable(T)
 
     # must split the default random instance (thread local) because #each might
     # yield the current fiber that may be resumed by another thread
-    Random.dup_and_split_default_unless(random, stack: true)
+    rng = random || Random.dup_and_split_default(stack: true)
 
     each_with_index do |elem, i|
       if i < n
         ary << elem
       else
-        j = random.rand(i + 1)
+        j = rng.rand(i + 1)
         if j < n
           ary.to_unsafe[j] = elem
         end
       end
     end
 
-    ary.shuffle!(random)
+    ary.shuffle!(rng)
   end
 
   # Returns a random element from `self`, using the given *random* number
@@ -1623,13 +1623,13 @@ module Enumerable(T)
 
     # must split the default random instance (thread local) because #each might
     # yield the current fiber that may be resumed by another thread
-    Random.dup_and_split_default_unless(random, stack: true)
+    rng = random || Random.dup_and_split_default(stack: true)
 
     each_with_index do |elem, i|
       if !found
         value = elem
         found = true
-      elsif random.rand(i + 1) == 0
+      elsif rng.rand(i + 1) == 0
         value = elem
       end
     end

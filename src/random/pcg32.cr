@@ -95,7 +95,10 @@ class Random::PCG32
   end
 
   # :nodoc:
-  def next_sequence!
+  #
+  # Leverages the sequence of the PCG algorithm to split this instance to an
+  # entirely new and uncorrelated sequence.
+  def split!
     seq = @inc &+ 1
     seq = 0_u64 if seq >= (1_u64 << 63) # only the low 63 bits are significant
     @inc = seq

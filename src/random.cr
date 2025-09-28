@@ -58,27 +58,24 @@ module Random
 
   # :nodoc:
   #
-  # Unless a *random* instance is provided, the macro will dup the thread
-  # instance (on the stack when possible, hence the macro) and advance the
-  # thread instance to the next sequence (taking advantage of PCG32 sequences)
+  # Dups the thread's default instance (on the stack when possible, hence the
+  # macro) and splits the thread instance (taking advantage of PCG32 sequences)
   # so both instances will generate uncorrelated sequences.
-  macro dup_and_split_default_unless(random, stack = false)
-    unless {{random.id}}
-      {% if flag?(:preview_mt) %}
-        %thread_rng = ::Random.default.as(Random::PCG32)
-
+  macro dup_and_split_default(stack = false)
+    {% if flag?(:preview_mt) %}
+      %thread_rng = ::Random.default
+      %copy =
         if {{stack}} && {{compare_versions(Crystal::VERSION, "1.12.0") >= 0}}
-          %buf = uninitialized ::ReferenceStorage(::Random::PCG32)
-          {{random.id}} = ::Random::PCG32.unsafe_construct(pointerof(%buf), %thread_rng)
+          %buf = uninitialized ::ReferenceStorage(typeof(::Random.default))
+          typeof(::Random.default).unsafe_construct(pointerof(%buf), %thread_rng)
         else
-          {{random.id}} = %thread_rng.dup
+          %thread_rng.dup
         end
-
-        %thread_rng.next_sequence!
-      {% else %}
-        {{random.id}} = ::Random.default
-      {% end %}
-    end
+      %thread_rng.split!
+      %copy
+    {% else %}
+      ::Random.default
+    {% end %}
   end
 
   # Initializes an instance with the given *seed* and *sequence*.
@@ -94,6 +91,11 @@ module Random
   # Reseed the generator.
   def new_seed
     raise NotImplementedError.new("{{@type}}#new_seed")
+  end
+
+  # :nodoc:
+  def split!
+    raise NotImplementedError.new("{{@type}}#split!")
   end
 
   # Generates a random unsigned integer.
