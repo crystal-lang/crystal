@@ -85,11 +85,11 @@ DATADIR ?= $(prefix)
 colorize = $(info $1)
 
 DEPS = $(LLVM_EXT_OBJ)
-ifneq ($(LLVM_VERSION),)
-  ifeq ($(shell if $(firstword $(subst ., ,$(LLVM_VERSION))) GEQ 18 echo 0),0)
-    DEPS =
-  endif
-endif
+# ifneq ($(LLVM_VERSION),)
+#   ifeq ($(shell if $(firstword $(subst ., ,$(LLVM_VERSION))) GEQ 18 echo 0),0)
+#     DEPS =
+#   endif
+# endif
 
 check_llvm_config = $(eval \
 	check_llvm_config := $(if $(LLVM_VERSION),\

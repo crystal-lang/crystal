@@ -36,8 +36,9 @@ struct LLVM::Target
   def create_target_machine(triple, cpu = "", features = "",
                             opt_level = LLVM::CodeGenOptLevel::Default,
                             reloc = LLVM::RelocMode::PIC,
-                            code_model = LLVM::CodeModel::Default) : LLVM::TargetMachine
-    target_machine = LibLLVM.create_target_machine(self, triple, cpu, features, opt_level, reloc, code_model)
+                            code_model = LLVM::CodeModel::Default,
+                            emulated_tls = false) : LLVM::TargetMachine
+    target_machine = LibLLVMExt.create_target_machine(self, triple, cpu, features, opt_level, reloc, code_model, emulated_tls ? 1 : 0)
     target_machine ? TargetMachine.new(target_machine) : raise "Couldn't create target machine"
   end
 
