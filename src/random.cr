@@ -63,11 +63,11 @@ module Random
   # so both instances will generate uncorrelated sequences.
   macro dup_and_split_default(stack = false)
     {% if flag?(:preview_mt) %}
-      %thread_rng = ::Random.default
+      %thread_rng = ::Random.default.as(::Random::PCG32)
       %copy =
         if {{stack}} && {{compare_versions(Crystal::VERSION, "1.12.0") >= 0}}
-          %buf = uninitialized ::ReferenceStorage(typeof(::Random.default))
-          typeof(::Random.default).unsafe_construct(pointerof(%buf), %thread_rng)
+          %buf = uninitialized ::ReferenceStorage(::Random::PCG32)
+          ::Random::PCG32.unsafe_construct(pointerof(%buf), %thread_rng)
         else
           %thread_rng.dup
         end
