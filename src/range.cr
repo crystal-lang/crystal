@@ -345,12 +345,12 @@ struct Range(B, E)
   #
   # Raises `ArgumentError` if `self` is an open range.
   def sample(random : Random? = nil)
-    random ||= Random.default
+    rng = random || Random.default
 
     {% if B < Int && E < Int %}
-      random.rand(self)
+      rng.rand(self)
     {% elsif B < Float && E < Float %}
-      random.rand(self)
+      rng.rand(self)
     {% elsif B.nilable? || E.nilable? %}
       b = self.begin
       e = self.end
@@ -359,7 +359,7 @@ struct Range(B, E)
         raise ArgumentError.new("Can't sample an open range")
       end
 
-      Range.new(b, e, @exclusive).sample(random)
+      Range.new(b, e, @exclusive).sample(rng)
     {% else %}
       super
     {% end %}
@@ -371,7 +371,7 @@ struct Range(B, E)
   # once. Thus, *random* will be left in a different state compared to the
   # implementation in `Enumerable`.
   def sample(n : Int, random : Random? = nil)
-    random ||= Random.default
+    rng = random || Random.default
 
     if self.begin.nil? || self.end.nil?
       raise ArgumentError.new("Can't sample an open range")
@@ -406,11 +406,11 @@ struct Range(B, E)
       # If we must return all values in the range...
       if possible == available
         result = Array(B).new(possible) { |i| min + i }
-        result.shuffle!(random)
+        result.shuffle!(rng)
         return result
       end
 
-      range_sample(n, random)
+      range_sample(n, rng)
     {% elsif B < Float && E < Float %}
       min = self.begin
       max = self.end
@@ -423,13 +423,13 @@ struct Range(B, E)
         return [min]
       end
 
-      range_sample(n, random)
+      range_sample(n, rng)
     {% else %}
       case n
       when 0
         [] of B
       when 1
-        [sample(random)]
+        [sample(rng)]
       else
         super
       end
