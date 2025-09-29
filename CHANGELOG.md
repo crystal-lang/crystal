@@ -102,6 +102,12 @@ Freeze period: 2025-09-30
 [#16012]: https://github.com/crystal-lang/crystal/pull/16012
 [#16026]: https://github.com/crystal-lang/crystal/pull/16026
 
+#### other
+
+- Add `thread_local` macro ([#16173], thanks @ysbaddaden)
+
+[#16173]: https://github.com/crystal-lang/crystal/pull/16173
+
 ### Bugfixes
 
 #### stdlib
@@ -113,6 +119,7 @@ Freeze period: 2025-09-30
 - _(networking)_ Run `before_request` callback in `HTTP::Client` only once ([#16064], thanks @straight-shoota)
 - _(networking)_ Fix `HTTP::Request#query=` typing ([#16143], thanks @Blacksmoke16)
 - _(runtime)_ `Fiber::ExecutionContext::Parallel::Scheduler#tick` must be unsigned ([#16155], thanks @ysbaddaden)
+- _(serialization)_ Fix element type inference in `YAML::ArrayConverter.from_yaml` ([#16166], thanks @HertzDevil)
 - _(serialization)_ Fix add missing `#==` overloads for `Log::Metadata::Value` and `YAML::Any` ([#15732], thanks @straight-shoota)
 - _(serialization)_ Fix pointer access bug in `XML::NodeSet` ([#16055], thanks @toddsundsted)
 - _(serialization)_ Remove `NOERROR` from LibXML default options ([#16103], thanks @straight-shoota)
@@ -130,6 +137,7 @@ Freeze period: 2025-09-30
 [#16064]: https://github.com/crystal-lang/crystal/pull/16064
 [#16143]: https://github.com/crystal-lang/crystal/pull/16143
 [#16155]: https://github.com/crystal-lang/crystal/pull/16155
+[#16166]: https://github.com/crystal-lang/crystal/pull/16166
 [#15732]: https://github.com/crystal-lang/crystal/pull/15732
 [#16055]: https://github.com/crystal-lang/crystal/pull/16055
 [#16103]: https://github.com/crystal-lang/crystal/pull/16103
@@ -190,6 +198,12 @@ Freeze period: 2025-09-30
 [#16047]: https://github.com/crystal-lang/crystal/pull/16047
 [#16050]: https://github.com/crystal-lang/crystal/pull/16050
 [#16003]: https://github.com/crystal-lang/crystal/pull/16003
+
+#### other
+
+- Drop `Thread::Local(T)` ([#16179], thanks @ysbaddaden)
+
+[#16179]: https://github.com/crystal-lang/crystal/pull/16179
 
 ### Performance
 
