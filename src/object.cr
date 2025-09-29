@@ -737,12 +737,15 @@ class Object
     {% raise "The thread_local macro expects a TypeDeclaration" unless decl.is_a?(TypeDeclaration) %}
     {% name = decl.var.id %}
     {% tls_name = "__tls_#{@type.name.gsub(/:/, "_")}__#{name}".id %}
+    {% emulated_tls = flag?(:android) || flag?(:openbsd) || (flag?(:win32) && flag?(:gnu)) %}
 
-    @[ThreadLocal]
-    @@{{name}} : {{decl.type}} | Nil
+    {% unless emulated_tls %}
+      @[ThreadLocal]
+      @@{{name}} : {{decl.type}} | Nil
+    {% end %}
 
     def self.{{name}} : {{decl.type}}
-      {% if flag?(:android) || flag?(:openbsd) || (flag?(:win32) && flag?(:gnu)) %}
+      {% if emulated_tls %}
         Thread.current.{{tls_name}} ||= {{yield}}
       {% else %}
         if (value = @@{{name}}).nil?
