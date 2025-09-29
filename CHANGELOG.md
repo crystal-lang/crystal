@@ -1,8 +1,8 @@
 # Changelog
 
-## [1.18.0] (2025-10-07)
+## [1.18.0] (2025-10-14)
 
-Freeze period: 2025-09-23
+Freeze period: 2025-09-30
 
 [1.18.0]: https://github.com/crystal-lang/crystal/releases/1.18.0
 
@@ -13,41 +13,52 @@ Freeze period: 2025-09-23
 - Support `ProcPointer`s of lib funs with parameter types ([#16089], thanks @HertzDevil)
 - _(annotations)_ Print deprecation warning on types and aliases ([#15962], thanks @ysbaddaden)
 - _(annotations)_ Print deprecation warnings on deprecated method argument ([#15999], thanks @ysbaddaden)
+- _(macros)_ Add `ArrayLiteral#*` and `StringLiteral#*` ([#16154], thanks @jneen)
 
 [#16089]: https://github.com/crystal-lang/crystal/pull/16089
 [#15962]: https://github.com/crystal-lang/crystal/pull/15962
 [#15999]: https://github.com/crystal-lang/crystal/pull/15999
+[#16154]: https://github.com/crystal-lang/crystal/pull/16154
 
 #### stdlib
 
-- Add `summary_width` and `summary_indent` to `OptionParser` in Crystal ([#15326], thanks @kojix2)
+- Add `summary_width` and `summary_indent` to `OptionParser` ([#15326], thanks @kojix2)
 - _(collection)_ Add `Set#select!` and `#reject!` ([#16060], thanks @HertzDevil)
 - _(collection)_ Expand empty `(Named)TupleLiteral` to `(Named)Tuple.new` instead of `{}` ([#16108], thanks @spuun)
 - _(concurrency)_ Speed up `Parallel::Scheduler#quick_dequeue?` for `max=1` ([#15961], thanks @ysbaddaden)
+- _(concurrency)_ Default execution context is now parallel (MT:1) ([#16136], thanks @ysbaddaden)
 - _(files)_ **[deprecation]** Add `.set_blocking` to `Socket` and `IO::FileDescriptor` and deprecate `#blocking` property ([#16033], [#16129], thanks @ysbaddaden)
 - _(llvm)_ Support LLVM 21.1 and 22.0 ([#16062], thanks @HertzDevil)
+- _(macros)_ Add `NumberLiteral#zero?` ([#10248], thanks @Sija)
+- _(networking)_ Fix `URI#host=` to wrap IPv6 address in brackets ([#16164], thanks @stakach)
 - _(runtime)_ Lazily instantiate the event loop of isolated execution contexts ([#16063], thanks @ysbaddaden)
 - _(runtime)_ Add `Fiber::ExecutionContext::Parallel#resize` ([#15956], thanks @ysbaddaden)
 - _(runtime)_ Add `Crystal::System.effective_cpu_count` ([#16148], thanks @ysbaddaden)
 - _(serialization)_ Add `Time::Location.from_json_object_key` ([#15957], thanks @Sija)
-- _(serialization)_ Resolve aliases in `YAML::Any` ([#15941], thanks @willhbr)
+- _(serialization)_ Resolve YAML aliases in `YAML::Any` ([#15941], thanks @willhbr)
 - _(serialization)_ Embed libxml2 version number on Windows MSVC ([#16104], thanks @HertzDevil)
 - _(serialization)_ Add `JSON::Any` wrapper around `JSON::Any#inspect` output ([#15979], thanks @jneen)
 - _(specs)_ Add `with_tempdir` spec helper ([#16005], thanks @straight-shoota)
 - _(system)_ Add `File.readlink?` ([#16004], thanks @straight-shoota)
 - _(text)_ Add `SemanticVersion.valid?` & `SemanticVersion.parse?` ([#15051], thanks @devnote-dev)
 - _(text)_ Add `String.additive_identity` ([#15998], thanks @straight-shoota)
+- _(text)_ Use proper ANSI reset codes in `Colorize` ([#16052], thanks @Blacksmoke16)
+- _(text)_ Update Unicode to 17.0.0 ([#16160], thanks @HertzDevil)
 - _(time)_ Use canonical IANA name for the local Windows system time zone ([#15967], thanks @HertzDevil)
 - _(time)_ Load `Location.local` by symlink name ([#16002], [#16022], thanks @straight-shoota)
 - _(time)_ Add `Time::Location.load?` ([#16121], thanks @straight-shoota)
+- _(time)_ Format `Time#inspect` with Internet Extended Date/Time Format ([#16039], thanks @straight-shoota)
 
 [#15326]: https://github.com/crystal-lang/crystal/pull/15326
 [#16060]: https://github.com/crystal-lang/crystal/pull/16060
 [#16108]: https://github.com/crystal-lang/crystal/pull/16108
 [#15961]: https://github.com/crystal-lang/crystal/pull/15961
+[#16136]: https://github.com/crystal-lang/crystal/pull/16136
 [#16033]: https://github.com/crystal-lang/crystal/pull/16033
 [#16129]: https://github.com/crystal-lang/crystal/pull/16129
 [#16062]: https://github.com/crystal-lang/crystal/pull/16062
+[#10248]: https://github.com/crystal-lang/crystal/pull/10248
+[#16164]: https://github.com/crystal-lang/crystal/pull/16164
 [#16063]: https://github.com/crystal-lang/crystal/pull/16063
 [#15956]: https://github.com/crystal-lang/crystal/pull/15956
 [#16148]: https://github.com/crystal-lang/crystal/pull/16148
@@ -59,20 +70,25 @@ Freeze period: 2025-09-23
 [#16004]: https://github.com/crystal-lang/crystal/pull/16004
 [#15051]: https://github.com/crystal-lang/crystal/pull/15051
 [#15998]: https://github.com/crystal-lang/crystal/pull/15998
+[#16052]: https://github.com/crystal-lang/crystal/pull/16052
+[#16160]: https://github.com/crystal-lang/crystal/pull/16160
 [#15967]: https://github.com/crystal-lang/crystal/pull/15967
 [#16002]: https://github.com/crystal-lang/crystal/pull/16002
 [#16022]: https://github.com/crystal-lang/crystal/pull/16022
 [#16121]: https://github.com/crystal-lang/crystal/pull/16121
+[#16039]: https://github.com/crystal-lang/crystal/pull/16039
 
 #### compiler
 
 - _(cli)_ Add the ability to dump type information to a JSON file ([#16027], thanks @HertzDevil)
 - _(interpreter)_ Support `Proc.new(Void*, Void*)` in the interpreter ([#16044], thanks @HertzDevil)
+- _(interpreter:repl)_ Fully exit the process on `exit!` from REPL ([#16171], thanks @jneen)
 - _(semantic)_ Resolve types when guessing return type from class method overloads ([#16118], thanks @HertzDevil)
 - _(semantic)_ Guess instance variable types from global method calls ([#16119], thanks @HertzDevil)
 
 [#16027]: https://github.com/crystal-lang/crystal/pull/16027
 [#16044]: https://github.com/crystal-lang/crystal/pull/16044
+[#16171]: https://github.com/crystal-lang/crystal/pull/16171
 [#16118]: https://github.com/crystal-lang/crystal/pull/16118
 [#16119]: https://github.com/crystal-lang/crystal/pull/16119
 
@@ -83,6 +99,12 @@ Freeze period: 2025-09-23
 
 [#16012]: https://github.com/crystal-lang/crystal/pull/16012
 [#16026]: https://github.com/crystal-lang/crystal/pull/16026
+
+#### other
+
+- Improve `Fiber::ExecutionContext.default_workers_count` ([#16149], thanks @ysbaddaden)
+
+[#16149]: https://github.com/crystal-lang/crystal/pull/16149
 
 ### Bugfixes
 
@@ -98,6 +120,7 @@ Freeze period: 2025-09-23
 - _(serialization)_ Fix pointer access bug in `XML::NodeSet` ([#16055], thanks @toddsundsted)
 - _(serialization)_ Remove `NOERROR` from LibXML default options ([#16103], thanks @straight-shoota)
 - _(serialization)_ Move `*::Serializable`'s private constructors into `macro included` hook ([#16147], thanks @HertzDevil)
+- _(serialization)_ Correctly reference global JSON/YAML modules ([#16161], [#16169], thanks @Sija, @straight-shoota)
 - _(system)_ Fix return type of `system_close_on_exec=` on Windows ([#16095], thanks @straight-shoota)
 - _(time)_ Fix time zone identifier `America/Argentina/Buenos_Aires` ([#16078], thanks @straight-shoota)
 - _(time)_ Fix `Time#at_beginning_of_week`,`#at_end_of_week` to respect local timezone ([#16113], thanks @straight-shoota)
@@ -113,6 +136,8 @@ Freeze period: 2025-09-23
 [#16055]: https://github.com/crystal-lang/crystal/pull/16055
 [#16103]: https://github.com/crystal-lang/crystal/pull/16103
 [#16147]: https://github.com/crystal-lang/crystal/pull/16147
+[#16161]: https://github.com/crystal-lang/crystal/pull/16161
+[#16169]: https://github.com/crystal-lang/crystal/pull/16169
 [#16095]: https://github.com/crystal-lang/crystal/pull/16095
 [#16078]: https://github.com/crystal-lang/crystal/pull/16078
 [#16113]: https://github.com/crystal-lang/crystal/pull/16113
@@ -122,6 +147,7 @@ Freeze period: 2025-09-23
 - _(codegen)_ Never generate assignments to a block's underscore parameters ([#16057], thanks @HertzDevil)
 - _(codegen)_ Fix `@[Primitive]` codegen for typedefs ([#16110], thanks @HertzDevil)
 - _(interpreter)_ never generate assignments to a block's underscore parameters ([#16058], thanks @HertzDevil)
+- _(interpreter)_ Add `writer.close_on_finalize = false` for signal pipe ([#16167], thanks @straight-shoota)
 - _(interpreter:repl)_ Continue REPL prompt if input consists entirely of annotations ([#16045], thanks @HertzDevil)
 - _(parser)_ Disallow unterminated escaped heredoc without trailing newline ([#16046], thanks @HertzDevil)
 - _(parser)_ Require space, semicolon, or newline after class/module/etc. header ([#13375], thanks @FnControlOption)
@@ -130,6 +156,7 @@ Freeze period: 2025-09-23
 - _(semantic)_ deprecation warning for (expanded) deprecated def ([#15997], thanks @ysbaddaden)
 - _(semantic)_ Copy annotations in  `Crystal::Arg#copy_without_location` ([#16008], thanks @ysbaddaden)
 - _(semantic)_ Copy annotations in `Crystal::Def#expand_default_arguments` ([#16007], thanks @ysbaddaden)
+- _(semantic)_ Copy annotations in `Crystal::Def#expand_new_default_arguments` ([#16013], thanks @ysbaddaden)
 - _(semantic)_ Fix error message for `StaticArray` with non-integer generic argument `N` ([#16037], thanks @straight-shoota)
 - _(semantic)_ Resolve bound type parameters from generic superclass during path lookup ([#10839], thanks @HertzDevil)
 - _(semantic)_ **[regression]** Ensure hash literals are evaluated from left to right ([#16124], thanks @HertzDevil)
@@ -137,6 +164,7 @@ Freeze period: 2025-09-23
 [#16057]: https://github.com/crystal-lang/crystal/pull/16057
 [#16110]: https://github.com/crystal-lang/crystal/pull/16110
 [#16058]: https://github.com/crystal-lang/crystal/pull/16058
+[#16167]: https://github.com/crystal-lang/crystal/pull/16167
 [#16045]: https://github.com/crystal-lang/crystal/pull/16045
 [#16046]: https://github.com/crystal-lang/crystal/pull/16046
 [#13375]: https://github.com/crystal-lang/crystal/pull/13375
@@ -145,14 +173,22 @@ Freeze period: 2025-09-23
 [#15997]: https://github.com/crystal-lang/crystal/pull/15997
 [#16008]: https://github.com/crystal-lang/crystal/pull/16008
 [#16007]: https://github.com/crystal-lang/crystal/pull/16007
+[#16013]: https://github.com/crystal-lang/crystal/pull/16013
 [#16037]: https://github.com/crystal-lang/crystal/pull/16037
 [#10839]: https://github.com/crystal-lang/crystal/pull/10839
 [#16124]: https://github.com/crystal-lang/crystal/pull/16124
+
+#### other
+
+- `Fiber::ExecutionContext::Parallel::Scheduler#tick` must be unsigned ([#16155], thanks @ysbaddaden)
+
+[#16155]: https://github.com/crystal-lang/crystal/pull/16155
 
 ### Chores
 
 #### stdlib
 
+- _(concurrency)_ **[deprecation]** Deprecate `Atomic::Flag` ([#15805], thanks @ysbaddaden)
 - _(files)_ **[deprecation]** Deprecate the `blocking` parameter of `File`, `Socket` and `IO::FileDescriptor` constructors ([#16034], [#16047], thanks @ysbaddaden, @Blacksmoke16)
 - _(files)_ Add type restrictions to mime ([#15834], thanks @Vici37)
 - _(log)_ Add type restrictions to Log directory ([#15777], thanks @Vici37)
@@ -162,6 +198,7 @@ Freeze period: 2025-09-23
 - _(serialization)_ Add type restrictions to json ([#15840], [#16142], thanks @Vici37, @Sija)
 - _(system)_ **[deprecation]** Deprecate `Process::Status#exit_signal` ([#16003], thanks @straight-shoota)
 
+[#15805]: https://github.com/crystal-lang/crystal/pull/15805
 [#16034]: https://github.com/crystal-lang/crystal/pull/16034
 [#16047]: https://github.com/crystal-lang/crystal/pull/16047
 [#15834]: https://github.com/crystal-lang/crystal/pull/15834
@@ -205,6 +242,7 @@ Freeze period: 2025-09-23
 
 - _(concurrency)_ Refactor redundant `begin ... end` blocks ([#16011], thanks @straight-shoota)
 - _(networking)_ Reorder implementation of `HTTP::Cookies#<<` and `[]=` ([#16107], thanks @straight-shoota)
+- _(networking)_ Fix `UDPSocket` broadcast spec to not use `connect` ([#16165], thanks @ysbaddaden)
 - _(runtime)_ Remove nilable pointers in `Crystal::PointerPairingHeap` ([#15973], thanks @HertzDevil)
 - _(runtime)_ Remove nilable pointer in `Crystal::EventLoop::IOCP#@timer_packet` ([#15975], thanks @HertzDevil)
 - _(runtime)_ Remove minimum in `Fiber::ExecutionContext::Parallel` ([#15946], thanks @ysbaddaden)
@@ -215,6 +253,7 @@ Freeze period: 2025-09-23
 
 [#16011]: https://github.com/crystal-lang/crystal/pull/16011
 [#16107]: https://github.com/crystal-lang/crystal/pull/16107
+[#16165]: https://github.com/crystal-lang/crystal/pull/16165
 [#15973]: https://github.com/crystal-lang/crystal/pull/15973
 [#15975]: https://github.com/crystal-lang/crystal/pull/15975
 [#15946]: https://github.com/crystal-lang/crystal/pull/15946
@@ -230,6 +269,12 @@ Freeze period: 2025-09-23
 
 [#16056]: https://github.com/crystal-lang/crystal/pull/16056
 [#16115]: https://github.com/crystal-lang/crystal/pull/16115
+
+#### tools
+
+- _(formatter)_ Simplify control flow in formatter for `Call` nodes ([#16170], thanks @straight-shoota)
+
+[#16170]: https://github.com/crystal-lang/crystal/pull/16170
 
 #### other
 
@@ -317,6 +362,7 @@ Freeze period: 2025-09-23
 
 ### Infrastructure
 
+- Changelog for 1.18.0 ([#16153], thanks @straight-shoota)
 - Update previous Crystal release 1.17.0 ([#15988], thanks @straight-shoota)
 - Support debug builds for the MSVC Boehm GC libraries ([#15968], thanks @HertzDevil)
 - Fix funding.json well-known file name ([#16000], thanks @matiasgarciaisaia)
@@ -342,6 +388,7 @@ Freeze period: 2025-09-23
 - _(ci)_ Trigger LLVM CI when codegen files are changed ([#16116], thanks @HertzDevil)
 - _(ci)_ Do not use D drive on MSVC CI ([#15986], thanks @HertzDevil)
 
+[#16153]: https://github.com/crystal-lang/crystal/pull/16153
 [#15988]: https://github.com/crystal-lang/crystal/pull/15988
 [#15968]: https://github.com/crystal-lang/crystal/pull/15968
 [#16000]: https://github.com/crystal-lang/crystal/pull/16000
@@ -366,26 +413,6 @@ Freeze period: 2025-09-23
 [#16131]: https://github.com/crystal-lang/crystal/pull/16131
 [#16116]: https://github.com/crystal-lang/crystal/pull/16116
 [#15986]: https://github.com/crystal-lang/crystal/pull/15986
-
-### other
-
-#### stdlib
-
-- _(concurrency)_ **[deprecation]** Deprecate `Atomic::Flag` ([#15805], thanks @ysbaddaden)
-
-[#15805]: https://github.com/crystal-lang/crystal/pull/15805
-
-#### compiler
-
-- _(semantic)_ Fix: Copy annotations in `Crystal::Def#expand_new_default_arguments` ([#16013], thanks @ysbaddaden)
-
-[#16013]: https://github.com/crystal-lang/crystal/pull/16013
-
-#### other
-
-- Default execution context is now parallel (MT:1) ([#16136], thanks @ysbaddaden)
-
-[#16136]: https://github.com/crystal-lang/crystal/pull/16136
 
 ## Previous Releases
 
