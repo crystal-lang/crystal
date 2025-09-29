@@ -18,7 +18,7 @@ require "./location/loader"
 # location = Time::Location.load("Europe/Berlin")
 # location # => #<Time::Location Europe/Berlin>
 # time = Time.local(2016, 2, 15, 21, 1, 10, location: location)
-# time # => 2016-02-15 21:01:10 +01:00 Europe/Berlin
+# time # => 2016-02-15 21:01:10+01:00[Europe/Berlin]
 # ```
 #
 # A custom time zone database can be configured through the environment variable
@@ -466,7 +466,7 @@ class Time::Location
   # Returns the time zone offset observed at *unix_seconds*.
   #
   # *unix_seconds* expresses the number of seconds since UNIX epoch
-  # (`1970-01-01 00:00:00 UTC`).
+  # (`1970-01-01 00:00:00Z`).
   def lookup(unix_seconds : Int) : Zone
     unless @cached_range[0] <= unix_seconds < @cached_range[1]
       @cached_zone, @cached_range = lookup_with_boundaries(unix_seconds)
