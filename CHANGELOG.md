@@ -13,18 +13,19 @@ Freeze period: 2025-09-30
 - Support `ProcPointer`s of lib funs with parameter types ([#16089], thanks @HertzDevil)
 - _(annotations)_ Print deprecation warning on types and aliases ([#15962], thanks @ysbaddaden)
 - _(annotations)_ Print deprecation warnings on deprecated method argument ([#15999], thanks @ysbaddaden)
+- _(macros)_ **[breaking]** Expand empty `(Named)TupleLiteral` to `(Named)Tuple.new` instead of `{}` ([#16108], thanks @spuun)
 - _(macros)_ Add `ArrayLiteral#*` and `StringLiteral#*` ([#16154], thanks @jneen)
 
 [#16089]: https://github.com/crystal-lang/crystal/pull/16089
 [#15962]: https://github.com/crystal-lang/crystal/pull/15962
 [#15999]: https://github.com/crystal-lang/crystal/pull/15999
+[#16108]: https://github.com/crystal-lang/crystal/pull/16108
 [#16154]: https://github.com/crystal-lang/crystal/pull/16154
 
 #### stdlib
 
 - Add `summary_width` and `summary_indent` to `OptionParser` ([#15326], thanks @kojix2)
 - _(collection)_ Add `Set#select!` and `#reject!` ([#16060], thanks @HertzDevil)
-- _(collection)_ Expand empty `(Named)TupleLiteral` to `(Named)Tuple.new` instead of `{}` ([#16108], thanks @spuun)
 - _(concurrency)_ Speed up `Parallel::Scheduler#quick_dequeue?` for `max=1` ([#15961], thanks @ysbaddaden)
 - _(concurrency)_ Default execution context is now parallel (MT:1) ([#16136], thanks @ysbaddaden)
 - _(files)_ **[deprecation]** Add `.set_blocking` to `Socket` and `IO::FileDescriptor` and deprecate `#blocking` property ([#16033], [#16129], thanks @ysbaddaden)
@@ -34,6 +35,7 @@ Freeze period: 2025-09-30
 - _(runtime)_ Lazily instantiate the event loop of isolated execution contexts ([#16063], thanks @ysbaddaden)
 - _(runtime)_ Add `Fiber::ExecutionContext::Parallel#resize` ([#15956], thanks @ysbaddaden)
 - _(runtime)_ Add `Crystal::System.effective_cpu_count` ([#16148], thanks @ysbaddaden)
+- _(runtime)_ Improve `Fiber::ExecutionContext.default_workers_count` ([#16149], thanks @ysbaddaden)
 - _(serialization)_ Add `Time::Location.from_json_object_key` ([#15957], thanks @Sija)
 - _(serialization)_ Resolve YAML aliases in `YAML::Any` ([#15941], thanks @willhbr)
 - _(serialization)_ Embed libxml2 version number on Windows MSVC ([#16104], thanks @HertzDevil)
@@ -51,7 +53,6 @@ Freeze period: 2025-09-30
 
 [#15326]: https://github.com/crystal-lang/crystal/pull/15326
 [#16060]: https://github.com/crystal-lang/crystal/pull/16060
-[#16108]: https://github.com/crystal-lang/crystal/pull/16108
 [#15961]: https://github.com/crystal-lang/crystal/pull/15961
 [#16136]: https://github.com/crystal-lang/crystal/pull/16136
 [#16033]: https://github.com/crystal-lang/crystal/pull/16033
@@ -62,6 +63,7 @@ Freeze period: 2025-09-30
 [#16063]: https://github.com/crystal-lang/crystal/pull/16063
 [#15956]: https://github.com/crystal-lang/crystal/pull/15956
 [#16148]: https://github.com/crystal-lang/crystal/pull/16148
+[#16149]: https://github.com/crystal-lang/crystal/pull/16149
 [#15957]: https://github.com/crystal-lang/crystal/pull/15957
 [#15941]: https://github.com/crystal-lang/crystal/pull/15941
 [#16104]: https://github.com/crystal-lang/crystal/pull/16104
@@ -100,12 +102,6 @@ Freeze period: 2025-09-30
 [#16012]: https://github.com/crystal-lang/crystal/pull/16012
 [#16026]: https://github.com/crystal-lang/crystal/pull/16026
 
-#### other
-
-- Improve `Fiber::ExecutionContext.default_workers_count` ([#16149], thanks @ysbaddaden)
-
-[#16149]: https://github.com/crystal-lang/crystal/pull/16149
-
 ### Bugfixes
 
 #### stdlib
@@ -116,6 +112,7 @@ Freeze period: 2025-09-30
 - _(networking)_ Fix `StaticFileHandler` to return 404 on file error ([#16025], [#16077], thanks @straight-shoota)
 - _(networking)_ Run `before_request` callback in `HTTP::Client` only once ([#16064], thanks @straight-shoota)
 - _(networking)_ Fix `HTTP::Request#query=` typing ([#16143], thanks @Blacksmoke16)
+- _(runtime)_ `Fiber::ExecutionContext::Parallel::Scheduler#tick` must be unsigned ([#16155], thanks @ysbaddaden)
 - _(serialization)_ Fix add missing `#==` overloads for `Log::Metadata::Value` and `YAML::Any` ([#15732], thanks @straight-shoota)
 - _(serialization)_ Fix pointer access bug in `XML::NodeSet` ([#16055], thanks @toddsundsted)
 - _(serialization)_ Remove `NOERROR` from LibXML default options ([#16103], thanks @straight-shoota)
@@ -132,6 +129,7 @@ Freeze period: 2025-09-30
 [#16077]: https://github.com/crystal-lang/crystal/pull/16077
 [#16064]: https://github.com/crystal-lang/crystal/pull/16064
 [#16143]: https://github.com/crystal-lang/crystal/pull/16143
+[#16155]: https://github.com/crystal-lang/crystal/pull/16155
 [#15732]: https://github.com/crystal-lang/crystal/pull/15732
 [#16055]: https://github.com/crystal-lang/crystal/pull/16055
 [#16103]: https://github.com/crystal-lang/crystal/pull/16103
@@ -178,36 +176,19 @@ Freeze period: 2025-09-30
 [#10839]: https://github.com/crystal-lang/crystal/pull/10839
 [#16124]: https://github.com/crystal-lang/crystal/pull/16124
 
-#### other
-
-- `Fiber::ExecutionContext::Parallel::Scheduler#tick` must be unsigned ([#16155], thanks @ysbaddaden)
-
-[#16155]: https://github.com/crystal-lang/crystal/pull/16155
-
 ### Chores
 
 #### stdlib
 
 - _(concurrency)_ **[deprecation]** Deprecate `Atomic::Flag` ([#15805], thanks @ysbaddaden)
 - _(files)_ **[deprecation]** Deprecate the `blocking` parameter of `File`, `Socket` and `IO::FileDescriptor` constructors ([#16034], [#16047], thanks @ysbaddaden, @Blacksmoke16)
-- _(files)_ Add type restrictions to mime ([#15834], thanks @Vici37)
-- _(log)_ Add type restrictions to Log directory ([#15777], thanks @Vici37)
-- _(networking)_ Add type restrictions to Oauth directory ([#15687], thanks @Vici37)
 - _(numeric)_ **[deprecation]** Deprecate `Float::Printer::IEEE` ([#16050], thanks @HertzDevil)
-- _(runtime)_ Disable flaky spec for `Fiber::ExecutionContext::GlobalQueue` on macOS ([#16146], thanks @ysbaddaden)
-- _(serialization)_ Add type restrictions to json ([#15840], [#16142], thanks @Vici37, @Sija)
 - _(system)_ **[deprecation]** Deprecate `Process::Status#exit_signal` ([#16003], thanks @straight-shoota)
 
 [#15805]: https://github.com/crystal-lang/crystal/pull/15805
 [#16034]: https://github.com/crystal-lang/crystal/pull/16034
 [#16047]: https://github.com/crystal-lang/crystal/pull/16047
-[#15834]: https://github.com/crystal-lang/crystal/pull/15834
-[#15777]: https://github.com/crystal-lang/crystal/pull/15777
-[#15687]: https://github.com/crystal-lang/crystal/pull/15687
 [#16050]: https://github.com/crystal-lang/crystal/pull/16050
-[#16146]: https://github.com/crystal-lang/crystal/pull/16146
-[#15840]: https://github.com/crystal-lang/crystal/pull/15840
-[#16142]: https://github.com/crystal-lang/crystal/pull/16142
 [#16003]: https://github.com/crystal-lang/crystal/pull/16003
 
 ### Performance
@@ -242,7 +223,6 @@ Freeze period: 2025-09-30
 
 - _(concurrency)_ Refactor redundant `begin ... end` blocks ([#16011], thanks @straight-shoota)
 - _(networking)_ Reorder implementation of `HTTP::Cookies#<<` and `[]=` ([#16107], thanks @straight-shoota)
-- _(networking)_ Fix `UDPSocket` broadcast spec to not use `connect` ([#16165], thanks @ysbaddaden)
 - _(runtime)_ Remove nilable pointers in `Crystal::PointerPairingHeap` ([#15973], thanks @HertzDevil)
 - _(runtime)_ Remove nilable pointer in `Crystal::EventLoop::IOCP#@timer_packet` ([#15975], thanks @HertzDevil)
 - _(runtime)_ Remove minimum in `Fiber::ExecutionContext::Parallel` ([#15946], thanks @ysbaddaden)
@@ -253,7 +233,6 @@ Freeze period: 2025-09-30
 
 [#16011]: https://github.com/crystal-lang/crystal/pull/16011
 [#16107]: https://github.com/crystal-lang/crystal/pull/16107
-[#16165]: https://github.com/crystal-lang/crystal/pull/16165
 [#15973]: https://github.com/crystal-lang/crystal/pull/15973
 [#15975]: https://github.com/crystal-lang/crystal/pull/15975
 [#15946]: https://github.com/crystal-lang/crystal/pull/15946
@@ -292,12 +271,16 @@ Freeze period: 2025-09-30
 - _(concurrency)_ Improve docs for `Channel#close` ([#15910], thanks @anaPerezGhiglia)
 - _(crypto)_ Fix doc example for `Crypto::BCrypt.new(String, String, Int)` ([#15931], thanks @hugopl)
 - _(crypto)_ Add type restrictions to crypto directory ([#15694], thanks @Vici37)
+- _(files)_ Add type restrictions to mime ([#15834], thanks @Vici37)
 - _(files)_ Fix `IO::TimeoutError` documentation use of deprecated `read_timeout=` ([#16073], thanks @lachlan)
 - _(files)_ Add type restrictions to io ([#15698], thanks @Vici37)
 - _(llvm)_ Deprecate each `LLVM::ABI::*` classes ([#15989], thanks @ysbaddaden)
+- _(log)_ Add type restrictions to Log directory ([#15777], thanks @Vici37)
+- _(networking)_ Add type restrictions to Oauth directory ([#15687], thanks @Vici37)
 - _(networking)_ Add type restrictions to http ([#15710], thanks @Vici37)
 - _(numeric)_ Add type restrictions to big ([#15689], thanks @Vici37)
 - _(runtime)_ Fix typo in `Object` docs ([#16035], thanks @plambert)
+- _(serialization)_ Add type restrictions to json ([#15840], [#16142], thanks @Vici37, @Sija)
 - _(serialization)_ Add note about default constructor in `*::Serializable` ([#16080], thanks @HertzDevil)
 - _(system)_ Add type restrictions to `args` parameter in `Process` ([#16031], thanks @BigBoyBarney)
 - _(system)_ Add missing `File::NotFoundError` exception documentation for `File.open` ([#15826], thanks @Fijxu)
@@ -309,12 +292,17 @@ Freeze period: 2025-09-30
 [#15910]: https://github.com/crystal-lang/crystal/pull/15910
 [#15931]: https://github.com/crystal-lang/crystal/pull/15931
 [#15694]: https://github.com/crystal-lang/crystal/pull/15694
+[#15834]: https://github.com/crystal-lang/crystal/pull/15834
 [#16073]: https://github.com/crystal-lang/crystal/pull/16073
 [#15698]: https://github.com/crystal-lang/crystal/pull/15698
 [#15989]: https://github.com/crystal-lang/crystal/pull/15989
+[#15777]: https://github.com/crystal-lang/crystal/pull/15777
+[#15687]: https://github.com/crystal-lang/crystal/pull/15687
 [#15710]: https://github.com/crystal-lang/crystal/pull/15710
 [#15689]: https://github.com/crystal-lang/crystal/pull/15689
 [#16035]: https://github.com/crystal-lang/crystal/pull/16035
+[#15840]: https://github.com/crystal-lang/crystal/pull/15840
+[#16142]: https://github.com/crystal-lang/crystal/pull/16142
 [#16080]: https://github.com/crystal-lang/crystal/pull/16080
 [#16031]: https://github.com/crystal-lang/crystal/pull/16031
 [#15826]: https://github.com/crystal-lang/crystal/pull/15826
@@ -329,11 +317,15 @@ Freeze period: 2025-09-30
 - _(networking)_ Disable UDP multicast spec on macOS ([#15990], thanks @straight-shoota)
 - _(networking)_ Extract specs for `HTTP::Cookies` to their own file ([#16106], thanks @straight-shoota)
 - _(networking)_ Overhaul `HTTP::Cookies` specs ([#16117], thanks @straight-shoota)
+- _(networking)_ Fix `UDPSocket` broadcast spec to not use `connect` ([#16165], thanks @ysbaddaden)
+- _(runtime)_ Disable flaky spec for `Fiber::ExecutionContext::GlobalQueue` on macOS ([#16146], thanks @ysbaddaden)
 - _(system)_ Enable specs for `close_on_exec` on Windows ([#14716], thanks @straight-shoota)
 
 [#15990]: https://github.com/crystal-lang/crystal/pull/15990
 [#16106]: https://github.com/crystal-lang/crystal/pull/16106
 [#16117]: https://github.com/crystal-lang/crystal/pull/16117
+[#16165]: https://github.com/crystal-lang/crystal/pull/16165
+[#16146]: https://github.com/crystal-lang/crystal/pull/16146
 [#14716]: https://github.com/crystal-lang/crystal/pull/14716
 
 #### compiler
