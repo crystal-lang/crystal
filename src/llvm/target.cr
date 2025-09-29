@@ -49,8 +49,8 @@ struct LLVM::Target
           LibLLVM.target_machine_options_set_code_model(options, code_model)
           LibLLVM.target_machine_options_set_reloc_mode(options, reloc)
           {% if LibLLVM.has_method?(:target_machine_options_set_emulated_tls) %}
-            LibLLVM.target_machine_options_set_emulated_tls(options, emulated_tls) unless emulated_tls.nil?
-            LibLLVM.target_machine_options_set_enable_tls_desc(options, enable_tls_desc) unless enable_tls_desc.nil?
+            LibLLVM.target_machine_options_set_emulated_tls(options, emulated_tls ? 1 : 0) unless emulated_tls.nil?
+            LibLLVM.target_machine_options_set_enable_tls_desc(options, enable_tls_desc ? 1 : 0) unless enable_tls_desc.nil?
           {% end %}
           machine = LibLLVM.create_target_machine_with_options(self, triple, options)
           LibLLVM.dispose_target_machine_options(options)
