@@ -36,8 +36,29 @@ struct LLVM::Target
   def create_target_machine(triple, cpu = "", features = "",
                             opt_level = LLVM::CodeGenOptLevel::Default,
                             reloc = LLVM::RelocMode::PIC,
-                            code_model = LLVM::CodeModel::Default) : LLVM::TargetMachine
-    target_machine = LibLLVM.create_target_machine(self, triple, cpu, features, opt_level, reloc, code_model)
+                            code_model = LLVM::CodeModel::Default,
+                            emulated_tls = nil,
+                            enable_tls_desc = nil) : LLVM::TargetMachine
+    target_machine =
+      {% if LibLLVM.has_method?(:create_target_machine_options) %}
+        begin
+          options = LibLLVM.create_target_machine_options
+          LibLLVM.target_machine_options_set_cpu(options, cpu)
+          LibLLVM.target_machine_options_set_features(options, features)
+          LibLLVM.target_machine_options_set_code_gen_opt_level(options, opt_level)
+          LibLLVM.target_machine_options_set_code_model(options, code_model)
+          LibLLVM.target_machine_options_set_reloc_mode(options, reloc)
+          {% if LibLLVM.has_method?(:target_machine_options_set_emulated_tls) %}
+            LibLLVM.target_machine_options_set_emulated_tls(options, emulated_tls) unless emulated_tls.nil?
+            LibLLVM.target_machine_options_set_enable_tls_desc(options, enable_tls_desc) unless enable_tls_desc.nil?
+          {% end %}
+          machine = LibLLVM.create_target_machine_with_options(self, triple, options)
+          LibLLVM.dispose_target_machine_options(options)
+          machine
+        end
+      {% else %}
+        LibLLVM.create_target_machine(self, triple, cpu, features, opt_level, reloc, code_model)
+      {% end %}
     target_machine ? TargetMachine.new(target_machine) : raise "Couldn't create target machine"
   end
 
