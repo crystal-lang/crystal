@@ -21,6 +21,8 @@ class Crystal::Repl
       case expression
       when "exit"
         break
+      when "exit!"
+        Process.exit(0)
       when .presence
         result = parse_and_interpret(expression)
         result.warnings.report(STDOUT)
