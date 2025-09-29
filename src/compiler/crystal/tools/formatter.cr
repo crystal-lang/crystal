@@ -2500,183 +2500,41 @@ module Crystal
     end
 
     def visit(node : Call)
-      # This is the case of `...`
-      if node.name == "`"
-        accept node.args.first
-        return false
-      end
+      format_call(node)
 
-      special_call =
-        case node.name
-        when "as", "as?", "is_a?", "nil?", "responds_to?"
-          true
-        else
-          false
-        end
+      false
+    end
 
-      obj = node.obj
+    private def format_call(node)
+      return if format_backtick_call(node)
+      return if format_global_match_data_call(node)
 
-      # Consider the case of `&.as(...)` and similar
-      if obj.is_a?(Nop)
-        obj = nil
-      end
-
-      # Consider the case of `as T`, that is, casting `self` without an explicit `self`
-      if special_call && obj.is_a?(Var) && obj.name == "self" && !@token.keyword?(:self)
-        obj = nil
-      end
+      obj = resolve_call_receiver(node)
 
       column = @column
       # The indent for arguments and block belonging to this node.
       base_indent = @indent
 
-      # Special case: $1, $2, ...
-      if @token.type.global_match_data_index? && node.name.in?("[]", "[]?") && obj.is_a?(Global)
-        write "$"
-        write @token.value
-        next_token
-        return false
-      end
-
       write_token :OP_COLON_COLON if node.global?
 
       if obj
-        # This handles unary operators written in prefix notation.
-        # The relevant distinction is that the call has a receiver and the
-        # current token is not that object but a unary operator.
-        if @token.type.unary_operator? && node.name == @token.type.to_s && !node.has_any_args?
-          write @token.type
-          next_token_skip_space_or_newline
-          accept obj
-          return false
-        end
+        return if format_unary_operator_call(node, obj)
 
         accept obj
 
         passed_backslash_newline = @token.passed_backslash_newline
-
-        if @token.type.space?
-          needs_space = true
-        else
-          needs_space = node.name != "*" && node.name != "/" && node.name != "**" && node.name != "//"
-        end
+        needs_space = @token.type.space? || !node.name.in?("*", "/", "**", "//")
 
         slash_is_not_regex!
         skip_space
 
-        # It's something like `foo.bar\n
-        #                        .baz`
-        if (@token.type.newline?) || @wrote_newline
-          base_indent = @indent + 2
-          indent(base_indent) { consume_newlines }
-          write_indent(base_indent)
-        end
+        base_indent = consume_newlines_in_call(base_indent)
 
-        if !@token.type.op_period?
-          # It's an operator
-          if @token.type.op_lsquare?
-            write "["
-            next_token_skip_space
+        unless @token.type.op_period?
+          return if format_square_brackets_call(node)
 
-            args = node.args
-
-            if node.name == "[]="
-              last_arg = args.pop
-            end
-
-            has_newlines, found_comment, _ = format_args args, true, node.named_args
-            if @token.type.op_comma? || @token.type.newline?
-              if has_newlines
-                write ","
-                found_comment = next_token_skip_space
-                write_line unless found_comment
-                write_indent
-                skip_space_or_newline
-              else
-                next_token_skip_space_or_newline
-              end
-            else
-              found_comment = skip_space_or_newline
-              write_indent if found_comment
-            end
-
-            # foo[&.bar]
-            if (block = node.block) && @token.type.op_amp?
-              has_args = !node.args.empty? || node.named_args
-              write "," if has_args
-              format_block(block, has_args)
-            end
-
-            write_token :OP_RSQUARE
-
-            if node.name == "[]?"
-              skip_space
-
-              # This might not be present in the case of `x[y] ||= z`
-              if @token.type.op_question?
-                write "?"
-                next_token
-              end
-            end
-
-            if last_arg
-              skip_space_or_newline
-
-              write " ="
-              next_token_skip_space
-              accept_assign_value_after_equals last_arg
-            end
-
-            return false
-          elsif @token.type.op_lsquare_rsquare?
-            write "[]"
-            next_token
-
-            if node.name == "[]="
-              skip_space_or_newline
-              write_token " ", :OP_EQ, " "
-              skip_space_or_newline
-              inside_call_or_assign do
-                accept node.args.last
-              end
-            end
-
-            return false
-          else
-            write " " if needs_space && !passed_backslash_newline
-            write node.name
-
-            # This is the case of a-1 and a+1
-            if @token.type.number?
-              @lexer.current_pos = @token.start + 1
-            end
-
-            slash_is_regex!
-          end
-
-          next_token
-          passed_backslash_newline = @token.passed_backslash_newline
-          found_comment = skip_space
-
-          if found_comment || @token.type.newline?
-            if @inside_call_or_assign == 0
-              next_indent = @indent + 2
-            else
-              next_indent = column == 0 ? 2 : column
-            end
-            indent(next_indent) do
-              skip_space_write_line
-              skip_space_or_newline
-            end
-            write_indent(next_indent, node.args.last)
-          else
-            write " " if needs_space && !passed_backslash_newline
-            inside_call_or_assign do
-              accept node.args.last
-            end
-          end
-
-          return false
+          format_operator_call(node, column, needs_space, passed_backslash_newline)
+          return
         end
 
         @lexer.wants_def_or_macro_name do
@@ -2684,84 +2542,25 @@ module Crystal
         end
         skip_space
 
-        if (@token.type.newline?) || @wrote_newline
-          base_indent = @indent + 2
-          indent(base_indent) { consume_newlines }
-          write_indent(base_indent)
-        end
+        base_indent = consume_newlines_in_call(base_indent)
 
         write "."
 
         skip_space_or_newline
       end
 
-      # This is for foo &.[bar] and &.[bar]?, or foo.[bar] and foo.[bar]?
-      if node.name.in?("[]", "[]?") && @token.type.op_lsquare?
-        write "["
-        next_token_skip_space_or_newline
-        format_call_args(node, false, base_indent)
-        skip_space_or_newline
-        write_token :OP_RSQUARE
-        write_token :OP_QUESTION if node.name == "[]?"
-        return false
-      end
+      return if format_square_brackets_call2(node, base_indent)
 
-      # This is for foo.[bar] = baz
-      if node.name == "[]=" && @token.type.op_lsquare?
-        write "["
-        next_token_skip_space_or_newline
-        args = node.args
-        last_arg = args.pop
-        format_call_args(node, true, base_indent)
-        skip_space_or_newline
-        write_token :OP_RSQUARE
-        skip_space_or_newline
-        write " ="
-        next_token_skip_space
-        accept_assign_value_after_equals last_arg
-        return false
-      end
+      return if format_assignment(node, base_indent)
 
-      # This is for foo.[] = bar
-      if node.name == "[]=" && @token.type.op_lsquare_rsquare?
-        write_token :OP_LSQUARE_RSQUARE
-        next_token_skip_space_or_newline
-        write " ="
-        next_token_skip_space
-        accept_assign_value_after_equals node.args.last
-        return false
-      end
+      format_regular_call(node, obj, base_indent)
+    end
 
-      assignment = Lexer.setter?(node.name)
-
-      if assignment
-        write node.name.rchop
-      else
-        write node.name
-      end
+    private def format_regular_call(node, obj, base_indent)
+      write node.name
       next_token
 
       passed_backslash_newline = @token.passed_backslash_newline
-
-      if assignment
-        skip_space
-
-        next_token
-        if @token.type.op_lparen?
-          write "=("
-          slash_is_regex!
-          next_token
-          format_call_args(node, true, base_indent)
-          skip_space_or_newline
-          write_token :OP_RPAREN
-        else
-          write " ="
-          skip_space
-          accept_assign_value_after_equals node.args.last
-        end
-
-        return false
-      end
 
       has_parentheses = false
       ends_with_newline = false
@@ -2770,26 +2569,7 @@ module Crystal
       has_newlines = false
       found_comment = false
 
-      # For special calls we want to format `.as (Int32)` into `.as(Int32)`
-      # so we remove the space between "as" and "(".
-      skip_space if special_call
-
-      # If the call has a single argument which is a parenthesized `Expressions`,
-      # we skip whitespace between the method name and the arg. The parenthesized
-      # arg is transformed into a call with parenthesis: `foo (a)` becomes `foo(a)`.
-      if node.args.size == 1 &&
-         @token.type.space? &&
-         !node.named_args && !node.block_arg && !node.block &&
-         (expressions = node.args[0].as?(Expressions)) &&
-         expressions.keyword.paren? && expressions.expressions.size == 1
-        # ...except do not transform `foo ()` into `foo()`, as the former is
-        # actually semantically equivalent to `foo(nil)`
-        arg = expressions.expressions[0]
-        unless arg.is_a?(Nop)
-          skip_space
-          node.args[0] = arg
-        end
-      end
+      normalize_parenthesized_single_arg(node)
 
       if @token.type.op_lparen?
         slash_is_regex!
@@ -2798,7 +2578,7 @@ module Crystal
         # If it's something like `foo.bar()` we rewrite it as `foo.bar`
         # (parentheses are not needed). Also applies for special calls
         # like `nil?` when there might not be a receiver.
-        if (obj || special_call) && !has_args && !node.block_arg && !node.block
+        if (obj || pseudo_call?(node)) && !has_args && !node.block_arg && !node.block
           skip_space_or_newline
           check :OP_RPAREN
           next_token
@@ -2807,7 +2587,7 @@ module Crystal
 
         write "("
         has_parentheses = true
-        has_newlines, found_comment, _ = format_call_args(node, true, base_indent)
+        has_newlines, found_comment, _ = format_call_args(node, base_indent)
         found_comment ||= skip_space
         if @token.type.newline?
           ends_with_newline = true
@@ -2816,70 +2596,166 @@ module Crystal
       elsif has_args || node.block_arg
         write " " unless passed_backslash_newline
         skip_space
-        has_newlines, found_comment, _ = format_call_args(node, false, base_indent)
+        has_newlines, found_comment, _ = format_call_args(node, base_indent)
       end
 
       if block = node.block
         needs_space = !has_parentheses || has_args
         block_indent = base_indent
         skip_space
-        if has_parentheses && @token.type.op_comma?
-          next_token
-          wrote_newline = skip_space(block_indent, write_comma: true)
-          if wrote_newline || @token.type.newline?
-            unless wrote_newline
-              next_token_skip_space_or_newline
-              write ","
-              write_line
+        if has_parentheses
+          if @token.type.op_comma?
+            next_token
+            wrote_newline = skip_space(block_indent, write_comma: true)
+            if wrote_newline || @token.type.newline?
+              unless wrote_newline
+                next_token_skip_space_or_newline
+                write ","
+                write_line
+              end
+              needs_space = false
+              block_indent += 2 if !@token.type.op_rparen? # foo(1, ↵  &.foo) case
+              write_indent(block_indent)
+            else
+              write "," if !@token.type.op_rparen? # foo(1, &.foo) case
             end
-            needs_space = false
-            block_indent += 2 if !@token.type.op_rparen? # foo(1, ↵  &.foo) case
-            write_indent(block_indent)
+          end
+          if @token.type.op_rparen?
+            if ends_with_newline
+              write_line unless found_comment || @wrote_newline
+              write_indent
+            end
+            write ")"
+            next_token_skip_space_or_newline
+
+            indent(block_indent) { format_block block, needs_space }
+            return false
           else
-            write "," if !@token.type.op_rparen? # foo(1, &.foo) case
+            indent(block_indent) { format_block block, needs_space }
+
+            skip_space
+            if @token.type.newline?
+              ends_with_newline = true
+            end
+            skip_space_or_newline
           end
-        end
-        if has_parentheses && @token.type.op_rparen?
-          if ends_with_newline
-            write_line unless found_comment || @wrote_newline
-            write_indent
-          end
-          write ")"
-          next_token_skip_space_or_newline
+
+          finish_args(has_parentheses, has_newlines, ends_with_newline, found_comment, base_indent)
+
+          return false
+        else
           indent(block_indent) { format_block block, needs_space }
+
+          finish_args(has_parentheses, has_newlines, ends_with_newline, found_comment, base_indent)
+
           return false
         end
-        indent(block_indent) { format_block block, needs_space }
-        if has_parentheses
-          skip_space
-          if @token.type.newline?
-            ends_with_newline = true
-          end
-          skip_space_or_newline
-        end
-      end
-
-      if has_args || node.block_arg
+      else
         finish_args(has_parentheses, has_newlines, ends_with_newline, found_comment, base_indent)
-      elsif has_parentheses
-        skip_space_or_newline
-        write_token :OP_RPAREN
+
+        false
+      end
+    end
+
+    private def pseudo_call?(node)
+      node.name.in?("as", "as?", "is_a?", "nil?", "responds_to?")
+    end
+
+    private def normalize_parenthesized_single_arg(node)
+      # If the call has a single argument which is a parenthesized `Expressions`,
+      # we skip whitespace between the method name and the arg. The parenthesized
+      # arg is transformed into a call with parenthesis: `foo (a)` becomes
+      # `foo(a)`.
+      return unless @token.type.space?
+      return unless node.args.size == 1 &&
+                    !node.named_args && !node.block_arg && !node.block
+
+      case arg = node.args[0]
+      when Expressions
+        return unless arg.keyword.paren? && arg.expressions.size == 1
+        arg = arg.expressions[0]
+
+        # ...except do not transform `foo ()` into `foo()`, as the former is
+        # actually semantically equivalent to `foo(nil)`
+        return if arg.is_a?(Nop)
+      when Path, Generic
+        # The call is a call to a pseudo method such as `#as`.
+        return unless pseudo_call?(node)
+        # The following assignment is a nop, but we still skip space.
+      else
+        return
       end
 
-      false
+      skip_space
+      node.args[0] = arg
     end
 
-    def format_call_args(node : ASTNode, has_parentheses, base_indent)
-      indent(base_indent) { format_args node.args, has_parentheses, node.named_args, node.block_arg }
+    private def format_backtick_call(node)
+      return false unless node.name == "`"
+
+      accept node.args.first
+      true
     end
 
-    def format_args(args : Array, has_parentheses, named_args = nil, block_arg = nil, needed_indent = @indent + 2, do_consume_newlines = false)
+    private def format_global_match_data_call(node)
+      return false unless @token.type.global_match_data_index? &&
+                          node.name.in?("[]", "[]?") &&
+                          node.obj.is_a?(Global)
+
+      write "$"
+      write @token.value
+      next_token
+
+      true
+    end
+
+    private def resolve_call_receiver(node)
+      obj = node.obj
+      obj = nil if obj.is_a?(Nop)
+
+      if pseudo_call?(node) && obj.is_a?(Var) && obj.name == "self" && !@token.keyword?(:self)
+        obj = nil
+      end
+
+      obj
+    end
+
+    # This handles unary operators written in prefix notation.
+    # The relevant distinction is that the call has a receiver and the
+    # current token is not that object but a unary operator.
+    private def format_unary_operator_call(node, obj)
+      return false unless @token.type.unary_operator? && node.name == @token.type.to_s && !node.has_any_args?
+
+      write @token.type
+      next_token_skip_space_or_newline
+      accept obj
+
+      true
+    end
+
+    private def consume_newlines_in_call(base_indent)
+      # It's something like `foo.bar\n
+      #                        .baz`
+      if (@token.type.newline?) || @wrote_newline
+        base_indent = @indent + 2
+        indent(base_indent) { consume_newlines }
+        write_indent(base_indent)
+      end
+
+      base_indent
+    end
+
+    def format_call_args(node : ASTNode, base_indent)
+      indent(base_indent) { format_args node.args, node.named_args, node.block_arg }
+    end
+
+    def format_args(args : Array, named_args = nil, block_arg = nil, needed_indent = @indent + 2, do_consume_newlines = false)
       has_newlines = false
       found_comment = false
       @inside_call_or_assign += 1
 
       unless args.empty?
-        has_newlines, found_comment, needed_indent = format_args_simple(args, needed_indent, do_consume_newlines)
+        has_newlines, found_comment, needed_indent = format_positional_args(args, needed_indent, do_consume_newlines)
       end
 
       if named_args
@@ -2896,7 +2772,7 @@ module Crystal
       {has_newlines, found_comment, needed_indent}
     end
 
-    def format_args_simple(args, needed_indent, do_consume_newlines)
+    def format_positional_args(args, needed_indent, do_consume_newlines)
       has_newlines = false
       found_comment = false
 
@@ -2971,7 +2847,7 @@ module Crystal
         end
       end
 
-      format_args named_args, false, needed_indent: named_args_column, do_consume_newlines: true
+      format_args named_args, needed_indent: named_args_column, do_consume_newlines: true
     end
 
     def format_block_arg(block_arg, needed_indent)
@@ -3032,7 +2908,7 @@ module Crystal
     def format_parenthesized_args(args, named_args = nil)
       write "("
       next_token_skip_space
-      has_newlines, found_comment, _ = format_args args, true, named_args: named_args
+      has_newlines, found_comment, _ = format_args args, named_args: named_args
       skip_space
       ends_with_newline = false
       if @token.type.newline?
@@ -3285,6 +3161,182 @@ module Crystal
       end
 
       skip_space_or_newline
+    end
+
+    def format_square_brackets_call(node)
+      return false unless node.name.starts_with?("[")
+
+      if @token.type.op_lsquare?
+        write "["
+        next_token_skip_space
+
+        args = node.args
+
+        if node.name == "[]="
+          last_arg = args.pop
+        end
+
+        has_newlines, found_comment, _ = format_args args, node.named_args
+        if @token.type.op_comma? || @token.type.newline?
+          if has_newlines
+            write ","
+            found_comment = next_token_skip_space
+            write_line unless found_comment
+            write_indent
+            skip_space_or_newline
+          else
+            next_token_skip_space_or_newline
+          end
+        else
+          found_comment = skip_space_or_newline
+          write_indent if found_comment
+        end
+
+        # foo[&.bar]
+        if (block = node.block) && @token.type.op_amp?
+          has_args = !node.args.empty? || node.named_args
+          write "," if has_args
+          format_block(block, has_args)
+        end
+
+        write_token :OP_RSQUARE
+
+        if node.name == "[]?"
+          skip_space
+
+          # This might not be present in the case of `x[y] ||= z`
+          if @token.type.op_question?
+            write "?"
+            next_token
+          end
+        end
+
+        if last_arg
+          skip_space_or_newline
+
+          write " ="
+          next_token_skip_space
+          accept_assign_value_after_equals last_arg
+        end
+      elsif @token.type.op_lsquare_rsquare?
+        write "[]"
+        next_token
+
+        if node.name == "[]="
+          skip_space_or_newline
+          write_token " ", :OP_EQ, " "
+          skip_space_or_newline
+          inside_call_or_assign do
+            accept node.args.last
+          end
+        end
+      else
+        raise "unreachable"
+      end
+
+      true
+    end
+
+    def format_square_brackets_call2(node, base_indent)
+      # This is for foo &.[bar] and &.[bar]?, or foo.[bar] and foo.[bar]?
+      if node.name.in?("[]", "[]?") && @token.type.op_lsquare?
+        write "["
+        next_token_skip_space_or_newline
+        format_call_args(node, base_indent)
+        skip_space_or_newline
+        write_token :OP_RSQUARE
+        write_token :OP_QUESTION if node.name == "[]?"
+        return true
+      end
+
+      # This is for foo.[bar] = baz
+      if node.name == "[]=" && @token.type.op_lsquare?
+        write "["
+        next_token_skip_space_or_newline
+        args = node.args
+        last_arg = args.pop
+        format_call_args(node, base_indent)
+        skip_space_or_newline
+        write_token :OP_RSQUARE
+        skip_space_or_newline
+        write " ="
+        next_token_skip_space
+        accept_assign_value_after_equals last_arg
+        return true
+      end
+
+      # This is for foo.[] = bar
+      if node.name == "[]=" && @token.type.op_lsquare_rsquare?
+        write_token :OP_LSQUARE_RSQUARE
+        next_token_skip_space_or_newline
+        write " ="
+        next_token_skip_space
+        accept_assign_value_after_equals node.args.last
+        return true
+      end
+
+      false
+    end
+
+    def format_assignment(node, base_indent)
+      return false unless Lexer.setter?(node.name)
+
+      write node.name.rchop
+      next_token
+
+      skip_space
+
+      next_token
+      if @token.type.op_lparen?
+        write "=("
+        slash_is_regex!
+        next_token
+        format_call_args(node, base_indent)
+        skip_space_or_newline
+        write_token :OP_RPAREN
+      else
+        write " ="
+        skip_space
+        accept_assign_value_after_equals node.args.last
+      end
+
+      true
+    end
+
+    def format_operator_call(node, column, needs_space, passed_backslash_newline)
+      write " " if needs_space && !passed_backslash_newline
+      write node.name
+
+      # This is the case of `a-1` and `a+1`
+      if @token.type.number?
+        @lexer.current_pos = @token.start + 1
+      end
+
+      slash_is_regex!
+
+      next_token
+      passed_backslash_newline = @token.passed_backslash_newline
+      found_comment = skip_space
+
+      if found_comment || @token.type.newline?
+        if @inside_call_or_assign == 0
+          next_indent = @indent + 2
+        else
+          next_indent = column == 0 ? 2 : column
+        end
+        indent(next_indent) do
+          skip_space_write_line
+          skip_space_or_newline
+        end
+        write_indent(next_indent, node.args.last)
+      else
+        write " " if needs_space && !passed_backslash_newline
+        inside_call_or_assign do
+          accept node.args.last
+        end
+      end
+
+      return false
     end
 
     def remove_to_skip(node, to_skip)
@@ -3707,7 +3759,7 @@ module Crystal
         # The tuple depth is 2 in both cases but only 1 leading curly brace is
         # present on the first return.
         if exp.is_a?(TupleLiteral) && opening_curly_brace_count < leading_tuple_depth(exp)
-          format_args(exp.elements, has_parentheses)
+          format_args(exp.elements)
           skip_space if has_parentheses
         else
           indent(@indent, exp)
@@ -3755,7 +3807,7 @@ module Crystal
       else
         write " " unless node.exps.empty?
         skip_space
-        format_args node.exps, false
+        format_args node.exps
       end
 
       false
