@@ -462,6 +462,16 @@ module Random
     random_bytes(n).hexstring
   end
 
+  # See `#next_bool`.
+  def self.next_bool : Bool
+    default.next_bool
+  end
+
+  # See `#next_int`.
+  def self.next_int : Int32
+    default.next_int
+  end
+
   # See `#rand`.
   def self.rand : Float64
     default.rand
