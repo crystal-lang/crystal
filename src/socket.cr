@@ -244,7 +244,7 @@ class Socket < IO
   # end
   # ```
   def accept? : Socket?
-    if rs = Crystal::EventLoop.current.accept(self)
+    if rs = system_accept
       sock = Socket.new(handle: rs[0], family: family, type: type, protocol: protocol, blocking: rs[1])
       unless (blocking = system_blocking?) == rs[1]
         # FIXME: unlike the overloads in TCPServer and UNIXServer, this version
