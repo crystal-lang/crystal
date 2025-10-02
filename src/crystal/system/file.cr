@@ -51,7 +51,7 @@ module Crystal::System::File
 
   LOWER_ALPHANUM = "0123456789abcdefghijklmnopqrstuvwxyz".to_slice
 
-  def self.mktemp(prefix : String?, suffix : String?, dir : String, random : ::Random = ::Random::DEFAULT) : {FileDescriptor::Handle, String, Bool}
+  def self.mktemp(prefix : String?, suffix : String?, dir : String, random : ::Random? = nil) : {FileDescriptor::Handle, String, Bool}
     flags = LibC::O_RDWR | LibC::O_CREAT | LibC::O_EXCL
     perm = ::File::Permissions.new(0o600)
 
@@ -59,10 +59,15 @@ module Crystal::System::File
     bytesize = prefix.bytesize + 8 + (suffix.try(&.bytesize) || 0)
 
     100.times do
+      # must resolve the default random (thread local) on each iteration because
+      # `open` below may yield the current fiber and the fiber be resumed on
+      # another thread:
+      rng = random || ::Random.default
+
       path = String.build(bytesize) do |io|
         io << prefix
         8.times do
-          io.write_byte LOWER_ALPHANUM.sample(random)
+          io.write_byte LOWER_ALPHANUM.sample(rng)
         end
         io << suffix
       end
