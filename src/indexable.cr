@@ -950,8 +950,17 @@ module Indexable(T)
   #
   # ```
   # a = [1, 2, 3]
-  # a.sample                # => 3
-  # a.sample                # => 1
+  # a.sample  # => 3
+  # a.sample  # => 1
+  # ```
+  #
+  # Uses the *random* instance when provided if the randomness needs to be
+  # controlled or to follow some traits. For example the following sample will
+  # always return the same value:
+  #
+  # ```
+  # a = [1, 2, 3]
+  # a.sample(Random.new(1)) # => 2
   # a.sample(Random.new(1)) # => 2
   # ```
   def sample(random : Random? = nil)

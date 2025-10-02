@@ -358,7 +358,7 @@ struct Slice(T)
   # :inherit:
   #
   # Raises if this slice is read-only.
-  def shuffle!(random : Random = Random.default) : self
+  def shuffle!(random : Random? = nil) : self
     check_writable
     super
   end

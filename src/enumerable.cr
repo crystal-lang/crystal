@@ -1565,17 +1565,25 @@ module Enumerable(T)
     reject { |e| pattern === e }
   end
 
-  # Returns an `Array` of *n* random elements from `self`, using the given
-  # *random* number generator. All elements have equal probability of being
-  # drawn. Sampling is done without replacement; if *n* is larger than the size
-  # of this collection, the returned `Array` has the same size as `self`.
+  # Returns an `Array` of *n* random elements from `self`. All elements have
+  # equal probability of being drawn. Sampling is done without replacement; if
+  # *n* is larger than the size of this collection, the returned `Array` has the
+  # same size as `self`.
   #
   # Raises `ArgumentError` if *n* is negative.
   #
   # ```
   # [1, 2, 3, 4, 5].sample(2)                # => [3, 5]
   # {1, 2, 3, 4, 5}.sample(2)                # => [3, 4]
-  # {1, 2, 3, 4, 5}.sample(2, Random.new(1)) # => [1, 5]
+  # ```
+  #
+  # Uses the *random* instance when provided if the randomness needs to be
+  # controlled or to follow some traits. For example the following calls use a
+  # custom seed or a secure random source:
+  #
+  # ```
+  # {1, 2, 3, 4, 5}.sample(2, Random.new(1))  # => [1, 5]
+  # {1, 2, 3, 4, 5}.sample(2, Random::Secure) # => [2, 5]
   # ```
   def sample(n : Int, random : Random? = nil) : Array(T)
     raise ArgumentError.new("Can't sample negative number of elements") if n < 0
@@ -1606,8 +1614,8 @@ module Enumerable(T)
     ary.shuffle!(rng)
   end
 
-  # Returns a random element from `self`, using the given *random* number
-  # generator. All elements have equal probability of being drawn.
+  # Returns a random element from `self`. All elements have equal probability of
+  # being drawn.
   #
   # Raises `IndexError` if `self` is empty.
   #
@@ -1615,7 +1623,15 @@ module Enumerable(T)
   # a = [1, 2, 3]
   # a.sample                # => 2
   # a.sample                # => 1
+  # ```
+  #
+  # Uses the *random* instance when provided if the randomness needs to be
+  # controlled or to follow some traits. For example the following calls use a
+  # custom seed or a secure random source:
+  #
+  # ```
   # a.sample(Random.new(1)) # => 3
+  # a.sample(Random::Secure) # => 1
   # ```
   def sample(random : Random? = nil) : T
     value = uninitialized T
