@@ -224,6 +224,7 @@ module Crystal::System::Socket
   end
 
   private def system_close
+    event_loop.before_close(self)
     event_loop.close(self)
   end
 
