@@ -1,5 +1,4 @@
 require "spec"
-require "../../support/interpreted.cr"
 require "crystal/fd_lock"
 require "wait_group"
 
@@ -92,8 +91,7 @@ describe Crystal::FdLock do
       called.should eq(1)
     end
 
-    # FIXME: the interpreter segfaults while running this spec (NULL pointer)
-    pending_interpreted "waits for all references to return" do
+    it "waits for all references to return" do
       lock = Crystal::FdLock.new
 
       ready = WaitGroup.new(10)
