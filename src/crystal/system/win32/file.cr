@@ -222,7 +222,7 @@ module Crystal::System::File
     raise NotImplementedError.new("File.chown")
   end
 
-  def self.fchown(path : String, fd : Int, uid : Int32, gid : Int32) : Nil
+  private def system_chown(uid : Int, gid : Int) : Nil
     raise NotImplementedError.new("File#chown")
   end
 

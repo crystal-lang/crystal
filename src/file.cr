@@ -778,7 +778,7 @@ class File < IO::FileDescriptor
   # file.chown(gid: 100)
   # ```
   def chown(uid : Int = -1, gid : Int = -1) : Nil
-    Crystal::System::File.fchown(@path, fd, uid, gid)
+    system_chown(uid, gid)
   end
 
   # Changes the permissions of the specified file.
