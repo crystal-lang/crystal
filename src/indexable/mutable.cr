@@ -256,8 +256,8 @@ module Indexable::Mutable(T)
   #
   # ```
   # a = [1, 2, 3, 4, 5]
-  # a.shuffle!  # => [3, 5, 2, 4, 1]
-  # a           # => [3, 5, 2, 4, 1]
+  # a.shuffle! # => [3, 5, 2, 4, 1]
+  # a          # => [3, 5, 2, 4, 1]
   # ```
   #
   # Uses the *random* instance when provided if the randomness needs to be
@@ -266,9 +266,9 @@ module Indexable::Mutable(T)
   #
   # ```
   # a = [1, 2, 3, 4, 5]
-  # a.shuffle!(Random.new(42))  # => [3, 2, 4, 5, 1]
-  # a.shuffle!(Random.new(42))  # => [3, 2, 4, 5, 1]
-  # a                           # => [3, 2, 4, 5, 1]
+  # a.shuffle!(Random.new(42)) # => [3, 2, 4, 5, 1]
+  # a.shuffle!(Random.new(42)) # => [3, 2, 4, 5, 1]
+  # a                          # => [3, 2, 4, 5, 1]
   # ```
   def shuffle!(random : Random? = nil) : self
     rng = random || Random.default

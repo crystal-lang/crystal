@@ -950,8 +950,8 @@ module Indexable(T)
   #
   # ```
   # a = [1, 2, 3]
-  # a.sample  # => 3
-  # a.sample  # => 1
+  # a.sample # => 3
+  # a.sample # => 1
   # ```
   #
   # Uses the *random* instance when provided if the randomness needs to be

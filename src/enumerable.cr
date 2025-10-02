@@ -1573,8 +1573,8 @@ module Enumerable(T)
   # Raises `ArgumentError` if *n* is negative.
   #
   # ```
-  # [1, 2, 3, 4, 5].sample(2)                # => [3, 5]
-  # {1, 2, 3, 4, 5}.sample(2)                # => [3, 4]
+  # [1, 2, 3, 4, 5].sample(2) # => [3, 5]
+  # {1, 2, 3, 4, 5}.sample(2) # => [3, 4]
   # ```
   #
   # Uses the *random* instance when provided if the randomness needs to be
@@ -1621,8 +1621,8 @@ module Enumerable(T)
   #
   # ```
   # a = [1, 2, 3]
-  # a.sample                # => 2
-  # a.sample                # => 1
+  # a.sample # => 2
+  # a.sample # => 1
   # ```
   #
   # Uses the *random* instance when provided if the randomness needs to be
@@ -1630,7 +1630,7 @@ module Enumerable(T)
   # custom seed or a secure random source:
   #
   # ```
-  # a.sample(Random.new(1)) # => 3
+  # a.sample(Random.new(1))  # => 3
   # a.sample(Random::Secure) # => 1
   # ```
   def sample(random : Random? = nil) : T
