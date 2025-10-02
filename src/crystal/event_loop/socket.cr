@@ -74,7 +74,16 @@ abstract class Crystal::EventLoop
     # and the source address.
     abstract def receive_from(socket : ::Socket, slice : Bytes) : Tuple(Int32, ::Socket::Address)
 
-    # Closes the socket.
+    # Hook to react on the socket after the IO object has been marked closed but
+    # before calling `#close` to actually close the system file descriptor or
+    # handle.
+    #
+    # On UNIX targets the event loop must resume any pending waiter in order to
+    # decrement the `Crystal::FdLock` counter.
+    def before_close(socket : ::Socket) : Nil
+    end
+
+    # Closes the system socket fd or handle.
     abstract def close(socket : ::Socket) : Nil
   end
 
