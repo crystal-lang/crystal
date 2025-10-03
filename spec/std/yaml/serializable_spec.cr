@@ -148,6 +148,23 @@ class YAMLAttrWithTimeArray3
   property value : Array(Time)
 end
 
+module YAMLAttrPointConverter
+  def self.from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+    YAMLAttrPoint.new(ctx, node)
+  end
+
+  def self.to_yaml(value, yaml : YAML::Nodes::Builder)
+    value.to_yaml(yaml)
+  end
+end
+
+class YAMLAttrWithSerializableArray
+  include YAML::Serializable
+
+  @[YAML::Field(converter: YAML::ArrayConverter(YAMLAttrPointConverter))]
+  property value : Array(YAMLAttrPoint)
+end
+
 class YAMLAttrWithSimpleMapping
   include YAML::Serializable
 
@@ -984,6 +1001,14 @@ describe "YAML::Serializable" do
       yaml = YAMLAttrWithTimeArray3.from_yaml(string)
       yaml.value.should be_a(Array(Time))
       yaml.value.map(&.to_s).should eq(["2014-10-31 23:37:16 UTC"])
+      yaml.to_yaml.should eq(string)
+    end
+
+    it "uses correct array element type" do
+      string = %(---\nvalue:\n- x: 1\n  y: 2\n)
+      yaml = YAMLAttrWithSerializableArray.from_yaml(string)
+      yaml.value.should be_a(Array(YAMLAttrPoint))
+      yaml.value.should eq([YAMLAttrPoint.new(1, 2)])
       yaml.to_yaml.should eq(string)
     end
   end
