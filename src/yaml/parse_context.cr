@@ -10,21 +10,15 @@
 #   before its members are deserialized.
 class YAML::ParseContext
   def initialize
-    # Recorded anchors: anchor => {object_id, crystal_type_id}
-    @anchors = {} of String => {UInt64, Int32}
+    # Recorded anchors: anchor => {boxed object, crystal_type_id}
+    @anchors = {} of String => {Void*, Int32}
   end
 
   # Associates an object with an anchor.
   def record_anchor(node, object : T) : Nil forall T
-    return unless object.is_a?(Reference)
-
-    record_anchor(node.anchor, object.object_id, object.crystal_type_id)
-  end
-
-  private def record_anchor(anchor, object_id, crystal_type_id)
-    return unless anchor
-
-    @anchors[anchor] = {object_id, crystal_type_id}
+    if anchor = node.anchor
+      @anchors[anchor] = {Box(T).box(object), object.crystal_type_id}
+    end
   end
 
   # Tries to read an alias from `node` of type `T`. Invokes
@@ -32,7 +26,7 @@ class YAML::ParseContext
   # instead of deserializing their members.
   def read_alias(node, type : T.class, &) forall T
     if ptr = read_alias_impl(node, T.crystal_instance_type_id, raise_on_alias: true)
-      yield ptr.unsafe_as(T)
+      yield Box(T).unbox(ptr)
     end
   end
 
@@ -40,7 +34,7 @@ class YAML::ParseContext
   # but an instance of type T isn't associated with the current anchor.
   def read_alias?(node, type : T.class, &) forall T
     if ptr = read_alias_impl(node, T.crystal_instance_type_id, raise_on_alias: false)
-      yield ptr.unsafe_as(T)
+      yield Box(T).unbox(ptr)
     end
   end
 
@@ -49,9 +43,9 @@ class YAML::ParseContext
       value = @anchors[node.anchor]?
 
       if value
-        object_id, crystal_type_id = value
+        box, crystal_type_id = value
         if crystal_type_id == expected_crystal_type_id
-          return Pointer(Void).new(object_id)
+          return box
         end
       end
 

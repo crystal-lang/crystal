@@ -514,6 +514,14 @@ describe "YAML::Serializable" do
     YAMLAttrPoint.from_yaml("---\nx: 1\ny: 2\n").should eq YAMLAttrPoint.new(1, 2)
   end
 
+  it "works with anchors of value types" do
+    YAMLAttrPoint.from_yaml(<<-YAML).should eq YAMLAttrPoint.new(123, 123)
+      ---
+      x: &foo 123
+      y: *foo
+      YAML
+  end
+
   it "empty class" do
     e = YAMLAttrEmptyClass.new
     e.to_yaml.should eq "--- {}\n"
