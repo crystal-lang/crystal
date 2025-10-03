@@ -84,7 +84,7 @@ class UNIXServer < UNIXSocket
   # Returns the client socket or `nil` if the server is closed after invoking
   # this method.
   def accept? : UNIXSocket?
-    if rs = Crystal::EventLoop.current.accept(self)
+    if rs = system_accept
       sock = UNIXSocket.new(handle: rs[0], type: type, path: @path, blocking: rs[1])
       sock.sync = sync?
       sock

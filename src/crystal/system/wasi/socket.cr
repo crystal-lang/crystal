@@ -21,6 +21,10 @@ module Crystal::System::Socket
     raise NotImplementedError.new "Crystal::System::Socket#system_listen"
   end
 
+  private def system_accept : {Handle, Bool}?
+    raise NotImplementedError.new "Crystal::System::Socket#system_accept"
+  end
+
   private def system_close_read
     if LibC.shutdown(fd, LibC::SHUT_RD) != 0
       raise ::Socket::Error.from_errno("shutdown read")

@@ -47,6 +47,10 @@ module Crystal::System::Socket
     end
   end
 
+  private def system_accept : {Handle, Bool}?
+    event_loop.accept(self)
+  end
+
   private def system_close_read
     if LibC.shutdown(fd, LibC::SHUT_RD) != 0
       raise ::Socket::Error.from_errno("shutdown read")

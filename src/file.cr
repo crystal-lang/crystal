@@ -778,7 +778,7 @@ class File < IO::FileDescriptor
   # file.chown(gid: 100)
   # ```
   def chown(uid : Int = -1, gid : Int = -1) : Nil
-    Crystal::System::File.fchown(@path, fd, uid, gid)
+    system_chown(uid, gid)
   end
 
   # Changes the permissions of the specified file.
@@ -791,12 +791,12 @@ class File < IO::FileDescriptor
   # file.info.permissions.value # => 0o700
   # ```
   def chmod(permissions : Int | Permissions) : Nil
-    system_chmod(@path, permissions)
+    system_chmod(permissions)
   end
 
   # Sets the access and modification times
   def utime(atime : Time, mtime : Time) : Nil
-    system_utime(atime, mtime, @path)
+    system_utime(atime, mtime)
   end
 
   # Attempts to set the access and modification times

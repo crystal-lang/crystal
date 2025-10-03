@@ -180,6 +180,10 @@ module Crystal::System::Socket
     end
   end
 
+  private def system_accept : {Handle, Bool}?
+    event_loop.accept(self)
+  end
+
   def system_accept(& : Handle -> Bool) : {Handle, Bool}?
     client_socket, blocking = Crystal::EventLoop.current.socket(family, type, protocol, nil)
     initialize_handle(client_socket)
