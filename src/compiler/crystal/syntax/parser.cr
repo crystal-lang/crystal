@@ -177,8 +177,12 @@ module Crystal
 
         next_token_skip_space_or_newline
         if @token.type.op_star?
-          raise "splat assignment already specified" if lhs_splat
-          lhs_splat = {index: i, location: @token.location}
+          if assign_index == -1
+            raise "splat assignment already specified" if lhs_splat
+            lhs_splat = {index: i, location: @token.location}
+          else
+            unexpected_token
+          end
           next_token_skip_space
         end
 
