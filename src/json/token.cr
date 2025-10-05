@@ -34,9 +34,10 @@ class JSON::Token
   @column_number : Int64
 
   def line_number : Int32
-    JSON.saturate_to_i32(@line_number)
+    @line_number.to_i32
   end
 
+  @[Experimental]
   def line_number_i64 : Int64
     @line_number
   end
@@ -46,9 +47,10 @@ class JSON::Token
   end
 
   def column_number : Int32
-    JSON.saturate_to_i32(@column_number)
+    @column_number.to_i32
   end
 
+  @[Experimental]
   def column_number_i64
     @column_number
   end

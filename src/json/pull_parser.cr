@@ -577,23 +577,25 @@ class JSON::PullParser
   end
 
   # Returns the current line number.
+  @[Experimental]
   def line_number_i64 : Int64
     @location[0]
   end
 
   # Returns the current line number.
   def line_number : Int32
-    JSON.saturate_to_i32(@location[0])
+    @location[0].to_i32
   end
 
   # Returns the current column number.
+  @[Experimental]
   def column_number_i64
     @location[1]
   end
 
   # Returns the current column number.
   def column_number
-    JSON.saturate_to_i32(@location[1])
+    @location[1].to_i32
   end
 
   # Returns the current location.
@@ -606,6 +608,7 @@ class JSON::PullParser
   # Returns the current location.
   #
   # The location is a tuple `{line number, column number}`.
+  @[Experimental]
   def location_i64 : Tuple(Int64, Int64)
     @location
   end
