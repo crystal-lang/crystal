@@ -45,8 +45,7 @@ class Log::Metadata
   protected def setup(@parent : Metadata?, entries : NamedTuple | Hash)
     @size = entries.size
     @parent_size = 0
-    parent_size = (@parent.try(&.max_total_size) || 0)
-    @max_total_size = @size + parent_size
+    @max_total_size = @size + (@parent.try(&.max_total_size) || 0)
     ptr_entries = pointerof(@first)
 
     if entries.is_a?(NamedTuple)
