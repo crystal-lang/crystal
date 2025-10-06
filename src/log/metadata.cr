@@ -93,7 +93,7 @@ class Log::Metadata
   # will be recomputed, but the result should be the same.
   #
   # * @parent.nil? signals if the defrag is needed/done
-  # * The value of pointerof(@first) are never changed
+  # * The value of pointerof(@first) never changes
   # * @parent is set at the very end of the method
   protected def defrag
     parent = @parent
