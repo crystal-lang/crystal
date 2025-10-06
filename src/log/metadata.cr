@@ -106,13 +106,7 @@ class Log::Metadata
     # Copy parent entries that ain't overwritten
     parent_size = 0
     parent.each do |(key, value)|
-      overwritten = false
-      @size.times do |i|
-        if ptr_entries[i][:key] == key
-          overwritten = true
-          break
-        end
-      end
+      overwritten = Slice.new(ptr_entries, @size).any? { |entry| entry[:key] == key }
       next if overwritten
       next_free_entry.value = {key: key, value: value}
       parent_size += 1
@@ -132,13 +126,11 @@ class Log::Metadata
     parent_size = @parent_size
     local_size = @size - parent_size
 
-    parent_size.times do |i|
-      entry = ptr_entries[i + local_size]
+    Slice.new(ptr_entries + local_size, parent_size).each do |entry|
       yield({entry[:key], entry[:value]})
     end
 
-    local_size.times do |i|
-      entry = ptr_entries[i]
+    Slice.new(ptr_entries, local_size).each do |entry|
       yield({entry[:key], entry[:value]})
     end
   end
