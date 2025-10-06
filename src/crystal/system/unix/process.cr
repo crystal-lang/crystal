@@ -197,6 +197,26 @@ struct Crystal::System::Process
   def self.fork
     {% raise("Process fork is unsupported with multithreaded mode") if flag?(:preview_mt) %}
 
+    block_signals do
+      pid = lock_write { LibC.fork }
+
+      if 0 == pid
+        # forked process
+
+        ::Process.after_fork_child_callbacks.each(&.call)
+
+        nil
+      elsif pid == -1
+        # forking process: error
+        raise RuntimeError.from_errno("fork")
+      else
+        # forking process: success
+        pid
+      end
+    end
+  end
+
+  private def self.block_signals(&)
     newmask = uninitialized LibC::SigsetT
     oldmask = uninitialized LibC::SigsetT
 
@@ -211,28 +231,10 @@ struct Crystal::System::Process
     ret = LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(newmask), pointerof(oldmask))
     raise RuntimeError.from_errno("Failed to disable signals") unless ret == 0
 
-    pid = lock_write { LibC.fork }
-
-    if 0 == pid
-      # forked process
-
-      ::Process.after_fork_child_callbacks.each(&.call)
-
-      # restore sigmask
+    begin
+      yield pointerof(oldmask)
+    ensure
       LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(oldmask), nil)
-
-      nil
-    else
-      # forking process
-
-      errno = Errno.value
-      LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(oldmask), nil)
-
-      if pid == -1
-        raise RuntimeError.from_os_error("fork", errno)
-      end
-
-      pid
     end
   end
 
