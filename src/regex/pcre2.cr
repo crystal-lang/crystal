@@ -1,37 +1,8 @@
 require "./lib_pcre2"
+require "crystal/value_with_finalizer"
 
 # :nodoc:
 module Regex::PCRE2
-  class JITStackPtr
-    def initialize(start_size, max_size)
-      @ptr = LibPCRE2.jit_stack_create(start_size, max_size, nil)
-      raise RuntimeError.new("Error allocating JIT stack") if @ptr.null?
-    end
-
-    def finalize
-      LibPCRE2.jit_stack_free(@ptr)
-    end
-
-    def to_unsafe
-      @ptr
-    end
-  end
-
-  class MatchDataPtr
-    def initialize(ovec_size)
-      @ptr = LibPCRE2.match_data_create(ovec_size, nil)
-      raise RuntimeError.new("Error allocating match data") if @ptr.null?
-    end
-
-    def finalize
-      LibPCRE2.match_data_free(@ptr)
-    end
-
-    def to_unsafe
-      @ptr
-    end
-  end
-
   @re : LibPCRE2::Code*
   @jit : Bool
 
@@ -236,14 +207,14 @@ module Regex::PCRE2
   private def match_impl(str, byte_index, options)
     match_data = match_data(str, byte_index, options) || return
 
-    # we reuse the same matchdata allocation, so we must "reimplement" the
+    # We reuse the same `match_data` allocation, so we must reimplement the
     # behavior of pcre2_match_data_create_from_pattern (get_ovector_count always
-    # returns 65535, aka the maximum):
+    # returns 65535, aka the maximum).
     ovector_count = capture_count_impl &+ 1
     ovector = Slice.new(LibPCRE2.get_ovector_pointer(match_data), ovector_count &* 2)
 
     # We need to dup the ovector because `match_data` is re-used for subsequent
-    # matches. Dup brings the ovector data into the realm of the GC.
+    # matches. We only dup the match data (not everything).
     ovector = ovector.dup
 
     ::Regex::MatchData.new(self, @re, str, byte_index, ovector.to_unsafe, ovector_count.to_i32 &- 1)
@@ -259,7 +230,7 @@ module Regex::PCRE2
 
   class_getter match_context : LibPCRE2::MatchContext* do
     match_context = LibPCRE2.match_context_create(nil)
-    LibPCRE2.jit_stack_assign(match_context, ->(_data) { current_jit_stack.to_unsafe }, nil)
+    LibPCRE2.jit_stack_assign(match_context, ->(_data) { current_jit_stack.value }, nil)
     match_context
   end
 
@@ -267,8 +238,10 @@ module Regex::PCRE2
   #
   # Only a single `match` function can run per thread at any given time, so
   # there can't be any concurrent access to the JIT stack.
-  thread_local(current_jit_stack : ::Regex::PCRE2::JITStackPtr) do
-    ::Regex::PCRE2::JITStackPtr.new(32_768, 1_048_576)
+  thread_local(current_jit_stack : ::Crystal::ValueWithFinalizer(::LibPCRE2::JITStack*)) do
+    ptr = LibPCRE2.jit_stack_create(32_768, 1_048_576, nil)
+    raise RuntimeError.new("Error allocating JIT stack") if ptr.null?
+    ::Crystal::ValueWithFinalizer.new(ptr, ->LibPCRE2.jit_stack_free)
   end
 
   # Match data is unique per thread.
@@ -276,11 +249,16 @@ module Regex::PCRE2
   # Match data contains a buffer for backtracking when matching in interpreted
   # mode (non-JIT). This buffer is heap-allocated and should be re-used for
   # subsequent matches.
-  thread_local(current_match_data : ::Regex::PCRE2::MatchDataPtr) do
-    # the ovector size is clamped to 65535 pairs; we declare the maximum
-    # because we allocate the match data buffer once for the thread and need
-    # to adapt to any regular expression
-    ::Regex::PCRE2::MatchDataPtr.new(65_535)
+  #
+  # Only a single `match` function can run per thread at any given time, so
+  # there can't be any concurrent access to the match data buffer.
+  thread_local(current_match_data : ::Crystal::ValueWithFinalizer(::LibPCRE2::MatchData*)) do
+    # The ovector size is clamped to 65535 pairs; we declare the maximum because
+    # we allocate the match data buffer once for the thread and need to adapt to
+    # any regular expression.
+    ptr = LibPCRE2.match_data_create(65_535, nil)
+    raise RuntimeError.new("Error allocating match data") if ptr.null?
+    ::Crystal::ValueWithFinalizer.new(ptr, ->LibPCRE2.match_data_free)
   end
 
   def finalize
@@ -288,7 +266,7 @@ module Regex::PCRE2
   end
 
   private def match_data(str, byte_index, options)
-    match_data = Regex::PCRE2.current_match_data
+    match_data = Regex::PCRE2.current_match_data.value
     match_count = LibPCRE2.match(@re, str, str.bytesize, byte_index, pcre2_match_options(options), match_data, PCRE2.match_context)
 
     if match_count < 0
