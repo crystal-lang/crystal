@@ -241,7 +241,7 @@ module Regex::PCRE2
   thread_local(current_jit_stack : ::Crystal::ValueWithFinalizer(::LibPCRE2::JITStack*)) do
     ptr = LibPCRE2.jit_stack_create(32_768, 1_048_576, nil)
     raise RuntimeError.new("Error allocating JIT stack") if ptr.null?
-    ::Crystal::ValueWithFinalizer.new(ptr, ->LibPCRE2.jit_stack_free)
+    ::Crystal::ValueWithFinalizer.new(ptr, ->(value : ::LibPCRE2::JITStack*) { LibPCRE2.jit_stack_free(value) })
   end
 
   # Match data is unique per thread.
@@ -258,7 +258,7 @@ module Regex::PCRE2
     # any regular expression.
     ptr = LibPCRE2.match_data_create(65_535, nil)
     raise RuntimeError.new("Error allocating match data") if ptr.null?
-    ::Crystal::ValueWithFinalizer.new(ptr, ->LibPCRE2.match_data_free)
+    ::Crystal::ValueWithFinalizer.new(ptr, ->(value : LibPCRE2::MatchData*) { LibPCRE2.match_data_free(value) })
   end
 
   def finalize
