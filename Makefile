@@ -36,14 +36,13 @@ interpreter ?=    ## Enable interpreter feature
 check ?=          ## Enable only check when running format
 order ?=random    ## Enable order for spec execution (values: "default" | "random" | seed number)
 deref_symlinks ?= ## Dereference symbolic links for `make install`
-libxml2 ?=        ## Enable LibXML2 support in the compiler itself
-                  ## (necessary for doc generation sanitization)
+docs_sanitizer ?= ## Enable santization for documentation generation
 
 O := .build
 SOURCES := $(shell find src -name '*.cr')
 SPEC_SOURCES := $(shell find spec -name '*.cr')
 MAN1PAGES := $(patsubst doc/man/%.adoc,man/%.1,$(wildcard doc/man/*.adoc))
-override FLAGS += -D strict_multi_assign -D preview_overload_order $(if $(release),--release )$(if $(stats),--stats )$(if $(progress),--progress )$(if $(threads),--threads $(threads) )$(if $(debug),-d )$(if $(static),--static )$(if $(LDFLAGS),--link-flags="$(LDFLAGS)" )$(if $(target),--cross-compile --target $(target) )$(if $(interpreter),,-Dwithout_interpreter )$(if $(libxml2),,-Dwithout_libxml2)
+override FLAGS += -D strict_multi_assign -D preview_overload_order $(if $(release),--release )$(if $(stats),--stats )$(if $(progress),--progress )$(if $(threads),--threads $(threads) )$(if $(debug),-d )$(if $(static),--static )$(if $(LDFLAGS),--link-flags="$(LDFLAGS)" )$(if $(target),--cross-compile --target $(target) )$(if $(interpreter),,-Dwithout_interpreter )$(if $(docs_sanitizer),,-Dwithout_libxml2)
 SPEC_WARNINGS_OFF := --exclude-warnings spec/std --exclude-warnings spec/compiler --exclude-warnings spec/primitives --exclude-warnings src/float/printer
 override SPEC_FLAGS += $(if $(verbose),-v )$(if $(junit_output),--junit_output $(junit_output) )$(if $(order),--order=$(order) )
 CRYSTAL_CONFIG_LIBRARY_PATH := '$$ORIGIN/../lib/crystal'
