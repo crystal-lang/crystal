@@ -24,7 +24,7 @@ module Crystal::System::Wasi
       end
 
       path = ::Path[name].expand.to_s
-      preopens << {path, path.ends_with?("/") ? path : path + "/", fd}
+      preopens << {path, path.ensure_suffix("/"), fd}
     end
 
     # Preopens added later take priority over preopens added earlier.

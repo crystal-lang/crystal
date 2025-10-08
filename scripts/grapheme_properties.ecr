@@ -59,13 +59,13 @@ struct String::Grapheme
     @@codepoints||= begin
       data = Array(Tuple(Int32, Int32, Property)).new(<%= props_data.size %>)
       <%- props_data.each do |range| -%>
-        put(data, {<%= sprintf("0x%04X", range.low) %>, <%= sprintf("0x%04X", range.high) %>, Property::<%= range.prop %>})
+        put(data, <%= sprintf("0x%04X", range.low) %>, <%= sprintf("0x%04X", range.high) %>, Property::<%= range.prop %>)
       <%- end -%>
       data
     end
   end
 
-  private def self.put(array : Array, values) : Nil
+  private def self.put(array : Array, *values) : Nil
     array << values
   end
 end

@@ -1,7 +1,10 @@
-{% skip_file if flag?(:win32) %}
+require "crystal/event_loop"
+
+{% skip_file unless flag?(:wasi) || Crystal::EventLoop.has_constant?(:LibEvent) %}
 
 require "crystal/thread_local_value"
 
+# :nodoc:
 module IO::Evented
   @read_timed_out = false
   @write_timed_out = false
@@ -12,58 +15,17 @@ module IO::Evented
   @read_event = Crystal::ThreadLocalValue(Crystal::EventLoop::Event).new
   @write_event = Crystal::ThreadLocalValue(Crystal::EventLoop::Event).new
 
-  def evented_read(errno_msg : String, &) : Int32
-    loop do
-      bytes_read = yield
-      if bytes_read != -1
-        # `to_i32` is acceptable because `Slice#size` is an Int32
-        return bytes_read.to_i32
-      end
-
-      if Errno.value == Errno::EAGAIN
-        wait_readable
-      else
-        raise IO::Error.from_errno(errno_msg, target: self)
-      end
-    end
-  ensure
-    resume_pending_readers
-  end
-
-  def evented_write(errno_msg : String, &) : Int32
-    begin
-      loop do
-        bytes_written = yield
-        if bytes_written != -1
-          return bytes_written.to_i32
-        end
-
-        if Errno.value == Errno::EAGAIN
-          wait_writable
-        else
-          raise IO::Error.from_errno(errno_msg, target: self)
-        end
-      end
-    ensure
-      resume_pending_writers
-    end
-  end
-
-  def evented_send(errno_msg : String, &) : Int32
-    bytes_written = yield
-    raise Socket::Error.from_errno(errno_msg) if bytes_written == -1
-    # `to_i32` is acceptable because `Slice#size` is an Int32
-    bytes_written.to_i32
-  ensure
-    resume_pending_writers
-  end
-
   # :nodoc:
   def resume_read(timed_out = false) : Nil
     @read_timed_out = timed_out
 
     if reader = @readers.get?.try &.shift?
-      reader.enqueue
+      {% if flag?(:execution_context) && Crystal::EventLoop.has_constant?(:LibEvent) %}
+        event_loop = Crystal::EventLoop.current.as(Crystal::EventLoop::LibEvent)
+        event_loop.callback_enqueue(reader)
+      {% else %}
+        reader.enqueue
+      {% end %}
     end
   end
 
@@ -72,17 +34,17 @@ module IO::Evented
     @write_timed_out = timed_out
 
     if writer = @writers.get?.try &.shift?
-      writer.enqueue
+      {% if flag?(:execution_context) && Crystal::EventLoop.has_constant?(:LibEvent) %}
+        event_loop = Crystal::EventLoop.current.as(Crystal::EventLoop::LibEvent)
+        event_loop.callback_enqueue(writer)
+      {% else %}
+        writer.enqueue
+      {% end %}
     end
   end
 
   # :nodoc:
-  def wait_readable(timeout = @read_timeout) : Nil
-    wait_readable(timeout: timeout) { raise TimeoutError.new("Read timed out") }
-  end
-
-  # :nodoc:
-  def wait_readable(timeout = @read_timeout, *, raise_if_closed = true, &) : Nil
+  def evented_wait_readable(timeout = @read_timeout, *, raise_if_closed = true, &) : Nil
     readers = @readers.get { Deque(Fiber).new }
     readers << Fiber.current
     add_read_event(timeout)
@@ -102,12 +64,7 @@ module IO::Evented
   end
 
   # :nodoc:
-  def wait_writable(timeout = @write_timeout) : Nil
-    wait_writable(timeout: timeout) { raise TimeoutError.new("Write timed out") }
-  end
-
-  # :nodoc:
-  def wait_writable(timeout = @write_timeout, &) : Nil
+  def evented_wait_writable(timeout = @write_timeout, &) : Nil
     writers = @writers.get { Deque(Fiber).new }
     writers << Fiber.current
     add_write_event(timeout)
@@ -126,31 +83,37 @@ module IO::Evented
     event.add timeout
   end
 
-  def evented_reopen : Nil
-    evented_close
-  end
-
   def evented_close : Nil
     @read_event.consume_each &.free
 
     @write_event.consume_each &.free
 
     @readers.consume_each do |readers|
-      Crystal::Scheduler.enqueue readers
+      {% if flag?(:execution_context) %}
+        readers.each { |fiber| fiber.execution_context.enqueue fiber }
+      {% else %}
+        Crystal::Scheduler.enqueue readers
+      {% end %}
     end
 
     @writers.consume_each do |writers|
-      Crystal::Scheduler.enqueue writers
+      {% if flag?(:execution_context) %}
+        writers.each { |fiber| fiber.execution_context.enqueue fiber }
+      {% else %}
+        Crystal::Scheduler.enqueue writers
+      {% end %}
     end
   end
 
-  private def resume_pending_readers
+  # :nodoc:
+  def evented_resume_pending_readers
     if (readers = @readers.get?) && !readers.empty?
       add_read_event
     end
   end
 
-  private def resume_pending_writers
+  # :nodoc:
+  def evented_resume_pending_writers
     if (writers = @writers.get?) && !writers.empty?
       add_write_event
     end

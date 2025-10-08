@@ -1,11 +1,12 @@
-module Crystal::System::Socket
-  # Creates a file descriptor / socket handle
-  # private def create_handle(family, type, protocol, blocking) : Handle
+require "../event_loop/socket"
 
+module Crystal::System::Socket
   # Initializes a file descriptor / socket handle for use with Crystal Socket
   # private def initialize_handle(fd)
 
-  # private def system_connect(addr, timeout = nil)
+  private def system_connect(addr, timeout = nil)
+    event_loop.connect(self, addr, timeout)
+  end
 
   # Tries to bind the socket to a local address.
   # Yields an `Socket::BindError` if the binding failed.
@@ -13,11 +14,17 @@ module Crystal::System::Socket
 
   # private def system_listen(backlog)
 
-  # private def system_accept
+  private def system_accept : {Handle, Bool}?
+    event_loop.accept(self)
+  end
 
-  # private def system_send_to(bytes : Bytes, addr : ::Socket::Address)
+  private def system_send_to(bytes : Bytes, addr : ::Socket::Address)
+    event_loop.send_to(self, bytes, addr)
+  end
 
-  # private def system_receive(bytes)
+  private def system_receive_from(bytes : Bytes) : Tuple(Int32, ::Socket::Address)
+    event_loop.receive_from(self, bytes)
+  end
 
   # private def system_close_read
 
@@ -51,11 +58,11 @@ module Crystal::System::Socket
 
   # private def system_linger=(val)
 
-  # private def system_getsockopt(fd, optname, optval, level = LibC::SOL_SOCKET, &)
+  # private def system_getsockopt(optname, optval, level = LibC::SOL_SOCKET, &)
 
-  # private def system_getsockopt(fd, optname, optval, level = LibC::SOL_SOCKET)
+  # private def system_getsockopt(optname, optval, level = LibC::SOL_SOCKET)
 
-  # private def system_setsockopt(fd, optname, optval, level = LibC::SOL_SOCKET)
+  # private def system_setsockopt(optname, optval, level = LibC::SOL_SOCKET)
 
   # private def system_blocking?
 
@@ -67,13 +74,37 @@ module Crystal::System::Socket
 
   # private def system_close_on_exec=(arg : Bool)
 
+  # private def system_fcntl(cmd, arg = 0)
+
   # def self.fcntl(fd, cmd, arg = 0)
 
-  # private def system_read(slice : Bytes) : Int32
+  # def self.socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol, blocking : Bool) : {Handle, Handle}
 
-  # private def system_write(slice : Bytes) : Int32
+  private def system_read(slice : Bytes) : Int32
+    event_loop.read(self, slice)
+  end
+
+  private def system_write(slice : Bytes) : Int32
+    event_loop.write(self, slice)
+  end
 
   # private def system_close
+
+  # Closes the internal handle without notifying the event loop.
+  # This is directly used after the fork of a process to close the
+  # parent's Crystal::System::Signal.@@pipe reference before re initializing
+  # the event loop. In the case of a fork that will exec there is even
+  # no need to initialize the event loop at all.
+  # Also used in `Socket#finalize`
+  # def socket_close
+
+  private def event_loop? : Crystal::EventLoop::Socket?
+    Crystal::EventLoop.current?
+  end
+
+  private def event_loop : Crystal::EventLoop::Socket
+    Crystal::EventLoop.current
+  end
 
   # IPSocket:
 

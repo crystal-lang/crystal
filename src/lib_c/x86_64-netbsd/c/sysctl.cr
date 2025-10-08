@@ -1,6 +1,7 @@
 lib LibC
-  CTL_HW  = 6
-  HW_NCPU = 3
+  CTL_HW        =  6
+  HW_NCPU       =  3
+  HW_NCPUONLINE = 16
 
   CTL_KERN           =  1
   KERN_PROC          = 14

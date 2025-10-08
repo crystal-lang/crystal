@@ -92,8 +92,8 @@ class JSON::PullParser
   end
 end
 
-private def assert_pull_parse(string, file = __FILE__, line = __LINE__)
-  it "parses #{string}", file, line do
+private def assert_pull_parse(string)
+  it "parses #{string}" do
     parser = JSON::PullParser.new string
     parser.assert JSON.parse(string).raw
     parser.kind.should eq(JSON::PullParser::Kind::EOF)

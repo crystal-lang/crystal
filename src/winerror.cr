@@ -2,6 +2,7 @@
   require "c/winbase"
   require "c/errhandlingapi"
   require "c/winsock2"
+  require "c/winternl"
 {% end %}
 
 # `WinError` represents Windows' [System Error Codes](https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes#system-error-codes-1).
@@ -54,24 +55,39 @@ enum WinError : UInt32
     {% end %}
   end
 
+  def self.from_ntstatus(status) : self
+    {% if flag?(:win32) %}
+      WinError.new(LibNTDLL.RtlNtStatusToDosError(status))
+    {% else %}
+      raise NotImplementedError.new("WinError.from_ntstatus")
+    {% end %}
+  end
+
   # Returns the system error message associated with this error code.
   #
   # The message is retrieved via [`FormatMessageW`](https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-formatmessagew)
   # using the current default `LANGID`.
   #
   # On non-win32 platforms the result is always an empty string.
+  #
+  # NOTE: The result may depend on the current system locale. Specs and
+  # comparisons should use `#value` instead of this method.
   def message : String
-    formatted_message
+    {% if flag?(:win32) %}
+      unsafe_message { |slice| String.from_utf16(slice).strip }
+    {% else %}
+      ""
+    {% end %}
   end
 
   # :nodoc:
-  def formatted_message : String
+  def unsafe_message(&)
     {% if flag?(:win32) %}
       buffer = uninitialized UInt16[256]
       size = LibC.FormatMessageW(LibC::FORMAT_MESSAGE_FROM_SYSTEM, nil, value, 0, buffer, buffer.size, nil)
-      String.from_utf16(buffer.to_slice[0, size]).strip
+      yield buffer.to_slice[0, size]
     {% else %}
-      ""
+      yield "".to_slice
     {% end %}
   end
 
@@ -2301,6 +2317,7 @@ enum WinError : UInt32
   ERROR_STATE_CONTAINER_NAME_SIZE_LIMIT_EXCEEDED                = 15818_u32
   ERROR_API_UNAVAILABLE                                         = 15841_u32
 
-  WSA_IO_PENDING    = ERROR_IO_PENDING
-  WSA_IO_INCOMPLETE = ERROR_IO_INCOMPLETE
+  WSA_IO_PENDING     = ERROR_IO_PENDING
+  WSA_IO_INCOMPLETE  = ERROR_IO_INCOMPLETE
+  WSA_INVALID_HANDLE = ERROR_INVALID_HANDLE
 end

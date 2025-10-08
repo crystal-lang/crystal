@@ -567,25 +567,16 @@ module XML
         reader.to_unsafe.should be_a(LibXML::XMLTextReader)
       end
     end
-  end
 
-  describe "#errors" do
-    it "makes errors accessible" do
-      reader = XML::Reader.new(%(<people></foo>))
-      reader.read
-      reader.expand?
+    describe "#errors" do
+      it "makes errors accessible" do
+        options = XML::ParserOptions::RECOVER | XML::ParserOptions::NONET
+        reader = XML::Reader.new(%(<people></foo>), options)
+        reader.read
+        reader.expand?
 
-      reader.errors.map(&.to_s).should eq ["Opening and ending tag mismatch: people line 1 and foo"]
-    end
-
-    it "adds errors to `XML::Error.errors` (deprecated)" do
-      XML::Error.errors # clear class error list
-
-      reader = XML::Reader.new(%(<people></foo>))
-      reader.read
-      reader.expand?
-
-      XML::Error.errors.try(&.map(&.to_s)).should eq ["Opening and ending tag mismatch: people line 1 and foo"]
+        reader.errors.map(&.to_s).should eq ["Opening and ending tag mismatch: people line 1 and foo"]
+      end
     end
   end
 end

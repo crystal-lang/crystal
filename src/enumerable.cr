@@ -558,6 +558,25 @@ module Enumerable(T)
     raise Enumerable::NotFoundError.new
   end
 
+  # Yields each value until the first truthy block result and returns that result.
+  #
+  # Accepts an optional parameter `if_none`, to set what gets returned if
+  # no element is found (defaults to `nil`).
+  #
+  # ```
+  # [1, 2, 3, 4].find_value { |i| i > 2 }     # => true
+  # [1, 2, 3, 4].find_value { |i| i > 8 }     # => nil
+  # [1, 2, 3, 4].find_value(-1) { |i| i > 8 } # => -1
+  # ```
+  def find_value(if_none = nil, & : T ->)
+    each do |i|
+      if result = yield i
+        return result
+      end
+    end
+    if_none
+  end
+
   # Returns the first element in the collection,
   # If the collection is empty, calls the block and returns its value.
   #
@@ -1014,9 +1033,9 @@ module Enumerable(T)
   # [1, 2, 3].map { |i| i * 10 } # => [10, 20, 30]
   # ```
   def map(& : T -> U) : Array(U) forall U
-    ary = [] of U
-    each { |e| ary << yield e }
-    ary
+    map_with_index do |e|
+      yield e
+    end
   end
 
   # Like `map`, but the block gets passed both the element and its index.
@@ -1752,7 +1771,7 @@ module Enumerable(T)
   end
 
   private def additive_identity(reflect)
-    type = reflect.first
+    type = reflect.type
     if type.responds_to? :additive_identity
       type.additive_identity
     else
@@ -1789,7 +1808,10 @@ module Enumerable(T)
   # Expects all types returned from the block to respond to `#+` method.
   #
   # This method calls `.additive_identity` on the yielded type to determine the
-  # type of the sum value.
+  # type of the sum value.  Hence, it can fail to compile if
+  # `.additive_identity` fails to determine a safe type, e.g., in case of
+  # union types.  In such cases, use `sum(initial)` with an initial value of
+  # the expected type of the sum value.
   #
   # If the collection is empty, returns `additive_identity`.
   #
@@ -1828,7 +1850,7 @@ module Enumerable(T)
   # ```
   #
   # This method calls `.multiplicative_identity` on the element type to determine the
-  # type of the sum value.
+  # type of the product value.
   #
   # If the collection is empty, returns `multiplicative_identity`.
   #
@@ -1836,7 +1858,7 @@ module Enumerable(T)
   # ([] of Int32).product # => 1
   # ```
   def product
-    product Reflect(T).first.multiplicative_identity
+    product Reflect(T).type.multiplicative_identity
   end
 
   # Multiplies *initial* and all the elements in the collection
@@ -1867,8 +1889,11 @@ module Enumerable(T)
   #
   # Expects all types returned from the block to respond to `#*` method.
   #
-  # This method calls `.multiplicative_identity` on the element type to determine the
-  # type of the sum value.
+  # This method calls `.multiplicative_identity` on the element type to
+  # determine the type of the product value.  Hence, it can fail to compile if
+  # `.multiplicative_identity` fails to determine a safe type, e.g., in case
+  # of union types.  In such cases, use `product(initial)` with an initial
+  # value of the expected type of the product value.
   #
   # If the collection is empty, returns `multiplicative_identity`.
   #
@@ -1876,7 +1901,7 @@ module Enumerable(T)
   # ([] of Int32).product { |x| x + 1 } # => 1
   # ```
   def product(& : T -> _)
-    product(Reflect(typeof(yield Enumerable.element_type(self))).first.multiplicative_identity) do |value|
+    product(Reflect(typeof(yield Enumerable.element_type(self))).type.multiplicative_identity) do |value|
       yield value
     end
   end
@@ -1994,9 +2019,7 @@ module Enumerable(T)
   # (1..5).to_a # => [1, 2, 3, 4, 5]
   # ```
   def to_a : Array(T)
-    ary = [] of T
-    each { |e| ary << e }
-    ary
+    to_a(&.as(T))
   end
 
   # Returns an `Array` with the results of running *block* against each element of the collection.
@@ -2268,12 +2291,16 @@ module Enumerable(T)
 
   # :nodoc:
   private struct Reflect(X)
-    # For now it's just a way to implement `Enumerable#sum` in a way that the
-    # initial value given to it has the type of the first type in the union,
-    # if the type is a union.
-    def self.first
+    # For now, Reflect is used to reject union types in `#sum()` and
+    # `#product()` methods.
+    def self.type
       {% if X.union? %}
-        {{X.union_types.first}}
+        {{
+          raise("`Enumerable#sum` and `#product` do not support Union " +
+                "types. Instead, use `Enumerable#sum(initial)` and " +
+                "`#product(initial)`, respectively, with an initial value " +
+                "of the intended type of the call.")
+        }}
       {% else %}
         X
       {% end %}

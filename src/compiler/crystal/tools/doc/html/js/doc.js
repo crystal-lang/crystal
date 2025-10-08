@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // TODO: Add OpenSearch description
     var searchQuery = location.hash.substring(3);
     history.pushState({searchQuery: searchQuery}, "Search for " + searchQuery, location.href.replace(/#q=.*/, ""));
-    searchInput.value = searchQuery;
+    searchInput.value = decodeURIComponent(searchQuery);
     document.addEventListener('CrystalDocs:loaded', performSearch);
   }
 

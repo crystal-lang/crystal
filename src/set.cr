@@ -73,7 +73,7 @@ struct Set(T)
     self
   end
 
-  # Returns `true` of this Set is comparing objects by `object_id`.
+  # Returns `true` if this Set is comparing objects by `object_id`.
   #
   # See `compare_by_identity`.
   def compare_by_identity? : Bool
@@ -491,6 +491,20 @@ struct Set(T)
   # :nodoc:
   def same?(other : Set) : Bool
     @hash.same?(other.@hash)
+  end
+
+  # Deletes every element of the set for which the block is falsey, and returns
+  # `self`.
+  def select!(& : T ->) : self
+    @hash.select! { |k, _| yield(k) }
+    self
+  end
+
+  # Deletes every element of the set for which the block is truthy, and returns
+  # `self`.
+  def reject!(& : T ->) : self
+    @hash.reject! { |k, _| yield(k) }
+    self
   end
 
   # Rebuilds the set based on the current elements.

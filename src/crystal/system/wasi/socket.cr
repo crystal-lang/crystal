@@ -8,15 +8,7 @@ module Crystal::System::Socket
 
   alias Handle = Int32
 
-  private def create_handle(family, type, protocol, blocking) : Handle
-    raise NotImplementedError.new "Crystal::System::Socket#create_handle"
-  end
-
-  private def initialize_handle(fd)
-  end
-
-  private def system_connect(addr, timeout = nil)
-    raise NotImplementedError.new "Crystal::System::Socket#system_connect"
+  private def initialize_handle(fd, blocking = nil)
   end
 
   # Tries to bind the socket to a local address.
@@ -29,16 +21,8 @@ module Crystal::System::Socket
     raise NotImplementedError.new "Crystal::System::Socket#system_listen"
   end
 
-  private def system_accept
-    (raise NotImplementedError.new "Crystal::System::Socket#system_accept").as(Int32)
-  end
-
-  private def system_send_to(bytes : Bytes, addr : ::Socket::Address)
-    raise NotImplementedError.new "Crystal::System::Socket#system_send_to"
-  end
-
-  private def system_receive(bytes)
-    raise NotImplementedError.new "Crystal::System::Socket#system_receive"
+  private def system_accept : {Handle, Bool}?
+    raise NotImplementedError.new "Crystal::System::Socket#system_accept"
   end
 
   private def system_close_read
@@ -109,30 +93,38 @@ module Crystal::System::Socket
     raise NotImplementedError.new "Crystal::System::Socket#system_linge="
   end
 
-  private def system_getsockopt(fd, optname, optval, level = LibC::SOL_SOCKET, &)
+  private def system_getsockopt(optname, optval, level = LibC::SOL_SOCKET, &)
     raise NotImplementedError.new "Crystal::System::Socket#system_getsockopt"
   end
 
-  private def system_getsockopt(fd, optname, optval, level = LibC::SOL_SOCKET)
+  private def system_getsockopt(optname, optval, level = LibC::SOL_SOCKET)
     raise NotImplementedError.new "Crystal::System::Socket#system_getsockopt"
   end
 
-  private def system_setsockopt(fd, optname, optval, level = LibC::SOL_SOCKET)
+  private def system_setsockopt(optname, optval, level = LibC::SOL_SOCKET)
     raise NotImplementedError.new "Crystal::System::Socket#system_setsockopt"
   end
 
   private def system_blocking?
-    fcntl(LibC::F_GETFL) & LibC::O_NONBLOCK == 0
+    Socket.get_blocking(fd)
   end
 
   private def system_blocking=(value)
-    flags = fcntl(LibC::F_GETFL)
+    Socket.set_blocking(fd, value)
+  end
+
+  def self.get_blocking(fd : Handle)
+    fcntl(fd, LibC::F_GETFL) & LibC::O_NONBLOCK == 0
+  end
+
+  def self.set_blocking(fd : Handle, value : Bool)
+    flags = fcntl(fd, LibC::F_GETFL)
     if value
       flags &= ~LibC::O_NONBLOCK
     else
       flags |= LibC::O_NONBLOCK
     end
-    fcntl(LibC::F_SETFL, flags)
+    fcntl(fd, LibC::F_SETFL, flags)
   end
 
   private def system_close_on_exec?
@@ -151,31 +143,22 @@ module Crystal::System::Socket
     r
   end
 
+  private def system_fcntl(cmd, arg = 0)
+    FileDescriptor.system_fcntl(fd, cmd, arg)
+  end
+
   private def system_tty?
     LibC.isatty(fd) == 1
   end
 
-  private def system_read(slice : Bytes) : Int32
-    evented_read("Error reading socket") do
-      LibC.recv(fd, slice, slice.size, 0).to_i32
-    end
-  end
-
-  private def system_write(slice : Bytes) : Int32
-    evented_write("Error writing to socket") do
-      LibC.send(fd, slice, slice.size, 0)
-    end
-  end
-
   private def system_close
-    # Perform libevent cleanup before LibC.close.
-    # Using a file descriptor after it has been closed is never defined and can
-    # always lead to undefined results. This is not specific to libevent.
-    evented_close
+    event_loop.close(self)
+  end
 
+  def socket_close
     # Clear the @volatile_fd before actually closing it in order to
     # reduce the chance of reading an outdated fd value
-    fd = @volatile_fd.swap(-1)
+    return unless fd = close_volatile_fd?
 
     ret = LibC.close(fd)
 
@@ -187,6 +170,11 @@ module Crystal::System::Socket
         raise ::Socket::Error.from_errno("Error closing socket")
       end
     end
+  end
+
+  def close_volatile_fd? : Int32?
+    fd = @volatile_fd.swap(-1)
+    fd unless fd == -1
   end
 
   private def system_local_address

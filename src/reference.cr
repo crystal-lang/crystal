@@ -1,7 +1,3 @@
-{% if flag?(:preview_mt) %}
-  require "crystal/thread_local_value"
-{% end %}
-
 # `Reference` is the base class of classes you define in your program.
 # It is set as a class' superclass when you don't specify one:
 #
@@ -180,54 +176,17 @@ class Reference
     io << '>'
   end
 
-  # :nodoc:
-  module ExecRecursive
-    # NOTE: can't use `Set` here because of prelude require order
-    alias Registry = Hash({UInt64, Symbol}, Nil)
-
-    {% if flag?(:preview_mt) %}
-      @@exec_recursive = Crystal::ThreadLocalValue(Registry).new
-    {% else %}
-      @@exec_recursive = Registry.new
-    {% end %}
-
-    def self.hash
-      {% if flag?(:preview_mt) %}
-        @@exec_recursive.get { Registry.new }
-      {% else %}
-        @@exec_recursive
-      {% end %}
-    end
-  end
-
   private def exec_recursive(method, &)
-    hash = ExecRecursive.hash
+    # NOTE: can't use `Set` because of prelude require order
+    hash = Fiber.current.exec_recursive_hash
     key = {object_id, method}
     hash.put(key, nil) do
       yield
-      hash.delete(key)
       return true
+    ensure
+      hash.delete(key)
     end
     false
-  end
-
-  # :nodoc:
-  module ExecRecursiveClone
-    alias Registry = Hash(UInt64, UInt64)
-
-    {% if flag?(:preview_mt) %}
-      @@exec_recursive = Crystal::ThreadLocalValue(Registry).new
-    {% else %}
-      @@exec_recursive = Registry.new
-    {% end %}
-
-    def self.hash
-      {% if flag?(:preview_mt) %}
-        @@exec_recursive.get { Registry.new }
-      {% else %}
-        @@exec_recursive
-      {% end %}
-    end
   end
 
   # Helper method to perform clone by also checking recursiveness.
@@ -249,10 +208,11 @@ class Reference
   # end
   # ```
   private def exec_recursive_clone(&)
-    hash = ExecRecursiveClone.hash
-    clone_object_id = hash[object_id]?
-    unless clone_object_id
-      clone_object_id = yield(hash).object_id
+    # NOTE: can't use `Set` because of prelude require order
+    hash = Fiber.current.exec_recursive_clone_hash
+    clone_object_id = hash.fetch(object_id) do
+      yield(hash).object_id
+    ensure
       hash.delete(object_id)
     end
     Pointer(Void).new(clone_object_id).as(self)

@@ -49,7 +49,7 @@ module IO::Buffered
   # Set the buffer size of both the read and write buffer
   # Cannot be changed after any of the buffers have been allocated
   def buffer_size=(value)
-    if @in_buffer || @out_buffer
+    if (@in_buffer || @out_buffer) && (buffer_size != value)
       raise ArgumentError.new("Cannot change buffer_size after buffers have been allocated")
     end
     @buffer_size = value
@@ -121,7 +121,7 @@ module IO::Buffered
   end
 
   # :nodoc:
-  def skip(bytes_count) : Nil
+  def skip(bytes_count : Int) : Nil
     check_open
 
     if bytes_count <= @in_buffer_rem.size
@@ -172,7 +172,7 @@ module IO::Buffered
   end
 
   # :nodoc:
-  def write_byte(byte : UInt8)
+  def write_byte(byte : UInt8) : Nil
     check_open
 
     if sync?
@@ -215,9 +215,9 @@ module IO::Buffered
   # Turns on/off `IO` **write** buffering. When *sync* is set to `true`, no buffering
   # will be done (that is, writing to this `IO` is immediately synced to the
   # underlying `IO`).
-  def sync=(sync)
+  def sync=(sync : Bool) : Bool
     flush if sync && !@sync
-    @sync = !!sync
+    @sync = sync
   end
 
   # Determines if this `IO` does write buffering. If `true`, no buffering is done.
@@ -226,8 +226,8 @@ module IO::Buffered
   end
 
   # Turns on/off `IO` **read** buffering.
-  def read_buffering=(read_buffering)
-    @read_buffering = !!read_buffering
+  def read_buffering=(read_buffering : Bool) : Bool
+    @read_buffering = read_buffering
   end
 
   # Determines whether this `IO` buffers reads.
@@ -236,8 +236,8 @@ module IO::Buffered
   end
 
   # Turns on/off flushing the underlying `IO` when a newline is written.
-  def flush_on_newline=(flush_on_newline)
-    @flush_on_newline = !!flush_on_newline
+  def flush_on_newline=(flush_on_newline : Bool) : Bool
+    @flush_on_newline = flush_on_newline
   end
 
   # Determines if this `IO` flushes automatically when a newline is written.
@@ -246,7 +246,7 @@ module IO::Buffered
   end
 
   # Flushes any buffered data and the underlying `IO`. Returns `self`.
-  def flush
+  def flush : self
     unbuffered_write(Slice.new(out_buffer, @out_count)) if @out_count > 0
     unbuffered_flush
     @out_count = 0
@@ -261,7 +261,7 @@ module IO::Buffered
   end
 
   # Rewinds the underlying `IO`. Returns `self`.
-  def rewind
+  def rewind : self
     unbuffered_rewind
     @in_buffer_rem = Bytes.empty
     self

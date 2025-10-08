@@ -3,7 +3,7 @@
 #
 # ```
 # # A proc without arguments
-# ->{ 1 } # Proc(Int32)
+# -> { 1 } # Proc(Int32)
 #
 # # A proc with one argument
 # ->(x : Int32) { x.to_s } # Proc(Int32, String)
@@ -100,7 +100,8 @@
 # The C library will of course store the callback, but Crystal's GC has
 # no way of knowing that.
 struct Proc
-  def self.new(pointer : Void*, closure_data : Void*)
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_proc_new)] {% end %}
+  def self.new(pointer : Void*, closure_data : Void*) : self
     func = {pointer, closure_data}
     ptr = pointerof(func).as(self*)
     ptr.value

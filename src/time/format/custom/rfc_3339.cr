@@ -1,11 +1,11 @@
 struct Time::Format
-  # The [RFC 3339](https://tools.ietf.org/html/rfc3339) datetime format ([ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
+  # The [RFC 3339](https://tools.ietf.org/html/rfc3339) datetime format ([ISO 8601](https://web.archive.org/web/20250306154328/http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
   #
   # ```
   # Time::Format::RFC_3339.format(Time.utc(2016, 2, 15, 4, 35, 50)) # => "2016-02-15T04:35:50Z"
   #
-  # Time::Format::RFC_3339.parse("2016-02-15T04:35:50Z") # => 2016-02-15 04:35:50.0 UTC
-  # Time::Format::RFC_3339.parse("2016-02-15 04:35:50Z") # => 2016-02-15 04:35:50.0 UTC
+  # Time::Format::RFC_3339.parse("2016-02-15T04:35:50Z") # => 2016-02-15 04:35:50Z
+  # Time::Format::RFC_3339.parse("2016-02-15 04:35:50Z") # => 2016-02-15 04:35:50Z
   # ```
   module RFC_3339
     # Parses a string into a `Time`.
@@ -16,27 +16,27 @@ struct Time::Format
     end
 
     # Formats a `Time` into the given *io*.
-    def self.format(time : Time, io : IO, fraction_digits = 0)
+    def self.format(time : Time, io : IO, fraction_digits = 0, *, preferred_separator = 'T')
       formatter = Formatter.new(time, io)
-      formatter.rfc_3339(fraction_digits: fraction_digits)
+      formatter.rfc_3339(fraction_digits: fraction_digits, preferred_separator: preferred_separator)
       io
     end
 
     # Formats a `Time` into a `String`.
-    def self.format(time : Time, fraction_digits = 0) : String
+    def self.format(time : Time, fraction_digits = 0, *, preferred_separator = 'T') : String
       String.build do |io|
-        format(time, io, fraction_digits: fraction_digits)
+        format(time, io, fraction_digits: fraction_digits, preferred_separator: preferred_separator)
       end
     end
   end
 
   module Pattern
-    def rfc_3339(fraction_digits = 0)
+    def rfc_3339(fraction_digits = 0, preferred_separator = 'T')
       year_month_day
-      char 'T', 't', ' '
+      char preferred_separator, 'T', 't', ' '
       twenty_four_hour_time_with_seconds
       second_fraction?(fraction_digits: fraction_digits)
-      time_zone_z_or_offset(force_colon: true)
+      time_zone_z_or_offset(force_colon: true, format_seconds: :auto)
     end
   end
 end

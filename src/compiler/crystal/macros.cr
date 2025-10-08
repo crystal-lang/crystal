@@ -62,6 +62,12 @@ private macro def_string_methods(klass)
   def includes?(search : StringLiteral | CharLiteral) : BoolLiteral
   end
 
+  # Returns an array of capture hashes for each match of *regex* in this string.
+  #
+  # Capture hashes have the same form as `Regex::MatchData#to_h`.
+  def scan(regex : RegexLiteral) : ArrayLiteral(HashLiteral(NumberLiteral | StringLiteral), StringLiteral | NilLiteral)
+  end
+
   # Similar to `String#size`.
   def size : NumberLiteral
   end
@@ -92,6 +98,20 @@ private macro def_string_methods(klass)
 
   # Similar to `String#to_i`.
   def to_i(base = 10)
+  end
+
+  # Returns an expression that evaluates to a slice literal containing the
+  # UTF-16 code units of this string, plus an extra trailing null character.
+  # This null character is not part of the slice, but ensures that calling
+  # `#to_unsafe` always results in a properly null-terminated C string.
+  #
+  # ```
+  # {{ "abc😂".to_utf16 }} # => ::Slice(::UInt16).literal(97, 98, 99, 55357, 56834, 0)[0, 5]
+  # ```
+  #
+  # WARNING: The return value is not necessarily a literal node.
+  @[Experimental("Slice literals are still under development. Join the discussion at [#2886](https://github.com/crystal-lang/crystal/issues/2886).")]
+  def to_utf16 : ASTNode
   end
 
   # Similar to `String#tr`.
@@ -322,6 +342,43 @@ module Crystal::Macros
   def skip_file : Nop
   end
 
+  # Returns the size of the given *type* as number of bytes.
+  #
+  # For definition purposes, a type is considered to be **stable** if its size
+  # and alignment do not change as new code is being processed. Currently, all
+  # Crystal types are stable, _except_ the following:
+  #
+  # * Structs, e.g. `Bytes`
+  # * `ReferenceStorage` instances
+  # * Modules, e.g. `Math` (however, `Math.class` is stable)
+  # * Uninstantiated generic types, e.g. `Array`
+  # * `StaticArray`, `Tuple`, `NamedTuple` instances with unstable element types
+  # * Unions containing any unstable types
+  #
+  # *type* must be a constant referring to a stable type. It cannot be evaluated
+  # at macro evaluation time, nor a `typeof` expression.
+  #
+  # ```
+  # {{ sizeof(Int32) }} # => 4
+  # {{ sizeof(Void*) }} # usually 4 or 8
+  # ```
+  def __crystal_pseudo_sizeof(type) : NumberLiteral
+  end
+
+  # Returns the alignment of the given *type* as number of bytes.
+  #
+  # *type* must be a constant referring to a stable type. It cannot be evaluated
+  # at macro evaluation time, nor a `typeof` expression.
+  #
+  # See `sizeof` for the definition of a stable type.
+  #
+  # ```
+  # {{ alignof(Int32) }} # => 4
+  # {{ alignof(Void*) }} # usually 4 or 8
+  # ```
+  def __crystal_pseudo_alignof(type) : NumberLiteral
+  end
+
   # This is the base class of all AST nodes. This methods are
   # available to all AST nodes.
   abstract class ASTNode
@@ -483,6 +540,10 @@ module Crystal::Macros
 
   # Any number literal.
   class NumberLiteral < ASTNode
+    # Returns `true` if value is 0, `false` otherwise.
+    def zero? : BoolLiteral
+    end
+
     # Compares this node's value to another node's value.
     def <(other : NumberLiteral) : BoolLiteral
     end
@@ -595,6 +656,10 @@ module Crystal::Macros
 
     # Similar to `String#<`
     def <(other : StringLiteral | MacroId) : BoolLiteral
+    end
+
+    # Similar to `String#*`.
+    def *(other : NumberLiteral) : StringLiteral
     end
   end
 
@@ -745,6 +810,10 @@ module Crystal::Macros
     def -(other : ArrayLiteral) : ArrayLiteral
     end
 
+    # Similar to `Array#*`
+    def *(other : NumberLiteral) : ArrayLiteral
+    end
+
     # Returns the type specified at the end of the array literal, if any.
     #
     # This refers to the part after brackets in `[] of String`.
@@ -798,6 +867,10 @@ module Crystal::Macros
 
     # Similar to `Hash#[]=`
     def []=(key : ASTNode, value : ASTNode) : ASTNode
+    end
+
+    # Similar to `Hash#has_hey?`
+    def has_key?(key : ASTNode) : BoolLiteral
     end
 
     # Returns the type specified at the end of the Hash literal, if any.
@@ -873,6 +946,10 @@ module Crystal::Macros
 
     # Adds or replaces a key.
     def []=(key : SymbolLiteral | StringLiteral | MacroId, value : ASTNode) : ASTNode
+    end
+
+    # Similar to `NamedTuple#has_key?`
+    def has_key?(key : SymbolLiteral | StringLiteral | MacroId) : ASTNode
     end
   end
 
@@ -2353,10 +2430,16 @@ module Crystal::Macros
     end
   end
 
-  # An `if` inside a macro, e.g.
+  # An `if`/`unless` inside a macro, e.g.
   #
   # ```
   # {% if cond %}
+  #   puts "Then"
+  # {% else %}
+  #   puts "Else"
+  # {% end %}
+  #
+  # {% unless cond %}
   #   puts "Then"
   # {% else %}
   #   puts "Else"
@@ -2373,6 +2456,10 @@ module Crystal::Macros
 
     # The `else` branch of the `if`.
     def else : ASTNode
+    end
+
+    # Returns `true` if this node represents an `unless` conditional, otherwise returns `false`.
+    def is_unless? : BoolLiteral
     end
   end
 
@@ -2824,6 +2911,18 @@ module Crystal::Macros
     def resolve? : TypeNode
     end
 
+    # Return `true` if `self` is private and `false` otherwise.
+    def private? : BoolLiteral
+    end
+
+    # Return `true` if `self` is public and `false` otherwise.
+    def public? : BoolLiteral
+    end
+
+    # Returns visibility of `self` as `:public` or `:private?`
+    def visibility : SymbolLiteral
+    end
+
     # Returns `true` if *other* is an ancestor of `self`.
     def <(other : TypeNode) : BoolLiteral
     end
@@ -2840,6 +2939,25 @@ module Crystal::Macros
     # Returns `true` if *other* is the same as `self` or if
     # `self` is an ancestor of *other*.
     def >=(other : TypeNode) : BoolLiteral
+    end
+
+    # Returns whether `self` contains any inner pointers.
+    #
+    # Primitive types, except `Void`, are expected to not contain inner pointers.
+    # `Proc` and `Pointer` contain inner pointers.
+    # Unions, structs and collection types (tuples, static arrays)
+    # have inner pointers if any of their contained types has inner pointers.
+    # All other types, including classes, are expected to contain inner pointers.
+    #
+    # Types that do not have inner pointers may opt to use atomic allocations,
+    # i.e. `GC.malloc_atomic` rather than `GC.malloc`. The compiler ensures
+    # that, for any type `T`:
+    #
+    # * `Pointer(T).malloc` is atomic if and only if `T` has no inner pointers;
+    # * `T.allocate` is atomic if and only if `T` is a reference type and
+    #   `ReferenceStorage(T)` has no inner pointers.
+    # NOTE: Like `#instance_vars` this method must be called from within a method. The result may be incorrect when used in top-level code.
+    def has_inner_pointers? : BoolLiteral
     end
   end
 end

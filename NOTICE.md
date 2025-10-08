@@ -1,12 +1,20 @@
 # Crystal Programming Language
 
-Copyright 2012-2024 Manas Technology Solutions.
+Copyright 2012-2025 Manas Technology Solutions.
 
 This product includes software developed at Manas Technology Solutions (<https://manas.tech/>).
 
-Apache License v2.0 applies to all works.
+Apache License v2.0 with Swift exception applies to all works unless specified
+otherwise:
 
-Please see [LICENSE](/LICENSE) for additional copyright and licensing information.
+Please see [REUSE.toml](REUSE.toml) and [LICENSE](LICENSE) for additional
+copyright and licensing information.
+
+* This repository includes vendored libraries (shards) in `/lib/` which have
+their own licenses. See [REUSE.toml](REUSE.toml) for details.
+* Crystal playground includes vendored libraries with their own licenses. See
+[src/compiler/crystal/tools/playground/public/vendor/REUSE.toml](src/compiler/crystal/tools/playground/public/vendor/REUSE.toml)
+for details.
 
 ## External libraries information
 
@@ -35,16 +43,6 @@ Crystal standard library uses the following libraries, which have their own lice
   * [LibYAML][] - [MIT][]
   * [readline][] - [GPLv3][]
   * [GMP][] - [LGPLv3][]
-
-Crystal playground includes the following libraries, which have their own licenses.
-(There are these files under [/src/compiler/crystal/tools/playground/public/vendor](/src/compiler/crystal/tools/playground/public/vendor)):
-
-   * [jQuery][] - [MIT][]
-     `Copyright JS Foundation and other contributors, https://js.foundation/`
-   * [Octicons][] - [MIT][] `(c) 2023 GitHub Inc.`
-   * [Materialize][] - [MIT][] `Copyright (c) 2014-2015 Materialize`
-   * [CodeMirror][] - [MIT][] `Copyright (C) 2016 by Marijn Haverbeke <marijnh@gmail.com> and others`
-   * [ansi\_up][] - [MIT][] `Copyright (c) 2011 Dru Nelson`
 
 <!-- licenses -->
 [Apache-2.0]: https://www.openssl.org/source/apache-license-2.0.txt

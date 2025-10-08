@@ -26,7 +26,7 @@ class Crystal::Repl
       @owner : Type,
       @args_bytesize : Int32,
       @instructions : CompiledInstructions = CompiledInstructions.new,
-      @local_vars = LocalVars.new(context)
+      @local_vars = LocalVars.new(context),
     )
     end
   end

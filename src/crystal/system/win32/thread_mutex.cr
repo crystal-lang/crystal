@@ -37,7 +37,7 @@ class Thread
     def unlock : Nil
       # `owningThread` is declared as `LibC::HANDLE` for historical reasons, so
       # the following comparison is correct
-      unless @cs.owningThread == LibC::HANDLE.new(LibC.GetCurrentThreadId)
+      unless @cs.owningThread == LibC::HANDLE.new(LibC.GetCurrentThreadId.to_u64!)
         raise RuntimeError.new "Attempt to unlock a mutex locked by another thread"
       end
       LibC.LeaveCriticalSection(self)

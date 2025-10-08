@@ -11,8 +11,8 @@ require "./benchmark/**"
 # require "benchmark"
 #
 # Benchmark.ips do |x|
-#   x.report("short sleep") { sleep 0.01 }
-#   x.report("shorter sleep") { sleep 0.001 }
+#   x.report("short sleep") { sleep 10.milliseconds }
+#   x.report("shorter sleep") { sleep 1.millisecond }
 # end
 # ```
 #
@@ -31,7 +31,7 @@ require "./benchmark/**"
 # require "benchmark"
 #
 # Benchmark.ips(warmup: 4, calculation: 10) do |x|
-#   x.report("sleep") { sleep 0.01 }
+#   x.report("sleep") { sleep 10.milliseconds }
 # end
 # ```
 #
@@ -102,10 +102,10 @@ module Benchmark
   # to which one can report the benchmarks. See the module's description.
   #
   # The optional parameters *calculation* and *warmup* set the duration of
-  # those stages in seconds. For more detail on these stages see
+  # those stages. For more detail on these stages see
   # `Benchmark::IPS`. When the *interactive* parameter is `true`, results are
   # displayed and updated as they are calculated, otherwise all at once after they finished.
-  def ips(calculation = 5, warmup = 2, interactive = STDOUT.tty?, &)
+  def ips(calculation : Time::Span = 5.seconds, warmup : Time::Span = 2.seconds, interactive : Bool = STDOUT.tty?, &)
     {% if !flag?(:release) %}
       puts "Warning: benchmarking without the `--release` flag won't yield useful results"
     {% end %}
@@ -115,6 +115,18 @@ module Benchmark
     job.execute
     job.report
     job
+  end
+
+  # Instruction per second interface of the `Benchmark` module. Yields a `Job`
+  # to which one can report the benchmarks. See the module's description.
+  #
+  # The optional parameters *calculation* and *warmup* set the duration of
+  # those stages in seconds. For more detail on these stages see
+  # `Benchmark::IPS`. When the *interactive* parameter is `true`, results are
+  # displayed and updated as they are calculated, otherwise all at once after they finished.
+  @[Deprecated("Use `#ips(Time::Span, Time::Span, Bool, &)` instead.")]
+  def ips(calculation = 5, warmup = 2, interactive = STDOUT.tty?, &)
+    ips(calculation.seconds, warmup.seconds, !!interactive) { |job| yield job }
   end
 
   # Returns the time used to execute the given block.

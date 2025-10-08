@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Code gen: hash literal spec" do
   it "creates custom non-generic hash" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(90)
       class Custom
         def initialize
           @keys = 0
@@ -25,11 +25,11 @@ describe "Code gen: hash literal spec" do
 
       custom = Custom {1 => 10, 2 => 20}
       custom.keys &* custom.values
-      )).to_i.should eq(90)
+      CRYSTAL
   end
 
   it "creates custom generic hash" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(90)
       class Custom(K, V)
         def initialize
           @keys = 0
@@ -52,11 +52,11 @@ describe "Code gen: hash literal spec" do
 
       custom = Custom {1 => 10, 2 => 20}
       custom.keys &* custom.values
-      )).to_i.should eq(90)
+      CRYSTAL
   end
 
   it "creates custom generic hash with type vars" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(90)
       class Custom(K, V)
         def initialize
           @keys = 0
@@ -79,11 +79,11 @@ describe "Code gen: hash literal spec" do
 
       custom = Custom(Int32, Int32) {1 => 10, 2 => 20}
       custom.keys &* custom.values
-      )).to_i.should eq(90)
+      CRYSTAL
   end
 
   it "creates custom generic hash via alias (1)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(90)
       class Custom(K, V)
         def initialize
           @keys = 0
@@ -108,11 +108,11 @@ describe "Code gen: hash literal spec" do
 
       custom = MyCustom {1 => 10, 2 => 20}
       custom.keys &* custom.values
-      )).to_i.should eq(90)
+      CRYSTAL
   end
 
   it "creates custom generic hash via alias (2)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(90)
       class Custom(K, V)
         def initialize
           @keys = 0
@@ -137,11 +137,11 @@ describe "Code gen: hash literal spec" do
 
       custom = MyCustom {1 => 10, 2 => 20}
       custom.keys &* custom.values
-      )).to_i.should eq(90)
+      CRYSTAL
   end
 
   it "doesn't crash on hash literal with proc pointer (#646)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       require "prelude"
 
       def blah
@@ -150,11 +150,11 @@ describe "Code gen: hash literal spec" do
 
       b = {"a" => ->blah}
       b["a"].call
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "creates custom non-generic hash in module" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(90)
       module Moo
         class Custom
           def initialize
@@ -179,11 +179,11 @@ describe "Code gen: hash literal spec" do
 
       custom = Moo::Custom {1 => 10, 2 => 20}
       custom.keys &* custom.values
-      )).to_i.should eq(90)
+      CRYSTAL
   end
 
   it "creates custom generic hash in module (#5684)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(90)
       module Moo
         class Custom(K, V)
           def initialize
@@ -208,7 +208,7 @@ describe "Code gen: hash literal spec" do
 
       custom = Moo::Custom {1 => 10, 2 => 20}
       custom.keys &* custom.values
-      )).to_i.should eq(90)
+      CRYSTAL
   end
 
   it "assignment in hash literal works" do

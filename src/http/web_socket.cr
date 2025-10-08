@@ -34,7 +34,7 @@ class HTTP::WebSocket
   # HTTP::WebSocket.new(
   #   URI.parse("ws://user:password@websocket.example.com/chat")) # Creates a new WebSocket to `websocket.example.com` with an HTTP basic auth Authorization header
   # ```
-  def self.new(uri : URI | String, headers = HTTP::Headers.new)
+  def self.new(uri : URI | String, headers : HTTP::Headers = HTTP::Headers.new) : self
     new(Protocol.new(uri, headers: headers))
   end
 
@@ -47,7 +47,7 @@ class HTTP::WebSocket
   # HTTP::WebSocket.new("websocket.example.com", "/chat")            # Creates a new WebSocket to `websocket.example.com`
   # HTTP::WebSocket.new("websocket.example.com", "/chat", tls: true) # Creates a new WebSocket with TLS to `ẁebsocket.example.com`
   # ```
-  def self.new(host : String, path : String, port = nil, tls : HTTP::Client::TLSContext = nil, headers = HTTP::Headers.new)
+  def self.new(host : String, path : String, port : Int32? = nil, tls : HTTP::Client::TLSContext = nil, headers : HTTP::Headers = HTTP::Headers.new) : self
     new(Protocol.new(host, path, port, tls, headers))
   end
 
@@ -62,15 +62,15 @@ class HTTP::WebSocket
   end
 
   # Called when a text message is received.
-  def on_message(&@on_message : String ->)
+  def on_message(&@on_message : String ->) : Proc(String, Nil)
   end
 
   # Called when a binary message is received.
-  def on_binary(&@on_binary : Bytes ->)
+  def on_binary(&@on_binary : Bytes ->) : Proc(Bytes, Nil)
   end
 
   # Called when the connection is closed by the other party.
-  def on_close(&@on_close : CloseCode, String ->)
+  def on_close(&@on_close : CloseCode, String ->) : Proc(HTTP::WebSocket::CloseCode, String, Nil)
   end
 
   protected def check_open
@@ -78,7 +78,7 @@ class HTTP::WebSocket
   end
 
   # Sends a message payload (message).
-  def send(message) : Nil
+  def send(message : String) : Nil
     check_open
     @ws.send(message)
   end
@@ -92,11 +92,31 @@ class HTTP::WebSocket
   end
 
   # Sends a PONG frame, which must be in response to a previously received PING frame from `#on_ping`.
-  def pong(message = nil) : Nil
+  def pong(message : String? = nil) : Nil
     check_open
     @ws.pong(message)
   end
 
+  # Streams data into io until the io is flushed and sent as a message.
+  #
+  # The method accepts a block with an `io` argument.
+  # The io object can call on `IO#write` and `IO#flush` method.
+  # The `write` method accepts `Bytes` (`Slice(UInt8)`) and sends the data in chunks of *frame_size* bytes. The `flush` method sends all the data in io and resets it.
+  # The remaining data in it is sent as a message when the block is finished executing.
+  # For further information, see the `HTTP::WebSocket::Protocol::StreamIO` class.
+  #
+  # ```
+  # # Open websocket connection
+  # ws = HTTP::WebSocket.new("websocket.example.com", "/chat")
+  #
+  # # Open stream
+  # ws.stream(false) do |io|
+  #   io.write "Hello, ".encode("UTF-8") # Sends "Hello, " to io
+  #   io.flush                           # Sends "Hello, " to the socket
+  #   io.write "world!".encode("UTF-8")  # Sends "world!" to io
+  # end
+  # # Sends "world!" to the socket
+  # ```
   def stream(binary = true, frame_size = 1024, &)
     check_open
     @ws.stream(binary: binary, frame_size: frame_size) do |io|
@@ -106,7 +126,7 @@ class HTTP::WebSocket
 
   # Sends a close frame, and closes the connection.
   # The close frame may contain a body (message) that indicates the reason for closing.
-  def close(code : CloseCode | Int? = nil, message = nil) : Nil
+  def close(code : CloseCode | Int? = nil, message : String? = nil) : Nil
     return if closed?
     @closed = true
     @ws.close(code, message)
@@ -142,8 +162,7 @@ class HTTP::WebSocket
         @current_message.write @buffer[0, info.size]
         if info.final
           message = @current_message.to_s
-          @on_ping.try &.call(message)
-          pong(message) unless closed?
+          do_ping(message)
           @current_message.clear
         end
       in .pong?
@@ -177,8 +196,7 @@ class HTTP::WebSocket
           end
           message = @current_message.gets_to_end
 
-          @on_close.try &.call(code, message)
-          close
+          do_close(code, message)
 
           @current_message.clear
           break
@@ -187,6 +205,16 @@ class HTTP::WebSocket
         # TODO: (asterite) I think this is good, but this case wasn't originally handled
       end
     end
+  end
+
+  private def do_close(code, message)
+    @on_close.try &.call(code, message)
+    close
+  end
+
+  private def do_ping(message)
+    @on_ping.try &.call(message)
+    pong(message) unless closed?
   end
 end
 

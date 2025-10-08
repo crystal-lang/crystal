@@ -25,7 +25,7 @@ class IO::Delimited < IO
   # byte sequence *read_delimiter* (interpreted as UTF-8) is found. If
   # *sync_close* is set, calling `#close` calls `#close` on the underlying
   # `IO`.
-  def self.new(io : IO, read_delimiter : String, sync_close : Bool = false)
+  def self.new(io : IO, read_delimiter : String, sync_close : Bool = false) : self
     new(io, read_delimiter.to_slice, sync_close)
   end
 
@@ -111,11 +111,13 @@ class IO::Delimited < IO
         next_index = @active_delimiter_buffer.index(first_byte, 1)
 
         # We read up to that new match, if any, or the entire buffer
-        read_bytes = next_index || @active_delimiter_buffer.size
+        read_bytes = Math.min(next_index || @active_delimiter_buffer.size, slice.size)
 
         slice.copy_from(@active_delimiter_buffer[0, read_bytes])
         slice += read_bytes
         @active_delimiter_buffer += read_bytes
+
+        return read_bytes if slice.empty?
         return read_bytes + read_internal(slice)
       end
     end

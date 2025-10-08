@@ -364,6 +364,8 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
       visibility: visibility,
     )
 
+    node.doc ||= annotations_doc @annotations
+
     if node_doc = node.doc
       generated_nodes.accept PropagateDocVisitor.new(node_doc)
     end
@@ -525,6 +527,10 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     end
   end
 
+  private def annotations_doc(annotations)
+    annotations.try(&.first?).try &.doc
+  end
+
   def check_class_var_annotations
     thread_local = false
     process_annotations(@annotations) do |annotation_type, ann|
@@ -557,7 +563,9 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
       node.raise "can't declare variable of generic non-instantiated type #{type}"
     end
 
-    Crystal.check_type_can_be_stored(node, type, "can't use #{type} as the type of #{variable_kind}")
+    unless type.can_be_stored?
+      node.raise "can't use #{type} as the type of #{variable_kind} yet, use a more specific type"
+    end
 
     declared_type
   end

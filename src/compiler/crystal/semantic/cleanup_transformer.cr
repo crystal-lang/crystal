@@ -140,6 +140,13 @@ module Crystal
     def transform(node : ClassDef)
       super
 
+      # check superclass for deprecation if the node isn't deprecated
+      if (type = node.type.lookup_type?(node.name)) && !type.annotation(@program.deprecated_annotation)
+        if ((superclass = node.superclass).is_a?(Path) && (stype = superclass.type? || node.type.lookup_type?(superclass)))
+          @program.check_deprecated_type(stype, superclass)
+        end
+      end
+
       node.hook_expansions.try &.map! &.transform self
       node
     end
@@ -379,7 +386,14 @@ module Crystal
         # `temp_assign` is this whole Assign node and its deduced type is same
         # as the original RHS's type
         temp_assign = expanded.as(Expressions).expressions.first
-        type = temp_assign.type
+        type = temp_assign.type?
+
+        # if the Assign node's RHS is untyped, this and all following
+        # assignments are unreachable
+        unless type
+          return untyped_expression node
+        end
+
         target_count = node.targets.size
         has_strict_multi_assign = @program.has_flag?("strict_multi_assign")
 
@@ -434,7 +448,15 @@ module Crystal
           const.value = const.value.transform self
           const.cleaned_up = true
         end
+      elsif type = node.target_type
+        @program.check_deprecated_type(type, node)
       end
+
+      node
+    end
+
+    def transform(node : Generic)
+      transform_many node.type_vars
 
       node
     end
@@ -462,10 +484,6 @@ module Crystal
     def transform(node : Call)
       if expanded = node.expanded
         return expanded.transform self
-      end
-
-      unless @current_def.try(&.annotation(@program.deprecated_annotation))
-        @program.check_call_to_deprecated_method(node)
       end
 
       # Need to transform these manually because node.block doesn't
@@ -612,6 +630,11 @@ module Crystal
           node.args << named_arg.value
         end
         node.named_args = nil
+      end
+
+      # Check deprecations last, after the arguments have been flattened.
+      unless @current_def.try(&.annotation(@program.deprecated_annotation))
+        @program.check_call_to_deprecated_method(node)
       end
 
       node
@@ -1090,10 +1113,7 @@ module Crystal
       node = super
 
       unless node.type?
-        if dependencies = node.dependencies?
-          node.unbind_from node.dependencies
-        end
-
+        node.unbind_from node.dependencies
         node.bind_to node.expressions
       end
 

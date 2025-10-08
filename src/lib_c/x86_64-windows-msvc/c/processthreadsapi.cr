@@ -3,6 +3,7 @@ require "c/wtypesbase"
 require "c/sdkddkver"
 
 lib LibC
+  CREATE_SUSPENDED           = 0x00000004
   CREATE_UNICODE_ENVIRONMENT = 0x00000400
 
   struct PROCESS_INFORMATION
@@ -58,6 +59,16 @@ lib LibC
                       lpKernelTime : FILETIME*, lpUserTime : FILETIME*) : BOOL
   fun SwitchToThread : BOOL
   fun QueueUserAPC(pfnAPC : PAPCFUNC, hThread : HANDLE, dwData : ULONG_PTR) : DWORD
+
+  fun GetThreadContext(hThread : HANDLE, lpContext : CONTEXT*) : DWORD
+  fun ResumeThread(hThread : HANDLE) : DWORD
+  fun SuspendThread(hThread : HANDLE) : DWORD
+
+  TLS_OUT_OF_INDEXES = 0xFFFFFFFF_u32
+
+  fun TlsAlloc : DWORD
+  fun TlsGetValue(dwTlsIndex : DWORD) : Void*
+  fun TlsSetValue(dwTlsIndex : DWORD, lpTlsValue : Void*) : BOOL
 
   PROCESS_QUERY_INFORMATION = 0x0400
 end

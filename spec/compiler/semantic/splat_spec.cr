@@ -9,27 +9,26 @@ end
 
 describe "Semantic: splat" do
   it "splats" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([int32, float64, char] of Type) }
       def foo(*args)
         args
       end
 
       foo 1, 1.5, 'a'
-      )) { tuple_of([int32, float64, char] of Type) }
+      CRYSTAL
   end
 
   it "errors on zero args with named arg and splat" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "wrong number of arguments"
       def foo(x, y = 1, *z)
       end
 
       foo
-      ),
-      "wrong number of arguments"
+      CRYSTAL
   end
 
   it "redefines method with splat (bug #248)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { char }
       class Foo
         def bar(*x)
           1
@@ -43,37 +42,34 @@ describe "Semantic: splat" do
       end
 
       Foo.new.bar 1
-      )) { char }
+      CRYSTAL
   end
 
   it "errors if splatting union" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "not yet supported"
       a = {1} || {1, 2}
       foo *a
-      ),
-      "not yet supported"
+      CRYSTAL
   end
 
   it "errors if splatting non-tuple type in call arguments" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "argument to splat must be a tuple, not Int32"
       foo *1
-      ),
-      "argument to splat must be a tuple, not Int32"
+      CRYSTAL
   end
 
   it "errors if splatting non-tuple type in return values" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "argument to splat must be a tuple, not Int32"
       def foo
         return *1
       end
 
       foo
-      ),
-      "argument to splat must be a tuple, not Int32"
+      CRYSTAL
   end
 
   it "forwards tuple with an extra argument" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of [int32] of TypeVar }
       def foo(*args)
         bar 1, *args
       end
@@ -84,21 +80,21 @@ describe "Semantic: splat" do
 
       x = foo 2
       x
-      )) { tuple_of [int32] of TypeVar }
+      CRYSTAL
   end
 
   it "forwards tuple in return statement" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([tuple_of([int32, char]), int32, char]) }
       def foo(*args)
         return args, *args
       end
 
       foo 1, 'a'
-      )) { tuple_of([tuple_of([int32, char]), int32, char]) }
+      CRYSTAL
   end
 
   it "can splat after type filter left it as a tuple (#442)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       def output(x, y)
         x + y
       end
@@ -109,31 +105,30 @@ describe "Semantic: splat" do
       else
         4
       end
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "errors if doesn't match splat with type restriction" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "no overload matches"
       def foo(*args : Int32)
       end
 
       foo 1, 2, 3, 'a'
-      ),
-      "no overload matches"
+      CRYSTAL
   end
 
   it "works if matches splat with type restriction" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       def foo(*args : Int32)
         args[0]
       end
 
       foo 1, 2, 3
-      )) { int32 }
+      CRYSTAL
   end
 
   it "overloads with type restriction and splat (1)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       def foo(arg : Int32)
         1
       end
@@ -143,11 +138,11 @@ describe "Semantic: splat" do
       end
 
       foo 1
-      )) { int32 }
+      CRYSTAL
   end
 
   it "overloads with type restriction and splat (2)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { char }
       def foo(arg : Int32)
         1
       end
@@ -157,21 +152,20 @@ describe "Semantic: splat" do
       end
 
       foo 1, 2, 3
-      )) { char }
+      CRYSTAL
   end
 
   it "errors if doesn't match splat with type restriction because of zero arguments" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "wrong number of arguments for 'foo' (given 0, expected 1+)"
       def foo(*args : Int32)
       end
 
       foo
-      ),
-      "wrong number of arguments for 'foo' (given 0, expected 1+)"
+      CRYSTAL
   end
 
   it "overloads with type restriction and splat (3)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { string }
       def foo(*args : Char)
         "hello"
       end
@@ -181,11 +175,11 @@ describe "Semantic: splat" do
       end
 
       foo 'a', 'b', 'c'
-      )) { string }
+      CRYSTAL
   end
 
   it "overloads with type restriction and splat (4)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { float64 }
       def foo(*args : Char)
         "hello"
       end
@@ -195,11 +189,11 @@ describe "Semantic: splat" do
       end
 
       foo 1, 2, 3
-      )) { float64 }
+      CRYSTAL
   end
 
   it "overloads with type restriction and splat (5)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { string }
       def foo(*args : Int32)
         "hello"
       end
@@ -209,11 +203,11 @@ describe "Semantic: splat" do
       end
 
       foo 1, 2, 3
-      )) { string }
+      CRYSTAL
   end
 
   it "overloads with type restriction and splat (6)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { float64 }
       def foo(*args : Int32)
         "hello"
       end
@@ -223,11 +217,11 @@ describe "Semantic: splat" do
       end
 
       foo
-      )) { float64 }
+      CRYSTAL
   end
 
   it "overloads with type restriction and splat (7)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { char }
       def foo(*args)
         foo args
       end
@@ -237,11 +231,11 @@ describe "Semantic: splat" do
       end
 
       foo 1, 2, 3
-      )) { char }
+      CRYSTAL
   end
 
   it "overloads with splat against method with two arguments (#986) (1)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       def foo(a, b)
         1
       end
@@ -251,11 +245,11 @@ describe "Semantic: splat" do
       end
 
       foo "bar", "baz"
-      )) { int32 }
+      CRYSTAL
   end
 
   it "overloads with splat against method with two arguments (#986) (2)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { char }
       def foo(a, b)
         1
       end
@@ -265,11 +259,11 @@ describe "Semantic: splat" do
       end
 
       foo "bar"
-      )) { char }
+      CRYSTAL
   end
 
   it "calls super with implicit splat arg (#1001)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def foo(name)
           name
@@ -283,11 +277,11 @@ describe "Semantic: splat" do
       end
 
       Bar.new.foo 1
-      )) { int32 }
+      CRYSTAL
   end
 
   it "splats arg and splat against splat (1) (#1042)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       def foo(a : Bool, *b : Int32)
         1
       end
@@ -297,11 +291,11 @@ describe "Semantic: splat" do
       end
 
       foo(true, 3, 4, 5)
-      )) { int32 }
+      CRYSTAL
   end
 
   it "splats arg and splat against splat (2) (#1042)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { char }
       def foo(a : Bool, *b : Int32)
         1
       end
@@ -311,11 +305,11 @@ describe "Semantic: splat" do
       end
 
       foo(3, 4, 5)
-      )) { char }
+      CRYSTAL
   end
 
   it "gives correct error when forwarding splat" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "wrong number of arguments for 'foo' (given 2, expected 1)"
       def foo(x : Int)
       end
 
@@ -324,12 +318,11 @@ describe "Semantic: splat" do
       end
 
       bar 'a', 1
-      ),
-      "wrong number of arguments for 'foo' (given 2, expected 1)"
+      CRYSTAL
   end
 
   it "gives correct error when forwarding splat (2)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to be Int, not Char"
       def foo(x : Int, y : Int, z : Int, w : Int)
       end
 
@@ -338,12 +331,11 @@ describe "Semantic: splat" do
       end
 
       bar 1, "a", 1.7
-      ),
-      "expected argument #1 to 'foo' to be Int, not Char"
+      CRYSTAL
   end
 
   it "doesn't crash on non-match (#2521)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "missing arguments: c, d"
       def test_func(a : String, *b, c, d)
       end
 
@@ -352,124 +344,119 @@ describe "Semantic: splat" do
       end
 
       test_func(val, 1, 2, 3, 4, 5)
-      ),
-      "missing arguments: c, d"
+      CRYSTAL
   end
 
   it "says no overload matches on type restrictions past the splat arg" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "missing arguments: a, b"
       def foo(*z, a : String, b : String)
       end
 
       foo(1, 2, 3, ("foo" || nil), ("bar" || nil))
-      ),
-      "missing arguments: a, b"
+      CRYSTAL
   end
 
   it "says missing argument because positional args don't match past splat" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "missing argument: z"
       def foo(x, *y, z)
       end
 
       foo 1, 2
-      ),
-      "missing argument: z"
+      CRYSTAL
   end
 
   it "allows default value after splat index" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([char, tuple_of([bool, float64]), int32]) }
       def foo(x, *y, z = 10)
         {x, y, z}
       end
 
       foo 'a', true, 1.5
-      )) { tuple_of([char, tuple_of([bool, float64]), int32]) }
+      CRYSTAL
   end
 
   it "uses bare *" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([int32, char]) }
       def foo(x, *, y)
         {x, y}
       end
 
       foo 10, y: 'a'
-      )) { tuple_of([int32, char]) }
+      CRYSTAL
   end
 
   it "uses bare *, doesn't let more args" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "no overload matches"
       def foo(x, *, y)
       end
 
       foo 10, 20, y: 30
-      ),
-      "no overload matches"
+      CRYSTAL
   end
 
   it "uses splat restriction" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([int32, char, bool]).metaclass }
       def foo(*args : *T) forall T
         T
       end
 
       foo 1, 'a', false
-      )) { tuple_of([int32, char, bool]).metaclass }
+      CRYSTAL
   end
 
   it "uses splat restriction, matches empty" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([] of Type).metaclass }
       def foo(*args : *T) forall T
         T
       end
 
       foo
-      )) { tuple_of([] of Type).metaclass }
+      CRYSTAL
   end
 
   it "uses splat restriction after non-splat arguments (#5037)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([char, string]).metaclass }
       def foo(x, *y : *T) forall T
         T
       end
 
       foo 1, 'a', ""
-      )) { tuple_of([char, string]).metaclass }
+      CRYSTAL
   end
 
   it "uses splat restriction with concrete type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "no overload matches"
       struct Tuple(*T)
         def self.foo(*args : *T)
         end
       end
 
       Tuple(Int32, Char).foo(1, true)
-      ),
-      "no overload matches"
+      CRYSTAL
   end
 
   it "method with splat and optional named argument matches zero args call (#2746)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([] of Type) }
       def foo(*args, k1 = nil)
         args
       end
 
       foo
-      )) { tuple_of([] of Type) }
+      CRYSTAL
   end
 
   it "method with default arguments and splat matches call with one arg (#2766)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       def foo(a = nil, b = nil, *, c = nil)
         a
       end
 
       foo(10)
-      )) { int32 }
+      CRYSTAL
   end
 
   it "accesses T when empty, via module" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { no_return.metaclass }
       module Moo(T)
         def t
           T
@@ -485,11 +472,11 @@ describe "Semantic: splat" do
       end
 
       Tuple.new.t
-      )) { no_return.metaclass }
+      CRYSTAL
   end
 
   it "matches type splat with splat in generic type (1)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([int32.metaclass, tuple_of([char, string]).metaclass, bool.metaclass]) }
       class Foo(*T)
       end
 
@@ -499,11 +486,11 @@ describe "Semantic: splat" do
 
       foo = Foo(Int32, Char, String, Bool).new
       method(foo)
-      )) { tuple_of([int32.metaclass, tuple_of([char, string]).metaclass, bool.metaclass]) }
+      CRYSTAL
   end
 
   it "matches type splat with splat in generic type (2)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([int32.metaclass, tuple_of([char, string]).metaclass, bool.metaclass]) }
       class Foo(T, *U, V)
         def t
           {T, U, V}
@@ -516,11 +503,11 @@ describe "Semantic: splat" do
 
       foo = Foo(Int32, Char, String, Bool).new
       method(foo)
-      )) { tuple_of([int32.metaclass, tuple_of([char, string]).metaclass, bool.metaclass]) }
+      CRYSTAL
   end
 
   it "matches instantiated generic with splat in generic type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { char }
       class Foo(*T)
       end
 
@@ -530,11 +517,11 @@ describe "Semantic: splat" do
 
       foo = Foo(Int32, String).new
       method(foo)
-      )) { char }
+      CRYSTAL
   end
 
   it "doesn't match splat in generic type with unsplatted tuple (#10164)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #1 to 'method' to be Foo(Tuple(Int32, String)), not Foo(Int32, String)"
       class Foo(*T)
       end
 
@@ -544,12 +531,11 @@ describe "Semantic: splat" do
 
       foo = Foo(Int32, String).new
       method(foo)
-      ),
-      "expected argument #1 to 'method' to be Foo(Tuple(Int32, String)), not Foo(Int32, String)"
+      CRYSTAL
   end
 
   it "matches partially instantiated generic with splat in generic type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { string.metaclass }
       class Foo(*T)
       end
 
@@ -559,11 +545,11 @@ describe "Semantic: splat" do
 
       foo = Foo(Int32, String).new
       method(foo)
-      )) { string.metaclass }
+      CRYSTAL
   end
 
   it "errors with too few non-splat type arguments (1)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "wrong number of type vars for Foo(T, U, *V) (given 1, expected 2+)"
       class Foo(T, U, *V)
       end
 
@@ -572,12 +558,11 @@ describe "Semantic: splat" do
 
       foo = Foo(Int32, String).new
       method(foo)
-      ),
-      "wrong number of type vars for Foo(T, U, *V) (given 1, expected 2+)"
+      CRYSTAL
   end
 
   it "errors with too few non-splat type arguments (2)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "wrong number of type vars for Foo(T, U, *V) (given 1, expected 2+)"
       class Foo(T, U, *V)
       end
 
@@ -586,12 +571,11 @@ describe "Semantic: splat" do
 
       foo = Foo(Int32, String).new
       method(foo)
-      ),
-      "wrong number of type vars for Foo(T, U, *V) (given 1, expected 2+)"
+      CRYSTAL
   end
 
   it "errors with too many non-splat type arguments" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "wrong number of type vars for Foo(A) (given 2+, expected 1)"
       class Foo(A)
       end
 
@@ -600,12 +584,11 @@ describe "Semantic: splat" do
 
       foo = Foo(Int32).new
       method(foo)
-      ),
-      "wrong number of type vars for Foo(A) (given 2+, expected 1)"
+      CRYSTAL
   end
 
   it "errors if using two splat indices on restriction" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't specify more than one splat in restriction"
       class Foo(*T)
       end
 
@@ -615,12 +598,11 @@ describe "Semantic: splat" do
 
       foo = Foo(Int32, Char, String, Bool).new
       method(foo)
-      ),
-      "can't specify more than one splat in restriction"
+      CRYSTAL
   end
 
   it "matches with splat" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([int32, int32]) }
       def foo(&block : *{Int32, Int32} -> U) forall U
         tup = {1, 2}
         yield *tup
@@ -629,21 +611,21 @@ describe "Semantic: splat" do
       foo do |x, y|
         {x, y}
       end
-      )) { tuple_of([int32, int32]) }
+      CRYSTAL
   end
 
   it "matches with tuple splat inside explicit Union" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       def foo(x : Union(*{Int32, String}))
         x
       end
 
       foo(1)
-      )) { int32 }
+      CRYSTAL
   end
 
   it "matches with type var splat inside explicit Union" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo(*T)
         def self.foo(x : Union(*T))
           x
@@ -651,11 +633,11 @@ describe "Semantic: splat" do
       end
 
       Foo(Int32, String).foo(1)
-      )) { int32 }
+      CRYSTAL
   end
 
   it "matches with type var splat inside explicit Union (2)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { string }
       class Foo(*T)
         def self.foo(x : Union(*T))
           x
@@ -663,11 +645,11 @@ describe "Semantic: splat" do
       end
 
       Foo(Int32, String).foo("")
-      )) { string }
+      CRYSTAL
   end
 
   it "matches with type var splat inside explicit Union, when all splat elements match" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo(*T)
         def self.foo(x : Union(*T))
           x
@@ -675,11 +657,11 @@ describe "Semantic: splat" do
       end
 
       Foo(Int32 | Bool, Int32 | String, Int32 | Char).foo(1)
-      )) { int32 }
+      CRYSTAL
   end
 
   it "matches with type var splat inside explicit Union, when one splat fails entirely" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { bool }
       class Foo(*T)
         def self.foo(x : Union(*T, Bool))
           x
@@ -687,11 +669,11 @@ describe "Semantic: splat" do
       end
 
       Foo(Int32, String).foo(true)
-      )) { bool }
+      CRYSTAL
   end
 
   it "matches with type var splat inside explicit Union, when non-splat vars fail" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo(*T)
         def self.foo(x : Union(*T, Char, Bool))
           x
@@ -699,11 +681,11 @@ describe "Semantic: splat" do
       end
 
       Foo(Int32, String).foo(1)
-      )) { int32 }
+      CRYSTAL
   end
 
   it "matches with type var and splat of itself inside explicit Union" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([int32, string]) }
       class Foo(*T)
         def self.foo(x : Union(T, *T))
           x
@@ -711,11 +693,11 @@ describe "Semantic: splat" do
       end
 
       Foo(Int32, String).foo({1, ""})
-      )) { tuple_of([int32, string]) }
+      CRYSTAL
   end
 
   it "matches with type var and splat of itself inside explicit Union (2)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo(*T)
         def self.foo(x : Union(T, *T))
           x
@@ -723,11 +705,11 @@ describe "Semantic: splat" do
       end
 
       Foo(Int32, String).foo(1)
-      )) { int32 }
+      CRYSTAL
   end
 
   it "matches with type var and splat of itself inside explicit Union (3)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { string }
       class Foo(*T)
         def self.foo(x : Union(T, *T))
           x
@@ -735,18 +717,17 @@ describe "Semantic: splat" do
       end
 
       Foo(Int32, String).foo("")
-      )) { string }
+      CRYSTAL
   end
 
   it "doesn't match free var type splats inside explicit Union" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to be Union(*T), not Int32"
       def foo(x : Union(*T)) forall T
         x
       end
 
       foo(1)
-      ),
-      "expected argument #1 to 'foo' to be Union(*T), not Int32"
+      CRYSTAL
   end
 
   describe Splat do
@@ -821,8 +802,8 @@ describe "Semantic: splat" do
       Foo.new.bar("test")
       CRYSTAL
     program = result.program
-    a_typ = program.types["Foo"].as(NonGenericClassType)
-    a_def = a_typ.def_instances.values[0]
+    a_type = program.types["Foo"].as(NonGenericClassType)
+    a_def = a_type.def_instances.values[0]
 
     a_def.location.should eq Location.new("", line_number: 2, column_number: 3)
     a_def.body.location.should eq Location.new("", line_number: 3, column_number: 5)

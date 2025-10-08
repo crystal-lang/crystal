@@ -17,6 +17,7 @@ lib LibC
   fun fchown(__fd : Int, __owner : UidT, __group : GidT) : Int
   fun close(__fd : Int) : Int
   fun dup2(__old_fd : Int, __new_fd : Int) : Int
+  fun dup3(__old_fd : Int, __new_fd : Int, __flags : Int) : Int
   fun _exit(__status : Int) : NoReturn
   fun execvp(__file : Char*, __argv : Char**) : Int
   fun fdatasync(__fd : Int) : Int
@@ -40,6 +41,7 @@ lib LibC
   {% end %}
   fun lseek(__fd : Int, __offset : OffT, __whence : Int) : OffT
   fun pipe(__fds : Int[2]) : Int
+  fun pipe2(__fds : Int[2], __flags : Int) : Int
   fun read(__fd : Int, __buf : Void*, __count : SizeT) : SSizeT
   fun pread(__fd : Int, __buf : Void*, __count : SizeT, __offset : OffT) : SSizeT
   fun rmdir(__path : Char*) : Int

@@ -22,7 +22,6 @@ all:
 ##   $ make -B generate_data
 
 CRYSTAL ?= crystal ## which previous crystal compiler use
-LLVM_CONFIG ?=     ## llvm-config command path to use
 
 release ?=      ## Compile in release mode
 stats ?=        ## Enable statistics output
@@ -36,7 +35,7 @@ target ?=       ## Cross-compilation target
 interpreter ?=  ## Enable interpreter feature
 check ?=        ## Enable only check when running format
 order ?=random  ## Enable order for spec execution (values: "default" | "random" | seed number)
-libxml2 ?=      ## Enable LibXML2 support in the compiler itself 
+libxml2 ?=      ## Enable LibXML2 support in the compiler itself
                 ## (necessary for doc generation sanitization)
 
 MAKEFLAGS += --no-builtin-rules
@@ -60,17 +59,21 @@ O := .build
 SOURCES := $(call GLOB,src\\*.cr)
 SPEC_SOURCES := $(call GLOB,spec\\*.cr)
 override FLAGS += -D strict_multi_assign -D preview_overload_order $(if $(release),--release )$(if $(stats),--stats )$(if $(progress),--progress )$(if $(threads),--threads $(threads) )$(if $(debug),-d )$(if $(static),--static )$(if $(LDFLAGS),--link-flags="$(LDFLAGS)" )$(if $(target),--cross-compile --target $(target) )$(if $(interpreter),,-Dwithout_interpreter )$(if $(libxml2),,-Dwithout_libxml2 )
-SPEC_WARNINGS_OFF := --exclude-warnings spec\std --exclude-warnings spec\compiler --exclude-warnings spec\primitives
+SPEC_WARNINGS_OFF := --exclude-warnings spec\std --exclude-warnings spec\compiler --exclude-warnings spec\primitives --exclude-warnings src\float\printer
 SPEC_FLAGS := $(if $(verbose),-v )$(if $(junit_output),--junit_output $(junit_output) )$(if $(order),--order=$(order) )
 CRYSTAL_CONFIG_LIBRARY_PATH := $$ORIGIN\lib
 CRYSTAL_CONFIG_BUILD_COMMIT := $(shell git rev-parse --short HEAD)
 CRYSTAL_CONFIG_PATH := $$ORIGIN\src
 CRYSTAL_VERSION ?= $(shell type src\VERSION)
-SOURCE_DATE_EPOCH ?= $(shell type src/SOURCE_DATE_EPOCH || git show -s --format=%ct HEAD)
+SOURCE_DATE_EPOCH ?= $(or $(shell type src\SOURCE_DATE_EPOCH 2>NUL),$(shell git show -s --format=%ct HEAD))
 export_vars = $(eval export CRYSTAL_CONFIG_BUILD_COMMIT CRYSTAL_CONFIG_PATH SOURCE_DATE_EPOCH)
 export_build_vars = $(eval export CRYSTAL_CONFIG_LIBRARY_PATH)
-LLVM_CONFIG ?=
-LLVM_VERSION := $(if $(LLVM_CONFIG),$(shell $(LLVM_CONFIG) --version))
+
+ifeq ($(LLVM_VERSION),)
+  LLVM_CONFIG ?=
+  LLVM_VERSION ?= $(if $(LLVM_CONFIG),$(shell "$(LLVM_CONFIG)" --version))
+endif
+
 LLVM_EXT_DIR = src\llvm\ext
 LLVM_EXT_OBJ = $(LLVM_EXT_DIR)\llvm_ext.obj
 CXXFLAGS += $(if $(static),$(if $(debug),/MTd /Od ,/MT ),$(if $(debug),/MDd /Od ,/MD ))
@@ -81,7 +84,7 @@ LIBDIR ?= $(prefix)\lib
 SRCDIR ?= $(prefix)\src
 DATADIR ?= $(prefix)
 
-colorize = $1
+colorize = $(info $1)
 
 DEPS = $(LLVM_EXT_OBJ)
 ifneq ($(LLVM_VERSION),)
@@ -92,8 +95,8 @@ endif
 
 check_llvm_config = $(eval \
 	check_llvm_config := $(if $(LLVM_VERSION),\
-		$(info $(call colorize,Using $(LLVM_CONFIG) [version=$(LLVM_VERSION)])),\
-		$(error "Could not locate compatible llvm-config, make sure it is installed and in your PATH, or set LLVM_CONFIG. Compatible versions: $(shell type src\llvm\ext\llvm-versions.txt)))\
+		$(call colorize,Using $(or $(LLVM_CONFIG),externally configured LLVM) [version=$(LLVM_VERSION)]),\
+		$(error "Could not locate compatible llvm-config, make sure it is installed and in your PATH, or set LLVM_VERSION / LLVM_CONFIG. Compatible versions: $(shell type src\llvm\ext\llvm-versions.txt)))\
 	)
 
 .PHONY: all
@@ -234,7 +237,7 @@ $(LLVM_EXT_OBJ): $(LLVM_EXT_DIR)\llvm_ext.cc
 	@rem - warning C4244: 'initializing': conversion from '_Ty' to '_Ty2', possible loss of data
 	@rem - warning C4530: C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc
 	@rem - warning C4624: '...': destructor was implicitly defined as deleted
-	$(CXX) /nologo /c $(CXXFLAGS) /WX /wd4244 /wd4624 /wd4530 "/Fo$@" "$<" $(shell $(LLVM_CONFIG) --cxxflags)
+	$(CXX) /nologo /c $(CXXFLAGS) /WX /wd4244 /wd4624 /wd4530 "/Fo$@" "$<" $(if $(LLVM_CONFIG),$(shell $(LLVM_CONFIG) --cxxflags))
 
 .PHONY: clean
 clean: clean_crystal ## Clean up built directories and files
