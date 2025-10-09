@@ -2928,7 +2928,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   def visit(node : ProcPointer)
     target_def = node.call.target_def
 
-    raise "BUG: missing interpret for ProcPointer to non Lib fun" unless target_def.owner.is_a?(LibType)
+    unless target_def.owner.is_a?(LibType)
+      # LLVM codegen supports more cases like closure data and obj/self
+      # target, but I can't trigger them — does LiteralExpander expand
+      # these cases into ProcLiteral?
+      raise "BUG: missing interpret for ProcPointer to non Lib fun"
+    end
     
     # find or build a compiled_def
     proc_type = node.type.as(ProcInstanceType)
