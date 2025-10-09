@@ -2934,7 +2934,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       # these cases into ProcLiteral?
       raise "BUG: missing interpret for ProcPointer to non Lib fun"
     end
-    
+
     # find or build a compiled_def
     proc_type = node.type.as(ProcInstanceType)
     symbol = @context.c_function(target_def.as(External).real_name)
