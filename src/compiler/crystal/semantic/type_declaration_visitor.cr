@@ -220,6 +220,8 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
     getter = Def.new(field_name, body: InstanceVar.new(var.name)).at(location)
     getter.doc = var.doc
 
+    # even on `-Dpreview_overload_order` these methods should never be defined
+    # on the type before, because field names cannot repeat
     type.add_def setter
     type.add_def getter
   end
