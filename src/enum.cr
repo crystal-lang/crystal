@@ -520,9 +520,11 @@ abstract struct Enum
       {% max_size = @type.constants.map(&.size).sort.last %}
       buffer = uninitialized UInt8[{{ max_size * 4 + 1 }}]
       appender = buffer.to_unsafe.appender
-      string.each_char_with_index do |char, index|
-        return nil if index > {{max_size}}
+      char_counter = 0
+      string.each_char do |char|
         next if char == '-' || char == '_'
+        char_counter += 1
+        return nil if char_counter > {{max_size}}
         char.downcase &.each_byte do |byte|
           appender << byte
         end
