@@ -2925,6 +2925,23 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     false
   end
 
+  def visit(node : ProcPointer)
+    target_def = node.call.target_def
+
+    if target_def.owner.is_a?(LibType)
+      # find or build a compiled_def
+      proc_type = node.type.as(ProcInstanceType)
+      symbol = @context.c_function(target_def.as(External).real_name)
+      compiled_def = @context.extern_proc_wrapper(proc_type, symbol)
+
+      # push compiled_def to stack + no closure data (null pointer)
+      put_i64 compiled_def.object_id.to_i64!, node: node
+      put_i64 0, node: node
+    else
+      raise "BUG: missing interpret for ProcPointer to non Lib fun"
+    end
+  end
+
   def visit(node : Break)
     exp = node.exp
 
