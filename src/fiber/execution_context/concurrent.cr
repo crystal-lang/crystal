@@ -13,8 +13,8 @@ module Fiber::ExecutionContext
   # communication with fibers in other contexts requires safe primitives, for
   # example `Channel`.
   #
-  # A blocking fiber blocks the entire context, and thus all the
-  # other fibers in the context.
+  # A blocking fiber blocks the entire context, and thus all the other fibers in
+  # the context.
   #
   # For example: we can start a concurrent context to run consumer fibers, while
   # the default context produces values. Because the consumer fibers will never
@@ -54,14 +54,19 @@ module Fiber::ExecutionContext
   # variable, for example using `Atomic#add` to increment *result* or a `Mutex`
   # for more complex operations.
   class Concurrent < Parallel
+    # :nodoc:
     def self.default : self
       new("DEFAULT", capacity: 1, hijack: true)
     end
 
+    # Creates a `Concurrent` context. The context will only really start when a
+    # fiber is spawned or enqueued into it.
     def self.new(name : String) : self
       new(name, capacity: 1, hijack: false)
     end
 
+    # Always raises an `ArgumentError` exception because a concurrent context
+    # cannot be resized.
     def resize(maximum : Int32) : Nil
       raise ArgumentError.new("Can't resize a concurrent context")
     end
