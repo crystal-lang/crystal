@@ -12,9 +12,6 @@ abstract class JSON::Lexer
   getter token : Token
   property skip : Bool
 
-  @line_number : Int64
-  @column_number : Int64
-
   def initialize
     @token = Token.new
     @line_number = 1

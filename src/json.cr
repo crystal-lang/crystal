@@ -120,40 +120,15 @@ module JSON
 
   # Exception thrown on a JSON parse error.
   class ParseException < Error
-    @line_number : Int64
-    @column_number : Int64
+    getter line_number : Int32
+    getter column_number : Int32
 
-    def line_number : Int32
-      @line_number.to_i32
-    end
-
-    def column_number : Int32
-      @column_number.to_i32
-    end
-
-    @[Experimental]
-    def line_number_i64 : Int64
-      @line_number
-    end
-
-    @[Experimental]
-    def column_number_i64
-      @column_number
-    end
-
-    def initialize(message, line_number, column_number, cause = nil)
-      @line_number = line_number.to_i64
-      @column_number = column_number.to_i64
+    def initialize(message, @line_number, @column_number, cause = nil)
       super "#{message} at line #{@line_number}, column #{@column_number}", cause
     end
 
     def location : {Int32, Int32}
       {line_number, column_number}
-    end
-
-    @[Experimental]
-    def location_i64 : {Int64, Int64}
-      {line_number_i64, column_number_i64}
     end
   end
 
