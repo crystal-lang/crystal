@@ -104,7 +104,7 @@ class JSON::PullParser
     @raw_value = ""
     @object_stack = [] of ObjectStackKind
     @skip_count = 0
-    @location = {0_i64, 0_i64}
+    @location = {0, 0}
 
     next_token
     case token.kind
@@ -577,39 +577,19 @@ class JSON::PullParser
   end
 
   # Returns the current line number.
-  @[Experimental]
-  def line_number_i64 : Int64
+  def line_number
     @location[0]
-  end
-
-  # Returns the current line number.
-  def line_number : Int32
-    @location[0].to_i32
-  end
-
-  # Returns the current column number.
-  @[Experimental]
-  def column_number_i64
-    @location[1]
   end
 
   # Returns the current column number.
   def column_number
-    @location[1].to_i32
+    @location[1]
   end
 
   # Returns the current location.
   #
   # The location is a tuple `{line number, column number}`.
   def location : Tuple(Int32, Int32)
-    {line_number, column_number}
-  end
-
-  # Returns the current location.
-  #
-  # The location is a tuple `{line number, column number}`.
-  @[Experimental]
-  def location_i64 : Tuple(Int64, Int64)
     @location
   end
 
@@ -674,12 +654,12 @@ class JSON::PullParser
   end
 
   private def next_token
-    @location = {@lexer.token.line_number_i64, @lexer.token.column_number_i64}
+    @location = {@lexer.token.line_number, @lexer.token.column_number}
     @lexer.next_token
   end
 
   private def next_token_expect_object_key
-    @location = {@lexer.token.line_number_i64, @lexer.token.column_number_i64}
+    @location = {@lexer.token.line_number, @lexer.token.column_number}
     @lexer.next_token_expect_object_key
   end
 
