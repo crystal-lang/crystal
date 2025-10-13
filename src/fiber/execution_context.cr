@@ -167,8 +167,7 @@ module Fiber::ExecutionContext
     end
   end
 
-  # Creates a new fiber then calls `#enqueue` to add it to the execution
-  # context.
+  # Creates a new fiber then calls enqueues it to the execution context.
   #
   # May be called from any `ExecutionContext` (i.e. must be thread-safe).
   def spawn(*, name : String? = nil, &block : ->) : Fiber
