@@ -60,7 +60,7 @@ module Fiber::ExecutionContext
     end
 
     # Creates a `Concurrent` context. The context will only really start when a
-    # fiber is spawned or enqueued into it.
+    # fiber is spawned into it.
     def self.new(name : String) : self
       new(name, capacity: 1, hijack: false)
     end

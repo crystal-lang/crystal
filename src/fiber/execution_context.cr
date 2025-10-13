@@ -37,7 +37,7 @@ require "./execution_context/*"
 # for common use cases.
 #
 # * `ExecutionContext::Concurrent`: Fully concurrent with limited parallelism.
-# Fibers run concurrently to each others, never in parallel (only one fiber at a
+# Fibers run concurrently to each other, never in parallel (only one fiber at a
 # time). They can use simpler and faster synchronization primitives internally
 # (no atomics, limited thread safety). Communication with fibers in other
 # contexts requires thread-safe primitives. A blocking fiber blocks the entire
@@ -74,7 +74,7 @@ module Fiber::ExecutionContext
   # Returns the default `ExecutionContext` for the process, automatically
   # started when the program started.
   #
-  # The default execution context is currently `Parallel` but only starts with a
+  # The default execution context is currently `Parallel` but only starts with
   # parallelism set to 1. The parallelism can be changed using
   # `Parallel#resize`.
   @[AlwaysInline]
