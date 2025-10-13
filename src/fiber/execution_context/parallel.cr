@@ -79,10 +79,10 @@ module Fiber::ExecutionContext
       new("DEFAULT", maximum, hijack: true)
     end
 
-    # Starts a context with a *maximum* parallelism. The context starts with an
-    # initial parallelism of zero. It will grow to one when a fiber is spawned,
-    # then the actual parallelism will keep increasing and decreasing as needed,
-    # but will never go past the configured *maximum*.
+    # Starts a `Parallel` context with a *maximum* parallelism. The context
+    # starts with an initial parallelism of zero. It will grow to one when a
+    # fiber is spawned, then the actual parallelism will keep increasing and
+    # decreasing as needed, but will never go past the configured *maximum*.
     def self.new(name : String, maximum : Int32) : self
       new(name, maximum, hijack: false)
     end
