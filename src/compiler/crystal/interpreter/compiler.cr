@@ -2943,6 +2943,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     # push compiled_def to stack + no closure data (null pointer)
     put_i64 compiled_def.object_id.to_i64!, node: node
     put_i64 0, node: node
+
     false
   end
 
