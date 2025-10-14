@@ -1123,6 +1123,10 @@ module Crystal::Macros
     # Similar to `Array#-`.
     def -(other : TupleLiteral) : TupleLiteral
     end
+
+    # Similar to `Tuple#*`
+    def *(other : NumberLiteral) : TupleLiteral
+    end
   end
 
   # A fictitious node representing a variable or instance
