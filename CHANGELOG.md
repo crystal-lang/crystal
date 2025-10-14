@@ -12,7 +12,7 @@
 - _(annotations)_ Print deprecation warning on types and aliases ([#15962], thanks @ysbaddaden)
 - _(annotations)_ Print deprecation warnings on deprecated method argument ([#15999], thanks @ysbaddaden)
 - _(macros)_ **[breaking]** Expand empty `(Named)TupleLiteral` to `(Named)Tuple.new` instead of `{}` ([#16108], thanks @spuun)
-- _(macros)_ Add `ArrayLiteral#*` and `StringLiteral#*` ([#16154], [#16206], thanks @jneen, @ysbaddaden)
+- _(macros)_ Add `ArrayLiteral#*`, `StringLiteral#*` and `TupleLiteral#*` ([#16154], [#16206], thanks @jneen, @ysbaddaden)
 
 [#16089]: https://github.com/crystal-lang/crystal/pull/16089
 [#15962]: https://github.com/crystal-lang/crystal/pull/15962
