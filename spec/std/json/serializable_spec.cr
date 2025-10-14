@@ -6,6 +6,20 @@ require "big/json"
 require "uuid"
 require "uuid/json"
 
+enum JSONSerializableEnum
+  Zero
+  One
+  Two
+  OneHundred
+end
+
+@[Flags]
+enum JSONSerializableFlagEnum
+  One
+  Two
+  OneHundred
+end
+
 class JSONAttrValue(T)
   include JSON::Serializable
 
@@ -515,6 +529,44 @@ module JsonDiscriminatorBug
   end
 end
 
+record JSONAttrWithEnumValue, value : JSONSerializableEnum do
+  include JSON::Serializable
+
+  @[JSON::Field(converter: Enum::ValueConverter(JSONSerializableEnum))]
+  @value : JSONSerializableEnum
+end
+
+record JSONAttrWithFlagEnumValue, value : JSONSerializableFlagEnum do
+  include JSON::Serializable
+
+  @[JSON::Field(converter: Enum::ValueConverter(JSONSerializableFlagEnum))]
+  @value : JSONSerializableFlagEnum
+end
+
+abstract class SerializableFoo
+  include JSON::Serializable
+
+  module Converter
+    def self.from_json(pull : JSON::PullParser) : SerializableFoo
+      SerializableFoo.find.from_json("{}")
+    end
+  end
+
+  def self.find : SerializableFoo.class
+    SerializableBar.as(SerializableFoo.class)
+  end
+end
+
+class SerializableBar < SerializableFoo
+  @[JSON::Field(converter: SerializableFoo::Converter)]
+  getter foo : SerializableFoo = SerializableBaz.new
+end
+
+class SerializableBaz < SerializableFoo
+  def initialize
+  end
+end
+
 class JSONInitializeOpts
   include JSON::Serializable
 
@@ -525,7 +577,24 @@ class JSONInitializeOpts
   end
 end
 
-describe "JSON mapping" do
+record Namespaced::JSON::Wrapper, name : String, options : Hash(String, ::JSON::Any::Type)? = nil do
+  include ::JSON::Serializable
+end
+
+describe "JSON::Serializable" do
+  it "works with classes within `JSON` namespace" do
+    Namespaced::JSON::Wrapper
+      .from_json(<<-JSON)
+        {
+          "name": "foo",
+          "options": {
+            "foo": true
+          }
+        }
+        JSON
+      .to_json
+  end
+
   it "works with record" do
     JSONAttrPoint.new(1, 2).to_json.should eq "{\"x\":1,\"y\":2}"
     JSONAttrPoint.from_json(%({"x": 1, "y": 2})).should eq JSONAttrPoint.new(1, 2)
@@ -1182,6 +1251,112 @@ describe "JSON mapping" do
     end
   end
 
+  describe "Enum::ValueConverter.from_json" do
+    it "normal enum" do
+      JSONAttrWithEnumValue.from_json(%({"value": 0})).value.should eq(JSONSerializableEnum::Zero)
+      JSONAttrWithEnumValue.from_json(%({"value": 1})).value.should eq(JSONSerializableEnum::One)
+      JSONAttrWithEnumValue.from_json(%({"value": 2})).value.should eq(JSONSerializableEnum::Two)
+      JSONAttrWithEnumValue.from_json(%({"value": 3})).value.should eq(JSONSerializableEnum::OneHundred)
+
+      expect_raises(JSON::ParseException, %(Expected Int but was String)) do
+        JSONAttrWithEnumValue.from_json(%({"value": "3"}))
+      end
+      expect_raises(JSON::ParseException, %(Unknown enum JSONSerializableEnum value: 4)) do
+        JSONAttrWithEnumValue.from_json(%({"value": 4}))
+      end
+      expect_raises(JSON::ParseException, %(Unknown enum JSONSerializableEnum value: -1)) do
+        JSONAttrWithEnumValue.from_json(%({"value": -1}))
+      end
+      expect_raises(JSON::ParseException, %(Expected Int but was String)) do
+        JSONAttrWithEnumValue.from_json(%({"value": ""}))
+      end
+
+      expect_raises(JSON::ParseException, "Expected Int but was String") do
+        JSONAttrWithEnumValue.from_json(%({"value": "one"}))
+      end
+
+      expect_raises(JSON::ParseException, "Expected Int but was BeginObject") do
+        JSONAttrWithEnumValue.from_json(%({"value": {}}))
+      end
+      expect_raises(JSON::ParseException, "Expected Int but was BeginArray") do
+        JSONAttrWithEnumValue.from_json(%({"value": []}))
+      end
+    end
+
+    it "flag enum" do
+      JSONAttrWithFlagEnumValue.from_json(%({"value": 0})).value.should eq(JSONSerializableFlagEnum::None)
+      JSONAttrWithFlagEnumValue.from_json(%({"value": 1})).value.should eq(JSONSerializableFlagEnum::One)
+      JSONAttrWithFlagEnumValue.from_json(%({"value": 2})).value.should eq(JSONSerializableFlagEnum::Two)
+      JSONAttrWithFlagEnumValue.from_json(%({"value": 4})).value.should eq(JSONSerializableFlagEnum::OneHundred)
+      JSONAttrWithFlagEnumValue.from_json(%({"value": 5})).value.should eq(JSONSerializableFlagEnum::OneHundred | JSONSerializableFlagEnum::One)
+      JSONAttrWithFlagEnumValue.from_json(%({"value": 7})).value.should eq(JSONSerializableFlagEnum::All)
+
+      expect_raises(JSON::ParseException, %(Unknown enum JSONSerializableFlagEnum value: 8)) do
+        JSONAttrWithFlagEnumValue.from_json(%({"value": 8}))
+      end
+      expect_raises(JSON::ParseException, %(Unknown enum JSONSerializableFlagEnum value: -1)) do
+        JSONAttrWithFlagEnumValue.from_json(%({"value": -1}))
+      end
+      expect_raises(JSON::ParseException, %(Expected Int but was String)) do
+        JSONAttrWithFlagEnumValue.from_json(%({"value": ""}))
+      end
+      expect_raises(JSON::ParseException, "Expected Int but was String") do
+        JSONAttrWithFlagEnumValue.from_json(%({"value": "one"}))
+      end
+      expect_raises(JSON::ParseException, "Expected Int but was BeginObject") do
+        JSONAttrWithFlagEnumValue.from_json(%({"value": {}}))
+      end
+      expect_raises(JSON::ParseException, "Expected Int but was BeginArray") do
+        JSONAttrWithFlagEnumValue.from_json(%({"value": []}))
+      end
+    end
+  end
+
+  describe "Enum::ValueConverter.to_json" do
+    it "normal enum" do
+      klass = JSONAttrWithEnumValue
+
+      klass.new(JSONSerializableEnum::One).to_json.should eq %({"value":1})
+      klass.from_json(klass.new(JSONSerializableEnum::One).to_json).value
+        .should eq(JSONSerializableEnum::One)
+
+      klass.new(JSONSerializableEnum::OneHundred).to_json.should eq %({"value":3})
+      klass.from_json(klass.new(JSONSerializableEnum::OneHundred).to_json).value
+        .should eq(JSONSerializableEnum::OneHundred)
+
+      # undefined members can't be parsed back because the standard converter only accepts
+      # named members
+      klass.new(JSONSerializableEnum.new(42)).to_json.should eq %({"value":42})
+    end
+
+    it "flag enum" do
+      klass = JSONAttrWithFlagEnumValue
+
+      klass.new(JSONSerializableFlagEnum::One).to_json.should eq %({"value":1})
+      klass.from_json(klass.new(JSONSerializableFlagEnum::One).to_json).value
+        .should eq(JSONSerializableFlagEnum::One)
+
+      klass.new(JSONSerializableFlagEnum::OneHundred).to_json.should eq %({"value":4})
+      klass.from_json(klass.new(JSONSerializableFlagEnum::OneHundred).to_json).value
+        .should eq(JSONSerializableFlagEnum::OneHundred)
+
+      combined = JSONSerializableFlagEnum::OneHundred | JSONSerializableFlagEnum::One
+
+      klass.new(combined).to_json.should eq %({"value":5})
+      klass.from_json(klass.new(combined).to_json).value.should eq(combined)
+
+      klass.new(JSONSerializableFlagEnum::None).to_json.should eq %({"value":0})
+      klass.from_json(klass.new(JSONSerializableFlagEnum::None).to_json).value
+        .should eq(JSONSerializableFlagEnum::None)
+
+      klass.new(JSONSerializableFlagEnum::All).to_json.should eq %({"value":7})
+      klass.from_json(klass.new(JSONSerializableFlagEnum::All).to_json).value
+        .should eq(JSONSerializableFlagEnum::All)
+
+      klass.new(JSONSerializableFlagEnum.new(42)).to_json.should eq %({"value":42})
+    end
+  end
+
   describe "namespaced classes" do
     it "lets default values use the object's own namespace" do
       request = JSONNamespace::FooRequest.from_json(%({"foo":{}}))
@@ -1200,5 +1375,9 @@ describe "JSON mapping" do
 
   it "supports generic type variables in converters" do
     JSONAttrWithGenericConverter(Time::EpochConverter).from_json(%({"value":1459859781})).value.should eq(Time.unix(1459859781))
+  end
+
+  it "fixes #16141" do
+    SerializableFoo.find.from_json("{}").should be_a(SerializableBar)
   end
 end

@@ -540,6 +540,10 @@ module Crystal::Macros
 
   # Any number literal.
   class NumberLiteral < ASTNode
+    # Returns `true` if value is 0, `false` otherwise.
+    def zero? : BoolLiteral
+    end
+
     # Compares this node's value to another node's value.
     def <(other : NumberLiteral) : BoolLiteral
     end
@@ -652,6 +656,10 @@ module Crystal::Macros
 
     # Similar to `String#<`
     def <(other : StringLiteral | MacroId) : BoolLiteral
+    end
+
+    # Similar to `String#*`.
+    def *(other : NumberLiteral) : StringLiteral
     end
   end
 
@@ -800,6 +808,10 @@ module Crystal::Macros
 
     # Similar to `Array#-`.
     def -(other : ArrayLiteral) : ArrayLiteral
+    end
+
+    # Similar to `Array#*`
+    def *(other : NumberLiteral) : ArrayLiteral
     end
 
     # Returns the type specified at the end of the array literal, if any.

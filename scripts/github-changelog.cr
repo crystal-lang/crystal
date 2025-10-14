@@ -340,7 +340,7 @@ class ChangelogEntry
 
   def to_s(io : IO)
     if sub_topic = pr.sub_topic
-      io << "*(" << sub_topic << ")* "
+      io << "_(" << sub_topic << ")_ "
     end
     if pr.labels.includes?("security")
       io << "**[security]** "
@@ -456,8 +456,7 @@ TOPIC_ORDER = %w[lang stdlib compiler tools other]
 puts "## [#{milestone.title}] (#{milestone.release_date.try(&.to_s("%F")) || "unreleased"})"
 if description = milestone.description.presence
   puts
-  print "_", description
-  puts "_"
+  puts description
 end
 puts
 puts "[#{milestone.title}]: https://github.com/#{repository}/releases/#{milestone.title}"

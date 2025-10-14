@@ -14,6 +14,10 @@ module Crystal::System::Socket
 
   # private def system_listen(backlog)
 
+  private def system_accept : {Handle, Bool}?
+    event_loop.accept(self)
+  end
+
   private def system_send_to(bytes : Bytes, addr : ::Socket::Address)
     event_loop.send_to(self, bytes, addr)
   end

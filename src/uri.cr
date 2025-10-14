@@ -99,7 +99,9 @@ class URI
   getter host : String?
 
   # Sets the host component of the URI.
-  setter host : String?
+  def host=(host : String?)
+    @host = host && !host.starts_with?('[') && host.includes?(':') ? "[#{host}]" : host
+  end
 
   # Returns the port component of the URI.
   #
@@ -175,7 +177,9 @@ class URI
 
   def_equals_and_hash scheme, host, port, path, query, user, password, fragment
 
-  def initialize(@scheme = nil, @host = nil, @port = nil, @path = "", query : String | Params | Nil = nil, @user = nil, @password = nil, @fragment = nil)
+  def initialize(@scheme = nil, host = nil, @port = nil, @path = "", query : String | Params | Nil = nil, @user = nil, @password = nil, @fragment = nil)
+    # wrap IPv6 addresses
+    self.host = host
     @query = query.try(&.to_s)
   end
 
