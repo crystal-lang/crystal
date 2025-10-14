@@ -2,8 +2,6 @@
 
 ## [1.18.0] (2025-10-14)
 
-Freeze period: 2025-09-30
-
 [1.18.0]: https://github.com/crystal-lang/crystal/releases/1.18.0
 
 ### Features
@@ -297,6 +295,7 @@ Freeze period: 2025-09-30
 - _(networking)_ Add type restrictions to http ([#15710], thanks @Vici37)
 - _(numeric)_ Add type restrictions to big ([#15689], thanks @Vici37)
 - _(runtime)_ Fix typo in `Object` docs ([#16035], thanks @plambert)
+- _(runtime)_ Tweak docs for `Fiber::ExecutionContext` [ﬁxup #16135] ([#16196], thanks @ysbaddaden)
 - _(serialization)_ Add type restrictions to json ([#15840], [#16142], thanks @Vici37, @Sija)
 - _(serialization)_ Add note about default constructor in `*::Serializable` ([#16080], thanks @HertzDevil)
 - _(system)_ Add type restrictions to `args` parameter in `Process` ([#16031], thanks @BigBoyBarney)
@@ -318,6 +317,7 @@ Freeze period: 2025-09-30
 [#15710]: https://github.com/crystal-lang/crystal/pull/15710
 [#15689]: https://github.com/crystal-lang/crystal/pull/15689
 [#16035]: https://github.com/crystal-lang/crystal/pull/16035
+[#16196]: https://github.com/crystal-lang/crystal/pull/16196
 [#15840]: https://github.com/crystal-lang/crystal/pull/15840
 [#16142]: https://github.com/crystal-lang/crystal/pull/16142
 [#16080]: https://github.com/crystal-lang/crystal/pull/16080
@@ -326,12 +326,6 @@ Freeze period: 2025-09-30
 [#16001]: https://github.com/crystal-lang/crystal/pull/16001
 [#15985]: https://github.com/crystal-lang/crystal/pull/15985
 [#16041]: https://github.com/crystal-lang/crystal/pull/16041
-
-#### other
-
-- Tweak docs for `Fiber::ExecutionContext` [ﬁxup #16135] ([#16196], thanks @ysbaddaden)
-
-[#16196]: https://github.com/crystal-lang/crystal/pull/16196
 
 ### Specs
 
