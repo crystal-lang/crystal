@@ -236,7 +236,9 @@
 - _(runtime)_ Remove minimum in `Fiber::ExecutionContext::Parallel` ([#15946], thanks @ysbaddaden)
 - _(runtime)_ Pass `fd` implicitly to `System::FileDescriptor` and `System::Socket` ([#16137], [#16183], thanks @ysbaddaden)
 - _(runtime)_ Drop custom implementation of `Fiber::ExecutionContext::Concurrent` ([#16135], thanks @ysbaddaden)
+- _(runtime)_ Tweak docs for `Fiber::ExecutionContext` [ﬁxup #16135] ([#16196], thanks @ysbaddaden)
 - _(specs)_ Keep own colorization state in `Spec::CLI` ([#15926], thanks @HertzDevil)
+- _(text)_ Use `ensure_suffix` instead of manually checking for suffixes ([#15858], thanks @MatheusRich)
 - _(time)_ Remove the old Windows time zone name table ([#16006], thanks @HertzDevil)
 
 [#16011]: https://github.com/crystal-lang/crystal/pull/16011
@@ -247,7 +249,9 @@
 [#16137]: https://github.com/crystal-lang/crystal/pull/16137
 [#16183]: https://github.com/crystal-lang/crystal/pull/16183
 [#16135]: https://github.com/crystal-lang/crystal/pull/16135
+[#16196]: https://github.com/crystal-lang/crystal/pull/16196
 [#15926]: https://github.com/crystal-lang/crystal/pull/15926
+[#15858]: https://github.com/crystal-lang/crystal/pull/15858
 [#16006]: https://github.com/crystal-lang/crystal/pull/16006
 
 #### compiler
@@ -295,7 +299,6 @@
 - _(networking)_ Add type restrictions to http ([#15710], thanks @Vici37)
 - _(numeric)_ Add type restrictions to big ([#15689], thanks @Vici37)
 - _(runtime)_ Fix typo in `Object` docs ([#16035], thanks @plambert)
-- _(runtime)_ Tweak docs for `Fiber::ExecutionContext` [ﬁxup #16135] ([#16196], thanks @ysbaddaden)
 - _(serialization)_ Add type restrictions to json ([#15840], [#16142], thanks @Vici37, @Sija)
 - _(serialization)_ Add note about default constructor in `*::Serializable` ([#16080], thanks @HertzDevil)
 - _(system)_ Add type restrictions to `args` parameter in `Process` ([#16031], thanks @BigBoyBarney)
@@ -317,7 +320,6 @@
 [#15710]: https://github.com/crystal-lang/crystal/pull/15710
 [#15689]: https://github.com/crystal-lang/crystal/pull/15689
 [#16035]: https://github.com/crystal-lang/crystal/pull/16035
-[#16196]: https://github.com/crystal-lang/crystal/pull/16196
 [#15840]: https://github.com/crystal-lang/crystal/pull/15840
 [#16142]: https://github.com/crystal-lang/crystal/pull/16142
 [#16080]: https://github.com/crystal-lang/crystal/pull/16080
