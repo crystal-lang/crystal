@@ -174,11 +174,9 @@ record PullRequest,
     topic.try(&.[1..].join(":").presence)
   end
 
-  class_getter missing_topics = Set(Int32).new
-
   def topic
     topics.fetch(0) do
-      self.class.missing_topics.add(number)
+      STDERR.puts "Missing topic for ##{number}"
       nil
     end
   end
@@ -495,12 +493,4 @@ SECTION_TITLES.each do |id, title|
       print_entries topic_entries
     end
   end
-end
-
-PullRequest.missing_topics.each do |number|
-  STDERR.puts "Missing topic for #{ansi_url("https://github.com/#{repository}/pull/#{number}", "##{number}")}"
-end
-
-def ansi_url(url, label)
-  "\e]8;;#{url}\e\\#{label}\e]8;;\e\\"
 end
