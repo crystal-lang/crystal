@@ -398,10 +398,10 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_read(slice : Bytes) : Int32
-    @fd_lock.reference { event_loop.read(self, slice) }
+    @fd_lock.read { event_loop.read(self, slice) }
   end
 
   private def system_write(slice : Bytes) : Int32
-    @fd_lock.reference { event_loop.write(self, slice) }
+    @fd_lock.write { event_loop.write(self, slice) }
   end
 end
