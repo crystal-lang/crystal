@@ -119,41 +119,28 @@ module Crystal
       # :nodoc:
       #
       # An individual compressed sequence.
-      struct Sequence
-        property! offset : Int64
-        property! unit_length : UInt32
-        property! version : UInt16
-        property! address_size : Int32
-        property! segment_selector_size : Int32
-        property! header_length : UInt32 # FIXME: UInt64 for DWARF64 (uncommon)
-        property! minimum_instruction_length : Int32
-        property! maximum_operations_per_instruction : Int32
-        property! default_is_stmt : Bool
-        property! line_base : Int32
-        property! line_range : Int32
-        property! opcode_base : Int32
-
+      record Sequence,
+        offset : Int64,
+        unit_length : UInt32,
+        minimum_instruction_length : Int32,
+        maximum_operations_per_instruction : Int32,
+        default_is_stmt : Bool,
+        line_base : Int32,
+        line_range : Int32,
+        opcode_base : Int32,
         # An array of how many args an array. Starts at 1 because 0 means an
         # extended opcode.
-        getter standard_opcode_lengths
-
+        standard_opcode_lengths : Array(UInt8),
         # An array of directory names. Starts at 1; 0 means that the information
         # is missing.
-        property! include_directories : Array(String)
-
+        include_directories : Array(String),
+        # An array of file names. Starts at 1; 0 means that the information is
+        # missing.
+        file_names : Array(FileEntry) do
         record FileEntry,
           path : String,
           mtime : UInt64,
           size : UInt64
-
-        # An array of file names. Starts at 1; 0 means that the information is
-        # missing.
-        property! file_names : Array(FileEntry)
-
-        def initialize
-          @maximum_operations_per_instruction = 1_u8
-          @standard_opcode_lengths = [0_u8]
-        end
 
         # Returns the unit length, adding the size of the `unit_length`.
         def total_length
@@ -194,68 +181,78 @@ module Crystal
           offset = pos - @offset
           break unless offset < size
 
-          sequence = Sequence.new
-          sequence.offset = offset
-          sequence.unit_length = @io.read_bytes(UInt32)
-          sequence.version = @io.read_bytes(UInt16)
+          unit_length = @io.read_bytes(UInt32)
+          total_length = unit_length + sizeof(typeof(unit_length))
+          version = @io.read_bytes(UInt16)
 
-          if sequence.version < 2 || sequence.version > 5
-            raise "Unknown line table version: #{sequence.version}"
+          if version < 2 || version > 5
+            raise "Unknown line table version: #{version}"
           end
 
-          if sequence.version >= 5
-            sequence.address_size = @io.read_bytes(UInt8).to_i
-            sequence.segment_selector_size = @io.read_bytes(UInt8).to_i
+          if version >= 5
+            _address_size = @io.read_bytes(UInt8).to_i
+            _segment_selector_size = @io.read_bytes(UInt8).to_i
           else
-            sequence.address_size = {{ flag?(:bits64) ? 8 : 4 }}
-            sequence.segment_selector_size = 0
+            _address_size = {{ flag?(:bits64) ? 8 : 4 }}
+            _segment_selector_size = 0
           end
 
-          sequence.header_length = @io.read_bytes(UInt32)
-          sequence.minimum_instruction_length = @io.read_bytes(UInt8).to_i
+          _header_length = @io.read_bytes(UInt32) # FIXME: UInt64 for DWARF64 (uncommon)
+          minimum_instruction_length = @io.read_bytes(UInt8).to_i
 
-          if sequence.version >= 4
-            sequence.maximum_operations_per_instruction = @io.read_bytes(UInt8).to_i
+          if version >= 4
+            maximum_operations_per_instruction = @io.read_bytes(UInt8).to_i
           else
-            sequence.maximum_operations_per_instruction = 1
+            maximum_operations_per_instruction = 1
           end
 
-          if sequence.maximum_operations_per_instruction == 0
-            raise "Invalid maximum operations per instruction: 0"
-          end
+            if maximum_operations_per_instruction == 0
+              raise "Invalid maximum operations per instruction: 0"
+            end
 
-          sequence.default_is_stmt = @io.read_byte == 1
-          sequence.line_base = @io.read_bytes(Int8).to_i
-          sequence.line_range = @io.read_bytes(UInt8).to_i
-          if sequence.line_range == 0
+          default_is_stmt = @io.read_byte == 1
+          line_base = @io.read_bytes(Int8).to_i
+          line_range = @io.read_bytes(UInt8).to_i
+          if line_range == 0
             raise "Invalid line range: 0"
           end
 
-          sequence.opcode_base = @io.read_bytes(UInt8).to_i
-          read_opcodes(sequence)
+          opcode_base = @io.read_bytes(UInt8).to_i
+          standard_opcode_lengths = Array(UInt8).new(opcode_base)
+          standard_opcode_lengths << 0_u8
+          (opcode_base - 1).times do
+            standard_opcode_lengths << @io.read_byte.not_nil!
+          end
 
-          if sequence.version < 5
-            sequence.include_directories = read_directory_table(sequence)
-            sequence.file_names = read_filename_table(sequence)
+          if version < 5
+            include_directories = read_directory_table
+            file_names = read_filename_table(include_directories)
           else
             dir_format = read_lnct_format
             count = DWARF.read_unsigned_leb128(@io)
-            sequence.include_directories = Array.new(count) { read_lnct(sequence, dir_format).path }
+            include_directories = Array.new(count) { read_lnct(nil, dir_format).path }
 
             file_format = read_lnct_format
             count = DWARF.read_unsigned_leb128(@io)
-            sequence.file_names = Array.new(count) { read_lnct(sequence, file_format) }
+            file_names = Array.new(count) { read_lnct(include_directories, file_format) }
           end
 
-          if @io.tell - @offset < sequence.offset + sequence.total_length
+          if @io.tell - @offset < offset + total_length
+            sequence = Sequence.new(
+              offset,
+              unit_length,
+              minimum_instruction_length,
+              maximum_operations_per_instruction,
+              default_is_stmt,
+              line_base,
+              line_range,
+              opcode_base,
+              standard_opcode_lengths,
+              include_directories,
+              file_names,
+            )
             read_statement_program(sequence)
           end
-        end
-      end
-
-      private def read_opcodes(sequence)
-        1.upto(sequence.opcode_base - 1) do
-          sequence.standard_opcode_lengths << @io.read_byte.not_nil!
         end
       end
 
@@ -285,7 +282,7 @@ module Crystal
         end
       end
 
-      private def read_lnct(sequence, formats)
+      private def read_lnct(include_directories, formats)
         dir = ""
         path = ""
         mtime = 0_u64
@@ -340,7 +337,7 @@ module Crystal
             path = str if str
           in .directory_index?
             if val
-              dir = sequence.include_directories[val]
+              dir = include_directories.not_nil![val]
             end
           in .timestamp?
             mtime = val.to_u64
@@ -358,7 +355,7 @@ module Crystal
         Sequence::FileEntry.new(path, mtime, size)
       end
 
-      private def read_directory_table(sequence)
+      private def read_directory_table
         ary = [""]
         loop do
           name = @io.gets('\0', chomp: true).to_s
@@ -368,7 +365,7 @@ module Crystal
         ary
       end
 
-      private def read_filename_table(sequence)
+      private def read_filename_table(include_directories)
         ary = [Sequence::FileEntry.new("", 0, 0)]
         loop do
           name = @io.gets('\0', chomp: true).to_s
@@ -377,7 +374,7 @@ module Crystal
           time = DWARF.read_unsigned_leb128(@io)
           length = DWARF.read_unsigned_leb128(@io)
 
-          dir = sequence.include_directories[dir]
+          dir = include_directories[dir]
           if (name != "" && dir != "")
             name = File.join(dir, name)
           end
