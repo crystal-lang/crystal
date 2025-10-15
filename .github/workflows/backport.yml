@@ -8,6 +8,7 @@ name: Backport
 on:
   pull_request_target:
     types: [closed, labeled]
+    branches: [master, release/*]
 
 permissions:
   contents: write # so it can comment

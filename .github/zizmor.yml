@@ -1,4 +1,7 @@
 rules:
+  dangerous-triggers:
+    ignore:
+      - backport.yml
   unpinned-uses:
     config:
       policies:
