@@ -110,9 +110,13 @@ jobs:
       - name: Set up environment
         run: |
           Add-Content $env:GITHUB_ENV "CRYSTAL_LIBRARY_PATH=$(pwd)\libs"
-          Add-Content $env:GITHUB_ENV "LLVM_VERSION=${{ inputs.llvm_version }}"
-          Add-Content $env:GITHUB_ENV "LLVM_TARGETS=${{ inputs.llvm_targets }}"
-          Add-Content $env:GITHUB_ENV "LLVM_LDFLAGS=${{ inputs.llvm_ldflags }}"
+          Add-Content $env:GITHUB_ENV "LLVM_VERSION=$env:INPUTS_LLVM_VERSION"
+          Add-Content $env:GITHUB_ENV "LLVM_TARGETS=$env:INPUTS_LLVM_TARGETS"
+          Add-Content $env:GITHUB_ENV "LLVM_LDFLAGS=$env:INPUTS_LLVM_LDFLAGS"
+        env:
+          INPUTS_LLVM_VERSION: ${{ inputs.llvm_version }}
+          INPUTS_LLVM_TARGETS: ${{ inputs.llvm_targets }}
+          INPUTS_LLVM_LDFLAGS: ${{ inputs.llvm_ldflags }}
 
       - name: Build LLVM extensions
         run: make -f Makefile.win deps
