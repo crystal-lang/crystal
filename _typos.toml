@@ -47,7 +47,7 @@ extend-ignore-re = [
   'tr‸ue|fo‸o',
   "\"[^\"]+\"\\.to_slice\\s*=> [\"']\\\\u", # src/html/entities.cr
   " ([a-zA-Z.]{8} ){4}->", # src/bit_array.cr
-  "[A-z]+[0-9]"
+  "[A-z]+[0-9]",
 ]
 
 [files]
