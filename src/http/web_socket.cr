@@ -78,7 +78,7 @@ class HTTP::WebSocket
   end
 
   # Sends a message payload (message).
-  def send(message : String) : Nil
+  def send(message : String | Bytes) : Nil
     check_open
     @ws.send(message)
   end
