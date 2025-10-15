@@ -110,7 +110,7 @@ jobs:
       uses: actions/checkout@v5
 
     - name: Spell Check Repo
-      uses: crate-ci/typos@v1.38.1
+      uses: crate-ci/typos@80c8a4945eec0f6d464eaf9e65ed98ef085283d1 # v1.38.1
       env:
         CLICOLOR: 1
 
