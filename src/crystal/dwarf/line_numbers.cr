@@ -206,9 +206,9 @@ module Crystal
             maximum_operations_per_instruction = 1
           end
 
-            if maximum_operations_per_instruction == 0
-              raise "Invalid maximum operations per instruction: 0"
-            end
+          if maximum_operations_per_instruction == 0
+            raise "Invalid maximum operations per instruction: 0"
+          end
 
           default_is_stmt = @io.read_byte == 1
           line_base = @io.read_bytes(Int8).to_i
