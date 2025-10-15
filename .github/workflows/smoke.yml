@@ -78,6 +78,8 @@ jobs:
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Build fresh compiler
         run: bin/ci with_build_env make

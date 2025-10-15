@@ -15,6 +15,8 @@ jobs:
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - name: Build Crystal
         uses: docker://crystallang/crystal:1.13.2-alpine-84codes-build
         with:
@@ -33,6 +35,8 @@ jobs:
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - name: Download Crystal executable
         uses: actions/download-artifact@v5
         with:
@@ -50,6 +54,8 @@ jobs:
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - name: Download Crystal executable
         uses: actions/download-artifact@v5
         with:
@@ -66,6 +72,8 @@ jobs:
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - name: Build Crystal
         uses: docker://crystallang/crystal:1.13.2-ubuntu-84codes-build
         with:
@@ -84,6 +92,8 @@ jobs:
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - name: Download Crystal executable
         uses: actions/download-artifact@v5
         with:
@@ -101,6 +111,8 @@ jobs:
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - name: Download Crystal executable
         uses: actions/download-artifact@v5
         with:

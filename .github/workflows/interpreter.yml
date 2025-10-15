@@ -19,6 +19,8 @@ jobs:
     name: "Test Interpreter"
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Test interpreter_spec
         run: make interpreter_spec junit_output=.junit/interpreter_spec.xml
@@ -30,6 +32,8 @@ jobs:
     name: Build interpreter
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Build compiler
         run: make interpreter=1 release=1
@@ -53,6 +57,8 @@ jobs:
     name: "Test std_spec with interpreter (${{ matrix.part }})"
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Download compiler artifact
         uses: actions/download-artifact@v5
@@ -74,6 +80,8 @@ jobs:
     name: "Test primitives_spec with interpreter"
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Download compiler artifact
         uses: actions/download-artifact@v5

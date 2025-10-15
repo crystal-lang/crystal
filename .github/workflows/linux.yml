@@ -35,6 +35,8 @@ jobs:
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Prepare System
         run: bin/ci prepare_system
@@ -53,6 +55,8 @@ jobs:
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Prepare System
         run: bin/ci prepare_system
@@ -71,6 +75,8 @@ jobs:
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Prepare System
         run: bin/ci prepare_system
@@ -92,6 +98,8 @@ jobs:
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Prepare System
         run: bin/ci prepare_system
@@ -108,6 +116,8 @@ jobs:
     steps:
     - name: Checkout Actions Repository
       uses: actions/checkout@v5
+      with:
+        persist-credentials: false
 
     - name: Spell Check Repo
       uses: crate-ci/typos@80c8a4945eec0f6d464eaf9e65ed98ef085283d1 # v1.38.1
@@ -120,5 +130,7 @@ jobs:
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - run: ameba

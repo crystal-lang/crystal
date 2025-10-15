@@ -22,4 +22,6 @@ jobs:
     steps:
       - run: shellcheck --version
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - run: make lint-shellcheck

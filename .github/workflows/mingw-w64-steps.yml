@@ -41,6 +41,8 @@ jobs:
 
       - name: Download Crystal source
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Build Crystal
         shell: msys2 {0}
@@ -56,6 +58,7 @@ jobs:
           repository: crystal-lang/shards
           ref: v0.19.1
           path: shards
+          persist-credentials: false
 
       - name: Build shards release
         shell: msys2 {0}
@@ -98,6 +101,8 @@ jobs:
 
       - name: Download Crystal source
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Run stdlib specs
         shell: msys2 {0}
@@ -128,6 +133,8 @@ jobs:
 
       - name: Download Crystal source
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Download Crystal executable
         uses: actions/download-artifact@v5

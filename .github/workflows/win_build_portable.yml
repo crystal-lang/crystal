@@ -37,6 +37,8 @@ jobs:
 
       - name: Download Crystal source
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Restore libraries
         uses: actions/cache/restore@v4
@@ -132,6 +134,7 @@ jobs:
           repository: crystal-lang/shards
           ref: v0.19.1
           path: shards
+          persist-credentials: false
 
       - name: Build shards release
         working-directory: ./shards
