@@ -404,7 +404,7 @@ describe "YAML serialization" do
     end
 
     describe "Union.from_yaml" do
-      it "String priorization" do
+      it "String prioritization" do
         (Int32 | String).from_yaml(%(42)).should eq 42
         (Int32 | String).from_yaml(%("42")).should eq "42"
 
