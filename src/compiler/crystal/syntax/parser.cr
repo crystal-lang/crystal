@@ -6135,6 +6135,7 @@ module Crystal
       if @token.type.op_colon?
         next_token_skip_space_or_newline
         base_type = parse_path
+        skip_space
       end
 
       check SemicolonOrNewLine
