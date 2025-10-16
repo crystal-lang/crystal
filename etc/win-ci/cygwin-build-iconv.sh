@@ -1,8 +1,9 @@
 #!/bin/sh
+# shellcheck disable=SC2155
 
-set -eo pipefail
+set -e
 
-Version=$1
+# Version=$1 # unused variable
 Dynamic=$2
 
 export PATH="$(pwd)/build-aux:$PATH"
@@ -26,7 +27,7 @@ else
   # GNU libiconv appears to define `BUILDING_DLL` unconditionally, so the static
   # library contains `/EXPORT` directives that make any executable also export
   # the iconv symbols, which we don't want
-  find . '(' -name '*.h' -or -name '*.h.build.in' ')' -print0 | xargs -0 -i sed -i 's/__declspec(dllexport)//' '{}'
+  find . '(' -name '*.h' -or -name '*.h.build.in' ')' -print0 | xargs -0 -I{} sed -i 's/__declspec(dllexport)//' '{}'
 fi
 export CPPFLAGS="-O2 -D_WIN32_WINNT=_WIN32_WINNT_WIN7 -I$(pwd)/iconv/include"
 export LDFLAGS="-L$(pwd)/iconv/lib"
