@@ -5,19 +5,19 @@ REPLy is a shard that provide a term reader for a REPL (Read Eval Print Loop).
 ## Features
 
 It includes the following features:
-- Multiline input
-- History
-- Pasting of large expressions
-- Hook for Syntax highlighting
-- Hook for Auto formatting
-- Hook for Auto indentation
-- Hook for Auto completion (Experimental)
-- History Reverse i-search
-- Work on Windows 10
+* Multiline input
+* History
+* Pasting of large expressions
+* Hook for Syntax highlighting
+* Hook for Auto formatting
+* Hook for Auto indentation
+* Hook for Auto completion (Experimental)
+* History Reverse i-search
+* Work on Windows 10
 
 It doesn't support yet:
-- Customizable hotkeys
-- Unicode characters
+* Customizable hotkeys
+* Unicode characters
 
 NOTE: REPLy was extracted from https://github.com/I3oris/ic, it was first designed to fit exactly the usecase of a crystal interpreter, so don't hesitate to open an issue to make REPLy more generic and suitable for your project if needed.
 
@@ -84,8 +84,8 @@ end
 ```
 
 ## Similar Project
-- [fancyline](https://github.com/Papierkorb/fancyline)
-- [crystal-readline](https://github.com/crystal-lang/crystal-readline)
+* [fancyline](https://github.com/Papierkorb/fancyline)
+* [crystal-readline](https://github.com/crystal-lang/crystal-readline)
 
 ## Development
 
