@@ -3,8 +3,7 @@
 
 set -e
 
-# Version=$1 # unused variable
-Dynamic=$2
+Dynamic=$1
 
 export PATH="$(pwd)/build-aux:$PATH"
 export CC="$(pwd)/build-aux/compile cl -nologo"
