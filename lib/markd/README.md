@@ -4,10 +4,9 @@
 [![Tag](https://img.shields.io/github/tag/icyleaf/markd.svg)](https://github.com/icyleaf/markd/blob/master/CHANGELOG.md)
 [![Build Status](https://img.shields.io/circleci/project/github/icyleaf/markd/master.svg?style=flat)](https://circleci.com/gh/icyleaf/markd)
 
-
 **THIS PROJECT IS LOOKING FOR MAINTAINER**
 
-Unfortunately, the maintainer no longer has the time and/or resources to work on markd further. This means that bugs will not be fixed and features will not be added unless someone else does so. 
+Unfortunately, the maintainer no longer has the time and/or resources to work on markd further. This means that bugs will not be fixed and features will not be added unless someone else does so.
 
 If you're interested in fixing up markd, please [file an issue](https://github.com/icyleaf/markd/issues/new) let me know.
 
