@@ -2033,6 +2033,8 @@ module Crystal
     it_parses "enum Foo; A\nB; C\nD = 1; end", EnumDef.new("Foo".path, [Arg.new("A"), Arg.new("B"), Arg.new("C"), Arg.new("D", 1.int32)] of ASTNode)
     it_parses "enum Foo; A = 1; B; end", EnumDef.new("Foo".path, [Arg.new("A", 1.int32), Arg.new("B")] of ASTNode)
     it_parses "enum Foo : UInt16; end", EnumDef.new("Foo".path, base_type: "UInt16".path)
+    it_parses "enum Foo : UInt16 ; end", EnumDef.new("Foo".path, base_type: "UInt16".path)
+    it_parses "enum Foo : UInt16 # comment\nend", EnumDef.new("Foo".path, base_type: "UInt16".path)
     it_parses "enum Foo; def foo; 1; end; end", EnumDef.new("Foo".path, [Def.new("foo", body: 1.int32)] of ASTNode)
     it_parses "enum Foo; A = 1\ndef foo; 1; end; end", EnumDef.new("Foo".path, [Arg.new("A", 1.int32), Def.new("foo", body: 1.int32)] of ASTNode)
     it_parses "enum Foo; A = 1\ndef foo; 1; end\ndef bar; 2; end\nend", EnumDef.new("Foo".path, [Arg.new("A", 1.int32), Def.new("foo", body: 1.int32), Def.new("bar", body: 2.int32)] of ASTNode)
