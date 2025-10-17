@@ -99,11 +99,20 @@ module Fiber::ExecutionContext
       return count.clamp(1..)
     end
 
-    total = System.cpu_count.to_i.clamp(1..)
-    effective = Crystal::System.effective_cpu_count.to_i.clamp(1..)
+    total = System.cpu_count.to_i.try { |count| count if count.positive? }
+    effective = Crystal::System.effective_cpu_count.to_i.try { |count| count if count.positive? }
     # TODO: query for CPU limits (e.g. linux/cgroup, freebsd/rctl, ...)
 
-    Math.min(total, effective)
+    case
+    when total && effective
+      Math.min(total, effective)
+    when total
+      total
+    when effective
+      effective
+    else
+      1
+    end
   end
 
   # :nodoc:
