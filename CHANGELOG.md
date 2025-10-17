@@ -8,10 +8,8 @@
 
 #### stdlib
 
-- _(networking)_ **[regression]** Allow sending Bytes via WebSocket ([#16216], thanks @carlhoerberg)
 - _(networking)_ **[regression]** Revert adding type restrictions on `HTTP::WebSocket#send` etc. ([#16218], thanks @straight-shoota)
 
-[#16216]: https://github.com/crystal-lang/crystal/pull/16216
 [#16218]: https://github.com/crystal-lang/crystal/pull/16218
 
 #### compiler
@@ -19,6 +17,12 @@
 - _(parser)_ **[regression]** Fix allow space after base type in enum def ([#16217], thanks @straight-shoota)
 
 [#16217]: https://github.com/crystal-lang/crystal/pull/16217
+
+### Infrastructure
+
+- Changelog for 1.18.1 ([#16224], thanks @matiasgarciaisaia)
+
+[#16224]: https://github.com/crystal-lang/crystal/pull/16224
 
 ## [1.18.0] (2025-10-14)
 
