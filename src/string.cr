@@ -646,13 +646,13 @@ class String
       last_is_underscore = false
       if prefix
         case ptr.value.unsafe_chr
-        when 'b'
+        when 'b', 'B'
           base = 2
           ptr += 1
-        when 'x'
+        when 'x', 'X'
           base = 16
           ptr += 1
-        when 'o'
+        when 'o', 'O'
           base = 8
           ptr += 1
         else
