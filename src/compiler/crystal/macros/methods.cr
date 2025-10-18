@@ -702,7 +702,7 @@ module Crystal
           num = arg.to_number
 
           unless num.is_a?(Int)
-            arg.raise "argument to StringLiteral#* cannot be a float"
+            arg.raise "argument to StringLiteral#* must be an integer"
           end
 
           StringLiteral.new(@value * num)
@@ -3188,13 +3188,13 @@ private def interpret_array_or_tuple_method(object, klass, method, args, named_a
   when "*"
     interpret_check_args(node: object) do |arg|
       unless arg.is_a?(Crystal::NumberLiteral)
-        arg.raise "argument to ArrayLiteral#* must be a number, not #{arg.class_desc}"
+        arg.raise "argument to `#{klass}#*` must be a number, not #{arg.class_desc}"
       end
 
       num = arg.to_number
 
       unless num.is_a?(Int)
-        arg.raise "argument to ArrayLiteral#* cannot be a float"
+        arg.raise "argument to `#{klass}#*` must be an integer"
       end
 
       klass.new(object.elements * num)

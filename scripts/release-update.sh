@@ -25,9 +25,9 @@ rm -f src/SOURCE_DATE_EPOCH
 # Truncate CHANGELOG.md
 sed -i -E '/^## \[/,/^## Previous Releases/{/^## Previous Releases/!d}' CHANGELOG.md
 
-if ! grep -q https://github.com/crystal-lang/crystal/blob/release/${CRYSTAL_VERSION%.*}/CHANGELOG.md CHANGELOG.md; then
+if ! grep -q "https://github.com/crystal-lang/crystal/blob/release/${CRYSTAL_VERSION%.*}/CHANGELOG.md" CHANGELOG.md; then
   sed -i -E "/For information on prior releases/{ N;a\
-  * [${CRYSTAL_VERSION%.*}](https://github.com/crystal-lang/crystal/blob/release/${CRYSTAL_VERSION%.*}/CHANGELOG.md)
+  - [${CRYSTAL_VERSION%.*}](https://github.com/crystal-lang/crystal/blob/release/${CRYSTAL_VERSION%.*}/CHANGELOG.md)
   }" CHANGELOG.md
 fi
 
