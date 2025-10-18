@@ -38,16 +38,23 @@ module Crystal::System::Env
 
   # Iterates all environment variables.
   def self.each(&block : String, String ->)
+    each_pointer do |kv_pointer|
+      # this does `String.new(kv_pointer).partition('=')` without an intermediary string
+      key_value = Slice.new(kv_pointer, LibC.strlen(kv_pointer))
+      split_index = key_value.index!(0x3d_u8) # '='
+      key = String.new(key_value[0, split_index])
+      value = String.new(key_value[split_index + 1..])
+      yield key, value
+    end
+  end
+
+  # Iterates all environment variables as a char pointer to a "KEY=VALUE" string.
+  def self.each_pointer(&block : LibC::Char* ->)
     environ_ptr = LibC.environ
     while environ_ptr
       environ_value = environ_ptr.value
       if environ_value
-        # this does `String.new(environ_value).partition('=')` without an intermediary string
-        key_value = Slice.new(environ_value, LibC.strlen(environ_value))
-        split_index = key_value.index!(0x3d_u8) # '='
-        key = String.new(key_value[0, split_index])
-        value = String.new(key_value[split_index + 1..])
-        yield key, value
+        yield environ_value
         environ_ptr += 1
       else
         break

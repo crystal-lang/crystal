@@ -250,7 +250,7 @@ class HTTP::WebSocket::Protocol
     end
   end
 
-  def pong(message : String? = nil) : Nil
+  def pong(message = nil) : Nil
     if message
       send(message.to_slice, Opcode::PONG)
     else
@@ -258,7 +258,7 @@ class HTTP::WebSocket::Protocol
     end
   end
 
-  def close(code : CloseCode? = nil, message : String? = nil) : Nil
+  def close(code : CloseCode? = nil, message = nil) : Nil
     return if @io.closed?
 
     if message
