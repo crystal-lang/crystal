@@ -289,6 +289,16 @@ module Crystal
     assert_syntax_error "*a, b, c, d, e = 1, 2", "Multiple assignment count mismatch"
     assert_syntax_error "a, b, c, d, *e = 1, 2, 3", "Multiple assignment count mismatch"
 
+    assert_syntax_error "a = *1", %(unexpected token: "*")
+    assert_syntax_error "a = *1, 2", %(unexpected token: "*")
+    assert_syntax_error "a = 1, *2", %(unexpected token: "*")
+    assert_syntax_error "a, b = *1", %(unexpected token: "*")
+    assert_syntax_error "a, b = *1, 2", %(unexpected token: "*")
+    assert_syntax_error "a, b = 1, *2", %(unexpected token: "*")
+    assert_syntax_error "a, *b = *1", %(unexpected token: "*")
+    assert_syntax_error "a, *b = *1, 2", %(unexpected token: "*")
+    assert_syntax_error "a, *b = 1, *2", %(unexpected token: "*")
+
     # #11442, #12911
     assert_syntax_error "a, b.<="
     assert_syntax_error "*a == 1"
