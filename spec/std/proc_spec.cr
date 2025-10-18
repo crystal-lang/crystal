@@ -89,5 +89,10 @@ describe "Proc" do
     f2.call('r').should eq(2)
   end
 
+  it "#[]" do
+    f = ->(x : Int32) { x + 1 }
+    f[3].should eq(4)
+  end
+
   typeof(-> { 1 }.hash)
 end
