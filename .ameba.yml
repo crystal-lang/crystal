@@ -72,9 +72,13 @@ Lint/RandZero:
 Lint/ShadowingOuterLocalVar:
   Enabled: false
 
-# TODO: Investigate file names and move to data directories.
 Lint/SpecFilename:
-  Enabled: false
+  Excluded:
+  - spec/compiler/data/**/*
+  - spec/compiler/lexer/lexer_objects/strings.cr
+  - spec/debug/**/*
+  - spec/llvm-ir/**/*
+  - spec/std/float_printer/ryu_printf_test_cases.cr
 
 # BUG: https://github.com/crystal-ameba/ameba/issues/612
 Lint/TopLevelOperatorDefinition:
