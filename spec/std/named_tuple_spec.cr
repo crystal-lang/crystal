@@ -503,6 +503,16 @@ describe "NamedTuple" do
     NamedTuple.new.merge(NamedTuple.new).should eq(NamedTuple.new)
   end
 
+  it "does reverse merge with other named tuple" do
+    a = {one: 1, two: 2, three: 3, four: 4, five: 5, "im \"string": "works"}
+    b = {two: "Two", three: true, "new one": "ok"}
+    a.reverse_merge(b).reverse_merge(four: "Four").reverse_merge(NamedTuple.new).should eq({one: 1, two: 2, three: 3, four: 4, five: 5, "new one": "ok", "im \"string": "works"})
+  end
+
+  it "does reverse merge two empty named tuples" do
+    NamedTuple.new.reverse_merge(NamedTuple.new).should eq(NamedTuple.new)
+  end
+
   it "does types" do
     tuple = {a: 1, b: 'a', c: "hello"}
     tuple.class.types.to_s.should eq("{a: Int32, b: Char, c: String}")
