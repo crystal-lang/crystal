@@ -930,7 +930,7 @@ abstract class IO
   # io.rewind
   # io.read_bytes(Int32, IO::ByteFormat::LittleEndian) # => 0x01020304
   # ```
-  def read_bytes(type : T.class, format : IO::ByteFormat = IO::ByteFormat::SystemEndian) : T forall T
+  def read_bytes(type, format : IO::ByteFormat = IO::ByteFormat::SystemEndian)
     type.from_io(self, format)
   end
 
