@@ -78,7 +78,7 @@ class HTTP::WebSocket
   end
 
   # Sends a message payload (message).
-  def send(message : String) : Nil
+  def send(message) : Nil
     check_open
     @ws.send(message)
   end
@@ -92,7 +92,7 @@ class HTTP::WebSocket
   end
 
   # Sends a PONG frame, which must be in response to a previously received PING frame from `#on_ping`.
-  def pong(message : String? = nil) : Nil
+  def pong(message = nil) : Nil
     check_open
     @ws.pong(message)
   end
@@ -126,7 +126,7 @@ class HTTP::WebSocket
 
   # Sends a close frame, and closes the connection.
   # The close frame may contain a body (message) that indicates the reason for closing.
-  def close(code : CloseCode | Int? = nil, message : String? = nil) : Nil
+  def close(code : CloseCode | Int? = nil, message = nil) : Nil
     return if closed?
     @closed = true
     @ws.close(code, message)
