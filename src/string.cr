@@ -1751,7 +1751,7 @@ class String
   # "string\r\n".rchop # => "string\r"
   # "string\n\r".rchop # => "string\n"
   # "string\n".rchop   # => "string"
-  # "string".rchop     # => "strin"
+  # "strings".rchop    # => "string"
   # "x".rchop.rchop    # => ""
   # ```
   def rchop : String
@@ -1761,7 +1761,7 @@ class String
   # Returns a new `String` with *suffix* removed from the end of the string.
   #
   # ```
-  # "string".rchop('g')   # => "strin"
+  # "strings".rchop('s')  # => "string"
   # "string".rchop('x')   # => "string"
   # "string".rchop("ing") # => "str"
   # "string".rchop("inx") # => "string"
@@ -1776,7 +1776,7 @@ class String
   # "string\r\n".rchop? # => "string\r"
   # "string\n\r".rchop? # => "string\n"
   # "string\n".rchop?   # => "string"
-  # "string".rchop?     # => "strin"
+  # "strings".rchop?    # => "string"
   # "".rchop?           # => nil
   # ```
   def rchop? : String?
@@ -1788,7 +1788,7 @@ class String
   # Returns a new `String` with *suffix* removed from the end of the string if possible, else returns `nil`.
   #
   # ```
-  # "string".rchop?('g')   # => "strin"
+  # "strings".rchop?('s')  # => "string"
   # "string".rchop?('x')   # => nil
   # "string".rchop?("ing") # => "str"
   # "string".rchop?("inx") # => nil
