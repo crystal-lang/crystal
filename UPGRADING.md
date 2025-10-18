@@ -14,13 +14,13 @@ a specific release.
 
 ## Crystal 1.13
 
-* `CRYSTAL_LIBRARY_RPATH` and the `preview_win32_delay_load` feature flag have
+- `CRYSTAL_LIBRARY_RPATH` and the `preview_win32_delay_load` feature flag have
   been removed. Individual DLLs can be explicitly delay-loaded with the MSVC
   toolchain by using `/DELAYLOAD` as a linker flag. Similarly RPATH can be added
   with GCC or Clang toolchains by adding `-Wl,-rpath`.
 
 ## Crystal 1.9
 
-* The implementation of the comparison operator `#<=>` between `Big*` (`BigDecimal`,
+- The implementation of the comparison operator `#<=>` between `Big*` (`BigDecimal`,
   `BigFloat`, `BigInt`, `BigRational`) and `Float` (`Float32`, `Float64`) number types
   is now nilable. When invoking these comparisons, `Nil` values must be handled.

@@ -4,7 +4,7 @@ about: I want to start a new discussion about improving the language.
 labels: status:discussion
 ---
 
-## Discussion
+# Discussion
 
 - What aspect of the language would you like to see improved?
 - What are the reasons?

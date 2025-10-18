@@ -5,7 +5,7 @@ labels: kind:feature
 type: Feature
 ---
 
-## Feature Request
+# Feature Request
 
 - Is your feature request related to a problem? Please describe clearly and concisely what is it.
 - Describe the feature you would like, optionally illustrated by examples, and how it will solve the above problem.
