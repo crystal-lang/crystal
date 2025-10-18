@@ -1497,6 +1497,8 @@ describe "String" do
       it "keeps groups" do
         s = "split on the word on okay?"
         s.split(/(on)/).should eq(["split ", "on", " the word ", "on", " okay?"])
+        s.split(/o(?:(n)|(r))/).should eq(["split ", "n", " the w", "r", "d ", "n", " okay?"])
+        s.split(/()/, limit: 4, remove_empty: true).should eq(["s", "", "p", "", "l", "", "it on the word on okay?"])
       end
     end
   end

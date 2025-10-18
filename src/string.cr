@@ -4241,19 +4241,25 @@ class String
     yield String.new(to_unsafe + byte_offset, piece_bytesize, piece_size)
   end
 
-  # Makes an `Array` by splitting the string on *separator* (and removing instances of *separator*).
+  # Makes an `Array` by splitting the string on *separator* (and removing
+  # instances of *separator*).
   #
-  # If *limit* is present, the array will be limited to *limit* items and
-  # the final item will contain the remainder of the string.
+  # If *separator* is an empty regex (`//`), the string will be separated into
+  # one-character strings. If *separator* defines any capture groups, their
+  # matches are also included in the result.
   #
-  # If *separator* is an empty regex (`//`), the string will be separated into one-character strings.
+  # If *limit* is present, *separator* will be matched at most `limit - 1`
+  # times, and the final item will contain the remainder of the string. The
+  # array may contain more than *limit* items if capture groups are present.
   #
   # If *remove_empty* is `true`, any empty strings are removed from the result.
+  # This does not affect matches from *separator*'s capture groups.
   #
   # ```
   # long_river_name = "Mississippi"
-  # long_river_name.split(/s+/) # => ["Mi", "i", "ippi"]
-  # long_river_name.split(//)   # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
+  # long_river_name.split(/s+/)  # => ["Mi", "i", "ippi"]
+  # long_river_name.split(//)    # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
+  # long_river_name.split(/(i)/) # => ["M", "i", "ss", "i", "ss", "i", "pp", "i", ""]
   # ```
   def split(separator : Regex, limit = nil, *, remove_empty = false, options : Regex::MatchOptions = Regex::MatchOptions::None) : Array(String)
     ary = Array(String).new
@@ -4263,14 +4269,19 @@ class String
     ary
   end
 
-  # Splits the string after each regex *separator* and yields each part to a block.
+  # Splits the string after each regex *separator* and yields each part to a
+  # block.
   #
-  # If *limit* is present, the array will be limited to *limit* items and
-  # the final item will contain the remainder of the string.
+  # If *separator* is an empty regex (`//`), the string will be separated into
+  # one-character strings. If *separator* defines any capture groups, their
+  # matches are also yielded in order.
   #
-  # If *separator* is an empty regex (`//`), the string will be separated into one-character strings.
+  # If *limit* is present, *separator* will be matched at most `limit - 1`
+  # times, and the final item will contain the remainder of the string. More
+  # than *limit* items may be yielded in total if capture groups are present.
   #
-  # If *remove_empty* is `true`, any empty strings are removed from the result.
+  # If *remove_empty* is `true`, any empty strings are not yielded. This does
+  # not affect matches from *separator*'s capture groups.
   #
   # ```
   # ary = [] of String
@@ -4282,6 +4293,10 @@ class String
   #
   # long_river_name.split(//) { |s| ary << s }
   # ary # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
+  # ary.clear
+  #
+  # long_river_name.split(/(i)/) { |s| ary << s }
+  # ary # => ["M", "i", "ss", "i", "ss", "i", "pp", "i", ""]
   # ```
   def split(separator : Regex, limit = nil, *, remove_empty = false, options : Regex::MatchOptions = Regex::MatchOptions::None, &block : String -> _)
     if empty?
