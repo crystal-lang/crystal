@@ -82,6 +82,7 @@ jobs:
   test_darwin:
     macos:
       xcode: 16.4.0
+    resource_class: m4pro.medium
     environment:
       <<: *env
       TRAVIS_OS_NAME: osx
@@ -290,6 +291,7 @@ jobs:
   dist_darwin:
     macos:
       xcode: 16.4.0
+    resource_class: m4pro.medium
     shell: /bin/bash --login -eo pipefail
     steps:
       - restore_cache:
