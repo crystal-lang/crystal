@@ -1277,9 +1277,7 @@ class String
   # "hello".byte_slice(-6) # raises IndexError
   # ```
   def byte_slice(start : Int) : String
-    count = bytesize - start
-    raise IndexError.new if start > 0 && count < 0
-    byte_slice start, count
+    byte_slice start, bytesize
   end
 
   # Returns a substring starting from the *start* byte.
@@ -1304,9 +1302,7 @@ class String
   # "hello".byte_slice?(-6) # => nil
   # ```
   def byte_slice?(start : Int) : String?
-    count = bytesize - start
-    return nil if start > 0 && count < 0
-    byte_slice? start, count
+    byte_slice? start, bytesize
   end
 
   # Returns the codepoint of the character at the given *index*.
