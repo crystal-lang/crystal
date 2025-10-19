@@ -1173,9 +1173,8 @@ class String
   # ```
   # "hello".byte_slice(0, 2)   # => "he"
   # "hello".byte_slice(0, 100) # => "hello"
-  # "hello".byte_slice(-2, 3)  # => "he"
-  # "hello".byte_slice(-2, 5)  # => "he"
-  # "hello".byte_slice(-2, 5)  # => "he"
+  # "hello".byte_slice(-2, 3)  # => "lo"
+  # "hello".byte_slice(-2, 5)  # => "lo"
   # "¥hello".byte_slice(0, 2)  # => "¥"
   # "¥hello".byte_slice(2, 2)  # => "he"
   # "¥hello".byte_slice(0, 1)  # => "\xC2" (invalid UTF-8 character)
