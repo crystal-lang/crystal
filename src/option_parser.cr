@@ -418,20 +418,7 @@ class OptionParser
       end
 
       # After argument parsing, delete handled arguments from args.
-      # We reverse so that we delete args from
-      handled_args.reverse!
-      i = 0
-      args.reject! do
-        # handled_args is sorted in reverse so we know that i <= handled_args.last
-        handled = i == handled_args.last?
-
-        # Maintain the i <= handled_args.last invariant
-        handled_args.pop if handled
-
-        i += 1
-
-        handled
-      end
+      remove_handled_args(args, handled_args)
 
       # Since we've deleted all handled arguments, `args` is all unknown arguments
       # which we split by the index of any double dash argument
@@ -524,5 +511,24 @@ class OptionParser
     end
 
     arg_index
+  end
+
+  # Removes handled arguments from the args array based on handled_args indexes.
+  private def remove_handled_args(args : Array(String), handled_args : Array(Int32)) : Nil
+    # After argument parsing, delete handled arguments from args.
+    # We reverse so that we delete args from the end
+    handled_args.reverse!
+    i = 0
+    args.reject! do
+      # handled_args is sorted in reverse so we know that i <= handled_args.last
+      handled = i == handled_args.last?
+
+      # Maintain the i <= handled_args.last invariant
+      handled_args.pop if handled
+
+      i += 1
+
+      handled
+    end
   end
 end
