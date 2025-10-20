@@ -159,8 +159,8 @@ class HTTP::StaticFileHandler
     end
   end
 
-  # *io* should be seekable, that's implement #seek method
-  private def serve_file_range(context : Server::Context, io : IO, range_header : String, file_info)
+  # *file* should be seekable, that's implement #seek method
+  private def serve_file_range(context : Server::Context, file : IO, range_header : String, file_info)
     range_header = range_header.lchop?("bytes=")
     unless range_header
       context.response.headers["Content-Range"] = "bytes */#{file_info.size}"
@@ -196,32 +196,32 @@ class HTTP::StaticFileHandler
 
     if ranges.size == 1
       range = ranges.first
-      io.seek range.begin
+      file.seek range.begin
       context.response.headers["Content-Range"] = "bytes #{range.begin}-#{range.end}/#{file_info.size}"
-      IO.copy io, context.response, range.size
+      IO.copy file, context.response, range.size
     else
       MIME::Multipart.build(context.response) do |builder|
         content_type = context.response.headers["Content-Type"]?
         context.response.headers["Content-Type"] = builder.content_type("byterange")
 
         ranges.each do |range|
-          io.seek range.begin
+          file.seek range.begin
           headers = HTTP::Headers{
             "Content-Range"  => "bytes #{range.begin}-#{range.end}/#{file_info.size}",
             "Content-Length" => range.size.to_s,
           }
           headers["Content-Type"] = content_type if content_type
-          chunk_io = IO::Sized.new(io, range.size)
+          chunk_io = IO::Sized.new(file, range.size)
           builder.body_part headers, chunk_io
         end
       end
     end
   end
 
-  private def serve_file_full(context : Server::Context, io : IO, file_info)
+  private def serve_file_full(context : Server::Context, file : IO, file_info)
     context.response.status = :ok
     context.response.content_length = file_info.size
-    IO.copy(io, context.response)
+    IO.copy(file, context.response)
   end
 
   # TODO: Optimize without lots of intermediary strings
