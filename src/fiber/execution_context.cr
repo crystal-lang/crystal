@@ -95,24 +95,13 @@ module Fiber::ExecutionContext
   # and otherwise defaults to the minimum number of logical CPUs available to
   # the process or available on the computer.
   def self.default_workers_count : Int32
-    if count = ENV["CRYSTAL_WORKERS"]?.try(&.to_i?)
-      return count.clamp(1..)
-    end
-
-    total = System.cpu_count.to_i.try { |count| count if count.positive? }
-    effective = Crystal::System.effective_cpu_count.to_i.try { |count| count if count.positive? }
+    count = ENV["CRYSTAL_WORKERS"]?.try(&.to_i?) || -1
+    count = System.cpu_count.to_i if count == -1
+    count = Crystal::System.effective_cpu_count.to_i if count == -1
     # TODO: query for CPU limits (e.g. linux/cgroup, freebsd/rctl, ...)
 
-    case
-    when total && effective
-      Math.min(total, effective)
-    when total
-      total
-    when effective
-      effective
-    else
-      1
-    end
+    # always report at least 1 worker
+    count.clamp(1..)
   end
 
   # :nodoc:
