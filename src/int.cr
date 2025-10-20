@@ -2803,7 +2803,7 @@ end
     multiplier : {{type.id}} = 1
     first_element = true
 
-    digits.each_with_index do |digit, i|
+    digits.each do |digit|
       if digit < 0
         raise ArgumentError.new("Invalid digit #{digit}")
       end
