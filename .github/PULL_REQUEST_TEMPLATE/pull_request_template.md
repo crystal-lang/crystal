@@ -1,3 +1,5 @@
+# Pull Request
+
 We thank you for helping improve Crystal. In order to ease the reviewing process, we invite you to read the [guidelines](https://github.com/crystal-lang/crystal/blob/master/CONTRIBUTING.md#making-good-pull-requests) and ask you to consider the following points before submitting a PR:
 
 1. We prefer to discuss the underlying issue _prior_ to discussing the code. Therefore, we kindly ask you to refer to an existing issue, or an existing discussion in a public space with members of the Core Team (forum, Gitter, Discord, ...). In few cases, we acknowledge that this might not be necessary, for instance when refactoring code or small bug fixes. In this case, the PR must include the same information an issue would have: a clear explanation of the issue, reproducible code, etc.
