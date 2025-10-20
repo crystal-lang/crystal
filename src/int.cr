@@ -2785,13 +2785,13 @@ end
 # All digits must be within 0...base.
 #
 # ```
-# Int32.from_digits([5, 4, 3, 2, 1])           # => 12345
-# Int32.from_digits([4, 6, 6, 0, 5], base: 7)  # => 12345
-# Int32.from_digits([45, 23, 1], base: 100)    # => 12345
+# Int32.from_digits([5, 4, 3, 2, 1])          # => 12345
+# Int32.from_digits([4, 6, 6, 0, 5], base: 7) # => 12345
+# Int32.from_digits([45, 23, 1], base: 100)   # => 12345
 #
 # Int32.from_digits([1], base: -2) # => ArgumentError
-# Int32.from_digits([-1]) # => ArgumentError
-# Int32.from_digits([3], base: 2) # => ArgumentError
+# Int32.from_digits([-1])          # => ArgumentError
+# Int32.from_digits([3], base: 2)  # => ArgumentError
 # ```
 {% for type in %w(Int8 Int16 Int32 Int64 Int128 UInt8 UInt16 UInt32 UInt64 UInt128) %}
   def {{type.id}}.from_digits(digits : Enumerable(Int), base : Int = 10) : self
