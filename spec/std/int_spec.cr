@@ -1155,40 +1155,40 @@ describe "Int" do
 
   describe "from_digits" do
     it "returns Int composed from given digits" do
-      Int.from_digits([9, 8, 7, 6, 5, 4, 3, 2, 1]).should eq(123456789)
+      Int32.from_digits([9, 8, 7, 6, 5, 4, 3, 2, 1]).should eq(123456789)
     end
 
     it "works with a base" do
-      Int.from_digits([11, 7], 16).should eq(123)
-      Int.from_digits([11, 7], base: 16).should eq(123)
+      Int32.from_digits([11, 7], 16).should eq(123)
+      Int32.from_digits([11, 7], base: 16).should eq(123)
     end
 
     it "accepts digits as Enumerable" do
       enumerable = IntEnumerable.new([11, 7])
-      Int.from_digits(enumerable, 16).should eq(123)
+      Int32.from_digits(enumerable, 16).should eq(123)
     end
 
     it "raises for base less than 2" do
       [-1, 0, 1].each do |base|
         expect_raises(ArgumentError, "Invalid base #{base}") do
-          Int.from_digits([1, 2, 3], base)
+          Int32.from_digits([1, 2, 3], base)
         end
       end
     end
 
     it "raises for digits greater than base" do
       expect_raises(ArgumentError, "Invalid digit 2 for base 2") do
-        Int.from_digits([1, 0, 2], 2)
+        Int32.from_digits([1, 0, 2], 2)
       end
 
       expect_raises(ArgumentError, "Invalid digit 10 for base 2") do
-        Int.from_digits([1, 0, 10], 2)
+        Int32.from_digits([1, 0, 10], 2)
       end
     end
 
     it "raises for negative digits" do
       expect_raises(ArgumentError, "Invalid digit -1") do
-        Int.from_digits([1, 2, -1])
+        Int32.from_digits([1, 2, -1])
       end
     end
   end
