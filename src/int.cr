@@ -670,7 +670,23 @@ struct Int
     ary
   end
 
-  def self.undigits(digits : Enumerable(Int), base : Int = 10) : self
+  # Returns a number for given digits and base.
+  # The digits are expected as an Enumerable with the least significant digit as the first element.
+  #
+  # Base must not be less than 2.
+  #
+  # All digits must be within 0...base.
+  #
+  # ```
+  # Int.from_digits([5, 4, 3, 2, 1])           # => 12345
+  # Int.from_digits([4, 6, 6, 0, 5], base: 7)  # => 12345
+  # Int.from_digits([45, 23, 1], base: 100)    # => 12345
+  #
+  # Int.from_digits([1], base: -2) # => ArgumentError
+  # Int.from_digits([-1]) # => ArgumentError
+  # Int.from_digits([3], base: 2) # => ArgumentError
+  # ```
+  def self.from_digits(digits : Enumerable(Int), base : Int = 10) : self
     if base < 2
       raise ArgumentError.new("Invalid base #{base}")
     end
