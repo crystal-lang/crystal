@@ -31,7 +31,9 @@ struct OAuth::Signature
     auth_header.add "oauth_timestamp", ts
     auth_header.add "oauth_nonce", nonce
     auth_header.add "oauth_signature", oauth_signature
-    auth_header.add "oauth_token", @oauth_token
+    if oauth_token = @oauth_token
+      auth_header.add "oauth_token", oauth_token
+    end
     auth_header.add "oauth_version", "1.0"
     @extra_params.try &.each do |key, value|
       auth_header.add key, value
@@ -65,7 +67,9 @@ struct OAuth::Signature
     params.add "oauth_nonce", nonce
     params.add "oauth_signature_method", "HMAC-SHA1"
     params.add "oauth_timestamp", ts
-    params.add "oauth_token", @oauth_token
+    if oauth_token = @oauth_token
+      params.add "oauth_token", oauth_token
+    end
     params.add "oauth_version", "1.0"
 
     @extra_params.try &.each do |key, value|
