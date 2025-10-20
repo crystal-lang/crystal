@@ -4431,7 +4431,7 @@ class String
   end
 
   # Returns an `Iterator` which yields each line of this string (see `String#each_line`).
-  def each_line(chomp = true, remove_empty = false)
+  def each_line(chomp = true, *, remove_empty : Bool = false)
     LineIterator.new(self, chomp, remove_empty)
   end
 
