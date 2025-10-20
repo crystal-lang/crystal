@@ -92,12 +92,12 @@ module Fiber::ExecutionContext
   # parallel execution context for example.
   #
   # Respects the `CRYSTAL_WORKERS` environment variable if present and valid,
-  # and otherwise defaults to the minimum number of logical CPUs available to
-  # the process or available on the computer.
+  # and otherwise defaults to the number of logical CPUs available to the
+  # process or on the computer.
   def self.default_workers_count : Int32
     count = ENV["CRYSTAL_WORKERS"]?.try(&.to_i?) || -1
-    count = System.cpu_count.to_i if count == -1
     count = Crystal::System.effective_cpu_count.to_i if count == -1
+    count = System.cpu_count.to_i if count == -1
     # TODO: query for CPU limits (e.g. linux/cgroup, freebsd/rctl, ...)
 
     # always report at least 1 worker
