@@ -670,6 +670,30 @@ struct Int
     ary
   end
 
+  def self.undigits(digits : Enumerable(Int), base : Int = 10) : self
+    if base < 2
+      raise ArgumentError.new("Invalid base #{base}")
+    end
+
+    num = 0
+    multiplier = 1
+
+    digits.each do |digit|
+      if digit < 0
+        raise ArgumentError.new("Invalid digit #{digit}")
+      end
+
+      if digit >= base
+        raise ArgumentError.new("Invalid digit #{digit} for base #{base}")
+      end
+
+      num += digit * multiplier
+      multiplier *= base
+    end
+
+    num
+  end
+
   private DIGITS_DOWNCASE = "0123456789abcdefghijklmnopqrstuvwxyz"
   private DIGITS_UPCASE   = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
   private DIGITS_BASE62   = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
