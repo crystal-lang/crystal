@@ -2800,9 +2800,10 @@ end
     end
 
     num : {{type.id}} = 0
-    multiplier = 1
+    multiplier : {{type.id}} = 1
+    first_element = true
 
-    digits.each do |digit|
+    digits.each_with_index do |digit, i|
       if digit < 0
         raise ArgumentError.new("Invalid digit #{digit}")
       end
@@ -2811,8 +2812,15 @@ end
         raise ArgumentError.new("Invalid digit #{digit} for base #{base}")
       end
 
+      # don't calculate multiplier upfront for the next digit
+      # to avoid overflow at the last iteration
+      if first_element
+        first_element = false
+      else
+        multiplier *= base
+      end
+
       num += digit * multiplier
-      multiplier *= base
     end
 
     num

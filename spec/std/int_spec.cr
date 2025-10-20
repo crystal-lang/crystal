@@ -1191,5 +1191,9 @@ describe "Int" do
         Int32.from_digits([1, 2, -1])
       end
     end
+
+    it "works properly for values close to the upper limit" do
+      UInt8.from_digits([5, 5, 2]).should eq(255)
+    end
   end
 end
