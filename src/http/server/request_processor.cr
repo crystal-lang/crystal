@@ -48,7 +48,13 @@ class HTTP::Server::RequestProcessor
         context = Context.new(request, response)
 
         Log.with_context do
-          @handler.call(context)
+          begin
+            @handler.call(context)
+          ensure
+            if output.is_a?(IO::Buffered)
+              output.sync = true
+            end
+          end
         rescue ex : ClientError
           Log.debug(exception: ex.cause) { ex.message }
         rescue ex
@@ -60,9 +66,6 @@ class HTTP::Server::RequestProcessor
           end
           return
         ensure
-          if input.is_a?(IO::Buffered)
-            input.sync = true
-          end
           response.output.close
         end
 
