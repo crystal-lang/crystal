@@ -138,6 +138,14 @@ describe "YAML serialization" do
       Hash(Int32, Bool).from_yaml("---\n1: true\n2: false\n").should eq({1 => true, 2 => false})
     end
 
+    it "does Hash#from_yaml with value type anchors" do
+      Hash(String, Int32).from_yaml(<<-YAML).should eq({"x" => 123, "y" => 123})
+        ---
+        x: &foo 123
+        y: *foo
+        YAML
+    end
+
     it "does Hash#from_yaml with merge" do
       yaml = <<-YAML
         - &foo
@@ -404,7 +412,7 @@ describe "YAML serialization" do
     end
 
     describe "Union.from_yaml" do
-      it "String priorization" do
+      it "String prioritization" do
         (Int32 | String).from_yaml(%(42)).should eq 42
         (Int32 | String).from_yaml(%("42")).should eq "42"
 
