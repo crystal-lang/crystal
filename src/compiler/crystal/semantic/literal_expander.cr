@@ -200,7 +200,7 @@ module Crystal
       node.elements.each_with_index do |elem, i|
         temp_var = elem_temp_vars.try &.[i]
         if elem.is_a?(Splat)
-          yield_var = new_temp_var
+          yield_var = new_temp_var(elem)
           each_body = Call.new(ary_var.clone, "<<", yield_var.clone).at(node)
           each_block = Block.new(args: [yield_var], body: each_body).at(node)
           exps << Call.new((temp_var || elem.exp).clone, "each", block: each_block).at(node)

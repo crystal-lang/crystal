@@ -148,10 +148,10 @@ def assert_expand_third(from : String, to, *, flags = nil, file = __FILE__, line
   assert_expand node, to, flags: flags, file: file, line: line
 end
 
-def assert_expand_named(from : String, to, *, generic = nil, flags = nil, file = __FILE__, line = __LINE__)
+def assert_expand_named(from : String, to, *, generic = nil, flags = nil, filename = nil, file = __FILE__, line = __LINE__)
   program = new_program
   program.flags.concat(flags.split) if flags
-  from_nodes = Parser.parse(from)
+  from_nodes = parse(from, filename: filename)
   generic_type = generic.path if generic
   case from_nodes
   when ArrayLiteral
