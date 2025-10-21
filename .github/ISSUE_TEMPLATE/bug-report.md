@@ -5,7 +5,7 @@ labels: kind:bug
 type: Bug
 ---
 
-## Bug Report
+# Bug Report
 
 Make sure to review these points before submitting issues - thank you!
 

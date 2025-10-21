@@ -221,4 +221,16 @@ struct Proc
     io << '>'
     nil
   end
+
+  # Invokes this `Proc` and returns the result.
+  #
+  # ```
+  # add = ->(x : Int32, y : Int32) { x + y }
+  # add[1, 2] # => 3
+  # ```
+  #
+  # Same as `#call`.
+  def [](*args : *T) : R
+    call(*args)
+  end
 end

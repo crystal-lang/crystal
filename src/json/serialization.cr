@@ -210,14 +210,14 @@ module JSON
               %found{name} = false
             {% end %}
 
-            %location = pull.location
+            %location = pull.location_i64
             begin
               pull.read_begin_object
             rescue exc : ::JSON::ParseException
               raise ::JSON::SerializableError.new(exc.message, self.class.to_s, nil, *%location, exc)
             end
             until pull.kind.end_object?
-              %key_location = pull.location
+              %key_location = pull.location_i64
               key = pull.read_object_key
               case key
               {% for name, value in properties %}
@@ -421,7 +421,7 @@ module JSON
       {% end %}
 
       def self.new(pull : ::JSON::PullParser)
-        location = pull.location
+        location = pull.location_i64
 
         discriminator_value = nil
 
@@ -486,7 +486,7 @@ module JSON
     getter klass : String
     getter attribute : String?
 
-    def initialize(message : String?, @klass : String, @attribute : String?, line_number : Int32, column_number : Int32, cause)
+    def initialize(message : String?, @klass : String, @attribute : String?, line_number, column_number, cause)
       message = String.build do |io|
         io << message
         io << "\n  parsing "
@@ -497,7 +497,7 @@ module JSON
       end
       super(message, line_number, column_number, cause)
       if cause
-        @line_number, @column_number = cause.location
+        @line_number, @column_number = cause.location_i64
       end
     end
   end
