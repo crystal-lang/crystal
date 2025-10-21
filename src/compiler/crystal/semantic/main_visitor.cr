@@ -1464,7 +1464,7 @@ module Crystal
           next
         end
 
-        temp_var = @program.new_temp_var.at(arg)
+        temp_var = @program.new_temp_var(arg).at(arg)
         assign = Assign.new(temp_var, exp).at(arg)
         exps << assign
         case arg

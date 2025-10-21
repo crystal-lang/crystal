@@ -808,4 +808,21 @@ describe "Semantic: splat" do
     a_def.location.should eq Location.new("", line_number: 2, column_number: 3)
     a_def.body.location.should eq Location.new("", line_number: 3, column_number: 5)
   end
+
+  it "normalizes with filename" do
+    result = semantic <<-CRYSTAL
+      def foo(x, y)
+      end
+
+      #<loc:"foo.cr",1,1>foo(*{1, 2})
+      #<loc:"bar.cr",1,1>foo(*{3, 4})
+      CRYSTAL
+
+    result.node.to_s.should end_with <<-CRYSTAL
+      __temp_cd6ae5dd_1 = {1, 2}
+      foo(__temp_cd6ae5dd_1[0], __temp_cd6ae5dd_1[1])
+      __temp_fbcf3d84_1 = {3, 4}
+      foo(__temp_fbcf3d84_1[0], __temp_fbcf3d84_1[1])\n
+      CRYSTAL
+  end
 end
