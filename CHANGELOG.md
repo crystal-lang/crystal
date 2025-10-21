@@ -14,6 +14,12 @@
 [#16231]: https://github.com/crystal-lang/crystal/pull/16231
 [#16227]: https://github.com/crystal-lang/crystal/pull/16227
 
+### Infrastructure
+
+- Changelog for 1.18.2 ([#16243], thanks @matiasgarciaisaia)
+
+[#16243]: https://github.com/crystal-lang/crystal/pull/16243
+
 ## [1.18.1] (2025-10-17)
 
 [1.18.1]: https://github.com/crystal-lang/crystal/releases/1.18.1
