@@ -4415,15 +4415,9 @@ class String
     while byte_index = byte_index('\n'.ord.to_u8, offset)
       count = byte_index - offset + 1
 
-      if remove_empty
-        line_length = count - 1
-        if offset + line_length > 0 && to_unsafe[offset + line_length - 1] === '\r'
-          line_length -= 1
-        end
-
-        skip_line = line_length == 0
-      else
-        skip_line = false
+      if remove_empty && (byte_index == offset || (byte_index == offset + 1 && to_unsafe[offset] === '\r'))
+        offset = byte_index + 1
+        next
       end
 
       if chomp
@@ -4433,7 +4427,7 @@ class String
         end
       end
 
-      yield unsafe_byte_slice_string(offset, count) unless skip_line
+      yield unsafe_byte_slice_string(offset, count)
       offset = byte_index + 1
     end
 
@@ -5721,19 +5715,13 @@ class String
     def next
       return stop if @end
 
-      skip_line = false
-
       byte_index = @string.byte_index('\n'.ord.to_u8, @offset)
       if byte_index
         count = byte_index - @offset + 1
 
-        if @remove_empty
-          line_length = count - 1
-          if @offset + line_length > 0 && @string.to_unsafe[@offset + line_length - 1] === '\r'
-            line_length -= 1
-          end
-
-          skip_line = line_length == 0
+        if @remove_empty && (byte_index == @offset || (byte_index == @offset + 1 && @string.to_unsafe[@offset] === '\r'))
+          @offset = byte_index + 1
+          return self.next
         end
 
         if @chomp
@@ -5754,7 +5742,6 @@ class String
         @end = true
       end
 
-      value = self.next if skip_line
       value
     end
   end
