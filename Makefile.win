@@ -35,7 +35,7 @@ target ?=         ## Cross-compilation target
 interpreter ?=    ## Enable interpreter feature
 check ?=          ## Enable only check when running format
 order ?=random    ## Enable order for spec execution (values: "default" | "random" | seed number)
-docs_sanitizer ?= ## Enable santization for documentation generation
+docs_sanitizer ?= ## Enable sanitization for documentation generation
 
 MAKEFLAGS += --no-builtin-rules
 .SUFFIXES:
