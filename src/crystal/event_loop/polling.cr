@@ -104,13 +104,16 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     rlimit.rlim_max.clamp(..Int32::MAX).to_i32!
   end
 
-  @lock = SpinLock.new # protects parallel accesses to @timers
+  @lock = Atomic(Bool).new(false)
+
+  @timers_lock = SpinLock.new
   @timers = Timers(Event).new
 
   {% unless flag?(:preview_mt) %}
     # no parallelism issues, but let's clean-up anyway
     def after_fork : Nil
-      @lock = SpinLock.new
+      @lock.set(false)
+      @timers_lock = SpinLock.new
     end
   {% end %}
 
@@ -130,6 +133,31 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     # thread unsafe
     def run(queue : Fiber::List*, blocking : Bool) : Nil
       system_run(blocking) { |fiber| queue.value.push(fiber) }
+    end
+
+    # the evloop has a single poll instance for the context and only one
+    # scheduler must wait on the evloop at any time
+
+    def lock?(&) : Bool
+      if @lock.swap(true, :acquire) == false
+        begin
+          yield
+        ensure
+          @lock.set(false, :release)
+        end
+        true
+      else
+        false
+      end
+    end
+
+    def interrupt? : Bool
+      if @lock.get(:relaxed)
+        interrupt
+        true
+      else
+        false
+      end
     end
   {% end %}
 
@@ -518,14 +546,14 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
   # internals: timers
 
   protected def add_timer(event : Event*)
-    @lock.sync do
+    @timers_lock.sync do
       is_next_ready = @timers.add(event)
       system_set_timer(event.value.wake_at) if is_next_ready
     end
   end
 
   protected def delete_timer(event : Event*) : Bool
-    @lock.sync do
+    @timers_lock.sync do
       dequeued, was_next_ready = @timers.delete(event)
       # update system timer if we deleted the next timer
       system_set_timer(@timers.next_ready?) if was_next_ready
@@ -567,7 +595,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     buffer = uninitialized StaticArray(Pointer(Event), 128)
     size = 0
 
-    @lock.sync do
+    @timers_lock.sync do
       @timers.dequeue_ready do |event|
         buffer.to_unsafe[size] = event
         break if (size &+= 1) == buffer.size

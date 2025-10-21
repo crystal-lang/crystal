@@ -321,8 +321,7 @@ module Fiber::ExecutionContext
       end
 
       # interrupt a thread waiting on the event loop
-      if @event_loop_lock.get(:relaxed)
-        @event_loop.interrupt
+      if @event_loop.interrupt?
         return
       end
 
@@ -363,21 +362,6 @@ module Fiber::ExecutionContext
         return if index >= capacity # check again
 
         @threads << start_thread(@schedulers[index])
-      end
-    end
-
-    # Only one thread is allowed to run the event loop. Yields then returns true
-    # if the lock was acquired, otherwise returns false immediately.
-    protected def lock_evloop?(&) : Bool
-      if @event_loop_lock.swap(true, :acquire) == false
-        begin
-          yield
-        ensure
-          @event_loop_lock.set(false, :release)
-        end
-        true
-      else
-        false
       end
     end
 
