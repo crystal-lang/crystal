@@ -2048,6 +2048,7 @@ class Hash(K, V)
       found_one = false
       each do |key, value|
         io << ", " if found_one
+        io << ' ' if !found_one && starts_with_curly_bracket?(key)
         key.inspect(io)
         io << " => "
         value.inspect(io)
@@ -2056,6 +2057,10 @@ class Hash(K, V)
       io << '}'
     end
     io << "{...}" unless executed
+  end
+
+  private def starts_with_curly_bracket?(object)
+    object.is_a?(Hash) || object.is_a?(Tuple) || object.is_a?(NamedTuple)
   end
 
   def pretty_print(pp) : Nil
