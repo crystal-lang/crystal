@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.18.2] (2025-10-21)
+
+[1.18.2]: https://github.com/crystal-lang/crystal/releases/1.18.2
+
+### Bugfixes
+
+#### stdlib
+
+- _(files)_ **[regression]** Revert type restriction for `IO#read_bytes` ([#16231], thanks @straight-shoota)
+- _(runtime)_ Fix `Fiber::ExecutionContext.default_workers_count` to avoid taking into account unsupported values ([#16227], thanks @Sija)
+
+[#16231]: https://github.com/crystal-lang/crystal/pull/16231
+[#16227]: https://github.com/crystal-lang/crystal/pull/16227
+
+### Infrastructure
+
+- Changelog for 1.18.2 ([#16243], thanks @matiasgarciaisaia)
+
+[#16243]: https://github.com/crystal-lang/crystal/pull/16243
+
 ## [1.18.1] (2025-10-17)
 
 [1.18.1]: https://github.com/crystal-lang/crystal/releases/1.18.1
