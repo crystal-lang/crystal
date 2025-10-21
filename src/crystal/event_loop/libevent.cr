@@ -13,14 +13,17 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
   private getter(event_base) { Crystal::EventLoop::LibEvent::Event::Base.new }
 
   def initialize(parallelism : Int32)
+    @lock = Atomic(Bool).new(false)
   end
 
   def after_fork_before_exec : Nil
+    @lock.set(false)
   end
 
   {% unless flag?(:preview_mt) %}
     # Reinitializes the event loop after a fork.
     def after_fork : Nil
+      @lock.set(false)
       event_base.reinit
     end
   {% end %}
@@ -45,6 +48,31 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
         queue.value.push(fiber)
       else
         raise "BUG: libevent callback executed outside of #run(queue*, blocking) call"
+      end
+    end
+
+    # the evloop has a single IOCP instance for the context and only one
+    # scheduler must wait on the evloop at any time
+
+    def lock?(&) : Bool
+      if @lock.swap(true, :acquire) == false
+        begin
+          yield
+        ensure
+          @lock.set(false, :release)
+        end
+        true
+      else
+        false
+      end
+    end
+
+    def interrupt? : Bool
+      if @lock.get(:relaxed)
+        interrupt
+        true
+      else
+        false
       end
     end
   {% end %}

@@ -118,7 +118,7 @@ module Fiber::ExecutionContext
 
           # run the event loop to see if any event is activable
           list = Fiber::List.new
-          if @execution_context.lock_evloop? { @event_loop.run(pointerof(list), blocking: false) }
+          if @event_loop.lock? { @event_loop.run(pointerof(list), blocking: false) }
             return enqueue_many(pointerof(list))
           end
         end
@@ -171,7 +171,7 @@ module Fiber::ExecutionContext
 
           yield @global_queue.grab?(@runnables, divisor: @execution_context.size)
 
-          if @execution_context.lock_evloop? { @event_loop.run(pointerof(list), blocking: false) }
+          if @event_loop.lock? { @event_loop.run(pointerof(list), blocking: false) }
             unless list.empty?
               # must stop spinning before calling enqueue_many that may call
               # wake_scheduler which returns immediately if a thread is
@@ -186,7 +186,7 @@ module Fiber::ExecutionContext
         end
 
         # wait on the event loop for events and timers to activate
-        evloop_ran = @execution_context.lock_evloop? do
+        evloop_ran = @event_loop.lock? do
           @waiting = true
 
           # there is a time window between stop spinning and start waiting
