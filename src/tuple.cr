@@ -588,8 +588,13 @@ struct Tuple
   # ```
   def to_s(io : IO) : Nil
     io << '{'
+    io << ' ' if starts_with_curly_bracket?(self.first?)
     join io, ", ", &.inspect(io)
     io << '}'
+  end
+
+  private def starts_with_curly_bracket?(object)
+    object.is_a?(Hash) || object.is_a?(Tuple) || object.is_a?(NamedTuple)
   end
 
   def pretty_print(pp) : Nil
