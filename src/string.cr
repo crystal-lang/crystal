@@ -4395,7 +4395,7 @@ class String
   # "hello\nworld\r\n".each_line(chomp: false) { } # yields "hello\n", "world\r\n"
   # ```
   #
-  # If *remove_empty* is `true`, any empty strings are removed from the result.
+  # If *remove_empty* is `true`, any empty lines are removed from the result.
   #
   # A trailing line feed is not considered starting a final, empty line.  The
   # empty string does not contain any lines.
