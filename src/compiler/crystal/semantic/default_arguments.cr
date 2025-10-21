@@ -65,7 +65,7 @@ class Crystal::Def
         splat_size = 0 if splat_size < 0
 
         splat_size.times do |index|
-          splat_name = program.new_temp_var_name
+          splat_name = program.new_temp_var_name(self)
           splat_names << splat_name
 
           splat_arg = Arg.new(splat_name)
@@ -88,7 +88,7 @@ class Crystal::Def
           str << ':'
           str << named_arg
 
-          temp_name = program.new_temp_var_name
+          temp_name = program.new_temp_var_name(self)
           named_args_temp_names << temp_name
 
           # If a named argument matches an argument's external name, use the internal name
