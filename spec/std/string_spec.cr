@@ -2708,9 +2708,18 @@ describe "String" do
     lines.should eq(["foo", "bar", "baz"])
   end
 
+  it "gets each_line with remove_empty = true and chomp = false" do
+    lines = [] of String
+    "\nfoo\n\nbar\r\n\r\nbaz".each_line(remove_empty: true, chomp: false) do |line|
+      lines << line
+    end.should be_nil
+    lines.should eq(["foo\n", "bar\r\n", "baz"])
+  end
+
   it_iterates "#each_line", ["foo", "bar", "baz"], "foo\nbar\r\nbaz\r\n".each_line
   it_iterates "#each_line(chomp: false)", ["foo\n", "bar\r\n", "baz\r\n"], "foo\nbar\r\nbaz\r\n".each_line(chomp: false)
-  it_iterates "#each_line(remove_empty: true)", ["foo", "bar", "baz"], "\nfoo\n\nbar\r\nbaz\n\n".each_line(remove_empty: true)
+  it_iterates "#each_line(remove_empty: true)", ["foo", "bar", "baz"], "\nfoo\n\nbar\r\n\r\nbaz".each_line(remove_empty: true)
+  it_iterates "#each_line(remove_empty: true, chomp: false)", ["foo\n", "bar\r\n", "baz"], "\nfoo\n\nbar\r\n\r\nbaz".each_line(remove_empty: true, chomp: false)
 
   it_iterates "#each_codepoint", [97, 98, 9731], "ab☃".each_codepoint
 
