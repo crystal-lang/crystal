@@ -88,6 +88,14 @@ module Crystal::System::Socket
     event_loop.write(self, slice)
   end
 
+  private def system_wait_readable : Nil
+    event_loop.wait_readable(self)
+  end
+
+  private def system_wait_writable : Nil
+    event_loop.wait_writable(self)
+  end
+
   # private def system_close
 
   # Closes the internal handle without notifying the event loop.
