@@ -56,6 +56,9 @@ struct Crystal::System::Process
   # Restores default handling of interrupt requests.
   # def self.restore_interrupts!
 
+  # Returns whether a debugger is attached to the current process.
+  # def self.debugger_present? : Bool
+
   # Spawns a fiber responsible for executing interrupt handlers on the main
   # thread.
   # def self.start_interrupt_loop

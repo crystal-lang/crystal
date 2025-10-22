@@ -442,6 +442,12 @@ describe Process do
 
   typeof(Process.new(*standing_command).terminate(graceful: false))
 
+  describe ".debugger_present?" do
+    it "compiles" do
+      typeof(Process.debugger_present?)
+    end
+  end
+
   it ".exists?" do
     # On Windows killing a parent process does not reparent its children to
     # another existing process, so the following isn't guaranteed to work
