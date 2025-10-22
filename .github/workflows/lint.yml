@@ -2,6 +2,7 @@ name: Lint
 on:
   push:
   pull_request:
+  workflow_dispatch:
 
 permissions: {}
 
@@ -21,5 +22,8 @@ jobs:
       - name: Run pre-commit hooks for changes against target branch (${TARGET_BRANCH})
         run: devenv shell -- pre-commit run --from-ref "origin/${TARGET_BRANCH}" --to-ref HEAD
         if: "${{ github.event_name != 'workflow_dispatch' }}"
+      - name: Run pre-commit on all files
+        run: devenv shell -- pre-commit run --all-files
+        if: "${{ github.event_name == 'workflow_dispatch' }}"
     env:
       TARGET_BRANCH: "${{ github.base_ref || 'master' }}"
