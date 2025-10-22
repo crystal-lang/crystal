@@ -112,8 +112,9 @@ class Process
 
   # Returns whether a debugger is attached to the current process.
   #
-  # Always returns `false` if the system has no means of determining the
-  # presence of a debugger.
+  # Currently supported on Windows and Linux. Always returns `false` on other
+  # systems.
+  @[Experimental]
   def self.debugger_present? : Bool
     Crystal::System::Process.debugger_present?
   end
