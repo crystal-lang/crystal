@@ -173,22 +173,21 @@ describe "Tuple" do
       {1, 2, 3}.to_s.should eq("{1, 2, 3}")
     end
 
-    it "inserts a whitespace between consecutive '{' to avoids macro interpolation when the first element is a Hash" do
-      el = {1 => 2}
-      t = {el}
-      t.to_s.should eq("{ {1 => 2}}")
-    end
+    context "when the first element starts with '{'" do
+      it "inserts a space after '{' and before '}' when the first element is a Hash, preventing macro interpolation ({{ ... }})" do
+        tuple = { {1 => 2} }
+        tuple.to_s.should eq("{ {1 => 2} }")
+      end
 
-    it "inserts a whitespace between consecutive '{' to avoids macro interpolation when the first element is a Tuple" do
-      el = {1, 2, 3}
-      t = {el}
-      t.to_s.should eq("{ {1, 2, 3}}")
-    end
+      it "inserts a space after '{' and before '}' when the first element is a Tuple, preventing macro interpolation ({{ ... }})" do
+        tuple = { {1, 2, 3} }
+        tuple.to_s.should eq("{ {1, 2, 3} }")
+      end
 
-    it "inserts a whitespace between consecutive '{' to avoids macro interpolation when the first element is a NamedTuple" do
-      el = {a: 1}
-      t = {el}
-      t.to_s.should eq("{ {a: 1}}")
+      it "inserts a space after '{' and before '}' when the first element is a NamedTuple, preventing macro interpolation ({{ ... }})" do
+        tuple = { {a: 1} }
+        tuple.to_s.should eq("{ {a: 1} }")
+      end
     end
   end
 

@@ -596,25 +596,24 @@ describe "Hash" do
     it do
       h = {} of RecursiveHash => RecursiveHash
       h[h] = h
-      h.to_s.should eq("{ {...} => {...}}")
+      h.to_s.should eq("{ {...} => {...} }")
     end
 
-    it "inserts a whitespace between consecutive '{' to avoids macro interpolation when a key in the first pair is a Hash" do
-      key = {1 => 2}
-      h = {key => 3}
-      h.to_s.should eq("{ {1 => 2} => 3}")
-    end
+    context "when the first key starts with '{'" do
+      it "inserts a space after '{' and before '}' when first key is a Hash, preventing macro interpolation ({{ ... }})" do
+        hash = { {1 => 2} => 3 }
+        hash.to_s.should eq("{ {1 => 2} => 3 }")
+      end
 
-    it "inserts a whitespace between consecutive '{' to avoids macro interpolation when a key in the first pair is a Tuple" do
-      key = {1, 2, 3}
-      h = {key => 4}
-      h.to_s.should eq("{ {1, 2, 3} => 4}")
-    end
+      it "inserts a space after '{' and before '}' when first key is a Tuple, preventing macro interpolation ({{ ... }})" do
+        hash = { {1, 2, 3} => 4 }
+        hash.to_s.should eq("{ {1, 2, 3} => 4 }")
+      end
 
-    it "inserts a whitespace between consecutive '{' to avoids macro interpolation when a key in the first pair is a NamedTuple" do
-      key = {a: 1}
-      h = {key => 2}
-      h.to_s.should eq("{ {a: 1} => 2}")
+      it "inserts a space after '{' and before '}' when first key is a NamedTuple, preventing macro interpolation ({{ ... }})" do
+        hash = { {a: 1} => 2 }
+        hash.to_s.should eq("{ {a: 1} => 2 }")
+      end
     end
   end
 

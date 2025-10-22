@@ -2044,23 +2044,36 @@ class Hash(K, V)
   # ```
   def to_s(io : IO) : Nil
     executed = exec_recursive(:to_s) do
+      needs_padding = false
+
       io << '{'
       found_one = false
       each do |key, value|
         io << ", " if found_one
-        io << ' ' if !found_one && starts_with_curly_bracket?(key)
+
+        if !found_one && curly_like?(key)
+          io << ' '
+          needs_padding = true
+        end
+
         key.inspect(io)
         io << " => "
         value.inspect(io)
         found_one = true
       end
+      io << ' ' if needs_padding
       io << '}'
     end
     io << "{...}" unless executed
   end
 
-  private def starts_with_curly_bracket?(object)
-    object.is_a?(Hash) || object.is_a?(Tuple) || object.is_a?(NamedTuple)
+  private def curly_like?(object)
+    case object
+    when Hash, Tuple, NamedTuple
+      true
+    else
+      false
+    end
   end
 
   def pretty_print(pp) : Nil
