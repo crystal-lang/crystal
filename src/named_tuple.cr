@@ -340,6 +340,23 @@ struct NamedTuple
     {% end %}
   end
 
+  # Merges two named tuples into one, returning a new named tuple.
+  # If a key is defined in both tuples, the value and its type are used from **self** (original tuple)
+  #
+  # ```
+  # a = {foo: "Hello", bar: "Old"}
+  # b = {bar: "New", baz: "Bye"}
+  # a.reverse_merge(b) # => {foo: "Hello", bar: "Old", baz: "Bye"}
+  # ```
+  def reverse_merge(other : NamedTuple)
+    other.merge(**self)
+  end
+
+  # :ditto:
+  def reverse_merge(**other)
+    reverse_merge(other)
+  end
+
   # Returns a hash value based on this name tuple's size, keys and values.
   #
   # See also: `Object#hash`.
