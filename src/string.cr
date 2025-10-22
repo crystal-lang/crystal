@@ -1173,9 +1173,8 @@ class String
   # ```
   # "hello".byte_slice(0, 2)   # => "he"
   # "hello".byte_slice(0, 100) # => "hello"
-  # "hello".byte_slice(-2, 3)  # => "he"
-  # "hello".byte_slice(-2, 5)  # => "he"
-  # "hello".byte_slice(-2, 5)  # => "he"
+  # "hello".byte_slice(-2, 3)  # => "lo"
+  # "hello".byte_slice(-2, 5)  # => "lo"
   # "¥hello".byte_slice(0, 2)  # => "¥"
   # "¥hello".byte_slice(2, 2)  # => "he"
   # "¥hello".byte_slice(0, 1)  # => "\xC2" (invalid UTF-8 character)
@@ -1277,9 +1276,7 @@ class String
   # "hello".byte_slice(-6) # raises IndexError
   # ```
   def byte_slice(start : Int) : String
-    count = bytesize - start
-    raise IndexError.new if start > 0 && count < 0
-    byte_slice start, count
+    byte_slice start, bytesize
   end
 
   # Returns a substring starting from the *start* byte.
@@ -1304,9 +1301,7 @@ class String
   # "hello".byte_slice?(-6) # => nil
   # ```
   def byte_slice?(start : Int) : String?
-    count = bytesize - start
-    return nil if start > 0 && count < 0
-    byte_slice? start, count
+    byte_slice? start, bytesize
   end
 
   # Returns the codepoint of the character at the given *index*.
