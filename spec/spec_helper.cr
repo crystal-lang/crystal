@@ -122,7 +122,11 @@ def assert_normalize(from, to, flags = nil, *, filename = nil, file = __FILE__, 
 end
 
 def assert_expand(from : String, to, *, flags = nil, file = __FILE__, line = __LINE__)
-  assert_expand Parser.parse(from), to, flags: flags, file: file, line: line
+  node = Parser.parse(from)
+  if node.is_a?(Expressions)
+    node = node.last
+  end
+  assert_expand node, to, flags: flags, file: file, line: line
 end
 
 def assert_expand(from_nodes : ASTNode, to, *, flags = nil, file = __FILE__, line = __LINE__)
@@ -136,16 +140,6 @@ def assert_expand(from_nodes : ASTNode, *, flags = nil, file = __FILE__, line = 
   program.flags.concat(flags.split) if flags
   to_nodes = LiteralExpander.new(program).expand(from_nodes)
   yield to_nodes, program
-end
-
-def assert_expand_second(from : String, to, *, flags = nil, file = __FILE__, line = __LINE__)
-  node = (Parser.parse(from).as(Expressions))[1]
-  assert_expand node, to, flags: flags, file: file, line: line
-end
-
-def assert_expand_third(from : String, to, *, flags = nil, file = __FILE__, line = __LINE__)
-  node = (Parser.parse(from).as(Expressions))[2]
-  assert_expand node, to, flags: flags, file: file, line: line
 end
 
 def assert_expand_named(from : String, to, *, generic = nil, flags = nil, filename = nil, file = __FILE__, line = __LINE__)
