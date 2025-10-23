@@ -141,6 +141,63 @@ struct BigInt < Int
     new(mpz)
   end
 
+  # Returns a number for given *digits* and *base*. The digits are expected as
+  # an `Enumerable` with the least significant digit as the first element.
+  #
+  # *base* must not be less than 2.
+  #
+  # All digits must be within `0...base`.
+  def self.from_digits(digits : Enumerable(Int), base : Int = 10) : self
+    if base < 2
+      raise ArgumentError.new("Invalid base #{base}")
+    end
+
+    new do |mpz|
+      multiplier = new(1)
+      first_element = true
+
+      digits.each do |digit|
+        if digit < 0
+          raise ArgumentError.new("Invalid digit #{digit}")
+        end
+
+        if digit >= base
+          raise ArgumentError.new("Invalid digit #{digit} for base #{base}")
+        end
+
+        # don't calculate multiplier upfront for the next digit
+        # to avoid overflow at the last iteration
+        if first_element
+          first_element = false
+
+          # mpz = digit
+          Int.primitive_ui_check(digit) do |ui, _, big_i|
+            {
+              ui:    LibGMP.set_ui(mpz, {{ ui }}),
+              big_i: LibGMP.set(mpz, {{ big_i }}),
+            }
+          end
+        else
+          # multiplier *= base
+          Int.primitive_ui_check(base) do |ui, _, big_i|
+            {
+              ui:    LibGMP.mul_ui(multiplier, multiplier, {{ ui }}),
+              big_i: LibGMP.mul(multiplier, multiplier, {{ big_i }}),
+            }
+          end
+
+          # mpz += base * digits
+          Int.primitive_ui_check(digit) do |ui, _, big_i|
+            {
+              ui:    LibGMP.addmul_ui(mpz, multiplier, {{ ui }}),
+              big_i: LibGMP.addmul(mpz, multiplier, {{ big_i }}),
+            }
+          end
+        end
+      end
+    end
+  end
+
   def <=>(other : BigInt)
     LibGMP.cmp(mpz, other)
   end
