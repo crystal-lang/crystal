@@ -9,3 +9,11 @@ We thank you for helping improve Crystal. In order to ease the reviewing process
 3. If your change is big, consider breaking it into several smaller PRs. In general, the smaller the change, the quicker we can review it.
 
 4. ⚠️ Please do not amend previous commits and force push to the PR branch. This makes reviews much harder because reference to previous state is hidden.
+
+---
+
+Add a :+1: [reaction] to [pull requests you find important].
+
+[reaction]: https://github.blog/2016-03-10-add-reactions-to-pull-requests-issues-and-comments/
+[pull requests you find important]:
+    https://github.com/crystal-lang/crystal/pulls?q=is%3Aopen+sort%3Areactions-%2B1-desc

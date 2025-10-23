@@ -15,3 +15,11 @@ Make sure to review these points before submitting issues - thank you!
 - Reduce code, if possible, to the minimum size that reproduces the bug.
 - If all of the above is impossible due to a large project, create a branch that reproduces the bug and point us to it.
 - Include Crystal compiler version (`crystal -v`) and OS. If possible, try to see if the bug still reproduces on master.
+
+---
+
+Add a :+1: [reaction] to [issues you find important].
+
+[reaction]: https://github.blog/2016-03-10-add-reactions-to-pull-requests-issues-and-comments/
+[issues you find important]:
+    https://github.com/crystal-lang/crystal/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc
