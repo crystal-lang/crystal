@@ -517,8 +517,7 @@ describe "Int" do
 
     it "preserves type of lhs" do
       {% for type in [UInt8, UInt16, UInt32, UInt64, Int8, Int16, Int32, Int64, UInt128, Int128] %}
-        tuple = {{type}}.new(7).divmod(2)
-        tuple.should be_a(Tuple({{type}}, {{type}}))
+        {{type}}.new(7).divmod(2).should be_a(Tuple({{type}}, {{type}}))
       {% end %}
     end
 
@@ -547,8 +546,7 @@ describe "Int" do
 
     it "preserves type of lhs" do
       {% for type in [UInt8, UInt16, UInt32, UInt64, Int8, Int16, Int32, Int64, UInt128, Int128] %}
-        tuple = {{type}}.new(7).tdivmod(2)
-        tuple.should be_a(Tuple({{type}}, {{type}}))
+        {{type}}.new(7).tdivmod(2).should be_a(Tuple({{type}}, {{type}}))
       {% end %}
     end
 
