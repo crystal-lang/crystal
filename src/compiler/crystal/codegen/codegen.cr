@@ -1622,7 +1622,7 @@ module Crystal
 
       global = @main_mod.globals[map_name]?
       unless global
-        global = @main_mod.globals.add(@main_llvm_typer.llvm_string_type(1).pointer.array(@program.llvm_id.@ids.size), map_name)
+        global = @main_mod.globals.add(@main_llvm_typer.llvm_type(@program.string).array(@program.llvm_id.@ids.size), map_name)
         global.linkage = LLVM::Linkage::Internal if @single_module
         global.initializer = create_type_id_to_class_name_map
         global.global_constant = true
@@ -1631,7 +1631,7 @@ module Crystal
       if @llvm_mod != @main_mod
         global = @llvm_mod.globals[map_name]?
         unless global
-          global = @llvm_mod.globals.add(@llvm_typer.llvm_string_type(1).pointer.array(@program.llvm_id.@ids.size), map_name)
+          global = @llvm_mod.globals.add(@llvm_typer.llvm_type(@program.string).array(@program.llvm_id.@ids.size), map_name)
           global.linkage = LLVM::Linkage::External
           global.global_constant = true
         end
