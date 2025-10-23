@@ -118,7 +118,7 @@ struct Int
   #
   # In truncated division, given two integers x and y:
   # * `q = x.tdiv(y)` is rounded toward zero
-  # * `r = x.remainder(y)` has the sign of the first argument
+  # * `r = x.remainder(y)` has the sign of x
   # * `x == q*y + r`
   #
   # For example:
