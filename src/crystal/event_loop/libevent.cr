@@ -12,6 +12,9 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
 
   private getter(event_base) { Crystal::EventLoop::LibEvent::Event::Base.new }
 
+  def initialize(parallelism : Int32)
+  end
+
   def after_fork_before_exec : Nil
   end
 

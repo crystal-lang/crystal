@@ -8,6 +8,9 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
     false
   end
 
+  def initialize(parallelism : Int32)
+  end
+
   # Runs the event loop.
   def run(blocking : Bool) : Bool
     raise NotImplementedError.new("Crystal::Wasi::EventLoop.run")
