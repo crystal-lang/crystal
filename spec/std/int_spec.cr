@@ -12,6 +12,19 @@ private macro it_converts_to_s(num, str, **opts)
   end
 end
 
+private class IntEnumerable
+  include Enumerable(Int32)
+
+  def initialize(@elements : Array(Int32))
+  end
+
+  def each(&)
+    @elements.each do |e|
+      yield e
+    end
+  end
+end
+
 describe "Int" do
   describe "#integer?" do
     {% for int in BUILTIN_INTEGER_TYPES %}
@@ -1137,6 +1150,50 @@ describe "Int" do
       expect_raises(ArgumentError, "Can't request digits of negative number") do
         -123.digits
       end
+    end
+  end
+
+  describe "from_digits" do
+    it "returns Int composed from given digits" do
+      Int32.from_digits([9, 8, 7, 6, 5, 4, 3, 2, 1]).should eq(123456789)
+    end
+
+    it "works with a base" do
+      Int32.from_digits([11, 7], 16).should eq(123)
+      Int32.from_digits([11, 7], base: 16).should eq(123)
+    end
+
+    it "accepts digits as Enumerable" do
+      enumerable = IntEnumerable.new([11, 7])
+      Int32.from_digits(enumerable, 16).should eq(123)
+    end
+
+    it "raises for base less than 2" do
+      [-1, 0, 1].each do |base|
+        expect_raises(ArgumentError, "Invalid base #{base}") do
+          Int32.from_digits([1, 2, 3], base)
+        end
+      end
+    end
+
+    it "raises for digits greater than base" do
+      expect_raises(ArgumentError, "Invalid digit 2 for base 2") do
+        Int32.from_digits([1, 0, 2], 2)
+      end
+
+      expect_raises(ArgumentError, "Invalid digit 10 for base 2") do
+        Int32.from_digits([1, 0, 10], 2)
+      end
+    end
+
+    it "raises for negative digits" do
+      expect_raises(ArgumentError, "Invalid digit -1") do
+        Int32.from_digits([1, 2, -1])
+      end
+    end
+
+    it "works properly for values close to the upper limit" do
+      UInt8.from_digits([5, 5, 2]).should eq(255)
     end
   end
 end
