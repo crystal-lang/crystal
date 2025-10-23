@@ -37,6 +37,10 @@ module Crystal::System::Socket
     end
   end
 
+  private def system_accept : {::Socket::Handle, Bool}?
+    event_loop.accept(self)
+  end
+
   private def system_send_buffer_size : Int
     raise NotImplementedError.new "Crystal::System::Socket#system_send_buffer_size"
   end
@@ -152,6 +156,7 @@ module Crystal::System::Socket
   end
 
   private def system_close
+    event_loop.before_close(self)
     event_loop.close(self)
   end
 
