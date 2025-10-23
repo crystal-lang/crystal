@@ -65,7 +65,7 @@ lib LibGMP
 
   # # I/O
 
-  fun set = __gmpz_set_ui(rop : MPZ*, op : MPZ*)
+  fun set = __gmpz_set(rop : MPZ*, op : MPZ*)
   fun set_ui = __gmpz_set_ui(rop : MPZ*, op : UI)
   fun set_si = __gmpz_set_si(rop : MPZ*, op : SI)
   fun set_d = __gmpz_set_d(rop : MPZ*, op : Double)
