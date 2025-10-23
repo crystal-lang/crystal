@@ -182,7 +182,7 @@ struct Int
   def tdivmod(other : Int)
     check_div_argument other
 
-    {unsafe_div(other), self.remainder(other)}
+    {unsafe_div(other), unsafe_mod(other)}
   end
 
   def fdiv(other) : Float64
