@@ -152,6 +152,8 @@ module Fiber::ExecutionContext
           Crystal.print_error_buffered("BUG: %s#run_loop [%s] crashed",
             self.class.name, @name, exception: exception)
         end
+      ensure
+        @event_loop.unregister(self)
       end
 
       private def find_next_runnable : Fiber?
