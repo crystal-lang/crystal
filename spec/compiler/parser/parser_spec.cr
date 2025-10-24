@@ -1444,6 +1444,10 @@ module Crystal
       it_parses "macro foo;unless var;true;end;end", Macro.new("foo", [] of Arg, Expressions.from(["unless var;true;".macro_literal, "end;".macro_literal] of ASTNode))
     end
 
+    {'i', 'q', 'r', 'w', 'x', 'Q'}.each do |ch|
+      it_parses "macro foo;%#{ch}[#{ch}];end", Macro.new("foo", [] of Arg, "%#{ch}[#{ch}];".macro_literal)
+    end
+
     it_parses "a = 1; pointerof(a)", [Assign.new("a".var, 1.int32), PointerOf.new("a".var)]
     it_parses "pointerof(@a)", PointerOf.new("@a".instance_var)
     it_parses "a = 1; pointerof(a)", [Assign.new("a".var, 1.int32), PointerOf.new("a".var)]
