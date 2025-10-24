@@ -417,7 +417,7 @@ module Spec
             fail expectation_failed_message, file, line
           end
         when {String, String}
-          unless ex.message == message
+          unless ex.message.as(String).includes?(message)
             expectation_failed_message = build_expectation_failed_message(klass, message, ex)
             fail expectation_failed_message, file, line
           end

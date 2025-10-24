@@ -177,12 +177,20 @@ describe "expectations" do
       expect_raises(Exception, "Ops") { raise ArgumentError.new("Ops") }
     end
 
+    it "passes if expected message is a substring of actual message and expected class equals actual class" do
+      expect_raises(Exception, "Ops") { raise Exception.new("Black Ops") }
+    end
+
+    it "passes if expected message is a substring of actual message and expected class is an ancestor of actual class" do
+      expect_raises(Exception, "Ops") { raise ArgumentError.new("Black Ops") }
+    end
+
     it "passes if expected regex matches actual message and expected class equals actual class" do
-      expect_raises(Exception, /Ops/) { raise Exception.new("Ops") }
+      expect_raises(Exception, /Ops/) { raise Exception.new("Black Ops") }
     end
 
     it "passes if expected regex matches actual message and expected class is an ancestor of actual class" do
-      expect_raises(Exception, /Ops/) { raise ArgumentError.new("Ops") }
+      expect_raises(Exception, /Ops/) { raise ArgumentError.new("Black Ops") }
     end
 
     it "passes if given no message expectation and expected class equals actual class" do
