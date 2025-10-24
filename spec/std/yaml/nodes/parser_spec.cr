@@ -35,4 +35,35 @@ describe YAML::Nodes do
       node.end_column.should eq(10)
     end
   end
+
+  describe ".parse_all" do
+    it "returns all documents" do
+      docs = YAML::Nodes.parse_all <<-YAML
+        ---
+        1
+        ---
+        [2]
+        YAML
+
+      docs.size.should eq(2)
+      docs[0].location.should eq({1, 1})
+      docs[0].end_line.should eq(3)
+      docs[0].end_column.should eq(1)
+      docs[1].location.should eq({3, 1})
+      docs[1].end_line.should eq(5)
+      docs[1].end_column.should eq(1)
+
+      node = docs[0].nodes[0].should be_a(YAML::Nodes::Scalar)
+      node.value.should eq("1")
+      node.location.should eq({2, 1})
+      node.end_line.should eq(2)
+      node.end_column.should eq(2)
+
+      node = docs[1].nodes[0].should be_a(YAML::Nodes::Sequence)
+      node.nodes[0].should(be_a(YAML::Nodes::Scalar)).value.should eq("2")
+      node.location.should eq({4, 1})
+      node.end_line.should eq(4)
+      node.end_column.should eq(4)
+    end
+  end
 end
