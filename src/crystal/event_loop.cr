@@ -4,7 +4,17 @@ abstract class Crystal::EventLoop
       Crystal::EventLoop::Wasi
     {% elsif flag?(:unix) %}
       # TODO: enable more targets by default (need manual tests or fixes)
-      {% if flag?("evloop=libevent") %}
+      {% if flag?("evloop=io_uring") %}
+        if Crystal::EventLoop::IoUring.supported?
+          Crystal::EventLoop::IoUring
+        else
+          # the kernel doesn't support io_uring or doesn't support the required
+          # features and opcodes
+          # FIXME: including two event loops leads to type issues
+          raise "TODO: fallback to epoll (kernel doesn't support io_uring or required features/opcodes)"
+          # Crystal::EventLoop::Epoll
+        end
+      {% elsif flag?("evloop=libevent") %}
         Crystal::EventLoop::LibEvent
       {% elsif flag?("evloop=epoll") || flag?(:android) || flag?(:linux) %}
         Crystal::EventLoop::Epoll
@@ -154,7 +164,9 @@ end
 {% if flag?(:wasi) %}
   require "./event_loop/wasi"
 {% elsif flag?(:unix) %}
-  {% if flag?("evloop=libevent") %}
+  {% if flag?("evloop=io_uring") %}
+    require "./event_loop/io_uring"
+  {% elsif flag?("evloop=libevent") %}
     require "./event_loop/libevent"
   {% elsif flag?("evloop=epoll") || flag?(:android) || flag?(:linux) %}
     require "./event_loop/epoll"
