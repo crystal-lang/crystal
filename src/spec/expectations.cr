@@ -423,6 +423,10 @@ module Spec
           end
         when {_, Nil}
           # No need to check the message
+        else
+          # actual message is nil
+          expectation_failed_message = build_expectation_failed_message(klass, message, ex)
+          fail expectation_failed_message, file, line
         end
 
         ex

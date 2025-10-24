@@ -201,8 +201,24 @@ describe "expectations" do
       expect_raises(Exception) { raise ArgumentError.new("Ops") }
     end
 
+    it "passes if given no message expectation, actual message is nil and expected class equals actual class" do
+      expect_raises(Exception) { raise Exception.new(nil) }
+    end
+
+    it "passes if given no message expectation, actual message is nil and expected class is an ancestor of actual class" do
+      expect_raises(Exception) { raise ArgumentError.new(nil) }
+    end
+
     it "fails if expected message does not equal actual message and expected class equals actual class" do
       expect_raises(Exception, "Ops") { raise Exception.new("Hm") }
+    rescue Spec::AssertionFailed
+      # success
+    else
+      raise "expected Spec::AssertionFailed but nothing was raised"
+    end
+
+    it "fails if given expected message, actual message is nil and expected class equals actual class" do
+      expect_raises(Exception, "Ops") { raise Exception.new(nil) }
     rescue Spec::AssertionFailed
       # success
     else
@@ -217,8 +233,24 @@ describe "expectations" do
       raise "expected Spec::AssertionFailed but nothing was raised"
     end
 
+    it "fails if given expected regex, actual message is nil and expected class equals actual class" do
+      expect_raises(Exception, /Ops/) { raise Exception.new(nil) }
+    rescue Spec::AssertionFailed
+      # success
+    else
+      raise "expected Spec::AssertionFailed but nothing was raised"
+    end
+
     it "fails if given no message expectation and expected class does not equal and is not an ancestor of actual class" do
       expect_raises(IndexError) { raise ArgumentError.new("Ops") }
+    rescue Spec::AssertionFailed
+      # success
+    else
+      raise "expected Spec::AssertionFailed but nothing was raised"
+    end
+
+    it "fails if given no message expectation, actual message is nil and expected class does not equal and is not an ancestor of actual class" do
+      expect_raises(IndexError) { raise ArgumentError.new(nil) }
     rescue Spec::AssertionFailed
       # success
     else
