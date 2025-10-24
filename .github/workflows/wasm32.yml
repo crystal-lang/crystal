@@ -14,7 +14,7 @@ env:
 jobs:
   wasm32-test:
     runs-on: ubuntu-24.04
-    container: crystallang/crystal:1.18.1-build
+    container: crystallang/crystal:1.18.2-build
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v5
