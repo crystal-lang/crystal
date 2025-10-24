@@ -434,7 +434,7 @@ module Spec
       end
 
       private def build_expectation_failed_message(klass : Class, message : String, exception : Exception)
-        backtrace = exception.backtrace.join('\n') { |f| "  # #{f}" }
+        backtrace = format_backtrace(exception.backtrace)
 
         <<-MESSAGE
         Expected #{klass} with message containing: #{message.inspect}
@@ -445,7 +445,7 @@ module Spec
       end
 
       private def build_expectation_failed_message(klass : Class, message : Regex, exception : Exception)
-        backtrace = exception.backtrace.join('\n') { |f| "  # #{f}" }
+        backtrace = format_backtrace(exception.backtrace)
 
         <<-MESSAGE
         Expected #{klass} with message matching: #{message.inspect}
@@ -456,7 +456,7 @@ module Spec
       end
 
       private def build_expectation_failed_message(klass : Class, message : Nil, exception : Exception)
-        backtrace = exception.backtrace.join('\n') { |f| "  # #{f}" }
+        backtrace = format_backtrace(exception.backtrace)
 
         <<-MESSAGE
         Expected #{klass} with any message
@@ -467,7 +467,7 @@ module Spec
       end
 
       private def build_expectation_failed_message(klass : Class, exception : Exception)
-        backtrace = exception.backtrace.join('\n') { |f| "  # #{f}" }
+        backtrace = format_backtrace(exception.backtrace)
 
         <<-MESSAGE
         Expected #{klass}
@@ -475,6 +475,10 @@ module Spec
         Backtrace:
         #{backtrace}
         MESSAGE
+      end
+
+      def format_backtrace(backtrace : Array(String))
+        backtrace.join('\n') { |f| "  # #{f}" }
       end
     {% end %}
   end
