@@ -18,5 +18,6 @@
       ];
     };
     typos.enable = true;
+    zizmor.enable = true;
   };
 }
