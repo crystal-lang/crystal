@@ -214,7 +214,7 @@ describe "expectations" do
     rescue Spec::AssertionFailed
       # success
     else
-      raise "expected Spec::AssertionFailed but nothing was raised"
+      fail "expected Spec::AssertionFailed but nothing was raised"
     end
 
     it "fails if given expected message, actual message is nil and expected class equals actual class" do
@@ -222,7 +222,7 @@ describe "expectations" do
     rescue Spec::AssertionFailed
       # success
     else
-      raise "expected Spec::AssertionFailed but nothing was raised"
+      fail "expected Spec::AssertionFailed but nothing was raised"
     end
 
     it "fails if expected regex does not match actual message and expected class equals actual class" do
@@ -230,7 +230,7 @@ describe "expectations" do
     rescue Spec::AssertionFailed
       # success
     else
-      raise "expected Spec::AssertionFailed but nothing was raised"
+      fail "expected Spec::AssertionFailed but nothing was raised"
     end
 
     it "fails if given expected regex, actual message is nil and expected class equals actual class" do
@@ -238,7 +238,7 @@ describe "expectations" do
     rescue Spec::AssertionFailed
       # success
     else
-      raise "expected Spec::AssertionFailed but nothing was raised"
+      fail "expected Spec::AssertionFailed but nothing was raised"
     end
 
     it "fails if given no message expectation and expected class does not equal and is not an ancestor of actual class" do
@@ -246,7 +246,7 @@ describe "expectations" do
     rescue Spec::AssertionFailed
       # success
     else
-      raise "expected Spec::AssertionFailed but nothing was raised"
+      fail "expected Spec::AssertionFailed but nothing was raised"
     end
 
     it "fails if given no message expectation, actual message is nil and expected class does not equal and is not an ancestor of actual class" do
@@ -254,7 +254,7 @@ describe "expectations" do
     rescue Spec::AssertionFailed
       # success
     else
-      raise "expected Spec::AssertionFailed but nothing was raised"
+      fail "expected Spec::AssertionFailed but nothing was raised"
     end
 
     it "fails if nothing was raised" do
@@ -262,7 +262,7 @@ describe "expectations" do
     rescue Spec::AssertionFailed
       # success
     else
-      raise "expected Spec::AssertionFailed but nothing was raised"
+      fail "expected Spec::AssertionFailed but nothing was raised"
     end
 
     describe "failure message format" do
@@ -279,7 +279,7 @@ describe "expectations" do
             Backtrace:
             MESSAGE
         else
-          raise "nothing is raised"
+          fail "expected Spec::AssertionFailed but nothing is raised"
         end
 
         it "contains expected class, actual exception and backtrace when expected class does not match actual class" do
@@ -294,7 +294,7 @@ describe "expectations" do
             Backtrace:
             MESSAGE
         else
-          raise "nothing is raised"
+          fail "expected Spec::AssertionFailed but nothing is raised"
         end
 
         it "escapes expected and actual messages in the same way" do
@@ -305,7 +305,7 @@ describe "expectations" do
           e.message.as(String).should contain("Expected Exception with message containing: #{%q(a\tb\nc).inspect}")
           e.message.as(String).should contain("got Exception with message: #{%q(a\tb\nc).inspect.inspect}")
         else
-          raise "nothing is raised"
+          fail "expected Spec::AssertionFailed but nothing is raised"
         end
       end
 
@@ -322,7 +322,7 @@ describe "expectations" do
             Backtrace:
             MESSAGE
         else
-          raise "nothing is raised"
+          fail "expected Spec::AssertionFailed but nothing is raised"
         end
 
         it "contains expected class, actual exception and backtrace when expected class does not match actual class" do
@@ -337,7 +337,7 @@ describe "expectations" do
             Backtrace:
             MESSAGE
         else
-          raise "nothing is raised"
+          fail "expected Spec::AssertionFailed but nothing is raised"
         end
       end
 
@@ -354,7 +354,7 @@ describe "expectations" do
             Backtrace:
             MESSAGE
         else
-          raise "nothing is raised"
+          fail "expected Spec::AssertionFailed but nothing is raised"
         end
       end
 
@@ -364,7 +364,7 @@ describe "expectations" do
         rescue e : Spec::AssertionFailed
           e.message.as(String).should contain("Expected IndexError but nothing was raised")
         else
-          raise "expected Spec::AssertionFailed but nothing was raised"
+          fail "expected Spec::AssertionFailed but nothing was raised"
         end
       end
     end
