@@ -97,16 +97,9 @@ module Crystal::System::File
     write_blocking(handle, slice, pos: @system_append ? UInt64::MAX : nil)
   end
 
-  NOT_FOUND_ERRORS = {
-    WinError::ERROR_FILE_NOT_FOUND,
-    WinError::ERROR_PATH_NOT_FOUND,
-    WinError::ERROR_INVALID_NAME,
-    WinError::ERROR_DIRECTORY,
-  }
-
   def self.check_not_found_error(message, path)
     error = WinError.value
-    if NOT_FOUND_ERRORS.includes? error
+    if ::File::NotFoundError.os_error?(error)
       nil
     else
       raise ::File::Error.from_os_error(message, error, file: path)
@@ -428,11 +421,9 @@ module Crystal::System::File
   def self.readlink(path, &) : String
     info = symlink_info?(path)
     unless info
-      {% begin %}
-      if WinError.value.in?({{ NOT_FOUND_ERRORS.splat }}, WinError::ERROR_NOT_A_REPARSE_POINT)
+      if ::File::NotFoundError.os_error?(WinError.value) || WinError.value == WinError::ERROR_NOT_A_REPARSE_POINT
         yield
       end
-      {% end %}
 
       raise ::File::Error.from_winerror("Cannot read link", file: path)
     end
