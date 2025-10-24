@@ -100,6 +100,21 @@ struct Crystal::System::Process
     # do nothing; `Crystal::System::Signal.start_loop` takes care of this
   end
 
+  def self.debugger_present? : Bool
+    {% if flag?(:linux) %}
+      ::File.each_line("/proc/self/status") do |line|
+        if tracer_pid = line.lchop?("TracerPid:").try(&.to_i?)
+          return true if tracer_pid != 0
+        end
+      end
+    {% end %}
+
+    # TODO: [Darwin](https://stackoverflow.com/questions/2200277/detecting-debugger-on-mac-os-x)
+    # TODO: other BSDs
+    # TODO: [Solaris](https://docs.oracle.com/cd/E23824_01/html/821-1473/proc-4.html)
+    false
+  end
+
   def self.exists?(pid)
     ret = LibC.kill(pid, 0)
     if ret == 0

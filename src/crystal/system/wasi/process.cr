@@ -68,6 +68,10 @@ struct Crystal::System::Process
   def self.start_interrupt_loop : Nil
   end
 
+  def self.debugger_present? : Bool
+    false
+  end
+
   def self.exists?(pid)
     raise NotImplementedError.new("Process.exists?")
   end

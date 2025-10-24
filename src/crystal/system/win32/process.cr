@@ -3,6 +3,7 @@ require "c/handleapi"
 require "c/jobapi2"
 require "c/synchapi"
 require "c/tlhelp32"
+require "c/debugapi"
 require "process/shell"
 require "crystal/atomic_semaphore"
 
@@ -227,6 +228,10 @@ struct Crystal::System::Process
         end
       end
     end
+  end
+
+  def self.debugger_present? : Bool
+    LibC.IsDebuggerPresent != 0
   end
 
   def self.exists?(pid)

@@ -110,6 +110,15 @@ class Process
     Crystal::System::Process.restore_interrupts!
   end
 
+  # Returns whether a debugger is attached to the current process.
+  #
+  # Currently supported on Windows and Linux. Always returns `false` on other
+  # systems.
+  @[Experimental]
+  def self.debugger_present? : Bool
+    Crystal::System::Process.debugger_present?
+  end
+
   # Returns `true` if the process identified by *pid* is valid for
   # a currently registered process, `false` otherwise. Note that this
   # returns `true` for a process in the zombie or similar state.
