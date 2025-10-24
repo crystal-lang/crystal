@@ -172,5 +172,99 @@ describe "expectations" do
     it "pass if raises MyError" do
       expect_raises(Exception, "Ops") { raise Exception.new("Ops") }
     end
+
+    describe "failure message format" do
+      context "given string to compare with message" do
+        it "contains expected exception, actual exception and backtrace" do
+          expect_raises(Exception, "digits should be non-negative") do
+            raise IndexError.new("Index out of bounds")
+          end
+        rescue e : Spec::AssertionFailed
+          e.message.as(String).should contain(<<-MESSAGE)
+            Expected Exception with message containing: "digits should be non-negative"
+                 got IndexError with message: "Index out of bounds"
+            Backtrace:
+              # spec/std/spec/expectations_spec.cr:#{__LINE__ - 7}:13 in '->'
+            MESSAGE
+        else
+          raise "nothing is raised"
+        end
+
+        it "contains expected class, actual exception and backtrace when expected class does not match actual class" do
+          expect_raises(ArgumentError, "digits should be non-negative") do
+            raise IndexError.new("Index out of bounds")
+          end
+        rescue e : Spec::AssertionFailed
+          e.message.as(String).should contain(<<-MESSAGE)
+            Expected ArgumentError
+                 got IndexError with message: "Index out of bounds"
+            Backtrace:
+              # spec/std/spec/expectations_spec.cr:#{__LINE__ - 7}:13 in '->'
+            MESSAGE
+        else
+          raise "nothing is raised"
+        end
+
+        it "escapes expected and actual messages in the same way" do
+          expect_raises(Exception, %q(a\tb\nc)) do
+            raise %q(a\tb\nc).inspect
+          end
+        rescue e : Spec::AssertionFailed
+          e.message.as(String).should contain("Expected Exception with message containing: #{%q(a\tb\nc).inspect}")
+          e.message.as(String).should contain("got Exception with message: #{%q(a\tb\nc).inspect.inspect}")
+        else
+          raise "nothing is raised"
+        end
+      end
+
+      context "given regex to match a message" do
+        it "contains expected exception, actual exception and backtrace" do
+          expect_raises(Exception, /digits should be non-negative/) do
+            raise IndexError.new("Index out of bounds")
+          end
+        rescue e : Spec::AssertionFailed
+          e.message.as(String).should contain(<<-MESSAGE)
+            Expected Exception with message matching: /digits should be non-negative/
+                 got IndexError with message: "Index out of bounds"
+            Backtrace:
+              # spec/std/spec/expectations_spec.cr:#{__LINE__ - 7}:13 in '->'
+            MESSAGE
+        else
+          raise "nothing is raised"
+        end
+
+        it "contains expected class, actual exception and backtrace when expected class does not match actual class" do
+          expect_raises(ArgumentError, /digits should be non-negative/) do
+            raise IndexError.new("Index out of bounds")
+          end
+        rescue e : Spec::AssertionFailed
+          e.message.as(String).should contain(<<-MESSAGE)
+            Expected ArgumentError
+                 got IndexError with message: "Index out of bounds"
+            Backtrace:
+              # spec/std/spec/expectations_spec.cr:#{__LINE__ - 7}:13 in '->'
+            MESSAGE
+        else
+          raise "nothing is raised"
+        end
+      end
+
+      context "given nil to allow any message" do
+        it "contains expected class, actual exception and backtrace when expected class does not match actual class" do
+          expect_raises(ArgumentError, nil) do
+            raise IndexError.new("Index out of bounds")
+          end
+        rescue e : Spec::AssertionFailed
+          e.message.as(String).should contain(<<-MESSAGE)
+            Expected ArgumentError
+                 got IndexError with message: "Index out of bounds"
+            Backtrace:
+              # spec/std/spec/expectations_spec.cr:#{__LINE__ - 7}:13 in '->'
+            MESSAGE
+        else
+          raise "nothing is raised"
+        end
+      end
+    end
   end
 end
