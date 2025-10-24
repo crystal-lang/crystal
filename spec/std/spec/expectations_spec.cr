@@ -272,11 +272,11 @@ describe "expectations" do
             raise IndexError.new("Index out of bounds")
           end
         rescue e : Spec::AssertionFailed
+          # don't check backtrace items because they are platform specific
           e.message.as(String).should contain(<<-MESSAGE)
             Expected Exception with message containing: "digits should be non-negative"
                  got IndexError with message: "Index out of bounds"
             Backtrace:
-              # spec/std/spec/expectations_spec.cr:#{__LINE__ - 7}:13 in '->'
             MESSAGE
         else
           raise "nothing is raised"
@@ -287,11 +287,11 @@ describe "expectations" do
             raise IndexError.new("Index out of bounds")
           end
         rescue e : Spec::AssertionFailed
+          # don't check backtrace items because they are platform specific
           e.message.as(String).should contain(<<-MESSAGE)
             Expected ArgumentError
                  got IndexError with message: "Index out of bounds"
             Backtrace:
-              # spec/std/spec/expectations_spec.cr:#{__LINE__ - 7}:13 in '->'
             MESSAGE
         else
           raise "nothing is raised"
@@ -315,11 +315,11 @@ describe "expectations" do
             raise IndexError.new("Index out of bounds")
           end
         rescue e : Spec::AssertionFailed
+          # don't check backtrace items because they are platform specific
           e.message.as(String).should contain(<<-MESSAGE)
             Expected Exception with message matching: /digits should be non-negative/
                  got IndexError with message: "Index out of bounds"
             Backtrace:
-              # spec/std/spec/expectations_spec.cr:#{__LINE__ - 7}:13 in '->'
             MESSAGE
         else
           raise "nothing is raised"
@@ -330,11 +330,11 @@ describe "expectations" do
             raise IndexError.new("Index out of bounds")
           end
         rescue e : Spec::AssertionFailed
+          # don't check backtrace items because they are platform specific
           e.message.as(String).should contain(<<-MESSAGE)
             Expected ArgumentError
                  got IndexError with message: "Index out of bounds"
             Backtrace:
-              # spec/std/spec/expectations_spec.cr:#{__LINE__ - 7}:13 in '->'
             MESSAGE
         else
           raise "nothing is raised"
@@ -347,11 +347,11 @@ describe "expectations" do
             raise IndexError.new("Index out of bounds")
           end
         rescue e : Spec::AssertionFailed
+          # don't check backtrace items because they are platform specific
           e.message.as(String).should contain(<<-MESSAGE)
             Expected ArgumentError
                  got IndexError with message: "Index out of bounds"
             Backtrace:
-              # spec/std/spec/expectations_spec.cr:#{__LINE__ - 7}:13 in '->'
             MESSAGE
         else
           raise "nothing is raised"
