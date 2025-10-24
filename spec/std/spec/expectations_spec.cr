@@ -169,8 +169,60 @@ describe "expectations" do
   end
 
   describe "expect_raises" do
-    it "pass if raises MyError" do
+    it "passes if expected message equals actual message and expected class equals actual class" do
       expect_raises(Exception, "Ops") { raise Exception.new("Ops") }
+    end
+
+    it "passes if expected message equals actual message and expected class is an ancestor of actual class" do
+      expect_raises(Exception, "Ops") { raise ArgumentError.new("Ops") }
+    end
+
+    it "passes if expected regex matches actual message and expected class equals actual class" do
+      expect_raises(Exception, /Ops/) { raise Exception.new("Ops") }
+    end
+
+    it "passes if expected regex matches actual message and expected class is an ancestor of actual class" do
+      expect_raises(Exception, /Ops/) { raise ArgumentError.new("Ops") }
+    end
+
+    it "passes if given no message expectation and expected class equals actual class" do
+      expect_raises(Exception) { raise Exception.new("Ops") }
+    end
+
+    it "passes if given no message expectation and expected class is an ancestor of actual class" do
+      expect_raises(Exception) { raise ArgumentError.new("Ops") }
+    end
+
+    it "fails if expected message does not equal actual message and expected class equals actual class" do
+      expect_raises(Exception, "Ops") { raise Exception.new("Hm") }
+    rescue Spec::AssertionFailed
+      # success
+    else
+      raise "expected Spec::AssertionFailed but nothing was raised"
+    end
+
+    it "fails if expected regex does not match actual message and expected class equals actual class" do
+      expect_raises(Exception, /Ops/) { raise Exception.new("Hm") }
+    rescue Spec::AssertionFailed
+      # success
+    else
+      raise "expected Spec::AssertionFailed but nothing was raised"
+    end
+
+    it "fails if given no message expectation and expected class does not equal and is not an ancestor of actual class" do
+      expect_raises(IndexError) { raise ArgumentError.new("Ops") }
+    rescue Spec::AssertionFailed
+      # success
+    else
+      raise "expected Spec::AssertionFailed but nothing was raised"
+    end
+
+    it "fails if nothing was raised" do
+      expect_raises(IndexError) { raise ArgumentError.new("Ops") }
+    rescue Spec::AssertionFailed
+      # success
+    else
+      raise "expected Spec::AssertionFailed but nothing was raised"
     end
 
     describe "failure message format" do
@@ -263,6 +315,16 @@ describe "expectations" do
             MESSAGE
         else
           raise "nothing is raised"
+        end
+      end
+
+      context "nothing was raises" do
+        it "contains expected class" do
+          expect_raises(IndexError) { }
+        rescue e : Spec::AssertionFailed
+          e.message.as(String).should contain("Expected IndexError but nothing was raised")
+        else
+          raise "expected Spec::AssertionFailed but nothing was raised"
         end
       end
     end
