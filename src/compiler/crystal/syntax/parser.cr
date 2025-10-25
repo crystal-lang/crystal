@@ -3281,6 +3281,9 @@ module Crystal
           macro_var_name = @token.value.to_s
           location = @token.location
           if current_char == '{'
+            if macro_var_name.size == 1
+              warnings.add_warning_at @token.location, "single-letter macro fresh variables with indices are deprecated"
+            end
             macro_var_exps = parse_macro_var_exps
           else
             macro_var_exps = nil
