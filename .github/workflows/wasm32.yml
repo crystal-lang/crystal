@@ -20,7 +20,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Install wasmtime
-        uses: mwilliamson/setup-wasmtime-action@v2
+        uses: mwilliamson/setup-wasmtime-action@bf814d7d8fc3c3a77dfe114bd9fb8a2c575f6ad6 #v2
         with:
           wasmtime-version: "2.0.0"
 
