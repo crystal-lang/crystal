@@ -1788,27 +1788,27 @@ module Crystal
         char = next_char
         if char == 'q' && peek_next_char.in?('(', '<', '[', '{', '|')
           next_char
-          delimiter_state = Token::DelimiterState.new(:string, char, closing_char, 1)
+          delimiter_state = Token::DelimiterState.new(:string, current_char, closing_char, 1)
           next_char
         elsif char == 'Q' && peek_next_char.in?('(', '<', '[', '{', '|')
           next_char
-          delimiter_state = Token::DelimiterState.new(:string, char, closing_char, 1)
+          delimiter_state = Token::DelimiterState.new(:string, current_char, closing_char, 1)
           next_char
         elsif char == 'i' && peek_next_char.in?('(', '<', '[', '{', '|')
           next_char
-          delimiter_state = Token::DelimiterState.new(:symbol_array, char, closing_char, 1)
+          delimiter_state = Token::DelimiterState.new(:symbol_array, current_char, closing_char, 1)
           next_char
         elsif char == 'w' && peek_next_char.in?('(', '<', '[', '{', '|')
           next_char
-          delimiter_state = Token::DelimiterState.new(:string_array, char, closing_char, 1)
+          delimiter_state = Token::DelimiterState.new(:string_array, current_char, closing_char, 1)
           next_char
         elsif char == 'x' && peek_next_char.in?('(', '<', '[', '{', '|')
           next_char
-          delimiter_state = Token::DelimiterState.new(:command, char, closing_char, 1)
+          delimiter_state = Token::DelimiterState.new(:command, current_char, closing_char, 1)
           next_char
         elsif char == 'r' && peek_next_char.in?('(', '<', '[', '{', '|')
           next_char
-          delimiter_state = Token::DelimiterState.new(:regex, char, closing_char, 1)
+          delimiter_state = Token::DelimiterState.new(:regex, current_char, closing_char, 1)
           next_char
         else
           start = current_pos
