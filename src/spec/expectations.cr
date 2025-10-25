@@ -410,23 +410,20 @@ module Spec
           raise ex
         end
 
-        case {ex.message, message}
-        when {String, Regex}
-          unless ex.message =~ message
-            expectation_failed_message = build_expectation_failed_message(klass, message, ex)
+        exception_as_string = ex.to_s
+        case message
+        when Regex
+          unless exception_as_string =~ message
+            expectation_failed_message = build_expectation_failed_message(klass, message, ex, exception_as_string)
             fail expectation_failed_message, file, line
           end
-        when {String, String}
-          unless ex.message.as(String).includes?(message)
-            expectation_failed_message = build_expectation_failed_message(klass, message, ex)
+        when String
+          unless exception_as_string.includes?(message)
+            expectation_failed_message = build_expectation_failed_message(klass, message, ex, exception_as_string)
             fail expectation_failed_message, file, line
           end
-        when {_, Nil}
+        when Nil
           # No need to check the message
-        else
-          # actual message is nil
-          expectation_failed_message = build_expectation_failed_message(klass, message, ex)
-          fail expectation_failed_message, file, line
         end
 
         ex
@@ -437,45 +434,35 @@ module Spec
         fail "Expected #{klass} but nothing was raised", file, line
       end
 
-      private def build_expectation_failed_message(klass : Class, message : String, exception : Exception)
+      private def build_expectation_failed_message(klass : Class, message : String, exception : Exception, exception_as_string : String)
         backtrace = "  # #{exception.backtrace.join("\n  # ")}"
 
         <<-MESSAGE
         Expected #{klass} with message containing: #{message.inspect}
-             got #{exception.class} with message: #{exception.message.inspect}
+             got #{exception.class} with message: #{exception_as_string.inspect}
         Backtrace:
         #{backtrace}
         MESSAGE
       end
 
-      private def build_expectation_failed_message(klass : Class, message : Regex, exception : Exception)
+      private def build_expectation_failed_message(klass : Class, message : Regex, exception : Exception, exception_as_string : String)
         backtrace = "  # #{exception.backtrace.join("\n  # ")}"
 
         <<-MESSAGE
         Expected #{klass} with message matching: #{message.inspect}
-             got #{exception.class} with message: #{exception.message.inspect}
-        Backtrace:
-        #{backtrace}
-        MESSAGE
-      end
-
-      private def build_expectation_failed_message(klass : Class, message : Nil, exception : Exception)
-        backtrace = "  # #{exception.backtrace.join("\n  # ")}"
-
-        <<-MESSAGE
-        Expected #{klass} with any message
-             got #{exception.class} with message: #{exception.message.inspect}
+             got #{exception.class} with message: #{exception_as_string.inspect}
         Backtrace:
         #{backtrace}
         MESSAGE
       end
 
       private def build_expectation_failed_message(klass : Class, exception : Exception)
+        exception_as_string = exception.to_s
         backtrace = "  # #{exception.backtrace.join("\n  # ")}"
 
         <<-MESSAGE
         Expected #{klass}
-             got #{exception.class} with message: #{exception.message.inspect}
+             got #{exception.class} with message: #{exception_as_string.inspect}
         Backtrace:
         #{backtrace}
         MESSAGE
