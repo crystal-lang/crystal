@@ -65,6 +65,7 @@ lib LibGMP
 
   # # I/O
 
+  fun set = __gmpz_set(rop : MPZ*, op : MPZ*)
   fun set_ui = __gmpz_set_ui(rop : MPZ*, op : UI)
   fun set_si = __gmpz_set_si(rop : MPZ*, op : SI)
   fun set_d = __gmpz_set_d(rop : MPZ*, op : Double)
@@ -89,6 +90,9 @@ lib LibGMP
   fun mul = __gmpz_mul(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
   fun mul_si = __gmpz_mul_si(rop : MPZ*, op1 : MPZ*, op2 : SI)
   fun mul_ui = __gmpz_mul_ui(rop : MPZ*, op1 : MPZ*, op2 : UI)
+
+  fun addmul = __gmpz_addmul(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
+  fun addmul_ui = __gmpz_addmul_ui(rop : MPZ*, op1 : MPZ*, op2 : UI)
 
   fun fdiv_q = __gmpz_fdiv_q(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
   fun fdiv_q_ui = __gmpz_fdiv_q_ui(rop : MPZ*, op1 : MPZ*, op2 : UI)
