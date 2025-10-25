@@ -68,8 +68,7 @@ module Fiber::ExecutionContext
     getter stack_pool : Fiber::StackPool = Fiber::StackPool.new
 
     # :nodoc:
-    getter event_loop : Crystal::EventLoop = Crystal::EventLoop.create
-    @event_loop_lock = Atomic(Bool).new(false)
+    getter event_loop : Crystal::EventLoop
 
     @parked = Atomic(Int32).new(0)
     @spinning = Atomic(Int32).new(0)
@@ -107,6 +106,7 @@ module Fiber::ExecutionContext
       @global_queue = GlobalQueue.new(@mutex)
       @schedulers = Array(Scheduler).new(capacity)
       @threads = Array(Thread).new(capacity)
+      @event_loop = Crystal::EventLoop.create(capacity)
 
       @rng = Random::PCG32.new
 
@@ -144,9 +144,13 @@ module Fiber::ExecutionContext
     # use an atomic/fence to make sure that @size can only be incremented
     # *after* the value has been written to @buffer.
     private def start_schedulers(capacity)
-      capacity.times do |index|
-        @schedulers << Scheduler.new(self, "#{@name}-#{index}")
-      end
+      capacity.times { |index| @schedulers << start_scheduler(index) }
+    end
+
+    private def start_scheduler(index)
+      scheduler = Scheduler.new(self, "#{@name}-#{index}")
+      @event_loop.register(scheduler, index)
+      scheduler
     end
 
     # Attaches *scheduler* to the current `Thread`, usually the process' main
@@ -204,7 +208,7 @@ module Fiber::ExecutionContext
 
         if new_capacity > old_capacity
           @schedulers = Array(Scheduler).new(new_capacity) do |index|
-            old_schedulers[index]? || Scheduler.new(self, "#{@name}-#{index}")
+            old_schedulers[index]? || start_scheduler(index)
           end
           threads = Array(Thread).new(new_capacity)
           old_threads.each { |thread| threads << thread }
@@ -316,8 +320,7 @@ module Fiber::ExecutionContext
       end
 
       # interrupt a thread waiting on the event loop
-      if @event_loop_lock.get(:relaxed)
-        @event_loop.interrupt
+      if @event_loop.interrupt?
         return
       end
 
@@ -358,21 +361,6 @@ module Fiber::ExecutionContext
         return if index >= capacity # check again
 
         @threads << start_thread(@schedulers[index])
-      end
-    end
-
-    # Only one thread is allowed to run the event loop. Yields then returns true
-    # if the lock was acquired, otherwise returns false immediately.
-    protected def lock_evloop?(&) : Bool
-      if @event_loop_lock.swap(true, :acquire) == false
-        begin
-          yield
-        ensure
-          @event_loop_lock.set(false, :release)
-        end
-        true
-      else
-        false
       end
     end
 
