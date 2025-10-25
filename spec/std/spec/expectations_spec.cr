@@ -12,6 +12,16 @@ private record NoObjectId, to_unsafe : Int32 do
   end
 end
 
+private class ExceptionWithOverriddenToS < Exception
+  def initialize(message : String, @to_s : String)
+    super(message)
+  end
+
+  def to_s
+    @to_s
+  end
+end
+
 describe "expectations" do
   describe "accept a custom failure message" do
     it { 1.should be < 3, "custom message!" }
@@ -263,6 +273,14 @@ describe "expectations" do
       # success
     else
       fail "expected Spec::AssertionFailed but nothing was raised"
+    end
+
+    it "uses the exception's #to_s output to match a given String" do
+      expect_raises(Exception, "Hm") { raise ExceptionWithOverriddenToS.new("Ops", to_s: "Hm") }
+    end
+
+    it "uses the exception's #to_s output to match a given Regex" do
+      expect_raises(Exception, /Hm/) { raise ExceptionWithOverriddenToS.new("Ops", to_s: "Hm") }
     end
 
     describe "failure message format" do
