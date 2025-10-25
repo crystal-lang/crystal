@@ -187,7 +187,7 @@ struct Crystal::System::Process
     end
   {% end %}
 
-  def self.fork(*, will_exec = false)
+  def self.fork(*, will_exec : Bool, &)
     newmask = uninitialized LibC::SigsetT
     oldmask = uninitialized LibC::SigsetT
 
@@ -206,18 +206,16 @@ struct Crystal::System::Process
     when 0
       # child:
       pid = nil
-      if will_exec
-        # notify event loop
-        Crystal::EventLoop.current.after_fork_before_exec
 
-        # reset signal handlers, then sigmask (inherited on exec):
-        Crystal::System::Signal.after_fork_before_exec
+      # after fork callback
+      yield
+
+      if will_exec
+        # reset sigmask (inherited on exec)
         LibC.sigemptyset(pointerof(newmask))
         LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(newmask), nil)
       else
-        {% unless flag?(:preview_mt) %}
-          ::Process.after_fork_child_callbacks.each(&.call)
-        {% end %}
+        # restore sigmask
         LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(oldmask), nil)
       end
     when -1
@@ -239,9 +237,10 @@ struct Crystal::System::Process
   def self.fork(&)
     {% raise("Process fork is unsupported with multithreaded mode") if flag?(:preview_mt) %}
 
-    if pid = fork
-      return pid
+    pid = fork(will_exec: false) do
+      ::Process.after_fork_child_callbacks.each(&.call)
     end
+    return pid if pid
 
     begin
       yield
@@ -258,7 +257,12 @@ struct Crystal::System::Process
   def self.spawn(command_args, env, clear_env, input, output, error, chdir)
     r, w = FileDescriptor.system_pipe
 
-    pid = self.fork(will_exec: true)
+    pid = fork(will_exec: true) do
+      # notify event loop and reset signal handlers
+      Crystal::EventLoop.current.after_fork_before_exec
+      Crystal::System::Signal.after_fork_before_exec
+    end
+
     if !pid
       LibC.close(r)
       begin
