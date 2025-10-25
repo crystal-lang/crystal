@@ -2044,7 +2044,10 @@ class Hash(K, V)
   # ```
   def to_s(io : IO) : Nil
     executed = exec_recursive(:to_s) do
+      needs_padding = curly_like?(self.first_key?)
+
       io << '{'
+      io << ' ' if needs_padding
       found_one = false
       each do |key, value|
         io << ", " if found_one
@@ -2053,9 +2056,19 @@ class Hash(K, V)
         value.inspect(io)
         found_one = true
       end
+      io << ' ' if needs_padding
       io << '}'
     end
     io << "{...}" unless executed
+  end
+
+  private def curly_like?(object)
+    case object
+    when Hash, Tuple, NamedTuple
+      true
+    else
+      false
+    end
   end
 
   def pretty_print(pp) : Nil
