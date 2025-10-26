@@ -320,6 +320,7 @@ module Crystal::System::Time
     put(data, "Australia/Melbourne", "AUS Eastern Standard Time", "AEST", "AEDT")
     put(data, "Australia/Perth", "W. Australia Standard Time", "AWST", "AWST")
     put(data, "Australia/Sydney", "AUS Eastern Standard Time", "AEST", "AEDT")
+    put(data, "GMT", "UTC", "GMT", "GMT")
     put(data, "Etc/GMT", "UTC", "GMT", "GMT")
     put(data, "Etc/GMT+1", "Cape Verde Standard Time", "-01", "-01")
     put(data, "Etc/GMT+10", "Hawaiian Standard Time", "-10", "-10")
