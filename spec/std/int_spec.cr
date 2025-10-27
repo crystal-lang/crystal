@@ -521,7 +521,61 @@ describe "Int" do
   end
 
   describe "divmod" do
-    it { 5.divmod(3).should eq({1, 2}) }
+    it "returns a Tuple of two elements containing the quotient and modulus obtained by dividing self by argument" do
+      5.divmod(3).should eq({1, 2})
+      -5.divmod(3).should eq({-2, 1})
+      5.divmod(-3).should eq({-2, -1})
+      -5.divmod(-3).should eq({1, -2})
+    end
+
+    it "preserves type of lhs" do
+      {% for type in [UInt8, UInt16, UInt32, UInt64, Int8, Int16, Int32, Int64, UInt128, Int128] %}
+        {{type}}.new(7).divmod(2).should be_a(Tuple({{type}}, {{type}}))
+      {% end %}
+    end
+
+    it "raises when divides by zero" do
+      expect_raises(DivisionByZeroError) { 5.divmod(0) }
+    end
+
+    it "raises when divides Int::MIN by -1" do
+      expect_raises(ArgumentError) { Int8::MIN.divmod(-1) }
+      expect_raises(ArgumentError) { Int16::MIN.divmod(-1) }
+      expect_raises(ArgumentError) { Int32::MIN.divmod(-1) }
+      expect_raises(ArgumentError) { Int64::MIN.divmod(-1) }
+      expect_raises(ArgumentError) { Int128::MIN.divmod(-1) }
+
+      (UInt8::MIN.divmod(-1)).should eq({0, 0})
+    end
+  end
+
+  describe "tdivmod" do
+    it "returns a Tuple of two elements containing the quotient and modulus obtained by dividing self by argument using truncated division" do
+      5.tdivmod(3).should eq({1, 2})
+      -5.tdivmod(3).should eq({-1, -2})
+      5.tdivmod(-3).should eq({-1, 2})
+      -5.tdivmod(-3).should eq({1, -2})
+    end
+
+    it "preserves type of lhs" do
+      {% for type in [UInt8, UInt16, UInt32, UInt64, Int8, Int16, Int32, Int64, UInt128, Int128] %}
+        {{type}}.new(7).tdivmod(2).should be_a(Tuple({{type}}, {{type}}))
+      {% end %}
+    end
+
+    it "raises when divides by zero" do
+      expect_raises(DivisionByZeroError) { 5.tdivmod(0) }
+    end
+
+    it "raises when divides Int::MIN by -1" do
+      expect_raises(ArgumentError) { Int8::MIN.tdivmod(-1) }
+      expect_raises(ArgumentError) { Int16::MIN.tdivmod(-1) }
+      expect_raises(ArgumentError) { Int32::MIN.tdivmod(-1) }
+      expect_raises(ArgumentError) { Int64::MIN.tdivmod(-1) }
+      expect_raises(ArgumentError) { Int128::MIN.tdivmod(-1) }
+
+      (UInt8::MIN.tdivmod(-1)).should eq({0, 0})
+    end
   end
 
   describe "fdiv" do
@@ -757,11 +811,33 @@ describe "Int" do
     end
   end
 
-  it "tdivs" do
-    5.tdiv(3).should eq(1)
-    -5.tdiv(3).should eq(-1)
-    5.tdiv(-3).should eq(-1)
-    -5.tdiv(-3).should eq(1)
+  describe "tdiv" do
+    it "divides self by argument using truncated division" do
+      5.tdiv(3).should eq(1)
+      -5.tdiv(3).should eq(-1)
+      5.tdiv(-3).should eq(-1)
+      -5.tdiv(-3).should eq(1)
+    end
+
+    it "preserves type of lhs" do
+      {% for type in [UInt8, UInt16, UInt32, UInt64, Int8, Int16, Int32, Int64, UInt128, Int128] %}
+        {{type}}.new(7).tdiv(2).should be_a({{type}})
+      {% end %}
+    end
+
+    it "raises when divides by zero" do
+      expect_raises(DivisionByZeroError) { 5.tdiv(0) }
+    end
+
+    it "raises when divides Int::MIN by -1" do
+      expect_raises(ArgumentError) { Int8::MIN.tdiv(-1) }
+      expect_raises(ArgumentError) { Int16::MIN.tdiv(-1) }
+      expect_raises(ArgumentError) { Int32::MIN.tdiv(-1) }
+      expect_raises(ArgumentError) { Int64::MIN.tdiv(-1) }
+      expect_raises(ArgumentError) { Int128::MIN.tdiv(-1) }
+
+      (UInt8::MIN.tdiv(-1)).should eq(0)
+    end
   end
 
   it "holds true that x == q*y + r" do

@@ -118,7 +118,7 @@ struct Int
   #
   # In truncated division, given two integers x and y:
   # * `q = x.tdiv(y)` is rounded toward zero
-  # * `r = x.remainder(y)` has the sign of the first argument
+  # * `r = x.remainder(y)` has the sign of x
   # * `x == q*y + r`
   #
   # For example:
@@ -150,6 +150,39 @@ struct Int
         raise ArgumentError.new "Overflow: {{@type}}::MIN / -1"
       end
     {% end %}
+  end
+
+  # Returns a `Tuple` of two elements containing the quotient
+  # and modulus obtained by dividing `self` by *number* using
+  # truncated division.
+  #
+  # ```
+  # 11.tdivmod(3)  # => {3, 2}
+  # 11.tdivmod(-3) # => {-4, -1}
+  # ```
+  #
+  # In truncated division, given two integers x and y:
+  # * `q = x.tdiv(y)` is rounded toward zero
+  # * `r = x.remainder(y)` has the sign of x
+  # * `x == q*y + r`
+  #
+  # For example:
+  #
+  # ```text
+  #  x     y     x / y     x % y
+  #  5     3       1         2
+  # -5     3      -1        -2
+  #  5    -3      -1         2
+  # -5    -3       1        -2
+  # ```
+  #
+  # Raises if *other* is `0`, or if *other* is `-1` and
+  # `self` is signed and is the minimum value for that
+  # integer type.
+  def tdivmod(other : Int)
+    check_div_argument other
+
+    {unsafe_div(other), unsafe_mod(other)}
   end
 
   def fdiv(other) : Float64
