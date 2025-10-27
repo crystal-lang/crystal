@@ -310,23 +310,24 @@ struct Crystal::System::Process
   def self.prepare_args(command : String, args : Enumerable(String)?, shell : Bool) : {String, UInt8**}
     if shell
       command = %(#{command} "${@}") unless command.includes?(' ')
-      shell_args = ["/bin/sh", "-c", command, "sh"]
+      argv_ary = ["/bin/sh", "-c", command, "sh"]
 
       if args
         unless command.includes?(%("${@}"))
           raise ArgumentError.new(%(Can't specify arguments in both command and args without including "${@}" into your command))
         end
-
-        shell_args.concat(args)
       end
 
-      {"/bin/sh", shell_args.map(&.check_no_null_byte.to_unsafe).to_unsafe}
+      pathname = "/bin/sh"
     else
-      command_args = [command]
-      command_args.concat(args) if args
-
-      {command, command_args.map(&.check_no_null_byte.to_unsafe).to_unsafe}
+      argv_ary = [command]
+      pathname = command
     end
+
+    argv_ary.concat(args) if args
+
+    argv = argv_ary.map(&.check_no_null_byte.to_unsafe)
+    {pathname, argv.to_unsafe}
   end
 
   private def self.try_replace(command_args, env, clear_env, input, output, error, chdir)
