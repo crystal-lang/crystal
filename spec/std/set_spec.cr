@@ -432,6 +432,14 @@ describe "Set" do
       set.map! { |n| n * -1 }.should be(set)
       set.should eq(Set{-1, -2, -3})
     end
+
+    it "exhibits reference semantic" do
+      set = Set{1, 2, 3}
+      copy = set
+
+      set.map! { |n| n * -1 }
+      set.should eq(copy)
+    end
   end
 
   describe "#select!" do
