@@ -96,7 +96,7 @@ struct Crystal::System::Process
     raise NotImplementedError.new("Process.prepare_args")
   end
 
-  def self.replace(command_args, env, clear_env, input, output, error, chdir)
+  def self.replace(command, command_args, env, clear_env, input, output, error, chdir)
     raise NotImplementedError.new("Process.replace")
   end
 

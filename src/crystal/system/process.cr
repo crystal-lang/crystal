@@ -77,7 +77,7 @@ struct Crystal::System::Process
   # def self.spawn(command_args : Args, env : Env?, clear_env : Bool, input : Stdio, output : Stdio, error : Stdio, chdir : Path | String?) : ProcessInformation
 
   # Replaces the current process with a new one.
-  # def self.replace(command_args : Args, env : Env?, clear_env : Bool, input : Stdio, output : Stdio, error : Stdio, chdir : Path | String?) : NoReturn
+  # def self.replace(command : String, command_args : Args, env : Env?, clear_env : Bool, input : Stdio, output : Stdio, error : Stdio, chdir : Path | String?) : NoReturn
 
   # Converts a command and array of arguments to the system-specific representation.
   # def self.prepare_args(command : String, args : Enumerable(String)?, shell : Bool) : Args

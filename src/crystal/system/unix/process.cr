@@ -351,9 +351,9 @@ struct Crystal::System::Process
     lock_write { LibC.execvp(command, argv) }
   end
 
-  def self.replace(command_args, env, clear_env, input, output, error, chdir)
+  def self.replace(command, command_args, env, clear_env, input, output, error, chdir)
     try_replace(command_args, env, clear_env, input, output, error, chdir)
-    raise_exception_from_errno(command_args[0])
+    raise_exception_from_errno(command)
   end
 
   private def self.raise_exception_from_errno(command, errno = Errno.value)

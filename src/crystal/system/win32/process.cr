@@ -343,7 +343,7 @@ struct Crystal::System::Process
     end
   end
 
-  private def self.try_replace(command_args, env, clear_env, input, output, error, chdir)
+  private def self.try_replace(command, command_args, env, clear_env, input, output, error, chdir)
     old_input_fd = reopen_io(input, ORIGINAL_STDIN)
     old_output_fd = reopen_io(output, ORIGINAL_STDOUT)
     old_error_fd = reopen_io(error, ORIGINAL_STDERR)
@@ -378,8 +378,8 @@ struct Crystal::System::Process
     errno
   end
 
-  def self.replace(command_args, env, clear_env, input, output, error, chdir) : NoReturn
-    errno = try_replace(command_args, env, clear_env, input, output, error, chdir)
+  def self.replace(command, command_args, env, clear_env, input, output, error, chdir) : NoReturn
+    errno = try_replace(command, command_args, env, clear_env, input, output, error, chdir)
     raise_exception_from_errno(command_args.is_a?(String) ? command_args : command_args[0], errno)
   end
 
