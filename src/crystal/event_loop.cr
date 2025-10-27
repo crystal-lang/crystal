@@ -8,11 +8,7 @@ abstract class Crystal::EventLoop
         if Crystal::EventLoop::IoUring.supported?
           Crystal::EventLoop::IoUring
         else
-          # the kernel doesn't support io_uring or doesn't support the required
-          # features and opcodes
-          # FIXME: including two event loops leads to type issues
-          raise "TODO: fallback to epoll (kernel doesn't support io_uring or required features/opcodes)"
-          # Crystal::EventLoop::Epoll
+          System.panic "io_uring_setup", Errno::ENOSYS
         end
       {% elsif flag?("evloop=libevent") %}
         Crystal::EventLoop::LibEvent
