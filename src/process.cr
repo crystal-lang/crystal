@@ -221,7 +221,7 @@ class Process
     output = exec_stdio_to_fd(output, for: STDOUT)
     error = exec_stdio_to_fd(error, for: STDERR)
 
-    Crystal::System::Process.replace(command_args, env, clear_env, input, output, error, chdir)
+    Crystal::System::Process.replace(command, command_args, env, clear_env, input, output, error, chdir)
   end
 
   private def self.exec_stdio_to_fd(stdio : ExecStdio, for dst_io : IO::FileDescriptor) : IO::FileDescriptor

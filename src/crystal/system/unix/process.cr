@@ -307,7 +307,7 @@ struct Crystal::System::Process
     pid
   end
 
-  def self.prepare_args(command : String, args : Enumerable(String)?, shell : Bool) : Array(String)
+  def self.prepare_args(command : String, args : Enumerable(String)?, shell : Bool) : {String, Array(String)}
     if shell
       command = %(#{command} "${@}") unless command.includes?(' ')
       shell_args = ["/bin/sh", "-c", command, "sh"]
@@ -320,11 +320,11 @@ struct Crystal::System::Process
         shell_args.concat(args)
       end
 
-      shell_args
+      {"/bin/sh", shell_args}
     else
       command_args = [command]
       command_args.concat(args) if args
-      command_args
+      {command, command_args}
     end
   end
 
@@ -344,11 +344,11 @@ struct Crystal::System::Process
 
     ::Dir.cd(chdir) if chdir
 
-    command = command_args[0]
+    pathname, argv = command_args
     argv = command_args.map &.check_no_null_byte.to_unsafe
     argv << Pointer(UInt8).null
 
-    lock_write { LibC.execvp(command, argv) }
+    lock_write { LibC.execvp(pathname, argv) }
   end
 
   def self.replace(command, command_args, env, clear_env, input, output, error, chdir)
