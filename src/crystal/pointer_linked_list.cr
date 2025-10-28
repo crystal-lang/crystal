@@ -33,7 +33,7 @@ struct Crystal::PointerLinkedList(T)
 
   # Prepends *node* to the head of the list.
   def unshift(node : Pointer(T)) : Nil
-    unless empty?
+    if !empty?
       typeof(self).insert_impl node, @head.value.previous, @head
     else
       node.value.previous = node
@@ -81,7 +81,7 @@ struct Crystal::PointerLinkedList(T)
 
   # Removes and returns tail from the list, yields if empty.
   def pop(&)
-    unless empty?
+    if !empty?
       h = @head
       t = (h.value.previous || h).tap { |t| delete(t) }
     else
