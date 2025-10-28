@@ -255,14 +255,14 @@ struct Crystal::System::Process
     end
   end
 
-  def self.spawn(command_args, env, clear_env, input, output, error, chdir)
+  def self.spawn(prepared_args, env, clear_env, input, output, error, chdir)
     r, w = FileDescriptor.system_pipe
 
     pid = self.fork(will_exec: true)
     if !pid
       LibC.close(r)
       begin
-        self.try_replace(command_args, env, clear_env, input, output, error, chdir)
+        self.try_replace(prepared_args, env, clear_env, input, output, error, chdir)
         byte = 1_u8
         errno = Errno.value.to_i32
         FileDescriptor.write_fully(w, pointerof(byte))
@@ -288,7 +288,7 @@ struct Crystal::System::Process
       when 0
         # Error message coming
         message = reader_pipe.gets_to_end
-        raise RuntimeError.new("Error executing process: '#{command_args[0]}': #{message}")
+        raise RuntimeError.new("Error executing process: '#{prepared_args[0]}': #{message}")
       when 1
         # Errno coming
         # can't use IO#read_bytes(Int32) because we skipped system/network
@@ -296,7 +296,7 @@ struct Crystal::System::Process
         # we thus read it in the same as order as written
         buf = uninitialized StaticArray(UInt8, 4)
         reader_pipe.read_fully(buf.to_slice)
-        raise_exception_from_errno(command_args[0], Errno.new(buf.unsafe_as(Int32)))
+        raise_exception_from_errno(prepared_args[0], Errno.new(buf.unsafe_as(Int32)))
       else
         raise RuntimeError.new("BUG: Invalid error response received from subprocess")
       end
@@ -330,7 +330,7 @@ struct Crystal::System::Process
     {pathname, argv.to_unsafe}
   end
 
-  private def self.try_replace(command_args, env, clear_env, input, output, error, chdir)
+  private def self.try_replace(prepared_args, env, clear_env, input, output, error, chdir)
     reopen_io(input, ORIGINAL_STDIN)
     reopen_io(output, ORIGINAL_STDOUT)
     reopen_io(error, ORIGINAL_STDERR)
@@ -346,13 +346,11 @@ struct Crystal::System::Process
 
     ::Dir.cd(chdir) if chdir
 
-    pathname, argv = command_args
-
-    lock_write { LibC.execvp(pathname, argv) }
+    lock_write { LibC.execvp(*prepared_args) }
   end
 
-  def self.replace(command, command_args, env, clear_env, input, output, error, chdir)
-    try_replace(command_args, env, clear_env, input, output, error, chdir)
+  def self.replace(command, prepared_args, env, clear_env, input, output, error, chdir)
+    try_replace(prepared_args, env, clear_env, input, output, error, chdir)
     raise_exception_from_errno(command)
   end
 
