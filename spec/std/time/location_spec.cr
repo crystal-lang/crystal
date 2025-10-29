@@ -103,6 +103,12 @@ class Time::Location
           Location.load("").should eq Location::UTC
           Location.load("Etc/UTC").should eq Location::UTC
         end
+
+        with_zoneinfo("nonexistent_zipfile.zip") do
+          Location.load("UTC").should eq Location::UTC
+          Location.load("").should eq Location::UTC
+          Location.load("Etc/UTC").should eq Location::UTC
+        end
       end
 
       describe "validating name" do
