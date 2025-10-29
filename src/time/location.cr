@@ -320,7 +320,7 @@ class Time::Location
   # :nodoc:
   def self.load?(name : String, & : String? ->) : Location?
     case name
-    when "", "UTC", "Etc/UTC"
+    when "", "UTC", "Etc/UTC", "GMT", "Etc/GMT"
       # `UTC` is a special identifier, empty string represents a fallback mechanism.
       # `Etc/UTC` is technically a tzdb identifier which could potentially point to anything.
       # But we map it to `Location::UTC` directly for convenience which allows it to work
