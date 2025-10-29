@@ -35,7 +35,7 @@ jobs:
         run: make interpreter=1 release=1
 
       - name: Upload compiler artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: crystal-interpreter
           path: |
@@ -55,7 +55,7 @@ jobs:
       - uses: actions/checkout@v5
 
       - name: Download compiler artifact
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: crystal-interpreter
           path: .build/
@@ -76,7 +76,7 @@ jobs:
       - uses: actions/checkout@v5
 
       - name: Download compiler artifact
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: crystal-interpreter
           path: .build/
