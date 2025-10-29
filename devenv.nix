@@ -5,6 +5,13 @@
 
   git-hooks.hooks = {
     actionlint.enable = true;
+    ameba = {
+      enable = true;
+      name = "Ameba";
+      entry = "${pkgs.ameba}/bin/ameba --fix";
+      files = "\\.e?cr$";
+      pass_filenames = true;
+    };
     check-toml.enable = true;
     check-vcs-permalinks.enable = true;
     circleci.enable = true;
