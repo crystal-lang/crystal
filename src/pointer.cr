@@ -382,9 +382,10 @@ struct Pointer(T)
   # ptr.shuffle!(4)
   # ptr # [3, 4, 1, 2]
   # ```
-  def shuffle!(count : Int, random = Random::DEFAULT)
+  def shuffle!(count : Int, random : Random? = nil)
+    rng = random || Random::DEFAULT
     (count - 1).downto(1) do |i|
-      j = random.rand(i + 1)
+      j = rng.rand(i + 1)
       swap(i, j)
     end
     self
