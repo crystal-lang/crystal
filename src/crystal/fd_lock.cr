@@ -103,7 +103,13 @@ struct Crystal::FdLock
         # acquire spinlock + forward declare pending waiter
         m, success = @m.compare_and_set(m, (m | xspin | xwait) & ~clear, :acquire, :relaxed)
         if success
-          waiters.value.push(pointerof(waiter))
+          # new waiters are added to the tail, while woken waiters that failed
+          # to lock again are added to the head to give them some edge
+          if (clear & xwaker) == 0_u32
+            waiters.value.push(pointerof(waiter))
+          else
+            waiters.value.unshift(pointerof(waiter))
+          end
 
           # release spinlock before suspending the fiber
           @m.and(~xspin, :release)
