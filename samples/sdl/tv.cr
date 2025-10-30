@@ -64,7 +64,7 @@ class ColorMaker
   end
 
   def make_alpha_color(multiplier)
-    rand = Random::DEFAULT.next_int
+    rand = Random.next_int
     r = ((rand >> 16) % 256).to_i
     g = ((rand >> 8) % 256).to_i
     b = (rand % 256).to_i

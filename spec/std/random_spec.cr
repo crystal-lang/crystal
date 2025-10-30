@@ -196,7 +196,11 @@ describe "Random" do
   end
 
   it "gets a random bool" do
-    Random::DEFAULT.next_bool.should be_a(Bool)
+    Random.next_bool.should be_a(Bool)
+  end
+
+  it "gets a random int" do
+    Random.next_int.should be_a(Int32)
   end
 
   it "generates by accumulation" do
