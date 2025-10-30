@@ -74,7 +74,7 @@ abstract class Crystal::EventLoop
     # and the source address.
     abstract def receive_from(socket : ::Socket, slice : Bytes) : Tuple(Int32, ::Socket::Address)
 
-    # Internal shutdown of the socket. Called after the Socket has been marked
+    # Internal shutdown of the socket. Called after the `Socket` has been marked
     # closed but before calling `#close` to actually close the system socket fd
     # or handle.
     #
