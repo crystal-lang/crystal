@@ -50,6 +50,7 @@ require "random/pcg32"
 # slower but cryptographically secure, so a third party can't deduce incoming
 # numbers.
 module Random
+  @[Deprecated("Use Random.default or create a local instance with Random.new")]
   DEFAULT = PCG32.new
 
   thread_local(default : ::Random) do
