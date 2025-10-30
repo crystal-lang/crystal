@@ -9,7 +9,8 @@
       enable = true;
       name = "Ameba";
       entry = "${pkgs.ameba}/bin/ameba --fix";
-      files = "\\.e?cr$";
+      files = "\\.cr$";
+      excludes = ["^lib/"];
       pass_filenames = true;
     };
     check-toml.enable = true;
