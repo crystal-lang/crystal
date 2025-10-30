@@ -27,6 +27,8 @@ jobs:
 
       - name: Download Crystal source
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Cache libraries
         id: cache-libs
@@ -107,6 +109,8 @@ jobs:
 
       - name: Download Crystal source
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Cache libraries
         id: cache-dlls
@@ -196,6 +200,8 @@ jobs:
 
       - name: Download Crystal source
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Cache LLVM
         id: cache-llvm-dlls
@@ -232,6 +238,8 @@ jobs:
 
       - name: Download Crystal source
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Download Crystal executable
         uses: actions/download-artifact@v5
@@ -272,6 +280,8 @@ jobs:
 
       - name: Download Crystal source
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Download Crystal executable
         uses: actions/download-artifact@v5
@@ -304,6 +314,8 @@ jobs:
 
       - name: Download Crystal source
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Download Crystal executable
         uses: actions/download-artifact@v5

@@ -29,6 +29,8 @@ jobs:
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - uses: cachix/install-nix-action@fd24c48048070c1be9acd18c9d369a83f0fe94d7 # v31
         with:
