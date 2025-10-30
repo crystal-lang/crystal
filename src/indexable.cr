@@ -965,7 +965,7 @@ module Indexable(T)
   # ```
   def sample(random : Random? = nil)
     raise IndexError.new("Can't sample empty collection") if size == 0
-    rng = random || Random::DEFAULT
+    rng = random || Random.default
     unsafe_fetch(rng.rand(size))
   end
 

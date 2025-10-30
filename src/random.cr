@@ -52,6 +52,32 @@ require "random/pcg32"
 module Random
   DEFAULT = PCG32.new
 
+  thread_local(default : ::Random) do
+    ::Random::PCG32.new.as(::Random)
+  end
+
+  # :nodoc:
+  #
+  # Dups the thread's default instance (on the stack when possible, hence the
+  # macro) and splits the thread instance (taking advantage of PCG32 sequences)
+  # so both instances will generate uncorrelated sequences.
+  macro dup_and_split_default(stack = false)
+    {% if flag?(:preview_mt) %}
+      %thread_rng = ::Random.default.as(::Random::PCG32)
+      %copy =
+        if {{stack}} && {{compare_versions(Crystal::VERSION, "1.12.0") >= 0}}
+          %buf = uninitialized ::ReferenceStorage(::Random::PCG32)
+          ::Random::PCG32.unsafe_construct(pointerof(%buf), %thread_rng)
+        else
+          %thread_rng.dup
+        end
+      %thread_rng.split!
+      %copy
+    {% else %}
+      ::Random.default
+    {% end %}
+  end
+
   # Initializes an instance with the given *seed* and *sequence*.
   def self.new(seed, sequence = 0_u64)
     PCG32.new(seed.to_u64, sequence)
@@ -60,6 +86,16 @@ module Random
   # Initializes an instance seeded from a system source.
   def self.new
     PCG32.new
+  end
+
+  # Reseed the generator.
+  def new_seed
+    raise NotImplementedError.new("{{@type}}#new_seed")
+  end
+
+  # :nodoc:
+  def split!
+    raise NotImplementedError.new("{{@type}}#split!")
   end
 
   # Generates a random unsigned integer.
@@ -466,12 +502,12 @@ module Random
 
   # See `#rand`.
   def self.rand : Float64
-    DEFAULT.rand
+    default.rand
   end
 
   # See `#rand(x)`.
   def self.rand(x)
-    DEFAULT.rand(x)
+    default.rand(x)
   end
 end
 

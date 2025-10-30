@@ -389,7 +389,7 @@ struct Pointer(T)
   # ptr.to_slice(4) # => Slice[3, 4, 1, 2]
   # ```
   def shuffle!(count : Int, random : Random? = nil)
-    rng = random || Random::DEFAULT
+    rng = random || Random.default
     (count - 1).downto(1) do |i|
       j = rng.rand(i + 1)
       swap(i, j)
