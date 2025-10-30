@@ -43,6 +43,12 @@ class Random::PCG32
     new(Random::Secure.rand(UInt64::MIN..UInt64::MAX), Random::Secure.rand(UInt64::MIN..UInt64::MAX))
   end
 
+  # :nodoc:
+  def initialize(random : self)
+    @state = random.@state
+    @inc = random.@inc
+  end
+
   def initialize(initstate : UInt64, initseq = 0_u64)
     # initialize to zeros to prevent compiler complains
     @state = 0_u64
@@ -86,5 +92,15 @@ class Random::PCG32
       deltau64 //= 2
     end
     @state = acc_mult &* @state &+ acc_plus
+  end
+
+  # :nodoc:
+  #
+  # Leverages the sequence of the PCG algorithm to split this instance to an
+  # entirely new and uncorrelated sequence.
+  def split!
+    seq = @inc &+ 1
+    seq = 0_u64 if seq >= (1_u64 << 63) # only the low 63 bits are significant
+    @inc = seq
   end
 end
