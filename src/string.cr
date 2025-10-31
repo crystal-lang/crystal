@@ -4405,6 +4405,8 @@ class String
   # "hello\nworld\r\n".each_line(chomp: false) { } # yields "hello\n", "world\r\n"
   # ```
   #
+  # If *remove_empty* is `true`, any empty lines are removed from the result.
+  #
   # A trailing line feed is not considered starting a final, empty line.  The
   # empty string does not contain any lines.
   #
@@ -4415,13 +4417,19 @@ class String
   # ```
   #
   # * `#lines` returns an array of lines
-  def each_line(chomp : Bool = true, & : String ->) : Nil
+  def each_line(chomp : Bool = true, remove_empty : Bool = false, & : String ->) : Nil
     return if empty?
 
     offset = 0
 
     while byte_index = byte_index('\n'.ord.to_u8, offset)
       count = byte_index - offset + 1
+
+      if remove_empty && (byte_index == offset || (byte_index == offset + 1 && to_unsafe[offset] === '\r'))
+        offset = byte_index + 1
+        next
+      end
+
       if chomp
         count -= 1
         if offset + count > 0 && to_unsafe[offset + count - 1] === '\r'
@@ -4439,8 +4447,8 @@ class String
   end
 
   # Returns an `Iterator` which yields each line of this string (see `String#each_line`).
-  def each_line(chomp = true)
-    LineIterator.new(self, chomp)
+  def each_line(chomp = true, *, remove_empty : Bool = false)
+    LineIterator.new(self, chomp, remove_empty)
   end
 
   # Converts camelcase boundaries to underscores.
@@ -5709,7 +5717,7 @@ class String
   private class LineIterator
     include Iterator(String)
 
-    def initialize(@string : String, @chomp : Bool)
+    def initialize(@string : String, @chomp : Bool, @remove_empty : Bool)
       @offset = 0
       @end = false
     end
@@ -5720,6 +5728,12 @@ class String
       byte_index = @string.byte_index('\n'.ord.to_u8, @offset)
       if byte_index
         count = byte_index - @offset + 1
+
+        if @remove_empty && (byte_index == @offset || (byte_index == @offset + 1 && @string.to_unsafe[@offset] === '\r'))
+          @offset = byte_index + 1
+          return self.next
+        end
+
         if @chomp
           count -= 1
           if @offset + count > 0 && @string.to_unsafe[@offset + count - 1] === '\r'
