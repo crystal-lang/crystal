@@ -45,6 +45,25 @@ private def is_stable_sort(mutable, &block)
 end
 
 describe "Slice" do
+  describe ".new" do
+    describe "initializes with default value" do
+      it "integer" do
+        Slice(Int32).new(3, 0).should eq Slice[0, 0, 0]
+        Slice(Int32).new(3, 1).should eq Slice[1, 1, 1]
+      end
+
+      it "float" do
+        Slice(Float32).new(3, 0.0).should eq Slice[0.0, 0.0, 0.0]
+        Slice(Float32).new(3, 1.0).should eq Slice[1.0, 1.0, 1.0]
+      end
+
+      it "pointer" do
+        Slice(Pointer(Void)).new(3, Pointer(Void).null).should eq Slice[Pointer(Void).null, Pointer(Void).null, Pointer(Void).null]
+        Slice(Pointer(Void)).new(3, Pointer(Void).new(0x123_u64)).should eq Slice[Pointer(Void).new(0x123_u64), Pointer(Void).new(0x123_u64), Pointer(Void).new(0x123_u64)]
+      end
+    end
+  end
+
   it "gets pointer and size" do
     pointer = Pointer.malloc(1, 0)
     slice = Slice.new(pointer, 1)
