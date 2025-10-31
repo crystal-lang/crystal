@@ -354,12 +354,12 @@ struct Crystal::System::Process
 
     ::Dir.cd(chdir) if chdir
 
-    lock_write { execvpe(*prepared_args, LibC.environ) }
+    execvpe(*prepared_args, LibC.environ)
   end
 
   private def self.execvpe(file, argv, envp)
     {% if LibC.has_method?("execvpe") && !flag?("execvpe_impl") %}
-      LibC.execvpe(file, argv, envp)
+      lock_write { LibC.execvpe(file, argv, envp) }
     {% else %}
       execvpe_impl(file, argv, envp)
     {% end %}
@@ -372,7 +372,7 @@ struct Crystal::System::Process
   # follow-up.
   private def self.execvpe_impl(file, argv, envp)
     LibC.environ = envp
-    LibC.execvp(file, argv)
+    lock_write { LibC.execvp(file, argv) }
   end
 
   def self.replace(command, prepared_args, env, clear_env, input, output, error, chdir)
