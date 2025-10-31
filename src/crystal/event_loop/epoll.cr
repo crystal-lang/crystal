@@ -4,7 +4,7 @@ require "../system/unix/eventfd"
 require "../system/unix/timerfd"
 
 class Crystal::EventLoop::Epoll < Crystal::EventLoop::Polling
-  def initialize
+  def initialize(parallelism : Int32)
     # the epoll instance
     @epoll = System::Epoll.new
 

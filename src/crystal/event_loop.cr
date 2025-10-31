@@ -4,7 +4,13 @@ abstract class Crystal::EventLoop
       Crystal::EventLoop::Wasi
     {% elsif flag?(:unix) %}
       # TODO: enable more targets by default (need manual tests or fixes)
-      {% if flag?("evloop=libevent") %}
+      {% if flag?("evloop=io_uring") %}
+        if Crystal::EventLoop::IoUring.supported?
+          Crystal::EventLoop::IoUring
+        else
+          System.panic "io_uring_setup", Errno::ENOSYS
+        end
+      {% elsif flag?("evloop=libevent") %}
         Crystal::EventLoop::LibEvent
       {% elsif flag?("evloop=epoll") || flag?(:android) || flag?(:linux) %}
         Crystal::EventLoop::Epoll
@@ -21,8 +27,8 @@ abstract class Crystal::EventLoop
   end
 
   # Creates an event loop instance
-  def self.create : self
-    backend_class.new
+  def self.create(parallelism : Int32 = 1) : self
+    backend_class.new(parallelism)
   end
 
   def self.default_file_blocking? : Bool
@@ -67,7 +73,35 @@ abstract class Crystal::EventLoop
     # enqueueing in parallel, so the caller is responsible and in control for
     # when and how the fibers will be enqueued.
     abstract def run(queue : Fiber::List*, blocking : Bool) : Nil
+
+    # Called once before *scheduler* is started. Optional hook.
+    def register(scheduler : Fiber::ExecutionContext::Scheduler, index : Int32) : Nil
+    end
+
+    # Called once before *scheduler* is shut down. Optional hook.
+    def unregister(scheduler : Fiber::ExecutionContext::Scheduler) : Nil
+    end
+
+    # Tries to lock the event loop and yields if the lock was acquired. Must
+    # unlock before returning. Returns true if the lock was acquired, false
+    # otherwise.
+    #
+    # Only needed when there should be a single scheduler running the event loop
+    # at any time (e.g. epoll, kqueue and IOCP). Can be a NOOP that always
+    # yields and returns true (io_uring).
+    abstract def lock?(&) : Bool
+
+    # Same as `#interrupt` but returns true if a running event loop has likely
+    # been interrupted, and false otherwise.
+    abstract def interrupt? : Bool
   {% end %}
+
+  # Blocks the current scheduler until all the pending events have completed.
+  # Must yield every runnable fiber.
+  #
+  # Optional.
+  def drain(& : Fiber ->) : Nil
+  end
 
   # Tells a blocking run loop to no longer wait for events to activate. It may
   # for example enqueue a NOOP event with an immediate (or past) timeout. Having
@@ -121,7 +155,10 @@ end
 {% if flag?(:wasi) %}
   require "./event_loop/wasi"
 {% elsif flag?(:unix) %}
-  {% if flag?("evloop=libevent") %}
+  {% if flag?("evloop=io_uring") %}
+    require "./event_loop/io_uring"
+    # require "./event_loop/epoll"
+  {% elsif flag?("evloop=libevent") %}
     require "./event_loop/libevent"
   {% elsif flag?("evloop=epoll") || flag?(:android) || flag?(:linux) %}
     require "./event_loop/epoll"
