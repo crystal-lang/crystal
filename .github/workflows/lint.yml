@@ -22,11 +22,11 @@ jobs:
         run: git fetch origin "${TARGET_BRANCH}"
       - name: Run pre-commit hooks for changes against target branch (${{ github.base_ref || 'master' }})
         run: pre-commit run --from-ref "origin/${TARGET_BRANCH}" --to-ref HEAD
-        shell: devenv shell bash -- -e {0}
+        shell: devenv --profile lint shell bash -- -e {0}
         if: "${{ github.event_name != 'workflow_dispatch' }}"
       - name: Run pre-commit on all files
         run: pre-commit run --all-files
-        shell: devenv shell bash -- -e {0}
+        shell: devenv --profile lint shell bash -- -e {0}
         if: "${{ github.event_name == 'workflow_dispatch' }}"
     env:
       TARGET_BRANCH: "${{ github.base_ref || 'master' }}"
