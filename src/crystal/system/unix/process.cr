@@ -158,7 +158,7 @@ struct Crystal::System::Process
   #
   # NOTE: there may still be some potential leaks (e.g. calling `accept` on a
   #       blocking socket).
-  {% if LibC.has_constant?(:SOCK_CLOEXEC) && LibC.has_method?(:accept4) && LibC.has_method?(:dup3) && LibC.has_method?(:pipe2) %}
+  {% if (LibC.has_constant?(:SOCK_CLOEXEC) && (LibC.has_method?(:accept4)) || !LibC.has_method?(:socket)) && LibC.has_method?(:dup3) && LibC.has_method?(:pipe2) %}
     # we don't implement .lock_read so compilation will fail if we need to
     # support another case, instead of silently skipping the rwlock!
 
