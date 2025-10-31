@@ -358,7 +358,7 @@ struct Crystal::System::Process
   end
 
   private def self.execvpe(command, argv, envp)
-    {% if LibC.has_method?("execvpe") %}
+    {% if LibC.has_method?("execvpe") && !flag?("execvpe_impl") %}
       LibC.execvpe(command, argv, envp)
     {% else %}
       execvpe_impl(command, argv, envp)
