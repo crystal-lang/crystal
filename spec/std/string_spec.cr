@@ -302,10 +302,13 @@ describe "String" do
     it { "1101".to_i(base: 2).should eq(13) }
     it { "12ab".to_i(16).should eq(4779) }
     it { "0x123abc".to_i(prefix: true).should eq(1194684) }
+    it { "0X123abc".to_i(prefix: true).should eq(1194684) }
     it { "0b1101".to_i(prefix: true).should eq(13) }
+    it { "0B1101".to_i(prefix: true).should eq(13) }
     it { "0b001101".to_i(prefix: true).should eq(13) }
     it { "0123".to_i(prefix: true).should eq(123) }
     it { "0o123".to_i(prefix: true).should eq(83) }
+    it { "0O123".to_i(prefix: true).should eq(83) }
     it { "0123".to_i(leading_zero_is_octal: true).should eq(83) }
     it { "123".to_i(leading_zero_is_octal: true).should eq(123) }
     it { "0o755".to_i(prefix: true, leading_zero_is_octal: true).should eq(493) }
