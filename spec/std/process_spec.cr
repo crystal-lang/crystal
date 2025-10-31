@@ -404,14 +404,12 @@ describe Process do
       end
 
       it "errors on invalid key" do
-        {% begin %}
-          expect_raises({% if flag?(:win32) %}ArgumentError, "Invalid env key" {% else %} RuntimeError, "Invalid argument"{% end %}) do
-            Process.run(*print_env_command, env: {"" => "baz"})
-          end
-          expect_raises({% if flag?(:win32) %}ArgumentError, "Invalid env key" {% else %} RuntimeError, "Invalid argument"{% end %}) do
-            Process.run(*print_env_command, env: {"foo=bar" => "baz"})
-          end
-        {% end %}
+        expect_raises({% if flag?(:win32) %}ArgumentError{% else %}RuntimeError{% end %}, %(Invalid env key "")) do
+          Process.run(*print_env_command, env: {"" => "baz"})
+        end
+        expect_raises({% if flag?(:win32) %}ArgumentError{% else %}RuntimeError{% end %}, %(Invalid env key "foo=bar")) do
+          Process.run(*print_env_command, env: {"foo=bar" => "baz"})
+        end
       end
 
       it "errors on zero char in key" do
