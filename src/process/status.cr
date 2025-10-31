@@ -95,7 +95,7 @@ enum Process::ExitReason
   # Returns `true` if the process exited abnormally.
   #
   # This includes all values except `Normal`.
-  def abnormal?
+  def abnormal? : Bool
     !normal?
   end
 
@@ -107,7 +107,7 @@ enum Process::ExitReason
   # ```
   #
   # `Status#description` provides more detail for a specific process status.
-  def description
+  def description : String
     case self
     in .normal?
       "Process exited normally"
@@ -413,7 +413,7 @@ class Process::Status
   # ```
   #
   # `ExitReason#description` provides the specific messages for non-signal exits.
-  def description
+  def description : String
     if exit_reason.signal? && (signal = exit_signal?)
       "Process received and didn't handle signal #{signal}"
     else
