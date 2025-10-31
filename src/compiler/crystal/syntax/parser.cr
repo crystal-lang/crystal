@@ -3280,6 +3280,9 @@ module Crystal
         when .macro_var?
           macro_var_name = @token.value.to_s
           location = @token.location
+          if macro_var_name[0].uppercase? || macro_var_name[0].titlecase?
+            warnings.add_warning_at @token.location, "macro fresh variables with constant names are deprecated"
+          end
           if current_char == '{'
             if macro_var_name.size == 1
               warnings.add_warning_at @token.location, "single-letter macro fresh variables with indices are deprecated"

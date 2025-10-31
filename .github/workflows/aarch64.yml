@@ -15,12 +15,14 @@ jobs:
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - name: Build Crystal
         uses: docker://crystallang/crystal:1.13.2-alpine-84codes-build
         with:
           args: make crystal
       - name: Upload Crystal executable
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: crystal-aarch64-musl
           path: |
@@ -33,8 +35,10 @@ jobs:
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - name: Download Crystal executable
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: crystal-aarch64-musl
       - name: Mark downloaded compiler as executable
@@ -50,8 +54,10 @@ jobs:
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - name: Download Crystal executable
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: crystal-aarch64-musl
       - name: Mark downloaded compiler as executable
@@ -66,12 +72,14 @@ jobs:
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - name: Build Crystal
         uses: docker://crystallang/crystal:1.13.2-ubuntu-84codes-build
         with:
           args: make crystal
       - name: Upload Crystal executable
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: crystal-aarch64-gnu
           path: |
@@ -84,8 +92,10 @@ jobs:
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - name: Download Crystal executable
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: crystal-aarch64-gnu
       - name: Mark downloaded compiler as executable
@@ -101,8 +111,10 @@ jobs:
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - name: Download Crystal executable
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: crystal-aarch64-gnu
       - name: Mark downloaded compiler as executable

@@ -55,6 +55,23 @@ describe Crystal::PointerLinkedList do
     end
   end
 
+  describe "unshift" do
+    it "prepends the node into the list" do
+      list = Crystal::PointerLinkedList(TestedObject).new
+
+      x = TestedObject.new 0
+      y = TestedObject.new 1
+      z = TestedObject.new 2
+
+      list.unshift pointerof(x)
+      list.unshift pointerof(y)
+      list.unshift pointerof(z)
+
+      ExpectOrderHelper.by_next(x, z, y, x)
+      ExpectOrderHelper.by_previous(x, y, z, x)
+    end
+  end
+
   describe "delete" do
     it "remove a node from list" do
       list = Crystal::PointerLinkedList(TestedObject).new
@@ -105,6 +122,40 @@ describe Crystal::PointerLinkedList do
       list = Crystal::PointerLinkedList(TestedObject).new
 
       obj = list.shift?
+
+      obj.should be_nil
+    end
+  end
+
+  describe "pop?" do
+    it "remove and return the last element" do
+      list = Crystal::PointerLinkedList(TestedObject).new
+
+      x = TestedObject.new 0
+      y = TestedObject.new 1
+      z = TestedObject.new 2
+      w = TestedObject.new 3
+
+      list.push pointerof(x)
+      list.push pointerof(y)
+      list.push pointerof(z)
+      list.push pointerof(w)
+
+      obj = list.pop?
+
+      typeof(obj).should eq(Pointer(TestedObject)?)
+
+      obj.should_not be_nil
+      obj.should eq(pointerof(w))
+
+      ExpectOrderHelper.by_next(x, y, z, x)
+      ExpectOrderHelper.by_previous(x, z, y, x)
+    end
+
+    it "return nil if list is empty" do
+      list = Crystal::PointerLinkedList(TestedObject).new
+
+      obj = list.pop?
 
       obj.should be_nil
     end

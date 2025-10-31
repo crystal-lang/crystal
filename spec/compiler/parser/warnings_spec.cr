@@ -1,22 +1,19 @@
 require "../../support/syntax"
 
-private def assert_parser_warning(source, message, *, file = __FILE__, line = __LINE__)
+private def assert_parser_warning(source, *messages, file = __FILE__, line = __LINE__)
   parser = Parser.new(source)
   parser.filename = "/test.cr"
   parser.parse
 
   warnings = parser.warnings.infos
-  warnings.size.should eq(1), file: file, line: line
-  warnings[0].should contain(message), file: file, line: line
+  warnings.size.should eq(messages.size), file: file, line: line
+  warnings.zip(messages) do |warning, message|
+    warning.should contain(message), file: file, line: line
+  end
 end
 
 private def assert_no_parser_warning(source, *, file = __FILE__, line = __LINE__)
-  parser = Parser.new(source)
-  parser.filename = "/test.cr"
-  parser.parse
-
-  warnings = parser.warnings.infos
-  warnings.should eq([] of String), file: file, line: line
+  assert_parser_warning(source, file: file, line: line)
 end
 
 VALID_SIGILS = ['i', 'q', 'r', 'w', 'x', 'Q']
@@ -67,10 +64,21 @@ describe "Parser warnings" do
     end
   end
 
-  it "warns on single-letter macro fresh variables with indices" do
-    chars = ('A'..'Z').to_a + ('a'..'z').to_a - VALID_SIGILS
+  it "warns on single-letter macro lowercase fresh variables with indices" do
+    chars = ('a'..'z').to_a - VALID_SIGILS
     chars.each do |letter|
       assert_parser_warning <<-CRYSTAL, "Warning: single-letter macro fresh variables with indices are deprecated"
+        macro foo
+          %#{letter}{1} = 2
+        end
+        CRYSTAL
+    end
+  end
+
+  it "warns on single-letter uppercase macro fresh variables with indices" do
+    chars = ('A'..'Z').to_a.push('ǲ') - VALID_SIGILS
+    chars.each do |letter|
+      assert_parser_warning <<-CRYSTAL, "Warning: macro fresh variables with constant names are deprecated", "Warning: single-letter macro fresh variables with indices are deprecated"
         macro foo
           %#{letter}{1} = 2
         end
@@ -88,12 +96,22 @@ describe "Parser warnings" do
     end
   end
 
-  it "doesn't warn on single-letter macro fresh variables without indices" do
-    ('A'..'Z').each do |letter|
+  it "warns on single-letter uppercase macro fresh variables without indices" do
+    chars = ('A'..'Z').to_a.push('ǲ')
+    chars.each do |letter|
+      assert_parser_warning <<-CRYSTAL, "Warning: macro fresh variables with constant names are deprecated"
+        macro foo
+          %#{letter} = 1
+        end
+        CRYSTAL
+    end
+  end
+
+  it "doesn't warn on single-letter lowercase macro fresh variables without indices" do
+    ('a'..'z').each do |letter|
       assert_no_parser_warning <<-CRYSTAL
         macro foo
           %#{letter} = 1
-          %#{letter.downcase} = 2
         end
         CRYSTAL
     end

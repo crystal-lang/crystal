@@ -53,6 +53,8 @@ jobs:
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Prepare System
         run: bin/ci prepare_system
