@@ -103,6 +103,24 @@ class Time::Location
           Location.load("").should eq Location::UTC
           Location.load("Etc/UTC").should eq Location::UTC
         end
+
+        with_zoneinfo("nonexistent_zipfile.zip") do
+          Location.load("UTC").should eq Location::UTC
+          Location.load("").should eq Location::UTC
+          Location.load("Etc/UTC").should eq Location::UTC
+        end
+      end
+
+      it "treats GMT as special case" do
+        with_zoneinfo do
+          Location.load("GMT").should eq Location::UTC
+          Location.load("Etc/GMT").should eq Location::UTC
+        end
+
+        with_zoneinfo("nonexistent_zipfile.zip") do
+          Location.load("GMT").should eq Location::UTC
+          Location.load("Etc/GMT").should eq Location::UTC
+        end
       end
 
       describe "validating name" do

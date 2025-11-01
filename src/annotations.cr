@@ -13,7 +13,7 @@
 # @[Deprecated("Here may be dragons")]
 # class Foo
 # end
-
+#
 # def foo(bar, @[Deprecated("Do not try this at home")] baz)
 # end
 # ```

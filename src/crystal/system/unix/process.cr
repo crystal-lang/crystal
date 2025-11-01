@@ -352,7 +352,25 @@ struct Crystal::System::Process
     argv = command_args.map &.check_no_null_byte.to_unsafe
     argv << Pointer(UInt8).null
 
-    lock_write { LibC.execvp(command, argv) }
+    lock_write { execvpe(command, argv, LibC.environ) }
+  end
+
+  private def self.execvpe(command, argv, envp)
+    {% if LibC.has_method?("execvpe") %}
+      LibC.execvpe(command, argv, envp)
+    {% else %}
+      execvpe_impl(command, argv, envp)
+    {% end %}
+  end
+
+  # Darwin, DragonflyBSD, and FreeBSD < 14 don't have an `execvpe` function, so
+  # we need to implement it ourselves.
+  # FIXME: This is a stub implementation which simply sets the environment
+  # pointer. That's the same behaviour as before, but not correct. Will fix in a
+  # follow-up.
+  private def self.execvpe_impl(command, argv, envp)
+    LibC.environ = envp
+    LibC.execvp(command, argv)
   end
 
   def self.replace(command_args, env, clear_env, input, output, error, chdir)

@@ -91,7 +91,7 @@ class OAuth::Consumer
   #
   # Yields an `URI::Params::Builder` to add extra parameters other than those
   # defined by the standard.
-  def get_authorize_uri(request_token, oauth_callback = nil, &block : URI::Params::Builder ->) : String
+  def get_authorize_uri(request_token : RequestToken, oauth_callback : String? = nil, &block : URI::Params::Builder ->) : String
     uri = URI.parse(@authorize_uri)
 
     # Use the default URI if it's not an absolute one

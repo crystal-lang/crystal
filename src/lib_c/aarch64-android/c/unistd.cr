@@ -20,6 +20,7 @@ lib LibC
   fun dup3(__old_fd : Int, __new_fd : Int, __flags : Int) : Int
   fun _exit(__status : Int) : NoReturn
   fun execvp(__file : Char*, __argv : Char**) : Int
+  fun execvpe(file : Char*, argv : Char**, envp : Char**) : Int
   fun fdatasync(__fd : Int) : Int
   @[ReturnsTwice]
   fun fork : PidT

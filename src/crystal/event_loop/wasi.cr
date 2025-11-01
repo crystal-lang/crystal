@@ -80,8 +80,14 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
     raise NotImplementedError.new("Crystal::EventLoop#reopened(FileDescriptor)")
   end
 
-  def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
+  def shutdown(file_descriptor : Crystal::System::FileDescriptor) : Nil
     file_descriptor.evented_close
+  end
+
+  def shutdown(file_descriptor : Crystal::System::FileDescriptor) : Nil
+  end
+
+  def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
     file_descriptor.file_descriptor_close
   end
 
@@ -133,8 +139,14 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
     raise NotImplementedError.new "Crystal::Wasi::EventLoop#accept"
   end
 
-  def close(socket : ::Socket) : Nil
+  def shutdown(socket : ::Socket) : Nil
     socket.evented_close
+  end
+
+  def shutdown(socket : ::Socket) : Nil
+  end
+
+  def close(socket : ::Socket) : Nil
     socket.socket_close
   end
 

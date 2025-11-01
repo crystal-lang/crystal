@@ -9,7 +9,8 @@
       enable = true;
       name = "Ameba";
       entry = "${pkgs.ameba}/bin/ameba --fix";
-      files = "\\.e?cr$";
+      files = "\\.cr$";
+      excludes = ["^lib/"];
       pass_filenames = true;
     };
     check-toml.enable = true;
@@ -17,7 +18,6 @@
     circleci.enable = true;
     crystal.enable = true;
     markdownlint.enable = true;
-    reuse.enable = true;
     shellcheck = {
       enable = true;
       excludes = [
@@ -26,5 +26,16 @@
     };
     typos.enable = true;
     zizmor.enable = true;
+  };
+
+  profiles = {
+    lint.module = {
+      # More expensive hooks that we don't want to execute on every commit all the time
+      git-hooks.hooks = {
+        # reuse always runs on all files in the repo which takes some time.
+        # Violations are very rare, so a longer feedback loop doesn't matter much.
+        reuse.enable = true;
+      };
+    };
   };
 }
