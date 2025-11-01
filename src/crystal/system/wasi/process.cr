@@ -88,7 +88,7 @@ struct Crystal::System::Process
     raise NotImplementedError.new("Process.fork")
   end
 
-  def self.spawn(command_args, env, clear_env, input, output, error, chdir)
+  def self.spawn(prepared_args, env, clear_env, input, output, error, chdir)
     raise NotImplementedError.new("Process.spawn")
   end
 
@@ -96,7 +96,7 @@ struct Crystal::System::Process
     raise NotImplementedError.new("Process.prepare_args")
   end
 
-  def self.replace(command_args, env, clear_env, input, output, error, chdir)
+  def self.replace(command, prepared_args, env, clear_env, input, output, error, chdir)
     raise NotImplementedError.new("Process.replace")
   end
 
