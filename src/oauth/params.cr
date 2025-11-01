@@ -4,10 +4,12 @@ struct OAuth::Params
     @params = [] of {String, String}
   end
 
-  def add(key : String, value : String?) : Nil
-    if value
-      @params << {URI.encode_www_form(key, space_to_plus: false), URI.encode_www_form(value, space_to_plus: false)}
-    end
+  def add(key : String, value : String) : Nil
+    @params << {URI.encode_www_form(key, space_to_plus: false), URI.encode_www_form(value, space_to_plus: false)}
+  end
+
+  @[Deprecated("Filter out `nil` values when calling `#add`")]
+  def add(key : String, value : Nil) : Nil
   end
 
   def add_query(query : String) : Nil
