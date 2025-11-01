@@ -64,7 +64,7 @@ describe "File" do
 
       rbuf = Bytes.new(5120)
       wbuf = Bytes.new(5120)
-      Random::DEFAULT.random_bytes(wbuf)
+      Random::Secure.random_bytes(wbuf)
 
       File.open(path, "r") do |reader|
         # opened fifo for read: wait for thread to open for write
