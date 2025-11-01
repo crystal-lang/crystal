@@ -447,27 +447,14 @@ class OptionParser
   # Parses a command-line argument into a flag and optional inline value.
   private def parse_arg_to_flag_and_value(arg : String) : {String, String?}
     if arg.starts_with?("--")
-      value_index = arg.index('=')
-      if value_index
-        flag = arg[0...value_index]
-        value = arg[value_index + 1..-1]
-      else
-        flag = arg
-        value = nil
+      name, separator, value = arg.partition("=")
+      if separator == "="
+        return {name, value}
       end
-    elsif arg.starts_with?('-')
-      if arg.size > 2
-        flag = arg[0..1]
-        value = arg[2..-1]
-      else
-        flag = arg
-        value = nil
-      end
-    else
-      flag = arg
-      value = nil
+    elsif arg.starts_with?('-') && arg.size > 2
+      return {arg[0..1], arg[2..]}
     end
-    {flag, value}
+    {arg, nil}
   end
 
   # Processes a single flag/subcommand. Matches original behaviour exactly.
