@@ -224,5 +224,44 @@ describe Crystal::Repl::Interpreter do
         foo.x.not_nil!("test")
       CRYSTAL
     end
+
+    it "downcasts with same ivar name in different scopes" do
+      interpret(<<-CRYSTAL, prelude: "prelude").should eq(%("parser"))
+        # When a block argument has the same name as a local variable
+        # in a parent scope, the interpreter was getting confused and
+        # using the wrong variable.
+        #
+        # The fix is to make sure that when looking up a variable,
+        # if we are in a block and the variable is a block argument,
+        # we only look at the current block's scope.
+        class OptionParser
+          record Handler,
+            value_type : String,
+            block : String ->
+
+          def initialize
+            @handlers = Hash(String, Handler).new
+          end
+
+          def self.parse(args = ARGV, &) : self
+            parser = OptionParser.new
+            yield parser
+            parser
+          end
+
+          def on(flag : String, &block : String ->)
+            @handlers[flag] = Handler.new(flag, block)
+          end
+        end
+
+        opt_parser = OptionParser.parse do |parser|
+          parser.on("Show help") do
+            parser
+          end
+        end
+
+        parser = "parser"
+      CRYSTAL
+    end
   end
 end
