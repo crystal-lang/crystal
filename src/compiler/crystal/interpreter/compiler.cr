@@ -1872,6 +1872,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     if body.is_a?(Var) && body.name == "self"
       # We also inline calls that simply return "self"
 
+      # We still have to accept the call arguments, but discard their values
+      node.args.each { |arg| discard_value(arg) }
+
       if @wants_value
         if obj
           request_value(obj)
@@ -1884,9 +1887,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
           end
         end
       end
-
-      # We still have to accept the call arguments, but discard their values
-      node.args.each { |arg| discard_value(arg) }
 
       return false
     end
