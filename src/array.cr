@@ -1604,9 +1604,10 @@ class Array(T)
     shift { nil }
   end
 
-  # Returns an array with all the elements in the collection randomized
-  # using the given *random* number generator.
-  def shuffle(random : Random = Random::DEFAULT) : Array(T)
+  # Returns a new instance with all elements in the collection randomized.
+  #
+  # See `Indexable::Mutable#shuffle!` for details.
+  def shuffle(random : Random? = nil) : Array(T)
     dup.shuffle!(random)
   end
 
