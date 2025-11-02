@@ -210,5 +210,27 @@ describe Crystal::Repl::Interpreter do
         bar.is_a?(Bar)
      CRYSTAL
     end
+
+    it "interprets abstract method call through a virtual type (#16278)" do
+      interpret(<<-CRYSTAL).should eq(0)
+        abstract class A
+          abstract def foo : Int32
+
+          def bar
+            foo
+          end
+        end
+
+        class B < A
+          @test = 0
+
+          def foo : Int32
+            @test
+          end
+        end
+
+        B.new.as(A).bar
+      CRYSTAL
+    end
   end
 end
