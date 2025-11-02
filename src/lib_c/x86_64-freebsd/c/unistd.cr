@@ -19,6 +19,10 @@ lib LibC
   fun dup3(x0 : Int, x1 : Int, x2 : Int) : Int
   fun _exit(x0 : Int) : NoReturn
   fun execvp(x0 : Char*, x1 : Char**) : Int
+  # `execvpe` is introduced in FreeBSD 15, but it already seems to be available in 14.
+  {% unless flag?("freebsd12.0") || flag?("freebsd13.0") %}
+    fun execvpe(file : Char*, argv : Char**, envp : Char**) : Int
+  {% end %}
   fun fdatasync(fd : Int) : Int
   @[ReturnsTwice]
   fun fork : PidT

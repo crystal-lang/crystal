@@ -151,7 +151,7 @@ jobs:
           cp README.md crystal/
 
       - name: Upload Crystal binaries
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: crystal
           path: crystal

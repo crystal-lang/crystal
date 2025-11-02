@@ -254,7 +254,7 @@ struct Crystal::System::Process
     end
   end
 
-  def self.spawn(command_args, env, clear_env, input, output, error, chdir)
+  def self.spawn(prepared_args, env, clear_env, input, output, error, chdir)
     r, w = FileDescriptor.system_pipe
 
     pid = fork(will_exec: true) do
@@ -266,7 +266,7 @@ struct Crystal::System::Process
     if !pid
       LibC.close(r)
       begin
-        self.try_replace(command_args, env, clear_env, input, output, error, chdir)
+        self.try_replace(prepared_args, env, clear_env, input, output, error, chdir)
         byte = 1_u8
         errno = Errno.value.to_i32
         FileDescriptor.write_fully(w, pointerof(byte))
@@ -292,7 +292,7 @@ struct Crystal::System::Process
       when 0
         # Error message coming
         message = reader_pipe.gets_to_end
-        raise RuntimeError.new("Error executing process: '#{command_args[0]}': #{message}")
+        raise RuntimeError.new("Error executing process: '#{prepared_args[0]}': #{message}")
       when 1
         # Errno coming
         # can't use IO#read_bytes(Int32) because we skipped system/network
@@ -300,7 +300,7 @@ struct Crystal::System::Process
         # we thus read it in the same as order as written
         buf = uninitialized StaticArray(UInt8, 4)
         reader_pipe.read_fully(buf.to_slice)
-        raise_exception_from_errno(command_args[0], Errno.new(buf.unsafe_as(Int32)))
+        raise_exception_from_errno(prepared_args[0], Errno.new(buf.unsafe_as(Int32)))
       else
         raise RuntimeError.new("BUG: Invalid error response received from subprocess")
       end
@@ -311,28 +311,30 @@ struct Crystal::System::Process
     pid
   end
 
-  def self.prepare_args(command : String, args : Enumerable(String)?, shell : Bool) : Array(String)
+  def self.prepare_args(command : String, args : Enumerable(String)?, shell : Bool) : {String, LibC::Char**}
     if shell
       command = %(#{command} "${@}") unless command.includes?(' ')
-      shell_args = ["/bin/sh", "-c", command, "sh"]
+      argv_ary = ["/bin/sh", "-c", command, "sh"]
 
       if args
         unless command.includes?(%("${@}"))
           raise ArgumentError.new(%(Can't specify arguments in both command and args without including "${@}" into your command))
         end
-
-        shell_args.concat(args)
       end
 
-      shell_args
+      pathname = "/bin/sh"
     else
-      command_args = [command]
-      command_args.concat(args) if args
-      command_args
+      argv_ary = [command]
+      pathname = command
     end
+
+    argv_ary.concat(args) if args
+
+    argv = argv_ary.map(&.check_no_null_byte.to_unsafe)
+    {pathname, argv.to_unsafe}
   end
 
-  private def self.try_replace(command_args, env, clear_env, input, output, error, chdir)
+  private def self.try_replace(prepared_args, env, clear_env, input, output, error, chdir)
     reopen_io(input, ORIGINAL_STDIN)
     reopen_io(output, ORIGINAL_STDOUT)
     reopen_io(error, ORIGINAL_STDERR)
@@ -348,16 +350,30 @@ struct Crystal::System::Process
 
     ::Dir.cd(chdir) if chdir
 
-    command = command_args[0]
-    argv = command_args.map &.check_no_null_byte.to_unsafe
-    argv << Pointer(UInt8).null
-
-    lock_write { LibC.execvp(command, argv) }
+    lock_write { LibC.execvp(*prepared_args) }
   end
 
-  def self.replace(command_args, env, clear_env, input, output, error, chdir)
-    try_replace(command_args, env, clear_env, input, output, error, chdir)
-    raise_exception_from_errno(command_args[0])
+  private def self.execvpe(command, argv, envp)
+    {% if LibC.has_method?("execvpe") %}
+      LibC.execvpe(command, argv, envp)
+    {% else %}
+      execvpe_impl(command, argv, envp)
+    {% end %}
+  end
+
+  # Darwin, DragonflyBSD, and FreeBSD < 14 don't have an `execvpe` function, so
+  # we need to implement it ourselves.
+  # FIXME: This is a stub implementation which simply sets the environment
+  # pointer. That's the same behaviour as before, but not correct. Will fix in a
+  # follow-up.
+  private def self.execvpe_impl(command, argv, envp)
+    LibC.environ = envp
+    LibC.execvp(command, argv)
+  end
+
+  def self.replace(command, prepared_args, env, clear_env, input, output, error, chdir)
+    try_replace(prepared_args, env, clear_env, input, output, error, chdir)
+    raise_exception_from_errno(command)
   end
 
   private def self.raise_exception_from_errno(command, errno = Errno.value)
