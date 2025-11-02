@@ -150,15 +150,19 @@ module Crystal
       interpret_check_args_toplevel do |arg|
         arg.accept self
         flag_name = @last.to_macro_id
-        flags = case node.name
+        value = case node.name
                 when "flag?"
-                  @program.flags
+                  @program.flag_value(flag_name)
                 when "host_flag?"
-                  @program.host_flags
+                  @program.host_flag_value(flag_name)
                 else
                   raise "Bug: unexpected macro method #{node.name}"
                 end
-        @last = BoolLiteral.new(flags.includes?(flag_name))
+
+        @last = case value
+                in String then StringLiteral.new(value)
+                in Bool   then BoolLiteral.new(value)
+                end
       end
     end
 

@@ -3780,12 +3780,30 @@ module Crystal
     end
 
     describe "flag?" do
-      it "has flag" do
+      it "has simple flag" do
         assert_macro %({{flag?(:foo)}}), %(true), flags: "foo"
       end
 
       it "doesn't have flag" do
         assert_macro %({{flag?(:foo)}}), %(false)
+      end
+
+      it "has flag value" do
+        assert_macro %({{flag?(:foo)}}), %("bar"), flags: "foo=bar"
+      end
+
+      it "has empty flag value" do
+        assert_macro %({{flag?(:foo)}}), %(""), flags: "foo="
+      end
+
+      it "uses last one of multiple values" do
+        assert_macro %({{flag?(:foo)}}), %("baz"), flags: %w[foo=bar foo=baz]
+        assert_macro %({{flag?(:foo)}}), %("bar"), flags: %w[foo=baz foo=bar]
+      end
+
+      it "uses last one of multiple values and simple" do
+        assert_macro %({{flag?(:foo)}}), %(true), flags: %w[foo=bar foo]
+        assert_macro %({{flag?(:foo)}}), %("bar"), flags: %w[foo foo=bar]
       end
     end
 
