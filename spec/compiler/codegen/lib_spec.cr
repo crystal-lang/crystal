@@ -235,4 +235,14 @@ describe "Code gen: lib" do
       LibFoo.x
       CRYSTAL
   end
+
+  it "doesn't crash with small static array in lib extern (#16312)" do
+    codegen(<<-CRYSTAL)
+      lib LibFoo
+        $x : UInt8[6]
+      end
+
+      LibFoo.x
+      CRYSTAL
+  end
 end
