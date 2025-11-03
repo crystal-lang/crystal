@@ -275,7 +275,7 @@ class Crystal::ABI::X86_64 < Crystal::ABI
     size(type, 8)
   end
 
-  def has_misaligned_fields?(type : LLVM::Type, offset = 0) : Bool
+  def has_misaligned_fields?(type : LLVM::Type, offset : Int = 0) : Bool
     case type.kind
     when LLVM::Type::Kind::Struct
       if type.packed_struct?
