@@ -493,12 +493,12 @@ module Random
 
   # See `#next_bool`.
   def self.next_bool : Bool
-    DEFAULT.next_bool
+    default.next_bool
   end
 
   # See `#next_int`.
   def self.next_int : Int32
-    DEFAULT.next_int
+    default.next_int
   end
 
   # See `#rand`.
