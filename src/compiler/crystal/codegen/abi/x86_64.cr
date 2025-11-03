@@ -275,14 +275,37 @@ class Crystal::ABI::X86_64 < Crystal::ABI
     size(type, 8)
   end
 
-  def has_misaligned_fields?(type : LLVM::Type) : Bool
-    return false unless type.packed_struct?
-    offset = 0
-    type.struct_element_types.each do |elem|
-      return true unless offset.divisible_by?(align(elem))
-      offset += size(elem)
+  def has_misaligned_fields?(type : LLVM::Type, offset = 0) : Bool
+    case type.kind
+    when LLVM::Type::Kind::Struct
+      if type.packed_struct?
+        type.struct_element_types.each do |elem|
+          return true unless offset.divisible_by?(align(elem))
+          offset += size(elem)
+        end
+      end
+      false
+    when LLVM::Type::Kind::Array
+      # Given:
+      #
+      # ```
+      # @[Packed]
+      # struct Foo
+      #   x : Int16
+      #   y : Int8
+      # end
+      # ```
+      #
+      # the types `Foo` and `Foo[1]` have no misaligned fields, but `Foo[2]`
+      # does, because the field `.[1].x` has offset 3 and a natural alignment of
+      # 2. Checking for the first two elements is sufficient; if both contain no
+      # misaligned fields, then `size(elem) % align(elem) == 0` must be true,
+      # meaning array indices have no effect on element alignment.
+      elem = type.element_type
+      has_misaligned_fields?(elem) || type.array_size > 1 && has_misaligned_fields?(elem, size(elem))
+    else
+      false
     end
-    false
   end
 
   enum RegClass
