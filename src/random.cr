@@ -50,9 +50,10 @@ require "random/pcg32"
 # slower but cryptographically secure, so a third party can't deduce incoming
 # numbers.
 module Random
-  @[Deprecated("Use Random.default or create a local instance with Random.new")]
+  @[Deprecated("Use #rand, Random.next_int or Random::Secure.random_bytes for example, or create a local instance with Random.new instead.")]
   DEFAULT = PCG32.new
 
+  # :nodoc:
   thread_local(default : ::Random) do
     ::Random::PCG32.new.as(::Random)
   end
