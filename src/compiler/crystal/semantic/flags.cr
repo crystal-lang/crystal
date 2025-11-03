@@ -24,17 +24,24 @@ class Crystal::Program
   # Returns the value of a flag in the format `"#{key}=#{value}"`.
   # Or `true` if the flags contain `key`.
   def flag_value(name : String) : String | Bool
-    self.class.flag_value(flags, name)
+    self.class.flag_value(flags_ary, name)
   end
 
   # Returns the value of a host flag in the format `"#{key}=#{value}"`.
   # Or `true` if the host flags contain `key`.
   def host_flag_value(name : String) : String | Bool
-    self.class.flag_value(host_flags, name)
+    self.class.flag_value(host_flags_ary, name)
+  end
+
+  private getter flags_ary : Array(String) do
+    flags.to_a
+  end
+  private getter host_flags_ary : Array(String) do
+    host_flags.to_a
   end
 
   def self.flag_value(flags, name)
-    flags.to_a.reverse_each do |flag|
+    flags.reverse_each do |flag|
       # Easy test to skip items that wouldn't match anyway
       next unless flag.starts_with?(name)
 
