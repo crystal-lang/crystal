@@ -60,23 +60,37 @@ module Random
 
   # :nodoc:
   #
-  # Dups the thread's default instance (on the stack when possible, hence the
-  # macro) and splits the thread instance (taking advantage of PCG32 sequences)
-  # so both instances will generate uncorrelated sequences.
-  macro dup_and_split_default(stack = false)
+  # Dups the thread's default instance and splits the thread instance (taking
+  # advantage of PCG32 sequences) so both instances will generate uncorrelated
+  # sequences.
+  #
+  # We split the thread local instance, not the dup instance, so multiple calls
+  # will cause each dup to have their own distinct sequence; they'd all use the
+  # same sequence otherwise.
+  def self.dup_and_split_default
     {% if flag?(:preview_mt) %}
       %thread_rng = ::Random.default.as(::Random::PCG32)
-      %copy =
-        if {{stack}} && {{compare_versions(Crystal::VERSION, "1.12.0") >= 0}}
-          %buf = uninitialized ::ReferenceStorage(::Random::PCG32)
-          ::Random::PCG32.unsafe_construct(pointerof(%buf), %thread_rng)
-        else
-          %thread_rng.dup
-        end
+      %copy = %thread_rng.dup
       %thread_rng.split!
       %copy
     {% else %}
       ::Random.default
+    {% end %}
+  end
+
+  # :nodoc:
+  #
+  # Same as `.dup_and_split_default` but allocates the dup on the stack when
+  # possible (hence the macro).
+  macro dup_and_split_default_on_stack
+    {% if compare_versions(Crystal::VERSION, "1.12.0") >= 0 %}
+      %thread_rng = ::Random.default.as(::Random::PCG32)
+      %buf = uninitialized ::ReferenceStorage(::Random::PCG32)
+      %copy = ::Random::PCG32.unsafe_construct(pointerof(%buf), %thread_rng)
+      %thread_rng.split!
+      %copy
+    {% else %}
+      ::Random.dup_and_split_default
     {% end %}
   end
 
