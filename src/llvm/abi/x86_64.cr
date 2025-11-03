@@ -277,6 +277,7 @@ class LLVM::ABI::X86_64 < LLVM::ABI
   end
 
   def has_misaligned_fields?(type : Type) : Bool
+    return false unless type.kind == Type::Kind::Struct
     return false unless type.packed_struct?
     offset = 0
     type.struct_element_types.each do |elem|

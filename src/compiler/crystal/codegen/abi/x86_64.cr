@@ -276,6 +276,7 @@ class Crystal::ABI::X86_64 < Crystal::ABI
   end
 
   def has_misaligned_fields?(type : LLVM::Type) : Bool
+    return false unless type.kind == LLVM::Type::Kind::Struct
     return false unless type.packed_struct?
     offset = 0
     type.struct_element_types.each do |elem|
