@@ -354,7 +354,7 @@ struct Crystal::System::Process
 
     ::Dir.cd(chdir) if chdir
 
-    lock_write { LibC.execvp(*prepared_args) }
+    lock_write { execvpe(*prepared_args, LibC.environ) }
   end
 
   private def self.execvpe(command, argv, envp)
