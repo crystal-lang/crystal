@@ -104,6 +104,7 @@ end
 
 {% if flag?(:darwin) %}
   require "c/sys/syslimits"
+
   lib LibC
     fun _NSGetExecutablePath(buf : Char*, bufsize : UInt32*) : Int
   end
