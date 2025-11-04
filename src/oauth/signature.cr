@@ -39,7 +39,7 @@ struct OAuth::Signature
     auth_header.to_s
   end
 
-  private def base_string(request, tls, params)
+  private def base_string(request, tls, normalized_params : String)
     host, port = host_and_port(request, tls)
 
     String.build do |str|
@@ -55,36 +55,48 @@ struct OAuth::Signature
       uri_path = request.path.presence || "/"
       URI.encode_www_form(uri_path, str, space_to_plus: false)
       str << '&'
-      str << params
+      URI.encode_www_form(normalized_params, str, space_to_plus: false)
     end
   end
 
-  private def gather_params(request, ts, nonce)
-    params = Params.new
+  private def gather_params(request, ts, nonce) : String
+    params = URI::Params.new
+
+    # Standard OAuth parameters (all non-nil)
     params.add "oauth_consumer_key", @consumer_key
     params.add "oauth_nonce", nonce
     params.add "oauth_signature_method", "HMAC-SHA1"
     params.add "oauth_timestamp", ts
-    params.add "oauth_token", @oauth_token
     params.add "oauth_version", "1.0"
 
+    # Optional token (avoid nil)
+    if token = @oauth_token
+      params.add "oauth_token", token
+    end
+
+    # Add any extra OAuth parameters (custom ones)
     @extra_params.try &.each do |key, value|
       params.add key, value
     end
 
+    # Add query parameters from the URL
     if query = request.query
-      params.add_query query
+      URI::Params.parse(query).each do |k, v|
+        # v can be String | Nil depending on parser implementation
+        params.add k, v.to_s
+      end
     end
 
-    body = request.body
-    content_type = request.headers["Content-type"]?
-    if body && content_type == "application/x-www-form-urlencoded"
+    # Add x-www-form-urlencoded body parameters if applicable
+    if (body = request.body) && request.headers["Content-type"]? == "application/x-www-form-urlencoded"
       form = body.gets_to_end
-      params.add_query form
+      URI::Params.parse(form).each do |k, v|
+        params.add k, v.to_s
+      end
       request.body = form
     end
 
-    params
+    oauth_normalize_params(params)
   end
 
   private def host_and_port(request, tls)
@@ -96,5 +108,31 @@ struct OAuth::Signature
     else
       {host_header, nil}
     end
+  end
+
+  private def oauth_rfc3986_encode(s : String) : String
+    String.build do |io|
+      s.to_slice.each do |b|
+        if (b >= 0x30 && b <= 0x39) || (b >= 0x41 && b <= 0x5A) ||
+           (b >= 0x61 && b <= 0x7A) || b == 45 || b == 46 || b == 95 || b == 126
+          io << b.chr
+        else
+          io << '%' << b.to_s(16).upcase.rjust(2, '0')
+        end
+      end
+    end
+  end
+
+  private def oauth_normalize_params(params : URI::Params) : String
+    pairs = [] of Tuple(String, String)
+    params.each do |key, values|
+      if values.is_a?(Array)
+        values.each { |v| pairs << {oauth_rfc3986_encode(key), oauth_rfc3986_encode(v)} }
+      else
+        pairs << {oauth_rfc3986_encode(key), oauth_rfc3986_encode(values)}
+      end
+    end
+    pairs.sort_by! { |(k, v)| {k, v} }
+    pairs.map { |(k, v)| "#{k}=#{v}" }.join("&")
   end
 end
