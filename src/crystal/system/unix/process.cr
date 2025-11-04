@@ -465,12 +465,6 @@ struct Crystal::System::Process
                   end
   end
 
-  private def self.strchrnul(s, c)
-    while s.value != 0 && !(s.value === c)
-      s += 1
-    end
-    s
-  end
 
   def self.replace(command, prepared_args, env, clear_env, input, output, error, chdir)
     try_replace(prepared_args, env, clear_env, input, output, error, chdir)
