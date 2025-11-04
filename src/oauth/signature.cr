@@ -62,41 +62,37 @@ struct OAuth::Signature
   private def gather_params(request, ts, nonce) : String
     params = URI::Params.new
 
-    # Standard OAuth parameters (all non-nil)
     params.add "oauth_consumer_key", @consumer_key
-    params.add "oauth_nonce", nonce
     params.add "oauth_signature_method", "HMAC-SHA1"
     params.add "oauth_timestamp", ts
-    params.add "oauth_version", "1.0"
-
-    # Optional token (avoid nil)
+    params.add "oauth_nonce", nonce
     if token = @oauth_token
       params.add "oauth_token", token
     end
+    params.add "oauth_version", "1.0"
 
-    # Add any extra OAuth parameters (custom ones)
-    @extra_params.try &.each do |key, value|
-      params.add key, value
-    end
+    # Add any custom OAuth parameters
+    @extra_params.try &.each { |k, v| params.add k, v }
 
-    # Add query parameters from the URL
+    # Add query parameters
     if query = request.query
-      URI::Params.parse(query).each do |k, v|
-        # v can be String | Nil depending on parser implementation
-        params.add k, v.to_s
-      end
+      add_query_params(params, query)
     end
 
-    # Add x-www-form-urlencoded body parameters if applicable
+    # Add x-www-form-urlencoded body parameters
     if (body = request.body) && request.headers["Content-type"]? == "application/x-www-form-urlencoded"
       form = body.gets_to_end
-      URI::Params.parse(form).each do |k, v|
-        params.add k, v.to_s
-      end
+      add_query_params(params, form)
       request.body = form
     end
 
     oauth_normalize_params(params)
+  end
+
+  private def add_query_params(params : URI::Params, raw : String)
+    URI::Params.parse(raw) do |k, v|
+      params.add k, v || ""
+    end
   end
 
   private def host_and_port(request, tls)
@@ -110,29 +106,24 @@ struct OAuth::Signature
     end
   end
 
-  private def oauth_rfc3986_encode(s : String) : String
-    String.build do |io|
-      s.to_slice.each do |b|
-        if (b >= 0x30 && b <= 0x39) || (b >= 0x41 && b <= 0x5A) ||
-           (b >= 0x61 && b <= 0x7A) || b == 45 || b == 46 || b == 95 || b == 126
-          io << b.chr
-        else
-          io << '%' << b.to_s(16).upcase.rjust(2, '0')
-        end
-      end
-    end
-  end
-
   private def oauth_normalize_params(params : URI::Params) : String
     pairs = [] of Tuple(String, String)
     params.each do |key, values|
       if values.is_a?(Array)
-        values.each { |v| pairs << {oauth_rfc3986_encode(key), oauth_rfc3986_encode(v)} }
+        values.each { |v| pairs << {key, v} }
       else
-        pairs << {oauth_rfc3986_encode(key), oauth_rfc3986_encode(values)}
+        pairs << {key, values}
       end
     end
     pairs.sort_by! { |(k, v)| {k, v} }
-    pairs.map { |(k, v)| "#{k}=#{v}" }.join("&")
+
+    String.build do |io|
+      pairs.each_with_index do |(k, v), i|
+        URI.encode_www_form(k, io, space_to_plus: false)
+        io << '='
+        URI.encode_www_form(v, io, space_to_plus: false)
+        io << '&' unless i == pairs.size - 1
+      end
+    end
   end
 end
