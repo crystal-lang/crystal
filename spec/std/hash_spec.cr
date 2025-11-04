@@ -23,26 +23,6 @@ private class HashWrapper(K, V)
   delegate each, to: @hash
 end
 
-private class KeyType
-  def initialize(@value : Int32)
-  end
-
-  def value
-    @value
-  end
-
-  def ==(other)
-    @value == other.value
-  end
-
-  def hash
-    value.hash
-  end
-end
-
-private class KeySubType < KeyType
-end
-
 describe "Hash" do
   describe "empty" do
     it "size should be zero" do
@@ -966,10 +946,10 @@ describe "Hash" do
     end
 
     it "allows transformed key type to be a subtype of the original type" do
-      h = {KeyType.new(1) => "a"}
+      h = {"1" => "foo", 2 => "bar"} # Hash(Int32 | String, String)
 
-      h.transform_keys! { |k, v| KeySubType.new(k.value) }
-      h.should eq({KeySubType.new(1) => "a"})
+      h.transform_keys!(&.to_i)
+      h.should eq({1 => "foo", 2 => "bar"})
     end
   end
 
