@@ -405,13 +405,9 @@ struct Crystal::System::Process
 
     buffer = uninitialized UInt8[LibC::PATH_MAX]
 
-    io_memory_storage = uninitialized ReferenceStorage(IO::Memory)
-    io = IO::Memory.unsafe_construct(pointerof(io_memory_storage), buffer.to_slice)
-
     seen_eaccess = false
 
     while path.size > 0
-      io.rewind
       if index = path.index(':'.ord.to_u8!)
         path_entry = path[0, index]
         path += index + 1
@@ -427,15 +423,23 @@ struct Crystal::System::Process
         next
       end
 
+      builder = buffer.to_slice
+
       if path_entry.empty?
         # empty path means current directory
-        io << "."
+        builder[0] = '.'.ord.to_u8!
+        builder += 1
       else
-        io.write(path_entry)
+        path_entry.copy_to(builder)
+        builder += path_entry.size
       end
-      io << "/" << file << "\0"
+      builder[0] = '/'.ord.to_u8!
+      builder += 1
+      file.to_slice.copy_to(builder)
+      builder += file.size
+      builder[0] = 0
 
-      lock_write { LibC.execve(io.to_slice, argv, envp) }
+      lock_write { LibC.execve(buffer.to_slice[0, buffer.size - builder.size], argv, envp) }
 
       case Errno.value
       when Errno::EACCES
