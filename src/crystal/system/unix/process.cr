@@ -4,6 +4,11 @@ require "c/sys/resource"
 require "c/unistd"
 require "crystal/rw_lock"
 require "file/error"
+{% if flag?(:linux) || flag?(:android) %}
+  require "c/limits"
+{% elsif flag?(:darwin) || flag?(:bsd) %}
+  require "c/sys/syslimits"
+{% end %}
 
 struct Crystal::System::Process
   getter pid : LibC::PidT
