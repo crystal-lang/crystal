@@ -211,7 +211,7 @@ describe Crystal::Repl::Interpreter do
      CRYSTAL
     end
 
-    it "interprets abstract method call through a virtual type (#16278)" do
+    it "doesn't error if def body is InstanceVar and virtual dispatch has only one subclass (#16278)" do
       interpret(<<-CRYSTAL).should eq(0)
         abstract class A
           abstract def foo : Int32
