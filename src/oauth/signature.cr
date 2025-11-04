@@ -118,11 +118,11 @@ struct OAuth::Signature
     pairs.sort_by! { |(k, v)| {k, v} }
 
     String.build do |io|
-      pairs.each_with_index do |(k, v), i|
-        URI.encode_www_form(k, io, space_to_plus: false)
+      pairs.each_with_index do |(key, value), index|
+        io << '&' unless index == 0
+        URI.encode_www_form(key, io, space_to_plus: false)
         io << '='
-        URI.encode_www_form(v, io, space_to_plus: false)
-        io << '&' unless i == pairs.size - 1
+        URI.encode_www_form(value, io, space_to_plus: false)
       end
     end
   end
