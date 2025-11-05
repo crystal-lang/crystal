@@ -81,6 +81,14 @@ jobs:
 
   test-stdlib:
     runs-on: ${{ inputs.runs-on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        env: [
+          {},
+          {FLAGS: "-Duse_libevent"},
+          {FLAGS: "-Dpreview_mt -Dexecution_context"},
+        ]
     steps:
       - name: Setup MSYS2
         id: msys2
@@ -109,6 +117,7 @@ jobs:
         run: |
           export CRYSTAL_SPEC_COMPILER_BIN="$(which crystal.exe)"
           make std_spec
+        env: ${{ matrix.env }}
 
   test-compiler:
     runs-on: ${{ inputs.runs-on }}
