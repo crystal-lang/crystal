@@ -459,43 +459,44 @@ class OptionParser
 
   # Processes a single flag/subcommand. Matches original behaviour exactly.
   private def handle_flag(flag : String, value : String?, arg_index : Int32, args : Array(String), handled_args : Array(Int32)) : Int32
-    if (handler = @handlers[flag]?) && !(handler.value_type.none? && value)
-      handled_args << arg_index
+    return arg_index unless handler = @handlers[flag]?
+    return arg_index if handler.value_type.none? && value
 
-      if !value
-        case handler.value_type
-        in FlagValue::Required
+    handled_args << arg_index
+
+    if !value
+      case handler.value_type
+      in FlagValue::Required
+        value = args[arg_index + 1]?
+        if value
+          handled_args << arg_index + 1
+          arg_index += 1
+        else
+          @missing_option.call(flag)
+        end
+      in FlagValue::Optional
+        unless gnu_optional_args?
           value = args[arg_index + 1]?
-          if value
+          if value && !@handlers.has_key?(value)
             handled_args << arg_index + 1
             arg_index += 1
           else
-            @missing_option.call(flag)
+            value = nil
           end
-        in FlagValue::Optional
-          unless gnu_optional_args?
-            value = args[arg_index + 1]?
-            if value && !@handlers.has_key?(value)
-              handled_args << arg_index + 1
-              arg_index += 1
-            else
-              value = nil
-            end
-          end
-        in FlagValue::None
-          # do nothing
         end
+      in FlagValue::None
+        # do nothing
       end
-
-      # If this is a subcommand (flag not starting with -), delete all
-      # subcommands since they are no longer valid.
-      unless flag.starts_with?('-')
-        @handlers.select! { |k, _| k.starts_with?('-') }
-        @flags.select!(&.starts_with?("    -"))
-      end
-
-      handler.block.call(value || "")
     end
+
+    # If this is a subcommand (flag not starting with -), delete all
+    # subcommands since they are no longer valid.
+    unless flag.starts_with?('-')
+      @handlers.select! { |k, _| k.starts_with?('-') }
+      @flags.select!(&.starts_with?("    -"))
+    end
+
+    handler.block.call(value || "")
 
     arg_index
   end
