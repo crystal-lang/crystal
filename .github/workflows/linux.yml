@@ -26,12 +26,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        flags: [""]
+        env: [{}]
         crystal_bootstrap_version: ["1.18.2"] # LATEST RELEASE
         include:
-          # libffi is only available starting from the 1.2.2 build images
           - crystal_bootstrap_version: 1.0.0
-            flags: "FLAGS=-Dwithout_ffi USE_PCRE1=true"
+            env:
+              # libffi is only available starting from the 1.2.2 build images
+              FLAGS: "-Dwithout_ffi"
+              # pcre2 is only available starting from the 1.8.0 build images
+              USE_PCRE1: true
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v5
@@ -45,7 +48,8 @@ jobs:
         run: bin/ci prepare_build
 
       - name: Test
-        run: ${{ matrix.flags }} bin/ci build
+        run: bin/ci build
+        env: ${{ matrix.env }}
 
   x86_64-musl-test:
     env:
