@@ -21,16 +21,14 @@ jobs:
     env:
       ARCH: x86_64
       ARCH_CMD: linux64
-      DOCKER_TEST_PREFIX: crystallang/crystal:${{ matrix.crystal_bootstrap_version }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         env: [{}]
-        crystal_bootstrap_version: ["1.18.2"] # LATEST RELEASE
         include:
-          - crystal_bootstrap_version: 1.0.0
-            env:
+          - env:
+              CRYSTAL_BOOTSTRAP_VERSION: 1.0.0
               # libffi is only available starting from the 1.2.2 build images
               FLAGS: "-Dwithout_ffi"
               # pcre2 is only available starting from the 1.8.0 build images
