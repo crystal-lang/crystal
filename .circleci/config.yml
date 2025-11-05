@@ -160,7 +160,6 @@ jobs:
           echo "export CRYSTAL_SHA1=$CIRCLE_SHA1" >> build.env
 
           # Which previous version use
-          echo "export PREVIOUS_CRYSTAL_RELEASE_LINUX64_TARGZ=<< pipeline.parameters.previous_crystal_base_url >>-linux-$(uname -m).tar.gz" >> build.env
           echo "export PREVIOUS_CRYSTAL_RELEASE_DARWIN_TARGZ=<< pipeline.parameters.previous_crystal_base_url >>-darwin-universal.tar.gz" >> build.env
 
           cat build.env
@@ -277,6 +276,7 @@ jobs:
           command: |
             cd /tmp/workspace/distribution-scripts
             source build.env
+            export PREVIOUS_CRYSTAL_RELEASE_LINUX64_TARGZ="<< pipeline.parameters.previous_crystal_base_url >>-linux-$(uname -m).tar.gz"
             cd linux
             make all64 release=true
       - store_artifacts:
