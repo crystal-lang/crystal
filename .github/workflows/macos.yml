@@ -17,12 +17,12 @@ jobs:
     runs-on: ${{ matrix.runs-on }}
     strategy:
       matrix:
+        runs-on: [macos-15-intel, macos-15]
         env: [
           {},
           {FLAGS: "-Duse_libevent"},
           {FLAGS: "-Dpreview_mt -Dexecution_context"},
         ]
-        runs-on: [macos-15-intel, macos-15]
       fail-fast: false
     steps:
       - name: Download Crystal source

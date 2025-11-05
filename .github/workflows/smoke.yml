@@ -57,18 +57,12 @@ env:
 
 jobs:
   smoke-test:
-    name: ${{ matrix.target }}
     runs-on: ubuntu-latest
 
     strategy:
       max-parallel: 2
       fail-fast: false
       matrix:
-        env: [
-          {},
-          {FLAGS: "-Duse_libevent"},
-          {FLAGS: "-Dpreview_mt -Dexecution_context"},
-        ]
         target:
           - aarch64-linux-android
           - arm-linux-gnueabihf
@@ -79,6 +73,11 @@ jobs:
           - x86_64-netbsd
           - x86_64-openbsd
           - x86_64-solaris
+        env: [
+          {},
+          {FLAGS: "-Duse_libevent"},
+          {FLAGS: "-Dpreview_mt -Dexecution_context"},
+        ]
 
     steps:
       - name: Download Crystal source
