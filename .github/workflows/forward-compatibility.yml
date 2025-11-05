@@ -29,7 +29,7 @@ jobs:
     env:
       ARCH: x86_64
       ARCH_CMD: linux64
-      DOCKER_TEST_PREFIX: crystallang/crystal:${{ matrix.crystal_bootstrap_version }}
+      CRYSTAL_BOOTSTRAP_VERSION: ${{ matrix.crystal_bootstrap_version }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
