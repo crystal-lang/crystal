@@ -17,7 +17,7 @@ jobs:
     runs-on: ${{ matrix.runs-on }}
     strategy:
       matrix:
-        runs-on: [macos-15-intel, macos-14, macos-15]
+        runs-on: [macos-15-intel, macos-15]
       fail-fast: false
     steps:
       - name: Download Crystal source
