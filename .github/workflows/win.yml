@@ -228,6 +228,15 @@ jobs:
   x86_64-windows-test:
     runs-on: windows-2025
     needs: [x86_64-windows-release]
+    strategy:
+      fail-fast: false
+      matrix:
+        env: [
+          {},
+          {FLAGS: "-Duse_libevent"},
+          {FLAGS: "-Dpreview_mt -Dexecution_context"},
+        ]
+    env: ${{ matrix.env }}
     steps:
       - name: Disable CRLF line ending substitution
         run: |
