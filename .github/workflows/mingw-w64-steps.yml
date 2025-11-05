@@ -41,6 +41,8 @@ jobs:
 
       - name: Download Crystal source
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Build Crystal
         shell: msys2 {0}
@@ -56,6 +58,7 @@ jobs:
           repository: crystal-lang/shards
           ref: v0.19.1
           path: shards
+          persist-credentials: false
 
       - name: Build shards release
         shell: msys2 {0}
@@ -71,7 +74,7 @@ jobs:
           ldd bin/shards.exe | grep -iv ' => /c/windows/system32' | sed 's/.* => //; s/ (.*//' | xargs -t -i /usr/bin/install -m 0755 '{}' "$(pwd)/../crystal/bin/"
 
       - name: Upload Crystal executable
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ${{ inputs.arch }}-mingw-w64-crystal
           path: crystal
@@ -98,6 +101,8 @@ jobs:
 
       - name: Download Crystal source
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Run stdlib specs
         shell: msys2 {0}
@@ -128,9 +133,11 @@ jobs:
 
       - name: Download Crystal source
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Download Crystal executable
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: ${{ inputs.arch }}-mingw-w64-crystal
           path: crystal

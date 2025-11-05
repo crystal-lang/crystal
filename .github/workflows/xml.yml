@@ -41,6 +41,8 @@ jobs:
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - name: Uninstall libxml2 and conflicts
         run: apk del libxml2-dev
       - name: Install ${{ matrix.pkg }}

@@ -1,10 +1,11 @@
-# `Set` implements a collection of unordered values with no duplicates.
+# `Set` implements a collection of values with no duplicates.
 #
 # An `Enumerable` object can be converted to `Set` using the `#to_set` method.
 #
 # `Set` uses `Hash` as storage, so you must note the following points:
 #
 # * Equality of elements is determined according to `Object#==` and `Object#hash`.
+# * Enumeration follows the order that the elements were inserted.
 # * `Set` assumes that the identity of each element does not change while it is stored. Modifying an element of a set will render the set to an unreliable state.
 #
 # ### Example
@@ -491,6 +492,15 @@ struct Set(T)
   # :nodoc:
   def same?(other : Set) : Bool
     @hash.same?(other.@hash)
+  end
+
+  # Replaces every element of the set with a value returned from the block, and
+  # returns `self`.
+  def map!(& : T -> T) : self
+    hash = @hash.transform_keys { |k, _| yield(k) }
+    @hash.clear
+    @hash.merge!(hash)
+    self
   end
 
   # Deletes every element of the set for which the block is falsey, and returns

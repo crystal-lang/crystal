@@ -282,7 +282,7 @@ struct Crystal::System::Process
     {new_handle, dup_handle}
   end
 
-  def self.spawn(command_args, env, clear_env, input, output, error, chdir)
+  def self.spawn(prepared_args, env, clear_env, input, output, error, chdir)
     startup_info = LibC::STARTUPINFOW.new
     startup_info.cb = sizeof(LibC::STARTUPINFOW)
     startup_info.dwFlags = LibC::STARTF_USESTDHANDLES
@@ -293,19 +293,19 @@ struct Crystal::System::Process
 
     process_info = LibC::PROCESS_INFORMATION.new
 
-    command_args = ::Process.quote_windows(command_args) unless command_args.is_a?(String)
+    prepared_args = ::Process.quote_windows(prepared_args) unless prepared_args.is_a?(String)
 
     if LibC.CreateProcessW(
-         nil, System.to_wstr(command_args), nil, nil, true, LibC::CREATE_SUSPENDED | LibC::CREATE_UNICODE_ENVIRONMENT,
+         nil, System.to_wstr(prepared_args), nil, nil, true, LibC::CREATE_SUSPENDED | LibC::CREATE_UNICODE_ENVIRONMENT,
          make_env_block(env, clear_env), chdir.try { |str| System.to_wstr(str) } || Pointer(UInt16).null,
          pointerof(startup_info), pointerof(process_info)
        ) == 0
       error = WinError.value
       case error.to_errno
       when Errno::EACCES, Errno::ENOENT, Errno::ENOEXEC
-        raise ::File::Error.from_os_error("Error executing process", error, file: command_args)
+        raise ::File::Error.from_os_error("Error executing process", error, file: prepared_args)
       else
-        raise IO::Error.from_os_error("Error executing process: '#{command_args}'", error)
+        raise IO::Error.from_os_error("Error executing process: '#{prepared_args}'", error)
       end
     end
 
@@ -337,13 +337,13 @@ struct Crystal::System::Process
         raise ::File::Error.from_os_error("Error executing process", WinError::ERROR_BAD_EXE_FORMAT, file: command)
       end
 
-      command_args = [command]
-      command_args.concat(args) if args
-      command_args
+      prepared_args = [command]
+      prepared_args.concat(args) if args
+      prepared_args
     end
   end
 
-  private def self.try_replace(command_args, env, clear_env, input, output, error, chdir)
+  private def self.try_replace(command, prepared_args, env, clear_env, input, output, error, chdir)
     old_input_fd = reopen_io(input, ORIGINAL_STDIN)
     old_output_fd = reopen_io(output, ORIGINAL_STDOUT)
     old_error_fd = reopen_io(error, ORIGINAL_STDERR)
@@ -359,12 +359,12 @@ struct Crystal::System::Process
 
     ::Dir.cd(chdir) if chdir
 
-    if command_args.is_a?(String)
-      command = System.to_wstr(command_args)
+    if prepared_args.is_a?(String)
+      command = System.to_wstr(prepared_args)
       argv = [command]
     else
-      command = System.to_wstr(command_args[0])
-      argv = command_args.map { |arg| System.to_wstr(arg) }
+      command = System.to_wstr(prepared_args[0])
+      argv = prepared_args.map { |arg| System.to_wstr(arg) }
     end
     argv << Pointer(LibC::WCHAR).null
 
@@ -378,9 +378,9 @@ struct Crystal::System::Process
     errno
   end
 
-  def self.replace(command_args, env, clear_env, input, output, error, chdir) : NoReturn
-    errno = try_replace(command_args, env, clear_env, input, output, error, chdir)
-    raise_exception_from_errno(command_args.is_a?(String) ? command_args : command_args[0], errno)
+  def self.replace(command, prepared_args, env, clear_env, input, output, error, chdir) : NoReturn
+    errno = try_replace(command, prepared_args, env, clear_env, input, output, error, chdir)
+    raise_exception_from_errno(prepared_args.is_a?(String) ? prepared_args : prepared_args[0], errno)
   end
 
   private def self.raise_exception_from_errno(command, errno = Errno.value)

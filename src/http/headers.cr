@@ -247,8 +247,13 @@ struct HTTP::Headers
     end
   end
 
-  def get(key : HTTP::Headers::Key | String) : Array(String)
+  def get(key : String) : Array(String)
     cast @hash[wrap(key)]
+  end
+
+  # :nodoc:
+  def get(key : HTTP::Headers::Key) : Array(String)
+    cast @hash[key]
   end
 
   def get?(key : String) : Array(String)?
