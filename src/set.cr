@@ -496,10 +496,8 @@ struct Set(T)
 
   # Replaces every element of the set with a value returned from the block, and
   # returns `self`.
-  def map!(& : T -> T) : self
-    hash = @hash.transform_keys { |k, _| yield(k) }
-    @hash.clear
-    @hash.merge!(hash)
+  def map!(&block : T -> T) : self
+    @hash.transform_keys! { |k, _| block.call(k) }
     self
   end
 
