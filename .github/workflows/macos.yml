@@ -17,6 +17,11 @@ jobs:
     runs-on: ${{ matrix.runs-on }}
     strategy:
       matrix:
+        env: [
+          {},
+          {FLAGS: "-Duse_libevent"},
+          {FLAGS: "-Dpreview_mt -Dexecution_context"},
+        ]
         runs-on: [macos-15-intel, macos-15]
       fail-fast: false
     steps:
@@ -43,6 +48,8 @@ jobs:
 
       - name: Test
         run: bin/ci build
+        env: ${{ matrix.env }}
 
       - name: Test interpreter
         run: bin/ci with_build_env 'make interpreter_spec'
+        env: ${{ matrix.env }}
