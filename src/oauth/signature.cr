@@ -63,24 +63,25 @@ struct OAuth::Signature
     params = URI::Params.new
 
     params.add "oauth_consumer_key", @consumer_key
+    params.add "oauth_nonce", nonce
     params.add "oauth_signature_method", "HMAC-SHA1"
     params.add "oauth_timestamp", ts
-    params.add "oauth_nonce", nonce
     if token = @oauth_token
       params.add "oauth_token", token
     end
     params.add "oauth_version", "1.0"
 
-    # Add any custom OAuth parameters
-    @extra_params.try &.each { |k, v| params.add k, v }
+    @extra_params.try &.each do |key, value|
+      params.add key, value
+    end
 
-    # Add query parameters
     if query = request.query
       add_query_params(params, query)
     end
 
-    # Add x-www-form-urlencoded body parameters
-    if (body = request.body) && request.headers["Content-type"]? == "application/x-www-form-urlencoded"
+    body = request.body
+    content_type = request.headers["Content-type"]?
+    if body && content_type == "application/x-www-form-urlencoded"
       form = body.gets_to_end
       add_query_params(params, form)
       request.body = form
@@ -91,7 +92,7 @@ struct OAuth::Signature
 
   private def add_query_params(params : URI::Params, raw : String)
     URI::Params.parse(raw) do |k, v|
-      params.add k, v || ""
+      params.add k, v
     end
   end
 
@@ -118,10 +119,9 @@ struct OAuth::Signature
     pairs.sort_by! { |(k, v)| {k, v} }
 
     String.build do |io|
-      pairs.each_with_index do |(key, value), index|
-        io << '&' unless index == 0
+      pairs.join(io, "&") do |(key, value), io|
         URI.encode_www_form(key, io, space_to_plus: false)
-        io << '='
+        io << "="
         URI.encode_www_form(value, io, space_to_plus: false)
       end
     end
