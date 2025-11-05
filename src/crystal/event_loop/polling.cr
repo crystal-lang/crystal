@@ -107,12 +107,6 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
   @lock = SpinLock.new # protects parallel accesses to @timers
   @timers = Timers(Event).new
 
-  # reset the mutexes since another thread may have acquired the lock of one
-  # event loop, which would prevent closing file descriptors for example.
-  def after_fork_before_exec : Nil
-    @lock = SpinLock.new
-  end
-
   {% unless flag?(:preview_mt) %}
     # no parallelism issues, but let's clean-up anyway
     def after_fork : Nil

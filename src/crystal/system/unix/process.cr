@@ -262,8 +262,6 @@ struct Crystal::System::Process
     r, w = FileDescriptor.system_pipe
 
     pid = fork(will_exec: true) do
-      # notify event loop and reset signal handlers
-      Crystal::EventLoop.current.after_fork_before_exec
       Crystal::System::Signal.after_fork_before_exec
     end
 
