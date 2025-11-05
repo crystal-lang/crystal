@@ -108,21 +108,39 @@ struct OAuth::Signature
   end
 
   private def oauth_normalize_params(params : URI::Params) : String
+    # Collect encoded pairs (encode names and values first, per RFC 5849 §3.4.1.3.2)
     pairs = [] of Tuple(String, String)
     params.each do |key, values|
       if values.is_a?(Array)
-        values.each { |v| pairs << {key, v} }
+        values.each do |v|
+          encoded_key = String.build do |s|
+            URI.encode_www_form key.to_s, s, space_to_plus: false
+          end
+          encoded_val = String.build do |s|
+            URI.encode_www_form v.to_s, s, space_to_plus: false
+          end
+          pairs << {encoded_key, encoded_val}
+        end
       else
-        pairs << {key, values}
+        encoded_key = String.build do |s|
+          URI.encode_www_form key.to_s, s, space_to_plus: false
+        end
+        encoded_val = String.build do |s|
+          URI.encode_www_form values.to_s, s, space_to_plus: false
+        end
+        pairs << {encoded_key, encoded_val}
       end
     end
+
+    # Sort by encoded name then encoded value
     pairs.sort_by! { |(k, v)| {k, v} }
 
+    # Join encoded pairs into "k=v&k2=v2"
     String.build do |io|
       pairs.join(io, "&") do |(key, value), io|
-        URI.encode_www_form(key, io, space_to_plus: false)
+        io << key
         io << "="
-        URI.encode_www_form(value, io, space_to_plus: false)
+        io << value
       end
     end
   end
