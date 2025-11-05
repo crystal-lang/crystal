@@ -280,19 +280,19 @@ module HTTP
         IISDate        = /#{Wkday}, \d{1,2}-#{Month}-\d{2,4} #{Time} GMT/
         ANSICDate      = /#{Wkday} #{Month} (?:\d{2}| \d) #{Time} \d{4}/
         SaneCookieDate = /(?:#{RFC1123Date}|#{RFC1036Date}|#{IISDate}|#{ANSICDate})/
-        ExtensionAV    = /(?<extension>[^\x00-\x1f\x7f]+)(?:\s*;)?/
-        HttpOnlyAV     = /(?<http_only>HttpOnly)(?:\s*;)?/i
-        SameSiteAV     = /SameSite=(?<samesite>\w+)(?:\s*;)?/i
-        SecureAV       = /(?<secure>Secure)(?:\s*;)?/i
-        PathAV         = /Path=(?<path>#{PathValue})(?:\s*;)?/i
-        DomainAV       = /Domain=\.?(?<domain>#{DomainValue})(?:\s*;)?/i
-        MaxAgeAV       = /Max-Age=(?<max_age>[0-9]*)(?:\s*;)?/i
-        ExpiresAV      = /Expires=(?<expires>#{SaneCookieDate})(?:\s*;)?/i
+        ExtensionAV    = /(?<extension>[^\x00-\x1f\x7f]+)/
+        HttpOnlyAV     = /(?<http_only>HttpOnly)/i
+        SameSiteAV     = /SameSite=(?<samesite>\w+)/i
+        SecureAV       = /(?<secure>Secure)/i
+        PathAV         = /Path=(?<path>#{PathValue})/i
+        DomainAV       = /Domain=\.?(?<domain>#{DomainValue})/i
+        MaxAgeAV       = /Max-Age=(?<max_age>[0-9]*)/i
+        ExpiresAV      = /Expires=(?<expires>#{SaneCookieDate})/i
         CookieAV       = /(?:#{ExpiresAV}|#{MaxAgeAV}|#{DomainAV}|#{PathAV}|#{SecureAV}|#{HttpOnlyAV}|#{SameSiteAV}|#{ExtensionAV})/
       end
 
       CookieString    = /(?:^|; )#{Regex::CookiePair}/
-      SetCookieString = /^#{Regex::CookiePair}(?:;\s*#{Regex::CookieAV})*$/
+      SetCookieString = /^#{Regex::CookiePair}(?:;\s*#{Regex::CookieAV})*;?$/
 
       def parse_cookies(header, &)
         header.scan(CookieString).each do |pair|
