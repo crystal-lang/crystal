@@ -64,6 +64,11 @@ jobs:
       max-parallel: 2
       fail-fast: false
       matrix:
+        env: [
+          {},
+          {FLAGS: "-Duse_libevent"},
+          {FLAGS: "-Dpreview_mt -Dexecution_context"},
+        ]
         target:
           - aarch64-linux-android
           - arm-linux-gnueabihf
@@ -86,3 +91,4 @@ jobs:
 
       - name: Run smoke test
         run: bin/ci with_build_env make smoke_test target=${{ matrix.target }}
+        env: ${{ matrix.env }}
