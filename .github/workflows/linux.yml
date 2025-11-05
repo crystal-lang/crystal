@@ -21,17 +21,18 @@ jobs:
     env:
       ARCH: x86_64
       ARCH_CMD: linux64
-      CRYSTAL_BOOTSTRAP_VERSION: ${{ matrix.crystal_bootstrap_version }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        flags: [""]
+        env: [{}]
         include:
-          # libffi is only available starting from the 1.2.2 build images
-          - crystal_bootstrap_version: 1.0.0
-            flags: "FLAGS=-Dwithout_ffi USE_PCRE1=true"
-          - crystal_bootstrap_version: 1.18.2 # LATEST RELEASE
+          - env:
+              CRYSTAL_BOOTSTRAP_VERSION: 1.0.0
+              # libffi is only available starting from the 1.2.2 build images
+              FLAGS: "-Dwithout_ffi"
+              # pcre2 is only available starting from the 1.7.0 build images
+              USE_PCRE1: true
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v5
@@ -45,7 +46,8 @@ jobs:
         run: bin/ci prepare_build
 
       - name: Test
-        run: ${{ matrix.flags }} bin/ci build
+        run: bin/ci build
+        env: ${{ matrix.env }}
 
   x86_64-musl-test:
     env:
