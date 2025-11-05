@@ -1766,10 +1766,14 @@ class Hash(K, V)
   # hash.transform_keys! { |key, value| key * value }
   # hash # => {"a" => 1, "bb" => 2, "ccc" => 3}
   # ```
-  def transform_keys!(&block : K, V -> K) : self
-    transformed_hash = self.transform_keys(&block)
-    initialize_dup_entries(transformed_hash) # we need only to copy the buffer
-    initialize_copy_non_entries_vars(transformed_hash)
+  def transform_keys!(& : K, V -> K) : self
+    copy = Hash(K, V).new(initial_capacity: entries_capacity)
+    each_with_object(copy) do |(key, value), memo|
+      memo[yield(key, value)] = value
+    end
+
+    initialize_dup_entries(copy) # we need only to copy the buffer
+    initialize_copy_non_entries_vars(copy)
     self
   end
 
