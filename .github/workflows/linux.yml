@@ -58,6 +58,14 @@ jobs:
       ARCH: x86_64-musl
       ARCH_CMD: linux64
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        env: [
+          {},
+          {FLAGS: "-Duse_libevent"},
+          {FLAGS: "-Dpreview_mt -Dexecution_context"},
+        ]
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v5
@@ -72,6 +80,7 @@ jobs:
 
       - name: Test
         run: bin/ci build
+        env: ${{ matrix.env }}
 
   x86_64-gnu-test-preview_mt:
     env:
