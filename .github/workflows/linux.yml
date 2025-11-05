@@ -25,7 +25,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        env: [{}]
+        env: [
+          {},
+          {FLAGS: "-Duse_libevent"},
+          {FLAGS: "-Dpreview_mt -Dexecution_context"},
+        ]
         include:
           - env:
               CRYSTAL_BOOTSTRAP_VERSION: 1.0.0
