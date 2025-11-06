@@ -77,6 +77,10 @@ jobs:
           {},
           {FLAGS: "-Dpreview_mt -Dexecution_context"},
         ]
+        include:
+          - target: x86_64-freebsd
+            env:
+              FLAGS: "-Devloop=libevent"
 
     steps:
       - name: Download Crystal source
