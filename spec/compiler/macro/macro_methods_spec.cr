@@ -3789,21 +3789,43 @@ module Crystal
       end
 
       it "has flag value" do
-        assert_macro %({{flag?(:foo)}}), %("bar"), flags: "foo=bar"
+        assert_macro %({{flag?(:foo)}}), %(false), flags: "foo=bar"
       end
 
       it "has empty flag value" do
-        assert_macro %({{flag?(:foo)}}), %(""), flags: "foo="
+        assert_macro %({{flag?(:foo)}}), %(false), flags: "foo="
       end
 
       it "uses last one of multiple values" do
-        assert_macro %({{flag?(:foo)}}), %("baz"), flags: %w[foo=bar foo=baz]
-        assert_macro %({{flag?(:foo)}}), %("bar"), flags: %w[foo=baz foo=bar]
+        assert_macro %({{flag?(:foo)}}), %(false), flags: %w[foo=bar foo=baz]
+        assert_macro %({{flag?(:foo)}}), %(false), flags: %w[foo=baz foo=bar]
+      end
+
+      describe "presents `name=value` as simple flag" do
+        it "foo=bar" do
+          assert_macro %({{flag?(:"foo=bar")}}), %(true), flags: "foo=bar"
+        end
+
+        it "foo=" do
+          assert_macro %({{flag?(:foo=)}}), %(true), flags: "foo="
+        end
+
+        it "multiple values" do
+          assert_macro %({{flag?(:"foo=bar")}}), %(true), flags: %w[foo=baz foo=bar]
+          assert_macro %({{flag?(:"foo=baz")}}), %(true), flags: %w[foo=bar foo=baz]
+          assert_macro %({{flag?(:"foo=bar")}}), %(true), flags: %w[foo=bar foo=baz]
+          assert_macro %({{flag?(:"foo=baz")}}), %(true), flags: %w[foo=baz foo=bar]
+        end
+
+        it "multiple values and simple flag" do
+          assert_macro %({{flag?(:"foo=bar")}}), %(true), flags: %w[foo=bar foo]
+          assert_macro %({{flag?(:"foo=bar")}}), %(true), flags: %w[foo foo=bar]
+        end
       end
 
       it "uses last one of multiple values and simple" do
         assert_macro %({{flag?(:foo)}}), %(true), flags: %w[foo=bar foo]
-        assert_macro %({{flag?(:foo)}}), %("bar"), flags: %w[foo foo=bar]
+        assert_macro %({{flag?(:foo)}}), %(true), flags: %w[foo foo=bar]
       end
     end
 

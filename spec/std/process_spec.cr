@@ -46,6 +46,14 @@ private def standing_command
   {% end %}
 end
 
+private def path_search_command
+  {% if flag?(:win32) %}
+    {"cmd.exe"}
+  {% else %}
+    {"true"}
+  {% end %}
+end
+
 private def newline
   {% if flag?(:win32) %}
     "\r\n"
@@ -379,6 +387,128 @@ describe Process do
           end
         end
       {% end %}
+
+      if {{ flag?(:win32) }}
+        it "finds binary in parent `$PATH`, not `env`" do
+          Process.run(*print_env_command, env: {"PATH" => ""})
+        end
+      else
+        # FIXME: This behaviour is incorrect. It should lookup the command in
+        # the parent process' `$PATH`, without any changes from `env`.
+        # https://github.com/crystal-lang/crystal/issues/6464#issuecomment-3391000914
+        it "finds binary in `env`" do
+          expect_raises(File::NotFoundError) do
+            Process.run(*print_env_command, env: {"PATH" => ""})
+          end
+        end
+      end
+
+      it "errors on invalid key" do
+        expect_raises({% if flag?(:win32) %}ArgumentError{% else %}RuntimeError{% end %}, %(Invalid env key "")) do
+          Process.run(*print_env_command, env: {"" => "baz"})
+        end
+        expect_raises({% if flag?(:win32) %}ArgumentError{% else %}RuntimeError{% end %}, %(Invalid env key "foo=bar")) do
+          Process.run(*print_env_command, env: {"foo=bar" => "baz"})
+        end
+      end
+
+      it "errors on zero char in key" do
+        expect_raises({{ flag?(:win32) }} ? ArgumentError : RuntimeError, "String `key` contains null byte") do
+          Process.run(*print_env_command, env: {"foo\0" => "baz"})
+        end
+      end
+
+      it "errors on zero char in value" do
+        expect_raises({{ flag?(:win32) }} ? ArgumentError : RuntimeError, "String `value` contains null byte") do
+          Process.run(*print_env_command, env: {"foo" => "baz\0"})
+        end
+      end
+    end
+
+    it "errors with empty command" do
+      {% begin %}
+        expect_raises({% if flag?(:win32) %} IO::Error, "The parameter is incorrect" {% else %} File::NotFoundError{% end %}) do
+          Process.run("")
+        end
+      {% end %}
+    end
+
+    it "errors with too long command" do
+      pending! unless {{ flag?(:linux) }}
+
+      path_max = {% if LibC.has_constant?(:PATH_MAX) %}
+                   LibC::PATH_MAX
+                 {% else %}
+                   10_000
+                 {% end %}
+
+      expect_raises(IO::Error, /File ?name too long/) do
+        Process.run("a" * (path_max + 1))
+      end
+
+      # The pathname itself is not too long, but it will be when combined with
+      # any path prefix.
+      expect_raises(IO::Error, /File ?name too long/) do
+        Process.run("a" * path_max)
+      end
+    end
+
+    describe "$PATH" do
+      it "works with unset $PATH" do
+        with_env("PATH": nil) do
+          Process.run(*path_search_command)
+        end
+      end
+
+      it "errors with empty $PATH" do
+        pending! if {{ flag?(:win32) }}
+        with_env("PATH": "") do
+          expect_raises(File::NotFoundError) do
+            Process.run(*path_search_command)
+          end
+        end
+      end
+
+      it "empty still finds in current directory" do
+        pending! unless {{ flag?(:unix) }}
+
+        with_tempfile("crystal-spec-run") do |dir|
+          Dir.mkdir dir
+          File.write(Path[dir, "foo"], "#!/bin/sh\necho bar")
+          File.chmod(Path[dir, "foo"], 0o555)
+          if {{ flag?(:darwin) }}
+            String.build do |io|
+              Process.run("foo", chdir: dir, output: io)
+            end.should eq "bar\n"
+          else
+            expect_raises(File::NotFoundError) do
+              Process.run("foo", chdir: dir)
+            end
+          end
+        end
+      end
+
+      it "empty path entry means current directory" do
+        pending! unless {{ flag?(:unix) }}
+
+        with_tempfile("crystal-spec-run") do |dir|
+          Dir.mkdir dir
+          File.write(Path[dir, "foo"], "#!/bin/sh\necho bar")
+          File.chmod(Path[dir, "foo"], 0o555)
+          with_env("PATH": ":") do
+            Process.run("foo", chdir: dir)
+          end
+          with_env("PATH": "::") do
+            Process.run("foo", chdir: dir)
+          end
+          with_env("PATH": "/does/not/exist:") do
+            Process.run("foo", chdir: dir)
+          end
+          with_env("PATH": ":/does/not/exist") do
+            Process.run("foo", chdir: dir)
+          end
+        end
+      end
     end
 
     it "can link processes together" do
