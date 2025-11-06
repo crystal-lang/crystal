@@ -2225,10 +2225,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       block.vars.try &.each do |name, var|
         next if var.name == "_"
 
-        # if name == "parser"
-        #   sleep 10
-        #   debugger
-        # end
         # Special vars don't have scopes like regular block vars do
         next if var.special_var?
 
