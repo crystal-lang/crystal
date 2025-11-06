@@ -410,10 +410,14 @@ struct Crystal::System::Process
     while path.size > 0
       if index = path.index(':'.ord.to_u8!)
         path_entry = path[0, index]
-        path += index + 1
+        path += index
+
+        # Do not advance a trailing `:` so that we read it as an empty path in
+        # the next iteration
+        path += 1 unless path.size == 1
       else
         path_entry = path
-        path += path.size
+        path += path_entry.size
       end
 
       # When the full pathname would be too long, simply skip it.
