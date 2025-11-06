@@ -899,4 +899,25 @@ describe "OptionParser with summary_width and summary_indent" do
       parser.summary_width = -10
     end
   end
+
+  it "formats subcommand help with custom summary_indent" do
+    help = nil
+    OptionParser.parse(%w(subcommand --help)) do |opts|
+      opts.summary_indent = "||"
+      opts.banner = "Usage: foo"
+
+      opts.on("subcommand", "Subcommand description") do
+        opts.banner = "Usage: foo subcommand"
+        opts.on("--local", "Local flag") { }
+      end
+      opts.on("other", "Other subcommand") { }
+      opts.on("--help", "Help") { help = opts.to_s }
+    end
+
+    help.should eq <<-USAGE
+      Usage: foo subcommand
+      ||--help                           Help
+      ||--local                          Local flag
+      USAGE
+  end
 end
