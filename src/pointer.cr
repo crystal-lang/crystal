@@ -416,6 +416,48 @@ struct Pointer(T)
     self
   end
 
+  # Replaces *count* elements in `self` with *value*. Returns `self`.
+  #
+  # ```
+  # slice = Slice[1, 2, 3, 4, 5]
+  # ptr = slice.to_unsafe + 1
+  # ptr.fill(3, 0)
+  # slice # => Slice[1, 0, 0, 0, 4]
+  # ```
+  def fill(count : Int32, value : T) : self
+    {% if T == UInt8 %}
+      Intrinsics.memset(self.as(Void*), value, count, false)
+      self
+    {% else %}
+      {% if Number::Primitive.union_types.includes?(T) %}
+        if value == 0
+          clear(count)
+          return self
+        end
+      {% end %}
+
+      fill(count) { value }
+    {% end %}
+  end
+
+  # Yields *count* indices starting from `self` to the given block and then
+  # assigns the block's output value in that position. Returns `self`.
+  #
+  # ```
+  # slice = Slice[2, 1, 1, 1, 1]
+  # ptr = slice.to_unsafe + 1
+  # ptr.fill(3) { |i| i * i }
+  # slice # => Slice[2, 0, 1, 4, 1]
+  # ptr.fill(3, offset: 3) { |i| i * i }
+  # slice # => Slice[2, 9, 16, 25, 1]
+  # ```
+  def fill(count : Int32, *, offset : Int32 = 0, & : Int32 -> T) : self
+    count.times do |i|
+      yield i + offset
+    end
+    self
+  end
+
   # Returns a pointer whose memory address is zero. This doesn't allocate memory.
   #
   # When calling a C function you can also pass `nil` instead of constructing a
