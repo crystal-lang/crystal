@@ -399,9 +399,9 @@ struct Pointer(T)
   # ptr.map!(4) { |value| value * 2 }
   # ptr # [2, 4, 6, 8]
   # ```
-  def map!(count : Int, & : T -> T)
-    count.times do |i|
-      self[i] = yield self[i]
+  def map!(count : Int, & : T -> T) : self
+    fill(count) do |i|
+      yield self[i]
     end
   end
 
@@ -409,11 +409,10 @@ struct Pointer(T)
   #
   # Accepts an optional *offset* parameter, which tells it to start counting
   # from there.
-  def map_with_index!(count : Int, offset = 0, &block)
-    count.times do |i|
-      self[i] = yield self[i], offset + i
+  def map_with_index!(count : Int, offset = 0, &block) : self
+    fill(count) do |i|
+      yield self[i], offset + i
     end
-    self
   end
 
   # Replaces *count* elements in `self` with *value*. Returns `self`.
@@ -453,7 +452,7 @@ struct Pointer(T)
   # ```
   def fill(count : Int32, *, offset : Int32 = 0, & : Int32 -> T) : self
     count.times do |i|
-      yield i + offset
+      self[i] = yield i + offset
     end
     self
   end
@@ -518,10 +517,9 @@ struct Pointer(T)
   # ptr[0] # => 42
   # ptr[1] # => 42
   # ```
-  def self.malloc(size : Int, value : T)
+  def self.malloc(size : Int, value : T) : Pointer(T)
     ptr = Pointer(T).malloc(size)
-    size.times { |i| ptr[i] = value }
-    ptr
+    ptr.fill(size, value)
   end
 
   # Allocates `size * sizeof(T)` bytes from the system's heap initialized
@@ -539,10 +537,9 @@ struct Pointer(T)
   # ptr[2] # => 12
   # ptr[3] # => 13
   # ```
-  def self.malloc(size : Int, & : Int32 -> T)
+  def self.malloc(size : Int, & : Int32 -> T) : Pointer(T)
     ptr = Pointer(T).malloc(size)
-    size.times { |i| ptr[i] = yield i }
-    ptr
+    ptr.fill(size) { |i| yield i }
   end
 
   # Returns a `Pointer::Appender` for this pointer.
