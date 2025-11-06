@@ -233,7 +233,6 @@ jobs:
       matrix:
         env: [
           {},
-          {FLAGS: "-Duse_libevent"},
           {FLAGS: "-Dpreview_mt -Dexecution_context"},
         ]
     env: ${{ matrix.env }}
