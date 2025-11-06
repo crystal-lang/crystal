@@ -27,7 +27,7 @@ jobs:
       matrix:
         env: [
           {},
-          {FLAGS: "-Duse_libevent"},
+          {FLAGS: "-Devloop=libevent"},
           {FLAGS: "-Dpreview_mt -Dexecution_context"},
         ]
         include:
@@ -63,7 +63,7 @@ jobs:
       matrix:
         env: [
           {},
-          {FLAGS: "-Duse_libevent"},
+          {FLAGS: "-Devloop=libevent"},
           {FLAGS: "-Dpreview_mt -Dexecution_context"},
         ]
     steps:

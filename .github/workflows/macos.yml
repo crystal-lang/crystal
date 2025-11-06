@@ -20,7 +20,7 @@ jobs:
         runs-on: [macos-15-intel, macos-15]
         env: [
           {},
-          {FLAGS: "-Duse_libevent"},
+          {FLAGS: "-Devloop=libevent"},
           {FLAGS: "-Dpreview_mt -Dexecution_context"},
         ]
       fail-fast: false
