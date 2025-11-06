@@ -232,5 +232,19 @@ describe Crystal::Repl::Interpreter do
         B.new.as(A).bar
       CRYSTAL
     end
+
+    it "handles self in inlined method with arguments (#16210)" do
+      interpret(<<-CRYSTAL, prelude: "prelude").should eq(%("hello"))
+        class Foo
+          property x : String?
+
+          def initialize(@x : String? = nil)
+          end
+        end
+
+        foo = Foo.new("hello")
+        foo.x.not_nil!("test")
+      CRYSTAL
+    end
   end
 end
