@@ -84,10 +84,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        env: [
-          {},
-          {FLAGS: "-Dpreview_mt -Dexecution_context"},
-        ]
+        env:
+          - FLAGS: ""
+          - FLAGS: "-Dpreview_mt -Dexecution_context"
     steps:
       - name: Setup MSYS2
         id: msys2

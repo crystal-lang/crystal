@@ -18,11 +18,10 @@ jobs:
     strategy:
       matrix:
         runs-on: [macos-15-intel, macos-15]
-        env: [
-          {},
-          {FLAGS: "-Devloop=libevent"},
-          {FLAGS: "-Dpreview_mt -Dexecution_context"},
-        ]
+        env:
+          - FLAGS: ""
+          - FLAGS: "-Devloop=libevent"
+          - FLAGS: "-Dpreview_mt -Dexecution_context"
       fail-fast: false
     steps:
       - name: Download Crystal source

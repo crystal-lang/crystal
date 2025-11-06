@@ -231,10 +231,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        env: [
-          {},
-          {FLAGS: "-Dpreview_mt -Dexecution_context"},
-        ]
+        env:
+          - FLAGS: ""
+          - FLAGS: "-Dpreview_mt -Dexecution_context"
     env: ${{ matrix.env }}
     steps:
       - name: Disable CRLF line ending substitution

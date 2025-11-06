@@ -25,11 +25,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        env: [
-          {},
-          {FLAGS: "-Devloop=libevent"},
-          {FLAGS: "-Dpreview_mt -Dexecution_context"},
-        ]
+        env:
+          - FLAGS: ""
+          - FLAGS: "-Devloop=libevent"
+          - FLAGS: "-Dpreview_mt -Dexecution_context"
         include:
           - env:
               CRYSTAL_BOOTSTRAP_VERSION: 1.0.0
@@ -61,11 +60,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        env: [
-          {},
-          {FLAGS: "-Devloop=libevent"},
-          {FLAGS: "-Dpreview_mt -Dexecution_context"},
-        ]
+        env:
+          - FLAGS: ""
+          - FLAGS: "-Devloop=libevent"
+          - FLAGS: "-Dpreview_mt -Dexecution_context"
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v5
