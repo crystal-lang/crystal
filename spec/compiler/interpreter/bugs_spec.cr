@@ -225,15 +225,8 @@ describe Crystal::Repl::Interpreter do
       CRYSTAL
     end
 
-    it "downcasts with same ivar name in different scopes" do
+    it "looks up local vars in parent scopes after looking up local vars in current scope and closured scope (#15489)" do
       interpret(<<-CRYSTAL, prelude: "prelude").should eq(%("parser"))
-        # When a block argument has the same name as a local variable
-        # in a parent scope, the interpreter was getting confused and
-        # using the wrong variable.
-        #
-        # The fix is to make sure that when looking up a variable,
-        # if we are in a block and the variable is a block argument,
-        # we only look at the current block's scope.
         class OptionParser
           record Handler,
             value_type : String,
@@ -244,7 +237,7 @@ describe Crystal::Repl::Interpreter do
           end
 
           def self.parse(args = ARGV, &) : self
-            parser = OptionParser.new
+            parser = OptionParser.new # Closure scope
             yield parser
             parser
           end
@@ -255,12 +248,12 @@ describe Crystal::Repl::Interpreter do
         end
 
         opt_parser = OptionParser.parse do |parser|
-          parser.on("Show help") do
+          parser.on("Show help") do # Here, `parser` should be looked up in the closure scope
             parser
           end
         end
 
-        parser = "parser"
+        parser = "parser" # Global scope
       CRYSTAL
     end
   end

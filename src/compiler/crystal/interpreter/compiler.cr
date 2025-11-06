@@ -791,9 +791,28 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def lookup_local_var_or_closured_var(name : String) : LocalVar | ClosuredVar
-    lookup_local_var?(name) ||
-      lookup_closured_var?(name) ||
-      raise("BUG: can't find closured var or local var #{name}")
+    # Look up in current block level
+    if index = @local_vars.name_to_index?(name, @block_level)
+      type = @local_vars.type(name, @block_level)
+      return LocalVar.new(index, type)
+    end
+
+    # Look up in closured scope
+    if closured_var = lookup_closured_var?(name)
+      return closured_var
+    end
+
+    # Look up in parent block levels
+    block_level = @block_level - 1
+    while block_level >= 0
+      if index = @local_vars.name_to_index?(name, block_level)
+        type = @local_vars.type(name, block_level)
+        return LocalVar.new(index, type)
+      end
+      block_level -= 1
+    end
+
+    raise "BUG: can't find closured var or local var #{name}"
   end
 
   def lookup_local_var(name : String) : LocalVar
@@ -2206,6 +2225,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       block.vars.try &.each do |name, var|
         next if var.name == "_"
 
+        # if name == "parser"
+        #   sleep 10
+        #   debugger
+        # end
         # Special vars don't have scopes like regular block vars do
         next if var.special_var?
 
