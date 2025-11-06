@@ -42,6 +42,8 @@ class Crystal::Program
 
   def self.flag_value(flags, name)
     flags.reverse_each do |flag|
+      return true if flag == name
+
       # Easy test to skip items that wouldn't match anyway
       next unless flag.starts_with?(name)
 
