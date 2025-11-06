@@ -465,7 +465,6 @@ struct Crystal::System::Process
                   end
   end
 
-
   def self.replace(command, prepared_args, env, clear_env, input, output, error, chdir)
     try_replace(prepared_args, env, clear_env, input, output, error, chdir)
     raise_exception_from_errno(command)
