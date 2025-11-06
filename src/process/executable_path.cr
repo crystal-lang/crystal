@@ -103,7 +103,7 @@ class Process
 end
 
 {% if flag?(:darwin) %}
-  require "c/sys/syslimits"
+  require "c/limits"
 
   lib LibC
     fun _NSGetExecutablePath(buf : Char*, bufsize : UInt32*) : Int
