@@ -471,6 +471,25 @@ describe Process do
         end
       end
 
+      it "empty still finds in current directory" do
+        pending! unless {{ flag?(:unix) }}
+
+        with_tempfile("crystal-spec-run") do |dir|
+          Dir.mkdir dir
+          File.write(Path[dir, "foo"], "#!/bin/sh\necho bar")
+          File.chmod(Path[dir, "foo"], 0o555)
+          if {{ flag?(:darwin) }}
+            String.build do |io|
+              Process.run("foo", chdir: dir, output: io)
+            end.should eq "bar\n"
+          else
+            expect_raises(File::NotFoundError) do
+              Process.run("foo", chdir: dir)
+            end
+          end
+        end
+      end
+
       it "empty path entry means current directory" do
         pending! unless {{ flag?(:unix) }}
 
@@ -478,12 +497,16 @@ describe Process do
           Dir.mkdir dir
           File.write(Path[dir, "foo"], "#!/bin/sh\necho bar")
           File.chmod(Path[dir, "foo"], 0o555)
-          unless {{ flag?(:darwin) }}
-            expect_raises(File::NotFoundError) do
-              Process.run("foo", chdir: dir)
-            end
-          end
           with_env("PATH": ":") do
+            Process.run("foo", chdir: dir)
+          end
+          with_env("PATH": "::") do
+            Process.run("foo", chdir: dir)
+          end
+          with_env("PATH": "/does/not/exist:") do
+            Process.run("foo", chdir: dir)
+          end
+          with_env("PATH": ":/does/not/exist") do
             Process.run("foo", chdir: dir)
           end
         end
