@@ -423,7 +423,7 @@ struct Pointer(T)
   # ptr.fill(3, 0)
   # slice # => Slice[1, 0, 0, 0, 4]
   # ```
-  def fill(count : Int32, value : T) : self
+  def fill(count : Int, value : T) : self
     {% if T == UInt8 %}
       Intrinsics.memset(self.as(Void*), value, count, false)
       self
@@ -450,7 +450,7 @@ struct Pointer(T)
   # ptr.fill(3, offset: 3) { |i| i * i }
   # slice # => Slice[2, 9, 16, 25, 1]
   # ```
-  def fill(count : Int32, *, offset : Int32 = 0, & : Int32 -> T) : self
+  def fill(count : Int, *, offset : Int = 0, &) : self
     count.times do |i|
       self[i] = yield i + offset
     end
