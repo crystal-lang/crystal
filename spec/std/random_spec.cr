@@ -362,4 +362,8 @@ describe "Random" do
       typeof(array).should eq(StaticArray({{type}}, 4))
     {% end %}
   end
+
+  it "fails to split" do
+    expect_raises(NotImplementedError) { TestRNG(Int32).new([0]).split }
+  end
 end
