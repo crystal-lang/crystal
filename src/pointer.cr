@@ -419,9 +419,9 @@ struct Pointer(T)
   #
   # ```
   # ptr = Pointer(Int32).malloc(5) { |i| i }
-  # ptr.to_slice(5) # => Slice{0, 1, 2, 3, 4}
+  # ptr # => [0, 1, 2, 3, 4]
   # ptr.fill(3, 0)
-  # ptr.to_slice(5) # => Slice{0, 0, 0, 0, 4}
+  # ptr # => [0, 0, 0, 0, 4]
   # ```
   def fill(count : Int, value : T) : self
     {% if T == UInt8 %}
@@ -444,13 +444,13 @@ struct Pointer(T)
   #
   # ```
   # ptr = Pointer(Int32).malloc(5) { |i| i }
-  # ptr.to_slice(6) # => Slice{0, 1, 2, 3, 4}
+  # ptr # => [0, 1, 2, 3, 4]
   #
   # (ptr + 1).fill(3) { |i| i * i }
-  # ptr.to_slice(6) # => Slice{0, 0, 1, 4, 4}
+  # ptr # => [0, 0, 1, 4, 4]
   #
   # (ptr + 1).fill(3, offset: 3) { |i| i * i }
-  # ptr.to_slice(6) # => Slice{0, 9, 16, 25, 4}
+  # ptr # => [0, 9, 16, 25, 4]
   # ```
   def fill(count : Int, *, offset : Int = 0, &) : self
     count.times do |i|
