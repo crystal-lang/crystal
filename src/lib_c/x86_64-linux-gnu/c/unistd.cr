@@ -19,6 +19,7 @@ lib LibC
   fun dup2(fd : Int, fd2 : Int) : Int
   fun dup3(fd : Int, fd2 : Int, flags : Int) : Int
   fun _exit(status : Int) : NoReturn
+  fun execve(file : Char*, argv : Char**, envp : Char**) : Int
   fun execvp(file : Char*, argv : Char**) : Int
   fun execvpe(file : Char*, argv : Char**, envp : Char**) : Int
   fun fdatasync(fd : Int) : Int
