@@ -509,6 +509,44 @@ describe Process do
           end
         end
       end
+
+      it "finds path in relative directory" do
+        pending! unless {{ flag?(:unix) }}
+
+        with_tempfile("crystal-spec-run") do |dir|
+          Dir.mkdir_p Path[dir, "bin"]
+          Dir.mkdir_p Path[dir, "empty"]
+          File.write(Path[dir, "bin", "foo"], "#!/bin/sh\necho bar")
+          File.chmod(Path[dir, "bin", "foo"], 0o555)
+          with_env("PATH": "bin") do
+            Process.run("foo", chdir: dir)
+          end
+          with_env("PATH": "empty:bin") do
+            Process.run("foo", chdir: dir)
+          end
+          with_env("PATH": "bin:empty") do
+            Process.run("foo", chdir: dir)
+          end
+          with_env("PATH": "/does/not/exist:bin") do
+            Process.run("foo", chdir: dir)
+          end
+          with_env("PATH": "bin:/does/not/exist") do
+            Process.run("foo", chdir: dir)
+          end
+          with_env("PATH": ":bin") do
+            Process.run("foo", chdir: dir)
+          end
+          with_env("PATH": "::bin") do
+            Process.run("foo", chdir: dir)
+          end
+          with_env("PATH": "/does/not/exist::bin") do
+            Process.run("foo", chdir: dir)
+          end
+          with_env("PATH": "bin:/does/not/exist") do
+            Process.run("foo", chdir: dir)
+          end
+        end
+      end
     end
 
     it "can link processes together" do
