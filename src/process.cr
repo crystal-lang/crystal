@@ -215,13 +215,13 @@ class Process
   # Raises `IO::Error` if executing the command fails (for example if the executable doesn't exist).
   def self.exec(command : String, args : Enumerable(String)? = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
                 input : ExecStdio = Redirect::Inherit, output : ExecStdio = Redirect::Inherit, error : ExecStdio = Redirect::Inherit, chdir : Path | String? = nil) : NoReturn
-    prepared_args = Crystal::System::Process.prepare_args(command, args, shell)
+    prepared_args = Crystal::System::Process.prepare_args(command, args, env, clear_env, shell)
 
     input = exec_stdio_to_fd(input, for: STDIN)
     output = exec_stdio_to_fd(output, for: STDOUT)
     error = exec_stdio_to_fd(error, for: STDERR)
 
-    Crystal::System::Process.replace(command, prepared_args, env, clear_env, input, output, error, chdir)
+    Crystal::System::Process.replace(command, prepared_args, input, output, error, chdir)
   end
 
   private def self.exec_stdio_to_fd(stdio : ExecStdio, for dst_io : IO::FileDescriptor) : IO::FileDescriptor
@@ -280,13 +280,13 @@ class Process
   # Raises `IO::Error` if executing the command fails (for example if the executable doesn't exist).
   def initialize(command : String, args : Enumerable(String)? = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
                  input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil)
-    prepared_args = Crystal::System::Process.prepare_args(command, args, shell)
+    prepared_args = Crystal::System::Process.prepare_args(command, args, env, clear_env, shell)
 
     fork_input = stdio_to_fd(input, for: STDIN)
     fork_output = stdio_to_fd(output, for: STDOUT)
     fork_error = stdio_to_fd(error, for: STDERR)
 
-    pid = Crystal::System::Process.spawn(prepared_args, env, clear_env, fork_input, fork_output, fork_error, chdir.try &.to_s)
+    pid = Crystal::System::Process.spawn(prepared_args, fork_input, fork_output, fork_error, chdir.try &.to_s)
     @process_info = Crystal::System::Process.new(pid)
 
     fork_input.close unless fork_input.in?(input, STDIN)

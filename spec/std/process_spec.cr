@@ -393,10 +393,10 @@ describe Process do
       end
 
       it "errors on invalid key" do
-        expect_raises({% if flag?(:win32) %}ArgumentError{% else %}RuntimeError{% end %}, %(Invalid env key "")) do
+        expect_raises(ArgumentError, %(Invalid env key "")) do
           Process.run(*print_env_command, env: {"" => "baz"})
         end
-        expect_raises({% if flag?(:win32) %}ArgumentError{% else %}RuntimeError{% end %}, %(Invalid env key "foo=bar")) do
+        expect_raises(ArgumentError, %(Invalid env key "foo=bar")) do
           Process.run(*print_env_command, env: {"foo=bar" => "baz"})
         end
       end
