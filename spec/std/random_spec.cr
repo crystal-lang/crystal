@@ -364,6 +364,8 @@ describe "Random" do
   end
 
   it "fails to split" do
-    expect_raises(NotImplementedError) { TestRNG(Int32).new([0]).split }
+    expect_raises(NotImplementedError, "TestRNG(Int32)#split") do
+      TestRNG(Int32).new([0]).split
+    end
   end
 end

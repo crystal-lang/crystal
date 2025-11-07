@@ -93,7 +93,7 @@ module Random
   # PRNG algorithm is splittable, so the method raises a `NotImplementedError`
   # exception by default.
   def split_internal(other : self) : Nil
-    raise NotImplementedError.new("{{@type}}#split")
+    raise NotImplementedError.new("#{self.class}#split")
   end
 
   # Generates a random `Bool`.
