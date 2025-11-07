@@ -418,10 +418,10 @@ struct Pointer(T)
   # Replaces *count* elements in `self` with *value*. Returns `self`.
   #
   # ```
-  # slice = Slice[1, 2, 3, 4, 5]
-  # ptr = slice.to_unsafe + 1
+  # ptr = Pointer(Int32).malloc(5) { |i| i }
+  # ptr.to_slice(5) # => Slice{0, 1, 2, 3, 4}
   # ptr.fill(3, 0)
-  # slice # => Slice[1, 0, 0, 0, 4]
+  # ptr.to_slice(5) # => Slice{0, 0, 0, 0, 4}
   # ```
   def fill(count : Int, value : T) : self
     {% if T == UInt8 %}
@@ -443,12 +443,14 @@ struct Pointer(T)
   # assigns the block's output value in that position. Returns `self`.
   #
   # ```
-  # slice = Slice[2, 1, 1, 1, 1]
-  # ptr = slice.to_unsafe + 1
-  # ptr.fill(3) { |i| i * i }
-  # slice # => Slice[2, 0, 1, 4, 1]
-  # ptr.fill(3, offset: 3) { |i| i * i }
-  # slice # => Slice[2, 9, 16, 25, 1]
+  # ptr = Pointer(Int32).malloc(5) { |i| i }
+  # ptr.to_slice(6) # => Slice{0, 1, 2, 3, 4}
+  #
+  # (ptr + 1).fill(3) { |i| i * i }
+  # ptr.to_slice(6) # => Slice{0, 0, 1, 4, 4}
+  #
+  # (ptr + 1).fill(3, offset: 3) { |i| i * i }
+  # ptr.to_slice(6) # => Slice{0, 9, 16, 25, 4}
   # ```
   def fill(count : Int, *, offset : Int = 0, &) : self
     count.times do |i|
