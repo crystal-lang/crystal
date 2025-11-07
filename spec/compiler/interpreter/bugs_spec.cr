@@ -226,7 +226,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "looks up local vars in parent scopes after looking up local vars in current scope and closured scope (#15489)" do
-      interpret(<<-CRYSTAL, prelude: "prelude").should eq(%("parser"))
+      interpret(<<-CRYSTAL).should eq("parser")
         def capture(&block)
           block
         end
