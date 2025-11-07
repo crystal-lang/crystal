@@ -208,7 +208,8 @@ end
 
 def prepare_macro_call(macro_body, flags = nil, &)
   program = new_program
-  program.flags.concat(flags.split) if flags
+  flags = flags.split if flags.is_a?(String)
+  program.flags.concat(flags) if flags
   program.top_level_semantic_complete = true
   args = yield program
 
