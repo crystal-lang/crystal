@@ -57,7 +57,6 @@ env:
 
 jobs:
   smoke-test:
-    name: ${{ matrix.target }}
     runs-on: ubuntu-latest
 
     strategy:
@@ -74,6 +73,13 @@ jobs:
           - x86_64-netbsd
           - x86_64-openbsd
           - x86_64-solaris
+        env:
+          - FLAGS: ""
+          - FLAGS: "-Dpreview_mt -Dexecution_context"
+        include:
+          - target: x86_64-freebsd
+            env:
+              FLAGS: "-Devloop=libevent"
 
     steps:
       - name: Download Crystal source
@@ -86,3 +92,4 @@ jobs:
 
       - name: Run smoke test
         run: bin/ci with_build_env make smoke_test target=${{ matrix.target }}
+        env: ${{ matrix.env }}

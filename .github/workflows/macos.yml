@@ -15,16 +15,13 @@ env:
 jobs:
   darwin-test:
     runs-on: ${{ matrix.runs-on }}
-    name: "${{ matrix.runs-on }} (${{ matrix.arch }})"
     strategy:
       matrix:
-        include:
-        - runs-on: macos-15-intel
-          arch: x86_64-darwin
-        - runs-on: macos-14
-          arch: aarch64-darwin
-        - runs-on: macos-15
-          arch: aarch64-darwin
+        runs-on: [macos-15-intel, macos-15]
+        env:
+          - FLAGS: ""
+          - FLAGS: "-Devloop=libevent"
+          - FLAGS: "-Dpreview_mt -Dexecution_context"
       fail-fast: false
     steps:
       - name: Download Crystal source
@@ -50,6 +47,8 @@ jobs:
 
       - name: Test
         run: bin/ci build
+        env: ${{ matrix.env }}
 
       - name: Test interpreter
         run: bin/ci with_build_env 'make interpreter_spec'
+        env: ${{ matrix.env }}
