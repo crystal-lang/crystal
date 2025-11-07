@@ -227,33 +227,22 @@ describe Crystal::Repl::Interpreter do
 
     it "looks up local vars in parent scopes after looking up local vars in current scope and closured scope (#15489)" do
       interpret(<<-CRYSTAL, prelude: "prelude").should eq(%("parser"))
-        class OptionParser
-          record Handler,
-            value_type : String,
-            block : String ->
-
-          def initialize
-            @handlers = Hash(String, Handler).new
-          end
-
-          def self.parse(args = ARGV, &) : self
-            parser = OptionParser.new # Closure scope
-            yield parser
-            parser
-          end
-
-          def on(flag : String, &block : String ->)
-            @handlers[flag] = Handler.new(flag, block)
-          end
+        def capture(&block)
+          block
         end
 
-        opt_parser = OptionParser.parse do |parser|
-          parser.on("Show help") do # Here, `parser` should be looked up in the closure scope
-            parser
-          end
+        def scoped(&)
+          yield 1
         end
 
-        parser = "parser" # Global scope
+        scoped do |parser|
+          capture do
+            parser
+          end
+          parser # Error: BUG: missing downcast_distinct from String to Int32 (Crystal::NonGenericClassType to Crystal::IntegerType)
+        end
+
+        parser = "parser"
       CRYSTAL
     end
   end
