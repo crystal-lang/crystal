@@ -791,22 +791,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def lookup_local_var_or_closured_var(name : String) : LocalVar | ClosuredVar
-    # Look up in current block level
-    if inner_local_var = lookup_local_var?(name, @block_level, @block_level)
-      return inner_local_var
-    end
-
-    # Look up in closured scope
-    if closured_var = lookup_closured_var?(name)
-      return closured_var
-    end
-
-    # Look up in parent block levels
-    if outer_local_var = lookup_local_var?(name, @block_level - 1)
-      return outer_local_var
-    end
-
-    raise "BUG: can't find closured var or local var #{name}"
+    lookup_local_var?(name, @block_level, @block_level) ||
+      lookup_closured_var?(name) ||
+      lookup_local_var?(name, @block_level - 1) ||
+      raise "BUG: can't find local var or closured var #{name}"
   end
 
   def lookup_local_var(name : String) : LocalVar
