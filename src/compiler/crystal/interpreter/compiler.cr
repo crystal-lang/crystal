@@ -794,7 +794,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     lookup_local_var?(name, @block_level, @block_level) ||
       lookup_closured_var?(name) ||
       lookup_local_var?(name, @block_level - 1) ||
-      raise "BUG: can't find local var or closured var #{name}"
+      raise("BUG: can't find local var or closured var #{name}")
   end
 
   def lookup_local_var(name : String) : LocalVar
