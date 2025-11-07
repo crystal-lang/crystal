@@ -8,7 +8,7 @@ parameters:
   distribution-scripts-version:
     description: "Git ref for version of https://github.com/crystal-lang/distribution-scripts/"
     type: string
-    default: "54d475d5f39dc6c95002683e5258cf8f83ca7415"
+    default: "24d03358df6d6ecc485b640caa93ec50ccbb400e"
   previous_crystal_base_url:
     description: "Prefix for URLs to Crystal bootstrap compiler"
     type: string
@@ -160,7 +160,6 @@ jobs:
           echo "export CRYSTAL_SHA1=$CIRCLE_SHA1" >> build.env
 
           # Which previous version use
-          echo "export PREVIOUS_CRYSTAL_RELEASE_LINUX64_TARGZ=<< pipeline.parameters.previous_crystal_base_url >>-linux-x86_64.tar.gz" >> build.env
           echo "export PREVIOUS_CRYSTAL_RELEASE_DARWIN_TARGZ=<< pipeline.parameters.previous_crystal_base_url >>-darwin-universal.tar.gz" >> build.env
 
           cat build.env
@@ -263,8 +262,12 @@ jobs:
             - distribution-scripts
 
   dist_linux:
+    parameters:
+      arch:
+        type: string
     machine:
       image: default
+    resource_class: << parameters.arch >>
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -273,6 +276,7 @@ jobs:
           command: |
             cd /tmp/workspace/distribution-scripts
             source build.env
+            export PREVIOUS_CRYSTAL_RELEASE_LINUX64_TARGZ="<< pipeline.parameters.previous_crystal_base_url >>-linux-$(uname -m).tar.gz"
             cd linux
             make all64 release=true
       - store_artifacts:
@@ -444,6 +448,7 @@ jobs:
           cd /tmp/workspace/build
           cp crystal-*-darwin-universal.tar.gz /tmp/upload/crystal-nightly-darwin-universal.tar.gz
           cp crystal-*-linux-x86_64.tar.gz /tmp/upload/crystal-nightly-linux-x86_64.tar.gz
+          cp crystal-*-linux-aarch64.tar.gz /tmp/upload/crystal-nightly-linux-aarch64.tar.gz
       - run: s3cmd put --recursive /tmp/upload/* s3://artifacts.crystal-lang.org/dist/
 
   dist_artifacts:
@@ -519,6 +524,9 @@ workflows:
           requires:
             - prepare_common
       - dist_linux:
+          matrix:
+            parameters:
+              arch: [large, arm.medium]
           filters: *release
           requires:
             - prepare_maintenance
@@ -578,6 +586,9 @@ workflows:
           requires:
             - prepare_common
       - dist_linux:
+          matrix:
+            parameters:
+              arch: [large, arm.medium]
           requires:
             - prepare_nightly
       - dist_darwin:

@@ -343,15 +343,7 @@ struct Crystal::System::Process
     reopen_io(output, ORIGINAL_STDOUT)
     reopen_io(error, ORIGINAL_STDERR)
 
-    ENV.clear if clear_env
-    env.try &.each do |key, val|
-      if val
-        ENV[key] = val
-      else
-        ENV.delete key
-      end
-    end
-
+    LibC.environ = Env.make_envp(env, clear_env)
     ::Dir.cd(chdir) if chdir
 
     lock_write { execvpe(*prepared_args, LibC.environ) }
