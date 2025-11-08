@@ -135,8 +135,12 @@ primitives_spec: $(O)/primitives_spec$(EXE) ## Run primitives specs
 interpreter_spec: $(O)/interpreter_spec$(EXE) ## Run interpreter specs
 	$(O)/interpreter_spec$(EXE) $(SPEC_FLAGS)
 
+.PHONY: simple_smoke_test
+simple_smoke_test: ## Build std specs as a smoke test
+simple_smoke_test: $(O)/std_spec$(EXE)
+
 .PHONY: smoke_test
-smoke_test: ## Build specs as a smoke test
+smoke_test: ## Build std specs, compiler specs and compiler as a smoke test
 smoke_test: $(O)/std_spec$(EXE) $(O)/compiler_spec$(EXE) $(O)/$(CRYSTAL_BIN)
 
 SHELLCHECK_SOURCES := $(wildcard **/*.sh) $(wildcard **/*.bash) bin/crystal bin/ci bin/check-compiler-flag scripts/git/pre-commit
