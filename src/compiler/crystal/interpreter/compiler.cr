@@ -791,9 +791,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def lookup_local_var_or_closured_var(name : String) : LocalVar | ClosuredVar
-    lookup_local_var?(name, @block_level, @block_level) ||
+    lookup_local_var?(name, at: @block_level) ||
       lookup_closured_var?(name) ||
-      lookup_local_var?(name, @block_level - 1) ||
+      lookup_local_var?(name, from: @block_level - 1) ||
       raise("BUG: can't find closured var or local var #{name}")
   end
 
@@ -801,20 +801,18 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     lookup_local_var?(name) || raise("BUG: can't find local var #{name}")
   end
 
-  # Look up a local var by name, starting from highest block level down to lowest.
-  def lookup_local_var?(name : String, from_block_level : Int32 = @block_level, to_block_level : Int32 = 0) : LocalVar?
-    current_block_level = from_block_level
-    while current_block_level >= to_block_level
-      index = @local_vars.name_to_index?(name, current_block_level)
-      if index
-        type = @local_vars.type(name, current_block_level)
-        return LocalVar.new(index, type)
+  def lookup_local_var?(name : String, *, from : Int32 = @block_level) : LocalVar?
+    from.downto(0) do |block_level|
+      if local_var = lookup_local_var?(name, at: block_level)
+        return local_var
       end
-
-      current_block_level -= 1
     end
+  end
 
-    nil
+  def lookup_local_var?(name : String, *, at block_level : Int32) : LocalVar?
+    if index = @local_vars.name_to_index?(name, block_level)
+      LocalVar.new(index, @local_vars.type(name, block_level))
+    end
   end
 
   def lookup_closured_var(name : String) : ClosuredVar
