@@ -12,9 +12,6 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
 
   private getter(event_base) { Crystal::EventLoop::LibEvent::Event::Base.new }
 
-  def after_fork_before_exec : Nil
-  end
-
   {% unless flag?(:preview_mt) %}
     # Reinitializes the event loop after a fork.
     def after_fork : Nil
