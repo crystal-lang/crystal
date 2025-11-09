@@ -68,6 +68,34 @@ module Random
   # the maximal value for the chosen type.
   abstract def next_u
 
+  # Splits the current instance into two seemingly independent instances that
+  # will return distinct sequences of random numbers. Returns a new instance.
+  #
+  # ```
+  # random = Random.new
+  # split1 = random.split
+  # split2 = random.split
+  #
+  # 5.times.map { random.rand(99) }.to_a # => [79, 42, 54, 17, 52]
+  # 5.times.map { split1.rand(99) }.to_a # => [90, 37, 15, 74, 61]
+  # 5.times.map { split2.rand(99) }.to_a # => [6, 87, 5, 73, 71]
+  # ```
+  def split : self
+    copy = dup
+    split_internal(copy)
+    copy
+  end
+
+  # The internal implementation for `#split` where *self* is the original
+  # instance and *other* the duplicated instance to be returned.
+  #
+  # The default `Random` implementation in stdlib is splittable, but not every
+  # PRNG algorithm is splittable, so the method raises a `NotImplementedError`
+  # exception by default.
+  def split_internal(other : self) : Nil
+    raise NotImplementedError.new("#{self.class}#split")
+  end
+
   # Generates a random `Bool`.
   #
   # ```
