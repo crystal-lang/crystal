@@ -19,16 +19,6 @@ class Crystal::EventLoop::Epoll < Crystal::EventLoop::Polling
     @epoll.add(@timerfd.fd, LibC::EPOLLIN, u64: @timerfd.fd.to_u64!)
   end
 
-  def after_fork_before_exec : Nil
-    super
-
-    # O_CLOEXEC would close these automatically, but we don't want to mess with
-    # the parent process fds (it would mess the parent evloop)
-    @epoll.close
-    @eventfd.close
-    @timerfd.close
-  end
-
   {% unless flag?(:preview_mt) %}
     def after_fork : Nil
       super
