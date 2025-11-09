@@ -399,9 +399,9 @@ struct Pointer(T)
   # ptr.map!(4) { |value| value * 2 }
   # ptr # [2, 4, 6, 8]
   # ```
-  def map!(count : Int, & : T -> T)
-    count.times do |i|
-      self[i] = yield self[i]
+  def map!(count : Int, & : T -> T) : self
+    fill(count) do |i|
+      yield self[i]
     end
   end
 
@@ -409,9 +409,52 @@ struct Pointer(T)
   #
   # Accepts an optional *offset* parameter, which tells it to start counting
   # from there.
-  def map_with_index!(count : Int, offset = 0, &block)
+  def map_with_index!(count : Int, offset = 0, &block) : self
+    fill(count) do |i|
+      yield self[i], offset + i
+    end
+  end
+
+  # Replaces *count* elements in `self` with *value*. Returns `self`.
+  #
+  # ```
+  # ptr = Pointer(Int32).malloc(5) { |i| i }
+  # ptr # => [0, 1, 2, 3, 4]
+  # ptr.fill(3, 0)
+  # ptr # => [0, 0, 0, 0, 4]
+  # ```
+  def fill(count : Int, value : T) : self
+    {% if T == UInt8 %}
+      Intrinsics.memset(self.as(Void*), value, count, false)
+      self
+    {% else %}
+      {% if Number::Primitive.union_types.includes?(T) %}
+        if value == 0
+          clear(count)
+          return self
+        end
+      {% end %}
+
+      fill(count) { value }
+    {% end %}
+  end
+
+  # Yields *count* indices starting from `self` to the given block and then
+  # assigns the block's output value in that position. Returns `self`.
+  #
+  # ```
+  # ptr = Pointer(Int32).malloc(5) { |i| i }
+  # ptr # => [0, 1, 2, 3, 4]
+  #
+  # (ptr + 1).fill(3) { |i| i * i }
+  # ptr # => [0, 0, 1, 4, 4]
+  #
+  # (ptr + 1).fill(3, offset: 3) { |i| i * i }
+  # ptr # => [0, 9, 16, 25, 4]
+  # ```
+  def fill(count : Int, *, offset : Int = 0, &) : self
     count.times do |i|
-      self[i] = yield self[i], offset + i
+      self[i] = yield i + offset
     end
     self
   end
@@ -476,10 +519,9 @@ struct Pointer(T)
   # ptr[0] # => 42
   # ptr[1] # => 42
   # ```
-  def self.malloc(size : Int, value : T)
+  def self.malloc(size : Int, value : T) : Pointer(T)
     ptr = Pointer(T).malloc(size)
-    size.times { |i| ptr[i] = value }
-    ptr
+    ptr.fill(size, value)
   end
 
   # Allocates `size * sizeof(T)` bytes from the system's heap initialized
@@ -497,10 +539,9 @@ struct Pointer(T)
   # ptr[2] # => 12
   # ptr[3] # => 13
   # ```
-  def self.malloc(size : Int, & : Int32 -> T)
+  def self.malloc(size : Int, & : Int32 -> T) : Pointer(T)
     ptr = Pointer(T).malloc(size)
-    size.times { |i| ptr[i] = yield i }
-    ptr
+    ptr.fill(size) { |i| yield i }
   end
 
   # Returns a `Pointer::Appender` for this pointer.
