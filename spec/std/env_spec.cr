@@ -6,16 +6,13 @@ describe "ENV" do
   # To avoid potential circular definitions, this has to use the system methods
   # directly, rather than `ENV` or `with_env`.
   around_each do |example|
-    old_env = {} of String => String
-    Crystal::System::Env.each { |key, value| old_env[key] = value }
+    old_overlay = ENV.overlay.dup
 
     begin
       example.run
     ensure
-      keys = [] of String
-      Crystal::System::Env.each { |key| keys << key }
-      keys.each { |key| Crystal::System::Env.set(key, nil) }
-      old_env.each { |key, value| Crystal::System::Env.set(key, value) }
+      ENV.overlay.clear
+      ENV.overlay.merge!(old_overlay)
     end
   end
 

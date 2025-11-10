@@ -16,6 +16,9 @@ require "crystal/system/env"
 module ENV
   extend Enumerable({String, String})
 
+  # :nodoc:
+  class_getter overlay = Hash(String, String?).new
+
   # Retrieves the value for environment variable named *key* as a `String`.
   # Raises `KeyError` if the named variable does not exist.
   def self.[](key : String) : String
@@ -35,7 +38,9 @@ module ENV
   #
   # If *key* or *value* contains a null-byte an `ArgumentError` is raised.
   def self.[]=(key : String, value : String?)
-    Crystal::System::Env.set(key, value)
+    key.check_no_null_byte("key")
+    value.try(&.check_no_null_byte("value"))
+    @@overlay[key] = value
 
     value
   end
@@ -47,7 +52,9 @@ module ENV
   # ENV.has_key?("PATH")           # => true
   # ```
   def self.has_key?(key : String) : Bool
-    Crystal::System::Env.has_key?(key)
+    !!@@overlay.fetch(key) do
+      return Crystal::System::Env.has_key?(key)
+    end
   end
 
   # Retrieves a value corresponding to the given *key*. Raises a `KeyError` exception if the
@@ -67,7 +74,10 @@ module ENV
   # Retrieves a value corresponding to a given *key*. Return the value of the block if
   # the *key* does not exist.
   def self.fetch(key : String, &block : String -> T) : String | T forall T
-    if value = Crystal::System::Env.get(key)
+    value = @@overlay.fetch(key) do
+      Crystal::System::Env.get(key)
+    end
+    if value
       value
     else
       yield key
@@ -91,11 +101,8 @@ module ENV
   # Removes the environment variable named *key*. Returns the previous value if
   # the environment variable existed, otherwise returns `nil`.
   def self.delete(key : String) : String?
-    if value = self[key]?
-      Crystal::System::Env.set(key, nil)
-      value
-    else
-      nil
+    @@overlay.put(key, nil) do
+      Crystal::System::Env.get(key)
     end
   end
 
@@ -108,8 +115,11 @@ module ENV
   # end
   # ```
   def self.each(& : {String, String} ->)
+    @@overlay.each do |key, value|
+      yield({key, value}) if value
+    end
     Crystal::System::Env.each do |key, value|
-      yield({key, value})
+      yield({key, value}) unless @@overlay.has_key?(key)
     end
   end
 
