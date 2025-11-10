@@ -154,7 +154,7 @@ describe TCPServer, tags: "network" do
       server.bind("::", 0)
       server.listen
 
-      TCPSocket.open("localhost", server.local_address.port) do |client|
+      TCPSocket.open("127.0.0.1", server.local_address.port) do |client|
         server.accept? do |sock|
           sock.ipv6_only?.should be_false
           server.close
