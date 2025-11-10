@@ -45,7 +45,10 @@ let
         # Darwin packages use embedded/bin/crystal
         [ ! -f "${src}/embedded/bin/crystal" ] || cp ${src}/embedded/bin/crystal $out/bin/
 
-        # Linux packages use lib/crystal/bin/crystal
+        # Linux packages use bin/crystal
+        [ ! -f "${src}/bin/crystal" ] || cp ${src}/bin/crystal $out/bin/
+
+        # Older Linux packages use lib/crystal/bin/crystal
         [ ! -f "${src}/lib/crystal/bin/crystal" ] || cp ${src}/lib/crystal/bin/crystal $out/bin/
       '';
     };
