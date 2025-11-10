@@ -20,10 +20,12 @@ describe UDPSocket, tags: "network" do
 
   it "supports IPv6 dual stack" do
     socket = UDPSocket.new(:inet6)
-    socket.ipv6_only?.should be_true
 
     socket.ipv6_only = false
     socket.ipv6_only?.should be_false
+
+    socket.ipv6_only = true
+    socket.ipv6_only?.should be_true
 
     socket = UDPSocket.new
     expect_raises(Socket::Error, "Unsupported IP address family: INET. For use with IPv6 only") do
