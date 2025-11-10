@@ -45,7 +45,7 @@ MAN1PAGES := $(patsubst doc/man/%.adoc,man/%.1,$(wildcard doc/man/*.adoc))
 override FLAGS += -D strict_multi_assign -D preview_overload_order $(if $(release),--release )$(if $(stats),--stats )$(if $(progress),--progress )$(if $(threads),--threads $(threads) )$(if $(debug),-d )$(if $(static),--static )$(if $(LDFLAGS),--link-flags="$(LDFLAGS)" )$(if $(target),--cross-compile --target $(target) )
 # NOTE: USE_PCRE1 is only used for testing compatibility with legacy environments that don't provide libpcre2.
 # Newly built compilers should never be distributed with libpcre to ensure syntax consistency.
-override COMPILER_FLAGS += $(if $(interpreter),,-Dwithout_interpreter )$(if $(docs_sanitizer),,-Dwithout_libxml2)  -Dwithout_openssl -Dwithout_zlib $(if $(USE_PCRE1),-Duse_pcre,-Duse_pcre2)
+override COMPILER_FLAGS += $(if $(interpreter),,-Dwithout_interpreter )$(if $(docs_sanitizer),,-Dwithout_libxml2 ) -Dwithout_openssl -Dwithout_zlib $(if $(USE_PCRE1),-Duse_pcre,-Duse_pcre2)
 SPEC_WARNINGS_OFF := --exclude-warnings spec/std --exclude-warnings spec/compiler --exclude-warnings spec/primitives --exclude-warnings src/float/printer
 override SPEC_FLAGS += $(if $(verbose),-v )$(if $(junit_output),--junit_output $(junit_output) )$(if $(order),--order=$(order) )
 CRYSTAL_CONFIG_LIBRARY_PATH := '$$ORIGIN/../lib/crystal'
