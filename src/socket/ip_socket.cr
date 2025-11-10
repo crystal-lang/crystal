@@ -26,4 +26,8 @@ class IPSocket < Socket
     @local_address = nil
     @remote_address = nil
   end
+
+  def dual_stack_enabled? : Bool
+    
+  end
 end
