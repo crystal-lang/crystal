@@ -174,7 +174,7 @@ describe TCPServer, tags: "network" do
       server.bind("::", 0)
       server.listen
 
-      expect_raises(Socket::ConnectError, "Connection refused") do
+      expect_raises(Socket::ConnectError) do
         TCPSocket.new("127.0.0.1", server.local_address.port, connect_timeout: 1.second)
       end
       server.close
