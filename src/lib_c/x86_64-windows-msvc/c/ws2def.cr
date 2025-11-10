@@ -134,6 +134,8 @@ lib LibC
   IPV6_DROP_MEMBERSHIP = 13
   IPV6_LEAVE_GROUP     = 13
 
+  IPV6_V6ONLY = 27
+
   enum IPPROTO
     IPPROTO_HOPOPTS  =   0 # IPv6 Hop-by-Hop options
     IPPROTO_ICMP     =   1

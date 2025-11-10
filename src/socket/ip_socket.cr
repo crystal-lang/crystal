@@ -27,7 +27,13 @@ class IPSocket < Socket
     @remote_address = nil
   end
 
-  def dual_stack_enabled? : Bool
-    
+  def ipv6_only? : Bool
+    raise Socket::Error.new("Unsupported IP address family: #{family}. For use with IPv6 only") unless family.inet6?
+    getsockopt_bool(LibC::IPV6_V6ONLY, level: LibC::IPPROTO_IPV6)
+  end
+
+  def ipv6_only=(val : Bool) : Bool
+    raise Socket::Error.new("Unsupported IP address family: #{family}. For use with IPv6 only") unless family.inet6?
+    sock.setsockopt_bool LibC::IPV6_V6ONLY, val, level: LibC::IPPROTO_IPV6
   end
 end

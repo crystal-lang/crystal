@@ -147,5 +147,17 @@ describe TCPServer, tags: "network" do
         end
       end
     end
+
+    it "supports IPv6 dual stack" do
+      TCPServer.open("::1", 0) do |server|
+        server.ipv6_only = false
+
+        TCPSocket.open("localhost", server.local_address.port) do |client|
+          server.accept? do |sock|
+            sock.ipv6_only?.should be_false
+          end
+        end
+      end
+    end
   end
 end
