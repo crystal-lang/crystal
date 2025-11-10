@@ -342,10 +342,10 @@ struct Crystal::System::Process
     reopen_io(output, ORIGINAL_STDOUT)
     reopen_io(error, ORIGINAL_STDERR)
 
-    LibC.environ = Env.make_envp(env, clear_env)
+    envp = Env.make_envp(env, clear_env)
     ::Dir.cd(chdir) if chdir
 
-    execvpe(*prepared_args, LibC.environ)
+    execvpe(*prepared_args, envp)
   end
 
   private def self.execvpe(file, argv, envp)

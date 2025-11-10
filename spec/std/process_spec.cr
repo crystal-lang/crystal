@@ -388,19 +388,8 @@ describe Process do
         end
       {% end %}
 
-      if {{ flag?(:win32) }}
-        it "finds binary in parent `$PATH`, not `env`" do
-          Process.run(*print_env_command, env: {"PATH" => ""})
-        end
-      else
-        # FIXME: This behaviour is incorrect. It should lookup the command in
-        # the parent process' `$PATH`, without any changes from `env`.
-        # https://github.com/crystal-lang/crystal/issues/6464#issuecomment-3391000914
-        it "finds binary in `env`" do
-          expect_raises(File::NotFoundError) do
-            Process.run(*print_env_command, env: {"PATH" => ""})
-          end
-        end
+      it "finds binary in parent `$PATH`, not `env`" do
+        Process.run(*print_env_command, env: {"PATH" => ""})
       end
 
       it "errors on invalid key" do
