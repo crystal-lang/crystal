@@ -39,7 +39,7 @@ let
       src = builtins.fetchTarball { inherit url sha256; };
 
       # Extract only the compiler binary
-      buildCommand = ''
+      installPhase = ''
         mkdir -p $out/bin
 
         if [ -f "${src}/embedded/bin/crystal" ]; then
