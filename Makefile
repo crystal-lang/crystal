@@ -42,7 +42,10 @@ O := .build
 SOURCES := $(shell find src -name '*.cr')
 SPEC_SOURCES := $(shell find spec -name '*.cr')
 MAN1PAGES := $(patsubst doc/man/%.adoc,man/%.1,$(wildcard doc/man/*.adoc))
-override FLAGS += -D strict_multi_assign -D preview_overload_order $(if $(release),--release )$(if $(stats),--stats )$(if $(progress),--progress )$(if $(threads),--threads $(threads) )$(if $(debug),-d )$(if $(static),--static )$(if $(LDFLAGS),--link-flags="$(LDFLAGS)" )$(if $(target),--cross-compile --target $(target) )$(if $(interpreter),,-Dwithout_interpreter )$(if $(docs_sanitizer),,-Dwithout_libxml2)
+override FLAGS += -D strict_multi_assign -D preview_overload_order $(if $(release),--release )$(if $(stats),--stats )$(if $(progress),--progress )$(if $(threads),--threads $(threads) )$(if $(debug),-d )$(if $(static),--static )$(if $(LDFLAGS),--link-flags="$(LDFLAGS)" )$(if $(target),--cross-compile --target $(target) )
+# NOTE: USE_PCRE1 is only used for testing compatibility with legacy environments that don't provide libpcre2.
+# Newly built compilers should never be distributed with libpcre to ensure syntax consistency.
+override COMPILER_FLAGS += $(if $(interpreter),,-Dwithout_interpreter )$(if $(docs_sanitizer),,-Dwithout_libxml2)  -Dwithout_openssl -Dwithout_zlib $(if $(USE_PCRE1),-Duse_pcre,-Duse_pcre2)
 SPEC_WARNINGS_OFF := --exclude-warnings spec/std --exclude-warnings spec/compiler --exclude-warnings spec/primitives --exclude-warnings src/float/printer
 override SPEC_FLAGS += $(if $(verbose),-v )$(if $(junit_output),--junit_output $(junit_output) )$(if $(order),--order=$(order) )
 CRYSTAL_CONFIG_LIBRARY_PATH := '$$ORIGIN/../lib/crystal'
@@ -244,7 +247,7 @@ $(O)/std_spec$(EXE): $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 $(O)/compiler_spec$(EXE): $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	$(call check_llvm_config)
 	@mkdir -p $(O)
-	$(EXPORT_CC) $(EXPORTS) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/compiler_spec.cr --release
+	$(EXPORT_CC) $(EXPORTS) ./bin/crystal build $(FLAGS) $(COMPILER_FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/compiler_spec.cr --release
 
 $(O)/primitives_spec$(EXE): $(O)/$(CRYSTAL_BIN) $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@mkdir -p $(O)
@@ -253,14 +256,12 @@ $(O)/primitives_spec$(EXE): $(O)/$(CRYSTAL_BIN) $(DEPS) $(SOURCES) $(SPEC_SOURCE
 $(O)/interpreter_spec$(EXE): $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	$(eval interpreter=1)
 	@mkdir -p $(O)
-	$(EXPORT_CC) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/compiler/interpreter_spec.cr
+	$(EXPORT_CC) ./bin/crystal build $(FLAGS) $(COMPILER_FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/compiler/interpreter_spec.cr
 
 $(O)/$(CRYSTAL_BIN): $(DEPS) $(SOURCES)
 	$(call check_llvm_config)
 	@mkdir -p $(O)
-	@# NOTE: USE_PCRE1 is only used for testing compatibility with legacy environments that don't provide libpcre2.
-	@# Newly built compilers should never be distributed with libpcre to ensure syntax consistency.
-	$(EXPORTS) $(EXPORTS_BUILD) ./bin/crystal build $(FLAGS) -o $(if $(WINDOWS),$(O)/crystal-next.exe,$@) src/compiler/crystal.cr -D without_openssl -D without_zlib $(if $(USE_PCRE1),-D use_pcre,-D use_pcre2)
+	$(EXPORTS) $(EXPORTS_BUILD) ./bin/crystal build $(FLAGS) $(COMPILER_FLAGS) -o $(if $(WINDOWS),$(O)/crystal-next.exe,$@) src/compiler/crystal.cr
 	@# NOTE: on MSYS2 it is not possible to overwrite a running program, so the compiler must be first built with
 	@# a different filename and then moved to the final destination.
 	$(if $(WINDOWS),mv $(O)/crystal-next.exe $@)
