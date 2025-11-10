@@ -152,6 +152,7 @@ describe TCPServer, tags: "network" do
       server = TCPServer.new(:inet6)
       server.ipv6_only = false
       server.bind("::", 0)
+      server.listen
 
       TCPSocket.open("localhost", server.local_address.port) do |client|
         server.accept? do |sock|
