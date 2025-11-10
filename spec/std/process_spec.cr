@@ -329,7 +329,7 @@ describe Process do
       end
 
       it "deletes existing environment variable" do
-        with_env("FOO": "bar") do
+        with_system_env("FOO": "bar") do
           value = Process.run(*print_env_command, env: {"FOO" => nil}) do |proc|
             proc.output.gets_to_end
           end
@@ -339,7 +339,7 @@ describe Process do
 
       {% if flag?(:win32) %}
         it "deletes existing environment variable case-insensitive" do
-          with_env("FOO": "bar") do
+          with_system_env("FOO": "bar") do
             value = Process.run(*print_env_command, env: {"foo" => nil}) do |proc|
               proc.output.gets_to_end
             end
@@ -349,7 +349,7 @@ describe Process do
       {% end %}
 
       it "preserves existing environment variable" do
-        with_env("FOO": "bar") do
+        with_system_env("FOO": "bar") do
           value = Process.run(*print_env_command) do |proc|
             proc.output.gets_to_end
           end
@@ -358,7 +358,7 @@ describe Process do
       end
 
       it "preserves and sets an environment variable" do
-        with_env("FOO": "bar") do
+        with_system_env("FOO": "bar") do
           value = Process.run(*print_env_command, env: {"FOO2" => "bar2"}) do |proc|
             proc.output.gets_to_end
           end
@@ -368,7 +368,7 @@ describe Process do
       end
 
       it "overrides existing environment variable" do
-        with_env("FOO": "bar") do
+        with_system_env("FOO": "bar") do
           value = Process.run(*print_env_command, env: {"FOO" => "different"}) do |proc|
             proc.output.gets_to_end
           end
@@ -378,7 +378,7 @@ describe Process do
 
       {% if flag?(:win32) %}
         it "overrides existing environment variable case-insensitive" do
-          with_env("FOO": "bar") do
+          with_system_env("FOO": "bar") do
             value = Process.run(*print_env_command, env: {"fOo" => "different"}) do |proc|
               proc.output.gets_to_end
             end
@@ -455,14 +455,14 @@ describe Process do
 
     describe "$PATH" do
       it "works with unset $PATH" do
-        with_env("PATH": nil) do
+        with_system_env("PATH": nil) do
           Process.run(*path_search_command)
         end
       end
 
       it "errors with empty $PATH" do
         pending! if {{ flag?(:win32) }}
-        with_env("PATH": "") do
+        with_system_env("PATH": "") do
           expect_raises(File::NotFoundError) do
             Process.run(*path_search_command)
           end
@@ -495,16 +495,16 @@ describe Process do
           Dir.mkdir dir
           File.write(Path[dir, "foo"], "#!/bin/sh\necho bar")
           File.chmod(Path[dir, "foo"], 0o555)
-          with_env("PATH": ":") do
+          with_system_env("PATH": ":") do
             Process.run("foo", chdir: dir)
           end
-          with_env("PATH": "::") do
+          with_system_env("PATH": "::") do
             Process.run("foo", chdir: dir)
           end
-          with_env("PATH": "/does/not/exist:") do
+          with_system_env("PATH": "/does/not/exist:") do
             Process.run("foo", chdir: dir)
           end
-          with_env("PATH": ":/does/not/exist") do
+          with_system_env("PATH": ":/does/not/exist") do
             Process.run("foo", chdir: dir)
           end
         end
@@ -518,31 +518,31 @@ describe Process do
           Dir.mkdir_p Path[dir, "empty"]
           File.write(Path[dir, "bin", "foo"], "#!/bin/sh\necho bar")
           File.chmod(Path[dir, "bin", "foo"], 0o555)
-          with_env("PATH": "bin") do
+          with_system_env("PATH": "bin") do
             Process.run("foo", chdir: dir)
           end
-          with_env("PATH": "empty:bin") do
+          with_system_env("PATH": "empty:bin") do
             Process.run("foo", chdir: dir)
           end
-          with_env("PATH": "bin:empty") do
+          with_system_env("PATH": "bin:empty") do
             Process.run("foo", chdir: dir)
           end
-          with_env("PATH": "/does/not/exist:bin") do
+          with_system_env("PATH": "/does/not/exist:bin") do
             Process.run("foo", chdir: dir)
           end
-          with_env("PATH": "bin:/does/not/exist") do
+          with_system_env("PATH": "bin:/does/not/exist") do
             Process.run("foo", chdir: dir)
           end
-          with_env("PATH": ":bin") do
+          with_system_env("PATH": ":bin") do
             Process.run("foo", chdir: dir)
           end
-          with_env("PATH": "::bin") do
+          with_system_env("PATH": "::bin") do
             Process.run("foo", chdir: dir)
           end
-          with_env("PATH": "/does/not/exist::bin") do
+          with_system_env("PATH": "/does/not/exist::bin") do
             Process.run("foo", chdir: dir)
           end
-          with_env("PATH": "bin:/does/not/exist") do
+          with_system_env("PATH": "bin:/does/not/exist") do
             Process.run("foo", chdir: dir)
           end
         end
