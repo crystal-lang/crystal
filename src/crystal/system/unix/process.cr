@@ -343,7 +343,11 @@ struct Crystal::System::Process
     reopen_io(error, ORIGINAL_STDERR)
 
     envp = Env.make_envp(env, clear_env)
-    ::Dir.cd(chdir) if chdir
+    if chdir
+      if 0 != LibC.chdir(chdir)
+        return
+      end
+    end
 
     execvpe(*prepared_args, envp)
   end
