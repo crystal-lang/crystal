@@ -8,6 +8,11 @@ module Crystal
       getter relative_to
 
       def initialize(@filename : String, @relative_to : String?)
+        if relative_to = @relative_to
+          super "Cannot find #{@filename} relative to #{relative_to}"
+        else
+          super "Cannot find #{@filename}"
+        end
       end
     end
 
