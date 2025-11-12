@@ -1647,7 +1647,10 @@ class Hash(K, V)
   # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.reject("a", "c") # => {"b" => 2, "d" => 4}
   # ```
   def reject(*keys) : Hash(K, V)
+    block = @block
+    @block = nil
     hash = self.dup
+    @block = block
     hash.reject!(*keys)
   end
 
@@ -1732,7 +1735,13 @@ class Hash(K, V)
   # hash.compact # => {"hello" => "world"}
   # ```
   def compact
-    object = {} of K => typeof(self.first_value.not_nil!)
+    case @block
+    when Proc
+      object = Hash(K, V).new(block: @block)
+    else
+      object = {} of K => typeof(self.first_value.not_nil!)
+    end
+
     object.compare_by_identity if compare_by_identity?
 
     each_with_object(object) do |(key, value), memo|
