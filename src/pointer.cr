@@ -528,6 +528,13 @@ struct Pointer(T)
   # ```
   def self.malloc(size : Int, value : T) : Pointer(T)
     ptr = Pointer(T).malloc(size)
+
+    {% if Number::Primitive.union_types.includes?(T) %}
+      return ptr if value.zero?
+    {% elsif T < Pointer %}
+      return ptr if value.null?
+    {% end %}
+
     ptr.fill(size, value)
   end
 
