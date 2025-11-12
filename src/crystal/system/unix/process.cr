@@ -471,8 +471,11 @@ struct Crystal::System::Process
 
   private def self.reopen_io(src_io : IO::FileDescriptor, dst_io : IO::FileDescriptor)
     if src_io.closed?
-      Crystal::EventLoop.remove(dst_io)
-      dst_io.file_descriptor_close
+      # Do not use FileDescriptor.file_descriptor_close here because it
+      # mutates the memory of `dst_id.fd` in `close_volatile_fd?` which causes
+      # problems with `vfork` behaviour.
+      # We can ignore any errors from `LibC.close`.
+      LibC.close(dst_io.fd)
     else
       src_io = to_real_fd(src_io)
 
