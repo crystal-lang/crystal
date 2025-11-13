@@ -1598,7 +1598,7 @@ module Enumerable(T)
 
     # must split the default random instance (thread local) because #each might
     # yield the current fiber that may be resumed by another thread
-    rng = random || Random.dup_and_split_default_on_stack
+    rng = random || Random.split_on_stack
 
     each_with_index do |elem, i|
       if i < n
@@ -1639,7 +1639,7 @@ module Enumerable(T)
 
     # must split the default random instance (thread local) because #each might
     # yield the current fiber that may be resumed by another thread
-    rng = random || Random.dup_and_split_default_on_stack
+    rng = random || Random.split_on_stack
 
     each_with_index do |elem, i|
       if !found
