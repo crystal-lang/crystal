@@ -70,7 +70,7 @@ module Random
       %thread_rng.split_internal(%copy)
       %copy
     {% else %}
-      ::Random.split
+      ::Random.thread_default.split
     {% end %}
   end
 
