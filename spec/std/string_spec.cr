@@ -2736,20 +2736,31 @@ describe "String" do
   end
 
   describe "byte_index_to_char_index" do
-    it "with ascii" do
+    it "returns the char index of a byte index" do
       "foo".byte_index_to_char_index(0).should eq(0)
       "foo".byte_index_to_char_index(1).should eq(1)
       "foo".byte_index_to_char_index(2).should eq(2)
-      "foo".byte_index_to_char_index(3).should eq(3)
-      "foo".byte_index_to_char_index(4).should be_nil
-    end
 
-    it "with utf-8" do
       "これ".byte_index_to_char_index(0).should eq(0)
       "これ".byte_index_to_char_index(3).should eq(1)
+    end
+
+    it "returns #size when given #bytesize byte index" do
+      "foo".byte_index_to_char_index(3).should eq(3)
       "これ".byte_index_to_char_index(6).should eq(2)
+    end
+
+    it "returns nil when given index out of range" do
+      "foo".byte_index_to_char_index(-1).should be_nil
+      "foo".byte_index_to_char_index(4).should be_nil
+
+      "これ".byte_index_to_char_index(-1).should be_nil
       "これ".byte_index_to_char_index(7).should be_nil
+    end
+
+    it "returns nil when given index points at non-leading byte of a multibyte character" do
       "これ".byte_index_to_char_index(1).should be_nil
+      "これ".byte_index_to_char_index(4).should be_nil
     end
   end
 
