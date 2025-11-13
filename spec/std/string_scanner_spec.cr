@@ -278,7 +278,7 @@ describe StringScanner do
   end
 
   describe "#offset" do
-    it "returns the current position" do
+    it "returns the current character position" do
       s = StringScanner.new("this is a string")
       s.offset.should eq(0)
       s.scan(/\w+/)
@@ -314,7 +314,7 @@ describe StringScanner do
   end
 
   describe "#offset=" do
-    it "sets the current position" do
+    it "sets the current character position" do
       s = StringScanner.new("this is a string")
       s.offset = 5
       s.scan(/\w+/).should eq("is")
