@@ -89,11 +89,6 @@ module Random
     raise NotImplementedError.new("{{@type}}#new_seed")
   end
 
-  # :nodoc:
-  def split!
-    raise NotImplementedError.new("{{@type}}#split!")
-  end
-
   # Generates a random unsigned integer.
   #
   # The integers must be uniformly distributed between `0` and
