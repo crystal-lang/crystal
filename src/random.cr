@@ -54,7 +54,7 @@ module Random
   DEFAULT = PCG32.new
 
   # :nodoc:
-  thread_local(default : ::Random) do
+  thread_local(thread_default : ::Random) do
     ::Random::PCG32.new.as(::Random)
   end
 
@@ -64,7 +64,7 @@ module Random
   # macro).
   macro split_on_stack
     {% if compare_versions(Crystal::VERSION, "1.12.0") >= 0 %}
-      %thread_rng = ::Random.default.as(::Random::PCG32)
+      %thread_rng = ::Random.thread_default.as(::Random::PCG32)
       %buf = uninitialized ::ReferenceStorage(::Random::PCG32)
       %copy = ::Random::PCG32.unsafe_construct(pointerof(%buf), %thread_rng)
       %thread_rng.split_internal(%copy)
@@ -488,22 +488,22 @@ module Random
 
   # See `#next_bool`.
   def self.next_bool : Bool
-    default.next_bool
+    thread_default.next_bool
   end
 
   # See `#next_int`.
   def self.next_int : Int32
-    default.next_int
+    thread_default.next_int
   end
 
   # See `#rand`.
   def self.rand : Float64
-    default.rand
+    thread_default.rand
   end
 
   # See `#rand(x)`.
   def self.rand(x)
-    default.rand(x)
+    thread_default.rand(x)
   end
 end
 
