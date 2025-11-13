@@ -284,6 +284,33 @@ describe StringScanner do
       s.scan(/\w+/)
       s.offset.should eq(4)
     end
+
+    it "returns #size when reached end of string" do
+      s = StringScanner.new("abc")
+      s.skip_until("c")
+      s.eos?.should be_true
+      s.offset.should eq(3)
+    end
+
+    it "returns the next character index if current byte offset is in the middle of a multibyte character" do
+      s = StringScanner.new("これ") # each character is represented by 3 bytes
+      s.offset.should eq(0)
+
+      s.read_byte
+      s.offset.should eq(1)
+
+      s.read_byte
+      s.offset.should eq(1)
+
+      s.read_byte
+      s.offset.should eq(1)
+
+      s.read_byte
+      s.offset.should eq(2)
+
+      s.read_byte
+      s.offset.should eq(2)
+    end
   end
 
   describe "#offset=" do
@@ -361,13 +388,9 @@ describe StringScanner, "#read_byte" do
   it "returns one byte from the current offset and advances the offset" do
     s = StringScanner.new("あ")
     s.read_byte.should eq 227
-    s.offset.should eq 1
     s.read_byte.should eq 129
-    s.offset.should eq 2
     s.read_byte.should eq 130
-    s.offset.should eq 3
     s.read_byte.should be_nil
-    s.offset.should eq 3
     s.eos?.should eq(true)
   end
 end
@@ -376,11 +399,8 @@ describe StringScanner, "#read_char" do
   it "returns a char from the current offset and advances the offset" do
     s = StringScanner.new("ab")
     s.read_char.should eq 'a'
-    s.offset.should eq 1
     s.read_char.should eq 'b'
-    s.offset.should eq 2
     s.read_byte.should be_nil
-    s.offset.should eq 2
     s.eos?.should eq(true)
   end
 end

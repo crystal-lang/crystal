@@ -72,12 +72,25 @@ class StringScanner
   # Sets the *position* of the scan offset.
   def offset=(position : Int)
     raise IndexError.new unless position >= 0
-    @byte_offset = Math.min(position, @str.bytesize)
+    @byte_offset = @str.char_index_to_byte_index(position) || @str.bytesize
   end
 
   # Returns the current position of the scan offset.
   def offset : Int32
-    @byte_offset
+    return @str.size if eos?
+    byte_index_to_char_index(@byte_offset)
+  end
+
+  private def byte_index_to_char_index(index) : Int32
+    char_index = 0
+    reader = Char::Reader.new(@str)
+
+    reader.each do |_|
+      return char_index if reader.pos >= index
+      char_index += 1
+    end
+
+    @str.size
   end
 
   # Tries to match with *pattern* at the current position. If there's a match,
