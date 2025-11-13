@@ -60,8 +60,8 @@ module Random
 
   # :nodoc:
   #
-  # Same as `.split` but allocates the dup on the stack when possible (hence the
-  # macro).
+  # Same as `Random.thread_default#split` but allocates the dup on the stack
+  # when possible (hence the macro).
   macro split_on_stack
     {% if compare_versions(Crystal::VERSION, "1.12.0") >= 0 %}
       %thread_rng = ::Random.thread_default.as(::Random::PCG32)
