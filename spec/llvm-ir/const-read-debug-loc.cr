@@ -10,7 +10,7 @@ def a_foo
 end
 
 THE_FOO.foo
-# CHECK:      call %Foo** @"~THE_FOO:read"()
+# CHECK:      call %Foo** @"~THE_FOO:const_read"()
 # CHECK-SAME: !dbg [[LOC:![0-9]+]]
 # CHECK:      [[LOC]] = !DILocation
 # CHECK-SAME: line: 12

@@ -36,6 +36,7 @@ require "./ieee"
 # Multiplication and Subtraction do not normalize their results.
 #
 # NOTE: `DiyFP` is not designed to contain special Floats (*NaN* and *Infinity*).
+@[Deprecated]
 struct Float::Printer::DiyFP
   SIGNIFICAND_SIZE = 64
 

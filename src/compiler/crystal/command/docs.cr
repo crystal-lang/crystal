@@ -16,7 +16,7 @@ class Crystal::Command
 
     compiler = new_compiler
 
-    OptionParser.parse(options) do |opts|
+    OptionParser.parse(@options) do |opts|
       opts.banner = <<-'BANNER'
         Usage: crystal docs [options]
 
@@ -117,6 +117,10 @@ class Crystal::Command
 
     unless project_info.version?
       STDERR.puts "Couldn't determine version from git or shard.yml, please provide --project-version option"
+    end
+
+    if Crystal::Doc::MarkdDocRenderer::SANITIZER.nil?
+      STDERR.puts "Crystal built without LibXML2 support, documentation sanitization disabled"
     end
 
     unless project_info.name? && project_info.version?

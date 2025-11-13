@@ -1,0 +1,53 @@
+name: XML CI
+
+on:
+  push:
+    paths:
+      - 'spec/std/xml/**'
+      - 'src/xml/**'
+      - '.github/workflows/xml.yml'
+  pull_request:
+    paths:
+      - 'spec/std/xml/**'
+      - 'src/xml/**'
+      - '.github/workflows/xml.yml'
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+jobs:
+  libssl_test:
+    runs-on: ubuntu-latest
+    name: "${{ matrix.pkg }}"
+    container: crystallang/crystal:1.18.2-alpine
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - pkg: "libxml2-dev=~2.9"
+            repository: http://dl-cdn.alpinelinux.org/alpine/v3.16/main
+          - pkg: "libxml2-dev=~2.12"
+            repository: http://dl-cdn.alpinelinux.org/alpine/v3.20/main
+          - pkg: "libxml2-dev=~2.13"
+            repository: http://dl-cdn.alpinelinux.org/alpine/v3.22/main
+          - pkg: "libxml2-dev"
+            repository: http://dl-cdn.alpinelinux.org/alpine/edge/main
+    steps:
+      - name: Download Crystal source
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Uninstall libxml2 and conflicts
+        run: apk del libxml2-dev
+      - name: Install ${{ matrix.pkg }}
+        run: apk add "${{ matrix.pkg }}" --repository=${{ matrix.repository }}
+      - name: Print LibXML2 version
+        run: bin/crystal eval 'require "xml"; p! XML.libxml2_version'
+      - name: Run XML specs
+        run: bin/crystal spec --order=random spec/std/xml/

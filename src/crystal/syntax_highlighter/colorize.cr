@@ -4,7 +4,11 @@ require "../syntax_highlighter"
 # A syntax highlighter that renders Crystal source code with ANSI escape codes
 # suitable for terminal highlighting.
 #
+# NOTE: To use `Crystal::SyntaxHighlighter::Colorize`, you must explicitly import it with `require "crystal/syntax_highlighter/colorize"`
+#
 # ```
+# require "crystal/syntax_highlighter/colorize"
+#
 # code = %(foo = bar("baz\#{PI + 1}") # comment)
 # colorized = Crystal::SyntaxHighlighter::Colorize.highlight(code)
 # colorized # => "foo \e[91m=\e[0m bar(\e[93m\"baz\#{\e[0;36mPI\e[0;93m \e[0;91m+\e[0;93m \e[0;35m1\e[0;93m}\"\e[0m) \e[90m# comment\e[0m"
@@ -65,7 +69,9 @@ class Crystal::SyntaxHighlighter::Colorize < Crystal::SyntaxHighlighter
 
   def render_interpolation(&)
     colorize :INTERPOLATION, "\#{"
-    yield
+    @colorize.fore(:default).surround(@io) do
+      yield
+    end
     colorize :INTERPOLATION, "}"
   end
 

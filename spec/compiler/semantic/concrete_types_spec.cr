@@ -1,6 +1,6 @@
 require "../../spec_helper"
 
-private def assert_concrete_types(str)
+private def assert_concrete_types(str, &)
   result = semantic("struct Witness;end\n\n#{str}")
   program = result.program
 

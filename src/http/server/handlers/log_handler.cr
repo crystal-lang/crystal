@@ -2,13 +2,15 @@ require "log"
 
 # A handler that logs the request method, resource, status code, and
 # the time used to execute the next handler
+#
+# NOTE: To use `LogHandler`, you must explicitly import it with `require "http"`
 class HTTP::LogHandler
   include HTTP::Handler
 
   def initialize(@log = Log.for("http.server"))
   end
 
-  def call(context) : Nil
+  def call(context : HTTP::Server::Context) : Nil
     start = Time.monotonic
 
     begin

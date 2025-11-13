@@ -1,3 +1,4 @@
+# NOTE: To use `FileUtils`, you must explicitly import it with `require "file_utils"`
 module FileUtils
   extend self
 
@@ -24,7 +25,7 @@ module FileUtils
   # ```
   #
   # NOTE: Alias of `Dir.cd` with block
-  def cd(path : Path | String)
+  def cd(path : Path | String, &)
     Dir.cd(path) { yield }
   end
 
@@ -222,7 +223,7 @@ module FileUtils
       dest_path = File.join(dest_path, File.basename(src_path))
     end
 
-    File.delete(dest_path) if File.file?(dest_path)
+    rm_rf(dest_path) if File.exists?(dest_path)
     File.symlink(src_path, dest_path)
   end
 
@@ -316,7 +317,7 @@ module FileUtils
   # ```
   def mv(src_path : Path | String, dest_path : Path | String) : Nil
     if error = Crystal::System::File.rename(src_path.to_s, dest_path.to_s)
-      raise error unless Errno.value.in?(Errno::EXDEV, Errno::EPERM)
+      raise error unless error.os_error.in?(Errno::EXDEV, Errno::EPERM, WinError::ERROR_NOT_SAME_DEVICE)
       cp_r(src_path, dest_path)
       rm_r(src_path)
     end
@@ -425,10 +426,8 @@ module FileUtils
   # FileUtils.rm_rf("non_existent_file")
   # ```
   def rm_rf(path : Path | String) : Nil
-    begin
-      rm_r(path)
-    rescue File::Error
-    end
+    rm_r(path)
+  rescue File::Error
   end
 
   # Deletes a list of files or directories *paths*.

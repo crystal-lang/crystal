@@ -1,0 +1,37 @@
+default: true
+
+heading-style: "setext"
+
+no-inline-html: false
+line-length: false
+
+ol-prefix:
+  style: "ordered"
+ul-style:
+  style: "dash"
+ul-indent:
+  indent: 2
+
+no-blanks-blockquote: false
+
+emphasis-style:
+  style: "underscore"
+strong-style:
+  style: "asterisk"
+
+no-duplicate-heading:
+  siblings_only: true
+no-bare-urls: false
+
+fenced-code-language: false
+commands-show-output: false
+
+first-line-h1:
+  front_matter_title: "^\\s*(page_)?title\\s*[:=]"
+  exclude:
+    .github/PULL_REQUEST_TEMPLATE/pull_request_template.md
+
+no-alt-text: false
+
+hard_tab:
+  code_blocks: false

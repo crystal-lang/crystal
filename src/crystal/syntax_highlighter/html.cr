@@ -3,7 +3,11 @@ require "html"
 
 # A syntax highlighter that renders Crystal source code with HTML markup.
 #
+# NOTE: To use `Crystal::SyntaxHighlighter::HTML`, you must explicitly import it with `require "crystal/syntax_highlighter/html"`
+#
 # ```
+# require "crystal/syntax_highlighter/html"
+#
 # code = %(foo = bar("baz\#{PI + 1}") # comment)
 # html = Crystal::SyntaxHighlighter::HTML.highlight(code)
 # html # => "foo <span class=\"o\">=</span> bar(<span class=\"s\">&quot;baz</span><span class=\"i\">\#{</span><span class=\"t\">PI</span> <span class=\"o\">+</span> <span class=\"n\">1</span><span class=\"i\">}</span><span class=\"s\">&quot;</span>) <span class=\"c\"># comment</span>"
@@ -52,7 +56,7 @@ class Crystal::SyntaxHighlighter::HTML < Crystal::SyntaxHighlighter
     when .string?
       span "s" { ::HTML.escape(value, @io) }
     when .ident?
-      span "m", &.print value
+      span "m" { ::HTML.escape(value, @io) }
     when .keyword?, .self?
       span "k", &.print value
     when .primitive_literal?

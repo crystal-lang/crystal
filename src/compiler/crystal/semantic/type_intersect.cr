@@ -72,6 +72,10 @@ module Crystal
       common_descendent_instance_and_generic(type1, type2)
     end
 
+    def self.common_descendent(type1 : GenericClassType, type2 : GenericClassInstanceType)
+      common_descendent(type2, type1)
+    end
+
     def self.common_descendent(type1 : GenericInstanceType, type2 : GenericInstanceType)
       common_descendent_generic_instances(type1, type2) ||
         common_descendent_base(type1, type2)
@@ -97,11 +101,21 @@ module Crystal
       restricted.try(&.metaclass)
     end
 
-    def self.common_descendent(type1 : GenericClassInstanceMetaclassType | GenericModuleInstanceMetaclassType, type2 : MetaclassType)
+    def self.common_descendent(type1 : GenericClassInstanceMetaclassType | GenericModuleInstanceMetaclassType, type2 : MetaclassType | VirtualMetaclassType)
       return type1 if type1.instance_type.generic_type.metaclass == type2
+
+      # Special case: a GenericInstanceMetaclass with a union type is
+      # the metaclass of a union type, for example Union(String | Int32).class.
+      # In that case the intersection of that type with a non-union metaclass
+      # will never match: it must also be another union type.
+      return nil if type1.instance_type.is_a?(UnionType)
 
       restricted = common_descendent(type1.instance_type, type2.instance_type)
       restricted ? type1 : nil
+    end
+
+    def self.common_descendent(type1 : MetaclassType | VirtualMetaclassType, type2 : GenericClassInstanceMetaclassType | GenericModuleInstanceMetaclassType)
+      common_descendent(type2, type1)
     end
 
     def self.common_descendent(type1 : UnionType, type2 : Type)
@@ -140,7 +154,7 @@ module Crystal
 
       restricted = common_descendent(type1.typedef, type2)
       if restricted == type1.typedef
-        return type1
+        type1
       elsif restricted.is_a?(UnionType)
         type1.program.type_merge(restricted.union_types.map { |t| t == type1.typedef ? type1 : t })
       else

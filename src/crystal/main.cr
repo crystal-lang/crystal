@@ -1,3 +1,5 @@
+require "process/executable_path" # Process::PATH_DELIMITER
+
 lib LibCrystalMain
   @[Raises]
   fun __crystal_main(argc : Int32, argv : UInt8**)
@@ -6,7 +8,7 @@ end
 module Crystal
   # Defines the main routine run by normal Crystal programs:
   #
-  # - Initializes the GC
+  # - Initializes runtime requirements (GC, ...)
   # - Invokes the given *block*
   # - Handles unhandled exceptions
   # - Invokes `at_exit` handlers
@@ -32,7 +34,10 @@ module Crystal
   # same can be accomplished with `at_exit`. But in some cases
   # redefinition of C's main is needed.
   def self.main(&block)
+    {% if flag?(:tracing) %} Crystal::Tracing.init {% end %}
     GC.init
+
+    init_runtime
 
     status =
       begin
@@ -43,6 +48,15 @@ module Crystal
       end
 
     exit(status, ex)
+  end
+
+  # :nodoc:
+  def self.init_runtime : Nil
+    # `__crystal_once` directly or indirectly depends on `Fiber` and `Thread`
+    # so we explicitly initialize their class vars, then init crystal/once
+    Thread.init
+    Fiber.init
+    Crystal::Once.init
   end
 
   # :nodoc:
@@ -61,7 +75,7 @@ module Crystal
   end
 
   # :nodoc:
-  def self.ignore_stdio_errors
+  def self.ignore_stdio_errors(&)
     yield
   rescue IO::Error
   end
@@ -127,6 +141,13 @@ fun main(argc : Int32, argv : UInt8**) : Int32
   Crystal.main(argc, argv)
 end
 
-{% if flag?(:win32) %}
+{% if flag?(:interpreted) %}
+  # the interpreter doesn't call Crystal.main(&)
+  Crystal.init_runtime
+{% elsif flag?(:win32) %}
   require "./system/win32/wmain"
+{% elsif flag?(:wasi) %}
+  require "./system/wasi/main"
+{% else %}
+  require "./system/unix/main"
 {% end %}

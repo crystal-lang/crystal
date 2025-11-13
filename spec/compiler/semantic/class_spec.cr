@@ -18,7 +18,7 @@ describe "Semantic: class" do
   end
 
   it "types instance variable" do
-    result = assert_type("
+    result = assert_type(<<-CRYSTAL) { generic_class "Foo", int32 }
       class Foo(T)
         def set
           @coco = 2
@@ -28,14 +28,14 @@ describe "Semantic: class" do
       f = Foo(Int32).new
       f.set
       f
-    ") { generic_class "Foo", int32 }
+      CRYSTAL
     mod = result.program
     type = result.node.type.as(GenericClassInstanceType)
     type.instance_vars["@coco"].type.should eq(mod.nilable(mod.int32))
   end
 
   it "types generic of generic type" do
-    result = assert_type("
+    assert_type(<<-CRYSTAL
       class Foo(T)
         def set
           @coco = 2
@@ -45,15 +45,16 @@ describe "Semantic: class" do
       f = Foo(Foo(Int32)).new
       f.set
       f
-    ") do
+      CRYSTAL
+    ) do
       foo = types["Foo"].as(GenericClassType)
       foo_i32 = foo.instantiate([int32] of TypeVar)
-      foo_foo_i32 = foo.instantiate([foo_i32] of TypeVar)
+      _foo_foo_i32 = foo.instantiate([foo_i32] of TypeVar)
     end
   end
 
   it "types instance variable" do
-    input = parse "
+    input = parse <<-CRYSTAL
       class Foo(T)
         def set(value : T)
           @coco = value
@@ -66,7 +67,7 @@ describe "Semantic: class" do
       g = Foo(Float64).new
       g.set 2.5
       g
-    "
+      CRYSTAL
     result = semantic input
     mod, node = result.program, result.node.as(Expressions)
     foo = mod.types["Foo"].as(GenericClassType)
@@ -79,7 +80,7 @@ describe "Semantic: class" do
   end
 
   it "types instance variable on getter" do
-    input = parse("
+    input = parse(<<-CRYSTAL).as(Expressions)
       class Foo(T)
         def set(value : T)
           @coco = value
@@ -97,7 +98,7 @@ describe "Semantic: class" do
       g = Foo(Float64).new
       g.set 2.5
       g.get
-    ").as(Expressions)
+      CRYSTAL
     result = semantic input
     mod, node = result.program, result.node.as(Expressions)
 
@@ -106,7 +107,7 @@ describe "Semantic: class" do
   end
 
   it "types recursive type" do
-    input = parse("
+    input = parse(<<-CRYSTAL).as(Expressions)
       class Node
         def add
           if next_node = @next
@@ -120,7 +121,7 @@ describe "Semantic: class" do
       n = Node.new
       n.add
       n
-    ").as(Expressions)
+      CRYSTAL
     result = semantic input
     mod, input = result.program, result.node.as(Expressions)
     node = mod.types["Node"].as(NonGenericClassType)
@@ -130,7 +131,7 @@ describe "Semantic: class" do
   end
 
   it "types self inside method call without obj" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { types["Foo"] }
       class Foo
         def foo
           bar
@@ -142,20 +143,20 @@ describe "Semantic: class" do
       end
 
       Foo.new.foo
-    ") { types["Foo"] }
+      CRYSTAL
   end
 
   it "types type var union" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { generic_class "Foo", union_of(int32, float64) }
       class Foo(T)
       end
 
       Foo(Int32 | Float64).new
-      ") { generic_class "Foo", union_of(int32, float64) }
+      CRYSTAL
   end
 
   it "types class and subclass as one type" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { types["Foo"].virtual_type }
       class Foo
       end
 
@@ -163,11 +164,11 @@ describe "Semantic: class" do
       end
 
       a = Foo.new || Bar.new
-      ") { types["Foo"].virtual_type }
+      CRYSTAL
   end
 
   it "types class and subclass as one type" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { types["Foo"].virtual_type }
       class Foo
       end
 
@@ -178,11 +179,11 @@ describe "Semantic: class" do
       end
 
       a = Bar.new || Baz.new
-      ") { types["Foo"].virtual_type }
+      CRYSTAL
   end
 
   it "types class and subclass as one type" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { types["Foo"].virtual_type }
       class Foo
       end
 
@@ -193,11 +194,11 @@ describe "Semantic: class" do
       end
 
       a = Foo.new || Bar.new || Baz.new
-      ") { types["Foo"].virtual_type }
+      CRYSTAL
   end
 
   it "does automatic inference of new for generic types" do
-    result = assert_type("
+    result = assert_type(<<-CRYSTAL) { generic_class "Box", int32 }
       class Box(T)
         def initialize(value : T)
           @value = value
@@ -205,7 +206,7 @@ describe "Semantic: class" do
       end
 
       b = Box.new(10)
-      ") { generic_class "Box", int32 }
+      CRYSTAL
     mod = result.program
     type = result.node.type.as(GenericClassInstanceType)
     type.type_vars["T"].type.should eq(mod.int32)
@@ -213,7 +214,7 @@ describe "Semantic: class" do
   end
 
   it "does automatic type inference of new for generic types 2" do
-    result = assert_type("
+    result = assert_type(<<-CRYSTAL) { generic_class "Box", bool }
       class Box(T)
         def initialize(x, value : T)
           @value = value
@@ -222,7 +223,7 @@ describe "Semantic: class" do
 
       b1 = Box.new(1, 10)
       b2 = Box.new(1, false)
-      ") { generic_class "Box", bool }
+      CRYSTAL
     mod = result.program
     type = result.node.type.as(GenericClassInstanceType)
     type.type_vars["T"].type.should eq(mod.bool)
@@ -230,7 +231,7 @@ describe "Semantic: class" do
   end
 
   it "does automatic type inference of new for nested generic type" do
-    nodes = parse("
+    nodes = parse(<<-CRYSTAL).as(Expressions)
       class Foo
         class Bar(T)
           def initialize(x : T)
@@ -240,7 +241,7 @@ describe "Semantic: class" do
       end
 
       Foo::Bar.new(1)
-      ").as(Expressions)
+      CRYSTAL
     result = semantic nodes
     mod = result.program
     type = nodes.last.type.as(GenericClassInstanceType)
@@ -274,41 +275,38 @@ describe "Semantic: class" do
   end
 
   it "reports wrong number of arguments for initialize" do
-    assert_error "
+    assert_error <<-CRYSTAL, "wrong number of arguments"
       class Foo
         def initialize(x, y)
         end
       end
 
       f = Foo.new
-      ",
-      "wrong number of arguments"
+      CRYSTAL
   end
 
   it "reports can't instantiate abstract class on new" do
-    assert_error "
+    assert_error <<-CRYSTAL, "can't instantiate abstract class Foo"
       abstract class Foo; end
       Foo.new
-      ",
-      "can't instantiate abstract class Foo"
+      CRYSTAL
   end
 
   it "reports can't instantiate abstract class on allocate" do
-    assert_error "
+    assert_error <<-CRYSTAL, "can't instantiate abstract class Foo"
       abstract class Foo; end
       Foo.allocate
-      ",
-      "can't instantiate abstract class Foo"
+      CRYSTAL
   end
 
   it "doesn't lookup new in supermetaclass" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { generic_class "Foo", int32 }
       class Foo(T)
       end
 
       Reference.new
       Foo(Int32).new
-      ") { generic_class "Foo", int32 }
+      CRYSTAL
   end
 
   it "errors when wrong arguments for new" do
@@ -317,7 +315,7 @@ describe "Semantic: class" do
   end
 
   it "types virtual method of generic class" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       class Object
         def foo
           bar
@@ -335,17 +333,17 @@ describe "Semantic: class" do
       end
 
       Foo(Int32).new.foo
-      ") { int32 }
+      CRYSTAL
   end
 
   it "allows defining classes inside modules or classes with ::" do
-    input = parse("
+    input = parse(<<-CRYSTAL)
       class Foo
       end
 
       class Foo::Bar
       end
-      ")
+      CRYSTAL
     result = semantic input
     mod = result.program
     mod.types["Foo"].types["Bar"].as(NonGenericClassType)
@@ -372,19 +370,33 @@ describe "Semantic: class" do
       end
       "
 
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       #{code}
       Mod::Foo.foo(Mod::Bar.new)
-      ") { int32 }
+      CRYSTAL
 
-    assert_type("
+    assert_type(<<-CRYSTAL) { char }
       #{code}
       Mod::Foo.foo(Bar.new)
-      ") { char }
+      CRYSTAL
+  end
+
+  it "type def does not reopen type from parent namespace (#11181)" do
+    assert_type <<-CRYSTAL, inject_primitives: false { types["Baz"].types["Foo"].types["Bar"].metaclass }
+      class Foo::Bar
+      end
+
+      module Baz
+        class Foo::Bar
+        end
+      end
+
+      Baz::Foo::Bar
+      CRYSTAL
   end
 
   it "finds in global scope if includes module" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       class Baz
       end
 
@@ -397,20 +409,20 @@ describe "Semantic: class" do
       end
 
       1
-    ") { int32 }
+      CRYSTAL
   end
 
   it "allows instantiating generic class with number" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { generic_class "Foo", 1.int32 }
       class Foo(T)
       end
 
       Foo(1).new
-      ") { generic_class "Foo", 1.int32 }
+      CRYSTAL
   end
 
   it "uses number type var in class method" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo(T)
         def self.foo
           T
@@ -418,11 +430,11 @@ describe "Semantic: class" do
       end
 
       Foo(1).foo
-      ") { int32 }
+      CRYSTAL
   end
 
   it "uses self as type var" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { generic_class "Foo", types["Bar"] }
       class Foo(T)
       end
 
@@ -433,11 +445,11 @@ describe "Semantic: class" do
       end
 
       Bar.coco.new
-      ") { generic_class "Foo", types["Bar"] }
+      CRYSTAL
   end
 
   it "uses self as type var" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { generic_class "Foo", types["Baz"] }
       class Foo(T)
       end
 
@@ -451,11 +463,11 @@ describe "Semantic: class" do
       end
 
       Baz.coco.new
-      ") { generic_class "Foo", types["Baz"] }
+      CRYSTAL
   end
 
   it "infers generic type after instance was created with explicit type" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo(T)
         def initialize(@x : T)
         end
@@ -468,7 +480,7 @@ describe "Semantic: class" do
       foo1 = Foo(Bool).new(true)
       foo2 = Foo.new(1)
       foo2.x
-      ") { int32 }
+      CRYSTAL
   end
 
   it "errors when creating Value" do
@@ -480,7 +492,7 @@ describe "Semantic: class" do
   end
 
   it "reads an object instance var" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def initialize(@x : Int32)
         end
@@ -488,11 +500,11 @@ describe "Semantic: class" do
 
       foo = Foo.new(1)
       foo.@x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "reads a virtual type instance var" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def initialize(@x : Int32)
         end
@@ -503,29 +515,27 @@ describe "Semantic: class" do
 
       foo = Foo.new(1) || Bar.new(2)
       foo.@x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "errors if reading non-existent ivar" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't infer the type of instance variable '@y' of Foo"
       class Foo
       end
 
       foo = Foo.new
       foo.@y
-      ),
-      "can't infer the type of instance variable '@y' of Foo"
+      CRYSTAL
   end
 
   it "errors if reading ivar from non-ivar container" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use instance variables inside primitive types (at Int32)"
       1.@y
-      ),
-      "can't use instance variables inside primitive types (at Int32)"
+      CRYSTAL
   end
 
   it "reads an object instance var from a union type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of(int32, char) }
       class Foo
         def initialize(@x : Int32)
         end
@@ -540,11 +550,11 @@ describe "Semantic: class" do
       bar = Bar.new(2, 'a')
       union = foo || bar
       union.@x
-      )) { union_of(int32, char) }
+      CRYSTAL
   end
 
   it "says that instance vars are not allowed in metaclass" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "@instance_vars are not yet allowed in metaclasses: use @@class_vars instead"
       module Foo
         def self.foo
           @foo
@@ -552,12 +562,11 @@ describe "Semantic: class" do
       end
 
       Foo.foo
-      ),
-      "@instance_vars are not yet allowed in metaclasses: use @@class_vars instead"
+      CRYSTAL
   end
 
   it "doesn't use initialize from base class" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "wrong number of arguments for 'Bar.new' (given 1, expected 2)"
       class Foo
         def initialize(x)
         end
@@ -569,12 +578,11 @@ describe "Semantic: class" do
       end
 
       Bar.new(1)
-      ),
-      "wrong number of arguments for 'Bar.new' (given 1, expected 2)"
+      CRYSTAL
   end
 
   it "doesn't use initialize from base class with virtual type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "wrong number of arguments for 'Bar#initialize' (given 1, expected 2)", inject_primitives: true
       class Foo
         def initialize(x)
         end
@@ -587,21 +595,20 @@ describe "Semantic: class" do
 
       klass = 1 == 1 ? Foo : Bar
       klass.new(1)
-      ),
-      "wrong number of arguments for 'Bar#initialize' (given 1, expected 2)", inject_primitives: true
+      CRYSTAL
   end
 
   it "errors if using underscore in generic class" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use underscore as generic type argument"
       class Foo(T)
       end
 
       Foo(_).new
-      ), "can't use underscore as generic type argument"
+      CRYSTAL
   end
 
   it "types bug #168 (it inherits instance var even if not mentioned in initialize)" do
-    assert_error "
+    assert_error <<-CRYSTAL, "can't infer the type of instance variable '@x' of Foo"
       class Foo
         def foo
           x = @x
@@ -619,12 +626,11 @@ describe "Semantic: class" do
       end
 
       Bar.new(Foo.new).foo
-      ",
-      "can't infer the type of instance variable '@x' of Foo"
+      CRYSTAL
   end
 
   it "doesn't mark instance variable as nilable if calling another initialize" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def initialize(x, y)
           initialize(x)
@@ -640,121 +646,111 @@ describe "Semantic: class" do
 
       foo = Foo.new(1, 2)
       foo.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "says wrong number of arguments for abstract class new" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "wrong number of arguments for 'Foo.new' (given 1, expected 0)"
       abstract class Foo
       end
 
       Foo.new(1)
-      ),
-      "wrong number of arguments for 'Foo.new' (given 1, expected 0)"
+      CRYSTAL
   end
 
   it "says wrong number of arguments for abstract class new (2)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "wrong number of arguments for 'Foo.new' (given 0, expected 1)"
       abstract class Foo
         def initialize(x)
         end
       end
 
       Foo.new
-      ),
-      "wrong number of arguments for 'Foo.new' (given 0, expected 1)"
+      CRYSTAL
   end
 
   it "can't reopen as struct" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "Foo is not a struct, it's a class"
       class Foo
       end
 
       struct Foo
       end
-      ),
-      "Foo is not a struct, it's a class"
+      CRYSTAL
   end
 
   it "can't reopen as module" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "Foo is not a module, it's a class"
       class Foo
       end
 
       module Foo
       end
-      ),
-      "Foo is not a module, it's a class"
+      CRYSTAL
   end
 
   it "errors if reopening non-generic class as generic" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "Foo is not a generic class"
       class Foo
       end
 
       class Foo(T)
       end
-      ),
-      "Foo is not a generic class"
+      CRYSTAL
   end
 
   it "errors if reopening generic class with different type vars" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "type var must be T, not U"
       class Foo(T)
       end
 
       class Foo(U)
       end
-      ),
-      "type var must be T, not U"
+      CRYSTAL
   end
 
   it "errors if reopening generic class with different type vars (2)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "type vars must be A, B, not C"
       class Foo(A, B)
       end
 
       class Foo(C)
       end
-      ),
-      "type vars must be A, B, not C"
+      CRYSTAL
   end
 
   it "errors if reopening generic class with different splat index" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "type var must be A, not *A"
       class Foo(A)
       end
 
       class Foo(*A)
       end
-      ),
-      "type var must be A, not *A"
+      CRYSTAL
   end
 
   it "errors if reopening generic class with different splat index (2)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "type var must be *A, not A"
       class Foo(*A)
       end
 
       class Foo(A)
       end
-      ),
-      "type var must be *A, not A"
+      CRYSTAL
   end
 
   it "errors if reopening generic class with different splat index (3)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "type vars must be *A, B, not A, *B"
       class Foo(*A, B)
       end
 
       class Foo(A, *B)
       end
-      ),
-      "type vars must be *A, B, not A, *B"
+      CRYSTAL
   end
 
   it "allows declaring a variable in an initialize and using it" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       class Foo
         def initialize
           @x = uninitialized Int32
@@ -767,11 +763,11 @@ describe "Semantic: class" do
       end
 
       Foo.new.x
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "allows using self in class scope" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def self.foo
           1
@@ -785,11 +781,11 @@ describe "Semantic: class" do
       end
 
       Foo.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "can't use implicit initialize if defined in parent" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "wrong number of arguments for 'Bar.new' (given 0, expected 1)"
       class Foo
         def initialize(x)
         end
@@ -799,12 +795,11 @@ describe "Semantic: class" do
       end
 
       Bar.new
-      ),
-      "wrong number of arguments for 'Bar.new' (given 0, expected 1)"
+      CRYSTAL
   end
 
   it "doesn't error on new on abstract virtual type class" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       abstract class Foo
       end
 
@@ -821,23 +816,22 @@ describe "Semantic: class" do
       ptr.value = Bar
       bar = ptr.value.new(1)
       bar.x
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "says no overload matches for class new" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #1 to 'Foo.new' to be Int32, not Char"
       class Foo
         def self.new(x : Int32)
         end
       end
 
       Foo.new 'a'
-      ),
-      "no overload matches"
+      CRYSTAL
   end
 
   it "correctly types #680" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable int32 }
       class Foo
         def initialize(@method : Int32?)
         end
@@ -854,11 +848,11 @@ describe "Semantic: class" do
       end
 
       Bar.new.method
-      )) { nilable int32 }
+      CRYSTAL
   end
 
   it "correctly types #680 (2)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "instance variable '@method' of Foo must be Int32, not Nil"
       class Foo
         def initialize(@method : Int32)
         end
@@ -875,12 +869,11 @@ describe "Semantic: class" do
       end
 
       Bar.new.method
-      ),
-      "instance variable '@method' of Foo must be Int32, not Nil"
+      CRYSTAL
   end
 
   it "can invoke method on abstract type without subclasses nor instances" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       require "prelude"
 
       abstract class Foo
@@ -889,11 +882,11 @@ describe "Semantic: class" do
       a = [] of Foo
       a.each &.foo
       1
-      )) { int32 }
+      CRYSTAL
   end
 
   it "can invoke method on abstract generic type without subclasses nor instances" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       require "prelude"
 
       abstract class Foo(T)
@@ -902,11 +895,11 @@ describe "Semantic: class" do
       a = [] of Foo(Int32)
       a.each &.foo
       1
-      )) { int32 }
+      CRYSTAL
   end
 
   it "can invoke method on abstract generic type with subclasses but no instances" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       require "prelude"
 
       abstract class Foo(T)
@@ -920,43 +913,41 @@ describe "Semantic: class" do
       a = [] of Foo(Int32)
       a.each &.foo
       1
-      )) { int32 }
+      CRYSTAL
   end
 
   it "doesn't crash on instance variable assigned a proc, and never instantiated (#923)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nil_type }
       class Klass
         def self.f(arg)
         end
 
         @a  : Proc(String, Nil) = ->f(String)
       end
-      )) { nil_type }
+      CRYSTAL
   end
 
   it "errors if declares class inside if" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't declare class dynamically"
       if 1 == 2
         class Foo; end
       end
-      ),
-      "can't declare class dynamically"
+      CRYSTAL
   end
 
   it "can mark initialize as private" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "private method 'new' called for Foo"
       class Foo
         private def initialize
         end
       end
 
       Foo.new
-      ),
-      "private method 'new' called for Foo"
+      CRYSTAL
   end
 
   it "errors if creating instance before typing instance variable" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "instance variable '@x' of Foo must be Int32"
       class Foo
         Foo.new
 
@@ -966,12 +957,11 @@ describe "Semantic: class" do
           @x = false
         end
       end
-      ),
-      "instance variable '@x' of Foo must be Int32"
+      CRYSTAL
   end
 
   it "errors if assigning superclass to declared instance var" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "instance variable '@bar' of Main must be Bar"
       class Foo
       end
 
@@ -987,12 +977,11 @@ describe "Semantic: class" do
       end
 
       Main.new
-      ),
-      "instance variable '@bar' of Main must be Bar"
+      CRYSTAL
   end
 
   it "hoists instance variable initializer" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       a = Foo.new.bar + 1
 
       class Foo
@@ -1004,11 +993,11 @@ describe "Semantic: class" do
       end
 
       a
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "doesn't mix classes on definition (#2352)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Baz
       end
 
@@ -1019,11 +1008,11 @@ describe "Semantic: class" do
       end
 
       Moo::Baz::B.foo
-      )) { int32 }
+      CRYSTAL
   end
 
   it "errors if using read-instance-var with non-typed variable" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't infer the type of instance variable '@foo' of Foo"
       class Foo
         def foo
           @foo
@@ -1032,33 +1021,32 @@ describe "Semantic: class" do
 
       f = Foo.new
       f.@foo
-      ),
-      "can't infer the type of instance variable '@foo' of Foo"
+      CRYSTAL
   end
 
   it "doesn't crash with top-level initialize (#2601)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       def initialize
         1
       end
 
       initialize
-      )) { int32 }
+      CRYSTAL
   end
 
   it "inherits self (#2890)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Foo"].metaclass }
       class Foo
         class Bar < self
         end
       end
 
       {{Foo::Bar.superclass}}
-      )) { types["Foo"].metaclass }
+      CRYSTAL
   end
 
   it "inherits Gen(self) (#2890)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Foo"].metaclass }
       class Gen(T)
         def self.t
           T
@@ -1071,11 +1059,11 @@ describe "Semantic: class" do
       end
 
       Foo::Bar.t
-      )) { types["Foo"].metaclass }
+      CRYSTAL
   end
 
   it "errors if inheriting Gen(self) and there's no self (#2890)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "there's no self in this scope"
       class Gen(T)
         def self.t
           T
@@ -1086,12 +1074,11 @@ describe "Semantic: class" do
       end
 
       Bar.t
-      ),
-      "there's no self in this scope"
+      CRYSTAL
   end
 
   it "preserves order of instance vars (#3050)" do
-    result = semantic("
+    result = semantic(<<-CRYSTAL)
       class Foo
         @x = uninitialized Int32
         @y : Int32
@@ -1099,24 +1086,23 @@ describe "Semantic: class" do
         def initialize(@y)
         end
       end
-      ")
+      CRYSTAL
     instance_vars = result.program.types["Foo"].instance_vars.to_a.map(&.[0])
     instance_vars.should eq(%w(@x @y))
   end
 
   it "errors if inherits from module" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "Moo is not a class, it's a module"
       module Moo
       end
 
       class Foo < Moo
       end
-      ),
-      "Moo is not a class, it's a module"
+      CRYSTAL
   end
 
   it "errors if inherits from metaclass" do
-    assert_error <<-CR, "Foo.class is not a class, it's a metaclass"
+    assert_error <<-CRYSTAL, "Foo.class is not a class, it's a metaclass"
       class Foo
       end
 
@@ -1124,30 +1110,29 @@ describe "Semantic: class" do
 
       class Bar < FooClass
       end
-      CR
+      CRYSTAL
   end
 
   it "can use short name for top-level type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["T"] }
       class T
       end
 
       T.new
-      )) { types["T"] }
+      CRYSTAL
   end
 
   it "errors on no method found on abstract class, class method (#2241)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined method 'bar' for Foo.class"
       abstract class Foo
       end
 
       Foo.bar
-      ),
-      "undefined method 'bar' for Foo.class"
+      CRYSTAL
   end
 
   it "inherits self twice (#5495)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of [types["Foo"].metaclass, types["Foo"].metaclass] }
       class Foo
         class Bar < self
         end
@@ -1157,11 +1142,11 @@ describe "Semantic: class" do
       end
 
       { {{ Foo::Bar.superclass }}, {{ Foo::Baz.superclass }} }
-    )) { tuple_of [types["Foo"].metaclass, types["Foo"].metaclass] }
+      CRYSTAL
   end
 
   it "types as no return if calling method on abstract class with all abstract subclasses (#6996)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { no_return }
       require "prelude"
 
       abstract class Foo
@@ -1172,11 +1157,11 @@ describe "Semantic: class" do
       end
 
       Pointer(Foo).malloc(1_u64).value.foo?
-      )) { no_return }
+      CRYSTAL
   end
 
   it "types as no return if calling method on abstract class with generic subclasses but no instances (#6996)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { no_return }
       require "prelude"
 
       abstract class Foo
@@ -1190,11 +1175,11 @@ describe "Semantic: class" do
       end
 
       Pointer(Foo).malloc(1_u64).value.foo?
-      )) { no_return }
+      CRYSTAL
   end
 
   it "types as no return if calling method on abstract generic class (#6996)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { no_return }
       require "prelude"
 
       abstract class Foo(T)
@@ -1202,11 +1187,11 @@ describe "Semantic: class" do
       end
 
       Pointer(Foo(Int32)).malloc(1_u64).value.foo?
-      )) { no_return }
+      CRYSTAL
   end
 
   it "types as no return if calling method on generic class with subclasses (#6996)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { no_return }
       require "prelude"
 
       abstract class Foo(T)
@@ -1219,6 +1204,6 @@ describe "Semantic: class" do
       Bar(Int32)
 
       Pointer(Foo(Int32)).malloc(1_u64).value.foo?
-      )) { no_return }
+      CRYSTAL
   end
 end

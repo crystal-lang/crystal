@@ -49,33 +49,70 @@ class LLVM::Builder
     Value.new phi_node
   end
 
-  def call(func, name : String = "")
+  @[Deprecated("Pass the function type of `func` as well (equal to `func.function_type`) in order to support LLVM 15+")]
+  def call(func : LLVM::Function, name : String = "")
     # check_func(func)
 
-    {% if LibLLVM::IS_LT_80 %}
-      Value.new LibLLVM.build_call(self, func, nil, 0, name)
-    {% else %}
-      Value.new LibLLVM.build_call2(self, func.function_type, func, nil, 0, name)
-    {% end %}
+    Value.new LibLLVM.build_call2(self, func.function_type, func, nil, 0, name)
   end
 
-  def call(func, arg : LLVM::Value, name : String = "")
+  def call(type : LLVM::Type, func : LLVM::Function, name : String = "")
+    # check_type("call", type)
+    # check_func(func)
+
+    Value.new LibLLVM.build_call2(self, type, func, nil, 0, name)
+  end
+
+  @[Deprecated("Pass the function type of `func` as well (equal to `func.function_type`) in order to support LLVM 15+")]
+  def call(func : LLVM::Function, arg : LLVM::Value, name : String = "")
     # check_func(func)
     # check_value(arg)
 
     value = arg.to_unsafe
-    {% if LibLLVM::IS_LT_80 %}
-      Value.new LibLLVM.build_call(self, func, pointerof(value), 1, name)
-    {% else %}
-      Value.new LibLLVM.build_call2(self, func.function_type, func, pointerof(value), 1, name)
-    {% end %}
+    Value.new LibLLVM.build_call2(self, func.function_type, func, pointerof(value), 1, name)
   end
 
-  def call(func, args : Array(LLVM::Value), name : String = "", bundle : LLVM::OperandBundleDef = LLVM::OperandBundleDef.null)
+  def call(type : LLVM::Type, func : LLVM::Function, arg : LLVM::Value, name : String = "")
+    # check_type("call", type)
+    # check_func(func)
+    # check_value(arg)
+
+    value = arg.to_unsafe
+    Value.new LibLLVM.build_call2(self, type, func, pointerof(value), 1, name)
+  end
+
+  @[Deprecated("Pass the function type of `func` as well (equal to `func.function_type`) in order to support LLVM 15+")]
+  def call(func : LLVM::Function, args : Array(LLVM::Value), name : String = "", bundle : LLVM::OperandBundleDef = LLVM::OperandBundleDef.null)
     # check_func(func)
     # check_values(args)
 
-    Value.new LibLLVMExt.build_call2(self, func.function_type, func, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, bundle, name)
+    bundle_ref = bundle.to_unsafe
+    bundles = bundle_ref ? pointerof(bundle_ref) : Pointer(Void).null.as(LibLLVM::OperandBundleRef*)
+    num_bundles = bundle_ref ? 1 : 0
+    Value.new {{ LibLLVM::IS_LT_180 ? LibLLVMExt : LibLLVM }}.build_call_with_operand_bundles(self, func.function_type, func, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, bundles, num_bundles, name)
+  end
+
+  def call(type : LLVM::Type, func : LLVM::Function, args : Array(LLVM::Value), name : String = "")
+    # check_type("call", type)
+    # check_func(func)
+    # check_values(args)
+
+    Value.new LibLLVM.build_call2(self, type, func, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, name)
+  end
+
+  def call(type : LLVM::Type, func : LLVM::Function, args : Array(LLVM::Value), name : String, bundle : LLVM::OperandBundleDef)
+    # check_type("call", type)
+    # check_func(func)
+    # check_values(args)
+
+    bundle_ref = bundle.to_unsafe
+    bundles = bundle_ref ? pointerof(bundle_ref) : Pointer(Void).null.as(LibLLVM::OperandBundleRef*)
+    num_bundles = bundle_ref ? 1 : 0
+    Value.new {{ LibLLVM::IS_LT_180 ? LibLLVMExt : LibLLVM }}.build_call_with_operand_bundles(self, type, func, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, bundles, num_bundles, name)
+  end
+
+  def call(type : LLVM::Type, func : LLVM::Function, args : Array(LLVM::Value), bundle : LLVM::OperandBundleDef)
+    call(type, func, args, "", bundle)
   end
 
   def alloca(type, name = "")
@@ -91,41 +128,81 @@ class LLVM::Builder
     Value.new LibLLVM.build_store(self, value, ptr)
   end
 
-  def load(ptr, name = "")
+  @[Deprecated("Pass the pointee of `ptr` as well (equal to `ptr.type.element_type`) in order to support LLVM 15+")]
+  def load(ptr : LLVM::Value, name = "")
     # check_value(ptr)
 
-    Value.new LibLLVM.build_load(self, ptr, name)
+    Value.new LibLLVM.build_load2(self, ptr.type.element_type, ptr, name)
+  end
+
+  def load(type : LLVM::Type, ptr : LLVM::Value, name = "")
+    # check_type("load", type)
+    # check_value(ptr)
+
+    Value.new LibLLVM.build_load2(self, type, ptr, name)
   end
 
   def store_volatile(value, ptr)
     store(value, ptr).tap { |v| v.volatile = true }
   end
 
-  def load_volatile(ptr, name = "")
+  def load_volatile(ptr : LLVM::Value, name = "")
     load(ptr, name).tap { |v| v.volatile = true }
   end
 
+  def load_volatile(type : LLVM::Type, ptr : LLVM::Value, name = "")
+    load(type, ptr, name).tap { |v| v.volatile = true }
+  end
+
   {% for method_name in %w(gep inbounds_gep) %}
-    def {{method_name.id}}(value, indices : Array(LLVM::ValueRef), name = "")
+    @[Deprecated("Pass the type of `value` as well (equal to `value.type`) in order to support LLVM 15+")]
+    def {{method_name.id}}(value : LLVM::Value, indices : Array(LLVM::ValueRef), name = "")
       # check_value(value)
 
-      Value.new LibLLVM.build_{{method_name.id}}(self, value, indices.to_unsafe.as(LibLLVM::ValueRef*), indices.size, name)
+      Value.new LibLLVM.build_{{method_name.id}}2(self, value.type, value, indices.to_unsafe.as(LibLLVM::ValueRef*), indices.size, name)
     end
 
-    def {{method_name.id}}(value, index : LLVM::Value, name = "")
+    def {{method_name.id}}(type : LLVM::Type, value : LLVM::Value, indices : Array(LLVM::ValueRef), name = "")
+      # check_type({{method_name}}, type)
+      # check_value(value)
+
+      Value.new LibLLVM.build_{{method_name.id}}2(self, type, value, indices.to_unsafe.as(LibLLVM::ValueRef*), indices.size, name)
+    end
+
+    @[Deprecated("Pass the type of `value` as well (equal to `value.type`) in order to support LLVM 15+")]
+    def {{method_name.id}}(value : LLVM::Value, index : LLVM::Value, name = "")
       # check_value(value)
 
       indices = pointerof(index).as(LibLLVM::ValueRef*)
-      Value.new LibLLVM.build_{{method_name.id}}(self, value, indices, 1, name)
+      Value.new LibLLVM.build_{{method_name.id}}2(self, value.type, value, indices, 1, name)
     end
 
-    def {{method_name.id}}(value, index1 : LLVM::Value, index2 : LLVM::Value, name = "")
+    def {{method_name.id}}(type : LLVM::Type, value : LLVM::Value, index : LLVM::Value, name = "")
+      # check_type({{method_name}}, type)
+      # check_value(value)
+
+      indices = pointerof(index).as(LibLLVM::ValueRef*)
+      Value.new LibLLVM.build_{{method_name.id}}2(self, type, value, indices, 1, name)
+    end
+
+    @[Deprecated("Pass the type of `value` as well (equal to `value.type`) in order to support LLVM 15+")]
+    def {{method_name.id}}(value : LLVM::Value, index1 : LLVM::Value, index2 : LLVM::Value, name = "")
       # check_value(value)
 
       indices = uninitialized LLVM::Value[2]
       indices[0] = index1
       indices[1] = index2
-      Value.new LibLLVM.build_{{method_name.id}}(self, value, indices.to_unsafe.as(LibLLVM::ValueRef*), 2, name)
+      Value.new LibLLVM.build_{{method_name.id}}2(self, value.type, value, indices.to_unsafe.as(LibLLVM::ValueRef*), 2, name)
+    end
+
+    def {{method_name.id}}(type : LLVM::Type, value : LLVM::Value, index1 : LLVM::Value, index2 : LLVM::Value, name = "")
+      # check_type({{method_name}}, type)
+      # check_value(value)
+
+      indices = uninitialized LLVM::Value[2]
+      indices[0] = index1
+      indices[1] = index2
+      Value.new LibLLVM.build_{{method_name.id}}2(self, type, value, indices.to_unsafe.as(LibLLVM::ValueRef*), 2, name)
     end
   {% end %}
 
@@ -162,11 +239,13 @@ class LLVM::Builder
     end
   {% end %}
 
-  def not(value, name = "")
-    # check_value(value)
+  {% for name in %w(not neg fneg) %}
+    def {{name.id}}(value, name = "")
+      # check_value(value)
 
-    Value.new LibLLVM.build_not(self, value, name)
-  end
+      Value.new LibLLVM.build_{{name.id}}(self, value, name)
+    end
+  {% end %}
 
   def unreachable
     Value.new LibLLVM.build_unreachable(self)
@@ -196,29 +275,50 @@ class LLVM::Builder
   end
 
   def catch_switch(parent_pad, basic_block, num_handlers, name = "")
-    Value.new LibLLVMExt.build_catch_switch(self, parent_pad, basic_block, num_handlers, name)
+    Value.new LibLLVM.build_catch_switch(self, parent_pad, basic_block, num_handlers, name)
   end
 
   def catch_pad(parent_pad, args : Array(LLVM::Value), name = "")
-    Value.new LibLLVMExt.build_catch_pad(self, parent_pad, args.size, args.to_unsafe.as(LibLLVM::ValueRef*), name)
+    Value.new LibLLVM.build_catch_pad(self, parent_pad, args.to_unsafe.as(LibLLVM::ValueRef*), args.size, name)
   end
 
   def add_handler(catch_switch_ref, handler)
-    LibLLVMExt.add_handler catch_switch_ref, handler
+    LibLLVM.add_handler catch_switch_ref, handler
   end
 
   def build_operand_bundle_def(name, values : Array(LLVM::Value))
-    LLVM::OperandBundleDef.new LibLLVMExt.build_operand_bundle_def(name, values.to_unsafe.as(LibLLVM::ValueRef*), values.size)
+    LLVM::OperandBundleDef.new {{ LibLLVM::IS_LT_180 ? LibLLVMExt : LibLLVM }}.create_operand_bundle(name, name.bytesize, values.to_unsafe.as(LibLLVM::ValueRef*), values.size)
   end
 
   def build_catch_ret(pad, basic_block)
-    LibLLVMExt.build_catch_ret(self, pad, basic_block)
+    LibLLVM.build_catch_ret(self, pad, basic_block)
   end
 
+  @[Deprecated("Pass the function type of `fn` as well (equal to `fn.function_type`) in order to support LLVM 15+")]
   def invoke(fn : LLVM::Function, args : Array(LLVM::Value), a_then, a_catch, bundle : LLVM::OperandBundleDef = LLVM::OperandBundleDef.null, name = "")
     # check_func(fn)
 
-    Value.new LibLLVMExt.build_invoke2 self, fn.function_type, fn, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, a_then, a_catch, bundle, name
+    bundle_ref = bundle.to_unsafe
+    bundles = bundle_ref ? pointerof(bundle_ref) : Pointer(Void).null.as(LibLLVM::OperandBundleRef*)
+    num_bundles = bundle_ref ? 1 : 0
+    Value.new {{ LibLLVM::IS_LT_180 ? LibLLVMExt : LibLLVM }}.build_invoke_with_operand_bundles(self, fn.function_type, fn, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, a_then, a_catch, bundles, num_bundles, name)
+  end
+
+  def invoke(type : LLVM::Type, fn : LLVM::Function, args : Array(LLVM::Value), a_then, a_catch, *, name = "")
+    # check_type("invoke", type)
+    # check_func(fn)
+
+    Value.new LibLLVM.build_invoke2 self, type, fn, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, a_then, a_catch, name
+  end
+
+  def invoke(type : LLVM::Type, fn : LLVM::Function, args : Array(LLVM::Value), a_then, a_catch, bundle : LLVM::OperandBundleDef, name = "")
+    # check_type("invoke", type)
+    # check_func(fn)
+
+    bundle_ref = bundle.to_unsafe
+    bundles = bundle_ref ? pointerof(bundle_ref) : Pointer(Void).null.as(LibLLVM::OperandBundleRef*)
+    num_bundles = bundle_ref ? 1 : 0
+    Value.new {{ LibLLVM::IS_LT_180 ? LibLLVMExt : LibLLVM }}.build_invoke_with_operand_bundles(self, type, fn, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, a_then, a_catch, bundles, num_bundles, name)
   end
 
   def switch(value, otherwise, cases)
@@ -235,8 +335,8 @@ class LLVM::Builder
     Value.new LibLLVM.build_atomicrmw(self, op, ptr, val, ordering, singlethread ? 1 : 0)
   end
 
-  def cmpxchg(pointer, cmp, new, success_ordering, failure_ordering)
-    Value.new LibLLVMExt.build_cmpxchg(self, pointer, cmp, new, success_ordering, failure_ordering)
+  def cmpxchg(pointer, cmp, new, success_ordering, failure_ordering, singlethread : Bool = false)
+    Value.new LibLLVM.build_atomic_cmp_xchg(self, pointer, cmp, new, success_ordering, failure_ordering, singlethread ? 1 : 0)
   end
 
   def fence(ordering, singlethread, name = "")
@@ -247,8 +347,25 @@ class LLVM::Builder
     Value.new LibLLVM.build_va_arg(self, list, type, name)
   end
 
+  @[Deprecated("Call `#set_current_debug_location(metadata, context)` or `#clear_current_debug_location` instead")]
   def set_current_debug_location(line, column, scope, inlined_at = nil)
     LibLLVMExt.set_current_debug_location(self, line, column, scope, inlined_at)
+  end
+
+  def set_current_debug_location(metadata, context : LLVM::Context)
+    {% if LibLLVM::IS_LT_90 %}
+      LibLLVM.set_current_debug_location(self, LibLLVM.metadata_as_value(context, metadata))
+    {% else %}
+      LibLLVM.set_current_debug_location2(self, metadata)
+    {% end %}
+  end
+
+  def clear_current_debug_location
+    {% if LibLLVM::IS_LT_90 %}
+      LibLLVMExt.clear_current_debug_location(self)
+    {% else %}
+      LibLLVM.set_current_debug_location2(self, nil)
+    {% end %}
   end
 
   def set_metadata(value, kind, node)
@@ -268,6 +385,10 @@ class LLVM::Builder
     @disposed = true
 
     LibLLVM.dispose_builder(@unwrap)
+  end
+
+  def finalize
+    dispose
   end
 
   # The next lines are for ease debugging when a types/values

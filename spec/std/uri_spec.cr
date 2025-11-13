@@ -2,7 +2,7 @@ require "spec"
 require "uri"
 require "uri/json"
 require "uri/yaml"
-require "../support/string"
+require "spec/helpers/string"
 
 private def assert_uri(string, file = __FILE__, line = __LINE__, **args)
   it "`#{string}`", file, line do
@@ -67,6 +67,10 @@ describe "URI" do
     assert_uri("http://www.example.com:81/", scheme: "http", host: "www.example.com", port: 81, path: "/")
     assert_uri("http://[::1]:81/", scheme: "http", host: "[::1]", port: 81, path: "/")
     assert_uri("http://192.0.2.16:81/", scheme: "http", host: "192.0.2.16", port: 81, path: "/")
+
+    # preserves fully-qualified host with trailing dot
+    assert_uri("https://example.com./", scheme: "https", host: "example.com.", path: "/")
+    assert_uri("https://example.com.:8443/", scheme: "https", host: "example.com.", port: 8443, path: "/")
 
     # port
     it { URI.parse("http://192.168.0.2:/foo").should eq URI.new(scheme: "http", host: "192.168.0.2", path: "/foo") }
@@ -166,6 +170,42 @@ describe "URI" do
     it { URI.new("http", "www.example.com", path: "/foo").hostname.should eq("www.example.com") }
     it { URI.new("http", "[::1]", path: "foo").hostname.should eq("::1") }
     it { URI.new(path: "/foo").hostname.should be_nil }
+  end
+
+  describe "#host" do
+    it "works with IPv6 address literals" do
+      uri = URI.new("http", "[::1]", path: "foo")
+      uri.hostname.should eq("::1")
+      uri.host.should eq("[::1]")
+      uri.to_s.should eq "http://[::1]/foo"
+      uri.host = "[::1]"
+      uri.to_s.should eq "http://[::1]/foo"
+
+      uri = URI.new("http", "::1", path: "foo")
+      uri.hostname.should eq("::1")
+      uri.host.should eq("[::1]")
+      uri.to_s.should eq "http://[::1]/foo"
+      uri.host = "::1"
+      uri.to_s.should eq "http://[::1]/foo"
+    end
+
+    it "works with IPv4 addresses" do
+      uri = URI.new("http", "192.168.0.2", path: "foo")
+      uri.hostname.should eq("192.168.0.2")
+      uri.host.should eq("192.168.0.2")
+      uri.to_s.should eq "http://192.168.0.2/foo"
+      uri.host = "192.168.0.2"
+      uri.to_s.should eq "http://192.168.0.2/foo"
+    end
+
+    it "works with domain names" do
+      uri = URI.new("http", "test.domain", path: "foo")
+      uri.hostname.should eq("test.domain")
+      uri.host.should eq("test.domain")
+      uri.to_s.should eq "http://test.domain/foo"
+      uri.host = "test.domain"
+      uri.to_s.should eq "http://test.domain/foo"
+    end
   end
 
   describe "#authority" do
@@ -365,6 +405,23 @@ describe "URI" do
     end
   end
 
+  describe "#update_query_params" do
+    it "returns self" do
+      expected_params = URI::Params{"id" => "30"}
+
+      uri = URI.parse("http://foo.com?id=30&limit=5#time=1305298413")
+      uri.update_query_params { |params| params.delete("limit") }.should be(uri)
+      uri.query_params.should eq(expected_params)
+    end
+
+    it "commits changes to the URI::Object" do
+      uri = URI.parse("http://foo.com?id=30&limit=5#time=1305298413")
+      uri.update_query_params { |params| params.delete("limit") }
+
+      uri.to_s.should eq("http://foo.com?id=30#time=1305298413")
+    end
+  end
+
   describe "#==" do
     it { URI.parse("http://example.com").should eq(URI.parse("http://example.com")) }
   end
@@ -380,7 +437,7 @@ describe "URI" do
     end
 
     it "returns nil for unknown schemes" do
-      URI.default_port("xyz").should eq(nil)
+      URI.default_port("xyz").should be_nil
     end
 
     it "treats scheme case insensitively" do
@@ -393,16 +450,25 @@ describe "URI" do
     it "registers port for scheme" do
       URI.set_default_port("ponzi", 9999)
       URI.default_port("ponzi").should eq(9999)
+    ensure
+      URI.set_default_port("ponzi", nil)
     end
 
     it "unregisters port for scheme" do
-      URI.set_default_port("ftp", nil)
-      URI.default_port("ftp").should eq(nil)
+      old_port = URI.default_port("ftp")
+      begin
+        URI.set_default_port("ftp", nil)
+        URI.default_port("ftp").should be_nil
+      ensure
+        URI.set_default_port("ftp", old_port)
+      end
     end
 
     it "treats scheme case insensitively" do
       URI.set_default_port("UNKNOWN", 1234)
       URI.default_port("unknown").should eq(1234)
+    ensure
+      URI.set_default_port("UNKNOWN", nil)
     end
   end
 

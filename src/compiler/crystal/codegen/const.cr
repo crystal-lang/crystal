@@ -46,12 +46,16 @@ class Crystal::CodeGenVisitor
              @main_mod.globals.add(@main_llvm_typer.llvm_type(const.value.type), global_name)
 
     type = const.value.type
-    # TODO: there's an LLVM bug that prevents us from having internal globals of type i128 or u128:
+    # TODO: LLVM < 9.0.0 has a bug that prevents us from having internal globals of type i128 or u128:
     # https://bugs.llvm.org/show_bug.cgi?id=42932
-    # so we just use global.
-    if @single_module && !(type.is_a?(IntegerType) && (type.kind == :i128 || type.kind == :u128))
+    # so we just use global in that case.
+    {% if compare_versions(Crystal::LLVM_VERSION, "9.0.0") < 0 %}
+      if @single_module && !(type.is_a?(IntegerType) && (type.kind.i128? || type.kind.u128?))
+        global.linkage = LLVM::Linkage::Internal
+      end
+    {% else %}
       global.linkage = LLVM::Linkage::Internal if @single_module
-    end
+    {% end %}
 
     global
   end
@@ -75,13 +79,11 @@ class Crystal::CodeGenVisitor
     set_current_debug_location const.locations.try &.first? if @debug.line_numbers?
 
     global = declare_const(const)
-    request_value do
-      accept const.value
-    end
+    request_value(const.value)
 
     const_type = const.value.type
     if const_type.passed_by_value?
-      @last = load @last
+      @last = load llvm_type(const_type), @last
     end
 
     global.initializer = @last
@@ -105,14 +107,12 @@ class Crystal::CodeGenVisitor
       set_current_debug_location const.locations.try &.first? if @debug.line_numbers?
 
       alloca_vars const.fake_def.try(&.vars), const.fake_def
-      request_value do
-        accept const.value
-      end
+      request_value(const.value)
     end
 
     const_type = const.value.type
     if const_type.passed_by_value?
-      @last = load @last
+      @last = load llvm_type(const_type), @last
     end
 
     store @last, global
@@ -132,7 +132,7 @@ class Crystal::CodeGenVisitor
     return global if const.initializer
 
     init_function_name = "~#{const.initialized_llvm_name}"
-    func = @main_mod.functions[init_function_name]? || create_initialize_const_function(init_function_name, const)
+    func = typed_fun?(@main_mod, init_function_name) || create_initialize_const_function(init_function_name, const)
     func = check_main_fun init_function_name, func
 
     set_current_debug_location const.locations.try &.first? if @debug.line_numbers?
@@ -146,7 +146,7 @@ class Crystal::CodeGenVisitor
   end
 
   def create_initialize_const_function(fun_name, const)
-    global, initialized_flag = declare_const_and_initialized_flag(const)
+    global, _ = declare_const_and_initialized_flag(const)
 
     in_main do
       define_main_function(fun_name, ([] of LLVM::Type), llvm_context.void, needs_alloca: true) do |func|
@@ -161,25 +161,23 @@ class Crystal::CodeGenVisitor
 
           alloca_vars const.fake_def.try(&.vars), const.fake_def
 
-          request_value do
-            accept const.value
-          end
+          request_value(const.value)
 
-          if const.value.type.passed_by_value?
-            @last = load @last
+          const_type = const.value.type
+          if const_type.passed_by_value?
+            @last = load llvm_type(const_type), @last
           end
 
           if @last.constant?
             global.initializer = @last
             global.global_constant = true
 
-            const_type = const.value.type
             if const_type.is_a?(PrimitiveType) || const_type.is_a?(EnumType)
               const.initializer = @last
             end
           else
-            global.initializer = llvm_type(const.value.type).null
-            unless const.value.type.nil_type? || const.value.type.void?
+            global.initializer = llvm_type(const_type).null
+            unless const_type.nil_type? || const_type.void?
               store @last, global
             end
           end
@@ -228,8 +226,8 @@ class Crystal::CodeGenVisitor
       return global
     end
 
-    read_function_name = "~#{const.llvm_name}:read"
-    func = @main_mod.functions[read_function_name]? || create_read_const_function(read_function_name, const)
+    read_function_name = "~#{const.llvm_name}:const_read"
+    func = typed_fun?(@main_mod, read_function_name) || create_read_const_function(read_function_name, const)
     func = check_main_fun read_function_name, func
     call func
   end

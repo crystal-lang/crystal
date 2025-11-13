@@ -1,38 +1,54 @@
 class XML::XPathContext
-  def initialize(node : Node)
-    @ctx = LibXML.xmlXPathNewContext(node.to_unsafe.value.doc)
-    @ctx.value.node = node.to_unsafe
+  getter errors = [] of XML::Error
+
+  def initialize(@node : Node)
+    @ctx = LibXML.xmlXPathNewContext(@node.to_unsafe.value.doc)
+    @ctx.value.node = @node.to_unsafe
+
+    {% if LibXML.has_method?(:xmlXPathSetErrorHandler) %}
+      LibXML.xmlXPathSetErrorHandler(@ctx, ->Error.structured_callback, Box.box(@errors))
+    {% end %}
+  end
+
+  # :nodoc:
+  def finalize
+    LibXML.xmlXPathFreeContext(@ctx)
   end
 
   def evaluate(search_path : String)
-    xpath = LibXML.xmlXPathEvalExpression(search_path, self)
-    unless xpath
-      {% if flag?(:arm) || flag?(:aarch64) %}
-        if errors = XML::Error.errors
-          raise errors.last
+    xpath_object =
+      {% if LibXML.has_method?(:xmlXPathSetErrorHandler) %}
+        LibXML.xmlXPathEvalExpression(search_path, self)
+      {% else %}
+        XML::Error.unsafe_collect(errors) do
+          LibXML.xmlXPathEvalExpression(search_path, self)
         end
       {% end %}
-      raise XML::Error.new("Error in '#{search_path}' expression", 0)
-    end
 
-    raise XML::Error.new("Error in '#{search_path}' expression", 0) unless xpath.value
-
-    case xpath.value.type
-    when LibXML::XPathObjectType::STRING
-      String.new(xpath.value.stringval)
-    when LibXML::XPathObjectType::NUMBER
-      xpath.value.floatval
-    when LibXML::XPathObjectType::BOOLEAN
-      xpath.value.boolval != 0
-    when LibXML::XPathObjectType::NODESET
-      if xpath.value.nodesetval
-        NodeSet.new(Node.new(@ctx.value.doc), xpath.value.nodesetval)
+    unless xpath_object
+      if error = @errors.first?
+        raise error
       else
-        NodeSet.new(Node.new(@ctx.value.doc))
+        raise XML::Error.new("Error in '#{search_path}' expression", 0)
       end
-    else
-      NodeSet.new(Node.new(@ctx.value.doc))
     end
+
+    retval =
+      case xpath_object.value.type
+      when LibXML::XPathObjectType::STRING
+        String.new(xpath_object.value.stringval)
+      when LibXML::XPathObjectType::NUMBER
+        xpath_object.value.floatval
+      when LibXML::XPathObjectType::BOOLEAN
+        xpath_object.value.boolval != 0
+      when LibXML::XPathObjectType::NODESET
+        NodeSet.new(@node.document, xpath_object.value.nodesetval)
+      else
+        NodeSet.new
+      end
+
+    LibXML.xmlXPathFreeObject(xpath_object)
+    retval
   end
 
   def register_namespaces(namespaces) : Nil
@@ -65,6 +81,7 @@ class XML::XPathContext
     LibXML.xmlXPathRegisterVariable(self, name, obj)
   end
 
+  # :nodoc:
   def to_unsafe
     @ctx
   end

@@ -4,7 +4,7 @@ require "uri/params"
 class URI
   describe Params do
     describe ".new" do
-      Params.new.should eq(Params.parse(""))
+      it { Params.new.should eq(Params.parse("")) }
     end
 
     describe ".parse" do
@@ -53,6 +53,22 @@ class URI
           encoded.should eq(to)
         end
       end
+
+      it "turns spaces to %20 if wanted" do
+        encoded = Params.build(space_to_plus: false) do |form|
+          form.add("foo bar", "hello world")
+        end
+
+        encoded.should eq("foo%20bar=hello%20world")
+      end
+
+      it "builds with IO" do
+        io = IO::Memory.new
+        Params.build(io) do |form|
+          form.add("custom", "key")
+        end
+        io.to_s.should eq("custom=key")
+      end
     end
 
     describe ".encode" do
@@ -61,9 +77,21 @@ class URI
         encoded.should eq("foo=bar&baz=quux&baz=quuz")
       end
 
+      it "builds from hash with IO" do
+        io = IO::Memory.new
+        Params.encode(io, {"foo" => "bar", "baz" => ["quux", "quuz"]})
+        io.to_s.should eq("foo=bar&baz=quux&baz=quuz")
+      end
+
       it "builds from named tuple" do
         encoded = Params.encode({foo: "bar", baz: ["quux", "quuz"]})
         encoded.should eq("foo=bar&baz=quux&baz=quuz")
+      end
+
+      it "builds from named tuple with IO" do
+        io = IO::Memory.new
+        Params.encode(io, {foo: "bar", baz: ["quux", "quuz"]})
+        io.to_s.should eq("foo=bar&baz=quux&baz=quuz")
       end
     end
 
@@ -72,6 +100,22 @@ class URI
         params = Params.parse("foo=bar&foo=baz&baz=qux")
         params.to_s.should eq("foo=bar&foo=baz&baz=qux")
       end
+
+      it "turns spaces to + by default" do
+        params = Params.parse("foo+bar=hello+world")
+        params.to_s.should eq("foo+bar=hello+world")
+      end
+
+      it "turns spaces to %20 if space_to_plus is false" do
+        params = Params.parse("foo+bar=hello+world")
+        params.to_s(space_to_plus: false).should eq("foo%20bar=hello%20world")
+      end
+    end
+
+    it "#inspect" do
+      URI::Params.new.inspect.should eq "URI::Params{}"
+
+      URI::Params{"foo" => ["bar", "baz"], "baz" => ["qux"]}.inspect.should eq %(URI::Params{"foo" => ["bar", "baz"], "baz" => ["qux"]})
     end
 
     describe "#[](name)" do
@@ -98,20 +142,20 @@ class URI
 
       it "return nil when there is no such param" do
         params = Params.parse("foo=bar&foo=baz&baz=qux")
-        params["non_existent_param"]?.should eq(nil)
+        params["non_existent_param"]?.should be_nil
       end
     end
 
     describe "#has_key?(name)" do
       it "returns true if param with provided name exists" do
         params = Params.parse("foo=bar&foo=baz&baz=qux")
-        params.has_key?("foo").should eq(true)
-        params.has_key?("baz").should eq(true)
+        params.has_key?("foo").should be_true
+        params.has_key?("baz").should be_true
       end
 
       it "return false if param with provided name does not exist" do
         params = Params.parse("foo=bar&foo=baz&baz=qux")
-        params.has_key?("non_existent_param").should eq(false)
+        params.has_key?("non_existent_param").should be_false
       end
     end
 
@@ -269,6 +313,64 @@ class URI
         expect_raises KeyError do
           params["foo"]
         end
+      end
+    end
+
+    describe "#merge!" do
+      it "modifies the receiver" do
+        params = Params.parse("foo=bar&foo=baz&qux=zoo")
+        other_params = Params.parse("foo=buzz&foo=extra")
+
+        params.merge!(other_params, replace: false)
+
+        params.to_s.should eq("foo=bar&foo=baz&foo=buzz&foo=extra&qux=zoo")
+      end
+
+      describe "does not modify the other params" do
+        it "with replace: true" do
+          params = Params.parse("foo=bar")
+          other_params = Params.parse("foo=buzz&foo=extra")
+
+          params.merge!(other_params, replace: true)
+          params.add("foo", "another")
+
+          other_params.to_s.should eq("foo=buzz&foo=extra")
+        end
+
+        it "with replace: false" do
+          params = Params.parse("foo=bar")
+          other_params = Params.parse("foo=buzz&foo=extra")
+
+          params.merge!(other_params, replace: false)
+          params.add("foo", "another")
+
+          other_params.to_s.should eq("foo=buzz&foo=extra")
+        end
+      end
+    end
+
+    describe "#merge" do
+      it "replaces all values with the same key by default" do
+        params = Params.parse("foo=bar&foo=baz&qux=zoo")
+        other_params = Params.parse("foo=buzz&foo=extra")
+
+        params.merge(other_params).to_s.should eq("foo=buzz&foo=extra&qux=zoo")
+      end
+
+      it "appends values with the same key with replace: false" do
+        params = Params.parse("foo=bar&foo=baz&qux=zoo")
+        other_params = Params.parse("foo=buzz&foo=extra")
+
+        params.merge(other_params, replace: false).to_s.should eq("foo=bar&foo=baz&foo=buzz&foo=extra&qux=zoo")
+      end
+
+      it "does not modify the receiver" do
+        params = Params.parse("foo=bar&foo=baz&qux=zoo")
+        other_params = Params.parse("foo=buzz&foo=extra")
+
+        params.merge(other_params)
+
+        params.to_s.should eq("foo=bar&foo=baz&qux=zoo")
       end
     end
 

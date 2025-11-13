@@ -1,6 +1,9 @@
 require "c/winnt"
 
+@[Link("kernel32")]
 lib LibC
+  fun GetStdHandle(nStdHandle : DWORD) : HANDLE
+
   fun GetCurrentDirectoryW(nBufferLength : DWORD, lpBuffer : LPWSTR) : DWORD
   fun SetCurrentDirectoryW(lpPathname : LPWSTR) : BOOL
 

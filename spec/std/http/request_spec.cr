@@ -331,6 +331,18 @@ module HTTP
         request = Request.new("GET", "")
         request.path.should eq("/")
       end
+
+      it "parses with only leading with double slash" do
+        HTTP::Request.new("GET", "//").path.should eq "//"
+      end
+
+      it "parses path leading with double slash" do
+        Request.new("GET", "//foo:bar").path.should eq "//foo:bar"
+      end
+
+      it "parses path leading with scheme" do
+        Request.new("GET", "http://example.com/foo/bar").path.should eq "http://example.com/foo/bar"
+      end
     end
 
     describe "#path=" do
@@ -432,13 +444,35 @@ module HTTP
 
       it "is affected when #query is modified" do
         request = Request.from_io(IO::Memory.new("GET /api/v3/some/resource?foo=bar&foo=baz&baz=qux HTTP/1.1\r\n\r\n")).as(Request)
-        params = request.query_params
 
         new_query = "foo=not-bar&foo=not-baz&not-baz=hello&name=world"
         request.query = new_query
         request.query_params.to_s.should eq(new_query)
       end
+    end
 
+    describe "#form_params" do
+      it "returns can safely be called on get requests" do
+        request = Request.from_io(IO::Memory.new("GET /api/v3/some/resource HTTP/1.1\r\n\r\n")).as(Request)
+        request.form_params?.should be_nil
+        request.form_params.size.should eq(0)
+      end
+
+      it "returns parsed HTTP::Params" do
+        request = Request.new("POST", "/form", HTTP::Headers{"Content-Type" => "application/x-www-form-urlencoded"}, HTTP::Params.encode({"test" => "foobar"}))
+        request.form_params?.should_not be_nil
+        request.form_params.size.should eq(1)
+        request.form_params["test"].should eq("foobar")
+      end
+
+      it "ignores invalid content-type" do
+        request = Request.new("POST", "/form", nil, HTTP::Params.encode({"test" => "foobar"}))
+        request.form_params?.should be_nil
+        request.form_params.size.should eq(0)
+      end
+    end
+
+    describe "#hostname" do
       it "gets request hostname from the headers" do
         request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nHost: host.example.org:3000\r\nReferer:\r\n\r\n")).as(Request)
         request.hostname.should eq("host.example.org")
@@ -472,15 +506,33 @@ module HTTP
         request = Request.new("GET", "/")
         request.hostname.should be_nil
       end
+    end
 
+    describe "#host_with_port" do
       it "gets request host with port from the headers" do
         request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nHost: host.example.org:3000\r\nReferer:\r\n\r\n")).as(Request)
         request.host_with_port.should eq("host.example.org:3000")
       end
     end
 
+    describe "#uri" do
+      it "returns request uri object" do
+        raw_resource = "/document?something=true#fragment"
+        request = Request.from_io(IO::Memory.new("GET #{raw_resource} HTTP/1.1\r\n\r\n")).as(Request)
+        request.uri.should eq(URI.parse(raw_resource))
+      end
+
+      it "can change the results of #resource" do
+        request = Request.from_io(IO::Memory.new("GET /route HTTP/1.1\r\n\r\n")).as(Request)
+        request.resource.should eq("/route")
+
+        request.uri.path = "/some_other_route"
+        request.resource.should eq("/some_other_route")
+      end
+    end
+
     it "doesn't raise on request with multiple Content_length headers" do
-      io = IO::Memory.new <<-REQ
+      io = IO::Memory.new <<-HTTP
         GET / HTTP/1.1
         Host: host
         Content-Length: 5
@@ -488,12 +540,12 @@ module HTTP
         Content-Type: text/plain
 
         abcde
-        REQ
+        HTTP
       HTTP::Request.from_io(io)
     end
 
     it "raises if request has multiple and differing content-length headers" do
-      io = IO::Memory.new <<-REQ
+      io = IO::Memory.new <<-HTTP
         GET / HTTP/1.1
         Host: host
         Content-Length: 5
@@ -501,7 +553,7 @@ module HTTP
         Content-Type: text/plain
 
         abcde
-        REQ
+        HTTP
       expect_raises(ArgumentError) do
         HTTP::Request.from_io(io)
       end

@@ -1,6 +1,6 @@
 require "../spec_helper"
 require "http/server"
-require "http/client/response"
+require "http/client"
 require "../../../support/ssl"
 require "../../../support/channel"
 
@@ -12,7 +12,7 @@ private def unix_request(path)
 end
 
 private def unused_port
-  TCPServer.open(0) do |server|
+  TCPServer.open(Socket::IPAddress::UNSPECIFIED, 0) do |server|
     server.local_address.port
   end
 end
@@ -45,18 +45,15 @@ describe HTTP::Server do
     server = HTTP::Server.new { }
     server.bind_unused_port
 
-    spawn do
+    run_server(server) do
       server.close
-      sleep 0.001
     end
-
-    server.listen
   end
 
   it "closes the server" do
     server = HTTP::Server.new { }
     address = server.bind_unused_port
-    ch = Channel(Symbol).new
+    ch = Channel(SpecChannelStatus).new
 
     spawn do
       server.listen
@@ -68,17 +65,17 @@ describe HTTP::Server do
     while !server.listening?
       Fiber.yield
     end
-    sleep 0.1
+    sleep 0.1.seconds
 
     schedule_timeout ch
 
     TCPSocket.open(address.address, address.port) { }
 
     # wait before closing the server
-    sleep 0.1
+    sleep 0.1.seconds
     server.close
 
-    ch.receive.should eq(:end)
+    ch.receive.should eq SpecChannelStatus::End
   end
 
   it "reuses the TCP port (SO_REUSEPORT)" do
@@ -121,12 +118,12 @@ describe HTTP::Server do
 
     run_server(server) do
       TCPSocket.open(address.address, address.port) do |socket|
-        socket << requestize(<<-REQUEST
+        socket << requestize(<<-HTTP
           POST / HTTP/1.1
           Expect: 100-continue
           Content-Length: 5
 
-          REQUEST
+          HTTP
         )
         socket << "\r\n"
         socket.flush
@@ -153,12 +150,12 @@ describe HTTP::Server do
 
     run_server(server) do
       TCPSocket.open(address.address, address.port) do |socket|
-        socket << requestize(<<-REQUEST
+        socket << requestize(<<-HTTP
           POST / HTTP/1.1
           Expect: 100-continue
           Content-Length: 5
 
-          REQUEST
+          HTTP
         )
         socket << "\r\n"
         socket.flush
@@ -271,7 +268,6 @@ describe HTTP::Server do
         server = HTTP::Server.new { }
 
         private_key = datapath("openssl", "openssl.key")
-        certificate = datapath("openssl", "openssl.crt")
 
         begin
           expect_raises(ArgumentError, "missing private key") { server.bind "tls://127.0.0.1:8081" }
@@ -368,8 +364,8 @@ describe HTTP::Server do
           File.exists?(path1).should be_false
           File.exists?(path2).should be_false
         ensure
-          File.delete(path1) if File.exists?(path1)
-          File.delete(path2) if File.exists?(path2)
+          File.delete?(path1)
+          File.delete?(path2)
         end
       end
     end
@@ -430,7 +426,7 @@ describe HTTP::Server do
       begin
         ch.receive
         client = HTTP::Client.new(address.address, address.port, client_context)
-        client.read_timeout = client.connect_timeout = 3
+        client.read_timeout = client.connect_timeout = 3.seconds
         client.get("/").body.should eq "ok"
       ensure
         ch.send nil

@@ -4,6 +4,8 @@ require "./context"
 # You can use a handler to intercept any incoming request and can modify the response.
 # These can be used for request throttling, ip-based filtering, adding custom headers e.g.
 #
+# NOTE: To use `Handler`, you must explicitly import it with `require "http/server/handler"`
+#
 # ### A custom handler
 #
 # ```
@@ -23,7 +25,7 @@ module HTTP::Handler
 
   abstract def call(context : HTTP::Server::Context)
 
-  def call_next(context : HTTP::Server::Context)
+  def call_next(context : HTTP::Server::Context) : Nil
     if next_handler = @next
       next_handler.call(context)
     else

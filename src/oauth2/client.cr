@@ -54,8 +54,16 @@
 # You can also use an `OAuth2::Session` to automatically refresh expired
 # tokens before each request.
 class OAuth2::Client
+  DEFAULT_HEADERS = HTTP::Headers{
+    "Accept"       => "application/json",
+    "Content-Type" => "application/x-www-form-urlencoded",
+  }
+
   # Sets the `HTTP::Client` to use with this client.
   setter http_client : HTTP::Client?
+
+  # Gets the redirect_uri
+  getter redirect_uri : String?
 
   # Returns the `HTTP::Client` to use with this client.
   #
@@ -87,7 +95,7 @@ class OAuth2::Client
 
   # Builds an authorize URI, as specified by
   # [RFC 6749, Section 4.1.1](https://tools.ietf.org/html/rfc6749#section-4.1.1).
-  def get_authorize_uri(scope = nil, state = nil) : String
+  def get_authorize_uri(scope : String? = nil, state : String? = nil) : String
     get_authorize_uri(scope, state) { }
   end
 
@@ -105,13 +113,13 @@ class OAuth2::Client
     end
 
     uri.query = URI::Params.build do |form|
-      form.add "client_id", @client_id
-      form.add "redirect_uri", @redirect_uri
-      form.add "response_type", "code"
-      form.add "scope", scope unless scope.nil?
-      form.add "state", state unless state.nil?
+      form.add("client_id", @client_id)
+      form.add("redirect_uri", @redirect_uri)
+      form.add("response_type", "code")
+      form.add("scope", scope) unless scope.nil?
+      form.add("state", state) unless state.nil?
       uri.query_params.each do |key, value|
-        form.add key, value
+        form.add(key, value)
       end
       yield form
     end
@@ -131,7 +139,7 @@ class OAuth2::Client
 
   # Gets an access token using the resource owner credentials, as specified by
   # [RFC 6749, Section 4.3.2](https://tools.ietf.org/html/rfc6749#section-4.3.2).
-  def get_access_token_using_resource_owner_credentials(username : String, password : String, scope = nil) : AccessToken
+  def get_access_token_using_resource_owner_credentials(username : String, password : String, scope : String? = nil) : AccessToken
     get_access_token do |form|
       form.add("grant_type", "password")
       form.add("username", username)
@@ -142,7 +150,7 @@ class OAuth2::Client
 
   # Gets an access token using client credentials, as specified by
   # [RFC 6749, Section 4.4.2](https://tools.ietf.org/html/rfc6749#section-4.4.2).
-  def get_access_token_using_client_credentials(scope = nil) : AccessToken
+  def get_access_token_using_client_credentials(scope : String? = nil) : AccessToken
     get_access_token do |form|
       form.add("grant_type", "client_credentials")
       form.add("scope", scope) unless scope.nil?
@@ -151,20 +159,17 @@ class OAuth2::Client
 
   # Gets an access token using a refresh token, as specified by
   # [RFC 6749, Section 6](https://tools.ietf.org/html/rfc6749#section-6).
-  def get_access_token_using_refresh_token(refresh_token, scope = nil) : AccessToken
+  def get_access_token_using_refresh_token(refresh_token : String?, scope : String? = nil) : AccessToken
     get_access_token do |form|
       form.add("grant_type", "refresh_token")
       form.add("refresh_token", refresh_token)
-      form.add "scope", scope unless scope.nil?
+      form.add("scope", scope) unless scope.nil?
     end
   end
 
-  private def get_access_token : AccessToken
-    headers = HTTP::Headers{
-      "Accept"       => "application/json",
-      "Content-Type" => "application/x-www-form-urlencoded",
-    }
-
+  # Makes a token exchange request with custom headers and form fields
+  def make_token_request(&block : URI::Params::Builder, HTTP::Headers -> _) : HTTP::Client::Response
+    headers = DEFAULT_HEADERS.dup
     body = URI::Params.build do |form|
       case @auth_scheme
       when .request_body?
@@ -176,10 +181,16 @@ class OAuth2::Client
           "Basic #{Base64.strict_encode("#{@client_id}:#{@client_secret}")}"
         )
       end
-      yield form
+      yield form, headers
     end
 
-    response = http_client.post token_uri.request_target, form: body, headers: headers
+    http_client.post token_uri.request_target, form: body, headers: headers
+  end
+
+  private def get_access_token(&) : AccessToken
+    response = make_token_request do |form, _headers|
+      yield form
+    end
     case response.status
     when .ok?, .created?
       OAuth2::AccessToken.from_json(response.body)

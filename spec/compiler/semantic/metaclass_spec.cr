@@ -86,20 +86,20 @@ describe "Semantic: metaclass" do
   end
 
   it "types metaclass superclass" do
-    mod = semantic(%(
+    mod = semantic(<<-CRYSTAL).program
       class Foo; end
       class Bar < Foo; end
-      )).program
+      CRYSTAL
 
     bar_class = mod.types["Bar"].metaclass.as(MetaclassType)
     bar_class.superclass.should eq(mod.types["Foo"].metaclass)
   end
 
   it "types generic metaclass superclass" do
-    mod = semantic(%(
+    mod = semantic(<<-CRYSTAL).program
       class Foo(T); end
       class Bar(T) < Foo(T); end
-      )).program
+      CRYSTAL
 
     foo_class = mod.types["Foo"].metaclass.as(MetaclassType)
     foo_class.superclass.should eq(mod.program.reference.metaclass)
@@ -110,10 +110,10 @@ describe "Semantic: metaclass" do
   end
 
   it "types generic instance metaclass superclass" do
-    mod = semantic(%(
+    mod = semantic(<<-CRYSTAL).program
       class Foo(T); end
       class Bar(T) < Foo(T); end
-      )).program
+      CRYSTAL
 
     foo_class = mod.generic_class("Foo", mod.int32).metaclass.as(GenericClassInstanceMetaclassType)
     foo_class.superclass.should eq(mod.program.reference.metaclass)
@@ -124,21 +124,33 @@ describe "Semantic: metaclass" do
 
   describe "subtyping relations between metaclasses" do
     it "non-generic classes" do
-      mod = semantic(%(
+      mod = semantic(<<-CRYSTAL).program
         class Foo; end
         class Bar < Foo; end
-        )).program
+        CRYSTAL
 
       foo_class = mod.types["Foo"].metaclass
       bar_class = mod.types["Bar"].metaclass
       bar_class.should be_a_proper_subtype_of(foo_class)
     end
 
+    it "virtual metaclass type with virtual type (#12628)" do
+      mod = semantic(<<-CRYSTAL).program
+        class Base; end
+        class Impl < Base; end
+        CRYSTAL
+
+      base = mod.types["Base"]
+      base.virtual_type!.metaclass.implements?(base).should be_false
+      base.virtual_type!.metaclass.implements?(base.metaclass).should be_true
+      base.virtual_type!.metaclass.implements?(base.metaclass.virtual_type!).should be_true
+    end
+
     it "generic classes (1)" do
-      mod = semantic(%(
+      mod = semantic(<<-CRYSTAL).program
         class Foo(T); end
         class Bar < Foo(Int32); end
-        )).program
+        CRYSTAL
 
       foo_class = mod.types["Foo"].metaclass
       foo_int32_class = mod.generic_class("Foo", mod.int32).metaclass
@@ -150,10 +162,10 @@ describe "Semantic: metaclass" do
     end
 
     it "generic classes (2)" do
-      mod = semantic(%(
+      mod = semantic(<<-CRYSTAL).program
         class Foo; end
         class Bar(T) < Foo; end
-        )).program
+        CRYSTAL
 
       foo_class = mod.types["Foo"].metaclass
       bar_class = mod.types["Bar"].metaclass
@@ -165,10 +177,10 @@ describe "Semantic: metaclass" do
     end
 
     it "generic classes (3)" do
-      mod = semantic(%(
+      mod = semantic(<<-CRYSTAL).program
         class Foo(T); end
         class Bar(T) < Foo(T); end
-        )).program
+        CRYSTAL
 
       foo_class = mod.types["Foo"].metaclass
       bar_class = mod.types["Bar"].metaclass
@@ -183,10 +195,10 @@ describe "Semantic: metaclass" do
     end
 
     it "non-generic modules" do
-      mod = semantic(%(
+      mod = semantic(<<-CRYSTAL).program
         module Foo; end
         module Bar; include Foo; end
-        )).program
+        CRYSTAL
 
       foo_class = mod.types["Foo"].metaclass
       bar_class = mod.types["Bar"].metaclass
@@ -194,10 +206,10 @@ describe "Semantic: metaclass" do
     end
 
     it "generic modules (1)" do
-      mod = semantic(%(
+      mod = semantic(<<-CRYSTAL).program
         module Foo(T); end
         module Bar; include Foo(Int32); end
-        )).program
+        CRYSTAL
 
       foo_class = mod.types["Foo"].metaclass
       foo_int32_class = mod.generic_module("Foo", mod.int32).metaclass
@@ -212,10 +224,10 @@ describe "Semantic: metaclass" do
     end
 
     it "generic modules (2)" do
-      mod = semantic(%(
+      mod = semantic(<<-CRYSTAL).program
         module Foo; end
         module Bar(T); include Foo; end
-        )).program
+        CRYSTAL
 
       foo_class = mod.types["Foo"].metaclass
       bar_class = mod.types["Bar"].metaclass
@@ -228,10 +240,10 @@ describe "Semantic: metaclass" do
     end
 
     it "generic modules (3)" do
-      mod = semantic(%(
+      mod = semantic(<<-CRYSTAL).program
         module Foo(T); end
         module Bar(T); include Foo(T); end
-        )).program
+        CRYSTAL
 
       foo_class = mod.types["Foo"].metaclass
       bar_class = mod.types["Bar"].metaclass
@@ -248,7 +260,7 @@ describe "Semantic: metaclass" do
   end
 
   it "can't reopen as struct" do
-    assert_error <<-CR, "Bar is not a struct, it's a metaclass"
+    assert_error <<-CRYSTAL, "Bar is not a struct, it's a metaclass"
       class Foo
       end
 
@@ -256,11 +268,11 @@ describe "Semantic: metaclass" do
 
       struct Bar
       end
-      CR
+      CRYSTAL
   end
 
   it "can't reopen as module" do
-    assert_error <<-CR, "Bar is not a module, it's a metaclass"
+    assert_error <<-CRYSTAL, "Bar is not a module, it's a metaclass"
       class Foo
       end
 
@@ -268,6 +280,6 @@ describe "Semantic: metaclass" do
 
       module Bar
       end
-      CR
+      CRYSTAL
   end
 end

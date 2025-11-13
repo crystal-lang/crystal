@@ -150,7 +150,9 @@ class Crystal::Type
         return if !@raise && !type
         type = type.not_nil!
 
-        check_type_can_be_stored(ident, type, "can't use #{type} in unions")
+        unless type.can_be_stored?
+          ident.raise "can't use #{type} in unions yet, use a more specific type"
+        end
 
         type.virtual_type
       end
@@ -174,12 +176,13 @@ class Crystal::Type
 
       case instance_type
       when NamedTupleType
-        named_args = node.named_args
-        unless named_args
+        unless node.type_vars.empty?
           node.raise "can only instantiate NamedTuple with named arguments"
         end
 
-        entries = named_args.map do |named_arg|
+        named_args = node.named_args
+        entries = Array(NamedArgumentType).new(named_args.try(&.size) || 0)
+        named_args.try &.each do |named_arg|
           subnode = named_arg.value
 
           if subnode.is_a?(NumberLiteral)
@@ -190,8 +193,11 @@ class Crystal::Type
           return if !@raise && !type
           type = type.not_nil!
 
-          check_type_can_be_stored(subnode, type, "can't use #{type} as a generic type argument")
-          NamedArgumentType.new(named_arg.name, type.virtual_type)
+          unless type.can_be_stored?
+            subnode.raise "can't use #{type} as a generic type argument yet, use a more specific type"
+          end
+
+          entries << NamedArgumentType.new(named_arg.name, type.virtual_type)
         end
 
         begin
@@ -246,13 +252,18 @@ class Crystal::Type
             type_var.raise "can only splat tuple type, not #{splat_type}"
           end
           next
+        when SizeOf, InstanceSizeOf, AlignOf, InstanceAlignOf, OffsetOf
+          next unless @raise
+
+          type_var.raise "can't use #{type_var} as a generic type argument"
         end
 
         # Check the case of T resolving to a number
         if type_var.is_a?(Path)
-          type = @root.lookup_path(type_var)
+          type = in_generic_args { lookup_type_var(type_var) }
           case type
           when Const
+            program.check_deprecated_constant(type, type_var)
             interpreter = MathInterpreter.new(@root)
             begin
               num = interpreter.interpret(type.value)
@@ -261,7 +272,7 @@ class Crystal::Type
               type_var.raise "expanding constant value for a number value", inner: ex
             end
             next
-          when ASTNode
+          when NumberLiteral
             type_vars << type
             next
           end
@@ -273,7 +284,9 @@ class Crystal::Type
 
         case instance_type
         when GenericUnionType, PointerType, StaticArrayType, TupleType, ProcType
-          check_type_can_be_stored(type_var, type, "can't use #{type} as a generic type argument")
+          unless type.can_be_stored?
+            type_var.raise "can't use #{type} as a generic type argument yet, use a more specific type"
+          end
         end
 
         type_vars << type.virtual_type
@@ -318,7 +331,9 @@ class Crystal::Type
             return if !@raise && !type
             type = type.not_nil!
 
-            check_type_can_be_stored(input, type, "can't use #{type} as proc argument")
+            unless type.can_be_stored?
+              input.raise "can't use #{type} as proc argument yet, use a more specific type"
+            end
 
             types << type.virtual_type
           end
@@ -330,7 +345,9 @@ class Crystal::Type
         return if !@raise && !type
         type = type.not_nil!
 
-        check_type_can_be_stored(output, type, "can't use #{type} as proc return type")
+        unless type.can_be_stored?
+          output.raise "can't use #{type} as proc return type yet, use a more specific type"
+        end
 
         types << type.virtual_type
       else
@@ -408,7 +425,7 @@ class Crystal::Type
     end
 
     def check_cant_infer_generic_type_parameter(scope, node)
-      if scope.is_a?(MetaclassType) && (instance_type = scope.instance_type).is_a?(GenericClassType)
+      if scope.is_a?(MetaclassType) && (instance_type = scope.instance_type).is_a?(GenericType)
         first_name = node.names.first
         if instance_type.type_vars.includes?(first_name)
           node.raise "can't infer the type parameter #{first_name} for the #{instance_type.type_desc} #{instance_type}. Please provide it explicitly"
@@ -416,11 +433,7 @@ class Crystal::Type
       end
     end
 
-    def check_type_can_be_stored(ident, type, message)
-      Crystal.check_type_can_be_stored(ident, type, message)
-    end
-
-    def in_generic_args
+    def in_generic_args(&)
       @in_generic_args += 1
       value = yield
       @in_generic_args -= 1

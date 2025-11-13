@@ -43,7 +43,7 @@ class Crystal::Doc::Method
   # This docs not include the "Description copied from ..." banner
   # in case it's needed.
   def doc
-    doc_info.doc
+    doc_info.doc.try &.strip.lchop(":showdoc:").strip
   end
 
   # Returns the type this method's docs are copied from, but
@@ -57,15 +57,17 @@ class Crystal::Doc::Method
   private def compute_doc_info : DocInfo?
     def_doc = @def.doc
     if def_doc
-      has_inherit = def_doc =~ /^\s*:inherit:\s*$/m
-      if has_inherit
-        ancestor_info = self.ancestor_doc_info
-        if ancestor_info
-          def_doc = def_doc.gsub(/^[ \t]*:inherit:[ \t]*$/m, ancestor_info.doc.not_nil!)
-          return DocInfo.new(def_doc, nil)
-        end
+      ancestor_doc_info = nil
+      # TODO: warn about `:inherit:` not finding an ancestor
+      inherit_def_doc = def_doc.gsub(/^[ \t]*:inherit:[ \t]*$/m) do
+        ancestor_doc_info ||= self.ancestor_doc_info
+        ancestor_doc_info.try(&.doc) || break
+      end
 
-        # TODO: warn about `:inherit:` not finding an ancestor
+      # inherit_def_doc is nil when breaking from the gsub block which means
+      # no ancestor doc info was found
+      if inherit_def_doc && !inherit_def_doc.same?(def_doc)
+        return DocInfo.new(inherit_def_doc, nil)
       end
 
       if @def.name.starts_with?(PSEUDO_METHOD_PREFIX)
@@ -104,8 +106,7 @@ class Crystal::Doc::Method
       other_defs_with_metadata = ancestor.defs.try &.[@def.name]?
       other_defs_with_metadata.try &.each do |other_def_with_metadata|
         # If we find an ancestor method with the same signature
-        if def_with_metadata.restriction_of?(other_def_with_metadata, type.type) &&
-           other_def_with_metadata.restriction_of?(def_with_metadata, ancestor)
+        if def_with_metadata.compare_strictness(other_def_with_metadata, self_owner: type.type, other_owner: ancestor) == 0
           other_def = other_def_with_metadata.def
           doc = other_def.doc
           return DocInfo.new(doc, @generator.type(ancestor)) if doc
@@ -123,14 +124,37 @@ class Crystal::Doc::Method
     @generator.relative_location(@def)
   end
 
+  def external_var?
+    !!@def.as?(External).try(&.external_var?)
+  end
+
   def prefix
     case
     when @type.program?
       ""
-    when @class_method
+    when external_var?
+      "$"
+    when @class_method, @type.lib?
       "."
     else
       "#"
+    end
+  end
+
+  def visibility
+    case @def.visibility
+    in .public?
+    in .protected?
+      "protected"
+    in .private?
+      "private"
+    end
+  end
+
+  def real_name
+    a_def = @def.as?(External)
+    if a_def && (real_name = (a_def.real_name)) && (real_name != a_def.name)
+      " = #{real_name}"
     end
   end
 
@@ -173,6 +197,10 @@ class Crystal::Doc::Method
 
   def kind
     case
+    when external_var?
+      "$"
+    when @type.lib?
+      "fun "
     when @type.program?
       "def "
     when @class_method
@@ -185,7 +213,11 @@ class Crystal::Doc::Method
   def id
     String.build do |io|
       io << to_s.delete(' ')
-      if @class_method
+      if external_var?
+        io << "-external-var"
+      elsif @type.lib?
+        io << "-function"
+      elsif @class_method
         io << "-class-method"
       else
         io << "-instance-method"
@@ -242,7 +274,7 @@ class Crystal::Doc::Method
         io << ", " if printed
         io << '&'
         arg_to_html block_arg, io, html: html
-      elsif @def.yields
+      elsif @def.block_arity
         io << ", " if printed
         io << '&'
       end
@@ -271,14 +303,11 @@ class Crystal::Doc::Method
   def arg_to_html(arg : Arg, io, html : HTMLOption = :all)
     if arg.external_name != arg.name
       if name = arg.external_name.presence
-        if Symbol.needs_quotes_for_named_argument? name
-          if html.none?
-            name.inspect io
-          else
-            HTML.escape name.inspect, io
-          end
-        else
+        name = Symbol.quote_for_named_argument(name)
+        if html.none?
           io << name
+        else
+          HTML.escape name, io
         end
       else
         io << "_"
@@ -315,21 +344,24 @@ class Crystal::Doc::Method
   end
 
   def has_args?
-    !@def.args.empty? || @def.double_splat || @def.block_arg || @def.yields
+    !@def.args.empty? || @def.double_splat || @def.block_arg || @def.block_arity
   end
 
   def to_json(builder : JSON::Builder)
     builder.object do
       builder.field "html_id", id
       builder.field "name", name
+      builder.field "real_name", real_name if real_name
       builder.field "doc", doc unless doc.nil?
       builder.field "summary", formatted_summary unless formatted_summary.nil?
       builder.field "abstract", abstract?
+      builder.field "visibility", visibility if visibility
       builder.field "args", args unless args.empty?
       builder.field "args_string", args_to_s unless args.empty?
       builder.field "args_html", args_to_html unless args.empty?
       builder.field "location", location unless location.nil?
-      builder.field "def", self.def
+      builder.field @type.lib? ? "fun" : "def", self.def
+      builder.field "external_var", external_var?
     end
   end
 

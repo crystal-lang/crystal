@@ -1,0 +1,89 @@
+name: AArch64 GitHub CI
+
+on: [push, pull_request]
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+env:
+  SPEC_SPLIT_DOTS: 160
+
+jobs:
+  aarch64-github-cross-compile:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Download Crystal source
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Install LLVM 20
+        run: |
+          sudo apt remove 'llvm-*' 'libllvm*'
+          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
+          sudo apt-add-repository -y deb http://apt.llvm.org/noble/ llvm-toolchain-noble-20 main
+          sudo apt install -y llvm-20-dev
+
+      - name: Install Crystal
+        uses: crystal-lang/install-crystal@v1
+        with:
+          crystal: "1.18.2"
+
+      - name: Cross-compile Crystal
+        run: make target=aarch64-linux-gnu release=1
+
+      - name: Upload crystal.o
+        uses: actions/upload-artifact@v5
+        with:
+          name: aarch64-linux-crystal-o
+          path: .build/crystal.o
+
+  aarch64-github-build:
+    runs-on: ubuntu-24.04-arm
+    needs: [aarch64-github-cross-compile]
+    steps:
+      - name: Checkout Crystal source
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Install LLVM 20
+        run: |
+          sudo apt remove 'llvm-*' 'libllvm*'
+          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
+          sudo apt-add-repository -y deb http://apt.llvm.org/noble/ llvm-toolchain-noble-20 main
+          sudo apt install -y llvm-20-dev
+
+      - name: Install dependencies
+        run: |
+          sudo apt install -y lld libgc-dev libpcre2-dev
+
+      - name: Download crystal.o
+        uses: actions/download-artifact@v6
+        with:
+          name: aarch64-linux-crystal-o
+
+      - name: Link Crystal
+        run: |
+          mkdir .build
+          # shellcheck disable=SC2046
+          cc crystal.o -o .build/crystal \
+            $(pkg-config bdw-gc libpcre2-8 --libs) \
+            $(llvm-config-20 --libs --system-libs --ldflags) \
+            -lm
+          bin/crystal --version
+
+      - name: Run stdlib specs
+        run: make std_spec
+
+      - name: Run compiler specs
+        run: make compiler_spec
+
+      - name: Run interpreter specs
+        run: make interpreter_spec
+
+      - name: Run primitives specs
+        run: make -o .build/crystal.exe primitives_spec # we know the compiler is fresh; do not rebuild it here

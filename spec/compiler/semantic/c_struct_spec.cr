@@ -27,7 +27,7 @@ describe "Semantic: struct" do
   end
 
   it "types struct getter to struct" do
-    assert_type("
+    assert_type(<<-CRYSTAL, inject_primitives: true) { types["LibFoo"].types["Baz"] }
       lib LibFoo
         struct Baz
           y : Int32
@@ -38,11 +38,11 @@ describe "Semantic: struct" do
       end
       bar = Pointer(LibFoo::Bar).malloc(1_u64)
       bar.value.x
-    ", inject_primitives: true) { types["LibFoo"].types["Baz"] }
+      CRYSTAL
   end
 
   it "types struct getter multiple levels via new" do
-    assert_type("
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       lib LibFoo
         struct Baz
           y : Int32
@@ -53,7 +53,7 @@ describe "Semantic: struct" do
       end
       bar = Pointer(LibFoo::Bar).malloc(1_u64)
       bar.value.x.y
-    ", inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "types struct getter with keyword name" do
@@ -80,7 +80,7 @@ describe "Semantic: struct" do
   end
 
   it "errors if setting closure" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't set closure as C struct member"
       lib LibFoo
         struct Bar
           x : -> Int32
@@ -91,12 +91,11 @@ describe "Semantic: struct" do
 
       bar = LibFoo::Bar.new
       bar.x = -> { a }
-      ),
-      "can't set closure as C struct member"
+      CRYSTAL
   end
 
   it "errors if already defined" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "Foo is already defined"
       lib LibC
         struct Foo
           x : Int32
@@ -105,12 +104,11 @@ describe "Semantic: struct" do
         struct Foo
         end
       end
-      ),
-      "Foo is already defined"
+      CRYSTAL
   end
 
   it "errors if already defined with another type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "Foo is already defined as enum"
       lib LibC
         enum Foo
           X
@@ -119,12 +117,11 @@ describe "Semantic: struct" do
         struct Foo
         end
       end
-      ),
-      "Foo is already defined as enum"
+      CRYSTAL
   end
 
   it "errors if already defined with another type (2)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "Foo is already defined as union"
       lib LibC
         union Foo
           x : Int32
@@ -133,12 +130,11 @@ describe "Semantic: struct" do
         struct Foo
         end
       end
-      ),
-      "Foo is already defined as union"
+      CRYSTAL
   end
 
   it "allows inline forward declaration" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { pointer_of(types["LibC"].types["Node"]) }
       lib LibC
         struct Node
           next : Node*
@@ -147,11 +143,11 @@ describe "Semantic: struct" do
 
       node = LibC::Node.new
       node.next
-      )) { pointer_of(types["LibC"].types["Node"]) }
+      CRYSTAL
   end
 
   it "supports macro if inside struct" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, flags: "some_flag") { int32 }
       lib LibC
         struct Foo
           {% if flag?(:some_flag) %}
@@ -163,11 +159,11 @@ describe "Semantic: struct" do
       end
 
       LibC::Foo.new.a
-      ), flags: "some_flag") { int32 }
+      CRYSTAL
   end
 
   it "includes another struct" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       lib LibC
         struct Foo
           a : Int32
@@ -179,11 +175,11 @@ describe "Semantic: struct" do
       end
 
       LibC::Bar.new.a
-      )) { int32 }
+      CRYSTAL
   end
 
   it "errors if includes non-cstruct type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can only include C struct, not union"
       lib LibC
         union Foo
           a : Int32
@@ -195,12 +191,11 @@ describe "Semantic: struct" do
       end
 
       LibC::Bar.new.a
-      ),
-      "can only include C struct, not union"
+      CRYSTAL
   end
 
   it "errors if includes unknown type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined constant Foo"
       lib LibC
         struct Bar
           include Foo
@@ -208,12 +203,11 @@ describe "Semantic: struct" do
       end
 
       LibC::Bar.new.a
-      ),
-      "undefined constant Foo"
+      CRYSTAL
   end
 
   it "errors if includes and field already exists" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "struct LibC::Foo has a field named 'a', which LibC::Bar already defines"
       lib LibC
         struct Foo
           a : Int32
@@ -226,12 +220,11 @@ describe "Semantic: struct" do
       end
 
       LibC::Bar.new.a
-      ),
-      "struct LibC::Foo has a field named 'a', which LibC::Bar already defines"
+      CRYSTAL
   end
 
   it "errors if includes and field already exists, the other way around" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "struct LibC::Bar already defines a field named 'a'"
       lib LibC
         struct Foo
           a : Int32
@@ -244,46 +237,43 @@ describe "Semantic: struct" do
       end
 
       LibC::Bar.new.a
-      ),
-      "struct LibC::Bar already defines a field named 'a'"
+      CRYSTAL
   end
 
   it "marks as packed" do
-    result = semantic(%(
+    result = semantic(<<-CRYSTAL)
       lib LibFoo
         @[Packed]
         struct Struct
           x, y : Int32
         end
       end
-      ))
+      CRYSTAL
     foo_struct = result.program.types["LibFoo"].types["Struct"].as(NonGenericClassType)
     foo_struct.packed?.should be_true
   end
 
   it "errors on empty c struct (#633)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "empty structs are disallowed"
       lib LibFoo
         struct Struct
         end
       end
-      ),
-      "empty structs are disallowed"
+      CRYSTAL
   end
 
   it "errors if using void in struct field type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use Void as a struct field type"
       lib LibFoo
         struct Struct
           x : Void
         end
       end
-      ),
-      "can't use Void as a struct field type"
+      CRYSTAL
   end
 
   it "errors if using void via typedef in struct field type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use Void as a struct field type"
       lib LibFoo
         type MyVoid = Void
 
@@ -291,12 +281,11 @@ describe "Semantic: struct" do
           x : MyVoid
         end
       end
-      ),
-      "can't use Void as a struct field type"
+      CRYSTAL
   end
 
   it "can access instance var from the outside (#1092)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       lib LibFoo
         struct Foo
           x : Int32
@@ -305,11 +294,11 @@ describe "Semantic: struct" do
 
       f = LibFoo::Foo.new x: 123
       f.@x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "automatically converts numeric type in struct field assignment" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       lib LibFoo
         struct Foo
           x : Int32
@@ -319,11 +308,11 @@ describe "Semantic: struct" do
       foo = LibFoo::Foo.new
       foo.x = 1_u8
       foo.x
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "errors if invoking to_i32! and got error in that call" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "converting from Foo to Int32 by invoking 'to_i32!'"
       lib LibFoo
         struct Foo
           x : Int32
@@ -338,12 +327,11 @@ describe "Semantic: struct" do
 
       foo = LibFoo::Foo.new
       foo.x = Foo.new
-      ),
-      "converting from Foo to Int32 by invoking 'to_i32!'"
+      CRYSTAL
   end
 
   it "errors if invoking to_i32! and got wrong type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "invoked 'to_i32!' to convert from Foo to Int32, but got Char"
       lib LibFoo
         struct Foo
           x : Int32
@@ -358,12 +346,11 @@ describe "Semantic: struct" do
 
       foo = LibFoo::Foo.new
       foo.x = Foo.new
-      ),
-      "invoked 'to_i32!' to convert from Foo to Int32, but got Char"
+      CRYSTAL
   end
 
   it "errors if invoking to_unsafe and got error in that call" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #1 to 'Int32#+' to be Float32, Float64, Int128, Int16, Int32, Int64, Int8, UInt128, UInt16, UInt32, UInt64 or UInt8, not Char", inject_primitives: true
       lib LibFoo
         struct Foo
           x : Int32
@@ -378,12 +365,11 @@ describe "Semantic: struct" do
 
       foo = LibFoo::Foo.new
       foo.x = Foo.new
-      ),
-      "no overload matches 'Int32#+' with type Char", inject_primitives: true
+      CRYSTAL
   end
 
   it "errors if invoking to_unsafe and got different type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "invoked 'to_unsafe' to convert from Foo to Int32, but got Char"
       lib LibFoo
         struct Foo
           x : Int32
@@ -398,7 +384,6 @@ describe "Semantic: struct" do
 
       foo = LibFoo::Foo.new
       foo.x = Foo.new
-      ),
-      "invoked 'to_unsafe' to convert from Foo to Int32, but got Char"
+      CRYSTAL
   end
 end

@@ -1,16 +1,19 @@
 require "string_pool"
 
 abstract class JSON::Lexer
-  def self.new(string : String)
+  def self.new(string : String) : self
     StringBased.new(string)
   end
 
-  def self.new(io : IO)
+  def self.new(io : IO) : self
     IOBased.new(io)
   end
 
   getter token : Token
   property skip : Bool
+
+  @line_number : Int64
+  @column_number : Int64
 
   def initialize
     @token = Token.new
@@ -146,7 +149,7 @@ abstract class JSON::Lexer
     consume_string_with_buffer { }
   end
 
-  private def consume_string_with_buffer
+  private def consume_string_with_buffer(&)
     @buffer.clear
     yield
     while true
@@ -275,7 +278,7 @@ abstract class JSON::Lexer
       char = next_char
     end
 
-    if char == 'e' || char == 'E'
+    if char.in?('e', 'E')
       consume_exponent
     else
       @token.kind = :float

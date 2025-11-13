@@ -1,6 +1,6 @@
 require "socket"
-require "http/client"
-require "http/headers"
+require "../client"
+require "../headers"
 require "base64"
 {% if flag?(:without_openssl) %}
   require "crystal/digest/sha1"
@@ -13,7 +13,7 @@ require "uri"
 class HTTP::WebSocket::Protocol
   GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 
-  @[Flags]
+  @[::Flags]
   enum Flags : UInt8
     FINAL = 0x80
     RSV1  = 0x40
@@ -94,13 +94,13 @@ class HTTP::WebSocket::Protocol
     send(data, Opcode::BINARY)
   end
 
-  def stream(binary = true, frame_size = 1024)
+  def stream(binary = true, frame_size = 1024, &)
     stream_io = StreamIO.new(self, binary, frame_size)
     yield(stream_io)
     stream_io.flush
   end
 
-  def send(data : Bytes, opcode : Opcode, flags = Flags::FINAL, flush = true) : Nil
+  def send(data : Bytes, opcode : Opcode, flags : Flags = Flags::FINAL, flush : Bool = true) : Nil
     write_header(data.size, opcode, flags)
     write_payload(data)
     @io.flush if flush
@@ -136,13 +136,36 @@ class HTTP::WebSocket::Protocol
   private def write_payload(data)
     return @io.write(data) unless @masked
 
-    key = Random::DEFAULT.next_int
+    key = Random.next_int
     mask_array = key.unsafe_as(StaticArray(UInt8, 4))
     @io.write mask_array.to_slice
 
-    data.each_with_index do |byte, index|
-      mask = mask_array[index & 0b11] # x & 0b11 == x % 4
-      @io.write_byte(byte ^ mask)
+    write_masked_data(data, mask_array)
+  end
+
+  private def write_masked_data(data, mask_array)
+    # We are going to write the data, masked, into a temporary buffer.
+    masked_data = uninitialized UInt8[IO::DEFAULT_BUFFER_SIZE]
+
+    # We'll do it by chunks of at most IO::DEFAULT_BUFFER_SIZE
+    remaining_data = data
+    until remaining_data.empty?
+      # How much data can we write?
+      # Either IO::DEFAULT_BUFFER_SIZE or whatever remains.
+      chunk_size = Math.min(remaining_data.size, IO::DEFAULT_BUFFER_SIZE)
+
+      # Mask the data
+      chunk = remaining_data[0, chunk_size]
+      chunk.each_with_index do |byte, index|
+        mask = mask_array[index & 0b11] # x & 0b11 == x % 4
+        masked_data[index] = byte ^ mask
+      end
+
+      # Write the masked data
+      @io.write(masked_data.to_slice[0, chunk_size])
+
+      # Discard the written data
+      remaining_data = remaining_data[chunk_size..]
     end
   end
 
@@ -259,11 +282,11 @@ class HTTP::WebSocket::Protocol
     @io.close if @sync_close
   end
 
-  def close(code : Int, message = nil) : Nil
+  def close(code : Int, message : String? = nil) : Nil
     close(CloseCode.new(code), message)
   end
 
-  def self.new(host : String, path : String, port = nil, tls : HTTP::Client::TLSContext = nil, headers = HTTP::Headers.new)
+  def self.new(host : String, path : String, port : Int32? = nil, tls : HTTP::Client::TLSContext = nil, headers : HTTP::Headers = HTTP::Headers.new) : self
     {% if flag?(:without_openssl) %}
       if tls
         raise "WebSocket TLS is disabled because `-D without_openssl` was passed at compile time"
@@ -315,7 +338,7 @@ class HTTP::WebSocket::Protocol
     new(socket, masked: true)
   end
 
-  def self.new(uri : URI | String, headers = HTTP::Headers.new)
+  def self.new(uri : URI | String, headers : HTTP::Headers = HTTP::Headers.new) : self
     uri = URI.parse(uri) if uri.is_a?(String)
 
     if (host = uri.hostname) && (path = uri.request_target)
@@ -329,7 +352,7 @@ class HTTP::WebSocket::Protocol
     raise ArgumentError.new("No host or path specified which are required.")
   end
 
-  def self.key_challenge(key)
+  def self.key_challenge(key : String) : String
     {% if flag?(:without_openssl) %}
       ::Crystal::Digest::SHA1.base64digest(key + GUID)
     {% else %}

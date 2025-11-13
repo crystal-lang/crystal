@@ -34,6 +34,11 @@ module Crystal
       self
     end
 
+    # Returns the number of lines between start and end locations
+    def length : Int32?
+      Location.lines(location, end_location)
+    end
+
     # Returns a deep copy of this node. Copied nodes retain
     # the location and end location of the original nodes.
     def clone
@@ -90,27 +95,6 @@ module Crystal
       self.class.class_desc
     end
 
-    def class_desc_is_a?(name)
-      # e.g. for `Splat < UnaryExpression < ASTNode` this produces:
-      #
-      # ```
-      # name.in?({class_desc, UnaryExpression.class_desc, ASTNode.class_desc})
-      # ```
-      #
-      # this assumes the macro AST node hierarchy matches exactly that of the
-      # compiler internal node types
-      {% begin %}
-        name.in?({
-          class_desc,
-          {% for t in @type.ancestors %}
-            {% if t <= Crystal::ASTNode %}
-              {{ t }}.class_desc,
-            {% end %}
-          {% end %}
-        })
-      {% end %}
-    end
-
     def pretty_print(pp)
       pp.text to_s
     end
@@ -164,6 +148,30 @@ module Crystal
 
     def self.from(obj : ASTNode)
       obj
+    end
+
+    # Concatenates two AST nodes into a single `Expressions` node, removing
+    # `Nop`s and merging keyword-less expressions into a single node.
+    #
+    # *x* and *y* may be modified in-place if they are already `Expressions`
+    # nodes.
+    def self.concat!(x : ASTNode, y : ASTNode) : ASTNode
+      return x if y.is_a?(Nop)
+      return y if x.is_a?(Nop)
+
+      if x.is_a?(Expressions) && x.keyword.none?
+        if y.is_a?(Expressions) && y.keyword.none?
+          x.expressions.concat(y.expressions)
+        else
+          x.expressions << y
+        end
+        x.at_end(y.end_location)
+      elsif y.is_a?(Expressions) && y.keyword.none?
+        y.expressions.unshift(x)
+        y.at(x.location)
+      else
+        Expressions.new([x, y] of ASTNode).at(x.location).at_end(y.end_location)
+      end
     end
 
     def initialize(@expressions = [] of ASTNode)
@@ -236,37 +244,130 @@ module Crystal
     def_equals_and_hash value
   end
 
+  # The kind of primitive numbers.
+  enum NumberKind
+    I8
+    I16
+    I32
+    I64
+    I128
+    U8
+    U16
+    U32
+    U64
+    U128
+    F32
+    F64
+
+    def to_s : String
+      super.downcase
+    end
+
+    # TODO: rename to `bit_width`
+    def bytesize
+      case self
+      in .i8?   then 8
+      in .i16?  then 16
+      in .i32?  then 32
+      in .i64?  then 64
+      in .i128? then 128
+      in .u8?   then 8
+      in .u16?  then 16
+      in .u32?  then 32
+      in .u64?  then 64
+      in .u128? then 128
+      in .f32?  then 32
+      in .f64?  then 64
+      end
+    end
+
+    def signed_int?
+      i8? || i16? || i32? || i64? || i128?
+    end
+
+    def unsigned_int?
+      u8? || u16? || u32? || u64? || u128?
+    end
+
+    def float?
+      f32? || f64?
+    end
+
+    def self.from_number(number : Number::Primitive) : self
+      case number
+      in Int8    then I8
+      in Int16   then I16
+      in Int32   then I32
+      in Int64   then I64
+      in Int128  then I128
+      in UInt8   then U8
+      in UInt16  then U16
+      in UInt32  then U32
+      in UInt64  then U64
+      in UInt128 then U128
+      in Float32 then F32
+      in Float64 then F64
+      end
+    end
+
+    def cast(number) : Number::Primitive
+      case self
+      in .i8?   then number.to_i8
+      in .i16?  then number.to_i16
+      in .i32?  then number.to_i32
+      in .i64?  then number.to_i64
+      in .i128? then number.to_i128
+      in .u8?   then number.to_u8
+      in .u16?  then number.to_u16
+      in .u32?  then number.to_u32
+      in .u64?  then number.to_u64
+      in .u128? then number.to_u128
+      in .f32?  then number.to_f32
+      in .f64?  then number.to_f64
+      end
+    end
+  end
+
   # Any number literal.
-  # kind stores a symbol indicating which type is it: i32, u16, f32, f64, etc.
   class NumberLiteral < ASTNode
     property value : String
-    property kind : Symbol
+    property kind : NumberKind
 
-    def initialize(@value : String, @kind = :i32)
+    def initialize(@value : String, @kind : NumberKind = :i32)
     end
 
     def self.new(value : Number)
-      new(value.to_s, kind_from_number(value))
+      new(value.to_s, NumberKind.from_number(value))
     end
 
     def has_sign?
-      @value[0] == '+' || @value[0] == '-'
+      @value[0].in?('+', '-')
     end
 
     def integer_value
-      case kind
-      when :i8   then value.to_i8
-      when :i16  then value.to_i16
-      when :i32  then value.to_i32
-      when :i64  then value.to_i64
-      when :i128 then value.to_i128
-      when :u8   then value.to_u8
-      when :u16  then value.to_u16
-      when :u32  then value.to_u32
-      when :u64  then value.to_u64
-      when :u128 then value.to_u128
+      unless kind.signed_int? || kind.unsigned_int?
+        raise "BUG: called 'integer_value' for non-integer literal"
+      end
+
+      kind.cast(value)
+    end
+
+    # Returns true if this literal is representable in the *other_type*. Used to
+    # define number literal autocasting.
+    #
+    # TODO: if *other_type* is a `FloatType` then precision loss and overflow
+    # may occur (#11710)
+    def representable_in?(other_type)
+      case {self.type, other_type}
+      when {IntegerType, IntegerType}
+        min, max = other_type.range
+        min <= integer_value <= max
+      when {IntegerType, FloatType}
+        true
+      when {FloatType, FloatType}
+        true
       else
-        raise "Bug: called 'integer_value' for non-integer literal"
+        false
       end
     end
 
@@ -276,24 +377,6 @@ module Crystal
 
     def_equals value.to_f64, kind
     def_hash value, kind
-
-    def self.kind_from_number(number : Number)
-      case number
-      when Int8    then :i8
-      when Int16   then :i16
-      when Int32   then :i32
-      when Int64   then :i64
-      when Int128  then :i128
-      when UInt8   then :u8
-      when UInt16  then :u16
-      when UInt32  then :u32
-      when UInt64  then :u64
-      when UInt128 then :u128
-      when Float32 then :f32
-      when Float64 then :f64
-      else              raise "Unsupported Number type for NumberLiteral: #{number.class}"
-      end
-    end
   end
 
   # A char literal.
@@ -372,11 +455,11 @@ module Crystal
     def initialize(@elements = [] of ASTNode, @of = nil, @name = nil)
     end
 
-    def self.map(values, of = nil)
+    def self.map(values, of = nil, &)
       new(values.map { |value| (yield value).as(ASTNode) }, of: of)
     end
 
-    def self.map_with_index(values)
+    def self.map_with_index(values, &)
       new(values.map_with_index { |value, idx| (yield value, idx).as(ASTNode) }, of: nil)
     end
 
@@ -465,9 +548,9 @@ module Crystal
 
   class RegexLiteral < ASTNode
     property value : ASTNode
-    property options : Regex::Options
+    property options : Regex::CompileOptions
 
-    def initialize(@value, @options = Regex::Options::None)
+    def initialize(@value, @options = Regex::CompileOptions::None)
     end
 
     def accept_children(visitor)
@@ -487,11 +570,11 @@ module Crystal
     def initialize(@elements)
     end
 
-    def self.map(values)
+    def self.map(values, &)
       new(values.map { |value| (yield value).as(ASTNode) })
     end
 
-    def self.map_with_index(values)
+    def self.map_with_index(values, &)
       new(values.map_with_index { |value, idx| (yield value, idx).as(ASTNode) })
     end
 
@@ -517,6 +600,7 @@ module Crystal
     include SpecialVar
 
     property name : String
+    property doc : String?
 
     def initialize(@name : String)
     end
@@ -547,20 +631,30 @@ module Crystal
     property call : Call?
     property splat_index : Int32?
 
-    def initialize(@args = [] of Var, body = nil, @splat_index = nil)
+    # When a block argument unpacks, the corresponding Var will
+    # have an empty name, and `unpacks` will have the unpacked
+    # Expressions in that index.
+    property unpacks : Hash(Int32, Expressions)?
+
+    def initialize(@args = [] of Var, body = nil, @splat_index = nil, @unpacks = nil)
       @body = Expressions.from body
     end
 
     def accept_children(visitor)
       @args.each &.accept visitor
       @body.accept visitor
+      @unpacks.try &.each_value &.accept visitor
     end
 
     def clone_without_location
-      Block.new(@args.clone, @body.clone, @splat_index)
+      Block.new(@args.clone, @body.clone, @splat_index, @unpacks.clone)
     end
 
-    def_equals_and_hash args, body, splat_index
+    def has_any_args?
+      args.present?
+    end
+
+    def_equals_and_hash args, body, splat_index, unpacks
   end
 
   # A method call.
@@ -589,28 +683,33 @@ module Crystal
     property visibility = Visibility::Public
     property? global : Bool
     property? expansion = false
+    property? args_in_brackets = false
     property? has_parentheses = false
 
-    def initialize(@obj, @name, @args = [] of ASTNode, @block = nil, @block_arg = nil, @named_args = nil, @global : Bool = false)
+    def initialize(@obj : ASTNode?, @name : String, @args : Array(ASTNode) = [] of ASTNode, @block = nil, @block_arg = nil, @named_args = nil, @global : Bool = false)
       if block = @block
         block.call = self
       end
     end
 
-    def self.new(obj, name, arg : ASTNode)
-      new obj, name, [arg] of ASTNode
+    def self.new(obj : ASTNode?, name : String, *args : ASTNode, block : Block? = nil, block_arg : ASTNode? = nil, named_args : Array(NamedArgument)? = nil, global : Bool = false)
+      {% if compare_versions(Crystal::VERSION, "1.5.0") > 0 %}
+        new obj, name, [*args] of ASTNode, block: block, block_arg: block_arg, named_args: named_args, global: global
+      {% else %}
+        new obj, name, args.to_a(&.as(ASTNode)), block: block, block_arg: block_arg, named_args: named_args, global: global
+      {% end %}
     end
 
-    def self.new(obj, name, arg1 : ASTNode, arg2 : ASTNode)
-      new obj, name, [arg1, arg2] of ASTNode
+    def self.new(name : String, args : Array(ASTNode) = [] of ASTNode, block : Block? = nil, block_arg : ASTNode? = nil, named_args : Array(NamedArgument)? = nil, global : Bool = false)
+      new(nil, name, args, block: block, block_arg: block_arg, named_args: named_args, global: global)
     end
 
-    def self.global(name, arg : ASTNode)
-      new nil, name, [arg] of ASTNode, global: true
+    def self.new(name : String, *args : ASTNode, block : Block? = nil, block_arg : ASTNode? = nil, named_args : Array(NamedArgument)? = nil, global : Bool = false)
+      new(nil, name, *args, block: block, block_arg: block_arg, named_args: named_args, global: global)
     end
 
-    def self.global(name, arg1 : ASTNode, arg2 : ASTNode)
-      new nil, name, [arg1, arg2] of ASTNode, global: true
+    def self.global(name, *args : ASTNode)
+      new nil, name, *args, global: true
     end
 
     def name_size
@@ -643,7 +742,15 @@ module Crystal
       loc = @name_location
       return unless loc
 
-      Location.new(loc.filename, loc.line_number, loc.column_number + name_size)
+      Location.new(loc.filename, loc.line_number, loc.column_number + name_size - 1)
+    end
+
+    # Returns `true` if this call has any arguments.
+    #
+    # Does not consider a block, only block argument.
+    # `foo {}` would be `false`, but `foo(&x)` would be `true`.
+    def has_any_args?
+      args.present? || !named_args.nil? || !block_arg.nil?
     end
 
     def_equals_and_hash obj, name, args, block, block_arg, named_args, global?
@@ -662,6 +769,10 @@ module Crystal
 
     def clone_without_location
       NamedArgument.new(name, value.clone)
+    end
+
+    def end_location
+      @end_location || value.end_location
     end
 
     def_equals_and_hash name, value
@@ -685,6 +796,9 @@ module Crystal
     property else : ASTNode
     property? ternary : Bool
 
+    # The location of the `else` keyword if present.
+    property else_location : Location?
+
     def initialize(@cond, a_then = nil, a_else = nil, @ternary = false)
       @then = Expressions.from a_then
       @else = Expressions.from a_else
@@ -707,6 +821,9 @@ module Crystal
     property cond : ASTNode
     property then : ASTNode
     property else : ASTNode
+
+    # The location of the `else` keyword if present.
+    property else_location : Location?
 
     def initialize(@cond, a_then = nil, a_else = nil)
       @then = Expressions.from a_then
@@ -810,15 +927,11 @@ module Crystal
       @end_location || @values.last.end_location
     end
 
-    def ==(other : self)
-      other.targets == targets && other.values == values
-    end
-
     def clone_without_location
       MultiAssign.new(@targets.clone, @values.clone)
     end
 
-    def_hash @targets, @values
+    def_equals_and_hash @targets, @values
   end
 
   # An instance variable.
@@ -937,8 +1050,9 @@ module Crystal
     property default_value : ASTNode?
     property restriction : ASTNode?
     property doc : String?
+    property parsed_annotations : Array(Annotation)?
 
-    def initialize(@name : String, @default_value : ASTNode? = nil, @restriction : ASTNode? = nil, external_name : String? = nil)
+    def initialize(@name : String, @default_value : ASTNode? = nil, @restriction : ASTNode? = nil, external_name : String? = nil, @parsed_annotations : Array(Annotation)? = nil)
       @external_name = external_name || @name
     end
 
@@ -952,10 +1066,10 @@ module Crystal
     end
 
     def clone_without_location
-      Arg.new @name, @default_value.clone, @restriction.clone, @external_name.clone
+      Arg.new @name, @default_value.clone, @restriction.clone, @external_name.clone, @parsed_annotations.clone
     end
 
-    def_equals_and_hash name, default_value, restriction, external_name
+    def_equals_and_hash name, default_value, restriction, external_name, parsed_annotations
   end
 
   # The Proc notation in the type grammar:
@@ -999,7 +1113,9 @@ module Crystal
     property body : ASTNode
     property block_arg : Arg?
     property return_type : ASTNode?
-    property yields : Int32?
+    # Number of block arguments accepted by this method.
+    # `nil` if it does not receive a block.
+    property block_arity : Int32?
     property name_location : Location?
     property splat_index : Int32?
     property doc : String?
@@ -1013,7 +1129,7 @@ module Crystal
     property? assigns_special_var = false
     property? abstract : Bool
 
-    def initialize(@name, @args = [] of Arg, body = nil, @receiver = nil, @block_arg = nil, @return_type = nil, @macro_def = false, @yields = nil, @abstract = false, @splat_index = nil, @double_splat = nil, @free_vars = nil)
+    def initialize(@name, @args = [] of Arg, body = nil, @receiver = nil, @block_arg = nil, @return_type = nil, @macro_def = false, @block_arity = nil, @abstract = false, @splat_index = nil, @double_splat = nil, @free_vars = nil)
       @body = Expressions.from body
     end
 
@@ -1031,7 +1147,7 @@ module Crystal
     end
 
     def clone_without_location
-      a_def = Def.new(@name, @args.clone, @body.clone, @receiver.clone, @block_arg.clone, @return_type.clone, @macro_def, @yields, @abstract, @splat_index, @double_splat.clone, @free_vars)
+      a_def = Def.new(@name, @args.clone, @body.clone, @receiver.clone, @block_arg.clone, @return_type.clone, @macro_def, @block_arity, @abstract, @splat_index, @double_splat.clone, @free_vars)
       a_def.calls_super = calls_super?
       a_def.calls_initialize = calls_initialize?
       a_def.calls_previous_def = calls_previous_def?
@@ -1042,7 +1158,15 @@ module Crystal
       a_def
     end
 
-    def_equals_and_hash @name, @args, @body, @receiver, @block_arg, @return_type, @macro_def, @yields, @abstract, @splat_index, @double_splat
+    def_equals_and_hash @name, @args, @body, @receiver, @block_arg, @return_type, @macro_def, @block_arity, @abstract, @splat_index, @double_splat
+
+    def autogenerated?
+      location == body.location
+    end
+
+    def has_any_args?
+      args.present? || !block_arity.nil?
+    end
   end
 
   class Macro < ASTNode
@@ -1076,6 +1200,10 @@ module Crystal
       m
     end
 
+    def has_any_args?
+      args.present? || !block_arg.nil?
+    end
+
     def_equals_and_hash @name, @args, @body, @block_arg, @splat_index, @double_splat
   end
 
@@ -1087,6 +1215,10 @@ module Crystal
 
     def accept_children(visitor)
       @exp.accept visitor
+    end
+
+    def end_location
+      @end_location || @exp.end_location
     end
 
     def_equals_and_hash exp
@@ -1114,6 +1246,18 @@ module Crystal
   class InstanceSizeOf < UnaryExpression
     def clone_without_location
       InstanceSizeOf.new(@exp.clone)
+    end
+  end
+
+  class AlignOf < UnaryExpression
+    def clone_without_location
+      AlignOf.new(@exp.clone)
+    end
+  end
+
+  class InstanceAlignOf < UnaryExpression
+    def clone_without_location
+      InstanceAlignOf.new(@exp.clone)
     end
   end
 
@@ -1156,6 +1300,10 @@ module Crystal
 
     def clone_without_location
       VisibilityModifier.new(@modifier, @exp.clone)
+    end
+
+    def end_location
+      @end_location || @exp.end_location
     end
 
     def_equals_and_hash modifier, exp
@@ -1221,6 +1369,10 @@ module Crystal
       @body = Expressions.from body
     end
 
+    def self.new(cond : ASTNode, body : ASTNode? = nil, exhaustive = false)
+      new([cond] of ASTNode, body, exhaustive)
+    end
+
     def accept_children(visitor)
       @conds.each &.accept visitor
       @body.accept visitor
@@ -1259,8 +1411,6 @@ module Crystal
   end
 
   class Select < ASTNode
-    record When, condition : ASTNode, body : ASTNode
-
     property whens : Array(When)
     property else : ASTNode?
 
@@ -1268,10 +1418,7 @@ module Crystal
     end
 
     def accept_children(visitor)
-      @whens.each do |select_when|
-        select_when.condition.accept visitor
-        select_when.body.accept visitor
-      end
+      @whens.each &.accept visitor
       @else.try &.accept visitor
     end
 
@@ -1315,6 +1462,10 @@ module Crystal
       new [name], global
     end
 
+    def self.new(name1 : String, name2 : String, global = false)
+      new [name1, name2], global
+    end
+
     def self.global(names)
       new names, true
     end
@@ -1327,6 +1478,11 @@ module Crystal
     # with the given name
     def single?(name)
       names.size == 1 && names.first == name
+    end
+
+    # Returns this path's name if it has only one part and is not global
+    def single_name?
+      names.first if names.size == 1 && !global?
     end
 
     def clone_without_location
@@ -1520,6 +1676,7 @@ module Crystal
   end
 
   class TypeDeclaration < ASTNode
+    property doc : String?
     property var : ASTNode
     property declared_type : ASTNode
     property value : ASTNode?
@@ -1618,6 +1775,12 @@ module Crystal
     property implicit = false
     property suffix = false
 
+    # The location of the `else` keyword if present.
+    property else_location : Location?
+
+    # The location of the `ensure` keyword if present.
+    property ensure_location : Location?
+
     def initialize(body = nil, @rescues = nil, @else = nil, @ensure = nil)
       @body = Expressions.from body
     end
@@ -1660,8 +1823,9 @@ module Crystal
     property obj : ASTNode?
     property name : String
     property args : Array(ASTNode)
+    property? global : Bool
 
-    def initialize(@obj, @name, @args = [] of ASTNode)
+    def initialize(@obj, @name, @args = [] of ASTNode, @global = false)
     end
 
     def accept_children(visitor)
@@ -1670,10 +1834,14 @@ module Crystal
     end
 
     def clone_without_location
-      ProcPointer.new(@obj.clone, @name, @args.clone)
+      ProcPointer.new(@obj.clone, @name, @args.clone, @global)
     end
 
-    def_equals_and_hash @obj, @name, @args
+    def_equals_and_hash @obj, @name, @args, @global
+
+    def has_any_args?
+      args.present?
+    end
   end
 
   class Union < ASTNode
@@ -1807,7 +1975,8 @@ module Crystal
   end
 
   class LibDef < ASTNode
-    property name : String
+    property name : Path
+    property doc : String?
     property body : ASTNode
     property name_location : Location?
     property visibility = Visibility::Public
@@ -1837,6 +2006,7 @@ module Crystal
     property real_name : String
     property doc : String?
     property? varargs : Bool
+    property name_location : Location?
 
     def initialize(@name, @args = [] of Arg, @return_type = nil, @varargs = false, @body = nil, @real_name = name)
     end
@@ -1848,7 +2018,17 @@ module Crystal
     end
 
     def clone_without_location
-      FunDef.new(@name, @args.clone, @return_type.clone, @varargs, @body.clone, @real_name)
+      clone = FunDef.new(@name, @args.clone, @return_type.clone, @varargs, @body.clone, @real_name)
+      clone.name_location = name_location
+      clone
+    end
+
+    def name_size
+      @name.size
+    end
+
+    def has_any_args?
+      args.present? || varargs
     end
 
     def_equals_and_hash @name, @args, @return_type, @varargs, @body, @real_name
@@ -1856,6 +2036,7 @@ module Crystal
 
   class TypeDef < ASTNode
     property name : String
+    property doc : String?
     property type_spec : ASTNode
     property name_location : Location?
 
@@ -1878,6 +2059,7 @@ module Crystal
   # A c struct/union definition inside a lib declaration
   class CStructOrUnionDef < ASTNode
     property name : String
+    property doc : String?
     property body : ASTNode
     property? union : Bool
 
@@ -1920,6 +2102,7 @@ module Crystal
 
   class ExternalVar < ASTNode
     property name : String
+    property doc : String?
     property type_spec : ASTNode
     property real_name : String?
 
@@ -2059,6 +2242,10 @@ module Crystal
       Annotation.new(@path.clone, @args.clone, @named_args.clone)
     end
 
+    def has_any_args?
+      args.present? || !named_args.nil?
+    end
+
     def_equals_and_hash path, args, named_args
   end
 
@@ -2114,8 +2301,9 @@ module Crystal
     property cond : ASTNode
     property then : ASTNode
     property else : ASTNode
+    property? is_unless : Bool
 
-    def initialize(@cond, a_then = nil, a_else = nil)
+    def initialize(@cond, a_then = nil, a_else = nil, @is_unless : Bool = false)
       @then = Expressions.from a_then
       @else = Expressions.from a_else
     end
@@ -2127,10 +2315,10 @@ module Crystal
     end
 
     def clone_without_location
-      MacroIf.new(@cond.clone, @then.clone, @else.clone)
+      MacroIf.new(@cond.clone, @then.clone, @else.clone, @is_unless)
     end
 
-    def_equals_and_hash @cond, @then, @else
+    def_equals_and_hash @cond, @then, @else, @is_unless
   end
 
   # for inside a macro:
@@ -2204,9 +2392,9 @@ module Crystal
   end
 
   class MagicConstant < ASTNode
-    property name : Symbol
+    property name : Token::Kind
 
-    def initialize(@name : Symbol)
+    def initialize(@name : Token::Kind)
     end
 
     def clone_without_location
@@ -2215,13 +2403,13 @@ module Crystal
 
     def expand_node(location, end_location)
       case name
-      when :__LINE__
+      when .magic_line?
         MagicConstant.expand_line_node(location)
-      when :__END_LINE__
+      when .magic_end_line?
         MagicConstant.expand_line_node(end_location)
-      when :__FILE__
+      when .magic_file?
         MagicConstant.expand_file_node(location)
-      when :__DIR__
+      when .magic_dir?
         MagicConstant.expand_dir_node(location)
       else
         raise "BUG: unknown magic constant: #{name}"

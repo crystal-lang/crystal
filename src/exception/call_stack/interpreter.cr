@@ -1,7 +1,4 @@
-require "c/dlfcn"
-require "c/stdio"
-require "c/string"
-require "../lib_unwind"
+require "../../crystal/system/print_error"
 
 # :nodoc:
 struct Exception::CallStack
@@ -17,7 +14,7 @@ struct Exception::CallStack
 
   def self.decode_line_number(pc)
     _, line, column, file = pc
-    {line, column, file}
+    {file, line, column}
   end
 
   def self.decode_function_name(pc)
@@ -30,7 +27,7 @@ struct Exception::CallStack
 
   def self.print_backtrace : Nil
     unwind.each do |frame|
-      Crystal::System.print_error frame.unsafe_as(String)
+      Crystal::System.print_error "%s\n", frame.unsafe_as(String)
     end
   end
 end

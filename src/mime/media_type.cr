@@ -64,7 +64,7 @@ module MIME
     # mime_type["foo"] = "bar"
     # mime_type["foo"] # => "bar"
     # ```
-    def []=(key : String, value : String)
+    def []=(key : String, value : String) : String
       raise Error.new("Invalid parameter name") unless MIME::MediaType.token? key
       @params[key] = value
     end
@@ -354,7 +354,7 @@ module MIME
       MediaType.new mediatype, params
     end
 
-    private def self.parse_parameter_value(reader)
+    private def self.parse_parameter_value(reader, &)
       reader = consume_whitespace(reader)
 
       # Quoted value.
@@ -488,12 +488,12 @@ module MIME
     end
 
     # :nodoc:
-    def self.token?(string) : Bool
+    def self.token?(string : String) : Bool
       string.each_char.all? { |char| token? char }
     end
 
     # :nodoc:
-    def self.quote_string(string, io) : Nil
+    def self.quote_string(string : String, io : IO) : Nil
       string.each_char do |char|
         case char
         when '"', '\\'

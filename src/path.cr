@@ -45,7 +45,7 @@ require "crystal/system/path"
 # * POSIX paths are generally case-sensitive, Windows paths case-insensitive
 #   (see `#<=>`).
 # * A POSIX path is absolute if it begins with a forward slash (`/`). A Windows path
-#   is absolute if it starts with a drive letter and root (`C:\`).
+#   is absolute if it starts with both a drive and a root (see `#absolute?`).
 #
 # ```
 # Path.posix("/foo/./bar").normalize   # => Path.posix("/foo/bar")
@@ -221,12 +221,14 @@ struct Path
     when 0 # Path only consists of separators
       String.new(slice[0, 1])
     when 1 # Path has no parent (ex. "hello/", "C:/", "crystal")
-      return anchor.to_s if windows? && windows_drive?
+      return anchor.to_s if windows? && (windows_drive? || dos_local_device_path?)
       "."
-    else # Path has a parent (ex. "a/a", "/home/user//", "C://Users/mmm")
-      return String.new(slice[0, 1]) if pos == -1
-      return anchor.to_s if windows? && pos == 1 && slice.unsafe_fetch(pos) === ':' && (anchor = self.anchor)
-      String.new(slice[0, pos + 1])
+    else # Path has a parent (ex. "a/a", "/home/user//", "C://Users/mmm", "\\wsl.localhost\Debian")
+      if windows? && (anchor = self.anchor) && pos < anchor.to_s.bytesize
+        anchor.to_s
+      else
+        @name.byte_slice(0, {pos, 0}.max + 1)
+      end
     end
   end
 
@@ -405,7 +407,11 @@ struct Path
   #
   # If the path turns to be empty, the current directory (`"."`) is returned.
   #
-  # The returned path ends in a slash only if it is the root (`"/"`, `\`, or `C:\`).
+  # The returned path ends in a slash if it is the root (`"/"`, `\`, or `C:\`),
+  # or if this path is a Windows local device path that also ends in a slash.
+  # This trailing slash is significant; `\\.\C:` refers to the _volume_ `C:`, on
+  # which most I/O functions fail, whereas `\\.\C:\` refers to the root
+  # _directory_ of said volume.
   #
   # See also Rob Pike: *[Lexical File Names in Plan 9 or Getting Dot-Dot Right](https://9p.io/sys/doc/lexnames.html)*
   def normalize(*, remove_final_separator : Bool = true) : Path
@@ -415,7 +421,7 @@ struct Path
     reader = Char::Reader.new(@name)
     dotdot = 0
     separators = self.separators
-    add_separator_at_end = !remove_final_separator && ends_with_separator?
+    add_separator_at_end = (!remove_final_separator || (windows? && dos_local_device_path?)) && ends_with_separator?
 
     new_name = String.build do |str|
       if drive
@@ -526,7 +532,7 @@ struct Path
     PartIterator.new(self)
   end
 
-  private def each_part_separator_index
+  private def each_part_separator_index(&)
     reader = Char::Reader.new(@name)
     start_pos = reader.pos
 
@@ -557,7 +563,7 @@ struct Path
   def self.next_part_separator_index(reader : Char::Reader, last_was_separator, separators)
     start_pos = reader.pos
 
-    found = reader.each do |char|
+    reader.each do |char|
       if separators.includes?(char)
         if last_was_separator
           next
@@ -623,7 +629,7 @@ struct Path
       end
 
       @reader = reader
-      return 0
+      0
     end
   end
 
@@ -632,50 +638,91 @@ struct Path
   end
 
   # Converts this path to a native path.
+  #
+  # * `#to_kind` performs a configurable conversion.
   def to_native : Path
     to_kind(Kind.native)
   end
 
   # Converts this path to a Windows path.
   #
+  # This creates a new instance with the same string representation but with
+  # `Kind::WINDOWS`. If `#windows?` is true, this is a no-op.
+  #
   # ```
   # Path.posix("foo/bar").to_windows   # => Path.windows("foo/bar")
   # Path.windows("foo/bar").to_windows # => Path.windows("foo/bar")
   # ```
   #
-  # This creates a new instance with the same string representation but with
-  # `Kind::WINDOWS`.
-  def to_windows : Path
-    new_instance(@name, Kind::WINDOWS)
+  # When *mappings* is `true` (default), forbidden characters in Windows paths are
+  # substituted by replacement characters when converting from a POSIX path.
+  # Replacements are calculated by adding `0xF000` to their codepoint.
+  # For example, the backslash character `U+005C` becomes `U+F05C`.
+  #
+  # ```
+  # Path.posix("foo\\bar").to_windows(mappings: true)  # => Path.windows("foo\uF05Cbar")
+  # Path.posix("foo\\bar").to_windows(mappings: false) # => Path.windows("foo\\bar")
+  # ```
+  #
+  # * `#to_posix` performs the inverse conversion.
+  # * `#to_kind` performs a configurable conversion.
+  def to_windows(*, mappings : Bool = true) : Path
+    name = @name
+    if posix? && mappings
+      name = name.tr(WINDOWS_ESCAPE_CHARACTERS, WINDOWS_ESCAPED_CHARACTERS)
+    end
+    new_instance(name, Kind::WINDOWS)
   end
+
+  # :nodoc:
+  WINDOWS_ESCAPE_CHARACTERS = %("*:<>?\\| )
+  # :nodoc:
+  WINDOWS_ESCAPED_CHARACTERS = "\uF022\uF02A\uF03A\uF03C\uF03E\uF03F\uF05C\uF07C\uF020"
 
   # Converts this path to a POSIX path.
   #
+  # It returns a new instance with `Kind::POSIX` and all occurrences of Windows'
+  # backslash file separators (`\\`) replaced by forward slash (`/`).
+  # If `#posix?` is true, this is a no-op.
+  #
   # ```
   # Path.windows("foo/bar\\baz").to_posix # => Path.posix("foo/bar/baz")
-  # Path.posix("foo/bar").to_posix        # => Path.posix("foo/bar")
   # Path.posix("foo/bar\\baz").to_posix   # => Path.posix("foo/bar\\baz")
   # ```
   #
-  # It returns a copy of this instance if it already has POSIX kind. Otherwise
-  # a new instance is created with `Kind::POSIX` and all occurrences of
-  # backslash file separators (`\\`) replaced by forward slash (`/`).
-  def to_posix : Path
-    if posix?
-      new_instance(@name, Kind::POSIX)
-    else
-      new_instance(@name.gsub(Path.separators(Kind::WINDOWS)[0], Path.separators(Kind::POSIX)[0]), Kind::POSIX)
+  # When *mappings* is `true` (default), replacements  for forbidden characters in Windows
+  # paths are substituted by the original characters when converting to a POSIX path.
+  # Originals are calculated by subtracting `0xF000` from the replacement codepoint.
+  # For example, the `U+F05C` becomes `U+005C`, the backslash character.
+  #
+  # ```
+  # Path.windows("foo\uF05Cbar").to_posix(mappings: true)  # => Path.posix("foo\\bar")
+  # Path.windows("foo\uF05Cbar").to_posix(mappings: false) # => Path.posix("foo\uF05Cbar")
+  # ```
+  #
+  # * `#to_windows` performs the inverse conversion.
+  # * `#to_kind` performs a configurable conversion.
+  def to_posix(*, mappings : Bool = true) : Path
+    name = @name
+    if windows?
+      name = name.gsub('\\', '/')
+      if mappings
+        name = name.tr(WINDOWS_ESCAPED_CHARACTERS, WINDOWS_ESCAPE_CHARACTERS)
+      end
     end
+    new_instance(name, Kind::POSIX)
   end
 
   # Converts this path to the given *kind*.
   #
   # See `#to_windows` and `#to_posix` for details.
-  def to_kind(kind) : Path
+  #
+  # * `#to_native` converts to the native path semantics.
+  def to_kind(kind, *, mappings : Bool = true) : Path
     if kind.posix?
-      to_posix
+      to_posix(mappings: mappings)
     else
-      to_windows
+      to_windows(mappings: mappings)
     end
   end
 
@@ -715,7 +762,9 @@ struct Path
       end
     end
 
-    unless new_instance(name).absolute?
+    if new_instance(name).absolute?
+      expanded = name
+    else
       unless base.absolute? || !expand_base
         base = base.expand
       end
@@ -758,8 +807,6 @@ struct Path
       else
         expanded = base.join(name)
       end
-    else
-      expanded = name
     end
 
     expanded = new_instance(expanded) unless expanded.is_a?(Path)
@@ -799,8 +846,8 @@ struct Path
     # Given that `File.join(arg1, arg2)` is the most common usage
     # it's good if we can optimize this case.
 
-    if part.is_a?(Path) && posix? && part.windows?
-      part = part.to_posix.to_s
+    if part.is_a?(Path)
+      part = part.to_kind(@kind).to_s
     else
       part = part.to_s
       part.check_no_null_byte
@@ -885,69 +932,7 @@ struct Path
   #
   # See `join(part)` for details.
   def join(parts : Enumerable) : Path
-    if parts.is_a?(Indexable)
-      return self if parts.empty?
-
-      # If it's just a single part we can avoid one allocation of String.build
-      return join(parts.first) if parts.size == 1
-
-      # If we know how many parts we have we can compute an approximation of
-      # the string's capacity: this path's size plus the parts' size plus the
-      # separators between them
-      capacity = @name.bytesize +
-                 parts.sum(&.to_s.bytesize) +
-                 parts.size
-    else
-      capacity = 64
-    end
-
-    new_name = String.build(capacity) do |str|
-      str << @name
-      last_ended_with_separator = ends_with_separator?
-
-      parts.each_with_index do |part, index|
-        case part
-        when Path
-          # Every POSIX path is also a valid Windows path, so we only need to
-          # convert the other way around (see `#to_windows`, `#to_posix`).
-          part = part.to_posix if posix? && part.windows?
-          part = part.@name
-        else
-          part = part.to_s
-          part.check_no_null_byte
-        end
-
-        if part.empty?
-          if index == parts.size - 1
-            str << separators[0] unless last_ended_with_separator
-            last_ended_with_separator = true
-          else
-            last_ended_with_separator = false
-          end
-
-          next
-        end
-
-        byte_start = 0
-        byte_count = part.bytesize
-
-        case {starts_with_separator?(part), last_ended_with_separator}
-        when {true, true}
-          byte_start += 1
-          byte_count -= 1
-        when {false, false}
-          str << separators[0] unless str.bytesize == 0
-        else
-          # There's one separator, so nothing to do
-        end
-
-        last_ended_with_separator = ends_with_separator?(part)
-
-        str.write part.unsafe_byte_slice(byte_start, byte_count)
-      end
-    end
-
-    new_instance new_name
+    parts.reduce(self) { |path, part| path.join(part) }
   end
 
   # Appends the given *part* to this path and returns the joined path.
@@ -988,19 +973,24 @@ struct Path
   # Returns `nil` if `self` cannot be expressed as relative to *base* or if
   # knowing the current working directory would be necessary to resolve it. The
   # latter can be avoided by expanding the paths first.
+  #
+  # For Windows paths, the drive and the root must be identical; relative paths
+  # between different path types are not supported, even if they would resolve
+  # to the same roots (e.g. `\\.\C:\foo` and `C:\foo` are not equivalent, nor
+  # are `\\?\UNC\server\share\foo` and `\\server\share\foo`).
   def relative_to?(base : Path) : Path?
+    # work on normalized paths otherwise we would need to backtrack on `..` parts
+    base = base.normalize
+    target = self.normalize
+
     base_anchor = base.anchor
-    target_anchor = self.anchor
+    target_anchor = target.anchor
 
     # if paths have a different anchors, there can't be a relative path between
     # them.
     if base_anchor != target_anchor
       return nil
     end
-
-    # work on normalized paths otherwise we would need to backtrack on `..` parts
-    base = base.normalize
-    target = self.normalize
 
     # check for trivial case of equal paths
     if base == target
@@ -1028,7 +1018,7 @@ struct Path
       target_part = target_iterator.next
     end
 
-    path = new_instance("")
+    parts = [] of String
 
     # base_path is not consumed, so we go up before descending into target_path
     if base_part.is_a?(String)
@@ -1038,21 +1028,21 @@ struct Path
         return nil
       end
 
-      path /= ".." unless base_part == "."
+      parts << ".." unless base_part == "."
       base_iterator.each do
-        path /= ".."
+        parts << ".."
       end
     end
 
     # target_path is not consumed, so we append what's left to the relative path
     if target_part.is_a?(String)
-      path /= target_part
+      parts << target_part
       target_iterator.each do |part|
-        path /= part
+        parts << part
       end
     end
 
-    return path
+    new_instance(parts.join(separators[0]))
   end
 
   # :ditto:
@@ -1137,11 +1127,18 @@ struct Path
   # ```
   # Path.windows("C:\\Program Files").drive       # => Path.windows("C:")
   # Path.windows("\\\\host\\share\\folder").drive # => Path.windows("\\\\host\\share")
+  # Path.windows("\\\\.\\NUL").drive              # => Path.windows("\\\\.")
+  # Path.windows("//?").drive                     # => Path.windows("//?")
   # ```
   #
-  # NOTE: Drives are only available for Windows paths. It can either be a drive letter (`C:`) or a UNC share (`\\host\share`).
+  # NOTE: Drives are only available for Windows paths. It can be a drive letter
+  # (`C:`), a UNC share (`\\host\share`), or a root local device path (`\\.`,
+  # `\\?`).
   def drive : Path?
-    if drive = drive_and_root[0]
+    drive_end, _ = drive_and_root_indices
+
+    if drive_end
+      drive = @name.byte_slice(0, drive_end)
       new_instance drive
     end
   end
@@ -1155,9 +1152,15 @@ struct Path
   # Path.windows("C:Program Files").root         # => nil
   # Path.windows("C:\\Program Files").root       # => Path.windows("\\")
   # Path.windows("\\\\host\\share\\folder").root # => Path.windows("\\")
+  # Path.windows("//./NUL").root                 # => Path.windows("/")
+  # Path.windows("\\\\?").root                   # => nil
   # ```
   def root : Path?
-    if root = drive_and_root[1]
+    drive_end, root_end = drive_and_root_indices
+
+    if root_end
+      root_start = drive_end || 0
+      root = @name.byte_slice(root_start, root_end - root_start)
       new_instance root
     end
   end
@@ -1169,56 +1172,76 @@ struct Path
   # Path.windows("C:Program Files").anchor         # => Path.windows("C:")
   # Path.windows("C:\\Program Files").anchor       # => Path.windows("C:\\")
   # Path.windows("\\\\host\\share\\folder").anchor # => Path.windows("\\\\host\\share\\")
+  # Path.windows("\\\\.\\NUL").anchor              # => Path.windows("\\\\.\\")
+  # Path.windows("//?").anchor                     # => Path.windows("//?")
   # ```
   def anchor : Path?
-    drive, root = drive_and_root
+    drive_end, root_end = drive_and_root_indices
+    anchor_end = root_end || drive_end
 
-    if root
-      if drive
-        new_instance({drive, root}.join)
-      else
-        new_instance(root)
-      end
-    elsif drive
-      new_instance drive
+    if anchor_end
+      new_instance(@name.byte_slice(0, anchor_end))
     end
   end
 
   # Returns a tuple of `#drive` and `#root` as strings.
   def drive_and_root : {String?, String?}
+    drive_end, root_end = drive_and_root_indices
+
+    if drive_end
+      drive = @name.byte_slice(0, drive_end)
+    end
+
+    if root_end
+      root_start = drive_end || 0
+      root = @name.byte_slice(root_start, root_end - root_start)
+    end
+
+    {drive, root}
+  end
+
+  private def drive_and_root_indices : {Int32?, Int32?}
     if windows?
       if windows_drive?
-        drive = @name.byte_slice(0, 2)
         if separators.includes?(@name.byte_at?(2).try(&.chr))
-          return drive, @name.byte_slice(2, 1)
+          {2, 3}
         else
-          return drive, nil
+          {2, nil}
+        end
+      elsif dos_local_device_path?
+        if separators.includes?(@name.byte_at?(3).try(&.chr))
+          {3, 4}
+        else
+          {3, nil}
         end
       elsif unc_share = unc_share?
-        share_end, root_end = unc_share
-        if share_end == root_end
-          root = nil
-        else
-          root = @name.byte_slice(share_end, root_end - share_end)
-        end
-
-        return @name.byte_slice(0, share_end), root
+        unc_share
       elsif starts_with_separator?
-        return nil, @name.byte_slice(0, 1)
+        {nil, 1}
       else
-        return nil, nil
+        {nil, nil}
       end
     elsif absolute? # posix
-      return nil, "/"
+      {nil, 1}
     else
-      return nil, nil
+      {nil, nil}
     end
+  end
+
+  private def dos_local_device_path?
+    # `//./`, `\\?` etc.
+    @name.size >= 3 &&
+      separators.includes?(@name.to_unsafe[0].unsafe_chr) &&
+      separators.includes?(@name.to_unsafe[1].unsafe_chr) &&
+      {'.', '?'}.includes?(@name.to_unsafe[2].unsafe_chr)
   end
 
   private def unc_share?
     # Test for UNC share
     # path: //share/share
     # part: 1122222 33333
+
+    # Grammar definition: https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-dtyp/62e862f4-2a51-452e-8eeb-dc4ff5ee33cc?redirectedfrom=MSDN
 
     return unless @name.size >= 5
 
@@ -1230,11 +1253,27 @@ struct Path
     reader.next_char
 
     # 2. Consume first path component
+    # The first component is either an IPv4 address or a hostname.
+    # IPv6 addresses are converted into hostnames by replacing all `:`s with
+    # `-`s, and then appending `.ipv6-literal.net`, so raw IPv6 addresses cannot
+    # appear here.
+    # Hostname follows the grammar of `reg-name` in [RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986).
     return if separators.includes?(reader.current_char)
     while true
       char = reader.current_char
       break if separators.includes?(char)
-      return unless char.ascii_letter?
+      if char == '%'
+        # percent encoded character
+        return unless reader.has_next?
+        reader.next_char
+        return unless reader.current_char.ascii_number?
+        return unless reader.has_next?
+        reader.next_char
+        return unless reader.current_char.ascii_number?
+      else
+        # unreserved / sub-delims
+        return unless char.ascii_alphanumeric? || char.in?('_', '.', '-', '~', '!', '$', ';', '=') || char.in?('&'..',')
+      end
       return unless reader.has_next?
       reader.next_char
     end
@@ -1246,11 +1285,12 @@ struct Path
     return unless reader.has_next?
     reader.next_char
 
-    # 3. Consume second path components
+    # 3. Consume second path component
+    # `share-name` in UNC grammar
     while true
       char = reader.current_char
       break if separators.includes?(char) || !reader.has_next?
-      return unless char.ascii_letter?
+      return unless char.ascii_alphanumeric? || char.in?(' ', '!', '-', '.', '@', '^', '_', '`', '{', '}', '~') || char.in?('#'..')') || char.ord.in?(0x80..0xFF)
       reader.next_char
     end
 
@@ -1261,20 +1301,29 @@ struct Path
       break unless separators.includes?(char)
     end
 
-    return share_end, reader.pos
+    unless reader.pos == share_end
+      root_end = reader.pos
+    end
+
+    return share_end, root_end
   end
 
   # Returns `true` if this path is absolute.
   #
   # A POSIX path is absolute if it begins with a forward slash (`/`).
-  # A Windows path is absolute if it begins with a drive letter and root (`C:\`)
-  # or with a UNC share (`\\server\share\`).
+  #
+  # A Windows path is absolute if it begins with a drive letter (`C:`), a UNC
+  # share (`\\server\share`), or a root local device path (`\\.`, `\\?`), which
+  # is then followed by a root path separator. Drive-relative paths (`C:foo`),
+  # rooted paths (`\foo`), and root local device paths (`\\.`) are not absolute.
   def absolute? : Bool
     separators = self.separators
     if windows?
       first_is_separator = false
       starts_with_double_separator = false
       found_share_name = false
+      found_dot_or_question_mark = false
+
       @name.each_char_with_index do |char, index|
         case index
         when 0
@@ -1290,13 +1339,20 @@ struct Path
             return false unless char == ':'
           end
         else
-          if separators.includes?(char)
+          case char
+          when .in?(separators)
             if index == 2
               return !starts_with_double_separator && !found_share_name
+            elsif index == 3 && found_dot_or_question_mark
+              return true
             elsif found_share_name
               return true
             else
               found_share_name = true
+            end
+          when '.', '?'
+            if index == 2
+              found_dot_or_question_mark = true
             end
           end
         end

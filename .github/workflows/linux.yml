@@ -2,47 +2,45 @@ name: Linux CI
 
 on: [push, pull_request]
 
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
 env:
   TRAVIS_OS_NAME: linux
   SPEC_SPLIT_DOTS: 160
 
 jobs:
-  test_linux:
+  # Test against latest release and the earliest supported Crystal version for forward compatibility.
+  #
+  # A more advanced test which runs against *each* supported version is available in `forward-compatibility.yml` and
+  # runs regularly on a nightly schedule.
+  test:
     env:
-      ARCH: x86_64
+      ARCH: ${{ matrix.arch }}
       ARCH_CMD: linux64
-      DOCKER_TEST_PREFIX: crystallang/crystal:${{ matrix.crystal_bootstrap_version }}
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        crystal_bootstrap_version: [1.2.2, 1.3.2]
+        arch: [x86_64, x86_64-musl]
+        env: [{}]
         include:
-          # libffi is only available starting from the 1.2.2 build images
-          - crystal_bootstrap_version: 1.0.0
-            flags: -Dwithout_ffi
-          - crystal_bootstrap_version: 1.1.1
-            flags: -Dwithout_ffi
+          - arch: x86_64
+            env:
+              CRYSTAL_BOOTSTRAP_VERSION: 1.0.0
+              # libffi is only available starting from the 1.2.2 build images
+              FLAGS: "-Dwithout_ffi"
+              # pcre2 is only available starting from the 1.7.0 build images
+              USE_PCRE1: true
+
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v2
-
-      - name: Prepare System
-        run: bin/ci prepare_system
-
-      - name: Prepare Build
-        run: bin/ci prepare_build
-
-      - name: Test
-        run: FLAGS=${{ matrix.flags }} bin/ci build
-
-  test_alpine:
-    env:
-      ARCH: x86_64-musl
-      ARCH_CMD: linux64
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download Crystal source
-        uses: actions/checkout@v2
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Prepare System
         run: bin/ci prepare_system
@@ -52,44 +50,18 @@ jobs:
 
       - name: Test
         run: bin/ci build
+        env: ${{ matrix.env }}
 
-  test_llvm:
-    env:
-      ARCH: x86_64
-      ARCH_CMD: linux64
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-        - llvm_version: 13.0.0
-          llvm_url: https://github.com/llvm/llvm-project/releases/download/llvmorg-13.0.0/clang+llvm-13.0.0-x86_64-linux-gnu-ubuntu-20.04.tar.xz
-          base_image: ubuntu-20.04
-    runs-on: ${{ matrix.base_image }}
-    name: "Test LLVM ${{ matrix.llvm_version }} (${{ matrix.base_image }})"
-    steps:
-      - name: Download Crystal source
-        uses: actions/checkout@v2
-
-      - name: Prepare System
-        run: bin/ci prepare_system
-
-      - name: Prepare Build
-        run: bin/ci prepare_build
-
-      - name: Install LLVM ${{ matrix.llvm_version }}
-        run: mkdir -p llvm && curl -L ${{ matrix.llvm_url }} > llvm.tar.xz && tar x --xz -C llvm --strip-components=1 -f llvm.tar.xz
-
-      - name: Test
-        run: bin/ci with_build_env "make clean deps compiler_spec crystal std_spec LLVM_CONFIG=\$(pwd)/llvm/bin/llvm-config threads=1 verbose=1 junit_output=.junit/spec.xml"
-
-  test_preview_mt:
+  x86_64-gnu-test-preview_mt:
     env:
       ARCH: x86_64
       ARCH_CMD: linux64
     runs-on: ubuntu-latest
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v2
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Prepare System
         run: bin/ci prepare_system
@@ -103,28 +75,6 @@ jobs:
       - name: Test
         run: bin/ci with_build_env 'CRYSTAL_WORKERS=4 make std_spec threads=1 FLAGS="-D preview_mt"'
 
-  test_interpreter:
-    env:
-      ARCH: ${{ matrix.arch }}
-      ARCH_CMD: linux64
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        arch:
-          - x86_64
-    steps:
-      - name: Download Crystal source
-        uses: actions/checkout@v2
-
-      - name: Prepare System
-        run: bin/ci prepare_system
-
-      - name: Prepare Build
-        run: bin/ci prepare_build
-
-      - name: Test interpreter
-        run: bin/ci with_build_env 'make deps && bin/crystal build -o interpreter_spec spec/compiler/interpreter_spec.cr && ./interpreter_spec'
-
   check_format:
     env:
       ARCH: x86_64
@@ -132,7 +82,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v2
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Prepare System
         run: bin/ci prepare_system
@@ -143,35 +95,27 @@ jobs:
       - name: Check Format
         run: bin/ci format
 
-  deploy_api_docs:
-    if: github.repository_owner == 'crystal-lang' && github.event_name == 'push' && github.ref == 'refs/heads/master'
-    env:
-      ARCH: x86_64
-      ARCH_CMD: linux64
+  lint_spellcheck:
+    name: Spell Check with Typos
     runs-on: ubuntu-latest
     steps:
+    - name: Checkout Actions Repository
+      uses: actions/checkout@v5
+      with:
+        persist-credentials: false
+
+    - name: Spell Check Repo
+      uses: crate-ci/typos@07d900b8fa1097806b8adb6391b0d3e0ac2fdea7 # v1.39.0
+      env:
+        CLICOLOR: 1
+
+  lint_ameba:
+    runs-on: ubuntu-latest
+    container: ghcr.io/crystal-ameba/ameba:sha-d861f4ed0f904e0ecdad11c26f98e968f7d95afa # 1.7.0-dev
+    steps:
       - name: Download Crystal source
-        uses: actions/checkout@v2
-
-      - name: Prepare System
-        run: bin/ci prepare_system
-
-      - name: Prepare Build
-        run: bin/ci prepare_build
-
-      - name: Build docs
-        run: bin/ci with_build_env 'make crystal docs threads=1'
-
-      - name: Set revision
-        run: echo $GITHUB_SHA > ./docs/revision.txt
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: actions/checkout@v5
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+          persist-credentials: false
 
-      - name: Deploy API docs to S3
-        run: |
-          aws s3 sync ./docs s3://crystal-api/api/master --delete
+      - run: ameba

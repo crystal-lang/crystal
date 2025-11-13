@@ -19,5 +19,10 @@ module Crystal
     def annotations(annotation_type : AnnotationType) : Array(Annotation)?
       @annotations.try &.[annotation_type]?
     end
+
+    # Returns all annotations on this type, if any, or `nil` otherwise
+    def all_annotations : Array(Annotation)?
+      @annotations.try &.values.flatten
+    end
   end
 end

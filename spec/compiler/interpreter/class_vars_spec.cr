@@ -4,7 +4,7 @@ require "./spec_helper"
 describe Crystal::Repl::Interpreter do
   context "class vars" do
     it "interprets class var without initializer" do
-      interpret(<<-CODE).should eq(41)
+      interpret(<<-CRYSTAL).should eq(41)
         class Foo
           @@x : Int32?
 
@@ -30,11 +30,11 @@ describe Crystal::Repl::Interpreter do
         a += x if x
 
         a
-      CODE
+      CRYSTAL
     end
 
     it "interprets class var with initializer" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
         class Foo
           @@x = 10
 
@@ -60,11 +60,11 @@ describe Crystal::Repl::Interpreter do
         a += x if x
 
         a
-      CODE
+      CRYSTAL
     end
 
     it "interprets class var for virtual type" do
-      interpret(<<-CODE).should eq(30)
+      interpret(<<-CRYSTAL).should eq(30)
         class Foo
           @@x = 1
 
@@ -92,11 +92,11 @@ describe Crystal::Repl::Interpreter do
         a += foobar.get
         a += barfoo.get
         a
-      CODE
+      CRYSTAL
     end
 
     it "interprets class var for virtual metaclass type" do
-      interpret(<<-CODE).should eq(30)
+      interpret(<<-CRYSTAL).should eq(30)
         class Foo
           @@x = 1
 
@@ -124,7 +124,66 @@ describe Crystal::Repl::Interpreter do
         a += foobar.get
         a += barfoo.get
         a
-      CODE
+      CRYSTAL
+    end
+
+    it "finds self in class var initializer (#12439)" do
+      interpret(<<-CRYSTAL).should eq(42)
+        class Foo
+          @@value : Int32 = self.int
+
+          def self.value
+            @@value
+          end
+
+          def self.int
+            42
+          end
+        end
+
+        Foo.value
+      CRYSTAL
+    end
+
+    it "does class var initializer with union (#12633)" do
+      interpret(<<-CRYSTAL).should eq("hello")
+        class MyClass
+          @@a : String | Int32 = "hello"
+
+          def self.a
+            @@a
+          end
+        end
+
+        x = MyClass.a
+        case x
+        in String
+          x
+        in Int32
+          "bye"
+        end
+        CRYSTAL
+    end
+
+    it "reads class var initializer with union (#12633)" do
+      interpret(<<-CRYSTAL).should eq(2)
+        class MyClass
+          @@a : Char | Int32 = 1
+
+          def self.foo(a)
+            @@a = a
+            b = @@a
+            case b
+            in Char
+              3
+            in Int32
+              b
+            end
+          end
+        end
+
+        MyClass.foo(2)
+        CRYSTAL
     end
   end
 end

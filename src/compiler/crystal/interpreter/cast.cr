@@ -15,6 +15,10 @@ class Crystal::Repl::Compiler
     upcast_distinct(node, from, to)
   end
 
+  private def upcast(node : ASTNode, from : Nil, to : Type)
+    # Nothing to do when casting from nil (NoReturn), as it's NoReturn
+  end
+
   private def upcast_distinct(node : ASTNode, from : TypeDefType, to : Type)
     upcast_distinct node, from.typedef, to
   end
@@ -31,8 +35,44 @@ class Crystal::Repl::Compiler
       needs_value_cast_inside_union?(from_element, to)
     end
 
-    if needs_union_value_cast # Compute the values that need a cast
-      node.raise "BUG: missing mixed union upcast from #{from} to #{to}"
+    if needs_union_value_cast
+      # Compute the values that need a cast
+      types_needing_cast = from.union_types.select do |union_type|
+        needs_value_cast_inside_union?(union_type, to)
+      end
+
+      end_jumps = [] of Int32
+
+      types_needing_cast.each do |type_needing_cast|
+        # Find compatible type
+        compatible_type = to.union_types.find! { |union_type| type_needing_cast.implements?(union_type) }
+
+        # Get the type id of the "from" union
+        get_union_type_id(aligned_sizeof_type(from), node: node)
+
+        # Check if `from_type_id` is the same as `type_needing_cast`
+        put_i32 type_id(type_needing_cast), node: node
+        cmp_i32 node: node
+        cmp_eq node: node
+
+        # If they are not the same, continue
+        branch_unless 0, node: nil
+        cond_jump_location = patch_location
+
+        # We need to upcast from type_needing_cast to compatible_type
+        upcast(node, type_needing_cast, compatible_type)
+
+        # Then we need to set the correct union type id
+        put_union_type_id(type_id(compatible_type), aligned_sizeof_type(to), node: node)
+
+        # Then jump to the end
+        jump 0, node: nil
+        end_jumps << patch_location
+
+        # The unless above should jump here, which is the start
+        # of the next if, or just the end
+        patch_jump(cond_jump_location)
+      end
     end
 
     # Putting a smaller union type inside a bigger one is just extending the value
@@ -40,6 +80,15 @@ class Crystal::Repl::Compiler
 
     if difference > 0
       push_zeros(difference, node: nil)
+    end
+
+    # If needs_union_value_cast was true, we have a bunch of
+    # if .. then that need to jump to the end of everything.
+    # Here we do that.
+    if end_jumps
+      end_jumps.each do |end_jump|
+        patch_jump(end_jump)
+      end
     end
   end
 
@@ -59,15 +108,33 @@ class Crystal::Repl::Compiler
   end
 
   private def upcast_distinct(node : ASTNode, from : PrimitiveType | EnumType | NonGenericClassType | GenericClassInstanceType | GenericClassInstanceMetaclassType | MetaclassType, to : MixedUnionType)
+    # It might happen that `from` is not of the union but it's compatible with one of them.
+    # We need to first cast the value to the compatible type and to `to`.
+    # This same logic exists in codegen/cast.cr
+    case from
+    when TupleInstanceType, NamedTupleInstanceType
+      unless to.union_types.any? &.==(from)
+        compatible_type = to.union_types.find! { |ut| from.implements?(ut) }
+        upcast(node, from, compatible_type)
+        return upcast(node, compatible_type, to)
+      end
+    end
+
     put_in_union(type_id(from), aligned_sizeof_type(from), aligned_sizeof_type(to), node: nil)
   end
 
   private def upcast_distinct(node : ASTNode, from : VirtualMetaclassType, to : MixedUnionType)
-    # Copy the type id
+    # We have a type ID (8 bytes) in the stack.
+    # We need to put that into a union whose:
+    # - tag will be the type ID (8 bytes)
+    # - value will be the type ID (8 bytes) followed by zeros to fill up the union size
+
+    # We already have 8 bytes in the stack. That's the tag.
+    # Now we put the type ID again for the value. So far we have 16 bytes in total.
     dup 8, node: nil
 
     # Then fill out the rest of the union
-    remaining = aligned_sizeof_type(to) - 8
+    remaining = aligned_sizeof_type(to) - 16
     push_zeros remaining, node: nil if remaining > 0
   end
 
@@ -153,7 +220,7 @@ class Crystal::Repl::Compiler
 
   private def upcast_distinct(node : ASTNode, from : TupleInstanceType, to : TupleInstanceType)
     # If we are here it means the tuples are different
-    unpack_tuple(node, from, to.tuple_types)
+    cast_tuple(node, from, to)
 
     # Finally, we must pop the original tuple that was casted
     pop_from_offset aligned_sizeof_type(from), aligned_sizeof_type(to), node: nil
@@ -161,7 +228,7 @@ class Crystal::Repl::Compiler
 
   private def upcast_distinct(node : ASTNode, from : NamedTupleInstanceType, to : NamedTupleInstanceType)
     # If we are here it means the tuples are different
-    unpack_named_tuple(node, from, to)
+    cast_named_tuple(node, from, to)
 
     # Finally, we must pop the original tuple that was casted
     pop_from_offset aligned_sizeof_type(from), aligned_sizeof_type(to), node: nil
@@ -169,59 +236,92 @@ class Crystal::Repl::Compiler
 
   # Unpacks a tuple into a series of types.
   # Each of the tuple elements is upcasted to the corresponding type in `to_types`.
+  # Every individual element is stack-aligned. Use `#cast_tuple` instead if they
+  # should follow their natural alignments inside a target tuple type. Nils
+  # inside `to_types` are discarded.
   # It's the caller's responsibility to pop the original, unpacked tuple, from the
   # stack if needed.
-  private def unpack_tuple(node : ASTNode, from : TupleInstanceType, to_types : Array(Type))
-    offset = aligned_sizeof_type(from)
+  private def unpack_tuple(node : ASTNode, from : TupleInstanceType, to_types : Array(Type?))
+    from_aligned_size = aligned_sizeof_type(from)
+    to_element_offset = 0
 
     to_types.each_with_index do |to_element_type, i|
+      next unless to_element_type
+
       from_element_type = from.tuple_types[i]
 
       from_inner_size = inner_sizeof_type(from_element_type)
 
+      from_element_offset = @context.offset_of(from, i)
+
       # Copy inner size bytes from the tuple.
       # The interpreter will make sure to align this value.
-      copy_from(offset, from_inner_size, node: nil)
+      # Go back `from_aligned_size` plus any elements already pushed onto the stack,
+      # but then move forward (subtracting) to reach the element in `from`.
+      copy_from(from_aligned_size - from_element_offset + to_element_offset, from_inner_size, node: nil)
 
       # Then upcast it to the target tuple element type
       upcast node, from_element_type, to_element_type
 
-      # Check the offset of this tuple element in `from`
-      current_offset =
-        @context.offset_of(from, i)
-
-      # Check what's the next offset in `from` is
-      next_offset =
-        if i == from.tuple_types.size - 1
-          aligned_sizeof_type(from)
-        else
-          @context.offset_of(from, i + 1)
-        end
-
       # Now we have element_type in front of the tuple so we must skip it
-      offset += aligned_sizeof_type(to_element_type)
-      # But we need to access the next tuple member, so we move forward
-      offset -= next_offset - current_offset
+      to_element_offset += aligned_sizeof_type(to_element_type)
     end
   end
 
-  private def unpack_named_tuple(node : ASTNode, from : NamedTupleInstanceType, to : NamedTupleInstanceType)
-    offset = aligned_sizeof_type(from)
+  private def cast_tuple(node : ASTNode, from : TupleInstanceType, to : TupleInstanceType)
+    from_aligned_size = aligned_sizeof_type(from)
+    to_element_offset = 0
 
-    to.entries.each_with_index do |to_entry, i|
-      from_entry = nil
-      from_entry_index = nil
+    to.tuple_types.each_with_index do |to_element_type, i|
+      from_element_type = from.tuple_types[i]
 
-      from.entries.each_with_index do |other_entry, j|
-        if other_entry.name == to_entry.name
-          from_entry = other_entry
-          from_entry_index = j
-          break
+      from_inner_size = inner_sizeof_type(from_element_type)
+
+      from_element_offset = @context.offset_of(from, i)
+
+      # Copy inner size bytes from the tuple.
+      # The interpreter will make sure to align this value.
+      # Go back `from_aligned_size` plus any elements already pushed onto the stack,
+      # but then move forward (subtracting) to reach the element in `from`.
+      copy_from(from_aligned_size - from_element_offset + to_element_offset, from_inner_size, node: nil)
+
+      # Then upcast it to the target tuple element type
+      upcast node, from_element_type, to_element_type
+
+      # the new value is stack-aligned; adjust as necessary to follow the
+      # element's natural alignment inside the target type
+      next_to_offset =
+        if i == to.tuple_types.size - 1
+          aligned_sizeof_type(to)
+        else
+          @context.offset_of(to, i + 1)
         end
+
+      difference = next_to_offset - to_element_offset - aligned_sizeof_type(to_element_type)
+      if difference > 0
+        push_zeros(difference, node: nil)
+      elsif difference < 0
+        pop(-difference, node: nil)
       end
 
-      from_entry = from_entry.not_nil!
-      from_entry_index = from_entry_index.not_nil!
+      # Now we have element_type in front of the tuple so we must skip it
+      to_element_offset = next_to_offset
+    end
+  end
+
+  private def cast_named_tuple(node : ASTNode, from : NamedTupleInstanceType, to : NamedTupleInstanceType)
+    from_aligned_size = aligned_sizeof_type(from)
+    to_element_offset = 0
+
+    from_entry_indices = to.entries.map_with_index do |to_entry, i|
+      from.entries.index! do |other_entry|
+        other_entry.name == to_entry.name
+      end
+    end
+
+    to.entries.each_with_index do |to_entry, i|
+      from_entry_index = from_entry_indices[i]
+      from_entry = from.entries[from_entry_index]
 
       from_element_type = from_entry.type
       to_element_type = to_entry.type
@@ -232,14 +332,31 @@ class Crystal::Repl::Compiler
 
       # Copy inner size bytes from the tuple.
       # The interpreter will make sure to align this value.
-      # Go back `offset`, but then move forward (subtracting) to reach the element in `from`.
-      copy_from(offset - from_element_offset, from_inner_size, node: nil)
+      # Go back `from_aligned_size` plus any elements already pushed onto the stack,
+      # but then move forward (subtracting) to reach the element in `from`.
+      copy_from(from_aligned_size - from_element_offset + to_element_offset, from_inner_size, node: nil)
 
       # Then upcast it to the target tuple element type
       upcast node, from_element_type, to_element_type
 
+      # the new value is stack-aligned; adjust as necessary to follow the
+      # element's natural alignment inside the target type
+      next_to_offset =
+        if i == to.entries.size - 1
+          aligned_sizeof_type(to)
+        else
+          @context.offset_of(to, i + 1)
+        end
+
+      difference = next_to_offset - to_element_offset - aligned_sizeof_type(to_element_type)
+      if difference > 0
+        push_zeros(difference, node: nil)
+      elsif difference < 0
+        pop(-difference, node: nil)
+      end
+
       # Now we have element_type in front of the tuple so we must skip it
-      offset += aligned_sizeof_type(to_element_type)
+      to_element_offset = next_to_offset
     end
   end
 
@@ -248,12 +365,7 @@ class Crystal::Repl::Compiler
     # Nothing to do
   end
 
-  private def upcast_distinct(node : ASTNode, from : MetaclassType, to : VirtualMetaclassType)
-    # TODO: not tested
-  end
-
-  private def upcast_distinct(node : ASTNode, from : VirtualMetaclassType, to : VirtualMetaclassType)
-    # TODO: not tested
+  private def upcast_distinct(node : ASTNode, from : MetaclassType | VirtualMetaclassType | GenericClassInstanceMetaclassType, to : VirtualMetaclassType)
   end
 
   private def upcast_distinct(node : ASTNode, from : Type, to : Type)
@@ -267,6 +379,10 @@ class Crystal::Repl::Compiler
     return if from == to
 
     downcast_distinct(node, from, to)
+  end
+
+  private def downcast(node : ASTNode, from : Type, to : Nil)
+    # Nothing to do when casting to nil (NoReturn)
   end
 
   private def downcast_distinct(node : ASTNode, from : Type, to : TypeDefType)
@@ -292,7 +408,7 @@ class Crystal::Repl::Compiler
     end
   end
 
-  private def downcast_distinct(node : ASTNode, from : MixedUnionType, to : PrimitiveType | EnumType | NonGenericClassType | GenericClassInstanceType | GenericClassInstanceMetaclassType | NilableType | NilableReferenceUnionType | ReferenceUnionType | MetaclassType | VirtualType | VirtualMetaclassType)
+  private def downcast_distinct(node : ASTNode, from : MixedUnionType, to : PrimitiveType | EnumType | NonGenericClassType | GenericClassInstanceType | GenericClassInstanceMetaclassType | NilableType | NilableProcType | NilableReferenceUnionType | ReferenceUnionType | MetaclassType | VirtualType | VirtualMetaclassType)
     remove_from_union(aligned_sizeof_type(from), aligned_sizeof_type(to), node: nil)
   end
 
@@ -331,6 +447,11 @@ class Crystal::Repl::Compiler
     # Nothing to do
   end
 
+  private def downcast_distinct(node : ASTNode, from : ProcInstanceType, to : ProcInstanceType)
+    # Nothing to do
+    # This is when Proc(T) is casted to Proc(Nil)
+  end
+
   private def downcast_distinct(node : ASTNode, from : NilableProcType, to : NilType)
     # TODO: not tested
     pop 16, node: nil
@@ -345,11 +466,7 @@ class Crystal::Repl::Compiler
     # Nothing to do
   end
 
-  private def downcast_distinct(node : ASTNode, from : VirtualMetaclassType, to : MetaclassType)
-    # Nothing to do
-  end
-
-  private def downcast_distinct(node : ASTNode, from : VirtualMetaclassType, to : VirtualMetaclassType)
+  private def downcast_distinct(node : ASTNode, from : VirtualMetaclassType, to : MetaclassType | VirtualMetaclassType | GenericClassInstanceMetaclassType | GenericModuleInstanceMetaclassType)
     # Nothing to do
   end
 

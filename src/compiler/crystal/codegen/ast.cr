@@ -3,32 +3,7 @@ require "../syntax/ast"
 module Crystal
   class ASTNode
     def no_returns?
-      type?.try &.no_return?
-    end
-
-    def zero?
-      false
-    end
-
-    def false?
-      false
-    end
-  end
-
-  class BoolLiteral
-    def false?
-      !value
-    end
-  end
-
-  class NumberLiteral
-    def zero?
-      case :kind
-      when :f32, :f64
-        value == "0.0"
-      else
-        value == "0"
-      end
+      !!type?.try &.no_return?
     end
   end
 
@@ -110,6 +85,10 @@ module Crystal
       @c_calling_convention ? self : nil
     end
 
+    def llvm_intrinsic?
+      self.is_a?(External) && self.real_name.starts_with?("llvm.")
+    end
+
     private def compute_c_calling_convention
       # One case where this is not true if for LLVM intrinsics.
       # For example overflow intrinsics return a tuple, like {i32, i1}:
@@ -157,6 +136,12 @@ module Crystal
       end
 
       found_extern
+    end
+  end
+
+  class Asm
+    def dialect : LLVM::InlineAsmDialect
+      intel? ? LLVM::InlineAsmDialect::Intel : LLVM::InlineAsmDialect::ATT
     end
   end
 end

@@ -15,6 +15,7 @@ class Counter < Crystal::Visitor
 
   def visit(node : Crystal::NumberLiteral)
     @count += 1
+    false
   end
 
   def visit(node : Crystal::ASTNode)

@@ -1,10 +1,15 @@
 {% if flag?(:win32) %}
   require "c/ws2tcpip"
   require "c/afunix"
+  require "c/netioapi"
+{% elsif flag?(:wasi) %}
+  require "c/arpa/inet"
+  require "c/netinet/in"
 {% else %}
   require "c/arpa/inet"
   require "c/sys/un"
   require "c/netinet/in"
+  require "c/net/if"
 {% end %}
 
 class Socket < IO
@@ -38,10 +43,12 @@ class Socket < IO
   end
 
   enum Type
-    STREAM    = LibC::SOCK_STREAM
-    DGRAM     = LibC::SOCK_DGRAM
-    RAW       = LibC::SOCK_RAW
-    SEQPACKET = LibC::SOCK_SEQPACKET
+    STREAM = LibC::SOCK_STREAM
+    DGRAM  = LibC::SOCK_DGRAM
+    {% unless flag?(:wasi) %}
+      RAW       = LibC::SOCK_RAW
+      SEQPACKET = LibC::SOCK_SEQPACKET
+    {% end %}
   end
 
   class Error < IO::Error

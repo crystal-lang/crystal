@@ -58,7 +58,7 @@ describe "StaticArray" do
     end
 
     it "compares other" do
-      (StaticArray(Int32, 0).new(0)).should_not eq(nil)
+      (StaticArray(Int32, 0).new(0)).should_not be_nil
       (StaticArray(Int32, 3).new(0)).should eq(StaticArray(Int8, 3).new(0_i8))
     end
   end
@@ -129,7 +129,7 @@ describe "StaticArray" do
     (a[0] + a[1] + a[2]).should eq(6)
 
     3.times do |i|
-      a.includes?(i + 1).should be_true
+      a.should contain(i + 1)
     end
   end
 
@@ -288,7 +288,7 @@ describe "StaticArray" do
     # StaticArray#sort_by and #sort_by! don't compile on aarch64-darwin and
     # aarch64-linux-musl due to a codegen error caused by LLVM < 13.0.0.
     # See https://github.com/crystal-lang/crystal/issues/11358 for details.
-    {% unless compare_versions(Crystal::LLVM_VERSION, "13.0.0") < 0 && flag?(:aarch64) && (flag?(:musl) || flag?(:darwin)) %}
+    {% unless compare_versions(Crystal::LLVM_VERSION, "13.0.0") < 0 && flag?(:aarch64) && (flag?(:musl) || flag?(:darwin) || flag?(:android)) %}
       describe "{{ sort }}_by" do
         it "sorts by" do
           a = StaticArray["foo", "a", "hello"]

@@ -9,6 +9,8 @@ require "./uri/params"
 # their components or by parsing their string forms and methods for accessing the various
 # components of an instance.
 #
+# NOTE: To use `URI`, you must explicitly import it with `require "uri"`
+#
 # Basic example:
 #
 # ```
@@ -97,7 +99,9 @@ class URI
   getter host : String?
 
   # Sets the host component of the URI.
-  setter host : String?
+  def host=(host : String?)
+    @host = host && !host.starts_with?('[') && host.includes?(':') ? "[#{host}]" : host
+  end
 
   # Returns the port component of the URI.
   #
@@ -173,7 +177,9 @@ class URI
 
   def_equals_and_hash scheme, host, port, path, query, user, password, fragment
 
-  def initialize(@scheme = nil, @host = nil, @port = nil, @path = "", query : String | Params | Nil = nil, @user = nil, @password = nil, @fragment = nil)
+  def initialize(@scheme = nil, host = nil, @port = nil, @path = "", query : String | Params | Nil = nil, @user = nil, @password = nil, @fragment = nil)
+    # wrap IPv6 addresses
+    self.host = host
     @query = query.try(&.to_s)
   end
 
@@ -265,7 +271,7 @@ class URI
   # require "uri"
   #
   # uri = URI.parse "http://foo.com?id=30&limit=5#time=1305298413"
-  # uri.query_params # => URI::Params(@raw_params={"id" => ["30"], "limit" => ["5"]})
+  # uri.query_params # => URI::Params{"id" => ["30"], "limit" => ["5"]}
   # ```
   def query_params : URI::Params
     URI::Params.parse(@query || "")
@@ -282,6 +288,26 @@ class URI
   # ```
   def query_params=(params : URI::Params)
     self.query = params.to_s
+  end
+
+  # Yields the value of `#query_params` commits any modifications of the `URI::Params` instance to self.
+  # Returns the modified `URI::Params`
+  #
+  # ```
+  # require "uri"
+  # uri = URI.parse("http://foo.com?id=30&limit=5#time=1305298413")
+  # uri.update_query_params { |params| params.delete_all("limit") } # => URI::Params{"id" => ["30"]}
+  #
+  # puts uri.to_s # => "http://foo.com?id=30#time=1305298413"
+  # ```
+  def update_query_params(& : URI::Params -> _) : URI
+    params = query_params
+
+    yield params
+
+    self.query_params = params
+
+    self
   end
 
   # Returns the authority component of this URI.
@@ -316,7 +342,7 @@ class URI
       #
       # host        = IP-literal / IPv4address / reg-name
       #
-      # The valid characters include unreserved, sub-delims, ':', '[', ']' (IPv6-Adress)
+      # The valid characters include unreserved, sub-delims, ':', '[', ']' (IPv6-Address)
       URI.encode(host, io) { |byte| URI.unreserved?(byte) || URI.sub_delim?(byte) || byte.unsafe_chr.in?(':', '[', ']') }
     end
 
@@ -608,7 +634,7 @@ class URI
         result.pop if result.size > 0
         # D.  if the input buffer consists only of "." or "..", then remove
         #     that from the input buffer; otherwise,
-      elsif path == ".." || path == "."
+      elsif path.in?("..", ".")
         path = ""
         # E.  move the first path segment in the input buffer to the end of
         #     the output buffer, including the initial "/" character (if
@@ -718,6 +744,10 @@ class URI
   # Returns `true` if this URI's *port* is the default port for
   # its *scheme*.
   private def default_port?
-    (scheme = @scheme) && (port = @port) && port == URI.default_port(scheme)
+    if (scheme = @scheme) && (port = @port)
+      port == URI.default_port(scheme)
+    else
+      false
+    end
   end
 end

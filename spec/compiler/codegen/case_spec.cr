@@ -18,8 +18,8 @@ describe "Code gen: case" do
   end
 
   it "codegens case that always returns" do
-    run("
-      require \"prelude\"
+    run(<<-CRYSTAL).to_i.should eq(3)
+      require "prelude"
       def foo
         if true
           case 0
@@ -31,12 +31,12 @@ describe "Code gen: case" do
       end
 
       foo
-    ").to_i.should eq(3)
+      CRYSTAL
   end
 
   it "codegens case when cond is a call" do
-    run("
-      require \"prelude\"
+    run(<<-CRYSTAL).to_i.should eq(2)
+      require "prelude"
 
       def foo
         1
@@ -50,11 +50,11 @@ describe "Code gen: case" do
       else
         3
       end
-    ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "codegens case with class" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(-1)
       struct Nil; def to_i!; 0; end; end
 
       struct Int32
@@ -70,11 +70,11 @@ describe "Code gen: case" do
       when Char
         a.ord
       end.to_i!
-      ").to_i.should eq(-1)
+      CRYSTAL
   end
 
   it "codegens value-less case" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       case
       when 1 == 2
         1
@@ -83,11 +83,11 @@ describe "Code gen: case" do
       else
         3
       end
-      ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "codegens case when constant bug (#1028)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       struct Nil
         def ===(other)
           self.is_a?(Reference) && other.is_a?(Reference)
@@ -101,11 +101,11 @@ describe "Code gen: case" do
       else
         2
       end
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "does case when with metaclass" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       class Foo
         def self.foo
           1
@@ -127,6 +127,6 @@ describe "Code gen: case" do
       else
         3
       end
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 end

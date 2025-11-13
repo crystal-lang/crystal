@@ -128,10 +128,8 @@ module YAML::Schema::Core
 
   # If `node` parses to a null value, returns `nil`, otherwise
   # invokes the given block.
-  def self.parse_null_or(node : YAML::Nodes::Node)
-    if node.is_a?(YAML::Nodes::Scalar) && parse_null?(node)
-      nil
-    else
+  def self.parse_null_or(node : YAML::Nodes::Node, &)
+    unless parse_null?(node)
       yield
     end
   end
@@ -140,7 +138,7 @@ module YAML::Schema::Core
   # values, resolving merge keys (<<) when found (keys and
   # values of the resolved merge mappings are yielded,
   # recursively).
-  def self.each(node : YAML::Nodes::Mapping)
+  def self.each(node : YAML::Nodes::Mapping, &)
     # We can't just traverse the nodes and invoke yield because
     # yield can't recurse. So, we use a stack of {Mapping, index}.
     # We pop from the stack and traverse the mapping values.
@@ -240,7 +238,7 @@ module YAML::Schema::Core
     raise YAML::ParseException.new("Invalid bool", *location)
   end
 
-  protected def self.parse_int(string, location) : Int64
+  protected def self.parse_int(string : String, location) : Int64
     return 0_i64 if string == "0"
 
     string.to_i64?(underscore: true, prefix: true, leading_zero_is_octal: true) ||
@@ -266,13 +264,13 @@ module YAML::Schema::Core
       raise(YAML::ParseException.new("Invalid timestamp", *location))
   end
 
-  protected def self.process_scalar_tag(scalar)
+  protected def self.process_scalar_tag(scalar, &)
     process_scalar_tag(scalar, scalar.tag) do |value|
       yield value
     end
   end
 
-  protected def self.process_scalar_tag(source, tag)
+  protected def self.process_scalar_tag(source, tag, &)
     case tag
     when "tag:yaml.org,2002:binary"
       yield parse_binary(source.value, source.location)
@@ -293,8 +291,13 @@ module YAML::Schema::Core
     end
   end
 
-  private def self.parse_null?(node : Nodes::Scalar)
-    parse_null?(node.value) && node.style.plain?
+  # Returns `true` if *node* parses to a null value.
+  def self.parse_null?(node : Nodes::Node)
+    if node.is_a?(Nodes::Scalar)
+      parse_null?(node.value) && node.style.plain?
+    else
+      false
+    end
   end
 
   private def self.parse_null?(string)
@@ -319,6 +322,25 @@ module YAML::Schema::Core
 
   private def self.parse_number?(string)
     parse_int?(string) || parse_float?(string)
+  end
+
+  # Parses an integer of the given *type* according to the core schema.
+  #
+  # *type* must be a primitive integer type. Raises `YAML::ParseException` if
+  # *node* is not a valid integer or its value is outside *type*'s range.
+  def self.parse_int(node : Nodes::Node, type : T.class) : T forall T
+    {% unless Int::Primitive.union_types.includes?(T) %}
+      {% raise "Expected `type` to be a primitive integer type, not #{T}" %}
+    {% end %}
+
+    string = node.value
+    return T.zero if string == "0"
+
+    begin
+      T.new(string, underscore: true, prefix: true, leading_zero_is_octal: true)
+    rescue ex : ArgumentError
+      raise YAML::ParseException.new("Can't read #{T}", *node.location)
+    end
   end
 
   private def self.parse_int?(string)

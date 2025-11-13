@@ -1,101 +1,167 @@
 require "./printer/*"
 
 # :nodoc:
-#
-# `Float::Printer` is based on Grisu3 algorithm described in the 2004 paper
-# "Printing Floating-Point Numbers Quickly and Accurately with Integers" by
-# Florian Loitsch.
 module Float::Printer
   extend self
-  BUFFER_SIZE = 128
 
-  # Converts `Float` *v* to a string representation and prints it onto *io*.
+  BUFFER_SIZE = 17 # maximum number of decimal digits required
+
+  # Writes *v*'s shortest string representation to the given *io*.
   #
-  # It is used by `Float64#to_s` and it is probably not necessary to use
-  # this directly.
+  # Based on the [Dragonbox](https://github.com/jk-jeon/dragonbox) algorithm
+  # developed by Junekey Jeon around 2020-2021.
+  #
+  # It is used by `Float::Primitive#to_s` and `Number#format`. It is probably
+  # not necessary to use this directly.
   #
   # *point_range* designates the boundaries of scientific notation which is used
-  # for all values whose decmial point position is outside that range.
-  def print(v : Float64 | Float32, io : IO, *, point_range = -3..15) : Nil
-    d = IEEE.to_uint(v)
-
-    if IEEE.sign(d) < 0
-      io << '-'
-      v = -v
-    end
-
-    if v == 0.0
-      io << "0.0"
-    elsif IEEE.special?(d)
-      if IEEE.inf?(d)
-        io << "Infinity"
-      else
-        io << "NaN"
+  # for all values whose decimal point position is outside that range.
+  def shortest(v : Float::Primitive, io : IO, *, point_range = -3..15) : Nil
+    check_finite_float(v, io) do |pos_v|
+      if pos_v.zero?
+        io << "0.0"
+        return
       end
-    else
-      internal(v, io, point_range)
+
+      significand, decimal_exponent = Dragonbox.to_decimal(pos_v)
+
+      # remove trailing zeros
+      while significand.unsafe_mod(10) == 0
+        significand = significand.unsafe_div(10)
+        decimal_exponent += 1
+      end
+
+      # generate `significand.to_s` in a reasonably fast manner
+      str = uninitialized UInt8[BUFFER_SIZE]
+      ptr = str.to_unsafe + BUFFER_SIZE
+      while significand > 0
+        ptr -= 1
+        ptr.value = 48_u8 &+ significand.unsafe_mod(10).to_u8!
+        significand = significand.unsafe_div(10)
+      end
+
+      buffer = str.to_slice[ptr - str.to_unsafe..]
+      decimal(io, buffer, decimal_exponent, point_range, :write_all)
     end
   end
 
-  private def internal(v : Float64 | Float32, io : IO, point_range)
-    buffer = StaticArray(UInt8, BUFFER_SIZE).new(0_u8)
-    success, decimal_exponent, length = Grisu3.grisu3(v, buffer.to_unsafe)
+  # How to output the decimal part in `#decimal`.
+  enum FractionMode
+    # Writes the decimal separator and all digits that follow.
+    # Also writes `.0` if the decimal part is empty.
+    WriteAll
 
-    unless success
-      # grisu3 does not work for ~0.5% of floats
-      # when this happens, fallback to another, slower approach
-      if v.is_a?(Float64)
-        LibC.snprintf(buffer.to_unsafe, BUFFER_SIZE, "%.17g", v)
-      else
-        LibC.snprintf(buffer.to_unsafe, BUFFER_SIZE, "%g", v.to_f64)
-      end
-      len = LibC.strlen(buffer)
-      io.write_string buffer.to_slice[0, len]
-      return
-    end
+    # If there are two or more digits, removes all consecutive trailing zeros,
+    # except that the digit past the decimal separator is always kept.
+    # `.100` becomes `.1`, and `.00` becomes `.0`.
+    # Also writes `.0` if the decimal part is empty.
+    RemoveExtraZeros
 
-    point = decimal_exponent + length
+    # If all the digits are zero, does not write the decimal separator nor the
+    # digits. Otherwise writes everything.
+    # `.100` becomes `.100`, and `.00` becomes the empty string.
+    RemoveIfZero
+  end
 
-    exp = point
-    exp_mode = !point_range.includes?(point)
-    point = 1 if exp_mode
+  # The general printing algorithm for decimal numbers. Writes to the given *io*
+  # the value *digits*, interpreted as an ASCII numeric string, and then
+  # multiplied by 10 to the *decimal_exponent*-th power.
+  #
+  # *digits* must not be empty or contain any leading zeros or minus signs. It
+  # may however contain redundant trailing zeros.
+  #
+  # *point_range* designates the boundaries of scientific notation which is used
+  # for all values whose decimal point position is outside that range. The
+  # scientific notation can be unconditionally enabled or disabled by passing
+  # `0...0` or `..` to this parameter.
+  #
+  # *fraction* determines if and how the decimal separator and the decimal part
+  # are written. Refer to `FractionMode` for the options available.
+  def decimal(io : IO, digits : Bytes, decimal_exponent : Int, point_range : Range, fraction : FractionMode) : Nil
+    length = digits.size
 
-    # add leading zero
-    io << '0' if point < 1
-
-    i = 0
+    exp = decimal_exponent + length
+    exp_mode = !point_range.includes?(exp)
+    point = exp_mode ? 1 : exp
 
     # add integer part digits
     if decimal_exponent > 0 && !exp_mode
       # whole number but not big enough to be exp form
-      io.write_string buffer.to_slice[i, length - i]
-      i = length
-      (point - length).times { io << '0' }
-    elsif i < point
-      io.write_string buffer.to_slice[i, point - i]
-      i = point
-    end
-
-    io << '.'
-
-    # add leading zeros after point
-    if point < 0
-      (-point).times { io << '0' }
-    end
-
-    # add fractional part digits
-    io.write_string buffer.to_slice[i, length - i]
-
-    # print trailing 0 if whole number or exp notation of power of ten
-    if (decimal_exponent >= 0 && !exp_mode) || (exp != point && length == 1)
+      io.write_string digits
+      digits = Bytes.empty
+      decimal_exponent.times { io << '0' }
+    elsif point > 0
+      io.write_string digits[0, point]
+      digits = digits[point..]
+    else
+      # add leading zero
       io << '0'
     end
 
+    unless fraction.remove_if_zero? && digits.all?(&.=== '0')
+      io << '.'
+
+      # add leading zeros after point
+      (-point).times { io << '0' }
+
+      # add fractional part digits
+      digits = remove_extra_zeros(digits) if fraction.remove_extra_zeros?
+      io.write_string(digits)
+
+      # print trailing 0 if whole number or exp notation of power of ten
+      io << '0' if digits.empty?
+    end
+
     # exp notation
-    if exp != point
+    if exp_mode
       io << 'e'
       io << '+' if exp > 0
       (exp - 1).to_s(io)
+    end
+  end
+
+  private def remove_extra_zeros(digits : Bytes) : Bytes
+    return digits if digits.empty?
+    b = digits.to_unsafe
+    e = b + digits.size - 1
+    while e > b && e.value === '0'
+      e -= 1
+    end
+    Slice.new(b, e + 1 - b)
+  end
+
+  # Writes *v*'s hexadecimal-significand representation to the given *io*.
+  #
+  # Used by `Float::Primitive#to_hexfloat` and `String::Formatter#float_hex`.
+  def hexfloat(v : Float64, io : IO, **opts) : Nil
+    check_finite_float(v, io) do
+      Hexfloat(Float64, UInt64).to_s(io, v, **opts)
+    end
+  end
+
+  # :ditto:
+  def hexfloat(v : Float32, io : IO, **opts) : Nil
+    check_finite_float(v, io) do
+      Hexfloat(Float32, UInt32).to_s(io, v, **opts)
+    end
+  end
+
+  # If *v* is finite, yields its absolute value, otherwise writes *v* to *io*.
+  private def check_finite_float(v : Float::Primitive, io : IO, &)
+    if v.nan?
+      io << "NaN"
+      return
+    end
+
+    if v.sign_bit < 0
+      io << '-'
+      v = -v
+    end
+
+    if v.infinite?
+      io << "Infinity"
+    else
+      yield v
     end
   end
 end

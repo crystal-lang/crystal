@@ -27,6 +27,8 @@ require "./repl"
 class Crystal::Repl::LocalVars
   record Key, name : String, block_level : Int32
 
+  getter block_level : Int32
+
   def initialize(@context : Context)
     @types = {} of Key => Type
     @name_to_index = {} of Key => Int32
@@ -78,7 +80,8 @@ class Crystal::Repl::LocalVars
 
   def declare(name : String, type : Type) : Int32?
     is_self = name == "self"
-    return if is_self && type.is_a?(Program)
+    # TODO: should this use `Type#passed_as_self?` instead?
+    return if is_self && (type.is_a?(Program) || type.is_a?(FileModule))
 
     key = Key.new(name, @block_level)
 

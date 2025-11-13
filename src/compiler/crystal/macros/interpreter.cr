@@ -69,7 +69,7 @@ module Crystal
         vars[macro_block_arg.name] = call_block || Nop.new
       end
 
-      new(program, scope, path_lookup, a_macro.location, vars, call.block, a_def, in_macro)
+      new(program, scope, path_lookup, a_macro.location, vars, call.block, a_def, in_macro, call)
     end
 
     record MacroVarKey, name : String, exps : Array(ASTNode)?
@@ -77,13 +77,34 @@ module Crystal
     def initialize(@program : Program,
                    @scope : Type, @path_lookup : Type, @location : Location?,
                    @vars = {} of String => ASTNode, @block : Block? = nil, @def : Def? = nil,
-                   @in_macro = false)
+                   @in_macro = false, @call : Call? = nil)
       @str = IO::Memory.new(512) # Can't be String::Builder because of `{{debug}}`
       @last = Nop.new
     end
 
     def define_var(name : String, value : ASTNode) : Nil
       @vars[name] = value
+    end
+
+    # Calls the program's `interpreted_node_hook` hook with the macro ASTNode that was interpreted.
+    def interpreted_hook(node : ASTNode, *, location custom_location : Location? = nil) : ASTNode
+      @program.interpreted_node_hook.try &.call(node, false, false, custom_location)
+
+      node
+    end
+
+    # Calls the program's `interpreted_node_hook` hook with the macro ASTNode that was _not_ interpreted.
+    def not_interpreted_hook(node : ASTNode, use_significant_node : Bool = false, *, location custom_location : Location? = nil) : ASTNode
+      return node unless interpreted_hook = @program.interpreted_node_hook
+
+      interpreted_hook.call node, true, use_significant_node, custom_location
+
+      # If a Yield was missed, also mark the code that would have ran as missed.
+      if node.is_a?(Yield) && (block = @block)
+        interpreted_hook.call block.body, true, false, nil
+      end
+
+      node
     end
 
     def accept(node)
@@ -104,12 +125,12 @@ module Crystal
         if (loc = @last.location) && loc.filename.is_a?(String) || is_yield
           macro_expansion_pragmas = @macro_expansion_pragmas ||= {} of Int32 => Array(Lexer::LocPragma)
           (macro_expansion_pragmas[@str.pos.to_i32] ||= [] of Lexer::LocPragma) << Lexer::LocPushPragma.new
-          @str << "begin " if is_yield
+          @str << "begin\n" if is_yield
           @last.to_s(@str, macro_expansion_pragmas: macro_expansion_pragmas, emit_doc: true)
           @str << " end" if is_yield
           (macro_expansion_pragmas[@str.pos.to_i32] ||= [] of Lexer::LocPragma) << Lexer::LocPopPragma.new
         else
-          @last.to_s(@str)
+          @last.to_s(@str, emit_location_pragmas: !!@program.interpreted_node_hook)
         end
       end
 
@@ -118,24 +139,28 @@ module Crystal
 
     def visit(node : MacroLiteral)
       @str << node.value
+      false
     end
 
     def visit(node : MacroVerbatim)
       exp = node.exp
       if exp.is_a?(Expressions)
         exp.expressions.each do |subexp|
-          subexp.to_s(@str)
+          subexp.to_s(@str, emit_location_pragmas: !!@program.interpreted_node_hook)
         end
       else
-        exp.to_s(@str)
+        exp.to_s(@str, emit_location_pragmas: !!@program.interpreted_node_hook)
       end
       false
     end
 
     def visit(node : Var)
+      self.interpreted_hook node
+
       var = @vars[node.name]?
       if var
-        return @last = var
+        @last = var
+        return false
       end
 
       # Try to consider the var as a top-level macro call.
@@ -149,8 +174,9 @@ module Crystal
       #
       # and in this case the parser has no idea about this, so the only
       # solution is to do it now.
-      if value = interpret_top_level_call?(Call.new(nil, node.name))
-        return @last = value
+      if value = interpret_top_level_call?(Call.new(node.name))
+        @last = value
+        return false
       end
 
       node.raise "undefined macro variable '#{node.name}'"
@@ -171,15 +197,26 @@ module Crystal
     end
 
     def visit(node : MacroIf)
+      self.interpreted_hook node
+
       node.cond.accept self
 
-      body = @last.truthy? ? node.then : node.else
+      body = if @last.truthy?
+               self.not_interpreted_hook node.else, use_significant_node: true
+               node.then
+             else
+               self.not_interpreted_hook node.then, use_significant_node: true
+               node.else
+             end
+
       body.accept self
 
       false
     end
 
     def visit(node : MacroFor)
+      self.interpreted_hook node.exp
+
       node.exp.accept self
 
       exp = @last
@@ -201,6 +238,10 @@ module Crystal
 
         element_var = node.vars[0]
         index_var = node.vars[1]?
+
+        if range.empty?
+          self.not_interpreted_hook node.body, use_significant_node: true
+        end
 
         range.each_with_index do |element, index|
           @vars[element_var.name] = NumberLiteral.new(element)
@@ -238,9 +279,13 @@ module Crystal
       visit_macro_for_array_like node, exp, exp.elements, &.itself
     end
 
-    def visit_macro_for_array_like(node, exp, entries)
+    def visit_macro_for_array_like(node, exp, entries, &)
       element_var = node.vars[0]
       index_var = node.vars[1]?
+
+      if entries.empty?
+        self.not_interpreted_hook node.body, use_significant_node: true
+      end
 
       entries.each_with_index do |element, index|
         @vars[element_var.name] = yield element
@@ -254,10 +299,14 @@ module Crystal
       @vars.delete index_var.name if index_var
     end
 
-    def visit_macro_for_hash_like(node, exp, entries)
+    def visit_macro_for_hash_like(node, exp, entries, &)
       key_var = node.vars[0]
       value_var = node.vars[1]?
       index_var = node.vars[2]?
+
+      if entries.empty?
+        self.not_interpreted_hook node.body, use_significant_node: true
+      end
 
       entries.each_with_index do |entry, i|
         key, value = yield entry, value_var
@@ -275,6 +324,8 @@ module Crystal
     end
 
     def visit(node : MacroVar)
+      self.interpreted_hook node
+
       if exps = node.exps
         exps = exps.map { |exp| accept exp }
       else
@@ -290,10 +341,14 @@ module Crystal
     end
 
     def visit(node : Assign)
+      self.interpreted_hook node
+
       case target = node.target
       when Var
         node.value.accept self
         @vars[target.name] = @last
+      when Underscore
+        node.value.accept self
       else
         node.raise "can only assign to variables, not #{target.class_desc}"
       end
@@ -312,18 +367,30 @@ module Crystal
     end
 
     def visit(node : And)
+      self.interpreted_hook node
+
       node.left.accept self
+
       if @last.truthy?
         node.right.accept self
+      else
+        self.not_interpreted_hook node.right, use_significant_node: true
       end
+
       false
     end
 
     def visit(node : Or)
+      self.interpreted_hook node
+
       node.left.accept self
-      unless @last.truthy?
+
+      if !@last.truthy?
         node.right.accept self
+      else
+        self.not_interpreted_hook node.right, use_significant_node: true
       end
+
       false
     end
 
@@ -334,14 +401,34 @@ module Crystal
     end
 
     def visit(node : If)
+      self.interpreted_hook node
+
       node.cond.accept self
-      (@last.truthy? ? node.then : node.else).accept self
+
+      a_then, a_else = node.then, node.else
+      unless @last.truthy?
+        a_then, a_else = a_else, a_then
+      end
+
+      self.not_interpreted_hook a_else
+      a_then.accept self
+
       false
     end
 
     def visit(node : Unless)
+      self.interpreted_hook node
+
       node.cond.accept self
-      (@last.truthy? ? node.else : node.then).accept self
+
+      a_then, a_else = node.then, node.else
+      if @last.truthy?
+        a_then, a_else = a_else, a_then
+      end
+
+      self.not_interpreted_hook a_else
+      a_then.accept self
+
       false
     end
 
@@ -355,12 +442,18 @@ module Crystal
           receiver = @last
         end
 
+        self.interpreted_hook obj, location: node.name_location
+
         args = node.args.map { |arg| accept arg }
         named_args = node.named_args.try &.to_h { |arg| {arg.name, accept arg.value} }
 
+        # normalize needed for param unpacking
+        block = node.block.try { |b| @program.normalize(b) }
+
         begin
-          @last = receiver.interpret(node.name, args, named_args, node.block, self, node.name_location)
+          @last = receiver.interpret(node.name, args, named_args, block, self, node.name_location)
         rescue ex : MacroRaiseException
+          # Re-raise to avoid the logic in the other rescue blocks and to retain the original location
           raise ex
         rescue ex : Crystal::CodeError
           node.raise ex.message, inner: ex
@@ -368,7 +461,10 @@ module Crystal
           node.raise ex.message
         end
       else
+        self.interpreted_hook node
+
         # no receiver: special calls
+        # may raise `Crystal::TopLevelMacroRaiseException`
         interpret_top_level_call node
       end
 
@@ -376,6 +472,8 @@ module Crystal
     end
 
     def visit(node : Yield)
+      self.interpreted_hook node
+
       unless @in_macro
         node.raise "can't use `{{yield}}` outside a macro"
       end
@@ -399,6 +497,8 @@ module Crystal
     end
 
     def visit(node : Path)
+      self.interpreted_hook node
+
       @last = resolve(node)
       false
     end
@@ -413,7 +513,7 @@ module Crystal
     end
 
     def resolve?(node : Path)
-      if node.names.size == 1 && (match = @free_vars.try &.[node.names.first]?)
+      if (single_name = node.single_name?) && (match = @free_vars.try &.[single_name]?)
         matched_type = match
       else
         matched_type = @path_lookup.lookup_path(node)
@@ -423,6 +523,7 @@ module Crystal
 
       case matched_type
       when Const
+        @program.check_deprecated_constant(matched_type, node)
         matched_type.value
       when Type
         matched_type = matched_type.remove_alias
@@ -504,13 +605,79 @@ module Crystal
       node.raise "can't resolve #{node} (#{node.class_desc})"
     end
 
+    def visit(node : SizeOf)
+      type_node = resolve(node.exp)
+      unless type_node.is_a?(TypeNode) && stable_abi?(type_node.type)
+        node.raise "argument to `sizeof` inside macros must be a type with a stable size"
+      end
+
+      @last = NumberLiteral.new(@program.size_of(type_node.type.sizeof_type).to_i32)
+      false
+    end
+
+    def visit(node : AlignOf)
+      type_node = resolve(node.exp)
+      unless type_node.is_a?(TypeNode) && stable_abi?(type_node.type)
+        node.raise "argument to `alignof` inside macros must be a type with a stable alignment"
+      end
+
+      @last = NumberLiteral.new(@program.align_of(type_node.type.sizeof_type).to_i32)
+      false
+    end
+
+    # Returns whether *type*'s size and alignment are stable with respect to
+    # source code augmentation, i.e. they remain unchanged at the top level even
+    # as new code is being processed by the compiler at various phases.
+    #
+    # `instance_sizeof` and `instance_alignof` are inherently unstable, as they
+    # only work on subclasses of `Reference`, and instance variables can be
+    # added to them at will.
+    #
+    # This method does not imply there is a publicly stable ABI yet!
+    private def stable_abi?(type : Type) : Bool
+      case type
+      when ReferenceStorageType
+        # instance variables may be added at will
+        false
+      when GenericType, AnnotationType
+        # no such values exist
+        false
+      when .module?
+        # ABI-equivalent to the union of all including types, which may be added
+        # at will
+        false
+      when ProcInstanceType, PointerInstanceType
+        true
+      when StaticArrayInstanceType
+        stable_abi?(type.element_type)
+      when TupleInstanceType
+        type.tuple_types.all? { |t| stable_abi?(t) }
+      when NamedTupleInstanceType
+        type.entries.all? { |entry| stable_abi?(entry.type) }
+      when InstanceVarContainer
+        # instance variables of structs may be added at will; references always
+        # have the size and alignment of a pointer
+        !type.struct?
+      when UnionType
+        type.union_types.all? { |t| stable_abi?(t) }
+      when TypeDefType
+        stable_abi?(type.typedef)
+      when AliasType
+        stable_abi?(type.aliased_type)
+      else
+        true
+      end
+    end
+
     def visit(node : Splat)
+      warnings.add_warning(node, "Deprecated use of splat operator. Use `#splat` instead")
       node.exp.accept self
       @last = @last.interpret("splat", [] of ASTNode, nil, nil, self, node.location)
       false
     end
 
     def visit(node : DoubleSplat)
+      warnings.add_warning(node, "Deprecated use of double splat operator. Use `#double_splat` instead")
       node.exp.accept self
       @last = @last.interpret("double_splat", [] of ASTNode, nil, nil, self, node.location)
       false
@@ -518,8 +685,8 @@ module Crystal
 
     def visit(node : IsA)
       node.obj.accept self
-      const_name = node.const.to_s
-      @last = BoolLiteral.new(@last.class_desc_is_a?(const_name))
+      macro_type = @program.lookup_macro_type(node.const)
+      @last = BoolLiteral.new(@last.macro_is_a?(macro_type))
       false
     end
 
@@ -532,22 +699,35 @@ module Crystal
         @last = TypeNode.new(@program)
       when "@def"
         @last = @def || NilLiteral.new
+      when "@caller"
+        @last = if call = @call
+                  ArrayLiteral.map [call], &.itself
+                else
+                  NilLiteral.new
+                end
       else
         node.raise "unknown macro instance var: '#{node.name}'"
       end
+      false
     end
 
     def visit(node : TupleLiteral)
+      self.interpreted_hook node
+
       @last = TupleLiteral.map(node.elements) { |element| accept element }
       false
     end
 
     def visit(node : ArrayLiteral)
+      self.interpreted_hook node
+
       @last = ArrayLiteral.map(node.elements) { |element| accept element }
       false
     end
 
     def visit(node : HashLiteral)
+      self.interpreted_hook node
+
       @last =
         HashLiteral.new(node.entries.map do |entry|
           HashLiteral::Entry.new(accept(entry.key), accept(entry.value))
@@ -564,6 +744,8 @@ module Crystal
     end
 
     def visit(node : Nop | NilLiteral | BoolLiteral | NumberLiteral | CharLiteral | StringLiteral | SymbolLiteral | RangeLiteral | RegexLiteral | MacroId | TypeNode | Def)
+      self.interpreted_hook node
+
       @last = node.clone_without_location
       false
     end

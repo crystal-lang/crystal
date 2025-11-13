@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Code gen: new" do
   it "codegens instance method with allocate" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Foo
         def coco
           1
@@ -10,11 +10,11 @@ describe "Code gen: new" do
       end
 
       Foo.allocate.coco
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens instance method with new and instance var" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Foo
         def initialize
           @coco = 2
@@ -28,11 +28,11 @@ describe "Code gen: new" do
 
       f = Foo.new
       f.coco
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens instance method with new" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Foo
         def coco
           1
@@ -40,17 +40,17 @@ describe "Code gen: new" do
       end
 
       Foo.new.coco
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "can create Reference" do
-    run(%(
+    run(<<-CRYSTAL).to_b.should be_false
       Reference.new.object_id == 0
-      )).to_b.should be_false
+      CRYSTAL
   end
 
   it "inherits initialize" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(42)
       class Foo
         def initialize(@x : Int32)
         end
@@ -64,11 +64,11 @@ describe "Code gen: new" do
       end
 
       Bar.new(42).x
-      )).to_i.should eq(42)
+      CRYSTAL
   end
 
   it "inherits initialize for generic type" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(42)
       class Foo(T)
         def initialize(@x : Int32)
         end
@@ -81,11 +81,11 @@ describe "Code gen: new" do
       end
 
       Bar(Int32).new(42).x
-      )).to_i.should eq(42)
+      CRYSTAL
   end
 
   it "overloads new and initialize, 1 (#2489)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(10)
       class String
         def size
           10
@@ -110,11 +110,11 @@ describe "Code gen: new" do
       end
 
       Foo.new.foo
-      )).to_i.should eq(10)
+      CRYSTAL
   end
 
   it "overloads new and initialize, 2 (#2489)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(6)
       class Global
         @@x = 0
 
@@ -141,11 +141,11 @@ describe "Code gen: new" do
       Bar.new(5)
 
       Global.x
-      )).to_i.should eq(6)
+      CRYSTAL
   end
 
   it "overloads new and initialize, 3 (#2489)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(6)
       class Global
         @@x = 0
 
@@ -170,11 +170,11 @@ describe "Code gen: new" do
       Foo.new(5)
 
       Global.x
-      )).to_i.should eq(6)
+      CRYSTAL
   end
 
   it "defines new for module" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(42)
       module Moo
         @x : Int32
 
@@ -192,11 +192,11 @@ describe "Code gen: new" do
       end
 
       Foo.new(41).x
-      )).to_i.should eq(42)
+      CRYSTAL
   end
 
   it "finds super in deep hierarchy" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(42)
       class Foo
         def initialize(@x : Int32)
         end
@@ -219,11 +219,11 @@ describe "Code gen: new" do
       end
 
       Qux.new.x
-      )).to_i.should eq(42)
+      CRYSTAL
   end
 
   it "finds new in superclass if no initialize is defined (1)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(42)
       class Foo
         def self.new
           42
@@ -234,11 +234,11 @@ describe "Code gen: new" do
       end
 
       Bar.new
-      )).to_i.should eq(42)
+      CRYSTAL
   end
 
   it "finds new in superclass if no initialize is defined (2)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(42)
       class Foo
         def self.new
           42
@@ -252,11 +252,11 @@ describe "Code gen: new" do
       end
 
       Bar.new
-      )).to_i.should eq(42)
+      CRYSTAL
   end
 
   it "finds new in superclass for Enum" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       struct Enum
         def self.new(x : String)
           new(1)
@@ -271,19 +271,19 @@ describe "Code gen: new" do
 
       color = Color.new("foo")
       color.value
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "can create Tuple with Tuple.new" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(0)
       require "prelude"
 
       Tuple.new.size
-      )).to_i.should eq(0)
+      CRYSTAL
   end
 
   it "evaluates initialize default value at the instance scope (1) (#731)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(42)
       class Foo
         @x : Int32
 
@@ -300,11 +300,11 @@ describe "Code gen: new" do
       end
 
       Foo.new.x
-      )).to_i.should eq(42)
+      CRYSTAL
   end
 
   it "evaluates initialize default value at the instance scope (2) (#731)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(42)
       class Foo
         @x : Int32
 
@@ -326,11 +326,11 @@ describe "Code gen: new" do
 
       foo = Foo.new(y: 22)
       foo.x &+ foo.y
-      )).to_i.should eq(42)
+      CRYSTAL
   end
 
   it "evaluates initialize default value at the instance scope (3) (#731)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(42)
       class Foo
         @x : Int32
 
@@ -354,11 +354,11 @@ describe "Code gen: new" do
       end
       total &+= foo.x
       total
-      )).to_i.should eq(42)
+      CRYSTAL
   end
 
   it "evaluates initialize default value at the instance scope (4) (#731)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(42)
       class Foo
         @x : Int32
 
@@ -382,6 +382,6 @@ describe "Code gen: new" do
         20
       end
       foo.x &+ foo.block.call
-      )).to_i.should eq(42)
+      CRYSTAL
   end
 end

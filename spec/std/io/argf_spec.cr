@@ -29,7 +29,7 @@ describe IO::ARGF do
     str = argf.gets_to_end
     str.should eq("\n67890\n")
 
-    argv.empty?.should be_true
+    argv.should be_empty
 
     argf.read_byte.should be_nil
 
@@ -42,9 +42,9 @@ describe IO::ARGF do
     argf = IO::ARGF.new [datapath("argf_test_file_3.xml")], IO::Memory.new
     argf.read(Bytes.new(4))
     buf = Bytes.new(4096)
-    z = argf.read(buf)
-    z = argf.read(buf)
-    z = argf.read(buf)
+    argf.read(buf)
+    argf.read(buf)
+    argf.read(buf)
     z = argf.read(buf)
     z.should_not eq 0
     String.new(buf[0...z]).should_not be_empty
@@ -84,7 +84,7 @@ describe IO::ARGF do
       argv.should eq([path2])
 
       argf.gets(chomp: false).should eq("67890\n")
-      argv.empty?.should be_true
+      argv.should be_empty
 
       argf.gets(chomp: false).should be_nil
 

@@ -85,6 +85,13 @@ describe "Pointer" do
       p1.copy_to(p2 || p3, 4)
       4.times { |i| p2[i].should eq(p1[i]) }
     end
+
+    it "doesn't raise OverflowError on unsigned size and different target type" do
+      p1 = Pointer.malloc(4, 1)
+      p2 = Pointer.malloc(4, 0 || nil)
+      p1.copy_to(p2, 4_u32)
+      4.times { |i| p2[i].should eq(p1[i]) }
+    end
   end
 
   describe "move_from" do
@@ -211,7 +218,7 @@ describe "Pointer" do
     (a[0] + a[1] + a[2]).should eq(6)
 
     3.times do |i|
-      a.to_slice(3).includes?(i + 1).should be_true
+      a.to_slice(3).should contain(i + 1)
     end
   end
 
@@ -237,6 +244,40 @@ describe "Pointer" do
     a[0].should eq(11)
     a[1].should eq(13)
     a[2].should eq(15)
+  end
+
+  describe "#fill" do
+    it "int" do
+      slice = Slice[0, 1, 2, 3, 4]
+      ptr = slice.to_unsafe + 1
+      ptr.fill(3, 7)
+      slice.should eq Slice[0, 7, 7, 7, 4]
+    end
+
+    it "string" do
+      slice = Slice["a", "b", "c", "d", "e"]
+      ptr = slice.to_unsafe + 1
+      ptr.fill(3, " ")
+      slice.should eq Slice["a", " ", " ", " ", "e"]
+    end
+
+    it "pointer" do
+      slice = Slice[Pointer(Void).new(0x1_u64), Pointer(Void).new(0x2_u64), Pointer(Void).new(0x3_u64), Pointer(Void).new(0x4_u64), Pointer(Void).new(0x5_u64)]
+      ptr = slice.to_unsafe + 1
+      ptr.fill(3, Pointer(Void).new(0x10_u64))
+      slice.should eq Slice[Pointer(Void).new(0x1_u64), Pointer(Void).new(0x10_u64), Pointer(Void).new(0x10_u64), Pointer(Void).new(0x10_u64), Pointer(Void).new(0x5_u64)]
+    end
+
+    describe "yielding" do
+      it "int" do
+        slice = Slice[1, 1, 1, 1, 1]
+        ptr = slice.to_unsafe + 1
+        ptr.fill(3) { |i| i * i }
+        slice.should eq Slice[1, 0, 1, 4, 1]
+        ptr.fill(3, offset: 3) { |i| i * i }
+        slice.should eq Slice[1, 9, 16, 25, 1]
+      end
+    end
   end
 
   it "raises if mallocs negative size" do

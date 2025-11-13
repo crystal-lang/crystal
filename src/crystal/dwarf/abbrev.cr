@@ -218,7 +218,7 @@ module Crystal
 
       # Extensions for multi-file compression (.dwz)
       # http://www.dwarfstd.org/ShowIssue.php?issue=120604.1
-      GNurefalt  = 0x1f20
+      Gnurefalt  = 0x1f20
       GnustrpAlt = 0x1f21
     end
 
@@ -237,10 +237,9 @@ module Crystal
         @children
       end
 
-      def self.read(io : IO::FileDescriptor, offset)
+      def self.read(io : IO) : Array(Abbrev)
         abbreviations = [] of Abbrev
 
-        io.seek(io.tell + offset)
         loop do
           code = DWARF.read_unsigned_leb128(io)
           break if code == 0

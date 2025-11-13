@@ -198,7 +198,7 @@ describe HTTP::ChunkedContent do
       expect_raises(IO::Error, "Trailing headers too long") do
         chunked.gets
       end
-      chunked.headers.empty?.should be_true
+      chunked.headers.should be_empty
     end
 
     it "fails for long combined headers" do

@@ -5,6 +5,22 @@
 # `-2` is the next to last element, and so on.
 #
 # Types including this module are typically `Array`-like types.
+#
+# ## Stability guarantees
+#
+# Several methods in `Indexable`, such as `#bsearch` and `#cartesian_product`,
+# require the collection to be _stable_; that is, calling `#each(&)` over and
+# over again should always yield the same elements, provided the collection is
+# not mutated between the calls. In particular, `#each(&)` itself should not
+# mutate the collection throughout the loop. Stability of an `Indexable` is
+# guaranteed if the following criteria are met:
+#
+# * `#unsafe_fetch` and `#size` do not mutate the collection
+# * `#each(&)` and `#each_index(&)` are not overridden
+#
+# The standard library assumes that all including types of `Indexable` are
+# always stable. It is undefined behavior to implement an `Indexable` that is
+# not stable or only conditionally stable.
 module Indexable(T)
   include Iterable(T)
   include Enumerable(T)
@@ -34,7 +50,7 @@ module Indexable(T)
   # a.fetch(2) { :default_value }    # => :default_value
   # a.fetch(2) { |index| index * 3 } # => 6
   # ```
-  def fetch(index : Int)
+  def fetch(index : Int, &)
     index = check_index_out_of_bounds(index) do
       return yield index
     end
@@ -85,8 +101,8 @@ module Indexable(T)
   # ary[-1]? # => 'c'
   # ary[-2]? # => 'b'
   #
-  # ary[3]?  # nil
-  # ary[-4]? # nil
+  # ary[3]?  # => nil
+  # ary[-4]? # => nil
   # ```
   @[AlwaysInline]
   def []?(index : Int)
@@ -595,7 +611,7 @@ module Indexable(T)
   # ```text
   # 2 -- 3 --
   # ```
-  def each_index(*, start : Int, count : Int)
+  def each_index(*, start : Int, count : Int, &)
     # We cannot use `normalize_start_and_count` here because `self` may be
     # mutated to contain enough elements during iteration even if there weren't
     # initially `count` elements.
@@ -677,14 +693,14 @@ module Indexable(T)
     end
   end
 
-  # Returns an `Array` with all the elements in the collection.
+  # Returns an `Array` with the results of running *block* against each element of the collection.
   #
   # ```
-  # {1, 2, 3}.to_a # => [1, 2, 3]
+  # {1, 2, 3}.to_a { |i| i * 2 } # => [2, 4, 6]
   # ```
-  def to_a : Array(T)
-    ary = Array(T).new(size)
-    each { |e| ary << e }
+  def to_a(& : T -> U) : Array(U) forall U
+    ary = Array(U).new(size)
+    each { |e| ary << yield e }
     ary
   end
 
@@ -720,7 +736,7 @@ module Indexable(T)
   # a.equals?(b) { |x, y| x == y.size } # => true
   # a.equals?(b) { |x, y| x == y }      # => false
   # ```
-  def equals?(other)
+  def equals?(other, &)
     return false if size != other.size
     each_with_index do |item, i|
       return false unless yield(item, other[i])
@@ -728,8 +744,8 @@ module Indexable(T)
     true
   end
 
-  # :inherited:
-  def first
+  # :inherit:
+  def first(&)
     size == 0 ? yield : unsafe_fetch(0)
   end
 
@@ -742,8 +758,8 @@ module Indexable(T)
     hasher
   end
 
-  # Returns the index of the first appearance of *value* in `self`
-  # starting from the given *offset*, or `nil` if the value is not in `self`.
+  # Returns the index of the first appearance of *object* in `self`
+  # starting from the given *offset*, or `nil` if *object* is not in `self`.
   #
   # ```
   # [1, 2, 3, 1, 2, 3].index(2, offset: 2) # => 4
@@ -753,7 +769,7 @@ module Indexable(T)
   end
 
   # Returns the index of the first object in `self` for which the block
-  # returns `true`, starting from the given *offset*, or `nil` if no match
+  # is truthy, starting from the given *offset*, or `nil` if no match
   # is found.
   #
   # ```
@@ -769,6 +785,72 @@ module Indexable(T)
       end
     end
     nil
+  end
+
+  # Returns the index of the first appearance of *obj* in `self`
+  # starting from the given *offset*. Raises `Enumerable::NotFoundError` if
+  # *obj* is not in `self`.
+  #
+  # ```
+  # [1, 2, 3, 1, 2, 3].index!(2, offset: 2) # => 4
+  # ```
+  def index!(obj, offset : Int = 0)
+    index(obj, offset) || raise Enumerable::NotFoundError.new
+  end
+
+  # Returns the index of the first object in `self` for which the block
+  # is truthy, starting from the given *offset*. Raises
+  # `Enumerable::NotFoundError` if no match is found.
+  #
+  # ```
+  # [1, 2, 3, 1, 2, 3].index!(offset: 2) { |x| x < 2 } # => 3
+  # ```
+  def index!(offset : Int = 0, & : T ->)
+    index(offset) { |e| yield e } || raise Enumerable::NotFoundError.new
+  end
+
+  # Returns the first element in the indexable for which the passed block
+  # is truthy, starting from the given *offset*.
+  #
+  # Accepts an optional parameter *if_none*, to set what gets returned if
+  # no element is found (defaults to `nil`).
+  #
+  # ```
+  # [1, 2, 3, 4].find { |i| i > 2 }        # => 3
+  # [1, 2, 3, 4].find(-1) { |i| i > 8 }    # => -1
+  # [1, 2, 3, 4].find(-1, 2) { |i| i < 2 } # => -1
+  # ```
+  def find(if_none = nil, *, offset : Int, & : T ->)
+    offset += size if offset < 0
+    return if_none if offset < 0
+
+    offset.upto(size - 1) do |i|
+      elem = unsafe_fetch(i)
+      if yield elem
+        return elem
+      end
+    end
+
+    if_none
+  end
+
+  # :ditto:
+  def find(if_none, _offset offset : Int, & : T ->)
+    find(if_none, offset: offset) { |e| yield e }
+  end
+
+  # Returns the first element in the indexable for which the passed block
+  # is truthy, starting from the given *offset*.
+  # Raises `Enumerable::NotFoundError` if there is no element for which the block is truthy.
+  #
+  # ```
+  # [1, 2, 3, 4].find! { |i| i > 2 }     # => 3
+  # [1, 2, 3, 4].find!(3) { |i| i > 2 }  # => 4
+  # [1, 2, 3, 4].find! { |i| i > 8 }     # => raises Enumerable::NotFoundError
+  # [1, 2, 3, 4].find!(-5) { |i| i > 2 } # => raises Enumerable::NotFoundError
+  # ```
+  def find!(offset : Int = 0, & : T ->)
+    find(offset: offset) { |i| yield i } || raise Enumerable::NotFoundError.new
   end
 
   # Returns the last element of `self` if it's not empty, or raises `IndexError`.
@@ -787,7 +869,7 @@ module Indexable(T)
   # ([1, 2, 3]).last { 4 }   # => 3
   # ([] of Int32).last { 4 } # => 4
   # ```
-  def last
+  def last(&)
     size == 0 ? yield : unsafe_fetch(size - 1)
   end
 
@@ -827,8 +909,15 @@ module Indexable(T)
     rindex(offset) { |elem| elem == value }
   end
 
+  # :ditto:
+  #
+  # Raises `Enumerable::NotFoundError` if *value* is not in `self`.
+  def rindex!(value, offset = size - 1)
+    rindex(value, offset) || raise Enumerable::NotFoundError.new
+  end
+
   # Returns the index of the first object in `self` for which the block
-  # returns `true`, starting from the last object, or `nil` if no match
+  # is truthy, starting from the last object, or `nil` if no match
   # is found.
   #
   # If *offset* is given, the search starts from that index towards the
@@ -850,17 +939,34 @@ module Indexable(T)
     nil
   end
 
+  # :ditto:
+  #
+  # Raises `Enumerable::NotFoundError` if no match is found.
+  def rindex!(offset = size - 1, & : T ->)
+    rindex(offset) { |e| yield e } || raise Enumerable::NotFoundError.new
+  end
+
   # Optimized version of `Enumerable#sample` that runs in O(1) time.
   #
   # ```
   # a = [1, 2, 3]
-  # a.sample                # => 3
-  # a.sample                # => 1
+  # a.sample # => 3
+  # a.sample # => 1
+  # ```
+  #
+  # Uses the *random* instance when provided if the randomness needs to be
+  # controlled or to follow some traits. For example the following sample will
+  # always return the same value:
+  #
+  # ```
+  # a = [1, 2, 3]
+  # a.sample(Random.new(1)) # => 2
   # a.sample(Random.new(1)) # => 2
   # ```
-  def sample(random = Random::DEFAULT)
+  def sample(random : Random? = nil)
     raise IndexError.new("Can't sample empty collection") if size == 0
-    unsafe_fetch(random.rand(size))
+    rng = random || Random::DEFAULT
+    unsafe_fetch(rng.rand(size))
   end
 
   # :inherit:
@@ -868,7 +974,7 @@ module Indexable(T)
   # If `self` is not empty and `n` is equal to 1, calls `sample(random)` exactly
   # once. Thus, *random* will be left in a different state compared to the
   # implementation in `Enumerable`.
-  def sample(n : Int, random = Random::DEFAULT) : Array(T)
+  def sample(n : Int, random : Random? = nil) : Array(T)
     return super unless n == 1
 
     if empty?
@@ -892,7 +998,7 @@ module Indexable(T)
     check_index_out_of_bounds(index) { raise IndexError.new }
   end
 
-  private def check_index_out_of_bounds(index)
+  private def check_index_out_of_bounds(index, &)
     index += size if index < 0
     if 0 <= index < size
       index
@@ -905,12 +1011,12 @@ module Indexable(T)
     Indexable.normalize_start_and_count(start, count, size)
   end
 
-  private def normalize_start_and_count(start, count)
+  private def normalize_start_and_count(start, count, &)
     Indexable.normalize_start_and_count(start, count, size) { yield }
   end
 
   # :nodoc:
-  def self.normalize_start_and_count(start, count, collection_size)
+  def self.normalize_start_and_count(start, count, collection_size, &)
     raise ArgumentError.new "Negative count: #{count}" if count < 0
     start += collection_size if start < 0
     if 0 <= start <= collection_size
@@ -951,7 +1057,7 @@ module Indexable(T)
     {start_index, count}
   end
 
-  # Returns an `Array` with all possible permutations of *size*.
+  # Returns an `Array` with all possible permutations of *size* of `self`.
   #
   # ```
   # a = [1, 2, 3]
@@ -985,7 +1091,7 @@ module Indexable(T)
   # the method will create a new array and reuse it. This can be
   # used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
-  def each_permutation(size : Int = self.size, reuse = false) : Nil
+  def each_permutation(size : Int = self.size, reuse = false, &) : Nil
     n = self.size
     return if size > n
 
@@ -1044,6 +1150,17 @@ module Indexable(T)
     PermutationIterator(self, T).new(self, size.to_i, Indexable(T).check_reuse(reuse, size))
   end
 
+  # Returns an `Array` with all possible combinations of *size* of `self`.
+  #
+  # ```
+  # a = [1, 2, 3]
+  # a.combinations    # => [[1, 2, 3]]
+  # a.combinations(1) # => [[1], [2], [3]]
+  # a.combinations(2) # => [[1, 2], [1, 3], [2, 3]]
+  # a.combinations(3) # => [[1, 2, 3]]
+  # a.combinations(0) # => [[]]
+  # a.combinations(4) # => []
+  # ```
   def combinations(size : Int = self.size)
     ary = [] of Array(T)
     each_combination(size) do |a|
@@ -1052,7 +1169,22 @@ module Indexable(T)
     ary
   end
 
-  def each_combination(size : Int = self.size, reuse = false) : Nil
+  # Yields each possible combination of *size* of `self`.
+  #
+  # ```
+  # a = [1, 2, 3]
+  # sums = [] of Int32
+  # a.each_combination(2) { |p| sums << p.sum } # => nil
+  # sums                                        # => [3, 4, 5]
+  # ```
+  #
+  # By default, a new array is created and yielded for each combination.
+  # If *reuse* is given, the array can be reused: if *reuse* is
+  # an `Array`, this array will be reused; if *reuse* if truthy,
+  # the method will create a new array and reuse it. This can be
+  # used to prevent many memory allocations when each slice of
+  # interest is to be used in a read-only fashion.
+  def each_combination(size : Int = self.size, reuse = false, &) : Nil
     n = self.size
     return if size > n
     raise ArgumentError.new("Size must be positive") if size < 0
@@ -1090,22 +1222,54 @@ module Indexable(T)
     end
   end
 
-  private def each_combination_piece(pool, size, reuse)
-    if reuse
-      reuse.clear
-      size.times { |i| reuse << pool[i] }
-      reuse
-    else
-      pool[0, size]
-    end
-  end
-
+  # Returns an `Iterator` over each possible combination of *size* of `self`.
+  #
+  # ```
+  # iter = [1, 2, 3, 4].each_combination(3)
+  # iter.next # => [1, 2, 3]
+  # iter.next # => [1, 2, 4]
+  # iter.next # => [1, 3, 4]
+  # iter.next # => [2, 3, 4]
+  # iter.next # => #<Iterator::Stop>
+  # ```
+  #
+  # By default, a new array is created and returned for each combination.
+  # If *reuse* is given, the array can be reused: if *reuse* is
+  # an `Array`, this array will be reused; if *reuse* if truthy,
+  # the method will create a new array and reuse it. This can be
+  # used to prevent many memory allocations when each slice of
+  # interest is to be used in a read-only fashion.
   def each_combination(size : Int = self.size, reuse = false)
     raise ArgumentError.new("Size must be positive") if size < 0
 
     CombinationIterator(self, T).new(self, size.to_i, Indexable(T).check_reuse(reuse, size))
   end
 
+  # Returns an `Array` with all possible combinations with repeated elements of
+  # *size* of `self`.
+  #
+  # ```
+  # a = [1, 2, 3]
+  #
+  # pp a.repeated_combinations
+  # pp a.repeated_combinations(2)
+  # ```
+  #
+  # produces:
+  #
+  # ```text
+  # [[1, 1, 1],
+  #  [1, 1, 2],
+  #  [1, 1, 3],
+  #  [1, 2, 2],
+  #  [1, 2, 3],
+  #  [1, 3, 3],
+  #  [2, 2, 2],
+  #  [2, 2, 3],
+  #  [2, 3, 3],
+  #  [3, 3, 3]]
+  # [[1, 1], [1, 2], [1, 3], [2, 2], [2, 3], [3, 3]]
+  # ```
   def repeated_combinations(size : Int = self.size) : Array(Array(T))
     ary = [] of Array(T)
     each_repeated_combination(size) do |a|
@@ -1114,7 +1278,23 @@ module Indexable(T)
     ary
   end
 
-  def each_repeated_combination(size : Int = self.size, reuse = false) : Nil
+  # Yields each possible combination with repeated elements of *size* of
+  # `self`.
+  #
+  # ```
+  # a = [1, 2, 3]
+  # sums = [] of Int32
+  # a.each_repeated_combination(2) { |p| sums << p.sum } # => nil
+  # sums                                                 # => [2, 3, 4, 4, 5, 6]
+  # ```
+  #
+  # By default, a new array is created and yielded for each combination.
+  # If *reuse* is given, the array can be reused: if *reuse* is
+  # an `Array`, this array will be reused; if *reuse* if truthy,
+  # the method will create a new array and reuse it. This can be
+  # used to prevent many memory allocations when each slice of
+  # interest is to be used in a read-only fashion.
+  def each_repeated_combination(size : Int = self.size, reuse = false, &) : Nil
     n = self.size
     return if size > n && n == 0
     raise ArgumentError.new("Size must be positive") if size < 0
@@ -1148,6 +1328,26 @@ module Indexable(T)
     end
   end
 
+  # Returns an `Iterator` over each possible combination with repeated elements
+  # of *size* of `self`.
+  #
+  # ```
+  # iter = [1, 2, 3].each_repeated_combination(2)
+  # iter.next # => [1, 1]
+  # iter.next # => [1, 2]
+  # iter.next # => [1, 3]
+  # iter.next # => [2, 2]
+  # iter.next # => [2, 3]
+  # iter.next # => [3, 3]
+  # iter.next # => #<Iterator::Stop>
+  # ```
+  #
+  # By default, a new array is created and returned for each combination.
+  # If *reuse* is given, the array can be reused: if *reuse* is
+  # an `Array`, this array will be reused; if *reuse* if truthy,
+  # the method will create a new array and reuse it. This can be
+  # used to prevent many memory allocations when each slice of
+  # interest is to be used in a read-only fashion.
   def each_repeated_combination(size : Int = self.size, reuse = false)
     raise ArgumentError.new("Size must be positive") if size < 0
 
@@ -1337,7 +1537,7 @@ module Indexable(T)
       @copy = array.dup
       @indices = Array.new(@size, 0)
       @pool = @indices.map { |i| @copy[i] }
-      @stop = @size > @n
+      @stop = false
       @i = @size - 1
       @first = true
     end

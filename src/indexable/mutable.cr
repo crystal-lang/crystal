@@ -185,7 +185,7 @@ module Indexable::Mutable(T)
   #
   # ```
   # a = [1, 2, 3, 4, 5, 6]
-  # a.fill(2, 3) { |i| i * i * i } # => [1, 2, 8, 27, 125, 6]
+  # a.fill(2, 3) { |i| i * i * i } # => [1, 2, 8, 27, 64, 6]
   # ```
   def fill(start : Int, count : Int, & : Int32 -> T) : self
     return self if count <= 0
@@ -205,7 +205,7 @@ module Indexable::Mutable(T)
   #
   # ```
   # a = [1, 2, 3, 4, 5, 6]
-  # a.fill(2..4) { |i| i * i * i } # => [1, 2, 8, 27, 125, 6]
+  # a.fill(2..4) { |i| i * i * i } # => [1, 2, 8, 27, 64, 6]
   # ```
   def fill(range : Range, & : Int32 -> T) : self
     fill(*Indexable.range_to_index_and_count(range, size) || raise IndexError.new) do |i|
@@ -251,17 +251,29 @@ module Indexable::Mutable(T)
     self
   end
 
-  # Modifies `self` by randomizing the order of elements in the collection
-  # using the given *random* number generator. Returns `self`.
+  # Modifies `self` by randomizing the order of elements in the collection.
+  # Returns `self`.
+  #
+  # ```
+  # a = [1, 2, 3, 4, 5]
+  # a.shuffle! # => [3, 5, 2, 4, 1]
+  # a          # => [3, 5, 2, 4, 1]
+  # ```
+  #
+  # Uses the *random* instance when provided if the randomness needs to be
+  # controlled or to follow some traits. For example the following shuffle will
+  # always result in the same order:
   #
   # ```
   # a = [1, 2, 3, 4, 5]
   # a.shuffle!(Random.new(42)) # => [3, 2, 4, 5, 1]
+  # a.shuffle!(Random.new(42)) # => [3, 2, 4, 5, 1]
   # a                          # => [3, 2, 4, 5, 1]
   # ```
-  def shuffle!(random = Random::DEFAULT) : self
+  def shuffle!(random : Random? = nil) : self
+    rng = random || Random::DEFAULT
     (size - 1).downto(1) do |i|
-      j = random.rand(i + 1)
+      j = rng.rand(i + 1)
       swap(i, j)
     end
     self
@@ -374,7 +386,7 @@ module Indexable::Mutable(T)
   # Raises `ArgumentError` if for any two elements the block returns `nil`.
   def sort!(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
-      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
 
     slice = Slice.new(size) { |i| unsafe_fetch(i) }.sort!(&block)
@@ -406,7 +418,7 @@ module Indexable::Mutable(T)
   # Raises `ArgumentError` if for any two elements the block returns `nil`.
   def unstable_sort!(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
-      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
 
     slice = Slice.new(size) { |i| unsafe_fetch(i) }.unstable_sort!(&block)
@@ -453,7 +465,7 @@ module Indexable::Mutable(T)
   #
   # ```
   # a = %w(apple pear fig)
-  # a.usntable_sort_by! { |word| word.size }
+  # a.unstable_sort_by! { |word| word.size }
   # a # => ["fig", "pear", "apple"]
   # ```
   #

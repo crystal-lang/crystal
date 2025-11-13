@@ -1,17 +1,35 @@
-.DS_Store
-/.tags
-/.tags_sorted_by_file
-/.vagrant
-.crystal/
-coverage/
-/deps/
-/.build/
-.*.swp
+# Environment configuration
 /Makefile.local
-all_spec
-/tmp
+/Makefile.win.local
+.env
+.env.*
+
+# Build artifacts
+*.o
+*.ll
+*.s
+*.obj
+*.dwo
+*.dwarf
+*.pdb
+*.exe
+/.build/
+/samples/.build/
 /docs/
-/src/llvm/ext/llvm_ext.o
-/src/llvm/ext/llvm_ext.obj
-/src/llvm/ext/llvm_ext.dwo
 /man/*.gz
+
+# CI
+/coverage/
+/tmp/
+/.junit/
+
+# Devenv
+.devenv*
+devenv.local.nix
+devenv.local.yaml
+
+# direnv
+.direnv
+
+# pre-commit
+.pre-commit-config.yaml

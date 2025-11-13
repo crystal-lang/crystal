@@ -4,17 +4,17 @@ require "./spec_helper"
 describe Crystal::Repl::Interpreter do
   context "calls" do
     it "calls a top-level method without arguments and no local vars" do
-      interpret(<<-CODE).should eq(3)
+      interpret(<<-CRYSTAL).should eq(3)
         def foo
           1 + 2
         end
 
         foo
-        CODE
+        CRYSTAL
     end
 
     it "calls a top-level method without arguments but with local vars" do
-      interpret(<<-CODE).should eq(3)
+      interpret(<<-CRYSTAL).should eq(3)
         def foo
           x = 1
           y = 2
@@ -23,42 +23,42 @@ describe Crystal::Repl::Interpreter do
 
         x = foo
         x
-        CODE
+        CRYSTAL
     end
 
     it "calls a top-level method with two arguments" do
-      interpret(<<-CODE).should eq(3)
+      interpret(<<-CRYSTAL).should eq(3)
         def foo(x, y)
           x + y
         end
 
         x = foo(1, 2)
         x
-        CODE
+        CRYSTAL
     end
 
     it "interprets call with default values" do
-      interpret(<<-CODE).should eq(3)
+      interpret(<<-CRYSTAL).should eq(3)
         def foo(x = 1, y = 2)
           x + y
         end
 
         foo
-        CODE
+        CRYSTAL
     end
 
     it "interprets call with named arguments" do
-      interpret(<<-CODE).should eq(-15)
+      interpret(<<-CRYSTAL).should eq(-15)
         def foo(x, y)
           x - y
         end
 
         foo(y: 25, x: 10)
-        CODE
+        CRYSTAL
     end
 
     it "interprets self for primitive types" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
         struct Int32
           def foo
             self
@@ -66,11 +66,11 @@ describe Crystal::Repl::Interpreter do
         end
 
         42.foo
-        CODE
+        CRYSTAL
     end
 
     it "interprets explicit self call for primitive types" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
         struct Int32
           def foo
             self.bar
@@ -82,11 +82,11 @@ describe Crystal::Repl::Interpreter do
         end
 
         42.foo
-        CODE
+        CRYSTAL
     end
 
     it "interprets implicit self call for pointer" do
-      interpret(<<-CODE).should eq(1)
+      interpret(<<-CRYSTAL).should eq(1)
         struct Pointer(T)
           def plus1
             self + 1_i64
@@ -96,21 +96,21 @@ describe Crystal::Repl::Interpreter do
         ptr = Pointer(UInt8).malloc(1_u64)
         ptr2 = ptr.plus1
         (ptr2 - ptr)
-        CODE
+        CRYSTAL
     end
 
     it "interprets call with if" do
-      interpret(<<-CODE).should eq(2)
+      interpret(<<-CRYSTAL).should eq(2)
         def foo
           1 == 1 ? 2 : 3
         end
 
         foo
-        CODE
+        CRYSTAL
     end
 
     it "does call with struct as obj" do
-      interpret(<<-CODE).should eq(3)
+      interpret(<<-CRYSTAL).should eq(3)
         struct Foo
           def initialize(@x : Int64)
           end
@@ -129,11 +129,11 @@ describe Crystal::Repl::Interpreter do
         end
 
         foo.x
-      CODE
+      CRYSTAL
     end
 
     it "does call with struct as obj (2)" do
-      interpret(<<-CODE).should eq(2)
+      interpret(<<-CRYSTAL).should eq(2)
         struct Foo
           def two
             2
@@ -141,11 +141,11 @@ describe Crystal::Repl::Interpreter do
         end
 
         Foo.new.two
-      CODE
+      CRYSTAL
     end
 
     it "does call on instance var that's a struct, from a class" do
-      interpret(<<-CODE).should eq(10)
+      interpret(<<-CRYSTAL).should eq(10)
         class Foo
           def initialize
             @x = 0_i64
@@ -174,11 +174,11 @@ describe Crystal::Repl::Interpreter do
         end
 
         Foo.new.foo
-      CODE
+      CRYSTAL
     end
 
     it "does call on instance var that's a struct, from a struct" do
-      interpret(<<-CODE).should eq(10)
+      interpret(<<-CRYSTAL).should eq(10)
         struct Foo
           def initialize
             @x = 0_i64
@@ -207,11 +207,11 @@ describe Crystal::Repl::Interpreter do
         end
 
         Foo.new.foo
-      CODE
+      CRYSTAL
     end
 
     it "discards call with struct as obj" do
-      interpret(<<-CODE).should eq(4)
+      interpret(<<-CRYSTAL).should eq(4)
         struct Foo
           def initialize(@x : Int64)
           end
@@ -231,11 +231,11 @@ describe Crystal::Repl::Interpreter do
 
         foo.x
         4
-      CODE
+      CRYSTAL
     end
 
     it "does call on constant that's a struct, takes a pointer to instance var" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
         struct Foo
           def initialize
             @x = 42
@@ -252,11 +252,11 @@ describe Crystal::Repl::Interpreter do
 
         CONST = Foo.new
         CONST.to_unsafe.value
-      CODE
+      CRYSTAL
     end
 
     it "does call on constant that's a struct, takes a pointer to instance var, inside if" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
         struct Foo
           def initialize
             @x = 42
@@ -274,11 +274,11 @@ describe Crystal::Repl::Interpreter do
         CONST = Foo.new
         c = (1 == 1 ? CONST : CONST).to_unsafe
         c.value
-      CODE
+      CRYSTAL
     end
 
     it "does call on var that's a struct, takes a pointer to instance var, inside if" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
         struct Foo
           def initialize
             @x = 42
@@ -296,11 +296,11 @@ describe Crystal::Repl::Interpreter do
         a = Foo.new
         c = (1 == 1 ? a : a).to_unsafe
         c.value
-      CODE
+      CRYSTAL
     end
 
     it "does call on ivar that's a struct, takes a pointer to instance var, inside if" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
         struct Foo
           def initialize
             @x = 42
@@ -327,11 +327,11 @@ describe Crystal::Repl::Interpreter do
         end
 
         Bar.new.do_it
-      CODE
+      CRYSTAL
     end
 
     it "does call on self that's a struct, takes a pointer to instance var, inside if" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
         struct Foo
           def initialize
             @x = 42
@@ -352,11 +352,11 @@ describe Crystal::Repl::Interpreter do
         end
 
         Foo.new.do_it
-      CODE
+      CRYSTAL
     end
 
     it "does call on Pointer#value that's a struct, takes a pointer to instance var" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
         struct Foo
           def initialize
             @x = 42
@@ -375,11 +375,11 @@ describe Crystal::Repl::Interpreter do
         ptr = pointerof(foo)
         c = ptr.value.to_unsafe
         c.value
-      CODE
+      CRYSTAL
     end
 
     it "does call on read instance var that's a struct, takes a pointer to instance var" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
         struct Foo
           def initialize
             @x = 42
@@ -403,11 +403,11 @@ describe Crystal::Repl::Interpreter do
         bar = Bar.new(foo)
         c = bar.@foo.to_unsafe
         c.value
-      CODE
+      CRYSTAL
     end
 
     it "does ReadInstanceVar with wants_struct_pointer" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
         struct Foo
           def initialize
             @x = 1
@@ -432,11 +432,11 @@ describe Crystal::Repl::Interpreter do
         entry.value = Foo.new
         ptr = entry.value.@bar.to_unsafe
         ptr.value
-      CODE
+      CRYSTAL
     end
 
     it "does Assign var with wants_struct_pointer" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
         struct Bar
           def initialize
             @x = 1
@@ -452,11 +452,11 @@ describe Crystal::Repl::Interpreter do
         bar = Bar.new
         ptr = (x = bar).to_unsafe
         ptr.value
-      CODE
+      CRYSTAL
     end
 
     it "does Assign instance var with wants_struct_pointer" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
         struct Bar
           def initialize
             @x = 1
@@ -480,11 +480,11 @@ describe Crystal::Repl::Interpreter do
         end
 
         Foo.new.foo
-      CODE
+      CRYSTAL
     end
 
     it "does Assign class var with wants_struct_pointer" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
         struct Bar
           def initialize
             @x = 1
@@ -508,11 +508,11 @@ describe Crystal::Repl::Interpreter do
         end
 
         Foo.new.foo
-      CODE
+      CRYSTAL
     end
 
     it "inlines method that just reads an instance var" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
         struct Foo
           def initialize
             @x = 1
@@ -541,11 +541,11 @@ describe Crystal::Repl::Interpreter do
         entry.value = Foo.new
         ptr = entry.value.bar.to_unsafe
         ptr.value
-      CODE
+      CRYSTAL
     end
 
     it "inlines method that just reads an instance var, but produces side effects of args" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
         struct Foo
           def initialize
             @x = 1
@@ -575,11 +575,11 @@ describe Crystal::Repl::Interpreter do
         a = 1
         ptr = entry.value.bar(a = 10).to_unsafe
         ptr.value + a
-      CODE
+      CRYSTAL
     end
 
     it "inlines method that just reads an instance var (2)" do
-      interpret(<<-CODE).should eq(2)
+      interpret(<<-CRYSTAL).should eq(2)
         abstract class Abstract
         end
 
@@ -594,11 +594,11 @@ describe Crystal::Repl::Interpreter do
 
         original = Concrete.new(2).as(Abstract)
         original.x
-      CODE
+      CRYSTAL
     end
 
     it "puts struct pointer after tuple indexer" do
-      interpret(<<-CODE).should eq(1)
+      interpret(<<-CRYSTAL).should eq(1)
         struct Point
           def initialize(@x : Int64)
           end
@@ -611,11 +611,11 @@ describe Crystal::Repl::Interpreter do
         a = Point.new(1_u64)
         t = {a}
         t[0].x
-      CODE
+      CRYSTAL
     end
 
     it "mutates call argument" do
-      interpret(<<-CODE).should eq(9000)
+      interpret(<<-CRYSTAL).should eq(9000)
         def foo(x)
           if 1 == 0
             x = "hello"
@@ -629,11 +629,11 @@ describe Crystal::Repl::Interpreter do
         end
 
         foo 9000
-      CODE
+      CRYSTAL
     end
 
     it "inlines call that returns self" do
-      interpret(<<-CODE).should eq(10)
+      interpret(<<-CRYSTAL).should eq(10)
         struct Foo
           def initialize
             @x = 0
@@ -659,11 +659,11 @@ describe Crystal::Repl::Interpreter do
         foo = Foo.new
         foo.mutate_itself
         foo.x
-      CODE
+      CRYSTAL
     end
 
     it "inlines call that returns self (2)" do
-      interpret(<<-CODE).should eq(10)
+      interpret(<<-CRYSTAL).should eq(10)
         struct Foo
           def initialize
             @x = 0
@@ -689,11 +689,11 @@ describe Crystal::Repl::Interpreter do
         foo = Foo.new
         foo.mutate_itself
         foo.x
-      CODE
+      CRYSTAL
     end
 
     it "mutates through pointer (1)" do
-      interpret(<<-CODE).should eq(10)
+      interpret(<<-CRYSTAL).should eq(10)
         struct Foo
           def initialize
             @x = 0
@@ -718,11 +718,11 @@ describe Crystal::Repl::Interpreter do
         end
 
         foo.mutate.ptr.value
-      CODE
+      CRYSTAL
     end
 
     it "mutates through pointer (2)" do
-      interpret(<<-CODE).should eq(10)
+      interpret(<<-CRYSTAL).should eq(10)
         struct Foo
           def initialize
             @x = 0
@@ -748,11 +748,11 @@ describe Crystal::Repl::Interpreter do
 
         x = foo.mutate.ptr
         x.value
-      CODE
+      CRYSTAL
     end
 
     it "mutates through pointer (3)" do
-      interpret(<<-CODE).should eq(10)
+      interpret(<<-CRYSTAL).should eq(10)
         struct Foo
           def initialize
             @x = 0
@@ -771,11 +771,11 @@ describe Crystal::Repl::Interpreter do
         ptr.value = Foo.new
         ptr.value.mutate
         ptr.value.x
-      CODE
+      CRYSTAL
     end
 
     it "mutates through read instance var" do
-      interpret(<<-CODE).should eq(10)
+      interpret(<<-CRYSTAL).should eq(10)
         struct Foo
           def initialize
             @bar = Bar.new
@@ -802,11 +802,11 @@ describe Crystal::Repl::Interpreter do
         foo = Foo.new
         foo.@bar.z = 10
         foo.bar.z
-      CODE
+      CRYSTAL
     end
 
     it "mutates through inlined instance var with receiver" do
-      interpret(<<-CODE).should eq(10)
+      interpret(<<-CRYSTAL).should eq(10)
         struct Foo
           def initialize
             @bar = Bar.new
@@ -833,11 +833,11 @@ describe Crystal::Repl::Interpreter do
         foo = Foo.new
         foo.bar.z = 10
         foo.bar.z
-      CODE
+      CRYSTAL
     end
 
     it "mutates through inlined instance var without receiver" do
-      interpret(<<-CODE).should eq(10)
+      interpret(<<-CRYSTAL).should eq(10)
         struct Foo
           def initialize
             @bar = Bar.new
@@ -868,7 +868,7 @@ describe Crystal::Repl::Interpreter do
         foo = Foo.new
         foo.mutate
         foo.bar.z
-      CODE
+      CRYSTAL
     end
   end
 end

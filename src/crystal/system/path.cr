@@ -3,7 +3,9 @@ module Crystal::System::Path
   # def self.home : String
 end
 
-{% if flag?(:unix) %}
+{% if flag?(:wasi) %}
+  require "./wasi/path"
+{% elsif flag?(:unix) %}
   require "./unix/path"
 {% elsif flag?(:win32) %}
   require "./win32/path"

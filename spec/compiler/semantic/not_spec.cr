@@ -2,34 +2,34 @@ require "../../spec_helper"
 
 describe "Semantic: not" do
   it "types not" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { bool }
       !1
-      )) { bool }
+      CRYSTAL
   end
 
   it "types not as NoReturn if exp is NoReturn" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { no_return }
       lib LibC
         fun exit : NoReturn
       end
 
       !LibC.exit
-      )) { no_return }
+      CRYSTAL
   end
 
   it "filters types inside if" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nil_type }
       a = 1 || nil
       z = nil
       if !a
         z = a
       end
       z
-      )) { nil_type }
+      CRYSTAL
   end
 
   it "filters types inside if/else" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       a = 1 || nil
       z = 2
       if !a
@@ -37,33 +37,33 @@ describe "Semantic: not" do
         z = a
       end
       z
-      )) { int32 }
+      CRYSTAL
   end
 
   it "filters types with !is_a?" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       a = 1 == 2 ? "x" : 1
       z = 0
       if !a.is_a?(String)
         z = a + 10
       end
       z
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "doesn't restrict and" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { nilable int32 }
       a = 1 || nil
       z = nil
       if !(a && (1 == 2))
         z = a
       end
       z
-      ), inject_primitives: true) { nilable int32 }
+      CRYSTAL
   end
 
   it "doesn't restrict and in while (#4243)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable int32 }
       x = nil
       y = nil
       z = nil
@@ -74,6 +74,6 @@ describe "Semantic: not" do
       end
 
       z
-      )) { nilable int32 }
+      CRYSTAL
   end
 end

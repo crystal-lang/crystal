@@ -45,7 +45,7 @@ class Socket
     #   socket.puts Time.utc
     # end
     # ```
-    def accept
+    def accept(&)
       sock = accept
       begin
         yield sock
@@ -68,7 +68,7 @@ class Socket
     #   socket.puts Time.utc
     # end
     # ```
-    def accept?
+    def accept?(&)
       sock = accept?
       return unless sock
 

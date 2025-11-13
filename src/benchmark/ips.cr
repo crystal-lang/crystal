@@ -14,21 +14,24 @@ module Benchmark
   module IPS
     class Job
       # List of all entries in the benchmark.
-      # After #execute, these are populated with the resulting statistics.
+      # After `#execute`, these are populated with the resulting statistics.
       property items : Array(Entry)
 
       @warmup_time : Time::Span
       @calculation_time : Time::Span
 
-      def initialize(calculation = 5, warmup = 2, interactive = STDOUT.tty?)
+      def initialize(calculation @calculation_time : Time::Span = 5.seconds, warmup @warmup_time : Time::Span = 2.seconds, interactive : Bool = STDOUT.tty?)
         @interactive = !!interactive
-        @warmup_time = warmup.seconds
-        @calculation_time = calculation.seconds
         @items = [] of Entry
       end
 
+      @[Deprecated("Use `.new(Time::Span, Time::Span, Bool)` instead.")]
+      def self.new(calculation = 5, warmup = 2, interactive = STDOUT.tty?)
+        new(calculation.seconds, warmup.seconds, !!interactive)
+      end
+
       # Adds code to be benchmarked
-      def report(label = "", &action) : Benchmark::IPS::Entry
+      def report(label : String = "", &action : ->) : Benchmark::IPS::Entry
         item = Entry.new(label, action)
         @items << item
         item
@@ -62,7 +65,7 @@ module Benchmark
         @items.each do |item|
           GC.collect
 
-          count = 0
+          count = 0_u64
           elapsed = Time.measure do
             target = Time.monotonic + @warmup_time
 
@@ -115,7 +118,7 @@ module Benchmark
       end
 
       private def run_comparison
-        fastest = ran_items.max_by { |i| i.mean }
+        fastest = ran_items.max_by(&.mean)
         ran_items.each do |item|
           item.slower = (fastest.mean / item.mean).to_f
         end
@@ -129,7 +132,7 @@ module Benchmark
       # Code to be benchmarked
       property action : ->
 
-      # Number of cycles needed to run for approx 100ms
+      # Number of cycles needed to run `action` for approximately 100ms.
       # Calculated during the warmup stage
       property! cycles : Int32
 

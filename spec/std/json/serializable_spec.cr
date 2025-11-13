@@ -6,6 +6,26 @@ require "big/json"
 require "uuid"
 require "uuid/json"
 
+enum JSONSerializableEnum
+  Zero
+  One
+  Two
+  OneHundred
+end
+
+@[Flags]
+enum JSONSerializableFlagEnum
+  One
+  Two
+  OneHundred
+end
+
+class JSONAttrValue(T)
+  include JSON::Serializable
+
+  property value : T
+end
+
 record JSONAttrPoint, x : Int32, y : Int32 do
   include JSON::Serializable
 end
@@ -82,24 +102,6 @@ class JSONAttrPersonEmittingNullsByOptions
   property value2 : Int32?
 end
 
-class JSONAttrWithBool
-  include JSON::Serializable
-
-  property value : Bool
-end
-
-class JSONAttrWithUUID
-  include JSON::Serializable
-
-  property value : UUID
-end
-
-class JSONAttrWithBigDecimal
-  include JSON::Serializable
-
-  property value : BigDecimal
-end
-
 class JSONAttrWithTime
   include JSON::Serializable
 
@@ -127,10 +129,46 @@ class JSONAttrWithNilableTimeEmittingNull
   end
 end
 
-class JSONAttrWithPropertiesKey
+class JSONAttrWithTimeArray1
   include JSON::Serializable
 
-  property properties : Hash(String, String)
+  @[JSON::Field(converter: JSON::ArrayConverter(Time::EpochConverter))]
+  property value : Array(Time)
+end
+
+class JSONAttrWithTimeArray2
+  include JSON::Serializable
+
+  @[JSON::Field(converter: JSON::ArrayConverter.new(Time::EpochConverter))]
+  property value : Array(Time)
+end
+
+class JSONAttrWithTimeArray3
+  include JSON::Serializable
+
+  @[JSON::Field(converter: JSON::ArrayConverter.new(Time::Format.new("%F %T")))]
+  property value : Array(Time)
+end
+
+class JSONAttrWithTimeHash1
+  include JSON::Serializable
+
+  @[JSON::Field(converter: JSON::HashValueConverter(Time::EpochConverter))]
+  property value : Hash(String, Time)
+end
+
+class JSONAttrWithTimeHash2
+  include JSON::Serializable
+
+  @[JSON::Field(converter: JSON::HashValueConverter.new(Time::EpochConverter))]
+  property value : Hash(String, Time)
+end
+
+class JSONAttrWithTimeHash3
+  include JSON::Serializable
+
+  @[JSON::Field(converter: JSON::HashValueConverter.new(Time::Format.new("%F %T")))]
+  property value : Hash(String, Time)
 end
 
 class JSONAttrWithSimpleMapping
@@ -161,12 +199,6 @@ class JSONAttrWithProblematicKeys
   property pull : Int32
 end
 
-class JSONAttrWithSet
-  include JSON::Serializable
-
-  property set : Set(String)
-end
-
 class JSONAttrWithDefaults
   include JSON::Serializable
 
@@ -192,6 +224,20 @@ class JSONAttrWithTimeEpoch
 
   @[JSON::Field(converter: Time::EpochConverter)]
   property value : Time
+end
+
+class JSONAttrNilableWithTimeEpoch
+  include JSON::Serializable
+
+  @[JSON::Field(converter: Time::EpochConverter)]
+  property value : Time?
+end
+
+class JSONAttrDefaultWithTimeEpoch
+  include JSON::Serializable
+
+  @[JSON::Field(converter: Time::EpochConverter)]
+  property value : Time = Time.unix(0)
 end
 
 class JSONAttrWithTimeEpochMillis
@@ -229,18 +275,6 @@ class JSONAttrWithNilableRootEmitNull
   property result : Array(JSONAttrPerson)?
 end
 
-class JSONAttrWithNilableUnion
-  include JSON::Serializable
-
-  property value : Int32?
-end
-
-class JSONAttrWithNilableUnion2
-  include JSON::Serializable
-
-  property value : Int32 | Nil
-end
-
 class JSONAttrWithPresence
   include JSON::Serializable
 
@@ -257,6 +291,29 @@ class JSONAttrWithPresence
   getter? last_name_present : Bool
 end
 
+class JSONAttrWithPresenceAndIgnoreSerialize
+  include JSON::Serializable
+
+  @[JSON::Field(presence: true, ignore_serialize: ignore_first_name?)]
+  property first_name : String?
+
+  @[JSON::Field(presence: true, ignore_serialize: last_name.nil? && !last_name_present?, emit_null: true)]
+  property last_name : String?
+
+  @[JSON::Field(ignore: true)]
+  getter? first_name_present : Bool = false
+
+  @[JSON::Field(ignore: true)]
+  getter? last_name_present : Bool = false
+
+  def initialize(@first_name : String? = nil, @last_name : String? = nil)
+  end
+
+  def ignore_first_name?
+    first_name.nil? || first_name == ""
+  end
+end
+
 class JSONAttrWithQueryAttributes
   include JSON::Serializable
 
@@ -267,6 +324,13 @@ class JSONAttrWithQueryAttributes
 
   @[JSON::Field(ignore: true)]
   getter? bar_present : Bool
+end
+
+class JSONAttrWithKeyQueryAttribute
+  include JSON::Serializable
+
+  @[JSON::Field(key: "is_foo")]
+  property? foo : Bool
 end
 
 module JSONAttrModule
@@ -343,6 +407,13 @@ struct JSONAttrPersonWithSelectiveSerialization
   end
 end
 
+struct JSONAttrWithGenericConverter(T)
+  include JSON::Serializable
+
+  @[JSON::Field(converter: T)]
+  property value : Time
+end
+
 abstract class JSONShape
   include JSON::Serializable
 
@@ -376,7 +447,8 @@ class JSONVariableDiscriminatorValueType
   use_json_discriminator "type", {
                                          0 => JSONVariableDiscriminatorNumber,
     "1"                                    => JSONVariableDiscriminatorString,
-    true                                   => JSONVariableDiscriminatorBool,
+    true                                   => JSONVariableDiscriminatorBoolTrue,
+    false                                  => JSONVariableDiscriminatorBoolFalse,
     JSONVariableDiscriminatorEnumFoo::Foo  => JSONVariableDiscriminatorEnum,
     JSONVariableDiscriminatorEnumFoo8::Foo => JSONVariableDiscriminatorEnum8,
   }
@@ -388,13 +460,33 @@ end
 class JSONVariableDiscriminatorString < JSONVariableDiscriminatorValueType
 end
 
-class JSONVariableDiscriminatorBool < JSONVariableDiscriminatorValueType
+class JSONVariableDiscriminatorBoolTrue < JSONVariableDiscriminatorValueType
+end
+
+class JSONVariableDiscriminatorBoolFalse < JSONVariableDiscriminatorValueType
 end
 
 class JSONVariableDiscriminatorEnum < JSONVariableDiscriminatorValueType
 end
 
 class JSONVariableDiscriminatorEnum8 < JSONVariableDiscriminatorValueType
+end
+
+class JSONStrictDiscriminator
+  include JSON::Serializable
+  include JSON::Serializable::Strict
+
+  property type : String
+
+  use_json_discriminator "type", {foo: JSONStrictDiscriminatorFoo, bar: JSONStrictDiscriminatorBar}
+end
+
+class JSONStrictDiscriminatorFoo < JSONStrictDiscriminator
+end
+
+class JSONStrictDiscriminatorBar < JSONStrictDiscriminator
+  property x : JSONStrictDiscriminator
+  property y : JSONStrictDiscriminator
 end
 
 module JSONNamespace
@@ -419,7 +511,97 @@ module JSONNamespace
   end
 end
 
-describe "JSON mapping" do
+class JSONSomething
+  include JSON::Serializable
+
+  property value : JSONSomething?
+end
+
+module JsonDiscriminatorBug
+  abstract class Base
+    include JSON::Serializable
+
+    use_json_discriminator("type", {"a" => A, "b" => B, "c" => C})
+  end
+
+  class A < Base
+  end
+
+  class B < Base
+    property source : Base
+    property value : Int32 = 1
+  end
+
+  class C < B
+  end
+end
+
+record JSONAttrWithEnumValue, value : JSONSerializableEnum do
+  include JSON::Serializable
+
+  @[JSON::Field(converter: Enum::ValueConverter(JSONSerializableEnum))]
+  @value : JSONSerializableEnum
+end
+
+record JSONAttrWithFlagEnumValue, value : JSONSerializableFlagEnum do
+  include JSON::Serializable
+
+  @[JSON::Field(converter: Enum::ValueConverter(JSONSerializableFlagEnum))]
+  @value : JSONSerializableFlagEnum
+end
+
+abstract class SerializableFoo
+  include JSON::Serializable
+
+  module Converter
+    def self.from_json(pull : JSON::PullParser) : SerializableFoo
+      SerializableFoo.find.from_json("{}")
+    end
+  end
+
+  def self.find : SerializableFoo.class
+    SerializableBar.as(SerializableFoo.class)
+  end
+end
+
+class SerializableBar < SerializableFoo
+  @[JSON::Field(converter: SerializableFoo::Converter)]
+  getter foo : SerializableFoo = SerializableBaz.new
+end
+
+class SerializableBaz < SerializableFoo
+  def initialize
+  end
+end
+
+class JSONInitializeOpts
+  include JSON::Serializable
+
+  property value : Int32
+
+  def initialize(**opts)
+    @value = opts.size
+  end
+end
+
+record Namespaced::JSON::Wrapper, name : String, options : Hash(String, ::JSON::Any::Type)? = nil do
+  include ::JSON::Serializable
+end
+
+describe "JSON::Serializable" do
+  it "works with classes within `JSON` namespace" do
+    Namespaced::JSON::Wrapper
+      .from_json(<<-JSON)
+        {
+          "name": "foo",
+          "options": {
+            "foo": true
+          }
+        }
+        JSON
+      .to_json
+  end
+
   it "works with record" do
     JSONAttrPoint.new(1, 2).to_json.should eq "{\"x\":1,\"y\":2}"
     JSONAttrPoint.from_json(%({"x": 1, "y": 2})).should eq JSONAttrPoint.new(1, 2)
@@ -489,6 +671,7 @@ describe "JSON mapping" do
         JSON
     end
     ex.location.should eq({4, 3})
+    ex.attribute.should eq "foo"
   end
 
   it "should parse extra fields (JSONAttrPersonExtraFields with on_unknown_json_attribute)" do
@@ -509,12 +692,13 @@ describe "JSON mapping" do
   it "raises if non-nilable attribute is nil" do
     error_message = <<-'MSG'
       Missing JSON attribute: name
-        parsing JSONAttrPerson at line 1, column 1
+        parsing JSONAttrPerson#name at line 1, column 1
       MSG
     ex = expect_raises ::JSON::SerializableError, error_message do
       JSONAttrPerson.from_json(%({"age": 30}))
     end
     ex.location.should eq({1, 1})
+    ex.attribute.should eq "name"
   end
 
   it "raises if not an object" do
@@ -544,16 +728,17 @@ describe "JSON mapping" do
         JSON
     end
     ex.location.should eq({3, 10})
+    ex.attribute.should eq "age"
   end
 
   it "doesn't emit null by default when doing to_json" do
     person = JSONAttrPerson.from_json(%({"name": "John"}))
-    (person.to_json =~ /age/).should be_falsey
+    person.to_json.should_not match /age/
   end
 
   it "emits null on request when doing to_json" do
     person = JSONAttrPersonEmittingNull.from_json(%({"name": "John"}))
-    (person.to_json =~ /age/).should be_truthy
+    person.to_json.should match /age/
   end
 
   it "emit_nulls option" do
@@ -562,13 +747,18 @@ describe "JSON mapping" do
   end
 
   it "doesn't raises on false value when not-nil" do
-    json = JSONAttrWithBool.from_json(%({"value": false}))
+    json = JSONAttrValue(Bool).from_json(%({"value": false}))
     json.value.should be_false
   end
 
+  it "parses JSON integer into a float property (#8618)" do
+    json = JSONAttrValue(Float64).from_json(%({"value": 123}))
+    json.value.should eq(123.0)
+  end
+
   it "parses UUID" do
-    uuid = JSONAttrWithUUID.from_json(%({"value": "ba714f86-cac6-42c7-8956-bcf5105e1b81"}))
-    uuid.should be_a(JSONAttrWithUUID)
+    uuid = JSONAttrValue(UUID).from_json(%({"value": "ba714f86-cac6-42c7-8956-bcf5105e1b81"}))
+    uuid.should be_a(JSONAttrValue(UUID))
     uuid.value.should eq(UUID.new("ba714f86-cac6-42c7-8956-bcf5105e1b81"))
   end
 
@@ -602,11 +792,11 @@ describe "JSON mapping" do
     json.to_json.should eq(%({"value":null}))
   end
 
-  it "outputs JSON with properties key" do
+  it "outputs JSON with Hash" do
     input = {
-      properties: {"foo" => "bar"},
+      value: {"foo" => "bar"},
     }.to_json
-    json = JSONAttrWithPropertiesKey.from_json(input)
+    json = JSONAttrValue(Hash(String, String)).from_json(input)
     json.to_json.should eq(input)
   end
 
@@ -630,8 +820,8 @@ describe "JSON mapping" do
   end
 
   it "parses json array as set" do
-    json = JSONAttrWithSet.from_json(%({"set": ["a", "a", "b"]}))
-    json.set.should eq(Set(String){"a", "b"})
+    json = JSONAttrValue(Set(String)).from_json(%({"value": ["a", "a", "b"]}))
+    json.value.should eq(Set(String){"a", "b"})
   end
 
   it "allows small types of integer" do
@@ -662,45 +852,46 @@ describe "JSON mapping" do
       json.a.should eq 11
       json.b.should eq "Haha"
 
-      json = JSONAttrWithDefaults.from_json(%({"a":null,"b":null}))
+      json = JSONAttrWithDefaults.from_json(%({"a":null,"b":null,"f":null}))
       json.a.should eq 11
       json.b.should eq "Haha"
+      json.f.should be_nil
     end
 
     it "bool" do
       json = JSONAttrWithDefaults.from_json(%({}))
-      json.c.should eq true
+      json.c.should be_true
       typeof(json.c).should eq Bool
-      json.d.should eq false
+      json.d.should be_false
       typeof(json.d).should eq Bool
 
       json = JSONAttrWithDefaults.from_json(%({"c":false}))
-      json.c.should eq false
+      json.c.should be_false
       json = JSONAttrWithDefaults.from_json(%({"c":true}))
-      json.c.should eq true
+      json.c.should be_true
 
       json = JSONAttrWithDefaults.from_json(%({"d":false}))
-      json.d.should eq false
+      json.d.should be_false
       json = JSONAttrWithDefaults.from_json(%({"d":true}))
-      json.d.should eq true
+      json.d.should be_true
     end
 
     it "with nilable" do
       json = JSONAttrWithDefaults.from_json(%({}))
 
-      json.e.should eq false
+      json.e.should be_false
       typeof(json.e).should eq(Bool | Nil)
 
       json.f.should eq 1
       typeof(json.f).should eq(Int32 | Nil)
 
-      json.g.should eq nil
+      json.g.should be_nil
       typeof(json.g).should eq(Int32 | Nil)
 
       json = JSONAttrWithDefaults.from_json(%({"e":false}))
-      json.e.should eq false
+      json.e.should be_false
       json = JSONAttrWithDefaults.from_json(%({"e":true}))
-      json.e.should eq true
+      json.e.should be_true
     end
 
     it "create new array every time" do
@@ -712,6 +903,16 @@ describe "JSON mapping" do
       json = JSONAttrWithDefaults.from_json(%({}))
       json.h.should eq [1, 2, 3]
     end
+  end
+
+  it "converter with null value (#13655)" do
+    JSONAttrNilableWithTimeEpoch.from_json(%({"value": null})).value.should be_nil
+    JSONAttrNilableWithTimeEpoch.from_json(%({"value":1459859781})).value.should eq Time.unix(1459859781)
+  end
+
+  it "converter with default value" do
+    JSONAttrDefaultWithTimeEpoch.from_json(%({"value": null})).value.should eq Time.unix(0)
+    JSONAttrDefaultWithTimeEpoch.from_json(%({"value":1459859781})).value.should eq Time.unix(1459859781)
   end
 
   it "uses Time::EpochConverter" do
@@ -728,6 +929,58 @@ describe "JSON mapping" do
     json.value.should be_a(Time)
     json.value.should eq(Time.unix_ms(1459860483856))
     json.to_json.should eq(string)
+  end
+
+  describe JSON::ArrayConverter do
+    it "uses converter metaclass" do
+      string = %({"value":[1459859781]})
+      json = JSONAttrWithTimeArray1.from_json(string)
+      json.value.should be_a(Array(Time))
+      json.value.should eq([Time.unix(1459859781)])
+      json.to_json.should eq(string)
+    end
+
+    it "uses converter instance with nested converter metaclass" do
+      string = %({"value":[1459859781]})
+      json = JSONAttrWithTimeArray2.from_json(string)
+      json.value.should be_a(Array(Time))
+      json.value.should eq([Time.unix(1459859781)])
+      json.to_json.should eq(string)
+    end
+
+    it "uses converter instance with nested converter instance" do
+      string = %({"value":["2014-10-31 23:37:16"]})
+      json = JSONAttrWithTimeArray3.from_json(string)
+      json.value.should be_a(Array(Time))
+      json.value.map(&.to_s).should eq(["2014-10-31 23:37:16 UTC"])
+      json.to_json.should eq(string)
+    end
+  end
+
+  describe JSON::HashValueConverter do
+    it "uses converter metaclass" do
+      string = %({"value":{"foo":1459859781}})
+      json = JSONAttrWithTimeHash1.from_json(string)
+      json.value.should be_a(Hash(String, Time))
+      json.value.should eq({"foo" => Time.unix(1459859781)})
+      json.to_json.should eq(string)
+    end
+
+    it "uses converter instance with nested converter metaclass" do
+      string = %({"value":{"foo":1459859781}})
+      json = JSONAttrWithTimeHash2.from_json(string)
+      json.value.should be_a(Hash(String, Time))
+      json.value.should eq({"foo" => Time.unix(1459859781)})
+      json.to_json.should eq(string)
+    end
+
+    it "uses converter instance with nested converter instance" do
+      string = %({"value":{"foo":"2014-10-31 23:37:16"}})
+      json = JSONAttrWithTimeHash3.from_json(string)
+      json.value.should be_a(Hash(String, Time))
+      json.value.transform_values(&.to_s).should eq({"foo" => "2014-10-31 23:37:16 UTC"})
+      json.to_json.should eq(string)
+    end
   end
 
   it "parses raw value from int" do
@@ -774,29 +1027,15 @@ describe "JSON mapping" do
   end
 
   it "parses nilable union" do
-    obj = JSONAttrWithNilableUnion.from_json(%({"value": 1}))
+    obj = JSONAttrValue(Int32?).from_json(%({"value": 1}))
     obj.value.should eq(1)
     obj.to_json.should eq(%({"value":1}))
 
-    obj = JSONAttrWithNilableUnion.from_json(%({"value": null}))
+    obj = JSONAttrValue(Int32?).from_json(%({"value": null}))
     obj.value.should be_nil
     obj.to_json.should eq(%({}))
 
-    obj = JSONAttrWithNilableUnion.from_json(%({}))
-    obj.value.should be_nil
-    obj.to_json.should eq(%({}))
-  end
-
-  it "parses nilable union2" do
-    obj = JSONAttrWithNilableUnion2.from_json(%({"value": 1}))
-    obj.value.should eq(1)
-    obj.to_json.should eq(%({"value":1}))
-
-    obj = JSONAttrWithNilableUnion2.from_json(%({"value": null}))
-    obj.value.should be_nil
-    obj.to_json.should eq(%({}))
-
-    obj = JSONAttrWithNilableUnion2.from_json(%({}))
+    obj = JSONAttrValue(Int32?).from_json(%({}))
     obj.value.should be_nil
     obj.to_json.should eq(%({}))
   end
@@ -808,6 +1047,48 @@ describe "JSON mapping" do
       json.first_name_present?.should be_true
       json.last_name.should be_nil
       json.last_name_present?.should be_false
+    end
+  end
+
+  describe "serializes JSON with presence markers and ignore_serialize" do
+    context "ignore_serialize is set to a method which returns true when value is nil or empty string" do
+      it "ignores field when value is empty string" do
+        json = JSONAttrWithPresenceAndIgnoreSerialize.from_json(%({"first_name": ""}))
+        json.first_name_present?.should be_true
+        json.to_json.should eq(%({}))
+      end
+
+      it "ignores field when value is nil" do
+        json = JSONAttrWithPresenceAndIgnoreSerialize.from_json(%({"first_name": null}))
+        json.first_name_present?.should be_true
+        json.to_json.should eq(%({}))
+      end
+    end
+
+    context "ignore_serialize is set to conditional expressions 'last_name.nil? && !last_name_present?'" do
+      it "emits null when value is null and @last_name_present is true" do
+        json = JSONAttrWithPresenceAndIgnoreSerialize.from_json(%({"last_name": null}))
+        json.last_name_present?.should be_true
+        json.to_json.should eq(%({"last_name":null}))
+      end
+
+      it "does not emit null when value is null and @last_name_present is false" do
+        json = JSONAttrWithPresenceAndIgnoreSerialize.from_json(%({}))
+        json.last_name_present?.should be_false
+        json.to_json.should eq(%({}))
+      end
+
+      it "emits field when value is not nil and @last_name_present is false" do
+        json = JSONAttrWithPresenceAndIgnoreSerialize.new(last_name: "something")
+        json.last_name_present?.should be_false
+        json.to_json.should eq(%({"last_name":"something"}))
+      end
+
+      it "emits field when value is not nil and @last_name_present is true" do
+        json = JSONAttrWithPresenceAndIgnoreSerialize.from_json(%({"last_name":"something"}))
+        json.last_name_present?.should be_true
+        json.to_json.should eq(%({"last_name":"something"}))
+      end
     end
   end
 
@@ -844,35 +1125,53 @@ describe "JSON mapping" do
     it "raises if non-nilable attribute is nil" do
       error_message = <<-'MSG'
         Missing JSON attribute: foo
-          parsing JSONAttrWithQueryAttributes at line 1, column 1
+          parsing JSONAttrWithQueryAttributes#foo at line 1, column 1
         MSG
       ex = expect_raises ::JSON::SerializableError, error_message do
         JSONAttrWithQueryAttributes.from_json(%({"is_bar": true}))
       end
       ex.location.should eq({1, 1})
+      ex.attribute.should eq "foo"
+    end
+
+    it "raises with key as attribute if non-nilable attribute is nil" do
+      error_message = <<-'MSG'
+        Missing JSON attribute: is_foo
+          parsing JSONAttrWithKeyQueryAttribute#is_foo at line 1, column 1
+        MSG
+      ex = expect_raises ::JSON::SerializableError, error_message do
+        JSONAttrWithKeyQueryAttribute.from_json(%({}))
+      end
+      ex.location.should eq({1, 1})
+      ex.attribute.should eq "is_foo"
     end
   end
 
   describe "BigDecimal" do
     it "parses json string with BigDecimal" do
-      json = JSONAttrWithBigDecimal.from_json(%({"value": "10.05"}))
+      json = JSONAttrValue(BigDecimal).from_json(%({"value": "10.05"}))
       json.value.should eq(BigDecimal.new("10.05"))
     end
 
     it "parses large json ints with BigDecimal" do
-      json = JSONAttrWithBigDecimal.from_json(%({"value": 9223372036854775808}))
+      json = JSONAttrValue(BigDecimal).from_json(%({"value": 9223372036854775808}))
       json.value.should eq(BigDecimal.new("9223372036854775808"))
     end
 
     it "parses json float with BigDecimal" do
-      json = JSONAttrWithBigDecimal.from_json(%({"value": 10.05}))
+      json = JSONAttrValue(BigDecimal).from_json(%({"value": 10.05}))
       json.value.should eq(BigDecimal.new("10.05"))
     end
 
     it "parses large precision json floats with BigDecimal" do
-      json = JSONAttrWithBigDecimal.from_json(%({"value": 0.00045808999999999997}))
+      json = JSONAttrValue(BigDecimal).from_json(%({"value": 0.00045808999999999997}))
       json.value.should eq(BigDecimal.new("0.00045808999999999997"))
     end
+  end
+
+  it "parses 128-bit integer" do
+    json = JSONAttrValue(Int128).from_json(%({"value": #{Int128::MAX}}))
+    json.value.should eq Int128::MAX
   end
 
   describe "work with module and inheritance" do
@@ -944,13 +1243,140 @@ describe "JSON mapping" do
       object_string.should be_a(JSONVariableDiscriminatorString)
 
       object_bool = JSONVariableDiscriminatorValueType.from_json(%({"type": true}))
-      object_bool.should be_a(JSONVariableDiscriminatorBool)
+      object_bool.should be_a(JSONVariableDiscriminatorBoolTrue)
+
+      object_bool = JSONVariableDiscriminatorValueType.from_json(%({"type": false}))
+      object_bool.should be_a(JSONVariableDiscriminatorBoolFalse)
 
       object_enum = JSONVariableDiscriminatorValueType.from_json(%({"type": 4}))
       object_enum.should be_a(JSONVariableDiscriminatorEnum)
 
       object_enum = JSONVariableDiscriminatorValueType.from_json(%({"type": 18}))
       object_enum.should be_a(JSONVariableDiscriminatorEnum8)
+    end
+
+    it "deserializes with discriminator, strict recursive type" do
+      foo = JSONStrictDiscriminator.from_json(%({"type": "foo"}))
+      foo = foo.should be_a(JSONStrictDiscriminatorFoo)
+
+      bar = JSONStrictDiscriminator.from_json(%({"type": "bar", "x": {"type": "foo"}, "y": {"type": "foo"}}))
+      bar = bar.should be_a(JSONStrictDiscriminatorBar)
+      bar.x.should be_a(JSONStrictDiscriminatorFoo)
+      bar.y.should be_a(JSONStrictDiscriminatorFoo)
+    end
+
+    it "deserializes with discriminator, another recursive type, fixes: #13429" do
+      c = JsonDiscriminatorBug::Base.from_json %q({"type": "c", "source": {"type": "a"}, "value": 2})
+      c.as(JsonDiscriminatorBug::C).value.should eq 2
+
+      c = JsonDiscriminatorBug::Base.from_json %q({"type": "c", "source": {"type": "a"}})
+      c.as(JsonDiscriminatorBug::C).value.should eq 1
+    end
+  end
+
+  describe "Enum::ValueConverter.from_json" do
+    it "normal enum" do
+      JSONAttrWithEnumValue.from_json(%({"value": 0})).value.should eq(JSONSerializableEnum::Zero)
+      JSONAttrWithEnumValue.from_json(%({"value": 1})).value.should eq(JSONSerializableEnum::One)
+      JSONAttrWithEnumValue.from_json(%({"value": 2})).value.should eq(JSONSerializableEnum::Two)
+      JSONAttrWithEnumValue.from_json(%({"value": 3})).value.should eq(JSONSerializableEnum::OneHundred)
+
+      expect_raises(JSON::ParseException, %(Expected Int but was String)) do
+        JSONAttrWithEnumValue.from_json(%({"value": "3"}))
+      end
+      expect_raises(JSON::ParseException, %(Unknown enum JSONSerializableEnum value: 4)) do
+        JSONAttrWithEnumValue.from_json(%({"value": 4}))
+      end
+      expect_raises(JSON::ParseException, %(Unknown enum JSONSerializableEnum value: -1)) do
+        JSONAttrWithEnumValue.from_json(%({"value": -1}))
+      end
+      expect_raises(JSON::ParseException, %(Expected Int but was String)) do
+        JSONAttrWithEnumValue.from_json(%({"value": ""}))
+      end
+
+      expect_raises(JSON::ParseException, "Expected Int but was String") do
+        JSONAttrWithEnumValue.from_json(%({"value": "one"}))
+      end
+
+      expect_raises(JSON::ParseException, "Expected Int but was BeginObject") do
+        JSONAttrWithEnumValue.from_json(%({"value": {}}))
+      end
+      expect_raises(JSON::ParseException, "Expected Int but was BeginArray") do
+        JSONAttrWithEnumValue.from_json(%({"value": []}))
+      end
+    end
+
+    it "flag enum" do
+      JSONAttrWithFlagEnumValue.from_json(%({"value": 0})).value.should eq(JSONSerializableFlagEnum::None)
+      JSONAttrWithFlagEnumValue.from_json(%({"value": 1})).value.should eq(JSONSerializableFlagEnum::One)
+      JSONAttrWithFlagEnumValue.from_json(%({"value": 2})).value.should eq(JSONSerializableFlagEnum::Two)
+      JSONAttrWithFlagEnumValue.from_json(%({"value": 4})).value.should eq(JSONSerializableFlagEnum::OneHundred)
+      JSONAttrWithFlagEnumValue.from_json(%({"value": 5})).value.should eq(JSONSerializableFlagEnum::OneHundred | JSONSerializableFlagEnum::One)
+      JSONAttrWithFlagEnumValue.from_json(%({"value": 7})).value.should eq(JSONSerializableFlagEnum::All)
+
+      expect_raises(JSON::ParseException, %(Unknown enum JSONSerializableFlagEnum value: 8)) do
+        JSONAttrWithFlagEnumValue.from_json(%({"value": 8}))
+      end
+      expect_raises(JSON::ParseException, %(Unknown enum JSONSerializableFlagEnum value: -1)) do
+        JSONAttrWithFlagEnumValue.from_json(%({"value": -1}))
+      end
+      expect_raises(JSON::ParseException, %(Expected Int but was String)) do
+        JSONAttrWithFlagEnumValue.from_json(%({"value": ""}))
+      end
+      expect_raises(JSON::ParseException, "Expected Int but was String") do
+        JSONAttrWithFlagEnumValue.from_json(%({"value": "one"}))
+      end
+      expect_raises(JSON::ParseException, "Expected Int but was BeginObject") do
+        JSONAttrWithFlagEnumValue.from_json(%({"value": {}}))
+      end
+      expect_raises(JSON::ParseException, "Expected Int but was BeginArray") do
+        JSONAttrWithFlagEnumValue.from_json(%({"value": []}))
+      end
+    end
+  end
+
+  describe "Enum::ValueConverter.to_json" do
+    it "normal enum" do
+      klass = JSONAttrWithEnumValue
+
+      klass.new(JSONSerializableEnum::One).to_json.should eq %({"value":1})
+      klass.from_json(klass.new(JSONSerializableEnum::One).to_json).value
+        .should eq(JSONSerializableEnum::One)
+
+      klass.new(JSONSerializableEnum::OneHundred).to_json.should eq %({"value":3})
+      klass.from_json(klass.new(JSONSerializableEnum::OneHundred).to_json).value
+        .should eq(JSONSerializableEnum::OneHundred)
+
+      # undefined members can't be parsed back because the standard converter only accepts
+      # named members
+      klass.new(JSONSerializableEnum.new(42)).to_json.should eq %({"value":42})
+    end
+
+    it "flag enum" do
+      klass = JSONAttrWithFlagEnumValue
+
+      klass.new(JSONSerializableFlagEnum::One).to_json.should eq %({"value":1})
+      klass.from_json(klass.new(JSONSerializableFlagEnum::One).to_json).value
+        .should eq(JSONSerializableFlagEnum::One)
+
+      klass.new(JSONSerializableFlagEnum::OneHundred).to_json.should eq %({"value":4})
+      klass.from_json(klass.new(JSONSerializableFlagEnum::OneHundred).to_json).value
+        .should eq(JSONSerializableFlagEnum::OneHundred)
+
+      combined = JSONSerializableFlagEnum::OneHundred | JSONSerializableFlagEnum::One
+
+      klass.new(combined).to_json.should eq %({"value":5})
+      klass.from_json(klass.new(combined).to_json).value.should eq(combined)
+
+      klass.new(JSONSerializableFlagEnum::None).to_json.should eq %({"value":0})
+      klass.from_json(klass.new(JSONSerializableFlagEnum::None).to_json).value
+        .should eq(JSONSerializableFlagEnum::None)
+
+      klass.new(JSONSerializableFlagEnum::All).to_json.should eq %({"value":7})
+      klass.from_json(klass.new(JSONSerializableFlagEnum::All).to_json).value
+        .should eq(JSONSerializableFlagEnum::All)
+
+      klass.new(JSONSerializableFlagEnum.new(42)).to_json.should eq %({"value":42})
     end
   end
 
@@ -960,5 +1386,21 @@ describe "JSON mapping" do
       request.foo.id.should eq "id:foo"
       request.bar.id.should eq "id:bar"
     end
+  end
+
+  it "fixes #13337" do
+    JSONSomething.from_json(%({"value":{}})).value.should_not be_nil
+  end
+
+  it "works when type has constructor with double splat parameter (#16140)" do
+    JSONInitializeOpts.from_json(%({"value":123})).value.should eq(123)
+  end
+
+  it "supports generic type variables in converters" do
+    JSONAttrWithGenericConverter(Time::EpochConverter).from_json(%({"value":1459859781})).value.should eq(Time.unix(1459859781))
+  end
+
+  it "fixes #16141" do
+    SerializableFoo.find.from_json("{}").should be_a(SerializableBar)
   end
 end

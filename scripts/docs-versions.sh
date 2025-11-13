@@ -3,7 +3,7 @@
 git tag --list | \
 grep -v -E '0\.1?[0-9]\.' | \
 grep '^[0-9]' | \
-tac | \
+sort -rV | \
 awk '
   BEGIN {
     print "{"

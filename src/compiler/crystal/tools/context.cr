@@ -68,7 +68,7 @@ module Crystal
     end
   end
 
-  class RechableVisitor < Visitor
+  class ReachableVisitor < Visitor
     @visited_typed_defs : Set(Def)
 
     def initialize(@context_visitor : Crystal::ContextVisitor)
@@ -112,7 +112,7 @@ module Crystal
       @found_untyped_def = false
     end
 
-    def inside_typed_def
+    def inside_typed_def(&)
       @inside_typed_def = true
       yield.tap { @inside_typed_def = false }
     end
@@ -154,7 +154,7 @@ module Crystal
 
         if @def_with_yield
           @context = Hash(String, Type).new
-          result.node.accept(RechableVisitor.new(self))
+          result.node.accept(ReachableVisitor.new(self))
         end
 
         # TODO should apply only if user is really in some of the nodes of the main expressions
@@ -163,21 +163,21 @@ module Crystal
 
       if @contexts.empty?
         if @found_untyped_def
-          return ContextResult.new("failed", "no context information found (methods which are never called don't have a context)")
+          ContextResult.new("failed", "no context information found (methods which are never called don't have a context)")
         else
-          return ContextResult.new("failed", "no context information found")
+          ContextResult.new("failed", "no context information found")
         end
       else
         res = ContextResult.new("ok", "#{@contexts.size} possible context#{@contexts.size > 1 ? "s" : ""} found")
         res.contexts = @contexts
-        return res
+        res
       end
     end
 
     def visit(node : Def)
       return false unless contains_target(node)
 
-      if @def_with_yield.nil? && !node.yields.nil?
+      if @def_with_yield.nil? && !node.block_arity.nil?
         @def_with_yield = node
         return false
       end

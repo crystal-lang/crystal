@@ -14,6 +14,20 @@ BUILTIN_NUMBER_TYPES_LTE_64 =
   [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Float32, Float64]
 BUILTIN_FLOAT_TYPES =
   [Float32, Float64]
+BUILTIN_NUMBER_SUFFIXES = {
+  Int8    => "i8",
+  Int16   => "i16",
+  Int32   => "i32",
+  Int64   => "i64",
+  Int128  => "i128",
+  UInt8   => "u8",
+  UInt16  => "u16",
+  UInt32  => "u32",
+  UInt64  => "u64",
+  UInt128 => "u128",
+  Float32 => "f32",
+  Float64 => "f64",
+}
 
 macro it_can_convert_between(a_types, b_types)
   {% for a_type in a_types %}
@@ -82,3 +96,47 @@ end
 # TODO test to_X conversions return types
 # TODO test zero? comparisons
 # TODO test <=> comparisons between types
+
+# Calls either `Float64.parse_hexfloat` or `Float32.parse_hexfloat`. The default
+# is `Float64` unless *str* ends with `_f32`, in which case that suffix is
+# stripped and `Float32` is chosen.
+macro hexfloat(str)
+  {% raise "`str` must be a StringLiteral, not #{str.class_name}" unless str.is_a?(StringLiteral) %}
+  {% if str.ends_with?("_f32") %}
+    ::Float32.parse_hexfloat({{ str[0...-4] }})
+  {% else %}
+    ::Float64.parse_hexfloat({{ str }})
+  {% end %}
+end
+
+# See also: https://github.com/crystal-lang/crystal/issues/15192
+lib LibC
+  {% if flag?(:win32) %}
+    FE_TONEAREST  = 0x00000000
+    FE_DOWNWARD   = 0x00000100
+    FE_UPWARD     = 0x00000200
+    FE_TOWARDZERO = 0x00000300
+  {% else %}
+    FE_TONEAREST  = 0x00000000
+    FE_DOWNWARD   = 0x00000400
+    FE_UPWARD     = 0x00000800
+    FE_TOWARDZERO = 0x00000C00
+  {% end %}
+
+  fun fegetround : Int
+  fun fesetround(round : Int) : Int
+end
+
+def with_hardware_rounding_mode(mode, &)
+  old_mode = LibC.fegetround
+  LibC.fesetround(mode)
+  yield ensure LibC.fesetround(old_mode)
+end
+
+def each_hardware_rounding_mode(&)
+  {% for mode in %w(FE_TONEAREST FE_DOWNWARD FE_UPWARD FE_TOWARDZERO) %}
+    with_hardware_rounding_mode(LibC::{{ mode.id }}) do
+      yield LibC::{{ mode.id }}, {{ mode }}
+    end
+  {% end %}
+end

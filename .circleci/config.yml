@@ -1,14 +1,18 @@
 version: 2.1
 
 parameters:
+  distribution-scripts-repo:
+    description: "Git url https://github.com/crystal-lang/distribution-scripts/"
+    type: string
+    default: "https://github.com/crystal-lang/distribution-scripts.git"
   distribution-scripts-version:
     description: "Git ref for version of https://github.com/crystal-lang/distribution-scripts/"
     type: string
-    default: "8328ae59292c05cf8c830a34b5b39ac46c43813e"
+    default: "24d03358df6d6ecc485b640caa93ec50ccbb400e"
   previous_crystal_base_url:
     description: "Prefix for URLs to Crystal bootstrap compiler"
     type: string
-    default: "https://github.com/crystal-lang/crystal/releases/download/1.3.2/crystal-1.3.2-1"
+    default: "https://github.com/crystal-lang/crystal/releases/download/1.18.2/crystal-1.18.2-1"
 
 defaults:
   environment: &env
@@ -19,7 +23,9 @@ defaults:
     - run: bin/ci prepare_system
     - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
     - run: bin/ci prepare_build
-    - run: bin/ci build
+    - run:
+        command: bin/ci build
+        no_output_timeout: 30m
     - run:
         when: always
         command: |
@@ -32,7 +38,8 @@ defaults:
 
 jobs:
   test_linux:
-    machine: true
+    machine:
+      image: default
     environment:
       <<: *env
       TRAVIS_OS_NAME: linux
@@ -44,7 +51,9 @@ jobs:
       - run: bin/ci prepare_system
       - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
       - run: bin/ci prepare_build
-      - run: bin/ci build
+      - run:
+          command: bin/ci build
+          no_output_timeout: 30m
       - run:
           when: always
           command: |
@@ -60,7 +69,8 @@ jobs:
             - docs
 
   test_alpine:
-    machine: true
+    machine:
+      image: default
     environment:
       <<: *env
       TRAVIS_OS_NAME: linux
@@ -71,7 +81,7 @@ jobs:
 
   test_darwin:
     macos:
-      xcode: 12.4.0
+      xcode: 16.4.0
     environment:
       <<: *env
       TRAVIS_OS_NAME: osx
@@ -85,7 +95,9 @@ jobs:
       - run: echo 'export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/opt/openssl@1.1/lib/pkgconfig"' >> $BASH_ENV
       - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
       - run: bin/ci prepare_build
-      - run: bin/ci build
+      - run:
+          command: bin/ci build
+          no_output_timeout: 30m
       - run:
           when: always
           command: |
@@ -102,7 +114,9 @@ jobs:
             - ~/Library/Caches/Homebrew/downloads
 
   test_preview_mt:
-    machine: true
+    machine:
+      image: default
+    resource_class: large
     environment:
       <<: *env
       TRAVIS_OS_NAME: linux
@@ -114,7 +128,9 @@ jobs:
       - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
       - run: bin/ci prepare_build
       - run: bin/ci with_build_env 'make crystal'
-      - run: bin/ci with_build_env 'CRYSTAL_WORKERS=4 make std_spec threads=1 FLAGS="-D preview_mt" junit_output=.junit/std_spec.xml'
+      - run:
+          command: bin/ci with_build_env 'CRYSTAL_WORKERS=4 make std_spec threads=1 FLAGS="-D preview_mt" junit_output=.junit/std_spec.xml'
+          no_output_timeout: 30m
       - run:
           when: always
           command: |
@@ -131,7 +147,7 @@ jobs:
     steps:
       # checkout specific distribution-scripts version to perform releases and nightly
       - run: |
-          git clone https://github.com/crystal-lang/distribution-scripts.git ~/distribution-scripts
+          git clone << pipeline.parameters.distribution-scripts-repo >> ~/distribution-scripts
           cd ~/distribution-scripts
           git checkout << pipeline.parameters.distribution-scripts-version >>
       # persist relevant information for build process
@@ -144,7 +160,6 @@ jobs:
           echo "export CRYSTAL_SHA1=$CIRCLE_SHA1" >> build.env
 
           # Which previous version use
-          echo "export PREVIOUS_CRYSTAL_RELEASE_LINUX64_TARGZ=<< pipeline.parameters.previous_crystal_base_url >>-linux-x86_64.tar.gz" >> build.env
           echo "export PREVIOUS_CRYSTAL_RELEASE_DARWIN_TARGZ=<< pipeline.parameters.previous_crystal_base_url >>-darwin-universal.tar.gz" >> build.env
 
           cat build.env
@@ -247,7 +262,12 @@ jobs:
             - distribution-scripts
 
   dist_linux:
-    machine: true
+    parameters:
+      arch:
+        type: string
+    machine:
+      image: default
+    resource_class: << parameters.arch >>
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -256,6 +276,7 @@ jobs:
           command: |
             cd /tmp/workspace/distribution-scripts
             source build.env
+            export PREVIOUS_CRYSTAL_RELEASE_LINUX64_TARGZ="<< pipeline.parameters.previous_crystal_base_url >>-linux-$(uname -m).tar.gz"
             cd linux
             make all64 release=true
       - store_artifacts:
@@ -268,7 +289,7 @@ jobs:
 
   dist_darwin:
     macos:
-      xcode: 12.4.0
+      xcode: 16.4.0
     shell: /bin/bash --login -eo pipefail
     steps:
       - restore_cache:
@@ -279,12 +300,7 @@ jobs:
           command: |
             brew unlink python@2 || true
 
-            # We need ruby-install >= 0.8.3
-            brew install ruby-install
-
-            ruby-install ruby 2.7.3
-
-            brew install pkgconfig libtool
+            brew install ruby@3 libffi pkgconfig libtool automake
 
             sudo mkdir -p /opt/crystal
             sudo chown $(whoami) /opt/crystal/
@@ -295,7 +311,6 @@ jobs:
       - run:
           no_output_timeout: 40m
           command: |
-            echo "2.7.3" > /tmp/workspace/distribution-scripts/.ruby-version
             cd /tmp/workspace/distribution-scripts
             source build.env
             cd omnibus
@@ -329,7 +344,8 @@ jobs:
                 /tmp/workspace/build/crystal-*-docs.tar.gz
 
   dist_docker:
-    machine: true
+    machine:
+      image: default
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -344,7 +360,8 @@ jobs:
             - build
 
   publish_docker:
-    machine: true
+    machine:
+      image: default
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -398,7 +415,8 @@ jobs:
             snapcraft push /tmp/workspace/build/*.snap --release=$SNAP_CHANNEL
 
   dist_docs:
-    machine: true
+    machine:
+      image: default
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -416,6 +434,23 @@ jobs:
           paths:
             - build
 
+  publish_nightly_artifacts:
+    docker:
+      - image: manastech/s3cmd:2.2-alpine
+    environment:
+      <<: *env
+      AWS_ACCESS_KEY_ID: AKIA2EEIIRCJDEDGK6MQ
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - run: |
+          mkdir -p /tmp/upload
+          cd /tmp/workspace/build
+          cp crystal-*-darwin-universal.tar.gz /tmp/upload/crystal-nightly-darwin-universal.tar.gz
+          cp crystal-*-linux-x86_64.tar.gz /tmp/upload/crystal-nightly-linux-x86_64.tar.gz
+          cp crystal-*-linux-aarch64.tar.gz /tmp/upload/crystal-nightly-linux-aarch64.tar.gz
+      - run: s3cmd put --recursive /tmp/upload/* s3://artifacts.crystal-lang.org/dist/
+
   dist_artifacts:
     docker:
       - image: buildpack-deps:xenial
@@ -427,7 +462,8 @@ jobs:
           destination: dist_packages
 
   test_dist_linux_on_docker:
-    machine: true
+    machine:
+      image: default
     environment:
       <<: *env
       TRAVIS_OS_NAME: linux
@@ -446,7 +482,10 @@ jobs:
       - run: bin/ci prepare_system
       - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
       - run: bin/ci prepare_build
-      - run: bin/ci build
+      - run: bin/ci with_build_env 'shards --version'
+      - run:
+          command: bin/ci build
+          no_output_timeout: 30m
 
 workflows:
   version: 2
@@ -485,6 +524,9 @@ workflows:
           requires:
             - prepare_common
       - dist_linux:
+          matrix:
+            parameters:
+              arch: [large, arm.medium]
           filters: *release
           requires:
             - prepare_maintenance
@@ -544,6 +586,9 @@ workflows:
           requires:
             - prepare_common
       - dist_linux:
+          matrix:
+            parameters:
+              arch: [large, arm.medium]
           requires:
             - prepare_nightly
       - dist_darwin:
@@ -571,6 +616,10 @@ workflows:
       - dist_docs:
           requires:
             - dist_docker
+      - publish_nightly_artifacts:
+          requires:
+            - dist_linux
+            - dist_darwin
       - dist_artifacts:
           requires:
             - dist_linux

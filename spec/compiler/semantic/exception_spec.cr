@@ -2,36 +2,36 @@ require "../../spec_helper"
 
 describe "Semantic: exception" do
   it "type is union of main and rescue blocks" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { union_of(int32, char) }
       begin
         1
       rescue
         'a'
       end
-    ") { union_of(int32, char) }
+      CRYSTAL
   end
 
   it "type union with empty main block" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { nilable int32 }
       begin
       rescue
         1
       end
-    ") { nilable int32 }
+      CRYSTAL
   end
 
   it "type union with empty rescue block" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { nilable int32 }
       begin
         1
       rescue
       end
-    ") { nilable int32 }
+      CRYSTAL
   end
 
   it "type for exception handler for explicit types" do
-    assert_type("
-      require \"prelude\"
+    assert_type(<<-CRYSTAL) { int32 }
+      require "prelude"
 
       class MyEx < Exception
       end
@@ -41,11 +41,11 @@ describe "Semantic: exception" do
       rescue MyEx
         1
       end
-    ") { int32 }
+      CRYSTAL
   end
 
   it "marks method calling method that raises as raises" do
-    result = assert_type("
+    result = assert_type(<<-CRYSTAL) { int32 }
       lib LibFoo
         @[Raises]
         fun some_fun : Int32
@@ -56,7 +56,7 @@ describe "Semantic: exception" do
       end
 
       foo
-    ") { int32 }
+      CRYSTAL
     mod = result.program
     a_def = mod.lookup_first_def("foo", false)
     def_instance = mod.lookup_def_instance DefInstanceKey.new(a_def.object_id, [] of Type, nil, nil)
@@ -64,7 +64,7 @@ describe "Semantic: exception" do
   end
 
   it "marks method calling lib fun that raises as raises" do
-    result = assert_type("
+    result = assert_type(<<-CRYSTAL) { int32 }
       @[Raises]
       fun some_fun : Int32; 1; end
 
@@ -73,7 +73,7 @@ describe "Semantic: exception" do
       end
 
       foo
-    ") { int32 }
+      CRYSTAL
     mod = result.program
     a_def = mod.lookup_first_def("foo", false)
     def_instance = mod.lookup_def_instance DefInstanceKey.new(a_def.object_id, [] of Type, nil, nil)
@@ -81,18 +81,18 @@ describe "Semantic: exception" do
   end
 
   it "types exception var with no types" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { union_of(nil_type, exception.virtual_type) }
       a = nil
       begin
       rescue ex
         a = ex
       end
       a
-    ") { union_of(nil_type, exception.virtual_type) }
+      CRYSTAL
   end
 
   it "types exception with type" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { union_of(nil_type, types["Ex"].virtual_type) }
       class Ex < Exception
       end
 
@@ -102,22 +102,22 @@ describe "Semantic: exception" do
         a = ex
       end
       a
-    ") { union_of(nil_type, types["Ex"].virtual_type) }
+      CRYSTAL
   end
 
   it "types var as not nil if defined inside begin and defined inside rescue" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       begin
         a = 1
       rescue
         a = 2
       end
       a
-      ") { int32 }
+      CRYSTAL
   end
 
   it "types var as nilable if previously nilable (1)" do
-    assert_type("
+    assert_type(<<-CRYSTAL, inject_primitives: true) { nilable int32 }
       if 1 == 2
         a = 1
       end
@@ -127,11 +127,11 @@ describe "Semantic: exception" do
       rescue
       end
       a
-      ", inject_primitives: true) { nilable int32 }
+      CRYSTAL
   end
 
   it "types var as nilable if previously nilable (2)" do
-    assert_type("
+    assert_type(<<-CRYSTAL, inject_primitives: true) { nilable int32 }
       if 1 == 2
         a = 1
       end
@@ -141,15 +141,23 @@ describe "Semantic: exception" do
         a = 2
       end
       a
-      ", inject_primitives: true) { nilable int32 }
+      CRYSTAL
   end
 
   it "errors if caught exception is not a subclass of Exception" do
-    assert_error "begin; rescue ex : Int32; end", "Int32 is not a subclass of Exception"
+    assert_error "begin; rescue ex : Int32; end", "Int32 cannot be used for `rescue`. Only subclasses of `Exception` and modules, or unions thereof, are allowed."
+  end
+
+  it "errors if caught exception is a union but not all types are valid" do
+    assert_error "begin; rescue ex : Union(Exception, String); end", "(Exception | String) cannot be used for `rescue`. Only subclasses of `Exception` and modules, or unions thereof, are allowed."
+  end
+
+  it "errors if caught exception is a nested union but not all types are valid" do
+    assert_error "begin; rescue ex : Union(Exception, Union(Exception, String)); end", "(Exception | String) cannot be used for `rescue`. Only subclasses of `Exception` and modules, or unions thereof, are allowed."
   end
 
   it "errors if caught exception is not a subclass of Exception without var" do
-    assert_error "begin; rescue Int32; end", "Int32 is not a subclass of Exception"
+    assert_error "begin; rescue Int32; end", "Int32 cannot be used for `rescue`. Only subclasses of `Exception` and modules, or unions thereof, are allowed."
   end
 
   assert_syntax_error "begin; rescue ex; rescue ex : Foo; end; ex",
@@ -162,7 +170,7 @@ describe "Semantic: exception" do
     "'else' is useless without 'rescue'"
 
   it "types code with abstract exception that delegates method" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       require "prelude"
 
       class Object
@@ -190,21 +198,21 @@ describe "Semantic: exception" do
       end
 
       1
-      )) { int32 }
+      CRYSTAL
   end
 
   it "transform nodes in else block" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable int32 }
       begin
       rescue
       else
         1 || nil
       end
-    )) { nilable int32 }
+      CRYSTAL
   end
 
   it "types var as nilable inside ensure (1)" do
-    result = assert_type(%(
+    result = assert_type(<<-CRYSTAL) { int32 }
       require "prelude"
 
       n = nil
@@ -215,7 +223,7 @@ describe "Semantic: exception" do
         p n
       end
       n
-      )) { int32 }
+      CRYSTAL
     mod = result.program
     eh = result.node.as(Expressions).expressions[-2]
     call_p_n = eh.as(ExceptionHandler).ensure.not_nil!.as(Call)
@@ -223,7 +231,7 @@ describe "Semantic: exception" do
   end
 
   it "types var as nilable inside ensure (2)" do
-    result = assert_type(%(
+    result = assert_type(<<-CRYSTAL) { int32 }
       require "prelude"
 
       begin
@@ -233,7 +241,7 @@ describe "Semantic: exception" do
         p n
       end
       n
-      )) { int32 }
+      CRYSTAL
     mod = result.program
     eh = result.node.as(Expressions).expressions[-2]
     call_p_n = eh.as(ExceptionHandler).ensure.not_nil!.as(Call)
@@ -241,28 +249,51 @@ describe "Semantic: exception" do
   end
 
   it "marks fun as raises" do
-    result = assert_type(%(
+    result = assert_type(<<-CRYSTAL) { int32 }
       @[Raises]
       fun foo : Int32; 1; end
       foo
-      )) { int32 }
+      CRYSTAL
     mod = result.program
     a_def = mod.lookup_first_def("foo", false)
     a_def.not_nil!.raises?.should be_true
   end
 
   it "marks def as raises" do
-    result = assert_type(%(
+    result = assert_type(<<-CRYSTAL) { int32 }
       @[Raises]
       def foo
         1
       end
 
       foo
-      )) { int32 }
+      CRYSTAL
     mod = result.program
     a_def = mod.lookup_first_def("foo", false)
     a_def.not_nil!.raises?.should be_true
+  end
+
+  it "marks method that calls another method that raises as raises, recursively" do
+    result = assert_type(<<-CRYSTAL) { int32 }
+      @[Raises]
+      def foo
+        1
+      end
+
+      def bar
+        foo
+      end
+
+      def baz
+        bar
+      end
+
+      foo
+      bar
+      baz
+      CRYSTAL
+    call = result.node.as(Expressions).expressions.last.as(Call)
+    call.target_defs.not_nil!.first.raises?.should be_true
   end
 
   it "marks proc literal as raises" do
@@ -272,7 +303,7 @@ describe "Semantic: exception" do
   end
 
   it "shadows local variable (1)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of(int32, types["Exception"].virtual_type) }
       require "prelude"
 
       a = 1
@@ -282,11 +313,11 @@ describe "Semantic: exception" do
         a
       end
       a
-      )) { union_of(int32, types["Exception"].virtual_type) }
+      CRYSTAL
   end
 
   it "remains nilable after rescue" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable types["Exception"].virtual_type }
       require "prelude"
 
       begin
@@ -295,11 +326,11 @@ describe "Semantic: exception" do
         a
       end
       a
-      )) { nilable types["Exception"].virtual_type }
+      CRYSTAL
   end
 
   it "doesn't consider vars as nilable inside else (#610)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       require "prelude"
 
       x = 1
@@ -310,11 +341,11 @@ describe "Semantic: exception" do
         x = a
       end
       x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "types instance variable as nilable if assigned inside an exception handler (#1845)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "instance variable '@bar' of Foo must be Int32, not Nil"
       class Foo
         def initialize
           begin
@@ -330,12 +361,11 @@ describe "Semantic: exception" do
 
       foo = Foo.new
       foo.bar
-      ),
-      "instance variable '@bar' of Foo must be Int32, not Nil"
+      CRYSTAL
   end
 
   it "doesn't type instance variable as nilable if assigned inside an exception handler after being assigned" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def initialize
           @bar = 1
@@ -352,11 +382,11 @@ describe "Semantic: exception" do
 
       foo = Foo.new
       foo.bar
-      )) { int32 }
+      CRYSTAL
   end
 
   it "correctly types #1988" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable int32 }
       begin
         x = 1
       rescue
@@ -367,11 +397,11 @@ describe "Semantic: exception" do
       else
         x
       end
-      )) { nilable int32 }
+      CRYSTAL
   end
 
   it "doesn't crash on break inside rescue, in while (#2441)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable types["Exception"].virtual_type }
       while true
         begin
         rescue ex
@@ -380,11 +410,11 @@ describe "Semantic: exception" do
       end
 
       ex
-      )) { nilable types["Exception"].virtual_type }
+      CRYSTAL
   end
 
   it "types var assignment inside block inside exception handler (#3324)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of(int32, string) }
       def foo
         yield
       end
@@ -397,11 +427,11 @@ describe "Semantic: exception" do
       rescue
       end
       var
-      )) { union_of(int32, string) }
+      CRYSTAL
   end
 
   it "marks instance variable as nilable if assigned inside rescue inside initialize" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "instance variable '@x' of Foo must be Int32, not Nil"
       require "prelude"
 
       class Coco < Exception
@@ -418,33 +448,32 @@ describe "Semantic: exception" do
       end
 
       Foo.new
-      ),
-      "instance variable '@x' of Foo must be Int32, not Nil"
+      CRYSTAL
   end
 
   it "assigns var inside ensure (1) (#3919)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       begin
       ensure
         a = 1
       end
       a
-      )) { int32 }
+      CRYSTAL
   end
 
   it "assigns var inside ensure (2) (#3919)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       a = true
       begin
       ensure
         a = 1
       end
       a
-      )) { int32 }
+      CRYSTAL
   end
 
   it "doesn't infect type to variable before handler (#4002)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       a = 1
       b = a
       begin
@@ -452,11 +481,11 @@ describe "Semantic: exception" do
       rescue
       end
       b
-      )) { int32 }
+      CRYSTAL
   end
 
   it "detects reading nil-if-read variable after exception handler (#4723)" do
-    result = assert_type(%(
+    result = assert_type(<<-CRYSTAL) { nilable int32 }
       if true
         foo = 42
       end
@@ -472,13 +501,13 @@ describe "Semantic: exception" do
       # However if not (it is BUG), `program.vars["foo"].type` is `Int32`
       # even though the type of the node `foo` is `Int32 | Nil`.
       foo
-    )) { nilable int32 }
+      CRYSTAL
     program = result.program
     program.vars["foo"].type.should be(program.nilable program.int32)
   end
 
   it "can't return from ensure (#4470)" do
-    assert_error(%(
+    assert_error(<<-CRYSTAL, "can't return from ensure")
       def foo
         return 1
       ensure
@@ -486,11 +515,11 @@ describe "Semantic: exception" do
       end
 
       foo
-    ), "can't return from ensure")
+      CRYSTAL
   end
 
   it "can't return from block inside ensure (#4470)" do
-    assert_error(%(
+    assert_error(<<-CRYSTAL, "can't return from ensure")
       def once
         yield
       end
@@ -504,11 +533,11 @@ describe "Semantic: exception" do
       end
 
       foo
-    ), "can't return from ensure")
+      CRYSTAL
   end
 
   it "can't return from while inside ensure (#4470)" do
-    assert_error(%(
+    assert_error(<<-CRYSTAL, "can't return from ensure")
       def foo
         return 1
       ensure
@@ -518,11 +547,11 @@ describe "Semantic: exception" do
       end
 
       foo
-    ), "can't return from ensure")
+      CRYSTAL
   end
 
   it "can't use break inside while inside ensure (#4470)" do
-    assert_error(%(
+    assert_error(<<-CRYSTAL, "can't use break inside ensure")
       while true
         begin
           break
@@ -530,11 +559,11 @@ describe "Semantic: exception" do
           break
         end
       end
-    ), "can't use break inside ensure")
+      CRYSTAL
   end
 
   it "can use break inside while inside ensure (#4470)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nil_type }
       while true
         begin
           break
@@ -544,11 +573,11 @@ describe "Semantic: exception" do
           end
         end
       end
-    )) { nil_type }
+      CRYSTAL
   end
 
   it "can't use break inside block inside ensure (#4470)" do
-    assert_error(%(
+    assert_error(<<-CRYSTAL, "can't use break inside ensure")
       def loop
         while true
           yield
@@ -562,11 +591,11 @@ describe "Semantic: exception" do
           break
         end
       end
-    ), "can't use break inside ensure")
+      CRYSTAL
   end
 
   it "can use break inside block inside ensure (#4470)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nil_type }
       def loop
         while true
           yield
@@ -582,11 +611,11 @@ describe "Semantic: exception" do
           end
         end
       end
-    )) { nil_type }
+      CRYSTAL
   end
 
   it "can't use next inside while inside ensure (#4470)" do
-    assert_error(%(
+    assert_error(<<-CRYSTAL, "can't use next inside ensure")
       while true
         begin
           break
@@ -594,11 +623,11 @@ describe "Semantic: exception" do
           next
         end
       end
-    ), "can't use next inside ensure")
+      CRYSTAL
   end
 
   it "can't use next inside block inside ensure (#4470)" do
-    assert_error(%(
+    assert_error(<<-CRYSTAL, "can't use next inside ensure")
       def loop
         while true
           yield
@@ -612,11 +641,11 @@ describe "Semantic: exception" do
           next
         end
       end
-    ), "can't use next inside ensure")
+      CRYSTAL
   end
 
   it "can use next inside while inside ensure (#4470)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { nil_type }
       while true
         begin
           break
@@ -628,11 +657,11 @@ describe "Semantic: exception" do
           end
         end
       end
-    ), inject_primitives: true) { nil_type }
+      CRYSTAL
   end
 
   it "can use next inside block inside ensure (#4470)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nil_type }
       def loop
         while true
           yield
@@ -652,11 +681,11 @@ describe "Semantic: exception" do
           end
         end
       end
-    )) { nil_type }
+      CRYSTAL
   end
 
   it "correctly types variables inside conditional inside exception handler with no-return rescue (#8012)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable int32 }
       def foo
         begin
           x = 99 if false
@@ -668,11 +697,11 @@ describe "Semantic: exception" do
       end
 
       foo
-    )) { nilable int32 }
+      CRYSTAL
   end
 
   it "gets a non-nilable type if all rescue are unreachable (#8751)" do
-    assert_no_errors <<-CR, inject_primitives: true
+    assert_no_errors <<-CRYSTAL, inject_primitives: true
       while true
         begin
           foo = 1
@@ -684,6 +713,86 @@ describe "Semantic: exception" do
 
         foo &+ 2
       end
-      CR
+      CRYSTAL
+  end
+
+  it "correctly types variable assigned inside nested exception handler (#9769)" do
+    assert_type(<<-CRYSTAL) { union_of(int32, string) }
+      int = 1
+      begin
+        begin
+          int = "a"
+        rescue
+        end
+      rescue
+      end
+      int
+      CRYSTAL
+  end
+
+  it "types a var after begin rescue as having all possible types and nil in begin if read (2)" do
+    assert_type(<<-CRYSTAL) { union_of [int32, char, nil_type] of Type }
+      begin
+        a = 2
+        a = 'a'
+      rescue
+      end
+      a
+      CRYSTAL
+  end
+
+  it "types a var after begin rescue as having all possible types in begin and rescue" do
+    assert_type(<<-CRYSTAL) { union_of [float64, int32, char, string, bool] of Type }
+      a = 1.5
+      begin
+        a = 2
+        a = 'a'
+        a = "hello"
+      rescue ex
+        a = false
+      end
+      a
+      CRYSTAL
+  end
+
+  it "types a var after begin rescue as having all possible types in begin and rescue (2)" do
+    assert_type(<<-CRYSTAL) { union_of [int32, char, string, nil_type] of Type }
+      b = 2
+      begin
+        a = 2
+        a = 'a'
+        a = "hello"
+      rescue ex
+        b = a
+      end
+      b
+      CRYSTAL
+  end
+
+  it "types a var after begin rescue with no-return in rescue" do
+    assert_type(<<-CRYSTAL) { string }
+      lib LibC
+        fun exit : NoReturn
+      end
+
+      begin
+        a = 2
+        a = 'a'
+        a = "hello"
+      rescue ex
+        LibC.exit
+      end
+      a
+      CRYSTAL
+  end
+
+  it "types a var after rescue as being nilable" do
+    assert_type(<<-CRYSTAL) { nilable int32 }
+      begin
+      rescue
+        a = 1
+      end
+      a
+      CRYSTAL
   end
 end

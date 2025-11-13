@@ -2,23 +2,42 @@ name: macOS CI
 
 on: [push, pull_request]
 
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
 env:
   SPEC_SPLIT_DOTS: 160
   CI_NIX_SHELL: true
 
 jobs:
-  test_macos:
-    runs-on: macos-10.15
+  darwin-test:
+    runs-on: ${{ matrix.runs-on }}
+    name: "${{ matrix.runs-on }} (${{ matrix.arch }})"
+    strategy:
+      matrix:
+        include:
+        - runs-on: macos-15-intel
+          arch: x86_64-darwin
+        - runs-on: macos-14
+          arch: aarch64-darwin
+        - runs-on: macos-15
+          arch: aarch64-darwin
+      fail-fast: false
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v2
-
-      - uses: cachix/install-nix-action@v14
+        uses: actions/checkout@v5
         with:
-          install_url: https://releases.nixos.org/nix/nix-2.4/install
+          persist-credentials: false
+
+      - uses: cachix/install-nix-action@fd24c48048070c1be9acd18c9d369a83f0fe94d7 # v31
+        with:
           extra_nix_config: |
             experimental-features = nix-command
-      - uses: cachix/cachix-action@v10
+
+      - uses: cachix/cachix-action@0fc020193b5a1fa3ac4575aa3a7d3aa6a35435ad # v16
         with:
           name: crystal-ci
           signingKey: '${{ secrets.CACHIX_SIGNING_KEY }}'
@@ -33,4 +52,4 @@ jobs:
         run: bin/ci build
 
       - name: Test interpreter
-        run: bin/ci with_build_env 'bin/crystal spec spec/compiler/interpreter_spec.cr'
+        run: bin/ci with_build_env 'make interpreter_spec'

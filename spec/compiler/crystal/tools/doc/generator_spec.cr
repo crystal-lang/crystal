@@ -163,6 +163,17 @@ describe Doc::Generator do
       doc_method = Doc::Method.new generator, doc_type, a_def, false
       doc_method.formatted_summary.should eq %(<p>Some Method</p>)
     end
+
+    it "should exclude whitespace before the summary line" do
+      program = Program.new
+      generator = Doc::Generator.new program, ["."]
+      doc_type = Doc::Type.new generator, program
+
+      a_def = Def.new "foo"
+      a_def.doc = " \n\nSome Method\n\nMore Data"
+      doc_method = Doc::Method.new generator, doc_type, a_def, false
+      doc_method.formatted_summary.should eq %(<p>Some Method</p>)
+    end
   end
 
   describe "#formatted_doc" do
@@ -191,6 +202,34 @@ describe Doc::Generator do
           a_def.add_annotation(program.types[ann].as(Crystal::AnnotationType), Annotation.new(Crystal::Path.new(ann), ["lorem ipsum".string] of ASTNode))
           doc_method = Doc::Method.new generator, doc_type, a_def, false
           doc_method.formatted_doc.should eq %(<p>Some Method</p>\n<p><span class="flag #{color}">#{ann.upcase}</span>  lorem ipsum</p>)
+        end
+      end
+
+      describe "with alias" do
+        it "should generate the #{ann} tag" do
+          program = Program.new
+          generator = Doc::Generator.new program, ["."]
+
+          alias_type = AliasType.new(program, program, "Foo", Crystal::Path.new("Bar"))
+          alias_type.add_annotation(program.types[ann].as(Crystal::AnnotationType), Annotation.new(Crystal::Path.new(ann), ["lorem ipsum".string] of ASTNode))
+          doc_type = Doc::Type.new generator, alias_type
+          doc_type.formatted_doc.should eq %(<p><span class="flag #{color}">#{ann.upcase}</span>  lorem ipsum</p>)
+        end
+      end
+
+      describe "with #{ann} annotation in parameter" do
+        it "should generate the #{ann} tag" do
+          program = Program.new
+          generator = Doc::Generator.new program, ["."]
+          doc_type = Doc::Type.new generator, program
+
+          a_def = Def.new "foo"
+          a_def.doc = "Some Method"
+          arg = Arg.new("bar")
+          arg.add_annotation(program.types[ann].as(Crystal::AnnotationType), Annotation.new(Crystal::Path.new(ann), ["lorem ipsum".string] of ASTNode))
+          a_def.args << arg
+          doc_method = Doc::Method.new generator, doc_type, a_def, false
+          doc_method.formatted_doc.should eq %(<p>Some Method</p>\n<p><span class="flag #{color}">#{ann.upcase} parameter <code>bar</code></span>  lorem ipsum</p>)
         end
       end
     end
