@@ -382,7 +382,7 @@ struct Crystal::System::Process
   def self.replace(command, args, shell, env, clear_env, input, output, error, chdir) : NoReturn
     prepared_args = prepare_args(command, args, shell)
     errno = try_replace(command, prepared_args, env, clear_env, input, output, error, chdir)
-    raise_exception_from_errno(prepared_args.is_a?(String) ? prepared_args : prepared_args[0], errno)
+    raise_exception_from_errno(command, errno)
   end
 
   private def self.raise_exception_from_errno(command, errno = Errno.value)
