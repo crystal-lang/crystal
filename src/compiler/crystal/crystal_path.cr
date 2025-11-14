@@ -9,9 +9,9 @@ module Crystal
 
       def initialize(@filename : String, @relative_to : String?)
         if relative_to = @relative_to
-          super "Cannot find #{@filename} relative to #{relative_to}"
+          super "can't find #{@filename.inspect} relative to #{relative_to.inspect}"
         else
-          super "Cannot find #{@filename}"
+          super "can't find #{@filename.inspect}"
         end
       end
     end
