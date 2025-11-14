@@ -262,6 +262,8 @@ struct Crystal::System::Process
   def self.spawn(prepared_args, env, clear_env, input, output, error, chdir)
     r, w = FileDescriptor.system_pipe
 
+    envp = Env.make_envp(env, clear_env)
+
     pid = fork(will_exec: true) do
       Crystal::System::Signal.after_fork_before_exec
     end
@@ -269,7 +271,7 @@ struct Crystal::System::Process
     if !pid
       LibC.close(r)
       begin
-        self.try_replace(prepared_args, env, clear_env, input, output, error, chdir)
+        self.try_replace(prepared_args, envp, input, output, error, chdir)
         byte = 1_u8
         errno = Errno.value.to_i32
         FileDescriptor.write_fully(w, pointerof(byte))
@@ -337,12 +339,11 @@ struct Crystal::System::Process
     {pathname, argv.to_unsafe}
   end
 
-  private def self.try_replace(prepared_args, env, clear_env, input, output, error, chdir)
+  private def self.try_replace(prepared_args, envp, input, output, error, chdir)
     reopen_io(input, ORIGINAL_STDIN)
     reopen_io(output, ORIGINAL_STDOUT)
     reopen_io(error, ORIGINAL_STDERR)
 
-    envp = Env.make_envp(env, clear_env)
     ::Dir.cd(chdir) if chdir
 
     execvpe(*prepared_args, envp)
@@ -456,7 +457,9 @@ struct Crystal::System::Process
   end
 
   def self.replace(command, prepared_args, env, clear_env, input, output, error, chdir)
-    try_replace(prepared_args, env, clear_env, input, output, error, chdir)
+    envp = Env.make_envp(env, clear_env)
+
+    try_replace(prepared_args, envp, input, output, error, chdir)
     raise_exception_from_errno(command)
   end
 
