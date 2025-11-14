@@ -1596,8 +1596,9 @@ module Enumerable(T)
     ary = Array(T).new(n)
     return ary if n == 0
 
-    # FIXME: thread unsafe (#each may yield and the fiber switch threads)
-    rng = random || Random::DEFAULT
+    # must split the default random instance (thread local) because #each might
+    # yield the current fiber that may be resumed by another thread
+    rng = random || Random.split_on_stack
 
     each_with_index do |elem, i|
       if i < n
@@ -1636,8 +1637,9 @@ module Enumerable(T)
     value = uninitialized T
     found = false
 
-    # FIXME: thread unsafe (#each may yield and the fiber switch threads)
-    rng = random || Random::DEFAULT
+    # must split the default random instance (thread local) because #each might
+    # yield the current fiber that may be resumed by another thread
+    rng = random || Random.split_on_stack
 
     each_with_index do |elem, i|
       if !found
