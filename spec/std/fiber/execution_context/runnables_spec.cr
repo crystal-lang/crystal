@@ -222,7 +222,7 @@ describe Fiber::ExecutionContext::Runnables do
         Fiber::ExecutionContext::Runnables(16).new(global_queue)
       end
 
-      threads = Array(Thread).new(n) do |i|
+      threads = n.times.map do |i|
         new_thread("RUN-#{i}") do
           runnables = all_runnables[i]
           slept = 0
@@ -266,7 +266,7 @@ describe Fiber::ExecutionContext::Runnables do
             Thread.sleep(1.nanosecond) # don't burn CPU
           end
         end
-      end
+      end.to_a
       ready.wait
 
       # enqueue in batches
@@ -277,7 +277,7 @@ describe Fiber::ExecutionContext::Runnables do
         Thread.sleep(10.nanoseconds) if i % 2 == 1
       end
 
-      threads.map(&.join)
+      threads.each(&.join)
 
       # must have dequeued each fiber exactly X times (no less, no more)
       fibers.each { |fc| fc.counter.should eq(increments) }
