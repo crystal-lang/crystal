@@ -39,14 +39,19 @@ let
       src = builtins.fetchTarball { inherit url sha256; };
 
       # Extract only the compiler binary
-      buildCommand = ''
+      installPhase = ''
         mkdir -p $out/bin
 
-        # Darwin packages use embedded/bin/crystal
-        [ ! -f "${src}/embedded/bin/crystal" ] || cp ${src}/embedded/bin/crystal $out/bin/
-
-        # Linux packages use lib/crystal/bin/crystal
-        [ ! -f "${src}/lib/crystal/bin/crystal" ] || cp ${src}/lib/crystal/bin/crystal $out/bin/
+        if [ -f "${src}/embedded/bin/crystal" ]; then
+          # Darwin packages use embedded/bin/crystal
+          cp ${src}/embedded/bin/crystal $out/bin/
+        elif [ -f "${src}/lib/crystal/bin/crystal" ]; then
+          # Older Linux packages use lib/crystal/bin/crystal
+          cp ${src}/lib/crystal/bin/crystal $out/bin/
+        elif [ -f "${src}/bin/crystal" ]; then
+          # Linux packages use bin/crystal
+          cp ${src}/bin/crystal $out/bin/
+        fi
       '';
     };
 
