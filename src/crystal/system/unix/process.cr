@@ -192,7 +192,7 @@ struct Crystal::System::Process
     end
   {% end %}
 
-  def self.fork(*, will_exec : Bool, &)
+  def self.system_fork(*, will_exec : Bool, &)
     newmask = uninitialized LibC::SigsetT
     oldmask = uninitialized LibC::SigsetT
 
@@ -236,15 +236,21 @@ struct Crystal::System::Process
     pid
   end
 
+  # Only used by deprecated `::Process.fork`
+  def self.fork
+    {% raise("Process fork is unsupported with multithreaded mode") if flag?(:preview_mt) %}
+
+    system_fork(will_exec: false) do
+      ::Process.after_fork_child_callbacks.each(&.call)
+    end
+  end
+
   # Duplicates the current process.
   # Returns a `Process` representing the new child process in the current process
   # and `nil` inside the new child process.
+  # Only used by deprecated `::Process.fork(&)` and compiler `fork_codegen`
   def self.fork(&)
-    {% raise("Process fork is unsupported with multithreaded mode") if flag?(:preview_mt) %}
-
-    pid = fork(will_exec: false) do
-      ::Process.after_fork_child_callbacks.each(&.call)
-    end
+    pid = fork
     return pid if pid
 
     begin
@@ -266,7 +272,7 @@ struct Crystal::System::Process
 
     envp = Env.make_envp(env, clear_env)
 
-    pid = fork(will_exec: true) do
+    pid = system_fork(will_exec: true) do
       Crystal::System::Signal.after_fork_before_exec
     end
 
