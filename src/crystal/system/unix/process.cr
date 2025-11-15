@@ -259,7 +259,9 @@ struct Crystal::System::Process
     end
   end
 
-  def self.spawn(prepared_args, env, clear_env, input, output, error, chdir)
+  def self.spawn(command, args, shell, env, clear_env, input, output, error, chdir)
+    prepared_args = prepare_args(command, args, shell)
+
     r, w = FileDescriptor.system_pipe
 
     envp = Env.make_envp(env, clear_env)
@@ -460,9 +462,9 @@ struct Crystal::System::Process
                   end
   end
 
-  def self.replace(command, prepared_args, env, clear_env, input, output, error, chdir)
+  def self.replace(command, args, shell, env, clear_env, input, output, error, chdir)
+    prepared_args = prepare_args(command, args, shell)
     envp = Env.make_envp(env, clear_env)
-
     try_replace(prepared_args, envp, input, output, error, chdir)
     raise_exception_from_errno(command)
   end
