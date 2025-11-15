@@ -224,5 +224,26 @@ describe Crystal::Repl::Interpreter do
         foo.x.not_nil!("test")
       CRYSTAL
     end
+
+    it "looks up local vars in parent scopes after looking up local vars in current scope and closured scope (#15489)" do
+      interpret(<<-CRYSTAL).should eq("parser")
+        def capture(&block)
+          block
+        end
+
+        def scoped(&)
+          yield 1
+        end
+
+        scoped do |parser|
+          capture do
+            parser
+          end
+          parser # Error: BUG: missing downcast_distinct from String to Int32 (Crystal::NonGenericClassType to Crystal::IntegerType)
+        end
+
+        parser = "parser"
+      CRYSTAL
+    end
   end
 end
