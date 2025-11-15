@@ -69,7 +69,7 @@ require "./execution_context/*"
 # ```
 @[Experimental]
 module Fiber::ExecutionContext
-  @@default : ExecutionContext?
+  @@default : ExecutionContext::Parallel?
 
   # Returns the default `ExecutionContext` for the process, automatically
   # started when the program started.
@@ -78,7 +78,7 @@ module Fiber::ExecutionContext
   # parallelism set to 1. The parallelism can be changed using
   # `Parallel#resize`.
   @[AlwaysInline]
-  def self.default : ExecutionContext
+  def self.default : ExecutionContext::Parallel
     @@default.not_nil!("expected default execution context to have been setup")
   end
 
