@@ -463,7 +463,16 @@ struct Crystal::System::Process
   def self.replace(command, prepared_args, env, clear_env, input, output, error, chdir)
     envp = Env.make_envp(env, clear_env)
 
-    try_replace(prepared_args, envp, input, output, error, chdir)
+    reopen_io(input, ORIGINAL_STDIN)
+    reopen_io(output, ORIGINAL_STDOUT)
+    reopen_io(error, ORIGINAL_STDERR)
+
+    if chdir
+      ::Dir.cd(chdir)
+    end
+
+    execvpe(*prepared_args, envp)
+
     raise_exception_from_errno(command)
   end
 

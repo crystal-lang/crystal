@@ -692,6 +692,12 @@ describe Process do
         Process.exec("foobarbaz")
       end
     end
+
+    it "raises if chdir doesn't exist" do
+      expect_raises(File::NotFoundError, "Error while changing directory: 'doesnotexist'") do
+        Process.exec(*exit_code_command(1), chdir: "doesnotexist")
+      end
+    end
   end
 
   describe ".chroot" do
