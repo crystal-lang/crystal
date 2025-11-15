@@ -221,12 +221,15 @@ class OptionParser
   end
 
   # Establishes a handler for boolean flags, e.g.
+  #
+  # ```
   # # Choose on or off
   # OptionParser.parse(args) do |opts|
   #   opts.bool("--[no-]verbose", "Run verbosely") do |v|
   #     flag = v
   #   end
   # end
+  # ```
   def bool(flag : String, description : String, &block : Bool ->)
     append_flag flag, description
 
