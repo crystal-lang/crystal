@@ -135,19 +135,23 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
 
   # fiber interface, see Crystal::EventLoop
 
-  def sleep(duration : ::Time::Span) : Nil
-    event = Event.new(:sleep, Fiber.current, timeout: duration)
+  def sleep(until time : Time::Span, token : Fiber::CancelationToken) : Bool
+    event = Event.new(:sleep, Fiber.current)
+    event.wake_at = time
+    event.cancelation_token = token
     add_timer(pointerof(event))
+
     Fiber.suspend
 
-    # safety check
-    return if event.timed_out?
+    unless event.timed_out? || delete_timer(pointerof(event))
+      # the timeout was canceled while another thread dequeued the timer while
+      # running the event loop: we must synchronize with #process_timer
+      # (otherwise *event* might go out of scope); by rule the timer will always
+      # enqueue the fiber and we must suspend again.
+      Fiber.suspend
+    end
 
-    # try to avoid a double resume if possible, but another thread might be
-    # running the evloop and dequeue the event in parallel, so a "can't resume
-    # dead fiber" can still happen in a MT execution context.
-    delete_timer(pointerof(event))
-    raise "BUG: #{event.fiber} called sleep but was manually resumed before the timer expired!"
+    event.timed_out?
   end
 
   def create_timeout_event(fiber : Fiber) : FiberEvent
@@ -607,7 +611,10 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
       return unless select_action.time_expired?
       fiber.@timeout_event.as(FiberEvent).clear
     when .sleep?
-      event.value.timed_out!
+      # the timer might have been canceled already, and we must synchronize with
+      # the resumed `#timeout` fiber; by rule we must always resume the fiber,
+      # regardless of whether we resolve the timeout or not.
+      event.value.timed_out! if fiber.resolve_timer?(event.value.cancelation_token)
     else
       raise RuntimeError.new("BUG: unexpected event in timers: #{event.value}%s\n")
     end
