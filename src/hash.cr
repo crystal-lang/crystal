@@ -1755,6 +1755,24 @@ class Hash(K, V)
     end
   end
 
+  # Destructively transforms all keys using a block. Same as transform_keys but modifies in place.
+  # The block cannot change a type of keys.
+  # The block yields the key and value.
+  #
+  # ```
+  # hash = {"a" => 1, "b" => 2, "c" => 3}
+  # hash.transform_keys! { |key| key.upcase }
+  # hash # => {"A" => 1, "B" => 2, "C" => 3}
+  # hash.transform_keys! { |key, value| key * value }
+  # hash # => {"a" => 1, "bb" => 2, "ccc" => 3}
+  # ```
+  def transform_keys!(& : K, V -> K) : self
+    copy = transform_keys { |k, v| (yield k, v).as(K) }
+    initialize_dup_entries(copy) # we need only to copy the buffer
+    initialize_copy_non_entries_vars(copy)
+    self
+  end
+
   # Returns a new hash with the results of running block once for every value.
   # The block can change a type of values.
   # The block yields the value and key.

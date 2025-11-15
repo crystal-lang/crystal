@@ -388,30 +388,17 @@ describe Process do
         end
       {% end %}
 
-      if {{ flag?(:win32) }}
-        it "finds binary in parent `$PATH`, not `env`" do
-          Process.run(*print_env_command, env: {"PATH" => ""})
-        end
-      else
-        # FIXME: This behaviour is incorrect. It should lookup the command in
-        # the parent process' `$PATH`, without any changes from `env`.
-        # https://github.com/crystal-lang/crystal/issues/6464#issuecomment-3391000914
-        it "finds binary in `env`" do
-          expect_raises(File::NotFoundError) do
-            Process.run(*print_env_command, env: {"PATH" => ""})
-          end
-        end
+      it "finds binary in parent `$PATH`, not `env`" do
+        Process.run(*print_env_command, env: {"PATH" => ""})
       end
 
       it "errors on invalid key" do
-        {% begin %}
-          expect_raises({% if flag?(:win32) %}ArgumentError, "Invalid env key" {% else %} RuntimeError, "Invalid argument"{% end %}) do
-            Process.run(*print_env_command, env: {"" => "baz"})
-          end
-          expect_raises({% if flag?(:win32) %}ArgumentError, "Invalid env key" {% else %} RuntimeError, "Invalid argument"{% end %}) do
-            Process.run(*print_env_command, env: {"foo=bar" => "baz"})
-          end
-        {% end %}
+        expect_raises(ArgumentError, %(Invalid env key "")) do
+          Process.run(*print_env_command, env: {"" => "baz"})
+        end
+        expect_raises(ArgumentError, %(Invalid env key "foo=bar")) do
+          Process.run(*print_env_command, env: {"foo=bar" => "baz"})
+        end
       end
 
       it "errors on zero char in key" do
@@ -507,6 +494,44 @@ describe Process do
             Process.run("foo", chdir: dir)
           end
           with_env("PATH": ":/does/not/exist") do
+            Process.run("foo", chdir: dir)
+          end
+        end
+      end
+
+      it "finds path in relative directory" do
+        pending! unless {{ flag?(:unix) }}
+
+        with_tempfile("crystal-spec-run") do |dir|
+          Dir.mkdir_p Path[dir, "bin"]
+          Dir.mkdir_p Path[dir, "empty"]
+          File.write(Path[dir, "bin", "foo"], "#!/bin/sh\necho bar")
+          File.chmod(Path[dir, "bin", "foo"], 0o555)
+          with_env("PATH": "bin") do
+            Process.run("foo", chdir: dir)
+          end
+          with_env("PATH": "empty:bin") do
+            Process.run("foo", chdir: dir)
+          end
+          with_env("PATH": "bin:empty") do
+            Process.run("foo", chdir: dir)
+          end
+          with_env("PATH": "/does/not/exist:bin") do
+            Process.run("foo", chdir: dir)
+          end
+          with_env("PATH": "bin:/does/not/exist") do
+            Process.run("foo", chdir: dir)
+          end
+          with_env("PATH": ":bin") do
+            Process.run("foo", chdir: dir)
+          end
+          with_env("PATH": "::bin") do
+            Process.run("foo", chdir: dir)
+          end
+          with_env("PATH": "/does/not/exist::bin") do
+            Process.run("foo", chdir: dir)
+          end
+          with_env("PATH": "bin:/does/not/exist") do
             Process.run("foo", chdir: dir)
           end
         end

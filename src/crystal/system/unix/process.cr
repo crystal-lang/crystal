@@ -2,6 +2,7 @@ require "c/signal"
 require "c/stdlib"
 require "c/sys/resource"
 require "c/unistd"
+require "c/limits"
 require "crystal/rw_lock"
 require "file/error"
 
@@ -261,16 +262,16 @@ struct Crystal::System::Process
   def self.spawn(prepared_args, env, clear_env, input, output, error, chdir)
     r, w = FileDescriptor.system_pipe
 
+    envp = Env.make_envp(env, clear_env)
+
     pid = fork(will_exec: true) do
-      # notify event loop and reset signal handlers
-      Crystal::EventLoop.current.after_fork_before_exec
       Crystal::System::Signal.after_fork_before_exec
     end
 
     if !pid
       LibC.close(r)
       begin
-        self.try_replace(prepared_args, env, clear_env, input, output, error, chdir)
+        self.try_replace(prepared_args, envp, input, output, error, chdir)
         byte = 1_u8
         errno = Errno.value.to_i32
         FileDescriptor.write_fully(w, pointerof(byte))
@@ -338,45 +339,127 @@ struct Crystal::System::Process
     {pathname, argv.to_unsafe}
   end
 
-  private def self.try_replace(prepared_args, env, clear_env, input, output, error, chdir)
+  private def self.try_replace(prepared_args, envp, input, output, error, chdir)
     reopen_io(input, ORIGINAL_STDIN)
     reopen_io(output, ORIGINAL_STDOUT)
     reopen_io(error, ORIGINAL_STDERR)
 
-    ENV.clear if clear_env
-    env.try &.each do |key, val|
-      if val
-        ENV[key] = val
-      else
-        ENV.delete key
-      end
-    end
-
     ::Dir.cd(chdir) if chdir
 
-    lock_write { execvpe(*prepared_args, LibC.environ) }
+    execvpe(*prepared_args, envp)
   end
 
-  private def self.execvpe(command, argv, envp)
-    {% if LibC.has_method?("execvpe") %}
-      LibC.execvpe(command, argv, envp)
+  private def self.execvpe(file, argv, envp)
+    {% if LibC.has_method?("execvpe") && !flag?("execvpe_impl") %}
+      lock_write { LibC.execvpe(file, argv, envp) }
     {% else %}
-      execvpe_impl(command, argv, envp)
+      execvpe_impl(file, argv, envp)
     {% end %}
   end
 
+  DEFAULT_PATH = "/usr/bin:/bin"
+
   # Darwin, DragonflyBSD, and FreeBSD < 14 don't have an `execvpe` function, so
   # we need to implement it ourselves.
-  # FIXME: This is a stub implementation which simply sets the environment
-  # pointer. That's the same behaviour as before, but not correct. Will fix in a
-  # follow-up.
-  private def self.execvpe_impl(command, argv, envp)
-    LibC.environ = envp
-    LibC.execvp(command, argv)
+  # This method runs between `fork` and `exec` and must be very cautious, such
+  # as no memory allocations.
+  private def self.execvpe_impl(file : String, argv : LibC::Char**, envp : LibC::Char**)
+    if file.empty?
+      Errno.value = Errno::ENOENT
+      return
+    end
+
+    # When file contains a slash, it's already a pathname that we should execute.
+    if file.includes?("/")
+      lock_write { LibC.execve(file, argv, envp) }
+
+      # Glibc implements a fallback if execve fails with ENOEXEC which tries
+      # executing `file` with `/bin/sh`. This is a legacy compatibility feature and
+      # has security concerns. We implement the behaviour of `execvpex`.
+      return
+    end
+
+    path = if path_ptr = LibC.getenv("PATH")
+             Slice.new(path_ptr, LibC.strlen(path_ptr))
+           else
+             DEFAULT_PATH.to_slice
+           end
+
+    if file.bytesize > LibC::NAME_MAX
+      Errno.value = Errno::ENAMETOOLONG
+      return
+    end
+
+    buffer = uninitialized UInt8[LibC::PATH_MAX]
+
+    seen_eaccess = false
+
+    while path.size > 0
+      if index = path.index(':'.ord.to_u8!)
+        path_entry = path[0, index]
+        path += index
+
+        # Do not advance a trailing `:` so that we read it as an empty path in
+        # the next iteration
+        path += 1 unless path.size == 1
+      else
+        path_entry = path
+        path += path_entry.size
+      end
+
+      # When the full pathname would be too long, simply skip it.
+      # This is an edge case. BSD implementations usually also print a warning.
+      # Cosmopolitan libc even errors.
+      if path_entry.size + file.bytesize + 2 >= buffer.size
+        next
+      end
+
+      builder = buffer.to_slice
+
+      if path_entry.empty?
+        # empty path means current directory
+        builder[0] = '.'.ord.to_u8!
+        builder += 1
+      else
+        path_entry.copy_to(builder)
+        builder += path_entry.size
+      end
+      builder[0] = '/'.ord.to_u8!
+      builder += 1
+      file.to_slice.copy_to(builder)
+      builder += file.size
+      builder[0] = 0
+
+      lock_write { LibC.execve(buffer.to_slice[0, buffer.size - builder.size], argv, envp) }
+
+      case Errno.value
+      when Errno::EACCES
+        # Non-terminal condition. Take note that we encountered EACCES and error
+        # with that if no other candidate is found.
+        seen_eaccess = true
+      when Errno::ENOENT, Errno::ENOTDIR
+        # Non terminal condition. Skip.
+      else
+        # Terminal condition. Return immediately. We found a file that exists
+        # is accessible, but it wouldn't execute.
+        return
+      end
+    end
+
+    Errno.value = if seen_eaccess
+                    # Erroring with ENOENT would be misleading if we found a candidate but
+                    # couldn't access it and thus skipped it.
+                    Errno::EACCES
+                  else
+                    # Make sure to set an error in case we never tried any path (e.g. `PATH=`)
+                    Errno::ENOENT
+                  end
   end
 
   def self.replace(command, prepared_args, env, clear_env, input, output, error, chdir)
-    try_replace(prepared_args, env, clear_env, input, output, error, chdir)
+    envp = Env.make_envp(env, clear_env)
+
+    try_replace(prepared_args, envp, input, output, error, chdir)
     raise_exception_from_errno(command)
   end
 
@@ -391,8 +474,11 @@ struct Crystal::System::Process
 
   private def self.reopen_io(src_io : IO::FileDescriptor, dst_io : IO::FileDescriptor)
     if src_io.closed?
-      Crystal::EventLoop.remove(dst_io)
-      dst_io.file_descriptor_close
+      # Do not use FileDescriptor.file_descriptor_close here because it
+      # mutates the memory of `dst_id.fd` in `close_volatile_fd?` which causes
+      # problems with `vfork` behaviour.
+      # We can ignore any errors from `LibC.close`.
+      LibC.close(dst_io.fd)
     else
       src_io = to_real_fd(src_io)
 

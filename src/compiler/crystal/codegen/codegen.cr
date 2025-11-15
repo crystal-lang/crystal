@@ -2129,8 +2129,11 @@ module Crystal
 
       if closure_vars || self_closured
         closure_vars ||= [] of MetaVar
-        closure_type = @llvm_typer.closure_context_type(closure_vars, parent_closure_type, (self_closured ? current_context.type : nil))
-        closure_ptr = malloc closure_type
+
+        closure_type, closure_has_inner_pointers =
+          @llvm_typer.closure_context_type(closure_vars, parent_closure_type, (self_closured ? current_context.type : nil))
+        closure_ptr = closure_has_inner_pointers ? malloc(closure_type) : malloc_atomic(closure_type)
+
         closure_vars.each_with_index do |var, i|
           current_context.vars[var.name] = LLVMVar.new(gep(closure_type, closure_ptr, 0, i, var.name), var.type)
         end

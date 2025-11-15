@@ -923,6 +923,36 @@ describe "Hash" do
     h2.should eq({"1a" => "a", "2b" => "b", "3c" => "c"})
   end
 
+  describe "transform_keys!" do
+    it "transforms keys in place" do
+      h = {1 => "a", 2 => "b", 3 => "c"}
+
+      h.transform_keys! { |x| x + 1 }.should be(h)
+      h.should eq({2 => "a", 3 => "b", 4 => "c"})
+    end
+
+    it "does nothing when empty hash" do
+      h = {} of Int32 => String
+
+      h.transform_keys! { |x| x + 1 }
+      h.should be_empty
+    end
+
+    it "transforms keys with values included" do
+      h = {"1" => "a", "2" => "b", "3" => "c"}
+
+      h.transform_keys! { |k, v| "#{k}#{v}" }
+      h.should eq({"1a" => "a", "2b" => "b", "3c" => "c"})
+    end
+
+    it "allows transformed key type to be a subtype of the original type" do
+      h = {"1" => "foo", 2 => "bar"} # Hash(Int32 | String, String)
+
+      h.transform_keys!(&.to_i)
+      h.should eq({1 => "foo", 2 => "bar"})
+    end
+  end
+
   it "transforms values" do
     h1 = {"a" => 1, "b" => 2, "c" => 3}
 

@@ -50,7 +50,29 @@ require "random/pcg32"
 # slower but cryptographically secure, so a third party can't deduce incoming
 # numbers.
 module Random
+  @[Deprecated("Use `#rand`, `Random.next_int` or `Random::Secure.random_bytes` for example, or create a local instance with `Random.new` instead.")]
   DEFAULT = PCG32.new
+
+  # :nodoc:
+  thread_local(thread_default : ::Random) do
+    ::Random::PCG32.new.as(::Random)
+  end
+
+  # :nodoc:
+  #
+  # Same as `Random.thread_default#split` but allocates the dup on the stack
+  # when possible (hence the macro).
+  macro split_on_stack
+    {% if compare_versions(Crystal::VERSION, "1.12.0") >= 0 %}
+      %thread_rng = ::Random.thread_default.as(::Random::PCG32)
+      %buf = uninitialized ::ReferenceStorage(::Random::PCG32)
+      %copy = ::Random::PCG32.unsafe_construct(pointerof(%buf), %thread_rng)
+      %thread_rng.split_internal(%copy)
+      %copy
+    {% else %}
+      ::Random.thread_default.split
+    {% end %}
+  end
 
   # Initializes an instance with the given *seed* and *sequence*.
   def self.new(seed, sequence = 0_u64)
@@ -62,11 +84,44 @@ module Random
     PCG32.new
   end
 
+  # Reseed the generator.
+  def new_seed
+    raise NotImplementedError.new("{{@type}}#new_seed")
+  end
+
   # Generates a random unsigned integer.
   #
   # The integers must be uniformly distributed between `0` and
   # the maximal value for the chosen type.
   abstract def next_u
+
+  # Splits the current instance into two seemingly independent instances that
+  # will return distinct sequences of random numbers. Returns a new instance.
+  #
+  # ```
+  # random = Random.new
+  # split1 = random.split
+  # split2 = random.split
+  #
+  # 5.times.map { random.rand(99) }.to_a # => [79, 42, 54, 17, 52]
+  # 5.times.map { split1.rand(99) }.to_a # => [90, 37, 15, 74, 61]
+  # 5.times.map { split2.rand(99) }.to_a # => [6, 87, 5, 73, 71]
+  # ```
+  def split : self
+    copy = dup
+    split_internal(copy)
+    copy
+  end
+
+  # The internal implementation for `#split` where *self* is the original
+  # instance and *other* the duplicated instance to be returned.
+  #
+  # The default `Random` implementation in stdlib is splittable, but not every
+  # PRNG algorithm is splittable, so the method raises a `NotImplementedError`
+  # exception by default.
+  def split_internal(other : self) : Nil
+    raise NotImplementedError.new("#{self.class}#split")
+  end
 
   # Generates a random `Bool`.
   #
@@ -428,22 +483,22 @@ module Random
 
   # See `#next_bool`.
   def self.next_bool : Bool
-    DEFAULT.next_bool
+    thread_default.next_bool
   end
 
   # See `#next_int`.
   def self.next_int : Int32
-    DEFAULT.next_int
+    thread_default.next_int
   end
 
   # See `#rand`.
   def self.rand : Float64
-    DEFAULT.rand
+    thread_default.rand
   end
 
   # See `#rand(x)`.
   def self.rand(x)
-    DEFAULT.rand(x)
+    thread_default.rand(x)
   end
 end
 

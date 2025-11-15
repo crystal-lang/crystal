@@ -725,4 +725,80 @@ describe "Code gen: closure" do
       s.callback = nil
       CRYSTAL
   end
+
+  it "uses atomic allocation for closure data if closured variables have no inner pointers" do
+    run(<<-CRYSTAL, Nil)
+      fun __crystal_malloc64(size : UInt64) : Void*
+        Pointer(Void).new(0_u64)
+      end
+
+      struct Foo
+        @a = 1.2
+        @b = true
+      end
+
+      x = 0
+      y = Foo.new
+      -> { {x, y} }
+      nil
+      CRYSTAL
+  end
+
+  it "uses non-atomic allocation for closure data if closured variables contain inner pointers" do
+    run(<<-CRYSTAL, Nil)
+      fun __crystal_malloc_atomic64(size : UInt64) : Void*
+        Pointer(Void).new(0_u64)
+      end
+
+      class Foo
+        @x : Foo?
+
+        def foo
+          -> { @x }
+        end
+      end
+
+      x = Foo.new
+      -> { x }
+
+      y = Pointer(Void).new(0_u64)
+      -> { y }
+
+      x.foo
+      nil
+      CRYSTAL
+  end
+
+  it "uses non-atomic allocation for nested closure data" do
+    # nested closures always contain a pointer to their parent closures
+    run(<<-CRYSTAL, Bool).should be_false
+      module Closure
+        @@atomic = uninitialized Int32
+
+        def self.atomic
+          pointerof(@@atomic).as(Void*)
+        end
+      end
+
+      fun __crystal_malloc_atomic64(size : UInt64) : Void*
+        Closure.atomic
+      end
+
+      struct Proc
+        def closure_data
+          func = self
+          ptr = pointerof(func).as({Void*, Void*}*)
+          ptr.value[1]
+        end
+      end
+
+      x = 0
+      fn = -> do
+        y = 0
+        -> { x &+ y }
+      end
+
+      fn.call.closure_data.address == Closure.atomic.address
+      CRYSTAL
+  end
 end
