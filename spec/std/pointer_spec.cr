@@ -246,6 +246,40 @@ describe "Pointer" do
     a[2].should eq(15)
   end
 
+  describe "#fill" do
+    it "int" do
+      slice = Slice[0, 1, 2, 3, 4]
+      ptr = slice.to_unsafe + 1
+      ptr.fill(3, 7)
+      slice.should eq Slice[0, 7, 7, 7, 4]
+    end
+
+    it "string" do
+      slice = Slice["a", "b", "c", "d", "e"]
+      ptr = slice.to_unsafe + 1
+      ptr.fill(3, " ")
+      slice.should eq Slice["a", " ", " ", " ", "e"]
+    end
+
+    it "pointer" do
+      slice = Slice[Pointer(Void).new(0x1_u64), Pointer(Void).new(0x2_u64), Pointer(Void).new(0x3_u64), Pointer(Void).new(0x4_u64), Pointer(Void).new(0x5_u64)]
+      ptr = slice.to_unsafe + 1
+      ptr.fill(3, Pointer(Void).new(0x10_u64))
+      slice.should eq Slice[Pointer(Void).new(0x1_u64), Pointer(Void).new(0x10_u64), Pointer(Void).new(0x10_u64), Pointer(Void).new(0x10_u64), Pointer(Void).new(0x5_u64)]
+    end
+
+    describe "yielding" do
+      it "int" do
+        slice = Slice[1, 1, 1, 1, 1]
+        ptr = slice.to_unsafe + 1
+        ptr.fill(3) { |i| i * i }
+        slice.should eq Slice[1, 0, 1, 4, 1]
+        ptr.fill(3, offset: 3) { |i| i * i }
+        slice.should eq Slice[1, 9, 16, 25, 1]
+      end
+    end
+  end
+
   it "raises if mallocs negative size" do
     expect_raises(ArgumentError) { Pointer.malloc(-1, 0) }
   end

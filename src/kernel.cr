@@ -593,6 +593,7 @@ end
 
         # additional reinitialization
         ->Random::DEFAULT.new_seed,
+        -> { Random.thread_default.new_seed },
       ] of -> Nil
     end
   end

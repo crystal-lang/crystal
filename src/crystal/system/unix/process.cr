@@ -262,6 +262,8 @@ struct Crystal::System::Process
   def self.spawn(prepared_args, env, clear_env, input, output, error, chdir)
     r, w = FileDescriptor.system_pipe
 
+    envp = Env.make_envp(env, clear_env)
+
     pid = fork(will_exec: true) do
       Crystal::System::Signal.after_fork_before_exec
     end
@@ -269,7 +271,7 @@ struct Crystal::System::Process
     if !pid
       LibC.close(r)
       begin
-        self.try_replace(prepared_args, env, clear_env, input, output, error, chdir)
+        self.try_replace(prepared_args, envp, input, output, error, chdir)
         byte = 1_u8
         errno = Errno.value.to_i32
         FileDescriptor.write_fully(w, pointerof(byte))
@@ -337,15 +339,18 @@ struct Crystal::System::Process
     {pathname, argv.to_unsafe}
   end
 
-  private def self.try_replace(prepared_args, env, clear_env, input, output, error, chdir)
+  private def self.try_replace(prepared_args, envp, input, output, error, chdir)
     reopen_io(input, ORIGINAL_STDIN)
     reopen_io(output, ORIGINAL_STDOUT)
     reopen_io(error, ORIGINAL_STDERR)
 
-    LibC.environ = Env.make_envp(env, clear_env)
-    ::Dir.cd(chdir) if chdir
+    if chdir
+      if 0 != LibC.chdir(chdir)
+        return
+      end
+    end
 
-    execvpe(*prepared_args, LibC.environ)
+    execvpe(*prepared_args, envp)
   end
 
   private def self.execvpe(file, argv, envp)
@@ -456,7 +461,9 @@ struct Crystal::System::Process
   end
 
   def self.replace(command, prepared_args, env, clear_env, input, output, error, chdir)
-    try_replace(prepared_args, env, clear_env, input, output, error, chdir)
+    envp = Env.make_envp(env, clear_env)
+
+    try_replace(prepared_args, envp, input, output, error, chdir)
     raise_exception_from_errno(command)
   end
 
@@ -471,8 +478,11 @@ struct Crystal::System::Process
 
   private def self.reopen_io(src_io : IO::FileDescriptor, dst_io : IO::FileDescriptor)
     if src_io.closed?
-      Crystal::EventLoop.remove(dst_io)
-      dst_io.file_descriptor_close
+      # Do not use FileDescriptor.file_descriptor_close here because it
+      # mutates the memory of `dst_id.fd` in `close_volatile_fd?` which causes
+      # problems with `vfork` behaviour.
+      # We can ignore any errors from `LibC.close`.
+      LibC.close(dst_io.fd)
     else
       src_io = to_real_fd(src_io)
 

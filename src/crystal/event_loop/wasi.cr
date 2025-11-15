@@ -84,9 +84,6 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
     file_descriptor.evented_close
   end
 
-  def shutdown(file_descriptor : Crystal::System::FileDescriptor) : Nil
-  end
-
   def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
     file_descriptor.file_descriptor_close
   end
@@ -141,9 +138,6 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
 
   def shutdown(socket : ::Socket) : Nil
     socket.evented_close
-  end
-
-  def shutdown(socket : ::Socket) : Nil
   end
 
   def close(socket : ::Socket) : Nil

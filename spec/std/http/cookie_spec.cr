@@ -500,6 +500,63 @@ module HTTP
         cookie = parse_set_cookie("a=1; max-age=0")
         cookie.max_age.should eq 0.seconds
       end
+
+      it "parses HttpOnly with trailing semicolon" do
+        cookie = parse_set_cookie("test=value; HttpOnly;")
+        cookie.name.should eq("test")
+        cookie.value.should eq("value")
+        cookie.http_only.should be_true
+      end
+
+      it "parses Secure with trailing semicolon" do
+        cookie = parse_set_cookie("test=value; Secure;")
+        cookie.name.should eq("test")
+        cookie.value.should eq("value")
+        cookie.secure.should be_true
+      end
+
+      it "parses both Secure and HttpOnly with trailing semicolon" do
+        cookie = parse_set_cookie("test=value; Secure; HttpOnly;")
+        cookie.name.should eq("test")
+        cookie.value.should eq("value")
+        cookie.secure.should be_true
+        cookie.http_only.should be_true
+      end
+
+      it "parses cookie with multiple trailing semicolons" do
+        cookie = parse_set_cookie("test=value; HttpOnly;;")
+        cookie.name.should eq("test")
+        cookie.value.should eq("value")
+        cookie.http_only.should be_true
+      end
+
+      it "parses cookie with whitespace and trailing semicolon" do
+        cookie = parse_set_cookie("test=value; HttpOnly; ")
+        cookie.name.should eq("test")
+        cookie.value.should eq("value")
+        cookie.http_only.should be_true
+      end
+
+      it "parses complex cookie with all attributes and trailing semicolon" do
+        cookie = parse_set_cookie("sessionid=abc123; Path=/; Domain=example.com; Expires=Wed, 09 Jun 2021 10:18:14 GMT; Secure; HttpOnly; SameSite=Strict;")
+        cookie.name.should eq("sessionid")
+        cookie.value.should eq("abc123")
+        cookie.path.should eq("/")
+        cookie.domain.should eq("example.com")
+        cookie.secure.should be_true
+        cookie.http_only.should be_true
+        cookie.samesite.should eq(HTTP::Cookie::SameSite::Strict)
+      end
+
+      it "parses cookie without HttpOnly but with trailing semicolon" do
+        cookie = parse_set_cookie("sessionid=abc123; Path=/; Domain=example.com; Secure;")
+        cookie.name.should eq("sessionid")
+        cookie.value.should eq("abc123")
+        cookie.path.should eq("/")
+        cookie.domain.should eq("example.com")
+        cookie.secure.should be_true
+        cookie.http_only.should be_false
+      end
     end
 
     describe "expiration_time" do
