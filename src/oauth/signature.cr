@@ -112,7 +112,7 @@ struct OAuth::Signature
     pairs = params.map do |key, value|
       {
         URI.encode_www_form(key.to_s, space_to_plus: false),
-        URI.encode_www_form(value.to_s, space_to_plus: false)
+        URI.encode_www_form(value.to_s, space_to_plus: false),
       }
     end
 
