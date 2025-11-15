@@ -122,9 +122,7 @@ struct OAuth::Signature
     # Build final normalized string WITHOUT re-encoding
     String.build do |io|
       pairs.join(io, "&") do |(key, value), io|
-        io << key
-        io << "="
-        io << value
+        io << key << "=" << value
       end
     end
   end
