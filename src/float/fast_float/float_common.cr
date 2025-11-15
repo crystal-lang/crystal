@@ -67,39 +67,75 @@ module Float::FastFloat
   struct BinaryFormat_Float64
     include BinaryFormat(Float64, UInt64)
 
-    POWERS_OF_TEN = [
-      1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e11,
-      1e12, 1e13, 1e14, 1e15, 1e16, 1e17, 1e18, 1e19, 1e20, 1e21, 1e22,
-    ]
+    {% if compare_versions(Crystal::VERSION, "1.16.0") < 0 %}
+      POWERS_OF_TEN = [
+        1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e11,
+        1e12, 1e13, 1e14, 1e15, 1e16, 1e17, 1e18, 1e19, 1e20, 1e21, 1e22,
+      ]
 
-    # Largest integer value v so that (5**index * v) <= 1<<53.
-    # 0x20000000000000 == 1 << 53
-    MAX_MANTISSA = [
-      0x20000000000000_u64,
-      0x20000000000000_u64.unsafe_div(5),
-      0x20000000000000_u64.unsafe_div(5 * 5),
-      0x20000000000000_u64.unsafe_div(5 * 5 * 5),
-      0x20000000000000_u64.unsafe_div(5 * 5 * 5 * 5),
-      0x20000000000000_u64.unsafe_div(CONSTANT_55555),
-      0x20000000000000_u64.unsafe_div(CONSTANT_55555 * 5),
-      0x20000000000000_u64.unsafe_div(CONSTANT_55555 * 5 * 5),
-      0x20000000000000_u64.unsafe_div(CONSTANT_55555 * 5 * 5 * 5),
-      0x20000000000000_u64.unsafe_div(CONSTANT_55555 * 5 * 5 * 5 * 5),
-      0x20000000000000_u64.unsafe_div(CONSTANT_55555 * CONSTANT_55555),
-      0x20000000000000_u64.unsafe_div(CONSTANT_55555 * CONSTANT_55555 * 5),
-      0x20000000000000_u64.unsafe_div(CONSTANT_55555 * CONSTANT_55555 * 5 * 5),
-      0x20000000000000_u64.unsafe_div(CONSTANT_55555 * CONSTANT_55555 * 5 * 5 * 5),
-      0x20000000000000_u64.unsafe_div(CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555),
-      0x20000000000000_u64.unsafe_div(CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555 * 5),
-      0x20000000000000_u64.unsafe_div(CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555 * 5 * 5),
-      0x20000000000000_u64.unsafe_div(CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555 * 5 * 5 * 5),
-      0x20000000000000_u64.unsafe_div(CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555 * 5 * 5 * 5 * 5),
-      0x20000000000000_u64.unsafe_div(CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555),
-      0x20000000000000_u64.unsafe_div(CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555 * 5),
-      0x20000000000000_u64.unsafe_div(CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555 * 5 * 5),
-      0x20000000000000_u64.unsafe_div(CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555 * 5 * 5 * 5),
-      0x20000000000000_u64.unsafe_div(CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555 * 5 * 5 * 5 * 5),
-    ]
+      # Largest integer value v so that (5**index * v) <= 1<<53.
+      # 0x20000000000000 == 1 << 53
+      MAX_MANTISSA = [
+        0x20000000000000_u64,
+        0x20000000000000_u64.unsafe_div(5),
+        0x20000000000000_u64.unsafe_div(5 * 5),
+        0x20000000000000_u64.unsafe_div(5 * 5 * 5),
+        0x20000000000000_u64.unsafe_div(5 * 5 * 5 * 5),
+        0x20000000000000_u64.unsafe_div(CONSTANT_55555),
+        0x20000000000000_u64.unsafe_div(CONSTANT_55555 * 5),
+        0x20000000000000_u64.unsafe_div(CONSTANT_55555 * 5 * 5),
+        0x20000000000000_u64.unsafe_div(CONSTANT_55555 * 5 * 5 * 5),
+        0x20000000000000_u64.unsafe_div(CONSTANT_55555 * 5 * 5 * 5 * 5),
+        0x20000000000000_u64.unsafe_div(CONSTANT_55555 * CONSTANT_55555),
+        0x20000000000000_u64.unsafe_div(CONSTANT_55555 * CONSTANT_55555 * 5),
+        0x20000000000000_u64.unsafe_div(CONSTANT_55555 * CONSTANT_55555 * 5 * 5),
+        0x20000000000000_u64.unsafe_div(CONSTANT_55555 * CONSTANT_55555 * 5 * 5 * 5),
+        0x20000000000000_u64.unsafe_div(CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555),
+        0x20000000000000_u64.unsafe_div(CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555 * 5),
+        0x20000000000000_u64.unsafe_div(CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555 * 5 * 5),
+        0x20000000000000_u64.unsafe_div(CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555 * 5 * 5 * 5),
+        0x20000000000000_u64.unsafe_div(CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555 * 5 * 5 * 5 * 5),
+        0x20000000000000_u64.unsafe_div(CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555),
+        0x20000000000000_u64.unsafe_div(CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555 * 5),
+        0x20000000000000_u64.unsafe_div(CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555 * 5 * 5),
+        0x20000000000000_u64.unsafe_div(CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555 * 5 * 5 * 5),
+        0x20000000000000_u64.unsafe_div(CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555 * 5 * 5 * 5 * 5),
+      ]
+    {% else %}
+      POWERS_OF_TEN = Slice(Float64).literal(
+        1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e11,
+        1e12, 1e13, 1e14, 1e15, 1e16, 1e17, 1e18, 1e19, 1e20, 1e21, 1e22,
+      )
+
+      # Largest integer value v so that (5**index * v) <= 1<<53.
+      # 0x20000000000000 == 1 << 53
+      MAX_MANTISSA = Slice(UInt64).literal(
+        {{ 0x20000000000000_u64 }},
+        {{ 0x20000000000000_u64 // (5) }},
+        {{ 0x20000000000000_u64 // (5 * 5) }},
+        {{ 0x20000000000000_u64 // (5 * 5 * 5) }},
+        {{ 0x20000000000000_u64 // (5 * 5 * 5 * 5) }},
+        {{ 0x20000000000000_u64 // (CONSTANT_55555) }},
+        {{ 0x20000000000000_u64 // (CONSTANT_55555 * 5) }},
+        {{ 0x20000000000000_u64 // (CONSTANT_55555 * 5 * 5) }},
+        {{ 0x20000000000000_u64 // (CONSTANT_55555 * 5 * 5 * 5) }},
+        {{ 0x20000000000000_u64 // (CONSTANT_55555 * 5 * 5 * 5 * 5) }},
+        {{ 0x20000000000000_u64 // (CONSTANT_55555 * CONSTANT_55555) }},
+        {{ 0x20000000000000_u64 // (CONSTANT_55555 * CONSTANT_55555 * 5) }},
+        {{ 0x20000000000000_u64 // (CONSTANT_55555 * CONSTANT_55555 * 5 * 5) }},
+        {{ 0x20000000000000_u64 // (CONSTANT_55555 * CONSTANT_55555 * 5 * 5 * 5) }},
+        {{ 0x20000000000000_u64 // (CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555) }},
+        {{ 0x20000000000000_u64 // (CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555 * 5) }},
+        {{ 0x20000000000000_u64 // (CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555 * 5 * 5) }},
+        {{ 0x20000000000000_u64 // (CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555 * 5 * 5 * 5) }},
+        {{ 0x20000000000000_u64 // (CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555 * 5 * 5 * 5 * 5) }},
+        {{ 0x20000000000000_u64 // (CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555) }},
+        {{ 0x20000000000000_u64 // (CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555 * 5) }},
+        {{ 0x20000000000000_u64 // (CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555 * 5 * 5) }},
+        {{ 0x20000000000000_u64 // (CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555 * 5 * 5 * 5) }},
+        {{ 0x20000000000000_u64 // (CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555 * CONSTANT_55555 * 5 * 5 * 5 * 5) }},
+      )
+    {% end %}
 
     def min_exponent_fast_path : Int32
       -22
@@ -175,26 +211,49 @@ module Float::FastFloat
   struct BinaryFormat_Float32
     include BinaryFormat(Float32, UInt32)
 
-    POWERS_OF_TEN = [
-      1e0f32, 1e1f32, 1e2f32, 1e3f32, 1e4f32, 1e5f32, 1e6f32, 1e7f32, 1e8f32, 1e9f32, 1e10f32,
-    ]
+    {% if compare_versions(Crystal::VERSION, "1.16.0") < 0 %}
+      POWERS_OF_TEN = [
+        1e0f32, 1e1f32, 1e2f32, 1e3f32, 1e4f32, 1e5f32, 1e6f32, 1e7f32, 1e8f32, 1e9f32, 1e10f32,
+      ]
 
-    # Largest integer value v so that (5**index * v) <= 1<<24.
-    # 0x1000000 == 1<<24
-    MAX_MANTISSA = [
-      0x1000000_u64,
-      0x1000000_u64.unsafe_div(5),
-      0x1000000_u64.unsafe_div(5 * 5),
-      0x1000000_u64.unsafe_div(5 * 5 * 5),
-      0x1000000_u64.unsafe_div(5 * 5 * 5 * 5),
-      0x1000000_u64.unsafe_div(CONSTANT_55555),
-      0x1000000_u64.unsafe_div(CONSTANT_55555 * 5),
-      0x1000000_u64.unsafe_div(CONSTANT_55555 * 5 * 5),
-      0x1000000_u64.unsafe_div(CONSTANT_55555 * 5 * 5 * 5),
-      0x1000000_u64.unsafe_div(CONSTANT_55555 * 5 * 5 * 5 * 5),
-      0x1000000_u64.unsafe_div(CONSTANT_55555 * CONSTANT_55555),
-      0x1000000_u64.unsafe_div(CONSTANT_55555 * CONSTANT_55555 * 5),
-    ]
+      # Largest integer value v so that (5**index * v) <= 1<<24.
+      # 0x1000000 == 1<<24
+      MAX_MANTISSA = [
+        0x1000000_u64,
+        0x1000000_u64.unsafe_div(5),
+        0x1000000_u64.unsafe_div(5 * 5),
+        0x1000000_u64.unsafe_div(5 * 5 * 5),
+        0x1000000_u64.unsafe_div(5 * 5 * 5 * 5),
+        0x1000000_u64.unsafe_div(CONSTANT_55555),
+        0x1000000_u64.unsafe_div(CONSTANT_55555 * 5),
+        0x1000000_u64.unsafe_div(CONSTANT_55555 * 5 * 5),
+        0x1000000_u64.unsafe_div(CONSTANT_55555 * 5 * 5 * 5),
+        0x1000000_u64.unsafe_div(CONSTANT_55555 * 5 * 5 * 5 * 5),
+        0x1000000_u64.unsafe_div(CONSTANT_55555 * CONSTANT_55555),
+        0x1000000_u64.unsafe_div(CONSTANT_55555 * CONSTANT_55555 * 5),
+      ]
+    {% else %}
+      POWERS_OF_TEN = Slice(Float32).literal(
+        1e0f32, 1e1f32, 1e2f32, 1e3f32, 1e4f32, 1e5f32, 1e6f32, 1e7f32, 1e8f32, 1e9f32, 1e10f32,
+      )
+
+      # Largest integer value v so that (5**index * v) <= 1<<24.
+      # 0x1000000 == 1<<24
+      MAX_MANTISSA = Slice(UInt64).literal(
+        {{ 0x1000000_u64 }},
+        {{ 0x1000000_u64 // (5) }},
+        {{ 0x1000000_u64 // (5 * 5) }},
+        {{ 0x1000000_u64 // (5 * 5 * 5) }},
+        {{ 0x1000000_u64 // (5 * 5 * 5 * 5) }},
+        {{ 0x1000000_u64 // (CONSTANT_55555) }},
+        {{ 0x1000000_u64 // (CONSTANT_55555 * 5) }},
+        {{ 0x1000000_u64 // (CONSTANT_55555 * 5 * 5) }},
+        {{ 0x1000000_u64 // (CONSTANT_55555 * 5 * 5 * 5) }},
+        {{ 0x1000000_u64 // (CONSTANT_55555 * 5 * 5 * 5 * 5) }},
+        {{ 0x1000000_u64 // (CONSTANT_55555 * CONSTANT_55555) }},
+        {{ 0x1000000_u64 // (CONSTANT_55555 * CONSTANT_55555 * 5) }},
+      )
+    {% end %}
 
     def min_exponent_fast_path : Int32
       -10
