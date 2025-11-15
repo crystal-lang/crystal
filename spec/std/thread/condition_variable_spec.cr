@@ -1,4 +1,5 @@
 require "../spec_helper"
+require "../../support/thread"
 
 # interpreter doesn't support threads yet (#14287)
 pending_interpreted describe: Thread::ConditionVariable do

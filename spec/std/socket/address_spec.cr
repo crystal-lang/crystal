@@ -126,6 +126,87 @@ describe Socket::IPAddress do
     Socket::IPAddress.new("::ffff:0:0", 443).address.should eq "::ffff:0.0.0.0"
   end
 
+  describe "#zone_id" do
+    # loopback interface "lo" is supposed to *always* be the first interface and
+    # enumerated with index 1
+    loopback_iface = {% if flag?(:windows) %}
+                       "loopback_0"
+                     {% elsif flag?(:darwin) || flag?(:bsd) || flag?(:solaris) %}
+                       "lo0"
+                     {% else %}
+                       "lo"
+                     {% end %}
+
+    it "parses link-local IPv6 with interface scope" do
+      address = Socket::IPAddress.new("fe80::3333:4444%3", 8081)
+      address.address.should eq "fe80::3333:4444"
+      address.zone_id.should eq 3
+      address.inspect.should eq "Socket::IPAddress([fe80::3333:4444%3]:8081)"
+    end
+
+    it "looks up loopback interface index by name" do
+      address = Socket::IPAddress.new("fe80::1111%#{loopback_iface}", 0)
+      address.address.should eq "fe80::1111"
+      address.zone_id.should eq 1
+    end
+
+    it "looks up loopback interface name by index" do
+      # loopback interface "lo" is supposed to *always* be the first interface and
+      # enumerated with index 1
+      address = Socket::IPAddress.new("fe80::1111%#{loopback_iface}", 0)
+      address.link_local_interface.should eq loopback_iface
+    end
+
+    it "fails interface name lookup for non-existent interfaces" do
+      exc_suff = {% if flag?(:windows) %}
+                   ""
+                 {% elsif flag?(:darwin) || flag?(:bsd) %}
+                   ": Device not configured"
+                 {% else %}
+                   ": No such device or address"
+                 {% end %}
+      expect_raises(Socket::Error, "Failed to look up interface name for index 333#{exc_suff}") do
+        Socket::IPAddress.new("fe80::d00d:1%333", 0).link_local_interface
+      end
+    end
+
+    it "interface name lookup returns nil in unsupported cases" do
+      Socket::IPAddress.new("fd03::3333", 0).link_local_interface.should be_nil
+      Socket::IPAddress.new("192.168.10.10", 0).link_local_interface.should be_nil
+      Socket::IPAddress.new("169.254.0.3", 0).link_local_interface.should be_nil
+      Socket::IPAddress.new("fe80::4545", 0).link_local_interface.should be_nil
+    end
+
+    it "fails link-local zone identifier on non-LL v6 addrs" do
+      expect_raises(Socket::Error, "Zoned/scoped IPv6 addresses are only allowed for link-local (supplied 'fd00::abcd%5' is not within fe80::/10)") do
+        Socket::IPAddress.new("fd00::abcd%5", 443)
+      end
+    end
+
+    it "fails link-local zone identifier on v4 addrs" do
+      expect_raises(Socket::Error, "Invalid IP address: 169.254.11.11%eth0") do
+        Socket::IPAddress.new("169.254.11.11%eth0", 0)
+      end
+
+      expect_raises(Socket::Error, "Invalid IP address: 192.168.11.11%3") do
+        Socket::IPAddress.new("192.168.11.11%3", 0)
+      end
+    end
+
+    it "fails on invalid link-local zone identifier" do
+      expect_raises(Socket::Error, "Invalid IPv6 link-local zone index '0' in address 'fe80::c0ff:ee%0'") do
+        Socket::IPAddress.new("fe80::c0ff:ee%0", port: 0)
+      end
+    end
+
+    it "fails on non-existent link-local zone interface" do
+      # looking up an interface index obviously requires for said interface device to exist
+      expect_raises(Socket::Error, "IPv6 link-local zone interface 'zzzzzzzzzzzzzzz' not found (in address 'fe80::0f0f:abcd%zzzzzzzzzzzzzzz')") do
+        Socket::IPAddress.new("fe80::0f0f:abcd%zzzzzzzzzzzzzzz", port: 0)
+      end
+    end
+  end
+
   describe ".parse" do
     it "parses IPv4" do
       address = Socket::IPAddress.parse "ip://192.168.0.1:8081"
@@ -222,6 +303,8 @@ describe Socket::IPAddress do
     it { Socket::IPAddress.parse_v6_fields?("0::ffff:c0a8:5e4").should eq UInt16.static_array(0, 0, 0, 0, 0, 0xffff, 0xc0a8, 0x5e4) }
     it { Socket::IPAddress.parse_v6_fields?("::0::ffff:c0a8:5e4").should be_nil }
     it { Socket::IPAddress.parse_v6_fields?("c0a8").should be_nil }
+    it { Socket::IPAddress.parse_v6_fields?("fe80::a:b%eth0").should eq UInt16.static_array(0xfe80, 0, 0, 0, 0, 0, 0xa, 0xb) }
+    it { Socket::IPAddress.parse_v6_fields?("fe80:0:0:0:ffff:c0a8:5e4%lo").should eq UInt16.static_array(0xfe80, 0, 0, 0, 0xffff, 0xc0a8, 0x5e4, 0) }
   end
 
   describe ".v4" do
@@ -263,6 +346,7 @@ describe Socket::IPAddress do
       Socket::IPAddress.v6(0xfe80, 0, 0, 0, 0x4860, 0x4860, 0x4860, 0x1234, port: 55001).should eq Socket::IPAddress.new("fe80::4860:4860:4860:1234", 55001)
       Socket::IPAddress.v6(0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xfffe, port: 65535).should eq Socket::IPAddress.new("ffff:ffff:ffff:ffff:ffff:ffff:ffff:fffe", 65535)
       Socket::IPAddress.v6(0, 0, 0, 0, 0, 0xffff, 0xc0a8, 0x0001, port: 0).should eq Socket::IPAddress.new("::ffff:192.168.0.1", 0)
+      Socket::IPAddress.v6(0xfe80, 0, 0, 0, 0x5971, 0x5971, 0x5971, 0xabcd, port: 44444, zone_id: 3).should eq Socket::IPAddress.new("fe80::5971:5971:5971:abcd%3", 44444)
     end
 
     it "raises on out of bound field" do
@@ -454,6 +538,10 @@ end
 
       Socket::UNIXAddress.new("some_path").should_not eq Socket::UNIXAddress.new("other_path")
       Socket::UNIXAddress.new("some_path").hash.should_not eq Socket::UNIXAddress.new("other_path").hash
+    end
+
+    it "accepts `Path` input" do
+      Socket::UNIXAddress.new(Path.new("some_path")).should eq Socket::UNIXAddress.new("some_path")
     end
 
     describe ".parse" do

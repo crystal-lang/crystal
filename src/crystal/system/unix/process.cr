@@ -2,6 +2,7 @@ require "c/signal"
 require "c/stdlib"
 require "c/sys/resource"
 require "c/unistd"
+require "c/limits"
 require "crystal/rw_lock"
 require "file/error"
 
@@ -100,6 +101,21 @@ struct Crystal::System::Process
     # do nothing; `Crystal::System::Signal.start_loop` takes care of this
   end
 
+  def self.debugger_present? : Bool
+    {% if flag?(:linux) %}
+      ::File.each_line("/proc/self/status") do |line|
+        if tracer_pid = line.lchop?("TracerPid:").try(&.to_i?)
+          return true if tracer_pid != 0
+        end
+      end
+    {% end %}
+
+    # TODO: [Darwin](https://stackoverflow.com/questions/2200277/detecting-debugger-on-mac-os-x)
+    # TODO: other BSDs
+    # TODO: [Solaris](https://docs.oracle.com/cd/E23824_01/html/821-1473/proc-4.html)
+    false
+  end
+
   def self.exists?(pid)
     ret = LibC.kill(pid, 0)
     if ret == 0
@@ -143,7 +159,11 @@ struct Crystal::System::Process
   #
   # NOTE: there may still be some potential leaks (e.g. calling `accept` on a
   #       blocking socket).
-  {% if LibC.has_constant?(:SOCK_CLOEXEC) && LibC.has_method?(:accept4) && LibC.has_method?(:dup3) && LibC.has_method?(:pipe2) %}
+  #
+  # `SOCK_CLOEXEC` and `accept4` are defined in `c/sys/socket.cr` which is only
+  # included when using sockets. The absence of `LibC.socket` indicates that
+  # we're not using sockets.
+  {% if (LibC.has_constant?(:SOCK_CLOEXEC) && (LibC.has_method?(:accept4)) || !LibC.has_method?(:socket)) && LibC.has_method?(:dup3) && LibC.has_method?(:pipe2) %}
     # we don't implement .lock_read so compilation will fail if we need to
     # support another case, instead of silently skipping the rwlock!
 
@@ -172,7 +192,7 @@ struct Crystal::System::Process
     end
   {% end %}
 
-  def self.fork(*, will_exec = false)
+  def self.fork(*, will_exec : Bool, &)
     newmask = uninitialized LibC::SigsetT
     oldmask = uninitialized LibC::SigsetT
 
@@ -191,18 +211,16 @@ struct Crystal::System::Process
     when 0
       # child:
       pid = nil
-      if will_exec
-        # notify event loop
-        Crystal::EventLoop.current.after_fork_before_exec
 
-        # reset signal handlers, then sigmask (inherited on exec):
-        Crystal::System::Signal.after_fork_before_exec
+      # after fork callback
+      yield
+
+      if will_exec
+        # reset sigmask (inherited on exec)
         LibC.sigemptyset(pointerof(newmask))
         LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(newmask), nil)
       else
-        {% unless flag?(:preview_mt) %}
-          ::Process.after_fork_child_callbacks.each(&.call)
-        {% end %}
+        # restore sigmask
         LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(oldmask), nil)
       end
     when -1
@@ -224,9 +242,10 @@ struct Crystal::System::Process
   def self.fork(&)
     {% raise("Process fork is unsupported with multithreaded mode") if flag?(:preview_mt) %}
 
-    if pid = fork
-      return pid
+    pid = fork(will_exec: false) do
+      ::Process.after_fork_child_callbacks.each(&.call)
     end
+    return pid if pid
 
     begin
       yield
@@ -240,14 +259,19 @@ struct Crystal::System::Process
     end
   end
 
-  def self.spawn(command_args, env, clear_env, input, output, error, chdir)
+  def self.spawn(prepared_args, env, clear_env, input, output, error, chdir)
     r, w = FileDescriptor.system_pipe
 
-    pid = self.fork(will_exec: true)
+    envp = Env.make_envp(env, clear_env)
+
+    pid = fork(will_exec: true) do
+      Crystal::System::Signal.after_fork_before_exec
+    end
+
     if !pid
       LibC.close(r)
       begin
-        self.try_replace(command_args, env, clear_env, input, output, error, chdir)
+        self.try_replace(prepared_args, envp, input, output, error, chdir)
         byte = 1_u8
         errno = Errno.value.to_i32
         FileDescriptor.write_fully(w, pointerof(byte))
@@ -264,7 +288,7 @@ struct Crystal::System::Process
     end
 
     LibC.close(w)
-    reader_pipe = IO::FileDescriptor.new(r, blocking: false)
+    reader_pipe = IO::FileDescriptor.new(r)
 
     begin
       case reader_pipe.read_byte
@@ -273,7 +297,7 @@ struct Crystal::System::Process
       when 0
         # Error message coming
         message = reader_pipe.gets_to_end
-        raise RuntimeError.new("Error executing process: '#{command_args[0]}': #{message}")
+        raise RuntimeError.new("Error executing process: '#{prepared_args[0]}': #{message}")
       when 1
         # Errno coming
         # can't use IO#read_bytes(Int32) because we skipped system/network
@@ -281,7 +305,7 @@ struct Crystal::System::Process
         # we thus read it in the same as order as written
         buf = uninitialized StaticArray(UInt8, 4)
         reader_pipe.read_fully(buf.to_slice)
-        raise_exception_from_errno(command_args[0], Errno.new(buf.unsafe_as(Int32)))
+        raise_exception_from_errno(prepared_args[0], Errno.new(buf.unsafe_as(Int32)))
       else
         raise RuntimeError.new("BUG: Invalid error response received from subprocess")
       end
@@ -292,53 +316,155 @@ struct Crystal::System::Process
     pid
   end
 
-  def self.prepare_args(command : String, args : Enumerable(String)?, shell : Bool) : Array(String)
+  def self.prepare_args(command : String, args : Enumerable(String)?, shell : Bool) : {String, LibC::Char**}
     if shell
       command = %(#{command} "${@}") unless command.includes?(' ')
-      shell_args = ["/bin/sh", "-c", command, "sh"]
+      argv_ary = ["/bin/sh", "-c", command, "sh"]
 
       if args
         unless command.includes?(%("${@}"))
           raise ArgumentError.new(%(Can't specify arguments in both command and args without including "${@}" into your command))
         end
-
-        shell_args.concat(args)
       end
 
-      shell_args
+      pathname = "/bin/sh"
     else
-      command_args = [command]
-      command_args.concat(args) if args
-      command_args
+      argv_ary = [command]
+      pathname = command
     end
+
+    argv_ary.concat(args) if args
+
+    argv = argv_ary.map(&.check_no_null_byte.to_unsafe)
+    {pathname, argv.to_unsafe}
   end
 
-  private def self.try_replace(command_args, env, clear_env, input, output, error, chdir)
+  private def self.try_replace(prepared_args, envp, input, output, error, chdir)
     reopen_io(input, ORIGINAL_STDIN)
     reopen_io(output, ORIGINAL_STDOUT)
     reopen_io(error, ORIGINAL_STDERR)
 
-    ENV.clear if clear_env
-    env.try &.each do |key, val|
-      if val
-        ENV[key] = val
-      else
-        ENV.delete key
+    if chdir
+      if 0 != LibC.chdir(chdir)
+        return
       end
     end
 
-    ::Dir.cd(chdir) if chdir
-
-    command = command_args[0]
-    argv = command_args.map &.check_no_null_byte.to_unsafe
-    argv << Pointer(UInt8).null
-
-    lock_write { LibC.execvp(command, argv) }
+    execvpe(*prepared_args, envp)
   end
 
-  def self.replace(command_args, env, clear_env, input, output, error, chdir)
-    try_replace(command_args, env, clear_env, input, output, error, chdir)
-    raise_exception_from_errno(command_args[0])
+  private def self.execvpe(file, argv, envp)
+    {% if LibC.has_method?("execvpe") && !flag?("execvpe_impl") %}
+      lock_write { LibC.execvpe(file, argv, envp) }
+    {% else %}
+      execvpe_impl(file, argv, envp)
+    {% end %}
+  end
+
+  DEFAULT_PATH = "/usr/bin:/bin"
+
+  # Darwin, DragonflyBSD, and FreeBSD < 14 don't have an `execvpe` function, so
+  # we need to implement it ourselves.
+  # This method runs between `fork` and `exec` and must be very cautious, such
+  # as no memory allocations.
+  private def self.execvpe_impl(file : String, argv : LibC::Char**, envp : LibC::Char**)
+    if file.empty?
+      Errno.value = Errno::ENOENT
+      return
+    end
+
+    # When file contains a slash, it's already a pathname that we should execute.
+    if file.includes?("/")
+      lock_write { LibC.execve(file, argv, envp) }
+
+      # Glibc implements a fallback if execve fails with ENOEXEC which tries
+      # executing `file` with `/bin/sh`. This is a legacy compatibility feature and
+      # has security concerns. We implement the behaviour of `execvpex`.
+      return
+    end
+
+    path = if path_ptr = LibC.getenv("PATH")
+             Slice.new(path_ptr, LibC.strlen(path_ptr))
+           else
+             DEFAULT_PATH.to_slice
+           end
+
+    if file.bytesize > LibC::NAME_MAX
+      Errno.value = Errno::ENAMETOOLONG
+      return
+    end
+
+    buffer = uninitialized UInt8[LibC::PATH_MAX]
+
+    seen_eaccess = false
+
+    while path.size > 0
+      if index = path.index(':'.ord.to_u8!)
+        path_entry = path[0, index]
+        path += index
+
+        # Do not advance a trailing `:` so that we read it as an empty path in
+        # the next iteration
+        path += 1 unless path.size == 1
+      else
+        path_entry = path
+        path += path_entry.size
+      end
+
+      # When the full pathname would be too long, simply skip it.
+      # This is an edge case. BSD implementations usually also print a warning.
+      # Cosmopolitan libc even errors.
+      if path_entry.size + file.bytesize + 2 >= buffer.size
+        next
+      end
+
+      builder = buffer.to_slice
+
+      if path_entry.empty?
+        # empty path means current directory
+        builder[0] = '.'.ord.to_u8!
+        builder += 1
+      else
+        path_entry.copy_to(builder)
+        builder += path_entry.size
+      end
+      builder[0] = '/'.ord.to_u8!
+      builder += 1
+      file.to_slice.copy_to(builder)
+      builder += file.size
+      builder[0] = 0
+
+      lock_write { LibC.execve(buffer.to_slice[0, buffer.size - builder.size], argv, envp) }
+
+      case Errno.value
+      when Errno::EACCES
+        # Non-terminal condition. Take note that we encountered EACCES and error
+        # with that if no other candidate is found.
+        seen_eaccess = true
+      when Errno::ENOENT, Errno::ENOTDIR
+        # Non terminal condition. Skip.
+      else
+        # Terminal condition. Return immediately. We found a file that exists
+        # is accessible, but it wouldn't execute.
+        return
+      end
+    end
+
+    Errno.value = if seen_eaccess
+                    # Erroring with ENOENT would be misleading if we found a candidate but
+                    # couldn't access it and thus skipped it.
+                    Errno::EACCES
+                  else
+                    # Make sure to set an error in case we never tried any path (e.g. `PATH=`)
+                    Errno::ENOENT
+                  end
+  end
+
+  def self.replace(command, prepared_args, env, clear_env, input, output, error, chdir)
+    envp = Env.make_envp(env, clear_env)
+
+    try_replace(prepared_args, envp, input, output, error, chdir)
+    raise_exception_from_errno(command)
   end
 
   private def self.raise_exception_from_errno(command, errno = Errno.value)
@@ -352,8 +478,11 @@ struct Crystal::System::Process
 
   private def self.reopen_io(src_io : IO::FileDescriptor, dst_io : IO::FileDescriptor)
     if src_io.closed?
-      Crystal::EventLoop.current.remove(dst_io)
-      dst_io.file_descriptor_close
+      # Do not use FileDescriptor.file_descriptor_close here because it
+      # mutates the memory of `dst_id.fd` in `close_volatile_fd?` which causes
+      # problems with `vfork` behaviour.
+      # We can ignore any errors from `LibC.close`.
+      LibC.close(dst_io.fd)
     else
       src_io = to_real_fd(src_io)
 
@@ -361,7 +490,7 @@ struct Crystal::System::Process
       ret = LibC.dup2(src_io.fd, dst_io.fd)
       raise IO::Error.from_errno("dup2") if ret == -1
 
-      dst_io.blocking = true
+      FileDescriptor.set_blocking(dst_io.fd, true)
       dst_io.close_on_exec = false
     end
   end

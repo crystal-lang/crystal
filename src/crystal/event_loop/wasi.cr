@@ -1,5 +1,13 @@
 # :nodoc:
 class Crystal::EventLoop::Wasi < Crystal::EventLoop
+  def self.default_file_blocking?
+    false
+  end
+
+  def self.default_socket_blocking?
+    false
+  end
+
   # Runs the event loop.
   def run(blocking : Bool) : Bool
     raise NotImplementedError.new("Crystal::Wasi::EventLoop.run")
@@ -9,9 +17,8 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
     raise NotImplementedError.new("Crystal::Wasi::EventLoop.interrupt")
   end
 
-  # Create a new resume event for a fiber.
-  def create_resume_event(fiber : Fiber) : Crystal::EventLoop::Event
-    raise NotImplementedError.new("Crystal::Wasi::EventLoop.create_resume_event")
+  def sleep(duration : ::Time::Span) : Nil
+    raise NotImplementedError.new("Crystal::Wasi::EventLoop.sleep")
   end
 
   # Creates a timeout_event.
@@ -29,6 +36,14 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
     raise NotImplementedError.new("Crystal::Wasi::EventLoop.create_fd_read_event")
   end
 
+  def pipe(read_blocking : Bool?, write_blocking : Bool?) : {IO::FileDescriptor, IO::FileDescriptor}
+    raise NotImplementedError.new("Crystal::EventLoop::Wasi#pipe")
+  end
+
+  def open(filename : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : {System::FileDescriptor::Handle, Bool} | Errno | WinError
+    raise NotImplementedError.new("Crystal::Wasi::EventLoop#open")
+  end
+
   def read(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
     evented_read(file_descriptor, "Error reading file_descriptor") do
       LibC.read(file_descriptor.fd, slice, slice.size).tap do |return_code|
@@ -36,6 +51,12 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
           raise IO::Error.new "File not open for reading", target: file_descriptor
         end
       end
+    end
+  end
+
+  def wait_readable(file_descriptor : Crystal::System::FileDescriptor) : Nil
+    file_descriptor.evented_wait_readable(raise_if_closed: false) do
+      raise IO::TimeoutError.new("Read timed out")
     end
   end
 
@@ -49,11 +70,30 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
     end
   end
 
-  def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
+  def wait_writable(file_descriptor : Crystal::System::FileDescriptor) : Nil
+    file_descriptor.evented_wait_writable(raise_if_closed: false) do
+      raise IO::TimeoutError.new("Write timed out")
+    end
+  end
+
+  def reopened(file_descriptor : Crystal::System::FileDescriptor) : Nil
+    raise NotImplementedError.new("Crystal::EventLoop#reopened(FileDescriptor)")
+  end
+
+  def shutdown(file_descriptor : Crystal::System::FileDescriptor) : Nil
     file_descriptor.evented_close
   end
 
-  def remove(file_descriptor : Crystal::System::FileDescriptor) : Nil
+  def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
+    file_descriptor.file_descriptor_close
+  end
+
+  def socket(family : ::Socket::Family, type : ::Socket::Type, protocol : ::Socket::Protocol) : {::Socket::Handle, Bool}
+    raise NotImplementedError.new("Crystal::EventLoop::Wasi#socket")
+  end
+
+  def socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol, blocking : Bool) : {Handle, Handle}
+    raise NotImplementedError.new("Crystal::EventLoop::Wasi#socketpair")
   end
 
   def read(socket : ::Socket, slice : Bytes) : Int32
@@ -62,9 +102,21 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
     end
   end
 
+  def wait_readable(socket : ::Socket) : Nil
+    socket.evented_wait_readable do
+      raise IO::TimeoutError.new("Read timed out")
+    end
+  end
+
   def write(socket : ::Socket, slice : Bytes) : Int32
     evented_write(socket, "Error writing to socket") do
       LibC.send(socket.fd, slice, slice.size, 0)
+    end
+  end
+
+  def wait_writable(socket : ::Socket) : Nil
+    socket.evented_wait_writable do
+      raise IO::TimeoutError.new("Write timed out")
     end
   end
 
@@ -84,11 +136,12 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
     raise NotImplementedError.new "Crystal::Wasi::EventLoop#accept"
   end
 
-  def close(socket : ::Socket) : Nil
+  def shutdown(socket : ::Socket) : Nil
     socket.evented_close
   end
 
-  def remove(socket : ::Socket) : Nil
+  def close(socket : ::Socket) : Nil
+    socket.socket_close
   end
 
   def evented_read(target, errno_msg : String, &) : Int32
@@ -100,7 +153,9 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
       end
 
       if Errno.value == Errno::EAGAIN
-        target.wait_readable
+        target.evented_wait_readable do
+          raise IO::TimeoutError.new("Read timed out")
+        end
       else
         raise IO::Error.from_errno(errno_msg, target: target)
       end
@@ -110,22 +165,22 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
   end
 
   def evented_write(target, errno_msg : String, &) : Int32
-    begin
-      loop do
-        bytes_written = yield
-        if bytes_written != -1
-          return bytes_written.to_i32
-        end
-
-        if Errno.value == Errno::EAGAIN
-          target.wait_writable
-        else
-          raise IO::Error.from_errno(errno_msg, target: target)
-        end
+    loop do
+      bytes_written = yield
+      if bytes_written != -1
+        return bytes_written.to_i32
       end
-    ensure
-      target.evented_resume_pending_writers
+
+      if Errno.value == Errno::EAGAIN
+        target.evented_wait_writable do
+          raise IO::TimeoutError.new("Write timed out")
+        end
+      else
+        raise IO::Error.from_errno(errno_msg, target: target)
+      end
     end
+  ensure
+    target.evented_resume_pending_writers
   end
 end
 

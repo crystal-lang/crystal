@@ -172,7 +172,7 @@ describe "Hash" do
   describe "#put" do
     it "puts in a small hash" do
       a = {} of Int32 => Int32
-      a.put(1, 2) { nil }.should eq(nil)
+      a.put(1, 2) { nil }.should be_nil
       a.put(1, 3) { nil }.should eq(2)
     end
 
@@ -181,7 +181,7 @@ describe "Hash" do
       100.times do |i|
         a[i] = i
       end
-      a.put(100, 2) { nil }.should eq(nil)
+      a.put(100, 2) { nil }.should be_nil
       a.put(100, 3) { nil }.should eq(2)
     end
 
@@ -381,7 +381,7 @@ describe "Hash" do
 
       h.dig("a", "b", "c").should eq([10, 20])
       h.dig(ary, "a").should eq("b")
-      h.dig(ary, "c").should eq(nil)
+      h.dig(ary, "c").should be_nil
     end
 
     it "raises KeyError if not found" do
@@ -428,7 +428,7 @@ describe "Hash" do
     end
 
     it "works with mixed types" do
-      {1 => "a", "a" => 1, 2.0 => "a", "a" => 1.0}.values_at(1, "a", 2.0, "a").should eq({"a", 1, "a", 1.0})
+      {1 => "a", "a" => 1, 2.0 => "a", "b" => 1.0}.values_at(1, "a", 2.0, "b").should eq({"a", 1, "a", 1.0})
     end
   end
 
@@ -467,8 +467,8 @@ describe "Hash" do
 
     it "returns nil if no key pairs with the given value" do
       hash = {"foo" => "bar", "baz" => "qux"}
-      hash.key_for?("foobar").should eq nil
-      hash.key_for?("bazqux").should eq nil
+      hash.key_for?("foobar").should be_nil
+      hash.key_for?("bazqux").should be_nil
     end
   end
 
@@ -596,7 +596,24 @@ describe "Hash" do
     it do
       h = {} of RecursiveHash => RecursiveHash
       h[h] = h
-      h.to_s.should eq("{{...} => {...}}")
+      h.to_s.should eq("{ {...} => {...} }")
+    end
+
+    context "when the first key starts with '{'" do
+      it "inserts a space after '{' and before '}' when first key is a Hash, preventing macro interpolation ({{ ... }})" do
+        hash = { {1 => 2} => 3 }
+        hash.to_s.should eq("{ {1 => 2} => 3 }")
+      end
+
+      it "inserts a space after '{' and before '}' when first key is a Tuple, preventing macro interpolation ({{ ... }})" do
+        hash = { {1, 2, 3} => 4 }
+        hash.to_s.should eq("{ {1, 2, 3} => 4 }")
+      end
+
+      it "inserts a space after '{' and before '}' when first key is a NamedTuple, preventing macro interpolation ({{ ... }})" do
+        hash = { {a: 1} => 2 }
+        hash.to_s.should eq("{ {a: 1} => 2 }")
+      end
     end
   end
 
@@ -904,6 +921,36 @@ describe "Hash" do
 
     h2 = h1.transform_keys { |k, v| "#{k}#{v}" }
     h2.should eq({"1a" => "a", "2b" => "b", "3c" => "c"})
+  end
+
+  describe "transform_keys!" do
+    it "transforms keys in place" do
+      h = {1 => "a", 2 => "b", 3 => "c"}
+
+      h.transform_keys! { |x| x + 1 }.should be(h)
+      h.should eq({2 => "a", 3 => "b", 4 => "c"})
+    end
+
+    it "does nothing when empty hash" do
+      h = {} of Int32 => String
+
+      h.transform_keys! { |x| x + 1 }
+      h.should be_empty
+    end
+
+    it "transforms keys with values included" do
+      h = {"1" => "a", "2" => "b", "3" => "c"}
+
+      h.transform_keys! { |k, v| "#{k}#{v}" }
+      h.should eq({"1a" => "a", "2b" => "b", "3c" => "c"})
+    end
+
+    it "allows transformed key type to be a subtype of the original type" do
+      h = {"1" => "foo", 2 => "bar"} # Hash(Int32 | String, String)
+
+      h.transform_keys!(&.to_i)
+      h.should eq({1 => "foo", 2 => "bar"})
+    end
   end
 
   it "transforms values" do

@@ -13,54 +13,34 @@ env:
   SPEC_SPLIT_DOTS: 160
 
 jobs:
-  x86_64-gnu-test:
+  # Test against latest release and the earliest supported Crystal version for forward compatibility.
+  #
+  # A more advanced test which runs against *each* supported version is available in `forward-compatibility.yml` and
+  # runs regularly on a nightly schedule.
+  test:
     env:
-      ARCH: x86_64
+      ARCH: ${{ matrix.arch }}
       ARCH_CMD: linux64
-      DOCKER_TEST_PREFIX: crystallang/crystal:${{ matrix.crystal_bootstrap_version }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        crystal_bootstrap_version: [1.7.3, 1.8.2, 1.9.2, 1.10.1, 1.11.2, 1.12.2, 1.13.3, 1.14.0]
-        flags: [""]
+        arch: [x86_64, x86_64-musl]
+        env: [{}]
         include:
-          # libffi is only available starting from the 1.2.2 build images
-          - crystal_bootstrap_version: 1.0.0
-            flags: "FLAGS=-Dwithout_ffi USE_PCRE1=true"
-          - crystal_bootstrap_version: 1.1.1
-            flags: "FLAGS=-Dwithout_ffi USE_PCRE1=true"
-          - crystal_bootstrap_version: 1.2.2
-            flags: "USE_PCRE1=true"
-          - crystal_bootstrap_version: 1.3.2
-            flags: "USE_PCRE1=true"
-          - crystal_bootstrap_version: 1.4.1
-            flags: "USE_PCRE1=true"
-          - crystal_bootstrap_version: 1.5.1
-            flags: "USE_PCRE1=true"
-          - crystal_bootstrap_version: 1.6.2
-            flags: "USE_PCRE1=true"
+          - arch: x86_64
+            env:
+              CRYSTAL_BOOTSTRAP_VERSION: 1.0.0
+              # libffi is only available starting from the 1.2.2 build images
+              FLAGS: "-Dwithout_ffi"
+              # pcre2 is only available starting from the 1.7.0 build images
+              USE_PCRE1: true
+
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v4
-
-      - name: Prepare System
-        run: bin/ci prepare_system
-
-      - name: Prepare Build
-        run: bin/ci prepare_build
-
-      - name: Test
-        run: ${{ matrix.flags }} bin/ci build
-
-  x86_64-musl-test:
-    env:
-      ARCH: x86_64-musl
-      ARCH_CMD: linux64
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download Crystal source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Prepare System
         run: bin/ci prepare_system
@@ -70,6 +50,7 @@ jobs:
 
       - name: Test
         run: bin/ci build
+        env: ${{ matrix.env }}
 
   x86_64-gnu-test-preview_mt:
     env:
@@ -78,7 +59,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Prepare System
         run: bin/ci prepare_system
@@ -99,7 +82,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Prepare System
         run: bin/ci prepare_system
@@ -109,3 +94,28 @@ jobs:
 
       - name: Check Format
         run: bin/ci format
+
+  lint_spellcheck:
+    name: Spell Check with Typos
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Actions Repository
+      uses: actions/checkout@v5
+      with:
+        persist-credentials: false
+
+    - name: Spell Check Repo
+      uses: crate-ci/typos@07d900b8fa1097806b8adb6391b0d3e0ac2fdea7 # v1.39.0
+      env:
+        CLICOLOR: 1
+
+  lint_ameba:
+    runs-on: ubuntu-latest
+    container: ghcr.io/crystal-ameba/ameba:sha-d861f4ed0f904e0ecdad11c26f98e968f7d95afa # 1.7.0-dev
+    steps:
+      - name: Download Crystal source
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - run: ameba

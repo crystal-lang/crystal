@@ -5,14 +5,10 @@
       {% config ||= read_file?("#{dir.id}/llvm_VERSION") %}
     {% end %}
 
-    {% unless config %}
-      {% raise "Cannot determine LLVM configuration; ensure the file `llvm_VERSION` exists under `CRYSTAL_LIBRARY_PATH`" %}
-    {% end %}
-
-    {% lines = config.lines.map(&.chomp) %}
-    {% llvm_version = lines[0] %}
-    {% llvm_targets = lines[1] %}
-    {% llvm_ldflags = lines[2] %}
+    {% lines = config ? config.lines.map(&.chomp) : nil %}
+    {% llvm_version = env("LLVM_VERSION") || (lines && lines[0]) %}
+    {% llvm_targets = env("LLVM_TARGETS") || (lines && lines[1]) %}
+    {% llvm_ldflags = env("LLVM_LDFLAGS") || (lines && lines[2]) %}
 
     @[Link("llvm")]
     {% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
@@ -21,10 +17,10 @@
     lib LibLLVM
     end
   {% else %}
-    {% llvm_config = env("LLVM_CONFIG") || `sh #{__DIR__}/ext/find-llvm-config`.stringify %}
-    {% llvm_version = `#{llvm_config.id} --version`.stringify %}
+    {% llvm_config = env("LLVM_CONFIG") || `sh #{__DIR__}/ext/find-llvm-config.sh`.stringify %}
+    {% llvm_version = env("LLVM_VERSION") || `#{llvm_config.id} --version`.stringify %}
     {% llvm_targets = env("LLVM_TARGETS") || `#{llvm_config.id} --targets-built`.stringify %}
-    {% llvm_ldflags = "`#{llvm_config.id} --libs --system-libs --ldflags#{" --link-static".id if flag?(:static)}#{" 2> /dev/null".id unless flag?(:win32)}`" %}
+    {% llvm_ldflags = env("LLVM_LDFLAGS") || "`#{llvm_config.id} --libs --system-libs --ldflags#{" --link-static".id if flag?(:static)}#{" 2> /dev/null".id unless flag?(:win32)}`" %}
 
     {% unless flag?(:win32) %}
       @[Link("stdc++")]
@@ -33,33 +29,38 @@
     {% end %}
   {% end %}
 
-  @[Link(ldflags: {{ llvm_ldflags }})]
+  {% llvm_version ||= Crystal::DESCRIPTION.gsub(/.*LLVM: ([^\n]*).*/m, "\\1") %}
+
+  {% unless llvm_targets %}
+    {% if flag?(:i386) || flag?(:x86_64) %}
+      {% llvm_targets = "X86" %}
+    {% elsif flag?(:arm) %}
+      {% llvm_targets = "ARM" %}
+    {% elsif flag?(:aarch64) %}
+      {% llvm_targets = "AArch64" %}
+    {% elsif flag?(:wasm32) %}
+      {% llvm_targets = "WebAssembly" %}
+    {% elsif flag?(:avr) %}
+      {% llvm_targets = "AVR" %}
+    {% end %}
+  {% end %}
+
+  {% if llvm_ldflags %}
+    @[Link(ldflags: {{ llvm_ldflags }})]
+  {% end %}
   lib LibLLVM
-    VERSION = {{ llvm_version.strip.gsub(/git/, "").gsub(/rc.*/, "") }}
-    BUILT_TARGETS = {{ llvm_targets.strip.downcase.split(' ').map(&.id.symbolize) }}
+    VERSION = {{ llvm_version.strip.gsub(/git/, "").gsub(/-?rc.*/, "") }}
+    BUILT_TARGETS = {{ llvm_targets.strip.downcase.gsub(/;|,/, " ").split(' ').map(&.id.symbolize) }}
   end
 {% end %}
 
 # Supported library versions:
 #
-# * LLVM (8-19; aarch64 requires 13+)
+# * LLVM (8-22; aarch64 requires 13+)
 #
 # See https://crystal-lang.org/reference/man/required_libraries.html#other-stdlib-libraries
 {% begin %}
   lib LibLLVM
-    IS_180 = {{LibLLVM::VERSION.starts_with?("18.0")}}
-    IS_170 = {{LibLLVM::VERSION.starts_with?("17.0")}}
-    IS_160 = {{LibLLVM::VERSION.starts_with?("16.0")}}
-    IS_150 = {{LibLLVM::VERSION.starts_with?("15.0")}}
-    IS_140 = {{LibLLVM::VERSION.starts_with?("14.0")}}
-    IS_130 = {{LibLLVM::VERSION.starts_with?("13.0")}}
-    IS_120 = {{LibLLVM::VERSION.starts_with?("12.0")}}
-    IS_111 = {{LibLLVM::VERSION.starts_with?("11.1")}}
-    IS_110 = {{LibLLVM::VERSION.starts_with?("11.0")}}
-    IS_100 = {{LibLLVM::VERSION.starts_with?("10.0")}}
-    IS_90 = {{LibLLVM::VERSION.starts_with?("9.0")}}
-    IS_80 = {{LibLLVM::VERSION.starts_with?("8.0")}}
-
     IS_LT_90 = {{compare_versions(LibLLVM::VERSION, "9.0.0") < 0}}
     IS_LT_100 = {{compare_versions(LibLLVM::VERSION, "10.0.0") < 0}}
     IS_LT_110 = {{compare_versions(LibLLVM::VERSION, "11.0.0") < 0}}
@@ -71,6 +72,8 @@
     IS_LT_170 = {{compare_versions(LibLLVM::VERSION, "17.0.0") < 0}}
     IS_LT_180 = {{compare_versions(LibLLVM::VERSION, "18.0.0") < 0}}
     IS_LT_190 = {{compare_versions(LibLLVM::VERSION, "19.0.0") < 0}}
+    IS_LT_200 = {{compare_versions(LibLLVM::VERSION, "20.0.0") < 0}}
+    IS_LT_210 = {{compare_versions(LibLLVM::VERSION, "21.0.0") < 0}}
   end
 {% end %}
 

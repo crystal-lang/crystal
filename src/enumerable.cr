@@ -1565,19 +1565,27 @@ module Enumerable(T)
     reject { |e| pattern === e }
   end
 
-  # Returns an `Array` of *n* random elements from `self`, using the given
-  # *random* number generator. All elements have equal probability of being
-  # drawn. Sampling is done without replacement; if *n* is larger than the size
-  # of this collection, the returned `Array` has the same size as `self`.
+  # Returns an `Array` of *n* random elements from `self`. All elements have
+  # equal probability of being drawn. Sampling is done without replacement; if
+  # *n* is larger than the size of this collection, the returned `Array` has the
+  # same size as `self`.
   #
   # Raises `ArgumentError` if *n* is negative.
   #
   # ```
-  # [1, 2, 3, 4, 5].sample(2)                # => [3, 5]
-  # {1, 2, 3, 4, 5}.sample(2)                # => [3, 4]
-  # {1, 2, 3, 4, 5}.sample(2, Random.new(1)) # => [1, 5]
+  # [1, 2, 3, 4, 5].sample(2) # => [3, 5]
+  # {1, 2, 3, 4, 5}.sample(2) # => [3, 4]
   # ```
-  def sample(n : Int, random : Random = Random::DEFAULT) : Array(T)
+  #
+  # Uses the *random* instance when provided if the randomness needs to be
+  # controlled or to follow some traits. For example the following calls use a
+  # custom seed or a secure random source:
+  #
+  # ```
+  # {1, 2, 3, 4, 5}.sample(2, Random.new(1))  # => [1, 5]
+  # {1, 2, 3, 4, 5}.sample(2, Random::Secure) # => [2, 5]
+  # ```
+  def sample(n : Int, random : Random? = nil) : Array(T)
     raise ArgumentError.new("Can't sample negative number of elements") if n < 0
 
     # Unweighted reservoir sampling:
@@ -1588,40 +1596,56 @@ module Enumerable(T)
     ary = Array(T).new(n)
     return ary if n == 0
 
+    # must split the default random instance (thread local) because #each might
+    # yield the current fiber that may be resumed by another thread
+    rng = random || Random.split_on_stack
+
     each_with_index do |elem, i|
       if i < n
         ary << elem
       else
-        j = random.rand(i + 1)
+        j = rng.rand(i + 1)
         if j < n
           ary.to_unsafe[j] = elem
         end
       end
     end
 
-    ary.shuffle!(random)
+    ary.shuffle!(rng)
   end
 
-  # Returns a random element from `self`, using the given *random* number
-  # generator. All elements have equal probability of being drawn.
+  # Returns a random element from `self`. All elements have equal probability of
+  # being drawn.
   #
   # Raises `IndexError` if `self` is empty.
   #
   # ```
   # a = [1, 2, 3]
-  # a.sample                # => 2
-  # a.sample                # => 1
-  # a.sample(Random.new(1)) # => 3
+  # a.sample # => 2
+  # a.sample # => 1
   # ```
-  def sample(random : Random = Random::DEFAULT) : T
+  #
+  # Uses the *random* instance when provided if the randomness needs to be
+  # controlled or to follow some traits. For example the following calls use a
+  # custom seed or a secure random source:
+  #
+  # ```
+  # a.sample(Random.new(1))  # => 3
+  # a.sample(Random::Secure) # => 1
+  # ```
+  def sample(random : Random? = nil) : T
     value = uninitialized T
     found = false
+
+    # must split the default random instance (thread local) because #each might
+    # yield the current fiber that may be resumed by another thread
+    rng = random || Random.split_on_stack
 
     each_with_index do |elem, i|
       if !found
         value = elem
         found = true
-      elsif random.rand(i + 1) == 0
+      elsif rng.rand(i + 1) == 0
         value = elem
       end
     end
@@ -1771,7 +1795,7 @@ module Enumerable(T)
   end
 
   private def additive_identity(reflect)
-    type = reflect.first
+    type = reflect.type
     if type.responds_to? :additive_identity
       type.additive_identity
     else
@@ -1808,7 +1832,10 @@ module Enumerable(T)
   # Expects all types returned from the block to respond to `#+` method.
   #
   # This method calls `.additive_identity` on the yielded type to determine the
-  # type of the sum value.
+  # type of the sum value.  Hence, it can fail to compile if
+  # `.additive_identity` fails to determine a safe type, e.g., in case of
+  # union types.  In such cases, use `sum(initial)` with an initial value of
+  # the expected type of the sum value.
   #
   # If the collection is empty, returns `additive_identity`.
   #
@@ -1847,7 +1874,7 @@ module Enumerable(T)
   # ```
   #
   # This method calls `.multiplicative_identity` on the element type to determine the
-  # type of the sum value.
+  # type of the product value.
   #
   # If the collection is empty, returns `multiplicative_identity`.
   #
@@ -1855,7 +1882,7 @@ module Enumerable(T)
   # ([] of Int32).product # => 1
   # ```
   def product
-    product Reflect(T).first.multiplicative_identity
+    product Reflect(T).type.multiplicative_identity
   end
 
   # Multiplies *initial* and all the elements in the collection
@@ -1886,8 +1913,11 @@ module Enumerable(T)
   #
   # Expects all types returned from the block to respond to `#*` method.
   #
-  # This method calls `.multiplicative_identity` on the element type to determine the
-  # type of the sum value.
+  # This method calls `.multiplicative_identity` on the element type to
+  # determine the type of the product value.  Hence, it can fail to compile if
+  # `.multiplicative_identity` fails to determine a safe type, e.g., in case
+  # of union types.  In such cases, use `product(initial)` with an initial
+  # value of the expected type of the product value.
   #
   # If the collection is empty, returns `multiplicative_identity`.
   #
@@ -1895,7 +1925,7 @@ module Enumerable(T)
   # ([] of Int32).product { |x| x + 1 } # => 1
   # ```
   def product(& : T -> _)
-    product(Reflect(typeof(yield Enumerable.element_type(self))).first.multiplicative_identity) do |value|
+    product(Reflect(typeof(yield Enumerable.element_type(self))).type.multiplicative_identity) do |value|
       yield value
     end
   end
@@ -2013,9 +2043,7 @@ module Enumerable(T)
   # (1..5).to_a # => [1, 2, 3, 4, 5]
   # ```
   def to_a : Array(T)
-    ary = [] of T
-    each { |e| ary << e }
-    ary
+    to_a(&.as(T))
   end
 
   # Returns an `Array` with the results of running *block* against each element of the collection.
@@ -2287,12 +2315,16 @@ module Enumerable(T)
 
   # :nodoc:
   private struct Reflect(X)
-    # For now it's just a way to implement `Enumerable#sum` in a way that the
-    # initial value given to it has the type of the first type in the union,
-    # if the type is a union.
-    def self.first
+    # For now, Reflect is used to reject union types in `#sum()` and
+    # `#product()` methods.
+    def self.type
       {% if X.union? %}
-        {{X.union_types.first}}
+        {{
+          raise("`Enumerable#sum` and `#product` do not support Union " +
+                "types. Instead, use `Enumerable#sum(initial)` and " +
+                "`#product(initial)`, respectively, with an initial value " +
+                "of the intended type of the call.")
+        }}
       {% else %}
         X
       {% end %}

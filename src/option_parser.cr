@@ -347,13 +347,25 @@ class OptionParser
     @flags.join io, '\n'
   end
 
+  # Width for option list portion of summary.
+  property summary_width : Int32 = 32
+
+  def summary_width=(width : Int32)
+    raise ArgumentError.new("Negative summary width: #{width}") if width < 0
+    @summary_width = width
+  end
+
+  # Indentation for summary.
+  property summary_indent : String = "    "
+
   private def append_flag(flag, description)
-    indent = " " * 37
-    description = description.gsub("\n", "\n#{indent}")
-    if flag.size >= 33
-      @flags << "    #{flag}\n#{indent}#{description}"
+    description_indent = "#{summary_indent}#{" " * summary_width} "
+    description = description.gsub("\n", "\n#{description_indent}")
+
+    if flag.size >= summary_width
+      @flags << "#{summary_indent}#{flag}\n#{description_indent}#{description}"
     else
-      @flags << "    #{flag}#{" " * (33 - flag.size)}#{description}"
+      @flags << "#{summary_indent}#{flag}#{" " * (summary_width - flag.size)} #{description}"
     end
   end
 
@@ -373,6 +385,8 @@ class OptionParser
     old_missing_option = @missing_option
     old_invalid_option = @invalid_option
     old_before_each = @before_each
+    old_summary_width = @summary_width
+    old_summary_indent = @summary_indent
 
     begin
       yield
@@ -385,6 +399,8 @@ class OptionParser
       @missing_option = old_missing_option
       @invalid_option = old_invalid_option
       @before_each = old_before_each
+      @summary_width = old_summary_width
+      @summary_indent = old_summary_indent
     end
   end
 
@@ -416,74 +432,9 @@ class OptionParser
           break
         end
 
-        if arg.starts_with?("--")
-          value_index = arg.index('=')
-          if value_index
-            flag = arg[0...value_index]
-            value = arg[value_index + 1..-1]
-          else
-            flag = arg
-            value = nil
-          end
-        elsif arg.starts_with?('-')
-          if arg.size > 2
-            flag = arg[0..1]
-            value = arg[2..-1]
-          else
-            flag = arg
-            value = nil
-          end
-        else
-          flag = arg
-          value = nil
-        end
+        flag, value = parse_arg_to_flag_and_value(arg)
 
-        # Fetch handler of the flag.
-        # If value is given even though handler does not take value, it is invalid, then it is skipped.
-        if (handler = @handlers[flag]?) && !(handler.value_type.none? && value)
-          handled_args << arg_index
-
-          if !value
-            case handler.value_type
-            in FlagValue::Required
-              value = args[arg_index + 1]?
-              if value
-                handled_args << arg_index + 1
-                arg_index += 1
-              else
-                @missing_option.call(flag)
-              end
-            in FlagValue::Optional
-              unless gnu_optional_args?
-                value = args[arg_index + 1]?
-                if value && !@handlers.has_key?(value)
-                  handled_args << arg_index + 1
-                  arg_index += 1
-                else
-                  value = nil
-                end
-              end
-            in FlagValue::None
-              # do nothing
-            in FlagValue::Boolean
-              # call the block here and ignore booleans later
-              if handler.is_a?(BoolHandler)
-                handler.block.call !flag.starts_with?("--no-")
-              end
-            end
-          end
-
-          # If this is a subcommand (flag not starting with -), delete all
-          # subcommands since they are no longer valid.
-          unless flag.starts_with?('-')
-            @handlers.select! { |k, _| k.starts_with?('-') }
-            @flags.select!(&.starts_with?("    -"))
-          end
-
-          if handler.is_a?(Handler)
-            handler.block.call(value || "")
-          end
-        end
+        arg_index = handle_flag(flag, value, arg_index, args, handled_args)
 
         arg_index += 1
       end
@@ -498,20 +449,7 @@ class OptionParser
       end
 
       # After argument parsing, delete handled arguments from args.
-      # We reverse so that we delete args from
-      handled_args.reverse!
-      i = 0
-      args.reject! do
-        # handled_args is sorted in reverse so we know that i <= handled_args.last
-        handled = i == handled_args.last?
-
-        # Maintain the i <= handled_args.last invariant
-        handled_args.pop if handled
-
-        i += 1
-
-        handled
-      end
+      remove_handled_args(args, handled_args)
 
       # Since we've deleted all handled arguments, `args` is all unknown arguments
       # which we split by the index of any double dash argument
@@ -534,6 +472,89 @@ class OptionParser
           @invalid_option.call(arg)
         end
       end
+    end
+  end
+
+  # Parses a command-line argument into a flag and optional inline value.
+  private def parse_arg_to_flag_and_value(arg : String) : {String, String?}
+    if arg.starts_with?("--")
+      name, separator, value = arg.partition("=")
+      if separator == "="
+        return {name, value}
+      end
+    elsif arg.starts_with?('-') && arg.size > 2
+      return {arg[0..1], arg[2..]}
+    end
+    {arg, nil}
+  end
+
+  # Processes a single flag/subcommand. Matches original behaviour exactly.
+  private def handle_flag(flag : String, value : String?, arg_index : Int32, args : Array(String), handled_args : Array(Int32)) : Int32
+    return arg_index unless handler = @handlers[flag]?
+    return arg_index if handler.value_type.none? && value
+
+    handled_args << arg_index
+
+    if !value
+      case handler.value_type
+      in FlagValue::Required
+        value = args[arg_index + 1]?
+        if value
+          handled_args << arg_index + 1
+          arg_index += 1
+        else
+          @missing_option.call(flag)
+        end
+      in FlagValue::Optional
+        unless gnu_optional_args?
+          value = args[arg_index + 1]?
+          if value && !@handlers.has_key?(value)
+            handled_args << arg_index + 1
+            arg_index += 1
+          else
+            value = nil
+          end
+        end
+      in FlagValue::None
+        # do nothing
+      in FlagValue::Boolean
+        # call the block here and ignore booleans later
+        if handler.is_a?(BoolHandler)
+          handler.block.call !flag.starts_with?("--no-")
+        end
+      end
+    end
+
+    # If this is a subcommand (flag not starting with -), delete all
+    # subcommands since they are no longer valid.
+    unless flag.starts_with?('-')
+      @handlers.select! { |k, _| k.starts_with?('-') }
+      @flags.select!(&.starts_with?("    -"))
+    end
+
+    if handler.is_a?(Handler)
+      handler.block.call(value || "")
+    end
+
+    arg_index
+  end
+
+  # Removes handled arguments from the args array based on handled_args indexes.
+  private def remove_handled_args(args : Array(String), handled_args : Array(Int32)) : Nil
+    # After argument parsing, delete handled arguments from args.
+    # We reverse so that we delete args from the end
+    handled_args.reverse!
+    i = 0
+    args.reject! do
+      # handled_args is sorted in reverse so we know that i <= handled_args.last
+      handled = i == handled_args.last?
+
+      # Maintain the i <= handled_args.last invariant
+      handled_args.pop if handled
+
+      i += 1
+
+      handled
     end
   end
 end

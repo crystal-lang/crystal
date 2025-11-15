@@ -236,29 +236,29 @@ module Crystal
 
       describe "#doc" do
         it "returns an empty string if there are no docs on the node (wants_doc = false)" do
-          assert_macro "{{ x.doc }}", %(""), {x: Call.new(nil, "some_call")}
+          assert_macro "{{ x.doc }}", %(""), {x: Call.new("some_call")}
         end
 
         it "returns the call's docs if present (wants_doc = true)" do
-          assert_macro "{{ x.doc }}", %("Some docs"), {x: Call.new(nil, "some_call").tap { |c| c.doc = "Some docs" }}
+          assert_macro "{{ x.doc }}", %("Some docs"), {x: Call.new("some_call").tap { |c| c.doc = "Some docs" }}
         end
 
         it "returns a multiline comment" do
-          assert_macro "{{ x.doc }}", %("Some\\nmulti\\nline\\ndocs"), {x: Call.new(nil, "some_call").tap { |c| c.doc = "Some\nmulti\nline\ndocs" }}
+          assert_macro "{{ x.doc }}", %("Some\\nmulti\\nline\\ndocs"), {x: Call.new("some_call").tap { |c| c.doc = "Some\nmulti\nline\ndocs" }}
         end
       end
 
       describe "#doc_comment" do
         it "returns an empty MacroId if there are no docs on the node (wants_doc = false)" do
-          assert_macro "{{ x.doc_comment }}", %(), {x: Call.new(nil, "some_call")}
+          assert_macro "{{ x.doc_comment }}", %(), {x: Call.new("some_call")}
         end
 
         it "returns the call's docs if present as a MacroId (wants_doc = true)" do
-          assert_macro "{{ x.doc_comment }}", %(Some docs), {x: Call.new(nil, "some_call").tap { |c| c.doc = "Some docs" }}
+          assert_macro "{{ x.doc_comment }}", %(Some docs), {x: Call.new("some_call").tap { |c| c.doc = "Some docs" }}
         end
 
         it "ensures each newline has a `#` prefix" do
-          assert_macro "{{ x.doc_comment }}", %(Some\n# multi\n# line\n# docs), {x: Call.new(nil, "some_call").tap { |c| c.doc = "Some\nmulti\nline\ndocs" }}
+          assert_macro "{{ x.doc_comment }}", %(Some\n# multi\n# line\n# docs), {x: Call.new("some_call").tap { |c| c.doc = "Some\nmulti\nline\ndocs" }}
         end
       end
     end
@@ -409,6 +409,14 @@ module Crystal
         assert_macro %({{'a'.ord}}), %(97)
         assert_macro %({{'龍'.ord}}), %(40845)
       end
+
+      it "executes zero?" do
+        assert_macro "{{0.zero?}}", "true"
+        assert_macro "{{1.zero?}}", "false"
+
+        assert_macro "{{0.0.zero?}}", "true"
+        assert_macro "{{0.1.zero?}}", "false"
+      end
     end
 
     describe "string methods" do
@@ -420,6 +428,10 @@ module Crystal
       it "executes string != string" do
         assert_macro %({{"foo" != "foo"}}), %(false)
         assert_macro %({{"foo" != "bar"}}), %(true)
+      end
+
+      it "executes string * number" do
+        assert_macro %({{"odelay" * 3}}), "\"odelayodelayodelay\""
       end
 
       it "executes split without arguments" do
@@ -569,6 +581,12 @@ module Crystal
 
       it "executes gsub" do
         assert_macro %({{"hello".gsub(/e|o/, "a")}}), %("halla")
+      end
+
+      it "executes scan" do
+        assert_macro %({{"Crystal".scan(/(Cr)(?<name1>y)(st)(?<name2>al)/)}}), %([{0 => "Crystal", 1 => "Cr", "name1" => "y", 3 => "st", "name2" => "al"} of ::Int32 | ::String => ::String | ::Nil] of ::Hash(::Int32 | ::String, ::String | ::Nil))
+        assert_macro %({{"Crystal".scan(/(Cr)?(stal)/)}}), %([{0 => "stal", 1 => nil, 2 => "stal"} of ::Int32 | ::String => ::String | ::Nil] of ::Hash(::Int32 | ::String, ::String | ::Nil))
+        assert_macro %({{"Ruby".scan(/Crystal/)}}), %([] of ::Hash(::Int32 | ::String, ::String | ::Nil))
       end
 
       it "executes camelcase" do
@@ -760,6 +778,10 @@ module Crystal
 
       it "executes map" do
         assert_macro %({{[1, 2, 3].map { |e| e == 2 }}}), "[false, true, false]"
+      end
+
+      it "executes *" do
+        assert_macro %({{["na"] * 5}}), %(["na", "na", "na", "na", "na"])
       end
 
       it "executes reduce with no initial value" do
@@ -1523,6 +1545,10 @@ module Crystal
           end
         end
       end
+
+      it "executes *" do
+        assert_macro %({{ {"na"} * 5}}), %({"na", "na", "na", "na", "na"})
+      end
     end
 
     describe "regex methods" do
@@ -1587,7 +1613,7 @@ module Crystal
     describe TypeNode do
       describe "#includers" do
         it "returns an array of types `self` is directly included in" do
-          assert_type(%(
+          assert_type(<<-CRYSTAL) { tuple_of([int32, int32, int32]) }
             module Foo
             end
 
@@ -1642,7 +1668,7 @@ module Crystal
               {% if Enumt.includers.map(&.stringify).sort == %w(ChildT(String) ChildT(T) Str) %} 1 {% else %} 'a' {% end %},
               {% if Enumt(String).includers.map(&.stringify).sort == %w(ChildT(String) Str) %} 1 {% else %} 'a' {% end %},
             }
-            )) { tuple_of([int32, int32, int32]) }
+            CRYSTAL
         end
       end
 
@@ -1767,7 +1793,7 @@ module Crystal
         it "does not include trailing + for virtual type" do
           assert_macro("{{klass.id}}", "Foo") do |program|
             foo = NonGenericClassType.new(program, program, "Foo", program.reference)
-            bar = NonGenericClassType.new(program, program, "Bar", foo)
+            NonGenericClassType.new(program, program, "Bar", foo)
             {klass: TypeNode.new(foo.virtual_type)}
           end
         end
@@ -1785,9 +1811,30 @@ module Crystal
         end
       end
 
-      it "executes instance_vars" do
-        assert_macro("{{x.instance_vars.map &.stringify}}", %(["bytesize", "length", "c"])) do |program|
-          {x: TypeNode.new(program.string)}
+      describe "#instance_vars" do
+        it "executes instance_vars" do
+          assert_macro("{{x.instance_vars.map &.stringify}}", %(["bytesize", "length", "c"])) do |program|
+            {x: TypeNode.new(program.string)}
+          end
+        end
+
+        it "errors when called from top-level scope" do
+          assert_error <<-CRYSTAL, "`TypeNode#instance_vars` cannot be called in the top-level scope: instance vars are not yet initialized"
+            class Foo
+            end
+            {{ Foo.instance_vars }}
+          CRYSTAL
+        end
+
+        it "does not error when called from def scope" do
+          assert_type <<-CRYSTAL { |program| program.string }
+            module Moo
+            end
+            def moo
+              {{ Moo.instance_vars.stringify }}
+            end
+            moo
+          CRYSTAL
         end
       end
 
@@ -1950,7 +1997,7 @@ module Crystal
       end
 
       it "== and != devirtualize generic type arguments (#10730)" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { tuple_of([int32, char]) }
           class A
           end
 
@@ -1967,7 +2014,7 @@ module Crystal
           end
 
           Foo(A).foo
-          )) { tuple_of([int32, char]) }
+          CRYSTAL
       end
 
       it "executes <" do
@@ -2485,6 +2532,25 @@ module Crystal
             {x: TypeNode.new(program.proc_of(program.void))}
           end
         end
+
+        it "errors when called from top-level scope" do
+          assert_error <<-CRYSTAL, "`TypeNode#has_inner_pointers?` cannot be called in the top-level scope: instance vars are not yet initialized"
+            class Foo
+            end
+            {{ Foo.has_inner_pointers? }}
+          CRYSTAL
+        end
+
+        it "does not error when called from def scope" do
+          assert_type <<-CRYSTAL { |program| program.bool }
+            module Moo
+            end
+            def moo
+              {{ Moo.has_inner_pointers? }}
+            end
+            moo
+          CRYSTAL
+        end
       end
     end
 
@@ -2726,19 +2792,24 @@ module Crystal
       it "executes else" do
         assert_macro %({{x.else}}), "\"foo\"", {x: MacroIf.new(BoolLiteral.new(true), StringLiteral.new("test"), StringLiteral.new("foo"))}
       end
+
+      it "executes is_unless?" do
+        assert_macro %({{x.is_unless?}}), "true", {x: MacroIf.new(BoolLiteral.new(true), StringLiteral.new("test"), StringLiteral.new("foo"), is_unless: true)}
+        assert_macro %({{x.is_unless?}}), "false", {x: MacroIf.new(BoolLiteral.new(false), StringLiteral.new("test"), StringLiteral.new("foo"), is_unless: false)}
+      end
     end
 
     describe "macro for methods" do
       it "executes vars" do
-        assert_macro %({{x.vars}}), "[bar]", {x: MacroFor.new([Var.new("bar")], Var.new("foo"), Call.new(nil, "puts", [Var.new("bar")] of ASTNode))}
+        assert_macro %({{x.vars}}), "[bar]", {x: MacroFor.new([Var.new("bar")], Var.new("foo"), Call.new("puts", [Var.new("bar")] of ASTNode))}
       end
 
       it "executes exp" do
-        assert_macro %({{x.exp}}), "foo", {x: MacroFor.new([Var.new("bar")], Var.new("foo"), Call.new(nil, "puts", [Var.new("bar")] of ASTNode))}
+        assert_macro %({{x.exp}}), "foo", {x: MacroFor.new([Var.new("bar")], Var.new("foo"), Call.new("puts", [Var.new("bar")] of ASTNode))}
       end
 
       it "executes body" do
-        assert_macro %({{x.body}}), "puts(bar)", {x: MacroFor.new([Var.new("bar")], Var.new("foo"), Call.new(nil, "puts", [Var.new("bar")] of ASTNode))}
+        assert_macro %({{x.body}}), "puts(bar)", {x: MacroFor.new([Var.new("bar")], Var.new("foo"), Call.new("puts", [Var.new("bar")] of ASTNode))}
       end
     end
 
@@ -2887,7 +2958,7 @@ module Crystal
       end
 
       it "executes args" do
-        assert_macro %({{x.args}}), "[1, 3]", {x: Call.new(nil, "some_call", [1.int32, 3.int32] of ASTNode)}
+        assert_macro %({{x.args}}), "[1, 3]", {x: Call.new("some_call", [1.int32, 3.int32] of ASTNode)}
       end
 
       it "executes receiver" do
@@ -2920,7 +2991,7 @@ module Crystal
 
       it "executes global?" do
         assert_macro %({{x.global?}}), "false", {x: Call.new(1.int32, "some_call")}
-        assert_macro %({{x.global?}}), "true", {x: Call.new(nil, "some_call", global: true)}
+        assert_macro %({{x.global?}}), "true", {x: Call.new("some_call", global: true)}
       end
     end
 
@@ -3709,12 +3780,52 @@ module Crystal
     end
 
     describe "flag?" do
-      it "has flag" do
+      it "has simple flag" do
         assert_macro %({{flag?(:foo)}}), %(true), flags: "foo"
       end
 
       it "doesn't have flag" do
         assert_macro %({{flag?(:foo)}}), %(false)
+      end
+
+      it "has flag value" do
+        assert_macro %({{flag?(:foo)}}), %("bar"), flags: "foo=bar"
+      end
+
+      it "has empty flag value" do
+        assert_macro %({{flag?(:foo)}}), %(""), flags: "foo="
+      end
+
+      it "uses last one of multiple values" do
+        assert_macro %({{flag?(:foo)}}), %("baz"), flags: %w[foo=bar foo=baz]
+        assert_macro %({{flag?(:foo)}}), %("bar"), flags: %w[foo=baz foo=bar]
+      end
+
+      describe "presents `name=value` as simple flag" do
+        it "foo=bar" do
+          assert_macro %({{flag?(:"foo=bar")}}), %(true), flags: "foo=bar"
+        end
+
+        it "foo=" do
+          assert_macro %({{flag?(:foo=)}}), %(true), flags: "foo="
+        end
+
+        it "multiple values" do
+          assert_macro %({{flag?(:"foo=bar")}}), %(true), flags: %w[foo=baz foo=bar]
+          assert_macro %({{flag?(:"foo=baz")}}), %(true), flags: %w[foo=bar foo=baz]
+          assert_macro %({{flag?(:"foo=bar")}}), %(true), flags: %w[foo=bar foo=baz]
+          assert_macro %({{flag?(:"foo=baz")}}), %(true), flags: %w[foo=baz foo=bar]
+        end
+
+        it "multiple values and simple flag" do
+          assert_macro %({{flag?(:"foo=bar")}}), %(true), flags: %w[foo=bar foo]
+          assert_macro %({{flag?(:"foo=bar")}}), %(true), flags: %w[foo foo=bar]
+        end
+      end
+
+      it "uses last one of multiple values and simple" do
+        assert_macro %({{flag?(:foo)}}), %(true), flags: %w[foo=bar foo]
+        assert_macro %({{flag?(:foo)}}), %("bar"), flags: %w[foo foo=bar]
       end
     end
 

@@ -2,6 +2,7 @@ require "./history"
 require "./expression_editor"
 require "./char_reader"
 require "./auto_completion"
+require "./search"
 
 module Reply
   # Reader for your REPL.
@@ -10,7 +11,7 @@ module Reply
   #
   # ```
   # class MyReader < Reply::Reader
-  #   def prompt(io, line_number, color?)
+  #   def prompt(io, line_number, color)
   #     io << "reply> "
   #   end
   # end
@@ -45,21 +46,23 @@ module Reply
     #                        ^    ^
     #                        |    |
     #                   History  AutoCompletion
+    #                   +Search
     # ```
 
     getter history = History.new
     getter editor : ExpressionEditor
     @auto_completion : AutoCompletion
     @char_reader = CharReader.new
+    @search = Search.new
     getter line_number = 1
 
     delegate :color?, :color=, :lines, :output, :output=, to: @editor
     delegate :word_delimiters, :word_delimiters=, to: @editor
 
     def initialize
-      @editor = ExpressionEditor.new do |expr_line_number, color?|
+      @editor = ExpressionEditor.new do |expr_line_number, color|
         String.build do |io|
-          prompt(io, @line_number + expr_line_number, color?)
+          prompt(io, @line_number + expr_line_number, color)
         end
       end
 
@@ -72,6 +75,10 @@ module Reply
         @auto_completion.display_entries(io, color?, max_height: {10, Term::Size.height - 1}.min, min_height: previous_height)
       end
 
+      @editor.set_footer do |io, _previous_height|
+        @search.footer(io, color?)
+      end
+
       @editor.set_highlight(&->highlight(String))
 
       if file = self.history_file
@@ -81,10 +88,10 @@ module Reply
 
     # Override to customize the prompt.
     #
-    # Toggle the colorization following *color?*.
+    # Toggle the colorization following *color*.
     #
     # default: `$:001> `
-    def prompt(io : IO, line_number : Int32, color? : Bool)
+    def prompt(io : IO, line_number : Int32, color : Bool)
       io << "$:"
       io << sprintf("%03d", line_number)
       io << "> "
@@ -118,7 +125,7 @@ module Reply
       0
     end
 
-    # Override to select with expression is saved in history.
+    # Override to select which expression is saved in history.
     #
     # default: `!expression.blank?`
     def save_in_history?(expression : String)
@@ -130,6 +137,13 @@ module Reply
     # default: `nil`
     def history_file
       nil
+    end
+
+    # Override with `true` to disable the reverse i-search (ctrl-r).
+    #
+    # default: `true` (disabled) if `history_file` not set.
+    def disable_search?
+      history_file.nil?
     end
 
     # Override to integrate auto-completion.
@@ -232,6 +246,7 @@ module Reply
         in .ctrl_delete?    then @editor.update { delete_word }
         in .alt_d?          then @editor.update { delete_word }
         in .ctrl_c?         then on_ctrl_c
+        in .ctrl_r?         then on_ctrl_r
         in .ctrl_d?
           if @editor.empty?
             output.puts
@@ -242,6 +257,12 @@ module Reply
         in .eof?, .ctrl_x?
           output.puts
           return nil
+        end
+
+        if (read.is_a?(CharReader::Sequence) && (read.ctrl_r? || read.backspace?)) || read.is_a?(Char) || read.is_a?(String)
+        else
+          @search.close
+          @editor.update
         end
 
         if read.is_a?(CharReader::Sequence) && (read.tab? || read.enter? || read.alt_enter? || read.shift_tab? || read.escape? || read.backspace? || read.ctrl_c?)
@@ -278,6 +299,8 @@ module Reply
     end
 
     private def on_char(char)
+      return search_and_replace(@search.query + char) if @search.open?
+
       @editor.update do
         @editor << char
         line = @editor.current_line.rstrip(' ')
@@ -294,6 +317,8 @@ module Reply
     end
 
     private def on_string(string)
+      return search_and_replace(@search.query + string) if @search.open?
+
       @editor.update do
         @editor << string
       end
@@ -301,6 +326,12 @@ module Reply
 
     private def on_enter(alt_enter = false, ctrl_enter = false, &)
       @auto_completion.close
+      if @search.open?
+        @search.close
+        @editor.update
+        return
+      end
+
       if alt_enter || ctrl_enter || (@editor.cursor_on_last_line? && continue?(@editor.expression))
         @editor.update do
           insert_new_line(indent: self.indentation_level(@editor.expression_before_cursor))
@@ -338,6 +369,8 @@ module Reply
     end
 
     private def on_back
+      return search_and_replace(@search.query.rchop) if @search.open?
+
       auto_complete_remove_char if @auto_completion.open?
       @editor.update { back }
     end
@@ -365,10 +398,19 @@ module Reply
 
     private def on_ctrl_c
       @auto_completion.close
+      @search.close
       @editor.end_editing
       output.puts "^C"
       @history.set_to_last
       @editor.prompt_next
+    end
+
+    private def on_ctrl_r
+      return if disable_search?
+
+      @auto_completion.close
+      @search.open
+      search_and_replace(reuse_index: true)
     end
 
     private def on_tab(shift_tab = false)
@@ -390,6 +432,7 @@ module Reply
 
     private def on_escape
       @auto_completion.close
+      @search.close
       @editor.update
     end
 
@@ -443,6 +486,21 @@ module Reply
         @auto_completion.name_filter = @editor.current_word[...-1]
       else
         @auto_completion.clear
+      end
+    end
+
+    private def search_and_replace(query = nil, reuse_index = false)
+      @search.query = query if query
+
+      from_index = reuse_index ? @history.index - 1 : @history.size - 1
+
+      result = @search.search(@history, from_index)
+      if result
+        @editor.replace(result.result)
+
+        @editor.move_cursor_to(result.x + @search.query.size, result.y)
+      else
+        @editor.replace([""])
       end
     end
 

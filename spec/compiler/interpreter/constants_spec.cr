@@ -4,7 +4,7 @@ require "./spec_helper"
 describe Crystal::Repl::Interpreter do
   context "constants" do
     it "returns nil in the assignment" do
-      interpret(<<-CRYSTAL).should eq(nil)
+      interpret(<<-CRYSTAL).should be_nil
         A = 123
       CRYSTAL
     end

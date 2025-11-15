@@ -14,13 +14,15 @@ jobs:
     if: github.repository == 'crystal-lang/crystal'
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - name: Build Crystal
         uses: docker://crystallang/crystal:1.13.2-alpine-84codes-build
         with:
           args: make crystal
       - name: Upload Crystal executable
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: crystal-aarch64-musl
           path: |
@@ -32,9 +34,11 @@ jobs:
     if: github.repository == 'crystal-lang/crystal'
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - name: Download Crystal executable
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: crystal-aarch64-musl
       - name: Mark downloaded compiler as executable
@@ -45,13 +49,15 @@ jobs:
           args: make std_spec
   aarch64-musl-test-compiler:
     needs: aarch64-musl-build
-    runs-on: [runs-on, runner=2cpu-linux-arm64, "family=m7g", ram=8, "run-id=${{ github.run_id }}"]
+    runs-on: [runs-on, runner=4cpu-linux-arm64, "family=m7g", ram=16, "run-id=${{ github.run_id }}"]
     if: github.repository == 'crystal-lang/crystal'
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - name: Download Crystal executable
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: crystal-aarch64-musl
       - name: Mark downloaded compiler as executable
@@ -65,13 +71,15 @@ jobs:
     if: github.repository == 'crystal-lang/crystal'
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - name: Build Crystal
         uses: docker://crystallang/crystal:1.13.2-ubuntu-84codes-build
         with:
           args: make crystal
       - name: Upload Crystal executable
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: crystal-aarch64-gnu
           path: |
@@ -83,9 +91,11 @@ jobs:
     if: github.repository == 'crystal-lang/crystal'
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - name: Download Crystal executable
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: crystal-aarch64-gnu
       - name: Mark downloaded compiler as executable
@@ -96,13 +106,15 @@ jobs:
           args: make std_spec
   aarch64-gnu-test-compiler:
     needs: aarch64-gnu-build
-    runs-on: [runs-on, runner=2cpu-linux-arm64, "family=m7g", ram=8, "run-id=${{ github.run_id }}"]
+    runs-on: [runs-on, runner=4cpu-linux-arm64, "family=m7g", ram=16, "run-id=${{ github.run_id }}"]
     if: github.repository == 'crystal-lang/crystal'
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - name: Download Crystal executable
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: crystal-aarch64-gnu
       - name: Mark downloaded compiler as executable

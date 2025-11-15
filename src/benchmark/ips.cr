@@ -31,7 +31,7 @@ module Benchmark
       end
 
       # Adds code to be benchmarked
-      def report(label = "", &action) : Benchmark::IPS::Entry
+      def report(label : String = "", &action : ->) : Benchmark::IPS::Entry
         item = Entry.new(label, action)
         @items << item
         item
@@ -65,7 +65,7 @@ module Benchmark
         @items.each do |item|
           GC.collect
 
-          count = 0
+          count = 0_u64
           elapsed = Time.measure do
             target = Time.monotonic + @warmup_time
 

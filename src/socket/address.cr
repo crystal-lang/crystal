@@ -90,6 +90,7 @@ class Socket
     BROADCAST6   = "ff0X::1"
 
     getter port : Int32
+    getter zone_id : Int32
 
     @addr : LibC::In6Addr | LibC::InAddr
 
@@ -100,21 +101,44 @@ class Socket
     # Raises `Socket::Error` if *address* does not contain a valid IP address or
     # the port number is out of range.
     #
+    # Scoped/Zoned IPv6 link-local addresses are supported per RFC4007, e.g.
+    # `fe80::abcd%eth0` but will always use their numerical interface index
+    # in the `#inspect` representation. The interface name can be retrieved later
+    # using `#link_local_interface` on the `IPAddress` object.
+    #
     # ```
     # require "socket"
     #
     # Socket::IPAddress.new("127.0.0.1", 8080)                 # => Socket::IPAddress(127.0.0.1:8080)
     # Socket::IPAddress.new("fe80::2ab2:bdff:fe59:8e2c", 1234) # => Socket::IPAddress([fe80::2ab2:bdff:fe59:8e2c]:1234)
+    # Socket::IPAddress.new("fe80::4567:8:9%eth0", 443)        # => Socket::IPAddress([fe80::4567:8:9%2]:443)
     # ```
     def self.new(address : String, port : Int32)
       raise Error.new("Invalid port number: #{port}") unless IPAddress.valid_port?(port)
 
       if v4_fields = parse_v4_fields?(address)
         addr = v4(v4_fields, port.to_u16!)
-      elsif v6_fields = parse_v6_fields?(address)
-        addr = v6(v6_fields, port.to_u16!)
       else
-        raise Error.new("Invalid IP address: #{address}")
+        v6_fields_tpl = parse_v6_fields?(address.to_slice)
+        raise Error.new("Invalid IP address: #{address}") if v6_fields_tpl.nil?
+        v6_fields, zone_slice = v6_fields_tpl
+        zone_id = 0
+        unless zone_slice.nil?
+          # `zone_id` is only relevant for link-local addresses, i.e. beginning with "fe80:".
+          if v6_fields[0] != 0xfe80
+            raise Error.new("Zoned/scoped IPv6 addresses are only allowed for link-local (supplied '#{address}' is not within fe80::/10)")
+          end
+          # Scope/Zone can be given either as a network interface name or directly as the interface index.
+          # When given a name we need to find the corresponding interface index.
+          zone = String.new(zone_slice)
+          if zone_id = zone.to_i?
+            raise Error.new("Invalid IPv6 link-local zone index '#{zone}' in address '#{address}'") unless zone_id.positive?
+          else
+            zone_id = LibC.if_nametoindex(zone).to_i
+            raise Error.new("IPv6 link-local zone interface '#{zone}' not found (in address '#{address}')") unless zone_id.positive?
+          end
+        end
+        addr = v6(v6_fields, port.to_u16!, zone_id)
       end
 
       addr
@@ -247,12 +271,20 @@ class Socket
     # Socket::IPAddress.parse_v6_fields?("a:0b:00c:000d:E:F::") # => UInt16.static_array(10, 11, 12, 13, 14, 15, 0, 0)
     # Socket::IPAddress.parse_v6_fields?("::ffff:192.168.1.1")  # => UInt16.static_array(0, 0, 0, 0, 0, 0xffff, 0xc0a8, 0x0101)
     # Socket::IPAddress.parse_v6_fields?("1::2::")              # => nil
+    # Socket::IPAddress.parse_v6_fields?("fe80::a:b%eth0")      # => StaticArray[65152, 0, 0, 0, 0, 0, 10, 11]
     # ```
     def self.parse_v6_fields?(str : String) : UInt16[8]?
-      parse_v6_fields?(str.to_slice)
+      parse_v6_fields?(str.to_slice).try &.[0]
     end
 
-    private def self.parse_v6_fields?(bytes : Bytes)
+    # This private method additionally supports IPv6 scoped addresses and
+    # returns its fields plus the zone/scope subslice (if present).
+    # Invalid addresses will immediately return just `nil` while correctly
+    # formatted addresses return a tuple.
+    #
+    # The format of IPv6 scoped addresses follows
+    # [RFC 4007, section 11](https://datatracker.ietf.org/doc/html/rfc4007#section-11).
+    private def self.parse_v6_fields?(bytes : Bytes) : Tuple(UInt16[8], Slice(UInt8)?)?
       # port of https://git.musl-libc.org/cgit/musl/tree/src/network/inet_pton.c?id=7e13e5ae69a243b90b90d2f4b79b2a150f806335
       ptr = bytes.to_unsafe
       finish = ptr + bytes.size
@@ -265,6 +297,7 @@ class Socket
       fields = StaticArray(UInt16, 8).new(0)
       brk = -1
       need_v4 = false
+      zone_slice = nil
 
       i = 0
       while true
@@ -296,6 +329,10 @@ class Socket
         return nil if i == 7
 
         unless ptr < finish && ptr.value === ':'
+          if (ptr < finish && ptr.value === '%')
+            zone_slice = Bytes.new(ptr + 1, finish - ptr - 1)
+            break
+          end
           return nil if !(ptr < finish && ptr.value === '.') || (i < 6 && brk < 0)
           need_v4 = true
           i &+= 1
@@ -320,7 +357,7 @@ class Socket
         fields[7] = x2.to_u16! << 8 | x3
       end
 
-      fields
+      {fields, zone_slice}
     end
 
     private def self.from_hex(ch : UInt8)
@@ -364,14 +401,15 @@ class Socket
       0 <= field <= 0xff ? field.to_u8! : raise Error.new("Invalid IPv4 field: #{field}")
     end
 
-    # Returns the IPv6 address with the given address *fields* and *port*
-    # number.
-    def self.v6(fields : UInt16[8], port : UInt16) : self
+    # Returns the IPv6 address with the given address *fields*, *port* number
+    # and scope identifier.
+    def self.v6(fields : UInt16[8], port : UInt16, zone_id : Int32 = 0) : self
       fields.map! { |field| endian_swap(field) }
       addr = LibC::SockaddrIn6.new(
         sin6_family: LibC::AF_INET6,
         sin6_port: endian_swap(port),
         sin6_addr: ipv6_from_addr16(fields),
+        sin6_scope_id: zone_id,
       )
       new(pointerof(addr), sizeof(typeof(addr)))
     end
@@ -379,10 +417,10 @@ class Socket
     # Returns the IPv6 address `[x0:x1:x2:x3:x4:x5:x6:x7]:port`.
     #
     # Raises `Socket::Error` if any field or the port number is out of range.
-    def self.v6(x0 : Int, x1 : Int, x2 : Int, x3 : Int, x4 : Int, x5 : Int, x6 : Int, x7 : Int, *, port : Int) : self
+    def self.v6(x0 : Int, x1 : Int, x2 : Int, x3 : Int, x4 : Int, x5 : Int, x6 : Int, x7 : Int, *, port : Int, zone_id : Int32 = 0) : self
       fields = StaticArray[x0, x1, x2, x3, x4, x5, x6, x7].map { |field| to_v6_field(field) }
       port = valid_port?(port) ? port.to_u16! : raise Error.new("Invalid port number: #{port}")
-      v6(fields, port)
+      v6(fields, port, zone_id)
     end
 
     private def self.to_v6_field(field)
@@ -435,12 +473,14 @@ class Socket
     protected def initialize(sockaddr : LibC::SockaddrIn6*, @size)
       @family = Family::INET6
       @addr = sockaddr.value.sin6_addr
+      @zone_id = sockaddr.value.sin6_scope_id.to_i
       @port = IPAddress.endian_swap(sockaddr.value.sin6_port).to_i
     end
 
     protected def initialize(sockaddr : LibC::SockaddrIn*, @size)
       @family = Family::INET
       @addr = sockaddr.value.sin_addr
+      @zone_id = 0
       @port = IPAddress.endian_swap(sockaddr.value.sin_port).to_i
     end
 
@@ -605,6 +645,7 @@ class Socket
       in LibC::In6Addr
         io << '['
         address_to_s(io, addr)
+        io << '%' << @zone_id if @zone_id.positive?
         io << ']' << ':' << port
       end
     end
@@ -717,6 +758,11 @@ class Socket
       sockaddr.value.sin6_family = family
       sockaddr.value.sin6_port = IPAddress.endian_swap(port.to_u16!)
       sockaddr.value.sin6_addr = addr
+      if @family == Family::INET6 && link_local?
+        sockaddr.value.sin6_scope_id = @zone_id
+      else
+        sockaddr.value.sin6_scope_id = 0
+      end
       sockaddr.as(LibC::Sockaddr*)
     end
 
@@ -726,6 +772,36 @@ class Socket
       sockaddr.value.sin_port = IPAddress.endian_swap(port.to_u16!)
       sockaddr.value.sin_addr = addr
       sockaddr.as(LibC::Sockaddr*)
+    end
+
+    # Returns the interface name for a scoped/zoned link-local IPv6 address.
+    # This only works on properly initialized link-local IPv6 address objects.
+    # In any other case this will return nil.
+    #
+    # The OS tracks the zone via a numerical interface index as enumerated
+    # by the kernel. To keep our abstraction class in line, we also only
+    # keep the interface index around.
+    #
+    # This helper method exists to look up the interface name based on the
+    # associated zone_id property.
+    def link_local_interface : String | Nil
+      {% unless LibC.has_method?(:if_nametoindex) %}
+        raise NotImplementedError.new "Socket::Address.link_local_interface"
+      {% end %}
+      return nil if @zone_id.zero?
+      return nil unless (@family == Socket::Family::INET6 && link_local?)
+      buf = uninitialized StaticArray(UInt8, LibC::IF_NAMESIZE)
+      result = LibC.if_indextoname(@zone_id, buf)
+      if result.null?
+        message = "Failed to look up interface name for index #{@zone_id}"
+        {% if flag?(:windows) %}
+          # In windows it is not possible to determine an error code here
+          raise Error.new(message)
+        {% else %}
+          raise Error.from_errno(message)
+        {% end %}
+      end
+      String.new(buf.to_unsafe)
     end
 
     protected def self.endian_swap(x : Int::Primitive) : Int::Primitive
@@ -765,7 +841,8 @@ class Socket
                       sizeof(typeof(LibC::SockaddrUn.new.sun_path)) - 1
                     {% end %}
 
-    def initialize(@path : String)
+    def initialize(path : Path | String)
+      @path = path.to_s
       if @path.bytesize > MAX_PATH_SIZE
         raise ArgumentError.new("Path size exceeds the maximum size of #{MAX_PATH_SIZE} bytes")
       end
@@ -839,7 +916,7 @@ class Socket
     {% unless flag?(:wasm32) %}
       protected def initialize(sockaddr : LibC::SockaddrUn*, size)
         @family = Family::UNIX
-        @path = String.new(sockaddr.value.sun_path.to_unsafe)
+        @path = String.new(sockaddr.value.sun_path.to_slice, truncate_at_null: true)
         @size = size || sizeof(LibC::SockaddrUn)
       end
     {% end %}
@@ -856,7 +933,7 @@ class Socket
       {% else %}
         sockaddr = Pointer(LibC::SockaddrUn).malloc
         sockaddr.value.sun_family = family
-        sockaddr.value.sun_path.to_unsafe.copy_from(@path.to_unsafe, @path.bytesize + 1)
+        sockaddr.value.sun_path.to_unsafe.copy_from(@path.to_unsafe, {@path.bytesize + 1, sockaddr.value.sun_path.size}.min)
         sockaddr.as(LibC::Sockaddr*)
       {% end %}
     end

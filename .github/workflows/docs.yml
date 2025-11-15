@@ -19,7 +19,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Prepare System
         run: bin/ci prepare_system
@@ -31,10 +33,10 @@ jobs:
         run: bin/ci with_build_env 'make crystal docs threads=1'
 
       - name: Set revision
-        run: echo $GITHUB_SHA > ./docs/revision.txt
+        run: echo "$GITHUB_SHA" > ./docs/revision.txt
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@00943011d9042930efac3dcd3a170e4273319bc8 # v5.1.0
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

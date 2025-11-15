@@ -11,7 +11,9 @@ require "./support/win32"
 require "./support/wasm32"
 
 class Crystal::Program
-  setter temp_var_counter
+  def reset_temp_vars
+    @temp_vars.clear
+  end
 
   def union_of(type1, type2, type3)
     union_of([type1, type2, type3] of Type).not_nil!
@@ -94,10 +96,10 @@ def top_level_semantic(node : ASTNode, wants_doc = false)
   SemanticResult.new(program, node)
 end
 
-def assert_normalize(from, to, flags = nil, *, file = __FILE__, line = __LINE__)
+def assert_normalize(from, to, flags = nil, *, filename = nil, file = __FILE__, line = __LINE__)
   program = new_program
   program.flags.concat(flags.split) if flags
-  from_nodes = Parser.parse(from)
+  from_nodes = parse(from, filename: filename)
   to_nodes = program.normalize(from_nodes)
   to_nodes_str = to_nodes.to_s.strip
   to_nodes_str.should eq(to.strip), file: file, line: line
@@ -110,7 +112,7 @@ def assert_normalize(from, to, flags = nil, *, file = __FILE__, line = __LINE__)
 
   # second idempotency check: if the normalizer mutates the original node,
   # further normalizations should not produce a different result
-  program.temp_var_counter = 0
+  program.reset_temp_vars
   to_nodes_str2 = program.normalize(from_nodes).to_s.strip
   unless to_nodes_str2 == to_nodes_str
     fail "Idempotency failed:\nBefore: #{to_nodes_str.inspect}\nAfter:  #{to_nodes_str2.inspect}", file: file, line: line
@@ -120,7 +122,11 @@ def assert_normalize(from, to, flags = nil, *, file = __FILE__, line = __LINE__)
 end
 
 def assert_expand(from : String, to, *, flags = nil, file = __FILE__, line = __LINE__)
-  assert_expand Parser.parse(from), to, flags: flags, file: file, line: line
+  node = Parser.parse(from)
+  if node.is_a?(Expressions)
+    node = node.last
+  end
+  assert_expand node, to, flags: flags, file: file, line: line
 end
 
 def assert_expand(from_nodes : ASTNode, to, *, flags = nil, file = __FILE__, line = __LINE__)
@@ -136,20 +142,10 @@ def assert_expand(from_nodes : ASTNode, *, flags = nil, file = __FILE__, line = 
   yield to_nodes, program
 end
 
-def assert_expand_second(from : String, to, *, flags = nil, file = __FILE__, line = __LINE__)
-  node = (Parser.parse(from).as(Expressions))[1]
-  assert_expand node, to, flags: flags, file: file, line: line
-end
-
-def assert_expand_third(from : String, to, *, flags = nil, file = __FILE__, line = __LINE__)
-  node = (Parser.parse(from).as(Expressions))[2]
-  assert_expand node, to, flags: flags, file: file, line: line
-end
-
-def assert_expand_named(from : String, to, *, generic = nil, flags = nil, file = __FILE__, line = __LINE__)
+def assert_expand_named(from : String, to, *, generic = nil, flags = nil, filename = nil, file = __FILE__, line = __LINE__)
   program = new_program
   program.flags.concat(flags.split) if flags
-  from_nodes = Parser.parse(from)
+  from_nodes = parse(from, filename: filename)
   generic_type = generic.path if generic
   case from_nodes
   when ArrayLiteral
@@ -182,6 +178,11 @@ def assert_warning(code, message, *, file = __FILE__, line = __LINE__)
   warning_failures[0].should contain(message), file: file, line: line
 end
 
+def assert_no_warning(code, *, file = __FILE__, line = __LINE__)
+  warning_failures = warnings_result(code)
+  warning_failures.should be_empty, file: file, line: line
+end
+
 def assert_macro(macro_body, expected, args = nil, *, expected_pragmas = nil, flags = nil, file = __FILE__, line = __LINE__)
   assert_macro(macro_body, expected, expected_pragmas: expected_pragmas, flags: flags, file: file, line: line) { args }
 end
@@ -207,7 +208,9 @@ end
 
 def prepare_macro_call(macro_body, flags = nil, &)
   program = new_program
-  program.flags.concat(flags.split) if flags
+  flags = flags.split if flags.is_a?(String)
+  program.flags.concat(flags) if flags
+  program.top_level_semantic_complete = true
   args = yield program
 
   macro_params = args.try &.keys.join(", ")
@@ -215,14 +218,14 @@ def prepare_macro_call(macro_body, flags = nil, &)
   call_args.concat(args.values) if args
 
   a_macro = Parser.parse("macro foo(#{macro_params});#{macro_body};end").as(Macro)
-  call = Call.new(nil, "", call_args)
+  call = Call.new("", call_args)
 
   {program, a_macro, call}
 end
 
-def codegen(code, inject_primitives = true, debug = Crystal::Debug::None, filename = __FILE__)
+def codegen(code, *, inject_primitives = true, single_module = false, debug = Crystal::Debug::None, filename = __FILE__)
   result = semantic code, inject_primitives: inject_primitives, filename: filename
-  result.program.codegen(result.node, single_module: false, debug: debug)[""].mod
+  result.program.codegen(result.node, single_module: single_module, debug: debug)[""].mod
 end
 
 private def new_program
@@ -298,7 +301,7 @@ def run(code, filename : String? = nil, inject_primitives = true, debug = Crysta
     ast = Parser.parse(code).as(Expressions)
     last = ast.expressions.last
     assign = Assign.new(Var.new("__tempvar"), last)
-    call = Call.new(nil, "print", Var.new("__tempvar"))
+    call = Call.new("print", Var.new("__tempvar"))
     exps = Expressions.new([assign, call] of ASTNode)
     ast.expressions[-1] = exps
     code = ast.to_s
@@ -337,11 +340,11 @@ end
 
 def test_c(c_code, crystal_code, *, file = __FILE__, &)
   with_temp_c_object_file(c_code, file: file) do |o_filename|
-    yield run(%(
-    require "prelude"
+    yield run(<<-CRYSTAL)
+      require "prelude"
 
-    @[Link(ldflags: #{o_filename.inspect})]
-    #{crystal_code}
-    ))
+      @[Link(ldflags: #{o_filename.inspect})]
+      #{crystal_code}
+      CRYSTAL
   end
 end

@@ -5,6 +5,7 @@
 struct Crystal::EventLoop::IOCP::Timer
   enum Type
     Sleep
+    Timeout
     SelectTimeout
   end
 
@@ -24,7 +25,12 @@ struct Crystal::EventLoop::IOCP::Timer
   # The event can be added to the `Timers` list.
   include PointerPairingHeap::Node
 
-  def initialize(@type : Type, @fiber)
+  def initialize(@type : Type, @fiber, timeout : Time::Span? = nil)
+    if timeout
+      seconds, nanoseconds = System::Time.monotonic
+      now = Time::Span.new(seconds: seconds, nanoseconds: nanoseconds)
+      @wake_at = now + timeout
+    end
   end
 
   def wake_at=(@wake_at)

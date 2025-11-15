@@ -5,11 +5,11 @@ require "crystal/system/time"
 # observed in a specific time zone.
 #
 # The calendaric calculations are based on the rules of the proleptic Gregorian
-# calendar as specified in [ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf).
+# calendar as specified in [ISO 8601](https://web.archive.org/web/20250306154328/http://xml.coverpages.org/ISO-FDIS-8601.pdf).
 # Leap seconds are ignored.
 #
 # Internally, the time is stored as an `Int64` representing seconds from epoch
-# (`0001-01-01 00:00:00.0 UTC`) and an `Int32` representing
+# (`0001-01-01 00:00:00Z`) and an `Int32` representing
 # nanosecond-of-second with value range `0..999_999_999`.
 #
 # The supported date range is `0001-01-01 00:00:00.0` to
@@ -84,7 +84,7 @@ require "crystal/system/time"
 #
 # ```
 # time = Time.local(2018, 3, 8, 22, 5, 13, location: Time::Location.load("Europe/Berlin"))
-# time          # => 2018-03-08 22:05:13 +01:00 Europe/Berlin
+# time          # => 2018-03-08 22:05:13+01:00[Europe/Berlin]
 # time.location # => #<Time::Location Europe/Berlin>
 # time.zone     # => #<Time::Location::Zone CET +01:00 (3600s) STD>
 # time.offset   # => 3600
@@ -94,7 +94,7 @@ require "crystal/system/time"
 #
 # ```
 # time = Time.utc(2018, 3, 8, 22, 5, 13)
-# time          # => 2018-03-08 22:05:13.0 UTC
+# time          # => 2018-03-08 22:05:13Z
 # time.location # => #<Time::Location UTC>
 # time.zone     # => #<Time::Location::Zone UTC +00:00 (0s) STD>
 # time.offset   # => 0
@@ -105,9 +105,9 @@ require "crystal/system/time"
 #
 # ```
 # time_de = Time.local(2018, 3, 8, 22, 5, 13, location: Time::Location.load("Europe/Berlin"))
-# time_ar = time_de.in Time::Location.load("America/Buenos_Aires")
-# time_de # => 2018-03-08 22:05:13 +01:00 Europe/Berlin
-# time_ar # => 2018-03-08 18:05:13 -03:00 America/Buenos_Aires
+# time_ar = time_de.in Time::Location.load("America/Argentina/Buenos_Aires")
+# time_de # => 2018-03-08 22:05:13+01:00[Europe/Berlin]
+# time_ar # => 2018-03-08 18:05:13-03:00[America/Argentina/Buenos_Aires]
 # ```
 #
 # Both `Time` instances show a different local date-time, but they represent
@@ -115,8 +115,8 @@ require "crystal/system/time"
 # equal:
 #
 # ```
-# time_de.to_utc     # => 2018-03-08 21:05:13 UTC
-# time_ar.to_utc     # => 2018-03-08 21:05:13 UTC
+# time_de.to_utc     # => 2018-03-08 21:05:13Z
+# time_ar.to_utc     # => 2018-03-08 21:05:13Z
 # time_de == time_ar # => true
 # ```
 #
@@ -267,7 +267,7 @@ struct Time
   # :nodoc:
   DAYS_PER_4_YEARS = 365*4 + 1
 
-  # This constant is defined to be "1970-01-01 00:00:00 UTC".
+  # This constant is defined as `1970-01-01 00:00:00Z`".
   # Can be used to create a `Time::Span` that represents an Unix Epoch time duration.
   #
   # ```
@@ -286,7 +286,7 @@ struct Time
   # ```
   #
   # Each member is identified by its ordinal number starting from `Monday = 1`
-  # according to [ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf).
+  # according to [ISO 8601](https://web.archive.org/web/20250306154328/http://xml.coverpages.org/ISO-FDIS-8601.pdf).
   #
   # `#value` returns this ordinal number. It can easily be converted to the also
   # common numbering based on `Sunday = 0` using `value % 7`.
@@ -379,7 +379,7 @@ struct Time
   #
   # ```
   # time = Time.local(2016, 2, 15, 10, 20, 30, location: Time::Location.load("Europe/Berlin"))
-  # time.inspect # => "2016-02-15 10:20:30.0 +01:00 Europe/Berlin"
+  # time.inspect # => "2016-02-15 10:20:30+01:00[Europe/Berlin]"
   # ```
   #
   # Valid value ranges for the individual fields:
@@ -470,7 +470,7 @@ struct Time
   end
 
   # Creates a new `Time` instance that corresponds to the number of *seconds*
-  # and *nanoseconds* elapsed from epoch (`0001-01-01 00:00:00.0 UTC`)
+  # and *nanoseconds* elapsed from epoch (`0001-01-01 00:00:00.0`)
   # observed in *location*.
   #
   # Valid range for *seconds* is `0..315_537_897_599`.
@@ -493,7 +493,7 @@ struct Time
   end
 
   # Creates a new `Time` instance that corresponds to the number of *seconds*
-  # and *nanoseconds* elapsed from epoch (`0001-01-01 00:00:00.0 UTC`)
+  # and *nanoseconds* elapsed from epoch (`0001-01-01 00:00:00Z`)
   # in UTC.
   #
   # Valid range for *seconds* is `0..315_537_897_599`.
@@ -512,24 +512,24 @@ struct Time
   {% end %}
 
   # Creates a new `Time` instance that corresponds to the number of
-  # *seconds* elapsed since the Unix epoch (`1970-01-01 00:00:00 UTC`).
+  # *seconds* elapsed since the Unix epoch (`1970-01-01 00:00:00Z`).
   #
   # The time zone is always UTC.
   #
   # ```
-  # Time.unix(981173106) # => 2001-02-03 04:05:06 UTC
+  # Time.unix(981173106) # => 2001-02-03 04:05:06Z
   # ```
   def self.unix(seconds : Int) : Time
     utc(seconds: UNIX_EPOCH.total_seconds + seconds, nanoseconds: 0)
   end
 
   # Creates a new `Time` instance that corresponds to the number of
-  # *milliseconds* elapsed since the Unix epoch (`1970-01-01 00:00:00 UTC`).
+  # *milliseconds* elapsed since the Unix epoch (`1970-01-01 00:00:00Z`).
   #
   # The time zone is always UTC.
   #
   # ```
-  # time = Time.unix_ms(981173106789) # => 2001-02-03 04:05:06.789 UTC
+  # time = Time.unix_ms(981173106789) # => 2001-02-03 04:05:06.789Z
   # time.millisecond                  # => 789
   # ```
   def self.unix_ms(milliseconds : Int) : Time
@@ -540,12 +540,12 @@ struct Time
   end
 
   # Creates a new `Time` instance that corresponds to the number of
-  # *nanoseconds* elapsed since the Unix epoch (`1970-01-01 00:00:00.000000000 UTC`).
+  # *nanoseconds* elapsed since the Unix epoch (`1970-01-01 00:00:00Z`).
   #
   # The time zone is always UTC.
   #
   # ```
-  # time = Time.unix_ns(981173106789479273) # => 2001-02-03 04:05:06.789479273 UTC
+  # time = Time.unix_ns(981173106789479273) # => 2001-02-03 04:05:06.789479273Z
   # time.nanosecond                         # => 789479273
   # ```
   def self.unix_ns(nanoseconds : Int) : Time
@@ -566,8 +566,26 @@ struct Time
   # new_year = Time.utc(2019, 1, 1, 0, 0, 0)
   # tokyo = new_year.to_local_in(Time::Location.load("Asia/Tokyo"))
   # new_york = new_year.to_local_in(Time::Location.load("America/New_York"))
-  # tokyo.inspect    # => "2019-01-01 00:00:00.0 +09:00 Asia/Tokyo"
-  # new_york.inspect # => "2019-01-01 00:00:00.0 -05:00 America/New_York"
+  # tokyo.inspect    # => "2019-01-01 00:00:00+09:00[Asia/Tokyo]"
+  # new_york.inspect # => "2019-01-01 00:00:00-05:00[America/New_York]"
+  # ```
+  #
+  # If the given wall clock is a gap or fold in the target location, no
+  # unambiguous equivalent representation exists.
+  #
+  # * In case of a gap, the clock jumps to the smaller offset and shows a time
+  # _before_ the gap. The wall clock is different from `self`.
+  # * In case of a fold, the clock chooses the bigger offset and shows a time
+  # _after_ the fold. The wall clock is identical to `self`.
+  #
+  # ```
+  # nyc = Time::Location.load("America/New_York")
+  #
+  # # gap on 2025-03-09 local time: 02:00:00 STD -> 03:00:00 DST
+  # Time.utc(2025, 3, 9, 2, 12, 34).to_local_in(nyc) # => 2025-03-09 01:12:34.0-05:00[America/New_York]
+  #
+  # # overlap on 2025-11-02 local time: 02:00:00 DST -> 01:00:00 STD
+  # Time.utc(2025, 11, 2, 1, 12, 34).to_local_in(nyc) # => 2025-11-02 01:12:34.0-04:00[America/New_York]
   # ```
   def to_local_in(location : Location) : Time
     local_seconds = offset_seconds
@@ -925,6 +943,36 @@ struct Time
     time - time.offset.seconds
   end
 
+  # Creates an instance representing the *week*-th *day_of_week* in the given
+  # *year* and *month*.
+  #
+  # If *week* is `5` and there are not enough weeks in the given month (e.g.
+  # February in a non-leap year), the last week of the month is used instead.
+  #
+  # Valid value ranges for the individual fields:
+  #
+  # * `year`: `1..9999`
+  # * `month`: `1..12`
+  # * `week`: `1..5`
+  # * `day_of_week`: `0..7`
+  def self.month_week_date(year : Int32, month : Int32, week : Int32, day_of_week : Int32 | DayOfWeek, hour : Int32 = 0, minute : Int32 = 0, second : Int32 = 0, *, nanosecond : Int32 = 0, location : Location = Location.local) : self
+    raise ArgumentError.new "Invalid week of month" unless week.in?(1..5)
+    day_of_week = DayOfWeek.from_value(day_of_week) if day_of_week.is_a?(Int32)
+
+    day_of_week = day_of_week.to_i32
+    first_day_of_week = Time.utc(year, month, 1).day_of_week.to_i32
+    day = (day_of_week - first_day_of_week) % 7 + 1
+
+    max_weeks = (Time.days_in_month(year, month) - day) // 7
+    day += {week - 1, max_weeks}.min * 7
+
+    time = Time.utc(year, month, day, hour, minute, second, nanosecond: nanosecond)
+    return time if location.utc?
+
+    time = time.in(location)
+    time - time.offset.seconds
+  end
+
   # Returns the duration between this `Time` and midnight of the same day.
   #
   # This is equivalent to creating a `Time::Span` from the time-of-day fields:
@@ -994,12 +1042,12 @@ struct Time
   #
   # ```
   # time_de = Time.local(2018, 3, 8, 22, 5, 13, location: Time::Location.load("Europe/Berlin"))
-  # time_ar = Time.local(2018, 3, 8, 18, 5, 13, location: Time::Location.load("America/Buenos_Aires"))
+  # time_ar = Time.local(2018, 3, 8, 18, 5, 13, location: Time::Location.load("America/Argentina/Buenos_Aires"))
   # time_de == time_ar # => true
   #
   # # both times represent the same instant:
-  # time_de.to_utc # => 2018-03-08 21:05:13 UTC
-  # time_ar.to_utc # => 2018-03-08 21:05:13 UTC
+  # time_de.to_utc # => 2018-03-08 21:05:13Z
+  # time_ar.to_utc # => 2018-03-08 21:05:13Z
   # ```
   def ==(other : Time) : Bool
     total_seconds == other.total_seconds && nanosecond == other.nanosecond
@@ -1050,29 +1098,29 @@ struct Time
 
   # Prints this `Time` to *io*.
   #
-  # The local date-time is formatted as date string `YYYY-MM-DD HH:mm:ss.nnnnnnnnn +ZZ:ZZ:ZZ`.
-  # Nanoseconds are omitted if *with_nanoseconds* is `false`.
-  # When the location is `UTC`, the offset is omitted. Offset seconds are omitted if `0`.
+  # It's formatted according to the Internet Extended Date/Time Format (IXDTF)
+  # as specified in [RFC 9557](https://datatracker.ietf.org/doc/html/rfc9557):
+  # An [RFC 3339](https://tools.ietf.org/html/rfc3339) formatted local date-time
+  # string with nanosecond precision followed by a time zone name suffix.
   #
-  # The name of the location is appended unless it is a fixed zone offset.
+  # It is similar to the format `%FT%T.%N%::z[%Z]`. Some parts may be omitted or
+  # shortened.
+  #
+  # Nanoseconds are omitted if *with_nanoseconds* is `false` or `nanoseconds`
+  # are zero. Zero offset seconds are omitted.  The name of the location is
+  # omitted for fixed zone offset.
+  #
+  # ```
+  # Time.utc(2014, 1, 2, 3, 4, 5)                      # => 2014-01-02 03:04:05Z
+  # Time.utc(2014, 1, 2, 3, 4, 5, nanosecond: 123_456) # => 2014-01-02 03:04:05.123456000Z
+  #
+  # Time.local(2014, 1, 2, 3, 4, 5, location: Time::Location.load("Europe/Berlin")) # => 2014-01-02 03:04:05+01:00[Europe/Berlin]
+  # Time.local(2014, 1, 2, 3, 4, 5, location: Time::Location.fixed(3600))           # => 2014-01-02 03:04:05+01:00
+  # Time.local(2014, 1, 2, 3, 4, 5, location: Time::Location.fixed(3601))           # => 2014-01-02 03:04:05+01:00:01
+  # ```
   def inspect(io : IO, with_nanoseconds = true) : Nil
-    to_s io, "%F %T"
-
-    if with_nanoseconds
-      if @nanoseconds == 0
-        io << ".0"
-      else
-        to_s io, ".%N"
-      end
-    end
-
-    if utc?
-      io << " UTC"
-    else
-      io << ' '
-      zone.format(io)
-      io << ' ' << location.name unless location.fixed?
-    end
+    Format::RFC_3339.format(self, io, fraction_digits: (with_nanoseconds && !nanosecond.zero?) ? 9 : 0, preferred_separator: ' ')
+    io << '[' << location.name << ']' unless location.fixed?
   end
 
   # Prints this `Time` to *io*.
@@ -1082,11 +1130,15 @@ struct Time
   # When the location is `UTC`, the offset is replaced with the string `UTC`.
   # Offset seconds are omitted if `0`.
   def to_s(io : IO) : Nil
-    to_s(io, "%F %T ")
+    formatter = Format::Formatter.new(self, io)
+    formatter.year_month_day
+    io << " "
+    formatter.twenty_four_hour_time_with_seconds
 
     if utc?
-      io << "UTC"
+      io << " UTC"
     else
+      io << " "
       zone.format(io)
     end
   end
@@ -1110,10 +1162,10 @@ struct Time
     Format.new(format).format(self, io)
   end
 
-  # Format this time using the format specified by [RFC 3339](https://tools.ietf.org/html/rfc3339) ([ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
+  # Format this time using the format specified by [RFC 3339](https://tools.ietf.org/html/rfc3339) ([ISO 8601](https://web.archive.org/web/20250306154328/http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
   #
   # ```
-  # Time.utc(2016, 2, 15).to_rfc3339 # => "2016-02-15T00:00:00Z"
+  # Time.utc(2016, 2, 15).to_rfc3339 # => "2016-02-15 00:00:00Z"
   # ```
   #
   # ISO 8601 allows some freedom over the syntax and RFC 3339 exercises that
@@ -1126,7 +1178,7 @@ struct Time
     Format::RFC_3339.format(to_utc, fraction_digits)
   end
 
-  # Format this time using the format specified by [RFC 3339](https://tools.ietf.org/html/rfc3339) ([ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
+  # Format this time using the format specified by [RFC 3339](https://tools.ietf.org/html/rfc3339) ([ISO 8601](https://web.archive.org/web/20250306154328/http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
   # into the given *io*.
   #
   #
@@ -1136,16 +1188,16 @@ struct Time
     Format::RFC_3339.format(to_utc, io, fraction_digits)
   end
 
-  # Parse time format specified by [RFC 3339](https://tools.ietf.org/html/rfc3339) ([ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
+  # Parse time format specified by [RFC 3339](https://tools.ietf.org/html/rfc3339) ([ISO 8601](https://web.archive.org/web/20250306154328/http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
   #
   # ```
-  # Time.parse_rfc3339("2016-02-15T04:35:50Z") # => 2016-02-15 04:35:50.0 UTC
+  # Time.parse_rfc3339("2016-02-15T04:35:50Z") # => 2016-02-15 04:35:50Z
   # ```
   def self.parse_rfc3339(time : String) : self
     Format::RFC_3339.parse(time)
   end
 
-  # Parse datetime format specified by [ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf).
+  # Parse datetime format specified by [ISO 8601](https://web.archive.org/web/20250306154328/http://xml.coverpages.org/ISO-FDIS-8601.pdf).
   #
   # This is similar to `.parse_rfc3339` but RFC 3339 defines a more strict format.
   # In ISO 8601 for examples, field delimiters (`-`, `:`) are optional.
@@ -1153,7 +1205,7 @@ struct Time
   # Use `#to_rfc3339` to format a `Time` according to .
   #
   # ```
-  # Time.parse_iso8601("2016-02-15T04:35:50Z") # => 2016-02-15 04:35:50.0 UTC
+  # Time.parse_iso8601("2016-02-15T04:35:50Z") # => 2016-02-15 04:35:50Z
   # ```
   def self.parse_iso8601(time : String)
     Format::ISO_8601_DATE_TIME.parse(time)
@@ -1183,7 +1235,7 @@ struct Time
   # This is also compatible to [RFC 882](https://tools.ietf.org/html/rfc882) and [RFC 1123](https://tools.ietf.org/html/rfc1123#page-55).
   #
   # ```
-  # Time.parse_rfc2822("Mon, 15 Feb 2016 04:35:50 UTC") # => 2016-02-15 04:35:50.0 UTC
+  # Time.parse_rfc2822("Mon, 15 Feb 2016 04:35:50 UTC") # => 2016-02-15 04:35:50Z
   # ```
   def self.parse_rfc2822(time : String) : self
     Format::RFC_2822.parse(time)
@@ -1194,7 +1246,7 @@ struct Time
   # See `Time::Format` for details.
   #
   # ```
-  # Time.parse("2016-04-05", "%F", Time::Location.load("Europe/Berlin")) # => 2016-04-05 00:00:00.0 +02:00 Europe/Berlin
+  # Time.parse("2016-04-05", "%F", Time::Location.load("Europe/Berlin")) # => 2016-04-05 00:00:00+02:00[Europe/Berlin]
   # ```
   #
   # If there is no time zone information in the formatted time, *location* will
@@ -1252,7 +1304,7 @@ struct Time
   end
 
   # Returns the number of seconds since the Unix epoch
-  # (`1970-01-01 00:00:00 UTC`).
+  # (`1970-01-01 00:00:00Z`).
   #
   # ```
   # time = Time.utc(2016, 1, 12, 3, 4, 5)
@@ -1263,7 +1315,7 @@ struct Time
   end
 
   # Returns the number of milliseconds since the Unix epoch
-  # (`1970-01-01 00:00:00 UTC`).
+  # (`1970-01-01 00:00:00Z`).
   #
   # ```
   # time = Time.utc(2016, 1, 12, 3, 4, 5, nanosecond: 678_000_000)
@@ -1274,7 +1326,7 @@ struct Time
   end
 
   # Returns the number of nanoseconds since the Unix epoch
-  # (`1970-01-01 00:00:00.000000000 UTC`).
+  # (`1970-01-01 00:00:00Z`).
   #
   # ```
   # time = Time.utc(2016, 1, 12, 3, 4, 5, nanosecond: 678_910_123)
@@ -1285,7 +1337,7 @@ struct Time
   end
 
   # Returns the number of seconds since the Unix epoch
-  # (`1970-01-01 00:00:00 UTC`) as `Float64` with nanosecond precision.
+  # (`1970-01-01 00:00:00Z`) as `Float64` with nanosecond precision.
   #
   # ```
   # time = Time.utc(2016, 1, 12, 3, 4, 5, nanosecond: 678_000_000)
@@ -1307,9 +1359,9 @@ struct Time
   #
   # ```
   # time_de = Time.local(2018, 3, 8, 22, 5, 13, location: Time::Location.load("Europe/Berlin"))
-  # time_ar = time_de.in Time::Location.load("America/Buenos_Aires")
-  # time_de # => 2018-03-08 22:05:13 +01:00 Europe/Berlin
-  # time_ar # => 2018-03-08 18:05:13 -03:00 America/Buenos_Aires
+  # time_ar = time_de.in Time::Location.load("America/Argentina/Buenos_Aires")
+  # time_de # => 2018-03-08 22:05:13+01:00[Europe/Berlin]
+  # time_ar # => 2018-03-08 18:05:13-03:00[America/Argentina/Buenos_Aires]
   # ```
   #
   # In contrast, `#to_local_in` changes to a different location while
@@ -1393,13 +1445,12 @@ struct Time
   #
   # ```
   # now = Time.utc(2023, 5, 16, 17, 53, 22)
-  # now.at_beginning_of_week             # => 2023-05-15 00:00:00 UTC
-  # now.at_beginning_of_week(:sunday)    # => 2023-05-14 00:00:00 UTC
-  # now.at_beginning_of_week(:wednesday) # => 2023-05-10 00:00:00 UTC
+  # now.at_beginning_of_week             # => 2023-05-15 00:00:00Z
+  # now.at_beginning_of_week(:sunday)    # => 2023-05-14 00:00:00Z
+  # now.at_beginning_of_week(:wednesday) # => 2023-05-10 00:00:00Z
   # ```
-  # TODO: Ensure correctness in local time-line.
   def at_beginning_of_week(start_day : Time::DayOfWeek = :monday) : Time
-    (self - ((day_of_week.value - start_day.value) % 7).days).at_beginning_of_day
+    self.shift(days: -((day_of_week.value - start_day.value) % 7)).at_beginning_of_day
   end
 
   def_at_end(year) { Time.local(year, 12, 31, 23, 59, 59, nanosecond: 999_999_999, location: location) }
@@ -1433,10 +1484,8 @@ struct Time
   def_at_end(month) { Time.local(year, month, Time.days_in_month(year, month), 23, 59, 59, nanosecond: 999_999_999, location: location) }
 
   # Returns a copy of this `Time` representing the end of the week.
-  #
-  # TODO: Ensure correctness in local time-line.
   def at_end_of_week : Time
-    (self + (7 - day_of_week.value).days).at_end_of_day
+    self.shift(days: 7 - day_of_week.value).at_end_of_day
   end
 
   def_at_end(day) { Time.local(year, month, day, 23, 59, 59, nanosecond: 999_999_999, location: location) }

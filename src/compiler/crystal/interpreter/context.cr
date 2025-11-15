@@ -20,7 +20,7 @@ class Crystal::Repl::Context
   getter! class_vars : ClassVars
 
   # libffi information about external functions.
-  getter lib_functions : Hash(External, LibFunction)
+  getter lib_functions : Hash(Void*, LibFunction)
 
   # Cache of multidispatch expansions.
   getter multidispatchs : Hash(MultidispatchKey, Def)
@@ -44,6 +44,19 @@ class Crystal::Repl::Context
   # the proc in this Hash.
   getter ffi_closure_to_compiled_def : Hash(Void*, CompiledDef)
 
+  # Cached underlying buffers for constant slices constructed via the
+  # `Slice.literal` compiler built-in, indexed by the internal buffer name
+  # (e.g. `$Slice:0`).
+  @const_slice_buffers = {} of String => UInt8*
+
+  # A cache of object IDs of the `CompiledDef`s corresponding to `ProcLiteral`s.
+  # Used to determine whether such an object ID or a raw function pointer is
+  # passed to `Proc.new`.
+  getter compiled_procs = Set(UInt64).new
+
+  # A cache from C proc pointers to `CompiledDef`s, formed using `Proc.new`.
+  getter extern_proc_wrappers = {} of Void* => CompiledDef
+
   def initialize(@program : Program)
     @program.flags << "interpreted"
 
@@ -52,8 +65,7 @@ class Crystal::Repl::Context
     @defs = {} of Def => CompiledDef
     @defs.compare_by_identity
 
-    @lib_functions = {} of External => LibFunction
-    @lib_functions.compare_by_identity
+    @lib_functions = {} of Void* => LibFunction
 
     @symbol_to_index = {} of String => Int32
     @symbols = [] of String
@@ -106,10 +118,10 @@ class Crystal::Repl::Context
   # Once the block returns, the stack is returned to the pool.
   # The stack is not cleared after or before it's used.
   def checkout_stack(& : UInt8* -> _)
-    stack, _ = @stack_pool.checkout
+    stack = @stack_pool.checkout
 
     begin
-      yield stack.as(UInt8*)
+      yield stack.pointer.as(UInt8*)
     ensure
       @stack_pool.release(stack)
     end
@@ -117,7 +129,7 @@ class Crystal::Repl::Context
 
   # This returns the CompiledDef that corresponds to __crystal_raise_overflow
   getter(crystal_raise_overflow_compiled_def : CompiledDef) do
-    call = Call.new(nil, "__crystal_raise_overflow", global: true)
+    call = Call.new("__crystal_raise_overflow", global: true)
     program.semantic(call)
 
     local_vars = LocalVars.new(self)
@@ -248,6 +260,23 @@ class Crystal::Repl::Context
     end
   end
 
+  def extern_proc_wrapper(proc_type : ProcInstanceType, symbol : Void*) : CompiledDef
+    extern_proc_wrappers.put_if_absent(symbol) do
+      crystal_args_bytesize = proc_type.arg_types.sum { |arg| aligned_sizeof_type(arg) }
+      target_def = proc_type.lookup_first_def("call", false).not_nil!
+      compiled_def = CompiledDef.new(self, target_def, proc_type, crystal_args_bytesize)
+
+      proc_type.arg_types.each_with_index do |arg_type, i|
+        compiled_def.local_vars.declare("arg#{i}", arg_type)
+      end
+
+      compiler = Compiler.new(self, compiled_def, top_level: false)
+      compiler.compile_extern_proc_wrapper(target_def, proc_type, symbol)
+
+      compiled_def
+    end
+  end
+
   def ffi_closure_context(interpreter : Interpreter, compiled_def : CompiledDef)
     # Keep the closure contexts in a Hash by the compiled def so we don't
     # lose a reference to it in the GC.
@@ -285,6 +314,10 @@ class Crystal::Repl::Context
 
       value.copy_to(ret.as(UInt8*))
     end
+  end
+
+  def const_slice_buffer(info : Program::ConstSliceInfo) : UInt8*
+    @const_slice_buffers.put_if_absent(info.name) { info.to_bytes.to_unsafe }
   end
 
   def aligned_sizeof_type(node : ASTNode) : Int32

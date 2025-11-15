@@ -1,34 +1,54 @@
 abstract class Crystal::EventLoop
-  # Creates an event loop instance
-  def self.create : self
+  def self.backend_class
     {% if flag?(:wasi) %}
-      Crystal::EventLoop::Wasi.new
+      Crystal::EventLoop::Wasi
     {% elsif flag?(:unix) %}
       # TODO: enable more targets by default (need manual tests or fixes)
       {% if flag?("evloop=libevent") %}
-        Crystal::EventLoop::LibEvent.new
+        Crystal::EventLoop::LibEvent
       {% elsif flag?("evloop=epoll") || flag?(:android) || flag?(:linux) %}
-        Crystal::EventLoop::Epoll.new
+        Crystal::EventLoop::Epoll
       {% elsif flag?("evloop=kqueue") || flag?(:darwin) || flag?(:freebsd) %}
-        Crystal::EventLoop::Kqueue.new
+        Crystal::EventLoop::Kqueue
       {% else %}
-        Crystal::EventLoop::LibEvent.new
+        Crystal::EventLoop::LibEvent
       {% end %}
     {% elsif flag?(:win32) %}
-      Crystal::EventLoop::IOCP.new
+      Crystal::EventLoop::IOCP
     {% else %}
       {% raise "Event loop not supported" %}
     {% end %}
   end
 
-  @[AlwaysInline]
-  def self.current : self
-    Crystal::Scheduler.event_loop
+  # Creates an event loop instance
+  def self.create : self
+    backend_class.new
+  end
+
+  def self.default_file_blocking? : Bool
+    backend_class.default_file_blocking?
+  end
+
+  def self.default_socket_blocking? : Bool
+    backend_class.default_socket_blocking?
   end
 
   @[AlwaysInline]
-  def self.current? : self?
-    Crystal::Scheduler.event_loop?
+  def self.current : self
+    {% if flag?(:execution_context) %}
+      Fiber::ExecutionContext.current.event_loop
+    {% else %}
+      Crystal::Scheduler.event_loop
+    {% end %}
+  end
+
+  @[AlwaysInline]
+  def self.current? : self | Nil
+    {% if flag?(:execution_context) %}
+      Fiber::ExecutionContext.current.event_loop
+    {% else %}
+      Crystal::Scheduler.event_loop?
+    {% end %}
   end
 
   # Runs the loop.
@@ -42,6 +62,13 @@ abstract class Crystal::EventLoop
   # events.
   abstract def run(blocking : Bool) : Bool
 
+  {% if flag?(:execution_context) %}
+    # Same as `#run` but collects runnable fibers into *queue* instead of
+    # enqueueing in parallel, so the caller is responsible and in control for
+    # when and how the fibers will be enqueued.
+    abstract def run(queue : Fiber::List*, blocking : Bool) : Nil
+  {% end %}
+
   # Tells a blocking run loop to no longer wait for events to activate. It may
   # for example enqueue a NOOP event with an immediate (or past) timeout. Having
   # activated an event, the loop shall return, allowing the blocked thread to
@@ -54,8 +81,15 @@ abstract class Crystal::EventLoop
   #       time in parallel, but this assumption may change in the future!
   abstract def interrupt : Nil
 
+  # Suspend the current fiber for *duration*.
+  abstract def sleep(duration : Time::Span) : Nil
+
   # Create a new resume event for a fiber.
-  abstract def create_resume_event(fiber : Fiber) : Event
+  #
+  # NOTE: optional.
+  def create_resume_event(fiber : Fiber) : Event
+    raise NotImplementedError.new("#{self.class.name}#create_resume_event(fiber)")
+  end
 
   # Creates a timeout_event.
   abstract def create_timeout_event(fiber : Fiber) : Event

@@ -20,17 +20,18 @@ class Log::Metadata
   # When the metadata is defragmented max_total_size will be updated with size
   protected getter max_total_size : Int32
   @max_total_size = uninitialized Int32
-  # How many entries are potentially overridden from parent (ie: initial entries.size)
-  @overridden_size = uninitialized Int32
   # How many entries are stored from @first.
-  # Initially are @overridden_size, the one explicitly overridden in entries argument.
   # When the metadata is defragmented @size will be increased up to
   # the actual number of entries resulting from merging the parent
   @size = uninitialized Int32
+  # Number of parent elements we've copied on defrag. Used to iterate parent
+  # entries first in #each.
+  @parent_size = uninitialized Int32
+
   # @first needs to be the last ivar of Metadata. The entries are allocated together with self
   @first = uninitialized Entry
 
-  def self.new(parent : Metadata? = nil, entries : NamedTuple | Hash = NamedTuple.new)
+  def self.new(parent : Metadata? = nil, entries : NamedTuple | Hash = NamedTuple.new) : self
     data_size = instance_sizeof(self) + sizeof(Entry) * {entries.size + (parent.try(&.max_total_size) || 0) - 1, 0}.max
     data = GC.malloc(data_size).as(self)
     data.setup(parent, entries)
@@ -42,7 +43,8 @@ class Log::Metadata
   end
 
   protected def setup(@parent : Metadata?, entries : NamedTuple | Hash)
-    @size = @overridden_size = entries.size
+    @size = entries.size
+    @parent_size = 0
     @max_total_size = @size + (@parent.try(&.max_total_size) || 0)
     ptr_entries = pointerof(@first)
 
@@ -91,43 +93,44 @@ class Log::Metadata
   # will be recomputed, but the result should be the same.
   #
   # * @parent.nil? signals if the defrag is needed/done
-  # * The values of @overridden_size, pointerof(@first) are never changed
+  # * The value of pointerof(@first) never changes
   # * @parent is set at the very end of the method
   protected def defrag
     parent = @parent
     return if parent.nil?
 
-    total_size = @overridden_size
     ptr_entries = pointerof(@first)
-    next_free_entry = ptr_entries + @overridden_size
+    next_free_entry = ptr_entries + @size
+    total_size = @size
 
+    # Copy parent entries that ain't overwritten
+    parent_size = 0
     parent.each do |(key, value)|
-      overridden = false
-      @overridden_size.times do |i|
-        if ptr_entries[i][:key] == key
-          overridden = true
-          break
-        end
-      end
-
-      unless overridden
-        next_free_entry.value = {key: key, value: value}
-        next_free_entry += 1
-        total_size += 1
-      end
+      overwritten = Slice.new(ptr_entries, @size).any? { |entry| entry[:key] == key }
+      next if overwritten
+      next_free_entry.value = {key: key, value: value}
+      parent_size += 1
+      next_free_entry += 1
+      total_size += 1
     end
 
     @size = total_size
     @max_total_size = total_size
+    @parent_size = parent_size
     @parent = nil
   end
 
   def each(& : {Symbol, Value} ->)
     defrag
     ptr_entries = pointerof(@first)
+    parent_size = @parent_size
+    local_size = @size - parent_size
 
-    @size.times do |i|
-      entry = ptr_entries[i]
+    Slice.new(ptr_entries + local_size, parent_size).each do |entry|
+      yield({entry[:key], entry[:value]})
+    end
+
+    Slice.new(ptr_entries, local_size).each do |entry|
       yield({entry[:key], entry[:value]})
     end
   end
@@ -162,7 +165,7 @@ class Log::Metadata
     nil
   end
 
-  def ==(other : Metadata)
+  def ==(other : Metadata) : Bool
     self_kv = self.to_a
     other_kv = other.to_a
 
@@ -216,7 +219,7 @@ class Log::Metadata
     end
 
     # :nodoc:
-    def self.to_metadata_value(value) : Metadata::Value
+    def self.to_metadata_value(value : _) : Metadata::Value
       value.is_a?(Value) ? value : Value.new(value)
     end
   end
@@ -227,7 +230,19 @@ class Fiber
   getter logging_context : Log::Metadata { Log::Metadata.empty }
 
   # :nodoc:
-  def logging_context=(value : Log::Metadata)
+  def logging_context=(value : Log::Metadata) : Log::Metadata
     @logging_context = value
+  end
+end
+
+class String
+  def ==(other : Log::Metadata::Value)
+    other == self
+  end
+end
+
+struct Value
+  def ==(other : Log::Metadata::Value)
+    other == self
   end
 end

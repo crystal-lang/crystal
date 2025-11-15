@@ -108,8 +108,18 @@ struct LLVM::DIBuilder
   end
 
   def create_enumerator(name, value)
+    is_unsigned = value.is_a?(Int::Unsigned) ? 1 : 0
+
+    {% unless LibLLVM::IS_LT_210 %}
+      if value.is_a?(Int128) || value.is_a?(UInt128)
+        encoded_value = UInt64[value & UInt64::MAX, (value >> 64) & UInt64::MAX]
+        return LibLLVM.di_builder_create_enumerator_of_arbitrary_precision(
+          self, name, name.bytesize, encoded_value.size * 64, encoded_value, is_unsigned)
+      end
+    {% end %}
+
     {{ LibLLVM::IS_LT_90 ? LibLLVMExt : LibLLVM }}.di_builder_create_enumerator(
-      self, name, name.bytesize, value.to_i64!, value.is_a?(Int::Unsigned) ? 1 : 0)
+      self, name, name.bytesize, value.to_i64!, is_unsigned)
   end
 
   def create_enumeration_type(scope, name, file, line_number, size_in_bits, align_in_bits, elements, underlying_type)
