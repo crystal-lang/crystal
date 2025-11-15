@@ -344,7 +344,11 @@ struct Crystal::System::Process
     reopen_io(output, ORIGINAL_STDOUT)
     reopen_io(error, ORIGINAL_STDERR)
 
-    ::Dir.cd(chdir) if chdir
+    if chdir
+      if 0 != LibC.chdir(chdir)
+        return
+      end
+    end
 
     execvpe(*prepared_args, envp)
   end
