@@ -75,25 +75,25 @@ struct OAuth::Signature
       params.add key, value
     end
 
+    # Inline query parsing
     if query = request.query
-      add_query_params(params, query)
+      URI::Params.parse(query) do |k, v|
+        params.add k, v
+      end
     end
 
+    # Inline form body parsing
     body = request.body
     content_type = request.headers["Content-type"]?
     if body && content_type == "application/x-www-form-urlencoded"
       form = body.gets_to_end
-      add_query_params(params, form)
+      URI::Params.parse(form) do |k, v|
+        params.add k, v
+      end
       request.body = form
     end
 
     oauth_normalize_params(params)
-  end
-
-  private def add_query_params(params : URI::Params, raw : String)
-    URI::Params.parse(raw) do |k, v|
-      params.add k, v
-    end
   end
 
   private def host_and_port(request, tls)
@@ -108,34 +108,18 @@ struct OAuth::Signature
   end
 
   private def oauth_normalize_params(params : URI::Params) : String
-    # Collect encoded pairs (encode names and values first, per RFC 5849 §3.4.1.3.2)
-    pairs = [] of Tuple(String, String)
-    params.each do |key, values|
-      if values.is_a?(Array)
-        values.each do |v|
-          encoded_key = String.build do |s|
-            URI.encode_www_form key.to_s, s, space_to_plus: false
-          end
-          encoded_val = String.build do |s|
-            URI.encode_www_form v.to_s, s, space_to_plus: false
-          end
-          pairs << {encoded_key, encoded_val}
-        end
-      else
-        encoded_key = String.build do |s|
-          URI.encode_www_form key.to_s, s, space_to_plus: false
-        end
-        encoded_val = String.build do |s|
-          URI.encode_www_form values.to_s, s, space_to_plus: false
-        end
-        pairs << {encoded_key, encoded_val}
-      end
+    # Encode names + values first (RFC 5849 §3.4.1.3.2)
+    pairs = params.map do |key, value|
+      {
+        URI.encode_www_form(key.to_s, space_to_plus: false),
+        URI.encode_www_form(value.to_s, space_to_plus: false)
+      }
     end
 
-    # Sort by encoded name then encoded value
+    # Sort by encoded key then encoded value
     pairs.sort_by! { |(k, v)| {k, v} }
 
-    # Join encoded pairs into "k=v&k2=v2"
+    # Build final normalized string WITHOUT re-encoding
     String.build do |io|
       pairs.join(io, "&") do |(key, value), io|
         io << key
