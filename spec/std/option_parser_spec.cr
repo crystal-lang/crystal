@@ -791,7 +791,7 @@ describe "OptionParser" do
 
   describe "boolean args" do
     describe "only-negative options" do
-      context "when chosen" do
+      context "when option specified" do
         it "should accept a negative option as a value of 'false'" do
           flag = true
           args = %w(--no-verbose)
@@ -803,10 +803,11 @@ describe "OptionParser" do
           flag.should eq(false)
         end
       end
-      context "when not chosen" do
+
+      context "when option not specified" do
         it "should produce a value of 'true' (the default)" do
           flag = true
-          args = [] of String
+          args = %w()
           OptionParser.parse(args) do |opts|
             opts.on("--no-verbose", "Turn off verbose") do
               flag = false
@@ -815,9 +816,23 @@ describe "OptionParser" do
           flag.should eq(true)
         end
       end
+
+      context "when option without 'no-' prefix specified" do
+        it "does not recognize it" do
+          args = %w(--verbose)
+
+          expect_raises(OptionParser::InvalidOption, "Invalid option: --verbose") do
+            OptionParser.parse(args) do |opts|
+              opts.on("--no-verbose", "Turn off verbose") do
+              end
+            end
+          end
+        end
+      end
     end
+
     describe "both-forms boolean" do
-      it "should be true when chosen" do
+      it "should be true when positive option specified" do
         flag = nil
         args = %w(--verbose)
         OptionParser.parse(args) do |opts|
@@ -827,7 +842,8 @@ describe "OptionParser" do
         end
         flag.should eq(true)
       end
-      it "should be true when chosen" do
+
+      it "should be false when negative option specified" do
         flag = nil
         args = %w(--no-verbose)
         OptionParser.parse(args) do |opts|
@@ -836,6 +852,17 @@ describe "OptionParser" do
           end
         end
         flag.should eq(false)
+      end
+
+      it "should not be changed when option not specified" do
+        flag = nil
+        args = %w()
+        OptionParser.parse(args) do |opts|
+          opts.bool("--[no-]verbose", "Run verbosely") do |v|
+            flag = v
+          end
+        end
+        flag.should be_nil
       end
     end
   end
