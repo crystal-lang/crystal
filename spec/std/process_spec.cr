@@ -662,6 +662,8 @@ describe Process do
           File.exists?(path).should be_true
         end
       end
+
+      typeof(Process.fork)
     end
   {% end %}
 
