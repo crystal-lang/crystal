@@ -1529,6 +1529,7 @@ class Hash(K, V)
   # ```
   def merge(other : Hash(L, W)) : Hash(K | L, V | W) forall L, W
     hash = Hash(K | L, V | W).new
+    hash.compare_by_identity if compare_by_identity?
     hash.merge! self
     hash.merge! other
     hash
@@ -1536,6 +1537,7 @@ class Hash(K, V)
 
   def merge(other : Hash(L, W), & : L, V, W -> V | W) : Hash(K | L, V | W) forall L, W
     hash = Hash(K | L, V | W).new
+    hash.compare_by_identity if compare_by_identity?
     hash.merge! self
     hash.merge!(other) { |k, v1, v2| yield k, v1, v2 }
     hash
@@ -1611,7 +1613,10 @@ class Hash(K, V)
   # h.reject { |k, v| v < 200 } # => {"b" => 200, "c" => 300}
   # ```
   def reject(& : K, V ->) : Hash(K, V)
-    each_with_object({} of K => V) do |(k, v), memo|
+    object = {} of K => V
+    object.compare_by_identity if compare_by_identity?
+
+    each_with_object(object) do |(k, v), memo|
       memo[k] = v unless yield k, v
     end
   end
@@ -1678,7 +1683,10 @@ class Hash(K, V)
   # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select(Set{"a", "c"}) # => {"a" => 1, "c" => 3}
   # ```
   def select(keys : Enumerable) : Hash(K, V)
-    keys.each_with_object({} of K => V) do |k, memo|
+    object = {} of K => V
+    object.compare_by_identity if compare_by_identity?
+
+    keys.each_with_object(object) do |k, memo|
       entry = find_entry(k)
       memo[k] = entry.value if entry
     end
@@ -1724,7 +1732,10 @@ class Hash(K, V)
   # hash.compact # => {"hello" => "world"}
   # ```
   def compact
-    each_with_object({} of K => typeof(self.first_value.not_nil!)) do |(key, value), memo|
+    object = {} of K => typeof(self.first_value.not_nil!)
+    object.compare_by_identity if compare_by_identity?
+
+    each_with_object(object) do |(key, value), memo|
       memo[key] = value unless value.nil?
     end
   end
@@ -1784,6 +1795,8 @@ class Hash(K, V)
   # ```
   def transform_values(& : V, K -> V2) : Hash(K, V2) forall V2
     copy = Hash(K, V2).new(initial_capacity: entries_capacity)
+    copy.compare_by_identity if compare_by_identity?
+
     each_with_object(copy) do |(key, value), memo|
       memo[key] = yield(value, key)
     end
