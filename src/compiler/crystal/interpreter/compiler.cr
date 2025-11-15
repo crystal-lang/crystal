@@ -1027,7 +1027,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     compile_instance_var(node)
   end
 
-  private def compile_instance_var(node : InstanceVar)
+  private def compile_instance_var(node : InstanceVar, owner = scope)
     return false unless @wants_value
 
     closured_self = lookup_closured_var?("self")
@@ -1035,8 +1035,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       ivar_offset, ivar_size = get_closured_self_pointer(closured_self, node.name, node: node)
       pointer_get ivar_size, node: node
     else
-      ivar_offset = ivar_offset(scope, node.name)
-      ivar_size = inner_sizeof_type(scope.lookup_instance_var(node.name))
+      ivar_offset = ivar_offset(owner, node.name)
+      ivar_size = inner_sizeof_type(owner.lookup_instance_var(node.name))
 
       get_self_ivar ivar_offset, ivar_size, node: node
     end
@@ -1859,7 +1859,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         if obj
           compile_read_instance_var(node, obj, body.name, owner: target_def.owner)
         else
-          compile_instance_var(body)
+          compile_instance_var(body, owner: target_def.owner)
         end
       end
 
