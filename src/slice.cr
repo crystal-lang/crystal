@@ -119,7 +119,8 @@ struct Slice(T)
   # slice # => Slice[10, 10, 10]
   # ```
   def self.new(size : Int, value : T, *, read_only = false)
-    new(size, read_only: read_only) { value }
+    pointer = Pointer(T).malloc(size, value)
+    new(pointer, size, read_only: read_only)
   end
 
   # Returns a deep copy of this slice.
