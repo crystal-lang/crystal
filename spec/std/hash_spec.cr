@@ -979,12 +979,12 @@ describe "Hash" do
 
     it "does not retain default value" do
       h = Hash(Int32, String).new("a")
-      expect_raises(KeyError, "Missing hash key: 0") { h.transform_keys(&.succ)[0] }
+      h.transform_keys(&.succ)[0]?.should be_nil
     end
 
     it "does not retain default block" do
       h = Hash(Int32, String).new { |_, _| "b" }
-      expect_raises(KeyError, "Missing hash key: 0") { h.transform_keys(&.succ)[0] }
+      h.transform_keys(&.succ)[0]?.should be_nil
     end
 
     it "does not retain compare_by_identity" do
@@ -1056,12 +1056,12 @@ describe "Hash" do
 
     it "does not retain default value" do
       h = Hash(Int32, String).new("a")
-      expect_raises(KeyError, "Missing hash key: 0") { h.transform_values(&.succ)[0] }
+      h.transform_values(&.succ)[0]?.should be_nil
     end
 
     it "does not retain default block" do
       h = Hash(Int32, String).new { |_, _| "b" }
-      expect_raises(KeyError, "Missing hash key: 0") { h.transform_values(&.succ)[0] }
+      h.transform_values(&.succ)[0]?.should be_nil
     end
 
     it "retains compare_by_identity" do
@@ -1319,12 +1319,12 @@ describe "Hash" do
 
     it "does not retain default value" do
       h = Hash(Int32, String).new("a")
-      expect_raises(KeyError, "Missing hash key: 0") { h.invert[0] }
+      h.invert[0]?.should be_nil
     end
 
     it "does not retain default block" do
       h = Hash(Int32, String).new { |_, _| "b" }
-      expect_raises(KeyError, "Missing hash key: 0") { h.invert[0] }
+      h.invert[0]?.should be_nil
     end
 
     it "does not retain compare_by_identity" do
@@ -1480,15 +1480,15 @@ describe "Hash" do
     it "does not retain default value" do
       h = Hash(Int32, String).new("a")
 
-      expect_raises(KeyError, "Missing hash key: 0") { h.reject(42)[0] }
-      expect_raises(KeyError, "Missing hash key: 0") { h.reject { |_, _| false }[0] }
+      h.reject(42)[0]?.should be_nil
+      h.reject { |_, _| false }[0]?.should be_nil
     end
 
     it "does not retain default block" do
       h = Hash(Int32, String).new { |_, _| "b" }
 
-      expect_raises(KeyError, "Missing hash key: 0") { h.reject(42)[0] }
-      expect_raises(KeyError, "Missing hash key: 0") { h.reject { |_, _| false }[0] }
+      h.reject(42)[0]?.should be_nil
+      h.reject { |_, _| false }[0]?.should be_nil
     end
 
     it "retains compare_by_identity" do
@@ -1525,17 +1525,17 @@ describe "Hash" do
     it "does not retain default value" do
       h = Hash(Int32, String).new("a")
 
-      expect_raises(KeyError, "Missing hash key: 0") { h.select(42)[0] }
-      expect_raises(KeyError, "Missing hash key: 0") { h.select([42])[0] }
-      expect_raises(KeyError, "Missing hash key: 0") { h.select { |_, _| true }[0] }
+      h.select(42)[0]?.should be_nil
+      h.select([42])[0]?.should be_nil
+      h.select { |_, _| true }[0]?.should be_nil
     end
 
     it "does not retain default block" do
       h = Hash(Int32, String).new { |_, _| "b" }
 
-      expect_raises(KeyError, "Missing hash key: 0") { h.select(42)[0] }
-      expect_raises(KeyError, "Missing hash key: 0") { h.select([42])[0] }
-      expect_raises(KeyError, "Missing hash key: 0") { h.select { |_, _| true }[0] }
+      h.select(42)[0]?.should be_nil
+      h.select([42])[0]?.should be_nil
+      h.select { |_, _| true }[0]?.should be_nil
     end
 
     it "retains compare_by_identity" do
