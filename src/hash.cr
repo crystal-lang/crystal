@@ -1528,6 +1528,8 @@ class Hash(K, V)
   # # => {"foo" => "bar"}
   # ```
   def merge(other : Hash(L, W)) : Hash(K | L, V | W) forall L, W
+    # Don't retain @block as far as key type may be changed and retained @block
+    # will not be compatible with this new type.
     hash = Hash(K | L, V | W).new
     hash.compare_by_identity if compare_by_identity?
     hash.merge! self
@@ -1536,6 +1538,8 @@ class Hash(K, V)
   end
 
   def merge(other : Hash(L, W), & : L, V, W -> V | W) : Hash(K | L, V | W) forall L, W
+    # Don't retain @block as far as key type may be changed and retained @block
+    # will not be compatible with this new type.
     hash = Hash(K | L, V | W).new
     hash.compare_by_identity if compare_by_identity?
     hash.merge! self

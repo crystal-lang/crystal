@@ -844,6 +844,18 @@ describe "Hash" do
       h3.should eq({1 => "foobar", "fizz" => "buzz"})
     end
 
+    it "does not retain default value" do
+      h = Hash(Int32, String).new("a")
+      h.merge({1 => "a"})[0]?.should be_nil
+      h.merge({1 => "a"}) { |k, v1, v2| v1 }[0]?.should be_nil
+    end
+
+    it "does not retain default block" do
+      h = Hash(Int32, String).new { |_, _| "b" }
+      h.merge({1 => "a"})[0]?.should be_nil
+      h.merge({1 => "a"}) { |k, v1, v2| v1 }[0]?.should be_nil
+    end
+
     it "retains compare_by_identity" do
       h = ({} of String => Int32).compare_by_identity
       h.merge({"a" => 1}).compare_by_identity?.should be_true
