@@ -1732,12 +1732,9 @@ class Hash(K, V)
   # hash.compact # => {"hello" => "world"}
   # ```
   def compact
-    case @block
-    when Proc
-      object = Hash(K, V).new(block: @block)
-    else
-      object = {} of K => typeof(self.first_value.not_nil!)
-    end
+    # Don't retain @block as far as #compact may change value type, e.g.
+    # (String | Nil) will become String.
+    object = {} of K => typeof(self.first_value.not_nil!)
 
     object.compare_by_identity if compare_by_identity?
 

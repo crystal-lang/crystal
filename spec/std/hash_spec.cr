@@ -949,14 +949,14 @@ describe "Hash" do
       h2.should eq({"a" => 1, "b" => 2})
     end
 
-    it "retains default value" do
+    it "does not retain default value" do
       h = Hash(Int32, String).new("a")
-      h.compact[0].should eq("a")
+      h.compact[0]?.should be_nil
     end
 
-    it "retains default block" do
+    it "does not retain default block" do
       h = Hash(Int32, String).new { |_, _| "b" }
-      h.compact[0].should eq("b")
+      h.compact[0]?.should be_nil
     end
 
     it "retains compare_by_identity" do
