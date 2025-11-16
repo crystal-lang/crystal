@@ -493,7 +493,7 @@ class OptionParser
     # subcommands since they are no longer valid.
     unless flag.starts_with?('-')
       @handlers.select! { |k, _| k.starts_with?('-') }
-      @flags.select!(&.starts_with?("    -"))
+      @flags.select!(&.starts_with?("#{summary_indent}-"))
     end
 
     handler.block.call(value || "")
