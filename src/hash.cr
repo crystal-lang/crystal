@@ -678,9 +678,9 @@ class Hash(K, V)
   end
 
   # Initializes a `dup` copy from the contents of `other`.
-  protected def initialize_dup(other)
+  protected def initialize_dup(other, retain_defaults : Bool = true)
     initialize_compare_by_identity(other)
-    initialize_default_block(other)
+    initialize_default_block(other) if retain_defaults
 
     return if other.empty?
 
@@ -689,9 +689,9 @@ class Hash(K, V)
   end
 
   # Initializes a `clone` copy from the contents of `other`.
-  protected def initialize_clone(other)
+  protected def initialize_clone(other, retain_defaults : Bool = true)
     initialize_compare_by_identity(other)
-    initialize_default_block(other)
+    initialize_default_block(other) if retain_defaults
 
     return if other.empty?
 
@@ -1647,10 +1647,7 @@ class Hash(K, V)
   # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.reject("a", "c") # => {"b" => 2, "d" => 4}
   # ```
   def reject(*keys) : Hash(K, V)
-    block = @block
-    @block = nil
-    hash = self.dup
-    @block = block
+    hash = self.dup(retain_defaults: false)
     hash.reject!(*keys)
   end
 
@@ -2042,9 +2039,20 @@ class Hash(K, V)
   # hash_b.merge!({"baz" => "qux"})
   # hash_a # => {"foo" => "bar"}
   # ```
-  def dup : Hash(K, V)
+  #
+  # Retains `compare_by_identity` flag.
+  #
+  # Retains default value and default block. It can be prevented with calling
+  # with `false` argument.
+  #
+  # ```
+  # hash_a = Hash(String, String).new("?")
+  # hash_b = hash_a.dup(retain_defaults: false)
+  # hash_b["foo"]? # => nil
+  # ```
+  def dup(retain_defaults : Bool = true) : Hash(K, V)
     hash = Hash(K, V).new
-    hash.initialize_dup(self)
+    hash.initialize_dup(self, retain_defaults)
     hash
   end
 
@@ -2056,16 +2064,26 @@ class Hash(K, V)
   # hash_b["foobar"]["foo"] = "baz"
   # hash_a # => {"foobar" => {"foo" => "bar"}}
   # ```
-  def clone : Hash(K, V)
+  #
+  # Retains `compare_by_identity` flag.
+  #
+  # Retains default value and default block. It can be prevented with calling
+  # with `false` argument.
+  #
+  # ```
+  # hash_a = Hash(String, String).new("?")
+  # hash_b = hash_a.clone(retain_defaults: false)
+  # hash_b["foo"]? # => nil
+  def clone(retain_defaults : Bool = true) : Hash(K, V)
     {% if V == ::Bool || V == ::Char || V == ::String || V == ::Symbol || V < ::Number::Primitive %}
       clone = Hash(K, V).new
-      clone.initialize_clone(self)
+      clone.initialize_clone(self, retain_defaults)
       clone
     {% else %}
       exec_recursive_clone do |hash|
         clone = Hash(K, V).new
         hash[object_id] = clone.object_id
-        clone.initialize_clone(self)
+        clone.initialize_clone(self, retain_defaults)
         clone
       end
     {% end %}

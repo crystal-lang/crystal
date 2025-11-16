@@ -697,6 +697,20 @@ describe "Hash" do
       h = ({} of String => Int32).compare_by_identity
       h.clone.compare_by_identity?.should be_true
     end
+
+    context "given retain_defaults: false" do
+      it "does not retain default value" do
+        h1 = Hash(Int32, String).new("a")
+        h2 = h1.clone(retain_defaults: false)
+        h2[0]?.should be_nil
+      end
+
+      it "does not retain default block" do
+        h1 = Hash(Int32, String).new { |_, _| "b" }
+        h2 = h1.clone(retain_defaults: false)
+        h2[0]?.should be_nil
+      end
+    end
   end
 
   describe "dup" do
@@ -759,6 +773,20 @@ describe "Hash" do
     it "retains compare_by_identity" do
       h = ({} of String => Int32).compare_by_identity
       h.dup.compare_by_identity?.should be_true
+    end
+
+    context "given retain_defaults: false" do
+      it "does not retain default value" do
+        h1 = Hash(Int32, String).new("a")
+        h2 = h1.dup(retain_defaults: false)
+        h2[0]?.should be_nil
+      end
+
+      it "does not retain default block" do
+        h1 = Hash(Int32, String).new { |_, _| "b" }
+        h2 = h1.dup(retain_defaults: false)
+        h2[0]?.should be_nil
+      end
     end
   end
 
