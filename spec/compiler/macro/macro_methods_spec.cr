@@ -583,6 +583,14 @@ module Crystal
         assert_macro %({{"hello".gsub(/e|o/, "a")}}), %("halla")
       end
 
+      it "executes gsub with a block" do
+        assert_macro %({{ "Version v%app.version%".gsub /%([^%\\s]++)%/ { "0.1.2" } }}), %("Version v0.1.2")                  # No block args
+        assert_macro %({{ "Version v%app.version%".gsub /%([^%\\s]++)%/ { |str| str.upcase } }}), %("Version v%APP.VERSION%") # First yields full matched string
+        assert_macro %({{ "Version v%app.version%".gsub /%([^%\\s]++)%/ { |_, a| a.upcase } }}), %("Version vAPP.VERSION")    # 1.. yields capture group n
+        assert_macro %({{ "bar baz".gsub /bar (foo)?/ { |_, a| a.nil? ? "" : "BUG" } }}), %("baz")                            # Capture group no match
+        assert_macro %({{ "bar".gsub /(foo)/ { "STR" } }}), %("bar")                                                          # No match at all
+      end
+
       it "executes scan" do
         assert_macro %({{"Crystal".scan(/(Cr)(?<name1>y)(st)(?<name2>al)/)}}), %([{0 => "Crystal", 1 => "Cr", "name1" => "y", 3 => "st", "name2" => "al"} of ::Int32 | ::String => ::String | ::Nil] of ::Hash(::Int32 | ::String, ::String | ::Nil))
         assert_macro %({{"Crystal".scan(/(Cr)?(stal)/)}}), %([{0 => "stal", 1 => nil, 2 => "stal"} of ::Int32 | ::String => ::String | ::Nil] of ::Hash(::Int32 | ::String, ::String | ::Nil))
