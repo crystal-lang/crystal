@@ -224,5 +224,18 @@ describe Crystal::Repl::Interpreter do
         foo.x.not_nil!("test")
       CRYSTAL
     end
+
+    it "returns concrete type with typeof (#16210)" do
+      interpret(<<-CRYSTAL, prelude: "prelude").should eq("true")
+        class Foo
+        end
+
+        class Bar < Foo
+        end
+
+        foo = Bar.new.as(Foo)
+        typeof(foo) == Foo
+      CRYSTAL
+    end
   end
 end
