@@ -341,6 +341,9 @@ struct Crystal::System::Process
     {pathname, argv.to_unsafe}
   end
 
+  # This method is similar to `.replace` (used for `Process.exec`) with some
+  # differences because we're limited in what we can do in the pre-exec phase
+  # between `fork` and `exec`.
   private def self.try_replace(prepared_args, envp, input, output, error, chdir)
     reopen_io(input, ORIGINAL_STDIN)
     reopen_io(output, ORIGINAL_STDOUT)
@@ -466,6 +469,8 @@ struct Crystal::System::Process
     prepared_args = prepare_args(command, args, shell)
     envp = Env.make_envp(env, clear_env)
 
+    # The following steps are similar to `.try_replace` (used for `fork`/`exec`)
+    # with some differences because we're not spawning a new process.
     reopen_io(input, ORIGINAL_STDIN)
     reopen_io(output, ORIGINAL_STDOUT)
     reopen_io(error, ORIGINAL_STDERR)
