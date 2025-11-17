@@ -219,170 +219,172 @@ describe "expectations" do
       expect_raises(Exception) { raise ArgumentError.new(nil) }
     end
 
-    it "fails if expected message does not equal actual message and expected class equals actual class" do
-      expect_raises(Exception, "Ops") { raise Exception.new("Hm") }
-    rescue Spec::AssertionFailed
-      # success
-    else
-      fail "expected Spec::AssertionFailed but nothing was raised"
-    end
-
-    it "fails if given expected message, actual message is nil and expected class equals actual class" do
-      expect_raises(Exception, "Ops") { raise Exception.new(nil) }
-    rescue Spec::AssertionFailed
-      # success
-    else
-      fail "expected Spec::AssertionFailed but nothing was raised"
-    end
-
-    it "fails if expected regex does not match actual message and expected class equals actual class" do
-      expect_raises(Exception, /Ops/) { raise Exception.new("Hm") }
-    rescue Spec::AssertionFailed
-      # success
-    else
-      fail "expected Spec::AssertionFailed but nothing was raised"
-    end
-
-    it "fails if given expected regex, actual message is nil and expected class equals actual class" do
-      expect_raises(Exception, /Ops/) { raise Exception.new(nil) }
-    rescue Spec::AssertionFailed
-      # success
-    else
-      fail "expected Spec::AssertionFailed but nothing was raised"
-    end
-
-    it "fails if given no message expectation and expected class does not equal and is not an ancestor of actual class" do
-      expect_raises(IndexError) { raise ArgumentError.new("Ops") }
-    rescue Spec::AssertionFailed
-      # success
-    else
-      fail "expected Spec::AssertionFailed but nothing was raised"
-    end
-
-    it "fails if given no message expectation, actual message is nil and expected class does not equal and is not an ancestor of actual class" do
-      expect_raises(IndexError) { raise ArgumentError.new(nil) }
-    rescue Spec::AssertionFailed
-      # success
-    else
-      fail "expected Spec::AssertionFailed but nothing was raised"
-    end
-
-    it "fails if nothing was raised" do
-      expect_raises(IndexError) { raise ArgumentError.new("Ops") }
-    rescue Spec::AssertionFailed
-      # success
-    else
-      fail "expected Spec::AssertionFailed but nothing was raised"
-    end
-
-    it "uses the exception's #to_s output to match a given String" do
-      expect_raises(Exception, "Hm") { raise ExceptionWithOverriddenToS.new("Ops", to_s: "Hm") }
-    end
-
-    it "uses the exception's #to_s output to match a given Regex" do
-      expect_raises(Exception, /Hm/) { raise ExceptionWithOverriddenToS.new("Ops", to_s: "Hm") }
-    end
-
-    describe "failure message format" do
-      context "given string to compare with message" do
-        it "contains expected exception, actual exception and backtrace" do
-          expect_raises(Exception, "digits should be non-negative") do
-            raise IndexError.new("Index out of bounds")
-          end
-        rescue e : Spec::AssertionFailed
-          # don't check backtrace items because they are platform specific
-          e.message.as(String).should contain(<<-MESSAGE)
-            Expected Exception with message containing: "digits should be non-negative"
-                 got IndexError with message: "Index out of bounds"
-            Backtrace:
-            MESSAGE
-        else
-          fail "expected Spec::AssertionFailed but nothing is raised"
-        end
-
-        it "contains expected class, actual exception and backtrace when expected class does not match actual class" do
-          expect_raises(ArgumentError, "digits should be non-negative") do
-            raise IndexError.new("Index out of bounds")
-          end
-        rescue e : Spec::AssertionFailed
-          # don't check backtrace items because they are platform specific
-          e.message.as(String).should contain(<<-MESSAGE)
-            Expected ArgumentError
-                 got IndexError with message: "Index out of bounds"
-            Backtrace:
-            MESSAGE
-        else
-          fail "expected Spec::AssertionFailed but nothing is raised"
-        end
-
-        it "escapes expected and actual messages in the same way" do
-          expect_raises(Exception, %q(a\tb\nc)) do
-            raise %q(a\tb\nc).inspect
-          end
-        rescue e : Spec::AssertionFailed
-          e.message.as(String).should contain("Expected Exception with message containing: #{%q(a\tb\nc).inspect}")
-          e.message.as(String).should contain("got Exception with message: #{%q(a\tb\nc).inspect.inspect}")
-        else
-          fail "expected Spec::AssertionFailed but nothing is raised"
-        end
+    unless {{ flag?(:wasm32) }}
+      it "fails if expected message does not equal actual message and expected class equals actual class" do
+        expect_raises(Exception, "Ops") { raise Exception.new("Hm") }
+      rescue Spec::AssertionFailed
+        # success
+      else
+        fail "expected Spec::AssertionFailed but nothing was raised"
       end
 
-      context "given regex to match a message" do
-        it "contains expected exception, actual exception and backtrace" do
-          expect_raises(Exception, /digits should be non-negative/) do
-            raise IndexError.new("Index out of bounds")
-          end
-        rescue e : Spec::AssertionFailed
-          # don't check backtrace items because they are platform specific
-          e.message.as(String).should contain(<<-MESSAGE)
-            Expected Exception with message matching: /digits should be non-negative/
-                 got IndexError with message: "Index out of bounds"
-            Backtrace:
-            MESSAGE
-        else
-          fail "expected Spec::AssertionFailed but nothing is raised"
-        end
-
-        it "contains expected class, actual exception and backtrace when expected class does not match actual class" do
-          expect_raises(ArgumentError, /digits should be non-negative/) do
-            raise IndexError.new("Index out of bounds")
-          end
-        rescue e : Spec::AssertionFailed
-          # don't check backtrace items because they are platform specific
-          e.message.as(String).should contain(<<-MESSAGE)
-            Expected ArgumentError
-                 got IndexError with message: "Index out of bounds"
-            Backtrace:
-            MESSAGE
-        else
-          fail "expected Spec::AssertionFailed but nothing is raised"
-        end
+      it "fails if given expected message, actual message is nil and expected class equals actual class" do
+        expect_raises(Exception, "Ops") { raise Exception.new(nil) }
+      rescue Spec::AssertionFailed
+        # success
+      else
+        fail "expected Spec::AssertionFailed but nothing was raised"
       end
 
-      context "given nil to allow any message" do
-        it "contains expected class, actual exception and backtrace when expected class does not match actual class" do
-          expect_raises(ArgumentError, nil) do
-            raise IndexError.new("Index out of bounds")
-          end
-        rescue e : Spec::AssertionFailed
-          # don't check backtrace items because they are platform specific
-          e.message.as(String).should contain(<<-MESSAGE)
-            Expected ArgumentError
-                 got IndexError with message: "Index out of bounds"
-            Backtrace:
-            MESSAGE
-        else
-          fail "expected Spec::AssertionFailed but nothing is raised"
-        end
+      it "fails if expected regex does not match actual message and expected class equals actual class" do
+        expect_raises(Exception, /Ops/) { raise Exception.new("Hm") }
+      rescue Spec::AssertionFailed
+        # success
+      else
+        fail "expected Spec::AssertionFailed but nothing was raised"
       end
 
-      context "nothing was raises" do
-        it "contains expected class" do
-          expect_raises(IndexError) { }
-        rescue e : Spec::AssertionFailed
-          e.message.as(String).should contain("Expected IndexError but nothing was raised")
-        else
-          fail "expected Spec::AssertionFailed but nothing was raised"
+      it "fails if given expected regex, actual message is nil and expected class equals actual class" do
+        expect_raises(Exception, /Ops/) { raise Exception.new(nil) }
+      rescue Spec::AssertionFailed
+        # success
+      else
+        fail "expected Spec::AssertionFailed but nothing was raised"
+      end
+
+      it "fails if given no message expectation and expected class does not equal and is not an ancestor of actual class" do
+        expect_raises(IndexError) { raise ArgumentError.new("Ops") }
+      rescue Spec::AssertionFailed
+        # success
+      else
+        fail "expected Spec::AssertionFailed but nothing was raised"
+      end
+
+      it "fails if given no message expectation, actual message is nil and expected class does not equal and is not an ancestor of actual class" do
+        expect_raises(IndexError) { raise ArgumentError.new(nil) }
+      rescue Spec::AssertionFailed
+        # success
+      else
+        fail "expected Spec::AssertionFailed but nothing was raised"
+      end
+
+      it "fails if nothing was raised" do
+        expect_raises(IndexError) { raise ArgumentError.new("Ops") }
+      rescue Spec::AssertionFailed
+        # success
+      else
+        fail "expected Spec::AssertionFailed but nothing was raised"
+      end
+
+      it "uses the exception's #to_s output to match a given String" do
+        expect_raises(Exception, "Hm") { raise ExceptionWithOverriddenToS.new("Ops", to_s: "Hm") }
+      end
+
+      it "uses the exception's #to_s output to match a given Regex" do
+        expect_raises(Exception, /Hm/) { raise ExceptionWithOverriddenToS.new("Ops", to_s: "Hm") }
+      end
+
+      describe "failure message format" do
+        context "given string to compare with message" do
+          it "contains expected exception, actual exception and backtrace" do
+            expect_raises(Exception, "digits should be non-negative") do
+              raise IndexError.new("Index out of bounds")
+            end
+          rescue e : Spec::AssertionFailed
+            # don't check backtrace items because they are platform specific
+            e.message.as(String).should contain(<<-MESSAGE)
+              Expected Exception with message containing: "digits should be non-negative"
+                   got IndexError with message: "Index out of bounds"
+              Backtrace:
+              MESSAGE
+          else
+            fail "expected Spec::AssertionFailed but nothing is raised"
+          end
+
+          it "contains expected class, actual exception and backtrace when expected class does not match actual class" do
+            expect_raises(ArgumentError, "digits should be non-negative") do
+              raise IndexError.new("Index out of bounds")
+            end
+          rescue e : Spec::AssertionFailed
+            # don't check backtrace items because they are platform specific
+            e.message.as(String).should contain(<<-MESSAGE)
+              Expected ArgumentError
+                   got IndexError with message: "Index out of bounds"
+              Backtrace:
+              MESSAGE
+          else
+            fail "expected Spec::AssertionFailed but nothing is raised"
+          end
+
+          it "escapes expected and actual messages in the same way" do
+            expect_raises(Exception, %q(a\tb\nc)) do
+              raise %q(a\tb\nc).inspect
+            end
+          rescue e : Spec::AssertionFailed
+            e.message.as(String).should contain("Expected Exception with message containing: #{%q(a\tb\nc).inspect}")
+            e.message.as(String).should contain("got Exception with message: #{%q(a\tb\nc).inspect.inspect}")
+          else
+            fail "expected Spec::AssertionFailed but nothing is raised"
+          end
+        end
+
+        context "given regex to match a message" do
+          it "contains expected exception, actual exception and backtrace" do
+            expect_raises(Exception, /digits should be non-negative/) do
+              raise IndexError.new("Index out of bounds")
+            end
+          rescue e : Spec::AssertionFailed
+            # don't check backtrace items because they are platform specific
+            e.message.as(String).should contain(<<-MESSAGE)
+              Expected Exception with message matching: /digits should be non-negative/
+                   got IndexError with message: "Index out of bounds"
+              Backtrace:
+              MESSAGE
+          else
+            fail "expected Spec::AssertionFailed but nothing is raised"
+          end
+
+          it "contains expected class, actual exception and backtrace when expected class does not match actual class" do
+            expect_raises(ArgumentError, /digits should be non-negative/) do
+              raise IndexError.new("Index out of bounds")
+            end
+          rescue e : Spec::AssertionFailed
+            # don't check backtrace items because they are platform specific
+            e.message.as(String).should contain(<<-MESSAGE)
+              Expected ArgumentError
+                   got IndexError with message: "Index out of bounds"
+              Backtrace:
+              MESSAGE
+          else
+            fail "expected Spec::AssertionFailed but nothing is raised"
+          end
+        end
+
+        context "given nil to allow any message" do
+          it "contains expected class, actual exception and backtrace when expected class does not match actual class" do
+            expect_raises(ArgumentError, nil) do
+              raise IndexError.new("Index out of bounds")
+            end
+          rescue e : Spec::AssertionFailed
+            # don't check backtrace items because they are platform specific
+            e.message.as(String).should contain(<<-MESSAGE)
+              Expected ArgumentError
+                   got IndexError with message: "Index out of bounds"
+              Backtrace:
+              MESSAGE
+          else
+            fail "expected Spec::AssertionFailed but nothing is raised"
+          end
+        end
+
+        context "nothing was raises" do
+          it "contains expected class" do
+            expect_raises(IndexError) { }
+          rescue e : Spec::AssertionFailed
+            e.message.as(String).should contain("Expected IndexError but nothing was raised")
+          else
+            fail "expected Spec::AssertionFailed but nothing was raised"
+          end
         end
       end
     end
