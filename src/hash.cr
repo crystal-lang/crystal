@@ -2051,7 +2051,11 @@ class Hash(K, V)
   # hash_b = hash_a.dup(retain_defaults: false)
   # hash_b["foo"]? # => nil
   # ```
-  def dup(retain_defaults : Bool = true) : Hash(K, V)
+  def dup : Hash(K, V)
+    dup(retain_defaults: true)
+  end
+
+  private def dup(retain_defaults : Bool) : Hash(K, V)
     hash = Hash(K, V).new
     hash.initialize_dup(self, retain_defaults)
     hash
