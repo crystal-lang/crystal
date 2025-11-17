@@ -294,7 +294,7 @@ describe "expectations" do
             # don't check backtrace items because they are platform specific
             e.message.as(String).should contain(<<-MESSAGE)
               Expected Exception with message containing: "digits should be non-negative"
-                  got IndexError with message: "Index out of bounds"
+                   got IndexError with message: "Index out of bounds"
               Backtrace:
               MESSAGE
           else
@@ -309,7 +309,7 @@ describe "expectations" do
             # don't check backtrace items because they are platform specific
             e.message.as(String).should contain(<<-MESSAGE)
               Expected ArgumentError
-                  got IndexError with message: "Index out of bounds"
+                   got IndexError with message: "Index out of bounds"
               Backtrace:
               MESSAGE
           else
@@ -337,7 +337,7 @@ describe "expectations" do
             # don't check backtrace items because they are platform specific
             e.message.as(String).should contain(<<-MESSAGE)
               Expected Exception with message matching: /digits should be non-negative/
-                  got IndexError with message: "Index out of bounds"
+                   got IndexError with message: "Index out of bounds"
               Backtrace:
               MESSAGE
           else
@@ -352,7 +352,7 @@ describe "expectations" do
             # don't check backtrace items because they are platform specific
             e.message.as(String).should contain(<<-MESSAGE)
               Expected ArgumentError
-                  got IndexError with message: "Index out of bounds"
+                   got IndexError with message: "Index out of bounds"
               Backtrace:
               MESSAGE
           else
@@ -369,7 +369,7 @@ describe "expectations" do
             # don't check backtrace items because they are platform specific
             e.message.as(String).should contain(<<-MESSAGE)
               Expected ArgumentError
-                  got IndexError with message: "Index out of bounds"
+                   got IndexError with message: "Index out of bounds"
               Backtrace:
               MESSAGE
           else
