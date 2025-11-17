@@ -225,7 +225,7 @@ describe Crystal::Repl::Interpreter do
       CRYSTAL
     end
 
-    it "returns concrete type with typeof (#16210)" do
+    it "returns concrete type with typeof (#16377)" do
       interpret(<<-CRYSTAL, prelude: "prelude").should eq("true")
         class Foo
         end
