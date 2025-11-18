@@ -358,8 +358,6 @@ struct Crystal::System::Process
       end
     end
 
-    ::Dir.cd(chdir) if chdir
-
     if prepared_args.is_a?(String)
       command = System.to_wstr(prepared_args)
       argv = [command]
@@ -367,9 +365,16 @@ struct Crystal::System::Process
       command = System.to_wstr(prepared_args[0])
       argv = prepared_args.map { |arg| System.to_wstr(arg) }
     end
+
     argv << Pointer(LibC::WCHAR).null
 
-    LibC._wexecvp(command, argv)
+    if chdir
+      Dir.cd(chdir) do
+        LibC._wexecvp(command, argv)
+      end
+    else
+      LibC._wexecvp(command, argv)
+    end
 
     # exec failed; restore the original C runtime file descriptors
     errno = Errno.value
