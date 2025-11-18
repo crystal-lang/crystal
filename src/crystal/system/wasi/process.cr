@@ -80,7 +80,7 @@ struct Crystal::System::Process
     raise NotImplementedError.new("Process.times")
   end
 
-  def self.fork(*, will_exec = false)
+  def self.fork
     raise NotImplementedError.new("Process.fork")
   end
 
