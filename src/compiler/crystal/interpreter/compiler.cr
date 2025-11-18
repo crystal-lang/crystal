@@ -1423,8 +1423,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     # The type of a typeof node can be a virtual metaclass, but typeof
     # should return a concrete type, so we devirtualize it.
-    type = node.type.devirtualize
-    put_type type, node: node
+    put_type node.type.devirtualize, node: node
     false
   end
 
