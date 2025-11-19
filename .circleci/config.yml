@@ -8,7 +8,7 @@ parameters:
   distribution-scripts-version:
     description: "Git ref for version of https://github.com/crystal-lang/distribution-scripts/"
     type: string
-    default: "d1d86577200f8a3d567bf83d911f60a05733c4b4"
+    default: "cf977004808218e4dd51811e5673406d4d0de1a2"
   previous_crystal_base_url:
     description: "Prefix for URLs to Crystal bootstrap compiler"
     type: string
@@ -349,18 +349,24 @@ jobs:
     steps:
       - attach_workspace:
           at: /tmp/workspace
-      - run: |
-          cd /tmp/workspace/distribution-scripts
-          source build.env
-          cd docker
-          make all TARBALLS=/tmp/workspace/build/ VERSION=${CRYSTAL_VERSION}
-          make smoke-all VERSION=${CRYSTAL_VERSION}
-      - run: |
-          cd /tmp/workspace/distribution-scripts
-          source build.env
-          cd docker
-          docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
-          make push VERSION=${CRYSTAL_VERSION}
+      - run:
+          name: Enable buildx for multiarch builds
+          command: docker buildx create --use
+      - run:
+          name: Build and push multiarch images
+          command: |
+            cd /tmp/workspace/distribution-scripts
+            source build.env
+            cd docker
+            docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
+            make all TARBALLS=/tmp/workspace/build/ VERSION=${CRYSTAL_VERSION} PUSH=1
+      - run:
+          name: Smoke tests
+          command: |
+            cd /tmp/workspace/distribution-scripts
+            source build.env
+            cd docker
+            make smoke-all VERSION=${CRYSTAL_VERSION}
 
   dist_snap:
     docker:
