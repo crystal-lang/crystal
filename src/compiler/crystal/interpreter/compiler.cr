@@ -1421,7 +1421,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   def visit(node : TypeOf)
     return false unless @wants_value
 
-    put_type node.type, node: node
+    # The type of a typeof node can be a virtual metaclass, but typeof
+    # should return a concrete type, so we devirtualize it.
+    put_type node.type.devirtualize, node: node
     false
   end
 
