@@ -98,6 +98,8 @@ module Crystal::System::Env
       envp << "#{key.check_no_null_byte("key")}=#{value.check_no_null_byte("value")}".to_unsafe
     end
 
+    envp << Pointer(LibC::Char).null
+
     envp.to_unsafe
   end
 end
