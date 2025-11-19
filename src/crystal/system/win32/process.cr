@@ -369,7 +369,7 @@ struct Crystal::System::Process
     argv << Pointer(LibC::WCHAR).null
 
     if chdir
-      Dir.cd(chdir) do
+      ::Dir.cd(chdir) do
         LibC._wexecvp(command, argv)
       end
     else
