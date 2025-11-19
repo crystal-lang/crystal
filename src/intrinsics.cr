@@ -163,8 +163,13 @@ lib LibIntrinsics
   {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_fshr128)] {% end %}
   fun fshr128 = "llvm.fshr.i128"(a : UInt128, b : UInt128, count : UInt128) : UInt128
 
-  fun va_start = "llvm.va_start"(ap : Void*)
-  fun va_end = "llvm.va_end"(ap : Void*)
+  {% if compare_versions(Crystal::LLVM_VERSION, "19.1.0") < 0 %}
+    fun va_start = "llvm.va_start"(ap : Void*)
+    fun va_end = "llvm.va_end"(ap : Void*)
+  {% else %}
+    fun va_start = "llvm.va_start.p0"(ap : Void*)
+    fun va_end = "llvm.va_end.p0"(ap : Void*)
+  {% end %}
 
   {% if flag?(:i386) || flag?(:x86_64) %}
     {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_pause)] {% end %}
@@ -349,8 +354,34 @@ module Intrinsics
   macro va_end(ap)
     ::LibIntrinsics.va_end({{ap}})
   end
+
+  # Should codegen to the following LLVM IR (before being inlined):
+  # ```
+  # define internal void @"*Intrinsics::unreachable:NoReturn"() #12 {
+  # entry:
+  #   unreachable
+  # }
+  # ```
+  #
+  # Can be used like `@llvm.assume(i1 cond)` as `unreachable unless (assumption)`.
+  #
+  # WARNING: the behaviour of the program is undefined if the assumption is broken!
+  @[AlwaysInline]
+  def self.unreachable : NoReturn
+    x = uninitialized NoReturn
+    x
+  end
 end
 
+# Invokes an execution trap to catch the attention of a debugger. This has the
+# same effect as placing a breakpoint in debuggers or IDEs supporting them.
+#
+# Execution is allowed to continue if the debugger instructs so. If no debugger
+# is attached, usually the current process terminates with a status that
+# corresponds to `Process::ExitReason::Breakpoint`.
+#
+# Inside an interpreter session, this drops into the REPL's pry mode instead of
+# a system debugger.
 macro debugger
   ::Intrinsics.debugtrap
 end

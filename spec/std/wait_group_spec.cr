@@ -129,7 +129,7 @@ describe WaitGroup do
       16.times do
         select
         when x = exited.receive
-          x.should eq(true)
+          x.should be_true
         when timeout(1.millisecond)
           fail "Expected channel to receive value"
         end

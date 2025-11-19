@@ -236,12 +236,14 @@ class Hash(K, V)
       # Translate initial capacity to the nearest power of 2, but keep it a minimum of 8.
       if initial_capacity < 8
         initial_entries_size = 8
+      elsif initial_capacity > 2**30
+        initial_entries_size = Int32::MAX
       else
         initial_entries_size = Math.pw2ceil(initial_capacity)
       end
 
       # Because we always keep indice_size >= entries_size * 2
-      initial_indices_size = initial_entries_size * 2
+      initial_indices_size = initial_entries_size.to_u64 * 2
 
       @entries = malloc_entries(initial_entries_size)
 
@@ -830,7 +832,7 @@ class Hash(K, V)
 
   # The actual number of bytes needed to allocate `@indices`.
   private def indices_malloc_size(size)
-    size * @indices_bytesize
+    size.to_u64 * @indices_bytesize
   end
 
   # Reallocates `size` number of indices for `@indices`.
@@ -1527,6 +1529,7 @@ class Hash(K, V)
   # ```
   def merge(other : Hash(L, W)) : Hash(K | L, V | W) forall L, W
     hash = Hash(K | L, V | W).new
+    hash.compare_by_identity if compare_by_identity?
     hash.merge! self
     hash.merge! other
     hash
@@ -1534,6 +1537,7 @@ class Hash(K, V)
 
   def merge(other : Hash(L, W), & : L, V, W -> V | W) : Hash(K | L, V | W) forall L, W
     hash = Hash(K | L, V | W).new
+    hash.compare_by_identity if compare_by_identity?
     hash.merge! self
     hash.merge!(other) { |k, v1, v2| yield k, v1, v2 }
     hash
@@ -1609,7 +1613,10 @@ class Hash(K, V)
   # h.reject { |k, v| v < 200 } # => {"b" => 200, "c" => 300}
   # ```
   def reject(& : K, V ->) : Hash(K, V)
-    each_with_object({} of K => V) do |(k, v), memo|
+    object = {} of K => V
+    object.compare_by_identity if compare_by_identity?
+
+    each_with_object(object) do |(k, v), memo|
       memo[k] = v unless yield k, v
     end
   end
@@ -1676,7 +1683,10 @@ class Hash(K, V)
   # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select(Set{"a", "c"}) # => {"a" => 1, "c" => 3}
   # ```
   def select(keys : Enumerable) : Hash(K, V)
-    keys.each_with_object({} of K => V) do |k, memo|
+    object = {} of K => V
+    object.compare_by_identity if compare_by_identity?
+
+    keys.each_with_object(object) do |k, memo|
       entry = find_entry(k)
       memo[k] = entry.value if entry
     end
@@ -1722,7 +1732,10 @@ class Hash(K, V)
   # hash.compact # => {"hello" => "world"}
   # ```
   def compact
-    each_with_object({} of K => typeof(self.first_value.not_nil!)) do |(key, value), memo|
+    object = {} of K => typeof(self.first_value.not_nil!)
+    object.compare_by_identity if compare_by_identity?
+
+    each_with_object(object) do |(key, value), memo|
       memo[key] = value unless value.nil?
     end
   end
@@ -1753,6 +1766,24 @@ class Hash(K, V)
     end
   end
 
+  # Destructively transforms all keys using a block. Same as transform_keys but modifies in place.
+  # The block cannot change a type of keys.
+  # The block yields the key and value.
+  #
+  # ```
+  # hash = {"a" => 1, "b" => 2, "c" => 3}
+  # hash.transform_keys! { |key| key.upcase }
+  # hash # => {"A" => 1, "B" => 2, "C" => 3}
+  # hash.transform_keys! { |key, value| key * value }
+  # hash # => {"a" => 1, "bb" => 2, "ccc" => 3}
+  # ```
+  def transform_keys!(& : K, V -> K) : self
+    copy = transform_keys { |k, v| (yield k, v).as(K) }
+    initialize_dup_entries(copy) # we need only to copy the buffer
+    initialize_copy_non_entries_vars(copy)
+    self
+  end
+
   # Returns a new hash with the results of running block once for every value.
   # The block can change a type of values.
   # The block yields the value and key.
@@ -1764,6 +1795,8 @@ class Hash(K, V)
   # ```
   def transform_values(& : V, K -> V2) : Hash(K, V2) forall V2
     copy = Hash(K, V2).new(initial_capacity: entries_capacity)
+    copy.compare_by_identity if compare_by_identity?
+
     each_with_object(copy) do |(key, value), memo|
       memo[key] = yield(value, key)
     end
@@ -2042,7 +2075,10 @@ class Hash(K, V)
   # ```
   def to_s(io : IO) : Nil
     executed = exec_recursive(:to_s) do
+      needs_padding = curly_like?(self.first_key?)
+
       io << '{'
+      io << ' ' if needs_padding
       found_one = false
       each do |key, value|
         io << ", " if found_one
@@ -2051,9 +2087,19 @@ class Hash(K, V)
         value.inspect(io)
         found_one = true
       end
+      io << ' ' if needs_padding
       io << '}'
     end
     io << "{...}" unless executed
+  end
+
+  private def curly_like?(object)
+    case object
+    when Hash, Tuple, NamedTuple
+      true
+    else
+      false
+    end
   end
 
   def pretty_print(pp) : Nil
@@ -2081,7 +2127,7 @@ class Hash(K, V)
   #
   # The order of the array follows the order the keys were inserted in the Hash.
   def to_a : Array({K, V})
-    to_a(&.itself)
+    super
   end
 
   # Returns an `Array` with the results of running *block* against tuples with key and values

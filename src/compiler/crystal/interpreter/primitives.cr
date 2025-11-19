@@ -187,10 +187,12 @@ class Crystal::Repl::Compiler
           scope.instance_type
         end
 
-      accept_call_members(node)
+      accept_call_args(node)
 
-      dup sizeof(Pointer(Void)), node: nil
-      reset_class(aligned_instance_sizeof_type(type), type_id(type), node: node)
+      # 0 stands for any non-reference type in `reset_class`
+      # (normally 0 stands for `Nil` so there is no conflict here)
+      type_id = type.struct? ? 0 : type_id(type)
+      reset_class(aligned_instance_sizeof_type(type), type_id, node: node)
 
       initializer_compiled_defs = @context.type_instance_var_initializers(type)
       unless initializer_compiled_defs.empty?
@@ -201,6 +203,11 @@ class Crystal::Repl::Compiler
         initializer_compiled_defs.each do |compiled_def|
           call compiled_def, node: nil
         end
+      end
+
+      # `Struct.pre_initialize` does not return a pointer, so always discard it
+      if !@wants_value || type.struct?
+        pop(sizeof(Pointer(Void)), node: nil)
       end
     when "tuple_indexer_known_index"
       unless @wants_value
@@ -382,7 +389,6 @@ class Crystal::Repl::Compiler
       ivar_name = '@' + node.name.rchop # remove the '=' suffix
       ivar = type.lookup_instance_var(ivar_name)
       ivar_offset = ivar_offset(type, ivar_name)
-      ivar_size = inner_sizeof_type(type.lookup_instance_var(ivar_name))
 
       # pointer_set needs first arg, then obj
       request_value(arg)
@@ -415,6 +421,9 @@ class Crystal::Repl::Compiler
       else
         pointer_set(inner_sizeof_type(ivar.type), node: node)
       end
+    when "interpreter_proc_new"
+      accept_call_args(node)
+      interpreter_proc_new(type_id(owner.instance_type), node: node)
     when "interpreter_call_stack_unwind"
       interpreter_call_stack_unwind(node: node)
     when "interpreter_raise_without_backtrace"
@@ -431,6 +440,12 @@ class Crystal::Repl::Compiler
     when "interpreter_fiber_resumable"
       accept_call_args(node)
       interpreter_fiber_resumable(node: node)
+    when "interpreter_signal_descriptor"
+      accept_call_args(node)
+      interpreter_signal_descriptor(node: node)
+    when "interpreter_signal"
+      accept_call_args(node)
+      interpreter_signal(node: node)
     when "interpreter_intrinsics_memcpy"
       accept_call_args(node)
       interpreter_intrinsics_memcpy(node: node)

@@ -179,7 +179,8 @@ module Crystal
     end
 
     private def type_id_impl(value, type : MixedUnionType)
-      union_type_and_value_pointer(value, type)[0]
+      struct_type = llvm_type(type)
+      load(llvm_context.int32, union_type_id(struct_type, value))
     end
   end
 end

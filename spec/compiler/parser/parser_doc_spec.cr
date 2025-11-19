@@ -16,21 +16,69 @@ describe "Parser doc" do
     {"alias", "alias Foo = Bar"},
     {"annotation", "@[Some]"},
     {"private def", "private def foo\nend"},
+    {"lib def", "lib MyLib\nend"},
   ].each do |(desc, code)|
     it "includes doc for #{desc}" do
-      parser = Parser.new(%(
+      parser = Parser.new(<<-CRYSTAL)
         # This is Foo.
         # Use it well.
         #{code}
-        ))
+        CRYSTAL
       parser.wants_doc = true
       node = parser.parse
       node.doc.should eq("This is Foo.\nUse it well.")
     end
   end
 
+  [
+    {"type def", "type Foo = Bar"},
+    {"cstruct def", "struct Name\nend"},
+    {"union def", "union Name\nend"},
+    {"fun def", "fun name = Name"},
+    {"external var", "$errno : Int32"},
+  ].each do |(desc, code)|
+    it "includes doc for #{desc} inside lib def" do
+      parser = Parser.new(<<-CRYSTAL)
+        lib MyLib
+          # This is Foo.
+          # Use it well.
+          #{code}
+        end
+        CRYSTAL
+      parser.wants_doc = true
+      node = parser.parse
+      node.as(Crystal::LibDef).body.doc.should eq("This is Foo.\nUse it well.")
+    end
+  end
+
+  it "includes doc for cstruct fields" do
+    parser = Parser.new(<<-CRYSTAL)
+      lib MyLib
+        struct IntOrFloat
+          # This is Foo.
+          # Use it well.
+          some_int : Int32
+          # This is Foo.
+          # Use it well.
+          some_float, other_float : Float64
+        end
+      end
+      CRYSTAL
+
+    parser.wants_doc = true
+    node = parser.parse
+    node.as(Crystal::LibDef)
+      .body.as(Crystal::CStructOrUnionDef)
+      .body.as(Crystal::Expressions)
+      .expressions.each do |exp|
+      exp.as(Crystal::TypeDeclaration)
+        .var.as(Crystal::Var)
+        .doc.should eq("This is Foo.\nUse it well.")
+    end
+  end
+
   it "disables doc parsing inside defs" do
-    parser = Parser.new(%(
+    parser = Parser.new(<<-CRYSTAL)
       # doc 1
       def foo
         # doc 2
@@ -40,7 +88,7 @@ describe "Parser doc" do
       # doc 3
       def baz
       end
-      ))
+      CRYSTAL
     parser.wants_doc = true
     nodes = parser.parse.as(Expressions)
 

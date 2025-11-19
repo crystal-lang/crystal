@@ -6,7 +6,7 @@ describe TCPServer, tags: "network" do
   describe ".new" do
     each_ip_family do |family, address|
       it "listens on local address" do
-        port = unused_local_port
+        port = unused_local_tcp_port
 
         server = TCPServer.new(address, port)
 
@@ -43,7 +43,7 @@ describe TCPServer, tags: "network" do
         end
         error.os_error.should eq({% if flag?(:win32) %}
           WinError::WSATYPE_NOT_FOUND
-        {% elsif flag?(:linux) && !flag?(:android) %}
+        {% elsif (flag?(:linux) && !flag?(:android)) || flag?(:openbsd) %}
           Errno.new(LibC::EAI_SERVICE)
         {% else %}
           Errno.new(LibC::EAI_NONAME)
@@ -85,7 +85,7 @@ describe TCPServer, tags: "network" do
 
     describe "address resolution" do
       it "binds to localhost" do
-        server = TCPServer.new("localhost", unused_local_port)
+        server = TCPServer.new("localhost", unused_local_tcp_port)
         server.close
       end
 
@@ -96,7 +96,7 @@ describe TCPServer, tags: "network" do
         # FIXME: Resolve special handling for win32. The error code handling should be identical.
         {% if flag?(:win32) %}
           [WinError::WSAHOST_NOT_FOUND, WinError::WSATRY_AGAIN].should contain err.os_error
-        {% elsif flag?(:android) %}
+        {% elsif flag?(:android) || flag?(:netbsd) || flag?(:openbsd) %}
           err.os_error.should eq(Errno.new(LibC::EAI_NODATA))
         {% else %}
           [Errno.new(LibC::EAI_NONAME), Errno.new(LibC::EAI_AGAIN)].should contain err.os_error
@@ -110,7 +110,7 @@ describe TCPServer, tags: "network" do
         # FIXME: Resolve special handling for win32. The error code handling should be identical.
         {% if flag?(:win32) %}
           [WinError::WSAHOST_NOT_FOUND, WinError::WSATRY_AGAIN].should contain err.os_error
-        {% elsif flag?(:android) %}
+        {% elsif flag?(:android) || flag?(:netbsd) || flag?(:openbsd) %}
           err.os_error.should eq(Errno.new(LibC::EAI_NODATA))
         {% else %}
           [Errno.new(LibC::EAI_NONAME), Errno.new(LibC::EAI_AGAIN)].should contain err.os_error
@@ -119,8 +119,8 @@ describe TCPServer, tags: "network" do
     end
 
     it "binds to all interfaces" do
-      port = unused_local_port
-      TCPServer.open(port) do |server|
+      port = unused_local_tcp_port
+      TCPServer.open(Socket::IPAddress::UNSPECIFIED, port) do |server|
         server.local_address.port.should eq port
       end
     end
@@ -130,7 +130,7 @@ describe TCPServer, tags: "network" do
     pending "settings"
   {% else %}
     it "settings" do
-      TCPServer.open("::", unused_local_port) do |server|
+      TCPServer.open("::", unused_local_tcp_port) do |server|
         (server.recv_buffer_size = 42).should eq 42
         server.recv_buffer_size.should eq 42
       end
@@ -138,16 +138,46 @@ describe TCPServer, tags: "network" do
   {% end %}
 
   describe "accept" do
-    {% unless flag?(:win32) %}
-      it "sets close on exec flag" do
-        TCPServer.open("localhost", 0) do |server|
-          TCPSocket.open("localhost", server.local_address.port) do |client|
-            server.accept? do |sock|
-              sock.close_on_exec?.should be_true
-            end
+    it "sets close on exec flag" do
+      TCPServer.open("localhost", 0) do |server|
+        TCPSocket.open("localhost", server.local_address.port) do |client|
+          server.accept? do |sock|
+            sock.close_on_exec?.should eq CLOSE_ON_EXEC_AVAILABLE
           end
         end
       end
-    {% end %}
+    end
+
+    it "supports IPv6 dual stack" do
+      server = TCPServer.new(:inet6)
+      server.ipv6_only = false
+      server.bind("::", 0)
+      server.listen
+
+      TCPSocket.open("127.0.0.1", server.local_address.port) do |client|
+        server.accept? do |sock|
+          sock.ipv6_only?.should be_false
+
+          # should raise when changing ipv6_only when not applicable
+          expect_raises(Socket::Error, /invalid argument/i) do
+            sock.ipv6_only = true
+          end
+        end
+      end
+
+      server.close
+    end
+
+    it "supports IPv6 only" do
+      server = TCPServer.new(:inet6)
+      server.ipv6_only = true
+      server.bind("::", 0)
+      server.listen
+
+      expect_raises(Socket::ConnectError) do
+        TCPSocket.new("127.0.0.1", server.local_address.port, connect_timeout: 1.second)
+      end
+      server.close
+    end
   end
 end

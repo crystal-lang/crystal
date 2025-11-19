@@ -4,12 +4,6 @@ require "http/client"
 require "../../../support/ssl"
 require "../../../support/channel"
 
-# TODO: Windows networking in the interpreter requires #12495
-{% if flag?(:interpreted) && flag?(:win32) %}
-  pending HTTP::Server
-  {% skip_file %}
-{% end %}
-
 # TODO: replace with `HTTP::Client.get` once it supports connecting to Unix socket (#2735)
 private def unix_request(path)
   UNIXSocket.open(path) do |io|
@@ -18,7 +12,7 @@ private def unix_request(path)
 end
 
 private def unused_port
-  TCPServer.open(0) do |server|
+  TCPServer.open(Socket::IPAddress::UNSPECIFIED, 0) do |server|
     server.local_address.port
   end
 end
@@ -274,7 +268,6 @@ describe HTTP::Server do
         server = HTTP::Server.new { }
 
         private_key = datapath("openssl", "openssl.key")
-        certificate = datapath("openssl", "openssl.crt")
 
         begin
           expect_raises(ArgumentError, "missing private key") { server.bind "tls://127.0.0.1:8081" }

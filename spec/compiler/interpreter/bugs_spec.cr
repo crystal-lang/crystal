@@ -136,7 +136,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "does multidispatch on virtual struct" do
-      interpret(<<-CRYSTAL).should eq(true)
+      interpret(<<-CRYSTAL).should be_true
         abstract struct Base
         end
 
@@ -187,7 +187,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "does multidispatch on virtual struct union nil" do
-      interpret(<<-CRYSTAL).should eq(true)
+      interpret(<<-CRYSTAL).should be_true
         abstract struct Foo
           @value = 1
         end
@@ -209,6 +209,33 @@ describe Crystal::Repl::Interpreter do
         bar = (foo || nil).itself
         bar.is_a?(Bar)
      CRYSTAL
+    end
+
+    it "handles self in inlined method with arguments (#16210)" do
+      interpret(<<-CRYSTAL, prelude: "prelude").should eq(%("hello"))
+        class Foo
+          property x : String?
+
+          def initialize(@x : String? = nil)
+          end
+        end
+
+        foo = Foo.new("hello")
+        foo.x.not_nil!("test")
+      CRYSTAL
+    end
+
+    it "returns concrete type with typeof (#16377)" do
+      interpret(<<-CRYSTAL, prelude: "prelude").should eq("true")
+        class Foo
+        end
+
+        class Bar < Foo
+        end
+
+        foo = Bar.new.as(Foo)
+        typeof(foo) == Foo
+      CRYSTAL
     end
   end
 end

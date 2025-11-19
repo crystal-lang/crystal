@@ -468,7 +468,7 @@ end
 # See also: `Object#inspect(io)`.
 def p(*objects)
   objects.each do |obj|
-    p obj
+    p obj # ameba:disable Lint/DebugCalls
   end
   objects
 end
@@ -482,7 +482,7 @@ end
 #
 # See `Object#inspect(io)`
 def p(**objects)
-  p(objects) unless objects.empty?
+  p(objects) unless objects.empty? # ameba:disable Lint/DebugCalls
 end
 
 # Pretty prints *object* to `STDOUT` followed
@@ -501,7 +501,7 @@ end
 # See also: `Object#pretty_print(pp)`.
 def pp(*objects)
   objects.each do |obj|
-    pp obj
+    pp obj # ameba:disable Lint/DebugCalls
   end
   objects
 end
@@ -515,7 +515,7 @@ end
 #
 # See `Object#pretty_print(pp)`
 def pp(**objects)
-  pp(objects) unless objects.empty?
+  pp(objects) unless objects.empty? # ameba:disable Lint/DebugCalls
 end
 
 # Registers the given `Proc` for execution when the program exits regularly.
@@ -585,7 +585,7 @@ end
     def self.after_fork_child_callbacks
       @@after_fork_child_callbacks ||= [
         # reinit event loop first:
-        ->{ Crystal::EventLoop.current.after_fork },
+        -> { Crystal::EventLoop.current.after_fork },
 
         # reinit signal handling:
         ->Crystal::System::Signal.after_fork,
@@ -593,12 +593,19 @@ end
 
         # additional reinitialization
         ->Random::DEFAULT.new_seed,
+        -> { Random.thread_default.new_seed },
       ] of -> Nil
     end
   end
 {% end %}
 
 {% unless flag?(:interpreted) || flag?(:wasm32) %}
+  {% if flag?(:execution_context) %}
+    Fiber::ExecutionContext.init_default_context
+  {% else %}
+    Crystal::Scheduler.init
+  {% end %}
+
   # load debug info on start up of the program is executed with CRYSTAL_LOAD_DEBUG_INFO=1
   # this will make debug info available on print_frame that is used by Crystal's segfault handler
   #
@@ -608,8 +615,6 @@ end
   Exception::CallStack.load_debug_info if ENV["CRYSTAL_LOAD_DEBUG_INFO"]? == "1"
   Exception::CallStack.setup_crash_handler
 
-  Crystal::Scheduler.init
-
   {% if flag?(:win32) %}
     Crystal::System::Process.start_interrupt_loop
   {% else %}
@@ -617,15 +622,6 @@ end
   {% end %}
 {% end %}
 
-# This is a temporary workaround to ensure there is always something in the IOCP
-# event loop being awaited, since both the interrupt loop and the fiber stack
-# pool collector are disabled in interpreted code. Without this, asynchronous
-# code that bypasses `Crystal::IOCP::OverlappedOperation` does not currently
-# work, see https://github.com/crystal-lang/crystal/pull/14949#issuecomment-2328314463
-{% if flag?(:interpreted) && flag?(:win32) %}
-  spawn(name: "Interpreter idle loop") do
-    while true
-      sleep 1.day
-    end
-  end
+{% if flag?(:interpreted) && flag?(:unix) && Crystal::Interpreter.class.has_method?(:signal_descriptor) %}
+  Crystal::System::Signal.setup_default_handlers
 {% end %}

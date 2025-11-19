@@ -16,6 +16,22 @@ module Crystal::System
     str.check_no_null_byte(name).to_utf16.to_unsafe
   end
 
+  # Converts the string literal *str* into a `Slice` of UTF-16 code points.
+  # *str* must not contain embedded null characters.
+  #
+  # This is equivalent to the macro `StringLiteral#to_utf16` if slice literals
+  # are available, and the normal `String#to_utf16` otherwise. This is useful
+  # for passing constant string arguments to Win32 functions.
+  {% if compare_versions(Crystal::VERSION, "1.16.0") >= 0 %}
+    macro wstr_literal(str)
+      \{{ str.to_utf16 }}
+    end
+  {% else %}
+    macro wstr_literal(str)
+      (\{{ str }}).check_no_null_byte.to_utf16
+    end
+  {% end %}
+
   def self.sid_to_s(sid : LibC::SID*) : String
     if LibC.ConvertSidToStringSidW(sid, out ptr) == 0
       raise RuntimeError.from_winerror("ConvertSidToStringSidW")

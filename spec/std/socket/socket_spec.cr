@@ -2,12 +2,6 @@ require "./spec_helper"
 require "../../support/tempfile"
 require "../../support/win32"
 
-# TODO: Windows networking in the interpreter requires #12495
-{% if flag?(:interpreted) && flag?(:win32) %}
-  pending Socket
-  {% skip_file %}
-{% end %}
-
 describe Socket, tags: "network" do
   describe ".unix" do
     it "creates a unix socket" do
@@ -24,16 +18,19 @@ describe Socket, tags: "network" do
         sock.type.should eq(Socket::Type::DGRAM)
       {% end %}
 
-      error = expect_raises(Socket::Error) do
-        TCPSocket.new(family: :unix)
-      end
-      error.os_error.should eq({% if flag?(:win32) %}
-        WinError::WSAEPROTONOSUPPORT
-      {% elsif flag?(:wasi) %}
-        WasiError::PROTONOSUPPORT
-      {% else %}
-        Errno.new(LibC::EPROTONOSUPPORT)
-      {% end %})
+      {% unless flag?(:freebsd) %}
+        # for some reason this doesn't fail on freebsd
+        error = expect_raises(Socket::Error) do
+          TCPSocket.new(family: :unix)
+        end
+        error.os_error.should eq({% if flag?(:win32) %}
+          WinError::WSAEPROTONOSUPPORT
+        {% elsif flag?(:wasi) %}
+          WasiError::PROTONOSUPPORT
+        {% else %}
+          Errno.new(LibC::EPROTONOSUPPORT)
+        {% end %})
+      {% end %}
     end
   end
 
@@ -48,7 +45,7 @@ describe Socket, tags: "network" do
     server = Socket.new(Socket::Family::INET, Socket::Type::STREAM, Socket::Protocol::TCP)
 
     begin
-      port = unused_local_port
+      port = unused_local_tcp_port
       server.bind("0.0.0.0", port)
       server.listen
 
@@ -63,9 +60,7 @@ describe Socket, tags: "network" do
         client.family.should eq(Socket::Family::INET)
         client.type.should eq(Socket::Type::STREAM)
         client.protocol.should eq(Socket::Protocol::TCP)
-        {% unless flag?(:win32) %}
-          client.close_on_exec?.should be_true
-        {% end %}
+        client.close_on_exec?.should eq CLOSE_ON_EXEC_AVAILABLE
       ensure
         client.close
       end
@@ -77,17 +72,19 @@ describe Socket, tags: "network" do
 
   it "accept raises timeout error if read_timeout is specified" do
     server = Socket.new(Socket::Family::INET, Socket::Type::STREAM, Socket::Protocol::TCP)
-    port = unused_local_port
+    port = unused_local_tcp_port
     server.bind("0.0.0.0", port)
     server.read_timeout = 0.1.seconds
     server.listen
 
     expect_raises(IO::TimeoutError) { server.accept }
     expect_raises(IO::TimeoutError) { server.accept? }
+  ensure
+    server.try &.close
   end
 
   it "sends messages" do
-    port = unused_local_port
+    port = unused_local_tcp_port
     server = Socket.tcp(Socket::Family::INET)
     server.bind("127.0.0.1", port)
     server.listen
@@ -153,7 +150,7 @@ describe Socket, tags: "network" do
 
       it "binds to port using default IP" do
         socket = TCPSocket.new family
-        socket.bind unused_local_port
+        socket.bind unused_local_tcp_port
         socket.listen
 
         address = socket.local_address.as(Socket::IPAddress)
@@ -163,22 +160,39 @@ describe Socket, tags: "network" do
         socket.close
 
         socket = UDPSocket.new family
-        socket.bind unused_local_port
+        socket.bind unused_local_udp_port
         socket.close
       end
     end
   end
 
-  {% unless flag?(:win32) %}
-    it "closes on exec by default" do
-      socket = Socket.new(Socket::Family::INET, Socket::Type::STREAM, Socket::Protocol::TCP)
-      socket.close_on_exec?.should be_true
-    end
-  {% end %}
+  it "closes on exec by default" do
+    socket = Socket.new(Socket::Family::INET, Socket::Type::STREAM, Socket::Protocol::TCP)
+    socket.close_on_exec?.should eq CLOSE_ON_EXEC_AVAILABLE
+  end
+
+  it ".set_blocking and .get_blocking" do
+    socket = Socket.tcp(Socket::Family::INET)
+    fd = socket.fd
+
+    Socket.set_blocking(fd, true)
+    {% if flag?(:win32) %}
+      expect_raises(NotImplementedError) { IO::FileDescriptor.get_blocking(fd) }
+    {% else %}
+      Socket.get_blocking(fd).should be_true
+    {% end %}
+
+    Socket.set_blocking(fd, false)
+    {% if flag?(:win32) %}
+      expect_raises(NotImplementedError) { IO::FileDescriptor.get_blocking(fd) }
+    {% else %}
+      Socket.get_blocking(fd).should be_false
+    {% end %}
+  end
 
   describe "#finalize" do
     it "does not flush" do
-      port = unused_local_port
+      port = unused_local_tcp_port
       server = Socket.tcp(Socket::Family::INET)
       server.bind("127.0.0.1", port)
       server.listen

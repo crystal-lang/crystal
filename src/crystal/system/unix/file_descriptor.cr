@@ -1,5 +1,4 @@
 require "c/fcntl"
-require "io/evented"
 require "termios"
 {% if flag?(:android) && LibC::ANDROID_API < 28 %}
   require "c/sys/ioctl"
@@ -7,7 +6,9 @@ require "termios"
 
 # :nodoc:
 module Crystal::System::FileDescriptor
-  include IO::Evented
+  {% if IO.has_constant?(:Evented) %}
+    include IO::Evented
+  {% end %}
 
   # Platform-specific type to represent a file descriptor handle to the operating
   # system.
@@ -18,32 +19,49 @@ module Crystal::System::FileDescriptor
   STDERR_HANDLE = 2
 
   private def system_blocking?
-    flags = fcntl(LibC::F_GETFL)
+    flags = system_fcntl(LibC::F_GETFL)
     !flags.bits_set? LibC::O_NONBLOCK
   end
 
   private def system_blocking=(value)
-    current_flags = fcntl(LibC::F_GETFL)
+    FileDescriptor.set_blocking(fd, value)
+  end
+
+  protected def self.get_blocking(fd : Handle)
+    fcntl(fd, LibC::F_GETFL) & LibC::O_NONBLOCK == 0
+  end
+
+  protected def self.set_blocking(fd : Handle, value : Bool)
+    current_flags = fcntl(fd, LibC::F_GETFL)
     new_flags = current_flags
     if value
       new_flags &= ~LibC::O_NONBLOCK
     else
       new_flags |= LibC::O_NONBLOCK
     end
-    fcntl(LibC::F_SETFL, new_flags) unless new_flags == current_flags
+    fcntl(fd, LibC::F_SETFL, new_flags) unless new_flags == current_flags
   end
 
-  private def system_blocking_init(value)
-    self.system_blocking = false unless value
+  protected def system_blocking_init(blocking : Bool?)
+    if blocking.nil?
+      blocking = EventLoop.default_file_blocking? ||
+                 case system_info.type
+                 when .pipe?, .socket?, .character_device?
+                   false
+                 else
+                   true
+                 end
+    end
+    self.system_blocking = blocking
   end
 
   private def system_close_on_exec?
-    flags = fcntl(LibC::F_GETFD)
+    flags = system_fcntl(LibC::F_GETFD)
     flags.bits_set? LibC::FD_CLOEXEC
   end
 
   private def system_close_on_exec=(arg : Bool)
-    fcntl(LibC::F_SETFD, arg ? LibC::FD_CLOEXEC : 0)
+    system_fcntl(LibC::F_SETFD, arg ? LibC::FD_CLOEXEC : 0)
     arg
   end
 
@@ -55,6 +73,10 @@ module Crystal::System::FileDescriptor
     r = LibC.fcntl(fd, cmd, arg)
     raise IO::Error.from_errno("fcntl() failed") if r == -1
     r
+  end
+
+  private def system_fcntl(cmd, arg = 0)
+    FileDescriptor.fcntl(fd, cmd, arg)
   end
 
   def self.system_info(fd)
@@ -108,16 +130,12 @@ module Crystal::System::FileDescriptor
     # Mark the handle open, since we had to have dup'd a live handle.
     @closed = false
 
-    event_loop.close(self)
+    event_loop.reopened(self)
   end
 
   private def system_close
-    # Perform libevent cleanup before LibC.close.
-    # Using a file descriptor after it has been closed is never defined and can
-    # always lead to undefined results. This is not specific to libevent.
+    event_loop.shutdown(self)
     event_loop.close(self)
-
-    file_descriptor_close
   end
 
   def file_descriptor_close(&) : Nil
@@ -130,9 +148,9 @@ module Crystal::System::FileDescriptor
 
     # Clear the @volatile_fd before actually closing it in order to
     # reduce the chance of reading an outdated fd value
-    _fd = @volatile_fd.swap(-1)
+    return unless fd = close_volatile_fd?
 
-    if LibC.close(_fd) != 0
+    if LibC.close(fd) != 0
       case Errno.value
       when Errno::EINTR, Errno::EINPROGRESS
         # ignore
@@ -146,6 +164,11 @@ module Crystal::System::FileDescriptor
     file_descriptor_close do
       raise IO::Error.from_errno("Error closing file", target: self)
     end
+  end
+
+  def close_volatile_fd? : Int32?
+    fd = @volatile_fd.swap(-1)
+    fd unless fd == -1
   end
 
   private def system_flock_shared(blocking)
@@ -200,14 +223,6 @@ module Crystal::System::FileDescriptor
     if ret != 0
       raise IO::Error.from_errno("Error syncing file", target: self)
     end
-  end
-
-  def self.pipe(read_blocking, write_blocking)
-    pipe_fds = system_pipe
-    r = IO::FileDescriptor.new(pipe_fds[0], read_blocking)
-    w = IO::FileDescriptor.new(pipe_fds[1], write_blocking)
-    w.sync = true
-    {r, w}
   end
 
   def self.system_pipe : StaticArray(LibC::Int, 2)
@@ -274,10 +289,10 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_echo(enable : Bool, mode = nil)
-    new_mode = mode || FileDescriptor.tcgetattr(fd)
+    new_mode = mode || system_tcgetattr
     flags = LibC::ECHO | LibC::ECHOE | LibC::ECHOK | LibC::ECHONL
     new_mode.c_lflag = enable ? (new_mode.c_lflag | flags) : (new_mode.c_lflag & ~flags)
-    if FileDescriptor.tcsetattr(fd, LibC::TCSANOW, pointerof(new_mode)) != 0
+    if system_tcsetattr(LibC::TCSANOW, pointerof(new_mode)) != 0
       raise IO::Error.from_errno("tcsetattr")
     end
   end
@@ -290,7 +305,7 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_raw(enable : Bool, mode = nil)
-    new_mode = mode || FileDescriptor.tcgetattr(fd)
+    new_mode = mode || system_tcgetattr
     if enable
       new_mode = FileDescriptor.cfmakeraw(new_mode)
     else
@@ -298,7 +313,7 @@ module Crystal::System::FileDescriptor
       new_mode.c_oflag |= LibC::OPOST
       new_mode.c_lflag |= LibC::ECHO | LibC::ECHOE | LibC::ECHOK | LibC::ECHONL | LibC::ICANON | LibC::ISIG | LibC::IEXTEN
     end
-    if FileDescriptor.tcsetattr(fd, LibC::TCSANOW, pointerof(new_mode)) != 0
+    if system_tcsetattr(LibC::TCSANOW, pointerof(new_mode)) != 0
       raise IO::Error.from_errno("tcsetattr")
     end
   end
@@ -312,16 +327,16 @@ module Crystal::System::FileDescriptor
 
   @[AlwaysInline]
   private def system_console_mode(&)
-    before = FileDescriptor.tcgetattr(fd)
+    before = system_tcgetattr
     begin
       yield before
     ensure
-      FileDescriptor.tcsetattr(fd, LibC::TCSANOW, pointerof(before))
+      system_tcsetattr(LibC::TCSANOW, pointerof(before))
     end
   end
 
   @[AlwaysInline]
-  def self.tcgetattr(fd)
+  private def system_tcgetattr
     termios = uninitialized LibC::Termios
     {% if LibC.has_method?(:tcgetattr) %}
       ret = LibC.tcgetattr(fd, pointerof(termios))
@@ -334,7 +349,7 @@ module Crystal::System::FileDescriptor
   end
 
   @[AlwaysInline]
-  def self.tcsetattr(fd, optional_actions, termios_p)
+  private def system_tcsetattr(optional_actions, termios_p)
     {% if LibC.has_method?(:tcsetattr) %}
       LibC.tcsetattr(fd, optional_actions, termios_p)
     {% else %}

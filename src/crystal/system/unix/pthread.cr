@@ -9,18 +9,43 @@ module Crystal::System::Thread
     @system_handle
   end
 
+  protected setter system_handle
+
   private def init_handle
-    # NOTE: the thread may start before `pthread_create` returns, so
-    # `@system_handle` must be set as soon as possible; we cannot use a separate
-    # handle and assign it to `@system_handle`, which would have been too late
+    # NOTE: `@system_handle` needs to be set here too, not just in
+    # `.thread_proc`, since the current thread might progress first; the value
+    # of `LibC.pthread_self` inside the new thread must be equal to this
+    # `@system_handle` after `pthread_create` returns
     ret = GC.pthread_create(
       thread: pointerof(@system_handle),
       attr: Pointer(LibC::PthreadAttrT).null,
-      start: ->(data : Void*) { data.as(::Thread).start; Pointer(Void).null },
+      start: ->Thread.thread_proc(Void*),
       arg: self.as(Void*),
     )
 
     raise RuntimeError.from_os_error("pthread_create", Errno.new(ret)) unless ret == 0
+  end
+
+  def self.init : Nil
+    {% if flag?(:musl) %}
+      @@main_handle = current_handle
+    {% elsif flag?(:openbsd) || flag?(:android) %}
+      ret = LibC.pthread_key_create(out current_key, nil)
+      raise RuntimeError.from_os_error("pthread_key_create", Errno.new(ret)) unless ret == 0
+      @@current_key = current_key
+    {% end %}
+  end
+
+  def self.thread_proc(data : Void*) : Void*
+    th = data.as(::Thread)
+
+    # `#start` calls `#stack_address`, which might read `@system_handle` before
+    # `GC.pthread_create` updates it in the original thread that spawned the
+    # current one, so we also assign to it here
+    th.system_handle = current_handle
+
+    th.start
+    Pointer(Void).null
   end
 
   def self.current_handle : Handle
@@ -38,13 +63,7 @@ module Crystal::System::Thread
   # Android appears to support TLS to some degree, but executables fail with
   # an underaligned TLS segment, see https://github.com/crystal-lang/crystal/issues/13951
   {% if flag?(:openbsd) || flag?(:android) %}
-    @@current_key : LibC::PthreadKeyT
-
-    @@current_key = begin
-      ret = LibC.pthread_key_create(out current_key, nil)
-      raise RuntimeError.from_os_error("pthread_key_create", Errno.new(ret)) unless ret == 0
-      current_key
-    end
+    @@current_key = uninitialized LibC::PthreadKeyT
 
     def self.current_thread : ::Thread
       if ptr = LibC.pthread_getspecific(@@current_key)
@@ -69,10 +88,17 @@ module Crystal::System::Thread
     end
   {% else %}
     @[ThreadLocal]
-    class_property current_thread : ::Thread { ::Thread.new }
+    @@current_thread : ::Thread?
+
+    def self.current_thread : ::Thread
+      @@current_thread ||= ::Thread.new
+    end
 
     def self.current_thread? : ::Thread?
       @@current_thread
+    end
+
+    def self.current_thread=(@@current_thread : ::Thread)
     end
   {% end %}
 
@@ -116,11 +142,26 @@ module Crystal::System::Thread
       ret = LibC.pthread_attr_destroy(pointerof(attr))
       raise RuntimeError.from_os_error("pthread_attr_destroy", Errno.new(ret)) unless ret == 0
     {% elsif flag?(:linux) %}
-      if LibC.pthread_getattr_np(@system_handle, out attr) == 0
-        LibC.pthread_attr_getstack(pointerof(attr), pointerof(address), out _)
-      end
+      ret = LibC.pthread_getattr_np(@system_handle, out attr)
+      raise RuntimeError.from_os_error("pthread_getattr_np", Errno.new(ret)) unless ret == 0
+
+      LibC.pthread_attr_getstack(pointerof(attr), pointerof(address), out stack_size)
+
       ret = LibC.pthread_attr_destroy(pointerof(attr))
       raise RuntimeError.from_os_error("pthread_attr_destroy", Errno.new(ret)) unless ret == 0
+
+      # with musl-libc, the main thread does not respect `rlimit -Ss` and
+      # instead returns the same default stack size as non-default threads, so
+      # we obtain the rlimit to correct the stack address manually
+      {% if flag?(:musl) %}
+        if Thread.current_is_main?
+          if LibC.getrlimit(LibC::RLIMIT_STACK, out rlim) == 0
+            address = address + stack_size - rlim.rlim_cur
+          else
+            raise RuntimeError.from_errno("getrlimit")
+          end
+        end
+      {% end %}
     {% elsif flag?(:openbsd) %}
       ret = LibC.pthread_stackseg_np(@system_handle, out stack)
       raise RuntimeError.from_os_error("pthread_stackseg_np", Errno.new(ret)) unless ret == 0
@@ -137,6 +178,14 @@ module Crystal::System::Thread
 
     address
   end
+
+  {% if flag?(:musl) %}
+    @@main_handle = uninitialized Handle
+
+    def self.current_is_main?
+      current_handle == @@main_handle
+    end
+  {% end %}
 
   # Warning: must be called from the current thread itself, because Darwin
   # doesn't allow to set the name of any thread but the current one!
@@ -170,7 +219,7 @@ module Crystal::System::Thread
       Thread.current_thread.@suspended.set(true)
 
       # block all signals but SIG_RESUME
-      mask = LibC::SigsetT.new
+      mask = uninitialized LibC::SigsetT
       LibC.sigfillset(pointerof(mask))
       LibC.sigdelset(pointerof(mask), SIG_RESUME)
 
@@ -211,7 +260,8 @@ module Crystal::System::Thread
     end
   end
 
-  # the suspend/resume signals follow BDWGC
+  # the suspend/resume signals try to follow BDWGC but aren't exact (e.g. it may
+  # use SIGUSR1 and SIGUSR2 on FreeBSD instead of SIGRT).
 
   private SIG_SUSPEND =
     {% if flag?(:linux) %}
@@ -228,6 +278,22 @@ module Crystal::System::Thread
     {% else %}
       LibC::SIGXCPU
     {% end %}
+
+  def self.sig_suspend : ::Signal
+    if (gc = GC).responds_to?(:sig_suspend)
+      gc.sig_suspend
+    else
+      ::Signal.new(SIG_SUSPEND)
+    end
+  end
+
+  def self.sig_resume : ::Signal
+    if (gc = GC).responds_to?(:sig_resume)
+      gc.sig_resume
+    else
+      ::Signal.new(SIG_RESUME)
+    end
+  end
 end
 
 # In musl (alpine) the calls to unwind API segfaults

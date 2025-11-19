@@ -19,6 +19,12 @@ private def new_string_io(*bytes)
   io
 end
 
+private module ReadBytesConverter
+  def self.from_io(io : IO, format = IO::ByteFormat::NetworkEndian) : Int32
+    io.read_bytes(Int32, format: format)
+  end
+end
+
 describe IO::ByteFormat do
   describe "little endian" do
     describe "encode" do
@@ -129,6 +135,11 @@ describe IO::ByteFormat do
           io = new_string_io(0x58, 0x39, 0xB4, 0xC8, 0x76, 0xBE, 0xF3, 0x3F)
           float = io.read_bytes Float64, IO::ByteFormat::LittleEndian
           float.should be_close(1.234, 0.0001)
+        end
+
+        it "reads with converter" do
+          io = new_string_io(0x78, 0x56, 0x34, 0x12)
+          io.read_bytes(ReadBytesConverter, IO::ByteFormat::LittleEndian).should eq 0x12345678_i32
         end
       end
 
@@ -247,6 +258,11 @@ describe IO::ByteFormat do
           io = new_string_io(0x3F, 0xF3, 0xBE, 0x76, 0xC8, 0xB4, 0x39, 0x58)
           float = io.read_bytes Float64, IO::ByteFormat::BigEndian
           float.should be_close(1.234, 0.0001)
+        end
+
+        it "reads with converter" do
+          io = new_string_io(0x12, 0x34, 0x56, 0x78)
+          io.read_bytes(ReadBytesConverter, IO::ByteFormat::BigEndian).should eq 0x12345678_i32
         end
       end
 

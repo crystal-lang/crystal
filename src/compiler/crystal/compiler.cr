@@ -5,6 +5,9 @@ require "crystal/digest/md5"
 {% if flag?(:msvc) %}
   require "./loader"
 {% end %}
+{% if flag?(:preview_mt) %}
+  require "wait_group"
+{% end %}
 
 module Crystal
   @[Flags]
@@ -80,7 +83,13 @@ module Crystal
     property? no_codegen = false
 
     # Maximum number of LLVM modules that are compiled in parallel
-    property n_threads : Int32 = {% if flag?(:preview_mt) || flag?(:win32) %} 1 {% else %} 8 {% end %}
+    property n_threads : Int32 = {% if flag?(:preview_mt) %}
+      ENV["CRYSTAL_WORKERS"]?.try(&.to_i?) || 4
+    {% elsif flag?(:win32) %}
+      1
+    {% else %}
+      8
+    {% end %}
 
     # Default prelude file to use. This ends up adding a
     # `require "prelude"` (or whatever name is set here) to
@@ -204,10 +213,24 @@ module Crystal
     # Raises `InvalidByteSequenceError` if the source code is not
     # valid UTF-8.
     def compile(source : Source | Array(Source), output_filename : String) : Result
+      compile_configure_program(source, output_filename) { }
+    end
+
+    # :ditto:
+    #
+    # Yields a `Program` instance before compiling.
+    def compile_configure_program(source : Source | Array(Source), output_filename : String, & : Program -> Nil) : Result
       source = [source] unless source.is_a?(Array)
       program = new_program(source)
+      yield program
       node = parse program, source
-      node = program.semantic node, cleanup: !no_cleanup?
+
+      begin
+        node = program.semantic node, cleanup: !no_cleanup?
+      rescue ex : SkipMacroCodeCoverageException
+        program.macro_expansion_error_hook.try &.call(ex.cause)
+      end
+
       units = codegen program, node, source, output_filename unless @no_codegen
 
       @progress_tracker.clear
@@ -231,7 +254,7 @@ module Crystal
       source = [source] unless source.is_a?(Array)
       program = new_program(source)
       node = parse program, source
-      node, processor = program.top_level_semantic(node)
+      node, _ = program.top_level_semantic(node)
 
       @progress_tracker.clear
       print_macro_run_stats(program)
@@ -335,6 +358,12 @@ module Crystal
         CompilationUnit.new(self, program, type_name, llvm_mod, output_dir, bc_flags_changed)
       end
 
+      {% if LibLLVM::IS_LT_170 %}
+        # initialize the legacy pass manager once in the main thread/process
+        # before we start codegen in threads (MT) or processes (fork)
+        init_llvm_legacy_pass_manager unless optimization_mode.o0?
+      {% end %}
+
       if @cross_compile
         cross_compile program, units, output_filename
       else
@@ -346,7 +375,7 @@ module Crystal
           run_dsymutil(output_filename) unless debug.none?
         {% end %}
 
-        {% if flag?(:windows) %}
+        {% if flag?(:msvc) %}
           copy_dlls(program, output_filename) unless static?
         {% end %}
       end
@@ -398,7 +427,7 @@ module Crystal
       llvm_mod = unit.llvm_mod
 
       @progress_tracker.stage("Codegen (bc+obj)") do
-        optimize llvm_mod unless @optimization_mode.o0?
+        optimize llvm_mod, target_machine unless @optimization_mode.o0?
 
         unit.emit(@emit_targets, emit_base_filename || output_filename)
 
@@ -416,26 +445,8 @@ module Crystal
 
     private def linker_command(program : Program, object_names, output_filename, output_dir, expand = false)
       if program.has_flag? "msvc"
-        lib_flags = program.lib_flags
-        # Execute and expand `subcommands`.
-        if expand
-          lib_flags = lib_flags.gsub(/`(.*?)`/) do
-            command = $1
-            begin
-              error_io = IO::Memory.new
-              output = Process.run(command, shell: true, output: :pipe, error: error_io) do |process|
-                process.output.gets_to_end
-              end
-              unless $?.success?
-                error_io.rewind
-                error "Error executing subcommand for linker flags: #{command.inspect}: #{error_io}"
-              end
-              output
-            rescue exc
-              error "Error executing subcommand for linker flags: #{command.inspect}: #{exc}"
-            end
-          end
-        end
+        lib_flags = program.lib_flags(@cross_compile)
+        lib_flags = expand_lib_flags(lib_flags) if expand
 
         object_arg = Process.quote_windows(object_names)
         output_arg = Process.quote_windows("/Fe#{output_filename}")
@@ -479,21 +490,76 @@ module Crystal
         {linker, cmd, nil}
       elsif program.has_flag? "wasm32"
         link_flags = @link_flags || ""
-        {"wasm-ld", %(wasm-ld "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} -lc #{program.lib_flags}), object_names}
+        {"wasm-ld", %(wasm-ld "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} -lc #{program.lib_flags(@cross_compile)}), object_names}
       elsif program.has_flag? "avr"
         link_flags = @link_flags || ""
         link_flags += " --target=avr-unknown-unknown -mmcu=#{@mcpu} -Wl,--gc-sections"
-        {DEFAULT_LINKER, %(#{DEFAULT_LINKER} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags}), object_names}
+        {DEFAULT_LINKER, %(#{DEFAULT_LINKER} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags(@cross_compile)}), object_names}
+      elsif program.has_flag?("win32") && program.has_flag?("gnu")
+        link_flags = @link_flags || ""
+        link_flags += " -Wl,--stack,0x800000"
+        lib_flags = program.lib_flags(@cross_compile)
+        lib_flags = expand_lib_flags(lib_flags) if expand
+        cmd = %(#{DEFAULT_LINKER} #{Process.quote_windows(object_names)} -o #{Process.quote_windows(output_filename)} #{link_flags} #{lib_flags}).gsub('\n', ' ')
+
+        if cmd.size > 32000
+          # The command line would be too big, pass the args through a file instead.
+          # GCC response file does not interpret those args as shell-escaped
+          # arguments, we must rebuild the whole command line
+          args_filename = "#{output_dir}/linker_args.txt"
+          File.open(args_filename, "w") do |f|
+            object_names.each do |object_name|
+              f << object_name.gsub(GCC_RESPONSE_FILE_TR) << ' '
+            end
+            f << "-o " << output_filename.gsub(GCC_RESPONSE_FILE_TR) << ' '
+            f << link_flags << ' ' << lib_flags
+          end
+          cmd = "#{DEFAULT_LINKER} #{Process.quote_windows("@" + args_filename)}"
+        end
+
+        {DEFAULT_LINKER, cmd, nil}
       else
         link_flags = @link_flags || ""
         link_flags += " -rdynamic"
-        {DEFAULT_LINKER, %(#{DEFAULT_LINKER} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags}), object_names}
+
+        if program.has_flag?("freebsd") || program.has_flag?("openbsd")
+          # pkgs are installed to usr/local/lib but it's not in LIBRARY_PATH by
+          # default; we declare it to ease linking on these platforms:
+          link_flags += " -L/usr/local/lib"
+        end
+
+        {DEFAULT_LINKER, %(#{DEFAULT_LINKER} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags(@cross_compile)}), object_names}
+      end
+    end
+
+    private GCC_RESPONSE_FILE_TR = {
+      " ":  %q(\ ),
+      "'":  %q(\'),
+      "\"": %q(\"),
+      "\\": "\\\\",
+    }
+
+    private def expand_lib_flags(lib_flags)
+      lib_flags.gsub(/`(.*?)`/) do
+        command = $1
+        begin
+          error_io = IO::Memory.new
+          output = Process.run(command, shell: true, output: :pipe, error: error_io) do |process|
+            process.output.gets_to_end
+          end
+          unless $?.success?
+            error_io.rewind
+            error "Error executing subcommand for linker flags: #{command.inspect}: #{error_io}"
+          end
+          output.chomp
+        rescue exc
+          error "Error executing subcommand for linker flags: #{command.inspect}: #{exc}"
+        end
       end
     end
 
     private def codegen(program, units : Array(CompilationUnit), output_filename, output_dir)
       object_names = units.map &.object_filename
-      target_triple = target_machine.triple
 
       @progress_tracker.stage("Codegen (bc+obj)") do
         @progress_tracker.stage_progress_total = units.size
@@ -536,12 +602,46 @@ module Crystal
 
     private def parallel_codegen(units, n_threads)
       {% if flag?(:preview_mt) %}
-        raise "Cannot fork compiler in multithread mode."
+        raise "LLVM isn't multithreaded and cannot fork compiler in multithread mode." unless LLVM.multithreaded?
+        mt_codegen(units, n_threads)
       {% elsif LibC.has_method?("fork") %}
         fork_codegen(units, n_threads)
       {% else %}
         raise "Cannot fork compiler. `Crystal::System::Process.fork` is not implemented on this system."
       {% end %}
+    end
+
+    private def mt_codegen(units, n_threads)
+      channel = Channel(CompilationUnit).new(n_threads * 2)
+      wg = WaitGroup.new
+      mutex = Mutex.new
+
+      n_threads.times do
+        wg.spawn do
+          while unit = channel.receive?
+            unit.compile(isolate_context: true)
+            mutex.synchronize { @progress_tracker.stage_progress += 1 }
+          end
+        end
+      end
+
+      units.each do |unit|
+        # We generate the bitcode in the main thread because LLVM contexts
+        # must be unique per compilation unit, but we share different contexts
+        # across many modules (or rely on the global context); trying to
+        # codegen in parallel would segfault!
+        #
+        # Luckily generating the bitcode is quick and once the bitcode is
+        # generated we don't need the global LLVM contexts anymore but can
+        # parse the bitcode in an isolated context and we can parallelize the
+        # slowest part: the optimization pass & compiling the object file.
+        unit.generate_bitcode
+
+        channel.send(unit)
+      end
+      channel.close
+
+      wg.wait
     end
 
     private def fork_codegen(units, n_threads)
@@ -619,7 +719,7 @@ module Crystal
         if @progress_tracker.stats?
           if result["reused"].as_bool
             name = result["name"].as_s
-            unit = units.find { |unit| unit.name == name }.not_nil!
+            unit = units.find! { |unit| unit.name == name }
             unit.reused_previous_compilation = true
           end
         end
@@ -627,7 +727,7 @@ module Crystal
       end
     end
 
-    private def fork_workers(n_threads)
+    private def fork_workers(n_threads, &)
       workers = [] of {Int32, IO::FileDescriptor, IO::FileDescriptor}
 
       n_threads.times do
@@ -684,9 +784,10 @@ module Crystal
 
       puts
       puts "Codegen (bc+obj):"
-      if units.size == reused
+      case reused
+      when units.size
         puts " - all previous .o files were reused"
-      elsif reused == 0
+      when .zero?
         puts " - no previous .o files were reused"
       else
         puts " - #{reused}/#{units.size} .o files were reused"
@@ -713,61 +814,52 @@ module Crystal
     end
 
     {% if LibLLVM::IS_LT_170 %}
+      property! pass_manager_builder : LLVM::PassManagerBuilder
+
+      private def init_llvm_legacy_pass_manager
+        registry = LLVM::PassRegistry.instance
+        registry.initialize_all
+
+        builder = LLVM::PassManagerBuilder.new
+        builder.size_level = 0
+
+        case optimization_mode
+        in .o3?
+          builder.opt_level = 3
+          builder.use_inliner_with_threshold = 275
+        in .o2?
+          builder.opt_level = 2
+          builder.use_inliner_with_threshold = 275
+        in .o1?
+          builder.opt_level = 1
+          builder.use_inliner_with_threshold = 150
+        in .o0?
+          # default behaviour, no optimizations
+        in .os?
+          builder.opt_level = 2
+          builder.size_level = 1
+          builder.use_inliner_with_threshold = 50
+        in .oz?
+          builder.opt_level = 2
+          builder.size_level = 2
+          builder.use_inliner_with_threshold = 5
+        end
+
+        @pass_manager_builder = builder
+      end
+
       private def optimize_with_pass_manager(llvm_mod)
         fun_pass_manager = llvm_mod.new_function_pass_manager
         pass_manager_builder.populate fun_pass_manager
         fun_pass_manager.run llvm_mod
+
+        module_pass_manager = LLVM::ModulePassManager.new
+        pass_manager_builder.populate module_pass_manager
         module_pass_manager.run llvm_mod
-      end
-
-      @module_pass_manager : LLVM::ModulePassManager?
-
-      private def module_pass_manager
-        @module_pass_manager ||= begin
-          mod_pass_manager = LLVM::ModulePassManager.new
-          pass_manager_builder.populate mod_pass_manager
-          mod_pass_manager
-        end
-      end
-
-      @pass_manager_builder : LLVM::PassManagerBuilder?
-
-      private def pass_manager_builder
-        @pass_manager_builder ||= begin
-          registry = LLVM::PassRegistry.instance
-          registry.initialize_all
-
-          builder = LLVM::PassManagerBuilder.new
-          builder.size_level = 0
-
-          case optimization_mode
-          in .o3?
-            builder.opt_level = 3
-            builder.use_inliner_with_threshold = 275
-          in .o2?
-            builder.opt_level = 2
-            builder.use_inliner_with_threshold = 275
-          in .o1?
-            builder.opt_level = 1
-            builder.use_inliner_with_threshold = 150
-          in .o0?
-            # default behaviour, no optimizations
-          in .os?
-            builder.opt_level = 2
-            builder.size_level = 1
-            builder.use_inliner_with_threshold = 50
-          in .oz?
-            builder.opt_level = 2
-            builder.size_level = 2
-            builder.use_inliner_with_threshold = 5
-          end
-
-          builder
-        end
       end
     {% end %}
 
-    protected def optimize(llvm_mod)
+    protected def optimize(llvm_mod, target_machine)
       {% if LibLLVM::IS_LT_130 %}
         optimize_with_pass_manager(llvm_mod)
       {% else %}
@@ -804,16 +896,17 @@ module Crystal
 
       status = $?
       unless status.success?
-        if status.normal_exit?
-          case status.exit_code
-          when 126
-            linker_not_found File::AccessDeniedError, linker_name
-          when 127
-            linker_not_found File::NotFoundError, linker_name
-          end
+        exit_code = status.exit_code?
+        case exit_code
+        when 126
+          linker_not_found File::AccessDeniedError, linker_name
+        when 127
+          linker_not_found File::NotFoundError, linker_name
+        when nil
+          # abnormal exit
+          exit_code = 1
         end
-        code = status.normal_exit? ? status.exit_code : 1
-        error "execution of command failed with exit status #{status}: #{command}", exit_code: code
+        error "execution of command failed with exit status #{status}: #{command}", exit_code: exit_code
       end
     end
 
@@ -843,6 +936,9 @@ module Crystal
       getter llvm_mod
       property? reused_previous_compilation = false
       getter object_extension : String
+      @memory_buffer : LLVM::MemoryBuffer?
+      @object_name : String?
+      @bc_name : String?
 
       def initialize(@compiler : Compiler, program : Program, @name : String,
                      @llvm_mod : LLVM::Module, @output_dir : String, @bc_flags_changed : Bool)
@@ -872,73 +968,82 @@ module Crystal
         @object_extension = compiler.codegen_target.object_extension
       end
 
-      def compile
-        compile_to_object
+      def generate_bitcode
+        @memory_buffer ||= llvm_mod.write_bitcode_to_memory_buffer
       end
 
-      private def compile_to_object
-        bc_name = self.bc_name
-        object_name = self.object_name
-        temporary_object_name = self.temporary_object_name
-
-        # To compile a file we first generate a `.bc` file and then
-        # create an object file from it. These `.bc` files are stored
-        # in the cache directory.
-        #
-        # On a next compilation of the same project, and if the compile
-        # flags didn't change (a combination of the target triple, mcpu
-        # and link flags, amongst others), we check if the new
-        # `.bc` file is exactly the same as the old one. In that case
-        # the `.o` file will also be the same, so we simply reuse the
-        # old one. Generating an `.o` file is what takes most time.
-        #
-        # However, instead of directly generating the final `.o` file
-        # from the `.bc` file, we generate it to a temporary name (`.o.tmp`)
-        # and then we rename that file to `.o`. We do this because the compiler
-        # could be interrupted while the `.o` file is being generated, leading
-        # to a corrupted file that later would cause compilation issues.
-        # Moving a file is an atomic operation so no corrupted `.o` file should
-        # be generated.
-
-        must_compile = true
-        can_reuse_previous_compilation =
-          compiler.emit_targets.none? && !@bc_flags_changed && File.exists?(bc_name) && File.exists?(object_name)
-
-        memory_buffer = llvm_mod.write_bitcode_to_memory_buffer
-
-        if can_reuse_previous_compilation
-          memory_io = IO::Memory.new(memory_buffer.to_slice)
-          changed = File.open(bc_name) { |bc_file| !IO.same_content?(bc_file, memory_io) }
-
-          # If the user cancelled a previous compilation
-          # it might be that the .o file is empty
-          if !changed && File.size(object_name) > 0
-            must_compile = false
-            memory_buffer.dispose
-            memory_buffer = nil
-          else
-            # We need to compile, so we'll write the memory buffer to file
-          end
-        end
-
-        # If there's a memory buffer, it means we must create a .o from it
-        if memory_buffer
-          # Delete existing .o file. It cannot be used anymore.
-          File.delete?(object_name)
-          # Create the .bc file (for next compilations)
-          File.write(bc_name, memory_buffer.to_slice)
-          memory_buffer.dispose
-        end
-
-        if must_compile
-          compiler.optimize llvm_mod unless compiler.optimization_mode.o0?
-          compiler.target_machine.emit_obj_to_file llvm_mod, temporary_object_name
-          File.rename(temporary_object_name, object_name)
+      # To compile a file we first generate a `.bc` file and then create an
+      # object file from it. These `.bc` files are stored in the cache
+      # directory.
+      #
+      # On a next compilation of the same project, and if the compile flags
+      # didn't change (a combination of the target triple, mcpu and link flags,
+      # amongst others), we check if the new `.bc` file is exactly the same as
+      # the old one. In that case the `.o` file will also be the same, so we
+      # simply reuse the old one. Generating an `.o` file is what takes most
+      # time.
+      #
+      # However, instead of directly generating the final `.o` file from the
+      # `.bc` file, we generate it to a temporary name (`.o.tmp`) and then we
+      # rename that file to `.o`. We do this because the compiler could be
+      # interrupted while the `.o` file is being generated, leading to a
+      # corrupted file that later would cause compilation issues. Moving a file
+      # is an atomic operation so no corrupted `.o` file should be generated.
+      def compile(isolate_context = false)
+        if must_compile?
+          isolate_module_context if isolate_context
+          update_bitcode_cache
+          compile_to_object
         else
           @reused_previous_compilation = true
         end
-
         dump_llvm_ir
+      end
+
+      private def must_compile?
+        memory_buffer = generate_bitcode
+
+        return true unless compiler.emit_targets.none?
+        return true if @bc_flags_changed
+        return true unless File.exists?(bc_name)
+        return true unless File.exists?(object_name)
+
+        # If the user cancelled a previous compilation
+        # it might be that the .o file is empty
+        return true if File.size(object_name) == 0
+
+        memory_io = IO::Memory.new(memory_buffer.to_slice)
+
+        changed = File.open(bc_name) { |bc_file| !IO.same_content?(bc_file, memory_io) }
+
+        memory_buffer.dispose unless changed
+
+        changed
+      end
+
+      # Parse the previously generated bitcode into the LLVM module using a
+      # dedicated context, so we can safely optimize & compile the module in
+      # multiple threads (llvm contexts can't be shared across threads).
+      private def isolate_module_context
+        @llvm_mod = LLVM::Module.parse(@memory_buffer.not_nil!, LLVM::Context.new)
+      end
+
+      private def update_bitcode_cache
+        return unless memory_buffer = @memory_buffer
+
+        # Delete existing .o file. It cannot be used anymore.
+        File.delete?(object_name)
+        # Create the .bc file (for next compilations)
+        File.write(bc_name, memory_buffer.to_slice)
+        memory_buffer.dispose
+      end
+
+      private def compile_to_object
+        temporary_object_name = self.temporary_object_name
+        target_machine = compiler.create_target_machine
+        compiler.optimize llvm_mod, target_machine unless compiler.optimization_mode.o0?
+        target_machine.emit_obj_to_file llvm_mod, temporary_object_name
+        File.rename(temporary_object_name, object_name)
       end
 
       private def dump_llvm_ir

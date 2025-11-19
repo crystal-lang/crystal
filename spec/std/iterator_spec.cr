@@ -33,6 +33,13 @@ private class MockIterator
 end
 
 describe Iterator do
+  describe "Iterator.empty" do
+    it "creates empty iterator" do
+      iter = Iterator(String).empty
+      iter.next.should be_a(Iterator::Stop)
+    end
+  end
+
   describe "Iterator.of" do
     it "creates singleton" do
       iter = Iterator.of(42)
@@ -656,7 +663,7 @@ describe Iterator do
 
   describe "uniq" do
     it "without block" do
-      iter = (1..8).each.map { |x| x % 3 }.uniq
+      iter = (1..8).each.map { |x| x % 3 }.uniq # ameba:disable Performance/ChainedCallWithNoBang
       iter.next.should eq(1)
       iter.next.should eq(2)
       iter.next.should eq(0)
@@ -799,7 +806,7 @@ describe Iterator do
     end
 
     it "flattens nested struct iterators with internal state being value types" do
-      iter = (1..2).each.map { |i| StructIter.new(10 * i + 1, 10 * i + 3) }.flatten
+      iter = (1..2).each.map { |i| StructIter.new(10 * i + 1, 10 * i + 3) }.flatten # ameba:disable Performance/FlattenAfterMap
 
       iter.next.should eq(11)
       iter.next.should eq(12)

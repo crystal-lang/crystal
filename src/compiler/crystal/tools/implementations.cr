@@ -53,7 +53,9 @@ module Crystal
         @line = macro_location.line_number + loc.line_number
         @column = loc.column_number
       else
-        raise "not implemented"
+        @line = loc.line_number
+        @column = loc.column_number
+        @filename = "<unknown>"
       end
     end
 
@@ -111,7 +113,7 @@ module Crystal
 
       if target_defs = node.target_defs
         target_defs.each do |target_def|
-          @locations << target_def.location.not_nil!
+          @locations << (target_def.location || Location.new(nil, 0, 0))
         end
       end
       false

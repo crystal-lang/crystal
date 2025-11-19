@@ -9,10 +9,18 @@ on:
       llvm_version:
         required: true
         type: string
+      llvm_targets:
+        required: true
+        type: string
+      llvm_ldflags:
+        required: true
+        type: string
+
+permissions: {}
 
 jobs:
   build:
-    runs-on: windows-2022
+    runs-on: windows-2025
     steps:
       - name: Disable CRLF line ending substitution
         run: |
@@ -25,10 +33,12 @@ jobs:
         uses: crystal-lang/install-crystal@v1
         id: install-crystal
         with:
-          crystal: "1.13.2"
+          crystal: "1.18.2"
 
       - name: Download Crystal source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Restore libraries
         uses: actions/cache/restore@v4
@@ -43,6 +53,7 @@ jobs:
             libs/mpir.lib
             libs/yaml.lib
             libs/xml2.lib
+            libs/libxml_VERSION
           key: win-libs-${{ hashFiles('.github/workflows/win.yml', 'etc/win-ci/*.ps1') }}-msvc
           fail-on-cache-miss: true
       - name: Restore OpenSSL
@@ -52,7 +63,7 @@ jobs:
             libs/crypto.lib
             libs/ssl.lib
             libs/openssl_VERSION
-          key: win-openssl-libs-3.1.0-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}-msvc
+          key: win-openssl-libs-3.4.1-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}-msvc
           fail-on-cache-miss: true
       - name: Restore DLLs
         uses: actions/cache/restore@v4
@@ -86,13 +97,7 @@ jobs:
             libs/ssl-dynamic.lib
             dlls/libcrypto-3-x64.dll
             dlls/libssl-3-x64.dll
-          key: win-openssl-dlls-3.1.0-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}-msvc
-          fail-on-cache-miss: true
-      - name: Restore LLVM
-        uses: actions/cache/restore@v4
-        with:
-          path: llvm
-          key: llvm-libs-${{ inputs.llvm_version }}-msvc
+          key: win-openssl-dlls-3.4.1-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}-msvc
           fail-on-cache-miss: true
       - name: Restore LLVM DLLs
         uses: actions/cache/restore@v4
@@ -106,12 +111,14 @@ jobs:
 
       - name: Set up environment
         run: |
-          echo "CRYSTAL_LIBRARY_PATH=$(pwd)\libs" >> ${env:GITHUB_ENV}
-          echo "LLVM_CONFIG=$(pwd)\llvm\bin\llvm-config.exe" >> ${env:GITHUB_ENV}
-          # NOTE: the name of the libiconv DLL has changed, so we manually copy
-          # the new one to the existing Crystal installation; remove after
-          # updating the base compiler to 1.14
-          cp dlls/iconv-2.dll ${{ steps.install-crystal.outputs.path }}
+          Add-Content $env:GITHUB_ENV "CRYSTAL_LIBRARY_PATH=$(pwd)\libs"
+          Add-Content $env:GITHUB_ENV "LLVM_VERSION=$env:INPUTS_LLVM_VERSION"
+          Add-Content $env:GITHUB_ENV "LLVM_TARGETS=$env:INPUTS_LLVM_TARGETS"
+          Add-Content $env:GITHUB_ENV "LLVM_LDFLAGS=$env:INPUTS_LLVM_LDFLAGS"
+        env:
+          INPUTS_LLVM_VERSION: ${{ inputs.llvm_version }}
+          INPUTS_LLVM_TARGETS: ${{ inputs.llvm_targets }}
+          INPUTS_LLVM_LDFLAGS: ${{ inputs.llvm_ldflags }}
 
       - name: Build LLVM extensions
         run: make -f Makefile.win deps
@@ -122,11 +129,12 @@ jobs:
           make -f Makefile.win -B ${{ inputs.release && 'release=1' || '' }} interpreter=1
 
       - name: Download shards release
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: crystal-lang/shards
-          ref: v0.18.0
+          ref: v0.19.1
           path: shards
+          persist-credentials: false
 
       - name: Build shards release
         working-directory: ./shards
@@ -143,7 +151,7 @@ jobs:
           cp README.md crystal/
 
       - name: Upload Crystal binaries
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
-          name: ${{ inputs.release && 'crystal-release' || 'crystal' }}
+          name: crystal
           path: crystal

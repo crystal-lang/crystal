@@ -10,6 +10,8 @@ lib/** linguist-vendored
 
 # produced by scripts/generate_windows_zone_names.cr
 src/crystal/system/win32/zone_names.cr linguist-generated
+# produced by scripts/generate_object_properties.cr
+src/object/properties.cr
 # produced by scripts/generate_html_entities.cr
 src/html/entities.cr linguist-generated
 # produced by scripts/generate_ssl_server_defaults.cr
@@ -18,10 +20,16 @@ src/openssl/ssl/defaults.cr linguist-generated
 src/string/grapheme/properties.cr linguist-generated
 # produced by scripts/generate_unicode_data.cr
 src/unicode/data.cr linguist-generated
+# produced by scripts/generate_glob_specs.cr
+spec/std/file/match-fast-glob_spec.cr
 # produced by scripts/generate_grapheme_break_specs.cr
 spec/std/string/grapheme_break_spec.cr linguist-generated
 # produced by spec/generate_wasm32_spec.sh
 spec/wasm32_std_spec.cr linguist-generated
+
+# devenv
+.devenv.flake.nix -merge linguist-generated
+devenv.lock -merge linguist-generated
 
 ## Syntax highlighting
 

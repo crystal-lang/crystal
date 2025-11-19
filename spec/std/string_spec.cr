@@ -302,10 +302,13 @@ describe "String" do
     it { "1101".to_i(base: 2).should eq(13) }
     it { "12ab".to_i(16).should eq(4779) }
     it { "0x123abc".to_i(prefix: true).should eq(1194684) }
+    it { "0X123abc".to_i(prefix: true).should eq(1194684) }
     it { "0b1101".to_i(prefix: true).should eq(13) }
+    it { "0B1101".to_i(prefix: true).should eq(13) }
     it { "0b001101".to_i(prefix: true).should eq(13) }
     it { "0123".to_i(prefix: true).should eq(123) }
     it { "0o123".to_i(prefix: true).should eq(83) }
+    it { "0O123".to_i(prefix: true).should eq(83) }
     it { "0123".to_i(leading_zero_is_octal: true).should eq(83) }
     it { "123".to_i(leading_zero_is_octal: true).should eq(123) }
     it { "0o755".to_i(prefix: true, leading_zero_is_octal: true).should eq(493) }
@@ -482,6 +485,7 @@ describe "String" do
     it { "1Y2P0IJ32E8E7".to_i64(36).should eq(9223372036854775807) }
   end
 
+  # more specs are available in `spec/manual/string_to_f_supplemental_spec.cr`
   it "does to_f" do
     expect_raises(ArgumentError) { "".to_f }
     "".to_f?.should be_nil
@@ -503,6 +507,7 @@ describe "String" do
     "  1234.56  ".to_f?(whitespace: false).should be_nil
     expect_raises(ArgumentError) { "  1234.56foo".to_f }
     "  1234.56foo".to_f?.should be_nil
+    "\u{A0}\u{2028}\u{2029}1234.56\u{A0}\u{2028}\u{2029}".to_f.should eq(1234.56_f64)
     "123.45 x".to_f64(strict: false).should eq(123.45_f64)
     expect_raises(ArgumentError) { "x1.2".to_f64 }
     "x1.2".to_f64?.should be_nil
@@ -547,6 +552,7 @@ describe "String" do
     "  1234.56  ".to_f32?(whitespace: false).should be_nil
     expect_raises(ArgumentError) { "  1234.56foo".to_f32 }
     "  1234.56foo".to_f32?.should be_nil
+    "\u{A0}\u{2028}\u{2029}1234.56\u{A0}\u{2028}\u{2029}".to_f32.should eq(1234.56_f32)
     "123.45 x".to_f32(strict: false).should eq(123.45_f32)
     expect_raises(ArgumentError) { "x1.2".to_f32 }
     "x1.2".to_f32?.should be_nil
@@ -590,6 +596,7 @@ describe "String" do
     "  1234.56  ".to_f64?(whitespace: false).should be_nil
     expect_raises(ArgumentError) { "  1234.56foo".to_f64 }
     "  1234.56foo".to_f64?.should be_nil
+    "\u{A0}\u{2028}\u{2029}1234.56\u{A0}\u{2028}\u{2029}".to_f64.should eq(1234.56_f64)
     "123.45 x".to_f64(strict: false).should eq(123.45_f64)
     expect_raises(ArgumentError) { "x1.2".to_f64 }
     "x1.2".to_f64?.should be_nil
@@ -773,6 +780,24 @@ describe "String" do
     it { "hello\n\n\n\n".chomp("").should eq("hello\n\n\n\n") }
 
     it { "hello\r\n".chomp("\n").should eq("hello") }
+
+    it "pre-computes string size if possible" do
+      {"!hello!", "\u{1f602}hello\u{1f602}", "\xFEhello\xFF"}.each do |str|
+        {"", "\n", "\r", "\r\n"}.each do |newline|
+          x = str + newline
+          x.size_known?.should be_true
+          y = x.chomp
+          y.@length.should eq(7)
+        end
+      end
+    end
+
+    it "does not pre-compute string size if not possible" do
+      x = String.build &.<< "abc\n"
+      x.size_known?.should be_false
+      y = x.chomp
+      y.size_known?.should be_false
+    end
   end
 
   describe "lchop" do
@@ -1349,6 +1374,27 @@ describe "String" do
       "foo foo".byte_index("oo", 2).should eq(5)
       "こんにちは世界".byte_index("ちは").should eq(9)
     end
+
+    it "gets byte index of regex" do
+      str = "0123x"
+      pattern = /x/
+
+      str.byte_index(pattern).should eq(4)
+      str.byte_index(pattern, offset: 4).should eq(4)
+      str.byte_index(pattern, offset: 5).should be_nil
+      str.byte_index(pattern, offset: -1).should eq(4)
+      str.byte_index(/y/).should be_nil
+
+      str = "012abc678"
+      pattern = /[abc]/
+
+      str.byte_index(pattern).should eq(3)
+      str.byte_index(pattern, offset: 2).should eq(3)
+      str.byte_index(pattern, offset: 5).should eq(5)
+      str.byte_index(pattern, offset: -4).should eq(5)
+      str.byte_index(pattern, offset: -1).should be_nil
+      str.byte_index(/y/).should be_nil
+    end
   end
 
   describe "includes?" do
@@ -1454,6 +1500,8 @@ describe "String" do
       it "keeps groups" do
         s = "split on the word on okay?"
         s.split(/(on)/).should eq(["split ", "on", " the word ", "on", " okay?"])
+        s.split(/o(?:(n)|(r))/).should eq(["split ", "n", " the w", "r", "d ", "n", " okay?"])
+        s.split(/()/, limit: 4, remove_empty: true).should eq(["s", "", "p", "", "l", "", "it on the word on okay?"])
       end
     end
   end
@@ -2191,6 +2239,16 @@ describe "String" do
     it "allows creating from an empty slice" do
       String.new(Bytes.empty).should eq("")
     end
+
+    it "allows creating from a non-empty slice" do
+      String.new(UInt8.slice(102, 111, 111, 0, 98, 97, 114)).should eq("foo\0bar")
+    end
+
+    it "allows creating from a null-terminated slice" do
+      String.new(Bytes.empty, truncate_at_null: true).should eq("")
+      String.new(UInt8.slice(102, 111, 111, 98, 97, 114), truncate_at_null: true).should eq("foobar")
+      String.new(UInt8.slice(102, 111, 111, 0, 98, 97, 114), truncate_at_null: true).should eq("foo")
+    end
   end
 
   describe "tr" do
@@ -2223,22 +2281,15 @@ describe "String" do
     end
 
     it "compares with == when different strings same contents" do
-      s1 = "foo#{1}"
-      s2 = "foo#{1}"
-      s1.should eq(s2)
+      ("fo" + "o").should eq("fo" + "o")
     end
 
     it "compares with == when different contents" do
-      s1 = "foo#{1}"
-      s2 = "foo#{2}"
-      s1.should_not eq(s2)
+      ("fo" + "o").should_not eq("bo" + "o")
     end
 
     it "sorts strings" do
-      s1 = "foo1"
-      s2 = "foo"
-      s3 = "bar"
-      [s1, s2, s3].sort.should eq(["bar", "foo", "foo1"])
+      ["foo1", "foo", "bar"].sort.should eq(["bar", "foo", "foo1"])
     end
   end
 
@@ -2374,23 +2425,31 @@ describe "String" do
     end
   end
 
-  it "has match" do
-    "FooBar".match(/oo/).not_nil![0].should eq("oo")
-  end
+  describe "#match" do
+    it "has match" do
+      match = "FooBar".match(/oo/).should_not be_nil
+      match[0].should eq("oo")
+    end
 
-  it "matches with position" do
-    "こんにちは".match(/./, 1).not_nil![0].should eq("ん")
-  end
+    it "matches with position" do
+      match = "こんにちは".match(/./, 1).should_not be_nil
+      match[0].should eq("ん")
+    end
 
-  it "matches empty string" do
-    match = "".match(/.*/).not_nil!
-    match.group_size.should eq(0)
-    match[0].should eq("")
+    it "matches empty string" do
+      match = "".match(/.*/).should_not be_nil
+      match.group_size.should eq(0)
+      match[0].should eq("")
+    end
+
+    it "returns nil" do
+      "foo".match(/bar/).should be_nil
+    end
   end
 
   it "matches, but returns Bool" do
-    "foo".matches?(/foo/).should eq(true)
-    "foo".matches?(/bar/).should eq(false)
+    "foo".matches?(/foo/).should be_true
+    "foo".matches?(/bar/).should be_false
   end
 
   it "#matches_full?" do
@@ -2646,8 +2705,26 @@ describe "String" do
     lines.should eq(["foo\n", "\n", "bar\r\n", "baz\r\n"])
   end
 
+  it "gets each_line with remove_empty = true" do
+    lines = [] of String
+    "\nfoo\n\nbar\r\nbaz\n\n".each_line(remove_empty: true) do |line|
+      lines << line
+    end.should be_nil
+    lines.should eq(["foo", "bar", "baz"])
+  end
+
+  it "gets each_line with remove_empty = true and chomp = false" do
+    lines = [] of String
+    "\nfoo\n\nbar\r\n\r\nbaz".each_line(remove_empty: true, chomp: false) do |line|
+      lines << line
+    end.should be_nil
+    lines.should eq(["foo\n", "bar\r\n", "baz"])
+  end
+
   it_iterates "#each_line", ["foo", "bar", "baz"], "foo\nbar\r\nbaz\r\n".each_line
   it_iterates "#each_line(chomp: false)", ["foo\n", "bar\r\n", "baz\r\n"], "foo\nbar\r\nbaz\r\n".each_line(chomp: false)
+  it_iterates "#each_line(remove_empty: true)", ["foo", "bar", "baz"], "\nfoo\n\nbar\r\n\r\nbaz".each_line(remove_empty: true)
+  it_iterates "#each_line(remove_empty: true, chomp: false)", ["foo\n", "bar\r\n", "baz"], "\nfoo\n\nbar\r\n\r\nbaz".each_line(remove_empty: true, chomp: false)
 
   it_iterates "#each_codepoint", [97, 98, 9731], "ab☃".each_codepoint
 
@@ -2827,10 +2904,10 @@ describe "String" do
     describe "encode" do
       it "encodes" do
         bytes = "Hello".encode("UCS-2LE")
-        bytes.to_a.should eq([72, 0, 101, 0, 108, 0, 108, 0, 111, 0])
+        bytes.should eq Bytes[72, 0, 101, 0, 108, 0, 108, 0, 111, 0]
       end
 
-      {% unless flag?(:musl) || flag?(:solaris) || flag?(:freebsd) || flag?(:dragonfly) %}
+      {% unless flag?(:musl) || flag?(:solaris) || flag?(:freebsd) || flag?(:dragonfly) || flag?(:netbsd) %}
         it "flushes the shift state (#11992)" do
           "\u{00CA}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x66])
           "\u{00CA}\u{0304}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x62])
@@ -2839,7 +2916,7 @@ describe "String" do
 
       # FreeBSD iconv encoder expects ISO/IEC 10646 compatibility code points,
       # see https://www.ccli.gov.hk/doc/e_hkscs_2008.pdf for details.
-      {% if flag?(:freebsd) || flag?(:dragonfly) %}
+      {% if flag?(:freebsd) || flag?(:dragonfly) || flag?(:netbsd) %}
         it "flushes the shift state (#11992)" do
           "\u{F329}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x66])
           "\u{F325}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x62])
@@ -2865,7 +2942,7 @@ describe "String" do
       end
 
       it "doesn't raise on invalid byte sequence" do
-        "好\xff是".encode("EUC-JP", invalid: :skip).to_a.should eq([185, 165, 192, 167])
+        "好\xff是".encode("EUC-JP", invalid: :skip).should eq(Bytes[185, 165, 192, 167])
       end
 
       it "raises if incomplete byte sequence" do
@@ -2875,7 +2952,7 @@ describe "String" do
       end
 
       it "doesn't raise if incomplete byte sequence" do
-        ("好".byte_slice(0, 1) + "是").encode("EUC-JP", invalid: :skip).to_a.should eq([192, 167])
+        ("好".byte_slice(0, 1) + "是").encode("EUC-JP", invalid: :skip).should eq(Bytes[192, 167])
       end
 
       it "decodes" do
@@ -2883,7 +2960,7 @@ describe "String" do
         String.new(bytes, "UTF-16LE").should eq("Hello")
       end
 
-      {% unless flag?(:solaris) || flag?(:freebsd) || flag?(:dragonfly) %}
+      {% unless flag?(:solaris) || flag?(:freebsd) || flag?(:dragonfly) || flag?(:netbsd) %}
         it "decodes with shift state" do
           String.new(Bytes[0x88, 0x66], "BIG5-HKSCS").should eq("\u{00CA}")
           String.new(Bytes[0x88, 0x62], "BIG5-HKSCS").should eq("\u{00CA}\u{0304}")
@@ -2892,7 +2969,7 @@ describe "String" do
 
       # FreeBSD iconv decoder returns ISO/IEC 10646-1:2000 code points,
       # see https://www.ccli.gov.hk/doc/e_hkscs_2008.pdf for details.
-      {% if flag?(:freebsd) || flag?(:dragonfly) %}
+      {% if flag?(:freebsd) || flag?(:dragonfly) || flag?(:netbsd) %}
         it "decodes with shift state" do
           String.new(Bytes[0x88, 0x66], "BIG5-HKSCS").should eq("\u{00CA}")
           String.new(Bytes[0x88, 0x62], "BIG5-HKSCS").should eq("\u{F325}")
@@ -3101,6 +3178,66 @@ describe "String" do
       it { expect_raises(IndexError) { "セキロ：シャドウズ ダイ トゥワイス".delete_at(19..1) } }
       it { expect_raises(IndexError) { "セキロ：シャドウズ ダイ トゥワイス".delete_at(-19..1) } }
     end
+  end
+
+  describe "ensure_suffix" do
+    context "with string suffix" do
+      it "adds suffix if not present" do
+        "foo".ensure_suffix("bar").should eq("foobar")
+        "foo".ensure_suffix("FOO").should eq("fooFOO")
+        "foo".ensure_suffix("").should eq("foo")
+        "foobar".ensure_suffix("arr").should eq("foobararr")
+      end
+
+      it "does not add suffix if already present" do
+        "foobar".ensure_suffix("bar").should eq("foobar")
+        "FOOBAR".ensure_suffix("BAR").should eq("FOOBAR")
+      end
+    end
+
+    context "with char suffix" do
+      it "adds suffix if not present" do
+        "foo".ensure_suffix('b').should eq("foob")
+        "foo".ensure_suffix('O').should eq("fooO")
+      end
+
+      it "does not add suffix if already present" do
+        "foob".ensure_suffix('b').should eq("foob")
+        "FOOB".ensure_suffix('B').should eq("FOOB")
+      end
+    end
+  end
+
+  describe "ensure_prefix" do
+    context "with string prefix" do
+      it "adds prefix if not present" do
+        "foo".ensure_prefix("bar").should eq("barfoo")
+        "foo".ensure_prefix("FOO").should eq("FOOfoo")
+        "foo".ensure_prefix("").should eq("foo")
+        "foo".ensure_prefix("barf").should eq("barffoo")
+      end
+
+      it "does not add prefix if already present" do
+        "foobar".ensure_prefix("foo").should eq("foobar")
+        "FOOBAR".ensure_prefix("FOO").should eq("FOOBAR")
+      end
+    end
+
+    context "with char prefix" do
+      it "adds prefix if not present" do
+        "foo".ensure_prefix('b').should eq("bfoo")
+        "foo".ensure_prefix('F').should eq("Ffoo")
+      end
+
+      it "does not add prefix if already present" do
+        "bfoo".ensure_prefix('b').should eq("bfoo")
+        "BFOO".ensure_prefix('B').should eq("BFOO")
+      end
+    end
+  end
+
+  it ".additive_identity" do
+    String.additive_identity.should be ""
   end
 end
 

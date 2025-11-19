@@ -30,8 +30,35 @@ class JSON::Token
     raise ParseException.new(exc.message, line_number, column_number)
   end
 
-  property line_number : Int32
-  property column_number : Int32
+  @line_number : Int64
+  @column_number : Int64
+
+  def line_number : Int32
+    @line_number.to_i32
+  end
+
+  @[Experimental]
+  def line_number_i64 : Int64
+    @line_number
+  end
+
+  def line_number=(line_number)
+    @line_number = line_number.to_i64
+  end
+
+  def column_number : Int32
+    @column_number.to_i32
+  end
+
+  @[Experimental]
+  def column_number_i64
+    @column_number
+  end
+
+  def column_number=(column_number)
+    @column_number = column_number.to_i64
+  end
+
   property raw_value : String
 
   def initialize

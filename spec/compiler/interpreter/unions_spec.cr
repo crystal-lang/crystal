@@ -11,7 +11,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "put and remove from union, together with is_a? (falsey case)" do
-      interpret(<<-CRYSTAL).should eq(true)
+      interpret(<<-CRYSTAL).should be_true
         a = 1 == 2 ? 2 : true
         a.is_a?(Int32) ? true : a
         CRYSTAL
@@ -33,6 +33,13 @@ describe Crystal::Repl::Interpreter do
         else
           'b'
         end
+        CRYSTAL
+    end
+
+    it "returns large union type (#15041)" do
+      interpret(<<-CRYSTAL).should eq(4_i64)
+        a = {3_i64, 4_i64} || nil
+        a.is_a?(Tuple) ? a[1] : 5_i64
         CRYSTAL
     end
 
