@@ -8,7 +8,7 @@ parameters:
   distribution-scripts-version:
     description: "Git ref for version of https://github.com/crystal-lang/distribution-scripts/"
     type: string
-    default: "24d03358df6d6ecc485b640caa93ec50ccbb400e"
+    default: "e07d45d8300e5cc98e53378ea9f09650621418d6"
   previous_crystal_base_url:
     description: "Prefix for URLs to Crystal bootstrap compiler"
     type: string
@@ -353,7 +353,7 @@ jobs:
           cd /tmp/workspace/distribution-scripts
           source build.env
           cd docker
-          make all64 CRYSTAL_DEB=/tmp/workspace/build/crystal_${CRYSTAL_VERSION}-1_amd64.deb CRYSTAL_TARGZ=/tmp/workspace/build/crystal-$CRYSTAL_VERSION-1-linux-x86_64.tar.gz
+          make TARBALLS=/tmp/workspace/build/
       - persist_to_workspace:
           root: /tmp/workspace/distribution-scripts/docker/
           paths:
@@ -368,10 +368,10 @@ jobs:
       - run: |
           cd /tmp/workspace/distribution-scripts
           source ./build.env
-          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-ubuntu-x86_64.tar.gz | docker image load
-          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-ubuntu-x86_64-build.tar.gz | docker image load
-          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-alpine.tar.gz | docker image load
-          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-alpine-build.tar.gz | docker image load
+          gunzip -c /tmp/workspace/build/crystal-${CRYSTAL_VERSION}-ubuntu.tar.gz | docker image load
+          gunzip -c /tmp/workspace/build/crystal-${CRYSTAL_VERSION}-ubuntu-build.tar.gz | docker image load
+          gunzip -c /tmp/workspace/build/crystal-${CRYSTAL_VERSION}-alpine.tar.gz | docker image load
+          gunzip -c /tmp/workspace/build/crystal-${CRYSTAL_VERSION}-alpine-build.tar.gz | docker image load
           docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
           docker push ${DOCKER_REPOSITORY}:${DOCKER_TAG}
           docker push ${DOCKER_REPOSITORY}:${DOCKER_TAG}-build
@@ -462,6 +462,9 @@ jobs:
           destination: dist_packages
 
   test_dist_linux_on_docker:
+    parameters:
+      arch:
+        type: string
     machine:
       image: default
     environment:
@@ -469,14 +472,14 @@ jobs:
       TRAVIS_OS_NAME: linux
       ARCH: x86_64
       ARCH_CMD: linux64
-    resource_class: large
+    resource_class: << parameters.arch >>
     steps:
       - attach_workspace:
           at: /tmp/workspace
       - run: |
           cd /tmp/workspace/distribution-scripts
           source ./build.env
-          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-ubuntu-x86_64-build.tar.gz | docker image load
+          gunzip -c /tmp/workspace/build/crystal-${CRYSTAL_VERSION}-ubuntu-build.tar.gz | docker image load
           echo "export DOCKER_TEST_PREFIX=crystallang/crystal:${DOCKER_TAG}" >> $BASH_ENV
       - checkout
       - run: bin/ci prepare_system
@@ -550,6 +553,9 @@ workflows:
             - dist_snap
       - test_dist_linux_on_docker:
           filters: *release
+          matrix:
+            parameters:
+              arch: [large, arm.medium]
           requires:
             - dist_docker
       - publish_docker:
@@ -608,6 +614,9 @@ workflows:
           requires:
             - dist_snap
       - test_dist_linux_on_docker:
+          matrix:
+            parameters:
+              arch: [large, arm.medium]
           requires:
             - dist_docker
       - publish_docker:
