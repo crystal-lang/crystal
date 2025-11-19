@@ -353,6 +353,8 @@ jobs:
           cd /tmp/workspace/distribution-scripts
           source build.env
           cd docker
+          # enable buildx
+          docker buildx create --use
           make TARBALLS=/tmp/workspace/build/
       - persist_to_workspace:
           root: /tmp/workspace/distribution-scripts/docker/
