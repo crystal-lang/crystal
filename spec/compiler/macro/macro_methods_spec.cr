@@ -584,11 +584,12 @@ module Crystal
       end
 
       it "executes gsub with a block" do
-        assert_macro %({{ "Version v%app.version%".gsub /%([^%\\s]++)%/ { "0.1.2" } }}), %("Version v0.1.2")                  # No block args
-        assert_macro %({{ "Version v%app.version%".gsub /%([^%\\s]++)%/ { |str| str.upcase } }}), %("Version v%APP.VERSION%") # First yields full matched string
-        assert_macro %({{ "Version v%app.version%".gsub /%([^%\\s]++)%/ { |_, a| a.upcase } }}), %("Version vAPP.VERSION")    # 1.. yields capture group n
-        assert_macro %({{ "bar baz".gsub /bar (foo)?/ { |_, a| a.nil? ? "" : "BUG" } }}), %("baz")                            # Capture group no match
-        assert_macro %({{ "bar".gsub /(foo)/ { "STR" } }}), %("bar")                                                          # No match at all
+        assert_macro %q({{ "foo bar baz".gsub(/ba./) { "biz" } }}), %("foo biz biz")                                                                  # No block args
+        assert_macro %q({{ "foo bar baz".gsub(/ba./) { |match| match.upcase } }}), %("foo BAR BAZ")                                                   # full matched string
+        assert_macro %q({{ "Name: Alice, Name: Bob".gsub(/Name: (\w+)/) { |full, matches| "User(#{matches[1].id})" } }}), %("User(Alice), User(Bob)") # single capture group
+        assert_macro %q({{ "5x10, 3x7".gsub(/(\d+)x(\d+)/) { |full, matches| "#{matches[1].to_i * matches[2].to_i}" } }}), %("50, 21")                # multiple capture groups
+        assert_macro %q({{ "bar baz".gsub /bar (foo)?/ { |_, matches| matches[1].nil? ? "" : "BUG" } }}), %("baz")                                    # Capture group no match
+        assert_macro %q({{ "bar".gsub /(foo)/ { "STR" } }}), %("bar")                                                                                 # No match at all
       end
 
       it "executes scan" do

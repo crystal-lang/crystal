@@ -2707,9 +2707,12 @@ class String
   # by the block value's value.
   #
   # ```
-  # "hello".gsub(/./) { |s| s[0].ord.to_s + ' ' } # => "104 101 108 108 111 "
+  # "hello".gsub(/./) { |s| s[0].ord.to_s + ' ' }                                              # => "104 101 108 108 111 "
+  # "foo bar baz".gsub(/ba./) { |match| match.upcase }                                         # => "foo BAR BAZ"
+  # "Name: Alice, Name: Bob".gsub(/Name: (\w+)/) { |full, matches| "User(#{matches[1]})" }     # => "User(Alice), User(Bob)"
+  # "5x10, 3x7".gsub(/(\d+)x(\d+)/) { |full, matches| "#{matches[1].to_i * matches[2].to_i}" } # => "50, 21"
   # ```
-  def gsub(pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None, &) : String
+  def gsub(pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None, & : String, Regex::MatchData -> _) : String
     gsub_append(pattern, options) do |string, match, buffer|
       $~ = match
       buffer << yield string, match

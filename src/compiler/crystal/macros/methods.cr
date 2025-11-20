@@ -752,13 +752,15 @@ module Crystal
 
             regex = regex_value first
 
-            new_value = value.gsub regex do |_, match|
-              block.args.each_with_index do |arg, idx|
-                interpreter.define_var(
-                  arg.name,
-                  match[idx]?.try { |v| StringLiteral.new v } || NilLiteral.new
-                )
+            new_value = value.gsub regex do |string, matches|
+              string_match_arg = block.args[0]?
+              matches_array_arg = block.args[1]?
+              matches_array_literal = ArrayLiteral.map matches.to_a do |item|
+                item.nil? ? NilLiteral.new : StringLiteral.new item
               end
+
+              interpreter.define_var(string_match_arg.name, StringLiteral.new string) if string_match_arg
+              interpreter.define_var(matches_array_arg.name, matches_array_literal) if matches_array_arg
 
               interpreter.accept(block.body).to_macro_id
             end

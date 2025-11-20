@@ -54,9 +54,10 @@ private macro def_string_methods(klass)
   def ends_with?(other : StringLiteral | CharLiteral) : BoolLiteral
   end
 
-  # Returns a `{{klass}}` where all occurrences of the provided *regex* are replaced by the block's return value.
-  # Block arguments map to those of `Regex::MatchData#[]?`; a `StringLiteral` if there was a match, and a `NilLiteral` if there was not.
-  def gsub(regex : RegexLiteral, & : StringLiteral, *Union(StringLiteral | NilLiteral) -> _) : {{klass}}
+  # Similar to `String#gsub(pattern, options, &)`.
+  #
+  # NOTE: The global special variables `$~` or `$n` are not supported.
+  def gsub(regex : RegexLiteral, & : StringLiteral, ArrayLiteral(StringLiteral | NilLiteral) -> _) : {{klass}}
   end
 
   # Similar to `String#gsub`.
