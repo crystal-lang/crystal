@@ -353,7 +353,7 @@ jobs:
           cd /tmp/workspace/distribution-scripts
           source build.env
           cd docker
-          make all64 CRYSTAL_DEB=/tmp/workspace/build/crystal_${CRYSTAL_VERSION}-1_amd64.deb CRYSTAL_TARGZ=/tmp/workspace/build/crystal-$CRYSTAL_VERSION-1-linux-x86_64.tar.gz
+          make all64 TARBALLS=/tmp/workspace/build/
       - persist_to_workspace:
           root: /tmp/workspace/distribution-scripts/docker/
           paths:
