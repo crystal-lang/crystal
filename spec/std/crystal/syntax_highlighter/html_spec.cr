@@ -122,6 +122,10 @@ describe Crystal::SyntaxHighlighter::HTML do
 
     it_highlights "Set{1, 2, 3}", %(<span class="t">Set</span>{<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>})
 
+    it_highlights "foo(/Name: /)", %(foo(<span class="s">/Name: /</span>))
+    it_highlights "foo[/Name: /]", %(foo[<span class="s">/Name: /</span>])
+    it_highlights "Foo{/Name: /}", %(<span class="t">Foo</span>{<span class="s">/Name: /</span>})
+
     it_highlights <<-CRYSTAL, <<-HTML
     foo, bar = <<-FOO, <<-BAR
       foo
