@@ -334,7 +334,7 @@ module Crystal
 
     # see also the other DWARF enums in `crystal/dwarf/abbrev.cr` (note that
     # LLVM defines several custom opcodes outside the user extension range)
-    DW_OP_plus_uconst = 0x23_u64
+    DW_OP_plus_uconst = 0x23
 
     private def declare_local(type, alloca, location, basic_block : LLVM::BasicBlock? = nil, offset : Int = 0, &)
       location = location.try &.expanded_location
@@ -352,7 +352,12 @@ module Crystal
       var = yield scope, file, location.line_number, debug_type
 
       if offset != 0
-        expr = di_builder.create_expression({{ LibLLVM::IS_LT_140 ? Int64 : UInt64 }}.static_array(DW_OP_plus_uconst, offset), 2)
+        expr =
+          {% if LibLLVM::IS_LT_140 %}
+            di_builder.create_expression(Int64.static_array(DW_OP_plus_uconst, offset), 2)
+          {% else %}
+            di_builder.create_expression(UInt64.static_array(DW_OP_plus_uconst, offset), 2)
+          {% end %}
       else
         expr = di_builder.create_expression(nil, 0)
       end
