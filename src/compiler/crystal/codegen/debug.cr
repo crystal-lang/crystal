@@ -352,7 +352,7 @@ module Crystal
       var = yield scope, file, location.line_number, debug_type
 
       if offset != 0
-        expr = di_builder.create_expression(UInt64.static_array(DW_OP_plus_uconst, offset), 2)
+        expr = di_builder.create_expression({{ LibLLVM::IS_LT_140 ? Int64 : UInt64 }}.static_array(DW_OP_plus_uconst, offset), 2)
       else
         expr = di_builder.create_expression(nil, 0)
       end
