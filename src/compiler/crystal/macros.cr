@@ -56,7 +56,7 @@ private macro def_string_methods(klass)
 
   # Similar to `String#gsub(pattern, options, &)`.
   #
-  # NOTE: The global special variables `$~` or `$n` are not supported.
+  # NOTE: The special variables `$~` and `$1`, `$2`, ... are not supported.
   def gsub(regex : RegexLiteral, & : StringLiteral, ArrayLiteral(StringLiteral | NilLiteral) -> _) : {{klass}}
   end
 
