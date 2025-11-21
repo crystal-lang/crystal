@@ -97,7 +97,7 @@ describe Sync::RWLock do
       done = started = locked = false
       lock = Sync::RWLock.new(:unchecked)
 
-      fiber = spawn do
+      spawn do
         started = true
         lock.lock_write
         locked = true
