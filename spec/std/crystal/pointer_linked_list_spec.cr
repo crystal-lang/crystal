@@ -93,6 +93,40 @@ describe Crystal::PointerLinkedList do
     end
   end
 
+  describe "#first?" do
+    it "returns nil when the list is empty" do
+      list = Crystal::PointerLinkedList(TestedObject).new
+
+      obj = list.first?
+
+      obj.should be_nil
+    end
+
+    it "returns the head item" do
+      list = Crystal::PointerLinkedList(TestedObject).new
+
+      x = TestedObject.new 0
+      y = TestedObject.new 1
+      z = TestedObject.new 2
+
+      list.push pointerof(x)
+      list.first?.should eq(pointerof(x))
+
+      list.push pointerof(y)
+      list.first?.should eq(pointerof(x))
+
+      list.push pointerof(z)
+      list.first?.should eq(pointerof(x))
+
+      list.shift?
+      list.shift?
+      list.first?.should eq(pointerof(z))
+
+      list.shift?
+      list.first?.should be_nil
+    end
+  end
+
   describe "shift?" do
     it "remove and return the first element" do
       list = Crystal::PointerLinkedList(TestedObject).new
