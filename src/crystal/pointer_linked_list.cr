@@ -96,13 +96,11 @@ struct Crystal::PointerLinkedList(T)
 
   # Iterates the list.
   def each(&) : Nil
-    return if empty?
-
     node = @head
-    loop do
+    while node
       _next = node.value.next
+      _next = Pointer(T).null if _next == @head
       yield node
-      break if _next == @head
       node = _next
     end
   end
