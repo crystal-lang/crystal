@@ -1,4 +1,5 @@
 require "crystal/system/socket"
+require "crystal/fd_lock"
 
 class Socket < IO
   include IO::Buffered
@@ -8,6 +9,7 @@ class Socket < IO
   SOMAXCONN = 128
 
   @volatile_fd : Atomic(Handle)
+  @fd_lock = Crystal::FdLock.new
 
   # Returns the handle associated with this socket from the operating system.
   #
@@ -149,7 +151,7 @@ class Socket < IO
   # `Socket::ConnectError` error if the connection failed.
   def connect(addr, timeout = nil, &)
     timeout = timeout.seconds unless timeout.is_a?(::Time::Span?)
-    result = system_connect(addr, timeout)
+    result = @fd_lock.write { system_connect(addr, timeout) }
     yield result if result.is_a?(Exception)
   end
 
@@ -163,7 +165,9 @@ class Socket < IO
   # ```
   def bind(host : String, port : Int) : Nil
     Addrinfo.resolve(host, port, @family, @type, @protocol) do |addrinfo|
-      system_bind(addrinfo, "#{host}:#{port}") { |errno| errno }
+      @fd_lock.reference do
+        system_bind(addrinfo, "#{host}:#{port}") { |errno| errno }
+      end
     end
   end
 
@@ -185,7 +189,7 @@ class Socket < IO
     end
 
     Addrinfo.resolve(address, port, @family, @type, @protocol) do |addrinfo|
-      system_bind(addrinfo, address_and_port) { |errno| errno }
+      @fd_lock.reference { system_bind(addrinfo, address_and_port) { |errno| errno } }
     end
   end
 
@@ -198,7 +202,7 @@ class Socket < IO
   # sock.bind Socket::IPAddress.new("192.168.1.25", 80)
   # ```
   def bind(addr : Socket::Address) : Nil
-    system_bind(addr, addr.to_s) { |errno| raise errno }
+    @fd_lock.reference { system_bind(addr, addr.to_s) { |errno| raise errno } }
   end
 
   # Tells the previously bound socket to listen for incoming connections.
@@ -209,7 +213,7 @@ class Socket < IO
   # Tries to listen for connections on the previously bound socket.
   # Yields an `Socket::Error` on failure.
   def listen(backlog : Int = SOMAXCONN, &)
-    system_listen(backlog) { |err| yield err }
+    @fd_lock.reference { system_listen(backlog) { |err| yield err } }
   end
 
   # Accepts an incoming connection.
@@ -244,7 +248,7 @@ class Socket < IO
   # end
   # ```
   def accept? : Socket?
-    if rs = system_accept
+    if rs = @fd_lock.read { system_accept }
       sock = Socket.new(handle: rs[0], family: family, type: type, protocol: protocol, blocking: rs[1])
       unless (blocking = system_blocking?) == rs[1]
         # FIXME: unlike the overloads in TCPServer and UNIXServer, this version
@@ -274,7 +278,7 @@ class Socket < IO
   # sock.send(Bytes[0])
   # ```
   def send(message) : Int32
-    system_write(message.to_slice)
+    @fd_lock.write { system_write(message.to_slice) }
   end
 
   # Sends a message to the specified remote address.
@@ -292,7 +296,7 @@ class Socket < IO
   # sock.send("text query", to: server)
   # ```
   def send(message, to addr : Address) : Int32
-    system_send_to(message.to_slice, addr)
+    @fd_lock.write { system_send_to(message.to_slice, addr) }
   end
 
   # Receives a text message from the previously bound address.
@@ -308,7 +312,9 @@ class Socket < IO
   def receive(max_message_size = 512) : {String, Address}
     address = nil
     message = String.new(max_message_size) do |buffer|
-      bytes_read, address = system_receive_from(Slice.new(buffer, max_message_size))
+      bytes_read, address = @fd_lock.read do
+        system_receive_from(Slice.new(buffer, max_message_size))
+      end
       {bytes_read, 0}
     end
     {message, address.as(Address)}
@@ -326,17 +332,17 @@ class Socket < IO
   # bytes_read, client_addr = server.receive(message)
   # ```
   def receive(message : Bytes) : {Int32, Address}
-    system_receive_from(message)
+    @fd_lock.read { system_receive_from(message) }
   end
 
   # Calls `shutdown(2)` with `SHUT_RD`
   def close_read
-    system_close_read
+    @fd_lock.reference { system_close_read }
   end
 
   # Calls `shutdown(2)` with `SHUT_WR`
   def close_write
-    system_close_write
+    @fd_lock.reference { system_close_write }
   end
 
   def inspect(io : IO) : Nil
@@ -424,7 +430,7 @@ class Socket < IO
   end
 
   protected def setsockopt(optname, optval, level = LibC::SOL_SOCKET)
-    system_setsockopt(optname, optval, level)
+    @fd_lock.reference { system_setsockopt(optname, optval, level) }
   end
 
   private def getsockopt_bool(optname, level = LibC::SOL_SOCKET)
@@ -434,7 +440,7 @@ class Socket < IO
 
   private def setsockopt_bool(optname, optval : Bool, level = LibC::SOL_SOCKET)
     v = optval ? 1 : 0
-    system_setsockopt optname, v, level
+    @fd_lock.reference { system_setsockopt(optname, v, level) }
     optval
   end
 
@@ -452,7 +458,7 @@ class Socket < IO
   # to read from this socket.
   @[Deprecated("Use Socket.set_blocking instead.")]
   def blocking=(value)
-    self.system_blocking = value
+    @fd_lock.reference { self.system_blocking = value }
   end
 
   # Returns whether the blocking mode of *fd* is blocking (true) or non blocking
@@ -474,7 +480,7 @@ class Socket < IO
   end
 
   def close_on_exec=(arg : Bool)
-    self.system_close_on_exec = arg
+    @fd_lock.reference { self.system_close_on_exec = arg }
   end
 
   def self.fcntl(fd, cmd, arg = 0)
@@ -482,7 +488,7 @@ class Socket < IO
   end
 
   def fcntl(cmd, arg = 0)
-    system_fcntl(cmd, arg)
+    @fd_lock.reference { system_fcntl(cmd, arg) }
   end
 
   # Finalizes the socket resource.
@@ -509,12 +515,12 @@ class Socket < IO
   end
 
   private def unbuffered_read(slice : Bytes) : Int32
-    system_read(slice)
+    @fd_lock.read { system_read(slice) }
   end
 
   private def unbuffered_write(slice : Bytes) : Nil
     until slice.empty?
-      slice += system_write(slice)
+      slice += @fd_lock.write { system_write(slice) }
     end
   end
 
@@ -527,7 +533,10 @@ class Socket < IO
 
     @closed = true
 
-    system_close
+    if @fd_lock.try_close? { event_loop.shutdown(self) }
+      event_loop.close(self)
+      @fd_lock.reset
+    end
   end
 
   private def unbuffered_flush : Nil
