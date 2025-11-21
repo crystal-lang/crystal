@@ -19,7 +19,7 @@
 # $ nix-shell --pure --arg musl true
 #
 
-{llvm ? 16, musl ? false, system ? builtins.currentSystem}:
+{llvm ? 20, musl ? false, system ? builtins.currentSystem}:
 
 let
   nixpkgs = import (builtins.fetchTarball {
