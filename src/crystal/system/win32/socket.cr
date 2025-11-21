@@ -389,10 +389,6 @@ module Crystal::System::Socket
     LibC.GetConsoleMode(LibC::HANDLE.new(fd), out _) != 0
   end
 
-  def system_close
-    socket_close
-  end
-
   private def socket_close(&)
     handle = @volatile_fd.swap(LibC::INVALID_SOCKET)
 

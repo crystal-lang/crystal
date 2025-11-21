@@ -316,7 +316,6 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   end
 
   def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
-    LibC.CancelIoEx(file_descriptor.windows_handle, nil) unless file_descriptor.system_blocking?
     file_descriptor.file_descriptor_close
   end
 
@@ -457,7 +456,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     if LibC.shutdown(socket.fd, LibC::SH_BOTH) == 0
       raise ::Socket::Error.from_wsa_error("shutdown")
     end
-    LibC.CancelIoEx(socket.fd, nil)
+    LibC.CancelIoEx(Pointer(Void).new(socket.fd), nil)
   end
 
   def close(socket : ::Socket) : Nil

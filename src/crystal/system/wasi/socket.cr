@@ -155,11 +155,6 @@ module Crystal::System::Socket
     LibC.isatty(fd) == 1
   end
 
-  private def system_close
-    event_loop.shutdown(self)
-    event_loop.close(self)
-  end
-
   def socket_close
     # Clear the @volatile_fd before actually closing it in order to
     # reduce the chance of reading an outdated fd value
