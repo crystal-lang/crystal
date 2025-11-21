@@ -24,14 +24,14 @@ require "./waiter"
 module Sync
   # :nodoc:
   struct MU
-    UNLOCKED       =   0_u32
-    WLOCK          =   1_u32
-    SPINLOCK       =   2_u32
-    WAITING        =   4_u32
-    WRITER_WAITING =   8_u32
-    LONG_WAIT      =  16_u32
-    DESIG_WAKER    =  32_u32
-    RLOCK          = 256_u32
+    UNLOCKED         =   0_u32
+    WLOCK            =   1_u32
+    SPINLOCK         =   2_u32
+    WAITING          =   4_u32
+    WRITER_WAITING   =   8_u32
+    LONG_WAIT        =  16_u32
+    DESIGNATED_WAKER =  32_u32
+    RLOCK            = 256_u32
 
     RMASK    = ~(RLOCK - 1_u32)
     ANY_LOCK = WLOCK | RMASK
@@ -166,7 +166,7 @@ module Sync
             # woken fiber doesn't care about long wait or a writer waiting, and
             # must clear the designated waker flag
             zero_to_acquire &= ~(LONG_WAIT | WRITER_WAITING)
-            clear = DESIG_WAKER
+            clear = DESIGNATED_WAKER
           end
         end
 
@@ -187,7 +187,7 @@ module Sync
         raise RuntimeError.new("Can't unlock Sync::MU that isn't held")
       end
 
-      if (word & WAITING) == 0 && (word & DESIG_WAKER) != 0
+      if (word & WAITING) == 0 && (word & DESIGNATED_WAKER) != 0
         # no waiters, or there is a designated waker already (no need to wake
         # another one), try quick unlock
         _, success = @word.compare_and_set(word, word &- WLOCK, :release, :relaxed)
@@ -208,7 +208,7 @@ module Sync
         raise RuntimeError.new("Can't runlock Sync::MU that isn't held")
       end
 
-      if (word & WAITING) == 0 && (word & DESIG_WAKER) != 0 && (word & RMASK) > RLOCK
+      if (word & WAITING) == 0 && (word & DESIGNATED_WAKER) != 0 && (word & RMASK) > RLOCK
         # no waiters, there is a designated waker already (no need to wake
         # another one), and there are still readers, try quick unlock
         _, success = @word.compare_and_set(word, word &- RLOCK, :release, :relaxed)
@@ -233,7 +233,7 @@ module Sync
       while true
         word = @word.get(:relaxed)
 
-        if (word & WAITING) == 0 || (word & DESIG_WAKER) != 0 || (word & RMASK) > RLOCK
+        if (word & WAITING) == 0 || (word & DESIGNATED_WAKER) != 0 || (word & RMASK) > RLOCK
           # no waiters, there is a designated waker (no need to wake another
           # one), or there are still readers, try release lock
           word, success = @word.compare_and_set(word, word - sub_on_release, :release, :relaxed)
@@ -241,7 +241,7 @@ module Sync
         elsif (word & SPINLOCK) == 0
           # there might be a waiter, and no designated waker, try to acquire
           # spinlock, and release the lock (early)
-          _, success = @word.compare_and_set(word, (word | SPINLOCK | DESIG_WAKER) &- sub_on_release, :acquire_release, :relaxed)
+          _, success = @word.compare_and_set(word, (word | SPINLOCK | DESIGNATED_WAKER) &- sub_on_release, :acquire_release, :relaxed)
           if success
             # spinlock is held, resume a single writer, or resume all readers
             wake = Crystal::PointerLinkedList(Waiter).new
@@ -265,8 +265,8 @@ module Sync
 
             # update flags
             clear = 0_u32
-            clear |= DESIG_WAKER if wake.empty? # nothing to wake => no designated waker
-            clear |= WAITING if @waiters.empty? # no more waiters => nothing waiting
+            clear |= DESIGNATED_WAKER if wake.empty? # nothing to wake => no designated waker
+            clear |= WAITING if @waiters.empty?      # no more waiters => nothing waiting
 
             release_spinlock(set: writer_waiting, clear: clear)
 
