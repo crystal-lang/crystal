@@ -192,7 +192,7 @@ struct Crystal::System::Process
     end
   {% end %}
 
-  def self.fork(*, will_exec : Bool, &)
+  def self.system_fork(*, will_exec : Bool, &)
     newmask = uninitialized LibC::SigsetT
     oldmask = uninitialized LibC::SigsetT
 
@@ -236,15 +236,21 @@ struct Crystal::System::Process
     pid
   end
 
+  # Only used by deprecated `::Process.fork`
+  def self.fork
+    {% raise("Process fork is unsupported with multithreaded mode") if flag?(:preview_mt) %}
+
+    system_fork(will_exec: false) do
+      ::Process.after_fork_child_callbacks.each(&.call)
+    end
+  end
+
   # Duplicates the current process.
   # Returns a `Process` representing the new child process in the current process
   # and `nil` inside the new child process.
+  # Only used by deprecated `::Process.fork(&)` and compiler `fork_codegen`
   def self.fork(&)
-    {% raise("Process fork is unsupported with multithreaded mode") if flag?(:preview_mt) %}
-
-    pid = fork(will_exec: false) do
-      ::Process.after_fork_child_callbacks.each(&.call)
-    end
+    pid = fork
     return pid if pid
 
     begin
@@ -259,12 +265,14 @@ struct Crystal::System::Process
     end
   end
 
-  def self.spawn(prepared_args, env, clear_env, input, output, error, chdir)
+  def self.spawn(command, args, shell, env, clear_env, input, output, error, chdir)
+    prepared_args = prepare_args(command, args, shell)
+
     r, w = FileDescriptor.system_pipe
 
     envp = Env.make_envp(env, clear_env)
 
-    pid = fork(will_exec: true) do
+    pid = system_fork(will_exec: true) do
       Crystal::System::Signal.after_fork_before_exec
     end
 
@@ -339,6 +347,9 @@ struct Crystal::System::Process
     {pathname, argv.to_unsafe}
   end
 
+  # This method is similar to `.replace` (used for `Process.exec`) with some
+  # differences because we're limited in what we can do in the pre-exec phase
+  # between `fork` and `exec`.
   private def self.try_replace(prepared_args, envp, input, output, error, chdir)
     reopen_io(input, ORIGINAL_STDIN)
     reopen_io(output, ORIGINAL_STDOUT)
@@ -460,10 +471,22 @@ struct Crystal::System::Process
                   end
   end
 
-  def self.replace(command, prepared_args, env, clear_env, input, output, error, chdir)
+  def self.replace(command, args, shell, env, clear_env, input, output, error, chdir)
+    prepared_args = prepare_args(command, args, shell)
     envp = Env.make_envp(env, clear_env)
 
-    try_replace(prepared_args, envp, input, output, error, chdir)
+    # The following steps are similar to `.try_replace` (used for `fork`/`exec`)
+    # with some differences because we're not spawning a new process.
+    reopen_io(input, ORIGINAL_STDIN)
+    reopen_io(output, ORIGINAL_STDOUT)
+    reopen_io(error, ORIGINAL_STDERR)
+
+    if chdir
+      ::Dir.cd(chdir)
+    end
+
+    execvpe(*prepared_args, envp)
+
     raise_exception_from_errno(command)
   end
 

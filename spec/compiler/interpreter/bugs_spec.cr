@@ -225,6 +225,19 @@ describe Crystal::Repl::Interpreter do
       CRYSTAL
     end
 
+    it "returns concrete type with typeof (#16377)" do
+      interpret(<<-CRYSTAL, prelude: "prelude").should eq("true")
+        class Foo
+        end
+
+        class Bar < Foo
+        end
+
+        foo = Bar.new.as(Foo)
+        typeof(foo) == Foo
+      CRYSTAL
+    end
+
     it "looks up local vars in parent scopes after looking up local vars in current scope and closured scope (#15489)" do
       interpret(<<-CRYSTAL).should eq("parser")
         def capture(&block)

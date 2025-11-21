@@ -147,5 +147,37 @@ describe TCPServer, tags: "network" do
         end
       end
     end
+
+    it "supports IPv6 dual stack" do
+      server = TCPServer.new(:inet6)
+      server.ipv6_only = false
+      server.bind("::", 0)
+      server.listen
+
+      TCPSocket.open("127.0.0.1", server.local_address.port) do |client|
+        server.accept? do |sock|
+          sock.ipv6_only?.should be_false
+
+          # should raise when changing ipv6_only when not applicable
+          expect_raises(Socket::Error, /invalid argument/i) do
+            sock.ipv6_only = true
+          end
+        end
+      end
+
+      server.close
+    end
+
+    it "supports IPv6 only" do
+      server = TCPServer.new(:inet6)
+      server.ipv6_only = true
+      server.bind("::", 0)
+      server.listen
+
+      expect_raises(Socket::ConnectError) do
+        TCPSocket.new("127.0.0.1", server.local_address.port, connect_timeout: 1.second)
+      end
+      server.close
+    end
   end
 end
