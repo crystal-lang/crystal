@@ -22,6 +22,9 @@ sed -i -E "s/version: .*/version: $(cat src/VERSION)/" shard.yml
 # Remove SOURCE_DATE_EPOCH (only used in source tree of a release)
 rm -f src/SOURCE_DATE_EPOCH
 
+# Remove pre-generated manpages (only used in source tree of a release)
+rm -rf man/
+
 # Truncate CHANGELOG.md
 sed -i -E '/^## \[/,/^## Previous Releases/{/^## Previous Releases/!d}' CHANGELOG.md
 
