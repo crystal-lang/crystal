@@ -161,7 +161,7 @@ class Crystal::Codegen::Target
   end
 
   def unix?
-    macos? || bsd? || linux? || wasi? || solaris?
+    macos? || bsd? || linux? || wasi? || solaris? || android?
   end
 
   def gnu?
