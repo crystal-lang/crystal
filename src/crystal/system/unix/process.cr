@@ -211,26 +211,29 @@ struct Crystal::System::Process
     ret = LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(newmask), pointerof(oldmask))
     raise RuntimeError.from_errno("Failed to disable signals") unless ret == 0
 
-    case pid = lock_write { LibC.fork }
-    when 0
-      # child:
-      pid = nil
+    pid = lock_write { LibC.fork }
+
+    if 0 == pid
+      # forked process
 
       ::Process.after_fork_child_callbacks.each(&.call)
 
       # restore sigmask
       LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(oldmask), nil)
-    when -1
-      # error:
+
+      nil
+    else
+      # forking process
+
       errno = Errno.value
       LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(oldmask), nil)
-      raise RuntimeError.from_os_error("fork", errno)
-    else
-      # parent:
-      LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(oldmask), nil)
-    end
 
-    pid
+      if pid == -1
+        raise RuntimeError.from_os_error("fork", errno)
+      end
+
+      pid
+    end
   end
 
   # Duplicates the current process.

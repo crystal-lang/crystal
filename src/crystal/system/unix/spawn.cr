@@ -73,27 +73,30 @@ struct Crystal::System::Process
     ret = LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(newmask), pointerof(oldmask))
     raise RuntimeError.from_errno("Failed to disable signals") unless ret == 0
 
-    case pid = lock_write { LibC.fork }
-    when 0
-      # child:
-      pid = nil
+    pid = lock_write { LibC.fork }
+
+    if 0 == pid
+      # forked process
 
       Crystal::System::Signal.after_fork_before_exec
 
       # reset sigmask (inherited on exec)
       LibC.sigemptyset(pointerof(newmask))
       LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(newmask), nil)
-    when -1
-      # error:
+
+      nil
+    else
+      # forking process
+
       errno = Errno.value
       LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(oldmask), nil)
-      raise RuntimeError.from_os_error("fork", errno)
-    else
-      # parent:
-      LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(oldmask), nil)
-    end
 
-    pid
+      if pid == -1
+        raise RuntimeError.from_os_error("fork", errno)
+      end
+
+      pid
+    end
   end
 
   # This method is similar to `.replace` (used for `Process.exec`) with some
