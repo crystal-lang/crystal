@@ -26,6 +26,12 @@ struct Crystal::PointerLinkedList(T)
     _next.value.previous = new
   end
 
+  def first?
+    if node = @head
+      node
+    end
+  end
+
   # Returns `true` if the list is empty, otherwise false.
   def empty? : Bool
     @head.null?
