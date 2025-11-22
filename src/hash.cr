@@ -1528,6 +1528,8 @@ class Hash(K, V)
   # # => {"foo" => "bar"}
   # ```
   def merge(other : Hash(L, W)) : Hash(K | L, V | W) forall L, W
+    # Don't retain @block as far as key type may be changed and retained @block
+    # will not be compatible with this new type.
     hash = Hash(K | L, V | W).new
     hash.compare_by_identity if compare_by_identity?
     hash.merge! self
@@ -1536,6 +1538,8 @@ class Hash(K, V)
   end
 
   def merge(other : Hash(L, W), & : L, V, W -> V | W) : Hash(K | L, V | W) forall L, W
+    # Don't retain @block as far as key type may be changed and retained @block
+    # will not be compatible with this new type.
     hash = Hash(K | L, V | W).new
     hash.compare_by_identity if compare_by_identity?
     hash.merge! self
@@ -1644,11 +1648,26 @@ class Hash(K, V)
   # Returns a new `Hash` without the given keys.
   #
   # ```
+  # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.reject(["a", "c"]) # => {"b" => 2, "d" => 4}
+  # ```
+  def reject(keys : Enumerable) : Hash(K, V)
+    object = {} of K => V
+    object.compare_by_identity if compare_by_identity?
+
+    each_entry_with_index do |entry, _|
+      object[entry.key] = entry.value unless keys.includes?(entry.key)
+    end
+
+    object
+  end
+
+  # Returns a new `Hash` without the given keys.
+  #
+  # ```
   # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.reject("a", "c") # => {"b" => 2, "d" => 4}
   # ```
   def reject(*keys) : Hash(K, V)
-    hash = self.dup
-    hash.reject!(*keys)
+    reject(keys)
   end
 
   # Removes a list of keys out of hash.
@@ -1732,7 +1751,10 @@ class Hash(K, V)
   # hash.compact # => {"hello" => "world"}
   # ```
   def compact
+    # Don't retain @block as far as #compact may change value type, e.g.
+    # (String | Nil) will become String.
     object = {} of K => typeof(self.first_value.not_nil!)
+
     object.compare_by_identity if compare_by_identity?
 
     each_with_object(object) do |(key, value), memo|
