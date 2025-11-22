@@ -217,7 +217,6 @@ module Crystal::System::File
   end
 
   private def system_truncate(size) : Nil
-    flush
     code = LibC.ftruncate(fd, size)
     if code != 0
       raise ::File::Error.from_errno("Error truncating file", file: path)
