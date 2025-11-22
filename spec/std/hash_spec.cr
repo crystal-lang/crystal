@@ -688,7 +688,7 @@ describe "Hash" do
     end
 
     it "retains default block" do
-      h1 = Hash(Int32, String).new { |_, _| "b" }
+      h1 = Hash(Int32, String).new { "b" }
       h2 = h1.clone
       h2[0].should eq("b")
     end
@@ -751,7 +751,7 @@ describe "Hash" do
     end
 
     it "retains default block" do
-      h1 = Hash(Int32, String).new { |_, _| "b" }
+      h1 = Hash(Int32, String).new { "b" }
       h2 = h1.dup
       h2[0].should eq("b")
     end
@@ -823,7 +823,7 @@ describe "Hash" do
     end
 
     it "does not retain default block" do
-      h = Hash(Int32, String).new { |_, _| "b" }
+      h = Hash(Int32, String).new { "b" }
       h.merge({1 => "a"})[0]?.should be_nil
       h.merge({1 => "a"}) { |k, v1, v2| v1 }[0]?.should be_nil
     end
@@ -939,7 +939,7 @@ describe "Hash" do
     end
 
     it "does not retain default block" do
-      h = Hash(Int32, String).new { |_, _| "b" }
+      h = Hash(Int32, String).new { "b" }
       h.compact[0]?.should be_nil
     end
 
@@ -995,7 +995,7 @@ describe "Hash" do
     end
 
     it "does not retain default block" do
-      h = Hash(Int32, String).new { |_, _| "b" }
+      h = Hash(Int32, String).new { "b" }
       h.transform_keys(&.succ)[0]?.should be_nil
     end
 
@@ -1072,7 +1072,7 @@ describe "Hash" do
     end
 
     it "does not retain default block" do
-      h = Hash(Int32, String).new { |_, _| "b" }
+      h = Hash(Int32, String).new { "b" }
       h.transform_values(&.succ)[0]?.should be_nil
     end
 
@@ -1335,7 +1335,7 @@ describe "Hash" do
     end
 
     it "does not retain default block" do
-      h = Hash(Int32, String).new { |_, _| "b" }
+      h = Hash(Int32, String).new { "b" }
       h.invert[0]?.should be_nil
     end
 
@@ -1494,22 +1494,22 @@ describe "Hash" do
 
       h.reject(42)[0]?.should be_nil
       h.reject([42])[0]?.should be_nil
-      h.reject { |_, _| false }[0]?.should be_nil
+      h.reject { false }[0]?.should be_nil
     end
 
     it "does not retain default block" do
-      h = Hash(Int32, String).new { |_, _| "b" }
+      h = Hash(Int32, String).new { "b" }
 
       h.reject(42)[0]?.should be_nil
       h.reject([42])[0]?.should be_nil
-      h.reject { |_, _| false }[0]?.should be_nil
+      h.reject { false }[0]?.should be_nil
     end
 
     it "retains compare_by_identity" do
       h = ({} of String => Int32).compare_by_identity
       h.reject("a").compare_by_identity?.should be_true
       h.reject(["a"]).compare_by_identity?.should be_true
-      h.reject { |_, _| false }.compare_by_identity?.should be_true
+      h.reject { false }.compare_by_identity?.should be_true
     end
   end
 
@@ -1542,22 +1542,22 @@ describe "Hash" do
 
       h.select(42)[0]?.should be_nil
       h.select([42])[0]?.should be_nil
-      h.select { |_, _| true }[0]?.should be_nil
+      h.select { true }[0]?.should be_nil
     end
 
     it "does not retain default block" do
-      h = Hash(Int32, String).new { |_, _| "b" }
+      h = Hash(Int32, String).new { "b" }
 
       h.select(42)[0]?.should be_nil
       h.select([42])[0]?.should be_nil
-      h.select { |_, _| true }[0]?.should be_nil
+      h.select { true }[0]?.should be_nil
     end
 
     it "retains compare_by_identity" do
       h = ({} of String => Int32).compare_by_identity
       h.select("a").compare_by_identity?.should be_true
       h.select(["a"]).compare_by_identity?.should be_true
-      h.select { |_, _| true }.compare_by_identity?.should be_true
+      h.select { true }.compare_by_identity?.should be_true
     end
   end
 
