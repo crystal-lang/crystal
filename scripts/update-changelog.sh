@@ -54,6 +54,10 @@ release_date=$(head -n1 "$current_changelog" | grep -o -P '(?<=\()[^)]+')
 date --utc --date="${release_date}" +%s > src/SOURCE_DATE_EPOCH
 git add src/SOURCE_DATE_EPOCH
 
+# Build manpages
+make clean man
+git add --force man
+
 changelog_path="doc/changelogs/v${VERSION%.*}.md"
 
 if [ ! -f "$changelog_path" ]; then

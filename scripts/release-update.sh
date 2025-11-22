@@ -22,6 +22,9 @@ sed -i -E "s/version: .*/version: $(cat src/VERSION)/" shard.yml
 # Remove SOURCE_DATE_EPOCH (only used in source tree of a release)
 rm -f src/SOURCE_DATE_EPOCH
 
+# Remove pre-generated manpages (only used in source tree of a release)
+rm -rf man/
+
 # Edit PREVIOUS_CRYSTAL_BASE_URL in .circleci/config.yml
 sed -i -E "s|[0-9.]+/crystal-[0-9.]+-[0-9]|$CRYSTAL_VERSION/crystal-$CRYSTAL_VERSION-1|g" .circleci/config.yml
 
