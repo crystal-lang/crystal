@@ -583,6 +583,15 @@ module Crystal
         assert_macro %({{"hello".gsub(/e|o/, "a")}}), %("halla")
       end
 
+      it "executes gsub with a block" do
+        assert_macro %q({{ "foo bar baz".gsub(/ba./) { "biz" } }}), %("foo biz biz")                                                                  # No block args
+        assert_macro %q({{ "foo bar baz".gsub(/ba./) { |match| match.upcase } }}), %("foo BAR BAZ")                                                   # full matched string
+        assert_macro %q({{ "Name: Alice, Name: Bob".gsub(/Name: (\w+)/) { |full, matches| "User(#{matches[1].id})" } }}), %("User(Alice), User(Bob)") # single capture group
+        assert_macro %q({{ "5x10, 3x7".gsub(/(\d+)x(\d+)/) { |full, matches| "#{matches[1].to_i * matches[2].to_i}" } }}), %("50, 21")                # multiple capture groups
+        assert_macro %q({{ "bar baz".gsub /bar (foo)?/ { |_, matches| matches[1].nil? ? "" : "BUG" } }}), %("baz")                                    # Capture group no match
+        assert_macro %q({{ "bar".gsub /(foo)/ { "STR" } }}), %("bar")                                                                                 # No match at all
+      end
+
       it "executes scan" do
         assert_macro %({{"Crystal".scan(/(Cr)(?<name1>y)(st)(?<name2>al)/)}}), %([{0 => "Crystal", 1 => "Cr", "name1" => "y", 3 => "st", "name2" => "al"} of ::Int32 | ::String => ::String | ::Nil] of ::Hash(::Int32 | ::String, ::String | ::Nil))
         assert_macro %({{"Crystal".scan(/(Cr)?(stal)/)}}), %([{0 => "stal", 1 => nil, 2 => "stal"} of ::Int32 | ::String => ::String | ::Nil] of ::Hash(::Int32 | ::String, ::String | ::Nil))
