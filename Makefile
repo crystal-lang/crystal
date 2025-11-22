@@ -43,6 +43,7 @@ O := .build
 SOURCES := $(shell find src -name '*.cr')
 SPEC_SOURCES := $(shell find spec -name '*.cr')
 MAN1PAGES := $(patsubst doc/man/%.adoc,man/%.1,$(wildcard doc/man/*.adoc))
+EXISTING_MAN1PAGES := $(wildcard man/*.1)
 override FLAGS += -D strict_multi_assign -D preview_overload_order $(if $(release),--release )$(if $(stats),--stats )$(if $(progress),--progress )$(if $(threads),--threads $(threads) )$(if $(debug),-d )$(if $(static),--static )$(if $(LDFLAGS),--link-flags="$(LDFLAGS)" )$(if $(target),--cross-compile --target $(target) )
 # NOTE: USE_PCRE1 is only used for testing compatibility with legacy environments that don't provide libpcre2.
 # Newly built compilers should never be distributed with libpcre to ensure syntax consistency.
@@ -187,7 +188,7 @@ generate_data: ## Run generator scripts for Unicode, SSL config, ...
 	$(MAKE) -B -f scripts/generate_data.mk
 
 .PHONY: install
-install: $(O)/$(CRYSTAL_BIN) $(MAN1PAGES) ## Install the compiler at DESTDIR
+install: $(O)/$(CRYSTAL_BIN) ## Install the compiler at DESTDIR
 	$(INSTALL) -d -m 0755 "$(DESTDIR)$(BINDIR)/"
 	$(INSTALL) -m 0755 "$(O)/$(CRYSTAL_BIN)" "$(DESTDIR)$(BINDIR)/$(CRYSTAL_BIN)"
 
@@ -196,7 +197,7 @@ install: $(O)/$(CRYSTAL_BIN) $(MAN1PAGES) ## Install the compiler at DESTDIR
 	rm -rf "$(DESTDIR)$(DATADIR)/crystal/$(LLVM_EXT_OBJ)" # Don't install llvm_ext.o
 
 	$(INSTALL) -d -m 0755 "$(DESTDIR)$(MANDIR)/man1/"
-	$(INSTALL) -m 644 $(MAN1PAGES) "$(DESTDIR)$(MANDIR)/man1/"
+	$(INSTALL) -m 644 $(EXISTING_MAN1PAGES) "$(DESTDIR)$(MANDIR)/man1/"
 	$(INSTALL) -d -m 0755 "$(DESTDIR)$(DATADIR)/licenses/crystal/"
 	$(INSTALL) -m 644 LICENSE "$(DESTDIR)$(DATADIR)/licenses/crystal/LICENSE"
 
@@ -206,6 +207,8 @@ install: $(O)/$(CRYSTAL_BIN) $(MAN1PAGES) ## Install the compiler at DESTDIR
 	$(INSTALL) -m 644 etc/completion.zsh "$(DESTDIR)$(DATADIR)/zsh/site-functions/_crystal"
 	$(INSTALL) -d -m 0755 "$(DESTDIR)$(DATADIR)/fish/vendor_completions.d/"
 	$(INSTALL) -m 644 etc/completion.fish "$(DESTDIR)$(DATADIR)/fish/vendor_completions.d/crystal.fish"
+
+man: $(MAN1PAGES)
 
 ifeq ($(WINDOWS),1)
 .PHONY: install_dlls
