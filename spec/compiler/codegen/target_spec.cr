@@ -25,4 +25,8 @@ describe Crystal::Codegen::Target do
     Target.new("x86_64-unknown-freebsd8.0").freebsd_version.should eq(8)
     Target.new("x86_64-unknown-freebsd11.0").freebsd_version.should eq(11)
   end
+
+  it "#unix?" do
+    Target.new("aarch64-android").unix?.should be_true
+  end
 end
