@@ -394,10 +394,12 @@ struct Crystal::System::Process
     reopen_io(error, ORIGINAL_STDERR)
 
     if chdir
-      ::Dir.cd(chdir)
+      ::Dir.cd(chdir) do
+        execvpe(*prepared_args, envp)
+      end
+    else
+      execvpe(*prepared_args, envp)
     end
-
-    execvpe(*prepared_args, envp)
 
     raise_exception_from_errno(command)
   end

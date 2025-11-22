@@ -700,6 +700,17 @@ describe Process do
         Process.exec(*exit_code_command(1), chdir: "doesnotexist")
       end
     end
+
+    it "does not change directory if exec fails" do
+      with_tempfile("exec_chdir") do |path|
+        Dir.mkdir_p(path)
+        previous_cwd = Dir.current
+        expect_raises(File::NotFoundError, "Error executing process: 'doesnotexist':") do
+          Process.exec("doesnotexist", chdir: path)
+        end
+        Dir.current.should eq previous_cwd
+      end
+    end
   end
 
   describe ".chroot" do
