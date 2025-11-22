@@ -70,11 +70,16 @@ abstract class Crystal::SyntaxHighlighter
   end
 
   private def slash_is_not_regex(last_token_type type, space_before)
-    return nil if type.nil?
-
-    type.number? || type.const? || type.instance_var? ||
-      type.class_var? || type.op_rparen? ||
-      type.op_rsquare? || type.op_rcurly? || !space_before
+    case type
+    when Nil
+      false
+    when .number?, .const?, .instance_var?, .class_var?, .op_rparen?, .op_rsquare?, .op_rcurly?
+      true
+    when .op_lparen?, .op_lsquare?, .op_lcurly?
+      false
+    else
+      !space_before
+    end
   end
 
   private def highlight_normal_state(lexer, break_on_rcurly = false)
