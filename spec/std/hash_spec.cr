@@ -1493,6 +1493,7 @@ describe "Hash" do
       h = Hash(Int32, String).new("a")
 
       h.reject(42)[0]?.should be_nil
+      h.reject([42])[0]?.should be_nil
       h.reject { |_, _| false }[0]?.should be_nil
     end
 
@@ -1500,12 +1501,14 @@ describe "Hash" do
       h = Hash(Int32, String).new { |_, _| "b" }
 
       h.reject(42)[0]?.should be_nil
+      h.reject([42])[0]?.should be_nil
       h.reject { |_, _| false }[0]?.should be_nil
     end
 
     it "retains compare_by_identity" do
       h = ({} of String => Int32).compare_by_identity
       h.reject("a").compare_by_identity?.should be_true
+      h.reject(["a"]).compare_by_identity?.should be_true
       h.reject { |_, _| false }.compare_by_identity?.should be_true
     end
   end

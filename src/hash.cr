@@ -678,9 +678,9 @@ class Hash(K, V)
   end
 
   # Initializes a `dup` copy from the contents of `other`.
-  protected def initialize_dup(other, retain_defaults : Bool = true)
+  protected def initialize_dup(other)
     initialize_compare_by_identity(other)
-    initialize_default_block(other) if retain_defaults
+    initialize_default_block(other)
 
     return if other.empty?
 
@@ -689,9 +689,9 @@ class Hash(K, V)
   end
 
   # Initializes a `clone` copy from the contents of `other`.
-  protected def initialize_clone(other, retain_defaults : Bool = true)
+  protected def initialize_clone(other)
     initialize_compare_by_identity(other)
-    initialize_default_block(other) if retain_defaults
+    initialize_default_block(other)
 
     return if other.empty?
 
@@ -1648,11 +1648,26 @@ class Hash(K, V)
   # Returns a new `Hash` without the given keys.
   #
   # ```
+  # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.reject(["a", "c"]) # => {"b" => 2, "d" => 4}
+  # ```
+  def reject(keys : Enumerable) : Hash(K, V)
+    object = {} of K => V
+    object.compare_by_identity if compare_by_identity?
+
+    each_entry_with_index do |entry, _|
+      object[entry.key] = entry.value unless keys.includes?(entry.key)
+    end
+
+    object
+  end
+
+  # Returns a new `Hash` without the given keys.
+  #
+  # ```
   # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.reject("a", "c") # => {"b" => 2, "d" => 4}
   # ```
   def reject(*keys) : Hash(K, V)
-    hash = self.dup(retain_defaults: false)
-    hash.reject!(*keys)
+    reject(keys)
   end
 
   # Removes a list of keys out of hash.
@@ -2040,24 +2055,9 @@ class Hash(K, V)
   # hash_b.merge!({"baz" => "qux"})
   # hash_a # => {"foo" => "bar"}
   # ```
-  #
-  # Retains `compare_by_identity` flag.
-  #
-  # Retains default value and default block. It can be prevented with calling
-  # with `false` argument.
-  #
-  # ```
-  # hash_a = Hash(String, String).new("?")
-  # hash_b = hash_a.dup(retain_defaults: false)
-  # hash_b["foo"]? # => nil
-  # ```
   def dup : Hash(K, V)
-    dup(retain_defaults: true)
-  end
-
-  private def dup(retain_defaults : Bool) : Hash(K, V)
     hash = Hash(K, V).new
-    hash.initialize_dup(self, retain_defaults)
+    hash.initialize_dup(self)
     hash
   end
 
@@ -2069,26 +2069,16 @@ class Hash(K, V)
   # hash_b["foobar"]["foo"] = "baz"
   # hash_a # => {"foobar" => {"foo" => "bar"}}
   # ```
-  #
-  # Retains `compare_by_identity` flag.
-  #
-  # Retains default value and default block. It can be prevented with calling
-  # with `false` argument.
-  #
-  # ```
-  # hash_a = Hash(String, String).new("?")
-  # hash_b = hash_a.clone(retain_defaults: false)
-  # hash_b["foo"]? # => nil
-  def clone(retain_defaults : Bool = true) : Hash(K, V)
+  def clone : Hash(K, V)
     {% if V == ::Bool || V == ::Char || V == ::String || V == ::Symbol || V < ::Number::Primitive %}
       clone = Hash(K, V).new
-      clone.initialize_clone(self, retain_defaults)
+      clone.initialize_clone(self)
       clone
     {% else %}
       exec_recursive_clone do |hash|
         clone = Hash(K, V).new
         hash[object_id] = clone.object_id
-        clone.initialize_clone(self, retain_defaults)
+        clone.initialize_clone(self)
         clone
       end
     {% end %}
