@@ -117,7 +117,12 @@ module IO::ByteFormat
     extend ByteFormat
   end
 
-  alias SystemEndian = LittleEndian
+  {% if flag?(:endian) == "big" %}
+    alias SystemEndian = BigEndian
+  {% else %}
+    alias SystemEndian = LittleEndian
+  {% end %}
+
   alias NetworkEndian = BigEndian
 
   {% for mod in %w(LittleEndian BigEndian) %}
