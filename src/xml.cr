@@ -57,8 +57,12 @@ module XML
   def self.parse(string : String, options : ParserOptions = ParserOptions.default) : Document
     raise XML::Error.new("Document is empty", 0) if string.empty?
     ctxt = LibXML.xmlNewParserCtxt
-    from_ptr(ctxt) do
-      LibXML.xmlCtxtReadMemory(ctxt, string, string.bytesize, nil, nil, options)
+    begin
+      from_ptr(ctxt) do
+        LibXML.xmlCtxtReadMemory(ctxt, string, string.bytesize, nil, nil, options)
+      end
+    ensure
+      LibXML.xmlFreeParserCtxt(ctxt)
     end
   end
 
@@ -67,8 +71,12 @@ module XML
   # See `ParserOptions.default` for default options.
   def self.parse(io : IO, options : ParserOptions = ParserOptions.default) : Document
     ctxt = LibXML.xmlNewParserCtxt
-    from_ptr(ctxt) do
-      LibXML.xmlCtxtReadIO(ctxt, ->read_callback, ->close_callback, Box(IO).box(io), nil, nil, options)
+    begin
+      from_ptr(ctxt) do
+        LibXML.xmlCtxtReadIO(ctxt, ->read_callback, ->close_callback, Box(IO).box(io), nil, nil, options)
+      end
+    ensure
+      LibXML.xmlFreeParserCtxt(ctxt)
     end
   end
 
@@ -78,8 +86,12 @@ module XML
   def self.parse_html(string : String, options : HTMLParserOptions = HTMLParserOptions.default) : Document
     raise XML::Error.new("Document is empty", 0) if string.empty?
     ctxt = LibXML.htmlNewParserCtxt
-    from_ptr(ctxt) do
-      LibXML.htmlCtxtReadMemory(ctxt, string, string.bytesize, nil, "utf-8", options)
+    begin
+      from_ptr(ctxt) do
+        LibXML.htmlCtxtReadMemory(ctxt, string, string.bytesize, nil, "utf-8", options)
+      end
+    ensure
+      LibXML.htmlFreeParserCtxt(ctxt)
     end
   end
 
@@ -88,8 +100,12 @@ module XML
   # See `HTMLParserOptions.default` for default options.
   def self.parse_html(io : IO, options : HTMLParserOptions = HTMLParserOptions.default) : Document
     ctxt = LibXML.htmlNewParserCtxt
-    from_ptr(ctxt) do
-      LibXML.htmlCtxtReadIO(ctxt, ->read_callback, ->close_callback, Box(IO).box(io), nil, "utf-8", options)
+    begin
+      from_ptr(ctxt) do
+        LibXML.htmlCtxtReadIO(ctxt, ->read_callback, ->close_callback, Box(IO).box(io), nil, "utf-8", options)
+      end
+    ensure
+      LibXML.htmlFreeParserCtxt(ctxt)
     end
   end
 
