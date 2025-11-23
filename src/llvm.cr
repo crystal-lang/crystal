@@ -45,6 +45,8 @@ module LLVM
       init_aarch64
     {% elsif flag?(:arm) %}
       init_arm
+    {% elsif flag?(:ppc) || flag?(:ppcle) || flag?(:ppc64) || flag?(:ppc64le) %}
+      init_powerpc
     {% elsif flag?(:wasm32) %}
       init_webassembly
     {% elsif flag?(:avr) %}

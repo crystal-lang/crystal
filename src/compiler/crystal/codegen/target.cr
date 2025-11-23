@@ -31,6 +31,8 @@ class Crystal::Codegen::Target
       @architecture = "aarch64"
     when .starts_with?("arm")
       @architecture = "arm"
+    when .starts_with?("powerpc")
+      @architecture = @architecture.gsub("powerpc", "ppc")
     when .starts_with?("wasm")
       if @environment == "wasi"
         @environment = "wasip1"
@@ -55,9 +57,9 @@ class Crystal::Codegen::Target
 
   def pointer_bit_width
     case @architecture
-    when "aarch64", "x86_64"
+    when "aarch64", "ppc64", "ppc64le", "x86_64"
       64
-    when "arm", "i386", "wasm32"
+    when "arm", "i386", "ppc", "ppcle", "wasm32"
       32
     when "avr"
       16
@@ -68,9 +70,9 @@ class Crystal::Codegen::Target
 
   def size_bit_width
     case @architecture
-    when "aarch64", "x86_64"
+    when "aarch64", "ppc64", "ppc64le", "x86_64"
       64
-    when "arm", "i386", "wasm32"
+    when "arm", "i386", "ppc", "ppcle", "wasm32"
       32
     when "avr"
       16
@@ -80,7 +82,11 @@ class Crystal::Codegen::Target
   end
 
   def system_endian
-    "little"
+    if @architecture.in?("ppc", "ppc64")
+      "big"
+    else
+      "little"
+    end
   end
 
   def os_name
@@ -253,6 +259,8 @@ class Crystal::Codegen::Target
         # the ABI call convention, codegen and the linker need to known the CPU model
         raise Target::Error.new("AVR targets must declare a CPU model, for example --mcpu=atmega328p")
       end
+    when .starts_with?("ppc")
+      LLVM.init_powerpc
     when "wasm32"
       LLVM.init_webassembly
 
