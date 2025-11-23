@@ -75,6 +75,10 @@ class Crystal::Codegen::Target
     end
   end
 
+  def system_endian
+    "little"
+  end
+
   def os_name
     case self
     when .macos?
