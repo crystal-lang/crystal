@@ -1184,7 +1184,7 @@ describe "Semantic: abstract def" do
         CRYSTAL
     end
 
-    it "allows forall type parameters in abstract methods (issue #10699)" do
+    it "allows forall type parameters in abstract methods" do
       assert_no_errors <<-CRYSTAL
         module Foo
           abstract def foo(x : U) : U forall U
@@ -1257,6 +1257,99 @@ describe "Semantic: abstract def" do
           include Foo
 
           def foo(x : Int32)
+          end
+        end
+        CRYSTAL
+    end
+
+    # Tests for forall parameter matching
+    it "errors when non-generic method tries to implement generic abstract method with forall" do
+      assert_error <<-CRYSTAL, "abstract `def Interface#transform(type : T.class) forall T` must be implemented"
+        module Interface
+          abstract def transform(type : T.class) : T forall T
+        end
+
+        class Implementation
+          include Interface
+
+          def transform(type : Int32.class) : Int32
+            123
+          end
+        end
+        CRYSTAL
+    end
+
+    it "accepts generic method implementing generic abstract method with forall" do
+      assert_no_errors <<-CRYSTAL
+        module Interface
+          abstract def transform(type : T.class) : T forall T
+        end
+
+        class Implementation
+          include Interface
+
+          def transform(type : T.class) : T forall T
+            type.allocate
+          end
+        end
+        CRYSTAL
+    end
+
+    it "errors when forall parameter counts don't match" do
+      assert_error <<-CRYSTAL, "abstract `def Interface#process(a : T, b : U) forall T, U` must be implemented"
+        module Interface
+          abstract def process(a : T, b : U) forall T, U
+        end
+
+        class Implementation
+          include Interface
+
+          def process(a : T, b : T) forall T
+            a
+          end
+        end
+        CRYSTAL
+    end
+
+    it "accepts matching forall parameters even with different names" do
+      assert_no_errors <<-CRYSTAL
+        module Interface
+          abstract def transform(value : T) : T forall T
+        end
+
+        class Implementation
+          include Interface
+
+          def transform(value : U) : U forall U
+            value
+          end
+        end
+        CRYSTAL
+    end
+
+    it "errors when abstract has forall but implementation tries to use specific types" do
+      assert_error <<-CRYSTAL, "abstract `def Container#get(key : K) forall K, V` must be implemented"
+        abstract class Container
+          abstract def get(key : K) : V forall K, V
+        end
+
+        class MyContainer < Container
+          def get(key : String) : Int32
+            42
+          end
+        end
+        CRYSTAL
+    end
+
+    it "accepts non-generic implementation when abstract def has no forall" do
+      assert_no_errors <<-CRYSTAL
+        abstract class Base
+          abstract def process(x : Int32) : String
+        end
+
+        class Derived < Base
+          def process(x : Int32) : String
+            x.to_s
           end
         end
         CRYSTAL

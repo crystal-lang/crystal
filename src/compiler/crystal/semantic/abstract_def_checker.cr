@@ -138,6 +138,21 @@ class Crystal::AbstractDefChecker
     return false unless m1.name == m2.name
     return false unless m1.block_arity == m2.block_arity
 
+    # Check if forall parameters match - if abstract method has forall parameters,
+    # the implementation must also have them (same count)
+    m1_has_forall = free_vars1 && !free_vars1.empty?
+    m2_has_forall = free_vars2 && !free_vars2.empty?
+
+    if m2_has_forall && !m1_has_forall
+      # Abstract method is generic but implementation is not
+      return false
+    end
+
+    if m2_has_forall && m1_has_forall
+      # Both are generic - they should have the same number of type parameters
+      return false unless free_vars1.try(&.size) == free_vars2.try(&.size)
+    end
+
     m1_args, m1_kargs = def_arg_ranges(m1)
     m2_args, m2_kargs = def_arg_ranges(m2)
 
