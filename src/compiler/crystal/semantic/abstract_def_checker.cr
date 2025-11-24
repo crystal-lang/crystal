@@ -138,19 +138,6 @@ class Crystal::AbstractDefChecker
     return false unless m1.name == m2.name
     return false unless m1.block_arity == m2.block_arity
 
-    implementation_def_forall_count = free_vars1.try(&.size) || 0
-    abstract_def_forall_count = free_vars2.try(&.size) || 0
-
-    if abstract_def_forall_count > 0 && implementation_def_forall_count.zero?
-      # Abstract method is generic but implementation is not
-      return false
-    end
-
-    if abstract_def_forall_count > 0 && implementation_def_forall_count > 0
-      # If both have freevars, just ensure tha the implementation has at least as many as the abstract
-      return false unless abstract_def_forall_count <= implementation_def_forall_count
-    end
-
     m1_args, m1_kargs = def_arg_ranges(m1)
     m2_args, m2_kargs = def_arg_ranges(m2)
 

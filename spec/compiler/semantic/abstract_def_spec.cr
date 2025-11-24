@@ -1153,218 +1153,262 @@ describe "Semantic: abstract def" do
     end
   end
 
-  describe "undefined types in abstract methods" do
-    it "reports undefined constant error for undefined type in abstract method" do
-      assert_error <<-CRYSTAL, "undefined constant Unknown"
-        module Foo
-          abstract def foo(x : Unknown)
+  it "reports undefined constant error for undefined type in abstract method" do
+    assert_error <<-CRYSTAL, "undefined constant Unknown"
+      module Foo
+        abstract def foo(x : Unknown)
+      end
+
+      class Bar
+        include Foo
+
+        def foo(x : Int32)
+        end
+      end
+      CRYSTAL
+  end
+
+  it "reports undefined constant error for undefined type in implementing method" do
+    assert_error <<-CRYSTAL, "undefined constant Unknown"
+      module Foo
+        abstract def foo(x : Int32)
+      end
+
+      class Bar
+        include Foo
+
+        def foo(x : Unknown)
+        end
+      end
+      CRYSTAL
+  end
+
+  it "allows forall type parameters in abstract methods" do
+    assert_no_errors <<-CRYSTAL
+      module Foo
+        abstract def foo(x : U) : U forall U
+      end
+
+      class Bar
+        include Foo
+
+        def foo(x : U) : U forall U
+          x
+        end
+      end
+      CRYSTAL
+  end
+
+  it "allows generic type parameters from enclosing class" do
+    assert_no_errors <<-CRYSTAL
+      module Comparable(T)
+        abstract def <=>(other : T)
+      end
+
+      struct Slice(T)
+        include Comparable(Slice(T))
+
+        def <=>(other : Slice(T))
+          0
+        end
+      end
+      CRYSTAL
+  end
+
+  it "allows multiple generic type parameters" do
+    assert_no_errors <<-CRYSTAL
+      abstract class Container(K, V)
+        abstract def get(key : K) : V?
+        abstract def set(key : K, value : V) : Nil
+      end
+
+      class HashMap(K, V) < Container(K, V)
+        def get(key : K) : V?
+          nil
         end
 
-        class Bar
-          include Foo
-
-          def foo(x : Int32)
-          end
+        def set(key : K, value : V) : Nil
         end
-        CRYSTAL
-    end
+      end
+      CRYSTAL
+  end
 
-    it "reports undefined constant error for undefined type in implementing method" do
-      assert_error <<-CRYSTAL, "undefined constant Unknown"
-        module Foo
-          abstract def foo(x : Int32)
+  it "distinguishes between undefined types and valid type parameters" do
+    assert_error <<-CRYSTAL, "undefined constant UnknownType"
+      abstract class Container(T)
+        abstract def process(x : T, y : UnknownType)
+      end
+
+      class MyContainer(T) < Container(T)
+        def process(x : T, y : String)
         end
+      end
+      CRYSTAL
+  end
 
-        class Bar
-          include Foo
+  it "reports undefined multi-segment paths" do
+    assert_error <<-CRYSTAL, "undefined constant Some::Path::Unknown"
+      module Foo
+        abstract def foo(x : Some::Path::Unknown)
+      end
 
-          def foo(x : Unknown)
-          end
+      class Bar
+        include Foo
+
+        def foo(x : Int32)
         end
-        CRYSTAL
-    end
+      end
+      CRYSTAL
+  end
 
-    it "allows forall type parameters in abstract methods" do
-      assert_no_errors <<-CRYSTAL
-        module Foo
-          abstract def foo(x : U) : U forall U
+  it "accepts untyped parameter implementing forall abstract method with return type" do
+    assert_no_errors <<-CRYSTAL
+      module Interface
+        abstract def transform(value : T) : T forall T
+      end
+
+      class Implementation
+        include Interface
+
+        def transform(value)
+          value
         end
+      end
+      CRYSTAL
+  end
 
-        class Bar
-          include Foo
+  it "accepts untyped parameter implementing forall abstract method without return type" do
+    assert_no_errors <<-CRYSTAL
+      module Interface
+        abstract def transform(value : T) forall T
+      end
 
-          def foo(x : U) : U forall U
-            x
-          end
+      class Implementation
+        include Interface
+
+        def transform(value)
+          value
         end
-        CRYSTAL
-    end
+      end
+      CRYSTAL
+  end
 
-    it "allows generic type parameters from enclosing class" do
-      assert_no_errors <<-CRYSTAL
-        module Comparable(T)
-          abstract def <=>(other : T)
+  it "accepts specific type implementing forall abstract method" do
+    assert_no_errors <<-CRYSTAL
+      module Interface
+        abstract def transform(type : T.class) : T forall T
+      end
+
+      class Implementation
+        include Interface
+
+        def transform(type : Int32.class) : Int32
+          123
         end
+      end
+      CRYSTAL
+  end
 
-        struct Slice(T)
-          include Comparable(Slice(T))
+  it "accepts more specific type implementing forall generic parameter" do
+    assert_no_errors <<-CRYSTAL
+      module Interface
+        abstract def transform(x : Array(T)) forall T
+      end
 
-          def <=>(other : Slice(T))
-            0
-          end
+      class Implementation
+        include Interface
+
+        def transform(x : Indexable) : Int32
+          123
         end
-        CRYSTAL
-    end
+      end
+      CRYSTAL
+  end
 
-    it "allows multiple generic type parameters" do
-      assert_no_errors <<-CRYSTAL
-        abstract class Container(K, V)
-          abstract def get(key : K) : V?
-          abstract def set(key : K, value : V) : Nil
+  it "accepts generic method implementing generic abstract method with forall" do
+    assert_no_errors <<-CRYSTAL
+      module Interface
+        abstract def transform(type : T.class) : T forall T
+      end
+
+      class Implementation
+        include Interface
+
+        def transform(type : T.class) : T forall T
         end
+      end
+      CRYSTAL
+  end
 
-        class HashMap(K, V) < Container(K, V)
-          def get(key : K) : V?
-            nil
-          end
+  it "accepts generic method when implementation has at least as many forall values than abstract" do
+    assert_no_errors <<-CRYSTAL
+      abstract class Foo
+        abstract def foo(x : T, y : Int32) forall T
+      end
 
-          def set(key : K, value : V) : Nil
-          end
+      class Bar < Foo
+        def foo(x : T, y : U) forall T, U; end
+      end
+      CRYSTAL
+  end
+
+  it "accepts matching forall parameters even with different names" do
+    assert_no_errors <<-CRYSTAL
+      module Interface
+        abstract def transform(value : T) : T forall T
+      end
+
+      class Implementation
+        include Interface
+
+        def transform(value : U) : U forall U
+          value
         end
-        CRYSTAL
-    end
+      end
+      CRYSTAL
+  end
 
-    it "distinguishes between undefined types and valid type parameters" do
-      assert_error <<-CRYSTAL, "undefined constant UnknownType"
-        abstract class Container(T)
-          abstract def process(x : T, y : UnknownType)
+  it "accepts specific types implementing forall abstract method" do
+    assert_no_errors <<-CRYSTAL
+      abstract class Container
+        abstract def get(key : K) : V forall K, V
+      end
+
+      class MyContainer < Container
+        def get(key : String) : Int32
+          42
         end
+      end
+      CRYSTAL
+  end
 
-        class MyContainer(T) < Container(T)
-          def process(x : T, y : String)
-          end
+  it "accepts non-generic implementation when abstract def has no forall" do
+    assert_no_errors <<-CRYSTAL
+      abstract class Base
+        abstract def process(x : Int32) : String
+      end
+
+      class Derived < Base
+        def process(x : Int32) : String
+          x.to_s
         end
-        CRYSTAL
-    end
+      end
+      CRYSTAL
+  end
 
-    it "reports undefined multi-segment paths" do
-      assert_error <<-CRYSTAL, "undefined constant Some::Path::Unknown"
-        module Foo
-          abstract def foo(x : Some::Path::Unknown)
+  pending "errors when implementation uses incompatible type with forall abstract method" do
+    assert_error <<-CRYSTAL, "abstract `def Interface#transform(x : Array(T)) forall T` must be implemented"
+      module Interface
+        abstract def transform(x : Array(T)) forall T
+      end
+
+      class Implementation
+        include Interface
+
+        def transform(x : Int32) : Int32
+          123
         end
-
-        class Bar
-          include Foo
-
-          def foo(x : Int32)
-          end
-        end
-        CRYSTAL
-    end
-
-    # Tests for forall parameter matching
-    it "errors when non-generic method tries to implement generic abstract method with forall" do
-      assert_error <<-CRYSTAL, "abstract `def Interface#transform(type : T.class) forall T` must be implemented"
-        module Interface
-          abstract def transform(type : T.class) : T forall T
-        end
-
-        class Implementation
-          include Interface
-
-          def transform(type : Int32.class) : Int32
-            123
-          end
-        end
-        CRYSTAL
-    end
-
-    it "accepts generic method implementing generic abstract method with forall" do
-      assert_no_errors <<-CRYSTAL
-        module Interface
-          abstract def transform(type : T.class) : T forall T
-        end
-
-        class Implementation
-          include Interface
-
-          def transform(type : T.class) : T forall T
-            type.allocate
-          end
-        end
-        CRYSTAL
-    end
-
-    it "accepts generic method when implementation has at least as many forall values than abstract" do
-      assert_no_errors <<-CRYSTAL
-        abstract class Foo
-          abstract def foo(x : T, y : Int32) forall T
-        end
-
-        class Bar < Foo
-          def foo(x : T, y : U) forall T, U; end
-        end
-        CRYSTAL
-    end
-
-    it "errors when forall parameter counts don't match" do
-      assert_error <<-CRYSTAL, "abstract `def Interface#process(a : T, b : U) forall T, U` must be implemented"
-        module Interface
-          abstract def process(a : T, b : U) forall T, U
-        end
-
-        class Implementation
-          include Interface
-
-          def process(a : T, b : T) forall T
-            a
-          end
-        end
-        CRYSTAL
-    end
-
-    it "accepts matching forall parameters even with different names" do
-      assert_no_errors <<-CRYSTAL
-        module Interface
-          abstract def transform(value : T) : T forall T
-        end
-
-        class Implementation
-          include Interface
-
-          def transform(value : U) : U forall U
-            value
-          end
-        end
-        CRYSTAL
-    end
-
-    it "errors when abstract has forall but implementation tries to use specific types" do
-      assert_error <<-CRYSTAL, "abstract `def Container#get(key : K) forall K, V` must be implemented"
-        abstract class Container
-          abstract def get(key : K) : V forall K, V
-        end
-
-        class MyContainer < Container
-          def get(key : String) : Int32
-            42
-          end
-        end
-        CRYSTAL
-    end
-
-    it "accepts non-generic implementation when abstract def has no forall" do
-      assert_no_errors <<-CRYSTAL
-        abstract class Base
-          abstract def process(x : Int32) : String
-        end
-
-        class Derived < Base
-          def process(x : Int32) : String
-            x.to_s
-          end
-        end
-        CRYSTAL
-    end
+      end
+      CRYSTAL
   end
 end
