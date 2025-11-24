@@ -718,7 +718,7 @@ class Regex
 
   # :ditto:
   @[Deprecated("Use the overload with `Regex::MatchOptions` instead.")]
-  def match_at_byte_index(str : String, byte_index : Int32 = 0, *, options : Regex::Options) : MatchData?
+  def match_at_byte_index(str, byte_index = 0, *, options) : MatchData?
     if byte_index > str.bytesize
       $~ = nil
     else
@@ -728,7 +728,7 @@ class Regex
 
   # :ditto:
   @[Deprecated("Use the overload with `Regex::MatchOptions` instead.")]
-  def match_at_byte_index(str : String, byte_index : Int32, _options : Regex::Options) : MatchData?
+  def match_at_byte_index(str, byte_index, _options) : MatchData?
     match_at_byte_index(str, byte_index, options: _options)
   end
 
@@ -752,7 +752,7 @@ class Regex
 
   # :ditto:
   @[Deprecated("Use the overload with `Regex::MatchOptions` instead.")]
-  def matches?(str : String, pos : Int32 = 0, *, options : Regex::Options) : Bool
+  def matches?(str, pos = 0, *, options) : Bool
     if byte_index = str.char_index_to_byte_index(pos)
       matches_at_byte_index?(str, byte_index, options)
     else
@@ -776,7 +776,7 @@ class Regex
 
   # :ditto:
   @[Deprecated("Use the overload with `Regex::MatchOptions` instead.")]
-  def matches_at_byte_index?(str : String, byte_index : Int32 = 0, *, options : Regex::Options) : Bool
+  def matches_at_byte_index?(str, byte_index = 0, *, options) : Bool
     return false if byte_index > str.bytesize
 
     matches_impl(str, byte_index, options)
@@ -784,7 +784,7 @@ class Regex
 
   # :ditto:
   @[Deprecated("Use the overload with `Regex::MatchOptions` instead.")]
-  def matches_at_byte_index?(str : String, byte_index : Int32, _options : Regex::Options) : Bool
+  def matches_at_byte_index?(str, byte_index, _options) : Bool
     matches_at_byte_index?(str, byte_index, options: _options)
   end
 
