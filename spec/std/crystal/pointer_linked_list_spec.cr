@@ -201,23 +201,46 @@ describe Crystal::PointerLinkedList do
     end
   end
 
-  it "does each" do
-    list = Crystal::PointerLinkedList(TestedObject).new
+  describe "#each" do
+    it "iterates everything" do
+      list = Crystal::PointerLinkedList(TestedObject).new
 
-    x = TestedObject.new 1
-    y = TestedObject.new 2
-    z = TestedObject.new 4
+      x = TestedObject.new 1
+      y = TestedObject.new 2
+      z = TestedObject.new 4
 
-    sum = 0
+      sum = 0
 
-    list.push pointerof(x)
-    list.push pointerof(y)
-    list.push pointerof(z)
+      list.push pointerof(x)
+      list.push pointerof(y)
+      list.push pointerof(z)
 
-    list.each do |object_ptr|
-      sum += object_ptr.value.value
+      list.each do |object_ptr|
+        sum += object_ptr.value.value
+      end
+
+      sum.should eq(7)
     end
 
-    sum.should eq(7)
+    it "can delete while iterating" do
+      list = Crystal::PointerLinkedList(TestedObject).new
+
+      x = TestedObject.new 1
+      y = TestedObject.new 2
+      z = TestedObject.new 4
+
+      sum = 0
+
+      list.push pointerof(x)
+      list.push pointerof(y)
+      list.push pointerof(z)
+
+      list.each do |obj|
+        list.delete(obj)
+        sum += obj.value.value
+      end
+
+      sum.should eq(7)
+    end
   end
 end
