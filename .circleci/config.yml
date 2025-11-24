@@ -8,7 +8,7 @@ parameters:
   distribution-scripts-version:
     description: "Git ref for version of https://github.com/crystal-lang/distribution-scripts/"
     type: string
-    default: "24d03358df6d6ecc485b640caa93ec50ccbb400e"
+    default: "17c8506466f524fcfbe57f9fed98dee05fd2666f"
   previous_crystal_base_url:
     description: "Prefix for URLs to Crystal bootstrap compiler"
     type: string
