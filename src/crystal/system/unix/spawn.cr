@@ -60,9 +60,8 @@ struct Crystal::System::Process
 
   private def self.fork_for_exec
     block_signals do |sigmask|
-      pid = lock_write { LibC.fork }
-
-      if 0 == pid
+      case pid = lock_write { LibC.fork }
+      when 0
         # forked process
 
         Crystal::System::Signal.after_fork_before_exec
@@ -71,7 +70,7 @@ struct Crystal::System::Process
         LibC.sigemptyset(sigmask)
 
         nil
-      elsif pid == -1
+      when -1
         # forking process: error
         raise RuntimeError.from_errno("fork")
       else
