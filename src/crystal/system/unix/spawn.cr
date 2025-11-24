@@ -59,23 +59,25 @@ struct Crystal::System::Process
   end
 
   private def self.fork_for_exec
-    block_signals do |sigmask|
-      case pid = lock_write { LibC.fork }
-      when 0
-        # forked process
+    lock_write do
+      block_signals do |sigmask|
+        case pid = LibC.fork
+        when 0
+          # forked process
 
-        Crystal::System::Signal.after_fork_before_exec
+          Crystal::System::Signal.after_fork_before_exec
 
-        # reset sigmask (inherited on exec)
-        LibC.sigemptyset(sigmask)
+          # reset sigmask (inherited on exec)
+          LibC.sigemptyset(sigmask)
 
-        nil
-      when -1
-        # forking process: error
-        raise RuntimeError.from_errno("fork")
-      else
-        # forking process: success
-        pid
+          nil
+        when -1
+          # forking process: error
+          raise RuntimeError.from_errno("fork")
+        else
+          # forking process: success
+          pid
+        end
       end
     end
   end
