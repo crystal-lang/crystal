@@ -8,7 +8,7 @@ parameters:
   distribution-scripts-version:
     description: "Git ref for version of https://github.com/crystal-lang/distribution-scripts/"
     type: string
-    default: "5757cf697e183d2df8c8d5857bb06999d416e5ed"
+    default: "da4c70de07dac25c4823fc23b4490d49151fc0b3"
   previous_crystal_base_url:
     description: "Prefix for URLs to Crystal bootstrap compiler"
     type: string
@@ -354,6 +354,7 @@ jobs:
           source build.env
           cd docker
           make all64 TARBALLS=/tmp/workspace/build/
+          make smoke-all
       - persist_to_workspace:
           root: /tmp/workspace/distribution-scripts/docker/
           paths:
