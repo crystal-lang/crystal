@@ -526,7 +526,7 @@ class Regex
   # re.match("Skiing")   # => Regex::MatchData("Skiing")
   # re.match("sledding") # => Regex::MatchData("sledding")
   # ```
-  def +(other : Regex) : Regex
+  def +(other) : Regex
     Regex.union(self, other)
   end
 
@@ -669,7 +669,7 @@ class Regex
 
   # :ditto:
   @[Deprecated("Use the overload with `Regex::MatchOptions` instead.")]
-  def match(str : String, pos : Int32 = 0, *, options : Regex::Options) : MatchData?
+  def match(str, pos = 0, *, options) : MatchData?
     if byte_index = str.char_index_to_byte_index(pos)
       $~ = match_at_byte_index(str, byte_index, options)
     else
