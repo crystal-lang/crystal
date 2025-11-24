@@ -33,7 +33,7 @@ module Sync
     def lock : Nil
       unless @mu.try_lock?
         unless @type.unchecked?
-          if @locked_by == Fiber.current
+          if owns_lock?
             raise Error::Deadlock.new unless @type.reentrant?
             @counter += 1
             return
