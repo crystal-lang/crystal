@@ -9,7 +9,7 @@ describe Sync::Mutex do
         m = Sync::Mutex.new(type)
         m.lock
 
-        ::spawn do
+        spawn do
           state.set(1)
           m.lock
           state.set(2)
@@ -78,7 +78,7 @@ describe Sync::Mutex do
       m = Sync::Mutex.new(:unchecked)
       done = started = locked = false
 
-      fiber = ::spawn do
+      spawn do
         started = true
 
         m.lock
