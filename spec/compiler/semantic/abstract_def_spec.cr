@@ -1295,6 +1295,18 @@ describe "Semantic: abstract def" do
         CRYSTAL
     end
 
+    it "accepts generic method when implementation has at least as many forall values than abstract" do
+      assert_no_errors <<-CRYSTAL
+        abstract class Foo
+          abstract def foo(x : T, y : Int32) forall T
+        end
+
+        class Bar < Foo
+          def foo(x : T, y : U) forall T, U; end
+        end
+        CRYSTAL
+    end
+
     it "errors when forall parameter counts don't match" do
       assert_error <<-CRYSTAL, "abstract `def Interface#process(a : T, b : U) forall T, U` must be implemented"
         module Interface
