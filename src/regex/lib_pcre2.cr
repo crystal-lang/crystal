@@ -191,7 +191,7 @@ lib LibPCRE2
     INTERNAL_DUPMATCH = -65
     DFA_UINVALID_UTF  = -66
 
-    def utf8_validity? : Bool
+    def utf8_validity?
       in?(UTF8_ERR21..UTF8_ERR1)
     end
   end

@@ -92,7 +92,7 @@ module Regex::PCRE2
     flag
   end
 
-  def self.supports_compile_flag?(options : Regex::Options) : Bool
+  def self.supports_compile_flag?(options)
     true
   end
 
@@ -146,7 +146,7 @@ module Regex::PCRE2
     flag
   end
 
-  def self.supports_match_flag?(options : Regex::MatchOptions) : Bool
+  def self.supports_match_flag?(options)
     true
   end
 
