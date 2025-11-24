@@ -127,6 +127,10 @@ describe Crystal::SyntaxHighlighter::Colorize do
 
     it_highlights "Set{1, 2, 3}", %(\e[36mSet\e[39m{\e[35m1\e[39m, \e[35m2\e[39m, \e[35m3\e[39m})
 
+    it_highlights "foo(/Name: /)", %(foo(\e[93m/Name: /\e[39m))
+    it_highlights "foo[/Name: /]", %(foo[\e[93m/Name: /\e[39m])
+    it_highlights "Foo{/Name: /}", %(\e[36mFoo\e[39m{\e[93m/Name: /\e[39m})
+
     it_highlights <<-CRYSTAL, <<-ANSI
       foo, bar = <<-FOO, <<-BAR
         foo

@@ -5,6 +5,7 @@ require "c/unistd"
 require "c/limits"
 require "crystal/rw_lock"
 require "file/error"
+require "./spawn"
 
 struct Crystal::System::Process
   getter pid : LibC::PidT
@@ -192,7 +193,10 @@ struct Crystal::System::Process
     end
   {% end %}
 
-  def self.fork(*, will_exec : Bool, &)
+  # Only used by deprecated `::Process.fork`
+  def self.fork
+    {% raise("Process fork is unsupported with multithreaded mode") if flag?(:preview_mt) %}
+
     newmask = uninitialized LibC::SigsetT
     oldmask = uninitialized LibC::SigsetT
 
@@ -212,17 +216,10 @@ struct Crystal::System::Process
       # child:
       pid = nil
 
-      # after fork callback
-      yield
+      ::Process.after_fork_child_callbacks.each(&.call)
 
-      if will_exec
-        # reset sigmask (inherited on exec)
-        LibC.sigemptyset(pointerof(newmask))
-        LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(newmask), nil)
-      else
-        # restore sigmask
-        LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(oldmask), nil)
-      end
+      # restore sigmask
+      LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(oldmask), nil)
     when -1
       # error:
       errno = Errno.value
@@ -239,12 +236,9 @@ struct Crystal::System::Process
   # Duplicates the current process.
   # Returns a `Process` representing the new child process in the current process
   # and `nil` inside the new child process.
+  # Only used by deprecated `::Process.fork(&)` and compiler `fork_codegen`
   def self.fork(&)
-    {% raise("Process fork is unsupported with multithreaded mode") if flag?(:preview_mt) %}
-
-    pid = fork(will_exec: false) do
-      ::Process.after_fork_child_callbacks.each(&.call)
-    end
+    pid = fork
     return pid if pid
 
     begin
@@ -257,63 +251,6 @@ struct Crystal::System::Process
     ensure
       LibC._exit 254 # not reached
     end
-  end
-
-  def self.spawn(prepared_args, env, clear_env, input, output, error, chdir)
-    r, w = FileDescriptor.system_pipe
-
-    envp = Env.make_envp(env, clear_env)
-
-    pid = fork(will_exec: true) do
-      Crystal::System::Signal.after_fork_before_exec
-    end
-
-    if !pid
-      LibC.close(r)
-      begin
-        self.try_replace(prepared_args, envp, input, output, error, chdir)
-        byte = 1_u8
-        errno = Errno.value.to_i32
-        FileDescriptor.write_fully(w, pointerof(byte))
-        FileDescriptor.write_fully(w, pointerof(errno))
-      rescue ex
-        byte = 0_u8
-        message = ex.inspect_with_backtrace
-        FileDescriptor.write_fully(w, pointerof(byte))
-        FileDescriptor.write_fully(w, message.to_slice)
-      ensure
-        LibC.close(w)
-        LibC._exit 127
-      end
-    end
-
-    LibC.close(w)
-    reader_pipe = IO::FileDescriptor.new(r)
-
-    begin
-      case reader_pipe.read_byte
-      when nil
-        # Pipe was closed, no error
-      when 0
-        # Error message coming
-        message = reader_pipe.gets_to_end
-        raise RuntimeError.new("Error executing process: '#{prepared_args[0]}': #{message}")
-      when 1
-        # Errno coming
-        # can't use IO#read_bytes(Int32) because we skipped system/network
-        # endianness check when writing the integer while read_bytes would;
-        # we thus read it in the same as order as written
-        buf = uninitialized StaticArray(UInt8, 4)
-        reader_pipe.read_fully(buf.to_slice)
-        raise_exception_from_errno(prepared_args[0], Errno.new(buf.unsafe_as(Int32)))
-      else
-        raise RuntimeError.new("BUG: Invalid error response received from subprocess")
-      end
-    ensure
-      reader_pipe.close
-    end
-
-    pid
   end
 
   def self.prepare_args(command : String, args : Enumerable(String)?, shell : Bool) : {String, LibC::Char**}
@@ -337,16 +274,6 @@ struct Crystal::System::Process
 
     argv = argv_ary.map(&.check_no_null_byte.to_unsafe)
     {pathname, argv.to_unsafe}
-  end
-
-  private def self.try_replace(prepared_args, envp, input, output, error, chdir)
-    reopen_io(input, ORIGINAL_STDIN)
-    reopen_io(output, ORIGINAL_STDOUT)
-    reopen_io(error, ORIGINAL_STDERR)
-
-    ::Dir.cd(chdir) if chdir
-
-    execvpe(*prepared_args, envp)
   end
 
   private def self.execvpe(file, argv, envp)
@@ -456,10 +383,24 @@ struct Crystal::System::Process
                   end
   end
 
-  def self.replace(command, prepared_args, env, clear_env, input, output, error, chdir)
+  def self.replace(command, args, shell, env, clear_env, input, output, error, chdir)
+    prepared_args = prepare_args(command, args, shell)
     envp = Env.make_envp(env, clear_env)
 
-    try_replace(prepared_args, envp, input, output, error, chdir)
+    # The following steps are similar to `.try_replace` (used for `fork`/`exec`)
+    # with some differences because we're not spawning a new process.
+    reopen_io(input, ORIGINAL_STDIN)
+    reopen_io(output, ORIGINAL_STDOUT)
+    reopen_io(error, ORIGINAL_STDERR)
+
+    if chdir
+      ::Dir.cd(chdir) do
+        execvpe(*prepared_args, envp)
+      end
+    else
+      execvpe(*prepared_args, envp)
+    end
+
     raise_exception_from_errno(command)
   end
 

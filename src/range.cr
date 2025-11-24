@@ -345,7 +345,7 @@ struct Range(B, E)
   #
   # Raises `ArgumentError` if `self` is an open range.
   def sample(random : Random? = nil)
-    rng = random || Random::DEFAULT
+    rng = random || Random.thread_default
 
     {% if B < Int && E < Int %}
       rng.rand(self)
@@ -371,7 +371,7 @@ struct Range(B, E)
   # once. Thus, *random* will be left in a different state compared to the
   # implementation in `Enumerable`.
   def sample(n : Int, random : Random? = nil)
-    rng = random || Random::DEFAULT
+    rng = random || Random.thread_default
 
     if self.begin.nil? || self.end.nil?
       raise ArgumentError.new("Can't sample an open range")
