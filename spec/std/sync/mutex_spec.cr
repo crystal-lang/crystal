@@ -2,11 +2,11 @@ require "./spec_helper"
 require "sync/mutex"
 
 describe Sync::Mutex do
-  {% for type in %i[checked unchecked reentrant] %}
-    describe {{type}} do
+  Sync::Type.each do |type|
+    describe type do
       it "locks and unlocks" do
         state = Atomic.new(0)
-        m = Sync::Mutex.new({{type}})
+        m = Sync::Mutex.new(type)
         m.lock
 
         ::spawn do
@@ -20,9 +20,9 @@ describe Sync::Mutex do
         Sync.eventually { state.get.should eq(2) }
       end
 
-      {% unless type == :unchecked %}
+      unless type.unchecked?
         it "unlock raises when not locked" do
-          m = Sync::Mutex.new({{type}})
+          m = Sync::Mutex.new(type)
           expect_raises(Sync::Error) { m.unlock }
         end
 
@@ -34,10 +34,10 @@ describe Sync::Mutex do
             expect_raises(Sync::Error) { m.unlock }
           end
         end
-      {% end %}
+      end
 
       it "synchronizes" do
-        m = Sync::Mutex.new({{type}})
+        m = Sync::Mutex.new(type)
         counter = 0
 
         IO.pipe do |r, w|
@@ -71,7 +71,7 @@ describe Sync::Mutex do
         end
       end
     end
-  {% end %}
+  end
 
   describe "unchecked" do
     it "hangs on deadlock" do
