@@ -21,3 +21,8 @@ SPDX-License-Identifier = "MIT"
 path = "lib/reply/**"
 SPDX-FileCopyrightText = "Copyright (c) 2022 I3oris <boris31.resch@gmail.com>"
 SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = "lib/sanitize/**"
+SPDX-FileCopyrightText = "Copyright (c) 2020 Johannes Müller <straightshoota@gmail.com>"
+SPDX-License-Identifier = "Apache-2.0"

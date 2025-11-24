@@ -14,7 +14,7 @@ describe "Semantic: if" do
   end
 
   it "types `if` with `&&` and assignment" do
-    assert_type("
+    assert_type(<<-CRYSTAL, inject_primitives: true) { nilable int32 }
       struct Number
         def abs
           self
@@ -31,28 +31,27 @@ describe "Semantic: if" do
       end
 
       Foo.new.coco
-      ", inject_primitives: true) { nilable int32 }
+      CRYSTAL
   end
 
   it "can invoke method on var that is declared on the right hand side of an and" do
-    assert_type("
+    assert_type(<<-CRYSTAL, inject_primitives: true) { nilable int32 }
       if 1 == 2 && (b = 1)
         b + 1
       end
-      ", inject_primitives: true) { nilable int32 }
+      CRYSTAL
   end
 
   it "errors if requires inside if" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't require dynamically"
       if 1 == 2
         require "foo"
       end
-      ),
-      "can't require dynamically"
+      CRYSTAL
   end
 
   it "correctly filters type of variable if there's a raise with an interpolation that can't be typed" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       require "prelude"
 
       def bar
@@ -68,49 +67,49 @@ describe "Semantic: if" do
       end
 
       foo
-      )) { int32 }
+      CRYSTAL
   end
 
   it "passes bug (related to #1729)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of(int32, float64) }
       n = true ? 3 : 3.2
       if n.is_a?(Float64)
         n
       end
       n
-      )) { union_of(int32, float64) }
+      CRYSTAL
   end
 
   it "restricts the type of the right hand side of an || when using is_a? (#1728)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { bool }
       n = 3 || "foobar"
       n.is_a?(String) || (n + 1 == 2)
-      ), inject_primitives: true) { bool }
+      CRYSTAL
   end
 
   it "restricts type with !var and ||" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { union_of bool, int32 }
       a = 1 == 1 ? 1 : nil
       !a || a + 2
-      ), inject_primitives: true) { union_of bool, int32 }
+      CRYSTAL
   end
 
   it "restricts type with !var.is_a?(...) and ||" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { union_of bool, int32 }
       a = 1 == 1 ? 1 : nil
       !a.is_a?(Int32) || a + 2
-      ), inject_primitives: true) { union_of bool, int32 }
+      CRYSTAL
   end
 
   it "restricts type with !var.is_a?(...) and &&" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { union_of bool, int32 }
       a = 1 == 1 ? 1 : ""
       !a.is_a?(String) && a + 2
-      ), inject_primitives: true) { union_of bool, int32 }
+      CRYSTAL
   end
 
   it "restricts with || (#2464)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       struct Int32
         def foo
           1
@@ -129,11 +128,11 @@ describe "Semantic: if" do
       else
         1
       end
-      )) { int32 }
+      CRYSTAL
   end
 
   it "doesn't restrict with || on different vars" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined method"
       struct Int32
         def foo
           1
@@ -151,12 +150,11 @@ describe "Semantic: if" do
       if a.is_a?(Int32) || b.is_a?(Char)
         a.foo + b.bar
       end
-      ),
-      "undefined method"
+      CRYSTAL
   end
 
   it "doesn't restrict with || on var and non-restricting condition" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined method"
       struct Int32
         def foo
           1
@@ -167,12 +165,11 @@ describe "Semantic: if" do
       if a.is_a?(Int32) || 1 == 2
         a.foo
       end
-      ),
-      "undefined method"
+      CRYSTAL
   end
 
   it "restricts with || but doesn't unify types to base class" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of(nil_type, int32, char) }
       class Foo
       end
 
@@ -194,22 +191,22 @@ describe "Semantic: if" do
       else
         nil
       end
-      )) { union_of(nil_type, int32, char) }
+      CRYSTAL
   end
 
   it "restricts with && always falsey" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of(bool, int32) }
       x = 1
       if (x.is_a?(String) && x.is_a?(String)) && x.is_a?(String)
         true
       else
         2
       end
-      )) { union_of(bool, int32) }
+      CRYSTAL
   end
 
   it "doesn't filter and recombine when variables don't change in if" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       module Moo
       end
 
@@ -232,11 +229,11 @@ describe "Semantic: if" do
       if x.is_a?(Bar) || x.is_a?(Baz)
       end
       foo(x)
-      )) { int32 }
+      CRYSTAL
   end
 
   it "restricts and doesn't unify union types" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of(nil_type, int32) }
       class Foo
       end
 
@@ -260,11 +257,11 @@ describe "Semantic: if" do
       else
         nil
       end
-      )) { union_of(nil_type, int32) }
+      CRYSTAL
   end
 
   it "types variable after unreachable else of && (#3360)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       def test
         foo = 1 if 1
         return 1 unless foo && foo
@@ -272,11 +269,11 @@ describe "Semantic: if" do
       end
 
       test
-      )) { int32 }
+      CRYSTAL
   end
 
   it "restricts || else (1) (#3266)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([int32, int32]) }
       a = 1 || nil
       b = 1 || nil
       if !a || !b
@@ -284,33 +281,33 @@ describe "Semantic: if" do
       else
         {a, b}
       end
-      )) { tuple_of([int32, int32]) }
+      CRYSTAL
   end
 
   it "restricts || else (2) (#3266)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of char, int32 }
       a = 1 || nil
       if !a || 1
         'c'
       else
         a
       end
-      )) { union_of char, int32 }
+      CRYSTAL
   end
 
   it "restricts || else (3) (#3266)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of char, int32 }
       a = 1 || nil
       if 1 || !a
         'c'
       else
         a
       end
-      )) { union_of char, int32 }
+      CRYSTAL
   end
 
   it "doesn't restrict || else in sub && (right)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable int32 }
       def foo
         a = 1 || nil
 
@@ -322,11 +319,11 @@ describe "Semantic: if" do
       end
 
       foo
-      )) { nilable int32 }
+      CRYSTAL
   end
 
   it "doesn't restrict || else in sub && (left)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable int32 }
       def foo
         a = 1 || nil
 
@@ -338,11 +335,11 @@ describe "Semantic: if" do
       end
 
       foo
-      )) { nilable int32 }
+      CRYSTAL
   end
 
   it "restricts || else in sub || (right)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       def foo
         a = 1 || nil
 
@@ -354,11 +351,11 @@ describe "Semantic: if" do
       end
 
       foo
-      )) { int32 }
+      CRYSTAL
   end
 
   it "restricts || else in sub || (left)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       def foo
         a = 1 || nil
 
@@ -370,11 +367,11 @@ describe "Semantic: if" do
       end
 
       foo
-      )) { int32 }
+      CRYSTAL
   end
 
   it "restricts && else in sub && (right)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       def foo
         a = 1 || nil
 
@@ -386,11 +383,11 @@ describe "Semantic: if" do
       end
 
       foo
-      )) { int32 }
+      CRYSTAL
   end
 
   it "restricts && else in sub && (left)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       def foo
         a = 1 || nil
 
@@ -402,11 +399,11 @@ describe "Semantic: if" do
       end
 
       foo
-      )) { int32 }
+      CRYSTAL
   end
 
   it "restricts || of more than 2 clauses (#8864)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       def foo
         a = 1 || 2.0 || 'c' || ""
 
@@ -418,11 +415,11 @@ describe "Semantic: if" do
       end
 
       foo
-      )) { int32 }
+      CRYSTAL
   end
 
   it "restricts && of !var.is_a(...)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of int32, float64, bool }
       def foo
         a = 1 || 2.0 || 'c'
 
@@ -434,11 +431,11 @@ describe "Semantic: if" do
       end
 
       foo
-      )) { union_of int32, float64, bool }
+      CRYSTAL
   end
 
   it "doesn't consider nil type in else branch with if with && (#7434)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       def foo
         if true && (y = 1 || nil)
         else
@@ -448,11 +445,11 @@ describe "Semantic: if" do
       end
 
       foo
-      )) { int32 }
+      CRYSTAL
   end
 
   it "includes pointer types in falsey branch" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable union_of bool, pointer_of(int32), int32 }
       def foo
         x = 1
         y = false || pointerof(x) || nil
@@ -464,11 +461,11 @@ describe "Semantic: if" do
       end
 
       foo
-      )) { nilable union_of bool, pointer_of(int32), int32 }
+      CRYSTAL
   end
 
   it "doesn't fail on new variables inside typeof condition" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable string }
       def foo
         if typeof(x = 1)
           ""
@@ -476,11 +473,11 @@ describe "Semantic: if" do
       end
 
       foo
-      )) { nilable string }
+      CRYSTAL
   end
 
   it "doesn't fail on nested conditionals inside typeof condition" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable string }
       def foo
         if typeof(1 || 'a')
           ""
@@ -488,11 +485,11 @@ describe "Semantic: if" do
       end
 
       foo
-      )) { nilable string }
+      CRYSTAL
   end
 
   it "doesn't fail on Expressions condition (1)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable int32.metaclass }
       def foo
         if (v = 1; true)
           typeof(v)
@@ -500,11 +497,11 @@ describe "Semantic: if" do
       end
 
       foo
-      )) { nilable int32.metaclass }
+      CRYSTAL
   end
 
   it "doesn't fail on Expressions condition (2)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable nil_type.metaclass }
       def foo
         if (v = nil; true)
           typeof(v)
@@ -512,6 +509,6 @@ describe "Semantic: if" do
       end
 
       foo
-      )) { nilable nil_type.metaclass }
+      CRYSTAL
   end
 end

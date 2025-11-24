@@ -28,20 +28,6 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
     {% end %}
   end
 
-  def after_fork_before_exec : Nil
-    super
-
-    # O_CLOEXEC would close these automatically but we don't want to mess with
-    # the parent process fds (that would mess the parent evloop)
-
-    # kqueue isn't inherited by fork on darwin/dragonfly, but we still close
-    @kqueue.close
-
-    {% unless LibC.has_constant?(:EVFILT_USER) %}
-      @pipe.each { |fd| LibC.close(fd) }
-    {% end %}
-  end
-
   {% unless flag?(:preview_mt) %}
     def after_fork : Nil
       super

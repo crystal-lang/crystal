@@ -54,6 +54,12 @@ private macro def_string_methods(klass)
   def ends_with?(other : StringLiteral | CharLiteral) : BoolLiteral
   end
 
+  # Similar to `String#gsub(pattern, options, &)`.
+  #
+  # NOTE: The special variables `$~` and `$1`, `$2`, ... are not supported.
+  def gsub(regex : RegexLiteral, & : StringLiteral, ArrayLiteral(StringLiteral | NilLiteral) -> _) : {{klass}}
+  end
+
   # Similar to `String#gsub`.
   def gsub(regex : RegexLiteral, replacement : StringLiteral) : {{klass}}
   end
@@ -540,6 +546,10 @@ module Crystal::Macros
 
   # Any number literal.
   class NumberLiteral < ASTNode
+    # Returns `true` if value is 0, `false` otherwise.
+    def zero? : BoolLiteral
+    end
+
     # Compares this node's value to another node's value.
     def <(other : NumberLiteral) : BoolLiteral
     end
@@ -652,6 +662,10 @@ module Crystal::Macros
 
     # Similar to `String#<`
     def <(other : StringLiteral | MacroId) : BoolLiteral
+    end
+
+    # Similar to `String#*`.
+    def *(other : NumberLiteral) : StringLiteral
     end
   end
 
@@ -800,6 +814,10 @@ module Crystal::Macros
 
     # Similar to `Array#-`.
     def -(other : ArrayLiteral) : ArrayLiteral
+    end
+
+    # Similar to `Array#*`
+    def *(other : NumberLiteral) : ArrayLiteral
     end
 
     # Returns the type specified at the end of the array literal, if any.
@@ -1110,6 +1128,10 @@ module Crystal::Macros
 
     # Similar to `Array#-`.
     def -(other : TupleLiteral) : TupleLiteral
+    end
+
+    # Similar to `Tuple#*`
+    def *(other : NumberLiteral) : TupleLiteral
     end
   end
 

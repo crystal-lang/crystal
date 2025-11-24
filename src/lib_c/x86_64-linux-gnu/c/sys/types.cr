@@ -40,7 +40,6 @@ lib LibC
     __align : Int
   end
 
-  alias PthreadKeyT = UInt
   alias PthreadT = ULong
   alias SSizeT = Long
   alias SusecondsT = Long

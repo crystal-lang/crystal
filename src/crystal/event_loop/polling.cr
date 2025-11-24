@@ -107,12 +107,6 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
   @lock = SpinLock.new # protects parallel accesses to @timers
   @timers = Timers(Event).new
 
-  # reset the mutexes since another thread may have acquired the lock of one
-  # event loop, which would prevent closing file descriptors for example.
-  def after_fork_before_exec : Nil
-    @lock = SpinLock.new
-  end
-
   {% unless flag?(:preview_mt) %}
     # no parallelism issues, but let's clean-up anyway
     def after_fork : Nil
@@ -232,10 +226,13 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     resume_all(file_descriptor)
   end
 
-  def close(file_descriptor : System::FileDescriptor) : Nil
+  def shutdown(file_descriptor : System::FileDescriptor) : Nil
     # perform cleanup before LibC.close. Using a file descriptor after it has
     # been closed is never defined and can always lead to undefined results
     resume_all(file_descriptor)
+  end
+
+  def close(file_descriptor : System::FileDescriptor) : Nil
     file_descriptor.file_descriptor_close
   end
 
@@ -363,10 +360,13 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     end
   end
 
-  def close(socket : ::Socket) : Nil
+  def shutdown(socket : ::Socket) : Nil
     # perform cleanup before LibC.close. Using a file descriptor after it has
     # been closed is never defined and can always lead to undefined results
     resume_all(socket)
+  end
+
+  def close(socket : ::Socket) : Nil
     socket.socket_close
   end
 

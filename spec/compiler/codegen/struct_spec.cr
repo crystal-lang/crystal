@@ -2,17 +2,17 @@ require "../../spec_helper"
 
 describe "Code gen: struct" do
   it "creates structs" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       struct Foo
       end
 
       f = Foo.allocate
       1
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "creates structs with instance var" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       struct Foo
         def initialize(@x : Int32)
         end
@@ -24,11 +24,11 @@ describe "Code gen: struct" do
 
       f = Foo.new(1)
       f.x
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "assigning a struct makes a copy (1)" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       struct Foo
         def initialize(@x : Int32)
         end
@@ -47,11 +47,11 @@ describe "Code gen: struct" do
       g.x = 2
 
       g.x
-      ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "assigning a struct makes a copy (2)" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       struct Foo
         def initialize(@x : Int32)
         end
@@ -70,11 +70,11 @@ describe "Code gen: struct" do
       g.x = 2
 
       f.x
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "passes a struct as a parameter makes a copy" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       struct Foo
         def initialize(@x : Int32)
         end
@@ -96,11 +96,11 @@ describe "Code gen: struct" do
       foo(f)
 
       f.x
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "passes a generic struct as a parameter makes a copy" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       struct Foo(T)
         def initialize(@x : T)
         end
@@ -122,11 +122,11 @@ describe "Code gen: struct" do
       foo(f)
 
       f.x
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "returns struct as a copy" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       struct Foo
         def initialize(@x : Int32)
         end
@@ -148,11 +148,11 @@ describe "Code gen: struct" do
 
       g = foo(f)
       g.x
-      ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "creates struct in def" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       struct Foo
         def initialize(@x : Int32)
         end
@@ -167,11 +167,11 @@ describe "Code gen: struct" do
       end
 
       foo.x
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "declares const struct" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       require "prelude"
 
       struct Foo
@@ -186,11 +186,11 @@ describe "Code gen: struct" do
       FOO = Foo.new(1)
 
       FOO.x
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "uses struct in if" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       require "prelude"
 
       struct Foo
@@ -210,21 +210,21 @@ describe "Code gen: struct" do
         foo = FOO
       end
       foo.x
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "uses nilable struct" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       struct Foo
       end
 
       f = Foo.new || nil
       f.nil? ? 1 : 2
-      ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "returns self" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       struct Foo
         def initialize(@x)
         end
@@ -242,11 +242,11 @@ describe "Code gen: struct" do
       f = Foo.new(1)
       g = f.foo
       g.x
-      ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "returns self with block" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       struct Foo
         def initialize(@x)
         end
@@ -265,11 +265,11 @@ describe "Code gen: struct" do
       f = Foo.new(1)
       g = f.foo { }
       g.x
-      ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "does phi of struct" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       struct Foo
         def initialize(@x : Int32)
         end
@@ -285,11 +285,11 @@ describe "Code gen: struct" do
             Foo.new(1)
           end
       x.x
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "allows assigning to struct argument (bug)" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       struct Foo
         def bar
           2
@@ -301,11 +301,11 @@ describe "Code gen: struct" do
       end
 
       foo(Foo.new)
-      ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "codegens struct assigned to underscore (#1842)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(123)
       struct Foo
         def initialize
           @value = 123
@@ -321,11 +321,11 @@ describe "Code gen: struct" do
       end
 
       foo.value
-      )).to_i.should eq(123)
+      CRYSTAL
   end
 
   it "codegens virtual struct" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       abstract struct Foo
       end
 
@@ -351,11 +351,11 @@ describe "Code gen: struct" do
 
       foo = Bar.new || Baz.new
       foo.x
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens virtual struct with pointer" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       abstract struct Foo
       end
 
@@ -383,11 +383,11 @@ describe "Code gen: struct" do
       ptr.value = Baz.new
       ptr.value = Bar.new
       ptr.value.x
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens virtual struct metaclass (#2551) (1)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(42)
       abstract struct Foo
         def initialize
           @x = 21
@@ -409,11 +409,11 @@ describe "Code gen: struct" do
       end
 
       Bar.new.as(Foo).x
-      )).to_i.should eq(42)
+      CRYSTAL
   end
 
   it "codegens virtual struct metaclass (#2551) (2)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(42)
       abstract struct Foo
         def initialize
           @x = 21
@@ -430,11 +430,11 @@ describe "Code gen: struct" do
       end
 
       Bar.new.as(Foo).@x
-      )).to_i.should eq(42)
+      CRYSTAL
   end
 
   it "codegens virtual struct metaclass (#2551) (3)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(42)
       abstract struct Foo
         def initialize
           @x = 21
@@ -455,11 +455,11 @@ describe "Code gen: struct" do
       end
 
       Bar.new.as(Foo).x
-      )).to_i.should eq(42)
+      CRYSTAL
   end
 
   it "codegens virtual struct metaclass (#2551) (4)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(42)
       require "prelude"
 
       abstract struct Foo
@@ -483,11 +483,11 @@ describe "Code gen: struct" do
       end
 
       (Bar || Baz).new.x
-      )).to_i.should eq(42)
+      CRYSTAL
   end
 
   it "mutates a  virtual struct" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(84)
       abstract struct Foo
         def initialize
           @x = 21
@@ -513,11 +513,11 @@ describe "Code gen: struct" do
       foo = Bar.new.as(Foo)
       foo.x = 84
       foo.x
-      )).to_i.should eq(84)
+      CRYSTAL
   end
 
   it "codegens virtual structs union (1)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(42)
       abstract struct Foo
       end
 
@@ -549,11 +549,11 @@ describe "Code gen: struct" do
 
       f = foo || foo2
       f.x
-      )).to_i.should eq(42)
+      CRYSTAL
   end
 
   it "codegens virtual structs union (2)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(84)
       abstract struct Foo
       end
 
@@ -585,11 +585,11 @@ describe "Code gen: struct" do
 
       f = foo2 || foo
       f.x
-      )).to_i.should eq(84)
+      CRYSTAL
   end
 
   it "can cast virtual struct to specific struct" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
        require "prelude"
 
        abstract struct Foo
@@ -609,11 +609,11 @@ describe "Code gen: struct" do
 
        x = Bar.new || Baz.new
        x.as(Bar).foo
-       )).to_i.should eq(1)
+       CRYSTAL
   end
 
   it "casts virtual struct to base type, only one subclass (#2885)" do
-    run(%(
+    run(<<-CRYSTAL).to_string.should eq("1")
       abstract struct Entry
         def initialize(@uid : String, @country : String)
         end
@@ -628,11 +628,11 @@ describe "Code gen: struct" do
 
       entry = MyEntry.new("1", "GER")
       entry.as(Entry).uid
-      )).to_string.should eq("1")
+      CRYSTAL
   end
 
   it "can call new on abstract struct with single child (#7309)" do
-    codegen(%(
+    codegen(<<-CRYSTAL, inject_primitives: false)
       require "prelude"
 
       abstract struct Foo
@@ -644,6 +644,6 @@ describe "Code gen: struct" do
       end
 
       A.as(Foo.class).new
-      ), inject_primitives: false)
+      CRYSTAL
   end
 end

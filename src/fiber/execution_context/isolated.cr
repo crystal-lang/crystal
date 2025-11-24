@@ -42,12 +42,13 @@ module Fiber::ExecutionContext
 
     getter name : String
 
-    @mutex : Thread::Mutex
+    @mutex = Thread::Mutex.new
+    @condition = Thread::ConditionVariable.new
     protected getter thread : Thread
     @main_fiber : Fiber
 
     # :nodoc:
-    getter event_loop : Crystal::EventLoop = Crystal::EventLoop.create
+    getter(event_loop : Crystal::EventLoop) { Crystal::EventLoop.create }
 
     getter? running : Bool = true
     @enqueued = false
@@ -59,7 +60,6 @@ module Fiber::ExecutionContext
     # Starts a new thread named *name* to execute *func*. Once *func* returns
     # the thread will terminate.
     def initialize(@name : String, @spawn_context : ExecutionContext = ExecutionContext.default, &@func : ->)
-      @mutex = Thread::Mutex.new
       @thread = uninitialized Thread
       @main_fiber = uninitialized Fiber
       @thread = start_thread
@@ -117,7 +117,12 @@ module Fiber::ExecutionContext
         if @waiting
           # wake up the blocked thread
           @waiting = false
-          @event_loop.interrupt
+
+          if event_loop = @event_loop
+            event_loop.interrupt
+          else
+            @condition.signal
+          end
         else
           # race: enqueued before the other thread started waiting
         end
@@ -127,28 +132,45 @@ module Fiber::ExecutionContext
     protected def reschedule : Nil
       Crystal.trace :sched, "reschedule"
 
+      if event_loop = @event_loop
+        wait_for(event_loop)
+      else
+        park_thread
+      end
+
+      Crystal.trace :sched, "resume"
+    end
+
+    private def park_thread
+      @mutex.synchronize do
+        loop do
+          return if check_enqueued?
+          @waiting = true
+          @condition.wait(@mutex)
+        end
+      end
+    end
+
+    private def wait_for(event_loop) : Nil
       loop do
         @mutex.synchronize do
-          # race: another thread already re-enqueued the fiber
-          if @enqueued
-            Crystal.trace :sched, "resume"
-            @enqueued = false
-            @waiting = false
-            return
-          end
+          return if check_enqueued?
           @waiting = true
         end
 
         # wait on the event loop
         list = Fiber::List.new
-        @event_loop.run(pointerof(list), blocking: true)
+        event_loop.run(pointerof(list), blocking: true)
 
-        if fiber = list.pop?
-          break if fiber == @main_fiber && list.empty?
+        # restart if the evloop got interrupted
+        next unless fiber = list.pop?
+
+        # sanity check
+        unless fiber == @main_fiber && list.empty?
           raise RuntimeError.new("Concurrency is disabled in isolated contexts")
         end
 
-        # the evloop got interrupted: restart
+        break
       end
 
       # cleanup
@@ -156,8 +178,16 @@ module Fiber::ExecutionContext
         @waiting = false
         @enqueued = false
       end
+    end
 
-      Crystal.trace :sched, "resume"
+    private def check_enqueued?
+      if @enqueued
+        @enqueued = false
+        @waiting = false
+        true
+      else
+        false
+      end
     end
 
     protected def resume(fiber : Fiber) : Nil

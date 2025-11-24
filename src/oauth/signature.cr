@@ -3,7 +3,7 @@ struct OAuth::Signature
   def initialize(@consumer_key : String, @client_shared_secret : String, @oauth_token : String? = nil, @token_shared_secret : String? = nil, @extra_params : Hash(String, String)? = nil)
   end
 
-  def base_string(request, tls, ts, nonce) : String
+  def base_string(request : HTTP::Request, tls, ts : String, nonce : String) : String
     base_string request, tls, gather_params(request, ts, nonce)
   end
 
@@ -17,12 +17,12 @@ struct OAuth::Signature
     end
   end
 
-  def compute(request, tls, ts, nonce) : String
+  def compute(request : HTTP::Request, tls, ts : String, nonce : String) : String
     base_string = base_string(request, tls, ts, nonce)
     Base64.strict_encode(OpenSSL::HMAC.digest :sha1, key, base_string)
   end
 
-  def authorization_header(request, tls, ts, nonce) : String
+  def authorization_header(request : HTTP::Request, tls, ts : String, nonce : String) : String
     oauth_signature = compute request, tls, ts, nonce
 
     auth_header = AuthorizationHeader.new
@@ -39,7 +39,7 @@ struct OAuth::Signature
     auth_header.to_s
   end
 
-  private def base_string(request, tls, params)
+  private def base_string(request, tls, normalized_params : String)
     host, port = host_and_port(request, tls)
 
     String.build do |str|
@@ -55,36 +55,45 @@ struct OAuth::Signature
       uri_path = request.path.presence || "/"
       URI.encode_www_form(uri_path, str, space_to_plus: false)
       str << '&'
-      str << params
+      URI.encode_www_form(normalized_params, str, space_to_plus: false)
     end
   end
 
-  private def gather_params(request, ts, nonce)
-    params = Params.new
+  private def gather_params(request, ts, nonce) : String
+    params = URI::Params.new
+
     params.add "oauth_consumer_key", @consumer_key
     params.add "oauth_nonce", nonce
     params.add "oauth_signature_method", "HMAC-SHA1"
     params.add "oauth_timestamp", ts
-    params.add "oauth_token", @oauth_token
+    if token = @oauth_token
+      params.add "oauth_token", token
+    end
     params.add "oauth_version", "1.0"
 
     @extra_params.try &.each do |key, value|
       params.add key, value
     end
 
+    # Inline query parsing
     if query = request.query
-      params.add_query query
+      URI::Params.parse(query) do |k, v|
+        params.add k, v
+      end
     end
 
+    # Inline form body parsing
     body = request.body
     content_type = request.headers["Content-type"]?
     if body && content_type == "application/x-www-form-urlencoded"
       form = body.gets_to_end
-      params.add_query form
+      URI::Params.parse(form) do |k, v|
+        params.add k, v
+      end
       request.body = form
     end
 
-    params
+    oauth_normalize_params(params)
   end
 
   private def host_and_port(request, tls)
@@ -95,6 +104,26 @@ struct OAuth::Signature
       {host, port}
     else
       {host_header, nil}
+    end
+  end
+
+  private def oauth_normalize_params(params : URI::Params) : String
+    # Encode names + values first (RFC 5849 §3.4.1.3.2)
+    pairs = params.map do |key, value|
+      {
+        URI.encode_www_form(key.to_s, space_to_plus: false),
+        URI.encode_www_form(value.to_s, space_to_plus: false),
+      }
+    end
+
+    # Sort by encoded key then encoded value
+    pairs.sort_by! { |(k, v)| {k, v} }
+
+    # Build final normalized string WITHOUT re-encoding
+    String.build do |io|
+      pairs.join(io, "&") do |(key, value), io|
+        io << key << "=" << value
+      end
     end
   end
 end

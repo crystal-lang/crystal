@@ -12,9 +12,6 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
 
   private getter(event_base) { Crystal::EventLoop::LibEvent::Event::Base.new }
 
-  def after_fork_before_exec : Nil
-  end
-
   {% unless flag?(:preview_mt) %}
     # Reinitializes the event loop after a fork.
     def after_fork : Nil
@@ -178,10 +175,13 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
     file_descriptor.evented_close
   end
 
-  def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
+  def shutdown(file_descriptor : Crystal::System::FileDescriptor) : Nil
     # perform cleanup before LibC.close. Using a file descriptor after it has
     # been closed is never defined and can always lead to undefined results
     file_descriptor.evented_close
+  end
+
+  def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
     file_descriptor.file_descriptor_close
   end
 
@@ -299,10 +299,13 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
     end
   end
 
-  def close(socket : ::Socket) : Nil
+  def shutdown(socket : ::Socket) : Nil
     # perform cleanup before LibC.close. Using a file descriptor after it has
     # been closed is never defined and can always lead to undefined results
     socket.evented_close
+  end
+
+  def close(socket : ::Socket) : Nil
     socket.socket_close
   end
 

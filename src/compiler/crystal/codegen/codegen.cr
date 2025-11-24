@@ -84,11 +84,13 @@ module Crystal
       llvm_context =
         {% if LibLLVM::IS_LT_110 %}
           LLVM::Context.new
-        {% else %}
+        {% elsif LibLLVM::IS_LT_210 %}
           begin
             ts_ctx = LLVM::Orc::ThreadSafeContext.new
             ts_ctx.context
           end
+        {% else %}
+          LLVM::Context.new(dispose_on_finalize: false)
         {% end %}
 
       visitor = CodeGenVisitor.new self, node, single_module: true, debug: debug, llvm_context: llvm_context
@@ -132,6 +134,10 @@ module Crystal
       {% else %}
         lljit_builder = LLVM::Orc::LLJITBuilder.new
         lljit = LLVM::Orc::LLJIT.new(lljit_builder)
+
+        {% unless LibLLVM::IS_LT_210 %}
+          ts_ctx = LLVM::Orc::ThreadSafeContext.new(llvm_context)
+        {% end %}
 
         dylib = lljit.main_jit_dylib
         dylib.link_symbols_from_current_process(lljit.global_prefix)
@@ -1612,26 +1618,37 @@ module Crystal
     end
 
     def type_id_to_class_name(type_id)
-      map = llvm_mod.globals["__crystal_type_id_to_class_name_map"]? || create_type_id_to_class_name_map("__crystal_type_id_to_class_name_map")
+      map_name = "__crystal_type_id_to_class_name_map"
 
-      str_ptr = gep llvm_type(@program.string), map, type_id
+      global = @main_mod.globals[map_name]?
+      unless global
+        global = @main_mod.globals.add(@main_llvm_typer.llvm_type(@program.string).array(@program.llvm_id.@ids.size), map_name)
+        global.linkage = LLVM::Linkage::Internal if @single_module
+        global.initializer = create_type_id_to_class_name_map
+        global.global_constant = true
+      end
+
+      if @llvm_mod != @main_mod
+        global = @llvm_mod.globals[map_name]?
+        unless global
+          global = @llvm_mod.globals.add(@llvm_typer.llvm_type(@program.string).array(@program.llvm_id.@ids.size), map_name)
+          global.linkage = LLVM::Linkage::External
+          global.global_constant = true
+        end
+      end
+
+      str_ptr = gep llvm_type(@program.string).array(@program.llvm_id.@ids.size), global, 0, type_id
       load llvm_type(@program.string), str_ptr
     end
 
-    def create_type_id_to_class_name_map(name)
+    def create_type_id_to_class_name_map
       ids = @program.llvm_id.@ids
       id_map = Array(LLVM::Value).new(size: ids.size, value: LLVM::Value.null)
       ids.each do |type, (_, type_id)|
-        id_map[type_id] = build_string_constant(type.to_s)
+        id_map[type_id] = build_string_constant(type.to_s, llvm_mod: @main_mod, llvm_typer: @main_llvm_typer)
       end
 
-      type = llvm_type(@program.string).array(ids.size)
-
-      global = @llvm_mod.globals.add(type, name)
-      global.linkage = LLVM::Linkage::Private
-      global.global_constant = true
-      global.initializer = llvm_type(@program.string).const_array(id_map)
-      global
+      @main_llvm_typer.llvm_type(@program.string).const_array(id_map)
     end
 
     def visit(node : IsA)
@@ -2112,8 +2129,11 @@ module Crystal
 
       if closure_vars || self_closured
         closure_vars ||= [] of MetaVar
-        closure_type = @llvm_typer.closure_context_type(closure_vars, parent_closure_type, (self_closured ? current_context.type : nil))
-        closure_ptr = malloc closure_type
+
+        closure_type, closure_has_inner_pointers =
+          @llvm_typer.closure_context_type(closure_vars, parent_closure_type, (self_closured ? current_context.type : nil))
+        closure_ptr = closure_has_inner_pointers ? malloc(closure_type) : malloc_atomic(closure_type)
+
         closure_vars.each_with_index do |var, i|
           current_context.vars[var.name] = LLVMVar.new(gep(closure_type, closure_ptr, 0, i, var.name), var.type)
         end
@@ -2532,22 +2552,23 @@ module Crystal
       @last = last
     end
 
-    def build_string_constant(str, name = "str")
+    def build_string_constant(str, name = "str", *, llvm_mod = @llvm_mod, llvm_typer = @llvm_typer)
       name = "#{name[0..18]}..." if name.bytesize > 18
       name = name.gsub '@', '.'
       name = "'#{name}'"
-      key = StringKey.new(@llvm_mod, str)
-      @strings[key] ||= begin
-        global = @llvm_mod.globals.add(@llvm_typer.llvm_string_type(str.bytesize), name.gsub('\\', "\\\\"))
+      key = StringKey.new(llvm_mod, str)
+      @strings.put_if_absent(key) do
+        llvm_context = llvm_mod.context
+        global = llvm_mod.globals.add(llvm_typer.llvm_string_type(str.bytesize), name.gsub('\\', "\\\\"))
         global.linkage = LLVM::Linkage::Private
         global.global_constant = true
         global.initializer = llvm_context.const_struct [
-          int32(@program.llvm_id.type_id(@program.string)), # in practice, should always be 1
-          int32(str.bytesize),
-          int32(str.size),
+          llvm_context.int32.const_int(@program.llvm_id.type_id(@program.string)), # in practice, should always be 1
+          llvm_context.int32.const_int(str.bytesize),
+          llvm_context.int32.const_int(str.size),
           llvm_context.const_string(str),
         ]
-        cast_to global, @program.string
+        pointer_cast global, llvm_typer.llvm_type(@program.string)
       end
     end
 

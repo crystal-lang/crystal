@@ -132,6 +132,7 @@ module Crystal::System::FileDescriptor
 
   private def system_close_on_exec=(close_on_exec)
     raise NotImplementedError.new("Crystal::System::FileDescriptor#system_close_on_exec=") if close_on_exec
+    false
   end
 
   private def system_closed? : Bool
@@ -151,6 +152,10 @@ module Crystal::System::FileDescriptor
 
   def self.fcntl(fd, cmd, arg = 0)
     raise NotImplementedError.new "Crystal::System::FileDescriptor.fcntl"
+  end
+
+  private def system_fcntl(cmd, arg = 0)
+    raise NotImplementedError.new "Crystal::System::FileDescriptor#system_fcntl"
   end
 
   protected def windows_handle
@@ -211,6 +216,7 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_close
+    event_loop.shutdown(self)
     event_loop.close(self)
   end
 

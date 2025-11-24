@@ -103,6 +103,24 @@ class Time::Location
           Location.load("").should eq Location::UTC
           Location.load("Etc/UTC").should eq Location::UTC
         end
+
+        with_zoneinfo("nonexistent_zipfile.zip") do
+          Location.load("UTC").should eq Location::UTC
+          Location.load("").should eq Location::UTC
+          Location.load("Etc/UTC").should eq Location::UTC
+        end
+      end
+
+      it "treats GMT as special case" do
+        with_zoneinfo do
+          Location.load("GMT").should eq Location::UTC
+          Location.load("Etc/GMT").should eq Location::UTC
+        end
+
+        with_zoneinfo("nonexistent_zipfile.zip") do
+          Location.load("GMT").should eq Location::UTC
+          Location.load("Etc/GMT").should eq Location::UTC
+        end
       end
 
       describe "validating name" do
@@ -194,6 +212,67 @@ class Time::Location
             location1.should eq location2
             location1.should_not be location2
           end
+        end
+      end
+    end
+
+    describe ".load?" do
+      it "loads Europe/Berlin" do
+        with_zoneinfo do
+          Time::Location.load?("Europe/Berlin").should eq Time::Location.load("Europe/Berlin")
+        end
+      end
+
+      it "returns nil if unavailable" do
+        Location.load?("Foobar/Baz").should be_nil
+
+        with_zoneinfo(datapath("zoneinfo")) do
+          Location.load?("Foobar/Baz").should be_nil
+        end
+      end
+
+      it "invalid zone file" do
+        expect_raises(Time::Location::InvalidTZDataError) do
+          Location.load?("Foo/invalid", [datapath("zoneinfo")])
+        end
+      end
+
+      it "treats UTC as special case" do
+        with_zoneinfo do
+          Location.load?("UTC").should eq Location::UTC
+          Location.load?("").should eq Location::UTC
+          Location.load?("Etc/UTC").should eq Location::UTC
+        end
+      end
+
+      describe "raises on invalid location name" do
+        it "absolute path" do
+          with_zoneinfo do
+            expect_raises(InvalidLocationNameError) do
+              Location.load?("/America/New_York")
+            end
+            expect_raises(InvalidLocationNameError) do
+              Location.load?("\\Zulu")
+            end
+          end
+        end
+
+        it "dot dot" do
+          with_zoneinfo do
+            expect_raises(InvalidLocationNameError) do
+              Location.load?("../zoneinfo/America/New_York")
+            end
+            expect_raises(InvalidLocationNameError) do
+              Location.load?("a..")
+            end
+          end
+        end
+      end
+
+      it "caches result" do
+        with_zoneinfo do
+          location = Location.load?("Europe/Berlin")
+          Location.load?("Europe/Berlin").should be location
         end
       end
     end
@@ -605,7 +684,7 @@ class Time::Location
 
       it "handles value after last transition" do
         with_zoneinfo do
-          location = Location.load("America/Buenos_Aires")
+          location = Location.load("America/Argentina/Buenos_Aires")
           zone = location.lookup(Time.utc(5000, 1, 1))
           zone.name.should eq "-03"
           zone.offset.should eq -3 * 3600

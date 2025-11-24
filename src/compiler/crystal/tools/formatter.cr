@@ -2544,7 +2544,7 @@ module Crystal
         # This handles unary operators written in prefix notation.
         # The relevant distinction is that the call has a receiver and the
         # current token is not that object but a unary operator.
-        if @token.type.unary_operator? && node.name == @token.type.to_s && node.args.empty?
+        if @token.type.unary_operator? && node.name == @token.type.to_s && !node.has_any_args?
           write @token.type
           next_token_skip_space_or_newline
           accept obj
@@ -2554,12 +2554,7 @@ module Crystal
         accept obj
 
         passed_backslash_newline = @token.passed_backslash_newline
-
-        if @token.type.space?
-          needs_space = true
-        else
-          needs_space = node.name != "*" && node.name != "/" && node.name != "**" && node.name != "//"
-        end
+        needs_space = @token.type.space? || !node.name.in?("*", "/", "**", "//")
 
         slash_is_not_regex!
         skip_space
@@ -2642,17 +2637,17 @@ module Crystal
             end
 
             return false
-          else
-            write " " if needs_space && !passed_backslash_newline
-            write node.name
-
-            # This is the case of a-1 and a+1
-            if @token.type.number?
-              @lexer.current_pos = @token.start + 1
-            end
-
-            slash_is_regex!
           end
+
+          write " " if needs_space && !passed_backslash_newline
+          write node.name
+
+          # This is the case of a-1 and a+1
+          if @token.type.number?
+            @lexer.current_pos = @token.start + 1
+          end
+
+          slash_is_regex!
 
           next_token
           passed_backslash_newline = @token.passed_backslash_newline
@@ -2765,7 +2760,7 @@ module Crystal
 
       has_parentheses = false
       ends_with_newline = false
-      has_args = !node.args.empty? || node.named_args
+      has_args = node.has_any_args?
 
       has_newlines = false
       found_comment = false
@@ -2823,50 +2818,58 @@ module Crystal
         needs_space = !has_parentheses || has_args
         block_indent = base_indent
         skip_space
-        if has_parentheses && @token.type.op_comma?
-          next_token
-          wrote_newline = skip_space(block_indent, write_comma: true)
-          if wrote_newline || @token.type.newline?
-            unless wrote_newline
-              next_token_skip_space_or_newline
-              write ","
-              write_line
+        if has_parentheses
+          if @token.type.op_comma?
+            next_token
+            wrote_newline = skip_space(block_indent, write_comma: true)
+            if wrote_newline || @token.type.newline?
+              unless wrote_newline
+                next_token_skip_space_or_newline
+                write ","
+                write_line
+              end
+              needs_space = false
+              block_indent += 2 if !@token.type.op_rparen? # foo(1, ↵  &.foo) case
+              write_indent(block_indent)
+            else
+              write "," if !@token.type.op_rparen? # foo(1, &.foo) case
             end
-            needs_space = false
-            block_indent += 2 if !@token.type.op_rparen? # foo(1, ↵  &.foo) case
-            write_indent(block_indent)
+          end
+          if @token.type.op_rparen?
+            if ends_with_newline
+              write_line unless found_comment || @wrote_newline
+              write_indent
+            end
+            write ")"
+            next_token_skip_space_or_newline
+
+            indent(block_indent) { format_block block, needs_space }
+            return false
           else
-            write "," if !@token.type.op_rparen? # foo(1, &.foo) case
+            indent(block_indent) { format_block block, needs_space }
+
+            skip_space
+            if @token.type.newline?
+              ends_with_newline = true
+            end
+            skip_space_or_newline
           end
-        end
-        if has_parentheses && @token.type.op_rparen?
-          if ends_with_newline
-            write_line unless found_comment || @wrote_newline
-            write_indent
-          end
-          write ")"
-          next_token_skip_space_or_newline
+
+          finish_args(has_parentheses, has_newlines, ends_with_newline, found_comment, base_indent)
+
+          return false
+        else
           indent(block_indent) { format_block block, needs_space }
+
+          finish_args(has_parentheses, has_newlines, ends_with_newline, found_comment, base_indent)
+
           return false
         end
-        indent(block_indent) { format_block block, needs_space }
-        if has_parentheses
-          skip_space
-          if @token.type.newline?
-            ends_with_newline = true
-          end
-          skip_space_or_newline
-        end
-      end
-
-      if has_args || node.block_arg
+      else
         finish_args(has_parentheses, has_newlines, ends_with_newline, found_comment, base_indent)
-      elsif has_parentheses
-        skip_space_or_newline
-        write_token :OP_RPAREN
-      end
 
-      false
+        false
+      end
     end
 
     def format_call_args(node : ASTNode, has_parentheses, base_indent)
@@ -3943,7 +3946,7 @@ module Crystal
       skip_space_or_newline
 
       if @token.type.op_lparen?
-        has_args = !node.args.empty? || node.named_args
+        has_args = node.has_any_args?
         if has_args
           format_parenthesized_args(node.args, named_args: node.named_args)
         else
@@ -4246,7 +4249,6 @@ module Crystal
 
     def visit(node : ProcLiteral)
       write_token :OP_MINUS_GT
-      whitespace_after_op_minus_gt = @token.type.space?
       skip_space_or_newline
 
       a_def = node.def

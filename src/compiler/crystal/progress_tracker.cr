@@ -1,7 +1,7 @@
 module Crystal
   class ProgressTracker
     # FIXME: This assumption is not always true
-    STAGES        = 13
+    STAGES        = 14
     STAGE_PADDING = 34
 
     property? stats = false

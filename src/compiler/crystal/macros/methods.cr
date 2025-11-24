@@ -150,15 +150,19 @@ module Crystal
       interpret_check_args_toplevel do |arg|
         arg.accept self
         flag_name = @last.to_macro_id
-        flags = case node.name
+        value = case node.name
                 when "flag?"
-                  @program.flags
+                  @program.flag_value(flag_name)
                 when "host_flag?"
-                  @program.host_flags
+                  @program.host_flag_value(flag_name)
                 else
                   raise "Bug: unexpected macro method #{node.name}"
                 end
-        @last = BoolLiteral.new(flags.includes?(flag_name))
+
+        @last = case value
+                in String then StringLiteral.new(value)
+                in Bool   then BoolLiteral.new(value)
+                end
       end
     end
 
@@ -548,6 +552,8 @@ module Crystal
         interpret_check_args { SymbolLiteral.new(kind.to_s) }
       when "to_number"
         interpret_check_args { MacroId.new(to_number.to_s) }
+      when "zero?"
+        interpret_check_args { BoolLiteral.new(to_number.zero?) }
       else
         super
       end
@@ -691,6 +697,20 @@ module Crystal
           end
           StringLiteral.new(@value + piece)
         end
+      when "*"
+        interpret_check_args do |arg|
+          unless arg.is_a?(Crystal::NumberLiteral)
+            arg.raise "argument to StringLiteral#* must be a number, not #{arg.class_desc}"
+          end
+
+          num = arg.to_number
+
+          unless num.is_a?(Int)
+            arg.raise "argument to StringLiteral#* must be an integer"
+          end
+
+          StringLiteral.new(@value * num)
+        end
       when "camelcase"
         interpret_check_args(named_params: ["lower"]) do
           lower = if named_args && (lower_arg = named_args["lower"]?)
@@ -726,13 +746,36 @@ module Crystal
           BoolLiteral.new(@value.ends_with?(piece))
         end
       when "gsub"
-        interpret_check_args do |first, second|
-          raise "first argument to StringLiteral#gsub must be a regex, not #{first.class_desc}" unless first.is_a?(RegexLiteral)
-          raise "second argument to StringLiteral#gsub must be a string, not #{second.class_desc}" unless second.is_a?(StringLiteral)
+        if block
+          interpret_check_args(uses_block: true) do |first|
+            raise "first argument to StringLiteral#gsub(&) must be a regex, not #{first.class_desc}" unless first.is_a?(RegexLiteral)
 
-          regex = regex_value(first)
+            regex = regex_value first
 
-          StringLiteral.new(value.gsub(regex, second.value))
+            new_value = value.gsub regex do |string, matches|
+              string_match_arg = block.args[0]?
+              matches_array_arg = block.args[1]?
+              matches_array_literal = ArrayLiteral.map matches.to_a do |item|
+                item.nil? ? NilLiteral.new : StringLiteral.new item
+              end
+
+              interpreter.define_var(string_match_arg.name, StringLiteral.new string) if string_match_arg
+              interpreter.define_var(matches_array_arg.name, matches_array_literal) if matches_array_arg
+
+              interpreter.accept(block.body).to_macro_id
+            end
+
+            StringLiteral.new new_value
+          end
+        else
+          interpret_check_args do |first, second|
+            raise "first argument to StringLiteral#gsub must be a regex, not #{first.class_desc}" unless first.is_a?(RegexLiteral)
+            raise "second argument to StringLiteral#gsub must be a string, not #{second.class_desc}" unless second.is_a?(StringLiteral)
+
+            regex = regex_value(first)
+
+            StringLiteral.new(value.gsub(regex, second.value))
+          end
         end
       when "identify"
         interpret_check_args { StringLiteral.new(@value.tr(":", "_")) }
@@ -3168,6 +3211,20 @@ private def interpret_array_or_tuple_method(object, klass, method, args, named_a
         arg.raise "argument to `#{klass}#-` must be a tuple or array, not #{arg.class_desc}:\n\n#{arg}"
       end
       klass.new(object.elements - other_elements)
+    end
+  when "*"
+    interpret_check_args(node: object) do |arg|
+      unless arg.is_a?(Crystal::NumberLiteral)
+        arg.raise "argument to `#{klass}#*` must be a number, not #{arg.class_desc}"
+      end
+
+      num = arg.to_number
+
+      unless num.is_a?(Int)
+        arg.raise "argument to `#{klass}#*` must be an integer"
+      end
+
+      klass.new(object.elements * num)
     end
   else
     nil

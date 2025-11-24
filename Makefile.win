@@ -23,18 +23,20 @@ all:
 
 CRYSTAL ?= crystal ## which previous crystal compiler use
 
-release ?=      ## Compile in release mode
-stats ?=        ## Enable statistics output
-progress ?=     ## Enable progress output
-threads ?=      ## Maximum number of threads to use
-debug ?=        ## Add symbolic debug info
-verbose ?=      ## Run specs in verbose mode
-junit_output ?= ## Path to output junit results
-static ?=       ## Enable static linking
-target ?=       ## Cross-compilation target
-interpreter ?=  ## Enable interpreter feature
-check ?=        ## Enable only check when running format
-order ?=random  ## Enable order for spec execution (values: "default" | "random" | seed number)
+release ?=        ## Compile in release mode
+stats ?=          ## Enable statistics output
+progress ?=       ## Enable progress output
+threads ?=        ## Maximum number of threads to use
+debug ?=          ## Add symbolic debug info
+verbose ?=        ## Run specs in verbose mode
+junit_output ?=   ## Path to output junit results
+static ?=         ## Enable static linking
+target ?=         ## Cross-compilation target
+interpreter ?=    ## Enable interpreter feature
+check ?=          ## Enable only check when running format
+order ?=random    ## Enable order for spec execution (values: "default" | "random" | seed number)
+docs_sanitizer ?= ## Enable sanitization for documentation generation
+sequential_codegen ?= ## Enforce sequential codegen in compiler builds. Base compiler before Crystal 1.8 cannot build with `-Dpreview_mt`
 
 MAKEFLAGS += --no-builtin-rules
 .SUFFIXES:
@@ -56,8 +58,11 @@ RMDIR = if exist $1 rd /S /Q $1
 O := .build
 SOURCES := $(call GLOB,src\\*.cr)
 SPEC_SOURCES := $(call GLOB,spec\\*.cr)
-override FLAGS += -D strict_multi_assign -D preview_overload_order $(if $(release),--release )$(if $(stats),--stats )$(if $(progress),--progress )$(if $(threads),--threads $(threads) )$(if $(debug),-d )$(if $(static),--static )$(if $(LDFLAGS),--link-flags="$(LDFLAGS)" )$(if $(target),--cross-compile --target $(target) )$(if $(interpreter),,-Dwithout_interpreter )
-SPEC_WARNINGS_OFF := --exclude-warnings spec\std --exclude-warnings spec\compiler --exclude-warnings spec\primitives
+override FLAGS += -D strict_multi_assign -D preview_overload_order $(if $(release),--release )$(if $(stats),--stats )$(if $(progress),--progress )$(if $(threads),--threads $(threads) )$(if $(debug),-d )$(if $(static),--static )$(if $(LDFLAGS),--link-flags="$(LDFLAGS)" )$(if $(target),--cross-compile --target $(target) )
+# NOTE: USE_PCRE1 is only used for testing compatibility with legacy environments that don't provide libpcre2.
+# Newly built compilers should never be distributed with libpcre to ensure syntax consistency.
+override COMPILER_FLAGS += $(if $(interpreter),,-Dwithout_interpreter )$(if $(docs_sanitizer),,-Dwithout_libxml2 ) -Dwithout_openssl -Dwithout_zlib$(if $(sequential_codegen),, -Dpreview_mt) $(if $(USE_PCRE1),-Duse_pcre,-Duse_pcre2)
+SPEC_WARNINGS_OFF := --exclude-warnings spec\std --exclude-warnings spec\compiler --exclude-warnings spec\primitives --exclude-warnings src\float\printer
 SPEC_FLAGS := $(if $(verbose),-v )$(if $(junit_output),--junit_output $(junit_output) )$(if $(order),--order=$(order) )
 CRYSTAL_CONFIG_LIBRARY_PATH := $$ORIGIN\lib
 CRYSTAL_CONFIG_BUILD_COMMIT := $(shell git rev-parse --short HEAD)
@@ -201,7 +206,7 @@ $(O)\compiler_spec.exe: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	$(call check_llvm_config)
 	@$(call MKDIR,"$(O)")
 	$(call export_vars)
-	.\bin\crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o "$@" spec\compiler_spec.cr --release
+	.\bin\crystal build $(FLAGS) $(COMPILER_FLAGS) $(SPEC_WARNINGS_OFF) -o "$@" spec\compiler_spec.cr --release
 
 $(O)\primitives_spec.exe: $(O)\crystal.exe $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@$(call MKDIR,"$(O)")
@@ -210,14 +215,14 @@ $(O)\primitives_spec.exe: $(O)\crystal.exe $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 $(O)\interpreter_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	$(eval interpreter=1)
 	@$(call MKDIR, "$(O)")
-	.\bin\crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec\compiler\interpreter_spec.cr
+	.\bin\crystal build $(FLAGS) $(COMPILER_FLAGS)  $(SPEC_WARNINGS_OFF) -o $@ spec\compiler\interpreter_spec.cr
 
 $(O)\crystal.exe: $(DEPS) $(SOURCES) $(O)\crystal.res
 	$(call check_llvm_config)
 	@$(call MKDIR,"$(O)")
 	$(call export_vars)
 	$(call export_build_vars)
-	.\bin\crystal build $(FLAGS) -o "$(O)\crystal-next.exe" src\compiler\crystal.cr -D without_openssl -D without_zlib $(if $(USE_PCRE1),-D use_pcre,-D use_pcre2) --link-flags=/PDBALTPATH:crystal.pdb "--link-flags=$(realpath $(O)\crystal.res)"
+	.\bin\crystal build $(FLAGS) $(COMPILER_FLAGS)  -o "$(O)\crystal-next.exe" src\compiler\crystal.cr --link-flags=/PDBALTPATH:crystal.pdb "--link-flags=$(realpath $(O)\crystal.res)"
 	$(call MV,"$(O)\crystal-next.exe","$@")
 	$(call MV,"$(O)\crystal-next.pdb","$(O)\crystal.pdb")
 

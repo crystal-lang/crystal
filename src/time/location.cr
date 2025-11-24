@@ -18,7 +18,7 @@ require "./location/loader"
 # location = Time::Location.load("Europe/Berlin")
 # location # => #<Time::Location Europe/Berlin>
 # time = Time.local(2016, 2, 15, 21, 1, 10, location: location)
-# time # => 2016-02-15 21:01:10 +01:00 Europe/Berlin
+# time # => 2016-02-15 21:01:10+01:00[Europe/Berlin]
 # ```
 #
 # A custom time zone database can be configured through the environment variable
@@ -299,9 +299,28 @@ class Time::Location
   # Files are cached based on the modification time, so subsequent request for
   # the same location name will most likely return the same instance of
   # `Location`, unless the time zone database has been updated in between.
+  #
+  # - `.load?` returns `nil` if the location is unavailable.
   def self.load(name : String) : Location
+    load?(name) { |source| raise InvalidLocationNameError.new(name, source) }
+  end
+
+  # :ditto:
+  #
+  # Returns `nil` if the location is unavailable.
+  # Raises `InvalidLocationNameError` if the name is invalid.
+  # Raises `InvalidTZDataError` if the loader encounters a format error in the
+  # time zone database.
+  #
+  # - `.load` raises if the location is unavailable.
+  def self.load?(name : String) : Location?
+    load?(name) { return }
+  end
+
+  # :nodoc:
+  def self.load?(name : String, & : String? ->) : Location?
     case name
-    when "", "UTC", "Etc/UTC"
+    when "", "UTC", "Etc/UTC", "GMT", "Etc/GMT"
       # `UTC` is a special identifier, empty string represents a fallback mechanism.
       # `Etc/UTC` is technically a tzdb identifier which could potentially point to anything.
       # But we map it to `Location::UTC` directly for convenience which allows it to work
@@ -318,11 +337,11 @@ class Time::Location
         if location = load_from_dir_or_zip(name, zoneinfo)
           return location
         else
-          raise InvalidLocationNameError.new(name, zoneinfo)
+          yield zoneinfo
         end
       end
 
-      if location = load(name, Crystal::System::Time.zone_sources)
+      if location = load(name, Crystal::System::Time.zone_sources) { |source| yield source }
         return location
       end
 
@@ -341,7 +360,7 @@ class Time::Location
         return location
       end
 
-      raise InvalidLocationNameError.new(name)
+      yield nil
     end
   end
 
@@ -447,7 +466,7 @@ class Time::Location
   # Returns the time zone offset observed at *unix_seconds*.
   #
   # *unix_seconds* expresses the number of seconds since UNIX epoch
-  # (`1970-01-01 00:00:00 UTC`).
+  # (`1970-01-01 00:00:00Z`).
   def lookup(unix_seconds : Int) : Zone
     unless @cached_range[0] <= unix_seconds < @cached_range[1]
       @cached_zone, @cached_range = lookup_with_boundaries(unix_seconds)

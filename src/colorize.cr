@@ -91,7 +91,7 @@
 # ```
 # require "colorize"
 #
-# "foo".colorize(Random::DEFAULT.next_bool ? :green : :default)
+# "foo".colorize(Random.next_bool ? :green : :default)
 # ```
 #
 # Available colors are:
@@ -335,6 +335,20 @@ private def each_code(mode : Colorize::Mode, &)
   yield "53" if mode.overline?
 end
 
+private def each_reset_code(mode : Colorize::Mode, &)
+  yield "22" if mode.bold?
+  yield "22" if mode.dim?
+  yield "23" if mode.italic?
+  yield "24" if mode.underline?
+  yield "25" if mode.blink?
+  yield "26" if mode.blink_fast?
+  yield "27" if mode.reverse?
+  yield "28" if mode.hidden?
+  yield "29" if mode.strikethrough?
+  yield "24" if mode.double_underline?
+  yield "55" if mode.overline?
+end
+
 # A colorized object. Colors and text decorations can be modified.
 struct Colorize::Object(T)
   private COLORS = %w(default black red green yellow blue magenta cyan light_gray dark_gray light_red light_green light_yellow light_blue light_magenta light_cyan white)
@@ -550,8 +564,24 @@ struct Colorize::Object(T)
       printed = false
 
       unless last_color_is_default
-        io << '0'
-        printed = true
+        unless @@last_color[:fore] == ColorANSI::Default
+          io << 39
+          printed = true
+        end
+
+        unless @@last_color[:back] == ColorANSI::Default
+          io << ';' if printed
+          io << 49
+          printed = true
+        end
+
+        unless @@last_color[:mode].none?
+          each_reset_code(@@last_color[:mode]) do |code|
+            io << ';' if printed
+            io << code
+            printed = true
+          end
+        end
       end
 
       unless fore_is_default
