@@ -12,6 +12,8 @@ module Sync
   # This lock can for example be used to protect the access to some resources,
   # with the guarantee that only one section of code can ever read, write or
   # mutate said resources.
+  #
+  # NOTE: Consider `Exclusive(T)` to protect a value `T` with a `Mutex`.
   class Mutex
     include Lockable
 
