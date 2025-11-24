@@ -51,18 +51,35 @@ require "./xml/libxml2"
 # string # => "<?xml version=\"1.0\"?>\n<person id=\"1\">\n  <firstname>Jane</firstname>\n  <lastname>Doe</lastname>\n</person>\n"
 # ```
 module XML
+  # Wraps a block that uses a XML parser context. Allocates the
+  # context and ensures the context is freed after use.
+  private def self.parse_xml(&)
+    ctxt = LibXML.xmlNewParserCtxt
+    begin
+      from_ptr(ctxt) { yield ctxt }
+    ensure
+      LibXML.xmlFreeParserCtxt(ctxt)
+    end
+  end
+
+  # Wraps a block that uses a HTML parser context. Allocates the
+  # context and ensures the context is freed after use.
+  private def self.parse_html(&)
+    ctxt = LibXML.htmlNewParserCtxt
+    begin
+      from_ptr(ctxt) { yield ctxt }
+    ensure
+      LibXML.htmlFreeParserCtxt(ctxt)
+    end
+  end
+
   # Parses an XML document from *string* with *options* into an `XML::Node`.
   #
   # See `ParserOptions.default` for default options.
   def self.parse(string : String, options : ParserOptions = ParserOptions.default) : Document
     raise XML::Error.new("Document is empty", 0) if string.empty?
-    ctxt = LibXML.xmlNewParserCtxt
-    begin
-      from_ptr(ctxt) do
-        LibXML.xmlCtxtReadMemory(ctxt, string, string.bytesize, nil, nil, options)
-      end
-    ensure
-      LibXML.xmlFreeParserCtxt(ctxt)
+    parse_xml do |ctxt|
+      LibXML.xmlCtxtReadMemory(ctxt, string, string.bytesize, nil, nil, options)
     end
   end
 
@@ -70,13 +87,8 @@ module XML
   #
   # See `ParserOptions.default` for default options.
   def self.parse(io : IO, options : ParserOptions = ParserOptions.default) : Document
-    ctxt = LibXML.xmlNewParserCtxt
-    begin
-      from_ptr(ctxt) do
-        LibXML.xmlCtxtReadIO(ctxt, ->read_callback, ->close_callback, Box(IO).box(io), nil, nil, options)
-      end
-    ensure
-      LibXML.xmlFreeParserCtxt(ctxt)
+    parse_xml do |ctxt|
+      LibXML.xmlCtxtReadIO(ctxt, ->read_callback, ->close_callback, Box(IO).box(io), nil, nil, options)
     end
   end
 
@@ -85,13 +97,8 @@ module XML
   # See `HTMLParserOptions.default` for default options.
   def self.parse_html(string : String, options : HTMLParserOptions = HTMLParserOptions.default) : Document
     raise XML::Error.new("Document is empty", 0) if string.empty?
-    ctxt = LibXML.htmlNewParserCtxt
-    begin
-      from_ptr(ctxt) do
-        LibXML.htmlCtxtReadMemory(ctxt, string, string.bytesize, nil, "utf-8", options)
-      end
-    ensure
-      LibXML.htmlFreeParserCtxt(ctxt)
+    parse_html do |ctxt|
+      LibXML.htmlCtxtReadMemory(ctxt, string, string.bytesize, nil, "utf-8", options)
     end
   end
 
@@ -99,13 +106,8 @@ module XML
   #
   # See `HTMLParserOptions.default` for default options.
   def self.parse_html(io : IO, options : HTMLParserOptions = HTMLParserOptions.default) : Document
-    ctxt = LibXML.htmlNewParserCtxt
-    begin
-      from_ptr(ctxt) do
-        LibXML.htmlCtxtReadIO(ctxt, ->read_callback, ->close_callback, Box(IO).box(io), nil, "utf-8", options)
-      end
-    ensure
-      LibXML.htmlFreeParserCtxt(ctxt)
+    parse_html do |ctxt|
+      LibXML.htmlCtxtReadIO(ctxt, ->read_callback, ->close_callback, Box(IO).box(io), nil, "utf-8", options)
     end
   end
 
