@@ -59,41 +59,25 @@ struct Crystal::System::Process
   end
 
   private def self.fork_for_exec
-    newmask = uninitialized LibC::SigsetT
-    oldmask = uninitialized LibC::SigsetT
+    block_signals do |sigmask|
+      case pid = lock_write { LibC.fork }
+      when 0
+        # forked process
 
-    # block signals while we fork, so the child process won't forward signals it
-    # may receive to the parent through the signal pipe, but make sure to not
-    # block stop-the-world signals as it appears to create deadlocks in glibc
-    # for example; this is safe because these signal handlers musn't be
-    # registered through `Signal.trap` but directly through `sigaction`.
-    LibC.sigfillset(pointerof(newmask))
-    LibC.sigdelset(pointerof(newmask), System::Thread.sig_suspend)
-    LibC.sigdelset(pointerof(newmask), System::Thread.sig_resume)
-    ret = LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(newmask), pointerof(oldmask))
-    raise RuntimeError.from_errno("Failed to disable signals") unless ret == 0
+        Crystal::System::Signal.after_fork_before_exec
 
-    case pid = lock_write { LibC.fork }
-    when 0
-      # child:
-      pid = nil
+        # reset sigmask (inherited on exec)
+        LibC.sigemptyset(sigmask)
 
-      Crystal::System::Signal.after_fork_before_exec
-
-      # reset sigmask (inherited on exec)
-      LibC.sigemptyset(pointerof(newmask))
-      LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(newmask), nil)
-    when -1
-      # error:
-      errno = Errno.value
-      LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(oldmask), nil)
-      raise RuntimeError.from_os_error("fork", errno)
-    else
-      # parent:
-      LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(oldmask), nil)
+        nil
+      when -1
+        # forking process: error
+        raise RuntimeError.from_errno("fork")
+      else
+        # forking process: success
+        pid
+      end
     end
-
-    pid
   end
 
   # This method is similar to `.replace` (used for `Process.exec`) with some
