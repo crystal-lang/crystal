@@ -410,7 +410,7 @@ class Regex
   # options = Regex::CompileOptions::IGNORE_CASE | Regex::CompileOptions::EXTENDED
   # Regex.new("dog", options) # => /dog/ix
   # ```
-  def self.new(source : String, options : Options = Options::None)
+  def self.new(source : String, options : Options = Options::None) : self
     new(_source: source, _options: options)
   end
 
@@ -430,7 +430,7 @@ class Regex
   # Regex.error?("(foo|bar)") # => nil
   # Regex.error?("(foo|bar")  # => "missing ) at 8"
   # ```
-  def self.error?(source) : String?
+  def self.error?(source : String) : String?
     Engine.error_impl(source)
   end
 
@@ -461,7 +461,7 @@ class Regex
   # string = Regex.escape("*?{}.") # => "\\*\\?\\{\\}\\."
   # /#{string}/                    # => /\*\?\{\}\./
   # ```
-  def self.escape(str) : String
+  def self.escape(str : String) : String
     String.build do |result|
       str.each_byte do |byte|
         {% begin %}
@@ -537,7 +537,7 @@ class Regex
   # /abc/i == /ABC/i # => false
   # /abc/i == /abc/i # => true
   # ```
-  def ==(other : Regex)
+  def ==(other : Regex) : Bool
     source == other.source && options == other.options
   end
 
@@ -564,7 +564,7 @@ class Regex
   #     end
   # b # => "Upper case"
   # ```
-  def ===(other : String)
+  def ===(other : String) : Bool
     match = match(other)
     $~ = match
     !match.nil?
@@ -842,7 +842,7 @@ class Regex
   end
 
   # :nodoc:
-  def self.append_source(source, io) : Nil
+  def self.append_source(source : String, io : IO) : Nil
     reader = Char::Reader.new(source)
     while reader.has_next?
       case char = reader.current_char
@@ -862,7 +862,7 @@ class Regex
     self
   end
 
-  def clone
+  def clone : Regex
     self
   end
 end
