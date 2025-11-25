@@ -58,8 +58,11 @@ describe "Slice" do
       end
 
       it "pointer" do
-        Slice(Pointer(Void)).new(3, Pointer(Void).null).should eq Slice[Pointer(Void).null, Pointer(Void).null, Pointer(Void).null]
-        Slice(Pointer(Void)).new(3, Pointer(Void).new(0x123_u64)).should eq Slice[Pointer(Void).new(0x123_u64), Pointer(Void).new(0x123_u64), Pointer(Void).new(0x123_u64)]
+        null = Pointer(Void).null
+        Slice(Pointer(Void)).new(3, null).should eq Slice[null, null, null]
+
+        value = Pointer(Void).new(0x123_u64)
+        Slice(Pointer(Void)).new(3, value).should eq Slice[value, value, value]
       end
     end
   end
