@@ -3912,6 +3912,9 @@ class String
   #
   # It is valid to pass `#bytesize` to *index*, and in this case the answer
   # will be the size of this string.
+  #
+  # Returns `nil` if a byte index points at a non-leading byte of a multibyte
+  # character.
   def byte_index_to_char_index(index) : Int32?
     if single_byte_optimizable?
       return 0 <= index <= bytesize ? index : nil
