@@ -81,11 +81,15 @@ module Sync
     end
 
     def lock : Nil
-      lock_slow unless try_lock?
+      unless try_lock?
+        lock_slow
+      end
     end
 
     def rlock : Nil
-      rlock_slow unless try_rlock?
+      unless try_rlock?
+        rlock_slow
+      end
     end
 
     def lock_slow
