@@ -604,10 +604,8 @@ module Crystal
       {% if flag?(:preview_mt) %}
         raise "LLVM isn't multithreaded and cannot fork compiler in multithread mode." unless LLVM.multithreaded?
         mt_codegen(units, n_threads)
-      {% elsif LibC.has_method?("fork") %}
-        fork_codegen(units, n_threads)
       {% else %}
-        raise "Cannot fork compiler. `Crystal::System::Process.fork` is not implemented on this system."
+        sequential_codegen(units)
       {% end %}
     end
 
@@ -642,119 +640,6 @@ module Crystal
       channel.close
 
       wg.wait
-    end
-
-    private def fork_codegen(units, n_threads)
-      workers = fork_workers(n_threads) do |input, output|
-        while i = input.gets(chomp: true).presence
-          unit = units[i.to_i]
-          unit.compile
-          result = {name: unit.name, reused: unit.reused_previous_compilation?}
-          output.puts result.to_json
-        end
-      rescue ex
-        result = {exception: {name: ex.class.name, message: ex.message, backtrace: ex.backtrace}}
-        output.puts result.to_json
-      end
-
-      overqueue = 1
-      indexes = Atomic(Int32).new(0)
-      channel = Channel(String).new(n_threads)
-      completed = Channel(Nil).new(n_threads)
-
-      workers.each do |pid, input, output|
-        spawn do
-          overqueued = 0
-
-          overqueue.times do
-            if (index = indexes.add(1)) < units.size
-              input.puts index
-              overqueued += 1
-            end
-          end
-
-          while (index = indexes.add(1)) < units.size
-            input.puts index
-
-            if response = output.gets(chomp: true)
-              channel.send response
-            else
-              Crystal::System.print_error "\nBUG: a codegen process failed\n"
-              exit 1
-            end
-          end
-
-          overqueued.times do
-            if response = output.gets(chomp: true)
-              channel.send response
-            else
-              Crystal::System.print_error "\nBUG: a codegen process failed\n"
-              exit 1
-            end
-          end
-
-          input << '\n'
-          input.close
-          output.close
-
-          Process.new(pid).wait
-          completed.send(nil)
-        end
-      end
-
-      spawn do
-        n_threads.times { completed.receive }
-        channel.close
-      end
-
-      while response = channel.receive?
-        result = JSON.parse(response)
-
-        if ex = result["exception"]?
-          Crystal::System.print_error "\nBUG: a codegen process failed: %s (%s)\n", ex["message"].as_s, ex["name"].as_s
-          ex["backtrace"].as_a?.try(&.each { |frame| Crystal::System.print_error "  from %s\n", frame })
-          exit 1
-        end
-
-        if @progress_tracker.stats?
-          if result["reused"].as_bool
-            name = result["name"].as_s
-            unit = units.find! { |unit| unit.name == name }
-            unit.reused_previous_compilation = true
-          end
-        end
-        @progress_tracker.stage_progress += 1
-      end
-    end
-
-    private def fork_workers(n_threads, &)
-      workers = [] of {Int32, IO::FileDescriptor, IO::FileDescriptor}
-
-      n_threads.times do
-        iread, iwrite = IO.pipe
-        oread, owrite = IO.pipe
-
-        iwrite.flush_on_newline = true
-        owrite.flush_on_newline = true
-
-        pid = Crystal::System::Process.fork do
-          iwrite.close
-          oread.close
-
-          yield iread, owrite
-
-          iread.close
-          owrite.close
-          exit 0
-        end
-
-        iread.close
-        owrite.close
-
-        workers << {pid, iwrite, oread}
-      end
-
-      workers
     end
 
     private def print_macro_run_stats(program)
