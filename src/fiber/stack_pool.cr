@@ -26,7 +26,7 @@ class Fiber
 
     def finalize
       @deque.each do |stack|
-        Crystal::System::Fiber.free_stack(stack.pointer, STACK_SIZE)
+        Crystal::System::Fiber.free_stack(stack.pointer, stack.size)
       end
     end
 
@@ -35,7 +35,7 @@ class Fiber
     def collect(count = lazy_size // 2) : Nil
       count.times do
         if stack = shift?
-          Crystal::System::Fiber.free_stack(stack.pointer, STACK_SIZE)
+          Crystal::System::Fiber.free_stack(stack.pointer, stack.size)
         else
           return
         end
@@ -52,11 +52,11 @@ class Fiber
     # Removes a stack from the bottom of the pool, or allocates a new one.
     def checkout : Stack
       if stack = pop?
-        Crystal::System::Fiber.reset_stack(stack.pointer, STACK_SIZE, @protect)
+        Crystal::System::Fiber.reset_stack(stack.pointer, stack.size, @protect)
         stack
       else
         pointer = Crystal::System::Fiber.allocate_stack(STACK_SIZE, @protect)
-        Stack.new(pointer, pointer + STACK_SIZE, reusable: true)
+        Stack.new(pointer, STACK_SIZE, reusable: true)
       end
     end
 
