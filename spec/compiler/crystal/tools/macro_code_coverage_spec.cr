@@ -1,8 +1,8 @@
 require "../../../spec_helper"
 include Crystal
 
-private def assert_coverage(code, expected_coverage, *, expected_error : String? = nil, focus : Bool = false, spec_file = __FILE__, spec_line = __LINE__)
-  it focus: focus, file: spec_file, line: spec_line do
+private def assert_coverage(code, expected_coverage, *, expected_error : String? = nil, spec_file = __FILE__, spec_line = __LINE__)
+  it file: spec_file, line: spec_line do
     processor = MacroCoverageProcessor.new
 
     compiler = Compiler.new
