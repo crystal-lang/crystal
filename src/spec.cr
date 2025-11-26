@@ -132,7 +132,8 @@ module Spec
 
       {% if Fiber.has_constant?(:ExecutionContext) %}
         count = ENV["CRYSTAL_WORKERS"]?.try(&.to_i?) || 1
-        Fiber::ExecutionContext.current.resize(count)
+        # FIXME: ExecutionContext.current should return ExecutionContext::Parallel
+        Fiber::ExecutionContext.current.as(Fiber::ExecutionContext::Parallel).resize(count)
       {% end %}
 
       run
