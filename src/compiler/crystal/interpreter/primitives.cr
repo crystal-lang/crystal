@@ -123,6 +123,31 @@ class Crystal::Repl::Compiler
         else
           put_self node: node
         end
+      elsif owner.reference_like?
+        if obj
+          request_value(obj)
+        else
+          put_self node: node
+        end
+
+        if owner.nilable?
+          dup sizeof(Void*), node: node
+          pointer_is_null node: node
+          branch_if 0, node: node
+          is_nil_label = patch_location
+
+          pointer_get(4, node: node)
+          jump 0, node: node
+          end_label = patch_location
+
+          patch_jump(is_nil_label)
+          pop sizeof(Void*), node: node
+          put_i32 0, node: node
+
+          patch_jump(end_label)
+        else
+          pointer_get(4, node: node)
+        end
       else
         put_i32 type_id(owner), node: node
       end
