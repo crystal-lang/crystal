@@ -14,7 +14,7 @@ jobs:
     if: github.repository == 'crystal-lang/crystal'
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
       - name: Build Crystal
@@ -34,7 +34,7 @@ jobs:
     if: github.repository == 'crystal-lang/crystal'
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
       - name: Download Crystal executable
@@ -53,7 +53,7 @@ jobs:
     if: github.repository == 'crystal-lang/crystal'
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
       - name: Download Crystal executable
@@ -71,7 +71,7 @@ jobs:
     if: github.repository == 'crystal-lang/crystal'
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
       - name: Build Crystal
@@ -91,7 +91,7 @@ jobs:
     if: github.repository == 'crystal-lang/crystal'
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
       - name: Download Crystal executable
@@ -110,7 +110,7 @@ jobs:
     if: github.repository == 'crystal-lang/crystal'
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
       - name: Download Crystal executable

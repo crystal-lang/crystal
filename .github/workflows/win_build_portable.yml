@@ -36,7 +36,7 @@ jobs:
           crystal: "1.18.2"
 
       - name: Download Crystal source
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
 
@@ -129,7 +129,7 @@ jobs:
           make -f Makefile.win -B ${{ inputs.release && 'release=1' || '' }} interpreter=1
 
       - name: Download shards release
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: crystal-lang/shards
           ref: v0.19.1
