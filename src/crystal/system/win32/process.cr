@@ -282,7 +282,7 @@ struct Crystal::System::Process
     {new_handle, dup_handle}
   end
 
-  def self.spawn(prepared_args, env, clear_env, input, output, error, chdir)
+  def self.spawn(command, args, shell, env, clear_env, input, output, error, chdir)
     startup_info = LibC::STARTUPINFOW.new
     startup_info.cb = sizeof(LibC::STARTUPINFOW)
     startup_info.dwFlags = LibC::STARTF_USESTDHANDLES
@@ -293,6 +293,7 @@ struct Crystal::System::Process
 
     process_info = LibC::PROCESS_INFORMATION.new
 
+    prepared_args = prepare_args(command, args, shell)
     prepared_args = ::Process.quote_windows(prepared_args) unless prepared_args.is_a?(String)
 
     if LibC.CreateProcessW(
@@ -357,8 +358,6 @@ struct Crystal::System::Process
       end
     end
 
-    ::Dir.cd(chdir) if chdir
-
     if prepared_args.is_a?(String)
       command = System.to_wstr(prepared_args)
       argv = [command]
@@ -366,9 +365,16 @@ struct Crystal::System::Process
       command = System.to_wstr(prepared_args[0])
       argv = prepared_args.map { |arg| System.to_wstr(arg) }
     end
+
     argv << Pointer(LibC::WCHAR).null
 
-    LibC._wexecvp(command, argv)
+    if chdir
+      ::Dir.cd(chdir) do
+        LibC._wexecvp(command, argv)
+      end
+    else
+      LibC._wexecvp(command, argv)
+    end
 
     # exec failed; restore the original C runtime file descriptors
     errno = Errno.value
@@ -378,9 +384,10 @@ struct Crystal::System::Process
     errno
   end
 
-  def self.replace(command, prepared_args, env, clear_env, input, output, error, chdir) : NoReturn
+  def self.replace(command, args, shell, env, clear_env, input, output, error, chdir) : NoReturn
+    prepared_args = prepare_args(command, args, shell)
     errno = try_replace(command, prepared_args, env, clear_env, input, output, error, chdir)
-    raise_exception_from_errno(prepared_args.is_a?(String) ? prepared_args : prepared_args[0], errno)
+    raise_exception_from_errno(command, errno)
   end
 
   private def self.raise_exception_from_errno(command, errno = Errno.value)

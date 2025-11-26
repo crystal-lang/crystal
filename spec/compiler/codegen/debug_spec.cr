@@ -331,4 +331,18 @@ describe "Code gen: debug" do
       Int32
       CRYSTAL
   end
+
+  it "doesn't fail if Proc self is closured (#16382)" do
+    codegen <<-CRYSTAL, debug: Crystal::Debug::All
+      struct Proc
+        def partial
+          -> do
+            self
+          end
+        end
+      end
+
+      -> { }.partial.call
+      CRYSTAL
+  end
 end

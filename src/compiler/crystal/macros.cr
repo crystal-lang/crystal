@@ -54,6 +54,12 @@ private macro def_string_methods(klass)
   def ends_with?(other : StringLiteral | CharLiteral) : BoolLiteral
   end
 
+  # Similar to `String#gsub(pattern, options, &)`.
+  #
+  # NOTE: The special variables `$~` and `$1`, `$2`, ... are not supported.
+  def gsub(regex : RegexLiteral, & : StringLiteral, ArrayLiteral(StringLiteral | NilLiteral) -> _) : {{klass}}
+  end
+
   # Similar to `String#gsub`.
   def gsub(regex : RegexLiteral, replacement : StringLiteral) : {{klass}}
   end

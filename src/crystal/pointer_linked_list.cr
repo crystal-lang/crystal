@@ -26,6 +26,12 @@ struct Crystal::PointerLinkedList(T)
     _next.value.previous = new
   end
 
+  def first?
+    if node = @head
+      node
+    end
+  end
+
   # Returns `true` if the list is empty, otherwise false.
   def empty? : Bool
     @head.null?
@@ -63,6 +69,9 @@ struct Crystal::PointerLinkedList(T)
     else
       @head = Pointer(T).null
     end
+
+    node.value.next = Pointer(T).null
+    node.value.previous = Pointer(T).null
   end
 
   # Removes and returns head from the list, yields if empty
@@ -96,13 +105,11 @@ struct Crystal::PointerLinkedList(T)
 
   # Iterates the list.
   def each(&) : Nil
-    return if empty?
-
     node = @head
-    loop do
+    while node
       _next = node.value.next
+      _next = Pointer(T).null if _next == @head
       yield node
-      break if _next == @head
       node = _next
     end
   end
