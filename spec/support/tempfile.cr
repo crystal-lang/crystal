@@ -1,4 +1,5 @@
 require "file_utils"
+require "./interpreted"
 {% if flag?(:msvc) %}
   require "crystal/system/win32/visual_studio"
 {% end %}
@@ -37,6 +38,24 @@ def with_tempfile(*paths, file = __FILE__, &)
   end
 end
 
+# Creates a temporary directory and exposes it as working directory in the
+# block.
+#
+# Use the `name` parameter to specify the name of the directory.
+# It should be unique per spec file. If nil, a random name is chosen
+# (`File.tempname`).
+#
+# The lifetime of the temporary directory is the same was for `.with_tempfile`.
+def with_tempdir(name : String? = nil, *, file = __FILE__, &)
+  name ||= File.tempname(dir: ".")
+  with_tempfile(name, file: file) do |path|
+    Dir.mkdir_p(path)
+    Dir.cd(path) do
+      yield
+    end
+  end
+end
+
 def with_temp_executable(name, file = __FILE__, &)
   {% if flag?(:win32) %}
     name += ".exe"
@@ -47,6 +66,9 @@ def with_temp_executable(name, file = __FILE__, &)
 end
 
 def with_temp_c_object_file(c_code, *, filename = "temp_c", file = __FILE__, &)
+  # can't use backtick in interpreted code (#12241)
+  pending_interpreted! "Unable to compile C code in interpreted code"
+
   obj_ext = {{ flag?(:msvc) ? ".obj" : ".o" }}
   with_tempfile("#{filename}.c", "#{filename}#{obj_ext}", file: file) do |c_filename, o_filename|
     File.write(c_filename, c_code)
@@ -63,7 +85,7 @@ def with_temp_c_object_file(c_code, *, filename = "temp_c", file = __FILE__, &)
         end
       end
 
-      `#{cl} /nologo /c #{Process.quote(c_filename)} #{Process.quote("/Fo#{o_filename}")}`.should be_truthy
+      `#{cl} /nologo /c /MD #{Process.quote(c_filename)} #{Process.quote("/Fo#{o_filename}")}`.should be_truthy
     {% else %}
       `#{ENV["CC"]? || "cc"} #{Process.quote(c_filename)} -c -o #{Process.quote(o_filename)}`.should be_truthy
     {% end %}

@@ -30,6 +30,9 @@ describe Time::Span do
     t1 = Time::Span.new days: -1, hours: 2, minutes: -3, seconds: 4, nanoseconds: -5_000_000
     t1.to_s.should eq("-22:02:56.005000000")
 
+    t1 = Time::Span.new weeks: 1, days: 2, hours: 3, minutes: 4, seconds: 5, nanoseconds: 6_000_000
+    t1.to_s.should eq("9.03:04:05.006000000")
+
     t1 = Time::Span.new hours: 25
     t1.to_s.should eq("1.01:00:00")
   end
@@ -358,5 +361,21 @@ describe Time::Span do
     1.week.should eq(7.days)
     2.weeks.should eq(14.days)
     1.1.weeks.should eq(7.7.days)
+  end
+
+  it "can subtract big amount using microseconds" do
+    jan_1_2k = Time.utc(2000, 1, 1)
+    past = Time.utc(5, 2, 3, 0, 0, 0)
+    delta = (past - jan_1_2k).total_microseconds.to_i64
+    past2 = jan_1_2k + delta.microseconds
+    past2.should eq(past)
+  end
+
+  it "can subtract big amount using milliseconds" do
+    jan_1_2k = Time.utc(2000, 1, 1)
+    past = Time.utc(5, 2, 3, 0, 0, 0)
+    delta = (past - jan_1_2k).total_milliseconds.to_i64
+    past2 = jan_1_2k + delta.milliseconds
+    past2.should eq(past)
   end
 end

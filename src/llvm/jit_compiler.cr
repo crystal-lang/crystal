@@ -15,7 +15,7 @@ class LLVM::JITCompiler
     # See https://github.com/crystal-lang/crystal/issues/9297#issuecomment-636512270
     # for background info
     target_machine = LibLLVM.get_execution_engine_target_machine(@unwrap)
-    LibLLVMExt.target_machine_enable_global_isel(target_machine, false)
+    {{ LibLLVM::IS_LT_180 ? LibLLVMExt : LibLLVM }}.set_target_machine_global_isel(target_machine, 0)
 
     @finalized = false
   end
@@ -37,6 +37,10 @@ class LLVM::JITCompiler
 
   def get_pointer_to_global(value)
     LibLLVM.get_pointer_to_global(self, value)
+  end
+
+  def function_address(name : String) : Void*
+    Pointer(Void).new(LibLLVM.get_function_address(self, name.check_no_null_byte))
   end
 
   def to_unsafe

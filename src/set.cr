@@ -1,10 +1,11 @@
-# `Set` implements a collection of unordered values with no duplicates.
+# `Set` implements a collection of values with no duplicates.
 #
 # An `Enumerable` object can be converted to `Set` using the `#to_set` method.
 #
 # `Set` uses `Hash` as storage, so you must note the following points:
 #
 # * Equality of elements is determined according to `Object#==` and `Object#hash`.
+# * Enumeration follows the order that the elements were inserted.
 # * `Set` assumes that the identity of each element does not change while it is stored. Modifying an element of a set will render the set to an unreliable state.
 #
 # ### Example
@@ -73,7 +74,7 @@ struct Set(T)
     self
   end
 
-  # Returns `true` of this Set is comparing objects by `object_id`.
+  # Returns `true` if this Set is comparing objects by `object_id`.
   #
   # See `compare_by_identity`.
   def compare_by_identity? : Bool
@@ -382,6 +383,19 @@ struct Set(T)
     @hash.keys
   end
 
+  # Returns an `Array` with the results of running *block* against each element of the collection.
+  #
+  # ```
+  # Set{1, 2, 3, 4, 5}.to_a { |i| i // 2 } # => [0, 1, 1, 2, 2]
+  # ```
+  def to_a(& : T -> U) : Array(U) forall U
+    array = Array(U).new(size)
+    @hash.each_key do |key|
+      array << yield key
+    end
+    array
+  end
+
   # Alias of `#to_s`.
   def inspect(io : IO) : Nil
     to_s(io)
@@ -459,7 +473,7 @@ struct Set(T)
 
   # Returns `true` if the set is a superset of the *other* set.
   #
-  # The *other* must have the same or fewer elements than this set, and all of
+  # The *other* must have fewer elements than this set, and all of
   # elements in the *other* set must be present in this set.
   #
   # ```
@@ -480,6 +494,27 @@ struct Set(T)
     @hash.same?(other.@hash)
   end
 
+  # Replaces every element of the set with a value returned from the block, and
+  # returns `self`.
+  def map!(& : T -> T) : self
+    @hash.transform_keys! { |k, _| yield(k) }
+    self
+  end
+
+  # Deletes every element of the set for which the block is falsey, and returns
+  # `self`.
+  def select!(& : T ->) : self
+    @hash.select! { |k, _| yield(k) }
+    self
+  end
+
+  # Deletes every element of the set for which the block is truthy, and returns
+  # `self`.
+  def reject!(& : T ->) : self
+    @hash.reject! { |k, _| yield(k) }
+    self
+  end
+
   # Rebuilds the set based on the current elements.
   #
   # When using mutable data types as elements, modifying an elements after it
@@ -494,5 +529,15 @@ module Enumerable
   # Returns a new `Set` with each unique element in the enumerable.
   def to_set : Set(T)
     Set.new(self)
+  end
+
+  # Returns a new `Set` with the unique results of running *block* against each
+  # element of the enumerable.
+  def to_set(&block : T -> U) : Set(U) forall U
+    set = Set(U).new
+    each do |elem|
+      set << yield elem
+    end
+    set
   end
 end

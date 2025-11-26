@@ -1,14 +1,8 @@
-{% if flag?(:musl) %}
-  # FIXME: These thread specs occasionally fail on musl/alpine based ci, so
-  # they're disabled for now to reduce noise.
-  # See https://github.com/crystal-lang/crystal/issues/8738
-  pending Thread::Mutex
-  {% skip_file %}
-{% end %}
+require "../spec_helper"
+require "../../support/thread"
 
-require "spec"
-
-describe Thread::Mutex do
+# interpreter doesn't support threads yet (#14287)
+pending_interpreted describe: Thread::Mutex do
   it "synchronizes" do
     a = 0
     mutex = Thread::Mutex.new

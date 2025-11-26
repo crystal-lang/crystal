@@ -1,8 +1,8 @@
 require "../../spec_helper"
 
-private def expect_augment(before : String, after : String)
+private def expect_augment(before : String, after : String, *, file : String = __FILE__, line : Int32 = __LINE__)
   result = semantic(before)
-  result.node.to_s.chomp.should eq(after.chomp)
+  result.node.to_s.chomp.should eq(after.chomp), file: file, line: line
 end
 
 private def expect_no_augment(code : String, flags = nil)
@@ -30,7 +30,7 @@ private def it_augments_for_ivar(ivar_type : String, expected_type : String, fil
       end
       CRYSTAL
 
-    expect_augment before, after
+    expect_augment before, after, file: file, line: line
   end
 end
 
@@ -45,8 +45,8 @@ describe "Semantic: restrictions augmenter" do
   it_augments_for_ivar "Array(String)", "::Array(::String)"
   it_augments_for_ivar "Tuple(Int32, Char)", "::Tuple(::Int32, ::Char)"
   it_augments_for_ivar "NamedTuple(a: Int32, b: Char)", "::NamedTuple(a: ::Int32, b: ::Char)"
-  it_augments_for_ivar "Proc(Int32, Char)", "(::Int32 -> ::Char)"
-  it_augments_for_ivar "Proc(Int32, Nil)", "(::Int32 -> _)"
+  it_augments_for_ivar "Proc(Int32, Char)", "::Int32 -> ::Char"
+  it_augments_for_ivar "Proc(Int32, Nil)", "::Int32 -> _"
   it_augments_for_ivar "Pointer(Void)", "::Pointer(::Void)"
   it_augments_for_ivar "StaticArray(Int32, 8)", "::StaticArray(::Int32, 8)"
   it_augments_for_ivar "Char | Int32 | String", "::Char | ::Int32 | ::String"
@@ -78,7 +78,9 @@ describe "Semantic: restrictions augmenter" do
           class Baz
           end
         end
+
         @x : Bar::Baz
+
         def initialize(value : ::Foo::Bar::Baz)
           @x = value
         end
@@ -110,7 +112,9 @@ describe "Semantic: restrictions augmenter" do
           class Baz
           end
         end
+
         @x : Bar::Baz
+
         def initialize(value : Bar::Baz)
           @x = value
         end
@@ -272,7 +276,7 @@ describe "Semantic: restrictions augmenter" do
   it "augments typedef" do
     before = <<-CRYSTAL
       lib LibFoo
-        type X = Void*
+        type X = Int32
       end
       class Foo
         @x : LibFoo::X
@@ -284,7 +288,7 @@ describe "Semantic: restrictions augmenter" do
 
     after = <<-CRYSTAL
       lib LibFoo
-        type X = Void*
+        type X = Int32
       end
       class Foo
         @x : LibFoo::X
@@ -400,8 +404,10 @@ describe "Semantic: restrictions augmenter" do
       macro foo
         {{ yield }}
       end
+
       class Foo
       end
+
       class Bar
         @x : Foo
         def initialize(value : ::Foo)

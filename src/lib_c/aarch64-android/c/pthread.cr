@@ -38,6 +38,7 @@ lib LibC
   fun pthread_mutex_unlock(__mutex : PthreadMutexT*) : Int
 
   fun pthread_self : PthreadT
+  fun pthread_setname_np(__key : PthreadT, __name : Char*) : Int
 
   fun pthread_setspecific(__key : PthreadKeyT, __value : Void*) : Int
 end

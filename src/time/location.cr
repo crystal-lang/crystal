@@ -18,7 +18,7 @@ require "./location/loader"
 # location = Time::Location.load("Europe/Berlin")
 # location # => #<Time::Location Europe/Berlin>
 # time = Time.local(2016, 2, 15, 21, 1, 10, location: location)
-# time # => 2016-02-15 21:01:10 +01:00 Europe/Berlin
+# time # => 2016-02-15 21:01:10+01:00[Europe/Berlin]
 # ```
 #
 # A custom time zone database can be configured through the environment variable
@@ -51,7 +51,7 @@ class Time::Location
   # the time zone database.
   #
   # See `Time::Location.load` for details.
-  class InvalidLocationNameError < Exception
+  class InvalidLocationNameError < Time::Error
     getter name, source
 
     def initialize(@name : String, @source : String? = nil)
@@ -63,7 +63,7 @@ class Time::Location
 
   # `InvalidTimezoneOffsetError` is raised if `Time::Location::Zone.new`
   # receives an invalid time zone offset.
-  class InvalidTimezoneOffsetError < Exception
+  class InvalidTimezoneOffsetError < Time::Error
     def initialize(offset : Int)
       super "Invalid time zone offset: #{offset}"
     end
@@ -92,12 +92,12 @@ class Time::Location
     # `#format`).
     #
     # Raises `InvalidTimezoneOffsetError` if *seconds* is outside the supported
-    # value range `-86_400..86_400` seconds (`-24:00` to `+24:00`).
+    # value range `-89_999..93_599` seconds (`-24:59:59` to `+25:59:59`).
     def initialize(@name : String?, @offset : Int32, @dst : Bool)
       # Maximum offsets of IANA time zone database are -12:00 and +14:00.
-      # +/-24 hours allows a generous padding for unexpected offsets.
-      # TODO: Maybe reduce to Int16 (+/- 18 hours).
-      raise InvalidTimezoneOffsetError.new(offset) if offset >= SECONDS_PER_DAY || offset <= -SECONDS_PER_DAY
+      # The hours component can be up to -24/+25 as required by POSIX TZ
+      # strings (e.g. `EST-24:59:59EDT,...`).
+      raise InvalidTimezoneOffsetError.new(offset) unless -89999 <= offset <= 93599
     end
 
     # Returns the name of the zone.
@@ -228,6 +228,30 @@ class Time::Location
     new zone.name, [zone]
   end
 
+  # Creates a `Location` instance named *name* with the given POSIX TZ string
+  # *str*, as defined in [POSIX.1-2024 Section 8.3](https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/V1_chap08.html).
+  #
+  # *str* must begin with a standard time designator followed by a time offset;
+  # implementation-defined TZ strings beginning with a colon, as well as names
+  # from the time zone database, are not supported.
+  #
+  # If *str* designates a daylight saving time, then the transition times must
+  # also be present. A TZ string like `"PST8PDT"` alone is considered invalid,
+  # since no default transition rules are assumed.
+  #
+  # ```
+  # location = Time::Location.posix_tz("America/New_York", "EST5EDT,M3.2.0,M11.1.0")
+  # Time.utc(2025, 3, 9, 6).in(location)  # => 2025-03-09 01:00:00.0 -05:00 America/New_York
+  # Time.utc(2025, 3, 9, 7).in(location)  # => 2025-03-09 03:00:00.0 -04:00 America/New_York
+  # Time.utc(2025, 11, 2, 5).in(location) # => 2025-11-02 01:00:00.0 -04:00 America/New_York
+  # Time.utc(2025, 11, 2, 6).in(location) # => 2025-11-02 01:00:00.0 -05:00 America/New_York
+  # ```
+  def self.posix_tz(name : String, str : String) : TZLocation
+    zones = Array(Location::Zone).new(initial_capacity: 2)
+    tz_args = TZ.parse(str, zones, true) || raise ArgumentError.new("Invalid TZ string: #{str}")
+    TZLocation.new(name, zones, str, *tz_args)
+  end
+
   # Loads the `Location` with the given *name*.
   #
   # ```
@@ -236,7 +260,7 @@ class Time::Location
   #
   # *name* is understood to be a location name in the IANA Time
   # Zone database, such as `"America/New_York"`. As special cases,
-  # `"UTC"` and empty string (`""`) return `Location::UTC`, and
+  # `"UTC"`, `"Etc/UTC"` and empty string (`""`) return `Location::UTC`, and
   # `"Local"` returns `Location.local`.
   #
   # The implementation uses a list of system-specific paths to look for a time
@@ -275,9 +299,32 @@ class Time::Location
   # Files are cached based on the modification time, so subsequent request for
   # the same location name will most likely return the same instance of
   # `Location`, unless the time zone database has been updated in between.
+  #
+  # - `.load?` returns `nil` if the location is unavailable.
   def self.load(name : String) : Location
+    load?(name) { |source| raise InvalidLocationNameError.new(name, source) }
+  end
+
+  # :ditto:
+  #
+  # Returns `nil` if the location is unavailable.
+  # Raises `InvalidLocationNameError` if the name is invalid.
+  # Raises `InvalidTZDataError` if the loader encounters a format error in the
+  # time zone database.
+  #
+  # - `.load` raises if the location is unavailable.
+  def self.load?(name : String) : Location?
+    load?(name) { return }
+  end
+
+  # :nodoc:
+  def self.load?(name : String, & : String? ->) : Location?
     case name
-    when "", "UTC"
+    when "", "UTC", "Etc/UTC", "GMT", "Etc/GMT"
+      # `UTC` is a special identifier, empty string represents a fallback mechanism.
+      # `Etc/UTC` is technically a tzdb identifier which could potentially point to anything.
+      # But we map it to `Location::UTC` directly for convenience which allows it to work
+      # without a copy of the database.
       UTC
     when "Local"
       local
@@ -290,11 +337,11 @@ class Time::Location
         if location = load_from_dir_or_zip(name, zoneinfo)
           return location
         else
-          raise InvalidLocationNameError.new(name, zoneinfo)
+          yield zoneinfo
         end
       end
 
-      if location = load(name, Crystal::System::Time.zone_sources)
+      if location = load(name, Crystal::System::Time.zone_sources) { |source| yield source }
         return location
       end
 
@@ -313,7 +360,7 @@ class Time::Location
         return location
       end
 
-      raise InvalidLocationNameError.new(name)
+      yield nil
     end
   end
 
@@ -339,7 +386,11 @@ class Time::Location
   # The environment variable `ENV["TZ"]` is consulted for finding the time zone
   # to use.
   #
-  # * `"UTC"` and empty string (`""`) return `Location::UTC`
+  # * `"UTC"`, `"Etc/UTC"` and empty string (`""`) return `Location::UTC`.
+  # * POSIX TZ strings (such as `"EST5EDT,M3.2.0,M11.1.0"`) are parsed using
+  #   `Location.posix_tz`.
+  # * Values beginning with a colon are implementation-defined according to
+  #   POSIX, and not supported in Crystal.
   # * Any other value (such as `"Europe/Berlin"`) is tried to be resolved using
   #   `Location.load`.
   # * If `ENV["TZ"]` is not set, the system's local time zone data will be used
@@ -347,20 +398,32 @@ class Time::Location
   # * If no time zone data could be found (i.e. the previous methods failed),
   #   `Location::UTC` is returned.
   def self.load_local : Location
-    case tz = ENV["TZ"]?
-    when "", "UTC"
+    case tz_string = ENV["TZ"]?
+    when "", "UTC", "Etc/UTC"
       return UTC
     when Nil
       if localtime = Crystal::System::Time.load_localtime
         return localtime
       end
+    when .starts_with?(':')
+      # Do not perform time zone database lookup here. POSIX.1-2024 says:
+      #
+      # > If _TZ_ is of the third format (that is, if the first character is not
+      # > a <colon> and the value does not match the syntax for the second
+      # > format), the value indicates either a geographical timezone or a
+      # > special timezone from an implementation-defined timezone database.
     else
+      zones = Array(Location::Zone).new(initial_capacity: 2)
+      if tz_args = TZ.parse(tz_string, zones, true)
+        return TZLocation.new("Local", zones, tz_string, *tz_args)
+      end
+
       if zoneinfo = ENV["ZONEINFO"]?
-        if location = load_from_dir_or_zip(tz, zoneinfo)
+        if location = load_from_dir_or_zip(tz_string, zoneinfo)
           return location
         end
       end
-      if location = load?(tz, Crystal::System::Time.zone_sources)
+      if location = load?(tz_string, Crystal::System::Time.zone_sources)
         return location
       end
     end
@@ -403,7 +466,7 @@ class Time::Location
   # Returns the time zone offset observed at *unix_seconds*.
   #
   # *unix_seconds* expresses the number of seconds since UNIX epoch
-  # (`1970-01-01 00:00:00 UTC`).
+  # (`1970-01-01 00:00:00Z`).
   def lookup(unix_seconds : Int) : Zone
     unless @cached_range[0] <= unix_seconds < @cached_range[1]
       @cached_zone, @cached_range = lookup_with_boundaries(unix_seconds)
@@ -416,20 +479,29 @@ class Time::Location
   def lookup_with_boundaries(unix_seconds : Int) : {Zone, {Int64, Int64}}
     case
     when zones.empty?
-      return Zone::UTC, {Int64::MIN, Int64::MAX}
-    when transitions.empty? || unix_seconds < transitions.first.when
-      return lookup_first_zone, {Int64::MIN, transitions[0]?.try(&.when) || Int64::MAX}
+      {Zone::UTC, {Int64::MIN, Int64::MAX}}
+    when transitions.empty?
+      {lookup_first_zone, {Int64::MIN, Int64::MAX}}
+    when unix_seconds < transitions.first.when
+      {lookup_first_zone, {Int64::MIN, transitions.first.when}}
+    when unix_seconds >= transitions.last.when
+      transition = transitions.last
+      {zones[transition.index], {transition.when, Int64::MAX}}
     else
-      tx_index = transitions.bsearch_index do |transition|
-        transition.when > unix_seconds
-      end || transitions.size
-
-      tx_index -= 1 unless tx_index == 0
-      transition = transitions[tx_index]
-      range_end = transitions[tx_index + 1]?.try(&.when) || Int64::MAX
-
-      return zones[transition.index], {transition.when, range_end}
+      lookup_within_fixed_transitions(unix_seconds)
     end
+  end
+
+  private def lookup_within_fixed_transitions(unix_seconds)
+    tx_index = transitions.bsearch_index do |transition|
+      transition.when > unix_seconds
+    end.not_nil!
+
+    tx_index -= 1 unless tx_index == 0
+    transition = transitions[tx_index]
+    range_end = transitions[tx_index + 1]?.try(&.when) || Int64::MAX
+
+    {zones[transition.index], {transition.when, range_end}}
   end
 
   # Returns the time zone to use for times before the first transition
@@ -476,7 +548,13 @@ class Time::Location
   end
 
   # Returns `true` if this location has a fixed offset.
+  #
+  # Locations returned by `Location.posix_tz` have a fixed offset if the TZ
+  # string specifies either no daylight saving time at all, or an all-year
+  # daylight saving time (e.g. `"EST5EDT,0/0,J365/25"`).
   def fixed? : Bool
     zones.size <= 1
   end
 end
+
+require "./tz"

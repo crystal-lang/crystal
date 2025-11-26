@@ -48,7 +48,7 @@ class Crystal::Repl::Compiler
         compatible_type = to.union_types.find! { |union_type| type_needing_cast.implements?(union_type) }
 
         # Get the type id of the "from" union
-        from_type_id = get_union_type_id(aligned_sizeof_type(from), node: node)
+        get_union_type_id(aligned_sizeof_type(from), node: node)
 
         # Check if `from_type_id` is the same as `type_needing_cast`
         put_i32 type_id(type_needing_cast), node: node
@@ -237,14 +237,17 @@ class Crystal::Repl::Compiler
   # Unpacks a tuple into a series of types.
   # Each of the tuple elements is upcasted to the corresponding type in `to_types`.
   # Every individual element is stack-aligned. Use `#cast_tuple` instead if they
-  # should follow their natural alignments inside a target tuple type.
+  # should follow their natural alignments inside a target tuple type. Nils
+  # inside `to_types` are discarded.
   # It's the caller's responsibility to pop the original, unpacked tuple, from the
   # stack if needed.
-  private def unpack_tuple(node : ASTNode, from : TupleInstanceType, to_types : Array(Type))
+  private def unpack_tuple(node : ASTNode, from : TupleInstanceType, to_types : Array(Type?))
     from_aligned_size = aligned_sizeof_type(from)
     to_element_offset = 0
 
     to_types.each_with_index do |to_element_type, i|
+      next unless to_element_type
+
       from_element_type = from.tuple_types[i]
 
       from_inner_size = inner_sizeof_type(from_element_type)
@@ -267,7 +270,6 @@ class Crystal::Repl::Compiler
 
   private def cast_tuple(node : ASTNode, from : TupleInstanceType, to : TupleInstanceType)
     from_aligned_size = aligned_sizeof_type(from)
-    to_aligned_size = aligned_sizeof_type(to)
     to_element_offset = 0
 
     to.tuple_types.each_with_index do |to_element_type, i|
@@ -309,7 +311,6 @@ class Crystal::Repl::Compiler
 
   private def cast_named_tuple(node : ASTNode, from : NamedTupleInstanceType, to : NamedTupleInstanceType)
     from_aligned_size = aligned_sizeof_type(from)
-    to_aligned_size = aligned_sizeof_type(to)
     to_element_offset = 0
 
     from_entry_indices = to.entries.map_with_index do |to_entry, i|

@@ -539,10 +539,24 @@ struct Tuple
     to_s
   end
 
-  def to_a
-    Array(Union(*T)).build(size) do |buffer|
+  # Returns an `Array` with all the elements in the tuple.
+  #
+  # ```
+  # {1, 2, 3, 4, 5}.to_a # => [1, 2, 3, 4, 5]
+  # ```
+  def to_a : Array(Union(*T))
+    super
+  end
+
+  # Returns an `Array` with the results of running *block* against each element of the tuple.
+  #
+  # ```
+  # {1, 2, 3, 4, 5}).to_a { |i| i * 2 } # => [2, 4, 6, 8, 10]
+  # ```
+  def to_a(& : Union(*T) -> U) forall U
+    Array(U).build(size) do |buffer|
       {% for i in 0...T.size %}
-        buffer[{{i}}] = self[{{i}}]
+        buffer[{{i}}] = yield self[{{i}}]
       {% end %}
       size
     end
@@ -573,9 +587,24 @@ struct Tuple
   # tuple.to_s # => "{1, \"hello\"}"
   # ```
   def to_s(io : IO) : Nil
+    needs_padding = curly_like?(self.first?)
+
     io << '{'
+    io << ' ' if needs_padding
+
     join io, ", ", &.inspect(io)
+
+    io << ' ' if needs_padding
     io << '}'
+  end
+
+  private def curly_like?(object)
+    case object
+    when Hash, Tuple, NamedTuple
+      true
+    else
+      false
+    end
   end
 
   def pretty_print(pp) : Nil

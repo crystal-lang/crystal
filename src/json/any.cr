@@ -21,7 +21,7 @@ struct JSON::Any
   alias Type = Nil | Bool | Int64 | Float64 | String | Array(JSON::Any) | Hash(String, JSON::Any)
 
   # Reads a `JSON::Any` value from the given pull parser.
-  def self.new(pull : JSON::PullParser)
+  def self.new(pull : JSON::PullParser) : self
     case pull.kind
     when .null?
       new pull.read_null
@@ -58,13 +58,13 @@ struct JSON::Any
   end
 
   # :ditto:
-  def self.new(raw : Int)
+  def self.new(raw : Int) : self
     # FIXME: Workaround for https://github.com/crystal-lang/crystal/issues/11645
     new(raw.to_i64)
   end
 
   # :ditto:
-  def self.new(raw : Float)
+  def self.new(raw : Float) : self
     # FIXME: Workaround for https://github.com/crystal-lang/crystal/issues/11645
     new(raw.to_f64)
   end
@@ -73,9 +73,7 @@ struct JSON::Any
   # Raises if the underlying value is not an `Array` or `Hash`.
   def size : Int
     case object = @raw
-    when Array
-      object.size
-    when Hash
+    when Array, Hash
       object.size
     else
       raise "Expected Array or Hash for #size, not #{object.class}"
@@ -132,12 +130,12 @@ struct JSON::Any
 
   # Traverses the depth of a structure and returns the value.
   # Returns `nil` if not found.
-  def dig?(index_or_key : String | Int, *subkeys) : JSON::Any?
+  def dig?(index_or_key : Int | String, *subkeys : Int | String) : JSON::Any?
     self[index_or_key]?.try &.dig?(*subkeys)
   end
 
   # :nodoc:
-  def dig?(index_or_key : String | Int) : JSON::Any?
+  def dig?(index_or_key : Int | String) : JSON::Any?
     case @raw
     when Hash, Array
       self[index_or_key]?
@@ -147,12 +145,12 @@ struct JSON::Any
   end
 
   # Traverses the depth of a structure and returns the value, otherwise raises.
-  def dig(index_or_key : String | Int, *subkeys) : JSON::Any
+  def dig(index_or_key : Int | String, *subkeys : Int | String) : JSON::Any
     self[index_or_key].dig(*subkeys)
   end
 
   # :nodoc:
-  def dig(index_or_key : String | Int) : JSON::Any
+  def dig(index_or_key : Int | String) : JSON::Any
     self[index_or_key]
   end
 
@@ -281,6 +279,38 @@ struct JSON::Any
   end
 
   def inspect(io : IO) : Nil
+    # == Why do we need exec_recursive_hash here? ==
+    # Our goal is to produce something like "JSON::Any([1,2,3])", with the tag only
+    # on the outside. A naive implementation would result in
+    # "JSON::Any([JSON::Any(1), JSON::Any(2), JSON::Any(3)])", because we need to
+    # do raw recursion through Array#inspect and Hash#inspect, which contain more
+    # JSON::Any objects, and there is no way to know whether we are "at the root".
+    # The two options we have are: set a stack-scoped flag indicating that we
+    # shouldn't wrap with "JSON::Any(", or re-implement Array#inspect and
+    # Hash#inspect, both of which require exec_recursive anyways.
+
+    # Once we have a more general method of setting fiber-local variables and flags,
+    # this could be significantly simplified.
+
+    hash = Fiber.current.exec_recursive_hash
+
+    # Here the key doesn't matter, we want to mask *all* invocations
+    # of JSON::Any#inspect below this stack frame
+    inspect_key = {0_u64, :__json_inspect__}
+
+    hash.put(inspect_key, nil) do
+      begin
+        # here's the root case, where we wrap with JSON::Any(...)
+        io << "JSON::Any("
+        @raw.inspect(io)
+        io << ")"
+        return
+      ensure
+        hash.delete(inspect_key)
+      end
+    end
+
+    # This is the non-root case, where we don't wrap with anything.
     @raw.inspect(io)
   end
 
@@ -307,7 +337,7 @@ struct JSON::Any
   def_hash raw
 
   # :nodoc:
-  def to_json(json : JSON::Builder)
+  def to_json(json : JSON::Builder) : Nil
     raw.to_json(json)
   end
 
@@ -321,7 +351,7 @@ struct JSON::Any
   end
 
   # Returns a new JSON::Any instance with the `raw` value `clone`ed.
-  def clone
+  def clone : JSON::Any
     JSON::Any.new(raw.clone)
   end
 end

@@ -93,7 +93,7 @@ struct Time::Span
     new(seconds: 0, nanoseconds: nanoseconds)
   end
 
-  # Creates a new `Time::Span` from the *days*, *hours*, *minutes*, *seconds* and *nanoseconds* given
+  # Creates a new `Time::Span` from the *weeks, *days*, *hours*, *minutes*, *seconds* and *nanoseconds* given
   #
   # Any time unit can be omitted.
   #
@@ -102,19 +102,20 @@ struct Time::Span
   # Time::Span.new(days: 1, hours: 2, minutes: 3)                             # => 1.02:03:00
   # Time::Span.new(days: 1, hours: 2, minutes: 3, seconds: 4, nanoseconds: 5) # => 1.02:03:04.000000005
   # ```
-  def self.new(*, days : Int = 0, hours : Int = 0, minutes : Int = 0, seconds : Int = 0, nanoseconds : Int = 0)
+  def self.new(*, weeks : Int = 0, days : Int = 0, hours : Int = 0, minutes : Int = 0, seconds : Int = 0, nanoseconds : Int = 0)
     new(
-      seconds: compute_seconds(days, hours, minutes, seconds),
+      seconds: compute_seconds(weeks, days, hours, minutes, seconds),
       nanoseconds: nanoseconds,
     )
   end
 
-  private def self.compute_seconds(days, hours, minutes, seconds)
+  private def self.compute_seconds(weeks, days, hours, minutes, seconds)
+    weeks_to_seconds = SECONDS_PER_WEEK.to_i64 * weeks
     days_to_seconds = SECONDS_PER_DAY.to_i64 * days
     hours_to_seconds = SECONDS_PER_HOUR.to_i64 * hours
     minutes_to_seconds = SECONDS_PER_MINUTE.to_i64 * minutes
 
-    days_to_seconds + hours_to_seconds + minutes_to_seconds + seconds
+    weeks_to_seconds + days_to_seconds + hours_to_seconds + minutes_to_seconds + seconds
   rescue OverflowError
     raise ArgumentError.new "Time::Span too big or too small"
   end
@@ -469,7 +470,8 @@ struct Int
 
   # Returns a `Time::Span` of `self` milliseconds.
   def milliseconds : Time::Span
-    Time::Span.new(nanoseconds: (self.to_i64 * Time::NANOSECONDS_PER_MILLISECOND))
+    sec, m = self.to_i64.divmod(1_000)
+    Time::Span.new(seconds: sec, nanoseconds: m * 1_000_000)
   end
 
   # :ditto:
@@ -479,7 +481,8 @@ struct Int
 
   # Returns a `Time::Span` of `self` microseconds.
   def microseconds : Time::Span
-    Time::Span.new(nanoseconds: (self.to_i64 * Time::NANOSECONDS_PER_MICROSECOND))
+    sec, m = self.to_i64.divmod(1_000_000)
+    Time::Span.new(seconds: sec, nanoseconds: m * 1_000)
   end
 
   # :ditto:

@@ -10,4 +10,10 @@ lib LibLLVM
 
   fun create_pass_builder_options = LLVMCreatePassBuilderOptions : PassBuilderOptionsRef
   fun dispose_pass_builder_options = LLVMDisposePassBuilderOptions(options : PassBuilderOptionsRef)
+  {% unless LibLLVM::IS_LT_170 %}
+    fun pass_builder_options_set_inliner_threshold = LLVMPassBuilderOptionsSetInlinerThreshold(PassBuilderOptionsRef, Int)
+  {% end %}
+  fun pass_builder_options_set_loop_unrolling = LLVMPassBuilderOptionsSetLoopUnrolling(PassBuilderOptionsRef, Bool)
+  fun pass_builder_options_set_loop_vectorization = LLVMPassBuilderOptionsSetLoopVectorization(PassBuilderOptionsRef, Bool)
+  fun pass_builder_options_set_slp_vectorization = LLVMPassBuilderOptionsSetSLPVectorization(PassBuilderOptionsRef, Bool)
 end

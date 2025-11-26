@@ -200,7 +200,7 @@ module Crystal
       node.elements.each_with_index do |elem, i|
         temp_var = elem_temp_vars.try &.[i]
         if elem.is_a?(Splat)
-          yield_var = new_temp_var
+          yield_var = new_temp_var(elem)
           each_body = Call.new(ary_var.clone, "<<", yield_var.clone).at(node)
           each_block = Block.new(args: [yield_var], body: each_body).at(node)
           exps << Call.new((temp_var || elem.exp).clone, "each", block: each_block).at(node)
@@ -279,15 +279,13 @@ module Crystal
       hash_var = new_temp_var
 
       exps = Array(ASTNode).new(node.entries.size + key_temp_var_count + value_temp_var_count + 2)
-      key_temp_vars.try &.each_with_index do |key_temp_var, i|
-        next unless key_temp_var
-        key_exp = node.entries[i].key
-        exps << Assign.new(key_temp_var, key_exp.clone).at(key_temp_var)
-      end
-      value_temp_vars.try &.each_with_index do |value_temp_var, i|
-        next unless value_temp_var
-        value_exp = node.entries[i].value
-        exps << Assign.new(value_temp_var, value_exp.clone).at(value_temp_var)
+      node.entries.each_with_index do |entry, i|
+        if key_temp_var = key_temp_vars.try &.[i]?
+          exps << Assign.new(key_temp_var, entry.key.clone).at(key_temp_var)
+        end
+        if value_temp_var = value_temp_vars.try &.[i]?
+          exps << Assign.new(value_temp_var, entry.value.clone).at(value_temp_var)
+        end
       end
       exps << Assign.new(hash_var.clone, constructor).at(node)
 
@@ -692,7 +690,7 @@ module Crystal
       case_whens = [] of When
 
       node.whens.each_with_index do |a_when, index|
-        condition = a_when.condition
+        condition = a_when.conds.first
         case condition
         when Call
           cloned_call = condition.clone
@@ -718,7 +716,7 @@ module Crystal
       if node_else = node.else
         case_else = node_else.clone
       else
-        case_else = Call.new(nil, "raise", StringLiteral.new("BUG: invalid select index"), global: true).at(node)
+        case_else = Call.new("raise", StringLiteral.new("BUG: invalid select index"), global: true).at(node)
       end
 
       call = Call.new(
@@ -1031,8 +1029,8 @@ module Crystal
       raise "#{node} (#{node.class}) can't be expanded"
     end
 
-    def new_temp_var
-      @program.new_temp_var
+    def new_temp_var(key = nil)
+      @program.new_temp_var(key)
     end
   end
 end

@@ -37,6 +37,10 @@ class Dir
 
   # Returns an array of all files that match against any of *patterns*.
   #
+  # ```
+  # Dir.glob "path/to/folder/*.txt" # Returns all files in the target folder that end in ".txt".
+  # Dir.glob "path/to/folder/**/*"  # Returns all files in the target folder and its subfolders.
+  # ```
   # The pattern syntax is similar to shell filename globbing, see `File.match?` for details.
   #
   # NOTE: Path separator in patterns needs to be always `/`. The returned file names use system-specific path separators.
@@ -60,7 +64,7 @@ class Dir
   # equivalent to
   # `match: File::MatchOptions.glob_default | File::MatchOptions::DotFiles`.
   @[Deprecated("Use the overload with a `match` parameter instead")]
-  def self.glob(*patterns : Path | String, match_hidden, follow_symlinks = false) : Array(String)
+  def self.glob(*patterns : Path | String, match_hidden : Bool, follow_symlinks : Bool = false) : Array(String)
     glob(patterns, match: match_hidden_to_options(match_hidden), follow_symlinks: follow_symlinks)
   end
 
@@ -171,7 +175,7 @@ class Dir
 
     private def self.compile(pattern)
       expanded_patterns = [] of String
-      File.expand_brace_pattern(pattern, expanded_patterns)
+      expand_brace_pattern(pattern, expanded_patterns)
 
       expanded_patterns.map do |expanded_pattern|
         single_compile expanded_pattern
@@ -417,6 +421,60 @@ class Dir
       return false if entry.native_hidden? && !match.native_hidden?
       return false if entry.os_hidden? && !match.os_hidden?
       true
+    end
+
+    # :nodoc:
+    # FIXME: The expansion mechanism does not work for complex brace patterns.
+    private def self.expand_brace_pattern(pattern : String, expanded) : Array(String)?
+      reader = Char::Reader.new(pattern)
+
+      lbrace = nil
+      rbrace = nil
+      alt_start = nil
+
+      alternatives = [] of String
+
+      nest = 0
+      escaped = false
+      reader.each do |char|
+        case {char, escaped}
+        when {'{', false}
+          lbrace = reader.pos if nest == 0
+          nest += 1
+        when {'}', false}
+          nest -= 1
+
+          if nest == 0
+            rbrace = reader.pos
+            start = (alt_start || lbrace).not_nil! + 1
+            alternatives << pattern.byte_slice(start, reader.pos - start)
+            break
+          end
+        when {',', false}
+          if nest == 1
+            start = (alt_start || lbrace).not_nil! + 1
+            alternatives << pattern.byte_slice(start, reader.pos - start)
+            alt_start = reader.pos
+          end
+        when {'\\', false}
+          escaped = true
+        else
+          escaped = false
+        end
+      end
+
+      if lbrace && rbrace
+        front = pattern.byte_slice(0, lbrace)
+        back = pattern.byte_slice(rbrace + 1)
+
+        alternatives.each do |alt|
+          brace_pattern = {front, alt, back}.join
+
+          expand_brace_pattern brace_pattern, expanded
+        end
+      else
+        expanded << pattern
+      end
     end
   end
 end

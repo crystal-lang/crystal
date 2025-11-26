@@ -37,11 +37,11 @@ class Compress::Gzip::Header
     seconds = IO::ByteFormat::LittleEndian.decode(Int32, header.to_slice[4, 4])
     @modification_time = Time.unix(seconds).to_local
 
-    xfl = header[8]
+    _xfl = header[8]
     @os = header[9]
 
     if flg.extra?
-      xlen = io.read_byte.not_nil!
+      xlen = io.read_bytes(UInt16, IO::ByteFormat::LittleEndian)
       @extra = Bytes.new(xlen)
       io.read_fully(@extra)
     end
@@ -55,7 +55,7 @@ class Compress::Gzip::Header
     end
 
     if flg.hcrc?
-      crc16 = io.read_bytes(UInt16, IO::ByteFormat::LittleEndian)
+      _crc16 = io.read_bytes(UInt16, IO::ByteFormat::LittleEndian)
       # TODO check crc16
     end
   end
@@ -86,7 +86,7 @@ class Compress::Gzip::Header
     io.write_byte os
 
     unless @extra.empty?
-      io.write_byte @extra.size.to_u8
+      io.write_bytes(@extra.size.to_u16, IO::ByteFormat::LittleEndian)
       io.write(@extra)
     end
 

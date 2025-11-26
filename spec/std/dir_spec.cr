@@ -3,25 +3,9 @@ require "../support/env"
 
 private def unset_tempdir(&)
   {% if flag?(:windows) %}
-    old_tempdirs = {ENV["TMP"]?, ENV["TEMP"]?, ENV["USERPROFILE"]?}
-    begin
-      ENV.delete("TMP")
-      ENV.delete("TEMP")
-      ENV.delete("USERPROFILE")
-
-      yield
-    ensure
-      ENV["TMP"], ENV["TEMP"], ENV["USERPROFILE"] = old_tempdirs
-    end
+    with_env("TMP": nil, "TEMP": nil, "USERPROFILE": nil) { yield }
   {% else %}
-    begin
-      old_tempdir = ENV["TMPDIR"]?
-      ENV.delete("TMPDIR")
-
-      yield
-    ensure
-      ENV["TMPDIR"] = old_tempdir
-    end
+    with_env("TMPDIR": nil) { yield }
   {% end %}
 end
 
@@ -143,7 +127,7 @@ describe "Dir" do
 
     context "path exists" do
       it "fails when path is a file" do
-        expect_raises(File::AlreadyExistsError, "Unable to create directory: '#{datapath("test_file.txt").inspect_unquoted}': File exists") do
+        expect_raises(File::AlreadyExistsError, "Unable to create directory: '#{datapath("test_file.txt").inspect_unquoted}'") do
           Dir.mkdir_p(datapath("test_file.txt"))
         end
       end
@@ -240,36 +224,30 @@ describe "Dir" do
     end
 
     it "tests double recursive matcher (#10807)" do
-      with_tempfile "glob-double-recurse" do |path|
-        Dir.mkdir_p path
-        Dir.cd(path) do
-          path1 = Path["x", "b", "x"]
-          Dir.mkdir_p path1
-          File.touch path1.join("file")
+      with_tempdir "glob-double-recurse" do
+        path1 = Path["x", "b", "x"]
+        Dir.mkdir_p path1
+        File.touch path1.join("file")
 
-          Dir["**/b/**/*"].sort.should eq [
-            path1.to_s,
-            path1.join("file").to_s,
-          ].sort
-        end
+        Dir["**/b/**/*"].sort.should eq [
+          path1.to_s,
+          path1.join("file").to_s,
+        ].sort
       end
     end
 
     it "tests double recursive matcher, multiple paths" do
-      with_tempfile "glob-double-recurse2" do |path|
-        Dir.mkdir_p path
-        Dir.cd(path) do
-          p1 = Path["x", "a", "x", "c"]
-          p2 = Path["x", "a", "x", "a", "x", "c"]
+      with_tempdir "glob-double-recurse2" do
+        p1 = Path["x", "a", "x", "c"]
+        p2 = Path["x", "a", "x", "a", "x", "c"]
 
-          Dir.mkdir_p p1
-          Dir.mkdir_p p2
+        Dir.mkdir_p p1
+        Dir.mkdir_p p2
 
-          Dir["**/a/**/c"].sort.should eq [
-            p1.to_s,
-            p2.to_s,
-          ].sort
-        end
+        Dir["**/a/**/c"].sort.should eq [
+          p1.to_s,
+          p2.to_s,
+        ].sort
       end
     end
 
@@ -330,22 +308,19 @@ describe "Dir" do
       pending "tests with \\"
     {% else %}
       it "tests with \\" do
-        with_tempfile "glob-escape-pattern" do |path|
-          Dir.mkdir_p path
-          Dir.cd(path) do
-            File.touch "g1.txt"
-            File.touch %q(\g3)
-            File.touch %q(\g4*)
+        with_tempdir "glob-escape-pattern" do
+          File.touch "g1.txt"
+          File.touch %q(\g3)
+          File.touch %q(\g4*)
 
-            Dir[%q(\\g*)].sort.should eq [
-              "\\g3",
-              "\\g4*",
-            ].sort
+          Dir[%q(\\g*)].sort.should eq [
+            "\\g3",
+            "\\g4*",
+          ].sort
 
-            Dir[%q(*g?\*)].sort.should eq [
-              "\\g4*",
-            ].sort
-          end
+          Dir[%q(*g?\*)].sort.should eq [
+            "\\g4*",
+          ].sort
         end
       end
     {% end %}
@@ -647,7 +622,8 @@ describe "Dir" do
   end
 
   describe ".current" do
-    it "matches shell" do
+    # can't use backtick in interpreted code (#12241)
+    pending_interpreted "matches shell" do
       Dir.current.should eq(`#{{{ flag?(:win32) ? "cmd /c cd" : "pwd" }}}`.chomp)
     end
 
@@ -658,7 +634,7 @@ describe "Dir" do
           Dir.mkdir_p path
           # Resolve any symbolic links in path caused by tmpdir being a link.
           # For example on macOS, /tmp is a symlink to /private/tmp.
-          path = File.real_path(path)
+          path = File.realpath(path)
 
           target_path = File.join(path, "target")
           link_path = File.join(path, "link")

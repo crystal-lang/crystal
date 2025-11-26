@@ -1,0 +1,46 @@
+= crystal-tool-unreachable(1)
+:doctype: manpage
+:date: {localdate}
+:crystal_version: {crystal_version}
+:man manual: Crystal Compiler Command Line Reference Guide
+:man source: crystal {crystal_version}
+
+== Name
+crystal-tool-unreachable - Identify methods that are never called
+
+== Synopsis
+*crystal tool unreachable* [options] [source...]
+
+== Description
+
+Show methods that are never called. The text output is a list
+of lines with columns separated by tab.
+
+Output fields:
+
+*count*::	 sum of all calls to this method (only with *--tallies* option; otherwise skipped)
+*location*::	 pathname, line and column, all separated by colon name
+*lines*::	 length of the def in lines annotations
+
+== Options
+
+*-D* _FLAG_, *--define*=_FLAG_::
+  Define a compile-time flag. This is useful to con    ditionally define types,
+  methods, or commands based on flags available at compile time. The default
+  flags are from the target triple given with *--target-triple* or the hosts
+  default, if none is given.
+*-f* _FORMAT_, *--format*=_FORMAT_::
+  Output format 'text' (default), 'json', 'codecov', or 'csv'.
+*--tallies*::
+  Print reachable methods and their call counts as well.
+*--check*::    Exit with error if there is any unreachable code.
+*-i* _PATH_, *--include*=_PATH_::
+  Include path in output.
+*-e* _PATH_, *--exclude*=_PATH_::
+  Exclude path in output (default: lib).
+*--error-trace*::
+  Show full error trace.
+*--prelude*::
+  Specify prelude to use. The default one initializes the garbage collector. You
+  can also use *--prelude=empty* to use no preludes. This can be useful for
+  checking code generation for a specific source code file.

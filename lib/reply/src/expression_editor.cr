@@ -83,8 +83,10 @@ module Reply
 
     @scroll_offset = 0
     @header_height = 0
+    @footer_height = 0
 
     @header : IO, Int32 -> Int32 = ->(io : IO, previous_height : Int32) { 0 }
+    @footer : IO, Int32 -> Int32 = ->(io : IO, previous_height : Int32) { 0 }
     @highlight = ->(code : String) { code }
 
     # The list of characters delimiting words.
@@ -95,14 +97,23 @@ module Reply
     # Creates a new `ExpressionEditor` with the given *prompt*.
     def initialize(&@prompt : Int32, Bool -> String)
       @prompt_size = @prompt.call(0, false).size # uncolorized size
+      @prompt_size = 1 if @prompt_size == 0
     end
 
     # Sets a `Proc` allowing to display a header above the prompt. (used by auto-completion)
     #
     # *io*: The IO in which the header should be displayed.
-    # *previous_hight*: Previous header height, useful to keep a header size constant.
+    # *previous_height*: Previous header height, useful to keep a header size constant.
     # Should returns the exact *height* printed in the io.
     def set_header(&@header : IO, Int32 -> Int32)
+    end
+
+    # Sets a `Proc` allowing to display a footer under the prompt. (used by search)
+    #
+    # *io*: The IO in which the footer should be displayed.
+    # *previous_height*: Previous footer height.
+    # Should returns the exact *height* printed in the io.
+    def set_footer(&@footer : IO, Int32 -> Int32)
     end
 
     # Sets the `Proc` to highlight the expression.
@@ -382,7 +393,7 @@ module Reply
     #
     # The expression scrolls if it's higher than epression_max_height.
     private def epression_max_height
-      self.height - @header_height
+      self.height - @header_height - @footer_height
     end
 
     def move_cursor_left(allow_scrolling = true)
@@ -723,6 +734,13 @@ module Reply
       end
     end
 
+    # Calls the footer proc and saves the *footer_height*
+    private def update_footer : String
+      String.build do |io|
+        @footer_height = @footer.call(io, @footer_height)
+      end
+    end
+
     def replace(lines : Array(String))
       update { @lines = lines }
     end
@@ -753,6 +771,8 @@ module Reply
 
     private def print_prompt(io, line_index)
       line_prompt_size = @prompt.call(line_index, false).size # uncolorized size
+      line_prompt_size = 1 if line_prompt_size == 0
+
       @prompt_size = {line_prompt_size, @prompt_size}.max
       io.print @prompt.call(line_index, color?)
 
@@ -826,9 +846,9 @@ module Reply
       {start, end_}
     end
 
-    private def print_line(io, colorized_line, line_index, line_size, prompt?, first?, is_last_part?)
-      if prompt?
-        io.puts unless first?
+    private def print_line(io, colorized_line, line_index, line_size, prompt, first, is_last_part)
+      if prompt
+        io.puts unless first
         print_prompt(io, line_index)
       end
       io.print colorized_line
@@ -840,10 +860,10 @@ module Reply
       # prompt>  bar                  |    extra line feed, so computes based on `%` or `//` stay exact.
       # prompt>end                    |
       # ```
-      io.puts if is_last_part? && last_part_size(line_size) == 0
+      io.puts if is_last_part && last_part_size(line_size) == 0
     end
 
-    private def sync_output
+    private def sync_output(&)
       if (output = @output).is_a?(IO::FileDescriptor) && output.tty?
         # Disallowing the synchronization reduce blinking on some terminal like vscode (#10)
         output.sync = false
@@ -870,6 +890,7 @@ module Reply
     private def print_expression_and_header(height_to_clear, force_full_view = false)
       height_to_clear += @header_height
       header = update_header()
+      footer = update_footer()
 
       if force_full_view
         start, end_ = 0, Int32::MAX
@@ -907,7 +928,7 @@ module Reply
 
           if start <= y && y + line_height - 1 <= end_
             # The line can hold entirely between the view bounds, print it:
-            print_line(io, colorized_lines[line_index], line_index, line.size, prompt?: true, first?: first, is_last_part?: true)
+            print_line(io, colorized_lines[line_index], line_index, line.size, prompt: true, first: first, is_last_part: true)
             first = false
 
             cursor_move_x = line.size
@@ -922,7 +943,7 @@ module Reply
             colorized_parts.each_with_index do |colorized_part, part_number|
               if start <= y <= end_
                 # The part holds on the view, we can print it.
-                print_line(io, colorized_part, line_index, line.size, prompt?: part_number == 0, first?: first, is_last_part?: part_number == line_height - 1)
+                print_line(io, colorized_part, line_index, line.size, prompt: part_number == 0, first: first, is_last_part: part_number == line_height - 1)
                 first = false
 
                 cursor_move_x = {line.size, (part_number + 1)*self.width - @prompt_size - 1}.min
@@ -941,6 +962,17 @@ module Reply
         @output.print Term::Cursor.clear_screen_down
         @output.print header
         @output.print display
+
+        if @footer_height != 0
+          # Display footer, then rewind cursor at the top left of the footer
+          @output.puts
+          @output.print footer
+          @output.print Term::Cursor.column(1)
+          move_real_cursor(x: @prompt_size, y: 1 - @footer_height)
+
+          cursor_move_y += 1
+          cursor_move_x = 0
+        end
 
         # Retrieve the real cursor at its corresponding cursor position (`@x`, `@y`)
         x_save, y_save = @x, @y

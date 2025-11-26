@@ -86,7 +86,10 @@ class LLVM::Builder
     # check_func(func)
     # check_values(args)
 
-    Value.new LibLLVMExt.build_call2(self, func.function_type, func, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, bundle, name)
+    bundle_ref = bundle.to_unsafe
+    bundles = bundle_ref ? pointerof(bundle_ref) : Pointer(Void).null.as(LibLLVM::OperandBundleRef*)
+    num_bundles = bundle_ref ? 1 : 0
+    Value.new {{ LibLLVM::IS_LT_180 ? LibLLVMExt : LibLLVM }}.build_call_with_operand_bundles(self, func.function_type, func, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, bundles, num_bundles, name)
   end
 
   def call(type : LLVM::Type, func : LLVM::Function, args : Array(LLVM::Value), name : String = "")
@@ -102,7 +105,10 @@ class LLVM::Builder
     # check_func(func)
     # check_values(args)
 
-    Value.new LibLLVMExt.build_call2(self, type, func, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, bundle, name)
+    bundle_ref = bundle.to_unsafe
+    bundles = bundle_ref ? pointerof(bundle_ref) : Pointer(Void).null.as(LibLLVM::OperandBundleRef*)
+    num_bundles = bundle_ref ? 1 : 0
+    Value.new {{ LibLLVM::IS_LT_180 ? LibLLVMExt : LibLLVM }}.build_call_with_operand_bundles(self, type, func, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, bundles, num_bundles, name)
   end
 
   def call(type : LLVM::Type, func : LLVM::Function, args : Array(LLVM::Value), bundle : LLVM::OperandBundleDef)
@@ -233,11 +239,13 @@ class LLVM::Builder
     end
   {% end %}
 
-  def not(value, name = "")
-    # check_value(value)
+  {% for name in %w(not neg fneg) %}
+    def {{name.id}}(value, name = "")
+      # check_value(value)
 
-    Value.new LibLLVM.build_not(self, value, name)
-  end
+      Value.new LibLLVM.build_{{name.id}}(self, value, name)
+    end
+  {% end %}
 
   def unreachable
     Value.new LibLLVM.build_unreachable(self)
@@ -279,7 +287,7 @@ class LLVM::Builder
   end
 
   def build_operand_bundle_def(name, values : Array(LLVM::Value))
-    LLVM::OperandBundleDef.new LibLLVMExt.build_operand_bundle_def(name, values.to_unsafe.as(LibLLVM::ValueRef*), values.size)
+    LLVM::OperandBundleDef.new {{ LibLLVM::IS_LT_180 ? LibLLVMExt : LibLLVM }}.create_operand_bundle(name, name.bytesize, values.to_unsafe.as(LibLLVM::ValueRef*), values.size)
   end
 
   def build_catch_ret(pad, basic_block)
@@ -290,7 +298,10 @@ class LLVM::Builder
   def invoke(fn : LLVM::Function, args : Array(LLVM::Value), a_then, a_catch, bundle : LLVM::OperandBundleDef = LLVM::OperandBundleDef.null, name = "")
     # check_func(fn)
 
-    Value.new LibLLVMExt.build_invoke2 self, fn.function_type, fn, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, a_then, a_catch, bundle, name
+    bundle_ref = bundle.to_unsafe
+    bundles = bundle_ref ? pointerof(bundle_ref) : Pointer(Void).null.as(LibLLVM::OperandBundleRef*)
+    num_bundles = bundle_ref ? 1 : 0
+    Value.new {{ LibLLVM::IS_LT_180 ? LibLLVMExt : LibLLVM }}.build_invoke_with_operand_bundles(self, fn.function_type, fn, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, a_then, a_catch, bundles, num_bundles, name)
   end
 
   def invoke(type : LLVM::Type, fn : LLVM::Function, args : Array(LLVM::Value), a_then, a_catch, *, name = "")
@@ -304,7 +315,10 @@ class LLVM::Builder
     # check_type("invoke", type)
     # check_func(fn)
 
-    Value.new LibLLVMExt.build_invoke2 self, type, fn, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, a_then, a_catch, bundle, name
+    bundle_ref = bundle.to_unsafe
+    bundles = bundle_ref ? pointerof(bundle_ref) : Pointer(Void).null.as(LibLLVM::OperandBundleRef*)
+    num_bundles = bundle_ref ? 1 : 0
+    Value.new {{ LibLLVM::IS_LT_180 ? LibLLVMExt : LibLLVM }}.build_invoke_with_operand_bundles(self, type, fn, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, a_then, a_catch, bundles, num_bundles, name)
   end
 
   def switch(value, otherwise, cases)
@@ -371,6 +385,10 @@ class LLVM::Builder
     @disposed = true
 
     LibLLVM.dispose_builder(@unwrap)
+  end
+
+  def finalize
+    dispose
   end
 
   # The next lines are for ease debugging when a types/values

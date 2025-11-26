@@ -21,8 +21,47 @@ class Crystal::Program
     flags.includes?(name)
   end
 
+  # Returns the value of a flag in the format `"#{key}=#{value}"`.
+  # Or `true` if the flags contain `key`.
+  def flag_value(name : String) : String | Bool
+    self.class.flag_value(flags_ary, name)
+  end
+
+  # Returns the value of a host flag in the format `"#{key}=#{value}"`.
+  # Or `true` if the host flags contain `key`.
+  def host_flag_value(name : String) : String | Bool
+    self.class.flag_value(host_flags_ary, name)
+  end
+
+  private getter flags_ary : Array(String) do
+    flags.to_a
+  end
+  private getter host_flags_ary : Array(String) do
+    host_flags.to_a
+  end
+
+  def self.flag_value(flags, name)
+    flags.reverse_each do |flag|
+      return true if flag == name
+
+      # Easy test to skip items that wouldn't match anyway
+      next unless flag.starts_with?(name)
+
+      key, assign, value = flag.partition("=")
+      if key == name
+        return assign == "=" ? value : true
+      end
+    end
+
+    false
+  end
+
   def bits64?
     codegen_target.pointer_bit_width == 64
+  end
+
+  def size_bit_width
+    codegen_target.size_bit_width
   end
 
   private def flags_for_target(target)
@@ -45,11 +84,27 @@ class Crystal::Program
       flags.add "freebsd#{target.freebsd_version}"
     end
     flags.add "netbsd" if target.netbsd?
-    flags.add "openbsd" if target.openbsd?
+
+    if target.openbsd?
+      flags.add "openbsd"
+
+      case target.architecture
+      when "aarch64"
+        flags.add "branch-protection=bti" unless flags.any?(&.starts_with?("branch-protection="))
+      when "x86_64", "i386"
+        flags.add "cf-protection=branch" unless flags.any?(&.starts_with?("cf-protection="))
+      end
+    end
+
     flags.add "dragonfly" if target.dragonfly?
+    flags.add "solaris" if target.solaris?
     flags.add "android" if target.android?
 
     flags.add "bsd" if target.bsd?
+
+    if target.avr? && (cpu = target_machine.cpu.presence)
+      flags.add cpu
+    end
 
     flags
   end

@@ -113,7 +113,7 @@ class Crystal::Repl::Interpreter
   def initialize(
     @context : Context,
     # TODO: what if the stack is exhausted?
-    @stack : UInt8* = Pointer(Void).malloc(8 * 1024 * 1024).as(UInt8*)
+    @stack : UInt8* = Pointer(Void).malloc(8 * 1024 * 1024).as(UInt8*),
   )
     @local_vars = LocalVars.new(@context)
     @argv = [] of String
@@ -627,10 +627,10 @@ class Crystal::Repl::Interpreter
   end
 
   private macro lib_call(lib_function)
-    %target_def = lib_function.def
     %cif = lib_function.call_interface
     %fn = lib_function.symbol
     %args_bytesizes = lib_function.args_bytesizes
+    %return_bytesize = lib_function.return_bytesize
 
     # Assume C calls don't have more than 100 arguments
     # TODO: use the stack for this?
@@ -649,7 +649,6 @@ class Crystal::Repl::Interpreter
     rescue ex : EscapingException
       raise_exception(ex.exception_pointer)
     else
-      %return_bytesize = inner_sizeof_type(%target_def.type)
       %aligned_return_bytesize = align(%return_bytesize)
 
       (stack - %offset).move_from(stack, %return_bytesize)
@@ -999,16 +998,17 @@ class Crystal::Repl::Interpreter
 
   private macro stack_pop(t)
     %aligned_size = align(sizeof({{t}}))
-    %value = (stack - %aligned_size).as({{t}}*).value
+    %value = uninitialized {{t}}
+    (stack - %aligned_size).copy_to(pointerof(%value).as(UInt8*), sizeof(typeof(%value)))
     stack_shrink_by(%aligned_size)
     %value
   end
 
   private macro stack_push(value)
     %temp = {{value}}
-    stack.as(Pointer(typeof({{value}}))).value = %temp
+    %size = sizeof(typeof(%temp))
 
-    %size = sizeof(typeof({{value}}))
+    stack.copy_from(pointerof(%temp).as(UInt8*), %size)
     %aligned_size = align(%size)
     stack += %size
     stack_grow_by(%aligned_size - %size)
@@ -1154,6 +1154,7 @@ class Crystal::Repl::Interpreter
         nil
       end
     end
+    spawned_fiber.@context.resumable = 1
     spawned_fiber.as(Void*)
   end
 
@@ -1161,9 +1162,47 @@ class Crystal::Repl::Interpreter
     # current_fiber = current_context.as(Fiber*).value
     new_fiber = new_context.as(Fiber*).value
 
-    # We directly resume the next fiber.
-    # TODO: is this okay? We totally ignore the scheduler here!
+    # delegates the context switch to the interpreter's scheduler, so we update
+    # the current fiber reference, set the GC stack bottom, and so on (aka
+    # there's more to switching context than `Fiber.swapcontext`):
     new_fiber.resume
+  end
+
+  private def fiber_resumable(context : Void*) : LibC::Long
+    fiber = context.as(Fiber*).value
+    fiber.@context.resumable
+  end
+
+  private def signal_descriptor(fd : Int32) : Nil
+    {% if flag?(:unix) %}
+      # replace the interpreter's signal writer so that the interpreted code
+      # will receive signals from now on
+      writer = IO::FileDescriptor.new(fd)
+      writer.sync = true
+      Crystal::System::Signal.writer = writer
+    {% else %}
+      raise "BUG: interpreter doesn't support signals on this target"
+    {% end %}
+  end
+
+  private def signal(signum : Int32, handler : Int32) : Nil
+    {% if flag?(:unix) %}
+      signal = ::Signal.new(signum)
+      case handler
+      when 0
+        signal.reset
+      when 1
+        signal.ignore
+      else
+        # register the signal for the OS so the process will receive them;
+        # registers a fake handler since the interpreter won't handle the signal:
+        # the interpreted code will receive it and will execute the interpreted
+        # handler
+        signal.trap { }
+      end
+    {% else %}
+      raise "BUG: interpreter doesn't support signals on this target"
+    {% end %}
   end
 
   private def pry(ip, instructions, stack_bottom, stack)

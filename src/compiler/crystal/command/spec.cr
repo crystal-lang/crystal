@@ -24,7 +24,7 @@ class Crystal::Command
         puts opts
         puts
 
-        runtime_options = Spec.option_parser
+        runtime_options = Spec::CLI.new.option_parser
         runtime_options.banner = "Runtime options (passed to spec runner):"
         puts runtime_options
         exit
@@ -95,8 +95,13 @@ class Crystal::Command
 
     output_filename = Crystal.temp_executable "spec"
 
-    ENV["CRYSTAL_SPEC_COMPILER_BIN"] ||= Process.executable_path
-    compiler.compile sources, output_filename, combine_rpath: true
+    ENV["CRYSTAL_SPEC_COMPILER_BIN"] ||= if crystal_exec_path = ENV["CRYSTAL_EXEC_PATH"]?
+                                           File.join(crystal_exec_path, "crystal")
+                                         else
+                                           Process.executable_path
+                                         end
+
+    compiler.compile sources, output_filename
     report_warnings
     execute output_filename, options, compiler, error_on_exit: warnings_fail_on_exit?
   end

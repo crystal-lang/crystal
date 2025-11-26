@@ -110,7 +110,7 @@ class JSON::Builder
   # ```
   #
   # This method can also be used to write the name of an object field.
-  def string(value) : Nil
+  def string(value : _) : Nil
     string do |io|
       value.to_s(io)
     end
@@ -277,7 +277,7 @@ class JSON::Builder
   # Writes an object's field and value.
   # The field's name is first converted to a `String` by invoking
   # `to_s` on it.
-  def field(name, value)
+  def field(name : _, value : _) : Nil
     string(name)
     value.to_json(self)
   end
@@ -291,12 +291,12 @@ class JSON::Builder
   end
 
   # Flushes the underlying `IO`.
-  def flush
+  def flush : Nil
     @io.flush
   end
 
   # Sets the indent *string*.
-  def indent=(string : String)
+  def indent=(string : String) : String?
     if string.empty?
       @indent = nil
     else
@@ -305,7 +305,7 @@ class JSON::Builder
   end
 
   # Sets the indent *level* (number of spaces).
-  def indent=(level : Int)
+  def indent=(level : Int) : String?
     if level < 0
       @indent = nil
     else
@@ -430,7 +430,10 @@ module JSON
   # end
   # string # => %<{"name":"foo","values":[1,2,3]}>
   # ```
-  def self.build(indent = nil, &)
+  #
+  # Accepts an indent parameter which can either be an `Int` (number of spaces to indent)
+  # or a `String`, which will prefix each level with the string a corresponding amount of times.
+  def self.build(indent : String | Int | Nil = nil, &)
     String.build do |str|
       build(str, indent) do |json|
         yield json
@@ -439,7 +442,7 @@ module JSON
   end
 
   # Writes JSON into the given `IO`. A `JSON::Builder` is yielded to the block.
-  def self.build(io : IO, indent = nil, &) : Nil
+  def self.build(io : IO, indent : String | Int | Nil = nil, &) : Nil
     builder = JSON::Builder.new(io)
     builder.indent = indent if indent
     builder.document do

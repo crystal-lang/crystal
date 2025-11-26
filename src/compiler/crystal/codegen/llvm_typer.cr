@@ -245,6 +245,10 @@ module Crystal
       llvm_type(type.remove_alias, wants_size)
     end
 
+    private def create_llvm_type(type : ReferenceStorageType, wants_size)
+      llvm_struct_type(type.reference_type, wants_size)
+    end
+
     private def create_llvm_type(type : NonGenericModuleType | GenericClassType, wants_size)
       # This can only be reached if the module or generic class don't have implementors
       @llvm_context.int1
@@ -489,17 +493,31 @@ module Crystal
       @@closure_counter += 1
       llvm_name = "closure_#{@@closure_counter}"
 
-      @llvm_context.struct(llvm_name) do |a_struct|
+      has_inner_pointers = !parent_llvm_type.nil?
+      closure_type = @llvm_context.struct(llvm_name) do |a_struct|
         @structs[llvm_name] = a_struct
 
-        elems = vars.map { |var| llvm_type(var.type).as(LLVM::Type) }
+        elems = Array(LLVM::Type).new(vars.size + (parent_llvm_type ? 1 : 0) + (self_type ? 1 : 0))
+
+        vars.each do |var|
+          elems << llvm_type(var.type)
+          has_inner_pointers ||= var.type.has_inner_pointers?
+        end
 
         # Make sure to copy the given LLVM::Type to this context
-        elems << copy_type(parent_llvm_type).pointer if parent_llvm_type
+        if parent_llvm_type
+          elems << copy_type(parent_llvm_type).pointer
+        end
 
-        elems << llvm_type(self_type) if self_type
+        if self_type
+          elems << llvm_type(self_type)
+          has_inner_pointers ||= self_type.has_inner_pointers?
+        end
+
         elems
       end
+
+      {closure_type, has_inner_pointers}
     end
 
     # Copy existing LLVM types, possibly from another context,
@@ -574,15 +592,15 @@ module Crystal
     end
 
     def align_of(type)
-      @layout.abi_alignment(type)
+      if type.void?
+        1_u32
+      else
+        @layout.abi_alignment(type)
+      end
     end
 
     def size_t
-      if @program.bits64?
-        @llvm_context.int64
-      else
-        @llvm_context.int32
-      end
+      @llvm_context.int(@program.size_bit_width)
     end
 
     @pointer_size : UInt64?

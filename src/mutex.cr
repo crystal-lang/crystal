@@ -1,3 +1,4 @@
+require "fiber/pointer_linked_list_node"
 require "crystal/spin_lock"
 
 # A fiber-safe mutex.
@@ -16,10 +17,13 @@ require "crystal/spin_lock"
 # mutex from the same fiber will deadlock. Any fiber can unlock the mutex, even
 # if it wasn't previously locked.
 class Mutex
-  @state = Atomic(Int32).new(0)
+  private UNLOCKED = 0
+  private LOCKED   = 1
+
+  @state = Atomic(Int32).new(UNLOCKED)
   @mutex_fiber : Fiber?
   @lock_count = 0
-  @queue = Deque(Fiber).new
+  @queue = Crystal::PointerLinkedList(Fiber::PointerLinkedListNode).new
   @queue_count = Atomic(Int32).new(0)
   @lock = Crystal::SpinLock.new
 
@@ -34,7 +38,7 @@ class Mutex
 
   @[AlwaysInline]
   def lock : Nil
-    if @state.swap(1) == 0
+    if @state.swap(LOCKED, :acquire) == UNLOCKED
       @mutex_fiber = Fiber.current unless @protection.unchecked?
       return
     end
@@ -49,43 +53,45 @@ class Mutex
     end
 
     lock_slow
-    nil
   end
 
   @[NoInline]
-  private def lock_slow
+  private def lock_slow : Nil
     loop do
       break if try_lock
 
+      waiting = Fiber::PointerLinkedListNode.new(Fiber.current)
+
       @lock.sync do
         @queue_count.add(1)
-        if @state.get == 0
-          if @state.swap(1) == 0
-            @queue_count.add(-1)
-            @mutex_fiber = Fiber.current
+
+        if @state.get(:relaxed) == UNLOCKED
+          if @state.swap(LOCKED, :acquire) == UNLOCKED
+            @queue_count.sub(1)
+
+            @mutex_fiber = Fiber.current unless @protection.unchecked?
             return
           end
         end
 
-        @queue.push Fiber.current
+        @queue.push pointerof(waiting)
       end
-      Crystal::Scheduler.reschedule
+
+      Fiber.suspend
     end
 
-    @mutex_fiber = Fiber.current
-    nil
+    @mutex_fiber = Fiber.current unless @protection.unchecked?
   end
 
   private def try_lock
     i = 1000
-    while @state.swap(1) != 0
-      while @state.get != 0
+    while @state.swap(LOCKED, :acquire) != UNLOCKED
+      while @state.get(:relaxed) != UNLOCKED
         Intrinsics.pause
         i &-= 1
         return false if i == 0
       end
     end
-
     true
   end
 
@@ -107,25 +113,24 @@ class Mutex
       @mutex_fiber = nil
     end
 
-    @state.lazy_set(0)
+    @state.set(UNLOCKED, :release)
 
     if @queue_count.get == 0
       return
     end
 
-    fiber = nil
+    waiting = nil
     @lock.sync do
       if @queue_count.get == 0
         return
       end
 
-      if fiber = @queue.shift?
+      if waiting = @queue.shift?
         @queue_count.add(-1)
       end
     end
-    fiber.enqueue if fiber
 
-    nil
+    waiting.try(&.value.enqueue)
   end
 
   def synchronize(&)

@@ -134,6 +134,8 @@ lib LibC
   IPV6_DROP_MEMBERSHIP = 13
   IPV6_LEAVE_GROUP     = 13
 
+  IPV6_V6ONLY = 27
+
   enum IPPROTO
     IPPROTO_HOPOPTS  =   0 # IPv6 Hop-by-Hop options
     IPPROTO_ICMP     =   1
@@ -207,5 +209,19 @@ lib LibC
     ai_canonname : Char*
     ai_addr : Sockaddr*
     ai_next : Addrinfo*
+  end
+
+  struct ADDRINFOEXW
+    ai_flags : Int
+    ai_family : Int
+    ai_socktype : Int
+    ai_protocol : Int
+    ai_addrlen : SizeT
+    ai_canonname : LPWSTR
+    ai_addr : Sockaddr*
+    ai_blob : Void*
+    ai_bloblen : SizeT
+    ai_provider : GUID*
+    ai_next : ADDRINFOEXW*
   end
 end

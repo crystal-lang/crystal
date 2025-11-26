@@ -65,7 +65,7 @@ class IO::Memory < IO
   # io.gets(2)    # => "he"
   # io.print "hi" # raises IO::Error
   # ```
-  def self.new(string : String)
+  def self.new(string : String) : self
     new string.to_slice, writeable: false
   end
 
@@ -90,11 +90,7 @@ class IO::Memory < IO
 
     return if count == 0
 
-    new_bytesize = @pos + count
-    if new_bytesize > @capacity
-      check_resizeable
-      resize_to_capacity(Math.pw2ceil(new_bytesize))
-    end
+    increase_capacity_by(count)
 
     slice.copy_to(@buffer + @pos, count)
 
@@ -112,11 +108,7 @@ class IO::Memory < IO
     check_writeable
     check_open
 
-    new_bytesize = @pos + 1
-    if new_bytesize > @capacity
-      check_resizeable
-      resize_to_capacity(Math.pw2ceil(new_bytesize))
-    end
+    increase_capacity_by(1)
 
     (@buffer + @pos).value = byte
 
@@ -131,7 +123,7 @@ class IO::Memory < IO
   end
 
   # :nodoc:
-  def gets(delimiter : Char, limit : Int32, chomp = false) : String?
+  def gets(delimiter : Char, limit : Int32, chomp : Bool = false) : String?
     return super if @encoding || delimiter.ord >= 128
 
     check_open
@@ -190,7 +182,7 @@ class IO::Memory < IO
   end
 
   # :nodoc:
-  def skip(bytes_count) : Nil
+  def skip(bytes_count : Int) : Nil
     check_open
 
     available = @bytesize - @pos
@@ -456,6 +448,28 @@ class IO::Memory < IO
     unless @resizeable
       raise IO::Error.new "Non-resizeable stream"
     end
+  end
+
+  private def increase_capacity_by(count)
+    raise IO::EOFError.new if count >= Int32::MAX - bytesize
+
+    new_bytesize = @pos + count
+    return if new_bytesize <= @capacity
+
+    check_resizeable
+
+    new_capacity = calculate_new_capacity(new_bytesize)
+    resize_to_capacity(new_capacity)
+  end
+
+  private def calculate_new_capacity(new_bytesize : Int32)
+    # If the new bytesize is bigger than 1 << 30, the next power of two would
+    # be 1 << 31, which is out of range for Int32.
+    # So we limit the capacity to Int32::MAX in order to be able to use the
+    # range (1 << 30) < new_bytesize < Int32::MAX
+    return Int32::MAX if new_bytesize > 1 << 30
+
+    Math.pw2ceil(new_bytesize)
   end
 
   private def resize_to_capacity(capacity)

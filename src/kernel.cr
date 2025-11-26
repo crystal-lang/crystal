@@ -5,6 +5,15 @@ require "crystal/at_exit_handlers"
 {% end %}
 
 # The standard input file descriptor. Contains data piped to the program.
+#
+# On Unix systems, if the file descriptor is a TTY, the runtime duplicates it.
+# So `STDIN.fd` might not be `0`.
+# The reason for this is to enable non-blocking reads for concurrency. Other fibers
+# can run while waiting on user input. The original file descriptor is
+# inherited from the parent process. Setting it to non-blocking mode would
+# reflect back, which can cause problems.
+#
+# On Windows, `STDIN` is always blocking.
 STDIN = IO::FileDescriptor.from_stdio(0)
 
 # The standard output file descriptor.
@@ -22,6 +31,15 @@ STDIN = IO::FileDescriptor.from_stdio(0)
 #   This is convenient but slower than with `flush_on_newline` set to `false`.
 #   If you need a bit more performance and you don't care about near real-time
 #   output you can do `STDOUT.flush_on_newline = false`.
+#
+# On Unix systems, if the file descriptor is a TTY, the runtime duplicates it.
+# So `STDOUT.fd` might not be `1`.
+# The reason for this is to enable non-blocking writes for concurrency. Other fibers
+# can run while waiting on IO. The original file descriptor is
+# inherited from the parent process. Setting it to non-blocking mode would
+# reflect back which can cause problems.
+#
+# On Windows, `STDOUT` is always blocking.
 STDOUT = IO::FileDescriptor.from_stdio(1)
 
 # The standard error file descriptor.
@@ -39,6 +57,15 @@ STDOUT = IO::FileDescriptor.from_stdio(1)
 #   This is convenient but slower than with `flush_on_newline` set to `false`.
 #   If you need a bit more performance and you don't care about near real-time
 #   output you can do `STDERR.flush_on_newline = false`.
+#
+# On Unix systems, if the file descriptor is a TTY, the runtime duplicates it.
+# So `STDERR.fd` might not be `2`.
+# The reason for this is to enable non-blocking writes for concurrency. Other fibers
+# can run while waiting on IO. The original file descriptor is
+# inherited from the parent process. Setting it to non-blocking mode would
+# reflect back which can cause problems.
+#
+# On Windows, `STDERR` is always blocking.
 STDERR = IO::FileDescriptor.from_stdio(2)
 
 # The name, the program was called with.
@@ -441,7 +468,7 @@ end
 # See also: `Object#inspect(io)`.
 def p(*objects)
   objects.each do |obj|
-    p obj
+    p obj # ameba:disable Lint/DebugCalls
   end
   objects
 end
@@ -455,7 +482,7 @@ end
 #
 # See `Object#inspect(io)`
 def p(**objects)
-  p(objects) unless objects.empty?
+  p(objects) unless objects.empty? # ameba:disable Lint/DebugCalls
 end
 
 # Pretty prints *object* to `STDOUT` followed
@@ -474,7 +501,7 @@ end
 # See also: `Object#pretty_print(pp)`.
 def pp(*objects)
   objects.each do |obj|
-    pp obj
+    pp obj # ameba:disable Lint/DebugCalls
   end
   objects
 end
@@ -488,10 +515,19 @@ end
 #
 # See `Object#pretty_print(pp)`
 def pp(**objects)
-  pp(objects) unless objects.empty?
+  pp(objects) unless objects.empty? # ameba:disable Lint/DebugCalls
 end
 
-# Registers the given `Proc` for execution when the program exits.
+# Registers the given `Proc` for execution when the program exits regularly.
+#
+# A regular exit happens when either
+# * the main fiber reaches the end of the program,
+# * the main fiber rescues an unhandled exception, or
+# * `::exit` is called.
+#
+# `Process.exit` does *not* trigger `at_exit` handlers, nor does external process
+# termination (see `Process.on_terminate` for handling that).
+#
 # If multiple handlers are registered, they are executed in reverse order of registration.
 #
 # ```
@@ -548,33 +584,26 @@ end
     # Hooks are defined here due to load order problems.
     def self.after_fork_child_callbacks
       @@after_fork_child_callbacks ||= [
-        # clean ups (don't depend on event loop):
+        # reinit event loop first:
+        -> { Crystal::EventLoop.current.after_fork },
+
+        # reinit signal handling:
         ->Crystal::System::Signal.after_fork,
         ->Crystal::System::SignalChildHandler.after_fork,
 
-        # reinit event loop:
-        ->{ Crystal::Scheduler.event_loop.after_fork },
-
-        # more clean ups (may depend on event loop):
+        # additional reinitialization
         ->Random::DEFAULT.new_seed,
+        -> { Random.thread_default.new_seed },
       ] of -> Nil
     end
   end
 {% end %}
 
 {% unless flag?(:interpreted) || flag?(:wasm32) %}
-  # Background loop to cleanup unused fiber stacks.
-  spawn(name: "Fiber Clean Loop") do
-    loop do
-      sleep 5
-      Fiber.stack_pool.collect
-    end
-  end
-
-  {% if flag?(:win32) %}
-    Crystal::System::Process.start_interrupt_loop
+  {% if flag?(:execution_context) %}
+    Fiber::ExecutionContext.init_default_context
   {% else %}
-    Crystal::System::Signal.setup_default_handlers
+    Crystal::Scheduler.init
   {% end %}
 
   # load debug info on start up of the program is executed with CRYSTAL_LOAD_DEBUG_INFO=1
@@ -586,7 +615,13 @@ end
   Exception::CallStack.load_debug_info if ENV["CRYSTAL_LOAD_DEBUG_INFO"]? == "1"
   Exception::CallStack.setup_crash_handler
 
-  {% if flag?(:preview_mt) %}
-    Crystal::Scheduler.init_workers
+  {% if flag?(:win32) %}
+    Crystal::System::Process.start_interrupt_loop
+  {% else %}
+    Crystal::System::Signal.setup_default_handlers
   {% end %}
+{% end %}
+
+{% if flag?(:interpreted) && flag?(:unix) && Crystal::Interpreter.class.has_method?(:signal_descriptor) %}
+  Crystal::System::Signal.setup_default_handlers
 {% end %}

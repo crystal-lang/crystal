@@ -5,7 +5,7 @@
 # the actual library file to the load path. `Crystal::Loader` does not support
 # ld scripts yet. So we just skip that for now. The libm symbols are still
 # available in the interpreter.
-{% if (flag?(:linux) && !flag?(:musl) && !flag?(:interpreted)) || flag?(:bsd) %}
+{% if (flag?(:linux) && !flag?(:musl) && !flag?(:interpreted)) || flag?(:bsd) || flag?(:solaris) %}
   @[Link("m")]
 {% end %}
 

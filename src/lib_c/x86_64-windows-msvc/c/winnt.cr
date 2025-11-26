@@ -3,6 +3,8 @@ require "c/int_safe"
 lib LibC
   alias BOOLEAN = BYTE
   alias LONG = Int32
+  alias ULONG = UInt32
+  alias USHORT = UInt16
   alias LARGE_INTEGER = Int64
 
   alias CHAR = UChar
@@ -14,6 +16,8 @@ lib LibC
   alias HANDLE = Void*
   alias HMODULE = Void*
 
+  alias PAPCFUNC = ULONG_PTR ->
+
   INVALID_FILE_ATTRIBUTES      = DWORD.new!(-1)
   FILE_ATTRIBUTE_DIRECTORY     =  0x10
   FILE_ATTRIBUTE_HIDDEN        =   0x2
@@ -21,11 +25,17 @@ lib LibC
   FILE_ATTRIBUTE_REPARSE_POINT = 0x400
   FILE_ATTRIBUTE_SYSTEM        =   0x4
 
-  FILE_APPEND_DATA = 0x00000004
+  DELETE = 0x00010000_u32
 
-  DELETE                = 0x00010000
-  FILE_READ_ATTRIBUTES  =       0x80
-  FILE_WRITE_ATTRIBUTES =     0x0100
+  FILE_WRITE_DATA       = 0x00000002_u32
+  FILE_APPEND_DATA      = 0x00000004_u32
+  FILE_READ_ATTRIBUTES  = 0x00000080_u32
+  FILE_WRITE_ATTRIBUTES = 0x00000100_u32
+  FILE_GENERIC_READ     = 0x00120089_u32
+  FILE_GENERIC_WRITE    = 0x00120116_u32
+
+  FILE_SYNCHRONOUS_IO_ALERT    = 0x00000010
+  FILE_SYNCHRONOUS_IO_NONALERT = 0x00000020
 
   MAXIMUM_REPARSE_DATA_BUFFER_SIZE = 0x4000
 
@@ -90,6 +100,31 @@ lib LibC
     WRITE = 0x20006
   end
 
+  struct SID_IDENTIFIER_AUTHORITY
+    value : BYTE[6]
+  end
+
+  struct SID
+    revision : BYTE
+    subAuthorityCount : BYTE
+    identifierAuthority : SID_IDENTIFIER_AUTHORITY
+    subAuthority : DWORD[1]
+  end
+
+  enum SID_NAME_USE
+    SidTypeUser           = 1
+    SidTypeGroup
+    SidTypeDomain
+    SidTypeAlias
+    SidTypeWellKnownGroup
+    SidTypeDeletedAccount
+    SidTypeInvalid
+    SidTypeUnknown
+    SidTypeComputer
+    SidTypeLabel
+    SidTypeLogonSession
+  end
+
   enum JOBOBJECTINFOCLASS
     AssociateCompletionPortInformation = 7
     ExtendedLimitInformation           = 9
@@ -135,54 +170,84 @@ lib LibC
   JOB_OBJECT_MSG_EXIT_PROCESS          = 7
   JOB_OBJECT_MSG_ABNORMAL_EXIT_PROCESS = 8
 
-  struct CONTEXT
-    p1Home : DWORD64
-    p2Home : DWORD64
-    p3Home : DWORD64
-    p4Home : DWORD64
-    p5Home : DWORD64
-    p6Home : DWORD64
-    contextFlags : DWORD
-    mxCsr : DWORD
-    segCs : WORD
-    segDs : WORD
-    segEs : WORD
-    segFs : WORD
-    segGs : WORD
-    segSs : WORD
-    eFlags : DWORD
-    dr0 : DWORD64
-    dr1 : DWORD64
-    dr2 : DWORD64
-    dr3 : DWORD64
-    dr6 : DWORD64
-    dr7 : DWORD64
-    rax : DWORD64
-    rcx : DWORD64
-    rdx : DWORD64
-    rbx : DWORD64
-    rsp : DWORD64
-    rbp : DWORD64
-    rsi : DWORD64
-    rdi : DWORD64
-    r8 : DWORD64
-    r9 : DWORD64
-    r10 : DWORD64
-    r11 : DWORD64
-    r12 : DWORD64
-    r13 : DWORD64
-    r14 : DWORD64
-    r15 : DWORD64
-    rip : DWORD64
-    fltSave : UInt8[512]           # DUMMYUNIONNAME
-    vectorRegister : UInt8[16][26] # M128A[26]
-    vectorControl : DWORD64
-    debugControl : DWORD64
-    lastBranchToRip : DWORD64
-    lastBranchFromRip : DWORD64
-    lastExceptionToRip : DWORD64
-    lastExceptionFromRip : DWORD64
-  end
+  {% if flag?(:x86_64) %}
+    struct CONTEXT
+      p1Home : DWORD64
+      p2Home : DWORD64
+      p3Home : DWORD64
+      p4Home : DWORD64
+      p5Home : DWORD64
+      p6Home : DWORD64
+      contextFlags : DWORD
+      mxCsr : DWORD
+      segCs : WORD
+      segDs : WORD
+      segEs : WORD
+      segFs : WORD
+      segGs : WORD
+      segSs : WORD
+      eFlags : DWORD
+      dr0 : DWORD64
+      dr1 : DWORD64
+      dr2 : DWORD64
+      dr3 : DWORD64
+      dr6 : DWORD64
+      dr7 : DWORD64
+      rax : DWORD64
+      rcx : DWORD64
+      rdx : DWORD64
+      rbx : DWORD64
+      rsp : DWORD64
+      rbp : DWORD64
+      rsi : DWORD64
+      rdi : DWORD64
+      r8 : DWORD64
+      r9 : DWORD64
+      r10 : DWORD64
+      r11 : DWORD64
+      r12 : DWORD64
+      r13 : DWORD64
+      r14 : DWORD64
+      r15 : DWORD64
+      rip : DWORD64
+      fltSave : UInt8[512]           # DUMMYUNIONNAME
+      vectorRegister : UInt8[16][26] # M128A[26]
+      vectorControl : DWORD64
+      debugControl : DWORD64
+      lastBranchToRip : DWORD64
+      lastBranchFromRip : DWORD64
+      lastExceptionToRip : DWORD64
+      lastExceptionFromRip : DWORD64
+    end
+  {% elsif flag?(:aarch64) %}
+    struct ARM64_NT_NEON128_DUMMYSTRUCTNAME
+      low : ULongLong
+      high : LongLong
+    end
+
+    union ARM64_NT_NEON128
+      dummystructname : ARM64_NT_NEON128_DUMMYSTRUCTNAME
+      d : Double[2]
+      s : Float[4]
+      h : WORD[8]
+      b : BYTE[16]
+    end
+
+    struct CONTEXT
+      contextFlags : DWORD
+      cpsr : DWORD
+      x : DWORD64[31] # x29 = fp, x30 = lr
+      sp : DWORD64
+      pc : DWORD64
+      v : ARM64_NT_NEON128[32]
+      fpcr : DWORD
+      fpsr : DWORD
+      bcr : DWORD[8]
+      bvr : DWORD64[8]
+      wcr : DWORD[8]
+      wvr : DWORD64[8]
+    end
+  {% end %}
 
   {% if flag?(:x86_64) %}
     CONTEXT_AMD64 = DWORD.new!(0x00100000)
@@ -206,6 +271,14 @@ lib LibC
     CONTEXT_EXTENDED_REGISTERS = CONTEXT_i386 | 0x00000020
 
     CONTEXT_FULL = CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_SEGMENTS
+  {% elsif flag?(:aarch64) %}
+    CONTEXT_ARM64 = DWORD.new!(0x00400000)
+
+    CONTEXT_ARM64_CONTROL        = CONTEXT_ARM64 | 0x1
+    CONTEXT_ARM64_INTEGER        = CONTEXT_ARM64 | 0x2
+    CONTEXT_ARM64_FLOATING_POINT = CONTEXT_ARM64 | 0x4
+
+    CONTEXT_FULL = CONTEXT_ARM64_CONTROL | CONTEXT_ARM64_INTEGER | CONTEXT_ARM64_FLOATING_POINT
   {% end %}
 
   fun RtlCaptureContext(contextRecord : CONTEXT*)
@@ -324,9 +397,65 @@ lib LibC
     optionalHeader : IMAGE_OPTIONAL_HEADER64
   end
 
+  IMAGE_DIRECTORY_ENTRY_EXPORT =  0
+  IMAGE_DIRECTORY_ENTRY_IMPORT =  1
+  IMAGE_DIRECTORY_ENTRY_IAT    = 12
+
+  IMAGE_SCN_CNT_INITIALIZED_DATA = 0x00000040
+
+  struct IMAGE_SECTION_HEADER
+    name : BYTE[8]
+    virtualSize : DWORD
+    virtualAddress : DWORD
+    sizeOfRawData : DWORD
+    pointerToRawData : DWORD
+    pointerToRelocations : DWORD
+    pointerToLinenumbers : DWORD
+    numberOfRelocations : WORD
+    numberOfLinenumbers : WORD
+    characteristics : DWORD
+  end
+
+  struct IMAGE_EXPORT_DIRECTORY
+    characteristics : DWORD
+    timeDateStamp : DWORD
+    majorVersion : WORD
+    minorVersion : WORD
+    name : DWORD
+    base : DWORD
+    numberOfFunctions : DWORD
+    numberOfNames : DWORD
+    addressOfFunctions : DWORD
+    addressOfNames : DWORD
+    addressOfNameOrdinals : DWORD
+  end
+
   struct IMAGE_IMPORT_BY_NAME
     hint : WORD
     name : CHAR[1]
+  end
+
+  struct IMAGE_SYMBOL_n_name
+    short : DWORD
+    long : DWORD
+  end
+
+  union IMAGE_SYMBOL_n
+    shortName : BYTE[8]
+    name : IMAGE_SYMBOL_n_name
+  end
+
+  IMAGE_SYM_CLASS_EXTERNAL = 2
+  IMAGE_SYM_CLASS_STATIC   = 3
+
+  @[Packed]
+  struct IMAGE_SYMBOL
+    n : IMAGE_SYMBOL_n
+    value : DWORD
+    sectionNumber : Short
+    type : WORD
+    storageClass : BYTE
+    numberOfAuxSymbols : BYTE
   end
 
   union IMAGE_THUNK_DATA64_u1
@@ -345,4 +474,7 @@ lib LibC
   alias IMAGE_NT_HEADERS = IMAGE_NT_HEADERS64
   alias IMAGE_THUNK_DATA = IMAGE_THUNK_DATA64
   IMAGE_ORDINAL_FLAG = IMAGE_ORDINAL_FLAG64
+
+  TIMER_QUERY_STATE  = 0x0001
+  TIMER_MODIFY_STATE = 0x0002
 end

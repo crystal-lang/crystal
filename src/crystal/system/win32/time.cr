@@ -53,26 +53,34 @@ module Crystal::System::Time
     ((filetime.dwHighDateTime.to_u64 << 32) | filetime.dwLowDateTime.to_u64).to_f64 / FILETIME_TICKS_PER_SECOND.to_f64
   end
 
-  @@performance_frequency : Int64 = begin
-    ret = LibC.QueryPerformanceFrequency(out frequency)
-    if ret == 0
-      raise RuntimeError.from_winerror("QueryPerformanceFrequency")
-    end
-
+  private class_getter performance_frequency : Int64 do
+    LibC.QueryPerformanceFrequency(out frequency)
     frequency
   end
 
   def self.monotonic : {Int64, Int32}
-    if LibC.QueryPerformanceCounter(out ticks) == 0
-      raise RuntimeError.from_winerror("QueryPerformanceCounter")
-    end
+    LibC.QueryPerformanceCounter(out ticks)
+    frequency = performance_frequency
+    {ticks // frequency, (ticks.remainder(frequency) * NANOSECONDS_PER_SECOND / frequency).to_i32}
+  end
 
-    {ticks // @@performance_frequency, (ticks.remainder(@@performance_frequency) * NANOSECONDS_PER_SECOND / @@performance_frequency).to_i32}
+  def self.ticks : UInt64
+    LibC.QueryPerformanceCounter(out ticks)
+    ticks.to_u64! &* (NANOSECONDS_PER_SECOND // performance_frequency)
   end
 
   def self.load_localtime : ::Time::Location?
-    if LibC.GetTimeZoneInformation(out info) != LibC::TIME_ZONE_ID_INVALID
-      initialize_location_from_TZI(info, "Local")
+    if LibC.GetDynamicTimeZoneInformation(out info) != LibC::TIME_ZONE_ID_INVALID
+      windows_name = String.from_utf16(info.timeZoneKeyName.to_slice, truncate_at_null: true)
+
+      return unless canonical_iana_name = windows_to_iana[windows_name]?
+      return unless windows_info = iana_to_windows[canonical_iana_name]?
+      _, stdname, dstname = windows_info
+
+      # In Crystal, we use only `UTC` as name for the UTC time zone
+      canonical_iana_name = "UTC" if canonical_iana_name == "Etc/UTC"
+
+      initialize_location_from_TZI(pointerof(info).as(LibC::TIME_ZONE_INFORMATION*).value, canonical_iana_name, windows_name, stdname, dstname)
     end
   end
 
@@ -90,7 +98,8 @@ module Crystal::System::Time
     daylightDate : LibC::SYSTEMTIME
 
   def self.load_iana_zone(iana_name : String) : ::Time::Location?
-    return unless windows_name = iana_to_windows[iana_name]?
+    return unless windows_info = iana_to_windows[iana_name]?
+    windows_name, stdname, dstname = windows_info
 
     WindowsRegistry.open?(LibC::HKEY_LOCAL_MACHINE, REGISTRY_TIME_ZONES) do |key_handle|
       WindowsRegistry.open?(key_handle, windows_name.to_utf16) do |sub_handle|
@@ -106,18 +115,17 @@ module Crystal::System::Time
         )
         WindowsRegistry.get_raw(sub_handle, Std, tzi.standardName.to_slice.to_unsafe_bytes)
         WindowsRegistry.get_raw(sub_handle, Dlt, tzi.daylightName.to_slice.to_unsafe_bytes)
-        initialize_location_from_TZI(tzi, iana_name)
+        initialize_location_from_TZI(tzi, iana_name, windows_name, stdname, dstname)
       end
     end
   end
 
-  private def self.initialize_location_from_TZI(info, name)
-    stdname, dstname = normalize_zone_names(info)
-
-    if info.standardDate.wMonth == 0_u16
+  private def self.initialize_location_from_TZI(info, name, windows_name, stdname, dstname)
+    if info.standardDate.wMonth == 0_u16 || info.daylightDate.wMonth == 0_u16
       # No DST
       zone = ::Time::Location::Zone.new(stdname, info.bias * BIAS_TO_OFFSET_FACTOR, false)
-      return ::Time::Location.new(name, [zone])
+      default_tz_args = {0, 0, ::Time::TZ::MonthWeekDay.default, ::Time::TZ::MonthWeekDay.default}
+      return ::Time::WindowsLocation.new(name, [zone], windows_name, default_tz_args)
     end
 
     zones = [
@@ -125,110 +133,22 @@ module Crystal::System::Time
       ::Time::Location::Zone.new(dstname, (info.bias + info.daylightBias) * BIAS_TO_OFFSET_FACTOR, true),
     ]
 
-    first_date = info.standardDate
-    second_date = info.daylightDate
-    first_index = 0_u8
-    second_index = 1_u8
+    std_index = 0
+    dst_index = 1
+    transition1 = systemtime_to_mwd(info.daylightDate)
+    transition2 = systemtime_to_mwd(info.standardDate)
+    tz_args = {std_index, dst_index, transition1, transition2}
 
-    if info.standardDate.wMonth > info.daylightDate.wMonth
-      first_date, second_date = second_date, first_date
-      first_index, second_index = second_index, first_index
-    end
-
-    transitions = [] of ::Time::Location::ZoneTransition
-
-    current_year = ::Time.utc.year
-
-    (current_year - 100).upto(current_year + 100) do |year|
-      tstamp = calculate_switchdate_in_year(year, first_date) - (zones[second_index].offset)
-      transitions << ::Time::Location::ZoneTransition.new(tstamp, first_index, first_index == 0, false)
-
-      tstamp = calculate_switchdate_in_year(year, second_date) - (zones[first_index].offset)
-      transitions << ::Time::Location::ZoneTransition.new(tstamp, second_index, second_index == 0, false)
-    end
-
-    ::Time::Location.new(name, zones, transitions)
+    ::Time::WindowsLocation.new(name, zones, windows_name, tz_args)
   end
 
-  # Calculates the day of a DST switch in year *year* by extrapolating the date given in
-  # *systemtime* (for the current year).
-  #
-  # Returns the number of seconds since UNIX epoch (Jan 1 1970) in the local time zone.
-  private def self.calculate_switchdate_in_year(year, systemtime)
-    # Windows specifies daylight savings information in "day in month" format:
-    # wMonth is month number (1-12)
-    # wDayOfWeek is appropriate weekday (Sunday=0 to Saturday=6)
-    # wDay is week within the month (1 to 5, where 5 is last week of the month)
-    # wHour, wMinute and wSecond are absolute time
-    day = 1
-
-    time = ::Time.utc(year, systemtime.wMonth.to_i32, day, systemtime.wHour.to_i32, systemtime.wMinute.to_i32, systemtime.wSecond.to_i32)
-    i = systemtime.wDayOfWeek.to_i32 - (time.day_of_week.to_i32 % 7)
-
-    if i < 0
-      i += 7
-    end
-
-    day += i
-
-    week = systemtime.wDay - 1
-
-    if week < 4
-      day += week * 7
-    else
-      # "Last" instance of the day.
-      day += 4 * 7
-      if day > ::Time.days_in_month(year, systemtime.wMonth)
-        day -= 7
-      end
-    end
-
-    time += (day - 1).days
-
-    time.to_unix
+  private def self.systemtime_to_mwd(time)
+    seconds = 3600 * time.wHour + 60 * time.wMinute + time.wSecond
+    ::Time::TZ::MonthWeekDay.new(time.wMonth.to_i8, time.wDay.to_i8, time.wDayOfWeek.to_i8, seconds)
   end
 
-  # Normalizes the names of the standard and dst zones.
-  private def self.normalize_zone_names(info : LibC::TIME_ZONE_INFORMATION) : Tuple(String, String)
-    stdname, _ = String.from_utf16(info.standardName.to_slice.to_unsafe)
-
-    if normalized_names = windows_zone_names[stdname]?
-      return normalized_names
-    end
-
-    dstname, _ = String.from_utf16(info.daylightName.to_slice.to_unsafe)
-
-    if english_name = translate_zone_name(stdname, dstname)
-      if normalized_names = windows_zone_names[english_name]?
-        return normalized_names
-      end
-    end
-
-    # As a last resort, return the raw names as provided by TIME_ZONE_INFORMATION.
-    # They are most probably localized and we couldn't find a translation.
-    return stdname, dstname
-  end
-
-  REGISTRY_TIME_ZONES = %q(SOFTWARE\Microsoft\Windows NT\CurrentVersion\Time Zones).to_utf16
-  Std                 = "Std".to_utf16
-  Dlt                 = "Dlt".to_utf16
-  TZI                 = "TZI".to_utf16
-
-  # Searches the registry for an English name of a time zone named *stdname* or *dstname*
-  # and returns the English name.
-  private def self.translate_zone_name(stdname, dstname)
-    WindowsRegistry.open?(LibC::HKEY_LOCAL_MACHINE, REGISTRY_TIME_ZONES) do |key_handle|
-      WindowsRegistry.each_name(key_handle) do |name|
-        WindowsRegistry.open?(key_handle, name) do |sub_handle|
-          # TODO: Implement reading MUI
-          std = WindowsRegistry.get_string(sub_handle, Std)
-          dlt = WindowsRegistry.get_string(sub_handle, Dlt)
-
-          if std == stdname || dlt == dstname
-            return String.from_utf16(name)
-          end
-        end
-      end
-    end
-  end
+  REGISTRY_TIME_ZONES = System.wstr_literal %q(SOFTWARE\Microsoft\Windows NT\CurrentVersion\Time Zones)
+  Std                 = System.wstr_literal "Std"
+  Dlt                 = System.wstr_literal "Dlt"
+  TZI                 = System.wstr_literal "TZI"
 end

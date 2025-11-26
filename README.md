@@ -10,18 +10,17 @@
 
 ---
 
-[![Crystal - Born and raised at Manas](https://cloud.githubusercontent.com/assets/209371/13291809/022e2360-daf8-11e5-8be7-d02c1c8b38fb.png)](https://manas.tech/)
+[![Crystal - Born and raised at Manas](doc/assets/crystal-born-and-raised.svg)](https://manas.tech/)
 
 Crystal is a programming language with the following goals:
 
-* Have a syntax similar to Ruby (but compatibility with it is not a goal)
-* Statically type-checked but without having to specify the type of variables or method arguments.
-* Be able to call C code by writing bindings to it in Crystal.
-* Have compile-time evaluation and generation of code, to avoid boilerplate code.
-* Compile to efficient native code.
+- Have a syntax similar to Ruby (but compatibility with it is not a goal)
+- Statically type-checked but without having to specify the type of variables or method arguments.
+- Be able to call C code by writing bindings to it in Crystal.
+- Have compile-time evaluation and generation of code, to avoid boilerplate code.
+- Compile to efficient native code.
 
-Why?
-----
+## Why?
 
 We love Ruby's efficiency for writing code.
 
@@ -35,37 +34,31 @@ We want full OOP.
 
 Oh, and we don't want to write C code to make the code run faster.
 
-Project Status
---------------
+## Project Status
 
 Within a major version, language features won't be removed or changed in any way that could prevent a Crystal program written with that version from compiling and working. The built-in standard library might be enriched, but it will always be done with backwards compatibility in mind.
 
-Development of the Crystal language is possible thanks to the community's effort and the continued support of [84codes](https://www.84codes.com/), [Nikola Motor Company](https://nikolamotor.com/) and every other [sponsor](https://crystal-lang.org/sponsors).
+Development of the Crystal language is possible thanks to the community's effort and the continued support of [84codes](https://www.84codes.com/) and every other [sponsor](https://crystal-lang.org/sponsors).
 
-Installing
-----------
+## Installing
 
 [Follow these installation instructions](https://crystal-lang.org/install)
 
-Try it online
--------------
+## Try it online
 
 [play.crystal-lang.org](https://play.crystal-lang.org/)
 
-Documentation
--------------
+## Documentation
 
-* [Language Reference](http://crystal-lang.org/reference)
-* [Standard library API](https://crystal-lang.org/api)
-* [Roadmap](https://github.com/crystal-lang/crystal/wiki/Roadmap)
+- [Language Reference](http://crystal-lang.org/reference)
+- [Standard library API](https://crystal-lang.org/api)
+- [Roadmap](https://github.com/crystal-lang/crystal/wiki/Roadmap)
 
-Community
----------
+## Community
 
 Have any questions or suggestions? Ask on the [Crystal Forum](https://forum.crystal-lang.org), on our [Gitter channel](https://gitter.im/crystal-lang/crystal) or IRC channel [#crystal-lang](https://web.libera.chat/#crystal-lang) at irc.libera.chat, or on Stack Overflow under the [crystal-lang](http://stackoverflow.com/questions/tagged/crystal-lang) tag. There is also an archived [Google Group](https://groups.google.com/forum/?fromgroups#!forum/crystal-lang).
 
-Contributing
-------------
+## Contributing
 
 The Crystal repository is hosted at [crystal-lang/crystal](https://github.com/crystal-lang/crystal) on GitHub.
 

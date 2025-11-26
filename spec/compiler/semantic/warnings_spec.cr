@@ -1,6 +1,193 @@
 require "../spec_helper"
 
 describe "Semantic: warnings" do
+  describe "deprecated types" do
+    it "detects deprecated class methods" do
+      assert_warning <<-CRYSTAL,
+        @[Deprecated]
+        class Foo
+        end
+
+        Foo.new
+        CRYSTAL
+        "warning in line 5\nWarning: Deprecated Foo."
+
+      assert_warning <<-CRYSTAL,
+        @[Deprecated]
+        module Foo::Bar
+          def self.baz
+          end
+        end
+
+        Foo::Bar.baz
+        CRYSTAL
+        "warning in line 7\nWarning: Deprecated Foo::Bar."
+    end
+
+    it "detects deprecated superclass" do
+      assert_warning <<-CRYSTAL,
+        @[Deprecated]
+        class Foo
+        end
+
+        class Bar < Foo
+        end
+        CRYSTAL
+        "warning in line 5\nWarning: Deprecated Foo."
+    end
+
+    it "doesn't check superclass when the class is deprecated" do
+      assert_warning <<-CRYSTAL,
+        @[Deprecated]
+        class Foo
+        end
+
+        @[Deprecated]
+        class Bar < Foo
+        end
+
+        Bar.new
+        CRYSTAL
+        "warning in line 9\nWarning: Deprecated Bar."
+    end
+
+    it "detects deprecated type reference" do
+      assert_warning <<-CRYSTAL,
+        @[Deprecated]
+        class Foo
+        end
+
+        def p(x)
+          x
+        end
+
+        p Foo
+        CRYSTAL
+        "warning in line 9\nWarning: Deprecated Foo."
+    end
+
+    it "only affects the type not the namespace" do
+      assert_no_warning <<-CRYSTAL
+        @[Deprecated]
+        class Foo
+          class Bar
+          end
+        end
+
+        Foo::Bar.new
+        CRYSTAL
+    end
+
+    it "doesn't deprecate instance methods (constructors already warn)" do
+      assert_warning <<-CRYSTAL,
+        @[Deprecated]
+        class Foo
+          def do_something
+          end
+        end
+
+        foo = Foo.new
+        foo.do_something
+        CRYSTAL
+        "warning in line 7\nWarning: Deprecated Foo."
+    end
+
+    it "detects deprecated through alias" do
+      assert_warning <<-CRYSTAL,
+        @[Deprecated]
+        class Foo
+        end
+
+        alias Bar = Foo
+        alias Baz = Bar
+
+        Baz.new
+        CRYSTAL
+        "warning in line 8\nWarning: Deprecated Foo."
+    end
+
+    it "detects deprecated constant in generic argument" do
+      assert_warning <<-CRYSTAL,
+        @[Deprecated("Do not use me")]
+        class Foo
+        end
+
+        class Bar(T)
+        end
+
+        Bar(Foo)
+        CRYSTAL
+        "warning in line 8\nWarning: Deprecated Foo. Do not use me"
+    end
+
+    it "detects deprecated constant in include" do
+      assert_warning <<-CRYSTAL,
+        @[Deprecated("Do not use me")]
+        module Foo
+        end
+
+        class Bar
+          include Foo
+        end
+
+        Bar.new
+        CRYSTAL
+        "warning in line 6\nWarning: Deprecated Foo. Do not use me"
+    end
+
+    it "detects deprecated constant in extend" do
+      assert_warning <<-CRYSTAL,
+        @[Deprecated("Do not use me")]
+        module Foo
+        end
+
+        class Bar
+          extend Foo
+        end
+        CRYSTAL
+        "warning in line 6\nWarning: Deprecated Foo. Do not use me"
+    end
+  end
+
+  describe "deprecated alias" do
+    it "detects deprecated class method calls" do
+      assert_warning <<-CRYSTAL,
+        class Foo
+        end
+
+        @[Deprecated("Use Foo.")]
+        alias Bar = Foo
+
+        Bar.new
+        CRYSTAL
+        "warning in line 7\nWarning: Deprecated Bar. Use Foo."
+
+      assert_warning <<-CRYSTAL,
+        module Foo::Bar
+          def self.baz; end
+        end
+
+        @[Deprecated("Use Foo::Bar.")]
+        alias Bar = Foo::Bar
+
+        Bar.baz
+        CRYSTAL
+        "warning in line 8\nWarning: Deprecated Bar. Use Foo::Bar."
+    end
+
+    it "doesn't deprecate the aliased type" do
+      assert_no_warning <<-CRYSTAL
+        class Foo
+        end
+
+        @[Deprecated("Use Foo.")]
+        alias Bar = Foo
+
+        Foo.new
+        CRYSTAL
+    end
+  end
+
   describe "deprecated annotations" do
     it "detects deprecated annotations" do
       assert_warning <<-CRYSTAL,
@@ -40,7 +227,7 @@ describe "Semantic: warnings" do
 
         foo
         CRYSTAL
-        "warning in line 5\nWarning: Deprecated top-level foo. Do not use me"
+        "warning in line 5\nWarning: Deprecated ::foo. Do not use me"
     end
 
     it "deprecation reason is optional" do
@@ -51,7 +238,7 @@ describe "Semantic: warnings" do
 
         foo
         CRYSTAL
-        "warning in line 5\nWarning: Deprecated top-level foo."
+        "warning in line 5\nWarning: Deprecated ::foo."
     end
 
     it "detects deprecated instance methods" do
@@ -127,7 +314,7 @@ describe "Semantic: warnings" do
 
         foo(a: 2)
         CRYSTAL
-        "warning in line 5\nWarning: Deprecated top-level foo:a."
+        "warning in line 5\nWarning: Deprecated ::foo."
     end
 
     it "detects deprecated initialize" do
@@ -228,47 +415,45 @@ describe "Semantic: warnings" do
     end
 
     it "ignore deprecation excluded locations" do
-      with_tempfile("check_warnings_excludes") do |path|
-        FileUtils.mkdir_p File.join(path, "lib")
+      with_tempdir("check_warnings_excludes") do
+        Dir.mkdir "lib"
 
         # NOTE tempfile might be created in symlinked folder
         # which affects how to match current dir /var/folders/...
         # with the real path /private/var/folders/...
-        path = File.real_path(path)
+        path = File.realpath(".")
 
         main_filename = File.join(path, "main.cr")
         output_filename = File.join(path, "main")
 
-        Dir.cd(path) do
-          File.write main_filename, <<-CRYSTAL
-            require "./lib/foo"
+        File.write main_filename, <<-CRYSTAL
+          require "./lib/foo"
 
-            bar
+          bar
+          foo
+          CRYSTAL
+        File.write File.join(path, "lib", "foo.cr"), <<-CRYSTAL
+          @[Deprecated("Do not use me")]
+          def foo
+          end
+
+          def bar
             foo
-            CRYSTAL
-          File.write File.join(path, "lib", "foo.cr"), <<-CRYSTAL
-            @[Deprecated("Do not use me")]
-            def foo
-            end
+          end
+          CRYSTAL
 
-            def bar
-              foo
-            end
-            CRYSTAL
+        compiler = create_spec_compiler
+        compiler.warnings.level = :all
+        compiler.warnings.exclude_lib_path = true
+        compiler.prelude = "empty"
+        compiler.compile Compiler::Source.new(main_filename, File.read(main_filename)), output_filename
 
-          compiler = create_spec_compiler
-          compiler.warnings.level = :all
-          compiler.warnings.exclude_lib_path = true
-          compiler.prelude = "empty"
-          compiler.compile Compiler::Source.new(main_filename, File.read(main_filename)), output_filename
-
-          compiler.warnings.infos.size.should eq(1)
-        end
+        compiler.warnings.infos.size.should eq(1)
       end
     end
 
     it "ignores nested calls to deprecated methods" do
-      x = assert_warning <<-CRYSTAL,
+      assert_warning <<-CRYSTAL,
         @[Deprecated]
         def foo; bar; end
 
@@ -277,7 +462,7 @@ describe "Semantic: warnings" do
 
         foo
         CRYSTAL
-        "warning in line 7\nWarning: Deprecated top-level foo."
+        "warning in line 7\nWarning: Deprecated ::foo."
     end
 
     it "errors if invalid argument type" do
@@ -308,29 +493,201 @@ describe "Semantic: warnings" do
     end
   end
 
+  describe "deprecated method args" do
+    describe "defs" do
+      it "warns when a deprecated positional argument is passed" do
+        assert_warning <<-CRYSTAL,
+          def foo(a, @[Deprecated] b, c)
+          end
+
+          foo(1, 2, 3)
+        CRYSTAL
+          "warning in line 4\nWarning: Deprecated argument b."
+      end
+
+      it "warns when a deprecated keyword argument is passed" do
+        assert_warning <<-CRYSTAL,
+          def foo(x, *, a, @[Deprecated] b)
+          end
+
+          foo(0, a: 1, b: 2)
+        CRYSTAL
+          "warning in line 4\nWarning: Deprecated argument b."
+      end
+
+      it "warns when a deprecated splat argument is passed" do
+        assert_warning <<-CRYSTAL,
+          def foo(a, @[Deprecated] *args)
+          end
+
+          foo(1, 2)
+        CRYSTAL
+          "warning in line 4\nWarning: Deprecated argument args."
+      end
+
+      it "warns when a deprecated double splat argument is passed" do
+        assert_warning <<-CRYSTAL,
+          def foo(*, a, @[Deprecated] **opts)
+          end
+
+          foo(a: 1, bad: 2)
+        CRYSTAL
+          "warning in line 4\nWarning: Deprecated argument opts."
+      end
+
+      it "warns when a deprecated default positional argument is passed" do
+        assert_warning <<-CRYSTAL,
+          def foo(a, @[Deprecated] b = nil, c = nil)
+          end
+
+          foo(1, 2)
+        CRYSTAL
+          "warning in line 4\nWarning: Deprecated argument b."
+      end
+
+      it "warns when a deprecated default keyword argument is passed" do
+        assert_warning <<-CRYSTAL,
+          def foo(*, a, @[Deprecated] b = nil)
+          end
+
+          foo(a: 1, b: 2)
+        CRYSTAL
+          "warning in line 4\nWarning: Deprecated argument b."
+      end
+
+      it "doesn't warn when a deprecated default positional argument isn't explicitly passed" do
+        assert_no_warning <<-CRYSTAL
+          def foo(a, @[Deprecated] b = nil, c = nil)
+          end
+
+          foo(1)
+          foo(1, c: 3)
+        CRYSTAL
+      end
+
+      it "doesn't warn when a deprecated default keyword argument isn't explicitly passed" do
+        assert_no_warning <<-CRYSTAL
+          def foo(*, a, @[Deprecated] b = nil)
+          end
+
+          foo(a: 1)
+        CRYSTAL
+      end
+
+      it "warns when a default value calls a method with a deprecated arg" do
+        assert_warning <<-CRYSTAL,
+          def bar(@[Deprecated] x)
+          end
+
+          def foo(a, @[Deprecated] b = bar(a))
+          end
+
+          foo(1)
+        CRYSTAL
+          "warning in line 4\nWarning: Deprecated argument x."
+
+        assert_warning <<-CRYSTAL,
+          def bar(@[Deprecated] x)
+          end
+
+          def foo(a, @[Deprecated] b = bar(a))
+          end
+
+          foo(1, 2)
+        CRYSTAL
+          "warning in line 7\nWarning: Deprecated argument b."
+      end
+
+      it "warns when a deprecated arg default value calls a method with a deprecated arg" do
+        assert_warning <<-CRYSTAL,
+          def bar(@[Deprecated] x)
+          end
+
+          def foo(@[Deprecated] b = bar(1))
+          end
+
+          foo
+        CRYSTAL
+          "warning in line 4\nWarning: Deprecated argument x."
+      end
+    end
+
+    describe "constructors" do
+      it "warns when a deprecated positional arg is passed" do
+        assert_warning <<-CRYSTAL,
+          class Foo
+            def initialize(a, @[Deprecated] b, c)
+            end
+          end
+
+          Foo.new(1, 2, 3)
+        CRYSTAL
+          "warning in line 6\nWarning: Deprecated argument b."
+      end
+
+      it "warns when a deprecated keyword argument is passed" do
+        assert_warning <<-CRYSTAL,
+          class Foo
+            def initialize(x, *, a, @[Deprecated] b)
+            end
+          end
+
+          Foo.new(0, a: 1, b: 2)
+        CRYSTAL
+          "warning in line 6\nWarning: Deprecated argument b."
+      end
+
+      it "warns when a deprecated splat argument is passed" do
+        assert_warning <<-CRYSTAL,
+          class Foo
+            def initialize(a, @[Deprecated] *args)
+            end
+          end
+
+          Foo.new(1, 2)
+        CRYSTAL
+          "warning in line 6\nWarning: Deprecated argument args."
+      end
+
+      it "warns when a deprecated double splat argument is passed" do
+        assert_warning <<-CRYSTAL,
+          class Foo
+            def initialize(*, a, @[Deprecated] **opts)
+            end
+          end
+
+          Foo.new(a: 1, bad: 2)
+        CRYSTAL
+          "warning in line 6\nWarning: Deprecated argument opts."
+      end
+    end
+  end
+
   describe "deprecated macros" do
     it "detects top-level deprecated macros" do
-      assert_warning %(
+      assert_warning <<-CRYSTAL,
         @[Deprecated("Do not use me")]
         macro foo
         end
 
         foo
-      ), "warning in line 6\nWarning: Deprecated top-level foo. Do not use me"
+        CRYSTAL
+        "warning in line 5\nWarning: Deprecated ::foo. Do not use me"
     end
 
     it "deprecation reason is optional" do
-      assert_warning %(
+      assert_warning <<-CRYSTAL,
         @[Deprecated]
         macro foo
         end
 
         foo
-      ), "warning in line 6\nWarning: Deprecated top-level foo."
+        CRYSTAL
+        "warning in line 5\nWarning: Deprecated ::foo."
     end
 
     it "detects deprecated class macros" do
-      assert_warning %(
+      assert_warning <<-CRYSTAL,
         class Foo
           @[Deprecated("Do not use me")]
           macro m
@@ -338,11 +695,12 @@ describe "Semantic: warnings" do
         end
 
         Foo.m
-      ), "warning in line 8\nWarning: Deprecated Foo.m. Do not use me"
+        CRYSTAL
+        "warning in line 7\nWarning: Deprecated Foo.m. Do not use me"
     end
 
     it "detects deprecated generic class macros" do
-      assert_warning %(
+      assert_warning <<-CRYSTAL,
         class Foo(T)
           @[Deprecated("Do not use me")]
           macro m
@@ -350,11 +708,12 @@ describe "Semantic: warnings" do
         end
 
         Foo.m
-      ), "warning in line 8\nWarning: Deprecated Foo.m. Do not use me"
+        CRYSTAL
+        "warning in line 7\nWarning: Deprecated Foo.m. Do not use me"
     end
 
     it "detects deprecated module macros" do
-      assert_warning %(
+      assert_warning <<-CRYSTAL,
         module Foo
           @[Deprecated("Do not use me")]
           macro m
@@ -362,21 +721,23 @@ describe "Semantic: warnings" do
         end
 
         Foo.m
-      ), "warning in line 8\nWarning: Deprecated Foo.m. Do not use me"
+        CRYSTAL
+        "warning in line 7\nWarning: Deprecated Foo.m. Do not use me"
     end
 
     it "detects deprecated macros with named arguments" do
-      assert_warning %(
+      assert_warning <<-CRYSTAL,
         @[Deprecated]
         macro foo(*, a)
         end
 
         foo(a: 2)
-      ), "warning in line 6\nWarning: Deprecated top-level foo."
+        CRYSTAL
+        "warning in line 5\nWarning: Deprecated ::foo."
     end
 
     it "informs warnings once per call site location (a)" do
-      warning_failures = warnings_result %(
+      warning_failures = warnings_result <<-CRYSTAL
         class Foo
           @[Deprecated("Do not use me")]
           macro m
@@ -389,13 +750,13 @@ describe "Semantic: warnings" do
 
         Foo.b
         Foo.b
-      )
+        CRYSTAL
 
       warning_failures.size.should eq(1)
     end
 
     it "informs warnings once per call site location (b)" do
-      warning_failures = warnings_result %(
+      warning_failures = warnings_result <<-CRYSTAL
         class Foo
           @[Deprecated("Do not use me")]
           macro m
@@ -404,76 +765,71 @@ describe "Semantic: warnings" do
 
         Foo.m
         Foo.m
-      )
+        CRYSTAL
 
       warning_failures.size.should eq(2)
     end
 
     it "ignore deprecation excluded locations" do
-      with_tempfile("check_warnings_excludes") do |path|
-        FileUtils.mkdir_p File.join(path, "lib")
+      with_tempdir("check_warnings_excludes") do
+        Dir.mkdir_p "lib"
 
         # NOTE tempfile might be created in symlinked folder
         # which affects how to match current dir /var/folders/...
         # with the real path /private/var/folders/...
-        path = File.real_path(path)
+        path = File.realpath(".")
 
         main_filename = File.join(path, "main.cr")
         output_filename = File.join(path, "main")
 
-        Dir.cd(path) do
-          File.write main_filename, %(
-            require "./lib/foo"
+        File.write main_filename, %(
+          require "./lib/foo"
 
-            bar
+          bar
+          foo
+        )
+        File.write File.join(path, "lib", "foo.cr"), %(
+          @[Deprecated("Do not use me")]
+          macro foo
+          end
+
+          macro bar
             foo
-          )
-          File.write File.join(path, "lib", "foo.cr"), %(
-            @[Deprecated("Do not use me")]
-            macro foo
-            end
+          end
+        )
 
-            macro bar
-              foo
-            end
-          )
+        compiler = create_spec_compiler
+        compiler.warnings.level = :all
+        compiler.warnings.exclude_lib_path = true
+        compiler.prelude = "empty"
+        compiler.compile Compiler::Source.new(main_filename, File.read(main_filename)), output_filename
 
-          compiler = create_spec_compiler
-          compiler.warnings.level = :all
-          compiler.warnings.exclude_lib_path = true
-          compiler.prelude = "empty"
-          compiler.compile Compiler::Source.new(main_filename, File.read(main_filename)), output_filename
-
-          compiler.warnings.infos.size.should eq(1)
-        end
+        compiler.warnings.infos.size.should eq(1)
       end
     end
 
     it "errors if invalid argument type" do
-      assert_error %(
+      assert_error <<-CRYSTAL, "first argument must be a String"
         @[Deprecated(42)]
         macro foo
         end
-        ),
-        "first argument must be a String"
+        CRYSTAL
     end
 
     it "errors if too many arguments" do
-      assert_error %(
+      assert_error <<-CRYSTAL, "wrong number of deprecated annotation arguments (given 2, expected 1)"
         @[Deprecated("Do not use me", "extra arg")]
         macro foo
         end
-        ),
-        "wrong number of deprecated annotation arguments (given 2, expected 1)"
+        CRYSTAL
     end
 
     it "errors if invalid named argument" do
-      assert_error %(
+      assert_error <<-CRYSTAL, "too many named arguments (given 1, expected maximum 0)"
         @[Deprecated(invalid: "Do not use me")]
         macro foo
         end
-        ),
-        "too many named arguments (given 1, expected maximum 0)"
+        CRYSTAL
     end
   end
 

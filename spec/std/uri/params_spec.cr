@@ -90,7 +90,7 @@ class URI
 
       it "builds from named tuple with IO" do
         io = IO::Memory.new
-        encoded = Params.encode(io, {foo: "bar", baz: ["quux", "quuz"]})
+        Params.encode(io, {foo: "bar", baz: ["quux", "quuz"]})
         io.to_s.should eq("foo=bar&baz=quux&baz=quuz")
       end
     end
@@ -142,20 +142,20 @@ class URI
 
       it "return nil when there is no such param" do
         params = Params.parse("foo=bar&foo=baz&baz=qux")
-        params["non_existent_param"]?.should eq(nil)
+        params["non_existent_param"]?.should be_nil
       end
     end
 
     describe "#has_key?(name)" do
       it "returns true if param with provided name exists" do
         params = Params.parse("foo=bar&foo=baz&baz=qux")
-        params.has_key?("foo").should eq(true)
-        params.has_key?("baz").should eq(true)
+        params.has_key?("foo").should be_true
+        params.has_key?("baz").should be_true
       end
 
       it "return false if param with provided name does not exist" do
         params = Params.parse("foo=bar&foo=baz&baz=qux")
-        params.has_key?("non_existent_param").should eq(false)
+        params.has_key?("non_existent_param").should be_false
       end
     end
 
@@ -317,7 +317,7 @@ class URI
     end
 
     describe "#merge!" do
-      it "modifies the reciever" do
+      it "modifies the receiver" do
         params = Params.parse("foo=bar&foo=baz&qux=zoo")
         other_params = Params.parse("foo=buzz&foo=extra")
 
@@ -364,7 +364,7 @@ class URI
         params.merge(other_params, replace: false).to_s.should eq("foo=bar&foo=baz&foo=buzz&foo=extra&qux=zoo")
       end
 
-      it "does not modify the reciever" do
+      it "does not modify the receiver" do
         params = Params.parse("foo=bar&foo=baz&qux=zoo")
         other_params = Params.parse("foo=buzz&foo=extra")
 

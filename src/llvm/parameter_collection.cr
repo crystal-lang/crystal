@@ -8,7 +8,7 @@ struct LLVM::ParameterCollection
     LibLLVM.get_count_params(@function).to_i
   end
 
-  def to_a
+  def to_a : Array(LLVM::Value)
     param_size = size()
     Array(LLVM::Value).build(param_size) do |buffer|
       LibLLVM.get_params(@function, buffer.as(LibLLVM::ValueRef*))

@@ -6,39 +6,36 @@ describe "Semantic: lib" do
   end
 
   it "raises on undefined fun" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined fun 'foo' for LibC"
       lib LibC
       end
 
       LibC.foo
-      ),
-      "undefined fun 'foo' for LibC"
+      CRYSTAL
   end
 
   it "raises wrong number of arguments" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "wrong number of arguments for 'LibC#foo' (given 1, expected 0)"
       lib LibC
         fun foo : Int32
       end
 
       LibC.foo 1
-      ),
-      "wrong number of arguments for 'LibC#foo' (given 1, expected 0)"
+      CRYSTAL
   end
 
   it "raises wrong argument type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "argument 'x' of 'LibC#foo' must be Int32, not Char"
       lib LibC
         fun foo(x : Int32) : Int32
       end
 
       LibC.foo 'a'
-      ),
-      "argument 'x' of 'LibC#foo' must be Int32, not Char"
+      CRYSTAL
   end
 
   it "reports error when changing var type and something breaks" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined method '+' for Char"
       class LibFoo
         def initialize
           @value = 1
@@ -55,12 +52,11 @@ describe "Semantic: lib" do
       f = LibFoo.new
       f.value + 1
       f.value = 'a'
-      ),
-      "undefined method '+' for Char"
+      CRYSTAL
   end
 
   it "reports error when changing instance var type and something breaks" do
-    assert_error "
+    assert_error <<-CRYSTAL, "argument 'c' of 'Lib#bar' must be Char"
       lib Lib
         fun bar(c : Char)
       end
@@ -83,8 +79,7 @@ describe "Semantic: lib" do
       foo(f)
 
       f.value = 1
-      ",
-      "argument 'c' of 'Lib#bar' must be Char"
+      CRYSTAL
   end
 
   it "reports error on fun argument type not primitive like" do
@@ -123,59 +118,57 @@ describe "Semantic: lib" do
   end
 
   it "reports error if using out with an already declared variable" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "variable 'x' is already defined, `out` must be used to define a variable, use another name", inject_primitives: true
       lib Lib
         fun foo(x : Int32*)
       end
 
       x = Pointer(Int32).malloc(1_u64)
       Lib.foo out x
-      ),
-      "variable 'x' is already defined, `out` must be used to define a variable, use another name", inject_primitives: true
+      CRYSTAL
   end
 
   it "allows invoking out with underscore " do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { float64 }
       lib Lib
         fun foo(x : Int32*) : Float64
       end
 
       Lib.foo out _
-      )) { float64 }
+      CRYSTAL
   end
 
   it "reports redefinition of fun with different signature" do
-    assert_error "
+    assert_error <<-CRYSTAL, "fun redefinition with different signature"
       lib LibC
         fun foo : Int32
         fun foo : Int64
       end
-      ",
-      "fun redefinition with different signature"
+      CRYSTAL
   end
 
   it "types lib var get" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       lib LibC
         $errno : Int32
       end
 
       LibC.errno
-      ") { int32 }
+      CRYSTAL
   end
 
   it "types lib var set" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       lib LibC
         $errno : Int32
       end
 
       LibC.errno = 1
-      ") { int32 }
+      CRYSTAL
   end
 
   it "types lib var get with forward declaration" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       lib LibC
         $errno : A
 
@@ -183,22 +176,22 @@ describe "Semantic: lib" do
       end
 
       LibC.errno
-      ") { int32 }
+      CRYSTAL
   end
 
   it "defined fun with aliased type" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       lib LibC
         alias SizeT = Int32
         fun foo(x : SizeT) : SizeT
       end
 
       LibC.foo(1)
-      ") { int32 }
+      CRYSTAL
   end
 
   it "overrides definition of fun" do
-    result = assert_type("
+    result = assert_type(<<-CRYSTAL) { float64 }
       lib LibC
         fun foo(x : Int32) : Float64
       end
@@ -208,7 +201,7 @@ describe "Semantic: lib" do
       end
 
       LibC.foo(1)
-      ") { float64 }
+      CRYSTAL
     mod = result.program
     lib_type = mod.types["LibC"].as(LibType)
     foo = lib_type.lookup_first_def("foo", false).as(External)
@@ -216,7 +209,7 @@ describe "Semantic: lib" do
   end
 
   it "error if passing type to LibC with to_unsafe but type doesn't match" do
-    assert_error "
+    assert_error <<-CRYSTAL, "argument 'x' of 'LibC#foo' must be Int32, not Foo (nor Char returned by 'Foo#to_unsafe')"
       lib LibC
         fun foo(x : Int32) : Int32
       end
@@ -228,11 +221,11 @@ describe "Semantic: lib" do
       end
 
       LibC.foo Foo.new
-      ", "argument 'x' of 'LibC#foo' must be Int32, not Foo (nor Char returned by 'Foo#to_unsafe')"
+      CRYSTAL
   end
 
   it "error if passing non primitive type as varargs" do
-    assert_error "
+    assert_error <<-CRYSTAL, "argument #2 of 'LibC#foo' is not a primitive type and no Foo#to_unsafe method found"
       lib LibC
         fun foo(x : Int32, ...)
       end
@@ -241,11 +234,11 @@ describe "Semantic: lib" do
       end
 
       LibC.foo 1, Foo.new
-      ", "argument #2 of 'LibC#foo' is not a primitive type and no Foo#to_unsafe method found"
+      CRYSTAL
   end
 
   it "error if passing non primitive type as varargs invoking to_unsafe" do
-    assert_error "
+    assert_error <<-CRYSTAL, "converted Foo invoking to_unsafe, but Bar is not a primitive type"
       lib LibC
         fun foo(x : Int32, ...)
       end
@@ -260,120 +253,159 @@ describe "Semantic: lib" do
       end
 
       LibC.foo 1, Foo.new
-      ", "converted Foo invoking to_unsafe, but Bar is not a primitive type"
+      CRYSTAL
   end
 
   it "allows passing splat to LibC fun" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { float64 }
       lib LibC
         fun foo(x : Int32, y : Float64, ...) : Float64
       end
 
       t = {1, 2.5, 3, 4}
       LibC.foo *t
-      )) { float64 }
+      CRYSTAL
   end
 
   it "allows passing double splat to LibC fun" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { float64 }
       lib LibC
         fun foo(x : Int32, y : Float64) : Float64
       end
 
       t = {y: 2.5, x: 3}
       LibC.foo **t
-      ), inject_primitives: true) { float64 }
+      CRYSTAL
   end
 
   it "errors if missing link arguments" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "missing link arguments: must at least specify a library name"
       @[Link]
       lib LibFoo
       end
-      ),
-      "missing link arguments: must at least specify a library name"
+      CRYSTAL
   end
 
   it "errors if first argument is not a string" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "'lib' link argument must be a String"
       @[Link(1)]
       lib LibFoo
       end
-      ),
-      "'lib' link argument must be a String"
+      CRYSTAL
   end
 
   it "errors if second argument is not a string" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "'ldflags' link argument must be a String"
       @[Link("foo", 1)]
       lib LibFoo
       end
-      ),
-      "'ldflags' link argument must be a String"
+      CRYSTAL
   end
 
   it "errors if third argument is not a bool" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "'static' link argument must be a Bool"
       @[Link("foo", "bar", 1)]
       lib LibFoo
       end
-      ),
-      "'static' link argument must be a Bool"
+      CRYSTAL
   end
 
   it "errors if fourth argument is not a bool" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "'framework' link argument must be a String"
       @[Link("foo", "bar", true, 1)]
       lib LibFoo
       end
-      ),
-      "'framework' link argument must be a String"
+      CRYSTAL
   end
 
   it "errors if too many link arguments" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "wrong number of link arguments (given 5, expected 1..4)"
       @[Link("foo", "bar", true, "Cocoa", 1)]
       lib LibFoo
       end
-      ),
-      "wrong number of link arguments (given 5, expected 1..4)"
+      CRYSTAL
   end
 
   it "errors if unknown named arg" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "unknown link argument: 'boo' (valid arguments are 'lib', 'ldflags', 'static', 'pkg_config', 'framework', 'wasm_import_module', and 'dll')"
       @[Link(boo: "bar")]
       lib LibFoo
       end
-      ),
-      "unknown link argument: 'boo' (valid arguments are 'lib', 'ldflags', 'static', 'pkg_config', 'framework', and 'wasm_import_module')"
+      CRYSTAL
+  end
+
+  it "allows dll argument" do
+    assert_no_errors <<-CRYSTAL
+      @[Link(dll: "foo.dll")]
+      lib LibFoo
+      end
+      CRYSTAL
+
+    assert_no_errors <<-CRYSTAL
+      @[Link(dll: "BAR.DLL")]
+      lib LibFoo
+      end
+      CRYSTAL
+  end
+
+  it "errors if dll argument contains directory separators" do
+    assert_error <<-CRYSTAL, "'dll' link argument must not include directory separators"
+      @[Link(dll: "foo/bar.dll")]
+      lib LibFoo
+      end
+      CRYSTAL
+
+    assert_error <<-CRYSTAL, "'dll' link argument must not include directory separators"
+      @[Link(dll: %q(foo\\bar.dll))]
+      lib LibFoo
+      end
+      CRYSTAL
+  end
+
+  it "errors if dll argument does not end with '.dll'" do
+    assert_error <<-CRYSTAL, "'dll' link argument must use a '.dll' file extension"
+      @[Link(dll: "foo")]
+      lib LibFoo
+      end
+      CRYSTAL
+
+    assert_error <<-CRYSTAL, "'dll' link argument must use a '.dll' file extension"
+      @[Link(dll: "foo.dylib")]
+      lib LibFoo
+      end
+      CRYSTAL
+
+    assert_error <<-CRYSTAL, "'dll' link argument must use a '.dll' file extension"
+      @[Link(dll: "")]
+      lib LibFoo
+      end
+      CRYSTAL
   end
 
   it "errors if lib already specified with positional argument" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "'lib' link argument already specified"
       @[Link("foo", lib: "bar")]
       lib LibFoo
       end
-      ),
-      "'lib' link argument already specified"
+      CRYSTAL
   end
 
   it "errors if lib named arg is not a String" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "'lib' link argument must be a String"
       @[Link(lib: 1)]
       lib LibFoo
       end
-      ),
-      "'lib' link argument must be a String"
+      CRYSTAL
   end
 
   it "clears annotations after lib" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       @[Link("foo")]
       lib LibFoo
         fun foo
       end
       1
-      )) { int32 }
+      CRYSTAL
   end
 
   it "warns if @[Link(static: true)] is specified" do
@@ -395,7 +427,7 @@ describe "Semantic: lib" do
   end
 
   it "allows invoking lib call without obj inside lib" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       lib LibFoo
         fun foo : Int32
 
@@ -403,11 +435,11 @@ describe "Semantic: lib" do
       end
 
       LibFoo::A
-      )) { int32 }
+      CRYSTAL
   end
 
   it "errors if lib fun call is part of dispatch" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "lib fun call is not supported in dispatch"
       lib LibFoo
         fun foo : Int32
       end
@@ -418,24 +450,22 @@ describe "Semantic: lib" do
       end
 
       (LibFoo || Bar).foo
-      ),
-      "lib fun call is not supported in dispatch"
+      CRYSTAL
   end
 
   it "disallows passing nil or pointer to arg expecting pointer" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "argument 'x' of 'Foo#foo' must be Pointer(Int32), not (Pointer(Int32) | Nil)", inject_primitives: true
       lib Foo
         fun foo(x : Int32*) : Int64
       end
 
       a = 1 == 1 ? nil : Pointer(Int32).malloc(1_u64)
       Foo.foo(a)
-      ),
-      "argument 'x' of 'Foo#foo' must be Pointer(Int32), not (Pointer(Int32) | Nil)", inject_primitives: true
+      CRYSTAL
   end
 
   it "correctly attached link flags if there's a macro if" do
-    result = semantic(%(
+    result = semantic(<<-CRYSTAL)
       @[Link("SDL")]
       @[Link("SDLMain")]
       {% if flag?(:some_flag) %}
@@ -446,7 +476,7 @@ describe "Semantic: lib" do
       end
 
       LibSDL.init(0_u32)
-      ))
+      CRYSTAL
     sdl = result.program.types["LibSDL"].as(LibType)
     attrs = sdl.link_annotations.not_nil!
     attrs.size.should eq(2)
@@ -455,7 +485,7 @@ describe "Semantic: lib" do
   end
 
   it "supports forward references (#399)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { pointer_of(types["LibFoo"].types["Bar"]) }
       lib LibFoo
         fun foo() : Bar*
 
@@ -465,11 +495,11 @@ describe "Semantic: lib" do
       end
 
       LibFoo.foo
-      )) { pointer_of(types["LibFoo"].types["Bar"]) }
+      CRYSTAL
   end
 
   it "supports forward references with struct inside struct (#399)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { pointer_of(types["LibFoo"].types["Foo"]) }
       lib LibFoo
         struct Bar
           x : Foo*
@@ -481,22 +511,21 @@ describe "Semantic: lib" do
       end
 
       LibFoo::Bar.new.x
-      )) { pointer_of(types["LibFoo"].types["Foo"]) }
+      CRYSTAL
   end
 
   it "errors if defines def on lib" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't define method in lib LibC"
       lib LibC
       end
 
       def LibC.foo
       end
-      ),
-      "can't define method in lib LibC"
+      CRYSTAL
   end
 
   it "reopens lib and adds more link annotations" do
-    result = semantic(%(
+    result = semantic(<<-CRYSTAL)
       @[Link("SDL")]
       lib LibSDL
         fun init = SDL_Init(flags : UInt32) : Int32
@@ -507,7 +536,7 @@ describe "Semantic: lib" do
       end
 
       LibSDL.init(0_u32)
-      ))
+      CRYSTAL
     sdl = result.program.types["LibSDL"].as(LibType)
     attrs = sdl.link_annotations.not_nil!
     attrs.size.should eq(2)
@@ -516,7 +545,7 @@ describe "Semantic: lib" do
   end
 
   it "reopens lib and adds same link annotations" do
-    result = semantic(%(
+    result = semantic(<<-CRYSTAL)
       @[Link("SDL")]
       lib LibSDL
         fun init = SDL_Init(flags : UInt32) : Int32
@@ -527,7 +556,7 @@ describe "Semantic: lib" do
       end
 
       LibSDL.init(0_u32)
-      ))
+      CRYSTAL
     sdl = result.program.types["LibSDL"].as(LibType)
     attrs = sdl.link_annotations.not_nil!
     attrs.size.should eq(1)
@@ -535,7 +564,7 @@ describe "Semantic: lib" do
   end
 
   it "gathers link annotations from macro expression" do
-    result = semantic(%(
+    result = semantic(<<-CRYSTAL)
       {% begin %}
         @[Link("SDL")]
       {% end %}
@@ -544,7 +573,7 @@ describe "Semantic: lib" do
       end
 
       LibSDL.init
-      ))
+      CRYSTAL
     sdl = result.program.types["LibSDL"].as(LibType)
     attrs = sdl.link_annotations.not_nil!
     attrs.size.should eq(1)
@@ -552,36 +581,34 @@ describe "Semantic: lib" do
   end
 
   it "errors if using void as parameter (related to #508)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use Void as parameter type"
       lib LibFoo
         fun foo(x : Void)
       end
-      ),
-      "can't use Void as parameter type"
+      CRYSTAL
   end
 
   it "errors if using void via typedef as parameter (related to #508)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use Void as parameter type"
       lib LibFoo
         type Foo = Void
         fun foo(x : Foo)
       end
-      ),
-      "can't use Void as parameter type"
+      CRYSTAL
   end
 
   it "can use tuple as fun return" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([int32, int32] of TypeVar) }
       lib LibC
         fun foo : {Int32, Int32}
       end
 
       LibC.foo
-      )) { tuple_of([int32, int32] of TypeVar) }
+      CRYSTAL
   end
 
   it "doesn't try to invoke unsafe for c struct/union (#1362)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "argument 'x' of 'LibFoo#foo' must be Pointer(LibFoo::Bar), not LibFoo::Bar"
       lib LibFoo
         struct Bar
         end
@@ -591,44 +618,43 @@ describe "Semantic: lib" do
 
       bar = LibFoo::Bar.new
       LibFoo.foo(bar)
-      ),
-      "argument 'x' of 'LibFoo#foo' must be Pointer(LibFoo::Bar), not LibFoo::Bar"
+      CRYSTAL
   end
 
   it "passes int as another integer type in variable" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { float64 }
       lib LibFoo
         fun foo(x : Int32) : Float64
       end
 
       a = 1_u8
       LibFoo.foo a
-      ), inject_primitives: true) { float64 }
+      CRYSTAL
   end
 
   it "passes float as another integer type in variable" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       lib LibFoo
         fun foo(x : Float32) : Int32
       end
 
       a = 1_f64
       LibFoo.foo a
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "passes int as another integer type with literal" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { float64 }
       lib LibFoo
         fun foo(x : Int32) : Float64
       end
 
       LibFoo.foo 1_u8
-      )) { float64 }
+      CRYSTAL
   end
 
   it "errors if invoking to_i32! and got error in that call" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "converting from Foo to Int32 by invoking 'to_i32!'"
       lib LibFoo
         fun foo(x : Int32) : Float64
       end
@@ -640,12 +666,11 @@ describe "Semantic: lib" do
       end
 
       LibFoo.foo Foo.new
-      ),
-      "converting from Foo to Int32 by invoking 'to_i32!'"
+      CRYSTAL
   end
 
   it "errors if invoking to_i32! and got wrong type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "invoked 'to_i32!' to convert from Foo to Int32, but got Char"
       lib LibFoo
         fun foo(x : Int32) : Float64
       end
@@ -657,12 +682,11 @@ describe "Semantic: lib" do
       end
 
       LibFoo.foo Foo.new
-      ),
-      "invoked 'to_i32!' to convert from Foo to Int32, but got Char"
+      CRYSTAL
   end
 
   it "defines lib funs before funs with body" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       fun foo : Int32
         LibX.x
       end
@@ -672,173 +696,163 @@ describe "Semantic: lib" do
       end
 
       foo
-      )) { int32 }
+      CRYSTAL
   end
 
   it "errors if using out with varargs" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use out at varargs position: declare the variable with `z = uninitialized ...` and pass it with `pointerof(z)`"
       lib LibX
         fun x(...)
       end
 
       LibX.x(out z)
-      ),
-      "can't use out at varargs position: declare the variable with `z = uninitialized ...` and pass it with `pointerof(z)`"
+      CRYSTAL
   end
 
   it "errors if using out with void pointer (#2424)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use out with Void* (parameter 'x' of LibFoo.foo is Void*)"
       lib LibFoo
         fun foo(x : Void*)
       end
 
       LibFoo.foo(out x)
-      ),
-      "can't use out with Void* (parameter 'x' of LibFoo.foo is Void*)"
+      CRYSTAL
   end
 
   it "errors if using out with void pointer through type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use out with Void* (parameter 'x' of LibFoo.foo is Void*)"
       lib LibFoo
         type Foo = Void
         fun foo(x : Foo*)
       end
 
       LibFoo.foo(out x)
-      ),
-      "can't use out with Void* (parameter 'x' of LibFoo.foo is Void*)"
+      CRYSTAL
   end
 
   it "errors if using out with non-pointer" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "parameter 'x' of LibFoo.foo cannot be passed as 'out' because it is not a pointer"
       lib LibFoo
         fun foo(x : Int32)
       end
 
       LibFoo.foo(out x)
-      ),
-      "parameter 'x' of LibFoo.foo cannot be passed as 'out' because it is not a pointer"
+      CRYSTAL
   end
 
   it "errors if redefining fun with different signature (#2468)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "fun redefinition with different signature"
       fun foo
       end
 
       fun foo(x : Int32)
       end
-      ),
-      "fun redefinition with different signature"
+      CRYSTAL
   end
 
   it "errors if using named args with variadic function" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use named args with variadic function"
       lib LibC
         fun foo(x : Int32, y : UInt8, ...) : Int32
       end
 
       LibC.foo y: 1_u8, x: 1
-      ),
-      "can't use named args with variadic function"
+      CRYSTAL
   end
 
   it "errors if using unknown named param" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "no parameter named 'z'"
       lib LibC
         fun foo(x : Int32, y : UInt8) : Int32
       end
 
       LibC.foo y: 1_u8, x: 1, z: 2
-      ),
-      "no parameter named 'z'"
+      CRYSTAL
   end
 
   it "errors if parameter already specified" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "argument for parameter 'x' already specified"
       lib LibC
         fun foo(x : Int32, y : UInt8) : Int32
       end
 
       LibC.foo 1, x: 2
-      ),
-      "argument for parameter 'x' already specified"
+      CRYSTAL
   end
 
   it "errors if missing argument" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "missing argument: y"
       lib LibC
         fun foo(x : Int32, y : UInt8) : Int32
       end
 
       LibC.foo x: 2
-      ),
-      "missing argument: y"
+      CRYSTAL
   end
 
   it "errors if missing arguments" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "missing arguments: x, z"
       lib LibC
         fun foo(x : Int32, y : UInt8, z: Int32) : Int32
       end
 
       LibC.foo y: 1_u8
-      ),
-      "missing arguments: x, z"
+      CRYSTAL
   end
 
   it "can use named args" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       lib LibC
         fun foo(x : Int32, y : UInt8) : Int32
       end
 
       LibC.foo y: 1_u8, x: 1
-      )) { int32 }
+      CRYSTAL
   end
 
   it "can use out with named args" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       lib LibC
         fun foo(x : Int32*)
       end
 
       LibC.foo(x: out x)
       x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "types fun returning nothing as nil" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nil_type }
       lib LibFoo
         fun foo
       end
 
       LibFoo.foo
-      )) { nil_type }
+      CRYSTAL
   end
 
   it "types fun returning void as nil" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nil_type }
       lib LibFoo
         fun foo : Void
       end
 
       LibFoo.foo
-      )) { nil_type }
+      CRYSTAL
   end
 
   it "types fun returning nil as nil" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nil_type }
       lib LibFoo
         fun foo : Nil
       end
 
       LibFoo.foo
-      )) { nil_type }
+      CRYSTAL
   end
 
   it "can use macros inside lib" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       lib LibFoo
         {% begin %}
           fun foo : Int32
@@ -846,11 +860,11 @@ describe "Semantic: lib" do
       end
 
       LibFoo.foo
-      )) { int32 }
+      CRYSTAL
   end
 
   it "can use macros inside struct" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       lib LibFoo
         struct Foo
           {% begin %}
@@ -860,21 +874,20 @@ describe "Semantic: lib" do
       end
 
       LibFoo::Foo.new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "errors if defining incompatible funs with the same name in the same lib (#3045)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "fun redefinition with different signature"
       lib LibFoo
         fun foo1 = foo
         fun foo2 = foo(x : Int32)
       end
-      ),
-      "fun redefinition with different signature"
+      CRYSTAL
   end
 
   it "errors if defining incompatible funs with the same name in different libs (#3045)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "fun redefinition with different signature"
       lib LibFoo1
         fun foo1 = foo
       end
@@ -882,75 +895,70 @@ describe "Semantic: lib" do
       lib LibFoo2
         fun foo2 = foo(x : Int32)
       end
-      ),
-      "fun redefinition with different signature"
+      CRYSTAL
   end
 
   it "specifies a call convention" do
-    result = semantic(%(
+    result = semantic(<<-CRYSTAL)
       lib LibFoo
         @[CallConvention("X86_StdCall")]
         fun foo : Int32
       end
-      ))
+      CRYSTAL
     foo = result.program.types["LibFoo"].lookup_first_def("foo", nil).as(External)
     foo.call_convention.should eq(LLVM::CallConvention::X86_StdCall)
   end
 
   it "specifies a call convention to a lib" do
-    result = semantic(%(
+    result = semantic(<<-CRYSTAL)
       @[CallConvention("X86_StdCall")]
       lib LibFoo
         fun foo : Int32
       end
-      ))
+      CRYSTAL
     foo = result.program.types["LibFoo"].lookup_first_def("foo", nil).as(External)
     foo.call_convention.should eq(LLVM::CallConvention::X86_StdCall)
   end
 
   it "errors if wrong number of arguments for CallConvention" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "wrong number of arguments for annotation CallConvention (given 2, expected 1)"
       lib LibFoo
         @[CallConvention("X86_StdCall", "bar")]
         fun foo : Int32
       end
-      ),
-      "wrong number of arguments for annotation CallConvention (given 2, expected 1)"
+      CRYSTAL
   end
 
   it "errors if CallConvention argument is not a string" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "argument to CallConvention must be a string"
       lib LibFoo
         @[CallConvention(1)]
         fun foo : Int32
       end
-      ),
-      "argument to CallConvention must be a string"
+      CRYSTAL
   end
 
   it "errors if CallConvention argument is not a valid string" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "invalid call convention. Valid values are #{LLVM::CallConvention.values.join ", "}"
       lib LibFoo
         @[CallConvention("foo")]
         fun foo : Int32
       end
-      ),
-      "invalid call convention. Valid values are #{LLVM::CallConvention.values.join ", "}"
+      CRYSTAL
   end
 
   it "errors if assigning void lib call to var (#4414)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "assigning Void return value of lib fun call has no effect"
       lib LibFoo
         fun foo
       end
 
       x = LibFoo.foo
-      ),
-      "assigning Void return value of lib fun call has no effect"
+      CRYSTAL
   end
 
   it "errors if passing void lib call to call argument (#4414)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "passing Void return value of lib fun call has no effect"
       lib LibFoo
         fun foo
       end
@@ -959,12 +967,11 @@ describe "Semantic: lib" do
       end
 
       bar(LibFoo.foo)
-      ),
-      "passing Void return value of lib fun call has no effect"
+      CRYSTAL
   end
 
   it "can list lib functions at the top level (#12395)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { bool }
       lib LibFoo
         fun foo
       end
@@ -974,6 +981,6 @@ describe "Semantic: lib" do
       {% else %}
         1
       {% end %}
-      )) { bool }
+      CRYSTAL
   end
 end

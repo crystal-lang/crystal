@@ -168,8 +168,27 @@ describe "Tuple" do
     [a, b, c, d, e].min.should eq(d)
   end
 
-  it "does to_s" do
-    {1, 2, 3}.to_s.should eq("{1, 2, 3}")
+  describe "#to_s" do
+    it "returns string representation" do
+      {1, 2, 3}.to_s.should eq("{1, 2, 3}")
+    end
+
+    context "when the first element starts with '{'" do
+      it "inserts a space after '{' and before '}' when the first element is a Hash, preventing macro interpolation ({{ ... }})" do
+        tuple = { {1 => 2} }
+        tuple.to_s.should eq("{ {1 => 2} }")
+      end
+
+      it "inserts a space after '{' and before '}' when the first element is a Tuple, preventing macro interpolation ({{ ... }})" do
+        tuple = { {1, 2, 3} }
+        tuple.to_s.should eq("{ {1, 2, 3} }")
+      end
+
+      it "inserts a space after '{' and before '}' when the first element is a NamedTuple, preventing macro interpolation ({{ ... }})" do
+        tuple = { {a: 1} }
+        tuple.to_s.should eq("{ {a: 1} }")
+      end
+    end
   end
 
   it "does each" do
@@ -333,27 +352,48 @@ describe "Tuple" do
     ({1, 2} === nil).should be_false
   end
 
-  it "does to_a" do
-    ary = {1, 'a', true}.to_a
-    ary.should eq([1, 'a', true])
-    ary.size.should eq(3)
+  describe "#to_a" do
+    describe "without block" do
+      it "basic" do
+        ary = {1, 'a', true}.to_a
+        ary.should eq([1, 'a', true])
+        ary.size.should eq(3)
+      end
 
-    ary = Tuple.new.to_a
-    ary.size.should eq(0)
+      it "empty" do
+        ary = Tuple.new.to_a
+        ary.size.should eq(0)
+      end
+    end
+
+    describe "with block" do
+      it "basic" do
+        {-1, -2, -3}.to_a(&.abs).should eq [1, 2, 3]
+      end
+
+      it "different type" do
+        {1, 2, true}.to_a(&.to_s).should eq ["1", "2", "true"]
+      end
+    end
   end
 
-  it "#to_static_array" do
-    ary = {1, 'a', true}.to_static_array
-    ary.should be_a(StaticArray(Int32 | Char | Bool, 3))
-    ary.should eq(StaticArray[1, 'a', true])
-    ary.size.should eq(3)
+  # Tuple#to_static_array don't compile on aarch64-darwin and
+  # aarch64-linux-musl due to a codegen error caused by LLVM < 13.0.0.
+  # See https://github.com/crystal-lang/crystal/issues/11358 for details.
+  {% unless compare_versions(Crystal::LLVM_VERSION, "13.0.0") < 0 && flag?(:aarch64) && (flag?(:musl) || flag?(:darwin) || flag?(:android)) %}
+    it "#to_static_array" do
+      ary = {1, 'a', true}.to_static_array
+      ary.should be_a(StaticArray(Int32 | Char | Bool, 3))
+      ary.should eq(StaticArray[1, 'a', true])
+      ary.size.should eq(3)
 
-    ary = Tuple.new.to_static_array
-    ary.should be_a(StaticArray(NoReturn, 0))
-    ary.size.should eq(0)
+      ary = Tuple.new.to_static_array
+      ary.should be_a(StaticArray(NoReturn, 0))
+      ary.size.should eq(0)
 
-    ary = Tuple(String | Int32).new(1).to_static_array
-    ary.should be_a(StaticArray(String | Int32, 1))
-    ary.should eq StaticArray[1.as(String | Int32)]
-  end
+      ary = Tuple(String | Int32).new(1).to_static_array
+      ary.should be_a(StaticArray(String | Int32, 1))
+      ary.should eq StaticArray[1.as(String | Int32)]
+    end
+  {% end %}
 end

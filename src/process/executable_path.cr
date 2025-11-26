@@ -50,7 +50,7 @@ class Process
       # Windows doesn't have "executable" metadata for files, so it also doesn't have files that are "not executable".
       true
     {% else %}
-      File.executable?(path)
+      File::Info.executable?(path)
     {% end %}
   end
 
@@ -103,8 +103,9 @@ class Process
 end
 
 {% if flag?(:darwin) %}
+  require "c/limits"
+
   lib LibC
-    PATH_MAX = 1024
     fun _NSGetExecutablePath(buf : Char*, bufsize : UInt32*) : Int
   end
 

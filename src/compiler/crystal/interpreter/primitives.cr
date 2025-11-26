@@ -87,6 +87,8 @@ class Crystal::Repl::Compiler
 
       pointer_add(inner_sizeof_type(element_type), node: node)
     when "class"
+      # Should match Crystal::Repl::Value#runtime_type
+      # in src/compiler/crystal/interpreter/value.cr
       obj = obj.not_nil!
       type = obj.type.remove_indirection
 
@@ -175,6 +177,37 @@ class Crystal::Repl::Compiler
         if type.struct?
           pop(sizeof(Pointer(Void)), node: nil)
         end
+      end
+    when "pre_initialize"
+      type =
+        if obj
+          discard_value(obj)
+          obj.type.instance_type
+        else
+          scope.instance_type
+        end
+
+      accept_call_args(node)
+
+      # 0 stands for any non-reference type in `reset_class`
+      # (normally 0 stands for `Nil` so there is no conflict here)
+      type_id = type.struct? ? 0 : type_id(type)
+      reset_class(aligned_instance_sizeof_type(type), type_id, node: node)
+
+      initializer_compiled_defs = @context.type_instance_var_initializers(type)
+      unless initializer_compiled_defs.empty?
+        initializer_compiled_defs.size.times do
+          dup sizeof(Pointer(Void)), node: nil
+        end
+
+        initializer_compiled_defs.each do |compiled_def|
+          call compiled_def, node: nil
+        end
+      end
+
+      # `Struct.pre_initialize` does not return a pointer, so always discard it
+      if !@wants_value || type.struct?
+        pop(sizeof(Pointer(Void)), node: nil)
       end
     when "tuple_indexer_known_index"
       unless @wants_value
@@ -356,7 +389,6 @@ class Crystal::Repl::Compiler
       ivar_name = '@' + node.name.rchop # remove the '=' suffix
       ivar = type.lookup_instance_var(ivar_name)
       ivar_offset = ivar_offset(type, ivar_name)
-      ivar_size = inner_sizeof_type(type.lookup_instance_var(ivar_name))
 
       # pointer_set needs first arg, then obj
       request_value(arg)
@@ -389,6 +421,9 @@ class Crystal::Repl::Compiler
       else
         pointer_set(inner_sizeof_type(ivar.type), node: node)
       end
+    when "interpreter_proc_new"
+      accept_call_args(node)
+      interpreter_proc_new(type_id(owner.instance_type), node: node)
     when "interpreter_call_stack_unwind"
       interpreter_call_stack_unwind(node: node)
     when "interpreter_raise_without_backtrace"
@@ -402,6 +437,15 @@ class Crystal::Repl::Compiler
     when "interpreter_fiber_swapcontext"
       accept_call_args(node)
       interpreter_fiber_swapcontext(node: node)
+    when "interpreter_fiber_resumable"
+      accept_call_args(node)
+      interpreter_fiber_resumable(node: node)
+    when "interpreter_signal_descriptor"
+      accept_call_args(node)
+      interpreter_signal_descriptor(node: node)
+    when "interpreter_signal"
+      accept_call_args(node)
+      interpreter_signal(node: node)
     when "interpreter_intrinsics_memcpy"
       accept_call_args(node)
       interpreter_intrinsics_memcpy(node: node)
@@ -735,7 +779,7 @@ class Crystal::Repl::Compiler
     in {.u16?, .i32?}   then zero_extend(6, node: node)
     in {.u16?, .i64?}   then zero_extend(6, node: node)
     in {.u16?, .i128?}  then zero_extend(14, node: node)
-    in {.u16?, .u8?}    then nop
+    in {.u16?, .u8?}    then checked ? (zero_extend(6, node: node); u64_to_u8(node: node)) : nop
     in {.u16?, .u16?}   then nop
     in {.u16?, .u32?}   then zero_extend(6, node: node)
     in {.u16?, .u64?}   then zero_extend(6, node: node)
@@ -812,7 +856,7 @@ class Crystal::Repl::Compiler
     in {.u128?, .u32?}  then checked ? u128_to_u32(node: node) : pop(8, node: node)
     in {.u128?, .u64?}  then checked ? u128_to_u64(node: node) : pop(8, node: node)
     in {.u128?, .u128?} then nop
-    in {.u128?, .f32?}  then u128_to_f32(node: node)
+    in {.u128?, .f32?}  then checked ? u128_to_f32(node: node) : u128_to_f32_bang(node: node)
     in {.u128?, .f64?}  then u128_to_f64(node: node)
     in {.f32?, .i8?}    then f32_to_f64(node: node); checked ? f64_to_i8(node: node) : f64_to_i64_bang(node: node)
     in {.f32?, .i16?}   then f32_to_f64(node: node); checked ? f64_to_i16(node: node) : f64_to_i64_bang(node: node)
@@ -1322,16 +1366,17 @@ class Crystal::Repl::Compiler
   end
 
   private def primitive_binary_op_cmp_float(node : ASTNode, kind : NumberKind, op : String)
-    case kind
-    when .f32? then cmp_f32(node: node)
-    when .f64? then cmp_f64(node: node)
-    else
-      node.raise "BUG: missing handling of binary #{op} with kind #{kind}"
+    if predicate = FloatPredicate.from_method?(op)
+      case kind
+      when .f32? then return cmp_f32(predicate, node: node)
+      when .f64? then return cmp_f64(predicate, node: node)
+      end
     end
 
-    primitive_binary_op_cmp_op(node, op)
+    node.raise "BUG: missing handling of binary #{op} with kind #{kind}"
   end
 
+  # TODO: should integer comparisons also use `FloatPredicate`?
   private def primitive_binary_op_cmp_op(node : ASTNode, op : String)
     case op
     when "==" then cmp_eq(node: node)
@@ -1342,6 +1387,34 @@ class Crystal::Repl::Compiler
     when ">=" then cmp_ge(node: node)
     else
       node.raise "BUG: missing handling of binary #{op}"
+    end
+  end
+
+  # interpreter-exclusive flags for `cmp_f32` and `cmp_f64`
+  # currently compatible with `LLVM::RealPredicate`
+  @[Flags]
+  enum FloatPredicate : UInt8
+    Equal
+    GreaterThan
+    LessThan
+    Unordered
+
+    def self.from_method?(op : String)
+      case op
+      when "==" then Equal
+      when "!=" then LessThan | GreaterThan | Unordered
+      when "<"  then LessThan
+      when "<=" then LessThan | Equal
+      when ">"  then GreaterThan
+      when ">=" then GreaterThan | Equal
+      end
+    end
+
+    def compare(x, y) : Bool
+      (equal? && x == y) ||
+        (greater_than? && x > y) ||
+        (less_than? && x < y) ||
+        (unordered? && (x.nan? || y.nan?))
     end
   end
 

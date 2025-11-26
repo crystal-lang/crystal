@@ -39,7 +39,9 @@ require "./float/printer"
 struct Float
   alias Primitive = Float32 | Float64
 
+  # Negates this value's sign.
   def -
+    # fallback implementation; does not handle IEEE 754 signed zeros correctly
     self.class.zero - self
   end
 
@@ -51,11 +53,18 @@ struct Float
     modulo(other)
   end
 
+  # Returns whether this value is a not-a-number.
+  #
+  # This includes both quiet and signalling NaNs from IEEE 754.
   def nan? : Bool
     !(self == self)
   end
 
+  # Checks whether this value is infinite. Returns `1` if this value is positive
+  # infinity, `-1` if this value is negative infinity, or `nil` otherwise.
   def infinite? : Int32?
+    # fallback implementation
+    # TODO: consider using https://llvm.org/docs/LangRef.html#llvm-is-fpclass-intrinsic
     if nan? || self == 0 || self != 2 * self
       nil
     else
@@ -63,6 +72,8 @@ struct Float
     end
   end
 
+  # Returns whether this value is finite, i.e. it is neither infinite nor a
+  # not-a-number.
   def finite? : Bool
     !nan? && !infinite?
   end
@@ -86,11 +97,6 @@ struct Float
 
       mod - other
     end
-  end
-
-  # See `Object#hash(hasher)`
-  def hash(hasher)
-    hasher.float(self)
   end
 
   # Writes this float to the given *io* in the given *format*.
@@ -198,6 +204,39 @@ struct Float32
 
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float32
   Number.expand_div [Float64], Float64
+
+  # :inherit:
+  def infinite? : Int32?
+    # TODO: consider using https://llvm.org/docs/LangRef.html#llvm-is-fpclass-intrinsic
+    case self
+    when -Float32::INFINITY
+      -1
+    when Float32::INFINITY
+      1
+    end
+  end
+
+  # Negates this value's sign.
+  #
+  # Works on signed zeros and not-a-number values as well. The negation of
+  # `0.0_f32` is `-0.0_f32`, and vice versa. The negation of a not-a-number
+  # value is only observable via `#sign_bit`.
+  def - : Float32
+    # equivalent to `Math.copysign(self, -sign_bit.to_f32)`
+    # TODO: consider using the LLVM `fneg` instruction
+    (unsafe_as(UInt32) ^ 0x80000000_u32).unsafe_as(Float32)
+  end
+
+  def abs
+    Math.copysign(self, 1)
+  end
+
+  # Returns `-1` if the sign bit of this float is set, `1` otherwise.
+  #
+  # Unlike `#sign`, this works on signed zeros and not-a-numbers as well.
+  def sign_bit : Int32
+    Math.copysign(1_f32, self).to_i
+  end
 
   # Rounds towards positive infinity.
   def ceil : Float32
@@ -387,8 +426,37 @@ struct Float64
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
   Number.expand_div [Float32], Float64
 
+  # :inherit:
+  def infinite? : Int32?
+    # TODO: consider using https://llvm.org/docs/LangRef.html#llvm-is-fpclass-intrinsic
+    case self
+    when -Float64::INFINITY
+      -1
+    when Float64::INFINITY
+      1
+    end
+  end
+
+  # Negates this value's sign.
+  #
+  # Works on signed zeros and not-a-number values as well. The negation of
+  # `0.0` is `-0.0`, and vice versa. The negation of a not-a-number value is
+  # only observable via `#sign_bit`.
+  def - : Float64
+    # equivalent to `Math.copysign(self, -sign_bit.to_f64)`
+    # TODO: consider using the LLVM `fneg` instruction
+    (unsafe_as(UInt64) ^ 0x80000000_00000000_u64).unsafe_as(Float64)
+  end
+
   def abs
     Math.copysign(self, 1)
+  end
+
+  # Returns `-1` if the sign bit of this float is set, `1` otherwise.
+  #
+  # Unlike `#sign`, this works on signed zeros and not-a-numbers as well.
+  def sign_bit : Int32
+    Math.copysign(1_f64, self).to_i
   end
 
   def ceil : Float64

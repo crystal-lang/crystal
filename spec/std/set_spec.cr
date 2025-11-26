@@ -286,6 +286,10 @@ describe "Set" do
     Set{1, 2, 3}.to_a.should eq([1, 2, 3])
   end
 
+  it "does support giving a block to to_a" do
+    Set{1, 2, 3}.to_a { |x| x + 1 }.should eq([2, 3, 4])
+  end
+
   it "does to_s" do
     Set{1, 2, 3}.to_s.should eq("Set{1, 2, 3}")
     Set{"foo"}.to_s.should eq(%(Set{"foo"}))
@@ -419,6 +423,38 @@ describe "Set" do
     it "retains compare_by_identity on clone" do
       set = Set(String).new.compare_by_identity
       set.clone.compare_by_identity?.should be_true
+    end
+  end
+
+  describe "#map!" do
+    it "replaces elements with the block's return values" do
+      set = Set{1, 2, 3}
+      set.map! { |n| n * -1 }.should be(set)
+      set.should eq(Set{-1, -2, -3})
+    end
+
+    it "exhibits reference semantic" do
+      set = Set{1, 2, 3}
+      copy = set
+
+      set.map! { |n| n * -1 }
+      set.should eq(copy)
+    end
+  end
+
+  describe "#select!" do
+    it "keeps only elements that evaluate to true" do
+      set = Set{1, 2, 3}
+      set.select! { |n| n < 2 }.should be(set)
+      set.should eq(Set{1})
+    end
+  end
+
+  describe "#reject!" do
+    it "returns self if changes were made" do
+      set = Set{1, 2, 3}
+      set.reject! { |n| n < 2 }.should be(set)
+      set.should eq(Set{2, 3})
     end
   end
 

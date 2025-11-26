@@ -118,7 +118,7 @@ struct Int
   #
   # In truncated division, given two integers x and y:
   # * `q = x.tdiv(y)` is rounded toward zero
-  # * `r = x.remainder(y)` has the sign of the first argument
+  # * `r = x.remainder(y)` has the sign of x
   # * `x == q*y + r`
   #
   # For example:
@@ -150,6 +150,39 @@ struct Int
         raise ArgumentError.new "Overflow: {{@type}}::MIN / -1"
       end
     {% end %}
+  end
+
+  # Returns a `Tuple` of two elements containing the quotient
+  # and modulus obtained by dividing `self` by *number* using
+  # truncated division.
+  #
+  # ```
+  # 11.tdivmod(3)  # => {3, 2}
+  # 11.tdivmod(-3) # => {-4, -1}
+  # ```
+  #
+  # In truncated division, given two integers x and y:
+  # * `q = x.tdiv(y)` is rounded toward zero
+  # * `r = x.remainder(y)` has the sign of x
+  # * `x == q*y + r`
+  #
+  # For example:
+  #
+  # ```text
+  #  x     y     x / y     x % y
+  #  5     3       1         2
+  # -5     3      -1        -2
+  #  5    -3      -1         2
+  # -5    -3       1        -2
+  # ```
+  #
+  # Raises if *other* is `0`, or if *other* is `-1` and
+  # `self` is signed and is the minimum value for that
+  # integer type.
+  def tdivmod(other : Int)
+    check_div_argument other
+
+    {unsafe_div(other), unsafe_mod(other)}
   end
 
   def fdiv(other) : Float64
@@ -191,6 +224,32 @@ struct Int
         unsafe_mod other
       end
     {% end %}
+  end
+
+  # :nodoc:
+  #
+  # Computes (x * y) % z, but without intermediate overflows.
+  # Precondition: `0 <= x < z && y >= 0`
+  def self.mulmod(x, y, z)
+    result = zero
+    while y > 0
+      if y.bits_set?(1)
+        # result = (result + x) % z
+        if result >= z &- x
+          result &-= z &- x
+        else
+          result &+= x
+        end
+      end
+      # x = (x + x) % z
+      if x >= z &- x
+        x &-= z &- x
+      else
+        x = x.unsafe_shl(1)
+      end
+      y = y.unsafe_shr(1)
+    end
+    result
   end
 
   # Returns the result of shifting this number's bits *count* positions to the right.
@@ -487,30 +546,23 @@ struct Int
     return v if u == 0
     return u if v == 0
 
-    shift = self.class.zero
     # Let shift := lg K, where K is the greatest power of 2
     # dividing both u and v.
-    while (u | v) & 1 == 0
-      shift &+= 1
-      u = u.unsafe_shr 1
-      v = v.unsafe_shr 1
-    end
-    while u & 1 == 0
-      u = u.unsafe_shr 1
-    end
+    shift = (u | v).trailing_zeros_count
+    u = u.unsafe_shr(u.trailing_zeros_count)
+
     # From here on, u is always odd.
     loop do
       # remove all factors of 2 in v -- they are not common
-      # note: v is not zero, so while will terminate
-      while v & 1 == 0
-        v = v.unsafe_shr 1
-      end
+      v = v.unsafe_shr(v.trailing_zeros_count)
+
       # Now u and v are both odd. Swap if necessary so u <= v,
       # then set v = v - u (which is even).
       u, v = v, u if u > v
       v &-= u
       break if v.zero?
     end
+
     # restore common factors of 2
     u.unsafe_shl shift
   end
@@ -532,11 +584,6 @@ struct Int
 
   def odd? : Bool
     !even?
-  end
-
-  # See `Object#hash(hasher)`
-  def hash(hasher)
-    hasher.int(self)
   end
 
   def succ : self
@@ -564,7 +611,7 @@ struct Int
     x = self
     while true
       yield x
-      return if x == to
+      return unless x < to
       x += 1
     end
   end
@@ -574,12 +621,26 @@ struct Int
   end
 
   # Calls the given block with each integer value from self down to `to`.
+  #
+  # ```
+  # 3.downto(1) do |i|
+  #   puts i
+  # end
+  # ```
+  #
+  # Prints:
+  #
+  # ```text
+  # 3
+  # 2
+  # 1
+  # ```
   def downto(to, &block : self ->) : Nil
     return unless self >= to
     x = self
     while true
       yield x
-      return if x == to
+      return unless x > to
       x -= 1
     end
   end
@@ -756,7 +817,7 @@ struct Int
     # representation, plus one byte for the negative sign (possibly used by the
     # string-returning overload).
     chars = uninitialized UInt8[129]
-    ptr_end = chars.to_unsafe + 128
+    ptr_end = chars.to_unsafe + 129
     ptr = ptr_end
     num = self
 
@@ -2748,3 +2809,53 @@ struct UInt128
     self
   end
 end
+
+# Returns a number for given digits and base.
+# The digits are expected as an Enumerable with the least significant digit as the first element.
+#
+# Base must not be less than 2.
+#
+# All digits must be within 0...base.
+#
+# ```
+# Int32.from_digits([5, 4, 3, 2, 1])          # => 12345
+# Int32.from_digits([4, 6, 6, 0, 5], base: 7) # => 12345
+# Int32.from_digits([45, 23, 1], base: 100)   # => 12345
+#
+# Int32.from_digits([1], base: -2) # raises ArgumentError
+# Int32.from_digits([-1])          # raises ArgumentError
+# Int32.from_digits([3], base: 2)  # raises ArgumentError
+# ```
+{% for type in %w(Int8 Int16 Int32 Int64 Int128 UInt8 UInt16 UInt32 UInt64 UInt128) %}
+  def {{type.id}}.from_digits(digits : Enumerable(Int), base : Int = 10) : self
+    if base < 2
+      raise ArgumentError.new("Invalid base #{base}")
+    end
+
+    num : {{type.id}} = 0
+    multiplier : {{type.id}} = 1
+    first_element = true
+
+    digits.each do |digit|
+      if digit < 0
+        raise ArgumentError.new("Invalid digit #{digit}")
+      end
+
+      if digit >= base
+        raise ArgumentError.new("Invalid digit #{digit} for base #{base}")
+      end
+
+      # don't calculate multiplier upfront for the next digit
+      # to avoid overflow at the last iteration
+      if first_element
+        first_element = false
+      else
+        multiplier *= base
+      end
+
+      num += digit * multiplier
+    end
+
+    num
+  end
+{% end %}

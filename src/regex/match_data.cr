@@ -210,7 +210,7 @@ class Regex
 
     # Like `#[](Range)`, but returns `nil` if the range's start is out of range.
     def []?(range : Range) : Array(String)?
-      self[*Indexable.range_to_index_and_count(range, size) || raise IndexError.new]?
+      self[*Indexable.range_to_index_and_count(range, size) || return nil]?
     end
 
     # Returns count or less (if there aren't enough) matches starting at the
@@ -336,10 +336,6 @@ class Regex
     end
 
     def inspect(io : IO) : Nil
-      to_s(io)
-    end
-
-    def to_s(io : IO) : Nil
       name_table = @regex.name_table
 
       io << "Regex::MatchData("
@@ -348,6 +344,21 @@ class Regex
         self[i]?.inspect(io)
       end
       io << ')'
+    end
+
+    # Returns the matched substring.
+    #
+    # ```
+    # "Crystal".match!(/yst/).to_s         # => "yst"
+    # "Crystal".match!(/(y)(s)(?=t)/).to_s # => "ys"
+    # ```
+    def to_s : String
+      self[0]
+    end
+
+    # Prints the matched substring to *io*.
+    def to_s(io : IO) : Nil
+      io << to_s
     end
 
     def pretty_print(pp) : Nil

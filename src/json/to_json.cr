@@ -98,6 +98,14 @@ class Array
   end
 end
 
+struct StaticArray
+  def to_json(json : JSON::Builder) : Nil
+    json.array do
+      each &.to_json(json)
+    end
+  end
+end
+
 class Deque
   def to_json(json : JSON::Builder) : Nil
     json.array do
@@ -163,6 +171,12 @@ struct NamedTuple
   end
 end
 
+class Time::Location
+  def to_json(json : JSON::Builder) : Nil
+    json.string(to_s)
+  end
+end
+
 struct Time::Format
   def to_json(value : Time, json : JSON::Builder) : Nil
     json.string do |io|
@@ -207,7 +221,7 @@ struct Enum
   #
   # `ValueConverter.to_json` offers a different serialization strategy based on the
   # member value.
-  def to_json(json : JSON::Builder)
+  def to_json(json : JSON::Builder) : Nil
     {% if @type.annotation(Flags) %}
       json.array do
         each do |member, _value|
@@ -268,7 +282,7 @@ end
 
 struct Time
   # Emits a string formatted according to [RFC 3339](https://tools.ietf.org/html/rfc3339)
-  # ([ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
+  # ([ISO 8601](https://web.archive.org/web/20250306154328/http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
   #
   # The JSON format itself does not specify a time data type, this method just
   # assumes that a string holding a RFC 3339 time format will be interpreted as
@@ -296,7 +310,7 @@ end
 # end
 #
 # timestamp = TimestampArray.from_json(%({"dates":[1459859781,1567628762]}))
-# timestamp.dates   # => [2016-04-05 12:36:21 UTC, 2019-09-04 20:26:02 UTC]
+# timestamp.dates   # => [2016-04-05 12:36:21Z, 2019-09-04 20:26:02Z]
 # timestamp.to_json # => %({"dates":[1459859781,1567628762]})
 # ```
 #
@@ -314,7 +328,7 @@ end
 # end
 #
 # timestamp = TimestampArray.from_json(%({"dates":["Apr 5, 2016","Sep 4, 2019"]}))
-# timestamp.dates   # => [2016-04-05 00:00:00 UTC, 2019-09-04 00:00:00 UTC]
+# timestamp.dates   # => [2016-04-05 00:00:00Z, 2019-09-04 00:00:00Z]
 # timestamp.to_json # => %({"dates":["Apr 5, 2016","Sep 4, 2019"]})
 # ```
 #
@@ -357,7 +371,7 @@ end
 # end
 #
 # timestamp = TimestampHash.from_json(%({"birthdays":{"foo":1459859781,"bar":1567628762}}))
-# timestamp.birthdays # => {"foo" => 2016-04-05 12:36:21 UTC, "bar" => 2019-09-04 20:26:02 UTC}
+# timestamp.birthdays # => {"foo" => 2016-04-05 12:36:21Z, "bar" => 2019-09-04 20:26:02Z}
 # timestamp.to_json   # => %({"birthdays":{"foo":1459859781,"bar":1567628762}})
 # ```
 #
@@ -375,7 +389,7 @@ end
 # end
 #
 # timestamp = TimestampHash.from_json(%({"birthdays":{"foo":"Apr 5, 2016","bar":"Sep 4, 2019"}}))
-# timestamp.birthdays # => {"foo" => 2016-04-05 00:00:00 UTC, "bar" => 2019-09-04 00:00:00 UTC}
+# timestamp.birthdays # => {"foo" => 2016-04-05 00:00:00Z, "bar" => 2019-09-04 00:00:00Z}
 # timestamp.to_json   # => %({"birthdays":{"foo":"Apr 5, 2016","bar":"Sep 4, 2019"}})
 # ```
 #
@@ -421,7 +435,7 @@ end
 # end
 #
 # person = Person.from_json(%({"birth_date": 1459859781}))
-# person.birth_date # => 2016-04-05 12:36:21 UTC
+# person.birth_date # => 2016-04-05 12:36:21Z
 # person.to_json    # => %({"birth_date":1459859781})
 # ```
 module Time::EpochConverter
@@ -445,7 +459,7 @@ end
 # end
 #
 # timestamp = Timestamp.from_json(%({"value": 1459860483856}))
-# timestamp.value   # => 2016-04-05 12:48:03.856 UTC
+# timestamp.value   # => 2016-04-05 12:48:03.856Z
 # timestamp.to_json # => %({"value":1459860483856})
 # ```
 module Time::EpochMillisConverter

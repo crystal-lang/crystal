@@ -276,6 +276,8 @@ describe "Lexer" do
   it_lexes "&+@foo", :OP_AMP_PLUS
   it_lexes "&-@foo", :OP_AMP_MINUS
   it_lexes_const "Foo"
+  it_lexes_const "ÁrvíztűrőTükörfúrógép"
+  it_lexes_const "ǅǈǋǲᾈᾉᾊ"
   it_lexes_instance_var "@foo"
   it_lexes_class_var "@@foo"
   it_lexes_globals ["$foo", "$FOO", "$_foo", "$foo123"]
@@ -656,6 +658,15 @@ describe "Lexer" do
   assert_syntax_error "'\\u{D800}'", "invalid unicode codepoint (surrogate half)"
   assert_syntax_error "'\\u{DFFF}'", "invalid unicode codepoint (surrogate half)"
   assert_syntax_error ":+1", "unexpected token"
+
+  it "invalid byte sequence" do
+    expect_raises(InvalidByteSequenceError, "Unexpected byte 0xff at position 0, malformed UTF-8") do
+      parse "\xFF"
+    end
+    expect_raises(InvalidByteSequenceError, "Unexpected byte 0xff at position 1, malformed UTF-8") do
+      parse " \xFF"
+    end
+  end
 
   assert_syntax_error "'\\1'", "invalid char escape sequence"
 

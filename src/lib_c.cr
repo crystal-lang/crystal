@@ -1,5 +1,16 @@
-{% if flag?(:win32) %}
-  @[Link({{ flag?(:preview_dll) ? "ucrt" : "libucrt" }})]
+# Supported library versions:
+#
+# * glibc (2.26+)
+# * musl libc (1.2+)
+# * system libraries of several BSDs
+# * macOS system library (11+)
+# * MSVCRT
+# * WASI
+# * bionic libc
+#
+# See https://crystal-lang.org/reference/man/required_libraries.html#system-library
+{% if flag?(:msvc) %}
+  @[Link({{ flag?(:static) ? "libucrt" : "ucrt" }})]
 {% end %}
 lib LibC
   alias Char = UInt8

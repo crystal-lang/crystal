@@ -55,9 +55,18 @@ class Crystal::CodeGenVisitor
 
     obj = node.obj
 
-    # Always accept obj: even if it's not passed as self this might
-    # involve intermediate calls with side effects.
-    if obj
+    case obj
+    when Path
+      # Non-generic metaclasses and lib types do not need a self argument,
+      # reading them should not have side effects unless `obj` turns out to be
+      # a constant with an initializer (e.g. `A = (puts 1; Int32)` has a side
+      # effect).
+      if obj.type.passed_as_self? || obj.target_const
+        request_value(obj)
+      end
+    when ASTNode
+      # Always accept obj: even if it's not passed as self this might
+      # involve intermediate calls with side effects.
       request_value(obj)
     end
 
@@ -239,9 +248,8 @@ class Crystal::CodeGenVisitor
       final_value_casted = cast_to_void_pointer final_value
       gep_call_arg = cast_to_void_pointer gep(llvm_type(call_arg_type), call_arg, 0, 0)
       size = @abi.size(abi_arg_type.type)
-      size = @program.bits64? ? int64(size) : int32(size)
       align = @abi.align(abi_arg_type.type)
-      memcpy(final_value_casted, gep_call_arg, size, align, int1(0))
+      memcpy(final_value_casted, gep_call_arg, size_t(size), align, int1(0))
       call_arg = load cast, final_value
     else
       # Keep same call arg
@@ -256,9 +264,8 @@ class Crystal::CodeGenVisitor
     final_value_casted = cast_to_void_pointer final_value
     call_arg_casted = cast_to_void_pointer call_arg
     size = @abi.size(abi_arg_type.type)
-    size = @program.bits64? ? int64(size) : int32(size)
     align = @abi.align(abi_arg_type.type)
-    memcpy(final_value_casted, call_arg_casted, size, align, int1(0))
+    memcpy(final_value_casted, call_arg_casted, size_t(size), align, int1(0))
     final_value
   end
 
@@ -342,7 +349,10 @@ class Crystal::CodeGenVisitor
 
     # Create self var if available
     if node_obj
-      new_vars["%self"] = LLVMVar.new(@last, node_obj.type, true)
+      # call `#remove_indirection` here so that the downcast call in
+      # `#visit(Var)` doesn't spend time expanding module types again and again
+      # (it should be the only use site of `node_obj.type`)
+      new_vars["%self"] = LLVMVar.new(@last, node_obj.type.remove_indirection, true)
     end
 
     # Get type if of args and create arg vars
@@ -360,6 +370,10 @@ class Crystal::CodeGenVisitor
     call.name_location = node.name_location
 
     is_super = node.super?
+
+    # call `#remove_indirection` here so that the `match_type_id` below doesn't
+    # spend time expanding module types again and again
+    owner = owner.remove_indirection unless is_super
 
     with_cloned_context do
       context.vars = new_vars
@@ -532,9 +546,8 @@ class Crystal::CodeGenVisitor
             final_value = alloca abi_return.type
             final_value_casted = cast_to_void_pointer final_value
             size = @abi.size(abi_return.type)
-            size = @program.@program.bits64? ? int64(size) : int32(size)
             align = @abi.align(abi_return.type)
-            memcpy(final_value_casted, cast2, size, align, int1(0))
+            memcpy(final_value_casted, cast2, size_t(size), align, int1(0))
             @last = final_value
           end
         in .indirect?
@@ -597,12 +610,19 @@ class Crystal::CodeGenVisitor
       abi_info = abi_info(target_def)
     end
 
+    sret = abi_info && sret?(abi_info)
     arg_offset = is_closure ? 2 : 1
+    arg_offset += 1 if sret
+
     arg_types = fun_type.try(&.arg_types) || target_def.try &.args.map &.type
     arg_types.try &.each_with_index do |arg_type, i|
       if abi_info && (abi_arg_type = abi_info.arg_types[i]?) && (attr = abi_arg_type.attr)
         @last.add_instruction_attribute(i + arg_offset, attr, llvm_context, abi_arg_type.type)
       end
+    end
+
+    if abi_info && sret
+      @last.add_instruction_attribute(1, LLVM::Attribute::StructRet, llvm_context, abi_info.return_type.type)
     end
   end
 

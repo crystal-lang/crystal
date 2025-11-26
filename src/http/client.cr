@@ -119,10 +119,6 @@ class HTTP::Client
   property? compress : Bool = true
 
   @io : IO?
-  @dns_timeout : Float64?
-  @connect_timeout : Float64?
-  @read_timeout : Float64?
-  @write_timeout : Float64?
   @reconnect = true
 
   # Creates a new HTTP client with the given *host*, *port* and *tls*
@@ -201,7 +197,7 @@ class HTTP::Client
   #
   # This constructor will raise an exception if any scheme but HTTP or HTTPS
   # is used.
-  def self.new(uri : URI, tls : TLSContext = nil)
+  def self.new(uri : URI, tls : TLSContext = nil) : self
     tls = tls_flag(uri, tls)
     host = validate_host(uri)
     new(host, uri.port, tls)
@@ -283,8 +279,9 @@ class HTTP::Client
   #   puts "Timeout!"
   # end
   # ```
+  @[Deprecated("Use `#read_timeout=(Time::Span)` instead")]
   def read_timeout=(read_timeout : Number)
-    @read_timeout = read_timeout.to_f
+    self.read_timeout = read_timeout.seconds
   end
 
   # Sets the read timeout with a `Time::Span`, to wait when reading before raising an `IO::TimeoutError`.
@@ -300,21 +297,18 @@ class HTTP::Client
   #   puts "Timeout!"
   # end
   # ```
-  def read_timeout=(read_timeout : Time::Span)
-    self.read_timeout = read_timeout.total_seconds
-  end
+  setter read_timeout : Time::Span?
 
   # Sets the write timeout - if any chunk of request is not written
   # within the number of seconds provided, `IO::TimeoutError` exception is raised.
+  @[Deprecated("Use `#write_timeout=(Time::Span)` instead")]
   def write_timeout=(write_timeout : Number)
-    @write_timeout = write_timeout.to_f
+    self.write_timeout = write_timeout.seconds
   end
 
   # Sets the write timeout - if any chunk of request is not written
   # within the provided `Time::Span`,  `IO::TimeoutError` exception is raised.
-  def write_timeout=(write_timeout : Time::Span)
-    self.write_timeout = write_timeout.total_seconds
-  end
+  setter write_timeout : Time::Span?
 
   # Sets the number of seconds to wait when connecting, before raising an `IO::TimeoutError`.
   #
@@ -329,8 +323,9 @@ class HTTP::Client
   #   puts "Timeout!"
   # end
   # ```
+  @[Deprecated("Use `#connect_timeout=(Time::Span)` instead")]
   def connect_timeout=(connect_timeout : Number)
-    @connect_timeout = connect_timeout.to_f
+    self.connect_timeout = connect_timeout.seconds
   end
 
   # Sets the open timeout with a `Time::Span` to wait when connecting, before raising an `IO::TimeoutError`.
@@ -346,13 +341,11 @@ class HTTP::Client
   #   puts "Timeout!"
   # end
   # ```
-  def connect_timeout=(connect_timeout : Time::Span)
-    self.connect_timeout = connect_timeout.total_seconds
-  end
+  setter connect_timeout : Time::Span?
 
-  # **This method has no effect right now**
-  #
   # Sets the number of seconds to wait when resolving a name, before raising an `IO::TimeoutError`.
+  #
+  # NOTE: *dns_timeout* is currently only supported on Windows.
   #
   # ```
   # require "http/client"
@@ -365,13 +358,14 @@ class HTTP::Client
   #   puts "Timeout!"
   # end
   # ```
+  @[Deprecated("Use `#dns_timeout=(Time::Span)` instead")]
   def dns_timeout=(dns_timeout : Number)
-    @dns_timeout = dns_timeout.to_f
+    self.dns_timeout = dns_timeout.seconds
   end
 
-  # **This method has no effect right now**
-  #
   # Sets the number of seconds to wait when resolving a name with a `Time::Span`, before raising an `IO::TimeoutError`.
+  #
+  # NOTE: *dns_timeout* is currently only supported on Windows.
   #
   # ```
   # require "http/client"
@@ -384,9 +378,7 @@ class HTTP::Client
   #   puts "Timeout!"
   # end
   # ```
-  def dns_timeout=(dns_timeout : Time::Span)
-    self.dns_timeout = dns_timeout.total_seconds
-  end
+  setter dns_timeout : Time::Span?
 
   # Adds a callback to execute before each request. This is usually
   # used to set an authorization header. Any number of callbacks
@@ -588,6 +580,10 @@ class HTTP::Client
 
   private def exec_internal(request)
     implicit_compression = implicit_compression?(request)
+
+    set_defaults request
+    run_before_request_callbacks(request)
+
     begin
       response = exec_internal_single(request, implicit_compression: implicit_compression)
     rescue exc : IO::Error
@@ -636,6 +632,10 @@ class HTTP::Client
 
   private def exec_internal(request, &block : Response -> T) : T forall T
     implicit_compression = implicit_compression?(request)
+
+    set_defaults request
+    run_before_request_callbacks(request)
+
     exec_internal_single(request, ignore_io_error: true, implicit_compression: implicit_compression) do |response|
       if response
         return handle_response(response) { yield response }
@@ -673,8 +673,6 @@ class HTTP::Client
   end
 
   private def send_request(request)
-    set_defaults request
-    run_before_request_callbacks(request)
     request.to_io(io)
     io.flush
   end
@@ -717,7 +715,7 @@ class HTTP::Client
   # response = client.exec "GET", "/"
   # response.body # => "..."
   # ```
-  def exec(method : String, path, headers : HTTP::Headers? = nil, body : BodyType = nil) : HTTP::Client::Response
+  def exec(method : String, path : String, headers : HTTP::Headers? = nil, body : BodyType = nil) : HTTP::Client::Response
     exec new_request method, path, headers, body
   end
 
@@ -747,7 +745,7 @@ class HTTP::Client
   # response = HTTP::Client.exec "GET", "http://www.example.com"
   # response.body # => "..."
   # ```
-  def self.exec(method, url : String | URI, headers : HTTP::Headers? = nil, body : BodyType = nil, tls : TLSContext = nil) : HTTP::Client::Response
+  def self.exec(method : String, url : String | URI, headers : HTTP::Headers? = nil, body : BodyType = nil, tls : TLSContext = nil) : HTTP::Client::Response
     headers = default_one_shot_headers(headers)
     exec(url, tls) do |client, path|
       client.exec method, path, headers, body

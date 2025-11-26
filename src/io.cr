@@ -137,8 +137,10 @@ abstract class IO
   # reader.gets # => "hello"
   # reader.gets # => "world"
   # ```
-  def self.pipe(read_blocking = false, write_blocking = false) : {IO::FileDescriptor, IO::FileDescriptor}
-    Crystal::System::FileDescriptor.pipe(read_blocking, write_blocking)
+  def self.pipe(read_blocking : Bool? = nil, write_blocking : Bool? = nil) : {IO::FileDescriptor, IO::FileDescriptor}
+    r, w = Crystal::EventLoop.current.pipe(read_blocking, write_blocking)
+    w.sync = true
+    {r, w}
   end
 
   # Creates a pair of pipe endpoints (connected to each other) and passes them
@@ -152,7 +154,7 @@ abstract class IO
   #   reader.gets # => "world"
   # end
   # ```
-  def self.pipe(read_blocking = false, write_blocking = false, &)
+  def self.pipe(read_blocking = nil, write_blocking = nil, &)
     r, w = IO.pipe(read_blocking, write_blocking)
     begin
       yield r, w
@@ -173,7 +175,7 @@ abstract class IO
   # io << "Crystal"
   # io.to_s # => "1-Crystal"
   # ```
-  def <<(obj) : self
+  def <<(obj : _) : self
     obj.to_s self
     self
   end
@@ -264,12 +266,12 @@ abstract class IO
 
   # Writes a formatted string to this IO.
   # For details on the format string, see top-level `::printf`.
-  def printf(format_string, *args) : Nil
+  def printf(format_string : String, *args) : Nil
     printf format_string, args
   end
 
   # :ditto:
-  def printf(format_string, args : Array | Tuple) : Nil
+  def printf(format_string : String, args : Array | Tuple) : Nil
     String::Formatter(typeof(args)).new(format_string, args, self).format
   end
 
@@ -414,7 +416,7 @@ abstract class IO
   #
   # "你".bytes # => [228, 189, 160]
   # ```
-  def read_utf8(slice : Bytes)
+  def read_utf8(slice : Bytes) : Int32
     if decoder = decoder()
       decoder.read_utf8(self, slice)
     else
@@ -594,7 +596,7 @@ abstract class IO
   # io.gets               # => "foo"
   # io.gets               # => nil
   # ```
-  def gets(chomp = true) : String?
+  def gets(chomp : Bool = true) : String?
     gets '\n', chomp: chomp
   end
 
@@ -610,7 +612,7 @@ abstract class IO
   # io.gets(3) # => "ld"
   # io.gets(3) # => nil
   # ```
-  def gets(limit : Int, chomp = false) : String?
+  def gets(limit : Int, chomp : Bool = false) : String?
     gets '\n', limit: limit, chomp: chomp
   end
 
@@ -624,7 +626,7 @@ abstract class IO
   # io.gets('z') # => "ld"
   # io.gets('w') # => nil
   # ```
-  def gets(delimiter : Char, chomp = false) : String?
+  def gets(delimiter : Char, chomp : Bool = false) : String?
     gets delimiter, Int32::MAX, chomp: chomp
   end
 
@@ -910,7 +912,7 @@ abstract class IO
   # io.rewind
   # io.gets(4) # => "\u{4}\u{3}\u{2}\u{1}"
   # ```
-  def write_bytes(object, format : IO::ByteFormat = IO::ByteFormat::SystemEndian) : Nil
+  def write_bytes(object : _, format : IO::ByteFormat = IO::ByteFormat::SystemEndian) : Nil
     object.to_io(self, format)
   end
 
@@ -1170,7 +1172,7 @@ abstract class IO
   #
   # io2.to_s # => "hello"
   # ```
-  def self.copy(src, dst) : Int64
+  def self.copy(src : IO, dst : IO) : Int64
     buffer = uninitialized UInt8[DEFAULT_BUFFER_SIZE]
     count = 0_i64
     while (len = src.read(buffer.to_slice).to_i32) > 0
@@ -1190,7 +1192,7 @@ abstract class IO
   #
   # io2.to_s # => "hel"
   # ```
-  def self.copy(src, dst, limit : Int) : Int64
+  def self.copy(src : IO, dst : IO, limit : Int) : Int64
     raise ArgumentError.new("Negative limit") if limit < 0
 
     limit = limit.to_i64
@@ -1219,11 +1221,14 @@ abstract class IO
 
     while true
       read1 = stream1.read(buf1.to_slice)
+      if read1.zero?
+        # First stream is EOF, check if the second has more.
+        return stream2.read_byte.nil?
+      end
       read2 = stream2.read_fully?(buf2.to_slice[0, read1])
       return false unless read2
 
       return false if buf1.to_unsafe.memcmp(buf2.to_unsafe, read1) != 0
-      return true if read1 == 0
     end
   end
 

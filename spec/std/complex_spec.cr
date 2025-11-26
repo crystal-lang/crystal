@@ -1,12 +1,15 @@
 require "spec"
 require "complex"
 require "../support/number"
+{% unless flag?(:wasm32) %}
+  require "big"
+{% end %}
 
 # exact equality, including component signs
 private def assert_complex_eq(z1 : Complex, z2 : Complex, *, file = __FILE__, line = __LINE__)
   z1.should eq(z2), file: file, line: line
-  Math.copysign(1.0, z1.real).should eq(Math.copysign(1.0, z2.real)), file: file, line: line
-  Math.copysign(1.0, z1.imag).should eq(Math.copysign(1.0, z2.imag)), file: file, line: line
+  z1.real.sign_bit.should eq(z2.real.sign_bit), file: file, line: line
+  z1.imag.sign_bit.should eq(z2.imag.sign_bit), file: file, line: line
 end
 
 private def assert_complex_nan(z : Complex, *, file = __FILE__, line = __LINE__)
@@ -49,6 +52,10 @@ describe "Complex" do
       c = 4.2
       (a == b).should be_true
       (a == c).should be_false
+
+      {% unless flag?(:wasm32) %}
+        (a == BigDecimal.new(53, 1)).should be_false
+      {% end %}
     end
 
     it "number == complex" do
@@ -57,6 +64,10 @@ describe "Complex" do
       c = Complex.new(7.2, 0)
       (a == b).should be_true
       (a == c).should be_false
+
+      {% unless flag?(:wasm32) %}
+        (BigDecimal.new(72, 1) == c).should be_false
+      {% end %}
     end
   end
 
@@ -254,6 +265,12 @@ describe "Complex" do
     it "complex / complex" do
       ((Complex.new(4, 6.2))/(Complex.new(0.5, 2.7))).should eq(Complex.new(2.485411140583554, -1.0212201591511936))
       ((Complex.new(4.1, 6.0))/(Complex.new(10, 2.2))).should eq(Complex.new(0.5169782525753529, 0.48626478443342236))
+
+      (1.to_c / -1.to_c).should eq(-1.to_c)
+      assert_complex_nan 1.to_c / Float64::NAN
+
+      (1.to_c / 0.to_c).real.abs.should eq(Float64::INFINITY)
+      (1.to_c / 0.to_c).imag.nan?.should be_true
     end
 
     it "complex / number" do
@@ -280,10 +297,10 @@ describe "Complex" do
   end
 
   it "test zero?" do
-    Complex.new(0, 0).zero?.should eq true
-    Complex.new(0, 3.4).zero?.should eq false
-    Complex.new(1.2, 0).zero?.should eq false
-    Complex.new(1.2, 3.4).zero?.should eq false
+    Complex.new(0, 0).zero?.should be_true
+    Complex.new(0, 3.4).zero?.should be_false
+    Complex.new(1.2, 0).zero?.should be_false
+    Complex.new(1.2, 3.4).zero?.should be_false
   end
 
   it "test additive_identity" do

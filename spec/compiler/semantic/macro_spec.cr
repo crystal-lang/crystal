@@ -55,7 +55,7 @@ describe "Semantic: macro" do
   end
 
   it "allows subclasses of return type for macro def" do
-    run(%{
+    run(<<-CRYSTAL).to_i.should eq(2)
       class Foo
         def foo
           1
@@ -76,11 +76,11 @@ describe "Semantic: macro" do
       end
 
       Baz.new.foobar.foo
-    }).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "allows return values that include the return type of the macro def" do
-    run(%{
+    run(<<-CRYSTAL).to_i.should eq(2)
       module Foo
         def foo
           1
@@ -103,11 +103,11 @@ describe "Semantic: macro" do
       end
 
       Baz.new.foobar.foo
-    }).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "allows generic return types for macro def" do
-    run(%{
+    run(<<-CRYSTAL).to_i.should eq(2)
       class Foo(T)
         def foo
           @foo
@@ -125,7 +125,7 @@ describe "Semantic: macro" do
       end
 
       Baz.new.foobar.foo
-    }).to_i.should eq(2)
+      CRYSTAL
 
     assert_error(<<-CRYSTAL, "method Bar#bar must return Foo(String) but it is returning Foo(Int32)")
       class Foo(T)
@@ -470,7 +470,7 @@ describe "Semantic: macro" do
   end
 
   it "preserves correct self in restriction when macro def is to be instantiated in subtypes (#5044)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { string }
       class Foo
         def foo(x)
           1
@@ -491,11 +491,11 @@ describe "Semantic: macro" do
       end
 
       (Baz.new || Baz2.new).foo(Baz.new)
-      )) { string }
+      CRYSTAL
   end
 
   it "doesn't affect self restrictions outside the macro def being instantiated in subtypes" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of int32, bool }
       class Foo
         def foo(other) : Bool
           {% @type %}
@@ -524,7 +524,7 @@ describe "Semantic: macro" do
       end
 
       Foo.new.as(Foo).foo(Bar1.new)
-      )) { union_of int32, bool }
+      CRYSTAL
   end
 
   it "errors if non-existent named arg" do
@@ -669,6 +669,21 @@ describe "Semantic: macro" do
         baz
       end
       CRYSTAL
+  end
+
+  it "begins with {{ yield }} (#15050)" do
+    result = top_level_semantic <<-CRYSTAL, wants_doc: true
+      macro foo
+        {{yield}}
+      end
+
+      foo do
+        # doc comment
+        def test
+        end
+      end
+      CRYSTAL
+    result.program.defs.try(&.["test"][0].def.doc).should eq "doc comment"
   end
 
   it "can return class type in macro def" do
@@ -1159,6 +1174,19 @@ describe "Semantic: macro" do
       end
 
       Foo(Int32).foo("foo")
+      CRYSTAL
+  end
+
+  it "finds type for global path shared with free var" do
+    assert_type(<<-CRYSTAL) { int32 }
+      module T
+      end
+
+      def foo(x : T) forall T
+        {{ ::T.module? ? 1 : 'a' }}
+      end
+
+      foo("")
       CRYSTAL
   end
 
@@ -1733,6 +1761,12 @@ describe "Semantic: macro" do
     method.location.not_nil!.expanded_location.not_nil!.line_number.should eq(9)
   end
 
+  it "assigns to underscore" do
+    assert_no_errors <<-CRYSTAL
+      {% _ = 1 %}
+      CRYSTAL
+  end
+
   it "unpacks block parameters inside macros (#13742)" do
     assert_no_errors <<-CRYSTAL
       macro foo
@@ -1749,6 +1783,16 @@ describe "Semantic: macro" do
 
       foo
       foo
+      CRYSTAL
+  end
+
+  it "unpacks to underscore within block parameters inside macros" do
+    assert_type(<<-CRYSTAL) { bool }
+      {% begin %}
+        {% x = nil %}
+        {% [{1, true, 'a', ""}].each { |(_, y, _, _)| x = y } %}
+        {{ x }}
+      {% end %}
       CRYSTAL
   end
 
@@ -1783,5 +1827,46 @@ describe "Semantic: macro" do
         { {{a}}, {{b}} }
       {% end %}
       CRYSTAL
+  end
+
+  it "assigns to underscore in MultiAssign" do
+    assert_type(<<-CRYSTAL) { tuple_of([char, bool]) }
+      {% begin %}
+        {% _, x, *_, y = [1, 'a', "", nil, true] %}
+        { {{x}}, {{y}} }
+      {% end %}
+      CRYSTAL
+  end
+
+  describe "@caller" do
+    it "returns an array of each call" do
+      assert_type(<<-CRYSTAL) { int32 }
+        macro test
+          {{@caller.size == 1 ? 1 : 'f'}}
+        end
+
+        test
+        CRYSTAL
+    end
+
+    it "provides access to the `Call` information" do
+      assert_type(<<-CRYSTAL) { tuple_of([int32, char] of Type) }
+        macro test(num)
+          {{@caller.first.args[0] == 1 ? 1 : 'f'}}
+        end
+
+        {test(1), test(2)}
+        CRYSTAL
+    end
+
+    it "returns nil if no stack is available" do
+      assert_type(<<-CRYSTAL) { char }
+        def test
+          {{(c = @caller) ? 1 : 'f'}}
+        end
+
+        test
+        CRYSTAL
+    end
   end
 end

@@ -50,10 +50,10 @@ describe Crystal::SyntaxHighlighter::HTML do
       def if else elsif end class module include
       extend while until do yield return unless next break
       begin lib fun type struct union enum macro out require
-      case when select then of rescue ensure is_a? alias sizeof
+      case when select then of rescue ensure is_a? alias sizeof alignof
       as as? typeof for in with self super private asm
       nil? abstract pointerof
-      protected uninitialized instance_sizeof offsetof
+      protected uninitialized instance_sizeof instance_alignof offsetof
       annotation verbatim
     ).each do |kw|
       it_highlights kw, %(<span class="k">#{kw}</span>)
@@ -122,6 +122,10 @@ describe Crystal::SyntaxHighlighter::HTML do
 
     it_highlights "Set{1, 2, 3}", %(<span class="t">Set</span>{<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>})
 
+    it_highlights "foo(/Name: /)", %(foo(<span class="s">/Name: /</span>))
+    it_highlights "foo[/Name: /]", %(foo[<span class="s">/Name: /</span>])
+    it_highlights "Foo{/Name: /}", %(<span class="t">Foo</span>{<span class="s">/Name: /</span>})
+
     it_highlights <<-CRYSTAL, <<-HTML
     foo, bar = <<-FOO, <<-BAR
       foo
@@ -162,4 +166,8 @@ describe Crystal::SyntaxHighlighter::HTML do
     it_highlights! "%w[foo"
     it_highlights! "%i[foo"
   end
+
+  # fix for https://forum.crystal-lang.org/t/question-about-the-crystal-syntax-highlighter/7283
+  it_highlights %q(/#{l[""]}/
+    "\\n"), %(<span class="s">/</span><span class="i">\#{</span>l[<span class="s">&quot;&quot;</span>]<span class="i">}</span><span class="s">/</span>\n    <span class="s">&quot;\\\\n&quot;</span>)
 end

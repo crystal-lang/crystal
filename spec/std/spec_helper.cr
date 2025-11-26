@@ -2,6 +2,8 @@ require "spec"
 require "../support/tempfile"
 require "../support/fibers"
 require "../support/win32"
+require "../support/wasm32"
+require "../support/interpreted"
 
 def datapath(*components)
   File.join("spec", "std", "data", *components)
@@ -41,7 +43,7 @@ def spawn_and_check(before : Proc(_), file = __FILE__, line = __LINE__, &block :
 
     # This is a workaround to ensure the "before" fiber
     # is unscheduled. Otherwise it might stay alive running the event loop
-    spawn(same_thread: true) do
+    spawn(same_thread: !{{flag?(:execution_context)}}) do
       while x.get != 2
         Fiber.yield
       end
@@ -76,15 +78,17 @@ def spawn_and_check(before : Proc(_), file = __FILE__, line = __LINE__, &block :
 end
 
 def compile_file(source_file, *, bin_name = "executable_file", flags = %w(), file = __FILE__, &)
+  # can't use backtick in interpreted code (#12241)
+  pending_interpreted! "Unable to compile Crystal code in interpreted code"
+
   with_temp_executable(bin_name, file: file) do |executable_file|
     compiler = ENV["CRYSTAL_SPEC_COMPILER_BIN"]? || "bin/crystal"
     args = ["build"] + flags + ["-o", executable_file, source_file]
     output = IO::Memory.new
     status = Process.run(compiler, args, env: {
-      "CRYSTAL_PATH"          => Crystal::PATH,
-      "CRYSTAL_LIBRARY_PATH"  => Crystal::LIBRARY_PATH,
-      "CRYSTAL_LIBRARY_RPATH" => Crystal::LIBRARY_RPATH,
-      "CRYSTAL_CACHE_DIR"     => Crystal::CACHE_DIR,
+      "CRYSTAL_PATH"         => Crystal::PATH,
+      "CRYSTAL_LIBRARY_PATH" => Crystal::LIBRARY_PATH,
+      "CRYSTAL_CACHE_DIR"    => Crystal::CACHE_DIR,
     }, output: output, error: output)
 
     unless status.success?
@@ -97,6 +101,33 @@ def compile_file(source_file, *, bin_name = "executable_file", flags = %w(), fil
   end
 end
 
+def assert_compile_error(source, expected_error, *, flags = %w(), file = __FILE__, line = __LINE__)
+  # can't use backtick in interpreted code (#12241)
+  pending_interpreted! "Unable to compile Crystal code in interpreted code"
+
+  with_tempfile("source_file", file: file) do |source_file|
+    File.write(source_file, source)
+
+    bin_name = "executable_file"
+    with_temp_executable(bin_name, file: file) do |executable_file|
+      compiler = ENV["CRYSTAL_SPEC_COMPILER_BIN"]? || "bin/crystal"
+      args = ["build"] + flags + ["-o", executable_file, source_file]
+      output = IO::Memory.new
+      status = Process.run(compiler, args, env: {
+        "CRYSTAL_PATH"         => Crystal::PATH,
+        "CRYSTAL_LIBRARY_PATH" => Crystal::LIBRARY_PATH,
+        "CRYSTAL_CACHE_DIR"    => Crystal::CACHE_DIR,
+        "NO_COLOR"             => "1",
+      }, output: output, error: output)
+
+      output.to_s.should contain(expected_error)
+
+      status.success?.should be_false
+      File.exists?(executable_file).should be_false
+    end
+  end
+end
+
 def compile_source(source, flags = %w(), file = __FILE__, &)
   with_tempfile("source_file", file: file) do |source_file|
     File.write(source_file, source)
@@ -106,19 +137,19 @@ def compile_source(source, flags = %w(), file = __FILE__, &)
   end
 end
 
-def compile_and_run_file(source_file, flags = %w(), file = __FILE__)
+def compile_and_run_file(source_file, flags = %w(), runtime_args = %w(), file = __FILE__)
   compile_file(source_file, flags: flags, file: file) do |executable_file|
     output, error = IO::Memory.new, IO::Memory.new
-    status = Process.run executable_file, output: output, error: error
+    status = Process.run executable_file, args: runtime_args, output: output, error: error
 
     {status, output.to_s, error.to_s}
   end
 end
 
-def compile_and_run_source(source, flags = %w(), file = __FILE__)
+def compile_and_run_source(source, flags = %w(), runtime_args = %w(), file = __FILE__)
   with_tempfile("source_file", file: file) do |source_file|
     File.write(source_file, source)
-    compile_and_run_file(source_file, flags, file: file)
+    compile_and_run_file(source_file, flags, runtime_args, file: file)
   end
 end
 

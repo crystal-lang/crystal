@@ -134,7 +134,7 @@ class Crystal::Doc::Generator
   end
 
   def must_include?(type : Crystal::Type)
-    return false if type.private?
+    return false if type.private? && !showdoc?(type)
     return false if nodoc? type
     return true if crystal_builtin?(type)
 
@@ -143,8 +143,10 @@ class Crystal::Doc::Generator
       return false if nodoc? ns
     end
 
-    # Don't include lib types or types inside a lib type
-    return false if type.is_a?(Crystal::LibType) || type.namespace.is_a?(LibType)
+    # Don't include lib types or types inside a lib type unless specified with `:showdoc:`
+    if (type.is_a?(LibType) || type.namespace.is_a?(LibType)) && !showdoc?(type)
+      return false
+    end
 
     !!type.locations.try &.any? do |type_location|
       must_include? type_location
@@ -215,8 +217,19 @@ class Crystal::Doc::Generator
     nodoc? obj.doc.try &.strip
   end
 
+  def showdoc?(str : String?) : Bool
+    return false if !str || !@program.wants_doc?
+    str.starts_with?(":showdoc:")
+  end
+
+  def showdoc?(obj : Crystal::Type)
+    showdoc?(obj.doc.try &.strip)
+  end
+
   def crystal_builtin?(type)
     return false unless project_info.crystal_stdlib?
+    # TODO: Enabling this allows links to `NoReturn` to work, but has two `NoReturn`s show up in the sidebar
+    # return true if type.is_a?(NamedType) && {"NoReturn", "Void"}.includes?(type.name)
     return false unless type.is_a?(Const) || type.is_a?(NonGenericModuleType)
 
     crystal_type = @program.types["Crystal"]
@@ -227,7 +240,7 @@ class Crystal::Doc::Generator
 
     {"BUILD_COMMIT", "BUILD_DATE", "CACHE_DIR", "DEFAULT_PATH",
      "DESCRIPTION", "PATH", "VERSION", "LLVM_VERSION",
-     "LIBRARY_PATH", "LIBRARY_RPATH"}.each do |name|
+     "LIBRARY_PATH", "HOST_TRIPLE", "TARGET_TRIPLE"}.each do |name|
       return true if type == crystal_type.types[name]?
     end
 
@@ -249,16 +262,9 @@ class Crystal::Doc::Generator
   def collect_subtypes(parent)
     types = [] of Type
 
-    # AliasType has defined `types?` to be the types
-    # of the aliased type, but for docs we don't want
-    # to list the nested types for aliases.
-    if parent.is_a?(AliasType)
-      return types
-    end
-
     parent.types?.try &.each_value do |type|
       case type
-      when Const, LibType
+      when Const
         next
       else
         types << type(type) if must_include? type
@@ -272,7 +278,7 @@ class Crystal::Doc::Generator
     types = [] of Constant
 
     parent.type.types?.try &.each_value do |type|
-      if type.is_a?(Const) && must_include?(type) && !type.private?
+      if type.is_a?(Const) && must_include?(type) && (!type.private? || showdoc?(type))
         types << Constant.new(self, parent, type)
       end
     end
@@ -301,7 +307,7 @@ class Crystal::Doc::Generator
   end
 
   def doc(obj : Type | Method | Macro | Constant)
-    doc = obj.doc
+    doc = obj.doc.try &.strip.lchop(":showdoc:").strip
 
     return if !doc && !has_doc_annotations?(obj)
 
@@ -309,12 +315,16 @@ class Crystal::Doc::Generator
   end
 
   def has_doc_annotations?(obj)
-    obj.annotations(@program.deprecated_annotation) || obj.annotations(@program.experimental_annotation)
+    obj.annotations(@program.deprecated_annotation) ||
+      obj.annotations(@program.experimental_annotation) ||
+      obj.as?(Method).try &.def.args.any? { |arg| has_doc_annotations?(arg) }
   end
 
   def doc(context, string)
     string = isolate_flag_lines string
-    string += build_flag_lines_from_annotations context
+    if annotations = build_flag_lines_from_annotations context
+      string += "\n\n" + annotations
+    end
     markdown = render_markdown(context, string)
     generate_flags markdown
   end
@@ -335,9 +345,10 @@ class Crystal::Doc::Generator
   # Assumes that flag keywords are at the beginning of respective `p` element
   def generate_flags(string)
     FLAGS.reduce(string) do |str, flag|
-      flag_regexp = /<p>\s*#{flag}:?/
-      element_sub = %(<p><span class="flag #{FLAG_COLORS[flag]}">#{flag}</span> )
-      str.gsub(flag_regexp, element_sub)
+      # "DEPRECATED(parameter foo):"
+      str.gsub(/<p>\s*#{flag}\((.*)\):/, %(<p><span class="flag #{FLAG_COLORS[flag]}">#{flag} \\1</span> ))
+        # "DEPRECATED:"
+        .gsub(/<p>\s*#{flag}:?/, %(<p><span class="flag #{FLAG_COLORS[flag]}">#{flag}</span> ))
     end
   end
 
@@ -358,21 +369,32 @@ class Crystal::Doc::Generator
   end
 
   def build_flag_lines_from_annotations(context)
-    first = true
     String.build do |io|
       if anns = context.annotations(@program.deprecated_annotation)
         anns.each do |ann|
-          io << "\n\n" if first
-          first = false
           io << "DEPRECATED: #{DeprecatedAnnotation.from(ann).message}\n\n"
         end
       end
 
       if anns = context.annotations(@program.experimental_annotation)
         anns.each do |ann|
-          io << "\n\n" if first
-          first = false
           io << "EXPERIMENTAL: #{ExperimentalAnnotation.from(ann).message}\n\n"
+        end
+      end
+
+      if context.is_a?(Method)
+        context.def.args.each do |arg|
+          if anns = arg.annotations(@program.deprecated_annotation)
+            anns.each do |ann|
+              io << "DEPRECATED(parameter `#{arg.name}`): #{DeprecatedAnnotation.from(ann).message}\n\n"
+            end
+          end
+
+          if anns = arg.annotations(@program.experimental_annotation)
+            anns.each do |ann|
+              io << "EXPERIMENTAL(parameter `#{arg.name}`): #{ExperimentalAnnotation.from(ann).message}\n\n"
+            end
+          end
         end
       end
     end

@@ -30,4 +30,5 @@ lib LibLLVM
   fun run_function = LLVMRunFunction(ee : ExecutionEngineRef, f : ValueRef, num_args : UInt, args : GenericValueRef*) : GenericValueRef
   fun get_execution_engine_target_machine = LLVMGetExecutionEngineTargetMachine(ee : ExecutionEngineRef) : TargetMachineRef
   fun get_pointer_to_global = LLVMGetPointerToGlobal(ee : ExecutionEngineRef, global : ValueRef) : Void*
+  fun get_function_address = LLVMGetFunctionAddress(ee : ExecutionEngineRef, name : Char*) : UInt64
 end

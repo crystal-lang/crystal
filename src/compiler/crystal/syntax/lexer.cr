@@ -59,6 +59,7 @@ module Crystal
     def initialize(string, string_pool : StringPool? = nil, warnings : WarningCollection? = nil)
       @warnings = warnings || WarningCollection.new
       @reader = Char::Reader.new(string)
+      check_reader_error
       @token = Token.new
       @temp_token = Token.new
       @line_number = 1
@@ -156,7 +157,7 @@ module Crystal
         case next_char
         when '\r', '\n'
           handle_slash_r_slash_n_or_slash_n
-          incr_line_number
+          incr_line_number 0
           @token.passed_backslash_newline = true
           consume_whitespace
           reset_regex_flags = false
@@ -586,8 +587,19 @@ module Crystal
             return check_ident_or_keyword(:abstract, start)
           end
         when 'l'
-          if char_sequence?('i', 'a', 's')
-            return check_ident_or_keyword(:alias, start)
+          if next_char == 'i'
+            case next_char
+            when 'a'
+              if next_char == 's'
+                return check_ident_or_keyword(:alias, start)
+              end
+            when 'g'
+              if char_sequence?('n', 'o', 'f')
+                return check_ident_or_keyword(:alignof, start)
+              end
+            else
+              # scan_ident
+            end
           end
         when 's'
           case peek_next_char
@@ -719,8 +731,19 @@ module Crystal
                 return check_ident_or_keyword(:include, start)
               end
             when 's'
-              if char_sequence?('t', 'a', 'n', 'c', 'e', '_', 's', 'i', 'z', 'e', 'o', 'f')
-                return check_ident_or_keyword(:instance_sizeof, start)
+              if char_sequence?('t', 'a', 'n', 'c', 'e', '_')
+                case next_char
+                when 's'
+                  if char_sequence?('i', 'z', 'e', 'o', 'f')
+                    return check_ident_or_keyword(:instance_sizeof, start)
+                  end
+                when 'a'
+                  if char_sequence?('l', 'i', 'g', 'n', 'o', 'f')
+                    return check_ident_or_keyword(:instance_alignof, start)
+                  end
+                else
+                  # scan_ident
+                end
               end
             else
               # scan_ident
@@ -1025,7 +1048,7 @@ module Crystal
 
         scan_ident(start)
       else
-        if current_char.ascii_uppercase?
+        if current_char.uppercase? || current_char.titlecase?
           while ident_part?(next_char)
             # Nothing to do
           end
@@ -1765,27 +1788,27 @@ module Crystal
         char = next_char
         if char == 'q' && peek_next_char.in?('(', '<', '[', '{', '|')
           next_char
-          delimiter_state = Token::DelimiterState.new(:string, char, closing_char, 1)
+          delimiter_state = Token::DelimiterState.new(:string, current_char, closing_char, 1)
           next_char
         elsif char == 'Q' && peek_next_char.in?('(', '<', '[', '{', '|')
           next_char
-          delimiter_state = Token::DelimiterState.new(:string, char, closing_char, 1)
+          delimiter_state = Token::DelimiterState.new(:string, current_char, closing_char, 1)
           next_char
         elsif char == 'i' && peek_next_char.in?('(', '<', '[', '{', '|')
           next_char
-          delimiter_state = Token::DelimiterState.new(:symbol_array, char, closing_char, 1)
+          delimiter_state = Token::DelimiterState.new(:symbol_array, current_char, closing_char, 1)
           next_char
         elsif char == 'w' && peek_next_char.in?('(', '<', '[', '{', '|')
           next_char
-          delimiter_state = Token::DelimiterState.new(:string_array, char, closing_char, 1)
+          delimiter_state = Token::DelimiterState.new(:string_array, current_char, closing_char, 1)
           next_char
         elsif char == 'x' && peek_next_char.in?('(', '<', '[', '{', '|')
           next_char
-          delimiter_state = Token::DelimiterState.new(:command, char, closing_char, 1)
+          delimiter_state = Token::DelimiterState.new(:command, current_char, closing_char, 1)
           next_char
         elsif char == 'r' && peek_next_char.in?('(', '<', '[', '{', '|')
           next_char
-          delimiter_state = Token::DelimiterState.new(:regex, char, closing_char, 1)
+          delimiter_state = Token::DelimiterState.new(:regex, current_char, closing_char, 1)
           next_char
         else
           start = current_pos
@@ -2014,7 +2037,7 @@ module Crystal
     end
 
     def macro_starts_with_keyword?(beginning_of_line) : MacroKeywordState?
-      case char = current_char
+      case current_char
       when 'a'
         case next_char
         when 'b'
@@ -2475,7 +2498,8 @@ module Crystal
           if char == '\''
             found_closing_single_quote = true
             end_here = current_pos
-            next_char
+            char = next_char
+            raise "Unexpected EOF on heredoc identifier" if char == '\0'
             break
           else
             # wait until another quote
@@ -2732,11 +2756,13 @@ module Crystal
     end
 
     def next_char_no_column_increment
-      char = @reader.next_char
+      @reader.next_char.tap { check_reader_error }
+    end
+
+    private def check_reader_error
       if error = @reader.error
         ::raise InvalidByteSequenceError.new("Unexpected byte 0x#{error.to_s(16)} at position #{@reader.pos}, malformed UTF-8")
       end
-      char
     end
 
     def next_char
@@ -2789,6 +2815,13 @@ module Crystal
     def next_token_never_a_symbol
       @wants_symbol = false
       next_token.tap { @wants_symbol = true }
+    end
+
+    def wants_def_or_macro_name(& : ->)
+      @wants_def_or_macro_name = true
+      yield
+    ensure
+      @wants_def_or_macro_name = false
     end
 
     def current_char

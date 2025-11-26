@@ -373,6 +373,10 @@ module Crystal
       nil
     end
 
+    def lookup_name(name)
+      types?.try(&.[name]?)
+    end
+
     def parents
       nil
     end
@@ -555,7 +559,7 @@ module Crystal
            program.tuple, program.named_tuple,
            program.pointer, program.static_array,
            program.union, program.enum, program.proc,
-           PrimitiveType
+           PrimitiveType, GenericReferenceStorageType
         false
       else
         true
@@ -1389,10 +1393,10 @@ module Crystal
       # Float64 mantissa has 52 bits
       case kind
       when .i8?, .u8?, .i16?, .u16?
-        # Less than 23 bits, so convertable to Float32 and Float64 without precision loss
+        # Less than 23 bits, so convertible to Float32 and Float64 without precision loss
         true
       when .i32?, .u32?
-        # Less than 52 bits, so convertable to Float64 without precision loss
+        # Less than 52 bits, so convertible to Float64 without precision loss
         other_type.kind.f64?
       else
         false
@@ -1777,13 +1781,17 @@ module Crystal
     end
 
     def solve(instance)
+      solve?(instance).not_nil!
+    end
+
+    def solve?(instance)
       if instance.is_a?(GenericInstanceType) && instance.generic_type == @owner
         ancestor = instance
       else
-        ancestor = instance.ancestors.find { |ancestor| ancestor.is_a?(GenericInstanceType) && ancestor.generic_type == owner }.as(GenericInstanceType)
+        ancestor = instance.ancestors.find { |ancestor| ancestor.is_a?(GenericInstanceType) && ancestor.generic_type == owner }.as?(GenericInstanceType)
       end
 
-      ancestor.type_vars[name]
+      ancestor.try &.type_vars[name]?
     end
 
     def unbound?
@@ -2091,6 +2099,8 @@ module Crystal
               type_var_type.to_s_with_options(io, skip_union_parens: true, codegen: codegen)
             end
           else
+            # `type_var` could only be a non-type such as `NumberLiteral`, no
+            # need to use `#to_s_with_options` here
             io << ", " unless first
             first = false
             type_var.to_s(io)
@@ -2284,7 +2294,11 @@ module Crystal
           raise TypeException.new "can't instantiate StaticArray(T, N) with N = #{n.type} (N must be an integer)"
         end
 
-        value = n.value.to_i
+        value = n.value.to_i?
+        unless value
+          raise TypeException.new "can't instantiate StaticArray(T, N) with N = #{n} (N must be an integer)"
+        end
+
         if value < 0
           raise TypeException.new "can't instantiate StaticArray(T, N) with N = #{value} (N must be positive)"
         end
@@ -2642,6 +2656,33 @@ module Crystal
     end
   end
 
+  # The non-instantiated ReferenceStorage(T) type.
+  class GenericReferenceStorageType < GenericClassType
+    @struct = true
+
+    def new_generic_instance(program, generic_type, type_vars)
+      type_param = self.type_vars.first
+      t = type_vars[type_param].type
+
+      unless t.is_a?(TypeParameter) || (t.class? && !t.struct?)
+        raise TypeException.new "Can't instantiate ReferenceStorage(#{type_param}) with #{type_param} = #{t} (#{type_param} must be a reference type)"
+      end
+
+      ReferenceStorageType.new program, t, self, type_param
+    end
+  end
+
+  class ReferenceStorageType < GenericClassInstanceType
+    getter reference_type : Type
+
+    def initialize(program, @reference_type, generic_type, type_param)
+      t_var = Var.new("T", @reference_type)
+      t_var.bind_to t_var
+
+      super(program, generic_type, program.value, {type_param => t_var} of String => ASTNode)
+    end
+  end
+
   # A lib type, like `lib LibC`.
   class LibType < ModuleType
     getter link_annotations : Array(LinkAnnotation)?
@@ -2655,19 +2696,6 @@ module Crystal
 
     def metaclass
       self
-    end
-
-    def add_var(name, type, real_name, thread_local)
-      setter = External.new("#{name}=", [Arg.new("value", type: type)], Primitive.new("external_var_set", type), real_name)
-      setter.set_type(type)
-      setter.thread_local = thread_local
-
-      getter = External.new("#{name}", [] of Arg, Primitive.new("external_var_get", type), real_name)
-      getter.set_type(type)
-      getter.thread_local = thread_local
-
-      add_def setter
-      add_def getter
     end
 
     def lookup_var(name)
@@ -2729,17 +2757,9 @@ module Crystal
     delegate lookup_defs, lookup_defs_with_modules, lookup_first_def,
       lookup_macro, lookup_macros, to: aliased_type
 
-    def types?
+    def lookup_name(name)
       process_value
-      if aliased_type = @aliased_type
-        aliased_type.types?
-      else
-        nil
-      end
-    end
-
-    def types
-      types?.not_nil!
+      @aliased_type.try(&.lookup_name(name))
     end
 
     def remove_alias
@@ -2925,6 +2945,12 @@ module Crystal
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
+      if codegen
+        if (namespace = instance_type.namespace).is_a?(FileModule)
+          namespace.to_s_with_options(io, generic_args: false, codegen: codegen)
+          io << "::"
+        end
+      end
       io << @name
     end
 
@@ -2998,7 +3024,7 @@ module Crystal
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
-      instance_type.to_s(io)
+      instance_type.to_s_with_options(io, codegen: codegen)
       io << ".class"
     end
 
@@ -3052,7 +3078,7 @@ module Crystal
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
-      instance_type.to_s(io)
+      instance_type.to_s_with_options(io, codegen: codegen)
       io << ".class"
     end
 
@@ -3450,7 +3476,7 @@ module Crystal
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
-      base_type.to_s(io)
+      base_type.to_s_with_options(io, codegen: codegen)
       io << '+'
     end
 

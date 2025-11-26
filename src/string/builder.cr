@@ -41,21 +41,14 @@ class String::Builder < IO
     return if slice.empty?
 
     count = slice.size
-    new_bytesize = real_bytesize + count
-    if new_bytesize > @capacity
-      resize_to_capacity(Math.pw2ceil(new_bytesize))
-    end
 
+    increase_capacity_by count
     slice.copy_to(@buffer + real_bytesize, count)
     @bytesize += count
   end
 
   def write_byte(byte : UInt8) : Nil
-    new_bytesize = real_bytesize + 1
-    if new_bytesize > @capacity
-      resize_to_capacity(Math.pw2ceil(new_bytesize))
-    end
-
+    increase_capacity_by 1
     @buffer[real_bytesize] = byte
 
     @bytesize += 1
@@ -108,22 +101,43 @@ class String::Builder < IO
     raise "Can only invoke 'to_s' once on String::Builder" if @finished
     @finished = true
 
-    write_byte 0_u8
+    real_bytesize = real_bytesize()
+    @buffer[real_bytesize] = 0_u8
+    real_bytesize += 1
 
     # Try to reclaim some memory if capacity is bigger than what we need
-    real_bytesize = real_bytesize()
     if @capacity > real_bytesize
       resize_to_capacity(real_bytesize)
     end
 
     String.set_crystal_type_id(@buffer)
     str = @buffer.as(String)
-    str.initialize_header((bytesize - 1).to_i)
+    str.initialize_header(bytesize)
     str
   end
 
   private def real_bytesize
     @bytesize + String::HEADER_SIZE
+  end
+
+  private def increase_capacity_by(count)
+    raise IO::EOFError.new if count >= Int32::MAX - real_bytesize
+
+    new_bytesize = real_bytesize + count
+    return if new_bytesize <= @capacity
+
+    new_capacity = calculate_new_capacity(new_bytesize)
+    resize_to_capacity(new_capacity)
+  end
+
+  private def calculate_new_capacity(new_bytesize)
+    # If the new bytesize is bigger than 1 << 30, the next power of two would
+    # be 1 << 31, which is out of range for Int32.
+    # So we limit the capacity to Int32::MAX in order to be able to use the
+    # range (1 << 30) < new_bytesize < Int32::MAX
+    return Int32::MAX if new_bytesize > 1 << 30
+
+    Math.pw2ceil(new_bytesize)
   end
 
   private def resize_to_capacity(capacity)

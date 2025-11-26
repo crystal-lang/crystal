@@ -19,6 +19,7 @@ module Reply
       CTRL_K
       CTRL_N
       CTRL_P
+      CTRL_R
       CTRL_U
       CTRL_X
       CTRL_UP
@@ -43,20 +44,9 @@ module Reply
       @slice_buffer = Bytes.new(buffer_size)
     end
 
-    def read_char(from io : T = STDIN) forall T
-      {% if flag?(:win32) && T <= IO::FileDescriptor %}
-        handle = LibC._get_osfhandle(io.fd)
-        raise RuntimeError.from_errno("_get_osfhandle") if handle == -1
-
-        raw(io) do
-          LibC.ReadConsoleA(LibC::HANDLE.new(handle), @slice_buffer, @slice_buffer.size, out nb_read, nil)
-
-          parse_escape_sequence(@slice_buffer[0...nb_read])
-        end
-      {% else %}
-        nb_read = raw(io, &.read(@slice_buffer))
-        parse_escape_sequence(@slice_buffer[0...nb_read])
-      {% end %}
+    def read_char(from io : IO = STDIN)
+      nb_read = raw(io, &.read(@slice_buffer))
+      parse_escape_sequence(@slice_buffer[0...nb_read])
     end
 
     private def parse_escape_sequence(chars : Bytes) : Char | Sequence | String?
@@ -152,6 +142,8 @@ module Reply
         Sequence::CTRL_N
       when ctrl('p')
         Sequence::CTRL_P
+      when ctrl('r')
+        Sequence::CTRL_R
       when ctrl('u')
         Sequence::CTRL_U
       when ctrl('x')
@@ -184,15 +176,3 @@ module Reply
     end
   end
 end
-
-{% if flag?(:win32) %}
-  lib LibC
-    STD_INPUT_HANDLE = -10
-
-    fun ReadConsoleA(hConsoleInput : Void*,
-                     lpBuffer : Void*,
-                     nNumberOfCharsToRead : UInt32,
-                     lpNumberOfCharsRead : UInt32*,
-                     pInputControl : Void*) : UInt8
-  end
-{% end %}

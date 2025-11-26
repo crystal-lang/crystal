@@ -6,7 +6,7 @@ module Regex::PCRE
     String.new(LibPCRE.version)
   end
 
-  class_getter version_number : {Int32, Int32} = begin
+  class_getter version_number : {Int32, Int32} do
     version = self.version
     dot = version.index('.') || raise RuntimeError.new("Invalid libpcre2 version")
     space = version.index(' ', dot) || raise RuntimeError.new("Invalid libpcre2 version")
@@ -36,7 +36,8 @@ module Regex::PCRE
       if options.includes?(option)
         flag |= case option
                 when .ignore_case?       then LibPCRE::CASELESS
-                when .multiline?         then LibPCRE::DOTALL | LibPCRE::MULTILINE
+                when .multiline?         then LibPCRE::MULTILINE | LibPCRE::DOTALL
+                when .multiline_only?    then LibPCRE::MULTILINE
                 when .dotall?            then LibPCRE::DOTALL
                 when .extended?          then LibPCRE::EXTENDED
                 when .anchored?          then LibPCRE::ANCHORED

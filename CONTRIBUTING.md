@@ -15,22 +15,27 @@ there's no more room for discussion. We'll anyway close the issue after some day
 
 If something is missing from the language it might be that it's not yet implemented or that it was purposely left out. If in doubt, just ask.
 
+Substantial changes go through an [RFC process](https://github.com/crystal-lang/rfcs).
+
+The best place to start an open discussion about potential changes is the [Crystal forum](https://forum.crystal-lang.org/c/crystal-contrib/6).
+
 ### What's needed right now
 
-You can find a list of tasks that we consider suitable for a first time contribution at
-the [newcomer label](https://github.com/crystal-lang/crystal/issues?q=is%3Aissue+is%3Aopen+label%3Acommunity%3Anewcomer).
+You can find a list of tasks that we consider suitable for a first time contribution with
+the [good first issue label](https://github.com/crystal-lang/crystal/contribute).
 
 As you feel more confident, you can keep an eye out for open issues with the following labels:
-* [`community:to-research`](https://github.com/crystal-lang/crystal/issues?utf8=%E2%9C%93&q=is%3Aissue%20is%3Aopen%20label%3Acommunity%3Ato-research): Help needed on **researching and investigating** the issue at hand; could be from going through an RFC to figure out how something _should_ be working, to go through details on a C-library we'd like to bind.
-* [`community:to-design`](https://github.com/crystal-lang/crystal/issues?utf8=%E2%9C%93&q=is%3Aissue%20is%3Aopen%20label%3Acommunity%3Ato-design): As an issue has been accepted, we are looking for **ideas on how it could be implemented**, this is, a high-level design for the feature at hand.
-* [`community:to-implement`](https://github.com/crystal-lang/crystal/issues?utf8=%E2%9C%93&q=is%3Aissue%20is%3Aopen%20label%3Acommunity%3Ato-implement): After a design has been agreed upon, the remaining task is to actually **code** it and send a PR!
-* [`community:to-document`](https://github.com/crystal-lang/crystal/issues?utf8=%E2%9C%93&q=is%3Aissue%20is%3Aopen%20label%3Acommunity%3Ato-document): Similar to the one above, but this one is for those awesome devs that are happy to **contribute with documentation** instead of just code.
+
+- [`community:to-research`](https://github.com/crystal-lang/crystal/issues?utf8=%E2%9C%93&q=is%3Aissue%20is%3Aopen%20label%3Acommunity%3Ato-research): Help needed on **researching and investigating** the issue at hand; could be from going through an RFC to figure out how something _should_ be working, to go through details on a C-library we'd like to bind.
+- [`community:to-design`](https://github.com/crystal-lang/crystal/issues?utf8=%E2%9C%93&q=is%3Aissue%20is%3Aopen%20label%3Acommunity%3Ato-design): As an issue has been accepted, we are looking for **ideas on how it could be implemented**, this is, a high-level design for the feature at hand.
+- [`community:to-implement`](https://github.com/crystal-lang/crystal/issues?utf8=%E2%9C%93&q=is%3Aissue%20is%3Aopen%20label%3Acommunity%3Ato-implement): After a design has been agreed upon, the remaining task is to actually **code** it and send a PR!
+- [`community:to-document`](https://github.com/crystal-lang/crystal/issues?utf8=%E2%9C%93&q=is%3Aissue%20is%3Aopen%20label%3Acommunity%3Ato-document): Similar to the one above, but this one is for those awesome devs that are happy to **contribute with documentation** instead of just code.
 
 Furthermore, these are the most important general topics in need right now, so if you are interested open an issue to start working on it:
 
-* Documenting the language
-* Documenting the standard library
-* Adding missing bits of the standard library, and/or improving its performance
+- Documenting the language
+- Documenting the standard library
+- Adding missing bits of the standard library, and/or improving its performance
 
 ### Labels
 
@@ -60,25 +65,25 @@ Topic encompasses the broad aspect of the language that the issue refers to: cou
 
 Status labels attempt to capture the lifecycle of an issue:
 
-* A detailed proposal on a feature is marked as `draft`, while a more general argument is usually labelled as `discussion` until a consensus is achieved.
+- A detailed proposal on a feature is marked as `draft`, while a more general argument is usually labelled as `discussion` until a consensus is achieved.
 
-* An issue is `accepted` when it describes a feature or bugfix that a core team member has agreed to have added to the language, so as soon as a design is discussed (if needed), it's safe to start working on a pull request.
+- An issue is `accepted` when it describes a feature or bugfix that a core team member has agreed to have added to the language, so as soon as a design is discussed (if needed), it's safe to start working on a pull request.
 
-* Bug reports are marked as `needs-more-info`, where the author is requested to provide the info required; note that the issue may be closed after some time if it is not supplied.
+- Bug reports are marked as `needs-more-info`, where the author is requested to provide the info required; note that the issue may be closed after some time if it is not supplied.
 
-* Issues that are batched in an epic to be worked on as a group are typically marked as `deferred`, while low-prio issues or tasks far away in the roadmap are marked as `someday`.
+- Issues that are batched in an epic to be worked on as a group are typically marked as `deferred`, while low-prio issues or tasks far away in the roadmap are marked as `someday`.
 
-* Closed issues are marked as `implemented`, `invalid`, `duplicate` or `wontfix`, depending on their resolution.
+- Closed issues are marked as `implemented`, `invalid`, `duplicate` or `wontfix`, depending on their resolution.
 
-## Contributing to...
+## Contributing
 
 ### The documentation
 
-The language reference is available at https://crystal-lang.org/reference/.
+The language reference is available at <https://crystal-lang.org/reference/>.
 See the repository at [crystal-lang/crystal-book](https://github.com/crystal-lang/crystal-book) for contributing to it.
 
 The [standard library documentation](https://crystal-lang.org/api/) is on the code itself, in this repository.
-There is a version updated with every push to the master branch [here](https://crystal-lang.org/api/master/).
+The [`master` version](https://crystal-lang.org/api/master/) is updated with every push to the master branch.
 It uses a subset of [Markdown](http://daringfireball.net/projects/markdown/). You can [use Ruby as a source
 of inspiration](https://twitter.com/yukihiro_matz/status/549317901002342400) whenever applicable. To generate
 the docs execute `make docs`. Please follow the guidelines described in our
@@ -88,8 +93,8 @@ Additionally, all official documentation can be found on [the Crystal website](h
 
 ### The standard library
 
-1. Fork it ( https://github.com/crystal-lang/crystal/fork )
-2. Clone it
+1. [Fork](https://github.com/crystal-lang/crystal/fork) and checkout the
+   repository <https://github.com/crystal-lang/crystal/>
 
 Once in the cloned directory, and once you [installed Crystal](https://crystal-lang.org/install/),
 you can execute `bin/crystal` instead of `crystal`. This is a wrapper that will use the cloned repository
@@ -202,13 +207,13 @@ details of the pull request process. For non-trivial changes, the merge commit s
 
 1. Do not directly commit to the `master` branch. Always create a feature branch and pull request.
 2. Feature branches should typically be created in your fork. The main repo should only contain essential branches.
-   * CI changes affecting circle CI only run for branches on the main repo. They should be prefixed `ci/` to trigger a maintenance release.
-   * Long-running feature branches that accept contributions must be pushed to the main repo in order to allow PRs targeting that branch.
+   - CI changes affecting circle CI only run for branches on the main repo. They should be prefixed `ci/` to trigger a maintenance release.
+   - Long-running feature branches that accept contributions must be pushed to the main repo in order to allow PRs targeting that branch.
 
 ## Git pre-commit hook
 
 Code submitted to this repository should be formatted according to `crystal tool format`.
-A pre-commit hook can be installed into the local git repo to ensure the formatter validates every commit: https://github.com/crystal-lang/crystal/blob/master/scripts/git/pre-commit
+A pre-commit hook can be installed into the local git repo to ensure the formatter validates every commit: <https://github.com/crystal-lang/crystal/blob/master/scripts/git/pre-commit>
 
 Install the pre-commit hook:
 
