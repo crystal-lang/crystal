@@ -82,11 +82,24 @@ private macro def_string_methods(klass)
   def lines : ArrayLiteral(StringLiteral)
   end
 
-  # Similar to `String#split`.
+  # Similar to `String#split()`.
   def split : ArrayLiteral(StringLiteral)
   end
 
-  # Similar to `String#split`.
+  # Similar to `String#split(String)`.
+  def split(node : StringLiteral) : ArrayLiteral(StringLiteral)
+  end
+
+  # Similar to `String#split(Char)`.
+  def split(node : CharLiteral) : ArrayLiteral(StringLiteral)
+  end
+
+  # Similar to `String#split(Regex)`.
+  def split(node : RegexLiteral) : ArrayLiteral(StringLiteral)
+  end
+
+  # Similar to `String#split(String)`.
+  @[Deprecated("Use `#split(StringLiteral)` instead")]
   def split(node : ASTNode) : ArrayLiteral(StringLiteral)
   end
 
