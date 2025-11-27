@@ -33,9 +33,9 @@ describe Crystal::EventLoop::Polling::Arena do
     it "allocates up to capacity" do
       arena = Crystal::EventLoop::Polling::Arena(Int32, 96).new(32)
 
-      indexes = 32.times.map do |i|
+      indexes = Array.new(32) do |i|
         arena.allocate_at?(i) { |ptr, _| ptr.value = i }
-      end.to_a
+      end
 
       indexes.size.should eq(32)
 

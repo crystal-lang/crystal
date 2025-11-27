@@ -39,7 +39,7 @@ describe Fiber::ExecutionContext::GlobalQueue do
 
     it "grabs fibers" do
       q = Fiber::ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
-      fibers = 10.times.map { |i| new_fake_fiber("f#{i}") }.to_a
+      fibers = Array.new(10) { |i| new_fake_fiber("f#{i}") }
       fibers.each { |f| q.unsafe_push(f) }
 
       runnables = Fiber::ExecutionContext::Runnables(6).new(q)
