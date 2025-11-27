@@ -18,18 +18,19 @@ module LLVM
     {% end %}
   end
 
-  {% for target, name in LibLLVM::TARGETS %}
-    @@initialized_{{name.id}} = Atomic(Bool).new(false)
+  {% for target in LibLLVM::ALL_TARGETS %}
+    {% name = target.downcase.id %}
+    @@initialized_{{name}} = Atomic(Bool).new(false)
 
-    def self.init_{{name.id}} : Nil
-      return if @@initialized_{{name.id}}.swap(true)
+    def self.init_{{name}} : Nil
+      return if @@initialized_{{name}}.swap(true)
 
-      \{% if LibLLVM::BUILT_TARGETS.includes?({{name}}) %}
-        LibLLVM.initialize_{{name.id}}_target_info
-        LibLLVM.initialize_{{name.id}}_target
-        LibLLVM.initialize_{{name.id}}_target_mc
-        LibLLVM.initialize_{{name.id}}_asm_printer
-        LibLLVM.initialize_{{name.id}}_asm_parser
+      \{% if LibLLVM::BUILT_TARGETS.includes?({{name.symbolize}}) %}
+        LibLLVM.initialize_{{name}}_target_info
+        LibLLVM.initialize_{{name}}_target
+        LibLLVM.initialize_{{name}}_target_mc
+        LibLLVM.initialize_{{name}}_asm_printer
+        LibLLVM.initialize_{{name}}_asm_parser
         LibLLVM.link_in_mc_jit
       \{% else %}
         raise "ERROR: LLVM was built without {{target.id}} target"
@@ -54,8 +55,11 @@ module LLVM
   end
 
   def self.init_all_targets : Nil
-    {% for name in LibLLVM::BUILT_TARGETS %}
-      init_{{name.id}}
+    {% for target in LibLLVM::ALL_TARGETS %}
+      {% name = target.downcase.id %}
+      \{% if LibLLVM::BUILT_TARGETS.includes?({{name.symbolize}}) %}
+        init_{{name}}
+      \{% end %}
     {% end %}
   end
 

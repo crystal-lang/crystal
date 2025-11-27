@@ -51,39 +51,6 @@
   lib LibLLVM
     VERSION = {{ llvm_version.strip.gsub(/git/, "").gsub(/-?rc.*/, "") }}
     BUILT_TARGETS = {{ llvm_targets.strip.downcase.gsub(/;|,/, " ").split(' ').map(&.id.symbolize) }}
-
-    # The list of targets is hardcoded at:
-    # https://github.com/llvm/llvm-project/blob/main/llvm/CMakeLists.txt
-    TARGETS = {
-      # enabled by default
-      "AArch64" => :aarch64,
-      "AMDGPU" => :amdgpu,
-      "ARM" => :arm,
-      "AVR" => :avr,
-      "BPF" => :bpf,
-      "Hexagon" => :hexagon,
-      "Lanai" => :lanai,
-      "LoongArch" => :loongarch,
-      "MSP430" => :msp430,
-      "Mips" => :mips,
-      "NVPTX" => :nvptx,
-      "PowerPC" => :powerpc,
-      "RISCV" => :riscv,
-      "SPIRV" => :spirv,
-      "Sparc" => :sparc,
-      "SystemZ" => :systemz,
-      "VE" => :ve,
-      "WebAssembly" => :webassembly,
-      "X86" => :x86,
-      "XCore" => :xcore,
-
-      # experimental
-      "ARC" => :arc,
-      "CSKY" => :csky,
-      "DirectX" => :directx,
-      "M68k" => :m68k,
-      "Xtensa" => :xtensa,
-    }
   end
 {% end %}
 
@@ -120,4 +87,5 @@ lib LibLLVM
   alias SizeT = LibC::SizeT
 end
 
+require "./lib_llvm/config"
 require "./lib_llvm/**"
