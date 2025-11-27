@@ -354,6 +354,7 @@ jobs:
           source build.env
           cd docker
           make all64 TARBALLS=/tmp/workspace/build/
+          make smoke-all
       - persist_to_workspace:
           root: /tmp/workspace/distribution-scripts/docker/
           paths:
