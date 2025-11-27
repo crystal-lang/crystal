@@ -24,7 +24,7 @@ describe Crystal::FdLock do
             100_000.times do |i|
               lock.read do
                 increment += 1
-                # Fiber.yield if i % 100 == 1
+                Fiber.yield if i % 1000 == 1
               end
             end
           end
@@ -66,7 +66,7 @@ describe Crystal::FdLock do
             100_000.times do |i|
               lock.write do
                 increment += 1
-                # Fiber.yield if i % 100 == 1
+                Fiber.yield if i % 1000 == 1
               end
             end
           end
