@@ -10,7 +10,7 @@ describe Fiber::ExecutionContext::Runnables do
 
   describe "#push" do
     it "enqueues the fiber in local queue" do
-      fibers = 4.times.map { |i| new_fake_fiber("f#{i}") }.to_a
+      fibers = Array.new(4) { |i| new_fake_fiber("f#{i}") }
 
       # local enqueue
       g = Fiber::ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
@@ -26,7 +26,7 @@ describe Fiber::ExecutionContext::Runnables do
     end
 
     it "moves half the local queue to the global queue on overflow" do
-      fibers = 5.times.map { |i| new_fake_fiber("f#{i}") }.to_a
+      fibers = Array.new(5) { |i| new_fake_fiber("f#{i}") }
 
       # local enqueue + overflow
       g = Fiber::ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
@@ -73,7 +73,7 @@ describe Fiber::ExecutionContext::Runnables do
 
   describe "#drain" do
     it "drains the local queue into the global queue" do
-      fibers = 6.times.map { |i| new_fake_fiber("f#{i}") }.to_a
+      fibers = Array.new(6) { |i| new_fake_fiber("f#{i}") }
 
       # local enqueue + overflow
       g = Fiber::ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
@@ -100,7 +100,7 @@ describe Fiber::ExecutionContext::Runnables do
   describe "#bulk_push" do
     it "fills the local queue" do
       l = Fiber::List.new
-      fibers = 4.times.map { |i| new_fake_fiber("f#{i}") }.to_a
+      fibers = Array.new(4) { |i| new_fake_fiber("f#{i}") }
       fibers.each { |f| l.push(f) }
 
       # local enqueue
@@ -114,7 +114,7 @@ describe Fiber::ExecutionContext::Runnables do
 
     it "pushes the overflow to the global queue" do
       l = Fiber::List.new
-      fibers = 7.times.map { |i| new_fake_fiber("f#{i}") }.to_a
+      fibers = Array.new(7) { |i| new_fake_fiber("f#{i}") }
       fibers.each { |f| l.push(f) }
 
       # local enqueue + overflow
@@ -142,7 +142,7 @@ describe Fiber::ExecutionContext::Runnables do
   describe "#steal_from" do
     it "steals from another runnables" do
       g = Fiber::ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
-      fibers = 6.times.map { |i| new_fake_fiber("f#{i}") }.to_a
+      fibers = Array.new(6) { |i| new_fake_fiber("f#{i}") }
 
       # fill the source queue
       r1 = Fiber::ExecutionContext::Runnables(16).new(g)
@@ -222,7 +222,7 @@ describe Fiber::ExecutionContext::Runnables do
         Fiber::ExecutionContext::Runnables(16).new(global_queue)
       end
 
-      threads = Array(Thread).new(n) do |i|
+      threads = Array.new(n) do |i|
         new_thread("RUN-#{i}") do
           runnables = all_runnables[i]
           slept = 0
@@ -277,7 +277,7 @@ describe Fiber::ExecutionContext::Runnables do
         Thread.sleep(10.nanoseconds) if i % 2 == 1
       end
 
-      threads.map(&.join)
+      threads.each(&.join)
 
       # must have dequeued each fiber exactly X times (no less, no more)
       fibers.each { |fc| fc.counter.should eq(increments) }

@@ -60,7 +60,7 @@ jobs:
               USE_PCRE1: true
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
 

@@ -39,7 +39,7 @@ describe Fiber::ExecutionContext::GlobalQueue do
 
     it "grabs fibers" do
       q = Fiber::ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
-      fibers = 10.times.map { |i| new_fake_fiber("f#{i}") }.to_a
+      fibers = Array.new(10) { |i| new_fake_fiber("f#{i}") }
       fibers.each { |f| q.unsafe_push(f) }
 
       runnables = Fiber::ExecutionContext::Runnables(6).new(q)
@@ -100,7 +100,7 @@ describe Fiber::ExecutionContext::GlobalQueue do
       queue = Fiber::ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
       ready = Thread::WaitGroup.new(n)
 
-      threads = Array(Thread).new(n) do |i|
+      threads = Array.new(n) do |i|
         new_thread("ONE-#{i}") do
           slept = 0
           ready.done
@@ -147,7 +147,7 @@ describe Fiber::ExecutionContext::GlobalQueue do
         queue = Fiber::ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
         ready = Thread::WaitGroup.new(n)
 
-        threads = Array(Thread).new(n) do |i|
+        threads = Array.new(n) do |i|
           new_thread("BULK-#{i}") do
             slept = 0
 

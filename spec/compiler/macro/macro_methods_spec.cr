@@ -434,16 +434,22 @@ module Crystal
         assert_macro %({{"odelay" * 3}}), "\"odelayodelayodelay\""
       end
 
-      it "executes split without arguments" do
-        assert_macro %({{"1 2 3".split}}), %(["1", "2", "3"] of ::String)
-      end
+      describe "#split" do
+        it "works without arguments" do
+          assert_macro %({{"1 2 3".split}}), %(["1", "2", "3"] of ::String)
+        end
 
-      it "executes split with argument" do
-        assert_macro %({{"1-2-3".split('-')}}), %(["1", "2", "3"] of ::String)
-      end
+        it "works with string argument" do
+          assert_macro %({{"1-2-3".split("-")}}), %(["1", "2", "3"] of ::String)
+        end
 
-      it "executes split with char argument" do
-        assert_macro %({{"1-2-3".split('-')}}), %(["1", "2", "3"] of ::String)
+        it "works with char argument" do
+          assert_macro %({{"1-2-3".split('-')}}), %(["1", "2", "3"] of ::String)
+        end
+
+        it "works with regex argument" do
+          assert_macro %({{"123-456-789".split(/-(.)/)}}), %(["123", "4", "56", "7", "89"] of ::String)
+        end
       end
 
       it "executes strip" do

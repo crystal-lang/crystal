@@ -132,14 +132,14 @@ class Crystal::ABI
         end
 
         test "multiple arguments" do |abi, ctx|
-          args = 9.times.map { ctx.int16 }.to_a
+          args = Array.new(9) { ctx.int16 }
           info = abi.abi_info(args, ctx.int8, false, ctx)
           info.arg_types.size.should eq(9)
           info.arg_types.each(&.kind.should eq(Crystal::ABI::ArgKind::Direct))
         end
 
         test "multiple arguments above registers" do |abi, ctx|
-          args = 5.times.map { ctx.int32 }.to_a
+          args = Array.new(5) { ctx.int32 }
           info = abi.abi_info(args, ctx.int8, false, ctx)
           info.arg_types.size.should eq(5)
           info.arg_types[0].kind.should eq(Crystal::ABI::ArgKind::Direct)

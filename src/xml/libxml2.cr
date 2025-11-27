@@ -175,10 +175,12 @@ lib LibXML
   fun xmlNewParserCtxt : ParserCtxt
   fun xmlCtxtReadIO(ParserCtxt, ioread : InputReadCallback, ioclose : InputCloseCallback, ioctx : Void*, url : UInt8*, encoding : UInt8*, options : XML::ParserOptions) : Doc*
   fun xmlCtxtReadMemory(ParserCtxt, buffer : UInt8*, size : Int, url : UInt8*, encoding : UInt8*, options : XML::ParserOptions) : Doc*
+  fun xmlFreeParserCtxt(ctxt : ParserCtxt)
 
   fun htmlNewParserCtxt : HTMLParserCtxt
   fun htmlCtxtReadMemory(HTMLParserCtxt, buffer : UInt8*, size : Int, url : UInt8*, encoding : UInt8*, options : XML::HTMLParserOptions) : Doc*
   fun htmlCtxtReadIO(HTMLParserCtxt, ioread : InputReadCallback, ioclose : InputCloseCallback, ioctx : Void*, url : UInt8*, encoding : UInt8*, options : XML::HTMLParserOptions) : Doc*
+  fun htmlFreeParserCtxt(ctxt : HTMLParserCtxt)
 
   fun xmlDocGetRootElement(doc : Doc*) : Node*
   fun xmlXPathNodeSetCreate(node : Node*) : NodeSet*

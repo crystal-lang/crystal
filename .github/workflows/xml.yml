@@ -40,7 +40,7 @@ jobs:
             repository: http://dl-cdn.alpinelinux.org/alpine/edge/main
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
       - name: Uninstall libxml2 and conflicts

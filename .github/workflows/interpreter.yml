@@ -18,7 +18,7 @@ jobs:
       image: crystallang/crystal:1.18.2-build
     name: "Test Interpreter"
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
 
@@ -31,7 +31,7 @@ jobs:
       image: crystallang/crystal:1.18.2-build
     name: Build interpreter
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
 
@@ -56,7 +56,7 @@ jobs:
       fail-fast: false
     name: "Test std_spec with interpreter (${{ matrix.part }})"
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
 
@@ -79,7 +79,7 @@ jobs:
       image: crystallang/crystal:1.18.2-build
     name: "Test primitives_spec with interpreter"
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
 

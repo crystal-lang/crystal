@@ -1106,9 +1106,8 @@ struct Time
   # It is similar to the format `%FT%T.%N%::z[%Z]`. Some parts may be omitted or
   # shortened.
   #
-  # Nanoseconds are omitted if *with_nanoseconds* is `false` or `nanoseconds`
-  # are zero. Zero offset seconds are omitted.  The name of the location is
-  # omitted for fixed zone offset.
+  # Nanoseconds are omitted if `#nanoseconds` is zero. Zero offset seconds are
+  # omitted.  The name of the location is omitted for fixed zone offset.
   #
   # ```
   # Time.utc(2014, 1, 2, 3, 4, 5)                      # => 2014-01-02 03:04:05Z
@@ -1118,7 +1117,17 @@ struct Time
   # Time.local(2014, 1, 2, 3, 4, 5, location: Time::Location.fixed(3600))           # => 2014-01-02 03:04:05+01:00
   # Time.local(2014, 1, 2, 3, 4, 5, location: Time::Location.fixed(3601))           # => 2014-01-02 03:04:05+01:00:01
   # ```
-  def inspect(io : IO, with_nanoseconds = true) : Nil
+  def inspect(io : IO) : Nil
+    Format::RFC_3339.format(self, io, fraction_digits: nanosecond.zero? ? 0 : 9, preferred_separator: ' ')
+    io << '[' << location.name << ']' unless location.fixed?
+  end
+
+  # :ditto:
+  #
+  # Nanoseconds are omitted if *with_nanoseconds* is `false` or `nanoseconds`
+  # are zero.
+  @[Deprecated("`with_nanoseconds` is deprecated, please use a custom format if necessary")]
+  def inspect(io : IO, with_nanoseconds) : Nil
     Format::RFC_3339.format(self, io, fraction_digits: (with_nanoseconds && !nanosecond.zero?) ? 9 : 0, preferred_separator: ' ')
     io << '[' << location.name << ']' unless location.fixed?
   end
