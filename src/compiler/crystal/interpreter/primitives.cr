@@ -123,7 +123,7 @@ class Crystal::Repl::Compiler
         else
           put_self node: node
         end
-      elsif owner.reference_like? && !owner.nilable?
+      elsif owner.reference_like?
         if obj
           request_value(obj)
         else
