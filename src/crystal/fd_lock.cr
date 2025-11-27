@@ -11,20 +11,25 @@
 # Tracks active references over a system file descriptor (fd) and serializes
 # reads and writes.
 #
-# Every read on the fd must lock read, every write must lock write and every
-# other operation (fcntl, setsockopt, ...) must acquire a shared lock. There can
-# be at most one reader + one writer + many references (other operations) at the
-# same time.
+# Every read on the fd must lock read.
+# Every write on the fd must lock write.
+# Other operations (fcntl, setsockopt, ...) must acquire a shared reference.
 #
-# The fdlock can be closed at any time, but the actual system close will wait
-# until there are no more references left. This avoids potential races when a
-# thread might try to read a fd that has been closed and has been reused by the
-# OS for example.
+# The read and write locks are exclusive but distinct: each can only be acquired
+# once, but both can be acquire at the same time. Shared references can happen
+# at any time. Both locks also acquire a shared reference while the lock is
+# acquired.
 #
-# Serializes reads and writes: only one attempt to read (or write) at a time can
-# go through, which avoids situations where 2 readers are waiting, then the
-# first reader is resumed but doesn't consume everything, then the second reader
-# will never be resumed. With this lock, a waiting reader will always be resumed.
+# The fdlock can be closed at any time (at which point we can't lock for read,
+# write or acquire a shared reference anymore), but the actual system close will
+# wait until there are no more references left. This avoids potential races when
+# a thread might try to read a fd that has been closed... and has been reused by
+# the OS for example.
+#
+# NOTE: since only one attempt to read (or write) can go through, it avoids
+# situations where multiple fibers are waiting, then the first fiber is resumed but
+# doesn't consume/fill everything, and... won't resume the next fiber! The lock
+# will always resume a waiting fiber (if any).
 #
 # Lock concepts
 #
