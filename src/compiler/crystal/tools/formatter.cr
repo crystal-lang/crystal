@@ -1225,14 +1225,76 @@ module Crystal
           end
         end
       else
+        has_newlines = false
+        next_needs_indent = false
+        needed_indent = @indent + 2
+
+        if @token.type.newline?
+          write_line
+          next_token_skip_space_or_newline
+          next_needs_indent = true
+          has_newlines = true
+        end
+
         skip_space_or_newline
         node.type_vars.each_with_index do |type_var, i|
-          accept type_var
+          if next_needs_indent
+            write_indent(needed_indent, type_var)
+          else
+            accept type_var
+          end
+          next_needs_indent = false
+
           if @paren_count == 0
-            skip_space_or_newline
+            is_last = last?(i, node.type_vars)
+            has_space_before_comment = @token.type.space?
+            if has_space_before_comment
+              next_token
+            end
+
             if @token.type.op_comma?
-              write ", " unless last?(i, node.type_vars)
-              next_token_skip_space_or_newline
+              write "," unless is_last && !has_newlines
+              next_token
+              found_comment = skip_space(needed_indent)
+              if found_comment
+                # Comment was written by skip_space, newline already consumed
+                if !is_last
+                  write_indent(needed_indent)
+                elsif has_newlines
+                  write_indent
+                end
+              elsif @token.type.newline?
+                write_line
+                next_token_skip_space_or_newline
+                if is_last
+                  write_indent if has_newlines
+                else
+                  next_needs_indent = true
+                  has_newlines = true
+                end
+              else
+                write " " unless is_last
+              end
+              skip_space_or_newline
+            elsif is_last && has_newlines
+              # Add trailing comma for multi-line generic types
+              write ","
+              if has_space_before_comment && @token.type.comment?
+                write " "
+                write_comment(needs_indent: false)
+                write_indent
+              elsif @token.type.newline?
+                write_line
+                next_token_skip_space_or_newline
+                write_indent
+              end
+              skip_space_or_newline
+            else
+              if has_space_before_comment && @token.type.comment?
+                write " "
+                write_comment(needs_indent: false)
+              end
+              skip_space_or_newline
             end
           end
         end
