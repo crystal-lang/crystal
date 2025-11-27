@@ -852,6 +852,8 @@ module Crystal
               splitter = arg.value
             when StringLiteral
               splitter = arg.value
+            when RegexLiteral
+              splitter = regex_value(arg)
             else
               splitter = arg.to_s
             end
