@@ -1195,7 +1195,13 @@ class Hash(K, V)
       if (block = @block) && key.is_a?(K)
         block.call(self, key.as(K))
       else
-        raise KeyError.new "Missing hash key: #{key.inspect}"
+        message = "Missing hash key: #{key.inspect}"
+
+        if @block && !key.is_a?(K)
+          message = "#{message} (key is not #{K})"
+        end
+
+        raise KeyError.new message
       end
     end
   end
