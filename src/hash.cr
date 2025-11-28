@@ -1197,7 +1197,7 @@ class Hash(K, V)
           raise KeyError.new "Invalid key type: expected #{K}, got #{key.class}"
         end
 
-        block.call(self, key.as(K))
+        block.call(self, key)
       else
         raise KeyError.new "Missing hash key: #{key.inspect}"
       end
