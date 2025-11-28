@@ -1928,20 +1928,26 @@ module Crystal
       has_space = @token.type.space?
       skip_space
       has_newline = @token.type.newline?
-      skip_space_or_newline
-
-      if (has_space || !node.output?) && !has_newline
-        write " "
-      end
 
       old_indent = @indent
       @indent = @column
+
       if has_newline
         write_line
         write_indent
+        skip_space_or_newline
+        if @line_output.empty?
+          write_indent(@indent, node.exp)
+        else
+          indent(@indent, node.exp)
+        end
+      else
+        skip_space_or_newline
+        if has_space || !node.output?
+          write " "
+        end
+        indent(@column, node.exp)
       end
-
-      indent(@column, node.exp)
 
       @indent = old_indent
 

@@ -1929,6 +1929,11 @@ describe Crystal::Formatter do
   assert_format "   {%\na = 1 %}", "{%\n  a = 1\n%}"
   assert_format "   {%\na = 1\n   %}", "{%\n  a = 1\n%}"
 
+  # Multi-line macro expression with comment as first line (issue #14450)
+  assert_format "{%\n  # comment\n  a = 1\n%}"
+  assert_format "{%\n  # comment 1\n  # comment 2\n  a = 1\n%}"
+  assert_format "{{\n  # comment\n  a + 1\n}}"
+
   assert_format "macro foo\n  {{\n1 + 2 }}\nend", "macro foo\n  {{\n    1 + 2\n  }}\nend"
   assert_format "macro foo\n  def bar\n    {{\n      1 + 2\n    }}\n  end\nend"
   assert_format "foo &.[]"
