@@ -56,7 +56,7 @@ module Crystal::System::Env
         split_index = key_value.index!(0x3d_u8) # '='
         key = key_value[0, split_index]
         value = key_value[split_index + 1..]
-        yield String.new(key), String.new(value)
+        env << {String.new(key), String.new(value)}
       end
     end
 
