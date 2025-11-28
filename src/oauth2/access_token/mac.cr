@@ -4,7 +4,7 @@ require "base64"
 require "./access_token"
 
 class OAuth2::AccessToken::Mac < OAuth2::AccessToken
-  def self.new(pull : JSON::PullParser)
+  def self.new(pull : JSON::PullParser) : self
     OAuth2::AccessToken.new(pull).as(self)
   end
 
@@ -12,7 +12,7 @@ class OAuth2::AccessToken::Mac < OAuth2::AccessToken
   property mac_key : String
   property issued_at : Int64
 
-  def initialize(access_token, expires_in, @mac_algorithm, @mac_key, refresh_token = nil, scope = nil, @issued_at = Time.utc.to_unix, extra = nil)
+  def initialize(access_token : String, expires_in, @mac_algorithm : String, @mac_key : String, refresh_token : String? = nil, scope : String? = nil, @issued_at : Int64 = Time.utc.to_unix, extra : Hash(String, String)? = nil)
     super(access_token, expires_in, refresh_token, scope, extra)
   end
 
@@ -34,7 +34,7 @@ class OAuth2::AccessToken::Mac < OAuth2::AccessToken
     request.headers["Authorization"] = header
   end
 
-  def self.signature(ts, nonce, method, uri, host, port, ext, mac_algorithm, mac_key) : String
+  def self.signature(ts, nonce : String, method : String, uri : String, host : String, port : Int32 | String, ext : String, mac_algorithm : String, mac_key : String) : String
     normalized_request_string = "#{ts}\n#{nonce}\n#{method}\n#{uri}\n#{host}\n#{port}\n#{ext}\n"
 
     digest = case mac_algorithm

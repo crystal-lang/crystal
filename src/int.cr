@@ -118,7 +118,7 @@ struct Int
   #
   # In truncated division, given two integers x and y:
   # * `q = x.tdiv(y)` is rounded toward zero
-  # * `r = x.remainder(y)` has the sign of the first argument
+  # * `r = x.remainder(y)` has the sign of x
   # * `x == q*y + r`
   #
   # For example:
@@ -150,6 +150,39 @@ struct Int
         raise ArgumentError.new "Overflow: {{@type}}::MIN / -1"
       end
     {% end %}
+  end
+
+  # Returns a `Tuple` of two elements containing the quotient
+  # and modulus obtained by dividing `self` by *number* using
+  # truncated division.
+  #
+  # ```
+  # 11.tdivmod(3)  # => {3, 2}
+  # 11.tdivmod(-3) # => {-4, -1}
+  # ```
+  #
+  # In truncated division, given two integers x and y:
+  # * `q = x.tdiv(y)` is rounded toward zero
+  # * `r = x.remainder(y)` has the sign of x
+  # * `x == q*y + r`
+  #
+  # For example:
+  #
+  # ```text
+  #  x     y     x / y     x % y
+  #  5     3       1         2
+  # -5     3      -1        -2
+  #  5    -3      -1         2
+  # -5    -3       1        -2
+  # ```
+  #
+  # Raises if *other* is `0`, or if *other* is `-1` and
+  # `self` is signed and is the minimum value for that
+  # integer type.
+  def tdivmod(other : Int)
+    check_div_argument other
+
+    {unsafe_div(other), unsafe_mod(other)}
   end
 
   def fdiv(other) : Float64
@@ -2776,3 +2809,53 @@ struct UInt128
     self
   end
 end
+
+# Returns a number for given digits and base.
+# The digits are expected as an Enumerable with the least significant digit as the first element.
+#
+# Base must not be less than 2.
+#
+# All digits must be within 0...base.
+#
+# ```
+# Int32.from_digits([5, 4, 3, 2, 1])          # => 12345
+# Int32.from_digits([4, 6, 6, 0, 5], base: 7) # => 12345
+# Int32.from_digits([45, 23, 1], base: 100)   # => 12345
+#
+# Int32.from_digits([1], base: -2) # raises ArgumentError
+# Int32.from_digits([-1])          # raises ArgumentError
+# Int32.from_digits([3], base: 2)  # raises ArgumentError
+# ```
+{% for type in %w(Int8 Int16 Int32 Int64 Int128 UInt8 UInt16 UInt32 UInt64 UInt128) %}
+  def {{type.id}}.from_digits(digits : Enumerable(Int), base : Int = 10) : self
+    if base < 2
+      raise ArgumentError.new("Invalid base #{base}")
+    end
+
+    num : {{type.id}} = 0
+    multiplier : {{type.id}} = 1
+    first_element = true
+
+    digits.each do |digit|
+      if digit < 0
+        raise ArgumentError.new("Invalid digit #{digit}")
+      end
+
+      if digit >= base
+        raise ArgumentError.new("Invalid digit #{digit} for base #{base}")
+      end
+
+      # don't calculate multiplier upfront for the next digit
+      # to avoid overflow at the last iteration
+      if first_element
+        first_element = false
+      else
+        multiplier *= base
+      end
+
+      num += digit * multiplier
+    end
+
+    num
+  end
+{% end %}

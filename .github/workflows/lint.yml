@@ -1,0 +1,34 @@
+name: Lint
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download source
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
+        with:
+          persist-credentials: false
+      - uses: cachix/install-nix-action@0b0e072294b088b73964f1d72dfdac0951439dbd # v31
+      - uses: cachix/cachix-action@0fc020193b5a1fa3ac4575aa3a7d3aa6a35435ad # v16
+        with:
+          name: devenv
+      - name: Install devenv.sh
+        run: nix profile install nixpkgs#devenv
+      - name: "Download target branch: ${{ github.base_ref || 'master' }}"
+        run: git fetch origin "${TARGET_BRANCH}"
+      - name: Run pre-commit hooks for changes against target branch (${{ github.base_ref || 'master' }})
+        run: pre-commit run --from-ref "origin/${TARGET_BRANCH}" --to-ref HEAD
+        shell: devenv --profile lint shell bash -- -e {0}
+        if: "${{ github.event_name != 'workflow_dispatch' }}"
+      - name: Run pre-commit on all files
+        run: pre-commit run --all-files
+        shell: devenv --profile lint shell bash -- -e {0}
+        if: "${{ github.event_name == 'workflow_dispatch' }}"
+    env:
+      TARGET_BRANCH: "${{ github.base_ref || 'master' }}"

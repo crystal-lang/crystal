@@ -159,7 +159,8 @@ class HTTP::StaticFileHandler
     end
   end
 
-  private def serve_file_range(context : Server::Context, file : File, range_header : String, file_info)
+  # *file* should be seekable, that's implement #seek method
+  private def serve_file_range(context : Server::Context, file : IO, range_header : String, file_info)
     range_header = range_header.lchop?("bytes=")
     unless range_header
       context.response.headers["Content-Range"] = "bytes */#{file_info.size}"
@@ -217,7 +218,7 @@ class HTTP::StaticFileHandler
     end
   end
 
-  private def serve_file_full(context : Server::Context, file : File, file_info)
+  private def serve_file_full(context : Server::Context, file : IO, file_info)
     context.response.status = :ok
     context.response.content_length = file_info.size
     IO.copy(file, context.response)

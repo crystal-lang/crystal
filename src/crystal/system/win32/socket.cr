@@ -86,9 +86,9 @@ module Crystal::System::Socket
     @blocking = blocking unless blocking.nil?
 
     unless @family.unix?
-      system_getsockopt(handle, LibC::SO_REUSEADDR, 0) do |value|
+      Socket.getsockopt(handle, LibC::SO_REUSEADDR, 0) do |value|
         if value == 0
-          system_setsockopt(handle, LibC::SO_EXCLUSIVEADDRUSE, 1)
+          Socket.setsockopt(handle, LibC::SO_EXCLUSIVEADDRUSE, 1)
         end
       end
     end
@@ -178,6 +178,10 @@ module Crystal::System::Socket
     unless LibC.listen(fd, backlog) == 0
       yield ::Socket::Error.from_wsa_error("Listen failed")
     end
+  end
+
+  private def system_accept : {Handle, Bool}?
+    event_loop.accept(self)
   end
 
   def system_accept(& : Handle -> Bool) : {Handle, Bool}?
@@ -310,20 +314,28 @@ module Crystal::System::Socket
     val
   end
 
-  private def system_getsockopt(handle, optname, optval, level = LibC::SOL_SOCKET, &)
+  private def system_getsockopt(optname, optval, level = LibC::SOL_SOCKET, &)
+    Socket.getsockopt(fd, optname, optval, level) { |value| yield value }
+  end
+
+  private def system_getsockopt(optname, optval, level = LibC::SOL_SOCKET)
+    Socket.getsockopt(fd, optname, optval, level) { |value| return value }
+    raise ::Socket::Error.from_wsa_error("getsockopt #{optname}")
+  end
+
+  private def system_setsockopt(optname, optval, level = LibC::SOL_SOCKET)
+    Socket.setsockopt(fd, optname, optval, level)
+  end
+
+  protected def self.getsockopt(handle, optname, optval, level = LibC::SOL_SOCKET, &)
     optsize = sizeof(typeof(optval))
     ret = LibC.getsockopt(handle, level, optname, pointerof(optval).as(UInt8*), pointerof(optsize))
     yield optval if ret == 0
     ret
   end
 
-  private def system_getsockopt(fd, optname, optval, level = LibC::SOL_SOCKET)
-    system_getsockopt(fd, optname, optval, level) { |value| return value }
-    raise ::Socket::Error.from_wsa_error("getsockopt #{optname}")
-  end
-
   # :nodoc:
-  def system_setsockopt(handle, optname, optval, level = LibC::SOL_SOCKET)
+  protected def self.setsockopt(handle, optname, optval, level = LibC::SOL_SOCKET)
     optsize = sizeof(typeof(optval))
 
     ret = LibC.setsockopt(handle, level, optname, pointerof(optval).as(UInt8*), optsize)
@@ -367,6 +379,10 @@ module Crystal::System::Socket
 
   def self.fcntl(fd, cmd, arg = 0)
     raise NotImplementedError.new "Crystal::System::Socket.fcntl"
+  end
+
+  private def system_fcntl(cmd, arg = 0)
+    raise NotImplementedError.new "Crystal::System::Socket#system_fcntl"
   end
 
   private def system_tty?

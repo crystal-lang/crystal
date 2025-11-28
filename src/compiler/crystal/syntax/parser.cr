@@ -177,8 +177,12 @@ module Crystal
 
         next_token_skip_space_or_newline
         if @token.type.op_star?
-          raise "splat assignment already specified" if lhs_splat
-          lhs_splat = {index: i, location: @token.location}
+          if assign_index == -1
+            raise "splat assignment already specified" if lhs_splat
+            lhs_splat = {index: i, location: @token.location}
+          else
+            unexpected_token
+          end
           next_token_skip_space
         end
 
@@ -240,7 +244,7 @@ module Crystal
       when Underscore, Var, InstanceVar, ClassVar, Global
         true
       when Call
-        !exp.has_parentheses? && !exp.block && ((exp.args.empty? && !exp.named_args) || exp.name == "[]")
+        !exp.has_parentheses? && !exp.block && (!exp.has_any_args? || exp.name == "[]")
       else
         false
       end
@@ -687,12 +691,7 @@ module Crystal
           end
 
           if @token.type.instance_var?
-            ivar_name = @token.value.to_s
-            end_location = token_end_location
-            next_token_skip_space
-
-            atomic = ReadInstanceVar.new(atomic, ivar_name).at(location)
-            atomic.end_location = end_location
+            atomic = parse_read_instance_var(atomic).at(location)
             next
           end
 
@@ -983,6 +982,17 @@ module Crystal
       end
 
       Not.new(atomic).at_end(end_location)
+    end
+
+    def parse_read_instance_var(atomic)
+      ivar_name = @token.value.to_s
+      end_location = token_end_location
+      next_token_skip_space
+
+      call = ReadInstanceVar.new(atomic, ivar_name)
+      call.end_location = end_location
+
+      call
     end
 
     def parse_atomic
@@ -1572,18 +1582,9 @@ module Crystal
           skip_space
         else
           next_token_skip_space
-
-          if @token.type.instance_var?
-            ivar_name = @token.value.to_s
-            end_location = token_end_location
-            next_token
-
-            call = ReadInstanceVar.new(obj, ivar_name).at(location)
-            call.end_location = end_location
-          end
         end
 
-        call ||= parse_call_block_arg_after_dot(obj)
+        call = parse_call_block_arg_after_dot(obj)
 
         block = Block.new([Var.new(block_arg_name)], call).at(location)
         end_location = call.end_location
@@ -1606,6 +1607,12 @@ module Crystal
 
     def parse_call_block_arg_after_dot(obj)
       location = @token.location
+
+      if @token.type.instance_var?
+        call = parse_read_instance_var(obj).at(location)
+        call = parse_atomic_method_suffix_special(call, location)
+        return call
+      end
 
       check AtomicWithMethodCheck
 
@@ -3273,7 +3280,13 @@ module Crystal
         when .macro_var?
           macro_var_name = @token.value.to_s
           location = @token.location
+          if macro_var_name[0].uppercase? || macro_var_name[0].titlecase?
+            warnings.add_warning_at @token.location, "macro fresh variables with constant names are deprecated"
+          end
           if current_char == '{'
+            if macro_var_name.size == 1
+              warnings.add_warning_at @token.location, "single-letter macro fresh variables with indices are deprecated"
+            end
             macro_var_exps = parse_macro_var_exps
           else
             macro_var_exps = nil
@@ -6132,6 +6145,7 @@ module Crystal
       if @token.type.op_colon?
         next_token_skip_space_or_newline
         base_type = parse_path
+        skip_space
       end
 
       check SemicolonOrNewLine

@@ -950,13 +950,23 @@ module Indexable(T)
   #
   # ```
   # a = [1, 2, 3]
-  # a.sample                # => 3
-  # a.sample                # => 1
+  # a.sample # => 3
+  # a.sample # => 1
+  # ```
+  #
+  # Uses the *random* instance when provided if the randomness needs to be
+  # controlled or to follow some traits. For example the following sample will
+  # always return the same value:
+  #
+  # ```
+  # a = [1, 2, 3]
+  # a.sample(Random.new(1)) # => 2
   # a.sample(Random.new(1)) # => 2
   # ```
-  def sample(random : Random = Random::DEFAULT)
+  def sample(random : Random? = nil)
     raise IndexError.new("Can't sample empty collection") if size == 0
-    unsafe_fetch(random.rand(size))
+    rng = random || Random.thread_default
+    unsafe_fetch(rng.rand(size))
   end
 
   # :inherit:
@@ -964,7 +974,7 @@ module Indexable(T)
   # If `self` is not empty and `n` is equal to 1, calls `sample(random)` exactly
   # once. Thus, *random* will be left in a different state compared to the
   # implementation in `Enumerable`.
-  def sample(n : Int, random : Random = Random::DEFAULT) : Array(T)
+  def sample(n : Int, random : Random? = nil) : Array(T)
     return super unless n == 1
 
     if empty?

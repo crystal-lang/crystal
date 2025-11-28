@@ -8,7 +8,7 @@
 # Int32.from_json("1")                # => 1
 # Array(Int32).from_json("[1, 2, 3]") # => [1, 2, 3]
 # ```
-def Object.from_json(string_or_io : String | IO) : Object
+def Object.from_json(string_or_io : String | IO)
   parser = JSON::PullParser.new(string_or_io)
   new parser
 end
@@ -21,7 +21,7 @@ end
 # ```
 # Int32.from_json(%({"main": 1}), root: "main") # => 1
 # ```
-def Object.from_json(string_or_io : String | IO, root : String) : Object
+def Object.from_json(string_or_io : String | IO, root : String)
   parser = JSON::PullParser.new(string_or_io)
   parser.on_key!(root) do
     new parser
@@ -138,7 +138,7 @@ end
                        } %}
   def {{type.id}}.new(pull : JSON::PullParser)
     # TODO: use `PullParser#read?` instead
-    location = pull.location
+    location = pull.location_i64
     value =
       {% if type == "UInt64" || type == "UInt128" || type == "Int128" %}
         pull.read_raw
@@ -282,7 +282,7 @@ def NamedTuple.new(pull : JSON::PullParser)
       {% end %}
     {% end %}
 
-    location = pull.location
+    location = pull.location_i64
 
     pull.read_object do |key|
       case key
@@ -389,7 +389,7 @@ module Enum::ValueConverter(T)
 end
 
 def Union.new(pull : JSON::PullParser)
-  location = pull.location
+  location = pull.location_i64
 
   {% begin %}
     case pull.kind

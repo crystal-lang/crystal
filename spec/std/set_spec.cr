@@ -426,6 +426,22 @@ describe "Set" do
     end
   end
 
+  describe "#map!" do
+    it "replaces elements with the block's return values" do
+      set = Set{1, 2, 3}
+      set.map! { |n| n * -1 }.should be(set)
+      set.should eq(Set{-1, -2, -3})
+    end
+
+    it "exhibits reference semantic" do
+      set = Set{1, 2, 3}
+      copy = set
+
+      set.map! { |n| n * -1 }
+      set.should eq(copy)
+    end
+  end
+
   describe "#select!" do
     it "keeps only elements that evaluate to true" do
       set = Set{1, 2, 3}

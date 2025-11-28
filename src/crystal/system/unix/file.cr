@@ -108,8 +108,8 @@ module Crystal::System::File
     raise ::File::Error.from_errno("Error changing owner", file: path) if ret == -1
   end
 
-  def self.fchown(path, fd, uid : Int, gid : Int)
-    ret = LibC.fchown(fd, uid, gid)
+  private def system_chown(uid : Int, gid : Int)
+    ret = @fd_lock.reference { LibC.fchown(fd, uid, gid) }
     raise ::File::Error.from_errno("Error changing owner", file: path) if ret == -1
   end
 
@@ -119,8 +119,8 @@ module Crystal::System::File
     end
   end
 
-  private def system_chmod(path, mode)
-    if LibC.fchmod(fd, mode) == -1
+  private def system_chmod(mode)
+    if @fd_lock.reference { LibC.fchmod(fd, mode) } == -1
       raise ::File::Error.from_errno("Error changing permissions", file: path)
     end
   end
@@ -196,29 +196,28 @@ module Crystal::System::File
     end
   end
 
-  private def system_utime(atime : ::Time, mtime : ::Time, filename : String) : Nil
+  private def system_utime(atime : ::Time, mtime : ::Time) : Nil
     ret = {% if LibC.has_method?("futimens") %}
             timespecs = uninitialized LibC::Timespec[2]
             timespecs[0] = Crystal::System::Time.to_timespec(atime)
             timespecs[1] = Crystal::System::Time.to_timespec(mtime)
-            LibC.futimens(fd, timespecs)
+            @fd_lock.reference { LibC.futimens(fd, timespecs) }
           {% elsif LibC.has_method?("futimes") %}
             timevals = uninitialized LibC::Timeval[2]
             timevals[0] = Crystal::System::Time.to_timeval(atime)
             timevals[1] = Crystal::System::Time.to_timeval(mtime)
-            LibC.futimes(fd, timevals)
+            @fd_lock.reference { LibC.futimes(fd, timevals) }
           {% else %}
             {% raise "Missing futimens & futimes" %}
           {% end %}
 
     if ret != 0
-      raise ::File::Error.from_errno("Error setting time on file", file: filename)
+      raise ::File::Error.from_errno("Error setting time on file", file: path)
     end
   end
 
   private def system_truncate(size) : Nil
-    flush
-    code = LibC.ftruncate(fd, size)
+    code = @fd_lock.reference { LibC.ftruncate(fd, size) }
     if code != 0
       raise ::File::Error.from_errno("Error truncating file", file: path)
     end

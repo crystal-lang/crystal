@@ -791,8 +791,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def lookup_local_var_or_closured_var(name : String) : LocalVar | ClosuredVar
-    lookup_local_var?(name) ||
+    lookup_local_var?(name, at: @block_level) ||
       lookup_closured_var?(name) ||
+      lookup_local_var?(name, from: @block_level - 1) ||
       raise("BUG: can't find closured var or local var #{name}")
   end
 
@@ -800,19 +801,18 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     lookup_local_var?(name) || raise("BUG: can't find local var #{name}")
   end
 
-  def lookup_local_var?(name : String) : LocalVar?
-    block_level = @block_level
-    while block_level >= 0
-      index = @local_vars.name_to_index?(name, block_level)
-      if index
-        type = @local_vars.type(name, block_level)
-        return LocalVar.new(index, type)
+  def lookup_local_var?(name : String, *, from : Int32 = @block_level) : LocalVar?
+    from.downto(0) do |block_level|
+      if local_var = lookup_local_var?(name, at: block_level)
+        return local_var
       end
-
-      block_level -= 1
     end
+  end
 
-    nil
+  def lookup_local_var?(name : String, *, at block_level : Int32) : LocalVar?
+    if index = @local_vars.name_to_index?(name, block_level)
+      LocalVar.new(index, @local_vars.type(name, block_level))
+    end
   end
 
   def lookup_closured_var(name : String) : ClosuredVar
@@ -1421,7 +1421,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   def visit(node : TypeOf)
     return false unless @wants_value
 
-    put_type node.type, node: node
+    # The type of a typeof node can be a virtual metaclass, but typeof
+    # should return a concrete type, so we devirtualize it.
+    put_type node.type.devirtualize, node: node
     false
   end
 
@@ -1872,6 +1874,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     if body.is_a?(Var) && body.name == "self"
       # We also inline calls that simply return "self"
 
+      # We still have to accept the call arguments, but discard their values
+      node.args.each { |arg| discard_value(arg) }
+
       if @wants_value
         if obj
           request_value(obj)
@@ -1884,9 +1889,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
           end
         end
       end
-
-      # We still have to accept the call arguments, but discard their values
-      node.args.each { |arg| discard_value(arg) }
 
       return false
     end
@@ -2921,6 +2923,28 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       # Otherwise, it's a null pointer
       put_i64 0, node: node
     end
+
+    false
+  end
+
+  def visit(node : ProcPointer)
+    target_def = node.call.target_def
+
+    unless target_def.owner.is_a?(LibType)
+      # LLVM codegen supports more cases like closure data and obj/self
+      # target, but I can't trigger them — does LiteralExpander expand
+      # these cases into ProcLiteral?
+      raise "BUG: missing interpret for ProcPointer to non Lib fun"
+    end
+
+    # find or build a compiled_def
+    proc_type = node.type.as(ProcInstanceType)
+    symbol = @context.c_function(target_def.as(External).real_name)
+    compiled_def = @context.extern_proc_wrapper(proc_type, symbol)
+
+    # push compiled_def to stack + no closure data (null pointer)
+    put_i64 compiled_def.object_id.to_i64!, node: node
+    put_i64 0, node: node
 
     false
   end

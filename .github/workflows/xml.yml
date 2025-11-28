@@ -3,10 +3,12 @@ name: XML CI
 on:
   push:
     paths:
+      - 'spec/std/xml/**'
       - 'src/xml/**'
       - '.github/workflows/xml.yml'
   pull_request:
     paths:
+      - 'spec/std/xml/**'
       - 'src/xml/**'
       - '.github/workflows/xml.yml'
   schedule:
@@ -23,7 +25,7 @@ jobs:
   libssl_test:
     runs-on: ubuntu-latest
     name: "${{ matrix.pkg }}"
-    container: crystallang/crystal:1.17.1-alpine
+    container: crystallang/crystal:1.18.2-alpine
     strategy:
       fail-fast: false
       matrix:
@@ -38,7 +40,9 @@ jobs:
             repository: http://dl-cdn.alpinelinux.org/alpine/edge/main
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
       - name: Uninstall libxml2 and conflicts
         run: apk del libxml2-dev
       - name: Install ${{ matrix.pkg }}

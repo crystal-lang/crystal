@@ -70,9 +70,7 @@ module Crystal
           is_generic = type.is_a?(GenericClassType)
           inherits_from_generic = type.ancestors.any?(GenericClassInstanceType)
           if is_generic || inherits_from_generic
-            has_default_self_new = self_new_methods.any? do |a_def|
-              a_def.args.empty? && !a_def.block_arity
-            end
+            has_default_self_new = self_new_methods.any?(&.has_any_args?.!)
 
             # For a generic class type we need to define `new` even
             # if a superclass defines it, because the generated new
@@ -90,7 +88,7 @@ module Crystal
 
               initialize_methods.each do |initialize|
                 # If the type has `self.new()`, don't override it
-                if initialize.args.empty? && !initialize.block_arity && has_default_self_new
+                if !initialize.has_any_args? && has_default_self_new
                   next
                 end
 
@@ -303,7 +301,7 @@ module Crystal
 
             # When **opts is expanded for named arguments, we must use internal
             # names that won't clash with local variables defined in the method.
-            temp_name = instance_type.program.new_temp_var_name
+            temp_name = instance_type.program.new_temp_var_name(self)
             def_arg = Arg.new(temp_name, external_name: named_arg)
 
             if matching_arg = args.find { |arg| arg.external_name == named_arg }

@@ -45,7 +45,7 @@ module HTTP::FormData
 
     # Adds a form part with the given *name* and *value*. *Headers* can
     # optionally be provided for the form part.
-    def field(name : String, value, headers : HTTP::Headers = HTTP::Headers.new) : Nil
+    def field(name : String, value : _, headers : HTTP::Headers = HTTP::Headers.new) : Nil
       file(name, IO::Memory.new(value.to_s), headers: headers)
     end
 
@@ -53,7 +53,7 @@ module HTTP::FormData
     # *Metadata* can be provided to add extra metadata about the file to the
     # Content-Disposition header for the form part. Other headers can be added
     # using *headers*.
-    def file(name : String, io, metadata : FileMetadata = FileMetadata.new, headers : HTTP::Headers = HTTP::Headers.new)
+    def file(name : String, io : IO, metadata : FileMetadata = FileMetadata.new, headers : HTTP::Headers = HTTP::Headers.new) : Nil
       fail "Cannot add form part: already finished" if @state.finished?
 
       headers["Content-Disposition"] = generate_content_disposition(name, metadata)

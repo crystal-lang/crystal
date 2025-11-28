@@ -307,6 +307,9 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     raise NotImplementedError.new("Crystal::System::IOCP#reopened(FileDescriptor)")
   end
 
+  def shutdown(file_descriptor : Crystal::System::FileDescriptor) : Nil
+  end
+
   def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
     LibC.CancelIoEx(file_descriptor.windows_handle, nil) unless file_descriptor.system_blocking?
     file_descriptor.file_descriptor_close
@@ -436,13 +439,16 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
         # AcceptEx does not automatically set the socket options on the accepted
         # socket to match those of the listening socket, we need to ask for that
         # explicitly with SO_UPDATE_ACCEPT_CONTEXT
-        socket.system_setsockopt client_handle, LibC::SO_UPDATE_ACCEPT_CONTEXT, socket.fd
+        System::Socket.setsockopt client_handle, LibC::SO_UPDATE_ACCEPT_CONTEXT, socket.fd
 
         true
       else
         false
       end
     end
+  end
+
+  def shutdown(socket : ::Socket) : Nil
   end
 
   def close(socket : ::Socket) : Nil

@@ -712,6 +712,10 @@ class Crystal::CodeGenVisitor
     codegen_binary_op(op, t1.remove_typedef, t2, p1, p2)
   end
 
+  def codegen_binary_op(op, t1, t2 : TypeDefType, p1, p2)
+    codegen_binary_op(op, t1, t2.remove_typedef, p1, p2)
+  end
+
   def codegen_binary_op(op, t1, t2, p1, p2)
     raise "BUG: codegen_binary_op called with #{t1} #{op} #{t2}"
   end
@@ -880,7 +884,7 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_primitive_pointer_realloc(node, target_def, call_args)
-    type = context.type.as(PointerInstanceType)
+    type = context.type.remove_typedef.as(PointerInstanceType)
 
     casted_ptr = cast_to_void_pointer(call_args[0])
     size = builder.mul call_args[1], llvm_size(type.element_type)
@@ -889,7 +893,7 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_primitive_pointer_add(node, target_def, call_args)
-    type = context.type.as(PointerInstanceType)
+    type = context.type.remove_typedef.as(PointerInstanceType)
 
     # `llvm_embedded_type` needed to treat `Void*` like `UInt8*`
     gep llvm_embedded_type(type.element_type), call_args[0], call_args[1]
@@ -902,7 +906,7 @@ class Crystal::CodeGenVisitor
 
   def codegen_primitive_struct_or_union_set(node, target_def, call_args)
     set_aggregate_field(node, target_def, call_args) do |field_type|
-      type = context.type.as(NonGenericClassType)
+      type = context.type.remove_typedef.as(NonGenericClassType)
       if type.extern_union?
         union_field_ptr(type, field_type, call_args[0])
       else
@@ -926,7 +930,7 @@ class Crystal::CodeGenVisitor
     end
 
     var_name = '@' + target_def.name.rchop
-    scope = context.type.as(NonGenericClassType)
+    scope = context.type.remove_typedef.as(NonGenericClassType)
     field_type = scope.instance_vars[var_name].type
 
     # Check assigning nil to a field of type pointer or Proc
@@ -1069,7 +1073,7 @@ class Crystal::CodeGenVisitor
 
     c_calling_convention = target_def.proc_c_calling_convention?
 
-    proc_type = context.type.as(ProcInstanceType)
+    proc_type = context.type.remove_typedef.as(ProcInstanceType)
     target_def.args.size.times do |i|
       proc_arg_type = proc_type.arg_types[i]
       target_def_arg_type = target_def.args[i].type
@@ -1176,7 +1180,7 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_primitive_pointer_diff(node, target_def, call_args)
-    type = context.type.as(PointerInstanceType)
+    type = context.type.remove_typedef.as(PointerInstanceType)
     p0 = ptr2int(call_args[0], llvm_context.int64)
     p1 = ptr2int(call_args[1], llvm_context.int64)
     sub = builder.sub p0, p1

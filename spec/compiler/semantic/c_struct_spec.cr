@@ -241,14 +241,14 @@ describe "Semantic: struct" do
   end
 
   it "marks as packed" do
-    result = semantic(%(
+    result = semantic(<<-CRYSTAL)
       lib LibFoo
         @[Packed]
         struct Struct
           x, y : Int32
         end
       end
-      ))
+      CRYSTAL
     foo_struct = result.program.types["LibFoo"].types["Struct"].as(NonGenericClassType)
     foo_struct.packed?.should be_true
   end

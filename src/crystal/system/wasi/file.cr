@@ -13,6 +13,10 @@ module Crystal::System::File
     raise NotImplementedError.new "Crystal::System::File.chown"
   end
 
+  private def system_chown(uid : Int, gid : Int)
+    raise NotImplementedError.new "Crystal::System::File#system_chown"
+  end
+
   def self.realpath(path)
     raise NotImplementedError.new "Crystal::System::File.realpath"
   end

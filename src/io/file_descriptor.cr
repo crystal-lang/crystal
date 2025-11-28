@@ -85,7 +85,7 @@ class IO::FileDescriptor < IO
   # This might be different from the internal file descriptor. For example, when
   # `STDIN` is a terminal on Windows, this returns `false` since the underlying
   # blocking reads are done on a completely separate thread.
-  @[Deprecated("Use Socket.get_blocking instead.")]
+  @[Deprecated("Use IO::FileDescriptor.get_blocking instead.")]
   def blocking : Bool
     emulated = emulated_blocking?
     return emulated unless emulated.nil?
@@ -109,7 +109,7 @@ class IO::FileDescriptor < IO
   #
   # NOTE: Only implemented on UNIX targets. Raises on Windows.
   def self.get_blocking(fd : Handle) : Bool
-    Crystal::System::Socket.get_blocking(fd)
+    Crystal::System::FileDescriptor.get_blocking(fd)
   end
 
   # Changes the blocking mode of *fd* to be blocking (true) or non blocking
@@ -133,7 +133,7 @@ class IO::FileDescriptor < IO
   end
 
   def fcntl(cmd : Int, arg : Int = 0) : Int
-    Crystal::System::FileDescriptor.fcntl(fd, cmd, arg)
+    system_fcntl(cmd, arg)
   end
 
   # Returns a `File::Info` object for this file descriptor, or raises

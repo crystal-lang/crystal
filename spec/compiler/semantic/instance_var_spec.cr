@@ -2771,7 +2771,7 @@ describe "Semantic: instance var" do
   end
 
   it "doesn't duplicate instance var in subclass" do
-    result = semantic(%(
+    result = semantic(<<-CRYSTAL)
       class Foo
         def initialize(@x : Int32)
         end
@@ -2784,7 +2784,7 @@ describe "Semantic: instance var" do
       class Bar < Foo
         @x : Int32
       end
-      ))
+      CRYSTAL
 
     foo = result.program.types["Foo"].as(NonGenericClassType)
     foo.instance_vars["@x"].type.should eq(result.program.int32)
@@ -3277,6 +3277,52 @@ describe "Semantic: instance var" do
       CRYSTAL
   end
 
+  it "infers from top-level method that has type annotation" do
+    assert_type(<<-CRYSTAL) { types["Bar"] }
+      class Bar
+      end
+
+      def bar : Bar
+        Bar.new
+      end
+
+      class Foo
+        def initialize
+          @bar = ::bar
+        end
+
+        def bar
+          @bar
+        end
+      end
+
+      Foo.new.bar
+      CRYSTAL
+  end
+
+  it "infers from simple top-level method without type annotation" do
+    assert_type(<<-CRYSTAL) { types["Bar"] }
+      class Bar
+      end
+
+      def bar
+        Bar.new
+      end
+
+      class Foo
+        def initialize
+          @bar = ::bar
+        end
+
+        def bar
+          @bar
+        end
+      end
+
+      Foo.new.bar
+      CRYSTAL
+  end
+
   it "infers from class method that has type annotation" do
     assert_type(<<-CRYSTAL) { types["Bar"] }
       class Bar
@@ -3407,6 +3453,36 @@ describe "Semantic: instance var" do
         end
 
         def self.bar(x : String) : Bar
+          Bar.new
+        end
+      end
+
+      class Foo
+        def initialize(x)
+          @bar = Bar.bar(x)
+        end
+
+        def bar
+          @bar
+        end
+      end
+
+      Foo.new(1).bar
+      CRYSTAL
+  end
+
+  it "infers from multiple class method overloads with same type but different spellings" do
+    assert_type(<<-CRYSTAL) { types["Bar"] }
+      class Bar
+        def self.bar(x : Int32) : Bar
+          Bar.new
+        end
+
+        def self.bar(x : Float64) : ::Bar
+          Bar.new
+        end
+
+        def self.bar(x : String) : self
           Bar.new
         end
       end

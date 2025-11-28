@@ -409,6 +409,14 @@ module Crystal
         assert_macro %({{'a'.ord}}), %(97)
         assert_macro %({{'龍'.ord}}), %(40845)
       end
+
+      it "executes zero?" do
+        assert_macro "{{0.zero?}}", "true"
+        assert_macro "{{1.zero?}}", "false"
+
+        assert_macro "{{0.0.zero?}}", "true"
+        assert_macro "{{0.1.zero?}}", "false"
+      end
     end
 
     describe "string methods" do
@@ -422,16 +430,26 @@ module Crystal
         assert_macro %({{"foo" != "bar"}}), %(true)
       end
 
-      it "executes split without arguments" do
-        assert_macro %({{"1 2 3".split}}), %(["1", "2", "3"] of ::String)
+      it "executes string * number" do
+        assert_macro %({{"odelay" * 3}}), "\"odelayodelayodelay\""
       end
 
-      it "executes split with argument" do
-        assert_macro %({{"1-2-3".split('-')}}), %(["1", "2", "3"] of ::String)
-      end
+      describe "#split" do
+        it "works without arguments" do
+          assert_macro %({{"1 2 3".split}}), %(["1", "2", "3"] of ::String)
+        end
 
-      it "executes split with char argument" do
-        assert_macro %({{"1-2-3".split('-')}}), %(["1", "2", "3"] of ::String)
+        it "works with string argument" do
+          assert_macro %({{"1-2-3".split("-")}}), %(["1", "2", "3"] of ::String)
+        end
+
+        it "works with char argument" do
+          assert_macro %({{"1-2-3".split('-')}}), %(["1", "2", "3"] of ::String)
+        end
+
+        it "works with regex argument" do
+          assert_macro %({{"123-456-789".split(/-(.)/)}}), %(["123", "4", "56", "7", "89"] of ::String)
+        end
       end
 
       it "executes strip" do
@@ -569,6 +587,15 @@ module Crystal
 
       it "executes gsub" do
         assert_macro %({{"hello".gsub(/e|o/, "a")}}), %("halla")
+      end
+
+      it "executes gsub with a block" do
+        assert_macro %q({{ "foo bar baz".gsub(/ba./) { "biz" } }}), %("foo biz biz")                                                                  # No block args
+        assert_macro %q({{ "foo bar baz".gsub(/ba./) { |match| match.upcase } }}), %("foo BAR BAZ")                                                   # full matched string
+        assert_macro %q({{ "Name: Alice, Name: Bob".gsub(/Name: (\w+)/) { |full, matches| "User(#{matches[1].id})" } }}), %("User(Alice), User(Bob)") # single capture group
+        assert_macro %q({{ "5x10, 3x7".gsub(/(\d+)x(\d+)/) { |full, matches| "#{matches[1].to_i * matches[2].to_i}" } }}), %("50, 21")                # multiple capture groups
+        assert_macro %q({{ "bar baz".gsub /bar (foo)?/ { |_, matches| matches[1].nil? ? "" : "BUG" } }}), %("baz")                                    # Capture group no match
+        assert_macro %q({{ "bar".gsub /(foo)/ { "STR" } }}), %("bar")                                                                                 # No match at all
       end
 
       it "executes scan" do
@@ -766,6 +793,10 @@ module Crystal
 
       it "executes map" do
         assert_macro %({{[1, 2, 3].map { |e| e == 2 }}}), "[false, true, false]"
+      end
+
+      it "executes *" do
+        assert_macro %({{["na"] * 5}}), %(["na", "na", "na", "na", "na"])
       end
 
       it "executes reduce with no initial value" do
@@ -1528,6 +1559,10 @@ module Crystal
             assert_macro %({{ {1, 2, 3, 4} - [1, 3, 5] }}), %({2, 4})
           end
         end
+      end
+
+      it "executes *" do
+        assert_macro %({{ {"na"} * 5}}), %({"na", "na", "na", "na", "na"})
       end
     end
 
@@ -3760,12 +3795,52 @@ module Crystal
     end
 
     describe "flag?" do
-      it "has flag" do
+      it "has simple flag" do
         assert_macro %({{flag?(:foo)}}), %(true), flags: "foo"
       end
 
       it "doesn't have flag" do
         assert_macro %({{flag?(:foo)}}), %(false)
+      end
+
+      it "has flag value" do
+        assert_macro %({{flag?(:foo)}}), %("bar"), flags: "foo=bar"
+      end
+
+      it "has empty flag value" do
+        assert_macro %({{flag?(:foo)}}), %(""), flags: "foo="
+      end
+
+      it "uses last one of multiple values" do
+        assert_macro %({{flag?(:foo)}}), %("baz"), flags: %w[foo=bar foo=baz]
+        assert_macro %({{flag?(:foo)}}), %("bar"), flags: %w[foo=baz foo=bar]
+      end
+
+      describe "presents `name=value` as simple flag" do
+        it "foo=bar" do
+          assert_macro %({{flag?(:"foo=bar")}}), %(true), flags: "foo=bar"
+        end
+
+        it "foo=" do
+          assert_macro %({{flag?(:foo=)}}), %(true), flags: "foo="
+        end
+
+        it "multiple values" do
+          assert_macro %({{flag?(:"foo=bar")}}), %(true), flags: %w[foo=baz foo=bar]
+          assert_macro %({{flag?(:"foo=baz")}}), %(true), flags: %w[foo=bar foo=baz]
+          assert_macro %({{flag?(:"foo=bar")}}), %(true), flags: %w[foo=bar foo=baz]
+          assert_macro %({{flag?(:"foo=baz")}}), %(true), flags: %w[foo=baz foo=bar]
+        end
+
+        it "multiple values and simple flag" do
+          assert_macro %({{flag?(:"foo=bar")}}), %(true), flags: %w[foo=bar foo]
+          assert_macro %({{flag?(:"foo=bar")}}), %(true), flags: %w[foo foo=bar]
+        end
+      end
+
+      it "uses last one of multiple values and simple" do
+        assert_macro %({{flag?(:foo)}}), %(true), flags: %w[foo=bar foo]
+        assert_macro %({{flag?(:foo)}}), %("bar"), flags: %w[foo foo=bar]
       end
     end
 

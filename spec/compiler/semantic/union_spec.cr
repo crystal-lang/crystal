@@ -13,18 +13,18 @@ end
 describe "Semantic: union" do
   context "commutativity" do
     it "module v.s. including module" do
-      assert_commutes(%(
+      assert_commutes(<<-CRYSTAL) { [types["A"], types["B"], types["A"]] }
         module A
         end
 
         module B
           include A
         end
-        )) { [types["A"], types["B"], types["A"]] }
+        CRYSTAL
     end
 
     it "module v.s. including generic module instance" do
-      assert_commutes(%(
+      assert_commutes(<<-CRYSTAL) { [types["A"], generic_module("B", types["Cxx"]), types["A"]] }
         class Cxx
         end
 
@@ -34,11 +34,11 @@ describe "Semantic: union" do
         module B(T)
           include A
         end
-        )) { [types["A"], generic_module("B", types["Cxx"]), types["A"]] }
+        CRYSTAL
     end
 
     it "generic module instance v.s. including module" do
-      assert_commutes(%(
+      assert_commutes(<<-CRYSTAL) { [generic_module("A", types["Cxx"]), types["B"], generic_module("A", types["Cxx"])] }
         class Cxx
         end
 
@@ -48,11 +48,11 @@ describe "Semantic: union" do
         module B
           include A(Cxx)
         end
-        )) { [generic_module("A", types["Cxx"]), types["B"], generic_module("A", types["Cxx"])] }
+        CRYSTAL
     end
 
     it "generic module instance v.s. including generic module instance" do
-      assert_commutes(%(
+      assert_commutes(<<-CRYSTAL) { [generic_module("A", types["Cxx"]), generic_module("B", types["Cxx"]), generic_module("A", types["Cxx"])] }
         class Cxx
         end
 
@@ -62,11 +62,11 @@ describe "Semantic: union" do
         module B(T)
           include A(T)
         end
-        )) { [generic_module("A", types["Cxx"]), generic_module("B", types["Cxx"]), generic_module("A", types["Cxx"])] }
+        CRYSTAL
     end
 
     it "module v.s. extending generic module instance metaclass" do
-      assert_commutes(%(
+      assert_commutes(<<-CRYSTAL) { [types["A"], generic_module("B", types["Cxx"]).metaclass, types["A"]] }
         class Cxx
         end
 
@@ -76,11 +76,11 @@ describe "Semantic: union" do
         module B(T)
           extend A
         end
-        )) { [types["A"], generic_module("B", types["Cxx"]).metaclass, types["A"]] }
+        CRYSTAL
     end
 
     it "generic module instance v.s. extending generic module instance metaclass" do
-      assert_commutes(%(
+      assert_commutes(<<-CRYSTAL) { [generic_module("A", types["Cxx"]), generic_module("B", types["Cxx"]).metaclass, generic_module("A", types["Cxx"])] }
         class Cxx
         end
 
@@ -90,11 +90,11 @@ describe "Semantic: union" do
         module B(T)
           extend A(T)
         end
-        )) { [generic_module("A", types["Cxx"]), generic_module("B", types["Cxx"]).metaclass, generic_module("A", types["Cxx"])] }
+        CRYSTAL
     end
 
     it "virtual metaclass v.s. generic subclass instance metaclass" do
-      assert_commutes(%(
+      assert_commutes(<<-CRYSTAL) { [types["A"].virtual_type!.metaclass, generic_class("B", types["Cxx"]).metaclass, types["A"].virtual_type!.metaclass] }
         class Cxx
         end
 
@@ -103,27 +103,27 @@ describe "Semantic: union" do
 
         class B(T) < A
         end
-        )) { [types["A"].virtual_type!.metaclass, generic_class("B", types["Cxx"]).metaclass, types["A"].virtual_type!.metaclass] }
+        CRYSTAL
     end
 
     it "superclass v.s. uninstantiated generic subclass" do
-      assert_commutes(%(
+      assert_commutes(<<-CRYSTAL) { [types["A"], types["B"], types["A"].virtual_type!] }
         class A
         end
 
         class B(T) < A
         end
-        )) { [types["A"], types["B"], types["A"].virtual_type!] }
+        CRYSTAL
     end
 
     it "uninstantiated generic super-metaclass v.s. uninstantiated generic sub-metaclass" do
-      assert_commutes(%(
+      assert_commutes(<<-CRYSTAL) { [types["A"].metaclass, types["B"].metaclass, types["A"].metaclass.virtual_type!] }
         class A(T)
         end
 
         class B(T) < A(T)
         end
-        )) { [types["A"].metaclass, types["B"].metaclass, types["A"].metaclass.virtual_type!] }
+        CRYSTAL
     end
   end
 

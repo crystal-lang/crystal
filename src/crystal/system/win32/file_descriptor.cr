@@ -154,6 +154,10 @@ module Crystal::System::FileDescriptor
     raise NotImplementedError.new "Crystal::System::FileDescriptor.fcntl"
   end
 
+  private def system_fcntl(cmd, arg = 0)
+    raise NotImplementedError.new "Crystal::System::FileDescriptor#system_fcntl"
+  end
+
   protected def windows_handle
     LibC::HANDLE.new(fd)
   end
@@ -212,6 +216,7 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_close
+    event_loop.shutdown(self)
     event_loop.close(self)
   end
 

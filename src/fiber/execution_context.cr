@@ -37,11 +37,11 @@ require "./execution_context/*"
 # for common use cases.
 #
 # * `ExecutionContext::Concurrent`: Fully concurrent with limited parallelism.
-# Fibers run concurrently, never in parallel (only one fiber at a time). They
-# can use simpler and faster synchronization primitives internally (no atomics,
-# limited thread safety). Communication with fibers in other contexts requires
-# thread-safe primitives. A blocking fiber blocks the entire thread and all
-# other fibers in the context.
+# Fibers run concurrently to each other, never in parallel (only one fiber at a
+# time). They can use simpler and faster synchronization primitives internally
+# (no atomics, limited thread safety). Communication with fibers in other
+# contexts requires thread-safe primitives. A blocking fiber blocks the entire
+# thread and all other fibers in the context.
 # * `ExecutionContext::Parallel`: Fully concurrent, fully parallel. Fibers
 # running in this context can be resumed by multiple system threads in this
 # context. They run concurrently and in parallel to each other (multiple fibers
@@ -56,46 +56,52 @@ require "./execution_context/*"
 #
 # ## The default execution context
 #
-# The Crystal runtime starts with a single threaded execution context, available
-# as `Fiber::ExecutionContext.default`:
+# The Crystal runtime starts a default execution context exposed as
+# `Fiber::ExecutionContext.default`. This is where the main fiber is running.
+#
+# Its parallelism is set to 1 for backwards compatibility reasons; Crystal used
+# to be single-threaded and concurrent only. You can increase the parallelism at
+# any time using `Parallel#resize`, for example:
 #
 # ```
-# Fiber::ExecutionContext.default.class # => Fiber::ExecutionContext::Concurrent
+# count = Fiber::ExecutionContext.default_workers_count
+# Fiber::ExecutionContext.default.resize(count)
 # ```
-#
-# NOTE: The default context is a `Concurrent` context for backwards
-# compatibility reasons. It might change to a `Parallel` context in the
-# future.
 @[Experimental]
 module Fiber::ExecutionContext
-  @@default : ExecutionContext?
+  @@default : ExecutionContext::Parallel?
 
   # Returns the default `ExecutionContext` for the process, automatically
   # started when the program started.
   #
-  # NOTE: The default context is a `Concurrent` context for backwards
-  # compatibility reasons. It might change to a `Parallel` context in the
-  # future.
+  # The default execution context is currently `Parallel` but only starts with
+  # parallelism set to 1. The parallelism can be changed using
+  # `Parallel#resize`.
   @[AlwaysInline]
-  def self.default : ExecutionContext
+  def self.default : ExecutionContext::Parallel
     @@default.not_nil!("expected default execution context to have been setup")
   end
 
   # :nodoc:
   def self.init_default_context : Nil
-    @@default = Concurrent.default
+    @@default = Parallel.default(1)
     @@monitor = Monitor.new
   end
 
-  # Returns the number of threads to start in the default multi threaded
-  # execution context. Respects the `CRYSTAL_WORKERS` environment variable
-  # and otherwise returns the potential parallelism of the CPU (number of
-  # hardware threads).
+  # Returns the default maximum parallelism. Can be used to resize the default
+  # parallel execution context for example.
   #
-  # Currently unused because the default context is single threaded for
-  # now (this might change later with compilation flags).
+  # Respects the `CRYSTAL_WORKERS` environment variable if present and valid,
+  # and otherwise defaults to the number of logical CPUs available to the
+  # process or on the computer.
   def self.default_workers_count : Int32
-    ENV["CRYSTAL_WORKERS"]?.try(&.to_i?) || Math.min(System.cpu_count.to_i, 32)
+    count = ENV["CRYSTAL_WORKERS"]?.try(&.to_i?) || -1
+    count = Crystal::System.effective_cpu_count.to_i if count == -1
+    count = System.cpu_count.to_i if count == -1
+    # TODO: query for CPU limits (e.g. linux/cgroup, freebsd/rctl, ...)
+
+    # always report at least 1 worker
+    count.clamp(1..)
   end
 
   # :nodoc:
@@ -159,8 +165,7 @@ module Fiber::ExecutionContext
     end
   end
 
-  # Creates a new fiber then calls `#enqueue` to add it to the execution
-  # context.
+  # Creates a new fiber then calls enqueues it to the execution context.
   #
   # May be called from any `ExecutionContext` (i.e. must be thread-safe).
   def spawn(*, name : String? = nil, &block : ->) : Fiber

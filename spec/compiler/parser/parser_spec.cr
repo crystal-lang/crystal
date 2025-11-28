@@ -289,6 +289,16 @@ module Crystal
     assert_syntax_error "*a, b, c, d, e = 1, 2", "Multiple assignment count mismatch"
     assert_syntax_error "a, b, c, d, *e = 1, 2, 3", "Multiple assignment count mismatch"
 
+    assert_syntax_error "a = *1", %(unexpected token: "*")
+    assert_syntax_error "a = *1, 2", %(unexpected token: "*")
+    assert_syntax_error "a = 1, *2", %(unexpected token: "*")
+    assert_syntax_error "a, b = *1", %(unexpected token: "*")
+    assert_syntax_error "a, b = *1, 2", %(unexpected token: "*")
+    assert_syntax_error "a, b = 1, *2", %(unexpected token: "*")
+    assert_syntax_error "a, *b = *1", %(unexpected token: "*")
+    assert_syntax_error "a, *b = *1, 2", %(unexpected token: "*")
+    assert_syntax_error "a, *b = 1, *2", %(unexpected token: "*")
+
     # #11442, #12911
     assert_syntax_error "a, b.<="
     assert_syntax_error "*a == 1"
@@ -616,6 +626,10 @@ module Crystal
     it_parses "foo &.each {\n}", Call.new("foo", block: Block.new(["__arg0".var], Call.new("__arg0".var, "each", block: Block.new)))
     it_parses "foo &.each do\nend", Call.new("foo", block: Block.new(["__arg0".var], Call.new("__arg0".var, "each", block: Block.new)))
     it_parses "foo &.@bar", Call.new("foo", block: Block.new(["__arg0".var], ReadInstanceVar.new("__arg0".var, "@bar")))
+    it_parses "foo &.@bar.baz", Call.new("foo", block: Block.new(["__arg0".var], Call.new(ReadInstanceVar.new("__arg0".var, "@bar"), "baz")))
+    it_parses "foo(&.@bar.baz)", Call.new("foo", block: Block.new(["__arg0".var], Call.new(ReadInstanceVar.new("__arg0".var, "@bar"), "baz")))
+    it_parses "foo &.@bar[baz]", Call.new("foo", block: Block.new(["__arg0".var], Call.new(ReadInstanceVar.new("__arg0".var, "@bar"), "[]", Call.new("baz"))))
+    it_parses "foo &.@bar.@baz", Call.new("foo", block: Block.new(["__arg0".var], ReadInstanceVar.new(ReadInstanceVar.new("__arg0".var, "@bar"), "@baz")))
 
     it_parses "foo(&.as(T))", Call.new("foo", block: Block.new([Var.new("__arg0")], Cast.new(Var.new("__arg0"), "T".path)))
     it_parses "foo(&.as(T).bar)", Call.new("foo", block: Block.new([Var.new("__arg0")], Call.new(Cast.new(Var.new("__arg0"), "T".path), "bar")))
@@ -1430,6 +1444,10 @@ module Crystal
       it_parses "macro foo;unless var;true;end;end", Macro.new("foo", [] of Arg, Expressions.from(["unless var;true;".macro_literal, "end;".macro_literal] of ASTNode))
     end
 
+    {'i', 'q', 'r', 'w', 'x', 'Q'}.each do |ch|
+      it_parses "macro foo;%#{ch}[#{ch}];end", Macro.new("foo", [] of Arg, "%#{ch}[#{ch}];".macro_literal)
+    end
+
     it_parses "a = 1; pointerof(a)", [Assign.new("a".var, 1.int32), PointerOf.new("a".var)]
     it_parses "pointerof(@a)", PointerOf.new("@a".instance_var)
     it_parses "a = 1; pointerof(a)", [Assign.new("a".var, 1.int32), PointerOf.new("a".var)]
@@ -2029,6 +2047,8 @@ module Crystal
     it_parses "enum Foo; A\nB; C\nD = 1; end", EnumDef.new("Foo".path, [Arg.new("A"), Arg.new("B"), Arg.new("C"), Arg.new("D", 1.int32)] of ASTNode)
     it_parses "enum Foo; A = 1; B; end", EnumDef.new("Foo".path, [Arg.new("A", 1.int32), Arg.new("B")] of ASTNode)
     it_parses "enum Foo : UInt16; end", EnumDef.new("Foo".path, base_type: "UInt16".path)
+    it_parses "enum Foo : UInt16 ; end", EnumDef.new("Foo".path, base_type: "UInt16".path)
+    it_parses "enum Foo : UInt16 # comment\nend", EnumDef.new("Foo".path, base_type: "UInt16".path)
     it_parses "enum Foo; def foo; 1; end; end", EnumDef.new("Foo".path, [Def.new("foo", body: 1.int32)] of ASTNode)
     it_parses "enum Foo; A = 1\ndef foo; 1; end; end", EnumDef.new("Foo".path, [Arg.new("A", 1.int32), Def.new("foo", body: 1.int32)] of ASTNode)
     it_parses "enum Foo; A = 1\ndef foo; 1; end\ndef bar; 2; end\nend", EnumDef.new("Foo".path, [Arg.new("A", 1.int32), Def.new("foo", body: 1.int32), Def.new("bar", body: 2.int32)] of ASTNode)
@@ -2805,16 +2825,16 @@ module Crystal
     end
 
     it "gets correct location after macro with yield" do
-      parser = Parser.new(%(
+      parser = Parser.new(<<-CRYSTAL)
         macro foo
           yield
         end
 
         1 + 'a'
-        ))
+        CRYSTAL
       node = parser.parse.as(Expressions).expressions[1]
       loc = node.location.not_nil!
-      loc.line_number.should eq(6)
+      loc.line_number.should eq(5)
     end
 
     it "gets correct location with \r\n (#1558)" do

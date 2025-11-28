@@ -465,7 +465,7 @@ describe "Semantic: lib" do
   end
 
   it "correctly attached link flags if there's a macro if" do
-    result = semantic(%(
+    result = semantic(<<-CRYSTAL)
       @[Link("SDL")]
       @[Link("SDLMain")]
       {% if flag?(:some_flag) %}
@@ -476,7 +476,7 @@ describe "Semantic: lib" do
       end
 
       LibSDL.init(0_u32)
-      ))
+      CRYSTAL
     sdl = result.program.types["LibSDL"].as(LibType)
     attrs = sdl.link_annotations.not_nil!
     attrs.size.should eq(2)
@@ -525,7 +525,7 @@ describe "Semantic: lib" do
   end
 
   it "reopens lib and adds more link annotations" do
-    result = semantic(%(
+    result = semantic(<<-CRYSTAL)
       @[Link("SDL")]
       lib LibSDL
         fun init = SDL_Init(flags : UInt32) : Int32
@@ -536,7 +536,7 @@ describe "Semantic: lib" do
       end
 
       LibSDL.init(0_u32)
-      ))
+      CRYSTAL
     sdl = result.program.types["LibSDL"].as(LibType)
     attrs = sdl.link_annotations.not_nil!
     attrs.size.should eq(2)
@@ -545,7 +545,7 @@ describe "Semantic: lib" do
   end
 
   it "reopens lib and adds same link annotations" do
-    result = semantic(%(
+    result = semantic(<<-CRYSTAL)
       @[Link("SDL")]
       lib LibSDL
         fun init = SDL_Init(flags : UInt32) : Int32
@@ -556,7 +556,7 @@ describe "Semantic: lib" do
       end
 
       LibSDL.init(0_u32)
-      ))
+      CRYSTAL
     sdl = result.program.types["LibSDL"].as(LibType)
     attrs = sdl.link_annotations.not_nil!
     attrs.size.should eq(1)
@@ -564,7 +564,7 @@ describe "Semantic: lib" do
   end
 
   it "gathers link annotations from macro expression" do
-    result = semantic(%(
+    result = semantic(<<-CRYSTAL)
       {% begin %}
         @[Link("SDL")]
       {% end %}
@@ -573,7 +573,7 @@ describe "Semantic: lib" do
       end
 
       LibSDL.init
-      ))
+      CRYSTAL
     sdl = result.program.types["LibSDL"].as(LibType)
     attrs = sdl.link_annotations.not_nil!
     attrs.size.should eq(1)
@@ -899,23 +899,23 @@ describe "Semantic: lib" do
   end
 
   it "specifies a call convention" do
-    result = semantic(%(
+    result = semantic(<<-CRYSTAL)
       lib LibFoo
         @[CallConvention("X86_StdCall")]
         fun foo : Int32
       end
-      ))
+      CRYSTAL
     foo = result.program.types["LibFoo"].lookup_first_def("foo", nil).as(External)
     foo.call_convention.should eq(LLVM::CallConvention::X86_StdCall)
   end
 
   it "specifies a call convention to a lib" do
-    result = semantic(%(
+    result = semantic(<<-CRYSTAL)
       @[CallConvention("X86_StdCall")]
       lib LibFoo
         fun foo : Int32
       end
-      ))
+      CRYSTAL
     foo = result.program.types["LibFoo"].lookup_first_def("foo", nil).as(External)
     foo.call_convention.should eq(LLVM::CallConvention::X86_StdCall)
   end
