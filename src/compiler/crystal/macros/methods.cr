@@ -1422,6 +1422,20 @@ module Crystal
       case method
       when "args", "body", "return_type"
         @def.interpret(method, args, named_args, block, interpreter, location)
+      when "call"
+        if block
+          raise "macro 'ProcLiteral#call' is not expected to be invoked with a block, but a block was given"
+        end
+
+        if named_args.try(&.present?)
+          raise "named arguments are not allowed here"
+        end
+
+        unless args.size == @def.args.size
+          wrong_number_of_arguments "macro 'ProcLiteral#call'", args.size, @def.args.size
+        end
+
+        interpreter.invoke_proc(self, args)
       else
         super
       end
