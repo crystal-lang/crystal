@@ -362,6 +362,14 @@ class StringScanner
     @str[offset, len]
   end
 
+  def peek_bytes(len) : String
+    @str.byte_slice(@byte_offset, len)
+  end
+
+  def current_byte : UInt8
+    @str.byte_at(@byte_offset)
+  end
+
   # Returns the remainder of the string after the scan offset.
   #
   # ```
