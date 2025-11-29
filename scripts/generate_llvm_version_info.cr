@@ -5,36 +5,7 @@
 # LLVM installation different from the one bundled with Crystal.
 
 require "c/libloaderapi"
-
-# The list of supported targets are hardcoded in:
-# https://github.com/llvm/llvm-project/blob/main/llvm/CMakeLists.txt
-LLVM_ALL_TARGETS = %w(
-  AArch64
-  AMDGPU
-  ARM
-  AVR
-  BPF
-  Hexagon
-  Lanai
-  LoongArch
-  Mips
-  MSP430
-  NVPTX
-  PowerPC
-  RISCV
-  Sparc
-  SPIRV
-  SystemZ
-  VE
-  WebAssembly
-  X86
-  XCore
-  ARC
-  CSKY
-  DirectX
-  M68k
-  Xtensa
-)
+require "llvm/lib_llvm/config"
 
 def find_dll_in_env_path
   ENV["PATH"]?.try &.split(Process::PATH_DELIMITER, remove_empty: true) do |path|
@@ -62,7 +33,7 @@ begin
   patch = uninitialized LibC::UInt
   llvm_get_version.call(pointerof(major), pointerof(minor), pointerof(patch))
 
-  targets_built = LLVM_ALL_TARGETS.select do |target|
+  targets_built = LibLLVM::ALL_TARGETS.select do |target|
     LibC.GetProcAddress(dll, "LLVMInitialize#{target}Target") && LibC.GetProcAddress(dll, "LLVMInitialize#{target}TargetInfo")
   end
 
