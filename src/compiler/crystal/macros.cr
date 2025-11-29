@@ -784,12 +784,16 @@ module Crystal::Macros
     def uniq : ArrayLiteral
     end
 
-    # Similar to `Array#[]`, but returns `NilLiteral` on out of bounds.
+    # Similar to `Array#[]?(Int)`.
     def [](index : NumberLiteral) : ASTNode
     end
 
-    # Similar to `Array#[]`.
-    def [](index : RangeLiteral) : ArrayLiteral(ASTNode)
+    # Similar to `Array#[]?(Range)`.
+    def [](index : RangeLiteral) : ArrayLiteral(ASTNode) | NilLiteral
+    end
+
+    # Similar to `Array#[]?(Int, Int)`.
+    def [](start : NumberLiteral, count : NumberLiteral) : ArrayLiteral(ASTNode) | NilLiteral
     end
 
     # Similar to `Array#[]=`.
@@ -1098,12 +1102,17 @@ module Crystal::Macros
     def uniq : TupleLiteral
     end
 
-    # Similar to `Tuple#[]`, but returns `NilLiteral` on out of bounds.
+    # Similar to `Tuple#[]?(Int)`.
     def [](index : NumberLiteral) : ASTNode
     end
 
-    # Similar to `Tuple#[]`.
-    def [](index : RangeLiteral) : TupleLiteral(ASTNode)
+    # Similar to `Tuple#[]?(Range)`.
+    def [](index : RangeLiteral) : TupleLiteral | NilLiteral
+    end
+
+    # Similar to `Array#[]?(Int, Int)`, but returns another `TupleLiteral`
+    # instead of an `ArrayLiteral`.
+    def [](start : NumberLiteral, count : NumberLiteral) : TupleLiteral | NilLiteral
     end
 
     # Similar to `Array#[]=`.
