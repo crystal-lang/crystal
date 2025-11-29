@@ -183,13 +183,13 @@ describe OpenSSL::SSL::Socket do
     server_received.should eq("hello")
   end
 
-  it "calls SNI callback with client hostname" do
+  it "calls on_server_name callback with client hostname" do
     tcp_server = TCPServer.new("127.0.0.1", 0)
     server_context, client_context = ssl_context_pair
 
     sni_hostname = Channel(String).new
 
-    server_context.set_sni_callback do |hostname|
+    server_context.on_server_name do |hostname|
       sni_hostname.send(hostname)
       nil # continue with default context
     end
@@ -210,7 +210,7 @@ describe OpenSSL::SSL::Socket do
     when hostname = sni_hostname.receive
       hostname.should eq("test.example.com")
     when timeout(1.second)
-      fail "SNI callback was not called"
+      fail "on_server_name callback was not called"
     end
   end
 end

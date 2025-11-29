@@ -201,7 +201,7 @@ describe OpenSSL::SSL::Context do
     end
   end
 
-  it "set_sni_callback" do
+  it "on_server_name" do
     context = OpenSSL::SSL::Context::Server.new
     context.certificate_chain = datapath("openssl", "openssl.crt")
     context.private_key = datapath("openssl", "openssl.key")
@@ -210,7 +210,7 @@ describe OpenSSL::SSL::Context do
     alt_context.certificate_chain = datapath("openssl", "openssl.crt")
     alt_context.private_key = datapath("openssl", "openssl.key")
 
-    context.set_sni_callback do |hostname|
+    context.on_server_name do |hostname|
       if hostname == "alt.example.com"
         alt_context
       else

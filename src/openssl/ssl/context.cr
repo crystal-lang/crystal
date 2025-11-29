@@ -108,10 +108,9 @@ abstract class OpenSSL::SSL::Context
   end
 
   class Server < Context
-    # Stores the SNI callback to prevent garbage collection
+    # Keep a reference so the GC doesn't collect it after sending it to C land
     @sni_callback : Proc(String, OpenSSL::SSL::Context::Server?)?
-    # Box to pass through C callback
-    @sni_callback_box : Pointer(Void)?
+    @sni_callback_box = Pointer(Void).null
 
     # Generates a new TLS server context with sane defaults for a server connection.
     #
@@ -216,7 +215,7 @@ abstract class OpenSSL::SSL::Context
     # example_context.certificate_chain = "example.com.crt"
     # example_context.private_key = "example.com.key"
     #
-    # default_context.set_sni_callback do |hostname|
+    # default_context.on_server_name do |hostname|
     #   case hostname
     #   when "example.com", "www.example.com"
     #     example_context
@@ -227,7 +226,7 @@ abstract class OpenSSL::SSL::Context
     # ```
     #
     # See [SSL_CTX_set_tlsext_servername_callback](https://docs.openssl.org/3.5/man3/SSL_CTX_set_tlsext_servername_callback/)
-    def set_sni_callback(&block : String -> OpenSSL::SSL::Context::Server?)
+    def on_server_name(&block : String -> OpenSSL::SSL::Context::Server?)
       @sni_callback = block
 
       # Create a C callback that extracts the hostname and calls our Crystal block
