@@ -330,6 +330,41 @@ describe StringScanner do
     end
   end
 
+  describe "#peek_behind" do
+    it "shows characters behind the scan head" do
+      s = StringScanner.new("abcdefg")
+      s.peek_behind(10).should eq("")
+      s.scan(3)
+      s.peek_behind(10).should eq("abc")
+      s.peek_behind(2).should eq("bc")
+    end
+  end
+
+  it "works with character indices on multibyte characters" do
+    s = StringScanner.new("abcdeあいうえおfghij")
+    s.peek(4).should eq("abcd")
+    s.skip(2)
+    s.peek(4).should eq("cdeあ")
+    s.skip(3)
+    s.peek(6).should eq("あいうえおf")
+    s.skip(4)
+    s.offset.should eq(9)
+    s.peek(0).should eq("")
+    s.peek(3).should eq("おfg")
+    s.peek_behind(2).should eq("うえ")
+    s.rewind(3)
+    s.current_char.should eq('い')
+    s.previous_char.should eq('あ')
+    s.current_byte.should eq(0xE3)  # first byte of い
+    s.previous_byte.should eq(0x82) # last byte of あ
+    s.peek(100).should eq("いうえおfghij")
+    s.scan(5).should eq("いうえおf")
+    s.current_char.should eq('g')
+    s.skip(100)
+    s.peek(1).should eq("")
+    s.current_char?.should be_nil
+  end
+
   describe "#reset" do
     it "resets the scan offset to the beginning and clears the last match" do
       s = StringScanner.new("this is a string")
