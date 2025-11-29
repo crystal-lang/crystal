@@ -10,7 +10,9 @@ module Sync
 
     include Crystal::PointerLinkedList::Node
 
-    def initialize(@type : Type)
+    property cv_mu : Pointer(MU)
+
+    def initialize(@type : Type, @cv_mu : Pointer(MU) = Pointer(MU).null)
       # protects against spurious wakeups (invalid manual fiber enqueues) that
       # could lead to insert a waiter in the list a second time (oops) or keep
       # the waiter in the list while the caller returned
