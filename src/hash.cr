@@ -1192,8 +1192,12 @@ class Hash(K, V)
   # ```
   def [](key)
     fetch(key) do
-      if (block = @block) && key.is_a?(K)
-        block.call(self, key.as(K))
+      if block = @block
+        unless key.is_a?(K)
+          raise KeyError.new "Invalid key type: expected #{K}, got #{key.class}"
+        end
+
+        block.call(self, key)
       else
         raise KeyError.new "Missing hash key: #{key.inspect}"
       end
