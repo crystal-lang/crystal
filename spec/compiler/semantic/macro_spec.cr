@@ -1685,6 +1685,19 @@ describe "Semantic: macro" do
       CRYSTAL
   end
 
+  it "preserves escaped interpolation in verbatim (#16413)" do
+    assert_type(<<-'CRYSTAL') { nil_type }
+      {% begin %}
+        {% verbatim do %}
+          {%
+            name = "FOO"
+            "\#{get_env(#{name})}"
+          %}
+        {% end %}
+      {% end %}
+      CRYSTAL
+  end
+
   it "can use macro in instance var initializer (#7666)" do
     assert_type(<<-CRYSTAL) { string }
       class Foo
