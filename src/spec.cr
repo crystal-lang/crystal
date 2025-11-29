@@ -130,6 +130,12 @@ module Spec
         Process.on_terminate { abort! }
       {% end %}
 
+      {% if Fiber.has_constant?(:ExecutionContext) && Fiber::ExecutionContext.class.has_method?(:current) %}
+        count = ENV["CRYSTAL_WORKERS"]?.try(&.to_i?) || 1
+        # FIXME: ExecutionContext.current should return ExecutionContext::Parallel
+        Fiber::ExecutionContext.current.as(Fiber::ExecutionContext::Parallel).resize(count)
+      {% end %}
+
       run
     end
   end
