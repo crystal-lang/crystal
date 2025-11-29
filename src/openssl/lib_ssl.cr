@@ -112,6 +112,11 @@ lib LibSSL
   SSL_CTRL_CLEAR_OPTIONS = 77
   SSL_CTRL_CLEAR_MODE    = 78
 
+  # SNI callback control commands
+  # SSL_CTX_set_tlsext_servername_callback is a macro that calls SSL_CTX_callback_ctrl
+  SSL_CTRL_SET_TLSEXT_SERVERNAME_CB  = 53
+  SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG = 54
+
   enum Options : ULong
     LEGACY_SERVER_CONNECT       = 0x00000004
     SAFARI_ECDHE_ECDSA_BUG      = 0x00000040
@@ -236,6 +241,8 @@ lib LibSSL
   fun ssl_ctx_set_default_verify_paths = SSL_CTX_set_default_verify_paths(ctx : SSLContext) : Int
   fun ssl_ctx_get_cert_store = SSL_CTX_get_cert_store(ctx : SSLContext) : LibCrypto::X509_STORE
   fun ssl_ctx_ctrl = SSL_CTX_ctrl(ctx : SSLContext, cmd : Int, larg : ULong, parg : Void*) : ULong
+  fun ssl_ctx_callback_ctrl = SSL_CTX_callback_ctrl(ctx : SSLContext, cmd : Int, fp : Void*) : Long
+  fun ssl_set_ssl_ctx = SSL_set_SSL_CTX(ssl : SSL, ctx : SSLContext) : SSLContext
 
   {% if compare_versions(OPENSSL_VERSION, "3.0.0") >= 0 %}
     fun ssl_get_peer_certificate = SSL_get1_peer_certificate(handle : SSL) : LibCrypto::X509
