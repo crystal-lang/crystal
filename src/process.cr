@@ -17,7 +17,7 @@ class Process
   # not run any handlers registered with `at_exit`, use `::exit` for that.
   #
   # *status* is the exit status of the current process.
-  def self.exit(status = 0) : NoReturn
+  def self.exit(status : Int32 | Process::Status = 0) : NoReturn
     Crystal::System::Process.exit(status)
   end
 

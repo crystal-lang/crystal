@@ -563,7 +563,7 @@ end
 # to the invoking environment.
 #
 # Registered `at_exit` procs are executed.
-def exit(status = 0) : NoReturn
+def exit(status : Int32 | Process::Status = 0) : NoReturn
   status = Crystal::AtExitHandlers.run status
   Crystal.ignore_stdio_errors { STDOUT.flush }
   Crystal.ignore_stdio_errors { STDERR.flush }
