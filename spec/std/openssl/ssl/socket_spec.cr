@@ -182,4 +182,35 @@ describe OpenSSL::SSL::Socket do
     end
     server_received.should eq("hello")
   end
+
+  it "calls SNI callback with client hostname" do
+    tcp_server = TCPServer.new("127.0.0.1", 0)
+    server_context, client_context = ssl_context_pair
+
+    sni_hostname = Channel(String).new
+
+    server_context.set_sni_callback do |hostname|
+      sni_hostname.send(hostname)
+      nil # continue with default context
+    end
+
+    spawn do
+      Client.open(TCPSocket.new(tcp_server.local_address.address, tcp_server.local_address.port), client_context, hostname: "test.example.com") do |socket|
+        socket.print "hello"
+      end
+    end
+
+    OpenSSL::SSL::Server.open(tcp_server, server_context) do |server|
+      client = server.accept
+      client.gets.should eq("hello")
+      client.close
+    end
+
+    select
+    when hostname = sni_hostname.receive
+      hostname.should eq("test.example.com")
+    when timeout(1.second)
+      fail "SNI callback was not called"
+    end
+  end
 end
