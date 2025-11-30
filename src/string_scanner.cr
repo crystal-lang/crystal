@@ -474,11 +474,23 @@ class StringScanner
   # Includes the current position of the offset, the total size of the string,
   # and five characters near the current position.
   def inspect(io : IO) : Nil
-    io << "#<StringScanner "
     offset = offset()
-    io << offset << '/' << @str.size
-    start = Math.min(Math.max(offset - 2, 0), Math.max(0, @str.size - 5))
-    io << " \"" << @str[start, 5] << "\" >"
+    io << "#<StringScanner "
+    io << offset << '/' << @str.size << ' '
+
+    if offset.zero?
+      io << '|'
+      peek(5).inspect(io)
+    elsif eos?
+      peek_behind(5).inspect(io)
+      io << '|'
+    else
+      peek_behind(2).inspect(io)
+      io << '|'
+      peek(3).inspect(io)
+    end
+
+    io << '>'
   end
 
   private def lookahead_byte_length(len : Int) : Int
