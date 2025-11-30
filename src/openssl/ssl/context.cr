@@ -109,7 +109,6 @@ abstract class OpenSSL::SSL::Context
 
   class Server < Context
     # Keep a reference so the GC doesn't collect it after sending it to C land
-    @sni_callback : Proc(String, OpenSSL::SSL::Context::Server?)?
     @sni_callback_box = Pointer(Void).null
 
     # Generates a new TLS server context with sane defaults for a server connection.
