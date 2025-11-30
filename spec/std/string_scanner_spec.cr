@@ -378,6 +378,26 @@ describe StringScanner do
     end
   end
 
+  describe "#unscan" do
+    it "undoes the previous #scan call" do
+      s = StringScanner.new("abcdefg")
+      s.scan(1)
+      s.current_char.should eq('b')
+      s.scan("bc")
+      s.current_char.should eq('d')
+      s.unscan
+      s.current_char.should eq('b')
+      s.scan(/\w\w\w/)
+      s.current_char.should eq('e')
+      s.unscan
+      s.current_char.should eq('b')
+      s.scan(4)
+      s.current_char.should eq('f')
+      s.unscan
+      s.current_char.should eq('b')
+    end
+  end
+
   describe "#reset" do
     it "resets the scan offset to the beginning and clears the last match" do
       s = StringScanner.new("this is a string")

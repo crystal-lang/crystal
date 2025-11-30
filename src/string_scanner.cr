@@ -126,6 +126,14 @@ class StringScanner
     result
   end
 
+  def unscan : Nil
+    match = @last_match
+    return if match.nil?
+
+    @byte_offset -= match[0].bytesize
+    @last_match = nil
+  end
+
   # Scans the string _until_ the *pattern* is matched. Returns the substring up
   # to and including the end of the match, the last match is saved, and
   # advances the scan offset. Returns `nil` if no match.
