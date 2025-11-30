@@ -365,6 +365,19 @@ describe StringScanner do
     s.current_char?.should be_nil
   end
 
+  describe "#beginning_of_line?" do
+    it "checks backwards for a newline or start of string" do
+      s = StringScanner.new("a\nb\nc\n")
+      s.beginning_of_line?.should be_true
+      s.skip(1)
+      s.beginning_of_line?.should be_false
+      s.skip(1)
+      s.beginning_of_line?.should be_true
+      s.terminate
+      s.beginning_of_line?.should be_false
+    end
+  end
+
   describe "#reset" do
     it "resets the scan offset to the beginning and clears the last match" do
       s = StringScanner.new("this is a string")

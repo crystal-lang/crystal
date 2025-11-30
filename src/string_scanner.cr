@@ -505,6 +505,14 @@ class StringScanner
     @byte_offset - reader.pos
   end
 
+  # Returns true if the stream is at the beginning of a line and not at EOS.
+  def beginning_of_line? : Bool
+    return false if eos?
+    return true if @byte_offset.zero?
+
+    previous_char == '\n'
+  end
+
   # :nodoc:
   struct StringMatchData
     def initialize(@str : String)
