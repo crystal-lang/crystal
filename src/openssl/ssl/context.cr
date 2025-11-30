@@ -230,29 +230,21 @@ abstract class OpenSSL::SSL::Context
 
       # Create a C callback that extracts the hostname and calls our Crystal block
       c_callback = ->(ssl : LibSSL::SSL, _alert_ptr : LibC::Int*, arg : Void*) : LibC::Int {
-        begin
-          # Get the server name from the SSL connection
-          servername_ptr = LibSSL.ssl_get_servername(ssl, LibSSL::TLSExt::NAMETYPE_host_name)
-          if servername_ptr.null?
-            return LibSSL::SSL_TLSEXT_ERR_OK
-          end
-
-          hostname = String.new(servername_ptr)
-
-          # Unbox the Crystal callback and call it
-          callback = Box(Proc(String, OpenSSL::SSL::Context::Server?)).unbox(arg)
-          new_context = callback.call(hostname)
-
-          if new_context
-            # Switch to the new SSL_CTX for this connection
-            LibSSL.ssl_set_ssl_ctx(ssl, new_context.to_unsafe)
-          end
-
-          LibSSL::SSL_TLSEXT_ERR_OK
-        rescue
-          # On any error, continue with the default context
-          LibSSL::SSL_TLSEXT_ERR_OK
+        servername_ptr = LibSSL.ssl_get_servername(ssl, LibSSL::TLSExt::NAMETYPE_host_name)
+        if servername_ptr.null?
+          return LibSSL::SSL_TLSEXT_ERR_OK
         end
+
+        hostname = String.new(servername_ptr)
+
+        callback = Box(Proc(String, OpenSSL::SSL::Context::Server?)).unbox(arg)
+        new_context = callback.call(hostname)
+
+        if new_context
+          LibSSL.ssl_set_ssl_ctx(ssl, new_context.to_unsafe)
+        end
+
+        LibSSL::SSL_TLSEXT_ERR_OK
       }
 
       # Box the callback to pass to C
