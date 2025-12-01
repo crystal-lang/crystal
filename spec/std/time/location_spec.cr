@@ -217,7 +217,7 @@ class Time::Location
 
       context "with $ZONEINFO" do
         it "loads from custom directory" do
-          with_env("TZDIR": datapath("zoneinfo")) do
+          with_env("ZONEINFO": datapath("zoneinfo")) do
             Time::Location.__clear_location_cache
             location = Location.load("Foo/Bar")
             location.name.should eq "Foo/Bar"
