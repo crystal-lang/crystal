@@ -679,8 +679,11 @@ describe "Dir" do
     it "returns configure directory for tempfiles" do
       unset_tempdir do
         tmp_path = Path["my_temporary_path"].expand.to_s
-        ENV[{{ flag?(:windows) ? "TMP" : "TMPDIR" }}] = tmp_path
-        Dir.tempdir.should eq tmp_path
+        key = {{ flag?(:windows) ? "TMP" : "TMPDIR" }}
+
+        with_env({key => tmp_path}) do
+          Dir.tempdir.should eq tmp_path
+        end
       end
     end
   end

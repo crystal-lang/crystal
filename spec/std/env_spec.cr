@@ -81,19 +81,22 @@ describe "ENV" do
   end
 
   describe "[]=" do
-    it "disallows NUL-bytes in key" do
+    # NOTE: disabled because we'd test `ENV.mock` instead of the actual system
+    # implementation
+
+    pending "disallows NUL-bytes in key" do
       expect_raises(ArgumentError, "String `key` contains null byte") do
         ENV["FOO\0BAR"] = "something"
       end
     end
 
-    it "disallows NUL-bytes in key if value is nil" do
+    pending "disallows NUL-bytes in key if value is nil" do
       expect_raises(ArgumentError, "String `key` contains null byte") do
         ENV["FOO\0BAR"] = nil
       end
     end
 
-    it "disallows NUL-bytes in value" do
+    pending "disallows NUL-bytes in value" do
       expect_raises(ArgumentError, "String `value` contains null byte") do
         ENV["FOO"] = "BAR\0BAZ"
       end
