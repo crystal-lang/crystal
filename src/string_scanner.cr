@@ -63,6 +63,9 @@
 class StringScanner
   @last_match : Regex::MatchData | StringMatchData | Nil
 
+  getter last_match
+  getter byte_offset : Int32
+
   def initialize(@str : String)
     @byte_offset = 0
   end
