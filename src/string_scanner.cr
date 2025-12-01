@@ -533,6 +533,11 @@ class StringScanner
     previous_char == '\n'
   end
 
+  # Returns true if the last #scan resulted in a match
+  def matched? : Bool
+    !@last_match.nil?
+  end
+
   # :nodoc:
   struct StringMatchData
     def initialize(@str : String)
