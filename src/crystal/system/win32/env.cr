@@ -53,19 +53,11 @@ module Crystal::System::Env
     end
   end
 
-  # Returns `true` if environment variable is set.
-  def self.has_key?(key : String) : Bool
-    return false unless valid_key?(key)
-    key = System.to_wstr(key, "key")
-
-    buffer = uninitialized UInt16[1]
-    LibC.GetEnvironmentVariableW(key, buffer, buffer.size) != 0
-  end
-
-  # Iterates all environment variables.
-  def self.each(&block : String, String ->)
+  def self.parse : Array({String, String})
     orig_pointer = pointer = LibC.GetEnvironmentStringsW
     raise RuntimeError.from_winerror("GetEnvironmentStringsW") if pointer.null?
+
+    env = Array({String, String}).new
 
     begin
       while !pointer.value.zero?
@@ -74,11 +66,13 @@ module Crystal::System::Env
         # (`%=ExitCode%`, `%=ExitCodeAscii%`, `%=::%`, `%=C:%` ...)
         next if string.starts_with?('=')
         key, _, value = string.partition('=')
-        yield key, value
+        env << {key, value}
       end
     ensure
       LibC.FreeEnvironmentStringsW(orig_pointer)
     end
+
+    env
   end
 
   # Used internally to create an input for `CreateProcess` `lpEnvironment`.

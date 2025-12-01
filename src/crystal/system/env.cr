@@ -5,11 +5,8 @@ module Crystal::System::Env
   # Gets an environment variable.
   # def self.get(key : String) : String?
 
-  # Returns `true` if environment variable is set.
-  # def self.has_key?(key : String) : Bool
-
-  # Iterates all environment variables.
-  # def self.each(&block : String, String ->)
+  # Reads the environment variables into a hash.
+  # def self.parse : Array({String, String})
 end
 
 {% if flag?(:unix) %}

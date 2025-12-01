@@ -460,7 +460,7 @@ struct Crystal::System::Process
 
   protected def self.make_env_block(env, clear_env : Bool) : UInt16*
     # If neither clearing nor adding anything, use the default behavior of inheriting everything.
-    return Pointer(UInt16).null if !env && !clear_env
+    # return Pointer(UInt16).null unless clear_env || env
 
     # Emulate case-insensitive behavior using a Hash like {"KEY" => {"kEy", "value"}, ...}
     final_env = {} of String => {String, String}

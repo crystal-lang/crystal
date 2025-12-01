@@ -1,22 +1,10 @@
 require "spec"
 require "./spec_helper"
+require "../support/env"
 
 describe "ENV" do
-  # Preserves the existing environment for each spec.
-  # To avoid potential circular definitions, this has to use the system methods
-  # directly, rather than `ENV` or `with_env`.
   around_each do |example|
-    old_env = {} of String => String
-    Crystal::System::Env.each { |key, value| old_env[key] = value }
-
-    begin
-      example.run
-    ensure
-      keys = [] of String
-      Crystal::System::Env.each { |key| keys << key }
-      keys.each { |key| Crystal::System::Env.set(key, nil) }
-      old_env.each { |key, value| Crystal::System::Env.set(key, value) }
-    end
+    ENV.mock { example.run }
   end
 
   it "gets non existent key raises" do
