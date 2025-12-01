@@ -51,7 +51,7 @@ module Crystal::System::Socket
   end
 
   private def system_accept : {Handle, Bool}?
-    @fd_lock.reference { event_loop.accept(self) }
+    @fd_lock.read { event_loop.accept(self) }
   end
 
   private def system_close_read
@@ -359,22 +359,22 @@ module Crystal::System::Socket
   {% end %}
 
   private def system_send_to(bytes : Bytes, addr : ::Socket::Address)
-    @fd_lock.reference { event_loop.send_to(self, bytes, addr) }
+    @fd_lock.write { event_loop.send_to(self, bytes, addr) }
   end
 
   private def system_receive_from(bytes : Bytes) : Tuple(Int32, ::Socket::Address)
-    @fd_lock.reference { event_loop.receive_from(self, bytes) }
+    @fd_lock.read { event_loop.receive_from(self, bytes) }
   end
 
   private def system_connect(addr, timeout = nil)
-    @fd_lock.reference { event_loop.connect(self, addr, timeout) }
+    @fd_lock.write { event_loop.connect(self, addr, timeout) }
   end
 
   private def system_read(slice : Bytes) : Int32
-    @fd_lock.reference { event_loop.read(self, slice) }
+    @fd_lock.read { event_loop.read(self, slice) }
   end
 
   private def system_write(slice : Bytes) : Int32
-    @fd_lock.reference { event_loop.write(self, slice) }
+    @fd_lock.write { event_loop.write(self, slice) }
   end
 end
