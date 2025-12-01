@@ -76,7 +76,7 @@ module Crystal::System::Time
     "/usr/share/zoneinfo/",
     "/usr/share/lib/zoneinfo/",
     "/usr/lib/locale/TZ/",
-    "/etc/zoneinfo",
+    "/etc/zoneinfo/",
   }
 
   # Android Bionic C-specific locations. These are files rather than directories
