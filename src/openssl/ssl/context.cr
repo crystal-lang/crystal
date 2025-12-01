@@ -226,8 +226,6 @@ abstract class OpenSSL::SSL::Context
     #
     # See [SSL_CTX_set_tlsext_servername_callback](https://docs.openssl.org/3.5/man3/SSL_CTX_set_tlsext_servername_callback/)
     def on_server_name(&block : String -> OpenSSL::SSL::Context::Server?)
-      @sni_callback = block
-
       # Create a C callback that extracts the hostname and calls our Crystal block
       c_callback = ->(ssl : LibSSL::SSL, alert_ptr : LibC::Int*, arg : Void*) : LibC::Int {
         servername_ptr = LibSSL.ssl_get_servername(ssl, LibSSL::TLSExt::NAMETYPE_host_name)
