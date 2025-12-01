@@ -30,7 +30,9 @@ module Crystal::System::Env
   end
 
   def self.parse : Array({String, String})
-    env = Array({String, String}).new
+    size = 0
+    each_pointer { size += 1 }
+    env = Array({String, String}).new(size)
 
     each_pointer do |kv_pointer|
       # this does `String.new(kv_pointer).partition('=')` without an intermediary string
