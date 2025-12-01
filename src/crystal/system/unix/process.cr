@@ -214,9 +214,6 @@ struct Crystal::System::Process
         case pid = LibC.fork
         when 0
           # forked process
-
-          ::Process.after_fork_child_callbacks.each(&.call)
-
           nil
         when -1
           # forking process: error
@@ -228,7 +225,10 @@ struct Crystal::System::Process
       end
     end
 
-    if result.is_a?(Errno)
+    case result
+    when Nil
+      ::Process.after_fork_child_callbacks.each(&.call)
+    when Errno
       raise RuntimeError.from_os_error("fork", result)
     else
       result
