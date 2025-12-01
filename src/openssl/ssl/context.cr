@@ -229,22 +229,27 @@ abstract class OpenSSL::SSL::Context
       @sni_callback = block
 
       # Create a C callback that extracts the hostname and calls our Crystal block
-      c_callback = ->(ssl : LibSSL::SSL, _alert_ptr : LibC::Int*, arg : Void*) : LibC::Int {
+      c_callback = ->(ssl : LibSSL::SSL, alert_ptr : LibC::Int*, arg : Void*) : LibC::Int {
         servername_ptr = LibSSL.ssl_get_servername(ssl, LibSSL::TLSExt::NAMETYPE_host_name)
         if servername_ptr.null?
           return LibSSL::SSL_TLSEXT_ERR_OK
         end
 
-        hostname = String.new(servername_ptr)
+        begin
+          hostname = String.new(servername_ptr)
 
-        callback = Box(Proc(String, OpenSSL::SSL::Context::Server?)).unbox(arg)
-        new_context = callback.call(hostname)
+          callback = Box(Proc(String, OpenSSL::SSL::Context::Server?)).unbox(arg)
+          new_context = callback.call(hostname)
 
-        if new_context
-          LibSSL.ssl_set_ssl_ctx(ssl, new_context.to_unsafe)
+          if new_context
+            LibSSL.ssl_set_ssl_ctx(ssl, new_context.to_unsafe)
+          end
+
+          LibSSL::SSL_TLSEXT_ERR_OK
+        rescue
+          alert_ptr.value = LibSSL::SSL_AD_INTERNAL_ERROR
+          LibSSL::SSL_TLSEXT_ERR_ALERT_FATAL
         end
-
-        LibSSL::SSL_TLSEXT_ERR_OK
       }
 
       # Box the callback to pass to C

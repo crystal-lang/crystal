@@ -198,6 +198,9 @@ lib LibSSL
   SSL_TLSEXT_ERR_ALERT_FATAL   = 2
   SSL_TLSEXT_ERR_NOACK         = 3
 
+  # TLS alert codes
+  SSL_AD_INTERNAL_ERROR = 80
+
   fun tlsv1_method = TLSv1_method : SSLMethod
   fun tlsv1_1_method = TLSv1_1_method : SSLMethod
   fun tlsv1_2_method = TLSv1_2_method : SSLMethod
