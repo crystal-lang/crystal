@@ -9,6 +9,14 @@ module Crystal::AtExitHandlers
     end
   end
 
+  def self.run(status : ::Process::Status, exception = nil)
+    if code = status.exit_code?
+      run(code, exception)
+    else
+      status
+    end
+  end
+
   def self.run(status, exception = nil)
     return status unless @@handlers
 

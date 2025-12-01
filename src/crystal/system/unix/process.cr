@@ -29,8 +29,20 @@ struct Crystal::System::Process
     Crystal::System::Process.signal(@pid, graceful ? LibC::SIGTERM : LibC::SIGKILL)
   end
 
-  def self.exit(status)
+  def self.exit(status : Int32)
     LibC.exit(status)
+  end
+
+  def self.exit(status : ::Process::Status)
+    if signal = status.exit_signal?
+      signal(self.pid, signal)
+
+      # The same signal that killed the child process might not kill the parent.
+      # We have to exit explicitly. The exist status adding 128 is a convention.
+      exit 128 + signal.value
+    else
+      exit status.exit_code
+    end
   end
 
   def self.pid
