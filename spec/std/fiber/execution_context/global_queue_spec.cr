@@ -99,7 +99,6 @@ describe Fiber::ExecutionContext::GlobalQueue do
       increments = 15
 
       queue = Fiber::ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
-      ready = Thread::WaitGroup.new(n)
 
       Fiber::ExecutionContext.stress_test(
         n,
@@ -107,7 +106,6 @@ describe Fiber::ExecutionContext::GlobalQueue do
           if fiber = queue.pop?
             fc = fibers.find! { |x| x.@fiber == fiber }
             queue.push(fiber) if fc.increment < increments
-            attempts = 0
             return :next
           end
 
@@ -137,7 +135,6 @@ describe Fiber::ExecutionContext::GlobalQueue do
       end
 
       queue = Fiber::ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
-      ready = Thread::WaitGroup.new(n)
 
       runnables = Array.new(n) { Fiber::ExecutionContext::Runnables(3).new(queue) }
       batches = Array.new(n) { Fiber::List.new }
@@ -167,14 +164,12 @@ describe Fiber::ExecutionContext::GlobalQueue do
 
           if fiber = r.shift?
             execute.call(fiber, batch)
-            attempts = 0
             return :next
           end
 
           if fiber = queue.grab?(r, 1)
             reenqueue.call(batch)
             execute.call(fiber, batch)
-            attempts = 0
             return :next
           end
 

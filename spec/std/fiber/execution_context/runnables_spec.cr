@@ -216,7 +216,6 @@ describe Fiber::ExecutionContext::Runnables do
       end
 
       global_queue = Fiber::ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
-      ready = Thread::WaitGroup.new(n)
 
       all_runnables = Array(Fiber::ExecutionContext::Runnables(16)).new(n) do
         Fiber::ExecutionContext::Runnables(16).new(global_queue)
