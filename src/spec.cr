@@ -132,7 +132,7 @@ module Spec
 
       {% if flag?(:execution_context) %}
         if count = ENV["CRYSTAL_WORKERS"]?.try(&.to_i?)
-          Fiber::ExecutionContext.current.resize(count)
+          Fiber::ExecutionContext.default.resize(count)
         end
       {% end %}
 
