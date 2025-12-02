@@ -105,9 +105,9 @@ private macro def_string_methods(klass)
   # Similar to `String#to_i64`.
   #
   # The returned `NumberLiteral` has the `:i32` kind if it fits into `Int32`'s
-  # range, and the :i64: kind otherwise. This matches the behavior of suffixless
-  # number literals in Crystal.
-  def to_i(base = 10) : NumberLiteral
+  # range, and the `:i64` kind otherwise. This matches the behavior of
+  # suffix-less number literals in Crystal.
+  def to_i(base : NumberLiteral = 10) : NumberLiteral
   end
 
   # Returns an expression that evaluates to a slice literal containing the
