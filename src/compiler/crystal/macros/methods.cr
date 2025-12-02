@@ -900,7 +900,11 @@ module Crystal
         end
 
         if value
-          NumberLiteral.new(value.to_s, :i32)
+          if value.in?(Int32::MIN..Int32::MAX)
+            NumberLiteral.new(value.to_s, :i32)
+          else
+            NumberLiteral.new(value.to_s, :i64)
+          end
         else
           raise "StringLiteral#to_i: #{@value} is not an integer"
         end

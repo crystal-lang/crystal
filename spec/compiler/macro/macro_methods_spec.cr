@@ -637,6 +637,18 @@ module Crystal
         assert_macro %({{"1234".to_i(16)}}), %(4660)
       end
 
+      it "adds correct number kind on to_i (#16467)" do
+        assert_macro %({{"0".to_i.kind}}), %(:i32)
+        assert_macro %({{"2147483647".to_i.kind}}), %(:i32)
+        assert_macro %({{"2147483648".to_i.kind}}), %(:i64)
+        assert_macro %({{"123456789012345".to_i.kind}}), %(:i64)
+        assert_macro %({{"7fffffffffffffff".to_i(16).kind}}), %(:i64)
+        assert_macro %({{"-2147483648".to_i.kind}}), %(:i32)
+        assert_macro %({{"-2147483649".to_i.kind}}), %(:i64)
+        assert_macro %({{"-123456789012345".to_i.kind}}), %(:i64)
+        assert_macro %({{"-8000000000000000".to_i(16).kind}}), %(:i64)
+      end
+
       it "executes string includes? char (true)" do
         assert_macro %({{"spice".includes?('s')}}), %(true)
         assert_macro %({{"spice".includes?('p')}}), %(true)
