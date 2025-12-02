@@ -421,8 +421,7 @@ struct Crystal::System::Process
   end
 
   private def self.raise_exception_from_errno(command, errno = Errno.value)
-    case errno
-    when Errno::EACCES, Errno::ENOENT, Errno::ENOEXEC
+    if ::File::NotFoundError.os_error?(errno) || ::File::AccessDeniedError.os_error?(errno) || errno == Errno::ENOEXEC
       raise ::File::Error.from_os_error("Error executing process", errno, file: command)
     else
       raise IO::Error.from_os_error("Error executing process: '#{command}'", errno)
