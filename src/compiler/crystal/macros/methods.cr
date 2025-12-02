@@ -855,6 +855,7 @@ module Crystal
             when RegexLiteral
               splitter = regex_value(arg)
             else
+              interpreter.warnings.add_warning_at(name_loc, "Deprecated StringLiteral#split(ASTNode). Use `#split(StringLiteral)` instead")
               splitter = arg.to_s
             end
 
