@@ -224,7 +224,7 @@ struct Crystal::System::Process
       nil
     when -1
       # forking process: error
-      RuntimeError.from_os_error("fork", errno)
+      raise RuntimeError.from_os_error("fork", errno)
     else
       # forking process: success
       pid
