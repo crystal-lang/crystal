@@ -209,29 +209,25 @@ struct Crystal::System::Process
   def self.fork
     {% raise("Process fork is unsupported with multithreaded mode") if flag?(:preview_mt) %}
 
-    result = lock_write do
+    pid, errno = lock_write do
       block_signals do
-        case pid = LibC.fork
-        when 0
-          # forked process
-          nil
-        when -1
-          # forking process: error
-          Errno.value
-        else
-          # forking process: success
-          pid
-        end
+        pid = LibC.fork
+        {pid, Errno.value}
       end
     end
 
-    case result
-    when Nil
+    case pid
+    when 0
+      # forked process
       ::Process.after_fork_child_callbacks.each(&.call)
-    when Errno
-      raise RuntimeError.from_os_error("fork", result)
+
+      nil
+    when -1
+      # forking process: error
+      RuntimeError.from_os_error("fork", errno)
     else
-      result
+      # forking process: success
+      pid
     end
   end
 
