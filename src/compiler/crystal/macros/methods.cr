@@ -791,6 +791,20 @@ module Crystal
           end
           BoolLiteral.new(@value.includes?(piece))
         end
+      when "match"
+        interpret_check_args do |arg|
+          unless arg.is_a?(RegexLiteral)
+            raise "StringLiteral#match expects a regex, not #{arg.class_desc}"
+          end
+
+          regex = regex_value(arg)
+
+          if match_data = @value.match(regex)
+            regex_captures_hash(match_data)
+          else
+            NilLiteral.new
+          end
+        end
       when "scan"
         interpret_check_args do |arg|
           unless arg.is_a?(RegexLiteral)
@@ -810,32 +824,7 @@ module Crystal
           )
 
           @value.scan(regex) do |match_data|
-            captures = HashLiteral.new(
-              of: HashLiteral::Entry.new(
-                Union.new([Path.global("Int32"), Path.global("String")] of ASTNode),
-                Union.new([Path.global("String"), Path.global("Nil")] of ASTNode),
-              )
-            )
-
-            match_data.to_h.each do |capture, substr|
-              case capture
-              in Int32
-                key = NumberLiteral.new(capture)
-              in String
-                key = StringLiteral.new(capture)
-              end
-
-              case substr
-              in String
-                value = StringLiteral.new(substr)
-              in Nil
-                value = NilLiteral.new
-              end
-
-              captures.entries << HashLiteral::Entry.new(key, value)
-            end
-
-            matches.elements << captures
+            matches.elements << regex_captures_hash(match_data)
           end
 
           matches
@@ -3379,6 +3368,35 @@ end
 
 private def empty_no_return_array
   Crystal::ArrayLiteral.new(of: Crystal::Path.global("NoReturn"))
+end
+
+private def regex_captures_hash(match_data : Regex::MatchData)
+  captures = Crystal::HashLiteral.new(
+    of: Crystal::HashLiteral::Entry.new(
+      Crystal::Union.new([Crystal::Path.global("Int32"), Crystal::Path.global("String")] of Crystal::ASTNode),
+      Crystal::Union.new([Crystal::Path.global("String"), Crystal::Path.global("Nil")] of Crystal::ASTNode),
+    )
+  )
+
+  match_data.to_h.each do |capture, substr|
+    case capture
+    in Int32
+      key = Crystal::NumberLiteral.new(capture)
+    in String
+      key = Crystal::StringLiteral.new(capture)
+    end
+
+    case substr
+    in String
+      value = Crystal::StringLiteral.new(substr)
+    in Nil
+      value = Crystal::NilLiteral.new
+    end
+
+    captures.entries << Crystal::HashLiteral::Entry.new(key, value)
+  end
+
+  captures
 end
 
 private def filter(object, klass, block, interpreter, keep = true)
