@@ -227,10 +227,10 @@ abstract class OpenSSL::SSL::Context
     # See [SSL_CTX_set_tlsext_servername_callback](https://docs.openssl.org/3.5/man3/SSL_CTX_set_tlsext_servername_callback/)
     def on_server_name(&block : String -> OpenSSL::SSL::Context::Server?)
       # Create a C callback that extracts the hostname and calls our Crystal block
-      c_callback = ->(ssl : LibSSL::SSL, alert_ptr : LibC::Int*, arg : Void*) : LibC::Int {
+      c_callback = Proc(LibSSL::SSL, LibC::Int*, Void*, LibC::Int).new do |ssl, alert_ptr, arg|
         servername_ptr = LibSSL.ssl_get_servername(ssl, LibSSL::TLSExt::NAMETYPE_host_name)
         if servername_ptr.null?
-          return LibSSL::SSL_TLSEXT_ERR_OK
+          next LibSSL::SSL_TLSEXT_ERR_OK
         end
 
         begin
@@ -248,7 +248,7 @@ abstract class OpenSSL::SSL::Context
           alert_ptr.value = LibSSL::SSL_AD_INTERNAL_ERROR
           LibSSL::SSL_TLSEXT_ERR_ALERT_FATAL
         end
-      }
+      end
 
       # Box the callback to pass to C
       callback_box = Box.box(block)
