@@ -400,7 +400,7 @@ module Crystal
     end
 
     def visit(node : MultiAssign)
-      @program.literal_expander.expand(node).accept(self)
+      (node.expanded ||= @program.literal_expander.expand(node)).accept(self)
       false
     end
 

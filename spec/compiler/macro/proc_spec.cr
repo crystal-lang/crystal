@@ -28,6 +28,18 @@ module Crystal
         assert_macro_error %({{ f.call(x: 1) }}), "named arguments are not allowed here", {f: proc_literal()}
       end
 
+      it "works if body has multi-assign and array setter" do
+        assert_type(<<-CRYSTAL) { string }
+          Foo = -> do
+            arr = [1]
+            arr[0], _ = "", 'a'
+            arr[0]
+          end
+
+          {{ (Foo.call; Foo.call) }}
+          CRYSTAL
+      end
+
       describe "type checking" do
         it "supports parameter type restrictions and return types" do
           # ->(x : ArrayLiteral, y : NumberLiteral) : StringLiteral { x[y] }
