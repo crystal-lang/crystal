@@ -207,13 +207,9 @@ abstract class OpenSSL::SSL::Context
       NO_TLS_V1_1,
       NO_SESSION_RESUMPTION_ON_RENEGOTIATION,
       SINGLE_ECDH_USE,
-      SINGLE_DH_USE
+      SINGLE_DH_USE,
+      NO_RENEGOTIATION,
     ))
-
-    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
-      add_options(OpenSSL::SSL::Options::NO_RENEGOTIATION)
-    {% end %}
-
     add_modes(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
 
     # OpenSSL does not support reading from the system root certificate store on
