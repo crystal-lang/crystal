@@ -321,6 +321,7 @@ describe Indexable do
     "foobar"[3_u32..3_u32].should eq("b")
     "foobar"[3_u32...3_u32].should eq("")
     "foobar"[3_u32...1_u32].should eq("")
+    "foobar"[3..Int32::MAX].should eq("bar")
   end
 
   it "iterates within a range of indices (#3386)" do
