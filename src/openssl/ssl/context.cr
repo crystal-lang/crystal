@@ -236,7 +236,7 @@ abstract class OpenSSL::SSL::Context
         begin
           hostname = String.new(servername_ptr)
 
-          callback = Box(Proc(String, OpenSSL::SSL::Context::Server?)).unbox(arg)
+          callback = Box(typeof(block)).unbox(arg)
           new_context = callback.call(hostname)
 
           if new_context
