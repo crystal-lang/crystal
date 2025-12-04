@@ -221,6 +221,8 @@ describe Fiber::ExecutionContext::Runnables do
         Fiber::ExecutionContext::Runnables(16).new(global_queue)
       end
 
+      all_randoms = Array.new(n) { Random.split }
+
       execute = ->(fiber : Fiber, runnables : Fiber::ExecutionContext::Runnables(16)) {
         fc = fibers.find! { |x| x.@fiber == fiber }
         runnables.push(fiber) if fc.increment < increments
@@ -230,6 +232,7 @@ describe Fiber::ExecutionContext::Runnables do
         n,
         iteration: ->(i : Int32) {
           runnables = all_runnables[i]
+          random = all_randoms[i]
 
           # dequeue from local queue
           if fiber = runnables.shift?
@@ -239,7 +242,7 @@ describe Fiber::ExecutionContext::Runnables do
 
           # steal from another queue
           j = 0
-          while (r = all_runnables.sample) == runnables
+          while (r = all_runnables.sample(random)) == runnables
             next if (j += 1) < 1000
             raise "FATAL: all_runnables.sample returned the local queue 1000 times!"
           end
