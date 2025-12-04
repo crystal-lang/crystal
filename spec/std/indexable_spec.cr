@@ -315,6 +315,14 @@ describe Indexable do
     elems.should eq([3, 4, 5, 6, 7])
   end
 
+  it "handles empty ranges, including those with exclude-end" do
+    "foobar"[3..3].should eq("b")
+    "foobar"[3...3].should eq("")
+    "foobar"[3_u32..3_u32].should eq("b")
+    "foobar"[3_u32...3_u32].should eq("")
+    "foobar"[3_u32...1_u32].should eq("")
+  end
+
   it "iterates within a range of indices (#3386)" do
     indexable = SafeIndexable.new(5)
     elems = [] of Int32

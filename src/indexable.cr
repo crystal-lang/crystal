@@ -1049,8 +1049,9 @@ module Indexable(T)
       count = collection_size - start_index
     else
       end_index += collection_size if end_index < 0
-      end_index -= 1 if range.excludes_end?
-      count = end_index - start_index + 1
+      end_index += 1 unless range.excludes_end?
+      end_index = start_index if end_index < start_index
+      count = end_index - start_index
     end
     count = 0 if count < 0
 
