@@ -4,7 +4,7 @@ module Crystal::System::Random
   @@initialized = false
   @@urandom : LibC::Int?
 
-  @[NeverInline]
+  @[NoInline]
   private def self.init
     Crystal.once(pointerof(@@initialized)) do
       # Directly open the urandom device without going through the event loop;
