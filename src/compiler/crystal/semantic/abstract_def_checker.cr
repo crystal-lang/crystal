@@ -116,7 +116,7 @@ class Crystal::AbstractDefChecker
 
         if implements?(target_type, ancestor_type, a_def, def_free_vars, base, method, method_free_vars)
           unless implemented
-            check_return_type(target_type, ancestor_type, a_def, base, method)
+            check_return_type(target_type, ancestor_type, a_def, def_free_vars, base, method, method_free_vars)
             implemented = true
           end
 
@@ -264,17 +264,64 @@ class Crystal::AbstractDefChecker
     return false if r1 && !r2
     if r2 && r1 && r1 != r2
       # Check if a1.restriction is contravariant with a2.restriction
+      rt1 = nil
+      rt2 = nil
+
       begin
         rt1 = t1.lookup_type(r1, free_vars: free_vars1)
-        rt2 = t2.lookup_type(r2, free_vars: free_vars2)
-        return false unless rt2.implements?(rt1)
       rescue Crystal::TypeException
-        # Ignore if we can't find a type (assume the method is implemented)
-        return true
+      end
+
+      begin
+        rt2 = t2.lookup_type(r2, free_vars: free_vars2)
+      rescue Crystal::TypeException
+      end
+
+      if rt1 && rt2
+        # Both types resolved - check compatibility
+        return false unless rt2.implements?(rt1)
+      elsif !rt2
+        # Only implementation side couldn't be resolved
+        if !can_lookup?(r2, free_vars2, t2)
+          report_undefined_type(r2)
+        end
+      elsif !rt1
+        # Only abstract side couldn't be resolved
+        if !can_lookup?(r1, free_vars1, t1)
+          report_undefined_type(r1)
+        end
       end
     end
 
     true
+  end
+
+  # Check if a restriction can potentially be looked up (is a free var or might be resolved later)
+  private def can_lookup?(restriction : ASTNode, free_vars, type : Type? = nil) : Bool
+    return true unless restriction.is_a?(Path)
+
+    # For single-name paths, check if it's a free variable
+    if name = restriction.single_name?
+      # Check if it's in free_vars (forall parameters)
+      return true if free_vars && free_vars.has_key?(name)
+
+      # Check if it's a type parameter of the enclosing generic type
+      if type && type.is_a?(GenericType)
+        return true if type.type_vars.includes?(name)
+      end
+
+      return false
+    end
+
+    return true if restriction.global?
+
+    # Other multi-segment paths can't be free variables
+    # Return false to indicate they should be reported as undefined if lookup failed
+    false
+  end
+
+  private def report_undefined_type(restriction : ASTNode)
+    report_error(restriction, "undefined constant #{restriction}")
   end
 
   def same_parameters?(m1 : Def, m2 : Def)
@@ -318,12 +365,13 @@ class Crystal::AbstractDefChecker
 
   # Checks that the return type of `type#method` matches that of `base_type#base_method`
   # when computing that information for `target_type` (`type` is an ancestor of `target_type`).
-  def check_return_type(target_type : Type, type : Type, method : Def, base_type : Type, base_method : Def)
+  def check_return_type(target_type : Type, type : Type, method : Def, method_free_vars, base_type : Type, base_method : Def, base_method_free_vars)
     base_return_type_node = base_method.return_type
     return unless base_return_type_node
 
-    original_base_return_type = base_type.lookup_type?(base_return_type_node)
+    original_base_return_type = base_type.lookup_type?(base_return_type_node, free_vars: base_method_free_vars)
     unless original_base_return_type
+      return if can_lookup?(base_return_type_node, base_method_free_vars, base_type)
       report_error(base_return_type_node, "can't resolve return type #{base_return_type_node}")
       return
     end
@@ -340,8 +388,9 @@ class Crystal::AbstractDefChecker
       base_return_type_node.accept(replacer)
     end
 
-    base_return_type = base_type.lookup_type?(base_return_type_node)
+    base_return_type = base_type.lookup_type?(base_return_type_node, free_vars: base_method_free_vars)
     unless base_return_type
+      return if can_lookup?(base_return_type_node, base_method_free_vars, base_type)
       report_error(base_return_type_node, "can't resolve return type #{base_return_type_node}")
       return
     end
@@ -352,8 +401,9 @@ class Crystal::AbstractDefChecker
       return
     end
 
-    return_type = type.lookup_type?(return_type_node)
+    return_type = type.lookup_type?(return_type_node, free_vars: method_free_vars)
     unless return_type
+      return if can_lookup?(return_type_node, method_free_vars, type)
       report_error(return_type_node, "can't resolve return type #{return_type_node}")
       return
     end
