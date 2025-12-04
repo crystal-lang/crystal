@@ -12,11 +12,9 @@ end
 
 {% if flag?(:wasi) %}
   require "./wasi/random"
-{% elsif flag?(:android) && LibC::ANDROID_API >= 28 %}
-  require "./unix/getrandom"
 {% elsif flag?(:bsd) || flag?(:darwin) %}
   require "./unix/arc4random"
-{% elsif flag?(:linux) && !flag?(:android) %}
+{% elsif flag?(:linux) && (!flag?(:android) || LibC::ANDROID_API >= 28) %}
   require "./unix/getrandom"
 {% elsif flag?(:unix) %}
   require "./unix/urandom"
