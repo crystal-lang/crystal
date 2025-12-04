@@ -3,6 +3,8 @@
 /Makefile.win.local
 .env
 .env.*
+.envrc
+.envrc.*
 
 # Build artifacts
 *.o
