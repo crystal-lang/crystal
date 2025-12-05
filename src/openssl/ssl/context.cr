@@ -12,11 +12,7 @@ require "log"
 abstract class OpenSSL::SSL::Context
   # :nodoc:
   def self.default_method
-    {% if LibSSL.has_method?(:tls_method) %}
-      LibSSL.tls_method
-    {% else %}
-      LibSSL.sslv23_method
-    {% end %}
+    LibSSL.tls_method
   end
 
   class Client < Context
@@ -99,11 +95,7 @@ abstract class OpenSSL::SSL::Context
     end
 
     private def alpn_protocol=(protocol : Bytes)
-      {% if LibSSL.has_method?(:ssl_ctx_set_alpn_protos) %}
-        LibSSL.ssl_ctx_set_alpn_protos(@handle, protocol, protocol.size)
-      {% else %}
-        raise NotImplementedError.new("LibSSL.ssl_ctx_set_alpn_protos")
-      {% end %}
+      LibSSL.ssl_ctx_set_alpn_protos(@handle, protocol, protocol.size)
     end
   end
 
@@ -175,21 +167,17 @@ abstract class OpenSSL::SSL::Context
     end
 
     private def alpn_protocol=(protocol : Bytes)
-      {% if LibSSL.has_method?(:ssl_ctx_set_alpn_select_cb) %}
-        alpn_cb = ->(ssl : LibSSL::SSL, o : LibC::Char**, olen : LibC::Char*, i : LibC::Char*, ilen : LibC::Int, data : Void*) {
-          proto = Box(Bytes).unbox(data)
-          ret = LibSSL.ssl_select_next_proto(o, olen, proto, proto.size, i, ilen)
-          if ret != LibSSL::OPENSSL_NPN_NEGOTIATED
-            LibSSL::SSL_TLSEXT_ERR_NOACK
-          else
-            LibSSL::SSL_TLSEXT_ERR_OK
-          end
-        }
-        @alpn_protocol = alpn_protocol = Box.box(protocol)
-        LibSSL.ssl_ctx_set_alpn_select_cb(@handle, alpn_cb, alpn_protocol)
-      {% else %}
-        raise NotImplementedError.new("LibSSL.ssl_ctx_set_alpn_select_cb")
-      {% end %}
+      alpn_cb = ->(ssl : LibSSL::SSL, o : LibC::Char**, olen : LibC::Char*, i : LibC::Char*, ilen : LibC::Int, data : Void*) {
+        proto = Box(Bytes).unbox(data)
+        ret = LibSSL.ssl_select_next_proto(o, olen, proto, proto.size, i, ilen)
+        if ret != LibSSL::OPENSSL_NPN_NEGOTIATED
+          LibSSL::SSL_TLSEXT_ERR_NOACK
+        else
+          LibSSL::SSL_TLSEXT_ERR_OK
+        end
+      }
+      @alpn_protocol = alpn_protocol = Box.box(protocol)
+      LibSSL.ssl_ctx_set_alpn_select_cb(@handle, alpn_cb, alpn_protocol)
     end
   end
 
@@ -201,13 +189,9 @@ abstract class OpenSSL::SSL::Context
 
     add_options(OpenSSL::SSL::Options.flags(
       ALL,
-      NO_SSL_V2,
-      NO_SSL_V3,
       NO_TLS_V1,
       NO_TLS_V1_1,
       NO_SESSION_RESUMPTION_ON_RENEGOTIATION,
-      SINGLE_ECDH_USE,
-      SINGLE_DH_USE,
       NO_RENEGOTIATION,
     ))
     add_modes(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
