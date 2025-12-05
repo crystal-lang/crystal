@@ -1043,8 +1043,18 @@ module Crystal
         assert_macro %({{ [1, 2, 3, 4][nil..nil] }}), %([1, 2, 3, 4])
       end
 
+      it "executes [] with range, start is out of bounds" do
+        assert_macro %({{ [1, 2, 3, 4][5..] }}), %(nil)
+        assert_macro %({{ [1, 2, 3, 4][-5..] }}), %(nil)
+      end
+
       it "executes [] with two numbers" do
         assert_macro %({{ [1, 2, 3, 4, 5][1, 3] }}), %([2, 3, 4])
+      end
+
+      it "executes [] with two numbers, start is out of bounds" do
+        assert_macro %({{ [1, 2, 3, 4][5, 1] }}), %(nil)
+        assert_macro %({{ [1, 2, 3, 4][-5, 4] }}), %(nil)
       end
 
       it "executes []=" do
@@ -1339,6 +1349,20 @@ module Crystal
         assert_macro %({{ {1, 2, 3, 4}[nil...2] }}), %({1, 2})
         assert_macro %({{ {1, 2, 3, 4}[..] }}), %({1, 2, 3, 4})
         assert_macro %({{ {1, 2, 3, 4}[nil..nil] }}), %({1, 2, 3, 4})
+      end
+
+      it "executes [] with range, start is out of bounds" do
+        assert_macro %({{ {1, 2, 3, 4}[5..] }}), %(nil)
+        assert_macro %({{ {1, 2, 3, 4}[-5..] }}), %(nil)
+      end
+
+      it "executes [] with two numbers" do
+        assert_macro %({{ {1, 2, 3, 4, 5}[1, 3] }}), %({2, 3, 4})
+      end
+
+      it "executes [] with two numbers, start is out of bounds" do
+        assert_macro %({{ {1, 2, 3, 4}[5, 1] }}), %(nil)
+        assert_macro %({{ {1, 2, 3, 4}[-5, 4] }}), %(nil)
       end
 
       it "executes size" do
