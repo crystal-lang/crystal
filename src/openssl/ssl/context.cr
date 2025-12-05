@@ -12,11 +12,7 @@ require "log"
 abstract class OpenSSL::SSL::Context
   # :nodoc:
   def self.default_method
-    {% if LibSSL.has_method?(:tls_method) %}
-      LibSSL.tls_method
-    {% else %}
-      LibSSL.sslv23_method
-    {% end %}
+    LibSSL.tls_method
   end
 
   class Client < Context
@@ -44,9 +40,7 @@ abstract class OpenSSL::SSL::Context
       super(method)
 
       self.verify_mode = OpenSSL::SSL::VerifyMode::PEER
-      {% if LibSSL.has_method?(:x509_verify_param_lookup) %}
-        self.default_verify_param = "ssl_server"
-      {% end %}
+      self.default_verify_param = "ssl_server"
     end
 
     # Returns a new TLS client context with only the given method set.
@@ -99,11 +93,7 @@ abstract class OpenSSL::SSL::Context
     end
 
     private def alpn_protocol=(protocol : Bytes)
-      {% if LibSSL.has_method?(:ssl_ctx_set_alpn_protos) %}
-        LibSSL.ssl_ctx_set_alpn_protos(@handle, protocol, protocol.size)
-      {% else %}
-        raise NotImplementedError.new("LibSSL.ssl_ctx_set_alpn_protos")
-      {% end %}
+      LibSSL.ssl_ctx_set_alpn_protos(@handle, protocol, protocol.size)
     end
   end
 
@@ -126,10 +116,7 @@ abstract class OpenSSL::SSL::Context
     # ```
     def initialize(method : LibSSL::SSLMethod = Context.default_method)
       super(method)
-
-      {% if LibSSL.has_method?(:x509_verify_param_lookup) %}
-        self.default_verify_param = "ssl_client"
-      {% end %}
+      self.default_verify_param = "ssl_client"
     end
 
     # Returns a new TLS server context with only the given method set.
@@ -175,21 +162,17 @@ abstract class OpenSSL::SSL::Context
     end
 
     private def alpn_protocol=(protocol : Bytes)
-      {% if LibSSL.has_method?(:ssl_ctx_set_alpn_select_cb) %}
-        alpn_cb = ->(ssl : LibSSL::SSL, o : LibC::Char**, olen : LibC::Char*, i : LibC::Char*, ilen : LibC::Int, data : Void*) {
-          proto = Box(Bytes).unbox(data)
-          ret = LibSSL.ssl_select_next_proto(o, olen, proto, proto.size, i, ilen)
-          if ret != LibSSL::OPENSSL_NPN_NEGOTIATED
-            LibSSL::SSL_TLSEXT_ERR_NOACK
-          else
-            LibSSL::SSL_TLSEXT_ERR_OK
-          end
-        }
-        @alpn_protocol = alpn_protocol = Box.box(protocol)
-        LibSSL.ssl_ctx_set_alpn_select_cb(@handle, alpn_cb, alpn_protocol)
-      {% else %}
-        raise NotImplementedError.new("LibSSL.ssl_ctx_set_alpn_select_cb")
-      {% end %}
+      alpn_cb = ->(ssl : LibSSL::SSL, o : LibC::Char**, olen : LibC::Char*, i : LibC::Char*, ilen : LibC::Int, data : Void*) {
+        proto = Box(Bytes).unbox(data)
+        ret = LibSSL.ssl_select_next_proto(o, olen, proto, proto.size, i, ilen)
+        if ret != LibSSL::OPENSSL_NPN_NEGOTIATED
+          LibSSL::SSL_TLSEXT_ERR_NOACK
+        else
+          LibSSL::SSL_TLSEXT_ERR_OK
+        end
+      }
+      @alpn_protocol = alpn_protocol = Box.box(protocol)
+      LibSSL.ssl_ctx_set_alpn_select_cb(@handle, alpn_cb, alpn_protocol)
     end
   end
 
@@ -201,19 +184,11 @@ abstract class OpenSSL::SSL::Context
 
     add_options(OpenSSL::SSL::Options.flags(
       ALL,
-      NO_SSL_V2,
-      NO_SSL_V3,
       NO_TLS_V1,
       NO_TLS_V1_1,
       NO_SESSION_RESUMPTION_ON_RENEGOTIATION,
-      SINGLE_ECDH_USE,
-      SINGLE_DH_USE
+      NO_RENEGOTIATION,
     ))
-
-    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
-      add_options(OpenSSL::SSL::Options::NO_RENEGOTIATION)
-    {% end %}
-
     add_modes(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
 
     # OpenSSL does not support reading from the system root certificate store on
@@ -470,26 +445,18 @@ abstract class OpenSSL::SSL::Context
   # Depending on the OpenSSL version, the available defaults are
   # `default`, `pkcs7`, `smime_sign`, `ssl_client` and `ssl_server`.
   def default_verify_param=(name : String)
-    {% if LibSSL.has_method?(:x509_verify_param_lookup) %}
-      param = LibCrypto.x509_verify_param_lookup(name)
-      raise ArgumentError.new("#{name} is an unsupported default verify param") unless param
-      ret = LibSSL.ssl_ctx_set1_param(@handle, param)
-      raise OpenSSL::Error.new("SSL_CTX_set1_param") unless ret == 1
-    {% else %}
-      raise NotImplementedError.new("LibSSL.x509_verify_param_lookup")
-    {% end %}
+    param = LibCrypto.x509_verify_param_lookup(name)
+    raise ArgumentError.new("#{name} is an unsupported default verify param") unless param
+    ret = LibSSL.ssl_ctx_set1_param(@handle, param)
+    raise OpenSSL::Error.new("SSL_CTX_set1_param") unless ret == 1
   end
 
   # Sets the given `OpenSSL::SSL::X509VerifyFlags` in this context, additionally to
   # the already set ones.
   def add_x509_verify_flags(flags : OpenSSL::SSL::X509VerifyFlags)
-    {% if LibSSL.has_method?(:x509_verify_param_set_flags) %}
-      param = LibSSL.ssl_ctx_get0_param(@handle)
-      ret = LibCrypto.x509_verify_param_set_flags(param, flags)
-      raise OpenSSL::Error.new("X509_VERIFY_PARAM_set_flags)") unless ret == 1
-    {% else %}
-      raise NotImplementedError.new("LibSSL.x509_verify_param_set_flags")
-    {% end %}
+    param = LibSSL.ssl_ctx_get0_param(@handle)
+    ret = LibCrypto.x509_verify_param_set_flags(param, flags)
+    raise OpenSSL::Error.new("X509_VERIFY_PARAM_set_flags") unless ret == 1
   end
 
   def to_unsafe

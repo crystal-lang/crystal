@@ -12,21 +12,17 @@ abstract class OpenSSL::SSL::Socket < IO
             hostname.to_unsafe.as(Pointer(Void))
           )
 
-          {% if LibSSL.has_method?(:ssl_get0_param) %}
-            param = LibSSL.ssl_get0_param(@ssl)
+          param = LibSSL.ssl_get0_param(@ssl)
 
-            if ::Socket::IPAddress.valid?(hostname)
-              unless LibCrypto.x509_verify_param_set1_ip_asc(param, hostname) == 1
-                raise OpenSSL::Error.new("X509_VERIFY_PARAM_set1_ip_asc")
-              end
-            else
-              unless LibCrypto.x509_verify_param_set1_host(param, hostname, 0) == 1
-                raise OpenSSL::Error.new("X509_VERIFY_PARAM_set1_host")
-              end
+          if ::Socket::IPAddress.valid?(hostname)
+            unless LibCrypto.x509_verify_param_set1_ip_asc(param, hostname) == 1
+              raise OpenSSL::Error.new("X509_VERIFY_PARAM_set1_ip_asc")
             end
-          {% else %}
-            context.set_cert_verify_callback(hostname)
-          {% end %}
+          else
+            unless LibCrypto.x509_verify_param_set1_host(param, hostname, 0) == 1
+              raise OpenSSL::Error.new("X509_VERIFY_PARAM_set1_host")
+            end
+          end
         end
 
         ret = LibSSL.ssl_connect(@ssl)
@@ -158,12 +154,8 @@ abstract class OpenSSL::SSL::Socket < IO
   # Returns the negotiated ALPN protocol (eg: `"h2"`) of `nil` if no protocol was
   # negotiated.
   def alpn_protocol
-    {% if LibSSL.has_method?(:ssl_get0_alpn_selected) %}
-      LibSSL.ssl_get0_alpn_selected(@ssl, out protocol, out len)
-      String.new(protocol, len) unless protocol.null?
-    {% else %}
-      raise NotImplementedError.new("LibSSL.ssl_get0_alpn_selected")
-    {% end %}
+    LibSSL.ssl_get0_alpn_selected(@ssl, out protocol, out len)
+    String.new(protocol, len) unless protocol.null?
   end
 
   def unbuffered_close : Nil

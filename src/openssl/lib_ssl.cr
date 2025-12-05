@@ -105,12 +105,9 @@ lib LibSSL
 
   # SSL_CTRL_SET_TMP_RSA = 2
   # SSL_CTRL_SET_TMP_DH = 3
-  SSL_CTRL_SET_TMP_ECDH = 4
-
-  SSL_CTRL_OPTIONS       = 32
-  SSL_CTRL_MODE          = 33
-  SSL_CTRL_CLEAR_OPTIONS = 77
-  SSL_CTRL_CLEAR_MODE    = 78
+  SSL_CTRL_SET_TMP_ECDH =  4
+  SSL_CTRL_MODE         = 33
+  SSL_CTRL_CLEAR_MODE   = 78
 
   enum Options : ULong
     LEGACY_SERVER_CONNECT       = 0x00000004
@@ -118,7 +115,6 @@ lib LibSSL
     DONT_INSERT_EMPTY_FRAGMENTS = 0x00000800
 
     # Various bug workarounds that should be rather harmless.
-    # This used to be `0x000FFFFF` before 0.9.7
     ALL = 0x80000BFF
 
     NO_QUERY_MTU     = 0x00001000
@@ -137,39 +133,49 @@ lib LibSSL
     NO_TLS_V1_3 = 0x20000000
     NO_TLS_V1_2 = 0x08000000
     NO_TLS_V1_1 = 0x10000000
-    {% if compare_versions(OPENSSL_VERSION, "1.1.0") >= 0 %}
+
+    {% if OPENSSL_VERSION != "0.0.0" %}
       NO_RENEGOTIATION = 0x40000000
+    {% else %}
+      NO_RENEGOTIATION = 0x00000000
     {% end %}
 
     NETSCAPE_CA_DN_BUG              = 0x20000000
     NETSCAPE_DEMO_CIPHER_CHANGE_BUG = 0x40000000
     CRYPTOPRO_TLSEXT_BUG            = 0x80000000
 
-    {% if compare_versions(OPENSSL_VERSION, "1.1.0") >= 0 || compare_versions(LIBRESSL_VERSION, "2.3.0") >= 0 %}
-      MICROSOFT_SESS_ID_BUG            = 0x00000000
-      NETSCAPE_CHALLENGE_BUG           = 0x00000000
-      NETSCAPE_REUSE_CIPHER_CHANGE_BUG = 0x00000000
-      SSLREF2_REUSE_CERT_TYPE_BUG      = 0x00000000
-      MICROSOFT_BIG_SSL_V3_BUFFER      = 0x00000000
-      SSLEAY_080_CLIENT_DH_BUG         = 0x00000000
-      TLS_D5_BUG                       = 0x00000000
-      TLS_BLOCK_PADDING_BUG            = 0x00000000
-      NO_SSL_V2                        = 0x00000000
-      SINGLE_ECDH_USE                  = 0x00000000
-      SINGLE_DH_USE                    = 0x00000000
-    {% else %}
-      MICROSOFT_SESS_ID_BUG            = 0x00000001
-      NETSCAPE_CHALLENGE_BUG           = 0x00000002
-      NETSCAPE_REUSE_CIPHER_CHANGE_BUG = 0x00000008
-      SSLREF2_REUSE_CERT_TYPE_BUG      = 0x00000010
-      MICROSOFT_BIG_SSL_V3_BUFFER      = 0x00000020
-      SSLEAY_080_CLIENT_DH_BUG         = 0x00000080
-      TLS_D5_BUG                       = 0x00000100
-      TLS_BLOCK_PADDING_BUG            = 0x00000200
-      NO_SSL_V2                        = 0x01000000
-      SINGLE_ECDH_USE                  = 0x00080000
-      SINGLE_DH_USE                    = 0x00100000
-    {% end %}
+    @[Deprecated("Removed from LibSSL.")]
+    MICROSOFT_SESS_ID_BUG = 0x00000000
+
+    @[Deprecated("Removed from LibSSL.")]
+    NETSCAPE_CHALLENGE_BUG = 0x00000000
+
+    @[Deprecated("Removed from LibSSL.")]
+    NETSCAPE_REUSE_CIPHER_CHANGE_BUG = 0x00000000
+
+    @[Deprecated("Removed from LibSSL.")]
+    SSLREF2_REUSE_CERT_TYPE_BUG = 0x00000000
+
+    @[Deprecated("Removed from LibSSL.")]
+    MICROSOFT_BIG_SSL_V3_BUFFER = 0x00000000
+
+    @[Deprecated("Removed from LibSSL.")]
+    SSLEAY_080_CLIENT_DH_BUG = 0x00000000
+
+    @[Deprecated("Removed from LibSSL.")]
+    TLS_D5_BUG = 0x00000000
+
+    @[Deprecated("Removed from LibSSL.")]
+    TLS_BLOCK_PADDING_BUG = 0x00000000
+
+    @[Deprecated("Removed from LibSSL.")]
+    NO_SSL_V2 = 0x00000000
+
+    @[Deprecated("Removed from LibSSL.")]
+    SINGLE_ECDH_USE = 0x00000000
+
+    @[Deprecated("Removed from LibSSL.")]
+    SINGLE_DH_USE = 0x00000000
   end
 
   @[Flags]
@@ -243,8 +249,10 @@ lib LibSSL
     fun ssl_get_peer_certificate = SSL_get_peer_certificate(handle : SSL) : LibCrypto::X509
   {% end %}
 
-  # In LibreSSL these functions are implemented as macros
-  {% if compare_versions(OPENSSL_VERSION, "1.1.0") >= 0 %}
+  {% if LIBRESSL_VERSION != "0.0.0" %}
+    SSL_CTRL_OPTIONS       = 32
+    SSL_CTRL_CLEAR_OPTIONS = 77
+  {% else %}
     fun ssl_ctx_get_options = SSL_CTX_get_options(ctx : SSLContext) : ULong
     fun ssl_ctx_set_options = SSL_CTX_set_options(ctx : SSLContext, larg : ULong) : ULong
     fun ssl_ctx_clear_options = SSL_CTX_clear_options(ctx : SSLContext, larg : ULong) : ULong
@@ -258,39 +266,28 @@ lib LibSSL
   fun ssl_ctx_set_cert_verify_callback = SSL_CTX_set_cert_verify_callback(ctx : SSLContext, callback : CertVerifyCallback, arg : Void*)
 
   # control TLS 1.3 session ticket generation
-  # LibreSSL does not seem to implement these functions
-  {% if compare_versions(OPENSSL_VERSION, "1.1.1") >= 0 %}
+  {% if OPENSSL_VERSION != "0.0.0" %}
     fun ssl_ctx_set_num_tickets = SSL_CTX_set_num_tickets(ctx : SSLContext, larg : LibC::SizeT) : Int
     fun ssl_set_num_tickets = SSL_set_num_tickets(ctx : SSL, larg : LibC::SizeT) : Int
   {% end %}
 
-  {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 || compare_versions(LibSSL::LIBRESSL_VERSION, "2.3.0") >= 0 %}
-    fun tls_method = TLS_method : SSLMethod
-  {% else %}
-    fun ssl_library_init = SSL_library_init
-    fun ssl_load_error_strings = SSL_load_error_strings
-    fun sslv23_method = SSLv23_method : SSLMethod
-  {% end %}
+  fun tls_method = TLS_method : SSLMethod
 
-  {% if compare_versions(OPENSSL_VERSION, "1.0.2") >= 0 || compare_versions(LIBRESSL_VERSION, "2.1.0") >= 0 %}
-    alias ALPNCallback = (SSL, Char**, Char*, Char*, Int, Void*) -> Int
+  alias ALPNCallback = (SSL, Char**, Char*, Char*, Int, Void*) -> Int
 
-    fun ssl_get0_alpn_selected = SSL_get0_alpn_selected(handle : SSL, data : Char**, len : LibC::UInt*) : Void
-    fun ssl_ctx_set_alpn_select_cb = SSL_CTX_set_alpn_select_cb(ctx : SSLContext, cb : ALPNCallback, arg : Void*) : Void
-    fun ssl_ctx_set_alpn_protos = SSL_CTX_set_alpn_protos(ctx : SSLContext, protos : Char*, protos_len : Int) : Int
-  {% end %}
+  fun ssl_get0_alpn_selected = SSL_get0_alpn_selected(handle : SSL, data : Char**, len : LibC::UInt*) : Void
+  fun ssl_ctx_set_alpn_select_cb = SSL_CTX_set_alpn_select_cb(ctx : SSLContext, cb : ALPNCallback, arg : Void*) : Void
+  fun ssl_ctx_set_alpn_protos = SSL_CTX_set_alpn_protos(ctx : SSLContext, protos : Char*, protos_len : Int) : Int
 
-  {% if compare_versions(OPENSSL_VERSION, "1.0.2") >= 0 || compare_versions(LIBRESSL_VERSION, "2.7.0") >= 0 %}
-    alias X509VerifyParam = LibCrypto::X509VerifyParam
+  alias X509VerifyParam = LibCrypto::X509VerifyParam
 
-    fun dtls_method = DTLS_method : SSLMethod
+  fun dtls_method = DTLS_method : SSLMethod
 
-    fun ssl_get0_param = SSL_get0_param(handle : SSL) : X509VerifyParam
-    fun ssl_ctx_get0_param = SSL_CTX_get0_param(ctx : SSLContext) : X509VerifyParam
-    fun ssl_ctx_set1_param = SSL_CTX_set1_param(ctx : SSLContext, param : X509VerifyParam) : Int
-  {% end %}
+  fun ssl_get0_param = SSL_get0_param(handle : SSL) : X509VerifyParam
+  fun ssl_ctx_get0_param = SSL_CTX_get0_param(ctx : SSLContext) : X509VerifyParam
+  fun ssl_ctx_set1_param = SSL_CTX_set1_param(ctx : SSLContext, param : X509VerifyParam) : Int
 
-  {% if compare_versions(OPENSSL_VERSION, "1.1.0") >= 0 || compare_versions(LIBRESSL_VERSION, "3.6.0") >= 0 %}
+  {% if OPENSSL_VERSION != "0.0.0" || compare_versions(LIBRESSL_VERSION, "3.6.0") >= 0 %}
     fun ssl_ctx_set_security_level = SSL_CTX_set_security_level(ctx : SSLContext, level : Int) : Void
     fun ssl_ctx_get_security_level = SSL_CTX_get_security_level(ctx : SSLContext) : Int
   {% end %}
@@ -300,10 +297,3 @@ lib LibSSL
     SSL_R_UNEXPECTED_EOF_WHILE_READING = 294
   {% end %}
 end
-
-{% if LibSSL.has_method?(:ssl_library_init) %}
-  LibSSL.ssl_library_init
-  LibSSL.ssl_load_error_strings
-  LibCrypto.openssl_add_all_algorithms
-  LibCrypto.err_load_crypto_strings
-{% end %}
