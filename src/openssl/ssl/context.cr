@@ -456,7 +456,7 @@ abstract class OpenSSL::SSL::Context
   def add_x509_verify_flags(flags : OpenSSL::SSL::X509VerifyFlags)
     param = LibSSL.ssl_ctx_get0_param(@handle)
     ret = LibCrypto.x509_verify_param_set_flags(param, flags)
-    raise OpenSSL::Error.new("X509_VERIFY_PARAM_set_flags)") unless ret == 1
+    raise OpenSSL::Error.new("X509_VERIFY_PARAM_set_flags") unless ret == 1
   end
 
   def to_unsafe
