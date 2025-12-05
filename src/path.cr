@@ -1364,6 +1364,13 @@ struct Path
     end
   end
 
+  # Returns `true` if this path is relative.
+  #
+  # See `#absolute?`
+  def relative? : Bool
+    !absolute?
+  end
+
   # :nodoc:
   def separators
     Path.separators(@kind)
