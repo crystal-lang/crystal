@@ -40,9 +40,7 @@ abstract class OpenSSL::SSL::Context
       super(method)
 
       self.verify_mode = OpenSSL::SSL::VerifyMode::PEER
-      {% if LibSSL.has_method?(:x509_verify_param_lookup) %}
-        self.default_verify_param = "ssl_server"
-      {% end %}
+      self.default_verify_param = "ssl_server"
     end
 
     # Returns a new TLS client context with only the given method set.
@@ -118,10 +116,7 @@ abstract class OpenSSL::SSL::Context
     # ```
     def initialize(method : LibSSL::SSLMethod = Context.default_method)
       super(method)
-
-      {% if LibSSL.has_method?(:x509_verify_param_lookup) %}
-        self.default_verify_param = "ssl_client"
-      {% end %}
+      self.default_verify_param = "ssl_client"
     end
 
     # Returns a new TLS server context with only the given method set.
@@ -450,26 +445,18 @@ abstract class OpenSSL::SSL::Context
   # Depending on the OpenSSL version, the available defaults are
   # `default`, `pkcs7`, `smime_sign`, `ssl_client` and `ssl_server`.
   def default_verify_param=(name : String)
-    {% if LibSSL.has_method?(:x509_verify_param_lookup) %}
-      param = LibCrypto.x509_verify_param_lookup(name)
-      raise ArgumentError.new("#{name} is an unsupported default verify param") unless param
-      ret = LibSSL.ssl_ctx_set1_param(@handle, param)
-      raise OpenSSL::Error.new("SSL_CTX_set1_param") unless ret == 1
-    {% else %}
-      raise NotImplementedError.new("LibSSL.x509_verify_param_lookup")
-    {% end %}
+    param = LibCrypto.x509_verify_param_lookup(name)
+    raise ArgumentError.new("#{name} is an unsupported default verify param") unless param
+    ret = LibSSL.ssl_ctx_set1_param(@handle, param)
+    raise OpenSSL::Error.new("SSL_CTX_set1_param") unless ret == 1
   end
 
   # Sets the given `OpenSSL::SSL::X509VerifyFlags` in this context, additionally to
   # the already set ones.
   def add_x509_verify_flags(flags : OpenSSL::SSL::X509VerifyFlags)
-    {% if LibSSL.has_method?(:x509_verify_param_set_flags) %}
-      param = LibSSL.ssl_ctx_get0_param(@handle)
-      ret = LibCrypto.x509_verify_param_set_flags(param, flags)
-      raise OpenSSL::Error.new("X509_VERIFY_PARAM_set_flags)") unless ret == 1
-    {% else %}
-      raise NotImplementedError.new("LibSSL.x509_verify_param_set_flags")
-    {% end %}
+    param = LibSSL.ssl_ctx_get0_param(@handle)
+    ret = LibCrypto.x509_verify_param_set_flags(param, flags)
+    raise OpenSSL::Error.new("X509_VERIFY_PARAM_set_flags)") unless ret == 1
   end
 
   def to_unsafe
