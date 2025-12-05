@@ -176,23 +176,17 @@ struct Crystal::System::Process
   # `SOCK_CLOEXEC` and `accept4` are defined in `c/sys/socket.cr` which is only
   # included when using sockets. The absence of `LibC.socket` indicates that
   # we're not using sockets.
-  private def self.rwlock
-    {% if (LibC.has_constant?(:SOCK_CLOEXEC) && (LibC.has_method?(:accept4)) || !LibC.has_method?(:socket)) && LibC.has_method?(:dup3) && LibC.has_method?(:pipe2) %}
-      {% raise "BUG: Crystal::System::Process.rwlock is only for targets without accept4, dup3 or pipe2" %}
-    {% else %}
-      @@rwlock ||= Crystal::RWLock.new
-    {% end %}
-  end
+  @@rwlock = Crystal::RWLock.new
 
   def self.lock_read(&)
     {% if (LibC.has_constant?(:SOCK_CLOEXEC) && (LibC.has_method?(:accept4)) || !LibC.has_method?(:socket)) && LibC.has_method?(:dup3) && LibC.has_method?(:pipe2) %}
       {% raise "BUG: Crystal::System::Process.lock_read is only for targets without accept4, dup3 or pipe2" %}
     {% else %}
-      rwlock.read_lock
+      @@rwlock.read_lock
       begin
         yield
       ensure
-        rwlock.read_unlock
+        @@rwlock.read_unlock
       end
     {% end %}
   end
@@ -201,11 +195,11 @@ struct Crystal::System::Process
     {% if (LibC.has_constant?(:SOCK_CLOEXEC) && (LibC.has_method?(:accept4)) || !LibC.has_method?(:socket)) && LibC.has_method?(:dup3) && LibC.has_method?(:pipe2) %}
       yield
     {% else %}
-      rwlock.write_lock
+      @@rwlock.write_lock
       begin
         yield
       ensure
-        rwlock.write_unlock
+        @@rwlock.write_unlock
       end
     {% end %}
   end
