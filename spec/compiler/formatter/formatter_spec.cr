@@ -143,6 +143,13 @@ describe Crystal::Formatter do
   assert_format "NamedTuple(\n  a: Int32,)", "NamedTuple(\n  a: Int32,\n)"
   assert_format "class Foo\n  NamedTuple(\n    a: Int32,\n  )\nend"
 
+  # Multi-line generic type with inline comments (issue #11328)
+  assert_format "Tuple(\n  Int32, # first\n  String, # second\n)", "Tuple(\n  Int32,  # first\n  String, # second\n)"
+  assert_format "Tuple(\n  Int32, # first\n  String, # second\n  Bool,\n)", "Tuple(\n  Int32,  # first\n  String, # second\n  Bool,\n)"
+  assert_format "Tuple(\n  Int32, # first\n  String # adds trailing comma\n)", "Tuple(\n  Int32,  # first\n  String, # adds trailing comma\n)"
+  assert_format "Hash(\n  String, # key\n  Int32, # value\n)", "Hash(\n  String, # key\n  Int32,  # value\n)"
+  assert_format "Tuple(\n  Int32,\n  String\n)", "Tuple(\n  Int32,\n  String,\n)"
+
   assert_format "::Tuple(T)"
   assert_format "::NamedTuple(T)"
   assert_format "::Pointer(T)"
