@@ -6,8 +6,8 @@ module Sync
   #
   # A `ConditionVariable` can be associated to any `Lockable`.
   #
-  # While one `Lockable` can be associated to multiple `ConditionVariable`, only
-  # one `ConditionVariable` can be associated to a single `Lockable`
+  # While one `Lockable` can be associated to multiple `ConditionVariable`, one
+  # `ConditionVariable` can only be associated to a single `Lockable`
   # (one-to-many relation).
   class ConditionVariable
     def initialize(@lock : Lockable)
