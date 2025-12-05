@@ -255,7 +255,7 @@ abstract class OpenSSL::SSL::Context
       @sni_callback_box = callback_box
 
       # Set the callback using SSL_CTX_callback_ctrl
-      LibSSL.ssl_ctx_callback_ctrl(@handle, LibSSL::SSL_CTRL_SET_TLSEXT_SERVERNAME_CB, c_callback.pointer.as(Void*))
+      LibSSL.ssl_ctx_callback_ctrl(@handle, LibSSL::SSL_CTRL_SET_TLSEXT_SERVERNAME_CB, c_callback.unsafe_as(Proc(Void)))
 
       # Set the arg that will be passed to the callback
       LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG, 0, callback_box)
