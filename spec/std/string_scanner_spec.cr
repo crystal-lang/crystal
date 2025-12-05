@@ -302,20 +302,20 @@ describe StringScanner do
   describe "#inspect" do
     it "has information on the scanner" do
       s = StringScanner.new("this is a string")
-      s.inspect.should eq(%(#<StringScanner 0/16 "this " >))
+      s.inspect.should eq(%(#<StringScanner 0/16 |"this ">))
       s.scan(/\w+\s/)
-      s.inspect.should eq(%(#<StringScanner 5/16 "s is " >))
+      s.inspect.should eq(%(#<StringScanner 5/16 "s "|"is ">))
       s.scan(/\w+\s/)
-      s.inspect.should eq(%(#<StringScanner 8/16 "s a s" >))
+      s.inspect.should eq(%(#<StringScanner 8/16 "s "|"a s">))
       s.scan(/\w+\s\w+/)
-      s.inspect.should eq(%(#<StringScanner 16/16 "tring" >))
+      s.inspect.should eq(%(#<StringScanner 16/16 "tring"|>))
     end
 
     it "works with small strings" do
       s = StringScanner.new("hi")
-      s.inspect.should eq(%(#<StringScanner 0/2 "hi" >))
+      s.inspect.should eq(%(#<StringScanner 0/2 |"hi">))
       s.scan(/\w\w/)
-      s.inspect.should eq(%(#<StringScanner 2/2 "hi" >))
+      s.inspect.should eq(%(#<StringScanner 2/2 "hi"|>))
     end
   end
 
@@ -327,6 +327,84 @@ describe StringScanner do
       s.offset.should eq(0)
       s.peek(7).should eq("this is")
       s.offset.should eq(0)
+    end
+  end
+
+  describe "#peek_behind" do
+    it "shows characters behind the scan head" do
+      s = StringScanner.new("abcdefg")
+      s.peek_behind(10).should eq("")
+      s.scan(3)
+      s.peek_behind(10).should eq("abc")
+      s.peek_behind(2).should eq("bc")
+    end
+  end
+
+  it "works with character indices on multibyte characters" do
+    s = StringScanner.new("abcdeあいうえおfghij")
+    s.peek(4).should eq("abcd")
+    s.skip(2)
+    s.peek(4).should eq("cdeあ")
+    s.skip(3)
+    s.peek(6).should eq("あいうえおf")
+    s.skip(4)
+    s.offset.should eq(9)
+    s.peek(0).should eq("")
+    s.peek(3).should eq("おfg")
+    s.peek_behind(2).should eq("うえ")
+    s.rewind(3)
+    s.current_char.should eq('い')
+    s.previous_char.should eq('あ')
+    s.current_byte.should eq(0xE3)  # first byte of い
+    s.previous_byte.should eq(0x82) # last byte of あ
+    s.peek(100).should eq("いうえおfghij")
+    s.scan(5).should eq("いうえおf")
+    s.current_char.should eq('g')
+    s.skip(100)
+    s.peek(1).should eq("")
+    s.current_char?.should be_nil
+  end
+
+  describe "#beginning_of_line?" do
+    it "checks backwards for a newline or start of string" do
+      s = StringScanner.new("a\nb\nc\n")
+      s.beginning_of_line?.should be_true
+      s.skip(1)
+      s.beginning_of_line?.should be_false
+      s.skip(1)
+      s.beginning_of_line?.should be_true
+      s.terminate
+      s.beginning_of_line?.should be_false
+    end
+  end
+
+  describe "#unscan" do
+    it "undoes the previous #scan call" do
+      s = StringScanner.new("abcdefg")
+      s.scan(1)
+      s.current_char.should eq('b')
+      s.scan("bc")
+      s.current_char.should eq('d')
+      s.unscan
+      s.current_char.should eq('b')
+      s.scan(/\w\w\w/)
+      s.current_char.should eq('e')
+      s.unscan
+      s.current_char.should eq('b')
+      s.scan(4)
+      s.current_char.should eq('f')
+      s.unscan
+      s.current_char.should eq('b')
+    end
+  end
+
+  describe "#read_char" do
+    it "advances by one character at a time" do
+      s = StringScanner.new("文字列")
+      s.read_char.should eq('文')
+      s.read_char.should eq('字')
+      s.read_char.should eq('列')
+      s.read_char.should be_nil
     end
   end
 

@@ -63,6 +63,9 @@
 class StringScanner
   @last_match : Regex::MatchData | StringMatchData | Nil
 
+  getter last_match
+  getter byte_offset : Int32
+
   def initialize(@str : String)
     @byte_offset = 0
   end
@@ -78,9 +81,18 @@ class StringScanner
     @str.byte_index_to_char_index(@byte_offset).not_nil!
   end
 
+  # Rewinds the scan head by `len` characters.
+  def rewind(len : Int)
+    return if len <= 0
+
+    @byte_offset -= lookbehind_byte_length(len)
+  end
+
   # Tries to match with *pattern* at the current position. If there's a match,
   # the scanner advances the scan offset, the last match is saved, and it
-  # returns the matched string. Otherwise, the scanner returns `nil`.
+  # returns the matched string. Otherwise, the scanner returns `nil`. If *pattern*
+  # is an Int, the scanner will be advanced by that number of characters, and the
+  # scanned string returned.
   #
   # ```
   # require "string_scanner"
@@ -90,7 +102,8 @@ class StringScanner
   # s.scan(/\w+/)  # => nil
   # s.scan(/\s\w/) # => " s"
   # s.scan('t')    # => "t"
-  # s.scan("ring") # => "ring"
+  # s.scan(2)      # => "ri"
+  # s.scan("ng")   # => "ng"
   # s.scan(/.*/)   # => ""
   # ```
   def scan(pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : String?
@@ -105,6 +118,30 @@ class StringScanner
   # :ditto:
   def scan(pattern : Char) : String?
     match(pattern, advance: true, anchored: true)
+  end
+
+  def scan(pattern : Int) : String
+    scan_len = lookahead_byte_length(pattern)
+    idx = @byte_offset
+    @byte_offset += scan_len
+    result = @str.byte_slice(idx, scan_len)
+    @last_match = StringMatchData.new(result)
+    result
+  end
+
+  # Reads a single character from the string, or returns nil if at the end.
+  def read_char : Char?
+    char = current_char? || return nil
+    @byte_offset += char.bytesize
+    char
+  end
+
+  def unscan : Nil
+    match = @last_match
+    return if match.nil?
+
+    @byte_offset -= match[0].bytesize
+    @last_match = nil
   end
 
   # Scans the string _until_ the *pattern* is matched. Returns the substring up
@@ -134,7 +171,7 @@ class StringScanner
     match(pattern, advance: true, anchored: false)
   end
 
-  private def match(pattern : Regex, advance = true, options = Regex::MatchOptions::ANCHORED)
+  private def match(pattern : Regex, advance : Bool = true, options : Regex::MatchOptions = Regex::MatchOptions::ANCHORED)
     match = pattern.match_at_byte_index(@str, @byte_offset, options)
     @last_match = match
     if match
@@ -198,6 +235,17 @@ class StringScanner
   def skip(pattern : Char) : Int32?
     match = scan(pattern)
     match.size if match
+  end
+
+  # Advances the offset by `len` chars. Prefer this to `scanner.offset += len`,
+  # since that can cause a full scan of the string in the case of multibyte
+  # characters.
+  def skip(pattern : Int) : Int32?
+    return if pattern <= 0
+
+    @byte_offset += lookahead_byte_length(pattern)
+
+    pattern
   end
 
   # Attempts to skip _until_ the given *pattern* is found after the scan
@@ -359,7 +407,63 @@ class StringScanner
   # Extracts a string corresponding to string[offset,*len*], without advancing
   # the scan offset.
   def peek(len) : String
-    @str[offset, len]
+    return "" if len.zero?
+
+    @str.byte_slice(@byte_offset, lookahead_byte_length(len))
+  end
+
+  # Extracts a string corresponding to string[offset - len, len], without advancing
+  # the scan offset.
+  def peek_behind(len) : String
+    return "" if len.zero?
+    byte_len = lookbehind_byte_length(len)
+    byte_len = @byte_offset if byte_len > @byte_offset
+    @str.byte_slice(@byte_offset - byte_len, byte_len)
+  end
+
+  # Returns the current byte at the scan head.
+  def current_byte? : UInt8?
+    @str.byte_at?(@byte_offset)
+  end
+
+  # :ditto:
+  def current_byte : UInt8
+    @str.byte_at(@byte_offset)
+  end
+
+  # Returns the byte before the scan head.
+  def previous_byte? : UInt8?
+    @str.byte_at?(@byte_offset - 1)
+  end
+
+  # :ditto:
+  def previous_byte : UInt8
+    @str.byte_at(@byte_offset - 1)
+  end
+
+  # Decodes a single character at the scan head.
+  def current_char? : Char?
+    char_reader.current_char?
+  end
+
+  # :ditto:
+  def current_char : Char
+    char_reader.current_char
+  end
+
+  # Decodes one character before the scan head
+  def previous_char? : Char?
+    char_reader.previous_char?
+  end
+
+  # :ditto:
+  def previous_char : Char
+    char_reader.previous_char
+  end
+
+  @[AlwaysInline]
+  private def char_reader : Char::Reader
+    Char::Reader.new(@str, @byte_offset)
   end
 
   # Returns the remainder of the string after the scan offset.
@@ -380,11 +484,68 @@ class StringScanner
   # Includes the current position of the offset, the total size of the string,
   # and five characters near the current position.
   def inspect(io : IO) : Nil
-    io << "#<StringScanner "
     offset = offset()
-    io << offset << '/' << @str.size
-    start = Math.min(Math.max(offset - 2, 0), Math.max(0, @str.size - 5))
-    io << " \"" << @str[start, 5] << "\" >"
+    io << "#<StringScanner "
+    io << offset << '/' << @str.size << ' '
+
+    if offset.zero?
+      io << '|'
+      peek(5).inspect(io)
+    elsif eos?
+      peek_behind(5).inspect(io)
+      io << '|'
+    else
+      peek_behind(2).inspect(io)
+      io << '|'
+      peek(3).inspect(io)
+    end
+
+    io << '>'
+  end
+
+  private def lookahead_byte_length(len : Int) : Int
+    return len if @str.single_byte_optimizable?
+    return 0 if len.zero?
+
+    # some redundant logic here from String#find_start_and_end, but in this case
+    # it is likely we are far into the string and len is small, so it is very
+    # important not to start at the beginning of the string.
+    reader = self.char_reader
+    i = 0
+
+    reader.each do
+      break if i == len
+      i += 1
+    end
+
+    reader.pos - @byte_offset
+  end
+
+  private def lookbehind_byte_length(len : Int) : Int
+    return len if @str.single_byte_optimizable?
+    return 0 if len.zero?
+
+    reader = self.char_reader
+
+    until len.zero?
+      reader.previous_char
+      len -= 1
+    end
+
+    @byte_offset - reader.pos
+  end
+
+  # Returns true if the stream is at the beginning of a line and not at EOS.
+  def beginning_of_line? : Bool
+    return false if eos?
+    return true if @byte_offset.zero?
+
+    previous_char == '\n'
+  end
+
+  # Returns true if the last #scan resulted in a match
+  def matched? : Bool
+    !@last_match.nil?
   end
 
   # :nodoc:
