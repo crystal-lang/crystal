@@ -678,7 +678,11 @@ class Object
   # Defines a `clone` method that returns a copy of this object with all
   # instance variables cloned (`clone` is in turn invoked on them).
   macro def_clone
+    {% if @caller && !@caller.first.doc_comment.empty? %}
+    # {{ @caller.first.doc_comment }}
+    {% else %}
     # Returns a copy of `self` with all instance variables cloned.
+    {% end %}
     def clone
       \{% if @type < ::Reference && !@type.instance_vars.map(&.type).all? { |t| t == ::Bool || t == ::Char || t == ::Symbol || t == ::String || t < ::Number::Primitive } %}
         exec_recursive_clone do |hash|
