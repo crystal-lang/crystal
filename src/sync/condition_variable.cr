@@ -9,6 +9,21 @@ module Sync
   # While one `Lockable` can be associated to multiple `ConditionVariable`, one
   # `ConditionVariable` can only be associated to a single `Lockable`
   # (one-to-many relation).
+  #
+  # Condition variables may only be preferred over `WaitGroup` or `Channel(T)`
+  # for specific scenarios that need to wake a single fiber (signal) or all
+  # waiting fibers (broadcast). For example:
+  #
+  # Prefer `Channel(T)` to pass a local resource around over a `Mutex` and
+  # `ConditionVariable` to protect a global resource, but sometimes you don't
+  # need to pass a value and only need to repeatedly signal one or multiple
+  # workers, in which case a condition variable might be useful.
+  #
+  # Prefer `WaitGroup(T)` if you need to wait for a task to complete, or for a
+  # set of workers to be ready (specific lifetimes), but sometimes you want to
+  # repeatedly or sporadically notify one or many workers that may be added or
+  # removed concurrently (unbounded lifetimes), in which case a condition
+  # variable might be useful.
   class ConditionVariable
     def initialize(@lock : Lockable)
       @cv = CV.new
