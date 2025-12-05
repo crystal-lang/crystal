@@ -1,6 +1,7 @@
 require "./mu"
 require "./type"
 require "./errors"
+require "./lockable"
 
 module Sync
   # A mutual exclusion lock to protect critical sections.
@@ -12,6 +13,8 @@ module Sync
   # with the guarantee that only one section of code can ever read, write or
   # mutate said resources.
   class Mutex
+    include Lockable
+
     def initialize(@type : Type = :checked)
       @counter = 0
       @mu = MU.new
@@ -66,6 +69,27 @@ module Sync
         @locked_by = nil
       end
       @mu.unlock
+    end
+
+    protected def wait(cv : Pointer(CV)) : Nil
+      counter = 1
+
+      unless @type.unchecked?
+        if @mu.held?
+          raise Error.new("Can't unlock Sync::Mutex locked by another fiber") unless owns_lock?
+          @locked_by = nil
+          counter, @counter = @counter, 0 if @type.reentrant?
+        else
+          raise Error.new("Can't unlock Sync::Mutex that isn't locked")
+        end
+      end
+
+      cv.value.wait pointerof(@mu)
+
+      unless @type.unchecked?
+        @locked_by = Fiber.current
+        @counter = counter if @type.reentrant?
+      end
     end
 
     protected def owns_lock? : Bool
