@@ -25,7 +25,7 @@ entries = nodes.flat_map do |node|
   end
 end.sort!
 
-ENV["ZONEINFO"] = ZONEINFO_ZIP
+ENV["TZDIR"] = ZONEINFO_ZIP
 iana_to_windows_items = entries.compact_map do |tzdata_name, territory, windows_name|
   location = Time::Location.load(tzdata_name)
   next unless location

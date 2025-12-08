@@ -14,7 +14,7 @@ private macro def_string_methods(klass)
   def [](range : RangeLiteral) : {{klass}}
   end
 
-  # Similar to `String#=~`.
+  # Similar to `String#matches?`.
   def =~(range : RegexLiteral) : BoolLiteral
   end
 
@@ -68,10 +68,17 @@ private macro def_string_methods(klass)
   def includes?(search : StringLiteral | CharLiteral) : BoolLiteral
   end
 
+  # Matches the given *regex* against this string and returns a capture hash, or
+  # `nil` if a match cannot be found.
+  #
+  # The capture hash has the same form as `Regex::MatchData#to_h`.
+  def match(regex : RegexLiteral) : HashLiteral(NumberLiteral | StringLiteral, StringLiteral | NilLiteral)
+  end
+
   # Returns an array of capture hashes for each match of *regex* in this string.
   #
   # Capture hashes have the same form as `Regex::MatchData#to_h`.
-  def scan(regex : RegexLiteral) : ArrayLiteral(HashLiteral(NumberLiteral | StringLiteral), StringLiteral | NilLiteral)
+  def scan(regex : RegexLiteral) : ArrayLiteral(HashLiteral(NumberLiteral | StringLiteral, StringLiteral | NilLiteral))
   end
 
   # Similar to `String#size`.
@@ -82,11 +89,24 @@ private macro def_string_methods(klass)
   def lines : ArrayLiteral(StringLiteral)
   end
 
-  # Similar to `String#split`.
+  # Similar to `String#split()`.
   def split : ArrayLiteral(StringLiteral)
   end
 
-  # Similar to `String#split`.
+  # Similar to `String#split(String)`.
+  def split(node : StringLiteral) : ArrayLiteral(StringLiteral)
+  end
+
+  # Similar to `String#split(Char)`.
+  def split(node : CharLiteral) : ArrayLiteral(StringLiteral)
+  end
+
+  # Similar to `String#split(Regex)`.
+  def split(node : RegexLiteral) : ArrayLiteral(StringLiteral)
+  end
+
+  # Similar to `String#split(String)`.
+  @[Deprecated("Use `#split(StringLiteral)` instead")]
   def split(node : ASTNode) : ArrayLiteral(StringLiteral)
   end
 

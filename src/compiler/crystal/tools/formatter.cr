@@ -1205,15 +1205,14 @@ module Crystal
       accept name
       skip_space_or_newline
 
-      write_token :OP_LPAREN
-      skip_space
-
       # Given that generic type arguments are always inside parentheses
       # we can start counting them from 0 inside them.
       old_paren_count = @paren_count
       @paren_count = 0
 
       if named_args = node.named_args
+        write_token :OP_LPAREN
+        skip_space
         has_newlines, _, _ = format_named_args([] of ASTNode, named_args, @indent + 2)
         # `format_named_args` doesn't skip trailing comma
         if @paren_count == 0 && @token.type.op_comma?
@@ -1224,22 +1223,11 @@ module Crystal
             write_indent
           end
         end
+        skip_space_or_newline if @paren_count == 0
+        write_token :OP_RPAREN
       else
-        skip_space_or_newline
-        node.type_vars.each_with_index do |type_var, i|
-          accept type_var
-          if @paren_count == 0
-            skip_space_or_newline
-            if @token.type.op_comma?
-              write ", " unless last?(i, node.type_vars)
-              next_token_skip_space_or_newline
-            end
-          end
-        end
+        format_literal_elements(node.type_vars, :OP_LPAREN, :OP_RPAREN)
       end
-
-      skip_space_or_newline if @paren_count == 0
-      write_token :OP_RPAREN
 
       # Restore the old parentheses count
       @paren_count = old_paren_count
@@ -1928,20 +1916,26 @@ module Crystal
       has_space = @token.type.space?
       skip_space
       has_newline = @token.type.newline?
-      skip_space_or_newline
-
-      if (has_space || !node.output?) && !has_newline
-        write " "
-      end
 
       old_indent = @indent
       @indent = @column
+
       if has_newline
         write_line
         write_indent
+        skip_space_or_newline
+        if @line_output.empty?
+          write_indent(@indent, node.exp)
+        else
+          indent(@indent, node.exp)
+        end
+      else
+        skip_space_or_newline
+        if has_space || !node.output?
+          write " "
+        end
+        indent(@column, node.exp)
       end
-
-      indent(@column, node.exp)
 
       @indent = old_indent
 
