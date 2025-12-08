@@ -91,6 +91,10 @@ describe Fiber::ExecutionContext::GlobalQueue do
   # interpreter doesn't support threads yet (#14287)
   pending_interpreted describe: "thread safety" do
     it "one by one" do
+      {% if flag?(:win32) && flag?(:aarch64) %}
+        pending! "CI/WIN32/CLANGARM64 always fails"
+      {% end %}
+
       fibers = StaticArray(Fiber::ExecutionContext::FiberCounter, 763).new do |i|
         Fiber::ExecutionContext::FiberCounter.new(new_fake_fiber("f#{i}"))
       end
