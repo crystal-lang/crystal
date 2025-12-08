@@ -136,13 +136,16 @@ module Crystal
     end
 
     def visit_interpolation(node, &)
-      node.expressions.each do |exp|
-        if exp.is_a?(StringLiteral)
-          @str << yield exp.value
+      node.expressions.chunks(&.is_a?(StringLiteral)).each do |(is_string, exps)|
+        if is_string
+          value = exps.join(&.as(StringLiteral).value)
+          @str << yield value
         else
-          @str << "\#{"
-          exp.accept(self)
-          @str << '}'
+          exps.each do |exp|
+            @str << "\#{"
+            exp.accept(self)
+            @str << '}'
+          end
         end
       end
     end

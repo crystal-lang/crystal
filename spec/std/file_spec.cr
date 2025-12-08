@@ -562,6 +562,41 @@ describe "File" do
     end
   end
 
+  long_path = "a" * 1000
+  describe ".info" do
+    it "raises for too long pathname" do
+      expect_raises(File::NotFoundError, /Unable to get file info: '#{long_path}': (File ?name too long|The system cannot find the path specified)/) do
+        File.info(long_path)
+      end
+    end
+
+    it "raises for invalid pathname" do
+      expect_raises(File::NotFoundError, /Unable to get file info: '': (No such file or directory|The system cannot find the path specified)/) do
+        File.info("")
+      end
+    end
+
+    it "raises for invalid pathname" do
+      expect_raises(File::NotFoundError, /Unable to get file info: '<': (No such file or directory|The filename, directory name, or volume label syntax is incorrect)/) do
+        File.info("<")
+      end
+    end
+  end
+
+  describe ".info?" do
+    it "returns nil for too long pathname" do
+      File.info?(long_path).should be_nil
+    end
+
+    it "returns nil for invalid pathname" do
+      File.info?("").should be_nil
+    end
+
+    it "returns nil for invalid pathname" do
+      File.info?("<").should be_nil
+    end
+  end
+
   describe "File::Info" do
     it "gets for this file" do
       info = File.info(datapath("test_file.txt"))
