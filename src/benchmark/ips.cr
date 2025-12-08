@@ -67,9 +67,9 @@ module Benchmark
 
           count = 0_u64
           elapsed = Time.measure do
-            target = Time.monotonic + @warmup_time
+            target = Time.instant + @warmup_time
 
-            while Time.monotonic < target
+            while Time.instant < target
               item.call
               count += 1
             end
@@ -87,7 +87,7 @@ module Benchmark
           bytes = 0_i64
           cycles = 0_i64
 
-          target = Time.monotonic + @calculation_time
+          target = Time.instant + @calculation_time
 
           loop do
             elapsed = nil
@@ -97,7 +97,7 @@ module Benchmark
             bytes += bytes_taken
             cycles += item.cycles
             measurements << elapsed.not_nil!
-            break if Time.monotonic >= target
+            break if Time.instant >= target
           end
 
           ips = measurements.map { |m| item.cycles.to_f / m.total_seconds }

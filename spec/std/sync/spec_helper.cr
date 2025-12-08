@@ -3,7 +3,7 @@ require "wait_group"
 
 module Sync
   def self.eventually(timeout : Time::Span = 1.second, &)
-    start = Time.monotonic
+    start = Time.instant
 
     loop do
       Fiber.yield
@@ -11,7 +11,7 @@ module Sync
       begin
         yield
       rescue ex
-        raise ex if (Time.monotonic - start) > timeout
+        raise ex if start.elapsed > timeout
       else
         break
       end
