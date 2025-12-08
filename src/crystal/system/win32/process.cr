@@ -119,8 +119,12 @@ struct Crystal::System::Process
     LibC.TerminateProcess(@process_handle, 1)
   end
 
-  def self.exit(status)
+  def self.exit(status : Int32)
     LibC.exit(status)
+  end
+
+  def self.exit(status : ::Process::Status)
+    exit status.system_exit_status.to_i32!
   end
 
   def self.pid
@@ -302,8 +306,7 @@ struct Crystal::System::Process
          pointerof(startup_info), pointerof(process_info)
        ) == 0
       error = WinError.value
-      case error.to_errno
-      when Errno::EACCES, Errno::ENOENT, Errno::ENOEXEC
+      if ::File::NotFoundError.os_error?(error) || ::File::AccessDeniedError.os_error?(error) || error == WinError::ERROR_BAD_EXE_FORMAT
         raise ::File::Error.from_os_error("Error executing process", error, file: prepared_args)
       else
         raise IO::Error.from_os_error("Error executing process: '#{prepared_args}'", error)
@@ -391,8 +394,7 @@ struct Crystal::System::Process
   end
 
   private def self.raise_exception_from_errno(command, errno = Errno.value)
-    case errno
-    when Errno::EACCES, Errno::ENOENT
+    if ::File::NotFoundError.os_error?(errno) || ::File::AccessDeniedError.os_error?(errno)
       raise ::File::Error.from_os_error("Error executing process", errno, file: command)
     else
       raise IO::Error.from_os_error("Error executing process: '#{command}'", errno)

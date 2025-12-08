@@ -598,6 +598,12 @@ module Crystal
         assert_macro %q({{ "bar".gsub /(foo)/ { "STR" } }}), %("bar")                                                                                 # No match at all
       end
 
+      it "executes match" do
+        assert_macro %({{ "hello world".match(/x/) }}), %(nil)
+        assert_macro %({{ "hello world".match(/o.*o/) }}), %({0 => "o wo"} of ::Int32 | ::String => ::String | ::Nil)
+        assert_macro %({{ "hello world".match(/(?:(x)|e)(?<name>\\S+)/) }}), %({0 => "ello", 1 => nil, "name" => "llo"} of ::Int32 | ::String => ::String | ::Nil)
+      end
+
       it "executes scan" do
         assert_macro %({{"Crystal".scan(/(Cr)(?<name1>y)(st)(?<name2>al)/)}}), %([{0 => "Crystal", 1 => "Cr", "name1" => "y", 3 => "st", "name2" => "al"} of ::Int32 | ::String => ::String | ::Nil] of ::Hash(::Int32 | ::String, ::String | ::Nil))
         assert_macro %({{"Crystal".scan(/(Cr)?(stal)/)}}), %([{0 => "stal", 1 => nil, 2 => "stal"} of ::Int32 | ::String => ::String | ::Nil] of ::Hash(::Int32 | ::String, ::String | ::Nil))

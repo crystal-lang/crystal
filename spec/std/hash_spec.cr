@@ -159,6 +159,29 @@ describe "Hash" do
       # a[2].should raise_exception
       a.should eq({1 => 2})
     end
+
+    it "raises on missing key" do
+      h = {1 => 2}
+
+      expect_raises KeyError, "Missing hash key: 2" do
+        h[2]
+      end
+    end
+
+    describe "with block" do
+      it "calls and returns if of the same type" do
+        h = Hash(Int32, String).new { "b" }
+        h[0].should eq("b")
+      end
+
+      it "errors if of the wrong type" do
+        h = Hash(Int32, String).new { "b" }
+
+        expect_raises KeyError, "Invalid key type: expected Int32, got String" do
+          h["0"]
+        end
+      end
+    end
   end
 
   describe "[]=" do

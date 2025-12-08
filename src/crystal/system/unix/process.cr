@@ -29,8 +29,20 @@ struct Crystal::System::Process
     Crystal::System::Process.signal(@pid, graceful ? LibC::SIGTERM : LibC::SIGKILL)
   end
 
-  def self.exit(status)
+  def self.exit(status : Int32)
     LibC.exit(status)
+  end
+
+  def self.exit(status : ::Process::Status)
+    if signal = status.exit_signal?
+      signal(self.pid, signal)
+
+      # The same signal that killed the child process might not kill the parent.
+      # We have to exit explicitly. The exist status adding 128 is a convention.
+      exit 128 + signal.value
+    else
+      exit status.exit_code
+    end
   end
 
   def self.pid
@@ -164,64 +176,59 @@ struct Crystal::System::Process
   # `SOCK_CLOEXEC` and `accept4` are defined in `c/sys/socket.cr` which is only
   # included when using sockets. The absence of `LibC.socket` indicates that
   # we're not using sockets.
-  {% if (LibC.has_constant?(:SOCK_CLOEXEC) && (LibC.has_method?(:accept4)) || !LibC.has_method?(:socket)) && LibC.has_method?(:dup3) && LibC.has_method?(:pipe2) %}
-    # we don't implement .lock_read so compilation will fail if we need to
-    # support another case, instead of silently skipping the rwlock!
+  @@rwlock = Crystal::RWLock.new
 
-    def self.lock_write(&)
-      yield
-    end
-  {% else %}
-    @@rwlock = Crystal::RWLock.new
-
-    def self.lock_read(&)
+  def self.lock_read(&)
+    {% if (LibC.has_constant?(:SOCK_CLOEXEC) && (LibC.has_method?(:accept4)) || !LibC.has_method?(:socket)) && LibC.has_method?(:dup3) && LibC.has_method?(:pipe2) %}
+      {% raise "BUG: Crystal::System::Process.lock_read is only for targets without accept4, dup3 or pipe2" %}
+    {% else %}
       @@rwlock.read_lock
       begin
         yield
       ensure
         @@rwlock.read_unlock
       end
-    end
+    {% end %}
+  end
 
-    def self.lock_write(&)
+  def self.lock_write(&)
+    {% if (LibC.has_constant?(:SOCK_CLOEXEC) && (LibC.has_method?(:accept4)) || !LibC.has_method?(:socket)) && LibC.has_method?(:dup3) && LibC.has_method?(:pipe2) %}
+      yield
+    {% else %}
       @@rwlock.write_lock
       begin
         yield
       ensure
         @@rwlock.write_unlock
       end
-    end
-  {% end %}
+    {% end %}
+  end
 
   # Only used by deprecated `::Process.fork`
   def self.fork
     {% raise("Process fork is unsupported with multithreaded mode") if flag?(:preview_mt) %}
 
-    result = lock_write do
+    pid, errno = lock_write do
       pthread_disable_cancelstate do
         block_signals do
-          case pid = LibC.fork
-          when 0
-            # forked process
-
-            ::Process.after_fork_child_callbacks.each(&.call)
-
-            nil
-          when -1
-            # forking process: error
-            Errno.value
-          else
-            # forking process: success
-            pid
-          end
+          pid = LibC.fork
+          {pid, Errno.value}
         end
       end
     end
 
-    if result.is_a?(Errno)
-      raise RuntimeError.from_os_error("fork", result)
+    case pid
+    when 0
+      # forked process
+      ::Process.after_fork_child_callbacks.each(&.call)
+
+      nil
+    when -1
+      # forking process: error
+      raise RuntimeError.from_os_error("fork", errno)
     else
-      result
+      # forking process: success
+      pid
     end
   end
 
@@ -434,8 +441,7 @@ struct Crystal::System::Process
   end
 
   private def self.raise_exception_from_errno(command, errno = Errno.value)
-    case errno
-    when Errno::EACCES, Errno::ENOENT, Errno::ENOEXEC
+    if ::File::NotFoundError.os_error?(errno) || ::File::AccessDeniedError.os_error?(errno) || errno == Errno::ENOEXEC
       raise ::File::Error.from_os_error("Error executing process", errno, file: command)
     else
       raise IO::Error.from_os_error("Error executing process: '#{command}'", errno)

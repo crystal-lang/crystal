@@ -70,11 +70,13 @@ module Crystal::System::Time
   end
 
   # Many systems use /usr/share/zoneinfo, Solaris 2 has
-  # /usr/share/lib/zoneinfo, IRIX 6 has /usr/lib/locale/TZ.
+  # /usr/share/lib/zoneinfo, IRIX 6 has /usr/lib/locale/TZ,
+  # NixOS has /etc/zoneinfo.
   ZONE_SOURCES = {
     "/usr/share/zoneinfo/",
     "/usr/share/lib/zoneinfo/",
     "/usr/lib/locale/TZ/",
+    "/etc/zoneinfo/",
   }
 
   # Android Bionic C-specific locations. These are files rather than directories
