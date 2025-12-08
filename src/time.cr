@@ -194,13 +194,13 @@ require "crystal/system/time"
 #
 # This monotonic clock should always be used for measuring elapsed time.
 #
-# A reading from this clock can be taken using `.monotonic`:
+# A reading from this clock can be taken using `.instant`:
 #
 # ```
-# t1 = Time.monotonic
+# t1 = Time.instant
 # # operation that takes 1 minute
-# t2 = Time.monotonic
-# t2 - t1 # => 1.minute (approximately)
+# t2 = Time.instant
+# t2.duration_since(t1) # => 1.minute (approximately)
 # ```
 #
 # The execution time of a block can be measured using `.measure`:
