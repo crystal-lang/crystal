@@ -37,7 +37,7 @@ module Sync
     {% if compare_versions(Crystal::VERSION, "1.12.0") >= 0 %}
       @lock = uninitialized ReferenceStorage(Mutex)
     {% else %}
-      @lock : Mutex
+      @lock = uninitialized Mutex
     {% end %}
 
     def initialize(@value : T, type : Type = :checked)
