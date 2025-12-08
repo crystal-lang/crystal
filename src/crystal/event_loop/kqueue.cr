@@ -198,13 +198,11 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
     end
   end
 
-  private def system_set_timer(time : Time::Span?) : Nil
+  private def system_set_timer(time : Time::Instant?) : Nil
     if time
       flags = LibC::EV_ADD | LibC::EV_ONESHOT | LibC::EV_CLEAR
 
-      seconds, nanoseconds = System::Time.monotonic
-      now = Time::Span.new(seconds: seconds, nanoseconds: nanoseconds)
-      t = time - now
+      t = time.elapsed
 
       data =
         {% if LibC.has_constant?(:NOTE_NSECONDS) %}
