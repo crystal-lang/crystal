@@ -176,54 +176,57 @@ struct Crystal::System::Process
   # `SOCK_CLOEXEC` and `accept4` are defined in `c/sys/socket.cr` which is only
   # included when using sockets. The absence of `LibC.socket` indicates that
   # we're not using sockets.
-  {% if (LibC.has_constant?(:SOCK_CLOEXEC) && (LibC.has_method?(:accept4)) || !LibC.has_method?(:socket)) && LibC.has_method?(:dup3) && LibC.has_method?(:pipe2) %}
-    # we don't implement .lock_read so compilation will fail if we need to
-    # support another case, instead of silently skipping the rwlock!
+  @@rwlock = Crystal::RWLock.new
 
-    def self.lock_write(&)
-      yield
-    end
-  {% else %}
-    @@rwlock = Crystal::RWLock.new
-
-    def self.lock_read(&)
+  def self.lock_read(&)
+    {% if (LibC.has_constant?(:SOCK_CLOEXEC) && (LibC.has_method?(:accept4)) || !LibC.has_method?(:socket)) && LibC.has_method?(:dup3) && LibC.has_method?(:pipe2) %}
+      {% raise "BUG: Crystal::System::Process.lock_read is only for targets without accept4, dup3 or pipe2" %}
+    {% else %}
       @@rwlock.read_lock
       begin
         yield
       ensure
         @@rwlock.read_unlock
       end
-    end
+    {% end %}
+  end
 
-    def self.lock_write(&)
+  def self.lock_write(&)
+    {% if (LibC.has_constant?(:SOCK_CLOEXEC) && (LibC.has_method?(:accept4)) || !LibC.has_method?(:socket)) && LibC.has_method?(:dup3) && LibC.has_method?(:pipe2) %}
+      yield
+    {% else %}
       @@rwlock.write_lock
       begin
         yield
       ensure
         @@rwlock.write_unlock
       end
-    end
-  {% end %}
+    {% end %}
+  end
 
   # Only used by deprecated `::Process.fork`
   def self.fork
     {% raise("Process fork is unsupported with multithreaded mode") if flag?(:preview_mt) %}
 
-    block_signals do
-      case pid = lock_write { LibC.fork }
-      when 0
-        # forked process
-
-        ::Process.after_fork_child_callbacks.each(&.call)
-
-        nil
-      when -1
-        # forking process: error
-        raise RuntimeError.from_errno("fork")
-      else
-        # forking process: success
-        pid
+    pid, errno = lock_write do
+      block_signals do
+        pid = LibC.fork
+        {pid, Errno.value}
       end
+    end
+
+    case pid
+    when 0
+      # forked process
+      ::Process.after_fork_child_callbacks.each(&.call)
+
+      nil
+    when -1
+      # forking process: error
+      raise RuntimeError.from_os_error("fork", errno)
+    else
+      # forking process: success
+      pid
     end
   end
 
