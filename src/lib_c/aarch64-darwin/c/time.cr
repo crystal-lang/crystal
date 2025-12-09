@@ -2,8 +2,8 @@ require "./sys/types"
 
 lib LibC
   CLOCK_REALTIME      = 0
-  CLOCK_MONOTONIC     = 6
   CLOCK_MONOTONIC_RAW = 4
+  CLOCK_MONOTONIC     = 6
   CLOCK_UPTIME_RAW    = 8
 
   struct Tm
