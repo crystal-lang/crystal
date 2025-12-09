@@ -3,6 +3,10 @@ require "c/winbase"
 require "c/processenv"
 
 module Crystal::System::Env
+  def self.equal?(a : String, b : String) : Bool
+    a.compare(b, case_insensitive: true) == 0
+  end
+
   # Sets an environment variable or unsets it if *value* is `nil`.
   def self.set(key : String, value : String) : Nil
     check_valid_key(key)
@@ -76,14 +80,33 @@ module Crystal::System::Env
   end
 
   # Used internally to create an input for `CreateProcess` `lpEnvironment`.
-  def self.make_env_block(env : Enumerable({String, String}))
-    # NOTE: the entire string contains embedded null bytes so we can't use
-    # `System.to_wstr` here
+  def self.make_env_block(env, clear_env) : UInt16*
     String.build do |io|
-      env.each do |(key, value)|
-        check_valid_key(key)
-        io << key.check_no_null_byte("key") << '=' << value.check_no_null_byte("value") << '\0'
+      unless clear_env
+        ::ENV.each do |key, value|
+          # skip override
+          next if env.try(&.any? { |k, _| equal?(k, key) })
+
+          io << key.check_no_null_byte("key")
+          io << '='
+          io << value.check_no_null_byte("value")
+          io << '\0'
+        end
       end
+
+      env.try(&.each do |key, value|
+        check_valid_key(key)
+
+        # skip deletion
+        next if value.nil?
+
+        io << key.check_no_null_byte("key")
+        io << '='
+        io << value.check_no_null_byte("value")
+        io << '\0'
+      end)
+
+      # terminate the block
       io << '\0'
     end.to_utf16.to_unsafe
   end

@@ -6,10 +6,16 @@ require "path"
 
 module Crystal::System::Env
   def self.set(key : String, value : String) : Nil
+    if self.responds_to?(:check_valid_key)
+      self.check_valid_key(key)
+    end
     previous_def unless ENV.mocking?
   end
 
   def self.set(key : String, value : Nil) : Nil
+    if self.responds_to?(:check_valid_key)
+      self.check_valid_key(key)
+    end
     previous_def unless ENV.mocking?
   end
 end

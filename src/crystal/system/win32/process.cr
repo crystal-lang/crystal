@@ -14,14 +14,14 @@ struct Crystal::System::Process
     HOST_PATH_DELIMITER = ':'
   {% end %}
 
-  private class_getter system_directory : String do
+  class_getter system_directory : String do
     buf = uninitialized UInt16[256]
     size = LibC.GetSystemDirectoryW(buf.to_unsafe, buf.size)
     raise RuntimeError.from_winerror("GetSystemDirectoryW") if size == 0
     String.from_utf16(buf.to_slice[0, size])
   end
 
-  private class_getter windows_directory : String do
+  class_getter windows_directory : String do
     buf = uninitialized UInt16[256]
     size = LibC.GetWindowsDirectoryW(buf.to_unsafe, buf.size)
     raise RuntimeError.from_winerror("GetWindowsDirectoryW") if size == 0
@@ -320,7 +320,7 @@ struct Crystal::System::Process
 
     if LibC.CreateProcessW(
          nil, System.to_wstr(prepared_args), nil, nil, true, LibC::CREATE_SUSPENDED | LibC::CREATE_UNICODE_ENVIRONMENT,
-         make_env_block(env, clear_env), chdir.try { |str| System.to_wstr(str) } || Pointer(UInt16).null,
+         Env.make_env_block(env, clear_env), chdir.try { |str| System.to_wstr(str) } || Pointer(UInt16).null,
          pointerof(startup_info), pointerof(process_info)
        ) == 0
       error = WinError.value
@@ -518,32 +518,6 @@ struct Crystal::System::Process
 
   def self.chroot(path)
     raise NotImplementedError.new("Process.chroot")
-  end
-
-  protected def self.make_env_block(env, clear_env : Bool) : UInt16*
-    # If neither clearing nor adding anything, use the default behavior of inheriting everything.
-    # return Pointer(UInt16).null unless clear_env || env
-
-    # Emulate case-insensitive behavior using a Hash like {"KEY" => {"kEy", "value"}, ...}
-    final_env = {} of String => {String, String}
-
-    unless clear_env
-      ::ENV.each do |key, val|
-        final_env[key.upcase] = {key, val}
-      end
-    end
-
-    env.try &.each do |(key, val)|
-      if val
-        # Note: in the case of overriding, the last "case-spelling" of the key wins.
-        final_env[key.upcase] = {key, val}
-      else
-        final_env.delete key.upcase
-      end
-    end
-
-    # The "values" we're passing are actually key-value pairs.
-    Env.make_env_block(final_env.each_value)
   end
 end
 

@@ -78,7 +78,7 @@ module ENV
 
   # :nodoc:
   def self.set_internal(key : String, value : String) : Nil
-    if index = @@env.index { |k, _| k == key }
+    if index = @@env.index { |k, _| Crystal::System::Env.equal?(k, key) }
       @@env[index] = {key, value}
     else
       @@env << {key, value}
@@ -87,7 +87,7 @@ module ENV
 
   # :nodoc:
   def self.set_internal(key : String, value : Nil) : Nil
-    if index = @@env.index { |k, _| k == key }
+    if index = @@env.index { |k, _| Crystal::System::Env.equal?(k, key) }
       @@env.delete_at(index)
     end
   end
@@ -123,7 +123,7 @@ module ENV
   # ENV.has_key?("PATH")           # => true
   # ```
   def self.has_key?(key : String) : Bool
-    @@lock.read { @@env.any? { |k, _| k == key } }
+    @@lock.read { @@env.any? { |k, _| Crystal::System::Env.equal?(k, key) } }
   end
 
   # Retrieves a value corresponding to the given *key*. Raises a `KeyError` exception if the
@@ -143,7 +143,7 @@ module ENV
   # Retrieves a value corresponding to a given *key*. Return the value of the block if
   # the *key* does not exist.
   def self.fetch(key : String, &block : String -> T) : String | T forall T
-    if entry = @@lock.read { @@env.find { |k, _| k == key } }
+    if entry = @@lock.read { @@env.find { |k, _| Crystal::System::Env.equal?(k, key) } }
       entry[1]
     else
       yield key
@@ -167,7 +167,7 @@ module ENV
   def self.delete(key : String) : String?
     @@lock.write do
       Crystal::System::Env.set(key, nil)
-      if index = @@env.index { |k, _| k == key }
+      if index = @@env.index { |k, _| Crystal::System::Env.equal?(k, key) }
         entry = @@env.delete_at(index)
         entry[1]
       end

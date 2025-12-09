@@ -7,6 +7,12 @@ module Crystal::System::Env
 
   # Reads the environment variables into a hash.
   # def self.parse : Array({String, String})
+
+  # Compares keys and returns true if equal.
+  # Calls `String#==` by default.
+  def self.equal?(a : String, b : String) : Bool
+    a == b
+  end
 end
 
 {% if flag?(:unix) %}
