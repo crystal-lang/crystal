@@ -591,6 +591,17 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     @wants_value = old_wants_value
 
+    # Ensure the Expressions node has a type. The semantic pass sets this via
+    # bind_to, but in some interpreter contexts it might not be set yet.
+    # Only set if not already set to avoid overwriting.
+    unless node.type?
+      if node.expressions.empty?
+        node.type = @context.program.nil_type
+      else
+        node.type = node.expressions.last.type?
+      end
+    end
+
     false
   end
 

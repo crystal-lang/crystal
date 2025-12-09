@@ -258,5 +258,40 @@ describe Crystal::Repl::Interpreter do
         parser = "parser"
       CRYSTAL
     end
+
+    it "sets type of Expressions node in if branches (#16486)" do
+      interpret(<<-CRYSTAL, prelude: "prelude").should eq(%("done"))
+        class Model
+          def self.foreign_key_for_association(sym : Symbol) : Symbol | Nil
+            nil
+          end
+
+          def self.through_key_for_association(sym : Symbol) : Symbol | Nil
+            nil
+          end
+        end
+
+        class Query
+          def self.where(key : Symbol, ids : Array) : Query
+            new
+          end
+
+          def initialize
+          end
+        end
+
+        def delete_dependents(queryable, destroy_assoc, ids, tx)
+          through_key = queryable.through_key_for_association(destroy_assoc)
+          if through_key.nil?
+            foreign_key = queryable.foreign_key_for_association(destroy_assoc)
+            return if foreign_key.nil?
+            q = Query.where(foreign_key, ids)
+          end
+        end
+
+        delete_dependents(Model, :test, [1, 2], nil)
+        "done"
+      CRYSTAL
+    end
   end
 end
