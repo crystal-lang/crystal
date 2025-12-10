@@ -27,7 +27,7 @@ class HTTP::Server
     property output : IO
 
     # :nodoc:
-    def version=(version : String)
+    def version=(version : String) : String
       check_headers
       @version = version
     end
@@ -36,7 +36,7 @@ class HTTP::Server
     # body. If not set, the default value is 200 (OK).
     getter status : HTTP::Status
 
-    def status=(status : HTTP::Status)
+    def status=(status : HTTP::Status) : HTTP::Status
       check_headers
       @status = status
     end
@@ -56,7 +56,7 @@ class HTTP::Server
     end
 
     # :nodoc:
-    def reset
+    def reset : Nil
       # This method is called by RequestProcessor to avoid allocating a new instance for each iteration.
       @headers.clear
       @cookies = nil
@@ -68,13 +68,13 @@ class HTTP::Server
     end
 
     # Convenience method to set the `Content-Type` header.
-    def content_type=(content_type : String)
+    def content_type=(content_type : String) : String
       check_headers
       headers["Content-Type"] = content_type
     end
 
     # Convenience method to set the `Content-Length` header.
-    def content_length=(content_length : Int)
+    def content_length=(content_length : Int) : String
       check_headers
       headers["Content-Length"] = content_length.to_s
     end
@@ -85,7 +85,7 @@ class HTTP::Server
     end
 
     # Convenience method to set the HTTP status code.
-    def status_code=(status_code : Int32)
+    def status_code=(status_code : Int32) : Int32
       self.status = HTTP::Status.new(status_code)
       status_code
     end
@@ -133,7 +133,7 @@ class HTTP::Server
     end
 
     # Sets the status message.
-    def status_message=(status_message : String?)
+    def status_message=(status_message : String?) : String
       check_headers
       @status_message = status_message
     end
@@ -183,7 +183,7 @@ class HTTP::Server
     #
     # Raises `IO::Error` if the response is closed or headers were already
     # sent.
-    def redirect(location : String | URI, status : HTTP::Status = :found)
+    def redirect(location : String | URI, status : HTTP::Status = :found) : Nil
       check_headers
 
       self.status = status

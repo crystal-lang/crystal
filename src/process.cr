@@ -17,7 +17,7 @@ class Process
   # not run any handlers registered with `at_exit`, use `::exit` for that.
   #
   # *status* is the exit status of the current process.
-  def self.exit(status : Int32 = 0) : NoReturn
+  def self.exit(status : Int32 | Process::Status = 0) : NoReturn
     Crystal::System::Process.exit(status)
   end
 
@@ -108,6 +108,15 @@ class Process
   # Restores default handling of interrupt requests.
   def self.restore_interrupts! : Nil
     Crystal::System::Process.restore_interrupts!
+  end
+
+  # Returns whether a debugger is attached to the current process.
+  #
+  # Currently supported on Windows and Linux. Always returns `false` on other
+  # systems.
+  @[Experimental]
+  def self.debugger_present? : Bool
+    Crystal::System::Process.debugger_present?
   end
 
   # Returns `true` if the process identified by *pid* is valid for
@@ -206,13 +215,11 @@ class Process
   # Raises `IO::Error` if executing the command fails (for example if the executable doesn't exist).
   def self.exec(command : String, args : Enumerable(String)? = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
                 input : ExecStdio = Redirect::Inherit, output : ExecStdio = Redirect::Inherit, error : ExecStdio = Redirect::Inherit, chdir : Path | String? = nil) : NoReturn
-    command_args = Crystal::System::Process.prepare_args(command, args, shell)
-
     input = exec_stdio_to_fd(input, for: STDIN)
     output = exec_stdio_to_fd(output, for: STDOUT)
     error = exec_stdio_to_fd(error, for: STDERR)
 
-    Crystal::System::Process.replace(command_args, env, clear_env, input, output, error, chdir)
+    Crystal::System::Process.replace(command, args, shell, env, clear_env, input, output, error, chdir)
   end
 
   private def self.exec_stdio_to_fd(stdio : ExecStdio, for dst_io : IO::FileDescriptor) : IO::FileDescriptor
@@ -271,13 +278,11 @@ class Process
   # Raises `IO::Error` if executing the command fails (for example if the executable doesn't exist).
   def initialize(command : String, args : Enumerable(String)? = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
                  input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil)
-    command_args = Crystal::System::Process.prepare_args(command, args, shell)
-
     fork_input = stdio_to_fd(input, for: STDIN)
     fork_output = stdio_to_fd(output, for: STDOUT)
     fork_error = stdio_to_fd(error, for: STDERR)
 
-    pid = Crystal::System::Process.spawn(command_args, env, clear_env, fork_input, fork_output, fork_error, chdir.try &.to_s)
+    pid = Crystal::System::Process.spawn(command, args, shell, env, clear_env, fork_input, fork_output, fork_error, chdir.try &.to_s)
     @process_info = Crystal::System::Process.new(pid)
 
     fork_input.close unless fork_input.in?(input, STDIN)

@@ -4,6 +4,10 @@ require "./sys/types"
 lib LibC
   PTHREAD_MUTEX_ERRORCHECK = 1
 
+  # Flags for cancelling threads
+  PTHREAD_CANCEL_ENABLE  = 0
+  PTHREAD_CANCEL_DISABLE = 1
+
   fun pthread_condattr_destroy(x0 : PthreadCondattrT*) : Int
   fun pthread_condattr_init(x0 : PthreadCondattrT*) : Int
   fun pthread_condattr_setclock(x0 : PthreadCondattrT*, x1 : ClockidT) : Int
@@ -18,8 +22,8 @@ lib LibC
   fun pthread_equal(x0 : PthreadT, x1 : PthreadT) : Int
   fun pthread_getspecific(PthreadKeyT) : Void*
   fun pthread_join(x0 : PthreadT, x1 : Void**) : Int
-  fun pthread_key_create(PthreadKeyT*, (Void*) ->) : Int
-  fun pthread_key_delete(PthreadKeyT) : Int
+  alias PthreadKeyDestructor = (Void*) ->
+  fun pthread_key_create(PthreadKeyT*, PthreadKeyDestructor) : Int
   fun pthread_main_np : Int
   fun pthread_mutexattr_destroy(x0 : PthreadMutexattrT*) : Int
   fun pthread_mutexattr_init(x0 : PthreadMutexattrT*) : Int
@@ -31,6 +35,7 @@ lib LibC
   fun pthread_mutex_unlock(x0 : PthreadMutexT*) : Int
   fun pthread_self : PthreadT
   fun pthread_set_name_np(PthreadT, Char*)
+  fun pthread_setcancelstate(Int, Int*) : Int
   fun pthread_setspecific(PthreadKeyT, Void*) : Int
   fun pthread_stackseg_np(PthreadT, StackT*) : Int
 end

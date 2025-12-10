@@ -36,7 +36,7 @@ on:
       - 'src/crystal/system/**'
       - '.github/workflows/smoke.yml'
   pull_request:
-    branches:
+    paths:
       - 'src/lib_c/**'
       - 'src/crystal/system/**'
       - '.github/workflows/smoke.yml'
@@ -77,10 +77,12 @@ jobs:
 
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Build fresh compiler
         run: bin/ci with_build_env make
 
       - name: Run smoke test
-        run: bin/ci with_build_env make smoke_test target=${{ matrix.target }}
+        run: bin/ci with_build_env make simple_smoke_test target=${{ matrix.target }}

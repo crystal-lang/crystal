@@ -14,6 +14,10 @@ module Crystal::System::Socket
 
   # private def system_listen(backlog)
 
+  private def system_accept : {Handle, Bool}?
+    event_loop.accept(self)
+  end
+
   private def system_send_to(bytes : Bytes, addr : ::Socket::Address)
     event_loop.send_to(self, bytes, addr)
   end
@@ -54,11 +58,11 @@ module Crystal::System::Socket
 
   # private def system_linger=(val)
 
-  # private def system_getsockopt(fd, optname, optval, level = LibC::SOL_SOCKET, &)
+  # private def system_getsockopt(optname, optval, level = LibC::SOL_SOCKET, &)
 
-  # private def system_getsockopt(fd, optname, optval, level = LibC::SOL_SOCKET)
+  # private def system_getsockopt(optname, optval, level = LibC::SOL_SOCKET)
 
-  # private def system_setsockopt(fd, optname, optval, level = LibC::SOL_SOCKET)
+  # private def system_setsockopt(optname, optval, level = LibC::SOL_SOCKET)
 
   # private def system_blocking?
 
@@ -69,6 +73,8 @@ module Crystal::System::Socket
   # private def system_close_on_exec?
 
   # private def system_close_on_exec=(arg : Bool)
+
+  # private def system_fcntl(cmd, arg = 0)
 
   # def self.fcntl(fd, cmd, arg = 0)
 

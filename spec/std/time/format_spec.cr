@@ -80,12 +80,12 @@ describe Time::Format do
         assert_prints zoned.to_s("%^Z"), "CET"
         assert_prints zoned.to_s("%Z"), "Europe/Berlin"
 
-        zoned = Time.local(2017, 11, 24, 13, 5, 6, location: Time::Location.load("America/Buenos_Aires"))
+        zoned = Time.local(2017, 11, 24, 13, 5, 6, location: Time::Location.load("America/Argentina/Buenos_Aires"))
         assert_prints zoned.to_s("%z"), "-0300"
         assert_prints zoned.to_s("%:z"), "-03:00"
         assert_prints zoned.to_s("%::z"), "-03:00:00"
         assert_prints zoned.to_s("%^Z"), "-03"
-        assert_prints zoned.to_s("%Z"), "America/Buenos_Aires"
+        assert_prints zoned.to_s("%Z"), "America/Argentina/Buenos_Aires"
       end
 
       offset = Time.local(2017, 11, 24, 13, 5, 6, location: Time::Location.fixed(9000))

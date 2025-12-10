@@ -707,4 +707,58 @@ class Object
     ptr.as(Pointer(typeof(crystal_instance_type_id))).value = crystal_instance_type_id
     ptr
   end
+
+  # :nodoc:
+  #
+  # Generates a class getter with a lazy initializer for a thread local
+  # variable.
+  #
+  # Unlike the `ThreadLocal` annotation, the value is guaranteed to always be
+  # reachable by the GC that won't collect it until it's really unreachable. We
+  # achieve that by using the `ThreadLocal` annocation (unreachable by GC) to
+  # speedup direct accesses while still keeping a direct reference on the
+  # current `Thread` object whose lifetime outlives the actual thread.
+  #
+  # For example:
+  #
+  # ```
+  # class Foo
+  #   thread_local(instance : Foo) { Foo.new }
+  # end
+  #
+  # # thread 1:
+  # Foo.instance # => <Foo:0x76a066968000>
+  # Foo.instance # => <Foo:0x76a066968000>
+  #
+  # # thread 2:
+  # Foo.instance # => <Foo:0x76a06116ae30>
+  # ```
+  macro thread_local(decl, &constructor)
+    {% raise "The thread_local macro expects a TypeDeclaration" unless decl.is_a?(TypeDeclaration) %}
+    {% name = decl.var.id %}
+    {% tls_name = "__tls_#{@type.name.gsub(/:/, "_")}__#{name}".id %}
+    {% emulated_tls = flag?(:android) || flag?(:openbsd) || (flag?(:win32) && flag?(:gnu)) %}
+
+    {% unless emulated_tls %}
+      @[ThreadLocal]
+      @@{{name}} : {{decl.type}} | Nil
+    {% end %}
+
+    def self.{{name}} : {{decl.type}}
+      {% if emulated_tls %}
+        Thread.current.{{tls_name}} ||= {{yield}}
+      {% else %}
+        if (value = @@{{name}}).nil?
+          Thread.current.{{tls_name}} = @@{{name}} = {{yield}}
+        else
+          value
+        end
+      {% end %}
+    end
+
+    class ::Thread
+      # :nodoc:
+      property {{tls_name}} : {{decl.type}} | Nil
+    end
+  end
 end

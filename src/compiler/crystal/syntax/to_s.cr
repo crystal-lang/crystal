@@ -136,13 +136,16 @@ module Crystal
     end
 
     def visit_interpolation(node, &)
-      node.expressions.each do |exp|
-        if exp.is_a?(StringLiteral)
-          @str << yield exp.value
+      node.expressions.chunks(&.is_a?(StringLiteral)).each do |(is_string, exps)|
+        if is_string
+          value = exps.join(&.as(StringLiteral).value)
+          @str << yield value
         else
-          @str << "\#{"
-          exp.accept(self)
-          @str << '}'
+          exps.each do |exp|
+            @str << "\#{"
+            exp.accept(self)
+            @str << '}'
+          end
         end
       end
     end
@@ -203,13 +206,13 @@ module Crystal
     end
 
     def visit(node : NamedTupleLiteral)
-      @str << '{'
-
       # short-circuit to handle empty named tuple context
       if node.entries.empty?
-        @str << '}'
+        @str << "::NamedTuple.new"
         return false
       end
+
+      @str << '{'
 
       # A node starts multiline when its starting brace is on a different line than the staring line of it's first entry
       start_multiline = (start_loc = node.location) && (first_entry_loc = node.entries.first?.try &.value.location) && first_entry_loc.line_number > start_loc.line_number
@@ -1100,8 +1103,6 @@ module Crystal
     end
 
     def visit(node : Generic)
-      name = node.name
-
       node.name.accept self
 
       printed_arg = false
@@ -1241,9 +1242,14 @@ module Crystal
     end
 
     def visit(node : TupleLiteral)
+      first = node.elements.first?
+      unless first
+        @str << "::Tuple.new"
+        return false
+      end
+
       @str << '{'
 
-      first = node.elements.first?
       space = first.is_a?(TupleLiteral) || first.is_a?(NamedTupleLiteral) || first.is_a?(HashLiteral)
       @str << ' ' if space
       node.elements.join(@str, ", ", &.accept self)
@@ -1276,7 +1282,7 @@ module Crystal
 
       @str << "do"
 
-      unless node.args.empty?
+      if node.has_any_args?
         @str << " |"
         node.args.each_with_index do |arg, i|
           @str << ", " if i > 0

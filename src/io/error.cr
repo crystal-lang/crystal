@@ -26,7 +26,7 @@ class IO
   # Raised when an `IO` operation times out.
   #
   # ```
-  # STDIN.read_timeout = 1
+  # STDIN.read_timeout = 1.second
   # STDIN.gets # raises IO::TimeoutError (after 1 second)
   # ```
   class TimeoutError < Error

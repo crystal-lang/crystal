@@ -24,7 +24,7 @@ jobs:
     steps:
       - name: Setup MSYS2
         id: msys2
-        uses: msys2/setup-msys2@40677d36a502eb2cf0fb808cc9dec31bf6152638 # v2.28.0
+        uses: msys2/setup-msys2@fb197b72ce45fb24f17bf3f807a388985654d1f2 # v2.29.0
         with:
           msystem: ${{ inputs.msystem }}
           update: true
@@ -40,7 +40,9 @@ jobs:
           git config --global core.autocrlf false
 
       - name: Download Crystal source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Build Crystal
         shell: msys2 {0}
@@ -51,11 +53,12 @@ jobs:
         run: make install install_dlls deref_symlinks=1 PREFIX="$(pwd)/crystal"
 
       - name: Download shards release
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: crystal-lang/shards
           ref: v0.19.1
           path: shards
+          persist-credentials: false
 
       - name: Build shards release
         shell: msys2 {0}
@@ -71,7 +74,7 @@ jobs:
           ldd bin/shards.exe | grep -iv ' => /c/windows/system32' | sed 's/.* => //; s/ (.*//' | xargs -t -i /usr/bin/install -m 0755 '{}' "$(pwd)/../crystal/bin/"
 
       - name: Upload Crystal executable
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ${{ inputs.arch }}-mingw-w64-crystal
           path: crystal
@@ -81,7 +84,7 @@ jobs:
     steps:
       - name: Setup MSYS2
         id: msys2
-        uses: msys2/setup-msys2@40677d36a502eb2cf0fb808cc9dec31bf6152638 # v2.28.0
+        uses: msys2/setup-msys2@fb197b72ce45fb24f17bf3f807a388985654d1f2 # v2.29.0
         with:
           msystem: ${{ inputs.msystem }}
           update: true
@@ -97,7 +100,9 @@ jobs:
           git config --global core.autocrlf false
 
       - name: Download Crystal source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Run stdlib specs
         shell: msys2 {0}
@@ -111,7 +116,7 @@ jobs:
     steps:
       - name: Setup MSYS2
         id: msys2
-        uses: msys2/setup-msys2@40677d36a502eb2cf0fb808cc9dec31bf6152638 # v2.28.0
+        uses: msys2/setup-msys2@fb197b72ce45fb24f17bf3f807a388985654d1f2 # v2.29.0
         with:
           msystem: ${{ inputs.msystem }}
           update: true
@@ -127,10 +132,12 @@ jobs:
           git config --global core.autocrlf false
 
       - name: Download Crystal source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Download Crystal executable
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: ${{ inputs.arch }}-mingw-w64-crystal
           path: crystal

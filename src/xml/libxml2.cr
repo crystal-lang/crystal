@@ -21,12 +21,20 @@ lib LibXML
   # assume at least this version is available everywhere.
 
   {% if (version = env("LIBXML_VERSION")) && (version.strip != "") %}
-     VERSION = {{env("LIBXML_VERSION")}}
-   {% elsif !flag?(:win32) || flag?(:gnu) %}
-     VERSION = {{`sh -c "pkg-config libxml-2.0 --silence-errors --modversion 2> /dev/null || echo 2.9.0"`.strip.stringify}}
-   {% else %}
-    # TODO: figure out the actual libxml version on *-windows-msvc target
-    VERSION = "2.9.0"
+    VERSION = {{env("LIBXML_VERSION")}}
+  {% elsif flag?(:msvc) %}
+    {% version = nil %}
+    {% for dir in Crystal::LIBRARY_PATH.split(Crystal::System::Process::HOST_PATH_DELIMITER) %}
+      {% unless version %}
+        {% config_path = "#{dir.id}\\libxml_VERSION" %}
+        {% if config_version = read_file?(config_path) %}
+          {% version = config_version.chomp %}
+        {% end %}
+      {% end %}
+    {% end %}
+    VERSION = {{ version || "2.9.0" }}
+  {% else %}
+    VERSION = {{`sh -c "pkg-config libxml-2.0 --silence-errors --modversion 2> /dev/null || echo 2.9.0"`.strip.stringify}}
   {% end %}
 
   alias Int = LibC::Int
@@ -167,10 +175,12 @@ lib LibXML
   fun xmlNewParserCtxt : ParserCtxt
   fun xmlCtxtReadIO(ParserCtxt, ioread : InputReadCallback, ioclose : InputCloseCallback, ioctx : Void*, url : UInt8*, encoding : UInt8*, options : XML::ParserOptions) : Doc*
   fun xmlCtxtReadMemory(ParserCtxt, buffer : UInt8*, size : Int, url : UInt8*, encoding : UInt8*, options : XML::ParserOptions) : Doc*
+  fun xmlFreeParserCtxt(ctxt : ParserCtxt)
 
   fun htmlNewParserCtxt : HTMLParserCtxt
   fun htmlCtxtReadMemory(HTMLParserCtxt, buffer : UInt8*, size : Int, url : UInt8*, encoding : UInt8*, options : XML::HTMLParserOptions) : Doc*
   fun htmlCtxtReadIO(HTMLParserCtxt, ioread : InputReadCallback, ioclose : InputCloseCallback, ioctx : Void*, url : UInt8*, encoding : UInt8*, options : XML::HTMLParserOptions) : Doc*
+  fun htmlFreeParserCtxt(ctxt : HTMLParserCtxt)
 
   fun xmlDocGetRootElement(doc : Doc*) : Node*
   fun xmlXPathNodeSetCreate(node : Node*) : NodeSet*

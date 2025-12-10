@@ -14,7 +14,7 @@ end
 ZONEINFO_ZIP = datapath("zoneinfo.zip")
 
 def with_zoneinfo(path = ZONEINFO_ZIP, &)
-  with_env("ZONEINFO": path) do
+  with_env("TZDIR": path) do
     Time::Location.__clear_location_cache
 
     yield

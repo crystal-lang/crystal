@@ -311,6 +311,27 @@ module HTTP
       end
     end
 
+    it "retry does not call before_request callback again" do
+      server = HTTP::Server.new do |context|
+        io = context.response.@io.as(Socket)
+        io.linger = 0 # with linger 0 the socket will be RST on close
+        io.close
+      end
+      address = server.bind_unused_port "127.0.0.1"
+
+      run_server(server) do
+        callback_counts = 0
+        client = HTTP::Client.new("127.0.0.1", address.port)
+        client.before_request do
+          callback_counts += 1
+        end
+        expect_raises(IO::Error) do
+          client.get(path: "/")
+        end
+        callback_counts.should eq 1
+      end
+    end
+
     it "doesn't read the body if request was HEAD" do
       resp_get = test_server("localhost", 0, 0.seconds) do |server|
         client = Client.new("localhost", server.local_address.port)

@@ -29,12 +29,12 @@ module HTTP
     # Creates a new instance by parsing the `Cookie` headers in the given `HTTP::Headers`.
     #
     # See `HTTP::Client::Response#cookies`.
-    def self.from_client_headers(headers) : self
+    def self.from_client_headers(headers : HTTP::Headers) : self
       new.tap(&.fill_from_client_headers(headers))
     end
 
     # Filling cookies by parsing the `Cookie` headers in the given `HTTP::Headers`.
-    def fill_from_client_headers(headers) : self
+    def fill_from_client_headers(headers : HTTP::Headers) : self
       if values = headers.get?("Cookie")
         values.each do |header|
           Cookie::Parser.parse_cookies(header) { |cookie| self << cookie }
@@ -46,12 +46,12 @@ module HTTP
     # Creates a new instance by parsing the `Set-Cookie` headers in the given `HTTP::Headers`.
     #
     # See `HTTP::Request#cookies`.
-    def self.from_server_headers(headers) : self
+    def self.from_server_headers(headers : HTTP::Headers) : self
       new.tap(&.fill_from_server_headers(headers))
     end
 
     # Filling cookies by parsing the `Set-Cookie` headers in the given `HTTP::Headers`.
-    def fill_from_server_headers(headers) : self
+    def fill_from_server_headers(headers : HTTP::Headers) : self
       if values = headers.get?("Set-Cookie")
         values.each do |header|
           Cookie::Parser.parse_set_cookie(header).try { |cookie| self << cookie }
@@ -77,8 +77,8 @@ module HTTP
     # request = HTTP::Request.new "GET", "/"
     # request.cookies["foo"] = "bar"
     # ```
-    def []=(key, value : String)
-      self[key] = Cookie.new(key, value)
+    def []=(key : String, value : String) : Cookie
+      self << Cookie.new(key, value)
     end
 
     # Sets a new cookie in the collection to the given `HTTP::Cookie`
@@ -91,12 +91,12 @@ module HTTP
     # response = HTTP::Client::Response.new(200)
     # response.cookies["foo"] = HTTP::Cookie.new("foo", "bar", "/admin", Time.utc + 12.hours, secure: true)
     # ```
-    def []=(key, value : Cookie)
+    def []=(key : String, value : Cookie) : Cookie
       unless key == value.name
         raise ArgumentError.new("Cookie name must match the given key")
       end
 
-      @cookies[key] = value
+      self << value
     end
 
     # Gets the current `HTTP::Cookie` for the given *key*.
@@ -104,7 +104,7 @@ module HTTP
     # ```
     # request.cookies["foo"].value # => "bar"
     # ```
-    def [](key) : Cookie
+    def [](key : String) : Cookie
       @cookies[key]
     end
 
@@ -118,7 +118,7 @@ module HTTP
     # request.cookies["foo"] = "bar"
     # request.cookies["foo"]?.try &.value # > "bar"
     # ```
-    def []?(key) : Cookie?
+    def []?(key : String) : Cookie?
       @cookies[key]?
     end
 
@@ -127,7 +127,7 @@ module HTTP
     # ```
     # request.cookies.has_key?("foo") # => true
     # ```
-    def has_key?(key) : Bool
+    def has_key?(key : String) : Bool
       @cookies.has_key?(key)
     end
 
@@ -137,19 +137,19 @@ module HTTP
     # ```
     # response.cookies << HTTP::Cookie.new("foo", "bar", http_only: true)
     # ```
-    def <<(cookie : Cookie)
-      self[cookie.name] = cookie
+    def <<(cookie : Cookie) : Cookie
+      @cookies[cookie.name] = cookie
     end
 
     # Clears the collection, removing all cookies.
-    def clear : Hash(String, HTTP::Cookie)
+    def clear : Hash(String, Cookie)
       @cookies.clear
     end
 
     # Deletes and returns the `HTTP::Cookie` for the specified *key*, or
     # returns `nil` if *key* cannot be found in the collection. Note that
     # *key* should match the name attribute of the desired `HTTP::Cookie`.
-    def delete(key) : Cookie?
+    def delete(key : String) : Cookie?
       @cookies.delete(key)
     end
 
@@ -161,7 +161,7 @@ module HTTP
     end
 
     # Returns an iterator over the cookies of this collection.
-    def each
+    def each : Iterator(Cookie)
       @cookies.each_value
     end
 
@@ -178,7 +178,7 @@ module HTTP
     # Adds `Cookie` headers for the cookies in this collection to the
     # given `HTTP::Headers` instance and returns it. Removes any existing
     # `Cookie` headers in it.
-    def add_request_headers(headers)
+    def add_request_headers(headers : HTTP::Headers) : HTTP::Headers
       if empty?
         headers.delete("Cookie")
       else
@@ -195,7 +195,7 @@ module HTTP
     # Adds `Set-Cookie` headers for the cookies in this collection to the
     # given `HTTP::Headers` instance and returns it. Removes any existing
     # `Set-Cookie` headers in it.
-    def add_response_headers(headers)
+    def add_response_headers(headers : HTTP::Headers) : HTTP::Headers
       headers.delete("Set-Cookie")
       each do |cookie|
         headers.add("Set-Cookie", cookie.to_set_cookie_header)

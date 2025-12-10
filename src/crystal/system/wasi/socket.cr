@@ -21,6 +21,10 @@ module Crystal::System::Socket
     raise NotImplementedError.new "Crystal::System::Socket#system_listen"
   end
 
+  private def system_accept : {Handle, Bool}?
+    raise NotImplementedError.new "Crystal::System::Socket#system_accept"
+  end
+
   private def system_close_read
     if LibC.shutdown(fd, LibC::SHUT_RD) != 0
       raise ::Socket::Error.from_errno("shutdown read")
@@ -31,6 +35,10 @@ module Crystal::System::Socket
     if LibC.shutdown(fd, LibC::SHUT_WR) != 0
       raise ::Socket::Error.from_errno("shutdown write")
     end
+  end
+
+  private def system_accept : {::Socket::Handle, Bool}?
+    event_loop.accept(self)
   end
 
   private def system_send_buffer_size : Int
@@ -89,15 +97,15 @@ module Crystal::System::Socket
     raise NotImplementedError.new "Crystal::System::Socket#system_linge="
   end
 
-  private def system_getsockopt(fd, optname, optval, level = LibC::SOL_SOCKET, &)
+  private def system_getsockopt(optname, optval, level = LibC::SOL_SOCKET, &)
     raise NotImplementedError.new "Crystal::System::Socket#system_getsockopt"
   end
 
-  private def system_getsockopt(fd, optname, optval, level = LibC::SOL_SOCKET)
+  private def system_getsockopt(optname, optval, level = LibC::SOL_SOCKET)
     raise NotImplementedError.new "Crystal::System::Socket#system_getsockopt"
   end
 
-  private def system_setsockopt(fd, optname, optval, level = LibC::SOL_SOCKET)
+  private def system_setsockopt(optname, optval, level = LibC::SOL_SOCKET)
     raise NotImplementedError.new "Crystal::System::Socket#system_setsockopt"
   end
 
@@ -139,11 +147,16 @@ module Crystal::System::Socket
     r
   end
 
+  private def system_fcntl(cmd, arg = 0)
+    FileDescriptor.system_fcntl(fd, cmd, arg)
+  end
+
   private def system_tty?
     LibC.isatty(fd) == 1
   end
 
   private def system_close
+    event_loop.shutdown(self)
     event_loop.close(self)
   end
 

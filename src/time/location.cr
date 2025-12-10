@@ -18,11 +18,11 @@ require "./location/loader"
 # location = Time::Location.load("Europe/Berlin")
 # location # => #<Time::Location Europe/Berlin>
 # time = Time.local(2016, 2, 15, 21, 1, 10, location: location)
-# time # => 2016-02-15 21:01:10 +01:00 Europe/Berlin
+# time # => 2016-02-15 21:01:10+01:00[Europe/Berlin]
 # ```
 #
 # A custom time zone database can be configured through the environment variable
-# `ZONEINFO`. See `.load` for details.
+# `TZDIR`. See `.load` for details.
 #
 # ### Fixed Offset
 #
@@ -274,7 +274,8 @@ class Time::Location
   # systems. In this case, you may need to distribute a copy of the database
   # with an application that depends on time zone data being available.
   #
-  # A custom lookup path can be set as environment variable `ZONEINFO`.
+  # A custom lookup path can be set as environment variable `TZDIR`(`ZONEINFO`
+  # is also supported as legacy option).
   # The path can point to the root of a directory structure or an
   # uncompressed ZIP file, each representing the time zone database using files
   # and folders of the expected names.
@@ -283,12 +284,12 @@ class Time::Location
   #
   # ```
   # # This tries to load the file `/usr/share/zoneinfo/Custom/Location`
-  # ENV["ZONEINFO"] = "/usr/share/zoneinfo/"
+  # ENV["TZDIR"] = "/usr/share/zoneinfo/"
   # Time::Location.load("Custom/Location")
   #
   # # This tries to load the file `Custom/Location` in the uncompressed ZIP
   # # file at `/path/to/zoneinfo.zip`
-  # ENV["ZONEINFO"] = "/path/to/zoneinfo.zip"
+  # ENV["TZDIR"] = "/path/to/zoneinfo.zip"
   # Time::Location.load("Custom/Location")
   # ```
   #
@@ -299,9 +300,28 @@ class Time::Location
   # Files are cached based on the modification time, so subsequent request for
   # the same location name will most likely return the same instance of
   # `Location`, unless the time zone database has been updated in between.
+  #
+  # - `.load?` returns `nil` if the location is unavailable.
   def self.load(name : String) : Location
+    load?(name) { |source| raise InvalidLocationNameError.new(name, source) }
+  end
+
+  # :ditto:
+  #
+  # Returns `nil` if the location is unavailable.
+  # Raises `InvalidLocationNameError` if the name is invalid.
+  # Raises `InvalidTZDataError` if the loader encounters a format error in the
+  # time zone database.
+  #
+  # - `.load` raises if the location is unavailable.
+  def self.load?(name : String) : Location?
+    load?(name) { return }
+  end
+
+  # :nodoc:
+  def self.load?(name : String, & : String? ->) : Location?
     case name
-    when "", "UTC", "Etc/UTC"
+    when "", "UTC", "Etc/UTC", "GMT", "Etc/GMT"
       # `UTC` is a special identifier, empty string represents a fallback mechanism.
       # `Etc/UTC` is technically a tzdb identifier which could potentially point to anything.
       # But we map it to `Location::UTC` directly for convenience which allows it to work
@@ -314,15 +334,16 @@ class Time::Location
       # much less dot dot. Likewise, none begin with a slash.
       raise InvalidLocationNameError.new(name)
     else
-      if zoneinfo = ENV["ZONEINFO"]?
+      # DEPRECATED: `ZONEINFO` is supported only for backwards compatibility.
+      if zoneinfo = ENV["TZDIR"]? || ENV["ZONEINFO"]?
         if location = load_from_dir_or_zip(name, zoneinfo)
           return location
         else
-          raise InvalidLocationNameError.new(name, zoneinfo)
+          yield zoneinfo
         end
       end
 
-      if location = load(name, Crystal::System::Time.zone_sources)
+      if location = load(name, Crystal::System::Time.zone_sources) { |source| yield source }
         return location
       end
 
@@ -341,7 +362,7 @@ class Time::Location
         return location
       end
 
-      raise InvalidLocationNameError.new(name)
+      yield nil
     end
   end
 
@@ -399,7 +420,8 @@ class Time::Location
         return TZLocation.new("Local", zones, tz_string, *tz_args)
       end
 
-      if zoneinfo = ENV["ZONEINFO"]?
+      # DEPRECATED: `ZONEINFO` is supported only for backwards compatibility.
+      if zoneinfo = ENV["TZDIR"]? || ENV["ZONEINFO"]?
         if location = load_from_dir_or_zip(tz_string, zoneinfo)
           return location
         end
@@ -447,7 +469,7 @@ class Time::Location
   # Returns the time zone offset observed at *unix_seconds*.
   #
   # *unix_seconds* expresses the number of seconds since UNIX epoch
-  # (`1970-01-01 00:00:00 UTC`).
+  # (`1970-01-01 00:00:00Z`).
   def lookup(unix_seconds : Int) : Zone
     unless @cached_range[0] <= unix_seconds < @cached_range[1]
       @cached_zone, @cached_range = lookup_with_boundaries(unix_seconds)

@@ -26,12 +26,29 @@ struct Crystal::PointerLinkedList(T)
     _next.value.previous = new
   end
 
+  def first?
+    if node = @head
+      node
+    end
+  end
+
   # Returns `true` if the list is empty, otherwise false.
   def empty? : Bool
     @head.null?
   end
 
-  # Appends a node to the tail of the list.
+  # Prepends *node* to the head of the list.
+  def unshift(node : Pointer(T)) : Nil
+    if !empty?
+      typeof(self).insert_impl node, @head.value.previous, @head
+    else
+      node.value.previous = node
+      node.value.next = node
+    end
+    @head = node
+  end
+
+  # Appends *node* to the tail of the list.
   def push(node : Pointer(T)) : Nil
     if empty?
       node.value.previous = node
@@ -42,7 +59,7 @@ struct Crystal::PointerLinkedList(T)
     end
   end
 
-  # Removes a node from the list.
+  # Removes *node* from the list.
   def delete(node : Pointer(T)) : Nil
     _next = node.value.next
 
@@ -52,6 +69,9 @@ struct Crystal::PointerLinkedList(T)
     else
       @head = Pointer(T).null
     end
+
+    node.value.next = Pointer(T).null
+    node.value.previous = Pointer(T).null
   end
 
   # Removes and returns head from the list, yields if empty
@@ -68,15 +88,28 @@ struct Crystal::PointerLinkedList(T)
     shift { nil }
   end
 
+  # Removes and returns tail from the list, yields if empty.
+  def pop(&)
+    if !empty?
+      h = @head
+      t = (h.value.previous || h).tap { |t| delete(t) }
+    else
+      yield
+    end
+  end
+
+  # Removes and returns tail from the list, `nil` if empty.
+  def pop?
+    pop { nil }
+  end
+
   # Iterates the list.
   def each(&) : Nil
-    return if empty?
-
     node = @head
-    loop do
+    while node
       _next = node.value.next
+      _next = Pointer(T).null if _next == @head
       yield node
-      break if _next == @head
       node = _next
     end
   end

@@ -8,11 +8,11 @@ parameters:
   distribution-scripts-version:
     description: "Git ref for version of https://github.com/crystal-lang/distribution-scripts/"
     type: string
-    default: "1ee31a42f0b06776a42fa4635b54dc9ec567e68a"
+    default: "d1d86577200f8a3d567bf83d911f60a05733c4b4"
   previous_crystal_base_url:
     description: "Prefix for URLs to Crystal bootstrap compiler"
     type: string
-    default: "https://github.com/crystal-lang/crystal/releases/download/1.17.1/crystal-1.17.1-1"
+    default: "https://github.com/crystal-lang/crystal/releases/download/1.18.2/crystal-1.18.2-1"
 
 defaults:
   environment: &env
@@ -81,7 +81,7 @@ jobs:
 
   test_darwin:
     macos:
-      xcode: 15.4.0
+      xcode: 16.4.0
     environment:
       <<: *env
       TRAVIS_OS_NAME: osx
@@ -160,7 +160,6 @@ jobs:
           echo "export CRYSTAL_SHA1=$CIRCLE_SHA1" >> build.env
 
           # Which previous version use
-          echo "export PREVIOUS_CRYSTAL_RELEASE_LINUX64_TARGZ=<< pipeline.parameters.previous_crystal_base_url >>-linux-x86_64.tar.gz" >> build.env
           echo "export PREVIOUS_CRYSTAL_RELEASE_DARWIN_TARGZ=<< pipeline.parameters.previous_crystal_base_url >>-darwin-universal.tar.gz" >> build.env
 
           cat build.env
@@ -263,8 +262,12 @@ jobs:
             - distribution-scripts
 
   dist_linux:
+    parameters:
+      arch:
+        type: string
     machine:
       image: default
+    resource_class: << parameters.arch >>
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -273,6 +276,7 @@ jobs:
           command: |
             cd /tmp/workspace/distribution-scripts
             source build.env
+            export PREVIOUS_CRYSTAL_RELEASE_LINUX64_TARGZ="<< pipeline.parameters.previous_crystal_base_url >>-linux-$(uname -m).tar.gz"
             cd linux
             make all64 release=true
       - store_artifacts:
@@ -285,7 +289,7 @@ jobs:
 
   dist_darwin:
     macos:
-      xcode: 15.3.0
+      xcode: 16.4.0
     shell: /bin/bash --login -eo pipefail
     steps:
       - restore_cache:
@@ -349,30 +353,14 @@ jobs:
           cd /tmp/workspace/distribution-scripts
           source build.env
           cd docker
-          make all64 CRYSTAL_DEB=/tmp/workspace/build/crystal_${CRYSTAL_VERSION}-1_amd64.deb CRYSTAL_TARGZ=/tmp/workspace/build/crystal-$CRYSTAL_VERSION-1-linux-x86_64.tar.gz
-      - persist_to_workspace:
-          root: /tmp/workspace/distribution-scripts/docker/
-          paths:
-            - build
-
-  publish_docker:
-    machine:
-      image: default
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
+          make all TARBALLS=/tmp/workspace/build/ VERSION=${CRYSTAL_VERSION}
+          make smoke-all VERSION=${CRYSTAL_VERSION}
       - run: |
           cd /tmp/workspace/distribution-scripts
-          source ./build.env
-          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-ubuntu-x86_64.tar.gz | docker image load
-          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-ubuntu-x86_64-build.tar.gz | docker image load
-          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-alpine.tar.gz | docker image load
-          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-alpine-build.tar.gz | docker image load
+          source build.env
+          cd docker
           docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
-          docker push ${DOCKER_REPOSITORY}:${DOCKER_TAG}
-          docker push ${DOCKER_REPOSITORY}:${DOCKER_TAG}-build
-          docker push ${DOCKER_REPOSITORY}:${DOCKER_TAG}-alpine
-          docker push ${DOCKER_REPOSITORY}:${DOCKER_TAG}-alpine-build
+          make push VERSION=${CRYSTAL_VERSION}
 
   dist_snap:
     docker:
@@ -420,7 +408,6 @@ jobs:
           cd /tmp/workspace/distribution-scripts
           source build.env
           cd docs
-          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-ubuntu-x86_64-build.tar.gz | docker image load
           make CRYSTAL_DOCKER_IMAGE=${DOCKER_REPOSITORY}:${DOCKER_TAG}-build
       - store_artifacts:
           path: /tmp/workspace/distribution-scripts/docs/build
@@ -444,6 +431,7 @@ jobs:
           cd /tmp/workspace/build
           cp crystal-*-darwin-universal.tar.gz /tmp/upload/crystal-nightly-darwin-universal.tar.gz
           cp crystal-*-linux-x86_64.tar.gz /tmp/upload/crystal-nightly-linux-x86_64.tar.gz
+          cp crystal-*-linux-aarch64.tar.gz /tmp/upload/crystal-nightly-linux-aarch64.tar.gz
       - run: s3cmd put --recursive /tmp/upload/* s3://artifacts.crystal-lang.org/dist/
 
   dist_artifacts:
@@ -455,32 +443,6 @@ jobs:
       - store_artifacts:
           path: /tmp/workspace/build
           destination: dist_packages
-
-  test_dist_linux_on_docker:
-    machine:
-      image: default
-    environment:
-      <<: *env
-      TRAVIS_OS_NAME: linux
-      ARCH: x86_64
-      ARCH_CMD: linux64
-    resource_class: large
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - run: |
-          cd /tmp/workspace/distribution-scripts
-          source ./build.env
-          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-ubuntu-x86_64-build.tar.gz | docker image load
-          echo "export DOCKER_TEST_PREFIX=crystallang/crystal:${DOCKER_TAG}" >> $BASH_ENV
-      - checkout
-      - run: bin/ci prepare_system
-      - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
-      - run: bin/ci prepare_build
-      - run: bin/ci with_build_env 'shards --version'
-      - run:
-          command: bin/ci build
-          no_output_timeout: 30m
 
 workflows:
   version: 2
@@ -519,6 +481,9 @@ workflows:
           requires:
             - prepare_common
       - dist_linux:
+          matrix:
+            parameters:
+              arch: [large, arm.medium]
           filters: *release
           requires:
             - prepare_maintenance
@@ -540,14 +505,6 @@ workflows:
           filters: *release
           requires:
             - dist_snap
-      - test_dist_linux_on_docker:
-          filters: *release
-          requires:
-            - dist_docker
-      - publish_docker:
-          filters: *release
-          requires:
-            - test_dist_linux_on_docker
       - dist_docs:
           filters: *release
           requires:
@@ -578,6 +535,9 @@ workflows:
           requires:
             - prepare_common
       - dist_linux:
+          matrix:
+            parameters:
+              arch: [large, arm.medium]
           requires:
             - prepare_nightly
       - dist_darwin:
@@ -596,12 +556,6 @@ workflows:
       - publish_snap:
           requires:
             - dist_snap
-      - test_dist_linux_on_docker:
-          requires:
-            - dist_docker
-      - publish_docker:
-          requires:
-            - dist_docker
       - dist_docs:
           requires:
             - dist_docker

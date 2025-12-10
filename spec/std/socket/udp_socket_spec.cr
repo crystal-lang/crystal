@@ -18,6 +18,24 @@ describe UDPSocket, tags: "network" do
     socket.close
   end
 
+  it "supports IPv6 dual stack" do
+    socket = UDPSocket.new(:inet6)
+
+    socket.ipv6_only = false
+    socket.ipv6_only?.should be_false
+
+    socket.ipv6_only = true
+    socket.ipv6_only?.should be_true
+
+    socket = UDPSocket.new
+    expect_raises(Socket::Error, "Unsupported IP address family: INET. For use with IPv6 only") do
+      socket.ipv6_only?
+    end
+    expect_raises(Socket::Error, "Unsupported IP address family: INET. For use with IPv6 only") do
+      socket.ipv6_only = false
+    end
+  end
+
   each_ip_family do |family, address, unspecified_address|
     it "#bind" do
       port = unused_local_udp_port
@@ -186,19 +204,31 @@ describe UDPSocket, tags: "network" do
     end
   end
 
-  {% if flag?(:linux) || flag?(:win32) %}
+  {% if flag?(:darwin) %}
+    # Fails since macOS Sequoia (version 15) with EHOSTUNREACH. The ability to
+    # send UDP broadcasts might need extra requirements.
+    pending "sends broadcast message"
+  {% else %}
     it "sends broadcast message" do
-      port = unused_local_tcp_port
+      server = UDPSocket.new(Socket::Family::INET)
+      server.bind("0.0.0.0", 0)
+      addr = Socket::IPAddress.new("255.255.255.255", server.local_address.port)
 
       client = UDPSocket.new(Socket::Family::INET)
-      client.bind("localhost", 0)
       client.broadcast = true
       client.broadcast?.should be_true
-      client.connect("255.255.255.255", port)
-      client.send("broadcast").should eq(9)
+
+      client.send("broadcast", to: addr).should eq(9)
       client.close
+
+      server.read_timeout = 1.second
+      begin
+        message, _ = server.receive
+        message.should eq("broadcast")
+      rescue IO::TimeoutError
+        # Since this test doesn't run over the loopback interface, this test
+        # fails when there is a firewall in use. Don't fail in that case.
+      end
     end
-  {% else %}
-    pending "sends broadcast message"
   {% end %}
 end

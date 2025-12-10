@@ -68,6 +68,10 @@ struct Crystal::System::Process
   def self.start_interrupt_loop : Nil
   end
 
+  def self.debugger_present? : Bool
+    false
+  end
+
   def self.exists?(pid)
     raise NotImplementedError.new("Process.exists?")
   end
@@ -76,7 +80,7 @@ struct Crystal::System::Process
     raise NotImplementedError.new("Process.times")
   end
 
-  def self.fork(*, will_exec = false)
+  def self.fork
     raise NotImplementedError.new("Process.fork")
   end
 
@@ -84,15 +88,11 @@ struct Crystal::System::Process
     raise NotImplementedError.new("Process.fork")
   end
 
-  def self.spawn(command_args, env, clear_env, input, output, error, chdir)
+  def self.spawn(command, args, shell, env, clear_env, input, output, error, chdir)
     raise NotImplementedError.new("Process.spawn")
   end
 
-  def self.prepare_args(command : String, args : Enumerable(String)?, shell : Bool) : Array(String)
-    raise NotImplementedError.new("Process.prepare_args")
-  end
-
-  def self.replace(command_args, env, clear_env, input, output, error, chdir)
+  def self.replace(command, args, shell, env, clear_env, input, output, error, chdir)
     raise NotImplementedError.new("Process.replace")
   end
 
