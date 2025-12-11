@@ -435,26 +435,25 @@ class StringScanner
 
   # Decodes a single character at the scan head.
   def current_char? : Char?
-    char_reader.current_char?
+    make_char_reader.current_char?
   end
 
   # :ditto:
   def current_char : Char
-    char_reader.current_char
+    make_char_reader.current_char
   end
 
   # Decodes one character before the scan head
   def previous_char? : Char?
-    char_reader.previous_char?
+    make_char_reader.previous_char?
   end
 
   # :ditto:
   def previous_char : Char
-    char_reader.previous_char
+    make_char_reader.previous_char
   end
 
-  @[AlwaysInline]
-  private def char_reader : Char::Reader
+  private def make_char_reader : Char::Reader
     Char::Reader.new(@str, @byte_offset)
   end
 
@@ -502,7 +501,7 @@ class StringScanner
     # some redundant logic here from String#find_start_and_end, but in this case
     # it is likely we are far into the string and len is small, so it is very
     # important not to start at the beginning of the string.
-    reader = self.char_reader
+    reader = self.make_char_reader
     i = 0
 
     reader.each do
@@ -517,7 +516,7 @@ class StringScanner
     return 0 if len.zero?
     return len if @str.single_byte_optimizable?
 
-    reader = self.char_reader
+    reader = self.make_char_reader
 
     until len.zero?
       reader.previous_char
