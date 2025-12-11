@@ -21,7 +21,7 @@ describe StringScanner do
       s.scan("string").should be_nil
       s.scan(/\s\w\w/).should_not be_nil # => " string"
       s.scan(4).should eq("ring")
-      s.scan(/.*/).should_not be_nil    # => ""
+      s.scan(/.*/).should_not be_nil # => ""
       s.scan(1).should be_nil
     end
 
@@ -311,20 +311,22 @@ describe StringScanner do
   describe "#inspect" do
     it "has information on the scanner" do
       s = StringScanner.new("this is a string")
-      s.inspect.should eq(%(#<StringScanner 0/16 |"this ">))
+      s.inspect.should eq(%(#<StringScanner 0/16 "‣this …">))
       s.scan(/\w+\s/)
-      s.inspect.should eq(%(#<StringScanner 5/16 "s "|"is ">))
+      s.inspect.should eq(%(#<StringScanner 5/16 "…s ‣is …">))
       s.scan(/\w+\s/)
-      s.inspect.should eq(%(#<StringScanner 8/16 "s "|"a s">))
+      s.inspect.should eq(%(#<StringScanner 8/16 "…s ‣a s…">))
       s.scan(/\w+\s\w+/)
-      s.inspect.should eq(%(#<StringScanner 16/16 "tring"|>))
+      s.inspect.should eq(%(#<StringScanner 16/16 "…tring‣" eos>))
     end
 
     it "works with small strings" do
       s = StringScanner.new("hi")
-      s.inspect.should eq(%(#<StringScanner 0/2 |"hi">))
-      s.scan(/\w\w/)
-      s.inspect.should eq(%(#<StringScanner 2/2 "hi"|>))
+      s.inspect.should eq(%(#<StringScanner 0/2 "‣hi">))
+      s.scan(/\w/)
+      s.inspect.should eq(%(#<StringScanner 1/2 "h‣i">))
+      s.scan(/\w/)
+      s.inspect.should eq(%(#<StringScanner 2/2 "hi‣" eos>))
     end
   end
 

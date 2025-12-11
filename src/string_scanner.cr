@@ -488,17 +488,30 @@ class StringScanner
     io << "#<StringScanner "
     io << offset << '/' << @str.size << ' '
 
+    indicator_char = '‣'
+    ellipsis = '…'
+
+    io << '"'
     if offset.zero?
-      io << '|'
-      peek(5).inspect(io)
+      io << indicator_char
+      peek(5).inspect_unquoted(io)
+      io << ellipsis if @str.size > 5
     elsif eos?
-      peek_behind(5).inspect(io)
-      io << '|'
+      show_behind = 5
+      io << ellipsis if @str.size > 5
+      peek_behind(show_behind).inspect_unquoted(io)
+      io << indicator_char
     else
-      peek_behind(2).inspect(io)
-      io << '|'
-      peek(3).inspect(io)
+      io << ellipsis unless peek_behind(3).size < 3
+      peek_behind(2).inspect_unquoted(io)
+      io << indicator_char
+      peek(1)
+      peek(3).inspect_unquoted(io)
+      io << ellipsis unless peek(4).size < 4
     end
+    io << '"'
+
+    io << " eos" if eos?
 
     io << '>'
   end
