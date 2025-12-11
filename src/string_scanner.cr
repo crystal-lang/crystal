@@ -400,15 +400,12 @@ class StringScanner
   # Extracts a string corresponding to string[offset,*len*], without advancing
   # the scan offset.
   def peek(len) : String
-    return "" if len.zero?
-
     @str.byte_slice(@byte_offset, lookahead_byte_length(len))
   end
 
   # Extracts a string corresponding to string[offset - len, len], without advancing
   # the scan offset.
   def peek_behind(len) : String
-    return "" if len.zero?
     byte_len = lookbehind_byte_length(len)
     byte_len = @byte_offset if byte_len > @byte_offset
     @str.byte_slice(@byte_offset - byte_len, byte_len)
@@ -499,8 +496,8 @@ class StringScanner
   end
 
   private def lookahead_byte_length(len : Int) : Int
-    return len if @str.single_byte_optimizable?
     return 0 if len.zero?
+    return len if @str.single_byte_optimizable?
 
     # some redundant logic here from String#find_start_and_end, but in this case
     # it is likely we are far into the string and len is small, so it is very
@@ -517,8 +514,8 @@ class StringScanner
   end
 
   private def lookbehind_byte_length(len : Int) : Int
-    return len if @str.single_byte_optimizable?
     return 0 if len.zero?
+    return len if @str.single_byte_optimizable?
 
     reader = self.char_reader
 
