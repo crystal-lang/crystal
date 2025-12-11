@@ -11,7 +11,6 @@ lib LibC
   EAI_AGAIN      =  -3
   EAI_BADFLAGS   =  -1
   EAI_FAIL       =  -4
-  EAI_NODATA     =  -5
   EAI_FAMILY     =  -6
   EAI_MEMORY     = -10
   EAI_NODATA     =  -5
