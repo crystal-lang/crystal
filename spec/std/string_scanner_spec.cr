@@ -365,6 +365,22 @@ describe StringScanner do
     s.current_char?.should be_nil
   end
 
+  describe "#previous_char? and #previous_byte?" do
+    it "finds the previous byte or char" do
+      s = StringScanner.new("あいうえお")
+      s.previous_byte?.should be_nil
+      expect_raises(IndexError, "No previous byte") { s.previous_byte }
+      s.previous_char?.should be_nil
+      expect_raises(IndexError) { s.previous_char }
+
+      s.scan(1)
+      s.previous_byte?.should eq(130)
+      s.previous_byte.should eq(130)
+      s.previous_char?.should eq('あ')
+      s.previous_char.should eq('あ')
+    end
+  end
+
   describe "#beginning_of_line?" do
     it "checks backwards for a newline or start of string" do
       s = StringScanner.new("a\nb\nc\n")

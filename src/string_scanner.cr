@@ -426,11 +426,13 @@ class StringScanner
 
   # Returns the byte before the scan head.
   def previous_byte? : UInt8?
+    return nil if @byte_offset.zero?
     @str.byte_at?(@byte_offset - 1)
   end
 
   # :ditto:
   def previous_byte : UInt8
+    raise IndexError.new("No previous byte") if @byte_offset.zero?
     @str.byte_at(@byte_offset - 1)
   end
 
