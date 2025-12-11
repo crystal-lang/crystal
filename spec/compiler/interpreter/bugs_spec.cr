@@ -239,27 +239,17 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "upcasts argument when passing to union type parameter (#16484)" do
-      interpret(<<-CRYSTAL, prelude: "prelude").should eq(%("[\\"1\\", \\"\\", \\"a\\"]"))
-        module MetadataValueConverter
-          def self.arg_to_log(arg) : String
-            arg.to_s
-          end
-
-          def self.arg_to_log(arg : Enumerable) : String
-            (arg.to_a.map { |a| arg_to_log(a) }).to_s
-          end
-
-          def self.arg_to_log(arg : Int) : String
-            arg.to_i64.to_s
-          end
-
-          def self.arg_to_log(arg : Int32 | String) : String
-            arg.to_s
-          end
+      interpret(<<-CRYSTAL).should eq(nil)
+        def foo(arg : Int32)
         end
 
-        args = [1, nil, "a"]
-        MetadataValueConverter.arg_to_log(args)
+        def foo(arg : Int32 | String)
+        end
+
+        def foo(arg : Int32 | String | Nil) # or foo(arg)
+        end
+
+        foo(nil.as(Int32 | String | Nil)) # BUG: missing downcast_distinct from String to (Int32 | String) (Crystal::NonGenericClassType to Crystal::MixedUnionType
 
       CRYSTAL
     end
