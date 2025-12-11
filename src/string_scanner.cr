@@ -85,8 +85,6 @@ class StringScanner
   def rewind(len : Int) : Nil
     return if len <= 0
 
-    pre_offset = @byte_offset
-
     @byte_offset -= lookbehind_byte_length(len) || @byte_offset
   end
 
@@ -527,7 +525,6 @@ class StringScanner
     # it is likely we are far into the string and len is small, so it is very
     # important not to start at the beginning of the string.
     reader = self.make_char_reader
-    i = 0
 
     current = reader.current_char?
 
