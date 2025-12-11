@@ -12,6 +12,7 @@ lib LibC
   AI_ADDRCONFIG  = 0x0020
   EAI_AGAIN      =     -3
   EAI_BADFLAGS   =     -1
+  EAI_NODATA     =     -5
   EAI_FAIL       =     -4
   EAI_FAMILY     =     -6
   EAI_MEMORY     =    -10
