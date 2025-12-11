@@ -9,7 +9,8 @@ describe StringScanner do
       s.scan(' ').should eq(" ")
       s.scan("is ").should eq("is ")
       s.scan(/\w+\s/).should eq("a ")
-      s.scan(/\w+/).should eq("string")
+      s.scan(2).should eq("st")
+      s.scan(/\w+/).should eq("ring")
     end
 
     it "returns nil if it can't match from the offset" do
@@ -18,8 +19,16 @@ describe StringScanner do
       s.scan(/\w+/).should be_nil
       s.scan('s').should be_nil
       s.scan("string").should be_nil
-      s.scan(/\s\w+/).should_not be_nil # => " string"
+      s.scan(/\s\w\w/).should_not be_nil # => " string"
+      s.scan(4).should eq("ring")
       s.scan(/.*/).should_not be_nil    # => ""
+      s.scan(1).should be_nil
+    end
+
+    it "errors on negative ints" do
+      s = StringScanner.new("testy mctesterson")
+      s.scan(10)
+      expect_raises(ArgumentError, "Negative lookahead count: -10") { s.scan(-10) }
     end
   end
 
@@ -328,6 +337,12 @@ describe StringScanner do
       s.peek(7).should eq("this is")
       s.offset.should eq(0)
     end
+
+    it "errors on negative input" do
+      s = StringScanner.new("abcde")
+      s.scan(2)
+      expect_raises(ArgumentError, "Negative lookahead count: -1") { s.peek(-1) }
+    end
   end
 
   describe "#peek_behind" do
@@ -337,6 +352,12 @@ describe StringScanner do
       s.scan(3)
       s.peek_behind(10).should eq("abc")
       s.peek_behind(2).should eq("bc")
+    end
+
+    it "errors on negative input" do
+      s = StringScanner.new("abcde")
+      s.scan(3)
+      expect_raises(ArgumentError, "Negative lookbehind count") { s.peek_behind(-1) }
     end
   end
 
@@ -360,8 +381,15 @@ describe StringScanner do
     s.peek(100).should eq("いうえおfghij")
     s.scan(5).should eq("いうえおf")
     s.current_char.should eq('g')
+
+    # does not move the head as there are not 100 characters left
     s.skip(100)
+    s.peek(1).should eq("g")
+
+    s.skip(4)
     s.peek(1).should eq("")
+    s.scan(1).should be_nil
+
     s.current_char?.should be_nil
   end
 

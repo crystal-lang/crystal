@@ -120,8 +120,12 @@ class StringScanner
     match(pattern, advance: true, anchored: true)
   end
 
-  def scan(pattern : Int) : String
+  def scan(pattern : Int) : String?
     scan_len = lookahead_byte_length(pattern)
+
+    # off the end of the string
+    return nil if scan_len.nil?
+
     idx = @byte_offset
     @byte_offset += scan_len
     result = @str.byte_slice(idx, scan_len)
@@ -234,9 +238,12 @@ class StringScanner
   # since that can cause a full scan of the string in the case of multibyte
   # characters.
   def skip(pattern : Int) : Int32?
-    return if pattern <= 0
+    scan_len = lookahead_byte_length(pattern)
 
-    @byte_offset += lookahead_byte_length(pattern)
+    # too many characters, would go off the end of the string
+    return nil if scan_len.nil?
+
+    @byte_offset += scan_len
 
     pattern
   end
@@ -400,14 +407,14 @@ class StringScanner
   # Extracts a string corresponding to string[offset,*len*], without advancing
   # the scan offset.
   def peek(len) : String
-    @str.byte_slice(@byte_offset, lookahead_byte_length(len))
+    @str.byte_slice(@byte_offset, lookahead_byte_length(len) || @str.bytesize)
   end
 
   # Extracts a string corresponding to string[offset - len, len], without advancing
   # the scan offset.
   def peek_behind(len) : String
     byte_len = lookbehind_byte_length(len)
-    byte_len = @byte_offset if byte_len > @byte_offset
+    byte_len = byte_len.clamp(0..@byte_offset)
     @str.byte_slice(@byte_offset - byte_len, byte_len)
   end
 
@@ -494,9 +501,12 @@ class StringScanner
     io << '>'
   end
 
-  private def lookahead_byte_length(len : Int) : Int
+  private def lookahead_byte_length(len : Int) : Int32?
+    raise ArgumentError.new("Negative lookahead count: #{len}") if len < 0
     return 0 if len.zero?
-    return len if @str.single_byte_optimizable?
+    if @str.single_byte_optimizable?
+      return @byte_offset + len > @str.bytesize ? nil : len
+    end
 
     # some redundant logic here from String#find_start_and_end, but in this case
     # it is likely we are far into the string and len is small, so it is very
@@ -504,15 +514,20 @@ class StringScanner
     reader = self.make_char_reader
     i = 0
 
-    reader.each do
-      break if i == len
-      i += 1
+    current = reader.current_char?
+
+    loop do
+      break if len.zero?
+      return nil if current.nil?
+      current = reader.next_char?
+      len -= 1
     end
 
     reader.pos - @byte_offset
   end
 
   private def lookbehind_byte_length(len : Int) : Int
+    raise ArgumentError.new("Negative lookbehind count: #{len}") if len < 0
     return 0 if len.zero?
     return len if @str.single_byte_optimizable?
 
