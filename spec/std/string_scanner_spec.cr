@@ -361,6 +361,40 @@ describe StringScanner do
     end
   end
 
+  describe "#rewind" do
+    it "rewinds a single byte optimizable string" do
+      s = StringScanner.new("abcde")
+      s.rewind(10)
+      s.offset.should eq(0)
+
+      s.skip(3)
+      s.current_char.should eq('d')
+      s.offset.should eq(3)
+
+      s.rewind(2)
+      s.offset.should eq(1)
+
+      s.rewind(1000)
+      s.offset.should eq(0)
+    end
+
+    it "rewinds a multibyte char string" do
+      s = StringScanner.new("あいうえお")
+      s.rewind(10)
+      s.offset.should eq(0)
+
+      s.skip(3)
+      s.current_char.should eq('え')
+      s.offset.should eq(3)
+
+      s.rewind(2)
+      s.offset.should eq(1)
+
+      s.rewind(1000)
+      s.offset.should eq(0)
+    end
+  end
+
   it "works with character indices on multibyte characters" do
     s = StringScanner.new("abcdeあいうえおfghij")
     s.peek(4).should eq("abcd")
@@ -386,9 +420,17 @@ describe StringScanner do
     s.skip(100)
     s.peek(1).should eq("g")
 
-    s.skip(4)
+    s.skip(3)
+    # one before the end of stream
+    s.peek(1).should eq("j")
+    s.scan(1).should eq("j")
+    s.rewind(1)
+    s.skip(1).should eq(1)
+
+    # at end of stream
     s.peek(1).should eq("")
     s.scan(1).should be_nil
+    s.skip(1).should be_nil
 
     s.current_char?.should be_nil
   end

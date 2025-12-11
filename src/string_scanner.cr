@@ -82,10 +82,12 @@ class StringScanner
   end
 
   # Rewinds the scan head by `len` characters.
-  def rewind(len : Int)
+  def rewind(len : Int) : Nil
     return if len <= 0
 
-    @byte_offset -= lookbehind_byte_length(len)
+    pre_offset = @byte_offset
+
+    @byte_offset -= lookbehind_byte_length(len) || @byte_offset
   end
 
   # Tries to match with *pattern* at the current position. If there's a match,
@@ -413,7 +415,7 @@ class StringScanner
   # Extracts a string corresponding to string[offset - len, len], without advancing
   # the scan offset.
   def peek_behind(len) : String
-    byte_len = lookbehind_byte_length(len)
+    byte_len = lookbehind_byte_length(len) || @byte_offset
     byte_len = byte_len.clamp(0..@byte_offset)
     @str.byte_slice(@byte_offset - byte_len, byte_len)
   end
@@ -526,15 +528,18 @@ class StringScanner
     reader.pos - @byte_offset
   end
 
-  private def lookbehind_byte_length(len : Int) : Int
+  private def lookbehind_byte_length(len : Int) : Int32?
     raise ArgumentError.new("Negative lookbehind count: #{len}") if len < 0
     return 0 if len.zero?
-    return len if @str.single_byte_optimizable?
+
+    if @str.single_byte_optimizable?
+      return len > @byte_offset ? nil : len
+    end
 
     reader = self.make_char_reader
 
     until len.zero?
-      reader.previous_char
+      reader.previous_char? || return nil
       len -= 1
     end
 
