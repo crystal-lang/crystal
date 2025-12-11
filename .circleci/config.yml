@@ -8,7 +8,7 @@ parameters:
   distribution-scripts-version:
     description: "Git ref for version of https://github.com/crystal-lang/distribution-scripts/"
     type: string
-    default: "b7af456b433ebf114769ad8eb4f2c51c56c26189"
+    default: "d1d86577200f8a3d567bf83d911f60a05733c4b4"
   previous_crystal_base_url:
     description: "Prefix for URLs to Crystal bootstrap compiler"
     type: string
@@ -353,31 +353,14 @@ jobs:
           cd /tmp/workspace/distribution-scripts
           source build.env
           cd docker
-          make all64 TARBALLS=/tmp/workspace/build/
-          make smoke-all
-      - persist_to_workspace:
-          root: /tmp/workspace/distribution-scripts/docker/
-          paths:
-            - build
-
-  publish_docker:
-    machine:
-      image: default
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
+          make all TARBALLS=/tmp/workspace/build/ VERSION=${CRYSTAL_VERSION}
+          make smoke-all VERSION=${CRYSTAL_VERSION}
       - run: |
           cd /tmp/workspace/distribution-scripts
-          source ./build.env
-          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-ubuntu-x86_64.tar.gz | docker image load
-          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-ubuntu-x86_64-build.tar.gz | docker image load
-          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-alpine.tar.gz | docker image load
-          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-alpine-build.tar.gz | docker image load
+          source build.env
+          cd docker
           docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
-          docker push ${DOCKER_REPOSITORY}:${DOCKER_TAG}
-          docker push ${DOCKER_REPOSITORY}:${DOCKER_TAG}-build
-          docker push ${DOCKER_REPOSITORY}:${DOCKER_TAG}-alpine
-          docker push ${DOCKER_REPOSITORY}:${DOCKER_TAG}-alpine-build
+          make push VERSION=${CRYSTAL_VERSION}
 
   dist_snap:
     docker:
@@ -425,7 +408,6 @@ jobs:
           cd /tmp/workspace/distribution-scripts
           source build.env
           cd docs
-          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-ubuntu-x86_64-build.tar.gz | docker image load
           make CRYSTAL_DOCKER_IMAGE=${DOCKER_REPOSITORY}:${DOCKER_TAG}-build
       - store_artifacts:
           path: /tmp/workspace/distribution-scripts/docs/build
@@ -461,32 +443,6 @@ jobs:
       - store_artifacts:
           path: /tmp/workspace/build
           destination: dist_packages
-
-  test_dist_linux_on_docker:
-    machine:
-      image: default
-    environment:
-      <<: *env
-      TRAVIS_OS_NAME: linux
-      ARCH: x86_64
-      ARCH_CMD: linux64
-    resource_class: large
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - run: |
-          cd /tmp/workspace/distribution-scripts
-          source ./build.env
-          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-ubuntu-x86_64-build.tar.gz | docker image load
-          echo "export DOCKER_TEST_PREFIX=crystallang/crystal:${DOCKER_TAG}" >> $BASH_ENV
-      - checkout
-      - run: bin/ci prepare_system
-      - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
-      - run: bin/ci prepare_build
-      - run: bin/ci with_build_env 'shards --version'
-      - run:
-          command: bin/ci build
-          no_output_timeout: 30m
 
 workflows:
   version: 2
@@ -549,14 +505,6 @@ workflows:
           filters: *release
           requires:
             - dist_snap
-      - test_dist_linux_on_docker:
-          filters: *release
-          requires:
-            - dist_docker
-      - publish_docker:
-          filters: *release
-          requires:
-            - test_dist_linux_on_docker
       - dist_docs:
           filters: *release
           requires:
@@ -608,12 +556,6 @@ workflows:
       - publish_snap:
           requires:
             - dist_snap
-      - test_dist_linux_on_docker:
-          requires:
-            - dist_docker
-      - publish_docker:
-          requires:
-            - dist_docker
       - dist_docs:
           requires:
             - dist_docker
