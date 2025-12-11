@@ -6,53 +6,37 @@ require "c/time"
   require "c/sys/system_properties"
 {% end %}
 
-{% if flag?(:darwin) %}
-  # Darwin supports clock_gettime starting from macOS Sierra, but we can't
-  # use it because it would prevent running binaries built on macOS Sierra
-  # to run on older macOS releases.
-  #
-  # Furthermore, mach_absolute_time is reported to have a higher precision.
-  require "c/mach/mach_time"
-{% end %}
-
 module Crystal::System::Time
   UNIX_EPOCH_IN_SECONDS  = 62135596800_i64
   NANOSECONDS_PER_SECOND =   1_000_000_000
 
   def self.compute_utc_seconds_and_nanoseconds : {Int64, Int32}
-    {% if LibC.has_method?("clock_gettime") %}
-      ret = LibC.clock_gettime(LibC::CLOCK_REALTIME, out timespec)
-      raise RuntimeError.from_errno("clock_gettime") unless ret == 0
-      {timespec.tv_sec.to_i64 + UNIX_EPOCH_IN_SECONDS, timespec.tv_nsec.to_i}
-    {% else %}
-      ret = LibC.gettimeofday(out timeval, nil)
-      raise RuntimeError.from_errno("gettimeofday") unless ret == 0
-      {timeval.tv_sec.to_i64 + UNIX_EPOCH_IN_SECONDS, timeval.tv_usec.to_i * 1_000}
-    {% end %}
+    ret = LibC.clock_gettime(LibC::CLOCK_REALTIME, out timespec)
+    raise RuntimeError.from_errno("clock_gettime") unless ret == 0
+    {timespec.tv_sec.to_i64 + UNIX_EPOCH_IN_SECONDS, timespec.tv_nsec.to_i}
   end
 
   def self.monotonic : {Int64, Int32}
-    {% if flag?(:darwin) %}
-      info = mach_timebase_info
-      total_nanoseconds = LibC.mach_absolute_time * info.numer // info.denom
-      seconds = total_nanoseconds // NANOSECONDS_PER_SECOND
-      nanoseconds = total_nanoseconds.remainder(NANOSECONDS_PER_SECOND)
-      {seconds.to_i64, nanoseconds.to_i32}
-    {% else %}
-      ret = LibC.clock_gettime(LibC::CLOCK_MONOTONIC, out tp)
-      raise RuntimeError.from_errno("clock_gettime(CLOCK_MONOTONIC)") unless ret == 0
-      {tp.tv_sec.to_i64, tp.tv_nsec.to_i32}
-    {% end %}
+    clock = {% if flag?(:darwin) %}
+              LibC::CLOCK_UPTIME_RAW
+            {% else %}
+              LibC::CLOCK_MONOTONIC
+            {% end %}
+
+    ret = LibC.clock_gettime(clock, out tp)
+    raise RuntimeError.from_errno("clock_gettime()") unless ret == 0
+    {tp.tv_sec.to_i64, tp.tv_nsec.to_i32}
   end
 
   def self.ticks : UInt64
-    {% if flag?(:darwin) %}
-      info = mach_timebase_info
-      LibC.mach_absolute_time &* info.numer // info.denom
-    {% else %}
-      LibC.clock_gettime(LibC::CLOCK_MONOTONIC, out tp)
-      tp.tv_sec.to_u64! &* NANOSECONDS_PER_SECOND &+ tp.tv_nsec.to_u64!
-    {% end %}
+    clock = {% if flag?(:darwin) %}
+              LibC::CLOCK_UPTIME_RAW
+            {% else %}
+              LibC::CLOCK_MONOTONIC
+            {% end %}
+
+    LibC.clock_gettime(clock, out tp)
+    tp.tv_sec.to_u64! &* NANOSECONDS_PER_SECOND &+ tp.tv_nsec.to_u64!
   end
 
   def self.to_timespec(time : ::Time)
@@ -157,17 +141,6 @@ module Crystal::System::Time
             nil
           end
         end
-      end
-    end
-  {% end %}
-
-  {% if flag?(:darwin) %}
-    @@mach_timebase_info : LibC::MachTimebaseInfo?
-
-    private def self.mach_timebase_info
-      @@mach_timebase_info ||= begin
-        LibC.mach_timebase_info(out info)
-        info
       end
     end
   {% end %}

@@ -18,6 +18,8 @@ module Sync
   # guarantee that nothing else is accessing said resources.
   #
   # The implementation doesn't favor readers or writers in particular.
+  #
+  # NOTE: Consider `Shared(T)` to protect a value `T` with a `RWLock`.
   class RWLock
     include Lockable
 

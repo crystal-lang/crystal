@@ -183,6 +183,24 @@ describe OpenSSL::SSL::Context do
     end
   end
 
+  it "on_server_name" do
+    context = OpenSSL::SSL::Context::Server.new
+    context.certificate_chain = datapath("openssl", "openssl.crt")
+    context.private_key = datapath("openssl", "openssl.key")
+
+    alt_context = OpenSSL::SSL::Context::Server.new
+    alt_context.certificate_chain = datapath("openssl", "openssl.crt")
+    alt_context.private_key = datapath("openssl", "openssl.key")
+
+    context.on_server_name do |hostname|
+      if hostname == "alt.example.com"
+        alt_context
+      else
+        nil
+      end
+    end
+  end
+
   it "calls #finalize on insecure client context" do
     assert_finalizes("insecure_client_ctx") { OpenSSL::SSL::Context::Client.insecure }
   end

@@ -209,9 +209,11 @@ struct Crystal::System::Process
     {% raise("Process fork is unsupported with multithreaded mode") if flag?(:preview_mt) %}
 
     pid, errno = lock_write do
-      block_signals do
-        pid = LibC.fork
-        {pid, Errno.value}
+      pthread_disable_cancelstate do
+        block_signals do
+          pid = LibC.fork
+          {pid, Errno.value}
+        end
       end
     end
 
@@ -250,6 +252,21 @@ struct Crystal::System::Process
     ensure
       LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(oldmask), nil)
     end
+  end
+
+  private def self.pthread_disable_cancelstate(&)
+    # No thread cancellation on android
+    {% if flag?(:android) %}
+      yield
+    {% else %}
+      LibC.pthread_setcancelstate(LibC::PTHREAD_CANCEL_DISABLE, out cancel_state)
+
+      begin
+        yield
+      ensure
+        LibC.pthread_setcancelstate(cancel_state, nil)
+      end
+    {% end %}
   end
 
   # Duplicates the current process.
