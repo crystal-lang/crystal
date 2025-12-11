@@ -21,7 +21,7 @@ module Fiber::ExecutionContext
   end
 
   # Runs a multithreaded test by starting *n* threads, waiting for all the
-  # threads to have been started the *publish* proc.
+  # threads to have been started, then runs the *publish* proc.
   #
   # Each thread calls *iteration* until the timeout is reached or the proc
   # returns `:break`; if the proc returns `:next` the thread goes immediately to
