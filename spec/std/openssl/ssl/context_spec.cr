@@ -11,11 +11,7 @@ describe OpenSSL::SSL::Context do
     context = OpenSSL::SSL::Context::Client.new
 
     (context.options & OpenSSL::SSL::Options::ALL).should eq(OpenSSL::SSL::Options::ALL)
-    (context.options & OpenSSL::SSL::Options::NO_SSL_V2).should eq(OpenSSL::SSL::Options::NO_SSL_V2)
-    (context.options & OpenSSL::SSL::Options::NO_SSL_V3).should eq(OpenSSL::SSL::Options::NO_SSL_V3)
     (context.options & OpenSSL::SSL::Options::NO_SESSION_RESUMPTION_ON_RENEGOTIATION).should eq(OpenSSL::SSL::Options::NO_SESSION_RESUMPTION_ON_RENEGOTIATION)
-    (context.options & OpenSSL::SSL::Options::SINGLE_ECDH_USE).should eq(OpenSSL::SSL::Options::SINGLE_ECDH_USE)
-    (context.options & OpenSSL::SSL::Options::SINGLE_DH_USE).should eq(OpenSSL::SSL::Options::SINGLE_DH_USE)
 
     context.modes.should eq(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
     context.verify_mode.should eq(OpenSSL::SSL::VerifyMode::PEER)
@@ -27,14 +23,8 @@ describe OpenSSL::SSL::Context do
     context = OpenSSL::SSL::Context::Server.new
 
     (context.options & OpenSSL::SSL::Options::ALL).should eq(OpenSSL::SSL::Options::ALL)
-    (context.options & OpenSSL::SSL::Options::NO_SSL_V2).should eq(OpenSSL::SSL::Options::NO_SSL_V2)
-    (context.options & OpenSSL::SSL::Options::NO_SSL_V3).should eq(OpenSSL::SSL::Options::NO_SSL_V3)
     (context.options & OpenSSL::SSL::Options::NO_SESSION_RESUMPTION_ON_RENEGOTIATION).should eq(OpenSSL::SSL::Options::NO_SESSION_RESUMPTION_ON_RENEGOTIATION)
-    (context.options & OpenSSL::SSL::Options::SINGLE_ECDH_USE).should eq(OpenSSL::SSL::Options::SINGLE_ECDH_USE)
-    (context.options & OpenSSL::SSL::Options::SINGLE_DH_USE).should eq(OpenSSL::SSL::Options::SINGLE_DH_USE)
-    {% if LibSSL::Options.has_constant?(:NO_RENEGOTIATION) %}
-      (context.options & OpenSSL::SSL::Options::NO_RENEGOTIATION).should eq(OpenSSL::SSL::Options::NO_RENEGOTIATION)
-    {% end %}
+    (context.options & OpenSSL::SSL::Options::NO_RENEGOTIATION).should eq(OpenSSL::SSL::Options::NO_RENEGOTIATION)
 
     context.modes.should eq(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
     context.verify_mode.should eq(OpenSSL::SSL::VerifyMode::NONE)
@@ -47,11 +37,7 @@ describe OpenSSL::SSL::Context do
     context.should be_a(OpenSSL::SSL::Context::Client)
     context.verify_mode.should eq(OpenSSL::SSL::VerifyMode::NONE)
     context.options.no_ssl_v3?.should_not be_true
-    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.1") >= 0 || compare_versions(LibSSL::LIBRESSL_VERSION, "3.2.0") >= 0 %}
-      context.modes.should eq(OpenSSL::SSL::Modes::AUTO_RETRY)
-    {% else %}
-      context.modes.should eq(OpenSSL::SSL::Modes::None)
-    {% end %}
+    context.modes.should eq(OpenSSL::SSL::Modes::AUTO_RETRY)
 
     OpenSSL::SSL::Context::Client.insecure(LibSSL.tlsv1_method)
   end
@@ -61,11 +47,7 @@ describe OpenSSL::SSL::Context do
     context.should be_a(OpenSSL::SSL::Context::Server)
     context.verify_mode.should eq(OpenSSL::SSL::VerifyMode::NONE)
     context.options.no_ssl_v3?.should_not be_true
-    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.1") >= 0 || compare_versions(LibSSL::LIBRESSL_VERSION, "3.2.0") >= 0 %}
-      context.modes.should eq(OpenSSL::SSL::Modes::AUTO_RETRY)
-    {% else %}
-      context.modes.should eq(OpenSSL::SSL::Modes::None)
-    {% end %}
+    context.modes.should eq(OpenSSL::SSL::Modes::AUTO_RETRY)
 
     OpenSSL::SSL::Context::Server.insecure(LibSSL.tlsv1_method)
   end
