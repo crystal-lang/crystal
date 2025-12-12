@@ -1155,12 +1155,12 @@ describe "Semantic: abstract def" do
 
   it "reports undefined constant error for undefined type in abstract method" do
     assert_error <<-CRYSTAL, "undefined constant Unknown"
-      module Foo
+      module Abstract
         abstract def foo(x : Unknown)
       end
 
-      class Bar
-        include Foo
+      class Concrete
+        include Abstract
 
         def foo(x : Int32)
         end
@@ -1170,12 +1170,12 @@ describe "Semantic: abstract def" do
 
   it "reports undefined constant error for undefined type in implementing method" do
     assert_error <<-CRYSTAL, "undefined constant Unknown"
-      module Foo
+      module Abstract
         abstract def foo(x : Int32)
       end
 
-      class Bar
-        include Foo
+      class Concrete
+        include Abstract
 
         def foo(x : Unknown)
         end
@@ -1185,12 +1185,12 @@ describe "Semantic: abstract def" do
 
   it "allows forall type parameters in abstract methods" do
     assert_no_errors <<-CRYSTAL
-      module Foo
+      module Abstract
         abstract def foo(x : U) : U forall U
       end
 
-      class Bar
-        include Foo
+      class Concrete
+        include Abstract
 
         def foo(x : U) : U forall U
           x
@@ -1217,12 +1217,12 @@ describe "Semantic: abstract def" do
 
   it "allows multiple generic type parameters" do
     assert_no_errors <<-CRYSTAL
-      abstract class Container(K, V)
+      abstract class Abstract(K, V)
         abstract def get(key : K) : V?
         abstract def set(key : K, value : V) : Nil
       end
 
-      class HashMap(K, V) < Container(K, V)
+      class Concrete(K, V) < Abstract(K, V)
         def get(key : K) : V?
           nil
         end
@@ -1235,11 +1235,11 @@ describe "Semantic: abstract def" do
 
   it "distinguishes between undefined types and valid type parameters" do
     assert_error <<-CRYSTAL, "undefined constant UnknownType"
-      abstract class Container(T)
+      abstract class Abstract(T)
         abstract def process(x : T, y : UnknownType)
       end
 
-      class MyContainer(T) < Container(T)
+      class Concrete(T) < Abstract(T)
         def process(x : T, y : String)
         end
       end
@@ -1248,12 +1248,12 @@ describe "Semantic: abstract def" do
 
   it "reports undefined multi-segment paths" do
     assert_error <<-CRYSTAL, "undefined constant Some::Path::Unknown"
-      module Foo
+      module Abstract
         abstract def foo(x : Some::Path::Unknown)
       end
 
-      class Bar
-        include Foo
+      class Concrete
+        include Abstract
 
         def foo(x : Int32)
         end
@@ -1263,12 +1263,12 @@ describe "Semantic: abstract def" do
 
   it "accepts untyped parameter implementing forall abstract method with return type" do
     assert_no_errors <<-CRYSTAL
-      module Interface
+      module Abstract
         abstract def transform(value : T) : T forall T
       end
 
-      class Implementation
-        include Interface
+      class Concrete
+        include Abstract
 
         def transform(value)
           value
@@ -1279,12 +1279,12 @@ describe "Semantic: abstract def" do
 
   it "accepts untyped parameter implementing forall abstract method without return type" do
     assert_no_errors <<-CRYSTAL
-      module Interface
+      module Abstract
         abstract def transform(value : T) forall T
       end
 
-      class Implementation
-        include Interface
+      class Concrete
+        include Abstract
 
         def transform(value)
           value
@@ -1293,14 +1293,14 @@ describe "Semantic: abstract def" do
       CRYSTAL
   end
 
-  it "accepts specific type implementing forall abstract method" do
-    assert_no_errors <<-CRYSTAL
-      module Interface
+  it "errors when specific type tries to implement forall abstract method" do
+    assert_error <<-CRYSTAL, "abstract `def Abstract#transform(type : T.class) forall T` must be implemented"
+      module Abstract
         abstract def transform(type : T.class) : T forall T
       end
 
-      class Implementation
-        include Interface
+      class Concrete
+        include Abstract
 
         def transform(type : Int32.class) : Int32
           123
@@ -1309,14 +1309,21 @@ describe "Semantic: abstract def" do
       CRYSTAL
   end
 
-  it "accepts more specific type implementing forall generic parameter" do
+  it "accepts more general type implementing forall generic parameter" do
     assert_no_errors <<-CRYSTAL
-      module Interface
+      module Indexable(T)
+      end
+
+      class Array(T)
+        include Indexable(T)
+      end
+
+      module Abstract
         abstract def transform(x : Array(T)) forall T
       end
 
-      class Implementation
-        include Interface
+      class Concrete
+        include Abstract
 
         def transform(x : Indexable) : Int32
           123
@@ -1327,12 +1334,12 @@ describe "Semantic: abstract def" do
 
   it "accepts generic method implementing generic abstract method with forall" do
     assert_no_errors <<-CRYSTAL
-      module Interface
+      module Abstract
         abstract def transform(type : T.class) : T forall T
       end
 
-      class Implementation
-        include Interface
+      class Concrete
+        include Abstract
 
         def transform(type : T.class) : T forall T
         end
@@ -1342,11 +1349,11 @@ describe "Semantic: abstract def" do
 
   it "accepts generic method when implementation has at least as many forall values than abstract" do
     assert_no_errors <<-CRYSTAL
-      abstract class Foo
+      abstract class Abstract
         abstract def foo(x : T, y : Int32) forall T
       end
 
-      class Bar < Foo
+      class Concrete < Abstract
         def foo(x : T, y : U) forall T, U; end
       end
       CRYSTAL
@@ -1354,12 +1361,12 @@ describe "Semantic: abstract def" do
 
   it "accepts matching forall parameters even with different names" do
     assert_no_errors <<-CRYSTAL
-      module Interface
+      module Abstract
         abstract def transform(value : T) : T forall T
       end
 
-      class Implementation
-        include Interface
+      class Concrete
+        include Abstract
 
         def transform(value : U) : U forall U
           value
@@ -1368,13 +1375,13 @@ describe "Semantic: abstract def" do
       CRYSTAL
   end
 
-  it "accepts specific types implementing forall abstract method" do
-    assert_no_errors <<-CRYSTAL
-      abstract class Container
+  it "errors when specific types try to implement forall abstract method" do
+    assert_error <<-CRYSTAL, "abstract `def Abstract#get(key : K) forall K, V` must be implemented"
+      abstract class Abstract
         abstract def get(key : K) : V forall K, V
       end
 
-      class MyContainer < Container
+      class Concrete < Abstract
         def get(key : String) : Int32
           42
         end
@@ -1384,11 +1391,11 @@ describe "Semantic: abstract def" do
 
   it "accepts non-generic implementation when abstract def has no forall" do
     assert_no_errors <<-CRYSTAL
-      abstract class Base
+      abstract class Abstract
         abstract def process(x : Int32) : String
       end
 
-      class Derived < Base
+      class Concrete < Abstract
         def process(x : Int32) : String
           x.to_s
         end
@@ -1397,13 +1404,13 @@ describe "Semantic: abstract def" do
   end
 
   pending "errors when implementation uses incompatible type with forall abstract method" do
-    assert_error <<-CRYSTAL, "abstract `def Interface#transform(x : Array(T)) forall T` must be implemented"
-      module Interface
+    assert_error <<-CRYSTAL, "abstract `def Abstract#transform(x : Array(T)) forall T` must be implemented"
+      module Abstract
         abstract def transform(x : Array(T)) forall T
       end
 
-      class Implementation
-        include Interface
+      class Concrete
+        include Abstract
 
         def transform(x : Int32) : Int32
           123
