@@ -6,8 +6,6 @@ require "crystal/dwarf"
 {% end %}
 
 struct Exception::CallStack
-  @@mutex = Thread::Mutex.new
-  @@dwarf_loaded = false
   @@dwarf_line_numbers : Crystal::DWARF::LineNumbers?
   @@dwarf_function_names : Array(Tuple(LibC::SizeT, LibC::SizeT, String))?
 
@@ -16,21 +14,6 @@ struct Exception::CallStack
   {% end %}
 
   # :nodoc:
-  def self.load_debug_info : Nil
-    return if @@dwarf_loaded
-    return if ENV["CRYSTAL_LOAD_DEBUG_INFO"]? == "0"
-
-    @@mutex.synchronize do
-      return if @@dwarf_loaded
-
-      @@dwarf_loaded = true
-      load_debug_info_impl
-    rescue ex
-      @@dwarf_line_numbers = nil
-      @@dwarf_function_names = nil
-      Crystal::System.print_exception "Unable to load dwarf information", ex
-    end
-  end
 
   protected def self.decode_line_number(pc)
     load_debug_info

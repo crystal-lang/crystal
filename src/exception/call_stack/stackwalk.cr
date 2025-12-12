@@ -4,23 +4,6 @@ require "c/dbghelp"
 struct Exception::CallStack
   skip(__FILE__)
 
-  @@sym_loaded = false
-  @@mutex = Thread::Mutex.new
-
-  def self.load_debug_info : Nil
-    return if @@sym_loaded
-    return if ENV["CRYSTAL_LOAD_DEBUG_INFO"]? == "0"
-
-    @@mutex.synchronize do
-      return if @@sym_loaded
-
-      @@sym_loaded = true
-      load_debug_info_impl
-    rescue ex
-      Crystal::System.print_exception "Unable to load debug information", ex
-    end
-  end
-
   private def self.load_debug_info_impl : Nil
     # TODO: figure out if and when to call SymCleanup (it cannot be done in
     # `at_exit` because unhandled exceptions in `main_user_code` are printed
