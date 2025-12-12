@@ -53,7 +53,7 @@ describe StringScanner do
   end
 
   describe "#skip" do
-    it "advances the offset but does not returns the string matched" do
+    it "advances the offset but does not return the string matched" do
       s = StringScanner.new("this is a string")
 
       s.skip(/\w+\s/).should eq(5)
