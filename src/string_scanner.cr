@@ -431,7 +431,7 @@ class StringScanner
     @str.byte_slice(@byte_offset, lookahead_byte_length(len) || @str.bytesize)
   end
 
-  # Extracts a string by looking behind *len* characters, without advancing the
+  # Extracts a string by looking behind *len* characters, without moving the
   # scan offset. The return value has at most *len* characters, but may have fewer
   # if the scan head is close to the beginning of the string.
   def peek_behind(len) : String
