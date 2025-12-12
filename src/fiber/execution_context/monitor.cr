@@ -48,12 +48,12 @@ module Fiber::ExecutionContext
       loop do
         Thread.sleep(remaining)
 
-        seconds, nanoseconds = System::Time.monotonic
+        seconds, nanoseconds = Crystal::System::Time.monotonic
         start = Time::Span.new(seconds: seconds, nanoseconds: nanoseconds)
 
         yield(start)
 
-        seconds, nanoseconds = System::Time.monotonic
+        seconds, nanoseconds = Crystal::System::Time.monotonic
         stop = Time::Span.new(seconds: seconds, nanoseconds: nanoseconds)
 
         remaining = (start + @every - stop).clamp(Time::Span.zero..)
