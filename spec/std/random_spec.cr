@@ -195,6 +195,10 @@ describe "Random" do
     values[0].should eq values[1]
   end
 
+  it "splits" do
+    Random.split.should be_a(Random)
+  end
+
   it "gets a random bool" do
     Random.next_bool.should be_a(Bool)
   end
