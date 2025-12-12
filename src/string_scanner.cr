@@ -41,14 +41,21 @@
 # * `#skip`
 # * `#skip_until`
 #
-# Methods that look ahead:
+# Methods that look ahead or behind:
 # * `#peek`
+# * `#peek_behind`
 # * `#check`
 # * `#check_until`
+# * `#rest`
+# * `#current_char`, `#current_char?`
+# * `#previous_char`, `#previous_char?`
+# * `#current_byte`, `#current_byte?`
+# * `#previous_byte`, `#previous_byte?`
 #
 # Methods that deal with the position of the offset:
 # * `#offset`
 # * `#offset=`
+# * `#rewind`
 # * `#eos?`
 # * `#reset`
 # * `#terminate`
@@ -56,6 +63,8 @@
 # Methods that deal with the last match:
 # * `#[]`
 # * `#[]?`
+# * `#matched?`
+# * `#unscan`
 #
 # Miscellaneous methods:
 # * `#inspect`
@@ -63,6 +72,8 @@
 class StringScanner
   @last_match : Regex::MatchData | StringMatchData | Nil
 
+  # The byte offset of the scan head. This is distinct from #offset in that
+  # it counts raw bytes instead of characters.
   getter byte_offset : Int32
 
   def initialize(@str : String)
@@ -70,6 +81,10 @@ class StringScanner
   end
 
   # Sets the *position* of the scan offset.
+  #
+  # **Note:** Moving the scan head with this method can cause performance issues in
+  # multibyte strings. For a more performant way to move the head, see
+  # [`#skip(Int)`](#skip%28pattern%3AInt%29%3AInt32%7CNil-instance-method) and `#rewind`.
   def offset=(position : Int)
     raise IndexError.new unless position >= 0
     @byte_offset = @str.char_index_to_byte_index(position) || @str.bytesize
@@ -213,7 +228,6 @@ class StringScanner
   end
 
   # Attempts to skip over the given *pattern* beginning with the scan offset.
-  # In other words, the pattern is not anchored to the current scan offset.
   #
   # If there's a match, the scanner advances the scan offset, the last match is
   # saved, and it returns the size of the skipped match. Otherwise it returns
@@ -241,6 +255,10 @@ class StringScanner
   # Advances the offset by `len` chars. Prefer this to `scanner.offset += len`,
   # since that can cause a full scan of the string in the case of multibyte
   # characters.
+  #
+  # **Note**: If there are less than the requested number of characters
+  # remaining in the string, this method will return nil and _not advance
+  # the scan head_. To move the scan head to the very end, use `#terminate`.
   def skip(pattern : Int) : Int32?
     scan_len = lookahead_byte_length(pattern)
 
@@ -414,57 +432,78 @@ class StringScanner
     @str
   end
 
-  # Extracts a string corresponding to string[offset,*len*], without advancing
-  # the scan offset.
+  # Extracts a string by looking ahead *len* characters, without advancing the
+  # scan offset. The return value has at most *len* characters, but may have fewer
+  # if the scan head is close to the end of the string.
   def peek(len) : String
     @str.byte_slice(@byte_offset, lookahead_byte_length(len) || @str.bytesize)
   end
 
-  # Extracts a string corresponding to string[offset - len, len], without advancing
-  # the scan offset.
+  # Extracts a string by looking behind *len* characters, without advancing the
+  # scan offset. The return value has at most *len* characters, but may have fewer
+  # if the scan head is close to the beginning of the string.
   def peek_behind(len) : String
     byte_len = lookbehind_byte_length(len) || @byte_offset
     @str.byte_slice(@byte_offset - byte_len, byte_len)
   end
 
-  # Returns the current byte at the scan head.
+  # Returns the current byte at the scan head, or nil if at the end.
+  # Does no multi-byte character checking, and may return part of a
+  # multi-byte character. See `#current_char`.
   def current_byte? : UInt8?
     @str.byte_at?(@byte_offset)
   end
 
-  # :ditto:
+  # Returns the current byte at the scan head, and errors if at the end.
+  # Does not move the scan head.
+  # Does no multi-byte character checking, and may return part of a
+  # multi-byte character. See `#current_char?`.
   def current_byte : UInt8
     @str.byte_at(@byte_offset)
   end
 
-  # Returns the byte before the scan head.
+  # Returns the byte before the scan head, or nil if at the beginning.
+  # Does not move the scan head.
+  # This performs no multi-byte checking and may return part of a multi-byte
+  # character. See `#previous_char?`.
   def previous_byte? : UInt8?
     return nil if @byte_offset.zero?
     @str.byte_at?(@byte_offset - 1)
   end
 
-  # :ditto:
+  # Returns the byte before the scan head, and errors if at the beginning.
+  # Does not move the scan head.
+  # This performs no multi-byte checking and may return part of a multi-byte
+  # character. See `#previous_char`
   def previous_byte : UInt8
     raise IndexError.new("No previous byte") if @byte_offset.zero?
     @str.byte_at(@byte_offset - 1)
   end
 
-  # Decodes a single character at the scan head.
+  # Returns the character at the scan head, or nil if at the end. Does not
+  # move the scan head. This will properly decode the next character from the
+  # string, and may return a multi-byte character.
   def current_char? : Char?
     make_char_reader.current_char?
   end
 
-  # :ditto:
+  # Returns the character at the scan head, and errors if at the end. Does not
+  # move the scan head. This will properly decode the next character from the
+  # string, and may return a multi-byte character.
   def current_char : Char
     make_char_reader.current_char
   end
 
-  # Decodes one character before the scan head
+  # Returns the character before the scan head, or nil if at the beginning. Does
+  # not move the scan head. This will properly decode the previous character from the
+  # string, and may return a multi-byte character.
   def previous_char? : Char?
     make_char_reader.previous_char?
   end
 
-  # :ditto:
+  # Returns the character before the scan head, and errors if at the beginning.
+  # Does not move the scan head. This will properly decode the previous character
+  # from the string, and may return a multi-byte character.
   def previous_char : Char
     make_char_reader.previous_char
   end
