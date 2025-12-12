@@ -4,6 +4,12 @@ require "c/dbghelp"
 struct Exception::CallStack
   skip(__FILE__)
 
+  @@mutex = Thread::Mutex.new
+
+  private def decode_backtrace
+    @@mutex.synchronize { previous_def }
+  end
+
   private def self.load_debug_info_impl : Nil
     # TODO: figure out if and when to call SymCleanup (it cannot be done in
     # `at_exit` because unhandled exceptions in `main_user_code` are printed
@@ -32,11 +38,15 @@ struct Exception::CallStack
     LibC.RtlCaptureContext(context)
 
     stack = [] of Void*
-    each_frame(context) do |frame|
-      (frame.count + 1).times do
-        stack << frame.ip
+
+    @@mutex.synchronize do
+      each_frame(context) do |frame|
+        (frame.count + 1).times do
+          stack << frame.ip
+        end
       end
     end
+
     stack
   end
 
@@ -116,10 +126,12 @@ struct Exception::CallStack
   private record StackContext, context : LibC::CONTEXT*, thread : LibC::HANDLE
 
   def self.print_backtrace(exception_info) : Nil
-    each_frame(exception_info.value.contextRecord) do |frame|
-      print_frame(frame)
     load_debug_info
 
+    @@mutex.synchronize do
+      each_frame(exception_info.value.contextRecord) do |frame|
+        print_frame(frame)
+      end
     end
   end
 
@@ -147,6 +159,7 @@ struct Exception::CallStack
     end
   end
 
+  # WARNING: caller must own the @@mutex lock!
   protected def self.decode_line_number(pc)
     line_info = uninitialized LibC::IMAGEHLP_LINEW64
     line_info.sizeOfStruct = sizeof(LibC::IMAGEHLP_LINEW64)
@@ -170,6 +183,7 @@ struct Exception::CallStack
     {file_name, line_number, 0}
   end
 
+  # WARNING: caller must own the @@mutex lock!
   protected def self.decode_function_name(pc)
     if sym = sym_from_addr(pc)
       _, sname = sym
@@ -177,6 +191,7 @@ struct Exception::CallStack
     end
   end
 
+  # WARNING: caller must own the @@mutex lock!
   protected def self.decode_frame(ip)
     pc = decode_address(ip)
     if sym = sym_from_addr(pc)
