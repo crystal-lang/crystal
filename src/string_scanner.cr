@@ -535,7 +535,7 @@ class StringScanner
     raise ArgumentError.new("Negative lookahead count: #{len}") if len < 0
     return 0 if len.zero?
     if @str.single_byte_optimizable?
-      return @byte_offset + len > @str.bytesize ? nil : len
+      return len <= @str.bytesize - @byte_offset ? len : nil
     end
 
     # some redundant logic here from String#find_start_and_end, but in this case
@@ -565,7 +565,7 @@ class StringScanner
     return 0 if len.zero?
 
     if @str.single_byte_optimizable?
-      return len > @byte_offset ? nil : len
+      return len <= @byte_offset ? len : nil
     end
 
     reader = self.make_char_reader
