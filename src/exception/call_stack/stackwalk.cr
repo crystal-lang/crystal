@@ -5,17 +5,19 @@ struct Exception::CallStack
   skip(__FILE__)
 
   @@sym_loaded = false
+  @@mutex = Thread::Mutex.new
 
   def self.load_debug_info : Nil
+    return if @@sym_loaded
     return if ENV["CRYSTAL_LOAD_DEBUG_INFO"]? == "0"
 
-    unless @@sym_loaded
+    @@mutex.synchronize do
+      return if @@sym_loaded
+
       @@sym_loaded = true
-      begin
-        load_debug_info_impl
-      rescue ex
-        Crystal::System.print_exception "Unable to load debug information", ex
-      end
+      load_debug_info_impl
+    rescue ex
+      Crystal::System.print_exception "Unable to load debug information", ex
     end
   end
 
