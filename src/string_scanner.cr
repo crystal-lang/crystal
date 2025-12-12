@@ -130,9 +130,8 @@ class StringScanner
     # off the end of the string
     return nil if scan_len.nil?
 
-    idx = @byte_offset
+    result = @str.byte_slice(@byte_offset, scan_len)
     @byte_offset += scan_len
-    result = @str.byte_slice(idx, scan_len)
     @last_match = StringMatchData.new(result)
     result
   end
