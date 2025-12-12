@@ -314,6 +314,8 @@ describe StringScanner do
       s.inspect.should eq(%(#<StringScanner 0/16 "‣this …">))
       s.scan(/\w+\s/)
       s.inspect.should eq(%(#<StringScanner 5/16 "…s ‣is …">))
+      s.scan(1)
+      s.inspect.should eq(%(#<StringScanner 6/16 "… i‣s a…">))
       s.scan(/\w+\s/)
       s.inspect.should eq(%(#<StringScanner 8/16 "…s ‣a s…">))
       s.scan(/\w+\s\w+/)
