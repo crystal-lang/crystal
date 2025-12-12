@@ -97,8 +97,6 @@ class StringScanner
 
   # Rewinds the scan head by `len` characters.
   def rewind(len : Int) : Nil
-    return if len <= 0
-
     @byte_offset -= lookbehind_byte_length(len) || @byte_offset
   end
 
