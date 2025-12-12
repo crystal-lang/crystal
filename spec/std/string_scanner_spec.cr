@@ -330,6 +330,20 @@ describe StringScanner do
       s.scan(/\w/)
       s.inspect.should eq(%(#<StringScanner 2/2 "hi‣" eos>))
     end
+
+    it "works with multi-byte strings" do
+      s = StringScanner.new("これは文字列である")
+      s.inspect.should eq(%(#<StringScanner 0/9 "‣これは文字…">))
+      s.scan(1)
+      s.inspect.should eq(%(#<StringScanner 1/9 "こ‣れは文字…">))
+      s.scan(1)
+      s.inspect.should eq(%(#<StringScanner 2/9 "これ‣は文字…">))
+      s.scan(1)
+      s.inspect.should eq(%(#<StringScanner 3/9 "…れは‣文字列…">))
+      s.terminate
+      s.inspect.should eq(%(#<StringScanner 9/9 "…字列である‣" eos>))
+
+    end
   end
 
   describe "#peek" do

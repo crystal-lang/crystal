@@ -518,31 +518,51 @@ class StringScanner
   # Includes the current position of the offset, the total size of the string,
   # and five characters near the current position.
   def inspect(io : IO) : Nil
-    offset = offset()
+    offset = self.offset
+    remaining = @str.size - offset
+
     io << "#<StringScanner "
     io << offset << '/' << @str.size << ' '
 
+    # find a range of 5 characters with the scan head as close to
+    # the middle as possible, and apply ellipses when appropriate
+    ellipsis_start = true
+    ellipsis_end = true
+    chars_before = 2
+    chars_after = 3
+
+    if offset <= chars_before
+      # shift to the right since there weren't enough chars before
+      chars_after += chars_before - offset
+      chars_before = offset
+
+      # no ellipsis if we hit the start
+      ellipsis_start = false
+    end
+
+    if remaining <= chars_after
+      # shift to the left since there weren't enough chars after
+      chars_before += chars_after - remaining
+      chars_after = @str.size - offset
+
+      # no ellipsis if we hit the end
+      ellipsis_end = false
+    end
+
+    # clamp in the case of small strings that don't have enough
+    # before *or* after
+    chars_before = chars_before.clamp(0, offset)
+    chars_after = chars_after.clamp(0, remaining)
+
     indicator_char = '‣'
-    ellipsis = '…'
+    ellipsis_char = '…'
 
     io << '"'
-    if offset.zero?
-      io << indicator_char
-      peek(5).inspect_unquoted(io)
-      io << ellipsis if @str.size > 5
-    elsif eos?
-      show_behind = 5
-      io << ellipsis if @str.size > 5
-      peek_behind(show_behind).inspect_unquoted(io)
-      io << indicator_char
-    else
-      io << ellipsis unless peek_behind(3).size < 3
-      peek_behind(2).inspect_unquoted(io)
-      io << indicator_char
-      peek(1)
-      peek(3).inspect_unquoted(io)
-      io << ellipsis unless peek(4).size < 4
-    end
+    io << ellipsis_char if ellipsis_start
+    io << peek_behind(chars_before) if chars_before > 0
+    io << indicator_char
+    io << peek(chars_after) if chars_after > 0
+    io << ellipsis_char if ellipsis_end
     io << '"'
 
     io << " eos" if eos?
