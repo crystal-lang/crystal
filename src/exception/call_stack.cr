@@ -1,13 +1,3 @@
-{% if flag?(:interpreted) %}
-  require "./call_stack/interpreter"
-{% elsif flag?(:win32) && !flag?(:gnu) %}
-  require "./call_stack/stackwalk"
-{% elsif flag?(:wasm32) %}
-  require "./call_stack/null"
-{% else %}
-  require "./call_stack/libunwind"
-{% end %}
-
 # Returns the current execution stack as an array containing strings
 # usually in the form file:line:column or file:line:column in 'method'.
 def caller : Array(String)
@@ -124,3 +114,13 @@ struct Exception::CallStack
     line
   end
 end
+
+{% if flag?(:interpreted) %}
+  require "./call_stack/interpreter"
+{% elsif flag?(:win32) && !flag?(:gnu) %}
+  require "./call_stack/stackwalk"
+{% elsif flag?(:wasm32) %}
+  require "./call_stack/null"
+{% else %}
+  require "./call_stack/libunwind"
+{% end %}
