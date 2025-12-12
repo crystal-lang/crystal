@@ -471,10 +471,6 @@ class StringScanner
     make_char_reader.previous_char
   end
 
-  private def make_char_reader : Char::Reader
-    Char::Reader.new(@str, @byte_offset)
-  end
-
   # Returns the remainder of the string after the scan offset.
   #
   # ```
@@ -523,6 +519,10 @@ class StringScanner
     io << " eos" if eos?
 
     io << '>'
+  end
+
+  private def make_char_reader : Char::Reader
+    Char::Reader.new(@str, @byte_offset)
   end
 
   # Transforms a character count into a byte count *forward*
