@@ -500,7 +500,6 @@ workflows:
           requires:
             - dist_linux
             - dist_darwin
-            - dist_snap
             - dist_docs
 
   nightly_release:
@@ -550,5 +549,4 @@ workflows:
           requires:
             - dist_linux
             - dist_darwin
-            - dist_snap
             - dist_docs
