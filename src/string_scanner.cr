@@ -307,6 +307,12 @@ class StringScanner
     match(pattern, advance: false, anchored: true)
   end
 
+  # :ditto:
+  def check(pattern : Int) : String?
+    scan_len = lookahead_byte_length(pattern) || return nil
+    @str.byte_slice(@byte_offset, scan_len)
+  end
+
   # Returns the value that `#scan_until` would return, without advancing the
   # scan offset. The last match is still saved, however.
   #
