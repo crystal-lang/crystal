@@ -483,7 +483,9 @@ class StringScanner
   # move the scan head. This will properly decode the next character from the
   # string, and may return a multi-byte character.
   def current_char : Char
-    make_char_reader.current_char
+    # [jneen] custom handling here because Char::Reader#current_char will just
+    # return '\0' at the end
+    current_char? || raise IndexError.new
   end
 
   # Returns the character before the scan head, or nil if at the beginning. Does
