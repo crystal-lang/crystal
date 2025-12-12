@@ -11,6 +11,9 @@ struct Exception::CallStack
 
   protected def self.load_debug_info_impl : Nil
     read_dwarf_sections
+  rescue ex
+    @@dwarf_line_numbers = nil
+    @@dwarf_function_names = nil
   end
 
   protected def self.read_dwarf_sections : Nil
