@@ -258,14 +258,8 @@ class StringScanner
   # remaining in the string, this method will return nil and _not advance
   # the scan head_. To move the scan head to the very end, use `#terminate`.
   def skip(pattern : Int) : Int32?
-    scan_len = lookahead_byte_length(pattern)
-
-    # too many characters, would go off the end of the string
-    return nil if scan_len.nil?
-
-    @byte_offset += scan_len
-
-    pattern
+    match = scan(pattern)
+    match.size if match
   end
 
   # Attempts to skip _until_ the given *pattern* is found after the scan
