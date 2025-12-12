@@ -22,6 +22,10 @@ struct Exception::CallStack
 
   {% if flag?(:interpreted) %} @[Primitive(:interpreter_call_stack_unwind)] {% end %}
   protected def self.unwind : Array(Void*)
+    # unlike DWARF, this is required on Windows to even be able to produce
+    # correct stack traces, so we do it here but not in `libunwind.cr`
+    load_debug_info
+
     # TODO: use stack if possible (must be 16-byte aligned)
     context = Pointer(LibC::CONTEXT).malloc(1)
     context.value.contextFlags = LibC::CONTEXT_FULL
@@ -37,10 +41,6 @@ struct Exception::CallStack
   end
 
   private def self.each_frame(context, &)
-    # unlike DWARF, this is required on Windows to even be able to produce
-    # correct stack traces, so we do it here but not in `libunwind.cr`
-    load_debug_info
-
     machine_type = {% if flag?(:x86_64) %}
                      LibC::IMAGE_FILE_MACHINE_AMD64
                    {% elsif flag?(:i386) %}
@@ -118,6 +118,8 @@ struct Exception::CallStack
   def self.print_backtrace(exception_info) : Nil
     each_frame(exception_info.value.contextRecord) do |frame|
       print_frame(frame)
+    load_debug_info
+
     end
   end
 
@@ -146,8 +148,6 @@ struct Exception::CallStack
   end
 
   protected def self.decode_line_number(pc)
-    load_debug_info
-
     line_info = uninitialized LibC::IMAGEHLP_LINEW64
     line_info.sizeOfStruct = sizeof(LibC::IMAGEHLP_LINEW64)
 
@@ -189,8 +189,6 @@ struct Exception::CallStack
   end
 
   private def self.sym_get_module_info(pc)
-    load_debug_info
-
     module_info = Pointer(LibC::IMAGEHLP_MODULEW64).malloc(1)
     module_info.value.sizeOfStruct = sizeof(LibC::IMAGEHLP_MODULEW64)
 
@@ -202,8 +200,6 @@ struct Exception::CallStack
   end
 
   private def self.sym_from_addr(pc)
-    load_debug_info
-
     symbol_size = sizeof(LibC::SYMBOL_INFOW) + (LibC::MAX_SYM_NAME - 1) * sizeof(LibC::WCHAR)
     symbol = Pointer(UInt8).malloc(symbol_size).as(LibC::SYMBOL_INFOW*)
     symbol.value.sizeOfStruct = sizeof(LibC::SYMBOL_INFOW)

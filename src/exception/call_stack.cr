@@ -49,6 +49,7 @@ struct Exception::CallStack
     {% if flag?(:wasm32) %}
       [] of String
     {% else %}
+      CallStack.load_debug_info
       show_full_info = ENV["CRYSTAL_CALLSTACK_FULL_INFO"]? == "1"
 
       @callstack.compact_map do |ip|
