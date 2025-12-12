@@ -435,6 +435,8 @@ describe StringScanner do
     s.peek(1).should eq("")
     s.scan(1).should be_nil
     s.skip(1).should be_nil
+    s.skip(0).should eq(0)
+    s.scan(0).should eq("")
 
     s.current_char?.should be_nil
   end
