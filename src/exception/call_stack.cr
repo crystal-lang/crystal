@@ -28,17 +28,12 @@ struct Exception::CallStack
 
   skip(__FILE__)
 
-  @@mutex = Thread::Mutex.new
   @@loaded = false
 
   # :nodoc:
   def self.load_debug_info : Nil
-    return if @@loaded
-    return if ENV["CRYSTAL_LOAD_DEBUG_INFO"]? == "0"
-
-    @@mutex.synchronize do
-      return if @@loaded
-      @@loaded = true
+    Crystal.once(pointerof(@@loaded)) do
+      return if ENV["CRYSTAL_LOAD_DEBUG_INFO"]? == "0"
 
       begin
         load_debug_info_impl
