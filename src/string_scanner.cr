@@ -92,7 +92,9 @@ class StringScanner
   # the scanner advances the scan offset, the last match is saved, and it
   # returns the matched string. Otherwise, the scanner returns `nil`. If *pattern*
   # is an Int, the scanner will be advanced by that number of characters, and the
-  # scanned string returned.
+  # scanned string returned. If *pattern* is an Int, then it is considered a match
+  # if there are at least that many characters left in the string, and will return
+  # nil otherwise.
   #
   # ```
   # require "string_scanner"
@@ -103,6 +105,7 @@ class StringScanner
   # s.scan(/\s\w/) # => " s"
   # s.scan('t')    # => "t"
   # s.scan(2)      # => "ri"
+  # s.scan(5)      # => nil
   # s.scan("ng")   # => "ng"
   # s.scan(/.*/)   # => ""
   # ```
@@ -120,6 +123,7 @@ class StringScanner
     match(pattern, advance: true, anchored: true)
   end
 
+  # :ditto:
   def scan(pattern : Int) : String?
     scan_len = lookahead_byte_length(pattern)
 
@@ -133,6 +137,8 @@ class StringScanner
     result
   end
 
+  # Reverts the scan head to before the last match, if it exists, and
+  # clears the last match information. This can only be used once per scan.
   def unscan : Nil
     match = @last_match
     return if match.nil?
@@ -514,6 +520,12 @@ class StringScanner
     io << '>'
   end
 
+  # Transforms a character count into a byte count *forward*
+  # from the scan head. Returns nil if the string doesn't have
+  # enough characters in it to advance by the given character
+  # count.
+  #
+  # Return value, if not nil, is guaranteed to be in (0..@str.bytesize - @byte_offset)
   private def lookahead_byte_length(len : Int) : Int32?
     raise ArgumentError.new("Negative lookahead count: #{len}") if len < 0
     return 0 if len.zero?
@@ -538,6 +550,11 @@ class StringScanner
     reader.pos - @byte_offset
   end
 
+  # Similar to #lookahead_byte_length, transforms a character count
+  # into a byte count *backwards* from the scan head, and returns nil
+  # if this would fall off the beginning of the string.
+  #
+  # Return value, if not nil, is guaranteed to be in (0..@byte_offset)
   private def lookbehind_byte_length(len : Int) : Int32?
     raise ArgumentError.new("Negative lookbehind count: #{len}") if len < 0
     return 0 if len.zero?
