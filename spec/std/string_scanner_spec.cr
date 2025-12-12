@@ -371,8 +371,13 @@ describe StringScanner do
       s.rewind(10)
       s.offset.should eq(0)
 
+      expect_raises(ArgumentError, "Negative lookbehind count") { s.rewind(-1) }
+
       s.skip(3)
       s.current_char.should eq('d')
+      s.offset.should eq(3)
+
+      s.rewind(0)
       s.offset.should eq(3)
 
       s.rewind(2)
