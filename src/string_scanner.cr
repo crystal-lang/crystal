@@ -426,7 +426,6 @@ class StringScanner
   # the scan offset.
   def peek_behind(len) : String
     byte_len = lookbehind_byte_length(len) || @byte_offset
-    byte_len = byte_len.clamp(0..@byte_offset)
     @str.byte_slice(@byte_offset - byte_len, byte_len)
   end
 
