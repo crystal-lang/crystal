@@ -598,7 +598,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       if node.expressions.empty?
         node.type = @context.program.nil_type
       else
-        node.type = node.expressions.last.type?
+        node.type = node.expressions.last.type? || @context.program.nil_type
       end
     end
 
