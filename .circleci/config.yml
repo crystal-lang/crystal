@@ -8,7 +8,7 @@ parameters:
   distribution-scripts-version:
     description: "Git ref for version of https://github.com/crystal-lang/distribution-scripts/"
     type: string
-    default: "cf977004808218e4dd51811e5673406d4d0de1a2"
+    default: "bad6c4f1e68a205bbbd3ee6dda243518259d56b4"
   previous_crystal_base_url:
     description: "Prefix for URLs to Crystal bootstrap compiler"
     type: string
@@ -369,40 +369,24 @@ jobs:
             make smoke-all VERSION=${CRYSTAL_VERSION}
 
   dist_snap:
-    docker:
-      - image: cibuilds/snapcraft:stable
+    machine:
+      image: "ubuntu-2204:current"
+    environment:
+      SNAPCRAFT_BUILD_ENVIRONMENT: host
     steps:
       - attach_workspace:
           at: /tmp/workspace
       - run:
           command: |
-            apt-get install -y make
+            sudo apt-get update
+            sudo apt-get install -y make snapd
+            sudo snap install snapcraft --classic
             cd /tmp/workspace/distribution-scripts
             source build.env
-            cd snapcraft
-            CRYSTAL_RELEASE_LINUX64_TARGZ=/tmp/workspace/build/crystal-$CRYSTAL_VERSION-1-linux-x86_64.tar.gz make
-      - store_artifacts:
-          path: /tmp/workspace/distribution-scripts/snapcraft/build
-          destination: build
-      - persist_to_workspace:
-          root: /tmp/workspace/distribution-scripts/snapcraft/
-          paths:
-            - build
-
-  publish_snap:
-    docker:
-      - image: cibuilds/snapcraft:stable
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - run:
-          # $SNAPCRAFT_TOKEN is generated using `snapcraft export-login --snaps crystal --channels edge,edge/* -`
-          command: |
-            cd /tmp/workspace/distribution-scripts
-            source build.env
-
-            echo $SNAPCRAFT_TOKEN | snapcraft login --with -
-            snapcraft push /tmp/workspace/build/*.snap --release=$SNAP_CHANNEL
+            cd snapcraft/
+            sudo -E make ARCH=amd64 CRYSTAL_TARBALL=/tmp/workspace/build/crystal-$CRYSTAL_VERSION-1-linux-x86_64.tar.gz  GRADE=$SNAP_GRADE
+            sudo -E make ARCH=arm64 CRYSTAL_TARBALL=/tmp/workspace/build/crystal-$CRYSTAL_VERSION-1-linux-aarch64.tar.gz GRADE=$SNAP_GRADE
+            sudo -E make push CHANNEL=$SNAP_CHANNEL
 
   dist_docs:
     machine:
@@ -507,10 +491,6 @@ workflows:
           filters: *release
           requires:
             - dist_linux
-      - publish_snap:
-          filters: *release
-          requires:
-            - dist_snap
       - dist_docs:
           filters: *release
           requires:
@@ -520,7 +500,6 @@ workflows:
           requires:
             - dist_linux
             - dist_darwin
-            - dist_snap
             - dist_docs
 
   nightly_release:
@@ -559,9 +538,6 @@ workflows:
       - dist_snap:
           requires:
             - dist_linux
-      - publish_snap:
-          requires:
-            - dist_snap
       - dist_docs:
           requires:
             - dist_docker
@@ -573,5 +549,4 @@ workflows:
           requires:
             - dist_linux
             - dist_darwin
-            - dist_snap
             - dist_docs
