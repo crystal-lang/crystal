@@ -22,7 +22,7 @@ require "./location/loader"
 # ```
 #
 # A custom time zone database can be configured through the environment variable
-# `ZONEINFO`. See `.load` for details.
+# `TZDIR`. See `.load` for details.
 #
 # ### Fixed Offset
 #
@@ -274,7 +274,8 @@ class Time::Location
   # systems. In this case, you may need to distribute a copy of the database
   # with an application that depends on time zone data being available.
   #
-  # A custom lookup path can be set as environment variable `ZONEINFO`.
+  # A custom lookup path can be set as environment variable `TZDIR`(`ZONEINFO`
+  # is also supported as legacy option).
   # The path can point to the root of a directory structure or an
   # uncompressed ZIP file, each representing the time zone database using files
   # and folders of the expected names.
@@ -283,12 +284,12 @@ class Time::Location
   #
   # ```
   # # This tries to load the file `/usr/share/zoneinfo/Custom/Location`
-  # ENV["ZONEINFO"] = "/usr/share/zoneinfo/"
+  # ENV["TZDIR"] = "/usr/share/zoneinfo/"
   # Time::Location.load("Custom/Location")
   #
   # # This tries to load the file `Custom/Location` in the uncompressed ZIP
   # # file at `/path/to/zoneinfo.zip`
-  # ENV["ZONEINFO"] = "/path/to/zoneinfo.zip"
+  # ENV["TZDIR"] = "/path/to/zoneinfo.zip"
   # Time::Location.load("Custom/Location")
   # ```
   #
@@ -333,7 +334,8 @@ class Time::Location
       # much less dot dot. Likewise, none begin with a slash.
       raise InvalidLocationNameError.new(name)
     else
-      if zoneinfo = ENV["ZONEINFO"]?
+      # DEPRECATED: `ZONEINFO` is supported only for backwards compatibility.
+      if zoneinfo = ENV["TZDIR"]? || ENV["ZONEINFO"]?
         if location = load_from_dir_or_zip(name, zoneinfo)
           return location
         else
@@ -418,7 +420,8 @@ class Time::Location
         return TZLocation.new("Local", zones, tz_string, *tz_args)
       end
 
-      if zoneinfo = ENV["ZONEINFO"]?
+      # DEPRECATED: `ZONEINFO` is supported only for backwards compatibility.
+      if zoneinfo = ENV["TZDIR"]? || ENV["ZONEINFO"]?
         if location = load_from_dir_or_zip(tz_string, zoneinfo)
           return location
         end

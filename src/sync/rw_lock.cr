@@ -1,6 +1,7 @@
 require "./mu"
 require "./type"
 require "./errors"
+require "./lockable"
 
 module Sync
   # A multiple readers and exclusive writer lock to protect critical sections.
@@ -17,7 +18,11 @@ module Sync
   # guarantee that nothing else is accessing said resources.
   #
   # The implementation doesn't favor readers or writers in particular.
+  #
+  # NOTE: Consider `Shared(T)` to protect a value `T` with a `RWLock`.
   class RWLock
+    include Lockable
+
     def initialize(@type : Type = :checked)
       @counter = 0
       @mu = MU.new
@@ -118,6 +123,27 @@ module Sync
         @locked_by = nil
       end
       @mu.unlock
+    end
+
+    protected def wait(cv : Pointer(CV)) : Nil
+      counter = 1
+
+      unless @type.unchecked?
+        if @mu.held?
+          raise Error.new("Can't unlock Sync::RWLock locked by another fiber") unless owns_lock?
+          @locked_by = nil
+          counter, @counter = @counter, 0 if @type.reentrant?
+        elsif !@mu.rheld?
+          raise Error.new("Can't unlock Sync::RWLock that isn't locked")
+        end
+      end
+
+      cv.value.wait pointerof(@mu)
+
+      unless @type.unchecked? || @mu.rheld?
+        @locked_by = Fiber.current
+        @counter = counter if @type.reentrant?
+      end
     end
 
     protected def owns_lock? : Bool

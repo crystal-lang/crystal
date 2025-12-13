@@ -598,6 +598,12 @@ module Crystal
         assert_macro %q({{ "bar".gsub /(foo)/ { "STR" } }}), %("bar")                                                                                 # No match at all
       end
 
+      it "executes match" do
+        assert_macro %({{ "hello world".match(/x/) }}), %(nil)
+        assert_macro %({{ "hello world".match(/o.*o/) }}), %({0 => "o wo"} of ::Int32 | ::String => ::String | ::Nil)
+        assert_macro %({{ "hello world".match(/(?:(x)|e)(?<name>\\S+)/) }}), %({0 => "ello", 1 => nil, "name" => "llo"} of ::Int32 | ::String => ::String | ::Nil)
+      end
+
       it "executes scan" do
         assert_macro %({{"Crystal".scan(/(Cr)(?<name1>y)(st)(?<name2>al)/)}}), %([{0 => "Crystal", 1 => "Cr", "name1" => "y", 3 => "st", "name2" => "al"} of ::Int32 | ::String => ::String | ::Nil] of ::Hash(::Int32 | ::String, ::String | ::Nil))
         assert_macro %({{"Crystal".scan(/(Cr)?(stal)/)}}), %([{0 => "stal", 1 => nil, 2 => "stal"} of ::Int32 | ::String => ::String | ::Nil] of ::Hash(::Int32 | ::String, ::String | ::Nil))
@@ -1037,8 +1043,18 @@ module Crystal
         assert_macro %({{ [1, 2, 3, 4][nil..nil] }}), %([1, 2, 3, 4])
       end
 
+      it "executes [] with range, start is out of bounds" do
+        assert_macro %({{ [1, 2, 3, 4][5..] }}), %(nil)
+        assert_macro %({{ [1, 2, 3, 4][-5..] }}), %(nil)
+      end
+
       it "executes [] with two numbers" do
         assert_macro %({{ [1, 2, 3, 4, 5][1, 3] }}), %([2, 3, 4])
+      end
+
+      it "executes [] with two numbers, start is out of bounds" do
+        assert_macro %({{ [1, 2, 3, 4][5, 1] }}), %(nil)
+        assert_macro %({{ [1, 2, 3, 4][-5, 4] }}), %(nil)
       end
 
       it "executes []=" do
@@ -1333,6 +1349,20 @@ module Crystal
         assert_macro %({{ {1, 2, 3, 4}[nil...2] }}), %({1, 2})
         assert_macro %({{ {1, 2, 3, 4}[..] }}), %({1, 2, 3, 4})
         assert_macro %({{ {1, 2, 3, 4}[nil..nil] }}), %({1, 2, 3, 4})
+      end
+
+      it "executes [] with range, start is out of bounds" do
+        assert_macro %({{ {1, 2, 3, 4}[5..] }}), %(nil)
+        assert_macro %({{ {1, 2, 3, 4}[-5..] }}), %(nil)
+      end
+
+      it "executes [] with two numbers" do
+        assert_macro %({{ {1, 2, 3, 4, 5}[1, 3] }}), %({2, 3, 4})
+      end
+
+      it "executes [] with two numbers, start is out of bounds" do
+        assert_macro %({{ {1, 2, 3, 4}[5, 1] }}), %(nil)
+        assert_macro %({{ {1, 2, 3, 4}[-5, 4] }}), %(nil)
       end
 
       it "executes size" do

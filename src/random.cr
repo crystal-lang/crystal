@@ -481,6 +481,11 @@ module Random
     random_bytes(n).hexstring
   end
 
+  # See `#split`.
+  def self.split : Random
+    thread_default.split.as(Random)
+  end
+
   # See `#next_bool`.
   def self.next_bool : Bool
     thread_default.next_bool

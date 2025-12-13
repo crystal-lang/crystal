@@ -791,6 +791,20 @@ module Crystal
           end
           BoolLiteral.new(@value.includes?(piece))
         end
+      when "match"
+        interpret_check_args do |arg|
+          unless arg.is_a?(RegexLiteral)
+            raise "StringLiteral#match expects a regex, not #{arg.class_desc}"
+          end
+
+          regex = regex_value(arg)
+
+          if match_data = @value.match(regex)
+            regex_captures_hash(match_data)
+          else
+            NilLiteral.new
+          end
+        end
       when "scan"
         interpret_check_args do |arg|
           unless arg.is_a?(RegexLiteral)
@@ -810,32 +824,7 @@ module Crystal
           )
 
           @value.scan(regex) do |match_data|
-            captures = HashLiteral.new(
-              of: HashLiteral::Entry.new(
-                Union.new([Path.global("Int32"), Path.global("String")] of ASTNode),
-                Union.new([Path.global("String"), Path.global("Nil")] of ASTNode),
-              )
-            )
-
-            match_data.to_h.each do |capture, substr|
-              case capture
-              in Int32
-                key = NumberLiteral.new(capture)
-              in String
-                key = StringLiteral.new(capture)
-              end
-
-              case substr
-              in String
-                value = StringLiteral.new(substr)
-              in Nil
-                value = NilLiteral.new
-              end
-
-              captures.entries << HashLiteral::Entry.new(key, value)
-            end
-
-            matches.elements << captures
+            matches.elements << regex_captures_hash(match_data)
           end
 
           matches
@@ -855,6 +844,7 @@ module Crystal
             when RegexLiteral
               splitter = regex_value(arg)
             else
+              interpreter.warnings.add_warning_at(name_loc, "Deprecated StringLiteral#split(ASTNode). Use `#split(StringLiteral)` instead")
               splitter = arg.to_s
             end
 
@@ -3145,12 +3135,8 @@ private def interpret_array_or_tuple_method(object, klass, method, args, named_a
 
         from = from.to_number.to_i
         to = to.to_number.to_i
-
-        begin
-          klass.new(object.elements[from, to])
-        rescue ex
-          object.raise ex.message
-        end
+        values = object.elements[from, to]?
+        values ? klass.new(values) : Crystal::NilLiteral.new
       else
         case arg = from
         when Crystal::NumberLiteral
@@ -3158,11 +3144,8 @@ private def interpret_array_or_tuple_method(object, klass, method, args, named_a
           object.elements[index]? || Crystal::NilLiteral.new
         when Crystal::RangeLiteral
           range = arg.interpret_to_nilable_range(interpreter)
-          begin
-            klass.new(object.elements[range])
-          rescue ex
-            object.raise ex.message
-          end
+          values = object.elements[range]?
+          values ? klass.new(values) : Crystal::NilLiteral.new
         else
           arg.raise "argument to [] must be a number or range, not #{arg.class_desc}:\n\n#{arg}"
         end
@@ -3378,6 +3361,35 @@ end
 
 private def empty_no_return_array
   Crystal::ArrayLiteral.new(of: Crystal::Path.global("NoReturn"))
+end
+
+private def regex_captures_hash(match_data : Regex::MatchData)
+  captures = Crystal::HashLiteral.new(
+    of: Crystal::HashLiteral::Entry.new(
+      Crystal::Union.new([Crystal::Path.global("Int32"), Crystal::Path.global("String")] of Crystal::ASTNode),
+      Crystal::Union.new([Crystal::Path.global("String"), Crystal::Path.global("Nil")] of Crystal::ASTNode),
+    )
+  )
+
+  match_data.to_h.each do |capture, substr|
+    case capture
+    in Int32
+      key = Crystal::NumberLiteral.new(capture)
+    in String
+      key = Crystal::StringLiteral.new(capture)
+    end
+
+    case substr
+    in String
+      value = Crystal::StringLiteral.new(substr)
+    in Nil
+      value = Crystal::NilLiteral.new
+    end
+
+    captures.entries << Crystal::HashLiteral::Entry.new(key, value)
+  end
+
+  captures
 end
 
 private def filter(object, klass, block, interpreter, keep = true)
