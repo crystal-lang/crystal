@@ -12,11 +12,7 @@ require "log"
 abstract class OpenSSL::SSL::Context
   # :nodoc:
   def self.default_method
-    {% if LibSSL.has_method?(:tls_method) %}
-      LibSSL.tls_method
-    {% else %}
-      LibSSL.sslv23_method
-    {% end %}
+    LibSSL.tls_method
   end
 
   class Client < Context
@@ -44,9 +40,7 @@ abstract class OpenSSL::SSL::Context
       super(method)
 
       self.verify_mode = OpenSSL::SSL::VerifyMode::PEER
-      {% if LibSSL.has_method?(:x509_verify_param_lookup) %}
-        self.default_verify_param = "ssl_server"
-      {% end %}
+      self.default_verify_param = "ssl_server"
     end
 
     # Returns a new TLS client context with only the given method set.
@@ -99,15 +93,14 @@ abstract class OpenSSL::SSL::Context
     end
 
     private def alpn_protocol=(protocol : Bytes)
-      {% if LibSSL.has_method?(:ssl_ctx_set_alpn_protos) %}
-        LibSSL.ssl_ctx_set_alpn_protos(@handle, protocol, protocol.size)
-      {% else %}
-        raise NotImplementedError.new("LibSSL.ssl_ctx_set_alpn_protos")
-      {% end %}
+      LibSSL.ssl_ctx_set_alpn_protos(@handle, protocol, protocol.size)
     end
   end
 
   class Server < Context
+    # Keep a reference so the GC doesn't collect it after sending it to C land
+    @sni_callback_box = Pointer(Void).null
+
     # Generates a new TLS server context with sane defaults for a server connection.
     #
     # Defaults to `TLS_method` or `SSLv23_method` (depending on OpenSSL version)
@@ -126,10 +119,7 @@ abstract class OpenSSL::SSL::Context
     # ```
     def initialize(method : LibSSL::SSLMethod = Context.default_method)
       super(method)
-
-      {% if LibSSL.has_method?(:x509_verify_param_lookup) %}
-        self.default_verify_param = "ssl_client"
-      {% end %}
+      self.default_verify_param = "ssl_client"
     end
 
     # Returns a new TLS server context with only the given method set.
@@ -175,21 +165,83 @@ abstract class OpenSSL::SSL::Context
     end
 
     private def alpn_protocol=(protocol : Bytes)
-      {% if LibSSL.has_method?(:ssl_ctx_set_alpn_select_cb) %}
-        alpn_cb = ->(ssl : LibSSL::SSL, o : LibC::Char**, olen : LibC::Char*, i : LibC::Char*, ilen : LibC::Int, data : Void*) {
-          proto = Box(Bytes).unbox(data)
-          ret = LibSSL.ssl_select_next_proto(o, olen, proto, proto.size, i, ilen)
-          if ret != LibSSL::OPENSSL_NPN_NEGOTIATED
-            LibSSL::SSL_TLSEXT_ERR_NOACK
-          else
-            LibSSL::SSL_TLSEXT_ERR_OK
+      alpn_cb = ->(ssl : LibSSL::SSL, o : LibC::Char**, olen : LibC::Char*, i : LibC::Char*, ilen : LibC::Int, data : Void*) {
+        proto = Box(Bytes).unbox(data)
+        ret = LibSSL.ssl_select_next_proto(o, olen, proto, proto.size, i, ilen)
+        if ret != LibSSL::OPENSSL_NPN_NEGOTIATED
+          LibSSL::SSL_TLSEXT_ERR_NOACK
+        else
+          LibSSL::SSL_TLSEXT_ERR_OK
+        end
+      }
+      @alpn_protocol = alpn_protocol = Box.box(protocol)
+      LibSSL.ssl_ctx_set_alpn_select_cb(@handle, alpn_cb, alpn_protocol)
+    end
+
+    # Sets a Server Name Indication (SNI) callback for this server context.
+    #
+    # The callback receives the hostname from the client's SNI extension and should
+    # return an `SSL::Context::Server` configured for that hostname, or `nil` to
+    # continue using the current context.
+    #
+    # This allows a TLS server to present different certificates based on the
+    # hostname the client is connecting to, enabling virtual hosting over TLS.
+    #
+    # Example:
+    # ```
+    # default_context = OpenSSL::SSL::Context::Server.new
+    # default_context.certificate_chain = "default.crt"
+    # default_context.private_key = "default.key"
+    #
+    # example_context = OpenSSL::SSL::Context::Server.new
+    # example_context.certificate_chain = "example.com.crt"
+    # example_context.private_key = "example.com.key"
+    #
+    # default_context.on_server_name do |hostname|
+    #   case hostname
+    #   when "example.com", "www.example.com"
+    #     example_context
+    #   else
+    #     nil # use default context
+    #   end
+    # end
+    # ```
+    #
+    # See [SSL_CTX_set_tlsext_servername_callback](https://docs.openssl.org/3.5/man3/SSL_CTX_set_tlsext_servername_callback/)
+    def on_server_name(&block : String -> OpenSSL::SSL::Context::Server?)
+      # Create a C callback that extracts the hostname and calls our Crystal block
+      c_callback = Proc(LibSSL::SSL, LibC::Int*, Void*, LibC::Int).new do |ssl, alert_ptr, arg|
+        servername_ptr = LibSSL.ssl_get_servername(ssl, LibSSL::TLSExt::NAMETYPE_host_name)
+        if servername_ptr.null?
+          next LibSSL::SSL_TLSEXT_ERR_OK
+        end
+
+        begin
+          hostname = String.new(servername_ptr)
+
+          callback = Box(typeof(block)).unbox(arg)
+          new_context = callback.call(hostname)
+
+          if new_context
+            LibSSL.ssl_set_ssl_ctx(ssl, new_context.to_unsafe)
           end
-        }
-        @alpn_protocol = alpn_protocol = Box.box(protocol)
-        LibSSL.ssl_ctx_set_alpn_select_cb(@handle, alpn_cb, alpn_protocol)
-      {% else %}
-        raise NotImplementedError.new("LibSSL.ssl_ctx_set_alpn_select_cb")
-      {% end %}
+
+          LibSSL::SSL_TLSEXT_ERR_OK
+        rescue
+          alert_ptr.value = LibSSL::SSL_AD_INTERNAL_ERROR
+          LibSSL::SSL_TLSEXT_ERR_ALERT_FATAL
+        end
+      end
+
+      # Box the callback to pass to C
+      callback_box = Box.box(block)
+      @sni_callback_box = callback_box
+
+      # Set the callback using SSL_CTX_callback_ctrl
+      LibSSL.ssl_ctx_callback_ctrl(@handle, LibSSL::SSL_CTRL_SET_TLSEXT_SERVERNAME_CB, c_callback.unsafe_as(Proc(Void)))
+
+      # Set the arg that will be passed to the callback
+      LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG, 0, callback_box)
     end
   end
 
@@ -201,19 +253,11 @@ abstract class OpenSSL::SSL::Context
 
     add_options(OpenSSL::SSL::Options.flags(
       ALL,
-      NO_SSL_V2,
-      NO_SSL_V3,
       NO_TLS_V1,
       NO_TLS_V1_1,
       NO_SESSION_RESUMPTION_ON_RENEGOTIATION,
-      SINGLE_ECDH_USE,
-      SINGLE_DH_USE
+      NO_RENEGOTIATION,
     ))
-
-    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
-      add_options(OpenSSL::SSL::Options::NO_RENEGOTIATION)
-    {% end %}
-
     add_modes(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
 
     # OpenSSL does not support reading from the system root certificate store on
@@ -470,26 +514,18 @@ abstract class OpenSSL::SSL::Context
   # Depending on the OpenSSL version, the available defaults are
   # `default`, `pkcs7`, `smime_sign`, `ssl_client` and `ssl_server`.
   def default_verify_param=(name : String)
-    {% if LibSSL.has_method?(:x509_verify_param_lookup) %}
-      param = LibCrypto.x509_verify_param_lookup(name)
-      raise ArgumentError.new("#{name} is an unsupported default verify param") unless param
-      ret = LibSSL.ssl_ctx_set1_param(@handle, param)
-      raise OpenSSL::Error.new("SSL_CTX_set1_param") unless ret == 1
-    {% else %}
-      raise NotImplementedError.new("LibSSL.x509_verify_param_lookup")
-    {% end %}
+    param = LibCrypto.x509_verify_param_lookup(name)
+    raise ArgumentError.new("#{name} is an unsupported default verify param") unless param
+    ret = LibSSL.ssl_ctx_set1_param(@handle, param)
+    raise OpenSSL::Error.new("SSL_CTX_set1_param") unless ret == 1
   end
 
   # Sets the given `OpenSSL::SSL::X509VerifyFlags` in this context, additionally to
   # the already set ones.
   def add_x509_verify_flags(flags : OpenSSL::SSL::X509VerifyFlags)
-    {% if LibSSL.has_method?(:x509_verify_param_set_flags) %}
-      param = LibSSL.ssl_ctx_get0_param(@handle)
-      ret = LibCrypto.x509_verify_param_set_flags(param, flags)
-      raise OpenSSL::Error.new("X509_VERIFY_PARAM_set_flags)") unless ret == 1
-    {% else %}
-      raise NotImplementedError.new("LibSSL.x509_verify_param_set_flags")
-    {% end %}
+    param = LibSSL.ssl_ctx_get0_param(@handle)
+    ret = LibCrypto.x509_verify_param_set_flags(param, flags)
+    raise OpenSSL::Error.new("X509_VERIFY_PARAM_set_flags") unless ret == 1
   end
 
   def to_unsafe

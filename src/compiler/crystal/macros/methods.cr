@@ -3135,12 +3135,8 @@ private def interpret_array_or_tuple_method(object, klass, method, args, named_a
 
         from = from.to_number.to_i
         to = to.to_number.to_i
-
-        begin
-          klass.new(object.elements[from, to])
-        rescue ex
-          object.raise ex.message
-        end
+        values = object.elements[from, to]?
+        values ? klass.new(values) : Crystal::NilLiteral.new
       else
         case arg = from
         when Crystal::NumberLiteral
@@ -3148,11 +3144,8 @@ private def interpret_array_or_tuple_method(object, klass, method, args, named_a
           object.elements[index]? || Crystal::NilLiteral.new
         when Crystal::RangeLiteral
           range = arg.interpret_to_nilable_range(interpreter)
-          begin
-            klass.new(object.elements[range])
-          rescue ex
-            object.raise ex.message
-          end
+          values = object.elements[range]?
+          values ? klass.new(values) : Crystal::NilLiteral.new
         else
           arg.raise "argument to [] must be a number or range, not #{arg.class_desc}:\n\n#{arg}"
         end
