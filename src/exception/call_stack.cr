@@ -1,13 +1,3 @@
-{% if flag?(:interpreted) %}
-  require "./call_stack/interpreter"
-{% elsif flag?(:win32) && !flag?(:gnu) %}
-  require "./call_stack/stackwalk"
-{% elsif flag?(:wasm32) %}
-  require "./call_stack/null"
-{% else %}
-  require "./call_stack/libunwind"
-{% end %}
-
 # Returns the current execution stack as an array containing strings
 # usually in the form file:line:column or file:line:column in 'method'.
 def caller : Array(String)
@@ -28,6 +18,21 @@ struct Exception::CallStack
 
   skip(__FILE__)
 
+  @@loaded = false
+
+  # :nodoc:
+  def self.load_debug_info : Nil
+    Crystal.once(pointerof(@@loaded)) do
+      return if ENV["CRYSTAL_LOAD_DEBUG_INFO"]? == "0"
+
+      begin
+        load_debug_info_impl
+      rescue ex
+        Crystal::System.print_exception "Unable to load debug information", ex
+      end
+    end
+  end
+
   @callstack : Array(Void*)
   @backtrace : Array(String)?
 
@@ -44,6 +49,7 @@ struct Exception::CallStack
     {% if flag?(:wasm32) %}
       [] of String
     {% else %}
+      CallStack.load_debug_info
       show_full_info = ENV["CRYSTAL_CALLSTACK_FULL_INFO"]? == "1"
 
       @callstack.compact_map do |ip|
@@ -109,3 +115,13 @@ struct Exception::CallStack
     line
   end
 end
+
+{% if flag?(:interpreted) %}
+  require "./call_stack/interpreter"
+{% elsif flag?(:win32) && !flag?(:gnu) %}
+  require "./call_stack/stackwalk"
+{% elsif flag?(:wasm32) %}
+  require "./call_stack/null"
+{% else %}
+  require "./call_stack/libunwind"
+{% end %}
