@@ -26,10 +26,10 @@ struct Crystal::EventLoop::Timers(T)
   end
 
   # Dequeues and yields each ready timer (their `#wake_at` is lower than
-  # `Time.instant`) from the oldest to the most recent (i.e. time
+  # `Crystal::System::Time.instant`) from the oldest to the most recent (i.e. time
   # ascending).
   def dequeue_ready(& : Pointer(T) -> Nil) : Nil
-    now = Time.instant
+    now = Crystal::System::Time.instant
 
     while event = @heap.first?
       break if event.value.wake_at > now

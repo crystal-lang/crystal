@@ -12,7 +12,7 @@ class Crystal::System::WaitableTimer
     raise RuntimeError.from_winerror("CreateWaitableTimerExW") if @handle.null?
   end
 
-  def set(time : ::Time::Span) : Nil
+  def set(time : ::Time::Instant) : Nil
     # convert absolute time to relative time, expressed in 100ns interval,
     # rounded up
     relative = time.elapsed

@@ -7,7 +7,7 @@ class Crystal::EventLoop::Polling::FiberEvent
 
   # sleep or select timeout
   def add(timeout : Time::Span) : Nil
-    now = Time.instant
+    now = Crystal::System::Time.instant
     @event.wake_at = now + timeout
     EventLoop.current.add_timer(pointerof(@event))
   end

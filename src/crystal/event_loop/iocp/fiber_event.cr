@@ -9,7 +9,7 @@ class Crystal::EventLoop::IOCP::FiberEvent
 
   # io timeout, sleep, or select timeout
   def add(timeout : Time::Span) : Nil
-    now = Time.instant
+    now = Crystal::System::Time.instant
     @timer.wake_at = now + timeout
     EventLoop.current.add_timer(pointerof(@timer))
   end

@@ -27,7 +27,7 @@ struct Crystal::EventLoop::IOCP::Timer
 
   def initialize(@type : Type, @fiber, timeout : Time::Span? = nil)
     if timeout
-      now = Time.instant
+      now = Crystal::System::Time.instant
       @wake_at = now + timeout
     end
   end

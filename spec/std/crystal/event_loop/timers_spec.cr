@@ -7,7 +7,7 @@ private struct Timer
   property! wake_at : Time::Instant
 
   def initialize(timeout : Time::Span? = nil)
-    @wake_at = Time.instant + timeout if timeout
+    @wake_at = Crystal::System::Time.instant + timeout if timeout
   end
 
   def heap_compare(other : Pointer(self)) : Bool
@@ -89,7 +89,7 @@ describe Crystal::EventLoop::Timers do
     timers.add(pointerof(event2)).should be_false
     timers.add(pointerof(event3)).should be_false
 
-    event0.wake_at = Time.instant - 1.minute
+    event0.wake_at = Crystal::System::Time.instant - 1.minute
     timers.add(pointerof(event0)).should be_true # added new head (next ready)
   end
 
