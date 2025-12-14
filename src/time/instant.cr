@@ -2,8 +2,7 @@
 #
 # The execution time of a block can be measured using `.measure`.
 def Time.instant : Time::Instant
-  seconds, nanoseconds = Crystal::System::Time.monotonic
-  Time::Instant.new(seconds: seconds, nanoseconds: nanoseconds)
+  Crystal::System::Time.instant
 end
 
 # `Time::Instant` represents a reading of a monotonic non-decreasing
