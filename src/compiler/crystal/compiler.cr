@@ -618,14 +618,29 @@ module Crystal
       wg = WaitGroup.new
       mutex = Mutex.new
 
-      n_threads.times do
-        wg.spawn do
-          while unit = channel.receive?
-            unit.compile(isolate_context: true)
-            mutex.synchronize { @progress_tracker.stage_progress += 1 }
+      worker = -> {
+        while unit = channel.receive?
+          unit.compile(isolate_context: true)
+          mutex.synchronize { @progress_tracker.stage_progress += 1 }
+        end
+      }
+
+      {% if flag?(:execution_context) %}
+        context = Fiber::ExecutionContext::Parallel.new("CODEGEN", n_threads)
+        wg.add(n_threads)
+
+        n_threads.times do
+          context.spawn do
+            worker.call
+          ensure
+            wg.done
           end
         end
-      end
+      {% else %}
+        n_threads.times do
+          wg.spawn(&worker)
+        end
+      {% end %}
 
       units.each do |unit|
         # We generate the bitcode in the main thread because LLVM contexts

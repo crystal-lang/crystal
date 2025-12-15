@@ -8,8 +8,4 @@ require "./requires"
 
 Log.setup_from_env(default_level: :warn, default_sources: "crystal.*")
 
-{% if flag?(:execution_context) %}
-  Fiber::ExecutionContext.default.resize(Fiber::ExecutionContext.default_workers_count)
-{% end %}
-
 Crystal::Command.run
