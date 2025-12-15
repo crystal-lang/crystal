@@ -483,7 +483,7 @@ module Random
 
   # See `#split`.
   def self.split : Random
-    thread_default.split
+    thread_default.split.as(Random)
   end
 
   # See `#next_bool`.
