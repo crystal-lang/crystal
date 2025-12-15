@@ -613,6 +613,16 @@ module Crystal
       {% end %}
     end
 
+    @@codegen_context_flag = false
+    @@codegen_context : Fiber::ExecutionContext::Parallel?
+
+    protected def codegen_context
+      Crystal.once(pointerof(@@codegen_context_flag)) do
+        @@codegen_context = Fiber::ExecutionContext::Parallel.new("CODEGEN", @n_threads)
+      end
+      @@codegen_context.not_nil!("BUG: missing codegen execution context")
+    end
+
     private def mt_codegen(units, n_threads)
       channel = Channel(CompilationUnit).new(n_threads * 2)
       wg = WaitGroup.new
@@ -626,11 +636,10 @@ module Crystal
       }
 
       {% if flag?(:execution_context) %}
-        context = Fiber::ExecutionContext::Parallel.new("CODEGEN", n_threads)
         wg.add(n_threads)
 
         n_threads.times do
-          context.spawn do
+          codegen_context.spawn do
             worker.call
           ensure
             wg.done
