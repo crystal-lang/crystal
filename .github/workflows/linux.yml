@@ -52,7 +52,7 @@ jobs:
         run: bin/ci build
         env: ${{ matrix.env }}
 
-  x86_64-gnu-test-preview_mt:
+  x86_64-gnu-test-execution-context-parallel:
     env:
       ARCH: x86_64
       ARCH_CMD: linux64
@@ -73,7 +73,30 @@ jobs:
         run: bin/ci with_build_env 'make crystal'
 
       - name: Test
-        run: bin/ci with_build_env 'CRYSTAL_WORKERS=4 make std_spec threads=1 FLAGS="-D preview_mt"'
+        run: bin/ci with_build_env 'CRYSTAL_WORKERS=4 make std_spec threads=1 FLAGS="-Dexecution_context -Dpreview_mt"'
+
+  x86_64-gnu-test-execution-context-concurrent:
+    env:
+      ARCH: x86_64
+      ARCH_CMD: linux64
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Crystal source
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Prepare System
+        run: bin/ci prepare_system
+
+      - name: Prepare Build
+        run: bin/ci prepare_build
+
+      - name: Make Crystal
+        run: bin/ci with_build_env 'make crystal'
+
+      - name: Test
+        run: bin/ci with_build_env 'CRYSTAL_WORKERS=1 make std_spec threads=1 FLAGS="-Dexecution_context -Dpreview_mt"'
 
   check_format:
     env:
