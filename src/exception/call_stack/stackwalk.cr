@@ -7,6 +7,7 @@ struct Exception::CallStack
   @@mutex = Thread::Mutex.new
 
   private def decode_backtrace
+    # must grab the mutex because DbgHelp isn't thread safe
     @@mutex.synchronize { previous_def }
   end
 
@@ -39,11 +40,11 @@ struct Exception::CallStack
 
     stack = [] of Void*
 
-    @@mutex.synchronize do
-      each_frame(context) do |frame|
-        (frame.count + 1).times do
-          stack << frame.ip
-        end
+    # DbgHelp is thread unsafe so we'd theoretically need to grab the mutex, but
+    # unwinding alone seems fine, only decoding the backtrace seems unsafe
+    each_frame(context) do |frame|
+      (frame.count + 1).times do
+        stack << frame.ip
       end
     end
 
@@ -128,6 +129,8 @@ struct Exception::CallStack
   def self.print_backtrace(exception_info) : Nil
     load_debug_info
 
+    # must grab the mutex because we decode the backtrace (thread unsafe) as we
+    # unwind the stack (apparently thread safe)
     @@mutex.synchronize do
       each_frame(exception_info.value.contextRecord) do |frame|
         print_frame(frame)
