@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <% if base_path = self.base_path %>
-    <base href="<%= base_path %>" />
-  <% end %>
+  <%- if base_path = self.base_path -%>
+  <base href="<%= base_path %>" />
+  <%- end -%>
   <%= HeadTemplate.new(project_info, nil) %>
   <meta name="repository-name" content="<%= project_info.name %>">
   <title><%= project_info.name %> <%= project_info.version %></title>
