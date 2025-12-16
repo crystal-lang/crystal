@@ -134,10 +134,11 @@
 #### other
 
 - PCRE2: use thread local for jit stack and match data ([#16175], thanks @ysbaddaden)
-- Rescale execution context in spec runner with `CRYSTAL_WORKERS` ([#16444], thanks @straight-shoota)
+- Rescale execution context in spec runner with `CRYSTAL_WORKERS` ([#16444], [#16471], thanks @straight-shoota, @ysbaddaden)
 
 [#16175]: https://github.com/crystal-lang/crystal/pull/16175
 [#16444]: https://github.com/crystal-lang/crystal/pull/16444
+[#16471]: https://github.com/crystal-lang/crystal/pull/16471
 
 ### Bugfixes
 
@@ -422,7 +423,7 @@
 - Add `ameba` to `git-hooks` ([#16276], [#16295], thanks @straight-shoota)
 - Add `devenv` profile `lint` ([#16291], thanks @straight-shoota)
 - Update distribution-scripts ([#16301], thanks @straight-shoota)
-- Makefile: Extract variable `COMPILER_FLAGS` ([#16349], thanks @straight-shoota)
+- Makefile: Extract variable `COMPILER_FLAGS` ([#16349], [#16372], thanks @straight-shoota)
 - Fix `shell.nix` on Linux ([#16346], thanks @straight-shoota)
 - Build compiler with `-Dpreview_mt` ([#16380], thanks @straight-shoota)
 - Update `devenv.lock` ([#16386], thanks @github-actions)
@@ -468,6 +469,7 @@
 [#16291]: https://github.com/crystal-lang/crystal/pull/16291
 [#16301]: https://github.com/crystal-lang/crystal/pull/16301
 [#16349]: https://github.com/crystal-lang/crystal/pull/16349
+[#16372]: https://github.com/crystal-lang/crystal/pull/16372
 [#16346]: https://github.com/crystal-lang/crystal/pull/16346
 [#16380]: https://github.com/crystal-lang/crystal/pull/16380
 [#16386]: https://github.com/crystal-lang/crystal/pull/16386
