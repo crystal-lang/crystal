@@ -6,7 +6,7 @@ module Crystal::Doc
     property refname : String? = nil
     property source_url_pattern : String? = nil
     property canonical_base_url : String? = nil
-    property page_404_base_href : String? = nil
+    property base_path : String? = nil
 
     def initialize(@name : String? = nil, @version : String? = nil, @refname : String? = nil, @source_url_pattern : String? = nil)
     end
