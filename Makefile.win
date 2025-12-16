@@ -73,8 +73,8 @@ endif
 ifndef SOURCE_DATE_EPOCH
 	SOURCE_DATE_EPOCH := $(or $(shell type src\SOURCE_DATE_EPOCH 2>NUL),$(shell git show -s --format=%ct HEAD))
 endif
-export_vars := $(eval export CRYSTAL_CONFIG_BUILD_COMMIT CRYSTAL_CONFIG_PATH SOURCE_DATE_EPOCH)
-export_build_vars := $(eval export CRYSTAL_CONFIG_LIBRARY_PATH)
+export_vars = $(eval export CRYSTAL_CONFIG_BUILD_COMMIT CRYSTAL_CONFIG_PATH SOURCE_DATE_EPOCH)
+export_build_vars = $(eval export CRYSTAL_CONFIG_LIBRARY_PATH)
 
 ifeq ($(LLVM_VERSION),)
   LLVM_CONFIG ?=
