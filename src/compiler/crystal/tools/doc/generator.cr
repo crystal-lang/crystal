@@ -85,13 +85,13 @@ class Crystal::Doc::Generator
     raw_body = read_readme
     body = doc(program_type, raw_body)
 
-    File.write File.join(@output_dir, "index.html"), MainTemplate.new(body, types, project_info, nil)
+    File.write File.join(@output_dir, "index.html"), MainTemplate.new(body, types, project_info)
 
     main_index = Main.new(raw_body, Type.new(self, @program), project_info)
     File.write File.join(@output_dir, "index.json"), main_index
     File.write File.join(@output_dir, "search-index.js"), main_index.to_jsonp
 
-    File.write File.join(@output_dir, "404.html"), MainTemplate.new(Error404Template.new.to_s, types, project_info, :page_404)
+    File.write File.join(@output_dir, "404.html"), MainTemplate.new(Error404Template.new.to_s, types, project_info, project_info.base_path)
   end
 
   def generate_sitemap(types)

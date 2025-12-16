@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <% if page_type == :page_404 && base_path = project_info.base_path %>
+  <% if base_path = self.base_path %>
     <base href="<%= base_path %>" />
   <% end %>
   <%= HeadTemplate.new(project_info, nil) %>
