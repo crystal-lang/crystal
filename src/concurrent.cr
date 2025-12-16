@@ -26,7 +26,7 @@ end
 # fibers might start their execution.
 def sleep(time : Time::Span) : Nil
   Crystal.trace :sched, "sleep", for: time
-  Crystal::EventLoop.current.sleep(time)
+  Fiber.sleep(time) { }
 end
 
 # Blocks the current fiber forever.

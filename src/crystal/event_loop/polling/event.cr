@@ -33,6 +33,8 @@ struct Crystal::EventLoop::Polling::Event
   # True if an IO event has timed out (i.e. we're past `#wake_at`).
   getter? timed_out : Bool = false
 
+  property! cancelation_token : Fiber::CancelationToken
+
   # The event can be added to `Waiters` lists.
   include PointerLinkedList::Node
 

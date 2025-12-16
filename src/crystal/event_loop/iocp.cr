@@ -143,7 +143,12 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     fiber = timer.value.fiber
 
     case timer.value.type
-    in .sleep?, .timeout?
+    in .sleep?
+      # the timer might have been canceled already, and we must synchronize with
+      # the resumed `#timeout` fiber; by rule we must always resume the fiber,
+      # regardless of whether we resolve the timeout or not.
+      timer.value.timed_out! if fiber.resolve_timer?(timer.value.cancelation_token)
+    in .timeout?
       timer.value.timed_out!
     in .select_timeout?
       return unless select_action = fiber.timeout_select_action
@@ -168,10 +173,11 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     end
   end
 
-  protected def delete_timer(timer : Pointer(Timer)) : Nil
+  protected def delete_timer(timer : Pointer(Timer)) : Bool
     @mutex.synchronize do
-      _, was_next_ready = @timers.delete(timer)
+      dequeued, was_next_ready = @timers.delete(timer)
       rearm_waitable_timer(@timers.next_ready?, interruptible: false) if was_next_ready
+      dequeued
     end
   end
 
@@ -195,25 +201,31 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     end
   end
 
-  def sleep(duration : Time::Span) : Nil
-    timer = Timer.new(:sleep, Fiber.current, duration)
+  def sleep(until time : Time::Span, token : Fiber::CancelationToken) : Bool
+    timer = Timer.new(:sleep, Fiber.current)
+    timer.wake_at = time
+    timer.cancelation_token = token
     add_timer(pointerof(timer))
+
     Fiber.suspend
 
-    # safety check
-    return if timer.timed_out?
+    unless timer.timed_out? || delete_timer(pointerof(timer))
+      # the timeout was canceled while another thread dequeued the timer while
+      # running the event loop: we must synchronize with #process_timer
+      # (otherwise *event* might go out of scope); by rule the timer will always
+      # enqueue the fiber and we must suspend again.
+      Fiber.suspend
+    end
 
-    # try to avoid a double resume if possible, but another thread might be
-    # running the evloop and dequeue the event in parallel, so a "can't resume
-    # dead fiber" can still happen in a MT execution context.
-    delete_timer(pointerof(timer))
-    raise "BUG: #{timer.fiber} called sleep but was manually resumed before the timer expired!"
+    timer.timed_out?
   end
 
   # Suspend the current fiber for *duration* and returns true if the timer
   # expired and false if the fiber was resumed early.
   #
   # Specific to IOCP to handle IO timeouts.
+  #
+  # TODO: use sleep(time, token) instead
   def timeout(duration : Time::Span) : Bool
     event = Fiber.current.resume_event
     event.add(duration)
