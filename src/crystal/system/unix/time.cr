@@ -19,7 +19,11 @@ module Crystal::System::Time
   private def self.clock_gettime(&)
     # Chose the best monotonic steady clock with nanosecond precision that ticks
     # while the system is suspended. See https://github.com/crystal-lang/rfcs/pull/15
-    clock = {% if flag?(:linux) %}
+    clock = {% if flag?(:darwin) %}
+              # CLOCK_MONOTONIC on Darwin has 1 microsecond resolution, but
+              # CLOCK_MONOTONIC_RAW has a higher resolution.
+              LibC::CLOCK_MONOTONIC_RAW
+            {% elsif flag?(:linux) %}
               # On Linux, `CLOCK_MONOTONIC` does not count suspended time, but
               # but `CLOCK_BOOTTIME` does.
               LibC::CLOCK_BOOTTIME
