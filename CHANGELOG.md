@@ -18,9 +18,15 @@
 
 - _(macros)_ **[breaking]** Add compiler flag values ([#16310], thanks @straight-shoota)
 - _(macros)_ Add yielding variant of `StringLiteral#gsub` ([#16378], thanks @Blacksmoke16)
+- _(macros)_ Support `StringLiteral#split(RegexLiteral)` ([#16423], thanks @HertzDevil)
+- _(macros)_ Add `StringLiteral#match` ([#16464], thanks @HertzDevil)
+- _(macros)_ Make all overloads of `ArrayLiteral#[]` return `nil` on out of bounds ([#16453], thanks @HertzDevil)
 
 [#16310]: https://github.com/crystal-lang/crystal/pull/16310
 [#16378]: https://github.com/crystal-lang/crystal/pull/16378
+[#16423]: https://github.com/crystal-lang/crystal/pull/16423
+[#16464]: https://github.com/crystal-lang/crystal/pull/16464
+[#16453]: https://github.com/crystal-lang/crystal/pull/16453
 
 #### stdlib
 
@@ -33,9 +39,6 @@
 - _(concurrency)_ Add `Sync::ConditionVariable` ([#16440], thanks @ysbaddaden)
 - _(concurrency)_ Import `Sync::Exclusive` and `Sync::Shared` ([#16487], thanks @ysbaddaden)
 - _(crypto)_ Add `OpenSSL::SSL::Context::Server#on_server_name` for SNI ([#16452], thanks @carlhoerberg)
-- _(macros)_ Support `StringLiteral#split(RegexLiteral)` ([#16423], thanks @HertzDevil)
-- _(macros)_ Add `StringLiteral#match` ([#16464], thanks @HertzDevil)
-- _(macros)_ Make all overloads of `ArrayLiteral#[]` return `nil` on out of bounds ([#16453], thanks @HertzDevil)
 - _(networking)_ Loosen type restrictions in `StaticFileHandler` helper methods from `File` to `IO` ([#16238], thanks @andrykonchin)
 - _(networking)_ Add `IPSocket#ipv6_only` ([#16347], thanks @stakach)
 - _(numeric)_ Add `Int.from_digits` as inverse of `Int#digits` ([#16237], thanks @andrykonchin)
@@ -46,7 +49,6 @@
 - _(runtime)_ Add `Random.next_bool` and `.next_int` ([#16297], thanks @ysbaddaden)
 - _(runtime)_ Add `Random#split` and `#split_internal` API for splittable PRNGs ([#16342], [#16495], thanks @ysbaddaden)
 - _(runtime)_ Add `Pointer#fill` ([#16338], thanks @straight-shoota)
-- _(runtime)_ Fix: default execution context is `Parallel` ([#16367], thanks @ysbaddaden)
 - _(runtime)_ Add `Crystal::PointerLinkedList#first?` ([#16400], thanks @ysbaddaden)
 - _(runtime)_ Ensure single reader and writer to system fd on Unix ([#16209], thanks @ysbaddaden)
 - _(serialization)_ Support deserialization of YAML anchors of value types ([#16186], thanks @HertzDevil)
@@ -78,9 +80,6 @@
 [#16440]: https://github.com/crystal-lang/crystal/pull/16440
 [#16487]: https://github.com/crystal-lang/crystal/pull/16487
 [#16452]: https://github.com/crystal-lang/crystal/pull/16452
-[#16423]: https://github.com/crystal-lang/crystal/pull/16423
-[#16464]: https://github.com/crystal-lang/crystal/pull/16464
-[#16453]: https://github.com/crystal-lang/crystal/pull/16453
 [#16238]: https://github.com/crystal-lang/crystal/pull/16238
 [#16347]: https://github.com/crystal-lang/crystal/pull/16347
 [#16237]: https://github.com/crystal-lang/crystal/pull/16237
@@ -92,7 +91,6 @@
 [#16342]: https://github.com/crystal-lang/crystal/pull/16342
 [#16495]: https://github.com/crystal-lang/crystal/pull/16495
 [#16338]: https://github.com/crystal-lang/crystal/pull/16338
-[#16367]: https://github.com/crystal-lang/crystal/pull/16367
 [#16400]: https://github.com/crystal-lang/crystal/pull/16400
 [#16209]: https://github.com/crystal-lang/crystal/pull/16209
 [#16186]: https://github.com/crystal-lang/crystal/pull/16186
@@ -153,6 +151,7 @@
 - _(networking)_ Fix `HTTP::Cookie` parsing trailing semicolons ([#16328], thanks @alexkutsan)
 - _(runtime)_ thread safety of `Exception::Callstack` ([#16504], thanks @ysbaddaden)
 - _(runtime)_ Add thread safety to default random ([#16174], thanks @ysbaddaden)
+- _(runtime)_ default execution context is `Parallel` ([#16367], thanks @ysbaddaden)
 - _(runtime)_ `Crystal::PointerLinkedList#each` stops iterating when deleting head ([#16401], thanks @ysbaddaden)
 - _(runtime)_ closing system fd is thread unsafe ([#16289], thanks @ysbaddaden)
 - _(runtime)_ `Crystal::System::Process#rwlock` with Crystal < 1.7 (UNIX) ([#16482], thanks @ysbaddaden)
@@ -179,6 +178,7 @@
 [#16328]: https://github.com/crystal-lang/crystal/pull/16328
 [#16504]: https://github.com/crystal-lang/crystal/pull/16504
 [#16174]: https://github.com/crystal-lang/crystal/pull/16174
+[#16367]: https://github.com/crystal-lang/crystal/pull/16367
 [#16401]: https://github.com/crystal-lang/crystal/pull/16401
 [#16289]: https://github.com/crystal-lang/crystal/pull/16289
 [#16482]: https://github.com/crystal-lang/crystal/pull/16482
@@ -237,11 +237,11 @@
 
 #### lang
 
-- **[deprecation]** Deprecate macro fresh variables with constant names ([#16293], thanks @HertzDevil)
 - _(macros)_ **[deprecation]** Deprecate single-letter macro fresh variables with indices ([#16267], thanks @HertzDevil)
+- _(macros)_ **[deprecation]** Deprecate macro fresh variables with constant names ([#16293], thanks @HertzDevil)
 
-[#16293]: https://github.com/crystal-lang/crystal/pull/16293
 [#16267]: https://github.com/crystal-lang/crystal/pull/16267
+[#16293]: https://github.com/crystal-lang/crystal/pull/16293
 
 #### stdlib
 
