@@ -16,7 +16,7 @@ module Crystal::System::Time
     {timespec.tv_sec.to_i64 + UNIX_EPOCH_IN_SECONDS, timespec.tv_nsec.to_i}
   end
 
-  def self.monotonic : {Int64, Int32}
+  private def self.clock_gettime(&)
     clock = {% if flag?(:darwin) %}
               LibC::CLOCK_UPTIME_RAW
             {% else %}
@@ -24,18 +24,19 @@ module Crystal::System::Time
             {% end %}
 
     ret = LibC.clock_gettime(clock, out tp)
-    raise RuntimeError.from_errno("clock_gettime()") unless ret == 0
+    yield unless ret == 0
+    tp
+  end
+
+  def self.monotonic : {Int64, Int32}
+    tp = clock_gettime do
+      raise RuntimeError.from_errno("clock_gettime()")
+    end
     {tp.tv_sec.to_i64, tp.tv_nsec.to_i32}
   end
 
   def self.ticks : UInt64
-    clock = {% if flag?(:darwin) %}
-              LibC::CLOCK_UPTIME_RAW
-            {% else %}
-              LibC::CLOCK_MONOTONIC
-            {% end %}
-
-    LibC.clock_gettime(clock, out tp)
+    tp = clock_gettime { }
     tp.tv_sec.to_u64! &* NANOSECONDS_PER_SECOND &+ tp.tv_nsec.to_u64!
   end
 
