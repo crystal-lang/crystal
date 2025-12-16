@@ -257,12 +257,6 @@
 
 [#15018]: https://github.com/crystal-lang/crystal/pull/15018
 
-#### other
-
-- Update typos 1.38.1 ([#16219], thanks @straight-shoota)
-
-[#16219]: https://github.com/crystal-lang/crystal/pull/16219
-
 ### Performance
 
 #### stdlib
@@ -428,6 +422,7 @@
 - Update `devenv.lock` ([#16408], thanks @github-actions)
 - Drop committed `.envrc` ([#16462], thanks @straight-shoota)
 - Add git-hook to ensure changing both `Makefile` and `Makefile.win` at the same time ([#16503], thanks @straight-shoota)
+- Update typos 1.38.1 ([#16219], thanks @straight-shoota)
 - Build snap arm64 target + drop publish_snap target ([#16491], thanks @ysbaddaden)
 - _(ci)_ Update darwin jobs in circleci to `m4pro.medium` resource class ([#16389], thanks @straight-shoota)
 - _(ci)_ Update xcode to 26.0.1 on circleci ([#16201], thanks @straight-shoota)
@@ -474,6 +469,7 @@
 [#16408]: https://github.com/crystal-lang/crystal/pull/16408
 [#16462]: https://github.com/crystal-lang/crystal/pull/16462
 [#16503]: https://github.com/crystal-lang/crystal/pull/16503
+[#16219]: https://github.com/crystal-lang/crystal/pull/16219
 [#16491]: https://github.com/crystal-lang/crystal/pull/16491
 [#16389]: https://github.com/crystal-lang/crystal/pull/16389
 [#16201]: https://github.com/crystal-lang/crystal/pull/16201
