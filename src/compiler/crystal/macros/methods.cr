@@ -1354,8 +1354,8 @@ module Crystal
           self.var.annotation(type)
         end
       when "annotations"
-        fetch_annotations(self, method, args, named_args, block) do |type|
-          annotations = type ? self.var.annotations(type) : self.var.all_annotations
+        fetch_annotations(self, method, args, named_args, block) do |type, is_a|
+          annotations = type ? self.var.annotations(type, is_a) : self.var.all_annotations
           return ArrayLiteral.new if annotations.nil?
           ArrayLiteral.map(annotations, &.itself)
         end
@@ -1528,8 +1528,8 @@ module Crystal
           self.annotation(type)
         end
       when "annotations"
-        fetch_annotations(self, method, args, named_args, block) do |type|
-          annotations = type ? self.annotations(type) : self.all_annotations
+        fetch_annotations(self, method, args, named_args, block) do |type, is_a|
+          annotations = type ? self.annotations(type, is_a) : self.all_annotations
           return ArrayLiteral.new if annotations.nil?
           ArrayLiteral.map(annotations, &.itself)
         end
@@ -1581,8 +1581,8 @@ module Crystal
           self.annotation(type)
         end
       when "annotations"
-        fetch_annotations(self, method, args, named_args, block) do |type|
-          annotations = type ? self.annotations(type) : self.all_annotations
+        fetch_annotations(self, method, args, named_args, block) do |type, is_a|
+          annotations = type ? self.annotations(type, is_a) : self.all_annotations
           return ArrayLiteral.new if annotations.nil?
           ArrayLiteral.map(annotations, &.itself)
         end
@@ -1960,6 +1960,36 @@ module Crystal
         interpret_check_args { BoolLiteral.new(type.class? && !type.struct?) }
       when "struct?"
         interpret_check_args { BoolLiteral.new(type.class? && type.struct?) }
+      when "annotation?"
+        interpret_check_args do
+          is_annotation = type.is_a?(AnnotationType) ||
+                          (type.is_a?(ClassType) && type.as(ClassType).annotation_class?)
+          BoolLiteral.new(is_annotation)
+        end
+      when "annotation_class?"
+        interpret_check_args do
+          BoolLiteral.new(type.is_a?(ClassType) && type.as(ClassType).annotation_class?)
+        end
+      when "annotation_repeatable?"
+        interpret_check_args do
+          if type.is_a?(ClassType) && type.as(ClassType).annotation_class?
+            BoolLiteral.new(type.as(ClassType).annotation_metadata.try(&.repeatable?) || false)
+          else
+            BoolLiteral.new(false)
+          end
+        end
+      when "annotation_targets"
+        interpret_check_args do
+          if type.is_a?(ClassType) && type.as(ClassType).annotation_class?
+            if targets = type.as(ClassType).annotation_metadata.try(&.targets)
+              ArrayLiteral.map(targets) { |t| StringLiteral.new(t) }
+            else
+              NilLiteral.new
+            end
+          else
+            NilLiteral.new
+          end
+        end
       when "nilable?"
         interpret_check_args { BoolLiteral.new(type.nilable?) }
       when "union_types"
@@ -2009,8 +2039,8 @@ module Crystal
           self.type.annotation(type)
         end
       when "annotations"
-        fetch_annotations(self, method, args, named_args, block) do |type|
-          annotations = type ? self.type.annotations(type) : self.type.all_annotations
+        fetch_annotations(self, method, args, named_args, block) do |type, is_a|
+          annotations = type ? self.type.annotations(type, is_a) : self.type.all_annotations
           return ArrayLiteral.new if annotations.nil?
           ArrayLiteral.map(annotations, &.itself)
         end
@@ -2709,7 +2739,7 @@ module Crystal
           case arg
           when NumberLiteral
             index = arg.to_number.to_i
-            return self.args[index]? || NilLiteral.new
+            return self.args[index]? || annotation_class_default_value_by_index(index, interpreter) || NilLiteral.new
           when SymbolLiteral then name = arg.value
           when StringLiteral then name = arg.value
           when MacroId       then name = arg.value
@@ -2720,7 +2750,14 @@ module Crystal
           named_arg = self.named_args.try &.find do |named_arg|
             named_arg.name == name
           end
-          named_arg.try(&.value) || NilLiteral.new
+
+          if named_arg
+            named_arg.value
+          elsif (default = annotation_class_default_value(name, interpreter))
+            default
+          else
+            NilLiteral.new
+          end
         end
       when "args"
         interpret_check_args do
@@ -2730,9 +2767,48 @@ module Crystal
         interpret_check_args do
           get_named_annotation_args self
         end
+      when "new_instance"
+        interpret_check_args do
+          Call.new(@path.clone, "new", args: @args.clone, named_args: @named_args.clone)
+        end
       else
         super
       end
+    end
+
+    # For annotation classes, returns the constructors (initialize + self.new, excluding private).
+    private def annotation_class_constructors(interpreter : MacroInterpreter) : Array(Def)?
+      resolved = interpreter.resolve?(@path)
+      return nil unless resolved.is_a?(TypeNode)
+
+      type = resolved.type
+      return nil unless type.is_a?(ClassType) && type.annotation_class?
+
+      init_defs = type.lookup_defs("initialize", lookup_ancestors_for_new: true)
+      new_defs = type.metaclass.lookup_defs("new", lookup_ancestors_for_new: true)
+      (init_defs + new_defs).reject(&.visibility.private?)
+    end
+
+    # Looks up the default value for a named parameter from constructor(s).
+    private def annotation_class_default_value(name : String, interpreter : MacroInterpreter) : ASTNode?
+      annotation_class_constructors(interpreter).try &.each do |constructor|
+        constructor.args.each do |arg|
+          if arg.external_name == name && (default = arg.default_value)
+            return default.clone
+          end
+        end
+      end
+      nil
+    end
+
+    # Looks up the default value for a positional parameter from constructor(s).
+    private def annotation_class_default_value_by_index(index : Int32, interpreter : MacroInterpreter) : ASTNode?
+      annotation_class_constructors(interpreter).try &.each do |constructor|
+        if (arg = constructor.args[index]?) && (default = arg.default_value)
+          return default.clone
+        end
+      end
+      nil
     end
   end
 
@@ -3413,31 +3489,42 @@ private def fetch_annotation(node, method, args, named_args, block, &)
     end
 
     type = arg.type
-    unless type.is_a?(Crystal::AnnotationType)
+
+    is_annotation_type = type.is_a?(Crystal::AnnotationType) ||
+                         (type.is_a?(Crystal::ClassType) && type.annotation_class?)
+
+    unless is_annotation_type
       args[0].raise "argument to '#{node.class_desc}#annotation' must be an annotation type, not #{type} (#{type.type_desc})"
     end
 
-    value = yield type
+    # Cast to AnnotationKey - we know it's valid at this point
+    annotation_key = type.as(Crystal::AnnotationKey)
+
+    value = yield annotation_key
     value || Crystal::NilLiteral.new
   end
 end
 
 private def fetch_annotations(node, method, args, named_args, block, &)
-  interpret_check_args(node: node, min_count: 0) do |arg|
+  interpret_check_args(node: node, min_count: 0, named_params: ["is_a"]) do |arg|
+    is_a = false
+    if named_args
+      if is_a_arg = named_args["is_a"]?
+        is_a = is_a_arg.truthy?
+      end
+    end
+
     unless arg
-      return yield(nil) || Crystal::NilLiteral.new
+      return yield(nil, is_a) || Crystal::NilLiteral.new
     end
 
     unless arg.is_a?(Crystal::TypeNode)
-      args[0].raise "argument to '#{node.class_desc}#annotation' must be a TypeNode, not #{arg.class_desc}"
+      args[0].raise "argument to '#{node.class_desc}#annotations' must be a TypeNode, not #{arg.class_desc}"
     end
 
     type = arg.type
-    unless type.is_a?(Crystal::AnnotationType)
-      args[0].raise "argument to '#{node.class_desc}#annotation' must be an annotation type, not #{type} (#{type.type_desc})"
-    end
 
-    value = yield type
+    value = yield type, is_a
     value || Crystal::NilLiteral.new
   end
 end

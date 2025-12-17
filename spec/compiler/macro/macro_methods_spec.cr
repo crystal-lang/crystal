@@ -2382,6 +2382,130 @@ module Crystal
         end
       end
 
+      describe "#annotation?" do
+        it "returns true for AnnotationType" do
+          assert_macro("{{type.annotation?}}", "true") do |program|
+            ann = AnnotationType.new(program, program, "SomeAnnotation")
+
+            {type: TypeNode.new(ann)}
+          end
+        end
+
+        it "returns true for @[Annotation] class" do
+          assert_macro("{{type.annotation?}}", "true") do |program|
+            klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+            klass.annotation_class = true
+
+            {type: TypeNode.new(klass)}
+          end
+        end
+
+        it "returns false for regular class" do
+          assert_macro("{{type.annotation?}}", "false") do |program|
+            klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+
+            {type: TypeNode.new(klass)}
+          end
+        end
+
+        it "returns false for module" do
+          assert_macro("{{type.annotation?}}", "false") do |program|
+            mod = NonGenericModuleType.new(program, program, "SomeModule")
+
+            {type: TypeNode.new(mod)}
+          end
+        end
+      end
+
+      describe "#annotation_class?" do
+        it "returns true for @[Annotation] class" do
+          assert_macro("{{type.annotation_class?}}", "true") do |program|
+            klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+            klass.annotation_class = true
+
+            {type: TypeNode.new(klass)}
+          end
+        end
+
+        it "returns false for AnnotationType" do
+          assert_macro("{{type.annotation_class?}}", "false") do |program|
+            ann = AnnotationType.new(program, program, "SomeAnnotation")
+
+            {type: TypeNode.new(ann)}
+          end
+        end
+
+        it "returns false for regular class" do
+          assert_macro("{{type.annotation_class?}}", "false") do |program|
+            klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+
+            {type: TypeNode.new(klass)}
+          end
+        end
+      end
+
+      describe "#annotation_repeatable?" do
+        it "returns true when repeatable" do
+          assert_macro("{{type.annotation_repeatable?}}", "true") do |program|
+            klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+            klass.annotation_class = true
+            metadata = AnnotationMetadata.new
+            metadata.repeatable = true
+            klass.annotation_metadata = metadata
+
+            {type: TypeNode.new(klass)}
+          end
+        end
+
+        it "returns false when not repeatable" do
+          assert_macro("{{type.annotation_repeatable?}}", "false") do |program|
+            klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+            klass.annotation_class = true
+
+            {type: TypeNode.new(klass)}
+          end
+        end
+
+        it "returns false for non-annotation class" do
+          assert_macro("{{type.annotation_repeatable?}}", "false") do |program|
+            klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+
+            {type: TypeNode.new(klass)}
+          end
+        end
+      end
+
+      describe "#annotation_targets" do
+        it "returns targets array when specified" do
+          assert_macro("{{type.annotation_targets}}", %(["class", "method"])) do |program|
+            klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+            klass.annotation_class = true
+            metadata = AnnotationMetadata.new
+            metadata.targets = ["class", "method"]
+            klass.annotation_metadata = metadata
+
+            {type: TypeNode.new(klass)}
+          end
+        end
+
+        it "returns nil when no targets specified" do
+          assert_macro("{{type.annotation_targets}}", "nil") do |program|
+            klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+            klass.annotation_class = true
+
+            {type: TypeNode.new(klass)}
+          end
+        end
+
+        it "returns nil for non-annotation class" do
+          assert_macro("{{type.annotation_targets}}", "nil") do |program|
+            klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+
+            {type: TypeNode.new(klass)}
+          end
+        end
+      end
+
       describe "#nilable?" do
         it false do
           assert_macro("{{x.nilable?}}", "false") do |program|
@@ -3445,41 +3569,41 @@ module Crystal
 
     describe "annotation methods" do
       it "executes name" do
-        assert_macro %({{x.name}}), %(Foo), {x: Annotation.new(Path.new("Foo"))}
-        assert_macro %({{x.name}}), %(Foo::Bar), {x: Annotation.new(Path.new("Foo", "Bar"))}
+        assert_macro %({{x.name}}), %(Foo), {x: Crystal::Annotation.new(Path.new("Foo"))}
+        assert_macro %({{x.name}}), %(Foo::Bar), {x: Crystal::Annotation.new(Path.new("Foo", "Bar"))}
       end
 
       it "executes [] with NumberLiteral" do
         assert_macro %({{x[y]}}), %(42), {
-          x: Annotation.new(Path.new("Foo"), [42.int32] of ASTNode),
+          x: Crystal::Annotation.new(Path.new("Foo"), [42.int32] of ASTNode),
           y: 0.int32,
         }
       end
 
       it "executes [] with SymbolLiteral" do
         assert_macro %({{x[y]}}), %(42), {
-          x: Annotation.new(Path.new("Foo"), [] of ASTNode, [NamedArgument.new("foo", 42.int32)]),
+          x: Crystal::Annotation.new(Path.new("Foo"), [] of ASTNode, [NamedArgument.new("foo", 42.int32)]),
           y: "foo".symbol,
         }
       end
 
       it "executes [] with StringLiteral" do
         assert_macro %({{x[y]}}), %(42), {
-          x: Annotation.new(Path.new("Foo"), [] of ASTNode, [NamedArgument.new("foo", 42.int32)]),
+          x: Crystal::Annotation.new(Path.new("Foo"), [] of ASTNode, [NamedArgument.new("foo", 42.int32)]),
           y: "foo".string,
         }
       end
 
       it "executes [] with MacroId" do
         assert_macro %({{x[y]}}), %(42), {
-          x: Annotation.new(Path.new("Foo"), [] of ASTNode, [NamedArgument.new("foo", 42.int32)]),
+          x: Crystal::Annotation.new(Path.new("Foo"), [] of ASTNode, [NamedArgument.new("foo", 42.int32)]),
           y: MacroId.new("foo"),
         }
       end
 
       it "executes [] with other ASTNode, but raises an error" do
         assert_macro_error %({{x[y]}}), "argument to [] must be a number, symbol or string, not BoolLiteral", {
-          x: Annotation.new(Path.new("Foo"), [] of ASTNode),
+          x: Crystal::Annotation.new(Path.new("Foo"), [] of ASTNode),
           y: true.bool,
         }
       end
@@ -4143,7 +4267,7 @@ module Crystal
 
   describe "immutability of returned container literals (#10818)" do
     it "Annotation#args" do
-      node = Annotation.new(Path.new("Foo"), [42.int32, "a".string] of ASTNode)
+      node = Crystal::Annotation.new(Path.new("Foo"), [42.int32, "a".string] of ASTNode)
       assert_macro %({{ (x.args << "a"; x.args.size) }}), "2", {x: node}
     end
 

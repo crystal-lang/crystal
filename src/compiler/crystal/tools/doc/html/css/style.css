@@ -263,6 +263,26 @@ p, li {
   color: #866BA6;
 }
 
+.annotation-metadata {
+  margin-left: 0.5em;
+}
+
+.annotation-metadata .badge {
+  display: inline-block;
+  padding: 0.1em 0.4em;
+  margin-left: 0.3em;
+  background: #e0d0f0;
+  border-radius: 3px;
+  font-size: 40%;
+  color: #666;
+  vertical-align: middle;
+}
+
+.annotation-metadata .badge.annotation {
+  background: #866BA6;
+  color: white;
+}
+
 .superclass-hierarchy {
   margin: -15px 0 30px 0;
   padding: 0;
@@ -880,6 +900,16 @@ table td {
 
   .kind {
     color: #b092d4;
+  }
+
+  .annotation-metadata .badge {
+    background: #443d4d;
+    color: #ccc;
+  }
+
+  .annotation-metadata .badge.annotation {
+    background: #866BA6;
+    color: white;
   }
 
   .n {

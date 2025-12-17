@@ -21,7 +21,13 @@
 <% else %>
   <span class="kind">
     <%= type.abstract? ? "abstract " : ""%><%= type.visibility.try(&.+(" ")) %><%= type.kind %>
-  </span> <%= type.full_name.gsub("::", "::<wbr>") %>
+  </span> <%= type.full_name.gsub("::", "::<wbr>") %><% if type.annotation_class? %>
+  <span class="annotation-metadata">
+    <span class="badge annotation">annotation</span><% if type.annotation_repeatable? %>
+    <span class="badge">repeatable</span><% end %><% if targets = type.annotation_targets %>
+    <span class="badge">targets: <%= targets.join(", ") %></span><% end %>
+  </span>
+<% end %>
 <% end %>
 </h1>
 

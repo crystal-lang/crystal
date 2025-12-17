@@ -95,6 +95,12 @@ module Crystal
       self.class.class_desc
     end
 
+    # Returns the Crystal runtime type this literal represents, or nil.
+    # Overridden by literal types (StringLiteral, NumberLiteral, etc.)
+    def runtime_type : String?
+      nil
+    end
+
     def pretty_print(pp)
       pp.text to_s
     end
@@ -224,6 +230,10 @@ module Crystal
       NilLiteral.new
     end
 
+    def runtime_type : String
+      "Nil"
+    end
+
     def_equals_and_hash
   end
 
@@ -239,6 +249,10 @@ module Crystal
 
     def clone_without_location
       BoolLiteral.new(@value)
+    end
+
+    def runtime_type : String
+      "Bool"
     end
 
     def_equals_and_hash value
@@ -375,6 +389,24 @@ module Crystal
       NumberLiteral.new(@value, @kind)
     end
 
+    def runtime_type : String
+      case kind
+      when .i8?   then "Int8"
+      when .i16?  then "Int16"
+      when .i32?  then "Int32"
+      when .i64?  then "Int64"
+      when .i128? then "Int128"
+      when .u8?   then "UInt8"
+      when .u16?  then "UInt16"
+      when .u32?  then "UInt32"
+      when .u64?  then "UInt64"
+      when .u128? then "UInt128"
+      when .f32?  then "Float32"
+      when .f64?  then "Float64"
+      else             "Int32" # default
+      end
+    end
+
     def_equals value.to_f64, kind
     def_hash value, kind
   end
@@ -393,6 +425,10 @@ module Crystal
       CharLiteral.new(@value)
     end
 
+    def runtime_type : String
+      "Char"
+    end
+
     def_equals_and_hash value
   end
 
@@ -404,6 +440,10 @@ module Crystal
 
     def clone_without_location
       StringLiteral.new(@value)
+    end
+
+    def runtime_type : String
+      "String"
     end
 
     def_equals_and_hash value
@@ -440,6 +480,10 @@ module Crystal
       SymbolLiteral.new(@value)
     end
 
+    def runtime_type : String
+      "Symbol"
+    end
+
     def_equals_and_hash value
   end
 
@@ -473,6 +517,10 @@ module Crystal
       ArrayLiteral.new(@elements.clone, @of.clone, @name.clone)
     end
 
+    def runtime_type : String
+      "Array"
+    end
+
     def_equals_and_hash @elements, @of, @name
   end
 
@@ -500,6 +548,10 @@ module Crystal
       HashLiteral.new(@entries.clone, @of.clone, @name.clone)
     end
 
+    def runtime_type : String
+      "Hash"
+    end
+
     def_equals_and_hash @entries, @of, @name
 
     record Entry, key : ASTNode, value : ASTNode
@@ -519,6 +571,10 @@ module Crystal
 
     def clone_without_location
       NamedTupleLiteral.new(@entries.clone)
+    end
+
+    def runtime_type : String
+      "NamedTuple"
     end
 
     def_equals_and_hash @entries
@@ -543,6 +599,10 @@ module Crystal
       RangeLiteral.new(@from.clone, @to.clone, @exclusive.clone)
     end
 
+    def runtime_type : String
+      "Range"
+    end
+
     def_equals_and_hash @from, @to, @exclusive
   end
 
@@ -559,6 +619,10 @@ module Crystal
 
     def clone_without_location
       RegexLiteral.new(@value.clone, @options)
+    end
+
+    def runtime_type : String
+      "Regex"
     end
 
     def_equals_and_hash @value, @options
@@ -584,6 +648,10 @@ module Crystal
 
     def clone_without_location
       TupleLiteral.new(elements.clone)
+    end
+
+    def runtime_type : String
+      "Tuple"
     end
 
     def_equals_and_hash elements
@@ -1509,6 +1577,7 @@ module Crystal
     property splat_index : Int32?
     property? abstract : Bool
     property? struct : Bool
+    property? annotation : Bool = false
     property visibility = Visibility::Public
 
     def initialize(@name, body = nil, @superclass = nil, @type_vars = nil, @abstract = false, @struct = false, @splat_index = nil)
@@ -1523,10 +1592,11 @@ module Crystal
     def clone_without_location
       clone = ClassDef.new(@name, @body.clone, @superclass.clone, @type_vars.clone, @abstract, @struct, @splat_index)
       clone.name_location = name_location
+      clone.annotation = @annotation
       clone
     end
 
-    def_equals_and_hash @name, @body, @superclass, @type_vars, @abstract, @struct, @splat_index
+    def_equals_and_hash @name, @body, @superclass, @type_vars, @abstract, @struct, @annotation, @splat_index
   end
 
   # Module definition:
@@ -1814,6 +1884,10 @@ module Crystal
 
     def clone_without_location
       ProcLiteral.new(@def.clone)
+    end
+
+    def runtime_type : String
+      "Proc"
     end
 
     def_equals_and_hash @def

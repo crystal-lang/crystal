@@ -1213,6 +1213,12 @@ module Crystal
     end
   end
 
+  # Metadata for @[Annotation] class types (repeatable, targets, etc.)
+  class AnnotationMetadata
+    property? repeatable : Bool = false
+    property targets : Array(String)?
+  end
+
   # Abstract base type for classes and structs
   # (types that can be allocated via the `allocate` method).
   abstract class ClassType < ModuleType
@@ -1226,6 +1232,8 @@ module Crystal
     getter depth : Int32
     property? :abstract; @abstract = false
     property? :struct; @struct = false
+    property? annotation_class : Bool = false
+    property annotation_metadata : AnnotationMetadata?
     property? can_be_stored = true
     property? lookup_new_in_ancestors = false
 

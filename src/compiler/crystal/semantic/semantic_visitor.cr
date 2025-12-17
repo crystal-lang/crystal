@@ -491,7 +491,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     end
   end
 
-  def lookup_annotation(ann)
+  def lookup_annotation(ann) : AnnotationKey
     # TODO: Since there's `Int::Primitive`, and now we'll have
     # `::Primitive`, but there's no way to specify ::Primitive
     # just yet in annotations, we temporarily hardcode
@@ -507,11 +507,15 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
       type = lookup_type(ann.path)
     end
 
-    unless type.is_a?(AnnotationType)
-      ann.raise "#{ann.path} is not an annotation, it's a #{type.type_desc}"
+    # Accept traditional annotations
+    return type if type.is_a?(AnnotationType)
+
+    # Accept annotation classes/structs
+    if type.is_a?(ClassType) && type.annotation_class?
+      return type
     end
 
-    type
+    ann.raise "#{ann.path} is not an annotation, it's a #{type.type_desc}"
   end
 
   def validate_annotation(annotation_type, ann)
@@ -524,6 +528,176 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     when @program.experimental_annotation
       # ditto DeprecatedAnnotation
       ExperimentalAnnotation.from(ann)
+    end
+
+    # Light validation for annotation classes
+    if annotation_type.is_a?(ClassType) && annotation_type.annotation_class?
+      validate_annotation_class_args(annotation_type, ann)
+    end
+  end
+
+  # Validates annotation arguments against initialize and self.new overloads.
+  # Checks that field names exist and types are compatible (shallow check).
+  private def validate_annotation_class_args(annotation_type : ClassType, ann : Annotation)
+    init_defs = annotation_type.lookup_defs("initialize", lookup_ancestors_for_new: true)
+    new_defs = annotation_type.metaclass.lookup_defs("new", lookup_ancestors_for_new: true)
+
+    # Combine both constructor types, excluding private ones
+    all_constructors = (init_defs + new_defs).reject(&.visibility.private?)
+
+    # If no constructors, any args are invalid
+    if all_constructors.empty? && ann.has_any_args?
+      ann.raise "@[#{annotation_type}] has arguments but #{annotation_type} has no constructor"
+    end
+
+    return if all_constructors.empty?
+
+    # If annotation has no args, check that at least one constructor accepts zero args
+    if !ann.has_any_args?
+      unless any_constructor_accepts_zero_args?(all_constructors)
+        ann.raise "@[#{annotation_type}] is missing required arguments"
+      end
+    end
+
+    # Validate positional args
+    ann.args.each_with_index do |arg, index|
+      validate_positional_arg(all_constructors, annotation_type, arg, index)
+    end
+
+    # Validate named args
+    ann.named_args.try &.each do |named_arg|
+      validate_named_arg(all_constructors, annotation_type, named_arg)
+    end
+  end
+
+  # Validates a named argument against all constructors, raising on error
+  private def validate_named_arg(constructors : Array(Def), annotation_type : ClassType, named_arg : NamedArgument)
+    found_param : Arg? = nil
+
+    constructors.each do |constructor|
+      param = constructor.args.find { |arg| arg.external_name == named_arg.name }
+      param ||= constructor.double_splat # double splat accepts any named arg
+
+      if param
+        found_param = param
+        return if literal_matches_restriction?(named_arg.value, param.restriction)
+      end
+    end
+
+    if found_param
+      actual_type = named_arg.value.runtime_type || "expression"
+      expected_type = found_param.restriction.try(&.to_s) || "any"
+      named_arg.raise "@[#{annotation_type}] parameter '#{named_arg.name}' expects #{expected_type}, not #{actual_type}"
+    else
+      named_arg.raise "@[#{annotation_type}] has no parameter '#{named_arg.name}'"
+    end
+  end
+
+  # Validates a positional argument against all constructors, raising on error
+  private def validate_positional_arg(constructors : Array(Def), annotation_type : ClassType, arg : ASTNode, index : Int32)
+    found_param : Arg? = nil
+
+    constructors.each do |constructor|
+      param = param_at_positional_index(constructor, index)
+
+      if param
+        found_param = param
+        return if literal_matches_restriction?(arg, param.restriction)
+      end
+    end
+
+    if found_param
+      actual_type = arg.runtime_type || "expression"
+      expected_type = found_param.restriction.try(&.to_s) || "any"
+      arg.raise "@[#{annotation_type}] argument at position #{index} expects #{expected_type}, not #{actual_type}"
+    else
+      arg.raise "@[#{annotation_type}] has too many arguments (expected at most #{index})"
+    end
+  end
+
+  # Gets the parameter at a positional index, handling splat
+  private def param_at_positional_index(init_def : Def, index : Int32) : Arg?
+    splat_index = init_def.splat_index
+
+    if splat_index
+      if index < splat_index
+        init_def.args[index]?
+      elsif index >= splat_index
+        # After or at splat - could be captured by splat
+        init_def.args[splat_index]?
+      else
+        nil
+      end
+    else
+      init_def.args[index]?
+    end
+  end
+
+  # Checks if any constructor can be called with zero arguments
+  private def any_constructor_accepts_zero_args?(constructors : Array(Def)) : Bool
+    constructors.any? do |constructor|
+      constructor.args.each_with_index.all? do |arg, index|
+        # Splat args don't require values
+        next true if index == constructor.splat_index
+        # Args with defaults don't require values
+        arg.default_value
+      end
+    end
+  end
+
+  # Shallow type check: compares literal's runtime type against restriction.
+  # Returns true if no restriction or if literal type matches restriction.
+  private def literal_matches_restriction?(literal : ASTNode, restriction : ASTNode?) : Bool
+    return true unless restriction
+
+    # Use literal's runtime_type if available
+    if runtime_type = literal.runtime_type
+      # NumberLiterals also match abstract number types
+      if literal.is_a?(NumberLiteral)
+        kind = literal.kind
+        abstract_types = if kind.signed_int? || kind.unsigned_int?
+                           {"Number", "Int"}
+                         else
+                           {"Number", "Float"}
+                         end
+        return restriction_matches_type?(restriction, runtime_type, abstract_types)
+      end
+
+      return restriction_matches_type?(restriction, runtime_type)
+    end
+
+    # Path could be a type reference - allow without validation
+    return true if literal.is_a?(Path)
+
+    # For complex expressions, skip shallow validation
+    true
+  end
+
+  # Checks if restriction matches the runtime type or any abstract types
+  private def restriction_matches_type?(restriction : ASTNode, runtime_type : String, abstract_types : Tuple? = nil) : Bool
+    case restriction
+    when Path
+      name = restriction.names.last
+      return true if name == runtime_type
+      abstract_types.try(&.includes?(name)) || false
+    when Generic
+      # Generic type like `Array(String)` - check base name
+      if restriction.name.is_a?(Path)
+        name = restriction.name.as(Path).names.last
+        return true if name == runtime_type
+        abstract_types.try(&.includes?(name)) || false
+      else
+        true # Complex generic, skip validation
+      end
+    when Union
+      # Union type - literal can match any member
+      restriction.types.any? { |t| restriction_matches_type?(t, runtime_type, abstract_types) }
+    when Metaclass, Self, Underscore
+      # Skip validation for these
+      true
+    else
+      # Unknown restriction type, skip validation
+      true
     end
   end
 
