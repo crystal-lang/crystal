@@ -478,6 +478,17 @@ describe "Semantic: if" do
       CRYSTAL
   end
 
+  it "allows chained comparisons of 4+ expressions (#16361)" do
+    assert_type(<<-CRYSTAL, inject_primitives: true) { bool }
+      def a; 1; end
+      def b; 2; end
+      def c; 3; end
+      def d; 4; end
+
+      a < b < c < d
+      CRYSTAL
+  end
+
   it "includes pointer types in falsey branch" do
     assert_type(<<-CRYSTAL) { nilable union_of bool, pointer_of(int32), int32 }
       def foo
