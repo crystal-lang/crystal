@@ -56,13 +56,7 @@ class Box(T)
       pointer.as(T)
     {% else %}
       if pointer.null?
-        {% if T.union_types.any? { |t| t == Nil } %}
-          # This branch is necessary to prevent null pointer dereference for
-          # `Box(Int32?).unbox(Pointer(Void).null)`.
-          return nil.as(T)
-        {% else %}
-          raise NilAssertionError.new("Unboxing null pointer")
-        {% end %}
+        raise NilAssertionError.new("Unboxing null pointer in mixed union")
       end
 
       pointer.as(self).object

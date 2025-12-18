@@ -61,8 +61,6 @@ describe "Box" do
     it "returns nil if nilable" do
       Box(Nil).unbox(Pointer(Void).null).should be_nil
       Box(String?).unbox(Pointer(Void).null).should be_nil
-      Box(Int32?).unbox(Pointer(Void).null).should be_nil
-      Box(Int32 | String?).unbox(Pointer(Void).null).should be_nil
       Box(UInt8*).unbox(Pointer(Void).null).should eq Pointer(UInt8).null
     end
 
@@ -72,6 +70,15 @@ describe "Box" do
       end
       expect_raises(NilAssertionError, "Unboxing null pointer") do
         Box(Int32).unbox(Pointer(Void).null)
+      end
+    end
+
+    it "raises for mixed union" do
+      expect_raises(NilAssertionError, "Unboxing null pointer in mixed union") do
+        Box(Int32 | String?).unbox(Pointer(Void).null)
+      end
+      expect_raises(NilAssertionError, "Unboxing null pointer in mixed union") do
+        Box(Int32?).unbox(Pointer(Void).null)
       end
     end
   end
