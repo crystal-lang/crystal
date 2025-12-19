@@ -2017,7 +2017,15 @@ module Crystal
           # `a && b` is expanded to `a ? b : a`
           # We don't use `else_type_filters` because if `a` is a temp var
           # assignment then `cond_type_filters` would contain more information
-          @type_filters = TypeFilters.and(cond_type_filters, then_type_filters)
+          and_filters = TypeFilters.and(cond_type_filters, then_type_filters)
+          # For variables assigned in the then branch but not in the condition,
+          # add truthy filters so they're properly narrowed when the && result
+          # is used as a condition (#15739)
+          then_vars.each do |name, _|
+            next if cond_vars.has_key?(name)
+            and_filters = TypeFilters.and(and_filters, TypeFilters.truthy_var(name))
+          end
+          @type_filters = and_filters
         when .or?
           # `a || b` is expanded to `a ? a : b`
           @type_filters = TypeFilters.or(cond_type_filters, else_type_filters)
