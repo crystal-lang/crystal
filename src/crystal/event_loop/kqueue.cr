@@ -202,7 +202,9 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
     if time
       flags = LibC::EV_ADD | LibC::EV_ONESHOT | LibC::EV_CLEAR
 
-      t = time.elapsed
+      # Cannot use `time.elapsed` here because it calls `::Time.instant` which
+      # could be mocked.
+      t = Crystal::System::Time.instant.duration_since(time)
 
       data =
         {% if LibC.has_constant?(:NOTE_NSECONDS) %}
