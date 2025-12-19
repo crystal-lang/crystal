@@ -44,6 +44,9 @@
 - _(numeric)_ Add `Int.from_digits` as inverse of `Int#digits` ([#16237], thanks @andrykonchin)
 - _(numeric)_ Add `BigInt.from_digits` ([#16259], thanks @HertzDevil)
 - _(numeric)_ Add `Int#tdivmod` ([#16258], thanks @andrykonchin)
+- _(runtime)_ Protect `Box.unbox` from dereferencing null pointer ([#16514], thanks @straight-shoota)
+- _(runtime)_ Add `Fiber::ExecutionContext::Scheduler.current?` ([#16521], thanks @ysbaddaden)
+- _(runtime)_ Register execution context schedulers with the event loop ([#16519], thanks @ysbaddaden)
 - _(runtime)_ Add `Proc#[]` as alias to `#call` ([#16220], thanks @andrykonchin)
 - _(runtime)_ Add `#unshift`, `#pop` and `#pop?` to `Crystal::PointerLinkedList` ([#16287], thanks @ysbaddaden)
 - _(runtime)_ Add `Random.next_bool` and `.next_int` ([#16297], thanks @ysbaddaden)
@@ -65,6 +68,7 @@
 - _(text)_ PCRE2: use thread local for jit stack and match data ([#16175], thanks @ysbaddaden)
 - _(text)_ Support 0X, 0O, 0B prefixes in string to integer conversion ([#16226], thanks @andrykonchin)
 - _(text)_ Add `String#each_line` parameter `remove_empty` ([#16232], thanks @andrykonchin)
+- _(time)_ **[breaking]** Adjust monotonic clocks to include suspended time with precision ([#16516], thanks @straight-shoota)
 - _(time)_ Add `weeks` parameter to `Time::Span.new` ([#16208], thanks @Sija)
 - _(time)_ Treat GMT as a legacy alias of UTC ([#16292], thanks @straight-shoota)
 - _(time)_ Add `/etc/zoneinfo` to zoneinfo lookup paths ([#16463], thanks @straight-shoota)
@@ -85,6 +89,9 @@
 [#16237]: https://github.com/crystal-lang/crystal/pull/16237
 [#16259]: https://github.com/crystal-lang/crystal/pull/16259
 [#16258]: https://github.com/crystal-lang/crystal/pull/16258
+[#16514]: https://github.com/crystal-lang/crystal/pull/16514
+[#16521]: https://github.com/crystal-lang/crystal/pull/16521
+[#16519]: https://github.com/crystal-lang/crystal/pull/16519
 [#16220]: https://github.com/crystal-lang/crystal/pull/16220
 [#16287]: https://github.com/crystal-lang/crystal/pull/16287
 [#16297]: https://github.com/crystal-lang/crystal/pull/16297
@@ -109,6 +116,7 @@
 [#16175]: https://github.com/crystal-lang/crystal/pull/16175
 [#16226]: https://github.com/crystal-lang/crystal/pull/16226
 [#16232]: https://github.com/crystal-lang/crystal/pull/16232
+[#16516]: https://github.com/crystal-lang/crystal/pull/16516
 [#16208]: https://github.com/crystal-lang/crystal/pull/16208
 [#16292]: https://github.com/crystal-lang/crystal/pull/16292
 [#16463]: https://github.com/crystal-lang/crystal/pull/16463
@@ -117,12 +125,13 @@
 
 #### compiler
 
-- _(codegen)_ Build compiler with `-Dexecution_context` ([#16447], thanks @ysbaddaden)
+- _(codegen)_ Build compiler with `-Dexecution_context` ([#16447], [#16502], thanks @ysbaddaden, @straight-shoota)
 - _(interpreter)_ Support `->LibX.fun_name` in the interpreter ([#16194], thanks @ysbaddaden)
 - _(semantic)_ Add error message to `CrystalPath::NotFoundError` ([#16365], thanks @willhbr)
 - _(semantic)_ Retain original location for errors in `included`, `extended` hooks ([#13261], thanks @Blacksmoke16)
 
 [#16447]: https://github.com/crystal-lang/crystal/pull/16447
+[#16502]: https://github.com/crystal-lang/crystal/pull/16502
 [#16194]: https://github.com/crystal-lang/crystal/pull/16194
 [#16365]: https://github.com/crystal-lang/crystal/pull/16365
 [#13261]: https://github.com/crystal-lang/crystal/pull/13261
@@ -149,7 +158,6 @@
 - _(collection)_ Fix Hash methods and retaining default value ([#16374], thanks @andrykonchin)
 - _(files)_ Fix condition for no-op `lock_write` to work without sockets ([#16304], thanks @straight-shoota)
 - _(networking)_ Fix `HTTP::Cookie` parsing trailing semicolons ([#16328], thanks @alexkutsan)
-- _(runtime)_ thread safety of `Exception::Callstack` ([#16504], thanks @ysbaddaden)
 - _(runtime)_ Add thread safety to default random ([#16174], thanks @ysbaddaden)
 - _(runtime)_ default execution context is `Parallel` ([#16367], thanks @ysbaddaden)
 - _(runtime)_ `Crystal::PointerLinkedList#each` stops iterating when deleting head ([#16401], thanks @ysbaddaden)
@@ -158,6 +166,7 @@
 - _(runtime)_ urandom initialization isn't thread safe + refactor ([#16479], thanks @ysbaddaden)
 - _(runtime)_ execution context queue stress tests failures ([#16472], thanks @ysbaddaden)
 - _(runtime)_ don't use `Time.monotonic` in `Fiber::ExecutionContext::Monitor` ([#16500], thanks @ysbaddaden)
+- _(runtime)_ thread safety of `Exception::Callstack` ([#16504], thanks @ysbaddaden)
 - _(serialization)_ memory leak in `XML.parse` and `XML.parse_html` methods ([#16414], thanks @ysbaddaden)
 - _(serialization)_ memory leak in `XML::Document#finalize` ([#16418], thanks @toddsundsted)
 - _(serialization)_ memory leak in `XML::Node#content=` ([#16419], thanks @toddsundsted)
@@ -176,7 +185,6 @@
 [#16374]: https://github.com/crystal-lang/crystal/pull/16374
 [#16304]: https://github.com/crystal-lang/crystal/pull/16304
 [#16328]: https://github.com/crystal-lang/crystal/pull/16328
-[#16504]: https://github.com/crystal-lang/crystal/pull/16504
 [#16174]: https://github.com/crystal-lang/crystal/pull/16174
 [#16367]: https://github.com/crystal-lang/crystal/pull/16367
 [#16401]: https://github.com/crystal-lang/crystal/pull/16401
@@ -185,6 +193,7 @@
 [#16479]: https://github.com/crystal-lang/crystal/pull/16479
 [#16472]: https://github.com/crystal-lang/crystal/pull/16472
 [#16500]: https://github.com/crystal-lang/crystal/pull/16500
+[#16504]: https://github.com/crystal-lang/crystal/pull/16504
 [#16414]: https://github.com/crystal-lang/crystal/pull/16414
 [#16418]: https://github.com/crystal-lang/crystal/pull/16418
 [#16419]: https://github.com/crystal-lang/crystal/pull/16419
@@ -206,22 +215,28 @@
 - _(cli)_ chore: correct progress step count to 14 ([#16269], thanks @miry)
 - _(codegen)_ Fix System V ABI for arrays of packed structs with misaligned fields ([#16314], thanks @HertzDevil)
 - _(debugger)_ Fix debug info for closured variables ([#16393], thanks @HertzDevil)
+- _(interpreter)_ interpreter musn't reuse dead fiber stacks ([#16518], thanks @ysbaddaden)
 - _(interpreter)_ interpreter handles `self` in inlined method with arguments ([#16307], thanks @cyangle)
 - _(interpreter)_ interpreter `typeof` should return concrete type ([#16379], thanks @cyangle)
 - _(interpreter)_ Fix variable shadowing bug in interpreter ([#16335], thanks @cyangle)
 - _(parser)_ Fix internal error if multi-assign RHS has splats ([#16182], thanks @HertzDevil)
 - _(parser)_ Fix regex delimiter detection in syntax highlighter ([#16394], thanks @HertzDevil)
 - _(parser)_ Merge adjacent StringLiterals before yielding ([#16427], thanks @Blacksmoke16)
+- _(semantic)_ Fix instantiation of abstract generic structs in virtual type lookup ([#16513], thanks @Blacksmoke16)
+- _(semantic)_ Fix variables assigned inside `&&` conditions with method calls incorrectly got `Nil` added to their type ([#16512], thanks @Blacksmoke16)
 
 [#16269]: https://github.com/crystal-lang/crystal/pull/16269
 [#16314]: https://github.com/crystal-lang/crystal/pull/16314
 [#16393]: https://github.com/crystal-lang/crystal/pull/16393
+[#16518]: https://github.com/crystal-lang/crystal/pull/16518
 [#16307]: https://github.com/crystal-lang/crystal/pull/16307
 [#16379]: https://github.com/crystal-lang/crystal/pull/16379
 [#16335]: https://github.com/crystal-lang/crystal/pull/16335
 [#16182]: https://github.com/crystal-lang/crystal/pull/16182
 [#16394]: https://github.com/crystal-lang/crystal/pull/16394
 [#16427]: https://github.com/crystal-lang/crystal/pull/16427
+[#16513]: https://github.com/crystal-lang/crystal/pull/16513
+[#16512]: https://github.com/crystal-lang/crystal/pull/16512
 
 #### tools
 
@@ -310,6 +325,7 @@
 - _(system)_ Extract internal `Process.block_signals` helper ([#16402], thanks @straight-shoota)
 - _(system)_ Rename target `aarch64-android` to `aarch64-linux-android` ([#16409], thanks @straight-shoota)
 - _(text)_ Simplify `String#byte_slice(Int)` and `String#byte_slice?(Int)` ([#16235], thanks @andrykonchin)
+- _(time)_ Replace `Time.monotonic` with `Time.instant` [follow-up #16490] ([#16498], thanks @straight-shoota)
 - _(time)_ Use `clock_gettime` on darwin ([#16492], thanks @straight-shoota)
 - _(time)_ Add `Crystal::System::Time.instant` ([#16506], thanks @straight-shoota)
 
@@ -344,6 +360,7 @@
 [#16402]: https://github.com/crystal-lang/crystal/pull/16402
 [#16409]: https://github.com/crystal-lang/crystal/pull/16409
 [#16235]: https://github.com/crystal-lang/crystal/pull/16235
+[#16498]: https://github.com/crystal-lang/crystal/pull/16498
 [#16492]: https://github.com/crystal-lang/crystal/pull/16492
 [#16506]: https://github.com/crystal-lang/crystal/pull/16506
 
@@ -382,6 +399,7 @@
 #### stdlib
 
 - _(collection)_ Add specs for `Slice.new` ([#16424], thanks @straight-shoota)
+- _(concurrency)_ Fix thread name expectation with parallel execution context ([#16517], thanks @straight-shoota)
 - _(crypto)_ Fix: remove 1 second sleep in openssl/ssl/server spec ([#16454], thanks @ysbaddaden)
 - _(files)_ Add specs for `IO#read_bytes` with converter ([#16250], thanks @straight-shoota)
 - _(networking)_ Fix TCP specs to accept `EAI_NODATA` instead of `EAI_NONAME` for unresolvable hostname ([#16496], thanks @straight-shoota)
@@ -389,6 +407,7 @@
 - _(time)_ Update zoneinfo to TZDB version 2025c ([#16501], thanks @straight-shoota)
 
 [#16424]: https://github.com/crystal-lang/crystal/pull/16424
+[#16517]: https://github.com/crystal-lang/crystal/pull/16517
 [#16454]: https://github.com/crystal-lang/crystal/pull/16454
 [#16250]: https://github.com/crystal-lang/crystal/pull/16250
 [#16496]: https://github.com/crystal-lang/crystal/pull/16496
@@ -404,6 +423,7 @@
 
 ### Infrastructure
 
+- Changelog for 1.19.0 ([#16510], thanks @ysbaddaden)
 - Update previous Crystal release 1.18.1 ([#16212], thanks @matiasgarciaisaia)
 - Fix shellcheck violations ([#16221], thanks @straight-shoota)
 - Fix markdownlint violations ([#16222], [#16252], thanks @straight-shoota)
@@ -422,6 +442,7 @@
 - Update `devenv.lock` ([#16408], thanks @github-actions)
 - Drop committed `.envrc` ([#16462], thanks @straight-shoota)
 - Add git-hook to ensure changing both `Makefile` and `Makefile.win` at the same time ([#16503], thanks @straight-shoota)
+- Makefile: Use simply expanded variables to avoid costly duplicate evaluation ([#16509], thanks @straight-shoota)
 - Update typos 1.38.1 ([#16219], thanks @straight-shoota)
 - Build snap arm64 target + drop publish_snap target ([#16491], thanks @ysbaddaden)
 - _(ci)_ Update darwin jobs in circleci to `m4pro.medium` resource class ([#16389], thanks @straight-shoota)
@@ -448,6 +469,7 @@
 - _(ci)_ Run multi-threading test job with execution context ([#16339], thanks @straight-shoota)
 - _(ci)_ build linux aarch64 tarballs ([#16330], thanks @ysbaddaden)
 
+[#16510]: https://github.com/crystal-lang/crystal/pull/16510
 [#16212]: https://github.com/crystal-lang/crystal/pull/16212
 [#16221]: https://github.com/crystal-lang/crystal/pull/16221
 [#16222]: https://github.com/crystal-lang/crystal/pull/16222
@@ -469,6 +491,7 @@
 [#16408]: https://github.com/crystal-lang/crystal/pull/16408
 [#16462]: https://github.com/crystal-lang/crystal/pull/16462
 [#16503]: https://github.com/crystal-lang/crystal/pull/16503
+[#16509]: https://github.com/crystal-lang/crystal/pull/16509
 [#16219]: https://github.com/crystal-lang/crystal/pull/16219
 [#16491]: https://github.com/crystal-lang/crystal/pull/16491
 [#16389]: https://github.com/crystal-lang/crystal/pull/16389
