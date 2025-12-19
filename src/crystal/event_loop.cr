@@ -20,7 +20,12 @@ abstract class Crystal::EventLoop
     {% end %}
   end
 
-  # Creates an event loop instance
+  # Creates an event loop instance.
+  #
+  # The *parallelism* arg is informational. It reports how many schedulers are
+  # expected to register with the event loop instance. Because schedulers are
+  # dynamically started and execution contexts can be resized, more or less
+  # schedulers may really register in practice.
   def self.create(parallelism : Int32 = 1) : self
     backend_class.new(parallelism)
   end
