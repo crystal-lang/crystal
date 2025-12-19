@@ -18,7 +18,7 @@ class Crystal::System::WaitableTimer
     # Cannot use `time.elapsed` here because it calls `::Time.instant` which
     # could be mocked.
     relative = Crystal::System::Time.instant.duration_since(time)
-    ticks = (relative.to_i * 10_000_000 + (relative.nanoseconds + 99) // 100).clamp(0_i64..)
+    ticks = (relative.to_i * 10_000_000 + (relative.nanoseconds + 99) // 100)
 
     # negative duration means relative time (positive would mean absolute
     # realtime clock)

@@ -206,13 +206,11 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
       # could be mocked.
       t = Crystal::System::Time.instant.duration_since(time)
 
-      data =
-        {% if LibC.has_constant?(:NOTE_NSECONDS) %}
-          t.total_nanoseconds.to_i64!.clamp(0..)
-        {% else %}
-          # legacy BSD (and DragonFly) only have millisecond precision
-          t.positive? ? t.total_milliseconds.to_i64!.clamp(1..) : 0
-        {% end %}
+      data = t.total_nanoseconds.to_i64!
+      {% unless LibC.has_constant?(:NOTE_NSECONDS) %}
+        # legacy BSD (and DragonFly) only have millisecond precision
+        data //= 1_000_000
+      {% end %}
     else
       flags = LibC::EV_DELETE
       data = 0_u64
