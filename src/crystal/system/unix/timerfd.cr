@@ -1,3 +1,4 @@
+{% skip_file unless flag?(:linux) %}
 require "c/sys/timerfd"
 
 struct Crystal::System::TimerFD
@@ -5,7 +6,11 @@ struct Crystal::System::TimerFD
 
   # Create a `timerfd` instance set to the monotonic clock.
   def initialize
-    @fd = LibC.timerfd_create(LibC::CLOCK_MONOTONIC, LibC::TFD_CLOEXEC)
+    # We must use the same clock as in `Crystal::System::Time.clock_gettime` in
+    # order to accept absolute timers with `Time::Instant` values.
+    # Since `TimerFD` is only used on Linux, we do not have to differentiate
+    # between different targets.
+    @fd = LibC.timerfd_create(LibC::CLOCK_BOOTTIME, LibC::TFD_CLOEXEC)
     raise RuntimeError.from_errno("timerfd_settime") if @fd == -1
   end
 
