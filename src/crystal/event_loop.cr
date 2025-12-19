@@ -95,6 +95,13 @@ abstract class Crystal::EventLoop
     end
   {% end %}
 
+  # Blocks the current scheduler until all the pending events have completed.
+  # Must yield every runnable fiber.
+  #
+  # Optional.
+  def drain(& : Fiber ->) : Nil
+  end
+
   # Tells a blocking run loop to no longer wait for events to activate. It may
   # for example enqueue a NOOP event with an immediate (or past) timeout. Having
   # activated an event, the loop shall return, allowing the blocked thread to
