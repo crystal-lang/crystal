@@ -92,7 +92,6 @@ class Fiber
     private def pop?
       {% if flag?(:execution_context) %}
         if @reuse_dead_fiber_stack && (stack = Thread.current.dead_fiber_stack?) && stack.reusable?
-          Crystal::System.print_error "reusing dead stack #{stack.inspect}\n"
           stack
         else
           @lock.sync { @deque.pop? } unless @deque.empty?
