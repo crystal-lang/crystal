@@ -132,7 +132,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: crystal-lang/shards
-          ref: v0.19.1
+          ref: v0.20.0
           path: shards
           persist-credentials: false
 
