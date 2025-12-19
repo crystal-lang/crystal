@@ -87,7 +87,7 @@ class Crystal::Repl::Context
     end
 
     # This is a stack pool, for checkout_stack.
-    @stack_pool = Fiber::StackPool.new(protect: false)
+    @stack_pool = Fiber::StackPool.new(protect: false, reuse_dead_fiber_stack: false)
 
     # Mapping of types to numeric ids
     @type_to_id = {} of Type => Int32
