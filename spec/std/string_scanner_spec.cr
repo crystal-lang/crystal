@@ -419,6 +419,45 @@ describe StringScanner do
     end
   end
 
+  describe "#rewind" do
+    it "rewinds a single byte optimizable string" do
+      s = StringScanner.new("abcde")
+      s.rewind(10)
+      s.offset.should eq(0)
+
+      expect_raises(ArgumentError, "Negative lookbehind count") { s.rewind(-1) }
+
+      s.skip(3)
+      s.current_char.should eq('d')
+      s.offset.should eq(3)
+
+      s.rewind(0)
+      s.offset.should eq(3)
+
+      s.rewind(2)
+      s.offset.should eq(1)
+
+      s.rewind(1000)
+      s.offset.should eq(0)
+    end
+
+    it "rewinds a multibyte char string" do
+      s = StringScanner.new("あいうえお")
+      s.rewind(10)
+      s.offset.should eq(0)
+
+      s.skip(3)
+      s.current_char.should eq('え')
+      s.offset.should eq(3)
+
+      s.rewind(2)
+      s.offset.should eq(1)
+
+      s.rewind(1000)
+      s.offset.should eq(0)
+    end
+  end
+
   describe "#previous_char? and #previous_byte?" do
     it "finds the previous byte or char for single-byte strings" do
       s = StringScanner.new("abcde")
