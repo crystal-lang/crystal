@@ -415,6 +415,21 @@ describe StringScanner do
       s.peek(7).should eq("this is")
       s.offset.should eq(0)
     end
+
+    it "shows the next len characters for multi-byte strings" do
+      s = StringScanner.new("これは文字列である")
+      s.offset.should eq(0)
+      s.peek(3).should eq("これは")
+      s.offset.should eq(0)
+      s.peek(6).should eq("これは文字列")
+      s.offset.should eq(0)
+    end
+
+    it "errors on negative input" do
+      s = StringScanner.new("abcde")
+      s.scan(2)
+      expect_raises(ArgumentError, "Negative lookahead count: -1") { s.peek(-1) }
+    end
   end
 
   describe "#reset" do
