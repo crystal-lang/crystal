@@ -46,6 +46,7 @@
 # * `#peek_behind`
 # * `#check`
 # * `#check_until`
+# * `#rest`
 # * `#current_char`, `#current_char?`
 # * `#previous_char`, `#previous_char?`
 # * `#current_byte`, `#current_byte?`
