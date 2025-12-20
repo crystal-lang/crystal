@@ -405,10 +405,12 @@ class StringScanner
     @str
   end
 
-  # Extracts a string corresponding to string[offset,*len*], without advancing
-  # the scan offset.
+  # Extracts a string by looking ahead *len* characters, without advancing the
+  # scan offset. The return value has at most *len* characters, but may have fewer
+  # if the scan head is close to the end of the string.
   def peek(len) : String
-    @str[offset, len]
+    byte_len = lookahead_byte_length(len) || @str.bytesize
+    @str.byte_slice(@byte_offset, byte_len)
   end
 
   # Returns the remainder of the string after the scan offset.
