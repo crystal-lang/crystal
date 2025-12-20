@@ -72,6 +72,10 @@ class StringScanner
   end
 
   # Sets the *position* of the scan offset.
+  #
+  # NOTE: Moving the scan head with this method can cause performance issues in
+  # multibyte strings. For a more performant way to move the head, see
+  # [`#skip(Int)`](#skip%28pattern%3AInt%29%3AInt32%7CNil-instance-method) and `#rewind`.
   def offset=(position : Int)
     raise IndexError.new unless position >= 0
     @byte_offset = @str.char_index_to_byte_index(position) || @str.bytesize
@@ -84,7 +88,11 @@ class StringScanner
 
   # Tries to match with *pattern* at the current position. If there's a match,
   # the scanner advances the scan offset, the last match is saved, and it
-  # returns the matched string. Otherwise, the scanner returns `nil`.
+  # returns the matched string. Otherwise, the scanner returns `nil`. If *pattern*
+  # is an Int, the scanner will be advanced by that number of characters, and the
+  # scanned string returned. If *pattern* is an Int, then it is considered a match
+  # if there are at least that many characters left in the string, and will return
+  # nil otherwise.
   #
   # ```
   # require "string_scanner"
@@ -94,7 +102,9 @@ class StringScanner
   # s.scan(/\w+/)  # => nil
   # s.scan(/\s\w/) # => " s"
   # s.scan('t')    # => "t"
-  # s.scan("ring") # => "ring"
+  # s.scan(2)      # => "ri"
+  # s.scan(5)      # => nil
+  # s.scan("ng")   # => "ng"
   # s.scan(/.*/)   # => ""
   # ```
   def scan(pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : String?
