@@ -419,6 +419,78 @@ describe StringScanner do
     end
   end
 
+  describe "#previous_char? and #previous_byte?" do
+    it "finds the previous byte or char for single-byte strings" do
+      s = StringScanner.new("abcde")
+      s.previous_byte?.should be_nil
+      expect_raises(IndexError, "No previous byte") { s.previous_byte }
+      s.previous_char?.should be_nil
+      expect_raises(IndexError) { s.previous_char }
+
+      s.scan(1)
+      s.previous_byte?.should eq('a'.ord)
+      s.previous_byte.should eq('a'.ord)
+      s.previous_char?.should eq('a')
+      s.previous_char.should eq('a')
+    end
+
+    it "finds the previous byte or char for multi-byte strings" do
+      s = StringScanner.new("あいうえお")
+      s.previous_byte?.should be_nil
+      expect_raises(IndexError, "No previous byte") { s.previous_byte }
+      s.previous_char?.should be_nil
+      expect_raises(IndexError) { s.previous_char }
+
+      s.scan(1)
+      s.previous_byte?.should eq('あ'.bytes.last)
+      s.previous_byte.should eq('あ'.bytes.last)
+      s.previous_char?.should eq('あ')
+      s.previous_char.should eq('あ')
+    end
+  end
+
+  describe "#current_char and #current_byte" do
+    it "finds the current byte and char for single-byte strings" do
+      s = StringScanner.new("abcde")
+      s.current_char.should eq('a')
+      s.current_char?.should eq('a')
+      s.current_byte.should eq('a'.ord)
+      s.current_byte?.should eq('a'.ord)
+
+      s.scan(2)
+      s.current_char.should eq('c')
+      s.current_char?.should eq('c')
+      s.current_byte.should eq('c'.ord)
+      s.current_byte?.should eq('c'.ord)
+
+      s.terminate
+      s.current_char?.should be_nil
+      expect_raises(IndexError) { s.current_char }
+      s.current_byte?.should be_nil
+      expect_raises(IndexError) { s.current_byte }
+    end
+
+    it "finds the current byte and char for multi-byte strings" do
+      s = StringScanner.new("あいうえお")
+      s.current_char.should eq('あ')
+      s.current_char?.should eq('あ')
+      s.current_byte.should eq('あ'.bytes.first)
+      s.current_byte?.should eq('あ'.bytes.first)
+
+      s.scan(2)
+      s.current_char.should eq('う')
+      s.current_char?.should eq('う')
+      s.current_byte.should eq('う'.bytes.first)
+      s.current_byte?.should eq('う'.bytes.first)
+
+      s.terminate
+      s.current_char?.should be_nil
+      expect_raises(IndexError) { s.current_char }
+      s.current_byte?.should be_nil
+      expect_raises(IndexError) { s.current_byte }
+    end
+  end
+
   describe "#reset" do
     it "resets the scan offset to the beginning and clears the last match" do
       s = StringScanner.new("this is a string")
