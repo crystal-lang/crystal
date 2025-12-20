@@ -63,6 +63,10 @@
 class StringScanner
   @last_match : Regex::MatchData | StringMatchData | Nil
 
+  # The byte offset of the scan head. This is distinct from #offset in that
+  # it counts raw bytes instead of characters.
+  getter byte_offset : Int32
+
   def initialize(@str : String)
     @byte_offset = 0
   end
