@@ -62,6 +62,7 @@
 # Methods that deal with the last match:
 # * `#[]`
 # * `#[]?`
+# * `#unscan`
 #
 # Miscellaneous methods:
 # * `#inspect`
@@ -146,6 +147,16 @@ class StringScanner
     @byte_offset += scan_len
     @last_match = StringMatchData.new(result)
     result
+  end
+
+  # Reverts the scan head to before the last match, if it exists, and
+  # clears the last match information. This can only be used once per scan.
+  def unscan : Nil
+    match = @last_match
+    return if match.nil?
+
+    @byte_offset -= match[0].bytesize
+    @last_match = nil
   end
 
   # Scans the string _until_ the *pattern* is matched. Returns the substring up
