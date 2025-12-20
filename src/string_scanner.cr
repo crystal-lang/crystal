@@ -175,7 +175,6 @@ class StringScanner
   end
 
   # Attempts to skip over the given *pattern* beginning with the scan offset.
-  # In other words, the pattern is not anchored to the current scan offset.
   #
   # If there's a match, the scanner advances the scan offset, the last match is
   # saved, and it returns the size of the skipped match. Otherwise it returns
