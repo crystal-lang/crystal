@@ -138,7 +138,7 @@ class StringScanner
     match(pattern, advance: true, anchored: false)
   end
 
-  private def match(pattern : Regex, advance = true, options = Regex::MatchOptions::ANCHORED)
+  private def match(pattern : Regex, advance : Bool = true, options : Regex::MatchOptions = Regex::MatchOptions::ANCHORED)
     match = pattern.match_at_byte_index(@str, @byte_offset, options)
     @last_match = match
     if match
@@ -409,7 +409,7 @@ class StringScanner
     # some redundant logic here from String#find_start_and_end, but in this case
     # it is likely we are far into the string and len is small, so it is very
     # important not to start at the beginning of the string.
-    reader = self.make_char_reader
+    reader = make_char_reader
 
     current = reader.current_char?
 
@@ -436,7 +436,7 @@ class StringScanner
       return len <= @byte_offset ? len : nil
     end
 
-    reader = self.make_char_reader
+    reader = make_char_reader
 
     until len.zero?
       reader.previous_char? || return nil
