@@ -435,16 +435,61 @@ class StringScanner
     @str.byte_slice(@byte_offset, @str.bytesize - @byte_offset)
   end
 
+  # :nodoc:
+  INSPECT_INDICATOR_CHAR = '‣'
+  INSPECT_ELLIPSIS_CHAR  = '…'
+  INSPECT_ENDING_CHAR    = '"'
+
   # Writes a representation of the scanner.
   #
   # Includes the current position of the offset, the total size of the string,
   # and five characters near the current position.
   def inspect(io : IO) : Nil
+    offset = self.offset
+    size = @str.size
+    remaining = size - offset
+
     io << "#<StringScanner "
-    offset = offset()
-    io << offset << '/' << @str.size
-    start = Math.min(Math.max(offset - 2, 0), Math.max(0, @str.size - 5))
-    io << " \"" << @str[start, 5] << "\" >"
+    io << offset << '/' << size << ' '
+
+    # find a range of 5 characters with the scan head as close to
+    # the middle as possible, and apply ellipses when appropriate
+    ellipsis_start = true
+    ellipsis_end = true
+    chars_before = 2
+    chars_after = 3
+
+    if offset <= chars_before
+      # shift to the right since there weren't enough chars before
+      chars_after += chars_before - offset
+      chars_before = offset
+
+      # no ellipsis if we hit the start
+      ellipsis_start = false
+    end
+
+    if remaining <= chars_after
+      # shift to the left since there weren't enough chars after
+      chars_before += chars_after - remaining
+      chars_after = remaining
+
+      # no ellipsis if we hit the end
+      ellipsis_end = false
+    end
+
+    # clamp in the case of small strings that don't have enough
+    # before *or* after
+    chars_before = chars_before.clamp(0, offset)
+    chars_after = chars_after.clamp(0, remaining)
+
+    io << (ellipsis_start ? INSPECT_ELLIPSIS_CHAR : INSPECT_ENDING_CHAR)
+    peek_behind(chars_before).inspect_unquoted(io) if chars_before > 0
+    io << INSPECT_INDICATOR_CHAR
+    peek(chars_after).inspect_unquoted(io) if chars_after > 0
+    io << (ellipsis_end ? INSPECT_ELLIPSIS_CHAR : INSPECT_ENDING_CHAR)
+
+    io << '>'
+  end
 
   private def make_char_reader : Char::Reader
     Char::Reader.new(@str, @byte_offset)
