@@ -388,6 +388,62 @@ class StringScanner
     io << offset << '/' << @str.size
     start = Math.min(Math.max(offset - 2, 0), Math.max(0, @str.size - 5))
     io << " \"" << @str[start, 5] << "\" >"
+
+  private def make_char_reader : Char::Reader
+    Char::Reader.new(@str, @byte_offset)
+  end
+
+  # Transforms a character count into a byte count *forward*
+  # from the scan head. Returns nil if the string doesn't have
+  # enough characters in it to advance by the given character
+  # count.
+  #
+  # Return value, if not nil, is guaranteed to be in (0..@str.bytesize - @byte_offset)
+  private def lookahead_byte_length(len : Int) : Int32?
+    raise ArgumentError.new("Negative lookahead count: #{len}") if len < 0
+    return 0 if len.zero?
+    if @str.single_byte_optimizable?
+      return len <= @str.bytesize - @byte_offset ? len : nil
+    end
+
+    # some redundant logic here from String#find_start_and_end, but in this case
+    # it is likely we are far into the string and len is small, so it is very
+    # important not to start at the beginning of the string.
+    reader = self.make_char_reader
+
+    current = reader.current_char?
+
+    loop do
+      break if len.zero?
+      return nil if current.nil?
+      current = reader.next_char?
+      len -= 1
+    end
+
+    reader.pos - @byte_offset
+  end
+
+  # Similar to #lookahead_byte_length, transforms a character count
+  # into a byte count *backwards* from the scan head, and returns nil
+  # if this would fall off the beginning of the string.
+  #
+  # Return value, if not nil, is guaranteed to be in (0..@byte_offset)
+  private def lookbehind_byte_length(len : Int) : Int32?
+    raise ArgumentError.new("Negative lookbehind count: #{len}") if len < 0
+    return 0 if len.zero?
+
+    if @str.single_byte_optimizable?
+      return len <= @byte_offset ? len : nil
+    end
+
+    reader = self.make_char_reader
+
+    until len.zero?
+      reader.previous_char? || return nil
+      len -= 1
+    end
+
+    @byte_offset - reader.pos
   end
 
   # :nodoc:
