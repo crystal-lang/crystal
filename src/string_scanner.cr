@@ -138,7 +138,7 @@ class StringScanner
     match(pattern, advance: true, anchored: false)
   end
 
-  private def match(pattern : Regex, advance = true, options = Regex::MatchOptions::ANCHORED)
+  private def match(pattern : Regex, advance : Bool = true, options : Regex::MatchOptions = Regex::MatchOptions::ANCHORED)
     match = pattern.match_at_byte_index(@str, @byte_offset, options)
     @last_match = match
     if match
