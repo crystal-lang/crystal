@@ -54,6 +54,7 @@
 # Methods that deal with the position of the offset:
 # * `#offset`
 # * `#offset=`
+# * `#rewind`
 # * `#eos?`
 # * `#reset`
 # * `#terminate`
@@ -89,6 +90,11 @@ class StringScanner
   # Returns the current position of the scan offset.
   def offset : Int32
     @str.byte_index_to_char_index(@byte_offset).not_nil!
+  end
+
+  # Rewinds the scan head by *len* characters.
+  def rewind(len : Int) : Nil
+    @byte_offset -= lookbehind_byte_length(len) || @byte_offset
   end
 
   # Tries to match with *pattern* at the current position. If there's a match,
