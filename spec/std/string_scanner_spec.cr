@@ -142,7 +142,7 @@ describe StringScanner do
   end
 
   describe "#skip_until" do
-    it "advances the offset but does not returns the string matched" do
+    it "advances the offset but does not return the string matched" do
       s = StringScanner.new("this is a string")
 
       s.skip_until(/not/).should be_nil
