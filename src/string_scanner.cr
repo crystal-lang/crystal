@@ -62,6 +62,7 @@
 # Methods that deal with the last match:
 # * `#[]`
 # * `#[]?`
+# * `#matched?`
 # * `#unscan`
 #
 # Miscellaneous methods:
@@ -640,6 +641,11 @@ class StringScanner
     return true if @byte_offset.zero?
 
     previous_char == '\n'
+  end
+
+  # Returns true if the last #scan resulted in a match
+  def matched? : Bool
+    !@last_match.nil?
   end
 
   # :nodoc:
