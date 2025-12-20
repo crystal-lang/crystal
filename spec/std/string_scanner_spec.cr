@@ -432,6 +432,30 @@ describe StringScanner do
     end
   end
 
+  describe "#peek_behind" do
+    it "shows characters behind the scan head" do
+      s = StringScanner.new("abcdefg")
+      s.peek_behind(10).should eq("")
+      s.scan(3)
+      s.peek_behind(10).should eq("abc")
+      s.peek_behind(2).should eq("bc")
+    end
+
+    it "shows characters behind the scan head for multi-byte strings" do
+      s = StringScanner.new("あいうえお")
+      s.peek_behind(10).should eq("")
+      s.scan(3)
+      s.peek_behind(10).should eq("あいう")
+      s.peek_behind(2).should eq("いう")
+    end
+
+    it "errors on negative input" do
+      s = StringScanner.new("abcde")
+      s.scan(3)
+      expect_raises(ArgumentError, "Negative lookbehind count") { s.peek_behind(-1) }
+    end
+  end
+
   describe "#reset" do
     it "resets the scan offset to the beginning and clears the last match" do
       s = StringScanner.new("this is a string")
