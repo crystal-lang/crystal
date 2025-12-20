@@ -607,6 +607,33 @@ describe StringScanner do
     end
   end
 
+  describe "#unscan" do
+    it "undoes the previous #scan call" do
+      s = StringScanner.new("abcdefg")
+      s.scan(1).should eq("a")
+      s.scan("bc").should eq("bc")
+      s.unscan
+      s.scan(/\w\w\w/).should eq("bcd")
+      s.unscan
+      s.scan(4).should eq("bcde")
+      s.unscan
+      s.current_char.should eq('b')
+    end
+
+    it "undoes the previous #scan call for multibyte strings" do
+      s = StringScanner.new("あいうえお")
+      s.scan(1).should eq("あ")
+      s.scan("いう").should eq("いう")
+      s.unscan
+      s.scan(/\w\w\w/).should eq("いうえ")
+      s.unscan
+      s.scan(4).should eq("いうえお")
+      s.unscan
+      s.unscan
+      s.current_char.should eq('い')
+    end
+  end
+
   describe "#reset" do
     it "resets the scan offset to the beginning and clears the last match" do
       s = StringScanner.new("this is a string")
