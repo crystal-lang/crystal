@@ -390,6 +390,60 @@ class StringScanner
     io << " \"" << @str[start, 5] << "\" >"
   end
 
+  private def make_char_reader : Char::Reader
+    Char::Reader.new(@str, @byte_offset)
+  end
+
+  # Transforms a character count into a byte count *forward*
+  # from the scan head. Returns nil if the string doesn't have
+  # enough characters in it to advance by the given character
+  # count.
+  #
+  # Return value, if not nil, is guaranteed to be in (0..@str.bytesize - @byte_offset)
+  private def lookahead_byte_length(len : Int) : Int32?
+    raise ArgumentError.new("Negative lookahead count: #{len}") if len < 0
+    return 0 if len.zero?
+    if @str.single_byte_optimizable?
+      return len <= @str.bytesize - @byte_offset ? len : nil
+    end
+
+    # some redundant logic here from String#find_start_and_end, but in this case
+    # it is likely we are far into the string and len is small, so it is very
+    # important not to start at the beginning of the string.
+    reader = make_char_reader
+
+    current = reader.current_char?
+
+    len.times do
+      return nil if current.nil?
+      current = reader.next_char?
+    end
+
+    reader.pos - @byte_offset
+  end
+
+  # Similar to #lookahead_byte_length, transforms a character count
+  # into a byte count *backwards* from the scan head, and returns nil
+  # if this would fall off the beginning of the string.
+  #
+  # Return value, if not nil, is guaranteed to be in (0..@byte_offset)
+  private def lookbehind_byte_length(len : Int) : Int32?
+    raise ArgumentError.new("Negative lookbehind count: #{len}") if len < 0
+    return 0 if len.zero?
+
+    if @str.single_byte_optimizable?
+      return len <= @byte_offset ? len : nil
+    end
+
+    reader = make_char_reader
+
+    len.times do
+      reader.previous_char? || return nil
+    end
+
+    @byte_offset - reader.pos
+  end
+
   # :nodoc:
   struct StringMatchData
     def initialize(@str : String)
