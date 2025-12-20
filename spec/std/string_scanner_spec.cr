@@ -595,4 +595,45 @@ describe StringScanner do
       s.eos?.should be_true
     end
   end
+
+  describe "#matched?" do
+    s = StringScanner.new("sphinx of black quartz, judge my vow")
+    s.matched?.should eq(false)
+
+    s.check(1000)
+    s.matched?.should eq(false)
+    s.check(10)
+    s.matched?.should eq(true)
+
+    s.check(/Sphinx/)
+    s.matched?.should eq(false)
+    s.check(/sphinx/)
+    s.matched?.should eq(true)
+
+    s.skip("nonsense")
+    s.matched?.should eq(false)
+    s.skip("sphinx ")
+    s.matched?.should eq(true)
+
+    s.skip(1000)
+    s.matched?.should eq(false)
+    s.skip(3)
+    s.matched?.should eq(true)
+
+    s.scan(/\d+/)
+    s.matched?.should eq(false)
+    s.scan(/\w+/)
+    s.matched?.should eq(true)
+
+    s.scan('b')
+    s.matched?.should eq(false)
+    s.scan(' ')
+    s.matched?.should eq(true)
+
+    # unaffected by #peek
+    s.scan(1000)
+    s.matched?.should eq(false)
+    s.peek(10)
+    s.matched?.should eq(false)
+  end
 end
