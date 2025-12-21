@@ -10,7 +10,7 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
     @pipe = uninitialized LibC::Int[2]
   {% end %}
 
-  def initialize
+  def initialize(parallelism : Int32)
     # the kqueue instance
     @kqueue = System::Kqueue.new
 

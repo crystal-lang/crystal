@@ -26,7 +26,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   @timer_packet = LibC::HANDLE.null
   @timer_key : System::IOCP::CompletionKey?
 
-  def initialize
+  def initialize(parallelism : Int32)
     @mutex = Thread::Mutex.new
     @timers = Timers(Timer).new
 
