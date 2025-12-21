@@ -1413,15 +1413,6 @@ struct Path
     end
   end
 
-  # Returns a new `URI` with `file` scheme from this path.
-  #
-  # A URI can only be created with an absolute path. Raises `Path::Error` if
-  # this path is not absolute.
-  def to_uri : URI
-    raise Error.new("Cannot create a URI from relative path") unless absolute?
-    URI.new(scheme: "file", path: @name)
-  end
-
   # Returns the path of the home directory of the current user.
   def self.home : Path
     new(Crystal::System::Path.home)
