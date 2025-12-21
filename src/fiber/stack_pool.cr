@@ -16,7 +16,11 @@ class Fiber
     #
     # Interpreter stacks grow upwards (pushing values increases the stack
     # pointer value) rather than downwards, so *protect* must be false.
-    def initialize(@protect : Bool = true)
+    #
+    # Interpreter keeps an internal list of stacks and musn't consider
+    # `Thread.current.dead_fiber_stack` for recycle which is handled by the
+    # scheduler's fiber stack pool where the interpreter runs.
+    def initialize(@protect : Bool = true, @reuse_dead_fiber_stack : Bool = true)
       @deque = Deque(Stack).new
 
       {% if flag?(:execution_context) %}
@@ -87,7 +91,7 @@ class Fiber
 
     private def pop?
       {% if flag?(:execution_context) %}
-        if (stack = Thread.current.dead_fiber_stack?) && stack.reusable?
+        if @reuse_dead_fiber_stack && (stack = Thread.current.dead_fiber_stack?) && stack.reusable?
           stack
         else
           @lock.sync { @deque.pop? } unless @deque.empty?
