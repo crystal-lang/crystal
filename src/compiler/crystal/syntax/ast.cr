@@ -2303,6 +2303,10 @@ module Crystal
     property named_args : Array(NamedArgument)?
     property doc : String?
 
+    # The constructor or `macro annotated` overload that matched this annotation's
+    # arguments during semantic analysis. Used for default value lookup.
+    property matched_overload : Def | Macro | Nil
+
     def initialize(@path, @args = [] of ASTNode, @named_args = nil)
     end
 

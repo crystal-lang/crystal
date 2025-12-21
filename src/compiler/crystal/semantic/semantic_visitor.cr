@@ -539,6 +539,19 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
   # Validates annotation arguments against initialize and self.new overloads.
   # Checks that field names exist and types are compatible (shallow check).
   private def validate_annotation_class_args(annotation_type : ClassType, ann : Annotation)
+    # Check for `macro annotated` overloads first
+    annotated_macros = annotation_type.annotated_macros
+
+    if annotated_macros && !annotated_macros.empty?
+      # Use macro-based validation (ASTNode types)
+      validate_annotation_with_macros(annotation_type, ann, annotated_macros)
+    else
+      # Fallback to runtime constructor validation
+      validate_annotation_with_constructors(annotation_type, ann)
+    end
+  end
+
+  private def validate_annotation_with_constructors(annotation_type : ClassType, ann : Annotation)
     init_defs = annotation_type.lookup_defs("initialize", lookup_ancestors_for_new: true)
     new_defs = annotation_type.metaclass.lookup_defs("new", lookup_ancestors_for_new: true)
 
@@ -552,40 +565,156 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
 
     return if all_constructors.empty?
 
-    # If annotation has no args, check that at least one constructor accepts zero args
+    validate_annotation_overloads(annotation_type, ann, all_constructors, AnnotationValidationMode::RuntimeConstructor)
+  end
+
+  private def validate_annotation_with_macros(annotation_type : ClassType, ann : Annotation, macros : Array(Macro))
+    validate_annotation_overloads(annotation_type, ann, macros, AnnotationValidationMode::MacroAnnotated)
+  end
+
+  # Unified validation for both constructors and macro annotated
+  private def validate_annotation_overloads(
+    annotation_type : ClassType,
+    ann : Annotation,
+    overloads : Array(Def) | Array(Macro),
+    mode : AnnotationValidationMode,
+  )
+    # If annotation has no args, check that at least one overload accepts zero args
     if !ann.has_any_args?
-      unless any_constructor_accepts_zero_args?(all_constructors)
+      matching = find_overload_accepting_zero_args(overloads)
+      unless matching
         ann.raise "@[#{annotation_type}] is missing required arguments"
       end
+      ann.matched_overload = matching
+      return
     end
 
-    # Validate positional args
+    # Find if any overload fully matches all args
+    matching = overloads.find { |overload| overload_matches_annotation?(overload, ann, mode) }
+
+    if matching
+      ann.matched_overload = matching
+      return # Valid - at least one overload matches
+    end
+
+    # No overload matched - generate a helpful error message
+    # First check if any provided arg has a type mismatch
     ann.args.each_with_index do |arg, index|
-      validate_positional_arg(all_constructors, annotation_type, arg, index)
+      validate_positional_arg_overloads(overloads, annotation_type, arg, index, mode)
     end
 
-    # Validate named args
     ann.named_args.try &.each do |named_arg|
-      validate_named_arg(all_constructors, annotation_type, named_arg)
+      validate_named_arg_overloads(overloads, annotation_type, named_arg, mode)
+    end
+
+    # If we reach here, all provided args are valid but no overload fully matched
+    # This means we're missing required arguments
+    ann.raise "@[#{annotation_type}] is missing required arguments"
+  end
+
+  # Checks if an ASTNode matches a macro type restriction using the macro type hierarchy
+  private def macro_literal_matches_restriction?(node : ASTNode, restriction : ASTNode?) : Bool
+    return true unless restriction
+
+    macro_type = @program.lookup_macro_type(restriction)
+    node.macro_is_a?(macro_type)
+  end
+
+  # Mode for annotation argument validation
+  private enum AnnotationValidationMode
+    RuntimeConstructor # Uses literal_matches_restriction?, runtime_type for errors
+    MacroAnnotated     # Uses macro_literal_matches_restriction?, class_desc for errors
+  end
+
+  # Unified type matching dispatcher
+  private def matches_restriction?(node : ASTNode, restriction : ASTNode?, mode : AnnotationValidationMode) : Bool
+    case mode
+    in .runtime_constructor?
+      literal_matches_restriction?(node, restriction)
+    in .macro_annotated?
+      macro_literal_matches_restriction?(node, restriction)
     end
   end
 
-  # Validates a named argument against all constructors, raising on error
-  private def validate_named_arg(constructors : Array(Def), annotation_type : ClassType, named_arg : NamedArgument)
+  # Unified actual type formatter for error messages
+  private def format_actual_type(node : ASTNode, mode : AnnotationValidationMode) : String
+    case mode
+    in .runtime_constructor?
+      node.runtime_type || "expression"
+    in .macro_annotated?
+      node.class_desc
+    end
+  end
+
+  # Finds the first overload that can be called with zero arguments
+  private def find_overload_accepting_zero_args(overloads : Array(Def) | Array(Macro)) : Def | Macro | Nil
+    overloads.find do |overload|
+      overload.args.each_with_index.all? do |arg, index|
+        next true if index == overload.splat_index
+        arg.default_value
+      end
+    end
+  end
+
+  # Checks if an overload fully matches all annotation arguments
+  private def overload_matches_annotation?(overload : Def | Macro, ann : Annotation, mode : AnnotationValidationMode) : Bool
+    positional_args = ann.args
+    named_args = ann.named_args
+
+    # Check positional args match
+    positional_args.each_with_index do |arg, index|
+      param = param_at_positional_index(overload, index)
+      return false unless param
+      return false unless matches_restriction?(arg, param.restriction, mode)
+    end
+
+    # Check named args match
+    named_args.try &.each do |named_arg|
+      param = overload.args.find { |arg| arg.external_name == named_arg.name }
+      param ||= overload.double_splat
+      return false unless param
+      return false unless matches_restriction?(named_arg.value, param.restriction, mode)
+    end
+
+    # Check all required params have values
+    overload.args.each_with_index do |param, index|
+      next if index == overload.splat_index
+      next if param.default_value
+
+      has_value = if index < positional_args.size
+                    true
+                  elsif named_args
+                    named_args.any? { |na| na.name == param.external_name }
+                  else
+                    false
+                  end
+      return false unless has_value
+    end
+
+    true
+  end
+
+  # Validates a named argument against all overloads
+  private def validate_named_arg_overloads(
+    overloads : Array(Def) | Array(Macro),
+    annotation_type : ClassType,
+    named_arg : NamedArgument,
+    mode : AnnotationValidationMode,
+  )
     found_param : Arg? = nil
 
-    constructors.each do |constructor|
-      param = constructor.args.find { |arg| arg.external_name == named_arg.name }
-      param ||= constructor.double_splat # double splat accepts any named arg
+    overloads.each do |overload|
+      param = overload.args.find { |arg| arg.external_name == named_arg.name }
+      param ||= overload.double_splat
 
       if param
         found_param = param
-        return if literal_matches_restriction?(named_arg.value, param.restriction)
+        return if matches_restriction?(named_arg.value, param.restriction, mode)
       end
     end
 
     if found_param
-      actual_type = named_arg.value.runtime_type || "expression"
+      actual_type = format_actual_type(named_arg.value, mode)
       expected_type = found_param.restriction.try(&.to_s) || "any"
       named_arg.raise "@[#{annotation_type}] parameter '#{named_arg.name}' expects #{expected_type}, not #{actual_type}"
     else
@@ -593,21 +722,27 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     end
   end
 
-  # Validates a positional argument against all constructors, raising on error
-  private def validate_positional_arg(constructors : Array(Def), annotation_type : ClassType, arg : ASTNode, index : Int32)
+  # Validates a positional argument against all overloads
+  private def validate_positional_arg_overloads(
+    overloads : Array(Def) | Array(Macro),
+    annotation_type : ClassType,
+    arg : ASTNode,
+    index : Int32,
+    mode : AnnotationValidationMode,
+  )
     found_param : Arg? = nil
 
-    constructors.each do |constructor|
-      param = param_at_positional_index(constructor, index)
+    overloads.each do |overload|
+      param = param_at_positional_index(overload, index)
 
       if param
         found_param = param
-        return if literal_matches_restriction?(arg, param.restriction)
+        return if matches_restriction?(arg, param.restriction, mode)
       end
     end
 
     if found_param
-      actual_type = arg.runtime_type || "expression"
+      actual_type = format_actual_type(arg, mode)
       expected_type = found_param.restriction.try(&.to_s) || "any"
       arg.raise "@[#{annotation_type}] argument at position #{index} expects #{expected_type}, not #{actual_type}"
     else
@@ -616,32 +751,21 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
   end
 
   # Gets the parameter at a positional index, handling splat
-  private def param_at_positional_index(init_def : Def, index : Int32) : Arg?
-    splat_index = init_def.splat_index
+  private def param_at_positional_index(def_or_macro : Def | Macro, index : Int32) : Arg?
+    args = def_or_macro.args
+    splat_index = def_or_macro.splat_index
 
     if splat_index
       if index < splat_index
-        init_def.args[index]?
+        args[index]?
       elsif index >= splat_index
         # After or at splat - could be captured by splat
-        init_def.args[splat_index]?
+        args[splat_index]?
       else
         nil
       end
     else
-      init_def.args[index]?
-    end
-  end
-
-  # Checks if any constructor can be called with zero arguments
-  private def any_constructor_accepts_zero_args?(constructors : Array(Def)) : Bool
-    constructors.any? do |constructor|
-      constructor.args.each_with_index.all? do |arg, index|
-        # Splat args don't require values
-        next true if index == constructor.splat_index
-        # Args with defaults don't require values
-        arg.default_value
-      end
+      args[index]?
     end
   end
 

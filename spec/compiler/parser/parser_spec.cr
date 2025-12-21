@@ -2300,6 +2300,7 @@ module Crystal
     assert_syntax_error "x, self = 1, 2",
       "can't change the value of self"
 
+    # Type restrictions are only allowed on `macro annotated` (for annotation validation)
     assert_syntax_error "macro foo(x : Int32); end"
 
     assert_syntax_error "/foo)/", "invalid regex"

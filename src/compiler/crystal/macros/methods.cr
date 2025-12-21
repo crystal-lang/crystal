@@ -2776,23 +2776,12 @@ module Crystal
       end
     end
 
-    # For annotation classes, returns the constructors (initialize + self.new, excluding private).
-    private def annotation_class_constructors(interpreter : MacroInterpreter) : Array(Def)?
-      resolved = interpreter.resolve?(@path)
-      return nil unless resolved.is_a?(TypeNode)
-
-      type = resolved.type
-      return nil unless type.is_a?(ClassType) && type.annotation_class?
-
-      init_defs = type.lookup_defs("initialize", lookup_ancestors_for_new: true)
-      new_defs = type.metaclass.lookup_defs("new", lookup_ancestors_for_new: true)
-      (init_defs + new_defs).reject(&.visibility.private?)
-    end
-
-    # Looks up the default value for a named parameter from constructor(s).
+    # Looks up the default value for a named parameter from the matched overload.
     private def annotation_class_default_value(name : String, interpreter : MacroInterpreter) : ASTNode?
-      annotation_class_constructors(interpreter).try &.each do |constructor|
-        constructor.args.each do |arg|
+      overload = @matched_overload
+      case overload
+      when Def, Macro
+        overload.args.each do |arg|
           if arg.external_name == name && (default = arg.default_value)
             return default.clone
           end
@@ -2801,10 +2790,12 @@ module Crystal
       nil
     end
 
-    # Looks up the default value for a positional parameter from constructor(s).
+    # Looks up the default value for a positional parameter from the matched overload.
     private def annotation_class_default_value_by_index(index : Int32, interpreter : MacroInterpreter) : ASTNode?
-      annotation_class_constructors(interpreter).try &.each do |constructor|
-        if (arg = constructor.args[index]?) && (default = arg.default_value)
+      overload = @matched_overload
+      case overload
+      when Def, Macro
+        if (arg = overload.args[index]?) && (default = arg.default_value)
           return default.clone
         end
       end

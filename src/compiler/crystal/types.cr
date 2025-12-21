@@ -1234,6 +1234,14 @@ module Crystal
     property? :struct; @struct = false
     property? annotation_class : Bool = false
     property annotation_metadata : AnnotationMetadata?
+
+    # Returns all `macro annotated` overloads defined on this annotation class,
+    # or nil if none exist.
+    def annotated_macros : Array(Macro)?
+      return nil unless annotation_class?
+      metaclass.macros.try &.["annotated"]?
+    end
+
     property? can_be_stored = true
     property? lookup_new_in_ancestors = false
 

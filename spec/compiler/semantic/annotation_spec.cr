@@ -2348,4 +2348,369 @@ describe "Semantic: annotation" do
         CRYSTAL
     end
   end
+
+  describe "macro annotated" do
+    it "validates positional arg with ASTNode type" do
+      assert_type(<<-CRYSTAL) { int32 }
+        @[Annotation]
+        class Foo
+          macro annotated(name : StringLiteral)
+          end
+        end
+
+        @[Foo("hello")]
+        class Bar
+        end
+
+        1
+        CRYSTAL
+    end
+
+    it "validates named arg with ASTNode type" do
+      assert_type(<<-CRYSTAL) { int32 }
+        @[Annotation]
+        class Foo
+          macro annotated(name : StringLiteral)
+          end
+        end
+
+        @[Foo(name: "hello")]
+        class Bar
+        end
+
+        1
+        CRYSTAL
+    end
+
+    it "rejects wrong ASTNode type for positional arg" do
+      assert_error <<-CRYSTAL, "@[Foo] argument at position 0 expects StringLiteral, not NumberLiteral"
+        @[Annotation]
+        class Foo
+          macro annotated(name : StringLiteral)
+          end
+        end
+
+        @[Foo(123)]
+        class Bar
+        end
+        CRYSTAL
+    end
+
+    it "rejects wrong ASTNode type for named arg" do
+      assert_error <<-CRYSTAL, "@[Foo] parameter 'name' expects StringLiteral, not NumberLiteral"
+        @[Annotation]
+        class Foo
+          macro annotated(name : StringLiteral)
+          end
+        end
+
+        @[Foo(name: 123)]
+        class Bar
+        end
+        CRYSTAL
+    end
+
+    it "validates with default value" do
+      assert_type(<<-CRYSTAL) { int32 }
+        @[Annotation]
+        class Foo
+          macro annotated(name : StringLiteral = "default")
+          end
+        end
+
+        @[Foo]
+        class Bar
+        end
+
+        1
+        CRYSTAL
+    end
+
+    it "gets default value from macro annotated" do
+      assert_type(<<-CRYSTAL) { int32 }
+        @[Annotation]
+        class Foo
+          macro annotated(name : StringLiteral = "default")
+          end
+        end
+
+        @[Foo]
+        class Bar
+        end
+
+        {% if Bar.annotation(Foo)[:name] == "default" %}
+          1
+        {% else %}
+          'a'
+        {% end %}
+        CRYSTAL
+    end
+
+    it "gets default value by index from macro annotated" do
+      assert_type(<<-CRYSTAL) { int32 }
+        @[Annotation]
+        class Foo
+          macro annotated(name : StringLiteral = "default")
+          end
+        end
+
+        @[Foo]
+        class Bar
+        end
+
+        {% if Bar.annotation(Foo)[0] == "default" %}
+          1
+        {% else %}
+          'a'
+        {% end %}
+        CRYSTAL
+    end
+
+    it "validates multiple overloads" do
+      assert_type(<<-CRYSTAL) { int32 }
+        @[Annotation]
+        class Foo
+          macro annotated(name : StringLiteral)
+          end
+
+          macro annotated(count : NumberLiteral)
+          end
+        end
+
+        @[Foo("hello")]
+        class Bar1
+        end
+
+        @[Foo(42)]
+        class Bar2
+        end
+
+        1
+        CRYSTAL
+    end
+
+    it "validates union types" do
+      assert_type(<<-CRYSTAL) { int32 }
+        @[Annotation]
+        class Foo
+          macro annotated(value : StringLiteral | SymbolLiteral)
+          end
+        end
+
+        @[Foo("hello")]
+        class Bar1
+        end
+
+        @[Foo(:hello)]
+        class Bar2
+        end
+
+        1
+        CRYSTAL
+    end
+
+    it "rejects type not in union" do
+      assert_error <<-CRYSTAL, "@[Foo] argument at position 0 expects StringLiteral | SymbolLiteral, not NumberLiteral"
+        @[Annotation]
+        class Foo
+          macro annotated(value : StringLiteral | SymbolLiteral)
+          end
+        end
+
+        @[Foo(123)]
+        class Bar
+        end
+        CRYSTAL
+    end
+
+    it "handles splat parameter" do
+      assert_type(<<-CRYSTAL) { int32 }
+        @[Annotation]
+        class Foo
+          macro annotated(*args)
+          end
+        end
+
+        @[Foo(1, 2, 3)]
+        class Bar
+        end
+
+        1
+        CRYSTAL
+    end
+
+    it "handles double splat parameter" do
+      assert_type(<<-CRYSTAL) { int32 }
+        @[Annotation]
+        class Foo
+          macro annotated(**options)
+          end
+        end
+
+        @[Foo(a: 1, b: 2)]
+        class Bar
+        end
+
+        1
+        CRYSTAL
+    end
+
+    it "does not fall back to constructor when macro annotated exists" do
+      assert_error <<-CRYSTAL, "@[Foo] argument at position 0 expects StringLiteral, not NumberLiteral"
+        @[Annotation]
+        class Foo
+          macro annotated(name : StringLiteral)
+          end
+
+          def initialize(@value : Int32)
+          end
+        end
+
+        @[Foo(123)]
+        class Bar
+        end
+        CRYSTAL
+    end
+
+    it "falls back to constructor when no macro annotated exists" do
+      assert_type(<<-CRYSTAL) { int32 }
+        @[Annotation]
+        class Foo
+          def initialize(@value : Int32)
+          end
+        end
+
+        @[Foo(123)]
+        class Bar
+        end
+
+        1
+        CRYSTAL
+    end
+
+    it "validates ASTNode base type matches subtype" do
+      assert_type(<<-CRYSTAL) { int32 }
+        @[Annotation]
+        class Foo
+          macro annotated(value : ASTNode)
+          end
+        end
+
+        @[Foo("hello")]
+        class Bar1
+        end
+
+        @[Foo(123)]
+        class Bar2
+        end
+
+        @[Foo(:symbol)]
+        class Bar3
+        end
+
+        1
+        CRYSTAL
+    end
+
+    it "validates missing required args" do
+      assert_error <<-CRYSTAL, "@[Foo] is missing required arguments"
+        @[Annotation]
+        class Foo
+          macro annotated(name : StringLiteral)
+          end
+        end
+
+        @[Foo]
+        class Bar
+        end
+        CRYSTAL
+    end
+
+    it "validates unknown named parameter" do
+      assert_error <<-CRYSTAL, "@[Foo] has no parameter 'unknown'"
+        @[Annotation]
+        class Foo
+          macro annotated(name : StringLiteral)
+          end
+        end
+
+        @[Foo(unknown: "value")]
+        class Bar
+        end
+        CRYSTAL
+    end
+
+    it "validates too many arguments" do
+      assert_error <<-CRYSTAL, "@[Foo] has too many arguments (expected at most 1)"
+        @[Annotation]
+        class Foo
+          macro annotated(name : StringLiteral)
+          end
+        end
+
+        @[Foo("a", "b")]
+        class Bar
+        end
+        CRYSTAL
+    end
+
+    it "validates partial args that don't fully match any overload" do
+      assert_error <<-CRYSTAL, "@[Foo] is missing required arguments"
+        @[Annotation]
+        class Foo
+          macro annotated(name : StringLiteral, age : NumberLiteral)
+          end
+
+          macro annotated(age : NumberLiteral, name : StringLiteral)
+          end
+        end
+
+        @[Foo("hello")]
+        class Bar
+        end
+        CRYSTAL
+    end
+
+    it "retrieves default value from correct matched overload" do
+      assert_type(<<-CRYSTAL) { string }
+        @[Annotation]
+        class Foo
+          macro annotated(x : NumberLiteral, y : StringLiteral = "number_default")
+          end
+
+          macro annotated(x : StringLiteral, y : NumberLiteral = 42)
+          end
+        end
+
+        @[Foo(1)]
+        class Bar
+        end
+
+        {% begin %}
+          {{ Bar.annotation(Foo)[:y] }}
+        {% end %}
+        CRYSTAL
+    end
+
+    it "retrieves default value from second matched overload" do
+      assert_type(<<-CRYSTAL) { int32 }
+        @[Annotation]
+        class Foo
+          macro annotated(x : NumberLiteral, y : StringLiteral = "number_default")
+          end
+
+          macro annotated(x : StringLiteral, y : NumberLiteral = 42)
+          end
+        end
+
+        @[Foo("hello")]
+        class Bar
+        end
+
+        {% begin %}
+          {{ Bar.annotation(Foo)[:y] }}
+        {% end %}
+        CRYSTAL
+    end
+  end
 end
