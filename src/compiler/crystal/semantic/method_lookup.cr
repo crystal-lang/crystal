@@ -428,6 +428,8 @@ module Crystal
 
       # Traverse all subtypes
       instance_type.subtypes(base_type).each do |subtype|
+        next if is_new && subtype.is_a?(GenericClassInstanceType) && subtype.abstract?
+
         subtype_lookup = virtual_lookup(subtype)
         subtype_virtual_lookup = virtual_lookup(subtype.virtual_type)
 

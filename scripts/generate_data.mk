@@ -4,7 +4,7 @@
 ## Generate time zone database for stdlib specs
 ##   $ make zoneinfo -f scripts/generate_data.mk
 
-TZDB_VERSION := 2025b
+TZDB_VERSION := 2025c
 
 ifeq ($(OS),Windows_NT)
   BIN_CRYSTAL=bin\crystal

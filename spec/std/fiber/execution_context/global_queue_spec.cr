@@ -91,131 +91,112 @@ describe Fiber::ExecutionContext::GlobalQueue do
   # interpreter doesn't support threads yet (#14287)
   pending_interpreted describe: "thread safety" do
     it "one by one" do
+      {% if flag?(:win32) && flag?(:aarch64) %}
+        pending! "CI/WIN32/CLANGARM64 always fails"
+      {% end %}
+
       fibers = StaticArray(Fiber::ExecutionContext::FiberCounter, 763).new do |i|
         Fiber::ExecutionContext::FiberCounter.new(new_fake_fiber("f#{i}"))
       end
 
       n = 7
       increments = 15
+
       queue = Fiber::ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
-      ready = Thread::WaitGroup.new(n)
 
-      threads = Array.new(n) do |i|
-        new_thread("ONE-#{i}") do
-          slept = 0
-          ready.done
-
-          loop do
-            if fiber = queue.pop?
-              fc = fibers.find! { |x| x.@fiber == fiber }
-              queue.push(fiber) if fc.increment < increments
-              slept = 0
-            elsif slept < 100
-              slept += 1
-              Thread.sleep(1.nanosecond) # don't burn CPU
-            else
-              break
-            end
+      Fiber::ExecutionContext.stress_test(
+        n,
+        iteration: ->(i : Int32) {
+          if fiber = queue.pop?
+            fc = fibers.find! { |x| x.@fiber == fiber }
+            queue.push(fiber) if fc.increment < increments
+            return :next
           end
-        end
-      end
-      ready.wait
 
-      fibers.each_with_index do |fc, i|
-        queue.push(fc.@fiber)
-        Thread.sleep(10.nanoseconds) if i % 10 == 9
-      end
-
-      threads.each(&.join)
+          # done?
+          if fibers.all? { |fc| fc.counter >= increments }
+            return :break
+          end
+        },
+        publish: -> {
+          fibers.each_with_index do |fc, i|
+            queue.push(fc.@fiber)
+            Thread.sleep(10.nanoseconds) if i % 10 == 9
+          end
+        },
+      )
 
       # must have dequeued each fiber exactly X times
       fibers.each { |fc| fc.counter.should eq(increments) }
     end
 
-    {% if flag?(:darwin) %}
-      # FIXME: the spec regularly fails on macOS with "expected 15 got 0"
-      pending "bulk operations"
-    {% else %}
-      it "bulk operations" do
-        n = 7
-        increments = 15
+    it "bulk operations" do
+      n = 7
+      increments = 15
 
-        fibers = StaticArray(Fiber::ExecutionContext::FiberCounter, 765).new do |i| # 765 can be divided by 3 and 5
-          Fiber::ExecutionContext::FiberCounter.new(new_fake_fiber("f#{i}"))
-        end
-
-        queue = Fiber::ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
-        ready = Thread::WaitGroup.new(n)
-
-        threads = Array.new(n) do |i|
-          new_thread("BULK-#{i}") do
-            slept = 0
-
-            r = Fiber::ExecutionContext::Runnables(3).new(queue)
-
-            batch = Fiber::List.new
-            size = 0
-
-            reenqueue = -> {
-              if size > 0
-                queue.bulk_push(pointerof(batch))
-                names = [] of String?
-                batch.each { |f| names << f.name }
-                batch.clear
-                size = 0
-              end
-            }
-
-            execute = ->(fiber : Fiber) {
-              fc = fibers.find! { |x| x.@fiber == fiber }
-
-              if fc.increment < increments
-                batch.push(fc.@fiber)
-                size += 1
-              end
-            }
-
-            ready.done
-
-            loop do
-              if fiber = r.shift?
-                execute.call(fiber)
-                slept = 0
-                next
-              end
-
-              if fiber = queue.grab?(r, 1)
-                reenqueue.call
-                execute.call(fiber)
-                slept = 0
-                next
-              end
-
-              if slept >= 100
-                break
-              end
-
-              reenqueue.call
-              slept += 1
-              Thread.sleep(1.nanosecond) # don't burn CPU
-            end
-          end
-        end
-        ready.wait
-
-        # enqueue in batches of 5
-        0.step(to: fibers.size - 1, by: 5) do |i|
-          list = Fiber::List.new
-          5.times { |j| list.push(fibers[i + j].@fiber) }
-          queue.bulk_push(pointerof(list))
-          Thread.sleep(10.nanoseconds) if i % 4 == 3
-        end
-
-        threads.each(&.join)
-
-        # must have dequeued each fiber exactly X times (no less, no more)
-        fibers.each { |fc| fc.counter.should eq(increments) }
+      fibers = StaticArray(Fiber::ExecutionContext::FiberCounter, 765).new do |i| # 765 can be divided by 3 and 5
+        Fiber::ExecutionContext::FiberCounter.new(new_fake_fiber("f#{i}"))
       end
-    {% end %}
+
+      queue = Fiber::ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
+
+      runnables = Array.new(n) { Fiber::ExecutionContext::Runnables(3).new(queue) }
+      batches = Array.new(n) { Fiber::List.new }
+
+      reenqueue = ->(batch : Pointer(Fiber::List)) {
+        if batch.value.size > 0
+          queue.bulk_push(batch)
+          names = [] of String?
+          batch.value.each { |f| names << f.name }
+          batch.value.clear
+        end
+      }
+
+      execute = ->(fiber : Fiber, batch : Pointer(Fiber::List)) {
+        fc = fibers.find! { |x| x.@fiber == fiber }
+
+        if fc.increment < increments
+          batch.value.push(fc.@fiber)
+        end
+      }
+
+      Fiber::ExecutionContext.stress_test(
+        n,
+        iteration: ->(i : Int32) {
+          r = runnables[i]
+          batch = batches.to_unsafe + i
+
+          if fiber = r.shift?
+            execute.call(fiber, batch)
+            return :next
+          end
+
+          if fiber = queue.grab?(r, 1)
+            reenqueue.call(batch)
+            execute.call(fiber, batch)
+            return :next
+          end
+
+          # done?
+          if fibers.all? { |fc| fc.counter >= increments }
+            return :break
+          end
+
+          reenqueue.call(batch)
+        },
+        publish: -> {
+          # enqueue in batches of 5
+          0.step(to: fibers.size - 1, by: 5) do |i|
+            list = Fiber::List.new
+            5.times { |j| list.push(fibers[i + j].@fiber) }
+            queue.bulk_push(pointerof(list))
+            Thread.sleep(10.nanoseconds) if i % 4 == 3
+          end
+        }
+      )
+
+      # must have dequeued each fiber exactly X times (no less, no more)
+      fibers.each { |fc| fc.counter.should eq(increments) }
+    end
   end
 end

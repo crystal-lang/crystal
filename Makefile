@@ -50,11 +50,19 @@ override COMPILER_FLAGS += $(if $(interpreter),,-Dwithout_interpreter )$(if $(do
 SPEC_WARNINGS_OFF := --exclude-warnings spec/std --exclude-warnings spec/compiler --exclude-warnings spec/primitives --exclude-warnings src/float/printer --exclude-warnings src/random.cr
 override SPEC_FLAGS += $(if $(verbose),-v )$(if $(junit_output),--junit_output $(junit_output) )$(if $(order),--order=$(order) )
 CRYSTAL_CONFIG_LIBRARY_PATH := '$$ORIGIN/../lib/crystal'
-CRYSTAL_CONFIG_BUILD_COMMIT ?= $(shell git rev-parse --short HEAD 2> /dev/null)
+ifndef CRYSTAL_CONFIG_BUILD_COMMIT
+	CRYSTAL_CONFIG_BUILD_COMMIT := $(shell git rev-parse --short HEAD 2> /dev/null)
+endif
 CRYSTAL_CONFIG_PATH := '$$ORIGIN/../share/crystal/src'
-BASE_CRYSTAL_VERSION ?= $(shell $(CRYSTAL) env CRYSTAL_VERSION)
-CRYSTAL_VERSION ?= $(shell cat src/VERSION)
-SOURCE_DATE_EPOCH ?= $(shell (cat src/SOURCE_DATE_EPOCH || (git show -s --format=%ct HEAD || stat -c "%Y" Makefile || stat -f "%m" Makefile)) 2> /dev/null)
+ifndef BASE_CRYSTAL_VERSION
+	BASE_CRYSTAL_VERSION := $(shell $(CRYSTAL) env CRYSTAL_VERSION)
+endif
+ifndef CRYSTAL_VERSION
+	CRYSTAL_VERSION := $(shell cat src/VERSION)
+endif
+ifndef SOURCE_DATE_EPOCH
+	SOURCE_DATE_EPOCH := $(shell (cat src/SOURCE_DATE_EPOCH || (git show -s --format=%ct HEAD || stat -c "%Y" Makefile ||stat -f "%m" Makefile)) 2> /dev/null)
+endif
 check_lld := command -v ld.lld >/dev/null && case "$$(uname -s)" in MINGW32*|MINGW64*|Linux) echo 1;; esac
 ifeq ($(shell $(check_lld)),1)
   EXPORT_CC ?= CC="$(CC) -fuse-ld=lld"
@@ -69,8 +77,10 @@ override EXPORTS_BUILD += \
 SHELL = sh
 
 ifeq ($(LLVM_VERSION),)
-  LLVM_CONFIG ?= $(shell src/llvm/ext/find-llvm-config.sh)
-  LLVM_VERSION ?= $(if $(LLVM_CONFIG),$(shell "$(LLVM_CONFIG)" --version 2> /dev/null))
+	ifndef LLVM_CONFIG
+  	LLVM_CONFIG := $(shell src/llvm/ext/find-llvm-config.sh)
+	endif
+	LLVM_VERSION := $(if $(LLVM_CONFIG),$(shell "$(LLVM_CONFIG)" --version 2> /dev/null))
 endif
 
 # Crystal versions before 1.8 cannot build a functional compiler with `-Dpreview_mt` (https://github.com/crystal-lang/crystal/pull/16380)

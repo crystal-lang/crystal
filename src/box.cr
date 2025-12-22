@@ -39,13 +39,26 @@ class Box(T)
   # Unboxes a `Void*` into an object of type `T`. Note that for this you must
   # specify T: `Box(T).unbox(data)`.
   #
+  # Raises `NilAssertionError` if *pointer* is null and `T` is not nilable.
+  #
   # WARNING: It is undefined behavior to box an object in one type and unbox it
   # via a different type; in particular, when boxing a `T` and unboxing it as a
   # `T?`, or vice-versa.
   def self.unbox(pointer : Void*) : T
-    {% if T < Pointer || T.union_types.all? { |t| t == Nil || t < Reference } %}
+    {% if T < Pointer %}
+      pointer.as(T)
+    {% elsif T.union_types.all? { |t| t == Nil || t < Reference } %}
+      {% unless T.union_types.any? { |t| t == Nil } %}
+        if pointer.null?
+          raise NilAssertionError.new("Unboxing null pointer")
+        end
+      {% end %}
       pointer.as(T)
     {% else %}
+      if pointer.null?
+        raise NilAssertionError.new("Unboxing null pointer in mixed union")
+      end
+
       pointer.as(self).object
     {% end %}
   end

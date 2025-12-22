@@ -50,6 +50,9 @@ struct Exception::CallStack
       LibC.dl_iterate_phdr(phdr_callback, pointerof(data))
       self.read_dwarf_sections(data.program, data.base_address)
     {% end %}
+  rescue ex
+    @@dwarf_line_numbers = nil
+    @@dwarf_function_names = nil
   end
 
   protected def self.read_dwarf_sections(program, base_address = 0)

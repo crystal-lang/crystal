@@ -290,7 +290,7 @@ class Process
     fork_error.close unless fork_error.in?(error, STDERR)
   end
 
-  def finalize
+  def finalize : Nil
     @process_info.release
   end
 
@@ -520,7 +520,7 @@ end
 # ```
 #
 # See [`Command` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/command.html) in the language reference.
-def `(command) : String
+def `(command : String) : String
   process = Process.new(command, shell: true, input: Process::Redirect::Inherit, output: Process::Redirect::Pipe, error: Process::Redirect::Inherit)
   output = process.output.gets_to_end
   status = process.wait
