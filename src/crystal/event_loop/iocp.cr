@@ -6,6 +6,7 @@ require "c/ntdll"
 require "../system/win32/iocp"
 require "../system/win32/waitable_timer"
 require "./timers"
+require "./lock"
 require "./iocp/*"
 
 # :nodoc:
@@ -27,8 +28,6 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   @timer_key : System::IOCP::CompletionKey?
 
   def initialize(parallelism : Int32)
-    @lock = Atomic(Bool).new(false)
-
     @timers_mutex = Thread::Mutex.new
     @timers = Timers(Timer).new
 
@@ -89,28 +88,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
 
     # the evloop has a single IOCP instance for the context and only one
     # scheduler must wait on the evloop at any time
-
-    def lock?(&) : Bool
-      if @lock.swap(true, :acquire) == false
-        begin
-          yield
-        ensure
-          @lock.set(false, :release)
-        end
-        true
-      else
-        false
-      end
-    end
-
-    def interrupt? : Bool
-      if @lock.get(:relaxed)
-        interrupt
-        true
-      else
-        false
-      end
-    end
+    include EventLoop::Lock
   {% end %}
 
   # Runs the event loop and enqueues the fiber for the next upcoming event or
