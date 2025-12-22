@@ -1,8 +1,9 @@
 # Int is the base type of all integer types.
 #
-# There are four signed integer types: `Int8`, `Int16`, `Int32` and `Int64`,
-# being able to represent numbers of 8, 16, 32 and 64 bits respectively.
-# There are four unsigned integer types: `UInt8`, `UInt16`, `UInt32` and `UInt64`.
+# There are four signed integer types: `Int8`, `Int16`, `Int32`, `Int64` and
+# `Int128`, being able to represent numbers of 8, 16, 32 and 64 bits respectively.
+# There are four unsigned integer types: `UInt8`, `UInt16`, `UInt32`, `UInt64`
+# and `UInt128.
 #
 # An integer literal is an optional `+` or `-` sign, followed by
 # a sequence of digits and underscores, optionally followed by a suffix.
@@ -12,15 +13,17 @@
 # ```
 # 1 # Int32
 #
-# 1_i8  # Int8
-# 1_i16 # Int16
-# 1_i32 # Int32
-# 1_i64 # Int64
+# 1_i8   # Int8
+# 1_i16  # Int16
+# 1_i32  # Int32
+# 1_i64  # Int64
+# 1_i128 # Int128
 #
-# 1_u8  # UInt8
-# 1_u16 # UInt16
-# 1_u32 # UInt32
-# 1_u64 # UInt64
+# 1_u8   # UInt8
+# 1_u16  # UInt16
+# 1_u32  # UInt32
+# 1_u64  # UInt64
+# 1_u128 # UInt128
 #
 # +10 # Int32
 # -20 # Int32
