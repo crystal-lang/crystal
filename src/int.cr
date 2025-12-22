@@ -1,7 +1,7 @@
 # Int is the base type of all integer types.
 #
 # There are five signed integer types: `Int8`, `Int16`, `Int32`, `Int64` and
-# `Int128`, being able to represent numbers of 8, 16, 32 and 64 bits respectively.
+# `Int128`, being able to represent numbers of 8, 16, 32, 64, and 128 bits respectively.
 # There are five unsigned integer types: `UInt8`, `UInt16`, `UInt32`, `UInt64`
 # and `UInt128.
 #
