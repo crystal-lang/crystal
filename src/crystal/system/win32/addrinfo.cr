@@ -29,12 +29,12 @@ module Crystal::System::Addrinfo
     pointerof(@addr).as(LibC::Sockaddr*)
   end
 
-  def self.getaddrinfo(domain, service, family, type, protocol, timeout) : Handle
+  def self.getaddrinfo(domain, service, family, type, protocol, timeout, numeric_host : Bool = false) : Handle
     hints = LibC::ADDRINFOEXW.new
     hints.ai_family = (family || ::Socket::Family::UNSPEC).to_i32
     hints.ai_socktype = type
     hints.ai_protocol = protocol
-    hints.ai_flags = 0
+    hints.ai_flags = numeric_host ? LibC::AI_NUMERICHOST : 0
 
     if service.is_a?(Int)
       hints.ai_flags |= LibC::AI_NUMERICSERV
