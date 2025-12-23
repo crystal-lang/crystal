@@ -208,8 +208,9 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
 
       data = t.total_nanoseconds.to_i64!
       {% unless LibC.has_constant?(:NOTE_NSECONDS) %}
-        # legacy BSD (and DragonFly) only have millisecond precision
-        data //= 1_000_000
+        # legacy BSD (and DragonFly) only have millisecond precision, so we
+        # round up to the next millisecond.
+        data = (data + 999_999) // 1_000_000
       {% end %}
     else
       flags = LibC::EV_DELETE
