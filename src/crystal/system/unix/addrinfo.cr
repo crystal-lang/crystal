@@ -29,26 +29,26 @@ module Crystal::System::Addrinfo
     pointerof(@addr).as(LibC::Sockaddr*)
   end
 
-  def self.getaddrinfo(domain, service, family, type, protocol, timeout, numeric_host : Bool = false) : Handle
+  def self.getaddrinfo(domain, service, family, type, protocol, timeout, ai_flags = 0) : Handle
     hints = LibC::Addrinfo.new
     hints.ai_family = (family || ::Socket::Family::UNSPEC).to_i32
     hints.ai_socktype = type
     hints.ai_protocol = protocol
-    hints.ai_flags = numeric_host ? LibC::AI_NUMERICHOST : 0
 
     if service.is_a?(Int)
-      hints.ai_flags |= LibC::AI_NUMERICSERV
+      ai_flags |= LibC::AI_NUMERICSERV
     end
 
     # On OS X < 10.12, the libsystem implementation of getaddrinfo segfaults
     # if AI_NUMERICSERV is set, and servname is NULL or 0.
     {% if flag?(:darwin) %}
-      if service.in?(0, nil) && (hints.ai_flags & LibC::AI_NUMERICSERV)
-        hints.ai_flags |= LibC::AI_NUMERICSERV
+      if service.in?(0, nil)
+        ai_flags |= LibC::AI_NUMERICSERV
         service = "00"
       end
     {% end %}
 
+    hints.ai_flags = ai_flags
     ret = LibC.getaddrinfo(domain, service.to_s, pointerof(hints), out ptr)
     unless ret.zero?
       if ret == LibC::EAI_SYSTEM
