@@ -12,12 +12,13 @@ class Crystal::System::WaitableTimer
     raise RuntimeError.from_winerror("CreateWaitableTimerExW") if @handle.null?
   end
 
-  def set(time : ::Time::Span) : Nil
+  def set(time : ::Time::Instant) : Nil
     # convert absolute time to relative time, expressed in 100ns interval,
     # rounded up
-    seconds, nanoseconds = System::Time.monotonic
-    relative = time - ::Time::Span.new(seconds: seconds, nanoseconds: nanoseconds)
-    ticks = (relative.to_i * 10_000_000 + (relative.nanoseconds + 99) // 100).clamp(0_i64..)
+    # Cannot use `time.elapsed` here because it calls `::Time.instant` which
+    # could be mocked.
+    relative = Crystal::System::Time.instant.duration_since(time)
+    ticks = (relative.to_i * 10_000_000 + (relative.nanoseconds + 99) // 100)
 
     # negative duration means relative time (positive would mean absolute
     # realtime clock)

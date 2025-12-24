@@ -15,7 +15,7 @@ struct Crystal::System::TimerFD
   end
 
   # Arm (start) the timer to run at *time* (absolute time).
-  def set(time : ::Time::Span) : Nil
+  def set(time : ::Time::Instant) : Nil
     itimerspec = uninitialized LibC::Itimerspec
     itimerspec.it_interval.tv_sec = 0
     itimerspec.it_interval.tv_nsec = 0

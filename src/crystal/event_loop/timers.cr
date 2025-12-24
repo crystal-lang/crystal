@@ -19,18 +19,17 @@ struct Crystal::EventLoop::Timers(T)
   end
 
   # Returns the time of the next ready timer (if any).
-  def next_ready? : Time::Span?
+  def next_ready? : Time::Instant?
     if event = @heap.first?
       event.value.wake_at
     end
   end
 
   # Dequeues and yields each ready timer (their `#wake_at` is lower than
-  # `System::Time.monotonic`) from the oldest to the most recent (i.e. time
+  # `Crystal::System::Time.instant`) from the oldest to the most recent (i.e. time
   # ascending).
   def dequeue_ready(& : Pointer(T) -> Nil) : Nil
-    seconds, nanoseconds = System::Time.monotonic
-    now = Time::Span.new(seconds: seconds, nanoseconds: nanoseconds)
+    now = Crystal::System::Time.instant
 
     while event = @heap.first?
       break if event.value.wake_at > now

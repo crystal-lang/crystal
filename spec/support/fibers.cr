@@ -1,17 +1,17 @@
 def wait_until_blocked(f : Fiber, timeout = 5.seconds)
-  now = Time.monotonic
+  now = Time.instant
 
   until f.resumable?
     Fiber.yield
-    raise "Fiber failed to block within #{timeout}" if (Time.monotonic - now) > timeout
+    raise "Fiber failed to block within #{timeout}" if now.elapsed > timeout
   end
 end
 
 def wait_until_finished(f : Fiber, timeout = 5.seconds)
-  now = Time.monotonic
+  now = Time.instant
   until f.dead?
     Fiber.yield
-    raise "Fiber failed to finish within #{timeout}" if (Time.monotonic - now) > timeout
+    raise "Fiber failed to finish within #{timeout}" if now.elapsed > timeout
   end
 end
 

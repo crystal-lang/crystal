@@ -122,7 +122,7 @@ class Crystal::EventLoop::Epoll < Crystal::EventLoop::Polling
     @epoll.delete(fd) { yield }
   end
 
-  private def system_set_timer(time : Time::Span?) : Nil
+  private def system_set_timer(time : Time::Instant?) : Nil
     if time
       @timerfd.set(time)
     else

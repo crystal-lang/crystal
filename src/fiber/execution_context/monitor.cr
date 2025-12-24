@@ -47,16 +47,11 @@ module Fiber::ExecutionContext
 
       loop do
         Thread.sleep(remaining)
-
-        seconds, nanoseconds = Crystal::System::Time.monotonic
-        start = Time::Span.new(seconds: seconds, nanoseconds: nanoseconds)
-
-        yield(start)
-
-        seconds, nanoseconds = Crystal::System::Time.monotonic
-        stop = Time::Span.new(seconds: seconds, nanoseconds: nanoseconds)
-
-        remaining = (start + @every - stop).clamp(Time::Span.zero..)
+        now = Crystal::System::Time.instant
+        yield(now)
+        # Cannot use `now.elapsed` here because it calls `::Time.instant` which
+        # could be mocked.
+        remaining = Crystal::System::Time.instant.duration_since(now) + @every
       rescue exception
         Crystal.print_error_buffered("BUG: %s#every crashed", self.class.name, exception: exception)
       end
