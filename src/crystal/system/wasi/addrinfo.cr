@@ -13,7 +13,7 @@ module Crystal::System::Addrinfo
     raise NotImplementedError.new("Crystal::System::Addrinfo#to_unsafe")
   end
 
-  def self.getaddrinfo(domain, service, family, type, protocol, timeout) : Handle
+  def self.getaddrinfo(domain, service, family, type, protocol, timeout, ai_flags = 0) : Handle
     raise NotImplementedError.new("Crystal::System::Addrinfo.getaddrinfo")
   end
 
