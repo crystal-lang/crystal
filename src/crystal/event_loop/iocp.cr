@@ -6,6 +6,7 @@ require "c/ntdll"
 require "../system/win32/iocp"
 require "../system/win32/waitable_timer"
 require "./timers"
+require "./lock"
 require "./iocp/*"
 
 # :nodoc:
@@ -27,7 +28,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   @timer_key : System::IOCP::CompletionKey?
 
   def initialize(parallelism : Int32)
-    @mutex = Thread::Mutex.new
+    @timers_mutex = Thread::Mutex.new
     @timers = Timers(Timer).new
 
     # the completion port
@@ -84,6 +85,10 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     def run(queue : Fiber::List*, blocking : Bool) : Nil
       run_impl(blocking) { |fiber| queue.value.push(fiber) }
     end
+
+    # the evloop has a single IOCP instance for the context and only one
+    # scheduler must wait on the evloop at any time
+    include EventLoop::Lock
   {% end %}
 
   # Runs the event loop and enqueues the fiber for the next upcoming event or
@@ -94,7 +99,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     if @waitable_timer
       timeout = blocking ? LibC::INFINITE : 0_i64
     elsif blocking
-      if time = @mutex.synchronize { @timers.next_ready? }
+      if time = @timers_mutex.synchronize { @timers.next_ready? }
         # convert absolute time of next timer to relative time, expressed in
         # milliseconds, rounded up
         seconds, nanoseconds = System::Time.monotonic
@@ -120,7 +125,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
       yield fiber
     end
 
-    @mutex.synchronize do
+    @timers_mutex.synchronize do
       # cancel the timeout of completed operations
       events.to_slice[0...size].each do |event|
         @timers.delete(pointerof(event.@timer))
@@ -162,14 +167,14 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   end
 
   protected def add_timer(timer : Pointer(Timer)) : Nil
-    @mutex.synchronize do
+    @timers_mutex.synchronize do
       is_next_ready = @timers.add(timer)
       rearm_waitable_timer(timer.value.wake_at, interruptible: true) if is_next_ready
     end
   end
 
   protected def delete_timer(timer : Pointer(Timer)) : Nil
-    @mutex.synchronize do
+    @timers_mutex.synchronize do
       _, was_next_ready = @timers.delete(timer)
       rearm_waitable_timer(@timers.next_ready?, interruptible: false) if was_next_ready
     end

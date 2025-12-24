@@ -1,4 +1,5 @@
 require "./libevent/event"
+require "./lock"
 
 # :nodoc:
 class Crystal::EventLoop::LibEvent < Crystal::EventLoop
@@ -29,6 +30,10 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
   end
 
   {% if flag?(:execution_context) %}
+    # the evloop has a single poll instance for the context and only one
+    # scheduler must wait on the evloop at any time
+    include Lock
+
     def run(queue : Fiber::List*, blocking : Bool) : Nil
       Crystal.trace :evloop, "run", blocking: blocking
       @runnables = queue

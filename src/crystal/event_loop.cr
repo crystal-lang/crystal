@@ -73,6 +73,19 @@ abstract class Crystal::EventLoop
     # when and how the fibers will be enqueued.
     abstract def run(queue : Fiber::List*, blocking : Bool) : Nil
 
+    # Tries to lock the event loop and yields if the lock was acquired. Must
+    # unlock before returning. Returns true if the lock was acquired, false
+    # otherwise.
+    #
+    # Only needed when there should be a single scheduler running the event loop
+    # at any time (e.g. epoll, kqueue and IOCP). Can be a NOOP that always
+    # yields and returns true (io_uring).
+    abstract def lock?(&) : Bool
+
+    # Same as `#interrupt` but returns true if a running event loop has likely
+    # been interrupted, and false otherwise.
+    abstract def interrupt? : Bool
+
     # Called once before *scheduler* is started. Optional hook.
     def register(scheduler : Fiber::ExecutionContext::Scheduler, index : Int32) : Nil
     end
