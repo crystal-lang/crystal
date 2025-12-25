@@ -765,11 +765,11 @@ module Crystal::Macros
     end
 
     # Similar to `Array#each`
-    def each(&) : Nil
+    def each(&) : NilLiteral
     end
 
     # Similar to `Enumerable#each_with_index`
-    def each_with_index(&) : Nil
+    def each_with_index(&) : NilLiteral
     end
 
     # Similar to `Enumerable#select`
@@ -864,7 +864,7 @@ module Crystal::Macros
     end
 
     # Similar to `Hash#each`
-    def each(&) : Nil
+    def each(&) : NilLiteral
     end
 
     # Similar to `Hash#empty?`
@@ -935,11 +935,11 @@ module Crystal::Macros
   # A named tuple literal.
   class NamedTupleLiteral < ASTNode
     # Similar to `NamedTuple#each`
-    def each(&) : Nil
+    def each(&) : NilLiteral
     end
 
     # Similar to `NamedTuple#each_with_index`
-    def each_with_index(&) : Nil
+    def each_with_index(&) : NilLiteral
     end
 
     # Similar to `NamedTuple#empty?`
@@ -990,7 +990,7 @@ module Crystal::Macros
     end
 
     # Similar to `Range#each`
-    def each(&) : Nil
+    def each(&) : NilLiteral
     end
 
     # Similar to `Range#end`
@@ -1083,11 +1083,11 @@ module Crystal::Macros
     end
 
     # Similar to `Tuple#each`
-    def each(&) : Nil
+    def each(&) : NilLiteral
     end
 
     # Similar to `Enumerable#each_with_index`
-    def each_with_index(&) : Nil
+    def each_with_index(&) : NilLiteral
     end
 
     # Similar to `Enumerable#select`
@@ -2939,7 +2939,7 @@ module Crystal::Macros
     # {{ Bar.overrides?(Foo, "one") }} # => true
     # {{ Bar.overrides?(Foo, "two") }} # => false
     # ```
-    def overrides?(type : TypeNode, method : StringLiteral | SymbolLiteral | MacroId) : Bool
+    def overrides?(type : TypeNode, method : StringLiteral | SymbolLiteral | MacroId) : BoolLiteral
     end
 
     # Returns `self`. This method exists so you can safely call `resolve` on a node and resolve it to a type, even if it's a type already.
