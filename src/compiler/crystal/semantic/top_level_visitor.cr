@@ -240,6 +240,12 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     pushing_type(type) do
       run_hooks(hook_type(superclass), type, :inherited, node) if created_new_type
       node.body.accept self
+    rescue ex : MacroRaiseException
+      # Make the inner most exception to be the inherited node so that it's the last frame in the trace.
+      # This will make the location show on that node instead of the `raise` call.
+      ex.inner = Crystal::MacroRaiseException.for_node node, ex.message
+
+      raise ex
     end
 
     if created_new_type
@@ -364,6 +370,9 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     end
 
     alias_type = AliasType.new(@program, scope, name, node.value)
+    process_annotations(annotations) do |annotation_type, ann|
+      alias_type.add_annotation(annotation_type, ann)
+    end
     attach_doc alias_type, node, annotations
     scope.types[name] = alias_type
 
@@ -851,7 +860,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     node.expressions.each_with_index do |child, i|
       begin
         child.accept self
-      rescue SkipMacroException
+      rescue ex : SkipMacroException
+        @program.macro_expansion_error_hook.try &.call(ex.cause) if ex.is_a? SkipMacroCodeCoverageException
         node.expressions.delete_at(i..-1)
         break
       end
@@ -1126,9 +1136,19 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       node_name.raise "#{type} is not a module, it's a #{type.type_desc}"
     end
 
+    if node_name.is_a?(Path)
+      @program.check_deprecated_type(type, node_name)
+    end
+
     begin
       current_type.as(ModuleType).include type
       run_hooks hook_type(type), current_type, kind, node
+    rescue ex : MacroRaiseException
+      # Make the inner most exception to be the include/extend node so that it's the last frame in the trace.
+      # This will make the location show on that node instead of the `raise` call.
+      ex.inner = Crystal::MacroRaiseException.for_node node, ex.message
+
+      raise ex
     rescue ex : TypeException
       node.raise "at '#{kind}' hook", ex
     end

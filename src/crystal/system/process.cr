@@ -56,6 +56,9 @@ struct Crystal::System::Process
   # Restores default handling of interrupt requests.
   # def self.restore_interrupts!
 
+  # Returns whether a debugger is attached to the current process.
+  # def self.debugger_present? : Bool
+
   # Spawns a fiber responsible for executing interrupt handlers on the main
   # thread.
   # def self.start_interrupt_loop
@@ -71,22 +74,19 @@ struct Crystal::System::Process
   # def self.fork(&)
 
   # Launches a child process with the command + args.
-  # def self.spawn(command_args : Args, env : Env?, clear_env : Bool, input : Stdio, output : Stdio, error : Stdio, chdir : Path | String?) : ProcessInformation
+  # def self.spawn(command : String, args : Enumerable(String)?, shell : Bool, env : Env?, clear_env : Bool, input : Stdio, output : Stdio, error : Stdio, chdir : Path | String?) : ProcessInformation
 
   # Replaces the current process with a new one.
-  # def self.replace(command_args : Args, env : Env?, clear_env : Bool, input : Stdio, output : Stdio, error : Stdio, chdir : Path | String?) : NoReturn
-
-  # Converts a command and array of arguments to the system-specific representation.
-  # def self.prepare_args(command : String, args : Enumerable(String)?, shell : Bool) : Args
+  # def self.replace(command : String, args : Enumerable(String)?, shell : Bool, env : Env?, clear_env : Bool, input : Stdio, output : Stdio, error : Stdio, chdir : Path | String?) : NoReturn
 
   # Changes the root directory for the current process.
   # def self.chroot(path : String)
 end
 
 module Crystal::System
-  ORIGINAL_STDIN  = IO::FileDescriptor.new(Crystal::System::FileDescriptor::STDIN_HANDLE, blocking: true)
-  ORIGINAL_STDOUT = IO::FileDescriptor.new(Crystal::System::FileDescriptor::STDOUT_HANDLE, blocking: true)
-  ORIGINAL_STDERR = IO::FileDescriptor.new(Crystal::System::FileDescriptor::STDERR_HANDLE, blocking: true)
+  ORIGINAL_STDIN  = IO::FileDescriptor.new(handle: Crystal::System::FileDescriptor::STDIN_HANDLE, blocking: true)
+  ORIGINAL_STDOUT = IO::FileDescriptor.new(handle: Crystal::System::FileDescriptor::STDOUT_HANDLE, blocking: true)
+  ORIGINAL_STDERR = IO::FileDescriptor.new(handle: Crystal::System::FileDescriptor::STDERR_HANDLE, blocking: true)
 end
 
 {% if flag?(:wasi) %}

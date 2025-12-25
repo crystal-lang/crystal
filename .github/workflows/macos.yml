@@ -15,24 +15,29 @@ env:
 jobs:
   darwin-test:
     runs-on: ${{ matrix.runs-on }}
-    name: ${{ matrix.arch }}
+    name: "${{ matrix.runs-on }} (${{ matrix.arch }})"
     strategy:
       matrix:
         include:
-        - runs-on: macos-13
+        - runs-on: macos-15-intel
           arch: x86_64-darwin
         - runs-on: macos-14
           arch: aarch64-darwin
+        - runs-on: macos-15
+          arch: aarch64-darwin
+      fail-fast: false
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
-      - uses: cachix/install-nix-action@v31
+      - uses: cachix/install-nix-action@0b0e072294b088b73964f1d72dfdac0951439dbd # v31
         with:
           extra_nix_config: |
             experimental-features = nix-command
 
-      - uses: cachix/cachix-action@v16
+      - uses: cachix/cachix-action@0fc020193b5a1fa3ac4575aa3a7d3aa6a35435ad # v16
         with:
           name: crystal-ci
           signingKey: '${{ secrets.CACHIX_SIGNING_KEY }}'

@@ -46,7 +46,15 @@ abstract class Crystal::EventLoop
     # file descriptor.
     abstract def reopened(file_descriptor : Crystal::System::FileDescriptor) : Nil
 
-    # Closes the file descriptor resource.
+    # Internal shutdown of the file descriptor. Called after the
+    # `IO::FileDescriptor` has been marked closed but before calling `#close` to
+    # actually close the system fd or handle.
+    #
+    # Implementations shall resume all pending waiters and let them fail because
+    # the IO has been closed.
+    abstract def shutdown(file_descriptor : Crystal::System::FileDescriptor) : Nil
+
+    # Closes the system fd or handle.
     abstract def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
   end
 

@@ -150,15 +150,19 @@ module Crystal
       interpret_check_args_toplevel do |arg|
         arg.accept self
         flag_name = @last.to_macro_id
-        flags = case node.name
+        value = case node.name
                 when "flag?"
-                  @program.flags
+                  @program.flag_value(flag_name)
                 when "host_flag?"
-                  @program.host_flags
+                  @program.host_flag_value(flag_name)
                 else
                   raise "Bug: unexpected macro method #{node.name}"
                 end
-        @last = BoolLiteral.new(flags.includes?(flag_name))
+
+        @last = case value
+                in String then StringLiteral.new(value)
+                in Bool   then BoolLiteral.new(value)
+                end
       end
     end
 
@@ -548,6 +552,8 @@ module Crystal
         interpret_check_args { SymbolLiteral.new(kind.to_s) }
       when "to_number"
         interpret_check_args { MacroId.new(to_number.to_s) }
+      when "zero?"
+        interpret_check_args { BoolLiteral.new(to_number.zero?) }
       else
         super
       end
@@ -691,6 +697,20 @@ module Crystal
           end
           StringLiteral.new(@value + piece)
         end
+      when "*"
+        interpret_check_args do |arg|
+          unless arg.is_a?(Crystal::NumberLiteral)
+            arg.raise "argument to StringLiteral#* must be a number, not #{arg.class_desc}"
+          end
+
+          num = arg.to_number
+
+          unless num.is_a?(Int)
+            arg.raise "argument to StringLiteral#* must be an integer"
+          end
+
+          StringLiteral.new(@value * num)
+        end
       when "camelcase"
         interpret_check_args(named_params: ["lower"]) do
           lower = if named_args && (lower_arg = named_args["lower"]?)
@@ -726,13 +746,36 @@ module Crystal
           BoolLiteral.new(@value.ends_with?(piece))
         end
       when "gsub"
-        interpret_check_args do |first, second|
-          raise "first argument to StringLiteral#gsub must be a regex, not #{first.class_desc}" unless first.is_a?(RegexLiteral)
-          raise "second argument to StringLiteral#gsub must be a string, not #{second.class_desc}" unless second.is_a?(StringLiteral)
+        if block
+          interpret_check_args(uses_block: true) do |first|
+            raise "first argument to StringLiteral#gsub(&) must be a regex, not #{first.class_desc}" unless first.is_a?(RegexLiteral)
 
-          regex = regex_value(first)
+            regex = regex_value first
 
-          StringLiteral.new(value.gsub(regex, second.value))
+            new_value = value.gsub regex do |string, matches|
+              string_match_arg = block.args[0]?
+              matches_array_arg = block.args[1]?
+              matches_array_literal = ArrayLiteral.map matches.to_a do |item|
+                item.nil? ? NilLiteral.new : StringLiteral.new item
+              end
+
+              interpreter.define_var(string_match_arg.name, StringLiteral.new string) if string_match_arg
+              interpreter.define_var(matches_array_arg.name, matches_array_literal) if matches_array_arg
+
+              interpreter.accept(block.body).to_macro_id
+            end
+
+            StringLiteral.new new_value
+          end
+        else
+          interpret_check_args do |first, second|
+            raise "first argument to StringLiteral#gsub must be a regex, not #{first.class_desc}" unless first.is_a?(RegexLiteral)
+            raise "second argument to StringLiteral#gsub must be a string, not #{second.class_desc}" unless second.is_a?(StringLiteral)
+
+            regex = regex_value(first)
+
+            StringLiteral.new(value.gsub(regex, second.value))
+          end
         end
       when "identify"
         interpret_check_args { StringLiteral.new(@value.tr(":", "_")) }
@@ -747,6 +790,20 @@ module Crystal
             raise "StringLiteral#includes? expects char or string, not #{arg.class_desc}"
           end
           BoolLiteral.new(@value.includes?(piece))
+        end
+      when "match"
+        interpret_check_args do |arg|
+          unless arg.is_a?(RegexLiteral)
+            raise "StringLiteral#match expects a regex, not #{arg.class_desc}"
+          end
+
+          regex = regex_value(arg)
+
+          if match_data = @value.match(regex)
+            regex_captures_hash(match_data)
+          else
+            NilLiteral.new
+          end
         end
       when "scan"
         interpret_check_args do |arg|
@@ -767,32 +824,7 @@ module Crystal
           )
 
           @value.scan(regex) do |match_data|
-            captures = HashLiteral.new(
-              of: HashLiteral::Entry.new(
-                Union.new([Path.global("Int32"), Path.global("String")] of ASTNode),
-                Union.new([Path.global("String"), Path.global("Nil")] of ASTNode),
-              )
-            )
-
-            match_data.to_h.each do |capture, substr|
-              case capture
-              in Int32
-                key = NumberLiteral.new(capture)
-              in String
-                key = StringLiteral.new(capture)
-              end
-
-              case substr
-              in String
-                value = StringLiteral.new(substr)
-              in Nil
-                value = NilLiteral.new
-              end
-
-              captures.entries << HashLiteral::Entry.new(key, value)
-            end
-
-            matches.elements << captures
+            matches.elements << regex_captures_hash(match_data)
           end
 
           matches
@@ -809,7 +841,10 @@ module Crystal
               splitter = arg.value
             when StringLiteral
               splitter = arg.value
+            when RegexLiteral
+              splitter = regex_value(arg)
             else
+              interpreter.warnings.add_warning_at(name_loc, "Deprecated StringLiteral#split(ASTNode). Use `#split(StringLiteral)` instead")
               splitter = arg.to_s
             end
 
@@ -958,6 +993,10 @@ module Crystal
           block_arg_key = block.args[0]?
           block_arg_value = block.args[1]?
 
+          if entries.empty?
+            interpreter.not_interpreted_hook block.body, use_significant_node: true
+          end
+
           entries.each do |entry|
             interpreter.define_var(block_arg_key.name, entry.key) if block_arg_key
             interpreter.define_var(block_arg_value.name, entry.value) if block_arg_value
@@ -970,6 +1009,10 @@ module Crystal
         interpret_check_args(uses_block: true) do
           block_arg_key = block.args[0]?
           block_arg_value = block.args[1]?
+
+          if entries.empty?
+            interpreter.not_interpreted_hook block.body, use_significant_node: true
+          end
 
           ArrayLiteral.map(entries) do |entry|
             interpreter.define_var(block_arg_key.name, entry.key) if block_arg_key
@@ -1056,6 +1099,10 @@ module Crystal
           block_arg_key = block.args[0]?
           block_arg_value = block.args[1]?
 
+          if entries.empty?
+            interpreter.not_interpreted_hook block.body, use_significant_node: true
+          end
+
           entries.each do |entry|
             interpreter.define_var(block_arg_key.name, MacroId.new(entry.key)) if block_arg_key
             interpreter.define_var(block_arg_value.name, entry.value) if block_arg_value
@@ -1068,6 +1115,10 @@ module Crystal
         interpret_check_args(uses_block: true) do
           block_arg_key = block.args[0]?
           block_arg_value = block.args[1]?
+
+          if entries.empty?
+            interpreter.not_interpreted_hook block.body, use_significant_node: true
+          end
 
           ArrayLiteral.map(entries) do |entry|
             interpreter.define_var(block_arg_key.name, MacroId.new(entry.key)) if block_arg_key
@@ -1164,7 +1215,13 @@ module Crystal
         interpret_check_args(uses_block: true) do
           block_arg = block.args.first?
 
-          interpret_to_range(interpreter).each do |num|
+          range = interpret_to_range(interpreter)
+
+          if range.empty?
+            interpreter.not_interpreted_hook block.body, use_significant_node: true
+          end
+
+          range.each do |num|
             interpreter.define_var(block_arg.name, NumberLiteral.new(num)) if block_arg
             interpreter.accept block.body
           end
@@ -1175,14 +1232,14 @@ module Crystal
         interpret_check_args(uses_block: true) do
           block_arg = block.args.first?
 
-          interpret_map(interpreter) do |num|
+          interpret_map(block, interpreter) do |num|
             interpreter.define_var(block_arg.name, NumberLiteral.new(num)) if block_arg
             interpreter.accept block.body
           end
         end
       when "to_a"
         interpret_check_args do
-          interpret_map(interpreter) do |num|
+          interpret_map(nil, interpreter) do |num|
             NumberLiteral.new(num)
           end
         end
@@ -1191,8 +1248,14 @@ module Crystal
       end
     end
 
-    def interpret_map(interpreter, &)
-      ArrayLiteral.map(interpret_to_range(interpreter)) do |num|
+    def interpret_map(block, interpreter, &)
+      range = interpret_to_range(interpreter)
+
+      if block && range.empty?
+        interpreter.not_interpreted_hook block.body, use_significant_node: true
+      end
+
+      ArrayLiteral.map(range) do |num|
         yield num
       end
     end
@@ -2887,6 +2950,10 @@ private def interpret_array_or_tuple_method(object, klass, method, args, named_a
     interpret_check_args(node: object, uses_block: true) do
       block_arg = block.args.first?
 
+      if object.elements.empty?
+        interpreter.not_interpreted_hook block.body, use_significant_node: true
+      end
+
       Crystal::BoolLiteral.new(object.elements.any? do |elem|
         interpreter.define_var(block_arg.name, elem) if block_arg
         interpreter.accept(block.body).truthy?
@@ -2895,6 +2962,10 @@ private def interpret_array_or_tuple_method(object, klass, method, args, named_a
   when "all?"
     interpret_check_args(node: object, uses_block: true) do
       block_arg = block.args.first?
+
+      if object.elements.empty?
+        interpreter.not_interpreted_hook block.body, use_significant_node: true
+      end
 
       Crystal::BoolLiteral.new(object.elements.all? do |elem|
         interpreter.define_var(block_arg.name, elem) if block_arg
@@ -2923,6 +2994,10 @@ private def interpret_array_or_tuple_method(object, klass, method, args, named_a
     interpret_check_args(node: object, uses_block: true) do
       block_arg = block.args.first?
 
+      if object.elements.empty?
+        interpreter.not_interpreted_hook block.body, use_significant_node: true
+      end
+
       found = object.elements.find do |elem|
         interpreter.define_var(block_arg.name, elem) if block_arg
         interpreter.accept(block.body).truthy?
@@ -2947,6 +3022,10 @@ private def interpret_array_or_tuple_method(object, klass, method, args, named_a
     interpret_check_args(node: object, uses_block: true) do
       block_arg = block.args.first?
 
+      if object.elements.empty?
+        interpreter.not_interpreted_hook block.body, use_significant_node: true
+      end
+
       object.elements.each do |elem|
         interpreter.define_var(block_arg.name, elem) if block_arg
         interpreter.accept block.body
@@ -2958,6 +3037,10 @@ private def interpret_array_or_tuple_method(object, klass, method, args, named_a
     interpret_check_args(node: object, uses_block: true) do
       block_arg = block.args[0]?
       index_arg = block.args[1]?
+
+      if object.elements.empty?
+        interpreter.not_interpreted_hook block.body, use_significant_node: true
+      end
 
       object.elements.each_with_index do |elem, idx|
         interpreter.define_var(block_arg.name, elem) if block_arg
@@ -2971,6 +3054,10 @@ private def interpret_array_or_tuple_method(object, klass, method, args, named_a
     interpret_check_args(node: object, uses_block: true) do
       block_arg = block.args.first?
 
+      if object.elements.empty?
+        interpreter.not_interpreted_hook block.body, use_significant_node: true
+      end
+
       klass.map(object.elements) do |elem|
         interpreter.define_var(block_arg.name, elem) if block_arg
         interpreter.accept block.body
@@ -2980,6 +3067,10 @@ private def interpret_array_or_tuple_method(object, klass, method, args, named_a
     interpret_check_args(node: object, uses_block: true) do
       block_arg = block.args[0]?
       index_arg = block.args[1]?
+
+      if object.elements.empty?
+        interpreter.not_interpreted_hook block.body, use_significant_node: true
+      end
 
       klass.map_with_index(object.elements) do |elem, idx|
         interpreter.define_var(block_arg.name, elem) if block_arg
@@ -2999,6 +3090,10 @@ private def interpret_array_or_tuple_method(object, klass, method, args, named_a
     interpret_check_args(node: object, min_count: 0, uses_block: true) do |memo|
       accumulate_arg = block.args.first?
       value_arg = block.args[1]?
+
+      if object.elements.empty?
+        interpreter.not_interpreted_hook block.body, use_significant_node: true
+      end
 
       if memo
         object.elements.reduce(memo) do |accumulate, elem|
@@ -3040,12 +3135,8 @@ private def interpret_array_or_tuple_method(object, klass, method, args, named_a
 
         from = from.to_number.to_i
         to = to.to_number.to_i
-
-        begin
-          klass.new(object.elements[from, to])
-        rescue ex
-          object.raise ex.message
-        end
+        values = object.elements[from, to]?
+        values ? klass.new(values) : Crystal::NilLiteral.new
       else
         case arg = from
         when Crystal::NumberLiteral
@@ -3053,11 +3144,8 @@ private def interpret_array_or_tuple_method(object, klass, method, args, named_a
           object.elements[index]? || Crystal::NilLiteral.new
         when Crystal::RangeLiteral
           range = arg.interpret_to_nilable_range(interpreter)
-          begin
-            klass.new(object.elements[range])
-          rescue ex
-            object.raise ex.message
-          end
+          values = object.elements[range]?
+          values ? klass.new(values) : Crystal::NilLiteral.new
         else
           arg.raise "argument to [] must be a number or range, not #{arg.class_desc}:\n\n#{arg}"
         end
@@ -3108,6 +3196,20 @@ private def interpret_array_or_tuple_method(object, klass, method, args, named_a
         arg.raise "argument to `#{klass}#-` must be a tuple or array, not #{arg.class_desc}:\n\n#{arg}"
       end
       klass.new(object.elements - other_elements)
+    end
+  when "*"
+    interpret_check_args(node: object) do |arg|
+      unless arg.is_a?(Crystal::NumberLiteral)
+        arg.raise "argument to `#{klass}#*` must be a number, not #{arg.class_desc}"
+      end
+
+      num = arg.to_number
+
+      unless num.is_a?(Int)
+        arg.raise "argument to `#{klass}#*` must be an integer"
+      end
+
+      klass.new(object.elements * num)
     end
   else
     nil
@@ -3261,8 +3363,41 @@ private def empty_no_return_array
   Crystal::ArrayLiteral.new(of: Crystal::Path.global("NoReturn"))
 end
 
+private def regex_captures_hash(match_data : Regex::MatchData)
+  captures = Crystal::HashLiteral.new(
+    of: Crystal::HashLiteral::Entry.new(
+      Crystal::Union.new([Crystal::Path.global("Int32"), Crystal::Path.global("String")] of Crystal::ASTNode),
+      Crystal::Union.new([Crystal::Path.global("String"), Crystal::Path.global("Nil")] of Crystal::ASTNode),
+    )
+  )
+
+  match_data.to_h.each do |capture, substr|
+    case capture
+    in Int32
+      key = Crystal::NumberLiteral.new(capture)
+    in String
+      key = Crystal::StringLiteral.new(capture)
+    end
+
+    case substr
+    in String
+      value = Crystal::StringLiteral.new(substr)
+    in Nil
+      value = Crystal::NilLiteral.new
+    end
+
+    captures.entries << Crystal::HashLiteral::Entry.new(key, value)
+  end
+
+  captures
+end
+
 private def filter(object, klass, block, interpreter, keep = true)
   block_arg = block.args.first?
+
+  if object.elements.empty?
+    interpreter.not_interpreted_hook block.body, use_significant_node: true
+  end
 
   klass.new(object.elements.select do |elem|
     interpreter.define_var(block_arg.name, elem) if block_arg
@@ -3309,6 +3444,10 @@ end
 
 private def sort_by(object, klass, block, interpreter)
   block_arg = block.args.first?
+
+  if object.elements.empty?
+    interpreter.not_interpreted_hook block.body, use_significant_node: true
+  end
 
   klass.new(object.elements.sort_by do |elem|
     block_arg.try { |arg| interpreter.define_var(arg.name, elem) }

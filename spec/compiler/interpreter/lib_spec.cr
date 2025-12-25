@@ -91,4 +91,27 @@ describe Crystal::Repl::Interpreter do
         CRYSTAL
     end
   end
+
+  context "proc pointer" do
+    it "calls extern fun" do
+      interpret(<<-CRYSTAL).should eq 6
+        @[Link(ldflags: #{ldflags_with_backtick.inspect})]
+        lib LibSum
+          fun simple_sum_int(a : Int32, b : Int32) : Int32
+        end
+
+        class Foo
+          def initialize(@method : Proc(Int32, Int32, Int32))
+          end
+
+          def call(a, b)
+            @method.call(a, b)
+          end
+        end
+
+        foo = Foo.new(->LibSum.simple_sum_int)
+        foo.call(1, 5)
+        CRYSTAL
+    end
+  end
 end

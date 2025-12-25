@@ -762,7 +762,9 @@ struct Path
       end
     end
 
-    unless new_instance(name).absolute?
+    if new_instance(name).absolute?
+      expanded = name
+    else
       unless base.absolute? || !expand_base
         base = base.expand
       end
@@ -805,8 +807,6 @@ struct Path
       else
         expanded = base.join(name)
       end
-    else
-      expanded = name
     end
 
     expanded = new_instance(expanded) unless expanded.is_a?(Path)
@@ -1362,6 +1362,13 @@ struct Path
     else
       separators.includes?(@name[0]?)
     end
+  end
+
+  # Returns `true` if this path is relative.
+  #
+  # See `#absolute?`
+  def relative? : Bool
+    !absolute?
   end
 
   # :nodoc:

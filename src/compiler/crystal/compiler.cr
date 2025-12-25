@@ -83,7 +83,9 @@ module Crystal
     property? no_codegen = false
 
     # Maximum number of LLVM modules that are compiled in parallel
-    property n_threads : Int32 = {% if flag?(:preview_mt) %}
+    property n_threads : Int32 = {% if flag?(:execution_context) %}
+      Fiber::ExecutionContext.default_workers_count
+    {% elsif flag?(:preview_mt) %}
       ENV["CRYSTAL_WORKERS"]?.try(&.to_i?) || 4
     {% elsif flag?(:win32) %}
       1
@@ -213,10 +215,24 @@ module Crystal
     # Raises `InvalidByteSequenceError` if the source code is not
     # valid UTF-8.
     def compile(source : Source | Array(Source), output_filename : String) : Result
+      compile_configure_program(source, output_filename) { }
+    end
+
+    # :ditto:
+    #
+    # Yields a `Program` instance before compiling.
+    def compile_configure_program(source : Source | Array(Source), output_filename : String, & : Program -> Nil) : Result
       source = [source] unless source.is_a?(Array)
       program = new_program(source)
+      yield program
       node = parse program, source
-      node = program.semantic node, cleanup: !no_cleanup?
+
+      begin
+        node = program.semantic node, cleanup: !no_cleanup?
+      rescue ex : SkipMacroCodeCoverageException
+        program.macro_expansion_error_hook.try &.call(ex.cause)
+      end
+
       units = codegen program, node, source, output_filename unless @no_codegen
 
       @progress_tracker.clear
@@ -240,7 +256,7 @@ module Crystal
       source = [source] unless source.is_a?(Array)
       program = new_program(source)
       node = parse program, source
-      node, processor = program.top_level_semantic(node)
+      node, _ = program.top_level_semantic(node)
 
       @progress_tracker.clear
       print_macro_run_stats(program)
@@ -321,6 +337,13 @@ module Crystal
     end
 
     private def codegen(program, node : ASTNode, sources, output_filename)
+      {% if LibLLVM::IS_LT_130 %}
+        if @codegen_target.architecture == "aarch64"
+          stderr.puts "Error: Target #{@codegen_target} requires a Crystal compiler built with LLVM 13 or a later version."
+          exit 1
+        end
+      {% end %}
+
       llvm_modules = @progress_tracker.stage("Codegen (crystal)") do
         program.codegen node, debug: debug, frame_pointers: frame_pointers,
           single_module: @single_module || @cross_compile || !@emit_targets.none?
@@ -539,7 +562,6 @@ module Crystal
 
     private def codegen(program, units : Array(CompilationUnit), output_filename, output_dir)
       object_names = units.map &.object_filename
-      target_triple = target_machine.triple
 
       @progress_tracker.stage("Codegen (bc+obj)") do
         @progress_tracker.stage_progress_total = units.size
@@ -983,24 +1005,22 @@ module Crystal
       private def must_compile?
         memory_buffer = generate_bitcode
 
-        can_reuse_previous_compilation =
-          compiler.emit_targets.none? && !@bc_flags_changed && File.exists?(bc_name) && File.exists?(object_name)
+        return true unless compiler.emit_targets.none?
+        return true if @bc_flags_changed
+        return true unless File.exists?(bc_name)
+        return true unless File.exists?(object_name)
 
-        if can_reuse_previous_compilation
-          memory_io = IO::Memory.new(memory_buffer.to_slice)
-          changed = File.open(bc_name) { |bc_file| !IO.same_content?(bc_file, memory_io) }
+        # If the user cancelled a previous compilation
+        # it might be that the .o file is empty
+        return true if File.size(object_name) == 0
 
-          # If the user cancelled a previous compilation
-          # it might be that the .o file is empty
-          if !changed && File.size(object_name) > 0
-            memory_buffer.dispose
-            return false
-          else
-            # We need to compile, so we'll write the memory buffer to file
-          end
-        end
+        memory_io = IO::Memory.new(memory_buffer.to_slice)
 
-        true
+        changed = File.open(bc_name) { |bc_file| !IO.same_content?(bc_file, memory_io) }
+
+        memory_buffer.dispose unless changed
+
+        changed
       end
 
       # Parse the previously generated bitcode into the LLVM module using a

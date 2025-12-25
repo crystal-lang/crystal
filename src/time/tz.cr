@@ -1,6 +1,40 @@
 # :nodoc:
 # Facilities for time zone lookup based on POSIX TZ strings
 module Time::TZ
+  # same as `Time.utc(year, 1, 1).to_unix`, except *year* is allowed to be
+  # outside its normal range
+  def self.jan1_to_unix(year : Int) : Int64
+    # assume leap years have the same pattern beyond year 9999
+    year -= 1
+    days = year * 365 + year // 4 - year // 100 + year // 400
+    SECONDS_PER_DAY.to_i64 * days - UNIX_EPOCH.total_seconds
+  end
+
+  # same as `Time.unix(unix_seconds).year`, except *unix_seconds* is allowed to
+  # be outside its normal range
+  def self.unix_to_year(unix_seconds : Int) : Int32
+    total_days = ((UNIX_EPOCH.total_seconds + unix_seconds) // SECONDS_PER_DAY).to_i
+
+    num400 = total_days // DAYS_PER_400_YEARS
+    total_days -= num400 * DAYS_PER_400_YEARS
+
+    num100 = total_days // DAYS_PER_100_YEARS
+    if num100 == 4 # leap
+      num100 = 3
+    end
+    total_days -= num100 * DAYS_PER_100_YEARS
+
+    num4 = total_days // DAYS_PER_4_YEARS
+    total_days -= num4 * DAYS_PER_4_YEARS
+
+    numyears = total_days // 365
+    if numyears == 4 # leap
+      numyears = 3
+    end
+
+    num400 * 400 + num100 * 100 + num4 * 4 + numyears + 1
+  end
+
   # `J*`: one-based ordinal day, excludes leap day
   record Julian1, ordinal : Int16, time : Int32 do
     def always_jan1? : Bool
@@ -12,7 +46,7 @@ module Time::TZ
     end
 
     def unix_date_in_year(year : Int) : Int64
-      Time.utc(year, 1, 1).to_unix + 86400_i64 * (Time.leap_year?(year) && @ordinal >= 60 ? @ordinal : @ordinal - 1)
+      TZ.jan1_to_unix(year) + 86400_i64 * (Time.leap_year?((year - 1) % 400 + 1) && @ordinal >= 60 ? @ordinal : @ordinal - 1)
     end
   end
 
@@ -28,11 +62,12 @@ module Time::TZ
     end
 
     def unix_date_in_year(year : Int) : Int64
-      Time.utc(year, 1, 1).to_unix + 86400_i64 * @ordinal
+      TZ.jan1_to_unix(year) + 86400_i64 * @ordinal
     end
   end
 
   # `M*.*.*`: month-week-day, week 5 is last week
+  # also used for Windows system time zones (ignoring the millisecond component)
   record MonthWeekDay, month : Int8, week : Int8, day : Int8, time : Int32 do
     def always_jan1? : Bool
       false
@@ -43,7 +78,19 @@ module Time::TZ
     end
 
     def unix_date_in_year(year : Int) : Int64
-      Time.month_week_date(year, @month.to_i32, @week.to_i32, @day.to_i32, location: Time::Location::UTC).to_unix
+      # this needs to handle years outside 1..9999; reduce `year` modulo 400 so
+      # that it fits into 1..2000, since the number of days per 400 years is
+      # divisible by 7
+      cycles = (year - 1) // 400
+      year = (year - 1) % 400 + 1
+      Time.month_week_date(year, @month.to_i32, @week.to_i32, @day.to_i32, location: Time::Location::UTC).to_unix + SECONDS_PER_400_YEARS * cycles
+    end
+
+    # 24 * 60 * 60 * (365 * 400 + 100 - 25 + 1)
+    SECONDS_PER_400_YEARS = 12622780800_i64
+
+    def self.default : self
+      new(0, 0, 0, 0)
     end
   end
 
@@ -67,16 +114,15 @@ module Time::TZ
       # rely on `Time`'s timezone facilities since that is exactly what this
       # method implements. It may differ from the UTC year by 0 or 1. musl uses
       # a similar loop.
-      utc_time = Time.unix(unix_seconds)
-      utc_year = local_year = utc_time.year
+      utc_year = local_year = TZ.unix_to_year(unix_seconds)
 
       while true
         datetime1 = transition1.unix_date_in_year(local_year) + transition1.time + std_offset
         datetime2 = transition2.unix_date_in_year(local_year) + transition2.time + dst_offset
         new_year_is_dst = datetime2 < datetime1
 
-        local_new_year = Time.utc(local_year, 1, 1).to_unix + (new_year_is_dst ? dst_offset : std_offset)
-        local_new_year_next = Time.utc(local_year + 1, 1, 1).to_unix + (new_year_is_dst ? dst_offset : std_offset)
+        local_new_year = TZ.jan1_to_unix(local_year) + (new_year_is_dst ? dst_offset : std_offset)
+        local_new_year_next = TZ.jan1_to_unix(local_year + 1) + (new_year_is_dst ? dst_offset : std_offset)
         break if local_new_year <= unix_seconds < local_new_year_next
 
         if local_year == utc_year
@@ -367,6 +413,64 @@ class Time::TZLocation < Time::Location
 
   private def lookup_posix_tz(unix_seconds : Int) : {Zone, {Int64, Int64}}
     zone, range = TZ.lookup(unix_seconds, @zones, @std_index, @dst_index, @transition1, @transition2)
+    range_begin, range_end = range
+
+    if last_transition = @transitions.last?
+      range_begin = {range_begin, last_transition.when}.max
+    end
+
+    {zone, {range_begin, range_end}}
+  end
+end
+
+# A time location capable of computing recurring time zone transitions in the
+# past or future using definitions from the Windows Registry.
+#
+# These locations are returned by `Time::Location.load`.
+class Time::WindowsLocation < Time::Location
+  # Two sets of transition rules for times before the first transition or after
+  # the last transition. Each corresponds to a `TZLocation`'s `@std_index`,
+  # `@dst_index`, `@transition1`, and `@transition2` fields. If there are no
+  # fixed transitions then the two sets are equal.
+  @past_tz_args : {Int32, Int32, TZ::MonthWeekDay, TZ::MonthWeekDay}
+  @future_tz_args : {Int32, Int32, TZ::MonthWeekDay, TZ::MonthWeekDay}
+
+  # The original Windows Registry key name for this location.
+  @key_name : String
+
+  def initialize(name : String, zones : Array(Zone), @key_name, @past_tz_args, @future_tz_args = past_tz_args, transitions = [] of ZoneTransition)
+    super(name, zones, transitions)
+  end
+
+  def_equals_and_hash name, zones, transitions, @key_name
+
+  # :nodoc:
+  def lookup_with_boundaries(unix_seconds : Int) : {Zone, {Int64, Int64}}
+    case
+    when zones.empty?
+      {Zone::UTC, {Int64::MIN, Int64::MAX}}
+    when transitions.empty?, unix_seconds < transitions.first.when
+      lookup_past(unix_seconds)
+    when unix_seconds >= transitions.last.when
+      lookup_future(unix_seconds)
+    else
+      lookup_within_fixed_transitions(unix_seconds)
+    end
+  end
+
+  private def lookup_past(unix_seconds : Int) : {Zone, {Int64, Int64}}
+    zone, range = TZ.lookup(unix_seconds, @zones, *@past_tz_args)
+    range_begin, range_end = range
+
+    if first_transition = @transitions.first?
+      range_end = {range_end, first_transition.when}.min
+    end
+
+    {zone, {range_begin, range_end}}
+  end
+
+  private def lookup_future(unix_seconds : Int) : {Zone, {Int64, Int64}}
+    zone, range = TZ.lookup(unix_seconds, @zones, *@future_tz_args)
     range_begin, range_end = range
 
     if last_transition = @transitions.last?

@@ -168,8 +168,27 @@ describe "Tuple" do
     [a, b, c, d, e].min.should eq(d)
   end
 
-  it "does to_s" do
-    {1, 2, 3}.to_s.should eq("{1, 2, 3}")
+  describe "#to_s" do
+    it "returns string representation" do
+      {1, 2, 3}.to_s.should eq("{1, 2, 3}")
+    end
+
+    context "when the first element starts with '{'" do
+      it "inserts a space after '{' and before '}' when the first element is a Hash, preventing macro interpolation ({{ ... }})" do
+        tuple = { {1 => 2} }
+        tuple.to_s.should eq("{ {1 => 2} }")
+      end
+
+      it "inserts a space after '{' and before '}' when the first element is a Tuple, preventing macro interpolation ({{ ... }})" do
+        tuple = { {1, 2, 3} }
+        tuple.to_s.should eq("{ {1, 2, 3} }")
+      end
+
+      it "inserts a space after '{' and before '}' when the first element is a NamedTuple, preventing macro interpolation ({{ ... }})" do
+        tuple = { {a: 1} }
+        tuple.to_s.should eq("{ {a: 1} }")
+      end
+    end
   end
 
   it "does each" do

@@ -1,5 +1,6 @@
 require "./spec_helper"
 require "../support/thread"
+require "wait_group"
 
 private def it_raises_on_null_byte(operation, file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
   it "errors on #{operation}", file, line, end_line do
@@ -47,112 +48,72 @@ describe "File" do
     end
   end
 
-  describe "blocking" do
-    it "opens regular file as blocking" do
-      with_tempfile("regular") do |path|
-        File.open(path, "w") do |file|
-          file.blocking.should be_true
-        end
+  {% if LibC.has_method?(:mkfifo) && !flag?(:darwin) %}
+    # interpreter doesn't support threads yet (#14287)
+    pending_interpreted "can read/write fifo file without blocking" do
+      path = File.tempname("chardev")
+      ret = LibC.mkfifo(path, File::DEFAULT_CREATE_PERMISSIONS)
+      raise RuntimeError.from_errno("mkfifo") unless ret == 0
 
-        File.open(path, "w", blocking: nil) do |file|
-          file.blocking.should be_true
-        end
-      end
-    end
-
-    it "opens regular file as non-blocking" do
-      with_tempfile("regular") do |path|
-        File.open(path, "w", blocking: false) do |file|
-          file.blocking.should be_false
-        end
-      end
-    end
-
-    {% if flag?(:unix) %}
-      if File.exists?("/dev/tty")
-        it "opens character device" do
-          File.open("/dev/tty", "r") do |file|
-            file.blocking.should be_true
-          end
-
-          File.open("/dev/tty", "r", blocking: false) do |file|
-            file.blocking.should be_false
-          end
-
-          File.open("/dev/tty", "r", blocking: nil) do |file|
-            file.blocking.should be_false
-          end
-        rescue File::Error
-          # The TTY may not be available (e.g. Docker CI)
-        end
+      # FIXME: open(2) will block when opening a fifo file until another thread
+      #        or process also opened the file
+      writer = nil
+      thread = new_thread do
+        writer = File.new(path, "w")
       end
 
-      {% if LibC.has_method?(:mkfifo) %}
-        # interpreter doesn't support threads yet (#14287)
-        pending_interpreted "opens fifo file as non-blocking" do
-          path = File.tempname("chardev")
-          ret = LibC.mkfifo(path, File::DEFAULT_CREATE_PERMISSIONS)
-          raise RuntimeError.from_errno("mkfifo") unless ret == 0
+      rbuf = Bytes.new(5120)
+      wbuf = Bytes.new(5120)
+      Random::Secure.random_bytes(wbuf)
 
-          # FIXME: open(2) will block when opening a fifo file until another
-          #        thread or process also opened the file; we should pass
-          #        O_NONBLOCK to the open(2) call itself, not afterwards
-          file = nil
-          new_thread { file = File.new(path, "w", blocking: nil) }
+      File.open(path, "r") do |reader|
+        # opened fifo for read: wait for thread to open for write
+        thread.join
 
-          begin
-            File.open(path, "r", blocking: false) do |file|
-              file.blocking.should be_false
+        reader.read_timeout = 1.second
+        writer.not_nil!.write_timeout = 1.second
+
+        WaitGroup.wait do |wg|
+          wg.spawn do
+            64.times do |i|
+              reader.read_fully(rbuf)
             end
-          ensure
-            File.delete(path)
-            file.try(&.close)
+          end
+
+          wg.spawn do
+            64.times do |i|
+              writer.not_nil!.write(wbuf)
+            end
+            writer.not_nil!.close
           end
         end
-      {% end %}
-    {% end %}
-
-    it "reads non-blocking file" do
-      File.open(datapath("test_file.txt"), "r", blocking: false) do |f|
-        f.gets_to_end.should eq("Hello World\n" * 20)
       end
+
+      rbuf.should eq(wbuf)
+    ensure
+      File.delete(path) if path
+      writer.try(&.close)
     end
+  {% end %}
 
-    it "writes and reads large non-blocking file" do
-      with_tempfile("non-blocking-io.txt") do |path|
-        File.open(path, "w+", blocking: false) do |f|
-          f.puts "Hello World\n" * 40000
-          f.pos = 0
-          f.gets_to_end.should eq("Hello World\n" * 40000)
-        end
+  # This test verifies that the workaround for a win32 bug with the O_APPEND
+  # equivalent with OVERLAPPED operations is working as expected.
+  it "returns the actual position after append" do
+    with_tempfile("delete-file.txt") do |filename|
+      File.write(filename, "hello")
+
+      File.open(filename, "a") do |file|
+        file.tell.should eq(0)
+
+        file.write "12345".to_slice
+        file.tell.should eq(10)
+
+        file.seek(5, IO::Seek::Set)
+        file.write "6789".to_slice
+        file.tell.should eq(14)
       end
-    end
 
-    it "can append non-blocking to an existing file" do
-      with_tempfile("append-existing.txt") do |path|
-        File.write(path, "hello")
-        File.write(path, " world", mode: "a", blocking: false)
-        File.read(path).should eq("hello world")
-      end
-    end
-
-    it "returns the actual position after non-blocking append" do
-      with_tempfile("delete-file.txt") do |filename|
-        File.write(filename, "hello")
-
-        File.open(filename, "a", blocking: false) do |file|
-          file.tell.should eq(0)
-
-          file.write "12345".to_slice
-          file.tell.should eq(10)
-
-          file.seek(5, IO::Seek::Set)
-          file.write "6789".to_slice
-          file.tell.should eq(14)
-        end
-
-        File.read(filename).should eq("hello123456789")
-      end
+      File.read(filename).should eq("hello123456789")
     end
   end
 
@@ -362,6 +323,88 @@ describe "File" do
     it "reads link" do
       File.readlink(datapath("symlink.txt")).should eq "test_file.txt"
     end
+
+    it "raises when not a link" do
+      expect_raises File::Error, "Cannot read link: '#{datapath("test_file.txt").inspect_unquoted}'" do
+        File.readlink(datapath("test_file.txt"))
+      end
+    end
+
+    it "raises when non-existent" do
+      expect_raises File::NotFoundError, "Cannot read link: '#{datapath("nonexistent.txt").inspect_unquoted}'" do
+        File.readlink(datapath("nonexistent.txt"))
+      end
+    end
+
+    it "returns non-existent target" do
+      with_tempfile("target-nonexistent") do |path|
+        Dir.mkdir_p(path)
+        Dir.cd(path) do
+          File.symlink("nonexistent.txt", "symlink.txt")
+
+          File.readlink("symlink.txt").should eq "nonexistent.txt"
+        end
+      end
+    end
+
+    it "raises when inaccessible" do
+      # Crystal does not expose ways to make a file unreadable on Windows
+      pending! if {{ flag?(:win32) }}
+      pending_if_superuser!
+
+      with_tempfile("readlink-inaccessible") do |path|
+        Dir.mkdir_p(path)
+        symlink = File.join(path, "symlink.txt")
+        File.symlink("nonexistent.txt", symlink)
+        File.chmod(path, File::Permissions::None)
+
+        expect_raises File::AccessDeniedError, "Cannot read link: '#{symlink.inspect_unquoted}'" do
+          File.readlink(symlink)
+        end
+      end
+    end
+  end
+
+  describe ".readlink?" do
+    it "reads link" do
+      File.readlink?(datapath("symlink.txt")).should eq "test_file.txt"
+    end
+
+    it "returns nil when not a link" do
+      File.readlink?(datapath("test_file.txt")).should be_nil
+    end
+
+    it "returns nil when non-existent" do
+      File.readlink?(datapath("nonexistent.txt")).should be_nil
+    end
+
+    it "raises when target non-existent" do
+      with_tempfile("target-nonexistent2") do |path|
+        Dir.mkdir_p(path)
+        Dir.cd(path) do
+          File.symlink("nonexistent.txt", "symlink.txt")
+
+          File.readlink?("symlink.txt").should eq "nonexistent.txt"
+        end
+      end
+    end
+
+    it "raises when inaccessible" do
+      # Crystal does not expose ways to make a file unreadable on Windows
+      pending! if {{ flag?(:win32) }}
+      pending_if_superuser!
+
+      with_tempfile("readlink-inaccessible2") do |path|
+        Dir.mkdir_p(path)
+        symlink = File.join(path, "symlink.txt")
+        File.symlink("nonexistent.txt", symlink)
+        File.chmod(path, File::Permissions::None)
+
+        expect_raises File::AccessDeniedError, "Cannot read link: '#{symlink.inspect_unquoted}'" do
+          File.readlink?(symlink)
+        end
+      end
+    end
   end
 
   it "gets dirname" do
@@ -519,6 +562,41 @@ describe "File" do
     end
   end
 
+  long_path = "a" * 1000
+  describe ".info" do
+    it "raises for too long pathname" do
+      expect_raises(File::NotFoundError, /Unable to get file info: '#{long_path}': (File ?name too long|The system cannot find the path specified)/) do
+        File.info(long_path)
+      end
+    end
+
+    it "raises for invalid pathname" do
+      expect_raises(File::NotFoundError, /Unable to get file info: '': (No such file or directory|The system cannot find the path specified)/) do
+        File.info("")
+      end
+    end
+
+    it "raises for invalid pathname" do
+      expect_raises(File::NotFoundError, /Unable to get file info: '<': (No such file or directory|The filename, directory name, or volume label syntax is incorrect)/) do
+        File.info("<")
+      end
+    end
+  end
+
+  describe ".info?" do
+    it "returns nil for too long pathname" do
+      File.info?(long_path).should be_nil
+    end
+
+    it "returns nil for invalid pathname" do
+      File.info?("").should be_nil
+    end
+
+    it "returns nil for invalid pathname" do
+      File.info?("<").should be_nil
+    end
+  end
+
   describe "File::Info" do
     it "gets for this file" do
       info = File.info(datapath("test_file.txt"))
@@ -649,7 +727,7 @@ describe "File" do
         end
 
         it "gives false when the file has no permissions" do
-          with_tempfile("unaccessible.txt") do |path|
+          with_tempfile("inaccessible.txt") do |path|
             File.write(path, "")
             File.chmod(path, 0o000)
             pending_if_superuser!

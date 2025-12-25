@@ -3,12 +3,6 @@
 require "./spec_helper"
 require "../../support/win32"
 
-# TODO: Windows networking in the interpreter requires #12495
-{% if flag?(:interpreted) && flag?(:win32) %}
-  pending TCPSocket
-  {% skip_file %}
-{% end %}
-
 describe TCPSocket, tags: "network" do
   describe "#connect" do
     each_ip_family do |family, address|
@@ -92,7 +86,7 @@ describe TCPSocket, tags: "network" do
         {% elsif flag?(:android) || flag?(:netbsd) || flag?(:openbsd) %}
           err.os_error.should eq(Errno.new(LibC::EAI_NODATA))
         {% else %}
-          [Errno.new(LibC::EAI_NONAME), Errno.new(LibC::EAI_AGAIN)].should contain err.os_error
+          [Errno.new(LibC::EAI_NONAME), Errno.new(LibC::EAI_NODATA), Errno.new(LibC::EAI_AGAIN)].should contain err.os_error
         {% end %}
       end
 
@@ -106,7 +100,7 @@ describe TCPSocket, tags: "network" do
         {% elsif flag?(:android) || flag?(:netbsd) || flag?(:openbsd) %}
           err.os_error.should eq(Errno.new(LibC::EAI_NODATA))
         {% else %}
-          [Errno.new(LibC::EAI_NONAME), Errno.new(LibC::EAI_AGAIN)].should contain err.os_error
+          [Errno.new(LibC::EAI_NONAME), Errno.new(LibC::EAI_NODATA), Errno.new(LibC::EAI_AGAIN)].should contain err.os_error
         {% end %}
       end
     end

@@ -8,6 +8,12 @@ class IO::FileDescriptor < IO
   @volatile_fd : Atomic(Handle)
 
   # Returns the raw file-descriptor handle. Its type is platform-specific.
+  #
+  # The file-descriptor handle has been configured for the IO system
+  # requirements. If it must be in a specific mode or have a specific set of
+  # flags set, then they must be applied, even when when it feels redundant,
+  # because even the same target isn't guaranteed to have the same requirements
+  # at runtime.
   def fd : Handle
     @volatile_fd.get
   end
@@ -39,17 +45,33 @@ class IO::FileDescriptor < IO
     write_timeout
   end
 
-  def self.new(fd : Handle, blocking = nil, *, close_on_finalize = true)
-    file_descriptor = new(handle: fd, close_on_finalize: close_on_finalize)
-    file_descriptor.system_blocking_init(blocking) unless file_descriptor.closed?
-    file_descriptor
-  end
+  {% begin %}
+    # Creates an IO::FileDescriptor from an existing system file descriptor or
+    # handle.
+    #
+    # This adopts *fd* into the IO system that will reconfigure it as per the
+    # event loop runtime requirements.
+    #
+    # NOTE: On Windows, the handle should have been created with
+    # `FILE_FLAG_OVERLAPPED`.
+    def self.new(fd : Handle, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated("Use IO::FileDescriptor.set_blocking instead.")] {% end %} blocking = nil, *, close_on_finalize = true)
+      file_descriptor = new(handle: fd, close_on_finalize: close_on_finalize)
+      file_descriptor.system_blocking_init(blocking) unless file_descriptor.closed?
+      file_descriptor
+    end
+  {% end %}
 
   # :nodoc:
-  def initialize(*, handle : Handle, @close_on_finalize = true)
+  #
+  # Internal constructor to wrap a system *handle*. The *blocking* arg is purely
+  # informational.
+  def initialize(*, handle : Handle, @close_on_finalize = true, blocking = nil)
     @volatile_fd = Atomic.new(handle)
     @closed = true # This is necessary so we can reference `self` in `system_closed?` (in case of an exception)
     @closed = system_closed?
+    {% if flag?(:win32) %}
+      @system_blocking = !!blocking
+    {% end %}
   end
 
   # :nodoc:
@@ -63,21 +85,46 @@ class IO::FileDescriptor < IO
   # This might be different from the internal file descriptor. For example, when
   # `STDIN` is a terminal on Windows, this returns `false` since the underlying
   # blocking reads are done on a completely separate thread.
-  def blocking
+  @[Deprecated("Use IO::FileDescriptor.get_blocking instead.")]
+  def blocking : Bool
     emulated = emulated_blocking?
     return emulated unless emulated.nil?
     system_blocking?
   end
 
-  def blocking=(value)
+  # Changes the file descriptor's mode to blocking (true) or non blocking
+  # (false).
+  #
+  # WARNING: The file descriptor has been configured to behave correctly with
+  # the event loop runtime requirements. Changing the blocking mode can cause
+  # the event loop to misbehave, for example block the entire program when a
+  # fiber tries to read from this file descriptor.
+  @[Deprecated("Use IO::FileDescriptor.set_blocking instead.")]
+  def blocking=(value : Bool) : Nil
     self.system_blocking = value
+  end
+
+  # Returns whether the blocking mode of *fd* is blocking (true) or non blocking
+  # (false).
+  #
+  # NOTE: Only implemented on UNIX targets. Raises on Windows.
+  def self.get_blocking(fd : Handle) : Bool
+    Crystal::System::FileDescriptor.get_blocking(fd)
+  end
+
+  # Changes the blocking mode of *fd* to be blocking (true) or non blocking
+  # (false).
+  #
+  # NOTE: Only implemented on UNIX targets. Raises on Windows.
+  def self.set_blocking(fd : Handle, value : Bool)
+    Crystal::System::FileDescriptor.set_blocking(fd, value)
   end
 
   def close_on_exec? : Bool
     system_close_on_exec?
   end
 
-  def close_on_exec=(value : Bool)
+  def close_on_exec=(value : Bool) : Bool
     self.system_close_on_exec = value
   end
 
@@ -85,8 +132,8 @@ class IO::FileDescriptor < IO
     Crystal::System::FileDescriptor.fcntl(fd, cmd, arg)
   end
 
-  def fcntl(cmd, arg = 0)
-    Crystal::System::FileDescriptor.fcntl(fd, cmd, arg)
+  def fcntl(cmd : Int, arg : Int = 0) : Int
+    system_fcntl(cmd, arg)
   end
 
   # Returns a `File::Info` object for this file descriptor, or raises
@@ -190,7 +237,7 @@ class IO::FileDescriptor < IO
   #
   # NOTE: Metadata is flushed even when *flush_metadata* is false on Windows
   # and DragonFly BSD.
-  def fsync(flush_metadata = true) : Nil
+  def fsync(flush_metadata : Bool = true) : Nil
     flush
     system_fsync(flush_metadata)
   end
@@ -208,7 +255,7 @@ class IO::FileDescriptor < IO
 
   # Places a shared advisory lock. More than one process may hold a shared lock for a given file descriptor at a given time.
   # `IO::Error` is raised if *blocking* is set to `false` and an existing exclusive lock is set.
-  def flock_shared(blocking = true) : Nil
+  def flock_shared(blocking : Bool = true) : Nil
     system_flock_shared(blocking)
   end
 
@@ -223,7 +270,7 @@ class IO::FileDescriptor < IO
 
   # Places an exclusive advisory lock. Only one process may hold an exclusive lock for a given file descriptor at a given time.
   # `IO::Error` is raised if *blocking* is set to `false` and any existing lock is set.
-  def flock_exclusive(blocking = true) : Nil
+  def flock_exclusive(blocking : Bool = true) : Nil
     system_flock_exclusive(blocking)
   end
 
@@ -243,7 +290,7 @@ class IO::FileDescriptor < IO
   # Resource release can be disabled with `close_on_finalize = false`.
   #
   # This method is a no-op if the file descriptor has already been closed.
-  def finalize
+  def finalize : Nil
     return if closed? || !close_on_finalize?
 
     Crystal::EventLoop.remove(self)
@@ -258,7 +305,7 @@ class IO::FileDescriptor < IO
     system_tty?
   end
 
-  def reopen(other : IO::FileDescriptor)
+  def reopen(other : IO::FileDescriptor) : IO::FileDescriptor
     return other if self.fd == other.fd
     system_reopen(other)
 

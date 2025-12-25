@@ -19,6 +19,7 @@ larg = "larg"
 Nd = "Nd"
 numer = "numer"
 OLT = "OLT"
+pendings = "pendings"
 RELA = "RELA"
 RPC_S_CALL_FAILED_DNE = "RPC_S_CALL_FAILED_DNE"
 SEH = "SEH"
@@ -47,6 +48,8 @@ extend-ignore-re = [
   'tr‸ue|fo‸o',
   "\"[^\"]+\"\\.to_slice\\s*=> [\"']\\\\u", # src/html/entities.cr
   " ([a-zA-Z.]{8} ){4}->", # src/bit_array.cr
+  "[A-z]+[0-9]+", # words including a number are likely some kind of identifier
+  "sha256[:-][0-9A-z=]+", # shell.nix
 ]
 
 [files]
@@ -56,5 +59,6 @@ extend-exclude = [
   "man/**",
   "spec/compiler/semantic/did_you_mean_spec.cr",
   "spec/std/data/**",
+  "spec/std/string/grapheme_break_spec.cr",
   "src/compiler/crystal/tools/playground/public/vendor/",
 ]

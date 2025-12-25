@@ -6,6 +6,7 @@ require "c/ntdll"
 require "../system/win32/iocp"
 require "../system/win32/waitable_timer"
 require "./timers"
+require "./lock"
 require "./iocp/*"
 
 # :nodoc:
@@ -23,11 +24,11 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   end
 
   @waitable_timer : System::WaitableTimer?
-  @timer_packet : LibC::HANDLE?
+  @timer_packet = LibC::HANDLE.null
   @timer_key : System::IOCP::CompletionKey?
 
-  def initialize
-    @mutex = Thread::Mutex.new
+  def initialize(parallelism : Int32)
+    @timers_mutex = Thread::Mutex.new
     @timers = Timers(Timer).new
 
     # the completion port
@@ -84,6 +85,10 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     def run(queue : Fiber::List*, blocking : Bool) : Nil
       run_impl(blocking) { |fiber| queue.value.push(fiber) }
     end
+
+    # the evloop has a single IOCP instance for the context and only one
+    # scheduler must wait on the evloop at any time
+    include EventLoop::Lock
   {% end %}
 
   # Runs the event loop and enqueues the fiber for the next upcoming event or
@@ -94,7 +99,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     if @waitable_timer
       timeout = blocking ? LibC::INFINITE : 0_i64
     elsif blocking
-      if time = @mutex.synchronize { @timers.next_ready? }
+      if time = @timers_mutex.synchronize { @timers.next_ready? }
         # convert absolute time of next timer to relative time, expressed in
         # milliseconds, rounded up
         seconds, nanoseconds = System::Time.monotonic
@@ -120,7 +125,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
       yield fiber
     end
 
-    @mutex.synchronize do
+    @timers_mutex.synchronize do
       # cancel the timeout of completed operations
       events.to_slice[0...size].each do |event|
         @timers.delete(pointerof(event.@timer))
@@ -162,14 +167,14 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   end
 
   protected def add_timer(timer : Pointer(Timer)) : Nil
-    @mutex.synchronize do
+    @timers_mutex.synchronize do
       is_next_ready = @timers.add(timer)
       rearm_waitable_timer(timer.value.wake_at, interruptible: true) if is_next_ready
     end
   end
 
   protected def delete_timer(timer : Pointer(Timer)) : Nil
-    @mutex.synchronize do
+    @timers_mutex.synchronize do
       _, was_next_ready = @timers.delete(timer)
       rearm_waitable_timer(@timers.next_ready?, interruptible: false) if was_next_ready
     end
@@ -177,14 +182,15 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
 
   protected def rearm_waitable_timer(time : Time::Span?, interruptible : Bool) : Nil
     if waitable_timer = @waitable_timer
-      status = @iocp.cancel_wait_completion_packet(@timer_packet.not_nil!, true)
+      raise "BUG: @timer_packet was not initialized!" unless @timer_packet
+      status = @iocp.cancel_wait_completion_packet(@timer_packet, true)
       if time
         waitable_timer.set(time)
         if status == LibC::STATUS_PENDING
           interrupt
         else
           # STATUS_CANCELLED, STATUS_SUCCESS
-          @iocp.associate_wait_completion_packet(@timer_packet.not_nil!, waitable_timer.handle, @timer_key.not_nil!)
+          @iocp.associate_wait_completion_packet(@timer_packet, waitable_timer.handle, @timer_key.not_nil!)
         end
       else
         waitable_timer.cancel
@@ -237,14 +243,16 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
 
   def pipe(read_blocking : Bool?, write_blocking : Bool?) : {IO::FileDescriptor, IO::FileDescriptor}
     r, w = System::FileDescriptor.system_pipe(!!read_blocking, !!write_blocking)
+    create_completion_port(LibC::HANDLE.new(r)) unless read_blocking
+    create_completion_port(LibC::HANDLE.new(w)) unless write_blocking
     {
-      IO::FileDescriptor.new(r, !!read_blocking),
-      IO::FileDescriptor.new(w, !!write_blocking),
+      IO::FileDescriptor.new(handle: r, blocking: !!read_blocking),
+      IO::FileDescriptor.new(handle: w, blocking: !!write_blocking),
     }
   end
 
   def open(path : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : {System::FileDescriptor::Handle, Bool} | WinError
-    access, disposition, attributes = System::File.posix_to_open_opts(flags, permissions, blocking)
+    access, disposition, attributes = System::File.posix_to_open_opts(flags, permissions, !!blocking)
 
     handle = LibC.CreateFileW(
       System.to_wstr(path),
@@ -302,6 +310,9 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
 
   def reopened(file_descriptor : Crystal::System::FileDescriptor) : Nil
     raise NotImplementedError.new("Crystal::System::IOCP#reopened(FileDescriptor)")
+  end
+
+  def shutdown(file_descriptor : Crystal::System::FileDescriptor) : Nil
   end
 
   def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
@@ -433,13 +444,16 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
         # AcceptEx does not automatically set the socket options on the accepted
         # socket to match those of the listening socket, we need to ask for that
         # explicitly with SO_UPDATE_ACCEPT_CONTEXT
-        socket.system_setsockopt client_handle, LibC::SO_UPDATE_ACCEPT_CONTEXT, socket.fd
+        System::Socket.setsockopt client_handle, LibC::SO_UPDATE_ACCEPT_CONTEXT, socket.fd
 
         true
       else
         false
       end
     end
+  end
+
+  def shutdown(socket : ::Socket) : Nil
   end
 
   def close(socket : ::Socket) : Nil

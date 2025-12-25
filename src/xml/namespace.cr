@@ -1,7 +1,14 @@
 class XML::Namespace
-  getter document : Node
+  getter document : Document
 
-  def initialize(@document : Node, @ns : LibXML::NS*)
+  # :nodoc:
+  @[Deprecated]
+  def self.new(document : Node, ns : LibXML::NS*)
+    new(document.as(Document), ns)
+  end
+
+  # :nodoc:
+  def initialize(@document : Document, @ns : LibXML::NS*)
   end
 
   # See `Object#hash(hasher)`

@@ -3,15 +3,19 @@ name: LLVM CI
 on:
   push:
     paths:
+      - 'src/compiler/crystal/codegen/**'
       - 'src/llvm/**'
       - 'spec/std/llvm/**'
       - 'spec/llvm-ir/**'
+      - 'spec/compiler/codegen/**'
       - '.github/workflows/llvm.yml'
   pull_request:
     paths:
+      - 'src/compiler/crystal/codegen/**'
       - 'src/llvm/**'
       - 'spec/std/llvm/**'
       - 'spec/llvm-ir/**'
+      - 'spec/compiler/codegen/**'
       - '.github/workflows/llvm.yml'
   schedule:
     - cron: '0 3 * * *'
@@ -41,11 +45,14 @@ jobs:
           - {llvm_version: 18, runs-on: ubuntu-24.04, codename: noble}
           - {llvm_version: 19, runs-on: ubuntu-24.04, codename: noble}
           - {llvm_version: 20, runs-on: ubuntu-24.04, codename: noble}
+          - {llvm_version: 21, runs-on: ubuntu-24.04, codename: noble}
           - {runs-on: ubuntu-24.04, codename: noble}
     name: "LLVM ${{ matrix.llvm_version || 'Nightly' }}"
     steps:
       - name: Checkout Crystal source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Install LLVM ${{ matrix.llvm_version || 'Nightly' }}
         run: |
@@ -61,7 +68,7 @@ jobs:
       - name: Install Crystal
         uses: crystal-lang/install-crystal@v1
         with:
-          crystal: "1.16.3"
+          crystal: "1.18.2"
 
       - name: Build libllvm_ext
         run: make -B deps

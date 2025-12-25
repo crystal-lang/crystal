@@ -99,19 +99,16 @@ module Spec
     def configure_formatter(formatter, output_path = nil)
       case formatter
       when "junit"
-        junit_formatter = Spec::JUnitFormatter.file(Path.new(output_path.not_nil!))
+        junit_formatter = Spec::JUnitFormatter.file(self, Path.new(output_path.not_nil!))
         add_formatter(junit_formatter)
       when "verbose"
-        override_default_formatter(Spec::VerboseFormatter.new(@stdout))
+        override_default_formatter(Spec::VerboseFormatter.new(self))
       when "tap"
-        override_default_formatter(Spec::TAPFormatter.new(@stdout))
+        override_default_formatter(Spec::TAPFormatter.new(self))
       end
     end
 
     def main(args)
-      # TODO: should not be global state
-      Colorize.on_tty_only!
-
       begin
         option_parser.parse(args)
       rescue e : OptionParser::InvalidOption
@@ -123,7 +120,7 @@ module Spec
       end
 
       if ENV["SPEC_VERBOSE"]? == "1"
-        override_default_formatter(Spec::VerboseFormatter.new(@stdout))
+        override_default_formatter(Spec::VerboseFormatter.new(self))
       end
 
       add_split_filter ENV["SPEC_SPLIT"]?
@@ -131,6 +128,12 @@ module Spec
       {% unless flag?(:wasm32) %}
         # TODO(wasm): Enable this once `Process.on_terminate` is implemented
         Process.on_terminate { abort! }
+      {% end %}
+
+      {% if flag?(:execution_context) %}
+        if count = ENV["CRYSTAL_WORKERS"]?.try(&.to_i?)
+          Fiber::ExecutionContext.default.resize(count)
+        end
       {% end %}
 
       run

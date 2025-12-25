@@ -51,7 +51,7 @@ module Crystal::System::File
 
   LOWER_ALPHANUM = "0123456789abcdefghijklmnopqrstuvwxyz".to_slice
 
-  def self.mktemp(prefix : String?, suffix : String?, dir : String, random : ::Random = ::Random::DEFAULT) : {FileDescriptor::Handle, String, Bool}
+  def self.mktemp(prefix : String?, suffix : String?, dir : String, random : ::Random? = nil) : {FileDescriptor::Handle, String, Bool}
     flags = LibC::O_RDWR | LibC::O_CREAT | LibC::O_EXCL
     perm = ::File::Permissions.new(0o600)
 
@@ -71,10 +71,12 @@ module Crystal::System::File
       when Tuple(FileDescriptor::Handle, Bool)
         fd, blocking = result
         return {fd, path, blocking}
-      when Errno::EEXIST, WinError::ERROR_FILE_EXISTS
-        # retry
       else
-        raise ::File::Error.from_os_error("Error creating temporary file", result, file: path)
+        if ::File::AlreadyExistsError.os_error?(result)
+          # retry
+        else
+          raise ::File::Error.from_os_error("Error creating temporary file", result, file: path)
+        end
       end
     end
 

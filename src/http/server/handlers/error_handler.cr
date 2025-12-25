@@ -14,7 +14,7 @@ class HTTP::ErrorHandler
   def initialize(@verbose : Bool = false, @log = Log.for("http.server"))
   end
 
-  def call(context) : Nil
+  def call(context : HTTP::Server::Context) : Nil
     call_next(context)
   rescue ex : HTTP::Server::ClientError
     @log.debug(exception: ex.cause) { ex.message }

@@ -30,6 +30,9 @@ describe Time::Span do
     t1 = Time::Span.new days: -1, hours: 2, minutes: -3, seconds: 4, nanoseconds: -5_000_000
     t1.to_s.should eq("-22:02:56.005000000")
 
+    t1 = Time::Span.new weeks: 1, days: 2, hours: 3, minutes: 4, seconds: 5, nanoseconds: 6_000_000
+    t1.to_s.should eq("9.03:04:05.006000000")
+
     t1 = Time::Span.new hours: 25
     t1.to_s.should eq("1.01:00:00")
   end

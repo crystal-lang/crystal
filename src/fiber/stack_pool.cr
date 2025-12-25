@@ -16,7 +16,11 @@ class Fiber
     #
     # Interpreter stacks grow upwards (pushing values increases the stack
     # pointer value) rather than downwards, so *protect* must be false.
-    def initialize(@protect : Bool = true)
+    #
+    # Interpreter keeps an internal list of stacks and musn't consider
+    # `Thread.current.dead_fiber_stack` for recycle which is handled by the
+    # scheduler's fiber stack pool where the interpreter runs.
+    def initialize(@protect : Bool = true, @reuse_dead_fiber_stack : Bool = true)
       @deque = Deque(Stack).new
 
       {% if flag?(:execution_context) %}
@@ -26,7 +30,7 @@ class Fiber
 
     def finalize
       @deque.each do |stack|
-        Crystal::System::Fiber.free_stack(stack.pointer, STACK_SIZE)
+        Crystal::System::Fiber.free_stack(stack.pointer, stack.size)
       end
     end
 
@@ -35,7 +39,7 @@ class Fiber
     def collect(count = lazy_size // 2) : Nil
       count.times do
         if stack = shift?
-          Crystal::System::Fiber.free_stack(stack.pointer, STACK_SIZE)
+          Crystal::System::Fiber.free_stack(stack.pointer, stack.size)
         else
           return
         end
@@ -52,11 +56,11 @@ class Fiber
     # Removes a stack from the bottom of the pool, or allocates a new one.
     def checkout : Stack
       if stack = pop?
-        Crystal::System::Fiber.reset_stack(stack.pointer, STACK_SIZE, @protect)
+        Crystal::System::Fiber.reset_stack(stack.pointer, stack.size, @protect)
         stack
       else
         pointer = Crystal::System::Fiber.allocate_stack(STACK_SIZE, @protect)
-        Stack.new(pointer, pointer + STACK_SIZE, reusable: true)
+        Stack.new(pointer, STACK_SIZE, reusable: true)
       end
     end
 
@@ -87,7 +91,7 @@ class Fiber
 
     private def pop?
       {% if flag?(:execution_context) %}
-        if (stack = Thread.current.dead_fiber_stack?) && stack.reusable?
+        if @reuse_dead_fiber_stack && (stack = Thread.current.dead_fiber_stack?) && stack.reusable?
           stack
         else
           @lock.sync { @deque.pop? } unless @deque.empty?

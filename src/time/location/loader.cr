@@ -20,15 +20,25 @@ class Time::Location
 
   # :nodoc:
   def self.load(name : String, sources : Enumerable(String)) : Time::Location?
+    load(name, sources) { |source| raise InvalidLocationNameError.new(name, source) }
+  end
+
+  # :nodoc:
+  def self.load(name : String, sources : Enumerable(String), &) : Time::Location?
     if source = find_zoneinfo_file(name, sources)
-      load_from_dir_or_zip(name, source) || raise InvalidLocationNameError.new(name, source)
+      load_from_dir_or_zip(name, source) || yield source
     end
   end
 
   # :nodoc:
   def self.load_android(name : String, sources : Enumerable(String)) : Time::Location?
+    load_android(name, sources) { |path| raise InvalidLocationNameError.new(name, path) }
+  end
+
+  # :nodoc:
+  def self.load_android(name : String, sources : Enumerable(String), &) : Time::Location?
     if path = find_android_tzdata_file(sources)
-      load_from_android_tzdata(name, path) || raise InvalidLocationNameError.new(name, path)
+      load_from_android_tzdata(name, path) || yield path
     end
   end
 
@@ -191,11 +201,21 @@ class Time::Location
       ZoneTransition.new(time, zone_idx, isstd, isutc)
     end
 
-    # TODO: parse the POSIX TZ string (#15792)
-    # note that some extensions are only available for version 3+
     if version != 0
-      raise InvalidTZDataError.new("Missing TZ footer") unless io.read_byte === '\n'
-      tz_string = io.gets
+      unless io.read_byte === '\n'
+        raise InvalidTZDataError.new("Missing TZ footer")
+      end
+      unless tz_string = io.gets
+        raise InvalidTZDataError.new("Missing TZ string")
+      end
+
+      unless tz_string.empty?
+        hours_extension = version != '2'.ord # version 3+
+        if tz_args = TZ.parse(tz_string, zones, hours_extension)
+          return TZLocation.new(location_name, zones, tz_string, *tz_args, transitions)
+        end
+        raise InvalidTZDataError.new("Invalid TZ string: #{tz_string}")
+      end
     end
 
     new(location_name, zones, transitions)
@@ -281,7 +301,7 @@ class Time::Location
       file.skip 6
       compression_method = file.read_bytes(Int16, IO::ByteFormat::LittleEndian)
       file.skip 12
-      uncompressed_size = file.read_bytes(Int32, IO::ByteFormat::LittleEndian)
+      _uncompressed_size = file.read_bytes(Int32, IO::ByteFormat::LittleEndian)
       filename_length = file.read_bytes(Int16, IO::ByteFormat::LittleEndian)
       extra_field_length = file.read_bytes(Int16, IO::ByteFormat::LittleEndian)
       file_comment_length = file.read_bytes(Int16, IO::ByteFormat::LittleEndian)

@@ -8,6 +8,9 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
     false
   end
 
+  def initialize(parallelism : Int32)
+  end
+
   # Runs the event loop.
   def run(blocking : Bool) : Bool
     raise NotImplementedError.new("Crystal::Wasi::EventLoop.run")
@@ -80,8 +83,11 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
     raise NotImplementedError.new("Crystal::EventLoop#reopened(FileDescriptor)")
   end
 
-  def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
+  def shutdown(file_descriptor : Crystal::System::FileDescriptor) : Nil
     file_descriptor.evented_close
+  end
+
+  def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
     file_descriptor.file_descriptor_close
   end
 
@@ -133,8 +139,11 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
     raise NotImplementedError.new "Crystal::Wasi::EventLoop#accept"
   end
 
-  def close(socket : ::Socket) : Nil
+  def shutdown(socket : ::Socket) : Nil
     socket.evented_close
+  end
+
+  def close(socket : ::Socket) : Nil
     socket.socket_close
   end
 
@@ -159,24 +168,22 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
   end
 
   def evented_write(target, errno_msg : String, &) : Int32
-    begin
-      loop do
-        bytes_written = yield
-        if bytes_written != -1
-          return bytes_written.to_i32
-        end
-
-        if Errno.value == Errno::EAGAIN
-          target.evented_wait_writable do
-            raise IO::TimeoutError.new("Write timed out")
-          end
-        else
-          raise IO::Error.from_errno(errno_msg, target: target)
-        end
+    loop do
+      bytes_written = yield
+      if bytes_written != -1
+        return bytes_written.to_i32
       end
-    ensure
-      target.evented_resume_pending_writers
+
+      if Errno.value == Errno::EAGAIN
+        target.evented_wait_writable do
+          raise IO::TimeoutError.new("Write timed out")
+        end
+      else
+        raise IO::Error.from_errno(errno_msg, target: target)
+      end
     end
+  ensure
+    target.evented_resume_pending_writers
   end
 end
 

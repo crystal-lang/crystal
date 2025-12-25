@@ -8,9 +8,19 @@ module Crystal::System::FileDescriptor
   end
 
   def self.fcntl(fd, cmd, arg = 0)
-    r = LibC.fcntl(fd, cmd, arg)
-    raise IO::Error.from_errno("fcntl() failed") if r == -1
-    r
+    FileDescriptor.fcntl(fd, cmd, arg)
+  end
+
+  private def system_fcntl(cmd, arg = 0)
+    FileDescriptor.fcntl(fd, cmd, arg)
+  end
+
+  def self.get_blocking(fd : Handle)
+    raise NotImplementedError.new("Crystal::System::FileDescriptor.get_blocking")
+  end
+
+  def self.set_blocking(fd : Handle, value : Bool)
+    raise NotImplementedError.new("Crystal::System::FileDescriptor.set_blocking")
   end
 
   protected def system_blocking_init(blocking : Bool?)

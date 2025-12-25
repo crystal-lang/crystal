@@ -1192,8 +1192,12 @@ class Hash(K, V)
   # ```
   def [](key)
     fetch(key) do
-      if (block = @block) && key.is_a?(K)
-        block.call(self, key.as(K))
+      if block = @block
+        unless key.is_a?(K)
+          raise KeyError.new "Invalid key type: expected #{K}, got #{key.class}"
+        end
+
+        block.call(self, key)
       else
         raise KeyError.new "Missing hash key: #{key.inspect}"
       end
@@ -1528,14 +1532,20 @@ class Hash(K, V)
   # # => {"foo" => "bar"}
   # ```
   def merge(other : Hash(L, W)) : Hash(K | L, V | W) forall L, W
+    # Don't retain @block as far as key type may be changed and retained @block
+    # will not be compatible with this new type.
     hash = Hash(K | L, V | W).new
+    hash.compare_by_identity if compare_by_identity?
     hash.merge! self
     hash.merge! other
     hash
   end
 
   def merge(other : Hash(L, W), & : L, V, W -> V | W) : Hash(K | L, V | W) forall L, W
+    # Don't retain @block as far as key type may be changed and retained @block
+    # will not be compatible with this new type.
     hash = Hash(K | L, V | W).new
+    hash.compare_by_identity if compare_by_identity?
     hash.merge! self
     hash.merge!(other) { |k, v1, v2| yield k, v1, v2 }
     hash
@@ -1611,7 +1621,10 @@ class Hash(K, V)
   # h.reject { |k, v| v < 200 } # => {"b" => 200, "c" => 300}
   # ```
   def reject(& : K, V ->) : Hash(K, V)
-    each_with_object({} of K => V) do |(k, v), memo|
+    object = {} of K => V
+    object.compare_by_identity if compare_by_identity?
+
+    each_with_object(object) do |(k, v), memo|
       memo[k] = v unless yield k, v
     end
   end
@@ -1639,11 +1652,26 @@ class Hash(K, V)
   # Returns a new `Hash` without the given keys.
   #
   # ```
+  # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.reject(["a", "c"]) # => {"b" => 2, "d" => 4}
+  # ```
+  def reject(keys : Enumerable) : Hash(K, V)
+    object = {} of K => V
+    object.compare_by_identity if compare_by_identity?
+
+    each_entry_with_index do |entry, _|
+      object[entry.key] = entry.value unless keys.includes?(entry.key)
+    end
+
+    object
+  end
+
+  # Returns a new `Hash` without the given keys.
+  #
+  # ```
   # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.reject("a", "c") # => {"b" => 2, "d" => 4}
   # ```
   def reject(*keys) : Hash(K, V)
-    hash = self.dup
-    hash.reject!(*keys)
+    reject(keys)
   end
 
   # Removes a list of keys out of hash.
@@ -1678,7 +1706,10 @@ class Hash(K, V)
   # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select(Set{"a", "c"}) # => {"a" => 1, "c" => 3}
   # ```
   def select(keys : Enumerable) : Hash(K, V)
-    keys.each_with_object({} of K => V) do |k, memo|
+    object = {} of K => V
+    object.compare_by_identity if compare_by_identity?
+
+    keys.each_with_object(object) do |k, memo|
       entry = find_entry(k)
       memo[k] = entry.value if entry
     end
@@ -1724,7 +1755,13 @@ class Hash(K, V)
   # hash.compact # => {"hello" => "world"}
   # ```
   def compact
-    each_with_object({} of K => typeof(self.first_value.not_nil!)) do |(key, value), memo|
+    # Don't retain @block as far as #compact may change value type, e.g.
+    # (String | Nil) will become String.
+    object = {} of K => typeof(self.first_value.not_nil!)
+
+    object.compare_by_identity if compare_by_identity?
+
+    each_with_object(object) do |(key, value), memo|
       memo[key] = value unless value.nil?
     end
   end
@@ -1755,6 +1792,24 @@ class Hash(K, V)
     end
   end
 
+  # Destructively transforms all keys using a block. Same as transform_keys but modifies in place.
+  # The block cannot change a type of keys.
+  # The block yields the key and value.
+  #
+  # ```
+  # hash = {"a" => 1, "b" => 2, "c" => 3}
+  # hash.transform_keys! { |key| key.upcase }
+  # hash # => {"A" => 1, "B" => 2, "C" => 3}
+  # hash.transform_keys! { |key, value| key * value }
+  # hash # => {"a" => 1, "bb" => 2, "ccc" => 3}
+  # ```
+  def transform_keys!(& : K, V -> K) : self
+    copy = transform_keys { |k, v| (yield k, v).as(K) }
+    initialize_dup_entries(copy) # we need only to copy the buffer
+    initialize_copy_non_entries_vars(copy)
+    self
+  end
+
   # Returns a new hash with the results of running block once for every value.
   # The block can change a type of values.
   # The block yields the value and key.
@@ -1766,6 +1821,8 @@ class Hash(K, V)
   # ```
   def transform_values(& : V, K -> V2) : Hash(K, V2) forall V2
     copy = Hash(K, V2).new(initial_capacity: entries_capacity)
+    copy.compare_by_identity if compare_by_identity?
+
     each_with_object(copy) do |(key, value), memo|
       memo[key] = yield(value, key)
     end
@@ -2044,7 +2101,10 @@ class Hash(K, V)
   # ```
   def to_s(io : IO) : Nil
     executed = exec_recursive(:to_s) do
+      needs_padding = curly_like?(self.first_key?)
+
       io << '{'
+      io << ' ' if needs_padding
       found_one = false
       each do |key, value|
         io << ", " if found_one
@@ -2053,9 +2113,19 @@ class Hash(K, V)
         value.inspect(io)
         found_one = true
       end
+      io << ' ' if needs_padding
       io << '}'
     end
     io << "{...}" unless executed
+  end
+
+  private def curly_like?(object)
+    case object
+    when Hash, Tuple, NamedTuple
+      true
+    else
+      false
+    end
   end
 
   def pretty_print(pp) : Nil

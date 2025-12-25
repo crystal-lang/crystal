@@ -411,7 +411,7 @@ class StringScanner
 
     def []?(range : Range) : Array(String)?
       start, count = Indexable.range_to_index_and_count(range, 1) || return nil
-      start, count = Indexable.normalize_start_and_count(start, count, 1) { return nil }
+      _, count = Indexable.normalize_start_and_count(start, count, 1) { return nil }
       return [] of String if count == 0
       [@str]
     end

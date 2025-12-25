@@ -138,6 +138,15 @@ describe Time do
       time.minute.should eq(59)
       time.second.should eq(59)
       time.nanosecond.should eq(999_999_999)
+
+      time = Time.local(9999, 12, 31, 23, 59, 59, nanosecond: 999_999_999, location: Time::Location.posix_tz("Local", "EST5EDT,M3.2.0,M11.1.0"))
+      time.year.should eq(9999)
+      time.month.should eq(12)
+      time.day.should eq(31)
+      time.hour.should eq(23)
+      time.minute.should eq(59)
+      time.second.should eq(59)
+      time.nanosecond.should eq(999_999_999)
     end
 
     it "fails with negative nanosecond" do
@@ -642,18 +651,18 @@ describe Time do
   end
 
   it "#inspect" do
-    Time.utc(2014, 1, 2, 3, 4, 5).inspect.should eq "2014-01-02 03:04:05.0 UTC"
-    Time.utc(2014, 1, 2, 3, 4, 5, nanosecond: 123_456_789).inspect.should eq "2014-01-02 03:04:05.123456789 UTC"
+    Time.utc(2014, 1, 2, 3, 4, 5).inspect.should eq "2014-01-02 03:04:05Z"
+    Time.utc(2014, 1, 2, 3, 4, 5, nanosecond: 123_456_789).inspect.should eq "2014-01-02 03:04:05.123456789Z"
 
     with_zoneinfo do
       location = Time::Location.load("Europe/Berlin")
-      Time.local(2014, 1, 2, 3, 4, 5, location: location).inspect.should eq "2014-01-02 03:04:05.0 +01:00 Europe/Berlin"
-      Time.local(2014, 1, 2, 3, 4, 5, nanosecond: 123_456_789, location: location).inspect.should eq "2014-01-02 03:04:05.123456789 +01:00 Europe/Berlin"
+      Time.local(2014, 1, 2, 3, 4, 5, location: location).inspect.should eq "2014-01-02 03:04:05+01:00[Europe/Berlin]"
+      Time.local(2014, 1, 2, 3, 4, 5, nanosecond: 123_456_789, location: location).inspect.should eq "2014-01-02 03:04:05.123456789+01:00[Europe/Berlin]"
     end
 
     location = Time::Location.fixed(3601)
-    Time.local(2014, 1, 2, 3, 4, 5, location: location).inspect.should eq "2014-01-02 03:04:05.0 +01:00:01"
-    Time.local(2014, 1, 2, 3, 4, 5, nanosecond: 123_456_789, location: location).inspect.should eq "2014-01-02 03:04:05.123456789 +01:00:01"
+    Time.local(2014, 1, 2, 3, 4, 5, location: location).inspect.should eq "2014-01-02 03:04:05+01:00:01"
+    Time.local(2014, 1, 2, 3, 4, 5, nanosecond: 123_456_789, location: location).inspect.should eq "2014-01-02 03:04:05.123456789+01:00:01"
   end
 
   it "at methods" do
@@ -716,6 +725,17 @@ describe Time do
     at_beginning_of_week_sunday.hour.should eq 0
     at_beginning_of_week_sunday.minute.should eq 0
     at_beginning_of_week_sunday.second.should eq 0
+
+    with_zoneinfo do
+      # Observes time zone (https://github.com/crystal-lang/crystal/issues/16112)
+      is = Time::Location.load("Asia/Jerusalem")
+      Time.local(2025, 3, 27, 23, 34, location: is).at_end_of_week
+        .should eq Time.local(2025, 3, 30, 23, 59, 59, nanosecond: 999_999_999, location: is)
+
+      ny = Time::Location.load("America/New_York")
+      Time.local(2024, 11, 3, 23, 34, 8, location: ny).at_beginning_of_week
+        .should eq Time.local(2024, 10, 28, 0, location: ny)
+    end
 
     t1.at_beginning_of_day.should eq Time.utc(2014, 11, 25)
     t1.at_beginning_of_hour.should eq Time.utc(2014, 11, 25, 10)
@@ -921,7 +941,7 @@ describe Time do
         Time.week_date(*CALENDAR_WEEK_TEST_DATA[0][1], 11, 57, 32, nanosecond: 123_567, location: location).should eq(
           Time.local(*CALENDAR_WEEK_TEST_DATA[0][0], 11, 57, 32, nanosecond: 123_567, location: location))
 
-        location = Time::Location.load("America/Buenos_Aires")
+        location = Time::Location.load("America/Argentina/Buenos_Aires")
         Time.week_date(*CALENDAR_WEEK_TEST_DATA[0][1], 11, 57, 32, nanosecond: 123_567, location: location).should eq(
           Time.local(*CALENDAR_WEEK_TEST_DATA[0][0], 11, 57, 32, nanosecond: 123_567, location: location))
       end
@@ -954,7 +974,7 @@ describe Time do
         Time.month_week_date(2025, 3, 3, 7, 11, 57, 32, nanosecond: 123_567, location: location).should eq(
           Time.local(2025, 3, 16, 11, 57, 32, nanosecond: 123_567, location: location))
 
-        location = Time::Location.load("America/Buenos_Aires")
+        location = Time::Location.load("America/Argentina/Buenos_Aires")
         Time.month_week_date(2025, 3, 3, 7, 11, 57, 32, nanosecond: 123_567, location: location).should eq(
           Time.local(2025, 3, 16, 11, 57, 32, nanosecond: 123_567, location: location))
       end

@@ -458,6 +458,7 @@ end
 # flag.clear
 # flag.test_and_set # => true
 # ```
+@[Deprecated("Use Atomic(Bool) instead.")]
 struct Atomic::Flag
   def initialize
     @value = Atomic(Bool).new(false)

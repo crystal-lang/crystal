@@ -1,4 +1,5 @@
 require "./libevent/event"
+require "./lock"
 
 # :nodoc:
 class Crystal::EventLoop::LibEvent < Crystal::EventLoop
@@ -12,7 +13,7 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
 
   private getter(event_base) { Crystal::EventLoop::LibEvent::Event::Base.new }
 
-  def after_fork_before_exec : Nil
+  def initialize(parallelism : Int32)
   end
 
   {% unless flag?(:preview_mt) %}
@@ -29,6 +30,10 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
   end
 
   {% if flag?(:execution_context) %}
+    # the evloop has a single poll instance for the context and only one
+    # scheduler must wait on the evloop at any time
+    include Lock
+
     def run(queue : Fiber::List*, blocking : Bool) : Nil
       Crystal.trace :evloop, "run", blocking: blocking
       @runnables = queue
@@ -118,9 +123,11 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
 
   def pipe(read_blocking : Bool?, write_blocking : Bool?) : {IO::FileDescriptor, IO::FileDescriptor}
     r, w = System::FileDescriptor.system_pipe
+    System::FileDescriptor.set_blocking(r, false) unless read_blocking
+    System::FileDescriptor.set_blocking(w, false) unless write_blocking
     {
-      IO::FileDescriptor.new(r, !!read_blocking),
-      IO::FileDescriptor.new(w, !!write_blocking),
+      IO::FileDescriptor.new(handle: r),
+      IO::FileDescriptor.new(handle: w),
     }
   end
 
@@ -130,13 +137,14 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
     fd = LibC.open(path, flags | LibC::O_CLOEXEC, permissions)
     return Errno.value if fd == -1
 
-    blocking = !System::File.special_type?(fd) if blocking.nil?
-    unless blocking
-      status_flags = System::FileDescriptor.fcntl(fd, LibC::F_GETFL)
-      System::FileDescriptor.fcntl(fd, LibC::F_SETFL, status_flags | LibC::O_NONBLOCK)
-    end
+    {% if flag?(:darwin) %}
+      # FIXME: poll of non-blocking fifo fd on darwin appears to be broken, so
+      # we default to blocking for the time being
+      blocking = true if blocking.nil?
+    {% end %}
 
-    {fd, blocking}
+    System::FileDescriptor.set_blocking(fd, false) unless blocking
+    {fd, !!blocking}
   end
 
   def read(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
@@ -175,10 +183,13 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
     file_descriptor.evented_close
   end
 
-  def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
+  def shutdown(file_descriptor : Crystal::System::FileDescriptor) : Nil
     # perform cleanup before LibC.close. Using a file descriptor after it has
     # been closed is never defined and can always lead to undefined results
     file_descriptor.evented_close
+  end
+
+  def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
     file_descriptor.file_descriptor_close
   end
 
@@ -296,10 +307,13 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
     end
   end
 
-  def close(socket : ::Socket) : Nil
+  def shutdown(socket : ::Socket) : Nil
     # perform cleanup before LibC.close. Using a file descriptor after it has
     # been closed is never defined and can always lead to undefined results
     socket.evented_close
+  end
+
+  def close(socket : ::Socket) : Nil
     socket.socket_close
   end
 
@@ -324,23 +338,21 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
   end
 
   def evented_write(target, errno_msg : String, &) : Int32
-    begin
-      loop do
-        bytes_written = yield
-        if bytes_written != -1
-          return bytes_written.to_i32
-        end
-
-        if Errno.value == Errno::EAGAIN
-          target.evented_wait_writable do
-            raise IO::TimeoutError.new("Write timed out")
-          end
-        else
-          raise IO::Error.from_errno(errno_msg, target: target)
-        end
+    loop do
+      bytes_written = yield
+      if bytes_written != -1
+        return bytes_written.to_i32
       end
-    ensure
-      target.evented_resume_pending_writers
+
+      if Errno.value == Errno::EAGAIN
+        target.evented_wait_writable do
+          raise IO::TimeoutError.new("Write timed out")
+        end
+      else
+        raise IO::Error.from_errno(errno_msg, target: target)
+      end
     end
+  ensure
+    target.evented_resume_pending_writers
   end
 end

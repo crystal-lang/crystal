@@ -136,11 +136,13 @@ struct Pointer(T)
   # Sets the value pointed at this pointer's address plus `offset * sizeof(T)`.
   #
   # ```
-  # ptr = Pointer(Int32).malloc(4) # [0, 0, 0, 0]
+  # ptr = Pointer(Int32).malloc(4)
+  # ptr.to_slice(4) # => Slice[0, 0, 0, 0]
   # ptr[1] = 42
   #
   # ptr2 = ptr + 1
-  # ptr2.value # => 42
+  # ptr2.value       # => 42
+  # ptr1.to_slice(4) # => Slice[0, 42, 0, 0]
   # ```
   def []=(offset, value : T)
     (self + offset).value = value
@@ -151,18 +153,18 @@ struct Pointer(T)
   # Use `#move_from` if they overlap (slower but always works).
   #
   # ```
-  # ptr1 = Pointer.malloc(4) { |i| i + 1 }  # [1, 2, 3, 4]
-  # ptr2 = Pointer.malloc(4) { |i| i + 11 } # [11, 12, 13, 14]
+  # ptr1 = Pointer.malloc(4) { |i| i + 1 }
+  # ptr2 = Pointer.malloc(4) { |i| i + 11 }
+  #
+  # ptr1.to_slice(4) # => Slice[1, 2, 3, 4]
+  # ptr2.to_slice(4) # => Slice[11, 12, 13, 14]
   #
   # # ptr2 -> [11, 12, 13, 14]
   # #          ^---^           <- copy this
   # # ptr1 -> [1,  2,  3,  4]
   # #          ^---^           <- here
   # ptr1.copy_from(ptr2, 2)
-  # ptr1[0] # => 11
-  # ptr1[1] # => 12
-  # ptr1[2] # => 3
-  # ptr1[3] # => 4
+  # ptr1.to_slice(4) # => Slice[1, 12, 3, 4]
   # ```
   def copy_from(source : Pointer(T), count : Int)
     source.copy_to(self, count)
@@ -182,18 +184,18 @@ struct Pointer(T)
   # Use `#move_to` if they overlap (slower but always works).
   #
   # ```
-  # ptr1 = Pointer.malloc(4) { |i| i + 1 }  # [1, 2, 3, 4]
-  # ptr2 = Pointer.malloc(4) { |i| i + 11 } # [11, 12, 13, 14]
+  # ptr1 = Pointer.malloc(4) { |i| i + 1 }
+  # ptr2 = Pointer.malloc(4) { |i| i + 11 }
+  #
+  # ptr1.to_slice(4) # => Slice[1, 2, 3, 4]
+  # ptr2.to_slice(4) # => Slice[11, 12, 13, 14]
   #
   # # ptr1 -> [1,  2,  3,  4]
   # #          ^---^           <- copy this
   # # ptr2 -> [11, 12, 13, 14]
   # #          ^---^           <- here
   # ptr1.copy_to(ptr2, 2)
-  # ptr2[0] # => 1
-  # ptr2[1] # => 2
-  # ptr2[2] # => 13
-  # ptr2[3] # => 14
+  # ptr2.to_slice(4) # => Slice[1, 2, 13, 14]
   # ```
   def copy_to(target : Pointer, count : Int)
     target.copy_from_impl(self, count)
@@ -203,18 +205,17 @@ struct Pointer(T)
   # *source* and `self` may overlap; the copy is always done in a non-destructive manner.
   #
   # ```
-  # ptr1 = Pointer.malloc(4) { |i| i + 1 } # ptr1 -> [1, 2, 3, 4]
-  # ptr2 = ptr1 + 1                        #             ^--------- ptr2
+  # ptr1 = Pointer.malloc(4) { |i| i + 1 }
+  # ptr1.to_slice(4) # => Slice[1, 2, 3, 4]
+  # #                              ^-- ptr2
+  # ptr2 = ptr1 + 1
   #
   # # [1, 2, 3, 4]
   # #  ^-----^       <- copy this
   # #     ^------^   <- here
   # ptr2.move_from(ptr1, 3)
   #
-  # ptr1[0] # => 1
-  # ptr1[1] # => 1
-  # ptr1[2] # => 2
-  # ptr1[3] # => 3
+  # ptr1.to_slice(4) # => Slice[1, 1, 2, 3]
   # ```
   def move_from(source : Pointer(T), count : Int)
     source.move_to(self, count)
@@ -233,18 +234,17 @@ struct Pointer(T)
   # *target* and `self` may overlap; the copy is always done in a non-destructive manner.
   #
   # ```
-  # ptr1 = Pointer.malloc(4) { |i| i + 1 } # ptr1 -> [1, 2, 3, 4]
-  # ptr2 = ptr1 + 1                        #             ^--------- ptr2
+  # ptr1 = Pointer.malloc(4) { |i| i + 1 }
+  # ptr1.to_slice(4) # => Slice[1, 2, 3, 4]
+  # #                              ^-- ptr2
+  # ptr2 = ptr1 + 1
   #
   # # [1, 2, 3, 4]
   # #  ^-----^       <- copy this
   # #     ^------^   <- here
   # ptr1.move_to(ptr2, 3)
   #
-  # ptr1[0] # => 1
-  # ptr1[1] # => 1
-  # ptr1[2] # => 2
-  # ptr1[3] # => 3
+  # ptr1.to_slice(4) # => Slice[1, 1, 2, 3]
   # ```
   def move_to(target : Pointer, count : Int)
     target.move_from_impl(self, count)
@@ -294,8 +294,11 @@ struct Pointer(T)
   # `x < y`, or a positive value if `x > y`.
   #
   # ```
-  # ptr1 = Pointer.malloc(4) { |i| i + 1 }  # [1, 2, 3, 4]
-  # ptr2 = Pointer.malloc(4) { |i| i + 11 } # [11, 12, 13, 14]
+  # ptr1 = Pointer.malloc(4) { |i| i + 1 }
+  # ptr2 = Pointer.malloc(4) { |i| i + 11 }
+  #
+  # ptr1.to_slice(4) # => Slice[1, 2, 3, 4]
+  # ptr2.to_slice(4) # => Slice[11, 12, 13, 14]
   #
   # ptr1.memcmp(ptr2, 4) < 0  # => true
   # ptr2.memcmp(ptr1, 4) > 0  # => true
@@ -360,9 +363,11 @@ struct Pointer(T)
   # Remember to always assign the value of realloc.
   #
   # ```
-  # ptr = Pointer.malloc(4) { |i| i + 1 } # [1, 2, 3, 4]
+  # ptr = Pointer.malloc(4) { |i| i + 1 }
+  # ptr.to_slice(4) # => Slice[1, 2, 3, 4]
+  #
   # ptr = ptr.realloc(8)
-  # ptr # [1, 2, 3, 4, 0, 0, 0, 0]
+  # ptr.to_slice(8) # => Slice[1, 2, 3, 4, 0, 0, 0, 0]
   # ```
   #
   # WARNING: Memory allocated using `GC.malloc` or `GC.malloc_atomic` must be
@@ -378,13 +383,15 @@ struct Pointer(T)
   # Shuffles *count* consecutive values pointed by this pointer.
   #
   # ```
-  # ptr = Pointer.malloc(4) { |i| i + 1 } # [1, 2, 3, 4]
+  # ptr = Pointer.malloc(4) { |i| i + 1 }
+  # ptr.to_slice(4) # => Slice[1, 2, 3, 4]
   # ptr.shuffle!(4)
-  # ptr # [3, 4, 1, 2]
+  # ptr.to_slice(4) # => Slice[3, 4, 1, 2]
   # ```
-  def shuffle!(count : Int, random = Random::DEFAULT)
+  def shuffle!(count : Int, random : Random? = nil)
+    rng = random || Random.thread_default
     (count - 1).downto(1) do |i|
-      j = random.rand(i + 1)
+      j = rng.rand(i + 1)
       swap(i, j)
     end
     self
@@ -394,13 +401,14 @@ struct Pointer(T)
   # values returned by the block.
   #
   # ```
-  # ptr = Pointer.malloc(4) { |i| i + 1 } # [1, 2, 3, 4]
+  # ptr = Pointer.malloc(4) { |i| i + 1 }
+  # ptr.to_slice(4) # => Slice[1, 2, 3, 4]
   # ptr.map!(4) { |value| value * 2 }
-  # ptr # [2, 4, 6, 8]
+  # ptr.to_slice(4) # => Slice[2, 4, 6, 8]
   # ```
-  def map!(count : Int, & : T -> T)
-    count.times do |i|
-      self[i] = yield self[i]
+  def map!(count : Int, & : T -> T) : self
+    fill(count) do |i|
+      yield self[i]
     end
   end
 
@@ -408,9 +416,52 @@ struct Pointer(T)
   #
   # Accepts an optional *offset* parameter, which tells it to start counting
   # from there.
-  def map_with_index!(count : Int, offset = 0, &block)
+  def map_with_index!(count : Int, offset = 0, &block) : self
+    fill(count) do |i|
+      yield self[i], offset + i
+    end
+  end
+
+  # Replaces *count* elements in `self` with *value*. Returns `self`.
+  #
+  # ```
+  # ptr = Pointer(Int32).malloc(5) { |i| i }
+  # ptr.to_slice(5) # => Slice[0, 1, 2, 3, 4]
+  # ptr.fill(3, 0)
+  # ptr.to_slice(5) # => Slice[0, 0, 0, 0, 4]
+  # ```
+  def fill(count : Int, value : T) : self
+    {% if T == UInt8 %}
+      Intrinsics.memset(self.as(Void*), value, count, false)
+      self
+    {% else %}
+      {% if Number::Primitive.union_types.includes?(T) %}
+        if value == 0
+          clear(count)
+          return self
+        end
+      {% end %}
+
+      fill(count) { value }
+    {% end %}
+  end
+
+  # Yields *count* indices starting from `self` to the given block and then
+  # assigns the block's output value in that position. Returns `self`.
+  #
+  # ```
+  # ptr = Pointer(Int32).malloc(5) { |i| i }
+  # ptr.to_slice(5) # => Slice[0, 1, 2, 3, 4]
+  #
+  # (ptr + 1).fill(3) { |i| i * i }
+  # ptr.to_slice(5) # => Slice[0, 0, 1, 4, 4]
+  #
+  # (ptr + 1).fill(3, offset: 3) { |i| i * i }
+  # ptr.to_slice(5) # => Slice[0, 9, 16, 25, 4]
+  # ```
+  def fill(count : Int, *, offset : Int = 0, &) : self
     count.times do |i|
-      self[i] = yield self[i], offset + i
+      self[i] = yield i + offset
     end
     self
   end
@@ -475,10 +526,16 @@ struct Pointer(T)
   # ptr[0] # => 42
   # ptr[1] # => 42
   # ```
-  def self.malloc(size : Int, value : T)
+  def self.malloc(size : Int, value : T) : Pointer(T)
     ptr = Pointer(T).malloc(size)
-    size.times { |i| ptr[i] = value }
-    ptr
+
+    {% if Number::Primitive.union_types.includes?(T) %}
+      return ptr if value.zero?
+    {% elsif T < Pointer %}
+      return ptr if value.null?
+    {% end %}
+
+    ptr.fill(size, value)
   end
 
   # Allocates `size * sizeof(T)` bytes from the system's heap initialized
@@ -496,10 +553,9 @@ struct Pointer(T)
   # ptr[2] # => 12
   # ptr[3] # => 13
   # ```
-  def self.malloc(size : Int, & : Int32 -> T)
+  def self.malloc(size : Int, & : Int32 -> T) : Pointer(T)
     ptr = Pointer(T).malloc(size)
-    size.times { |i| ptr[i] = yield i }
-    ptr
+    ptr.fill(size) { |i| yield i }
   end
 
   # Returns a `Pointer::Appender` for this pointer.

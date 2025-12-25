@@ -159,12 +159,24 @@ class String
   # This method is always safe to call, and the resulting string will have
   # the contents and size of the slice.
   #
+  # If *truncate_at_null* is true, only the characters up to and not including
+  # the first null character are copied.
+  #
   # ```
   # slice = Slice.new(4) { |i| ('a'.ord + i).to_u8 }
   # String.new(slice) # => "abcd"
+  #
+  # slice = UInt8.slice(102, 111, 111, 0, 98, 97, 114)
+  # String.new(slice, truncate_at_null: true) # => "foo"
   # ```
-  def self.new(slice : Bytes)
-    new(slice.to_unsafe, slice.size)
+  def self.new(slice : Bytes, *, truncate_at_null : Bool = false)
+    bytesize = slice.size
+    if truncate_at_null
+      if index = slice.index(0)
+        bytesize = index
+      end
+    end
+    new(slice.to_unsafe, bytesize)
   end
 
   # Creates a new `String` from the given *bytes*, which are encoded in the given *encoding*.
@@ -634,13 +646,13 @@ class String
       last_is_underscore = false
       if prefix
         case ptr.value.unsafe_chr
-        when 'b'
+        when 'b', 'B'
           base = 2
           ptr += 1
-        when 'x'
+        when 'x', 'X'
           base = 16
           ptr += 1
-        when 'o'
+        when 'o', 'O'
           base = 8
           ptr += 1
         else
@@ -1161,9 +1173,8 @@ class String
   # ```
   # "hello".byte_slice(0, 2)   # => "he"
   # "hello".byte_slice(0, 100) # => "hello"
-  # "hello".byte_slice(-2, 3)  # => "he"
-  # "hello".byte_slice(-2, 5)  # => "he"
-  # "hello".byte_slice(-2, 5)  # => "he"
+  # "hello".byte_slice(-2, 3)  # => "lo"
+  # "hello".byte_slice(-2, 5)  # => "lo"
   # "¥hello".byte_slice(0, 2)  # => "¥"
   # "¥hello".byte_slice(2, 2)  # => "he"
   # "¥hello".byte_slice(0, 1)  # => "\xC2" (invalid UTF-8 character)
@@ -1265,9 +1276,7 @@ class String
   # "hello".byte_slice(-6) # raises IndexError
   # ```
   def byte_slice(start : Int) : String
-    count = bytesize - start
-    raise IndexError.new if start > 0 && count < 0
-    byte_slice start, count
+    byte_slice start, bytesize
   end
 
   # Returns a substring starting from the *start* byte.
@@ -1292,9 +1301,7 @@ class String
   # "hello".byte_slice?(-6) # => nil
   # ```
   def byte_slice?(start : Int) : String?
-    count = bytesize - start
-    return nil if start > 0 && count < 0
-    byte_slice? start, count
+    byte_slice? start, bytesize
   end
 
   # Returns the codepoint of the character at the given *index*.
@@ -1739,7 +1746,7 @@ class String
   # "string\r\n".rchop # => "string\r"
   # "string\n\r".rchop # => "string\n"
   # "string\n".rchop   # => "string"
-  # "string".rchop     # => "strin"
+  # "strings".rchop    # => "string"
   # "x".rchop.rchop    # => ""
   # ```
   def rchop : String
@@ -1749,7 +1756,7 @@ class String
   # Returns a new `String` with *suffix* removed from the end of the string.
   #
   # ```
-  # "string".rchop('g')   # => "strin"
+  # "strings".rchop('s')  # => "string"
   # "string".rchop('x')   # => "string"
   # "string".rchop("ing") # => "str"
   # "string".rchop("inx") # => "string"
@@ -1764,7 +1771,7 @@ class String
   # "string\r\n".rchop? # => "string\r"
   # "string\n\r".rchop? # => "string\n"
   # "string\n".rchop?   # => "string"
-  # "string".rchop?     # => "strin"
+  # "strings".rchop?    # => "string"
   # "".rchop?           # => nil
   # ```
   def rchop? : String?
@@ -1776,7 +1783,7 @@ class String
   # Returns a new `String` with *suffix* removed from the end of the string if possible, else returns `nil`.
   #
   # ```
-  # "string".rchop?('g')   # => "strin"
+  # "strings".rchop?('s')  # => "string"
   # "string".rchop?('x')   # => nil
   # "string".rchop?("ing") # => "str"
   # "string".rchop?("inx") # => nil
@@ -2700,7 +2707,10 @@ class String
   # by the block value's value.
   #
   # ```
-  # "hello".gsub(/./) { |s| s[0].ord.to_s + ' ' } # => "104 101 108 108 111 "
+  # "hello".gsub(/./) { |s| s[0].ord.to_s + ' ' }                                              # => "104 101 108 108 111 "
+  # "foo bar baz".gsub(/ba./) { |match| match.upcase }                                         # => "foo BAR BAZ"
+  # "Name: Alice, Name: Bob".gsub(/Name: (\w+)/) { |full, matches| "User(#{matches[1]})" }     # => "User(Alice), User(Bob)"
+  # "5x10, 3x7".gsub(/(\d+)x(\d+)/) { |full, matches| "#{matches[1].to_i * matches[2].to_i}" } # => "50, 21"
   # ```
   def gsub(pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None, &) : String
     gsub_append(pattern, options) do |string, match, buffer|
@@ -4229,19 +4239,25 @@ class String
     yield String.new(to_unsafe + byte_offset, piece_bytesize, piece_size)
   end
 
-  # Makes an `Array` by splitting the string on *separator* (and removing instances of *separator*).
+  # Makes an `Array` by splitting the string on *separator* (and removing
+  # instances of *separator*).
   #
-  # If *limit* is present, the array will be limited to *limit* items and
-  # the final item will contain the remainder of the string.
+  # If *separator* is an empty regex (`//`), the string will be separated into
+  # one-character strings. If *separator* defines any capture groups, their
+  # matches are also included in the result.
   #
-  # If *separator* is an empty regex (`//`), the string will be separated into one-character strings.
+  # If *limit* is present, *separator* will be matched at most `limit - 1`
+  # times, and the final item will contain the remainder of the string. The
+  # array may contain more than *limit* items if capture groups are present.
   #
   # If *remove_empty* is `true`, any empty strings are removed from the result.
+  # This does not affect matches from *separator*'s capture groups.
   #
   # ```
   # long_river_name = "Mississippi"
-  # long_river_name.split(/s+/) # => ["Mi", "i", "ippi"]
-  # long_river_name.split(//)   # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
+  # long_river_name.split(/s+/)  # => ["Mi", "i", "ippi"]
+  # long_river_name.split(//)    # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
+  # long_river_name.split(/(i)/) # => ["M", "i", "ss", "i", "ss", "i", "pp", "i", ""]
   # ```
   def split(separator : Regex, limit = nil, *, remove_empty = false, options : Regex::MatchOptions = Regex::MatchOptions::None) : Array(String)
     ary = Array(String).new
@@ -4251,14 +4267,19 @@ class String
     ary
   end
 
-  # Splits the string after each regex *separator* and yields each part to a block.
+  # Splits the string after each regex *separator* and yields each part to a
+  # block.
   #
-  # If *limit* is present, the array will be limited to *limit* items and
-  # the final item will contain the remainder of the string.
+  # If *separator* is an empty regex (`//`), the string will be separated into
+  # one-character strings. If *separator* defines any capture groups, their
+  # matches are also yielded in order.
   #
-  # If *separator* is an empty regex (`//`), the string will be separated into one-character strings.
+  # If *limit* is present, *separator* will be matched at most `limit - 1`
+  # times, and the final item will contain the remainder of the string. More
+  # than *limit* items may be yielded in total if capture groups are present.
   #
-  # If *remove_empty* is `true`, any empty strings are removed from the result.
+  # If *remove_empty* is `true`, any empty strings are not yielded. This does
+  # not affect matches from *separator*'s capture groups.
   #
   # ```
   # ary = [] of String
@@ -4270,6 +4291,10 @@ class String
   #
   # long_river_name.split(//) { |s| ary << s }
   # ary # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
+  # ary.clear
+  #
+  # long_river_name.split(/(i)/) { |s| ary << s }
+  # ary # => ["M", "i", "ss", "i", "ss", "i", "pp", "i", ""]
   # ```
   def split(separator : Regex, limit = nil, *, remove_empty = false, options : Regex::MatchOptions = Regex::MatchOptions::None, &block : String -> _)
     if empty?
@@ -4337,7 +4362,31 @@ class String
     end
   end
 
-  def lines(chomp = true) : Array(String)
+  # Returns an array of the string split into lines.
+  #
+  # Both LF (line feed, `\n`) and CRLF (carriage return line feed, `\r\n`) are
+  # recognized as line delimiters.
+  #
+  # If *chomp* is true, the line separator is removed from the end of each line.
+  #
+  # ```
+  # "hello\nworld\n".lines                 # => ["hello", "world"]
+  # "hello\nworld\n".lines(chomp: false)   # => ["hello\n", "world\n"]
+  # "hello\nworld\r\n".lines               # => ["hello", "world"]
+  # "hello\nworld\r\n".lines(chomp: false) # => ["hello\n", "world\r\n"]
+  # ```
+  #
+  # A trailing line feed is not considered starting a final, empty line.  The
+  # empty string does not contain any lines.
+  #
+  # ```
+  # "hellp\n".lines # => ["hellp"]
+  # "\n".lines      # => [""]
+  # "".lines        # => [] of String
+  # ```
+  #
+  # * `#each_line` yields each line without allocating an array
+  def lines(chomp : Bool = true) : Array(String)
     lines = [] of String
     each_line(chomp: chomp) do |line|
       lines << line
@@ -4345,27 +4394,45 @@ class String
     lines
   end
 
-  # Splits the string after each newline and yields each line to a block.
+  # Splits the string after each newline and yields each line.
+  #
+  # Both LF (line feed, `\n`) and CRLF (carriage return line feed, `\r\n`) are
+  # recognized as line delimiters.
+  #
+  # If *chomp* is true, the line separator is removed from the end of each line.
   #
   # ```
-  # haiku = "the first cold shower
-  # even the monkey seems to want
-  # a little coat of straw"
-  # haiku.each_line do |stanza|
-  #   puts stanza
-  # end
-  # # output:
-  # # the first cold shower
-  # # even the monkey seems to want
-  # # a little coat of straw
+  # "hello\nworld".each_line { }                   # yields "hello", "world"
+  # "hello\nworld".each_line(chomp: false) { }     # yields "hello\n", "world"
+  # "hello\nworld\r\n".each_line { }               # yields "hello", "world"
+  # "hello\nworld\r\n".each_line(chomp: false) { } # yields "hello\n", "world\r\n"
   # ```
-  def each_line(chomp = true, &block : String ->) : Nil
+  #
+  # If *remove_empty* is `true`, any empty lines are removed from the result.
+  #
+  # A trailing line feed is not considered starting a final, empty line.  The
+  # empty string does not contain any lines.
+  #
+  # ```
+  # "hello\n".each_line { } # yields "hello"
+  # "\n".each_line { }      # yields ""
+  # "".each_line { }        # does not yield
+  # ```
+  #
+  # * `#lines` returns an array of lines
+  def each_line(chomp : Bool = true, remove_empty : Bool = false, & : String ->) : Nil
     return if empty?
 
     offset = 0
 
     while byte_index = byte_index('\n'.ord.to_u8, offset)
       count = byte_index - offset + 1
+
+      if remove_empty && (byte_index == offset || (byte_index == offset + 1 && to_unsafe[offset] === '\r'))
+        offset = byte_index + 1
+        next
+      end
+
       if chomp
         count -= 1
         if offset + count > 0 && to_unsafe[offset + count - 1] === '\r'
@@ -4383,8 +4450,8 @@ class String
   end
 
   # Returns an `Iterator` which yields each line of this string (see `String#each_line`).
-  def each_line(chomp = true)
-    LineIterator.new(self, chomp)
+  def each_line(chomp = true, *, remove_empty : Bool = false)
+    LineIterator.new(self, chomp, remove_empty)
   end
 
   # Converts camelcase boundaries to underscores.
@@ -4815,7 +4882,7 @@ class String
   # "fooo".match_full!(/foo/) # Regex::Error
   # $~                        # raises Exception
   # ```
-  def match_full!(regex : Regex) : Regex::MatchData?
+  def match_full!(regex : Regex) : Regex::MatchData
     match!(regex, options: Regex::MatchOptions::ANCHORED | Regex::MatchOptions::ENDANCHORED)
   end
 
@@ -5653,7 +5720,7 @@ class String
   private class LineIterator
     include Iterator(String)
 
-    def initialize(@string : String, @chomp : Bool)
+    def initialize(@string : String, @chomp : Bool, @remove_empty : Bool)
       @offset = 0
       @end = false
     end
@@ -5664,6 +5731,12 @@ class String
       byte_index = @string.byte_index('\n'.ord.to_u8, @offset)
       if byte_index
         count = byte_index - @offset + 1
+
+        if @remove_empty && (byte_index == @offset || (byte_index == @offset + 1 && @string.to_unsafe[@offset] === '\r'))
+          @offset = byte_index + 1
+          return self.next
+        end
+
         if @chomp
           count -= 1
           if @offset + count > 0 && @string.to_unsafe[@offset + count - 1] === '\r'
@@ -5812,6 +5885,11 @@ class String
         end
       {% end %}
     end
+  end
+
+  # Returns the empty string.
+  def self.additive_identity : String
+    ""
   end
 end
 

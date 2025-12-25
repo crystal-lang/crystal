@@ -3,6 +3,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop; end
 
 require "./polling/*"
 require "./timers"
+require "./lock"
 
 module Crystal::System::FileDescriptor
   # user data (generation index for the arena)
@@ -104,19 +105,13 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     rlimit.rlim_max.clamp(..Int32::MAX).to_i32!
   end
 
-  @lock = SpinLock.new # protects parallel accesses to @timers
+  @timers_lock = SpinLock.new
   @timers = Timers(Event).new
-
-  # reset the mutexes since another thread may have acquired the lock of one
-  # event loop, which would prevent closing file descriptors for example.
-  def after_fork_before_exec : Nil
-    @lock = SpinLock.new
-  end
 
   {% unless flag?(:preview_mt) %}
     # no parallelism issues, but let's clean-up anyway
     def after_fork : Nil
-      @lock = SpinLock.new
+      @timers_lock = SpinLock.new
     end
   {% end %}
 
@@ -133,6 +128,10 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
   end
 
   {% if flag?(:execution_context) %}
+    # the evloop has a single poll instance for the context and only one
+    # scheduler must wait on the evloop at any time
+    include EventLoop::Lock
+
     # thread unsafe
     def run(queue : Fiber::List*, blocking : Bool) : Nil
       system_run(blocking) { |fiber| queue.value.push(fiber) }
@@ -164,9 +163,11 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
 
   def pipe(read_blocking : Bool?, write_blocking : Bool?) : {IO::FileDescriptor, IO::FileDescriptor}
     r, w = System::FileDescriptor.system_pipe
+    System::FileDescriptor.set_blocking(r, false) unless read_blocking
+    System::FileDescriptor.set_blocking(w, false) unless write_blocking
     {
-      IO::FileDescriptor.new(r, !!read_blocking),
-      IO::FileDescriptor.new(w, !!write_blocking),
+      IO::FileDescriptor.new(handle: r),
+      IO::FileDescriptor.new(handle: w),
     }
   end
 
@@ -176,13 +177,14 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     fd = LibC.open(path, flags | LibC::O_CLOEXEC, permissions)
     return Errno.value if fd == -1
 
-    blocking = !System::File.special_type?(fd) if blocking.nil?
-    unless blocking
-      status_flags = System::FileDescriptor.fcntl(fd, LibC::F_GETFL)
-      System::FileDescriptor.fcntl(fd, LibC::F_SETFL, status_flags | LibC::O_NONBLOCK)
-    end
+    {% if flag?(:darwin) %}
+      # FIXME: poll of non-blocking fifo fd on darwin appears to be broken, so
+      # we default to blocking for the time being
+      blocking = true if blocking.nil?
+    {% end %}
 
-    {fd, blocking}
+    System::FileDescriptor.set_blocking(fd, false) unless blocking
+    {fd, !!blocking}
   end
 
   def read(file_descriptor : System::FileDescriptor, slice : Bytes) : Int32
@@ -229,10 +231,13 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     resume_all(file_descriptor)
   end
 
-  def close(file_descriptor : System::FileDescriptor) : Nil
+  def shutdown(file_descriptor : System::FileDescriptor) : Nil
     # perform cleanup before LibC.close. Using a file descriptor after it has
     # been closed is never defined and can always lead to undefined results
     resume_all(file_descriptor)
+  end
+
+  def close(file_descriptor : System::FileDescriptor) : Nil
     file_descriptor.file_descriptor_close
   end
 
@@ -360,10 +365,13 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     end
   end
 
-  def close(socket : ::Socket) : Nil
+  def shutdown(socket : ::Socket) : Nil
     # perform cleanup before LibC.close. Using a file descriptor after it has
     # been closed is never defined and can always lead to undefined results
     resume_all(socket)
+  end
+
+  def close(socket : ::Socket) : Nil
     socket.socket_close
   end
 
@@ -515,14 +523,14 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
   # internals: timers
 
   protected def add_timer(event : Event*)
-    @lock.sync do
+    @timers_lock.sync do
       is_next_ready = @timers.add(event)
       system_set_timer(event.value.wake_at) if is_next_ready
     end
   end
 
   protected def delete_timer(event : Event*) : Bool
-    @lock.sync do
+    @timers_lock.sync do
       dequeued, was_next_ready = @timers.delete(event)
       # update system timer if we deleted the next timer
       system_set_timer(@timers.next_ready?) if was_next_ready
@@ -564,7 +572,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     buffer = uninitialized StaticArray(Pointer(Event), 128)
     size = 0
 
-    @lock.sync do
+    @timers_lock.sync do
       @timers.dequeue_ready do |event|
         buffer.to_unsafe[size] = event
         break if (size &+= 1) == buffer.size

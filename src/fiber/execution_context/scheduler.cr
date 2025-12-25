@@ -6,6 +6,11 @@ module Fiber::ExecutionContext
       Thread.current.scheduler
     end
 
+    @[AlwaysInline]
+    def self.current? : Scheduler?
+      Thread.current.scheduler?
+    end
+
     protected abstract def thread : Thread
     protected abstract def execution_context : ExecutionContext
 

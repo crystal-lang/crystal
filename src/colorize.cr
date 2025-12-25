@@ -91,7 +91,7 @@
 # ```
 # require "colorize"
 #
-# "foo".colorize(Random::DEFAULT.next_bool ? :green : :default)
+# "foo".colorize(Random.next_bool ? :green : :default)
 # ```
 #
 # Available colors are:
@@ -117,7 +117,8 @@
 #
 # See `Colorize::Mode` for available text decorations.
 module Colorize
-  # Objects will only be colored if this is `true`.
+  # Objects will only be colored if this is `true`, unless overridden by
+  # `Colorize::Object#toggle`.
   #
   # ```
   # require "colorize"
@@ -129,16 +130,31 @@ module Colorize
   # "hello".colorize.red.to_s # => "hello"
   # ```
   #
-  # NOTE: This is by default disabled if the environment variable `NO_COLOR` contains any value.
-  class_property? enabled : Bool { !ENV.has_key?("NO_COLOR") }
+  # NOTE: This is by default enabled if `.default_enabled?` is true for `STDOUT`
+  # and `STDERR`.
+  class_property? enabled : Bool { default_enabled?(STDOUT, STDERR) }
 
-  # Makes `Colorize.enabled` `true` if and only if both of `STDOUT.tty?`
-  # and `STDERR.tty?` are `true` and the tty is not considered a dumb terminal.
-  # This is determined by the environment variable called `TERM`.
-  # If `TERM=dumb`, color won't be enabled.
-  # If `NO_COLOR` contains any value color won't be enabled conforming to https://no-color.org
-  def self.on_tty_only!
-    self.enabled = STDOUT.tty? && STDERR.tty? && ENV["TERM"]? != "dumb" && !ENV.has_key?("NO_COLOR")
+  # Resets `Colorize.enabled?` to its initial default value, i.e. whether
+  # `.default_enabled?` is true for `STDOUT` and `STDERR`. Returns this new
+  # value.
+  #
+  # This can be used to revert `Colorize.enabled?` to its initial state after
+  # colorization is explicitly enabled or disabled.
+  def self.on_tty_only! : Bool
+    @@enabled = nil
+    enabled?
+  end
+
+  # Returns whether colorization should be enabled by default on the given
+  # standard output and error streams.
+  #
+  # This is true if both streams are terminals (i.e. `IO#tty?` returns true),
+  # the `TERM` environment variable is not equal to `dumb`, and the
+  # [`NO_COLOR` environment variable](https://no-color.org) is not set to a
+  # non-empty string.
+  def self.default_enabled?(stdout : IO, stderr : IO = stdout) : Bool
+    stdout.tty? && (stderr == stdout || stderr.tty?) &&
+      ENV["TERM"]? != "dumb" && !ENV["NO_COLOR"]?.try(&.empty?.!)
   end
 
   # Resets the color and text decoration of the *io*.
@@ -317,6 +333,20 @@ private def each_code(mode : Colorize::Mode, &)
   yield "9" if mode.strikethrough?
   yield "21" if mode.double_underline?
   yield "53" if mode.overline?
+end
+
+private def each_reset_code(mode : Colorize::Mode, &)
+  yield "22" if mode.bold?
+  yield "22" if mode.dim?
+  yield "23" if mode.italic?
+  yield "24" if mode.underline?
+  yield "25" if mode.blink?
+  yield "26" if mode.blink_fast?
+  yield "27" if mode.reverse?
+  yield "28" if mode.hidden?
+  yield "29" if mode.strikethrough?
+  yield "24" if mode.double_underline?
+  yield "55" if mode.overline?
 end
 
 # A colorized object. Colors and text decorations can be modified.
@@ -534,8 +564,24 @@ struct Colorize::Object(T)
       printed = false
 
       unless last_color_is_default
-        io << '0'
-        printed = true
+        unless @@last_color[:fore] == ColorANSI::Default
+          io << 39
+          printed = true
+        end
+
+        unless @@last_color[:back] == ColorANSI::Default
+          io << ';' if printed
+          io << 49
+          printed = true
+        end
+
+        unless @@last_color[:mode].none?
+          each_reset_code(@@last_color[:mode]) do |code|
+            io << ';' if printed
+            io << code
+            printed = true
+          end
+        end
       end
 
       unless fore_is_default

@@ -10,7 +10,7 @@ describe Fiber::ExecutionContext::Runnables do
 
   describe "#push" do
     it "enqueues the fiber in local queue" do
-      fibers = 4.times.map { |i| new_fake_fiber("f#{i}") }.to_a
+      fibers = Array.new(4) { |i| new_fake_fiber("f#{i}") }
 
       # local enqueue
       g = Fiber::ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
@@ -26,7 +26,7 @@ describe Fiber::ExecutionContext::Runnables do
     end
 
     it "moves half the local queue to the global queue on overflow" do
-      fibers = 5.times.map { |i| new_fake_fiber("f#{i}") }.to_a
+      fibers = Array.new(5) { |i| new_fake_fiber("f#{i}") }
 
       # local enqueue + overflow
       g = Fiber::ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
@@ -71,10 +71,36 @@ describe Fiber::ExecutionContext::Runnables do
     end
   end
 
+  describe "#drain" do
+    it "drains the local queue into the global queue" do
+      fibers = Array.new(6) { |i| new_fake_fiber("f#{i}") }
+
+      # local enqueue + overflow
+      g = Fiber::ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
+      r = Fiber::ExecutionContext::Runnables(6).new(g)
+
+      # empty
+      r.drain
+      g.size.should eq(0)
+
+      # full
+      fibers.each { |f| r.push(f) }
+      r.drain
+      r.shift?.should be_nil
+      g.size.should eq(6)
+
+      # refill half (1 pop + 2 grab) and drain again
+      g.unsafe_grab?(r, divisor: 1)
+      r.drain
+      r.shift?.should be_nil
+      g.size.should eq(5)
+    end
+  end
+
   describe "#bulk_push" do
     it "fills the local queue" do
       l = Fiber::List.new
-      fibers = 4.times.map { |i| new_fake_fiber("f#{i}") }.to_a
+      fibers = Array.new(4) { |i| new_fake_fiber("f#{i}") }
       fibers.each { |f| l.push(f) }
 
       # local enqueue
@@ -88,7 +114,7 @@ describe Fiber::ExecutionContext::Runnables do
 
     it "pushes the overflow to the global queue" do
       l = Fiber::List.new
-      fibers = 7.times.map { |i| new_fake_fiber("f#{i}") }.to_a
+      fibers = Array.new(7) { |i| new_fake_fiber("f#{i}") }
       fibers.each { |f| l.push(f) }
 
       # local enqueue + overflow
@@ -116,7 +142,7 @@ describe Fiber::ExecutionContext::Runnables do
   describe "#steal_from" do
     it "steals from another runnables" do
       g = Fiber::ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
-      fibers = 6.times.map { |i| new_fake_fiber("f#{i}") }.to_a
+      fibers = Array.new(6) { |i| new_fake_fiber("f#{i}") }
 
       # fill the source queue
       r1 = Fiber::ExecutionContext::Runnables(16).new(g)
@@ -190,68 +216,62 @@ describe Fiber::ExecutionContext::Runnables do
       end
 
       global_queue = Fiber::ExecutionContext::GlobalQueue.new(Thread::Mutex.new)
-      ready = Thread::WaitGroup.new(n)
 
       all_runnables = Array(Fiber::ExecutionContext::Runnables(16)).new(n) do
         Fiber::ExecutionContext::Runnables(16).new(global_queue)
       end
 
-      threads = Array(Thread).new(n) do |i|
-        new_thread("RUN-#{i}") do
+      all_randoms = Array.new(n) { Random.split }
+
+      execute = ->(fiber : Fiber, runnables : Fiber::ExecutionContext::Runnables(16)) {
+        fc = fibers.find! { |x| x.@fiber == fiber }
+        runnables.push(fiber) if fc.increment < increments
+      }
+
+      Fiber::ExecutionContext.stress_test(
+        n,
+        iteration: ->(i : Int32) {
           runnables = all_runnables[i]
-          slept = 0
+          random = all_randoms[i]
 
-          execute = ->(fiber : Fiber) {
-            fc = fibers.find! { |x| x.@fiber == fiber }
-            runnables.push(fiber) if fc.increment < increments
-          }
-
-          ready.done
-
-          loop do
-            # dequeue from local queue
-            if fiber = runnables.shift?
-              execute.call(fiber)
-              slept = 0
-              next
-            end
-
-            # steal from another queue
-            while (r = all_runnables.sample) == runnables
-            end
-            if fiber = runnables.steal_from(r)
-              execute.call(fiber)
-              slept = 0
-              next
-            end
-
-            # dequeue from global queue
-            if fiber = global_queue.grab?(runnables, n)
-              execute.call(fiber)
-              slept = 0
-              next
-            end
-
-            if slept >= 100
-              break
-            end
-
-            slept += 1
-            Thread.sleep(1.nanosecond) # don't burn CPU
+          # dequeue from local queue
+          if fiber = runnables.shift?
+            execute.call(fiber, runnables)
+            return :next
           end
-        end
-      end
-      ready.wait
 
-      # enqueue in batches
-      0.step(to: fibers.size - 1, by: 9) do |i|
-        list = Fiber::List.new
-        9.times { |j| list.push(fibers[i + j].@fiber) }
-        global_queue.bulk_push(pointerof(list))
-        Thread.sleep(10.nanoseconds) if i % 2 == 1
-      end
+          # steal from another queue
+          j = 0
+          while (r = all_runnables.sample(random)) == runnables
+            next if (j += 1) < 1000
+            raise "FATAL: all_runnables.sample returned the local queue 1000 times!"
+          end
+          if fiber = runnables.steal_from(r)
+            execute.call(fiber, runnables)
+            return :next
+          end
 
-      threads.map(&.join)
+          # dequeue from global queue
+          if fiber = global_queue.grab?(runnables, n)
+            execute.call(fiber, runnables)
+            return :next
+          end
+
+          # done?
+          if fibers.all? { |fc| fc.counter >= increments }
+            return :break
+          end
+        },
+        publish: -> {
+          # enqueue in batches of 9
+          0.step(to: fibers.size - 1, by: 9) do |i|
+            list = Fiber::List.new
+            9.times { |j| list.push(fibers[i + j].@fiber) }
+            global_queue.bulk_push(pointerof(list))
+            Thread.sleep(10.nanoseconds) if i % 2 == 1
+          end
+        },
+      )
 
       # must have dequeued each fiber exactly X times (no less, no more)
       fibers.each { |fc| fc.counter.should eq(increments) }

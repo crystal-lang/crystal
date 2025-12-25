@@ -302,10 +302,13 @@ describe "String" do
     it { "1101".to_i(base: 2).should eq(13) }
     it { "12ab".to_i(16).should eq(4779) }
     it { "0x123abc".to_i(prefix: true).should eq(1194684) }
+    it { "0X123abc".to_i(prefix: true).should eq(1194684) }
     it { "0b1101".to_i(prefix: true).should eq(13) }
+    it { "0B1101".to_i(prefix: true).should eq(13) }
     it { "0b001101".to_i(prefix: true).should eq(13) }
     it { "0123".to_i(prefix: true).should eq(123) }
     it { "0o123".to_i(prefix: true).should eq(83) }
+    it { "0O123".to_i(prefix: true).should eq(83) }
     it { "0123".to_i(leading_zero_is_octal: true).should eq(83) }
     it { "123".to_i(leading_zero_is_octal: true).should eq(123) }
     it { "0o755".to_i(prefix: true, leading_zero_is_octal: true).should eq(493) }
@@ -1497,6 +1500,8 @@ describe "String" do
       it "keeps groups" do
         s = "split on the word on okay?"
         s.split(/(on)/).should eq(["split ", "on", " the word ", "on", " okay?"])
+        s.split(/o(?:(n)|(r))/).should eq(["split ", "n", " the w", "r", "d ", "n", " okay?"])
+        s.split(/()/, limit: 4, remove_empty: true).should eq(["s", "", "p", "", "l", "", "it on the word on okay?"])
       end
     end
   end
@@ -2234,6 +2239,16 @@ describe "String" do
     it "allows creating from an empty slice" do
       String.new(Bytes.empty).should eq("")
     end
+
+    it "allows creating from a non-empty slice" do
+      String.new(UInt8.slice(102, 111, 111, 0, 98, 97, 114)).should eq("foo\0bar")
+    end
+
+    it "allows creating from a null-terminated slice" do
+      String.new(Bytes.empty, truncate_at_null: true).should eq("")
+      String.new(UInt8.slice(102, 111, 111, 98, 97, 114), truncate_at_null: true).should eq("foobar")
+      String.new(UInt8.slice(102, 111, 111, 0, 98, 97, 114), truncate_at_null: true).should eq("foo")
+    end
   end
 
   describe "tr" do
@@ -2690,8 +2705,26 @@ describe "String" do
     lines.should eq(["foo\n", "\n", "bar\r\n", "baz\r\n"])
   end
 
+  it "gets each_line with remove_empty = true" do
+    lines = [] of String
+    "\nfoo\n\nbar\r\nbaz\n\n".each_line(remove_empty: true) do |line|
+      lines << line
+    end.should be_nil
+    lines.should eq(["foo", "bar", "baz"])
+  end
+
+  it "gets each_line with remove_empty = true and chomp = false" do
+    lines = [] of String
+    "\nfoo\n\nbar\r\n\r\nbaz".each_line(remove_empty: true, chomp: false) do |line|
+      lines << line
+    end.should be_nil
+    lines.should eq(["foo\n", "bar\r\n", "baz"])
+  end
+
   it_iterates "#each_line", ["foo", "bar", "baz"], "foo\nbar\r\nbaz\r\n".each_line
   it_iterates "#each_line(chomp: false)", ["foo\n", "bar\r\n", "baz\r\n"], "foo\nbar\r\nbaz\r\n".each_line(chomp: false)
+  it_iterates "#each_line(remove_empty: true)", ["foo", "bar", "baz"], "\nfoo\n\nbar\r\n\r\nbaz".each_line(remove_empty: true)
+  it_iterates "#each_line(remove_empty: true, chomp: false)", ["foo\n", "bar\r\n", "baz"], "\nfoo\n\nbar\r\n\r\nbaz".each_line(remove_empty: true, chomp: false)
 
   it_iterates "#each_codepoint", [97, 98, 9731], "ab☃".each_codepoint
 
@@ -3201,6 +3234,10 @@ describe "String" do
         "BFOO".ensure_prefix('B').should eq("BFOO")
       end
     end
+  end
+
+  it ".additive_identity" do
+    String.additive_identity.should be ""
   end
 end
 

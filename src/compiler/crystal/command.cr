@@ -46,6 +46,7 @@ class Crystal::Command
         format                   format project, directories and/or files
         hierarchy                show type hierarchy
         implementations          show implementations for given call in location
+        macro_code_coverage      generate a macro code coverage report
         types                    show type of main variables
         unreachable              show methods that are never called
         --help, -h               show this help
@@ -59,7 +60,7 @@ class Crystal::Command
   @compiler : Compiler?
 
   def initialize(@options : Array(String))
-    @color = ENV["TERM"]? != "dumb" && !ENV.has_key?("NO_COLOR")
+    @color = Colorize.default_enabled?(STDOUT, STDERR)
     @error_trace = false
     @progress_tracker = ProgressTracker.new
   end
@@ -209,6 +210,9 @@ class Crystal::Command
     when "unreachable".starts_with?(tool)
       options.shift
       unreachable
+    when "macro_code_coverage".starts_with?(tool)
+      options.shift
+      macro_code_coverage
     when "--help" == tool, "-h" == tool
       puts COMMANDS_USAGE
       exit
@@ -255,7 +259,7 @@ class Crystal::Command
   end
 
   private def types
-    config, result = compile_no_codegen "tool types"
+    _, result = compile_no_codegen "tool types"
     @progress_tracker.stage("Tool (types)") do
       Crystal.print_types result.node
     end
@@ -338,6 +342,13 @@ class Crystal::Command
     def compile(output_filename = self.output_filename)
       compiler.emit_base_filename = emit_base_filename || output_filename.rchop(File.extname(output_filename))
       compiler.compile sources, output_filename
+    end
+
+    def compile_configure_program(output_filename = self.output_filename, &)
+      compiler.emit_base_filename = emit_base_filename || output_filename.rchop(File.extname(output_filename))
+      compiler.compile_configure_program sources, output_filename do |program|
+        yield program
+      end
     end
 
     def top_level_semantic
@@ -762,7 +773,7 @@ class Crystal::Command
 
   private def error(msg, exit_code = 1)
     # This is for the case where the main command is wrong
-    @color = false if ARGV.includes?("--no-color") || ENV["TERM"]? == "dumb" || ENV.has_key?("NO_COLOR")
+    @color = false if ARGV.includes?("--no-color") || !Colorize.default_enabled?(STDOUT, STDERR)
     Crystal.error msg, @color, exit_code: exit_code
   end
 

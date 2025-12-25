@@ -20,9 +20,14 @@ abstract class Crystal::EventLoop
     {% end %}
   end
 
-  # Creates an event loop instance
-  def self.create : self
-    backend_class.new
+  # Creates an event loop instance.
+  #
+  # The *parallelism* arg is informational. It reports how many schedulers are
+  # expected to register with the event loop instance. Because schedulers are
+  # dynamically started and execution contexts can be resized, more or less
+  # schedulers may really register in practice.
+  def self.create(parallelism : Int32 = 1) : self
+    backend_class.new(parallelism)
   end
 
   def self.default_file_blocking? : Bool
@@ -67,6 +72,27 @@ abstract class Crystal::EventLoop
     # enqueueing in parallel, so the caller is responsible and in control for
     # when and how the fibers will be enqueued.
     abstract def run(queue : Fiber::List*, blocking : Bool) : Nil
+
+    # Tries to lock the event loop and yields if the lock was acquired. Must
+    # unlock before returning. Returns true if the lock was acquired, false
+    # otherwise.
+    #
+    # Only needed when there should be a single scheduler running the event loop
+    # at any time (e.g. epoll, kqueue and IOCP). Can be a NOOP that always
+    # yields and returns true (io_uring).
+    abstract def lock?(&) : Bool
+
+    # Same as `#interrupt` but returns true if a running event loop has likely
+    # been interrupted, and false otherwise.
+    abstract def interrupt? : Bool
+
+    # Called once before *scheduler* is started. Optional hook.
+    def register(scheduler : Fiber::ExecutionContext::Scheduler, index : Int32) : Nil
+    end
+
+    # Called once before *scheduler* is shut down. Optional hook.
+    def unregister(scheduler : Fiber::ExecutionContext::Scheduler) : Nil
+    end
   {% end %}
 
   # Tells a blocking run loop to no longer wait for events to activate. It may

@@ -8,6 +8,11 @@ module Crystal
       getter relative_to
 
       def initialize(@filename : String, @relative_to : String?)
+        if relative_to = @relative_to
+          super "can't find #{@filename.inspect} relative to #{relative_to.inspect}"
+        else
+          super "can't find #{@filename.inspect}"
+        end
       end
     end
 
@@ -129,7 +134,7 @@ module Crystal
     def each_file_expansion(filename, relative_to, &)
       relative_filename = "#{relative_to}/#{filename}"
       # Check if .cr file exists.
-      yield relative_filename.ends_with?(".cr") ? relative_filename : "#{relative_filename}.cr"
+      yield relative_filename.ensure_suffix(".cr")
 
       filename_is_relative = filename.starts_with?('.')
 
