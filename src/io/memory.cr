@@ -175,6 +175,11 @@ class IO::Memory < IO
     end
   end
 
+  def read_greedy(slice : Bytes) : Int32
+    # IO::Memory is always greedy
+    read(slice)
+  end
+
   def peek : Bytes
     check_open
 
