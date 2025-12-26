@@ -548,6 +548,28 @@ abstract class IO
     count
   end
 
+  # Similar to `#read`, but with the additional guarantee that either
+  # the buffer will be entirely filled or the EOF will be reached while trying.
+  #
+  # Calling this method may result in multiple read calls if necessary.
+  #
+  # ```
+  # io = IO::Memory.new "123451234"
+  # slice = Bytes.new(5)
+  # io.read_greedy(slice) # => 5
+  # slice                 # => Bytes[49, 50, 51, 52, 53]
+  # io.read_greedy(slice) # => 4
+  # ```
+  def read_greedy(slice : Bytes) : Int32
+    count = slice.size
+    while slice.size > 0
+      read_bytes = read(slice)
+      return slice_total_size &- slice.size if read_bytes == 0
+      slice += read_bytes
+    end
+    count
+  end
+
   # Reads the rest of this `IO` data as a `String`.
   #
   # ```
