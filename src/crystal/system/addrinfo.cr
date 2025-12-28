@@ -11,8 +11,8 @@ module Crystal::System::Addrinfo
 
   # def self.free_addrinfo(addrinfo : Handle)
 
-  def self.getaddrinfo(domain, service, family, type, protocol, timeout, ai_flags = 0, & : ::Socket::Addrinfo ->)
-    addrinfo = root = getaddrinfo(domain, service, family, type, protocol, timeout, ai_flags)
+  def self.getaddrinfo(domain, service, family, type, protocol, timeout, flags = 0, & : ::Socket::Addrinfo ->)
+    addrinfo = root = getaddrinfo(domain, service, family, type, protocol, timeout, flags)
 
     begin
       while addrinfo
