@@ -2,6 +2,16 @@ class Crystal::Program
   @flags : Set(String)?
   @host_flags : Set(String)?
 
+  # Custom flags passed via `-D` command line argument.
+  property user_flags = Set(String).new
+
+  # Updates the USER_FLAGS and ALL_FLAGS constants with current flag values.
+  # Called by the compiler after all flags have been set.
+  def update_flag_constants
+    crystal.types["USER_FLAGS"].as(Const).value.as(StringLiteral).value = user_flags.to_a.join(", ")
+    crystal.types["ALL_FLAGS"].as(Const).value.as(StringLiteral).value = flags.to_a.join(", ")
+  end
+
   # Returns the flags for this program. By default these
   # are computed from the target triple (for example x86_64,
   # darwin, linux, etc.), but can be overwritten with `flags=`

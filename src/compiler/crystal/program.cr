@@ -356,6 +356,12 @@ module Crystal
       define_crystal_string_constant "TARGET_TRIPLE", Crystal::Config.host_target.to_s, <<-MD
         The LLVM target triple of the target system (the machine that the compiler builds for).
         MD
+      define_crystal_string_constant "USER_FLAGS", user_flags.to_a.join(", "), <<-MD
+        The flags provided by the user via the `-D` command line argument.
+        MD
+      define_crystal_string_constant "ALL_FLAGS", flags.to_a.join(", "), <<-MD
+        The combined flags of the user and the program, including the target triple and the user flags.
+        MD
     end
 
     private def define_crystal_string_constant(name, value, doc = nil)
