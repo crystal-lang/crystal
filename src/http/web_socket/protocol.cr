@@ -62,7 +62,7 @@ class HTTP::WebSocket::Protocol
       @pos += count
 
       if @pos == @buffer.size
-        flush(final: false)
+        send_frame(final: false)
       end
 
       if count < slice.size
@@ -74,7 +74,18 @@ class HTTP::WebSocket::Protocol
       raise "This IO is write-only"
     end
 
-    def flush(final = true) : Nil
+    def flush : Nil
+      # SteramIO is used to split one message into the necessary frames. There
+      # should be no need for the caller to try to control this by flushing.
+    end
+
+    @[Deprecated]
+    def flush(final : Bool)
+      # replaced by send_frame and close
+      # kept for backward compatibility
+    end
+
+    private def send_frame(final = false) : Nil
       @websocket.send(
         @buffer[0...@pos],
         @opcode,
@@ -83,6 +94,10 @@ class HTTP::WebSocket::Protocol
       )
       @opcode = Opcode::CONTINUATION
       @pos = 0
+    end
+
+    def close
+      send_frame(final: true)
     end
   end
 
@@ -97,7 +112,7 @@ class HTTP::WebSocket::Protocol
   def stream(binary = true, frame_size = 1024, &)
     stream_io = StreamIO.new(self, binary, frame_size)
     yield(stream_io)
-    stream_io.flush
+    stream_io.close
   end
 
   def send(data : Bytes, opcode : Opcode, flags : Flags = Flags::FINAL, flush : Bool = true) : Nil
