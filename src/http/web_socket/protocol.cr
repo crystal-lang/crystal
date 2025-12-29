@@ -75,7 +75,7 @@ class HTTP::WebSocket::Protocol
     end
 
     def flush : Nil
-      # SteramIO is used to split one message into the necessary frames. There
+      # StreamIO is used to split one message into the necessary frames. There
       # should be no need for the caller to try to control this by flushing.
     end
 
