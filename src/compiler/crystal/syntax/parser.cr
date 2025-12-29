@@ -4851,7 +4851,12 @@ module Crystal
       end
 
       check :OP_RPAREN if allow_newline
-      end_location = token_end_location
+
+      # Prefer the end location of the last named argument when available.
+      # Using `token_end_location` would produce an off-by-one column
+      # in some cases (see issue #16092).
+      end_location = named_args.last?.try(&.end_location) unless allow_newline
+      end_location ||= token_end_location
 
       if allow_newline
         next_token_skip_space
