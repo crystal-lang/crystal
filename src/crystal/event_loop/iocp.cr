@@ -102,9 +102,10 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
       if time = @timers_mutex.synchronize { @timers.next_ready? }
         # convert absolute time of next timer to relative time, expressed in
         # milliseconds, rounded up
-        seconds, nanoseconds = System::Time.monotonic
-        relative = time - Time::Span.new(seconds: seconds, nanoseconds: nanoseconds)
-        timeout = (relative.to_i * 1000 + (relative.nanoseconds + 999_999) // 1_000_000).clamp(0_i64..)
+        # Cannot use `time.elapsed` here because it calls `::Time.instant` which
+        # could be mocked.
+        relative = Crystal::System::Time.instant.duration_since(time)
+        timeout = (relative.to_i * 1000 + (relative.nanoseconds + 999_999) // 1_000_000)
       else
         timeout = LibC::INFINITE
       end
@@ -180,7 +181,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     end
   end
 
-  protected def rearm_waitable_timer(time : Time::Span?, interruptible : Bool) : Nil
+  protected def rearm_waitable_timer(time : Time::Instant?, interruptible : Bool) : Nil
     if waitable_timer = @waitable_timer
       raise "BUG: @timer_packet was not initialized!" unless @timer_packet
       status = @iocp.cancel_wait_completion_packet(@timer_packet, true)

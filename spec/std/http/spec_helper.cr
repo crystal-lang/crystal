@@ -11,12 +11,12 @@ private def wait_for(&)
             {% else %}
               5.seconds
             {% end %}
-  now = Time.monotonic
+  now = Time.instant
 
   until yield
     Fiber.yield
 
-    if (Time.monotonic - now) > timeout
+    if now.elapsed > timeout
       raise "server failed to start within #{timeout}"
     end
   end

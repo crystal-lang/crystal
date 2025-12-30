@@ -356,9 +356,9 @@ struct Time
   # elapsed_time # => 20.milliseconds (approximately)
   # ```
   def self.measure(&block : ->) : Time::Span
-    start = monotonic
+    start = instant
     yield
-    monotonic - start
+    start.elapsed
   end
 
   # Creates a new `Time` instance representing the current time from the
