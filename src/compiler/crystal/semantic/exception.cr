@@ -306,6 +306,22 @@ module Crystal
     end
   end
 
+  # Raised when another exception is raised when calculating macro code coverage.
+  # Extends `SkipMacroException` to ensure it's also treated as a somewhat non-failure exception.
+  #
+  # Rescuing this exception allows the macro code coverage tool to run on the code that was collected up to before the exception was raised, while not resulting in an error/running all the other code after it.
+  # The exception's message/trace is printed to STDOUT while the report is written to STDERR.
+  # This is especially useful for testing error flows of custom macro logic as it allows the code to assert the proper error was raised, while still allowing to save the coverage report.
+  # I.e. the report JSON/exception outputs are not co-mingled.
+  # The main benefit of this is preventing the need to run these kind of tests twice, once for the coverage report and once for the actual test assertions.
+  class SkipMacroCodeCoverageException < SkipMacroException
+    def initialize(exception : ::Exception)
+      super "", nil
+      @message = exception.message
+      @cause = exception
+    end
+  end
+
   class Program
     def undefined_class_variable(node, owner, similar_name)
       common = String.build do |str|

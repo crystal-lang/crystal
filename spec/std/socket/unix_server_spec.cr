@@ -27,6 +27,18 @@ describe UNIXServer do
       end
     end
 
+    it "creates the socket file from `Path`" do
+      with_tempfile("unix_server.sock") do |path|
+        path = Path.new(path)
+        UNIXServer.open(path) do
+          File.exists?(path).should be_true
+          File.info(path).type.socket?.should be_true
+        end
+
+        File.exists?(path).should be_false
+      end
+    end
+
     it "deletes socket file on close" do
       with_tempfile("unix_server-close.sock") do |path|
         server = UNIXServer.new(path)
@@ -148,19 +160,17 @@ describe UNIXServer do
       end
     end
 
-    {% unless flag?(:win32) %}
-      it "sets close on exec flag" do
-        with_tempfile("unix_socket-accept.sock") do |path|
-          UNIXServer.open(path) do |server|
-            UNIXSocket.open(path) do |client|
-              server.accept? do |sock|
-                sock.close_on_exec?.should be_true
-              end
+    it "sets close on exec flag" do
+      with_tempfile("unix_socket-accept.sock") do |path|
+        UNIXServer.open(path) do |server|
+          UNIXSocket.open(path) do |client|
+            server.accept? do |sock|
+              sock.close_on_exec?.should eq CLOSE_ON_EXEC_AVAILABLE
             end
           end
         end
       end
-    {% end %}
+    end
   end
 
   # Datagram socket type is not supported on Windows yet:

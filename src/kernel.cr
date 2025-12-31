@@ -468,7 +468,7 @@ end
 # See also: `Object#inspect(io)`.
 def p(*objects)
   objects.each do |obj|
-    p obj
+    p obj # ameba:disable Lint/DebugCalls
   end
   objects
 end
@@ -482,7 +482,7 @@ end
 #
 # See `Object#inspect(io)`
 def p(**objects)
-  p(objects) unless objects.empty?
+  p(objects) unless objects.empty? # ameba:disable Lint/DebugCalls
 end
 
 # Pretty prints *object* to `STDOUT` followed
@@ -501,7 +501,7 @@ end
 # See also: `Object#pretty_print(pp)`.
 def pp(*objects)
   objects.each do |obj|
-    pp obj
+    pp obj # ameba:disable Lint/DebugCalls
   end
   objects
 end
@@ -515,7 +515,7 @@ end
 #
 # See `Object#pretty_print(pp)`
 def pp(**objects)
-  pp(objects) unless objects.empty?
+  pp(objects) unless objects.empty? # ameba:disable Lint/DebugCalls
 end
 
 # Registers the given `Proc` for execution when the program exits regularly.
@@ -563,7 +563,7 @@ end
 # to the invoking environment.
 #
 # Registered `at_exit` procs are executed.
-def exit(status = 0) : NoReturn
+def exit(status : Int32 | Process::Status = 0) : NoReturn
   status = Crystal::AtExitHandlers.run status
   Crystal.ignore_stdio_errors { STDOUT.flush }
   Crystal.ignore_stdio_errors { STDERR.flush }
@@ -584,21 +584,28 @@ end
     # Hooks are defined here due to load order problems.
     def self.after_fork_child_callbacks
       @@after_fork_child_callbacks ||= [
-        # clean ups (don't depend on event loop):
+        # reinit event loop first:
+        -> { Crystal::EventLoop.current.after_fork },
+
+        # reinit signal handling:
         ->Crystal::System::Signal.after_fork,
         ->Crystal::System::SignalChildHandler.after_fork,
 
-        # reinit event loop:
-        ->{ Crystal::EventLoop.current.after_fork },
-
-        # more clean ups (may depend on event loop):
+        # additional reinitialization
         ->Random::DEFAULT.new_seed,
+        -> { Random.thread_default.new_seed },
       ] of -> Nil
     end
   end
 {% end %}
 
 {% unless flag?(:interpreted) || flag?(:wasm32) %}
+  {% if flag?(:execution_context) %}
+    Fiber::ExecutionContext.init_default_context
+  {% else %}
+    Crystal::Scheduler.init
+  {% end %}
+
   # load debug info on start up of the program is executed with CRYSTAL_LOAD_DEBUG_INFO=1
   # this will make debug info available on print_frame that is used by Crystal's segfault handler
   #
@@ -608,11 +615,13 @@ end
   Exception::CallStack.load_debug_info if ENV["CRYSTAL_LOAD_DEBUG_INFO"]? == "1"
   Exception::CallStack.setup_crash_handler
 
-  Crystal::Scheduler.init
-
   {% if flag?(:win32) %}
     Crystal::System::Process.start_interrupt_loop
   {% else %}
     Crystal::System::Signal.setup_default_handlers
   {% end %}
+{% end %}
+
+{% if flag?(:interpreted) && flag?(:unix) && Crystal::Interpreter.class.has_method?(:signal_descriptor) %}
+  Crystal::System::Signal.setup_default_handlers
 {% end %}

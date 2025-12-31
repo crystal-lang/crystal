@@ -344,11 +344,13 @@ struct Range(B, E)
   # the method simply calls `random.rand(self)`.
   #
   # Raises `ArgumentError` if `self` is an open range.
-  def sample(random : Random = Random::DEFAULT)
+  def sample(random : Random? = nil)
+    rng = random || Random.thread_default
+
     {% if B < Int && E < Int %}
-      random.rand(self)
+      rng.rand(self)
     {% elsif B < Float && E < Float %}
-      random.rand(self)
+      rng.rand(self)
     {% elsif B.nilable? || E.nilable? %}
       b = self.begin
       e = self.end
@@ -357,7 +359,7 @@ struct Range(B, E)
         raise ArgumentError.new("Can't sample an open range")
       end
 
-      Range.new(b, e, @exclusive).sample(random)
+      Range.new(b, e, @exclusive).sample(rng)
     {% else %}
       super
     {% end %}
@@ -368,7 +370,9 @@ struct Range(B, E)
   # If `self` is not empty and `n` is equal to 1, calls `sample(random)` exactly
   # once. Thus, *random* will be left in a different state compared to the
   # implementation in `Enumerable`.
-  def sample(n : Int, random = Random::DEFAULT)
+  def sample(n : Int, random : Random? = nil)
+    rng = random || Random.thread_default
+
     if self.begin.nil? || self.end.nil?
       raise ArgumentError.new("Can't sample an open range")
     end
@@ -402,11 +406,11 @@ struct Range(B, E)
       # If we must return all values in the range...
       if possible == available
         result = Array(B).new(possible) { |i| min + i }
-        result.shuffle!(random)
+        result.shuffle!(rng)
         return result
       end
 
-      range_sample(n, random)
+      range_sample(n, rng)
     {% elsif B < Float && E < Float %}
       min = self.begin
       max = self.end
@@ -419,13 +423,13 @@ struct Range(B, E)
         return [min]
       end
 
-      range_sample(n, random)
+      range_sample(n, rng)
     {% else %}
       case n
       when 0
         [] of B
       when 1
-        [sample(random)]
+        [sample(rng)]
       else
         super
       end
@@ -480,15 +484,26 @@ struct Range(B, E)
   # (3..8).size  # => 6
   # (3...8).size # => 5
   # ```
-  def size
+  #
+  # Raises `OverflowError` if the difference is bigger than `Int32`.
+  # Raises `ArgumentError` if either `begin` or `end` are `nil`.
+  def size : Int32
     b = self.begin
     e = self.end
 
     # Optimized implementation for int range
     if b.is_a?(Int) && e.is_a?(Int)
-      e -= 1 if @exclusive
-      n = e - b + 1
-      n < 0 ? 0 : n
+      return 0 if e < b
+
+      # Convert `e` to `Int32` in order to ensure that `e &- b` doesn't get
+      # truncated due to the smaller type of `e`.
+      if e.is_a?(UInt8 | Int8 | UInt16 | Int16)
+        e = e.to_i32!
+      end
+
+      diff = (e &- b).to_i32.abs
+      diff &+= 1 unless @exclusive
+      diff
     else
       if b.nil? || e.nil?
         raise ArgumentError.new("Can't calculate size of an open range")

@@ -1,9 +1,6 @@
-require "./event_loop/socket"
+require "../event_loop/socket"
 
 module Crystal::System::Socket
-  # Creates a file descriptor / socket handle
-  # private def create_handle(family, type, protocol, blocking) : Handle
-
   # Initializes a file descriptor / socket handle for use with Crystal Socket
   # private def initialize_handle(fd)
 
@@ -17,7 +14,7 @@ module Crystal::System::Socket
 
   # private def system_listen(backlog)
 
-  private def system_accept
+  private def system_accept : {Handle, Bool}?
     event_loop.accept(self)
   end
 
@@ -61,11 +58,11 @@ module Crystal::System::Socket
 
   # private def system_linger=(val)
 
-  # private def system_getsockopt(fd, optname, optval, level = LibC::SOL_SOCKET, &)
+  # private def system_getsockopt(optname, optval, level = LibC::SOL_SOCKET, &)
 
-  # private def system_getsockopt(fd, optname, optval, level = LibC::SOL_SOCKET)
+  # private def system_getsockopt(optname, optval, level = LibC::SOL_SOCKET)
 
-  # private def system_setsockopt(fd, optname, optval, level = LibC::SOL_SOCKET)
+  # private def system_setsockopt(optname, optval, level = LibC::SOL_SOCKET)
 
   # private def system_blocking?
 
@@ -77,9 +74,11 @@ module Crystal::System::Socket
 
   # private def system_close_on_exec=(arg : Bool)
 
+  # private def system_fcntl(cmd, arg = 0)
+
   # def self.fcntl(fd, cmd, arg = 0)
 
-  # def self.socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol) : {Handle, Handle}
+  # def self.socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol, blocking : Bool) : {Handle, Handle}
 
   private def system_read(slice : Bytes) : Int32
     event_loop.read(self, slice)
@@ -90,6 +89,18 @@ module Crystal::System::Socket
   end
 
   # private def system_close
+
+  # Closes the internal handle without notifying the event loop.
+  # This is directly used after the fork of a process to close the
+  # parent's Crystal::System::Signal.@@pipe reference before re initializing
+  # the event loop. In the case of a fork that will exec there is even
+  # no need to initialize the event loop at all.
+  # Also used in `Socket#finalize`
+  # def socket_close
+
+  private def event_loop? : Crystal::EventLoop::Socket?
+    Crystal::EventLoop.current?
+  end
 
   private def event_loop : Crystal::EventLoop::Socket
     Crystal::EventLoop.current

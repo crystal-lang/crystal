@@ -113,7 +113,7 @@ class CSV
   # rows.next # => ["one", "two"]
   # rows.next # => ["three"]
   # ```
-  def self.each_row(string_or_io : String | IO, separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR)
+  def self.each_row(string_or_io : String | IO, separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR) : Iterator(Array(String))
     Parser.new(string_or_io, separator, quote_char).each_row
   end
 
@@ -174,7 +174,7 @@ class CSV
   # Headers are always stripped.
   #
   # See `CSV.parse` about the *separator* and *quote_char* arguments.
-  def initialize(string_or_io : String | IO, headers = false, @strip = false, separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR)
+  def initialize(string_or_io : String | IO, headers : Bool = false, @strip : Bool = false, separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR)
     @parser = Parser.new(string_or_io, separator, quote_char)
     if headers
       headers = @parser.next_row || ([] of String)

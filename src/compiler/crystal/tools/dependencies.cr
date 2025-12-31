@@ -8,8 +8,8 @@ class Crystal::Command
 
     dependency_printer = DependencyPrinter.create(STDOUT, format: DependencyPrinter::Format.parse(config.output_format), verbose: config.verbose)
 
-    dependency_printer.includes.concat config.includes.map { |path| ::Path[path].expand.to_s }
-    dependency_printer.excludes.concat config.excludes.map { |path| ::Path[path].expand.to_s }
+    dependency_printer.includes.concat config.includes.map { |path| ::Path[path].expand.to_posix.to_s }
+    dependency_printer.excludes.concat config.excludes.map { |path| ::Path[path].expand.to_posix.to_s }
     config.compiler.dependency_printer = dependency_printer
 
     dependency_printer.start_format
@@ -124,7 +124,7 @@ module Crystal
       end
 
       private def print_indent
-        @io.print "  " * @stack.size unless @stack.empty?
+        @io.print "  " * @stack.size unless @stack.empty? || @format.flat?
       end
     end
 

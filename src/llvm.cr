@@ -2,85 +2,64 @@ require "./llvm/**"
 require "c/string"
 
 module LLVM
-  @@initialized = false
-
-  def self.init_x86 : Nil
-    return if @@initialized_x86
-    @@initialized_x86 = true
-
-    {% if LibLLVM::BUILT_TARGETS.includes?(:x86) %}
-      LibLLVM.initialize_x86_target_info
-      LibLLVM.initialize_x86_target
-      LibLLVM.initialize_x86_target_mc
-      LibLLVM.initialize_x86_asm_printer
-      LibLLVM.initialize_x86_asm_parser
-      LibLLVM.link_in_mc_jit
+  # Returns the runtime version of LLVM.
+  #
+  # Starting with LLVM 16, this method returns the version as reported by
+  # `LLVMGetVersion` at runtime. Older versions of LLVM do not expose this
+  # information, so the value falls back to `LibLLVM::VERSION` which is
+  # determined at compile time and might slightly be out of sync to the
+  # dynamic library loaded at runtime.
+  def self.version
+    {% if LibLLVM.has_method?(:get_version) %}
+      LibLLVM.get_version(out major, out minor, out patch)
+      "#{major}.#{minor}.#{patch}"
     {% else %}
-      raise "ERROR: LLVM was built without X86 target"
+      LibLLVM::VERSION
     {% end %}
   end
 
-  def self.init_aarch64 : Nil
-    return if @@initialized_aarch64
-    @@initialized_aarch64 = true
+  {% for target in LibLLVM::ALL_TARGETS %}
+    {% name = target.downcase.id %}
+    @@initialized_{{name}} = Atomic(Bool).new(false)
 
-    {% if LibLLVM::BUILT_TARGETS.includes?(:aarch64) %}
-      LibLLVM.initialize_aarch64_target_info
-      LibLLVM.initialize_aarch64_target
-      LibLLVM.initialize_aarch64_target_mc
-      LibLLVM.initialize_aarch64_asm_printer
-      LibLLVM.initialize_aarch64_asm_parser
-      LibLLVM.link_in_mc_jit
+    def self.init_{{name}} : Nil
+      return if @@initialized_{{name}}.swap(true)
+
+      \{% if LibLLVM::BUILT_TARGETS.includes?({{name.symbolize}}) %}
+        LibLLVM.initialize_{{name}}_target_info
+        LibLLVM.initialize_{{name}}_target
+        LibLLVM.initialize_{{name}}_target_mc
+        LibLLVM.initialize_{{name}}_asm_printer
+        LibLLVM.initialize_{{name}}_asm_parser
+        LibLLVM.link_in_mc_jit
+      \{% else %}
+        raise "ERROR: LLVM was built without {{target.id}} target"
+      \{% end %}
+    end
+  {% end %}
+
+  def self.init_native_target : Nil
+    {% if flag?(:i386) || flag?(:x86_64) %}
+      init_x86
+    {% elsif flag?(:aarch64) %}
+      init_aarch64
+    {% elsif flag?(:arm) %}
+      init_arm
+    {% elsif flag?(:wasm32) %}
+      init_webassembly
+    {% elsif flag?(:avr) %}
+      init_avr
     {% else %}
-      raise "ERROR: LLVM was built without AArch64 target"
+      {% raise "Unsupported platform" %}
     {% end %}
   end
 
-  def self.init_arm : Nil
-    return if @@initialized_arm
-    @@initialized_arm = true
-
-    {% if LibLLVM::BUILT_TARGETS.includes?(:arm) %}
-      LibLLVM.initialize_arm_target_info
-      LibLLVM.initialize_arm_target
-      LibLLVM.initialize_arm_target_mc
-      LibLLVM.initialize_arm_asm_printer
-      LibLLVM.initialize_arm_asm_parser
-      LibLLVM.link_in_mc_jit
-    {% else %}
-      raise "ERROR: LLVM was built without ARM target"
-    {% end %}
-  end
-
-  def self.init_avr : Nil
-    return if @@initialized_avr
-    @@initialized_avr = true
-
-    {% if LibLLVM::BUILT_TARGETS.includes?(:avr) %}
-      LibLLVM.initialize_avr_target_info
-      LibLLVM.initialize_avr_target
-      LibLLVM.initialize_avr_target_mc
-      LibLLVM.initialize_avr_asm_printer
-      LibLLVM.initialize_avr_asm_parser
-      LibLLVM.link_in_mc_jit
-    {% else %}
-      raise "ERROR: LLVM was built without AVR target"
-    {% end %}
-  end
-
-  def self.init_webassembly : Nil
-    return if @@initialized_webassembly
-    @@initialized_webassembly = true
-
-    {% if LibLLVM::BUILT_TARGETS.includes?(:webassembly) %}
-      LibLLVM.initialize_webassembly_target_info
-      LibLLVM.initialize_webassembly_target
-      LibLLVM.initialize_webassembly_target_mc
-      LibLLVM.initialize_webassembly_asm_printer
-      LibLLVM.initialize_webassembly_asm_parser
-      LibLLVM.link_in_mc_jit
-    {% else %}
-      raise "ERROR: LLVM was built without WebAssembly target"
+  def self.init_all_targets : Nil
+    {% for target in LibLLVM::ALL_TARGETS %}
+      {% name = target.downcase.id %}
+      \{% if LibLLVM::BUILT_TARGETS.includes?({{name.symbolize}}) %}
+        init_{{name}}
+      \{% end %}
     {% end %}
   end
 
@@ -138,6 +117,18 @@ module LLVM
     string = String.new(chars)
     LibLLVM.dispose_message(chars)
     string
+  end
+
+  def self.parse_command_line_options(options : Enumerable(String), overview : String = "") : Nil
+    c_strs = options.to_a(&.to_unsafe)
+    LibLLVM.parse_command_line_options(c_strs.size, c_strs, overview)
+  end
+
+  protected def self.assert(error : LibLLVM::ErrorRef)
+    if error
+      chars = LibLLVM.get_error_message(error)
+      raise String.new(chars).tap { LibLLVM.dispose_error_message(chars) }
+    end
   end
 
   {% unless LibLLVM::IS_LT_130 %}

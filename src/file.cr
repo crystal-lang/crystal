@@ -2,6 +2,7 @@ class File < IO::FileDescriptor
 end
 
 require "./file/error"
+require "./file/match"
 require "crystal/system/file"
 
 # A `File` instance represents a file entry in the local file system and allows using it as an `IO`.
@@ -39,7 +40,7 @@ require "crystal/system/file"
 # tempfile = File.tempfile("foo")
 #
 # File.size(tempfile.path)                   # => 6
-# File.info(tempfile.path).modification_time # => 2015-10-20 13:11:12 UTC
+# File.info(tempfile.path).modification_time # => 2015-10-20 13:11:12Z
 # File.exists?(tempfile.path)                # => true
 # File.read_lines(tempfile.path)             # => ["foobar"]
 # ```
@@ -124,56 +125,56 @@ class File < IO::FileDescriptor
 
   include Crystal::System::File
 
-  # This constructor is provided for subclasses to be able to initialize an
-  # `IO::FileDescriptor` with a *path* and *fd*.
-  private def initialize(@path, fd : Int, blocking = false, encoding = nil, invalid = nil)
-    self.set_encoding(encoding, invalid: invalid) if encoding
-    super(fd, blocking)
+  # This constructor is for constructors to be able to initialize a `File` with
+  # a *path* and *fd*. The *blocking* param is informational and must reflect
+  # the non/blocking state of the underlying fd.
+  private def initialize(@path, fd : Int, mode = "", blocking = nil, encoding = nil, invalid = nil)
+    super(handle: fd)
+    system_init(mode, blocking)
+    set_encoding(encoding, invalid: invalid) if encoding
   end
 
-  # :nodoc:
-  def self.from_fd(path : String, fd : Int, *, blocking = false, encoding = nil, invalid = nil)
-    new(path, fd, blocking: blocking, encoding: encoding, invalid: invalid)
-  end
+  {% begin %}
+    # Opens the file named by *filename*.
+    #
+    # *mode* must be one of the following file open modes:
+    #
+    # ```text
+    # Mode       | Description
+    # -----------+------------------------------------------------------
+    # r rb       | Read-only, starts at the beginning of the file.
+    # r+ r+b rb+ | Read-write, starts at the beginning of the file.
+    # w wb       | Write-only, truncates existing file to zero length or
+    #            | creates a new file if the file doesn't exist.
+    # w+ w+b wb+ | Read-write, truncates existing file to zero length or
+    #            | creates a new file if the file doesn't exist.
+    # a ab       | Write-only, all writes seek to the end of the file,
+    #            | creates a new file if the file doesn't exist.
+    # a+ a+b ab+ | Read-write, all writes seek to the end of the file,
+    #            | creates a new file if the file doesn't exist.
+    # ```
+    #
+    # Line endings are preserved on all platforms. The `b` mode flag has no
+    # effect; it is provided only for POSIX compatibility.
+    #
+    # NOTE: The *blocking* arg is deprecated since Crystal 1.17. It used to be
+    # true by default to denote a regular disk file (always ready in system event
+    # loops) and could be set to false when the file was known to be a fifo, pipe,
+    # or character device (for example `/dev/tty`). The event loop now chooses
+    # the appropriate blocking mode automatically and there are no reasons to
+    # change it anymore.
+    #
+    # NOTE: On macOS files are always opened in blocking mode because non-blocking
+    # FIFO files don't work — the OS exhibits issues with readiness notifications.
+    def self.new(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated] {% end %} blocking = nil)
+      new_internal filename, mode, perm, encoding, invalid, blocking
+    end
+  {% end %}
 
-  # Opens the file named by *filename*.
-  #
-  # *mode* must be one of the following file open modes:
-  #
-  # ```text
-  # Mode       | Description
-  # -----------+------------------------------------------------------
-  # r rb       | Read-only, starts at the beginning of the file.
-  # r+ r+b rb+ | Read-write, starts at the beginning of the file.
-  # w wb       | Write-only, truncates existing file to zero length or
-  #            | creates a new file if the file doesn't exist.
-  # w+ w+b wb+ | Read-write, truncates existing file to zero length or
-  #            | creates a new file if the file doesn't exist.
-  # a ab       | Write-only, all writes seek to the end of the file,
-  #            | creates a new file if the file doesn't exist.
-  # a+ a+b ab+ | Read-write, all writes seek to the end of the file,
-  #            | creates a new file if the file doesn't exist.
-  # ```
-  #
-  # Line endings are preserved on all platforms. The `b` mode flag has no
-  # effect; it is provided only for POSIX compatibility.
-  #
-  # *blocking* is set to `true` by default because system event queues (e.g.
-  # epoll, kqueue) will always report the file descriptor of regular disk files
-  # as ready.
-  #
-  # *blocking* must be set to `false` on POSIX targets when the file to open
-  # isn't a regular file but a character device (e.g. `/dev/tty`) or fifo. These
-  # files depend on another process or thread to also be reading or writing, and
-  # system event queues will properly report readyness.
-  #
-  # *blocking* may also be set to `nil` in which case the blocking or
-  # non-blocking flag will be determined automatically, at the expense of an
-  # additional syscall.
-  def self.new(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, blocking = true)
+  protected def self.new_internal(filename, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, blocking = nil)
     filename = filename.to_s
-    fd = Crystal::System::File.open(filename, mode, perm: perm)
-    new(filename, fd, blocking: blocking, encoding: encoding, invalid: invalid)
+    fd, blocking = Crystal::System::File.open(filename, mode, perm: perm, blocking: blocking)
+    new(filename, fd, mode, blocking, encoding, invalid)
   end
 
   getter path : String
@@ -207,7 +208,7 @@ class File < IO::FileDescriptor
   # ```
   # File.write("foo", "foo")
   # File.info("foo").size              # => 3
-  # File.info("foo").modification_time # => 2015-09-23 06:24:19 UTC
+  # File.info("foo").modification_time # => 2015-09-23 06:24:19Z
   #
   # File.symlink("foo", "bar")
   # File.info("bar", follow_symlinks: false).type.symlink? # => true
@@ -248,8 +249,8 @@ class File < IO::FileDescriptor
   # File.same_content?("file.cr", "bar.cr") # => true
   # ```
   def self.same_content?(path1 : Path | String, path2 : Path | String) : Bool
-    open(path1, "rb") do |file1|
-      open(path2, "rb") do |file2|
+    open_internal(path1, "rb") do |file1|
+      open_internal(path2, "rb") do |file2|
         return false unless file1.size == file2.size
 
         same_content?(file1, file2)
@@ -467,227 +468,6 @@ class File < IO::FileDescriptor
     Path.new(path).expand(dir || Dir.current, home: home).to_s
   end
 
-  class BadPatternError < Exception
-  end
-
-  # Matches *path* against *pattern*.
-  #
-  # The pattern syntax is similar to shell filename globbing. It may contain the following metacharacters:
-  #
-  # * `*` matches an unlimited number of arbitrary characters, excluding any directory separators.
-  #   * `"*"` matches all regular files.
-  #   * `"c*"` matches all files beginning with `c`.
-  #   * `"*c"` matches all files ending with `c`.
-  #   * `"*c*"` matches all files that have `c` in them (including at the beginning or end).
-  # * `**` matches directories recursively if followed by `/`.
-  #   If this path segment contains any other characters, it is the same as the usual `*`.
-  # * `?` matches one arbitrary character, excluding any directory separators.
-  # * character sets:
-  #   * `[abc]` matches any one of these characters.
-  #   * `[^abc]` matches any one character other than these.
-  #   * `[a-z]` matches any one character in the range.
-  # * `{a,b}` matches subpattern `a` or `b`.
-  # * `\\` escapes the next character.
-  #
-  # If *path* is a `Path`, all directory separators supported by *path* are
-  # recognized, according to the path's kind. If *path* is a `String`, only `/`
-  # is considered a directory separator.
-  #
-  # NOTE: Only `/` in *pattern* matches directory separators in *path*.
-  def self.match?(pattern : String, path : Path | String) : Bool
-    expanded_patterns = [] of String
-    File.expand_brace_pattern(pattern, expanded_patterns)
-
-    if path.is_a?(Path)
-      separators = Path.separators(path.@kind)
-      path = path.to_s
-    else
-      separators = Path.separators(Path::Kind::POSIX)
-    end
-
-    expanded_patterns.each do |expanded_pattern|
-      return true if match_single_pattern(expanded_pattern, path, separators)
-    end
-    false
-  end
-
-  private def self.match_single_pattern(pattern : String, path : String, separators)
-    # linear-time algorithm adapted from https://research.swtch.com/glob
-    preader = Char::Reader.new(pattern)
-    sreader = Char::Reader.new(path)
-    next_ppos = 0
-    next_spos = 0
-    strlen = path.bytesize
-    escaped = false
-
-    while true
-      pnext = preader.has_next?
-      snext = sreader.has_next?
-
-      return true unless pnext || snext
-
-      if pnext
-        pchar = preader.current_char
-        char = sreader.current_char
-
-        case {pchar, escaped}
-        when {'\\', false}
-          escaped = true
-          preader.next_char
-          next
-        when {'?', false}
-          if snext && !char.in?(separators)
-            preader.next_char
-            sreader.next_char
-            next
-          end
-        when {'*', false}
-          double_star = preader.peek_next_char == '*'
-          if char.in?(separators) && !double_star
-            preader.next_char
-            next_spos = 0
-            next
-          else
-            next_ppos = preader.pos
-            next_spos = sreader.pos + sreader.current_char_width
-            preader.next_char
-            preader.next_char if double_star
-            next
-          end
-        when {'[', false}
-          pnext = preader.has_next?
-
-          character_matched = false
-          character_set_open = true
-          escaped = false
-          inverted = false
-          case preader.peek_next_char
-          when '^'
-            inverted = true
-            preader.next_char
-          when ']'
-            raise BadPatternError.new "Invalid character set: empty character set"
-          else
-            # Nothing
-            # TODO: check if this branch is fine
-          end
-
-          while pnext
-            pchar = preader.next_char
-            case {pchar, escaped}
-            when {'\\', false}
-              escaped = true
-            when {']', false}
-              character_set_open = false
-              break
-            when {'-', false}
-              raise BadPatternError.new "Invalid character set: missing range start"
-            else
-              escaped = false
-              if preader.has_next? && preader.peek_next_char == '-'
-                preader.next_char
-                range_end = preader.next_char
-                case range_end
-                when ']'
-                  raise BadPatternError.new "Invalid character set: missing range end"
-                when '\\'
-                  range_end = preader.next_char
-                else
-                  # Nothing
-                  # TODO: check if this branch is fine
-                end
-                range = (pchar..range_end)
-                character_matched = true if range.includes?(char)
-              elsif char == pchar
-                character_matched = true
-              end
-            end
-            pnext = preader.has_next?
-            false
-          end
-          raise BadPatternError.new "Invalid character set: unterminated character set" if character_set_open
-
-          if character_matched != inverted && snext
-            preader.next_char
-            sreader.next_char
-            next
-          end
-        else
-          escaped = false
-
-          if snext && sreader.current_char == pchar
-            preader.next_char
-            sreader.next_char
-            next
-          end
-        end
-      end
-
-      if 0 < next_spos <= strlen
-        preader.pos = next_ppos
-        sreader.pos = next_spos
-        next
-      end
-
-      raise BadPatternError.new "Empty escape character" if escaped
-
-      return false
-    end
-  end
-
-  # :nodoc:
-  def self.expand_brace_pattern(pattern : String, expanded) : Array(String)?
-    reader = Char::Reader.new(pattern)
-
-    lbrace = nil
-    rbrace = nil
-    alt_start = nil
-
-    alternatives = [] of String
-
-    nest = 0
-    escaped = false
-    reader.each do |char|
-      case {char, escaped}
-      when {'{', false}
-        lbrace = reader.pos if nest == 0
-        nest += 1
-      when {'}', false}
-        nest -= 1
-
-        if nest == 0
-          rbrace = reader.pos
-          start = (alt_start || lbrace).not_nil! + 1
-          alternatives << pattern.byte_slice(start, reader.pos - start)
-          break
-        end
-      when {',', false}
-        if nest == 1
-          start = (alt_start || lbrace).not_nil! + 1
-          alternatives << pattern.byte_slice(start, reader.pos - start)
-          alt_start = reader.pos
-        end
-      when {'\\', false}
-        escaped = true
-      else
-        escaped = false
-      end
-    end
-
-    if lbrace && rbrace
-      front = pattern.byte_slice(0, lbrace)
-      back = pattern.byte_slice(rbrace + 1)
-
-      alternatives.each do |alt|
-        brace_pattern = {front, alt, back}.join
-
-        expand_brace_pattern brace_pattern, expanded
-      end
-    else
-      expanded << pattern
-    end
-  end
-
   # Resolves the real path of *path* by following symbolic links.
   def self.realpath(path : Path | String) : String
     Crystal::System::File.realpath(path.to_s)
@@ -719,26 +499,41 @@ class File < IO::FileDescriptor
     end
   end
 
-  # Returns value of a symbolic link .
+  # Returns the target of a symbolic link.
   def self.readlink(path : Path | String) : String
-    Crystal::System::File.readlink(path.to_s)
+    Crystal::System::File.readlink(path.to_s) { }
   end
 
-  # Opens the file named by *filename*. If a file is being created, its initial
-  # permissions may be set using the *perm* parameter.
+  # Returns the target of a symbolic link.
   #
-  # See `self.new` for what *mode* can be.
-  def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, blocking = true) : self
-    new filename, mode, perm, encoding, invalid, blocking
+  # Returns `nil` if *path* does not exist or is not a symbolic link.
+  def self.readlink?(path : Path | String) : String?
+    Crystal::System::File.readlink(path.to_s) { return nil }
   end
 
-  # Opens the file named by *filename*. If a file is being created, its initial
-  # permissions may be set using the *perm* parameter. Then given block will be passed the opened
-  # file as an argument, the file will be automatically closed when the block returns.
-  #
-  # See `self.new` for what *mode* can be.
-  def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, blocking = true, &)
-    file = new filename, mode, perm, encoding, invalid, blocking
+  {% begin %}
+    # Opens the file named by *filename*. If a file is being created, its initial
+    # permissions may be set using the *perm* parameter.
+    #
+    # See `self.new` for what *mode* can be.
+    def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated] {% end %} blocking = nil) : self
+      new_internal(filename.to_s, mode, perm, encoding, invalid, blocking)
+    end
+  {% end %}
+
+  {% begin %}
+    # Opens the file named by *filename*. If a file is being created, its initial
+    # permissions may be set using the *perm* parameter. Then given block will be passed the opened
+    # file as an argument, the file will be automatically closed when the block returns.
+    #
+    # See `self.new` for what *mode* can be.
+    def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated] {% end %} blocking = nil, &)
+      open_internal(filename.to_s, mode, perm, encoding, invalid, blocking) { |file| yield file }
+    end
+  {% end %}
+
+  protected def self.open_internal(filename, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, blocking = nil, &)
+    file = new_internal(filename, mode, perm, encoding, invalid, blocking)
     begin
       yield file
     ensure
@@ -746,94 +541,108 @@ class File < IO::FileDescriptor
     end
   end
 
-  # Returns the content of *filename* as a string.
-  #
-  # ```
-  # File.write("bar", "foo")
-  # File.read("bar") # => "foo"
-  # ```
-  def self.read(filename : Path | String, encoding = nil, invalid = nil, blocking = true) : String
-    open(filename, "r", blocking: blocking) do |file|
-      if encoding
-        file.set_encoding(encoding, invalid: invalid)
-        file.gets_to_end
-      else
-        # We try to read a string with an initialize capacity
-        # equal to the file's size, but the size might not be
-        # correct or even be zero (for example for /proc files)
-        size = file.size.to_i
-        size = 256 if size == 0
-        String.build(size) do |io|
-          IO.copy(file, io)
+  {% begin %}
+    # Returns the content of *filename* as a string.
+    #
+    # Raises `File::Error` if the file cannot be read.
+    #
+    # ```
+    # File.write("bar", "foo")
+    # File.read("bar") # => "foo"
+    #
+    # File.read("non-existent") # raises File::NotFoundError
+    # ```
+    def self.read(filename : Path | String, encoding = nil, invalid = nil, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated] {% end %} blocking = nil) : String
+      open_internal(filename, "r", blocking: blocking) do |file|
+        if encoding
+          file.set_encoding(encoding, invalid: invalid)
+          file.gets_to_end
+        else
+          # We try to read a string with an initialize capacity
+          # equal to the file's size, but the size might not be
+          # correct or even be zero (for example for /proc files)
+          size = file.size.to_i
+          size = 256 if size == 0
+          String.build(size) do |io|
+            IO.copy(file, io)
+          end
         end
       end
     end
-  end
+  {% end %}
 
-  # Yields each line in *filename* to the given block.
-  #
-  # ```
-  # File.write("foobar", "foo\nbar")
-  #
-  # array = [] of String
-  # File.each_line("foobar") do |line|
-  #   array << line
-  # end
-  # array # => ["foo", "bar"]
-  # ```
-  def self.each_line(filename : Path | String, encoding = nil, invalid = nil, chomp = true, blocking = true, &)
-    open(filename, "r", encoding: encoding, invalid: invalid, blocking: blocking) do |file|
-      file.each_line(chomp: chomp) do |line|
-        yield line
+  {% begin %}
+    # Yields each line in *filename* to the given block.
+    #
+    # ```
+    # File.write("foobar", "foo\nbar")
+    #
+    # array = [] of String
+    # File.each_line("foobar") do |line|
+    #   array << line
+    # end
+    # array # => ["foo", "bar"]
+    # ```
+    def self.each_line(filename : Path | String, encoding = nil, invalid = nil, chomp = true, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated] {% end %} blocking = nil, &)
+      open_internal(filename, "r", encoding: encoding, invalid: invalid, blocking: blocking) do |file|
+        file.each_line(chomp: chomp) do |line|
+          yield line
+        end
       end
     end
-  end
+  {% end %}
 
-  # Returns all lines in *filename* as an array of strings.
-  #
-  # ```
-  # File.write("foobar", "foo\nbar")
-  # File.read_lines("foobar") # => ["foo", "bar"]
-  # ```
-  def self.read_lines(filename : Path | String, encoding = nil, invalid = nil, chomp = true, blocking = true) : Array(String)
-    lines = [] of String
-    each_line(filename, encoding: encoding, invalid: invalid, chomp: chomp, blocking: blocking) do |line|
-      lines << line
+  {% begin %}
+    # Returns all lines in *filename* as an array of strings.
+    #
+    # ```
+    # File.write("foobar", "foo\nbar")
+    # File.read_lines("foobar") # => ["foo", "bar"]
+    # ```
+    def self.read_lines(filename : Path | String, encoding = nil, invalid = nil, chomp = true, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated] {% end %} blocking = nil) : Array(String)
+      lines = [] of String
+      open_internal(filename, "r", encoding: encoding, invalid: invalid, blocking: blocking) do |file|
+        file.each_line(chomp: chomp) do |line|
+          lines << line
+        end
+      end
+      lines
     end
-    lines
-  end
+  {% end %}
 
-  # Writes the given *content* to *filename*.
-  #
-  # By default, an existing file will be overwritten.
-  #
-  # *filename* will be created if it does not already exist.
-  #
-  # ```
-  # File.write("foo", "bar")
-  # File.write("foo", "baz", mode: "a")
-  # ```
-  #
-  # NOTE: If the content is a `Slice(UInt8)`, those bytes will be written.
-  # If it's an `IO`, all bytes from the `IO` will be written.
-  # Otherwise, the string representation of *content* will be written
-  # (the result of invoking `to_s` on *content*).
-  #
-  # See `self.new` for what *mode* can be.
-  def self.write(filename : Path | String, content, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, mode = "w", blocking = true)
-    open(filename, mode, perm, encoding: encoding, invalid: invalid, blocking: blocking) do |file|
-      case content
-      when Bytes
-        file.sync = true
-        file.write(content)
-      when IO
-        file.sync = true
-        IO.copy(content, file)
-      else
-        file.print(content)
+  {% begin %}
+    # Writes the given *content* to *filename*.
+    #
+    # By default, an existing file will be overwritten.
+    #
+    # *filename* will be created if it does not already exist.
+    #
+    # ```
+    # File.write("foo", "bar")
+    # File.write("foo", "baz", mode: "a")
+    # ```
+    #
+    # NOTE: If the content is a `Slice(UInt8)`, those bytes will be written.
+    # If it's an `IO`, all bytes from the `IO` will be written.
+    # Otherwise, the string representation of *content* will be written
+    # (the result of invoking `to_s` on *content*).
+    #
+    # See `self.new` for what *mode* can be.
+    def self.write(filename : Path | String, content, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, mode = "w", {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated] {% end %} blocking = nil)
+      open_internal(filename, mode, perm, encoding: encoding, invalid: invalid, blocking: blocking) do |file|
+        case content
+        when Bytes
+          file.sync = true
+          file.write(content)
+        when IO
+          file.sync = true
+          IO.copy(content, file)
+        else
+          file.print(content)
+        end
       end
     end
-  end
+  {% end %}
 
   # Copies the file *src* to the file *dst*.
   # Permission bits are copied too.
@@ -845,14 +654,18 @@ class File < IO::FileDescriptor
   # File.info("afile_copy").permissions.value # => 0o600
   # ```
   def self.copy(src : String | Path, dst : String | Path) : Nil
-    open(src) do |s|
-      open(dst, "wb") do |d|
+    open_internal(src) do |s|
+      permissions = s.info.permissions
+      open_internal(dst, "wb", perm: permissions) do |d|
+        # If permissions don't match, we opened a pre-existing file with
+        # different permissions and need to change them explicitly.
+        # The permission change does not have any effect on the open file descriptor d.
+        if d.info.permissions != permissions
+          d.chmod(permissions)
+        end
+
         # TODO use sendfile or copy_file_range syscall. See #8926, #8919
         IO.copy(s, d)
-        d.flush # need to flush in case permissions are read-only
-
-        # Set the permissions after the content is written in case src permissions is read-only
-        d.chmod(s.info.permissions)
       end
     end
   end
@@ -915,7 +728,7 @@ class File < IO::FileDescriptor
   #
   # Use `#touch` if the `File` is already open.
   def self.touch(filename : Path | String, time : Time = Time.utc) : Nil
-    open(filename, "a") { } unless exists?(filename)
+    open_internal(filename, "a") { } unless exists?(filename)
     utime time, time, filename
   end
 
@@ -965,7 +778,7 @@ class File < IO::FileDescriptor
   # file.chown(gid: 100)
   # ```
   def chown(uid : Int = -1, gid : Int = -1) : Nil
-    Crystal::System::File.fchown(@path, fd, uid, gid)
+    system_chown(uid, gid)
   end
 
   # Changes the permissions of the specified file.
@@ -978,12 +791,12 @@ class File < IO::FileDescriptor
   # file.info.permissions.value # => 0o700
   # ```
   def chmod(permissions : Int | Permissions) : Nil
-    system_chmod(@path, permissions)
+    system_chmod(permissions)
   end
 
   # Sets the access and modification times
   def utime(atime : Time, mtime : Time) : Nil
-    system_utime(atime, mtime, @path)
+    system_utime(atime, mtime)
   end
 
   # Attempts to set the access and modification times

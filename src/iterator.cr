@@ -144,6 +144,19 @@ module Iterator(T)
     Stop::INSTANCE
   end
 
+  # Returns an empty iterator.
+  def self.empty
+    EmptyIterator(T).new
+  end
+
+  private struct EmptyIterator(T)
+    include Iterator(T)
+
+    def next
+      stop
+    end
+  end
+
   def self.of(element : T)
     SingletonIterator(T).new(element)
   end
@@ -1444,13 +1457,13 @@ module Iterator(T)
     def next
       {% begin %}
         {% for i in 0...Is.size %}
-          %v{i} = @iterators[{{ i }}].next
-          return stop if %v{i}.is_a?(Stop)
+          %value{i} = @iterators[{{ i }}].next
+          return stop if %value{i}.is_a?(Stop)
         {% end %}
 
         Tuple.new(
           {% for i in 0...Is.size %}
-            %v{i},
+            %value{i},
           {% end %}
         )
       {% end %}

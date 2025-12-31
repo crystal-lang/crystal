@@ -35,7 +35,7 @@ struct BigInt < Int
   # BigInt.new("123_456_789_123_456_789_123_456_789")  # => 123456789123456789123456789
   # BigInt.new("1234567890ABCDEF", base: 16)           # => 1311768467294899695
   # ```
-  def initialize(str : String, base = 10)
+  def initialize(str : String, base : Int32 = 10)
     # Strip leading '+' char to smooth out cases with strings like "+123"
     str = str.lchop('+')
     # Strip '_' to make it compatible with int literals like "1_000_000"
@@ -47,7 +47,7 @@ struct BigInt < Int
   end
 
   # Creates a `BigInt` from the given *num*.
-  def self.new(num : Int::Primitive)
+  def self.new(num : Int::Primitive) : self
     Int.primitive_si_ui_check(num) do |si, ui, _|
       {
         si: begin
@@ -110,23 +110,23 @@ struct BigInt < Int
   end
 
   # :ditto:
-  def self.new(num : BigFloat)
+  def self.new(num : BigFloat) : self
     num.to_big_i
   end
 
   # :ditto:
-  def self.new(num : BigDecimal)
+  def self.new(num : BigDecimal) : self
     num.to_big_i
   end
 
   # :ditto:
-  def self.new(num : BigRational)
+  def self.new(num : BigRational) : self
     num.to_big_i
   end
 
   # Returns *num*. Useful for generic code that does `T.new(...)` with `T`
   # being a `Number`.
-  def self.new(num : BigInt)
+  def self.new(num : BigInt) : self
     num
   end
 
@@ -139,6 +139,63 @@ struct BigInt < Int
     LibGMP.init(out mpz)
     yield pointerof(mpz)
     new(mpz)
+  end
+
+  # Returns a number for given *digits* and *base*. The digits are expected as
+  # an `Enumerable` with the least significant digit as the first element.
+  #
+  # *base* must not be less than 2.
+  #
+  # All digits must be within `0...base`.
+  def self.from_digits(digits : Enumerable(Int), base : Int = 10) : self
+    if base < 2
+      raise ArgumentError.new("Invalid base #{base}")
+    end
+
+    new do |mpz|
+      multiplier = new(1)
+      first_element = true
+
+      digits.each do |digit|
+        if digit < 0
+          raise ArgumentError.new("Invalid digit #{digit}")
+        end
+
+        if digit >= base
+          raise ArgumentError.new("Invalid digit #{digit} for base #{base}")
+        end
+
+        # don't calculate multiplier upfront for the next digit
+        # to avoid overflow at the last iteration
+        if first_element
+          first_element = false
+
+          # mpz = digit
+          Int.primitive_ui_check(digit) do |ui, _, big_i|
+            {
+              ui:    LibGMP.set_ui(mpz, {{ ui }}),
+              big_i: LibGMP.set(mpz, {{ big_i }}),
+            }
+          end
+        else
+          # multiplier *= base
+          Int.primitive_ui_check(base) do |ui, _, big_i|
+            {
+              ui:    LibGMP.mul_ui(multiplier, multiplier, {{ ui }}),
+              big_i: LibGMP.mul(multiplier, multiplier, {{ big_i }}),
+            }
+          end
+
+          # mpz += base * digits
+          Int.primitive_ui_check(digit) do |ui, _, big_i|
+            {
+              ui:    LibGMP.addmul_ui(mpz, multiplier, {{ ui }}),
+              big_i: LibGMP.addmul(mpz, multiplier, {{ big_i }}),
+            }
+          end
+        end
+      end
+    end
   end
 
   def <=>(other : BigInt)
@@ -155,7 +212,7 @@ struct BigInt < Int
     end
   end
 
-  def <=>(other : Float::Primitive)
+  def <=>(other : Float::Primitive) : Int32?
     LibGMP.cmp_d(mpz, other) unless other.nan?
   end
 
@@ -338,7 +395,7 @@ struct BigInt < Int
     {the_q, the_r}
   end
 
-  def unsafe_truncated_divmod(number : BigInt)
+  def unsafe_truncated_divmod(number : BigInt) : Tuple(BigInt, BigInt)
     the_q = BigInt.new
     the_r = BigInt.new { |r| LibGMP.tdiv_qr(the_q, r, self, number) }
     {the_q, the_r}
@@ -385,7 +442,7 @@ struct BigInt < Int
     BigInt.new { |mpz| LibGMP.com(mpz, self) }
   end
 
-  def bit(bit : Int)
+  def bit(bit : Int) : Int32
     return 0 if bit < 0
     return self < 0 ? 1 : 0 if bit > LibGMP::BitcntT::MAX
     LibGMP.tstbit(self, LibGMP::BitcntT.new!(bit))
@@ -659,7 +716,7 @@ struct BigInt < Int
   {% for n in [8, 16, 32, 64, 128] %}
     def to_i{{n}} : Int{{n}}
       \{% if Int{{n}} == LibGMP::SI %}
-        LibGMP.{{ flag?(:win32) ? "fits_si_p".id : "fits_slong_p".id }}(self) != 0 ? LibGMP.get_si(self) : raise OverflowError.new
+        LibGMP.{{ flag?(:win32) && !flag?(:gnu) ? "fits_si_p".id : "fits_slong_p".id }}(self) != 0 ? LibGMP.get_si(self) : raise OverflowError.new
       \{% elsif Int{{n}}::MAX.is_a?(NumberLiteral) && Int{{n}}::MAX < LibGMP::SI::MAX %}
         LibGMP::SI.new(self).to_i{{n}}
       \{% else %}
@@ -669,7 +726,7 @@ struct BigInt < Int
 
     def to_u{{n}} : UInt{{n}}
       \{% if UInt{{n}} == LibGMP::UI %}
-        LibGMP.{{ flag?(:win32) ? "fits_ui_p".id : "fits_ulong_p".id }}(self) != 0 ? LibGMP.get_ui(self) : raise OverflowError.new
+        LibGMP.{{ flag?(:win32) && !flag?(:gnu) ? "fits_ui_p".id : "fits_ulong_p".id }}(self) != 0 ? LibGMP.get_ui(self) : raise OverflowError.new
       \{% elsif UInt{{n}}::MAX.is_a?(NumberLiteral) && UInt{{n}}::MAX < LibGMP::UI::MAX %}
         LibGMP::UI.new(self).to_u{{n}}
       \{% else %}
@@ -725,7 +782,6 @@ struct BigInt < Int
     end
 
     x = T.zero
-    preshift_limit = T::MAX >> bits_per_limb
     limbs.reverse_each do |limb|
       x <<= bits_per_limb
       x |= limb
@@ -792,7 +848,7 @@ struct BigInt < Int
     BigRational.new(self)
   end
 
-  def clone
+  def clone : BigInt
     self
   end
 
@@ -806,7 +862,7 @@ struct BigInt < Int
     pointerof(@mpz)
   end
 
-  def to_unsafe
+  def to_unsafe : Pointer(LibGMP::MPZ)
     mpz
   end
 end
@@ -901,7 +957,7 @@ class String
   #
   # "3a060dbf8d1a5ac3e67bc8f18843fc48".to_big_i(16)
   # ```
-  def to_big_i(base = 10) : BigInt
+  def to_big_i(base : Int32 = 10) : BigInt
     BigInt.new(self, base)
   end
 end
@@ -919,7 +975,7 @@ module Math
   end
 
   # Calculates the integer square root of *value*.
-  def isqrt(value : BigInt)
+  def isqrt(value : BigInt) : BigInt
     BigInt.new { |mpz| LibGMP.sqrt(mpz, value) }
   end
 
@@ -984,7 +1040,7 @@ end
 struct Crystal::Hasher
   private HASH_MODULUS_INT_P = BigInt.new(HASH_MODULUS)
 
-  def self.reduce_num(value : BigInt)
+  def self.reduce_num(value : BigInt) : UInt64
     {% if LibGMP::UI == UInt64 %}
       v = LibGMP.tdiv_ui(value, HASH_MODULUS)
       value < 0 ? &-v : v

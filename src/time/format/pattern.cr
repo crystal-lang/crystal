@@ -54,6 +54,8 @@ struct Time::Format
           month_zero_padded
         when 'M'
           minute
+        when 'n'
+          char '\n'
         when 'N'
           second_fraction
         when 'p'
@@ -68,6 +70,8 @@ struct Time::Format
           unix_seconds
         when 'S'
           second
+        when 't'
+          char '\t'
         when 'T', 'X'
           twenty_four_hour_time_with_seconds
         when 'u'

@@ -20,7 +20,7 @@ class Crystal::Repl::Context
   getter! class_vars : ClassVars
 
   # libffi information about external functions.
-  getter lib_functions : Hash(External, LibFunction)
+  getter lib_functions : Hash(Void*, LibFunction)
 
   # Cache of multidispatch expansions.
   getter multidispatchs : Hash(MultidispatchKey, Def)
@@ -44,6 +44,19 @@ class Crystal::Repl::Context
   # the proc in this Hash.
   getter ffi_closure_to_compiled_def : Hash(Void*, CompiledDef)
 
+  # Cached underlying buffers for constant slices constructed via the
+  # `Slice.literal` compiler built-in, indexed by the internal buffer name
+  # (e.g. `$Slice:0`).
+  @const_slice_buffers = {} of String => UInt8*
+
+  # A cache of object IDs of the `CompiledDef`s corresponding to `ProcLiteral`s.
+  # Used to determine whether such an object ID or a raw function pointer is
+  # passed to `Proc.new`.
+  getter compiled_procs = Set(UInt64).new
+
+  # A cache from C proc pointers to `CompiledDef`s, formed using `Proc.new`.
+  getter extern_proc_wrappers = {} of Void* => CompiledDef
+
   def initialize(@program : Program)
     @program.flags << "interpreted"
 
@@ -52,8 +65,7 @@ class Crystal::Repl::Context
     @defs = {} of Def => CompiledDef
     @defs.compare_by_identity
 
-    @lib_functions = {} of External => LibFunction
-    @lib_functions.compare_by_identity
+    @lib_functions = {} of Void* => LibFunction
 
     @symbol_to_index = {} of String => Int32
     @symbols = [] of String
@@ -75,7 +87,7 @@ class Crystal::Repl::Context
     end
 
     # This is a stack pool, for checkout_stack.
-    @stack_pool = Fiber::StackPool.new(protect: false)
+    @stack_pool = Fiber::StackPool.new(protect: false, reuse_dead_fiber_stack: false)
 
     # Mapping of types to numeric ids
     @type_to_id = {} of Type => Int32
@@ -106,10 +118,10 @@ class Crystal::Repl::Context
   # Once the block returns, the stack is returned to the pool.
   # The stack is not cleared after or before it's used.
   def checkout_stack(& : UInt8* -> _)
-    stack, _ = @stack_pool.checkout
+    stack = @stack_pool.checkout
 
     begin
-      yield stack.as(UInt8*)
+      yield stack.pointer.as(UInt8*)
     ensure
       @stack_pool.release(stack)
     end
@@ -117,7 +129,7 @@ class Crystal::Repl::Context
 
   # This returns the CompiledDef that corresponds to __crystal_raise_overflow
   getter(crystal_raise_overflow_compiled_def : CompiledDef) do
-    call = Call.new(nil, "__crystal_raise_overflow", global: true)
+    call = Call.new("__crystal_raise_overflow", global: true)
     program.semantic(call)
 
     local_vars = LocalVars.new(self)
@@ -248,6 +260,23 @@ class Crystal::Repl::Context
     end
   end
 
+  def extern_proc_wrapper(proc_type : ProcInstanceType, symbol : Void*) : CompiledDef
+    extern_proc_wrappers.put_if_absent(symbol) do
+      crystal_args_bytesize = proc_type.arg_types.sum { |arg| aligned_sizeof_type(arg) }
+      target_def = proc_type.lookup_first_def("call", false).not_nil!
+      compiled_def = CompiledDef.new(self, target_def, proc_type, crystal_args_bytesize)
+
+      proc_type.arg_types.each_with_index do |arg_type, i|
+        compiled_def.local_vars.declare("arg#{i}", arg_type)
+      end
+
+      compiler = Compiler.new(self, compiled_def, top_level: false)
+      compiler.compile_extern_proc_wrapper(target_def, proc_type, symbol)
+
+      compiled_def
+    end
+  end
+
   def ffi_closure_context(interpreter : Interpreter, compiled_def : CompiledDef)
     # Keep the closure contexts in a Hash by the compiled def so we don't
     # lose a reference to it in the GC.
@@ -285,6 +314,10 @@ class Crystal::Repl::Context
 
       value.copy_to(ret.as(UInt8*))
     end
+  end
+
+  def const_slice_buffer(info : Program::ConstSliceInfo) : UInt8*
+    @const_slice_buffers.put_if_absent(info.name) { info.to_bytes.to_unsafe }
   end
 
   def aligned_sizeof_type(node : ASTNode) : Int32
@@ -393,14 +426,16 @@ class Crystal::Repl::Context
   getter(loader : Loader) {
     lib_flags = program.lib_flags
     # Execute and expand `subcommands`.
-    lib_flags = lib_flags.gsub(/`(.*?)`/) { `#{$1}` }
+    lib_flags = lib_flags.gsub(/`(.*?)`/) { `#{$1}`.chomp }
 
     args = Process.parse_arguments(lib_flags)
     # FIXME: Part 1: This is a workaround for initial integration of the interpreter:
     # The loader can't handle the static libgc.a usually shipped with crystal and loading as a shared library conflicts
     # with the compiler's own GC.
-    # (MSVC doesn't seem to have this issue)
-    args.delete("-lgc")
+    # (Windows doesn't seem to have this issue)
+    unless program.has_flag?("win32") && program.has_flag?("gnu")
+      args.delete("-lgc")
+    end
 
     # recreate the MSVC developer prompt environment, similar to how compiled
     # code does it in `Compiler#linker_command`
@@ -432,7 +467,7 @@ class Crystal::Repl::Context
   # used in `Crystal::Program#each_dll_path`
   private def dll_search_paths
     {% if flag?(:msvc) %}
-      paths = CrystalLibraryPath.paths
+      paths = CrystalLibraryPath.default_paths
 
       if executable_path = Process.executable_path
         paths << File.dirname(executable_path)

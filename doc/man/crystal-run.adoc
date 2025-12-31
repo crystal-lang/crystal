@@ -1,0 +1,20 @@
+= crystal-run(1)
+:doctype: manpage
+:date: {localdate}
+:crystal_version: {crystal_version}
+:man manual: Crystal Compiler Command Line Reference Guide
+:man source: crystal {crystal_version}
+
+== Name
+crystal-run - Compile and run a Crystal program
+
+== Synopsis
+*crystal run* [options] [programfile] [--] [arguments]
+
+== Description
+
+The default command. Compile and run program.
+
+== Options
+
+Same as the build options.

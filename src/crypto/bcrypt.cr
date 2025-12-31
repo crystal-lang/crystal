@@ -21,11 +21,6 @@ require "./subtle"
 # application. Be sure to test and select this based on your server, not your
 # home computer.
 #
-# This implementation of Bcrypt is currently 50% slower than pure C solutions,
-# so keep this in mind when selecting your cost. It may be wise to test with
-# Ruby's [bcrypt gem](https://github.com/codahale/bcrypt-ruby)
-# which is a binding to OpenBSD's implementation.
-#
 # Last but not least: beware of denial of services! Always protect your
 # application using an external strategy (eg: rate limiting), otherwise
 # endpoints that verifies bcrypt hashes will be an easy target.
@@ -44,10 +39,17 @@ class Crypto::Bcrypt
   private DIGEST_SIZE     = 31
 
   # bcrypt IV: "OrpheanBeholderScryDoubt"
-  private CIPHER_TEXT = UInt32.static_array(
-    0x4f727068, 0x65616e42, 0x65686f6c,
-    0x64657253, 0x63727944, 0x6f756274,
-  )
+  {% if compare_versions(Crystal::VERSION, "1.16.0") >= 0 %}
+    private CIPHER_TEXT = Slice(UInt32).literal(
+      0x4f727068, 0x65616e42, 0x65686f6c,
+      0x64657253, 0x63727944, 0x6f756274,
+    )
+  {% else %}
+    private CIPHER_TEXT = UInt32.static_array(
+      0x4f727068, 0x65616e42, 0x65686f6c,
+      0x64657253, 0x63727944, 0x6f756274,
+    )
+  {% end %}
 
   # Hashes the *password* using bcrypt algorithm using salt obtained via `Random::Secure.random_bytes(SALT_SIZE)`.
   #
@@ -56,7 +58,7 @@ class Crypto::Bcrypt
   #
   # Crypto::Bcrypt.hash_secret "secret"
   # ```
-  def self.hash_secret(password, cost = DEFAULT_COST) : String
+  def self.hash_secret(password : String, cost : Int32 = DEFAULT_COST) : String
     # We make a clone here to we don't keep a mutable reference to the original string
     passwordb = password.to_unsafe.to_slice(password.bytesize + 1).clone # include leading 0
     saltb = Random::Secure.random_bytes(SALT_SIZE)
@@ -65,13 +67,15 @@ class Crypto::Bcrypt
 
   # Creates a new `Crypto::Bcrypt` object from the given *password* with *salt* and *cost*.
   #
+  # *salt* must be a base64 encoded string of 16 bytes (128 bits).
+  #
   # ```
   # require "crypto/bcrypt"
   #
-  # password = Crypto::Bcrypt.new "secret", "salt_of_16_chars"
-  # password.digest
+  # password = Crypto::Bcrypt.new "secret", "CJjskaIgXR32DJYjVyNPdA=="
+  # password.to_s # => "$2a$11$CJjskaIgXR32DJYjVyNPd./ajV3Yj6GiP0IAI6rR.fMnjRgozqqqG"
   # ```
-  def self.new(password : String, salt : String, cost = DEFAULT_COST)
+  def self.new(password : String, salt : String, cost : Int32 = DEFAULT_COST) : self
     # We make a clone here to we don't keep a mutable reference to the original string
     passwordb = password.to_unsafe.to_slice(password.bytesize + 1).clone # include leading 0
     saltb = Base64.decode(salt, SALT_SIZE)
@@ -126,7 +130,8 @@ class Crypto::Bcrypt
     blowfish = Blowfish.new(BLOWFISH_ROUNDS)
     blowfish.enhance_key_schedule(salt, password, cost)
 
-    cipher = CIPHER_TEXT.dup
+    cipher = uninitialized UInt32[6]
+    cipher.to_slice.copy_from(CIPHER_TEXT.to_slice)
     cdata = cipher.to_unsafe
 
     0.step(to: 4, by: 2) do |i|

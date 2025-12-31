@@ -82,9 +82,7 @@ describe "Normalize: array literal" do
       __temp_2 = [2]
       __temp_3 = Foo.new
       __temp_3 << __temp_1
-      __temp_2.each do |__temp_4|
-        __temp_3 << __temp_4
-      end
+      __temp_2.each do |__temp_4| __temp_3 << __temp_4 end
       __temp_3
       CRYSTAL
   end
@@ -95,9 +93,28 @@ describe "Normalize: array literal" do
       __temp_2 = [2]
       __temp_3 = Foo(typeof(__temp_1, ::Enumerable.element_type(__temp_2))).new
       __temp_3 << __temp_1
-      __temp_2.each do |__temp_4|
-        __temp_3 << __temp_4
-      end
+      __temp_2.each do |__temp_4| __temp_3 << __temp_4 end
+      __temp_3
+      CRYSTAL
+  end
+
+  # TODO: add md5 to the rest of the variables
+  it "normalizes with filename" do
+    assert_expand_named "Foo{x, *y}", <<-CRYSTAL, filename: "foo.cr"
+      __temp_1 = x
+      __temp_2 = y
+      __temp_3 = Foo.new
+      __temp_3 << __temp_1
+      __temp_2.each do |__temp_cd6ae5dd_1| __temp_3 << __temp_cd6ae5dd_1 end
+      __temp_3
+      CRYSTAL
+
+    assert_expand_named "Foo{x, *y}", <<-CRYSTAL, filename: "bar.cr"
+      __temp_1 = x
+      __temp_2 = y
+      __temp_3 = Foo.new
+      __temp_3 << __temp_1
+      __temp_2.each do |__temp_fbcf3d84_1| __temp_3 << __temp_fbcf3d84_1 end
       __temp_3
       CRYSTAL
   end

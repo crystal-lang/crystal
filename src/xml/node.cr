@@ -1,18 +1,50 @@
+require "weak_ref"
+
 class XML::Node
   LOOKS_LIKE_XPATH = /^(\.\/|\/|\.\.|\.$)/
 
-  # Creates a new node.
-  def initialize(node : LibXML::Attr*)
-    initialize(node.as(LibXML::Node*))
+  # Every Node must keep a reference to its document XML::Node. To keep things
+  # simple, a document XML::Node merely references itself. An unlinked node must
+  # still reference its original document XML::Node until adopted into another
+  # document's tree (the libxml nodes keep a pointer to their libxml doc).
+  #
+  # NOTE: when a libxml node is moved to another document, then the @document
+  # reference of its XML::Node and any instantiated descendant must be updated
+  # to pointer to the new document Node.
+  @document : Document
+
+  # :nodoc:
+  def self.new(node : LibXML::Node*, document : Document) : self
+    if node == document.@node
+      # should never happen, but just in case
+      return document
+    end
+
+    if obj = document.cached?(node)
+      return obj
+    end
+
+    obj = new(node_: node, document_: document)
+    document.cache[node] = WeakRef.new(obj)
+    obj
   end
 
-  # :ditto:
-  def initialize(node : LibXML::Doc*, @errors : Array(XML::Error)? = nil)
-    initialize(node.as(LibXML::Node*))
+  # :nodoc:
+  @[Deprecated]
+  def self.new(node : LibXML::Node*) : self
+    new(node, Document.new(node.value.doc))
   end
 
-  # :ditto:
-  def initialize(@node : LibXML::Node*)
+  # :nodoc:
+  @[Deprecated]
+  def self.new(node : LibXML::Attr*) : self
+    new(node.as(LibXML::Node*), Document.new(node.value.doc))
+  end
+
+  # Must never be called directly, use the constructors above.
+  private def initialize(*, node_ : LibXML::Node*, document_ : self)
+    @node = node_.as(LibXML::Node*)
+    @document = document_
   end
 
   # Gets the attribute content for the *attribute* given by name.
@@ -63,18 +95,21 @@ class XML::Node
   # Gets the list of children for this node as a `XML::NodeSet`.
   def children : XML::NodeSet
     child = @node.value.children
+    return NodeSet.new unless child
 
-    set = LibXML.xmlXPathNodeSetCreate(child)
-
-    if child
-      child = child.value.next
-      while child
-        LibXML.xmlXPathNodeSetAddUnique(set, child)
-        child = child.value.next
-      end
+    size = 1
+    while child = child.value.next
+      size += 1
     end
 
-    NodeSet.new(document, set)
+    child = @node.value.children
+    nodes = Slice(Node).new(size) do
+      node = Node.new(child, document)
+      child = child.value.next
+      node
+    end
+
+    NodeSet.new(nodes)
   end
 
   # Returns `true` if this is a comment node.
@@ -93,12 +128,31 @@ class XML::Node
   # The string gets XML escaped, not interpreted as markup.
   def content=(content)
     check_no_null_byte(content)
+
+    if fragment? || element? || attribute?
+      # libxml will immediately free all the children nodes, while we may have
+      # live references to a child or a descendant; explicitly unlink all the
+      # children before replacing the node's contents
+      child = @node.value.children
+      while child
+        # save next pointer before unlinking, as `xmlUnlinkNode` clears it
+        next_child = child.value.next
+        if node = document.cached?(child)
+          node.unlink
+        else
+          document.unlinked_nodes << child
+          LibXML.xmlUnlinkNode(child)
+        end
+        child = next_child
+      end
+    end
+
     LibXML.xmlNodeSetContent(self, content)
   end
 
-  # Gets the document for this Node as a `XML::Node`.
-  def document : XML::Node
-    Node.new @node.value.doc
+  # Gets the document for this node.
+  def document : Document
+    @document
   end
 
   # Returns `true` if this is a Document or HTML Document node.
@@ -114,22 +168,12 @@ class XML::Node
 
   # Returns the encoding of this node's document.
   def encoding : String?
-    if document?
-      encoding = @node.as(LibXML::Doc*).value.encoding
-      encoding ? String.new(encoding) : nil
-    else
-      document.encoding
-    end
+    document.encoding
   end
 
   # Returns the version of this node's document.
   def version : String?
-    if document?
-      version = @node.as(LibXML::Doc*).value.version
-      version ? String.new(version) : nil
-    else
-      document.version
-    end
+    document.version
   end
 
   # Returns `true` if this is an Element node.
@@ -143,7 +187,7 @@ class XML::Node
     child = @node.value.children
     while child
       if child.value.type == XML::Node::Type::ELEMENT_NODE
-        return Node.new(child)
+        return Node.new(child, document)
       end
       child = child.value.next
     end
@@ -165,33 +209,7 @@ class XML::Node
 
   # Returns detailed information for this node including node type, name, attributes and children.
   def inspect(io : IO) : Nil
-    io << "#<XML::"
-    case type
-    when XML::Node::Type::NONE               then io << "None"
-    when XML::Node::Type::ELEMENT_NODE       then io << "Element"
-    when XML::Node::Type::ATTRIBUTE_NODE     then io << "Attribute"
-    when XML::Node::Type::TEXT_NODE          then io << "Text"
-    when XML::Node::Type::CDATA_SECTION_NODE then io << "CData"
-    when XML::Node::Type::ENTITY_REF_NODE    then io << "EntityRef"
-    when XML::Node::Type::ENTITY_NODE        then io << "Entity"
-    when XML::Node::Type::PI_NODE            then io << "ProcessingInstruction"
-    when XML::Node::Type::COMMENT_NODE       then io << "Comment"
-    when XML::Node::Type::DOCUMENT_NODE      then io << "Document"
-    when XML::Node::Type::DOCUMENT_TYPE_NODE then io << "DocumentType"
-    when XML::Node::Type::DOCUMENT_FRAG_NODE then io << "DocumentFragment"
-    when XML::Node::Type::NOTATION_NODE      then io << "Notation"
-    when XML::Node::Type::HTML_DOCUMENT_NODE then io << "HTMLDocument"
-    when XML::Node::Type::DTD_NODE           then io << "DTD"
-    when XML::Node::Type::ELEMENT_DECL       then io << "Element"
-    when XML::Node::Type::ATTRIBUTE_DECL     then io << "AttributeDecl"
-    when XML::Node::Type::ENTITY_DECL        then io << "EntityDecl"
-    when XML::Node::Type::NAMESPACE_DECL     then io << "NamespaceDecl"
-    when XML::Node::Type::XINCLUDE_START     then io << "XIncludeStart"
-    when XML::Node::Type::XINCLUDE_END       then io << "XIncludeEnd"
-    when XML::Node::Type::DOCB_DOCUMENT_NODE then io << "DOCBDocument"
-    end
-
-    io << ":0x"
+    io << "#<XML::" << type_name << ":0x"
     object_id.to_s(io, 16)
 
     if text?
@@ -224,10 +242,92 @@ class XML::Node
     io << '>'
   end
 
+  def pretty_print(pp : PrettyPrint) : Nil
+    pp.surround("#<XML::#{type_name}:0x#{object_id.to_s(16)}", ">", left_break: nil, right_break: nil) do
+      if text?
+        pp.breakable
+        content.pretty_print(pp)
+      else
+        unless document?
+          pp.breakable
+          pp.group do
+            pp.text "name="
+            pp.nest do
+              pp.breakable ""
+              name.pretty_print(pp)
+            end
+          end
+        end
+
+        if attribute?
+          pp.breakable
+          pp.group do
+            pp.text "content="
+            pp.nest do
+              pp.breakable ""
+              content.pretty_print(pp)
+            end
+          end
+        else
+          attributes = self.attributes
+          unless attributes.empty?
+            pp.breakable
+            pp.group do
+              pp.text "attributes="
+              pp.nest do
+                pp.breakable ""
+                attributes.pretty_print(pp)
+              end
+            end
+          end
+
+          children = self.children
+          unless children.empty?
+            pp.breakable
+            pp.group do
+              pp.text "children="
+              pp.nest do
+                pp.breakable ""
+                children.pretty_print(pp)
+              end
+            end
+          end
+        end
+      end
+    end
+  end
+
+  private def type_name
+    case type
+    when XML::Node::Type::NONE               then "None"
+    when XML::Node::Type::ELEMENT_NODE       then "Element"
+    when XML::Node::Type::ATTRIBUTE_NODE     then "Attribute"
+    when XML::Node::Type::TEXT_NODE          then "Text"
+    when XML::Node::Type::CDATA_SECTION_NODE then "CData"
+    when XML::Node::Type::ENTITY_REF_NODE    then "EntityRef"
+    when XML::Node::Type::ENTITY_NODE        then "Entity"
+    when XML::Node::Type::PI_NODE            then "ProcessingInstruction"
+    when XML::Node::Type::COMMENT_NODE       then "Comment"
+    when XML::Node::Type::DOCUMENT_NODE      then "Document"
+    when XML::Node::Type::DOCUMENT_TYPE_NODE then "DocumentType"
+    when XML::Node::Type::DOCUMENT_FRAG_NODE then "DocumentFragment"
+    when XML::Node::Type::NOTATION_NODE      then "Notation"
+    when XML::Node::Type::HTML_DOCUMENT_NODE then "HTMLDocument"
+    when XML::Node::Type::DTD_NODE           then "DTD"
+    when XML::Node::Type::ELEMENT_DECL       then "Element"
+    when XML::Node::Type::ATTRIBUTE_DECL     then "AttributeDecl"
+    when XML::Node::Type::ENTITY_DECL        then "EntityDecl"
+    when XML::Node::Type::NAMESPACE_DECL     then "NamespaceDecl"
+    when XML::Node::Type::XINCLUDE_START     then "XIncludeStart"
+    when XML::Node::Type::XINCLUDE_END       then "XIncludeEnd"
+    when XML::Node::Type::DOCB_DOCUMENT_NODE then "DOCBDocument"
+    end
+  end
+
   # Returns the next sibling node or `nil` if not found.
   def next : XML::Node?
     next_node = @node.value.next
-    next_node ? Node.new(next_node) : nil
+    next_node ? Node.new(next_node, document) : nil
   end
 
   # :ditto:
@@ -240,7 +340,7 @@ class XML::Node
     next_node = @node.value.next
     while next_node
       if next_node.value.type == XML::Node::Type::ELEMENT_NODE
-        return Node.new(next_node)
+        return Node.new(next_node, document)
       end
       next_node = next_node.value.next
     end
@@ -362,13 +462,13 @@ class XML::Node
   # Returns the parent node or `nil` if not found.
   def parent : XML::Node?
     parent = @node.value.parent
-    parent ? Node.new(parent) : nil
+    parent ? Node.new(parent, document) : nil
   end
 
   # Returns the previous sibling node or `nil` if not found.
   def previous : XML::Node?
     prev_node = @node.value.prev
-    prev_node ? Node.new(prev_node) : nil
+    prev_node ? Node.new(prev_node, document) : nil
   end
 
   # Returns the previous sibling node that is an element or `nil` if not found.
@@ -376,7 +476,7 @@ class XML::Node
     prev_node = @node.value.prev
     while prev_node
       if prev_node.value.type == XML::Node::Type::ELEMENT_NODE
-        return Node.new(prev_node)
+        return Node.new(prev_node, document)
       end
       prev_node = prev_node.value.prev
     end
@@ -397,7 +497,7 @@ class XML::Node
   # Returns the root node for this document or `nil`.
   def root : XML::Node?
     root = LibXML.xmlDocGetRootElement(@node.value.doc)
-    root ? Node.new(root) : nil
+    root ? Node.new(root, document) : nil
   end
 
   # Same as `#content`.
@@ -431,39 +531,68 @@ class XML::Node
     end
   end
 
-  # :nodoc:
-  SAVE_MUTEX = ::Mutex.new
-
   # Serialize this Node as XML to *io* using default options.
   #
   # See `XML::SaveOptions.xml_default` for default options.
   def to_xml(io : IO, indent = 2, indent_text = " ", options : SaveOptions = SaveOptions.xml_default)
-    # We need to use a mutex because we modify global libxml variables
-    SAVE_MUTEX.synchronize do
+    {% if LibXML.has_method?(:xmlSaveSetIndentString) %}
+      # indentation is now always enabled by default (it can be disabled per
+      # save context with the XML_SAVE_NO_INDENT option); the indent string is
+      # explicitly set on the save context (no more global default)
+      ctxt = LibXML.xmlSaveToIO(
+        ->Node.write_callback,
+        ->Node.close_callback,
+        Box(IO).box(io),
+        @node.value.doc.value.encoding,
+        options)
+      LibXML.xmlSaveSetIndentString(ctxt, indent_text * indent)
+      LibXML.xmlSaveTree(ctxt, self)
+      LibXML.xmlSaveClose(ctxt)
+    {% else %}
+      # indentation is disabled by default and it can only be enabled globally
+      # for the current thread (no per context value)
       XML.with_indent_tree_output(true) do
-        XML.with_tree_indent_string(indent_text * indent) do
-          save_ctx = LibXML.xmlSaveToIO(
-            ->(ctx, buffer, len) {
-              Box(IO).unbox(ctx).write_string Slice.new(buffer, len)
-              len
-            },
-            ->(ctx) {
-              Box(IO).unbox(ctx).flush
-              0
-            },
+        # the indent string will be copied to the save context... from the
+        # default thread local value; at least we can reset the thread local
+        # immediately after creating the save context
+        ctxt = XML.with_tree_indent_string(indent_text * indent) do
+          LibXML.xmlSaveToIO(
+            ->Node.write_callback,
+            ->Node.close_callback,
             Box(IO).box(io),
             @node.value.doc.value.encoding,
             options)
-          LibXML.xmlSaveTree(save_ctx, self)
-          LibXML.xmlSaveClose(save_ctx)
         end
+        LibXML.xmlSaveTree(ctxt, self)
+        LibXML.xmlSaveClose(ctxt)
       end
-    end
+    {% end %}
 
     io
   end
 
-  # Returns underlying `LibXML::Node*` instance.
+  protected def self.write_callback(data : Void*, buffer : UInt8*, len : LibC::Int) : LibC::Int
+    io = Box(IO).unbox(data)
+    buf = Slice.new(buffer, len)
+
+    {% if LibXML.has_method?(:xmlSaveSetIndentString) %}
+      io.write_string(buf)
+    {% else %}
+      XML.save_indent_tree_output { io.write_string(buf) }
+    {% end %}
+
+    len
+  end
+
+  protected def self.close_callback(data : Void*) : LibC::Int
+    # no need to save the indent tree output thread local, even though we flush
+    # and the current fiber might swapcontext: libxml is closing the output and
+    # won't write to the IO anymore
+    Box(IO).unbox(data).flush
+    LibC::Int.new(0)
+  end
+
+  # :nodoc:
   def to_unsafe
     @node
   end
@@ -475,7 +604,8 @@ class XML::Node
 
   # Removes the node from the XML document.
   def unlink : Nil
-    LibXML.xmlUnlinkNode(self)
+    document.unlinked_nodes << @node
+    LibXML.xmlUnlinkNode(@node)
   end
 
   # Returns `true` if this is an xml Document node.
@@ -571,15 +701,34 @@ class XML::Node
     xpath(path, namespaces, variables).as(String)
   end
 
-  # Returns the list of `XML::Error` found when parsing this document.
-  # Returns `nil` if no errors were found.
+  @[Deprecated("Use XML::Document#errors instead.")]
   def errors : Array(XML::Error)?
-    return @errors unless @errors.try &.empty?
+    document.errors
   end
 
   private def check_no_null_byte(string)
     if string.includes? Char::ZERO
       raise XML::Error.new("Cannot escape string containing null character", 0)
+    end
+  end
+
+  # these helpers must only be called on document nodes:
+
+  protected def cached?(node : LibXML::Node*) : Node?
+    cache[node]?.try(&.value)
+  end
+
+  protected def unlink_cached_children(node : LibXML::Node*) : Nil
+    child = node.value.children
+    while child
+      # save next pointer before unlinking, as `xmlUnlinkNode` clears it
+      next_child = child.value.next
+      if obj = cached?(child)
+        obj.unlink
+      else
+        unlink_cached_children(child)
+      end
+      child = next_child
     end
   end
 end

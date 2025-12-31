@@ -17,7 +17,7 @@ class Process
   # not run any handlers registered with `at_exit`, use `::exit` for that.
   #
   # *status* is the exit status of the current process.
-  def self.exit(status = 0) : NoReturn
+  def self.exit(status : Int32 | Process::Status = 0) : NoReturn
     Crystal::System::Process.exit(status)
   end
 
@@ -89,7 +89,7 @@ class Process
   #   end
   # end
   #
-  # wait_channel.receive
+  # wait_channel.receive?
   # puts "bye"
   # ```
   def self.on_terminate(&handler : ::Process::ExitReason ->) : Nil
@@ -108,6 +108,15 @@ class Process
   # Restores default handling of interrupt requests.
   def self.restore_interrupts! : Nil
     Crystal::System::Process.restore_interrupts!
+  end
+
+  # Returns whether a debugger is attached to the current process.
+  #
+  # Currently supported on Windows and Linux. Always returns `false` on other
+  # systems.
+  @[Experimental]
+  def self.debugger_present? : Bool
+    Crystal::System::Process.debugger_present?
   end
 
   # Returns `true` if the process identified by *pid* is valid for
@@ -173,7 +182,7 @@ class Process
   # By default the process is configured without input, output or error.
   #
   # Raises `IO::Error` if executing the command fails (for example if the executable doesn't exist).
-  def self.run(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
+  def self.run(command : String, args : Enumerable(String)? = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
                input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil) : Process::Status
     status = new(command, args, env, clear_env, shell, input, output, error, chdir).wait
     $? = status
@@ -188,7 +197,7 @@ class Process
   # Returns the block's value.
   #
   # Raises `IO::Error` if executing the command fails (for example if the executable doesn't exist).
-  def self.run(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
+  def self.run(command : String, args : Enumerable(String)? = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
                input : Stdio = Redirect::Pipe, output : Stdio = Redirect::Pipe, error : Stdio = Redirect::Pipe, chdir : Path | String? = nil, &)
     process = new(command, args, env, clear_env, shell, input, output, error, chdir)
     begin
@@ -204,15 +213,13 @@ class Process
   # Replaces the current process with a new one. This function never returns.
   #
   # Raises `IO::Error` if executing the command fails (for example if the executable doesn't exist).
-  def self.exec(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
+  def self.exec(command : String, args : Enumerable(String)? = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
                 input : ExecStdio = Redirect::Inherit, output : ExecStdio = Redirect::Inherit, error : ExecStdio = Redirect::Inherit, chdir : Path | String? = nil) : NoReturn
-    command_args = Crystal::System::Process.prepare_args(command, args, shell)
-
     input = exec_stdio_to_fd(input, for: STDIN)
     output = exec_stdio_to_fd(output, for: STDOUT)
     error = exec_stdio_to_fd(error, for: STDERR)
 
-    Crystal::System::Process.replace(command_args, env, clear_env, input, output, error, chdir)
+    Crystal::System::Process.replace(command, args, shell, env, clear_env, input, output, error, chdir)
   end
 
   private def self.exec_stdio_to_fd(stdio : ExecStdio, for dst_io : IO::FileDescriptor) : IO::FileDescriptor
@@ -269,15 +276,13 @@ class Process
   #   process, and passing *args* is not supported.
   #
   # Raises `IO::Error` if executing the command fails (for example if the executable doesn't exist).
-  def initialize(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
+  def initialize(command : String, args : Enumerable(String)? = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
                  input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil)
-    command_args = Crystal::System::Process.prepare_args(command, args, shell)
-
     fork_input = stdio_to_fd(input, for: STDIN)
     fork_output = stdio_to_fd(output, for: STDOUT)
     fork_error = stdio_to_fd(error, for: STDERR)
 
-    pid = Crystal::System::Process.spawn(command_args, env, clear_env, fork_input, fork_output, fork_error, chdir.try &.to_s)
+    pid = Crystal::System::Process.spawn(command, args, shell, env, clear_env, fork_input, fork_output, fork_error, chdir.try &.to_s)
     @process_info = Crystal::System::Process.new(pid)
 
     fork_input.close unless fork_input.in?(input, STDIN)
@@ -285,39 +290,26 @@ class Process
     fork_error.close unless fork_error.in?(error, STDERR)
   end
 
-  def finalize
+  def finalize : Nil
     @process_info.release
   end
 
   private def stdio_to_fd(stdio : Stdio, for dst_io : IO::FileDescriptor) : IO::FileDescriptor
     case stdio
-    when IO::FileDescriptor
-      stdio
-    when IO
-      if stdio.closed?
-        if dst_io == STDIN
-          return File.open(File::NULL, "r").tap(&.close)
-        else
-          return File.open(File::NULL, "w").tap(&.close)
+    in IO::FileDescriptor
+      # on Windows, only async pipes can be passed to child processes, async
+      # regular files will report an error and those require a separate pipe
+      # (https://github.com/crystal-lang/crystal/pull/13362#issuecomment-1519082712)
+      {% if flag?(:win32) %}
+        unless stdio.system_blocking? || stdio.info.type.pipe?
+          return io_to_fd(stdio, for: dst_io)
         end
-      end
+      {% end %}
 
-      if dst_io == STDIN
-        fork_io, process_io = IO.pipe(read_blocking: true)
-
-        @wait_count += 1
-        ensure_channel
-        spawn { copy_io(stdio, process_io, channel, close_dst: true) }
-      else
-        process_io, fork_io = IO.pipe(write_blocking: true)
-
-        @wait_count += 1
-        ensure_channel
-        spawn { copy_io(process_io, stdio, channel, close_src: true) }
-      end
-
-      fork_io
-    when Redirect::Pipe
+      stdio
+    in IO
+      io_to_fd(stdio, for: dst_io)
+    in Redirect::Pipe
       case dst_io
       when STDIN
         fork_io, @input = IO.pipe(read_blocking: true)
@@ -330,17 +322,41 @@ class Process
       end
 
       fork_io
-    when Redirect::Inherit
+    in Redirect::Inherit
       dst_io
-    when Redirect::Close
+    in Redirect::Close
       if dst_io == STDIN
         File.open(File::NULL, "r")
       else
         File.open(File::NULL, "w")
       end
-    else
-      raise "BUG: Impossible type in stdio #{stdio.class}"
     end
+  end
+
+  private def io_to_fd(stdio : Stdio, for dst_io : IO::FileDescriptor) : IO::FileDescriptor
+    if stdio.closed?
+      if dst_io == STDIN
+        return File.open(File::NULL, "r").tap(&.close)
+      else
+        return File.open(File::NULL, "w").tap(&.close)
+      end
+    end
+
+    if dst_io == STDIN
+      fork_io, process_io = IO.pipe(read_blocking: true)
+
+      @wait_count += 1
+      ensure_channel
+      spawn { copy_io(stdio, process_io, channel, close_dst: true) }
+    else
+      process_io, fork_io = IO.pipe(write_blocking: true)
+
+      @wait_count += 1
+      ensure_channel
+      spawn { copy_io(process_io, stdio, channel, close_src: true) }
+    end
+
+    fork_io
   end
 
   # :nodoc:
@@ -486,7 +502,7 @@ end
 # ```text
 # LICENSE shard.yml Readme.md spec src
 # ```
-def system(command : String, args = nil) : Bool
+def system(command : String, args : Enumerable(String)? = nil) : Bool
   status = Process.run(command, args, shell: true, input: Process::Redirect::Inherit, output: Process::Redirect::Inherit, error: Process::Redirect::Inherit)
   $? = status
   status.success?
@@ -504,7 +520,7 @@ end
 # ```
 #
 # See [`Command` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/command.html) in the language reference.
-def `(command) : String
+def `(command : String) : String
   process = Process.new(command, shell: true, input: Process::Redirect::Inherit, output: Process::Redirect::Pipe, error: Process::Redirect::Inherit)
   output = process.output.gets_to_end
   status = process.wait

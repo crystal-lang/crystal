@@ -264,7 +264,7 @@ describe Enum do
       SpecEnum.from_value(0).should eq(SpecEnum::One)
       SpecEnum.from_value(1).should eq(SpecEnum::Two)
       SpecEnum.from_value(2).should eq(SpecEnum::Three)
-      expect_raises(Exception, "Unknown enum SpecEnum value: 3") { SpecEnum.from_value(3) }
+      expect_raises(ArgumentError, "Unknown enum SpecEnum value: 3") { SpecEnum.from_value(3) }
     end
 
     it "for flags enum" do
@@ -272,7 +272,7 @@ describe Enum do
       SpecEnumFlags.from_value(1).should eq(SpecEnumFlags::One)
       SpecEnumFlags.from_value(2).should eq(SpecEnumFlags::Two)
       SpecEnumFlags.from_value(3).should eq(SpecEnumFlags::One | SpecEnumFlags::Two)
-      expect_raises(Exception, "Unknown enum SpecEnumFlags value: 8") { SpecEnumFlags.from_value(8) }
+      expect_raises(ArgumentError, "Unknown enum SpecEnumFlags value: 8") { SpecEnumFlags.from_value(8) }
     end
 
     it "for private enum" do
@@ -316,6 +316,8 @@ describe Enum do
     SpecEnum.parse("TWO").should eq(SpecEnum::Two)
     SpecEnum.parse("TwO").should eq(SpecEnum::Two)
     SpecEnum2.parse("FORTY_TWO").should eq(SpecEnum2::FortyTwo)
+    SpecEnum2.parse("FORTY___TWO").should eq(SpecEnum2::FortyTwo)
+    SpecEnum2.parse("FORTY___TWO_").should eq(SpecEnum2::FortyTwo)
 
     SpecEnum2.parse("FORTY_FOUR").should eq(SpecEnum2::FORTY_FOUR)
     SpecEnum2.parse("forty_four").should eq(SpecEnum2::FORTY_FOUR)

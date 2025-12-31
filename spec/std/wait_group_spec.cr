@@ -129,7 +129,7 @@ describe WaitGroup do
       16.times do
         select
         when x = exited.receive
-          x.should eq(true)
+          x.should be_true
         when timeout(1.millisecond)
           fail "Expected channel to receive value"
         end
@@ -158,6 +158,19 @@ describe WaitGroup do
 
     wg.wait
     extra.get.should eq(32)
+  end
+
+  it "takes a block to WaitGroup.wait" do
+    fiber_count = 10
+    completed = Array.new(fiber_count) { false }
+
+    WaitGroup.wait do |wg|
+      fiber_count.times do |i|
+        wg.spawn { completed[i] = true }
+      end
+    end
+
+    completed.should eq [true] * 10
   end
 
   # the test takes far too much time for the interpreter to complete

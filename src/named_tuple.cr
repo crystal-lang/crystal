@@ -70,7 +70,7 @@ struct NamedTuple
       {% begin %}
         {
           {% for key in T %}
-            {{ key.stringify }}: options[{{ key.symbolize }}].as(typeof(element_type({{ key }}))),
+            {{ key.stringify }}: options[{{ key.symbolize }}].as(typeof(element_type({{ key.symbolize }}))),
           {% end %}
         }
       {% end %}
@@ -119,7 +119,7 @@ struct NamedTuple
     {% begin %}
       NamedTuple.new(
       {% for key, value in T %}
-        {{key.stringify}}: self[{{key.symbolize}}].cast(hash.fetch({{key.symbolize}}) { hash["{{key}}"] }),
+        {{key.stringify}}: self[{{key.symbolize}}].cast(hash.fetch({{key.symbolize}}) { hash[{{key.stringify}}] }),
       {% end %}
       )
     {% end %}
@@ -338,6 +338,23 @@ struct NamedTuple
       {% for k in U %} {{k.stringify}}: other[{{k.symbolize}}], {% end %}
     )
     {% end %}
+  end
+
+  # Merges two named tuples into one, returning a new named tuple.
+  # If a key is defined in both tuples, the value and its type are used from **self** (original tuple)
+  #
+  # ```
+  # a = {foo: "Hello", bar: "Old"}
+  # b = {bar: "New", baz: "Bye"}
+  # a.reverse_merge(b) # => {foo: "Hello", bar: "Old", baz: "Bye"}
+  # ```
+  def reverse_merge(other : NamedTuple)
+    other.merge(**self)
+  end
+
+  # :ditto:
+  def reverse_merge(**other)
+    reverse_merge(other)
   end
 
   # Returns a hash value based on this name tuple's size, keys and values.

@@ -11,36 +11,10 @@ module Spec
     Comment
     Focus
     Order
-  end
 
-  private STATUS_COLORS = {
-    Status::Success => :green,
-    Status::Fail    => :red,
-    Status::Error   => :red,
-    Status::Pending => :yellow,
-  }
-
-  private INFO_COLORS = {
-    InfoKind::Comment => :cyan,
-    InfoKind::Focus   => :cyan,
-    InfoKind::Order   => :cyan,
-  }
-
-  private LETTERS = {
-    Status::Success => '.',
-    Status::Fail    => 'F',
-    Status::Error   => 'E',
-    Status::Pending => '*',
-  }
-
-  # :nodoc:
-  def self.color(str, status : Status)
-    str.colorize(STATUS_COLORS[status])
-  end
-
-  # :nodoc:
-  def self.color(str, kind : InfoKind)
-    str.colorize(INFO_COLORS[kind])
+    def color : Colorize::Color
+      Colorize::ColorANSI::Cyan
+    end
   end
 
   # :nodoc:
@@ -204,10 +178,10 @@ module Spec
       end
     end
 
-    @start_time : Time::Span? = nil
+    @start_time : Time::Instant? = nil
 
     def run
-      @start_time = Time.monotonic
+      @start_time = Time.instant
 
       at_exit do |status|
         # Do not run specs if the process is exiting on an error
@@ -220,14 +194,22 @@ module Spec
             execute_examples
           end
         rescue ex
-          STDERR.print "Unhandled exception: "
-          ex.inspect_with_backtrace(STDERR)
-          STDERR.flush
+          @stderr.print "Unhandled exception: "
+          ex.inspect_with_backtrace(@stderr)
+          @stderr.flush
           @aborted = true
         ensure
           finish_run unless list_tags?
         end
       end
+    end
+
+    def colorize(str, status : Status)
+      str.colorize(status.color).toggle(@color)
+    end
+
+    def colorize(str, kind : InfoKind)
+      str.colorize(kind.color).toggle(@color)
     end
 
     def execute_examples
@@ -273,7 +255,7 @@ module Spec
       return if tag_counts.empty?
       longest_name_size = tag_counts.keys.max_of(&.size)
       tag_counts.to_a.sort_by! { |k, v| {-v, k} }.each do |tag_name, count|
-        puts "#{tag_name.rjust(longest_name_size)}: #{count}"
+        @stdout.puts "#{tag_name.rjust(longest_name_size)}: #{count}"
       end
     end
 
@@ -298,15 +280,15 @@ module Spec
       # If the "log" module is required it is configured to emit no entries by default.
       def log_setup
         defined?(::Log) do
-          if Log.responds_to?(:setup)
-            Log.setup_from_env(default_level: :none)
+          if ::Log.responds_to?(:setup)
+            ::Log.setup_from_env(default_level: :none)
           end
         end
       end
     end
 
     def finish_run
-      elapsed_time = Time.monotonic - @start_time.not_nil!
+      elapsed_time = @start_time.not_nil!.elapsed
       root_context.finish(elapsed_time, @aborted)
       exit 1 if !root_context.succeeded || @aborted || (focus? && ENV["SPEC_FOCUS_NO_FAIL"]? != "1")
     end

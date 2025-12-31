@@ -12,7 +12,7 @@ private def unix_request(path)
 end
 
 private def unused_port
-  TCPServer.open(0) do |server|
+  TCPServer.open(Socket::IPAddress::UNSPECIFIED, 0) do |server|
     server.local_address.port
   end
 end
@@ -65,14 +65,14 @@ describe HTTP::Server do
     while !server.listening?
       Fiber.yield
     end
-    sleep 0.1
+    sleep 0.1.seconds
 
     schedule_timeout ch
 
     TCPSocket.open(address.address, address.port) { }
 
     # wait before closing the server
-    sleep 0.1
+    sleep 0.1.seconds
     server.close
 
     ch.receive.should eq SpecChannelStatus::End
@@ -268,7 +268,6 @@ describe HTTP::Server do
         server = HTTP::Server.new { }
 
         private_key = datapath("openssl", "openssl.key")
-        certificate = datapath("openssl", "openssl.crt")
 
         begin
           expect_raises(ArgumentError, "missing private key") { server.bind "tls://127.0.0.1:8081" }
@@ -427,7 +426,7 @@ describe HTTP::Server do
       begin
         ch.receive
         client = HTTP::Client.new(address.address, address.port, client_context)
-        client.read_timeout = client.connect_timeout = 3
+        client.read_timeout = client.connect_timeout = 3.seconds
         client.get("/").body.should eq "ok"
       ensure
         ch.send nil

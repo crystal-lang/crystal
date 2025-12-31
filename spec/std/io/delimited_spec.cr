@@ -57,10 +57,10 @@ describe "IO::Delimited" do
         delimited.read_char.should eq('e')
         delimited.read_char.should eq('r')
         delimited.read_char.should eq('z')
-        delimited.read_char.should eq(nil)
-        delimited.read_char.should eq(nil)
-        delimited.read_char.should eq(nil)
-        delimited.read_char.should eq(nil)
+        delimited.read_char.should be_nil
+        delimited.read_char.should be_nil
+        delimited.read_char.should be_nil
+        delimited.read_char.should be_nil
 
         io.read_char.should eq('f')
         io.read_char.should eq('g')
@@ -77,7 +77,7 @@ describe "IO::Delimited" do
         io = MemoryIOWithoutPeek.new("ab12312")
         delimited = IO::Delimited.new(io, read_delimiter: "ab1")
 
-        delimited.read_char.should eq(nil)
+        delimited.read_char.should be_nil
       end
 
       it "handles the delimiter at the end" do
@@ -150,10 +150,10 @@ describe "IO::Delimited" do
         delimited.read_char.should eq('e')
         delimited.read_char.should eq('r')
         delimited.read_char.should eq('z')
-        delimited.read_char.should eq(nil)
-        delimited.read_char.should eq(nil)
-        delimited.read_char.should eq(nil)
-        delimited.read_char.should eq(nil)
+        delimited.read_char.should be_nil
+        delimited.read_char.should be_nil
+        delimited.read_char.should be_nil
+        delimited.read_char.should be_nil
 
         io.read_char.should eq('f')
         io.read_char.should eq('g')
@@ -172,7 +172,7 @@ describe "IO::Delimited" do
         delimited = IO::Delimited.new(io, read_delimiter: "ab1")
 
         delimited.peek.should eq(Bytes.empty)
-        delimited.read_char.should eq(nil)
+        delimited.read_char.should be_nil
       end
 
       it "handles the delimiter at the end" do
@@ -255,6 +255,22 @@ describe "IO::Delimited" do
 
         delimited.peek.should eq("abcde".to_slice)
         delimited.gets_to_end.should eq("abcdefgwijk")
+        delimited.gets_to_end.should eq("")
+        io.gets_to_end.should eq("hello")
+      end
+
+      it "handles the case of peek matching first byte, not having enough room, but later not matching (limited slice)" do
+        #                                 not a delimiter
+        #                                    ---
+        io = MemoryIOWithFixedPeek.new("abcdefgwijkfghhello")
+        #                               -------    ---
+        #                                peek    delimiter
+        io.peek_size = 7
+        delimited = IO::Delimited.new(io, read_delimiter: "fgh")
+
+        delimited.peek.should eq("abcde".to_slice)
+        delimited.read_string(6).should eq "abcdef"
+        delimited.read_string(5).should eq("gwijk")
         delimited.gets_to_end.should eq("")
         io.gets_to_end.should eq("hello")
       end
@@ -369,7 +385,7 @@ describe "IO::Delimited" do
       delimited.read_char.should eq('b')
 
       delimited.close
-      delimited.closed?.should eq(true)
+      delimited.closed?.should be_true
       expect_raises(IO::Error, "Closed stream") do
         delimited.read_char
       end
@@ -378,11 +394,11 @@ describe "IO::Delimited" do
     it "closes the underlying stream if sync_close is true" do
       io = IO::Memory.new "abcdefg"
       delimited = IO::Delimited.new(io, read_delimiter: "zr", sync_close: true)
-      delimited.sync_close?.should eq(true)
+      delimited.sync_close?.should be_true
 
-      io.closed?.should eq(false)
+      io.closed?.should be_false
       delimited.close
-      io.closed?.should eq(true)
+      io.closed?.should be_true
     end
   end
 end

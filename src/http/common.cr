@@ -255,7 +255,7 @@ module HTTP
   end
 
   # :nodoc:
-  def self.serialize_headers_and_body(io, headers, body, body_io, version)
+  def self.serialize_headers_and_body(io : IO, headers : HTTP::Headers, body : String?, body_io : IO?, version : String) : Nil
     if body
       serialize_headers_and_string_body(io, headers, body)
     elsif body_io
@@ -282,7 +282,7 @@ module HTTP
     end
   end
 
-  def self.serialize_headers_and_string_body(io, headers, body)
+  def self.serialize_headers_and_string_body(io : IO, headers : HTTP::Headers, body : String) : Nil
     headers["Content-Length"] = body.bytesize.to_s
     headers.serialize(io)
     io << "\r\n"
@@ -295,7 +295,7 @@ module HTTP
     io << "\r\n"
   end
 
-  def self.serialize_chunked_body(io, body)
+  def self.serialize_chunked_body(io : IO, body : IO) : Nil
     buf = uninitialized UInt8[8192]
     while (buf_length = body.read(buf.to_slice)) > 0
       buf_length.to_s(io, 16)
@@ -307,7 +307,7 @@ module HTTP
   end
 
   # :nodoc:
-  def self.content_length(headers) : UInt64?
+  def self.content_length(headers : HTTP::Headers) : UInt64?
     length_headers = headers.get? "Content-Length"
     return nil unless length_headers
     first_header = length_headers[0]
@@ -334,7 +334,7 @@ module HTTP
     end
   end
 
-  def self.expect_continue?(headers) : Bool
+  def self.expect_continue?(headers : HTTP::Headers) : Bool
     headers["Expect"]?.try(&.downcase) == "100-continue"
   end
 
@@ -343,9 +343,9 @@ module HTTP
   # ```
   # require "http"
   #
-  # HTTP.parse_time("Sun, 14 Feb 2016 21:00:00 GMT")  # => "2016-02-14 21:00:00 UTC"
-  # HTTP.parse_time("Sunday, 14-Feb-16 21:00:00 GMT") # => "2016-02-14 21:00:00 UTC"
-  # HTTP.parse_time("Sun Feb 14 21:00:00 2016")       # => "2016-02-14 21:00:00 UTC"
+  # HTTP.parse_time("Sun, 14 Feb 2016 21:00:00 GMT")  # => "2016-02-14 21:00:00Z"
+  # HTTP.parse_time("Sunday, 14-Feb-16 21:00:00 GMT") # => "2016-02-14 21:00:00Z"
+  # HTTP.parse_time("Sun Feb 14 21:00:00 2016")       # => "2016-02-14 21:00:00Z"
   # ```
   #
   # Uses `Time::Format::HTTP_DATE` as parser.
@@ -380,7 +380,7 @@ module HTTP
   # quoted = %q(\"foo\\bar\")
   # HTTP.dequote_string(quoted) # => %q("foo\bar")
   # ```
-  def self.dequote_string(str) : String
+  def self.dequote_string(str : String) : String
     data = str.to_slice
     quoted_pair_index = data.index('\\'.ord)
     return str unless quoted_pair_index
@@ -410,7 +410,7 @@ module HTTP
   # io.rewind
   # io.gets_to_end # => %q(\"foo\\\ bar\")
   # ```
-  def self.quote_string(string, io) : Nil
+  def self.quote_string(string : String, io : IO) : Nil
     # Escaping rules: https://evolvis.org/pipermail/evolvis-platfrm-discuss/2014-November/000675.html
 
     string.each_char do |char|
@@ -435,7 +435,7 @@ module HTTP
   # string = %q("foo\ bar")
   # HTTP.quote_string(string) # => %q(\"foo\\\ bar\")
   # ```
-  def self.quote_string(string) : String
+  def self.quote_string(string : String) : String
     String.build do |io|
       quote_string(string, io)
     end
@@ -448,4 +448,5 @@ require "./client/response"
 require "./headers"
 require "./content"
 require "./cookie"
+require "./cookies"
 require "./formdata"

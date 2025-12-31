@@ -117,7 +117,7 @@ class Crystal::CodeGenVisitor
           void_ptr = context.fun.params.first
           closure_type = llvm_typer.copy_type(context.closure_type.not_nil!)
           closure_ptr = pointer_cast void_ptr, closure_type.pointer
-          setup_closure_vars target_def.vars, context.closure_vars.not_nil!, self.context, closure_type, closure_ptr
+          setup_closure_vars target_def, context.closure_vars.not_nil!, self.context, closure_type, closure_ptr
         else
           context.reset_closure
         end
@@ -236,17 +236,22 @@ class Crystal::CodeGenVisitor
     # Check if this def must use the C calling convention and the return
     # value must be either casted or passed by sret
     if target_def.c_calling_convention? && target_def.abi_info?
+      return_type = target_def.body.type
+      if return_type.proc?
+        @last = check_proc_is_not_closure(@last, return_type)
+      end
+
       abi_info = abi_info(target_def)
-      ret_type = abi_info.return_type
-      if cast = ret_type.cast
+      abi_ret_type = abi_info.return_type
+      if cast = abi_ret_type.cast
         casted_last = pointer_cast @last, cast.pointer
         last = load cast, casted_last
         ret last
         return
       end
 
-      if (attr = ret_type.attr) && attr == LLVM::Attribute::StructRet
-        store load(llvm_type(target_def.body.type), @last), context.fun.params[0]
+      if (attr = abi_ret_type.attr) && attr == LLVM::Attribute::StructRet
+        store load(llvm_type(return_type), @last), context.fun.params[0]
         ret
         return
       end
@@ -332,7 +337,7 @@ class Crystal::CodeGenVisitor
       end
     end
 
-    if @single_module && !target_def.no_inline? && !target_def.is_a?(External)
+    if @single_module && !target_def.is_a?(External)
       context.fun.linkage = LLVM::Linkage::Internal
     end
 
@@ -390,6 +395,14 @@ class Crystal::CodeGenVisitor
       context.fun.call_convention = call_convention
     end
 
+    if @single_module && mangled_name.starts_with?("__crystal_")
+      # FIXME: macos ld fails to link when the personality fun is internal; it
+      # might work with lld so we might want to check the linker?
+      unless @program.has_flag?("darwin") && mangled_name.starts_with?("__crystal_personality")
+        context.fun.linkage = LLVM::Linkage::Internal
+      end
+    end
+
     i = 0
     args.each do |arg|
       param = context.fun.params[i + offset]
@@ -401,7 +414,7 @@ class Crystal::CodeGenVisitor
         context.fun.add_attribute(attr, i + offset + 1, abi_arg_type.type)
       end
 
-      i += 1 unless abi_arg_type.kind == LLVM::ABI::ArgKind::Ignore
+      i += 1 unless abi_arg_type.kind == ABI::ArgKind::Ignore
     end
 
     # This is for sret
@@ -443,18 +456,15 @@ class Crystal::CodeGenVisitor
     context.fun.add_attribute LLVM::Attribute::ReturnsTwice if target_def.returns_twice?
     context.fun.add_attribute LLVM::Attribute::Naked if target_def.naked?
     context.fun.add_attribute LLVM::Attribute::NoReturn if target_def.no_returns?
-
-    if target_def.no_inline?
-      context.fun.add_attribute LLVM::Attribute::NoInline
-      context.fun.linkage = LLVM::Linkage::External
-    end
+    context.fun.add_attribute LLVM::Attribute::NoInline if target_def.no_inline?
   end
 
-  def setup_closure_vars(def_vars, closure_vars, context, closure_type, closure_ptr)
+  def setup_closure_vars(target_def, closure_vars, context, closure_type, closure_ptr)
     if context.closure_skip_parent
       parent_context = context.closure_parent_context.not_nil!
-      setup_closure_vars(def_vars, parent_context.closure_vars.not_nil!, parent_context, closure_type, closure_ptr)
+      setup_closure_vars(target_def, parent_context.closure_vars.not_nil!, parent_context, closure_type, closure_ptr)
     else
+      def_vars = target_def.vars
       closure_vars.each_with_index do |var, i|
         # A closured var in this context might have the same name as
         # a local var in another context, for example if the local var
@@ -463,7 +473,14 @@ class Crystal::CodeGenVisitor
         def_var = def_vars.try &.[var.name]?
         next if def_var && !def_var.closured?
 
-        self.context.vars[var.name] = LLVMVar.new(gep(closure_type, closure_ptr, 0, i, var.name), var.type)
+        if context.fun.naked?
+          debug_variable_created = false
+        else
+          var_offset = llvm_typer.offset_of(closure_type, i)
+          debug_variable_created = declare_variable(var.name, var.type, closure_ptr, target_def.location, offset: var_offset)
+        end
+        var_ptr = gep(closure_type, closure_ptr, 0, i, var.name)
+        self.context.vars[var.name] = LLVMVar.new(var_ptr, var.type, debug_variable_created: debug_variable_created)
       end
 
       if (closure_parent_context = context.closure_parent_context) &&
@@ -471,12 +488,18 @@ class Crystal::CodeGenVisitor
         parent_closure_type = llvm_typer.copy_type(closure_parent_context.closure_type.not_nil!)
         parent_closure_ptr = gep(closure_type, closure_ptr, 0, closure_vars.size, "parent_ptr")
         parent_closure = load(parent_closure_type.pointer, parent_closure_ptr, "parent")
-        setup_closure_vars(def_vars, parent_vars, closure_parent_context, parent_closure_type, parent_closure)
+        setup_closure_vars(target_def, parent_vars, closure_parent_context, parent_closure_type, parent_closure)
       elsif closure_self = context.closure_self
-        offset = context.closure_parent_context ? 1 : 0
-        self_value = gep(closure_type, closure_ptr, 0, closure_vars.size + offset, "self")
-        self_value = load(llvm_type(closure_self), self_value) unless context.type.passed_by_value?
-        self.context.vars["self"] = LLVMVar.new(self_value, closure_self, true)
+        self_index = closure_vars.size + (context.closure_parent_context ? 1 : 0)
+        if context.fun.naked?
+          debug_variable_created = false
+        else
+          self_offset = llvm_typer.offset_of(closure_type, self_index)
+          debug_variable_created = declare_variable("self", closure_self, closure_ptr, target_def.location, offset: self_offset)
+        end
+        self_value = gep(closure_type, closure_ptr, 0, self_index, "self")
+        self_value = load(llvm_type(closure_self), self_value) unless closure_self.passed_by_value?
+        self.context.vars["self"] = LLVMVar.new(self_value, closure_self, true, debug_variable_created: debug_variable_created)
       end
     end
   end
@@ -621,11 +644,9 @@ class Crystal::CodeGenVisitor
         # LLVM::Context.register(llvm_context, type_name)
 
         llvm_typer = LLVMTyper.new(@program, llvm_context)
-        llvm_mod = llvm_context.new_module(type_name)
-        llvm_mod.data_layout = self.data_layout
+        llvm_mod = configure_module(llvm_context.new_module(type_name))
         llvm_builder = new_builder(llvm_context)
 
-        define_symbol_table llvm_mod, llvm_typer
         ModuleInfo.new(llvm_mod, llvm_typer, llvm_builder)
       end
     end

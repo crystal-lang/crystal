@@ -6,28 +6,16 @@ require "crystal/dwarf"
 {% end %}
 
 struct Exception::CallStack
-  @@dwarf_loaded = false
   @@dwarf_line_numbers : Crystal::DWARF::LineNumbers?
   @@dwarf_function_names : Array(Tuple(LibC::SizeT, LibC::SizeT, String))?
 
-  # :nodoc:
-  def self.load_debug_info : Nil
-    return if ENV["CRYSTAL_LOAD_DEBUG_INFO"]? == "0"
+  {% if flag?(:win32) %}
+    @@coff_symbols : Hash(Int32, Array(Crystal::PE::COFFSymbol))?
+  {% end %}
 
-    unless @@dwarf_loaded
-      @@dwarf_loaded = true
-      begin
-        load_debug_info_impl
-      rescue ex
-        @@dwarf_line_numbers = nil
-        @@dwarf_function_names = nil
-        Crystal::System.print_exception "Unable to load dwarf information", ex
-      end
-    end
-  end
+  # :nodoc:
 
   protected def self.decode_line_number(pc)
-    load_debug_info
     if ln = @@dwarf_line_numbers
       if row = ln.find(pc)
         return {row.path, row.line, row.column}
@@ -37,7 +25,6 @@ struct Exception::CallStack
   end
 
   protected def self.decode_function_name(pc)
-    load_debug_info
     if fn = @@dwarf_function_names
       fn.each do |(low_pc, high_pc, function_name)|
         return function_name if low_pc <= pc <= high_pc

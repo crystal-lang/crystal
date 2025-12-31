@@ -3,25 +3,25 @@ require "file/error"
 
 # :nodoc:
 module Crystal::System::File
-  def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions)
+  def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions, blocking : Bool?) : {FileDescriptor::Handle, Bool}
     perm = ::File::Permissions.new(perm) if perm.is_a? Int32
 
-    fd, errno = open(filename, open_flag(mode), perm)
-
-    unless errno.none?
-      raise ::File::Error.from_os_error("Error opening file with mode '#{mode}'", errno, file: filename)
+    case result = EventLoop.current.open(filename, open_flag(mode), perm, blocking)
+    in Tuple(FileDescriptor::Handle, Bool)
+      result
+    in Errno
+      raise ::File::Error.from_os_error("Error opening file with mode '#{mode}'", result, file: filename)
     end
-
-    fd
   end
 
-  def self.open(filename : String, flags : Int32, perm : ::File::Permissions) : {LibC::Int, Errno}
-    filename.check_no_null_byte
-    flags |= LibC::O_CLOEXEC
+  protected def system_init(mode : String, blocking : Bool) : Nil
+  end
 
-    fd = LibC.open(filename, flags, perm)
-
-    {fd, fd < 0 ? Errno.value : Errno::NONE}
+  def self.special_type?(fd)
+    stat = uninitialized LibC::Stat
+    ret = fstat(fd, pointerof(stat))
+    # not checking for S_IFSOCK because we can't open(2) a socket
+    ret != -1 && (stat.st_mode & LibC::S_IFMT).in?(LibC::S_IFCHR, LibC::S_IFIFO)
   end
 
   def self.info?(path : String, follow_symlinks : Bool) : ::File::Info?
@@ -35,7 +35,7 @@ module Crystal::System::File
     if ret == 0
       ::File::Info.new(stat)
     else
-      if Errno.value.in?(Errno::ENOENT, Errno::ENOTDIR)
+      if ::File::NotFoundError.os_error?(Errno.value)
         nil
       else
         raise ::File::Error.from_errno("Unable to get file info", file: path)
@@ -108,8 +108,8 @@ module Crystal::System::File
     raise ::File::Error.from_errno("Error changing owner", file: path) if ret == -1
   end
 
-  def self.fchown(path, fd, uid : Int, gid : Int)
-    ret = LibC.fchown(fd, uid, gid)
+  private def system_chown(uid : Int, gid : Int)
+    ret = @fd_lock.reference { LibC.fchown(fd, uid, gid) }
     raise ::File::Error.from_errno("Error changing owner", file: path) if ret == -1
   end
 
@@ -119,8 +119,8 @@ module Crystal::System::File
     end
   end
 
-  private def system_chmod(path, mode)
-    if LibC.fchmod(fd, mode) == -1
+  private def system_chmod(mode)
+    if @fd_lock.reference { LibC.fchmod(fd, mode) } == -1
       raise ::File::Error.from_errno("Error changing permissions", file: path)
     end
   end
@@ -129,7 +129,7 @@ module Crystal::System::File
     err = LibC.unlink(path.check_no_null_byte)
     if err != -1
       true
-    elsif !raise_on_missing && Errno.value == Errno::ENOENT
+    elsif !raise_on_missing && ::File::NotFoundError.os_error?(Errno.value)
       false
     else
       raise ::File::Error.from_errno("Error deleting file", file: path)
@@ -154,24 +154,20 @@ module Crystal::System::File
     ret
   end
 
-  def self.readlink(path) : String
-    buf = Bytes.new 256
-    # First pass at 256 bytes handles all normal occurrences in 1 system call.
-    # Second pass at 1024 bytes handles outliers?
-    # Third pass is the max or double what Linux/MacOS can store.
-    3.times do |iter|
-      bytesize = LibC.readlink(path, buf, buf.bytesize)
-      if bytesize == -1
-        raise ::File::Error.from_errno("Cannot read link", file: path)
-      elsif bytesize == buf.bytesize
-        break if iter >= 2
-        buf = Bytes.new(buf.bytesize * 4)
-      else
-        return String.new(buf.to_unsafe, bytesize)
+  def self.readlink(path, &) : String
+    buf = uninitialized UInt8[4096]
+    bytesize = LibC.readlink(path, buf, buf.size)
+    if bytesize == -1
+      if ::File::NotFoundError.os_error?(Errno.value) || Errno.value == Errno::EINVAL
+        yield
       end
-    end
 
-    raise ::File::Error.from_os_error("Cannot read link", Errno::ENAMETOOLONG, file: path)
+      raise ::File::Error.from_errno("Cannot read link", file: path)
+    elsif bytesize == buf.size
+      raise ::File::Error.from_os_error("Cannot read link", Errno::ENAMETOOLONG, file: path)
+    else
+      return String.new(buf.to_unsafe, bytesize)
+    end
   end
 
   def self.rename(old_filename, new_filename) : ::File::Error?
@@ -182,38 +178,46 @@ module Crystal::System::File
   end
 
   def self.utime(atime : ::Time, mtime : ::Time, filename : String) : Nil
-    timevals = uninitialized LibC::Timeval[2]
-    timevals[0] = Crystal::System::Time.to_timeval(atime)
-    timevals[1] = Crystal::System::Time.to_timeval(mtime)
-    ret = LibC.utimes(filename, timevals)
+    ret =
+      {% if LibC.has_method?("utimensat") %}
+        timespecs = uninitialized LibC::Timespec[2]
+        timespecs[0] = Crystal::System::Time.to_timespec(atime)
+        timespecs[1] = Crystal::System::Time.to_timespec(mtime)
+        LibC.utimensat(LibC::AT_FDCWD, filename, timespecs, 0)
+      {% else %}
+        timevals = uninitialized LibC::Timeval[2]
+        timevals[0] = Crystal::System::Time.to_timeval(atime)
+        timevals[1] = Crystal::System::Time.to_timeval(mtime)
+        LibC.utimes(filename, timevals)
+      {% end %}
+
     if ret != 0
       raise ::File::Error.from_errno("Error setting time on file", file: filename)
     end
   end
 
-  private def system_utime(atime : ::Time, mtime : ::Time, filename : String) : Nil
+  private def system_utime(atime : ::Time, mtime : ::Time) : Nil
     ret = {% if LibC.has_method?("futimens") %}
             timespecs = uninitialized LibC::Timespec[2]
             timespecs[0] = Crystal::System::Time.to_timespec(atime)
             timespecs[1] = Crystal::System::Time.to_timespec(mtime)
-            LibC.futimens(fd, timespecs)
+            @fd_lock.reference { LibC.futimens(fd, timespecs) }
           {% elsif LibC.has_method?("futimes") %}
             timevals = uninitialized LibC::Timeval[2]
             timevals[0] = Crystal::System::Time.to_timeval(atime)
             timevals[1] = Crystal::System::Time.to_timeval(mtime)
-            LibC.futimes(fd, timevals)
+            @fd_lock.reference { LibC.futimes(fd, timevals) }
           {% else %}
             {% raise "Missing futimens & futimes" %}
           {% end %}
 
     if ret != 0
-      raise ::File::Error.from_errno("Error setting time on file", file: filename)
+      raise ::File::Error.from_errno("Error setting time on file", file: path)
     end
   end
 
   private def system_truncate(size) : Nil
-    flush
-    code = LibC.ftruncate(fd, size)
+    code = @fd_lock.reference { LibC.ftruncate(fd, size) }
     if code != 0
       raise ::File::Error.from_errno("Error truncating file", file: path)
     end

@@ -20,15 +20,18 @@ module Benchmark
       @warmup_time : Time::Span
       @calculation_time : Time::Span
 
-      def initialize(calculation = 5, warmup = 2, interactive = STDOUT.tty?)
+      def initialize(calculation @calculation_time : Time::Span = 5.seconds, warmup @warmup_time : Time::Span = 2.seconds, interactive : Bool = STDOUT.tty?)
         @interactive = !!interactive
-        @warmup_time = warmup.seconds
-        @calculation_time = calculation.seconds
         @items = [] of Entry
       end
 
+      @[Deprecated("Use `.new(Time::Span, Time::Span, Bool)` instead.")]
+      def self.new(calculation = 5, warmup = 2, interactive = STDOUT.tty?)
+        new(calculation.seconds, warmup.seconds, !!interactive)
+      end
+
       # Adds code to be benchmarked
-      def report(label = "", &action) : Benchmark::IPS::Entry
+      def report(label : String = "", &action : ->) : Benchmark::IPS::Entry
         item = Entry.new(label, action)
         @items << item
         item
@@ -62,11 +65,11 @@ module Benchmark
         @items.each do |item|
           GC.collect
 
-          count = 0
+          count = 0_u64
           elapsed = Time.measure do
-            target = Time.monotonic + @warmup_time
+            target = Time.instant + @warmup_time
 
-            while Time.monotonic < target
+            while Time.instant < target
               item.call
               count += 1
             end
@@ -84,7 +87,7 @@ module Benchmark
           bytes = 0_i64
           cycles = 0_i64
 
-          target = Time.monotonic + @calculation_time
+          target = Time.instant + @calculation_time
 
           loop do
             elapsed = nil
@@ -94,7 +97,7 @@ module Benchmark
             bytes += bytes_taken
             cycles += item.cycles
             measurements << elapsed.not_nil!
-            break if Time.monotonic >= target
+            break if Time.instant >= target
           end
 
           ips = measurements.map { |m| item.cycles.to_f / m.total_seconds }

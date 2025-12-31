@@ -51,7 +51,7 @@ describe StringScanner do
       s.offset.should eq(5)
       s[0]?.should_not be_nil
 
-      s.skip(/\d+/).should eq(nil)
+      s.skip(/\d+/).should be_nil
       s.offset.should eq(5)
 
       s.skip('i').should eq(1)
@@ -72,7 +72,7 @@ describe StringScanner do
     it "advances the offset but does not returns the string matched" do
       s = StringScanner.new("this is a string")
 
-      s.skip_until(/not/).should eq(nil)
+      s.skip_until(/not/).should be_nil
       s.offset.should eq(0)
       s[0]?.should be_nil
 
@@ -93,9 +93,9 @@ describe StringScanner do
   describe "#eos" do
     it "it is true when the offset is at the end" do
       s = StringScanner.new("this is a string")
-      s.eos?.should eq(false)
+      s.eos?.should be_false
       s.skip(/(\w+\s?){4}/)
-      s.eos?.should eq(true)
+      s.eos?.should be_true
     end
   end
 
@@ -348,11 +348,11 @@ describe StringScanner do
       s = StringScanner.new("this is a string")
       s.scan_until(/str/)
       s[0]?.should_not be_nil
-      s.eos?.should eq(false)
+      s.eos?.should be_false
 
       s.terminate
       s[0]?.should be_nil
-      s.eos?.should eq(true)
+      s.eos?.should be_true
     end
   end
 end

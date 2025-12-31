@@ -10,7 +10,7 @@ describe "Code gen: var" do
   end
 
   it "codegens ivar assignment when not-nil type filter applies" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       class Foo
         def foo
           if @a
@@ -22,11 +22,11 @@ describe "Code gen: var" do
 
       foo = Foo.new
       foo.foo
-      ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "codegens bug with instance vars and ssa" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(-1)
       class Foo
         def initialize
           @angle = 0
@@ -43,11 +43,11 @@ describe "Code gen: var" do
 
       f = Foo.new
       f.foo
-      ").to_i.should eq(-1)
+      CRYSTAL
   end
 
   it "codegens bug with var, while, if, break and ssa" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       a = 1
       a = 2
 
@@ -60,11 +60,11 @@ describe "Code gen: var" do
       end
 
       a
-      ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "codegens bug with union of int, nil and string (1): assigning nil to union must fill all zeros" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       struct Nil
         def foo
           1
@@ -84,11 +84,11 @@ describe "Code gen: var" do
         x = "a"
       end
       x.foo
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens bug with union of int, nil and string (2): assigning nil to union must fill all zeros" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       struct Nil
         def foo
           1
@@ -108,31 +108,31 @@ describe "Code gen: var" do
         x = "a"
       end
       x.foo
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens assignment that can never be reached" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       if 1 == 1 && (x = nil)
         z = x
       end
-      ))
+      CRYSTAL
   end
 
   it "works with typeof with assignment (#828)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(123)
       class String; def to_i!; 0; end; end
 
       a = 123
       typeof(a = "hello")
       a.to_i!
-      )).to_i.should eq(123)
+      CRYSTAL
   end
 
   it "assigns to underscore" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       _ = (b = 2)
       b
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 end

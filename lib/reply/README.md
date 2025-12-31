@@ -12,10 +12,10 @@ It includes the following features:
 * Hook for Auto formatting
 * Hook for Auto indentation
 * Hook for Auto completion (Experimental)
+* History Reverse i-search
 * Work on Windows 10
 
 It doesn't support yet:
-* History reverse i-search
 * Customizable hotkeys
 * Unicode characters
 
@@ -53,7 +53,7 @@ end
 require "reply"
 
 class MyReader < Reply::Reader
-  def prompt(io : IO, line_number : Int32, color? : Bool) : Nil
+  def prompt(io : IO, line_number : Int32, color : Bool) : Nil
     # Display a custom prompt
   end
 

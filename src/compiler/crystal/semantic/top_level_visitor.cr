@@ -120,7 +120,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         when node.splat_index
           node.raise "BUG: Expected ReferenceStorageType to have no splat parameter"
         end
-        type = GenericReferenceStorageType.new @program, scope, name, @program.value, type_vars
+        type = GenericReferenceStorageType.new @program, scope, name, @program.value, type_vars, false
         type.declare_instance_var("@type_id", @program.int32)
         type.can_be_stored = false
       end
@@ -193,9 +193,9 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       if superclass.is_a?(GenericClassInstanceType)
         superclass.generic_type.add_subclass(type)
       end
+      scope.types[name] = type
     end
 
-    scope.types[name] = type
     node.resolved_type = type
 
     process_annotations(annotations) do |annotation_type, ann|
@@ -240,6 +240,12 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     pushing_type(type) do
       run_hooks(hook_type(superclass), type, :inherited, node) if created_new_type
       node.body.accept self
+    rescue ex : MacroRaiseException
+      # Make the inner most exception to be the inherited node so that it's the last frame in the trace.
+      # This will make the location show on that node instead of the `raise` call.
+      ex.inner = Crystal::MacroRaiseException.for_node node, ex.message
+
+      raise ex
     end
 
     if created_new_type
@@ -364,6 +370,9 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     end
 
     alias_type = AliasType.new(@program, scope, name, node.value)
+    process_annotations(annotations) do |annotation_type, ann|
+      alias_type.add_annotation(annotation_type, ann)
+    end
     attach_doc alias_type, node, annotations
     scope.types[name] = alias_type
 
@@ -502,7 +511,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
       if !@method_added_running && has_hooks?(target_type.metaclass)
         @method_added_running = true
-        run_hooks target_type.metaclass, target_type, :method_added, node, Call.new(nil, "method_added", node).at(node)
+        run_hooks target_type.metaclass, target_type, :method_added, node, Call.new("method_added", node).at(node)
         @method_added_running = false
       end
     end
@@ -555,6 +564,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       type = LibType.new @program, scope, name
       scope.types[name] = type
     end
+
+    attach_doc type, node, annotations
 
     node.resolved_type = type
 
@@ -626,9 +637,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       type.extern = true
       type.extern_union = node.union?
 
-      if location = node.location
-        type.add_location(location)
-      end
+      attach_doc type, node, annotations
 
       current_type.types[node.name] = type
     end
@@ -641,15 +650,22 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   end
 
   def visit(node : TypeDef)
+    annotations = read_annotations
     type = current_type.types[node.name]?
+
     if type
       node.raise "#{node.name} is already defined"
     else
       typed_def_type = lookup_type(node.type_spec)
       typed_def_type = check_allowed_in_lib node.type_spec, typed_def_type
-      current_type.types[node.name] = TypeDefType.new @program, current_type, node.name, typed_def_type
-      false
+      type = TypeDefType.new @program, current_type, node.name, typed_def_type
+
+      attach_doc type, node, annotations
+
+      current_type.types[node.name] = type
     end
+
+    false
   end
 
   def visit(node : EnumDef)
@@ -824,6 +840,13 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     method_name = is_flags ? "includes?" : "=="
     body = Call.new(Var.new("self").at(member), method_name, Path.new(member.name).at(member)).at(member)
     a_def = Def.new("#{member.name.underscore}?", body: body).at(member)
+
+    a_def.doc = if member.doc.try &.starts_with?(":nodoc:")
+                  ":nodoc:"
+                else
+                  "Returns `true` if this enum value #{is_flags ? "contains" : "equals"} `#{member.name}`"
+                end
+
     enum_type.add_def a_def
   end
 
@@ -837,7 +860,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     node.expressions.each_with_index do |child, i|
       begin
         child.accept self
-      rescue SkipMacroException
+      rescue ex : SkipMacroException
+        @program.macro_expansion_error_hook.try &.call(ex.cause) if ex.is_a? SkipMacroCodeCoverageException
         node.expressions.delete_at(i..-1)
         break
       end
@@ -1000,6 +1024,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     external.call_convention = call_convention
     external.varargs = node.varargs?
     external.fun_def = node
+    external.return_type = node.return_type
     node.external = external
 
     current_type.add_def(external)
@@ -1111,9 +1136,19 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       node_name.raise "#{type} is not a module, it's a #{type.type_desc}"
     end
 
+    if node_name.is_a?(Path)
+      @program.check_deprecated_type(type, node_name)
+    end
+
     begin
       current_type.as(ModuleType).include type
       run_hooks hook_type(type), current_type, kind, node
+    rescue ex : MacroRaiseException
+      # Make the inner most exception to be the include/extend node so that it's the last frame in the trace.
+      # This will make the location show on that node instead of the `raise` call.
+      ex.inner = Crystal::MacroRaiseException.for_node node, ex.message
+
+      raise ex
     rescue ex : TypeException
       node.raise "at '#{kind}' hook", ex
     end

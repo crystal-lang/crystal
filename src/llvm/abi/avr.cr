@@ -1,5 +1,6 @@
 require "../abi"
 
+@[Deprecated("This API is now internal to the compiler and no longer updated publicly.")]
 class LLVM::ABI::AVR < LLVM::ABI
   AVRTINY = StaticArray[
     "attiny4",

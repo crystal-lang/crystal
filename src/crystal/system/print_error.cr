@@ -23,7 +23,7 @@ module Crystal::System
     String.each_utf16_char(bytes) do |char|
       if appender.size > utf8.size - char.bytesize
         # buffer is full (char won't fit)
-        print_error utf8.to_slice[0...appender.size]
+        print_error appender.to_slice
         appender = utf8.to_unsafe.appender
       end
 
@@ -33,7 +33,7 @@ module Crystal::System
     end
 
     if appender.size > 0
-      print_error utf8.to_slice[0...appender.size]
+      print_error appender.to_slice
     end
   end
 
@@ -65,6 +65,12 @@ module Crystal::System
     finish = ptr + format_len
     arg_index = 0
 
+    # The widest integer types supported by the format specifier are `%lld` and
+    # `%llu`, which do not exceed 64 bits, so we only need 20 digits maximum
+    # note that `chars` does not have to be null-terminated, since we are
+    # only yielding a `Bytes`
+    int_chars = uninitialized UInt8[20]
+
     while ptr < finish
       next_percent = ptr
       while next_percent < finish && !(next_percent.value === '%')
@@ -94,20 +100,20 @@ module Crystal::System
         end
       when 'd'
         read_arg(Int::Primitive) do |arg|
-          to_int_slice(arg, 10, true, width) { |bytes| yield bytes }
+          yield to_int_slice(int_chars.to_slice, arg, 10, true, width)
         end
       when 'u'
         read_arg(Int::Primitive) do |arg|
-          to_int_slice(arg, 10, false, width) { |bytes| yield bytes }
+          yield to_int_slice(int_chars.to_slice, arg, 10, false, width)
         end
       when 'x'
         read_arg(Int::Primitive) do |arg|
-          to_int_slice(arg, 16, false, width) { |bytes| yield bytes }
+          yield to_int_slice(int_chars.to_slice, arg, 16, false, width)
         end
       when 'p'
         read_arg(Pointer(Void)) do |arg|
           yield "0x".to_slice
-          to_int_slice(arg.address, 16, false, 2) { |bytes| yield bytes }
+          yield to_int_slice(int_chars.to_slice, arg.address, 16, false, 2)
         end
       else
         yield Slice.new(next_percent, fmt_ptr + 1 - next_percent)
@@ -118,8 +124,8 @@ module Crystal::System
   end
 
   private macro read_arg(type, &block)
-    {{ block.args[0] }} = args[arg_index].as?({{ type }})
-    if !{{ block.args[0] }}.nil?
+    {{ block.args[0] }} = args[arg_index]
+    if {{ block.args[0] }}.is_a?({{ type }})
       {{ block.body }}
     else
       yield "(???)".to_slice
@@ -140,27 +146,26 @@ module Crystal::System
   end
 
   # simplified version of `Int#internal_to_s`
-  protected def self.to_int_slice(num, base, signed, width, &)
+  protected def self.to_int_slice(buf, num, base, signed, width)
     if num == 0
-      yield "0".to_slice
-      return
+      "0".to_slice
+    else
+      # NOTE: do not factor out `num`! it is written this way to inhibit
+      # unnecessary union dispatches
+      case {signed, width}
+      when {true, 2}  then to_int_slice_impl(buf, LibC::LongLong.new!(num), base)
+      when {true, 1}  then to_int_slice_impl(buf, LibC::Long.new!(num), base)
+      when {true, 0}  then to_int_slice_impl(buf, LibC::Int.new!(num), base)
+      when {false, 2} then to_int_slice_impl(buf, LibC::ULongLong.new!(num), base)
+      when {false, 1} then to_int_slice_impl(buf, LibC::ULong.new!(num), base)
+      else                 to_int_slice_impl(buf, LibC::UInt.new!(num), base)
+      end
     end
+  end
 
-    # Given sizeof(num) <= 64 bits, we need at most 20 bytes for `%d` or `%u`
-    # note that `chars` does not have to be null-terminated, since we are
-    # only yielding a `Bytes`
-    chars = uninitialized UInt8[20]
-    ptr_end = chars.to_unsafe + 20
+  private def self.to_int_slice_impl(buf, num, base)
+    ptr_end = buf.to_unsafe + buf.size
     ptr = ptr_end
-
-    num = case {signed, width}
-          when {true, 2}  then LibC::LongLong.new!(num)
-          when {true, 1}  then LibC::Long.new!(num)
-          when {true, 0}  then LibC::Int.new!(num)
-          when {false, 2} then LibC::ULongLong.new!(num)
-          when {false, 1} then LibC::ULong.new!(num)
-          else                 LibC::UInt.new!(num)
-          end
 
     neg = num < 0
 
@@ -178,7 +183,7 @@ module Crystal::System
       ptr.value = '-'.ord.to_u8
     end
 
-    yield Slice.new(ptr, ptr_end - ptr)
+    Slice.new(ptr, ptr_end - ptr)
   end
 
   def self.print_exception(message, ex)

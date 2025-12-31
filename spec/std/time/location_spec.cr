@@ -1,6 +1,32 @@
 require "../spec_helper"
 require "../../support/time"
 
+private def assert_tz_boundaries(tz : String, t0 : Time, t1 : Time, t2 : Time, t3 : Time, *, file = __FILE__, line = __LINE__)
+  location = Time::Location.posix_tz("Local", tz)
+  std_zone = location.zones.find(&.dst?.!).should_not be_nil, file: file, line: line
+  dst_zone = location.zones.find(&.dst?).should_not be_nil, file: file, line: line
+  assert_tz_boundaries(location, std_zone, dst_zone, t0, t1, t2, t3, file: file, line: line)
+end
+
+private def assert_tz_boundaries(
+  location : Time::Location, std_zone : Time::Location::Zone, dst_zone : Time::Location::Zone,
+  t0 : Time, t1 : Time, t2 : Time, t3 : Time, *, file = __FILE__, line = __LINE__,
+)
+  t0, t1, t2, t3 = t0.to_unix, t1.to_unix, t2.to_unix, t3.to_unix
+
+  location.lookup_with_boundaries(t1 - 1).should eq({std_zone, {t0, t1}}), file: file, line: line
+  location.lookup_with_boundaries(t1).should eq({dst_zone, {t1, t2}}), file: file, line: line
+  location.lookup_with_boundaries(t1 + (t2 - t1) // 2).should eq({dst_zone, {t1, t2}}), file: file, line: line
+  location.lookup_with_boundaries(t2 - 1).should eq({dst_zone, {t1, t2}}), file: file, line: line
+  location.lookup_with_boundaries(t2).should eq({std_zone, {t2, t3}}), file: file, line: line
+end
+
+private def assert_tz_raises(str, *, file = __FILE__, line = __LINE__)
+  expect_raises(ArgumentError, "Invalid TZ string: #{str}", file: file, line: line) do
+    Time::Location.posix_tz("", str)
+  end
+end
+
 class Time::Location
   describe Time::Location do
     describe ".load" do
@@ -22,7 +48,7 @@ class Time::Location
           location.utc?.should be_false
           location.fixed?.should be_false
 
-          with_tz(nil) do
+          with_tz("UTC") do
             location.local?.should be_false
           end
 
@@ -40,6 +66,14 @@ class Time::Location
           location.name.should eq "Europe/Berlin"
           location.utc?.should be_false
           location.fixed?.should be_false
+        end
+
+        it "uses IANA zone names for Windows system time zones (#15911)" do
+          location = Location.load("Europe/Lisbon")
+          std_zone = location.zones.find(&.dst?.!).should_not be_nil
+          dst_zone = location.zones.find(&.dst?).should_not be_nil
+          std_zone.name.should eq("WET")
+          dst_zone.name.should eq("WEST")
         end
       {% end %}
 
@@ -69,6 +103,24 @@ class Time::Location
           Location.load("").should eq Location::UTC
           Location.load("Etc/UTC").should eq Location::UTC
         end
+
+        with_zoneinfo("nonexistent_zipfile.zip") do
+          Location.load("UTC").should eq Location::UTC
+          Location.load("").should eq Location::UTC
+          Location.load("Etc/UTC").should eq Location::UTC
+        end
+      end
+
+      it "treats GMT as special case" do
+        with_zoneinfo do
+          Location.load("GMT").should eq Location::UTC
+          Location.load("Etc/GMT").should eq Location::UTC
+        end
+
+        with_zoneinfo("nonexistent_zipfile.zip") do
+          Location.load("GMT").should eq Location::UTC
+          Location.load("Etc/GMT").should eq Location::UTC
+        end
       end
 
       describe "validating name" do
@@ -94,7 +146,7 @@ class Time::Location
         end
       end
 
-      context "with ZONEINFO" do
+      context "with $TZDIR" do
         it "loads from custom directory" do
           with_zoneinfo(datapath("zoneinfo")) do
             location = Location.load("Foo/Bar")
@@ -162,6 +214,77 @@ class Time::Location
           end
         end
       end
+
+      context "with $ZONEINFO" do
+        it "loads from custom directory" do
+          with_env("ZONEINFO": datapath("zoneinfo")) do
+            Time::Location.__clear_location_cache
+            location = Location.load("Foo/Bar")
+            location.name.should eq "Foo/Bar"
+          end
+        end
+      end
+    end
+
+    describe ".load?" do
+      it "loads Europe/Berlin" do
+        with_zoneinfo do
+          Time::Location.load?("Europe/Berlin").should eq Time::Location.load("Europe/Berlin")
+        end
+      end
+
+      it "returns nil if unavailable" do
+        Location.load?("Foobar/Baz").should be_nil
+
+        with_zoneinfo(datapath("zoneinfo")) do
+          Location.load?("Foobar/Baz").should be_nil
+        end
+      end
+
+      it "invalid zone file" do
+        expect_raises(Time::Location::InvalidTZDataError) do
+          Location.load?("Foo/invalid", [datapath("zoneinfo")])
+        end
+      end
+
+      it "treats UTC as special case" do
+        with_zoneinfo do
+          Location.load?("UTC").should eq Location::UTC
+          Location.load?("").should eq Location::UTC
+          Location.load?("Etc/UTC").should eq Location::UTC
+        end
+      end
+
+      describe "raises on invalid location name" do
+        it "absolute path" do
+          with_zoneinfo do
+            expect_raises(InvalidLocationNameError) do
+              Location.load?("/America/New_York")
+            end
+            expect_raises(InvalidLocationNameError) do
+              Location.load?("\\Zulu")
+            end
+          end
+        end
+
+        it "dot dot" do
+          with_zoneinfo do
+            expect_raises(InvalidLocationNameError) do
+              Location.load?("../zoneinfo/America/New_York")
+            end
+            expect_raises(InvalidLocationNameError) do
+              Location.load?("a..")
+            end
+          end
+        end
+      end
+
+      it "caches result" do
+        with_zoneinfo do
+          location = Location.load?("Europe/Berlin")
+          Location.load?("Europe/Berlin").should be location
+        end
+      end
     end
 
     describe ".load_android" do
@@ -224,23 +347,34 @@ class Time::Location
     end
 
     describe ".load_local" do
-      it "with unset TZ" do
-        with_tz(nil) do
-          # This should generally be `Local`, but if `/etc/localtime` doesn't exist,
-          # `Crystal::System::Time.load_localtime` can't resolve a local time zone,
-          # making the return value default to `UTC`.
-          {"Local", "UTC"}.should contain Location.load_local.name
+      context "with unset TZ" do
+        it "is #local?" do
+          with_tz(nil) do
+            Location.load_local.local?.should be_true
+          end
+        end
+
+        it "derives location name from system (e.g. /etc/localtime)" do
+          with_tz(nil) do
+            local = Location.load_local
+
+            # This expectation might fail on unix in case /etc/localtime is not
+            # a symlink into the zoneinfo database.
+            local.name.should_not eq "Local"
+
+            local.should eq Location.load(local.name)
+          end
         end
       end
 
       it "with TZ" do
-        with_zoneinfo do
-          with_tz("Europe/Berlin") do
+        with_tz("Europe/Berlin") do
+          with_zoneinfo do
             Location.load_local.name.should eq "Europe/Berlin"
           end
         end
-        with_zoneinfo(datapath("zoneinfo")) do
-          with_tz("Foo/Bar") do
+        with_tz("Foo/Bar") do
+          with_zoneinfo(datapath("zoneinfo")) do
             Location.load_local.name.should eq "Foo/Bar"
           end
         end
@@ -251,6 +385,18 @@ class Time::Location
           with_tz("") do
             Location.load_local.utc?.should be_true
           end
+        end
+      end
+
+      it "with POSIX TZ string" do
+        with_tz("EST5EDT,M3.2.0,M11.1.0") do
+          location = Location.load_local
+          location.name.should eq("Local")
+          location.zones.should eq [
+            Location::Zone.new("EST", -18000, false),
+            Location::Zone.new("EDT", -14400, true),
+          ]
+          location.transitions.should be_empty
         end
       end
 
@@ -269,7 +415,19 @@ class Time::Location
 
           with_system_time_zone(info) do
             location = Location.load_local
-            location.zones.should eq [Time::Location::Zone.new("CET", 3600, false), Time::Location::Zone.new("CEST", 7200, true)]
+            std_zone = Time::Location::Zone.new("CET", 3600, false)
+            dst_zone = Time::Location::Zone.new("CEST", 7200, true)
+            location.zones.should eq [std_zone, dst_zone]
+
+            location.lookup(Time.utc(2000, 10, 29, 0, 59, 59)).should eq(dst_zone)
+            location.lookup(Time.utc(2000, 10, 29, 1, 0, 0)).should eq(std_zone)
+            location.lookup(Time.utc(2001, 3, 25, 0, 59, 59)).should eq(std_zone)
+            location.lookup(Time.utc(2001, 3, 25, 1, 0, 0)).should eq(dst_zone)
+
+            location.lookup(Time.utc(3000, 10, 26, 0, 59, 59)).should eq(dst_zone)
+            location.lookup(Time.utc(3000, 10, 26, 1, 0, 0)).should eq(std_zone)
+            location.lookup(Time.utc(3001, 3, 29, 0, 59, 59)).should eq(std_zone)
+            location.lookup(Time.utc(3001, 3, 29, 1, 0, 0)).should eq(dst_zone)
           end
         end
 
@@ -322,13 +480,183 @@ class Time::Location
         location.zones.first.offset.should eq -7539
       end
 
+      it "exactly 24 hours" do
+        location = Location.fixed 86400
+        location.name.should eq "+24:00"
+        location.zones.first.offset.should eq 86400
+
+        location = Location.fixed -86400
+        location.name.should eq "-24:00"
+        location.zones.first.offset.should eq -86400
+      end
+
       it "raises if offset to large" do
-        expect_raises(InvalidTimezoneOffsetError, "86401") do
-          Location.fixed(86401)
+        expect_raises(InvalidTimezoneOffsetError, "93600") do
+          Location.fixed(93600)
         end
         expect_raises(InvalidTimezoneOffsetError, "-90000") do
           Location.fixed(-90000)
         end
+      end
+    end
+
+    describe ".tz" do
+      it "parses string with standard time only" do
+        location = Location.posix_tz("America/New_York", "EST5")
+        location.name.should eq("America/New_York")
+        location.zones.should eq [
+          Location::Zone.new("EST", -18000, false),
+        ]
+        location.transitions.should be_empty
+      end
+
+      it "parses string with both standard time and DST" do
+        location = Location.posix_tz("America/New_York", "EST5EDT,M3.2.0,M11.1.0")
+        location.name.should eq("America/New_York")
+        location.zones.should eq [
+          Location::Zone.new("EST", -18000, false),
+          Location::Zone.new("EDT", -14400, true),
+        ]
+        location.transitions.should be_empty
+
+        location = Location.posix_tz("America/New_York", "EST5EDT-24:59:59,M3.2.0,M11.1.0")
+        location.name.should eq("America/New_York")
+        location.zones.should eq [
+          Location::Zone.new("EST", -18000, false),
+          Location::Zone.new("EDT", 89999, true),
+        ]
+        location.transitions.should be_empty
+
+        location = Location.posix_tz("America/New_York", "EST-24:59:59EDT,M3.2.0,M11.1.0")
+        location.name.should eq("America/New_York")
+        location.zones.should eq [
+          Location::Zone.new("EST", 89999, false),
+          Location::Zone.new("EDT", 93599, true),
+        ]
+        location.transitions.should be_empty
+      end
+
+      it "parses string with all-year DST" do
+        location = Location.posix_tz("America/New_York", "EST5EDT,0/0,J365/25")
+        location.name.should eq("America/New_York")
+        location.zones.should eq [
+          Location::Zone.new("EDT", -14400, true),
+        ]
+        location.transitions.should be_empty
+
+        location = Location.posix_tz("America/New_York", "XXX-6EDT-4:30:10,J1/0,J365/22:30:10")
+        location.name.should eq("America/New_York")
+        location.zones.should eq [
+          Location::Zone.new("EDT", 16210, true),
+        ]
+        location.transitions.should be_empty
+      end
+
+      it "errors on invalid TZ strings" do
+        # std
+        assert_tz_raises ""
+        assert_tz_raises "G"
+        assert_tz_raises "GM"
+        assert_tz_raises "<>"
+        assert_tz_raises "<G>"
+        assert_tz_raises "<GM>"
+        assert_tz_raises "<GMT"
+        assert_tz_raises "012"
+        assert_tz_raises "+00"
+        assert_tz_raises "-00"
+        assert_tz_raises "<$aa>"
+        assert_tz_raises "?"
+        assert_tz_raises ":foobar"
+        assert_tz_raises "/foo/bar"
+        assert_tz_raises "Europe/Berlin"
+
+        # std offset
+        assert_tz_raises "EST"
+        assert_tz_raises "EST "
+        assert_tz_raises "EST 5"
+        assert_tz_raises "EST25"
+        assert_tz_raises "EST123"
+        assert_tz_raises "EST00123"
+        assert_tz_raises "EST-25"
+        assert_tz_raises "EST-123"
+        assert_tz_raises "EST-00123"
+        assert_tz_raises "EST4:"
+        assert_tz_raises "EST4:60"
+        assert_tz_raises "EST4:+30"
+        assert_tz_raises "EST4:-01"
+        assert_tz_raises "EST4:20:"
+        assert_tz_raises "EST4:20:60"
+        assert_tz_raises "EST4:20:+30"
+        assert_tz_raises "EST4:20:-01"
+
+        # dst
+        assert_tz_raises "EST5 "
+        assert_tz_raises "EST5G"
+        assert_tz_raises "EST5GM"
+        assert_tz_raises "EST5<>"
+        assert_tz_raises "EST5<GM>"
+        assert_tz_raises "EST5<GMT"
+        assert_tz_raises "EST5<$aa>"
+        assert_tz_raises "EST5+00"
+        assert_tz_raises "EST5-00"
+
+        # dst offset
+        assert_tz_raises "EST5EDT4:"
+        assert_tz_raises "EST5EDT4:60"
+        assert_tz_raises "EST5EDT4:+30"
+        assert_tz_raises "EST5EDT4:-01"
+        assert_tz_raises "EST5EDT4:20:"
+        assert_tz_raises "EST5EDT4:20:60"
+        assert_tz_raises "EST5EDT4:20:+30"
+        assert_tz_raises "EST5EDT4:20:-01"
+
+        # start
+        assert_tz_raises "EST5EDT"
+        assert_tz_raises "EST5EDT,"
+        assert_tz_raises "EST5EDT,A"
+        assert_tz_raises "EST5EDT,J0"
+        assert_tz_raises "EST5EDT,J366"
+        assert_tz_raises "EST5EDT,-1"
+        assert_tz_raises "EST5EDT,366"
+        assert_tz_raises "EST5EDT,M3"
+        assert_tz_raises "EST5EDT,M3."
+        assert_tz_raises "EST5EDT,M3.2"
+        assert_tz_raises "EST5EDT,M3.2."
+        assert_tz_raises "EST5EDT,M0.2.0"
+        assert_tz_raises "EST5EDT,M13.2.0"
+        assert_tz_raises "EST5EDT,M3.0.0"
+        assert_tz_raises "EST5EDT,M3.6.0"
+        assert_tz_raises "EST5EDT,M3.2.-1"
+        assert_tz_raises "EST5EDT,M3.2.7"
+        assert_tz_raises "EST5EDT,M3.2.0/"
+        assert_tz_raises "EST5EDT,M3.2.0/168"
+        assert_tz_raises "EST5EDT,M3.2.0/-168"
+
+        # end
+        assert_tz_raises "EST5EDT,M3.2.0"
+        assert_tz_raises "EST5EDT,M3.2.0,"
+        assert_tz_raises "EST5EDT,M3.2.0,A"
+        assert_tz_raises "EST5EDT,M3.2.0,J0"
+        assert_tz_raises "EST5EDT,M3.2.0,J366"
+        assert_tz_raises "EST5EDT,M3.2.0,-1"
+        assert_tz_raises "EST5EDT,M3.2.0,366"
+        assert_tz_raises "EST5EDT,M3.2.0,M11"
+        assert_tz_raises "EST5EDT,M3.2.0,M11."
+        assert_tz_raises "EST5EDT,M3.2.0,M11.1"
+        assert_tz_raises "EST5EDT,M3.2.0,M11.1."
+        assert_tz_raises "EST5EDT,M3.2.0,M0.1.0"
+        assert_tz_raises "EST5EDT,M3.2.0,M13.1.0"
+        assert_tz_raises "EST5EDT,M3.2.0,M11.0.0"
+        assert_tz_raises "EST5EDT,M3.2.0,M11.6.0"
+        assert_tz_raises "EST5EDT,M3.2.0,M11.1.-1"
+        assert_tz_raises "EST5EDT,M3.2.0,M11.1.7"
+        assert_tz_raises "EST5EDT,M3.2.0,M11.1.0/"
+        assert_tz_raises "EST5EDT,M3.2.0,M11.1.0/168"
+        assert_tz_raises "EST5EDT,M3.2.0,M11.1.0/-168"
+
+        # trailing characters
+        assert_tz_raises "EST5EDT,M3.2.0,M11.1.0 "
+        assert_tz_raises "EST5EDT,M3.2.0/2,M11.1.0/2 "
       end
     end
 
@@ -366,7 +694,7 @@ class Time::Location
 
       it "handles value after last transition" do
         with_zoneinfo do
-          location = Location.load("America/Buenos_Aires")
+          location = Location.load("America/Argentina/Buenos_Aires")
           zone = location.lookup(Time.utc(5000, 1, 1))
           zone.name.should eq "-03"
           zone.offset.should eq -3 * 3600
@@ -426,6 +754,161 @@ class Time::Location
           location.__cached_zone = cached_zone
 
           location.lookup(Time.utc(2017, 11, 23, 22, 6, 12)).should eq cached_zone
+        end
+      end
+
+      context "TZ string" do
+        it "looks up location with standard time only" do
+          location = Location.posix_tz("Local", "EST5")
+          zone, range = location.lookup_with_boundaries(Time.utc(2025, 1, 1, 22, 6, 12).to_unix)
+          zone.should eq(Zone.new("EST", -18000, false))
+          range.should eq({Int64::MIN, Int64::MAX})
+        end
+
+        it "looks up location with all-year DST" do
+          location = Location.posix_tz("Local", "EST5EDT4,0/0,J365/25")
+          zone, range = location.lookup_with_boundaries(Time.utc(2025, 1, 1, 22, 6, 12).to_unix)
+          zone.should eq(Zone.new("EDT", -14400, true))
+          range.should eq({Int64::MIN, Int64::MAX})
+        end
+
+        context "transition dates" do
+          it "supports one-based ordinal days" do
+            assert_tz_boundaries "EST5EDT4,J1/2,J365/2",
+              Time.utc(2025, 12, 31, 6, 0, 0), Time.utc(2026, 1, 1, 7, 0, 0),
+              Time.utc(2026, 12, 31, 6, 0, 0), Time.utc(2027, 1, 1, 7, 0, 0)
+
+            assert_tz_boundaries "EST5EDT4,J1/2,J365/2",
+              Time.utc(2027, 12, 31, 6, 0, 0), Time.utc(2028, 1, 1, 7, 0, 0),
+              Time.utc(2028, 12, 31, 6, 0, 0), Time.utc(2029, 1, 1, 7, 0, 0)
+          end
+
+          it "excludes Feb 29 if one-based" do
+            assert_tz_boundaries "EST5EDT4,J59/2,J60/2",
+              Time.utc(2027, 3, 1, 6, 0, 0), Time.utc(2028, 2, 28, 7, 0, 0),
+              Time.utc(2028, 3, 1, 6, 0, 0), Time.utc(2029, 2, 28, 7, 0, 0)
+          end
+
+          it "supports zero-based ordinal days" do
+            assert_tz_boundaries "EST5EDT4,50/2,280/2",
+              Time.utc(2025, 10, 8, 6, 0, 0), Time.utc(2026, 2, 20, 7, 0, 0),
+              Time.utc(2026, 10, 8, 6, 0, 0), Time.utc(2027, 2, 20, 7, 0, 0)
+
+            assert_tz_boundaries "EST5EDT4,50/2,280/2",
+              Time.utc(2027, 10, 8, 6, 0, 0), Time.utc(2028, 2, 20, 7, 0, 0),
+              Time.utc(2028, 10, 7, 6, 0, 0), Time.utc(2029, 2, 20, 7, 0, 0)
+          end
+
+          it "includes Feb 29 if zero-based" do
+            assert_tz_boundaries "EST5EDT4,59/2,60/2",
+              Time.utc(2027, 3, 2, 6, 0, 0), Time.utc(2028, 2, 29, 7, 0, 0),
+              Time.utc(2028, 3, 1, 6, 0, 0), Time.utc(2029, 3, 1, 7, 0, 0)
+          end
+
+          it "supports month + week + day of week" do
+            tz = "EST5EDT4,M3.2.0/2,M11.1.0/2"
+
+            trans = [
+              {Time.utc(2020, 11, 1, 6, 0, 0), Time.utc(2021, 3, 14, 7, 0, 0)},
+              {Time.utc(2021, 11, 7, 6, 0, 0), Time.utc(2022, 3, 13, 7, 0, 0)},
+              {Time.utc(2022, 11, 6, 6, 0, 0), Time.utc(2023, 3, 12, 7, 0, 0)},
+              {Time.utc(2023, 11, 5, 6, 0, 0), Time.utc(2024, 3, 10, 7, 0, 0)},
+              {Time.utc(2024, 11, 3, 6, 0, 0), Time.utc(2025, 3, 9, 7, 0, 0)},
+              {Time.utc(2025, 11, 2, 6, 0, 0), Time.utc(2026, 3, 8, 7, 0, 0)},
+              {Time.utc(2026, 11, 1, 6, 0, 0), Time.utc(2027, 3, 14, 7, 0, 0)},
+              {Time.utc(2027, 11, 7, 6, 0, 0), Time.utc(2028, 3, 12, 7, 0, 0)},
+              {Time.utc(2028, 11, 5, 6, 0, 0), Time.utc(2029, 3, 11, 7, 0, 0)},
+            ]
+
+            trans.each_cons_pair do |(t0, t1), (t2, t3)|
+              assert_tz_boundaries(tz, t0, t1, t2, t3)
+            end
+          end
+
+          it "handles time zone differences other than 1 hour" do
+            assert_tz_boundaries "EST4:30EDT-1:23:45,M3.2.0,M11.1.0",
+              Time.utc(2024, 11, 3, 0, 36, 15), Time.utc(2025, 3, 9, 6, 30, 0),
+              Time.utc(2025, 11, 2, 0, 36, 15), Time.utc(2026, 3, 8, 6, 30, 0)
+          end
+
+          it "defaults transition times to 02:00:00 local time" do
+            assert_tz_boundaries "EST5EDT,M3.2.0,M11.1.0",
+              Time.utc(2024, 11, 3, 6, 0, 0), Time.utc(2025, 3, 9, 7, 0, 0),
+              Time.utc(2025, 11, 2, 6, 0, 0), Time.utc(2026, 3, 8, 7, 0, 0)
+          end
+
+          it "supports transition times from -167 to 167 hours" do
+            assert_tz_boundaries "EST5EDT,M3.2.0/-167,M11.1.0/167",
+              Time.utc(2024, 11, 10, 3, 0, 0), Time.utc(2025, 3, 2, 6, 0, 0),
+              Time.utc(2025, 11, 9, 3, 0, 0), Time.utc(2026, 3, 1, 6, 0, 0)
+          end
+
+          it "handles years beginning and ending in DST" do
+            tz = "AEST-10AEDT,M10.1.0,M4.1.0/3"
+
+            trans = [
+              {Time.utc(2020, 4, 4, 16, 0, 0), Time.utc(2020, 10, 3, 16, 0, 0)},
+              {Time.utc(2021, 4, 3, 16, 0, 0), Time.utc(2021, 10, 2, 16, 0, 0)},
+              {Time.utc(2022, 4, 2, 16, 0, 0), Time.utc(2022, 10, 1, 16, 0, 0)},
+              {Time.utc(2023, 4, 1, 16, 0, 0), Time.utc(2023, 9, 30, 16, 0, 0)},
+              {Time.utc(2024, 4, 6, 16, 0, 0), Time.utc(2024, 10, 5, 16, 0, 0)},
+              {Time.utc(2025, 4, 5, 16, 0, 0), Time.utc(2025, 10, 4, 16, 0, 0)},
+              {Time.utc(2026, 4, 4, 16, 0, 0), Time.utc(2026, 10, 3, 16, 0, 0)},
+              {Time.utc(2027, 4, 3, 16, 0, 0), Time.utc(2027, 10, 2, 16, 0, 0)},
+              {Time.utc(2028, 4, 1, 16, 0, 0), Time.utc(2028, 9, 30, 16, 0, 0)},
+              {Time.utc(2029, 3, 31, 16, 0, 0), Time.utc(2029, 10, 6, 16, 0, 0)},
+            ]
+
+            trans.each_cons_pair do |(t0, t1), (t2, t3)|
+              assert_tz_boundaries(tz, t0, t1, t2, t3)
+            end
+          end
+
+          it "handles very distant years" do
+            assert_tz_boundaries "EST5EDT4,M3.2.0/2,M11.1.0/2",
+              Time.utc(1583, 11, 6, 6, 0, 0), Time.utc(1584, 3, 11, 7, 0, 0),
+              Time.utc(1584, 11, 4, 6, 0, 0), Time.utc(1585, 3, 10, 7, 0, 0)
+
+            assert_tz_boundaries "EST5EDT4,M3.2.0/2,M11.1.0/2",
+              Time.utc(3332, 11, 2, 6, 0, 0), Time.utc(3333, 3, 8, 7, 0, 0),
+              Time.utc(3333, 11, 1, 6, 0, 0), Time.utc(3334, 3, 14, 7, 0, 0)
+          end
+        end
+      end
+
+      context "zoneinfo + POSIX TZ string" do
+        it "looks up location beyond last transition time" do
+          with_zoneinfo do
+            # "CET-1CEST,M3.5.0,M10.5.0/3"
+            # last transition is in year 2037
+            location = Location.load("Europe/Berlin")
+            Time.unix(location.@transitions.last.when).year.should eq(2037)
+
+            assert_tz_boundaries location,
+              Zone.new("CET", 3600, false), Zone.new("CEST", 7200, true),
+              Time.utc(2037, 10, 25, 1, 0, 0), Time.utc(2038, 3, 28, 1, 0, 0),
+              Time.utc(2038, 10, 31, 1, 0, 0), Time.utc(2039, 3, 27, 1, 0, 0)
+
+            assert_tz_boundaries location,
+              Zone.new("CET", 3600, false), Zone.new("CEST", 7200, true),
+              Time.utc(3003, 10, 30, 1, 0, 0), Time.utc(3004, 3, 25, 1, 0, 0),
+              Time.utc(3004, 10, 28, 1, 0, 0), Time.utc(3005, 3, 31, 1, 0, 0)
+          end
+        end
+
+        it "looks up location if TZ string has no transitions" do
+          with_zoneinfo do
+            # Paraguay stopped observing DST since 2024
+            location = Location.load("America/Asuncion")
+
+            zone, range = location.lookup_with_boundaries(Time.utc(2024, 10, 15, 2, 59, 59).to_unix)
+            zone.should eq(Zone.new("-03", -10800, true))
+            range.should eq({Time.utc(2024, 10, 6, 4, 0, 0).to_unix, Time.utc(2024, 10, 15, 3, 0, 0).to_unix})
+
+            zone, range = location.lookup_with_boundaries(Time.utc(2024, 10, 15, 3, 0, 0).to_unix)
+            zone.should eq(Zone.new("-03", -10800, false))
+            range.should eq({Time.utc(2024, 10, 15, 3, 0, 0).to_unix, Int64::MAX})
+          end
         end
       end
     end

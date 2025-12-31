@@ -3,6 +3,7 @@ require "c/handleapi"
 require "c/jobapi2"
 require "c/synchapi"
 require "c/tlhelp32"
+require "c/debugapi"
 require "process/shell"
 require "crystal/atomic_semaphore"
 
@@ -17,12 +18,12 @@ struct Crystal::System::Process
   @thread_id : LibC::DWORD
   @process_handle : LibC::HANDLE
   @job_object : LibC::HANDLE
-  @completion_key = IOCP::CompletionKey.new
+  @completion_key = IOCP::CompletionKey.new(:process_run)
 
   @@interrupt_handler : Proc(::Process::ExitReason, Nil)?
   @@interrupt_count = Crystal::AtomicSemaphore.new
   @@win32_interrupt_handler : LibC::PHANDLER_ROUTINE?
-  @@setup_interrupt_handler = Atomic::Flag.new
+  @@setup_interrupt_handler = Atomic(Bool).new(false)
   @@last_interrupt = ::Process::ExitReason::Interrupted
 
   def initialize(process_info)
@@ -37,7 +38,7 @@ struct Crystal::System::Process
       LibC::JOBOBJECTINFOCLASS::AssociateCompletionPortInformation,
       LibC::JOBOBJECT_ASSOCIATE_COMPLETION_PORT.new(
         completionKey: @completion_key.as(Void*),
-        completionPort: Crystal::EventLoop.current.iocp,
+        completionPort: Crystal::EventLoop.current.iocp_handle,
       ),
     )
 
@@ -54,6 +55,12 @@ struct Crystal::System::Process
     if LibC.AssignProcessToJobObject(@job_object, @process_handle) == 0
       raise RuntimeError.from_winerror("AssignProcessToJobObject")
     end
+
+    if LibC.ResumeThread(process_info.hThread) == 0xFFFFFFFF_u32
+      raise RuntimeError.from_winerror("ResumeThread")
+    end
+
+    close_handle(process_info.hThread)
   end
 
   private def config_job_object(kind, info)
@@ -112,8 +119,12 @@ struct Crystal::System::Process
     LibC.TerminateProcess(@process_handle, 1)
   end
 
-  def self.exit(status)
+  def self.exit(status : Int32)
     LibC.exit(status)
+  end
+
+  def self.exit(status : ::Process::Status)
+    exit status.system_exit_status.to_i32!
   end
 
   def self.pid
@@ -201,9 +212,9 @@ struct Crystal::System::Process
   end
 
   def self.start_interrupt_loop : Nil
-    return unless @@setup_interrupt_handler.test_and_set
+    return if @@setup_interrupt_handler.swap(true, :relaxed)
 
-    spawn(name: "Interrupt signal loop") do
+    spawn(name: "interrupt-signal-loop") do
       while true
         @@interrupt_count.wait { sleep 50.milliseconds }
 
@@ -221,6 +232,10 @@ struct Crystal::System::Process
         end
       end
     end
+  end
+
+  def self.debugger_present? : Bool
+    LibC.IsDebuggerPresent != 0
   end
 
   def self.exists?(pid)
@@ -256,48 +271,55 @@ struct Crystal::System::Process
   end
 
   private def self.handle_from_io(io : IO::FileDescriptor, parent_io)
-    source_handle = io.windows_handle
+    source_handle =
+      if io.is_a?(File) && !io.system_blocking? && !io.closed?
+        dup_handle = reopen_file_as_blocking(io, parent_io == STDIN, "Process.run")
+      else
+        io.windows_handle
+      end
 
     cur_proc = LibC.GetCurrentProcess
     if LibC.DuplicateHandle(cur_proc, source_handle, cur_proc, out new_handle, 0, true, LibC::DUPLICATE_SAME_ACCESS) == 0
       raise RuntimeError.from_winerror("DuplicateHandle")
     end
 
-    new_handle
+    {new_handle, dup_handle}
   end
 
-  def self.spawn(command_args, env, clear_env, input, output, error, chdir)
+  def self.spawn(command, args, shell, env, clear_env, input, output, error, chdir)
     startup_info = LibC::STARTUPINFOW.new
     startup_info.cb = sizeof(LibC::STARTUPINFOW)
     startup_info.dwFlags = LibC::STARTF_USESTDHANDLES
 
-    startup_info.hStdInput = handle_from_io(input, STDIN)
-    startup_info.hStdOutput = handle_from_io(output, STDOUT)
-    startup_info.hStdError = handle_from_io(error, STDERR)
+    startup_info.hStdInput, dup_input = handle_from_io(input, STDIN)
+    startup_info.hStdOutput, dup_output = handle_from_io(output, STDOUT)
+    startup_info.hStdError, dup_error = handle_from_io(error, STDERR)
 
     process_info = LibC::PROCESS_INFORMATION.new
 
-    command_args = ::Process.quote_windows(command_args) unless command_args.is_a?(String)
+    prepared_args = prepare_args(command, args, shell)
+    prepared_args = ::Process.quote_windows(prepared_args) unless prepared_args.is_a?(String)
 
     if LibC.CreateProcessW(
-         nil, System.to_wstr(command_args), nil, nil, true, LibC::CREATE_UNICODE_ENVIRONMENT,
+         nil, System.to_wstr(prepared_args), nil, nil, true, LibC::CREATE_SUSPENDED | LibC::CREATE_UNICODE_ENVIRONMENT,
          make_env_block(env, clear_env), chdir.try { |str| System.to_wstr(str) } || Pointer(UInt16).null,
          pointerof(startup_info), pointerof(process_info)
        ) == 0
       error = WinError.value
-      case error.to_errno
-      when Errno::EACCES, Errno::ENOENT, Errno::ENOEXEC
-        raise ::File::Error.from_os_error("Error executing process", error, file: command_args)
+      if ::File::NotFoundError.os_error?(error) || ::File::AccessDeniedError.os_error?(error) || error == WinError::ERROR_BAD_EXE_FORMAT
+        raise ::File::Error.from_os_error("Error executing process", error, file: prepared_args)
       else
-        raise IO::Error.from_os_error("Error executing process: '#{command_args}'", error)
+        raise IO::Error.from_os_error("Error executing process: '#{prepared_args}'", error)
       end
     end
-
-    close_handle(process_info.hThread)
 
     close_handle(startup_info.hStdInput)
     close_handle(startup_info.hStdOutput)
     close_handle(startup_info.hStdError)
+
+    close_handle(dup_input) if dup_input
+    close_handle(dup_output) if dup_output
+    close_handle(dup_error) if dup_error
 
     process_info
   end
@@ -315,20 +337,20 @@ struct Crystal::System::Process
       # > The problem is that the `cmd.exe` has complicated parsing rules for the command arguments, and programming language runtimes fail to escape the command arguments properly.
       # > Because of this, it’s possible to inject commands if someone can control the part of command arguments of the batch file.
       # https://flatt.tech/research/posts/batbadbut-you-cant-securely-execute-commands-on-windows/
-      if command.byte_slice?(-4, 4).try(&.downcase).in?(".bat", ".cmd")
+      if command.rstrip(". ").byte_slice?(-4, 4).try(&.downcase).in?(".bat", ".cmd")
         raise ::File::Error.from_os_error("Error executing process", WinError::ERROR_BAD_EXE_FORMAT, file: command)
       end
 
-      command_args = [command]
-      command_args.concat(args) if args
-      command_args
+      prepared_args = [command]
+      prepared_args.concat(args) if args
+      prepared_args
     end
   end
 
-  private def self.try_replace(command_args, env, clear_env, input, output, error, chdir)
-    reopen_io(input, ORIGINAL_STDIN)
-    reopen_io(output, ORIGINAL_STDOUT)
-    reopen_io(error, ORIGINAL_STDERR)
+  private def self.try_replace(command, prepared_args, env, clear_env, input, output, error, chdir)
+    old_input_fd = reopen_io(input, ORIGINAL_STDIN)
+    old_output_fd = reopen_io(output, ORIGINAL_STDOUT)
+    old_error_fd = reopen_io(error, ORIGINAL_STDERR)
 
     ENV.clear if clear_env
     env.try &.each do |key, val|
@@ -339,49 +361,97 @@ struct Crystal::System::Process
       end
     end
 
-    ::Dir.cd(chdir) if chdir
-
-    if command_args.is_a?(String)
-      command = System.to_wstr(command_args)
+    if prepared_args.is_a?(String)
+      command = System.to_wstr(prepared_args)
       argv = [command]
     else
-      command = System.to_wstr(command_args[0])
-      argv = command_args.map { |arg| System.to_wstr(arg) }
+      command = System.to_wstr(prepared_args[0])
+      argv = prepared_args.map { |arg| System.to_wstr(arg) }
     end
+
     argv << Pointer(LibC::WCHAR).null
 
-    LibC._wexecvp(command, argv)
+    if chdir
+      ::Dir.cd(chdir) do
+        LibC._wexecvp(command, argv)
+      end
+    else
+      LibC._wexecvp(command, argv)
+    end
+
+    # exec failed; restore the original C runtime file descriptors
+    errno = Errno.value
+    LibC._dup2(old_input_fd, 0)
+    LibC._dup2(old_output_fd, 1)
+    LibC._dup2(old_error_fd, 2)
+    errno
   end
 
-  def self.replace(command_args, env, clear_env, input, output, error, chdir) : NoReturn
-    try_replace(command_args, env, clear_env, input, output, error, chdir)
-    raise_exception_from_errno(command_args.is_a?(String) ? command_args : command_args[0])
+  def self.replace(command, args, shell, env, clear_env, input, output, error, chdir) : NoReturn
+    prepared_args = prepare_args(command, args, shell)
+    errno = try_replace(command, prepared_args, env, clear_env, input, output, error, chdir)
+    raise_exception_from_errno(command, errno)
   end
 
   private def self.raise_exception_from_errno(command, errno = Errno.value)
-    case errno
-    when Errno::EACCES, Errno::ENOENT
+    if ::File::NotFoundError.os_error?(errno) || ::File::AccessDeniedError.os_error?(errno)
       raise ::File::Error.from_os_error("Error executing process", errno, file: command)
     else
       raise IO::Error.from_os_error("Error executing process: '#{command}'", errno)
     end
   end
 
+  # Replaces the C standard streams' file descriptors, not Win32's, since
+  # `try_replace` uses the C `LibC._wexecvp` and only cares about the former.
+  # Returns a duplicate of the original file descriptor
   private def self.reopen_io(src_io : IO::FileDescriptor, dst_io : IO::FileDescriptor)
-    src_io = to_real_fd(src_io)
+    dst_fd =
+      case dst_io
+      when ORIGINAL_STDIN  then 0
+      when ORIGINAL_STDOUT then 1
+      when ORIGINAL_STDERR then 2
+      else
+        raise "BUG: Invalid destination IO"
+      end
 
-    dst_io.reopen(src_io)
-    dst_io.blocking = true
-    dst_io.close_on_exec = false
+    src_fd =
+      case src_io
+      when STDIN  then 0
+      when STDOUT then 1
+      when STDERR then 2
+      else
+        handle =
+          case src_io
+          when .system_blocking?, .closed?
+            src_io.windows_handle
+          when File
+            reopen_file_as_blocking(src_io, dst_fd == 0, "Process.exec")
+          else
+            raise IO::Error.new("Non-blocking streams are not supported in `Process.exec`", target: src_io)
+          end
+        LibC._open_osfhandle(handle, 0)
+      end
+
+    return src_fd if dst_fd == src_fd
+
+    orig_src_fd = LibC._dup(src_fd)
+
+    if LibC._dup2(src_fd, dst_fd) == -1
+      raise IO::Error.from_errno("Failed to replace C file descriptor", target: dst_io)
+    end
+
+    orig_src_fd
   end
 
-  private def self.to_real_fd(fd : IO::FileDescriptor)
-    case fd
-    when STDIN  then ORIGINAL_STDIN
-    when STDOUT then ORIGINAL_STDOUT
-    when STDERR then ORIGINAL_STDERR
-    else             fd
+  # The arguments for input, output and error must be handles without
+  # FILE_FLAG_OVERLAPPED.
+  private def self.reopen_file_as_blocking(file, for_stdin, method_name)
+    access = for_stdin ? LibC::FILE_GENERIC_READ : LibC::FILE_GENERIC_WRITE
+    handle = LibC.ReOpenFile(file.windows_handle, access, LibC::DEFAULT_SHARE_MODE, 0)
+    if handle == LibC::INVALID_HANDLE_VALUE
+      raise IO::Error.from_winerror("Failed to reopen non-blocking File as blocking", target: file)
     end
+    handle
   end
 
   def self.chroot(path)

@@ -1,53 +1,67 @@
 require "c/netdb"
 require "c/netinet/tcp"
 require "c/sys/socket"
-require "io/evented"
+require "crystal/fd_lock"
 
 module Crystal::System::Socket
-  include IO::Evented
+  {% if IO.has_constant?(:Evented) %}
+    include IO::Evented
+  {% end %}
 
   alias Handle = Int32
 
-  private def create_handle(family, type, protocol, blocking) : Handle
+  @fd_lock = FdLock.new
+
+  def self.socket(family, type, protocol, blocking) : Handle
     {% if LibC.has_constant?(:SOCK_CLOEXEC) %}
-      fd = LibC.socket(family, type.value | LibC::SOCK_CLOEXEC, protocol)
+      flags = type.value | LibC::SOCK_CLOEXEC
+      flags |= LibC::SOCK_NONBLOCK unless blocking
+      fd = LibC.socket(family, flags, protocol)
       raise ::Socket::Error.from_errno("Failed to create socket") if fd == -1
       fd
     {% else %}
       Process.lock_read do
         fd = LibC.socket(family, type, protocol)
         raise ::Socket::Error.from_errno("Failed to create socket") if fd == -1
-        Socket.fcntl(fd, LibC::F_SETFD, LibC::FD_CLOEXEC)
+        FileDescriptor.fcntl(fd, LibC::F_SETFD, LibC::FD_CLOEXEC)
+        FileDescriptor.fcntl(fd, LibC::F_SETFL, FileDescriptor.fcntl(fd, LibC::F_GETFL) | LibC::O_NONBLOCK) unless blocking
         fd
       end
     {% end %}
   end
 
-  private def initialize_handle(fd)
+  private def initialize_handle(fd, blocking = nil)
+    {% if Crystal::EventLoop.has_constant?(:Polling) %}
+      @__evloop_data = Crystal::EventLoop::Polling::Arena::INVALID_INDEX
+    {% end %}
   end
 
   # Tries to bind the socket to a local address.
   # Yields an `Socket::BindError` if the binding failed.
   private def system_bind(addr, addrstr, &)
-    unless LibC.bind(fd, addr, addr.size) == 0
+    unless @fd_lock.reference { LibC.bind(fd, addr, addr.size) } == 0
       yield ::Socket::BindError.from_errno("Could not bind to '#{addrstr}'")
     end
   end
 
   private def system_listen(backlog, &)
-    unless LibC.listen(fd, backlog) == 0
+    unless @fd_lock.reference { LibC.listen(fd, backlog) } == 0
       yield ::Socket::Error.from_errno("Listen failed")
     end
   end
 
+  private def system_accept : {Handle, Bool}?
+    @fd_lock.read { event_loop.accept(self) }
+  end
+
   private def system_close_read
-    if LibC.shutdown(fd, LibC::SHUT_RD) != 0
+    if @fd_lock.reference { LibC.shutdown(fd, LibC::SHUT_RD) } != 0
       raise ::Socket::Error.from_errno("shutdown read")
     end
   end
 
   private def system_close_write
-    if LibC.shutdown(fd, LibC::SHUT_WR) != 0
+    if @fd_lock.reference { LibC.shutdown(fd, LibC::SHUT_WR) } != 0
       raise ::Socket::Error.from_errno("shutdown write")
     end
   end
@@ -77,7 +91,7 @@ module Crystal::System::Socket
   end
 
   private def system_reuse_port? : Bool
-    system_getsockopt(fd, LibC::SO_REUSEPORT, 0) do |value|
+    system_getsockopt(LibC::SO_REUSEPORT, 0) do |value|
       return value != 0
     end
 
@@ -128,61 +142,71 @@ module Crystal::System::Socket
     val
   end
 
-  private def system_getsockopt(fd, optname, optval, level = LibC::SOL_SOCKET, &)
+  private def system_getsockopt(optname, optval, level = LibC::SOL_SOCKET, &)
     optsize = LibC::SocklenT.new(sizeof(typeof(optval)))
     ret = LibC.getsockopt(fd, level, optname, pointerof(optval), pointerof(optsize))
     yield optval if ret == 0
     ret
   end
 
-  private def system_getsockopt(fd, optname, optval, level = LibC::SOL_SOCKET)
-    system_getsockopt(fd, optname, optval, level) { |value| return value }
+  private def system_getsockopt(optname, optval, level = LibC::SOL_SOCKET)
+    system_getsockopt(optname, optval, level) { |value| return value }
     raise ::Socket::Error.from_errno("getsockopt #{optname}")
   end
 
-  private def system_setsockopt(fd, optname, optval, level = LibC::SOL_SOCKET)
+  private def system_setsockopt(optname, optval, level = LibC::SOL_SOCKET)
     optsize = LibC::SocklenT.new(sizeof(typeof(optval)))
 
-    ret = LibC.setsockopt(fd, level, optname, pointerof(optval), optsize)
+    ret = @fd_lock.reference do
+      LibC.setsockopt(fd, level, optname, pointerof(optval), optsize)
+    end
     raise ::Socket::Error.from_errno("setsockopt #{optname}") if ret == -1
     ret
   end
 
   private def system_blocking?
-    fcntl(LibC::F_GETFL) & LibC::O_NONBLOCK == 0
+    FileDescriptor.get_blocking(fd)
   end
 
   private def system_blocking=(value)
-    flags = fcntl(LibC::F_GETFL)
-    if value
-      flags &= ~LibC::O_NONBLOCK
-    else
-      flags |= LibC::O_NONBLOCK
+    @fd_lock.reference do
+      FileDescriptor.set_blocking(fd, value)
     end
-    fcntl(LibC::F_SETFL, flags)
+  end
+
+  def self.get_blocking(fd : Handle)
+    FileDescriptor.get_blocking(fd)
+  end
+
+  def self.set_blocking(fd : Handle, value : Bool)
+    FileDescriptor.set_blocking(fd, value)
   end
 
   private def system_close_on_exec?
-    flags = fcntl(LibC::F_GETFD)
+    flags = FileDescriptor.fcntl(fd, LibC::F_GETFD)
     (flags & LibC::FD_CLOEXEC) == LibC::FD_CLOEXEC
   end
 
   private def system_close_on_exec=(arg : Bool)
-    fcntl(LibC::F_SETFD, arg ? LibC::FD_CLOEXEC : 0)
+    system_fcntl(LibC::F_SETFD, arg ? LibC::FD_CLOEXEC : 0)
     arg
   end
 
   def self.fcntl(fd, cmd, arg = 0)
-    r = LibC.fcntl fd, cmd, arg
-    raise ::Socket::Error.from_errno("fcntl() failed") if r == -1
-    r
+    FileDescriptor.fcntl(fd, cmd, arg)
   end
 
-  def self.socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol) : {Handle, Handle}
+  private def system_fcntl(cmd, arg = 0)
+    @fd_lock.reference { FileDescriptor.fcntl(fd, cmd, arg) }
+  end
+
+  def self.socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol, blocking : Bool) : {Handle, Handle}
     fds = uninitialized Handle[2]
 
     {% if LibC.has_constant?(:SOCK_CLOEXEC) %}
-      if LibC.socketpair(::Socket::Family::UNIX, type.value | LibC::SOCK_CLOEXEC, protocol, fds) == -1
+      flags = type.value | LibC::SOCK_CLOEXEC
+      flags |= LibC::SOCK_NONBLOCK unless blocking
+      if LibC.socketpair(::Socket::Family::UNIX, flags, protocol, fds) == -1
         raise ::Socket::Error.new("socketpair() failed")
       end
     {% else %}
@@ -190,8 +214,12 @@ module Crystal::System::Socket
         if LibC.socketpair(::Socket::Family::UNIX, type, protocol, fds) == -1
           raise ::Socket::Error.new("socketpair() failed")
         end
-        fcntl(fds[0], LibC::F_SETFD, LibC::FD_CLOEXEC)
-        fcntl(fds[1], LibC::F_SETFD, LibC::FD_CLOEXEC)
+        FileDescriptor.fcntl(fds[0], LibC::F_SETFD, LibC::FD_CLOEXEC)
+        FileDescriptor.fcntl(fds[1], LibC::F_SETFD, LibC::FD_CLOEXEC)
+        unless blocking
+          FileDescriptor.fcntl(fds[0], LibC::F_SETFL, FileDescriptor.fcntl(fds[0], LibC::F_GETFL) | LibC::O_NONBLOCK)
+          FileDescriptor.fcntl(fds[1], LibC::F_SETFL, FileDescriptor.fcntl(fds[1], LibC::F_GETFL) | LibC::O_NONBLOCK)
+        end
       end
     {% end %}
 
@@ -203,14 +231,16 @@ module Crystal::System::Socket
   end
 
   private def system_close
-    # Perform libevent cleanup before LibC.close.
-    # Using a file descriptor after it has been closed is never defined and can
-    # always lead to undefined results. This is not specific to libevent.
-    event_loop.close(self)
+    if @fd_lock.try_close? { event_loop.shutdown(self) }
+      event_loop.close(self)
+      @fd_lock.reset
+    end
+  end
 
+  def socket_close(&)
     # Clear the @volatile_fd before actually closing it in order to
     # reduce the chance of reading an outdated fd value
-    fd = @volatile_fd.swap(-1)
+    return unless fd = close_volatile_fd?
 
     ret = LibC.close(fd)
 
@@ -219,8 +249,19 @@ module Crystal::System::Socket
       when Errno::EINTR, Errno::EINPROGRESS
         # ignore
       else
-        raise ::Socket::Error.from_errno("Error closing socket")
+        yield
       end
+    end
+  end
+
+  def close_volatile_fd? : Int32?
+    fd = @volatile_fd.swap(-1)
+    fd unless fd == -1
+  end
+
+  def socket_close
+    socket_close do
+      raise ::Socket::Error.from_errno("Error closing socket")
     end
   end
 
@@ -316,4 +357,24 @@ module Crystal::System::Socket
       val
     end
   {% end %}
+
+  private def system_send_to(bytes : Bytes, addr : ::Socket::Address)
+    @fd_lock.write { event_loop.send_to(self, bytes, addr) }
+  end
+
+  private def system_receive_from(bytes : Bytes) : Tuple(Int32, ::Socket::Address)
+    @fd_lock.read { event_loop.receive_from(self, bytes) }
+  end
+
+  private def system_connect(addr, timeout = nil)
+    @fd_lock.write { event_loop.connect(self, addr, timeout) }
+  end
+
+  private def system_read(slice : Bytes) : Int32
+    @fd_lock.read { event_loop.read(self, slice) }
+  end
+
+  private def system_write(slice : Bytes) : Int32
+    @fd_lock.write { event_loop.write(self, slice) }
+  end
 end
