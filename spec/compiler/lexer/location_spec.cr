@@ -40,6 +40,15 @@ describe "Lexer: location" do
     assert_token_column_number lexer, :NUMBER, 1
   end
 
+  it "works with filenames containing escaped characters" do
+    lexer = Lexer.new %q(#<loc:"foo-\"bar\"-baz",12,34>1)
+    token = lexer.next_token
+    token.type.should eq(t :NUMBER)
+    token.line_number.should eq(12)
+    token.column_number.should eq(34)
+    token.filename.should eq(%(foo-"bar"-baz))
+  end
+
   it "overrides location with pragma" do
     lexer = Lexer.new %(1 + #<loc:"foo",12,34>2)
     lexer.filename = "bar"

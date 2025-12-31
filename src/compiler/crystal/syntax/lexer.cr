@@ -2372,19 +2372,44 @@ module Crystal
 
         filename_pos = current_pos
 
+        # Build the filename, honoring backslash escapes so filenames
+        # can contain quotes like \". We collect slices between
+        # escapes to avoid per-char appends.
+        sub_start = filename_pos
+        escaped = false
+        filename_builder = String::Builder.new
+
         while true
           case current_char
           when '"'
-            break
+            break unless escaped # if escaped, quote is part of filename
           when '\0'
             raise "unexpected end of file in loc pragma"
           else
-            next_char_no_column_increment
+            if escaped
+              # write slice before the backslash and append the escaped char
+              filename_builder.write @reader.string.to_slice[sub_start, current_pos - sub_start]
+              filename_builder << current_char
+              sub_start = current_pos + 1
+            end
           end
+
+          escaped = current_char == '\\'
+          if escaped
+            # write slice up to the backslash; actual backslash is not part
+            # of the resulting filename (it's the escape marker)
+            filename_builder.write @reader.string.to_slice[sub_start, current_pos - sub_start]
+            sub_start = current_pos + 1
+          end
+
+          next_char_no_column_increment
         end
 
         incr_column_number (current_pos - filename_pos) + 7 # == "#<loc:\"".size
-        filename = string_range(filename_pos)
+
+        # append the remaining part (from last sub_start up to quote)
+        filename_builder.write @reader.string.to_slice[sub_start, current_pos - sub_start]
+        filename = filename_builder.to_s
 
         # skip '"'
         next_char
