@@ -79,12 +79,6 @@ class HTTP::WebSocket::Protocol
       # should be no need for the caller to try to control this by flushing.
     end
 
-    @[Deprecated]
-    def flush(final : Bool)
-      # replaced by send_frame and close
-      # kept for backward compatibility
-    end
-
     private def send_frame(final = false) : Nil
       @websocket.send(
         @buffer[0...@pos],
