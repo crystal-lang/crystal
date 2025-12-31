@@ -2653,6 +2653,13 @@ module Crystal
       assert_end_location "[1, 2,]"
       assert_end_location "foo(\n  &.block\n)", line_number: 3, column_number: 1
       assert_end_location "foo.bar(x) do; end"
+      assert_end_location "foo(bar: 123)"
+      assert_end_location "foo bar: 123"
+      assert_end_location "f foo(bar: 123)"
+      assert_end_location "f(foo bar: 123)"
+      assert_end_location "f foo bar: 123"
+      assert_end_location "f foo(x: 123, &.bar)"
+      assert_end_location "f foo x: 123, &.bar"
       assert_end_location "%w(one two)"
       assert_end_location "{%\nif foo\n  bar\n end\n%}", line_number: 5, column_number: 2
       assert_end_location "foo bar, out baz"
