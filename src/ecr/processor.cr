@@ -94,7 +94,7 @@ module ECR
 
   private def append_loc(str, filename, line_number, column_number)
     str << %(#<loc:")
-    str << filename
+    str << filename.gsub('"', %(\\"))
     str << %(",)
     str << line_number
     str << ','
