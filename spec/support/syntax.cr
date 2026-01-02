@@ -55,7 +55,7 @@ class String
   end
 
   def ann
-    Annotation.new path
+    Crystal::Annotation.new path
   end
 
   def arg(default_value = nil, restriction = nil, external_name = nil, annotations = nil)

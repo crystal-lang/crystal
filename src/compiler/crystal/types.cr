@@ -1213,6 +1213,12 @@ module Crystal
     end
   end
 
+  # Metadata for @[Annotation] class types (repeatable, targets, etc.)
+  class AnnotationMetadata
+    property? repeatable : Bool = false
+    property targets : Array(String)?
+  end
+
   # Abstract base type for classes and structs
   # (types that can be allocated via the `allocate` method).
   abstract class ClassType < ModuleType
@@ -1226,6 +1232,16 @@ module Crystal
     getter depth : Int32
     property? :abstract; @abstract = false
     property? :struct; @struct = false
+    property? annotation_class : Bool = false
+    property annotation_metadata : AnnotationMetadata?
+
+    # Returns all `macro annotated` overloads defined on this annotation class,
+    # or nil if none exist.
+    def annotated_macros : Array(Macro)?
+      return nil unless annotation_class?
+      metaclass.macros.try &.["annotated"]?
+    end
+
     property? can_be_stored = true
     property? lookup_new_in_ancestors = false
 
