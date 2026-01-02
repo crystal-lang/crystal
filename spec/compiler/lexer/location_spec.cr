@@ -40,6 +40,35 @@ describe "Lexer: location" do
     assert_token_column_number lexer, :NUMBER, 1
   end
 
+  it "works with filenames containing escaped quotes" do
+    lexer = Lexer.new %q(#<loc:"foo-\"bar\"-baz",12,34>1)
+    token = lexer.next_token
+    token.type.should eq(t :NUMBER)
+    token.line_number.should eq(12)
+    token.column_number.should eq(34)
+    token.filename.should eq(%(foo-"bar"-baz))
+  end
+
+  it "works with filenames containing escaped backslash" do
+    lexer = Lexer.new %q(#<loc:"foo\\bar\\baz",12,34>1)
+    token = lexer.next_token
+    token.type.should eq(t :NUMBER)
+    token.line_number.should eq(12)
+    token.column_number.should eq(34)
+    token.filename.should eq(%q(foo\bar\baz))
+  end
+
+  {% for code in ["foo\0bar", "foo\rbar", "foo\nbar", "foo\vbar"] %}
+    it %q(rejects filenames containing invalid characters: {{ code }}) do
+      lexer = Lexer.new %q(#<loc:{{ code }},12,34>1)
+      msg = %q(found invalid characters in filename: {{ code }})
+
+      expect_raises(Crystal::SyntaxException, msg) do
+        lexer.next_token
+      end
+    end
+  {% end %}
+
   it "overrides location with pragma" do
     lexer = Lexer.new %(1 + #<loc:"foo",12,34>2)
     lexer.filename = "bar"
