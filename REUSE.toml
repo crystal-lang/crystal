@@ -4,7 +4,7 @@ version = 1
 # exception.
 [[annotations]]
 path = ["**"]
-SPDX-FileCopyrightText = "Copyright 2012-2025 Manas Technology Solutions."
+SPDX-FileCopyrightText = "Copyright 2012-2026 Manas Technology Solutions."
 SPDX-License-Identifier = "Apache-2.0 WITH Swift-exception"
 
 # Unset license information for vendored libraries ("shards"). They either
