@@ -3417,6 +3417,15 @@ module Crystal
       node_source(source, expressions[1].as(TypeDeclaration).var).should eq("buzz")
     end
 
+    it "sets correct location of a parenthesized union" do
+      source = "foo : (String | Nil) | Foo"
+      node = Parser.new(source).parse.as(TypeDeclaration)
+
+      union = node.declared_type.should be_a Union
+      node_source(source, union)
+        .should eq("(String | Nil) | Foo")
+    end
+
     it "doesn't override yield with macro yield" do
       parser = Parser.new("def foo; yield 1; {% begin %} yield 1 {% end %}; end")
       a_def = parser.parse.as(Def)
