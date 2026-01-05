@@ -48,6 +48,8 @@ class HTTP::WebSocket::Protocol
   end
 
   class StreamIO < IO
+    getter? closed = false
+
     def initialize(@websocket : Protocol, binary, frame_size)
       @opcode = binary ? Opcode::BINARY : Opcode::TEXT
       @buffer = Bytes.new(frame_size)
@@ -55,6 +57,7 @@ class HTTP::WebSocket::Protocol
     end
 
     def write(slice : Bytes) : Nil
+      check_open
       return if slice.empty?
 
       count = Math.min(@buffer.size - @pos, slice.size)
@@ -74,11 +77,6 @@ class HTTP::WebSocket::Protocol
       raise "This IO is write-only"
     end
 
-    def flush : Nil
-      # StreamIO is used to split one message into the necessary frames. There
-      # should be no need for the caller to try to control this by flushing.
-    end
-
     private def send_frame(final = false) : Nil
       @websocket.send(
         @buffer[0...@pos],
@@ -91,6 +89,8 @@ class HTTP::WebSocket::Protocol
     end
 
     def close
+      return if closed?
+      @closed = true
       send_frame(final: true)
     end
   end
