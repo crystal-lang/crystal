@@ -564,7 +564,7 @@ abstract class IO
     count = slice.size
     while slice.size > 0
       read_bytes = read(slice)
-      return slice_total_size &- slice.size if read_bytes == 0
+      return count &- slice.size if read_bytes == 0
       slice += read_bytes
     end
     count
