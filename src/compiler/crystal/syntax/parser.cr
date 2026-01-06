@@ -5097,7 +5097,7 @@ module Crystal
         next_token_skip_space_or_newline
         type = parse_type_splat { parse_union_type }
         if type.is_a?(Union)
-          type.at(location)
+          type.at(location).at_end(@token.location)
         end
         if @token.type.op_rparen?
           next_token_skip_space
