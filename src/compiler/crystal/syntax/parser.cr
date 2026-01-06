@@ -5038,7 +5038,7 @@ module Crystal
       parse_proc_type_output(input_types, input_types.first.location)
     end
 
-    def parse_union_type(location = nil)
+    def parse_union_type
       type = parse_atomic_type_with_suffix
       return type unless @token.type.op_bar?
 
@@ -5048,7 +5048,7 @@ module Crystal
         types << parse_atomic_type_with_suffix
       end
 
-      Union.new(types).at(location || type).at_end(types.last)
+      Union.new(types).at(type).at_end(types.last)
     end
 
     def parse_atomic_type_with_suffix
@@ -5095,7 +5095,10 @@ module Crystal
         parse_proc_type_output(nil, location)
       when .op_lparen?
         next_token_skip_space_or_newline
-        type = parse_type_splat { parse_union_type(location) }
+        type = parse_type_splat { parse_union_type }
+        if type.is_a?(Union)
+          type.at(location)
+        end
         if @token.type.op_rparen?
           next_token_skip_space
           if @token.type.op_minus_gt? # `(A) -> B` case
