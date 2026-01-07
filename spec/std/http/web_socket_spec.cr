@@ -265,6 +265,22 @@ describe HTTP::WebSocket do
       bytes = io.to_slice
       (bytes[0] & 0x0f).should eq(0x02) # BINARY frame
     end
+
+    it "should not send frame if stream is flushed" do
+      io = IO::Memory.new
+      ws = HTTP::WebSocket::Protocol.new(io)
+      ws.stream do |stream|
+        stream.write "foo".to_slice
+        stream.flush
+        io.size.should eq 0
+      end # flushed/sent here
+      bytes = io.to_slice
+      bytes.size.should eq 5 # 1 byte header, 1 byte size, 3 byte payload "foo"
+      first_frame = bytes
+      (first_frame[0] & 0x80).should_not eq(0x00) # FINAL bit set
+      (first_frame[0] & 0x0f).should eq(0x02)     # BINARY frame
+      first_frame[1].should eq(3)
+    end
   end
 
   describe "send_masked" do

@@ -97,12 +97,14 @@ class HTTP::WebSocket
     @ws.pong(message)
   end
 
-  # Streams data into io until the io is flushed and sent as a message.
+  # Stream data as one message with automatically fragmentation handling
+  # with respect to given `frame_size`.
+  # When the io is closed, current data in the buffer is sent in a FIN frame.
+  # The io is closed when the block returns.
   #
   # The method accepts a block with an `io` argument.
-  # The io object can call on `IO#write` and `IO#flush` method.
-  # The `write` method accepts `Bytes` (`Slice(UInt8)`) and sends the data in chunks of *frame_size* bytes. The `flush` method sends all the data in io and resets it.
-  # The remaining data in it is sent as a message when the block is finished executing.
+  # The io object can call on `IO#write` method.
+  # The `write` method accepts `Bytes` (`Slice(UInt8)`) and sends the data in chunks of *frame_size* bytes.
   # For further information, see the `HTTP::WebSocket::Protocol::StreamIO` class.
   #
   # ```
@@ -110,12 +112,10 @@ class HTTP::WebSocket
   # ws = HTTP::WebSocket.new("websocket.example.com", "/chat")
   #
   # # Open stream
-  # ws.stream(false) do |io|
-  #   io.write "Hello, ".encode("UTF-8") # Sends "Hello, " to io
-  #   io.flush                           # Sends "Hello, " to the socket
-  #   io.write "world!".encode("UTF-8")  # Sends "world!" to io
-  # end
-  # # Sends "world!" to the socket
+  # ws.stream(false, frame_size: 4) do |io|
+  #   io.write "foo".encode("UTF-8") # Nothing is sent, buffer not full
+  #   io.write "bar".encode("UTF-8") # Will send a first frame with "foob"
+  # end                              # io is closed, a FIN frame with "bar" is sent
   # ```
   def stream(binary = true, frame_size = 1024, &)
     check_open
