@@ -197,13 +197,11 @@ class Crystal::Program
     # We start with the target filename
     required_files = Set{filename}
     recorded_requires.map do |recorded_require|
-      begin
-        files = @program.find_in_path(recorded_require.filename, recorded_require.relative_to)
-        required_files.concat(files) if files
-      rescue Crystal::CrystalPath::NotFoundError
-        # Maybe the file is gone
-        next
-      end
+      files = @program.find_in_path(recorded_require.filename, recorded_require.relative_to)
+      required_files.concat(files) if files
+    rescue Crystal::CrystalPath::NotFoundError
+      # Maybe the file is gone
+      next
     end
 
     new_requires_with_timestamps = required_files.map do |required_file|

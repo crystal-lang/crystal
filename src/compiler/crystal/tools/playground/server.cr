@@ -187,21 +187,19 @@ module Crystal::Playground
     private def bind_io_as_output(tag, io)
       spawn do
         loop do
-          begin
-            output = String.new(4096) do |buffer|
-              length = io.read_utf8(Slice.new(buffer, 4096))
-              {length, 0}
-            end
-            break if output.empty?
-
-            send_with_json_builder do |json|
-              json.field "type", "output"
-              json.field "tag", tag
-              json.field "content", output
-            end
-          rescue
-            break
+          output = String.new(4096) do |buffer|
+            length = io.read_utf8(Slice.new(buffer, 4096))
+            {length, 0}
           end
+          break if output.empty?
+
+          send_with_json_builder do |json|
+            json.field "type", "output"
+            json.field "tag", tag
+            json.field "content", output
+          end
+        rescue
+          break
         end
       end
     end
