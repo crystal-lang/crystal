@@ -112,8 +112,8 @@ class OptionParser
   # and uses it to parse the passed *args* (defaults to `ARGV`).
   #
   # Refer to `#gnu_optional_args?` for the behaviour of the named parameter.
-  def self.parse(args = ARGV, *, gnu_optional_args : Bool = false, &) : self
-    parser = OptionParser.new(gnu_optional_args: gnu_optional_args)
+  def self.parse(args = ARGV, *, gnu_optional_args : Bool = false, bundling : Bool = false, &) : self
+    parser = OptionParser.new(gnu_optional_args: gnu_optional_args, bundling: bundling)
     yield parser
     parser.parse(args)
     parser
@@ -122,7 +122,7 @@ class OptionParser
   # Creates a new parser.
   #
   # Refer to `#gnu_optional_args?` for the behaviour of the named parameter.
-  def initialize(*, @gnu_optional_args : Bool = false)
+  def initialize(*, @gnu_optional_args : Bool = false, @bundling : Bool = false)
     @flags = [] of String
     @handlers = Hash(String, Handler).new
     @stop = false
@@ -133,8 +133,8 @@ class OptionParser
   # Creates a new parser, with its configuration specified in the block.
   #
   # Refer to `#gnu_optional_args?` for the behaviour of the named parameter.
-  def self.new(*, gnu_optional_args : Bool = false, &)
-    new(gnu_optional_args: gnu_optional_args).tap { |parser| yield parser }
+  def self.new(*, gnu_optional_args : Bool = false, bundling : Bool = false, &)
+    new(gnu_optional_args: gnu_optional_args, bundling: bundling).tap { |parser| yield parser }
   end
 
   # Returns whether the GNU convention is followed for optional arguments.
@@ -172,6 +172,27 @@ class OptionParser
   # Remaining: []
   # ```
   property? gnu_optional_args : Bool
+
+  # Returns whether short option bundling is enabled.
+  #
+  # If true, short options can be grouped after a single dash:
+  #
+  # ```
+  # require "option_parser"
+  #
+  # removed = false
+  # forced = false
+  # OptionParser.parse(%w(-rf), bundling: true) do |parser|
+  #   parser.on("-r", "") { removed = true }
+  #   parser.on("-f", "") { forced = true }
+  # end
+  #
+  # {removed, forced} # => {true, true}
+  # ```
+  #
+  # Without `bundling: true`, a token like `-rf` is interpreted as
+  # the flag `-r` with an inline value `f`.
+  property? bundling : Bool
 
   # Establishes the initial message for the help printout.
   # Typically, you want to write here the name of your program,
@@ -401,9 +422,12 @@ class OptionParser
           break
         end
 
-        flag, value = parse_arg_to_flag_and_value(arg)
-
-        arg_index = handle_flag(flag, value, arg_index, args, handled_args)
+        if bundling? && bundled_short_arg?(arg)
+          arg_index = handle_bundled_short_options(arg, arg_index, args, handled_args)
+        else
+          flag, value = parse_arg_to_flag_and_value(arg)
+          arg_index = handle_flag(flag, value, arg_index, args, handled_args)
+        end
 
         arg_index += 1
       end
@@ -444,6 +468,10 @@ class OptionParser
     end
   end
 
+  private def bundled_short_arg?(arg : String) : Bool
+    arg.starts_with?('-') && !arg.starts_with?("--") && arg.size > 2
+  end
+
   # Parses a command-line argument into a flag and optional inline value.
   private def parse_arg_to_flag_and_value(arg : String) : {String, String?}
     if arg.starts_with?("--")
@@ -451,10 +479,53 @@ class OptionParser
       if separator == "="
         return {name, value}
       end
-    elsif arg.starts_with?('-') && arg.size > 2
+    elsif bundled_short_arg?(arg)
       return {arg[0..1], arg[2..]}
     end
     {arg, nil}
+  end
+
+  private def handle_bundled_short_options(arg : String, arg_index : Int32, args : Array(String), handled_args : Array(Int32)) : Int32
+    rest = arg[1..]
+    rest.each_char_with_index do |char, index|
+      flag = "-#{char}"
+
+      suffix = index + 1 < rest.bytesize ? rest[(index + 1)..] : nil
+
+      if handler = @handlers[flag]?
+        case handler.value_type
+        in FlagValue::None
+          next_index = handle_flag(flag, nil, arg_index, args, handled_args)
+          return next_index unless next_index == arg_index
+        in FlagValue::Required
+          value = suffix
+          if value && !value.empty?
+            handled_args << arg_index
+            handler.block.call(value)
+          else
+            next_index = handle_flag(flag, nil, arg_index, args, handled_args)
+            return next_index unless next_index == arg_index
+          end
+          return arg_index
+        in FlagValue::Optional
+          value = suffix
+          if value && !value.empty? && gnu_optional_args?
+            handled_args << arg_index
+            handler.block.call(value)
+            return arg_index
+          else
+            next_index = handle_flag(flag, nil, arg_index, args, handled_args)
+            return next_index unless next_index == arg_index
+          end
+        end
+      else
+        @invalid_option.call(flag)
+        return arg_index
+      end
+    end
+
+    handled_args << arg_index
+    arg_index
   end
 
   # Processes a single flag/subcommand. Matches original behaviour exactly.
