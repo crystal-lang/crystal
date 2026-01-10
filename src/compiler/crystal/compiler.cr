@@ -285,7 +285,7 @@ module Crystal
       program.flags << "static" if static?
       program.user_flags.concat @flags
       program.flags.concat @flags
-      program.update_flag_constants
+      program.define_crystal_constants
       program.wants_doc = wants_doc?
       program.color = color?
       program.stdout = stdout
