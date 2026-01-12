@@ -163,7 +163,8 @@
 - _(collection)_ Fix Hash methods and retaining default value ([#16374], thanks @andrykonchin)
 - _(files)_ Fix condition for no-op `lock_write` to work without sockets ([#16304], thanks @straight-shoota)
 - _(networking)_ Fix `HTTP::Cookie` parsing trailing semicolons ([#16328], thanks @alexkutsan)
-- _(runtime)_ Add thread safety to default random ([#16174], thanks @ysbaddaden)
+- _(networking)_ Make `#flush` in `WebSocket#stream` a no-op to not send wrongly frames ([#16539], thanks @spuun)
+- _(runtime)_ **[deprecation]** Add thread safety to default random ([#16174], thanks @ysbaddaden)
 - _(runtime)_ default execution context is `Parallel` ([#16367], thanks @ysbaddaden)
 - _(runtime)_ `Crystal::PointerLinkedList#each` stops iterating when deleting head ([#16401], thanks @ysbaddaden)
 - _(runtime)_ closing system fd is thread unsafe ([#16289], thanks @ysbaddaden)
@@ -190,6 +191,7 @@
 [#16374]: https://github.com/crystal-lang/crystal/pull/16374
 [#16304]: https://github.com/crystal-lang/crystal/pull/16304
 [#16328]: https://github.com/crystal-lang/crystal/pull/16328
+[#16539]: https://github.com/crystal-lang/crystal/pull/16539
 [#16174]: https://github.com/crystal-lang/crystal/pull/16174
 [#16367]: https://github.com/crystal-lang/crystal/pull/16367
 [#16401]: https://github.com/crystal-lang/crystal/pull/16401
@@ -224,11 +226,11 @@
 - _(interpreter)_ interpreter `typeof` should return concrete type ([#16379], thanks @cyangle)
 - _(interpreter)_ Fix variable shadowing bug in interpreter ([#16335], thanks @cyangle)
 - _(interpreter)_ interpreter musn't reuse dead fiber stacks ([#16518], thanks @ysbaddaden)
-- _(parser)_ Fix `Call#end_location` w/ named arguments off-by-one error ([#16542], thanks @Sija)
-- _(parser)_ Fix incorrect location for parenthesized union AST nodes ([#16552], thanks @Sija)
 - _(parser)_ Fix internal error if multi-assign RHS has splats ([#16182], thanks @HertzDevil)
 - _(parser)_ Fix regex delimiter detection in syntax highlighter ([#16394], thanks @HertzDevil)
 - _(parser)_ Merge adjacent StringLiterals before yielding ([#16427], thanks @Blacksmoke16)
+- _(parser)_ Fix `Call#end_location` w/ named arguments off-by-one error ([#16542], thanks @Sija)
+- _(parser)_ Fix incorrect location for parenthesized union AST nodes ([#16552], thanks @Sija)
 - _(semantic)_ Fix instantiation of abstract generic structs in virtual type lookup ([#16513], thanks @Blacksmoke16)
 - _(semantic)_ Fix variables assigned inside `&&` conditions with method calls incorrectly got `Nil` added to their type ([#16512], thanks @Blacksmoke16)
 
@@ -239,11 +241,11 @@
 [#16379]: https://github.com/crystal-lang/crystal/pull/16379
 [#16335]: https://github.com/crystal-lang/crystal/pull/16335
 [#16518]: https://github.com/crystal-lang/crystal/pull/16518
-[#16542]: https://github.com/crystal-lang/crystal/pull/16542
-[#16552]: https://github.com/crystal-lang/crystal/pull/16552
 [#16182]: https://github.com/crystal-lang/crystal/pull/16182
 [#16394]: https://github.com/crystal-lang/crystal/pull/16394
 [#16427]: https://github.com/crystal-lang/crystal/pull/16427
+[#16542]: https://github.com/crystal-lang/crystal/pull/16542
+[#16552]: https://github.com/crystal-lang/crystal/pull/16552
 [#16513]: https://github.com/crystal-lang/crystal/pull/16513
 [#16512]: https://github.com/crystal-lang/crystal/pull/16512
 
@@ -270,12 +272,12 @@
 #### stdlib
 
 - _(macros)_ **[deprecation]** Deprecate `StringLiteral#split(ASTNode)` for non-separator arguments ([#16439], thanks @HertzDevil)
-- _(time)_ **[deprecation]** Deprecate `Time.monotonic` ([#16545], thanks @straight-shoota)
 - _(time)_ **[deprecation]** Deprecate `Time#inspect(io, *, with_nanoseconds)` ([#16416], thanks @straight-shoota)
+- _(time)_ **[deprecation]** Deprecate `Time.monotonic` ([#16545], thanks @straight-shoota)
 
 [#16439]: https://github.com/crystal-lang/crystal/pull/16439
-[#16545]: https://github.com/crystal-lang/crystal/pull/16545
 [#16416]: https://github.com/crystal-lang/crystal/pull/16416
+[#16545]: https://github.com/crystal-lang/crystal/pull/16545
 
 #### compiler
 
@@ -286,8 +288,10 @@
 #### other
 
 - Update copyright year ([#16550], thanks @HertzDevil)
+- Remove redundant `begin`/`end` blocks ([#16554], thanks @straight-shoota)
 
 [#16550]: https://github.com/crystal-lang/crystal/pull/16550
+[#16554]: https://github.com/crystal-lang/crystal/pull/16554
 
 ### Performance
 
@@ -342,10 +346,10 @@
 - _(system)_ Extract internal `Process.block_signals` helper ([#16402], thanks @straight-shoota)
 - _(system)_ Rename target `aarch64-android` to `aarch64-linux-android` ([#16409], thanks @straight-shoota)
 - _(text)_ Simplify `String#byte_slice(Int)` and `String#byte_slice?(Int)` ([#16235], thanks @andrykonchin)
-- _(time)_ remove extraneous method definition for `Time::Span#sign` ([#16553], thanks @plambert)
 - _(time)_ Use `clock_gettime` on darwin ([#16492], thanks @straight-shoota)
 - _(time)_ Add `Crystal::System::Time.instant` ([#16506], thanks @straight-shoota)
 - _(time)_ Replace `Time.monotonic` with `Time.instant` [follow-up #16490] ([#16498], thanks @straight-shoota)
+- _(time)_ remove extraneous method definition for `Time::Span#sign` ([#16553], thanks @plambert)
 
 [#16300]: https://github.com/crystal-lang/crystal/pull/16300
 [#16233]: https://github.com/crystal-lang/crystal/pull/16233
@@ -378,10 +382,10 @@
 [#16402]: https://github.com/crystal-lang/crystal/pull/16402
 [#16409]: https://github.com/crystal-lang/crystal/pull/16409
 [#16235]: https://github.com/crystal-lang/crystal/pull/16235
-[#16553]: https://github.com/crystal-lang/crystal/pull/16553
 [#16492]: https://github.com/crystal-lang/crystal/pull/16492
 [#16506]: https://github.com/crystal-lang/crystal/pull/16506
 [#16498]: https://github.com/crystal-lang/crystal/pull/16498
+[#16553]: https://github.com/crystal-lang/crystal/pull/16553
 
 ### Documentation
 
