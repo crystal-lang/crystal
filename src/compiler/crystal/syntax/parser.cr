@@ -5406,17 +5406,15 @@ module Crystal
     # Looks ahead next tokens to check whether they indicate type.
     def type_start?(*, consume_newlines)
       peek_ahead do
-        begin
-          if consume_newlines
-            next_token_skip_space_or_newline
-          else
-            next_token_skip_space
-          end
-
-          type_start?
-        rescue
-          false
+        if consume_newlines
+          next_token_skip_space_or_newline
+        else
+          next_token_skip_space
         end
+
+        type_start?
+      rescue
+        false
       end
     end
 
