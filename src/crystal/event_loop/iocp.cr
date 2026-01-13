@@ -461,6 +461,6 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   end
 
   def close(socket : ::Socket) : Nil
-    raise NotImplementedError.new("Crystal::System::IOCP#close(Socket)")
+    socket.socket_close
   end
 end
