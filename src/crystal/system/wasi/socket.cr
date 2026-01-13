@@ -11,13 +11,11 @@ module Crystal::System::Socket
   private def initialize_handle(fd, blocking = nil)
   end
 
-  # Tries to bind the socket to a local address.
-  # Yields an `Socket::BindError` if the binding failed.
-  private def system_bind(addr, addrstr, &)
+  private def system_bind(addr, addrstr)
     raise NotImplementedError.new "Crystal::System::Socket#system_bind"
   end
 
-  private def system_listen(backlog, &)
+  private def system_listen(backlog)
     raise NotImplementedError.new "Crystal::System::Socket#system_listen"
   end
 

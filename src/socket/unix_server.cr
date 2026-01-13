@@ -41,12 +41,11 @@ class UNIXServer < UNIXSocket
     @path = path = path.to_s
     super(Family::UNIX, type)
 
-    @fd_lock.reference do
-      system_bind(UNIXAddress.new(path), path) do |error|
-        close(delete: false)
-        raise error
-      end
+    if error = @fd_lock.reference { system_bind(UNIXAddress.new(path), path) }
+      close(delete: false)
+      raise error
     end
+
     return if type == Type::DGRAM
 
     listen(backlog) do |error|

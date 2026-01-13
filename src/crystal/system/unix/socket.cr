@@ -33,17 +33,15 @@ module Crystal::System::Socket
     {% end %}
   end
 
-  # Tries to bind the socket to a local address.
-  # Yields an `Socket::BindError` if the binding failed.
-  private def system_bind(addr, addrstr, &)
+  private def system_bind(addr, addrstr)
     unless LibC.bind(fd, addr, addr.size) == 0
-      yield ::Socket::BindError.from_errno("Could not bind to '#{addrstr}'")
+      ::Socket::BindError.from_errno("Could not bind to '#{addrstr}'")
     end
   end
 
-  private def system_listen(backlog, &)
+  private def system_listen(backlog)
     unless LibC.listen(fd, backlog) == 0
-      yield ::Socket::Error.from_errno("Listen failed")
+      ::Socket::Error.from_errno("Listen failed")
     end
   end
 

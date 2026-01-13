@@ -168,15 +168,15 @@ module Crystal::System::Socket
     end
   end
 
-  private def system_bind(addr, addrstr, &)
+  private def system_bind(addr, addrstr)
     unless LibC.bind(fd, addr, addr.size) == 0
-      yield ::Socket::BindError.from_wsa_error("Could not bind to '#{addrstr}'")
+      ::Socket::BindError.from_wsa_error("Could not bind to '#{addrstr}'")
     end
   end
 
-  private def system_listen(backlog, &)
+  private def system_listen(backlog)
     unless LibC.listen(fd, backlog) == 0
-      yield ::Socket::Error.from_wsa_error("Listen failed")
+      ::Socket::Error.from_wsa_error("Listen failed")
     end
   end
 
