@@ -312,6 +312,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   end
 
   def shutdown(file_descriptor : Crystal::System::FileDescriptor) : Nil
+    LibC.CancelIoEx(file_descriptor.windows_handle, nil)
   end
 
   def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
@@ -453,6 +454,10 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   end
 
   def shutdown(socket : ::Socket) : Nil
+    if LibC.shutdown(socket.fd, LibC::SH_BOTH) == 0
+      raise ::Socket::Error.from_wsa_error("shutdown")
+    end
+    LibC.CancelIoEx(socket.fd, nil)
   end
 
   def close(socket : ::Socket) : Nil
