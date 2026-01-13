@@ -165,7 +165,7 @@
 - _(files)_ Fix condition for no-op `lock_write` to work without sockets ([#16304], thanks @straight-shoota)
 - _(networking)_ Fix `HTTP::Cookie` parsing trailing semicolons ([#16328], thanks @alexkutsan)
 - _(networking)_ **[breaking]** Make `#flush` in `WebSocket#stream` a no-op to not send wrongly frames ([#16539], thanks @spuun)
-- _(runtime)_ **[deprecation]** Add thread safety to default random ([#16174], thanks @ysbaddaden)
+- _(runtime)_ **[deprecation]** Add thread safety to default random ([#16174], [#16568], thanks @ysbaddaden)
 - _(runtime)_ default execution context is `Parallel` ([#16367], thanks @ysbaddaden)
 - _(runtime)_ `Crystal::PointerLinkedList#each` stops iterating when deleting head ([#16401], thanks @ysbaddaden)
 - _(runtime)_ closing system fd is thread unsafe ([#16289], thanks @ysbaddaden)
@@ -195,6 +195,7 @@
 [#16328]: https://github.com/crystal-lang/crystal/pull/16328
 [#16539]: https://github.com/crystal-lang/crystal/pull/16539
 [#16174]: https://github.com/crystal-lang/crystal/pull/16174
+[#16568]: https://github.com/crystal-lang/crystal/pull/16568
 [#16367]: https://github.com/crystal-lang/crystal/pull/16367
 [#16401]: https://github.com/crystal-lang/crystal/pull/16401
 [#16289]: https://github.com/crystal-lang/crystal/pull/16289
