@@ -42,7 +42,7 @@
 - _(networking)_ Loosen type restrictions in `StaticFileHandler` helper methods from `File` to `IO` ([#16238], thanks @andrykonchin)
 - _(networking)_ Add `IPSocket#ipv6_only` ([#16347], thanks @stakach)
 - _(networking)_ Expose `flags` hint for `getaddrinfo` ([#16528], thanks @stakach)
-- _(numeric)_ Add `Int.from_digits` as inverse of `Int#digits` ([#16237], thanks @andrykonchin)
+- _(numeric)_ Add `Int.from_digits` as inverse of `Int#digits` ([#16237], [#16566], thanks @andrykonchin, @ysbaddaden)
 - _(numeric)_ Add `BigInt.from_digits` ([#16259], thanks @HertzDevil)
 - _(numeric)_ Add `Int#tdivmod` ([#16258], thanks @andrykonchin)
 - _(runtime)_ Add `Proc#[]` as alias to `#call` ([#16220], thanks @andrykonchin)
@@ -91,6 +91,7 @@
 [#16347]: https://github.com/crystal-lang/crystal/pull/16347
 [#16528]: https://github.com/crystal-lang/crystal/pull/16528
 [#16237]: https://github.com/crystal-lang/crystal/pull/16237
+[#16566]: https://github.com/crystal-lang/crystal/pull/16566
 [#16259]: https://github.com/crystal-lang/crystal/pull/16259
 [#16258]: https://github.com/crystal-lang/crystal/pull/16258
 [#16220]: https://github.com/crystal-lang/crystal/pull/16220
@@ -163,7 +164,7 @@
 - _(collection)_ Fix Hash methods and retaining default value ([#16374], thanks @andrykonchin)
 - _(files)_ Fix condition for no-op `lock_write` to work without sockets ([#16304], thanks @straight-shoota)
 - _(networking)_ Fix `HTTP::Cookie` parsing trailing semicolons ([#16328], thanks @alexkutsan)
-- _(networking)_ Make `#flush` in `WebSocket#stream` a no-op to not send wrongly frames ([#16539], thanks @spuun)
+- _(networking)_ **[breaking]** Make `#flush` in `WebSocket#stream` a no-op to not send wrongly frames ([#16539], thanks @spuun)
 - _(runtime)_ **[deprecation]** Add thread safety to default random ([#16174], thanks @ysbaddaden)
 - _(runtime)_ default execution context is `Parallel` ([#16367], thanks @ysbaddaden)
 - _(runtime)_ `Crystal::PointerLinkedList#each` stops iterating when deleting head ([#16401], thanks @ysbaddaden)
@@ -173,6 +174,7 @@
 - _(runtime)_ execution context queue stress tests failures ([#16472], thanks @ysbaddaden)
 - _(runtime)_ don't use `Time.monotonic` in `Fiber::ExecutionContext::Monitor` ([#16500], thanks @ysbaddaden)
 - _(runtime)_ thread safety of `Exception::Callstack` ([#16504], thanks @ysbaddaden)
+- _(runtime)_ actually clear memory using gc_none on unix ([#16562], thanks @BlobCodes)
 - _(serialization)_ memory leak in `XML.parse` and `XML.parse_html` methods ([#16414], thanks @ysbaddaden)
 - _(serialization)_ memory leak in `XML::Document#finalize` ([#16418], thanks @toddsundsted)
 - _(serialization)_ memory leak in `XML::Node#content=` ([#16419], thanks @toddsundsted)
@@ -201,6 +203,7 @@
 [#16472]: https://github.com/crystal-lang/crystal/pull/16472
 [#16500]: https://github.com/crystal-lang/crystal/pull/16500
 [#16504]: https://github.com/crystal-lang/crystal/pull/16504
+[#16562]: https://github.com/crystal-lang/crystal/pull/16562
 [#16414]: https://github.com/crystal-lang/crystal/pull/16414
 [#16418]: https://github.com/crystal-lang/crystal/pull/16418
 [#16419]: https://github.com/crystal-lang/crystal/pull/16419
@@ -252,10 +255,12 @@
 #### tools
 
 - _(docs-generator)_ Fix doc generation when nesting multiple `:inherit:` directives ([#16443], thanks @Blacksmoke16)
+- _(docs-generator)_ Fix some doc inconsistencies for macros ([#16561], thanks @Blacksmoke16)
 - _(formatter)_ Fix incorrect formatting of multi-line macro expression with comment as first line ([#16429], thanks @Blacksmoke16)
 - _(formatter)_ Add multi-line formatting support to `Generic` formatter visitor ([#16430], thanks @Blacksmoke16)
 
 [#16443]: https://github.com/crystal-lang/crystal/pull/16443
+[#16561]: https://github.com/crystal-lang/crystal/pull/16561
 [#16429]: https://github.com/crystal-lang/crystal/pull/16429
 [#16430]: https://github.com/crystal-lang/crystal/pull/16430
 
@@ -398,6 +403,7 @@
 #### stdlib
 
 - _(collection)_ Clarify `Set`'s enumeration order ([#16274], thanks @HertzDevil)
+- _(concurrency)_ Add docs for `Sync` namespace ([#16565], thanks @ysbaddaden)
 - _(crypto)_ Remove outdated performance hint in `Bcrypt` docs ([#16536], thanks @BlobCodes)
 - _(macros)_ Fix invalid runtime types in macro docs ([#16534], thanks @BlobCodes)
 - _(networking)_ Add type restrictions to `OAuth::Consumer#get_authorize_uri` ([#16285], thanks @straight-shoota)
@@ -408,6 +414,7 @@
 - _(text)_ Add type restrictions to regex directory ([#16066], thanks @Vici37)
 
 [#16274]: https://github.com/crystal-lang/crystal/pull/16274
+[#16565]: https://github.com/crystal-lang/crystal/pull/16565
 [#16536]: https://github.com/crystal-lang/crystal/pull/16536
 [#16534]: https://github.com/crystal-lang/crystal/pull/16534
 [#16285]: https://github.com/crystal-lang/crystal/pull/16285
