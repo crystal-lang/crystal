@@ -9,7 +9,6 @@
 # - `Sync::RWLock` to protect critical sections using shared access and mutual
 #   exclusion.
 # - `Sync::ConditionVariable` to synchronize critical sections together.
-#
 # - `Sync::Exclusive(T)` to protect a value `T` using mutual exclusion.
 # - `Sync::Shared(T)` to protect a value `T` using a mix of shared access and
 #   mutual exclusion.
