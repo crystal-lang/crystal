@@ -165,9 +165,7 @@ class Socket < IO
   # ```
   def bind(host : String, port : Int) : Nil
     Addrinfo.resolve(host, port, @family, @type, @protocol) do |addrinfo|
-      @fd_lock.reference do
-        system_bind(addrinfo, "#{host}:#{port}") { |errno| errno }
-      end
+      @fd_lock.reference { system_bind(addrinfo, "#{host}:#{port}") }
     end
   end
 
@@ -189,7 +187,7 @@ class Socket < IO
     end
 
     Addrinfo.resolve(address, port, @family, @type, @protocol) do |addrinfo|
-      @fd_lock.reference { system_bind(addrinfo, address_and_port) { |errno| errno } }
+      @fd_lock.reference { system_bind(addrinfo, address_and_port)  }
     end
   end
 
@@ -202,7 +200,9 @@ class Socket < IO
   # sock.bind Socket::IPAddress.new("192.168.1.25", 80)
   # ```
   def bind(addr : Socket::Address) : Nil
-    @fd_lock.reference { system_bind(addr, addr.to_s) { |errno| raise errno } }
+    if error = @fd_lock.reference { system_bind(addr, addr.to_s) }
+      raise error
+    end
   end
 
   # Tells the previously bound socket to listen for incoming connections.
@@ -213,7 +213,9 @@ class Socket < IO
   # Tries to listen for connections on the previously bound socket.
   # Yields an `Socket::Error` on failure.
   def listen(backlog : Int = SOMAXCONN, &)
-    @fd_lock.reference { system_listen(backlog) { |err| yield err } }
+    if error = @fd_lock.reference { system_listen(backlog) }
+      yield error
+    end
   end
 
   # Accepts an incoming connection.

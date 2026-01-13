@@ -40,7 +40,7 @@ class TCPServer < TCPSocket
       self.reuse_address = true
       self.reuse_port = true if reuse_port
 
-      if errno = @fd_lock.reference { system_bind(addrinfo, "#{host}:#{port}") { |errno| errno } }
+      if errno = @fd_lock.reference { system_bind(addrinfo, "#{host}:#{port}") }
         close
         next errno
       end
