@@ -327,7 +327,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
 
       if rings.size > 1 && (blocking || once_in_a_while?)
         # iterate from a random entry to avoid a bias on the first ones
-        start = ring.@rng.rand(0...rings.size)
+        start = Random.rand(0...rings.size)
         enqueued = process_all(rings, start) { |fiber| yield fiber }
       end
     {% end %}
