@@ -232,6 +232,7 @@ private def new_program
   program = Program.new
   program.color = false
   apply_program_flags(program.flags)
+  program.define_crystal_constants
   program
 end
 
