@@ -2,7 +2,6 @@ class Crystal::EventLoop::IoUring::FiberEvent
   include Crystal::EventLoop::Event
 
   def initialize(type : Event::Type, fiber : Fiber)
-    # assert(type.select_timeout?)
     @event = Event.new(type, fiber)
   end
 
