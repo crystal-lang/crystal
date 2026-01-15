@@ -19,9 +19,6 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
     def initialize(*args, **kwargs)
       super(*args, **kwargs)
 
-      # TODO: not needed after <https://github.com/crystal-lang/crystal/issues/16157>
-      @rng = Random::PCG32.new
-
       {% if flag?(:preview_mt) %}
         # unless IORING_REGISTER_SYNC_CANCEL (Linux 6.0) and
         # IORING_REGISTER_SEND_MSG_RING (Linux 6.13) are supported we may have
