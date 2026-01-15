@@ -9,10 +9,7 @@ struct Crystal::EventLoop::IoUring::Event
 
   getter type : Type
   getter fiber : Fiber
-
   property! res : Int32
-  # property! flags : UInt32
-
   property! wake_at : Time::Span?
 
   # The event can be added to the `Timers` list.
