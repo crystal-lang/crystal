@@ -187,7 +187,7 @@ class Socket < IO
     end
 
     Addrinfo.resolve(address, port, @family, @type, @protocol) do |addrinfo|
-      @fd_lock.reference { system_bind(addrinfo, address_and_port)  }
+      @fd_lock.reference { system_bind(addrinfo, address_and_port) }
     end
   end
 
