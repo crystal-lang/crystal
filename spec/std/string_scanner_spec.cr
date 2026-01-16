@@ -9,7 +9,8 @@ describe StringScanner do
       s.scan(' ').should eq(" ")
       s.scan("is ").should eq("is ")
       s.scan(/\w+\s/).should eq("a ")
-      s.scan(/\w+/).should eq("string")
+      s.scan(2).should eq("st")
+      s.scan(/\w+/).should eq("ring")
     end
 
     it "returns nil if it can't match from the offset" do
@@ -18,8 +19,28 @@ describe StringScanner do
       s.scan(/\w+/).should be_nil
       s.scan('s').should be_nil
       s.scan("string").should be_nil
-      s.scan(/\s\w+/).should_not be_nil # => " string"
-      s.scan(/.*/).should_not be_nil    # => ""
+      s.scan(/\s\w\w/).should_not be_nil # => " string"
+      s.scan(4).should eq("ring")
+      s.scan(/.*/).should_not be_nil # => ""
+      s.scan(1).should be_nil
+    end
+
+    it "errors on negative ints" do
+      s = StringScanner.new("testy mctesterson")
+      s.scan(10)
+      expect_raises(ArgumentError, "Negative lookahead count: -10") { s.scan(-10) }
+    end
+
+    it "works on multi-byte strings" do
+      s = StringScanner.new("テストの文字列")
+      s.scan(/\w\w\w/).should eq("テスト")
+      s.scan(/[a-z]+/).should be_nil
+      s.scan('ト').should be_nil
+      s.scan('の').should eq("の")
+      s.scan(10).should be_nil
+      s.scan(2).should eq("文字")
+      s.scan("不在").should be_nil
+      s.scan("列").should eq("列")
     end
   end
 
@@ -44,32 +65,84 @@ describe StringScanner do
   end
 
   describe "#skip" do
-    it "advances the offset but does not returns the string matched" do
-      s = StringScanner.new("this is a string")
+    describe "with single byte strings" do
+      it "advances the offset but does not return the string matched" do
+        s = StringScanner.new("this is a string")
 
-      s.skip(/\w+\s/).should eq(5)
-      s.offset.should eq(5)
-      s[0]?.should_not be_nil
+        s.skip(/\w+\s/).should eq(5)
+        s.offset.should eq(5)
+        s[0]?.should eq("this ")
 
-      s.skip(/\d+/).should be_nil
-      s.offset.should eq(5)
+        s.skip(/\d+/).should be_nil
+        s.offset.should eq(5)
+        s[0]?.should be_nil
 
-      s.skip('i').should eq(1)
-      s.offset.should eq(6)
+        s.skip('i').should eq(1)
+        s.offset.should eq(6)
+        s[0]?.should eq("i")
 
-      s.skip("s ").should eq(2)
-      s.offset.should eq(8)
+        s.skip("s ").should eq(2)
+        s.offset.should eq(8)
+        s[0]?.should eq("s ")
 
-      s.skip(/\w+\s/).should eq(2)
-      s.offset.should eq(10)
+        s.skip(/\w+\s/).should eq(2)
+        s.offset.should eq(10)
+        s[0]?.should eq("a ")
 
-      s.skip(/\w+/).should eq(6)
-      s.offset.should eq(16)
+        s.skip(5).should eq(5)
+        s.offset.should eq(15)
+        s[0]?.should eq("strin")
+
+        s.skip(100).should be_nil
+        s.skip(2).should be_nil
+        s.skip(1).should eq(1)
+        s.skip(1).should be_nil
+        s.skip(0).should eq(0)
+      end
+    end
+
+    describe "with multibyte strings" do
+      it "advances the offset but does not return the string matched" do
+        s = StringScanner.new("これは文字列である")
+
+        s.skip(/\w\w\w/).should eq(3)
+        s.offset.should eq(3)
+        s[0]?.should eq("これは")
+
+        s.skip(/\d+/).should be_nil
+        s.offset.should eq(3)
+
+        s.skip(100).should be_nil
+
+        s.skip("文字").should eq(2)
+        s.offset.should eq(5)
+        s[0]?.should eq("文字")
+
+        s.skip('列').should eq(1)
+        s.offset.should eq(6)
+        s[0]?.should eq("列")
+
+        s.skip(2).should eq(2)
+        s.offset.should eq(8)
+        s[0]?.should eq("であ")
+
+        s.skip(2).should be_nil
+        s.skip(0).should eq(0)
+        s[0]?.should eq("")
+
+        s.skip(1).should eq(1)
+        s[0]?.should eq("る")
+
+        s.eos?.should be_true
+        s.skip(1).should be_nil
+        s.skip(0).should eq(0)
+        s[0]?.should eq("")
+      end
     end
   end
 
   describe "#skip_until" do
-    it "advances the offset but does not returns the string matched" do
+    it "advances the offset but does not return the string matched" do
       s = StringScanner.new("this is a string")
 
       s.skip_until(/not/).should be_nil
@@ -106,12 +179,27 @@ describe StringScanner do
 
       s.check(/\w+\s/).should eq("is ")
       s.offset.should eq(5)
+      s[0].should eq("is ")
+
       s.check(/\w+\s/).should eq("is ")
       s.offset.should eq(5)
+      s[0].should eq("is ")
+
       s.check('i').should eq("i")
       s.offset.should eq(5)
-      s.check("is ").should eq("is ")
+      s[0].should eq("i")
+
+      s.check("is a str").should eq("is a str")
       s.offset.should eq(5)
+      s[0].should eq("is a str")
+
+      s.check(4).should eq("is a")
+      s.offset.should eq(5)
+      s[0].should eq("is a")
+
+      s.check(100).should be_nil
+      s.offset.should eq(5)
+      s[0]?.should be_nil
     end
 
     it "returns nil if it can't match from the offset" do
@@ -119,6 +207,7 @@ describe StringScanner do
       s.check(/\d+/).should be_nil
       s.check('0').should be_nil
       s.check("01").should be_nil
+      s.check(100).should be_nil
     end
   end
 
