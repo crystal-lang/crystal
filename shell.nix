@@ -59,22 +59,22 @@ let
   latestCrystalBinary = genericBinary ({
     x86_64-darwin = {
       url = "https://github.com/crystal-lang/crystal/releases/download/1.19.0/crystal-1.19.0-1-darwin-universal.tar.gz";
-      sha256 = "sha256:1xrb6ag3kkln4gd8g7f7f1g8jkzwswyg7wkhraf6c05k4hcs3i88";
+      sha256 = "sha256:0y8d7vlwmnqzb3hbd3ndwm26c64ksq3560a7h6igwv59ayi92mva";
     };
 
     aarch64-darwin = {
       url = "https://github.com/crystal-lang/crystal/releases/download/1.19.0/crystal-1.19.0-1-darwin-universal.tar.gz";
-      sha256 = "sha256:1xrb6ag3kkln4gd8g7f7f1g8jkzwswyg7wkhraf6c05k4hcs3i88";
+      sha256 = "sha256:0y8d7vlwmnqzb3hbd3ndwm26c64ksq3560a7h6igwv59ayi92mva";
     };
 
     x86_64-linux = {
       url = "https://github.com/crystal-lang/crystal/releases/download/1.19.0/crystal-1.19.0-1-linux-x86_64.tar.gz";
-      sha256 = "sha256:0gzg1yzlqdszfw2w902f541n55290j2x86cqvr58car8bcgdzxj3";
+      sha256 = "sha256:0mjl86agin7n19hx7z560v8q60mrishdkrs7zh869m9jjzc50pvc";
     };
 
     aarch64-linux = {
       url = "https://github.com/crystal-lang/crystal/releases/download/1.19.0/crystal-1.19.0-1-linux-aarch64.tar.gz";
-      sha256 = "sha256:1xskbcs59kyb9pb67m9k7iy5y1aarz5kvad880s9qprz4n5airv8";
+      sha256 = "sha256:1vrz2xlvgykbfphfx5qavdakx1a7d9vyw5d8xhkj7ixm50yqwvmm";
     };
   }.${pkgs.stdenv.system});
 
