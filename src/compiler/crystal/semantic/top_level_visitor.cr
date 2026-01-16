@@ -1261,11 +1261,14 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       when @program.target_annotation
         if args = ann.named_args
           args.each do |arg|
+            value = arg.value
+            next if value.is_a?(Crystal::Nop)
+
             case arg.name
             when "features"
-              node.target_features = arg.value.as(Crystal::ASTNode).id.stringify
+              node.target_features = arg.value.id.stringify
             when "cpu"
-              node.target_cpu = arg.value.as(Crystal::ASTNode).id.stringify
+              node.target_cpu = arg.value.id.stringify
             end
           end
         end
