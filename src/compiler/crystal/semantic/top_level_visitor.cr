@@ -1259,9 +1259,9 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       when @program.raises_annotation
         node.raises = true
       when @program.target_features_annotation
-        node.target_features = ann[0]
+        node.target_features = ann.args.first
       when @program.target_cpu_annotation
-        node.target_cpu = ann[0]
+        node.target_cpu = ann.args.first
       else
         yield annotation_type, ann
       end
