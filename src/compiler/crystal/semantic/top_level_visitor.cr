@@ -1263,9 +1263,9 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
           args.each do |arg|
             case arg.name
             when "features"
-              node.target_features = arg.value.id.stringify
+              node.target_features = arg.value.as(Crystal::ASTNode).id.stringify
             when "cpu"
-              node.target_cpu = arg.value.id.stringify
+              node.target_cpu = arg.value.as(Crystal::ASTNode).id.stringify
             end
           end
         end
