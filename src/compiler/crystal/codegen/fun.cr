@@ -447,7 +447,7 @@ class Crystal::CodeGenVisitor
     context.fun = typed_fun.func
     context.fun_type = typed_fun.type
 
-    target_flags = target_def.target_features
+    features = target_def.target_features
     cpu = target_def.target_cpu
     debug = @debug.variables?
 
