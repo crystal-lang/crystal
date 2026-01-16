@@ -1258,10 +1258,9 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         node.returns_twice = true
       when @program.raises_annotation
         node.raises = true
-      when @program.target_features_annotation
-        node.target_features = ann.args.first.id.stringify
-      when @program.target_cpu_annotation
-        node.target_cpu = ann.args.first.id.stringify
+      when @program.target_annotation
+        node.target_features = ann.named_args[:features]
+        node.target_cpu = ann.named_args[:cpu]
       else
         yield annotation_type, ann
       end
