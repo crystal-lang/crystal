@@ -279,6 +279,8 @@ module Crystal
       types["ThreadLocal"] = @thread_local_annotation = AnnotationType.new self, self, "ThreadLocal"
       types["Deprecated"] = @deprecated_annotation = AnnotationType.new self, self, "Deprecated"
       types["Experimental"] = @experimental_annotation = AnnotationType.new self, self, "Experimental"
+      types["TargetFeatures"] = @target_features_annotation = AnnotationType.new self, self, "TargetFeatures"
+      types["TargetCPU"] = @target_cpu_annotation = AnnotationType.new self, self, "TargetCPU"
 
       define_crystal_constants
 
