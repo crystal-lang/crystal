@@ -447,16 +447,25 @@ class Crystal::CodeGenVisitor
     context.fun = typed_fun.func
     context.fun_type = typed_fun.type
 
-    if @debug.variables?
+    features = target_def.target_features?
+    cpu = target_def.target_cpu?
+    debug = @debug.variables?
+
+    if debug || features || cpu
+      # Make it a hard boundary
       context.fun.add_attribute LLVM::Attribute::NoInline
-      context.fun.add_attribute LLVM::Attribute::OptimizeNone
+
+      context.fun.add_attribute LLVM::Attribute::OptimizeNone if debug
+      context.fun.add_target_dependent_attribute("target-features", features) if features
+      context.fun.add_target_dependent_attribute("target-cpu", cpu) if cpu
     else
       context.fun.add_attribute LLVM::Attribute::AlwaysInline if target_def.always_inline?
+      context.fun.add_attribute LLVM::Attribute::NoInline if target_def.no_inline?
     end
+
     context.fun.add_attribute LLVM::Attribute::ReturnsTwice if target_def.returns_twice?
     context.fun.add_attribute LLVM::Attribute::Naked if target_def.naked?
     context.fun.add_attribute LLVM::Attribute::NoReturn if target_def.no_returns?
-    context.fun.add_attribute LLVM::Attribute::NoInline if target_def.no_inline?
   end
 
   def setup_closure_vars(target_def, closure_vars, context, closure_type, closure_ptr)

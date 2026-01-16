@@ -159,6 +159,12 @@ module Crystal
     # `true` if this def has the `@[ReturnsTwice]` annotation
     property? returns_twice = false
 
+    # Set to the value of the `@[TargetFeatures("+sve")]` annotation
+    property? target_features : String? = nil
+
+    # Set to the value of the `@[TargetCPU("apple-m4")]` annotation
+    property? target_cpu : String? = nil
+
     # `true` if this def has the `@[Naked]` annotation
     property? naked = false
 
