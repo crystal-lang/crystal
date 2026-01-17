@@ -1259,15 +1259,14 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       when @program.raises_annotation
         node.raises = true
       when @program.target_annotation
-        if args = ann.named_args
-          args.each do |arg|
-            value = arg.value.to_s
-            case arg.name
-            when "features"
-              node.target_features = value
-            when "cpu"
-              node.target_cpu = value
-            end
+        ann.named_args.try &.each do |arg|
+          case arg.name
+          when "features"
+            node.target_features = arg.value.to_s
+          when "cpu"
+            node.target_cpu = arg.value.to_s
+          else
+            ann.raise "invalid Target parameter '#{arg.name}'. Valid parameters are features, cpu"
           end
         end
       else
