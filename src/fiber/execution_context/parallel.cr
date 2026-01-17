@@ -75,8 +75,12 @@ module Fiber::ExecutionContext
     @spinning = Atomic(Int32).new(0)
 
     # :nodoc:
+    #
+    # Starts the default execution context. There can be only one for the whole
+    # process. Must be called from the main thread's main fiber; associates the
+    # current thread and fiber to the created execution context.
     protected def self.default(maximum : Int32) : self
-      new("DEFAULT", maximum, hijack: true)
+      Fiber.current.execution_context = new("DEFAULT", maximum, hijack: true)
     end
 
     # Starts a `Parallel` context with a *maximum* parallelism. The context
@@ -98,28 +102,27 @@ module Fiber::ExecutionContext
       new(name, size.exclusive? ? size.end - 1 : size.end, hijack: false)
     end
 
-    protected def initialize(@name : String, @capacity : Int32, hijack : Bool)
-      raise ArgumentError.new("Parallelism can't be less than one.") if @capacity < 1
+    protected def initialize(@name : String, capacity : Int32, hijack : Bool)
+      raise ArgumentError.new("Parallelism can't be less than one.") if capacity < 1
 
       @mutex = Thread::Mutex.new
       @condition = Thread::ConditionVariable.new
 
       @global_queue = GlobalQueue.new(@mutex)
       @schedulers = Array(Scheduler).new(capacity)
-      @threads = Array(Thread).new(capacity)
       @event_loop = Crystal::EventLoop.create(capacity)
-
+      @started = hijack ? 1 : 0
       @rng = Random::PCG32.new
 
       start_schedulers(capacity)
-      @threads << hijack_current_thread(@schedulers.first) if hijack
+      hijack_current_thread(@schedulers.first) if hijack
 
       ExecutionContext.execution_contexts.push(self)
     end
 
     # The number of threads that have been started.
     def size : Int32
-      @threads.size
+      @started
     end
 
     # The maximum number of threads that can be started.
@@ -134,12 +137,11 @@ module Fiber::ExecutionContext
 
     # Starts all schedulers at once.
     #
-    # We could lazily initialize them as needed, like we do for threads, which
-    # would be safe as long as we only mutate when the mutex is locked... but
-    # unlike @threads, we do iterate the schedulers in #steal without locking
-    # the mutex (for obvious reasons) and there are no guarantees that the new
-    # schedulers.@size will be written after the scheduler has been written to
-    # the array's buffer.
+    # We could lazily initialize them as needed, would be safe as long as we
+    # only mutate when the mutex is locked, but we iterate the schedulers in
+    # #steal without locking the mutex (for obvious reasons) and there are no
+    # guarantees that the new schedulers.@size will be written after the
+    # scheduler has been written to the array's buffer.
     #
     # OPTIMIZE: consider storing schedulers to an array-like object that would
     # use an atomic/fence to make sure that @size can only be incremented
@@ -156,32 +158,18 @@ module Fiber::ExecutionContext
 
     # Attaches *scheduler* to the current `Thread`, usually the process' main
     # thread. Starts a `Fiber` to run the scheduler loop.
-    private def hijack_current_thread(scheduler) : Thread
+    private def hijack_current_thread(scheduler) : Nil
       thread = Thread.current
       thread.internal_name = scheduler.name
       thread.execution_context = self
       thread.scheduler = scheduler
-
       scheduler.thread = thread
-      scheduler.main_fiber = Fiber.new("#{scheduler.name}:loop", self) do
-        scheduler.run_loop
-      end
-
-      thread
     end
 
     # Starts a new `Thread` and attaches *scheduler*. Runs the scheduler loop
     # directly in the thread's main `Fiber`.
-    private def start_thread(scheduler) : Thread
-      Thread.new(name: scheduler.name) do |thread|
-        thread.execution_context = self
-        thread.scheduler = scheduler
-
-        scheduler.thread = thread
-        scheduler.main_fiber = thread.main_fiber
-        scheduler.main_fiber.name = "#{scheduler.name}:loop"
-        scheduler.run_loop
-      end
+    private def start_thread(scheduler) : Nil
+      ExecutionContext.thread_pool.checkout(scheduler)
     end
 
     # Resizes the context to the new *maximum* parallelism.
@@ -203,7 +191,6 @@ module Fiber::ExecutionContext
         # and eventually assign the copy as @schedulers; this way #steal can
         # safely access the array (never mutated).
         new_capacity = maximum
-        old_threads = @threads
         old_schedulers = @schedulers
         old_capacity = capacity
 
@@ -211,9 +198,6 @@ module Fiber::ExecutionContext
           @schedulers = Array(Scheduler).new(new_capacity) do |index|
             old_schedulers[index]? || start_scheduler(index)
           end
-          threads = Array(Thread).new(new_capacity)
-          old_threads.each { |thread| threads << thread }
-          @threads = threads
         elsif new_capacity < old_capacity
           # tell the overflow schedulers to shutdown
           removed_schedulers = old_schedulers[new_capacity..]
@@ -221,7 +205,7 @@ module Fiber::ExecutionContext
 
           # resize
           @schedulers = old_schedulers[0...new_capacity]
-          @threads = old_threads[0...new_capacity]
+          @started = new_capacity if @started > new_capacity
 
           # reset @parked counter (we wake all parked threads) so they can
           # shutdown (if told to):
@@ -294,6 +278,8 @@ module Fiber::ExecutionContext
         Crystal.trace :sched, "park"
         @parked.add(1, :acquire_release)
 
+        # TODO: detach the scheduler and return the thread back into ThreadPool
+        # instead
         @condition.wait(@mutex)
 
         # we don't decrement @parked because #wake_scheduler did
@@ -355,13 +341,13 @@ module Fiber::ExecutionContext
       # check if we can start another thread; no need for atomics, the values
       # shall be rather stable over time and we check them again inside the
       # mutex
-      return if @threads.size >= capacity
+      return if @started >= capacity
 
       @mutex.synchronize do
-        index = @threads.size
-        return if index >= capacity # check again
-
-        @threads << start_thread(@schedulers[index])
+        if (index = @started) < capacity
+          start_thread(@schedulers[index])
+          @started += 1
+        end
       end
     end
 
