@@ -3181,7 +3181,7 @@ module Crystal
               found_default_value: found_default_value,
               found_splat: found_splat,
               found_double_splat: found_double_splat,
-              allow_restrictions: false)
+              allow_restrictions: name == "annotated")
             if !found_default_value && extras.default_value
               found_default_value = true
             end
