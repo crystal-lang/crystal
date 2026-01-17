@@ -3248,7 +3248,8 @@ private macro interpret_check_args(*, node = self, min_count = nil, named_params
   {% if !named_params %}
     if named_args && !named_args.empty?
       %full_name = full_macro_name({{ node }}, method, {{ top_level }})
-      {{ node }}.raise "named arguments are not allowed here"
+      attempted = named_args.join(", ")
+      {{ node }}.raise "#{%full_name} does not allow named arguments (attempted: #{attempted})"
     end
   {% elsif named_params != true %}
     if named_args
