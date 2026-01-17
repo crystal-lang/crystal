@@ -1,20 +1,96 @@
 require "crystal/system/env"
+require "sync/rw_lock"
 
 # `ENV` is a hash-like accessor for environment variables.
 #
 # ### Example
 #
+# We can read the `HOST` and `PORT` environment variables and fallback to
+# default values when a variable is unset:
+#
 # ```
-# # Set env var PORT to a default if not already set
-# ENV["PORT"] ||= "5000"
-# # Later use that env var.
-# puts ENV["PORT"].to_i
+# host = ENV.fetch("HOST", "localhost")
+# port = ENV.fetch("PORT", "5000").to_i
 # ```
 #
-# NOTE: All keys and values are strings. You must take care to cast other types
-# at runtime, e.g. integer port numbers.
+# NOTE: All keys and values are `String`s. You must take care to cast other
+# types at runtime, e.g. integer port numbers.
+#
+# ### Safety
+#
+# Modifying the environment in single-threaded programs is safe. Modifying the
+# environment is also always safe on Windows.
+#
+# Modifying the environment in multi-threaded programs on other targets is
+# always unsafe, and can cause a mere read to segfault! At best, memory will be
+# leaked every time the environment is modified.
+#
+# The problem is that POSIX systems don't guarantee a thread safe implementation
+# of the `getenv`, `setenv` and `putenv` libc functions. Any thread that gets an
+# environment variable while another thread sets an environment variable may
+# segfault. The `ENV` object itself is internally protected by a readers-writer
+# lock, but we can't protect against external libraries, including libc calls
+# made by the stdlib. They might call `getenv` internally without holding the
+# read lock while a crystal fiber with the write lock calls `setenv`.
+#
+# The only safe solution is to consider `ENV` to be immutable, and to never call
+# `ENV.[]=`, `ENV.delete` or `ENV.clear` in your program. If you really need to,
+# you must make sure that no other thread has been started (beware of libraries
+# that may start threads) or you may call `ENV.unsafe_set`.
+#
+# NOTE: Passing environment variables to a child process should use the `env`
+# arg of `Process.run` and `Process.new`.
 module ENV
   extend Enumerable({String, String})
+
+  # Parse the environment once during startup, while the program is still single
+  # threaded, then we only ever read/write the internal hash and never call the
+  # libc functions that may be safe (win32) or unsafe (unix):
+  @@env = Crystal::System::Env.parse
+  @@lock = Sync::RWLock.new
+
+  # Reads an environment variable from the system environment. Returns `nil` if
+  # the environment variable is unset.
+  #
+  # WARNING: this is thread unsafe on most targets and can cause your program to
+  # segfault if another fiber or an external library is trying to write a system
+  # environment variable at the same time!
+  def self.unsafe_get(key : String) : String?
+    @@lock.read do
+      Crystal::System::Env.get(key)
+    end
+  end
+
+  # Sets an environment variable to the system environment. If *value* is `nil`,
+  # the environment variable will be unset.
+  #
+  # WARNING: this is thread unsafe on most targets and can cause your program to
+  # segfault if another fiber or an external library, including libc calls made
+  # by the stdlib, is trying to read a system environment variable at the same
+  # time!
+  def self.unsafe_set(key : String, value : String?) : String?
+    @@lock.write do
+      Crystal::System::Env.set(key, value)
+      set_internal(key, value)
+    end
+    value
+  end
+
+  # :nodoc:
+  def self.set_internal(key : String, value : String) : Nil
+    if index = @@env.index { |k, _| Crystal::System::Env.equal?(k, key) }
+      @@env[index] = {key, value}
+    else
+      @@env << {key, value}
+    end
+  end
+
+  # :nodoc:
+  def self.set_internal(key : String, value : Nil) : Nil
+    if index = @@env.index { |k, _| Crystal::System::Env.equal?(k, key) }
+      @@env.delete_at(index)
+    end
+  end
 
   # Retrieves the value for environment variable named *key* as a `String`.
   # Raises `KeyError` if the named variable does not exist.
@@ -34,10 +110,10 @@ module ENV
   # If *value* is `nil`, the environment variable is deleted.
   #
   # If *key* or *value* contains a null-byte an `ArgumentError` is raised.
+  #
+  # @Deprecated("Modifying ENV is unsafe. Consider ENV.unsafe_set if you really must change it.")
   def self.[]=(key : String, value : String?)
-    Crystal::System::Env.set(key, value)
-
-    value
+    unsafe_set(key, value)
   end
 
   # Returns `true` if the environment variable named *key* exists and `false` if it doesn't.
@@ -47,7 +123,7 @@ module ENV
   # ENV.has_key?("PATH")           # => true
   # ```
   def self.has_key?(key : String) : Bool
-    Crystal::System::Env.has_key?(key)
+    @@lock.read { @@env.any? { |k, _| Crystal::System::Env.equal?(k, key) } }
   end
 
   # Retrieves a value corresponding to the given *key*. Raises a `KeyError` exception if the
@@ -67,8 +143,8 @@ module ENV
   # Retrieves a value corresponding to a given *key*. Return the value of the block if
   # the *key* does not exist.
   def self.fetch(key : String, &block : String -> T) : String | T forall T
-    if value = Crystal::System::Env.get(key)
-      value
+    if entry = @@lock.read { @@env.find { |k, _| Crystal::System::Env.equal?(k, key) } }
+      entry[1]
     else
       yield key
     end
@@ -76,31 +152,29 @@ module ENV
 
   # Returns an array of all the environment variable names.
   def self.keys : Array(String)
-    keys = [] of String
-    each { |key, _| keys << key }
-    keys
+    @@lock.read { @@env.map { |k, _| k } }
   end
 
   # Returns an array of all the environment variable values.
   def self.values : Array(String)
-    values = [] of String
-    each { |_, value| values << value }
-    values
+    @@lock.read { @@env.map { |_, v| v } }
   end
 
   # Removes the environment variable named *key*. Returns the previous value if
   # the environment variable existed, otherwise returns `nil`.
+  #
+  # @Deprecated("Modifying ENV is unsafe. Consider ENV.unsafe_set if you really must change it.")
   def self.delete(key : String) : String?
-    if value = self[key]?
+    @@lock.write do
       Crystal::System::Env.set(key, nil)
-      value
-    else
-      nil
+      if index = @@env.index { |k, _| Crystal::System::Env.equal?(k, key) }
+        entry = @@env.delete_at(index)
+        entry[1]
+      end
     end
   end
 
-  # Iterates over all `KEY=VALUE` pairs of environment variables, yielding both
-  # the *key* and *value*.
+  # Iterates all the environment variables, yielding both the *key* and *value*.
   #
   # ```
   # ENV.each do |key, value|
@@ -108,13 +182,17 @@ module ENV
   # end
   # ```
   def self.each(& : {String, String} ->)
-    Crystal::System::Env.each do |key, value|
-      yield({key, value})
+    @@lock.read do
+      @@env.each { |(key, value)| yield({key, value}) }
     end
   end
 
+  # @Deprecated("Modifying ENV is unsafe. Consider ENV.unsafe_set if you really must change it.")
   def self.clear : Nil
-    keys.each { |k| delete k }
+    @@lock.write do
+      @@env.each { |k, _| Crystal::System::Env.set(k, nil) }
+      @@env.clear
+    end
   end
 
   # Writes the contents of the environment to *io*.

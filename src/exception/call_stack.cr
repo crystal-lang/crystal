@@ -23,7 +23,7 @@ struct Exception::CallStack
   # :nodoc:
   def self.load_debug_info : Nil
     Crystal.once(pointerof(@@loaded)) do
-      return if ENV["CRYSTAL_LOAD_DEBUG_INFO"]? == "0"
+      return unless load_debug_info?
 
       begin
         load_debug_info_impl
@@ -35,6 +35,9 @@ struct Exception::CallStack
 
   @callstack : Array(Void*)
   @backtrace : Array(String)?
+
+  class_getter?(show_full_info : Bool) { ENV["CRYSTAL_CALLSTACK_FULL_INFO"]? == "1" }
+  class_getter?(load_debug_info : Bool) { ENV["CRYSTAL_LOAD_DEBUG_INFO"]? != "0" }
 
   def initialize(@callstack : Array(Void*) = CallStack.unwind)
   end
@@ -50,7 +53,7 @@ struct Exception::CallStack
       [] of String
     {% else %}
       CallStack.load_debug_info
-      show_full_info = ENV["CRYSTAL_CALLSTACK_FULL_INFO"]? == "1"
+      show_full_info = CallStack.show_full_info?
 
       @callstack.compact_map do |ip|
         CallStack.decode_backtrace_frame(ip, show_full_info)

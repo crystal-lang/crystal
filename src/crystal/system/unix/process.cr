@@ -313,11 +313,7 @@ struct Crystal::System::Process
   end
 
   private def self.execvpe(file, argv, envp)
-    {% if LibC.has_method?("execvpe") && !flag?("execvpe_impl") %}
-      lock_write { LibC.execvpe(file, argv, envp) }
-    {% else %}
-      execvpe_impl(file, argv, envp)
-    {% end %}
+    execvpe_impl(file, argv, envp)
   end
 
   DEFAULT_PATH = "/usr/bin:/bin"
@@ -342,11 +338,7 @@ struct Crystal::System::Process
       return
     end
 
-    path = if path_ptr = LibC.getenv("PATH")
-             Slice.new(path_ptr, LibC.strlen(path_ptr))
-           else
-             DEFAULT_PATH.to_slice
-           end
+    path = ENV.fetch("PATH", DEFAULT_PATH).to_slice
 
     if file.bytesize > LibC::NAME_MAX
       Errno.value = Errno::ENAMETOOLONG

@@ -14,6 +14,24 @@ struct Crystal::System::Process
     HOST_PATH_DELIMITER = ':'
   {% end %}
 
+  class_getter system_directory : String do
+    buf = uninitialized UInt16[256]
+    size = LibC.GetSystemDirectoryW(buf.to_unsafe, buf.size)
+    raise RuntimeError.from_winerror("GetSystemDirectoryW") if size == 0
+    String.from_utf16(buf.to_slice[0, size])
+  end
+
+  class_getter windows_directory : String do
+    buf = uninitialized UInt16[256]
+    size = LibC.GetWindowsDirectoryW(buf.to_unsafe, buf.size)
+    raise RuntimeError.from_winerror("GetWindowsDirectoryW") if size == 0
+    String.from_utf16(buf.to_slice[0, size])
+  end
+
+  private class_getter program_directory : String do
+    ::File.dirname(PROGRAM_NAME)
+  end
+
   getter pid : LibC::DWORD
   @thread_id : LibC::DWORD
   @process_handle : LibC::HANDLE
@@ -302,7 +320,7 @@ struct Crystal::System::Process
 
     if LibC.CreateProcessW(
          nil, System.to_wstr(prepared_args), nil, nil, true, LibC::CREATE_SUSPENDED | LibC::CREATE_UNICODE_ENVIRONMENT,
-         make_env_block(env, clear_env), chdir.try { |str| System.to_wstr(str) } || Pointer(UInt16).null,
+         Env.make_env_block(env, clear_env), chdir.try { |str| System.to_wstr(str) } || Pointer(UInt16).null,
          pointerof(startup_info), pointerof(process_info)
        ) == 0
       error = WinError.value
@@ -341,7 +359,7 @@ struct Crystal::System::Process
         raise ::File::Error.from_os_error("Error executing process", WinError::ERROR_BAD_EXE_FORMAT, file: command)
       end
 
-      prepared_args = [command]
+      prepared_args = [resolve(command)]
       prepared_args.concat(args) if args
       prepared_args
     end
@@ -401,6 +419,50 @@ struct Crystal::System::Process
     end
   end
 
+  # If the file name does not contain an extension, .exe is appended.
+  # If the file name ends in a period (.) with no extension, or if the file name contains a path, .exe is not appended.
+  # If the file name does not contain a directory path, the system searches for the executable file:
+  # The directory from which the application loaded.
+  # The current directory for the parent process.
+  # The 32-bit Windows system directory.
+  # The 16-bit Windows system directory. Not supported on 64-bits Windows.
+  # The Windows directory.
+  # The directories that are listed in the PATH environment variable.
+  private def self.resolve(command) : String
+    if command.blank?
+      raise IO::Error.from_os_error("Error executing process: '#{command}'", WinError::ERROR_INVALID_PARAMETER)
+    end
+
+    if command.index('\\') || command.index('/')
+      return command
+    end
+
+    original_command = command
+
+    if !command.ends_with?('.') && ::File.extname(command).empty?
+      command = "#{command}.exe"
+    end
+
+    executable = ::File.join(program_directory, command)
+    return executable if File.exists?(executable)
+
+    executable = ::File.join(Dir.current, command)
+    return executable if File.exists?(executable)
+
+    executable = ::File.join(system_directory, command)
+    return executable if File.exists?(executable)
+
+    executable = ::File.join(windows_directory, command)
+    return executable if File.exists?(executable)
+
+    ENV["PATH"]?.try(&.split(';').each do |dir|
+      executable = ::File.join(dir, command)
+      return executable if File.exists?(executable)
+    end)
+
+    raise_exception_from_errno(original_command, Errno::ENOENT)
+  end
+
   # Replaces the C standard streams' file descriptors, not Win32's, since
   # `try_replace` uses the C `LibC._wexecvp` and only cares about the former.
   # Returns a duplicate of the original file descriptor
@@ -456,29 +518,6 @@ struct Crystal::System::Process
 
   def self.chroot(path)
     raise NotImplementedError.new("Process.chroot")
-  end
-
-  protected def self.make_env_block(env, clear_env : Bool) : UInt16*
-    # If neither clearing nor adding anything, use the default behavior of inheriting everything.
-    return Pointer(UInt16).null if !env && !clear_env
-
-    # Emulate case-insensitive behavior using a Hash like {"KEY" => {"kEy", "value"}, ...}
-    final_env = {} of String => {String, String}
-    unless clear_env
-      Crystal::System::Env.each do |key, val|
-        final_env[key.upcase] = {key, val}
-      end
-    end
-    env.try &.each do |(key, val)|
-      if val
-        # Note: in the case of overriding, the last "case-spelling" of the key wins.
-        final_env[key.upcase] = {key, val}
-      else
-        final_env.delete key.upcase
-      end
-    end
-    # The "values" we're passing are actually key-value pairs.
-    Crystal::System::Env.make_env_block(final_env.each_value)
   end
 end
 
