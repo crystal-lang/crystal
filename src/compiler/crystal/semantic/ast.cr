@@ -228,6 +228,8 @@ module Crystal
       a_def.no_inline = no_inline?
       a_def.always_inline = always_inline?
       a_def.returns_twice = returns_twice?
+      a_def.target_features = target_features
+      a_def.target_cpu = target_cpu
       a_def.naked = naked?
       a_def.annotations = annotations
       a_def.new = new?

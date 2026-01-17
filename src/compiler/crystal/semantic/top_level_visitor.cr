@@ -1262,11 +1262,11 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         ann.named_args.try &.each do |arg|
           case arg.name
           when "features"
-            node.target_features = arg.value.to_s
+            node.target_features = arg.value.to_s[1..-2]
           when "cpu"
-            node.target_cpu = arg.value.to_s
+            node.target_cpu = arg.value.to_s[1..-2]
           else
-            ann.raise "invalid Target parameter '#{arg.name}'. Valid parameters are features, cpu"
+            ann.raise "invalid Target argument '#{arg.name}'. Valid arguments are features, cpu"
           end
         end
       else
