@@ -204,7 +204,7 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
 
       # Cannot use `time.elapsed` here because it calls `::Time.instant` which
       # could be mocked.
-      t = Crystal::System::Time.instant.duration_since(time)
+      t = time.duration_since(Crystal::System::Time.instant)
 
       data = t.total_nanoseconds.to_i64!
       {% unless LibC.has_constant?(:NOTE_NSECONDS) %}
