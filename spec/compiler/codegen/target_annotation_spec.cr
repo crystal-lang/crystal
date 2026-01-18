@@ -47,7 +47,7 @@ describe "Code gen: Target annotation" do
       run(<<-CRYSTAL).to_i.should be > 0
         require "prelude"
 
-        @[Target(cpu: "apple-m4")]
+        @[Target(cpu: "apple-m1")]
         def foo
           [1, 2, 3].sample
         end
@@ -57,7 +57,7 @@ describe "Code gen: Target annotation" do
       run(<<-CRYSTAL).to_i.should be > 0
         require "prelude"
 
-        @[Target(cpu: "znver4")]
+        @[Target(cpu: "znver1")]
         def foo
           [1, 2, 3].sample
         end
