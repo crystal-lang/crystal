@@ -12,6 +12,8 @@ describe "Code gen: Target annotation" do
   it "can target optional CPU features" do
     {% if flag?(:aarch64) %}
       run(<<-CRYSTAL).to_b.should be_true
+        require "prelude"
+
         # SVE2-only instruction (will fail unless +sve,+sve2 enabled)
         @[Target(features: "+sve,+sve2")]
         def sve2_smoke_test : Nil
@@ -42,18 +44,22 @@ describe "Code gen: Target annotation" do
 
   it "can optimize code for a specific CPU" do
     {% if flag?(:aarch64) %}
-      run(<<-CRYSTAL).to_i.should be >= 0
+      run(<<-CRYSTAL).to_i.should be > 0
+        require "prelude"
+
         @[Target(cpu: "apple-m4")]
         def foo
-          rand(10)
+          [1, 2, 3].sample
         end
         foo
         CRYSTAL
     {% elsif flag?(:x86_64) %}
-      run(<<-CRYSTAL).to_i.should be >= 0
+      run(<<-CRYSTAL).to_i.should be > 0
+        require "prelude"
+
         @[Target(cpu: "znver4")]
         def foo
-          rand(10)
+          [1, 2, 3].sample
         end
         foo
         CRYSTAL
