@@ -1258,6 +1258,17 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         node.returns_twice = true
       when @program.raises_annotation
         node.raises = true
+      when @program.target_annotation
+        ann.named_args.try &.each do |arg|
+          case arg.name
+          when "features"
+            node.target_features = arg.value.to_s[1..-2]
+          when "cpu"
+            node.target_cpu = arg.value.to_s[1..-2]
+          else
+            ann.raise "invalid Target argument '#{arg.name}'. Valid arguments are features, cpu"
+          end
+        end
       else
         yield annotation_type, ann
       end
