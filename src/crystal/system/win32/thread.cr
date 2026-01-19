@@ -152,7 +152,7 @@ module Crystal::System::Thread
     # context must be aligned on 16 bytes but we lack a mean to force the
     # alignment on the struct, so we overallocate then realign the pointer:
     local = uninitialized UInt8[sizeof(Tuple(LibC::CONTEXT, UInt8[15]))]
-    thread_context = Pointer(LibC::CONTEXT).new(local.to_unsafe.align_up(16))
+    thread_context = local.to_unsafe.align_up(16).as(LibC::CONTEXT*)
     thread_context.value.contextFlags = LibC::CONTEXT_FULL
 
     if LibC.GetThreadContext(@system_handle, thread_context) == -1
