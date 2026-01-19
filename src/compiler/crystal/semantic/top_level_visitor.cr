@@ -1274,7 +1274,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
             ann.raise "invalid value for debug argument. Must be true or false" unless debug_value.in?({"false", "true"})
             node.debug = debug_value == "true"
           else
-            ann.raise "invalid Target argument '#{arg.name}'. Valid arguments are features, cpu"
+            ann.raise "invalid Target argument '#{arg.name}'. Valid arguments are features, optimize, debug, cpu"
           end
         end
       else
