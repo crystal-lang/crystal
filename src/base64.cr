@@ -31,6 +31,7 @@ module Base64
 
   {% begin %}
     private STREAM_MAX_INPUT_BUFFER_SIZE = {{ IO::DEFAULT_BUFFER_SIZE // (LINE_SIZE + 1) * (LINE_SIZE // 4 * 3) }}
+    private STREAM_MAX_INPUT_BUFFER_SIZE_P1 = {{ IO::DEFAULT_BUFFER_SIZE // (LINE_SIZE + 1) * (LINE_SIZE // 4 * 3) + 1 }}
   {% end %}
 
   # Returns the base64-encoded version of *data*.
@@ -198,29 +199,29 @@ module Base64
   end
 
   private def encode_base64_stream(input : IO, output : IO, charset : UInt8[64]*, *, newlines : Bool = false, pad : Bool = false) : Int64
-    input_buffer = uninitialized UInt8[STREAM_MAX_INPUT_BUFFER_SIZE]
+    input_buffer = uninitialized UInt8[STREAM_MAX_INPUT_BUFFER_SIZE_P1]
     output_buffer = uninitialized UInt8[IO::DEFAULT_BUFFER_SIZE]
-    total_written = 0
+    total_written = 0_i64
 
     while true
-      # TODO: input_size = input.read_fully(input_buffer.to_slice)
+      # TODO: input_size = input.read_fully(input_buffer.to_slice[0, STREAM_MAX_INPUT_BUFFER_SIZE])
       input_size = begin
-        slice = input_buffer.to_slice
+        slice = input_buffer.to_slice[0, STREAM_MAX_INPUT_BUFFER_SIZE]
 
         count = slice.size
         while slice.size > 0
           read_bytes = input.read(slice)
-          return count &- slice.size if read_bytes == 0
+          break if read_bytes == 0
           slice += read_bytes
         end
-        count
+        count &- slice.size
       end
 
-      written = encode_base64_buffer(input_buffer[0, input_size], output_buffer.to_unsafe, charset, newlines: newlines, pad: pad)
+      written = encode_base64_buffer(input_buffer.to_slice[0, input_size], output_buffer.to_slice, charset, newlines: newlines, pad: pad, extra_byte: true)
       output.write_string(output_buffer.to_slice[0, written])
       total_written += written
 
-      break if input_size != input_buffer.size
+      break if input_size != STREAM_MAX_INPUT_BUFFER_SIZE
     end
 
     total_written
@@ -239,7 +240,7 @@ module Base64
 
     while input.size > 0
       process_bytes = Math.min(STREAM_MAX_INPUT_BUFFER_SIZE, input.size)
-      written_bytes = encode_base64_buffer(input[0, process_bytes], output.to_slice, charset, newlines: newlines, pad: pad)
+      written_bytes = encode_base64_buffer(input[0, process_bytes], output.to_slice, charset, newlines: newlines, pad: pad, extra_byte: process_bytes > input.size)
 
       input += process_bytes
 
@@ -277,7 +278,7 @@ module Base64
 
     # Handle large sections of data in chunks for performance.
     # This is the performance-critical section (for long inputs).
-    while (input.size + (extra_byte ? 1 : 0)) > LINE_BYTES
+    while (input.size.to_i64! &+ (extra_byte ? 1 : 0)) > LINE_BYTES
       encode_base64_buffer__full_pairs_excess(input.to_unsafe, output.to_unsafe, LINE_PAIRS, charset)
 
       input += LINE_BYTES
@@ -356,8 +357,8 @@ module Base64
 
     if pairs > 1
       encode_base64_buffer__full_pairs_excess(input, output, pairs - 1, charset)
-      input += 3 &* pairs
-      output += 4 &* pairs
+      input += 3 &* (pairs - 1)
+      output += 4 &* (pairs - 1)
     end
 
     charset = charset.as(UInt8*)
