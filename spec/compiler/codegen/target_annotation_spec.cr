@@ -96,7 +96,7 @@ describe "Code gen: Target annotation" do
       begin
         foo
       rescue error
-        error.backtrace.first
+        puts error.backtrace[0..4]
       end
       CRYSTAL
   end
