@@ -475,8 +475,8 @@ struct Pointer(T)
   #
   # ```
   # ptr = Pointer(Void).new(0x30_u64)
-  # ptr.align_down(16) #=> Pointer(Void)@0x30
-  # ptr.align_down(32) #=> Pointer(Void)@0x20
+  # ptr.align_down(16) # => Pointer(Void)@0x30
+  # ptr.align_down(32) # => Pointer(Void)@0x20
   # ```
   @[AlwaysInline]
   def align_down(boundary : UInt64) : Pointer(T)
@@ -492,8 +492,8 @@ struct Pointer(T)
   #
   # ```
   # ptr = Pointer(Void).new(0x30_u64)
-  # ptr.align_up(16) #=> Pointer(Void)@0x30
-  # ptr.align_up(32) #=> Pointer(Void)@0x40
+  # ptr.align_up(16) # => Pointer(Void)@0x30
+  # ptr.align_up(32) # => Pointer(Void)@0x40
   # ```
   @[AlwaysInline]
   def align_up(boundary : UInt64) : Pointer(T)
