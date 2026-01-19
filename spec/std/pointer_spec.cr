@@ -395,6 +395,30 @@ describe "Pointer" do
     ptr.clone.should eq(ptr)
   end
 
+  it "aligns pointers using #align_down and #align_up" do
+    ptr = Pointer(Void).new(0x30_u64)
+    ptr.align_down(16).should eq(Pointer(Void).new(0x30_u64))
+    ptr.align_down(32).should eq(Pointer(Void).new(0x20_u64))
+
+    ptr = Pointer(Void).new(0x30_u64)
+    ptr.align_up(16).should eq(Pointer(Void).new(0x30_u64))
+    ptr.align_up(32).should eq(Pointer(Void).new(0x40_u64))
+
+    ptr = Pointer(Void).new(1_u64)
+    ptr.align_up(1024).should eq(Pointer(Void).new(1024_u64))
+    ptr.align_down(1024).should eq(Pointer(Void).new(0_u64))
+
+    {% if flag?(:bits64) %}
+      ptr = Pointer(Void*).new(&-1_u64)
+      ptr.align_up(2).should eq(Pointer(Void*).new(0_u64))
+      ptr.align_down(2).should eq(Pointer(Void*).new(&-2_u64))
+    {% else %}
+      ptr = Pointer(Void*).new(&-1_u64)
+      ptr.align_up(2).should eq(Pointer(Void*).new(0_u64))
+      ptr.align_down(2).should eq(Pointer(Void*).new((&-2_u32).to_u64))
+    {% end %}
+  end
+
   {% if flag?(:bits32) %}
     it "raises on copy_from with size bigger than UInt32::MAX" do
       ptr = Pointer(Int32).new(123)
