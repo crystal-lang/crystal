@@ -165,6 +165,12 @@ module Crystal
     # Set to the value of the `@[Target(cpu: "apple-m4")]` annotation
     property target_cpu : String? = nil
 
+    # Set to the value of the `@[Target(optimize: None)]` annotation
+    property optimize : LLVM::Optimize = LLVM::Optimize::Default
+
+    # Set to the value of the `@[Target(debug: false)]` annotation
+    property? debug = true
+
     # `true` if this def has the `@[Naked]` annotation
     property? naked = false
 
@@ -230,6 +236,8 @@ module Crystal
       a_def.returns_twice = returns_twice?
       a_def.target_features = target_features
       a_def.target_cpu = target_cpu
+      a_def.optimize = optimize
+      a_def.debug = debug?
       a_def.naked = naked?
       a_def.annotations = annotations
       a_def.new = new?

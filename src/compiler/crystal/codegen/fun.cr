@@ -449,13 +449,18 @@ class Crystal::CodeGenVisitor
 
     features = target_def.target_features
     cpu = target_def.target_cpu
-    debug = @debug.variables?
+    optimize_none = @debug.variables? || target_def.optimize.none?
+    optimize_size = target_def.optimize.size?
 
-    if debug || features || cpu
+    if optimize_none || optimize_size || features || cpu
       # Make it a hard boundary
       context.fun.add_attribute LLVM::Attribute::NoInline
 
-      context.fun.add_attribute LLVM::Attribute::OptimizeNone if debug
+      if optimize_none
+        context.fun.add_attribute LLVM::Attribute::OptimizeNone
+      elsif optimize_size
+        context.fun.add_attribute LLVM::Attribute::OptimizeForSize
+      end
       context.fun.add_target_dependent_attribute("target-features", features) if features
       context.fun.add_target_dependent_attribute("target-cpu", cpu) if cpu
     else
