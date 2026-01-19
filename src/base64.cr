@@ -20,15 +20,18 @@ module Base64
 
   class Error < Exception; end
 
-  private CHARS_STD                    = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
-  private CHARS_SAFE                   = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
-  private LINE_SIZE                    = 60
-  private LINE_PAIRS                   = LINE_SIZE // 4
-  private LINE_BYTES                   = LINE_PAIRS * 3
-  private PAD                          = '='
-  private NL                           = '\n'
-  private NR                           = '\r'
-  private STREAM_MAX_INPUT_BUFFER_SIZE = IO::DEFAULT_BUFFER_SIZE // (LINE_SIZE + 1) * (LINE_SIZE // 4 * 3)
+  private CHARS_STD  = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+  private CHARS_SAFE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
+  private LINE_SIZE  = 60
+  private LINE_PAIRS = LINE_SIZE // 4
+  private LINE_BYTES = LINE_PAIRS * 3
+  private PAD        = '='
+  private NL         = '\n'
+  private NR         = '\r'
+
+  {% begin %}
+    private STREAM_MAX_INPUT_BUFFER_SIZE = {{ IO::DEFAULT_BUFFER_SIZE // (LINE_SIZE + 1) * (LINE_SIZE // 4 * 3) }}
+  {% end %}
 
   # Returns the base64-encoded version of *data*.
   # This method complies with [RFC 2045](https://tools.ietf.org/html/rfc2045).
