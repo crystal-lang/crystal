@@ -19,9 +19,9 @@ class Fiber
     end
 
     def first_addressable_pointer : Void**
-      ptr = @bottom                             # stacks grow down
-      ptr -= sizeof(Void*)                      # point to first addressable pointer
-      Pointer(Void*).new(ptr.address & ~15_u64) # align to 16 bytes
+      ptr = @bottom                          # stacks grow down
+      ptr -= sizeof(Void*)                   # point to first addressable pointer
+      Pointer(Void*).new(ptr.align_down(16)) # align to 16 bytes
     end
   end
 end
