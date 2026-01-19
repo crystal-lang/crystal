@@ -365,7 +365,6 @@ module Base64
 
     value = 0_u32
     pointerof(value).as(UInt8*).copy_from(input, count: 3)
-    input += 3
 
     value = value.byte_swap if IO::ByteFormat::SystemEndian == IO::ByteFormat::LittleEndian
 
