@@ -47,11 +47,14 @@ module Fiber::ExecutionContext
 
       loop do
         Thread.sleep(remaining)
-        now = Crystal::System::Time.instant
-        yield(now)
-        # Cannot use `now.elapsed` here because it calls `::Time.instant` which
-        # could be mocked.
-        remaining = Crystal::System::Time.instant.duration_since(now) + @every
+
+        start = Crystal::System::Time.instant
+        yield(start)
+        stop = Crystal::System::Time.instant
+
+        # calculate remaining time for more steady wakeups (minimize exponential
+        # delays)
+        remaining = (start + @every - stop).clamp(Time::Span.zero..)
       rescue exception
         Crystal.print_error_buffered("BUG: %s#every crashed", self.class.name, exception: exception)
       end
