@@ -1,6 +1,6 @@
 require "../spec_helper"
 
-describe "Code gen: Target annotation", focus: true do
+describe "Code gen: Target annotation" do
   it "errors if invalid Target argument provided" do
     assert_error <<-CRYSTAL, "invalid Target argument 'invalid'. Valid arguments are features, optimize, debug, cpu"
       @[Target(invalid: "lorem ipsum")]
