@@ -202,8 +202,7 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
     if time
       flags = LibC::EV_ADD | LibC::EV_ONESHOT | LibC::EV_CLEAR
 
-      # Cannot use `time.elapsed` here because it calls `::Time.instant` which
-      # could be mocked.
+      # Cannot use `::Time.instant` here because it could be mocked.
       t = time.duration_since(Crystal::System::Time.instant)
 
       data = t.total_nanoseconds.to_i64!

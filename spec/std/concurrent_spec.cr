@@ -91,9 +91,9 @@ describe "concurrent" do
   {% end %}
 
   it "sleep does not return immediately (#16578)" do
-    start = Time.monotonic
-    sleep 50.milliseconds
-    elapsed = Time.monotonic - start
+    elapsed = Time.measure do
+      sleep 50.milliseconds
+    end
     elapsed.should be >= 50.milliseconds
   end
 end
