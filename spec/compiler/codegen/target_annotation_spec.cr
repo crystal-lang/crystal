@@ -89,14 +89,24 @@ describe "Code gen: Target annotation" do
       require "prelude"
 
       @[Target(debug: false)]
-      def foo
-        raise "error"
+      def foo(size : Int32)
+        raise "error" if size >= 0
+        size
       end
 
+      @[NoInline]
+      def caller_func
+        foo(rand(10))
+      end
+
+      # get all the backtrace lines to the caller_func
+      # foo should be the ?? line before it
       begin
-        foo
+        caller_func
       rescue error
-        puts error.backtrace[0..4]
+        backtrace = error.backtrace
+        caller_idx = backtrace.index! { |line| line.includes? "caller_func" }
+        puts backtrace[0..caller_idx].join("\n")
       end
       CRYSTAL
   end
