@@ -4,6 +4,8 @@ on:
   schedule:
     - cron: "0 3 * * 2" # Weekly on Tuesdays
   push:
+    branches:
+      - master
     paths:
       - '.github/workflows/update-devenv.yml'
   workflow_dispatch:
