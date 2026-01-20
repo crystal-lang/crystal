@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.19.1] (2026-01-20)
+
+[1.19.1]: https://github.com/crystal-lang/crystal/releases/1.19.1
+
+### Bugfixes
+
+#### stdlib
+
+- _(concurrency)_ **[regression]** Fix kqueue timer duration calculation ([#16581], thanks @skuznetsov)
+- _(concurrency)_ **[regression]** time calculations in IOCP and Monitor thread ([#16583], thanks @ysbaddaden)
+
+[#16581]: https://github.com/crystal-lang/crystal/pull/16581
+[#16583]: https://github.com/crystal-lang/crystal/pull/16583
+
+### Infrastructure
+
+- Changelog for 1.19.1 ([#16590], thanks @ysbaddaden)
+
+[#16590]: https://github.com/crystal-lang/crystal/pull/16589
+
 ## [1.19.0] (2026-01-14)
 
 [1.19.0]: https://github.com/crystal-lang/crystal/releases/1.19.0
