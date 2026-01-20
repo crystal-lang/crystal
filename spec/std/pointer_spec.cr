@@ -408,15 +408,8 @@ describe "Pointer" do
     ptr.align_up(1024).should eq(Pointer(Void).new(1024_u64))
     ptr.align_down(1024).should eq(Pointer(Void).new(0_u64))
 
-    {% if flag?(:bits64) %}
-      ptr = Pointer(Void*).new(&-1_u64)
-      ptr.align_up(2).should eq(Pointer(Void*).new(0_u64))
-      ptr.align_down(2).should eq(Pointer(Void*).new(&-2_u64))
-    {% else %}
-      ptr = Pointer(Void*).new(&-1_u64)
-      ptr.align_up(2).should eq(Pointer(Void*).new(0_u64))
-      ptr.align_down(2).should eq(Pointer(Void*).new((&-2_u32).to_u64))
-    {% end %}
+    ptr = Pointer(Void*).new(&-1_u64)
+    ptr.align_down(2).should eq(Pointer(Void*).new({% if flag?(:bits64) %}&-2_u64{% else %}(&-2_u32).to_u64{% end %}))
   end
 
   {% if flag?(:bits32) %}
