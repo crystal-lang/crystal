@@ -1047,7 +1047,9 @@ module Indexable(T)
 
     end_index = range.end
     if end_index.nil?
-      count = collection_size - start_index
+      if start_index <= collection_size
+        count = collection_size - start_index
+      end
     else
       if end_index < 0
         end_index += collection_size

@@ -329,7 +329,15 @@ describe Indexable do
   end
 
   it "handles extremely large ranges without overflowing" do
-    "foobar"[3..Int32::MAX].should eq("bar")
+    max = Int32::MAX
+
+    "foobar"[3..max].should eq("bar")
+
+    expect_raises IndexError, "Index out of bounds" do
+      "foobar"[max..]
+    end
+
+    Indexable.range_to_index_and_count(max.., 10).should eq({ max, 0 })
   end
 
   it "handles extremely large collection sizes without overflowing" do
