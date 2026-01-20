@@ -3247,16 +3247,28 @@ private macro interpret_check_args(*, node = self, min_count = nil, named_params
 
   {% if !named_params %}
     if named_args && !named_args.empty?
-      %full_name = full_macro_name({{ node }}, method, {{ top_level }})
-      attempted = named_args.join(", ")
-      {{ node }}.raise "#{%full_name} does not allow named arguments (attempted: #{attempted})"
+      {% if top_level %}
+        named_args.each do |arg|
+          {{ node }}.raise "no parameter named '#{arg.name}'"
+        end
+      {% else %}
+        named_args.each_key do |name|
+          {{ node }}.raise "no parameter named '#{name}'"
+        end
+      {% end %}
     end
   {% elsif named_params != true %}
     if named_args
       allowed_keys = {{ named_params }}
-      named_args.each_key do |name|
-        {{ node }}.raise "no named parameter '#{name}'" unless allowed_keys.includes?(name)
-      end
+      {% if top_level %}
+        named_args.each do |arg|
+          {{ node }}.raise "no parameter named '#{arg.name}'" unless allowed_keys.includes?(arg.name)
+        end
+      {% else %}
+        named_args.each_key do |name|
+          {{ node }}.raise "no parameter named '#{name}'" unless allowed_keys.includes?(name)
+        end
+      {% end %}
     end
   {% end %}
 

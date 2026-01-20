@@ -4127,11 +4127,11 @@ module Crystal
     end
 
     it "reports unexpected named argument" do
-      assert_macro_error %({{"".starts_with?(other: "")}}), "macro 'StringLiteral#starts_with?' does not allow named arguments"
+      assert_macro_error %({{"".starts_with?(other: "")}}), "no parameter named 'other'"
     end
 
     it "reports unexpected named argument (2)" do
-      assert_macro_error %({{"".camelcase(foo: "")}}), "no named parameter 'foo'"
+      assert_macro_error %({{"".camelcase(foo: "")}}), "no parameter named 'foo'"
     end
 
     # there are no macro methods with required named parameters
