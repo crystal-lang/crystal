@@ -1039,22 +1039,27 @@ module Indexable(T)
       start_index = 0
     else
       start_index += collection_size if start_index < 0
-      if start_index < 0
-        return nil
-      end
+
+      return nil if start_index < 0
     end
+
+    count = 0
 
     end_index = range.end
     if end_index.nil?
       count = collection_size - start_index
     else
-      end_index += collection_size if end_index < 0
-      end_index = collection_size - 1 if end_index >= collection_size
-      end_index += 1 unless range.excludes_end?
-      end_index = start_index if end_index < start_index
-      count = end_index - start_index
+      if end_index < 0
+        end_index += collection_size
+      end
+
+      # must be careful with computation here, since we may be dealing with
+      # unsigned ints or ints close to MAX.
+      if end_index >= start_index
+        count = end_index - start_index
+        count += 1 unless range.excludes_end? || collection_size < count
+      end
     end
-    count = 0 if count < 0
 
     {start_index, count}
   end
