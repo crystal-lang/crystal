@@ -16,9 +16,9 @@
 
 ### Infrastructure
 
-- Changelog for 1.19.1 ([#16589], thanks @ysbaddaden)
+- Changelog for 1.19.1 ([#16590], thanks @ysbaddaden)
 
-[#16589]: https://github.com/crystal-lang/crystal/pull/16589
+[#16590]: https://github.com/crystal-lang/crystal/pull/16589
 
 ## [1.19.0] (2026-01-14)
 
