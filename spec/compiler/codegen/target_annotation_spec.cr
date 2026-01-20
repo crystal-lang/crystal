@@ -85,30 +85,34 @@ describe "Code gen: Target annotation" do
   end
 
   it "can disable debug metadata" do
-    run(<<-CRYSTAL).to_string.should contain("in '??'")
-      require "prelude"
+    {% if flag?(:linux) %}
+      run(<<-CRYSTAL).to_string.should contain("in '??'")
+        require "prelude"
 
-      @[Target(debug: false)]
-      def foo(size : Int32)
-        raise "error" if size >= 0
-        size
-      end
+        @[Target(debug: false)]
+        def foo(size : Int32)
+          raise "error" if size >= 0
+          size
+        end
 
-      @[NoInline]
-      def caller_func
-        foo(rand(10))
-      end
+        @[NoInline]
+        def caller_func
+          foo(rand(10))
+        end
 
-      # get all the backtrace lines to the caller_func
-      # foo should be the ?? line before it
-      begin
-        caller_func
-      rescue error
-        backtrace = error.backtrace
-        caller_idx = backtrace.index! { |line| line.includes? "caller_func" }
-        puts backtrace[0..caller_idx].join("\n")
-      end
-      CRYSTAL
+        # get all the backtrace lines to the caller_func
+        # foo should be the ?? line before it
+        begin
+          caller_func
+        rescue error
+          backtrace = error.backtrace
+          caller_idx = backtrace.index! { |line| line.includes? "caller_func" }
+          puts backtrace[0..caller_idx].join("\n")
+        end
+        CRYSTAL
+    {% else %}
+      pending! "unable to detect on this platform"
+    {% end %}
   end
 
   it "can adjust optimizations" do
