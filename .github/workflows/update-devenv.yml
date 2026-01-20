@@ -3,9 +3,6 @@ name: Update devenv
 on:
   schedule:
     - cron: "0 3 * * 2" # Weekly on Tuesdays
-  pull_request:
-    paths:
-      - '.github/workflows/update-devenv.yml'
   push:
     paths:
       - '.github/workflows/update-devenv.yml'
