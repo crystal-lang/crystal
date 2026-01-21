@@ -523,6 +523,9 @@ abstract class IO
   # slice                # => Bytes[49, 50, 51, 52, 53]
   # io.read_fully(slice) # raises IO::EOFError
   # ```
+  #
+  # `#read_greedy` also tries to fill the entire buffer if possible,
+  # but still allows the partially filled slice to be used if an early EOF was reached.
   def read_fully(slice : Bytes) : Int32
     read_fully?(slice) || raise(EOFError.new)
   end
@@ -538,13 +541,12 @@ abstract class IO
   # slice                 # => Bytes[49, 50, 51, 52, 53]
   # io.read_fully?(slice) # => nil
   # ```
+  #
+  # `#read_greedy` also tries to fill the entire buffer if possible,
+  # but still allows the partially filled slice to be used if an early EOF was reached.
   def read_fully?(slice : Bytes) : Int32?
-    count = slice.size
-    while slice.size > 0
-      read_bytes = read slice
-      return nil if read_bytes == 0
-      slice += read_bytes
-    end
+    count = read_greedy(slice)
+    return nil if count != slice.size
     count
   end
 
@@ -560,7 +562,7 @@ abstract class IO
   # slice                 # => Bytes[49, 50, 51, 52, 53]
   # io.read_greedy(slice) # => 4
   # ```
-  # 
+  #
   # `#read_fully` and `#read_fully?` also try to fill the entire buffer but error on unexpected EOF.
   def read_greedy(slice : Bytes) : Int32
     count = slice.size
