@@ -439,7 +439,7 @@ describe "Pointer" do
     # On 32 bit platforms, this results in a Pointer with address UInt32::MAX (truncated)
     ptr = Pointer(Void*).new(&-1_u64)
 
-    ptr.align_up(1).address.should eq(&-{{ flag?(:bits32) ? 1_u32 : 1_u64 }})
+    ptr.align_up(1).address.should eq({{ flag?(:bits32) ? (0u32 &- 1) : (0u64 &- 1) }})
 
     ptr.align_up(2).address.should eq(0_u64)
 
