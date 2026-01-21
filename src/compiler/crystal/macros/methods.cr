@@ -3245,32 +3245,20 @@ private macro interpret_check_args(*, node = self, min_count = nil, named_params
     end
   {% end %}
 
-  {% if !named_params %}
-    if named_args && !named_args.empty?
-      {% if top_level %}
-        named_args.each do |arg|
-          {{ node }}.raise "no parameter named '#{arg.name}'"
-        end
-      {% else %}
-        named_args.each_key do |name|
-          {{ node }}.raise "no parameter named '#{name}'"
-        end
-      {% end %}
-    end
-  {% elsif named_params != true %}
+  if {{ named_params != true }}
+    %allowed_keys = {{ named_params }}
     if named_args
-      allowed_keys = {{ named_params }}
       {% if top_level %}
-        named_args.each do |arg|
-          {{ node }}.raise "no parameter named '#{arg.name}'" unless allowed_keys.includes?(arg.name)
-        end
+      named_args.each do |arg|
+        {{ node }}.raise "no parameter named '#{arg.name}'" unless %allowed_keys.try(&.includes?(arg.name))
+      end
       {% else %}
-        named_args.each_key do |name|
-          {{ node }}.raise "no parameter named '#{name}'" unless allowed_keys.includes?(name)
-        end
+      named_args.each_key do |name|
+        {{ node }}.raise "no parameter named '#{name}'" unless %allowed_keys.try(&.includes?(name))
+      end
       {% end %}
     end
-  {% end %}
+  end
 
   {% if min_count %}
     unless {{ min_count }} <= args.size <= {{ block.args.size }}
