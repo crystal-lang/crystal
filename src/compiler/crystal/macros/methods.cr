@@ -3245,7 +3245,7 @@ private macro interpret_check_args(*, node = self, min_count = nil, named_params
     end
   {% end %}
 
-  if {{ named_params != true }}
+  {% if named_params != true %}
     %allowed_keys = {{ named_params }}
     if named_args
       {% if top_level %}
@@ -3258,7 +3258,7 @@ private macro interpret_check_args(*, node = self, min_count = nil, named_params
       end
       {% end %}
     end
-  end
+  {% end %}
 
   {% if min_count %}
     unless {{ min_count }} <= args.size <= {{ block.args.size }}
