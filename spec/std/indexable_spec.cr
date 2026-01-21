@@ -329,23 +329,19 @@ describe Indexable do
   end
 
   it "handles extremely large ranges without overflowing" do
-    max = Int32::MAX
-
-    "foobar"[3..max].should eq("bar")
+    "foobar"[3..Int32::MAX].should eq("bar")
 
     expect_raises IndexError, "Index out of bounds" do
-      "foobar"[max..]
+      "foobar"[Int32::MAX..]
     end
 
-    Indexable.range_to_index_and_count(max.., 10).should eq({max, 0})
+    Indexable.range_to_index_and_count(Int32::MAX.., 10).should eq({Int32::MAX, 0})
   end
 
   it "handles extremely large collection sizes without overflowing" do
-    max = Int32::MAX
-
-    Indexable.range_to_index_and_count((max - 2)..max, max).should eq({max - 2, 3})
-    Indexable.range_to_index_and_count((max - 4)...max, max).should eq({max - 4, 4})
-    Indexable.range_to_index_and_count((max - 4)..-2, max).should eq({max - 4, 3})
+    Indexable.range_to_index_and_count((Int32::MAX - 2)..Int32::MAX, Int32::MAX).should eq({Int32::MAX - 2, 3})
+    Indexable.range_to_index_and_count((Int32::MAX - 4)...Int32::MAX, Int32::MAX).should eq({Int32::MAX - 4, 4})
+    Indexable.range_to_index_and_count((Int32::MAX - 4)..-2, Int32::MAX).should eq({Int32::MAX - 4, 3})
   end
 
   it "errors on start indices that are off the end" do
