@@ -316,7 +316,7 @@ module Base64
   # On most archivectures supported by crystal, unaligned memory access is very cheap.
   # This section thus tries to improve performance by unrolling the loop and by replacing
   # three aligned UInt8 accesses by one unaligned UInt32 access (discarding the last byte).
-  # The condition `pairs > 8` makes sure that there's at least one pair which is processed byte by byte,
+  # The caller has to make sure that there's at least one readable byte behind the last given pair,
   # so we never accidentally read one byte further than we're allowed to (-> possible segfault).
   #
   # NOTE: On weak-memory architectures like risc-v, llvm must replace the
