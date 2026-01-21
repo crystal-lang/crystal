@@ -551,7 +551,7 @@ abstract class IO
   # Similar to `#read`, but with the additional guarantee that either
   # the buffer will be entirely filled or the EOF will be reached while trying.
   #
-  # Calling this method may result in multiple read calls if necessary.
+  # Calling this method may result in multiple calls to `#read` if necessary.
   #
   # ```
   # io = IO::Memory.new "123451234"
@@ -560,6 +560,8 @@ abstract class IO
   # slice                 # => Bytes[49, 50, 51, 52, 53]
   # io.read_greedy(slice) # => 4
   # ```
+  # 
+  # `#read_fully` and `#read_fully?` also try to fill the entire buffer but error on unexpected EOF.
   def read_greedy(slice : Bytes) : Int32
     count = slice.size
     while slice.size > 0
