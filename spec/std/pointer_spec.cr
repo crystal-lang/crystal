@@ -395,7 +395,7 @@ describe "Pointer" do
     ptr.clone.should eq(ptr)
   end
 
-  it "aligns 32-bit pointers using #align_down and #align_up" do
+  it "aligns small pointers using #align_down and #align_up" do
     ptr = Pointer(Void).new(0x30_u64)
     ptr.align_down(16).should eq(Pointer(Void).new(0x30_u64))
     ptr.align_down(32).should eq(Pointer(Void).new(0x20_u64))
@@ -413,9 +413,9 @@ describe "Pointer" do
     ptr.align_down(1u64 << 29).address.should eq(0xC0000000_u64)
 
     ptr = Pointer(Void).new(0xBADCAB1E_u64)
-    ptr.align_up(1u64 << 32).address.should eq({{ flag?(:bits32) ? 0_u64 : (1u64 << 32) }})
+    ptr.align_up(1u64 << 32).address.should eq({% if flag?(:bits32) %} 0u64 {% else %} 1u64 << 32 {% end %})
     ptr.align_down(1u64 << 32).address.should eq(0_u64)
-    ptr.align_up(1u64 << 40).address.should eq({{ flag?(:bits32) ? 0_u64 : (1u64 << 40) }})
+    ptr.align_up(1u64 << 40).address.should eq({% if flag?(:bits32) %} 0u64 {% else %} 1u64 << 40 {% end %})
     ptr.align_down(1u64 << 40).address.should eq(0_u64)
   end
 
@@ -439,7 +439,7 @@ describe "Pointer" do
     # On 32 bit platforms, this results in a Pointer with address UInt32::MAX (truncated)
     ptr = Pointer(Void*).new(&-1_u64)
 
-    ptr.align_up(1).address.should eq(&-{{ flag?(:bits32) ? 1_u32 : 1_u64 }})
+    ptr.align_up(1).address.should eq({% if flag?(:bits32) %} (&-1u32).to_u64 {% else %} &-1u64 {% end %})
 
     ptr.align_up(2).address.should eq(0_u64)
 
