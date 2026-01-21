@@ -409,8 +409,8 @@ describe "Pointer" do
     ptr.align_down(1024).should eq(Pointer(Void).new(0_u64))
 
     ptr = Pointer(Void).new(0xDEADC0DE_u64)
-    ptr.align_up(1u64 << 29).address.should eq(0xE0000000_u32)
-    ptr.align_down(1u64 << 29).address.should eq(0xC0000000_u32)
+    ptr.align_up(1u64 << 29).address.should eq(0xE0000000_u64)
+    ptr.align_down(1u64 << 29).address.should eq(0xC0000000_u64)
 
     ptr = Pointer(Void).new(0xBADCAB1E_u64)
     ptr.align_up(1u64 << 32).address.should eq({{ flag?(:bits32) ? 0_u64 : (1u64 << 32) }})
