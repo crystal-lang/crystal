@@ -46,4 +46,7 @@ lib LibC
     ComputerNamePhysicalDomain
     ComputerNamePhysicalDnsFullyQualified
   end
+
+  fun GetSystemDirectoryW(LPWSTR, UInt) : UInt
+  fun GetWindowsDirectoryW(LPWSTR, UInt) : UInt
 end

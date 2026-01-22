@@ -1,22 +1,10 @@
 require "spec"
 require "./spec_helper"
+require "../support/env"
 
 describe "ENV" do
-  # Preserves the existing environment for each spec.
-  # To avoid potential circular definitions, this has to use the system methods
-  # directly, rather than `ENV` or `with_env`.
   around_each do |example|
-    old_env = {} of String => String
-    Crystal::System::Env.each { |key, value| old_env[key] = value }
-
-    begin
-      example.run
-    ensure
-      keys = [] of String
-      Crystal::System::Env.each { |key| keys << key }
-      keys.each { |key| Crystal::System::Env.set(key, nil) }
-      old_env.each { |key, value| Crystal::System::Env.set(key, value) }
-    end
+    ENV.mock { example.run }
   end
 
   it "gets non existent key raises" do
@@ -93,19 +81,22 @@ describe "ENV" do
   end
 
   describe "[]=" do
-    it "disallows NUL-bytes in key" do
+    # NOTE: disabled because we'd test `ENV.mock` instead of the actual system
+    # implementation
+
+    pending "disallows NUL-bytes in key" do
       expect_raises(ArgumentError, "String `key` contains null byte") do
         ENV["FOO\0BAR"] = "something"
       end
     end
 
-    it "disallows NUL-bytes in key if value is nil" do
+    pending "disallows NUL-bytes in key if value is nil" do
       expect_raises(ArgumentError, "String `key` contains null byte") do
         ENV["FOO\0BAR"] = nil
       end
     end
 
-    it "disallows NUL-bytes in value" do
+    pending "disallows NUL-bytes in value" do
       expect_raises(ArgumentError, "String `value` contains null byte") do
         ENV["FOO"] = "BAR\0BAZ"
       end

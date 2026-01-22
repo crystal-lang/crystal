@@ -3,6 +3,10 @@ require "c/winbase"
 require "c/processenv"
 
 module Crystal::System::Env
+  def self.equal?(a : String, b : String) : Bool
+    a.compare(b, case_insensitive: true) == 0
+  end
+
   # Sets an environment variable or unsets it if *value* is `nil`.
   def self.set(key : String, value : String) : Nil
     check_valid_key(key)
@@ -53,19 +57,11 @@ module Crystal::System::Env
     end
   end
 
-  # Returns `true` if environment variable is set.
-  def self.has_key?(key : String) : Bool
-    return false unless valid_key?(key)
-    key = System.to_wstr(key, "key")
-
-    buffer = uninitialized UInt16[1]
-    LibC.GetEnvironmentVariableW(key, buffer, buffer.size) != 0
-  end
-
-  # Iterates all environment variables.
-  def self.each(&block : String, String ->)
+  def self.parse : Array({String, String})
     orig_pointer = pointer = LibC.GetEnvironmentStringsW
     raise RuntimeError.from_winerror("GetEnvironmentStringsW") if pointer.null?
+
+    env = Array({String, String}).new
 
     begin
       while !pointer.value.zero?
@@ -74,22 +70,43 @@ module Crystal::System::Env
         # (`%=ExitCode%`, `%=ExitCodeAscii%`, `%=::%`, `%=C:%` ...)
         next if string.starts_with?('=')
         key, _, value = string.partition('=')
-        yield key, value
+        env << {key, value}
       end
     ensure
       LibC.FreeEnvironmentStringsW(orig_pointer)
     end
+
+    env
   end
 
   # Used internally to create an input for `CreateProcess` `lpEnvironment`.
-  def self.make_env_block(env : Enumerable({String, String}))
-    # NOTE: the entire string contains embedded null bytes so we can't use
-    # `System.to_wstr` here
+  def self.make_env_block(env, clear_env) : UInt16*
     String.build do |io|
-      env.each do |(key, value)|
-        check_valid_key(key)
-        io << key.check_no_null_byte("key") << '=' << value.check_no_null_byte("value") << '\0'
+      unless clear_env
+        ::ENV.each do |key, value|
+          # skip override
+          next if env.try(&.any? { |k, _| equal?(k, key) })
+
+          io << key.check_no_null_byte("key")
+          io << '='
+          io << value.check_no_null_byte("value")
+          io << '\0'
+        end
       end
+
+      env.try(&.each do |key, value|
+        check_valid_key(key)
+
+        # skip deletion
+        next if value.nil?
+
+        io << key.check_no_null_byte("key")
+        io << '='
+        io << value.check_no_null_byte("value")
+        io << '\0'
+      end)
+
+      # terminate the block
       io << '\0'
     end.to_utf16.to_unsafe
   end
