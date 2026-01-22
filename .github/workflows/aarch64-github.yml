@@ -30,7 +30,7 @@ jobs:
       - name: Install Crystal
         uses: crystal-lang/install-crystal@v1
         with:
-          crystal: "1.19.0"
+          crystal: "1.19.1"
 
       - name: Cross-compile Crystal
         run: make target=aarch64-linux-gnu release=1
