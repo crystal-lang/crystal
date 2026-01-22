@@ -286,11 +286,12 @@ class Time::Location
   # Time::Location.load("Custom/Location")
   # ```
   #
-  # If `TZDIR` is set to `"/usr/share/zoneinfo"` this tries to load the file
-  # `/usr/share/zoneinfo/Custom/Location`.
+  # If the `TZDIR` environment variable is `"/usr/share/zoneinfo"` this tries to
+  # load the file `/usr/share/zoneinfo/Custom/Location`.
   #
-  # If `TZDIR` is set to `"/path/to/zoneinfo.zip"` this tries to load the file
-  # `Custom/Location` in the uncompressed ZIP file at `/path/to/zoneinfo.zip`.
+  # If the `TZDIR` environment variable is `"/path/to/zoneinfo.zip"` this tries
+  # to load the file `Custom/Location` in the uncompressed ZIP file at
+  # `/path/to/zoneinfo.zip`.
   #
   # If the location name cannot be found, `InvalidLocationNameError` is raised.
   # If the loader encounters a format error in the time zone database,
