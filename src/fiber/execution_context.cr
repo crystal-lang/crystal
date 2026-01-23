@@ -42,8 +42,8 @@ require "./execution_context/*"
 #
 #   Fibers run concurrently to each other, never in parallel (only one fiber at
 #   a time). Fibers within the same concurrent context can communicate with
-#   simpler and faster synchronization primitives (no atomics, limited thread 
-#   safety), however communication with fibers in other contexts must be 
+#   simpler and faster synchronization primitives (no atomics, limited thread
+#   safety), however communication with fibers in other contexts must be
 #   thread-safe (e.g. `Channel, `Sync`, ...).
 #   blocking fiber blocks the entire thread and all other fibers in the context.
 #
