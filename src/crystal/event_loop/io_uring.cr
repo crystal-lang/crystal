@@ -228,7 +228,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
 
   private def ring? : Ring?
     {% if flag?(:execution_context) %}
-      Fiber::ExecutionContext::Scheduler.current?.try(&.__evloop_ring)
+      Fiber::ExecutionContext::Scheduler.current?.try(&.__evloop_ring?)
     {% else %}
       @main_ring
     {% end %}
