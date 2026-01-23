@@ -313,7 +313,7 @@ module Base64
 
   # Internal method of encode_base64_buffer.
   #
-  # On most archivectures supported by crystal, unaligned memory access is very cheap.
+  # On most architectures supported by Crystal, unaligned memory access is very cheap.
   # This section thus tries to improve performance by unrolling the loop and by replacing
   # three aligned UInt8 accesses by one unaligned UInt32 access (discarding the last byte).
   # The caller has to make sure that there's at least one readable byte behind the last given pair,
@@ -356,9 +356,9 @@ module Base64
     return if pairs <= 0
 
     if pairs > 1
-      encode_base64_buffer__full_pairs_excess(input, output, pairs - 1, charset)
-      input += 3 &* (pairs - 1)
-      output += 4 &* (pairs - 1)
+      encode_base64_buffer__full_pairs_excess(input, output, pairs &- 1, charset)
+      input += 3 &* (pairs &- 1)
+      output += 4 &* (pairs &- 1)
     end
 
     charset = charset.as(UInt8*)

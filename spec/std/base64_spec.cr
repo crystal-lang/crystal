@@ -83,7 +83,7 @@ describe "Base64" do
       7,
       8190,          # 1 segment below the buffer size
       8191,          # 2 bytes below the buffer size
-      8192,          # 1 byte belowbuffer size
+      8192,          # 1 byte below buffer size
       8193,          # encoding buffer size
       8194,          # 1 byte over the buffer size
       8195,          # 2 bytes over the buffer size
