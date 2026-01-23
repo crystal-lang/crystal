@@ -143,7 +143,7 @@ std_spec: $(O)/std_spec$(EXE) ## Run standard library specs
 
 .PHONY: compiler_spec
 compiler_spec: $(O)/compiler_spec$(EXE) ## Run compiler specs
-	$(O)/compiler_spec$(EXE) $(SPEC_FLAGS)
+	CRYSTAL_PATH=$(CURDIR)/src $(O)/compiler_spec$(EXE) $(SPEC_FLAGS)
 
 .PHONY: primitives_spec
 primitives_spec: $(O)/primitives_spec$(EXE) ## Run primitives specs
@@ -151,7 +151,7 @@ primitives_spec: $(O)/primitives_spec$(EXE) ## Run primitives specs
 
 .PHONY: interpreter_spec
 interpreter_spec: $(O)/interpreter_spec$(EXE) ## Run interpreter specs
-	$(O)/interpreter_spec$(EXE) $(SPEC_FLAGS)
+	CRYSTAL_PATH=$(CURDIR)/src $(O)/interpreter_spec$(EXE) $(SPEC_FLAGS)
 
 .PHONY: simple_smoke_test
 simple_smoke_test: ## Build std specs as a smoke test
