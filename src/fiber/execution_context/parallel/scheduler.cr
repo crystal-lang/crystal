@@ -19,7 +19,7 @@ module Fiber::ExecutionContext
       # :nodoc:
       property execution_context : Parallel
       protected property! thread : Thread
-      protected property! main_fiber : Fiber
+      protected property main_fiber : Fiber
 
       @global_queue : GlobalQueue
       @runnables : Runnables(256)
@@ -35,6 +35,7 @@ module Fiber::ExecutionContext
         @global_queue = @execution_context.global_queue
         @runnables = Runnables(256).new(@global_queue)
         @event_loop = @execution_context.event_loop
+        @main_fiber = Fiber.new("#{@name}:loop", @execution_context) { run_loop }
       end
 
       protected def shutdown! : Nil
