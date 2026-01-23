@@ -41,9 +41,10 @@ require "./execution_context/*"
 # * `ExecutionContext::Concurrent`: Fully concurrent with limited parallelism.
 #
 #   Fibers run concurrently to each other, never in parallel (only one fiber at
-#   a time). They can use simpler and faster synchronization primitives
-#   internally (no atomics, limited thread safety), however communication with
-#   fibers in other contexts must be safe (e.g. `Channel,  `Sync`, ...). A
+#   a time). Fibers within the same concurrent context can communicate with
+#   simpler and faster synchronization primitives (no atomics, limited thread 
+#   safety), however communication with fibers in other contexts must be 
+#   thread-safe (e.g. `Channel, `Sync`, ...).
 #   blocking fiber blocks the entire thread and all other fibers in the context.
 #
 # * `ExecutionContext::Parallel`: Fully concurrent, fully parallel.
