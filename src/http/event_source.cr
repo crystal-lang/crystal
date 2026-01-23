@@ -7,22 +7,27 @@ require "./cookie"
 # An EventSource client for Server-Sent Events (SSE).
 #
 # Server-Sent Events allow servers to push data to clients over a persistent HTTP connection.
-# The client receives events as they arrive and can process them using callbacks.
+# The client receives events as they arrive through lazy iteration.
 #
 # ```
 # require "http/event_source"
 #
-# es = HTTP::EventSource.new("http://example.com/events")
-#
-# es.on_message do |event|
+# # Lazy connection on iteration:
+# events = HTTP::EventSource.new("http://example.com/events")
+# events.each do |event|
 #   puts "Received: #{event.data}"
+#   break if event.type == "done"
 # end
+# events.close
 #
-# es.on("custom_event") do |event|
-#   puts "Custom event: #{event.data}"
+# # Eager connection with open block:
+# HTTP::EventSource.open("http://example.com/events") do |source, response|
+#   puts "Connected! Status: #{response.status_code}"
+#   source.each do |event|
+#     puts "Event: #{event.type} - #{event.data}"
+#     break if event.type == "done"
+#   end
 # end
-#
-# es.run # Blocks and receives events
 # ```
 #
 # See https://html.spec.whatwg.org/multipage/server-sent-events.html
@@ -30,6 +35,22 @@ class HTTP::EventSource
   # Exception raised when an error occurs that should not trigger reconnection.
   class NoReconnectError < Exception
   end
+
+  # :nodoc:
+  # Signal sent through the channel when the server gracefully closes (204 No Content).
+  private record GracefulStop
+
+  # :nodoc:
+  # Signal sent through the channel when a retriable error occurs (IO errors, 429, 5xx).
+  private record RetriableError, exception : Exception
+
+  # :nodoc:
+  # Signal sent through the channel when a fatal error occurs (4xx, invalid content-type).
+  private record FatalError, exception : Exception
+
+  # :nodoc:
+  # Union type for all messages sent through the event channel.
+  private alias ChannelMessage = Event | GracefulStop | RetriableError | FatalError | Iterator::Stop
 
   # Represents a Server-Sent Event.
   #
@@ -44,6 +65,9 @@ class HTTP::EventSource
     id : String? = nil,
     # Retry interval in milliseconds (from "retry:" field).
     retry : Int32? = nil
+
+  # Make EventSource iterable.
+  include Iterator(Event)
 
   # Connection states matching the W3C EventSource specification.
   enum ReadyState
@@ -85,13 +109,9 @@ class HTTP::EventSource
 
   @retry_interval : Int32 = DEFAULT_RETRY_INTERVAL
   @original_headers : HTTP::Headers
-  @headers : HTTP::Headers
-
-  # Callbacks
-  @on_open : Proc(Nil)?
-  @on_message : Proc(Event, Nil)?
-  @on_error : Proc(Exception, Nil)?
-  @event_handlers : Hash(String, Array(Proc(Event, Nil)))?
+  @event_channel : Channel(ChannelMessage)?
+  @response_channel : Channel(HTTP::Client::Response)?
+  @consumer_fiber : Fiber?
 
   # Opens a new EventSource from a URI.
   #
@@ -126,106 +146,267 @@ class HTTP::EventSource
   end
 
   private def initialize(@url : URI, headers : HTTP::Headers)
-    @original_headers = headers.dup
-    @headers = headers
+    @original_headers = headers
 
     # Parse any cookies from initial headers into the cookie jar
     @cookies.fill_from_client_headers(headers)
   end
 
-  # Called when the connection is established.
+  # Opens an EventSource connection from a URI with eager connection.
+  #
+  # The connection is established immediately and the block receives the source
+  # and the HTTP response. The connection is automatically closed when the block returns.
   #
   # ```
-  # es.on_open do
-  #   puts "Connected!"
+  # require "http/event_source"
+  #
+  # HTTP::EventSource.open("http://example.com/events") do |source, response|
+  #   puts "Connected! Headers: #{response.headers}"
+  #   source.each do |event|
+  #     puts "Event: #{event.data}"
+  #     break if event.type == "done"
+  #   end
   # end
   # ```
-  def on_open(&@on_open : ->)
-  end
-
-  # Called when a message event is received.
-  #
-  # This is called for events with type "message" or no explicit type.
-  #
-  # ```
-  # es.on_message do |event|
-  #   puts "Message: #{event.data}"
-  # end
-  # ```
-  def on_message(&@on_message : Event ->)
-  end
-
-  # Called when an error occurs.
-  #
-  # ```
-  # es.on_error do |error|
-  #   puts "Error: #{error.message}"
-  # end
-  # ```
-  def on_error(&@on_error : Exception ->)
-  end
-
-  # Registers a handler for named events (events with explicit "event:" field).
-  #
-  # ```
-  # es.on("status") do |event|
-  #   puts "Status update: #{event.data}"
-  # end
-  # ```
-  def on(event_type : String, &callback : Event ->)
-    @event_handlers ||= Hash(String, Array(Proc(Event, Nil))).new
-    handlers = @event_handlers.not_nil!
-    (handlers[event_type] ||= [] of Proc(Event, Nil)) << callback
-  end
-
-  # Starts the event stream and continuously receives events.
-  #
-  # This method blocks until the connection is closed via `#close`.
-  # It automatically reconnects if the connection is lost, using the
-  # retry interval specified by the server or the default interval.
-  #
-  # Reconnection behavior:
-  # - Network/IO errors: Reconnects after retry interval
-  # - 204 No Content: Closes without reconnecting
-  # - 4xx errors (except 429): Closes without reconnecting
-  # - 429 Too Many Requests: Reconnects after retry interval
-  # - 500, 502, 503, 504: Reconnects after retry interval
-  # - Other 5xx errors: Closes without reconnecting
-  #
-  # ```
-  # es = HTTP::EventSource.new("http://example.com/events")
-  # es.on_message { |event| puts event.data }
-  # es.run # blocks here
-  # ```
-  def run : Nil
-    loop do
-      break if closed?
-
-      should_reconnect = false
-      begin
-        should_reconnect = connect_and_listen
-      rescue ex : NoReconnectError
-        # Non-retriable error - notify and close
-        @on_error.try &.call(ex)
-        break
-      rescue ex : Exception
-        break if closed?
-        # Retriable error - notify and reconnect
-        @on_error.try &.call(ex)
-        should_reconnect = true
+  def self.open(uri : URI | String, headers : HTTP::Headers = HTTP::Headers.new, &) : Nil
+    uri = URI.parse(uri) if uri.is_a?(String)
+    source = new(uri, headers)
+    begin
+      source.open_connection do |response|
+        yield source, response
       end
-
-      break unless should_reconnect
-
-      # Auto-reconnect after retry interval
-      sleep @retry_interval.milliseconds
+    ensure
+      source.close
     end
   end
 
-  # Returns true if should reconnect, false otherwise
-  private def connect_and_listen : Bool
-    @ready_state = ReadyState::Connecting
+  # Opens an EventSource connection to the target host with eager connection.
+  #
+  # ```
+  # require "http/event_source"
+  #
+  # HTTP::EventSource.open("example.com", "/events") do |source, response|
+  #   source.each do |event|
+  #     puts event.data
+  #   end
+  # end
+  # ```
+  def self.open(host : String, path : String, port : Int32? = nil,
+                tls : HTTP::Client::TLSContext = nil,
+                headers : HTTP::Headers = HTTP::Headers.new, &) : Nil
+    scheme = tls ? "https" : "http"
+    port ||= tls ? 443 : 80
+    uri = URI.new(scheme: scheme, host: host, port: port, path: path)
+    open(uri, headers) do |source, response|
+      yield source, response
+    end
+  end
 
+  # :nodoc:
+  # Internal method for open() block form - establishes connection eagerly and yields response.
+  protected def open_connection(&) : Nil
+    # Set up response channel to receive initial response
+    @response_channel = Channel(HTTP::Client::Response).new(1)
+
+    # Ensure connection is established
+    ensure_connected
+
+    # Wait for initial response from consumer fiber
+    response = @response_channel.not_nil!.receive
+
+    # Clear response channel (only needed for initial response)
+    @response_channel = nil
+
+    # Yield response to user - they can now call next() to iterate
+    yield response
+  end
+
+  # Returns the next event from the SSE stream.
+  #
+  # Automatically connects on first call (for lazy iteration) and handles
+  # reconnection transparently. Returns `Iterator::Stop` when the stream is closed.
+  #
+  # Reconnection behavior:
+  # - Network/IO errors: Reconnects after retry interval
+  # - 204 No Content: Stops iteration (graceful close)
+  # - 4xx errors (except 429): Raises NoReconnectError
+  # - 429 Too Many Requests: Reconnects after retry interval
+  # - 500, 502, 503, 504: Reconnects after retry interval
+  # - Other 5xx errors: Raises NoReconnectError
+  def next : Event | Iterator::Stop
+    return stop if @closed
+
+    loop do
+      # Ensure connection is established (idempotent)
+      ensure_connected
+
+      # Receive next event from consumer fiber
+      begin
+        message = @event_channel.not_nil!.receive
+        case message
+        when Event
+          return message
+        when Iterator::Stop
+          # Stream ended normally - close and stop (no reconnection)
+          close unless @closed
+          return stop
+        when GracefulStop
+          # Graceful close (204 No Content) - close and stop
+          close unless @closed
+          return stop
+        when FatalError
+          # Fatal error - close and raise original exception
+          close unless @closed
+          raise message.exception
+        when RetriableError
+          # Retriable error - clear fiber and reconnect after delay
+          @consumer_fiber = nil
+          @event_channel = nil
+          return stop if @closed
+          sleep @retry_interval.milliseconds
+          next
+        end
+      rescue Channel::ClosedError
+        close unless @closed
+        return stop
+      end
+    end
+  end
+
+  # Ensures the connection is established, connecting if necessary.
+  # Spawns a consumer fiber if not already running.
+  private def ensure_connected : Nil
+    return if @consumer_fiber
+    @event_channel = Channel(ChannelMessage).new(1)
+    @consumer_fiber = spawn { consume_stream }
+  end
+
+  # :nodoc:
+  # Categorizes how to handle an HTTP response.
+  private enum ResponseAction
+    # 200 OK with valid content-type - continue processing the stream
+    Continue
+    # 204 No Content - stop gracefully without error
+    GracefulStop
+    # Retriable errors - 429, 5xx (500, 502, 503, 504), IO errors
+    Retriable
+    # Fatal errors - 4xx (except 429), invalid content-type, other 5xx
+    Fatal
+  end
+
+  # Categorizes the HTTP response and returns the action to take.
+  # Returns ResponseAction and an optional error message.
+  private def categorize_response(response : HTTP::Client::Response) : {ResponseAction, String?}
+    status = response.status_code
+
+    # 200 OK - check content type
+    if status == 200
+      content_type = response.content_type
+      unless content_type && content_type.starts_with?("text/event-stream")
+        # Invalid content type won't be fixed by retrying
+        return {ResponseAction::Fatal, "Invalid Content-Type: expected text/event-stream, got #{content_type}"}
+      end
+      return {ResponseAction::Continue, nil}
+    end
+
+    # 204 No Content - graceful close, don't reconnect
+    if status == 204
+      return {ResponseAction::GracefulStop, nil}
+    end
+
+    # Client errors (4xx) - don't reconnect (except 429)
+    if status >= 400 && status < 500
+      if status == 429 # Too Many Requests - should retry
+        return {ResponseAction::Retriable, "EventSource connection failed: 429 Too Many Requests"}
+      else
+        # Other 4xx errors won't be fixed by retrying
+        return {ResponseAction::Fatal, "EventSource connection failed: #{status}"}
+      end
+    end
+
+    # Temporary server errors - should reconnect
+    if status == 500 || status == 502 || status == 503 || status == 504
+      return {ResponseAction::Retriable, "EventSource connection failed: #{status}"}
+    end
+
+    # Other errors - don't reconnect
+    {ResponseAction::Fatal, "EventSource connection failed: #{status}"}
+  end
+
+  # Helper to send a message to the event channel, handling closed channel gracefully.
+  private def send_to_channel(message : ChannelMessage) : Nil
+    @event_channel.try(&.send(message))
+  rescue Channel::ClosedError
+    # User stopped iterating, ignore
+  end
+
+  # Parses events from the response body and sends them to the channel.
+  # Updates last_event_id and retry_interval as events are received.
+  private def parse_and_send_events(io : IO) : Nil
+    Parser.new(io).each do |event|
+      break if @closed
+
+      # Update last event ID if present
+      if id = event.id
+        @last_event_id = id unless id.empty?
+      end
+
+      # Update retry interval if specified
+      if retry_val = event.retry
+        @retry_interval = retry_val
+      end
+
+      # Skip empty data events with no type (per SSE spec)
+      next if event.data.empty? && event.type.nil?
+
+      send_to_channel(event)
+    end
+
+    # Stream ended normally - send stop
+    send_to_channel(Iterator.stop)
+  end
+
+  # Connects to server and processes events.
+  # Runs in a fiber. The parser iteration blocks on channel.send() until next() receives,
+  # so events are only processed when consumed.
+  private def consume_stream : Nil
+    @ready_state = ReadyState::Connecting
+    headers = prepare_headers
+
+    HTTP::Client.get(@url, headers: headers) do |response|
+      # Store cookies
+      response.cookies.each do |cookie|
+        @cookies << cookie
+      end
+
+      # Send response if open() is waiting for it
+      @response_channel.try(&.send(response))
+
+      # Categorize response and take appropriate action
+      action, message = categorize_response(response)
+
+      case action
+      in .continue?
+        @ready_state = ReadyState::Open
+        parse_and_send_events(response.body_io)
+      in .graceful_stop?
+        send_to_channel(GracefulStop.new)
+      in .retriable?
+        send_to_channel(RetriableError.new(Exception.new(message.not_nil!)))
+      in .fatal?
+        send_to_channel(FatalError.new(NoReconnectError.new(message.not_nil!)))
+      end
+    end
+  rescue ex : IO::Error
+    # Network errors are retriable
+    send_to_channel(RetriableError.new(ex))
+  rescue ex
+    # Unexpected errors are fatal - re-raise original exception
+    send_to_channel(FatalError.new(ex))
+  end
+
+  # Prepares request headers for the connection.
+  private def prepare_headers : HTTP::Headers
     headers = @original_headers.dup
 
     # Add cookies from jar to request
@@ -240,119 +421,34 @@ class HTTP::EventSource
       headers["Last-Event-ID"] = @last_event_id
     end
 
-    HTTP::Client.new(@url) do |client|
-      client.get(@url.request_target, headers: headers) do |response|
-        # Store cookies from Set-Cookie response headers
-        # Do this before validation so cookies are preserved even on error responses
-        response.cookies.each do |cookie|
-          @cookies << cookie
-        end
-
-        should_reconnect = validate_response(response)
-        return should_reconnect unless should_reconnect
-
-        @ready_state = ReadyState::Open
-        @on_open.try &.call
-
-        Parser.new(response.body_io).each do |event|
-          break if closed?
-          dispatch_event(event)
-        end
-      end
-    end
-
-    # Connection ended normally (stream closed), reconnect
-    true
-  end
-
-  # Validates the response.
-  # Returns true if the response is valid (200 OK with correct content-type).
-  # Raises NoReconnectError for errors that should not trigger reconnection.
-  # Raises Exception for errors that should trigger reconnection.
-  private def validate_response(response : HTTP::Client::Response) : Bool
-    status = response.status_code
-
-    # 200 OK - process the stream
-    if status == 200
-      content_type = response.content_type
-      unless content_type && content_type.starts_with?("text/event-stream")
-        # Invalid content type won't be fixed by retrying
-        @ready_state = ReadyState::Closed
-        @closed = true
-        raise NoReconnectError.new("Invalid Content-Type: expected text/event-stream, got #{content_type}")
-      end
-      return true
-    end
-
-    # 204 No Content - graceful close, don't reconnect
-    if status == 204
-      @ready_state = ReadyState::Closed
-      @closed = true
-      return false
-    end
-
-    # Client errors (4xx) - don't reconnect (except 429)
-    if status >= 400 && status < 500
-      if status == 429 # Too Many Requests - should retry
-        raise "EventSource connection failed: 429 Too Many Requests"
-      else
-        # Other 4xx errors won't be fixed by retrying
-        @ready_state = ReadyState::Closed
-        @closed = true
-        raise NoReconnectError.new("EventSource connection failed: #{status}")
-      end
-    end
-
-    # Temporary server errors - should reconnect
-    if status == 500 || status == 502 || status == 503 || status == 504
-      raise "EventSource connection failed: #{status}"
-    end
-
-    # Other errors - don't reconnect
-    @ready_state = ReadyState::Closed
-    @closed = true
-    raise NoReconnectError.new("EventSource connection failed: #{status}")
-  end
-
-  private def dispatch_event(event : Event) : Nil
-    # Update last event ID if present
-    if id = event.id
-      @last_event_id = id unless id.empty?
-    end
-
-    # Update retry interval if specified
-    if retry_val = event.retry
-      @retry_interval = retry_val
-    end
-
-    # Skip empty data events (per spec)
-    return if event.data.empty?
-
-    # Determine event type (default to "message" if nil)
-    event_type = event.type || "message"
-
-    # Dispatch to type-specific handlers
-    if handlers = @event_handlers.try(&.[event_type]?)
-      handlers.each &.call(event)
-    end
-
-    # Also dispatch to on_message for "message" type events
-    if event_type == "message"
-      @on_message.try &.call(event)
-    end
+    headers
   end
 
   # Closes the connection.
   #
-  # After calling this method, the EventSource will not reconnect.
+  # After calling this method, the EventSource will not reconnect and
+  # iteration will stop.
   #
   # ```
-  # es.close
+  # events = HTTP::EventSource.new("http://example.com/events")
+  # events.each do |event|
+  #   break if event.type == "done"
+  # end
+  # events.close
   # ```
   def close : Nil
     return if closed?
     @closed = true
     @ready_state = ReadyState::Closed
+    @event_channel.try(&.close)
+    @event_channel = nil
+    @consumer_fiber = nil
+  end
+
+  # :nodoc:
+  # Finalizer to ensure connection is closed when GC'd.
+  def finalize
+    close
   end
 
   # :nodoc:

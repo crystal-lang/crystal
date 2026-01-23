@@ -295,14 +295,15 @@ describe HTTP::EventSource do
         headers = HTTP::Headers{"Cookie" => "session=abc123"}
         es = HTTP::EventSource.new("http://#{address}/events", headers)
 
-        es.on_message do |event|
-          es.close
+        spawn do
+          es.each do |event|
+            break
+          end
         end
-
-        spawn { es.run }
 
         request_headers = headers_received.receive
         request_headers["Cookie"].should eq("session=abc123")
+        es.close
       end
     end
 
@@ -322,17 +323,18 @@ describe HTTP::EventSource do
       run_server(server) do
         es = HTTP::EventSource.new("http://#{address}/events")
 
-        es.on_message do |event|
-          es.cookies.size.should eq(2)
-          es.cookies["session"].value.should eq("new-session-id")
-          es.cookies["token"].value.should eq("bearer-xyz")
-          es.close
-          done.send(nil)
+        spawn do
+          es.each do |event|
+            es.cookies.size.should eq(2)
+            es.cookies["session"].value.should eq("new-session-id")
+            es.cookies["token"].value.should eq("bearer-xyz")
+            done.send(nil)
+            break
+          end
         end
 
-        spawn { es.run }
-
         done.receive
+        es.close
       end
     end
 
@@ -362,14 +364,15 @@ describe HTTP::EventSource do
       run_server(server) do
         es = HTTP::EventSource.new("http://#{address}/events")
 
-        es.on_message do |event|
-          es.close
+        spawn do
+          es.each do |event|
+            break
+          end
         end
-
-        spawn { es.run }
 
         cookie_header = cookies_on_second_request.receive
         cookie_header.should eq("session=updated-session")
+        es.close
       end
     end
 
@@ -391,17 +394,18 @@ describe HTTP::EventSource do
         headers = HTTP::Headers{"Cookie" => "client_cookie=from-client"}
         es = HTTP::EventSource.new("http://#{address}/events", headers)
 
-        es.on_message do |event|
-          es.cookies.size.should eq(2)
-          es.cookies["client_cookie"].value.should eq("from-client")
-          es.cookies["server_cookie"].value.should eq("from-server")
-          es.close
-          done.send(nil)
+        spawn do
+          es.each do |event|
+            es.cookies.size.should eq(2)
+            es.cookies["client_cookie"].value.should eq("from-client")
+            es.cookies["server_cookie"].value.should eq("from-server")
+            done.send(nil)
+            break
+          end
         end
 
-        spawn { es.run }
-
         done.receive
+        es.close
       end
     end
 
@@ -423,26 +427,26 @@ describe HTTP::EventSource do
         headers = HTTP::Headers{"Cookie" => "session=initial-session"}
         es = HTTP::EventSource.new("http://#{address}/events", headers)
 
-        es.on_message do |event|
-          # Cookie should be updated
-          es.cookies.size.should eq(1)
-          es.cookies["session"].value.should eq("renewed-session")
-          es.close
-          done.send(nil)
+        spawn do
+          es.each do |event|
+            # Cookie should be updated
+            es.cookies.size.should eq(1)
+            es.cookies["session"].value.should eq("renewed-session")
+            done.send(nil)
+            break
+          end
         end
 
-        spawn { es.run }
-
         done.receive
+        es.close
       end
     end
   end
 
   describe HTTP::EventSource do
-    describe "connection" do
+    describe "lazy iteration" do
       it "connects and receives events" do
         events_received = [] of HTTP::EventSource::Event
-        done = Channel(Nil).new
 
         server = HTTP::Server.new do |context|
           context.response.content_type = "text/event-stream"
@@ -459,31 +463,106 @@ describe HTTP::EventSource do
         run_server(server) do
           es = HTTP::EventSource.new("http://#{address}/events")
 
-          es.on_message do |event|
+          es.ready_state.should eq(HTTP::EventSource::ReadyState::Connecting)
+
+          es.each do |event|
             events_received << event
+            # Break after receiving expected events to avoid hanging on reconnection
+            break if events_received.size == 2
           end
-
-          es.on("custom") do |event|
-            events_received << event
-            es.close
-            done.send(nil)
-          end
-
-          spawn { es.run }
-
-          done.receive
 
           events_received.size.should eq(2)
           events_received[0].data.should eq("hello")
           events_received[0].type.should be_nil
           events_received[1].data.should eq("world")
           events_received[1].type.should eq("custom")
+
+          es.close
         end
       end
 
-      it "calls on_open callback" do
-        opened = Channel(Nil).new
+      it "supports iterator methods" do
+        server = HTTP::Server.new do |context|
+          context.response.content_type = "text/event-stream"
 
+          writer = HTTP::EventSource::Writer.new(context.response)
+          writer.event(data: "one")
+          writer.event(data: "two")
+          writer.event(data: "three")
+          context.response.close
+        end
+
+        address = server.bind_unused_port
+
+        run_server(server) do
+          es = HTTP::EventSource.new("http://#{address}/events")
+
+          first_event = es.first
+          first_event.data.should eq("one")
+
+          es.close
+        end
+      end
+
+      it "supports breaking from iteration" do
+        events_received = [] of HTTP::EventSource::Event
+
+        server = HTTP::Server.new do |context|
+          context.response.content_type = "text/event-stream"
+
+          writer = HTTP::EventSource::Writer.new(context.response)
+          writer.event(data: "one")
+          writer.event(data: "two")
+          writer.event(data: "three")
+          context.response.close
+        end
+
+        address = server.bind_unused_port
+
+        run_server(server) do
+          es = HTTP::EventSource.new("http://#{address}/events")
+
+          es.each do |event|
+            events_received << event
+            break if event.data == "two"
+          end
+
+          events_received.size.should eq(2)
+          events_received[0].data.should eq("one")
+          events_received[1].data.should eq("two")
+
+          es.close
+        end
+      end
+    end
+
+    describe "eager connection with open" do
+      it "connects immediately and yields response" do
+        server = HTTP::Server.new do |context|
+          context.response.content_type = "text/event-stream"
+          context.response.headers["X-Custom"] = "header-value"
+
+          writer = HTTP::EventSource::Writer.new(context.response)
+          writer.event(data: "test")
+          context.response.close
+        end
+
+        address = server.bind_unused_port
+
+        run_server(server) do
+          HTTP::EventSource.open("http://#{address}/events") do |source, response|
+            response.status_code.should eq(200)
+            response.headers["X-Custom"].should eq("header-value")
+            source.ready_state.should eq(HTTP::EventSource::ReadyState::Open)
+
+            events = source.to_a
+            events.size.should eq(1)
+            events[0].data.should eq("test")
+          end
+        end
+      end
+
+      it "automatically closes connection after block" do
         server = HTTP::Server.new do |context|
           context.response.content_type = "text/event-stream"
           writer = HTTP::EventSource::Writer.new(context.response)
@@ -494,19 +573,13 @@ describe HTTP::EventSource do
         address = server.bind_unused_port
 
         run_server(server) do
-          es = HTTP::EventSource.new("http://#{address}/events")
-
-          es.on_open do
-            opened.send(nil)
+          source = nil
+          HTTP::EventSource.open("http://#{address}/events") do |s, response|
+            source = s
+            source.closed?.should be_false
           end
 
-          es.on_message do |event|
-            es.close
-          end
-
-          spawn { es.run }
-
-          opened.receive
+          source.not_nil!.closed?.should be_true
         end
       end
 
@@ -524,21 +597,21 @@ describe HTTP::EventSource do
         run_server(server) do
           es = HTTP::EventSource.new("http://#{address}/events")
 
-          es.on_message do |event|
+          es.each do |event|
             es.last_event_id.should eq("evt-123")
-            es.close
+            break
           end
 
-          es.run
+          es.close
         end
       end
 
-      it "updates retry interval from events" do
+      it "includes event metadata" do
         server = HTTP::Server.new do |context|
           context.response.content_type = "text/event-stream"
 
           writer = HTTP::EventSource::Writer.new(context.response)
-          writer.event(data: "test", retry: 7000)
+          writer.event(data: "test", id: "evt-456", retry: 7000)
           context.response.close
         end
 
@@ -547,15 +620,18 @@ describe HTTP::EventSource do
         run_server(server) do
           es = HTTP::EventSource.new("http://#{address}/events")
 
-          es.on_message do |event|
+          es.each do |event|
+            event.id.should eq("evt-456")
             event.retry.should eq(7000)
-            es.close
+            break
           end
 
-          es.run
+          es.close
         end
       end
+    end
 
+    describe "connection" do
       it "sets proper request headers" do
         headers_received = Channel(HTTP::Headers).new
 
@@ -571,16 +647,18 @@ describe HTTP::EventSource do
         run_server(server) do
           es = HTTP::EventSource.new("http://#{address}/events")
 
-          es.on_message do |event|
-            es.close
+          spawn do
+            es.each do |event|
+              break
+            end
           end
-
-          spawn { es.run }
 
           headers = headers_received.receive
           headers["Accept"].should eq("text/event-stream")
           headers["Cache-Control"].should eq("no-store")
           headers["Connection"].should eq("keep-alive")
+
+          es.close
         end
       end
 
@@ -600,18 +678,20 @@ describe HTTP::EventSource do
           custom_headers = HTTP::Headers{"Authorization" => "Bearer token123"}
           es = HTTP::EventSource.new("http://#{address}/events", custom_headers)
 
-          es.on_message do |event|
-            es.close
+          spawn do
+            es.each do |event|
+              break
+            end
           end
-
-          spawn { es.run }
 
           headers = headers_received.receive
           headers["Authorization"].should eq("Bearer token123")
+
+          es.close
         end
       end
 
-      it "does not reconnect on 204 No Content" do
+      it "stops iteration on 204 No Content" do
         server = HTTP::Server.new do |context|
           context.response.status_code = 204
         end
@@ -621,14 +701,17 @@ describe HTTP::EventSource do
         run_server(server) do
           es = HTTP::EventSource.new("http://#{address}/events")
 
-          es.run
+          events = [] of HTTP::EventSource::Event
+          es.each do |event|
+            events << event
+          end
 
+          events.size.should eq(0)
           es.closed?.should be_true
-          es.ready_state.should eq(HTTP::EventSource::ReadyState::Closed)
         end
       end
 
-      it "does not reconnect on 404 Not Found" do
+      it "raises on 404 Not Found" do
         server = HTTP::Server.new do |context|
           context.response.status_code = 404
           context.response.print("Not Found")
@@ -639,16 +722,11 @@ describe HTTP::EventSource do
         run_server(server) do
           es = HTTP::EventSource.new("http://#{address}/events")
 
-          error_raised = false
-          es.on_error do |error|
-            error.message.to_s.should contain("404")
-            error.should be_a(HTTP::EventSource::NoReconnectError)
-            error_raised = true
+          expect_raises(HTTP::EventSource::NoReconnectError, /404/) do
+            es.each do |event|
+            end
           end
 
-          es.run
-
-          error_raised.should be_true
           es.closed?.should be_true
         end
       end
@@ -674,13 +752,13 @@ describe HTTP::EventSource do
         run_server(server) do
           es = HTTP::EventSource.new("http://#{address}/events")
 
-          es.on_message do |event|
-            event.data.should eq("success")
-            es.close
-            done.send(nil)
+          spawn do
+            es.each do |event|
+              event.data.should eq("success")
+              done.send(nil)
+              break
+            end
           end
-
-          spawn { es.run }
 
           select
           when done.receive
@@ -688,6 +766,8 @@ describe HTTP::EventSource do
           when timeout(10.seconds)
             fail "Timeout waiting for reconnection"
           end
+
+          es.close
         end
       end
 
@@ -712,13 +792,13 @@ describe HTTP::EventSource do
         run_server(server) do
           es = HTTP::EventSource.new("http://#{address}/events")
 
-          es.on_message do |event|
-            event.data.should eq("success")
-            es.close
-            done.send(nil)
+          spawn do
+            es.each do |event|
+              event.data.should eq("success")
+              done.send(nil)
+              break
+            end
           end
-
-          spawn { es.run }
 
           select
           when done.receive
@@ -726,10 +806,12 @@ describe HTTP::EventSource do
           when timeout(10.seconds)
             fail "Timeout waiting for reconnection"
           end
+
+          es.close
         end
       end
 
-      it "does not reconnect on invalid content type" do
+      it "raises on invalid content type" do
         server = HTTP::Server.new do |context|
           context.response.content_type = "text/html"
           context.response.print("<html></html>")
@@ -740,28 +822,23 @@ describe HTTP::EventSource do
         run_server(server) do
           es = HTTP::EventSource.new("http://#{address}/events")
 
-          error_raised = false
-          es.on_error do |error|
-            error.message.to_s.should contain("Content-Type")
-            error.should be_a(HTTP::EventSource::NoReconnectError)
-            error_raised = true
+          expect_raises(HTTP::EventSource::NoReconnectError, /Content-Type/) do
+            es.each do |event|
+            end
           end
 
-          es.run
-
-          error_raised.should be_true
           es.closed?.should be_true
         end
       end
 
-      it "skips events with empty data" do
+      it "skips events with empty data and no type" do
         events_received = [] of HTTP::EventSource::Event
 
         server = HTTP::Server.new do |context|
           context.response.content_type = "text/event-stream"
 
           writer = HTTP::EventSource::Writer.new(context.response)
-          # Event with only ID, no data - should be skipped
+          # Event with only ID, no data, no type - should be skipped
           writer.event(data: "", id: "123")
           # Event with data - should be received
           writer.event(data: "valid")
@@ -773,15 +850,16 @@ describe HTTP::EventSource do
         run_server(server) do
           es = HTTP::EventSource.new("http://#{address}/events")
 
-          es.on_message do |event|
+          es.each do |event|
             events_received << event
-            es.close
+            # Break after receiving the valid event to avoid hanging on reconnection
+            break if events_received.size == 1
           end
-
-          es.run
 
           events_received.size.should eq(1)
           events_received[0].data.should eq("valid")
+
+          es.close
         end
       end
     end
@@ -809,15 +887,14 @@ describe HTTP::EventSource do
       end
     end
 
-    describe "ready state" do
-      it "starts as Connecting" do
+    describe "connection state" do
+      it "starts in Connecting state" do
         es = HTTP::EventSource.new("http://localhost/events")
         es.ready_state.should eq(HTTP::EventSource::ReadyState::Connecting)
+        es.closed?.should be_false
       end
 
-      it "becomes Open when connected" do
-        state_changes = [] of HTTP::EventSource::ReadyState
-
+      it "becomes Open when iteration starts" do
         server = HTTP::Server.new do |context|
           context.response.content_type = "text/event-stream"
           writer = HTTP::EventSource::Writer.new(context.response)
@@ -830,21 +907,14 @@ describe HTTP::EventSource do
         run_server(server) do
           es = HTTP::EventSource.new("http://#{address}/events")
 
-          es.on_open do
-            state_changes << es.ready_state
+          es.ready_state.should eq(HTTP::EventSource::ReadyState::Connecting)
+
+          es.each do |event|
+            es.ready_state.should eq(HTTP::EventSource::ReadyState::Open)
+            break
           end
 
-          es.on_message do |event|
-            state_changes << es.ready_state
-            es.close
-          end
-
-          es.run
-
-          state_changes.should eq([
-            HTTP::EventSource::ReadyState::Open,
-            HTTP::EventSource::ReadyState::Open,
-          ])
+          es.close
         end
       end
 
