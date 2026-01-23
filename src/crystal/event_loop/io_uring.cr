@@ -407,8 +407,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
       min_complete = 1
 
       if abstime = @mutex.synchronize { @timers.next_ready? }
-        seconds, nanoseconds = System::Time.monotonic
-        timeout = abstime - Time::Span.new(seconds: seconds, nanoseconds: nanoseconds)
+        timeout = abstime - System::Time.instant
 
         unless timeout.positive?
           # some timers have expired: don't wait

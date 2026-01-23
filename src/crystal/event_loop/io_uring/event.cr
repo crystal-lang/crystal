@@ -10,7 +10,7 @@ struct Crystal::EventLoop::IoUring::Event
   getter type : Type
   getter fiber : Fiber
   property! res : Int32
-  property! wake_at : Time::Span?
+  property! wake_at : Time::Instant?
 
   # The event can be added to the `Timers` list.
   include PointerPairingHeap::Node
