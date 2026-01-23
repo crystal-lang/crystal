@@ -68,7 +68,7 @@ def run_handler(handler, &)
 
   IO::Stapled.pipe do |server_io, client_io|
     processor = HTTP::Server::RequestProcessor.new(handler)
-    f = spawn do
+    f = spawn(name: "http-run-handler") do
       processor.process(server_io, server_io)
     rescue exc
       done.send exc
@@ -83,11 +83,12 @@ def run_handler(handler, &)
 
       yield client
     ensure
+      # close processor to unblock the fiber running the fiber, but wait for the
+      # handler to terminate before closing server_io otherwise it could raise
       processor.close
+      exception = done.receive
       server_io.close
-      if exc = done.receive
-        raise exc
-      end
+      raise exception if exception
     end
   end
 end
