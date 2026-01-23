@@ -351,7 +351,7 @@ module FileUtils
     Dir.current
   end
 
-  # Deletes the *path* file given, raised if path is not exists.
+  # Deletes the *path* file given, raises if path is not exists.
   #
   # ```
   # require "file_utils"
@@ -364,7 +364,7 @@ module FileUtils
     File.delete(path)
   end
 
-  # Deletes all *paths* file given, raised if one path is not exists.
+  # Deletes all *paths* file given, raises if one path does not exists.
   #
   # ```
   # require "file_utils"
@@ -377,7 +377,7 @@ module FileUtils
     end
   end
 
-  # Deletes the *path* file given, ignored if path is not exists.
+  # Deletes the *path* file given, ignoring if it does not exists.
   #
   # ```
   # require "file_utils"
@@ -390,7 +390,7 @@ module FileUtils
     File.delete?(path)
   end
 
-  # Deletes all *paths* file given, ignored if one path is not exists.
+  # Deletes all *paths* file given, ignoring if a path does not exists.
   #
   # ```
   # require "file_utils"
