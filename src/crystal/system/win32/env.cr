@@ -94,6 +94,40 @@ module Crystal::System::Env
     end.to_utf16.to_unsafe
   end
 
+  # Used internally to create an input for `_wexecvpe`. Similar to
+  # .make_env_block but allocates an array of pointers to individual
+  # "KEY=VALUE" strings while .make_env_block allocates a single buffer.
+  def self.make_envp(env, clear_env) : UInt16**
+    # If neither clearing nor adding anything, use the default behavior of
+    # inheriting everything.
+    return Pointer(UInt16*).null if !env && !clear_env
+
+    envp = Array(UInt16*).new
+
+    unless clear_env
+      each do |key, value|
+        # skip override
+        next if env.try(&.any? { |k, _| k.compare(key, case_insensitive: true) == 0 })
+
+        envp << System.to_wstr("#{key}=#{value}")
+      end
+    end
+
+    env.try(&.each do |key, value|
+      check_valid_key(key)
+
+      # skip deletion
+      next if value.nil?
+
+      envp << System.to_wstr("#{key}=#{value}")
+    end)
+
+    # terminate the array
+    envp << Pointer(UInt16).null
+
+    envp.to_unsafe
+  end
+
   private def self.valid_key?(key : String)
     !(key.empty? || key.includes?('='))
   end

@@ -352,15 +352,6 @@ struct Crystal::System::Process
     old_output_fd = reopen_io(output, ORIGINAL_STDOUT)
     old_error_fd = reopen_io(error, ORIGINAL_STDERR)
 
-    ENV.clear if clear_env
-    env.try &.each do |key, val|
-      if val
-        ENV[key] = val
-      else
-        ENV.delete key
-      end
-    end
-
     if prepared_args.is_a?(String)
       command = System.to_wstr(prepared_args)
       argv = [command]
@@ -368,15 +359,16 @@ struct Crystal::System::Process
       command = System.to_wstr(prepared_args[0])
       argv = prepared_args.map { |arg| System.to_wstr(arg) }
     end
-
     argv << Pointer(LibC::WCHAR).null
+
+    envp = Env.make_envp(env, clear_env)
 
     if chdir
       ::Dir.cd(chdir) do
-        LibC._wexecvp(command, argv)
+        LibC._wexecvpe(command, argv, envp)
       end
     else
-      LibC._wexecvp(command, argv)
+      LibC._wexecvpe(command, argv, envp)
     end
 
     # exec failed; restore the original C runtime file descriptors
