@@ -18,7 +18,7 @@ module Fiber::ExecutionContext
   # which defaults to `Fiber::ExecutionContext.default`.
   #
   # Isolated fibers can normally communicate with other fibers running in other
-  # execution contexts using `Channel`, `WaitGroup` or `Mutex` for example. They
+  # execution contexts using `Channel`, `WaitGroup` or `Sync` for example. They
   # can also execute `IO` operations or `sleep` just like any other fiber.
   #
   # Calls that result in waiting (e.g. sleep, or socket read/write) will block
