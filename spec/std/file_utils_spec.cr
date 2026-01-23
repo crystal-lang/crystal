@@ -238,9 +238,19 @@ describe "FileUtils" do
     it "tests rm with nonexistent path" do
       with_tempfile("rm-nonexistent") do |path|
         test_with_string_and_path(path) do |arg|
-          expect_raises(File::NotFoundError, "Error deleting file: '#{path.inspect_unquoted}'") do
-            FileUtils.rm(arg)
-          end
+
+          {% if flag?(:linux) %}
+            expect_raises(File::Error, "Error deleting file: '#{path.inspect_unquoted}': Is a directory") do
+              FileUtils.rm(arg)
+            end
+          {% end %}
+
+          {% if flag?(:darwin) %}
+            expect_raises(File::Error, "'#{path.inspect_unquoted}'': Operation not permitted") do
+              FileUtils.rm(arg)
+            end
+          {% end %}
+
         end
       end
     end
@@ -250,9 +260,18 @@ describe "FileUtils" do
         test_with_string_and_path(path) do |arg|
           Dir.mkdir_p(path)
 
-          expect_raises(File::Error, "Error deleting file: '#{path.inspect_unquoted}': Is a directory") do
-            FileUtils.rm(arg)
-          end
+          {% if flag?(:linux) %}
+            expect_raises(File::Error, "Error deleting file: '#{path.inspect_unquoted}': Is a directory") do
+              FileUtils.rm(arg)
+            end
+          {% end %}
+
+          {% if flag?(:darwin) %}
+            expect_raises(File::Error, "'#{path.inspect_unquoted}'': Operation not permitted") do
+              FileUtils.rm(arg)
+            end
+          {% end %}
+
           Dir.exists?(path).should be_true
         end
       end
@@ -265,9 +284,18 @@ describe "FileUtils" do
           File.write(path2, "")
           Dir.mkdir_p(path3)
 
-          expect_raises(File::Error, "Error deleting file: '#{path3.inspect_unquoted}': Is a directory") do
-            FileUtils.rm(args.to_a)
-          end
+          {% if flag?(:linux) %}
+            expect_raises(File::Error, "Error deleting file: '#{path3.inspect_unquoted}': Is a directory") do
+              FileUtils.rm(args.to_a)
+            end
+          {% end %}
+
+          {% if flag?(:darwin) %}
+            expect_raises(File::Error, "'#{path3.inspect_unquoted}'': Operation not permitted") do
+              FileUtils.rm(args.to_a)
+            end
+          {% end %}
+
           File.exists?(path1).should be_false
           File.exists?(path2).should be_false
           Dir.exists?(path3).should be_true
@@ -293,9 +321,18 @@ describe "FileUtils" do
           File.write(path1, "")
           File.write(path2, "")
 
-          expect_raises(File::NotFoundError, "Error deleting file: '#{path2.inspect_unquoted}'") do
-            FileUtils.rm([arg1, arg2, arg2])
-          end
+          {% if flag?(:linux) %}
+            expect_raises(File::NotFoundError, "Error deleting file: '#{path2.inspect_unquoted}'") do
+              FileUtils.rm([arg1, arg2, arg2])
+            end
+          {% end %}
+
+          {% if flag?(:darwin) %}
+            expect_raises(File::NotFoundError, "'#{path2.inspect_unquoted}'': Operation not permitted") do
+              FileUtils.rm([arg1, arg2, arg2])
+            end
+          {% end %}
+
         end
       end
     end
@@ -324,9 +361,19 @@ describe "FileUtils" do
       with_tempfile("rm_f-directory") do |path|
         test_with_string_and_path(path) do |arg|
           Dir.mkdir_p(path)
-          expect_raises(File::Error, "Error deleting file: '#{path.inspect_unquoted}': Is a directory") do
-            FileUtils.rm_f(arg)
-          end
+
+          {% if flag?(:linux) %}
+            expect_raises(File::Error, "Error deleting file: '#{path.inspect_unquoted}': Is a directory") do
+              FileUtils.rm_f(arg)
+            end
+          {% end %}
+
+          {% if flag?(:darwin) %}
+            expect_raises(File::Error, "'#{path.inspect_unquoted}'': Operation not permitted") do
+              FileUtils.rm_f(arg)
+            end
+          {% end %}
+
           Dir.exists?(path).should be_true
         end
       end
@@ -339,9 +386,17 @@ describe "FileUtils" do
           File.write(path2, "")
           Dir.mkdir_p(path3)
 
-          expect_raises(File::Error, "Error deleting file: '#{path3.inspect_unquoted}': Is a directory") do
-            FileUtils.rm_f(args.to_a)
-          end
+          {% if flag?(:linux) %}
+            expect_raises(File::Error, "Error deleting file: '#{path3.inspect_unquoted}': Is a directory") do
+              FileUtils.rm_f(args.to_a)
+            end
+          {% end %}
+
+          {% if flag?(:darwin) %}
+            expect_raises(File::Error, "'#{path3.inspect_unquoted}'': Operation not permitted") do
+              FileUtils.rm_f(args.to_a)
+            end
+          {% end %}
 
           File.exists?(path1).should be_false
           File.exists?(path2).should be_false
@@ -362,7 +417,7 @@ describe "FileUtils" do
       end
     end
 
-    it "tests rm with some nonexistent paths" do
+    it "tests rm_f with some nonexistent paths" do
       with_tempfile("rm-nonexistent1", "rm-nonexistent2") do |path1, path2|
         test_with_string_and_path(path1, path2) do |arg1, arg2|
           File.write(path1, "")
