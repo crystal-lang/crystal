@@ -16,9 +16,8 @@ require "../../web_socket"
 # ```
 class HTTP::WebSocketHandler
   include HTTP::Handler
-  @protocols : Array(String)?
 
-  def initialize(@protocols = nil, &@proc : WebSocket, Server::Context ->)
+  def initialize(@subprotocols : Array(String)? = nil, &@proc : WebSocket, Server::Context ->)
   end
 
   def call(context) : Nil
@@ -66,14 +65,13 @@ class HTTP::WebSocketHandler
   end
 
   private def sec_websocket_protocol(request)
-    requested_protocols = request.headers["Sec-WebSocket-Protocol"]?
-    return nil unless requested_protocols
-    if supported_protocols = @protocols
-      requested_protocols.split(",").each do |protocol|
-        protocol = protocol.strip
-        if supported_protocols.includes? protocol
-          return protocol
-        end
+    return unless requested_protocols = request.headers["Sec-WebSocket-Protocol"]?
+    return unless supported_protocols = @subprotocols
+
+    requested_protocols.split(",").each do |protocol|
+      protocol = protocol.strip
+      if supported_protocols.includes? protocol
+        return protocol
       end
     end
   end
