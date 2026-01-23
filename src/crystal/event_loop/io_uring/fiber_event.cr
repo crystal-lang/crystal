@@ -6,8 +6,7 @@ class Crystal::EventLoop::IoUring::FiberEvent
   end
 
   def add(timeout : Time::Span) : Nil
-    seconds, nanoseconds = System::Time.monotonic
-    @event.wake_at = Time::Span.new(seconds: seconds, nanoseconds: nanoseconds) + timeout
+    @event.wake_at = System::Time.instant + timeout
     EventLoop.current.as(IoUring).add_timer(pointerof(@event))
   end
 
