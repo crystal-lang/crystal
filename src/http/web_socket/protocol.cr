@@ -297,7 +297,7 @@ class HTTP::WebSocket::Protocol
     close(CloseCode.new(code), message)
   end
 
-  def self.new(host : String, path : String, port : Int32? = nil, tls : HTTP::Client::TLSContext = nil, headers : HTTP::Headers = HTTP::Headers.new, protocols : Array(String)? = nil) : self
+  def self.new(host : String, path : String, port : Int32? = nil, tls : HTTP::Client::TLSContext = nil, headers : HTTP::Headers = HTTP::Headers.new, protocols : Enumerable(String)? = nil) : self
     {% if flag?(:without_openssl) %}
       if tls
         raise "WebSocket TLS is disabled because `-D without_openssl` was passed at compile time"
@@ -344,9 +344,9 @@ class HTTP::WebSocket::Protocol
         raise Socket::Error.new("Handshake got denied. Server did not verify WebSocket challenge.")
       end
 
-      if requested_protocol = headers["Sec-WebSocket-Protocol"]?
+      if protocols && !protocols.empty?
         if server_protocol = handshake_response.headers["Sec-WebSocket-Protocol"]?
-          unless requested_protocol.split(",").includes?(server_protocol)
+          unless protocols.includes?(server_protocol)
             raise Socket::Error.new("Handshake got denied. Server responded with an invalid Sec-WebSocket-Protocol.")
           end
           accepted_protocol = server_protocol
