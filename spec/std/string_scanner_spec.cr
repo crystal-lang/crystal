@@ -417,6 +417,45 @@ describe StringScanner do
       s.peek(7).should eq("this is")
       s.offset.should eq(0)
     end
+
+    it "shows the next len characters for multi-byte strings" do
+      s = StringScanner.new("これは文字列である")
+      s.offset.should eq(0)
+      s.peek(3).should eq("これは")
+      s.offset.should eq(0)
+      s.peek(6).should eq("これは文字列")
+      s.offset.should eq(0)
+    end
+
+    it "errors on negative input" do
+      s = StringScanner.new("abcde")
+      s.scan(2)
+      expect_raises(ArgumentError, "Negative lookahead count: -1") { s.peek(-1) }
+    end
+  end
+
+  describe "#peek_behind" do
+    it "shows characters behind the scan head" do
+      s = StringScanner.new("abcdefg")
+      s.peek_behind(10).should eq("")
+      s.scan(3)
+      s.peek_behind(10).should eq("abc")
+      s.peek_behind(2).should eq("bc")
+    end
+
+    it "shows characters behind the scan head for multi-byte strings" do
+      s = StringScanner.new("あいうえお")
+      s.peek_behind(10).should eq("")
+      s.scan(3)
+      s.peek_behind(10).should eq("あいう")
+      s.peek_behind(2).should eq("いう")
+    end
+
+    it "errors on negative input" do
+      s = StringScanner.new("abcde")
+      s.scan(3)
+      expect_raises(ArgumentError, "Negative lookbehind count") { s.peek_behind(-1) }
+    end
   end
 
   describe "#reset" do
