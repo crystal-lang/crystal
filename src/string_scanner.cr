@@ -96,7 +96,9 @@ class StringScanner
 
   # Rewinds the scan head by *len* characters.
   def rewind(len : Int) : Nil
-    @byte_offset -= lookbehind_byte_length(len) || @byte_offset
+    byte_len = lookbehind_byte_length(len)
+    raise IndexError.new("Index out of range") if byte_len.nil?
+    @byte_offset -= byte_len
   end
 
   # Tries to match with *pattern* at the current position. If there's a match,

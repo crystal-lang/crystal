@@ -422,7 +422,9 @@ describe StringScanner do
   describe "#rewind" do
     it "rewinds a single byte optimizable string" do
       s = StringScanner.new("abcde")
-      s.rewind(10)
+
+      expect_raises(IndexError, "Index out of range") { s.rewind(10) }
+
       s.offset.should eq(0)
 
       expect_raises(ArgumentError, "Negative lookbehind count") { s.rewind(-1) }
@@ -437,13 +439,13 @@ describe StringScanner do
       s.rewind(2)
       s.offset.should eq(1)
 
-      s.rewind(1000)
-      s.offset.should eq(0)
+      expect_raises(IndexError, "Index out of range") { s.rewind(1000) }
+      s.offset.should eq(1)
     end
 
     it "rewinds a multibyte char string" do
       s = StringScanner.new("あいうえお")
-      s.rewind(10)
+      expect_raises(IndexError, "Index out of range") { s.rewind(10) }
       s.offset.should eq(0)
 
       s.skip(3)
@@ -453,8 +455,8 @@ describe StringScanner do
       s.rewind(2)
       s.offset.should eq(1)
 
-      s.rewind(1000)
-      s.offset.should eq(0)
+      expect_raises(IndexError, "Index out of range") { s.rewind(1000) }
+      s.offset.should eq(1)
     end
   end
 
