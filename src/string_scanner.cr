@@ -153,7 +153,7 @@ class StringScanner
   # clears the last match information. This can only be used once per scan.
   def unscan : Nil
     match = @last_match
-    return if match.nil?
+    raise NilAssertionError.new("No previous match") if match.nil?
 
     @byte_offset -= match[0].bytesize
     @last_match = nil

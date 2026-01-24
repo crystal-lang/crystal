@@ -560,6 +560,7 @@ describe StringScanner do
 
     it "undoes the previous #scan call for multibyte strings" do
       s = StringScanner.new("あいうえお")
+      expect_raises(NilAssertionError, "No previous match") { s.unscan }
       s.scan(1).should eq("あ")
       s.scan("いう").should eq("いう")
       s.unscan
@@ -567,7 +568,7 @@ describe StringScanner do
       s.unscan
       s.scan(4).should eq("いうえお")
       s.unscan
-      s.unscan
+      expect_raises(NilAssertionError, "No previous match") { s.unscan }
       s.current_char.should eq('い')
     end
   end
