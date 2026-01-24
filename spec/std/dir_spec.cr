@@ -677,7 +677,8 @@ describe "Dir" do
     end
 
     it "returns configure directory for tempfiles" do
-      reset_tempdir(Path["my_temporary_path"].expand.to_s) do
+      tmp_path = Path["my_temporary_path"].expand.to_s
+      reset_tempdir(tmp_path) do
         Dir.tempdir.should eq tmp_path
       end
     end
