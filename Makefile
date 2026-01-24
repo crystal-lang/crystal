@@ -47,7 +47,7 @@ override FLAGS += -D strict_multi_assign -D preview_overload_order $(if $(releas
 # NOTE: USE_PCRE1 is only used for testing compatibility with legacy environments that don't provide libpcre2.
 # Newly built compilers should never be distributed with libpcre to ensure syntax consistency.
 override COMPILER_FLAGS += $(if $(interpreter),,-Dwithout_interpreter )$(if $(docs_sanitizer),,-Dwithout_libxml2 ) -Dwithout_openssl -Dwithout_zlib$(if $(sequential_codegen),, -Dpreview_mt -Dexecution_context) $(if $(USE_PCRE1),-Duse_pcre,-Duse_pcre2)
-SPEC_WARNINGS_OFF := --exclude-warnings spec/std --exclude-warnings spec/compiler --exclude-warnings spec/primitives --exclude-warnings src/float/printer --exclude-warnings src/random.cr
+SPEC_WARNINGS_OFF := --exclude-warnings spec/std --exclude-warnings spec/compiler --exclude-warnings spec/primitives --exclude-warnings src/float/printer --exclude-warnings src/random.cr --exclude-warnings spec/std/env_spec.cr
 override SPEC_FLAGS += $(if $(verbose),-v )$(if $(junit_output),--junit_output $(junit_output) )$(if $(order),--order=$(order) )
 CRYSTAL_CONFIG_LIBRARY_PATH := '$$ORIGIN/../lib/crystal'
 ifndef CRYSTAL_CONFIG_BUILD_COMMIT

@@ -5,6 +5,7 @@ require "../spec_helper"
 require "compiler/crystal/ffi"
 require "compiler/crystal/loader"
 require "../loader/spec_helper"
+require "../../support/env"
 
 # all the integral return types must be at least as large as the register size
 # to avoid integer promotion by FFI!
@@ -36,20 +37,18 @@ end
 {% end %}
 
 describe Crystal::FFI::CallInterface do
-  before_all do
+  around_all do |example|
     FileUtils.mkdir_p(SPEC_CRYSTAL_LOADER_LIB_PATH)
     build_c_dynlib(compiler_datapath("ffi", "sum.c"))
 
     {% if flag?(:win32) && flag?(:gnu) %}
-      ENV["PATH"] = "#{SPEC_CRYSTAL_LOADER_LIB_PATH}#{Process::PATH_DELIMITER}#{ENV["PATH"]}"
+      with_env({"PATH" => "#{SPEC_CRYSTAL_LOADER_LIB_PATH}#{Process::PATH_DELIMITER}#{ENV["PATH"]}"}) do
+        example.run
+      end
+    {% else %}
+      example.run
     {% end %}
-  end
-
-  after_all do
-    {% if flag?(:win32) && flag?(:gnu) %}
-      ENV["PATH"] = ENV["PATH"].delete_at(0, ENV["PATH"].index!(Process::PATH_DELIMITER) + 1)
-    {% end %}
-
+  ensure
     FileUtils.rm_rf(SPEC_CRYSTAL_LOADER_LIB_PATH)
   end
 

@@ -56,19 +56,23 @@ module ENV
     fetch(key, nil)
   end
 
+  # See `.unsafe_set`.
+  @[Deprecated("Modifying ENV is unsafe. Consider ENV.unsafe_set if you really must set the variable.")]
+  def self.[]=(key : String, value : String?)
+    unsafe_set(key, value)
+    value
+  end
+
   # Sets the value for environment variable named *key* as *value*.
   # Overwrites existing environment variable if already present.
-  # Returns *value* if successful, otherwise raises an exception.
   # If *value* is `nil`, the environment variable is deleted.
   #
   # If *key* or *value* contains a null-byte an `ArgumentError` is raised.
   #
   # WARNING: It is recommended to never set environment variables. See the
   # Safety section of `ENV` for details.
-  def self.[]=(key : String, value : String?)
+  def self.unsafe_set(key : String, value : String?) : Nil
     Crystal::System::Env.set(key, value)
-
-    value
   end
 
   # Returns `true` if the environment variable named *key* exists and `false` if it doesn't.
@@ -124,6 +128,7 @@ module ENV
   #
   # WARNING: It is recommended to never delete environment variables. See the
   # Safety section of `ENV` for details.
+  @[Deprecated("Modifying ENV is unsafe. Consider ENV.unsafe_set(key, nil) if you really must delete the variable.")]
   def self.delete(key : String) : String?
     if value = self[key]?
       Crystal::System::Env.set(key, nil)
@@ -147,8 +152,7 @@ module ENV
     end
   end
 
-  # WARNING: It is recommended to never delete environment variables. See the
-  # Safety section of `ENV` for details.
+  @[Deprecated("Modifying ENV is unsafe. Consider ENV.each { |k, _| ENV.unsafe_set(k, nil) } if you really must clear the environment.")]
   def self.clear : Nil
     keys.each { |k| delete k }
   end

@@ -1,6 +1,7 @@
 {% skip_file if flag?(:without_interpreter) %}
 require "./spec_helper"
 require "../loader/spec_helper"
+require "../../support/env"
 
 private def ldflags
   {% if flag?(:msvc) %}
@@ -19,20 +20,18 @@ private def ldflags_with_backtick
 end
 
 describe Crystal::Repl::Interpreter do
-  before_all do
+  around_all do |example|
     FileUtils.mkdir_p(SPEC_CRYSTAL_LOADER_LIB_PATH)
     build_c_dynlib(compiler_datapath("interpreter", "sum.c"))
 
     {% if flag?(:win32) %}
-      ENV["PATH"] = "#{SPEC_CRYSTAL_LOADER_LIB_PATH}#{Process::PATH_DELIMITER}#{ENV["PATH"]}"
+      with_env({"PATH" => "#{SPEC_CRYSTAL_LOADER_LIB_PATH}#{Process::PATH_DELIMITER}#{ENV["PATH"]}"}) do
+        example.run
+      end
+    {% else %}
+      example.run
     {% end %}
-  end
-
-  after_all do
-    {% if flag?(:win32) %}
-      ENV["PATH"] = ENV["PATH"].delete_at(0, ENV["PATH"].index!(Process::PATH_DELIMITER) + 1)
-    {% end %}
-
+  ensure
     FileUtils.rm_rf(SPEC_CRYSTAL_LOADER_LIB_PATH)
   end
 

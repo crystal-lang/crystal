@@ -352,12 +352,14 @@ struct Crystal::System::Process
     old_output_fd = reopen_io(output, ORIGINAL_STDOUT)
     old_error_fd = reopen_io(error, ORIGINAL_STDERR)
 
-    ENV.clear if clear_env
+    if clear_env
+      ENV.each { |key, _| ENV.unsafe_set(key, nil) }
+    end
     env.try &.each do |key, val|
       if val
-        ENV[key] = val
+        ENV.unsafe_set(key, val)
       else
-        ENV.delete key
+        ENV.unsafe_set(key, nil)
       end
     end
 

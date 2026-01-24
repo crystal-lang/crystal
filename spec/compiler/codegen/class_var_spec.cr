@@ -306,7 +306,7 @@ describe "Codegen: class var" do
     run(<<-CRYSTAL).to_string.should eq("BAR")
       require "prelude"
 
-      ENV["FOO"] = "BAR"
+      ENV.unsafe_set("FOO", "BAR")
 
       class Foo
         @@x = ENV["FOO"]
