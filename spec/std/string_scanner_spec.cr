@@ -433,6 +433,11 @@ describe StringScanner do
       s.terminate
       s.inspect.should eq(%(#<StringScanner 9/9 …字列である‣">))
     end
+
+    it "works with empty string" do
+      s = StringScanner.new("")
+      s.inspect.should eq(%(#<StringScanner 0/0 "‣">))
+    end
   end
 
   describe "#peek" do
