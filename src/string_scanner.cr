@@ -466,40 +466,15 @@ class StringScanner
     io << offset << '/' << size << ' '
 
     # find a range of 5 characters with the scan head as close to
-    # the middle as possible, and apply ellipses when appropriate
-    ellipsis_start = true
-    ellipsis_end = true
-    chars_before = 2
-    chars_after = 3
+    # the middle as possible.
+    chars_after = Math.max(3, 5 - offset).clamp(0, remaining)
+    chars_before = (5 - chars_after).clamp(0, offset)
 
-    if offset <= chars_before
-      # shift to the right since there weren't enough chars before
-      chars_after += chars_before - offset
-      chars_before = offset
-
-      # no ellipsis if we hit the start
-      ellipsis_start = false
-    end
-
-    if remaining <= chars_after
-      # shift to the left since there weren't enough chars after
-      chars_before += chars_after - remaining
-      chars_after = remaining
-
-      # no ellipsis if we hit the end
-      ellipsis_end = false
-    end
-
-    # clamp in the case of small strings that don't have enough
-    # before *or* after
-    chars_before = chars_before.clamp(0, offset)
-    chars_after = chars_after.clamp(0, remaining)
-
-    io << (ellipsis_start ? INSPECT_ELLIPSIS_CHAR : INSPECT_ENDING_CHAR)
+    io << (chars_before < offset ? INSPECT_ELLIPSIS_CHAR : INSPECT_ENDING_CHAR)
     peek_behind(chars_before).inspect_unquoted(io) if chars_before > 0
     io << INSPECT_INDICATOR_CHAR
     peek(chars_after).inspect_unquoted(io) if chars_after > 0
-    io << (ellipsis_end ? INSPECT_ELLIPSIS_CHAR : INSPECT_ENDING_CHAR)
+    io << (chars_after < remaining ? INSPECT_ELLIPSIS_CHAR : INSPECT_ENDING_CHAR)
 
     io << '>'
   end
