@@ -494,12 +494,16 @@ describe "Dir" do
 
       it "ignores hidden files" do
         Dir.glob("#{Path[datapath].to_posix}/dir/dots/*", match: :none).should be_empty
+        Dir.glob("#{Path[datapath].to_posix}/dir/dots/*/", match: :none).should be_empty
         Dir.glob("#{Path[datapath].to_posix}/dir/dots/*", match_hidden: false).should be_empty
+        Dir.glob("#{Path[datapath].to_posix}/dir/dots/*/", match_hidden: false).should be_empty
       end
 
       it "ignores hidden files recursively" do
         Dir.glob("#{Path[datapath].to_posix}/dir/dots/**/*", match: :none).should be_empty
+        Dir.glob("#{Path[datapath].to_posix}/dir/dots/**/*/", match: :none).should be_empty
         Dir.glob("#{Path[datapath].to_posix}/dir/dots/**/*", match_hidden: false).should be_empty
+        Dir.glob("#{Path[datapath].to_posix}/dir/dots/**/*/", match_hidden: false).should be_empty
       end
     end
 
