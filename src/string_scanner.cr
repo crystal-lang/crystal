@@ -85,7 +85,7 @@ class StringScanner
   # can cause performance issues in multibyte strings. For a more
   # performant way to move the head, see
   # [`#skip(Int)`](#skip%28len%3AInt%29%3AInt32%7CNil-instance-method)
-  # or #rewind.
+  # or `#rewind`.
   def offset=(position : Int)
     raise IndexError.new unless position >= 0
     @byte_offset = @str.char_index_to_byte_index(position) || @str.bytesize
