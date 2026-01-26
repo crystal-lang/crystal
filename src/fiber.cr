@@ -213,7 +213,7 @@ class Fiber
 
   # :nodoc:
   def self.current? : Fiber?
-    Thread.current?.try &.current_fiber
+    Thread.current?.try &.current_fiber?
   end
 
   # The fiber's proc is currently running or didn't fully save its context. The
