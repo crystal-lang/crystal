@@ -452,10 +452,10 @@ class StringScanner
   INSPECT_INDICATOR_CHAR = '‣'
 
   # :nodoc:
-  INSPECT_ELLIPSIS_CHAR  = '…'
+  INSPECT_ELLIPSIS_CHAR = '…'
 
   # :nodoc:
-  INSPECT_ENDING_CHAR    = '"'
+  INSPECT_ENDING_CHAR = '"'
 
   # Writes a representation of the scanner.
   #
