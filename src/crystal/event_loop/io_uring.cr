@@ -174,9 +174,11 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
       System::IoUring.supports_opcode?(LibC::IORING_OP_WRITE)               # 5.6
   end
 
-  DEFAULT_SQ_ENTRIES     =  16
-  DEFAULT_CQ_ENTRIES     = 128
-  DEFAULT_SQ_THREAD_IDLE = {{(value = env("IORING_SQ_THREAD_IDLE")) && !value.empty? && value.to_i}} # in milliseconds
+  DEFAULT_SQ_ENTRIES =  16
+  DEFAULT_CQ_ENTRIES = 128
+
+  # how long the poll thread should idle (in milliseconds)
+  DEFAULT_SQ_THREAD_IDLE = {{(value = flag?("io_uring_sq_thread_idle")).is_a?(StringLiteral) && !value.empty? && value.to_i || nil}}
 
   # SQPOLL without fixed files was added in Linux 5.11 with CAP_SYS_NICE
   # privilege and Linux 5.13 unprivileged.
