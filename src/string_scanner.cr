@@ -81,9 +81,11 @@ class StringScanner
 
   # Sets the *position* of the scan offset.
   #
-  # NOTE: Moving the scan head with this method can cause performance issues in
-  # multibyte strings. For a more performant way to move the head, see
-  # [`#skip(Int)`](#skip%28len%3AInt%29%3AInt32%7CNil-instance-method).
+  # NOTE: Moving the scan head to a non-zero index with this method
+  # can cause performance issues in multibyte strings. For a more
+  # performant way to move the head, see
+  # [`#skip(Int)`](#skip%28len%3AInt%29%3AInt32%7CNil-instance-method)
+  # or #rewind.
   def offset=(position : Int)
     raise IndexError.new unless position >= 0
     @byte_offset = @str.char_index_to_byte_index(position) || @str.bytesize
