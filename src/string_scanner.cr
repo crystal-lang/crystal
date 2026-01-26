@@ -605,7 +605,7 @@ class StringScanner
     previous_char == '\n'
   end
 
-  # Returns true if the last #scan resulted in a match
+  # Returns true if the last `#scan` resulted in a match
   def matched? : Bool
     !@last_match.nil?
   end
