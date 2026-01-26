@@ -1,6 +1,7 @@
 {% skip_file if flag?(:without_interpreter) %}
 require "./spec_helper"
 require "../loader/spec_helper"
+require "../../support/env"
 
 private def ldflags
   {% if flag?(:msvc) %}

@@ -5,6 +5,7 @@ require "../spec_helper"
 require "compiler/crystal/ffi"
 require "compiler/crystal/loader"
 require "../loader/spec_helper"
+require "../../support/env"
 
 # all the integral return types must be at least as large as the register size
 # to avoid integer promotion by FFI!
