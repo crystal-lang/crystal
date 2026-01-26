@@ -151,8 +151,10 @@ class StringScanner
     match(len, advance: true)
   end
 
-  # Reverts the scan head to before the last match, if it exists, and
-  # clears the last match information. This can only be used once per scan.
+  # Reverts the scan head to before the last match, and clears the last
+  # match information. This can only be used once per scan.
+  #
+  # Raises NilAssertionError if there is no previous match.
   def unscan : Nil
     match = @last_match
     raise NilAssertionError.new("No previous match") if match.nil?
