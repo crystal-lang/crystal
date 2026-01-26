@@ -97,6 +97,8 @@ class StringScanner
   end
 
   # Rewinds the scan head by *len* characters.
+  #
+  # Raises IndexError if this would go off the beginning of the stream.
   def rewind(len : Int) : Nil
     byte_len = lookbehind_byte_length(len)
     raise IndexError.new("Index out of range") if byte_len.nil?
