@@ -211,6 +211,11 @@ class Fiber
     Thread.current.current_fiber
   end
 
+  # :nodoc:
+  def self.current? : Fiber?
+    Thread.current?.try &.current_fiber
+  end
+
   # The fiber's proc is currently running or didn't fully save its context. The
   # fiber can't be resumed.
   def running? : Bool
