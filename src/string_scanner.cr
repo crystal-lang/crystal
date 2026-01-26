@@ -448,14 +448,9 @@ class StringScanner
     @str.byte_slice(@byte_offset, @str.bytesize - @byte_offset)
   end
 
-  # :nodoc:
-  INSPECT_INDICATOR_CHAR = '‣'
-
-  # :nodoc:
-  INSPECT_ELLIPSIS_CHAR = '…'
-
-  # :nodoc:
-  INSPECT_ENDING_CHAR = '"'
+  private INSPECT_INDICATOR_CHAR = '‣'
+  private INSPECT_ELLIPSIS_CHAR  = '…'
+  private INSPECT_ENDING_CHAR    = '"'
 
   # Writes a representation of the scanner.
   #
