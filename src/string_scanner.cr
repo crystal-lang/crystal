@@ -453,7 +453,7 @@ class StringScanner
 
   # Returns the current byte at the scan head, or nil if at the end.
   # Does no multi-byte character checking, and may return part of a
-  # multi-byte character. See `#current_char`.
+  # multi-byte character. See `#current_char?`.
   def current_byte? : UInt8?
     @str.byte_at?(@byte_offset)
   end
@@ -461,7 +461,7 @@ class StringScanner
   # Returns the current byte at the scan head, and errors if at the end.
   # Does not move the scan head.
   # Does no multi-byte character checking, and may return part of a
-  # multi-byte character. See `#current_char?`.
+  # multi-byte character. See `#current_char`.
   def current_byte : UInt8
     @str.byte_at(@byte_offset)
   end
