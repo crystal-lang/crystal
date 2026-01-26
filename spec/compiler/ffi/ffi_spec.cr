@@ -41,7 +41,7 @@ describe Crystal::FFI::CallInterface do
     build_c_dynlib(compiler_datapath("ffi", "sum.c"))
 
     {% if flag?(:win32) && flag?(:gnu) %}
-      with_env({ "PATH" => "#{SPEC_CRYSTAL_LOADER_LIB_PATH}#{Process::PATH_DELIMITER}#{ENV["PATH"]}" }) do
+      with_env({"PATH" => "#{SPEC_CRYSTAL_LOADER_LIB_PATH}#{Process::PATH_DELIMITER}#{ENV["PATH"]}"}) do
         example.run
       end
     {% else %}

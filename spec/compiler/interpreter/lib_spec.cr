@@ -24,7 +24,7 @@ describe Crystal::Repl::Interpreter do
     build_c_dynlib(compiler_datapath("interpreter", "sum.c"))
 
     {% if flag?(:win32) %}
-      with_env({ "PATH" => "#{SPEC_CRYSTAL_LOADER_LIB_PATH}#{Process::PATH_DELIMITER}#{ENV["PATH"]}" }) do
+      with_env({"PATH" => "#{SPEC_CRYSTAL_LOADER_LIB_PATH}#{Process::PATH_DELIMITER}#{ENV["PATH"]}"}) do
         example.run
       end
     {% else %}
