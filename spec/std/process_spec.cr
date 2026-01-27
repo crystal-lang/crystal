@@ -545,7 +545,7 @@ describe Process do
 
       context "with shell: true" do
         it "errors with nonexist $PATH" do
-          pending! if {{ flag?(:win32) }}
+          pending! unless {{ flag?(:unix) }}
           Process.run(*print_env_command, shell: true, env: {"PATH" => "/does/not/exist"}).success?.should be_false
         end
 
