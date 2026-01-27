@@ -542,6 +542,47 @@ describe Process do
           end
         end
       end
+
+      context "with shell: true" do
+        it "errors with nonexist $PATH" do
+          pending! if {{ flag?(:win32) }}
+          Process.run(*print_env_command, shell: true, env: {"PATH" => "/does/not/exist"}).success?.should be_false
+        end
+
+        it "empty path entry means current directory" do
+          pending! unless {{ flag?(:unix) }}
+
+          with_tempfile("crystal-spec-run") do |dir|
+            Dir.mkdir dir
+            File.write(Path[dir, "foo"], "#!/bin/sh\necho bar")
+            File.chmod(Path[dir, "foo"], 0o555)
+            Process.run("foo", chdir: dir, shell: true, env: {"PATH" => ":"}).success?.should be_true
+            Process.run("foo", chdir: dir, shell: true, env: {"PATH" => "::"}).success?.should be_true
+            Process.run("foo", chdir: dir, shell: true, env: {"PATH" => "/does/not/exist:"}).success?.should be_true
+            Process.run("foo", chdir: dir, shell: true, env: {"PATH" => ":/does/not/exist"}).success?.should be_true
+          end
+        end
+
+        it "finds path in relative directory" do
+          pending! unless {{ flag?(:unix) }}
+
+          with_tempfile("crystal-spec-run") do |dir|
+            Dir.mkdir_p Path[dir, "bin"]
+            Dir.mkdir_p Path[dir, "empty"]
+            File.write(Path[dir, "bin", "foo"], "#!/bin/sh\necho bar")
+            File.chmod(Path[dir, "bin", "foo"], 0o555)
+            Process.run("foo", chdir: dir, shell: true, env: {"PATH" => "bin"}).success?.should be_true
+            Process.run("foo", chdir: dir, shell: true, env: {"PATH" => "empty:bin"}).success?.should be_true
+            Process.run("foo", chdir: dir, shell: true, env: {"PATH" => "bin:empty"}).success?.should be_true
+            Process.run("foo", chdir: dir, shell: true, env: {"PATH" => "/does/not/exist:bin"}).success?.should be_true
+            Process.run("foo", chdir: dir, shell: true, env: {"PATH" => "bin:/does/not/exist"}).success?.should be_true
+            Process.run("foo", chdir: dir, shell: true, env: {"PATH" => ":bin"}).success?.should be_true
+            Process.run("foo", chdir: dir, shell: true, env: {"PATH" => "::bin"}).success?.should be_true
+            Process.run("foo", chdir: dir, shell: true, env: {"PATH" => "/does/not/exist::bin"}).success?.should be_true
+            Process.run("foo", chdir: dir, shell: true, env: {"PATH" => "bin:/does/not/exist"}).success?.should be_true
+          end
+        end
+      end
     end
 
     it "can link processes together" do
