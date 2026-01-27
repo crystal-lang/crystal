@@ -91,7 +91,7 @@ class Crystal::Doc::Generator
     File.write File.join(@output_dir, "index.json"), main_index
     File.write File.join(@output_dir, "search-index.js"), main_index.to_jsonp
 
-    File.write File.join(@output_dir, "404.html"), MainTemplate.new(Error404Template.new.to_s, types, project_info)
+    File.write File.join(@output_dir, "404.html"), MainTemplate.new(Error404Template.new.to_s, types, project_info, base_path: project_info.base_path)
   end
 
   def generate_sitemap(types)
