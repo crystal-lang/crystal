@@ -68,7 +68,7 @@ def run_handler(handler, &)
 
   IO::Stapled.pipe do |server_io, client_io|
     processor = HTTP::Server::RequestProcessor.new(handler)
-    f = spawn(name: "http-run-handler") do
+    f = spawn do
       processor.process(server_io, server_io)
     rescue exc
       done.send exc
@@ -83,12 +83,21 @@ def run_handler(handler, &)
 
       yield client
     ensure
-      # close processor to unblock the fiber running the fiber, but wait for the
-      # handler to terminate before closing server_io otherwise it could raise
       processor.close
-      exception = done.receive
+
+      {% if flag?(:execution_context) && flag?(:"evloop=io_uring") %}
+        # FIXME: flaky workaround to avoid OAuth2::Client specs to fail:
+        #
+        # Error while flushing data to the client (HTTP::Server::ClientError)
+        # Caused by: Closed stream (IO::Error)
+        Fiber.yield
+      {% end %}
+
       server_io.close
-      raise exception if exception
+
+      if exc = done.receive
+        raise exc
+      end
     end
   end
 end
