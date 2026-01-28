@@ -712,4 +712,6 @@ describe "Lexer" do
     token.delimiter_state.kind.should eq(Token::DelimiterKind::HEREDOC)
     token.raw.should eq "<<-EOS"
   end
+
+  assert_syntax_error "<<-123\n456\n123", "heredoc identifier starts with invalid character"
 end
