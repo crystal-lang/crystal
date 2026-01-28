@@ -84,7 +84,17 @@ def run_handler(handler, &)
       yield client
     ensure
       processor.close
+
+      {% if flag?(:execution_context) && flag?(:"evloop=io_uring") %}
+        # FIXME: flaky workaround to avoid OAuth2::Client specs to fail:
+        #
+        # Error while flushing data to the client (HTTP::Server::ClientError)
+        # Caused by: Closed stream (IO::Error)
+        Fiber.yield
+      {% end %}
+
       server_io.close
+
       if exc = done.receive
         raise exc
       end

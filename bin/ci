@@ -192,10 +192,10 @@ with_build_env() {
   export DOCKER_TEST_PREFIX="${DOCKER_TEST_PREFIX:="crystallang/crystal:${CRYSTAL_BOOTSTRAP_VERSION:-1.19.1}"}"
 
   case $ARCH in
-    x86_64)
+    aarch64|x86_64)
       export DOCKER_TEST_IMAGE="$DOCKER_TEST_PREFIX-build"
       ;;
-    x86_64-musl)
+    aarch64-musl|x86_64-musl)
       export DOCKER_TEST_IMAGE="$DOCKER_TEST_PREFIX-alpine-build"
       ;;
     i386)
@@ -203,6 +203,7 @@ with_build_env() {
       ;;
   esac
 
+  # NOTE: disabling seccomp because the default profile disables io_uring syscalls
   on_linux docker run \
     --rm -t \
     -u "$(id -u)" \
@@ -213,6 +214,7 @@ with_build_env() {
     -e CRYSTAL_CACHE_DIR="/tmp/crystal" \
     -e SPEC_SPLIT_DOTS \
     -e USE_PCRE1 \
+    --security-opt seccomp=unconfined \
     "$DOCKER_TEST_IMAGE" \
     "$ARCH_CMD" /bin/sh -c "'$command'"
 
