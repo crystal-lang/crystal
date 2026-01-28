@@ -202,8 +202,6 @@ module Crystal::System::Signal
           Crystal::System.print_error "Error while trying to determine if a stack overflow has occurred. Probable memory corruption\n"
           false
         end
-    else
-      Crystal::System.print_error "No current fiber found while handling segfault. Probable unregistered thread\n"
     end
 
     if is_stack_overflow
