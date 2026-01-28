@@ -255,6 +255,11 @@ jobs:
           Add-Content $env:GITHUB_ENV "LLVM_TARGETS=${{ env.CI_LLVM_TARGETS }}"
           Add-Content $env:GITHUB_ENV "LLVM_LDFLAGS=${{ env.CI_LLVM_LDFLAGS }}"
 
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        with:
+          limit-access-to-actor: true
+
       - name: Run stdlib specs
         run: make -f Makefile.win std_spec
 
