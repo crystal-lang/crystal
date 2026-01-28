@@ -192,10 +192,10 @@ with_build_env() {
   export DOCKER_TEST_PREFIX="${DOCKER_TEST_PREFIX:="crystallang/crystal:${CRYSTAL_BOOTSTRAP_VERSION:-1.19.1}"}"
 
   case $ARCH in
-    x86_64)
+    aarch64|x86_64)
       export DOCKER_TEST_IMAGE="$DOCKER_TEST_PREFIX-build"
       ;;
-    x86_64-musl)
+    aarch64-musl|x86_64-musl)
       export DOCKER_TEST_IMAGE="$DOCKER_TEST_PREFIX-alpine-build"
       ;;
     i386)
