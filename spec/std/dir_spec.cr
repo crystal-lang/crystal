@@ -1,11 +1,11 @@
 require "./spec_helper"
 require "../support/env"
 
-private def unset_tempdir(&)
+private def reset_tempdir(tmp_path = nil, &)
   {% if flag?(:windows) %}
-    with_env("TMP": nil, "TEMP": nil, "USERPROFILE": nil) { yield }
+    with_env("TMP": tmp_path, "TEMP": nil, "USERPROFILE": nil) { yield }
   {% else %}
-    with_env("TMPDIR": nil) { yield }
+    with_env("TMPDIR": tmp_path) { yield }
   {% end %}
 end
 
@@ -665,7 +665,7 @@ describe "Dir" do
 
   describe ".tempdir" do
     it "returns default directory for tempfiles" do
-      unset_tempdir do
+      reset_tempdir do
         {% if flag?(:windows) %}
           # GetTempPathW defaults to the Windows directory when %TMP%, %TEMP%
           # and %USERPROFILE% are not set.
@@ -681,9 +681,8 @@ describe "Dir" do
     end
 
     it "returns configure directory for tempfiles" do
-      unset_tempdir do
-        tmp_path = Path["my_temporary_path"].expand.to_s
-        ENV[{{ flag?(:windows) ? "TMP" : "TMPDIR" }}] = tmp_path
+      tmp_path = Path["my_temporary_path"].expand.to_s
+      reset_tempdir(tmp_path) do
         Dir.tempdir.should eq tmp_path
       end
     end
