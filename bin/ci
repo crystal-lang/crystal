@@ -203,6 +203,7 @@ with_build_env() {
       ;;
   esac
 
+  # NOTE: disabling seccomp because the default profile disables io_uring syscalls
   on_linux docker run \
     --rm -t \
     -u "$(id -u)" \
@@ -213,6 +214,7 @@ with_build_env() {
     -e CRYSTAL_CACHE_DIR="/tmp/crystal" \
     -e SPEC_SPLIT_DOTS \
     -e USE_PCRE1 \
+    --security-opt seccomp=unconfined \
     "$DOCKER_TEST_IMAGE" \
     "$ARCH_CMD" /bin/sh -c "'$command'"
 
