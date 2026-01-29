@@ -73,11 +73,11 @@ macro record(__name name, *properties, **kwargs)
   struct {{name.id}}
     {% for property in properties %}
       {% if property.is_a?(Assign) %}
-        getter {{property.target.id}}
+        getter({{property.target.id}})
       {% elsif property.is_a?(TypeDeclaration) %}
-        getter {{property}}
+        getter({{property}})
       {% else %}
-        getter :{{property.id}}
+        getter(:{{property.id}})
       {% end %}
     {% end %}
 
