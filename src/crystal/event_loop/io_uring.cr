@@ -13,7 +13,7 @@
 # keeps re-enqueueing themselves, don't block runnable fibers from progressing,
 # especially when there's a starving scheduler.
 #
-# Thread Safety
+# ## Thread Safety
 #
 # While IO URING is thread safe in the kernel, the SQ and CQ rings aren't thread
 # safe (by design) so each scheduler has its own ring. A main ring is created
@@ -30,7 +30,7 @@
 #
 # CQ rings are always protected by a lock. See below for reasons.
 #
-# Rings
+# ## Rings
 #
 # The scheduler rings are kept in an array. The array never shrinks and only
 # ever grows. Mutations are protected with a mutex and the array is duplicated,

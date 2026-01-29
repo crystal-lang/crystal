@@ -23,11 +23,11 @@ class Crystal::System::IoUring
     fd = Syscall.io_uring_setup(1_u32, pointerof(params))
 
     if fd < 0
-      if fd == -LibC::ENOSYS || fd == -LibC::EPERM
+      case -fd
+      when LibC::ENOSYS || LibC::EPERM
+        # not supported
         return false
-      end
-
-      if fd == -LibC::EINVAL
+      when LibC::EINVAL
         # retry without "no sqarray" flag
         params = LibC::IoUringParams.new
         fd = Syscall.io_uring_setup(1_u32, pointerof(params))
@@ -95,8 +95,7 @@ class Crystal::System::IoUring
     # setup the ring
     params = LibC::IoUringParams.new
     params.flags |= LibC::IORING_SETUP_NO_SQARRAY if @@no_sqarray
-    # params.flags |= LibC::IORING_SETUP_COOP_TASKRUN
-    # params.flags |= LibC::IORING_SETUP_TASKRUN_FLAG
+    params.flags |= LibC::IORING_SETUP_COOP_TASKRUN
 
     if cq_entries
       params.cq_entries = cq_entries.to_u32
