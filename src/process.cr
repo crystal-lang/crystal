@@ -294,7 +294,7 @@ class Process
   # executable which is then looked up by the operating system.
   # The lookup uses the `PATH` variable of the current process environment
   # (i.e. `ENV["PATH"]).
-  # In order to resolve to a specific executable, provide an path instead of
+  # In order to resolve to a specific executable, provide a path instead of
   # only a command name. `Process.find_executable` can help with looking up a
   # command in a custom `PATH`.
   #
