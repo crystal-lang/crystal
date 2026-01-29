@@ -291,7 +291,13 @@ class Process
   # ## `shell: false` (the default)
   #
   # *command* is either a path to the executable to run, or the name of an
-  # executable which is then looked up in `ENV["PATH"]` (similar to `.find_executable`).
+  # executable which is then looked up by the operating system.
+  # The lookup uses the `PATH` variable of the current process environment
+  # (i.e. `ENV["PATH"]).
+  # In order to resolve to a specific executable, provide an path instead of
+  # only a command name. `Process.find_executable` can help with looking up a
+  # command in a custom `PATH`.
+  #
   # The arguments in *args* are passed as arguments to the child process.
   #
   # Raises `IO::Error` if executing *command*  fails, for example because the
@@ -301,6 +307,9 @@ class Process
   #
   # *command* is a shell script executed in the system shell (`/bin/sh` on Unix
   # systems, `cmd.exe` on Windows).
+  # Command names are looked up by the shell itself, using the `PATH` variable
+  # of the shell process (i.e. `env["PATH"]`).
+  #
   # *args* is unsupported on Windows.
   # On Unix it's passed as additional arguments to the shell process and can be
   # used in the shell script with `"${@}"` to safely insert them there. If the
