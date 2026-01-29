@@ -4,6 +4,7 @@ require "spec"
 require "process"
 require "./spec_helper"
 require "../support/env"
+require "../support/wait_for"
 
 private def exit_code_command(code)
   {% if flag?(:win32) %}
@@ -239,7 +240,7 @@ describe Process do
       channel.send process
 
       # Wait a moment for the other fiber to continue and close the IOs
-      sleep 1.microsecond
+      wait_for { process.output.closed? }
 
       process.output.closed?.should be_true
       process.error.closed?.should be_true
