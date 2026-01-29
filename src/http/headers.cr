@@ -180,7 +180,7 @@ struct HTTP::Headers
 
   def merge!(other) : self
     other.each do |key, value|
-      self[wrap(key)] = value
+      self[key] = value
     end
     self
   end
