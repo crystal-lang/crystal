@@ -59,10 +59,8 @@ describe "File" do
       wbuf = Bytes.new(5120)
       Random::Secure.random_bytes(wbuf)
 
-      writer = nil
-
-      WaitGroup.wait do |wg|
-        {% if flag?(:execution_context) %}
+      {% if flag?(:execution_context) %}
+        WaitGroup.wait do |wg|
           # one fiber may block on open(2) (depends on the event loop) but the
           # monitor thread will notice and move the scheduler to another thread,
           # unblocking the other fiber
@@ -77,12 +75,15 @@ describe "File" do
               64.times { |i| reader.read_fully(rbuf) }
             end
           end
-        {% else %}
-          # open(2) will block when opening a fifo file until another thread or
-          # process also opened the file; so we must explicitly start a thread
-          thread = new_thread { writer = File.new(path, "w") }
+        end
+      {% else %}
+        # open(2) will block when opening a fifo file until another thread or
+        # process also opened the file; so we must explicitly start a thread
+        writer = nil
+        thread = new_thread { writer = File.new(path, "w") }
 
-          File.open(path, "r") do |reader|
+        File.open(path, "r") do |reader|
+          WaitGroup.wait do |wg|
             # opened fifo for read: wait for thread to open for write
             thread.join
 
@@ -95,13 +96,14 @@ describe "File" do
               writer.not_nil!.close
             end
           end
-        {% end %}
-      end
+        ensure
+          writer.try(&.close)
+        end
+      {% end %}
 
       rbuf.should eq(wbuf)
     ensure
       File.delete(path) if path
-      writer.close if writer
     end
   {% end %}
 
