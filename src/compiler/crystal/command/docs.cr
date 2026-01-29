@@ -60,6 +60,10 @@ class Crystal::Command
         project_info.canonical_base_url = value
       end
 
+      opts.on("--base-path=PATH", "Set the base path - must be absolute for finding assets on the 404 page") do |value|
+        project_info.base_path = value
+      end
+
       opts.on("--sitemap-base-url=URL", "-b URL", "Set the sitemap base URL and generates sitemap") do |value|
         sitemap_base_url = value
       end

@@ -46,10 +46,16 @@
 # * `#peek_behind`
 # * `#check`
 # * `#check_until`
+# * `#rest`
+# * `#current_char`, `#current_char?`
+# * `#previous_char`, `#previous_char?`
+# * `#current_byte`, `#current_byte?`
+# * `#previous_byte`, `#previous_byte?`
 #
 # Methods that deal with the position of the offset:
 # * `#offset`
 # * `#offset=`
+# * `#rewind`
 # * `#eos?`
 # * `#reset`
 # * `#terminate`
@@ -57,6 +63,7 @@
 # Methods that deal with the last match:
 # * `#[]`
 # * `#[]?`
+# * `#matched?`
 #
 # Miscellaneous methods:
 # * `#inspect`
@@ -74,9 +81,11 @@ class StringScanner
 
   # Sets the *position* of the scan offset.
   #
-  # NOTE: Moving the scan head with this method can cause performance issues in
-  # multibyte strings. For a more performant way to move the head, see
-  # [`#skip(Int)`](#skip%28len%3AInt%29%3AInt32%7CNil-instance-method).
+  # NOTE: Moving the scan head to a non-zero index with this method
+  # can cause performance issues in multibyte strings. For a more
+  # performant way to move the head, see
+  # [`#skip(Int)`](#skip%28len%3AInt%29%3AInt32%7CNil-instance-method)
+  # or `#rewind`.
   def offset=(position : Int)
     raise IndexError.new unless position >= 0
     @byte_offset = @str.char_index_to_byte_index(position) || @str.bytesize
@@ -85,6 +94,15 @@ class StringScanner
   # Returns the current position of the scan offset.
   def offset : Int32
     @str.byte_index_to_char_index(@byte_offset).not_nil!
+  end
+
+  # Rewinds the scan head by *len* characters.
+  #
+  # Raises IndexError if this would go off the beginning of the stream.
+  def rewind(len : Int) : Nil
+    byte_len = lookbehind_byte_length(len)
+    raise IndexError.new("Index out of range") if byte_len.nil?
+    @byte_offset -= byte_len
   end
 
   # Tries to match with *pattern* at the current position. If there's a match,
@@ -435,6 +453,71 @@ class StringScanner
     @str.byte_slice(@byte_offset - byte_len, byte_len)
   end
 
+  # Returns the current byte at the scan head, or nil if at the end.
+  # Does no multi-byte character checking, and may return part of a
+  # multi-byte character. See `#current_char?`.
+  def current_byte? : UInt8?
+    @str.byte_at?(@byte_offset)
+  end
+
+  # Returns the current byte at the scan head, and errors if at the end.
+  # Does not move the scan head.
+  # Does no multi-byte character checking, and may return part of a
+  # multi-byte character. See `#current_char`.
+  def current_byte : UInt8
+    @str.byte_at(@byte_offset)
+  end
+
+  # Returns the byte before the scan head, or nil if at the beginning.
+  # Does not move the scan head.
+  # This performs no multi-byte checking and may return part of a multi-byte
+  # character. See `#previous_char?`.
+  def previous_byte? : UInt8?
+    return nil if @byte_offset.zero?
+    @str.byte_at?(@byte_offset - 1)
+  end
+
+  # Returns the byte before the scan head, and errors if at the beginning.
+  # Does not move the scan head.
+  # This performs no multi-byte checking and may return part of a multi-byte
+  # character. See `#previous_char`
+  def previous_byte : UInt8
+    raise IndexError.new("No previous byte") if @byte_offset.zero?
+    @str.byte_at(@byte_offset - 1)
+  end
+
+  # Returns the character at the scan head, or nil if at the end. Does not
+  # move the scan head. This will properly decode the next character from the
+  # string, and may return a multi-byte character.
+  def current_char? : Char?
+    make_char_reader.current_char?
+  end
+
+  # Returns the character at the scan head, and errors if at the end. Does not
+  # move the scan head. This will properly decode the next character from the
+  # string, and may return a multi-byte character.
+  def current_char : Char
+    # [jneen] Using the nilable version here and manually raising instead of
+    # the perhaps more obvious `make_char_reader.current_char`. This is
+    # because we want to raise an IndexError at the end of the stream, but that
+    # method would return '\0' and not raise any error.
+    current_char? || raise IndexError.new
+  end
+
+  # Returns the character before the scan head, or nil if at the beginning. Does
+  # not move the scan head. This will properly decode the previous character from the
+  # string, and may return a multi-byte character.
+  def previous_char? : Char?
+    make_char_reader.previous_char?
+  end
+
+  # Returns the character before the scan head, and errors if at the beginning.
+  # Does not move the scan head. This will properly decode the previous character
+  # from the string, and may return a multi-byte character.
+  def previous_char : Char
+    make_char_reader.previous_char
+  end
+
   # Returns the remainder of the string after the scan offset.
   #
   # ```
@@ -530,6 +613,19 @@ class StringScanner
     end
 
     @byte_offset - reader.pos
+  end
+
+  # Returns true if the stream is at the beginning of a line and not at EOS.
+  def beginning_of_line? : Bool
+    return false if eos?
+    return true if @byte_offset.zero?
+
+    previous_char == '\n'
+  end
+
+  # Returns true if the last `#scan` resulted in a match
+  def matched? : Bool
+    !@last_match.nil?
   end
 
   # :nodoc:
