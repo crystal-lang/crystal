@@ -9,8 +9,6 @@ struct HTTP::Headers
 
   # :nodoc:
   record Key, name : String do
-    forward_missing_to @name
-
     def hash(hasher)
       name.each_byte do |c|
         hasher = normalize_byte(c).hash(hasher)
