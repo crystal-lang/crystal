@@ -155,9 +155,23 @@ describe HTTP::Headers do
     headers.serialize.should eq("Foo_quux: bar\r\nBaz-Quux: a\r\nBaz-Quux: b\r\n")
   end
 
-  it "merges and return self" do
-    headers = HTTP::Headers.new
-    headers.should be headers.merge!({"foo" => "bar"})
+  describe "#merge!" do
+    it "merges and return self" do
+      headers = HTTP::Headers.new
+      headers.should be headers.merge!({"foo" => "bar"})
+    end
+
+    it "merges other headers" do
+      headers = HTTP::Headers{"foo" => "bar", "boo" => "baz"}
+      headers.merge!(HTTP::Headers{"foo" => "baz", "qux" => "quux"})
+      headers.should eq HTTP::Headers{"foo" => "baz", "boo" => "baz", "qux" => "quux"}
+    end
+
+    it "merges other hash" do
+      headers = HTTP::Headers{"foo" => "bar", "boo" => "baz"}
+      headers.merge!({"foo" => "baz", "qux" => "quux"})
+      headers.should eq HTTP::Headers{"foo" => "baz", "boo" => "baz", "qux" => "quux"}
+    end
   end
 
   it "matches word" do
