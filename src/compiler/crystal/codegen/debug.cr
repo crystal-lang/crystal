@@ -492,6 +492,7 @@ module Crystal
     end
 
     def emit_def_debug_metadata(target_def)
+      return unless target_def.debug?
       location = target_def.location.try &.expanded_location
       return unless location
 
