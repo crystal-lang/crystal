@@ -424,6 +424,9 @@ struct Crystal::System::IOCP
         case error = WinError.wsa_value
         when .wsa_io_pending?
           # the operation is running asynchronously; do nothing
+        when .wsaeconnaborted?
+          return 0_u32 unless connreset_is_error
+          raise IO::Error.from_os_error(method, error, target: target)
         else
           raise IO::Error.from_os_error(method, error, target: target)
         end
@@ -434,6 +437,7 @@ struct Crystal::System::IOCP
       operation.wait_for_result(timeout) do |error|
         case error
         when .wsa_io_incomplete?, .error_operation_aborted?
+          return 0_u32 if target.closed?
           raise IO::TimeoutError.new("#{method} timed out")
         when .wsaeconnreset?
           return 0_u32 unless connreset_is_error
