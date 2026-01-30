@@ -1,25 +1,13 @@
 module Fiber::ExecutionContext
   # :nodoc:
   class Monitor
-    # :nodoc:
-    struct Timer
-      def initialize(@every : Time::Span)
-        @last = Crystal::System::Time.instant
-      end
-
-      def elapsed?(now : Time::Instant) : Bool
-        ret = @last + @every <= now
-        @last = now if ret
-        ret
-      end
-    end
-
     DEFAULT_EVERY = 10.milliseconds
+    COLLECT_STACKS_EVERY = 5.seconds
 
     @thread : Thread?
 
     def initialize(@every = DEFAULT_EVERY)
-      @stack_collect_timer = Timer.new(5.seconds)
+      @collect_stacks_next = Crystal::System::Time.instant + COLLECT_STACKS_EVERY
       @thread = Thread.new(name: "SYSMON") { run_loop }
     end
 
@@ -50,7 +38,7 @@ module Fiber::ExecutionContext
     private def run_loop : Nil
       every do |now|
         transfer_schedulers_blocked_on_syscall
-        collect_stacks if @stack_collect_timer.elapsed?(now)
+        collect_stacks
       end
     end
 
@@ -101,6 +89,9 @@ module Fiber::ExecutionContext
     #
     # OPTIMIZE: should maybe happen during GC collections (?)
     private def collect_stacks
+      return unless @collect_stacks_next <= now
+      @collect_stacks_next = now + COLLECT_STACKS_EVERY
+
       Crystal.trace :sched, "collect_stacks" do
         ExecutionContext.each(&.stack_pool?.try(&.collect))
       end
