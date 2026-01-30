@@ -217,7 +217,11 @@ module Crystal::System::Socket
         when .wsa_io_incomplete?, .wsaenotsock?
           return false
         when .error_operation_aborted?
-          raise IO::TimeoutError.new("#{method} timed out")
+          # if the socket is closed then accept was aborted by an explicit
+          # shutdown before close, otherwise we manually canceled because of a
+          # timeout
+          return false if closed?
+          raise IO::TimeoutError.new("#{method} timed out (overlapped_accept)")
         end
       end
 
