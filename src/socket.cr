@@ -250,6 +250,8 @@ class Socket < IO
   # end
   # ```
   def accept? : Socket?
+    return if closed?
+
     if rs = @fd_lock.read { system_accept }
       sock = Socket.new(handle: rs[0], family: family, type: type, protocol: protocol, blocking: rs[1])
       unless (blocking = system_blocking?) == rs[1]
