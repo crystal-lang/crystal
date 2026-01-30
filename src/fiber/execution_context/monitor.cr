@@ -38,7 +38,7 @@ module Fiber::ExecutionContext
     private def run_loop : Nil
       every do |now|
         transfer_schedulers_blocked_on_syscall
-        collect_stacks
+        collect_stacks(now)
       end
     end
 
@@ -88,7 +88,7 @@ module Fiber::ExecutionContext
     # Iterates each execution context and collects unused fiber stacks.
     #
     # OPTIMIZE: should maybe happen during GC collections (?)
-    private def collect_stacks
+    private def collect_stacks(now)
       return unless @collect_stacks_next <= now
       @collect_stacks_next = now + COLLECT_STACKS_EVERY
 
