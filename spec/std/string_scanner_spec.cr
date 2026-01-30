@@ -391,20 +391,52 @@ describe StringScanner do
   describe "#inspect" do
     it "has information on the scanner" do
       s = StringScanner.new("this is a string")
-      s.inspect.should eq(%(#<StringScanner 0/16 "this " >))
+      s.inspect.should eq(%(#<StringScanner 0/16 "‣this …>))
       s.scan(/\w+\s/)
-      s.inspect.should eq(%(#<StringScanner 5/16 "s is " >))
+      s.inspect.should eq(%(#<StringScanner 5/16 …s ‣is …>))
+      s.scan(1)
+      s.inspect.should eq(%(#<StringScanner 6/16 … i‣s a…>))
       s.scan(/\w+\s/)
-      s.inspect.should eq(%(#<StringScanner 8/16 "s a s" >))
+      s.inspect.should eq(%(#<StringScanner 8/16 …s ‣a s…>))
       s.scan(/\w+\s\w+/)
-      s.inspect.should eq(%(#<StringScanner 16/16 "tring" >))
+      s.inspect.should eq(%(#<StringScanner 16/16 …tring‣">))
     end
 
     it "works with small strings" do
       s = StringScanner.new("hi")
-      s.inspect.should eq(%(#<StringScanner 0/2 "hi" >))
-      s.scan(/\w\w/)
-      s.inspect.should eq(%(#<StringScanner 2/2 "hi" >))
+      s.inspect.should eq(%(#<StringScanner 0/2 "‣hi">))
+      s.scan(/\w/)
+      s.inspect.should eq(%(#<StringScanner 1/2 "h‣i">))
+      s.scan(/\w/)
+      s.inspect.should eq(%(#<StringScanner 2/2 "hi‣">))
+
+      s = StringScanner.new(" a\n\t ")
+      s.skip(1)
+      s.inspect.should eq(%(#<StringScanner 1/5 " ‣a\\n\\t ">))
+
+      s = StringScanner.new("\0\e")
+      s.skip(1)
+      s.inspect.should eq(%(#<StringScanner 1/2 "\\u0000‣\\e">))
+    end
+
+    it "works with multi-byte strings" do
+      s = StringScanner.new("これは文字列である")
+      s.inspect.should eq(%(#<StringScanner 0/9 "‣これは文字…>))
+      s.scan(1)
+      s.inspect.should eq(%(#<StringScanner 1/9 "こ‣れは文字…>))
+      s.scan(1)
+      s.inspect.should eq(%(#<StringScanner 2/9 "これ‣は文字…>))
+      s.scan(1)
+      s.inspect.should eq(%(#<StringScanner 3/9 …れは‣文字列…>))
+      s.scan(3)
+      s.inspect.should eq(%(#<StringScanner 6/9 …字列‣である">))
+      s.terminate
+      s.inspect.should eq(%(#<StringScanner 9/9 …字列である‣">))
+    end
+
+    it "works with empty string" do
+      s = StringScanner.new("")
+      s.inspect.should eq(%(#<StringScanner 0/0 "‣">))
     end
   end
 

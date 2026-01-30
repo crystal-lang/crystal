@@ -531,16 +531,34 @@ class StringScanner
     @str.byte_slice(@byte_offset, @str.bytesize - @byte_offset)
   end
 
+  private INSPECT_INDICATOR_CHAR = '‣'
+  private INSPECT_ELLIPSIS_CHAR  = '…'
+  private INSPECT_ENDING_CHAR    = '"'
+
   # Writes a representation of the scanner.
   #
   # Includes the current position of the offset, the total size of the string,
   # and five characters near the current position.
   def inspect(io : IO) : Nil
+    offset = self.offset
+    size = @str.size
+    remaining = size - offset
+
     io << "#<StringScanner "
-    offset = offset()
-    io << offset << '/' << @str.size
-    start = Math.min(Math.max(offset - 2, 0), Math.max(0, @str.size - 5))
-    io << " \"" << @str[start, 5] << "\" >"
+    io << offset << '/' << size << ' '
+
+    # find a range of 5 characters with the scan head as close to
+    # the middle as possible.
+    chars_after = Math.max(3, 5 - offset).clamp(0, remaining)
+    chars_before = (5 - chars_after).clamp(0, offset)
+
+    io << (chars_before < offset ? INSPECT_ELLIPSIS_CHAR : INSPECT_ENDING_CHAR)
+    peek_behind(chars_before).inspect_unquoted(io) if chars_before > 0
+    io << INSPECT_INDICATOR_CHAR
+    peek(chars_after).inspect_unquoted(io) if chars_after > 0
+    io << (chars_after < remaining ? INSPECT_ELLIPSIS_CHAR : INSPECT_ENDING_CHAR)
+
+    io << '>'
   end
 
   private def make_char_reader : Char::Reader
