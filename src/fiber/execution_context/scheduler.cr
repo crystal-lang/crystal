@@ -101,9 +101,10 @@ module Fiber::ExecutionContext
       ret = yield
 
       unless scheduler.leave_syscall?(value)
-        # the scheduler has been detached: enqueue the current fiber back into
-        # its execution context, and return the thread back into the thread pool
-        scheduler.execution_context.enqueue(fiber)
+        # the scheduler has been detached (or is being detached): enqueue the
+        # current fiber back into its execution context, and return the thread
+        # back into the thread pool
+        scheduler.execution_context.external_enqueue(fiber)
         ExecutionContext.thread_pool.checkin
       end
 
