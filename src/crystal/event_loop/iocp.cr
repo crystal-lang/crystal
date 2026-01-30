@@ -453,9 +453,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   end
 
   def shutdown(socket : ::Socket) : Nil
-    if LibC.shutdown(socket.fd, LibC::SH_BOTH) == LibC::SOCKET_ERROR
-      raise ::Socket::Error.from_wsa_error("shutdown")
-    end
+    LibC.shutdown(socket.fd, LibC::SH_BOTH)
     LibC.CancelIoEx(Pointer(Void).new(socket.fd), nil)
   end
 
