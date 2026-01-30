@@ -115,7 +115,7 @@ module Fiber::ExecutionContext
 
     protected def enter_syscall : UInt32
       old_value = @syscall.add(SYSCALL_FLAG | SYSCALL_INCREMENT, :acquire_release)
-      old_value += SYSCALL_FLAG | SYSCALL_INCREMENT
+      old_value + SYSCALL_FLAG | SYSCALL_INCREMENT
     end
 
     protected def leave_syscall?(value : UInt32) : Bool
