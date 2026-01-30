@@ -4,7 +4,13 @@ abstract class Crystal::EventLoop
       Crystal::EventLoop::Wasi
     {% elsif flag?(:unix) %}
       # TODO: enable more targets by default (need manual tests or fixes)
-      {% if flag?("evloop=libevent") %}
+      {% if flag?("evloop=io_uring") %}
+        if Crystal::EventLoop::IoUring.supported?
+          Crystal::EventLoop::IoUring
+        else
+          System.panic "io_uring_setup", Errno::ENOSYS
+        end
+      {% elsif flag?("evloop=libevent") %}
         Crystal::EventLoop::LibEvent
       {% elsif flag?("evloop=epoll") || flag?(:android) || flag?(:linux) %}
         Crystal::EventLoop::Epoll
@@ -95,6 +101,13 @@ abstract class Crystal::EventLoop
     end
   {% end %}
 
+  # Blocks the current scheduler until all the pending events have completed.
+  # Must yield every runnable fiber.
+  #
+  # Optional.
+  def drain(& : Fiber ->) : Nil
+  end
+
   # Tells a blocking run loop to no longer wait for events to activate. It may
   # for example enqueue a NOOP event with an immediate (or past) timeout. Having
   # activated an event, the loop shall return, allowing the blocked thread to
@@ -147,7 +160,9 @@ end
 {% if flag?(:wasi) %}
   require "./event_loop/wasi"
 {% elsif flag?(:unix) %}
-  {% if flag?("evloop=libevent") %}
+  {% if flag?("evloop=io_uring") %}
+    require "./event_loop/io_uring"
+  {% elsif flag?("evloop=libevent") %}
     require "./event_loop/libevent"
   {% elsif flag?("evloop=epoll") || flag?(:android) || flag?(:linux) %}
     require "./event_loop/epoll"

@@ -131,7 +131,10 @@ module Fiber::ExecutionContext
         loop do
           if @shutdown
             spin_stop
+
+            # drain everything into the global queue
             @runnables.drain
+            @event_loop.drain { |fiber| @global_queue.push(fiber) }
 
             # we may have been the last running scheduler, waiting on the event
             # loop while there are pending events for example; let's resume a
