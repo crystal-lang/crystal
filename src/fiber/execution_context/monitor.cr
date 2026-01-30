@@ -1,7 +1,7 @@
 module Fiber::ExecutionContext
   # :nodoc:
   class Monitor
-    DEFAULT_EVERY = 10.milliseconds
+    DEFAULT_EVERY        = 10.milliseconds
     COLLECT_STACKS_EVERY = 5.seconds
 
     @thread : Thread?
