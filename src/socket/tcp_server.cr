@@ -115,6 +115,8 @@ class TCPServer < TCPSocket
   # end
   # ```
   def accept? : TCPSocket?
+    return if closed?
+
     if rs = @fd_lock.read { system_accept }
       sock = TCPSocket.new(handle: rs[0], family: family, type: type, protocol: protocol, blocking: rs[1])
       sock.sync = sync?

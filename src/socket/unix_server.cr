@@ -85,6 +85,8 @@ class UNIXServer < UNIXSocket
   # Returns the client socket or `nil` if the server is closed after invoking
   # this method.
   def accept? : UNIXSocket?
+    return if closed?
+
     if rs = @fd_lock.read { system_accept }
       sock = UNIXSocket.new(handle: rs[0], type: type, path: @path, blocking: rs[1])
       sock.sync = sync?
