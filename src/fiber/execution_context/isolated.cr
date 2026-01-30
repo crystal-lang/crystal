@@ -115,6 +115,15 @@ module Fiber::ExecutionContext
 
     # :nodoc:
     def enqueue(fiber : Fiber) : Nil
+      enqueue_impl(fiber)
+    end
+
+    # :nodoc:
+    def external_enqueue(fiber : Fiber) : Nil
+      enqueue_impl(fiber)
+    end
+
+    private def enqueue_impl(fiber)
       Crystal.trace :sched, "enqueue", fiber: fiber, context: self
 
       unless fiber == @main_fiber
