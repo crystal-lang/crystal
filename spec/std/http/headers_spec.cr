@@ -155,9 +155,36 @@ describe HTTP::Headers do
     headers.serialize.should eq("Foo_quux: bar\r\nBaz-Quux: a\r\nBaz-Quux: b\r\n")
   end
 
-  it "merges and return self" do
+  describe "#merge!" do
+    it "merges and return self" do
+      headers = HTTP::Headers.new
+      headers.should be headers.merge!({"foo" => "bar"})
+    end
+
+    it "merges other headers" do
+      headers = HTTP::Headers{"foo" => "bar", "boo" => "baz"}
+      headers.merge!(HTTP::Headers{"foo" => "baz", "qux" => "quux"})
+      headers.should eq HTTP::Headers{"foo" => "baz", "boo" => "baz", "qux" => "quux"}
+    end
+
+    it "merges other hash" do
+      headers = HTTP::Headers{"foo" => "bar", "boo" => "baz"}
+      headers.merge!({"foo" => "baz", "qux" => "quux"})
+      headers.should eq HTTP::Headers{"foo" => "baz", "boo" => "baz", "qux" => "quux"}
+    end
+
+    it "raises an error if header value contains invalid character" do
+      headers = HTTP::Headers.new
+      expect_raises ArgumentError do
+        headers.merge!({"invalid-header" => "\r\nLocation: http://example.com"})
+      end
+    end
+  end
+
+  it "dispatch with union type (#16622)" do
     headers = HTTP::Headers.new
-    headers.should be headers.merge!({"foo" => "bar"})
+    headers.merge!(HTTP::Headers.new)
+    headers["foo"] = "bar".as(String | Array(String))
   end
 
   it "matches word" do
