@@ -4,6 +4,7 @@ require "spec"
 require "process"
 require "./spec_helper"
 require "../support/env"
+require "../support/wait_for"
 
 private def exit_code_command(code)
   {% if flag?(:win32) %}
@@ -214,9 +215,38 @@ describe Process do
       value.should eq("hello#{newline}")
     end
 
-    it "closes ios after block" do
+    it "closes input after block" do
       Process.run(*stdin_to_stdout_command) { }
       $?.exit_code.should eq(0)
+    end
+
+    it "closes output and error after block" do
+      reader, writer = IO.pipe
+      channel = Channel(Process).new
+
+      spawn do
+        Process.run(*stdin_to_stdout_command, input: reader, output: :pipe, error: :pipe) do |process|
+          channel.send process
+          channel.receive
+        end
+        channel.close
+      end
+
+      process = channel.receive
+
+      process.output.closed?.should be_false
+      process.error.closed?.should be_false
+
+      channel.send process
+
+      # Wait a moment for the other fiber to continue and close the IOs
+      wait_for { process.output.closed? }
+
+      process.output.closed?.should be_true
+      process.error.closed?.should be_true
+
+      writer.close
+      channel.receive?.should be_nil
     end
 
     it "forwards closed io" do

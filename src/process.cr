@@ -202,6 +202,8 @@ class Process
     process = new(command, args, env, clear_env, shell, input, output, error, chdir)
     begin
       value = yield process
+
+      process.close
       $? = process.wait
       value
     rescue ex
@@ -375,8 +377,6 @@ class Process
 
   # Waits for this process to complete and closes any pipes.
   def wait : Process::Status
-    close_io @input # only closed when a pipe was created but not managed by copy_io
-
     @wait_count.times do
       ex = channel.receive
       raise ex if ex
