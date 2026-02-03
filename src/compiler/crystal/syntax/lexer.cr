@@ -2378,10 +2378,6 @@ module Crystal
           end
         end
 
-        unless valid_filename?(filename)
-          raise "found invalid characters in filename: #{filename.inspect}"
-        end
-
         incr_column_number {{ %(#<loc:").size - 1 }}
 
         unless current_char == ','
@@ -2453,15 +2449,6 @@ module Crystal
       else
         raise %(expected #<loc:push>, #<loc:pop> or #<loc:"...">)
       end
-    end
-
-    private def valid_filename?(filename)
-      filename
-        .each_char
-        .none?(&.in?(
-          '\0', '\a', '\b', '\n', '\r', '\t', '\v', '\f', '\e',
-          *UNICODE_BIDI_CONTROL_CHARACTERS,
-        ))
     end
 
     private def consume_heredoc_start(start)

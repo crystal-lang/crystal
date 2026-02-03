@@ -58,17 +58,6 @@ describe "Lexer: location" do
     token.filename.should eq(%q(foo\bar\baz))
   end
 
-  {% for code in ["foo\0bar", "foo\rbar", "foo\nbar", "foo\vbar"] %}
-    it %q(rejects filenames containing invalid characters: {{ code }}) do
-      lexer = Lexer.new %q(#<loc:{{ code }},12,34>1)
-      msg = %q(found invalid characters in filename: {{ code }})
-
-      expect_raises(Crystal::SyntaxException, msg) do
-        lexer.next_token
-      end
-    end
-  {% end %}
-
   it "overrides location with pragma" do
     lexer = Lexer.new %(1 + #<loc:"foo",12,34>2)
     lexer.filename = "bar"
