@@ -273,28 +273,22 @@ describe Process do
 
     it "sets working directory with string" do
       parent = File.dirname(Dir.current)
-      command = {% if flag?(:win32) %}
-                  "cmd.exe /c echo %cd%"
-                {% else %}
-                  "pwd"
-                {% end %}
-      value = Process.run(command, shell: true, chdir: parent, output: Process::Redirect::Pipe) do |proc|
-        proc.output.gets_to_end
-      end
-      value.should eq "#{parent}#{newline}"
+      pwd = {% if flag?(:win32) %}
+              Process.capture("cmd.exe", {"/c", "echo %cd%"}, chdir: parent)
+            {% else %}
+              Process.capture("pwd", chdir: parent)
+            {% end %}
+      pwd.should eq "#{parent}#{newline}"
     end
 
     it "sets working directory with path" do
       parent = Path.new File.dirname(Dir.current)
-      command = {% if flag?(:win32) %}
-                  "cmd.exe /c echo %cd%"
-                {% else %}
-                  "pwd"
-                {% end %}
-      value = Process.run(command, shell: true, chdir: parent, output: Process::Redirect::Pipe) do |proc|
-        proc.output.gets_to_end
-      end
-      value.should eq "#{parent}#{newline}"
+      pwd = {% if flag?(:win32) %}
+              Process.capture("cmd.exe", {"/c", "echo %cd%"}, chdir: parent)
+            {% else %}
+              Process.capture("pwd", chdir: parent)
+            {% end %}
+      pwd.should eq "#{parent}#{newline}"
     end
 
     pending_win32 "disallows passing arguments to nowhere" do
