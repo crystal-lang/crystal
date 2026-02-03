@@ -627,6 +627,21 @@ describe Process do
     end
   end
 
+  describe ".capture" do
+    it "gets output" do
+      value = Process.capture(*shell_command("echo hello"))
+      value.should eq("hello#{newline}")
+      $?.exit_code.should eq(0)
+    end
+
+    it "raises on unsuccessful exit code" do
+      expect_raises(IO::Error, "Command failed with exit code 17") do
+        Process.capture(*exit_code_command(17))
+      end
+      $?.exit_code.should eq(17)
+    end
+  end
+
   describe ".on_interrupt" do
     it "compiles" do
       typeof(Process.on_interrupt { })
