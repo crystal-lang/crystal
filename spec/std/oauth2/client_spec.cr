@@ -70,7 +70,7 @@ describe OAuth2::Client do
             client.http_client = http_client
 
             expect_raises OAuth2::Error do
-              token = client.get_access_token_using_authorization_code(authorization_code: "asdf")
+              client.get_access_token_using_authorization_code(authorization_code: "asdf")
             end
           end
         end
