@@ -13,7 +13,7 @@ describe OpenSSL::SSL::Context do
     (context.options & OpenSSL::SSL::Options::ALL).should eq(OpenSSL::SSL::Options::ALL)
     (context.options & OpenSSL::SSL::Options::NO_SESSION_RESUMPTION_ON_RENEGOTIATION).should eq(OpenSSL::SSL::Options::NO_SESSION_RESUMPTION_ON_RENEGOTIATION)
 
-    context.modes.should eq(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
+    context.modes.should eq(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS, ENABLE_PARTIAL_WRITE))
     context.verify_mode.should eq(OpenSSL::SSL::VerifyMode::PEER)
 
     OpenSSL::SSL::Context::Client.new(LibSSL.tlsv1_method)
@@ -26,7 +26,7 @@ describe OpenSSL::SSL::Context do
     (context.options & OpenSSL::SSL::Options::NO_SESSION_RESUMPTION_ON_RENEGOTIATION).should eq(OpenSSL::SSL::Options::NO_SESSION_RESUMPTION_ON_RENEGOTIATION)
     (context.options & OpenSSL::SSL::Options::NO_RENEGOTIATION).should eq(OpenSSL::SSL::Options::NO_RENEGOTIATION)
 
-    context.modes.should eq(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
+    context.modes.should eq(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS, ENABLE_PARTIAL_WRITE))
     context.verify_mode.should eq(OpenSSL::SSL::VerifyMode::NONE)
 
     OpenSSL::SSL::Context::Server.new(LibSSL.tlsv1_method)

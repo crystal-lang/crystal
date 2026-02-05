@@ -259,7 +259,7 @@ abstract class OpenSSL::SSL::Context
       NO_SESSION_RESUMPTION_ON_RENEGOTIATION,
       NO_RENEGOTIATION,
     ))
-    add_modes(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
+    add_modes(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS, ENABLE_PARTIAL_WRITE))
 
     # OpenSSL does not support reading from the system root certificate store on
     # Windows, so we have to import them ourselves

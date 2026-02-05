@@ -1,6 +1,6 @@
 abstract class OpenSSL::SSL::Socket < IO
   class Client < Socket
-    def initialize(io, context : Context::Client = Context::Client.new, sync_close : Bool = false, hostname : String? = nil)
+    def initialize(io : ::Socket, context : Context::Client = Context::Client.new, sync_close : Bool = false, hostname : String? = nil)
       super(io, context, sync_close)
       begin
         if hostname
@@ -25,9 +25,15 @@ abstract class OpenSSL::SSL::Socket < IO
           end
         end
 
-        ret = LibSSL.ssl_connect(@ssl)
-        unless ret == 1
-          raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_connect")
+        loop do
+          ret = LibSSL.ssl_connect(@ssl)
+          break if ret == 1
+          error = LibSSL.ssl_get_error(@ssl, ret)
+          case error
+          when .want_read?  then wait_readable
+          when .want_write? then wait_writable
+          else                   raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_connect")
+          end
         end
       rescue ex
         LibSSL.ssl_free(@ssl) # GC never calls finalize, avoid mem leak
@@ -52,7 +58,7 @@ abstract class OpenSSL::SSL::Socket < IO
   end
 
   class Server < Socket
-    def initialize(io, context : Context::Server = Context::Server.new,
+    def initialize(io : ::Socket, context : Context::Server = Context::Server.new,
                    sync_close : Bool = false, accept : Bool = true)
       super(io, context, sync_close)
 
@@ -67,10 +73,17 @@ abstract class OpenSSL::SSL::Socket < IO
     end
 
     def accept : Nil
-      ret = LibSSL.ssl_accept(@ssl)
-      unless ret == 1
-        @bio.io.close if @sync_close
-        raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_accept")
+      loop do
+        ret = LibSSL.ssl_accept(@ssl)
+        break if ret == 1
+        error = LibSSL.ssl_get_error(@ssl, ret)
+        case error
+        when .want_read?  then wait_readable
+        when .want_write? then wait_writable
+        else
+          @io.close if @sync_close
+          raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_accept")
+        end
       end
     end
 
@@ -93,7 +106,10 @@ abstract class OpenSSL::SSL::Socket < IO
 
   getter? closed : Bool
 
-  protected def initialize(io, context : Context, @sync_close : Bool = false)
+  # Returns the underlying `::Socket`.
+  getter io : ::Socket
+
+  protected def initialize(@io : ::Socket, context : Context, @sync_close : Bool = false)
     @closed = false
 
     @ssl = LibSSL.ssl_new(context)
@@ -103,13 +119,14 @@ abstract class OpenSSL::SSL::Socket < IO
 
     # Since OpenSSL::SSL::Socket is buffered it makes no
     # sense to wrap a IO::Buffered with buffering activated.
-    if io.is_a?(IO::Buffered)
-      io.sync = true
-      io.read_buffering = false
+    if @io.is_a?(IO::Buffered)
+      @io.sync = true
+      @io.read_buffering = false
     end
 
-    @bio = BIO.new(io)
-    LibSSL.ssl_set_bio(@ssl, @bio, @bio)
+    unless LibSSL.ssl_set_fd(@ssl, @io.fd) == 1
+      raise OpenSSL::Error.new("SSL_set_fd")
+    end
   end
 
   def finalize
@@ -122,11 +139,21 @@ abstract class OpenSSL::SSL::Socket < IO
     count = slice.size
     return 0 if count == 0
 
-    LibSSL.ssl_read(@ssl, slice.to_unsafe, count).tap do |bytes|
-      if bytes <= 0 && !LibSSL.ssl_get_error(@ssl, bytes).zero_return?
-        ex = OpenSSL::SSL::Error.new(@ssl, bytes, "SSL_read")
+    loop do
+      ret = LibSSL.ssl_read(@ssl, slice.to_unsafe, count)
+      if ret > 0
+        return ret
+      end
+
+      error = LibSSL.ssl_get_error(@ssl, ret)
+      case error
+      when .want_read?   then wait_readable
+      when .want_write?  then wait_writable
+      when .zero_return? then return 0
+      else
+        ex = OpenSSL::SSL::Error.new(@ssl, ret, "SSL_read")
         if ex.underlying_eof?
-          # underlying BIO terminated gracefully, without terminating SSL aspect gracefully first
+          # underlying socket terminated gracefully, without terminating SSL aspect gracefully first
           # some misbehaving servers "do this" so treat as EOF even though it's a protocol error
           return 0
         end
@@ -140,15 +167,23 @@ abstract class OpenSSL::SSL::Socket < IO
 
     return if slice.empty?
 
-    count = slice.size
-    bytes = LibSSL.ssl_write(@ssl, slice.to_unsafe, count)
-    unless bytes > 0
-      raise OpenSSL::SSL::Error.new(@ssl, bytes, "SSL_write")
+    while slice.size > 0
+      ret = LibSSL.ssl_write(@ssl, slice.to_unsafe, slice.size)
+      if ret > 0
+        slice += ret
+      else
+        error = LibSSL.ssl_get_error(@ssl, ret)
+        case error
+        when .want_read?  then wait_readable
+        when .want_write? then wait_writable
+        else                   raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_write")
+        end
+      end
     end
   end
 
   def unbuffered_flush : Nil
-    @bio.io.flush
+    @io.flush
   end
 
   # Returns the negotiated ALPN protocol (eg: `"h2"`) of `nil` if no protocol was
@@ -167,24 +202,21 @@ abstract class OpenSSL::SSL::Socket < IO
         ret = LibSSL.ssl_shutdown(@ssl)
         break if ret == 1                # done bidirectional
         break if ret == 0 && sync_close? # done unidirectional, "this first successful call to SSL_shutdown() is sufficient"
-        raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_shutdown") if ret < 0
-      rescue e : OpenSSL::SSL::Error
-        case e.error
-        when .want_read?, .want_write?
-          # Ignore, shutdown did not complete yet
-        when .syscall?
-          # OpenSSL claimed an underlying syscall failed, but that didn't set any error state,
-          # assume we're done
-          break
-        else
-          raise e
+        if ret < 0
+          error = LibSSL.ssl_get_error(@ssl, ret)
+          case error
+          when .want_read?  then wait_readable
+          when .want_write? then wait_writable
+          when .syscall?    then break # underlying syscall failed without error state, assume done
+          else                   raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_shutdown")
+          end
         end
 
         # ret == 0, retry, shutdown is not complete yet
       end
     rescue IO::Error
     ensure
-      @bio.io.close if @sync_close
+      @io.close if @sync_close
     end
   end
 
@@ -210,49 +242,43 @@ abstract class OpenSSL::SSL::Socket < IO
   end
 
   def local_address
-    io = @bio.io
-    io.responds_to?(:local_address) ? io.local_address : nil
+    io = @io
+    if io.responds_to?(:local_address)
+      io.local_address
+    end
   end
 
   def remote_address
-    io = @bio.io
-    io.responds_to?(:remote_address) ? io.remote_address : nil
+    io = @io
+    if io.responds_to?(:remote_address)
+      io.remote_address
+    end
   end
 
   def read_timeout
-    io = @bio.io
-    if io.responds_to? :read_timeout
-      io.read_timeout
-    else
-      raise NotImplementedError.new("#{io.class}#read_timeout")
-    end
+    @io.read_timeout
   end
 
   def read_timeout=(value)
-    io = @bio.io
-    if io.responds_to? :read_timeout=
-      io.read_timeout = value
-    else
-      raise NotImplementedError.new("#{io.class}#read_timeout=")
-    end
+    @io.read_timeout = value
   end
 
   def write_timeout
-    io = @bio.io
-    if io.responds_to? :write_timeout
-      io.write_timeout
-    else
-      raise NotImplementedError.new("#{io.class}#write_timeout")
-    end
+    @io.write_timeout
   end
 
   def write_timeout=(value)
-    io = @bio.io
-    if io.responds_to? :write_timeout=
-      io.write_timeout = value
-    else
-      raise NotImplementedError.new("#{io.class}#write_timeout=")
-    end
+    @io.write_timeout = value
+  end
+
+  # Returns `true` if kTLS is being used for sending data.
+  def ktls_send? : Bool
+    LibCrypto.BIO_ctrl(LibSSL.ssl_get_wbio(@ssl), LibCrypto::CTRL_GET_KTLS_SEND, 0, Pointer(Void).null) != 0
+  end
+
+  # Returns `true` if kTLS is being used for receiving data.
+  def ktls_recv? : Bool
+    LibCrypto.BIO_ctrl(LibSSL.ssl_get_rbio(@ssl), LibCrypto::CTRL_GET_KTLS_RECV, 0, Pointer(Void).null) != 0
   end
 
   # Returns the `OpenSSL::X509::Certificate` the peer presented, if a
@@ -272,5 +298,13 @@ abstract class OpenSSL::SSL::Socket < IO
         LibCrypto.x509_free(raw_cert)
       end
     end
+  end
+
+  private def wait_readable : Nil
+    Crystal::EventLoop.current.wait_readable(@io)
+  end
+
+  private def wait_writable : Nil
+    Crystal::EventLoop.current.wait_writable(@io)
   end
 end

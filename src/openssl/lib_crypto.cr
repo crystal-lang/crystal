@@ -111,6 +111,8 @@ lib LibCrypto
 
   type BioMethod = Void
 
+  fun BIO_ctrl(bio : Bio*, cmd : Int, larg : Long, parg : Void*) : Long
+
   fun BIO_new(BioMethod*) : Bio*
   fun BIO_free(Bio*) : Int
 
