@@ -28,19 +28,19 @@ module Fiber::ExecutionContext
   # the next iteration, other it will ease the CPU before the next iteration.
   #
   # Returns after every thread has been joined.
-  def self.stress_test(n, *, iteration, publish, name = "STRESS", timeout = 1.second)
+  def self.stress_test(n, *, iteration, publish, name = "STRESS", timeout = 5.seconds)
     ready = Thread::WaitGroup.new(n)
 
     threads = Array.new(n) do |i|
       new_thread("#{name}-#{i}") do
         ready.done
 
-        started = Time.monotonic
+        started = Crystal::System::Time.instant
         attempts = 0
 
         iter = 0
         while iter += 1
-          if iter % 100 == 99 && (Time.monotonic - started) >= timeout
+          if iter % 100 == 99 && (Crystal::System::Time.instant - started) >= timeout
             # reached timeout: abort
             break
           end
