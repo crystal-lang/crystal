@@ -95,7 +95,6 @@ class Crystal::System::IoUring
     # setup the ring
     params = LibC::IoUringParams.new
     params.flags |= LibC::IORING_SETUP_NO_SQARRAY if @@no_sqarray
-    params.flags |= LibC::IORING_SETUP_COOP_TASKRUN
 
     if cq_entries
       params.cq_entries = cq_entries.to_u32
@@ -105,6 +104,8 @@ class Crystal::System::IoUring
     if sq_thread_idle
       params.sq_thread_idle = sq_thread_idle.to_i32
       params.flags |= LibC::IORING_SETUP_SQPOLL
+    else
+      params.flags |= LibC::IORING_SETUP_COOP_TASKRUN
     end
 
     if wq_fd
