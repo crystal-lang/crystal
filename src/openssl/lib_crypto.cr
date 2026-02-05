@@ -98,17 +98,6 @@ lib LibCrypto
   CTRL_GET_KTLS_SEND = 73
   CTRL_GET_KTLS_RECV = 76
 
-  alias BioMethodWrite = (Bio*, Char*, SizeT, SizeT*) -> Int
-  alias BioMethodWriteOld = (Bio*, Char*, Int) -> Int
-  alias BioMethodRead = (Bio*, Char*, SizeT, SizeT*) -> Int
-  alias BioMethodReadOld = (Bio*, Char*, Int) -> Int
-  alias BioMethodPuts = (Bio*, Char*) -> Int
-  alias BioMethodGets = (Bio*, Char*, Int) -> Int
-  alias BioMethodCtrl = (Bio*, Int, Long, Void*) -> Long
-  alias BioMethodCreate = Bio* -> Int
-  alias BioMethodDestroy = Bio* -> Int
-  alias BioMethodCallbackCtrl = (Bio*, Int, Void*) -> Long
-
   type BioMethod = Void
 
   fun BIO_new(BioMethod*) : Bio*
@@ -120,14 +109,21 @@ lib LibCrypto
   fun BIO_set_shutdown(Bio*, Int)
 
   fun BIO_meth_new(Int, Char*) : BioMethod*
-  fun BIO_meth_set_read(BioMethod*, BioMethodReadOld)
-  fun BIO_meth_set_write(BioMethod*, BioMethodWriteOld)
-  fun BIO_meth_set_puts(BioMethod*, BioMethodPuts)
-  fun BIO_meth_set_gets(BioMethod*, BioMethodGets)
-  fun BIO_meth_set_ctrl(BioMethod*, BioMethodCtrl)
-  fun BIO_meth_set_create(BioMethod*, BioMethodCreate)
-  fun BIO_meth_set_destroy(BioMethod*, BioMethodDestroy)
-  fun BIO_meth_set_callback_ctrl(BioMethod*, BioMethodCallbackCtrl)
+  fun BIO_meth_set_read(BioMethod*, (Bio*, Char*, Int) -> Int)
+  fun BIO_meth_set_write(BioMethod*, (Bio*, Char*, Int) -> Int)
+
+  {% unless compare_versions(LIBRESSL_VERSION, "0.0.0") > 0 %}
+    # LibreSSL doesn't support the _ex functions
+    fun BIO_meth_set_read_ex(BioMethod*, (Bio*, Char*, SizeT, SizeT*) -> Int)
+    fun BIO_meth_set_write_ex(BioMethod*, (Bio*, Char*, SizeT, SizeT*) -> Int)
+  {% end %}
+
+  fun BIO_meth_set_puts(BioMethod*, (Bio*, Char*) -> Int)
+  fun BIO_meth_set_gets(BioMethod*, (Bio*, Char*, Int) -> Int)
+  fun BIO_meth_set_ctrl(BioMethod*, (Bio*, Int, Long, Void*) -> Long)
+  fun BIO_meth_set_create(BioMethod*, (Bio*) -> Int)
+  fun BIO_meth_set_destroy(BioMethod*, (Bio*) -> Int)
+  fun BIO_meth_set_callback_ctrl(BioMethod*, (Bio*, Int, Void*) -> Long)
 
   fun sha1 = SHA1(data : Char*, length : SizeT, md : Char*) : Char*
 
