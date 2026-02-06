@@ -41,10 +41,6 @@ struct OpenSSL::BIO
   def self.read_ex(bio, buffer, len, readp)
     count = len > Int32::MAX ? Int32::MAX : len.to_i
     io = Box(IO).unbox(LibCrypto.BIO_get_data(bio))
-
-    # FIXME: why flush (write) before reading?!
-    io.flush
-
     ret = io.read Slice.new(buffer, count)
     readp.value = LibC::SizeT.new(ret)
     1
@@ -52,10 +48,6 @@ struct OpenSSL::BIO
 
   def self.read(bio, buffer, len)
     io = Box(IO).unbox(LibCrypto.BIO_get_data(bio))
-
-    # FIXME: why flush (write) before reading?!
-    io.flush
-
     io.read(Slice.new(buffer, len)).to_i
   end
 
