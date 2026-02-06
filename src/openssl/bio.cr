@@ -3,7 +3,9 @@ require "./lib_crypto"
 # :nodoc:
 struct OpenSSL::BIO
   CRYSTAL_BIO = begin
-    biom = LibCrypto.BIO_meth_new(Int32::MAX, "Crystal BIO")
+    bio_id = LibCrypto.BIO_get_new_index
+    bio_type = bio_id | LibCrypto::BIO_TYPE_SOURCE_SINK | LibCrypto::BIO_TYPE_DESCRIPTOR
+    biom = LibCrypto.BIO_meth_new(bio_type, "Crystal BIO")
 
     {% if LibCrypto.has_method?(:BIO_meth_set_read_ex) %}
       LibCrypto.BIO_meth_set_read_ex(biom, ->read_ex)
@@ -71,6 +73,8 @@ struct OpenSSL::BIO
             0
           when LibCrypto::CTRL_GET_KTLS_SEND, LibCrypto::CTRL_GET_KTLS_RECV
             0
+          when LibCrypto::BIO_C_GET_FD
+            io.responds_to?(:fd) ? io.fd : -1
           else
             STDERR.puts "WARNING: Unsupported BIO ctrl call (#{cmd})"
             0
