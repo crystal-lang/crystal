@@ -409,6 +409,11 @@ module Crystal
     end
 
     def visit(node : ClassDef)
+      if node.annotation?
+        @str << "@[Annotation]"
+        newline
+        append_indent
+      end
       if node.abstract?
         @str << "abstract "
       end

@@ -89,6 +89,20 @@ class Crystal::Doc::Type
     @type.private? ? "private" : nil
   end
 
+  def annotation_class?
+    @type.is_a?(ClassType) && @type.as(ClassType).annotation_class?
+  end
+
+  def annotation_repeatable?
+    return false unless annotation_class?
+    @type.as(ClassType).annotation_metadata.try(&.repeatable?) || false
+  end
+
+  def annotation_targets
+    return nil unless annotation_class?
+    @type.as(ClassType).annotation_metadata.try(&.targets)
+  end
+
   def parents_of?(type)
     return false unless type
 
