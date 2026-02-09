@@ -53,7 +53,7 @@ module Crystal::System::Time
     ((filetime.dwHighDateTime.to_u64 << 32) | filetime.dwLowDateTime.to_u64).to_f64 / FILETIME_TICKS_PER_SECOND.to_f64
   end
 
-  private def performance_frequency
+  private def self.performance_frequency
     LibC.QueryPerformanceFrequency(out frequency)
     frequency
   end
