@@ -240,10 +240,7 @@ describe Process do
       channel.send process
 
       # Wait a moment for the other fiber to continue and close the IOs
-      wait_for { process.output.closed? }
-
-      process.output.closed?.should be_true
-      process.error.closed?.should be_true
+      wait_for { process.output.closed? && process.error.closed? }
 
       writer.close
       channel.receive?.should be_nil
