@@ -61,8 +61,8 @@ module Crystal::System::Time
   def self.monotonic : {Int64, Int32}
     LibC.QueryPerformanceCounter(out ticks)
     frequency = performance_frequency
-    ticks = ticks.tdivmod(frequency)
-    {ticks[0], (ticks[1] &* NANOSECONDS_PER_SECOND // frequency).to_i32!}
+    divmod = ticks.tdivmod(frequency)
+    {divmod[0], (divmod[1] &* NANOSECONDS_PER_SECOND // frequency).to_i32!}
   end
 
   def self.ticks : UInt64
