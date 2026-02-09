@@ -58,6 +58,7 @@ extend-exclude = [
   "lib/**",
   "man/**",
   "spec/compiler/semantic/did_you_mean_spec.cr",
+  "spec/std/string_scanner_spec.cr",
   "spec/std/data/**",
   "spec/std/string/grapheme_break_spec.cr",
   "src/compiler/crystal/tools/playground/public/vendor/",

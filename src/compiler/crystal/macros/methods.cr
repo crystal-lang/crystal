@@ -1067,6 +1067,54 @@ module Crystal
           entries.clear
           self
         end
+      when "select"
+        if block
+          interpret_check_args(uses_block: true) do
+            block_arg_key = block.args[0]?
+            block_arg_value = block.args[1]?
+
+            if entries.empty?
+              interpreter.not_interpreted_hook block.body, use_significant_node: true
+            end
+
+            filtered = entries.select do |entry|
+              interpreter.define_var(block_arg_key.name, entry.key) if block_arg_key
+              interpreter.define_var(block_arg_value.name, entry.value) if block_arg_value
+              interpreter.accept(block.body).truthy?
+            end
+            HashLiteral.new(filtered)
+          end
+        else
+          if args.empty?
+            wrong_number_of_arguments "macro 'HashLiteral#select'", args.size, "1+"
+          end
+          filtered = entries.select { |entry| args.any? &.==(entry.key) }
+          HashLiteral.new(filtered)
+        end
+      when "reject"
+        if block
+          interpret_check_args(uses_block: true) do
+            block_arg_key = block.args[0]?
+            block_arg_value = block.args[1]?
+
+            if entries.empty?
+              interpreter.not_interpreted_hook block.body, use_significant_node: true
+            end
+
+            filtered = entries.reject do |entry|
+              interpreter.define_var(block_arg_key.name, entry.key) if block_arg_key
+              interpreter.define_var(block_arg_value.name, entry.value) if block_arg_value
+              interpreter.accept(block.body).truthy?
+            end
+            HashLiteral.new(filtered)
+          end
+        else
+          if args.empty?
+            wrong_number_of_arguments "macro 'HashLiteral#reject'", args.size, "1+"
+          end
+          filtered = entries.reject { |entry| args.any? &.==(entry.key) }
+          HashLiteral.new(filtered)
+        end
       else
         super
       end
@@ -1182,6 +1230,70 @@ module Crystal
           end
 
           BoolLiteral.new(entries.any? &.key.==(key))
+        end
+      when "select"
+        if block
+          interpret_check_args(uses_block: true) do
+            block_arg_key = block.args[0]?
+            block_arg_value = block.args[1]?
+
+            if entries.empty?
+              interpreter.not_interpreted_hook block.body, use_significant_node: true
+            end
+
+            filtered = entries.select do |entry|
+              interpreter.define_var(block_arg_key.name, MacroId.new(entry.key)) if block_arg_key
+              interpreter.define_var(block_arg_value.name, entry.value) if block_arg_value
+              interpreter.accept(block.body).truthy?
+            end
+            NamedTupleLiteral.new(filtered)
+          end
+        else
+          if args.empty?
+            wrong_number_of_arguments "macro 'NamedTupleLiteral#select'", args.size, "1+"
+          end
+          key_strings = args.map do |arg|
+            case arg
+            when SymbolLiteral, MacroId, StringLiteral
+              arg.value
+            else
+              raise "argument to 'NamedTupleLiteral#select' must be a symbol, string, or macro id, not #{arg.class_desc}"
+            end
+          end
+          filtered = entries.select { |entry| key_strings.includes?(entry.key) }
+          NamedTupleLiteral.new(filtered)
+        end
+      when "reject"
+        if block
+          interpret_check_args(uses_block: true) do
+            block_arg_key = block.args[0]?
+            block_arg_value = block.args[1]?
+
+            if entries.empty?
+              interpreter.not_interpreted_hook block.body, use_significant_node: true
+            end
+
+            filtered = entries.reject do |entry|
+              interpreter.define_var(block_arg_key.name, MacroId.new(entry.key)) if block_arg_key
+              interpreter.define_var(block_arg_value.name, entry.value) if block_arg_value
+              interpreter.accept(block.body).truthy?
+            end
+            NamedTupleLiteral.new(filtered)
+          end
+        else
+          if args.empty?
+            wrong_number_of_arguments "macro 'NamedTupleLiteral#reject'", args.size, "1+"
+          end
+          key_strings = args.map do |arg|
+            case arg
+            when SymbolLiteral, MacroId, StringLiteral
+              arg.value
+            else
+              raise "argument to 'NamedTupleLiteral#reject' must be a symbol, string, or macro id, not #{arg.class_desc}"
+            end
+          end
+          filtered = entries.reject { |entry| key_strings.includes?(entry.key) }
+          NamedTupleLiteral.new(filtered)
         end
       else
         super
@@ -3245,17 +3357,18 @@ private macro interpret_check_args(*, node = self, min_count = nil, named_params
     end
   {% end %}
 
-  {% if !named_params %}
-    if named_args && !named_args.empty?
-      %full_name = full_macro_name({{ node }}, method, {{ top_level }})
-      {{ node }}.raise "named arguments are not allowed here"
-    end
-  {% elsif named_params != true %}
+  {% if named_params != true %}
+    %allowed_keys = {{ named_params }}
     if named_args
-      allowed_keys = {{ named_params }}
-      named_args.each_key do |name|
-        {{ node }}.raise "no named parameter '#{name}'" unless allowed_keys.includes?(name)
+      {% if top_level %}
+      named_args.each do |arg|
+        {{ node }}.raise "no parameter named '#{arg.name}'" unless %allowed_keys.try(&.includes?(arg.name))
       end
+      {% else %}
+      named_args.each_key do |name|
+        {{ node }}.raise "no parameter named '#{name}'" unless %allowed_keys.try(&.includes?(name))
+      end
+      {% end %}
     end
   {% end %}
 

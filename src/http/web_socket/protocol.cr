@@ -48,6 +48,8 @@ class HTTP::WebSocket::Protocol
   end
 
   class StreamIO < IO
+    getter? closed = false
+
     def initialize(@websocket : Protocol, binary, frame_size)
       @opcode = binary ? Opcode::BINARY : Opcode::TEXT
       @buffer = Bytes.new(frame_size)
@@ -55,6 +57,7 @@ class HTTP::WebSocket::Protocol
     end
 
     def write(slice : Bytes) : Nil
+      check_open
       return if slice.empty?
 
       count = Math.min(@buffer.size - @pos, slice.size)
@@ -62,7 +65,7 @@ class HTTP::WebSocket::Protocol
       @pos += count
 
       if @pos == @buffer.size
-        flush(final: false)
+        send_frame(final: false)
       end
 
       if count < slice.size
@@ -74,7 +77,7 @@ class HTTP::WebSocket::Protocol
       raise "This IO is write-only"
     end
 
-    def flush(final = true) : Nil
+    private def send_frame(final = false) : Nil
       @websocket.send(
         @buffer[0...@pos],
         @opcode,
@@ -83,6 +86,12 @@ class HTTP::WebSocket::Protocol
       )
       @opcode = Opcode::CONTINUATION
       @pos = 0
+    end
+
+    def close
+      return if closed?
+      @closed = true
+      send_frame(final: true)
     end
   end
 
@@ -97,7 +106,7 @@ class HTTP::WebSocket::Protocol
   def stream(binary = true, frame_size = 1024, &)
     stream_io = StreamIO.new(self, binary, frame_size)
     yield(stream_io)
-    stream_io.flush
+    stream_io.close
   end
 
   def send(data : Bytes, opcode : Opcode, flags : Flags = Flags::FINAL, flush : Bool = true) : Nil

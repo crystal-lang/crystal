@@ -100,11 +100,9 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
       timeout = blocking ? LibC::INFINITE : 0_i64
     elsif blocking
       if time = @timers_mutex.synchronize { @timers.next_ready? }
-        # convert absolute time of next timer to relative time, expressed in
-        # milliseconds, rounded up
-        # Cannot use `time.elapsed` here because it calls `::Time.instant` which
-        # could be mocked.
-        relative = Crystal::System::Time.instant.duration_since(time)
+        # convert absolute time to relative time, expressed in milliseconds,
+        # rounded up; cannot use `::Time.instant` that could be mocked
+        relative = time.duration_since(Crystal::System::Time.instant)
         timeout = (relative.to_i * 1000 + (relative.nanoseconds + 999_999) // 1_000_000)
       else
         timeout = LibC::INFINITE

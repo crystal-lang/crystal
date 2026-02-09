@@ -29,8 +29,8 @@ module Crystal::System::Thread
 
   def self.sleep(time : ::Time::Span) : Nil
     req = uninitialized LibC::Timespec
-    req.tv_sec = typeof(req.tv_sec).new(time.seconds)
-    req.tv_nsec = typeof(req.tv_nsec).new(time.nanoseconds)
+    req.tv_sec = typeof(req.tv_sec).new(time.@seconds)
+    req.tv_nsec = typeof(req.tv_nsec).new(time.@nanoseconds)
 
     loop do
       return if LibC.nanosleep(pointerof(req), out rem) == 0

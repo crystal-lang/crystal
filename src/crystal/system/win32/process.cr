@@ -302,7 +302,7 @@ struct Crystal::System::Process
 
     if LibC.CreateProcessW(
          nil, System.to_wstr(prepared_args), nil, nil, true, LibC::CREATE_SUSPENDED | LibC::CREATE_UNICODE_ENVIRONMENT,
-         make_env_block(env, clear_env), chdir.try { |str| System.to_wstr(str) } || Pointer(UInt16).null,
+         Env.make_env_block(env, clear_env), chdir.try { |str| System.to_wstr(str) } || Pointer(UInt16).null,
          pointerof(startup_info), pointerof(process_info)
        ) == 0
       error = WinError.value
@@ -456,29 +456,6 @@ struct Crystal::System::Process
 
   def self.chroot(path)
     raise NotImplementedError.new("Process.chroot")
-  end
-
-  protected def self.make_env_block(env, clear_env : Bool) : UInt16*
-    # If neither clearing nor adding anything, use the default behavior of inheriting everything.
-    return Pointer(UInt16).null if !env && !clear_env
-
-    # Emulate case-insensitive behavior using a Hash like {"KEY" => {"kEy", "value"}, ...}
-    final_env = {} of String => {String, String}
-    unless clear_env
-      Crystal::System::Env.each do |key, val|
-        final_env[key.upcase] = {key, val}
-      end
-    end
-    env.try &.each do |(key, val)|
-      if val
-        # Note: in the case of overriding, the last "case-spelling" of the key wins.
-        final_env[key.upcase] = {key, val}
-      else
-        final_env.delete key.upcase
-      end
-    end
-    # The "values" we're passing are actually key-value pairs.
-    Crystal::System::Env.make_env_block(final_env.each_value)
   end
 end
 

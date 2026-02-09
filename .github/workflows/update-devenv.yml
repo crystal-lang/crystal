@@ -3,10 +3,9 @@ name: Update devenv
 on:
   schedule:
     - cron: "0 3 * * 2" # Weekly on Tuesdays
-  pull_request:
-    paths:
-      - '.github/workflows/update-devenv.yml'
   push:
+    branches:
+      - master
     paths:
       - '.github/workflows/update-devenv.yml'
   workflow_dispatch:
@@ -27,9 +26,9 @@ jobs:
           ref: master
           persist-credentials: false
 
-      - uses: cachix/install-nix-action@0b0e072294b088b73964f1d72dfdac0951439dbd # v31
+      - uses: cachix/install-nix-action@4e002c8ec80594ecd40e759629461e26c8abed15 # v31
 
-      - uses: cachix/cachix-action@0fc020193b5a1fa3ac4575aa3a7d3aa6a35435ad # v16
+      - uses: cachix/cachix-action@3ba601ff5bbb07c7220846facfa2cd81eeee15a1 # v16
         with:
           name: devenv
 
@@ -51,7 +50,7 @@ jobs:
 
       - name: Create PR
         if: steps.changes.outputs.changed == 'true'
-        uses: peter-evans/create-pull-request@84ae59a2cdc2258d6fa0732dd66352dddae2a412 # v7
+        uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8
         with:
           commit-message: "Update `devenv.lock`"
           title: "Update `devenv.lock`"

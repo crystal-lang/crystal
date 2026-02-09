@@ -89,4 +89,11 @@ describe "concurrent" do
       Array(Int32).new(5) { chan.receive }.should eq [1, 2, 10, 3, 20]
     end
   {% end %}
+
+  it "sleep does not return immediately (#16578)" do
+    elapsed = Time.measure do
+      sleep 50.milliseconds
+    end
+    elapsed.should be >= 50.milliseconds
+  end
 end

@@ -18,7 +18,7 @@ module GC
     {% else %}
       # libc malloc is not guaranteed to return cleared memory, so we need to
       # explicitly clear it. Ref: https://github.com/crystal-lang/crystal/issues/14678
-      LibC.malloc(size).tap(&.clear)
+      LibC.malloc(size).tap(&.clear(size))
     {% end %}
   end
 
