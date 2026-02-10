@@ -84,6 +84,14 @@ struct OpenSSL::BIO
   @boxed_io : Void*
 
   def initialize(@io : IO)
+    if io.is_a?(IO::Buffered)
+      # Disable buffers of the underlying IO (e.g. TCP socket) so OpenSSL
+      # becomes responsible of what needs to be read/written on the wire;
+      # instead, buffers shall be on OpenSSL::SSL::Socket (for example).
+      io.sync = true
+      io.read_buffering = false
+    end
+
     @bio = LibCrypto.BIO_new(CRYSTAL_BIO)
 
     # We need to store a reference to the box because it's
