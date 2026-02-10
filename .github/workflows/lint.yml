@@ -21,7 +21,11 @@ jobs:
       - name: Install devenv.sh
         run: nix profile install nixpkgs#devenv
       - name: "Download target branch: ${{ github.base_ref || 'master' }}"
-        run: git fetch origin "${TARGET_BRANCH}" --depth=1
+        run: git fetch origin "${TARGET_BRANCH}"
+      - name: Diagnostic
+        run: |
+          git log --oneline --graph --decorate --all | head -n 20
+          git merge-base origin/master HEAD || echo "No merge base found"
       - name: Run prek hooks for changes against target branch (${{ github.base_ref || 'master' }})
         run: prek run --from-ref "origin/${TARGET_BRANCH}" --to-ref HEAD
         shell: devenv --profile lint shell bash -- -e {0}
