@@ -112,8 +112,8 @@ class OptionParser
   # and uses it to parse the passed *args* (defaults to `ARGV`).
   #
   # Refer to `#gnu_optional_args?` for the behaviour of the named parameter.
-  def self.parse(args = ARGV, *, gnu_optional_args : Bool = false, bundling : Bool = false, &) : self
-    parser = OptionParser.new(gnu_optional_args: gnu_optional_args, bundling: bundling)
+  def self.parse(args = ARGV, *, gnu_optional_args : Bool = false, &) : self
+    parser = OptionParser.new(gnu_optional_args: gnu_optional_args)
     yield parser
     parser.parse(args)
     parser
@@ -122,7 +122,7 @@ class OptionParser
   # Creates a new parser.
   #
   # Refer to `#gnu_optional_args?` for the behaviour of the named parameter.
-  def initialize(*, @gnu_optional_args : Bool = false, @bundling : Bool = false)
+  def initialize(*, @gnu_optional_args : Bool = false)
     @flags = [] of String
     @handlers = Hash(String, Handler).new
     @stop = false
@@ -133,8 +133,8 @@ class OptionParser
   # Creates a new parser, with its configuration specified in the block.
   #
   # Refer to `#gnu_optional_args?` for the behaviour of the named parameter.
-  def self.new(*, gnu_optional_args : Bool = false, bundling : Bool = false, &)
-    new(gnu_optional_args: gnu_optional_args, bundling: bundling).tap { |parser| yield parser }
+  def self.new(*, gnu_optional_args : Bool = false, &)
+    new(gnu_optional_args: gnu_optional_args).tap { |parser| yield parser }
   end
 
   # Returns whether the GNU convention is followed for optional arguments.
@@ -172,27 +172,6 @@ class OptionParser
   # Remaining: []
   # ```
   property? gnu_optional_args : Bool
-
-  # Returns whether short option bundling is enabled.
-  #
-  # If true, short options can be grouped after a single dash:
-  #
-  # ```
-  # require "option_parser"
-  #
-  # removed = false
-  # forced = false
-  # OptionParser.parse(%w(-rf), bundling: true) do |parser|
-  #   parser.on("-r", "") { removed = true }
-  #   parser.on("-f", "") { forced = true }
-  # end
-  #
-  # {removed, forced} # => {true, true}
-  # ```
-  #
-  # Without `bundling: true`, a token like `-rf` is interpreted as
-  # the flag `-r` with an inline value `f`.
-  property? bundling : Bool
 
   # Establishes the initial message for the help printout.
   # Typically, you want to write here the name of your program,
@@ -422,7 +401,7 @@ class OptionParser
           break
         end
 
-        if bundling? && bundled_short_arg?(arg)
+        if bundled_short_arg?(arg)
           arg_index = handle_bundled_short_options(arg, arg_index, args, handled_args)
         else
           flag, value = parse_arg_to_flag_and_value(arg)
