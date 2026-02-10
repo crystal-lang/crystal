@@ -1,4 +1,5 @@
 require "./types"
+require "./uio"
 
 lib LibC
   SOCK_DGRAM     =  2
@@ -48,6 +49,23 @@ lib LibC
     l_linger : Int
   end
 
+  struct Msghdr
+    msg_name : Void*
+    msg_namelen : SocklenT
+    msg_iov : Iovec*
+    msg_iovlen : SizeT
+    msg_control : Void*
+    msg_controllen : SizeT
+    msg_flags : Int
+  end
+
+  struct Cmsghdr
+    cmsg_len : SizeT
+    cmsg_level : Int
+    cmsg_type : Int
+    cmsg_data : Char[0]
+  end
+
   fun accept(__fd : Int, __addr : Sockaddr*, __addr_length : SocklenT*) : Int
   fun accept4(__fd : Int, __addr : Sockaddr*, __addr_length : SocklenT*, __flags : Int) : Int
   fun bind(__fd : Int, __addr : Sockaddr*, __addr_length : SocklenT) : Int
@@ -58,7 +76,9 @@ lib LibC
   fun listen(__fd : Int, __backlog : Int) : Int
   fun recv(__fd : Int, __buf : Void*, __n : SizeT, __flags : Int) : SSizeT
   fun recvfrom(__fd : Int, __buf : Void*, __n : SizeT, __flags : Int, __src_addr : Sockaddr*, __src_addr_length : SocklenT*) : SSizeT
+  fun recvmsg(Int, Msghdr*, Int) : Int
   fun send(__fd : Int, __buf : Void*, __n : SizeT, __flags : Int) : SSizeT
+  fun sendmsg(Int, Msghdr*, Int) : Int
   fun sendto(__fd : Int, __buf : Void*, __n : SizeT, __flags : Int, __dst_addr : Sockaddr*, __dst_addr_length : SocklenT) : SSizeT
   fun setsockopt(__fd : Int, __level : Int, __option : Int, __value : Void*, __value_length : SocklenT) : Int
   fun shutdown(__fd : Int, __how : Int) : Int

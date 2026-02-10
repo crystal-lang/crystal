@@ -365,6 +365,36 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     end
   end
 
+  # Extension to support Kernel TLS in OpenSSL::BIO.
+  def recvmsg(socket : ::Socket, message : Pointer(LibC::Msghdr), flags : Int32) : Int32 | Errno
+    loop do
+      ret = LibC.recvmsg(socket.fd, message, flags)
+      return ret.to_i unless ret == -1
+
+      if Errno.value == Errno::EAGAIN
+        wait_readable(socket, socket.@read_timeout) { return Errno::ETIMEDOUT }
+        return Errno::EBADF if socket.closed?
+      else
+        return Errno.value
+      end
+    end
+  end
+
+  # Extension to support Kernel TLS in OpenSSL::BIO.
+  def sendmsg(socket : ::Socket, message : Pointer(LibC::Msghdr), flags : Int32) : Int32 | Errno
+    loop do
+      ret = LibC.sendmsg(socket.fd, message, flags)
+      return ret.to_i unless ret == -1
+
+      if Errno.value == Errno::EAGAIN
+        wait_writable(socket, socket.@write_timeout) { return Errno::ETIMEDOUT }
+        return Errno::EBADF if socket.closed?
+      else
+        return Errno.value
+      end
+    end
+  end
+
   def shutdown(socket : ::Socket) : Nil
     # perform cleanup before LibC.close. Using a file descriptor after it has
     # been closed is never defined and can always lead to undefined results

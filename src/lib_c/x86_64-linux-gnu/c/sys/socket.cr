@@ -1,4 +1,5 @@
 require "./types"
+require "./uio"
 
 lib LibC
   SOCK_DGRAM     =  2
@@ -48,6 +49,23 @@ lib LibC
     l_linger : Int
   end
 
+  struct Msghdr
+    msg_name : Void*
+    msg_namelen : SocklenT
+    msg_iov : Iovec*
+    msg_iovlen : SizeT
+    msg_control : Void*
+    msg_controllen : SizeT
+    msg_flags : Int
+  end
+
+  struct Cmsghdr
+    cmsg_len : SizeT
+    cmsg_level : Int
+    cmsg_type : Int
+    cmsg_data : Char[0]
+  end
+
   fun accept(fd : Int, addr : Sockaddr*, addr_len : SocklenT*) : Int
   fun accept4(fd : Int, addr : Sockaddr*, addr_len : SocklenT*, flags : Int) : Int
   fun bind(fd : Int, addr : Sockaddr*, len : SocklenT) : Int
@@ -58,7 +76,9 @@ lib LibC
   fun listen(fd : Int, n : Int) : Int
   fun recv(fd : Int, buf : Void*, n : SizeT, flags : Int) : SSizeT
   fun recvfrom(fd : Int, buf : Void*, n : SizeT, flags : Int, addr : Sockaddr*, addr_len : SocklenT*) : SSizeT
+  fun recvmsg(Int, Msghdr*, Int) : Int
   fun send(fd : Int, buf : Void*, n : SizeT, flags : Int) : SSizeT
+  fun sendmsg(Int, Msghdr*, Int) : Int
   fun sendto(fd : Int, buf : Void*, n : SizeT, flags : Int, addr : Sockaddr*, addr_len : SocklenT) : SSizeT
   fun setsockopt(fd : Int, level : Int, optname : Int, optval : Void*, optlen : SocklenT) : Int
   fun shutdown(fd : Int, how : Int) : Int
