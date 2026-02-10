@@ -252,7 +252,7 @@ describe "OptionParser" do
     it "parses bundled boolean short options" do
       args = %w(-rf)
       called = [] of String
-      OptionParser.parse(args, bundling: true) do |opts|
+      OptionParser.parse(args) do |opts|
         opts.on("-r", "") { called << "-r" }
         opts.on("-f", "") { called << "-f" }
       end
@@ -263,7 +263,7 @@ describe "OptionParser" do
     it "re-triggers handlers for repeated short flags" do
       args = %w(-vvv)
       verbosity = 0
-      OptionParser.parse(args, bundling: true) do |opts|
+      OptionParser.parse(args) do |opts|
         opts.on("-v", "") { verbosity += 1 }
       end
       verbosity.should eq(3)
@@ -274,7 +274,7 @@ describe "OptionParser" do
       args = %w(-ovalue -r)
       value = nil
       r = false
-      OptionParser.parse(args, bundling: true) do |opts|
+      OptionParser.parse(args) do |opts|
         opts.on("-o VALUE", "") { |v| value = v }
         opts.on("-r", "") { r = true }
       end
@@ -287,7 +287,7 @@ describe "OptionParser" do
       args = %w(-ab123)
       a = false
       b = nil
-      OptionParser.parse(args, bundling: true) do |opts|
+      OptionParser.parse(args) do |opts|
         opts.on("-a", "") { a = true }
         opts.on("-b VALUE", "") { |v| b = v }
       end
@@ -298,7 +298,7 @@ describe "OptionParser" do
 
     it "raises on invalid option inside bundle" do
       expect_raises OptionParser::InvalidOption, "Invalid option: -j" do
-        OptionParser.parse(["-rj"], bundling: true) do |opts|
+        OptionParser.parse(["-rj"]) do |opts|
           opts.on("-r", "") { }
         end
       end
@@ -309,7 +309,7 @@ describe "OptionParser" do
       a = false
       b = false
       e = nil
-      OptionParser.parse(args, bundling: true) do |opts|
+      OptionParser.parse(args) do |opts|
         opts.on("-a", "") { a = true }
         opts.on("-b", "") { b = true }
         opts.on("-e VALUE", "") { |v| e = v }
@@ -454,7 +454,7 @@ describe "OptionParser" do
   end
 
   it "raises on invalid option if value is given to none value handler (short flag, #9553) " do
-    expect_raises OptionParser::InvalidOption, "Invalid option: -foo" do
+    expect_raises OptionParser::InvalidOption, "Invalid option: -o" do
       OptionParser.parse(["-foo"]) do |opts|
         opts.on("-f", "some flag") { }
       end
