@@ -7,7 +7,7 @@ on:
 permissions: {}
 
 jobs:
-  pre-commit:
+  prek:
     runs-on: ubuntu-latest
     steps:
       - name: Download source
@@ -22,12 +22,12 @@ jobs:
         run: nix profile install nixpkgs#devenv
       - name: "Download target branch: ${{ github.base_ref || 'master' }}"
         run: git fetch origin "${TARGET_BRANCH}"
-      - name: Run pre-commit hooks for changes against target branch (${{ github.base_ref || 'master' }})
-        run: pre-commit run --from-ref "origin/${TARGET_BRANCH}" --to-ref HEAD
+      - name: Run prek hooks for changes against target branch (${{ github.base_ref || 'master' }})
+        run: prek run --from-ref "origin/${TARGET_BRANCH}" --to-ref HEAD
         shell: devenv --profile lint shell bash -- -e {0}
         if: "${{ github.event_name != 'workflow_dispatch' }}"
-      - name: Run pre-commit on all files
-        run: pre-commit run --all-files
+      - name: Run prek on all files
+        run: prek run --all-files
         shell: devenv --profile lint shell bash -- -e {0}
         if: "${{ github.event_name == 'workflow_dispatch' }}"
     env:
