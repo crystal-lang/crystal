@@ -74,7 +74,11 @@ struct OpenSSL::BIO
           when LibCrypto::CTRL_GET_KTLS_SEND, LibCrypto::CTRL_GET_KTLS_RECV
             0
           when LibCrypto::BIO_C_GET_FD
-            io.responds_to?(:fd) ? io.fd : -1
+            if io.is_a?(Socket) || io.is_a?(IO::FileDescriptor)
+              io.fd
+            else
+              -1
+            end
           else
             STDERR.puts "WARNING: Unsupported BIO ctrl call (#{cmd})"
             0
