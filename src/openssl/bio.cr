@@ -4,8 +4,11 @@ require "./lib_crypto"
 struct OpenSSL::BIO
   CRYSTAL_BIO = begin
     bio_id = LibCrypto.BIO_get_new_index
+    raise OpenSSL::Error.new("BIO_get_new_index") if bio_id == -1
+
     bio_type = bio_id | LibCrypto::BIO_TYPE_SOURCE_SINK | LibCrypto::BIO_TYPE_DESCRIPTOR
     biom = LibCrypto.BIO_meth_new(bio_type, "Crystal BIO")
+    raise OpenSSL::Error.new("BIO_meth_new") if biom.null?
 
     {% if LibCrypto.has_method?(:BIO_meth_set_read_ex) %}
       LibCrypto.BIO_meth_set_read_ex(biom, ->read_ex)
@@ -99,6 +102,8 @@ struct OpenSSL::BIO
 
   def initialize(@io : IO)
     @bio = LibCrypto.BIO_new(CRYSTAL_BIO)
+    raise OpenSSL::Error.new("BIO_new") if @bio.null?
+
     LibCrypto.BIO_set_data(@bio, Box(IO).box(io))
   end
 
