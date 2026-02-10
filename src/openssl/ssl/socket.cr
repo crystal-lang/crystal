@@ -69,7 +69,7 @@ abstract class OpenSSL::SSL::Socket < IO
     def accept : Nil
       ret = LibSSL.ssl_accept(@ssl)
       unless ret == 1
-        @bio.io.close if @sync_close
+        bio.io.close if @sync_close
         raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_accept")
       end
     end
@@ -93,6 +93,12 @@ abstract class OpenSSL::SSL::Socket < IO
 
   getter? closed : Bool
 
+  {% if compare_versions(Crystal::VERSION, "1.12.0") >= 0 %}
+    @bio = uninitialized ReferenceStorage(BIO)
+  {% else %}
+    @bio = uninitialized BIO
+  {% end %}
+
   protected def initialize(io, context : Context, @sync_close : Bool = false)
     @closed = false
 
@@ -101,12 +107,27 @@ abstract class OpenSSL::SSL::Socket < IO
       raise OpenSSL::Error.new("SSL_new")
     end
 
-    @bio = BIO.new(io)
-    LibSSL.ssl_set_bio(@ssl, @bio, @bio)
+    bio =
+      {% if compare_versions(Crystal::VERSION, "1.12.0") >= 0 %}
+        @bio = uninitialized ReferenceStorage(BIO)
+        BIO.unsafe_construct(pointerof(@bio), io)
+      {% else %}
+        @bio = BIO.new(io)
+      {% end %}
+
+    LibSSL.ssl_set_bio(@ssl, bio, bio)
   end
 
   def finalize
     LibSSL.ssl_free(@ssl)
+  end
+
+  private def bio
+    {% if compare_versions(Crystal::VERSION, "1.12.0") >= 0 %}
+      @bio.to_reference
+    {% else %}
+      @bio
+    {% end %}
   end
 
   def unbuffered_read(slice : Bytes) : Int32
@@ -141,7 +162,7 @@ abstract class OpenSSL::SSL::Socket < IO
   end
 
   def unbuffered_flush : Nil
-    @bio.io.flush
+    bio.io.flush
   end
 
   # Returns the negotiated ALPN protocol (eg: `"h2"`) of `nil` if no protocol was
@@ -177,7 +198,7 @@ abstract class OpenSSL::SSL::Socket < IO
       end
     rescue IO::Error
     ensure
-      @bio.io.close if @sync_close
+      bio.io.close if @sync_close
     end
   end
 
@@ -203,17 +224,17 @@ abstract class OpenSSL::SSL::Socket < IO
   end
 
   def local_address
-    io = @bio.io
+    io = bio.io
     io.responds_to?(:local_address) ? io.local_address : nil
   end
 
   def remote_address
-    io = @bio.io
+    io = bio.io
     io.responds_to?(:remote_address) ? io.remote_address : nil
   end
 
   def read_timeout
-    io = @bio.io
+    io = bio.io
     if io.responds_to? :read_timeout
       io.read_timeout
     else
@@ -222,7 +243,7 @@ abstract class OpenSSL::SSL::Socket < IO
   end
 
   def read_timeout=(value)
-    io = @bio.io
+    io = bio.io
     if io.responds_to? :read_timeout=
       io.read_timeout = value
     else
@@ -231,7 +252,7 @@ abstract class OpenSSL::SSL::Socket < IO
   end
 
   def write_timeout
-    io = @bio.io
+    io = bio.io
     if io.responds_to? :write_timeout
       io.write_timeout
     else
@@ -240,7 +261,7 @@ abstract class OpenSSL::SSL::Socket < IO
   end
 
   def write_timeout=(value)
-    io = @bio.io
+    io = bio.io
     if io.responds_to? :write_timeout=
       io.write_timeout = value
     else

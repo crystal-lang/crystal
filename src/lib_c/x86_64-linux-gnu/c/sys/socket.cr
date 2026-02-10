@@ -29,6 +29,8 @@ lib LibC
   SHUT_WR        =      1
   SOCK_CLOEXEC   = 524288
   SOCK_NONBLOCK  =   2048
+  SOL_TCP        =      6
+  SOL_TLS        =    282
 
   alias SocklenT = UInt
   alias SaFamilyT = UShort

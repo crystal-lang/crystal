@@ -1,0 +1,132 @@
+lib LibC
+  TLS_TX = 1
+  TLS_RX = 2
+
+  TLS_SET_RECORD_TYPE = 1
+  TLS_GET_RECORD_TYPE = 2
+
+  TLS_CIPHER_AES_GCM_128              = 51
+  TLS_CIPHER_AES_GCM_128_IV_SIZE      =  8
+  TLS_CIPHER_AES_GCM_128_KEY_SIZE     = 16
+  TLS_CIPHER_AES_GCM_128_SALT_SIZE    =  4
+  TLS_CIPHER_AES_GCM_128_TAG_SIZE     = 16
+  TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE =  8
+
+  TLS_CIPHER_AES_GCM_256              = 52
+  TLS_CIPHER_AES_GCM_256_IV_SIZE      =  8
+  TLS_CIPHER_AES_GCM_256_KEY_SIZE     = 32
+  TLS_CIPHER_AES_GCM_256_SALT_SIZE    =  4
+  TLS_CIPHER_AES_GCM_256_TAG_SIZE     = 16
+  TLS_CIPHER_AES_GCM_256_REC_SEQ_SIZE =  8
+
+  TLS_CIPHER_AES_CCM_128              = 53
+  TLS_CIPHER_AES_CCM_128_IV_SIZE      =  8
+  TLS_CIPHER_AES_CCM_128_KEY_SIZE     = 16
+  TLS_CIPHER_AES_CCM_128_SALT_SIZE    =  4
+  TLS_CIPHER_AES_CCM_128_TAG_SIZE     = 16
+  TLS_CIPHER_AES_CCM_128_REC_SEQ_SIZE =  8
+
+  TLS_CIPHER_CHACHA20_POLY1305              = 54
+  TLS_CIPHER_CHACHA20_POLY1305_IV_SIZE      = 12
+  TLS_CIPHER_CHACHA20_POLY1305_KEY_SIZE     = 32
+  TLS_CIPHER_CHACHA20_POLY1305_SALT_SIZE    =  0
+  TLS_CIPHER_CHACHA20_POLY1305_TAG_SIZE     = 16
+  TLS_CIPHER_CHACHA20_POLY1305_REC_SEQ_SIZE =  8
+
+  TLS_CIPHER_SM4_GCM              = 55
+  TLS_CIPHER_SM4_GCM_IV_SIZE      =  8
+  TLS_CIPHER_SM4_GCM_KEY_SIZE     = 16
+  TLS_CIPHER_SM4_GCM_SALT_SIZE    =  4
+  TLS_CIPHER_SM4_GCM_TAG_SIZE     = 16
+  TLS_CIPHER_SM4_GCM_REC_SEQ_SIZE =  8
+
+  TLS_CIPHER_SM4_CCM              = 56
+  TLS_CIPHER_SM4_CCM_IV_SIZE      =  8
+  TLS_CIPHER_SM4_CCM_KEY_SIZE     = 16
+  TLS_CIPHER_SM4_CCM_SALT_SIZE    =  4
+  TLS_CIPHER_SM4_CCM_TAG_SIZE     = 16
+  TLS_CIPHER_SM4_CCM_REC_SEQ_SIZE =  8
+
+  TLS_CIPHER_ARIA_GCM_128              = 57
+  TLS_CIPHER_ARIA_GCM_128_IV_SIZE      =  8
+  TLS_CIPHER_ARIA_GCM_128_KEY_SIZE     = 16
+  TLS_CIPHER_ARIA_GCM_128_SALT_SIZE    =  4
+  TLS_CIPHER_ARIA_GCM_128_TAG_SIZE     = 16
+  TLS_CIPHER_ARIA_GCM_128_REC_SEQ_SIZE =  8
+
+  TLS_CIPHER_ARIA_GCM_256              = 58
+  TLS_CIPHER_ARIA_GCM_256_IV_SIZE      =  8
+  TLS_CIPHER_ARIA_GCM_256_KEY_SIZE     = 32
+  TLS_CIPHER_ARIA_GCM_256_SALT_SIZE    =  4
+  TLS_CIPHER_ARIA_GCM_256_TAG_SIZE     = 16
+  TLS_CIPHER_ARIA_GCM_256_REC_SEQ_SIZE =  8
+
+  struct Tls_crypto_info
+    version : UInt16
+    cipher_type : UInt16
+  end
+
+  struct Tls12_crypto_info_aes_gcm_128
+    info : Tls_crypto_info
+    iv : Char[TLS_CIPHER_AES_GCM_128_IV_SIZE]
+    key : Char[TLS_CIPHER_AES_GCM_128_KEY_SIZE]
+    salt : Char[TLS_CIPHER_AES_GCM_128_SALT_SIZE]
+    rec_seq : Char[TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE]
+  end
+
+  struct Tls12_crypto_info_aes_gcm_256
+    info : Tls_crypto_info
+    iv : Char[TLS_CIPHER_AES_GCM_256_IV_SIZE]
+    key : Char[TLS_CIPHER_AES_GCM_256_KEY_SIZE]
+    salt : Char[TLS_CIPHER_AES_GCM_256_SALT_SIZE]
+    rec_seq : Char[TLS_CIPHER_AES_GCM_256_REC_SEQ_SIZE]
+  end
+
+  struct Tls12_crypto_info_aes_ccm_128
+    info : Tls_crypto_info
+    iv : Char[TLS_CIPHER_AES_CCM_128_IV_SIZE]
+    key : Char[TLS_CIPHER_AES_CCM_128_KEY_SIZE]
+    salt : Char[TLS_CIPHER_AES_CCM_128_SALT_SIZE]
+    rec_seq : Char[TLS_CIPHER_AES_CCM_128_REC_SEQ_SIZE]
+  end
+
+  struct Tls12_crypto_info_chacha20_poly1305
+    info : Tls_crypto_info
+    iv : Char[TLS_CIPHER_CHACHA20_POLY1305_IV_SIZE]
+    key : Char[TLS_CIPHER_CHACHA20_POLY1305_KEY_SIZE]
+    salt : Char[TLS_CIPHER_CHACHA20_POLY1305_SALT_SIZE]
+    rec_seq : Char[TLS_CIPHER_CHACHA20_POLY1305_REC_SEQ_SIZE]
+  end
+
+  struct Tls12_crypto_info_sm4_gcm
+    info : Tls_crypto_info
+    iv : Char[TLS_CIPHER_SM4_GCM_IV_SIZE]
+    key : Char[TLS_CIPHER_SM4_GCM_KEY_SIZE]
+    salt : Char[TLS_CIPHER_SM4_GCM_SALT_SIZE]
+    rec_seq : Char[TLS_CIPHER_SM4_GCM_REC_SEQ_SIZE]
+  end
+
+  struct Tls12_crypto_info_sm4_ccm
+    info : Tls_crypto_info
+    iv : Char[TLS_CIPHER_SM4_CCM_IV_SIZE]
+    key : Char[TLS_CIPHER_SM4_CCM_KEY_SIZE]
+    salt : Char[TLS_CIPHER_SM4_CCM_SALT_SIZE]
+    rec_seq : Char[TLS_CIPHER_SM4_CCM_REC_SEQ_SIZE]
+  end
+
+  struct Tls12_crypto_info_aria_gcm_128
+    info : Tls_crypto_info
+    iv : Char[TLS_CIPHER_ARIA_GCM_128_IV_SIZE]
+    key : Char[TLS_CIPHER_ARIA_GCM_128_KEY_SIZE]
+    salt : Char[TLS_CIPHER_ARIA_GCM_128_SALT_SIZE]
+    rec_seq : Char[TLS_CIPHER_ARIA_GCM_128_REC_SEQ_SIZE]
+  end
+
+  struct Tls12_crypto_info_aria_gcm_256
+    info : Tls_crypto_info
+    iv : Char[TLS_CIPHER_ARIA_GCM_256_IV_SIZE]
+    key : Char[TLS_CIPHER_ARIA_GCM_256_KEY_SIZE]
+    salt : Char[TLS_CIPHER_ARIA_GCM_256_SALT_SIZE]
+    rec_seq : Char[TLS_CIPHER_ARIA_GCM_256_REC_SEQ_SIZE]
+  end
+end

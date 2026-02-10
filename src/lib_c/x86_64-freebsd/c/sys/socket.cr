@@ -70,6 +70,9 @@ lib LibC
     cmsg_data : Char[0]
   end
 
+  MSG_EOR    = 0x00000008
+  MSG_CTRUNC = 0x00000020
+
   fun accept(x0 : Int, x1 : Sockaddr*, x2 : SocklenT*) : Int
   fun accept4(x0 : Int, x1 : Sockaddr*, x2 : SocklenT*, x3 : Int) : Int
   fun bind(x0 : Int, x1 : Sockaddr*, x2 : SocklenT) : Int
