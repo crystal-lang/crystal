@@ -61,8 +61,8 @@ jobs:
     runs-on: ubuntu-latest
 
     strategy:
-      max-parallel: 2
       fail-fast: false
+      max-parallel: 2
       matrix:
         target:
           - aarch64-linux-android
