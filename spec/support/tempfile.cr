@@ -66,29 +66,31 @@ def with_temp_executable(name, file = __FILE__, &)
 end
 
 def with_temp_c_object_file(c_code, *, filename = "temp_c", file = __FILE__, &)
-  # can't use backtick in interpreted code (#12241)
+  # can't spawn processes in interpreted code (#12241)
   pending_interpreted! "Unable to compile C code in interpreted code"
 
   obj_ext = {{ flag?(:msvc) ? ".obj" : ".o" }}
   with_tempfile("#{filename}.c", "#{filename}#{obj_ext}", file: file) do |c_filename, o_filename|
     File.write(c_filename, c_code)
 
-    {% if flag?(:msvc) %}
-      # following is based on `Crystal::Compiler#linker_command`
-      unless cl = ENV["CC"]?
-        cl = "cl.exe"
-        if msvc_path = Crystal::System::VisualStudio.find_latest_msvc_path
-          # we won't be cross-compiling the specs binaries, so host and target
-          # bits are identical
-          bits = {{ flag?(:bits64) ? "x64" : "x86" }}
-          cl = Process.quote(msvc_path.join("bin", "Host#{bits}", bits, cl).to_s)
+    status =
+      {% if flag?(:msvc) %}
+        # following is based on `Crystal::Compiler#linker_command`
+        unless cl = ENV["CC"]?
+          cl = "cl.exe"
+          if msvc_path = Crystal::System::VisualStudio.find_latest_msvc_path
+            # we won't be cross-compiling the specs binaries, so host and target
+            # bits are identical
+            bits = {{ flag?(:bits64) ? "x64" : "x86" }}
+            cl = msvc_path.join("bin", "Host#{bits}", bits, cl).to_s
+          end
         end
-      end
-
-      `#{cl} /nologo /c /MD #{Process.quote(c_filename)} #{Process.quote("/Fo#{o_filename}")}`.should be_truthy
-    {% else %}
-      `#{ENV["CC"]? || "cc"} #{Process.quote(c_filename)} -c -o #{Process.quote(o_filename)}`.should be_truthy
-    {% end %}
+        Process.run(cl, {"/nologo", "/c", "/MD", c_filename, "/Fo#{o_filename}"})
+      {% else %}
+        cc = ENV.fetch("CC", "cc")
+        Process.run(cc, {c_filename, "-c", "-o", o_filename})
+      {% end %}
+    status.success?.should be_truthy
 
     yield o_filename
   end

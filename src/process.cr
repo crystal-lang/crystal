@@ -238,6 +238,28 @@ class Process
     end
   end
 
+  # Executes a child process and waits for it to complete, returning its
+  # standard output.
+  #
+  # Raises `IO::Error` if the execution itself fails (for example because the
+  # executable does not exist or is not executable) but also if the process
+  # returned a unsuccessful exit status.
+  #
+  # Example:
+  #
+  # ```
+  # username = Process.capture("whoami")
+  # ```
+  def self.capture(command : String, args : Enumerable(String)? = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
+                   input : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil) : String
+    process = new(command, args, env, clear_env, shell, input, Redirect::Pipe, error, chdir)
+    output = process.output.gets_to_end
+    status = process.wait
+    $? = status
+    raise IO::Error.new("Command failed with exit code #{status}") unless status.success?
+    output
+  end
+
   # Replaces the current process with a new one. This function never returns.
   #
   # Raises `IO::Error` if executing the command fails (for example if the executable doesn't exist).
