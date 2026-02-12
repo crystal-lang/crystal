@@ -3,7 +3,12 @@ require "./lib_crypto"
 # :nodoc:
 struct OpenSSL::BIO
   CRYSTAL_BIO = begin
-    biom = LibCrypto.BIO_meth_new(Int32::MAX, "Crystal BIO")
+    bio_id = LibCrypto.BIO_get_new_index
+    raise OpenSSL::Error.new("BIO_get_new_index") if bio_id == -1
+
+    bio_type = bio_id | LibCrypto::BIO_TYPE_SOURCE_SINK | LibCrypto::BIO_TYPE_DESCRIPTOR
+    biom = LibCrypto.BIO_meth_new(bio_type, "Crystal BIO")
+    raise OpenSSL::Error.new("BIO_meth_new") if biom.null?
 
     {% if LibCrypto.has_method?(:BIO_meth_set_read_ex) %}
       LibCrypto.BIO_meth_set_read_ex(biom, ->read_ex)
@@ -63,6 +68,12 @@ struct OpenSSL::BIO
             0
           when LibCrypto::CTRL_GET_KTLS_SEND, LibCrypto::CTRL_GET_KTLS_RECV
             0
+          when LibCrypto::BIO_C_GET_FD
+            if io.is_a?(Socket) || io.is_a?(IO::FileDescriptor)
+              io.fd
+            else
+              -1
+            end
           else
             STDERR.puts "WARNING: Unsupported BIO ctrl call (#{cmd})"
             0
@@ -81,8 +92,6 @@ struct OpenSSL::BIO
     1
   end
 
-  @boxed_io : Void*
-
   def initialize(@io : IO)
     if io.is_a?(IO::Buffered)
       # Disable buffers of the underlying IO (e.g. TCP socket) so OpenSSL
@@ -93,13 +102,9 @@ struct OpenSSL::BIO
     end
 
     @bio = LibCrypto.BIO_new(CRYSTAL_BIO)
+    raise OpenSSL::Error.new("BIO_new") if @bio.null?
 
-    # We need to store a reference to the box because it's
-    # stored in `@bio.value.ptr`, but that lives in C-land,
-    # not in Crystal-land.
-    @boxed_io = Box(IO).box(io)
-
-    LibCrypto.BIO_set_data(@bio, @boxed_io)
+    LibCrypto.BIO_set_data(@bio, Box(IO).box(io))
   end
 
   getter io

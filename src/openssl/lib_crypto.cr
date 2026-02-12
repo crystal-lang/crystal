@@ -63,6 +63,9 @@ lib LibCrypto
   type X509_STORE = Void*
   type X509_STORE_CTX = Void*
 
+  BIO_TYPE_DESCRIPTOR  = 0x0100
+  BIO_TYPE_SOURCE_SINK = 0x0400
+
   struct Bio
     method : Void*
     callback : BIO_callback_fn
@@ -90,13 +93,14 @@ lib LibCrypto
   EVP_MAX_KEY_LENGTH = 32
   EVP_MAX_IV_LENGTH  = 16
 
-  CTRL_EOF           =  2
-  CTRL_PUSH          =  6
-  CTRL_POP           =  7
-  CTRL_FLUSH         = 11
-  CTRL_SET_KTLS_SEND = 72
-  CTRL_GET_KTLS_SEND = 73
-  CTRL_GET_KTLS_RECV = 76
+  CTRL_EOF           =   2
+  CTRL_PUSH          =   6
+  CTRL_POP           =   7
+  CTRL_FLUSH         =  11
+  CTRL_SET_KTLS_SEND =  72
+  CTRL_GET_KTLS_SEND =  73
+  CTRL_GET_KTLS_RECV =  76
+  BIO_C_GET_FD       = 105
 
   type BioMethod = Void
 
@@ -108,6 +112,7 @@ lib LibCrypto
   fun BIO_set_init(Bio*, Int)
   fun BIO_set_shutdown(Bio*, Int)
 
+  fun BIO_get_new_index : Int
   fun BIO_meth_new(Int, Char*) : BioMethod*
   fun BIO_meth_set_read(BioMethod*, (Bio*, Char*, Int) -> Int)
   fun BIO_meth_set_write(BioMethod*, (Bio*, Char*, Int) -> Int)
