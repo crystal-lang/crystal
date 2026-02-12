@@ -63,7 +63,7 @@ class OpenSSL::SSL::Server
   #
   # This method calls `@wrapped.accept` and wraps the resulting IO in a SSL socket (`OpenSSL::SSL::Socket::Server`) with `context` configuration.
   def accept : OpenSSL::SSL::Socket::Server
-    new_ssl_socket(@wrapped.accept)
+    new_ssl_socket(@wrapped.accept.as(::Socket))
   end
 
   # Implements `::Socket::Server#accept?`.
@@ -71,11 +71,11 @@ class OpenSSL::SSL::Server
   # This method calls `@wrapped.accept?` and wraps the resulting IO in a SSL socket (`OpenSSL::SSL::Socket::Server`) with `context` configuration.
   def accept? : OpenSSL::SSL::Socket::Server?
     if socket = @wrapped.accept?
-      new_ssl_socket(socket)
+      new_ssl_socket(socket.as(::Socket))
     end
   end
 
-  private def new_ssl_socket(io)
+  private def new_ssl_socket(io : ::Socket)
     OpenSSL::SSL::Socket::Server.new(io, @context, sync_close: @sync_close, accept: @start_immediately)
   end
 
