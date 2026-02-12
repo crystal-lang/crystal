@@ -630,9 +630,9 @@ describe "Dir" do
     pending_interpreted "matches shell" do
       pwd =
         {% if flag?(:win32) %}
-          Process.capture("cmd", {"/c", "cd"}).chomp
+          Process.capture!("cmd", {"/c", "cd"}).chomp
         {% else %}
-          Process.capture("pwd").chomp
+          Process.capture!("pwd").chomp
         {% end %}
       Dir.current.should eq(pwd)
     end

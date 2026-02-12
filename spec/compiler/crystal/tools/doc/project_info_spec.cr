@@ -4,7 +4,7 @@ require "../../../../support/tempfile"
 private alias ProjectInfo = Crystal::Doc::ProjectInfo
 
 private def run_git(*args : String)
-  Process.capture("git", ["-c", %(user.email=""), "-c", %(user.name="spec"), *args])
+  Process.capture!("git", ["-c", %(user.email=""), "-c", %(user.name="spec"), *args])
 rescue IO::Error
   pending! "Git is not available"
 end

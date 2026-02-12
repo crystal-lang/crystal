@@ -274,9 +274,9 @@ describe Process do
     it "sets working directory with string" do
       parent = File.dirname(Dir.current)
       pwd = {% if flag?(:win32) %}
-              Process.capture("cmd.exe", {"/c", "echo %cd%"}, chdir: parent)
+              Process.capture!("cmd.exe", {"/c", "echo %cd%"}, chdir: parent)
             {% else %}
-              Process.capture("pwd", chdir: parent)
+              Process.capture!("pwd", chdir: parent)
             {% end %}
       pwd.should eq "#{parent}#{newline}"
     end
@@ -284,9 +284,9 @@ describe Process do
     it "sets working directory with path" do
       parent = Path.new File.dirname(Dir.current)
       pwd = {% if flag?(:win32) %}
-              Process.capture("cmd.exe", {"/c", "echo %cd%"}, chdir: parent)
+              Process.capture!("cmd.exe", {"/c", "echo %cd%"}, chdir: parent)
             {% else %}
-              Process.capture("pwd", chdir: parent)
+              Process.capture!("pwd", chdir: parent)
             {% end %}
       pwd.should eq "#{parent}#{newline}"
     end
@@ -621,17 +621,36 @@ describe Process do
     end
   end
 
-  describe ".capture" do
+  describe ".capture!" do
     it "gets output" do
-      value = Process.capture(*shell_command("echo hello"))
+      value = Process.capture!(*shell_command("echo hello"))
       value.should eq("hello#{newline}")
       $?.exit_code.should eq(0)
     end
 
     it "raises on unsuccessful exit code" do
       expect_raises(IO::Error, "Command failed with exit code 17") do
-        Process.capture(*exit_code_command(17))
+        Process.capture!(*exit_code_command(17))
       end
+      $?.exit_code.should eq(17)
+    end
+  end
+
+  describe ".capture" do
+    it "gets output" do
+      # TODO: call command that prints to both stdout and stderr
+      status, output, error = Process.capture(*shell_command("echo hello"))
+      output.should eq("hello#{newline}")
+      error.should eq("")
+      status.exit_code.should eq(0)
+      $?.exit_code.should eq(0)
+    end
+
+    it "raises on unsuccessful exit code" do
+      status, output, error = Process.capture(*exit_code_command(17))
+      output.should eq("")
+      error.should eq("")
+      status.exit_code.should eq(17)
       $?.exit_code.should eq(17)
     end
   end

@@ -1,3 +1,5 @@
+require "wait_group"
+
 class Process
   # A struct representing the CPU current times of the process,
   # in fractions of seconds.
@@ -238,6 +240,37 @@ class Process
     end
   end
 
+  # Executes a child process and waits for it to complete, returning its status,
+  # standard output and standard error.
+  #
+  # Example:
+  #
+  # ```
+  # status, output, error = Process.capture("whoami")
+  # ```
+  #
+  # Consider `#capture!` if you're only interested in the standard output.
+  def self.capture(command : String, args : Enumerable(String)? = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
+                    input : Stdio = Redirect::Close, chdir : Path | String? = nil) : {Status, String, String}
+    process = new(command, args, env, clear_env, shell, input, Redirect::Pipe, Redirect::Pipe, chdir)
+    wg = WaitGroup.new
+    error = ""
+
+    wg.spawn do
+      error = process.error.gets_to_end
+    rescue
+      # silence errors
+    end
+    output = process.output.gets_to_end
+
+    # wait for process, then the error stream
+    status = process.wait
+    wg.wait
+
+    $? = status
+    {status, output, error}
+  end
+
   # Executes a child process and waits for it to complete, returning its
   # standard output.
   #
@@ -248,10 +281,12 @@ class Process
   # Example:
   #
   # ```
-  # username = Process.capture("whoami")
+  # username = Process.capture!("whoami")
   # ```
-  def self.capture(command : String, args : Enumerable(String)? = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
-                   input : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil) : String
+  #
+  # Consider `#capture` to also capture the standard error and process status.
+  def self.capture!(command : String, args : Enumerable(String)? = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
+                    input : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil) : String
     process = new(command, args, env, clear_env, shell, input, Redirect::Pipe, error, chdir)
     output = process.output.gets_to_end
     status = process.wait

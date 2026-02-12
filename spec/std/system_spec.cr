@@ -5,7 +5,7 @@ describe System do
   describe "hostname" do
     # can't use backtick in interpreted code (#12241)
     pending_interpreted "returns current hostname" do
-      shell_hostname = Process.capture("hostname").strip
+      shell_hostname = Process.capture!("hostname").strip
 
       hostname = System.hostname
       hostname.should eq(shell_hostname)

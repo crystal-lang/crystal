@@ -23,9 +23,9 @@ describe IO::FileDescriptor do
     code = %q(print "#{STDIN.blocking} #{STDIN.info.type}")
     compile_source(code) do |binpath|
       File.open(binpath) do |input|
-        Process.capture(binpath, input: input).should eq("true File")
+        Process.capture!(binpath, input: input).should eq("true File")
       end
-      Process.capture(binpath, input: Process::Redirect::Pipe).should eq("#{{{ flag?(:win32) }}} Pipe")
+      Process.capture!(binpath, input: Process::Redirect::Pipe).should eq("#{{{ flag?(:win32) }}} Pipe")
     end
   end
 
@@ -40,7 +40,7 @@ describe IO::FileDescriptor do
       code = %q(print STDIN.tty?, ' ', STDERR.tty?)
       compile_source(code) do |binpath|
         File.open(File::NULL) do |null|
-          Process.capture(binpath, input: null, error: null).should eq("false false")
+          Process.capture!(binpath, input: null, error: null).should eq("false false")
         end
       end
     end
