@@ -1,6 +1,7 @@
 lib LibC
-  TLS_TX = 1
-  TLS_RX = 2
+  TLS_TX             = 1
+  TLS_RX             = 2
+  TLS_TX_ZEROCOPY_RO = 3
 
   TLS_SET_RECORD_TYPE = 1
   TLS_GET_RECORD_TYPE = 2

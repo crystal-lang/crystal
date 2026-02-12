@@ -66,9 +66,10 @@ lib LibCrypto
   BIO_TYPE_DESCRIPTOR  = 0x0100
   BIO_TYPE_SOURCE_SINK = 0x0400
 
-  BIO_FLAGS_KTLS_TX_CTRL_MSG = 0x1000
-  BIO_FLAGS_KTLS_RX          = 0x2000
-  BIO_FLAGS_KTLS_TX          = 0x4000
+  BIO_FLAGS_KTLS_TX_CTRL_MSG          = 0x1000
+  BIO_FLAGS_KTLS_RX                   = 0x2000
+  BIO_FLAGS_KTLS_TX                   = 0x4000
+  BIO_FLAGS_KTLS_TX_ZEROCOPY_SENDFILE = 0x8000
 
   struct Bio
     method : Void*
@@ -103,16 +104,17 @@ lib LibCrypto
   TLS1_2_VERSION_MAJOR = 0x03
   TLS1_2_VERSION_MINOR = 0x03
 
-  CTRL_EOF                       =   2
-  CTRL_PUSH                      =   6
-  CTRL_POP                       =   7
-  CTRL_FLUSH                     =  11
-  CTRL_SET_KTLS                  =  72
-  CTRL_GET_KTLS_SEND             =  73
-  CTRL_SET_KTLS_TX_SEND_CTRL_MSG =  74
-  CTRL_CLEAR_KTLS_TX_CTRL_MSG    =  75
-  CTRL_GET_KTLS_RECV             =  76
-  BIO_C_GET_FD                   = 105
+  CTRL_EOF                           =   2
+  CTRL_PUSH                          =   6
+  CTRL_POP                           =   7
+  CTRL_FLUSH                         =  11
+  CTRL_SET_KTLS                      =  72
+  CTRL_GET_KTLS_SEND                 =  73
+  CTRL_SET_KTLS_TX_SEND_CTRL_MSG     =  74
+  CTRL_CLEAR_KTLS_TX_CTRL_MSG        =  75
+  CTRL_GET_KTLS_RECV                 =  76
+  CTRL_SET_KTLS_TX_ZEROCOPY_SENDFILE =  90
+  BIO_C_GET_FD                       = 105
 
   type BioMethod = Void
 

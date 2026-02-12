@@ -118,8 +118,15 @@ class OpenSSL::BIO
               when LibCrypto::CTRL_CLEAR_KTLS_TX_CTRL_MSG
                 LibCrypto.BIO_clear_flags(b, LibCrypto::BIO_FLAGS_KTLS_TX_CTRL_MSG)
                 0
+              when LibCrypto::CTRL_SET_KTLS_TX_ZEROCOPY_SENDFILE
+                ret = KTLS.enable_tx_zerocopy_sendfile(bio.io.as(Socket))
+                LibCrypto.BIO_set_flags(b, LibCrypto::BIO_FLAGS_KTLS_TX_ZEROCOPY_SENDFILE) if ret
+                ret ? 1 : 0
             {% else %}
-              when LibCrypto::CTRL_SET_KTLS, LibCrypto::CTRL_GET_KTLS_SEND, LibCrypto::CTRL_GET_KTLS_RECV
+              when LibCrypto::CTRL_SET_KTLS,
+                   LibCrypto::CTRL_GET_KTLS_SEND,
+                   LibCrypto::CTRL_GET_KTLS_RECV,
+                   LibCrypto::CTRL_SET_KTLS_TX_ZEROCOPY_SENDFILE
                 0
             {% end %}
             when LibCrypto::BIO_C_GET_FD

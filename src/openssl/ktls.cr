@@ -51,6 +51,15 @@ module OpenSSL
       {% end %}
     end
 
+    def self.enable_tx_zerocopy_sendfile(socket : Socket) : Bool
+      {% if flag?(:linux) %}
+        enable = LibC::Int.new(1)
+        LibC.setsockopt(socket.fd, LibC::SOL_TLS, LibC::TLS_TX_ZEROCOPY_RO, pointerof(enable), sizeof(LibC::Int)) == 0
+      {% elsif flag?(:freebsd) %}
+        true
+      {% end %}
+    end
+
     # The TLS_TX socket option changes the send/sendmsg handlers of the TCP
     # socket. If successful, then data sent using this socket will be encrypted
     # and encapsulated in TLS records using the crypto_info provided here.
