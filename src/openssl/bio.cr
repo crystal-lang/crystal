@@ -46,10 +46,6 @@ struct OpenSSL::BIO
   def self.read_ex(bio, buffer, len, readp)
     count = len > Int32::MAX ? Int32::MAX : len.to_i
     io = Box(IO).unbox(LibCrypto.BIO_get_data(bio))
-
-    # FIXME: why flush (write) before reading?!
-    io.flush
-
     ret = io.read Slice.new(buffer, count)
     readp.value = LibC::SizeT.new(ret)
     1
@@ -57,10 +53,6 @@ struct OpenSSL::BIO
 
   def self.read(bio, buffer, len)
     io = Box(IO).unbox(LibCrypto.BIO_get_data(bio))
-
-    # FIXME: why flush (write) before reading?!
-    io.flush
-
     io.read(Slice.new(buffer, len)).to_i
   end
 
@@ -101,6 +93,14 @@ struct OpenSSL::BIO
   end
 
   def initialize(@io : IO)
+    if io.is_a?(IO::Buffered)
+      # Disable buffers of the underlying IO (e.g. TCP socket) so OpenSSL
+      # becomes responsible of what needs to be read/written on the wire;
+      # instead, buffers shall be on OpenSSL::SSL::Socket (for example).
+      io.sync = true
+      io.read_buffering = false
+    end
+
     @bio = LibCrypto.BIO_new(CRYSTAL_BIO)
     raise OpenSSL::Error.new("BIO_new") if @bio.null?
 
