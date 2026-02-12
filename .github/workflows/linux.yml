@@ -121,7 +121,7 @@ jobs:
         persist-credentials: false
 
     - name: Spell Check Repo
-      uses: crate-ci/typos@06d010dfe4c84fdab1a25ea02b57b3585018ba80 # v1.42.3
+      uses: crate-ci/typos@78bc6fb2c0d734235d57a2d6b9de923cc325ebdd # v1.43.4
       env:
         CLICOLOR: 1
 
