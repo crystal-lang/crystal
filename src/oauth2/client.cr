@@ -194,6 +194,10 @@ class OAuth2::Client
       yield form
     end
 
+    unless response.success?
+      raise Error.new("Unexpected response status: #{response.status.code} #{response.status}")
+    end
+
     case result = (AccessToken | ErrorResponse).from_json(response.body)
     in AccessToken
       result
