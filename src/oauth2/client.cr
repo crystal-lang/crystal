@@ -1,3 +1,5 @@
+require "./error_response"
+
 # An OAuth2 client.
 #
 # For a quick example of how to authenticate an `HTTP::Client` with OAuth2 if
@@ -191,11 +193,16 @@ class OAuth2::Client
     response = make_token_request do |form, _headers|
       yield form
     end
-    case response.status
-    when .ok?, .created?
-      OAuth2::AccessToken.from_json(response.body)
-    else
-      raise OAuth2::Error.new(response.body)
+
+    unless response.success?
+      raise Error.new("Unexpected response status: #{response.status.code} #{response.status}")
+    end
+
+    case result = (AccessToken | ErrorResponse).from_json(response.body)
+    in AccessToken
+      result
+    in ErrorResponse
+      raise Error.new(result.error)
     end
   end
 
