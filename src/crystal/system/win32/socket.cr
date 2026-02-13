@@ -168,15 +168,15 @@ module Crystal::System::Socket
     end
   end
 
-  private def system_bind(addr, addrstr, &)
+  private def system_bind(addr, addrstr)
     unless LibC.bind(fd, addr, addr.size) == 0
-      yield ::Socket::BindError.from_wsa_error("Could not bind to '#{addrstr}'")
+      ::Socket::BindError.from_wsa_error("Could not bind to '#{addrstr}'")
     end
   end
 
-  private def system_listen(backlog, &)
+  private def system_listen(backlog)
     unless LibC.listen(fd, backlog) == 0
-      yield ::Socket::Error.from_wsa_error("Listen failed")
+      ::Socket::Error.from_wsa_error("Listen failed")
     end
   end
 
@@ -217,7 +217,11 @@ module Crystal::System::Socket
         when .wsa_io_incomplete?, .wsaenotsock?
           return false
         when .error_operation_aborted?
-          raise IO::TimeoutError.new("#{method} timed out")
+          # if the socket is closed then accept was aborted by an explicit
+          # shutdown before close, otherwise we manually canceled because of a
+          # timeout
+          return false if closed?
+          raise IO::TimeoutError.new("#{method} timed out (overlapped_accept)")
         end
       end
 
@@ -387,10 +391,6 @@ module Crystal::System::Socket
 
   private def system_tty?
     LibC.GetConsoleMode(LibC::HANDLE.new(fd), out _) != 0
-  end
-
-  def system_close
-    socket_close
   end
 
   private def socket_close(&)

@@ -9,10 +9,11 @@ module Crystal::System::Socket
   end
 
   # Tries to bind the socket to a local address.
-  # Yields an `Socket::BindError` if the binding failed.
-  # private def system_bind(addr, addrstr)
+  # Returns a `Socket::BindError` on failure.
+  # private def system_bind(addr, addrstr) : ::Socket::BindError?
 
-  # private def system_listen(backlog)
+  # Returns a `Socket::Error` on failure.
+  # private def system_listen(backlog) : ::Socket::Error?
 
   private def system_accept : {Handle, Bool}?
     event_loop.accept(self)
