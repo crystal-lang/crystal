@@ -71,6 +71,10 @@ jobs:
             workers: 1
           - flags: "-Dexecution_context -Dpreview_mt" # execution_context: parallel
             workers: 4
+          - flags: "-Devloop=io_uring"
+            workers: 1
+          - flags: "-Dexecution_context -Dpreview_mt -Dio_uring"
+            workers: 4
         include:
           - arch: x86_64
             opts:
