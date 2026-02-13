@@ -188,15 +188,21 @@ module Crystal::System::Signal
     # amount larger than a typical stack frame, 4096 bytes here.
     addr = info.value.si_addr
 
-    is_stack_overflow =
-      begin
-        stack_top = ::Fiber.current.@stack.pointer - 4096
-        stack_bottom = ::Fiber.current.@stack.bottom
-        stack_top <= addr < stack_bottom
-      rescue e
-        Crystal::System.print_error "Error while trying to determine if a stack overflow has occurred. Probable memory corruption\n"
-        false
-      end
+    current_fiber = ::Fiber.current?
+
+    is_stack_overflow = false
+
+    if current_fiber
+      is_stack_overflow =
+        begin
+          stack_top = current_fiber.@stack.pointer - 4096
+          stack_bottom = current_fiber.@stack.bottom
+          stack_top <= addr < stack_bottom
+        rescue e
+          Crystal::System.print_error "Error while trying to determine if a stack overflow has occurred. Probable memory corruption\n"
+          false
+        end
+    end
 
     if is_stack_overflow
       Crystal::System.print_error "Stack overflow (e.g., infinite or very deep recursion)\n"
