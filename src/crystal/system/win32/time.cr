@@ -53,7 +53,7 @@ module Crystal::System::Time
     ((filetime.dwHighDateTime.to_u64 << 32) | filetime.dwLowDateTime.to_u64).to_f64 / FILETIME_TICKS_PER_SECOND.to_f64
   end
 
-  private class_getter performance_frequency : Int64 do
+  private def self.performance_frequency
     LibC.QueryPerformanceFrequency(out frequency)
     frequency
   end
@@ -61,7 +61,8 @@ module Crystal::System::Time
   def self.monotonic : {Int64, Int32}
     LibC.QueryPerformanceCounter(out ticks)
     frequency = performance_frequency
-    {ticks // frequency, (ticks.remainder(frequency) * NANOSECONDS_PER_SECOND / frequency).to_i32}
+    divmod = ticks.tdivmod(frequency)
+    {divmod[0], (divmod[1] &* NANOSECONDS_PER_SECOND // frequency).to_i32!}
   end
 
   def self.ticks : UInt64
