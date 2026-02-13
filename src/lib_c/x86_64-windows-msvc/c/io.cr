@@ -1,12 +1,13 @@
 require "c/stdint"
 
 lib LibC
-  fun _wexecvp(cmdname : WCHAR*, argv : WCHAR**) : IntPtrT
+  fun _wexecvpe(cmdname : WCHAR*, argv : WCHAR**, envp : WCHAR**) : IntPtrT
   fun _open_osfhandle(osfhandle : HANDLE, flags : LibC::Int) : LibC::Int
   fun _dup(fd : Int) : Int
   fun _dup2(fd1 : Int, fd2 : Int) : Int
 
   # unused
+  fun _wexecvp(cmdname : WCHAR*, argv : WCHAR**) : IntPtrT
   fun _get_osfhandle(fd : Int) : IntPtrT
   fun _close(fd : Int) : Int
   fun _isatty(fd : Int) : Int
