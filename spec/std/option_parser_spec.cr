@@ -248,6 +248,79 @@ describe "OptionParser" do
     expect_doesnt_capture_option [] of String, "-f FLAG"
   end
 
+  describe "bundling" do
+    it "parses bundled boolean short options" do
+      args = %w(-rf)
+      called = [] of String
+      OptionParser.parse(args) do |opts|
+        opts.on("-r", "") { called << "-r" }
+        opts.on("-f", "") { called << "-f" }
+      end
+      called.should eq(%w(-r -f))
+      args.size.should eq(0)
+    end
+
+    it "re-triggers handlers for repeated short flags" do
+      args = %w(-vvv)
+      verbosity = 0
+      OptionParser.parse(args) do |opts|
+        opts.on("-v", "") { verbosity += 1 }
+      end
+      verbosity.should eq(3)
+      args.size.should eq(0)
+    end
+
+    it "uses rest of token as required value and stops bundling" do
+      args = %w(-ovalue -r)
+      value = nil
+      r = false
+      OptionParser.parse(args) do |opts|
+        opts.on("-o VALUE", "") { |v| value = v }
+        opts.on("-r", "") { r = true }
+      end
+      value.should eq("value")
+      r.should be_true
+      args.size.should eq(0)
+    end
+
+    it "assigns remainder as value for later required option" do
+      args = %w(-ab123)
+      a = false
+      b = nil
+      OptionParser.parse(args) do |opts|
+        opts.on("-a", "") { a = true }
+        opts.on("-b VALUE", "") { |v| b = v }
+      end
+      a.should be_true
+      b.should eq("123")
+      args.size.should eq(0)
+    end
+
+    it "raises on invalid option inside bundle" do
+      expect_raises OptionParser::InvalidOption, "Invalid option: -j" do
+        OptionParser.parse(["-rj"]) do |opts|
+          opts.on("-r", "") { }
+        end
+      end
+    end
+
+    it "consumes rest of bundle as argument value when middle option requires argument" do
+      args = %w(-aeb)
+      a = false
+      b = false
+      e = nil
+      OptionParser.parse(args) do |opts|
+        opts.on("-a", "") { a = true }
+        opts.on("-b", "") { b = true }
+        opts.on("-e VALUE", "") { |v| e = v }
+      end
+      a.should be_true
+      b.should be_false
+      e.should eq("b")
+      args.size.should eq(0)
+    end
+  end
+
   describe "gnu_optional_args" do
     it "doesn't get optional argument for short flag after space" do
       flag = nil
@@ -381,7 +454,7 @@ describe "OptionParser" do
   end
 
   it "raises on invalid option if value is given to none value handler (short flag, #9553) " do
-    expect_raises OptionParser::InvalidOption, "Invalid option: -foo" do
+    expect_raises OptionParser::InvalidOption, "Invalid option: -o" do
       OptionParser.parse(["-foo"]) do |opts|
         opts.on("-f", "some flag") { }
       end
