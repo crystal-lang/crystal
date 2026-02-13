@@ -202,7 +202,7 @@ class OAuth2::Client
     in AccessToken
       result
     in ErrorResponse
-      raise Error.new(response.body)
+      raise Error.new(result.error)
     end
   end
 
