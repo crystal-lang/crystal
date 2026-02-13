@@ -61,6 +61,7 @@ jobs:
       ARCH_CMD: linux64
     runs-on: ${{ case(startsWith(matrix.arch, 'aarch64'), 'ubuntu-24.04-arm', 'ubuntu-latest') }}
     strategy:
+      fail-fast: false
       matrix:
         arch:
           - x86_64
