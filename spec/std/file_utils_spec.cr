@@ -238,19 +238,11 @@ describe "FileUtils" do
     it "tests rm with nonexistent path" do
       with_tempfile("rm-nonexistent") do |path|
         test_with_string_and_path(path) do |arg|
-
-          {% if flag?(:linux) %}
-            expect_raises(File::Error, "Error deleting file: '#{path.inspect_unquoted}': Is a directory") do
+          {% if flag?(:linux) || flag?(:darwin) %}
+            expect_raises(File::Error, "Error deleting file: '#{path.inspect_unquoted}': No such file or directory") do
               FileUtils.rm(arg)
             end
           {% end %}
-
-          {% if flag?(:darwin) %}
-            expect_raises(File::Error, "'#{path.inspect_unquoted}'': Operation not permitted") do
-              FileUtils.rm(arg)
-            end
-          {% end %}
-
         end
       end
     end
@@ -267,7 +259,7 @@ describe "FileUtils" do
           {% end %}
 
           {% if flag?(:darwin) %}
-            expect_raises(File::Error, "'#{path.inspect_unquoted}'': Operation not permitted") do
+            expect_raises(File::Error, "Error deleting file: '#{path.inspect_unquoted}': Operation not permitted") do
               FileUtils.rm(arg)
             end
           {% end %}
@@ -288,17 +280,19 @@ describe "FileUtils" do
             expect_raises(File::Error, "Error deleting file: '#{path3.inspect_unquoted}': Is a directory") do
               FileUtils.rm(args.to_a)
             end
+            File.exists?(path1).should be_false
+            File.exists?(path2).should be_false
+            Dir.exists?(path3).should be_true
           {% end %}
 
           {% if flag?(:darwin) %}
-            expect_raises(File::Error, "'#{path3.inspect_unquoted}'': Operation not permitted") do
+            expect_raises(File::Error, "Error deleting file: '#{path3.inspect_unquoted}': Operation not permitted") do
               FileUtils.rm(args.to_a)
             end
+            File.exists?(path1).should be_false
+            File.exists?(path2).should be_false
+            Dir.exists?(path3).should be_true
           {% end %}
-
-          File.exists?(path1).should be_false
-          File.exists?(path2).should be_false
-          Dir.exists?(path3).should be_true
         end
       end
     end
@@ -328,11 +322,10 @@ describe "FileUtils" do
           {% end %}
 
           {% if flag?(:darwin) %}
-            expect_raises(File::NotFoundError, "'#{path2.inspect_unquoted}'': Operation not permitted") do
+            expect_raises(File::NotFoundError, "Error deleting file: '#{path2.inspect_unquoted}': No such file or directory") do
               FileUtils.rm([arg1, arg2, arg2])
             end
           {% end %}
-
         end
       end
     end
@@ -369,7 +362,7 @@ describe "FileUtils" do
           {% end %}
 
           {% if flag?(:darwin) %}
-            expect_raises(File::Error, "'#{path.inspect_unquoted}'': Operation not permitted") do
+            expect_raises(File::Error, "Error deleting file: '#{path.inspect_unquoted}': Operation not permitted") do
               FileUtils.rm_f(arg)
             end
           {% end %}
@@ -390,17 +383,19 @@ describe "FileUtils" do
             expect_raises(File::Error, "Error deleting file: '#{path3.inspect_unquoted}': Is a directory") do
               FileUtils.rm_f(args.to_a)
             end
+            File.exists?(path1).should be_false
+            File.exists?(path2).should be_false
+            Dir.exists?(path3).should be_true
           {% end %}
 
           {% if flag?(:darwin) %}
-            expect_raises(File::Error, "'#{path3.inspect_unquoted}'': Operation not permitted") do
+            expect_raises(File::Error, "Error deleting file: '#{path3.inspect_unquoted}': Operation not permitted") do
               FileUtils.rm_f(args.to_a)
             end
+            File.exists?(path1).should be_false
+            File.exists?(path2).should be_false
+            Dir.exists?(path3).should be_true
           {% end %}
-
-          File.exists?(path1).should be_false
-          File.exists?(path2).should be_false
-          Dir.exists?(path3).should be_true
         end
       end
     end
