@@ -60,6 +60,21 @@ describe OAuth2::Client do
           end
         end
 
+        it "returns an error if the response has an error status" do
+          handler = HTTP::Handler::HandlerProc.new do |context|
+            context.response.status = :bad_request
+          end
+
+          run_handler(handler) do |http_client|
+            client = OAuth2::Client.new "127.0.0.1", "client_id", "client_secret", scheme: "http"
+            client.http_client = http_client
+
+            expect_raises OAuth2::Error do
+              client.get_access_token_using_authorization_code(authorization_code: "asdf")
+            end
+          end
+        end
+
         it "returns an error if the payload is an error" do
           handler = HTTP::Handler::HandlerProc.new do |context|
             {error: "oops"}.to_json context.response
