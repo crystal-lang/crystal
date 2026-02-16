@@ -1,4 +1,5 @@
 require "./spec_helper"
+require "../spec_helper"
 require "../../support/tempfile"
 require "../../support/win32"
 
@@ -217,4 +218,62 @@ describe Socket, tags: "network" do
       server.try &.close
     end
   end
+
+  {% unless flag?(:netbsd) || flag?(:openbsd) %}
+    describe "#sendfile" do
+      it "writes file range to socket" do
+        port = unused_local_tcp_port
+        server = Socket.tcp(:inet)
+        server.bind("127.0.0.1", port)
+        server.listen
+
+        spawn do
+          client = server.not_nil!.accept
+          File.open(datapath("test_file.txt")) do |file|
+            client.sendfile(file, offset: 0, count: 11)
+          end
+        ensure
+          client.try(&.close)
+        end
+
+        socket = Socket.tcp(:inet)
+        socket.connect("localhost", port)
+        socket.gets_to_end.should eq("Hello World")
+      ensure
+        server.try(&.close)
+        socket.try(&.close)
+      end
+
+      it "uses absolute range (not relative to file position)" do
+        port = unused_local_tcp_port
+        server = Socket.tcp(:inet)
+        server.bind("127.0.0.1", port)
+        server.listen
+
+        buf = uninitialized UInt8[3]
+        pos = -1
+
+        spawn do
+          client = server.not_nil!.accept
+          File.open(datapath("test_file.txt")) do |file|
+            file.read_buffering = false
+            file.read(buf.to_slice)
+
+            client.sendfile(file, offset: 17, count: 11)
+            pos = file.pos
+          end
+        ensure
+          client.try(&.close)
+        end
+
+        socket = Socket.tcp(:inet)
+        socket.connect("127.0.0.1", port)
+        socket.gets_to_end.should eq(" World\nHell")
+        pos.should eq(buf.size), "expected Socket#sendfile to not affect File#pos"
+      ensure
+        server.try(&.close)
+        socket.try(&.close)
+      end
+    end
+  {% end %}
 end

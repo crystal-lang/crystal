@@ -452,6 +452,22 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     end
   end
 
+  # TODO: return WinError instead of raising exceptions
+  def sendfile(socket : ::Socket, fd : System::FileDescriptor::Handle, offset : Int64, count : Int64, flags : Int32) : Int64
+    # can't send more than 2,147,483,646 bytes at once
+    count = count.clamp(..(Int32::MAX - 1))
+
+    Crystal::System::IOCP.wsa_overlapped_operation(socket, socket.fd, "TransmitFile", socket.@write_timeout) do |operation|
+      operation.@overlapped.union.offset.offset = LibC::DWORD.new!(offset)
+      operation.@overlapped.union.offset.offsetHigh = LibC::DWORD.new!(offset >> 32)
+
+      ret = Crystal::System::Socket.transmit_file
+        .call(socket.fd, LibC::HANDLE.new(fd), LibC::DWORD.new(count), 0, operation, nil, 0)
+
+      {ret, count}
+    end.to_i
+  end
+
   def shutdown(socket : ::Socket) : Nil
   end
 

@@ -1,6 +1,9 @@
 require "c/netdb"
 require "c/netinet/tcp"
 require "c/sys/socket"
+{% unless flag?(:netbsd) || flag?(:openbsd) %}
+  require "c/sys/sendfile"
+{% end %}
 require "crystal/fd_lock"
 
 module Crystal::System::Socket
@@ -28,6 +31,28 @@ module Crystal::System::Socket
         fd
       end
     {% end %}
+  end
+
+  def self.sendfile(sockfd, fd, offset, count, flags)
+    ret = 0
+    sent_bytes = 0_i64
+
+    {% if flag?(:darwin) %}
+      len = LibC::OffT.new(count)
+      ret = LibC.sendfile(fd, sockfd, offset, pointerof(len), nil, 0)
+      sent_bytes = len.to_i64
+    {% elsif flag?(:dragonflybsd) || flag?(:freebsd) %}
+      ret = LibC.sendfile(fd, sockfd, offset, LibC::SizeT.new(count), nil, out sbytes, flags)
+      sent_bytes = sbytes.to_i64
+    {% elsif flag?(:linux) || flag?(:solaris) %}
+      ret = LibC.sendfile(sockfd, fd, pointerof(offset), LibC::SizeT.new(count))
+      sent_bytes = ret.to_i64 unless ret == -1
+    {% else %}
+      Errno.value = Errno::ENOSYS
+      ret = -1
+    {% end %}
+
+    {ret, sent_bytes}
   end
 
   private def initialize_handle(fd, blocking = nil)
@@ -364,6 +389,23 @@ module Crystal::System::Socket
 
   private def system_receive_from(bytes : Bytes) : Tuple(Int32, ::Socket::Address)
     @fd_lock.read { event_loop.receive_from(self, bytes) }
+  end
+
+  private def system_sendfile(file : IO::FileDescriptor, offset : Int64, count : Int64) : Int64
+    ret = file.@fd_lock.read do
+      @fd_lock.write { event_loop.sendfile(self, file.fd, offset, count, flags: 0) }
+    end
+
+    case ret
+    in Int64
+      ret
+    in Errno
+      if ret == Errno::ETIMEDOUT
+        raise IO::TimeoutError.new("Sendfile timed out", target: self)
+      else
+        raise IO::Error.from_os_error("sendfile", ret, target: self)
+      end
+    end
   end
 
   private def system_connect(addr, timeout = nil)
