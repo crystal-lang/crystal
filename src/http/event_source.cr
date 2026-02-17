@@ -246,13 +246,8 @@ class HTTP::EventSource
         case message
         when Event
           return message
-        when Iterator::Stop
-          # Stream ended normally - close and stop (no reconnection)
-          close unless @closed
-          return stop
-        when GracefulStop
-          # Graceful close (204 No Content) - close and stop
-          close unless @closed
+        when Iterator::Stop, GracefulStop
+          close
           return stop
         when FatalError
           # Fatal error - close and raise original exception
@@ -587,7 +582,7 @@ class HTTP::EventSource
     end
   end
 
-  # Helper for sending SSE events from a server response.
+  # Helper for sending events from a server response.
   #
   # The server should set the following headers for proper SSE behavior:
   # - `Content-Type: text/event-stream`
@@ -648,10 +643,10 @@ class HTTP::EventSource
     # Sends a retry interval update.
     #
     # ```
-    # writer.retry(5000) # Set retry to 5 seconds
+    # writer.retry(5.seconds)
     # ```
-    def retry(milliseconds : Int32) : Nil
-      @io << "retry: " << milliseconds << '\n'
+    def retry(span : Time::Span) : Nil
+      @io << "retry: " << span.total_milliseconds.to_i64 << '\n'
       @io << '\n'
       @io.flush
     end
