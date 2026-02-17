@@ -9,8 +9,6 @@ struct HTTP::Headers
 
   # :nodoc:
   record Key, name : String do
-    forward_missing_to @name
-
     def hash(hasher)
       name.each_byte do |c|
         hasher = normalize_byte(c).hash(hasher)
@@ -348,7 +346,13 @@ struct HTTP::Headers
     invalid_value_char(value).nil?
   end
 
-  forward_missing_to @hash
+  def clear
+    @hash.clear
+  end
+
+  def object_id
+    @hash.object_id
+  end
 
   private def unsafe_add(key, value : String)
     key = wrap(key)
