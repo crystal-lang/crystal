@@ -33,11 +33,10 @@ class OpenSSL::BIO
   def self.read_ex(b, buffer, len, readp)
     size = len > Int32::MAX ? Int32::MAX : len.to_i
     bio = Box(BIO).unbox(LibCrypto.BIO_get_data(b))
-    io = bio.io
 
     {% if OpenSSL.has_constant?(:KTLS) %}
       if bio.ktls_recv?
-        case ret = KTLS.read_record(io.as(Socket), buffer, size)
+        case ret = KTLS.read_record(bio.socket, buffer, size)
         in Int32
           readp.value = LibC::SizeT.new(ret)
           return 1
@@ -48,7 +47,7 @@ class OpenSSL::BIO
       end
     {% end %}
 
-    ret = io.read(Slice.new(buffer, size))
+    ret = bio.io.read(Slice.new(buffer, size))
     readp.value = LibC::SizeT.new(ret)
     1
   end
@@ -61,11 +60,10 @@ class OpenSSL::BIO
   def self.write_ex(b, data, len, writep)
     size = len > Int32::MAX ? Int32::MAX : len.to_i
     bio = Box(BIO).unbox(LibCrypto.BIO_get_data(b))
-    io = bio.io
 
     {% if OpenSSL.has_constant?(:KTLS) %}
       if bio.ktls_send_ctrl_msg?
-        case ret = KTLS.send_ctrl_message(io.as(Socket), bio.ktls_record_type, data, size)
+        case ret = KTLS.send_ctrl_message(bio.socket, bio.ktls_record_type, data, size)
         in Int32
           LibCrypto.BIO_clear_flags(b, LibCrypto::BIO_FLAGS_KTLS_TX_CTRL_MSG)
           writep.value = LibC::SizeT.new(ret)
@@ -77,7 +75,7 @@ class OpenSSL::BIO
       end
     {% end %}
 
-    io.write Slice.new(data, size)
+    bio.io.write Slice.new(data, size)
     writep.value = LibC::SizeT.new(size)
     1
   end
@@ -99,7 +97,7 @@ class OpenSSL::BIO
               0
             {% if OpenSSL.has_constant?(:KTLS) %}
               when LibCrypto::CTRL_SET_KTLS
-                socket = bio.io.as(Socket)
+                socket = bio.socket
                 is_tx = num != 0
                 if KTLS.enable(socket) && KTLS.start(socket, ptr, is_tx)
                   LibCrypto.BIO_set_flags(b, is_tx ? LibCrypto::BIO_FLAGS_KTLS_TX : LibCrypto::BIO_FLAGS_KTLS_RX)
@@ -119,7 +117,7 @@ class OpenSSL::BIO
                 LibCrypto.BIO_clear_flags(b, LibCrypto::BIO_FLAGS_KTLS_TX_CTRL_MSG)
                 0
               when LibCrypto::CTRL_SET_KTLS_TX_ZEROCOPY_SENDFILE
-                ret = KTLS.enable_tx_zerocopy_sendfile(bio.io.as(Socket))
+                ret = KTLS.enable_tx_zerocopy_sendfile(bio.socket)
                 LibCrypto.BIO_set_flags(b, LibCrypto::BIO_FLAGS_KTLS_TX_ZEROCOPY_SENDFILE) if ret
                 ret ? 1 : 0
             {% else %}
@@ -163,6 +161,10 @@ class OpenSSL::BIO
   end
 
   getter io : IO
+
+  def socket
+    @io.as(Socket)
+  end
 
   {% if OpenSSL.has_constant?(:KTLS) %}
     property ktls_record_type : UInt8 = 0
