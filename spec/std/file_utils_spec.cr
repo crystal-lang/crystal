@@ -238,7 +238,7 @@ describe "FileUtils" do
     it "tests rm with nonexistent path" do
       with_tempfile("rm-nonexistent") do |path|
         test_with_string_and_path(path) do |arg|
-          {% if flag?(:linux) || flag?(:darwin) %}
+          {% if flag?(:linux) || flag?(:darwin) || flag?(:windows) %}
             expect_raises(File::Error, "Error deleting file: '#{path.inspect_unquoted}': No such file or directory") do
               FileUtils.rm(arg)
             end
@@ -260,6 +260,12 @@ describe "FileUtils" do
 
           {% if flag?(:darwin) %}
             expect_raises(File::Error, "Error deleting file: '#{path.inspect_unquoted}': Operation not permitted") do
+              FileUtils.rm(arg)
+            end
+          {% end %}
+
+          {% if flag?(:windows) %}
+            expect_raises(File::Error, "Error deleting file: '#{path.inspect_unquoted}': Access is denied.") do
               FileUtils.rm(arg)
             end
           {% end %}
@@ -287,6 +293,15 @@ describe "FileUtils" do
 
           {% if flag?(:darwin) %}
             expect_raises(File::Error, "Error deleting file: '#{path3.inspect_unquoted}': Operation not permitted") do
+              FileUtils.rm(args.to_a)
+            end
+            File.exists?(path1).should be_false
+            File.exists?(path2).should be_false
+            Dir.exists?(path3).should be_true
+          {% end %}
+
+          {% if flag?(:windows) %}
+            expect_raises(File::Error, "Error deleting file: '#{path3.inspect_unquoted}': Access is denied.") do
               FileUtils.rm(args.to_a)
             end
             File.exists?(path1).should be_false
@@ -321,7 +336,7 @@ describe "FileUtils" do
             end
           {% end %}
 
-          {% if flag?(:darwin) %}
+          {% if flag?(:darwin) || flag?(:windows) %}
             expect_raises(File::NotFoundError, "Error deleting file: '#{path2.inspect_unquoted}': No such file or directory") do
               FileUtils.rm([arg1, arg2, arg2])
             end
@@ -367,6 +382,12 @@ describe "FileUtils" do
             end
           {% end %}
 
+          {% if flag?(:windows) %}
+            expect_raises(File::Error, "Error deleting file: '#{path.inspect_unquoted}': Access is denied.") do
+              FileUtils.rm_f(arg)
+            end
+          {% end %}
+
           Dir.exists?(path).should be_true
         end
       end
@@ -390,6 +411,15 @@ describe "FileUtils" do
 
           {% if flag?(:darwin) %}
             expect_raises(File::Error, "Error deleting file: '#{path3.inspect_unquoted}': Operation not permitted") do
+              FileUtils.rm_f(args.to_a)
+            end
+            File.exists?(path1).should be_false
+            File.exists?(path2).should be_false
+            Dir.exists?(path3).should be_true
+          {% end %}
+
+          {% if flag?(:windows) %}
+            expect_raises(File::Error, "Error deleting file: '#{path3.inspect_unquoted}': Access is denied.") do
               FileUtils.rm_f(args.to_a)
             end
             File.exists?(path1).should be_false
