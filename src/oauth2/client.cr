@@ -198,11 +198,10 @@ class OAuth2::Client
       raise Error.new("Unexpected response status: #{response.status.code} #{response.status}")
     end
 
-    case result = (AccessToken | ErrorResponse).from_json(response.body)
-    in AccessToken
-      result
-    in ErrorResponse
-      raise Error.new(result.error)
+    begin
+      AccessToken.from_json(response.body)
+    rescue ex : JSON::SerializableError
+      raise Error.new(ErrorResponse.from_json(response.body).error)
     end
   end
 
