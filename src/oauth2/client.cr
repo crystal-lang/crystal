@@ -201,7 +201,7 @@ class OAuth2::Client
     begin
       AccessToken.from_json(response.body)
     rescue ex : JSON::SerializableError
-      raise Error.new(ErrorResponse.from_json(response.body).error)
+      raise Error.new(ErrorResponse.from_json(response.body).error, cause: ex)
     end
   end
 
