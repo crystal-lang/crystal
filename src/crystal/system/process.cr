@@ -74,6 +74,7 @@ struct Crystal::System::Process
   # def self.fork(&)
 
   # def prepare_args(command : String, args : Enumerable(String)?, shell : Bool) : Args
+  # def prepare_args(args : Enumerable(String)) : Args
 
   # Launches a child process with the command + args.
   # def self.spawn(prepared_args : Args, shell : Bool, env : Env?, clear_env : Bool, input : Stdio, output : Stdio, error : Stdio, chdir : Path | String?) : ProcessInformation
