@@ -221,58 +221,59 @@ describe Socket, tags: "network" do
 
   {% unless flag?(:netbsd) || flag?(:openbsd) %}
     describe "#sendfile" do
-      it "writes file range to socket" do
-        port = unused_local_tcp_port
-        server = Socket.tcp(:inet)
-        server.bind("127.0.0.1", port)
-        server.listen
+      sendfile_test = ->(file : File, offset : Int32, count : Int32) {
+        begin
+          port = unused_local_tcp_port
+          server = Socket.tcp(:inet)
+          server.bind("127.0.0.1", port)
+          server.listen
 
-        spawn do
-          client = server.not_nil!.accept
-          File.open(datapath("test_file.txt")) do |file|
-            client.sendfile(file, offset: 0, count: 11)
+          spawn do
+            client = server.not_nil!.accept
+            client.sendfile(file, offset, count)
+          ensure
+            client.try(&.close)
           end
-        ensure
-          client.try(&.close)
-        end
 
-        socket = Socket.tcp(:inet)
-        socket.connect("localhost", port)
-        socket.gets_to_end.should eq("Hello World")
-      ensure
-        server.try(&.close)
-        socket.try(&.close)
+          socket = Socket.tcp(:inet)
+          socket.connect("localhost", port)
+          socket.gets_to_end
+        ensure
+          server.try(&.close)
+          socket.try(&.close)
+        end
+      }
+
+      it "writes file range to socket" do
+        File.open(datapath("test_file.txt")) do |file|
+          received = sendfile_test.call(file, 0, 11)
+          received.should eq("Hello World")
+        end
       end
 
-      it "uses absolute range (not relative to file position)" do
-        port = unused_local_tcp_port
-        server = Socket.tcp(:inet)
-        server.bind("127.0.0.1", port)
-        server.listen
-
+      it "uses absolute range (unbuffered)" do
         buf = uninitialized UInt8[3]
-        pos = -1
 
-        spawn do
-          client = server.not_nil!.accept
-          File.open(datapath("test_file.txt")) do |file|
-            file.read_buffering = false
-            file.read(buf.to_slice)
+        File.open(datapath("test_file.txt")) do |file|
+          file.read_buffering = false
+          file.read(buf.to_slice)
 
-            client.sendfile(file, offset: 17, count: 11)
-            pos = file.pos
-          end
-        ensure
-          client.try(&.close)
+          received = sendfile_test.call(file, 17, 11)
+          received.should eq(" World\nHell")
+          file.pos.should eq(buf.size), "expected Socket#sendfile to not affect File#pos"
         end
+      end
 
-        socket = Socket.tcp(:inet)
-        socket.connect("127.0.0.1", port)
-        socket.gets_to_end.should eq(" World\nHell")
-        pos.should eq(buf.size), "expected Socket#sendfile to not affect File#pos"
-      ensure
-        server.try(&.close)
-        socket.try(&.close)
+      it "uses absolute range (buffered)" do
+        buf = uninitialized UInt8[9]
+
+        File.open(datapath("test_file.txt")) do |file|
+          file.read(buf.to_slice)
+
+          received = sendfile_test.call(file, 3, 10)
+          received.should eq("lo World\nH")
+          file.pos.should eq(buf.size), "expected Socket#sendfile to not affect File#pos"
+        end
       end
     end
   {% end %}
