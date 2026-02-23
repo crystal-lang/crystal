@@ -45,7 +45,8 @@ module Crystal::System::Socket
       ret = LibC.sendfile(fd, sockfd, offset, LibC::SizeT.new(count), nil, out sbytes, flags)
       sent_bytes = sbytes.to_i64
     {% elsif flag?(:linux) || flag?(:solaris) %}
-      ret = LibC.sendfile(sockfd, fd, pointerof(offset), LibC::SizeT.new(count))
+      off = LibC::OffT.new(offset)
+      ret = LibC.sendfile(sockfd, fd, pointerof(off), LibC::SizeT.new(count))
       sent_bytes = ret.to_i64 unless ret == -1
     {% else %}
       Errno.value = Errno::ENOSYS
