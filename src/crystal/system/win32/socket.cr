@@ -43,7 +43,7 @@ module Crystal::System::Socket
   class_getter transmit_file
   @@connect_ex = uninitialized LibC::ConnectEx
   @@accept_ex = uninitialized LibC::AcceptEx
-  @@transmit_file = uninitialized LibC::AcceptEx
+  @@transmit_file = uninitialized LibC::TransmitFile
 
   # Some overlapped socket functions are not part of the Winsock specification.
   # The implementation is provider-specific and needs to be queried at runtime

@@ -455,17 +455,32 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   # TODO: return WinError instead of raising exceptions
   def sendfile(socket : ::Socket, fd : System::FileDescriptor::Handle, offset : Int64, count : Int64, flags : Int32) : Int64
     # can't send more than 2,147,483,646 bytes at once
-    count = count.clamp(..(Int32::MAX - 1))
+    len = LibC::DWORD.new(count.clamp(..(Int32::MAX - 1)))
 
-    Crystal::System::IOCP.wsa_overlapped_operation(socket, socket.fd, "TransmitFile", socket.@write_timeout) do |operation|
+    Crystal::System::IOCP::WSAOverlappedOperation.run(socket.fd) do |operation|
+      # , socket.fd, "TransmitFile", socket.@write_timeout) do |operation|
       operation.@overlapped.union.offset.offset = LibC::DWORD.new!(offset)
       operation.@overlapped.union.offset.offsetHigh = LibC::DWORD.new!(offset >> 32)
 
       ret = Crystal::System::Socket.transmit_file
-        .call(socket.fd, LibC::HANDLE.new(fd), LibC::DWORD.new(count), 0, operation, nil, 0)
+        .call(socket.fd, LibC::HANDLE.new(fd), len, LibC::DWORD.new(0), operation.to_unsafe, Pointer(Void).null, LibC::DWORD.new(flags))
+      return len.to_i64 if ret == 1
 
-      {ret, count}
-    end.to_i
+      error = WinError.wsa_value
+
+      unless error == WinError::ERROR_IO_PENDING || error == WinError::WSA_IO_PENDING
+        raise IO::Error.from_os_error("TransmitFile", error, target: socket)
+      end
+
+      operation.wait_for_result(socket.@write_timeout) do |error|
+        case error
+        when .wsa_io_incomplete?, .error_operation_aborted?
+          raise IO::TimeoutError.new("TransmitFile timed out", target: socket)
+        else
+          raise IO::Error.from_os_error("TransmitFile", error, target: socket)
+        end
+      end
+    end.to_i64
   end
 
   def shutdown(socket : ::Socket) : Nil
