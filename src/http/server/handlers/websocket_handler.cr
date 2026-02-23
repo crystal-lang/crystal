@@ -68,7 +68,7 @@ class HTTP::WebSocketHandler
     return unless requested_protocols = request.headers["Sec-WebSocket-Protocol"]?
     return unless supported_protocols = @subprotocols
 
-    requested_protocols.split(",").each do |protocol|
+    requested_protocols.split(',') do |protocol|
       protocol = protocol.strip
       if supported_protocols.includes? protocol
         return protocol
