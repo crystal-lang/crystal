@@ -278,9 +278,10 @@ class Crystal::ABI::X86_64 < Crystal::ABI
   def has_misaligned_fields?(type : LLVM::Type, offset : Int = 0) : Bool
     case type.kind
     when LLVM::Type::Kind::Struct
-      return false unless type.packed_struct?
       type.struct_element_types.each do |elem|
+        offset = align_offset(offset, elem) unless type.packed_struct?
         return true unless offset.divisible_by?(align(elem))
+        return true if has_misaligned_fields?(elem, offset)
         offset += size(elem)
       end
       false
@@ -301,7 +302,7 @@ class Crystal::ABI::X86_64 < Crystal::ABI
       # misaligned fields, then `size(elem) % align(elem) == 0` must be true,
       # meaning array indices have no effect on element alignment.
       elem = type.element_type
-      has_misaligned_fields?(elem) || type.array_size > 1 && has_misaligned_fields?(elem, size(elem))
+      has_misaligned_fields?(elem, offset) || type.array_size > 1 && has_misaligned_fields?(elem, offset + size(elem))
     else
       false
     end
