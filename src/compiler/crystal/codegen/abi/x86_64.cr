@@ -118,7 +118,7 @@ class Crystal::ABI::X86_64 < Crystal::ABI
       i = off // 8
       e = (off + t_size + 7) // 8
       while i < e
-        unify(cls, ix + 1, RegClass::Memory)
+        unify(cls, ix + i, RegClass::Memory)
         i += 1
       end
       return
