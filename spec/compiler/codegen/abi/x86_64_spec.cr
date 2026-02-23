@@ -146,6 +146,19 @@ class Crystal::ABI
           info.arg_types[0].should eq(ArgType.indirect(str, LLVM::Attribute::ByVal))
           info.return_type.should eq(ArgType.indirect(str, LLVM::Attribute::StructRet))
         end
+
+        test "does with non-packed struct containing packed struct with unaligned fields" do |abi, ctx|
+          inner = ctx.struct([ctx.int16, ctx.int8], packed: true)
+          str = ctx.struct([ctx.int8, inner])
+          arg_types = [str]
+          return_type = str
+
+          info = abi.abi_info(arg_types, return_type, true, ctx)
+          info.arg_types.size.should eq(1)
+
+          info.arg_types[0].should eq(ArgType.indirect(str, LLVM::Attribute::ByVal))
+          info.return_type.should eq(ArgType.indirect(str, LLVM::Attribute::StructRet))
+        end
       end
     {% end %}
   end
