@@ -625,7 +625,7 @@ describe HTTP::WebSocket do
       address = http_server.bind_unused_port
 
       run_server(http_server) do
-        ws = HTTP::WebSocket::Protocol.new(
+        HTTP::WebSocket::Protocol.new(
           address.address,
           port: address.port,
           path: "/"
