@@ -1919,7 +1919,7 @@ module Crystal
             if !delimiter_state && ident_start?(char)
               is_percent_literal =
                 char.in?('q', 'Q', 'w', 'i', 'r', 'x') &&
-                lookahead { next_char; peek_next_char.in?('(', '<', '[', '{', '|') }
+                  lookahead { next_char; peek_next_char.in?('(', '<', '[', '{', '|') }
               break unless is_percent_literal
             end
           end
