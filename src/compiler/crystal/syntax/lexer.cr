@@ -1449,7 +1449,8 @@ module Crystal
         raise_unterminated_quoted delimiter_state
       when string_end
         next_char
-        if string_open_count == 0
+        # For symmetric delimiters (like ||), don't use nesting logic
+        if string_nest == string_end || string_open_count == 0
           @token.type = :DELIMITER_END
         else
           @token.type = :STRING
@@ -1786,29 +1787,36 @@ module Crystal
 
       if !delimiter_state && current_char == '%' && ident_start?(peek_next_char)
         char = next_char
+        # For symmetric delimiters (like ||), use open_count = 0 (no nesting)
         if char == 'q' && peek_next_char.in?('(', '<', '[', '{', '|')
           next_char
-          delimiter_state = Token::DelimiterState.new(:string, current_char, closing_char, 1)
+          open_count = current_char == closing_char ? 0 : 1
+          delimiter_state = Token::DelimiterState.new(:string, current_char, closing_char, open_count)
           next_char
         elsif char == 'Q' && peek_next_char.in?('(', '<', '[', '{', '|')
           next_char
-          delimiter_state = Token::DelimiterState.new(:string, current_char, closing_char, 1)
+          open_count = current_char == closing_char ? 0 : 1
+          delimiter_state = Token::DelimiterState.new(:string, current_char, closing_char, open_count)
           next_char
         elsif char == 'i' && peek_next_char.in?('(', '<', '[', '{', '|')
           next_char
-          delimiter_state = Token::DelimiterState.new(:symbol_array, current_char, closing_char, 1)
+          open_count = current_char == closing_char ? 0 : 1
+          delimiter_state = Token::DelimiterState.new(:symbol_array, current_char, closing_char, open_count)
           next_char
         elsif char == 'w' && peek_next_char.in?('(', '<', '[', '{', '|')
           next_char
-          delimiter_state = Token::DelimiterState.new(:string_array, current_char, closing_char, 1)
+          open_count = current_char == closing_char ? 0 : 1
+          delimiter_state = Token::DelimiterState.new(:string_array, current_char, closing_char, open_count)
           next_char
         elsif char == 'x' && peek_next_char.in?('(', '<', '[', '{', '|')
           next_char
-          delimiter_state = Token::DelimiterState.new(:command, current_char, closing_char, 1)
+          open_count = current_char == closing_char ? 0 : 1
+          delimiter_state = Token::DelimiterState.new(:command, current_char, closing_char, open_count)
           next_char
         elsif char == 'r' && peek_next_char.in?('(', '<', '[', '{', '|')
           next_char
-          delimiter_state = Token::DelimiterState.new(:regex, current_char, closing_char, 1)
+          open_count = current_char == closing_char ? 0 : 1
+          delimiter_state = Token::DelimiterState.new(:regex, current_char, closing_char, open_count)
           next_char
         else
           start = current_pos
@@ -1901,10 +1909,19 @@ module Crystal
           case char = peek_next_char
           when '(', '[', '<', '{', '|'
             next_char
-            delimiter_state = Token::DelimiterState.new(:string, char, closing_char, 1)
+            # For symmetric delimiters (like ||), use open_count = 0 (no nesting)
+            open_count = char == closing_char ? 0 : 1
+            delimiter_state = Token::DelimiterState.new(:string, char, closing_char, open_count)
           else
             whitespace = false
-            break if !delimiter_state && ident_start?(char)
+            # Don't break if this looks like a prefixed percent literal that will
+            # be handled before the main loop (e.g., %Q|...|, %w|...|, etc.)
+            if !delimiter_state && ident_start?(char)
+              is_percent_literal =
+                char.in?('q', 'Q', 'w', 'i', 'r', 'x') &&
+                lookahead { next_char; peek_next_char.in?('(', '<', '[', '{', '|') }
+              break unless is_percent_literal
+            end
           end
         when '#'
           if delimiter_state
@@ -1961,13 +1978,21 @@ module Crystal
             char = current_char
 
             if delimiter_state
-              case char
-              when delimiter_state.nest
-                delimiter_state = delimiter_state.with_open_count_delta(+1)
-              when delimiter_state.end
-                delimiter_state = delimiter_state.with_open_count_delta(-1)
-                if delimiter_state.open_count == 0
+              # For symmetric delimiters (like ||), don't use nesting logic
+              if delimiter_state.nest == delimiter_state.end
+                if char == delimiter_state.end
                   delimiter_state = nil
+                end
+              else
+                # For paired delimiters (like (), [], {}, <>), use nesting logic
+                case char
+                when delimiter_state.nest
+                  delimiter_state = delimiter_state.with_open_count_delta(+1)
+                when delimiter_state.end
+                  delimiter_state = delimiter_state.with_open_count_delta(-1)
+                  if delimiter_state.open_count == 0
+                    delimiter_state = nil
+                  end
                 end
               end
             end
@@ -2323,14 +2348,15 @@ module Crystal
           break # raise is handled by parser
         when @token.delimiter_state.end
           unless escaped
-            if @token.delimiter_state.open_count == 0
+            # For symmetric delimiters (like ||), don't use nesting logic
+            if @token.delimiter_state.nest == @token.delimiter_state.end || @token.delimiter_state.open_count == 0
               break
             else
               @token.delimiter_state = @token.delimiter_state.with_open_count_delta(-1)
             end
           end
         when @token.delimiter_state.nest
-          unless escaped
+          unless @token.delimiter_state.nest == @token.delimiter_state.end || escaped
             @token.delimiter_state = @token.delimiter_state.with_open_count_delta(+1)
           end
         when .ascii_whitespace?
