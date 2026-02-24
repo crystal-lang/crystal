@@ -51,9 +51,9 @@ jobs:
     container:
       image: crystallang/crystal:1.19.1-build
     strategy:
+      fail-fast: false
       matrix:
         part: [0, 1, 2, 3]
-      fail-fast: false
     name: "Test std_spec with interpreter (${{ matrix.part }})"
     steps:
       - uses: actions/checkout@v6

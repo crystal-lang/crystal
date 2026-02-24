@@ -170,6 +170,10 @@ module Fiber::ExecutionContext
         spinning do
           return if @shutdown
 
+          # usually empty but the scheduler may have been transferred to another
+          # thread with queued fibers
+          yield @runnables.shift?
+
           yield @global_queue.grab?(@runnables, divisor: @execution_context.size)
 
           if @event_loop.lock? { @event_loop.run(pointerof(list), blocking: false) }
@@ -303,6 +307,8 @@ module Fiber::ExecutionContext
           "event-loop"
         elsif @parked
           "parked"
+        elsif @syscall.get(:relaxed).bits_set?(SYSCALL_FLAG)
+          "syscall"
         else
           "running"
         end

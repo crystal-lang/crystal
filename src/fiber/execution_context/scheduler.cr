@@ -73,5 +73,60 @@ module Fiber::ExecutionContext
     # Returns the current status of the scheduler. For example `"running"`,
     # `"event-loop"` or `"parked"`.
     abstract def status : String
+
+    # :nodoc:
+    SYSCALL_FLAG = 1_u32
+
+    # :nodoc:
+    # use to increment the counter to avoid ABA issues
+    SYSCALL_INCREMENT = 2_u32
+
+    @syscall = Atomic(UInt32).new(0_u32)
+
+    # :nodoc:
+    #
+    # Marks the current scheduler as doing a syscall that may block the current
+    # thread for an unknown time. This allows the monitor thread to move the
+    # scheduler to another thread, without waiting for the syscall to complete.
+    #
+    # When the syscall eventually completes, the thread will check if the
+    # scheduler has been detached and either continue running the current fiber
+    # if the scheduler is still attached, or enqueue the current fiber back into
+    # its execution context, then returns itself back into the thread pool.
+    def syscall(& : -> U) : U forall U
+      scheduler = Scheduler.current
+      fiber = Fiber.current
+      value = scheduler.enter_syscall
+
+      ret = yield
+
+      unless scheduler.leave_syscall?(value)
+        # the scheduler has been detached (or is being detached): enqueue the
+        # current fiber back into its execution context, and return the thread
+        # back into the thread pool
+        scheduler.execution_context.external_enqueue(fiber)
+        ExecutionContext.thread_pool.checkin
+      end
+
+      # the scheduler wasn't detached, or the fiber has been resume: we can
+      # continue normally
+      ret
+    end
+
+    protected def enter_syscall : UInt32
+      old_value = @syscall.add(SYSCALL_FLAG | SYSCALL_INCREMENT, :acquire_release)
+      old_value + SYSCALL_FLAG | SYSCALL_INCREMENT
+    end
+
+    protected def leave_syscall?(value : UInt32) : Bool
+      new_value = (value & ~SYSCALL_FLAG) &+ SYSCALL_INCREMENT
+      _, success = @syscall.compare_and_set(value, new_value, :acquire_release, :relaxed)
+      success
+    end
+
+    protected def detach_syscall? : Bool
+      value = @syscall.get(:relaxed)
+      value.bits_set?(SYSCALL_FLAG) && leave_syscall?(value)
+    end
   end
 end

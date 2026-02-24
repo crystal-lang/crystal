@@ -172,6 +172,10 @@ module Fiber::ExecutionContext
       ExecutionContext.thread_pool.checkout(scheduler)
     end
 
+    protected def each_scheduler(& : Scheduler ->) : Nil
+      @schedulers.each { |scheduler| yield scheduler }
+    end
+
     # Resizes the context to the new *maximum* parallelism.
     #
     # The new *maximum* can grow, in which case more schedulers are created to
@@ -246,10 +250,18 @@ module Fiber::ExecutionContext
         ExecutionContext::Scheduler.current.enqueue(fiber)
       else
         # cross context: push to global queue
-        Crystal.trace :sched, "enqueue", fiber: fiber, to_context: self
-        @global_queue.push(fiber)
-        wake_scheduler
+        external_enqueue(fiber)
       end
+    end
+
+    # :nodoc:
+    def external_enqueue(fiber : Fiber) : Nil
+      Crystal.trace :sched, "enqueue", fiber: fiber, to_context: self
+      @global_queue.push(fiber)
+
+      # always try to wake a scheduler on external enqueues, they may all be
+      # parked/waiting on evloop:
+      wake_scheduler
     end
 
     # Picks a scheduler at random then iterates all schedulers to try to steal

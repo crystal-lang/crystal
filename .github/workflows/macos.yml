@@ -17,6 +17,7 @@ jobs:
     runs-on: ${{ matrix.runs-on }}
     name: "${{ matrix.runs-on }} (${{ matrix.arch }})"
     strategy:
+      fail-fast: false
       matrix:
         include:
         - runs-on: macos-15-intel
@@ -25,7 +26,6 @@ jobs:
           arch: aarch64-darwin
         - runs-on: macos-15
           arch: aarch64-darwin
-      fail-fast: false
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v6

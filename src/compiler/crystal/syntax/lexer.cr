@@ -2469,7 +2469,7 @@ module Crystal
         next_char
       end
 
-      unless ident_part?(current_char)
+      unless ident_start?(current_char)
         raise "heredoc identifier starts with invalid character"
       end
 
