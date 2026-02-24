@@ -265,6 +265,22 @@ describe HTTP::WebSocket do
       bytes = io.to_slice
       (bytes[0] & 0x0f).should eq(0x02) # BINARY frame
     end
+
+    it "should not send frame if stream is flushed" do
+      io = IO::Memory.new
+      ws = HTTP::WebSocket::Protocol.new(io)
+      ws.stream do |stream|
+        stream.write "foo".to_slice
+        stream.flush
+        io.size.should eq 0
+      end # flushed/sent here
+      bytes = io.to_slice
+      bytes.size.should eq 5 # 1 byte header, 1 byte size, 3 byte payload "foo"
+      first_frame = bytes
+      (first_frame[0] & 0x80).should_not eq(0x00) # FINAL bit set
+      (first_frame[0] & 0x0f).should eq(0x02)     # BINARY frame
+      first_frame[1].should eq(3)
+    end
   end
 
   describe "send_masked" do
@@ -519,6 +535,102 @@ describe HTTP::WebSocket do
       client.send "hello"
       client.run
       message.should eq("hello")
+    end
+  end
+
+  describe "Sec-WebSocket-Protocol" do
+    it "fails handshake if server does not include Sec-WebSocket-Protocol in response when requested" do
+      http_server = HTTP::Server.new do |context|
+        response = context.response
+        key = context.request.headers["Sec-WebSocket-Key"]
+        response.status_code = 101
+        response.headers["Upgrade"] = "websocket"
+        response.headers["Connection"] = "Upgrade"
+        response.headers["Sec-WebSocket-Accept"] = HTTP::WebSocket::Protocol.key_challenge(key) if key
+      end
+
+      address = http_server.bind_unused_port
+
+      run_server(http_server) do
+        expect_raises(Socket::Error, "Handshake got denied. Server did not respond with Sec-WebSocket-Protocol.") do
+          HTTP::WebSocket::Protocol.new(
+            address.address,
+            port: address.port,
+            path: "/",
+            protocols: ["chat"]
+          )
+        end
+      end
+    end
+
+    it "fails handshake if server responds with non-requested Sec-WebSocket-Protocol" do
+      http_server = HTTP::Server.new do |context|
+        response = context.response
+        key = context.request.headers["Sec-WebSocket-Key"]
+        response.status_code = 101
+        response.headers["Upgrade"] = "websocket"
+        response.headers["Connection"] = "Upgrade"
+        response.headers["Sec-WebSocket-Accept"] = HTTP::WebSocket::Protocol.key_challenge(key) if key
+        response.headers["Sec-WebSocket-Protocol"] = "video"
+      end
+
+      address = http_server.bind_unused_port
+
+      run_server(http_server) do
+        expect_raises(Socket::Error, "Handshake got denied. Server responded with an invalid Sec-WebSocket-Protocol.") do
+          HTTP::WebSocket::Protocol.new(
+            address.address,
+            port: address.port,
+            path: "/",
+            protocols: ["chat"]
+          )
+        end
+      end
+    end
+
+    it "accepts handshake if server responds with one of the requested Sec-WebSocket-Protocol" do
+      http_server = HTTP::Server.new do |context|
+        response = context.response
+        key = context.request.headers["Sec-WebSocket-Key"]
+        response.status_code = 101
+        response.headers["Upgrade"] = "websocket"
+        response.headers["Connection"] = "Upgrade"
+        response.headers["Sec-WebSocket-Accept"] = HTTP::WebSocket::Protocol.key_challenge(key) if key
+        response.headers["Sec-WebSocket-Protocol"] = "chat"
+      end
+
+      address = http_server.bind_unused_port
+
+      run_server(http_server) do
+        ws = HTTP::WebSocket::Protocol.new(
+          address.address,
+          port: address.port,
+          path: "/",
+          protocols: ["chat", "video"]
+        )
+        ws.protocol.should eq("chat")
+      end
+    end
+
+    it "accepts handshake if neither provided nor responded Sec-WebSocket-Protocol" do
+      http_server = HTTP::Server.new do |context|
+        response = context.response
+        key = context.request.headers["Sec-WebSocket-Key"]
+        response.status_code = 101
+        response.headers["Upgrade"] = "websocket"
+        response.headers["Connection"] = "Upgrade"
+        response.headers["Sec-WebSocket-Accept"] = HTTP::WebSocket::Protocol.key_challenge(key) if key
+      end
+
+      address = http_server.bind_unused_port
+
+      run_server(http_server) do
+        HTTP::WebSocket::Protocol.new(
+          address.address,
+          port: address.port,
+          path: "/"
+        )
+      end
     end
   end
 

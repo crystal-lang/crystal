@@ -19,7 +19,7 @@ module Fiber::ExecutionContext
       # :nodoc:
       property execution_context : Parallel
       protected property! thread : Thread
-      protected property! main_fiber : Fiber
+      protected property main_fiber : Fiber
 
       @global_queue : GlobalQueue
       @runnables : Runnables(256)
@@ -35,6 +35,7 @@ module Fiber::ExecutionContext
         @global_queue = @execution_context.global_queue
         @runnables = Runnables(256).new(@global_queue)
         @event_loop = @execution_context.event_loop
+        @main_fiber = Fiber.new("#{@name}:loop", @execution_context) { run_loop }
       end
 
       protected def shutdown! : Nil
@@ -169,6 +170,10 @@ module Fiber::ExecutionContext
         spinning do
           return if @shutdown
 
+          # usually empty but the scheduler may have been transferred to another
+          # thread with queued fibers
+          yield @runnables.shift?
+
           yield @global_queue.grab?(@runnables, divisor: @execution_context.size)
 
           if @event_loop.lock? { @event_loop.run(pointerof(list), blocking: false) }
@@ -302,6 +307,8 @@ module Fiber::ExecutionContext
           "event-loop"
         elsif @parked
           "parked"
+        elsif @syscall.get(:relaxed).bits_set?(SYSCALL_FLAG)
+          "syscall"
         else
           "running"
         end

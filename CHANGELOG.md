@@ -4,6 +4,7 @@
 
 For information on prior releases, refer to their changelogs:
 
+- [1.19](https://github.com/crystal-lang/crystal/blob/release/1.19/CHANGELOG.md)
 - [1.18](https://github.com/crystal-lang/crystal/blob/release/1.18/CHANGELOG.md)
 - [1.17](https://github.com/crystal-lang/crystal/blob/release/1.17/CHANGELOG.md)
 - [1.16](https://github.com/crystal-lang/crystal/blob/release/1.16/CHANGELOG.md)

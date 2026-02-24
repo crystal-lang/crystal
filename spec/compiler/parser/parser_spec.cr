@@ -2653,6 +2653,13 @@ module Crystal
       assert_end_location "[1, 2,]"
       assert_end_location "foo(\n  &.block\n)", line_number: 3, column_number: 1
       assert_end_location "foo.bar(x) do; end"
+      assert_end_location "foo(bar: 123)"
+      assert_end_location "foo bar: 123"
+      assert_end_location "f foo(bar: 123)"
+      assert_end_location "f(foo bar: 123)"
+      assert_end_location "f foo bar: 123"
+      assert_end_location "f foo(x: 123, &.bar)"
+      assert_end_location "f foo x: 123, &.bar"
       assert_end_location "%w(one two)"
       assert_end_location "{%\nif foo\n  bar\n end\n%}", line_number: 5, column_number: 2
       assert_end_location "foo bar, out baz"
@@ -3415,6 +3422,19 @@ module Crystal
       expressions = Parser.new(source).parse.as(LibDef).body.as(CStructOrUnionDef).body.as(Expressions).expressions
       node_source(source, expressions[0].as(TypeDeclaration).var).should eq("fizz")
       node_source(source, expressions[1].as(TypeDeclaration).var).should eq("buzz")
+    end
+
+    it "sets correct location of a parenthesized union" do
+      source = "foo : (String | Nil) | Foo"
+      node = Parser.new(source).parse.as(TypeDeclaration)
+
+      union = node.declared_type.should be_a Union
+      node_source(source, union)
+        .should eq("(String | Nil) | Foo")
+
+      inner_union = union.types.first.should be_a Union
+      node_source(source, inner_union)
+        .should eq("(String | Nil)")
     end
 
     it "doesn't override yield with macro yield" do

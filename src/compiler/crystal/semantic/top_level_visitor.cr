@@ -858,13 +858,11 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
   def visit(node : Expressions)
     node.expressions.each_with_index do |child, i|
-      begin
-        child.accept self
-      rescue ex : SkipMacroException
-        @program.macro_expansion_error_hook.try &.call(ex.cause) if ex.is_a? SkipMacroCodeCoverageException
-        node.expressions.delete_at(i..-1)
-        break
-      end
+      child.accept self
+    rescue ex : SkipMacroException
+      @program.macro_expansion_error_hook.try &.call(ex.cause) if ex.is_a? SkipMacroCodeCoverageException
+      node.expressions.delete_at(i..-1)
+      break
     end
     false
   end

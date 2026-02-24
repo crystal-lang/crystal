@@ -1206,6 +1206,22 @@ module Crystal
           end
         end
       end
+
+      it "executes select with block" do
+        assert_macro %({{{:a => 1, :b => 2, :c => 3}.select { |k, v| v > 1 }}}), "{:b => 2, :c => 3}"
+      end
+
+      it "executes select with keys" do
+        assert_macro %({{{:a => 1, :b => 2, "c" => 3}.select(:a, "c")}}), "{:a => 1, \"c\" => 3}"
+      end
+
+      it "executes reject with block" do
+        assert_macro %({{{:a => 1, :b => 2, :c => 3}.reject { |k, v| v > 1 }}}), "{:a => 1}"
+      end
+
+      it "executes reject with keys" do
+        assert_macro %({{{:a => 1, :b => 2, :c => 3}.reject(:b)}}), "{:a => 1, :c => 3}"
+      end
     end
 
     describe NamedTupleLiteral do
@@ -1318,6 +1334,22 @@ module Crystal
             )
           end
         end
+      end
+
+      it "executes select with block" do
+        assert_macro %({{ {a: 1, b: 2, c: 3}.select { |k, v| v > 1 } }}), "{b: 2, c: 3}"
+      end
+
+      it "executes select with keys" do
+        assert_macro %({{ {a: 1, b: 2, c: 3}.select("a", "c") }}), "{a: 1, c: 3}"
+      end
+
+      it "executes reject with block" do
+        assert_macro %({{ {a: 1, b: 2, c: 3}.reject { |k, v| v > 1 } }}), "{a: 1}"
+      end
+
+      it "executes reject with keys" do
+        assert_macro %({{ {a: 1, b: 2, c: 3}.reject(:b) }}), "{a: 1, c: 3}"
       end
     end
 
@@ -4127,11 +4159,11 @@ module Crystal
     end
 
     it "reports unexpected named argument" do
-      assert_macro_error %({{"".starts_with?(other: "")}}), "named arguments are not allowed here"
+      assert_macro_error %({{"".starts_with?(other: "")}}), "no parameter named 'other'"
     end
 
     it "reports unexpected named argument (2)" do
-      assert_macro_error %({{"".camelcase(foo: "")}}), "no named parameter 'foo'"
+      assert_macro_error %({{"".camelcase(foo: "")}}), "no parameter named 'foo'"
     end
 
     # there are no macro methods with required named parameters

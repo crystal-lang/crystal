@@ -4,6 +4,7 @@ require "spec"
 require "process"
 require "./spec_helper"
 require "../support/env"
+require "../support/wait_for"
 
 private def exit_code_command(code)
   {% if flag?(:win32) %}
@@ -214,9 +215,35 @@ describe Process do
       value.should eq("hello#{newline}")
     end
 
-    it "closes ios after block" do
+    it "closes input after block" do
       Process.run(*stdin_to_stdout_command) { }
       $?.exit_code.should eq(0)
+    end
+
+    it "closes output and error after block" do
+      reader, writer = IO.pipe
+      channel = Channel(Process).new
+
+      spawn do
+        Process.run(*stdin_to_stdout_command, input: reader, output: :pipe, error: :pipe) do |process|
+          channel.send process
+          channel.receive
+        end
+        channel.close
+      end
+
+      process = channel.receive
+
+      process.output.closed?.should be_false
+      process.error.closed?.should be_false
+
+      channel.send process
+
+      # Wait a moment for the other fiber to continue and close the IOs
+      wait_for { process.output.closed? && process.error.closed? }
+
+      writer.close
+      channel.receive?.should be_nil
     end
 
     it "forwards closed io" do
@@ -539,6 +566,47 @@ describe Process do
           end
           with_env("PATH": "bin:/does/not/exist") do
             Process.run("foo", chdir: dir)
+          end
+        end
+      end
+
+      context "with shell: true" do
+        it "errors with nonexist $PATH" do
+          pending! unless {{ flag?(:unix) }}
+          Process.run(*print_env_command, shell: true, env: {"PATH" => "/does/not/exist"}).success?.should be_false
+        end
+
+        it "empty path entry means current directory" do
+          pending! unless {{ flag?(:unix) }}
+
+          with_tempfile("crystal-spec-run") do |dir|
+            Dir.mkdir dir
+            File.write(Path[dir, "foo"], "#!/bin/sh\necho bar")
+            File.chmod(Path[dir, "foo"], 0o555)
+            Process.run("foo", chdir: dir, shell: true, env: {"PATH" => ":"}).success?.should be_true
+            Process.run("foo", chdir: dir, shell: true, env: {"PATH" => "::"}).success?.should be_true
+            Process.run("foo", chdir: dir, shell: true, env: {"PATH" => "/does/not/exist:"}).success?.should be_true
+            Process.run("foo", chdir: dir, shell: true, env: {"PATH" => ":/does/not/exist"}).success?.should be_true
+          end
+        end
+
+        it "finds path in relative directory" do
+          pending! unless {{ flag?(:unix) }}
+
+          with_tempfile("crystal-spec-run") do |dir|
+            Dir.mkdir_p Path[dir, "bin"]
+            Dir.mkdir_p Path[dir, "empty"]
+            File.write(Path[dir, "bin", "foo"], "#!/bin/sh\necho bar")
+            File.chmod(Path[dir, "bin", "foo"], 0o555)
+            Process.run("foo", chdir: dir, shell: true, env: {"PATH" => "bin"}).success?.should be_true
+            Process.run("foo", chdir: dir, shell: true, env: {"PATH" => "empty:bin"}).success?.should be_true
+            Process.run("foo", chdir: dir, shell: true, env: {"PATH" => "bin:empty"}).success?.should be_true
+            Process.run("foo", chdir: dir, shell: true, env: {"PATH" => "/does/not/exist:bin"}).success?.should be_true
+            Process.run("foo", chdir: dir, shell: true, env: {"PATH" => "bin:/does/not/exist"}).success?.should be_true
+            Process.run("foo", chdir: dir, shell: true, env: {"PATH" => ":bin"}).success?.should be_true
+            Process.run("foo", chdir: dir, shell: true, env: {"PATH" => "::bin"}).success?.should be_true
+            Process.run("foo", chdir: dir, shell: true, env: {"PATH" => "/does/not/exist::bin"}).success?.should be_true
+            Process.run("foo", chdir: dir, shell: true, env: {"PATH" => "bin:/does/not/exist"}).success?.should be_true
           end
         end
       end
