@@ -134,10 +134,11 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
   def open(path : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : {System::FileDescriptor::Handle, Bool} | Errno
     path.check_no_null_byte
 
-    fd = ::Fiber.syscall do
-      LibC.open(path, flags | LibC::O_CLOEXEC, permissions)
+    fd, errno = ::Fiber.syscall do
+      ret = LibC.open(path, flags | LibC::O_CLOEXEC, permissions)
+      {ret, Errno.value}
     end
-    return Errno.value if fd == -1
+    return errno if fd == -1
 
     {% if flag?(:darwin) %}
       # FIXME: poll of non-blocking fifo fd on darwin appears to be broken, so
