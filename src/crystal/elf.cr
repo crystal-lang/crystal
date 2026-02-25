@@ -26,7 +26,7 @@ module Crystal
       OPENVMS  = 0x0D
       NSK_OS   = 0x0E
       AROS     = 0x0F
-      FENIS_OS = 0x10
+      FENIX_OS = 0x10
       CLOUDABI = 0x11
       SORTIX   = 0x53
     end
@@ -165,7 +165,7 @@ module Crystal
         # If constant initialization is not working (for example when an
         # error occurred during runtime setup or a custom main function doesn't
         # do the initialization), continuing the ELF reader results in a
-        # seg fault. This condition detects the uninitialized constant and
+        # seg fault. This condition detects the uninitialized constant
         # and errors.
         # A simple program to reproduce is:
         # ```
@@ -227,7 +227,7 @@ module Crystal
     end
 
     # Searches for a section then yield the `SectionHeader` and the IO object
-    # ready for parsing if the section was found. Returns the valure returned by
+    # ready for parsing if the section was found. Returns the value returned by
     # the block or nil if the section wasn't found.
     def read_section?(name : String, &)
       if sh = section_headers.find { |sh| sh_name(sh.name) == name }
