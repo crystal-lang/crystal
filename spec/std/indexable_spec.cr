@@ -315,6 +315,49 @@ describe Indexable do
     elems.should eq([3, 4, 5, 6, 7])
   end
 
+  it "handles empty ranges, including those with exclude-end" do
+    "foobar"[3..3].should eq("b")
+    "foobar"[3...3].should eq("")
+
+    "foobar"[3..-3].should eq("b")
+    "foobar"[3...-3].should eq("")
+    "foobar"[3...-5].should eq("")
+
+    "foobar"[3_u32..3_u32].should eq("b")
+    "foobar"[3_u32...3_u32].should eq("")
+    "foobar"[3_u32...1_u32].should eq("")
+  end
+
+  it "handles extremely large ranges without overflowing" do
+    "foobar"[3..Int32::MAX].should eq("bar")
+
+    expect_raises IndexError, "Index out of bounds" do
+      "foobar"[Int32::MAX..]
+    end
+
+    Indexable.range_to_index_and_count(Int32::MAX.., 10).should eq({Int32::MAX, 0})
+  end
+
+  it "handles extremely large collection sizes without overflowing" do
+    Indexable.range_to_index_and_count((Int32::MAX - 2)..Int32::MAX, Int32::MAX).should eq({Int32::MAX - 2, 3})
+    Indexable.range_to_index_and_count((Int32::MAX - 4)...Int32::MAX, Int32::MAX).should eq({Int32::MAX - 4, 4})
+    Indexable.range_to_index_and_count((Int32::MAX - 4)..-2, Int32::MAX).should eq({Int32::MAX - 4, 3})
+  end
+
+  it "errors on start indices that are off the end" do
+    expect_raises IndexError, "Index out of bounds" do
+      "foobar"[100..1000]
+    end
+
+    expect_raises IndexError, "Index out of bounds" do
+      "foobar"[Int32::MIN..Int32::MAX]
+    end
+  end
+
+  it "handles exclusive ranges that go off the end" do
+    "foobar"[3...100].should eq("bar")
+  end
+
   it "iterates within a range of indices (#3386)" do
     indexable = SafeIndexable.new(5)
     elems = [] of Int32

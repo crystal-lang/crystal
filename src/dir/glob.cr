@@ -282,6 +282,7 @@ class Dir
           next_cmd = sequence[next_pos]?
 
           each_child(path) do |entry|
+            next unless matches_file?(entry, match)
             if cmd.matches?(entry.name)
               is_dir = entry.dir?
               fullpath = join(path, entry.name)

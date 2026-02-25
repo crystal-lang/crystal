@@ -1,11 +1,13 @@
 module Fiber::ExecutionContext
   # :nodoc:
   class Monitor
-    DEFAULT_EVERY = 5.seconds
+    DEFAULT_EVERY        = 10.milliseconds
+    COLLECT_STACKS_EVERY = 5.seconds
 
     @thread : Thread?
 
     def initialize(@every = DEFAULT_EVERY)
+      @collect_stacks_next = Crystal::System::Time.instant + COLLECT_STACKS_EVERY
       @thread = Thread.new(name: "SYSMON") { run_loop }
     end
 
@@ -35,7 +37,8 @@ module Fiber::ExecutionContext
     # OS.
     private def run_loop : Nil
       every do |now|
-        collect_stacks
+        transfer_schedulers_blocked_on_syscall
+        collect_stacks(now)
       end
     end
 
@@ -47,20 +50,48 @@ module Fiber::ExecutionContext
 
       loop do
         Thread.sleep(remaining)
-        now = Crystal::System::Time.instant
-        yield(now)
-        # Cannot use `now.elapsed` here because it calls `::Time.instant` which
-        # could be mocked.
-        remaining = Crystal::System::Time.instant.duration_since(now) + @every
+
+        start = Crystal::System::Time.instant
+        yield(start)
+        stop = Crystal::System::Time.instant
+
+        # calculate remaining time for more steady wakeups (minimize exponential
+        # delays)
+        remaining = (start + @every - stop).clamp(Time::Span.zero..)
       rescue exception
         Crystal.print_error_buffered("BUG: %s#every crashed", self.class.name, exception: exception)
+      end
+    end
+
+    # Iterates each ExecutionContext::Scheduler and transfers the Scheduler for
+    # any Thread currently blocked on a syscall.
+    #
+    # OPTIMIZE: a scheduler in a MT context might not need to be transferred if
+    # its queue is empty and another scheduler in the context is blocked on the
+    # event loop.
+    private def transfer_schedulers_blocked_on_syscall : Nil
+      ExecutionContext.each do |execution_context|
+        execution_context.each_scheduler do |scheduler|
+          next unless scheduler.detach_syscall?
+
+          Crystal.trace :sched, "reassociate",
+            scheduler: scheduler,
+            syscall: scheduler.thread.current_fiber
+
+          pool = ExecutionContext.thread_pool
+          pool.detach(scheduler.thread)
+          pool.checkout(scheduler)
+        end
       end
     end
 
     # Iterates each execution context and collects unused fiber stacks.
     #
     # OPTIMIZE: should maybe happen during GC collections (?)
-    private def collect_stacks
+    private def collect_stacks(now)
+      return unless @collect_stacks_next <= now
+      @collect_stacks_next = now + COLLECT_STACKS_EVERY
+
       Crystal.trace :sched, "collect_stacks" do
         ExecutionContext.each(&.stack_pool?.try(&.collect))
       end

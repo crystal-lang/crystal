@@ -14,10 +14,8 @@ class Crystal::System::WaitableTimer
 
   def set(time : ::Time::Instant) : Nil
     # convert absolute time to relative time, expressed in 100ns interval,
-    # rounded up
-    # Cannot use `time.elapsed` here because it calls `::Time.instant` which
-    # could be mocked.
-    relative = Crystal::System::Time.instant.duration_since(time)
+    # rounded up; cannot use `::Time.instant` that could be mocked
+    relative = time.duration_since(Crystal::System::Time.instant)
     ticks = (relative.to_i * 10_000_000 + (relative.nanoseconds + 99) // 100)
 
     # negative duration means relative time (positive would mean absolute

@@ -82,6 +82,14 @@ module Crystal
           write value.name || '?'
         end
 
+        def write(value : Thread) : Nil
+          {% if flag?(:linux) %}
+            write Pointer(Void).new(value.@system_handle)
+          {% else %}
+            write value.@system_handle
+          {% end %}
+        end
+
         {% if flag?(:execution_context) %}
           def write(value : Fiber::ExecutionContext) : Nil
             write value.name

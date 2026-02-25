@@ -69,7 +69,13 @@ require "./execution_context/*"
 # ```
 @[Experimental]
 module Fiber::ExecutionContext
+  @@thread_pool : ThreadPool?
   @@default : ExecutionContext::Parallel?
+
+  # :nodoc:
+  def self.thread_pool : ThreadPool
+    @@thread_pool.not_nil!("expected thread pool to have been setup")
+  end
 
   # Returns the default `ExecutionContext` for the process, automatically
   # started when the program started.
@@ -84,6 +90,7 @@ module Fiber::ExecutionContext
 
   # :nodoc:
   def self.init_default_context : Nil
+    @@thread_pool = ThreadPool.new
     @@default = Parallel.default(1)
     @@monitor = Monitor.new
   end
@@ -189,9 +196,22 @@ module Fiber::ExecutionContext
 
   # :nodoc:
   #
-  # Enqueues a fiber to be resumed inside the execution context.
+  # Enqueues a fiber to be resumed inside the execution context. Implementations
+  # may check if *self* is the current context and assume a local scheduler
+  # enqueue.
   #
   # May be called from any ExecutionContext (i.e. must be thread-safe). May also
   # be called from bare threads (outside of an ExecutionContext).
   abstract def enqueue(fiber : Fiber) : Nil
+
+  # :nodoc:
+  #
+  # Identical to `#enqueue` but the enqueue musn't check whether *self* is the
+  # current context and always enqueue as if called by an external context or
+  # bare thread.
+  #
+  # Called for example by threads with their scheduler detached (or currently
+  # being detached in parallel) to enqueue the current fiber after a blocking
+  # syscall returned. See `Scheduler#syscall`.
+  abstract def external_enqueue(fiber : Fiber) : Nil
 end

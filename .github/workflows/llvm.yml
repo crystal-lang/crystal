@@ -46,6 +46,7 @@ jobs:
           - {llvm_version: 19, runs-on: ubuntu-24.04, codename: noble}
           - {llvm_version: 20, runs-on: ubuntu-24.04, codename: noble}
           - {llvm_version: 21, runs-on: ubuntu-24.04, codename: noble}
+          - {llvm_version: 22, runs-on: ubuntu-24.04, codename: noble}
           - {runs-on: ubuntu-24.04, codename: noble}
     name: "LLVM ${{ matrix.llvm_version || 'Nightly' }}"
     steps:
@@ -68,7 +69,7 @@ jobs:
       - name: Install Crystal
         uses: crystal-lang/install-crystal@v1
         with:
-          crystal: "1.18.2"
+          crystal: "1.19.1"
 
       - name: Build libllvm_ext
         run: make -B deps
