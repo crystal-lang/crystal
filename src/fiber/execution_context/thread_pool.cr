@@ -136,7 +136,7 @@ class Fiber
               # original stack, terminating the main thread would invalidate the
               # main fiber stack (oops)
               #
-              # never shutdown a thread on windows: it would abort pending I/O
+              # FIXME: never shutdown a thread on windows: it would abort pending I/O
               # operations (for example `Socket#accept`) that the thread started
               parked.wait
             else
