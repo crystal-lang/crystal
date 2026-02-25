@@ -401,12 +401,9 @@ class OptionParser
           break
         end
 
-        if bundled_short_arg?(arg)
-          arg_index = handle_bundled_short_options(arg, arg_index, args, handled_args)
-        else
-          flag, value = parse_arg_to_flag_and_value(arg)
-          arg_index = handle_flag(flag, value, arg_index, args, handled_args)
-        end
+        flag, value = parse_arg_to_flag_and_value(arg)
+
+        arg_index = handle_flag(flag, value, arg_index, args, handled_args)
 
         arg_index += 1
       end
@@ -447,10 +444,6 @@ class OptionParser
     end
   end
 
-  private def bundled_short_arg?(arg : String) : Bool
-    arg.starts_with?('-') && !arg.starts_with?("--") && arg.size > 2
-  end
-
   # Parses a command-line argument into a flag and optional inline value.
   private def parse_arg_to_flag_and_value(arg : String) : {String, String?}
     if arg.starts_with?("--")
@@ -458,53 +451,10 @@ class OptionParser
       if separator == "="
         return {name, value}
       end
-    elsif bundled_short_arg?(arg)
+    elsif arg.starts_with?('-') && arg.size > 2
       return {arg[0..1], arg[2..]}
     end
     {arg, nil}
-  end
-
-  private def handle_bundled_short_options(arg : String, arg_index : Int32, args : Array(String), handled_args : Array(Int32)) : Int32
-    rest = arg[1..]
-    rest.each_char_with_index do |char, index|
-      flag = "-#{char}"
-
-      suffix = index + 1 < rest.bytesize ? rest[(index + 1)..] : nil
-
-      if handler = @handlers[flag]?
-        case handler.value_type
-        in FlagValue::None
-          next_index = handle_flag(flag, nil, arg_index, args, handled_args)
-          return next_index unless next_index == arg_index
-        in FlagValue::Required
-          value = suffix
-          if value && !value.empty?
-            handled_args << arg_index
-            handler.block.call(value)
-          else
-            next_index = handle_flag(flag, nil, arg_index, args, handled_args)
-            return next_index unless next_index == arg_index
-          end
-          return arg_index
-        in FlagValue::Optional
-          value = suffix
-          if value && !value.empty? && gnu_optional_args?
-            handled_args << arg_index
-            handler.block.call(value)
-            return arg_index
-          else
-            next_index = handle_flag(flag, nil, arg_index, args, handled_args)
-            return next_index unless next_index == arg_index
-          end
-        end
-      else
-        @invalid_option.call(flag)
-        return arg_index
-      end
-    end
-
-    handled_args << arg_index
-    arg_index
   end
 
   # Processes a single flag/subcommand. Matches original behaviour exactly.
