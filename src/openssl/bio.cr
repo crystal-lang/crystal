@@ -157,7 +157,7 @@ class OpenSSL::BIO
     @bio = LibCrypto.BIO_new(CRYSTAL_BIO)
     raise OpenSSL::Error.new("BIO_new") if @bio.null?
 
-    LibCrypto.BIO_set_data(@bio, self.as(Void*))
+    LibCrypto.BIO_set_data(@bio, Box.box(self))
   end
 
   getter io : IO
