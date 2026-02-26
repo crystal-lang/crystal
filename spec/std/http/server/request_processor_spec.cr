@@ -2,6 +2,7 @@ require "spec"
 require "log/spec"
 require "http/server/request_processor"
 require "../../../support/io"
+require "../../../support/tempfile"
 
 private def requestize(string)
   string.gsub('\n', "\r\n")
@@ -266,6 +267,22 @@ describe HTTP::Server::RequestProcessor do
     end
     logs.check(:debug, "Error while flushing data to the client")
     logs.entry.exception.should be_a(IO::Error)
+  end
+
+  it "handles closed UNIXSocket without broken pipe" do
+    with_tempfile("request_processor.sock") do |path|
+      server = UNIXServer.new(path)
+      client = UNIXSocket.new(path)
+      server.accept do |sock|
+        sock.sync = false
+        client.send "GET / HTTP/1.1\r\n\r\n"
+        processor = HTTP::Server::RequestProcessor.new do |context|
+          client.close
+          context.response.puts "hello"
+        end
+        processor.process(sock, sock)
+      end
+    end
   end
 
   it "catches raised error on handler and retains context from handler" do
