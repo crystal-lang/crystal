@@ -393,20 +393,39 @@ module Crystal::System::Socket
   end
 
   private def system_sendfile(file : IO::FileDescriptor, offset : Int64, count : Int64) : Int64
-    ret = file.@fd_lock.read do
-      @fd_lock.write { event_loop.sendfile(self, file.fd, offset, count, flags: 0) }
-    end
-
-    case ret
-    in Int64
-      ret
-    in Errno
-      if ret == Errno::ETIMEDOUT
-        raise IO::TimeoutError.new("Sendfile timed out", target: self)
-      else
-        raise IO::Error.from_os_error("sendfile", ret, target: self)
+    {% if LibC.has_method?(:sendfile) %}
+      ret = file.@fd_lock.read do
+        @fd_lock.write do
+          event_loop.sendfile(self, file.fd, offset, count, flags: 0)
+        end
       end
-    end
+
+      case ret
+      in Int64
+        ret
+      in Errno
+        if ret == Errno::ETIMEDOUT
+          raise IO::TimeoutError.new("Sendfile timed out", target: self)
+        else
+          raise IO::Error.from_os_error("sendfile", ret, target: self)
+        end
+      end
+    {% else %}
+      # emulate in user-space
+      buf = uninitialized UInt8[IO::DEFAULT_BUFFER_SIZE]
+      len = count.clamp(..IO::DEFAULT_BUFFER_SIZE)
+
+      ret = LibC.pread(file.fd, buf, len, offset)
+      raise IO::Error.from_errno("pread", target: file) if ret == -1
+
+      slice = buf.to_slice[0, ret]
+      until slice.empty?
+        sent_bytes = event_loop.write(self, slice)
+        slice += sent_bytes
+      end
+
+      ret.to_i64
+    {% end %}
   end
 
   private def system_connect(addr, timeout = nil)
