@@ -82,7 +82,7 @@ describe Process do
     end
 
     it "raises if args[0] is empty" do
-      expect_raises(IO::Error, "Error executing process: ''") do
+      expect_raises(IO::Error, /Error executing process: '("")?'/) do
         Process.new([""] of String)
       end
     end
