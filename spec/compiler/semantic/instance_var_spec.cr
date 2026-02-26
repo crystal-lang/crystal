@@ -4971,6 +4971,25 @@ describe "Semantic: instance var" do
       CRYSTAL
   end
 
+  it "resolves unqualified constants in block inside instance var initializer (#14827)" do
+    assert_type(<<-CRYSTAL) { bool }
+      def with_block
+        yield
+      end
+
+      module A
+        struct B
+        end
+
+        struct C
+          @data : B = with_block { B.new }
+        end
+      end
+
+      A::C.new.is_a?(A::C)
+      CRYSTAL
+  end
+
   it "errors when assigning instance variable at top level block" do
     assert_error <<-CRYSTAL, "can't use instance variables at the top level"
       def foo
