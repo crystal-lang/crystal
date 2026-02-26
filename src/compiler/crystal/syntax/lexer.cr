@@ -1962,7 +1962,7 @@ module Crystal
       delimiter_kind = case char
                        when 'i'                     then Token::DelimiterKind::SYMBOL_ARRAY
                        when 'r'                     then Token::DelimiterKind::REGEX
-                       when 'w'                     then Token::DelimiterKind::STRING_ARRAY
+                       when 'w', 'W'                then Token::DelimiterKind::STRING_ARRAY
                        when 'x'                     then Token::DelimiterKind::COMMAND
                        when 'q', 'Q'                then Token::DelimiterKind::STRING
                        when '(', '[', '{', '<', '|' then Token::DelimiterKind::STRING

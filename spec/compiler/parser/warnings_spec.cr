@@ -16,7 +16,7 @@ private def assert_no_parser_warning(source, *, file = __FILE__, line = __LINE__
   assert_parser_warning(source, file: file, line: line)
 end
 
-VALID_SIGILS = ['i', 'q', 'r', 'w', 'x', 'Q']
+VALID_SIGILS = ['i', 'q', 'r', 'w', 'W', 'x', 'Q']
 
 describe "Parser warnings" do
   it "warns on suffix-less UInt64 literals > Int64::MAX" do
