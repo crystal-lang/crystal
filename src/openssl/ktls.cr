@@ -70,43 +70,51 @@ module OpenSSL
     # here.
     def self.start(socket : Socket, crypto_info : Pointer, is_tx : Bool) : Bool
       {% if flag?(:linux) %}
-        # OpenSSL uses an internal struct { union { cipher... }, len } and of
-        # course the union size depends on how and where openssl has been built,
-        # for example against which linux kernel headers.
-        #
-        # Hopefully 'struct crypto_info' puts the cipher version/type first, so
-        # we can at least handle an allow list for currently supported ciphers.
-        crypto_info_len =
-          case type = crypto_info.as(LibC::Tls_crypto_info*).value.cipher_type
-          when LibC::TLS_CIPHER_AES_GCM_128
-            sizeof(LibC::Tls12_crypto_info_aes_gcm_128)
-          when LibC::TLS_CIPHER_AES_GCM_256
-            sizeof(LibC::Tls12_crypto_info_aes_gcm_256)
-          when LibC::TLS_CIPHER_AES_CCM_128
-            sizeof(LibC::Tls12_crypto_info_aes_ccm_128)
-          when LibC::TLS_CIPHER_CHACHA20_POLY1305
-            sizeof(LibC::Tls12_crypto_info_chacha20_poly1305)
-          when LibC::TLS_CIPHER_SM4_GCM
-            sizeof(LibC::Tls12_crypto_info_sm4_gcm)
-          when LibC::TLS_CIPHER_SM4_CCM
-            sizeof(LibC::Tls12_crypto_info_sm4_ccm)
-          when LibC::TLS_CIPHER_ARIA_GCM_128
-            sizeof(LibC::Tls12_crypto_info_aria_gcm_128)
-          when LibC::TLS_CIPHER_ARIA_GCM_256
-            sizeof(LibC::Tls12_crypto_info_aria_gcm_256)
-          else
-            # unknown TLS cipher (Linux 6.17 <> OpenSSL 3.6)
-            # check 'struct tls_crypto_info_all' in openssl/include/internal/ktls.h
-            STDERR.print "WARNING: unknown Kernel TLS cipher (#{type})\n"
-            return false
-          end
-        optname = is_tx ? LibC::TLS_TX : LibC::TLS_RX
-        LibC.setsockopt(socket.fd, LibC::SOL_TLS, optname, crypto_info, crypto_info_len) == 0
+        if len = crypto_info_len(crypto_info)
+          optname = is_tx ? LibC::TLS_TX : LibC::TLS_RX
+          LibC.setsockopt(socket.fd, LibC::SOL_TLS, optname, crypto_info, len) == 0
+        else
+          return false
+        end
       {% elsif flag?(:freebsd) %}
         optname = is_tx ? LibC::TCP_TXTLS_ENABLE : LibC::TCP_RXTLS_ENABLE
         LibC.setsockopt(socket.fd, LibC::IPPROTO_TCP, optname, crypto_info, sizeof(LibC::Tls_enable)) == 0
       {% end %}
     end
+
+    {% if flag?(:linux) %}
+      # OpenSSL uses an internal struct { union { cipher... }, len } and of
+      # course the union size depends on how and where openssl has been built,
+      # for example against which linux kernel headers.
+      #
+      # Hopefully 'struct crypto_info' puts the cipher version/type first, so
+      # we can at least handle an allow list for currently supported ciphers.
+      private def self.crypto_info_len(crypto_info)
+        case type = crypto_info.as(LibC::Tls_crypto_info*).value.cipher_type
+        when LibC::TLS_CIPHER_AES_GCM_128
+          sizeof(LibC::Tls12_crypto_info_aes_gcm_128)
+        when LibC::TLS_CIPHER_AES_GCM_256
+          sizeof(LibC::Tls12_crypto_info_aes_gcm_256)
+        when LibC::TLS_CIPHER_AES_CCM_128
+          sizeof(LibC::Tls12_crypto_info_aes_ccm_128)
+        when LibC::TLS_CIPHER_CHACHA20_POLY1305
+          sizeof(LibC::Tls12_crypto_info_chacha20_poly1305)
+        when LibC::TLS_CIPHER_SM4_GCM
+          sizeof(LibC::Tls12_crypto_info_sm4_gcm)
+        when LibC::TLS_CIPHER_SM4_CCM
+          sizeof(LibC::Tls12_crypto_info_sm4_ccm)
+        when LibC::TLS_CIPHER_ARIA_GCM_128
+          sizeof(LibC::Tls12_crypto_info_aria_gcm_128)
+        when LibC::TLS_CIPHER_ARIA_GCM_256
+          sizeof(LibC::Tls12_crypto_info_aria_gcm_256)
+        else
+          # unknown TLS cipher (Linux 6.17, OpenSSL 3.6), check linux/tls.h and
+          # 'struct tls_crypto_info_all' in openssl/include/internal/ktls.h
+          STDERR.print "WARNING: unknown TLS cipher (skipping Kernel TLS)\n"
+          nil
+        end
+      end
+    {% end %}
 
     # Send a TLS record using the crypto_info provided in ktls_start and use
     # record_type instead of the default SSL3_RT_APPLICATION_DATA.
