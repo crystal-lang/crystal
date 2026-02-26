@@ -2299,6 +2299,42 @@ module Crystal::Macros
     # Returns the return type of this proc, if specified.
     def return_type : ASTNode | Nop
     end
+
+    # Invokes this `ProcLiteral` and returns the result.
+    #
+    # The number of arguments must match the number of parameters declared by
+    # the proc.
+    #
+    # The proc body is evaluated as a macro expression in the same context as
+    # the caller. As with `Proc`s in normal code, a new lexical scope is created
+    # with the proc parameters as the only accessible variables; the proc body
+    # has no effect on variables in the caller's scope, and closures are not
+    # supported.
+    #
+    # Parameter type restrictions and return types are optional; if present,
+    # arguments and the return value are checked using the same rules as the
+    # macro `#is_a?`. The only exception is that a return type of `NilLiteral`
+    # or `Nop` always makes the proc body return such an AST node, instead of
+    # the body's implicit return expression.
+    #
+    # `ProcLiteral`s themselves are not yet supported in the macro language.
+    # Hence, the only way to call them is to assign a proc to a constant, and
+    # then refer to that constant inside a macro expression:
+    #
+    # ```
+    # Fib = ->(x : NumberLiteral) do
+    #   x <= 2 ? 1 : Fib.call(x - 1) + Fib.call(x - 2)
+    # end
+    #
+    # {{ Fib.call(11) }} # => 89
+    # ```
+    #
+    # As long as the same constant is not referenced in non-macro code, the
+    # compiler will not treat the proc literal as a regular `Proc`, which would
+    # most likely fail to compile.
+    @[Experimental("Proc support in the macro language is still under development. Join the discussion at [#16451](https://github.com/crystal-lang/crystal/issues/16451).")]
+    def call(*args) : ASTNode
+    end
   end
 
   # A proc pointer, like `->my_var.some_method(String)`
