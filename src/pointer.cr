@@ -341,9 +341,7 @@ struct Pointer(T)
   # ptr2.to_s # => "Pointer(Int32).null"
   # ```
   def to_s(io : IO) : Nil
-    io << "Pointer("
-    io << T.to_s
-    io << ')'
+    io << {{ @type.name.stringify }}
     if address == 0
       io << ".null"
     else
