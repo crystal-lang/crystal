@@ -53,17 +53,7 @@ class XML::Attributes
     prop = find_prop(name)
     return unless prop
 
-    value = ""
-    if ptr = LibXML.xmlNodeGetContent(prop)
-      begin
-        value = String.new(ptr)
-      ensure
-        # FIXME: calling xmlFree crashes the interpreter
-        {% unless flag?(:interpreted) %}
-          LibXML.xmlFree.call(ptr.as(Void*))
-        {% end %}
-      end
-    end
+    value = XML.node_content_to_string(prop)
 
     if node = @node.document.cached?(prop)
       # can't call xmlUnsetProp: it would free the node

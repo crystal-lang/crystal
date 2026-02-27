@@ -120,18 +120,7 @@ class XML::Node
   # Returns the content for this Node. An empty string is
   # returned if the node has no content.
   def content : String
-    if ptr = LibXML.xmlNodeGetContent(self)
-      begin
-        String.new(ptr)
-      ensure
-        # FIXME: calling xmlFree crashes the interpreter
-        {% unless flag?(:interpreted) %}
-          LibXML.xmlFree.call(ptr.as(Void*))
-        {% end %}
-      end
-    else
-      ""
-    end
+    XML.node_content_to_string(to_unsafe)
   end
 
   # Sets the Node's content to a Text node containing string.
