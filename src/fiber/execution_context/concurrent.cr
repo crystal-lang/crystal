@@ -9,7 +9,7 @@ module Fiber::ExecutionContext
   #
   # Fibers in this context can use simpler and faster synchronization primitives
   # between themselves (for example no atomics or thread safety required), but
-  # data shared with other contexts needs to be protected (e.g. `Mutex`), and
+  # data shared with other contexts needs to be protected (see `Sync`), and
   # communication with fibers in other contexts requires safe primitives, for
   # example `Channel`.
   #
@@ -51,8 +51,8 @@ module Fiber::ExecutionContext
   # ```
   #
   # In practice, we still recommended to always protect shared accesses to a
-  # variable, for example using `Atomic#add` to increment *result* or a `Mutex`
-  # for more complex operations.
+  # variable, for example using `Atomic#add` to increment *result* or a `Sync`
+  # primitive for more complex operations.
   class Concurrent < Parallel
     # :nodoc:
     def self.default : self
