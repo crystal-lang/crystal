@@ -36,6 +36,9 @@ class Channel(T)
     end
   end
 
+  class TimeoutError < Exception
+  end
+
   private module SenderReceiverCloseAction
     def close
       self.state = DeliveryState::Closed
@@ -294,22 +297,83 @@ class Channel(T)
     pp.text inspect
   end
 
-  def self.receive_first(*channels)
-    receive_first channels
+  # Returns the first available value received from the given *channels*, or
+  # raises `Channel::TimeoutError` if given a *timeout* that expires before a
+  # value is received.
+  #
+  # ```
+  # c1 = Channel(String).new(1)
+  # c2 = Channel(String).new(1)
+  #
+  # c2.send "hello"
+  # value = Channel.receive_first c1, c2 # => receives "hello" from c2
+  #
+  # begin
+  #   # will timeout after 1 second and raise Channel::TimeoutError because
+  #   # no channels are ready to receive
+  #   value = Channel.receive_first c1, c2, timeout: 1.second
+  # rescue ex : Channel::TimeoutError
+  #   Log.error(exception: ex)
+  # end
+  # ```
+  def self.receive_first(*channels, timeout : Time::Span? = nil)
+    receive_first channels, timeout: timeout
   end
 
-  def self.receive_first(channels : Enumerable(Channel))
-    _, value = self.select(channels.map(&.receive_select_action))
+  # :ditto:
+  def self.receive_first(channels : Enumerable(Channel), *, timeout : Time::Span? = nil)
+    actions = channels.map do |channel|
+      action = channel.receive_select_action
+      action.as(Union(typeof(action) | TimeoutAction))
+    end
+    self.select_action_first(actions, timeout: timeout)
+  end
+
+  # Sends the given *value* to the first channel ready to receive in *channels*,
+  # or raises `Channel::TimeoutError` if given a *timeout* that expires before
+  # a channel becomes ready to receive.
+  #
+  # ```
+  # c1 = Channel(String).new(1)
+  # c2 = Channel(String).new(1)
+  #
+  # c1.send "hello"
+  # value = Channel.send_first "goodbye", c1, c2 # => sends "goodbye" to c2
+  #
+  # begin
+  #   # will timeout after 1 second and raise Channel::TimeoutError because
+  #   # no channels are ready to receive
+  #   value = Channel.send_first "ciao", c1, c2, timeout: 1.second
+  # rescue ex : Channel::TimeoutError
+  #   Log.error(exception: ex)
+  # end
+  # ```
+  def self.send_first(value, *channels, timeout : Time::Span? = nil) : Nil
+    send_first value, channels, timeout: timeout
+  end
+
+  # :ditto:
+  def self.send_first(value, channels : Enumerable(Channel), *, timeout : Time::Span? = nil) : Nil
+    actions = channels.map do |channel|
+      action = channel.send_select_action(value)
+      action.as(Union(typeof(action) | TimeoutAction))
+    end
+    self.select_action_first(actions, timeout: timeout)
+  end
+
+  private def self.select_action_first(actions : Enumerable(SelectAction), *, timeout : Time::Span? = nil)
+    if timeout.nil?
+      _, value = self.select(actions)
+    else
+      timeout_action, timeout_index = TimeoutAction.new(timeout), actions.size
+      if actions.is_a?(Tuple)
+        index, value = self.select(*actions, timeout_action)
+      else
+        index, value = self.select(actions.to_a << timeout_action)
+      end
+      raise TimeoutError.new if index == timeout_index
+    end
     value
-  end
-
-  def self.send_first(value, *channels) : Nil
-    send_first value, channels
-  end
-
-  def self.send_first(value, channels : Enumerable(Channel)) : Nil
-    self.select(channels.map(&.send_select_action(value)))
-    nil
   end
 
   # :nodoc:
