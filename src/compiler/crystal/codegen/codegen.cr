@@ -1269,7 +1269,7 @@ module Crystal
     end
 
     def get_global(name, type, real_var, initial_value = nil)
-      if real_var.thread_local?
+      if real_var.thread_local? && !real_var.thread_local_unsafe?
         get_thread_local(name, type, real_var)
       else
         get_global_var(name, type, real_var, initial_value)

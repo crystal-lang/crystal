@@ -553,6 +553,12 @@ module Crystal
     # to global and class variables.
     property? thread_local = false
 
+    # Whether to access this thread-local variable
+    # only with the guarantees as C11.
+    # Accessing TLS inside a fiber changing its underlying
+    # thread mid-execution will result in undefined behavior.
+    property? thread_local_unsafe = false
+
     # Is this variable "unsafe" (no need to check if it was initialized)?
     property? uninitialized = false
 
@@ -710,6 +716,12 @@ module Crystal
     # such as libc's `$errno`, which can be annotated with
     # `@[ThreadLocal]`. This property is `true` in that case.
     property? thread_local = false
+
+    # Whether to access this thread-local variable
+    # only with the guarantees as C11.
+    # Accessing TLS inside a fiber changing its underlying
+    # thread mid-execution will result in undefined behavior.
+    property? thread_local_unsafe = false
 
     def initialize(name : String, args : Array(Arg), body, @real_name : String)
       super(name, args, body, nil, nil, nil)

@@ -444,11 +444,12 @@ module Crystal
           node.raise "declaring the type of a class variable must be done at the class level"
         end
 
-        thread_local = check_class_var_annotations
+        thread_local, tls_unsafe = check_class_var_annotations
 
         class_var = lookup_class_var(var)
         var.var = class_var
         class_var.thread_local = true if thread_local
+        class_var.thread_local_unsafe = true if tls_unsafe
 
         node.type = @program.nil
       else
@@ -526,10 +527,11 @@ module Crystal
           node.raise "can only declare instance variables of a non-generic class, not a #{type.type_desc} (#{type})"
         end
       when ClassVar
-        thread_local = check_class_var_annotations
+        thread_local, tls_unsafe = check_class_var_annotations
 
         class_var = visit_class_var var
         class_var.thread_local = true if thread_local
+        class_var.thread_local_unsafe = true if tls_unsafe
       else
         raise "Bug: unexpected var type: #{var.class}"
       end
@@ -648,10 +650,11 @@ module Crystal
     end
 
     def visit(node : ClassVar)
-      thread_local = check_class_var_annotations
+      thread_local, tls_unsafe = check_class_var_annotations
 
       var = visit_class_var node
       var.thread_local = true if thread_local
+      var.thread_local_unsafe = true if tls_unsafe
 
       false
     end
@@ -881,7 +884,7 @@ module Crystal
     end
 
     def type_assign(target : ClassVar, value, node)
-      thread_local = check_class_var_annotations
+      thread_local, tls_unsafe = check_class_var_annotations
 
       # Outside a def is already handled by ClassVarsInitializerVisitor
       # (@exp_nest is 1 if we are at the top level because it was incremented
@@ -890,6 +893,7 @@ module Crystal
         var = lookup_class_var(target)
         target.var = var
         var.thread_local = true if thread_local
+        var.thread_local_unsafe = true if tls_unsafe
         return
       end
 
@@ -898,6 +902,7 @@ module Crystal
       var = lookup_class_var(target)
       target.var = var
       var.thread_local = true if thread_local
+      var.thread_local_unsafe = true if tls_unsafe
 
       if casted_value = check_automatic_cast(value, var.type, node)
         value = casted_value
