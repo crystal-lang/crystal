@@ -131,10 +131,13 @@ class Fiber
               @pool.push pointerof(parked)
             end
 
-            if thread == @main_thread
+            if thread == @main_thread || {% flag?(:win32) && Crystal::EventLoop.has_constant?(:IOCP) %}
               # never shutdown the main thread: the main fiber is running on its
               # original stack, terminating the main thread would invalidate the
               # main fiber stack (oops)
+              #
+              # FIXME: never shutdown a thread on windows: it would abort pending I/O
+              # operations (for example `Socket#accept`) that the thread started
               parked.wait
             else
               parked.wait(ExecutionContext.thread_keepalive) do
