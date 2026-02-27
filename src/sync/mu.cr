@@ -110,6 +110,9 @@ module Sync
         add_on_acquire: RLOCK)
     end
 
+    # Called from CV#wait after a cv waiter has been transferred to mu then
+    # woken from mu. They must act as if they had always waited on mu (for
+    # example a reader musn't fail to lock even if the WRITER_WAITING is set).
     protected def lock_slow(waiter : Pointer(Waiter), clear : UInt32)
       if waiter.value.writer?
         zero_to_acquire = ANY_LOCK
@@ -117,7 +120,7 @@ module Sync
         set_on_waiting = WRITER_WAITING
         clear_on_acquire = WRITER_WAITING
       else
-        zero_to_acquire = WLOCK | WRITER_WAITING
+        zero_to_acquire = WLOCK
         add_on_acquire = RLOCK
         set_on_waiting = 0_u32
         clear_on_acquire = 0_u32
