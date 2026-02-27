@@ -1866,18 +1866,18 @@ module Crystal
 
     it_parses "a = 1; class Foo; @x = a; end", [Assign.new("a".var, 1.int32), ClassDef.new("Foo".path, Assign.new("@x".instance_var, "a".call))]
 
-    it_parses "@[Foo]", Annotation.new("Foo".path)
-    it_parses "@[Foo()]", Annotation.new("Foo".path)
-    it_parses "@[Foo(1)]", Annotation.new("Foo".path, [1.int32] of ASTNode)
-    it_parses "@[Foo(\"hello\")]", Annotation.new("Foo".path, ["hello".string] of ASTNode)
-    it_parses "@[Foo(1, foo: 2)]", Annotation.new("Foo".path, [1.int32] of ASTNode, [NamedArgument.new("foo", 2.int32)])
-    it_parses "@[Foo(1, foo: 2\n)]", Annotation.new("Foo".path, [1.int32] of ASTNode, [NamedArgument.new("foo", 2.int32)])
-    it_parses "@[Foo(\n1, foo: 2\n)]", Annotation.new("Foo".path, [1.int32] of ASTNode, [NamedArgument.new("foo", 2.int32)])
-    it_parses "@[Foo::Bar]", Annotation.new(Path.new("Foo", "Bar"))
+    it_parses "@[Foo]", Crystal::Annotation.new("Foo".path)
+    it_parses "@[Foo()]", Crystal::Annotation.new("Foo".path)
+    it_parses "@[Foo(1)]", Crystal::Annotation.new("Foo".path, [1.int32] of ASTNode)
+    it_parses "@[Foo(\"hello\")]", Crystal::Annotation.new("Foo".path, ["hello".string] of ASTNode)
+    it_parses "@[Foo(1, foo: 2)]", Crystal::Annotation.new("Foo".path, [1.int32] of ASTNode, [NamedArgument.new("foo", 2.int32)])
+    it_parses "@[Foo(1, foo: 2\n)]", Crystal::Annotation.new("Foo".path, [1.int32] of ASTNode, [NamedArgument.new("foo", 2.int32)])
+    it_parses "@[Foo(\n1, foo: 2\n)]", Crystal::Annotation.new("Foo".path, [1.int32] of ASTNode, [NamedArgument.new("foo", 2.int32)])
+    it_parses "@[Foo::Bar]", Crystal::Annotation.new(Path.new("Foo", "Bar"))
 
     assert_syntax_error "@[Foo(\"\": 1)]"
 
-    it_parses "lib LibC\n@[Bar]; end", LibDef.new("LibC".path, Annotation.new("Bar".path))
+    it_parses "lib LibC\n@[Bar]; end", LibDef.new("LibC".path, Crystal::Annotation.new("Bar".path))
 
     it_parses "Foo(_)", Generic.new("Foo".path, [Underscore.new] of ASTNode)
 
@@ -2065,7 +2065,7 @@ module Crystal
 
     it_parses "enum Foo; macro foo;end; end", EnumDef.new("Foo".path, [Macro.new("foo", [] of Arg, Expressions.new)] of ASTNode)
 
-    it_parses "enum Foo; @[Bar]; end", EnumDef.new("Foo".path, [Annotation.new("Bar".path)] of ASTNode)
+    it_parses "enum Foo; @[Bar]; end", EnumDef.new("Foo".path, [Crystal::Annotation.new("Bar".path)] of ASTNode)
 
     assert_syntax_error "enum Foo; A B; end", "expecting ';', 'end' or newline after enum member"
     assert_syntax_error "enum Foo\n  A,   B,   C\nend\n", "expecting ';', 'end' or newline after enum member"
@@ -2300,6 +2300,7 @@ module Crystal
     assert_syntax_error "x, self = 1, 2",
       "can't change the value of self"
 
+    # Type restrictions are only allowed on `macro annotated` (for annotation validation)
     assert_syntax_error "macro foo(x : Int32); end"
 
     assert_syntax_error "/foo)/", "invalid regex"
@@ -2776,6 +2777,13 @@ module Crystal
     it_parses "annotation Foo::Bar\n\nend", AnnotationDef.new(Path.new("Foo", "Bar"))
 
     it_parses %(annotation Foo\nend\nrequire "bar"), [AnnotationDef.new("Foo".path), Require.new("bar")]
+
+    it_parses "@[Annotation]\nclass Foo; end", [Crystal::Annotation.new("Annotation".path), ClassDef.new("Foo".path)]
+    it_parses "@[Annotation]\nstruct Foo; end", [Crystal::Annotation.new("Annotation".path), ClassDef.new("Foo".path, struct: true)]
+    it_parses "@[Annotation]\nabstract class Foo; end", [Crystal::Annotation.new("Annotation".path), ClassDef.new("Foo".path, abstract: true)]
+    it_parses "@[Annotation]\nabstract struct Foo; end", [Crystal::Annotation.new("Annotation".path), ClassDef.new("Foo".path, abstract: true, struct: true)]
+    it_parses "@[Annotation]\nclass Foo < Bar; end", [Crystal::Annotation.new("Annotation".path), ClassDef.new("Foo".path, superclass: "Bar".path)]
+    it_parses "@[Annotation]\nclass Foo(T); end", [Crystal::Annotation.new("Annotation".path), ClassDef.new("Foo".path, type_vars: ["T"])]
 
     assert_syntax_error "def foo(x : *Int32); end", "invalid type splat"
     assert_syntax_error "def foo(x : (*Int32)); end", "invalid type splat"

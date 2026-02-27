@@ -257,7 +257,7 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
   def declare_instance_var(owner, node, var)
     annotations = nil
     process_annotations(@annotations) do |annotation_type, ann|
-      annotations ||= [] of {AnnotationType, Annotation}
+      annotations ||= [] of {AnnotationKey, Annotation}
       annotations << {annotation_type, ann}
     end
 

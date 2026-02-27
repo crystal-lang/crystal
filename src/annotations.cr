@@ -90,3 +90,32 @@ end
 # ```
 annotation Experimental
 end
+
+# This annotation marks a class or struct as an [annotation](https://crystal-lang.org/reference/syntax_and_semantics/annotations/index.html).
+#
+# Classes or structs marked with `@[Annotation]` can be used as annotations on other types, methods, and other declarations.
+# The types's constructor parameters map to the fields the annotation allows, including their expected types and default value if present.
+# Applying this annotation does not effect the semantics of the type (modules, inheritance, etc).
+#
+# ```
+# @[Annotation]
+# record MyAnnotation, name : String, count : Int32 = 5
+#
+# @[MyAnnotation("example")]
+# class Foo; end
+#
+# {% begin %}
+#   {% ann = Foo.annotation(MyAnnotation) %}
+#   {% puts ann["name"] %}  # => "example"
+#   {% puts ann["count"] %} # => 5
+# {% end %}
+# ```
+#
+# The `Crystal::Macros::Annotation#new_instance` macro method can be used to instantiate the annotation at runtime
+# passing its positional and named arguments to the related class/struct's constructor:
+#
+# ```
+# {{ Foo.annotation(MyAnnotation).new_instance }} == MyAnnotation.new("example", 5) # => true
+# ```
+annotation Annotation
+end

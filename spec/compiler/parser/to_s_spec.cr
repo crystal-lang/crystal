@@ -79,6 +79,17 @@ describe "ASTNode#to_s" do
   expect_to_s %(foo : (A | B).class)
   expect_to_s %[%("\#{foo}")], %["\\"\#{foo}\\""]
   expect_to_s "class Foo\n  private def bar\n  end\nend"
+  it "does to_s of @[Annotation] class" do
+    node = ClassDef.new("Foo".path)
+    node.annotation = true
+    node.to_s.should eq("@[Annotation]\nclass Foo\nend")
+  end
+
+  it "does to_s of @[Annotation] struct" do
+    node = ClassDef.new("Foo".path, struct: true)
+    node.annotation = true
+    node.to_s.should eq("@[Annotation]\nstruct Foo\nend")
+  end
   expect_to_s "foo(&.==(2))"
   expect_to_s "foo.nil?"
   expect_to_s "foo._bar"

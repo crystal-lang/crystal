@@ -489,7 +489,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     end
   end
 
-  def lookup_annotation(ann)
+  def lookup_annotation(ann) : AnnotationKey
     # TODO: Since there's `Int::Primitive`, and now we'll have
     # `::Primitive`, but there's no way to specify ::Primitive
     # just yet in annotations, we temporarily hardcode
@@ -505,11 +505,15 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
       type = lookup_type(ann.path)
     end
 
-    unless type.is_a?(AnnotationType)
-      ann.raise "#{ann.path} is not an annotation, it's a #{type.type_desc}"
+    # Accept traditional annotations
+    return type if type.is_a?(AnnotationType)
+
+    # Accept annotation classes/structs
+    if type.is_a?(ClassType) && type.annotation_class?
+      return type
     end
 
-    type
+    ann.raise "#{ann.path} is not an annotation, it's a #{type.type_desc}"
   end
 
   def validate_annotation(annotation_type, ann)
@@ -522,6 +526,300 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     when @program.experimental_annotation
       # ditto DeprecatedAnnotation
       ExperimentalAnnotation.from(ann)
+    end
+
+    # Light validation for annotation classes
+    if annotation_type.is_a?(ClassType) && annotation_type.annotation_class?
+      validate_annotation_class_args(annotation_type, ann)
+    end
+  end
+
+  # Validates annotation arguments against initialize and self.new overloads.
+  # Checks that field names exist and types are compatible (shallow check).
+  private def validate_annotation_class_args(annotation_type : ClassType, ann : Annotation)
+    # Check for `macro annotated` overloads first
+    annotated_macros = annotation_type.annotated_macros
+
+    if annotated_macros && !annotated_macros.empty?
+      # Use macro-based validation (ASTNode types)
+      validate_annotation_with_macros(annotation_type, ann, annotated_macros)
+    else
+      # Fallback to runtime constructor validation
+      validate_annotation_with_constructors(annotation_type, ann)
+    end
+  end
+
+  private def validate_annotation_with_constructors(annotation_type : ClassType, ann : Annotation)
+    init_defs = annotation_type.lookup_defs("initialize", lookup_ancestors_for_new: true)
+    new_defs = annotation_type.metaclass.lookup_defs("new", lookup_ancestors_for_new: true)
+
+    # Combine both constructor types, excluding private ones
+    all_constructors = (init_defs + new_defs).reject(&.visibility.private?)
+
+    # If no constructors, any args are invalid
+    if all_constructors.empty? && ann.has_any_args?
+      ann.raise "@[#{annotation_type}] has arguments but #{annotation_type} has no constructor"
+    end
+
+    return if all_constructors.empty?
+
+    validate_annotation_overloads(annotation_type, ann, all_constructors, AnnotationValidationMode::RuntimeConstructor)
+  end
+
+  private def validate_annotation_with_macros(annotation_type : ClassType, ann : Annotation, macros : Array(Macro))
+    validate_annotation_overloads(annotation_type, ann, macros, AnnotationValidationMode::MacroAnnotated)
+  end
+
+  # Unified validation for both constructors and macro annotated
+  private def validate_annotation_overloads(
+    annotation_type : ClassType,
+    ann : Annotation,
+    overloads : Array(Def) | Array(Macro),
+    mode : AnnotationValidationMode,
+  )
+    # If annotation has no args, check that at least one overload accepts zero args
+    if !ann.has_any_args?
+      matching = find_overload_accepting_zero_args(overloads)
+      unless matching
+        ann.raise "@[#{annotation_type}] is missing required arguments"
+      end
+      ann.matched_overload = matching
+      return
+    end
+
+    # Find if any overload fully matches all args
+    matching = overloads.find { |overload| overload_matches_annotation?(overload, ann, mode) }
+
+    if matching
+      ann.matched_overload = matching
+      return # Valid - at least one overload matches
+    end
+
+    # No overload matched - generate a helpful error message
+    # First check if any provided arg has a type mismatch
+    ann.args.each_with_index do |arg, index|
+      validate_positional_arg_overloads(overloads, annotation_type, arg, index, mode)
+    end
+
+    ann.named_args.try &.each do |named_arg|
+      validate_named_arg_overloads(overloads, annotation_type, named_arg, mode)
+    end
+
+    # If we reach here, all provided args are valid but no overload fully matched
+    # This means we're missing required arguments
+    ann.raise "@[#{annotation_type}] is missing required arguments"
+  end
+
+  # Checks if an ASTNode matches a macro type restriction using the macro type hierarchy
+  private def macro_literal_matches_restriction?(node : ASTNode, restriction : ASTNode?) : Bool
+    return true unless restriction
+
+    macro_type = @program.lookup_macro_type(restriction)
+    node.macro_is_a?(macro_type)
+  end
+
+  # Mode for annotation argument validation
+  private enum AnnotationValidationMode
+    RuntimeConstructor # Uses literal_matches_restriction?, runtime_type for errors
+    MacroAnnotated     # Uses macro_literal_matches_restriction?, class_desc for errors
+  end
+
+  # Unified type matching dispatcher
+  private def matches_restriction?(node : ASTNode, restriction : ASTNode?, mode : AnnotationValidationMode) : Bool
+    case mode
+    in .runtime_constructor?
+      literal_matches_restriction?(node, restriction)
+    in .macro_annotated?
+      macro_literal_matches_restriction?(node, restriction)
+    end
+  end
+
+  # Unified actual type formatter for error messages
+  private def format_actual_type(node : ASTNode, mode : AnnotationValidationMode) : String
+    case mode
+    in .runtime_constructor?
+      node.runtime_type || "expression"
+    in .macro_annotated?
+      node.class_desc
+    end
+  end
+
+  # Finds the first overload that can be called with zero arguments
+  private def find_overload_accepting_zero_args(overloads : Array(Def) | Array(Macro)) : Def | Macro | Nil
+    overloads.find do |overload|
+      overload.args.each_with_index.all? do |arg, index|
+        next true if index == overload.splat_index
+        arg.default_value
+      end
+    end
+  end
+
+  # Checks if an overload fully matches all annotation arguments
+  private def overload_matches_annotation?(overload : Def | Macro, ann : Annotation, mode : AnnotationValidationMode) : Bool
+    positional_args = ann.args
+    named_args = ann.named_args
+
+    # Check positional args match
+    positional_args.each_with_index do |arg, index|
+      param = param_at_positional_index(overload, index)
+      return false unless param
+      return false unless matches_restriction?(arg, param.restriction, mode)
+    end
+
+    # Check named args match
+    named_args.try &.each do |named_arg|
+      param = overload.args.find { |arg| arg.external_name == named_arg.name }
+      param ||= overload.double_splat
+      return false unless param
+      return false unless matches_restriction?(named_arg.value, param.restriction, mode)
+    end
+
+    # Check all required params have values
+    overload.args.each_with_index do |param, index|
+      next if index == overload.splat_index
+      next if param.default_value
+
+      has_value = if index < positional_args.size
+                    true
+                  elsif named_args
+                    named_args.any? { |na| na.name == param.external_name }
+                  else
+                    false
+                  end
+      return false unless has_value
+    end
+
+    true
+  end
+
+  # Validates a named argument against all overloads
+  private def validate_named_arg_overloads(
+    overloads : Array(Def) | Array(Macro),
+    annotation_type : ClassType,
+    named_arg : NamedArgument,
+    mode : AnnotationValidationMode,
+  )
+    found_param : Arg? = nil
+
+    overloads.each do |overload|
+      param = overload.args.find { |arg| arg.external_name == named_arg.name }
+      param ||= overload.double_splat
+
+      if param
+        found_param = param
+        return if matches_restriction?(named_arg.value, param.restriction, mode)
+      end
+    end
+
+    if found_param
+      actual_type = format_actual_type(named_arg.value, mode)
+      expected_type = found_param.restriction.try(&.to_s) || "any"
+      named_arg.raise "@[#{annotation_type}] parameter '#{named_arg.name}' expects #{expected_type}, not #{actual_type}"
+    else
+      named_arg.raise "@[#{annotation_type}] has no parameter '#{named_arg.name}'"
+    end
+  end
+
+  # Validates a positional argument against all overloads
+  private def validate_positional_arg_overloads(
+    overloads : Array(Def) | Array(Macro),
+    annotation_type : ClassType,
+    arg : ASTNode,
+    index : Int32,
+    mode : AnnotationValidationMode,
+  )
+    found_param : Arg? = nil
+
+    overloads.each do |overload|
+      param = param_at_positional_index(overload, index)
+
+      if param
+        found_param = param
+        return if matches_restriction?(arg, param.restriction, mode)
+      end
+    end
+
+    if found_param
+      actual_type = format_actual_type(arg, mode)
+      expected_type = found_param.restriction.try(&.to_s) || "any"
+      arg.raise "@[#{annotation_type}] argument at position #{index} expects #{expected_type}, not #{actual_type}"
+    else
+      arg.raise "@[#{annotation_type}] has too many arguments (expected at most #{index})"
+    end
+  end
+
+  # Gets the parameter at a positional index, handling splat
+  private def param_at_positional_index(def_or_macro : Def | Macro, index : Int32) : Arg?
+    args = def_or_macro.args
+    splat_index = def_or_macro.splat_index
+
+    if splat_index
+      if index < splat_index
+        args[index]?
+      elsif index >= splat_index
+        # After or at splat - could be captured by splat
+        args[splat_index]?
+      else
+        nil
+      end
+    else
+      args[index]?
+    end
+  end
+
+  # Shallow type check: compares literal's runtime type against restriction.
+  # Returns true if no restriction or if literal type matches restriction.
+  private def literal_matches_restriction?(literal : ASTNode, restriction : ASTNode?) : Bool
+    return true unless restriction
+
+    # Use literal's runtime_type if available
+    if runtime_type = literal.runtime_type
+      # NumberLiterals also match abstract number types
+      if literal.is_a?(NumberLiteral)
+        kind = literal.kind
+        abstract_types = if kind.signed_int? || kind.unsigned_int?
+                           {"Number", "Int"}
+                         else
+                           {"Number", "Float"}
+                         end
+        return restriction_matches_type?(restriction, runtime_type, abstract_types)
+      end
+
+      return restriction_matches_type?(restriction, runtime_type)
+    end
+
+    # Path could be a type reference - allow without validation
+    return true if literal.is_a?(Path)
+
+    # For complex expressions, skip shallow validation
+    true
+  end
+
+  # Checks if restriction matches the runtime type or any abstract types
+  private def restriction_matches_type?(restriction : ASTNode, runtime_type : String, abstract_types : Tuple? = nil) : Bool
+    case restriction
+    when Path
+      name = restriction.names.last
+      return true if name == runtime_type
+      abstract_types.try(&.includes?(name)) || false
+    when Generic
+      # Generic type like `Array(String)` - check base name
+      if restriction.name.is_a?(Path)
+        name = restriction.name.as(Path).names.last
+        return true if name == runtime_type
+        abstract_types.try(&.includes?(name)) || false
+      else
+        true # Complex generic, skip validation
+      end
+    when Union
+      # Union type - literal can match any member
+      restriction.types.any? { |t| restriction_matches_type?(t, runtime_type, abstract_types) }
+    when Metaclass, Self, Underscore
+      # Skip validation for these
+      true
+    else
+      # Unknown restriction type, skip validation
+      true
     end
   end
 
