@@ -243,6 +243,14 @@ describe Socket, tags: "network" do
       end
     }
 
+    it "rejects negative offset and count arguments" do
+      File.open(datapath("test_file.txt")) do |file|
+        sock = Socket.tcp(:inet)
+        expect_raises(ArgumentError, "Negative offset") { sock.sendfile(file, -1, 10) }
+        expect_raises(ArgumentError, "Negative count") { sock.sendfile(file, 1, -10) }
+      end
+    end
+
     it "writes file range to socket" do
       File.open(datapath("test_file.txt")) do |file|
         received = sendfile_test.call(file, 0, 11)

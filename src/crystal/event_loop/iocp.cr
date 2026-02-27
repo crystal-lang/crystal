@@ -458,7 +458,6 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     len = LibC::DWORD.new(count.clamp(..(Int32::MAX - 1)))
 
     Crystal::System::IOCP::WSAOverlappedOperation.run(socket.fd) do |operation|
-      # , socket.fd, "TransmitFile", socket.@write_timeout) do |operation|
       operation.@overlapped.union.offset.offset = LibC::DWORD.new!(offset)
       operation.@overlapped.union.offset.offsetHigh = LibC::DWORD.new!(offset >> 32)
 

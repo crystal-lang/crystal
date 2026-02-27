@@ -471,4 +471,17 @@ module Crystal::System::Socket
     setsockopt LibC::TCP_KEEPCNT, val, level: ::Socket::Protocol::TCP
     val
   end
+
+  private def system_sendfile(file : IO::FileDescriptor, offset : Int64, count : Int64) : Int64
+    # clamp offset and count to be within file size so TransmitFile won't fail
+    # on out of bounds
+    file_size = file.info.size.to_i64
+    return 0_i64 if offset > file_size
+
+    max_count = file_size - offset
+    count = max_count if count > max_count
+    return 0_i64 if count == 0
+
+    event_loop.sendfile(self, file.fd, offset, count, 0)
+  end
 end

@@ -334,11 +334,11 @@ class Socket < IO
   # copy).
   #
   # Returns how many bytes have actually been written. This should always be
-  # *limit* but may be less, for example if *offset* + *limit* is greater than
+  # *count* but may be less, for example if *offset* + *count* is greater than
   # the file size.
   #
-  # Doesn't directly read from *file* so the file position (`IO#pos`) doesn't
-  # change.
+  # Doesn't directly read from *file* so the current file position (`IO#pos`)
+  # doesn't change.
   #
   # For example, to send an entire file minus the first 44 bytes:
   #
@@ -354,14 +354,15 @@ class Socket < IO
   # end
   # ```
   #
-  # Some targets don't support `sendfile` or an equivalent syscall. Consider
-  # `IO.copy` as a portable alternative.
-  #
-  # WARNING: Windows requires both *offset* and *offset* + *count* to be within
-  # file size!
+  # The method leverages the `sendfile` (UNIX) and `TransmitFile` (Windows)
+  # syscalls when available for the copy to happen entirely in the kernel. The
+  # feature is emulated in user space on other targets.
   #
   # @[Experimental]
   def sendfile(file : IO::FileDescriptor, offset : Int, count : Int) : Int64
+    raise ArgumentError.new("Negative offset") if offset < 0
+    raise ArgumentError.new("Negative count") if count < 0
+
     flush unless sync?
 
     offset = offset.to_i64
