@@ -420,6 +420,10 @@ class Crystal::Repl::Compiler
     pop sizeof(Pointer(Void)), node: nil
   end
 
+  private def downcast_distinct(node : ASTNode, from : NilableType, to : ReferenceUnionType)
+    # Nothing to do: both are represented as pointers
+  end
+
   private def downcast_distinct(node : ASTNode, from : NilableReferenceUnionType, to : VirtualType | NonGenericClassType | GenericClassInstanceType | NilableType)
     # Nothing to do
   end
