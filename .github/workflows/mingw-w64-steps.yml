@@ -74,7 +74,7 @@ jobs:
           ldd bin/shards.exe | grep -iv ' => /c/windows/system32' | sed 's/.* => //; s/ (.*//' | xargs -t -i /usr/bin/install -m 0755 '{}' "$(pwd)/../crystal/bin/"
 
       - name: Upload Crystal executable
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ inputs.arch }}-mingw-w64-crystal
           path: crystal
@@ -137,7 +137,7 @@ jobs:
           persist-credentials: false
 
       - name: Download Crystal executable
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: ${{ inputs.arch }}-mingw-w64-crystal
           path: crystal

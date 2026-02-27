@@ -48,7 +48,7 @@ jobs:
           key: win-libs-${{ hashFiles('.github/workflows/win.yml', 'etc/win-ci/*.ps1') }}-msvc
       - name: Set up Cygwin
         if: steps.cache-libs.outputs.cache-hit != 'true'
-        uses: cygwin/cygwin-install-action@f2009323764960f80959895c7bc3bb30210afe4d # v6
+        uses: cygwin/cygwin-install-action@711d29f3da23c9f4a1798e369a6f01198c13b11a # v6
         with:
           packages: make
           install-dir: C:\cygwin64
@@ -138,7 +138,7 @@ jobs:
           key: win-dlls-${{ hashFiles('.github/workflows/win.yml', 'etc/win-ci/*.ps1') }}-msvc
       - name: Set up Cygwin
         if: steps.cache-dlls.outputs.cache-hit != 'true'
-        uses: cygwin/cygwin-install-action@f2009323764960f80959895c7bc3bb30210afe4d # v6
+        uses: cygwin/cygwin-install-action@711d29f3da23c9f4a1798e369a6f01198c13b11a # v6
         with:
           packages: make
           install-dir: C:\cygwin64
@@ -242,7 +242,7 @@ jobs:
           persist-credentials: false
 
       - name: Download Crystal executable
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: crystal
           path: build
@@ -284,7 +284,7 @@ jobs:
           persist-credentials: false
 
       - name: Download Crystal executable
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: crystal
           path: build
@@ -318,7 +318,7 @@ jobs:
           persist-credentials: false
 
       - name: Download Crystal executable
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: crystal
           path: etc/win-ci/portable
@@ -344,7 +344,7 @@ jobs:
           & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" crystal.iss
 
       - name: Upload Crystal installer
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: crystal-installer
           path: etc/win-ci/Output/crystal-setup.exe
