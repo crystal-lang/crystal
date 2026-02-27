@@ -1,4 +1,5 @@
 require "./types"
+require "./uio"
 
 lib LibC
   SOCK_DGRAM     =  2
@@ -46,6 +47,16 @@ lib LibC
   struct Linger
     l_onoff : Int
     l_linger : Int
+  end
+
+  struct Msghdr
+    msg_name : Void*
+    msg_namelen : SocklenT
+    msg_iov : Iovec*
+    msg_iovlen : Int
+    msg_control : Void*
+    msg_controllen : SocklenT
+    msg_flags : Int
   end
 
   fun accept(x0 : Int, x1 : Sockaddr*, x2 : SocklenT*) : Int
