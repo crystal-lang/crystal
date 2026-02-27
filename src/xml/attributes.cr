@@ -54,8 +54,12 @@ class XML::Attributes
     return unless prop
 
     value = ""
-    if content = LibXML.xmlNodeGetContent(prop)
-      value = String.new(content)
+    if ptr = LibXML.xmlNodeGetContent(prop)
+      begin
+        value = String.new(ptr)
+      ensure
+        LibXML.xmlFree.call(ptr.as(Void*))
+      end
     end
 
     if node = @node.document.cached?(prop)
