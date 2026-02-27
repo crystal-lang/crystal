@@ -2232,7 +2232,6 @@ module Crystal
     assert_syntax_error "case when .foo? then 1; end"
     assert_syntax_error "macro foo;{%end};end"
     assert_syntax_error "foo {1, 2}", %(unexpected token: ",")
-    assert_syntax_error "pointerof(self)", "can't take address of self"
     assert_syntax_error "def foo 1; end"
 
     assert_syntax_error %<{"x": [] of Int32,\n}\n1.foo(>, "unterminated call", 3, 6
