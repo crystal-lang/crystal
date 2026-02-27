@@ -58,7 +58,10 @@ class XML::Attributes
       begin
         value = String.new(ptr)
       ensure
-        LibXML.xmlFree.call(ptr.as(Void*))
+        # FIXME: calling xmlFree crashes the interpreter
+        {% unless flag?(:interpreted) %}
+          LibXML.xmlFree.call(ptr.as(Void*))
+        {% end %}
       end
     end
 
