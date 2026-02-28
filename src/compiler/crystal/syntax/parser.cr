@@ -2121,13 +2121,7 @@ module Crystal
         end
       end
 
-      if pieces.any?(&.value.is_a?(ASTNode))
-        pieces = combine_interpolation_pieces(pieces, delimiter_state)
-        result = StringInterpolation.new(pieces).at(location)
-      else
-        string = combine_pieces(pieces, delimiter_state)
-        result = StringLiteral.new string
-      end
+      result = combine_pieces(pieces, delimiter_state)
 
       case delimiter_state.kind
       when .command?
@@ -2147,6 +2141,16 @@ module Crystal
       result
     end
 
+    private def combine_pieces(pieces, delimiter_state)
+      if pieces.any?(&.value.is_a?(ASTNode))
+        pieces = combine_interpolation_pieces(pieces, delimiter_state)
+        StringInterpolation.new(pieces)
+      else
+        string = combine_stringliteral_pieces(pieces, delimiter_state)
+        StringLiteral.new(string)
+      end
+    end
+
     private def combine_interpolation_pieces(pieces, delimiter_state)
       if needs_heredoc_indent_removed?(delimiter_state)
         remove_heredoc_indent(pieces, delimiter_state.heredoc_indent)
@@ -2158,7 +2162,7 @@ module Crystal
       end
     end
 
-    private def combine_pieces(pieces, delimiter_state)
+    private def combine_stringliteral_pieces(pieces, delimiter_state)
       if needs_heredoc_indent_removed?(delimiter_state)
         pieces = remove_heredoc_indent(pieces, delimiter_state.heredoc_indent)
         pieces.join { |piece| piece.as(StringLiteral).value }
@@ -2266,12 +2270,11 @@ module Crystal
 
       delimiter_state, _options, end_location = consume_delimiter pieces, delimiter_state
 
-      if pieces.any?(&.value.is_a?(ASTNode))
-        pieces = combine_interpolation_pieces(pieces, delimiter_state)
-        node.expressions.concat(pieces)
+      result = combine_pieces(pieces, delimiter_state)
+      if result.is_a?(StringInterpolation)
+        node.expressions.concat(result.expressions)
       else
-        string = combine_pieces(pieces, delimiter_state)
-        node.expressions.push(StringLiteral.new(string).at(node).at_end(end_location))
+        node.expressions.push(result.at(node).at_end(end_location))
       end
 
       node.heredoc_indent = delimiter_state.heredoc_indent
