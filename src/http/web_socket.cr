@@ -5,20 +5,6 @@ require "./headers"
 class HTTP::WebSocket
   getter? closed = false
 
-  struct Ping
-    getter message : String
-
-    def initialize(@message)
-    end
-  end
-
-  struct Pong
-    getter message : String
-
-    def initialize(@message)
-    end
-  end
-
   # :nodoc:
   def initialize(io : IO, sync_close = true)
     initialize(Protocol.new(io, sync_close: sync_close))
@@ -268,6 +254,22 @@ class HTTP::WebSocket
   private def do_ping(message)
     @on_ping.try &.call(message)
     pong(message) unless closed?
+  end
+
+  # Returned by `receive` when the remote host sends a ping message.
+  struct Ping
+    getter message : String
+
+    def initialize(@message)
+    end
+  end
+
+  # Returned by `receive` when the remote host sends a pong message.
+  struct Pong
+    getter message : String
+
+    def initialize(@message)
+    end
   end
 end
 
