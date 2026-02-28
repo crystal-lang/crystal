@@ -5,7 +5,7 @@ private def regex(string, options = Regex::CompileOptions::None)
 end
 
 private def it_parses(string, expected_node, file = __FILE__, line = __LINE__, *, focus : Bool = false)
-  it "parses #{string.dump}", file, line, focus: focus do
+  it _description: "parses #{string.dump}", _file: file, _line: line, _focus: focus do
     parser = Parser.new(string)
     parser.filename = "/foo/bar/baz.cr"
     node = parser.parse
