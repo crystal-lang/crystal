@@ -2121,22 +2121,20 @@ module Crystal
         end
       end
 
-      result = combine_pieces(pieces, delimiter_state)
+      result = combine_pieces(pieces, delimiter_state).at(location).at_end(end_location)
 
       case delimiter_state.kind
       when .command?
-        result = Call.new("`", result).at(location)
+        result = Call.new("`", result).at(result)
       when .regex?
         if result.is_a?(StringLiteral) && (regex_error = Regex.error?(result.value))
           raise "invalid regex: #{regex_error}", location
         end
 
-        result = RegexLiteral.new(result, options).at(location)
+        result = RegexLiteral.new(result, options).at(result)
       else
         # no special treatment
       end
-
-      result.end_location = end_location
 
       result
     end
