@@ -329,6 +329,56 @@ class Socket < IO
     system_receive_from(message)
   end
 
+  # Writes *count* bytes from *file* to *socket* starting from the byte at
+  # *offset*, avoiding to copy data between the kernel and user spaces (zero-
+  # copy).
+  #
+  # Returns how many bytes have actually been written. This should always be
+  # *count* but may be less, for example if *offset* + *count* is greater than
+  # the file size.
+  #
+  # Doesn't directly read from *file* so the current file position (`IO#pos`)
+  # doesn't change.
+  #
+  # For example, to send an entire file minus the first 44 bytes:
+  #
+  # ```
+  # require "socket"
+  #
+  # sock = Socket.tcp(Socket::Family::INET)
+  # sock.connect("localhost", 1234)
+  #
+  # File.open("audio.wav") do |file|
+  #   sock.sendfile(file, 44, file.info.size - 44)
+  #   file.pos # => 0
+  # end
+  # ```
+  #
+  # The method leverages the `sendfile` (UNIX) and `TransmitFile` (Windows)
+  # syscalls when available for the copy to happen entirely in the kernel. The
+  # feature is emulated in user space on other targets.
+  #
+  # @[Experimental]
+  def sendfile(file : IO::FileDescriptor, offset : Int, count : Int) : Int64
+    raise ArgumentError.new("Negative offset") if offset < 0
+    raise ArgumentError.new("Negative count") if count < 0
+
+    flush unless sync?
+
+    offset = offset.to_i64
+    count = count.to_i64
+    total = 0_i64
+
+    until count == 0
+      sent_bytes = system_sendfile(file, offset, count)
+      offset += sent_bytes
+      count -= sent_bytes
+      total += sent_bytes
+    end
+
+    total
+  end
+
   # Calls `shutdown(2)` with `SHUT_RD`
   def close_read
     system_close_read

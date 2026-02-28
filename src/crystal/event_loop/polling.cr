@@ -368,6 +368,28 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     end
   end
 
+  def sendfile(socket : ::Socket, fd : System::FileDescriptor::Handle, offset : Int64, count : Int64, flags : Int32) : Int64 | Errno
+    loop do
+      ret, sent_bytes = System::Socket.sendfile(socket.fd, fd, offset, count, flags)
+      return sent_bytes unless ret == -1
+
+      case errno = Errno.value
+      when Errno::EAGAIN
+        # Darwin/BSD may have written bytes before blocking
+        return sent_bytes if sent_bytes > 0
+
+        wait_writable(socket, socket.@write_timeout) { return Errno::ETIMEDOUT }
+        return Errno::EBADF if socket.closed?
+      when Errno::EINTR, Errno::EBUSY
+        # Darwin/BSD may have written bytes before being interrupted (zero
+        # doesn't necessarily means EOF)
+        return sent_bytes if sent_bytes > 0
+      else
+        return errno
+      end
+    end
+  end
+
   def shutdown(socket : ::Socket) : Nil
     # perform cleanup before LibC.close. Using a file descriptor after it has
     # been closed is never defined and can always lead to undefined results

@@ -26,6 +26,10 @@ module Crystal::System::Socket
     event_loop.receive_from(self, bytes)
   end
 
+  private def system_sendfile(file : IO::FileDescriptor, offset : Int64, count : Int64) : Int64
+    event_loop.sendfile(self, file.fd, offset, count, 0)
+  end
+
   # private def system_close_read
 
   # private def system_close_write
