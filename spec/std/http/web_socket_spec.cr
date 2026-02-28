@@ -541,8 +541,10 @@ describe HTTP::WebSocket do
   it "allows receiving messages synchronously" do
     ws_handler = HTTP::WebSocketHandler.new do |ws, ctx|
       str = ws.receive.as(String)
-      ws.send(str)
-      ws.send(str.to_slice)
+      4.times do
+        ws.send(str)
+        ws.send(str.to_slice)
+      end
       ws.close :normal_closure, "bye!"
     end
     http_server = HTTP::Server.new([ws_handler])
@@ -552,11 +554,21 @@ describe HTTP::WebSocket do
     run_server(http_server) do
       client = HTTP::WebSocket.new("ws://#{address}")
       client.send "hello"
-      client.receive.should eq("hello")
-      client.receive.should eq("hello".to_slice)
-      close_code, msg = client.receive.as Tuple
-      close_code.normal_closure?.should be_true
-      msg.should eq "bye!"
+
+      client.receive.should eq "hello"
+      client.receive.should eq "hello".to_slice
+
+      client.receive_string.should eq "hello"
+      client.receive_bytes.should eq "hello".to_slice
+
+      client.receive?.should eq "hello"
+      client.receive?.should eq "hello".to_slice
+
+      client.receive_string?.should eq "hello"
+      client.receive_bytes?.should eq "hello".to_slice
+
+      # The WebSocket is closed after sending the above messages
+      client.receive?.should eq nil
     end
   end
 

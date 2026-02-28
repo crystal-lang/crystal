@@ -74,7 +74,11 @@ class HTTP::WebSocket
   end
 
   protected def check_open
-    raise IO::Error.new "Closed socket" if closed?
+    handle_closed if closed?
+  end
+
+  protected def handle_closed
+    raise IO::Error.new "Closed socket"
   end
 
   # Sends a message payload (message).
@@ -132,8 +136,71 @@ class HTTP::WebSocket
     @ws.close(code, message)
   end
 
-  # Receives and returns a single WebSocket message, calling previously set callbacks if defined.
-  # Ping and pong messages are automatically handled.
+  # Receives and returns a single WebSocket message as a `String` or
+  # raises `IO::Error` if the `WebSocket` has been closed.
+  #
+  # ```
+  # # Open websocket connection
+  # ws = HTTP::WebSocket.new("websocket.example.com", "/chat")
+  #
+  # loop do
+  #   msg = ws.receive_string
+  #   handle(msg)
+  # end
+  # ```
+  def receive_string : String
+    receive_string? || handle_closed
+  end
+
+  # Receives and returns a single binary WebSocket message as a `Bytes`, or
+  # raises `IO::Error` if the `WebSocket` has been closed.
+  #
+  # ```
+  # # Open websocket connection
+  # ws = HTTP::WebSocket.new("websocket.example.com", "/chat")
+  #
+  # loop do
+  #   msg = ws.receive_bytes
+  #   handle(msg)
+  # end
+  # ```
+  def receive_bytes : Bytes
+    receive_bytes? || handle_closed
+  end
+
+  # Receives and returns a single WebSocket message as a `String` or `nil`
+  # if the `WebSocket` has been closed.
+  #
+  # ```
+  # # Open websocket connection
+  # ws = HTTP::WebSocket.new("websocket.example.com", "/chat")
+  #
+  # while msg = ws.receive_string?
+  #   handle(msg)
+  # end
+  # ```
+  def receive_string? : String?
+    receive?.as(String?)
+  end
+
+  # Receives and returns a single binary WebSocket message as a `Bytes` or `nil`
+  # if the `WebSocket` has been closed.
+  #
+  # ```
+  # # Open websocket connection
+  # ws = HTTP::WebSocket.new("websocket.example.com", "/chat")
+  #
+  # while msg = ws.receive_bytes?
+  #   handle(msg)
+  # end
+  # ```
+  def receive_bytes? : Bytes?
+    receive?.as(Bytes?)
+  end
+
+  # Receives and returns a single WebSocket message as a `String` for text
+  # messages, `Bytes` for binary messages, or raises `IO::Error` if the
+  # `WebSocket` has been closed.
   #
   # ```
   # # Open websocket connection
@@ -146,17 +213,43 @@ class HTTP::WebSocket
   #     puts msg
   #   in Bytes # binary
   #     ws.send "response".to_slice
-  #   in Tuple(HTTP::WebSocket::CloseCode, String)
-  #     break
-  #   in HTTP::WebSocket::Ping
-  #     # No need to send a pong. This is handled automatically.
-  #     puts "ping"
-  #   in HTTP::WebSocket::Pong
-  #     puts "pong"
   #   end
   # end
   # ```
-  def receive : String | Bytes | {CloseCode, String} | Ping | Pong
+  def receive : String | Bytes
+    receive? || handle_closed
+  end
+
+  # Receives and returns a single WebSocket message as a `String` for text
+  # messages, `Bytes` for binary messages, or `nil` if the `WebSocket` has been
+  # closed.
+  #
+  # ```
+  # # Open websocket connection
+  # ws = HTTP::WebSocket.new("websocket.example.com", "/chat")
+  #
+  # loop do
+  #   case msg = ws.receive?
+  #   in String # text
+  #     ws.send "response"
+  #     puts msg
+  #   in Bytes # binary
+  #     ws.send "response".to_slice
+  #   in Nil
+  #     break
+  #   end
+  # end
+  # ```
+  def receive? : String | Bytes | Nil
+    case message = receive_impl
+    in String, Bytes
+      message
+    in Tuple(CloseCode, String)
+      nil
+    end
+  end
+
+  private def receive_impl : String | Bytes | {CloseCode, String}
     loop do
       begin
         info = @ws.receive(@buffer)
@@ -173,7 +266,6 @@ class HTTP::WebSocket
           message = @current_message.to_s
           do_ping(message)
           @current_message.clear
-          return Ping.new(message)
         end
       in .pong?
         @current_message.write @buffer[0, info.size]
@@ -181,7 +273,6 @@ class HTTP::WebSocket
           message = @current_message.to_s
           @on_pong.try &.call(message)
           @current_message.clear
-          return Pong.new(message)
         end
       in .text?
         @current_message.write @buffer[0, info.size]
@@ -240,7 +331,7 @@ class HTTP::WebSocket
   # ```
   def run : Nil
     loop do
-      receive
+      receive_impl
     rescue
       break
     end
@@ -254,22 +345,6 @@ class HTTP::WebSocket
   private def do_ping(message)
     @on_ping.try &.call(message)
     pong(message) unless closed?
-  end
-
-  # Returned by `receive` when the remote host sends a ping message.
-  struct Ping
-    getter message : String
-
-    def initialize(@message)
-    end
-  end
-
-  # Returned by `receive` when the remote host sends a pong message.
-  struct Pong
-    getter message : String
-
-    def initialize(@message)
-    end
   end
 end
 
