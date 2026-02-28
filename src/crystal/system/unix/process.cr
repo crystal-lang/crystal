@@ -292,23 +292,25 @@ struct Crystal::System::Process
   def self.prepare_args(command : String, args : Enumerable(String)?, shell : Bool) : {String, LibC::Char**}
     if shell
       command = %(#{command} "${@}") unless command.includes?(' ')
-      argv_ary = ["/bin/sh", "-c", command, "sh"]
+      command_args = ["/bin/sh", "-c", command, "sh"]
 
       if args
         unless command.includes?(%("${@}"))
           raise ArgumentError.new(%(Can't specify arguments in both command and args without including "${@}" into your command))
         end
       end
-
-      pathname = "/bin/sh"
     else
-      argv_ary = [command]
-      pathname = command
+      command_args = [command]
     end
 
-    argv_ary.concat(args) if args
+    command_args.concat(args) if args
 
-    argv = argv_ary.map(&.check_no_null_byte.to_unsafe)
+    prepare_args(command_args)
+  end
+
+  def self.prepare_args(args : Enumerable(String)) : {String, LibC::Char**}
+    pathname = args.first
+    argv = args.map(&.check_no_null_byte.to_unsafe)
     {pathname, argv.to_unsafe}
   end
 

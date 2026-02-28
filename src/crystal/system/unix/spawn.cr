@@ -2,9 +2,7 @@ require "c/signal"
 require "c/unistd"
 
 struct Crystal::System::Process
-  def self.spawn(command, args, shell, env, clear_env, input, output, error, chdir)
-    prepared_args = prepare_args(command, args, shell)
-
+  def self.spawn(prepared_args, shell, env, clear_env, input, output, error, chdir)
     r, w = FileDescriptor.system_pipe
 
     envp = Env.make_envp(env, clear_env)
