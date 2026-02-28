@@ -1,4 +1,5 @@
 require "mime/media_type"
+require "string_pool"
 {% if !flag?(:without_zlib) %}
   require "compress/deflate"
   require "compress/gzip"
@@ -193,8 +194,9 @@ module HTTP
     {name, value}
   end
 
-  # Important! These have to be in lexicographic order.
-  private COMMON_HEADERS = %w(
+  private COMMON_HEADERS = StringPool.new
+
+  %w(
     Accept-Encoding
     Accept-Language
     Accept-encoding
@@ -240,18 +242,19 @@ module HTTP
     location
     referer
     user-agent
-  )
+  ).each do |header|
+    COMMON_HEADERS.get header
+  end
 
   # :nodoc:
   def self.header_name(slice : Bytes) : String
     # Check if the header name is a common one.
     # If so we avoid having to allocate a string for it.
-    if slice.size < 20
-      name = COMMON_HEADERS.bsearch { |string| slice <= string.to_slice }
-      return name if name && name.to_slice == slice
+    if slice.size < 20 && (name = COMMON_HEADERS.get?(slice))
+      name
+    else
+      String.new(slice)
     end
-
-    String.new(slice)
   end
 
   # :nodoc:
