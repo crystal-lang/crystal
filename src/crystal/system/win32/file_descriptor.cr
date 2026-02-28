@@ -215,11 +215,6 @@ module Crystal::System::FileDescriptor
     @closed = false
   end
 
-  private def system_close
-    event_loop.shutdown(self)
-    event_loop.close(self)
-  end
-
   def file_descriptor_close(&)
     # Clear the @volatile_fd before actually closing it in order to
     # reduce the chance of reading an outdated handle value
@@ -428,7 +423,7 @@ module Crystal::System::FileDescriptor
       new_mode = (old_mode | off_mask) & ~on_mask
     end
 
-    if LibC.SetConsoleMode(windows_handle, new_mode) == 0
+    if @fd_lock.reference { LibC.SetConsoleMode(windows_handle, new_mode) } == 0
       raise IO::Error.from_winerror("SetConsoleMode")
     end
   end
@@ -444,7 +439,7 @@ module Crystal::System::FileDescriptor
       system_console_mode(enable, on_mask, off_mask, old_mode)
       yield
     ensure
-      LibC.SetConsoleMode(windows_handle, old_mode)
+      @fd_lock.reference { LibC.SetConsoleMode(windows_handle, old_mode) }
     end
   end
 end

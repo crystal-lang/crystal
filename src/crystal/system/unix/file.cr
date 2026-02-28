@@ -109,7 +109,7 @@ module Crystal::System::File
   end
 
   private def system_chown(uid : Int, gid : Int)
-    ret = @fd_lock.reference { LibC.fchown(fd, uid, gid) }
+    ret = LibC.fchown(fd, uid, gid)
     raise ::File::Error.from_errno("Error changing owner", file: path) if ret == -1
   end
 
@@ -120,7 +120,7 @@ module Crystal::System::File
   end
 
   private def system_chmod(mode)
-    if @fd_lock.reference { LibC.fchmod(fd, mode) } == -1
+    if LibC.fchmod(fd, mode) == -1
       raise ::File::Error.from_errno("Error changing permissions", file: path)
     end
   end
@@ -201,12 +201,12 @@ module Crystal::System::File
             timespecs = uninitialized LibC::Timespec[2]
             timespecs[0] = Crystal::System::Time.to_timespec(atime)
             timespecs[1] = Crystal::System::Time.to_timespec(mtime)
-            @fd_lock.reference { LibC.futimens(fd, timespecs) }
+            LibC.futimens(fd, timespecs)
           {% elsif LibC.has_method?("futimes") %}
             timevals = uninitialized LibC::Timeval[2]
             timevals[0] = Crystal::System::Time.to_timeval(atime)
             timevals[1] = Crystal::System::Time.to_timeval(mtime)
-            @fd_lock.reference { LibC.futimes(fd, timevals) }
+            LibC.futimes(fd, timevals)
           {% else %}
             {% raise "Missing futimens & futimes" %}
           {% end %}
@@ -217,7 +217,7 @@ module Crystal::System::File
   end
 
   private def system_truncate(size) : Nil
-    code = @fd_lock.reference { LibC.ftruncate(fd, size) }
+    code = LibC.ftruncate(fd, size)
     if code != 0
       raise ::File::Error.from_errno("Error truncating file", file: path)
     end

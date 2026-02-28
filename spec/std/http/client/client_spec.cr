@@ -206,7 +206,16 @@ module HTTP
         context.response.output.close
         io = context.response.@io.as(Socket)
         io.linger = 0 # with linger 0 the socket will be RST on close
-        io.close
+
+        {% if flag?(:win32) %}
+          # FIXME: calling #close will shutdown the socket before closing it,
+          # which results in WSARecv to raise an IO::Error in HTTP::Client and
+          # fail the spec; for the time being we bypass the shutdown by closing
+          # the socket only
+          io.socket_close
+        {% else %}
+          io.close
+        {% end %}
       end
       address = server.bind_unused_port "127.0.0.1"
 
