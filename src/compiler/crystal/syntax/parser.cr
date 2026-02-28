@@ -2103,9 +2103,8 @@ module Crystal
       delimiter_state = @token.delimiter_state
 
       pieces = [] of Piece
-      has_interpolation = false
 
-      delimiter_state, has_interpolation, options, end_location = consume_delimiter pieces, delimiter_state, has_interpolation
+      delimiter_state, options, end_location = consume_delimiter pieces, delimiter_state
 
       if want_skip_space && delimiter_state.kind.string?
         while true
@@ -2115,14 +2114,14 @@ module Crystal
           if passed_backslash_newline && @token.type.delimiter_start? && @token.delimiter_state.kind.string?
             next_string_token(delimiter_state)
             delimiter_state = @token.delimiter_state
-            delimiter_state, has_interpolation, options, end_location = consume_delimiter pieces, delimiter_state, has_interpolation
+            delimiter_state, options, end_location = consume_delimiter pieces, delimiter_state
           else
             break
           end
         end
       end
 
-      if has_interpolation
+      if pieces.any?(&.value.is_a?(ASTNode))
         pieces = combine_interpolation_pieces(pieces, delimiter_state)
         result = StringInterpolation.new(pieces).at(location)
       else
@@ -2168,7 +2167,7 @@ module Crystal
       end
     end
 
-    def consume_delimiter(pieces, delimiter_state, has_interpolation)
+    def consume_delimiter(pieces, delimiter_state)
       options = Regex::CompileOptions::None
       end_location = nil
       while true
@@ -2210,7 +2209,6 @@ module Crystal
             pieces << Piece.new(exp.value, line_number)
           else
             pieces << Piece.new(exp, line_number)
-            has_interpolation = true
           end
 
           skip_space_or_newline
@@ -2225,7 +2223,7 @@ module Crystal
         end
       end
 
-      {delimiter_state, has_interpolation, options, end_location}
+      {delimiter_state, options, end_location}
     end
 
     def consume_regex_options
@@ -2265,11 +2263,10 @@ module Crystal
       delimiter_state = @token.delimiter_state
 
       pieces = [] of Piece
-      has_interpolation = false
 
-      delimiter_state, has_interpolation, _options, end_location = consume_delimiter pieces, delimiter_state, has_interpolation
+      delimiter_state, _options, end_location = consume_delimiter pieces, delimiter_state
 
-      if has_interpolation
+      if pieces.any?(&.value.is_a?(ASTNode))
         pieces = combine_interpolation_pieces(pieces, delimiter_state)
         node.expressions.concat(pieces)
       else
