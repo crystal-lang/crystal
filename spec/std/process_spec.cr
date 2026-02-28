@@ -216,6 +216,52 @@ describe Process do
     end
   end
 
+  describe ".run?" do
+    it "waits for the process" do
+      status = Process.run?(to_ary(exit_code_command(0))).should be_a(Process::Status)
+      status.exit_code.should eq(0)
+    end
+
+    it "waits for the process" do
+      status = Process.run?(to_ary(exit_code_command(1))).should be_a(Process::Status)
+      status.exit_code.should eq(1)
+    end
+
+    it "returns nil if args[0] is empty" do
+      Process.run?([""] of String).should be_nil
+    end
+
+    it "returns nil command doesn't exist" do
+      Process.run?(["foobarbaz"]).should be_nil
+    end
+
+    it "returns nil for long path" do
+      Process.run?(["a" * 1000]).should be_nil
+    end
+
+    it "returns nil if command is not executable" do
+      with_tempfile("crystal-spec-run") do |path|
+        File.touch path
+        Process.run?([path]).should be_nil
+      end
+    end
+
+    it "returns nil if command is not executable" do
+      with_tempfile("crystal-spec-run") do |path|
+        Dir.mkdir path
+        Process.run?([path]).should be_nil
+      end
+    end
+
+    it "returns nil if command could not be executed" do
+      with_tempfile("crystal-spec-run") do |path|
+        File.touch path
+        command = File.join(path, "foo")
+        Process.run?([command]).should be_nil
+      end
+    end
+  end
+
   describe ".run" do
     it "waits for the process" do
       Process.run(*exit_code_command(0)).exit_code.should eq(0)

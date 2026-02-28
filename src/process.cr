@@ -202,6 +202,30 @@ class Process
     status
   end
 
+  # Executes a child process and waits for it to complete, returning its status.
+  #
+  # See `Process.new` for the meaning of the parameters.
+  #
+  # Returns a `Process::Status` representing the child process' exit status.
+  # The global `$?` variable is set to the returned status.
+  #
+  # Returns `nil` if the execution itself fails (for example because the
+  # executable does not exist or is not executable).
+  #
+  # Example:
+  #
+  # ```
+  # Process.run?(["true"])        # => Process::Status[0]
+  # Process.run?(["nonexistent"]) # => nil
+  # ```
+  def self.run?(args : Enumerable(String), *,
+                env : Env = nil, clear_env : Bool = false,
+                input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close,
+                chdir : Path | String? = nil) : Process::Status?
+    status = new(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir) { return nil }.wait
+    status
+  end
+
   # Executes a child process, yields the block, and then waits for it to finish.
   #
   # See `Process.new` for the meaning of the parameters.
