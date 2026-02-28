@@ -2200,34 +2200,40 @@ module Crystal
             raise "Unterminated string literal"
           end
         else
-          line_number = @token.line_number
-          delimiter_state = @token.delimiter_state
           next_token_skip_space_or_newline
-          old_inside_interpolation = @inside_interpolation
-          @inside_interpolation = true
-          exp = preserve_stop_on_do { parse_expression }
 
-          # We cannot reduce `StringLiteral` of interpolation inside heredoc into `String`
-          # because heredoc try to remove its indentation.
-          if exp.is_a?(StringLiteral) && !delimiter_state.kind.heredoc?
-            pieces << Piece.new(exp.value, line_number)
-          else
-            pieces << Piece.new(exp, line_number)
-          end
-
-          skip_space_or_newline
-          if !@token.type.op_rcurly?
-            raise "Unterminated string interpolation"
-          end
-
-          @token.delimiter_state = delimiter_state
-          next_string_token(delimiter_state)
-          @inside_interpolation = old_inside_interpolation
+          line_number = @token.line_number
+          exp = consume_interpolation(delimiter_state)
+          next_string_token delimiter_state
+          pieces << Piece.new(exp, line_number)
           delimiter_state = @token.delimiter_state
         end
       end
 
       {delimiter_state, options, end_location}
+    end
+
+    def consume_interpolation(delimiter_state)
+      old_inside_interpolation = @inside_interpolation
+      @inside_interpolation = true
+
+      exp = preserve_stop_on_do { parse_expression }
+
+      skip_space_or_newline
+      if !@token.type.op_rcurly?
+        raise "Unterminated string interpolation"
+      end
+
+      @token.delimiter_state = delimiter_state
+      @inside_interpolation = old_inside_interpolation
+
+      # We cannot reduce `StringLiteral` of interpolation inside heredoc into `String`
+      # because heredoc try to remove its indentation.
+      if exp.is_a?(StringLiteral) && !delimiter_state.kind.heredoc?
+        exp = exp.value
+      end
+
+      exp
     end
 
     def consume_regex_options
