@@ -1258,6 +1258,25 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         node.returns_twice = true
       when @program.raises_annotation
         node.raises = true
+      when @program.target_annotation
+        ann.named_args.try &.each do |arg|
+          case arg.name
+          when "cpu"
+            node.target_cpu = arg.value.to_s[1..-2]
+          when "features"
+            node.target_features = arg.value.to_s[1..-2]
+          when "optimize"
+            optimize_value = arg.value.to_s.split(":").last.downcase
+            ann.raise "invalid value for optimize argument. Must be Size or None" unless optimize_value.in?({"size", "none"})
+            node.optimize = LLVM::Optimize.parse optimize_value
+          when "debug"
+            debug_value = arg.value.to_s
+            ann.raise "invalid value for debug argument. Must be true or false" unless debug_value.in?({"false", "true"})
+            node.debug = debug_value == "true"
+          else
+            ann.raise "invalid Target argument '#{arg.name}'. Valid arguments are features, optimize, debug, cpu"
+          end
+        end
       else
         yield annotation_type, ann
       end
