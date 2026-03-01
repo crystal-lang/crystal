@@ -2103,9 +2103,8 @@ module Crystal
       delimiter_state = @token.delimiter_state
 
       pieces = [] of Piece
-      has_interpolation = false
 
-      delimiter_state, has_interpolation, options, end_location = consume_delimiter pieces, delimiter_state, has_interpolation
+      delimiter_state, options, end_location = consume_delimiter pieces, delimiter_state
 
       if want_skip_space && delimiter_state.kind.string?
         while true
@@ -2115,37 +2114,39 @@ module Crystal
           if passed_backslash_newline && @token.type.delimiter_start? && @token.delimiter_state.kind.string?
             next_string_token(delimiter_state)
             delimiter_state = @token.delimiter_state
-            delimiter_state, has_interpolation, options, end_location = consume_delimiter pieces, delimiter_state, has_interpolation
+            delimiter_state, options, end_location = consume_delimiter pieces, delimiter_state
           else
             break
           end
         end
       end
 
-      if has_interpolation
-        pieces = combine_interpolation_pieces(pieces, delimiter_state)
-        result = StringInterpolation.new(pieces).at(location)
-      else
-        string = combine_pieces(pieces, delimiter_state)
-        result = StringLiteral.new string
-      end
+      result = combine_pieces(pieces, delimiter_state).at(location).at_end(end_location)
 
       case delimiter_state.kind
       when .command?
-        result = Call.new("`", result).at(location)
+        result = Call.new("`", result).at(result)
       when .regex?
         if result.is_a?(StringLiteral) && (regex_error = Regex.error?(result.value))
           raise "invalid regex: #{regex_error}", location
         end
 
-        result = RegexLiteral.new(result, options).at(location)
+        result = RegexLiteral.new(result, options).at(result)
       else
         # no special treatment
       end
 
-      result.end_location = end_location
-
       result
+    end
+
+    private def combine_pieces(pieces, delimiter_state)
+      if pieces.any?(&.value.is_a?(ASTNode))
+        pieces = combine_interpolation_pieces(pieces, delimiter_state)
+        StringInterpolation.new(pieces)
+      else
+        string = combine_stringliteral_pieces(pieces, delimiter_state)
+        StringLiteral.new(string)
+      end
     end
 
     private def combine_interpolation_pieces(pieces, delimiter_state)
@@ -2159,7 +2160,7 @@ module Crystal
       end
     end
 
-    private def combine_pieces(pieces, delimiter_state)
+    private def combine_stringliteral_pieces(pieces, delimiter_state)
       if needs_heredoc_indent_removed?(delimiter_state)
         pieces = remove_heredoc_indent(pieces, delimiter_state.heredoc_indent)
         pieces.join { |piece| piece.as(StringLiteral).value }
@@ -2168,7 +2169,7 @@ module Crystal
       end
     end
 
-    def consume_delimiter(pieces, delimiter_state, has_interpolation)
+    def consume_delimiter(pieces, delimiter_state)
       options = Regex::CompileOptions::None
       end_location = nil
       while true
@@ -2197,35 +2198,40 @@ module Crystal
             raise "Unterminated string literal"
           end
         else
-          line_number = @token.line_number
-          delimiter_state = @token.delimiter_state
           next_token_skip_space_or_newline
-          old_inside_interpolation = @inside_interpolation
-          @inside_interpolation = true
-          exp = preserve_stop_on_do { parse_expression }
 
-          # We cannot reduce `StringLiteral` of interpolation inside heredoc into `String`
-          # because heredoc try to remove its indentation.
-          if exp.is_a?(StringLiteral) && !delimiter_state.kind.heredoc?
-            pieces << Piece.new(exp.value, line_number)
-          else
-            pieces << Piece.new(exp, line_number)
-            has_interpolation = true
-          end
-
-          skip_space_or_newline
-          if !@token.type.op_rcurly?
-            raise "Unterminated string interpolation"
-          end
-
-          @token.delimiter_state = delimiter_state
-          next_string_token(delimiter_state)
-          @inside_interpolation = old_inside_interpolation
+          line_number = @token.line_number
+          exp = consume_interpolation(delimiter_state)
+          next_string_token delimiter_state
+          pieces << Piece.new(exp, line_number)
           delimiter_state = @token.delimiter_state
         end
       end
 
-      {delimiter_state, has_interpolation, options, end_location}
+      {delimiter_state, options, end_location}
+    end
+
+    def consume_interpolation(delimiter_state)
+      old_inside_interpolation = @inside_interpolation
+      @inside_interpolation = true
+
+      exp = preserve_stop_on_do { parse_expression }
+
+      skip_space_or_newline
+      if !@token.type.op_rcurly?
+        raise "Unterminated string interpolation"
+      end
+
+      @token.delimiter_state = delimiter_state
+      @inside_interpolation = old_inside_interpolation
+
+      # We cannot reduce `StringLiteral` of interpolation inside heredoc into `String`
+      # because heredoc try to remove its indentation.
+      if exp.is_a?(StringLiteral) && !delimiter_state.kind.heredoc?
+        exp = exp.value
+      end
+
+      exp
     end
 
     def consume_regex_options
@@ -2265,16 +2271,14 @@ module Crystal
       delimiter_state = @token.delimiter_state
 
       pieces = [] of Piece
-      has_interpolation = false
 
-      delimiter_state, has_interpolation, _options, end_location = consume_delimiter pieces, delimiter_state, has_interpolation
+      delimiter_state, _options, end_location = consume_delimiter pieces, delimiter_state
 
-      if has_interpolation
-        pieces = combine_interpolation_pieces(pieces, delimiter_state)
-        node.expressions.concat(pieces)
+      result = combine_pieces(pieces, delimiter_state)
+      if result.is_a?(StringInterpolation)
+        node.expressions.concat(result.expressions)
       else
-        string = combine_pieces(pieces, delimiter_state)
-        node.expressions.push(StringLiteral.new(string).at(node).at_end(end_location))
+        node.expressions.push(result.at(node).at_end(end_location))
       end
 
       node.heredoc_indent = delimiter_state.heredoc_indent
