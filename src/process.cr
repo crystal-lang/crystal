@@ -269,6 +269,59 @@ class Process
     end
   end
 
+  # Creates and executes a child process.
+  #
+  # This starts a new process for the command given in *args[0]*.
+  #
+  # The command is either a path to the executable to run, or the name of an
+  # executable which is then looked up by the operating system.
+  # The lookup uses the `PATH` variable of the current process environment
+  # (i.e. `ENV["PATH"]).
+  # In order to resolve to a specific executable, provide a path instead of
+  # only a command name. `Process.find_executable` can help with looking up a
+  # command in a custom `PATH`.
+  #
+  # The following arguments in *args* are passed as arguments to the child process.
+  #
+  # Returns `nil` if executing *args[0]* fails, for example because the
+  # executable doesn't exist or is not executable. Raises `IO::Error` for other
+  # execution errors.
+  #
+  # *env* provides a mapping of environment variables for the child process.
+  # If *clear_env* is `true`, only these explicit variables are used; if `false`,
+  # the child inherits the parent's environment with *env*  merged.
+  #
+  # *input*, *output*, *error* configure the child process's standard streams.
+  # * `Redirect::Close` passes the null device
+  # * `Redirect::Pipe` creates a pipe that's accessible via `#input`, `#output`
+  #    or `#error`.
+  # * `Redirect::Inherit` to share the parent's streams (`STDIN`, `STDOUT`, `STDERR`).
+  # * An `IO` instance creates a pipe that reads/writes into the given IO.
+  #
+  # *chdir* changes the working directory of the child process. If `nil`, uses
+  # the current working directory of the parent process.
+  #
+  # Example:
+  #
+  # ```
+  # process = Process.new?(%w[echo Hello], output: Process::Redirect::Pipe)
+  # process.output.gets_to_end # => "Hello\n"
+  # process.wait               # => Process::Status[0]
+  #
+  # Process.new?(%w[nonexist]) # => nil
+  # ```
+  #
+  # Similar methods:
+  #
+  # * `Process.new` raises if the executable cannot be executed.
+  # * `Process.run` is a convenient short cut if you just want to run a command
+  #    and wait for it to finish.
+  # * `Process.exec` replaces the current process.
+  def self.new?(args : Enumerable(String), *, env : Env = nil, clear_env : Bool = false,
+                input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil) : self?
+    new(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir) { return nil }
+  end
+
   # Returns the process identifier of this process.
   def pid : Int64
     @process_info.pid.to_i64
@@ -327,6 +380,7 @@ class Process
   #
   # Similar methods:
   #
+  # * `Process.new?` returns `nil` if the executable cannot be executed instead of raising.
   # * `Process.run` is a convenient short cut if you just want to run a command
   #    and wait for it to finish.
   # * `Process.exec` replaces the current process.
@@ -339,7 +393,29 @@ class Process
     fork_error = stdio_to_fd(error, for: STDERR)
 
     prepared_args = Crystal::System::Process.prepare_args(args)
-    pid = Crystal::System::Process.spawn(prepared_args, false, env, clear_env, fork_input, fork_output, fork_error, chdir.try &.to_s)
+    pid = Crystal::System::Process.spawn(prepared_args, false, env, clear_env, fork_input, fork_output, fork_error, chdir.try &.to_s) do |error, command|
+      raise ::File::Error.from_os_error("Error executing process", error, file: command)
+    end
+    @process_info = Crystal::System::Process.new(pid)
+
+    fork_input.close unless fork_input.in?(input, STDIN)
+    fork_output.close unless fork_output.in?(output, STDOUT)
+    fork_error.close unless fork_error.in?(error, STDERR)
+  end
+
+  # :nodoc:
+  protected def initialize(args : Enumerable(String), *, env : Env = nil, clear_env : Bool = false,
+                           input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil, &)
+    raise File::NotFoundError.new("Error executing process: No command", file: "") if args.empty?
+
+    fork_input = stdio_to_fd(input, for: STDIN)
+    fork_output = stdio_to_fd(output, for: STDOUT)
+    fork_error = stdio_to_fd(error, for: STDERR)
+
+    prepared_args = Crystal::System::Process.prepare_args(args)
+    pid = Crystal::System::Process.spawn(prepared_args, false, env, clear_env, fork_input, fork_output, fork_error, chdir.try &.to_s) do
+      yield
+    end
     @process_info = Crystal::System::Process.new(pid)
 
     fork_input.close unless fork_input.in?(input, STDIN)
@@ -421,7 +497,9 @@ class Process
     fork_error = stdio_to_fd(error, for: STDERR)
 
     prepared_args = Crystal::System::Process.prepare_args(command, args, shell)
-    pid = Crystal::System::Process.spawn(prepared_args, shell, env, clear_env, fork_input, fork_output, fork_error, chdir.try &.to_s)
+    pid = Crystal::System::Process.spawn(prepared_args, shell, env, clear_env, fork_input, fork_output, fork_error, chdir.try &.to_s) do |error, command|
+      raise ::File::Error.from_os_error("Error executing process", error, file: command)
+    end
     @process_info = Crystal::System::Process.new(pid)
 
     fork_input.close unless fork_input.in?(input, STDIN)
