@@ -351,7 +351,7 @@ module FileUtils
     Dir.current
   end
 
-  # Deletes the *path* file given.
+  # Deletes the *path* file given, raises if path is not exists.
   #
   # ```
   # require "file_utils"
@@ -364,7 +364,7 @@ module FileUtils
     File.delete(path)
   end
 
-  # Deletes all *paths* file given.
+  # Deletes all *paths* files given, raises if any of the paths don't exist.
   #
   # ```
   # require "file_utils"
@@ -374,6 +374,32 @@ module FileUtils
   def rm(paths : Enumerable(Path | String)) : Nil
     paths.each do |path|
       File.delete(path)
+    end
+  end
+
+  # Deletes the given *path* file, ignoring it if it does not exist.
+  #
+  # ```
+  # require "file_utils"
+  #
+  # FileUtils.rm_f("afile.cr")
+  # ```
+  #
+  # NOTE: Alias of `File.delete?`
+  def rm_f(path : Path | String) : Nil
+    File.delete?(path)
+  end
+
+  # Deletes all *paths* files given, ignoring non-existing ones.
+  #
+  # ```
+  # require "file_utils"
+  #
+  # FileUtils.rm_f(["dir/afile", "afile_copy"])
+  # ```
+  def rm_f(paths : Enumerable(Path | String)) : Nil
+    paths.each do |path|
+      File.delete?(path)
     end
   end
 
@@ -452,7 +478,7 @@ module FileUtils
   # FileUtils.rmdir("baz")
   # ```
   #
-  # NOTE: Alias of `Dir.rmdir`
+  # NOTE: Alias of `Dir.delete`
   def rmdir(path : Path | String) : Nil
     Dir.delete(path)
   end
