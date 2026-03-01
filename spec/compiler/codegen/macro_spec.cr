@@ -1889,4 +1889,17 @@ describe "Code gen: macro" do
     run("{{ flag?(:foo) ? 1 : 0 }}", flags: %w(foo)).to_i.should eq(1)
     run("{{ flag?(:foo) ? 1 : 0 }}", Int32, flags: %w(foo)).should eq(1)
   end
+
+  it "expands record macro with comments during wants_doc=true (#16074)" do
+    semantic(<<-CRYSTAL, wants_doc: true)
+    require "macros"
+    require "object/properties"
+
+    record TestRecord,
+      # This is a comment
+      test : String?
+
+    TestRecord.new("test").test
+    CRYSTAL
+  end
 end
