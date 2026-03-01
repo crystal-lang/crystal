@@ -63,6 +63,10 @@ private def newline
   {% end %}
 end
 
+private def to_ary(tuple)
+  [tuple[0]].concat(tuple[1])
+end
+
 # interpreted code doesn't receive SIGCHLD for `#wait` to work (#12241)
 {% if flag?(:interpreted) && !flag?(:win32) %}
   pending Process
@@ -70,7 +74,78 @@ end
 {% end %}
 
 describe Process do
-  describe ".new" do
+  describe ".new (args)" do
+    it "raises if args is empty" do
+      expect_raises(File::NotFoundError, "Error executing process: No command") do
+        Process.new([] of String)
+      end
+    end
+
+    it "raises if args[0] is empty" do
+      expect_raises(IO::Error, /Error executing process: '("")?'/) do
+        Process.new([""] of String)
+      end
+    end
+
+    it "raises if command doesn't exist" do
+      expect_raises(File::NotFoundError, "Error executing process: 'foobarbaz'") do
+        Process.new(["foobarbaz"])
+      end
+    end
+
+    it "raises for long path" do
+      expect_raises(File::NotFoundError, "Error executing process: 'aaaaaaa") do
+        Process.new(["a" * 1000])
+      end
+    end
+
+    it "accepts nilable string for `chdir` (#13767)" do
+      expect_raises(File::NotFoundError, "Error executing process: 'foobarbaz'") do
+        Process.new(["foobarbaz"], chdir: nil.as(String?))
+      end
+    end
+
+    it "raises if command is not executable" do
+      with_tempfile("crystal-spec-run") do |path|
+        File.touch path
+        expect_raises({% if flag?(:win32) %} File::BadExecutableError {% else %} File::AccessDeniedError {% end %}, "Error executing process: '#{path.inspect_unquoted}'") do
+          Process.new([path])
+        end
+      end
+    end
+
+    it "raises if command is not executable" do
+      with_tempfile("crystal-spec-run") do |path|
+        Dir.mkdir path
+        expect_raises(File::AccessDeniedError, "Error executing process: '#{path.inspect_unquoted}'") do
+          Process.new([path])
+        end
+      end
+    end
+
+    it "raises if command could not be executed" do
+      with_tempfile("crystal-spec-run") do |path|
+        File.touch path
+        command = File.join(path, "foo")
+        expect_raises(IO::Error, "Error executing process: '#{command.inspect_unquoted}'") do
+          Process.new([command])
+        end
+      end
+    end
+
+    it "doesn't break if process is collected before completion", tags: %w[slow] do
+      200.times { Process.new(to_ary(exit_code_command(0))) }
+
+      # run the GC multiple times to unmap as much memory as possible
+      10.times { GC.collect }
+
+      # the processes above have now been queued after completion; if this last
+      # one finishes at all, nothing was broken by the GC
+      Process.run(*exit_code_command(0))
+    end
+  end
+
+  describe ".new (command + args)" do
     it "raises if command doesn't exist" do
       expect_raises(File::NotFoundError, "Error executing process: 'foobarbaz'") do
         Process.new("foobarbaz")

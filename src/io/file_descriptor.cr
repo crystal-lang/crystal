@@ -1,4 +1,5 @@
 require "crystal/system/file_descriptor"
+require "crystal/fd_lock"
 
 # An `IO` over a file descriptor.
 class IO::FileDescriptor < IO
@@ -6,6 +7,7 @@ class IO::FileDescriptor < IO
   include IO::Buffered
 
   @volatile_fd : Atomic(Handle)
+  @fd_lock = Crystal::FdLock.new
 
   # Returns the raw file-descriptor handle. Its type is platform-specific.
   #
@@ -101,7 +103,7 @@ class IO::FileDescriptor < IO
   # fiber tries to read from this file descriptor.
   @[Deprecated("Use IO::FileDescriptor.set_blocking instead.")]
   def blocking=(value : Bool) : Nil
-    self.system_blocking = value
+    @fd_lock.reference { self.system_blocking = value }
   end
 
   # Returns whether the blocking mode of *fd* is blocking (true) or non blocking
@@ -125,7 +127,7 @@ class IO::FileDescriptor < IO
   end
 
   def close_on_exec=(value : Bool) : Bool
-    self.system_close_on_exec = value
+    @fd_lock.reference { self.system_close_on_exec = value }
   end
 
   def self.fcntl(fd, cmd, arg = 0)
@@ -133,7 +135,7 @@ class IO::FileDescriptor < IO
   end
 
   def fcntl(cmd : Int, arg : Int = 0) : Int
-    system_fcntl(cmd, arg)
+    @fd_lock.reference { system_fcntl(cmd, arg) }
   end
 
   # Returns a `File::Info` object for this file descriptor, or raises
@@ -155,7 +157,7 @@ class IO::FileDescriptor < IO
   #
   # Use `File.info` if the file is not open and a path to the file is available.
   def info : File::Info
-    system_info
+    @fd_lock.reference { system_info }
   end
 
   # Seeks to a given *offset* (in bytes) according to the *whence* argument.
@@ -177,7 +179,7 @@ class IO::FileDescriptor < IO
     flush
     offset -= @in_buffer_rem.size if whence.current?
 
-    system_seek(offset, whence)
+    @fd_lock.reference { system_seek(offset, whence) }
 
     @in_buffer_rem = Bytes.empty
 
@@ -239,7 +241,7 @@ class IO::FileDescriptor < IO
   # and DragonFly BSD.
   def fsync(flush_metadata : Bool = true) : Nil
     flush
-    system_fsync(flush_metadata)
+    @fd_lock.reference { system_fsync(flush_metadata) }
   end
 
   # TODO: use fcntl/lockf instead of flock (which doesn't lock over NFS)
@@ -307,7 +309,10 @@ class IO::FileDescriptor < IO
 
   def reopen(other : IO::FileDescriptor) : IO::FileDescriptor
     return other if self.fd == other.fd
-    system_reopen(other)
+
+    other.@fd_lock.reference do
+      @fd_lock.reference { system_reopen(other) }
+    end
 
     other
   end
@@ -327,12 +332,12 @@ class IO::FileDescriptor < IO
   end
 
   private def unbuffered_read(slice : Bytes) : Int32
-    system_read(slice)
+    @fd_lock.read { system_read(slice) }
   end
 
   private def unbuffered_write(slice : Bytes) : Nil
     until slice.empty?
-      slice += system_write(slice)
+      slice += @fd_lock.write { system_write(slice) }
     end
   end
 
@@ -347,7 +352,10 @@ class IO::FileDescriptor < IO
     # IO::Evented readers and writers can be cancelled
     # knowing the IO is in a closed state.
     @closed = true
-    system_close
+
+    if @fd_lock.try_close? { event_loop.shutdown(self) }
+      event_loop.close(self)
+    end
   end
 
   private def unbuffered_flush : Nil

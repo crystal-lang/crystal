@@ -434,6 +434,7 @@ struct Crystal::System::IOCP
       operation.wait_for_result(timeout) do |error|
         case error
         when .wsa_io_incomplete?, .error_operation_aborted?
+          raise IO::Error.new("Closed") if target.closed?
           raise IO::TimeoutError.new("#{method} timed out")
         when .wsaeconnreset?
           return 0_u32 unless connreset_is_error

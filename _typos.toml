@@ -25,6 +25,7 @@ RPC_S_CALL_FAILED_DNE = "RPC_S_CALL_FAILED_DNE"
 SEH = "SEH"
 setup_seh_handler = "setup_seh_handler"
 usri4_parms = "usri4_parms"
+msg_controllen = "msg_controllen"
 
 [default]
 extend-ignore-re = [
