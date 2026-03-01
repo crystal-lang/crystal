@@ -1,5 +1,10 @@
 require "spec"
 
+private lib LibPointerSpec
+  type A = Void
+  type B = Void
+end
+
 private def reset(p1, p2)
   p1.value = 10
   p2.value = 20
@@ -187,6 +192,11 @@ describe "Pointer" do
   it "does to_s" do
     Pointer(Int32).null.to_s.should eq("Pointer(Int32).null")
     Pointer(Int32).new(1234_u64).to_s.should eq("Pointer(Int32)@0x4d2")
+  end
+
+  it "doesn't confuse lib typedefs (#16686)" do
+    Pointer(LibPointerSpec::A).null.inspect.should eq "Pointer(LibPointerSpec::A).null"
+    Pointer(LibPointerSpec::B).null.inspect.should eq "Pointer(LibPointerSpec::B).null"
   end
 
   it "creates from int" do
