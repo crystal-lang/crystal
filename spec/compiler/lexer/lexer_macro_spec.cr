@@ -295,7 +295,7 @@ describe "Lexer macro" do
     token.type.should eq(t :MACRO_END)
   end
 
-  [{"(", ")"}, {"[", "]"}, {"<", ">"}].each do |(left, right)|
+  [{"(", ")"}, {"[", "]"}, {"<", ">"}, {"|", "|"}].each do |(left, right)|
     it "lexes macro with embedded string with %#{left}" do
       lexer = Lexer.new("good %#{left} end #{right} day end")
 
@@ -328,6 +328,19 @@ describe "Lexer macro" do
 
     token = lexer.next_macro_token(token.macro_state, false)
     token.type.should eq(t :MACRO_END)
+  end
+
+  ["Q", "q", "w", "i", "r"].each do |prefix|
+    it "lexes macro with %#{prefix}| literal" do
+      lexer = Lexer.new("good %#{prefix}|begin| day end")
+
+      token = lexer.next_macro_token(Token::MacroState.default, false)
+      token.type.should eq(t :MACRO_LITERAL)
+      token.value.should eq("good %#{prefix}|begin| day ")
+
+      token = lexer.next_macro_token(token.macro_state, false)
+      token.type.should eq(t :MACRO_END)
+    end
   end
 
   it "lexes macro with comments" do
