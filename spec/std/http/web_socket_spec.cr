@@ -39,7 +39,7 @@ private class MalformerHandler
 end
 
 describe HTTP::WebSocket do
-  describe "receive" do
+  describe "Protocol#receive" do
     it "can read a small text packet" do
       data = Bytes[0x81, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f]
       io = IO::Memory.new(data)
@@ -535,6 +535,40 @@ describe HTTP::WebSocket do
       client.send "hello"
       client.run
       message.should eq("hello")
+    end
+  end
+
+  it "allows receiving messages synchronously" do
+    ws_handler = HTTP::WebSocketHandler.new do |ws, ctx|
+      str = ws.receive.as(String)
+      4.times do
+        ws.send(str)
+        ws.send(str.to_slice)
+      end
+      ws.close :normal_closure, "bye!"
+    end
+    http_server = HTTP::Server.new([ws_handler])
+
+    address = http_server.bind_unused_port
+
+    run_server(http_server) do
+      client = HTTP::WebSocket.new("ws://#{address}")
+      client.send "hello"
+
+      client.receive.should eq "hello"
+      client.receive.should eq "hello".to_slice
+
+      client.receive_string.should eq "hello"
+      client.receive_bytes.should eq "hello".to_slice
+
+      client.receive?.should eq "hello"
+      client.receive?.should eq "hello".to_slice
+
+      client.receive_string?.should eq "hello"
+      client.receive_bytes?.should eq "hello".to_slice
+
+      # The WebSocket is closed after sending the above messages
+      client.receive?.should eq nil
     end
   end
 
