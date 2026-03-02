@@ -544,9 +544,9 @@ module Crystal
       return link_flags unless DEFAULT_LINKER == "cc"
       return link_flags if link_flags.includes?("-fuse-ld=")
 
-      if (Process.run("mold") rescue false)
+      if Process.find_executable("mold")
         link_flags + " -fuse-ld=mold"
-      elsif (Process.run("ld.lld") rescue false)
+      elsif Process.find_executable("ld.lld")
         link_flags + " -fuse-ld=lld"
       else
         link_flags
