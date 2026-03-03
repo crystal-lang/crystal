@@ -255,6 +255,23 @@ module Crystal
 
     property! owner : Type
 
+    def min_max_args_sizes
+      max_size = args.size
+      default_value_index = args.index(&.default_value)
+      min_size = default_value_index || max_size
+      splat_index = self.splat_index
+      if splat_index
+        min_size = {default_value_index || splat_index, splat_index}.min
+        if args[splat_index].name.empty?
+          max_size = splat_index
+        else
+          # TODO: check for splat restrictions e.g. `macro foo(*x : Path)`
+          max_size = Int32::MAX
+        end
+      end
+      {min_size, max_size}
+    end
+
     # Yields `arg, arg_index, object, object_index` corresponding
     # to arguments matching the given objects, taking into account this
     # macro's splat index.
