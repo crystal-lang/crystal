@@ -269,7 +269,7 @@
 - Run side effects for class var with constant initializer. ([#10010](https://github.com/crystal-lang/crystal/pull/10010), thanks @asterite)
 - Fix `VaList` and disable `va_arg` for AArch64. ([#9422](https://github.com/crystal-lang/crystal/pull/9422), thanks @jhass)
 - Fix cache corrupted when compilation is cancelled. ([#9558](https://github.com/crystal-lang/crystal/pull/9558), thanks @waj)
-- Consider `select` as an openning keyword in macros. ([#9624](https://github.com/crystal-lang/crystal/pull/9624), thanks @asterite)
+- Consider `select` as an opening keyword in macros. ([#9624](https://github.com/crystal-lang/crystal/pull/9624), thanks @asterite)
 - Use function attribute `frame-pointer`. ([#9361](https://github.com/crystal-lang/crystal/pull/9361), thanks @kubo39)
 - Make missing `__crystal_raise_overflow` error more clear. ([#9686](https://github.com/crystal-lang/crystal/pull/9686), thanks @3n-k1)
 - Forbid calls with both block arg and block. ([#10026](https://github.com/crystal-lang/crystal/pull/10026), thanks @HertzDevil)
@@ -1363,7 +1363,7 @@
 - Fixed `HTTP::Server` response double-close. ([#7908](https://github.com/crystal-lang/crystal/pull/7908), thanks @asterite)
 - Enforce `HTTP::Client` host argument is just a host. ([#7958](https://github.com/crystal-lang/crystal/pull/7958), thanks @asterite)
 - Allow `HTTP::Params.encode` to encode an arrays of values for a key. ([#7862](https://github.com/crystal-lang/crystal/pull/7862), thanks @rodrigopinto)
-- Forward `read_timeout`/`write_timeout` in ssl socket to underlaying socket. ([#7820](https://github.com/crystal-lang/crystal/pull/7820), thanks @carlhoerberg)
+- Forward `read_timeout`/`write_timeout` in ssl socket to underlying socket. ([#7820](https://github.com/crystal-lang/crystal/pull/7820), thanks @carlhoerberg)
 - Natively support [Same-site Cookies](https://tools.ietf.org/html/draft-west-first-party-cookies-07#section-4.1.1). ([#7864](https://github.com/crystal-lang/crystal/pull/7864), thanks @Blacksmoke16)
 - Allow setting buffer size for `IO::Buffered`. ([#7930](https://github.com/crystal-lang/crystal/pull/7930), thanks @carlhoerberg)
 
@@ -2459,7 +2459,7 @@
 - Fixed `INI` parser edge cases and performance improvements. ([#5442](https://github.com/crystal-lang/crystal/pull/5442), [#5718](https://github.com/crystal-lang/crystal/pull/5718) thanks @woodruffw, @j8r)
 - Fixed initialization of `LibXML`. ([#5587](https://github.com/crystal-lang/crystal/pull/5587), thanks @lbguilherme)
 - Some finalizers were missing for example when the object where cloned. ([#5367](https://github.com/crystal-lang/crystal/pull/5367), thanks @alexbatalov)
-- Fixed sigfault handler initialization regarding `sa_mask`. ([#5677](https://github.com/crystal-lang/crystal/pull/5677) thanks @ysbaddaden)
+- Fixed segfault handler initialization regarding `sa_mask`. ([#5677](https://github.com/crystal-lang/crystal/pull/5677) thanks @ysbaddaden)
 - Fixed missing reference symbol in ARM. ([#5640](https://github.com/crystal-lang/crystal/pull/5640), thanks @blankoworld)
 - Fixed detect LLVM 5.0 by `llvm-config-5.0` command. ([#5531](https://github.com/crystal-lang/crystal/pull/5531), thanks @Vexatos)
 - Restore STDIN|OUT|ERR blocking state on exit. ([#5802](https://github.com/crystal-lang/crystal/pull/5802), thanks @bew)
@@ -2537,7 +2537,7 @@
 
 - The platform-specific parts of `File` and `IO::FileDescriptor` were moved to `Crystal::System`, as part of preparation for the Windows port. ([#5333](https://github.com/crystal-lang/crystal/pull/5333), [#5553](https://github.com/crystal-lang/crystal/pull/5553), [#5622](https://github.com/crystal-lang/crystal/pull/5622) thanks @RX14)
 - The platform-specific parts of `Dir` were moved to `Crystal::System`, as part of preparation for the Windows port. ([#5447](https://github.com/crystal-lang/crystal/pull/5447), thanks @RX14)
-- Incremental contributions regaring Windows support. ([#5422](https://github.com/crystal-lang/crystal/pull/5422), [#5524](https://github.com/crystal-lang/crystal/pull/5524), [#5533](https://github.com/crystal-lang/crystal/pull/5533), [#5538](https://github.com/crystal-lang/crystal/pull/5538), [#5539](https://github.com/crystal-lang/crystal/pull/5539), [#5580](https://github.com/crystal-lang/crystal/pull/5580), [#5947](https://github.com/crystal-lang/crystal/pull/5947) thanks @RX14 and @straight-shoota)
+- Incremental contributions regarding Windows support. ([#5422](https://github.com/crystal-lang/crystal/pull/5422), [#5524](https://github.com/crystal-lang/crystal/pull/5524), [#5533](https://github.com/crystal-lang/crystal/pull/5533), [#5538](https://github.com/crystal-lang/crystal/pull/5538), [#5539](https://github.com/crystal-lang/crystal/pull/5539), [#5580](https://github.com/crystal-lang/crystal/pull/5580), [#5947](https://github.com/crystal-lang/crystal/pull/5947) thanks @RX14 and @straight-shoota)
 - The build on OpenBSD was fixed. ([#5387](https://github.com/crystal-lang/crystal/pull/5387), thanks @wmoxam)
 - Add support for FreeBSD 12 (64-bit inodes). ([#5199](https://github.com/crystal-lang/crystal/pull/5199), thanks @myfreeweb)
 - Scripts and makefiles now depend on `sh` instead of `bash` for greater portability. ([#5468](https://github.com/crystal-lang/crystal/pull/5468), thanks @j8r)
@@ -2579,7 +2579,7 @@
 - Add custom extension support to `Tempfile`. ([#5264](https://github.com/crystal-lang/crystal/issues/5264), thanks @jreinert)
 - Add `reduce` method to `TupleLiteral` and `ArrayLiteral` when using macros. ([#5294](https://github.com/crystal-lang/crystal/issues/5294), thanks @javanut13)
 - Export a JSON representation of the documentation in the generated output. ([#4746](https://github.com/crystal-lang/crystal/issues/4746) and [#5228](https://github.com/crystal-lang/crystal/issues/5228), thanks @straight-shoota)
-- Make `gc/none` garbage collection compile again and allow it to be enbled using `-Dgc_none` compiler flag. ([#5314](https://github.com/crystal-lang/crystal/issues/5314), thanks @ysbaddaden)
+- Make `gc/none` garbage collection compile again and allow it to be enabled using `-Dgc_none` compiler flag. ([#5314](https://github.com/crystal-lang/crystal/issues/5314), thanks @ysbaddaden)
 
 ### Standard library bugs fixed
 
@@ -3158,7 +3158,7 @@
 - Constants and class vars are no longer initialized before "main". Now their initialization order goes along with "main", similar to how it works in Ruby (much more intuitive)
 - Added syntax for unpacking block arguments: `foo { |(x, y)| ... }`
 - Added `NamedTupleLiteral#map` and `HashLiteral#map` in macros (thanks @jhass)
-- Fixed wrong codgen for tuples/named tuples merge with pass-by-value types
+- Fixed wrong codegen for tuples/named tuples merge with pass-by-value types
 - Formatter: fixed incorrect format for named tuple type
 
 ### 0.17.0 (2016-05-17)
@@ -3287,7 +3287,7 @@
 - `Spec`: allow setting multiple output formatters (thanks @marceloboeira)
 - `StringScanner`: improved performance
 - Added `foo.[0] = 1` and `foo.[0]` as valid syntax, similar to the one in `&.` blocks (thanks @MakeNowJust)
-- `CSV`: allow separate and quote characters different than comma and doble quote (thanks @jreinert)
+- `CSV`: allow separate and quote characters different than comma and double quote (thanks @jreinert)
 - `YAML`: support merge operator (`<<`) (thanks @jreinert)
 - Allow redefining primitive methods like `Int32#+(other : Int32)`
 - Allow defining macros with operator names like `[]`
@@ -3296,7 +3296,7 @@
 - `HTTP::Client`: added a constructor with an `URI` argument (thanks @plukevdh)
 - `String`: `sub` and `gsub` now understand backreferences (thanks @bjmllr)
 - `Random`: added `Random#rand(Float64)` and `Random#rand(Range(Float, Float))` (thanks @AlexWayfer)
-- `HTML`: `HTLM.escape` includes more characters (thanks @Ryuuzakis)
+- `HTML`: `HTML.escape` includes more characters (thanks @Ryuuzakis)
 - Added `TypeNode.class` method in macros (thanks @waterlink)
 - `run` inside macros now also work with absolute paths (useful when used with `__DIR__`)
 - Added docs for `Math` and `StaticArray` (thanks @Zavydiel, @HeleneMyr)
@@ -3372,7 +3372,7 @@
 - Added `Int#to_s(base)` for `base = 62` (thanks @jhass)
 - `JSON.parse` now returns `JSON::Any`, which allows traversal of JSON objects with less casts
 - Added `OpenSSL::PKCS5` (thanks @benoist)
-- MemoryIO can now be created to read/write from a Slice(UInt8). In this mode MemoryIO can't be exapnded, and can optionally be written. And when creating a MemoryIO from a String, it's non-resizeable and read-only.
+- MemoryIO can now be created to read/write from a Slice(UInt8). In this mode MemoryIO can't be expanded, and can optionally be written. And when creating a MemoryIO from a String, it's non-resizeable and read-only.
 - Added `Object#!~` (the opposite of `=~`)
 - `at_exit` now receives that exit status code in the block (thanks @MakeNowJust)
 - Allow using `Set` in JSON mappings (thanks @benoist)
@@ -3397,7 +3397,7 @@
 
 ### 0.9.0 (2015-10-16)
 
-- **(breaking change)** The `CGI` module's funcionality has been moved to `URI` and `HTTP::Params`
+- **(breaking change)** The `CGI` module's functionality has been moved to `URI` and `HTTP::Params`
 - **(breaking change)** `IO#read()` is now `IO#gets_to_end`. Removed `IO#read(count)`, added `IO#skip(count)`
 - **(breaking change)** `json_mapping` is now `JSON.mapping`. `yaml_mapping` is now `YAML.mapping`
 - **(breaking change)** `StringIO` is now `MemoryIO`
@@ -3470,7 +3470,7 @@
 - Added `HTTP::Cookies` (thanks @netfeed)
 - Added `Tuple#reverse` (thanks @jhass)
 - Added `Number#clamp` (thanks @technorama)
-- Added serveral socket options (thanks @technorama)
+- Added several socket options (thanks @technorama)
 - Added `WebSocket.open` (thanks @kumpelblase2)
 - Added `Enum.flags` macro
 - Added support for sending chunked content in HTTP server (thanks @bcardiff)
@@ -3831,7 +3831,7 @@
 - Added `Regex.escape`.
 - Added `String#scan`.
 - Added `-e` switch to spec, to run specs that match a pattern.
-- Added `--fail-fast` swtich to spec.
+- Added `--fail-fast` switch to spec.
 - Added `HTTPClient#basic_auth`.
 - Added `DeclareVar`, `Def` and `Arg` macro methods.
 - Added `Time` and `TimeSpan` structs. `TimeWithZone` will come later.
@@ -3859,8 +3859,8 @@
 - Added [SecureRandom](https://github.com/crystal-lang/crystal/blob/master/src/secure_random.cr).
 - New syntax for array/hash-like classes. For example: `Set {1, 2, 3}` and `HTTP::Headers {"content-type": "text/plain"}`. These just create the type and use `<<` or `[]=`.
 - Optimized Json parsing performance.
-- Added a [CSV builder](https://github.com/crystal-lang/crystal/blob/master/src/csv.cr#L13).
-- XML reader can [parse from an IO](https://github.com/crystal-lang/crystal/blob/master/src/xml/reader.cr#L10).
+- Added a [CSV builder](https://github.com/crystal-lang/crystal/blob/0.5.1//src/csv.cr#L13).
+- XML reader can [parse from an IO](https://github.com/crystal-lang/crystal/blob/0.5.1//src/xml/reader.cr#L10).
 - Added `Dir::glob` and `Dir::Entries` (thanks @jhass)
 - Allow `ensure` as an expression suffix.
 - Fixed [#219](https://github.com/crystal-lang/crystal/issues/219): Proc type is not inferred when passing to library fun and the return type doesn't match.
