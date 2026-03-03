@@ -53,6 +53,58 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     annotations = read_annotations
 
+    # Check for @[Annotation] meta-annotation
+    annotation_metadata : AnnotationMetadata? = nil
+    annotations.try &.reject! do |ann|
+      if ann.path.single?("Annotation")
+        if node.abstract?
+          ann.raise "can't use @[Annotation] on abstract type"
+        end
+        node.annotation = true
+
+        # Parse metadata arguments
+        metadata = AnnotationMetadata.new
+        ann.named_args.try &.each do |named_arg|
+          case named_arg.name
+          when "repeatable"
+            if named_arg.value.is_a?(BoolLiteral)
+              metadata.repeatable = named_arg.value.as(BoolLiteral).value
+            else
+              named_arg.raise "@[Annotation] 'repeatable' argument must be a boolean literal"
+            end
+          when "targets"
+            if named_arg.value.is_a?(ArrayLiteral)
+              targets = [] of String
+              named_arg.value.as(ArrayLiteral).elements.each do |elem|
+                if elem.is_a?(StringLiteral)
+                  target = elem.as(StringLiteral).value
+                  unless target.in?("class", "method", "property", "parameter")
+                    elem.raise "@[Annotation] invalid target '#{target}' (valid targets: class, method, property, parameter)"
+                  end
+                  targets << target
+                else
+                  elem.raise "@[Annotation] 'targets' array must contain string literals"
+                end
+              end
+              if targets.empty?
+                named_arg.raise "@[Annotation] 'targets' array can't be empty"
+              end
+              metadata.targets = targets
+            else
+              named_arg.raise "@[Annotation] 'targets' argument must be an array literal"
+            end
+          else
+            named_arg.raise "@[Annotation] has no argument '#{named_arg.name}'"
+          end
+        end
+        annotation_metadata = metadata
+
+        true # remove from list
+      else
+        false # keep in list
+      end
+    end
+
     special_type = nil
     process_annotations(annotations) do |annotation_type, ann|
       case annotation_type
@@ -87,6 +139,10 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         node.raise "#{name} is not a #{node.struct? ? "struct" : "class"}, it's a #{type.type_desc}"
       end
 
+      if node.annotation? != type.annotation_class?
+        node.raise "#{name} is not an annotation #{node.struct? ? "struct" : "class"}"
+      end
+
       if type_vars = node.type_vars
         if type.is_a?(GenericType)
           check_reopened_generic(type, node, type_vars)
@@ -106,6 +162,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         end
         type.abstract = node.abstract?
         type.struct = node.struct?
+        type.annotation_class = node.annotation?
+        type.annotation_metadata = annotation_metadata
       in .reference_storage_type?
         type_vars = node.type_vars
         case
@@ -232,7 +290,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         end
       end
 
-      type.add_annotation(annotation_type, ann)
+      type.add_annotation(annotation_type, ann, "class")
     end
 
     attach_doc type, node, annotations
@@ -259,6 +317,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     check_outside_exp node, "declare module"
 
     annotations = read_annotations
+    reject_annotation_meta_annotation(annotations, "a module")
 
     scope, name, type = lookup_type_def(node)
 
@@ -305,6 +364,15 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     false
   end
 
+  # Rejects @[Annotation] meta-annotation - only class/struct definitions should allow it
+  private def reject_annotation_meta_annotation(annotations, type_desc : String)
+    annotations.try &.each do |ann|
+      if ann.path.single?("Annotation")
+        ann.raise "can't use @[Annotation] on #{type_desc}"
+      end
+    end
+  end
+
   private def check_reopened_generic(generic, node, new_type_vars)
     generic_type_vars = generic.type_vars
     if new_type_vars != generic_type_vars || node.splat_index != generic.splat_index
@@ -332,6 +400,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     check_outside_exp node, "declare annotation"
 
     annotations = read_annotations
+    reject_annotation_meta_annotation(annotations, "an annotation")
     process_annotations(annotations) do |annotation_type, ann|
       node.add_annotation(annotation_type, ann)
     end
@@ -358,6 +427,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     check_outside_exp node, "declare alias"
 
     annotations = read_annotations
+    reject_annotation_meta_annotation(annotations, "an alias")
 
     scope, name, existing_type = lookup_type_def(node)
 
@@ -420,7 +490,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   def visit(node : Arg)
     if anns = node.parsed_annotations
       process_annotations anns do |annotation_type, ann|
-        node.add_annotation annotation_type, ann
+        node.add_annotation annotation_type, ann, "parameter"
       end
     end
 
@@ -437,7 +507,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         process_def_primitive_annotation(node, ann)
       end
 
-      node.add_annotation(annotation_type, ann)
+      node.add_annotation(annotation_type, ann, "method")
     end
 
     node.doc ||= annotations_doc(annotations)
@@ -553,6 +623,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     check_outside_exp node, "declare lib"
 
     annotations = read_annotations
+    reject_annotation_meta_annotation(annotations, "a lib")
 
     scope, name, type = lookup_type_def(node)
 
@@ -672,6 +743,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     check_outside_exp node, "declare enum"
 
     annotations = read_annotations
+    reject_annotation_meta_annotation(annotations, "an enum")
 
     scope, name, enum_type = lookup_type_def(node)
 
