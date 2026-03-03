@@ -467,7 +467,6 @@ def print_entries(entries)
   puts
 
   entries.each(&.print_ref_labels(STDOUT))
-  puts
 end
 
 SECTION_TITLES.each do |id, title|
