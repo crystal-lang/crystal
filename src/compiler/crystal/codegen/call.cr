@@ -492,7 +492,9 @@ class Crystal::CodeGenVisitor
   end
 
   def inline_call_return_value(target_def, body)
-    if target_def.type.nil_type?
+    if target_def.type.no_return?
+      unreachable
+    elsif target_def.type.nil_type?
       @last = llvm_nil
     else
       @last = upcast(@last, target_def.type, body.type)
