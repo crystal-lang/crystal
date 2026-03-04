@@ -187,10 +187,13 @@ module XML
       begin
         String.new(ptr)
       ensure
-        # FIXME: calling xmlFree crashes the interpreter (#12495)
-        {% unless flag?(:interpreted) %}
-          LibXML.xmlFree.call(ptr.as(Void*))
+        xmlFree = LibXML.xmlFree
+        {% if flag?(:interpreted) %}
+          # FIXME: calling xmlFree directly crashes the interpreter (https://github.com/crystal-lang/crystal/issues/12495)
+          xmlFree = LibXML::FreeFunc.new(xmlFree.pointer, Pointer(Void).null)
         {% end %}
+        
+        xmlFree.call(ptr.as(Void*))
       end
     else
       ""
