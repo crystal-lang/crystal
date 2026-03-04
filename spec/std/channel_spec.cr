@@ -34,13 +34,13 @@ private macro parallel(*jobs)
   }
 end
 
-module FakeContext
+private module FakeContext
   def self.spawn(*, name : String? = nil, &block : ->) : Fiber
     ::spawn(name: name, &block)
   end
 end
 
-concurrent =
+private CONCURRENT =
   {% if flag?(:execution_context) %}
     ctx = Fiber::ExecutionContext.current
     if ctx.is_a?(Fiber::ExecutionContext::Parallel) && ctx.capacity > 1
@@ -607,13 +607,13 @@ describe "unbuffered" do
     ch = Channel(Int32).new
     state = 0
 
-    concurrent.spawn do
+    CONCURRENT.spawn do
       state = 1
       ch.send 123
       state = 2
     end
 
-    concurrent.spawn do
+    CONCURRENT.spawn do
       Sync.eventually { state.should eq(1) }
       ch.receive.should eq(123)
       state.should eq(1)
@@ -697,7 +697,7 @@ describe "unbuffered" do
     ch = Channel(Nil).new
     state = :none
 
-    concurrent.spawn do
+    CONCURRENT.spawn do
       begin
         state = :ready
         ch.send(nil)
@@ -706,7 +706,7 @@ describe "unbuffered" do
       end
     end
 
-    concurrent.spawn do
+    CONCURRENT.spawn do
       Sync.eventually { state.should eq(:ready) }
       ch.close
     end
@@ -719,14 +719,14 @@ describe "unbuffered" do
     state = :none
     closed = false
 
-    concurrent.spawn do
+    CONCURRENT.spawn do
       state = :ready
       ch.receive
     rescue Channel::ClosedError
       closed = ch.closed?
     end
 
-    concurrent.spawn do
+    CONCURRENT.spawn do
       Sync.eventually { state.should eq(:ready) }
       ch.close
     end
@@ -738,7 +738,7 @@ describe "unbuffered" do
     ch = Channel(Int32).new
     state = :none
 
-    concurrent.spawn do
+    CONCURRENT.spawn do
       state = :ready
       ch.send 1
     rescue ex
@@ -747,7 +747,7 @@ describe "unbuffered" do
       state = :done
     end
 
-    concurrent.spawn do
+    CONCURRENT.spawn do
       Sync.eventually { state.should eq(:ready) }
       ch.receive.should eq(1)
       ch.close
@@ -862,7 +862,7 @@ describe "buffered" do
     ch = Channel(Int32).new(1)
     state = :none
 
-    concurrent.spawn do
+    CONCURRENT.spawn do
       ch.send 1
       state = :ready
       ch.send 2
@@ -872,7 +872,7 @@ describe "buffered" do
       state = :done
     end
 
-    concurrent.spawn do
+    CONCURRENT.spawn do
       Sync.eventually { state.should eq(:ready) }
       ch.receive.should eq(1)
       ch.receive.should eq(2)
