@@ -192,7 +192,6 @@ module XML
           # FIXME: calling xmlFree directly crashes the interpreter (https://github.com/crystal-lang/crystal/issues/12495)
           xmlFree = LibXML::FreeFunc.new(xmlFree.pointer, Pointer(Void).null)
         {% end %}
-        
         xmlFree.call(ptr.as(Void*))
       end
     else
