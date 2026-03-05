@@ -238,11 +238,9 @@ describe "FileUtils" do
     it "tests rm with nonexistent path" do
       with_tempfile("rm-nonexistent") do |path|
         test_with_string_and_path(path) do |arg|
-          {% if flag?(:linux) || flag?(:darwin) || flag?(:windows) %}
-            expect_raises(File::Error, "Error deleting file: '#{path.inspect_unquoted}': No such file or directory") do
-              FileUtils.rm(arg)
-            end
-          {% end %}
+          expect_raises(File::Error, "Error deleting file: '#{path.inspect_unquoted}': No such file or directory") do
+            FileUtils.rm(arg)
+          end
         end
       end
     end
@@ -250,15 +248,13 @@ describe "FileUtils" do
     it "tests rm with directory" do
       with_tempfile("rm-directory") do |path|
         test_with_string_and_path(path) do |arg|
-          {% if flag?(:linux) || flag?(:darwin) || flag?(:windows) %}
-            Dir.mkdir_p(path)
+          Dir.mkdir_p(path)
 
-            expect_raises(File::Error, "Error deleting file: '#{path.inspect_unquoted}'") do
-              FileUtils.rm(arg)
-            end
+          expect_raises(File::Error, "Error deleting file: '#{path.inspect_unquoted}'") do
+            FileUtils.rm(arg)
+          end
 
-            Dir.exists?(path).should be_true
-          {% end %}
+          Dir.exists?(path).should be_true
         end
       end
     end
@@ -266,19 +262,17 @@ describe "FileUtils" do
     it "tests rm with file and directory" do
       with_tempfile("rm-multi1", "rm-multi2", "rm-dir3") do |path1, path2, path3|
         test_with_string_and_path(path1, path2, path3) do |*args|
-          {% if flag?(:linux) || flag?(:darwin) || flag?(:windows) %}
-            File.write(path1, "")
-            File.write(path2, "")
-            Dir.mkdir_p(path3)
+          File.write(path1, "")
+          File.write(path2, "")
+          Dir.mkdir_p(path3)
 
-            expect_raises(File::Error, "Error deleting file: '#{path3.inspect_unquoted}'") do
-              FileUtils.rm(args.to_a)
-            end
+          expect_raises(File::Error, "Error deleting file: '#{path3.inspect_unquoted}'") do
+            FileUtils.rm(args.to_a)
+          end
 
-            File.exists?(path1).should be_false
-            File.exists?(path2).should be_false
-            Dir.exists?(path3).should be_true
-          {% end %}
+          File.exists?(path1).should be_false
+          File.exists?(path2).should be_false
+          Dir.exists?(path3).should be_true
         end
       end
     end
@@ -301,11 +295,9 @@ describe "FileUtils" do
           File.write(path1, "")
           File.write(path2, "")
 
-          {% if flag?(:linux) || flag?(:darwin) || flag?(:windows) %}
-            expect_raises(File::NotFoundError, "Error deleting file: '#{path2.inspect_unquoted}'") do
-              FileUtils.rm([arg1, arg2, arg2])
-            end
-          {% end %}
+          expect_raises(File::NotFoundError, "Error deleting file: '#{path2.inspect_unquoted}'") do
+            FileUtils.rm([arg1, arg2, arg2])
+          end
         end
       end
     end
@@ -335,11 +327,9 @@ describe "FileUtils" do
         test_with_string_and_path(path) do |arg|
           Dir.mkdir_p(path)
 
-          {% if flag?(:linux) || flag?(:darwin) || flag?(:windows) %}
-            expect_raises(File::Error, "Error deleting file: '#{path.inspect_unquoted}'") do
-              FileUtils.rm_f(arg)
-            end
-          {% end %}
+          expect_raises(File::Error, "Error deleting file: '#{path.inspect_unquoted}'") do
+            FileUtils.rm_f(arg)
+          end
 
           Dir.exists?(path).should be_true
         end
@@ -349,19 +339,17 @@ describe "FileUtils" do
     it "tests rm_f with file and directory" do
       with_tempfile("rm_f-multi1", "rm_f-multi2", "rm_f-dir3") do |path1, path2, path3|
         test_with_string_and_path(path1, path2, path3) do |*args|
-          {% if flag?(:linux) || flag?(:darwin) || flag?(:windows) %}
-            File.write(path1, "")
-            File.write(path2, "")
-            Dir.mkdir_p(path3)
+          File.write(path1, "")
+          File.write(path2, "")
+          Dir.mkdir_p(path3)
 
-            expect_raises(File::Error, "Error deleting file: '#{path3.inspect_unquoted}'") do
-              FileUtils.rm_f(args.to_a)
-            end
+          expect_raises(File::Error, "Error deleting file: '#{path3.inspect_unquoted}'") do
+            FileUtils.rm_f(args.to_a)
+          end
 
-            File.exists?(path1).should be_false
-            File.exists?(path2).should be_false
-            Dir.exists?(path3).should be_true
-          {% end %}
+          File.exists?(path1).should be_false
+          File.exists?(path2).should be_false
+          Dir.exists?(path3).should be_true
         end
       end
     end
