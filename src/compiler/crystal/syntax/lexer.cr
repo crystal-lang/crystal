@@ -1561,6 +1561,8 @@ module Crystal
               char = next_char
             end
 
+            @token.line_number = @line_number
+            @token.column_number = @column_number
             @token.type = :SPACE
           else
             next_string_array_token_noescape delimiter_state

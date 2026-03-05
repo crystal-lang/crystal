@@ -132,16 +132,12 @@ describe "Lexer %W string array" do
     lexer = Lexer.new("%W(one \n two)")
 
     token = lexer.next_token
-    p! token
-    2.times do
-      token = lexer.next_string_token(token.delimiter_state)
-      p! token
-    end
+    lexer.next_string_token(token.delimiter_state)
+    lexer.next_string_token(token.delimiter_state)
 
     token = lexer.next_token
-    p! token
     token.line_number.should eq(2)
-    token.column_number.should eq(6)
+    token.column_number.should eq(3)
   end
 
   it "lexes string array with interpolation" do

@@ -760,9 +760,18 @@ module Crystal
             write " "
           end
 
-          while @token.type.string?
-            write_sanitized_string_body(@token.delimiter_state.allow_escapes)
-            @lexer.next_string_token(@token.delimiter_state)
+          case elem
+          when StringLiteral, SymbolLiteral
+            while @token.type.string?
+              write_sanitized_string_body(@token.delimiter_state.allow_escapes)
+              @lexer.next_string_token(@token.delimiter_state)
+            end
+          when StringInterpolation
+            visit_string_interpolation_body(elem, @token.delimiter_state, @column)
+          when Splat
+            visit_interpolation(elem)
+          else
+            raise "Bug: unexpected element in string array: #{elem.class}"
           end
         end
 
