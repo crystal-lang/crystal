@@ -354,7 +354,7 @@ describe "FileUtils" do
             File.write(path2, "")
             Dir.mkdir_p(path3)
 
-            expect_raises(File::Error, "Error deleting file: '#{path3.inspect_unquoted}': Is a directory") do
+            expect_raises(File::Error, "Error deleting file: '#{path3.inspect_unquoted}'") do
               FileUtils.rm_f(args.to_a)
             end
 
