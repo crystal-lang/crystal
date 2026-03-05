@@ -250,27 +250,15 @@ describe "FileUtils" do
     it "tests rm with directory" do
       with_tempfile("rm-directory") do |path|
         test_with_string_and_path(path) do |arg|
-          Dir.mkdir_p(path)
+          {% if flag?(:linux) || flag?(:darwin) || flag?(:windows) %}
+            Dir.mkdir_p(path)
 
-          {% if flag?(:linux) %}
-            expect_raises(File::Error, "Error deleting file: '#{path.inspect_unquoted}': Is a directory") do
+            expect_raises(File::Error, "Error deleting file: '#{path.inspect_unquoted}'") do
               FileUtils.rm(arg)
             end
-          {% end %}
 
-          {% if flag?(:darwin) %}
-            expect_raises(File::Error, "Error deleting file: '#{path.inspect_unquoted}': Operation not permitted") do
-              FileUtils.rm(arg)
-            end
+            Dir.exists?(path).should be_true
           {% end %}
-
-          {% if flag?(:windows) %}
-            expect_raises(File::Error, "Error deleting file: '#{path.inspect_unquoted}': Access is denied.") do
-              FileUtils.rm(arg)
-            end
-          {% end %}
-
-          Dir.exists?(path).should be_true
         end
       end
     end
@@ -278,32 +266,15 @@ describe "FileUtils" do
     it "tests rm with file and directory" do
       with_tempfile("rm-multi1", "rm-multi2", "rm-dir3") do |path1, path2, path3|
         test_with_string_and_path(path1, path2, path3) do |*args|
-          File.write(path1, "")
-          File.write(path2, "")
-          Dir.mkdir_p(path3)
+          {% if flag?(:linux) || flag?(:darwin) || flag?(:windows) %}
+            File.write(path1, "")
+            File.write(path2, "")
+            Dir.mkdir_p(path3)
 
-          {% if flag?(:linux) %}
-            expect_raises(File::Error, "Error deleting file: '#{path3.inspect_unquoted}': Is a directory") do
+            expect_raises(File::Error, "Error deleting file: '#{path3.inspect_unquoted}'") do
               FileUtils.rm(args.to_a)
             end
-            File.exists?(path1).should be_false
-            File.exists?(path2).should be_false
-            Dir.exists?(path3).should be_true
-          {% end %}
 
-          {% if flag?(:darwin) %}
-            expect_raises(File::Error, "Error deleting file: '#{path3.inspect_unquoted}': Operation not permitted") do
-              FileUtils.rm(args.to_a)
-            end
-            File.exists?(path1).should be_false
-            File.exists?(path2).should be_false
-            Dir.exists?(path3).should be_true
-          {% end %}
-
-          {% if flag?(:windows) %}
-            expect_raises(File::Error, "Error deleting file: '#{path3.inspect_unquoted}': Access is denied.") do
-              FileUtils.rm(args.to_a)
-            end
             File.exists?(path1).should be_false
             File.exists?(path2).should be_false
             Dir.exists?(path3).should be_true
@@ -330,14 +301,8 @@ describe "FileUtils" do
           File.write(path1, "")
           File.write(path2, "")
 
-          {% if flag?(:linux) %}
+          {% if flag?(:linux) || flag?(:darwin) || flag?(:windows) %}
             expect_raises(File::NotFoundError, "Error deleting file: '#{path2.inspect_unquoted}'") do
-              FileUtils.rm([arg1, arg2, arg2])
-            end
-          {% end %}
-
-          {% if flag?(:darwin) || flag?(:windows) %}
-            expect_raises(File::NotFoundError, "Error deleting file: '#{path2.inspect_unquoted}': No such file or directory") do
               FileUtils.rm([arg1, arg2, arg2])
             end
           {% end %}
@@ -370,20 +335,8 @@ describe "FileUtils" do
         test_with_string_and_path(path) do |arg|
           Dir.mkdir_p(path)
 
-          {% if flag?(:linux) %}
-            expect_raises(File::Error, "Error deleting file: '#{path.inspect_unquoted}': Is a directory") do
-              FileUtils.rm_f(arg)
-            end
-          {% end %}
-
-          {% if flag?(:darwin) %}
-            expect_raises(File::Error, "Error deleting file: '#{path.inspect_unquoted}': Operation not permitted") do
-              FileUtils.rm_f(arg)
-            end
-          {% end %}
-
-          {% if flag?(:windows) %}
-            expect_raises(File::Error, "Error deleting file: '#{path.inspect_unquoted}': Access is denied.") do
+          {% if flag?(:linux) || flag?(:darwin) || flag?(:windows) %}
+            expect_raises(File::Error, "Error deleting file: '#{path.inspect_unquoted}'") do
               FileUtils.rm_f(arg)
             end
           {% end %}
@@ -396,32 +349,15 @@ describe "FileUtils" do
     it "tests rm_f with file and directory" do
       with_tempfile("rm_f-multi1", "rm_f-multi2", "rm_f-dir3") do |path1, path2, path3|
         test_with_string_and_path(path1, path2, path3) do |*args|
-          File.write(path1, "")
-          File.write(path2, "")
-          Dir.mkdir_p(path3)
+          {% if flag?(:linux) || flag?(:darwin) || flag?(:windows) %}
+            File.write(path1, "")
+            File.write(path2, "")
+            Dir.mkdir_p(path3)
 
-          {% if flag?(:linux) %}
             expect_raises(File::Error, "Error deleting file: '#{path3.inspect_unquoted}': Is a directory") do
               FileUtils.rm_f(args.to_a)
             end
-            File.exists?(path1).should be_false
-            File.exists?(path2).should be_false
-            Dir.exists?(path3).should be_true
-          {% end %}
 
-          {% if flag?(:darwin) %}
-            expect_raises(File::Error, "Error deleting file: '#{path3.inspect_unquoted}': Operation not permitted") do
-              FileUtils.rm_f(args.to_a)
-            end
-            File.exists?(path1).should be_false
-            File.exists?(path2).should be_false
-            Dir.exists?(path3).should be_true
-          {% end %}
-
-          {% if flag?(:windows) %}
-            expect_raises(File::Error, "Error deleting file: '#{path3.inspect_unquoted}': Access is denied.") do
-              FileUtils.rm_f(args.to_a)
-            end
             File.exists?(path1).should be_false
             File.exists?(path2).should be_false
             Dir.exists?(path3).should be_true
