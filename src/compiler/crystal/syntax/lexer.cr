@@ -2378,7 +2378,7 @@ module Crystal
           end
         end
 
-        incr_column_number {{ %(#<loc:").size - 1 }}
+        incr_column_number %(#<loc:").size - 1
 
         unless current_char == ','
           raise "expected ',' in loc pragma after filename"
