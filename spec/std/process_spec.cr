@@ -74,6 +74,48 @@ end
 {% end %}
 
 describe Process do
+  describe ".new?" do
+    it "raises if args is empty" do
+      expect_raises(File::NotFoundError, "Error executing process: No command") do
+        Process.new?([] of String)
+      end
+    end
+
+    it "returns nil if args[0] is empty" do
+      Process.new?([""] of String).should be_nil
+    end
+
+    it "returns nil command doesn't exist" do
+      Process.new?(["foobarbaz"]).should be_nil
+    end
+
+    it "returns nil for long path" do
+      Process.new?(["a" * 1000]).should be_nil
+    end
+
+    it "returns nil if command is not executable" do
+      with_tempfile("crystal-spec-run") do |path|
+        File.touch path
+        Process.new?([path]).should be_nil
+      end
+    end
+
+    it "returns nil if command is not executable" do
+      with_tempfile("crystal-spec-run") do |path|
+        Dir.mkdir path
+        Process.new?([path]).should be_nil
+      end
+    end
+
+    it "returns nil if command could not be executed" do
+      with_tempfile("crystal-spec-run") do |path|
+        File.touch path
+        command = File.join(path, "foo")
+        Process.new?([command]).should be_nil
+      end
+    end
+  end
+
   describe ".new (args)" do
     it "raises if args is empty" do
       expect_raises(File::NotFoundError, "Error executing process: No command") do

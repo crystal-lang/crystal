@@ -286,7 +286,7 @@ struct Crystal::System::Process
     {new_handle, dup_handle}
   end
 
-  def self.spawn(prepared_args, shell, env, clear_env, input, output, error, chdir)
+  def self.spawn(prepared_args, shell, env, clear_env, input, output, error, chdir, &)
     startup_info = LibC::STARTUPINFOW.new
     startup_info.cb = sizeof(LibC::STARTUPINFOW)
     startup_info.dwFlags = LibC::STARTF_USESTDHANDLES
@@ -306,7 +306,7 @@ struct Crystal::System::Process
        ) == 0
       error = WinError.value
       if ::File::NotFoundError.os_error?(error) || ::File::AccessDeniedError.os_error?(error) || error == WinError::ERROR_BAD_EXE_FORMAT
-        raise ::File::Error.from_os_error("Error executing process", error, file: prepared_args)
+        yield error, prepared_args
       else
         raise IO::Error.from_os_error("Error executing process: '#{prepared_args}'", error)
       end
