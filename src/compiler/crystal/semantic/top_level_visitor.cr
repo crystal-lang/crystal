@@ -1331,7 +1331,11 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       target_type = next_type
     end
 
-    target_type.as(NamedType)
+    unless target_type.is_a?(NamedType)
+      path.raise "#{target_type} can't be used as a namespace"
+    end
+
+    target_type
   end
 
   # Turns all finished macros into expanded nodes, and
