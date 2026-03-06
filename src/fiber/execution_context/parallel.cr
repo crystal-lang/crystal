@@ -54,6 +54,10 @@ module Fiber::ExecutionContext
   #
   # p result.get # => 523776
   # ```
+  #
+  # NOTE: The `Parallel` execution context isn't tied to a fixed set of system
+  # threads, and execution can switch to other system threads, for example when
+  # a fiber is blocked on a syscall.
   class Parallel
     include ExecutionContext
 

@@ -53,6 +53,10 @@ module Fiber::ExecutionContext
   # In practice, we still recommended to always protect shared accesses to a
   # variable, for example using `Atomic#add` to increment *result* or a `Sync`
   # primitive for more complex operations.
+  #
+  # NOTE: The `Concurrent` execution context isn't tied to a system thread, and
+  # may switch to another system thread, for example when a fiber is blocked on
+  # a syscall.
   class Concurrent < Parallel
     # :nodoc:
     def self.default : self

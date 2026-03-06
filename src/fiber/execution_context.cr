@@ -81,6 +81,27 @@ require "./execution_context/*"
 # count = Fiber::ExecutionContext.default_workers_count
 # Fiber::ExecutionContext.default.resize(count)
 # ```
+#
+# ## Relationship with system threads
+#
+# Execution contexts control when and how fibers run, and on which system thread
+# they execute. The term *parallelism* is the maximum number of fibers that can
+# run in parallel (maximum number of schedulers) but there can be less or more
+# system threads running in practice, for example when a fiber is blocked on a
+# syscall.
+#
+# There are no guarantees on how a fiber will run on system threads. A fiber can
+# start in thread A, then be resumed and terminated on thread A, B or C. This is
+# true for both the `Parallel` and `Concurrent` contexts.
+#
+# Notable exception: `Isolated` guarantees that its fiber will always run on the
+# same system thread. During its lifetime, the fiber owns the thread, but only
+# for the fiber's lifetime.
+#
+# Threads are kept in a thread pool: threads can be started, attached and
+# detached from any context at any time. Threads can be detached from a context
+# and reattached to the same execution context or to another one (`Concurrent`,
+# `Parallel` or `Isolated`).
 @[Experimental]
 module Fiber::ExecutionContext
   @@thread_pool : ThreadPool?
