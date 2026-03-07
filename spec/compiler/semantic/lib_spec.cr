@@ -310,7 +310,7 @@ describe "Semantic: lib" do
       CRYSTAL
   end
 
-  it "errors if fourth argument is not a bool" do
+  it "errors if fourth argument is not a string" do
     assert_error <<-CRYSTAL, "'framework' link argument must be a String"
       @[Link("foo", "bar", true, 1)]
       lib LibFoo
