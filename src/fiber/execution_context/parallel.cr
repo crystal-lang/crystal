@@ -9,15 +9,14 @@ module Fiber::ExecutionContext
   # contexts.
   #
   # The context internally keeps a number of fiber schedulers, each scheduler
-  # being able to start running on a system thread, so multiple schedulers can
-  # run in parallel. The fibers are resumable by any scheduler in the context,
-  # they can thus move from one system thread to another at any time.
+  # runs on a system thread, so multiple schedulers can run in parallel. The
+  # fibers are resumable by any scheduler in the context, and can thus move from
+  # one system thread to another at any time.
   #
-  # The actual parallelism is controlled by the execution context. As the need
-  # for parallelism increases, for example more fibers running longer, the more
-  # schedulers will start (and thus system threads), as the need decreases, for
-  # example not enough fibers, the schedulers will pause themselves and
-  # parallelism will decrease.
+  # The actual parallelism is dynamic. As the need for parallelism increases,
+  # for example more fibers running longer, the more schedulers will start (and
+  # thus system threads), as the need decreases, for example not enough fibers,
+  # the schedulers will pause themselves and parallelism will decrease.
   #
   # The parallelism can be as low as 1, in which case the context becomes a
   # concurrent context (no parallelism) until resized.
@@ -55,6 +54,10 @@ module Fiber::ExecutionContext
   #
   # p result.get # => 523776
   # ```
+  #
+  # NOTE: The `Parallel` execution context isn't tied to a fixed set of system
+  # threads, and execution can switch to other system threads, for example when
+  # a fiber is blocked on a syscall.
   class Parallel
     include ExecutionContext
 
