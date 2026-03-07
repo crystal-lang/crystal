@@ -135,24 +135,17 @@ end
 
 def assert_syntax_error(str, message = nil, line = nil, column = nil, metafile = __FILE__, metaline = __LINE__, metaendline = __END_LINE__, *, focus : Bool = false)
   it "says syntax error on #{str.inspect}", metafile, metaline, metaendline, focus: focus do
-    begin
+    ex = expect_raises(SyntaxException, message, file: metafile, line: metaline) do
       parse str
-      fail "Expected SyntaxException to be raised", metafile, metaline
-    rescue ex : SyntaxException
-      if message
-        unless ex.message.not_nil!.includes?(message.not_nil!)
-          fail "Expected message to include #{message.inspect} but got #{ex.message.inspect}", metafile, metaline
-        end
+    end
+    if line
+      unless ex.line_number == line
+        fail "Expected line number to be #{line} but got #{ex.line_number}", metafile, metaline
       end
-      if line
-        unless ex.line_number == line
-          fail "Expected line number to be #{line} but got #{ex.line_number}", metafile, metaline
-        end
-      end
-      if column
-        unless ex.column_number == column
-          fail "Expected column number to be #{column} but got #{ex.column_number}", metafile, metaline
-        end
+    end
+    if column
+      unless ex.column_number == column
+        fail "Expected column number to be #{column} but got #{ex.column_number}", metafile, metaline
       end
     end
   end
