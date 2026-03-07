@@ -270,6 +270,48 @@ jobs:
       - name: Build samples
         run: make -f Makefile.win samples
 
+  test-std:
+    runs-on: windows-2025
+    needs: [x86_64-windows-release]
+    strategy:
+      fail-fast: false
+      matrix:
+        opts:
+          - flags: "-Dexecution_context -Dpreview_mt" # execution_context: concurrent
+            workers: 1
+          - flags: "-Dexecution_context -Dpreview_mt" # execution_context: parallel
+            workers: 4
+    steps:
+      - name: Disable CRLF line ending substitution
+        run: git config --global core.autocrlf false
+
+      - name: Enable Developer Command Prompt
+        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
+
+      - name: Download Crystal source
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Download Crystal executable
+        uses: actions/download-artifact@v8
+        with:
+          name: crystal
+          path: build
+
+      - name: Set up environment
+        run: |
+          Add-Content $env:GITHUB_PATH "$(pwd)\build"
+          Add-Content $env:GITHUB_ENV "CRYSTAL_SPEC_COMPILER_BIN=$(pwd)\build\crystal.exe"
+          Add-Content $env:GITHUB_ENV "LLVM_VERSION=${{ env.CI_LLVM_VERSION }}"
+          Add-Content $env:GITHUB_ENV "LLVM_TARGETS=${{ env.CI_LLVM_TARGETS }}"
+          Add-Content $env:GITHUB_ENV "LLVM_LDFLAGS=${{ env.CI_LLVM_LDFLAGS }}"
+
+      - name: Test
+        run: make -f Makefile.win std_spec FLAGS="${{ matrix.opts.flags }}"
+        env:
+          CRYSTAL_WORKERS: ${{ matrix.opts.workers || 1 }}
+
   x86_64-windows-test-interpreter:
     runs-on: windows-2025
     needs: [x86_64-windows-release]
