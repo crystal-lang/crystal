@@ -1,12 +1,13 @@
 #! /bin/sh
 
 # This script automates generating changelog with `scripts/github-changelog.cr`,
-# editing it into `CHANGELOG.md` and pushing it to a `changelog/$VERSION` branch.
+# editing it into `doc/changelog/v${VERSION%.*}.md` and pushing it to a
+# `changelog/$VERSION` branch.
 #
 # It reads the current (dev-)version from `src/VERSION` and generates the
 # changelog entries for all PRs from the respective GitHub milestone via
 # `scripts/github-changelog.cr`.
-# The section is then inserted into `CHANGELOG.md`, overwriting any previous
+# The section is then inserted into the changelog file, overwriting any previous
 # content for this milestone.
 # Finally, the changes are committed and pushed to `changelog/$VERSION`.
 # If the changelog section is *new*, also creates a draft PR for this branch.
@@ -53,26 +54,36 @@ release_date=$(head -n1 "$current_changelog" | grep -o -P '(?<=\()[^)]+')
 date --utc --date="${release_date}" +%s > src/SOURCE_DATE_EPOCH
 git add src/SOURCE_DATE_EPOCH
 
-if grep --silent -E "^## \[$VERSION\]" CHANGELOG.md; then
-  echo "Replacing section in CHANGELOG"
+changelog_path="doc/changelogs/v${VERSION%.*}.md"
 
+if [ ! -f "$changelog_path" ]; then
+  echo "Creating new changelog file $changelog_path"
+  printf "# Changelog %s\n\n" "${VERSION%.*}" > "$changelog_path"
+
+  printf '%s [%s series](./v%s.md)\n' "-" "${VERSION%.*}" "${VERSION%.*}" >> "doc/changelogs/README.md"
+  git add "doc/changelogs/README.md"
+fi
+
+if grep --silent -E "^## \[$VERSION\]" "$changelog_path"; then
+  echo "Replacing section in $changelog_path"
   sed -i -E "/^## \[$VERSION\]/,/^## /{
+
     /^## \[$VERSION\]/s/.*/cat $current_changelog/e; /^## /!d
-  }" CHANGELOG.md
+  }" "$changelog_path"
 
-  git add CHANGELOG.md
+  git add "$changelog_path"
   git commit -m "Update changelog for $VERSION"
-  git push
+  echo git push
 else
-  echo "Adding new section to CHANGELOG"
+  echo "Adding new section to $changelog_path"
 
-  sed -i -E "2r $current_changelog" CHANGELOG.md
+  sed -i -E "2r $current_changelog" "$changelog_path"
 
-  git add CHANGELOG.md
+  git add "$changelog_path"
   git commit -m "Add changelog for $VERSION"
-  git push -u upstream "$branch"
+  echo git push -u upstream "$branch"
 
-  gh pr create --draft --base "$base_branch" \
-    --body "Preview: https://github.com/crystal-lang/crystal/blob/$branch/CHANGELOG.md" \
+  echo gh pr create --draft --base "$base_branch" \
+    --body "Preview: https://github.com/crystal-lang/crystal/blob/$branch/$changelog_path.md" \
     --label "topic:infrastructure" -t "Changelog for $VERSION" --milestone "$VERSION"
 fi
