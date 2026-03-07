@@ -1,7 +1,25 @@
 require "../../support/syntax"
 
 private def regex(string, options = Regex::CompileOptions::None)
-  RegexLiteral.new(StringLiteral.new(string), options)
+  string = StringLiteral.new(string) if string.is_a?(String)
+  RegexLiteral.new(string, options)
+end
+
+private def command(string)
+  string = StringLiteral.new(string) if string.is_a?(String)
+  Call.new("`", string)
+end
+
+private def string_array(*args)
+  ary = [] of ASTNode
+  ary.concat(args)
+  ary.array_of(Crystal::Path.global("String"))
+end
+
+private def symbol_array(*args)
+  ary = [] of ASTNode
+  ary.concat(args)
+  ary.array_of(Crystal::Path.global("Symbol"))
 end
 
 private def it_parses(string, expected_node, file = __FILE__, line = __LINE__, *, focus : Bool = false)
@@ -19,6 +37,20 @@ private def it_parses(string, expected_node, file = __FILE__, line = __LINE__, *
     end
 
     node.should eq(Expressions.from(local_expected_node))
+  end
+end
+
+private def it_parses_literal(literal, expectations, *, file = __FILE__, line = __LINE__)
+  expectations.each do |delimiter, expected_node|
+    end_delimiter = case delimiter[-1]
+                    when '[' then ']'
+                    when '{' then '}'
+                    when '(' then ')'
+                    else
+                      delimiter[-1]
+                    end
+
+    it_parses "#{delimiter}#{literal}#{end_delimiter}", expected_node, file: file, line: line
   end
 end
 
@@ -2743,6 +2775,152 @@ module Crystal
     it_parses "%i((one two))", (["(one".symbol, "two)".symbol] of ASTNode).array_of(Path.global("Symbol"))
     it_parses "%i(foo(bar) baz)", (["foo(bar)".symbol, "baz".symbol] of ASTNode).array_of(Path.global("Symbol"))
     it_parses "%i{foo\\nbar baz}", (["foo\\nbar".symbol, "baz".symbol] of ASTNode).array_of(Path.global("Symbol"))
+
+    describe "literal escape" do
+      it_parses_literal "a\nb", {
+        "%q[" => "a\nb".string,
+        "%Q[" => "a\nb".string,
+        "\""  => "a\nb".string,
+        "%r[" => regex("a\nb"),
+        "/"   => regex("a\nb"),
+        "%x[" => command("a\nb"),
+        "`"   => command("a\nb"),
+        "%w[" => string_array("a".string, "b".string),
+        "%i[" => symbol_array("a".symbol, "b".symbol),
+        ":\"" => "a\nb".symbol,
+      }
+      it_parses_literal "a\tb", {
+        "%q[" => "a\tb".string,
+        "%Q[" => "a\tb".string,
+        "%r[" => regex("a\tb"),
+        "/"   => regex("a\tb"),
+        "%x[" => command("a\tb"),
+        "`"   => command("a\tb"),
+        "%w[" => string_array("a".string, "b".string),
+        "%i[" => symbol_array("a".symbol, "b".symbol),
+        ":\"" => "a\tb".symbol,
+      }
+      it_parses_literal "a\r\nb", {
+        "%q[" => "a\r\nb".string,
+        "%Q[" => "a\r\nb".string,
+        "\""  => "a\r\nb".string,
+        "%r[" => regex("a\r\nb"),
+        "/"   => regex("a\r\nb"),
+        "%x[" => command("a\r\nb"),
+        "`"   => command("a\r\nb"),
+        "%w[" => string_array("a".string, "b".string),
+        "%i[" => symbol_array("a".symbol, "b".symbol),
+        ":\"" => "a\r\nb".symbol,
+      }
+      it_parses_literal "a\\nb", {
+        "%q[" => "a\\nb".string,
+        "%Q[" => "a\nb".string,
+        "\""  => "a\nb".string,
+        "%r[" => regex("a\\nb"),
+        "/"   => regex("a\\nb"),
+        "%x[" => command("a\nb"),
+        "`"   => command("a\nb"),
+        "%w[" => string_array("a\\nb".string),
+        "%i[" => symbol_array("a\\nb".symbol),
+        ":\"" => "a\nb".symbol,
+      }
+      it_parses_literal "a\\tb", {
+        "%q[" => "a\\tb".string,
+        "%Q[" => "a\tb".string,
+        "\""  => "a\tb".string,
+        "%r[" => regex("a\\tb"),
+        "/"   => regex("a\\tb"),
+        "%x[" => command("a\tb"),
+        "`"   => command("a\tb"),
+        "%w[" => string_array("a\\tb".string),
+        "%i[" => symbol_array("a\\tb".symbol),
+        ":\"" => "a\tb".symbol,
+      }
+      it_parses_literal "a\\rb", {
+        "%q[" => "a\\rb".string,
+        "%Q[" => "a\rb".string,
+        "\""  => "a\rb".string,
+        "%r[" => regex("a\\rb"),
+        "/"   => regex("a\\rb"),
+        "%x[" => command("a\rb"),
+        "`"   => command("a\rb"),
+        "%w[" => string_array("a\\rb".string),
+        "%i[" => symbol_array("a\\rb".symbol),
+        ":\"" => "a\rb".symbol,
+      }
+      it_parses_literal "a\\\nb", {
+        "%q[" => "a\\\nb".string,
+        "%Q[" => "ab".string,
+        "\""  => "ab".string,
+        "%r[" => regex("a\nb"),
+        "/"   => regex("a\nb"),
+        "%x[" => command("ab"),
+        "`"   => command("ab"),
+        "%w[" => string_array("a\nb".string),
+        "%i[" => symbol_array("a\nb".symbol),
+        ":\"" => "a\nb".symbol,
+      }
+      it_parses_literal "a\\u{41}b", {
+        "%q[" => "a\\u{41}b".string,
+        "%Q[" => "aAb".string,
+        "\""  => "aAb".string,
+        "%x[" => command("aAb"),
+        "`"   => command("aAb"),
+        "%w[" => string_array("a\\u{41}b".string),
+        "%i[" => symbol_array("a\\u{41}b".symbol),
+        ":\"" => "aAb".symbol,
+      }
+      assert_syntax_error "%r[\\u{61}]", "invalid regex: PCRE2 does not support \\F, \\L, \\l, \\N{name}, \\U, or \\u at 2"
+      assert_syntax_error "/\\u{61}/", "invalid regex: PCRE2 does not support \\F, \\L, \\l, \\N{name}, \\U, or \\u at 2"
+      it_parses_literal "a\\x41b", {
+        "%q[" => "a\\x41b".string,
+        "%Q[" => "aAb".string,
+        "\""  => "aAb".string,
+        "%r[" => regex("a\\x41b"),
+        "/"   => regex("a\\x41b"),
+        "%x[" => command("aAb"),
+        "`"   => command("aAb"),
+        "%w[" => string_array("a\\x41b".string),
+        "%i[" => symbol_array("a\\x41b".symbol),
+        ":\"" => "aAb".symbol,
+      }
+      it_parses_literal "a\\101b", {
+        "%q[" => "a\\101b".string,
+        "%Q[" => "aAb".string,
+        "\""  => "aAb".string,
+        "%r[" => regex("a\\101b"),
+        "/"   => regex("a\\101b"),
+        "%x[" => command("aAb"),
+        "`"   => command("aAb"),
+        "%w[" => string_array("a\\101b".string),
+        "%i[" => symbol_array("a\\101b".symbol),
+        ":\"" => "aAb".symbol,
+      }
+      it_parses_literal "a\#{x}b", {
+        "%q[" => "a\#{x}b".string,
+        "%Q[" => StringInterpolation.new(["a".string, Call.new("x"), "b".string] of ASTNode),
+        "\""  => StringInterpolation.new(["a".string, Call.new("x"), "b".string] of ASTNode),
+        "%r[" => regex(StringInterpolation.new(["a".string, Call.new("x"), "b".string] of ASTNode)),
+        "/"   => regex(StringInterpolation.new(["a".string, Call.new("x"), "b".string] of ASTNode)),
+        "%x[" => command(StringInterpolation.new(["a".string, Call.new("x"), "b".string] of ASTNode)),
+        "`"   => command(StringInterpolation.new(["a".string, Call.new("x"), "b".string] of ASTNode)),
+        "%w[" => string_array("a\#{x}b".string),
+        "%i[" => symbol_array("a\#{x}b".symbol),
+        ":\"" => "a\#{x}b".symbol,
+      }
+      it_parses_literal "a\\\#{x}b", {
+        "%q[" => "a\\\#{x}b".string,
+        "%Q[" => "a\#{x}b".string,
+        "\""  => "a\#{x}b".string,
+        "%r[" => regex("a\\\#{x}b"),
+        "/"   => regex("a\\\#{x}b"),
+        "%x[" => command("a\#{x}b"),
+        "`"   => command("a\#{x}b"),
+        "%w[" => string_array("a\\\#{x}b".string),
+        "%i[" => symbol_array("a\\\#{x}b".symbol),
+        ":\"" => "a\#{x}b".symbol,
+      }
+    end
 
     assert_syntax_error "%w(", "Unterminated string array literal"
     assert_syntax_error "%w{one}}", "expecting token 'EOF', not '}'"
