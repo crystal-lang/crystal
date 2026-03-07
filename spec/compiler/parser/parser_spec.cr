@@ -2870,8 +2870,8 @@ module Crystal
         "%i[" => symbol_array("a\\u{41}b".symbol),
         ":\"" => "aAb".symbol,
       }
-      assert_syntax_error "%r[\\u{61}]", "invalid regex: PCRE2 does not support \\F, \\L, \\l, \\N{name}, \\U, or \\u at 2"
-      assert_syntax_error "/\\u{61}/", "invalid regex: PCRE2 does not support \\F, \\L, \\l, \\N{name}, \\U, or \\u at 2"
+      assert_syntax_error "%r[\\u{61}]", "invalid regex: #{Regex::Engine.name.lchop("Regex::")} does not support \\F, \\L, \\l, \\N{name}, \\U, or \\u at 2"
+      assert_syntax_error "/\\u{61}/", "invalid regex: #{Regex::Engine.name.lchop("Regex::")} does not support \\F, \\L, \\l, \\N{name}, \\U, or \\u at 2"
       it_parses_literal "a\\x41b", {
         "%q[" => "a\\x41b".string,
         "%Q[" => "aAb".string,
