@@ -85,7 +85,7 @@ class HTTP::Server
     end
 
     # Convenience method to get the `Content-Length` header.
-    def content_length : Int32?
+    def content_length : Int64?
       headers["Content-Length"]?.try(&.to_i)
     end
 
