@@ -372,6 +372,18 @@ describe "::sprintf" do
       assert_sprintf "%300.250d", 10.to_big_i ** 200, "#{" " * 50}#{"0" * 49}1#{"0" * 200}"
       assert_sprintf "%- #300.250X", 16.to_big_i ** 200 - 1, " 0X#{"0" * 50}#{"F" * 200}#{" " * 47}"
     end
+
+    it "works with BigFloat" do
+      assert_sprintf "%d", 123.to_big_f, "123"
+      assert_sprintf "%80.70d", 2.to_big_i ** 200, "          0000000001606938044258990275541962092341162602522202993782792835301376"
+      assert_sprintf "%- #70.60X", 2.to_big_f ** 200 - 2.to_big_f ** 120, " 0X0000000000FFFFFFFFFFFFFFFFFFFF000000000000000000000000000000       "
+    end
+
+    it "works with BigDecimal" do
+      assert_sprintf "%d", 123.to_big_d, "123"
+      assert_sprintf "%300.250d", 10.to_big_d ** 200, "#{" " * 50}#{"0" * 49}1#{"0" * 200}"
+      assert_sprintf "%- #300.250X", 16.to_big_d ** 200 - 1, " 0X#{"0" * 50}#{"F" * 200}#{" " * 47}"
+    end
   end
 
   it "doesn't stop at null character when doing '%'" do
@@ -1174,6 +1186,30 @@ describe "::sprintf" do
     end
   else
     pending "floats"
+  end
+
+  context "chars" do
+    it "works" do
+      assert_sprintf "%c", 'a', "a"
+      assert_sprintf "%3c", 'R', "  R"
+      assert_sprintf "%-3c", 'L', "L  "
+      assert_sprintf "%c", '▞', "▞"
+      assert_sprintf "%c", 65, "A"
+      assert_sprintf "%c", 66_i8, "B"
+      assert_sprintf "%c", 67_i16, "C"
+      assert_sprintf "%c", 68_i32, "D"
+      assert_sprintf "%c", 69_i64, "E"
+      assert_sprintf "%c", 97_u8, "a"
+      assert_sprintf "%c", 98_u16, "b"
+      assert_sprintf "%c", 99_u32, "c"
+      assert_sprintf "%c", 100_u64, "d"
+      assert_sprintf "%c", 0x259E, "▞"
+    end
+
+    it "raises if not a Char or Int" do
+      expect_raises(ArgumentError, "Expected a char or integer") { sprintf("%c", "this") }
+      expect_raises(ArgumentError, "Expected a char or integer") { sprintf("%c", 17.34) }
+    end
   end
 
   context "strings" do

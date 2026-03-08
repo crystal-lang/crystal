@@ -333,10 +333,8 @@ module FileUtils
   def mv(srcs : Enumerable(Path | String), dest : Path | String) : Nil
     raise ArgumentError.new("No such directory : #{dest}") unless Dir.exists?(dest)
     srcs.each do |src|
-      begin
-        mv(src, File.join(dest, File.basename(src)))
-      rescue File::Error
-      end
+      mv(src, File.join(dest, File.basename(src)))
+    rescue File::Error
     end
   end
 
@@ -441,10 +439,8 @@ module FileUtils
   # ```
   def rm_rf(paths : Enumerable(Path | String)) : Nil
     paths.each do |path|
-      begin
-        rm_r(path)
-      rescue File::Error
-      end
+      rm_r(path)
+    rescue File::Error
     end
   end
 

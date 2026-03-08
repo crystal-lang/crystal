@@ -4,12 +4,6 @@ require "http/client"
 require "../../../support/ssl"
 require "../../../support/channel"
 
-# TODO: Windows networking in the interpreter requires #12495
-{% if flag?(:interpreted) && flag?(:win32) %}
-  pending HTTP::Server
-  {% skip_file %}
-{% end %}
-
 # TODO: replace with `HTTP::Client.get` once it supports connecting to Unix socket (#2735)
 private def unix_request(path)
   UNIXSocket.open(path) do |io|
@@ -18,7 +12,7 @@ private def unix_request(path)
 end
 
 private def unused_port
-  TCPServer.open(0) do |server|
+  TCPServer.open(Socket::IPAddress::UNSPECIFIED, 0) do |server|
     server.local_address.port
   end
 end
@@ -274,7 +268,6 @@ describe HTTP::Server do
         server = HTTP::Server.new { }
 
         private_key = datapath("openssl", "openssl.key")
-        certificate = datapath("openssl", "openssl.crt")
 
         begin
           expect_raises(ArgumentError, "missing private key") { server.bind "tls://127.0.0.1:8081" }
@@ -413,6 +406,11 @@ describe HTTP::Server do
   end
 
   it "can process simultaneous SSL handshakes" do
+    {% if flag?(:win32) && flag?(:gnu) && flag?(:x86_64) %}
+      # FIXME: why does the spec causes the process to die with status code 67?
+      pending! "process dies with exit code 67 on msys2-ucrt-x86_64 on CI"
+    {% end %}
+
     server = HTTP::Server.new do |context|
       context.response.print "ok"
     end

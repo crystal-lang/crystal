@@ -59,6 +59,41 @@ describe "BigInt" do
     BigInt.new(12.3).to_s.should eq("12")
   end
 
+  describe ".from_digits" do
+    it "creates from digits" do
+      BigInt.from_digits([] of Int32).should eq(0.to_big_i)
+      BigInt.from_digits([3, 2, 1]).should eq(123.to_big_i)
+      BigInt.from_digits({3, 2, 1}, base: 16).should eq(0x123.to_big_i)
+      BigInt.from_digits((0xfa..0xff), base: 256).should eq(0xfffefdfcfbfa.to_big_i)
+      BigInt.from_digits([UInt128::MAX, UInt128::MAX, UInt128::MAX, UInt128::MAX], base: 2.to_big_i ** 128).should eq(2.to_big_i ** 512 - 1)
+      BigInt.from_digits(Deque{1, 0.to_big_i, 0, 1.to_big_i}, base: 2).should eq(9.to_big_i)
+    end
+
+    it "raises for base less than 2" do
+      [-1, 0, 1].each do |base|
+        expect_raises(ArgumentError, "Invalid base #{base}") do
+          BigInt.from_digits([1, 2, 3], base)
+        end
+      end
+    end
+
+    it "raises for digits greater than base" do
+      expect_raises(ArgumentError, "Invalid digit 2 for base 2") do
+        BigInt.from_digits([1, 0, 2], 2)
+      end
+
+      expect_raises(ArgumentError, "Invalid digit 10 for base 2") do
+        BigInt.from_digits([1, 0, 10], 2)
+      end
+    end
+
+    it "raises for negative digits" do
+      expect_raises(ArgumentError, "Invalid digit -1") do
+        BigInt.from_digits([1, 2, -1])
+      end
+    end
+  end
+
   it "compares" do
     1.to_big_i.should eq(1.to_big_i)
     1.to_big_i.should eq(1)

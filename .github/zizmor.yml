@@ -1,0 +1,9 @@
+rules:
+  dangerous-triggers:
+    ignore:
+      - backport.yml
+  unpinned-uses:
+    config:
+      policies:
+        actions/*: ref-pin
+        crystal-lang/*: ref-pin

@@ -1,5 +1,6 @@
 require "../abi"
 
+@[Deprecated("This API is now internal to the compiler and no longer updated publicly.")]
 class LLVM::ABI::Wasm32 < LLVM::ABI
   def abi_info(atys : Array(Type), rty : Type, ret_def : Bool, context : Context)
     ret_ty = compute_return_type(rty, ret_def, context)

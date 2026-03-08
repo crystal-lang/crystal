@@ -4,6 +4,7 @@ require "spec"
 require "process"
 require "./spec_helper"
 require "../support/env"
+require "../support/wait_for"
 
 private def exit_code_command(code)
   {% if flag?(:win32) %}
@@ -46,12 +47,24 @@ private def standing_command
   {% end %}
 end
 
+private def path_search_command
+  {% if flag?(:win32) %}
+    {"cmd.exe"}
+  {% else %}
+    {"true"}
+  {% end %}
+end
+
 private def newline
   {% if flag?(:win32) %}
     "\r\n"
   {% else %}
     "\n"
   {% end %}
+end
+
+private def to_ary(tuple)
+  [tuple[0]].concat(tuple[1])
 end
 
 # interpreted code doesn't receive SIGCHLD for `#wait` to work (#12241)
@@ -61,10 +74,87 @@ end
 {% end %}
 
 describe Process do
-  describe ".new" do
+  describe ".new (args)" do
+    it "raises if args is empty" do
+      expect_raises(File::NotFoundError, "Error executing process: No command") do
+        Process.new([] of String)
+      end
+    end
+
+    it "raises if args[0] is empty" do
+      expect_raises(IO::Error, /Error executing process: '("")?'/) do
+        Process.new([""] of String)
+      end
+    end
+
+    it "raises if command doesn't exist" do
+      expect_raises(File::NotFoundError, "Error executing process: 'foobarbaz'") do
+        Process.new(["foobarbaz"])
+      end
+    end
+
+    it "raises for long path" do
+      expect_raises(File::NotFoundError, "Error executing process: 'aaaaaaa") do
+        Process.new(["a" * 1000])
+      end
+    end
+
+    it "accepts nilable string for `chdir` (#13767)" do
+      expect_raises(File::NotFoundError, "Error executing process: 'foobarbaz'") do
+        Process.new(["foobarbaz"], chdir: nil.as(String?))
+      end
+    end
+
+    it "raises if command is not executable" do
+      with_tempfile("crystal-spec-run") do |path|
+        File.touch path
+        expect_raises({% if flag?(:win32) %} File::BadExecutableError {% else %} File::AccessDeniedError {% end %}, "Error executing process: '#{path.inspect_unquoted}'") do
+          Process.new([path])
+        end
+      end
+    end
+
+    it "raises if command is not executable" do
+      with_tempfile("crystal-spec-run") do |path|
+        Dir.mkdir path
+        expect_raises(File::AccessDeniedError, "Error executing process: '#{path.inspect_unquoted}'") do
+          Process.new([path])
+        end
+      end
+    end
+
+    it "raises if command could not be executed" do
+      with_tempfile("crystal-spec-run") do |path|
+        File.touch path
+        command = File.join(path, "foo")
+        expect_raises(IO::Error, "Error executing process: '#{command.inspect_unquoted}'") do
+          Process.new([command])
+        end
+      end
+    end
+
+    it "doesn't break if process is collected before completion", tags: %w[slow] do
+      200.times { Process.new(to_ary(exit_code_command(0))) }
+
+      # run the GC multiple times to unmap as much memory as possible
+      10.times { GC.collect }
+
+      # the processes above have now been queued after completion; if this last
+      # one finishes at all, nothing was broken by the GC
+      Process.run(*exit_code_command(0))
+    end
+  end
+
+  describe ".new (command + args)" do
     it "raises if command doesn't exist" do
       expect_raises(File::NotFoundError, "Error executing process: 'foobarbaz'") do
         Process.new("foobarbaz")
+      end
+    end
+
+    it "raises for long path" do
+      expect_raises(File::NotFoundError, "Error executing process: 'aaaaaaa") do
+        Process.new("a" * 1000)
       end
     end
 
@@ -100,6 +190,17 @@ describe Process do
           Process.new(command)
         end
       end
+    end
+
+    it "doesn't break if process is collected before completion", tags: %w[slow] do
+      200.times { Process.new(*exit_code_command(0)) }
+
+      # run the GC multiple times to unmap as much memory as possible
+      10.times { GC.collect }
+
+      # the processes above have now been queued after completion; if this last
+      # one finishes at all, nothing was broken by the GC
+      Process.run(*exit_code_command(0))
     end
   end
 
@@ -189,9 +290,35 @@ describe Process do
       value.should eq("hello#{newline}")
     end
 
-    it "closes ios after block" do
+    it "closes input after block" do
       Process.run(*stdin_to_stdout_command) { }
       $?.exit_code.should eq(0)
+    end
+
+    it "closes output and error after block" do
+      reader, writer = IO.pipe
+      channel = Channel(Process).new
+
+      spawn do
+        Process.run(*stdin_to_stdout_command, input: reader, output: :pipe, error: :pipe) do |process|
+          channel.send process
+          channel.receive
+        end
+        channel.close
+      end
+
+      process = channel.receive
+
+      process.output.closed?.should be_false
+      process.error.closed?.should be_false
+
+      channel.send process
+
+      # Wait a moment for the other fiber to continue and close the IOs
+      wait_for { process.output.closed? && process.error.closed? }
+
+      writer.close
+      channel.receive?.should be_nil
     end
 
     it "forwards closed io" do
@@ -268,7 +395,7 @@ describe Process do
     end
 
     describe "does not execute batch files" do
-      %w[.bat .Bat .BAT .cmd .cmD .CmD].each do |ext|
+      %w[.bat .Bat .BAT .cmd .cmD .CmD .bat\  .cmd\ ... .bat.\ .].each do |ext|
         it ext do
           with_tempfile "process_run#{ext}" do |path|
             File.write(path, "echo '#{ext}'\n")
@@ -368,6 +495,196 @@ describe Process do
           end
         end
       {% end %}
+
+      it "finds binary in parent `$PATH`, not `env`" do
+        Process.run(*print_env_command, env: {"PATH" => ""})
+      end
+
+      it "errors on invalid key" do
+        expect_raises(ArgumentError, %(Invalid env key "")) do
+          Process.run(*print_env_command, env: {"" => "baz"})
+        end
+        expect_raises(ArgumentError, %(Invalid env key "foo=bar")) do
+          Process.run(*print_env_command, env: {"foo=bar" => "baz"})
+        end
+      end
+
+      it "errors on zero char in key" do
+        expect_raises({{ flag?(:win32) }} ? ArgumentError : RuntimeError, "String `key` contains null byte") do
+          Process.run(*print_env_command, env: {"foo\0" => "baz"})
+        end
+      end
+
+      it "errors on zero char in value" do
+        expect_raises({{ flag?(:win32) }} ? ArgumentError : RuntimeError, "String `value` contains null byte") do
+          Process.run(*print_env_command, env: {"foo" => "baz\0"})
+        end
+      end
+    end
+
+    it "errors with empty command" do
+      {% begin %}
+        expect_raises({% if flag?(:win32) %} IO::Error, "The parameter is incorrect" {% else %} File::NotFoundError{% end %}) do
+          Process.run("")
+        end
+      {% end %}
+    end
+
+    it "errors with too long command" do
+      pending! unless {{ flag?(:linux) }}
+
+      path_max = {% if LibC.has_constant?(:PATH_MAX) %}
+                   LibC::PATH_MAX
+                 {% else %}
+                   10_000
+                 {% end %}
+
+      expect_raises(IO::Error, /File ?name too long/) do
+        Process.run("a" * (path_max + 1))
+      end
+
+      # The pathname itself is not too long, but it will be when combined with
+      # any path prefix.
+      expect_raises(IO::Error, /File ?name too long/) do
+        Process.run("a" * path_max)
+      end
+    end
+
+    describe "$PATH" do
+      it "works with unset $PATH" do
+        with_env("PATH": nil) do
+          Process.run(*path_search_command)
+        end
+      end
+
+      it "errors with empty $PATH" do
+        pending! if {{ flag?(:win32) }}
+        with_env("PATH": "") do
+          expect_raises(File::NotFoundError) do
+            Process.run(*path_search_command)
+          end
+        end
+      end
+
+      it "empty still finds in current directory" do
+        pending! unless {{ flag?(:unix) }}
+
+        with_tempfile("crystal-spec-run") do |dir|
+          Dir.mkdir dir
+          File.write(Path[dir, "foo"], "#!/bin/sh\necho bar")
+          File.chmod(Path[dir, "foo"], 0o555)
+          if {{ flag?(:darwin) }}
+            String.build do |io|
+              Process.run("foo", chdir: dir, output: io)
+            end.should eq "bar\n"
+          else
+            expect_raises(File::NotFoundError) do
+              Process.run("foo", chdir: dir)
+            end
+          end
+        end
+      end
+
+      it "empty path entry means current directory" do
+        pending! unless {{ flag?(:unix) }}
+
+        with_tempfile("crystal-spec-run") do |dir|
+          Dir.mkdir dir
+          File.write(Path[dir, "foo"], "#!/bin/sh\necho bar")
+          File.chmod(Path[dir, "foo"], 0o555)
+          with_env("PATH": ":") do
+            Process.run("foo", chdir: dir)
+          end
+          with_env("PATH": "::") do
+            Process.run("foo", chdir: dir)
+          end
+          with_env("PATH": "/does/not/exist:") do
+            Process.run("foo", chdir: dir)
+          end
+          with_env("PATH": ":/does/not/exist") do
+            Process.run("foo", chdir: dir)
+          end
+        end
+      end
+
+      it "finds path in relative directory" do
+        pending! unless {{ flag?(:unix) }}
+
+        with_tempfile("crystal-spec-run") do |dir|
+          Dir.mkdir_p Path[dir, "bin"]
+          Dir.mkdir_p Path[dir, "empty"]
+          File.write(Path[dir, "bin", "foo"], "#!/bin/sh\necho bar")
+          File.chmod(Path[dir, "bin", "foo"], 0o555)
+          with_env("PATH": "bin") do
+            Process.run("foo", chdir: dir)
+          end
+          with_env("PATH": "empty:bin") do
+            Process.run("foo", chdir: dir)
+          end
+          with_env("PATH": "bin:empty") do
+            Process.run("foo", chdir: dir)
+          end
+          with_env("PATH": "/does/not/exist:bin") do
+            Process.run("foo", chdir: dir)
+          end
+          with_env("PATH": "bin:/does/not/exist") do
+            Process.run("foo", chdir: dir)
+          end
+          with_env("PATH": ":bin") do
+            Process.run("foo", chdir: dir)
+          end
+          with_env("PATH": "::bin") do
+            Process.run("foo", chdir: dir)
+          end
+          with_env("PATH": "/does/not/exist::bin") do
+            Process.run("foo", chdir: dir)
+          end
+          with_env("PATH": "bin:/does/not/exist") do
+            Process.run("foo", chdir: dir)
+          end
+        end
+      end
+
+      context "with shell: true" do
+        it "errors with nonexist $PATH" do
+          pending! unless {{ flag?(:unix) }}
+          Process.run(*print_env_command, shell: true, env: {"PATH" => "/does/not/exist"}).success?.should be_false
+        end
+
+        it "empty path entry means current directory" do
+          pending! unless {{ flag?(:unix) }}
+
+          with_tempfile("crystal-spec-run") do |dir|
+            Dir.mkdir dir
+            File.write(Path[dir, "foo"], "#!/bin/sh\necho bar")
+            File.chmod(Path[dir, "foo"], 0o555)
+            Process.run("foo", chdir: dir, shell: true, env: {"PATH" => ":"}).success?.should be_true
+            Process.run("foo", chdir: dir, shell: true, env: {"PATH" => "::"}).success?.should be_true
+            Process.run("foo", chdir: dir, shell: true, env: {"PATH" => "/does/not/exist:"}).success?.should be_true
+            Process.run("foo", chdir: dir, shell: true, env: {"PATH" => ":/does/not/exist"}).success?.should be_true
+          end
+        end
+
+        it "finds path in relative directory" do
+          pending! unless {{ flag?(:unix) }}
+
+          with_tempfile("crystal-spec-run") do |dir|
+            Dir.mkdir_p Path[dir, "bin"]
+            Dir.mkdir_p Path[dir, "empty"]
+            File.write(Path[dir, "bin", "foo"], "#!/bin/sh\necho bar")
+            File.chmod(Path[dir, "bin", "foo"], 0o555)
+            Process.run("foo", chdir: dir, shell: true, env: {"PATH" => "bin"}).success?.should be_true
+            Process.run("foo", chdir: dir, shell: true, env: {"PATH" => "empty:bin"}).success?.should be_true
+            Process.run("foo", chdir: dir, shell: true, env: {"PATH" => "bin:empty"}).success?.should be_true
+            Process.run("foo", chdir: dir, shell: true, env: {"PATH" => "/does/not/exist:bin"}).success?.should be_true
+            Process.run("foo", chdir: dir, shell: true, env: {"PATH" => "bin:/does/not/exist"}).success?.should be_true
+            Process.run("foo", chdir: dir, shell: true, env: {"PATH" => ":bin"}).success?.should be_true
+            Process.run("foo", chdir: dir, shell: true, env: {"PATH" => "::bin"}).success?.should be_true
+            Process.run("foo", chdir: dir, shell: true, env: {"PATH" => "/does/not/exist::bin"}).success?.should be_true
+            Process.run("foo", chdir: dir, shell: true, env: {"PATH" => "bin:/does/not/exist"}).success?.should be_true
+          end
+        end
+      end
     end
 
     it "can link processes together" do
@@ -431,6 +748,12 @@ describe Process do
 
   typeof(Process.new(*standing_command).terminate(graceful: false))
 
+  describe ".debugger_present?" do
+    it "compiles" do
+      typeof(Process.debugger_present?)
+    end
+  end
+
   it ".exists?" do
     # On Windows killing a parent process does not reparent its children to
     # another existing process, so the following isn't guaranteed to work
@@ -488,6 +811,8 @@ describe Process do
           File.exists?(path).should be_true
         end
       end
+
+      typeof(Process.fork)
     end
   {% end %}
 
@@ -516,6 +841,23 @@ describe Process do
     it "gets error from exec" do
       expect_raises(File::NotFoundError, "Error executing process: 'foobarbaz'") do
         Process.exec("foobarbaz")
+      end
+    end
+
+    it "raises if chdir doesn't exist" do
+      expect_raises(File::NotFoundError, "Error while changing directory: 'doesnotexist'") do
+        Process.exec(*exit_code_command(1), chdir: "doesnotexist")
+      end
+    end
+
+    it "does not change directory if exec fails" do
+      with_tempfile("exec_chdir") do |path|
+        Dir.mkdir_p(path)
+        previous_cwd = Dir.current
+        expect_raises(File::NotFoundError, "Error executing process: 'doesnotexist':") do
+          Process.exec("doesnotexist", chdir: path)
+        end
+        Dir.current.should eq previous_cwd
       end
     end
   end

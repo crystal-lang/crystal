@@ -187,23 +187,19 @@ module Crystal::Playground
     private def bind_io_as_output(tag, io)
       spawn do
         loop do
-          begin
-            output = String.new(4096) do |buffer|
-              length = io.read_utf8(Slice.new(buffer, 4096))
-              {length, 0}
-            end
-            unless output.empty?
-              send_with_json_builder do |json|
-                json.field "type", "output"
-                json.field "tag", tag
-                json.field "content", output
-              end
-            else
-              break
-            end
-          rescue
-            break
+          output = String.new(4096) do |buffer|
+            length = io.read_utf8(Slice.new(buffer, 4096))
+            {length, 0}
           end
+          break if output.empty?
+
+          send_with_json_builder do |json|
+            json.field "type", "output"
+            json.field "tag", tag
+            json.field "content", output
+          end
+        rescue
+          break
         end
       end
     end
@@ -453,7 +449,7 @@ module Crystal::Playground
       public_dir = File.join(playground_dir, "public")
 
       agent_ws = PathWebSocketHandler.new "/agent" do |ws, context|
-        match_data = context.request.path.not_nil!.match(/\/(\d+)\/(\d+)$/).not_nil!
+        match_data = context.request.path.not_nil!.match!(/\/(\d+)\/(\d+)$/)
         session_key = match_data[1].to_i
         tag = match_data[2].to_i
         Log.info { "#{context.request.path} WebSocket connected (session=#{session_key}, tag=#{tag})" }

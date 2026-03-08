@@ -6,7 +6,7 @@ describe Spec::ExampleGroup do
       root = build_spec("f.cr", count: 20)
 
       before_randomize = all_spec_descriptions(root)
-      root.randomize(Random::DEFAULT)
+      root.randomize(Random.new)
       after_randomize = all_spec_descriptions(root)
 
       after_randomize.should_not eq before_randomize

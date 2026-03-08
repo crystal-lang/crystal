@@ -32,7 +32,7 @@ module Spec
         end
 
         non_nil_block = block
-        start = Time.monotonic
+        start = Time.instant
 
         ran = @parent.run_around_each_hooks(Example::Procsy.new(self) { internal_run(start, non_nil_block) })
         ran || internal_run(start, non_nil_block)
@@ -48,14 +48,14 @@ module Spec
     private def internal_run(start, block)
       @parent.run_before_each_hooks
       block.call
-      @parent.report(:success, description, file, line, Time.monotonic - start)
+      @parent.report(:success, description, file, line, start.elapsed)
     rescue ex : Spec::AssertionFailed
-      @parent.report(:fail, description, file, line, Time.monotonic - start, ex)
+      @parent.report(:fail, description, file, line, start.elapsed, ex)
       @parent.cli.abort! if @parent.cli.fail_fast?
     rescue ex : Spec::ExamplePending
-      @parent.report(:pending, description, file, line, Time.monotonic - start)
+      @parent.report(:pending, description, file, line, start.elapsed)
     rescue ex
-      @parent.report(:error, description, file, line, Time.monotonic - start, ex)
+      @parent.report(:error, description, file, line, start.elapsed, ex)
       @parent.cli.abort! if @parent.cli.fail_fast?
     ensure
       @parent.run_after_each_hooks

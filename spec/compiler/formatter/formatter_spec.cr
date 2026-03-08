@@ -143,6 +143,13 @@ describe Crystal::Formatter do
   assert_format "NamedTuple(\n  a: Int32,)", "NamedTuple(\n  a: Int32,\n)"
   assert_format "class Foo\n  NamedTuple(\n    a: Int32,\n  )\nend"
 
+  # Multi-line generic type with inline comments (issue #11328)
+  assert_format "Tuple(\n  Int32, # first\n  String, # second\n)", "Tuple(\n  Int32,  # first\n  String, # second\n)"
+  assert_format "Tuple(\n  Int32, # first\n  String, # second\n  Bool,\n)", "Tuple(\n  Int32,  # first\n  String, # second\n  Bool,\n)"
+  assert_format "Tuple(\n  Int32, # first\n  String # adds trailing comma\n)", "Tuple(\n  Int32,  # first\n  String, # adds trailing comma\n)"
+  assert_format "Hash(\n  String, # key\n  Int32, # value\n)", "Hash(\n  String, # key\n  Int32,  # value\n)"
+  assert_format "Tuple(\n  Int32,\n  String\n)", "Tuple(\n  Int32,\n  String,\n)"
+
   assert_format "::Tuple(T)"
   assert_format "::NamedTuple(T)"
   assert_format "::Pointer(T)"
@@ -756,6 +763,13 @@ describe Crystal::Formatter do
     CRYSTAL
 
   assert_format <<-CRYSTAL
+    def foo(
+      a, b,
+    )
+    end
+    CRYSTAL
+
+  assert_format <<-CRYSTAL
     macro foo(
       a,
       *b,
@@ -1076,6 +1090,12 @@ describe Crystal::Formatter do
   assert_format "foo.[ 1,  2 ]?", "foo.[1, 2]?"
   assert_format "foo.[] =1", "foo.[] = 1"
   assert_format "foo.[ 1 , 2 ]   =3", "foo.[1, 2] = 3"
+
+  assert_format "foo.[]()", "foo.[]"
+  assert_format "foo.[]( 1 , 2 )", "foo.[](1, 2)"
+  assert_format "foo.[]?( 1,  2 )", "foo.[]?(1, 2)"
+  assert_format "foo.[] =(1)", "foo.[] = (1)"
+  assert_format "foo.[]=( 1 , 2 , 3 )", "foo.[]=(1, 2, 3)"
 
   assert_format "1  ||  2", "1 || 2"
   assert_format "a  ||  b", "a || b"
@@ -1902,12 +1922,12 @@ describe Crystal::Formatter do
 
   assert_format "<<-FOO\nFOO"
 
-  assert_format "<<-FOO\n#{"foo"}\nFOO"
-  assert_format "<<-FOO\n#{"foo"}bar\nFOO"
-  assert_format "<<-FOO\nbar#{"foo"}\nFOO"
-  assert_format "<<-FOO\nbar#{"foo"}bar\nFOO"
-  assert_format "<<-FOO\nfoo\n#{"foo"}\nFOO"
-  assert_format "<<-FOO\nfoo\n#{1}\nFOO"
+  assert_format %(<<-FOO\n\#{"foo"}\nFOO)
+  assert_format %(<<-FOO\n\#{"foo"}bar\nFOO)
+  assert_format %(<<-FOO\nbar\#{"foo"}\nFOO)
+  assert_format %(<<-FOO\nbar\#{"foo"}bar\nFOO)
+  assert_format %(<<-FOO\nfoo\n\#{"foo"}\nFOO)
+  assert_format %(<<-FOO\nfoo\n\#{1}\nFOO)
 
   assert_format "#!shebang\n1 + 2"
 
@@ -1915,6 +1935,11 @@ describe Crystal::Formatter do
   assert_format "   {{\n1 + 2\n   }}", "{{\n  1 + 2\n}}"
   assert_format "   {%\na = 1 %}", "{%\n  a = 1\n%}"
   assert_format "   {%\na = 1\n   %}", "{%\n  a = 1\n%}"
+
+  # Multi-line macro expression with comment as first line (issue #14450)
+  assert_format "{%\n  # comment\n  a = 1\n%}"
+  assert_format "{%\n  # comment 1\n  # comment 2\n  a = 1\n%}"
+  assert_format "{{\n  # comment\n  a + 1\n}}"
 
   assert_format "macro foo\n  {{\n1 + 2 }}\nend", "macro foo\n  {{\n    1 + 2\n  }}\nend"
   assert_format "macro foo\n  def bar\n    {{\n      1 + 2\n    }}\n  end\nend"
@@ -2631,7 +2656,7 @@ describe Crystal::Formatter do
 
   assert_format <<-CRYSTAL
     1 # foo
-    / #{1} /
+    / \#{1} /
     CRYSTAL
 
   assert_format <<-CRYSTAL,
@@ -2848,6 +2873,14 @@ describe Crystal::Formatter do
 
     # doc
     def baz; end
+    CRYSTAL
+
+  # 15180
+  assert_format <<-CRYSTAL
+    x = uninitialized Foo
+    {% begin %}
+      x = foo(x)
+    {% end %}
     CRYSTAL
 
   # CVE-2021-42574

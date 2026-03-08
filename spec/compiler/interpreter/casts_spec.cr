@@ -25,7 +25,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "casts from mixed union type to another mixed union type for caller" do
-      interpret(<<-CRYSTAL).should eq(true)
+      interpret(<<-CRYSTAL).should be_true
         a = 1 == 1 ? 1 : (1 == 1 ? 20_i16 : nil)
         if a
           a < 2
@@ -49,7 +49,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "casts from nilable type to mixed union type (2)" do
-      interpret(<<-CRYSTAL).should eq(true)
+      interpret(<<-CRYSTAL).should be_true
         y = 1 == 1 ? "a" : nil
         x = true
         x = y

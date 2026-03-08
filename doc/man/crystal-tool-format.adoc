@@ -1,0 +1,21 @@
+= crystal-tool-format(1)
+:doctype: manpage
+:date: {localdate}
+:crystal_version: {crystal_version}
+:man manual: Crystal Compiler Command Line Reference Guide
+:man source: crystal {crystal_version}
+
+== Name
+crystal-tool-format - Format Crystal source files
+
+== Synopsis
+*crystal tool format* [options] [source...]
+
+== Description
+
+Format project, directories and/or files with the coding
+style used in the standard library.
+
+== Options
+
+*--check*:: Only check conformity but do not apply any changes.

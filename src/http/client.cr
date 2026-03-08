@@ -197,7 +197,7 @@ class HTTP::Client
   #
   # This constructor will raise an exception if any scheme but HTTP or HTTPS
   # is used.
-  def self.new(uri : URI, tls : TLSContext = nil)
+  def self.new(uri : URI, tls : TLSContext = nil) : self
     tls = tls_flag(uri, tls)
     host = validate_host(uri)
     new(host, uri.port, tls)
@@ -580,6 +580,10 @@ class HTTP::Client
 
   private def exec_internal(request)
     implicit_compression = implicit_compression?(request)
+
+    set_defaults request
+    run_before_request_callbacks(request)
+
     begin
       response = exec_internal_single(request, implicit_compression: implicit_compression)
     rescue exc : IO::Error
@@ -628,6 +632,10 @@ class HTTP::Client
 
   private def exec_internal(request, &block : Response -> T) : T forall T
     implicit_compression = implicit_compression?(request)
+
+    set_defaults request
+    run_before_request_callbacks(request)
+
     exec_internal_single(request, ignore_io_error: true, implicit_compression: implicit_compression) do |response|
       if response
         return handle_response(response) { yield response }
@@ -665,8 +673,6 @@ class HTTP::Client
   end
 
   private def send_request(request)
-    set_defaults request
-    run_before_request_callbacks(request)
     request.to_io(io)
     io.flush
   end
@@ -709,7 +715,7 @@ class HTTP::Client
   # response = client.exec "GET", "/"
   # response.body # => "..."
   # ```
-  def exec(method : String, path, headers : HTTP::Headers? = nil, body : BodyType = nil) : HTTP::Client::Response
+  def exec(method : String, path : String, headers : HTTP::Headers? = nil, body : BodyType = nil) : HTTP::Client::Response
     exec new_request method, path, headers, body
   end
 
@@ -739,7 +745,7 @@ class HTTP::Client
   # response = HTTP::Client.exec "GET", "http://www.example.com"
   # response.body # => "..."
   # ```
-  def self.exec(method, url : String | URI, headers : HTTP::Headers? = nil, body : BodyType = nil, tls : TLSContext = nil) : HTTP::Client::Response
+  def self.exec(method : String, url : String | URI, headers : HTTP::Headers? = nil, body : BodyType = nil, tls : TLSContext = nil) : HTTP::Client::Response
     headers = default_one_shot_headers(headers)
     exec(url, tls) do |client, path|
       client.exec method, path, headers, body

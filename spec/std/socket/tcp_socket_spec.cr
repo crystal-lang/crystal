@@ -3,17 +3,11 @@
 require "./spec_helper"
 require "../../support/win32"
 
-# TODO: Windows networking in the interpreter requires #12495
-{% if flag?(:interpreted) && flag?(:win32) %}
-  pending TCPSocket
-  {% skip_file %}
-{% end %}
-
 describe TCPSocket, tags: "network" do
   describe "#connect" do
     each_ip_family do |family, address|
       it "connects to server" do
-        port = unused_local_port
+        port = unused_local_tcp_port
 
         TCPServer.open(address, port) do |server|
           TCPSocket.open(address, port) do |client|
@@ -38,7 +32,7 @@ describe TCPSocket, tags: "network" do
         pending "raises when connection is refused"
       {% else %}
         it "raises when connection is refused" do
-          port = unused_local_port
+          port = unused_local_tcp_port
 
           expect_raises(Socket::ConnectError, "Error connecting to '#{address}:#{port}'") do
             TCPSocket.new(address, port)
@@ -73,7 +67,7 @@ describe TCPSocket, tags: "network" do
 
     describe "address resolution" do
       it "connects to localhost" do
-        port = unused_local_port
+        port = unused_local_tcp_port
 
         TCPServer.open("localhost", port) do |server|
           TCPSocket.open("localhost", port) do |client|
@@ -92,7 +86,7 @@ describe TCPSocket, tags: "network" do
         {% elsif flag?(:android) || flag?(:netbsd) || flag?(:openbsd) %}
           err.os_error.should eq(Errno.new(LibC::EAI_NODATA))
         {% else %}
-          [Errno.new(LibC::EAI_NONAME), Errno.new(LibC::EAI_AGAIN)].should contain err.os_error
+          [Errno.new(LibC::EAI_NONAME), Errno.new(LibC::EAI_NODATA), Errno.new(LibC::EAI_AGAIN)].should contain err.os_error
         {% end %}
       end
 
@@ -106,13 +100,15 @@ describe TCPSocket, tags: "network" do
         {% elsif flag?(:android) || flag?(:netbsd) || flag?(:openbsd) %}
           err.os_error.should eq(Errno.new(LibC::EAI_NODATA))
         {% else %}
-          [Errno.new(LibC::EAI_NONAME), Errno.new(LibC::EAI_AGAIN)].should contain err.os_error
+          [Errno.new(LibC::EAI_NONAME), Errno.new(LibC::EAI_NODATA), Errno.new(LibC::EAI_AGAIN)].should contain err.os_error
         {% end %}
       end
     end
 
     it "fails to connect IPv6 to IPv4 server" do
-      port = unused_local_port
+      pending! "IPv6 is unavailable" unless SocketSpecHelper.supports_ipv6?
+
+      port = unused_local_tcp_port
 
       TCPServer.open("0.0.0.0", port) do |server|
         expect_raises(Socket::ConnectError, "Error connecting to '::1:#{port}'") do
@@ -131,9 +127,9 @@ describe TCPSocket, tags: "network" do
     pending "sends and receives messages (fibers & channels)"
   {% else %}
     it "sync from server" do
-      port = unused_local_port
+      port = unused_local_tcp_port
 
-      TCPServer.open("::", port) do |server|
+      TCPServer.open(Socket::IPAddress::UNSPECIFIED, port) do |server|
         TCPSocket.open("localhost", port) do |client|
           sock = server.accept
           sock.sync?.should eq(server.sync?)
@@ -150,9 +146,9 @@ describe TCPSocket, tags: "network" do
     end
 
     it "settings" do
-      port = unused_local_port
+      port = unused_local_tcp_port
 
-      TCPServer.open("::", port) do |server|
+      TCPServer.open(Socket::IPAddress::UNSPECIFIED, port) do |server|
         TCPSocket.open("localhost", port) do |client|
           # test protocol specific socket options
           (client.tcp_nodelay = true).should be_true
@@ -183,7 +179,7 @@ describe TCPSocket, tags: "network" do
     end
 
     it "sends and receives messages" do
-      port = unused_local_port
+      port = unused_local_tcp_port
 
       TCPServer.open("::", port) do |server|
         TCPSocket.open("localhost", port) do |client|
@@ -198,11 +194,11 @@ describe TCPSocket, tags: "network" do
     end
 
     it "sends and receives messages (fibers & channels)" do
-      port = unused_local_port
+      port = unused_local_tcp_port
 
       channel = Channel(Exception?).new
       spawn do
-        TCPServer.open("::", port) do |server|
+        TCPServer.open(Socket::IPAddress::UNSPECIFIED, port) do |server|
           channel.send nil
           sock = server.accept
           sock.read_timeout = 3.second

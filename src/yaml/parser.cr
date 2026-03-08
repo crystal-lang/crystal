@@ -32,7 +32,7 @@ abstract class YAML::Parser
   end
 
   # Deserializes multiple YAML document.
-  def parse_all : Array(YAML::Any)
+  def parse_all
     documents = new_documents
 
     @pull_parser.read_next
@@ -102,12 +102,14 @@ abstract class YAML::Parser
 
   protected def parse_scalar
     value = anchor(@pull_parser.anchor, new_scalar)
+    end_value(value)
     @pull_parser.read_next
     value
   end
 
   protected def parse_alias
     value = get_anchor(@pull_parser.anchor.not_nil!)
+    end_value(value)
     @pull_parser.read_next
     value
   end

@@ -2,17 +2,16 @@ require "../../spec_helper"
 
 describe "Call errors" do
   it "says wrong number of arguments (to few arguments)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "wrong number of arguments for 'foo' (given 0, expected 1)"
       def foo(x)
       end
 
       foo
-      ),
-      "wrong number of arguments for 'foo' (given 0, expected 1)"
+      CRYSTAL
   end
 
   it "says wrong number of arguments even if other overloads don't match by block" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "wrong number of arguments for 'foo' (given 0, expected 1)"
       def foo(x)
       end
 
@@ -21,93 +20,84 @@ describe "Call errors" do
       end
 
       foo
-      ),
-      "wrong number of arguments for 'foo' (given 0, expected 1)"
+      CRYSTAL
   end
 
   it "says not expected to be invoked with a block" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "'foo' is not expected to be invoked with a block, but a block was given"
       def foo
       end
 
       foo {}
-      ),
-      "'foo' is not expected to be invoked with a block, but a block was given"
+      CRYSTAL
   end
 
   it "says expected to be invoked with a block" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "'foo' is expected to be invoked with a block, but no block was given"
       def foo
         yield
       end
 
       foo
-      ),
-      "'foo' is expected to be invoked with a block, but no block was given"
+      CRYSTAL
   end
 
   it "says missing named argument" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "missing argument: x"
       def foo(*, x)
       end
 
       foo
-      ),
-      "missing argument: x"
+      CRYSTAL
   end
 
   it "says missing named arguments" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "missing arguments: x, y"
       def foo(*, x, y)
       end
 
       foo
-      ),
-      "missing arguments: x, y"
+      CRYSTAL
   end
 
   it "says no parameter named" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "no parameter named 'x'"
       def foo
       end
 
       foo(x: 1)
-      ),
-      "no parameter named 'x'"
+      CRYSTAL
   end
 
   it "says no parameters named" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "no parameters named 'x', 'y'"
       def foo
       end
 
       foo(x: 1, y: 2)
-      ),
-      "no parameters named 'x', 'y'"
+      CRYSTAL
   end
 
   it "says argument already specified" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "argument for parameter 'x' already specified"
       def foo(x)
       end
 
       foo(1, x: 2)
-      ),
-      "argument for parameter 'x' already specified"
+      CRYSTAL
   end
 
   it "says type mismatch for positional argument" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #2 to 'foo' to be Int32, not Char"
       def foo(x : Int32, y : Int32)
       end
 
       foo(1, 'a')
-      ),
-      "expected argument #2 to 'foo' to be Int32, not Char"
+      CRYSTAL
   end
 
   it "says type mismatch for positional argument with two options" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to be Int32 or String, not Char"
       def foo(x : Int32)
       end
 
@@ -115,12 +105,11 @@ describe "Call errors" do
       end
 
       foo('a')
-      ),
-      "expected argument #1 to 'foo' to be Int32 or String, not Char"
+      CRYSTAL
   end
 
   it "says type mismatch for positional argument with three options" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to be Bool, Int32 or String, not Char"
       def foo(x : Int32)
       end
 
@@ -131,66 +120,60 @@ describe "Call errors" do
       end
 
       foo('a')
-      ),
-      "expected argument #1 to 'foo' to be Bool, Int32 or String, not Char"
+      CRYSTAL
   end
 
   it "says type mismatch for named argument " do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument 'x' to 'foo' to be Int32, not Char"
       def foo(x : Int32, y : Int32)
       end
 
       foo(y: 1, x: 'a')
-      ),
-      "expected argument 'x' to 'foo' to be Int32, not Char"
+      CRYSTAL
   end
 
   it "replaces free variables in positional argument" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #2 to 'foo' to be Int32, not Char"
       def foo(x : T, y : T) forall T
       end
 
       foo(1, 'a')
-      ),
-      "expected argument #2 to 'foo' to be Int32, not Char"
+      CRYSTAL
   end
 
   it "replaces free variables in named argument" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument 'y' to 'foo' to be Int32, not Char"
       def foo(x : T, y : T) forall T
       end
 
       foo(x: 1, y: 'a')
-      ),
-      "expected argument 'y' to 'foo' to be Int32, not Char"
+      CRYSTAL
   end
 
   it "replaces generic type var in positional argument" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #1 to 'Foo(Int32).foo' to be Int32, not Char"
       class Foo(T)
         def self.foo(x : T)
         end
       end
 
       Foo(Int32).foo('a')
-      ),
-      "expected argument #1 to 'Foo(Int32).foo' to be Int32, not Char"
+      CRYSTAL
   end
 
   it "replaces generic type var in named argument" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument 'y' to 'Foo(Int32).foo' to be Int32, not Char"
       class Foo(T)
         def self.foo(x : T, y : T)
         end
       end
 
       Foo(Int32).foo(x: 1, y: 'a')
-      ),
-      "expected argument 'y' to 'Foo(Int32).foo' to be Int32, not Char"
+      CRYSTAL
   end
 
   it "says type mismatch for positional argument even if there are overloads that don't match" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to be Char or Int32, not String"
       def foo(x : Int32)
       end
 
@@ -201,12 +184,11 @@ describe "Call errors" do
       end
 
       foo("hello")
-      ),
-      "expected argument #1 to 'foo' to be Char or Int32, not String"
+      CRYSTAL
   end
 
   it "says type mismatch for symbol against enum (did you mean)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to match a member of enum Color.\n\nDid you mean :red?"
       enum Color
         Red
         Green
@@ -217,12 +199,11 @@ describe "Call errors" do
       end
 
       foo(:rred)
-      ),
-      "expected argument #1 to 'foo' to match a member of enum Color.\n\nDid you mean :red?"
+      CRYSTAL
   end
 
   it "says type mismatch for symbol against enum (list all possibilities when 10 or less)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to match a member of enum Color.\n\nOptions are: :red, :green, :blue, :violet and :purple"
       enum Color
         Red
         Green
@@ -235,12 +216,11 @@ describe "Call errors" do
       end
 
       foo(:hello_world)
-      ),
-      "expected argument #1 to 'foo' to match a member of enum Color.\n\nOptions are: :red, :green, :blue, :violet and :purple"
+      CRYSTAL
   end
 
   it "says type mismatch for symbol against enum, named argument case" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument 'x' to 'foo' to match a member of enum Color.\n\nDid you mean :red?"
       enum Color
         Red
         Green
@@ -251,12 +231,11 @@ describe "Call errors" do
       end
 
       foo(x: :rred)
-      ),
-      "expected argument 'x' to 'foo' to match a member of enum Color.\n\nDid you mean :red?"
+      CRYSTAL
   end
 
   it "errors on argument if more types are given than expected" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to be Int32, not (Int32 | Nil)"
       def foo(x : Int32)
       end
 
@@ -264,12 +243,11 @@ describe "Call errors" do
       end
 
       foo(1 || nil)
-      ),
-      "expected argument #1 to 'foo' to be Int32, not (Int32 | Nil)"
+      CRYSTAL
   end
 
   it "errors on argument if more types are given than expected, shows all expected types" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to be Char or Int32, not (Char | Int32 | Nil)"
       def foo(x : Int32)
       end
 
@@ -277,12 +255,11 @@ describe "Call errors" do
       end
 
       foo(1 ? nil : (1 || 'a'))
-      ),
-      "expected argument #1 to 'foo' to be Char or Int32, not (Char | Int32 | Nil)"
+      CRYSTAL
   end
 
   it "errors on argument if argument matches in all overloads but with different types in other arguments" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #2 to 'foo' to be Int32, not (Int32 | Nil)"
       def foo(x : String, y : Int32, w : Int32)
       end
 
@@ -290,8 +267,7 @@ describe "Call errors" do
       end
 
       foo("a", 1 || nil, 1)
-      ),
-      "expected argument #2 to 'foo' to be Int32, not (Int32 | Nil)"
+      CRYSTAL
   end
 
   describe "method signatures in error traces" do

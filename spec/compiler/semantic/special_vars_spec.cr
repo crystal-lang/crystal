@@ -3,7 +3,7 @@ require "../../spec_helper"
 describe "Semantic: special vars" do
   ["$~", "$?"].each do |name|
     it "infers #{name}" do
-      assert_type(%(
+      assert_type(<<-CRYSTAL) { nilable string }
         class Object; def not_nil!; self; end; end
 
         def foo
@@ -12,19 +12,19 @@ describe "Semantic: special vars" do
 
         foo
         #{name}
-        )) { nilable string }
+        CRYSTAL
     end
 
     it "types #{name} when not defined as no return" do
-      assert_type(%(
+      assert_type(<<-CRYSTAL) { no_return }
         require "prelude"
 
         #{name}
-        )) { no_return }
+        CRYSTAL
     end
 
     it "types #{name} when not defined as no return (2)" do
-      assert_type(%(
+      assert_type(<<-CRYSTAL) { nilable string }
         class Object; def not_nil!; self; end; end
 
         def foo
@@ -33,19 +33,18 @@ describe "Semantic: special vars" do
         end
 
         foo
-        )) { nilable string }
+        CRYSTAL
     end
 
     it "errors if assigning #{name} at top level" do
-      assert_error %(
+      assert_error <<-CRYSTAL, "'#{name}' can't be assigned at the top level"
         #{name} = "hey"
-        ),
-        "'#{name}' can't be assigned at the top level"
+        CRYSTAL
     end
   end
 
   it "infers when assigning inside block" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable string }
       class Object; def not_nil!; self; end; end
 
       def bar
@@ -60,11 +59,11 @@ describe "Semantic: special vars" do
 
       foo
       $~
-      )) { nilable string }
+      CRYSTAL
   end
 
   it "infers in block" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable string }
       class Object; def not_nil!; self; end; end
 
       def foo
@@ -77,11 +76,11 @@ describe "Semantic: special vars" do
         a = $~
       end
       a
-      )) { nilable string }
+      CRYSTAL
   end
 
   it "infers in block with nested block" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable string }
       class Object; def not_nil!; self; end; end
 
       def bar
@@ -100,11 +99,11 @@ describe "Semantic: special vars" do
         a = $~
       end
       a
-      )) { nilable string }
+      CRYSTAL
   end
 
   it "infers after block" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable string }
       class Object; def not_nil!; self; end; end
 
       def foo
@@ -115,6 +114,6 @@ describe "Semantic: special vars" do
       foo do
       end
       $~
-      )) { nilable string }
+      CRYSTAL
   end
 end

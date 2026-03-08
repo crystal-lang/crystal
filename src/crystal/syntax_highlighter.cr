@@ -70,11 +70,16 @@ abstract class Crystal::SyntaxHighlighter
   end
 
   private def slash_is_not_regex(last_token_type type, space_before)
-    return nil if type.nil?
-
-    type.number? || type.const? || type.instance_var? ||
-      type.class_var? || type.op_rparen? ||
-      type.op_rsquare? || type.op_rcurly? || !space_before
+    case type
+    when Nil
+      false
+    when .number?, .const?, .instance_var?, .class_var?, .op_rparen?, .op_rsquare?, .op_rcurly?
+      true
+    when .op_lparen?, .op_lsquare?, .op_lcurly?
+      false
+    else
+      !space_before
+    end
   end
 
   private def highlight_normal_state(lexer, break_on_rcurly = false)
@@ -84,6 +89,8 @@ abstract class Crystal::SyntaxHighlighter
     space_before = false
 
     while true
+      previous_delimiter_state = lexer.token.delimiter_state
+
       token = lexer.next_token
 
       case token.type
@@ -105,6 +112,7 @@ abstract class Crystal::SyntaxHighlighter
           highlight_token token, last_is_def
         else
           highlight_delimiter_state lexer, token
+          token.delimiter_state = previous_delimiter_state
         end
       when .string_array_start?, .symbol_array_start?
         highlight_string_array lexer, token

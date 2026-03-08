@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Code gen: generic class type" do
   it "codegens inherited generic class instance var" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       class Foo(T)
         def initialize(@x : T)
         end
@@ -16,11 +16,11 @@ describe "Code gen: generic class type" do
       end
 
       Bar.new(1).x
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "instantiates generic class with default argument in initialize (#394)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       class Foo(T)
         def initialize(@x = 1)
         end
@@ -31,11 +31,11 @@ describe "Code gen: generic class type" do
       end
 
       Foo(Int32).new.x &+ 1
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "allows initializing instance variable (#665)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       class SomeType(T)
         @x = 1
 
@@ -45,11 +45,11 @@ describe "Code gen: generic class type" do
       end
 
       SomeType(Char).new.x
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "allows initializing instance variable in inherited generic type" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Foo(T)
         @x = 1
 
@@ -63,11 +63,11 @@ describe "Code gen: generic class type" do
       end
 
       Bar(Char).new.x
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "declares instance var with virtual T (#1675)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Foo
         def foo
           1
@@ -93,11 +93,11 @@ describe "Code gen: generic class type" do
       generic = Generic(Foo).new
       generic.value = Foo.new
       generic.value.foo
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "runs generic instance var initializers in superclass's metaclass context (#4753)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Bar(T)
         def x
           {% if T == Int32 %} 1 {% else %} 2 {% end %}
@@ -116,11 +116,11 @@ describe "Code gen: generic class type" do
       end
 
       Foo(Int32).new.bar.x
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "runs generic instance var initializers in superclass's metaclass context (2) (#6482)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Bar(T)
         def x
           {% if T == FooBase(Int32) %} 1 {% else %} 2 {% end %}
@@ -139,11 +139,11 @@ describe "Code gen: generic class type" do
       end
 
       Foo(Int32).new.bar.x
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "doesn't run generic instance var initializers in formal superclass's context (#4753)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(7)
       class Foo(T)
         @foo = T.new
 
@@ -162,11 +162,11 @@ describe "Code gen: generic class type" do
       end
 
       Bar(Baz).new.foo.baz
-      )).to_i.should eq(7)
+      CRYSTAL
   end
 
   it "codegens static array size after instantiating" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(3)
       struct StaticArray(T, N)
         def size
           N
@@ -177,11 +177,11 @@ describe "Code gen: generic class type" do
 
       x = uninitialized Int32[3]
       x.size
-      )).to_i.should eq(3)
+      CRYSTAL
   end
 
   it "inherited instance var initialize from generic to concrete (#2128)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(42)
       class Foo(T)
         @x = 42
 
@@ -194,11 +194,11 @@ describe "Code gen: generic class type" do
       end
 
       Bar.new.x
-      )).to_i.should eq(42)
+      CRYSTAL
   end
 
   it "inherited instance var initialize from generic to generic to concrete (#2128)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(42)
       class Foo(T)
         @x = 10
 
@@ -220,11 +220,11 @@ describe "Code gen: generic class type" do
 
       baz = Baz.new
       baz.x &+ baz.y
-      )).to_i.should eq(42)
+      CRYSTAL
   end
 
   it "invokes super in generic class (#2354)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       class Global
         @@x = 1
 
@@ -252,11 +252,11 @@ describe "Code gen: generic class type" do
       b.foo
 
       Global.x
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "uses big integer as generic type argument (#2353)" do
-    run(%(
+    run(<<-CRYSTAL).to_u64.should eq(2374623294237463578)
       require "prelude"
 
       MIN_RANGE = -2374623294237463578
@@ -269,11 +269,11 @@ describe "Code gen: generic class type" do
       end
 
       Hello(MAX_RANGE).t
-      )).to_u64.should eq(2374623294237463578)
+      CRYSTAL
   end
 
   it "doesn't use virtual + in type arguments (#2839)" do
-    run(%(
+    run(<<-CRYSTAL).to_string.should eq("Gen(Foo)")
       class Class
         def name : String
           {{ @type.name.stringify }}
@@ -290,11 +290,11 @@ describe "Code gen: generic class type" do
       end
 
       Gen(Foo).name
-      )).to_string.should eq("Gen(Foo)")
+      CRYSTAL
   end
 
   it "doesn't use virtual + in type arguments for Tuple (#2839)" do
-    run(%(
+    run(<<-CRYSTAL).to_string.should eq("Tuple(Foo)")
       class Class
         def name : String
           {{ @type.name.stringify }}
@@ -311,11 +311,11 @@ describe "Code gen: generic class type" do
       end
 
       Tuple(Foo).name
-      )).to_string.should eq("Tuple(Foo)")
+      CRYSTAL
   end
 
   it "doesn't use virtual + in type arguments for NamedTuple (#2839)" do
-    run(%(
+    run(<<-CRYSTAL).to_string.should eq("NamedTuple(x: Foo)")
       class Class
         def name : String
           {{ @type.name.stringify }}
@@ -332,11 +332,11 @@ describe "Code gen: generic class type" do
       end
 
       NamedTuple(x: Foo).name
-      )).to_string.should eq("NamedTuple(x: Foo)")
+      CRYSTAL
   end
 
   it "codegens virtual generic metaclass macro method call" do
-    run(%(
+    run(<<-CRYSTAL).to_string.should eq("Bar(Int32)")
       class Class
         def name : String
           {{ @type.name.stringify }}
@@ -350,11 +350,11 @@ describe "Code gen: generic class type" do
       end
 
       Bar(Int32).new.as(Foo(Int32)).class.name
-      )).to_string.should eq("Bar(Int32)")
+      CRYSTAL
   end
 
   it "recomputes two calls that look the same due to generic type being instantiated (#7728)" do
-    run(%(
+    run(<<-CRYSTAL).to_string.should eq("hello")
       require "prelude"
 
       abstract class Base
@@ -377,11 +377,11 @@ describe "Code gen: generic class type" do
       foo(Gen.new(1) || Gen.new(1.5))
       foo(Gen.new(true) || Gen.new(1_u8))
       foo(Gen.new("hello") || Gen.new('z')).as(String)
-      )).to_string.should eq("hello")
+      CRYSTAL
   end
 
   it "doesn't consider abstract types for including types (#7200)" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       module Moo
       end
 
@@ -399,11 +399,11 @@ describe "Code gen: generic class type" do
       end
 
       Bar(Int32).new.as(Moo).foo
-      ))
+      CRYSTAL
   end
 
   it "doesn't consider abstract generic instantiation when restricting type (#5190)" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       abstract class Foo(E)
         abstract def foo
       end
@@ -424,11 +424,11 @@ describe "Code gen: generic class type" do
       if x.is_a?(Bar)
         x.foo
       end
-      ))
+      CRYSTAL
   end
 
   it "doesn't crash on generic type restriction with initially no subtypes (#8411)" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       class Foo
       end
 
@@ -446,11 +446,11 @@ describe "Code gen: generic class type" do
       end
 
       Baz(Int32).new
-      ))
+      CRYSTAL
   end
 
   it "doesn't crash on generic type restriction with no subtypes (#7583)" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       require "prelude"
 
       class Foo
@@ -468,11 +468,11 @@ describe "Code gen: generic class type" do
       if f.is_a?(Baz)
         x(f.baz)
       end
-      ))
+      CRYSTAL
   end
 
   it "doesn't override guessed instance var in generic type if already declared in superclass (#9431)" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       class Foo
         @x = 0
       end
@@ -486,11 +486,60 @@ describe "Code gen: generic class type" do
       end
 
       Baz.new
-      ))
+      CRYSTAL
+  end
+
+  it "accesses generic type argument from superclass, def context (#10834)" do
+    run(<<-CRYSTAL, Int32).should eq(7)
+      class Foo(T)
+      end
+
+      class Bar(U) < Foo(U)
+        def t
+          T
+        end
+      end
+
+      Bar(7).new.t
+      CRYSTAL
+  end
+
+  it "accesses generic type argument from superclass, metaclass context" do
+    run(<<-CRYSTAL, Int32).should eq(7)
+      struct Int32
+        def self.new(x : Int32)
+          x
+        end
+      end
+
+      class Foo(T)
+      end
+
+      class Bar(U) < Foo(U)
+        @x = T.new(7)
+      end
+
+      Bar(Int32).new.@x
+      CRYSTAL
+  end
+
+  it "accesses generic type argument from superclass, macro context" do
+    run(<<-CRYSTAL, Int32).should eq(1)
+      class Foo(T)
+      end
+
+      class Bar(U) < Foo(U)
+        def t
+          {{ T == 7 ? 1 : 2 }}
+        end
+      end
+
+      Bar(7).new.t
+      CRYSTAL
   end
 
   it "codegens compile-time interpreted generic int128" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(4)
       require "prelude"
 
       CONST = 1_i128 + 2_i128
@@ -507,6 +556,6 @@ describe "Code gen: generic class type" do
       end
 
       Bar.new.t_incr
-      )).to_i.should eq(4)
+      CRYSTAL
   end
 end

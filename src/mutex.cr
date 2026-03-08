@@ -1,3 +1,4 @@
+require "fiber/pointer_linked_list_node"
 require "crystal/spin_lock"
 
 # A fiber-safe mutex.
@@ -22,7 +23,7 @@ class Mutex
   @state = Atomic(Int32).new(UNLOCKED)
   @mutex_fiber : Fiber?
   @lock_count = 0
-  @queue = Deque(Fiber).new
+  @queue = Crystal::PointerLinkedList(Fiber::PointerLinkedListNode).new
   @queue_count = Atomic(Int32).new(0)
   @lock = Crystal::SpinLock.new
 
@@ -59,6 +60,8 @@ class Mutex
     loop do
       break if try_lock
 
+      waiting = Fiber::PointerLinkedListNode.new(Fiber.current)
+
       @lock.sync do
         @queue_count.add(1)
 
@@ -71,7 +74,7 @@ class Mutex
           end
         end
 
-        @queue.push Fiber.current
+        @queue.push pointerof(waiting)
       end
 
       Fiber.suspend
@@ -116,17 +119,18 @@ class Mutex
       return
     end
 
-    fiber = nil
+    waiting = nil
     @lock.sync do
       if @queue_count.get == 0
         return
       end
 
-      if fiber = @queue.shift?
+      if waiting = @queue.shift?
         @queue_count.add(-1)
       end
     end
-    fiber.enqueue if fiber
+
+    waiting.try(&.value.enqueue)
   end
 
   def synchronize(&)

@@ -1,3 +1,4 @@
+{% skip_file if flag?(:docs) %}
 require "primitives"
 
 {% if flag?(:msvc) %}

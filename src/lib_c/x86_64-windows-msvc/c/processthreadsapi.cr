@@ -3,6 +3,7 @@ require "c/wtypesbase"
 require "c/sdkddkver"
 
 lib LibC
+  CREATE_SUSPENDED           = 0x00000004
   CREATE_UNICODE_ENVIRONMENT = 0x00000400
 
   struct PROCESS_INFORMATION

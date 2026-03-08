@@ -70,7 +70,7 @@ describe "Code gen: if" do
   end
 
   it "codegen if with nested if that returns" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       def foo
         if true
           if true
@@ -83,11 +83,11 @@ describe "Code gen: if" do
       end
 
       foo
-    ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegen if with union type and then without type" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       def foo
         if true
           return 1
@@ -98,11 +98,11 @@ describe "Code gen: if" do
       end
 
       foo
-    ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegen if with union type and else without type" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       def foo
         if false
           1 || 1.1
@@ -113,11 +113,11 @@ describe "Code gen: if" do
       end
 
       foo
-    ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens if with virtual" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Foo
       end
 
@@ -130,11 +130,11 @@ describe "Code gen: if" do
       else
         2
       end
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens nested if with var (ssa bug)" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       foo = 1
       if 1 == 2
         if 1 == 2
@@ -144,29 +144,29 @@ describe "Code gen: if" do
         end
       end
       foo
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens if with nested if that raises" do
-    run("
-      require \"prelude\"
+    run(<<-CRYSTAL).to_i.should eq(1)
+      require "prelude"
 
       struct Nil; def to_i; 0; end; end
 
       block = 1 || nil
       if 1 == 2
         if block
-          raise \"Oh no\"
+          raise "Oh no"
         end
       else
         block
       end.to_i
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens if with return in else preserves type filter" do
-    run("
-      require \"prelude\"
+    run(<<-CRYSTAL).to_i.should eq(2)
+      require "prelude"
 
       def foo
         x = 1 || nil
@@ -179,11 +179,11 @@ describe "Code gen: if" do
       end
 
       foo
-      ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "codegens bug #1729" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(3)
       n = true ? 3 : 3.2
       z = if n.is_a?(Float64) || false
         0
@@ -191,24 +191,24 @@ describe "Code gen: if" do
         n
       end
       z.to_i!
-      )).to_i.should eq(3)
+      CRYSTAL
   end
 
   {% if flag?(:bits64) %}
     it "codegens if with pointer 0x100000000 pointer" do
-      run(%(
+      run(<<-CRYSTAL).to_i.should eq(1)
         ptr = Pointer(Void).new(0x100000000_u64)
         if ptr
           1
         else
           2
         end
-      )).to_i.should eq(1)
+        CRYSTAL
     end
   {% end %}
 
   it "doesn't crash with if !var using var in else" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       foo = nil
       if !foo
         1
@@ -216,11 +216,11 @@ describe "Code gen: if" do
         foo
       end
       1
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "doesn't crash with if !is_a? using var in then" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       foo = 1
       if !foo.is_a?(Int32)
         foo
@@ -228,33 +228,33 @@ describe "Code gen: if" do
         1
       end
       1
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "restricts with || always falsey" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       t = 1
       if t.is_a?(String) || t.is_a?(String)
         t
       else
         2
       end
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "considers or truthy/falsey right" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       t = 1 || 'a'
       if t.is_a?(Char) || t.is_a?(Char)
         1
       else
         2
       end
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "codegens #3104" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       def foo
         yield
       end
@@ -265,11 +265,11 @@ describe "Code gen: if" do
         end
       end
       x
-      ))
+      CRYSTAL
   end
 
   it "doesn't generate truthy if branch if doesn't need value (bug)" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       class Foo
       end
 
@@ -284,11 +284,11 @@ describe "Code gen: if" do
         end
       end
       1
-      ))
+      CRYSTAL
   end
 
   it "doesn't crash no NoReturn var (true left cond) (#1823)" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       def foo
         arg = nil
         if true || arg.nil?
@@ -299,11 +299,11 @@ describe "Code gen: if" do
       end
 
       foo
-      ))
+      CRYSTAL
   end
 
   it "doesn't crash no NoReturn var (non-true left cond) (#1823)" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       def foo
         arg = nil
         if 1 == 2 || arg.nil?
@@ -314,6 +314,6 @@ describe "Code gen: if" do
       end
 
       foo
-      ))
+      CRYSTAL
   end
 end

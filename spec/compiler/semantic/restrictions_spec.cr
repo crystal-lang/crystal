@@ -25,45 +25,45 @@ describe "Restrictions" do
 
     it "restricts type with included module" do
       mod = Program.new
-      mod.semantic parse("
+      mod.semantic parse(<<-CRYSTAL)
         module Mod
         end
 
         class Foo
           include Mod
         end
-      ")
+        CRYSTAL
 
       mod.types["Foo"].restrict(mod.types["Mod"], MatchContext.new(mod, mod)).should eq(mod.types["Foo"])
     end
 
     it "restricts virtual type with included module 1" do
       mod = Program.new
-      mod.semantic parse("
+      mod.semantic parse(<<-CRYSTAL)
         module Moo; end
         class Foo; include Moo; end
-      ")
+        CRYSTAL
 
       mod.t("Foo+").restrict(mod.t("Moo"), MatchContext.new(mod, mod)).should eq(mod.t("Foo+"))
     end
 
     it "restricts virtual type with included module 2" do
       mod = Program.new
-      mod.semantic parse("
+      mod.semantic parse(<<-CRYSTAL)
         module Mxx; end
         class Axx; end
         class Bxx < Axx; include Mxx; end
         class Cxx < Axx; include Mxx; end
         class Dxx < Cxx; end
         class Exx < Axx; end
-      ")
+        CRYSTAL
 
       mod.t("Axx+").restrict(mod.t("Mxx"), MatchContext.new(mod, mod)).should eq(mod.union_of(mod.t("Bxx+"), mod.t("Cxx+")))
     end
 
     it "restricts module with another module" do
       mod = Program.new
-      mod.semantic parse("
+      mod.semantic parse(<<-CRYSTAL)
         module Mxx; end
         module Nxx; end
         class Axx; include Mxx; end
@@ -71,14 +71,14 @@ describe "Restrictions" do
         class Cxx; include Mxx; include Nxx; end
         class Dxx < Axx; include Nxx; end
         class Exx < Bxx; include Mxx; end
-      ")
+        CRYSTAL
 
       mod.t("Mxx").restrict(mod.t("Nxx"), MatchContext.new(mod, mod)).should eq(mod.union_of(mod.t("Cxx"), mod.t("Dxx"), mod.t("Exx")))
     end
 
     it "restricts generic module instance with another module" do
       mod = Program.new
-      mod.semantic parse("
+      mod.semantic parse(<<-CRYSTAL)
         module Mxx(T); end
         module Nxx; end
         class Axx; include Mxx(Int32); end
@@ -86,7 +86,7 @@ describe "Restrictions" do
         class Cxx; include Mxx(Int32); include Nxx; end
         class Dxx < Axx; include Nxx; end
         class Exx < Bxx; include Mxx(Int32); end
-      ")
+        CRYSTAL
 
       result = mod.generic_module("Mxx", mod.int32).restrict(mod.t("Nxx"), MatchContext.new(mod, mod))
       result.should eq(mod.union_of(mod.t("Cxx"), mod.t("Dxx"), mod.t("Exx")))
@@ -94,7 +94,7 @@ describe "Restrictions" do
 
     it "restricts generic module instance with another generic module instance" do
       mod = Program.new
-      mod.semantic parse("
+      mod.semantic parse(<<-CRYSTAL)
         module Mxx(T); end
         module Nxx(T); end
         class Axx; include Mxx(Int32); end
@@ -104,7 +104,7 @@ describe "Restrictions" do
         class Exx < Bxx; include Mxx(Int32); end
         class Fxx; include Mxx(Int32); include Nxx(Char); end
         class Gxx; include Mxx(Char); include Nxx(Int32); end
-      ")
+        CRYSTAL
 
       result = mod.generic_module("Mxx", mod.int32).restrict(mod.generic_module("Nxx", mod.int32), MatchContext.new(mod, mod))
       result.should eq(mod.union_of(mod.t("Cxx"), mod.t("Dxx"), mod.t("Exx")))
@@ -112,7 +112,7 @@ describe "Restrictions" do
 
     it "restricts generic module instance with class" do
       mod = Program.new
-      mod.semantic parse("
+      mod.semantic parse(<<-CRYSTAL)
         module Mxx(T); end
         module Nxx; end
         class Axx; include Mxx(Int32); end
@@ -120,7 +120,7 @@ describe "Restrictions" do
         class Cxx; include Mxx(Int32); include Nxx; end
         class Dxx < Axx; include Nxx; end
         class Exx < Bxx; include Mxx(Int32); end
-      ")
+        CRYSTAL
 
       result = mod.generic_module("Mxx", mod.int32).restrict(mod.t("Nxx"), MatchContext.new(mod, mod))
       result.should eq(mod.union_of(mod.t("Cxx"), mod.t("Dxx"), mod.t("Exx")))
@@ -128,22 +128,22 @@ describe "Restrictions" do
 
     it "restricts module through generic include (#4287)" do
       mod = Program.new
-      mod.semantic parse("
+      mod.semantic parse(<<-CRYSTAL)
         module Axx; end
         module Bxx(T); include Axx; end
         class Cxx; include Bxx(Int32); end
-      ")
+        CRYSTAL
 
       mod.t("Axx").restrict(mod.t("Cxx"), MatchContext.new(mod, mod)).should eq(mod.t("Cxx"))
     end
 
     it "restricts class against uninstantiated generic base class through multiple inheritance (1) (#9660)" do
       mod = Program.new
-      mod.semantic parse("
+      mod.semantic parse(<<-CRYSTAL)
         class Axx(T); end
         class Bxx(T) < Axx(T); end
         class Cxx < Bxx(Int32); end
-      ")
+        CRYSTAL
 
       result = mod.t("Cxx").restrict(mod.t("Axx"), MatchContext.new(mod, mod))
       result.should eq(mod.t("Cxx"))
@@ -151,11 +151,11 @@ describe "Restrictions" do
 
     it "restricts class against uninstantiated generic base class through multiple inheritance (2) (#9660)" do
       mod = Program.new
-      mod.semantic parse("
+      mod.semantic parse(<<-CRYSTAL)
         class Axx(T); end
         class Bxx(T) < Axx(T); end
         class Cxx(T) < Bxx(T); end
-      ")
+        CRYSTAL
 
       result = mod.generic_class("Cxx", mod.int32).restrict(mod.t("Axx"), MatchContext.new(mod, mod))
       result.should eq(mod.generic_class("Cxx", mod.int32))
@@ -163,11 +163,11 @@ describe "Restrictions" do
 
     it "restricts virtual generic class against uninstantiated generic subclass (1)" do
       mod = Program.new
-      mod.semantic parse("
+      mod.semantic parse(<<-CRYSTAL)
         class Axx(T); end
         class Bxx(T) < Axx(T); end
         class Cxx < Bxx(Int32); end
-      ")
+        CRYSTAL
 
       result = mod.generic_class("Axx", mod.int32).virtual_type.restrict(mod.generic_class("Bxx", mod.int32), MatchContext.new(mod, mod))
       result.should eq(mod.generic_class("Bxx", mod.int32).virtual_type)
@@ -175,11 +175,11 @@ describe "Restrictions" do
 
     it "restricts virtual generic class against uninstantiated generic subclass (2)" do
       mod = Program.new
-      mod.semantic parse("
+      mod.semantic parse(<<-CRYSTAL)
         class Axx(T); end
         class Bxx(T) < Axx(T); end
         class Cxx(T) < Bxx(T); end
-      ")
+        CRYSTAL
 
       result = mod.generic_class("Axx", mod.int32).virtual_type.restrict(mod.generic_class("Bxx", mod.int32), MatchContext.new(mod, mod))
       result.should eq(mod.generic_class("Bxx", mod.int32).virtual_type)
@@ -189,7 +189,7 @@ describe "Restrictions" do
   describe "restriction_of?" do
     describe "Metaclass vs Metaclass" do
       it "inserts typed Metaclass before untyped Metaclass" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { bool }
           def foo(a : T.class) forall T
             1
           end
@@ -199,11 +199,11 @@ describe "Restrictions" do
           end
 
           foo(Int32)
-          )) { bool }
+          CRYSTAL
       end
 
       it "keeps typed Metaclass before untyped Metaclass" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { bool }
           def foo(a : Int32.class)
             true
           end
@@ -213,14 +213,14 @@ describe "Restrictions" do
           end
 
           foo(Int32)
-          )) { bool }
+          CRYSTAL
       end
     end
 
     describe "Metaclass vs Path" do
       {% for type in [Object, Value, Class] %}
         it "inserts metaclass before {{ type }}" do
-          assert_type(%(
+          assert_type(<<-CRYSTAL) { bool }
             def foo(a : {{ type }})
               1
             end
@@ -230,11 +230,11 @@ describe "Restrictions" do
             end
 
             foo(Int32)
-            )) { bool }
+            CRYSTAL
         end
 
         it "keeps metaclass before {{ type }}" do
-          assert_type(%(
+          assert_type(<<-CRYSTAL) { bool }
             def foo(a : Int32.class)
               true
             end
@@ -244,7 +244,7 @@ describe "Restrictions" do
             end
 
             foo(Int32)
-            )) { bool }
+            CRYSTAL
         end
       {% end %}
 
@@ -271,7 +271,7 @@ describe "Restrictions" do
 
     describe "Path vs Path" do
       it "inserts typed Path before untyped Path" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { bool }
           def foo(a : T) forall T
             1
           end
@@ -281,11 +281,11 @@ describe "Restrictions" do
           end
 
           foo(1)
-          )) { bool }
+          CRYSTAL
       end
 
       it "keeps typed Path before untyped Path" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { bool }
           def foo(a : Int32)
             true
           end
@@ -295,13 +295,13 @@ describe "Restrictions" do
           end
 
           foo(1)
-          )) { bool }
+          CRYSTAL
       end
     end
 
     describe "Generic vs Path" do
       it "inserts typed Generic before untyped Path" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { bool }
           def foo(a : T) forall T
             1
           end
@@ -311,11 +311,11 @@ describe "Restrictions" do
           end
 
           foo(Array(Int32).new)
-          )) { bool }
+          CRYSTAL
       end
 
       it "keeps typed Generic before untyped Path" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { bool }
           def foo(a : Array(Int32))
             true
           end
@@ -325,11 +325,11 @@ describe "Restrictions" do
           end
 
           foo(Array(Int32).new)
-          )) { bool }
+          CRYSTAL
       end
 
       it "inserts untyped Generic before untyped Path" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { bool }
           def foo(a : T) forall T
             1
           end
@@ -339,11 +339,11 @@ describe "Restrictions" do
           end
 
           foo(Array(Int32).new)
-          )) { bool }
+          CRYSTAL
       end
 
       it "inserts untyped Generic before untyped Path (2)" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { bool }
           def foo(a : T) forall T
             1
           end
@@ -353,11 +353,11 @@ describe "Restrictions" do
           end
 
           foo(Array(Int32).new)
-          )) { bool }
+          CRYSTAL
       end
 
       it "keeps untyped Generic before untyped Path" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { bool }
           def foo(a : Array(T)) forall T
             true
           end
@@ -367,13 +367,13 @@ describe "Restrictions" do
           end
 
           foo(Array(Int32).new)
-          )) { bool }
+          CRYSTAL
       end
     end
 
     describe "Generic vs Generic" do
       it "inserts typed Generic before untyped Generic" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { bool }
           def foo(a : Array(T)) forall T
             1
           end
@@ -383,11 +383,11 @@ describe "Restrictions" do
           end
 
           foo(Array(Int32).new)
-          )) { bool }
+          CRYSTAL
       end
 
       it "keeps typed Generic before untyped Generic" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { bool }
           def foo(a : Array(Int32))
             true
           end
@@ -397,13 +397,13 @@ describe "Restrictions" do
           end
 
           foo(Array(Int32).new)
-          )) { bool }
+          CRYSTAL
       end
     end
 
     describe "GenericClassType vs GenericClassInstanceType" do
       it "inserts GenericClassInstanceType before GenericClassType" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { tuple_of([bool, int32]) }
           class Foo(T)
           end
 
@@ -419,11 +419,11 @@ describe "Restrictions" do
             bar(Foo(Int32).new),
             bar(Foo(Float64).new)
           }
-          )) { tuple_of([bool, int32]) }
+          CRYSTAL
       end
 
       it "keeps GenericClassInstanceType before GenericClassType" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { tuple_of([bool, int32]) }
           class Foo(T)
           end
 
@@ -439,11 +439,11 @@ describe "Restrictions" do
             bar(Foo(Int32).new),
             bar(Foo(Float64).new)
           }
-          )) { tuple_of([bool, int32]) }
+          CRYSTAL
       end
 
       it "works with classes in different namespaces" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { tuple_of([bool, int32]) }
           class Foo(T)
           end
 
@@ -462,11 +462,11 @@ describe "Restrictions" do
             bar(Foo(Int32).new),
             bar(Mod::Foo(Int32).new)
           }
-          )) { tuple_of([bool, int32]) }
+          CRYSTAL
       end
 
       it "doesn't mix different generic classes" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { tuple_of([int32, bool]) }
           class Foo(T)
           end
 
@@ -485,13 +485,13 @@ describe "Restrictions" do
             bar(Foo(Int32).new),
             bar(Bar(Int32).new)
           }
-          )) { tuple_of([int32, bool]) }
+          CRYSTAL
       end
     end
 
     describe "NamedTuple vs NamedTuple" do
       it "inserts more specialized NamedTuple before less specialized one" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { bool }
           class Foo
           end
 
@@ -507,11 +507,11 @@ describe "Restrictions" do
           end
 
           foo({x: Bar.new})
-          )) { bool }
+          CRYSTAL
       end
 
       it "keeps more specialized NamedTuple before less specialized one" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { bool }
           class Foo
           end
 
@@ -527,11 +527,11 @@ describe "Restrictions" do
           end
 
           foo({x: Bar.new})
-          )) { bool }
+          CRYSTAL
       end
 
       it "doesn't mix incompatible NamedTuples (#10238)" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { tuple_of([int32, bool]) }
           def foo(a : NamedTuple(a: Int32))
             1
           end
@@ -544,7 +544,7 @@ describe "Restrictions" do
             foo({a: 1}),
             foo({b: 1})
           }
-          )) { tuple_of([int32, bool]) }
+          CRYSTAL
       end
     end
 
@@ -808,7 +808,7 @@ describe "Restrictions" do
   end
 
   it "self always matches instance type in restriction" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Foo"] }
       class Foo
         def self.foo(x : self)
           x
@@ -816,11 +816,11 @@ describe "Restrictions" do
       end
 
       Foo.foo Foo.new
-      )) { types["Foo"] }
+      CRYSTAL
   end
 
   it "self always matches instance type in return type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Foo"] }
       class Foo
         def self.foo : self
           {{ @type }}
@@ -828,21 +828,20 @@ describe "Restrictions" do
         end
       end
       Foo.foo
-      )) { types["Foo"] }
+      CRYSTAL
   end
 
   it "errors if using typeof" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use typeof in type restrictions"
       def foo(x : typeof(1))
       end
 
       foo(1)
-      ),
-      "can't use typeof in type restrictions"
+      CRYSTAL
   end
 
   it "errors if using typeof inside generic type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use typeof in type restrictions"
       class Gen(T)
       end
 
@@ -850,85 +849,79 @@ describe "Restrictions" do
       end
 
       foo(Gen(Int32).new)
-      ),
-      "can't use typeof in type restrictions"
+      CRYSTAL
   end
 
   it "errors if using typeof in block restriction" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use 'typeof' here"
       def foo(&x : typeof(1) -> )
         yield 1
       end
 
       foo {}
-      ),
-      "can't use 'typeof' here"
+      CRYSTAL
   end
 
   it "errors if using typeof in block restriction" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use typeof in type restriction"
       def foo(&x : -> typeof(1))
         yield
       end
 
       foo {}
-      ),
-      "can't use typeof in type restriction"
+      CRYSTAL
   end
 
   it "passes #278" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #1 to 'bar' to be String, not (Int32 | String)"
       def bar(x : String, y : String = nil)
       end
 
       bar(1 || "")
-      ),
-      "expected argument #1 to 'bar' to be String, not (Int32 | String)"
+      CRYSTAL
   end
 
   it "errors on T::Type that's union when used from type restriction" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined constant T::Baz"
       def foo(x : T) forall T
         T::Baz
       end
 
       foo(1 || 1.5)
-      ),
-      "undefined constant T::Baz"
+      CRYSTAL
   end
 
   it "errors on T::Type that's a union when used from block type restriction" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined constant T::Baz"
       class Foo(T)
         def self.foo(&block : T::Baz ->)
         end
       end
 
       Foo(Int32 | Float64).foo { 1 + 2 }
-      ),
-      "undefined constant T::Baz"
+      CRYSTAL
   end
 
   it "errors if can't find type on lookup" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined constant Something"
       def foo(x : Something)
       end
 
       foo 1
-      ), "undefined constant Something"
+      CRYSTAL
   end
 
   it "errors if can't find type on lookup with nested type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined constant Foo::Bar"
       def foo(x : Foo::Bar)
       end
 
       foo 1
-      ), "undefined constant Foo::Bar"
+      CRYSTAL
   end
 
   it "works with static array (#637)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { char }
       def foo(x : UInt8[1])
         1
       end
@@ -939,22 +932,22 @@ describe "Restrictions" do
 
       x = uninitialized UInt8[2]
       foo(x)
-      )) { char }
+      CRYSTAL
   end
 
   it "works with static array that uses underscore" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { char }
       def foo(x : UInt8[_])
         'a'
       end
 
       x = uninitialized UInt8[2]
       foo(x)
-      )) { char }
+      CRYSTAL
   end
 
   it "works with generic compared to fixed (primitive) type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { char }
       class Foo(T)
       end
 
@@ -965,11 +958,11 @@ describe "Restrictions" do
       end
 
       1.5 / Foo(Int32).new
-      )) { char }
+      CRYSTAL
   end
 
   it "works with generic class metaclass vs. generic instance class metaclass" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo(T)
       end
 
@@ -978,11 +971,11 @@ describe "Restrictions" do
       end
 
       foo Foo(Int32)
-      )) { int32 }
+      CRYSTAL
   end
 
   it "works with generic class metaclass vs. generic class metaclass" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo(T)
       end
 
@@ -991,11 +984,11 @@ describe "Restrictions" do
       end
 
       foo Foo(Int32)
-      )) { int32 }
+      CRYSTAL
   end
 
   it "works with union against unions of generics" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of(generic_class("Foo", int32), generic_class("Foo", float64)) }
       class Foo(T)
       end
 
@@ -1004,11 +997,11 @@ describe "Restrictions" do
       end
 
       foo(Foo(Int32).new || Foo(Float64).new)
-      )) { union_of(generic_class("Foo", int32), generic_class("Foo", float64)) }
+      CRYSTAL
   end
 
   it "should not let GenericChild(Base) pass as a GenericBase(Child) (#1294)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to be GenericBase(Child), not GenericChild(Base)"
       class Base
       end
 
@@ -1025,12 +1018,11 @@ describe "Restrictions" do
       end
 
       foo GenericChild(Base).new
-      ),
-      "expected argument #1 to 'foo' to be GenericBase(Child), not GenericChild(Base)"
+      CRYSTAL
   end
 
   it "allows passing recursive type to free var (#1076)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { char }
       class Foo(T)
       end
 
@@ -1045,11 +1037,11 @@ describe "Restrictions" do
 
       h1 = Bar(NestedParams).new
       bar(h1)
-      )) { char }
+      CRYSTAL
   end
 
   it "restricts class union type to overloads with classes" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { union_of([uint8, uint16, uint32] of Type) }
       def foo(x : Int32.class)
         1_u8
       end
@@ -1064,11 +1056,11 @@ describe "Restrictions" do
 
       a = 1 || "foo" || true
       foo(a.class)
-      ), inject_primitives: true) { union_of([uint8, uint16, uint32] of Type) }
+      CRYSTAL
   end
 
   it "restricts class union type to overloads with classes (2)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { union_of([uint8, uint16] of Type) }
       def foo(x : Int32.class)
         1_u8
       end
@@ -1083,11 +1075,11 @@ describe "Restrictions" do
 
       a = 1 || "foo"
       foo(a.class)
-      ), inject_primitives: true) { union_of([uint8, uint16] of Type) }
+      CRYSTAL
   end
 
   it "makes metaclass subclass pass parent metaclass restriction (#2079)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Bar"].metaclass }
       class Foo; end
 
       class Bar < Foo; end
@@ -1097,11 +1089,11 @@ describe "Restrictions" do
       end
 
       foo
-      )) { types["Bar"].metaclass }
+      CRYSTAL
   end
 
   it "matches virtual type against alias" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       module Moo
       end
 
@@ -1122,11 +1114,11 @@ describe "Restrictions" do
       end
 
       foo(Baz.new.as(Bar))
-      )) { int32 }
+      CRYSTAL
   end
 
   it "matches alias against alias in block type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Rec"].metaclass }
       class Foo(T)
         def self.new(&block : -> T)
           Foo(T).new
@@ -1143,22 +1135,22 @@ describe "Restrictions" do
       alias Rec = Nil | Array(Rec)
 
       Foo.new { nil.as(Rec)}.t
-      )) { types["Rec"].metaclass }
+      CRYSTAL
   end
 
   it "matches free variable for type variable" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { generic_class "Foo", int32 }
       class Foo(Type)
         def initialize(x : Type)
         end
       end
 
       Foo.new(1)
-      )) { generic_class "Foo", int32 }
+      CRYSTAL
   end
 
   it "restricts virtual metaclass type against metaclass (#3438)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Parent"].metaclass.virtual_type! }
       class Parent
       end
 
@@ -1170,45 +1162,43 @@ describe "Restrictions" do
       end
 
       foo(Parent || Child)
-      )) { types["Parent"].metaclass.virtual_type! }
+      CRYSTAL
   end
 
   it "errors if using free var without forall" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined constant T"
       def foo(x : T)
         T
       end
 
       foo(1)
-      ),
-      "undefined constant T"
+      CRYSTAL
   end
 
   it "sets number as free variable (#2699)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected argument #2 to 'foo' to be StaticArray(UInt8, 10), not StaticArray(UInt8, 11)"
       def foo(x : T[N], y : T[N]) forall T, N
       end
 
       x = uninitialized UInt8[10]
       y = uninitialized UInt8[11]
       foo(x, y)
-      ),
-      "expected argument #2 to 'foo' to be StaticArray(UInt8, 10), not StaticArray(UInt8, 11)"
+      CRYSTAL
   end
 
   it "does not treat single path as free variable when given number (1) (#11859)" do
-    assert_error <<-CR, "expected argument #1 to 'Foo(1)#foo' to be Foo(1), not Foo(2)"
+    assert_error <<-CRYSTAL, "expected argument #1 to 'Foo(1)#foo' to be Foo(1), not Foo(2)"
       class Foo(T)
         def foo(x : Foo(T))
         end
       end
 
       Foo(1).new.foo(Foo(2).new)
-      CR
+      CRYSTAL
   end
 
   it "does not treat single path as free variable when given number (2) (#11859)" do
-    assert_error <<-CR, "expected argument #1 to 'foo' to be Foo(1), not Foo(2)"
+    assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to be Foo(1), not Foo(2)"
       X = 1
 
       class Foo(T)
@@ -1218,11 +1208,11 @@ describe "Restrictions" do
       end
 
       foo(Foo(2).new)
-      CR
+      CRYSTAL
   end
 
   it "matches number in bound free variable (#13605)" do
-    assert_type(<<-CR) { generic_class "Foo", 1.int32 }
+    assert_type(<<-CRYSTAL) { generic_class "Foo", 1.int32 }
       class Foo(T)
       end
 
@@ -1231,11 +1221,11 @@ describe "Restrictions" do
       end
 
       foo(Foo(1).new, Foo(1).new)
-      CR
+      CRYSTAL
   end
 
   it "sets number as unbound generic type var (#13110)" do
-    assert_type(<<-CR) { generic_class "Foo", 1.int32 }
+    assert_type(<<-CRYSTAL) { generic_class "Foo", 1.int32 }
       class Foo(T)
         def self.foo(x : Foo(T))
           x
@@ -1243,11 +1233,11 @@ describe "Restrictions" do
       end
 
       Foo.foo(Foo(1).new)
-      CR
+      CRYSTAL
   end
 
   it "restricts aliased typedef type (#9474)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       lib A
         alias B = Int32
       end
@@ -1260,7 +1250,7 @@ describe "Restrictions" do
 
       x = uninitialized C
       foo x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "errors if using Tuple with named args" do

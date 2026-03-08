@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Code gen: regex literal spec" do
   it "works in a class variable (#10951)" do
-    run(%(
+    run(<<-CRYSTAL).to_b.should be_true
       require "prelude"
       class Foo
         @@regex = /whatever/
@@ -12,6 +12,6 @@ describe "Code gen: regex literal spec" do
         end
       end
       Foo.check_regex
-      )).to_b.should eq(true)
+      CRYSTAL
   end
 end

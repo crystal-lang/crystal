@@ -42,7 +42,7 @@ describe "Normalize: proc pointer" do
   end
 
   it "normalizes proc pointer with variable receiver" do
-    assert_expand_second "foo = 1; ->foo.bar(Int32)", <<-CRYSTAL
+    assert_expand "foo = 1; ->foo.bar(Int32)", <<-CRYSTAL
       __temp_1 = foo
       ->(__temp_2 : Int32) do
         __temp_1.bar(__temp_2)

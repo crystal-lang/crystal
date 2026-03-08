@@ -15,7 +15,7 @@ module Reply
       height_got = nil
 
       display_got = String.build do |io|
-        height_got = self.display_entries(io, color?: false, width: with_width, max_height: max_height, min_height: min_height)
+        height_got = self.display_entries(io, color: false, width: with_width, max_height: max_height, min_height: min_height)
       end
       display_got.should eq display
       height_got.should eq height
@@ -54,6 +54,22 @@ module Reply
     end
   end
 
+  class Search
+    setter failed
+
+    def verify(query, open = true, failed = false)
+      @query.should eq query
+      @open.should eq open
+      @failed.should eq failed
+    end
+
+    def verify_footer(footer, height)
+      String.build do |io|
+        footer(io, true).should eq height
+      end.should eq footer
+    end
+  end
+
   struct CharReader
     def verify_read(to_read, expect : CharReader::Sequence)
       verify_read(to_read, [expect])
@@ -79,6 +95,14 @@ module Reply
     end
 
     getter auto_completion
+  end
+
+  class SpecReaderWithSearch < Reader
+    def disable_search?
+      false
+    end
+
+    getter search
   end
 
   class SpecReaderWithEqual < Reader
@@ -124,7 +148,7 @@ module Reply
     end
 
     def self.expression_editor
-      editor = ExpressionEditor.new do |line_number, _color?|
+      editor = ExpressionEditor.new do |line_number, _color|
         # Prompt size = 5
         "p:#{sprintf("%02d", line_number)}>"
       end
@@ -139,6 +163,10 @@ module Reply
       history = History.new
       entries.each { |e| history << e }
       history
+    end
+
+    def self.search
+      Search.new.tap &.open
     end
 
     def self.char_reader(buffer_size = 64)

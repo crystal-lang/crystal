@@ -30,7 +30,7 @@ struct ConwayMap
   def initialize(pattern)
     @map = Array.new(HEIGHT) { Array.new(WIDTH, false) }
 
-    ix = min WIDTH, pattern.map(&.size).max
+    ix = min WIDTH, pattern.max_of(&.size)
     iy = min HEIGHT, pattern.size
     dx = (WIDTH - ix) // 2
     dy = (HEIGHT - iy) // 2

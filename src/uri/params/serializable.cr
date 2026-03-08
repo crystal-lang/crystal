@@ -57,6 +57,11 @@ struct URI::Params
   #
   # A.from_www_form("a=1") # => A(@a=1, @b=1.0)
   # ```
+  #
+  # NOTE: `URI::Params::Serializable` defines an internal constructor on any
+  # including type, which means the default constructor (`def initialize; end`)
+  # is absent unless explicitly defined by the user, even when all instance
+  # variables have a default initializer.
   module Serializable
     macro included
       def self.from_www_form(params : ::String)
@@ -88,24 +93,26 @@ struct URI::Params
           new_from_www_form(params, name)
         end
       end
-    end
 
-    # :nodoc:
-    def initialize(*, __uri_params params : ::URI::Params, name : String?)
-      {% begin %}
-        {% for ivar, idx in @type.instance_vars %}
-          %name{idx} = name.nil? ? {{ivar.name.stringify}} : "#{name}[#{{{ivar.name.stringify}}}]"
-          %value{idx} = {{(ann = ivar.annotation(URI::Params::Field)) && (converter = ann["converter"]) ? converter : ivar.type}}.from_www_form params, %name{idx}
+      # :nodoc:
+      def initialize(*, __uri_params params : ::URI::Params, name : String?)
+        {% verbatim do %}
+          {% begin %}
+            {% for ivar, idx in @type.instance_vars %}
+              %name{idx} = name.nil? ? {{ivar.name.stringify}} : "#{name}[#{{{ivar.name.stringify}}}]"
+              %value{idx} = {{(ann = ivar.annotation(URI::Params::Field)) && (converter = ann["converter"]) ? converter : ivar.type}}.from_www_form params, %name{idx}
 
-          unless %value{idx}.nil?
-            @{{ivar.name.id}} = %value{idx}
-          else
-            {% unless ivar.type.resolve.nilable? || ivar.has_default_value? %}
-              raise URI::SerializableError.new "Missing required property: '#{%name{idx}}'."
+              unless %value{idx}.nil?
+                @{{ivar.name.id}} = %value{idx}
+              else
+                {% unless ivar.type.resolve.nilable? || ivar.has_default_value? %}
+                  raise URI::SerializableError.new "Missing required property: '#{%name{idx}}'."
+                {% end %}
+              end
             {% end %}
-          end
+          {% end %}
         {% end %}
-      {% end %}
+      end
     end
 
     def to_www_form(*, space_to_plus : Bool = true) : String

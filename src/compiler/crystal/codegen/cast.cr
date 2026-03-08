@@ -196,7 +196,7 @@ class Crystal::CodeGenVisitor
   end
 
   def assign_distinct(target_pointer, target_type : VirtualType, value_type : MixedUnionType, value)
-    _, union_value_ptr = union_type_and_value_pointer(value, value_type)
+    union_value_ptr = union_value(llvm_type(value_type), value)
     casted_value = cast_to_pointer(union_value_ptr, target_type)
     store load(llvm_type(target_type), casted_value), target_pointer
   end
@@ -211,7 +211,7 @@ class Crystal::CodeGenVisitor
 
   def assign_distinct(target_pointer, target_type : VirtualMetaclassType, value_type : UnionType, value)
     # Can happen when assigning Foo+.class <- Bar.class | Baz.class with Bar < Foo and Baz < Foo
-    _, union_value_ptr = union_type_and_value_pointer(value, value_type)
+    union_value_ptr = union_value(llvm_type(value_type), value)
     casted_value = cast_to_pointer(union_value_ptr, target_type)
     store load(llvm_type(target_type), casted_value), target_pointer
   end
@@ -269,7 +269,7 @@ class Crystal::CodeGenVisitor
     # target_type is Proc(*T, Nil) and all the types in the union are Proc(*T, R).
     # In that case we can simply get the union value and cast it to the target type.
     # Cast of a non-void proc to a void proc
-    _, union_value_ptr = union_type_and_value_pointer(value, value_type)
+    union_value_ptr = union_value(llvm_type(value_type), value)
     value = cast_to_pointer(union_value_ptr, target_type)
     store load(llvm_type(target_type), value), target_pointer
   end
@@ -415,12 +415,12 @@ class Crystal::CodeGenVisitor
   end
 
   def downcast_distinct(value, to_type : NilableType, from_type : MixedUnionType)
-    _, value_ptr = union_type_and_value_pointer(value, from_type)
+    value_ptr = union_value(llvm_type(from_type), value)
     load(llvm_type(to_type), cast_to_pointer(value_ptr, to_type))
   end
 
   def downcast_distinct(value, to_type : BoolType, from_type : MixedUnionType)
-    _, value_ptr = union_type_and_value_pointer(value, from_type)
+    value_ptr = union_value(llvm_type(from_type), value)
     value = cast_to_pointer(value_ptr, @program.int8)
     value = load(llvm_context.int8, value)
     trunc value, llvm_context.int1
@@ -439,7 +439,7 @@ class Crystal::CodeGenVisitor
       end
     end
 
-    _, value_ptr = union_type_and_value_pointer(value, from_type)
+    value_ptr = union_value(llvm_type(from_type), value)
     value = cast_to_pointer(value_ptr, to_type)
     to_lhs value, to_type
   end

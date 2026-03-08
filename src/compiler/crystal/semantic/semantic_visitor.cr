@@ -443,12 +443,10 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     skip_macro_exception = nil
 
     generated_nodes = expand_macro(the_macro, node, mode: mode, visibility: :public, accept: accept) do
-      begin
-        @program.expand_macro node, (@scope || current_type), @path_lookup, free_vars, @untyped_def
-      rescue ex : SkipMacroException
-        skip_macro_exception = ex
-        {ex.expanded_before_skip, ex.macro_expansion_pragmas}
-      end
+      @program.expand_macro node, (@scope || current_type), @path_lookup, free_vars, @untyped_def
+    rescue ex : SkipMacroException
+      skip_macro_exception = ex
+      {ex.expanded_before_skip, ex.macro_expansion_pragmas}
     end
 
     node.expanded = generated_nodes
@@ -563,7 +561,9 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
       node.raise "can't declare variable of generic non-instantiated type #{type}"
     end
 
-    Crystal.check_type_can_be_stored(node, type, "can't use #{type} as the type of #{variable_kind}")
+    unless type.can_be_stored?
+      node.raise "can't use #{type} as the type of #{variable_kind} yet, use a more specific type"
+    end
 
     declared_type
   end

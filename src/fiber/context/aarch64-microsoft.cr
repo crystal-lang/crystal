@@ -13,16 +13,16 @@ class Fiber
 
     # actual stack top, not including guard pages and reserved pages
     LibC.GetNativeSystemInfo(out system_info)
-    stack_top = @stack_bottom - system_info.dwPageSize
+    stack_top = @stack.bottom - system_info.dwPageSize
 
     stack_ptr[-4] = self.as(Void*)      # x0 (r0): puts `self` as first argument for `fiber_main`
     stack_ptr[-16] = fiber_main.pointer # x30 (lr): initial `resume` will `ret` to this address
 
     # The following three values are stored in the Thread Information Block (NT_TIB)
     # and are used by Windows to track the current stack limits
-    stack_ptr[-3] = @stack        # [x18, #0x1478]: Win32 DeallocationStack
-    stack_ptr[-2] = stack_top     # [x18, #16]: Stack Limit
-    stack_ptr[-1] = @stack_bottom # [x18, #8]: Stack Base
+    stack_ptr[-3] = @stack.pointer # [x18, #0x1478]: Win32 DeallocationStack
+    stack_ptr[-2] = stack_top      # [x18, #16]: Stack Limit
+    stack_ptr[-1] = @stack.bottom  # [x18, #8]: Stack Base
   end
 
   # :nodoc:
@@ -55,6 +55,9 @@ class Fiber
 
       mov     x19, sp               // current_context.stack_top = sp
       str     x19, [x0, #0]
+      {% if flag?(:execution_context) %}
+      dmb     ish                   // barrier: ensure registers are stored
+      {% end %}
       mov     x19, #1               // current_context.resumable = 1
       str     x19, [x0, #8]
 
@@ -112,6 +115,9 @@ class Fiber
 
       mov     x19, sp               // current_context.stack_top = sp
       str     x19, [$0, #0]
+      {% if flag?(:execution_context) %}
+      dmb     ish                   // barrier: ensure registers are stored
+      {% end %}
       mov     x19, #1               // current_context.resumable = 1
       str     x19, [$0, #8]
 

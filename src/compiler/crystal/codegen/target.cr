@@ -192,6 +192,10 @@ class Crystal::Codegen::Target
     @architecture == "avr"
   end
 
+  def embedded?
+    environment_parts.any? { |part| part == "eabi" || part == "eabihf" }
+  end
+
   def to_target_machine(cpu = "", features = "", optimization_mode = Compiler::OptimizationMode::O0,
                         code_model = LLVM::CodeModel::Default) : LLVM::TargetMachine
     case @architecture
@@ -228,8 +232,14 @@ class Crystal::Codegen::Target
                 in .o0?             then LLVM::CodeGenOptLevel::None
                 end
 
+    if embedded?
+      reloc = LLVM::RelocMode::Static
+    else
+      reloc = LLVM::RelocMode::PIC
+    end
+
     target = LLVM::Target.from_triple(self.to_s)
-    machine = target.create_target_machine(self.to_s, cpu: cpu, features: features, opt_level: opt_level, code_model: code_model).not_nil!
+    machine = target.create_target_machine(self.to_s, cpu: cpu, features: features, opt_level: opt_level, reloc: reloc, code_model: code_model).not_nil!
     # FIXME: We need to disable global isel until https://reviews.llvm.org/D80898 is released,
     # or we fixed generating values for 0 sized types.
     # When removing this, also remove it from the ABI specs and jit compiler.

@@ -2,12 +2,6 @@ require "spec"
 require "socket"
 require "../../support/tempfile"
 
-# TODO: Windows networking in the interpreter requires #12495
-{% if flag?(:interpreted) && flag?(:win32) %}
-  pending UNIXSocket
-  {% skip_file %}
-{% end %}
-
 describe UNIXSocket do
   it "raises when path is too long" do
     with_tempfile("unix_socket-too_long-#{("a" * 2048)}.sock") do |path|
@@ -37,6 +31,29 @@ describe UNIXSocket do
             sock.gets(4).should eq("ping")
             sock << "pong"
             client.gets(4).should eq("pong")
+          end
+        end
+      end
+    end
+  end
+
+  it "initializes with `Path` paths" do
+    with_tempfile("unix_socket.sock") do |path|
+      path_path = Path.new(path)
+      UNIXServer.open(path_path) do |server|
+        server.local_address.family.should eq(Socket::Family::UNIX)
+        server.local_address.path.should eq(path)
+
+        UNIXSocket.open(path_path) do |client|
+          client.local_address.family.should eq(Socket::Family::UNIX)
+          client.local_address.path.should eq(path)
+
+          server.accept do |sock|
+            sock.local_address.family.should eq(Socket::Family::UNIX)
+            sock.local_address.path.should eq(path)
+
+            sock.remote_address.family.should eq(Socket::Family::UNIX)
+            sock.remote_address.path.should eq(path)
           end
         end
       end

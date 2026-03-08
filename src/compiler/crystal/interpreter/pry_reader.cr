@@ -3,7 +3,7 @@ require "./repl_reader"
 class Crystal::PryReader < Crystal::ReplReader
   property prompt_info = ""
 
-  def prompt(io, line_number, color?)
+  def prompt(io, line_number, color)
     io << "pry("
     io << @prompt_info
     io << ')'

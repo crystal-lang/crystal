@@ -29,21 +29,25 @@ module Crystal::System::Addrinfo
     pointerof(@addr).as(LibC::Sockaddr*)
   end
 
-  def self.getaddrinfo(domain, service, family, type, protocol, timeout) : Handle
+  def self.getaddrinfo(domain, service, family, type, protocol, timeout, flags = 0) : Handle
     hints = LibC::Addrinfo.new
     hints.ai_family = (family || ::Socket::Family::UNSPEC).to_i32
     hints.ai_socktype = type
     hints.ai_protocol = protocol
-    hints.ai_flags = 0
 
     if service.is_a?(Int)
-      hints.ai_flags |= LibC::AI_NUMERICSERV
+      flags |= LibC::AI_NUMERICSERV
       if service < 0
         raise ::Socket::Addrinfo::Error.from_os_error(nil, WinError::WSATYPE_NOT_FOUND, domain: domain, type: type, protocol: protocol, service: service)
       end
     end
 
-    ret = LibC.getaddrinfo(domain, service.to_s, pointerof(hints), out ptr)
+    hints.ai_flags = flags
+
+    ptr = Pointer(LibC::Addrinfo).null
+    ret = ::Fiber.syscall do
+      LibC.getaddrinfo(domain, service.to_s, pointerof(hints), pointerof(ptr))
+    end
     unless ret.zero?
       error = WinError.new(ret.to_u32!)
       raise ::Socket::Addrinfo::Error.from_os_error(nil, error, domain: domain, type: type, protocol: protocol, service: service)

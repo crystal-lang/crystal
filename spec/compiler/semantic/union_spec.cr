@@ -13,18 +13,18 @@ end
 describe "Semantic: union" do
   context "commutativity" do
     it "module v.s. including module" do
-      assert_commutes(%(
+      assert_commutes(<<-CRYSTAL) { [types["A"], types["B"], types["A"]] }
         module A
         end
 
         module B
           include A
         end
-        )) { [types["A"], types["B"], types["A"]] }
+        CRYSTAL
     end
 
     it "module v.s. including generic module instance" do
-      assert_commutes(%(
+      assert_commutes(<<-CRYSTAL) { [types["A"], generic_module("B", types["Cxx"]), types["A"]] }
         class Cxx
         end
 
@@ -34,11 +34,11 @@ describe "Semantic: union" do
         module B(T)
           include A
         end
-        )) { [types["A"], generic_module("B", types["Cxx"]), types["A"]] }
+        CRYSTAL
     end
 
     it "generic module instance v.s. including module" do
-      assert_commutes(%(
+      assert_commutes(<<-CRYSTAL) { [generic_module("A", types["Cxx"]), types["B"], generic_module("A", types["Cxx"])] }
         class Cxx
         end
 
@@ -48,11 +48,11 @@ describe "Semantic: union" do
         module B
           include A(Cxx)
         end
-        )) { [generic_module("A", types["Cxx"]), types["B"], generic_module("A", types["Cxx"])] }
+        CRYSTAL
     end
 
     it "generic module instance v.s. including generic module instance" do
-      assert_commutes(%(
+      assert_commutes(<<-CRYSTAL) { [generic_module("A", types["Cxx"]), generic_module("B", types["Cxx"]), generic_module("A", types["Cxx"])] }
         class Cxx
         end
 
@@ -62,11 +62,11 @@ describe "Semantic: union" do
         module B(T)
           include A(T)
         end
-        )) { [generic_module("A", types["Cxx"]), generic_module("B", types["Cxx"]), generic_module("A", types["Cxx"])] }
+        CRYSTAL
     end
 
     it "module v.s. extending generic module instance metaclass" do
-      assert_commutes(%(
+      assert_commutes(<<-CRYSTAL) { [types["A"], generic_module("B", types["Cxx"]).metaclass, types["A"]] }
         class Cxx
         end
 
@@ -76,11 +76,11 @@ describe "Semantic: union" do
         module B(T)
           extend A
         end
-        )) { [types["A"], generic_module("B", types["Cxx"]).metaclass, types["A"]] }
+        CRYSTAL
     end
 
     it "generic module instance v.s. extending generic module instance metaclass" do
-      assert_commutes(%(
+      assert_commutes(<<-CRYSTAL) { [generic_module("A", types["Cxx"]), generic_module("B", types["Cxx"]).metaclass, generic_module("A", types["Cxx"])] }
         class Cxx
         end
 
@@ -90,11 +90,11 @@ describe "Semantic: union" do
         module B(T)
           extend A(T)
         end
-        )) { [generic_module("A", types["Cxx"]), generic_module("B", types["Cxx"]).metaclass, generic_module("A", types["Cxx"])] }
+        CRYSTAL
     end
 
     it "virtual metaclass v.s. generic subclass instance metaclass" do
-      assert_commutes(%(
+      assert_commutes(<<-CRYSTAL) { [types["A"].virtual_type!.metaclass, generic_class("B", types["Cxx"]).metaclass, types["A"].virtual_type!.metaclass] }
         class Cxx
         end
 
@@ -103,27 +103,27 @@ describe "Semantic: union" do
 
         class B(T) < A
         end
-        )) { [types["A"].virtual_type!.metaclass, generic_class("B", types["Cxx"]).metaclass, types["A"].virtual_type!.metaclass] }
+        CRYSTAL
     end
 
     it "superclass v.s. uninstantiated generic subclass" do
-      assert_commutes(%(
+      assert_commutes(<<-CRYSTAL) { [types["A"], types["B"], types["A"].virtual_type!] }
         class A
         end
 
         class B(T) < A
         end
-        )) { [types["A"], types["B"], types["A"].virtual_type!] }
+        CRYSTAL
     end
 
     it "uninstantiated generic super-metaclass v.s. uninstantiated generic sub-metaclass" do
-      assert_commutes(%(
+      assert_commutes(<<-CRYSTAL) { [types["A"].metaclass, types["B"].metaclass, types["A"].metaclass.virtual_type!] }
         class A(T)
         end
 
         class B(T) < A(T)
         end
-        )) { [types["A"].metaclass, types["B"].metaclass, types["A"].metaclass.virtual_type!] }
+        CRYSTAL
     end
   end
 
@@ -144,7 +144,7 @@ describe "Semantic: union" do
   end
 
   it "assigns to union and keeps new union type in call" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { union_of(int32, bool, char) }
       def foo(x)
         while false
           x = 'a'
@@ -153,11 +153,11 @@ describe "Semantic: union" do
       end
 
       foo(1 || false)
-      ") { union_of(int32, bool, char) }
+      CRYSTAL
   end
 
   it "looks up type in union type with free var" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { generic_class "Bar", union_of(int32, char) }
       class Bar(T)
       end
 
@@ -166,11 +166,11 @@ describe "Semantic: union" do
       end
 
       foo(1 || 'a')
-    ") { generic_class "Bar", union_of(int32, char) }
+      CRYSTAL
   end
 
   it "supports macro if inside union" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, flags: "some_flag") { int32 }
       lib LibC
         union Foo
           {% if flag?(:some_flag) %}
@@ -182,45 +182,45 @@ describe "Semantic: union" do
       end
 
       LibC::Foo.new.a
-      ), flags: "some_flag") { int32 }
+      CRYSTAL
   end
 
   it "types union" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of(int32, string).metaclass }
       Union(Int32, String)
-      )) { union_of(int32, string).metaclass }
+      CRYSTAL
   end
 
   it "types union of same type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32.metaclass }
       Union(Int32, Int32, Int32)
-      )) { int32.metaclass }
+      CRYSTAL
   end
 
   it "can reopen Union" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       struct Union
         def self.foo
           1
         end
       end
       Union(Int32, String).foo
-      )) { int32 }
+      CRYSTAL
   end
 
   it "can reopen Union and access T" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([int32, string]).metaclass }
       struct Union
         def self.types
           T
         end
       end
       Union(Int32, String).types
-      )) { tuple_of([int32, string]).metaclass }
+      CRYSTAL
   end
 
   it "can iterate T" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([int32.metaclass, string.metaclass]) }
       struct Union
         def self.types
           {% begin %}
@@ -233,18 +233,17 @@ describe "Semantic: union" do
         end
       end
       Union(Int32, String).types
-      )) { tuple_of([int32.metaclass, string.metaclass]) }
+      CRYSTAL
   end
 
   it "errors if instantiates union" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't create instance of a union type"
       Union(Int32, String).new
-      ),
-      "can't create instance of a union type"
+      CRYSTAL
   end
 
   it "finds method in Object" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Object
         def self.foo
           1
@@ -252,11 +251,11 @@ describe "Semantic: union" do
       end
 
       Union(Int32, String).foo
-      )) { int32 }
+      CRYSTAL
   end
 
   it "finds method in Value" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       struct Value
         def self.foo
           1
@@ -264,36 +263,36 @@ describe "Semantic: union" do
       end
 
       Union(Int32, String).foo
-      )) { int32 }
+      CRYSTAL
   end
 
   it "merges types in the same hierarchy with Union" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Foo"].virtual_type!.metaclass }
       class Foo; end
       class Bar < Foo; end
 
       Union(Foo, Bar)
-      )) { types["Foo"].virtual_type!.metaclass }
+      CRYSTAL
   end
 
   it "treats void as nil in union" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nil_type }
       nil.as(Void?)
-      )) { nil_type }
+      CRYSTAL
   end
 
   it "can use Union in type restriction (#2988)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([int32, string]) }
       def foo(x : Union(Int32, String))
         x
       end
 
       {foo(1), foo("hi")}
-      )) { tuple_of([int32, string]) }
+      CRYSTAL
   end
 
   it "doesn't crash with union of no-types (#5805)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of char, generic_class("Gen", int32).metaclass }
       class Gen(T)
       end
 
@@ -303,20 +302,20 @@ describe "Semantic: union" do
       else
         'a'
       end
-      )) { union_of char, generic_class("Gen", int32).metaclass }
+      CRYSTAL
   end
 
   it "doesn't virtualize union elements (#7814)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Foo"].metaclass }
       class Foo; end
       class Bar < Foo; end
 
       Union(Foo)
-      )) { types["Foo"].metaclass }
+      CRYSTAL
   end
 
   it "doesn't run virtual lookup on unbound unions (#9173)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Object
         def foo
           self
@@ -339,6 +338,6 @@ describe "Semantic: union" do
       end
 
       Child(Int32).new.as(Parent).bar
-      )) { int32 }
+      CRYSTAL
   end
 end

@@ -493,17 +493,31 @@ module Crystal
       @@closure_counter += 1
       llvm_name = "closure_#{@@closure_counter}"
 
-      @llvm_context.struct(llvm_name) do |a_struct|
+      has_inner_pointers = !parent_llvm_type.nil?
+      closure_type = @llvm_context.struct(llvm_name) do |a_struct|
         @structs[llvm_name] = a_struct
 
-        elems = vars.map { |var| llvm_type(var.type).as(LLVM::Type) }
+        elems = Array(LLVM::Type).new(vars.size + (parent_llvm_type ? 1 : 0) + (self_type ? 1 : 0))
+
+        vars.each do |var|
+          elems << llvm_type(var.type)
+          has_inner_pointers ||= var.type.has_inner_pointers?
+        end
 
         # Make sure to copy the given LLVM::Type to this context
-        elems << copy_type(parent_llvm_type).pointer if parent_llvm_type
+        if parent_llvm_type
+          elems << copy_type(parent_llvm_type).pointer
+        end
 
-        elems << llvm_type(self_type) if self_type
+        if self_type
+          elems << llvm_type(self_type)
+          has_inner_pointers ||= self_type.has_inner_pointers?
+        end
+
         elems
       end
+
+      {closure_type, has_inner_pointers}
     end
 
     # Copy existing LLVM types, possibly from another context,

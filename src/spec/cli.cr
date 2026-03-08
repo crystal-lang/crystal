@@ -16,6 +16,14 @@ module Spec
     property? focus = false
     getter? dry_run = false
     getter? list_tags = false
+    getter? color : Bool
+
+    getter stdout : IO
+    getter stderr : IO
+
+    def initialize(@stdout : IO = STDOUT, @stderr : IO = STDERR)
+      @color = Colorize.default_enabled?(@stdout, @stderr)
+    end
 
     def add_location(file, line)
       locations = @locations ||= {} of String => Array(Int32)
@@ -69,8 +77,7 @@ module Spec
           if location =~ /\A(.+?)\:(\d+)\Z/
             add_location $1, $2.to_i
           else
-            STDERR.puts "location #{location} must be file:line"
-            exit 1
+            abort "location #{location} must be file:line"
           end
         end
         opts.on("--tag TAG", "run examples with the specified TAG, or exclude examples by adding ~ before the TAG.") do |tag|
@@ -92,7 +99,7 @@ module Spec
           configure_formatter("junit", output_path)
         end
         opts.on("-h", "--help", "show this help") do |pattern|
-          puts opts
+          @stdout.puts opts
           exit
         end
         opts.on("-v", "--verbose", "verbose output") do
@@ -102,10 +109,10 @@ module Spec
           configure_formatter("tap")
         end
         opts.on("--color", "Enabled ANSI colored output") do
-          Colorize.enabled = true
+          @color = true
         end
         opts.on("--no-color", "Disable ANSI colored output") do
-          Colorize.enabled = false
+          @color = false
         end
         opts.on("--dry-run", "Pass all tests without execution") do
           @dry_run = true
@@ -120,6 +127,11 @@ module Spec
     # module.
     # The real implementation in `../spec.cr` overrides this for actual use.
     def configure_formatter(formatter, output_path = nil)
+    end
+
+    private def abort(msg)
+      @stderr.puts msg
+      exit 1
     end
   end
 

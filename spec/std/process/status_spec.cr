@@ -9,6 +9,16 @@ private def exit_status(status)
   {% end %}
 end
 
+private def status_for(exit_reason : Process::ExitReason)
+  exit_code = case exit_reason
+              when .interrupted?
+                {% if flag?(:unix) %}Signal::INT.value{% else %}LibC::STATUS_CONTROL_C_EXIT{% end %}
+              else
+                raise NotImplementedError.new("status_for")
+              end
+  Process::Status.new(exit_code)
+end
+
 describe Process::Status do
   it "#exit_code" do
     Process::Status.new(exit_status(0)).exit_code.should eq 0
@@ -16,6 +26,30 @@ describe Process::Status do
     Process::Status.new(exit_status(127)).exit_code.should eq 127
     Process::Status.new(exit_status(128)).exit_code.should eq 128
     Process::Status.new(exit_status(255)).exit_code.should eq 255
+
+    expect_raises(RuntimeError, "Abnormal exit has no exit code") do
+      status_for(:interrupted).exit_code
+    end
+  end
+
+  it "#exit_code?" do
+    Process::Status.new(exit_status(0)).exit_code?.should eq 0
+    Process::Status.new(exit_status(1)).exit_code?.should eq 1
+    Process::Status.new(exit_status(127)).exit_code?.should eq 127
+    Process::Status.new(exit_status(128)).exit_code?.should eq 128
+    Process::Status.new(exit_status(255)).exit_code?.should eq 255
+
+    status_for(:interrupted).exit_code?.should be_nil
+  end
+
+  it "#system_exit_status" do
+    Process::Status.new(exit_status(0)).system_exit_status.should eq 0_u32
+    Process::Status.new(exit_status(1)).system_exit_status.should eq({{ flag?(:unix) ? 0x0100_u32 : 1_u32 }})
+    Process::Status.new(exit_status(127)).system_exit_status.should eq({{ flag?(:unix) ? 0x7f00_u32 : 127_u32 }})
+    Process::Status.new(exit_status(128)).system_exit_status.should eq({{ flag?(:unix) ? 0x8000_u32 : 128_u32 }})
+    Process::Status.new(exit_status(255)).system_exit_status.should eq({{ flag?(:unix) ? 0xFF00_u32 : 255_u32 }})
+
+    status_for(:interrupted).system_exit_status.should eq({% if flag?(:unix) %}Signal::INT.value{% else %}LibC::STATUS_CONTROL_C_EXIT{% end %})
   end
 
   it "#success?" do
@@ -24,6 +58,8 @@ describe Process::Status do
     Process::Status.new(exit_status(127)).success?.should be_false
     Process::Status.new(exit_status(128)).success?.should be_false
     Process::Status.new(exit_status(255)).success?.should be_false
+
+    status_for(:interrupted).success?.should be_false
   end
 
   it "#normal_exit?" do
@@ -32,6 +68,18 @@ describe Process::Status do
     Process::Status.new(exit_status(127)).normal_exit?.should be_true
     Process::Status.new(exit_status(128)).normal_exit?.should be_true
     Process::Status.new(exit_status(255)).normal_exit?.should be_true
+
+    status_for(:interrupted).normal_exit?.should be_false
+  end
+
+  it "#abnormal_exit?" do
+    Process::Status.new(exit_status(0)).abnormal_exit?.should be_false
+    Process::Status.new(exit_status(1)).abnormal_exit?.should be_false
+    Process::Status.new(exit_status(127)).abnormal_exit?.should be_false
+    Process::Status.new(exit_status(128)).abnormal_exit?.should be_false
+    Process::Status.new(exit_status(255)).abnormal_exit?.should be_false
+
+    status_for(:interrupted).abnormal_exit?.should be_true
   end
 
   it "#signal_exit?" do
@@ -40,6 +88,8 @@ describe Process::Status do
     Process::Status.new(exit_status(127)).signal_exit?.should be_false
     Process::Status.new(exit_status(128)).signal_exit?.should be_false
     Process::Status.new(exit_status(255)).signal_exit?.should be_false
+
+    status_for(:interrupted).signal_exit?.should eq {{ !flag?(:win32) }}
   end
 
   it "equality" do
@@ -59,12 +109,32 @@ describe Process::Status do
     err1.hash.should eq(err2.hash)
   end
 
+  it "#exit_signal?" do
+    Process::Status.new(exit_status(0)).exit_signal?.should be_nil
+    Process::Status.new(exit_status(1)).exit_signal?.should be_nil
+
+    status_for(:interrupted).exit_signal?.should eq({% if flag?(:unix) %}Signal::INT{% else %}nil{% end %})
+  end
+
   {% if flag?(:unix) && !flag?(:wasi) %}
     it "#exit_signal" do
       Process::Status.new(Signal::HUP.value).exit_signal.should eq Signal::HUP
       Process::Status.new(Signal::INT.value).exit_signal.should eq Signal::INT
       last_signal = Signal.values[-1]
       Process::Status.new(last_signal.value).exit_signal.should eq last_signal
+
+      unknown_signal = Signal.new(126)
+      Process::Status.new(unknown_signal.value).exit_signal.should eq unknown_signal
+    end
+
+    it "#exit_signal?" do
+      Process::Status.new(Signal::HUP.value).exit_signal?.should eq Signal::HUP
+      Process::Status.new(Signal::INT.value).exit_signal?.should eq Signal::INT
+      last_signal = Signal.values[-1]
+      Process::Status.new(last_signal.value).exit_signal?.should eq last_signal
+
+      unknown_signal = Signal.new(126)
+      Process::Status.new(unknown_signal.value).exit_signal?.should eq unknown_signal
     end
 
     it "#normal_exit? with signal code" do
@@ -78,7 +148,7 @@ describe Process::Status do
       Process::Status.new(0x00).signal_exit?.should be_false
       Process::Status.new(0x01).signal_exit?.should be_true
       Process::Status.new(0x7e).signal_exit?.should be_true
-      Process::Status.new(0x7f).signal_exit?.should be_false
+      Process::Status.new(0x7f).signal_exit?.should be_true
     end
   {% end %}
 
@@ -196,11 +266,29 @@ describe Process::Status do
       assert_prints Process::Status.new(exit_status(255)).to_s, "255"
     end
 
+    it "on abnormal exit" do
+      {% if flag?(:win32) %}
+        assert_prints status_for(:interrupted).to_s, "STATUS_CONTROL_C_EXIT"
+      {% else %}
+        assert_prints status_for(:interrupted).to_s, "INT"
+      {% end %}
+    end
+
     {% if flag?(:unix) && !flag?(:wasi) %}
       it "with exit signal" do
         assert_prints Process::Status.new(Signal::HUP.value).to_s, "HUP"
         last_signal = Signal.values[-1]
         assert_prints Process::Status.new(last_signal.value).to_s, last_signal.to_s
+
+        assert_prints Process::Status.new(Signal.new(126).value).to_s, "Signal[126]"
+      end
+    {% end %}
+
+    {% if flag?(:win32) %}
+      it "hex format" do
+        assert_prints Process::Status.new(UInt16::MAX).to_s, "0x0000FFFF"
+        assert_prints Process::Status.new(0x01234567).to_s, "0x01234567"
+        assert_prints Process::Status.new(UInt32::MAX).to_s, "0xFFFFFFFF"
       end
     {% end %}
   end
@@ -214,11 +302,54 @@ describe Process::Status do
       assert_prints Process::Status.new(exit_status(255)).inspect, "Process::Status[255]"
     end
 
+    it "on abnormal exit" do
+      {% if flag?(:win32) %}
+        assert_prints status_for(:interrupted).inspect, "Process::Status[LibC::STATUS_CONTROL_C_EXIT]"
+      {% else %}
+        assert_prints status_for(:interrupted).inspect, "Process::Status[Signal::INT]"
+      {% end %}
+    end
+
     {% if flag?(:unix) && !flag?(:wasi) %}
       it "with exit signal" do
         assert_prints Process::Status.new(Signal::HUP.value).inspect, "Process::Status[Signal::HUP]"
         last_signal = Signal.values[-1]
         assert_prints Process::Status.new(last_signal.value).inspect, "Process::Status[#{last_signal.inspect}]"
+
+        unknown_signal = Signal.new(126)
+        assert_prints Process::Status.new(unknown_signal.value).inspect, "Process::Status[Signal[126]]"
+      end
+    {% end %}
+
+    {% if flag?(:win32) %}
+      it "hex format" do
+        assert_prints Process::Status.new(UInt16::MAX).inspect, "Process::Status[0x0000FFFF]"
+        assert_prints Process::Status.new(0x01234567).inspect, "Process::Status[0x01234567]"
+        assert_prints Process::Status.new(UInt32::MAX).inspect, "Process::Status[0xFFFFFFFF]"
+      end
+    {% end %}
+  end
+
+  describe "#description" do
+    it "with exit status" do
+      Process::Status.new(exit_status(0)).description.should eq "Process exited normally"
+      Process::Status.new(exit_status(255)).description.should eq "Process exited normally"
+    end
+
+    it "on interrupt" do
+      status_for(:interrupted).description.should eq "Process was interrupted"
+    end
+
+    {% if flag?(:unix) && !flag?(:wasi) %}
+      it "with exit signal" do
+        Process::Status.new(Signal::HUP.value).description.should eq "Process terminated abnormally"
+        Process::Status.new(Signal::KILL.value).description.should eq "Process terminated abnormally"
+        Process::Status.new(Signal::STOP.value).description.should eq "Process received and didn't handle signal STOP"
+        last_signal = Signal.values[-1]
+        Process::Status.new(last_signal.value).description.should eq "Process received and didn't handle signal #{last_signal}"
+
+        unknown_signal = Signal.new(126)
+        Process::Status.new(unknown_signal.value).description.should eq "Process received and didn't handle signal 126"
       end
     {% end %}
   end

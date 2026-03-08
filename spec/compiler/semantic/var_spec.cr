@@ -27,7 +27,7 @@ describe "Semantic: var" do
   end
 
   it "reports undefined local variable or method" do
-    assert_error "
+    assert_error <<-CRYSTAL, "undefined local variable or method 'something'"
       def foo
         a = something
       end
@@ -37,7 +37,7 @@ describe "Semantic: var" do
       end
 
       bar
-    ", "undefined local variable or method 'something'"
+      CRYSTAL
   end
 
   it "reports there's no self" do
@@ -50,52 +50,49 @@ describe "Semantic: var" do
   end
 
   it "lets type on else side of if with a Bool | Nil union" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { nilable bool }
       a = (1 == 1) || nil
       a ? nil : a
-      ), inject_primitives: true) { nilable bool }
+      CRYSTAL
   end
 
   it "errors if declaring var that is already declared" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "variable 'a' already declared"
       a = 1
       a = uninitialized Float64
-      ),
-      "variable 'a' already declared"
+      CRYSTAL
   end
 
   it "errors if reads from underscore" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't read from _"
       _
-      ),
-      "can't read from _"
+      CRYSTAL
   end
 
   it "declares local variable with value" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       a : Int32 = 0
       a
-      )) { int32 }
+      CRYSTAL
   end
 
   it "declares local variable and then assigns it" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       a : Int32
       a = 0
       a
-      )) { int32 }
+      CRYSTAL
   end
 
   it "declares local variable and immediately reads it" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "read before assignment to local variable 'a'"
       a : Int32
       a
-      ),
-      "read before assignment to local variable 'a'"
+      CRYSTAL
   end
 
   it "declares local variable and assigns it with if" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       a : Int32
       if 1 == 2
         a = 0
@@ -103,54 +100,49 @@ describe "Semantic: var" do
         a = 1
       end
       a
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "declares local variable but doesn't assign it in all branches" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "type must be Int32", inject_primitives: true
       a : Int32
       if 1 == 2
         a = 0
       end
       a
-      ),
-      "type must be Int32", inject_primitives: true
+      CRYSTAL
   end
 
   it "declares local variable and assigns wrong type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "type must be Int32"
       a : Int32
       a = true
-      ),
-      "type must be Int32"
+      CRYSTAL
   end
 
   it "parse local variable as method call even if local variable is declared in call arguments" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined local variable or method 'a'"
       macro foo(x)
         {{x}}
       end
       foo a : Int32
       a
-    ),
-      "undefined local variable or method 'a'"
+      CRYSTAL
   end
 
   it "errors if variable already exists" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "variable 'a' already declared"
       a = true
       a : Int32
-      ),
-      "variable 'a' already declared"
+      CRYSTAL
   end
 
   it "errors if declaring generic type without type vars (with local var)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't declare variable of generic non-instantiated type Foo"
       class Foo(T)
       end
 
       x : Foo
-      ),
-      "can't declare variable of generic non-instantiated type Foo"
+      CRYSTAL
   end
 end

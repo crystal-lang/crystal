@@ -25,7 +25,7 @@ module HTTP::Handler
 
   abstract def call(context : HTTP::Server::Context)
 
-  def call_next(context : HTTP::Server::Context)
+  def call_next(context : HTTP::Server::Context) : Nil
     if next_handler = @next
       next_handler.call(context)
     else

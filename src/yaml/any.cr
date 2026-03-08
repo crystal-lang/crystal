@@ -33,21 +33,9 @@ struct YAML::Any
     when YAML::Nodes::Scalar
       new YAML::Schema::Core.parse_scalar(node)
     when YAML::Nodes::Sequence
-      ary = [] of YAML::Any
-
-      node.each do |value|
-        ary << new(ctx, value)
-      end
-
-      new ary
+      new Array(self).new(ctx, node)
     when YAML::Nodes::Mapping
-      hash = {} of YAML::Any => YAML::Any
-
-      node.each do |key, value|
-        hash[new(ctx, key)] = new(ctx, value)
-      end
-
-      new hash
+      new Hash(self, self).new(ctx, node)
     when YAML::Nodes::Alias
       if value = node.value
         new(ctx, value)
@@ -372,6 +360,12 @@ class Object
 end
 
 struct Value
+  def ==(other : YAML::Any)
+    self == other.raw
+  end
+end
+
+struct Struct
   def ==(other : YAML::Any)
     self == other.raw
   end

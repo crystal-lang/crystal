@@ -1,16 +1,19 @@
 require "string_pool"
 
 abstract class JSON::Lexer
-  def self.new(string : String)
+  def self.new(string : String) : self
     StringBased.new(string)
   end
 
-  def self.new(io : IO)
+  def self.new(io : IO) : self
     IOBased.new(io)
   end
 
   getter token : Token
   property skip : Bool
+
+  @line_number : Int64
+  @column_number : Int64
 
   def initialize
     @token = Token.new

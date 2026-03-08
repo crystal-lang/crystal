@@ -4,12 +4,6 @@ require "../../spec_helper"
 require "../../socket/spec_helper"
 require "../../../support/ssl"
 
-# TODO: Windows networking in the interpreter requires #12495
-{% if flag?(:interpreted) && flag?(:win32) %}
-  pending OpenSSL::SSL::Socket
-  {% skip_file %}
-{% end %}
-
 describe OpenSSL::SSL::Socket do
   describe OpenSSL::SSL::Socket::Server do
     it "auto accept client by default" do
@@ -187,5 +181,65 @@ describe OpenSSL::SSL::Socket do
       raise server_received
     end
     server_received.should eq("hello")
+  end
+
+  it "calls on_server_name callback with client hostname" do
+    pending_interpreted!("Leads to invalid memory access")
+
+    tcp_server = TCPServer.new("127.0.0.1", 0)
+    server_context, client_context = ssl_context_pair
+
+    sni_hostname = nil
+
+    server_context.on_server_name do |hostname|
+      sni_hostname = hostname
+      nil # continue with default context
+    end
+
+    spawn do
+      Client.open(TCPSocket.new(tcp_server.local_address.address, tcp_server.local_address.port), client_context, hostname: "test.example.com") do |socket|
+        socket.print "hello"
+      end
+    end
+
+    OpenSSL::SSL::Server.open(tcp_server, server_context) do |server|
+      client = server.accept
+      client.gets.should eq("hello")
+      client.close
+    end
+
+    sni_hostname.should eq("test.example.com")
+  end
+
+  it "handles exception in on_server_name callback" do
+    pending_interpreted!("Leads to invalid memory access")
+
+    tcp_server = TCPServer.new("127.0.0.1", 0)
+    server_context, client_context = ssl_context_pair
+
+    server_context.on_server_name do |hostname|
+      raise "test error"
+    end
+
+    client_error = Channel(Exception?).new
+
+    spawn do
+      begin
+        Client.open(TCPSocket.new(tcp_server.local_address.address, tcp_server.local_address.port), client_context, hostname: "test.example.com") do |socket|
+          socket.print "hello"
+        end
+        client_error.send(nil)
+      rescue ex
+        client_error.send(ex)
+      end
+    end
+
+    OpenSSL::SSL::Server.open(tcp_server, server_context) do |server|
+      expect_raises(OpenSSL::SSL::Error) do
+        server.accept
+      end
+    end
+
+    client_error.receive.should be_a(OpenSSL::SSL::Error)
   end
 end

@@ -622,6 +622,60 @@ module Reply
       SpecHelper.send(pipe_in, '\0')
     end
 
+    it "searches on ctrl-r" do
+      reader = SpecHelper.reader(type: SpecReaderWithSearch)
+      pipe_out, pipe_in = IO.pipe
+
+      SEARCH_ENTRIES.each { |e| reader.history << e }
+
+      spawn do
+        reader.read_next(from: pipe_out)
+      end
+
+      SpecHelper.send(pipe_in, '\u0012') # Ctrl-r (search)
+      reader.search.verify("", open: true, failed: true)
+
+      SpecHelper.send(pipe_in, 'p')
+      reader.search.verify("p", open: true, failed: false)
+      reader.editor.verify("pp! i")
+      reader.history.index.should eq 3
+
+      SpecHelper.send(pipe_in, "ut")
+      reader.search.verify("put", open: true, failed: false)
+      reader.editor.verify(<<-END)
+        while i < 10
+          puts i
+          i += 1
+        end
+        END
+      reader.history.index.should eq 2
+
+      SpecHelper.send(pipe_in, "ss")
+      reader.search.verify("putss", open: true, failed: true)
+      reader.editor.verify("")
+      reader.history.index.should eq 5
+
+      SpecHelper.send(pipe_in, '\u{7f}') # back
+      reader.search.verify("puts", open: true, failed: false)
+      reader.editor.verify(<<-END)
+        while i < 10
+          puts i
+          i += 1
+        end
+        END
+      reader.history.index.should eq 2
+
+      SpecHelper.send(pipe_in, '\e') # back
+      reader.search.verify("", open: false, failed: false)
+      reader.editor.verify(<<-END)
+        while i < 10
+          puts i
+          i += 1
+        end
+        END
+      reader.history.index.should eq 2
+    end
+
     it "resets" do
       reader = SpecHelper.reader
       pipe_out, pipe_in = IO.pipe

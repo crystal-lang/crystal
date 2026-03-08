@@ -108,25 +108,25 @@ class Crystal::Digest::MD5 < ::Digest
   private def ff(a, b, c, d, x, s, ac)
     a &+= f(b, c, d) &+ x &+ ac.to_u32
     a = a.rotate_left s
-    a &+= b
+    a &+ b
   end
 
   private def gg(a, b, c, d, x, s, ac)
     a &+= g(b, c, d) &+ x &+ ac.to_u32
     a = a.rotate_left s
-    a &+= b
+    a &+ b
   end
 
   private def hh(a, b, c, d, x, s, ac)
     a &+= h(b, c, d) &+ x &+ ac.to_u32
     a = a.rotate_left s
-    a &+= b
+    a &+ b
   end
 
   private def ii(a, b, c, d, x, s, ac)
     a &+= i(b, c, d) &+ x &+ ac.to_u32
     a = a.rotate_left s
-    a &+= b
+    a &+ b
   end
 
   private def transform(input)

@@ -55,7 +55,7 @@ describe "Semantic: macro" do
   end
 
   it "allows subclasses of return type for macro def" do
-    run(%{
+    run(<<-CRYSTAL).to_i.should eq(2)
       class Foo
         def foo
           1
@@ -76,11 +76,11 @@ describe "Semantic: macro" do
       end
 
       Baz.new.foobar.foo
-    }).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "allows return values that include the return type of the macro def" do
-    run(%{
+    run(<<-CRYSTAL).to_i.should eq(2)
       module Foo
         def foo
           1
@@ -103,11 +103,11 @@ describe "Semantic: macro" do
       end
 
       Baz.new.foobar.foo
-    }).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "allows generic return types for macro def" do
-    run(%{
+    run(<<-CRYSTAL).to_i.should eq(2)
       class Foo(T)
         def foo
           @foo
@@ -125,7 +125,7 @@ describe "Semantic: macro" do
       end
 
       Baz.new.foobar.foo
-    }).to_i.should eq(2)
+      CRYSTAL
 
     assert_error(<<-CRYSTAL, "method Bar#bar must return Foo(String) but it is returning Foo(Int32)")
       class Foo(T)
@@ -470,7 +470,7 @@ describe "Semantic: macro" do
   end
 
   it "preserves correct self in restriction when macro def is to be instantiated in subtypes (#5044)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { string }
       class Foo
         def foo(x)
           1
@@ -491,11 +491,11 @@ describe "Semantic: macro" do
       end
 
       (Baz.new || Baz2.new).foo(Baz.new)
-      )) { string }
+      CRYSTAL
   end
 
   it "doesn't affect self restrictions outside the macro def being instantiated in subtypes" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of int32, bool }
       class Foo
         def foo(other) : Bool
           {% @type %}
@@ -524,7 +524,7 @@ describe "Semantic: macro" do
       end
 
       Foo.new.as(Foo).foo(Bar1.new)
-      )) { union_of int32, bool }
+      CRYSTAL
   end
 
   it "errors if non-existent named arg" do
@@ -581,6 +581,64 @@ describe "Semantic: macro" do
       CRYSTAL
   end
 
+  it "error raised within complex macro included hook (#7394)" do
+    ex = assert_error(<<-'CRYSTAL', "Value method must be an instance method")
+      module ExampleModule
+        macro included
+          {% verbatim do %}
+            {%
+              if method = @type.class.methods.find &.name.stringify.==("value")
+                method.raise "Value method must be an instance method."
+              else
+                raise "BUG: Didn't find value method."
+              end
+            %}
+          {% end %}
+        end
+      end
+
+      class ExampleClass
+        def self.value : Nil
+        end
+
+        include ExampleModule
+      end
+    CRYSTAL
+
+    ex.to_s.should contain "error in line 16"
+  end
+
+  it "error raise within macro included hook points to `include` vs `raise`" do
+    ex = assert_error(<<-'CRYSTAL', "noooo")
+      module Foo
+        macro included
+          {% raise "noooo" %}
+        end
+      end
+
+      include Foo
+    CRYSTAL
+
+    ex.to_s.should contain "error in line 3"
+    ex.to_s.should contain "error in line 7"
+  end
+
+  it "error raise within macro inherited hook points to the inheriting type vs `raise`" do
+    ex = assert_error(<<-'CRYSTAL', "noooo")
+      abstract struct Parent
+        macro inherited
+          {% raise "noooo" %}
+        end
+      end
+
+      struct Child < Parent
+      end
+    CRYSTAL
+
+    ex.to_s.should contain "error in line 3"
+    ex.to_s.should contain "error in line 7"
+  end
+
   it "gives precise location info when doing yield inside macro" do
     assert_error(<<-CRYSTAL, "in line 6")
       macro foo
@@ -611,6 +669,21 @@ describe "Semantic: macro" do
         baz
       end
       CRYSTAL
+  end
+
+  it "begins with {{ yield }} (#15050)" do
+    result = top_level_semantic <<-CRYSTAL, wants_doc: true
+      macro foo
+        {{yield}}
+      end
+
+      foo do
+        # doc comment
+        def test
+        end
+      end
+      CRYSTAL
+    result.program.defs.try(&.["test"][0].def.doc).should eq "doc comment"
   end
 
   it "can return class type in macro def" do
@@ -1608,6 +1681,19 @@ describe "Semantic: macro" do
             3
           end
         }}
+      {% end %}
+      CRYSTAL
+  end
+
+  it "preserves escaped interpolation in verbatim (#16413)" do
+    assert_type(<<-'CRYSTAL') { nil_type }
+      {% begin %}
+        {% verbatim do %}
+          {%
+            name = "FOO"
+            "\#{get_env(#{name})}"
+          %}
+        {% end %}
       {% end %}
       CRYSTAL
   end

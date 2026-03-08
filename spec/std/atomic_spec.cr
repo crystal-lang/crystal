@@ -26,10 +26,10 @@ describe Atomic do
       atomic = Atomic.new(true)
 
       atomic.compare_and_set(false, true).should eq({true, false})
-      atomic.get.should eq(true)
+      atomic.get.should be_true
 
       atomic.compare_and_set(true, false).should eq({true, true})
-      atomic.get.should eq(false)
+      atomic.get.should be_false
     end
 
     it "with integer" do
@@ -258,8 +258,8 @@ describe Atomic do
   describe "#set" do
     it "with bool" do
       atomic = Atomic.new(false)
-      atomic.set(true).should eq(true)
-      atomic.get.should eq(true)
+      atomic.set(true).should be_true
+      atomic.get.should be_true
     end
 
     it "with integer" do
@@ -281,7 +281,7 @@ describe Atomic do
       atomic.get.should eq("foo")
 
       atomic.set(nil)
-      atomic.get.should eq(nil)
+      atomic.get.should be_nil
     end
 
     it "explicit ordering" do
@@ -297,15 +297,15 @@ describe Atomic do
     atomic.lazy_get.should eq(2)
 
     bool = Atomic.new(true)
-    bool.lazy_set(false).should eq(false)
-    bool.lazy_get.should eq(false)
+    bool.lazy_set(false).should be_false
+    bool.lazy_get.should be_false
   end
 
   describe "#swap" do
     it "with bool" do
       atomic = Atomic.new(true)
-      atomic.swap(false).should eq(true)
-      atomic.get.should eq(false)
+      atomic.swap(false).should be_true
+      atomic.get.should be_false
     end
 
     it "with integer" do
@@ -329,11 +329,11 @@ describe Atomic do
     it "with nilable reference" do
       atomic = Atomic(String?).new(nil)
 
-      atomic.swap("not nil").should eq(nil)
+      atomic.swap("not nil").should be_nil
       atomic.get.should eq("not nil")
 
       atomic.swap(nil).should eq("not nil")
-      atomic.get.should eq(nil)
+      atomic.get.should be_nil
     end
 
     it "with reference union" do
@@ -364,31 +364,31 @@ describe Atomic do
     it "gets and sets" do
       booleans = AtomicBooleans.new
 
-      booleans.@one.get.should eq(false)
-      booleans.@two.get.should eq(false)
-      booleans.@three.get.should eq(false)
+      booleans.@one.get.should be_false
+      booleans.@two.get.should be_false
+      booleans.@three.get.should be_false
 
       booleans.@two.set(true)
-      booleans.@one.get.should eq(false)
-      booleans.@two.get.should eq(true)
-      booleans.@three.get.should eq(false)
+      booleans.@one.get.should be_false
+      booleans.@two.get.should be_true
+      booleans.@three.get.should be_false
 
       booleans.@one.set(true)
       booleans.@three.set(true)
-      booleans.@one.get.should eq(true)
-      booleans.@two.get.should eq(true)
-      booleans.@three.get.should eq(true)
+      booleans.@one.get.should be_true
+      booleans.@two.get.should be_true
+      booleans.@three.get.should be_true
 
       booleans.@one.set(false)
       booleans.@three.set(false)
-      booleans.@one.get.should eq(false)
-      booleans.@two.get.should eq(true)
-      booleans.@three.get.should eq(false)
+      booleans.@one.get.should be_false
+      booleans.@two.get.should be_true
+      booleans.@three.get.should be_false
 
       booleans.@two.set(false)
-      booleans.@one.get.should eq(false)
-      booleans.@two.get.should eq(false)
-      booleans.@three.get.should eq(false)
+      booleans.@one.get.should be_false
+      booleans.@two.get.should be_false
+      booleans.@three.get.should be_false
     end
   end
 end

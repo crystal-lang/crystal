@@ -143,6 +143,70 @@ describe Indexable do
     end
   end
 
+  describe "#find" do
+    it "finds the element matching the block" do
+      indexable = SafeIndexable.new(4)
+      indexable.find { |i| i > 2 }.should eq 3
+    end
+
+    it "finds the element matching the block after given offset" do
+      indexable = SafeIndexable.new(8)
+      indexable.find(offset: 5) { |i| i.even? }.should eq 6
+    end
+
+    it "finds the element matching the block after given negative offset" do
+      indexable = SafeIndexable.new(8)
+      indexable.find(offset: -6) { |i| i.even? }.should eq 2
+    end
+
+    it "does not receive a valid negative offset, returns if_none value" do
+      indexable = SafeIndexable.new(4)
+      indexable.find(-1, offset: -10) { |i| i > 2 }.should eq -1
+    end
+
+    it "does not find the element matching the block" do
+      indexable = SafeIndexable.new(4)
+      indexable.find { |i| i > 7 }.should be_nil
+    end
+
+    it "does not find the element matching the block, returns custom if_none value" do
+      indexable = SafeIndexable.new(4)
+      indexable.find(if_none: -1) { |i| i > 7 }.should eq -1
+    end
+
+    it "does not find the element matching the block after given offset, returns custom if_none value" do
+      indexable = SafeIndexable.new(5)
+      indexable.find(-3, 3) { |i| i > 15 }.should eq -3
+    end
+  end
+
+  describe "#find!" do
+    it "finds the element matching the block" do
+      indexable = SafeIndexable.new(4)
+      indexable.find! { |i| i > 2 }.should eq 3
+    end
+
+    it "finds the element matching the block after given offset" do
+      indexable = SafeIndexable.new(8)
+      indexable.find!(offset: 5) { |i| i.even? }.should eq 6
+    end
+
+    it "finds the element matching the block after given negative offset" do
+      indexable = SafeIndexable.new(8)
+      indexable.find!(offset: -6) { |i| i.even? }.should eq 2
+    end
+
+    it "does not receive a valid negative offset, raises not found" do
+      indexable = SafeIndexable.new(4)
+      expect_raises(Enumerable::NotFoundError) { indexable.find!(offset: -10) { |i| i > 2 } }
+    end
+
+    it "does not find the element matching the block, raises not found" do
+      indexable = SafeIndexable.new(4)
+      expect_raises(Enumerable::NotFoundError) { indexable.find! { |i| i > 7 } }
+    end
+  end
+
   describe "#rindex" do
     it "does rindex with big negative offset" do
       indexable = SafeIndexable.new(3)
@@ -249,6 +313,49 @@ describe Indexable do
 
     # last element iterated is still 7.
     elems.should eq([3, 4, 5, 6, 7])
+  end
+
+  it "handles empty ranges, including those with exclude-end" do
+    "foobar"[3..3].should eq("b")
+    "foobar"[3...3].should eq("")
+
+    "foobar"[3..-3].should eq("b")
+    "foobar"[3...-3].should eq("")
+    "foobar"[3...-5].should eq("")
+
+    "foobar"[3_u32..3_u32].should eq("b")
+    "foobar"[3_u32...3_u32].should eq("")
+    "foobar"[3_u32...1_u32].should eq("")
+  end
+
+  it "handles extremely large ranges without overflowing" do
+    "foobar"[3..Int32::MAX].should eq("bar")
+
+    expect_raises IndexError, "Index out of bounds" do
+      "foobar"[Int32::MAX..]
+    end
+
+    Indexable.range_to_index_and_count(Int32::MAX.., 10).should eq({Int32::MAX, 0})
+  end
+
+  it "handles extremely large collection sizes without overflowing" do
+    Indexable.range_to_index_and_count((Int32::MAX - 2)..Int32::MAX, Int32::MAX).should eq({Int32::MAX - 2, 3})
+    Indexable.range_to_index_and_count((Int32::MAX - 4)...Int32::MAX, Int32::MAX).should eq({Int32::MAX - 4, 4})
+    Indexable.range_to_index_and_count((Int32::MAX - 4)..-2, Int32::MAX).should eq({Int32::MAX - 4, 3})
+  end
+
+  it "errors on start indices that are off the end" do
+    expect_raises IndexError, "Index out of bounds" do
+      "foobar"[100..1000]
+    end
+
+    expect_raises IndexError, "Index out of bounds" do
+      "foobar"[Int32::MIN..Int32::MAX]
+    end
+  end
+
+  it "handles exclusive ranges that go off the end" do
+    "foobar"[3...100].should eq("bar")
   end
 
   it "iterates within a range of indices (#3386)" do

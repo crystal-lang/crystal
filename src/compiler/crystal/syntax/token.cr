@@ -327,6 +327,14 @@ module Crystal
         new kind, nest, the_end, open_count, 0, true
       end
 
+      # Creates a DelimiterState for percent literals in macros.
+      # For symmetric delimiters (||), uses open_count = 0 (no nesting).
+      # For paired delimiters (()), uses open_count = 1 (enables nesting).
+      def self.percent_literal(kind : DelimiterKind, nest, the_end)
+        open_count = nest == the_end ? 0 : 1
+        new kind, nest, the_end, open_count, 0, true
+      end
+
       def with_open_count_delta(delta)
         DelimiterState.new(@kind, @nest, @end, @open_count + delta, @heredoc_indent, @allow_escapes)
       end

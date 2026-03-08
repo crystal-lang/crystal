@@ -1,5 +1,19 @@
 require "../../spec_helper"
 
+private STABLE_ABI_TYPES = [
+  Nil, Void, Int32, Float32, Bool, Char, Symbol, Pointer(Void),           # primitive scalars
+  StaticArray(Int32, 1), Tuple(Int32), NamedTuple(x: Int32), Proc(Int32), # primitive aggregates
+  Reference, String,
+  Union(Int32, Char), Union(Int32, String), Union(Nil, String), Union(Nil, String, Regex), Union(Nil, Proc(Int32)), # unions
+]
+
+private UNSTABLE_ABI_TYPES = [
+  Value, Struct, Int, Float,
+  Slice, Slice(Int32), Enumerable, Enumerable(Int32), Flags,
+  StaticArray(Slice(Int32), 1), Tuple(Slice(Int32)), NamedTuple(x: Slice(Int32)),
+  Union(Slice(Int32), Nil),
+]
+
 describe "MacroExpander" do
   it "expands simple macro" do
     assert_macro "1 + 2", "1 + 2"
@@ -51,6 +65,14 @@ describe "MacroExpander" do
 
   it "expands macro with tuple" do
     assert_macro %({{{1, 2, 3}}}), %({1, 2, 3})
+  end
+
+  it "expands macro with empty tuple" do
+    assert_macro "{{x}}", "::Tuple.new", {x: TupleLiteral.new([] of ASTNode)}
+  end
+
+  it "expands macro with empty named tuple" do
+    assert_macro "{{x}}", "::NamedTuple.new", {x: NamedTupleLiteral.new([] of NamedTupleLiteral::Entry)}
   end
 
   it "expands macro with range" do
@@ -170,4 +192,72 @@ describe "MacroExpander" do
       ] of Lexer::LocPragma,
     }
   end
+
+  {% for op in ["sizeof".id, "alignof".id] %}
+    describe "{{ op }}" do
+      {% for type in STABLE_ABI_TYPES %}
+        it "gets {{ op }} {{ type.id }}" do
+          # we are not interested in the actual sizes or alignments here, these
+          # values are up to the codegen spec suite
+          assert_macro %(\{{ {{ op }}({{ type.id }}).is_a?(NumberLiteral) }}), "true"
+        end
+      {% end %}
+
+      it "gets {{ op }} enum" do
+        assert_macro("\{{ {{ op }}(Foo) == {{ op }}(Int16) }}", "true") do |program|
+          program.types["Foo"] = EnumType.new(program, program, "Foo", program.int16)
+          nil
+        end
+      end
+
+      it "gets {{ op }} alias" do
+        assert_macro("\{{ {{ op }}(Foo) == {{ op }}(Int16) }}", "true") do |program|
+          program.types["Foo"] = AliasType.new(program, program, "Foo", Crystal::Path.global("Int16"))
+          nil
+        end
+      end
+
+      it "gets {{ op }} typedef" do
+        assert_macro("\{{ {{ op }}(Foo) == {{ op }}(Int16) }}", "true") do |program|
+          program.types["Foo"] = TypeDefType.new(program, program, "Foo", program.int16)
+          nil
+        end
+      end
+
+      it "errors with typeof" do
+        assert_error %(\{{ {{ op }}(typeof(1)) }})
+      end
+
+      {% for type in UNSTABLE_ABI_TYPES %}
+        it "errors with {{ type.id }}" do
+          assert_error %(\{{ {{ op }}({{ type.id }}) }}), "argument to `{{ op }}` inside macros must be a type with a stable {{ op == "sizeof" ? "size".id : "alignment".id }}"
+        end
+      {% end %}
+
+      it "errors with alias of unstable type" do
+        assert_error <<-CRYSTAL, "argument to `{{ op }}` inside macros must be a type with a stable {{ op == "sizeof" ? "size".id : "alignment".id }}"
+          struct Foo
+          end
+
+          alias Bar = Foo
+
+          \{{ {{ op }}(Bar) }}
+          CRYSTAL
+      end
+
+      it "errors with typedef of unstable type" do
+        assert_error <<-CRYSTAL, "argument to `{{ op }}` inside macros must be a type with a stable {{ op == "sizeof" ? "size".id : "alignment".id }}"
+          lib Lib
+            struct Foo
+              x : Int32
+            end
+
+            type Bar = Foo
+          end
+
+          \{{ {{ op }}(Lib::Bar) }}
+          CRYSTAL
+      end
+    end
+  {% end %}
 end

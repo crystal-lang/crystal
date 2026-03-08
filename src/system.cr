@@ -19,7 +19,7 @@ module System
   # ```
   # System.cpu_count # => 4
   # ```
-  def self.cpu_count : Int
-    Crystal::System.cpu_count
+  def self.cpu_count : Int32
+    Crystal::System.cpu_count.to_i32!
   end
 end

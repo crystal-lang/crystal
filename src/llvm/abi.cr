@@ -1,9 +1,13 @@
+# LLVM::ABI is deprecated. The compiler uses Crystal::ABI instead.
+
 # Based on https://github.com/rust-lang/rust/blob/29ac04402d53d358a1f6200bea45a301ff05b2d1/src/librustc_trans/trans/cabi.rs
+@[Deprecated("This API is now internal to the compiler and no longer updated publicly.")]
 abstract class LLVM::ABI
   getter target_data : TargetData
   getter? osx : Bool
   getter? windows : Bool
 
+  @[Deprecated("This API is now internal to the compiler and no longer updated publicly.")]
   def initialize(target_machine : TargetMachine)
     @target_data = target_machine.data_layout
     triple = target_machine.triple
@@ -73,12 +77,14 @@ abstract class LLVM::ABI
     end
   end
 
+  @[Deprecated("This API is now internal to the compiler and no longer updated publicly.")]
   enum ArgKind
     Direct
     Indirect
     Ignore
   end
 
+  @[Deprecated("This API is now internal to the compiler and no longer updated publicly.")]
   struct ArgType
     getter kind : ArgKind
     getter type : Type
@@ -98,14 +104,17 @@ abstract class LLVM::ABI
       new ArgKind::Ignore, type
     end
 
+    @[Deprecated("This API is now internal to the compiler and no longer updated publicly.")]
     def initialize(@kind, @type, @cast = nil, @pad = nil, @attr = nil)
     end
   end
 
+  @[Deprecated("This API is now internal to the compiler and no longer updated publicly.")]
   class FunctionType
     getter arg_types : Array(ArgType)
     getter return_type : ArgType
 
+    @[Deprecated("This API is now internal to the compiler and no longer updated publicly.")]
     def initialize(@arg_types, @return_type)
     end
   end

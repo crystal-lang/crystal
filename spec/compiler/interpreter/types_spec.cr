@@ -107,7 +107,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "interprets crystal_type_id for virtual metaclass type (#12228)" do
-      interpret(<<-CRYSTAL).should eq(true)
+      interpret(<<-CRYSTAL).should be_true
         class P
         end
 

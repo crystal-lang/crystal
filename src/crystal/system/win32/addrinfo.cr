@@ -29,23 +29,23 @@ module Crystal::System::Addrinfo
     pointerof(@addr).as(LibC::Sockaddr*)
   end
 
-  def self.getaddrinfo(domain, service, family, type, protocol, timeout) : Handle
+  def self.getaddrinfo(domain, service, family, type, protocol, timeout, flags = 0) : Handle
     hints = LibC::ADDRINFOEXW.new
     hints.ai_family = (family || ::Socket::Family::UNSPEC).to_i32
     hints.ai_socktype = type
     hints.ai_protocol = protocol
-    hints.ai_flags = 0
 
     if service.is_a?(Int)
-      hints.ai_flags |= LibC::AI_NUMERICSERV
+      flags |= LibC::AI_NUMERICSERV
       if service < 0
         raise ::Socket::Addrinfo::Error.from_os_error(nil, WinError::WSATYPE_NOT_FOUND, domain: domain, type: type, protocol: protocol, service: service)
       end
     end
 
-    Crystal::IOCP::GetAddrInfoOverlappedOperation.run(Crystal::EventLoop.current.iocp) do |operation|
+    hints.ai_flags = flags
+    IOCP::GetAddrInfoOverlappedOperation.run(Crystal::EventLoop.current.iocp_handle) do |operation|
       completion_routine = LibC::LPLOOKUPSERVICE_COMPLETION_ROUTINE.new do |dwError, dwBytes, lpOverlapped|
-        orig_operation = Crystal::IOCP::GetAddrInfoOverlappedOperation.unbox(lpOverlapped)
+        orig_operation = IOCP::GetAddrInfoOverlappedOperation.unbox(lpOverlapped)
         LibC.PostQueuedCompletionStatus(orig_operation.iocp, 0, 0, lpOverlapped)
       end
 
@@ -60,7 +60,7 @@ module Crystal::System::Addrinfo
       else
         case error = WinError.new(result.to_u32!)
         when .wsa_io_pending?
-          # used in `Crystal::IOCP::OverlappedOperation#try_cancel_getaddrinfo`
+          # used in `IOCP::OverlappedOperation#try_cancel_getaddrinfo`
           operation.cancel_handle = cancel_handle
         else
           raise ::Socket::Addrinfo::Error.from_os_error("GetAddrInfoExW", error, domain: domain, type: type, protocol: protocol, service: service)

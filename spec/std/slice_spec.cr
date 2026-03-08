@@ -45,6 +45,28 @@ private def is_stable_sort(mutable, &block)
 end
 
 describe "Slice" do
+  describe ".new" do
+    describe "initializes with default value" do
+      it "integer" do
+        Slice(Int32).new(3, 0).should eq Slice[0, 0, 0]
+        Slice(Int32).new(3, 1).should eq Slice[1, 1, 1]
+      end
+
+      it "float" do
+        Slice(Float32).new(3, 0.0).should eq Slice[0.0, 0.0, 0.0]
+        Slice(Float32).new(3, 1.0).should eq Slice[1.0, 1.0, 1.0]
+      end
+
+      it "pointer" do
+        null = Pointer(Void).null
+        Slice(Pointer(Void)).new(3, null).should eq Slice[null, null, null]
+
+        value = Pointer(Void).new(0x123_u64)
+        Slice(Pointer(Void)).new(3, value).should eq Slice[value, value, value]
+      end
+    end
+  end
+
   it "gets pointer and size" do
     pointer = Pointer.malloc(1, 0)
     slice = Slice.new(pointer, 1)
@@ -529,7 +551,7 @@ describe "Slice" do
   it "does macro [] with numbers (#3055)" do
     slice = Bytes[1, 2, 3]
     slice.should be_a(Bytes)
-    slice.to_a.should eq([1, 2, 3])
+    slice.should eq(Bytes[1, 2, 3])
   end
 
   it "does Bytes[]" do
@@ -547,7 +569,7 @@ describe "Slice" do
   it "reverses" do
     slice = Bytes[1, 2, 3]
     slice.reverse!
-    slice.to_a.should eq([3, 2, 1])
+    slice.should eq(Bytes[3, 2, 1])
   end
 
   it "shuffles" do

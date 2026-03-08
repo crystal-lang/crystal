@@ -396,15 +396,13 @@ module Crystal
 
     def add_type_info(vars, name, type, node)
       info = vars[name]?
-      unless info
-        info = TypeInfo.new(type, node.location.not_nil!)
-        info.outside_def = true if @outside_def
-        vars[name] = info
-      else
+      if info
         info.type = Type.merge!(type, info.type)
-        info.outside_def = true if @outside_def
-        vars[name] = info
+      else
+        info = TypeInfo.new(type, node.location.not_nil!)
       end
+      info.outside_def = true if @outside_def
+      vars[name] = info
     end
 
     def add_instance_var_type_info(vars, name, type : Type, node)
@@ -415,17 +413,14 @@ module Crystal
       end
 
       info = vars[name]?
-      unless info
-        info = InstanceVarTypeInfo.new(node.location.not_nil!, type)
-        info.outside_def = true if @outside_def
-        info.add_annotations(annotations) if annotations
-        vars[name] = info
-      else
+      if info
         info.type = Type.merge!(info.type, type)
-        info.outside_def = true if @outside_def
-        info.add_annotations(annotations) if annotations
-        vars[name] = info
+      else
+        info = InstanceVarTypeInfo.new(node.location.not_nil!, type)
       end
+      info.outside_def = true if @outside_def
+      info.add_annotations(annotations) if annotations
+      vars[name] = info
     end
 
     def guess_type(node : NumberLiteral)
@@ -740,6 +735,10 @@ module Crystal
     # method solves to a method with a type annotation
     # (use the type annotation)
     def guess_type_call_with_type_annotation(node : Call)
+      if node.global?
+        return guess_type_from_class_method(@program, node)
+      end
+
       obj = node.obj
       return nil unless obj
 
@@ -793,10 +792,10 @@ module Crystal
         # We can only infer the type if all overloads return
         # the same type (because we can't know the call
         # argument's type)
-        return_types = defs.map(&.return_type.not_nil!).uniq!
+        return_types = defs.map { |a_def| lookup_type?(a_def.return_type.not_nil!, obj_type) || return nil }.uniq!
         return unless return_types.size == 1
 
-        return lookup_type?(return_types[0], obj_type)
+        return return_types[0]
       end
 
       # If we only have one def, check the body, we might be

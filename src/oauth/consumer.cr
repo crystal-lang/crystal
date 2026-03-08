@@ -72,7 +72,7 @@ class OAuth::Consumer
   # [RFC 5849, Section 2.1](https://tools.ietf.org/html/rfc5849#section-2.1).
   #
   # Raises `OAuth::Error` if there was an error getting the request token.
-  def get_request_token(oauth_callback = "oob") # : RequestToken
+  def get_request_token(oauth_callback : String = "oob") : RequestToken
     post(nil, nil, {"oauth_callback" => oauth_callback}, @request_token_uri) do |response|
       RequestToken.from_response(response.body)
     end
@@ -81,7 +81,7 @@ class OAuth::Consumer
   # Returns an authorize URI from a given request token to redirect the user
   # to obtain an access token, as specified by
   # [RFC 5849, Section 2.2](https://tools.ietf.org/html/rfc5849#section-2.2).
-  def get_authorize_uri(request_token, oauth_callback = nil) : String
+  def get_authorize_uri(request_token : RequestToken, oauth_callback : String? = nil) : String
     get_authorize_uri(request_token, oauth_callback) { }
   end
 
@@ -91,7 +91,7 @@ class OAuth::Consumer
   #
   # Yields an `URI::Params::Builder` to add extra parameters other than those
   # defined by the standard.
-  def get_authorize_uri(request_token, oauth_callback = nil, &block : URI::Params::Builder ->) : String
+  def get_authorize_uri(request_token : RequestToken, oauth_callback : String? = nil, &block : URI::Params::Builder ->) : String
     uri = URI.parse(@authorize_uri)
 
     # Use the default URI if it's not an absolute one
@@ -116,7 +116,7 @@ class OAuth::Consumer
   # [RFC 5849, Section 2.3](https://tools.ietf.org/html/rfc5849#section-2.3).
   #
   # Raises `OAuth::Error` if there was an error getting the access token.
-  def get_access_token(request_token, oauth_verifier, extra_params = nil) : AccessToken
+  def get_access_token(request_token : RequestToken, oauth_verifier : String, extra_params : Hash(String, String)? = nil) : AccessToken
     extra_params ||= {} of String => String
     extra_params["oauth_verifier"] = oauth_verifier
     post(request_token.token, request_token.secret, extra_params, @access_token_uri) do |response|

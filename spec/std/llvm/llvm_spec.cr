@@ -2,6 +2,10 @@ require "spec"
 require "llvm"
 
 describe LLVM do
+  it ".version" do
+    LLVM.version.should eq LibLLVM::VERSION
+  end
+
   describe ".normalize_triple" do
     it "works" do
       LLVM.normalize_triple("x86_64-apple-macos").should eq("x86_64-apple-macos")

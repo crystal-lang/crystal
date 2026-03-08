@@ -1,0 +1,30 @@
+= crystal-init(1)
+:doctype: manpage
+:date: {localdate}
+:crystal_version: {crystal_version}
+:man manual: Crystal Compiler Command Line Reference Guide
+:man source: crystal {crystal_version}
+
+== Name
+crystal-init - Create a a new Crystal project
+
+== Synopsis
+*crystal init* TYPE [DIR | NAME DIR]
+
+== Description
+
+TYPE is one of:
+
+*lib*	 Creates a library skeleton +
+*app*	 Creates an application skeleton
+
+This initializes the lib/app project folder as a git repository, with a license file, a README file, a shard.yml for use with shards (the Crystal dependency manager), a .gitignore file, and src and spec folders.
+
+DIR  - directory where project will be generated
+
+NAME - name of project to be generated (default: basename of DIR)
+
+== Options
+
+*-f, --force*:: Force overwrite existing files.
+*-s, --skip-existing*:: Skip existing files.

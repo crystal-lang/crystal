@@ -14,12 +14,12 @@ describe "Semantic: while" do
   end
 
   it "types while with multiple breaks with value" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable union_of(char, tuple_of([string, int32])) }
       while 1
         break 'a' if 1
         break "", 123 if 1
       end
-      )) { nilable union_of(char, tuple_of([string, int32])) }
+      CRYSTAL
   end
 
   it "types endless while with break without value" do
@@ -31,12 +31,12 @@ describe "Semantic: while" do
   end
 
   it "types endless while with multiple breaks with value" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of(char, tuple_of([string, int32])) }
       while true
         break 'a' if 1
         break "", 123 if 1
       end
-      )) { union_of(char, tuple_of([string, int32])) }
+      CRYSTAL
   end
 
   it "reports break cannot be used outside a while" do
@@ -62,117 +62,117 @@ describe "Semantic: while" do
   end
 
   it "uses var type inside while if endless loop" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       a = nil
       while true
         a = 1
         break
       end
       a
-      )) { int32 }
+      CRYSTAL
   end
 
   it "uses var type inside while if endless loop (2)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       while true
         a = 1
         break
       end
       a
-      )) { int32 }
+      CRYSTAL
   end
 
   it "marks variable as nil if breaking before assigning to it in an endless loop" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { nilable int32 }
       a = nil
       while true
         break if 1 == 2
         a = 1
       end
       a
-      ), inject_primitives: true) { nilable int32 }
+      CRYSTAL
   end
 
   it "marks variable as nil if breaking before assigning to it in an endless loop (2)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { nilable int32 }
       while true
         break if 1 == 2
         a = 1
       end
       a
-      ), inject_primitives: true) { nilable int32 }
+      CRYSTAL
   end
 
   it "types while with && (#1425)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { nilable int32 }
       a = 1
       while a.is_a?(Int32) && (1 == 1)
         a = nil
       end
       a
-      ), inject_primitives: true) { nilable int32 }
+      CRYSTAL
   end
 
   it "types while with assignment" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       while a = 1
         break
       end
       a
-      )) { int32 }
+      CRYSTAL
   end
 
   it "types while with assignment and &&" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       while (a = 1) && (1 == 1)
         break
       end
       a
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "types while with assignment and call" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       while (a = 1) > 0
         break
       end
       a
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "doesn't modify var's type before while" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { union_of(int32, char) }
       x = 'x'
       x.ord
       while 1 == 2
         x = 1
       end
       x
-      ), inject_primitives: true) { union_of(int32, char) }
+      CRYSTAL
   end
 
   it "restricts type after while (#4242)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       a = nil
       while a.nil?
         a = 1
       end
       a
-      )) { int32 }
+      CRYSTAL
   end
 
   it "restricts type after while with not (#4242)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       a = nil
       while !a
         a = 1
       end
       a
-      )) { int32 }
+      CRYSTAL
   end
 
   it "restricts type after `while` with `not` and `and` (#4242)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of [int32, char] }
       a = nil
       b = nil
       while !(a && b)
@@ -180,11 +180,11 @@ describe "Semantic: while" do
         b = 'a'
       end
       {a, b}
-      )) { tuple_of [int32, char] }
+      CRYSTAL
   end
 
   it "doesn't restrict type after while if there's a break (#4242)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { nilable int32 }
       a = nil
       while a.nil?
         if 1 == 1
@@ -193,11 +193,11 @@ describe "Semantic: while" do
         a = 1
       end
       a
-      ), inject_primitives: true) { nilable int32 }
+      CRYSTAL
   end
 
   it "doesn't use type at end of endless while if variable is reassigned" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       while true
         a = 1
         if 1 == 1
@@ -206,11 +206,11 @@ describe "Semantic: while" do
         a = 'x'
       end
       a
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "doesn't use type at end of endless while if variable is reassigned (2)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       a = ""
       while true
         a = 1
@@ -220,11 +220,11 @@ describe "Semantic: while" do
         a = 'x'
       end
       a
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "doesn't use type at end of endless while if variable is reassigned (3)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { union_of(int32, char) }
       a = {1}
       while true
         a = a[0]
@@ -234,11 +234,11 @@ describe "Semantic: while" do
         a = {'x'}
       end
       a
-      ), inject_primitives: true) { union_of(int32, char) }
+      CRYSTAL
   end
 
   it "uses type at end of endless while if variable is reassigned, but not before first break" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { nilable union_of(int32, char) }
       while true
         if 1 == 1
           break
@@ -250,11 +250,11 @@ describe "Semantic: while" do
         a = 'x'
       end
       a
-      ), inject_primitives: true) { nilable union_of(int32, char) }
+      CRYSTAL
   end
 
   it "uses type at end of endless while if variable is reassigned, but not before first break (2)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { union_of(int32, char, string) }
       a = ""
       while true
         if 1 == 1
@@ -267,11 +267,11 @@ describe "Semantic: while" do
         a = 'x'
       end
       a
-      ), inject_primitives: true) { union_of(int32, char, string) }
+      CRYSTAL
   end
 
   it "rebinds condition variable after while body (#6158)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { nilable types["Foo"] }
       class Foo
         @parent : self?
 
@@ -295,11 +295,11 @@ describe "Semantic: while" do
         break if 1 == 1
       end
       b
-      ), inject_primitives: true) { nilable types["Foo"] }
+      CRYSTAL
   end
 
   it "doesn't type var as nilable after break inside rescue" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       while true
         begin
           foo = 1
@@ -308,11 +308,11 @@ describe "Semantic: while" do
         end
       end
       foo
-      )) { int32 }
+      CRYSTAL
   end
 
   it "types variable as nilable if raise before assign" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable int32 }
       require "prelude"
 
       while true
@@ -324,30 +324,30 @@ describe "Semantic: while" do
         break
       end
       foo
-      )) { nilable int32 }
+      CRYSTAL
   end
 
   it "finds while cond assign target in Not (#10345)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       while !(x = 1 || nil)
       end
       x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "finds all while cond assign targets in expressions (#10350)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       a = 1
       while ((b = 1); a)
         a = nil
         b = "hello"
       end
       b
-      )) { int32 }
+      CRYSTAL
   end
 
   it "finds all while cond assign targets in expressions (2)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of [int32, int32] }
       def foo(x, y)
         true ? 1 : nil
       end
@@ -358,49 +358,49 @@ describe "Semantic: while" do
       end
 
       {a, b}
-      )) { tuple_of [int32, int32] }
+      CRYSTAL
   end
 
   it "finds all while cond assign targets in expressions (3)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { nilable union_of(int32, char) }
       while 1 == 1 ? (x = 1; 1 == 1) : false
         x = 'a'
       end
       x
-      ), inject_primitives: true) { nilable union_of(int32, char) }
+      CRYSTAL
   end
 
   it "finds all while cond assign targets in expressions (4)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { union_of(int32, char, string) }
       x = ""
       while 1 == 1 ? (x = 1; 1 == 1) : false
         x = 'a'
       end
       x
-      ), inject_primitives: true) { union_of(int32, char, string) }
+      CRYSTAL
   end
 
   it "finds all while cond assign targets in expressions (5)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { nilable union_of(int32, char) }
       while 1 == 1 ? (x = 1; 1 == 1) : false
         x
         x = 'a'
       end
       x
-      ), inject_primitives: true) { nilable union_of(int32, char) }
+      CRYSTAL
   end
 
   it "finds all while cond assign targets in expressions (6)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { tuple_of [int32, int32] }
        while (x = true ? (y = 1) : 1; y = x; 1 == 1)
          x = 'a'
        end
        {x, y}
-      ), inject_primitives: true) { tuple_of [int32, int32] }
+       CRYSTAL
   end
 
   it "doesn't fail on new variables inside typeof condition" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable string }
       def foo
         while typeof(x = 1)
           return ""
@@ -408,11 +408,11 @@ describe "Semantic: while" do
       end
 
       foo
-      )) { nilable string }
+      CRYSTAL
   end
 
   it "doesn't fail on nested conditionals inside typeof condition" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable string }
       def foo
         while typeof(1 || 'a')
           return ""
@@ -420,11 +420,11 @@ describe "Semantic: while" do
       end
 
       foo
-      )) { nilable string }
+      CRYSTAL
   end
 
   it "doesn't fail on Expressions condition (1)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of int32.metaclass, char }
       def foo
         while (v = 1; true)
           return typeof(v)
@@ -433,11 +433,11 @@ describe "Semantic: while" do
       end
 
       foo
-      )) { union_of int32.metaclass, char }
+      CRYSTAL
   end
 
   it "doesn't fail on Expressions condition (2)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of nil_type.metaclass, char }
       def foo
         while (v = nil; true)
           return typeof(v)
@@ -446,6 +446,30 @@ describe "Semantic: while" do
       end
 
       foo
-      )) { union_of nil_type.metaclass, char }
+      CRYSTAL
+  end
+
+  it "doesn't modify variables unchanged in condition and body" do
+    assert_no_errors <<-CRYSTAL
+      abstract class Base; end
+
+      class A < Base; end
+
+      class B < Base; end
+
+      class C < Base; end
+
+      def foo(x : A | B)
+      end
+
+      el = A.new.as(Base)
+      if el.is_a?(A) || el.is_a?(B)
+        while false
+          break
+        end
+
+        foo(el)
+      end
+      CRYSTAL
   end
 end

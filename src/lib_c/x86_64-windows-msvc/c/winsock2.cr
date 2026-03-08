@@ -3,7 +3,7 @@ require "./basetsd"
 require "./guiddef"
 require "./winbase"
 
-@[Link("WS2_32")]
+@[Link("ws2_32")]
 lib LibC
   alias SOCKET = UINT_PTR
 

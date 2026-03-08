@@ -56,7 +56,7 @@ module Reply
     # If closed, do nothing.
     #
     # Returns the actual displayed height.
-    def display_entries(io, color? = true, width = Term::Size.width, max_height = 10, min_height = 0) : Int32 # ameba:disable Metrics/CyclomaticComplexity
+    def display_entries(io, color = true, width = Term::Size.width, max_height = 10, min_height = 0) : Int32 # ameba:disable Metrics/CyclomaticComplexity
       if cleared?
         min_height.times { io.puts }
         return min_height
@@ -68,7 +68,7 @@ module Reply
       height = 0
 
       # Print title:
-      if color?
+      if color
         @display_title.call(io, @title)
       else
         io << @title << ":"
@@ -116,7 +116,7 @@ module Reply
 
           if r + c*nb_rows == @selection_pos
             # Colorize selection:
-            if color?
+            if color
               @display_selected_entry.call(io, entry_str)
             else
               io << ">" + entry_str[...-1] # if no color, remove last spaces to let place to '*'.
@@ -124,7 +124,7 @@ module Reply
           else
             # Display entry_str, with @name_filter prefix in bright:
             unless entry.empty?
-              if color?
+              if color
                 io << @display_entry.call(io, @name_filter, entry_str.lchop(@name_filter))
               else
                 io << entry_str
@@ -132,7 +132,7 @@ module Reply
             end
           end
         end
-        io << Term::Cursor.clear_line_after if color?
+        io << Term::Cursor.clear_line_after if color
         io.puts
       end
 

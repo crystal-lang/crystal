@@ -3,26 +3,32 @@
 
 # Return list of options, that match $pattern
 _crystal_compgen_options(){
-    local IFS=$' \n'
     local options=$1
     local pattern=$2
-    COMPREPLY=( $(compgen -W "${options}" -- "${pattern}") )
+
+    while IFS=$' \n' read -r line; do
+        COMPREPLY+=("$line")
+    done < <(compgen -W "${options}" -- "${pattern}")
 }
 
 # Return list of crystal sources or directories, that match $pattern
 _crystal_compgen_sources(){
-    local IFS=$'\n'
     local pattern=$1
+
     type compopt &> /dev/null && compopt -o filenames
-    COMPREPLY=( $(compgen -f -o plusdirs -X '!*.cr' -- "${pattern}") )
+    while IFS=$'\n' read -r line; do
+        COMPREPLY+=("$line")
+    done < <(compgen -f -o plusdirs -X '!*.cr' -- "${pattern}")
 }
 
 # Return list of files or directories, that match $pattern (the default action)
 _crystal_compgen_files(){
-    local IFS=$'\n'
     local pattern=$1
+
     type compopt &> /dev/null && compopt -o filenames
-    COMPREPLY=( $(compgen -o default -- "${pattern}") )
+    while IFS=$'\n' read -r line; do
+        COMPREPLY+=("$line")
+    done < <(compgen -o default -- "${pattern}")
 }
 
 _crystal()
@@ -32,6 +38,7 @@ _crystal()
     local cmd=${COMP_WORDS[1]}
     local cur="${COMP_WORDS[COMP_CWORD]}"
     local prev="${COMP_WORDS[COMP_CWORD-1]}"
+    COMPREPLY=()
 
     commands="init build clear_cache docs eval play run spec tool help version --help --version"
 
@@ -46,7 +53,7 @@ _crystal()
             ;;
         build)
             if [[ "${cur}" == -* ]] ; then
-                local opts="--cross-compile --debug --emit --error-on-warnings --exclude-warnings --ll --link-flags --mcpu --no-color --no-codegen --prelude --release --single-module --threads --target --verbose --warnings --help"
+                local opts="--cross-compile --debug --emit --error-on-warnings --exclude-warnings --ll --link-flags --mcpu --no-color --no-codegen --output --prelude --release --single-module --threads --target --verbose --warnings --x86-asm-syntax --help"
                 _crystal_compgen_options "${opts}" "${cur}"
             else
                 _crystal_compgen_sources "${cur}"
@@ -54,7 +61,7 @@ _crystal()
             ;;
         run)
             if [[ "${cur}" == -* ]] ; then
-                local opts="--debug --define --emit --error-on-warnings --exclude-warnings --format --help --ll --link-flags --mcpu --no-color --no-codegen --prelude --release --stats --single-module --threads --verbose --warnings"
+                local opts="--debug --define --emit --error-on-warnings --exclude-warnings --format --help --ll --link-flags --mcpu --no-color --no-codegen --output --prelude --release --stats --single-module --threads --verbose --warnings --x86-asm-syntax"
                 _crystal_compgen_options "${opts}" "${cur}"
             else
                 _crystal_compgen_sources "${cur}"
@@ -66,7 +73,7 @@ _crystal()
                 _crystal_compgen_options "${opts}" "${cur}"
             else
                 if [[ "${prev}" == "tool" ]] ; then
-                    local subcommands="context dependencies expand flags format hierarchy implementations types unreachable"
+                    local subcommands="context dependencies expand flags format hierarchy implementations macro_code_coverage types unreachable"
                     _crystal_compgen_options "${subcommands}" "${cur}"
                 else
                     _crystal_compgen_sources "${cur}"

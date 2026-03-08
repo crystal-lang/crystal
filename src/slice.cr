@@ -119,7 +119,8 @@ struct Slice(T)
   # slice # => Slice[10, 10, 10]
   # ```
   def self.new(size : Int, value : T, *, read_only = false)
-    new(size, read_only: read_only) { value }
+    pointer = Pointer(T).malloc(size, value)
+    new(pointer, size, read_only: read_only)
   end
 
   # Returns a deep copy of this slice.
@@ -358,7 +359,7 @@ struct Slice(T)
   # :inherit:
   #
   # Raises if this slice is read-only.
-  def shuffle!(random : Random = Random::DEFAULT) : self
+  def shuffle!(random : Random? = nil) : self
     check_writable
     super
   end
@@ -445,19 +446,9 @@ struct Slice(T)
   def fill(value : T) : self
     check_writable
 
-    {% if T == UInt8 %}
-      Intrinsics.memset(to_unsafe.as(Void*), value, size, false)
-      self
-    {% else %}
-      {% if Number::Primitive.union_types.includes?(T) %}
-        if value == 0
-          to_unsafe.clear(size)
-          return self
-        end
-      {% end %}
+    to_unsafe.fill(size, value)
 
-      fill { value }
-    {% end %}
+    self
   end
 
   # :inherit:
@@ -825,6 +816,9 @@ struct Slice(T)
   # Bytes[1, 2] <=> Bytes[1, 2] # => 0
   # ```
   def <=>(other : Slice(U)) forall U
+    # If both slices are identical references, we can skip the memory comparison.
+    return 0 if same?(other)
+
     min_size = Math.min(size, other.size)
     {% if T == UInt8 && U == UInt8 %}
       cmp = to_unsafe.memcmp(other.to_unsafe, min_size)
@@ -847,7 +841,12 @@ struct Slice(T)
   # Bytes[1, 2] == Bytes[1, 2, 3] # => false
   # ```
   def ==(other : Slice(U)) : Bool forall U
+    # If both slices are of different sizes, they cannot be equal.
     return false if size != other.size
+
+    # If both slices are identical references, we can skip the memory comparison.
+    # Not using `same?` here because we have already compared sizes.
+    return true if to_unsafe == other.to_unsafe
 
     {% if T == UInt8 && U == UInt8 %}
       to_unsafe.memcmp(other.to_unsafe, size) == 0

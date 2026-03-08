@@ -128,16 +128,8 @@ module Crystal
 
     def create_debug_type(type : EnumType, original_type : Type)
       elements = type.types.map do |name, item|
-        str_value = item.as?(Const).try &.value.as?(NumberLiteral).try &.value
-
-        value =
-          if type.base_type.kind.unsigned_int?
-            str_value.try(&.to_u64?) || 0_u64
-          else
-            str_value.try(&.to_i64?) || 0_i64
-          end
-
-        di_builder.create_enumerator(name, value)
+        value = item.as?(Const).try &.value.as?(NumberLiteral).try &.integer_value
+        di_builder.create_enumerator(name, value || 0)
       end
 
       size_in_bits = type.base_type.kind.bytesize
@@ -329,9 +321,9 @@ module Crystal
       end
     end
 
-    def declare_variable(var_name, var_type, alloca, location, basic_block : LLVM::BasicBlock? = nil)
+    def declare_variable(var_name, var_type, alloca, location, basic_block : LLVM::BasicBlock? = nil, offset : Int = 0)
       return false unless @debug.variables?
-      declare_local(var_type, alloca, location, basic_block) do |scope, file, line_number, debug_type|
+      declare_local(var_type, alloca, location, basic_block, offset) do |scope, file, line_number, debug_type|
         di_builder.create_auto_variable scope, var_name, file, line_number, debug_type, align_of(var_type)
       end
     end
@@ -340,7 +332,11 @@ module Crystal
       @program.target_machine.data_layout.abi_alignment(llvm_type(type)) * 8
     end
 
-    private def declare_local(type, alloca, location, basic_block : LLVM::BasicBlock? = nil, &)
+    # see also the other DWARF enums in `crystal/dwarf/abbrev.cr` (note that
+    # LLVM defines several custom opcodes outside the user extension range)
+    DW_OP_plus_uconst = 0x23
+
+    private def declare_local(type, alloca, location, basic_block : LLVM::BasicBlock? = nil, offset : Int = 0, &)
       location = location.try &.expanded_location
       return false unless location
 
@@ -354,7 +350,18 @@ module Crystal
       return false unless scope
 
       var = yield scope, file, location.line_number, debug_type
-      expr = di_builder.create_expression(nil, 0)
+
+      if offset != 0
+        expr =
+          {% if LibLLVM::IS_LT_140 %}
+            di_builder.create_expression(Int64.static_array(DW_OP_plus_uconst, offset), 2)
+          {% else %}
+            di_builder.create_expression(UInt64.static_array(DW_OP_plus_uconst, offset), 2)
+          {% end %}
+      else
+        expr = di_builder.create_expression(nil, 0)
+      end
+
       if basic_block
         block = basic_block
       else
@@ -363,16 +370,6 @@ module Crystal
       old_debug_location = @current_debug_location
       set_current_debug_location location
       if builder.current_debug_location != llvm_nil && (ptr = alloca)
-        # FIXME: When debug records are used instead of debug intrinsics, it
-        # seems inserting them into an empty BasicBlock will instead place them
-        # in a totally different (next?) function where the variable doesn't
-        # exist, leading to a "function-local metadata used in wrong function"
-        # validation error. This might happen when e.g. all variables inside a
-        # block are closured. Ideally every debug record should immediately
-        # follow the variable it declares.
-        {% unless LibLLVM::IS_LT_190 %}
-          call(do_nothing_fun) if block.instructions.empty?
-        {% end %}
         di_builder.insert_declare_at_end(ptr, var, expr, builder.current_debug_location_metadata, block)
         set_current_debug_location old_debug_location
         true

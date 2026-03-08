@@ -27,7 +27,7 @@ class CSV::Parser
   end
 
   # Returns an `Iterator` of `Array(String)` for the remaining rows.
-  def each_row
+  def each_row : Iterator(Array(String))
     RowIterator.new(self)
   end
 

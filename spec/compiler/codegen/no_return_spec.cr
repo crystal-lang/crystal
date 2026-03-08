@@ -10,7 +10,7 @@ describe "Code gen: no return" do
   end
 
   it "codegens if with no return and variable used afterwards" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       require "prelude"
 
       lib LibC
@@ -19,11 +19,11 @@ describe "Code gen: no return" do
 
       if (a = LibC.exit2) && a.size == 3
       end
-      ))
+      CRYSTAL
   end
 
   it "codegen types exception handler as NoReturn if ensure is NoReturn" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       require "prelude"
 
       lib LibC
@@ -35,18 +35,18 @@ describe "Code gen: no return" do
       ensure
         LibC.foo
       end
-      ))
+      CRYSTAL
   end
 
   it "codegens no return variable declaration (#1508)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       foo = uninitialized NoReturn
       1
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens no return instance variable declaration (#1508)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Foo
         def initialize
           @foo = uninitialized NoReturn
@@ -59,11 +59,11 @@ describe "Code gen: no return" do
       end
 
       Foo.new.x
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens call with no return because of falsey if (#3661)" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       lib LibC
         fun exit(Int32) : NoReturn
       end
@@ -79,14 +79,14 @@ describe "Code gen: no return" do
       foo do |x|
         LibC.exit(0) unless false
       end
-      ))
+      CRYSTAL
   end
 
   it "codegens untyped typeof (#5105)" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       require "prelude"
 
       typeof(raise("").foo)
-      ))
+      CRYSTAL
   end
 end

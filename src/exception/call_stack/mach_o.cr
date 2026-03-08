@@ -11,6 +11,9 @@ struct Exception::CallStack
 
   protected def self.load_debug_info_impl : Nil
     read_dwarf_sections
+  rescue ex
+    @@dwarf_line_numbers = nil
+    @@dwarf_function_names = nil
   end
 
   protected def self.read_dwarf_sections : Nil
@@ -27,14 +30,24 @@ struct Exception::CallStack
         @@dwarf_line_numbers = Crystal::DWARF::LineNumbers.new(io, sh.size, strings: strings, line_strings: line_strings)
       end
 
+      abbrevs_tables = mach_o.read_section?("__debug_abbrev") do |sh, io|
+        all = {} of Int64 => Array(Crystal::DWARF::Abbrev)
+        while (offset = io.pos - sh.offset) < sh.size
+          all[offset] = Crystal::DWARF::Abbrev.read(io)
+        end
+        all
+      end
+
       mach_o.read_section?("__debug_info") do |sh, io|
         names = [] of {LibC::SizeT, LibC::SizeT, String}
 
         while (offset = io.pos - sh.offset) < sh.size
           info = Crystal::DWARF::Info.new(io, offset)
 
-          mach_o.read_section?("__debug_abbrev") do |sh, io|
-            info.read_abbreviations(io)
+          if abbrevs_tables
+            if abbreviations = abbrevs_tables[info.debug_abbrev_offset]?
+              info.abbreviations = abbreviations
+            end
           end
 
           parse_function_names_from_dwarf(info, strings, line_strings) do |low_pc, high_pc, name|

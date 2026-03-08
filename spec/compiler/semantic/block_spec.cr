@@ -2,28 +2,28 @@ require "../../spec_helper"
 
 describe "Block inference" do
   it "infer type of empty block body" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { nil_type }
       def foo; yield; end
 
       foo do
       end
-    ") { nil_type }
+      CRYSTAL
   end
 
   it "infer type of block body" do
-    input = parse("
+    input = parse(<<-CRYSTAL).as(Expressions)
       def foo; yield; end
 
       foo do
         x = 1
       end
-    ").as(Expressions)
+      CRYSTAL
     result = semantic input
     input.last.as(Call).block.not_nil!.body.type.should eq(result.program.int32)
   end
 
   it "infer type of block parameter" do
-    input = parse("
+    input = parse(<<-CRYSTAL).as(Expressions)
       def foo
         yield 1
       end
@@ -31,14 +31,14 @@ describe "Block inference" do
       foo do |x|
         1
       end
-    ").as(Expressions)
+      CRYSTAL
     result = semantic input
     mod = result.program
     input.last.as(Call).block.not_nil!.args[0].type.should eq(mod.int32)
   end
 
   it "infer type of local variable" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { union_of(char, int32) }
       def foo
         yield 1
       end
@@ -48,11 +48,11 @@ describe "Block inference" do
         y = x
       end
       y
-    ") { union_of(char, int32) }
+      CRYSTAL
   end
 
   it "infer type of yield" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       def foo
         yield
       end
@@ -60,19 +60,19 @@ describe "Block inference" do
       foo do
         1
       end
-    ") { int32 }
+      CRYSTAL
   end
 
   it "infer type with union" do
-    assert_type("
-      require \"prelude\"
+    assert_type(<<-CRYSTAL) { union_of(array_of(int32), array_of(float64)) }
+      require "prelude"
       a = [1] || [1.1]
       a.tap { |x| x }
-    ") { union_of(array_of(int32), array_of(float64)) }
+      CRYSTAL
   end
 
   it "uses block arg, too many parameters" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "too many block parameters (given 1, expected maximum 0)"
       def foo
         yield
       end
@@ -80,12 +80,11 @@ describe "Block inference" do
       foo do |x|
         x
       end
-      ),
-      "too many block parameters (given 1, expected maximum 0)"
+      CRYSTAL
   end
 
   it "yields with different types" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of(int32, char) }
       def foo
         yield 1
         yield 'a'
@@ -94,30 +93,30 @@ describe "Block inference" do
       foo do |x|
         x
       end
-      )) { union_of(int32, char) }
+      CRYSTAL
   end
 
   it "break from block without value" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { nil_type }
       def foo; yield; end
 
       foo do
         break
       end
-    ") { nil_type }
+      CRYSTAL
   end
 
   it "break without value has nil type" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { nilable int32 }
       def foo; yield; 1; end
       foo do
         break if false
       end
-    ") { nilable int32 }
+      CRYSTAL
   end
 
   it "infers type of block before call" do
-    result = assert_type("
+    result = assert_type(<<-CRYSTAL) { generic_class "Foo", float64 }
       struct Int32
         def foo
           10.5
@@ -135,7 +134,7 @@ describe "Block inference" do
       end
 
       bar { |x| x.foo }
-      ") { generic_class "Foo", float64 }
+      CRYSTAL
     mod = result.program
     type = result.node.type.as(GenericClassInstanceType)
     type.type_vars["T"].type.should eq(mod.float64)
@@ -143,7 +142,7 @@ describe "Block inference" do
   end
 
   it "infers type of block before call taking other args free vars into account" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { generic_class "Foo", float64 }
       class Foo(X)
         def initialize(x : X)
           @x = x
@@ -157,33 +156,31 @@ describe "Block inference" do
       a = foo(1) do |x|
         10.5
       end
-      ") { generic_class "Foo", float64 }
+      CRYSTAL
   end
 
   it "reports error if yields a type that's not that one in the block specification" do
-    assert_error "
+    assert_error <<-CRYSTAL, "argument #1 of yield expected to be Int32, not Float64"
       def foo(&block: Int32 -> )
         yield 10.5
       end
 
       foo {}
-      ",
-      "argument #1 of yield expected to be Int32, not Float64"
+      CRYSTAL
   end
 
   it "reports error if yields a type that's not that one in the block specification" do
-    assert_error "
+    assert_error <<-CRYSTAL, "argument #1 of yield expected to be Int32, not (Float64 | Int32)"
       def foo(&block: Int32 -> )
         yield (1 || 1.5)
       end
 
       foo {}
-      ",
-      "argument #1 of yield expected to be Int32, not (Float64 | Int32)"
+      CRYSTAL
   end
 
   it "reports error if yields a type that later changes and that's not that one in the block specification" do
-    assert_error "
+    assert_error <<-CRYSTAL, "argument #1 of yield expected to be Int32, not (Float64 | Int32)"
       def foo(&block: Int32 -> )
         a = 1
         while true
@@ -193,45 +190,41 @@ describe "Block inference" do
       end
 
       foo {}
-      ",
-      "argument #1 of yield expected to be Int32, not (Float64 | Int32)"
+      CRYSTAL
   end
 
   it "reports error if missing arguments to yield" do
-    assert_error "
+    assert_error <<-CRYSTAL, "wrong number of yield arguments (given 1, expected 2)"
       def foo(&block: Int32, Int32 -> )
         yield 1
       end
 
       foo { |x| x }
-      ",
-      "wrong number of yield arguments (given 1, expected 2)"
+      CRYSTAL
   end
 
   it "reports error if block didn't return expected type" do
-    assert_error "
+    assert_error <<-CRYSTAL, "expected block to return Float64, not Char"
       def foo(&block: Int32 -> Float64)
         yield 1
       end
 
       foo { 'a' }
-      ",
-      "expected block to return Float64, not Char"
+      CRYSTAL
   end
 
   it "reports error if block type doesn't match" do
-    assert_error "
+    assert_error <<-CRYSTAL, "expected block to return Float64, not (Float64 | Int32)"
       def foo(&block: Int32 -> Float64)
         yield 1
       end
 
       foo { 1 || 1.5 }
-      ",
-      "expected block to return Float64, not (Float64 | Int32)"
+      CRYSTAL
   end
 
   it "reports error if block changes type" do
-    assert_error "
+    assert_error <<-CRYSTAL, "type must be Float64"
       def foo(&block: Int32 -> Float64)
         yield 1
       end
@@ -241,12 +234,11 @@ describe "Block inference" do
         foo { a }
         a = 1
       end
-      ",
-      "type must be Float64"
+      CRYSTAL
   end
 
   it "reports error on method instantiate (#4543)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected block to return Int32, not UInt32"
       class Foo
         @foo = 42
 
@@ -256,12 +248,11 @@ describe "Block inference" do
       end
 
       Foo.new { 42u32 }
-      ),
-      "expected block to return Int32, not UInt32"
+      CRYSTAL
   end
 
   it "matches block arg return type" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { generic_class "Foo", float64 }
       class Foo(T)
       end
 
@@ -271,11 +262,11 @@ describe "Block inference" do
       end
 
       foo { Foo(Float64).new }
-      ") { generic_class "Foo", float64 }
+      CRYSTAL
   end
 
   it "infers type of block with generic type" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { float64 }
       class Foo(T)
       end
 
@@ -286,11 +277,11 @@ describe "Block inference" do
       foo do |x|
         10.5
       end
-      ") { float64 }
+      CRYSTAL
   end
 
   it "infer type with self block arg" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { nilable types["Foo"] }
       class Foo
         def foo(&block : self -> )
           yield self
@@ -303,11 +294,11 @@ describe "Block inference" do
         a = x
       end
       a
-      ") { nilable types["Foo"] }
+      CRYSTAL
   end
 
   it "error with self input type doesn't match" do
-    assert_error "
+    assert_error <<-CRYSTAL, "argument #1 of yield expected to be Foo, not Int32"
       class Foo
         def foo(&block : self -> )
           yield 1
@@ -316,12 +307,11 @@ describe "Block inference" do
 
       f = Foo.new
       f.foo {}
-      ",
-      "argument #1 of yield expected to be Foo, not Int32"
+      CRYSTAL
   end
 
   it "error with self output type doesn't match" do
-    assert_error "
+    assert_error <<-CRYSTAL, "expected block to return Foo, not Int32"
       class Foo
         def foo(&block : Int32 -> self )
           yield 1
@@ -330,8 +320,7 @@ describe "Block inference" do
 
       f = Foo.new
       f.foo { 1 }
-      ",
-      "expected block to return Foo, not Int32"
+      CRYSTAL
   end
 
   it "errors when using local variable with block parameter name" do
@@ -340,18 +329,18 @@ describe "Block inference" do
   end
 
   it "types empty block" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { nil_type }
       def foo
         ret = yield
         ret
       end
 
       foo { }
-    ") { nil_type }
+      CRYSTAL
   end
 
   it "preserves type filters in block" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { char }
       class Foo
         def bar
           'a'
@@ -370,12 +359,12 @@ describe "Block inference" do
       else
         'b'
       end
-      ") { char }
+      CRYSTAL
   end
 
   it "checks block type with virtual type" do
-    assert_type("
-      require \"prelude\"
+    assert_type(<<-CRYSTAL) { int32 }
+      require "prelude"
 
       class Foo
       end
@@ -389,12 +378,12 @@ describe "Block inference" do
       a.map { |x| x.to_s }
 
       1
-      ") { int32 }
+      CRYSTAL
   end
 
   it "maps block of union types to union types" do
-    assert_type("
-      require \"prelude\"
+    assert_type(<<-CRYSTAL) { array_of(union_of(types["Foo1"].virtual_type, types["Foo2"].virtual_type)) }
+      require "prelude"
 
       class Foo1
       end
@@ -410,31 +399,31 @@ describe "Block inference" do
 
       a = [Foo1.new, Foo2.new, Bar1.new, Bar2.new]
       a.map { |x| x }
-      ") { array_of(union_of(types["Foo1"].virtual_type, types["Foo2"].virtual_type)) }
+      CRYSTAL
   end
 
   it "does next from block without value" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { nil_type }
       def foo; yield; end
 
       foo do
         next
       end
-    ") { nil_type }
+      CRYSTAL
   end
 
   it "does next from block with value" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       def foo; yield; end
 
       foo do
         next 1
       end
-    ") { int32 }
+      CRYSTAL
   end
 
   it "does next from block with value 2" do
-    assert_type("
+    assert_type(<<-CRYSTAL, inject_primitives: true) { union_of(int32, bool) }
       def foo; yield; end
 
       foo do
@@ -443,11 +432,11 @@ describe "Block inference" do
         end
         false
       end
-    ", inject_primitives: true) { union_of(int32, bool) }
+      CRYSTAL
   end
 
   it "ignores block parameter if not used" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       def foo(&block)
         yield 1
       end
@@ -455,11 +444,11 @@ describe "Block inference" do
       foo do |x|
         x + 1
       end
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "allows yielding multiple types when a union is expected" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { array_of(float64) }
       require "prelude"
 
       class Foo
@@ -473,11 +462,11 @@ describe "Block inference" do
 
       foo = Foo.new
       foo.map &.to_f
-      )) { array_of(float64) }
+      CRYSTAL
   end
 
   it "allows initialize with yield (#224)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       class Foo
         @x : Int32
 
@@ -494,11 +483,11 @@ describe "Block inference" do
         a + 1
       end
       foo.x
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "passes #233: block with initialize with default args" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Foo"] }
       class Foo
         def initialize(x = nil)
           yield
@@ -506,11 +495,11 @@ describe "Block inference" do
       end
 
       Foo.new {}
-      )) { types["Foo"] }
+      CRYSTAL
   end
 
   it "errors if declares def inside block" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't declare def dynamically"
       def foo
         yield
       end
@@ -519,12 +508,11 @@ describe "Block inference" do
         def bar
         end
       end
-      ),
-      "can't declare def dynamically"
+      CRYSTAL
   end
 
   it "errors if declares macro inside block" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't declare macro dynamically"
       def foo
         yield
       end
@@ -533,12 +521,11 @@ describe "Block inference" do
         macro bar
         end
       end
-      ),
-      "can't declare macro dynamically"
+      CRYSTAL
   end
 
   it "errors if declares fun inside block" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't declare fun dynamically"
       def foo
         yield
       end
@@ -547,12 +534,11 @@ describe "Block inference" do
         fun bar : Int32
         end
       end
-      ),
-      "can't declare fun dynamically"
+      CRYSTAL
   end
 
   it "errors if declares class inside block" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't declare class dynamically"
       def foo
         yield
       end
@@ -561,12 +547,11 @@ describe "Block inference" do
         class Foo
         end
       end
-      ),
-      "can't declare class dynamically"
+      CRYSTAL
   end
 
   it "errors if declares module inside block" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't declare module dynamically"
       def foo
         yield
       end
@@ -575,12 +560,11 @@ describe "Block inference" do
         module Foo
         end
       end
-      ),
-      "can't declare module dynamically"
+      CRYSTAL
   end
 
   it "errors if declares lib inside block" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't declare lib dynamically"
       def foo
         yield
       end
@@ -589,12 +573,11 @@ describe "Block inference" do
         lib LibFoo
         end
       end
-      ),
-      "can't declare lib dynamically"
+      CRYSTAL
   end
 
   it "errors if declares alias inside block" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't declare alias dynamically"
       def foo
         yield
       end
@@ -602,12 +585,11 @@ describe "Block inference" do
       foo do
         alias A = Int32
       end
-      ),
-      "can't declare alias dynamically"
+      CRYSTAL
   end
 
   it "errors if declares include inside block" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't include dynamically"
       def foo
         yield
       end
@@ -615,12 +597,11 @@ describe "Block inference" do
       foo do
         include Int32
       end
-      ),
-      "can't include dynamically"
+      CRYSTAL
   end
 
   it "errors if declares extend inside block" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't extend dynamically"
       def foo
         yield
       end
@@ -628,12 +609,11 @@ describe "Block inference" do
       foo do
         extend Int32
       end
-      ),
-      "can't extend dynamically"
+      CRYSTAL
   end
 
   it "errors if declares enum inside block" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't declare enum dynamically"
       def foo
         yield
       end
@@ -643,12 +623,11 @@ describe "Block inference" do
           A
         end
       end
-      ),
-      "can't declare enum dynamically"
+      CRYSTAL
   end
 
   it "allows alias as block fun type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       alias Alias = Int32 -> Int32
 
       def foo(&block : Alias)
@@ -658,11 +637,11 @@ describe "Block inference" do
       foo do |x|
         x + 1
       end
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "errors if alias is not a fun type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expected block type to be a function type, not Int32"
       alias Alias = Int32
 
       def foo(&block : Alias)
@@ -672,31 +651,30 @@ describe "Block inference" do
       foo do |x|
         x + 1
       end
-      ),
-      "expected block type to be a function type, not Int32"
+      CRYSTAL
   end
 
   it "errors if proc is not instantiated" do
-    assert_error <<-CR, "can't create an instance of generic class Proc(*T, R) without specifying its type vars"
+    assert_error <<-CRYSTAL, "can't create an instance of generic class Proc(*T, R) without specifying its type vars"
       def capture(&block : Proc)
         block
       end
 
       capture { }
-      CR
+      CRYSTAL
   end
 
   it "passes #262" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { array_of(bool) }
       require "prelude"
 
       h = {} of String => Int32
       h.map { true }
-      )) { array_of(bool) }
+      CRYSTAL
   end
 
   it "allows invoking method on a object of a captured block with a type that was never instantiated" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { proc_of(types["Bar"], void) }
       require "prelude"
 
       class Bar
@@ -719,11 +697,11 @@ describe "Block inference" do
       foo do |bar|
         method(bar).baz
       end
-      )) { proc_of(types["Bar"], void) }
+      CRYSTAL
   end
 
   it "types bug with yield not_nil! that is never not nil" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { nilable(int32) }
       lib LibC
         fun exit : NoReturn
       end
@@ -746,11 +724,11 @@ describe "Block inference" do
       end
 
       extra
-      ), inject_primitives: true) { nilable(int32) }
+      CRYSTAL
   end
 
   it "ignores void return type (#427)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nil_type }
       lib Fake
         fun foo(func : -> Void)
       end
@@ -762,11 +740,11 @@ describe "Block inference" do
       foo do
         1
       end
-      )) { nil_type }
+      CRYSTAL
   end
 
   it "ignores void return type (2) (#427)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       def foo(&block : Int32 -> Void)
         yield 1
       end
@@ -774,11 +752,11 @@ describe "Block inference" do
       foo do
         1
       end
-      )) { int32 }
+      CRYSTAL
   end
 
   it "ignores void return type (3) (#427)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       alias Alias = Int32 -> Void
 
       def foo(&block : Alias)
@@ -788,11 +766,11 @@ describe "Block inference" do
       foo do
         1
       end
-      )) { int32 }
+      CRYSTAL
   end
 
   it "ignores void return type (4)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       alias Alias = Void
 
       def foo(&block : -> Alias)
@@ -802,11 +780,11 @@ describe "Block inference" do
       foo do
         1
       end
-      )) { int32 }
+      CRYSTAL
   end
 
   it "uses block return type as return type, even if can't infer block type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       class Foo
         def initialize(@foo : Int32)
         end
@@ -827,11 +805,11 @@ describe "Block inference" do
       foo = Foo.new(100)
       block = f.call(foo)
       block.call
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "uses block var with same name as local var" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       def foo
         yield true
       end
@@ -841,11 +819,11 @@ describe "Block inference" do
         a
       end
       a
-      )) { int32 }
+      CRYSTAL
   end
 
   it "types recursive hash assignment" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { array_of int32 }
       require "prelude"
 
       class Hash
@@ -862,21 +840,20 @@ describe "Block inference" do
       z = hash.map {|key| key + 1 }
       hash[1] = z.size
       z
-      )) { array_of int32 }
+      CRYSTAL
   end
 
   it "errors if invoking new with block when no initialize is defined" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "'Foo.new' is not expected to be invoked with a block, but a block was given"
       class Foo
       end
 
       Foo.new { }
-      ),
-      "'Foo.new' is not expected to be invoked with a block, but a block was given"
+      CRYSTAL
   end
 
   it "recalculates call that uses block arg output as free var" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of(char, int32).metaclass }
       def foo(&block : Int32 -> U) forall U
         block
         U
@@ -900,11 +877,11 @@ describe "Block inference" do
       z = Foo.new.bar
       Foo.new.x = 'a'
       z
-      )) { union_of(char, int32).metaclass }
+      CRYSTAL
   end
 
   it "finds type inside module in block" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Moo"].types["Bar"] }
       module Moo
         class Foo
         end
@@ -921,11 +898,11 @@ describe "Block inference" do
         z = Bar.new { Foo.new }
       end
       z
-      )) { types["Moo"].types["Bar"] }
+      CRYSTAL
   end
 
   it "passes &->f" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       def foo
       end
 
@@ -935,11 +912,11 @@ describe "Block inference" do
       end
 
       bar &->foo
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "errors if declares class inside captured block" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't declare class dynamically"
       def foo(&block)
         block.call
       end
@@ -948,12 +925,11 @@ describe "Block inference" do
         class B
         end
       end
-      ),
-      "can't declare class dynamically"
+      CRYSTAL
   end
 
   it "doesn't assign block variable type to last value (#694)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       def foo
         yield 1
       end
@@ -964,18 +940,17 @@ describe "Block inference" do
         x = "a"
       end
       z
-      )) { int32 }
+      CRYSTAL
   end
 
   it "errors if yields from top level" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use `yield` outside a method"
       yield
-      ),
-      "can't use `yield` outside a method"
+      CRYSTAL
   end
 
   it "errors on recursive yield" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "recursive block expansion"
       def foo
         yield
 
@@ -984,12 +959,11 @@ describe "Block inference" do
       end
 
       foo {}
-      ),
-      "recursive block expansion"
+      CRYSTAL
   end
 
   it "errors on recursive yield with non ProcNotation restriction (#6896)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "recursive block expansion"
       def foo(&block : -> Int32)
         yield
 
@@ -999,12 +973,11 @@ describe "Block inference" do
       end
 
       foo { 1 }
-      ),
-      "recursive block expansion"
+      CRYSTAL
   end
 
   it "errors on recursive yield with ProcNotation restriction" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "recursive block expansion"
       def foo(&block : -> Int32)
         yield
 
@@ -1014,34 +987,33 @@ describe "Block inference" do
       end
 
       foo { 1 }
-      ),
-      "recursive block expansion"
+      CRYSTAL
   end
 
   it "binds to proc, not only to its body (#1796)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of(int32, char).metaclass }
       def yielder(&block : Int32 -> U) forall U
         yield 1
         U
       end
 
       yielder { next 'a' if true; 1 }
-      )) { union_of(int32, char).metaclass }
+      CRYSTAL
   end
 
   it "binds block return type free variable even if there are no block parameters (#1797)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32.metaclass }
       def yielder(&block : -> U) forall U
         yield
         U
       end
 
       yielder { 1 }
-      )) { int32.metaclass }
+      CRYSTAL
   end
 
   it "returns from proc literal" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { union_of int32, float64 }
       foo = ->{
         if 1 == 1
           return 1
@@ -1051,11 +1023,11 @@ describe "Block inference" do
       }
 
       foo.call
-      ), inject_primitives: true) { union_of int32, float64 }
+      CRYSTAL
   end
 
   it "errors if returns from captured block" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't return from captured block, use next"
       def foo(&block)
         block
       end
@@ -1067,12 +1039,11 @@ describe "Block inference" do
       end
 
       bar
-      ),
-      "can't return from captured block, use next"
+      CRYSTAL
   end
 
   it "errors if breaks from captured block" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't break from captured block, try using `next`."
       def foo(&block)
         block
       end
@@ -1084,22 +1055,20 @@ describe "Block inference" do
       end
 
       bar
-      ),
-      "can't break from captured block, try using `next`."
+      CRYSTAL
   end
 
   it "errors if doing next in proc literal" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "invalid next"
       foo = ->{
         next
       }
       foo.call
-      ),
-      "invalid next"
+      CRYSTAL
   end
 
   it "does next from captured block" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { union_of int32, float64 }
       def foo(&block : -> T) forall T
         block
       end
@@ -1113,32 +1082,32 @@ describe "Block inference" do
       end
 
       f.call
-      ), inject_primitives: true) { union_of int32, float64 }
+      CRYSTAL
   end
 
   it "sets captured block type to that of restriction" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { proc_of(union_of(int32, string)) }
       def foo(&block : -> Int32 | String)
         block
       end
 
       foo { 1 }
-      )) { proc_of(union_of(int32, string)) }
+      CRYSTAL
   end
 
   it "sets captured block type to that of restriction with alias" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { proc_of(union_of(int32, string)) }
       alias Alias = -> Int32 | String
       def foo(&block : Alias)
         block
       end
 
       foo { 1 }
-      )) { proc_of(union_of(int32, string)) }
+      CRYSTAL
   end
 
   it "matches block with generic type and free var" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32.metaclass }
       class Foo(T)
       end
 
@@ -1148,11 +1117,11 @@ describe "Block inference" do
       end
 
       foo { Foo(Int32).new }
-      )) { int32.metaclass }
+      CRYSTAL
   end
 
   it "doesn't mix local var with block var, using break (#2314)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { bool }
       def foo
         yield 1
       end
@@ -1162,11 +1131,11 @@ describe "Block inference" do
         break
       end
       x
-      )) { bool }
+      CRYSTAL
   end
 
   it "doesn't mix local var with block var, using next (#2314)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { bool }
       def foo
         yield 1
       end
@@ -1176,12 +1145,12 @@ describe "Block inference" do
         next
       end
       x
-      )) { bool }
+      CRYSTAL
   end
 
   ["Object", "Bar | Object", "(Object ->)", "( -> Object)"].each do |string|
     it "errors if using #{string} as block return type (#2358)" do
-      assert_error %(
+      assert_error <<-CRYSTAL, "use a more specific type"
         class Foo(T)
         end
 
@@ -1193,13 +1162,12 @@ describe "Block inference" do
         end
 
         capture { 1 }
-        ),
-        "use a more specific type"
+        CRYSTAL
     end
   end
 
   it "yields splat" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([char, int32]) }
       def foo
         tup = {1, 'a'}
         yield *tup
@@ -1208,11 +1176,11 @@ describe "Block inference" do
       foo do |x, y|
         {y, x}
       end
-      )) { tuple_of([char, int32]) }
+      CRYSTAL
   end
 
   it "yields splat and non splat" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([nilable(char), union_of(int32, bool)]) }
       def foo
         tup = {1, 'a'}
         yield *tup
@@ -1223,11 +1191,11 @@ describe "Block inference" do
       foo do |x, y|
         {y, x}
       end
-      )) { tuple_of([nilable(char), union_of(int32, bool)]) }
+      CRYSTAL
   end
 
   it "uses splat in block parameter" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([int32, char]) }
       def foo
         yield 1, 'a'
       end
@@ -1235,11 +1203,11 @@ describe "Block inference" do
       foo do |*args|
         args
       end
-      )) { tuple_of([int32, char]) }
+      CRYSTAL
   end
 
   it "uses splat in block parameter, many args" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([int32, tuple_of([char, bool, nil_type]), float64, string]) }
       def foo
         yield 1, 'a', true, nil, 1.5, "hello"
       end
@@ -1247,11 +1215,11 @@ describe "Block inference" do
       foo do |x, *y, z, w|
         {x, y, z, w}
       end
-      )) { tuple_of([int32, tuple_of([char, bool, nil_type]), float64, string]) }
+      CRYSTAL
   end
 
   it "uses splat in block parameter, but not enough yield expressions" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "too many block parameters (given 3+, expected maximum 1)"
       def foo
         yield 1
       end
@@ -1259,12 +1227,11 @@ describe "Block inference" do
       foo do |x, y, z, *w|
         {x, y, z, w}
       end
-      ),
-      "too many block parameters (given 3+, expected maximum 1)"
+      CRYSTAL
   end
 
   it "errors if splat parameter becomes a union" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "yield argument to block splat parameter must be a Tuple"
       def foo
         yield 1
         yield 1, 2
@@ -1272,12 +1239,11 @@ describe "Block inference" do
 
       foo do |*args|
       end
-      ),
-      "yield argument to block splat parameter must be a Tuple"
+      CRYSTAL
   end
 
   it "auto-unpacks tuple" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([int32, char]) }
       def foo
         tup = {1, 'a'}
         yield tup
@@ -1286,11 +1252,11 @@ describe "Block inference" do
       foo do |x, y|
         {x, y}
       end
-      )) { tuple_of([int32, char]) }
+      CRYSTAL
   end
 
   it "auto-unpacks tuple, less than max" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([int32, char]) }
       def foo
         tup = {1, 'a', true}
         yield tup
@@ -1299,11 +1265,11 @@ describe "Block inference" do
       foo do |x, y|
         {x, y}
       end
-      )) { tuple_of([int32, char]) }
+      CRYSTAL
   end
 
   it "auto-unpacks with block arg type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       def foo(&block : {Int32, Int32} -> _)
         yield({1, 2})
       end
@@ -1311,11 +1277,11 @@ describe "Block inference" do
       foo do |x, y|
         x + y
       end
-      ), inject_primitives: true) { int32 }
+      CRYSTAL
   end
 
   it "auto-unpacks tuple, captured block" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { tuple_of([int32, char]) }
       def foo(&block : {Int32, Char} -> _)
         tup = {1, 'a'}
         block.call tup
@@ -1324,7 +1290,7 @@ describe "Block inference" do
       foo do |x, y|
         {x, y}
       end
-      ), inject_primitives: true) { tuple_of([int32, char]) }
+      CRYSTAL
   end
 
   it "auto-unpacks tuple, captured empty block" do
@@ -1340,7 +1306,7 @@ describe "Block inference" do
   end
 
   it "auto-unpacks tuple, captured block with multiple statements" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { tuple_of([float64, int32, bool]) }
       def foo(&block : {Float64, Int32} -> _)
         tup = {1.0, 3}
         block.call tup
@@ -1350,11 +1316,11 @@ describe "Block inference" do
         z = x < y
         {x, y, z}
       end
-      ), inject_primitives: true) { tuple_of([float64, int32, bool]) }
+      CRYSTAL
   end
 
   it "auto-unpacks tuple, less than max, captured block" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL, inject_primitives: true) { tuple_of([int32, char]) }
       def foo(&block : {Int32, Char, Bool} -> _)
         tup = {1, 'a', true}
         block.call tup
@@ -1363,11 +1329,11 @@ describe "Block inference" do
       foo do |x, y|
         {x, y}
       end
-      ), inject_primitives: true) { tuple_of([int32, char]) }
+      CRYSTAL
   end
 
   it "doesn't auto-unpack tuple, more args" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "too many block parameters (given 3, expected maximum 2)"
       def foo
         tup = {1, 'a'}
         yield tup, true
@@ -1375,12 +1341,11 @@ describe "Block inference" do
 
       foo do |x, y, z|
       end
-      ),
-      "too many block parameters (given 3, expected maximum 2)"
+      CRYSTAL
   end
 
   it "auto-unpacks tuple, too many args" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "too many block parameters (given 3, expected maximum 2)"
       def foo
         tup = {1, 'a'}
         yield tup
@@ -1388,12 +1353,11 @@ describe "Block inference" do
 
       foo do |x, y, z|
       end
-      ),
-      "too many block parameters (given 3, expected maximum 2)"
+      CRYSTAL
   end
 
   it "auto-unpacks tuple, too many args, captured block" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "too many block parameters (given 3, expected maximum 2)"
       def foo(&block : {Int32, Char} -> _)
         tup = {1, 'a'}
         block.call tup
@@ -1401,12 +1365,11 @@ describe "Block inference" do
 
       foo do |x, y, z|
       end
-      ),
-      "too many block parameters (given 3, expected maximum 2)"
+      CRYSTAL
   end
 
   it "doesn't crash on #2531" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(10)
       def foo
         yield
       end
@@ -1416,11 +1379,11 @@ describe "Block inference" do
         value ? nil : nil
       end
       value ? 10 : 20
-      )).to_i.should eq(10)
+      CRYSTAL
   end
 
   it "yields in overload, matches type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of(int32, int64) }
       struct Int
         def foo(&block : self ->)
           yield self
@@ -1430,11 +1393,11 @@ describe "Block inference" do
       (1 || 1_i64).foo do |x|
         x
       end
-      )) { union_of(int32, int64) }
+      CRYSTAL
   end
 
   it "uses free var in return type in captured block" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32.metaclass }
       class U
       end
 
@@ -1444,11 +1407,11 @@ describe "Block inference" do
       end
 
       foo { 1 }
-      )) { int32.metaclass }
+      CRYSTAL
   end
 
   it "uses free var in return type with tuple type" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([tuple_of([int32, int32]), tuple_of([int32, int32]).metaclass]) }
       class T; end
 
       class U; end
@@ -1463,7 +1426,7 @@ describe "Block inference" do
       end
 
       Foo.new(1).foo { |x| {x, x} }
-      )) { tuple_of([tuple_of([int32, int32]), tuple_of([int32, int32]).metaclass]) }
+      CRYSTAL
   end
 
   it "reports mismatch with generic argument type in output type" do
@@ -1490,7 +1453,7 @@ describe "Block inference" do
   end
 
   it "unpacks block argument" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([int32, char]) }
       def foo
         yield({1, 'a'})
       end
@@ -1498,11 +1461,11 @@ describe "Block inference" do
       foo do |(x, y)|
         {x, y}
       end
-      )) { tuple_of([int32, char]) }
+      CRYSTAL
   end
 
   it "correctly types unpacked tuple block arg after block (#3339)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       def foo
         yield({""})
       end
@@ -1512,11 +1475,11 @@ describe "Block inference" do
 
       end
       i
-      )) { int32 }
+      CRYSTAL
   end
 
   it "can infer block type given that the method has a return type (#7160)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       struct Int32
         def self.foo
           0
@@ -1540,7 +1503,7 @@ describe "Block inference" do
       end
 
       Node.new.sum
-      )) { int32 }
+      CRYSTAL
   end
 
   it "doesn't crash on cleaning up typeof node without dependencies (#8669)" do
@@ -1555,7 +1518,7 @@ describe "Block inference" do
   end
 
   it "respects block arg restriction when block has a splat parameter (#6473)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       def foo(&block : Int32 ->)
         yield 1
       end
@@ -1567,11 +1530,11 @@ describe "Block inference" do
       foo do |*x|
         bar(*x)
       end
-      )) { int32 }
+      CRYSTAL
   end
 
   it "respects block arg restriction when block has a splat parameter (2) (#9524)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { tuple_of([int32, int32]) }
       def foo(&block : {Int32, Int32} ->)
         yield({1, 2})
       end
@@ -1583,7 +1546,7 @@ describe "Block inference" do
       foo do |*x|
         bar(*x)
       end
-      )) { tuple_of([int32, int32]) }
+      CRYSTAL
   end
 
   it "allows underscore in block return type even if the return type can't be computed" do
@@ -1632,13 +1595,13 @@ describe "Block inference" do
   end
 
   it "renders expected block return type of a free variable on mismatch" do
-    assert_error(<<-CR, "expected block to return Int64, not String")
+    assert_error(<<-CRYSTAL, "expected block to return Int64, not String")
       struct Foo
         def bar(arg : U, &block : -> U) forall U
         end
       end
 
       Foo.new.bar(1_i64) { "hi" }
-      CR
+      CRYSTAL
   end
 end

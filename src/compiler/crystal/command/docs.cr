@@ -60,6 +60,10 @@ class Crystal::Command
         project_info.canonical_base_url = value
       end
 
+      opts.on("--base-path=PATH", "Set the base path - must be absolute for finding assets on the 404 page") do |value|
+        project_info.base_path = value
+      end
+
       opts.on("--sitemap-base-url=URL", "-b URL", "Set the sitemap base URL and generates sitemap") do |value|
         sitemap_base_url = value
       end
@@ -117,6 +121,10 @@ class Crystal::Command
 
     unless project_info.version?
       STDERR.puts "Couldn't determine version from git or shard.yml, please provide --project-version option"
+    end
+
+    if Crystal::Doc::MarkdDocRenderer::SANITIZER.nil?
+      STDERR.puts "Crystal built without LibXML2 support, documentation sanitization disabled"
     end
 
     unless project_info.name? && project_info.version?

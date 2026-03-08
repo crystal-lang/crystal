@@ -12,13 +12,13 @@ describe Mutex do
     x = 0
     mutex = Mutex.new
 
-    fibers = 10.times.map do
+    fibers = Array.new(10) do
       spawn do
         100.times do
           mutex.synchronize { x += 1 }
         end
       end
-    end.to_a
+    end
 
     fibers.each do |f|
       wait_until_finished f

@@ -34,137 +34,137 @@ describe "Code gen: and" do
   end
 
   it "codegens and with primitive type other than bool" do
-    run(%(
+    run(<<-CRYSTAL, Int32).should eq(0)
       struct Nil; def to_i!; 0; end; end
       (nil && 2).to_i!
-      ), Int32).should eq(0)
+      CRYSTAL
   end
 
   it "codegens and with nilable as left node 1" do
-    run("
+    run(<<-CRYSTAL, Int32).should eq(0)
       struct Nil; def to_i!; 0; end; end
       class Object; def to_i!; -1; end; end
       a = Reference.new
       a = nil
       (a && 2).to_i!
-    ", Int32).should eq(0)
+      CRYSTAL
   end
 
   it "codegens and with nilable as left node 2" do
-    run("
+    run(<<-CRYSTAL, Int32).should eq(2)
       class Object; def to_i!; -1; end; end
       a = nil
       a = Reference.new
       (a && 2).to_i!
-    ", Int32).should eq(2)
+      CRYSTAL
   end
 
   it "codegens and with non-false union as left node" do
-    run("
+    run(<<-CRYSTAL, Int32).should eq(2)
       a = 1.5
       a = 1
       (a && 2).to_i!
-    ", Int32).should eq(2)
+      CRYSTAL
   end
 
   it "codegens and with nil union as left node 1" do
-    run("
-      require \"nil\"
+    run(<<-CRYSTAL, Int32).should eq(2)
+      require "nil"
       a = nil
       a = 1
       (a && 2).to_i!
-    ", Int32).should eq(2)
+      CRYSTAL
   end
 
   it "codegens and with nil union as left node 2" do
-    run("
+    run(<<-CRYSTAL, Int32).should eq(0)
       struct Nil; def to_i!; 0; end; end
       a = 1
       a = nil
       (a && 2).to_i!
-    ", Int32).should eq(0)
+      CRYSTAL
   end
 
   it "codegens and with bool union as left node 1" do
-    run("
+    run(<<-CRYSTAL, Int32).should eq(2)
       struct Bool; def to_i!; 0; end; end
       a = false
       a = 1
       (a && 2).to_i!
-    ", Int32).should eq(2)
+      CRYSTAL
   end
 
   it "codegens and with bool union as left node 2" do
-    run("
+    run(<<-CRYSTAL, Int32).should eq(0)
       struct Bool; def to_i!; 0; end; end
       a = 1
       a = false
       (a && 2).to_i!
-    ", Int32).should eq(0)
+      CRYSTAL
   end
 
   it "codegens and with bool union as left node 3" do
-    run("
+    run(<<-CRYSTAL, Int32).should eq(2)
       struct Bool; def to_i!; 0; end; end
       a = 1
       a = true
       (a && 2).to_i!
-    ", Int32).should eq(2)
+      CRYSTAL
   end
 
   it "codegens and with bool union as left node 1" do
-    run("
-      require \"nil\"
+    run(<<-CRYSTAL, Int32).should eq(3)
+      require "nil"
       struct Bool; def to_i!; 1; end; end
       a = false
       a = nil
       a = 2
       (a && 3).to_i!
-    ", Int32).should eq(3)
+      CRYSTAL
   end
 
   it "codegens and with bool union as left node 2" do
-    run("
-      require \"nil\"
+    run(<<-CRYSTAL, Int32).should eq(1)
+      require "nil"
       struct Bool; def to_i!; 1; end; end
       a = nil
       a = 2
       a = false
       (a && 3).to_i!
-    ", Int32).should eq(1)
+      CRYSTAL
   end
 
   it "codegens and with bool union as left node 3" do
-    run("
-      require \"nil\"
+    run(<<-CRYSTAL, Int32).should eq(3)
+      require "nil"
       struct Bool; def to_i!; 1; end; end
       a = nil
       a = 2
       a = true
       (a && 3).to_i!
-    ", Int32).should eq(3)
+      CRYSTAL
   end
 
   it "codegens and with bool union as left node 4" do
-    run("
+    run(<<-CRYSTAL, Int32).should eq(0)
       struct Nil; def to_i!; 0; end; end
       struct Bool; def to_i!; 1; end; end
       a = 2
       a = true
       a = nil
       (a && 3).to_i!
-    ", Int32).should eq(0)
+      CRYSTAL
   end
 
   it "codegens assign in right node, after must be nilable" do
-    run("
+    run(<<-CRYSTAL, Bool).should be_true
       a = 1 == 2 && (b = Reference.new)
       b.nil?
-      ", Bool).should be_true
+      CRYSTAL
   end
 
   it "codegens assign in right node, inside if must not be nil" do
-    run("
+    run(<<-CRYSTAL, Int32).should eq(1)
       struct Nil; end
       class Foo; def foo; 1; end; end
 
@@ -173,14 +173,14 @@ describe "Code gen: and" do
       else
         0
       end
-      ", Int32).should eq(1)
+      CRYSTAL
   end
 
   it "codegens assign in right node, after if must be nilable" do
-    run("
+    run(<<-CRYSTAL, Bool).should be_true
       if 1 == 2 && (b = Reference.new)
       end
       b.nil?
-      ", Bool).should be_true
+      CRYSTAL
   end
 end

@@ -46,8 +46,8 @@ CONTINUE_ERROR = [
 WORD_DELIMITERS = {{" \n\t+-*/,;@&%<>^\\[](){}|.~".chars}}
 
 class CrystalReader < Reply::Reader
-  def prompt(io : IO, line_number : Int32, color? : Bool) : Nil
-    io << "crystal".colorize.blue.toggle(color?)
+  def prompt(io : IO, line_number : Int32, color : Bool) : Nil
+    io << "crystal".colorize.blue.toggle(color)
     io << ':'
     io << sprintf("%03d", line_number)
     io << "> "

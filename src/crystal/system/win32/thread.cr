@@ -20,6 +20,16 @@ module Crystal::System::Thread
     )
   end
 
+  def self.init : Nil
+    {% if flag?(:gnu) %}
+      current_key = LibC.TlsAlloc
+      if current_key == LibC::TLS_OUT_OF_INDEXES
+        Crystal::System.panic("TlsAlloc()", WinError.value)
+      end
+      @@current_key = current_key
+    {% end %}
+  end
+
   def self.thread_proc(data : Void*) : LibC::UInt
     # ensure that even in the case of stack overflow there is enough reserved
     # stack space for recovery (for the main thread this is done in
@@ -47,13 +57,7 @@ module Crystal::System::Thread
 
   # MinGW does not support TLS correctly
   {% if flag?(:gnu) %}
-    @@current_key : LibC::DWORD = begin
-      current_key = LibC.TlsAlloc
-      if current_key == LibC::TLS_OUT_OF_INDEXES
-        Crystal::System.panic("TlsAlloc()", WinError.value)
-      end
-      current_key
-    end
+    @@current_key = uninitialized LibC::DWORD
 
     def self.current_thread : ::Thread
       th = current_thread?
@@ -82,10 +86,17 @@ module Crystal::System::Thread
     end
   {% else %}
     @[ThreadLocal]
-    class_property current_thread : ::Thread { ::Thread.new }
+    @@current_thread : ::Thread?
+
+    def self.current_thread : ::Thread
+      @@current_thread ||= ::Thread.new
+    end
 
     def self.current_thread? : ::Thread?
       @@current_thread
+    end
+
+    def self.current_thread=(@@current_thread : ::Thread)
     end
   {% end %}
 
@@ -141,7 +152,7 @@ module Crystal::System::Thread
     # context must be aligned on 16 bytes but we lack a mean to force the
     # alignment on the struct, so we overallocate then realign the pointer:
     local = uninitialized UInt8[sizeof(Tuple(LibC::CONTEXT, UInt8[15]))]
-    thread_context = Pointer(LibC::CONTEXT).new(local.to_unsafe.address &+ 15_u64 & ~15_u64)
+    thread_context = local.to_unsafe.align_up(16).as(LibC::CONTEXT*)
     thread_context.value.contextFlags = LibC::CONTEXT_FULL
 
     if LibC.GetThreadContext(@system_handle, thread_context) == -1

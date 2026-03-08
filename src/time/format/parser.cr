@@ -502,6 +502,11 @@ struct Time::Format
     end
 
     def char(char, *alternatives)
+      if char.ascii_whitespace?
+        skip_spaces
+        return
+      end
+
       unless @reader.has_next?
         if alternatives.empty?
           raise "Expected #{char.inspect} but the end of the input was reached"

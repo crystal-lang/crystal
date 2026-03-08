@@ -486,6 +486,17 @@ describe IO do
         IO.same_content?(io1, io2).should be_false
       end
     end
+
+    it "combines multiple reads using #read_greedy" do
+      bytes = Bytes.new 7
+
+      io = SimpleIOMemory.new("Hello World", max_read: 2)
+      io.read_greedy(bytes).should eq(7)
+      bytes.should eq("Hello W".to_slice)
+      io.read_greedy(bytes).should eq(4)
+      bytes[0, 4].should eq("orld".to_slice)
+      io.read_greedy(bytes).should eq(0)
+    end
   end
 
   describe "write operations" do
@@ -820,26 +831,23 @@ describe IO do
           io.gets_to_end.should eq("\r\nFoo\nBar")
         end
 
-        # TODO: Windows networking in the interpreter requires #12495
-        {% unless flag?(:interpreted) || flag?(:win32) %}
-          it "gets ascii from socket (#9056)" do
-            server = TCPServer.new "localhost", 0
-            sock = TCPSocket.new "localhost", server.local_address.port
-            begin
-              sock.set_encoding("ascii")
-              spawn do
-                client = server.accept
-                message = client.gets
-                client << "#{message}\n"
-              end
-              sock << "K\n"
-              sock.gets.should eq("K")
-            ensure
-              server.close
-              sock.close
+        it "gets ascii from socket (#9056)" do
+          server = TCPServer.new "localhost", 0
+          sock = TCPSocket.new "localhost", server.local_address.port
+          begin
+            sock.set_encoding("ascii")
+            spawn do
+              client = server.accept
+              message = client.gets
+              client << "#{message}\n"
             end
+            sock << "K\n"
+            sock.gets.should eq("K")
+          ensure
+            server.close
+            sock.close
           end
-        {% end %}
+        end
       end
 
       describe "encode" do

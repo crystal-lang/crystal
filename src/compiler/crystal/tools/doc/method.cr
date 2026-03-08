@@ -43,7 +43,7 @@ class Crystal::Doc::Method
   # This docs not include the "Description copied from ..." banner
   # in case it's needed.
   def doc
-    doc_info.doc
+    doc_info.doc.try &.strip.lchop(":showdoc:").strip
   end
 
   # Returns the type this method's docs are copied from, but
@@ -79,7 +79,7 @@ class Crystal::Doc::Method
 
     previous_docs = previous_def_docs(@def)
     if previous_docs
-      return DocInfo.new(def_doc, nil)
+      return DocInfo.new(previous_docs, nil)
     end
 
     ancestor_info = self.ancestor_doc_info
@@ -108,11 +108,10 @@ class Crystal::Doc::Method
         # If we find an ancestor method with the same signature
         if def_with_metadata.compare_strictness(other_def_with_metadata, self_owner: type.type, other_owner: ancestor) == 0
           other_def = other_def_with_metadata.def
-          doc = other_def.doc
-          return DocInfo.new(doc, @generator.type(ancestor)) if doc
-
-          doc = previous_def_docs(other_def)
-          return DocInfo.new(doc, nil) if doc
+          ancestor_type = @generator.type(ancestor)
+          ancestor_method = Doc::Method.new(@generator, ancestor_type, other_def, @class_method)
+          doc = ancestor_method.doc
+          return DocInfo.new(doc, ancestor_type) if doc
         end
       end
     end
@@ -124,14 +123,37 @@ class Crystal::Doc::Method
     @generator.relative_location(@def)
   end
 
+  def external_var?
+    !!@def.as?(External).try(&.external_var?)
+  end
+
   def prefix
     case
     when @type.program?
       ""
-    when @class_method
+    when external_var?
+      "$"
+    when @class_method, @type.lib?
       "."
     else
       "#"
+    end
+  end
+
+  def visibility
+    case @def.visibility
+    in .public?
+    in .protected?
+      "protected"
+    in .private?
+      "private"
+    end
+  end
+
+  def real_name
+    a_def = @def.as?(External)
+    if a_def && (real_name = (a_def.real_name)) && (real_name != a_def.name)
+      " = #{real_name}"
     end
   end
 
@@ -174,6 +196,10 @@ class Crystal::Doc::Method
 
   def kind
     case
+    when external_var?
+      "$"
+    when @type.lib?
+      "fun "
     when @type.program?
       "def "
     when @class_method
@@ -186,7 +212,11 @@ class Crystal::Doc::Method
   def id
     String.build do |io|
       io << to_s.delete(' ')
-      if @class_method
+      if external_var?
+        io << "-external-var"
+      elsif @type.lib?
+        io << "-function"
+      elsif @class_method
         io << "-class-method"
       else
         io << "-instance-method"
@@ -320,14 +350,17 @@ class Crystal::Doc::Method
     builder.object do
       builder.field "html_id", id
       builder.field "name", name
+      builder.field "real_name", real_name if real_name
       builder.field "doc", doc unless doc.nil?
       builder.field "summary", formatted_summary unless formatted_summary.nil?
       builder.field "abstract", abstract?
+      builder.field "visibility", visibility if visibility
       builder.field "args", args unless args.empty?
       builder.field "args_string", args_to_s unless args.empty?
       builder.field "args_html", args_to_html unless args.empty?
       builder.field "location", location unless location.nil?
-      builder.field "def", self.def
+      builder.field @type.lib? ? "fun" : "def", self.def
+      builder.field "external_var", external_var?
     end
   end
 

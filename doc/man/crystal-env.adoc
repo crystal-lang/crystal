@@ -1,0 +1,43 @@
+= crystal-env(1)
+:doctype: manpage
+:date: {localdate}
+:crystal_version: {crystal_version}
+:man manual: Crystal Compiler Command Line Reference Guide
+:man source: crystal {crystal_version}
+
+== Name
+crystal-env - Print environment variables for the Crystal compiler
+
+== Synopsis
+*crystal env* [variables]
+
+== Description
+
+Print Crystal-specific environment variables in a format compatible with
+shell scripts. If one or more variable names are given as arguments, it
+prints only the value of each named variable on its own line.
+
+Variables:
+
+*CRYSTAL_CACHE_DIR*::
+Please see ENVIRONMENT VARIABLES.
+
+*CRYSTAL_EXEC_PATH*::
+Please see ENVIRONMENT VARIABLES.
+
+*CRYSTAL_LIBRARY_PATH*::
+Please see ENVIRONMENT VARIABLES.
+
+*CRYSTAL_PATH*::
+Please see ENVIRONMENT VARIABLES.
+
+*CRYSTAL_VERSION*::
+Contains Crystal version.
+
+== Informative Variables
+
+These variables expose information about the Crystal compiler and cannot be configured externally.
+
+=== CRYSTAL_VERSION
+
+Contains Crystal version.

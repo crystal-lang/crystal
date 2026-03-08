@@ -172,8 +172,8 @@ module Crystal::System::User
     end
   end
 
-  private REGISTRY_PROFILE_LIST = %q(SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList).to_utf16
-  private ProfileImagePath      = "ProfileImagePath".to_utf16
+  private REGISTRY_PROFILE_LIST = System.wstr_literal %q(SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList)
+  private ProfileImagePath      = System.wstr_literal "ProfileImagePath"
 
   private def self.lookup_home_directory(uid : String, username : String) : String?
     # If this user has logged in at least once their home path should be stored

@@ -30,3 +30,4 @@ if ($Dynamic) {
 } else {
     mv -Force $BuildTree\Release\libxml2s.lib libs\xml2.lib
 }
+[IO.File]::WriteAllLines("libs\libxml_VERSION", $Version)

@@ -1457,13 +1457,13 @@ module Iterator(T)
     def next
       {% begin %}
         {% for i in 0...Is.size %}
-          %v{i} = @iterators[{{ i }}].next
-          return stop if %v{i}.is_a?(Stop)
+          %value{i} = @iterators[{{ i }}].next
+          return stop if %value{i}.is_a?(Stop)
         {% end %}
 
         Tuple.new(
           {% for i in 0...Is.size %}
-            %v{i},
+            %value{i},
           {% end %}
         )
       {% end %}

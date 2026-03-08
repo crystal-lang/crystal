@@ -131,12 +131,12 @@ class HTTP::Client::Response
 
     it "parses long request lines" do
       request = Response.from_io?(IO::Memory.new("HTTP/1.1 200 #{"OK" * 600_000}\r\n\r\n"))
-      request.should eq(nil)
+      request.should be_nil
     end
 
     it "parses long headers" do
       request = Response.from_io?(IO::Memory.new("HTTP/1.1 200 OK\r\n#{"X-Test-Header: A pretty log header value\r\n" * 100_000}\r\n"))
-      request.should eq(nil)
+      request.should be_nil
     end
 
     describe "handle invalid IO" do
@@ -312,8 +312,8 @@ class HTTP::Client::Response
       end
       response = Response.from_io(IO::Memory.new("HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nContent-Length: #{body.bytesize}\r\n\r\n#{body}"))
       response.body.should eq("hello")
-      response.headers["content-encoding"]?.should eq(nil)
-      response.headers["content-length"]?.should eq(nil)
+      response.headers["content-encoding"]?.should be_nil
+      response.headers["content-length"]?.should be_nil
     end
 
     it "deletes Content-Encoding and Content-Length headers after deflate decompression" do
@@ -322,21 +322,21 @@ class HTTP::Client::Response
       end
       response = Response.from_io(IO::Memory.new("HTTP/1.1 200 OK\r\nContent-Encoding: deflate\r\nContent-Length: #{body.bytesize}\r\n\r\n#{body}"))
       response.body.should eq("hello")
-      response.headers["content-encoding"]?.should eq(nil)
-      response.headers["content-length"]?.should eq(nil)
+      response.headers["content-encoding"]?.should be_nil
+      response.headers["content-length"]?.should be_nil
     end
 
     describe "success?" do
       it "returns true for the 2xx" do
         response = Response.new(:ok)
 
-        response.success?.should eq(true)
+        response.success?.should be_true
       end
 
       it "returns false for other ranges" do
         response = Response.new(500)
 
-        response.success?.should eq(false)
+        response.success?.should be_false
       end
     end
   end

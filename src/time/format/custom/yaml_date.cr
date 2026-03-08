@@ -4,8 +4,7 @@ struct Time::Format
   # can consist of just the date part, and following it any number of spaces,
   # or 't', or 'T' can follow, with many optional components. So, we implement
   # this in a more efficient way to avoid parsing the same string with many
-  # possible formats (there's also no way to specify any number of spaces
-  # with Time::Format, or an "or" like in a Regex).
+  # possible formats (there's also no way to specify an "or" like in a Regex).
   #
   # As an additional note, Ruby's Psych YAML parser also implements a
   # custom time parser, probably for this same reason.
@@ -63,8 +62,8 @@ struct Time::Format
       when 'T', 't'
         next_char
         return yaml_time?
-      when .ascii_whitespace?
-        skip_spaces
+      when ' ', '\t'
+        skip_whitespaces_and_tabs
 
         if @reader.has_next?
           return yaml_time?
@@ -99,7 +98,7 @@ struct Time::Format
 
       second_fraction?
 
-      skip_spaces
+      skip_whitespaces_and_tabs
 
       if @reader.has_next?
         begin
@@ -112,6 +111,12 @@ struct Time::Format
       end
 
       true
+    end
+
+    private def skip_whitespaces_and_tabs
+      while current_char.in?(' ', '\t')
+        next_char
+      end
     end
   end
 

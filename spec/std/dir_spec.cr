@@ -1,11 +1,11 @@
 require "./spec_helper"
 require "../support/env"
 
-private def unset_tempdir(&)
+private def reset_tempdir(tmp_path = nil, &)
   {% if flag?(:windows) %}
-    with_env("TMP": nil, "TEMP": nil, "USERPROFILE": nil) { yield }
+    with_env("TMP": tmp_path, "TEMP": nil, "USERPROFILE": nil) { yield }
   {% else %}
-    with_env("TMPDIR": nil) { yield }
+    with_env("TMPDIR": tmp_path) { yield }
   {% end %}
 end
 
@@ -224,36 +224,30 @@ describe "Dir" do
     end
 
     it "tests double recursive matcher (#10807)" do
-      with_tempfile "glob-double-recurse" do |path|
-        Dir.mkdir_p path
-        Dir.cd(path) do
-          path1 = Path["x", "b", "x"]
-          Dir.mkdir_p path1
-          File.touch path1.join("file")
+      with_tempdir "glob-double-recurse" do
+        path1 = Path["x", "b", "x"]
+        Dir.mkdir_p path1
+        File.touch path1.join("file")
 
-          Dir["**/b/**/*"].sort.should eq [
-            path1.to_s,
-            path1.join("file").to_s,
-          ].sort
-        end
+        Dir["**/b/**/*"].sort.should eq [
+          path1.to_s,
+          path1.join("file").to_s,
+        ].sort
       end
     end
 
     it "tests double recursive matcher, multiple paths" do
-      with_tempfile "glob-double-recurse2" do |path|
-        Dir.mkdir_p path
-        Dir.cd(path) do
-          p1 = Path["x", "a", "x", "c"]
-          p2 = Path["x", "a", "x", "a", "x", "c"]
+      with_tempdir "glob-double-recurse2" do
+        p1 = Path["x", "a", "x", "c"]
+        p2 = Path["x", "a", "x", "a", "x", "c"]
 
-          Dir.mkdir_p p1
-          Dir.mkdir_p p2
+        Dir.mkdir_p p1
+        Dir.mkdir_p p2
 
-          Dir["**/a/**/c"].sort.should eq [
-            p1.to_s,
-            p2.to_s,
-          ].sort
-        end
+        Dir["**/a/**/c"].sort.should eq [
+          p1.to_s,
+          p2.to_s,
+        ].sort
       end
     end
 
@@ -314,22 +308,19 @@ describe "Dir" do
       pending "tests with \\"
     {% else %}
       it "tests with \\" do
-        with_tempfile "glob-escape-pattern" do |path|
-          Dir.mkdir_p path
-          Dir.cd(path) do
-            File.touch "g1.txt"
-            File.touch %q(\g3)
-            File.touch %q(\g4*)
+        with_tempdir "glob-escape-pattern" do
+          File.touch "g1.txt"
+          File.touch %q(\g3)
+          File.touch %q(\g4*)
 
-            Dir[%q(\\g*)].sort.should eq [
-              "\\g3",
-              "\\g4*",
-            ].sort
+          Dir[%q(\\g*)].sort.should eq [
+            "\\g3",
+            "\\g4*",
+          ].sort
 
-            Dir[%q(*g?\*)].sort.should eq [
-              "\\g4*",
-            ].sort
-          end
+          Dir[%q(*g?\*)].sort.should eq [
+            "\\g4*",
+          ].sort
         end
       end
     {% end %}
@@ -503,12 +494,16 @@ describe "Dir" do
 
       it "ignores hidden files" do
         Dir.glob("#{Path[datapath].to_posix}/dir/dots/*", match: :none).should be_empty
+        Dir.glob("#{Path[datapath].to_posix}/dir/dots/*/", match: :none).should be_empty
         Dir.glob("#{Path[datapath].to_posix}/dir/dots/*", match_hidden: false).should be_empty
+        Dir.glob("#{Path[datapath].to_posix}/dir/dots/*/", match_hidden: false).should be_empty
       end
 
       it "ignores hidden files recursively" do
         Dir.glob("#{Path[datapath].to_posix}/dir/dots/**/*", match: :none).should be_empty
+        Dir.glob("#{Path[datapath].to_posix}/dir/dots/**/*/", match: :none).should be_empty
         Dir.glob("#{Path[datapath].to_posix}/dir/dots/**/*", match_hidden: false).should be_empty
+        Dir.glob("#{Path[datapath].to_posix}/dir/dots/**/*/", match_hidden: false).should be_empty
       end
     end
 
@@ -670,7 +665,7 @@ describe "Dir" do
 
   describe ".tempdir" do
     it "returns default directory for tempfiles" do
-      unset_tempdir do
+      reset_tempdir do
         {% if flag?(:windows) %}
           # GetTempPathW defaults to the Windows directory when %TMP%, %TEMP%
           # and %USERPROFILE% are not set.
@@ -686,9 +681,8 @@ describe "Dir" do
     end
 
     it "returns configure directory for tempfiles" do
-      unset_tempdir do
-        tmp_path = Path["my_temporary_path"].expand.to_s
-        ENV[{{ flag?(:windows) ? "TMP" : "TMPDIR" }}] = tmp_path
+      tmp_path = Path["my_temporary_path"].expand.to_s
+      reset_tempdir(tmp_path) do
         Dir.tempdir.should eq tmp_path
       end
     end

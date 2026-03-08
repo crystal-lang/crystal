@@ -8,7 +8,7 @@ describe "YAML" do
     it { YAML.parse_all("---\nfoo\n---\nbar\n").should eq(["foo", "bar"]) }
     it { YAML.parse("foo: bar").should eq({"foo" => "bar"}) }
     it { YAML.parse("--- []\n").should eq([] of YAML::Any) }
-    it { YAML.parse("---\n...").should eq nil }
+    it { YAML.parse("---\n...").should eq YAML::Any.new(nil) }
 
     it "parses recursive sequence" do
       doc = YAML.parse("--- &foo\n- *foo\n")

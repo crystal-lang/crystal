@@ -25,6 +25,15 @@ class ECR::Lexer
     end
   end
 
+  class SyntaxException < Exception
+    getter line_number : Int32
+    getter column_number : Int32
+
+    def initialize(message, @line_number, @column_number)
+      super(message)
+    end
+  end
+
   def initialize(string)
     @reader = Char::Reader.new(string)
     @token = Token.new
@@ -197,5 +206,9 @@ class ECR::Lexer
 
   private def string_range(start_pos, end_pos)
     @reader.string.byte_slice(start_pos, end_pos - start_pos)
+  end
+
+  private def raise(message : String)
+    raise SyntaxException.new(message, @line_number, @column_number)
   end
 end

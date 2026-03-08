@@ -1,6 +1,6 @@
-## Reporting a Vulnerability
+# Reporting a Vulnerability
 
-Should you find any security-related issue, please *do not share them openly* in
+Should you find any security-related issue, please _do not share them openly_ in
 the issue tracker. We have a dedicated mailbox where we keep track of them:
 
 <security@manas.tech>

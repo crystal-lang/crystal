@@ -1,4 +1,5 @@
 require "crystal/system/socket"
+require "crystal/fd_lock"
 
 class Socket < IO
   include IO::Buffered
@@ -8,11 +9,18 @@ class Socket < IO
   SOMAXCONN = 128
 
   @volatile_fd : Atomic(Handle)
+  @fd_lock = Crystal::FdLock.new
 
   # Returns the handle associated with this socket from the operating system.
   #
   # * on POSIX platforms, this is a file descriptor (`Int32`)
   # * on Windows, this is a SOCKET handle (`LibC::SOCKET`)
+  #
+  # The returned system socket has been configured as per the IO system runtime
+  # requirements. If the returned socket must be in a specific mode or have a
+  # specific set of flags set, then they must be applied, even when it feels
+  # redundant, because even the same target isn't guaranteed to have the same
+  # requirements at runtime.
   def fd
     @volatile_fd.get
   end
@@ -43,42 +51,74 @@ class Socket < IO
     write_timeout
   end
 
-  # Creates a TCP socket. Consider using `TCPSocket` or `TCPServer` unless you
-  # need full control over the socket.
-  def self.tcp(family : Family, blocking = false) : self
-    new(family, Type::STREAM, Protocol::TCP, blocking)
-  end
-
-  # Creates an UDP socket. Consider using `UDPSocket` unless you need full
-  # control over the socket.
-  def self.udp(family : Family, blocking = false)
-    new(family, Type::DGRAM, Protocol::UDP, blocking)
-  end
-
-  # Creates an UNIX socket. Consider using `UNIXSocket` or `UNIXServer` unless
-  # you need full control over the socket.
-  def self.unix(type : Type = Type::STREAM, blocking = false) : self
-    new(Family::UNIX, type, blocking: blocking)
-  end
-
-  def initialize(family : Family, type : Type, protocol : Protocol = Protocol::IP, blocking = false)
-    # This method is `#initialize` instead of `.new` because it is used as super
-    # constructor from subclasses.
-
-    fd = create_handle(family, type, protocol, blocking)
-    initialize(fd, family, type, protocol, blocking)
-  end
-
-  # Creates a Socket from an existing socket file descriptor / handle.
-  def initialize(fd, @family : Family, @type : Type, @protocol : Protocol = Protocol::IP, blocking = false)
-    @volatile_fd = Atomic.new(fd)
-    @closed = false
-    initialize_handle(fd)
-
-    self.sync = true
-    unless blocking
-      self.blocking = false
+  {% begin %}
+    # Creates a TCP socket. Consider using `TCPSocket` or `TCPServer` unless you
+    # need full control over the socket.
+    def self.tcp(family : Family, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated("Use Socket.set_blocking instead.")] {% end %} blocking = nil) : self
+      new(af: family, type: Type::STREAM, protocol: Protocol::TCP, blocking: blocking)
     end
+  {% end %}
+
+  {% begin %}
+    # Creates an UDP socket. Consider using `UDPSocket` unless you need full
+    # control over the socket.
+    def self.udp(family : Family, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated("Use Socket.set_blocking instead.")] {% end %} blocking = nil) : self
+      new(af: family, type: Type::DGRAM, protocol: Protocol::UDP, blocking: blocking)
+    end
+  {% end %}
+
+  {% begin %}
+    # Creates an UNIX socket. Consider using `UNIXSocket` or `UNIXServer` unless
+    # you need full control over the socket.
+    def self.unix(type : Type = Type::STREAM, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated("Use Socket.set_blocking instead.")] {% end %} blocking = nil) : self
+      new(af: Family::UNIX, type: type, protocol: Protocol::IP, blocking: blocking)
+    end
+  {% end %}
+
+  {% begin %}
+    # Creates a socket. Consider using `TCPSocket`, `TCPServer`, `UDPSocket`,
+    # `UNIXSocket` or `UNIXServer` unless you need full control over the socket.
+    def initialize(family : Family, type : Type, protocol : Protocol = Protocol::IP, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated("Use Socket.set_blocking instead.")] {% end %} blocking = nil)
+      # This method is `#initialize` instead of `.new` because it is used as super
+      # constructor from subclasses.
+      initialize(af: family, type: type, protocol: protocol, blocking: blocking)
+    end
+  {% end %}
+
+  # :nodoc:
+  #
+  # Internal initializer for the above constructors to avoid deprecation
+  # warnings on the blocking arg.
+  protected def initialize(*, af : Family, type : Type, protocol : Protocol, blocking)
+    fd, blocking = Crystal::EventLoop.current.socket(af, type, protocol, blocking)
+    initialize(handle: fd, family: af, type: type, protocol: protocol, blocking: blocking)
+    self.sync = true
+  end
+
+  {% begin %}
+    # Creates a Socket from an existing system file descriptor or socket handle.
+    #
+    # This adopts *fd* into the IO system that will reconfigure it as per the
+    # event loop runtime requirements.
+    #
+    # NOTE: On Windows, the handle must have been created with
+    # `WSA_FLAG_OVERLAPPED`.
+    def initialize(fd, @family : Family, @type : Type, @protocol : Protocol = Protocol::IP, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated("Use Socket.set_blocking instead.")] {% end %} blocking = nil)
+      initialize(handle: fd, family: family, type: type, protocol: protocol)
+      blocking = Crystal::EventLoop.default_socket_blocking? if blocking.nil?
+      Crystal::System::Socket.set_blocking(fd, blocking) unless blocking
+      self.sync = true
+    end
+  {% end %}
+
+  # :nodoc:
+  #
+  # Internal constructor to initialize the bare socket. The *blocking* arg is
+  # purely informational.
+  def initialize(*, handle, @family, @type, @protocol, blocking = nil)
+    @volatile_fd = Atomic.new(handle)
+    @closed = false
+    initialize_handle(handle, blocking)
   end
 
   # Connects the socket to a remote host:port.
@@ -111,7 +151,7 @@ class Socket < IO
   # `Socket::ConnectError` error if the connection failed.
   def connect(addr, timeout = nil, &)
     timeout = timeout.seconds unless timeout.is_a?(::Time::Span?)
-    result = system_connect(addr, timeout)
+    result = @fd_lock.write { system_connect(addr, timeout) }
     yield result if result.is_a?(Exception)
   end
 
@@ -125,7 +165,7 @@ class Socket < IO
   # ```
   def bind(host : String, port : Int) : Nil
     Addrinfo.resolve(host, port, @family, @type, @protocol) do |addrinfo|
-      system_bind(addrinfo, "#{host}:#{port}") { |errno| errno }
+      @fd_lock.reference { system_bind(addrinfo, "#{host}:#{port}") }
     end
   end
 
@@ -147,7 +187,7 @@ class Socket < IO
     end
 
     Addrinfo.resolve(address, port, @family, @type, @protocol) do |addrinfo|
-      system_bind(addrinfo, address_and_port) { |errno| errno }
+      @fd_lock.reference { system_bind(addrinfo, address_and_port) }
     end
   end
 
@@ -160,7 +200,9 @@ class Socket < IO
   # sock.bind Socket::IPAddress.new("192.168.1.25", 80)
   # ```
   def bind(addr : Socket::Address) : Nil
-    system_bind(addr, addr.to_s) { |errno| raise errno }
+    if error = @fd_lock.reference { system_bind(addr, addr.to_s) }
+      raise error
+    end
   end
 
   # Tells the previously bound socket to listen for incoming connections.
@@ -171,7 +213,9 @@ class Socket < IO
   # Tries to listen for connections on the previously bound socket.
   # Yields an `Socket::Error` on failure.
   def listen(backlog : Int = SOMAXCONN, &)
-    system_listen(backlog) { |err| yield err }
+    if error = @fd_lock.reference { system_listen(backlog) }
+      yield error
+    end
   end
 
   # Accepts an incoming connection.
@@ -206,8 +250,15 @@ class Socket < IO
   # end
   # ```
   def accept? : Socket?
-    if client_fd = system_accept
-      sock = Socket.new(client_fd, family, type, protocol, blocking)
+    return if closed?
+
+    if rs = @fd_lock.read { system_accept }
+      sock = Socket.new(handle: rs[0], family: family, type: type, protocol: protocol, blocking: rs[1])
+      unless (blocking = system_blocking?) == rs[1]
+        # FIXME: unlike the overloads in TCPServer and UNIXServer, this version
+        # carries the blocking mode from the server socket to the client socket
+        Crystal::System::Socket.set_blocking(fd, blocking)
+      end
       sock.sync = sync?
       sock
     end
@@ -231,7 +282,7 @@ class Socket < IO
   # sock.send(Bytes[0])
   # ```
   def send(message) : Int32
-    system_write(message.to_slice)
+    @fd_lock.write { system_write(message.to_slice) }
   end
 
   # Sends a message to the specified remote address.
@@ -249,7 +300,7 @@ class Socket < IO
   # sock.send("text query", to: server)
   # ```
   def send(message, to addr : Address) : Int32
-    system_send_to(message.to_slice, addr)
+    @fd_lock.write { system_send_to(message.to_slice, addr) }
   end
 
   # Receives a text message from the previously bound address.
@@ -265,7 +316,9 @@ class Socket < IO
   def receive(max_message_size = 512) : {String, Address}
     address = nil
     message = String.new(max_message_size) do |buffer|
-      bytes_read, address = system_receive_from(Slice.new(buffer, max_message_size))
+      bytes_read, address = @fd_lock.read do
+        system_receive_from(Slice.new(buffer, max_message_size))
+      end
       {bytes_read, 0}
     end
     {message, address.as(Address)}
@@ -283,17 +336,17 @@ class Socket < IO
   # bytes_read, client_addr = server.receive(message)
   # ```
   def receive(message : Bytes) : {Int32, Address}
-    system_receive_from(message)
+    @fd_lock.read { system_receive_from(message) }
   end
 
   # Calls `shutdown(2)` with `SHUT_RD`
   def close_read
-    system_close_read
+    @fd_lock.reference { system_close_read }
   end
 
   # Calls `shutdown(2)` with `SHUT_WR`
   def close_write
-    system_close_write
+    @fd_lock.reference { system_close_write }
   end
 
   def inspect(io : IO) : Nil
@@ -373,34 +426,57 @@ class Socket < IO
 
   # Returns the modified *optval*.
   protected def getsockopt(optname, optval, level = LibC::SOL_SOCKET)
-    system_getsockopt(fd, optname, optval, level)
+    system_getsockopt(optname, optval, level)
   end
 
   protected def getsockopt(optname, optval, level = LibC::SOL_SOCKET, &)
-    system_getsockopt(fd, optname, optval, level) { |value| yield value }
+    system_getsockopt(optname, optval, level) { |value| yield value }
   end
 
   protected def setsockopt(optname, optval, level = LibC::SOL_SOCKET)
-    system_setsockopt(fd, optname, optval, level)
+    @fd_lock.reference { system_setsockopt(optname, optval, level) }
   end
 
   private def getsockopt_bool(optname, level = LibC::SOL_SOCKET)
-    ret = getsockopt optname, 0, level
+    ret = system_getsockopt optname, 0, level
     ret != 0
   end
 
   private def setsockopt_bool(optname, optval : Bool, level = LibC::SOL_SOCKET)
     v = optval ? 1 : 0
-    setsockopt optname, v, level
+    @fd_lock.reference { system_setsockopt(optname, v, level) }
     optval
   end
 
+  # Returns whether the socket's mode is blocking (true) or non blocking (false).
+  @[Deprecated("Use Socket.get_blocking instead.")]
   def blocking
     system_blocking?
   end
 
+  # Changes the socket's mode to blocking (true) or non blocking (false).
+  #
+  # WARNING: The socket has been configured to behave correctly with the event
+  # loop runtime requirements. Changing the blocking mode can cause the event
+  # loop to misbehave, for example block the entire program when a fiber tries
+  # to read from this socket.
+  @[Deprecated("Use Socket.set_blocking instead.")]
   def blocking=(value)
-    self.system_blocking = value
+    @fd_lock.reference { self.system_blocking = value }
+  end
+
+  # Returns whether the blocking mode of *fd* is blocking (true) or non blocking
+  # (false).
+  #
+  # NOTE: Only implemented on UNIX targets. Raises on Windows.
+  def self.get_blocking(fd : Handle) : Bool
+    Crystal::System::Socket.get_blocking(fd)
+  end
+
+  # Changes the blocking mode of *fd* to be blocking (true) or non blocking
+  # (false).
+  def self.set_blocking(fd : Handle, value : Bool)
+    Crystal::System::Socket.set_blocking(fd, value)
   end
 
   def close_on_exec?
@@ -408,7 +484,7 @@ class Socket < IO
   end
 
   def close_on_exec=(arg : Bool)
-    self.system_close_on_exec = arg
+    @fd_lock.reference { self.system_close_on_exec = arg }
   end
 
   def self.fcntl(fd, cmd, arg = 0)
@@ -416,7 +492,7 @@ class Socket < IO
   end
 
   def fcntl(cmd, arg = 0)
-    self.class.fcntl fd, cmd, arg
+    @fd_lock.reference { system_fcntl(cmd, arg) }
   end
 
   # Finalizes the socket resource.
@@ -430,7 +506,7 @@ class Socket < IO
   def finalize
     return if closed?
 
-    event_loop?.try(&.remove(self))
+    Crystal::EventLoop.remove(self)
     socket_close { } # ignore error
   end
 
@@ -443,12 +519,12 @@ class Socket < IO
   end
 
   private def unbuffered_read(slice : Bytes) : Int32
-    system_read(slice)
+    @fd_lock.read { system_read(slice) }
   end
 
   private def unbuffered_write(slice : Bytes) : Nil
     until slice.empty?
-      slice += system_write(slice)
+      slice += @fd_lock.write { system_write(slice) }
     end
   end
 
@@ -461,7 +537,10 @@ class Socket < IO
 
     @closed = true
 
-    system_close
+    if @fd_lock.try_close? { event_loop.shutdown(self) }
+      event_loop.close(self)
+      @fd_lock.reset
+    end
   end
 
   private def unbuffered_flush : Nil

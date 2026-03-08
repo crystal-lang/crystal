@@ -27,9 +27,18 @@ class URI
       self
     end
 
+    def parse_request_target : self
+      parse_no_scheme
+      self
+    end
+
     private def parse_scheme_start
       if alpha?
         parse_scheme
+      elsif c === '/' && @input[@ptr + 1] === '/'
+        @ptr += 1
+        @uri.host = ""
+        parse_authority
       else
         parse_no_scheme
       end
@@ -156,22 +165,10 @@ class URI
       case c
       when '\0'
         nil
-      when '/'
-        parse_relative_slash
       when '?'
         parse_query
       when '#'
         parse_fragment
-      else
-        parse_path
-      end
-    end
-
-    private def parse_relative_slash
-      if @input[@ptr + 1] === '/'
-        @ptr += 1
-        @uri.host ||= ""
-        parse_authority
       else
         parse_path
       end

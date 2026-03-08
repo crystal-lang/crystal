@@ -27,6 +27,7 @@ describe WeakRef do
     foo = "foo"
     ref = WeakRef.new(foo)
     GC.collect
+    ref.value.should be(foo)
   end
 
   it "FinalizeState counts released objects" do

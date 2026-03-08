@@ -70,9 +70,14 @@ module XML
       end
     end
 
-    it "returns nil with invalid xpath" do
+    it "returns nil when xpath fails to match" do
       doc = doc()
       doc.xpath_node("//invalid").should be_nil
+    end
+
+    it "returns nil when invalid fails to match" do
+      doc = doc()
+      doc.xpath_node("//invalid/text()").should be_nil
     end
 
     it "finds with explicit namespace" do

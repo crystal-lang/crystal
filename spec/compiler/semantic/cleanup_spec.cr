@@ -12,14 +12,14 @@ describe "cleanup" do
   end
 
   it "errors if assigning instance var to itself" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "expression has no effect"
       class Foo
         def initialize
           @a = 1; @a = @a
         end
       end
       Foo.new
-      ), "expression has no effect"
+      CRYSTAL
   end
 
   it "strip tuple elements after unreachable element" do

@@ -4,12 +4,6 @@ require "../../support/fibers"
 require "../../support/channel"
 require "../../support/tempfile"
 
-# TODO: Windows networking in the interpreter requires #12495
-{% if flag?(:interpreted) && flag?(:win32) %}
-  pending UNIXServer
-  {% skip_file %}
-{% end %}
-
 describe UNIXServer do
   describe ".new" do
     it "raises when path is too long" do
@@ -24,6 +18,18 @@ describe UNIXServer do
 
     it "creates the socket file" do
       with_tempfile("unix_server.sock") do |path|
+        UNIXServer.open(path) do
+          File.exists?(path).should be_true
+          File.info(path).type.socket?.should be_true
+        end
+
+        File.exists?(path).should be_false
+      end
+    end
+
+    it "creates the socket file from `Path`" do
+      with_tempfile("unix_server.sock") do |path|
+        path = Path.new(path)
         UNIXServer.open(path) do
           File.exists?(path).should be_true
           File.info(path).type.socket?.should be_true
@@ -154,19 +160,17 @@ describe UNIXServer do
       end
     end
 
-    {% unless flag?(:win32) %}
-      it "sets close on exec flag" do
-        with_tempfile("unix_socket-accept.sock") do |path|
-          UNIXServer.open(path) do |server|
-            UNIXSocket.open(path) do |client|
-              server.accept? do |sock|
-                sock.close_on_exec?.should be_true
-              end
+    it "sets close on exec flag" do
+      with_tempfile("unix_socket-accept.sock") do |path|
+        UNIXServer.open(path) do |server|
+          UNIXSocket.open(path) do |client|
+            server.accept? do |sock|
+              sock.close_on_exec?.should eq CLOSE_ON_EXEC_AVAILABLE
             end
           end
         end
       end
-    {% end %}
+    end
   end
 
   # Datagram socket type is not supported on Windows yet:

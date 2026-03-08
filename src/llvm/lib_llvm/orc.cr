@@ -18,7 +18,11 @@ lib LibLLVM
   fun orc_jit_dylib_add_generator = LLVMOrcJITDylibAddGenerator(jd : OrcJITDylibRef, dg : OrcDefinitionGeneratorRef)
 
   fun orc_create_new_thread_safe_context = LLVMOrcCreateNewThreadSafeContext : OrcThreadSafeContextRef
-  fun orc_thread_safe_context_get_context = LLVMOrcThreadSafeContextGetContext(ts_ctx : OrcThreadSafeContextRef) : ContextRef
+  {% if LibLLVM::IS_LT_210 %}
+    fun orc_thread_safe_context_get_context = LLVMOrcThreadSafeContextGetContext(ts_ctx : OrcThreadSafeContextRef) : ContextRef
+  {% else %}
+    fun orc_create_new_thread_safe_context_from_llvm_context = LLVMOrcCreateNewThreadSafeContextFromLLVMContext(ctx : ContextRef) : OrcThreadSafeContextRef
+  {% end %}
   fun orc_dispose_thread_safe_context = LLVMOrcDisposeThreadSafeContext(ts_ctx : OrcThreadSafeContextRef)
 
   fun orc_create_new_thread_safe_module = LLVMOrcCreateNewThreadSafeModule(m : ModuleRef, ts_ctx : OrcThreadSafeContextRef) : OrcThreadSafeModuleRef

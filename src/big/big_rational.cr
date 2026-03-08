@@ -46,23 +46,23 @@ struct BigRational < Number
   # Creates an exact representation of float as rational.
   #
   # Raises `ArgumentError` if *num* is not finite.
-  def self.new(num : Float::Primitive)
+  def self.new(num : Float::Primitive) : self
     raise ArgumentError.new "Can only construct from a finite number" unless num.finite?
     new { |mpq| LibGMP.mpq_set_d(mpq, num) }
   end
 
   # Creates an exact representation of float as rational.
-  def self.new(num : BigFloat)
+  def self.new(num : BigFloat) : self
     new { |mpq| LibGMP.mpq_set_f(mpq, num) }
   end
 
   # Creates a `BigRational` from the given *num*.
-  def self.new(num : BigRational)
+  def self.new(num : BigRational) : self
     num
   end
 
   # :ditto:
-  def self.new(num : BigDecimal)
+  def self.new(num : BigDecimal) : self
     num.to_big_r
   end
 
@@ -90,19 +90,19 @@ struct BigRational < Number
     BigInt.new(@mpq._mp_den)
   end
 
-  def <=>(other : BigRational)
+  def <=>(other : BigRational) : Int32
     LibGMP.mpq_cmp(mpq, other)
   end
 
-  def <=>(other : Float::Primitive)
+  def <=>(other : Float::Primitive) : Int32?
     self <=> BigRational.new(other) unless other.nan?
   end
 
-  def <=>(other : BigFloat)
+  def <=>(other : BigFloat) : Int32
     self <=> other.to_big_r
   end
 
-  def <=>(other : Int)
+  def <=>(other : Int) : Int32
     Int.primitive_si_ui_check(other) do |si, ui, big_i|
       {
         si:    LibGMP.mpq_cmp_si(self, {{ si }}, 1),
@@ -112,7 +112,7 @@ struct BigRational < Number
     end
   end
 
-  def <=>(other : BigInt)
+  def <=>(other : BigInt) : Int32
     LibGMP.mpq_cmp_z(self, other)
   end
 
@@ -310,6 +310,10 @@ struct BigRational < Number
     to_f64!
   end
 
+  def to_i : Int32
+    to_i32
+  end
+
   delegate to_i8, to_i16, to_i32, to_i64, to_u8, to_u16, to_u32, to_u64, to: to_f64
 
   # Returns `self`.
@@ -367,7 +371,7 @@ struct BigRational < Number
     denominator.format(io, separator, delimiter, decimal_places, group: group, only_significant: only_significant)
   end
 
-  def clone
+  def clone : BigRational
     self
   end
 
@@ -375,7 +379,7 @@ struct BigRational < Number
     pointerof(@mpq)
   end
 
-  def to_unsafe
+  def to_unsafe : Pointer(LibGMP::MPQ)
     mpq
   end
 
@@ -402,7 +406,7 @@ struct Int
     BigRational.new(self, 1)
   end
 
-  def <=>(other : BigRational)
+  def <=>(other : BigRational) : Int32
     -(other <=> self)
   end
 
@@ -463,7 +467,7 @@ end
 
 # :nodoc:
 struct Crystal::Hasher
-  def self.reduce_num(value : BigRational)
+  def self.reduce_num(value : BigRational) : UInt64
     inverse = BigInt.new do |mpz|
       if LibGMP.invert(mpz, value.denominator, HASH_MODULUS_INT_P) == 0
         # inverse doesn't exist, i.e. denominator is a multiple of HASH_MODULUS

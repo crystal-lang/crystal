@@ -391,7 +391,7 @@ module Reply
     end
 
     it "is aligned when prompt size change" do
-      editor = ExpressionEditor.new do |line_number, _color?|
+      editor = ExpressionEditor.new do |line_number, _color|
         "*" * line_number + ">" # A prompt that increase its size at each line
       end
       editor.output = IO::Memory.new
@@ -426,6 +426,39 @@ module Reply
                            "**>  3\n" \
                            "***> 4\n" \
                            "****>5"
+    end
+
+    it "Don't mess up the terminal when the prompt is empty" do
+      editor = ExpressionEditor.new { "" }
+      editor.output = IO::Memory.new
+      editor.color = false
+      editor.height = 5
+      editor.width = 15
+
+      editor.update { editor << "Hello,\nWorld" }
+      editor.verify_output "\e[1G\e[J" \
+                           "Hello,\n" \
+                           "World"
+
+      editor.output = IO::Memory.new
+      editor.update { editor << '\n' }
+      editor.verify_output "\e[1A\e[1G\e[J" \
+                           "Hello,\n" \
+                           "World\n"
+
+      editor.output = IO::Memory.new
+      editor.update { editor << "1+1" }
+      editor.verify_output "\e[2A\e[1G\e[J" \
+                           "Hello,\n" \
+                           "World\n" \
+                           "1+1"
+
+      editor.output = IO::Memory.new
+      editor.update { editor << '\n' }
+      editor.verify_output "\e[2A\e[1G\e[J" \
+                           "Hello,\n" \
+                           "World\n" \
+                           "1+1\n"
     end
 
     # TODO:

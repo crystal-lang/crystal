@@ -2,22 +2,22 @@ require "../../spec_helper"
 
 describe "Semantic: yield with scope" do
   it "infer type of empty block body" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { nil_type }
       def foo; with 1 yield; end
 
       foo do
       end
-    ") { nil_type }
+      CRYSTAL
   end
 
   it "infer type of block body" do
-    input = parse "
+    input = parse <<-CRYSTAL
       def foo; with 1 yield; end
 
       foo do
         x = 1
       end
-    "
+      CRYSTAL
     result = semantic input
     mod, input = result.program, result.node.as(Expressions)
     call = input.last.as(Call)
@@ -26,7 +26,7 @@ describe "Semantic: yield with scope" do
   end
 
   it "infer type of block body with yield scope" do
-    input = parse %(
+    input = parse <<-CRYSTAL
       require "primitives"
 
       def foo; with 1 yield; end
@@ -34,14 +34,14 @@ describe "Semantic: yield with scope" do
       foo do
         to_i64
       end
-    )
+      CRYSTAL
     result = semantic input
     mod, input = result.program, result.node.as(Expressions)
     input.last.as(Call).block.not_nil!.body.type.should eq(mod.int64)
   end
 
   it "infer type of block body with yield scope and arguments" do
-    input = parse %(
+    input = parse <<-CRYSTAL
       require "primitives"
 
       def foo; with 1 yield 1.5; end
@@ -49,14 +49,14 @@ describe "Semantic: yield with scope" do
       foo do |f|
         to_i64 + f
       end
-    )
+      CRYSTAL
     result = semantic input
     mod, input = result.program, result.node.as(Expressions)
     input.last.as(Call).block.not_nil!.body.type.should eq(mod.float64)
   end
 
   it "passes #229" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def foo
           1
@@ -71,11 +71,11 @@ describe "Semantic: yield with scope" do
         x = a { foo }
       end
       x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "invokes nested calls" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def x
           with self yield
@@ -98,11 +98,11 @@ describe "Semantic: yield with scope" do
           end
         end
       end
-      )) { int32 }
+      CRYSTAL
   end
 
   it "finds macro" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def x
           with self yield
@@ -121,11 +121,11 @@ describe "Semantic: yield with scope" do
       foo.x do
         y
       end
-      )) { int32 }
+      CRYSTAL
   end
 
   it "errors if using instance variable at top level" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't use instance variables at the top level"
       class Foo
         def foo
           with self yield
@@ -135,12 +135,11 @@ describe "Semantic: yield with scope" do
       Foo.new.foo do
         @foo
       end
-      ),
-      "can't use instance variables at the top level"
+      CRYSTAL
   end
 
   it "uses instance variable of enclosing scope" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def foo
           with self yield
@@ -160,11 +159,11 @@ describe "Semantic: yield with scope" do
       end
 
       Bar.new.bar
-      )) { int32 }
+      CRYSTAL
   end
 
   it "uses method of enclosing scope" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def foo
           with self yield
@@ -184,11 +183,11 @@ describe "Semantic: yield with scope" do
       end
 
       Bar.new.bar
-      )) { int32 }
+      CRYSTAL
   end
 
   it "mentions with yield scope and current scope in error" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "undefined local variable or method 'baz' for Int32 (with ... yield) and Foo (current scope)"
       def foo
         with 1 yield
       end
@@ -202,7 +201,6 @@ describe "Semantic: yield with scope" do
       end
 
       Foo.new.bar
-      ),
-      "undefined local variable or method 'baz' for Int32 (with ... yield) and Foo (current scope)"
+      CRYSTAL
   end
 end

@@ -92,7 +92,7 @@ describe "IO::Sized" do
       sized.read_char.should eq('b')
 
       sized.close
-      sized.closed?.should eq(true)
+      sized.closed?.should be_true
       expect_raises(IO::Error, "Closed stream") do
         sized.read_char
       end
@@ -101,11 +101,11 @@ describe "IO::Sized" do
     it "closes the underlying stream if sync_close is true" do
       io = IO::Memory.new "abcdefg"
       sized = IO::Sized.new(io, read_size: 5, sync_close: true)
-      sized.sync_close?.should eq(true)
+      sized.sync_close?.should be_true
 
-      io.closed?.should eq(false)
+      io.closed?.should be_false
       sized.close
-      io.closed?.should eq(true)
+      io.closed?.should be_true
     end
   end
 

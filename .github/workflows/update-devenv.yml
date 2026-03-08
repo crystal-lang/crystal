@@ -1,0 +1,60 @@
+name: Update devenv
+
+on:
+  schedule:
+    - cron: "0 3 * * 2" # Weekly on Tuesdays
+  push:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/update-devenv.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-devenv:
+    if: github.repository == 'crystal-lang/crystal'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download source
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          ref: master
+          persist-credentials: false
+
+      - uses: cachix/install-nix-action@4e002c8ec80594ecd40e759629461e26c8abed15 # v31
+
+      - uses: cachix/cachix-action@3ba601ff5bbb07c7220846facfa2cd81eeee15a1 # v16
+        with:
+          name: devenv
+
+      - name: Install devenv.sh
+        run: nix profile add nixpkgs#devenv
+
+      - name: Update devenv.lock
+        run: devenv update
+
+      - name: Check for changes
+        id: changes
+        run: |
+          git add devenv.lock
+          if git diff --cached --quiet; then
+            echo "changed=false" >>"$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >>"$GITHUB_OUTPUT"
+          fi
+
+      - name: Create PR
+        if: steps.changes.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8
+        with:
+          commit-message: "Update `devenv.lock`"
+          title: "Update `devenv.lock`"
+          body: ""
+          labels: "topic:infrastructure"
+          branch: infra/update-devenv
+          delete-branch: true

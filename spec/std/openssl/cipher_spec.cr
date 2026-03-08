@@ -48,7 +48,7 @@ describe OpenSSL::Cipher do
   it "authenticated?" do
     begin
       cipher = OpenSSL::Cipher.new("aes-128-gcm")
-      cipher.authenticated?.should eq(true)
+      cipher.authenticated?.should be_true
     rescue ArgumentError
       # This system doesn't support GCM ciphers
       # Silently skip, as this method will never return true
@@ -56,6 +56,6 @@ describe OpenSSL::Cipher do
     end
 
     cipher = OpenSSL::Cipher.new("aes-128-cbc")
-    cipher.authenticated?.should eq(false)
+    cipher.authenticated?.should be_false
   end
 end

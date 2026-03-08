@@ -1,7 +1,7 @@
 module Crystal
   class ProgressTracker
     # FIXME: This assumption is not always true
-    STAGES        = 13
+    STAGES        = 14
     STAGE_PADDING = 34
 
     property? stats = false
@@ -18,9 +18,9 @@ module Crystal
       print_stats
       print_progress
 
-      time_start = Time.monotonic
+      time_start = Time.instant
       retval = yield
-      time_taken = Time.monotonic - time_start
+      time_taken = time_start.elapsed
 
       print_stats(time_taken)
       print_progress
@@ -44,7 +44,7 @@ module Crystal
       justified_name = "#{current_stage_name}:".ljust(STAGE_PADDING)
       if time_taken
         memory_usage_mb = GC.stats.heap_size / 1024.0 / 1024.0
-        memory_usage_str = " (%7.2fMB)" % {memory_usage_mb} if true # display_memory?
+        memory_usage_str = " (%7.2fMB)" % {memory_usage_mb}
         puts "#{justified_name} #{time_taken}#{memory_usage_str}"
       else
         print "#{justified_name}\r" unless @progress

@@ -2,67 +2,67 @@ require "../../spec_helper"
 
 describe "Code gen: automatic cast" do
   it "casts literal integer (Int32 -> Int64)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(12345)
       def foo(x : Int64)
         x
       end
 
       foo(12345)
-      )).to_i.should eq(12345)
+      CRYSTAL
   end
 
   it "casts literal integer (Int64 -> Int32, ok)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2147483647)
       def foo(x : Int32)
         x
       end
 
       foo(2147483647_i64)
-      )).to_i.should eq(2147483647)
+      CRYSTAL
   end
 
   it "casts literal integer (Int32 -> Float32)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(12345)
       def foo(x : Float32)
         x
       end
 
       foo(12345).to_i!
-      )).to_i.should eq(12345)
+      CRYSTAL
   end
 
   it "casts literal integer (Int32 -> Float64)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(12345)
       def foo(x : Float64)
         x
       end
 
       foo(12345).to_i!
-      )).to_i.should eq(12345)
+      CRYSTAL
   end
 
   it "casts literal float (Float32 -> Float64)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(12345)
       def foo(x : Float64)
         x
       end
 
       foo(12345.0_f32).to_i!
-      )).to_i.should eq(12345)
+      CRYSTAL
   end
 
   it "casts literal float (Float64 -> Float32)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(12345)
       def foo(x : Float32)
         x
       end
 
       foo(12345.0).to_i!
-      )).to_i.should eq(12345)
+      CRYSTAL
   end
 
   it "casts symbol literal to enum" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       :four
 
       enum Foo
@@ -76,11 +76,11 @@ describe "Code gen: automatic cast" do
       end
 
       foo(:three)
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "casts Int32 to Int64 in ivar assignment" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(10)
       class Foo
         @x : Int64
 
@@ -94,11 +94,11 @@ describe "Code gen: automatic cast" do
       end
 
       Foo.new.x
-      )).to_i.should eq(10)
+      CRYSTAL
   end
 
   it "casts Symbol to Enum in ivar assignment" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       enum E
         One
         Two
@@ -118,11 +118,11 @@ describe "Code gen: automatic cast" do
       end
 
       Foo.new.x
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "casts Int32 to Int64 in cvar assignment" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(10)
       class Foo
         @@x : Int64 = 0_i64
 
@@ -133,19 +133,19 @@ describe "Code gen: automatic cast" do
       end
 
       Foo.x
-      )).to_i.should eq(10)
+      CRYSTAL
   end
 
   it "casts Int32 to Int64 in lvar assignment" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(123)
       x : Int64
       x = 123
       x
-      )).to_i.should eq(123)
+      CRYSTAL
   end
 
   it "casts Int32 to Int64 in ivar type declaration" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(10)
       class Foo
         @x : Int64 = 10
 
@@ -155,11 +155,11 @@ describe "Code gen: automatic cast" do
       end
 
       Foo.new.x
-      )).to_i.should eq(10)
+      CRYSTAL
   end
 
   it "casts Symbol to Enum in ivar type declaration" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       enum Color
         Red
         Green
@@ -175,11 +175,11 @@ describe "Code gen: automatic cast" do
       end
 
       Foo.new.x
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "casts Int32 to Int64 in cvar type declaration" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(10)
       class Foo
         @@x : Int64 = 10
 
@@ -189,21 +189,21 @@ describe "Code gen: automatic cast" do
       end
 
       Foo.x
-      )).to_i.should eq(10)
+      CRYSTAL
   end
 
   it "casts Int32 -> Int64 in arg restriction" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(123)
       def foo(x : Int64 = 123)
         x
       end
 
       foo
-      )).to_i.should eq(123)
+      CRYSTAL
   end
 
   it "casts Int32 to Int64 in ivar type declaration in generic" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(10)
       class Foo(T)
         @x : T = 10
 
@@ -213,11 +213,11 @@ describe "Code gen: automatic cast" do
       end
 
       Foo(Int64).new.x
-      )).to_i.should eq(10)
+      CRYSTAL
   end
 
   it "does multidispatch with automatic casting (1) (#8217)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(10)
       def foo(mode : Int64, x : Int32)
         10
       end
@@ -225,11 +225,11 @@ describe "Code gen: automatic cast" do
         20
       end
       foo(1, 1 || "a")
-      )).to_i.should eq(10)
+      CRYSTAL
   end
 
   it "does multidispatch with automatic casting (2) (#8217)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(20)
       def foo(mode : Int64, x : Int32)
         10
       end
@@ -237,11 +237,11 @@ describe "Code gen: automatic cast" do
         20
       end
       foo(1, "a" || 1)
-      )).to_i.should eq(20)
+      CRYSTAL
   end
 
   it "does multidispatch with automatic casting (3)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       abstract class Foo
       end
 
@@ -258,27 +258,27 @@ describe "Code gen: automatic cast" do
       end
 
       Bar.new.as(Foo).foo(1)
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "doesn't autocast number on union (#8655)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(255)
       def foo(x : UInt8 | Int32, y : Float64)
         x
       end
 
       foo(255, 60)
-      )).to_i.should eq(255)
+      CRYSTAL
   end
 
   it "casts integer variable to larger type (#9565)" do
-    run(%(
+    run(<<-CRYSTAL).to_i64.should eq(123)
       def foo(x : Int64)
         x
       end
 
       x = 123
       foo(x)
-      )).to_i64.should eq(123)
+      CRYSTAL
   end
 end

@@ -40,7 +40,7 @@ class TCPServer < TCPSocket
       self.reuse_address = true
       self.reuse_port = true if reuse_port
 
-      if errno = system_bind(addrinfo, "#{host}:#{port}") { |errno| errno }
+      if errno = @fd_lock.reference { system_bind(addrinfo, "#{host}:#{port}") }
         close
         next errno
       end
@@ -52,7 +52,14 @@ class TCPServer < TCPSocket
     end
   end
 
-  # Creates a TCPServer from an already configured raw file descriptor
+  # Creates a TCPServer from an existing system file descriptor or socket
+  # handle.
+  #
+  # This adopts *fd* into the IO system that will reconfigure it as per the
+  # event loop runtime requirements.
+  #
+  # NOTE: On Windows, the handle must have been created with
+  # `WSA_FLAG_OVERLAPPED`.
   def initialize(*, fd : Handle, family : Family = Family::INET)
     super(fd: fd, family: family)
   end
@@ -108,8 +115,10 @@ class TCPServer < TCPSocket
   # end
   # ```
   def accept? : TCPSocket?
-    if client_fd = system_accept
-      sock = TCPSocket.new(fd: client_fd, family: family, type: type, protocol: protocol)
+    return if closed?
+
+    if rs = @fd_lock.read { system_accept }
+      sock = TCPSocket.new(handle: rs[0], family: family, type: type, protocol: protocol, blocking: rs[1])
       sock.sync = sync?
       sock
     end

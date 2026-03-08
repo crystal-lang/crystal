@@ -23,6 +23,7 @@ describe System do
           `getconf _NPROCESSORS_ONLN 2>/dev/null || nproc --all 2>/dev/null || grep -sc '^processor' /proc/cpuinfo || sysctl -n hw.ncpu 2>/dev/null`.to_i
         {% end %}
       cpu_count = System.cpu_count
+      cpu_count.should be_a(Int32)
       cpu_count.should eq(shell_cpus)
     end
   end

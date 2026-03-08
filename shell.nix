@@ -19,7 +19,7 @@
 # $ nix-shell --pure --arg musl true
 #
 
-{llvm ? 11, musl ? false, system ? builtins.currentSystem}:
+{llvm ? 16, musl ? false, system ? builtins.currentSystem}:
 
 let
   nixpkgs = import (builtins.fetchTarball {
@@ -39,32 +39,42 @@ let
       src = builtins.fetchTarball { inherit url sha256; };
 
       # Extract only the compiler binary
-      buildCommand = ''
+      installPhase = ''
         mkdir -p $out/bin
 
-        # Darwin packages use embedded/bin/crystal
-        [ ! -f "${src}/embedded/bin/crystal" ] || cp ${src}/embedded/bin/crystal $out/bin/
-
-        # Linux packages use lib/crystal/bin/crystal
-        [ ! -f "${src}/lib/crystal/bin/crystal" ] || cp ${src}/lib/crystal/bin/crystal $out/bin/
+        if [ -f "${src}/embedded/bin/crystal" ]; then
+          # Darwin packages use embedded/bin/crystal
+          cp ${src}/embedded/bin/crystal $out/bin/
+        elif [ -f "${src}/lib/crystal/bin/crystal" ]; then
+          # Older Linux packages use lib/crystal/bin/crystal
+          cp ${src}/lib/crystal/bin/crystal $out/bin/
+        elif [ -f "${src}/bin/crystal" ]; then
+          # Linux packages use bin/crystal
+          cp ${src}/bin/crystal $out/bin/
+        fi
       '';
     };
 
   # Hashes obtained using `nix-prefetch-url --unpack <url>`
   latestCrystalBinary = genericBinary ({
     x86_64-darwin = {
-      url = "https://github.com/crystal-lang/crystal/releases/download/1.14.0/crystal-1.14.0-1-darwin-universal.tar.gz";
-      sha256 = "sha256:09mp3mngj4wik4v2bffpms3x8dksmrcy0a7hs4cg8b13hrfdrgww";
+      url = "https://github.com/crystal-lang/crystal/releases/download/1.19.1/crystal-1.19.1-1-darwin-universal.tar.gz";
+      sha256 = "sha256:1w2ph2sz91pddkpc6nxbgpbx4gvml481g2gr1a5325w7hk523d7v";
     };
 
     aarch64-darwin = {
-      url = "https://github.com/crystal-lang/crystal/releases/download/1.14.0/crystal-1.14.0-1-darwin-universal.tar.gz";
-      sha256 = "sha256:09mp3mngj4wik4v2bffpms3x8dksmrcy0a7hs4cg8b13hrfdrgww";
+      url = "https://github.com/crystal-lang/crystal/releases/download/1.19.1/crystal-1.19.1-1-darwin-universal.tar.gz";
+      sha256 = "sha256:1w2ph2sz91pddkpc6nxbgpbx4gvml481g2gr1a5325w7hk523d7v";
     };
 
     x86_64-linux = {
-      url = "https://github.com/crystal-lang/crystal/releases/download/1.14.0/crystal-1.14.0-1-linux-x86_64.tar.gz";
-      sha256 = "sha256:0p5b22ivggf9xlw91cbhib7n4lzd8is1shd3480jjp14rn1kiy5z";
+      url = "https://github.com/crystal-lang/crystal/releases/download/1.19.1/crystal-1.19.1-1-linux-x86_64.tar.gz";
+      sha256 = "sha256:0vh0m9dppjwv0af40sz8y2y7dm1ysrm2z3va1cgn4g9f9p0wnfcq";
+    };
+
+    aarch64-linux = {
+      url = "https://github.com/crystal-lang/crystal/releases/download/1.19.1/crystal-1.19.1-1-linux-aarch64.tar.gz";
+      sha256 = "sha256:1c4xgwcxanss5scx4aj814qjb7amwbhbrv8izgfvfq73d8b7azng";
     };
   }.${pkgs.stdenv.system});
 

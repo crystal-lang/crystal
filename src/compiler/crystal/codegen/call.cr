@@ -55,9 +55,18 @@ class Crystal::CodeGenVisitor
 
     obj = node.obj
 
-    # Always accept obj: even if it's not passed as self this might
-    # involve intermediate calls with side effects.
-    if obj
+    case obj
+    when Path
+      # Non-generic metaclasses and lib types do not need a self argument,
+      # reading them should not have side effects unless `obj` turns out to be
+      # a constant with an initializer (e.g. `A = (puts 1; Int32)` has a side
+      # effect).
+      if obj.type.passed_as_self? || obj.target_const
+        request_value(obj)
+      end
+    when ASTNode
+      # Always accept obj: even if it's not passed as self this might
+      # involve intermediate calls with side effects.
       request_value(obj)
     end
 
@@ -483,7 +492,9 @@ class Crystal::CodeGenVisitor
   end
 
   def inline_call_return_value(target_def, body)
-    if target_def.type.nil_type?
+    if target_def.type.no_return?
+      unreachable
+    elsif target_def.type.nil_type?
       @last = llvm_nil
     else
       @last = upcast(@last, target_def.type, body.type)

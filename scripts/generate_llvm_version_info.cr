@@ -5,36 +5,7 @@
 # LLVM installation different from the one bundled with Crystal.
 
 require "c/libloaderapi"
-
-# The list of supported targets are hardcoded in:
-# https://github.com/llvm/llvm-project/blob/main/llvm/CMakeLists.txt
-LLVM_ALL_TARGETS = %w(
-  AArch64
-  AMDGPU
-  ARM
-  AVR
-  BPF
-  Hexagon
-  Lanai
-  LoongArch
-  Mips
-  MSP430
-  NVPTX
-  PowerPC
-  RISCV
-  Sparc
-  SystemZ
-  VE
-  WebAssembly
-  X86
-  XCore
-  ARC
-  CSKY
-  DirectX
-  M68k
-  SPIRV
-  Xtensa
-)
+require "llvm/lib_llvm/config"
 
 def find_dll_in_env_path
   ENV["PATH"]?.try &.split(Process::PATH_DELIMITER, remove_empty: true) do |path|
@@ -62,7 +33,7 @@ begin
   patch = uninitialized LibC::UInt
   llvm_get_version.call(pointerof(major), pointerof(minor), pointerof(patch))
 
-  targets_built = LLVM_ALL_TARGETS.select do |target|
+  targets_built = LibLLVM::ALL_TARGETS.select do |target|
     LibC.GetProcAddress(dll, "LLVMInitialize#{target}Target") && LibC.GetProcAddress(dll, "LLVMInitialize#{target}TargetInfo")
   end
 
@@ -73,6 +44,8 @@ begin
   system_libs = %w(psapi shell32 ole32 uuid advapi32)
   # https://github.com/llvm/llvm-project/commit/a5ffabce98a4b2e9d69009fa3e60f2b154100860
   system_libs << "ws2_32" if {major, minor, patch} >= {18, 0, 0}
+  # https://github.com/llvm/llvm-project/commit/cb7690af09b95bb944baf1b5a9ffb18f86c12130
+  system_libs << "ntdll" if {major, minor, patch} >= {19, 0, 0}
 
   puts "#{major}.#{minor}.#{patch}"
   puts targets_built.join(' ')

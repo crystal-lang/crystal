@@ -6,4 +6,6 @@ lib LibC
     alias UINT_PTR = UInt32
     alias ULONG_PTR = Uint64
   {% end %}
+
+  alias DWORD_PTR = ULONG_PTR
 end

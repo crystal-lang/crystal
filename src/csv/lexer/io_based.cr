@@ -2,7 +2,7 @@ require "csv"
 
 # :nodoc:
 class CSV::Lexer::IOBased < CSV::Lexer
-  def initialize(@io : IO, separator = DEFAULT_SEPARATOR, quote_char = DEFAULT_QUOTE_CHAR)
+  def initialize(@io : IO, separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR)
     super(separator, quote_char)
     @current_char = @io.read_char || '\0'
   end

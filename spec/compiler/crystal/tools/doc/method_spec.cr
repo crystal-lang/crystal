@@ -218,6 +218,30 @@ describe Doc::Method do
       method.doc_copied_from.should be_nil
     end
 
+    it "inherits doc from ancestor's previous def (no extra comment)" do
+      program = top_level_semantic(<<-CRYSTAL, wants_doc: true).program
+        class Foo
+          # Some docs
+          def foo
+          end
+
+          def foo
+            previous_def
+          end
+        end
+
+        class Bar < Foo
+          def foo
+            super
+          end
+        end
+        CRYSTAL
+      generator = Doc::Generator.new program, [""]
+      method = generator.type(program.types["Bar"]).lookup_method("foo").not_nil!
+      method.doc.should eq("Some docs")
+      method.doc_copied_from.should eq(generator.type(program.types["Foo"]))
+    end
+
     it "inherits doc from ancestor (use :inherit:)" do
       program = top_level_semantic(<<-CRYSTAL, wants_doc: true).program
         class Foo
@@ -261,6 +285,34 @@ describe Doc::Method do
       generator = Doc::Generator.new program, [""]
       method = generator.type(program.types["Bar"]).lookup_method("foo").not_nil!
       method.doc.should eq("Before\n\nSome docs\n\nAfter")
+      method.doc_copied_from.should be_nil
+    end
+
+    it "inherits doc from ancestor through chained :inherit:" do
+      program = top_level_semantic(<<-CRYSTAL, wants_doc: true).program
+        class Foo
+          # Some docs
+          def foo
+          end
+        end
+
+        class Bar < Foo
+          # :inherit:
+          def foo
+            super
+          end
+        end
+
+        class Baz < Bar
+          # :inherit:
+          def foo
+            super
+          end
+        end
+        CRYSTAL
+      generator = Doc::Generator.new program, [""]
+      method = generator.type(program.types["Baz"]).lookup_method("foo").not_nil!
+      method.doc.should eq("Some docs")
       method.doc_copied_from.should be_nil
     end
   end

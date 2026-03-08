@@ -11,39 +11,45 @@ private def http_quote_string(string)
 end
 
 describe HTTP do
-  it "parses RFC 1123" do
-    time = Time.utc(1994, 11, 6, 8, 49, 37)
-    HTTP.parse_time("Sun, 06 Nov 1994 08:49:37 GMT").should eq(time)
-  end
+  describe ".parse_time" do
+    it "parses RFC 1123" do
+      time = Time.utc(1994, 11, 6, 8, 49, 37)
+      HTTP.parse_time("Sun, 06 Nov 1994 08:49:37 GMT").should eq(time)
+    end
 
-  it "parses RFC 1123 without day name" do
-    time = Time.utc(1994, 11, 6, 8, 49, 37)
-    HTTP.parse_time("06 Nov 1994 08:49:37 GMT").should eq(time)
-  end
+    it "parses RFC 1123 without day name" do
+      time = Time.utc(1994, 11, 6, 8, 49, 37)
+      HTTP.parse_time("06 Nov 1994 08:49:37 GMT").should eq(time)
+    end
 
-  it "parses RFC 1036" do
-    time = Time.utc(1994, 11, 6, 8, 49, 37)
-    HTTP.parse_time("Sunday, 06-Nov-94 08:49:37 GMT").should eq(time)
-  end
+    it "parses RFC 1036" do
+      time = Time.utc(1994, 11, 6, 8, 49, 37)
+      HTTP.parse_time("Sunday, 06-Nov-94 08:49:37 GMT").should eq(time)
+    end
 
-  it "parses ANSI C" do
-    time = Time.utc(1994, 11, 6, 8, 49, 37)
-    HTTP.parse_time("Sun Nov  6 08:49:37 1994").should eq(time)
-    time2 = Time.utc(1994, 11, 16, 8, 49, 37)
-    HTTP.parse_time("Sun Nov 16 08:49:37 1994").should eq(time2)
-  end
+    it "parses ANSI C" do
+      time = Time.utc(1994, 11, 6, 8, 49, 37)
+      HTTP.parse_time("Sun Nov  6 08:49:37 1994").should eq(time)
+      time2 = Time.utc(1994, 11, 16, 8, 49, 37)
+      HTTP.parse_time("Sun Nov 16 08:49:37 1994").should eq(time2)
+    end
 
-  it "parses and is UTC (#2744)" do
-    date = "Mon, 09 Sep 2011 23:36:00 GMT"
-    parsed_time = HTTP.parse_time(date).not_nil!
-    parsed_time.utc?.should be_true
-  end
+    it "parses and is UTC (#2744)" do
+      date = "Mon, 09 Sep 2011 23:36:00 GMT"
+      parsed_time = HTTP.parse_time(date).not_nil!
+      parsed_time.utc?.should be_true
+    end
 
-  it "parses and is local (#2744)" do
-    date = "Mon, 09 Sep 2011 23:36:00 -0300"
-    parsed_time = HTTP.parse_time(date).not_nil!
-    parsed_time.offset.should eq -3 * 3600
-    parsed_time.to_utc.to_s.should eq("2011-09-10 02:36:00 UTC")
+    it "parses and is local (#2744)" do
+      date = "Mon, 09 Sep 2011 23:36:00 -0300"
+      parsed_time = HTTP.parse_time(date).not_nil!
+      parsed_time.offset.should eq -3 * 3600
+      parsed_time.to_utc.to_s.should eq("2011-09-10 02:36:00 UTC")
+    end
+
+    it "handles errors" do
+      HTTP.parse_time("Thu").should be_nil
+    end
   end
 
   describe "generates HTTP date" do

@@ -10,10 +10,10 @@ struct Time::Format
   # * [asctime](http://en.cppreference.com/w/c/chrono/asctime)
   #
   # ```
-  # Time::Format::HTTP_DATE.parse("Sun, 14 Feb 2016 21:00:00 GMT")  # => 2016-02-14 21:00:00 UTC
-  # Time::Format::HTTP_DATE.parse("Sunday, 14-Feb-16 21:00:00 GMT") # => 2016-02-14 21:00:00 UTC
-  # Time::Format::HTTP_DATE.parse("Sun, 14-Feb-2016 21:00:00 GMT")  # => 2016-02-14 21:00:00 UTC
-  # Time::Format::HTTP_DATE.parse("Sun Feb 14 21:00:00 2016")       # => 2016-02-14 21:00:00 UTC
+  # Time::Format::HTTP_DATE.parse("Sun, 14 Feb 2016 21:00:00 GMT")  # => 2016-02-14 21:00:00Z
+  # Time::Format::HTTP_DATE.parse("Sunday, 14-Feb-16 21:00:00 GMT") # => 2016-02-14 21:00:00Z
+  # Time::Format::HTTP_DATE.parse("Sun, 14-Feb-2016 21:00:00 GMT")  # => 2016-02-14 21:00:00Z
+  # Time::Format::HTTP_DATE.parse("Sun Feb 14 21:00:00 2016")       # => 2016-02-14 21:00:00Z
   #
   # Time::Format::HTTP_DATE.format(Time.utc(2016, 2, 15)) # => "Mon, 15 Feb 2016 00:00:00 GMT"
   # ```
@@ -102,6 +102,7 @@ struct Time::Format
       ansi_c_format = current_char != ','
       next_char unless ansi_c_format
 
+      raise "Invalid date format" unless current_char.ascii_whitespace?
       whitespace
 
       ansi_c_format

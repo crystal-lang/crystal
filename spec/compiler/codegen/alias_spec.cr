@@ -2,40 +2,40 @@ require "../../spec_helper"
 
 describe "Code gen: alias" do
   it "invokes methods on empty array of recursive alias (1)" do
-    run(%(
+    run(<<-CRYSTAL).to_string.should eq("")
       require "prelude"
 
       alias Alias = Array(Alias)
 
       a = [] of Alias
       b = a.map(&.to_s).join
-      )).to_string.should eq("")
+      CRYSTAL
   end
 
   it "invokes methods on empty array of recursive alias (2)" do
-    run(%(
+    run(<<-CRYSTAL).to_string.should eq("")
       require "prelude"
 
       alias Alias = Nil | Array(Alias)
 
       a = [] of Alias
       b = a.map(&.to_s).join
-      )).to_string.should eq("")
+      CRYSTAL
   end
 
   it "invokes methods on empty array of recursive alias (3)" do
-    run(%(
+    run(<<-CRYSTAL).to_string.should eq("")
       require "prelude"
 
       alias Alias = Nil | Array(Alias)
 
       a = [] of Alias
       b = a.map(&.to_s).join
-      )).to_string.should eq("")
+      CRYSTAL
   end
 
   it "casts to recursive alias" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       require "prelude"
 
       class Bar(T)
@@ -46,11 +46,11 @@ describe "Code gen: alias" do
       a = 1.as(Foo)
       b = a.as(Int32)
       b
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "casts to recursive alias" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Bar(T)
         def self.new(&block : -> T)
         end
@@ -71,23 +71,23 @@ describe "Code gen: alias" do
       end
 
       foo(2).to_i!
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "doesn't break with alias for link attributes" do
-    result = semantic(%(
+    result = semantic(<<-CRYSTAL)
       alias Foo = Int32
 
       module Moo
         alias Bar = Foo
         alias Foo = Moo
       end
-      ))
+      CRYSTAL
     result.program.link_annotations
   end
 
   it "doesn't crash on cast to as recursive alias (#639)" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       class Foo(T)
       end
 
@@ -98,11 +98,11 @@ describe "Code gen: alias" do
       ptr = Pointer(Type).malloc(1_u64)
       ptr.value = 1.as(Type)
       ptr.value = 1
-      ))
+      CRYSTAL
   end
 
   it "lazily solves aliases (#1346)" do
-    run(%(
+    run(<<-CRYSTAL)
       struct Proc
         def self.new(&block : self)
           block
@@ -127,11 +127,11 @@ describe "Code gen: alias" do
 
       cmd = CmdHandler.new { |s| s.foo }
       cmd.call(SmtpSession.new)
-      ))
+      CRYSTAL
   end
 
   it "codegens cast to alias that includes bool" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       alias Foo = Bool | Array(Foo)
 
       a = false.as(Foo)
@@ -140,11 +140,11 @@ describe "Code gen: alias" do
       else
         2
       end
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "overloads alias against generic (1) (#3261)" do
-    run(%(
+    run(<<-CRYSTAL, inject_primitives: false).to_i.should eq(2)
       class Foo(T)
       end
 
@@ -159,11 +159,11 @@ describe "Code gen: alias" do
       end
 
       take(Foo(String).new)
-      ), inject_primitives: false).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "overloads alias against generic (2) (#3261)" do
-    run(%(
+    run(<<-CRYSTAL, inject_primitives: false).to_i.should eq(1)
       class Foo(T)
       end
 
@@ -178,6 +178,6 @@ describe "Code gen: alias" do
       end
 
       take(Foo(String).new)
-      ), inject_primitives: false).to_i.should eq(1)
+      CRYSTAL
   end
 end
