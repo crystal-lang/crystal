@@ -73,13 +73,13 @@ macro record(__name name, *properties, **kwargs)
   struct {{name.id}}
     {% for property in properties %}
       {% if property.is_a?(Assign) %}
-        {% unless property.doc == "" %}# {{property.doc.gsub(/\n/, "\n# ").id}}{% end %}
+        {% if compare_versions(Crystal::VERSION, "1.11.0") > 0 && property.doc != "" %}# {{property.doc.gsub(/\n/, "\n# ").id}}{% end %}
         getter {{property.target.id}}
       {% elsif property.is_a?(TypeDeclaration) %}
-        {% unless property.doc == "" %}# {{property.doc.gsub(/\n/, "\n# ").id}}{% end %}
+        {% if compare_versions(Crystal::VERSION, "1.11.0") > 0 && property.doc != "" %}# {{property.doc.gsub(/\n/, "\n# ").id}}{% end %}
         getter {{property.var.id}} : {{property.type}}{% if !property.value.nil? || property.value.stringify == "nil" %} = {{property.value}}{% end %}
       {% else %}
-        {% unless property.doc == "" %}# {{property.doc.gsub(/\n/, "\n# ").id}}{% end %}
+        {% if compare_versions(Crystal::VERSION, "1.11.0") > 0 && property.doc != "" %}# {{property.doc.gsub(/\n/, "\n# ").id}}{% end %}
         getter :{{property.id}}
       {% end %}
     {% end %}
