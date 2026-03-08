@@ -74,12 +74,13 @@ macro record(__name name, *properties, **kwargs)
     {% for property in properties %}
       {% if property.is_a?(Assign) %}
         {% unless property.doc == "" %}# {{property.doc.gsub(/\n/, "\n# ").id}}{% end %}
-        getter {{property.target.id}} = {{property.value.id}}
+        getter {{property.target.id}}
       {% elsif property.is_a?(TypeDeclaration) %}
         {% unless property.doc == "" %}# {{property.doc.gsub(/\n/, "\n# ").id}}{% end %}
         getter {{property.var.id}} : {{property.type}}{% if !property.value.nil? || property.value.stringify == "nil" %} = {{property.value}}{% end %}
       {% else %}
-        getter(:{{property.id}})
+        {% unless property.doc == "" %}# {{property.doc.gsub(/\n/, "\n# ").id}}{% end %}
+        getter :{{property.id}}
       {% end %}
     {% end %}
 

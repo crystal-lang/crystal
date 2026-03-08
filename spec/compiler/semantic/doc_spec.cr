@@ -682,11 +682,11 @@ describe "Semantic: doc" do
       require "object/properties"
 
       record Foo,
-        # This is a single line comment
-        val = 1,
         # This is a multiline
         # comment
-        name : String?
+        name : String?,
+        # This is a single line comment
+        val = 1
 
       Foo.new("test").name
       Foo.new("test").val
