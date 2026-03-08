@@ -383,6 +383,11 @@ module Crystal
       end
     end
 
+    # Returns the doc comment attached to this node. Not every node
+    # supports having doc comments, so by default this returns `nil`.
+    def doc
+    end
+
     def truthy?
       case self
       when NilLiteral, Nop
