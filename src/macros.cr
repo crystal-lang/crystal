@@ -73,9 +73,11 @@ macro record(__name name, *properties, **kwargs)
   struct {{name.id}}
     {% for property in properties %}
       {% if property.is_a?(Assign) %}
-        getter({{property.target.id}})
+        {% unless property.doc == "" %}# {{property.doc.gsub(/\n/, "\n# ").id}}{% end %}
+        getter {{property.target.id}} = {{property.value.id}}
       {% elsif property.is_a?(TypeDeclaration) %}
-        getter({{property}})
+        {% unless property.doc == "" %}# {{property.doc.gsub(/\n/, "\n# ").id}}{% end %}
+        getter {{property.var.id}} : {{property.type}}{% if !property.value.nil? || property.value.stringify == "nil" %} = {{property.value}}{% end %}
       {% else %}
         getter(:{{property.id}})
       {% end %}
