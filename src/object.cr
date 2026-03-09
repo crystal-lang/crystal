@@ -756,6 +756,7 @@ class Object
       {% end %}
     end
 
+    # :nodoc:
     class ::Thread
       # :nodoc:
       property {{tls_name}} : {{decl.type}} | Nil
