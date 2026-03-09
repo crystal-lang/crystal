@@ -52,7 +52,10 @@ class Crystal::CodeGenVisitor
     new_fun = typed_fun.func
     source_fun.params.each_index do |index|
       attrs = source_fun.attributes(index + 1)
-      new_fun.add_attribute(attrs, index + 1) unless attrs.value == 0
+      if attrs.value != 0
+        param_type = new_fun.params[index].type
+        new_fun.add_attribute(attrs, index + 1, param_type)
+      end
     end
 
     typed_fun
