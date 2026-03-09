@@ -55,6 +55,66 @@ module Fiber::ExecutionContext
   #
   # p result.get # => 523776
   # ```
+  #
+  # Here's another version example that runs truly in parallel and utilizes
+  # all available CPU cores even on high CPU-bounded tasks.
+  # Check [#16707](https://github.com/crystal-lang/crystal/issues/16707) for more details
+
+  # ```
+  # total_seeds = 102400000_i64
+  # worker_size = Fiber::ExecutionContext.default_workers_count # => 16 on AMD 7840hs
+  # Fiber::ExecutionContext.default.resize(worker_size)
+  # batches = worker_size
+  # batch_size = (total_seeds // batches).to_i32
+
+  # p calculate(total_seeds, batch_size, worker_size, batches)
+
+  # def calculate(total_seeds, batch_size, worker_size, batches)
+  #   p! batch_size
+  #   p! batches
+
+  #   channel = Channel({Int64, Int64}).new(batches + 1)
+  #   collector = Channel(Int64).new
+
+  #   batches.times do |i|
+  #     spawn name: "Worker-#{i}" do
+  #       result = 0_i64
+
+  #       while (r = channel.receive?)
+  #         (r[0]...r[1]).each do |seed|
+  #           result = result &+ seed
+  #         end
+  #       end
+
+  #       collector.send(result)
+  #     end
+  #   end
+
+  #   r0 = 0_i64
+
+  #   batches.times do
+  #     r1 = r0 &+ batch_size
+  #     channel.send({r0, r1})
+  #     r0 = r1
+  #   end
+
+  #   if total_seeds - batch_size &* batches > 0
+  #     channel.send({r0, total_seeds})
+  #   end
+
+  #   channel.close
+
+  #   value = 0_i64
+
+  #   worker_size.times {|i| value = value &+ collector.receive }
+
+  #   value
+  # end
+  #
+  # # batch_size # => 6400000
+  # # batches # => 16
+  # # 5242879948800000
+  # ```
   class Parallel
     include ExecutionContext
 
