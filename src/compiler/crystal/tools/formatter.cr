@@ -502,12 +502,12 @@ module Crystal
           check :OP_RCURLY
           write "}"
           next_string_token
-        when .delimiter_end?
-          break
         else
-          raise "Bug: unexpected token: #{@token.type}"
+          break
         end
       end
+
+      check :DELIMITER_END
 
       write @token.raw
       format_regex_modifiers if is_regex
