@@ -146,7 +146,7 @@ describe File do
         tempfile.path.should eq filepath
         tempfile.closed?.should be_true
 
-        filepath = filepath.not_nil!
+        filepath = filepath.should_not(be_nil)
         File.exists?(filepath).should be_true
       ensure
         File.delete(filepath) if filepath

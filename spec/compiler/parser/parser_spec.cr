@@ -89,7 +89,7 @@ private def assert_end_location(source, line_number = 1, column_number = source.
     parser = Parser.new(string)
     node = parser.parse.as(Expressions).expressions[0]
     node_source(string, node).should eq(source)
-    end_loc = node.end_location.not_nil!
+    end_loc = node.end_location.should_not be_nil
     end_loc.line_number.should eq(line_number)
     end_loc.column_number.should eq(column_number)
   end
@@ -3151,7 +3151,7 @@ module Crystal
 
     it "gets corrects of ~" do
       node = Parser.parse("\n  ~1")
-      loc = node.location.not_nil!
+      loc = node.location.should_not be_nil
       loc.line_number.should eq(2)
       loc.column_number.should eq(3)
     end
@@ -3159,7 +3159,7 @@ module Crystal
     it "gets corrects end location for var" do
       parser = Parser.new("foo = 1\nfoo; 1")
       node = parser.parse.as(Expressions).expressions[1]
-      end_loc = node.end_location.not_nil!
+      end_loc = node.end_location.should_not be_nil
       end_loc.line_number.should eq(2)
       end_loc.column_number.should eq(3)
     end
@@ -3167,7 +3167,7 @@ module Crystal
     it "gets corrects end location for var + var" do
       parser = Parser.new("foo = 1\nfoo + nfoo; 1")
       node = parser.parse.as(Expressions).expressions[1].as(Call).obj.as(Var)
-      end_loc = node.end_location.not_nil!
+      end_loc = node.end_location.should_not be_nil
       end_loc.line_number.should eq(2)
       end_loc.column_number.should eq(3)
     end
@@ -3175,8 +3175,8 @@ module Crystal
     it "gets corrects end location for block with { ... }" do
       parser = Parser.new("foo { 1 + 2 }; 1")
       node = parser.parse.as(Expressions).expressions[0].as(Call)
-      block = node.block.not_nil!
-      end_loc = block.end_location.not_nil!
+      block = node.block.should_not be_nil
+      end_loc = block.end_location.should_not be_nil
       end_loc.line_number.should eq(1)
       end_loc.column_number.should eq(13)
       node.end_location.should eq(end_loc)
@@ -3185,8 +3185,8 @@ module Crystal
     it "gets corrects end location for block with do ... end" do
       parser = Parser.new("foo do\n  1 + 2\nend; 1")
       node = parser.parse.as(Expressions).expressions[0].as(Call)
-      block = node.block.not_nil!
-      end_loc = block.end_location.not_nil!
+      block = node.block.should_not be_nil
+      end_loc = block.end_location.should_not be_nil
       end_loc.line_number.should eq(3)
       end_loc.column_number.should eq(3)
       node.end_location.should eq(end_loc)
@@ -3201,13 +3201,13 @@ module Crystal
         1 + 'a'
         CRYSTAL
       node = parser.parse.as(Expressions).expressions[1]
-      loc = node.location.not_nil!
+      loc = node.location.should_not be_nil
       loc.line_number.should eq(5)
     end
 
     it "gets correct location with \r\n (#1558)" do
       nodes = Parser.parse("class Foo\r\nend\r\n\r\n1").as(Expressions)
-      loc = nodes.last.location.not_nil!
+      loc = nodes.last.location.should_not be_nil
       loc.line_number.should eq(4)
       loc.column_number.should eq(1)
     end
@@ -3215,7 +3215,7 @@ module Crystal
     it "sets location of enum method" do
       parser = Parser.new("enum Foo; A; def bar; end; end")
       node = parser.parse.as(EnumDef).members[1].as(Def)
-      loc = node.location.not_nil!
+      loc = node.location.should_not be_nil
       loc.line_number.should eq(1)
       loc.column_number.should eq(14)
     end
@@ -3223,7 +3223,7 @@ module Crystal
     it "gets correct location after macro with yield" do
       parser = Parser.new(%(\n  1 ? 2 : 3))
       node = parser.parse
-      loc = node.location.not_nil!
+      loc = node.location.should_not be_nil
       loc.line_number.should eq(2)
       loc.column_number.should eq(3)
     end
@@ -3231,7 +3231,7 @@ module Crystal
     it "gets correct location of empty exception handler inside def" do
       parser = Parser.new("def foo\nensure\nend")
       node = parser.parse.as(Def).body
-      loc = node.location.not_nil!
+      loc = node.location.should_not be_nil
       loc.line_number.should eq(2)
     end
 
@@ -3240,7 +3240,7 @@ module Crystal
       node = parser.parse.as(Expressions).expressions[1]
 
       node.name_location.should_not be_nil
-      name_location = node.name_location.not_nil!
+      name_location = node.name_location.should_not be_nil
 
       name_location.line_number.should eq(1)
       name_location.column_number.should eq(10)
@@ -3251,7 +3251,7 @@ module Crystal
       node = parser.parse.as(Expressions).expressions[1]
 
       node.name_location.should_not be_nil
-      name_location = node.name_location.not_nil!
+      name_location = node.name_location.should_not be_nil
 
       name_location.line_number.should eq(1)
       name_location.column_number.should eq(12)
@@ -3278,7 +3278,7 @@ module Crystal
     it "sets correct location of proc literal" do
       parser = Parser.new("->(\n  x : Int32,\n  y : String\n) { }")
       node = parser.parse.as(ProcLiteral)
-      loc = node.location.not_nil!
+      loc = node.location.should_not be_nil
       loc.line_number.should eq(1)
       loc.column_number.should eq(1)
     end
@@ -3286,62 +3286,62 @@ module Crystal
     it "sets correct location of `else` of if statement" do
       parser = Parser.new("if foo\nelse\nend")
       node = parser.parse.as(If)
-      node.location.not_nil!.line_number.should eq(1)
-      node.else_location.not_nil!.line_number.should eq(2)
-      node.end_location.not_nil!.line_number.should eq(3)
+      node.location.should_not(be_nil).line_number.should eq(1)
+      node.else_location.should_not(be_nil).line_number.should eq(2)
+      node.end_location.should_not(be_nil).line_number.should eq(3)
 
       parser = Parser.new("if foo\nend")
       node = parser.parse.as(If)
-      node.location.not_nil!.line_number.should eq(1)
+      node.location.should_not(be_nil).line_number.should eq(1)
       node.else_location.should be_nil
-      node.end_location.not_nil!.line_number.should eq(2)
+      node.end_location.should_not(be_nil).line_number.should eq(2)
     end
 
     it "sets correct location of `elsif` of if statement" do
       parser = Parser.new("if foo\nelsif bar\nend")
       node = parser.parse.as(If)
-      node.location.not_nil!.line_number.should eq(1)
-      node.else_location.not_nil!.line_number.should eq(2)
-      node.end_location.not_nil!.line_number.should eq(3)
+      node.location.should_not(be_nil).line_number.should eq(1)
+      node.else_location.should_not(be_nil).line_number.should eq(2)
+      node.end_location.should_not(be_nil).line_number.should eq(3)
     end
 
     it "sets correct location of `else` of unless statement" do
       parser = Parser.new("unless foo\nelse\nend")
       node = parser.parse.as(Unless)
-      node.location.not_nil!.line_number.should eq(1)
-      node.else_location.not_nil!.line_number.should eq(2)
-      node.end_location.not_nil!.line_number.should eq(3)
+      node.location.should_not(be_nil).line_number.should eq(1)
+      node.else_location.should_not(be_nil).line_number.should eq(2)
+      node.end_location.should_not(be_nil).line_number.should eq(3)
     end
 
     it "sets correct location and end location of `begin` block" do
       parser = Parser.new("begin\nfoo\nend")
       node = parser.parse.as(Expressions)
-      node.location.not_nil!.line_number.should eq(1)
-      node.end_location.not_nil!.line_number.should eq(3)
+      node.location.should_not(be_nil).line_number.should eq(1)
+      node.end_location.should_not(be_nil).line_number.should eq(3)
     end
 
     it "sets correct location and end location of parenthesized empty block" do
       parser = Parser.new("()")
       node = parser.parse.as(Expressions)
-      node.location.not_nil!.column_number.should eq(1)
-      node.end_location.not_nil!.column_number.should eq(2)
+      node.location.should_not(be_nil).column_number.should eq(1)
+      node.end_location.should_not(be_nil).column_number.should eq(2)
     end
 
     it "sets correct location and end location of parenthesized block" do
       parser = Parser.new("(foo; bar)")
       node = parser.parse.as(Expressions)
-      node.location.not_nil!.column_number.should eq(1)
-      node.end_location.not_nil!.column_number.should eq(10)
+      node.location.should_not(be_nil).column_number.should eq(1)
+      node.end_location.should_not(be_nil).column_number.should eq(10)
     end
 
     it "sets correct locations of keywords of exception handler" do
       parser = Parser.new("begin\nrescue\nelse\nensure\nend")
       node = parser.parse.as(ExceptionHandler)
-      node.location.not_nil!.line_number.should eq(1)
-      node.rescues.not_nil!.first.location.not_nil!.line_number.should eq(2)
-      node.else_location.not_nil!.line_number.should eq(3)
-      node.ensure_location.not_nil!.line_number.should eq(4)
-      node.end_location.not_nil!.line_number.should eq(5)
+      node.location.should_not(be_nil).line_number.should eq(1)
+      node.rescues.should_not(be_nil).first.location.should_not(be_nil).line_number.should eq(2)
+      node.else_location.should_not(be_nil).line_number.should eq(3)
+      node.ensure_location.should_not(be_nil).line_number.should eq(4)
+      node.end_location.should_not(be_nil).line_number.should eq(5)
     end
 
     it "sets correct locations of macro if / else" do
@@ -3711,7 +3711,7 @@ module Crystal
     it "sets correct location of trailing ensure" do
       parser = Parser.new("foo ensure bar")
       node = parser.parse.as(ExceptionHandler)
-      ensure_location = node.ensure_location.not_nil!
+      ensure_location = node.ensure_location.should_not(be_nil)
       ensure_location.line_number.should eq(1)
       ensure_location.column_number.should eq(5)
     end
@@ -3719,7 +3719,7 @@ module Crystal
     it "sets correct location of trailing rescue" do
       source = "foo rescue bar"
       parser = Parser.new(source)
-      node = parser.parse.as(ExceptionHandler).rescues.not_nil![0]
+      node = parser.parse.as(ExceptionHandler).rescues.should_not(be_nil)[0]
       node_source(source, node).should eq("rescue bar")
     end
 
@@ -3744,7 +3744,7 @@ module Crystal
 
     it "sets correct location of implicit tuple literal of multi-return" do
       source = "def foo; return 1, 2; end"
-      node = Parser.new(source).parse.as(Def).body.as(Return).exp.not_nil!
+      node = Parser.new(source).parse.as(Def).body.as(Return).exp.should_not be_nil
       node_source(source, node).should eq("1, 2")
     end
 
@@ -3761,7 +3761,7 @@ module Crystal
     it "sets correct location of var in proc pointer" do
       source = "foo : Foo; ->foo.bar"
       expressions = Parser.new(source).parse.as(Expressions).expressions
-      node = expressions[1].as(ProcPointer).obj.not_nil!
+      node = expressions[1].as(ProcPointer).obj.should_not be_nil
       node_source(source, node).should eq("foo")
     end
 
@@ -3774,7 +3774,7 @@ module Crystal
 
     it "sets correct location of receiver var in method def" do
       source = "def foo.bar; end"
-      node = Parser.new(source).parse.as(Def).receiver.not_nil!
+      node = Parser.new(source).parse.as(Def).receiver.should_not be_nil
       node_source(source, node).should eq("foo")
     end
 
@@ -3816,7 +3816,7 @@ module Crystal
       CRYSTAL
 
       exps = Parser.parse(code).as(Expressions)
-      exps.expressions[1].location.not_nil!.line_number.should eq(7)
+      exps.expressions[1].location.should_not(be_nil).line_number.should eq(7)
     end
 
     it "sets correct location for fun def" do
@@ -3878,25 +3878,25 @@ module Crystal
 
     it "sets correct location of argument in named tuple type" do
       source = "x : {foo: Bar}"
-      node = Parser.parse(source).as(TypeDeclaration).declared_type.as(Generic).named_args.not_nil!.first
+      node = Parser.parse(source).as(TypeDeclaration).declared_type.as(Generic).named_args.should_not(be_nil).first
       node_source(source, node).should eq("foo: Bar")
     end
 
     it "sets correct location of instance variable in proc pointer" do
       source = "->@foo.x"
-      node = Parser.parse(source).as(ProcPointer).obj.not_nil!
+      node = Parser.parse(source).as(ProcPointer).obj.should_not(be_nil)
       node_source(source, node).should eq("@foo")
     end
 
     it "sets correct location of instance variable in proc pointer" do
       source = "->@@foo.x"
-      node = Parser.parse(source).as(ProcPointer).obj.not_nil!
+      node = Parser.parse(source).as(ProcPointer).obj.should_not(be_nil)
       node_source(source, node).should eq("@@foo")
     end
 
     it "sets correct location of annotation on method parameter" do
       source = "def x(@[Foo] y) end"
-      node = Parser.parse(source).as(Def).args.first.parsed_annotations.not_nil!.first
+      node = Parser.parse(source).as(Def).args.first.parsed_annotations.should_not(be_nil).first
       node_source(source, node).should eq("@[Foo]")
     end
 

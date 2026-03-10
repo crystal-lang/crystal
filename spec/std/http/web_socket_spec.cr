@@ -384,7 +384,7 @@ describe HTTP::WebSocket do
           end
 
           ws.on_close do |code, message|
-            http_ref.not_nil!.close
+            http_ref.should_not(be_nil).close
             close_chan.send({code.to_i, message})
           end
         end
@@ -430,7 +430,7 @@ describe HTTP::WebSocket do
           end
 
           ws.on_close do
-            http_ref.not_nil!.close
+            http_ref.should_not(be_nil).close
           end
         end
 
