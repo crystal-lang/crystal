@@ -105,9 +105,9 @@ require "./compiler_rt/divmod128.cr"
     struct UInt128
       @[AlwaysInline]
       def to_f32 : Float32
-        # Float32::MAX.to_u128! (it is okay to use a literal here because
-        # support for LLVM 14 was added after 128-bit literals)
-        if self > 340282346638528859811704183484516925440_u128
+        # Float32 cannot represent values larger than Float32::MAX (~3.4e38)
+        max = 340282346638528859811704183484516925440_u128 # Float32::MAX.to_u128!
+        if self > max
           raise OverflowError.new
         end
         __floatuntisf(self)
@@ -122,8 +122,10 @@ require "./compiler_rt/divmod128.cr"
     struct Float32
       @[AlwaysInline]
       def to_i128 : Int128
-        # Int128::MIN.to_f32!..Int128::MAX.to_f32!.prev_float
-        if !(self >= -1.7014118e+38_f32) || self > 1.7014117e+38_f32
+        # Representable range: Int128::MIN.to_f32! .. Int128::MAX.to_f32!.prev_float
+        min = -1.7014118e+38_f32 # Int128::MIN.to_f32!
+        max =  1.7014117e+38_f32 # Int128::MAX.to_f32!.prev_float
+        if !(self >= min) || self > max
           raise OverflowError.new
         end
         __fixsfti(self)
@@ -131,8 +133,9 @@ require "./compiler_rt/divmod128.cr"
 
       @[AlwaysInline]
       def to_u128 : UInt128
-        # UInt128::MIN.to_f32!..Float32::MAX
-        if !(self >= 0_f32) || self > 3.4028235e+38_f32
+        # Representable range: 0 .. Float32::MAX
+        max = 3.4028235e+38_f32 # Float32::MAX
+        if !(self >= 0_f32) || self > max
           raise OverflowError.new
         end
         __fixunssfti(self)
@@ -142,8 +145,10 @@ require "./compiler_rt/divmod128.cr"
     struct Float64
       @[AlwaysInline]
       def to_i128 : Int128
-        # Int128::MIN.to_f64!..Int128::MAX.to_f64!.prev_float
-        if !(self >= -1.7014118346046923e+38_f64) || self > 1.7014118346046921e+38_f64
+        # Representable range: Int128::MIN.to_f64! .. Int128::MAX.to_f64!.prev_float
+        min = -1.7014118346046923e+38_f64 # Int128::MIN.to_f64!
+        max =  1.7014118346046921e+38_f64 # Int128::MAX.to_f64!.prev_float
+        if !(self >= min) || self > max
           raise OverflowError.new
         end
         __fixdfti(self)
@@ -151,8 +156,9 @@ require "./compiler_rt/divmod128.cr"
 
       @[AlwaysInline]
       def to_u128 : UInt128
-        # UInt128::MIN.to_f64!..UInt128::MAX.to_f64!.prev_float
-        if !(self >= 0_f64) || self > 3.4028236692093843e+38_f64
+        # Representable range: 0 .. UInt128::MAX.to_f64!.prev_float
+        max = 3.4028236692093843e+38_f64 # UInt128::MAX.to_f64!.prev_float
+        if !(self >= 0_f64) || self > max
           raise OverflowError.new
         end
         __fixunsdfti(self)
