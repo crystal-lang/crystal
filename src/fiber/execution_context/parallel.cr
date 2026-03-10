@@ -123,6 +123,12 @@ module Fiber::ExecutionContext
       ExecutionContext.execution_contexts.push(self)
     end
 
+    # TODO: must report how many schedulers are running (count spinning
+    # schedulers but don't count waiting/parked ones).
+    protected def size : Int32
+      @started
+    end
+
     # The maximum number of schedulers that can be started, aka how many fibers
     # can run in parallel or maximum parallelism of the context.
     def capacity : Int32
