@@ -123,12 +123,8 @@ module Fiber::ExecutionContext
       ExecutionContext.execution_contexts.push(self)
     end
 
-    # The number of threads that have been started.
-    def size : Int32
-      @started
-    end
-
-    # The maximum number of threads that can be started.
+    # The maximum number of schedulers that can be started, aka how many fibers
+    # can run in parallel or maximum parallelism of the context.
     def capacity : Int32
       @schedulers.size
     end
