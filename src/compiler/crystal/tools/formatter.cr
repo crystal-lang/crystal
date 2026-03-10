@@ -579,6 +579,33 @@ module Crystal
         end
       end
 
+      visit_string_interpolation_body(node, delimiter_state, column, is_regex: is_regex, is_heredoc: is_heredoc)
+
+      heredoc_end = @line
+
+      check :DELIMITER_END
+      write @token.raw
+
+      if is_heredoc
+        if indent_difference > 0
+          @heredoc_fixes << HeredocFix.new(heredoc_line, @line, indent_difference)
+        end
+        (heredoc_line...heredoc_end).each do |line|
+          @no_rstrip_lines.add line
+        end
+        write_line
+      end
+
+      format_regex_modifiers if is_regex
+      next_token
+
+      @string_continuation = old_string_continuation
+      @indent = old_indent unless is_heredoc
+
+      false
+    end
+
+    def visit_string_interpolation_body(node, delimiter_state, column, *, is_regex = false, is_heredoc = false)
       node.expressions.each do |exp|
         if @token.type.delimiter_end?
           # Heredoc cannot contain string continuation,
@@ -627,29 +654,6 @@ module Crystal
           visit_interpolation(exp)
         end
       end
-
-      heredoc_end = @line
-
-      check :DELIMITER_END
-      write @token.raw
-
-      if is_heredoc
-        if indent_difference > 0
-          @heredoc_fixes << HeredocFix.new(heredoc_line, @line, indent_difference)
-        end
-        (heredoc_line...heredoc_end).each do |line|
-          @no_rstrip_lines.add line
-        end
-        write_line
-      end
-
-      format_regex_modifiers if is_regex
-      next_token
-
-      @string_continuation = old_string_continuation
-      @indent = old_indent unless is_heredoc
-
-      false
     end
 
     private def visit_interpolation(exp)
