@@ -1274,7 +1274,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
           ann.raise "wrong number of arguments for TargetFeature (given #{ann.args.size}, expected 0..1)" if ann.args.size > 1
           features_value = ann.args[0].to_s
           ann.raise "expected argument #1 to 'TargetFeature' to be String" unless features_value.starts_with?('"') && features_value.ends_with?('"')
-          node.target_features = features_value
+          node.target_features = features_value[1..-2]
         end
       else
         yield annotation_type, ann
