@@ -315,7 +315,7 @@ module Crystal
               start_char = next_char
               next_char :SYMBOL_ARRAY_START
               @token.raw = "%i#{start_char}" if @wants_raw
-              @token.delimiter_state = Token::DelimiterState.new(:symbol_array, start_char, closing_char(start_char))
+              @token.delimiter_state = Token::DelimiterState.new(:symbol_array, start_char, closing_char(start_char), allow_escapes: false)
             else
               @token.type = :OP_PERCENT
             end
@@ -357,7 +357,7 @@ module Crystal
               start_char = next_char
               next_char :STRING_ARRAY_START
               @token.raw = "%w#{start_char}" if @wants_raw
-              @token.delimiter_state = Token::DelimiterState.new(:string_array, start_char, closing_char(start_char))
+              @token.delimiter_state = Token::DelimiterState.new(:string_array, start_char, closing_char(start_char), allow_escapes: false)
             else
               @token.type = :OP_PERCENT
             end
@@ -1800,7 +1800,7 @@ module Crystal
           next_char
         elsif char == 'w' && peek_next_char.in?('(', '<', '[', '{', '|')
           next_char
-          delimiter_state = Token::DelimiterState.percent_literal(:string_array, current_char, closing_char)
+          delimiter_state = Token::DelimiterState.percent_literal(:string_array, current_char, closing_char, allow_escapes: false)
           next_char
         elsif char == 'x' && peek_next_char.in?('(', '<', '[', '{', '|')
           next_char
