@@ -54,7 +54,6 @@ module Fiber::ExecutionContext
       protected def enqueue(fiber : Fiber) : Nil
         Crystal.trace :sched, "enqueue", fiber: fiber
         @runnables.push(fiber)
-        @execution_context.wake_scheduler unless @execution_context.capacity == 1
       end
 
       protected def reschedule : Nil
@@ -241,10 +240,7 @@ module Fiber::ExecutionContext
       private def enqueue_many(list : Fiber::List*) : Fiber?
         if fiber = list.value.pop?
           Crystal.trace :sched, "enqueue", size: list.value.size, fiber: fiber
-          unless list.value.empty?
-            @runnables.bulk_push(list)
-            @execution_context.wake_scheduler unless @execution_context.capacity == 1
-          end
+          @runnables.bulk_push(list) unless list.value.empty?
           fiber
         end
       end
