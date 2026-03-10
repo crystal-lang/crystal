@@ -49,8 +49,12 @@ private def it_parses_literal(literal, expectations, *, file = __FILE__, line = 
                     else
                       delimiter[-1]
                     end
-
-    it_parses "#{delimiter}#{literal}#{end_delimiter}", expected_node, file: file, line: line
+    source = "#{delimiter}#{literal}#{end_delimiter}"
+    if expected_node.is_a?(String)
+      assert_syntax_error source, expected_node, metafile: file, metaline: line
+    else
+      it_parses source, expected_node, file: file, line: line
+    end
   end
 end
 
@@ -2864,14 +2868,14 @@ module Crystal
         "%q[" => "a\\u{41}b".string,
         "%Q[" => "aAb".string,
         "\""  => "aAb".string,
+        "%r[" => "invalid regex",
+        "/"   => "invalid regex",
         "%x[" => command("aAb"),
         "`"   => command("aAb"),
         "%w[" => string_array("a\\u{41}b".string),
         "%i[" => symbol_array("a\\u{41}b".symbol),
         ":\"" => "aAb".symbol,
       }
-      assert_syntax_error "%r[\\u{61}]", "invalid regex"
-      assert_syntax_error "/\\u{61}/", "invalid regex"
       it_parses_literal "a\\x41b", {
         "%q[" => "a\\x41b".string,
         "%Q[" => "aAb".string,
