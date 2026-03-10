@@ -123,9 +123,11 @@ module Fiber::ExecutionContext
       ExecutionContext.execution_contexts.push(self)
     end
 
+    # :nodoc:
+    #
     # TODO: must report how many schedulers are running (count spinning
     # schedulers but don't count waiting/parked ones).
-    protected def size : Int32
+    def size : Int32
       @started
     end
 
