@@ -488,24 +488,7 @@ module Crystal
       write @token.raw
       next_string_token
 
-      while true
-        case @token.type
-        when .string?
-          write_sanitized_string_body(@token.delimiter_state.allow_escapes && !is_regex)
-          next_string_token
-        when .interpolation_start?
-          # This is the case of #{__DIR__}
-          write "\#{"
-          next_token_skip_space_or_newline
-          indent(@column, node)
-          skip_space_or_newline
-          check :OP_RCURLY
-          write "}"
-          next_string_token
-        else
-          break
-        end
-      end
+      visit_string_body(node, is_regex)
 
       check :DELIMITER_END
 
@@ -528,6 +511,27 @@ module Crystal
       end
 
       false
+    end
+
+    def visit_string_body(node, is_regex = false)
+      while true
+        case @token.type
+        when .string?
+          write_sanitized_string_body(@token.delimiter_state.allow_escapes && !is_regex)
+          next_string_token
+        when .interpolation_start?
+          # This is the case of #{__DIR__}
+          write "\#{"
+          next_token_skip_space_or_newline
+          indent(@column, node)
+          skip_space_or_newline
+          check :OP_RCURLY
+          write "}"
+          next_string_token
+        else
+          break
+        end
+      end
     end
 
     private def write_sanitized_string_body(escape)
