@@ -1,8 +1,11 @@
+{% raise "compiler-rt shift builtins assume little-endian byte order for unsafe_as(Tuple) reinterpretation" if flag?(:big_endian) %}
+
 # :nodoc:
 # Ported from https://github.com/llvm/llvm-project/blob/ce59ccd04023cab3a837da14079ca2dcbfebb70c/compiler-rt/lib/builtins/ashlti3.c
 #
 # Returns: a << b
 # Precondition:  0 <= b < bits_in_tword
+# NOTE: The Tuple reinterpretation below assumes little-endian layout: {low, high}
 fun __ashlti3(a : Int128, b : Int32) : Int128
   low, high = a.unsafe_as(Tuple(UInt64, Int64))
   if b >= 64
@@ -21,6 +24,7 @@ end
 #
 # Returns: a >> b
 # Precondition:  0 <= b < bits_in_tword
+# NOTE: The Tuple reinterpretation below assumes little-endian layout: {low, high}
 fun __ashrti3(a : Int128, b : Int32) : Int128
   low, high = a.unsafe_as(Tuple(UInt64, Int64))
   if b >= 64
@@ -39,6 +43,7 @@ end
 #
 # Returns: logical a >> b
 # Precondition:  0 <= b < bits_in_tword
+# NOTE: The Tuple reinterpretation below assumes little-endian layout: {low, high}
 fun __lshrti3(a : Int128, b : Int32) : Int128
   low, high = a.unsafe_as(Tuple(UInt64, UInt64))
   if b >= 64
