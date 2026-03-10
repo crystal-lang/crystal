@@ -1,3 +1,4 @@
+@[AlwaysInline]
 private def __mulddi3(a : UInt64, b : UInt64) : Int128
   bits_in_dword_2 = (sizeof(Int64) &* 8) // 2
   lower_mask = ~0_u64 >> bits_in_dword_2
