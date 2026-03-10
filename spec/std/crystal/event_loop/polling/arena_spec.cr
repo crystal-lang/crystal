@@ -67,7 +67,7 @@ describe Crystal::EventLoop::Polling::Arena do
       called = 0
 
       2.times do
-        arena.get(index.not_nil!) do |ptr|
+        arena.get(index) do |ptr|
           ptr.should eq(pointer)
           ptr.value.should eq(654321)
           called += 1
