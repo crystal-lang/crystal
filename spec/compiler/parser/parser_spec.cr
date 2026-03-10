@@ -41,6 +41,13 @@ private def it_parses(string, expected_node, file = __FILE__, line = __LINE__, *
 end
 
 private def it_parses_literal(literal, expectations, *, file = __FILE__, line = __LINE__)
+  # For percent literals, add additional variants. But allow them to be overridden with different expectations.
+  expectations.dup.each do |delimiter, expected_node|
+    if delimiter.starts_with?("%")
+      expectations.put_if_absent("#{delimiter[..-2]}{", expected_node)
+      expectations.put_if_absent("#{delimiter[..-2]}|", expected_node)
+    end
+  end
   expectations.each do |delimiter, expected_node|
     end_delimiter = case delimiter[-1]
                     when '[' then ']'
@@ -2923,6 +2930,58 @@ module Crystal
         "%w[" => string_array("a\\\#{x}b".string),
         "%i[" => symbol_array("a\\\#{x}b".symbol),
         ":\"" => "a\#{x}b".symbol,
+      }
+      it_parses_literal "a\\]b", {
+        "%q[" => %(unexpected token: "b"),
+        "%q{" => "a\\]b".string,
+        "%q|" => "a\\]b".string,
+        "%Q[" => "a]b".string,
+        "\""  => "a]b".string,
+        "%r[" => regex("a\\]b"),
+        "/"   => regex("a\\]b"),
+        "%x[" => command("a]b"),
+        "`"   => command("a]b"),
+        "%w[" => string_array("a]b".string),
+        "%w{" => string_array("a\\]b".string),
+        "%w|" => string_array("a\\]b".string),
+        "%i[" => symbol_array("a]b".symbol),
+        "%i{" => symbol_array("a\\]b".symbol),
+        "%i|" => symbol_array("a\\]b".symbol),
+        ":\"" => "a]b".symbol,
+      }
+      it_parses_literal "a\\[b", {
+        "%q[" => "Unterminated string literal",
+        "%q{" => "a\\[b".string,
+        "%q|" => "a\\[b".string,
+        "%Q[" => "a[b".string,
+        "\""  => "a[b".string,
+        "%r[" => regex("a\\[b"),
+        "/"   => regex("a\\[b"),
+        "%x[" => command("a[b"),
+        "`"   => command("a[b"),
+        "%w[" => string_array("a[b".string),
+        "%w{" => string_array("a\\[b".string),
+        "%w|" => string_array("a\\[b".string),
+        "%i[" => symbol_array("a[b".symbol),
+        "%i{" => symbol_array("a\\[b".symbol),
+        "%i|" => symbol_array("a\\[b".symbol),
+        ":\"" => "a[b".symbol,
+      }
+      it_parses_literal "a\\[b\\]c", {
+        "%q[" => "a\\[b\\]c".string,
+        "%Q[" => "a[b]c".string,
+        "\""  => "a[b]c".string,
+        "%r[" => regex("a\\[b\\]c"),
+        "/"   => regex("a\\[b\\]c"),
+        "%x[" => command("a[b]c"),
+        "`"   => command("a[b]c"),
+        "%w[" => string_array("a[b]c".string),
+        "%w{" => string_array("a\\[b\\]c".string),
+        "%w|" => string_array("a\\[b\\]c".string),
+        "%i[" => symbol_array("a[b]c".symbol),
+        "%i{" => symbol_array("a\\[b\\]c".symbol),
+        "%i|" => symbol_array("a\\[b\\]c".symbol),
+        ":\"" => "a[b]c".symbol,
       }
     end
 
