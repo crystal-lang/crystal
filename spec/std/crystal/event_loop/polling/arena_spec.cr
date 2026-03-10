@@ -23,9 +23,9 @@ describe Crystal::EventLoop::Polling::Arena do
       called.should eq(1)
 
       pointer.should_not be_nil
-      index.should_not be_nil
+      index = index.should_not be_nil
 
-      arena.get(index.not_nil!) do |ptr|
+      arena.get(index) do |ptr|
         ptr.should eq(pointer)
       end
     end
@@ -40,9 +40,10 @@ describe Crystal::EventLoop::Polling::Arena do
       indexes.size.should eq(32)
 
       indexes.each do |index|
-        arena.get(index.not_nil!) do |pointer|
+        index = index.should_not(be_nil)
+        arena.get(index) do |pointer|
           pointer.should eq(pointer)
-          pointer.value.should eq(index.not_nil!.index)
+          pointer.value.should eq(index.index)
         end
       end
     end

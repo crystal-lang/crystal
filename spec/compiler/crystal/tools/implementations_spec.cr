@@ -187,23 +187,20 @@ describe "implementations" do
       bar
     ), Location.new(".", 12, 9))
 
-    result.implementations.should_not be_nil
-    impls = result.implementations.not_nil!
+    impls = result.implementations.should_not be_nil
     impls.size.should eq(1)
 
     impls[0].line.should eq(11) # location of baz
     impls[0].column.should eq(7)
     impls[0].filename.should eq(".")
 
-    impls[0].expands.should_not be_nil
-    exp = impls[0].expands.not_nil!
+    exp = impls[0].expands.should_not be_nil
     exp.line.should eq(8) # location of foo call in macro baz
     exp.column.should eq(9)
     exp.macro.should eq("baz")
     exp.filename.should eq(".")
 
-    exp.expands.should_not be_nil
-    exp = exp.expands.not_nil!
+    exp = exp.expands.should_not be_nil
     exp.line.should eq(3) # location of def bar in macro foo
     exp.column.should eq(9)
     exp.macro.should eq("foo")
