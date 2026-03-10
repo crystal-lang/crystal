@@ -624,29 +624,7 @@ module Crystal
             end
           end
         else
-          check :INTERPOLATION_START
-          write "\#{"
-          delimiter_state = @token.delimiter_state
-
-          wrote_comment = next_token_skip_space
-          has_newline = wrote_comment || @token.type.newline?
-          skip_space_or_newline
-
-          if has_newline
-            write_line unless wrote_comment
-            write_indent(@column + 2)
-            indent(@column + 2, exp)
-            wrote_comment = skip_space_or_newline
-            write_line unless wrote_comment
-          else
-            indent(@column, exp)
-          end
-
-          skip_space_or_newline
-          check :OP_RCURLY
-          write "}"
-          @token.delimiter_state = delimiter_state
-          next_string_token
+          visit_interpolation(exp)
         end
       end
 
@@ -672,6 +650,32 @@ module Crystal
       @indent = old_indent unless is_heredoc
 
       false
+    end
+
+    private def visit_interpolation(exp)
+      check :INTERPOLATION_START
+      write "\#{"
+      delimiter_state = @token.delimiter_state
+
+      wrote_comment = next_token_skip_space
+      has_newline = wrote_comment || @token.type.newline?
+      skip_space_or_newline
+
+      if has_newline
+        write_line unless wrote_comment
+        write_indent(@column + 2)
+        indent(@column + 2, exp)
+        wrote_comment = skip_space_or_newline
+        write_line unless wrote_comment
+      else
+        indent(@column, exp)
+      end
+
+      skip_space_or_newline
+      check :OP_RCURLY
+      write "}"
+      @token.delimiter_state = delimiter_state
+      next_string_token
     end
 
     private def consume_heredocs
