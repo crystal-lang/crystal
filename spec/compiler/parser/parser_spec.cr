@@ -3032,8 +3032,8 @@ module Crystal
         "/"   => regex("a\\\\ b"),
         "%x[" => command("a\\ b"),
         "`"   => command("a\\ b"),
-        "%w[" => string_array("a\\ b".string),
-        "%i[" => symbol_array("a\\ b".symbol),
+        "%w[" => string_array("a\\".string, "b".string),
+        "%i[" => symbol_array("a\\".symbol, "b".symbol),
         ":\"" => "a\\ b".symbol,
       }
       it_parses_literal "\\\\a", {
@@ -3045,8 +3045,8 @@ module Crystal
         "/"   => regex("\\\\a"),
         "%x[" => command("\\a"),
         "`"   => command("\\a"),
-        "%w[" => string_array("\\\\a".string),
-        "%i[" => symbol_array("\\\\a".symbol),
+        "%w[" => string_array("\\a".string),
+        "%i[" => symbol_array("\\a".symbol),
         ":\"" => "\\a".symbol,
       }
       it_parses_literal "\\", {
@@ -3071,8 +3071,8 @@ module Crystal
         "/"   => regex("\\\\"),
         "%x[" => command("\\"),
         "`"   => command("\\"),
-        "%w[" => "Unterminated string array literal", # FIXME: #12277
-        "%i[" => "Unterminated symbol array literal", # FIXME: #12277
+        "%w[" => string_array("\\".string),
+        "%i[" => symbol_array("\\".symbol),
         ":\"" => "\\".symbol,
       }
       it_parses_literal "\\\\\\", {

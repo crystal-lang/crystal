@@ -775,34 +775,47 @@ module Crystal
         write "[]"
         next_token
       when .string_array_start?, .symbol_array_start?
-        first = true
         write @token.raw
-        count = 0
-        while true
-          has_space_newline = space_newline?
-          if has_space_newline
+
+        next_string_token
+
+        node.elements.each_with_index do |elem, index|
+          found_space = false
+          found_newline = false
+          while @token.type.space?
+            found_newline ||= @token.raw.includes?("\n")
+            found_space = true
+            next_string_token
+          end
+          if found_newline
             write_line
-            if count == node.elements.size
-              write_indent
-            else
-              write_indent(@indent + 2)
-            end
+            write_indent(@indent + 2)
+          elsif found_space && index != 0
+            write " "
           end
-          next_string_array_token
-          case @token.type
-          when .string?
-            write " " unless first || has_space_newline
-            write @token.raw
-            first = false
-          when .string_array_end?
-            write @token.raw
-            next_token
-            break
+
+          case elem
+          when StringLiteral
+            visit_string_body(elem)
+          when SymbolLiteral
+            visit_string_body(elem)
           else
-            raise "Bug: unexpected token #{@token.type}"
+            raise "Bug: unexpected element in string array: #{elem.class}"
           end
-          count += 1
         end
+
+        # skip trailing space
+        while @token.type.space?
+          if @token.raw.includes?("\n") && node.elements.present?
+            write_line
+          end
+          next_string_token
+        end
+
+        check :STRING_ARRAY_END
+        write @token.raw
+        next_token
+
         return false
       else
         name = node.name.not_nil!
@@ -4578,10 +4591,6 @@ module Crystal
       @token = @lexer.next_string_token(@token.delimiter_state)
       increment_lines(@lexer.line_number - current_line_number)
       @token
-    end
-
-    def next_string_array_token
-      @token = @lexer.next_string_array_token
     end
 
     def next_macro_token

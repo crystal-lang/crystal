@@ -2406,32 +2406,62 @@ module Crystal
     end
 
     def parse_string_array
-      parse_string_or_symbol_array StringLiteral, "String"
+      strings, end_location = parse_string_or_symbol_array_strings do |pieces|
+        combine_pieces(pieces, @token.delimiter_state)
+      end
+
+      ArrayLiteral.new(strings, Path.global("String")).at_end(end_location)
     end
 
     def parse_symbol_array
-      parse_string_or_symbol_array SymbolLiteral, "Symbol"
+      strings, end_location = parse_string_or_symbol_array_strings do |pieces|
+        string = combine_stringliteral_pieces(pieces, @token.delimiter_state)
+        SymbolLiteral.new(string)
+      end
+
+      ArrayLiteral.new(strings, Path.global("Symbol")).at_end(end_location)
     end
 
-    def parse_string_or_symbol_array(klass, elements_type)
+    def parse_string_or_symbol_array_strings(&)
       strings = [] of ASTNode
-      end_location = nil
 
-      while true
-        next_string_array_token
-        case @token.type
-        when .string?
-          strings << klass.new(@token.value.to_s).at(@token.location).at_end(token_end_location)
-        when .string_array_end?
-          end_location = token_end_location
-          next_token
-          break
-        else
-          raise "Unterminated #{elements_type.downcase} array literal"
+      while !@token.type.string_array_end?
+        if element = parse_percent_array_element { |pieces| yield pieces }
+          strings << element
         end
       end
 
-      ArrayLiteral.new(strings, Path.global(elements_type)).at_end(end_location)
+      check :STRING_ARRAY_END
+
+      end_location = @token.location
+
+      next_token
+
+      {strings, end_location}
+    end
+
+    def parse_percent_array_element(&)
+      pieces = [] of Piece
+      start_location = nil
+      end_location = nil
+      delimiter_state = @token.delimiter_state
+
+      while true
+        end_location = token_end_location
+        next_string_token(delimiter_state)
+        start_location ||= @token.location
+        delimiter_state = @token.delimiter_state
+        case @token.type
+        when .string?
+          pieces << Piece.new(@token.value.to_s, @token.line_number)
+        else
+          break
+        end
+      end
+
+      return if pieces.empty?
+
+      (yield pieces).at(start_location).at_end(end_location)
     end
 
     def parse_empty_array_literal
