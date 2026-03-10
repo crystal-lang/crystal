@@ -300,6 +300,10 @@ module Fiber::ExecutionContext
         io << ' ' << @name << '>'
       end
 
+      protected def active? : Bool
+        !(@waiting || @parked || @syscall.lazy_get.bits_set?(SYSCALL_FLAG))
+      end
+
       def status : String
         if @spinning
           "spinning"

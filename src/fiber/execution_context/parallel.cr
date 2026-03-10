@@ -120,9 +120,15 @@ module Fiber::ExecutionContext
       ExecutionContext.execution_contexts.push(self)
     end
 
-    # The number of threads that have been started.
+    # The number of schedulers that are currently active, aka the current
+    # parallelism for the context.
     def size : Int32
-      @started
+      count = 0
+      @schedulers.each_with_index do |scheduler, index|
+        break if index == @started
+        count += 1 if scheduler.active?
+      end
+      count
     end
 
     # The maximum number of threads that can be started.
