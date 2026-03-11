@@ -1259,22 +1259,22 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       when @program.raises_annotation
         node.raises = true
       when @program.target_feature_annotation
-        ann.named_args.try &.each do |arg|
-          case arg.name
+        ann.named_args.try &.each do |named_arg|
+          case named_arg.name
           when "cpu"
-            cpu_value = arg.value.to_s
-            ann.raise "expected argument 'cpu' to be String" unless cpu_value.starts_with?('"') && cpu_value.ends_with?('"')
-            node.target_cpu = cpu_value[1..-2]
+            cpu_value = named_arg.value
+            named_arg.raise "expected argument 'cpu' to be String" unless cpu_value.is_a?(StringLiteral)
+            node.target_cpu = cpu_value.to_s[1..-2]
           else
-            ann.raise "no argument named '#{arg.name}', expected 'cpu'"
+            named_arg.raise "no argument named '#{named_arg.name}', expected 'cpu'"
           end
         end
 
         if ann.args.size > 0
           ann.raise "wrong number of arguments for TargetFeature (given #{ann.args.size}, expected 0..1)" if ann.args.size > 1
-          features_value = ann.args[0].to_s
-          ann.raise "expected argument #1 to 'TargetFeature' to be String" unless features_value.starts_with?('"') && features_value.ends_with?('"')
-          node.target_features = features_value[1..-2]
+          features_value = ann.args[0]
+          ann.raise "expected argument #1 to 'TargetFeature' to be String" unless features_value.is_a?(StringLiteral)
+          node.target_features = features_value.to_s[1..-2]
         end
       else
         yield annotation_type, ann
