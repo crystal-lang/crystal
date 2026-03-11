@@ -2848,22 +2848,14 @@ module Crystal
             end
             skip_space_or_newline
           end
-
-          finish_args(has_parentheses, has_newlines, ends_with_newline, found_comment, base_indent)
-
-          return false
         else
           indent(block_indent) { format_block block, needs_space }
-
-          finish_args(has_parentheses, has_newlines, ends_with_newline, found_comment, base_indent)
-
-          return false
         end
-      else
-        finish_args(has_parentheses, has_newlines, ends_with_newline, found_comment, base_indent)
-
-        false
       end
+
+      finish_args(has_parentheses, has_newlines, ends_with_newline, found_comment, base_indent)
+
+      false
     end
 
     def format_call_args(node : ASTNode, has_parentheses, base_indent)
