@@ -1252,42 +1252,25 @@ module Crystal
       node.types.each_with_index do |type, i|
         if @token.type.op_question?
           # This can happen if it's a nilable type written like T?
-          write "?"
-          next_token
+          write_token :op_question
           break
+        end
+
+        unless i == 0
+          skip_space_or_newline
+          write_token " ", :op_bar, " "
+          skip_space
+
+          if @token.type.newline?
+            write_line
+            write_indent(column)
+            next_token_skip_space_or_newline
+          end
         end
 
         accept type
 
-        last = last?(i, node.types)
-        if last
-          skip_space
-        else
-          skip_space_or_newline
-        end
-
-        while true
-          case @token.type
-          when .op_bar?
-            write " | "
-            next_token_skip_space
-            if @token.type.newline?
-              write_line
-              write_indent(column)
-              next_token_skip_space_or_newline
-            end
-          when .op_rparen?
-            if @paren_count > 0
-              @paren_count -= 1
-              write ")"
-              next_token_skip_space
-            else
-              break
-            end
-          else
-            break
-          end
-        end
+        skip_space
       end
 
       check_close_paren
