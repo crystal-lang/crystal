@@ -3254,8 +3254,8 @@ module Crystal
 
       case @token.type
       when .op_lparen?
-        write "("
-        next_token_skip_space_or_newline
+        write_token :OP_LPAREN
+        skip_space_or_newline
 
         while true
           format_block_arg
@@ -3263,14 +3263,12 @@ module Crystal
             next_token_skip_space_or_newline
           end
 
-          if @token.type.op_rparen?
-            next_token
-            write ")"
-            break
-          else
-            write ", "
-          end
+          break if @token.type.op_rparen?
+
+          write ", "
         end
+
+        write_token :OP_RPAREN
       when .ident?
         write @token.value
         next_token
