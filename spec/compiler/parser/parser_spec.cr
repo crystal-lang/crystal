@@ -2791,6 +2791,7 @@ module Crystal
       it_parses_literal "a\nb", {
         "%q[" => "a\nb".string,
         "%Q[" => "a\nb".string,
+        "%["  => "a\nb".string,
         "\""  => "a\nb".string,
         "%r[" => regex("a\nb"),
         "/"   => regex("a\nb"),
@@ -2803,6 +2804,7 @@ module Crystal
       it_parses_literal "a\tb", {
         "%q[" => "a\tb".string,
         "%Q[" => "a\tb".string,
+        "%["  => "a\tb".string,
         "%r[" => regex("a\tb"),
         "/"   => regex("a\tb"),
         "%x[" => command("a\tb"),
@@ -2814,6 +2816,7 @@ module Crystal
       it_parses_literal "a\r\nb", {
         "%q[" => "a\r\nb".string,
         "%Q[" => "a\r\nb".string,
+        "%["  => "a\r\nb".string,
         "\""  => "a\r\nb".string,
         "%r[" => regex("a\r\nb"),
         "/"   => regex("a\r\nb"),
@@ -2826,6 +2829,7 @@ module Crystal
       it_parses_literal "a\\nb", {
         "%q[" => "a\\nb".string,
         "%Q[" => "a\nb".string,
+        "%["  => "a\nb".string,
         "\""  => "a\nb".string,
         "%r[" => regex("a\\nb"),
         "/"   => regex("a\\nb"),
@@ -2838,6 +2842,7 @@ module Crystal
       it_parses_literal "a\\tb", {
         "%q[" => "a\\tb".string,
         "%Q[" => "a\tb".string,
+        "%["  => "a\tb".string,
         "\""  => "a\tb".string,
         "%r[" => regex("a\\tb"),
         "/"   => regex("a\\tb"),
@@ -2850,6 +2855,7 @@ module Crystal
       it_parses_literal "a\\rb", {
         "%q[" => "a\\rb".string,
         "%Q[" => "a\rb".string,
+        "%["  => "a\rb".string,
         "\""  => "a\rb".string,
         "%r[" => regex("a\\rb"),
         "/"   => regex("a\\rb"),
@@ -2862,6 +2868,7 @@ module Crystal
       it_parses_literal "a\\\nb", {
         "%q[" => "a\\\nb".string,
         "%Q[" => "ab".string,
+        "%["  => "ab".string,
         "\""  => "ab".string,
         "%r[" => regex("a\nb"),
         "/"   => regex("a\nb"),
@@ -2874,6 +2881,7 @@ module Crystal
       it_parses_literal "a\\u{41}b", {
         "%q[" => "a\\u{41}b".string,
         "%Q[" => "aAb".string,
+        "%["  => "aAb".string,
         "\""  => "aAb".string,
         "%r[" => "invalid regex",
         "/"   => "invalid regex",
@@ -2886,6 +2894,7 @@ module Crystal
       it_parses_literal "a\\x41b", {
         "%q[" => "a\\x41b".string,
         "%Q[" => "aAb".string,
+        "%["  => "aAb".string,
         "\""  => "aAb".string,
         "%r[" => regex("a\\x41b"),
         "/"   => regex("a\\x41b"),
@@ -2898,6 +2907,7 @@ module Crystal
       it_parses_literal "a\\101b", {
         "%q[" => "a\\101b".string,
         "%Q[" => "aAb".string,
+        "%["  => "aAb".string,
         "\""  => "aAb".string,
         "%r[" => regex("a\\101b"),
         "/"   => regex("a\\101b"),
@@ -2910,6 +2920,7 @@ module Crystal
       it_parses_literal "a\#{x}b", {
         "%q[" => "a\#{x}b".string,
         "%Q[" => StringInterpolation.new(["a".string, Call.new("x"), "b".string] of ASTNode),
+        "%["  => StringInterpolation.new(["a".string, Call.new("x"), "b".string] of ASTNode),
         "\""  => StringInterpolation.new(["a".string, Call.new("x"), "b".string] of ASTNode),
         "%r[" => regex(StringInterpolation.new(["a".string, Call.new("x"), "b".string] of ASTNode)),
         "/"   => regex(StringInterpolation.new(["a".string, Call.new("x"), "b".string] of ASTNode)),
@@ -2922,6 +2933,7 @@ module Crystal
       it_parses_literal "a\\\#{x}b", {
         "%q[" => "a\\\#{x}b".string,
         "%Q[" => "a\#{x}b".string,
+        "%["  => "a\#{x}b".string,
         "\""  => "a\#{x}b".string,
         "%r[" => regex("a\\\#{x}b"),
         "/"   => regex("a\\\#{x}b"),
@@ -2936,6 +2948,7 @@ module Crystal
         "%q{" => "a\\]b".string,
         "%q|" => "a\\]b".string,
         "%Q[" => "a]b".string,
+        "%["  => "a]b".string,
         "\""  => "a]b".string,
         "%r[" => regex("a\\]b"),
         "/"   => regex("a\\]b"),
@@ -2954,6 +2967,7 @@ module Crystal
         "%q{" => "a\\[b".string,
         "%q|" => "a\\[b".string,
         "%Q[" => "a[b".string,
+        "%["  => "a[b".string,
         "\""  => "a[b".string,
         "%r[" => regex("a\\[b"),
         "/"   => regex("a\\[b"),
@@ -2970,6 +2984,7 @@ module Crystal
       it_parses_literal "a\\[b\\]c", {
         "%q[" => "a\\[b\\]c".string,
         "%Q[" => "a[b]c".string,
+        "%["  => "a[b]c".string,
         "\""  => "a[b]c".string,
         "%r[" => regex("a\\[b\\]c"),
         "/"   => regex("a\\[b\\]c"),
@@ -2988,6 +3003,9 @@ module Crystal
         "%Q[" => "Unterminated string literal", # ref #5403
         "%Q{" => "a[b]c".string,
         "%Q|" => "a[b]c".string,
+        "%["  => "Unterminated string literal", # ref #5403
+        "%{"  => "a[b]c".string,
+        "%|"  => "a[b]c".string,
         "\""  => "a[b]c".string,
         "%r[" => "Unterminated regular expression", # ref #5403
         "%r{" => "invalid regex: missing terminating ] for character class at 6",
@@ -3008,6 +3026,7 @@ module Crystal
       it_parses_literal "a\\\\ b", {
         "%q[" => "a\\\\ b".string,
         "%Q[" => "a\\ b".string,
+        "%["  => "a\\ b".string,
         "\""  => "a\\ b".string,
         "%r[" => regex("a\\\\ b"),
         "/"   => regex("a\\\\ b"),
@@ -3020,6 +3039,7 @@ module Crystal
       it_parses_literal "\\\\a", {
         "%q[" => "\\\\a".string,
         "%Q[" => "\\a".string,
+        "%["  => "\\a".string,
         "\""  => "\\a".string,
         "%r[" => regex("\\\\a"),
         "/"   => regex("\\\\a"),
@@ -3032,6 +3052,7 @@ module Crystal
       it_parses_literal "\\", {
         "%q[" => "\\".string,
         "%Q[" => "Unterminated string literal",
+        "%["  => "Unterminated string literal",
         "\""  => "Unterminated string literal",
         "%r[" => "Unterminated regular expression",
         "/"   => "Unterminated regular expression",
@@ -3044,6 +3065,7 @@ module Crystal
       it_parses_literal "\\\\", {
         "%q[" => "\\\\".string,
         "%Q[" => "\\".string,
+        "%["  => "\\".string,
         "\""  => "\\".string,
         "%r[" => regex("\\\\"),
         "/"   => regex("\\\\"),
@@ -3056,6 +3078,7 @@ module Crystal
       it_parses_literal "\\\\\\", {
         "%q[" => "\\\\\\".string,
         "%Q[" => "Unterminated string literal",
+        "%["  => "Unterminated string literal",
         "\""  => "Unterminated string literal",
         "%r[" => "Unterminated regular expression",
         "/"   => "Unterminated regular expression",
