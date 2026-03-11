@@ -2932,7 +2932,7 @@ module Crystal
         ":\"" => "a\#{x}b".symbol,
       }
       it_parses_literal "a\\]b", {
-        "%q[" => %(unexpected token: "b"),
+        "%q[" => %(unexpected token: "b"), # ref #5403
         "%q{" => "a\\]b".string,
         "%q|" => "a\\]b".string,
         "%Q[" => "a]b".string,
@@ -2950,7 +2950,7 @@ module Crystal
         ":\"" => "a]b".symbol,
       }
       it_parses_literal "a\\[b", {
-        "%q[" => "Unterminated string literal",
+        "%q[" => "Unterminated string literal", # ref #5403
         "%q{" => "a\\[b".string,
         "%q|" => "a\\[b".string,
         "%Q[" => "a[b".string,
@@ -2982,6 +2982,88 @@ module Crystal
         "%i{" => symbol_array("a\\[b\\]c".symbol),
         "%i|" => symbol_array("a\\[b\\]c".symbol),
         ":\"" => "a[b]c".symbol,
+      }
+      it_parses_literal "a[b\\]c", {
+        "%q[" => "a[b\\]c".string,
+        "%Q[" => "Unterminated string literal", # ref #5403
+        "%Q{" => "a[b]c".string,
+        "%Q|" => "a[b]c".string,
+        "\""  => "a[b]c".string,
+        "%r[" => "Unterminated regular expression", # ref #5403
+        "%r{" => "invalid regex: missing terminating ] for character class at 6",
+        "%r|" => "invalid regex: missing terminating ] for character class at 6",
+        "/"   => "invalid regex: missing terminating ] for character class at 6",
+        "%x[" => "Unterminated command literal", # ref #5403
+        "%x{" => command("a[b]c".string),
+        "%x|" => command("a[b]c".string),
+        "`"   => command("a[b]c"),
+        "%w[" => "Unterminated string array literal", # ref #5403
+        "%w{" => string_array("a[b\\]c".string),
+        "%w|" => string_array("a[b\\]c".string),
+        "%i[" => "Unterminated symbol array literal", # ref #5403
+        "%i{" => symbol_array("a[b\\]c".symbol),
+        "%i|" => symbol_array("a[b\\]c".symbol),
+        ":\"" => "a[b]c".symbol,
+      }
+      it_parses_literal "a\\\\ b", {
+        "%q[" => "a\\\\ b".string,
+        "%Q[" => "a\\ b".string,
+        "\""  => "a\\ b".string,
+        "%r[" => regex("a\\\\ b"),
+        "/"   => regex("a\\\\ b"),
+        "%x[" => command("a\\ b"),
+        "`"   => command("a\\ b"),
+        "%w[" => string_array("a\\ b".string),
+        "%i[" => symbol_array("a\\ b".symbol),
+        ":\"" => "a\\ b".symbol,
+      }
+      it_parses_literal "\\\\a", {
+        "%q[" => "\\\\a".string,
+        "%Q[" => "\\a".string,
+        "\""  => "\\a".string,
+        "%r[" => regex("\\\\a"),
+        "/"   => regex("\\\\a"),
+        "%x[" => command("\\a"),
+        "`"   => command("\\a"),
+        "%w[" => string_array("\\\\a".string),
+        "%i[" => symbol_array("\\\\a".symbol),
+        ":\"" => "\\a".symbol,
+      }
+      it_parses_literal "\\", {
+        "%q[" => "\\".string,
+        "%Q[" => "Unterminated string literal",
+        "\""  => "Unterminated string literal",
+        "%r[" => "Unterminated regular expression",
+        "/"   => "Unterminated regular expression",
+        "%x[" => "Unterminated command literal",
+        "`"   => "Unterminated command literal",
+        "%w[" => "Unterminated string array literal", # FIXME: #12277
+        "%i[" => "Unterminated symbol array literal", # FIXME: #12277
+        ":\"" => "unterminated quoted symbol",
+      }
+      it_parses_literal "\\\\", {
+        "%q[" => "\\\\".string,
+        "%Q[" => "\\".string,
+        "\""  => "\\".string,
+        "%r[" => regex("\\\\"),
+        "/"   => regex("\\\\"),
+        "%x[" => command("\\"),
+        "`"   => command("\\"),
+        "%w[" => "Unterminated string array literal", # FIXME: #12277
+        "%i[" => "Unterminated symbol array literal", # FIXME: #12277
+        ":\"" => "\\".symbol,
+      }
+      it_parses_literal "\\\\\\", {
+        "%q[" => "\\\\\\".string,
+        "%Q[" => "Unterminated string literal",
+        "\""  => "Unterminated string literal",
+        "%r[" => "Unterminated regular expression",
+        "/"   => "Unterminated regular expression",
+        "%x[" => "Unterminated command literal",
+        "`"   => "Unterminated command literal",
+        "%w[" => "Unterminated string array literal", # FIXME: #12277
+        "%i[" => "Unterminated symbol array literal", # FIXME: #12277
+        ":\"" => "unterminated quoted symbol",
       }
     end
 
