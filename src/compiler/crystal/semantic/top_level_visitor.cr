@@ -1264,7 +1264,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
           when "cpu"
             cpu_value = named_arg.value
             named_arg.raise "expected argument 'cpu' to be String" unless cpu_value.is_a?(StringLiteral)
-            node.target_cpu = cpu_value.to_s[1..-2]
+            node.target_cpu = cpu_value.value
           else
             named_arg.raise "no argument named '#{named_arg.name}', expected 'cpu'"
           end
@@ -1274,7 +1274,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
           ann.raise "wrong number of arguments for TargetFeature (given #{ann.args.size}, expected 0..1)" if ann.args.size > 1
           features_value = ann.args[0]
           ann.raise "expected argument #1 to 'TargetFeature' to be String" unless features_value.is_a?(StringLiteral)
-          node.target_features = features_value.to_s[1..-2]
+          node.target_features = features_value.value
         end
       else
         yield annotation_type, ann
