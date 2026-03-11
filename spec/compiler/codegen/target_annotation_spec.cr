@@ -6,13 +6,13 @@ describe "Code gen: TargetFeature annotation" do
       require "prelude"
 
       # This feature is available on all platforms
-      @[TargetFeature("+soft-float")]
-      def no_hardware_floating_points(input : Float64) : Float64
-        input / 2.0
+      @[TargetFeature("+strict-align")]
+      def strict_align(input : Int32) : Int32
+        input * 2
       end
 
-      output = no_hardware_floating_points(4.0)
-      output == 2.0
+      output = strict_align(1)
+      output == 2
       CRYSTAL
   end
 
@@ -37,16 +37,16 @@ describe "Code gen: TargetFeature annotation" do
       require "prelude"
 
       {% if flag?(:aarch64) %}
-        @[TargetFeature("+soft-float", cpu: "apple-m1")]
+        @[TargetFeature("+strict-align", cpu: "apple-m1")]
       {% elsif flag?(:x86_64) %}
-        @[TargetFeature("+soft-float", cpu: "x86-64-v4")]
+        @[TargetFeature("+strict-align", cpu: "x86-64-v4")]
       {% end %}
-      def no_hardware_floating_points(input : Float64) : Float64
-        input / 2.0
+      def strict_align(input : Int32) : Int32
+        input * 2
       end
 
-      output = no_hardware_floating_points(4.0)
-      output == 2.0
+      output = strict_align(1)
+      output == 2
       CRYSTAL
   end
 end

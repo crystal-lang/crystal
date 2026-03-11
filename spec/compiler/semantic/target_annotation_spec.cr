@@ -50,14 +50,14 @@ describe "Semantic: TargetFeature annotation" do
   end
 
   it "can target a specific LLVM supported feature" do
-    assert_type(<<-CRYSTAL) { float64 }
+    assert_type(<<-CRYSTAL) { int32 }
       # This feature is available on all platforms
-      @[TargetFeature("+soft-float")]
-      def no_hardware_floating_points(input : Float64) : Float64
-        input / 2.0
+      @[TargetFeature("+strict-align")]
+      def strict_align(input : Int32) : Int32
+        input * 2
       end
 
-      no_hardware_floating_points(4.0)
+      strict_align(1)
       CRYSTAL
   end
 end
