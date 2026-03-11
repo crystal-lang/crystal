@@ -54,7 +54,7 @@ describe "Semantic: TargetFeature annotation" do
       # This feature is available on all platforms
       @[TargetFeature("+strict-align")]
       def strict_align(input : Int32) : Int32
-        input * 2
+        input
       end
 
       strict_align(1)
