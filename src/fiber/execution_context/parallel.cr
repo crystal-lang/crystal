@@ -130,7 +130,6 @@ module Fiber::ExecutionContext
     def size : Int32
       count = 0
       @schedulers.each_with_index do |scheduler, index|
-        break if index == @started
         count += 1 if scheduler.active?
       end
       count
