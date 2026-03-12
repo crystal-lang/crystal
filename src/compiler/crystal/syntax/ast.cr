@@ -1847,7 +1847,16 @@ module Crystal
   class Union < ASTNode
     property types : Array(ASTNode)
 
+    def self.new(type : ASTNode)
+      new [type] of ASTNode
+    end
+
     def initialize(@types)
+    end
+
+    # A union with only one element represents parenthesis in the type grammar: `(A)`
+    def singleton?
+      types.size == 1
     end
 
     def accept_children(visitor)
