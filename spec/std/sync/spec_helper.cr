@@ -36,4 +36,21 @@ module Sync
       raise ex
     end
   end
+
+  module FakeContext
+    def self.spawn(*, name : String? = nil, &block : ->) : Fiber
+      ::spawn(name: name, &block)
+    end
+  end
+
+  CONCURRENT =
+    {% if flag?(:execution_context) %}
+      ctx = Fiber::ExecutionContext.current
+      if ctx.is_a?(Fiber::ExecutionContext::Parallel) && ctx.capacity > 1
+        ctx = Fiber::ExecutionContext::Concurrent.new("CONCURRENT")
+      end
+      ctx
+    {% else %}
+      FakeContext
+    {% end %}
 end
