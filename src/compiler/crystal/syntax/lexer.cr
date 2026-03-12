@@ -1449,8 +1449,7 @@ module Crystal
         raise_unterminated_quoted delimiter_state
       when string_end
         next_char
-        # For symmetric delimiters (like ||), don't use nesting logic
-        if string_nest == string_end || string_open_count == 0
+        if string_open_count == 0
           @token.type = :DELIMITER_END
         else
           @token.type = :STRING
