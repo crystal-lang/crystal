@@ -97,13 +97,15 @@ module Fiber::ExecutionContext
         next unless execution_context.is_a?(Parallel)
         next if (capacity = execution_context.capacity) == 1
 
+        # how many schedulers are active (running, spinning)?
         active = execution_context.size
         return if active == 0
 
+        # how many schedulers can be woken?
         available = capacity - active
         return if available == 0
 
-        # at most, double the number of schedulers
+        # can't wake more schedulers than currently active
         available = active if available > active
 
         # fibers from the global queue are divided evenly across active
