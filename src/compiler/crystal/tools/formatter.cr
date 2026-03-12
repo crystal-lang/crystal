@@ -1064,29 +1064,7 @@ module Crystal
       false
     end
 
-    def check_open_paren
-      if @token.type.op_lparen?
-        while @token.type.op_lparen?
-          write "("
-          next_token_skip_space
-          @paren_count += 1
-        end
-        true
-      else
-        false
-      end
-    end
-
-    def check_close_paren
-      while @token.type.op_rparen? && @paren_count > 0
-        @paren_count -= 1
-        write_token :OP_RPAREN
-      end
-    end
-
     def visit(node : Path)
-      check_open_paren
-
       # Sometimes the :: is not present because the parser generates ::Nil, for example
       if node.global? && @token.type.op_colon_colon?
         write "::"
@@ -1105,14 +1083,10 @@ module Crystal
         end
       end
 
-      check_close_paren
-
       false
     end
 
     def visit(node : Generic)
-      check_open_paren
-
       name = node.name.as(Path)
       if name.global? && @token.type.op_colon_colon?
         write "::"
@@ -1241,18 +1215,23 @@ module Crystal
       @paren_count = old_paren_count
 
       false
-    ensure
-      check_close_paren
     end
 
     def visit(node : Union)
-      check_open_paren
+      if node.singleton?
+        # Parenthesis in the type grammar: `(A)`
+        write_token :OP_LPAREN
+
+        accept node.types.first
+
+        write_token :OP_RPAREN
+        return false
+      end
 
       if @token.type.ident? && @token.value == "self?" && node.types.size == 2 &&
          node.types[0].is_a?(Self) && node.types[1].to_s == "::Nil"
         write "self?"
         next_token
-        check_close_paren
         return false
       end
 
@@ -1280,8 +1259,6 @@ module Crystal
 
         skip_space
       end
-
-      check_close_paren
 
       false
     end
@@ -2393,36 +2370,30 @@ module Crystal
     end
 
     def visit(node : ProcNotation)
-      check_open_paren
+      inputs = node.inputs
+
+      first_input_is_singleton_union = inputs.try(&.first?).as?(Union).try(&.singleton?)
+      has_input_parens = @token.type.op_lparen? && !first_input_is_singleton_union
+
+      write_token :op_lparen if has_input_parens
 
       paren_count = @paren_count
 
-      if inputs = node.inputs
-        # Check if it's ((X, Y) -> Z)
-        #                ^    ^
-        sub_paren_count = @paren_count
-        if check_open_paren
-          sub_paren_count = @paren_count
-        end
-
+      if inputs
         inputs.each_with_index do |input, i|
           accept input
-          if @paren_count == sub_paren_count
-            skip_space_or_newline
-            if @token.type.op_comma?
-              write ", " unless last?(i, inputs)
-              next_token_skip_space_or_newline
-            end
+
+          skip_space_or_newline
+          if @token.type.op_comma?
+            write ", " unless last?(i, inputs)
+            next_token_skip_space_or_newline
           end
         end
 
-        if sub_paren_count != paren_count
-          check_close_paren
-        end
+        write_token :OP_RPAREN if has_input_parens
       end
 
       skip_space_or_newline if paren_count == @paren_count
-      check_close_paren
       skip_space
 
       write " " if inputs
@@ -2436,15 +2407,11 @@ module Crystal
         skip_space
       end
 
-      check_close_paren
-
       false
     end
 
     def visit(node : Self)
-      check_open_paren
       write_keyword :self
-      check_close_paren
       false
     end
 
