@@ -122,7 +122,12 @@ module Fiber::ExecutionContext
 
     # The number of threads that have been started.
     def size : Int32
-      @started
+      count = 0
+      @schedulers.each_with_index do |scheduler, index|
+        break if index == @started
+        count += 1 if scheduler.active?
+      end
+      count
     end
 
     # The maximum number of threads that can be started.
