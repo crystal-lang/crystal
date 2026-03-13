@@ -241,6 +241,29 @@ describe "Semantic: closure" do
       CRYSTAL
   end
 
+  it "errors if sending closured proc stored in local var to C" do
+    assert_error <<-CRYSTAL, "can't send closure to C function (closured vars: a)"
+      lib LibC
+        fun foo(callback : ->)
+      end
+
+      a = 1
+      proc = -> { a }
+      LibC.foo(proc)
+      CRYSTAL
+  end
+
+  it "allows sending non-closure proc stored in local var to C" do
+    assert_no_errors <<-CRYSTAL
+      lib LibC
+        fun foo(callback : ->)
+      end
+
+      proc = -> { }
+      LibC.foo(proc)
+      CRYSTAL
+  end
+
   it "errors if sending closured proc pointer to C (1)" do
     assert_error <<-CRYSTAL, "can't send closure to C function (closured vars: self)"
       lib LibC
