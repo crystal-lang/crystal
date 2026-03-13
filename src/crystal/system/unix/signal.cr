@@ -23,7 +23,7 @@ module Crystal::System::Signal
   @@handlers = {} of ::Signal => Handler
   @@sigset = Sigset.new
   class_property child_handler : Handler?
-  @@mutex = Sync::Mutex.new(:unchecked)
+  @@mutex = Mutex.new(:unchecked)
 
   def self.trap(signal, handler) : Nil
     @@mutex.synchronize do
@@ -287,7 +287,7 @@ module Crystal::System::SignalChildHandler
 
   @@pending = {} of LibC::PidT => Int32
   @@waiting = {} of LibC::PidT => Channel(Int32)
-  @@mutex = Sync::Mutex.new(:unchecked)
+  @@mutex = Mutex.new(:unchecked)
 
   def self.wait(pid : LibC::PidT) : Channel(Int32)
     channel = Channel(Int32).new(1)

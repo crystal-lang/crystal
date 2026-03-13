@@ -635,7 +635,7 @@ module Crystal
     private def mt_codegen(units, n_threads)
       channel = Channel(CompilationUnit).new(n_threads * 2)
       wg = WaitGroup.new
-      mutex = Sync::Mutex.new
+      mutex = Mutex.new
 
       n_threads.times do
         wg.spawn do
