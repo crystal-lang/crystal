@@ -44,6 +44,10 @@ module Fiber::ExecutionContext
         @main_fiber = Fiber.new("#{@name}:loop", @execution_context) { run_loop }
       end
 
+      protected def running! : Nil
+        @state = State::RUNNING
+      end
+
       protected def shutdown! : Nil
         @shutdown = true
       end

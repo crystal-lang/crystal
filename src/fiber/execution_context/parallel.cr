@@ -164,6 +164,7 @@ module Fiber::ExecutionContext
       thread.execution_context = self
       thread.scheduler = scheduler
       scheduler.thread = thread
+      scheduler.running!
     end
 
     # Starts a new `Thread` and attaches *scheduler*. Runs the scheduler loop
