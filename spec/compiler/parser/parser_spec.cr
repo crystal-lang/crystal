@@ -41,6 +41,13 @@ private def it_parses(string, expected_node, file = __FILE__, line = __LINE__, *
 end
 
 private def it_parses_literal(literal, expectations, *, file = __FILE__, line = __LINE__)
+  # For percent literals, add additional variants. But allow them to be overridden with different expectations.
+  expectations.dup.each do |delimiter, expected_node|
+    if delimiter.starts_with?("%")
+      expectations.put_if_absent("#{delimiter[..-2]}{", expected_node)
+      expectations.put_if_absent("#{delimiter[..-2]}|", expected_node)
+    end
+  end
   expectations.each do |delimiter, expected_node|
     end_delimiter = case delimiter[-1]
                     when '[' then ']'
@@ -49,8 +56,12 @@ private def it_parses_literal(literal, expectations, *, file = __FILE__, line = 
                     else
                       delimiter[-1]
                     end
-
-    it_parses "#{delimiter}#{literal}#{end_delimiter}", expected_node, file: file, line: line
+    source = "#{delimiter}#{literal}#{end_delimiter}"
+    if expected_node.is_a?(String)
+      assert_syntax_error source, expected_node, metafile: file, metaline: line
+    else
+      it_parses source, expected_node, file: file, line: line
+    end
   end
 end
 
@@ -2780,6 +2791,7 @@ module Crystal
       it_parses_literal "a\nb", {
         "%q[" => "a\nb".string,
         "%Q[" => "a\nb".string,
+        "%["  => "a\nb".string,
         "\""  => "a\nb".string,
         "%r[" => regex("a\nb"),
         "/"   => regex("a\nb"),
@@ -2792,6 +2804,7 @@ module Crystal
       it_parses_literal "a\tb", {
         "%q[" => "a\tb".string,
         "%Q[" => "a\tb".string,
+        "%["  => "a\tb".string,
         "%r[" => regex("a\tb"),
         "/"   => regex("a\tb"),
         "%x[" => command("a\tb"),
@@ -2803,6 +2816,7 @@ module Crystal
       it_parses_literal "a\r\nb", {
         "%q[" => "a\r\nb".string,
         "%Q[" => "a\r\nb".string,
+        "%["  => "a\r\nb".string,
         "\""  => "a\r\nb".string,
         "%r[" => regex("a\r\nb"),
         "/"   => regex("a\r\nb"),
@@ -2815,6 +2829,7 @@ module Crystal
       it_parses_literal "a\\nb", {
         "%q[" => "a\\nb".string,
         "%Q[" => "a\nb".string,
+        "%["  => "a\nb".string,
         "\""  => "a\nb".string,
         "%r[" => regex("a\\nb"),
         "/"   => regex("a\\nb"),
@@ -2827,6 +2842,7 @@ module Crystal
       it_parses_literal "a\\tb", {
         "%q[" => "a\\tb".string,
         "%Q[" => "a\tb".string,
+        "%["  => "a\tb".string,
         "\""  => "a\tb".string,
         "%r[" => regex("a\\tb"),
         "/"   => regex("a\\tb"),
@@ -2839,6 +2855,7 @@ module Crystal
       it_parses_literal "a\\rb", {
         "%q[" => "a\\rb".string,
         "%Q[" => "a\rb".string,
+        "%["  => "a\rb".string,
         "\""  => "a\rb".string,
         "%r[" => regex("a\\rb"),
         "/"   => regex("a\\rb"),
@@ -2851,6 +2868,7 @@ module Crystal
       it_parses_literal "a\\\nb", {
         "%q[" => "a\\\nb".string,
         "%Q[" => "ab".string,
+        "%["  => "ab".string,
         "\""  => "ab".string,
         "%r[" => regex("a\nb"),
         "/"   => regex("a\nb"),
@@ -2863,18 +2881,20 @@ module Crystal
       it_parses_literal "a\\u{41}b", {
         "%q[" => "a\\u{41}b".string,
         "%Q[" => "aAb".string,
+        "%["  => "aAb".string,
         "\""  => "aAb".string,
+        "%r[" => "invalid regex",
+        "/"   => "invalid regex",
         "%x[" => command("aAb"),
         "`"   => command("aAb"),
         "%w[" => string_array("a\\u{41}b".string),
         "%i[" => symbol_array("a\\u{41}b".symbol),
         ":\"" => "aAb".symbol,
       }
-      assert_syntax_error "%r[\\u{61}]", "invalid regex"
-      assert_syntax_error "/\\u{61}/", "invalid regex"
       it_parses_literal "a\\x41b", {
         "%q[" => "a\\x41b".string,
         "%Q[" => "aAb".string,
+        "%["  => "aAb".string,
         "\""  => "aAb".string,
         "%r[" => regex("a\\x41b"),
         "/"   => regex("a\\x41b"),
@@ -2887,6 +2907,7 @@ module Crystal
       it_parses_literal "a\\101b", {
         "%q[" => "a\\101b".string,
         "%Q[" => "aAb".string,
+        "%["  => "aAb".string,
         "\""  => "aAb".string,
         "%r[" => regex("a\\101b"),
         "/"   => regex("a\\101b"),
@@ -2899,6 +2920,7 @@ module Crystal
       it_parses_literal "a\#{x}b", {
         "%q[" => "a\#{x}b".string,
         "%Q[" => StringInterpolation.new(["a".string, Call.new("x"), "b".string] of ASTNode),
+        "%["  => StringInterpolation.new(["a".string, Call.new("x"), "b".string] of ASTNode),
         "\""  => StringInterpolation.new(["a".string, Call.new("x"), "b".string] of ASTNode),
         "%r[" => regex(StringInterpolation.new(["a".string, Call.new("x"), "b".string] of ASTNode)),
         "/"   => regex(StringInterpolation.new(["a".string, Call.new("x"), "b".string] of ASTNode)),
@@ -2911,6 +2933,7 @@ module Crystal
       it_parses_literal "a\\\#{x}b", {
         "%q[" => "a\\\#{x}b".string,
         "%Q[" => "a\#{x}b".string,
+        "%["  => "a\#{x}b".string,
         "\""  => "a\#{x}b".string,
         "%r[" => regex("a\\\#{x}b"),
         "/"   => regex("a\\\#{x}b"),
@@ -2919,6 +2942,151 @@ module Crystal
         "%w[" => string_array("a\\\#{x}b".string),
         "%i[" => symbol_array("a\\\#{x}b".symbol),
         ":\"" => "a\#{x}b".symbol,
+      }
+      it_parses_literal "a\\]b", {
+        "%q[" => %(unexpected token: "b"), # ref #5403
+        "%q{" => "a\\]b".string,
+        "%q|" => "a\\]b".string,
+        "%Q[" => "a]b".string,
+        "%["  => "a]b".string,
+        "\""  => "a]b".string,
+        "%r[" => regex("a\\]b"),
+        "/"   => regex("a\\]b"),
+        "%x[" => command("a]b"),
+        "`"   => command("a]b"),
+        "%w[" => string_array("a]b".string),
+        "%w{" => string_array("a\\]b".string),
+        "%w|" => string_array("a\\]b".string),
+        "%i[" => symbol_array("a]b".symbol),
+        "%i{" => symbol_array("a\\]b".symbol),
+        "%i|" => symbol_array("a\\]b".symbol),
+        ":\"" => "a]b".symbol,
+      }
+      it_parses_literal "a\\[b", {
+        "%q[" => "Unterminated string literal", # ref #5403
+        "%q{" => "a\\[b".string,
+        "%q|" => "a\\[b".string,
+        "%Q[" => "a[b".string,
+        "%["  => "a[b".string,
+        "\""  => "a[b".string,
+        "%r[" => regex("a\\[b"),
+        "/"   => regex("a\\[b"),
+        "%x[" => command("a[b"),
+        "`"   => command("a[b"),
+        "%w[" => string_array("a[b".string),
+        "%w{" => string_array("a\\[b".string),
+        "%w|" => string_array("a\\[b".string),
+        "%i[" => symbol_array("a[b".symbol),
+        "%i{" => symbol_array("a\\[b".symbol),
+        "%i|" => symbol_array("a\\[b".symbol),
+        ":\"" => "a[b".symbol,
+      }
+      it_parses_literal "a\\[b\\]c", {
+        "%q[" => "a\\[b\\]c".string,
+        "%Q[" => "a[b]c".string,
+        "%["  => "a[b]c".string,
+        "\""  => "a[b]c".string,
+        "%r[" => regex("a\\[b\\]c"),
+        "/"   => regex("a\\[b\\]c"),
+        "%x[" => command("a[b]c"),
+        "`"   => command("a[b]c"),
+        "%w[" => string_array("a[b]c".string),
+        "%w{" => string_array("a\\[b\\]c".string),
+        "%w|" => string_array("a\\[b\\]c".string),
+        "%i[" => symbol_array("a[b]c".symbol),
+        "%i{" => symbol_array("a\\[b\\]c".symbol),
+        "%i|" => symbol_array("a\\[b\\]c".symbol),
+        ":\"" => "a[b]c".symbol,
+      }
+      it_parses_literal "a[b\\]c", {
+        "%q[" => "a[b\\]c".string,
+        "%Q[" => "Unterminated string literal", # ref #5403
+        "%Q{" => "a[b]c".string,
+        "%Q|" => "a[b]c".string,
+        "%["  => "Unterminated string literal", # ref #5403
+        "%{"  => "a[b]c".string,
+        "%|"  => "a[b]c".string,
+        "\""  => "a[b]c".string,
+        "%r[" => "Unterminated regular expression", # ref #5403
+        "%r{" => "invalid regex: missing terminating ] for character class at 6",
+        "%r|" => "invalid regex: missing terminating ] for character class at 6",
+        "/"   => "invalid regex: missing terminating ] for character class at 6",
+        "%x[" => "Unterminated command literal", # ref #5403
+        "%x{" => command("a[b]c".string),
+        "%x|" => command("a[b]c".string),
+        "`"   => command("a[b]c"),
+        "%w[" => "Unterminated string array literal", # ref #5403
+        "%w{" => string_array("a[b\\]c".string),
+        "%w|" => string_array("a[b\\]c".string),
+        "%i[" => "Unterminated symbol array literal", # ref #5403
+        "%i{" => symbol_array("a[b\\]c".symbol),
+        "%i|" => symbol_array("a[b\\]c".symbol),
+        ":\"" => "a[b]c".symbol,
+      }
+      it_parses_literal "a\\\\ b", {
+        "%q[" => "a\\\\ b".string,
+        "%Q[" => "a\\ b".string,
+        "%["  => "a\\ b".string,
+        "\""  => "a\\ b".string,
+        "%r[" => regex("a\\\\ b"),
+        "/"   => regex("a\\\\ b"),
+        "%x[" => command("a\\ b"),
+        "`"   => command("a\\ b"),
+        "%w[" => string_array("a\\ b".string),
+        "%i[" => symbol_array("a\\ b".symbol),
+        ":\"" => "a\\ b".symbol,
+      }
+      it_parses_literal "\\\\a", {
+        "%q[" => "\\\\a".string,
+        "%Q[" => "\\a".string,
+        "%["  => "\\a".string,
+        "\""  => "\\a".string,
+        "%r[" => regex("\\\\a"),
+        "/"   => regex("\\\\a"),
+        "%x[" => command("\\a"),
+        "`"   => command("\\a"),
+        "%w[" => string_array("\\\\a".string),
+        "%i[" => symbol_array("\\\\a".symbol),
+        ":\"" => "\\a".symbol,
+      }
+      it_parses_literal "\\", {
+        "%q[" => "\\".string,
+        "%Q[" => "Unterminated string literal",
+        "%["  => "Unterminated string literal",
+        "\""  => "Unterminated string literal",
+        "%r[" => "Unterminated regular expression",
+        "/"   => "Unterminated regular expression",
+        "%x[" => "Unterminated command literal",
+        "`"   => "Unterminated command literal",
+        "%w[" => "Unterminated string array literal",
+        "%i[" => "Unterminated symbol array literal",
+        ":\"" => "unterminated quoted symbol",
+      }
+      it_parses_literal "\\\\", {
+        "%q[" => "\\\\".string,
+        "%Q[" => "\\".string,
+        "%["  => "\\".string,
+        "\""  => "\\".string,
+        "%r[" => regex("\\\\"),
+        "/"   => regex("\\\\"),
+        "%x[" => command("\\"),
+        "`"   => command("\\"),
+        "%w[" => "Unterminated string array literal", # FIXME: #12277
+        "%i[" => "Unterminated symbol array literal", # FIXME: #12277
+        ":\"" => "\\".symbol,
+      }
+      it_parses_literal "\\\\\\", {
+        "%q[" => "\\\\\\".string,
+        "%Q[" => "Unterminated string literal",
+        "%["  => "Unterminated string literal",
+        "\""  => "Unterminated string literal",
+        "%r[" => "Unterminated regular expression",
+        "/"   => "Unterminated regular expression",
+        "%x[" => "Unterminated command literal",
+        "`"   => "Unterminated command literal",
+        "%w[" => "Unterminated string array literal", # FIXME: #12277
+        "%i[" => "Unterminated symbol array literal", # FIXME: #12277
+        ":\"" => "unterminated quoted symbol",
       }
     end
 

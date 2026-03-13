@@ -675,4 +675,25 @@ describe "Semantic: doc" do
       a_def.doc.should eq("Some description")
     end
   end
+
+  it "expands record macro with comments (#16074)" do
+    result = semantic <<-CRYSTAL, wants_doc: true
+      require "macros"
+      require "object/properties"
+
+      record Foo,
+        # This is a multiline
+        # comment
+        name : String?,
+        # This is a single line comment
+        val = 1
+
+      Foo.new("test").name
+      Foo.new("test").val
+    CRYSTAL
+
+    foo = result.program.types["Foo"]
+    foo.lookup_defs("val").first.doc.should eq("This is a single line comment")
+    foo.lookup_defs("name").first.doc.should eq("This is a multiline\ncomment")
+  end
 end

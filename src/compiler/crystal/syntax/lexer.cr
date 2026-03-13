@@ -1449,8 +1449,7 @@ module Crystal
         raise_unterminated_quoted delimiter_state
       when string_end
         next_char
-        # For symmetric delimiters (like ||), don't use nesting logic
-        if string_nest == string_end || string_open_count == 0
+        if string_open_count == 0
           @token.type = :DELIMITER_END
         else
           @token.type = :STRING
@@ -2384,27 +2383,18 @@ module Crystal
     def consume_loc_pragma
       case current_char
       when '"'
-        # skip '"'
-        next_char_no_column_increment
+        delimited_pair :string, '"', '"',
+          start: current_pos
 
-        filename_pos = current_pos
+        state = @token.delimiter_state
 
-        while true
-          case current_char
-          when '"'
-            break
-          when '\0'
-            raise "unexpected end of file in loc pragma"
-          else
-            next_char_no_column_increment
+        filename = String.build do |str|
+          while (token = next_string_token(state)).type.string?
+            str << token.value
           end
         end
 
-        incr_column_number (current_pos - filename_pos) + 7 # == "#<loc:\"".size
-        filename = string_range(filename_pos)
-
-        # skip '"'
-        next_char
+        incr_column_number %(#<loc:").size - 1
 
         unless current_char == ','
           raise "expected ',' in loc pragma after filename"
