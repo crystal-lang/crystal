@@ -528,6 +528,15 @@ module Crystal
         return false
       end
 
+      # Check if parameter restrictions match (for annotation validation)
+      args.each_with_index do |arg, i|
+        other_arg = other.args[i]
+        # If either has a restriction, they must be equal
+        if arg.restriction || other_arg.restriction
+          return false unless restrictions_equal?(arg.restriction, other_arg.restriction)
+        end
+      end
+
       self_named_args = self.required_named_arguments
       other_named_args = other.required_named_arguments
 
@@ -544,6 +553,12 @@ module Crystal
       return false unless self_names == other_names
 
       true
+    end
+
+    private def restrictions_equal?(a : ASTNode?, b : ASTNode?) : Bool
+      return true if a.nil? && b.nil?
+      return false if a.nil? || b.nil?
+      a.to_s == b.to_s
     end
 
     def required_named_arguments

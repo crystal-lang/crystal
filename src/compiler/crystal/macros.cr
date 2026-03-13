@@ -1227,7 +1227,9 @@ module Crystal::Macros
 
     # Returns an array of annotations with the given `type`
     # attached to this variable, or an empty `ArrayLiteral` if there are none.
-    def annotations(type : TypeNode) : ArrayLiteral(Annotation)
+    #
+    # If *is_a* is `true`, also returns annotations whose types inherit from or include *type*.
+    def annotations(type : TypeNode, is_a : BoolLiteral = false) : ArrayLiteral(Annotation)
     end
 
     # Returns an array of all annotations attached to this
@@ -1236,7 +1238,7 @@ module Crystal::Macros
     end
   end
 
-  # An annotation on top of a type or variable.
+  # An annotation on top of a source code feature.
   class Annotation < ASTNode
     # Returns the name of this annotation.
     def name : Path
@@ -1259,6 +1261,25 @@ module Crystal::Macros
 
     # Returns a `NamedTupleLiteral` representing the named arguments on `self`.
     def named_args : NamedTupleLiteral
+    end
+
+    # Returns a `Call` to instantiate the annotation type at runtime.
+    # The annotation's `#args` and `#named_args` are passed to the annotation type's `.new` constructor.
+    # Missing optional positional/named arguments will use defaults defined on the constructor if present.
+    # If the args within the annotation do not map to a valid overload of `.new` a compile time error is raised;
+    # same as if you were instantiating the type manually.
+    #
+    # ```
+    # @[Annotation]
+    # record MyAnnotation, name : String, count : Int32 = 5
+    #
+    # @[MyAnnotation(name: "example")]
+    # class Foo; end
+    #
+    # {{ Foo.annotation(MyAnnotation).new_instance.stringify }}                         # => MyAnnotation.new(name: "example")
+    # {{ Foo.annotation(MyAnnotation).new_instance }} == MyAnnotation.new("example", 5) # => true
+    # ```
+    def new_instance : Call
     end
   end
 
@@ -1437,7 +1458,9 @@ module Crystal::Macros
 
     # Returns an array of annotations with the given `type`
     # attached to this arg, or an empty `ArrayLiteral` if there are none.
-    def annotations(type : TypeNode) : ArrayLiteral(Annotation)
+    #
+    # If *is_a* is `true`, also returns annotations whose types inherit from or include *type*.
+    def annotations(type : TypeNode, is_a : BoolLiteral = false) : ArrayLiteral(Annotation)
     end
 
     # Returns an array of all annotations attached to this
@@ -1546,7 +1569,9 @@ module Crystal::Macros
 
     # Returns an array of annotations with the given `type`
     # attached to this method, or an empty `ArrayLiteral` if there are none.
-    def annotations(type : TypeNode) : ArrayLiteral(Annotation)
+    #
+    # If *is_a* is `true`, also returns annotations whose types inherit from or include *type*.
+    def annotations(type : TypeNode, is_a : BoolLiteral = false) : ArrayLiteral(Annotation)
     end
 
     # Returns an array of all annotations attached to this
@@ -2825,6 +2850,72 @@ module Crystal::Macros
     def struct? : BoolLiteral
     end
 
+    # Returns `true` if this type can be used as an annotation.
+    # This includes traditional `annotation Foo end` types and `@[Annotation]` classes.
+    #
+    # ```
+    # annotation Foo; end
+    #
+    # @[Annotation]
+    # class Bar; end
+    #
+    # class Baz; end
+    #
+    # {{Foo.annotation?}} # => true
+    # {{Bar.annotation?}} # => true
+    # {{Baz.annotation?}} # => false
+    # ```
+    def annotation? : BoolLiteral
+    end
+
+    # Returns `true` if this type is an `@[Annotation]` class.
+    # Returns `false` for traditional annotations defined with `annotation Foo end`.
+    #
+    # ```
+    # annotation Foo; end
+    #
+    # @[Annotation]
+    # class Bar; end
+    #
+    # {{Foo.annotation_class?}} # => false
+    # {{Bar.annotation_class?}} # => true
+    # ```
+    def annotation_class? : BoolLiteral
+    end
+
+    # Returns `true` if this annotation class has `repeatable: true`.
+    # Returns `false` if not an annotation class or not repeatable.
+    #
+    # ```
+    # @[Annotation]
+    # class Foo; end
+    #
+    # @[Annotation(repeatable: true)]
+    # class Bar; end
+    #
+    # {{Foo.annotation_repeatable?}} # => false
+    # {{Bar.annotation_repeatable?}} # => true
+    # ```
+    def annotation_repeatable? : BoolLiteral
+    end
+
+    # Returns the allowed targets for this annotation class as an array of strings,
+    # or `nil` if no targets are specified (annotation can be applied anywhere).
+    # Returns `nil` if not an annotation class.
+    #
+    # ```
+    # @[Annotation]
+    # class Foo; end
+    #
+    # @[Annotation(targets: ["class", "method"])]
+    # class Bar; end
+    #
+    # {{Foo.annotation_targets}} # => nil
+    # {{Bar.annotation_targets}} # => ["class", "method"]
+    # ```
+    def annotation_targets : ArrayLiteral(StringLiteral) | NilLiteral
+    end
+
     # Returns the types forming a union type, if this is a union type.
     # Otherwise returns this single type inside an array literal (so you can safely call `union_types` on any type and treat all types uniformly).
     #
@@ -2916,7 +3007,9 @@ module Crystal::Macros
 
     # Returns an array of annotations with the given `type`
     # attached to this type, or an empty `ArrayLiteral` if there are none.
-    def annotations(type : TypeNode) : ArrayLiteral(Annotation)
+    #
+    # If *is_a* is `true`, also returns annotations whose types inherit from or include *type*.
+    def annotations(type : TypeNode, is_a : BoolLiteral = false) : ArrayLiteral(Annotation)
     end
 
     # Returns an array of all annotations attached to this
