@@ -15,4 +15,6 @@ require "./sync/mutex"
 # You also disable all protections with `unchecked`. Attempting to re-lock the
 # mutex from the same fiber will deadlock. Any fiber can unlock the mutex, even
 # if it wasn't previously locked.
+#
+# WARNING: `Mutex` is deprecated as of Crystal 1.20. Use `Sync::Mutex` instead.
 alias Mutex = Sync::Mutex
