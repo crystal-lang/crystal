@@ -312,17 +312,20 @@ module Fiber::ExecutionContext
       end
 
       def status : String
-        if @state.spinning?
+        case @state
+        in .spinning?
           "spinning"
-        elsif @state.waiting?
+        in .waiting?
           "event-loop"
-        elsif @state.parked?
+        in .parked?
           "parked"
-        elsif syscall_flag?
-          "syscall"
-        elsif @state.running?
-          "running"
-        else
+        in .running?
+          if syscall_flag?
+            "syscall"
+          else
+            "running"
+          end
+        in .none?
           "none"
         end
       end
