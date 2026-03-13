@@ -2026,6 +2026,37 @@ describe Crystal::Formatter do
   assert_format "def foo : A | B(C)\n  nil\nend"
   assert_format "def foo(x : (   A  |  B   )) : (   A  |  B   )\nend", "def foo(x : (A | B)) : (A | B)\nend"
 
+  describe "ProcNotation" do
+    assert_format "G_(A ->)"
+    assert_format "G_((A ->))"
+    assert_format "G_((A) ->)"
+
+    assert_format "G_(A, B -> R)"
+    pending { assert_format "G_((A), B -> R)" }
+    assert_format "G_((A, B -> R))"
+    assert_format "G_((A, B) -> R)"
+    pending { assert_format "G_(((A), B) -> R)" }
+    pending { assert_format "G_((((A), B) -> R))" }
+
+    assert_format "G_(A, (B -> R))"
+    assert_format "G_(A, ->)"
+    assert_format "G_(A, (->))"
+    pending { assert_format "G_(A, () ->)" } # #16741
+    assert_format "G_(A, -> R)"
+    assert_format "G_(-> R)"
+    pending { assert_format "G_(() -> R)" } # #16741
+
+    assert_format "G_(A -> R | S)"
+    assert_format "G_((A -> R | S))"
+    assert_format "G_((A) -> R | S)"
+
+    assert_format "G_((A -> R) | S)"
+
+    assert_format "G_(A | B -> R)"
+    assert_format "G_((A | B) -> C)"
+    assert_format "G_(A | (B -> C))"
+  end
+
   assert_format "foo &.bar.is_a?(Baz)"
   assert_format "foo &.bar.responds_to?(:baz)"
 
