@@ -105,7 +105,8 @@ module Fiber::ExecutionContext
         available = capacity - active
         return if available == 0
 
-        # can't wake more schedulers than currently active
+        # don't wake more schedulers than currently active (scale active
+        # parallelism to a factor of 2 max)
         available = active if available > active
 
         # fibers from the global queue are divided evenly across active
