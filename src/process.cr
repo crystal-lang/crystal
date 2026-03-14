@@ -182,6 +182,29 @@ class Process
   # See `Process.new` for the meaning of the parameters.
   #
   # Returns a `Process::Status` representing the child process' exit status.
+  #
+  # Raises `IO::Error` if the execution itself fails (for example because the
+  # executable does not exist or is not executable).
+  #
+  # Example:
+  #
+  # ```
+  # io = IO::Memory.new
+  # status = Process.run(%w[echo hello], output: io)
+  # io.to_s # => "hello\n"
+  # status  # => Process::Status[0]
+  # ```
+  def self.run(args : Enumerable(String), *, env : Env = nil, clear_env : Bool = false,
+               input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil) : Process::Status
+    status = new(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir).wait
+    status
+  end
+
+  # Executes a child process and waits for it to complete, returning its status.
+  #
+  # See `Process.new` for the meaning of the parameters.
+  #
+  # Returns a `Process::Status` representing the child process' exit status.
   # The global `$?` variable is set to the returned status.
   #
   # Raises `IO::Error` if the execution itself fails (for example because the
@@ -200,6 +223,42 @@ class Process
     status = new(command, args, env, clear_env, shell, input, output, error, chdir).wait
     $? = status
     status
+  end
+
+  # Executes a child process, yields the block, and then waits for it to finish.
+  #
+  # See `Process.new` for the meaning of the parameters.
+  #
+  # By default the process is configured to use pipes for input, output and error.
+  # These will be closed automatically at the end of the block.
+  #
+  # Returns a tuple with the process' exit status and the block's output value.
+  #
+  # Raises `IO::Error` if the execution itself fails (for example because the
+  # executable does not exist or is not executable).
+  #
+  # Example:
+  #
+  # ```
+  # status, result = Process.run(%w[echo hello]) do |process|
+  #   process.output.gets_to_end
+  # end
+  # status # => Process::Status[0]
+  # result # => "hello\n"
+  # ```
+  def self.run(args : Enumerable(String), *, env : Env = nil, clear_env : Bool = false,
+               input : Stdio = Redirect::Pipe, output : Stdio = Redirect::Pipe, error : Stdio = Redirect::Pipe, chdir : Path | String? = nil, & : Process -> _)
+    process = new(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir)
+    begin
+      value = yield process
+
+      process.close
+      status = process.wait
+      {status, value}
+    rescue ex
+      process.terminate
+      raise ex
+    end
   end
 
   # Executes a child process, yields the block, and then waits for it to finish.
