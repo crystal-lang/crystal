@@ -222,7 +222,7 @@ describe Process do
     end
 
     it "waits for the process" do
-      Process.run(to_ary(exit_code_command(0))) { }.exit_code.should eq(0)
+      Process.run(to_ary(exit_code_command(0))) { }[0].exit_code.should eq(0)
     end
   end
 
