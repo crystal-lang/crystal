@@ -177,6 +177,12 @@ module LLVM
     end
   end
 
+  enum Optimize
+    Default
+    Size
+    None
+  end
+
   # Attribute index are either ReturnIndex (0), FunctionIndex (-1) or a
   # parameter number ranging from 1 to N.
   enum AttributeIndex : UInt32
