@@ -305,7 +305,7 @@ struct Crystal::System::Process
          pointerof(startup_info), pointerof(process_info)
        ) == 0
       error = WinError.value
-      if ::File::NotFoundError.os_error?(error) || ::File::AccessDeniedError.os_error?(error) || error == WinError::ERROR_BAD_EXE_FORMAT
+      if ::File::NotFoundError.os_error?(error) || ::File::AccessDeniedError.os_error?(error) || error.in?(WinError::ERROR_BAD_EXE_FORMAT, WinError::ERROR_INVALID_PARAMETER)
         yield error, prepared_args
       else
         raise IO::Error.from_os_error("Error executing process: '#{prepared_args}'", error)
