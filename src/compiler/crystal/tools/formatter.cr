@@ -3275,8 +3275,7 @@ module Crystal
         write @token.value
         next_token
       when .underscore?
-        write("_")
-        next_token
+        write_token :UNDERSCORE
       else
         raise "BUG: unexpected token #{@token.type}"
       end
@@ -3993,9 +3992,7 @@ module Crystal
     end
 
     def visit(node : Underscore)
-      check :UNDERSCORE
-      write "_"
-      next_token
+      write_token :UNDERSCORE
 
       false
     end
