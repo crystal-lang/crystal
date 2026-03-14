@@ -129,13 +129,6 @@ module Crystal
       @exp_needs_indent = true
       @inside_def = 0
 
-      # When we parse a type, parentheses information is not stored in ASTs, unlike
-      # for an Expressions node. So when we are printing a type (Path, ProcNotation, Union, etc.)
-      # we increment this when we find a '(', and decrement it when we find ')', but
-      # only if `paren_count > 0`: it might be the case of `def foo(x : A)`, but we don't
-      # want to print that last ')' when printing the type A.
-      @paren_count = 0
-
       # This stores the column number (if any) of each comment in every line
       @when_infos = [] of AlignInfo
       @hash_infos = [] of AlignInfo
@@ -1179,17 +1172,12 @@ module Crystal
       accept name
       skip_space_or_newline
 
-      # Given that generic type arguments are always inside parentheses
-      # we can start counting them from 0 inside them.
-      old_paren_count = @paren_count
-      @paren_count = 0
-
       if named_args = node.named_args
         write_token :OP_LPAREN
         skip_space
         has_newlines, _, _ = format_named_args([] of ASTNode, named_args, @indent + 2)
         # `format_named_args` doesn't skip trailing comma
-        if @paren_count == 0 && @token.type.op_comma?
+        if @token.type.op_comma?
           next_token_skip_space_or_newline
           if has_newlines
             write ","
@@ -1197,14 +1185,11 @@ module Crystal
             write_indent
           end
         end
-        skip_space_or_newline if @paren_count == 0
+        skip_space_or_newline
         write_token :OP_RPAREN
       else
         format_literal_elements(node.type_vars, :OP_LPAREN, :OP_RPAREN)
       end
-
-      # Restore the old parentheses count
-      @paren_count = old_paren_count
 
       false
     end
@@ -1254,14 +1239,6 @@ module Crystal
               write_line
               write_indent(column)
               next_token_skip_space_or_newline
-            end
-          when .op_rparen?
-            if @paren_count > 0
-              @paren_count -= 1
-              write ")"
-              next_token_skip_space
-            else
-              break
             end
           else
             break
@@ -2386,8 +2363,6 @@ module Crystal
 
       write_token :op_lparen if has_input_parens
 
-      paren_count = @paren_count
-
       if inputs
         inputs.each_with_index do |input, i|
           accept input
@@ -2402,8 +2377,7 @@ module Crystal
         write_token :OP_RPAREN if has_input_parens
       end
 
-      skip_space_or_newline if paren_count == @paren_count
-      skip_space
+      skip_space_or_newline
 
       write " " if inputs
       write_token :OP_MINUS_GT
@@ -4899,8 +4873,6 @@ module Crystal
     end
 
     def finish
-      raise "BUG: unclosed parenthesis" if @paren_count > 0
-
       skip_space
       write_line
       skip_space_or_newline last: true
