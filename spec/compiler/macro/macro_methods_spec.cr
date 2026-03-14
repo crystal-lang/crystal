@@ -2696,6 +2696,8 @@ module Crystal
     end
 
     describe "proc literal methods" do
+      # `#call` is tested in `./proc_spec.cr`
+
       it "executes body" do
         assert_macro %({{x.body}}), "1", {x: ProcLiteral.new(Def.new("->", body: 1.int32))}
       end
