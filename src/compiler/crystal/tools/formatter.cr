@@ -1252,42 +1252,25 @@ module Crystal
       node.types.each_with_index do |type, i|
         if @token.type.op_question?
           # This can happen if it's a nilable type written like T?
-          write "?"
-          next_token
+          write_token :op_question
           break
+        end
+
+        unless i == 0
+          skip_space_or_newline
+          write_token " ", :op_bar, " "
+          skip_space
+
+          if @token.type.newline?
+            write_line
+            write_indent(column)
+            next_token_skip_space_or_newline
+          end
         end
 
         accept type
 
-        last = last?(i, node.types)
-        if last
-          skip_space
-        else
-          skip_space_or_newline
-        end
-
-        while true
-          case @token.type
-          when .op_bar?
-            write " | "
-            next_token_skip_space
-            if @token.type.newline?
-              write_line
-              write_indent(column)
-              next_token_skip_space_or_newline
-            end
-          when .op_rparen?
-            if @paren_count > 0
-              @paren_count -= 1
-              write ")"
-              next_token_skip_space
-            else
-              break
-            end
-          else
-            break
-          end
-        end
+        skip_space
       end
 
       check_close_paren
@@ -2848,22 +2831,14 @@ module Crystal
             end
             skip_space_or_newline
           end
-
-          finish_args(has_parentheses, has_newlines, ends_with_newline, found_comment, base_indent)
-
-          return false
         else
           indent(block_indent) { format_block block, needs_space }
-
-          finish_args(has_parentheses, has_newlines, ends_with_newline, found_comment, base_indent)
-
-          return false
         end
-      else
-        finish_args(has_parentheses, has_newlines, ends_with_newline, found_comment, base_indent)
-
-        false
       end
+
+      finish_args(has_parentheses, has_newlines, ends_with_newline, found_comment, base_indent)
+
+      false
     end
 
     def format_call_args(node : ASTNode, has_parentheses, base_indent)
@@ -3254,8 +3229,8 @@ module Crystal
 
       case @token.type
       when .op_lparen?
-        write "("
-        next_token_skip_space_or_newline
+        write_token :OP_LPAREN
+        skip_space_or_newline
 
         while true
           format_block_arg
@@ -3263,20 +3238,17 @@ module Crystal
             next_token_skip_space_or_newline
           end
 
-          if @token.type.op_rparen?
-            next_token
-            write ")"
-            break
-          else
-            write ", "
-          end
+          break if @token.type.op_rparen?
+
+          write ", "
         end
+
+        write_token :OP_RPAREN
       when .ident?
         write @token.value
         next_token
       when .underscore?
-        write("_")
-        next_token
+        write_token :UNDERSCORE
       else
         raise "BUG: unexpected token #{@token.type}"
       end
@@ -3993,9 +3965,7 @@ module Crystal
     end
 
     def visit(node : Underscore)
-      check :UNDERSCORE
-      write "_"
-      next_token
+      write_token :UNDERSCORE
 
       false
     end
