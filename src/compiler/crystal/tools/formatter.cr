@@ -1197,6 +1197,17 @@ module Crystal
     end
 
     def visit(node : Union)
+      if node.parens? && node.types.size == 1 && (proc_notation = node.types.first.as?(ProcNotation))
+        # Singleton union with parenthesis means a proc notation doesn't need
+        # parenthesis around input parameters: `(A -> B)`
+        write_token :OP_LPAREN
+
+        visit(proc_notation, in_parens: true)
+
+        write_token :OP_RPAREN
+        return false
+      end
+
       write_token :OP_LPAREN if node.parens?
 
       if @token.type.ident? && @token.value == "self?" && node.types.size == 2 &&
@@ -2342,13 +2353,35 @@ module Crystal
       false
     end
 
-    def visit(node : ProcNotation)
+    def visit(node : ProcNotation, in_parens = false)
       inputs = node.inputs
 
       has_input_parens = @token.type.op_lparen? &&
                          !inputs.try(&.first?).try(&.location).try(&.equals?(@token.location))
+      needs_input_parens = !(
+          # The proc notation is the only type in a union with parens
+          #
+          #   `(T -> U)`
+          in_parens ||
+          # No inputs
+          #
+          #   `-> T`
+          inputs.nil? ||
+          # The first input is parenthesized
+          #
+          #   `(T), U -> V`
+          inputs.first?.as?(Union).try(&.parens?) ||
+          # Only one input and it's not a union
+          #
+          #   `T -> U`
+          (inputs.size < 2 && !inputs.first?.is_a?(Union))
+        )
 
-      write_token :op_lparen if has_input_parens
+      if has_input_parens
+        write_token :op_lparen
+      elsif needs_input_parens
+        write "("
+      end
 
       if inputs
         inputs.each_with_index do |input, i|
@@ -2361,7 +2394,11 @@ module Crystal
           end
         end
 
-        write_token :OP_RPAREN if has_input_parens
+        if has_input_parens
+          write_token :OP_RPAREN
+        elsif needs_input_parens
+          write ")"
+        end
       end
 
       skip_space_or_newline
