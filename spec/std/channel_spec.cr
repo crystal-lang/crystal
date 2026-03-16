@@ -34,23 +34,6 @@ private macro parallel(*jobs)
   }
 end
 
-private module FakeContext
-  def self.spawn(*, name : String? = nil, &block : ->) : Fiber
-    ::spawn(name: name, &block)
-  end
-end
-
-private CONCURRENT =
-  {% if flag?(:execution_context) %}
-    ctx = Fiber::ExecutionContext.current
-    if ctx.is_a?(Fiber::ExecutionContext::Parallel) && ctx.capacity > 1
-      ctx = Fiber::ExecutionContext::Concurrent.new("channel_spec")
-    end
-    ctx
-  {% else %}
-    FakeContext
-  {% end %}
-
 describe Channel do
   it "creates unbuffered with no arguments" do
     Channel(Int32).new
@@ -607,13 +590,13 @@ describe "unbuffered" do
     ch = Channel(Int32).new
     state = 0
 
-    CONCURRENT.spawn do
+    Sync::CONCURRENT.spawn do
       state = 1
       ch.send 123
       state = 2
     end
 
-    CONCURRENT.spawn do
+    Sync::CONCURRENT.spawn do
       Sync.eventually { state.should eq(1) }
       ch.receive.should eq(123)
       state.should eq(1)
@@ -697,7 +680,7 @@ describe "unbuffered" do
     ch = Channel(Nil).new
     state = :none
 
-    CONCURRENT.spawn do
+    Sync::CONCURRENT.spawn do
       begin
         state = :ready
         ch.send(nil)
@@ -706,7 +689,7 @@ describe "unbuffered" do
       end
     end
 
-    CONCURRENT.spawn do
+    Sync::CONCURRENT.spawn do
       Sync.eventually { state.should eq(:ready) }
       ch.close
     end
@@ -719,14 +702,14 @@ describe "unbuffered" do
     state = :none
     closed = false
 
-    CONCURRENT.spawn do
+    Sync::CONCURRENT.spawn do
       state = :ready
       ch.receive
     rescue Channel::ClosedError
       closed = ch.closed?
     end
 
-    CONCURRENT.spawn do
+    Sync::CONCURRENT.spawn do
       Sync.eventually { state.should eq(:ready) }
       ch.close
     end
@@ -738,7 +721,7 @@ describe "unbuffered" do
     ch = Channel(Int32).new
     state = :none
 
-    CONCURRENT.spawn do
+    Sync::CONCURRENT.spawn do
       state = :ready
       ch.send 1
     rescue ex
@@ -747,7 +730,7 @@ describe "unbuffered" do
       state = :done
     end
 
-    CONCURRENT.spawn do
+    Sync::CONCURRENT.spawn do
       Sync.eventually { state.should eq(:ready) }
       ch.receive.should eq(1)
       ch.close
@@ -862,7 +845,7 @@ describe "buffered" do
     ch = Channel(Int32).new(1)
     state = :none
 
-    CONCURRENT.spawn do
+    Sync::CONCURRENT.spawn do
       ch.send 1
       state = :ready
       ch.send 2
@@ -872,7 +855,7 @@ describe "buffered" do
       state = :done
     end
 
-    CONCURRENT.spawn do
+    Sync::CONCURRENT.spawn do
       Sync.eventually { state.should eq(:ready) }
       ch.receive.should eq(1)
       ch.receive.should eq(2)
