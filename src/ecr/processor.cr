@@ -93,9 +93,9 @@ module ECR
   end
 
   private def append_loc(str, filename, line_number, column_number)
-    str << %(#<loc:")
-    str << filename
-    str << %(",)
+    str << "#<loc:"
+    filename.inspect(str)
+    str << ','
     str << line_number
     str << ','
     str << column_number

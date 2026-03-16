@@ -15,7 +15,7 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-      - uses: cachix/install-nix-action@2126ae7fc54c9df00dd18f7f18754393182c73cd # v31
+      - uses: cachix/install-nix-action@1ca7d21a94afc7c957383a2d217460d980de4934 # v31
         with:
           nix_path: nixpkgs=https://github.com/NixOS/nixpkgs/archive/e99215c1a21cab2a995a3d01fe20d5714addea27.tar.gz # nixpkgs-unstable@2026-03-06 (with devenv 2.0)
       - uses: cachix/cachix-action@3ba601ff5bbb07c7220846facfa2cd81eeee15a1 # v16

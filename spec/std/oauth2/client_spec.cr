@@ -42,20 +42,52 @@ describe OAuth2::Client do
 
   describe "get_access_token_using_*" do
     describe "using HTTP Basic authentication to pass credentials" do
-      it "#get_access_token_using_authorization_code" do
-        handler = HTTP::Handler::HandlerProc.new do |context|
-          body = context.request.body.not_nil!.gets_to_end
-          response = {access_token: "access_token", body: body}
-          context.response.print response.to_json
+      describe "#get_access_token_using_authorization_code" do
+        it "gets a valid token successfully" do
+          handler = HTTP::Handler::HandlerProc.new do |context|
+            body = context.request.body.not_nil!.gets_to_end
+            response = {access_token: "access_token", body: body}
+            context.response.print response.to_json
+          end
+
+          run_handler(handler) do |http_client|
+            client = OAuth2::Client.new "127.0.0.1", "client_id", "client_secret", scheme: "http"
+            client.http_client = http_client
+
+            token = client.get_access_token_using_authorization_code(authorization_code: "SDFhw39fwfg23flSfpawbef")
+            token.extra.not_nil!["body"].should eq %("redirect_uri=&grant_type=authorization_code&code=SDFhw39fwfg23flSfpawbef")
+            token.access_token.should eq "access_token"
+          end
         end
 
-        run_handler(handler) do |http_client|
-          client = OAuth2::Client.new "127.0.0.1", "client_id", "client_secret", scheme: "http"
-          client.http_client = http_client
+        it "returns an error if the response has an error status" do
+          handler = HTTP::Handler::HandlerProc.new do |context|
+            context.response.status = :bad_request
+          end
 
-          token = client.get_access_token_using_authorization_code(authorization_code: "SDFhw39fwfg23flSfpawbef")
-          token.extra.not_nil!["body"].should eq %("redirect_uri=&grant_type=authorization_code&code=SDFhw39fwfg23flSfpawbef")
-          token.access_token.should eq "access_token"
+          run_handler(handler) do |http_client|
+            client = OAuth2::Client.new "127.0.0.1", "client_id", "client_secret", scheme: "http"
+            client.http_client = http_client
+
+            expect_raises OAuth2::Error do
+              client.get_access_token_using_authorization_code(authorization_code: "asdf")
+            end
+          end
+        end
+
+        it "returns an error if the payload is an error" do
+          handler = HTTP::Handler::HandlerProc.new do |context|
+            {error: "oops"}.to_json context.response
+          end
+
+          run_handler(handler) do |http_client|
+            client = OAuth2::Client.new "127.0.0.1", "client_id", "client_secret", scheme: "http"
+            client.http_client = http_client
+
+            expect_raises OAuth2::Error do
+              client.get_access_token_using_authorization_code(authorization_code: "asdf")
+            end
+          end
         end
       end
 
