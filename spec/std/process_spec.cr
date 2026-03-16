@@ -105,7 +105,7 @@ describe Process do
       end
     end
 
-    it "raises if command is not executable" do
+    it "raises if command is a file path" do
       with_tempfile("crystal-spec-run") do |path|
         File.touch path
         expect_raises({% if flag?(:win32) %} File::BadExecutableError {% else %} File::AccessDeniedError {% end %}, "Error executing process: '#{path.inspect_unquoted}'") do
@@ -114,7 +114,7 @@ describe Process do
       end
     end
 
-    it "raises if command is not executable" do
+    it "raises if command is a dir path" do
       with_tempfile("crystal-spec-run") do |path|
         Dir.mkdir path
         expect_raises(File::AccessDeniedError, "Error executing process: '#{path.inspect_unquoted}'") do
@@ -123,7 +123,7 @@ describe Process do
       end
     end
 
-    it "raises if command could not be executed" do
+    it "raises if command is a file's subpath" do
       with_tempfile("crystal-spec-run") do |path|
         File.touch path
         command = File.join(path, "foo")
@@ -164,7 +164,7 @@ describe Process do
       end
     end
 
-    it "raises if command is not executable" do
+    it "raises if command is a file path" do
       with_tempfile("crystal-spec-run") do |path|
         File.touch path
         expect_raises({% if flag?(:win32) %} File::BadExecutableError {% else %} File::AccessDeniedError {% end %}, "Error executing process: '#{path.inspect_unquoted}'") do
@@ -173,7 +173,7 @@ describe Process do
       end
     end
 
-    it "raises if command is not executable" do
+    it "raises if command is a dir path" do
       with_tempfile("crystal-spec-run") do |path|
         Dir.mkdir path
         expect_raises(File::AccessDeniedError, "Error executing process: '#{path.inspect_unquoted}'") do
@@ -182,7 +182,7 @@ describe Process do
       end
     end
 
-    it "raises if command could not be executed" do
+    it "raises if command is a file's subpath" do
       with_tempfile("crystal-spec-run") do |path|
         File.touch path
         command = File.join(path, "foo")
@@ -217,12 +217,12 @@ describe Process do
   end
 
   describe ".run?" do
-    it "waits for the process" do
+    it "waits for successful process" do
       status = Process.run?(to_ary(exit_code_command(0))).should be_a(Process::Status)
       status.exit_code.should eq(0)
     end
 
-    it "waits for the process" do
+    it "waits for unsuccessful process" do
       status = Process.run?(to_ary(exit_code_command(1))).should be_a(Process::Status)
       status.exit_code.should eq(1)
     end
@@ -239,21 +239,21 @@ describe Process do
       Process.run?(["a" * 1000]).should be_nil
     end
 
-    it "returns nil if command is not executable" do
+    it "returns nil if command is a file path" do
       with_tempfile("crystal-spec-run") do |path|
         File.touch path
         Process.run?([path]).should be_nil
       end
     end
 
-    it "returns nil if command is not executable" do
+    it "returns nil if command is a dir path" do
       with_tempfile("crystal-spec-run") do |path|
         Dir.mkdir path
         Process.run?([path]).should be_nil
       end
     end
 
-    it "returns nil if command could not be executed" do
+    it "returns nil if command is a file's subpath" do
       with_tempfile("crystal-spec-run") do |path|
         File.touch path
         command = File.join(path, "foo")
