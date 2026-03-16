@@ -196,8 +196,7 @@ class Process
   # ```
   def self.run(args : Enumerable(String), *, env : Env = nil, clear_env : Bool = false,
                input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil) : Process::Status
-    status = new(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir).wait
-    status
+    new(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir).wait
   end
 
   # Executes a child process and waits for it to complete, returning its status.
