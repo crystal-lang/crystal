@@ -128,7 +128,12 @@ module Fiber::ExecutionContext
     # TODO: must report how many schedulers are running (count spinning
     # schedulers but don't count waiting/parked ones).
     def size : Int32
-      @started
+      count = 0
+      @schedulers.each_with_index do |scheduler, index|
+        break if index == @started
+        count += 1 if scheduler.active?
+      end
+      count
     end
 
     # The maximum number of schedulers that can be started, aka how many fibers
@@ -297,8 +302,10 @@ module Fiber::ExecutionContext
         Crystal.trace :sched, "park"
         @parked.add(1, :acquire_release)
 
-        # TODO: detach the scheduler and return the thread back into ThreadPool
-        # instead
+        # NOTE: we could detach the scheduler and return the thread back into
+        # ThreadPool... but it would need synchronization with #wake_scheduler
+        # that wouldn't only start a thread for the next scheduler (@started)
+        # but have to pick a non running scheduler
         @condition.wait(@mutex)
 
         # we don't decrement @parked because #wake_scheduler did
@@ -314,20 +321,16 @@ module Fiber::ExecutionContext
     # from external execution contexts, in which case the context may have its
     # last thread about to park itself, and we must prevent the last thread from
     # parking when there is a parallel cross context enqueue!
-    #
-    # OPTIMIZE: instead of blindly spending time (blocking progress on the
-    # current thread) to unpark a thread / start a new thread we could move the
-    # responsibility to an external observer to increase parallelism in a MT
-    # context when it detects pending work.
-    protected def wake_scheduler : Nil
-      # another thread is spinning: nothing to do (it shall notice the enqueue)
-      if @spinning.get(:relaxed) > 0
-        return
-      end
+    protected def wake_scheduler(count = 1) : Nil
+      # another thread is spinning: nothing to do
+      count -= @spinning.get(:relaxed)
+      return if count < 1
 
       # interrupt a thread waiting on the event loop
+      # FIXME: what if every scheduler can wait on evloop? (i.e. io_uring)
       if @event_loop.interrupt?
-        return
+        count -= 1
+        return if count == 0
       end
 
       # we can check @parked without locking the mutex because we can't push to
@@ -340,30 +343,42 @@ module Fiber::ExecutionContext
       if @parked.get(:acquire) > 0
         @mutex.synchronize do
           # avoid race conditions
-          return if @parked.get(:relaxed) == 0
-          return if @spinning.get(:relaxed) > 0
+          parked = @parked.get(:relaxed)
+          spinning = @spinning.get(:relaxed)
 
-          # increase the number of spinning threads _now_ to avoid multiple
-          # threads from trying to wakeup multiple threads at the same time
-          #
-          # we must also decrement the number of parked threads because another
-          # thread could lock the mutex and increment @spinning again before the
-          # signaled thread is resumed
-          @spinning.add(1, :acquire_release)
-          @parked.sub(1, :acquire_release)
+          if parked > 0 && spinning < count
+            wake = count > parked ? parked : count
 
-          @condition.signal
+            # increase the number of spinning threads _now_ to avoid multiple
+            # threads from trying to wakeup multiple threads at the same time
+            #
+            # we must also decrement the number of parked threads because another
+            # thread could lock the mutex and increment @spinning again before the
+            # signaled thread is resumed
+            @spinning.add(wake, :acquire_release)
+            @parked.sub(wake, :acquire_release)
+
+            if wake == parked
+              @condition.broadcast
+            else
+              wake.times { @condition.signal }
+            end
+
+            count -= wake
+          end
         end
-        return
+        return if count == 0
       end
 
-      # check if we can start another thread; no need for atomics, the values
-      # shall be rather stable over time and we check them again inside the
-      # mutex
+      # check if we can start another scheduler; no need for atomics, the value
+      # shall be rather stable over time and we check again inside the mutex
       return if @started >= capacity
 
       @mutex.synchronize do
-        if (index = @started) < capacity
+        start = @started
+        limit = (start + count).clamp(..capacity)
+
+        (start...limit).each do |index|
           start_thread(@schedulers[index])
           @started += 1
         end

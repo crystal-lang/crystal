@@ -1,22 +1,18 @@
 module Fiber::ExecutionContext
   # :nodoc:
   class Monitor
-    DEFAULT_EVERY        = 10.milliseconds
-    COLLECT_STACKS_EVERY = 5.seconds
+    DEFAULT_EVERY              = 10.milliseconds
+    INCREASE_PARALLELISM_EVERY = 100.milliseconds
+    COLLECT_STACKS_EVERY       = 5.seconds
 
     @thread : Thread?
 
     def initialize(@every = DEFAULT_EVERY)
       @collect_stacks_next = Crystal::System::Time.instant + COLLECT_STACKS_EVERY
+      @increase_parallelism_next = Crystal::System::Time.instant + INCREASE_PARALLELISM_EVERY
       @thread = Thread.new(name: "SYSMON") { run_loop }
     end
 
-    # TODO: slow parallelism (MT): instead of actively trying to wakeup, which
-    # can be expensive and a source of contention, leading to waste more time
-    # than running the enqueued fiber(s) directly, the monitor thread could
-    # check the queues of MT schedulers every some milliseconds and decide to
-    # start or wake threads.
-    #
     # TODO: maybe yield (ST/MT): detect schedulers that have been stuck running
     # the same fiber since the previous iteration (check current fiber &
     # scheduler tick to avoid ABA issues), then mark the fiber to trigger a
@@ -38,6 +34,7 @@ module Fiber::ExecutionContext
     private def run_loop : Nil
       every do |now|
         transfer_schedulers_blocked_on_syscall
+        increase_parallelism(now)
         collect_stacks(now)
       end
     end
@@ -82,6 +79,52 @@ module Fiber::ExecutionContext
           pool.detach(scheduler.thread)
           pool.checkout(scheduler)
         end
+      end
+    end
+
+    # Iterates parallel execution contexts and increases their parallelism when
+    # there are pending fibers waiting to run.
+    #
+    # At most, the parallelism will double on each iteration. This is to avoid
+    # waking too many schedulers at once which can waste resources to wake the
+    # schedulers that might just fight to dequeue/steal fibers instead of
+    # running them.
+    private def increase_parallelism(now) : Nil
+      return unless @increase_parallelism_next <= now
+      @increase_parallelism_next = now + INCREASE_PARALLELISM_EVERY
+
+      ExecutionContext.each do |execution_context|
+        next unless execution_context.is_a?(Parallel)
+        next if (capacity = execution_context.capacity) == 1
+
+        # how many schedulers are active (running, spinning)?
+        active = execution_context.size
+        return if active == 0
+
+        # how many schedulers can be woken?
+        available = capacity - active
+        return if available == 0
+
+        # don't wake more schedulers than currently active (scale active
+        # parallelism to a factor of 2 max)
+        available = active if available > active
+
+        # fibers from the global queue are divided evenly across active
+        # schedulers, so wake as many schedulers as needed
+        count = execution_context.@global_queue.size
+
+        if count < available
+          # split work: wake one scheduler for every scheduler with fibers in
+          # its local queue
+          execution_context.each_scheduler do |scheduler|
+            count += 1 unless scheduler.@runnables.empty?
+            break if count == available
+          end
+        else
+          count = available
+        end
+
+        execution_context.wake_scheduler(count)
       end
     end
 
