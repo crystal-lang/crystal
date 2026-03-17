@@ -1149,13 +1149,15 @@ module Crystal
     end
 
     def visit(node : Union)
-      if node.types.size == 1
-        @str << "("
+      @str << "(" if node.parens?
+
+      if node.singleton?
         drop_parens_for_proc_notation(node.types.first, &.accept(self))
-        @str << ")"
       else
         node.types.join(@str, " | ", &.accept self)
       end
+
+      @str << ")" if node.parens?
       false
     end
 
