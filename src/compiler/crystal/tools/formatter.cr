@@ -767,13 +767,9 @@ module Crystal
             write " "
           end
 
-          case elem
-          when StringLiteral
-            visit_string_body(elem)
-          when SymbolLiteral
-            visit_string_body(elem)
-          else
-            raise "Bug: unexpected element in string array: #{elem.class}"
+          while @token.type.string?
+            write_sanitized_string_body(@token.delimiter_state.allow_escapes)
+            @lexer.next_string_token(@token.delimiter_state)
           end
         end
 
