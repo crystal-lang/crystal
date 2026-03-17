@@ -1501,7 +1501,10 @@ module Crystal
             else
               @token.type = :STRING
               @token.value = current_char.to_s
-              @token.invalid_escape = true
+              unless delimiter_state.kind.array? && char.ascii_whitespace?
+                @token.invalid_escape = true
+              end
+
               next_char
             end
           end

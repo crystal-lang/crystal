@@ -2469,6 +2469,33 @@ module Crystal
         case @token.type
         when .string?
           pieces << Piece.new(@token.value.to_s, @token.line_number)
+        when .interpolation_start?
+          line_number = @token.line_number
+          # parse interpolation expression
+          next_token_skip_space_or_newline
+          if @token.type.op_star?
+            unless pieces.empty?
+              raise "splat interpolation must be the only piece in a string array element", @token
+            end
+
+            splat_location = @token.location
+            next_token_skip_space_or_newline
+
+            exp = consume_interpolation(delimiter_state)
+
+            next_string_token(delimiter_state)
+            unless @token.type.space? || @token.type.string_array_end?
+              raise "splat interpolation must be the only piece in a string array element", @token
+            end
+
+            if exp.is_a?(String)
+              exp = StringLiteral.new(exp)
+            end
+
+            return Splat.new(exp).at(splat_location)
+          else
+            pieces << Piece.new(consume_interpolation(delimiter_state), line_number)
+          end
         else
           break
         end

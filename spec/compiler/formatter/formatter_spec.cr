@@ -1177,6 +1177,9 @@ describe Crystal::Formatter do
 
   assert_format "%w(\n\n)\n# ```\n# 1\n# ```\n", "%w()\n# ```\n# 1\n# ```"
   assert_format "%w(a\\ b)"
+  assert_format "%W(\n\n)\n# ```\n# 1\n# ```\n", "%W()\n# ```\n# 1\n# ```"
+  assert_format "%W(a\\ b)"
+  assert_format "%W(a\#{\n  1\n   }\\ b)", "%W(a\#{\n  1\n}\\ b)"
 
   assert_format "/foo/"
   assert_format "/foo/imx"
