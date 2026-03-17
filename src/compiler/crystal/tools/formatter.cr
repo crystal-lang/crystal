@@ -808,6 +808,7 @@ module Crystal
         while @token.type.space?
           if @token.raw.includes?("\n") && node.elements.present?
             write_line
+            write_indent
           end
           next_string_token
         end

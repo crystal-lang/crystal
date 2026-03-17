@@ -1815,6 +1815,7 @@ describe Crystal::Formatter do
   assert_format "1 #=> 2", "1 # => 2"
   assert_format "1 #=>2", "1 # => 2"
   assert_format "foo(\n  [\n    1,\n    2,\n  ],\n  [\n    3,\n    4,\n  ]\n)"
+  assert_format "begin\n  %w(\n    one two\n    three four\n  )\nend"
   assert_format "%w(\n  one two\n  three four\n)"
   assert_format "a = %w(\n  one two\n  three four\n)"
   assert_format "foo &.bar do\n  1 + 2\nend"
