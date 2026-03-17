@@ -1203,20 +1203,13 @@ module Crystal
     end
 
     def visit(node : Union)
-      if node.singleton?
-        # Parenthesis in the type grammar: `(A)`
-        write_token :OP_LPAREN
-
-        accept node.types.first
-
-        write_token :OP_RPAREN
-        return false
-      end
+      write_token :OP_LPAREN if node.parens?
 
       if @token.type.ident? && @token.value == "self?" && node.types.size == 2 &&
          node.types[0].is_a?(Self) && node.types[1].to_s == "::Nil"
         write "self?"
         next_token
+        write_token :OP_RPAREN if node.parens?
         return false
       end
 
@@ -1244,6 +1237,8 @@ module Crystal
 
         skip_space
       end
+
+      write_token :OP_RPAREN if node.parens?
 
       false
     end
@@ -2357,8 +2352,8 @@ module Crystal
     def visit(node : ProcNotation)
       inputs = node.inputs
 
-      first_input_is_singleton_union = inputs.try(&.first?).as?(Union).try(&.singleton?)
-      has_input_parens = @token.type.op_lparen? && !first_input_is_singleton_union
+      first_input_has_parens = inputs.try(&.first?).as?(Union).try(&.parens?)
+      has_input_parens = @token.type.op_lparen? && !first_input_has_parens
 
       write_token :op_lparen if has_input_parens
 
