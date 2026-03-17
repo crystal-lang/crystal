@@ -747,26 +747,6 @@ module Crystal
       false
     end
 
-    def space_newline?
-      pos, line, col = @lexer.current_pos, @lexer.line_number, @lexer.column_number
-      while true
-        char = @lexer.current_char
-        case char
-        when ' ', '\t'
-          @lexer.next_char
-        when '\n'
-          @lexer.current_pos = pos
-          return true
-        else
-          break
-        end
-      end
-      @lexer.current_pos = pos
-      @lexer.line_number = line
-      @lexer.column_number = col
-      false
-    end
-
     def visit(node : ArrayLiteral)
       case @token.type
       when .op_lsquare?
@@ -777,20 +757,13 @@ module Crystal
       when .string_array_start?, .symbol_array_start?
         write @token.raw
 
-        next_string_token
+        @lexer.next_string_token(@token.delimiter_state)
 
         node.elements.each_with_index do |elem, index|
-          found_space = false
-          found_newline = false
-          while @token.type.space?
-            found_newline ||= @token.raw.includes?("\n")
-            found_space = true
-            next_string_token
-          end
-          if found_newline
+          if skip_space_in_percent_array_literal
             write_line
             write_indent(@indent + 2)
-          elsif found_space && index != 0
+          elsif index != 0
             write " "
           end
 
@@ -805,12 +778,9 @@ module Crystal
         end
 
         # skip trailing space
-        while @token.type.space?
-          if @token.raw.includes?("\n") && node.elements.present?
-            write_line
-            write_indent
-          end
-          next_string_token
+        if skip_space_in_percent_array_literal && node.elements.present?
+          write_line
+          write_indent(@indent)
         end
 
         check :STRING_ARRAY_END
@@ -831,6 +801,18 @@ module Crystal
       end
 
       false
+    end
+
+    def skip_space_in_percent_array_literal
+      return false unless @token.type.space?
+
+      found_newline = false
+      while @token.type.space?
+        found_newline ||= @token.raw.includes?("\n")
+        @lexer.next_string_token(@token.delimiter_state)
+      end
+
+      found_newline
     end
 
     def visit(node : TupleLiteral)
