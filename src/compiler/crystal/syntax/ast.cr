@@ -1847,7 +1847,7 @@ module Crystal
   class Union < ASTNode
     property types : Array(ASTNode)
 
-    def self.new(type : ASTNode)
+    def self.parens(type : ASTNode)
       new [type] of ASTNode
     end
 
