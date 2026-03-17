@@ -488,26 +488,9 @@ module Crystal
       write @token.raw
       next_string_token
 
-      while true
-        case @token.type
-        when .string?
-          write_sanitized_string_body(@token.delimiter_state.allow_escapes && !is_regex)
-          next_string_token
-        when .interpolation_start?
-          # This is the case of #{__DIR__}
-          write "\#{"
-          next_token_skip_space_or_newline
-          indent(@column, node)
-          skip_space_or_newline
-          check :OP_RCURLY
-          write "}"
-          next_string_token
-        when .delimiter_end?
-          break
-        else
-          raise "Bug: unexpected token: #{@token.type}"
-        end
-      end
+      visit_string_body(node, is_regex)
+
+      check :DELIMITER_END
 
       write @token.raw
       format_regex_modifiers if is_regex
@@ -528,6 +511,27 @@ module Crystal
       end
 
       false
+    end
+
+    def visit_string_body(node, is_regex = false)
+      while true
+        case @token.type
+        when .string?
+          write_sanitized_string_body(@token.delimiter_state.allow_escapes && !is_regex)
+          next_string_token
+        when .interpolation_start?
+          # This is the case of #{__DIR__}
+          write "\#{"
+          next_token_skip_space_or_newline
+          indent(@column, node)
+          skip_space_or_newline
+          check :OP_RCURLY
+          write "}"
+          next_string_token
+        else
+          break
+        end
+      end
     end
 
     private def write_sanitized_string_body(escape)
@@ -620,29 +624,7 @@ module Crystal
             end
           end
         else
-          check :INTERPOLATION_START
-          write "\#{"
-          delimiter_state = @token.delimiter_state
-
-          wrote_comment = next_token_skip_space
-          has_newline = wrote_comment || @token.type.newline?
-          skip_space_or_newline
-
-          if has_newline
-            write_line unless wrote_comment
-            write_indent(@column + 2)
-            indent(@column + 2, exp)
-            wrote_comment = skip_space_or_newline
-            write_line unless wrote_comment
-          else
-            indent(@column, exp)
-          end
-
-          skip_space_or_newline
-          check :OP_RCURLY
-          write "}"
-          @token.delimiter_state = delimiter_state
-          next_string_token
+          visit_interpolation(exp)
         end
       end
 
@@ -668,6 +650,32 @@ module Crystal
       @indent = old_indent unless is_heredoc
 
       false
+    end
+
+    private def visit_interpolation(exp)
+      check :INTERPOLATION_START
+      write "\#{"
+      delimiter_state = @token.delimiter_state
+
+      wrote_comment = next_token_skip_space
+      has_newline = wrote_comment || @token.type.newline?
+      skip_space_or_newline
+
+      if has_newline
+        write_line unless wrote_comment
+        write_indent(@column + 2)
+        indent(@column + 2, exp)
+        wrote_comment = skip_space_or_newline
+        write_line unless wrote_comment
+      else
+        indent(@column, exp)
+      end
+
+      skip_space_or_newline
+      check :OP_RCURLY
+      write "}"
+      @token.delimiter_state = delimiter_state
+      next_string_token
     end
 
     private def consume_heredocs
