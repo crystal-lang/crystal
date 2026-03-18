@@ -5104,6 +5104,13 @@ module Crystal
         parse_proc_type_output(nil, location)
       when .op_lparen?
         next_token_skip_space_or_newline
+        if @token.type.op_rparen?
+          # ProcNotation without argument types: `() ->`
+          next_token_skip_space
+          check :OP_MINUS_GT
+          return parse_proc_type_output([] of ASTNode, location)
+        end
+
         type = parse_type_splat { parse_union_type }
         if type.is_a?(Union)
           type.at(location).at_end(@token.location)

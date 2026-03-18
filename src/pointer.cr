@@ -498,6 +498,14 @@ struct Pointer(T)
     Pointer(T).new((self.address &+ (boundary &- 1)) & (&-boundary))
   end
 
+  # :nodoc:
+  #
+  # This definition is required for the invalid `Pointer.new` method to not get
+  # documented. This will never be called, the compiler will fail to compile.
+  def initialize
+    raise "can't create instance of a pointer type"
+  end
+
   # Returns a pointer whose memory address is zero. This doesn't allocate memory.
   #
   # When calling a C function you can also pass `nil` instead of constructing a

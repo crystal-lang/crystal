@@ -1,21 +1,26 @@
-require "spec"
+require "./sync/spec_helper"
 
 describe Fiber do
   it "#resumable?" do
-    done = false
-    resumable = nil
+    ch = Channel(Bool).new
 
-    fiber = spawn do
-      resumable = Fiber.current.resumable?
-      done = true
+    Sync::CONCURRENT.spawn do
+      fiber = spawn do
+        # not resumable: fiber is running (sent second)
+        ch.send Fiber.current.resumable?
+      end
+
+      # resumable: fiber hasn't been resumed (sent first)
+      ch.send fiber.resumable?
     end
 
-    fiber.resumable?.should be_true
-
-    until done
-      Fiber.yield
+    {true, false}.each do |expected|
+      select
+      when resumable = ch.receive
+        resumable.should eq(expected)
+      when timeout(1.second)
+        raise "reached timeout"
+      end
     end
-
-    resumable.should be_false
   end
 end
