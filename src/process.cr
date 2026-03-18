@@ -224,6 +224,30 @@ class Process
     status
   end
 
+  # Executes a child process and waits for it to complete, returning its status.
+  #
+  # See `Process.new` for the meaning of the parameters.
+  #
+  # Returns a `Process::Status` representing the child process' exit status.
+  # The global `$?` variable is set to the returned status.
+  #
+  # Returns `nil` if the execution itself fails (for example because the
+  # executable does not exist or is not executable).
+  #
+  # Example:
+  #
+  # ```
+  # Process.run?(["true"])        # => Process::Status[0]
+  # Process.run?(["nonexistent"]) # => nil
+  # ```
+  def self.run?(args : Enumerable(String), *,
+                env : Env = nil, clear_env : Bool = false,
+                input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close,
+                chdir : Path | String? = nil) : Process::Status?
+    status = new(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir) { return nil }.wait
+    status
+  end
+
   # Executes a child process, yields the block, and then waits for it to finish.
   #
   # See `Process.new` for the meaning of the parameters.
@@ -397,7 +421,29 @@ class Process
     fork_error = stdio_to_fd(error, for: STDERR)
 
     prepared_args = Crystal::System::Process.prepare_args(args)
-    pid = Crystal::System::Process.spawn(prepared_args, false, env, clear_env, fork_input, fork_output, fork_error, chdir.try &.to_s)
+    pid = Crystal::System::Process.spawn(prepared_args, false, env, clear_env, fork_input, fork_output, fork_error, chdir.try &.to_s) do |error, command|
+      raise ::File::Error.from_os_error("Error executing process", error, file: command)
+    end
+    @process_info = Crystal::System::Process.new(pid)
+
+    fork_input.close unless fork_input.in?(input, STDIN)
+    fork_output.close unless fork_output.in?(output, STDOUT)
+    fork_error.close unless fork_error.in?(error, STDERR)
+  end
+
+  # :nodoc:
+  protected def initialize(args : Enumerable(String), *, env : Env = nil, clear_env : Bool = false,
+                           input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil, &)
+    raise File::NotFoundError.new("Error executing process: No command", file: "") if args.empty?
+
+    fork_input = stdio_to_fd(input, for: STDIN)
+    fork_output = stdio_to_fd(output, for: STDOUT)
+    fork_error = stdio_to_fd(error, for: STDERR)
+
+    prepared_args = Crystal::System::Process.prepare_args(args)
+    pid = Crystal::System::Process.spawn(prepared_args, false, env, clear_env, fork_input, fork_output, fork_error, chdir.try &.to_s) do
+      yield
+    end
     @process_info = Crystal::System::Process.new(pid)
 
     fork_input.close unless fork_input.in?(input, STDIN)
@@ -479,7 +525,9 @@ class Process
     fork_error = stdio_to_fd(error, for: STDERR)
 
     prepared_args = Crystal::System::Process.prepare_args(command, args, shell)
-    pid = Crystal::System::Process.spawn(prepared_args, shell, env, clear_env, fork_input, fork_output, fork_error, chdir.try &.to_s)
+    pid = Crystal::System::Process.spawn(prepared_args, shell, env, clear_env, fork_input, fork_output, fork_error, chdir.try &.to_s) do |error, command|
+      raise ::File::Error.from_os_error("Error executing process", error, file: command)
+    end
     @process_info = Crystal::System::Process.new(pid)
 
     fork_input.close unless fork_input.in?(input, STDIN)
