@@ -455,7 +455,6 @@ if description = milestone.description.presence
 end
 puts
 puts "[#{milestone.title}]: https://github.com/#{repository}/releases/#{milestone.title}"
-puts
 
 def print_entries(entries)
   entries.each do |entry|
@@ -468,6 +467,7 @@ end
 
 SECTION_TITLES.each do |id, title|
   entries = sections[id]? || next
+  puts
   puts "### #{title}"
   puts
 
@@ -479,9 +479,12 @@ SECTION_TITLES.each do |id, title|
 
     topic_titles = topics.keys.sort_by! { |k| TOPIC_ORDER.index(k) || Int32::MAX }
 
+    first = true
     topic_titles.each do |topic_title|
       topic_entries = topics[topic_title]? || next
 
+      puts unless first
+      first = false
       puts "#### #{topic_title}"
       puts
 
