@@ -63,6 +63,10 @@ Lint/LiteralsComparison:
 Lint/NotNil:
   Enabled: false
 
+# BUG: https://github.com/crystal-ameba/ameba/issues/605
+Lint/SpecFocus:
+  Enabled: false
+
 Lint/RandZero:
   Excluded:
   # Explicit tests

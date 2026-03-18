@@ -228,6 +228,26 @@ def codegen(code, *, inject_primitives = true, single_module = false, debug = Cr
   result.program.codegen(result.node, single_module: single_module, debug: debug)[""].mod
 end
 
+def compile(*codes, prelude = "empty", debug = Crystal::Debug::None, target = nil)
+  sources = codes.map_with_index do |code, index|
+    Compiler::Source.new("file#{index}.cr", code)
+  end.to_a
+
+  compiler = create_spec_compiler
+  compiler.prelude = prelude
+  compiler.debug = debug
+  compiler.stdout = IO::Memory.new # don't print anything
+
+  if target
+    compiler.cross_compile = true # skip linker
+    compiler.codegen_target = Crystal::Codegen::Target.new(target)
+  end
+
+  with_temp_executable("crystal-spec-output") do |output_filename|
+    compiler.compile(sources, output_filename)
+  end
+end
+
 private def new_program
   program = Program.new
   program.color = false

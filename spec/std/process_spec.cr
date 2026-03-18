@@ -216,7 +216,7 @@ describe Process do
     end
   end
 
-  describe ".run?" do
+  describe ".run?(args)" do
     it "waits for successful process" do
       status = Process.run?(to_ary(exit_code_command(0))).should be_a(Process::Status)
       status.exit_code.should eq(0)
@@ -263,6 +263,22 @@ describe Process do
   end
 
   describe ".run" do
+    it "waits for the process" do
+      Process.run(to_ary(exit_code_command(0))).exit_code.should eq(0)
+    end
+  end
+
+  describe ".run(args, &)" do
+    it "waits for the process" do
+      Process.run(to_ary(exit_code_command(0))) { }[0].exit_code.should eq(0)
+    end
+
+    it "returns block result" do
+      Process.run(to_ary(exit_code_command(0))) { 42 }[1].should eq 42
+    end
+  end
+
+  describe ".run(command, args)" do
     it "waits for the process" do
       Process.run(*exit_code_command(0)).exit_code.should eq(0)
     end
