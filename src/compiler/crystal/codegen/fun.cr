@@ -460,6 +460,7 @@ class Crystal::CodeGenVisitor
     context.fun.add_attribute LLVM::Attribute::ReturnsTwice if target_def.returns_twice?
     context.fun.add_attribute LLVM::Attribute::Naked if target_def.naked?
     context.fun.add_attribute LLVM::Attribute::NoReturn if target_def.no_returns?
+    context.fun.add_attribute LLVM::Attribute::Cold if mangled_name == RAISE_OVERFLOW_NAME
     context.fun.add_attribute LLVM::Attribute::NoInline if target_def.no_inline?
   end
 
