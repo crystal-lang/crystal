@@ -18,3 +18,6 @@ require "./sync/mutex"
 #
 # WARNING: `Mutex` is deprecated as of Crystal 1.20. Use `Sync::Mutex` instead.
 alias Mutex = Sync::Mutex
+
+# WARNING: `Mutex::Protection` is deprecated as of Crystal 1.20. Use `Sync::Type` instead.
+alias Mutex::Protection = Sync::Type
