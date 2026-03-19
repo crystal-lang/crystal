@@ -10,19 +10,19 @@ private def assert_format(input, output = input, strict = false, flags = nil, fi
         Expected
 
         ~~~
-        #{input}
+        #{input.gsub(/([ \t])\n/, "\\1¶\n")}
         ~~~
 
         to format to:
 
         ~~~
-        #{output}
+        #{output.gsub(/([ \t])\n/, "\\1¶\n")}
         ~~~
 
         but got:
 
         ~~~
-        #{result}
+        #{result.gsub(/([ \t])\n/, "\\1¶\n")}
         ~~~
 
           assert_format #{input.inspect}, #{result.chomp.inspect}
