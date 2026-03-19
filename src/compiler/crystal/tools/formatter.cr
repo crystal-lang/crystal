@@ -1761,10 +1761,20 @@ module Crystal
       write_line
       write value
 
+      # `write` doesn't update `@line` for embedded newlines.
+      # Track the output lines from the formatted macro body explicitly,
+      # then ignore line mutations while consuming original macro tokens.
+      increment_lines(value.count('\n'))
+      line = @line
+
       next_macro_token
 
       until @token.type.macro_end?
         next_macro_token
+      end
+
+      if @line != line
+        increment_lines(line - @line)
       end
 
       skip_space_or_newline

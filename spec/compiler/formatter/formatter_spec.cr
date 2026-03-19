@@ -2945,4 +2945,26 @@ describe Crystal::Formatter do
       assert_format %(<<-'EOS'\n#{char}\nEOS)
     end
   end
+
+  # #16755
+  assert_format <<-CRYSTAL, <<-CRYSTAL
+    macro foo
+      Foo(
+      )
+    end
+
+    {
+      a:           1,
+      description: 2,
+    }
+    CRYSTAL
+    macro foo
+      Foo()
+    end
+
+    {
+      a:           1,
+      description: 2,
+    }
+    CRYSTAL
 end
