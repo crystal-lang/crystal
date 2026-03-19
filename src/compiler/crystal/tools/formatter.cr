@@ -800,8 +800,6 @@ module Crystal
     end
 
     def skip_space_in_percent_array_literal
-      return false unless @token.type.space?
-
       found_newline = false
       while @token.type.space?
         found_newline ||= @token.raw.includes?("\n")
