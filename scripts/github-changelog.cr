@@ -325,8 +325,11 @@ class ChangelogEntry
   getter pull_requests : Array(PullRequest)
   property backported_from : PullRequest?
 
-  def initialize(pr : PullRequest)
-    @pull_requests = [pr]
+  def self.new(pr : PullRequest)
+    new [pr]
+  end
+
+  def initialize(@pull_requests : Array(PullRequest))
   end
 
   def pr
@@ -405,8 +408,9 @@ class ChangelogEntry
   end
 end
 
-entries = milestone.pull_requests.compact_map do |pr|
-  ChangelogEntry.new(pr) unless pr.fixup? || pr.backported?
+entries = milestone.pull_requests.group_by(&.clean_title).compact_map do |_, prs|
+  next if prs.all? { |pr| pr.fixup? || pr.backported? }
+  ChangelogEntry.new(prs)
 end
 
 milestone.pull_requests.each do |pr|
