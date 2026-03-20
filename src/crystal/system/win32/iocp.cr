@@ -92,23 +92,21 @@ struct Crystal::System::IOCP
     raise IO::Error.from_winerror("CreateIoCompletionPort") if @handle.null?
   end
 
-  def wait_queued_completions(timeout, alertable = false, &)
-    overlapped_entries = uninitialized LibC::OVERLAPPED_ENTRY[64]
-
+  def wait_queued_completions(buffer, timeout, alertable = false)
     if timeout > UInt64::MAX
       timeout = LibC::INFINITE
     else
       timeout = timeout.to_u64
     end
 
-    result = LibC.GetQueuedCompletionStatusEx(@handle, overlapped_entries, overlapped_entries.size, out removed, timeout, alertable)
+    result = LibC.GetQueuedCompletionStatusEx(@handle, buffer, buffer.size, out removed, timeout, alertable)
 
     if result == 0
       error = WinError.value
       if timeout && error.wait_timeout?
-        return true
+        return 0
       elsif alertable && error.value == LibC::WAIT_IO_COMPLETION
-        return true
+        return 0
       else
         raise IO::Error.from_os_error("GetQueuedCompletionStatusEx", error)
       end
@@ -118,36 +116,7 @@ struct Crystal::System::IOCP
       raise IO::Error.new("GetQueuedCompletionStatusEx returned 0")
     end
 
-    # TODO: wouldn't the processing fit better in `EventLoop::IOCP#run`?
-    removed.times do |i|
-      entry = overlapped_entries[i]
-
-      # See `CompletionKey` for the operations that use a non-nil completion
-      # key. All IO operations (include File, Socket) do not set this field.
-      case completion_key = Pointer(Void).new(entry.lpCompletionKey).as(CompletionKey?)
-      in Nil
-        operation = OverlappedOperation.unbox(entry.lpOverlapped)
-        Crystal.trace :evloop, "operation", op: operation.class.name, fiber: operation.@fiber
-        operation.schedule { |fiber| yield fiber }
-      in CompletionKey
-        Crystal.trace :evloop, "completion", tag: completion_key.tag.to_s, bytes: entry.dwNumberOfBytesTransferred, fiber: completion_key.fiber
-
-        CompletionKey.unregister(completion_key)
-        if completion_key.valid?(entry.dwNumberOfBytesTransferred)
-          # if `Process` exits before a call to `#wait`, this fiber will be
-          # reset already
-          if fiber = completion_key.fiber
-            # this ensures existing references to `completion_key` do not keep
-            # an indirect reference to `::Thread.current`, as that leads to a
-            # finalization cycle
-            completion_key.fiber = nil
-            yield fiber
-          end
-        end
-      end
-    end
-
-    false
+    removed
   end
 
   def post_queued_completion_status(completion_key : CompletionKey, number_of_bytes_transferred = 0)
@@ -211,12 +180,7 @@ struct Crystal::System::IOCP
       pointerof(@overlapped)
     end
 
-    protected def schedule(&)
-      done!
-      yield @fiber
-    end
-
-    private def done!
+    def done!
       @state = :done
     end
 
