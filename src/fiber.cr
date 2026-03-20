@@ -86,6 +86,9 @@ class Fiber
   property list_next : Fiber?
 
   # :nodoc:
+  property fls : Void* = Pointer(Void).null
+
+  # :nodoc:
   def self.inactive(fiber : Fiber)
     fibers.delete(fiber)
   end
@@ -125,7 +128,13 @@ class Fiber
   def initialize(@name : String?, @stack : Stack, {% if flag?(:execution_context) %}@execution_context : ExecutionContext = ExecutionContext.current,{% end %} &@proc : ->)
     @context = Context.new
 
-    fiber_main = ->(f : Fiber) { f.run }
+    fiber_main = ->(f : Fiber) {
+      fls = Crystal::FiberLocalStorage.new
+      f.fls = pointerof(fls).as(Void*)
+      Crystal::FiberLocalStorage.fls = pointerof(fls).as(Void*)
+
+      f.run
+    }
     stack_ptr = @stack.first_addressable_pointer
     makecontext(stack_ptr, fiber_main)
 
