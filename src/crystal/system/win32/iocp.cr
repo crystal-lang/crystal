@@ -42,7 +42,7 @@ struct Crystal::System::IOCP
       Timer
     end
 
-    property fiber : ::Fiber?
+    @fiber = Atomic(::Fiber?).new(nil)
     getter tag : Tag
 
     property next : CompletionKey?
@@ -56,8 +56,29 @@ struct Crystal::System::IOCP
       @@pending.delete(key)
     end
 
-    def initialize(@tag : Tag, @fiber : ::Fiber? = nil)
+    def initialize(@tag : Tag, fiber : ::Fiber? = nil)
+      @fiber.lazy_set(fiber)
       @@pending.push(self)
+    end
+
+    def fiber=(fiber : ::Fiber)
+      @fiber.set(fiber, :acquire_release)
+      fiber
+    end
+
+    def fiber
+      @fiber.lazy_get
+    end
+
+    # The caller that succeeds to reset the fiber owns it (it may resume or skip
+    # suspend). The caller that fails to reset the fiber doesn't (it musn't
+    # resume or must suspend).
+    #
+    # Setting the fiber to nil also avoids to keep a @@pending -> CompletionKey
+    # -> ::Fiber -> ::Thread indirect reference that leads to a GC finalization
+    # cycle.
+    def reset_fiber?
+      @fiber.swap(nil, :relaxed)
     end
 
     def valid?(number_of_bytes_transferred)
