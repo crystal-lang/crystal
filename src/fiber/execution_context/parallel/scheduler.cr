@@ -39,6 +39,7 @@ module Fiber::ExecutionContext
         @main_fiber = Fiber.new("#{@name}:loop", @execution_context) do
           run_loop
         ensure
+          @event_loop.unregister(self)
           ExecutionContext.thread_pool.checkin
         end
       end
@@ -158,8 +159,6 @@ module Fiber::ExecutionContext
           Crystal.print_error_buffered("BUG: %s#run_loop [%s] crashed",
             self.class.name, @name, exception: exception)
         end
-      ensure
-        @event_loop.unregister(self)
       end
 
       private def find_next_runnable : Fiber?
