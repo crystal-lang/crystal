@@ -153,19 +153,9 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
 
       System::IOCP::CompletionKey.unregister(completion_key)
 
-      return unless completion_key.valid?(overlapped_entry.value.dwNumberOfBytesTransferred)
-
-      # if `Process` exits before a call to `#wait`, this fiber will be
-      # reset already
-      # FIXME: prone to race conditions in MT environment
-      return unless fiber = completion_key.fiber
-
-      # this ensures existing references to `completion_key` do not keep
-      # an indirect reference to `::Thread.current`, as that leads to a
-      # finalization cycle
-      completion_key.fiber = nil
-
-      fiber
+      if completion_key.valid?(overlapped_entry.value.dwNumberOfBytesTransferred)
+        completion_key.reset_fiber?
+      end
     end
   end
 
