@@ -280,6 +280,11 @@ record PullRequest,
   def backport?
     title.includes?("[Backport ")
   end
+
+  def print_ref_label(io)
+    link_ref(io)
+    io << ": " << permalink
+  end
 end
 
 def query_milestone(api_token, repository, number)
@@ -392,17 +397,6 @@ class ChangelogEntry
 
     authors
   end
-
-  def print_ref_labels(io)
-    pull_requests.each { |pr| print_ref_label(io, pr) }
-    backported_from.try { |pr| print_ref_label(io, pr) }
-  end
-
-  def print_ref_label(io, pr)
-    pr.link_ref(io)
-    io << ": " << pr.permalink
-    io.puts
-  end
 end
 
 entries = milestone.pull_requests.compact_map do |pr|
@@ -463,7 +457,10 @@ def print_entries(entries)
   end
   puts
 
-  entries.each(&.print_ref_labels(STDOUT))
+  all_prs = entries.flat_map(&.pull_requests) + entries.compact_map(&.backported_from)
+  all_prs.sort_by!(&.number)
+  all_prs.join(STDOUT, "\n", &.print_ref_label(STDOUT))
+  STDOUT.puts
 end
 
 SECTION_TITLES.each do |id, title|
