@@ -35,12 +35,7 @@ module Fiber::ExecutionContext
         @global_queue = @execution_context.global_queue
         @runnables = Runnables(256).new(@global_queue)
         @event_loop = @execution_context.event_loop
-
-        @main_fiber = Fiber.new("#{@name}:loop", @execution_context) do
-          run_loop
-        ensure
-          ExecutionContext.thread_pool.checkin
-        end
+        @main_fiber = Fiber.new("#{@name}:loop", @execution_context) { run_loop }
       end
 
       protected def shutdown! : Nil
@@ -160,6 +155,7 @@ module Fiber::ExecutionContext
         end
       ensure
         @event_loop.unregister(self)
+        ExecutionContext.thread_pool.checkin
       end
 
       private def find_next_runnable : Fiber?
