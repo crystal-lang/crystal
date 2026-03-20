@@ -62,7 +62,7 @@ struct Crystal::System::IOCP
     end
 
     def fiber=(fiber : ::Fiber)
-      @fiber.set(fiber, :acquire_release)
+      @fiber.set(fiber, :sequentially_consistent)
       fiber
     end
 
