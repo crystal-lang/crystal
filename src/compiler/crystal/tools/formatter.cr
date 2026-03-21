@@ -271,7 +271,7 @@ module Crystal
           indent(@indent, exp)
         end
 
-        found_comment = skip_space
+        found_comment = skip_space(consume_newline: false)
 
         next_needs_indent = true
         if @token.type.op_semicolon?
@@ -298,17 +298,15 @@ module Crystal
           last_found_comment = skip_space_or_newline last: true, next_comes_end: true
         else
           if needs_two_lines
-            unless found_comment
-              if @wrote_newline
-                write_line unless @wrote_double_newlines
-              elsif !@wrote_double_newlines
-                write_line
-                write_line
-              end
-              @wrote_double_newlines = true
-              found_comment = skip_space_or_newline
-              write_line unless found_comment || @wrote_double_newlines
+            if @wrote_newline
+              write_line unless @wrote_double_newlines
+            elsif !@wrote_double_newlines
+              write_line
+              write_line
             end
+            @wrote_double_newlines = true
+            found_comment = skip_space_or_newline
+            write_line unless found_comment || @wrote_double_newlines
           else
             consume_newlines
           end

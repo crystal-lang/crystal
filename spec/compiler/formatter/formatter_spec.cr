@@ -1767,6 +1767,22 @@ describe Crystal::Formatter do
     end
     CRYSTAL
   assert_format <<-CRYSTAL, <<-CRYSTAL
+    class Foo
+      def bar
+      end # foo
+      def baz
+      end
+    end
+    CRYSTAL
+    class Foo
+      def bar
+      end # foo
+
+      def baz
+      end
+    end
+    CRYSTAL
+  assert_format <<-CRYSTAL, <<-CRYSTAL
     (
       begin
         1
