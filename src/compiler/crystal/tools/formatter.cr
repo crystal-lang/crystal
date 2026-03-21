@@ -280,8 +280,7 @@ module Crystal
           else
             found_comment = skip_semicolon_or_space
             if @token.type.newline?
-              write_line
-              next_token_skip_space
+              consume_newlines
             else
               write "; " unless last?(i, node.expressions) || found_comment
               skip_space_or_newline

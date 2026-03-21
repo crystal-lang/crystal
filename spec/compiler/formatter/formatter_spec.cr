@@ -1766,6 +1766,23 @@ describe Crystal::Formatter do
       end
     end
     CRYSTAL
+  assert_format <<-CRYSTAL, <<-CRYSTAL
+    (
+      begin
+        1
+      end;
+
+      2
+    )
+    CRYSTAL
+    (
+      begin
+        1
+      end
+
+      2
+    )
+    CRYSTAL
 
   assert_format "while 1 # foo\n  # bar\n  2\nend", "while 1 # foo\n  # bar\n  2\nend"
   assert_format "foo(\n # foo\n1,\n\n # bar\n2,  \n)", "foo(\n  # foo\n  1,\n\n  # bar\n  2,\n)"
