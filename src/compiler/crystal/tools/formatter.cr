@@ -2411,12 +2411,11 @@ module Crystal
 
         inputs.each_with_index do |input, i|
           accept input
-          if @paren_count == sub_paren_count
-            skip_space_or_newline
-            if @token.type.op_comma?
-              write ", " unless last?(i, inputs)
-              next_token_skip_space_or_newline
-            end
+
+          skip_space_or_newline
+          if @token.type.op_comma?
+            write ", " unless last?(i, inputs)
+            next_token_skip_space_or_newline
           end
         end
 
