@@ -3028,6 +3028,20 @@ class String
     true
   end
 
+  # Returns `true` if `self` is not `#blank?`.
+  #
+  # ```
+  # "a".present?      # => true
+  # "".present?       # => false
+  # "   ".present?    # => false
+  # "   a   ".present? # => true
+  # ```
+  #
+  # See also: `Object#blank?`.
+  def present? : Bool
+    !blank?
+  end
+
   # Returns `self` unless `#blank?` is `true` in which case it returns `nil`.
   #
   # ```
