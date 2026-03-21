@@ -59,6 +59,7 @@ describe "ASTNode#to_s" do
   expect_to_s %(macro foo\n  %bar = 1\nend)
   expect_to_s %(macro foo\n  %bar = 1; end)
   expect_to_s %(macro foo\n  %bar{1, x} = 1\nend)
+  expect_to_s %(macro foo\n  %bar{}\nend)
   expect_to_s %({% foo %})
   expect_to_s %({{ foo }})
   expect_to_s %({% if foo %}\n  foo_then\n{% end %})
