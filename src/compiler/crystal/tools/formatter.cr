@@ -273,6 +273,7 @@ module Crystal
 
         found_comment = skip_space
 
+        next_needs_indent = true
         if @token.type.op_semicolon?
           if needs_two_lines
             skip_semicolon_or_space_or_newline
@@ -281,15 +282,12 @@ module Crystal
             if @token.type.newline?
               write_line
               next_token_skip_space
-              next_needs_indent = true
             else
               write "; " unless last?(i, node.expressions) || found_comment
               skip_space_or_newline
               next_needs_indent = found_comment
             end
           end
-        else
-          next_needs_indent = true
         end
 
         unless @exp_needs_indent
