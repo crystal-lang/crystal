@@ -1915,7 +1915,7 @@ describe Crystal::Formatter do
 
   assert_format "<<-HTML\n  hello \n  HTML"
   assert_format "<<-HTML\n  hello \n  world   \n  HTML"
-  assert_format "  <<-HTML\n    hello \n    world   \n    HTML", "<<-HTML\n  hello \n  world   \n  HTML"
+  assert_format "  <<-HTML   \n    hello \n    world   \n    HTML", "<<-HTML\n  hello \n  world   \n  HTML"
 
   assert_format "x, y = <<-FOO, <<-BAR\n  hello\n  FOO\n  world\n  BAR"
   assert_format "x, y, z = <<-FOO, <<-BAR, <<-BAZ\n  hello\n  FOO\n  world\n  BAR\n  qux\nBAZ"
@@ -2945,4 +2945,26 @@ describe Crystal::Formatter do
       assert_format %(<<-'EOS'\n#{char}\nEOS)
     end
   end
+
+  # #16755
+  assert_format <<-CRYSTAL, <<-CRYSTAL
+    macro foo
+      Foo(
+      )
+    end
+
+    {
+      a:           1,
+      description: 2,
+    }
+    CRYSTAL
+    macro foo
+      Foo()
+    end
+
+    {
+      a:           1,
+      description: 2,
+    }
+    CRYSTAL
 end

@@ -534,10 +534,10 @@ module Crystal
       end
     end
 
-    private def write_sanitized_string_body(escape)
+    private def write_sanitized_string_body(escape, no_rstrip = false)
       body = @token.invalid_escape ? @token.value.as(String) : @token.raw
       body = Lexer.escape_forbidden_characters(body) if escape
-      write body
+      write body, no_rstrip: no_rstrip
     end
 
     def visit(node : StringInterpolation)
@@ -574,14 +574,12 @@ module Crystal
       if is_heredoc && @token.type.string?
         token_is_indent = @token.raw.bytesize == node.heredoc_indent && @token.raw.each_char.all? &.ascii_whitespace?
         if token_is_indent
-          write @token.raw
+          write @token.raw, no_rstrip: true
           next_string_token
         end
       end
 
       visit_string_interpolation_body(node, delimiter_state, column, is_regex: is_regex, is_heredoc: is_heredoc)
-
-      heredoc_end = @line
 
       check :DELIMITER_END
       write @token.raw
@@ -589,9 +587,6 @@ module Crystal
       if is_heredoc
         if indent_difference > 0
           @heredoc_fixes << HeredocFix.new(heredoc_line, @line, indent_difference)
-        end
-        (heredoc_line...heredoc_end).each do |line|
-          @no_rstrip_lines.add line
         end
         write_line
       end
@@ -642,7 +637,7 @@ module Crystal
           else
             loop do
               check :STRING
-              write_sanitized_string_body(delimiter_state.allow_escapes && !is_regex)
+              write_sanitized_string_body(delimiter_state.allow_escapes && !is_regex, no_rstrip: is_heredoc)
               next_string_token
 
               # On heredoc, pieces of contents are combined due to removing indentation.
@@ -1816,12 +1811,6 @@ module Crystal
     end
 
     def visit(node : MacroLiteral)
-      line = @line
-      @token.raw.scan("\n") do
-        line -= 1
-        @no_rstrip_lines.add line
-      end
-
       raw = @token.raw
 
       # If the macro literal has a backlash, but we are subformatting
@@ -1831,7 +1820,7 @@ module Crystal
         raw = raw.gsub("\\", "\\" * (@subformat_nesting + 1))
       end
 
-      write raw
+      write raw, no_rstrip: true
       next_macro_token
       false
     end
@@ -2212,20 +2201,9 @@ module Crystal
         # will already have it.
         write_indent
 
-        increment_lines(macro_node_line + value.lines.size + 1 - @line)
-
-        line = @line
-
         # We have to potentially skip multiple macro literal tokens
         while @token.type.macro_literal?
           next_macro_token
-        end
-
-        # Skipping the macro literal tokens might have altered `@line`:
-        # restore it to what it was before the macro tokens (we are
-        # already accounting for the lines in a different way).
-        if @line != line
-          increment_lines(line - @line)
         end
       else
         inside_macro { no_indent node }
@@ -4533,11 +4511,8 @@ module Crystal
     end
 
     def next_token
-      current_line_number = @lexer.line_number
       @token = @lexer.next_token
-      if @token.type.delimiter_start?
-        increment_lines(@lexer.line_number - current_line_number)
-      elsif @token.type.newline?
+      if @token.type.newline?
         if !@lexer.heredocs.empty? && !@consuming_heredocs
           write_line
           consume_heredocs
@@ -4547,9 +4522,7 @@ module Crystal
     end
 
     def next_string_token
-      current_line_number = @lexer.line_number
       @token = @lexer.next_string_token(@token.delimiter_state)
-      increment_lines(@lexer.line_number - current_line_number)
       @token
     end
 
@@ -4558,13 +4531,9 @@ module Crystal
     end
 
     def next_macro_token
-      current_line_number = @lexer.line_number
-
       char = @lexer.current_char
       @token = @lexer.next_macro_token(@macro_state, false)
       @macro_state = @token.macro_state
-
-      increment_lines(@lexer.line_number - current_line_number)
 
       # Unescape
       if char == '\\' && !@token.raw.starts_with?(char)
@@ -4858,7 +4827,7 @@ module Crystal
       indent(indent) { yield }
     end
 
-    def write(string : String)
+    def write(string : String, no_rstrip : Bool = false)
       @output << string
       @line_output << string
       last_newline = string.rindex('\n')
@@ -4867,6 +4836,13 @@ module Crystal
       else
         @column += string.size
       end
+      lines_count = string.count('\n')
+
+      @no_rstrip_lines.add @line if no_rstrip
+      lines_count.times {
+        increment_line
+        @no_rstrip_lines.add @line if no_rstrip
+      }
 
       @wrote_newline = false
       @wrote_double_newlines = false
@@ -4902,14 +4878,6 @@ module Crystal
     def decrement_line
       @line -= 1
       @comment_columns.pop
-    end
-
-    def increment_lines(count)
-      if count < 0
-        (-count).times { decrement_line }
-      else
-        count.times { increment_line }
-      end
     end
 
     def finish
@@ -5213,7 +5181,6 @@ module Crystal
         write "\\"
         write @lexer.skip_macro_whitespace
         @macro_state.whitespace = true
-        increment_line
         true
       else
         false
