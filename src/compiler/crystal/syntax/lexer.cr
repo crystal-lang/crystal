@@ -292,11 +292,11 @@ module Crystal
         elsif @wants_def_or_macro_name
           @token.type = :OP_SLASH
         elsif @slash_is_regex
-          delimited_pair :regex, '/', '/', start, advance: false
+          delimited_pair :regex, '/', '/', start
         elsif char.ascii_whitespace? || char == '\0'
           @token.type = :OP_SLASH
         elsif @wants_regex
-          delimited_pair :regex, '/', '/', start, advance: false
+          delimited_pair :regex, '/', '/', start
         else
           @token.type = :OP_SLASH
         end
@@ -543,9 +543,11 @@ module Crystal
         if @wants_def_or_macro_name
           next_char :OP_GRAVE
         else
+          next_char
           delimited_pair :command, '`', '`', start
         end
       when '"'
+        next_char
         delimited_pair :string, '"', '"', start
       when '0'..'9'
         scan_number start
@@ -2294,8 +2296,7 @@ module Crystal
       @token.value = value
     end
 
-    def delimited_pair(kind : Token::DelimiterKind, string_nest, string_end, start, allow_escapes = true, advance = true)
-      next_char if advance
+    def delimited_pair(kind : Token::DelimiterKind, string_nest, string_end, start, allow_escapes = true)
       @token.type = :DELIMITER_START
       @token.delimiter_state = Token::DelimiterState.new(kind, string_nest, string_end, allow_escapes)
       set_token_raw_from_start(start)
@@ -2377,6 +2378,7 @@ module Crystal
     def consume_loc_pragma
       case current_char
       when '"'
+        next_char
         delimited_pair :string, '"', '"',
           start: current_pos
 
@@ -2517,7 +2519,7 @@ module Crystal
 
       here = string_range(start_here, end_here)
 
-      delimited_pair :heredoc, here, here, start, allow_escapes: !has_single_quote, advance: false
+      delimited_pair :heredoc, here, here, start, allow_escapes: !has_single_quote
     end
 
     private def consume_symbol
