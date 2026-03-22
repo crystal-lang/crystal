@@ -1969,23 +1969,15 @@ module Crystal
             char = current_char
 
             if delimiter_state
-              # For symmetric delimiters (like ||), don't use nesting logic
-              if delimiter_state.nest == delimiter_state.end
-                if char == delimiter_state.end
+              case char
+              when delimiter_state.end
+                if delimiter_state.open_count == 0
                   delimiter_state = nil
+                else
+                  delimiter_state = delimiter_state.with_open_count_delta(-1)
                 end
-              else
-                # For paired delimiters (like (), [], {}, <>), use nesting logic
-                case char
-                when delimiter_state.nest
-                  delimiter_state = delimiter_state.with_open_count_delta(+1)
-                when delimiter_state.end
-                  if delimiter_state.open_count == 0
-                    delimiter_state = nil
-                  else
-                    delimiter_state = delimiter_state.with_open_count_delta(-1)
-                  end
-                end
+              when delimiter_state.nest
+                delimiter_state = delimiter_state.with_open_count_delta(+1)
               end
             end
 
