@@ -1788,27 +1788,27 @@ module Crystal
         char = next_char
         if char == 'q' && peek_next_char.in?('(', '<', '[', '{', '|')
           next_char
-          delimiter_state = Token::DelimiterState.percent_literal(:string, current_char, closing_char)
+          delimiter_state = Token::DelimiterState.new(:string, current_char, closing_char)
           next_char
         elsif char == 'Q' && peek_next_char.in?('(', '<', '[', '{', '|')
           next_char
-          delimiter_state = Token::DelimiterState.percent_literal(:string, current_char, closing_char)
+          delimiter_state = Token::DelimiterState.new(:string, current_char, closing_char)
           next_char
         elsif char == 'i' && peek_next_char.in?('(', '<', '[', '{', '|')
           next_char
-          delimiter_state = Token::DelimiterState.percent_literal(:symbol_array, current_char, closing_char)
+          delimiter_state = Token::DelimiterState.new(:symbol_array, current_char, closing_char)
           next_char
         elsif char == 'w' && peek_next_char.in?('(', '<', '[', '{', '|')
           next_char
-          delimiter_state = Token::DelimiterState.percent_literal(:string_array, current_char, closing_char)
+          delimiter_state = Token::DelimiterState.new(:string_array, current_char, closing_char)
           next_char
         elsif char == 'x' && peek_next_char.in?('(', '<', '[', '{', '|')
           next_char
-          delimiter_state = Token::DelimiterState.percent_literal(:command, current_char, closing_char)
+          delimiter_state = Token::DelimiterState.new(:command, current_char, closing_char)
           next_char
         elsif char == 'r' && peek_next_char.in?('(', '<', '[', '{', '|')
           next_char
-          delimiter_state = Token::DelimiterState.percent_literal(:regex, current_char, closing_char)
+          delimiter_state = Token::DelimiterState.new(:regex, current_char, closing_char)
           next_char
         else
           start = current_pos
@@ -1901,7 +1901,7 @@ module Crystal
           case char = peek_next_char
           when '(', '[', '<', '{', '|'
             next_char
-            delimiter_state = Token::DelimiterState.percent_literal(:string, char, closing_char)
+            delimiter_state = Token::DelimiterState.new(:string, char, closing_char)
           else
             whitespace = false
             # Don't break if this looks like a prefixed percent literal that will
