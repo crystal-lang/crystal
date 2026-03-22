@@ -297,11 +297,22 @@ describe "OptionParser" do
     end
 
     it "raises on invalid option inside bundle" do
-      expect_raises OptionParser::InvalidOption, "Invalid option: -j" do
+      expect_raises OptionParser::InvalidOption, "Invalid option: -rj" do
         OptionParser.parse(["-rj"]) do |opts|
           opts.on("-r", "") { }
         end
       end
+    end
+
+    it "does not bundle when some options are unknown" do
+      args = %w(-nc)
+      n = false
+      OptionParser.parse(args) do |opts|
+        opts.on("-n", "") { n = true }
+        opts.invalid_option { }
+      end
+      n.should be_false
+      args.should eq(%w(-nc))
     end
 
     it "consumes rest of bundle as argument value when middle option requires argument" do
@@ -454,7 +465,7 @@ describe "OptionParser" do
   end
 
   it "raises on invalid option if value is given to none value handler (short flag, #9553) " do
-    expect_raises OptionParser::InvalidOption, "Invalid option: -o" do
+    expect_raises OptionParser::InvalidOption, "Invalid option: -foo" do
       OptionParser.parse(["-foo"]) do |opts|
         opts.on("-f", "some flag") { }
       end

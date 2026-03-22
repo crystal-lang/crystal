@@ -401,8 +401,13 @@ class OptionParser
           break
         end
 
-        if bundled_short_arg?(arg)
-          arg_index = handle_bundled_short_options(arg, arg_index, args, handled_args)
+        if short_arg?(arg)
+          if validate_bundle(arg)
+            arg_index = handle_bundled_short_options(arg, arg_index, args, handled_args)
+          else
+            flag, value = parse_arg_to_flag_and_value(arg)
+            arg_index = handle_flag(flag, value, arg_index, args, handled_args)
+          end
         else
           flag, value = parse_arg_to_flag_and_value(arg)
           arg_index = handle_flag(flag, value, arg_index, args, handled_args)
@@ -447,8 +452,23 @@ class OptionParser
     end
   end
 
-  private def bundled_short_arg?(arg : String) : Bool
+  private def short_arg?(arg : String) : Bool
     arg.starts_with?('-') && !arg.starts_with?("--") && arg.size > 2
+  end
+
+  # Validates all flags in a bundle before executing any handlers.
+  # Returns false if any flag in the bundle is unrecognized, so the entire
+  # bundle can be treated as a single unhandled argument.
+  private def validate_bundle(arg : String) : Bool
+    rest = arg[1..]
+    rest.each_char do |char|
+      flag = "-#{char}"
+      handler = @handlers[flag]?
+      return false unless handler
+      # If this flag consumes a value, remaining chars become its value — stop validating
+      break if handler.value_type.required? || handler.value_type.optional?
+    end
+    true
   end
 
   # Parses a command-line argument into a flag and optional inline value.
@@ -458,7 +478,7 @@ class OptionParser
       if separator == "="
         return {name, value}
       end
-    elsif bundled_short_arg?(arg)
+    elsif short_arg?(arg)
       return {arg[0..1], arg[2..]}
     end
     {arg, nil}
