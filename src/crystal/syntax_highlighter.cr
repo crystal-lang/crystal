@@ -242,7 +242,8 @@ abstract class Crystal::SyntaxHighlighter
       render :STRING_ARRAY_START, token.raw
       while true
         consume_space_or_newline(lexer)
-        token = lexer.next_string_array_token
+        delimiter_state = token.delimiter_state
+        token = lexer.next_string_token(delimiter_state)
         case token.type
         when .string?
           render :STRING_ARRAY_TOKEN, token.raw

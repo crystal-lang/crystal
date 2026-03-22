@@ -8,19 +8,23 @@ private def it_should_be_valid_string_array_lexer(lexer)
   token = lexer.next_token
   token.type.should eq(t :STRING_ARRAY_START)
 
-  token = lexer.next_string_array_token
+  token = lexer.next_string_token(token.delimiter_state)
   token.type.should eq(t :STRING)
   token.value.should eq("one")
 
-  token = lexer.next_string_array_token
+  token = lexer.next_string_token(token.delimiter_state)
+  token.type.should eq(t :SPACE)
+  token.value.should eq(" ")
+
+  token = lexer.next_string_token(token.delimiter_state)
   token.type.should eq(t :STRING)
   token.value.should eq("two")
 
-  token = lexer.next_string_array_token
+  token = lexer.next_string_token(token.delimiter_state)
   token.type.should eq(t :STRING_ARRAY_END)
 end
 
-describe "Lexer string array" do
+describe "Lexer %w string array" do
   it "lexes simple string array" do
     lexer = Lexer.new("%w(one two)")
 
@@ -33,25 +37,29 @@ describe "Lexer string array" do
     token = lexer.next_token
     token.type.should eq(t :STRING_ARRAY_START)
 
-    token = lexer.next_string_array_token
+    token = lexer.next_string_token(token.delimiter_state)
     token.type.should eq(t :STRING)
     token.value.should eq("one")
 
-    token = lexer.next_string_array_token
+    token = lexer.next_string_token(token.delimiter_state)
+    token.type.should eq(t :SPACE)
+    token.value.should eq(" \n ")
+
+    token = lexer.next_string_token(token.delimiter_state)
     token.type.should eq(t :STRING)
     token.value.should eq("two")
 
-    token = lexer.next_string_array_token
+    token = lexer.next_string_token(token.delimiter_state)
     token.type.should eq(t :STRING_ARRAY_END)
   end
 
   it "lexes string array with new line gives correct column for next token" do
     lexer = Lexer.new("%w(one \n two).")
 
-    lexer.next_token
-    lexer.next_string_array_token
-    lexer.next_string_array_token
-    lexer.next_string_array_token
+    token = lexer.next_token
+    lexer.next_string_token(token.delimiter_state)
+    lexer.next_string_token(token.delimiter_state)
+    lexer.next_string_token(token.delimiter_state)
 
     token = lexer.next_token
     token.line_number.should eq(2)

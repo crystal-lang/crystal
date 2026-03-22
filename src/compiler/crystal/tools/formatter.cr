@@ -751,26 +751,6 @@ module Crystal
       false
     end
 
-    def space_newline?
-      pos, line, col = @lexer.current_pos, @lexer.line_number, @lexer.column_number
-      while true
-        char = @lexer.current_char
-        case char
-        when ' ', '\t'
-          @lexer.next_char
-        when '\n'
-          @lexer.current_pos = pos
-          return true
-        else
-          break
-        end
-      end
-      @lexer.current_pos = pos
-      @lexer.line_number = line
-      @lexer.column_number = col
-      false
-    end
-
     def visit(node : ArrayLiteral)
       case @token.type
       when .op_lsquare?
@@ -779,34 +759,34 @@ module Crystal
         write "[]"
         next_token
       when .string_array_start?, .symbol_array_start?
-        first = true
         write @token.raw
-        count = 0
-        while true
-          has_space_newline = space_newline?
-          if has_space_newline
+
+        @lexer.next_string_token(@token.delimiter_state)
+
+        node.elements.each_with_index do |elem, index|
+          if skip_space_in_percent_array_literal
             write_line
-            if count == node.elements.size
-              write_indent
-            else
-              write_indent(@indent + 2)
-            end
+            write_indent(@indent + 2)
+          elsif index != 0
+            write " "
           end
-          next_string_array_token
-          case @token.type
-          when .string?
-            write " " unless first || has_space_newline
-            write @token.raw
-            first = false
-          when .string_array_end?
-            write @token.raw
-            next_token
-            break
-          else
-            raise "Bug: unexpected token #{@token.type}"
+
+          while @token.type.string?
+            write_sanitized_string_body(@token.delimiter_state.allow_escapes)
+            @lexer.next_string_token(@token.delimiter_state)
           end
-          count += 1
         end
+
+        # skip trailing space
+        if skip_space_in_percent_array_literal && node.elements.present?
+          write_line
+          write_indent(@indent)
+        end
+
+        check :STRING_ARRAY_END
+        write @token.raw
+        next_token
+
         return false
       else
         name = node.name.not_nil!
@@ -821,6 +801,16 @@ module Crystal
       end
 
       false
+    end
+
+    def skip_space_in_percent_array_literal
+      found_newline = false
+      while @token.type.space?
+        found_newline ||= @token.raw.includes?("\n")
+        @lexer.next_string_token(@token.delimiter_state)
+      end
+
+      found_newline
     end
 
     def visit(node : TupleLiteral)
@@ -4561,10 +4551,6 @@ module Crystal
       @token = @lexer.next_string_token(@token.delimiter_state)
       increment_lines(@lexer.line_number - current_line_number)
       @token
-    end
-
-    def next_string_array_token
-      @token = @lexer.next_string_array_token
     end
 
     def next_macro_token

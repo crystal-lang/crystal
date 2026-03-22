@@ -315,7 +315,7 @@ module Crystal
               start_char = next_char
               next_char :SYMBOL_ARRAY_START
               @token.raw = "%i#{start_char}" if @wants_raw
-              @token.delimiter_state = Token::DelimiterState.new(:symbol_array, start_char, closing_char(start_char))
+              @token.delimiter_state = Token::DelimiterState.new(:symbol_array, start_char, closing_char(start_char), allow_escapes: false)
             else
               @token.type = :OP_PERCENT
             end
@@ -357,7 +357,7 @@ module Crystal
               start_char = next_char
               next_char :STRING_ARRAY_START
               @token.raw = "%w#{start_char}" if @wants_raw
-              @token.delimiter_state = Token::DelimiterState.new(:string_array, start_char, closing_char(start_char))
+              @token.delimiter_state = Token::DelimiterState.new(:string_array, start_char, closing_char(start_char), allow_escapes: false)
             else
               @token.type = :OP_PERCENT
             end
@@ -1444,13 +1444,13 @@ module Crystal
         end
       end
 
-      case current_char
+      case char = current_char
       when '\0'
         raise_unterminated_quoted delimiter_state
       when string_end
         next_char
         if string_open_count == 0
-          @token.type = :DELIMITER_END
+          @token.type = delimiter_state.kind.array? ? Token::Kind::STRING_ARRAY_END : Token::Kind::DELIMITER_END
         else
           @token.type = :STRING
           @token.value = string_end.to_s
@@ -1545,6 +1545,16 @@ module Crystal
               next_char
             end
           end
+        elsif delimiter_state.kind.array?
+          case char = next_char
+          when '\\', .ascii_whitespace?, string_end, string_nest
+            string_token_escape_value char.to_s
+          else
+            next_char
+            @token.type = :STRING
+            @token.value = string_range(start)
+            @token.invalid_escape = true
+          end
         else
           @token.type = :STRING
           @token.value = current_char.to_s
@@ -1570,17 +1580,34 @@ module Crystal
         @token.line_number = @line_number
         @token.column_number = @column_number
 
-        if delimiter_state.kind.heredoc?
+        case delimiter_state.kind
+        when .heredoc?
           unless check_heredoc_end delimiter_state
             next_string_token_noescape delimiter_state
             @token.value = string_range(start)
           end
+        when .array?
+          @token.type = :SPACE
         else
           @token.type = :STRING
           @token.value = is_slash_r ? "\r\n" : "\n"
         end
       else
-        next_string_token_noescape delimiter_state
+        if delimiter_state.kind.array?
+          if char.ascii_whitespace?
+            while char.ascii_whitespace?
+              handle_slash_r_slash_n_or_slash_n
+              incr_line_number if char == '\n'
+              char = next_char
+            end
+
+            @token.type = :SPACE
+          else
+            next_string_array_token_noescape delimiter_state
+          end
+        else
+          next_string_token_noescape delimiter_state
+        end
         @token.value = string_range(start)
       end
 
@@ -1645,7 +1672,9 @@ module Crystal
             when .regex?   then "Unterminated regular expression"
             when .heredoc?
               "Unterminated heredoc: can't find \"#{delimiter_state.end}\" anywhere before the end of file"
-            when .string? then "Unterminated string literal"
+            when .string?       then "Unterminated string literal"
+            when .string_array? then "Unterminated string array literal"
+            when .symbol_array? then "Unterminated symbol array literal"
             else
               ::raise "unreachable"
             end
@@ -1800,7 +1829,7 @@ module Crystal
           next_char
         elsif char == 'w' && peek_next_char.in?('(', '<', '[', '{', '|')
           next_char
-          delimiter_state = Token::DelimiterState.percent_literal(:string_array, current_char, closing_char)
+          delimiter_state = Token::DelimiterState.percent_literal(:string_array, current_char, closing_char, allow_escapes: false)
           next_char
         elsif char == 'x' && peek_next_char.in?('(', '<', '[', '{', '|')
           next_char
@@ -2307,77 +2336,15 @@ module Crystal
       set_token_raw_from_start(start)
     end
 
-    def next_string_array_token
-      while true
-        if current_char == '\n'
-          next_char
-          incr_line_number 1
-        elsif current_char.ascii_whitespace?
-          next_char
-        else
-          break
-        end
-      end
+    def next_string_array_token_noescape(delimiter_state)
+      string_end = delimiter_state.end
+      string_nest = delimiter_state.nest
 
-      reset_token
-
-      if current_char == @token.delimiter_state.end
-        @token.raw = current_char.to_s if @wants_raw
-        next_char :STRING_ARRAY_END
-        return @token
-      end
-
-      start = current_pos
-      sub_start = start
-      value = String::Builder.new
-
-      escaped = false
-      while true
-        case current_char
-        when Char::ZERO
-          break # raise is handled by parser
-        when @token.delimiter_state.end
-          unless escaped
-            # For symmetric delimiters (like ||), don't use nesting logic
-            if @token.delimiter_state.nest == @token.delimiter_state.end || @token.delimiter_state.open_count == 0
-              break
-            else
-              @token.delimiter_state = @token.delimiter_state.with_open_count_delta(-1)
-            end
-          end
-        when @token.delimiter_state.nest
-          unless @token.delimiter_state.nest == @token.delimiter_state.end || escaped
-            @token.delimiter_state = @token.delimiter_state.with_open_count_delta(+1)
-          end
-        when .ascii_whitespace?
-          break unless escaped
-        else
-          if escaped
-            value << '\\'
-          end
-        end
-
-        escaped = current_char == '\\'
-        if escaped
-          value.write @reader.string.to_slice[sub_start, current_pos - sub_start]
-          sub_start = current_pos + 1
-        end
-
+      while !current_char.in?(string_end, string_nest, '\0', '\\', '#') && !current_char.ascii_whitespace?
         next_char
       end
 
-      if start == current_pos
-        @token.type = :EOF
-        return @token
-      end
-
-      value.write @reader.string.to_slice[sub_start, current_pos - sub_start]
-
       @token.type = :STRING
-      @token.value = value.to_s
-      set_token_raw_from_start(start)
-
-      @token
     end
 
     def consume_loc_pragma
