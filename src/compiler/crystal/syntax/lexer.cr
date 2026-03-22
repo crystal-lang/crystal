@@ -1932,9 +1932,10 @@ module Crystal
           end
         when '}'
           if delimiter_state && delimiter_state.end == '}'
-            delimiter_state = delimiter_state.with_open_count_delta(-1)
             if delimiter_state.open_count == 0
               delimiter_state = nil
+            else
+              delimiter_state = delimiter_state.with_open_count_delta(-1)
             end
           elsif @macro_curly_count > 0
             # Once we find the final '}' that closes the interpolation,
@@ -1979,9 +1980,10 @@ module Crystal
                 when delimiter_state.nest
                   delimiter_state = delimiter_state.with_open_count_delta(+1)
                 when delimiter_state.end
-                  delimiter_state = delimiter_state.with_open_count_delta(-1)
                   if delimiter_state.open_count == 0
                     delimiter_state = nil
+                  else
+                    delimiter_state = delimiter_state.with_open_count_delta(-1)
                   end
                 end
               end
