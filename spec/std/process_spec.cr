@@ -981,7 +981,7 @@ describe Process do
       error = expect_raises(Process::ExitError) do
         Process.capture(to_ary(stdin_to_stderr_command(status: 1)), input: IO::Memory.new("hello"))
       end
-      error.result.error.should eq "hello"
+      error.result.error.chomp.should eq "hello"
     end
   end
 
