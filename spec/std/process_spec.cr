@@ -30,6 +30,14 @@ private def stdin_to_stdout_command
   {% end %}
 end
 
+private def stdin_to_stderr_command(status = 0)
+  {% if flag?(:win32) %}
+    {"powershell.exe", {"-C", "1>&2 $Input; exit #{status}"}}
+  {% else %}
+    {"/bin/sh", {"-c", "cat 1>&2; exit #{status}"}}
+  {% end %}
+end
+
 private def print_env_command
   {% if flag?(:win32) %}
     # cmd adds these by itself, clear them out before printing.
@@ -758,6 +766,99 @@ describe Process do
         end
       end
       buffer.to_s.chomp.lines.size.should eq(1000)
+    end
+  end
+
+  describe ".capture_result" do
+    it "captures stdout" do
+      result = Process.capture_result(to_ary(shell_command("echo hello")))
+      result.status.success?.should be_true
+      result.output?.should eq "hello#{newline}"
+      result.error?.should eq ""
+    end
+
+    it "captures stdout from stdin" do
+      result = Process.capture_result(to_ary(stdin_to_stdout_command), input: IO::Memory.new("hello"))
+      result.status.success?.should be_true
+      result.output.should eq "hello"
+    end
+
+    it "ignores stdout if output is IO" do
+      io = IO::Memory.new
+      result = Process.capture_result(to_ary(stdin_to_stdout_command), input: IO::Memory.new("hello"), output: io)
+      result.status.success?.should be_true
+      result.output?.should be_nil
+      result.error?.should eq ""
+      io.to_s.should eq "hello"
+    end
+
+    it "ignores stdout if output is FileDescriptor" do
+      reader, writer = IO.pipe
+      result = Process.capture_result(to_ary(stdin_to_stdout_command), input: IO::Memory.new("hello\n"), output: writer)
+      result.status.success?.should be_true
+      result.output?.should be_nil
+      result.error?.should eq ""
+      reader.gets.should eq "hello"
+    end
+
+    it "captures stderr" do
+      result = Process.capture_result(to_ary(shell_command("1>&2 echo hello")))
+      result.status.success?.should be_true
+      result.output?.should eq ""
+      result.error?.should eq "hello#{newline}"
+    end
+
+    it "ignores stderr if error is IO" do
+      io = IO::Memory.new
+      result = Process.capture_result(to_ary(shell_command("1>&2 echo hello")), error: io)
+      result.status.success?.should be_true
+      result.output?.should eq ""
+      result.error?.should be_nil
+      io.to_s.should eq "hello#{newline}"
+    end
+
+    it "ignores stderr if error is FileDescriptor" do
+      reader, writer = IO.pipe
+      result = Process.capture_result(to_ary(shell_command("1>&2 echo hello")), error: writer)
+      result.status.success?.should be_true
+      result.output?.should eq ""
+      result.error?.should be_nil
+      reader.gets.should eq "hello"
+    end
+
+    it "doesn't capture closed stdout" do
+      result = Process.capture_result(to_ary(shell_command("echo hello")), output: :close)
+      result.output?.should be_nil
+      result.error?.should_not be_nil
+    end
+
+    it "doesn't capture closed stderr" do
+      result = Process.capture_result(to_ary(shell_command("1>&2 echo hello")), error: :close)
+      result.status.success?.should be_true
+      result.output?.should eq ""
+      result.error?.should be_nil
+    end
+
+    pending "truncates error output", tags: %w[slow] do
+      dashes32 = "-" * (32 << 10)
+      input = IO::Memory.new("#{dashes32}X#{dashes32}")
+      result = Process.capture_result(to_ary(stdin_to_stderr_command), input: input)
+      result.status.success?.should be_true
+      result.output?.should eq ""
+      error = result.error.should be_a(String)
+      error.should contain "\n...omitted 1 bytes...\n"
+      error.count("-").should eq(32 << 11)
+    end
+
+    it "reports status" do
+      Process.capture_result(to_ary(exit_code_command(0))).status.exit_code.should eq(0)
+      Process.capture_result(to_ary(exit_code_command(123))).status.exit_code.should eq(123)
+    end
+
+    it "raises if process cannot execute" do
+      expect_raises(File::NotFoundError, "Error executing process: 'foobarbaz'") do
+        Process.capture_result(["foobarbaz"])
+      end
     end
   end
 
