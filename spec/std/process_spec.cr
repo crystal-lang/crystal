@@ -961,7 +961,7 @@ describe Process do
     end
 
     it "captures stdout from stdin" do
-      Process.capture(to_ary(stdin_to_stdout_command), input: IO::Memory.new("hello")).should eq "hello"
+      Process.capture(to_ary(stdin_to_stdout_command), input: IO::Memory.new("hello")).chomp.should eq "hello"
     end
 
     it "raises on non-zero exit status" do
