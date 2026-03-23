@@ -2,17 +2,14 @@ require "../spec_helper"
 
 describe "Code gen: TargetFeature annotation" do
   it "can target optional CPU features" do
-    run(<<-CRYSTAL).to_b.should be_true
+    compile(<<-CRYSTAL)
       require "prelude"
 
-      # This feature is available on all platforms
-      @[TargetFeature("+strict-align")]
-      def strict_align(input : Int32) : Int32
-        input * 2
+      @[TargetFeature("+sve,+sve2")]
+      def sve2_smoke_test : Nil
+        asm("ext z0.b, { z1.b, z2.b }, #0" :::: "volatile")
+        nil
       end
-
-      output = strict_align(1)
-      output == 2
       CRYSTAL
   end
 
@@ -33,20 +30,14 @@ describe "Code gen: TargetFeature annotation" do
   end
 
   it "can target optional CPU features and optimize code for a specific CPU" do
-    run(<<-CRYSTAL).to_b.should be_true
+    compile(<<-CRYSTAL)
       require "prelude"
 
-      {% if flag?(:aarch64) %}
-        @[TargetFeature("+strict-align", cpu: "apple-m1")]
-      {% elsif flag?(:x86_64) %}
-        @[TargetFeature("+strict-align", cpu: "x86-64-v4")]
-      {% end %}
-      def strict_align(input : Int32) : Int32
-        input * 2
+      @[TargetFeature("+sve,+sve2", cpu: "apple-m1")]
+      def sve2_smoke_test : Nil
+        asm("ext z0.b, { z1.b, z2.b }, #0" :::: "volatile")
+        nil
       end
-
-      output = strict_align(1)
-      output == 2
       CRYSTAL
   end
 end
