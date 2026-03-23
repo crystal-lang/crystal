@@ -96,31 +96,21 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   private def run_impl(blocking : Bool, &) : Nil
     Crystal.trace :evloop, "run", blocking: blocking ? 1 : 0
 
-    if @waitable_timer
-      timeout = blocking ? LibC::INFINITE : 0_i64
-    elsif blocking
-      if time = @timers_mutex.synchronize { @timers.next_ready? }
-        # convert absolute time to relative time, expressed in milliseconds,
-        # rounded up; cannot use `::Time.instant` that could be mocked
-        relative = time.duration_since(Crystal::System::Time.instant)
-        timeout = (relative.to_i * 1000 + (relative.nanoseconds + 999_999) // 1_000_000)
-      else
-        timeout = LibC::INFINITE
-      end
-    else
-      timeout = 0_i64
-    end
-
-    # the array must be at least as large as `overlapped_entries` in
-    # `System::IOCP#wait_queued_completions`
+    overlapped_entries = uninitialized LibC::OVERLAPPED_ENTRY[64]
     events = uninitialized FiberEvent[64]
     size = 0
 
-    @iocp.wait_queued_completions(timeout) do |fiber|
+    removed = @iocp.wait_queued_completions(overlapped_entries.to_slice, run_timeout(blocking))
+
+    removed.times do |i|
+      overlapped_entry = overlapped_entries.to_unsafe + i
+      next unless fiber = handle_event(overlapped_entry)
+
       if (event = fiber.@resume_event) && event.wake_at?
         events[size] = event
         size += 1
       end
+
       yield fiber
     end
 
@@ -141,6 +131,59 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     end
 
     @interrupted.set(false, :release)
+  end
+
+  private def handle_event(overlapped_entry)
+    if (ptr = Pointer(Void).new(overlapped_entry.value.lpCompletionKey)).null?
+      # IO operation
+      operation = System::IOCP::OverlappedOperation.unbox(overlapped_entry.value.lpOverlapped)
+
+      Crystal.trace :evloop, "operation", op: operation.class.name, fiber: operation.@fiber
+
+      operation.done!
+      operation.@fiber
+    else
+      # other kind of completion event
+      completion_key = ptr.as(System::IOCP::CompletionKey)
+
+      Crystal.trace :evloop, "completion",
+        tag: completion_key.tag.to_s,
+        bytes: overlapped_entry.value.dwNumberOfBytesTransferred,
+        fiber: completion_key.fiber
+
+      System::IOCP::CompletionKey.unregister(completion_key)
+
+      return unless completion_key.valid?(overlapped_entry.value.dwNumberOfBytesTransferred)
+
+      # if `Process` exits before a call to `#wait`, this fiber will be
+      # reset already
+      # FIXME: prone to race conditions in MT environment
+      return unless fiber = completion_key.fiber
+
+      # this ensures existing references to `completion_key` do not keep
+      # an indirect reference to `::Thread.current`, as that leads to a
+      # finalization cycle
+      completion_key.fiber = nil
+
+      fiber
+    end
+  end
+
+  private def run_timeout(blocking)
+    if @waitable_timer
+      blocking ? LibC::INFINITE : 0_i64
+    elsif blocking
+      if time = @timers_mutex.synchronize { @timers.next_ready? }
+        # convert absolute time to relative time, expressed in milliseconds,
+        # rounded up; cannot use `::Time.instant` that could be mocked
+        relative = time.duration_since(Crystal::System::Time.instant)
+        (relative.to_i * 1000 + (relative.nanoseconds + 999_999) // 1_000_000)
+      else
+        LibC::INFINITE
+      end
+    else
+      0_i64
+    end
   end
 
   private def process_timer(timer : Pointer(Timer), &)
