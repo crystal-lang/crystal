@@ -270,47 +270,45 @@ describe "OptionParser" do
       args.size.should eq(0)
     end
 
-    it "uses rest of token as required value and stops bundling" do
-      args = %w(-ovalue -r)
+    it "uses rest of bundle as value for required option" do
       value = nil
+      a = false
       r = false
-      OptionParser.parse(args) do |opts|
+      parser = OptionParser.new do |opts|
+        opts.on("-a", "") { a = true }
         opts.on("-o VALUE", "") { |v| value = v }
         opts.on("-r", "") { r = true }
       end
+
+      args = %w(-ovalue -r)
+      parser.parse(args)
       value.should eq("value")
       r.should be_true
       args.size.should eq(0)
-    end
 
-    it "assigns remainder as value for later required option" do
-      args = %w(-ab123)
-      a = false
-      b = nil
-      OptionParser.parse(args) do |opts|
-        opts.on("-a", "") { a = true }
-        opts.on("-b VALUE", "") { |v| b = v }
-      end
+      value = nil
+      r = false
+      args = %w(-ao123)
+      parser.parse(args)
       a.should be_true
-      b.should eq("123")
+      value.should eq("123")
       args.size.should eq(0)
     end
 
-    it "raises on invalid option inside bundle" do
-      expect_raises OptionParser::InvalidOption, "Invalid option: -rj" do
-        OptionParser.parse(["-rj"]) do |opts|
-          opts.on("-r", "") { }
-        end
-      end
-    end
-
     it "does not bundle when some options are unknown" do
-      args = %w(-nc)
       n = false
-      OptionParser.parse(args) do |opts|
+      parser = OptionParser.new do |opts|
         opts.on("-n", "") { n = true }
-        opts.invalid_option { }
       end
+
+      expect_raises OptionParser::InvalidOption, "Invalid option: -nc" do
+        parser.parse(["-nc"])
+      end
+      n.should be_false
+
+      args = %w(-nc)
+      parser.invalid_option { }
+      parser.parse(args)
       n.should be_false
       args.should eq(%w(-nc))
     end

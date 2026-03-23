@@ -401,13 +401,8 @@ class OptionParser
           break
         end
 
-        if short_arg?(arg)
-          if validate_bundle(arg)
-            arg_index = handle_bundled_short_options(arg, arg_index, args, handled_args)
-          else
-            flag, value = parse_arg_to_flag_and_value(arg)
-            arg_index = handle_flag(flag, value, arg_index, args, handled_args)
-          end
+        if bundle = validate_bundle(arg)
+          arg_index = handle_bundled_short_options(arg, bundle, arg_index, args, handled_args)
         else
           flag, value = parse_arg_to_flag_and_value(arg)
           arg_index = handle_flag(flag, value, arg_index, args, handled_args)
@@ -457,18 +452,22 @@ class OptionParser
   end
 
   # Validates all flags in a bundle before executing any handlers.
-  # Returns false if any flag in the bundle is unrecognized, so the entire
-  # bundle can be treated as a single unhandled argument.
-  private def validate_bundle(arg : String) : Bool
+  # Returns the array of validated handlers if all flags are recognized, or nil
+  # if any flag is unrecognized, so the entire bundle can be treated as a single
+  # unhandled argument. Stops collecting handlers at the first value-consuming flag
+  # since remaining chars become its value rather than separate flags.
+  private def validate_bundle(arg : String) : Array(Handler)?
+    return nil unless short_arg?(arg)
+    handlers = [] of Handler
     rest = arg[1..]
     rest.each_char do |char|
-      flag = "-#{char}"
-      handler = @handlers[flag]?
-      return false unless handler
+      handler = @handlers["-#{char}"]?
+      return nil unless handler
+      handlers << handler
       # If this flag consumes a value, remaining chars become its value — stop validating
       break if handler.value_type.required? || handler.value_type.optional?
     end
-    true
+    handlers
   end
 
   # Parses a command-line argument into a flag and optional inline value.
@@ -484,42 +483,36 @@ class OptionParser
     {arg, nil}
   end
 
-  private def handle_bundled_short_options(arg : String, arg_index : Int32, args : Array(String), handled_args : Array(Int32)) : Int32
+  private def handle_bundled_short_options(arg : String, bundle : Array(Handler), arg_index : Int32, args : Array(String), handled_args : Array(Int32)) : Int32
     rest = arg[1..]
-    rest.each_char_with_index do |char, index|
-      flag = "-#{char}"
-
+    bundle.each_with_index do |handler, index|
+      flag = "-#{rest[index]}"
       suffix = index + 1 < rest.bytesize ? rest[(index + 1)..] : nil
 
-      if handler = @handlers[flag]?
-        case handler.value_type
-        in FlagValue::None
+      case handler.value_type
+      in FlagValue::None
+        next_index = handle_flag(flag, nil, arg_index, args, handled_args)
+        return next_index unless next_index == arg_index
+      in FlagValue::Required
+        value = suffix
+        if value && !value.empty?
+          handled_args << arg_index
+          handler.block.call(value)
+        else
           next_index = handle_flag(flag, nil, arg_index, args, handled_args)
           return next_index unless next_index == arg_index
-        in FlagValue::Required
-          value = suffix
-          if value && !value.empty?
-            handled_args << arg_index
-            handler.block.call(value)
-          else
-            next_index = handle_flag(flag, nil, arg_index, args, handled_args)
-            return next_index unless next_index == arg_index
-          end
-          return arg_index
-        in FlagValue::Optional
-          value = suffix
-          if value && !value.empty? && gnu_optional_args?
-            handled_args << arg_index
-            handler.block.call(value)
-            return arg_index
-          else
-            next_index = handle_flag(flag, nil, arg_index, args, handled_args)
-            return next_index unless next_index == arg_index
-          end
         end
-      else
-        @invalid_option.call(flag)
         return arg_index
+      in FlagValue::Optional
+        value = suffix
+        if value && !value.empty? && gnu_optional_args?
+          handled_args << arg_index
+          handler.block.call(value)
+          return arg_index
+        else
+          next_index = handle_flag(flag, nil, arg_index, args, handled_args)
+          return next_index unless next_index == arg_index
+        end
       end
     end
 
