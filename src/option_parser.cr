@@ -484,36 +484,9 @@ class OptionParser
   end
 
   private def handle_bundled_short_options(arg : String, bundle : Array(Handler), arg_index : Int32, args : Array(String), handled_args : Array(Int32)) : Int32
-    rest = arg[1..]
     bundle.each_with_index do |handler, index|
-      flag = "-#{rest[index]}"
-      suffix = index + 1 < rest.bytesize ? rest[(index + 1)..] : nil
-
-      case handler.value_type
-      in FlagValue::None
-        next_index = handle_flag(flag, nil, arg_index, args, handled_args)
-        return next_index unless next_index == arg_index
-      in FlagValue::Required
-        value = suffix
-        if value && !value.empty?
-          handled_args << arg_index
-          handler.block.call(value)
-        else
-          next_index = handle_flag(flag, nil, arg_index, args, handled_args)
-          return next_index unless next_index == arg_index
-        end
-        return arg_index
-      in FlagValue::Optional
-        value = suffix
-        if value && !value.empty? && gnu_optional_args?
-          handled_args << arg_index
-          handler.block.call(value)
-          return arg_index
-        else
-          next_index = handle_flag(flag, nil, arg_index, args, handled_args)
-          return next_index unless next_index == arg_index
-        end
-      end
+      value = arg[(index + 2)..] unless handler.value_type.none?
+      handler.block.call value || ""
     end
 
     handled_args << arg_index

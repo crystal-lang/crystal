@@ -273,21 +273,19 @@ describe "OptionParser" do
     it "uses rest of bundle as value for required option" do
       value = nil
       a = false
-      r = false
       parser = OptionParser.new do |opts|
         opts.on("-a", "") { a = true }
         opts.on("-o VALUE", "") { |v| value = v }
-        opts.on("-r", "") { r = true }
       end
 
-      args = %w(-ovalue -r)
+      args = %w(-ovalue -a)
       parser.parse(args)
       value.should eq("value")
-      r.should be_true
+      a.should be_true
       args.size.should eq(0)
 
       value = nil
-      r = false
+      a = false
       args = %w(-ao123)
       parser.parse(args)
       a.should be_true
