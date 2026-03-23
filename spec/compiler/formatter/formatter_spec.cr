@@ -1161,6 +1161,9 @@ describe Crystal::Formatter do
   assert_format "%w{one(   two(  three)}", "%w{one( two( three)}"
   assert_format "%i{one(   two(  three)}", "%i{one( two( three)}"
 
+  assert_format "%w(\n\n)\n# ```\n# 1\n# ```\n", "%w()\n# ```\n# 1\n# ```"
+  assert_format "%w(a\\ b)"
+
   assert_format "/foo/"
   assert_format "/foo/imx"
   assert_format "/foo \#{ bar }/", "/foo \#{bar}/"
@@ -1815,6 +1818,7 @@ describe Crystal::Formatter do
   assert_format "1 #=> 2", "1 # => 2"
   assert_format "1 #=>2", "1 # => 2"
   assert_format "foo(\n  [\n    1,\n    2,\n  ],\n  [\n    3,\n    4,\n  ]\n)"
+  assert_format "begin\n  %w(\n    one two\n    three four\n  )\nend"
   assert_format "%w(\n  one two\n  three four\n)"
   assert_format "a = %w(\n  one two\n  three four\n)"
   assert_format "foo &.bar do\n  1 + 2\nend"

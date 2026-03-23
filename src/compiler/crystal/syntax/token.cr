@@ -301,6 +301,10 @@ module Crystal
       SYMBOL_ARRAY
       COMMAND
       HEREDOC
+
+      def array?
+        string_array? || symbol_array?
+      end
     end
 
     record DelimiterState,
@@ -332,9 +336,9 @@ module Crystal
       # Creates a DelimiterState for percent literals in macros.
       # For symmetric delimiters (||), uses open_count = 0 (no nesting).
       # For paired delimiters (()), uses open_count = 1 (enables nesting).
-      def self.percent_literal(kind : DelimiterKind, nest, the_end)
+      def self.percent_literal(kind : DelimiterKind, nest, the_end, *, allow_escapes : Bool = true)
         open_count = nest == the_end ? 0 : 1
-        new kind, nest, the_end, open_count, 0, true
+        new kind, nest, the_end, open_count, 0, allow_escapes
       end
 
       def with_open_count_delta(delta)
