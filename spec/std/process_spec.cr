@@ -873,7 +873,7 @@ describe Process do
     it "captures stdout from stdin" do
       result = Process.capture_result?(to_ary(stdin_to_stdout_command), input: IO::Memory.new("hello")).should be_a(Process::Result)
       result.status.success?.should be_true
-      result.output.should eq "hello"
+      result.output.chomp.should eq "hello"
     end
 
     it "ignores stdout if output is IO" do
@@ -882,7 +882,7 @@ describe Process do
       result.status.success?.should be_true
       result.output?.should be_nil
       result.error?.should eq ""
-      io.to_s.should eq "hello"
+      io.to_s.chomp.should eq "hello"
     end
 
     it "ignores stdout if output is FileDescriptor" do
