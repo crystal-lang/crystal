@@ -134,4 +134,25 @@ class Process
       raise Process::ExitError.new(args, result)
     end
   end
+
+  # Executes a process and returns its captured standard output or `nil` on failure.
+  #
+  # Raises `IO::Error` if the process fails to execute.
+  # Returns nil if the process does not terminate with a zero exit status.
+  #
+  # The error stream is not captured by default, but it can be redirected into
+  # an `IO`. `Redirect::Pipe` creates a pipe, but it cannot be accessed.
+  #
+  # ```
+  # Process.capture(%w[echo foo]) # => "foo\n"
+  # Process.capture(%w[nonexist]) # => nil
+  # ```
+  def self.capture?(args : Enumerable(String), *, env : Env = nil, clear_env : Bool = false,
+                    input : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil) : String?
+    result = capture_result(args, env: env, clear_env: clear_env, input: input, error: error, chdir: chdir)
+
+    if result.status.success?
+      result.output
+    end
+  end
 end
