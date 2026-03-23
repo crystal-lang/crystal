@@ -862,6 +862,99 @@ describe Process do
     end
   end
 
+  describe ".capture_result?" do
+    it "captures stdout" do
+      result = Process.capture_result?(to_ary(shell_command("echo hello"))).should be_a(Process::Result)
+      result.status.success?.should be_true
+      result.output?.should eq "hello#{newline}"
+      result.error?.should eq ""
+    end
+
+    it "captures stdout from stdin" do
+      result = Process.capture_result?(to_ary(stdin_to_stdout_command), input: IO::Memory.new("hello")).should be_a(Process::Result)
+      result.status.success?.should be_true
+      result.output.should eq "hello"
+    end
+
+    it "ignores stdout if output is IO" do
+      io = IO::Memory.new
+      result = Process.capture_result?(to_ary(stdin_to_stdout_command), input: IO::Memory.new("hello"), output: io).should be_a(Process::Result)
+      result.status.success?.should be_true
+      result.output?.should be_nil
+      result.error?.should eq ""
+      io.to_s.should eq "hello"
+    end
+
+    it "ignores stdout if output is FileDescriptor" do
+      reader, writer = IO.pipe
+      result = Process.capture_result?(to_ary(stdin_to_stdout_command), input: IO::Memory.new("hello\n"), output: writer).should be_a(Process::Result)
+      result.status.success?.should be_true
+      result.output?.should be_nil
+      result.error?.should eq ""
+      reader.gets.should eq "hello"
+    end
+
+    it "captures stderr" do
+      result = Process.capture_result?(to_ary(shell_command("1>&2 echo hello"))).should be_a(Process::Result)
+      result.status.success?.should be_true
+      result.output?.should eq ""
+      result.error?.should eq "hello#{newline}"
+    end
+
+    it "ignores stderr if error is IO" do
+      io = IO::Memory.new
+      result = Process.capture_result?(to_ary(shell_command("1>&2 echo hello")), error: io).should be_a(Process::Result)
+      result.status.success?.should be_true
+      result.output?.should eq ""
+      result.error?.should be_nil
+      io.to_s.should eq "hello#{newline}"
+    end
+
+    it "ignores stderr if error is FileDescriptor" do
+      reader, writer = IO.pipe
+      result = Process.capture_result?(to_ary(shell_command("1>&2 echo hello")), error: writer).should be_a(Process::Result)
+      result.status.success?.should be_true
+      result.output?.should eq ""
+      result.error?.should be_nil
+      reader.gets.should eq "hello"
+    end
+
+    it "doesn't capture closed stdout" do
+      result = Process.capture_result?(to_ary(shell_command("echo hello")), output: :close).should be_a(Process::Result)
+      result.output?.should be_nil
+      result.error?.should_not be_nil
+    end
+
+    it "doesn't capture closed stderr" do
+      result = Process.capture_result?(to_ary(shell_command("1>&2 echo hello")), error: :close).should be_a(Process::Result)
+      result.status.success?.should be_true
+      result.output?.should eq ""
+      result.error?.should be_nil
+    end
+
+    pending "truncates error output", tags: %w[slow] do
+      dashes32 = "-" * (32 << 10)
+      input = IO::Memory.new("#{dashes32}X#{dashes32}")
+      result = Process.capture_result?(to_ary(stdin_to_stderr_command), input: input).should be_a(Process::Result)
+      result.status.success?.should be_true
+      result.output?.should eq ""
+      error = result.error.should be_a(String)
+      error.should contain "\n...omitted 1 bytes...\n"
+      error.count("-").should eq(32 << 11)
+    end
+
+    it "reports status" do
+      result = Process.capture_result?(to_ary(exit_code_command(0))).should be_a(Process::Result)
+      result.status.exit_code.should eq(0)
+      result = Process.capture_result?(to_ary(exit_code_command(123))).should be_a(Process::Result)
+      result.status.exit_code.should eq(123)
+    end
+
+    it "raises if process cannot execute" do
+      Process.capture_result?(["foobarbaz"]).should be_nil
+    end
+  end
+
   describe ".on_interrupt" do
     it "compiles" do
       typeof(Process.on_interrupt { })
