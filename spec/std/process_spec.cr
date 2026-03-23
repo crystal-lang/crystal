@@ -32,7 +32,7 @@ end
 
 private def stdin_to_stderr_command(status = 0)
   {% if flag?(:win32) %}
-    {"powershell.exe", {"-C", "1>&2 $Input; exit #{status}"}}
+    {"powershell.exe", {"-C", "while ($line = [Console]::In.ReadLine()) { [Console]::Error.WriteLine($line) }; exit #{status}"}}
   {% else %}
     {"/bin/sh", {"-c", "cat 1>&2; exit #{status}"}}
   {% end %}
@@ -780,7 +780,7 @@ describe Process do
     it "captures stdout from stdin" do
       result = Process.capture_result(to_ary(stdin_to_stdout_command), input: IO::Memory.new("hello"))
       result.status.success?.should be_true
-      result.output.should eq "hello"
+      result.output.chomp.should eq "hello"
     end
 
     it "ignores stdout if output is IO" do
@@ -789,7 +789,7 @@ describe Process do
       result.status.success?.should be_true
       result.output?.should be_nil
       result.error?.should eq ""
-      io.to_s.should eq "hello"
+      io.to_s.chomp.should eq "hello"
     end
 
     it "ignores stdout if output is FileDescriptor" do
