@@ -112,4 +112,26 @@ class Process
 
     Result.new(status, captured_output, captured_error.try(&.to_s))
   end
+
+  # Executes a process and returns its captured standard output.
+  #
+  # Raises `IO::Error` if the process fails to execute or `Process::ExitError`
+  # if does not terminate with a zero exit status.
+  #
+  # If *error* is `Redirect::Pipe` (default), this method captures the standard
+  # error and includes it in the raised `Process::ExitError`.
+  #
+  # ```
+  # Process.capture(%w[echo foo]) # => "foo\n"
+  # Process.capture(%w[nonexist]) # raises Process::ExitError
+  # ```
+  def self.capture(args : Enumerable(String), *, env : Env = nil, clear_env : Bool = false,
+                   input : Stdio = Redirect::Close, error : Stdio = Redirect::Pipe, chdir : Path | String? = nil) : String
+    result = capture_result(args, env: env, clear_env: clear_env, input: input, error: error, chdir: chdir)
+    if result.status.success?
+      result.output
+    else
+      raise Process::ExitError.new(args, result)
+    end
+  end
 end

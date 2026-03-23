@@ -955,6 +955,36 @@ describe Process do
     end
   end
 
+  describe ".capture" do
+    it "captures stdout" do
+      Process.capture(to_ary(shell_command("echo hello"))).should eq "hello#{newline}"
+    end
+
+    it "captures stdout from stdin" do
+      Process.capture(to_ary(stdin_to_stdout_command), input: IO::Memory.new("hello")).should eq "hello"
+    end
+
+    it "raises on non-zero exit status" do
+      error = expect_raises(Process::ExitError, /^Command \[.*exit 1.*\] failed: Process exited with status 1$/) do
+        Process.capture(to_ary(exit_code_command(1)))
+      end
+      error.result.status.exit_code.should eq 1
+    end
+
+    it "raises if process cannot execute" do
+      expect_raises(File::NotFoundError, "Error executing process: 'foobarbaz'") do
+        Process.capture(["foobarbaz"])
+      end
+    end
+
+    it "captures stderr in error message" do
+      error = expect_raises(Process::ExitError) do
+        Process.capture(to_ary(stdin_to_stderr_command(status: 1)), input: IO::Memory.new("hello"))
+      end
+      error.result.error.should eq "hello"
+    end
+  end
+
   describe ".on_interrupt" do
     it "compiles" do
       typeof(Process.on_interrupt { })
