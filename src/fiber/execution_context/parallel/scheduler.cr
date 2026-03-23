@@ -154,6 +154,7 @@ module Fiber::ExecutionContext
         end
       ensure
         @event_loop.unregister(self)
+        ExecutionContext.thread_pool.checkin
       end
 
       private def find_next_runnable : Fiber?

@@ -10,19 +10,19 @@ private def assert_format(input, output = input, strict = false, flags = nil, fi
         Expected
 
         ~~~
-        #{input}
+        #{input.gsub(/([ \t])\n/, "\\1¶\n")}
         ~~~
 
         to format to:
 
         ~~~
-        #{output}
+        #{output.gsub(/([ \t])\n/, "\\1¶\n")}
         ~~~
 
         but got:
 
         ~~~
-        #{result}
+        #{result.gsub(/([ \t])\n/, "\\1¶\n")}
         ~~~
 
           assert_format #{input.inspect}, #{result.chomp.inspect}
@@ -2032,11 +2032,11 @@ describe Crystal::Formatter do
     assert_format "G_((A) ->)"
 
     assert_format "G_(A, B -> R)"
-    pending { assert_format "G_((A), B -> R)" }
+    assert_format "G_((A), B -> R)"
     assert_format "G_((A, B -> R))"
     assert_format "G_((A, B) -> R)"
-    pending { assert_format "G_(((A), B) -> R)" }
-    pending { assert_format "G_((((A), B) -> R))" }
+    assert_format "G_(((A), B) -> R)"
+    assert_format "G_((((A), B) -> R))"
 
     assert_format "G_((A, B ->) | S)"
 
@@ -2945,4 +2945,26 @@ describe Crystal::Formatter do
       assert_format %(<<-'EOS'\n#{char}\nEOS)
     end
   end
+
+  # #16755
+  assert_format <<-CRYSTAL, <<-CRYSTAL
+    macro foo
+      Foo(
+      )
+    end
+
+    {
+      a:           1,
+      description: 2,
+    }
+    CRYSTAL
+    macro foo
+      Foo()
+    end
+
+    {
+      a:           1,
+      description: 2,
+    }
+    CRYSTAL
 end

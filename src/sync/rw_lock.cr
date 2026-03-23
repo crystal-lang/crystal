@@ -91,7 +91,7 @@ module Sync
       unless @mu.try_lock?
         unless @type.unchecked?
           if owns_lock?
-            raise Error::Deadlock.new("Can't lock mutex recursively") unless @type.reentrant?
+            raise Error::Deadlock.new("Can't lock rwlock recursively") unless @type.reentrant?
             @counter += 1
             return
           end
