@@ -833,7 +833,8 @@ describe Process do
     end
 
     it "doesn't capture closed stderr" do
-      result = Process.capture_result(to_ary(shell_command("1>&2 echo hello")), error: :close)
+      # FIXME: Autocasting breaks in the interpreter
+      result = Process.capture_result(to_ary(shell_command("1>&2 echo hello")), error: Process::Redirect::Close)
       result.status.success?.should be_true
       result.output?.should eq ""
       result.error?.should be_nil
@@ -926,7 +927,8 @@ describe Process do
     end
 
     it "doesn't capture closed stderr" do
-      result = Process.capture_result?(to_ary(shell_command("1>&2 echo hello")), error: :close).should be_a(Process::Result)
+      # FIXME: Autocasting breaks in the interpreter
+      result = Process.capture_result?(to_ary(shell_command("1>&2 echo hello")), error: Process::Redirect::Close).should be_a(Process::Result)
       result.status.success?.should be_true
       result.output?.should eq ""
       result.error?.should be_nil
