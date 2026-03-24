@@ -68,20 +68,9 @@ class Process
   # ```
   def self.capture_result(args : Enumerable(String), *, env : Env = nil, clear_env : Bool = false,
                           input : Stdio = Redirect::Close, output : Stdio = Redirect::Pipe, error : Stdio = Redirect::Pipe, chdir : Path | String? = nil) : Result
-    if error == Redirect::Pipe
-      error = captured_error = IO::Memory.new
+    capture_result_impl(output, error) do |error|
+      Process.new(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir)
     end
-
-    process = Process.new(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir)
-
-    if output == Redirect::Pipe
-      captured_output = process.output.gets_to_end
-    end
-
-    process.close
-    status = process.wait
-
-    Result.new(status, captured_output, captured_error.try(&.to_s))
   end
 
   # Executes a process and returns its result.
@@ -97,11 +86,17 @@ class Process
   # ```
   def self.capture_result?(args : Enumerable(String), *, env : Env = nil, clear_env : Bool = false,
                            input : Stdio = Redirect::Close, output : Stdio = Redirect::Pipe, error : Stdio = Redirect::Pipe, chdir : Path | String? = nil) : Result?
+    capture_result_impl(output, error) do |error|
+      Process.new(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir) { return nil }
+    end
+  end
+
+  private def self.capture_result_impl(output, error, & : -> Process)
     if error == Redirect::Pipe
       error = captured_error = IO::Memory.new
     end
 
-    process = Process.new(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir) { return nil }
+    process = yield error
 
     if output == Redirect::Pipe
       captured_output = process.output.gets_to_end
