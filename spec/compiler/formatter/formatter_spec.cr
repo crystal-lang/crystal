@@ -2094,10 +2094,10 @@ describe Crystal::Formatter do
     assert_format "G_(A, (B -> R))"
     assert_format "G_(A, ->)"
     assert_format "G_(A, (->))"
-    pending { assert_format "G_(A, () ->)" } # #16741
+    assert_format "G_(A, () ->)"
     assert_format "G_(A, -> R)"
     assert_format "G_(-> R)"
-    pending { assert_format "G_(() -> R)" } # #16741
+    assert_format "G_(() -> R)"
 
     assert_format "G_(A -> R | S)"
     assert_format "G_((A -> R | S))"
