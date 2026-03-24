@@ -3938,6 +3938,24 @@ module Crystal
       node_source(source, node).should eq("::Foo")
     end
 
+    it "sets correct location of proc notation inputs" do
+      source = "alias T = ((A), (B)) -> R"
+      proc_notation = Parser.parse(source).as(Alias).value.should be_a(ProcNotation)
+      inputs = proc_notation.inputs.should be_a(Array(ASTNode))
+      path = inputs.first.should be_a(Path)
+      node_source(source, path).should eq "A"
+      node_source(source, inputs[1]).should eq "(B)"
+    end
+
+    it "sets correct location of proc notation inputs" do
+      source = "alias T = (A) -> R"
+      proc_notation = Parser.parse(source).as(Alias).value.should be_a(ProcNotation)
+      inputs = proc_notation.inputs.should be_a(Array(ASTNode))
+      path = inputs.first.should be_a(Path)
+      node_source(source, path).should eq "A"
+      node_source(source, proc_notation).should eq "(A) -> R"
+    end
+
     it "sets args_in_brackets to false for `a.b`" do
       parser = Parser.new("a.b")
       node = parser.parse.as(Call)

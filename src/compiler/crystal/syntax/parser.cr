@@ -5112,9 +5112,6 @@ module Crystal
         end
 
         type = parse_type_splat { parse_union_type }
-        if type.is_a?(Union)
-          type.at(location).at_end(@token.location)
-        end
         if @token.type.op_rparen?
           end_location = @token.location
           next_token_skip_space
