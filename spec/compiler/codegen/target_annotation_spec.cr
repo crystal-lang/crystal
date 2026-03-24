@@ -18,13 +18,19 @@ describe "Code gen: TargetFeature annotation" do
   it "can optimize code for a specific CPU" do
     {% if compare_versions(Crystal::LLVM_VERSION, "13.0.0") < 0 %} pending! "requires LLVM 13+" {% end %}
 
-    compile(<<-CRYSTAL, prelude: "prelude", target: "x86_64-linux-gnu")
-      @[TargetFeature(cpu: "x86-64-v3")]
-      def foo
-        [1, 2, 3].sample
+    # unlike the ARM backend, the X86 backend doesn't validate assembly
+    # instructions, but the LLVM intrinsics are validated so we use one
+    compile(<<-CRYSTAL, target: "x86_64-linux-gnu")
+      lib LibIntrinsics
+        fun x86_avx_vzeroall = "llvm.x86.avx.vzeroall"
       end
 
-      foo
+      @[TargetFeature(cpu: "x86-64-v3")]
+      def x86_vzeroall : Nil
+        LibIntrinsics.x86_avx_vzeroall
+      end
+
+      x86_vzeroall
       CRYSTAL
   end
 
