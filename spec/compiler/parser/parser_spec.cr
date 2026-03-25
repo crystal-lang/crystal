@@ -146,9 +146,9 @@ module Crystal
     it_parses %(macro foo\n%q(%t{)\nend), Macro.new("foo", body: Expressions.from(["%q(%t".macro_literal, "{)\n".macro_literal] of ASTNode))
     it_parses %(macro foo\n%(%t{)\nend), Macro.new("foo", body: Expressions.from(["%(%t".macro_literal, "{)\n".macro_literal] of ASTNode))
 
-    assert_syntax_error %({% begin %}\n%q(%t{})\n{% end %}), %(unexpected token: "}") # #16772
+    it_parses %({% begin %}\n%q(%t{})\n{% end %}), MacroIf.new(true.bool, Expressions.from(["\n%q(%t".macro_literal, "{})\n".macro_literal] of ASTNode))
     it_parses %({% begin %}\n%(%t{})\n{% end %}), MacroIf.new(true.bool, Expressions.from(["\n%(%t".macro_literal, "{})\n".macro_literal] of ASTNode))
-    assert_syntax_error %({% begin %}\n%q(%t{)\n{% end %}), %{unexpected token: ")"}
+    it_parses %({% begin %}\n%q(%t{)\n{% end %}), MacroIf.new(true.bool, Expressions.from(["\n%q(%t".macro_literal, "{)\n".macro_literal] of ASTNode))
     it_parses %({% begin %}\n%(%t{)\n{% end %}), MacroIf.new(true.bool, Expressions.from(["\n%(%t".macro_literal, "{)\n".macro_literal] of ASTNode))
 
     it_parses ":foo", "foo".symbol
