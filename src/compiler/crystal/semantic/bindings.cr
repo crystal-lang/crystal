@@ -747,7 +747,7 @@ module Crystal
       elements.each do |element|
         if element.is_a?(Splat) && (type = element.type?)
           unless type.is_a?(TupleInstanceType)
-            raise "argument to splat must be a tuple, not #{type}"
+            element.raise "argument to splat must be a tuple, not #{type}"
           end
         end
       end
