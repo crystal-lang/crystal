@@ -1743,32 +1743,9 @@ module Crystal
       end
 
       if !delimiter_state && current_char == '%' && ident_start?(peek_next_char)
-        char = next_char
-        if char == 'q' && peek_next_char.in?('(', '<', '[', '{', '|')
-          next_char
-          delimiter_state = Token::DelimiterState.new(:string, current_char, closing_char)
-          next_char
-        elsif char == 'Q' && peek_next_char.in?('(', '<', '[', '{', '|')
-          next_char
-          delimiter_state = Token::DelimiterState.new(:string, current_char, closing_char)
-          next_char
-        elsif char == 'i' && peek_next_char.in?('(', '<', '[', '{', '|')
-          next_char
-          delimiter_state = Token::DelimiterState.new(:symbol_array, current_char, closing_char)
-          next_char
-        elsif char == 'w' && peek_next_char.in?('(', '<', '[', '{', '|')
-          next_char
-          delimiter_state = Token::DelimiterState.new(:string_array, current_char, closing_char)
-          next_char
-        elsif char == 'x' && peek_next_char.in?('(', '<', '[', '{', '|')
-          next_char
-          delimiter_state = Token::DelimiterState.new(:command, current_char, closing_char)
-          next_char
-        elsif char == 'r' && peek_next_char.in?('(', '<', '[', '{', '|')
-          next_char
-          delimiter_state = Token::DelimiterState.new(:regex, current_char, closing_char)
-          next_char
-        else
+        delimiter = peek_ahead { delimiter_state_for_percent_literal }
+        unless delimiter
+          char = next_char
           start = current_pos
           while ident_part?(char)
             char = next_char
