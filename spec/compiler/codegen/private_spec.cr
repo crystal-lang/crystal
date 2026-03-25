@@ -26,6 +26,16 @@ describe "Codegen: private" do
       CRYSTAL
   end
 
+  it "codegens private def reading self in same file" do
+    compile(<<-CRYSTAL)
+      private def foo
+        d = self
+      end
+
+      foo
+      CRYSTAL
+  end
+
   it "codegens class var of private type with same name as public type (#11620)" do
     compile(<<-CRYSTAL, <<-CRYSTAL)
       module Foo
