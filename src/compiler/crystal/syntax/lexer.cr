@@ -1742,20 +1742,17 @@ module Crystal
         return @token
       end
 
-      if !delimiter_state && current_char == '%' && ident_start?(peek_next_char)
-        delimiter = peek_ahead { delimiter_state_for_percent_literal }
-        unless delimiter
+      if !delimiter_state && current_char == '%' && ident_start?(peek_next_char) && !peek_ahead { delimiter_state_for_percent_literal }
+        char = next_char
+        start = current_pos
+        while ident_part?(char)
           char = next_char
-          start = current_pos
-          while ident_part?(char)
-            char = next_char
-          end
-          beginning_of_line = false
-          @token.type = :MACRO_VAR
-          @token.value = string_range_from_pool(start)
-          @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
-          return @token
         end
+        beginning_of_line = false
+        @token.type = :MACRO_VAR
+        @token.value = string_range_from_pool(start)
+        @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
+        return @token
       end
 
       if !delimiter_state && current_char == 'e'
@@ -1833,19 +1830,13 @@ module Crystal
           end
           whitespace = false
         when '%'
-          case char = peek_next_char
-          when '(', '[', '<', '{', '|'
-            next_char
-            delimiter_state = Token::DelimiterState.new(:string, char, closing_char)
-          else
-            whitespace = false
-            # Don't break if this looks like a prefixed percent literal that will
-            # be handled before the main loop (e.g., %Q|...|, %w|...|, etc.)
-            if !delimiter_state && ident_start?(char)
-              is_percent_literal =
-                char.in?('q', 'Q', 'w', 'i', 'r', 'x') &&
-                  lookahead { next_char; peek_next_char.in?('(', '<', '[', '{', '|') }
-              break unless is_percent_literal
+          whitespace = false
+
+          if !delimiter_state
+            delimiter_state = lookahead { delimiter_state_for_percent_literal }
+            if !delimiter_state && ident_start?(peek_next_char)
+              # Start of a macro var
+              break
             end
           end
         when '#'
