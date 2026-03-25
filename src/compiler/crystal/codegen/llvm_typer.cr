@@ -144,6 +144,10 @@ module Crystal
       final_type
     end
 
+    private def create_llvm_type(type : FileModule, wants_size)
+      @llvm_context.int32
+    end
+
     private def create_llvm_type(type : MetaclassType, wants_size)
       @llvm_context.int32
     end
