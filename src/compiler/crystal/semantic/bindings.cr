@@ -743,6 +743,16 @@ module Crystal
   class TupleLiteral
     property! program : Program
 
+    def validate_splats!
+      elements.each do |element|
+        if element.is_a?(Splat) && (type = element.type?)
+          unless type.is_a?(TupleInstanceType)
+            raise "argument to splat must be a tuple, not #{type}"
+          end
+        end
+      end
+    end
+
     def update(from = nil)
       types = [] of TypeVar
       elements.each do |node|
