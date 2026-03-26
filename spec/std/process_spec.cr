@@ -143,6 +143,10 @@ describe Process do
       # one finishes at all, nothing was broken by the GC
       Process.run(*exit_code_command(0))
     end
+
+    it "accepts tuple args" do
+      Process.new({path_search_command[0]}).wait.success?.should be_true
+    end
   end
 
   describe ".new (command + args)" do
@@ -259,6 +263,10 @@ describe Process do
         command = File.join(path, "foo")
         Process.run?([command]).should be_nil
       end
+    end
+
+    it "accepts tuple args" do
+      Process.run({path_search_command[0]}).success?.should be_true
     end
   end
 

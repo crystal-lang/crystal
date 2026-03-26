@@ -310,8 +310,12 @@ struct Crystal::System::Process
 
   def self.prepare_args(args : Enumerable(String)) : {String, LibC::Char**}
     pathname = args.first
-    argv = args.map(&.check_no_null_byte.to_unsafe)
-    {pathname, argv.to_unsafe}
+    argv = Pointer(Pointer(UInt8)).malloc(args.size)
+    args.each_with_index do |arg, i|
+      argv[i] = arg.check_no_null_byte.to_unsafe
+    end
+
+    {pathname, argv}
   end
 
   private def self.execvpe(file, argv, envp)
