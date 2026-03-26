@@ -502,8 +502,8 @@ module Crystal
     it_parses "def foo(var : () -> Double); end", Def.new("foo", [Arg.new("var", restriction: ProcNotation.new([] of ASTNode, "Double".path))])
     it_parses "x : (A -> B)", TypeDeclaration.new("x".var, declared_type: Crystal::Union.parens(ProcNotation.new(["A".path] of ASTNode, "B".path)))
     it_parses "x : (A -> B).class", TypeDeclaration.new("x".var, declared_type: Metaclass.new(Crystal::Union.parens(ProcNotation.new(["A".path] of ASTNode, "B".path))))
-    it_parses "alias T = (A*) -> R", Alias.new("T".path, ProcNotation.new([Crystal::Union.parens(Generic.new(Path.global("Pointer"), ["A".path] of ASTNode, suffix: :asterisk))] of ASTNode, "R".path))
-    it_parses "alias T = (A -> ) ->", Alias.new("T".path, ProcNotation.new([Crystal::Union.parens(ProcNotation.new(["A".path] of ASTNode))] of ASTNode))
+    it_parses "alias T = (A*) -> R", Alias.new("T".path, ProcNotation.new([Generic.new(Path.global("Pointer"), ["A".path] of ASTNode, suffix: :asterisk)] of ASTNode, "R".path))
+    it_parses "alias T = (A -> ) ->", Alias.new("T".path, ProcNotation.new([ProcNotation.new(["A".path] of ASTNode)] of ASTNode))
     it_parses "def foo(var : Char[256]); end", Def.new("foo", [Arg.new("var", restriction: "Char".static_array_of(256))])
     it_parses "def foo(var : Char[N]); end", Def.new("foo", [Arg.new("var", restriction: "Char".static_array_of("N".path))])
     it_parses "def foo(var : Int32 = 1); end", Def.new("foo", [Arg.new("var", 1.int32, "Int32".path)])
@@ -3942,7 +3942,7 @@ module Crystal
       source = "alias T = ((A), (B)) -> R"
       proc_notation = Parser.parse(source).as(Alias).value.should be_a(ProcNotation)
       inputs = proc_notation.inputs.should be_a(Array(ASTNode))
-      path = inputs.first.should be_a(Path)
+      path = inputs.first.should(be_a(Union)).types.first.should be_a(Path)
       node_source(source, path).should eq "A"
       node_source(source, inputs[1]).should eq "(B)"
     end
