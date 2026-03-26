@@ -128,12 +128,7 @@ module Fiber::ExecutionContext
     # TODO: must report how many schedulers are running (count spinning
     # schedulers but don't count waiting/parked ones).
     def size : Int32
-      count = 0
-      @schedulers.each_with_index do |scheduler, index|
-        break if index == @started
-        count += 1 if scheduler.active?
-      end
-      count
+      @schedulers.count(&.active?)
     end
 
     # The maximum number of schedulers that can be started, aka how many fibers
@@ -176,6 +171,7 @@ module Fiber::ExecutionContext
       thread.execution_context = self
       thread.scheduler = scheduler
       scheduler.thread = thread
+      scheduler.running!
     end
 
     # Starts a new `Thread` and attaches *scheduler*. Runs the scheduler loop
