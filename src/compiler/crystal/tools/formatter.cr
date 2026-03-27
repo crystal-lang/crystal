@@ -4834,10 +4834,10 @@ module Crystal
       lines_count = string.count('\n')
 
       @no_rstrip_lines.add @line if no_rstrip
-      lines_count.times {
+      lines_count.times do
         increment_line
         @no_rstrip_lines.add @line if no_rstrip
-      }
+      end
 
       @wrote_newline = false
       @wrote_double_newlines = false
