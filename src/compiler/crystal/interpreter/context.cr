@@ -423,10 +423,17 @@ class Crystal::Repl::Context
 
   getter? loader : Loader?
 
+  # Tracks the lib_flags string used at loader initialization. Used to detect
+  # new @[Link] annotations added during incremental REPL evaluation (e.g. the
+  # first use of Regex in the REPL adds pcre2 to lib_flags after the loader
+  # was already initialized with only the prelude's libraries).
+  @loader_lib_flags = ""
+
   getter(loader : Loader) {
     lib_flags = program.lib_flags
     # Execute and expand `subcommands`.
     lib_flags = lib_flags.gsub(/`(.*?)`/) { `#{$1}`.chomp }
+    @loader_lib_flags = lib_flags
 
     args = Process.parse_arguments(lib_flags)
     # FIXME: Part 1: This is a workaround for initial integration of the interpreter:
@@ -478,13 +485,49 @@ class Crystal::Repl::Context
       end
 
       paths
+    {% elsif flag?(:win32) && flag?(:gnu) %}
+      # MinGW: include the crystal.exe directory (where DLLs live) and PATH
+      paths = [] of String
+
+      if executable_path = Process.executable_path
+        paths << File.dirname(executable_path)
+      end
+
+      ENV["PATH"]?.try &.split(Process::PATH_DELIMITER, remove_empty: true) do |path|
+        paths << path
+      end
+
+      paths
     {% else %}
       nil
     {% end %}
   end
 
   def c_function(name : String)
+    # In REPL mode, new @[Link] annotations may be added to lib_flags after the
+    # loader was already initialized (e.g. Regex / pcre2 on first regex use).
+    # Sync the loader with any new libraries before looking up the symbol.
+    if loader?
+      current = program.lib_flags
+      update_loader(current) if current != @loader_lib_flags
+    end
     loader.find_symbol(name)
+  end
+
+  # Loads any libraries that appear in *new_lib_flags* but were not present
+  # when the loader was last initialized.
+  private def update_loader(new_lib_flags : String)
+    expanded = new_lib_flags.gsub(/`(.*?)`/) { `#{$1}`.chomp }
+    old_args = Process.parse_arguments(@loader_lib_flags).to_set
+
+    Process.parse_arguments(expanded).each do |arg|
+      next if old_args.includes?(arg)
+      if libname = arg.lchop?("-l")
+        loader.load_library?(libname)
+      end
+    end
+
+    @loader_lib_flags = expanded
   end
 
   def align(size : Int32) : Int32
