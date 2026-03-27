@@ -22,6 +22,12 @@ describe "Time::Format" do
       Time::Format::RFC_2822.parse("Mon, 15 Feb 16 00:00 UT").should eq time
       Time::Format::RFC_2822.parse(" Mon , 14 Feb 2016 20 : 00 : 00 EDT (comment)").to_utc.should eq time
     end
+
+    it "parses three-digit calendar year without mapping to 1900-based century (regression for year 100)" do
+      # `full_or_short_year` must only treat 50–99 as 19xx; 100–999 are literal years.
+      # A buggy `when 50..999` turned 100 into 2000 (100 + 1900).
+      Time::Format::RFC_2822.parse("Mon, 01 Jan 100 00:00:00 +0000").should eq Time.utc(100, 1, 1)
+    end
   end
 
   describe "ISO_8601_DATE" do

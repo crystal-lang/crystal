@@ -112,7 +112,7 @@ struct Time::Format
       @year = case year = consume_number(4)
               when 0..49
                 year + 2000
-              when 50..999
+              when 50..99
                 year + 1900
               else
                 year
