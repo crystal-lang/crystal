@@ -160,7 +160,6 @@ describe MIME do
       MIME.register(".parse-media-type10", "filename=foo.html")
     end
 
-    # Regression: `0x20 > ord > 0x7F` is never satisfied (bad chained compare).
     expect_raises ArgumentError, "Invalid media type" do
       MIME.register(".parse-media-type-control", "text\x01/html")
     end
