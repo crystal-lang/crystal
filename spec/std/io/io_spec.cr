@@ -797,7 +797,10 @@ describe IO do
         end
 
         it "handles long lines correctly with invalid: :skip" do
-          text = "test string" * 1024
+          # Using both ASCII characters and a 26-byte Unicode characters to
+          # ensure we hit as many byte boundaries inside the Unicode characters
+          # as we can to get sufficient confidence in this test.
+          text = "test string 👩🏾‍🤝‍👨🏻" * 10240
           io = IO::Memory.new
           io.set_encoding "UTF-8", invalid: :skip
           io << text
