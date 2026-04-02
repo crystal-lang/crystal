@@ -1,5 +1,5 @@
 lib LibC
-  IOSQE_IO_DRAIN = 1_u32 << 0
+  IOSQE_IO_DRAIN = 1_u32 << 1
   IOSQE_IO_LINK  = 1_u32 << 2
 
   IORING_SETUP_SQPOLL       = 1_u32 << 1
