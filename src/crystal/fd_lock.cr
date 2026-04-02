@@ -1,3 +1,5 @@
+require "fiber/pointer_linked_list_node"
+
 # The general design is influenced by fdMutex in Go (LICENSE: BSD 3-Clause,
 # Copyright Google):
 # https://github.com/golang/go/blob/go1.25.1/src/internal/poll/fd_mutex.go

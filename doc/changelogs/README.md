@@ -1,0 +1,25 @@
+# Changelog
+
+## Historical changelogs
+
+- [pre-1.0](pre-1.0.md)
+- [1.0 series](v1.0.md)
+- [1.1 series](v1.1.md)
+- [1.2 series](v1.2.md)
+- [1.3 series](v1.3.md)
+- [1.4 series](v1.4.md)
+- [1.5 series](v1.5.md)
+- [1.6 series](v1.6.md)
+- [1.7 series](v1.7.md)
+- [1.8 series](v1.8.md)
+- [1.9 series](v1.9.md)
+- [1.10 series](v1.10.md)
+- [1.11 series](v1.11.md)
+- [1.12 series](v1.12.md)
+- [1.13 series](v1.13.md)
+- [1.14 series](v1.14.md)
+- [1.15 series](v1.15.md)
+- [1.16 series](v1.16.md)
+- [1.17 series](v1.17.md)
+- [1.18 series](v1.18.md)
+- [1.19 series](v1.19.md)

@@ -30,6 +30,14 @@ private def stdin_to_stdout_command
   {% end %}
 end
 
+private def stdin_to_stderr_command(status = 0)
+  {% if flag?(:win32) %}
+    {"powershell.exe", {"-C", "while ($line = [Console]::In.ReadLine()) { [Console]::Error.WriteLine($line) }; exit #{status}"}}
+  {% else %}
+    {"/bin/sh", {"-c", "cat 1>&2; exit #{status}"}}
+  {% end %}
+end
+
 private def print_env_command
   {% if flag?(:win32) %}
     # cmd adds these by itself, clear them out before printing.
@@ -63,6 +71,10 @@ private def newline
   {% end %}
 end
 
+private def to_ary(tuple)
+  [tuple[0]].concat(tuple[1])
+end
+
 # interpreted code doesn't receive SIGCHLD for `#wait` to work (#12241)
 {% if flag?(:interpreted) && !flag?(:win32) %}
   pending Process
@@ -70,7 +82,82 @@ end
 {% end %}
 
 describe Process do
-  describe ".new" do
+  describe ".new (args)" do
+    it "raises if args is empty" do
+      expect_raises(File::NotFoundError, "Error executing process: No command") do
+        Process.new([] of String)
+      end
+    end
+
+    it "raises if args[0] is empty" do
+      expect_raises(IO::Error, /Error executing process: '(""|\\"\\")?'/) do
+        Process.new([""] of String)
+      end
+    end
+
+    it "raises if command doesn't exist" do
+      expect_raises(File::NotFoundError, "Error executing process: 'foobarbaz'") do
+        Process.new(["foobarbaz"])
+      end
+    end
+
+    it "raises for long path" do
+      expect_raises(File::NotFoundError, "Error executing process: 'aaaaaaa") do
+        Process.new(["a" * 1000])
+      end
+    end
+
+    it "accepts nilable string for `chdir` (#13767)" do
+      expect_raises(File::NotFoundError, "Error executing process: 'foobarbaz'") do
+        Process.new(["foobarbaz"], chdir: nil.as(String?))
+      end
+    end
+
+    it "raises if command is a file path" do
+      with_tempfile("crystal-spec-run") do |path|
+        File.touch path
+        expect_raises({% if flag?(:win32) %} File::BadExecutableError {% else %} File::AccessDeniedError {% end %}, "Error executing process: '#{path.inspect_unquoted}'") do
+          Process.new([path])
+        end
+      end
+    end
+
+    it "raises if command is a dir path" do
+      with_tempfile("crystal-spec-run") do |path|
+        Dir.mkdir path
+        expect_raises(File::AccessDeniedError, "Error executing process: '#{path.inspect_unquoted}'") do
+          Process.new([path])
+        end
+      end
+    end
+
+    it "raises if command is a file's subpath" do
+      with_tempfile("crystal-spec-run") do |path|
+        File.touch path
+        command = File.join(path, "foo")
+        expect_raises(IO::Error, "Error executing process: '#{command.inspect_unquoted}'") do
+          Process.new([command])
+        end
+      end
+    end
+
+    it "doesn't break if process is collected before completion", tags: %w[slow] do
+      200.times { Process.new(to_ary(exit_code_command(0))) }
+
+      # run the GC multiple times to unmap as much memory as possible
+      10.times { GC.collect }
+
+      # the processes above have now been queued after completion; if this last
+      # one finishes at all, nothing was broken by the GC
+      Process.run(*exit_code_command(0))
+    end
+
+    it "accepts tuple args" do
+      Process.new({path_search_command[0]}).wait.success?.should be_true
+    end
+  end
+
+  describe ".new (command + args)" do
     it "raises if command doesn't exist" do
       expect_raises(File::NotFoundError, "Error executing process: 'foobarbaz'") do
         Process.new("foobarbaz")
@@ -89,7 +176,7 @@ describe Process do
       end
     end
 
-    it "raises if command is not executable" do
+    it "raises if command is a file path" do
       with_tempfile("crystal-spec-run") do |path|
         File.touch path
         expect_raises({% if flag?(:win32) %} File::BadExecutableError {% else %} File::AccessDeniedError {% end %}, "Error executing process: '#{path.inspect_unquoted}'") do
@@ -98,7 +185,7 @@ describe Process do
       end
     end
 
-    it "raises if command is not executable" do
+    it "raises if command is a dir path" do
       with_tempfile("crystal-spec-run") do |path|
         Dir.mkdir path
         expect_raises(File::AccessDeniedError, "Error executing process: '#{path.inspect_unquoted}'") do
@@ -107,7 +194,7 @@ describe Process do
       end
     end
 
-    it "raises if command could not be executed" do
+    it "raises if command is a file's subpath" do
       with_tempfile("crystal-spec-run") do |path|
         File.touch path
         command = File.join(path, "foo")
@@ -141,7 +228,73 @@ describe Process do
     end
   end
 
+  describe ".run?(args)" do
+    it "waits for successful process" do
+      status = Process.run?(to_ary(exit_code_command(0))).should be_a(Process::Status)
+      status.exit_code.should eq(0)
+    end
+
+    it "waits for unsuccessful process" do
+      status = Process.run?(to_ary(exit_code_command(1))).should be_a(Process::Status)
+      status.exit_code.should eq(1)
+    end
+
+    it "returns nil if args[0] is empty" do
+      Process.run?([""] of String).should be_nil
+    end
+
+    it "returns nil command doesn't exist" do
+      Process.run?(["foobarbaz"]).should be_nil
+    end
+
+    it "returns nil for long path" do
+      Process.run?(["a" * 1000]).should be_nil
+    end
+
+    it "returns nil if command is a file path" do
+      with_tempfile("crystal-spec-run") do |path|
+        File.touch path
+        Process.run?([path]).should be_nil
+      end
+    end
+
+    it "returns nil if command is a dir path" do
+      with_tempfile("crystal-spec-run") do |path|
+        Dir.mkdir path
+        Process.run?([path]).should be_nil
+      end
+    end
+
+    it "returns nil if command is a file's subpath" do
+      with_tempfile("crystal-spec-run") do |path|
+        File.touch path
+        command = File.join(path, "foo")
+        Process.run?([command]).should be_nil
+      end
+    end
+
+    it "accepts tuple args" do
+      Process.run({path_search_command[0]}).success?.should be_true
+    end
+  end
+
   describe ".run" do
+    it "waits for the process" do
+      Process.run(to_ary(exit_code_command(0))).exit_code.should eq(0)
+    end
+  end
+
+  describe ".run(args, &)" do
+    it "waits for the process" do
+      Process.run(to_ary(exit_code_command(0))) { }[0].exit_code.should eq(0)
+    end
+
+    it "returns block result" do
+      Process.run(to_ary(exit_code_command(0))) { 42 }[1].should eq 42
+    end
+  end
+
+  describe ".run(command, args)" do
     it "waits for the process" do
       Process.run(*exit_code_command(0)).exit_code.should eq(0)
     end
@@ -621,6 +774,244 @@ describe Process do
         end
       end
       buffer.to_s.chomp.lines.size.should eq(1000)
+    end
+  end
+
+  describe ".capture_result" do
+    it "captures stdout" do
+      result = Process.capture_result(to_ary(shell_command("echo hello")))
+      result.status.success?.should be_true
+      result.output?.should eq "hello#{newline}"
+      result.error?.should eq ""
+    end
+
+    it "captures stdout from stdin" do
+      result = Process.capture_result(to_ary(stdin_to_stdout_command), input: IO::Memory.new("hello"))
+      result.status.success?.should be_true
+      result.output.chomp.should eq "hello"
+    end
+
+    it "ignores stdout if output is IO" do
+      io = IO::Memory.new
+      result = Process.capture_result(to_ary(stdin_to_stdout_command), input: IO::Memory.new("hello"), output: io)
+      result.status.success?.should be_true
+      result.output?.should be_nil
+      result.error?.should eq ""
+      io.to_s.chomp.should eq "hello"
+    end
+
+    it "ignores stdout if output is FileDescriptor" do
+      reader, writer = IO.pipe
+      result = Process.capture_result(to_ary(stdin_to_stdout_command), input: IO::Memory.new("hello\n"), output: writer)
+      result.status.success?.should be_true
+      result.output?.should be_nil
+      result.error?.should eq ""
+      reader.gets.should eq "hello"
+    end
+
+    it "captures stderr" do
+      result = Process.capture_result(to_ary(shell_command("1>&2 echo hello")))
+      result.status.success?.should be_true
+      result.output?.should eq ""
+      result.error?.should eq "hello#{newline}"
+    end
+
+    it "ignores stderr if error is IO" do
+      io = IO::Memory.new
+      result = Process.capture_result(to_ary(shell_command("1>&2 echo hello")), error: io)
+      result.status.success?.should be_true
+      result.output?.should eq ""
+      result.error?.should be_nil
+      io.to_s.should eq "hello#{newline}"
+    end
+
+    it "ignores stderr if error is FileDescriptor" do
+      reader, writer = IO.pipe
+      result = Process.capture_result(to_ary(shell_command("1>&2 echo hello")), error: writer)
+      result.status.success?.should be_true
+      result.output?.should eq ""
+      result.error?.should be_nil
+      reader.gets.should eq "hello"
+    end
+
+    it "doesn't capture closed stdout" do
+      result = Process.capture_result(to_ary(shell_command("echo hello")), output: :close)
+      result.output?.should be_nil
+      result.error?.should_not be_nil
+    end
+
+    it "doesn't capture closed stderr" do
+      # FIXME: Autocasting breaks in the interpreter
+      result = Process.capture_result(to_ary(shell_command("1>&2 echo hello")), error: Process::Redirect::Close)
+      result.status.success?.should be_true
+      result.output?.should eq ""
+      result.error?.should be_nil
+    end
+
+    pending "truncates error output", tags: %w[slow] do
+      dashes32 = "-" * (32 << 10)
+      input = IO::Memory.new("#{dashes32}X#{dashes32}")
+      result = Process.capture_result(to_ary(stdin_to_stderr_command), input: input)
+      result.status.success?.should be_true
+      result.output?.should eq ""
+      error = result.error.should be_a(String)
+      error.should contain "\n...omitted 1 bytes...\n"
+      error.count("-").should eq(32 << 11)
+    end
+
+    it "reports status" do
+      Process.capture_result(to_ary(exit_code_command(0))).status.exit_code.should eq(0)
+      Process.capture_result(to_ary(exit_code_command(123))).status.exit_code.should eq(123)
+    end
+
+    it "raises if process cannot execute" do
+      expect_raises(File::NotFoundError, "Error executing process: 'foobarbaz'") do
+        Process.capture_result(["foobarbaz"])
+      end
+    end
+  end
+
+  describe ".capture_result?" do
+    it "captures stdout" do
+      result = Process.capture_result?(to_ary(shell_command("echo hello"))).should be_a(Process::Result)
+      result.status.success?.should be_true
+      result.output?.should eq "hello#{newline}"
+      result.error?.should eq ""
+    end
+
+    it "captures stdout from stdin" do
+      result = Process.capture_result?(to_ary(stdin_to_stdout_command), input: IO::Memory.new("hello")).should be_a(Process::Result)
+      result.status.success?.should be_true
+      result.output.chomp.should eq "hello"
+    end
+
+    it "ignores stdout if output is IO" do
+      io = IO::Memory.new
+      result = Process.capture_result?(to_ary(stdin_to_stdout_command), input: IO::Memory.new("hello"), output: io).should be_a(Process::Result)
+      result.status.success?.should be_true
+      result.output?.should be_nil
+      result.error?.should eq ""
+      io.to_s.chomp.should eq "hello"
+    end
+
+    it "ignores stdout if output is FileDescriptor" do
+      reader, writer = IO.pipe
+      result = Process.capture_result?(to_ary(stdin_to_stdout_command), input: IO::Memory.new("hello\n"), output: writer).should be_a(Process::Result)
+      result.status.success?.should be_true
+      result.output?.should be_nil
+      result.error?.should eq ""
+      reader.gets.should eq "hello"
+    end
+
+    it "captures stderr" do
+      result = Process.capture_result?(to_ary(shell_command("1>&2 echo hello"))).should be_a(Process::Result)
+      result.status.success?.should be_true
+      result.output?.should eq ""
+      result.error?.should eq "hello#{newline}"
+    end
+
+    it "ignores stderr if error is IO" do
+      io = IO::Memory.new
+      result = Process.capture_result?(to_ary(shell_command("1>&2 echo hello")), error: io).should be_a(Process::Result)
+      result.status.success?.should be_true
+      result.output?.should eq ""
+      result.error?.should be_nil
+      io.to_s.should eq "hello#{newline}"
+    end
+
+    it "ignores stderr if error is FileDescriptor" do
+      reader, writer = IO.pipe
+      result = Process.capture_result?(to_ary(shell_command("1>&2 echo hello")), error: writer).should be_a(Process::Result)
+      result.status.success?.should be_true
+      result.output?.should eq ""
+      result.error?.should be_nil
+      reader.gets.should eq "hello"
+    end
+
+    it "doesn't capture closed stdout" do
+      result = Process.capture_result?(to_ary(shell_command("echo hello")), output: :close).should be_a(Process::Result)
+      result.output?.should be_nil
+      result.error?.should_not be_nil
+    end
+
+    it "doesn't capture closed stderr" do
+      # FIXME: Autocasting breaks in the interpreter
+      result = Process.capture_result?(to_ary(shell_command("1>&2 echo hello")), error: Process::Redirect::Close).should be_a(Process::Result)
+      result.status.success?.should be_true
+      result.output?.should eq ""
+      result.error?.should be_nil
+    end
+
+    pending "truncates error output", tags: %w[slow] do
+      dashes32 = "-" * (32 << 10)
+      input = IO::Memory.new("#{dashes32}X#{dashes32}")
+      result = Process.capture_result?(to_ary(stdin_to_stderr_command), input: input).should be_a(Process::Result)
+      result.status.success?.should be_true
+      result.output?.should eq ""
+      error = result.error.should be_a(String)
+      error.should contain "\n...omitted 1 bytes...\n"
+      error.count("-").should eq(32 << 11)
+    end
+
+    it "reports status" do
+      result = Process.capture_result?(to_ary(exit_code_command(0))).should be_a(Process::Result)
+      result.status.exit_code.should eq(0)
+      result = Process.capture_result?(to_ary(exit_code_command(123))).should be_a(Process::Result)
+      result.status.exit_code.should eq(123)
+    end
+
+    it "raises if process cannot execute" do
+      Process.capture_result?(["foobarbaz"]).should be_nil
+    end
+  end
+
+  describe ".capture" do
+    it "captures stdout" do
+      Process.capture(to_ary(shell_command("echo hello"))).should eq "hello#{newline}"
+    end
+
+    it "captures stdout from stdin" do
+      Process.capture(to_ary(stdin_to_stdout_command), input: IO::Memory.new("hello")).chomp.should eq "hello"
+    end
+
+    it "raises on non-zero exit status" do
+      error = expect_raises(Process::ExitError, /^Command \[.*exit 1.*\] failed: Process exited with status 1$/) do
+        Process.capture(to_ary(exit_code_command(1)))
+      end
+      error.result.status.exit_code.should eq 1
+    end
+
+    it "raises if process cannot execute" do
+      expect_raises(File::NotFoundError, "Error executing process: 'foobarbaz'") do
+        Process.capture(["foobarbaz"])
+      end
+    end
+
+    it "captures stderr in error message" do
+      error = expect_raises(Process::ExitError) do
+        Process.capture(to_ary(stdin_to_stderr_command(status: 1)), input: IO::Memory.new("hello"))
+      end
+      error.result.error.chomp.should eq "hello"
+    end
+  end
+
+  describe ".capture?" do
+    it "captures stdout" do
+      Process.capture?(to_ary(shell_command("echo hello"))).should eq "hello#{newline}"
+    end
+
+    it "captures stdout from stdin" do
+      Process.capture?(to_ary(stdin_to_stdout_command), input: IO::Memory.new("hello")).try(&.chomp).should eq "hello"
+    end
+
+    it "returns nil on unsuccessful exit" do
+      Process.capture?(to_ary(exit_code_command(1))).should be_nil
+    end
+
+    it "raises if process cannot execute" do
+      expect_raises(File::NotFoundError, "Error executing process: 'foobarbaz'") do
+        Process.capture(["foobarbaz"])
+      end
     end
   end
 

@@ -40,7 +40,7 @@ class TCPServer < TCPSocket
       self.reuse_address = true
       self.reuse_port = true if reuse_port
 
-      if errno = system_bind(addrinfo, "#{host}:#{port}") { |errno| errno }
+      if errno = @fd_lock.reference { system_bind(addrinfo, "#{host}:#{port}") }
         close
         next errno
       end
@@ -115,7 +115,9 @@ class TCPServer < TCPSocket
   # end
   # ```
   def accept? : TCPSocket?
-    if rs = system_accept
+    return if closed?
+
+    if rs = @fd_lock.read { system_accept }
       sock = TCPSocket.new(handle: rs[0], family: family, type: type, protocol: protocol, blocking: rs[1])
       sock.sync = sync?
       sock

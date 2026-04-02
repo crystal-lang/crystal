@@ -2396,6 +2396,7 @@ describe "String" do
 
     it "works when match is empty, multibyte char" do
       "\u{80}\u{800}\u{10000}".scan(/()/).map(&.begin).should eq([0, 1, 2, 3])
+      " Äa".scan(/(?=(\S))/).map(&.[1]).should eq(["Ä", "a"])
     end
 
     it "works with strings with block" do

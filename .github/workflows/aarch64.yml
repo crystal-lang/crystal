@@ -22,7 +22,7 @@ jobs:
         with:
           args: make crystal
       - name: Upload Crystal executable
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: crystal-aarch64-musl
           path: |
@@ -38,7 +38,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Download Crystal executable
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: crystal-aarch64-musl
       - name: Mark downloaded compiler as executable
@@ -57,7 +57,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Download Crystal executable
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: crystal-aarch64-musl
       - name: Mark downloaded compiler as executable
@@ -79,7 +79,7 @@ jobs:
         with:
           args: make crystal
       - name: Upload Crystal executable
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: crystal-aarch64-gnu
           path: |
@@ -95,7 +95,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Download Crystal executable
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: crystal-aarch64-gnu
       - name: Mark downloaded compiler as executable
@@ -114,7 +114,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Download Crystal executable
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: crystal-aarch64-gnu
       - name: Mark downloaded compiler as executable

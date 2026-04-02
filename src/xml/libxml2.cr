@@ -384,6 +384,8 @@ lib LibXML
     fun xmlSaveSetIndentString(SaveCtxPtr, UInt8*)
   {% end %}
 
+  $xmlFree : (Void* -> Void)
+
   fun xmlFreeDoc(Doc*)
   fun xmlFreeNode(Node*)
   fun xmlFreeTextReader(XMLTextReader)

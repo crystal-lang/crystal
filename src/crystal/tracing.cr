@@ -155,12 +155,11 @@ module Crystal
         {% if flag?(:win32) %}
           buf = uninitialized UInt16[256]
 
-          # FIXME: use `System.wstr_literal` after #15746 is available
-          name = UInt16.static_array({% for chr in "CRYSTAL_TRACE".chars %}{{chr.ord}}, {% end %} 0)
+          name = System.wstr_literal "CRYSTAL_TRACE"
           len = LibC.GetEnvironmentVariableW(name, buf, buf.size)
           parse_sections(buf.to_slice[0...len]) if len > 0
 
-          name = UInt16.static_array({% for chr in "CRYSTAL_TRACE_FILE".chars %}{{chr.ord}}, {% end %} 0)
+          name = System.wstr_literal "CRYSTAL_TRACE_FILE"
           len = LibC.GetEnvironmentVariableW(name, buf, buf.size)
           if len > 0
             @@handle = open_trace_file(buf.to_slice[0...len])

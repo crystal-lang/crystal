@@ -3,9 +3,6 @@
 # This helper queries merged pull requests for a given milestone from the GitHub API
 # and creates formatted changelog entries.
 #
-# Pull requests that are already referenced in CHANGELOG.md are omitted, which
-# makes it easy to incrementally add entries.
-#
 # Entries are grouped by topic (based on topic labels) and ordered by merge date.
 # Some annotations are automatically added based on labels.
 #
@@ -467,7 +464,6 @@ def print_entries(entries)
   puts
 
   entries.each(&.print_ref_labels(STDOUT))
-  puts
 end
 
 SECTION_TITLES.each do |id, title|

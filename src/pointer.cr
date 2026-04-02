@@ -341,9 +341,7 @@ struct Pointer(T)
   # ptr2.to_s # => "Pointer(Int32).null"
   # ```
   def to_s(io : IO) : Nil
-    io << "Pointer("
-    io << T.to_s
-    io << ')'
+    io << {{ @type.name.stringify }}
     if address == 0
       io << ".null"
     else
@@ -498,6 +496,14 @@ struct Pointer(T)
   @[AlwaysInline]
   def align_up(boundary : UInt64) : Pointer(T)
     Pointer(T).new((self.address &+ (boundary &- 1)) & (&-boundary))
+  end
+
+  # :nodoc:
+  #
+  # This definition is required for the invalid `Pointer.new` method to not get
+  # documented. This will never be called, the compiler will fail to compile.
+  def initialize
+    raise "can't create instance of a pointer type"
   end
 
   # Returns a pointer whose memory address is zero. This doesn't allocate memory.

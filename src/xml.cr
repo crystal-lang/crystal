@@ -180,6 +180,24 @@ module XML
     # Construct a formatted version string
     "#{number // 10_000}.#{number % 10_000 // 100}.#{number % 100}"
   end
+
+  # :nodoc:
+  protected def self.node_content_to_string(node : LibXML::Node*) : String
+    if ptr = LibXML.xmlNodeGetContent(node)
+      begin
+        String.new(ptr)
+      ensure
+        xmlFree = LibXML.xmlFree
+        {% if flag?(:interpreted) %}
+          # FIXME: calling xmlFree directly crashes the interpreter (https://github.com/crystal-lang/crystal/issues/12495)
+          xmlFree = LibXML::FreeFunc.new(xmlFree.pointer, Pointer(Void).null)
+        {% end %}
+        xmlFree.call(ptr.as(Void*))
+      end
+    else
+      ""
+    end
+  end
 end
 
 require "./xml/*"

@@ -1788,27 +1788,27 @@ module Crystal
         char = next_char
         if char == 'q' && peek_next_char.in?('(', '<', '[', '{', '|')
           next_char
-          delimiter_state = Token::DelimiterState.new(:string, current_char, closing_char, 1)
+          delimiter_state = Token::DelimiterState.new(:string, current_char, closing_char)
           next_char
         elsif char == 'Q' && peek_next_char.in?('(', '<', '[', '{', '|')
           next_char
-          delimiter_state = Token::DelimiterState.new(:string, current_char, closing_char, 1)
+          delimiter_state = Token::DelimiterState.new(:string, current_char, closing_char)
           next_char
         elsif char == 'i' && peek_next_char.in?('(', '<', '[', '{', '|')
           next_char
-          delimiter_state = Token::DelimiterState.new(:symbol_array, current_char, closing_char, 1)
+          delimiter_state = Token::DelimiterState.new(:symbol_array, current_char, closing_char)
           next_char
         elsif char == 'w' && peek_next_char.in?('(', '<', '[', '{', '|')
           next_char
-          delimiter_state = Token::DelimiterState.new(:string_array, current_char, closing_char, 1)
+          delimiter_state = Token::DelimiterState.new(:string_array, current_char, closing_char)
           next_char
         elsif char == 'x' && peek_next_char.in?('(', '<', '[', '{', '|')
           next_char
-          delimiter_state = Token::DelimiterState.new(:command, current_char, closing_char, 1)
+          delimiter_state = Token::DelimiterState.new(:command, current_char, closing_char)
           next_char
         elsif char == 'r' && peek_next_char.in?('(', '<', '[', '{', '|')
           next_char
-          delimiter_state = Token::DelimiterState.new(:regex, current_char, closing_char, 1)
+          delimiter_state = Token::DelimiterState.new(:regex, current_char, closing_char)
           next_char
         else
           start = current_pos
@@ -1901,10 +1901,17 @@ module Crystal
           case char = peek_next_char
           when '(', '[', '<', '{', '|'
             next_char
-            delimiter_state = Token::DelimiterState.new(:string, char, closing_char, 1)
+            delimiter_state = Token::DelimiterState.new(:string, char, closing_char)
           else
             whitespace = false
-            break if !delimiter_state && ident_start?(char)
+            # Don't break if this looks like a prefixed percent literal that will
+            # be handled before the main loop (e.g., %Q|...|, %w|...|, etc.)
+            if !delimiter_state && ident_start?(char)
+              is_percent_literal =
+                char.in?('q', 'Q', 'w', 'i', 'r', 'x') &&
+                  lookahead { next_char; peek_next_char.in?('(', '<', '[', '{', '|') }
+              break unless is_percent_literal
+            end
           end
         when '#'
           if delimiter_state
@@ -1925,9 +1932,10 @@ module Crystal
           end
         when '}'
           if delimiter_state && delimiter_state.end == '}'
-            delimiter_state = delimiter_state.with_open_count_delta(-1)
             if delimiter_state.open_count == 0
               delimiter_state = nil
+            else
+              delimiter_state = delimiter_state.with_open_count_delta(-1)
             end
           elsif @macro_curly_count > 0
             # Once we find the final '}' that closes the interpolation,
@@ -1962,13 +1970,14 @@ module Crystal
 
             if delimiter_state
               case char
-              when delimiter_state.nest
-                delimiter_state = delimiter_state.with_open_count_delta(+1)
               when delimiter_state.end
-                delimiter_state = delimiter_state.with_open_count_delta(-1)
                 if delimiter_state.open_count == 0
                   delimiter_state = nil
+                else
+                  delimiter_state = delimiter_state.with_open_count_delta(-1)
                 end
+              when delimiter_state.nest
+                delimiter_state = delimiter_state.with_open_count_delta(+1)
               end
             end
 
@@ -2323,14 +2332,15 @@ module Crystal
           break # raise is handled by parser
         when @token.delimiter_state.end
           unless escaped
-            if @token.delimiter_state.open_count == 0
+            # For symmetric delimiters (like ||), don't use nesting logic
+            if @token.delimiter_state.nest == @token.delimiter_state.end || @token.delimiter_state.open_count == 0
               break
             else
               @token.delimiter_state = @token.delimiter_state.with_open_count_delta(-1)
             end
           end
         when @token.delimiter_state.nest
-          unless escaped
+          unless @token.delimiter_state.nest == @token.delimiter_state.end || escaped
             @token.delimiter_state = @token.delimiter_state.with_open_count_delta(+1)
           end
         when .ascii_whitespace?
@@ -2367,27 +2377,18 @@ module Crystal
     def consume_loc_pragma
       case current_char
       when '"'
-        # skip '"'
-        next_char_no_column_increment
+        delimited_pair :string, '"', '"',
+          start: current_pos
 
-        filename_pos = current_pos
+        state = @token.delimiter_state
 
-        while true
-          case current_char
-          when '"'
-            break
-          when '\0'
-            raise "unexpected end of file in loc pragma"
-          else
-            next_char_no_column_increment
+        filename = String.build do |str|
+          while (token = next_string_token(state)).type.string?
+            str << token.value
           end
         end
 
-        incr_column_number (current_pos - filename_pos) + 7 # == "#<loc:\"".size
-        filename = string_range(filename_pos)
-
-        # skip '"'
-        next_char
+        incr_column_number %(#<loc:").size - 1
 
         unless current_char == ','
           raise "expected ',' in loc pragma after filename"

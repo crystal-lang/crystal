@@ -368,6 +368,36 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     end
   end
 
+  # Extension to support Kernel TLS in OpenSSL::BIO.
+  def recvmsg(socket : ::Socket, message : Pointer(LibC::Msghdr), flags : Int32) : Int32 | Errno
+    loop do
+      ret = LibC.recvmsg(socket.fd, message, flags)
+      return ret.to_i unless ret == -1
+
+      if Errno.value == Errno::EAGAIN
+        wait_readable(socket, socket.@read_timeout) { return Errno::ETIMEDOUT }
+        return Errno::EBADF if socket.closed?
+      else
+        return Errno.value
+      end
+    end
+  end
+
+  # Extension to support Kernel TLS in OpenSSL::BIO.
+  def sendmsg(socket : ::Socket, message : Pointer(LibC::Msghdr), flags : Int32) : Int32 | Errno
+    loop do
+      ret = LibC.sendmsg(socket.fd, message, flags)
+      return ret.to_i unless ret == -1
+
+      if Errno.value == Errno::EAGAIN
+        wait_writable(socket, socket.@write_timeout) { return Errno::ETIMEDOUT }
+        return Errno::EBADF if socket.closed?
+      else
+        return Errno.value
+      end
+    end
+  end
+
   def sendfile(socket : ::Socket, fd : System::FileDescriptor::Handle, offset : Int64, count : Int64, flags : Int32) : Int64 | Errno
     loop do
       ret, sent_bytes = System::Socket.sendfile(socket.fd, fd, offset, count, flags)

@@ -156,7 +156,7 @@ module LLVM
       end
 
       unless LibLLVM::IS_LT_130
-        # LLVM 13 manadates type params for inalloca
+        # LLVM 13 mandates type params for inalloca
         typed_attrs << InAlloca
       end
 

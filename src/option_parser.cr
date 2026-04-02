@@ -401,9 +401,12 @@ class OptionParser
           break
         end
 
-        flag, value = parse_arg_to_flag_and_value(arg)
-
-        arg_index = handle_flag(flag, value, arg_index, args, handled_args)
+        if bundle = validate_bundle(arg)
+          arg_index = handle_bundled_short_options(arg, bundle, arg_index, args, handled_args)
+        else
+          flag, value = parse_arg_to_flag_and_value(arg)
+          arg_index = handle_flag(flag, value, arg_index, args, handled_args)
+        end
 
         arg_index += 1
       end
@@ -444,6 +447,29 @@ class OptionParser
     end
   end
 
+  private def short_arg?(arg : String) : Bool
+    arg.starts_with?('-') && !arg.starts_with?("--") && arg.size > 2
+  end
+
+  # Validates all flags in a bundle before executing any handlers.
+  # Returns the array of validated handlers if all flags are recognized, or nil
+  # if any flag is unrecognized, so the entire bundle can be treated as a single
+  # unhandled argument. Stops collecting handlers at the first value-consuming flag
+  # since remaining chars become its value rather than separate flags.
+  private def validate_bundle(arg : String) : Array(Handler)?
+    return nil unless short_arg?(arg)
+    handlers = [] of Handler
+    rest = arg[1..]
+    rest.each_char do |char|
+      handler = @handlers["-#{char}"]?
+      return nil unless handler
+      handlers << handler
+      # If this flag consumes a value, remaining chars become its value — stop validating
+      break if handler.value_type.required? || handler.value_type.optional?
+    end
+    handlers
+  end
+
   # Parses a command-line argument into a flag and optional inline value.
   private def parse_arg_to_flag_and_value(arg : String) : {String, String?}
     if arg.starts_with?("--")
@@ -451,10 +477,20 @@ class OptionParser
       if separator == "="
         return {name, value}
       end
-    elsif arg.starts_with?('-') && arg.size > 2
+    elsif short_arg?(arg)
       return {arg[0..1], arg[2..]}
     end
     {arg, nil}
+  end
+
+  private def handle_bundled_short_options(arg : String, bundle : Array(Handler), arg_index : Int32, args : Array(String), handled_args : Array(Int32)) : Int32
+    bundle.each_with_index do |handler, index|
+      value = arg[(index + 2)..] unless handler.value_type.none?
+      handler.block.call value || ""
+    end
+
+    handled_args << arg_index
+    arg_index
   end
 
   # Processes a single flag/subcommand. Matches original behaviour exactly.

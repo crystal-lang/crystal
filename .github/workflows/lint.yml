@@ -15,21 +15,34 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-      - uses: cachix/install-nix-action@4e002c8ec80594ecd40e759629461e26c8abed15 # v31
-      - uses: cachix/cachix-action@3ba601ff5bbb07c7220846facfa2cd81eeee15a1 # v16
+      - uses: cachix/install-nix-action@51f3067b56fe8ae331890c77d4e454f6d60615ff # v31
+        with:
+          nix_path: nixpkgs=https://github.com/NixOS/nixpkgs/archive/e99215c1a21cab2a995a3d01fe20d5714addea27.tar.gz # nixpkgs-unstable@2026-03-06 (with devenv 2.0)
+      - uses: cachix/cachix-action@1eb2ef646ac0255473d23a5907ad7b04ce94065c # v17
         with:
           name: devenv
       - name: Install devenv.sh
         run: nix profile install nixpkgs#devenv
       - name: "Download target branch: ${{ github.base_ref || 'master' }}"
         run: git fetch origin "${TARGET_BRANCH}"
+      - name: Check whether to run full test on all files
+        id: test_full_run
+        if: ${{ github.event_name != 'workflow_dispatch' }}
+        run: |
+          # Trigger full run if devenv.lock or this workflow file changed
+          if git diff --quiet "origin/${TARGET_BRANCH}" HEAD -- devenv.lock .github/workflows/lint.yml; then
+            echo "test_full_run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "test_full_run=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Run prek on all files
+        id: run_full
+        run: prek run --all-files
+        shell: devenv --profile lint shell bash -- -e {0}
+        if: ${{ github.event_name == 'workflow_dispatch' || steps.test_full_run.outputs.test_full_run == 'true' }}
       - name: Run prek hooks for changes against target branch (${{ github.base_ref || 'master' }})
         run: prek run --from-ref "origin/${TARGET_BRANCH}" --to-ref HEAD
         shell: devenv --profile lint shell bash -- -e {0}
-        if: "${{ github.event_name != 'workflow_dispatch' }}"
-      - name: Run prek on all files
-        run: prek run --all-files
-        shell: devenv --profile lint shell bash -- -e {0}
-        if: "${{ github.event_name == 'workflow_dispatch' }}"
+        if: "${{ steps.run_full.outcome == 'skipped' }}"
     env:
       TARGET_BRANCH: "${{ github.base_ref || 'master' }}"

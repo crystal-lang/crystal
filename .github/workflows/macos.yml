@@ -32,12 +32,12 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: cachix/install-nix-action@4e002c8ec80594ecd40e759629461e26c8abed15 # v31
+      - uses: cachix/install-nix-action@51f3067b56fe8ae331890c77d4e454f6d60615ff # v31
         with:
           extra_nix_config: |
             experimental-features = nix-command
 
-      - uses: cachix/cachix-action@3ba601ff5bbb07c7220846facfa2cd81eeee15a1 # v16
+      - uses: cachix/cachix-action@1eb2ef646ac0255473d23a5907ad7b04ce94065c # v17
         with:
           name: crystal-ci
           signingKey: '${{ secrets.CACHIX_SIGNING_KEY }}'
@@ -53,3 +53,38 @@ jobs:
 
       - name: Test interpreter
         run: bin/ci with_build_env 'make interpreter_spec'
+
+  test-std:
+    runs-on: macos-15
+    strategy:
+      fail-fast: false
+      matrix:
+        opts:
+          - flags: "-Dexecution_context -Dpreview_mt" # execution_context: concurrent
+            workers: 1
+          - flags: "-Dexecution_context -Dpreview_mt" # execution_context: parallel
+            workers: 4
+    steps:
+      - name: Download Crystal source
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: cachix/install-nix-action@51f3067b56fe8ae331890c77d4e454f6d60615ff # v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command
+
+      - uses: cachix/cachix-action@1eb2ef646ac0255473d23a5907ad7b04ce94065c # v17
+        with:
+          name: crystal-ci
+          signingKey: '${{ secrets.CACHIX_SIGNING_KEY }}'
+
+      - name: Prepare System
+        run: bin/ci prepare_system
+
+      - name: Prepare Build
+        run: bin/ci prepare_build
+
+      - name: Test
+        run: bin/ci with_build_env 'CRYSTAL_WORKERS=${{ matrix.opts.workers || 1 }} make std_spec threads=1 FLAGS="${{ matrix.opts.flags }}"'

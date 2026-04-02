@@ -292,24 +292,30 @@ struct Crystal::System::Process
   def self.prepare_args(command : String, args : Enumerable(String)?, shell : Bool) : {String, LibC::Char**}
     if shell
       command = %(#{command} "${@}") unless command.includes?(' ')
-      argv_ary = ["/bin/sh", "-c", command, "sh"]
+      command_args = ["/bin/sh", "-c", command, "sh"]
 
       if args
         unless command.includes?(%("${@}"))
           raise ArgumentError.new(%(Can't specify arguments in both command and args without including "${@}" into your command))
         end
       end
-
-      pathname = "/bin/sh"
     else
-      argv_ary = [command]
-      pathname = command
+      command_args = [command]
     end
 
-    argv_ary.concat(args) if args
+    command_args.concat(args) if args
 
-    argv = argv_ary.map(&.check_no_null_byte.to_unsafe)
-    {pathname, argv.to_unsafe}
+    prepare_args(command_args)
+  end
+
+  def self.prepare_args(args : Enumerable(String)) : {String, LibC::Char**}
+    pathname = args.first
+    argv = Pointer(Pointer(UInt8)).malloc(args.size)
+    args.each_with_index do |arg, i|
+      argv[i] = arg.check_no_null_byte.to_unsafe
+    end
+
+    {pathname, argv}
   end
 
   private def self.execvpe(file, argv, envp)
@@ -440,11 +446,17 @@ struct Crystal::System::Process
     raise_exception_from_errno(command)
   end
 
-  private def self.raise_exception_from_errno(command, errno = Errno.value)
+  private def self.raise_exception_from_errno(command, errno = Errno.value, &)
     if ::File::NotFoundError.os_error?(errno) || ::File::AccessDeniedError.os_error?(errno) || errno == Errno::ENOEXEC
-      raise ::File::Error.from_os_error("Error executing process", errno, file: command)
+      yield errno, command
     else
       raise IO::Error.from_os_error("Error executing process: '#{command}'", errno)
+    end
+  end
+
+  private def self.raise_exception_from_errno(command, errno = Errno.value)
+    raise_exception_from_errno(command, errno) do |errno, command|
+      raise ::File::Error.from_os_error("Error executing process", errno, file: command)
     end
   end
 

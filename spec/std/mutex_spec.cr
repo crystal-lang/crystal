@@ -31,14 +31,14 @@ describe Mutex do
     it "raises if locked recursively" do
       mutex = Mutex.new
       mutex.lock
-      expect_raises(Exception, "Attempt to lock a mutex recursively (deadlock)") do
+      expect_raises(Sync::Error::Deadlock, "Can't lock mutex recursively") do
         mutex.lock
       end
     end
 
     it "raises if unlocks without lock" do
       mutex = Mutex.new
-      expect_raises(Exception, "Attempt to unlock a mutex which is not locked") do
+      expect_raises(Sync::Error, "Can't unlock Sync::Mutex that isn't locked") do
         mutex.unlock
       end
     end
@@ -57,7 +57,7 @@ describe Mutex do
         Fiber.yield
       end
 
-      expect_raises(Exception, "Attempt to unlock a mutex locked by another fiber") do
+      expect_raises(Sync::Error, "Can't unlock Sync::Mutex locked by another fiber") do
         mutex.not_nil!.unlock
       end
     end
@@ -74,7 +74,7 @@ describe Mutex do
 
     it "raises if unlocks without lock" do
       mutex = Mutex.new(:reentrant)
-      expect_raises(Exception, "Attempt to unlock a mutex which is not locked") do
+      expect_raises(Sync::Error, "Can't unlock Sync::Mutex that isn't locked") do
         mutex.unlock
       end
     end
@@ -93,7 +93,7 @@ describe Mutex do
         Fiber.yield
       end
 
-      expect_raises(Exception, "Attempt to unlock a mutex locked by another fiber") do
+      expect_raises(Sync::Error, "Can't unlock Sync::Mutex locked by another fiber") do
         mutex.not_nil!.unlock
       end
     end

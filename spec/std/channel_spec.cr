@@ -1,10 +1,5 @@
 require "spec"
-require "./spec_helper"
-
-private def yield_to(fiber)
-  Fiber.current.enqueue
-  fiber.resume
-end
+require "./sync/spec_helper"
 
 private macro parallel(*jobs)
   %channel = Channel(Exception | Nil).new
@@ -594,23 +589,20 @@ describe "unbuffered" do
   it "blocks if there is no receiver" do
     ch = Channel(Int32).new
     state = 0
-    main = Fiber.current
 
-    sender = Fiber.new do
+    Sync::CONCURRENT.spawn do
       state = 1
       ch.send 123
       state = 2
-    ensure
-      yield_to(main)
     end
 
-    yield_to(sender)
-    state.should eq(1)
-    ch.receive.should eq(123)
-    state.should eq(1)
+    Sync::CONCURRENT.spawn do
+      Sync.eventually { state.should eq(1) }
+      ch.receive.should eq(123)
+      state.should eq(1)
+    end
 
-    sleep
-    state.should eq(2)
+    Sync.eventually { state.should eq(2) }
   end
 
   it "deliver many senders" do
@@ -631,8 +623,7 @@ describe "unbuffered" do
 
   it "can send and receive nil" do
     ch = Channel(Nil).new
-    sender = Fiber.new { ch.send nil }
-    yield_to(sender)
+    spawn { ch.send nil }
     ch.receive.should be_nil
   end
 
@@ -654,21 +645,17 @@ describe "unbuffered" do
 
   it "can be closed from different fiber" do
     ch = Channel(Int32).new
-    closed = false
-    main = Fiber.current
+    state = :none
 
-    receiver = Fiber.new do
+    spawn do
+      state = :ready
       expect_raises(Channel::ClosedError) { ch.receive }
-      closed = true
-    ensure
-      yield_to(main)
+      state = :closed
     end
+    Sync.eventually { state.should eq(:ready) }
 
-    yield_to(receiver)
     ch.close
-
-    sleep
-    closed.should be_true
+    Sync.eventually { state.should eq(:closed) }
   end
 
   it "cannot send if closed" do
@@ -691,65 +678,65 @@ describe "unbuffered" do
 
   it "wakes up sender fiber when channel is closed" do
     ch = Channel(Nil).new
-    closed = false
-    main = Fiber.current
+    state = :none
 
-    sender = Fiber.new do
+    Sync::CONCURRENT.spawn do
       begin
+        state = :ready
         ch.send(nil)
       rescue Channel::ClosedError
-        closed = true
+        state = :closed
       end
-      yield_to(main)
     end
 
-    yield_to(sender)
+    Sync::CONCURRENT.spawn do
+      Sync.eventually { state.should eq(:ready) }
+      ch.close
+    end
 
-    ch.close
-    sleep
-
-    closed.should be_true
+    Sync.eventually { state.should eq(:closed) }
   end
 
   it "wakes up receiver fibers when channel is closed" do
     ch = Channel(Nil).new
+    state = :none
     closed = false
-    main = Fiber.current
 
-    receiver = Fiber.new do
+    Sync::CONCURRENT.spawn do
+      state = :ready
       ch.receive
     rescue Channel::ClosedError
       closed = ch.closed?
-    ensure
-      yield_to(main)
     end
 
-    yield_to(receiver)
+    Sync::CONCURRENT.spawn do
+      Sync.eventually { state.should eq(:ready) }
+      ch.close
+    end
 
-    ch.close
-    sleep
-
-    closed.should be_true
+    Sync.eventually { closed.should be_true }
   end
 
   it "can send successfully without raise" do
     ch = Channel(Int32).new
-    raise_flag = false
+    state = :none
 
-    sender = Fiber.new do
+    Sync::CONCURRENT.spawn do
+      state = :ready
       ch.send 1
     rescue ex
-      raise_flag = true
+      state = :raised
+    else
+      state = :done
     end
 
-    yield_to(sender)
+    Sync::CONCURRENT.spawn do
+      Sync.eventually { state.should eq(:ready) }
+      ch.receive.should eq(1)
+      ch.close
+    end
 
-    ch.receive.should eq(1)
-    ch.close
-
-    Fiber.yield
-
-    raise_flag.should be_false
+    Sync.eventually { state.should eq(:done) }
   end
 end
 
@@ -782,9 +769,8 @@ describe "buffered" do
   it "doesn't block when not full" do
     ch = Channel(Int32).new(10)
     done = false
-    sender = Fiber.new { ch.send 123; done = true }
-    yield_to(sender)
-    done.should be_true
+    spawn { ch.send 123; done = true }
+    Sync.eventually { done.should be_true }
   end
 
   it "gets ready with data" do
@@ -802,8 +788,7 @@ describe "buffered" do
 
   it "can send and receive nil" do
     ch = Channel(Nil).new(10)
-    sender = Fiber.new { ch.send nil }
-    yield_to(sender)
+    spawn { ch.send nil }
     ch.receive.should be_nil
   end
 
@@ -825,20 +810,17 @@ describe "buffered" do
 
   it "can be closed from different fiber" do
     ch = Channel(Int32).new(10)
-    received = false
-    main = Fiber.current
+    ready = received = false
 
-    receiver = Fiber.new do
+    spawn do
+      ready = true
       expect_raises(Channel::ClosedError) { ch.receive }
       received = true
-    ensure
-      yield_to(main)
     end
+    Sync.eventually { ready.should be_true }
 
-    yield_to(receiver)
     ch.close
-    sleep
-    received.should be_true
+    Sync.eventually { received.should be_true }
   end
 
   it "cannot send if closed" do
@@ -861,24 +843,27 @@ describe "buffered" do
 
   it "can send successfully without raise" do
     ch = Channel(Int32).new(1)
-    raise_flag = false
+    state = :none
 
-    sender = Fiber.new do
+    Sync::CONCURRENT.spawn do
       ch.send 1
+      state = :ready
       ch.send 2
     rescue ex
-      raise_flag = true
+      state = :raised
+    else
+      state = :done
     end
 
-    yield_to(sender)
+    Sync::CONCURRENT.spawn do
+      Sync.eventually { state.should eq(:ready) }
+      ch.receive.should eq(1)
+      ch.receive.should eq(2)
+      ch.close
+    end
 
-    ch.receive.should eq(1)
-    ch.receive.should eq(2)
-    ch.close
-
-    Fiber.yield
-
-    raise_flag.should be_false
+    Sync.eventually { {:raised, :done}.should contain(state) }
+    state.should eq(:done)
   end
 
   it "does inspect on unbuffered channel" do

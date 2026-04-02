@@ -100,8 +100,8 @@ describe Sync::ConditionVariable do
     Sync.eventually { waiting.should eq(100) }
     done.should eq(0)
 
-    # resume all fibers at once
-    c.broadcast
+    # resume all fibers at once (synchronize so all fibers are waiting)
+    m.synchronize { c.broadcast }
     Sync.eventually { done.should eq(100) }
   end
 
@@ -112,16 +112,14 @@ describe Sync::ConditionVariable do
     r = 50
     w = 100
 
-    r.times do
-      spawn do
-        until done == w
-          l.read { c.wait }
-        end
+    r.times do |i|
+      spawn(name: "cv:read_#{i}") do
+        l.read { c.wait }
       end
     end
 
-    w.times do
-      spawn do
+    w.times do |i|
+      spawn(name: "cv:write_#{i}") do
         l.write do
           waiting += 1
           c.wait
@@ -132,12 +130,10 @@ describe Sync::ConditionVariable do
     Sync.eventually { waiting.should eq(w) }
     done.should eq(0)
 
-    # resume all fibers at once
-    c.broadcast
-    Sync.eventually { done.should eq(w) }
+    # resume all fibers at once (lock read so all writers are waiting)
+    l.read { c.broadcast }
 
-    # wake any pending readers
-    c.broadcast
+    Sync.eventually { done.should eq(w) }
   end
 
   it "producer consumer pattern" do

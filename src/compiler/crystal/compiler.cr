@@ -500,6 +500,7 @@ module Crystal
       elsif program.has_flag?("win32") && program.has_flag?("gnu")
         link_flags = @link_flags || ""
         link_flags += " -Wl,--stack,0x800000"
+        link_flags = use_modern_linker(link_flags)
         lib_flags = program.lib_flags(@cross_compile)
         lib_flags = expand_lib_flags(lib_flags) if expand
         cmd = %(#{DEFAULT_LINKER} #{Process.quote_windows(object_names)} -o #{Process.quote_windows(output_filename)} #{link_flags} #{lib_flags}).gsub('\n', ' ')
@@ -530,7 +531,25 @@ module Crystal
           link_flags += " -L/usr/local/lib"
         end
 
+        link_flags = use_modern_linker(link_flags)
+
         {DEFAULT_LINKER, %(#{DEFAULT_LINKER} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags(@cross_compile)}), object_names}
+      end
+    end
+
+    # Tests if `mold` or `lld` are available and prefers them as linkers over
+    # the default `ld`. Only works when `cc` is the linker driver and can be
+    # disabled with `--link-flags=-fuse-ld=bfd`.
+    private def use_modern_linker(link_flags)
+      return link_flags unless DEFAULT_LINKER == "cc"
+      return link_flags if link_flags.includes?("-fuse-ld=")
+
+      if Process.find_executable("mold")
+        link_flags + " -fuse-ld=mold"
+      elsif Process.find_executable("ld.lld")
+        link_flags + " -fuse-ld=lld"
+      else
+        link_flags
       end
     end
 
@@ -616,7 +635,7 @@ module Crystal
     private def mt_codegen(units, n_threads)
       channel = Channel(CompilationUnit).new(n_threads * 2)
       wg = WaitGroup.new
-      mutex = Mutex.new
+      mutex = Sync::Mutex.new
 
       n_threads.times do
         wg.spawn do

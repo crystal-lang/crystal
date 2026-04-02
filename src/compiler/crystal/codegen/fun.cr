@@ -48,10 +48,14 @@ class Crystal::CodeGenVisitor
     type = @llvm_typer.copy_type(func.type)
     typed_fun = add_typed_fun(@llvm_mod, mangled_name, type)
 
+    source_fun = func.func
     new_fun = typed_fun.func
-    func.func.params.to_a.each_with_index do |p1, index|
-      attrs = new_fun.attributes(index + 1)
-      new_fun.add_attribute(attrs, index + 1) unless attrs.value == 0
+    source_fun.params.each_index do |index|
+      attrs = source_fun.attributes(index + 1)
+      if attrs.value != 0
+        param_type = new_fun.params[index].type
+        new_fun.add_attribute(attrs, index + 1, param_type)
+      end
     end
 
     typed_fun
@@ -447,16 +451,25 @@ class Crystal::CodeGenVisitor
     context.fun = typed_fun.func
     context.fun_type = typed_fun.type
 
-    if @debug.variables?
+    optimize_none = @debug.variables?
+    features = target_def.target_features
+    cpu = target_def.target_cpu
+
+    if optimize_none || features || cpu
+      # Make it a hard boundary, disabling inlining
       context.fun.add_attribute LLVM::Attribute::NoInline
-      context.fun.add_attribute LLVM::Attribute::OptimizeNone
+
+      context.fun.add_attribute LLVM::Attribute::OptimizeNone if optimize_none
+      context.fun.add_target_dependent_attribute("target-features", features) if features
+      context.fun.add_target_dependent_attribute("target-cpu", cpu) if cpu
     else
       context.fun.add_attribute LLVM::Attribute::AlwaysInline if target_def.always_inline?
+      context.fun.add_attribute LLVM::Attribute::NoInline if target_def.no_inline?
     end
+
     context.fun.add_attribute LLVM::Attribute::ReturnsTwice if target_def.returns_twice?
     context.fun.add_attribute LLVM::Attribute::Naked if target_def.naked?
     context.fun.add_attribute LLVM::Attribute::NoReturn if target_def.no_returns?
-    context.fun.add_attribute LLVM::Attribute::NoInline if target_def.no_inline?
   end
 
   def setup_closure_vars(target_def, closure_vars, context, closure_type, closure_ptr)

@@ -10,19 +10,19 @@ private def assert_format(input, output = input, strict = false, flags = nil, fi
         Expected
 
         ~~~
-        #{input}
+        #{input.gsub(/([ \t])\n/, "\\1¶\n")}
         ~~~
 
         to format to:
 
         ~~~
-        #{output}
+        #{output.gsub(/([ \t])\n/, "\\1¶\n")}
         ~~~
 
         but got:
 
         ~~~
-        #{result}
+        #{result.gsub(/([ \t])\n/, "\\1¶\n")}
         ~~~
 
           assert_format #{input.inspect}, #{result.chomp.inspect}
@@ -1749,6 +1749,57 @@ describe Crystal::Formatter do
   assert_format "def foo\nend\n\ndef bar\nend\n\n# foo"
   assert_format "1 && (\n  2 || 3\n)"
   assert_format "class Foo\n  def foo\n    # nothing\n  end\nend"
+  assert_format <<-CRYSTAL, <<-CRYSTAL
+    class Foo
+      def bar
+      end;
+
+      def baz
+      end
+    end
+    CRYSTAL
+    class Foo
+      def bar
+      end
+
+      def baz
+      end
+    end
+    CRYSTAL
+  assert_format <<-CRYSTAL, <<-CRYSTAL
+    class Foo
+      def bar
+      end # foo
+      def baz
+      end
+    end
+    CRYSTAL
+    class Foo
+      def bar
+      end # foo
+
+      def baz
+      end
+    end
+    CRYSTAL
+  assert_format <<-CRYSTAL, <<-CRYSTAL
+    (
+      begin
+        1
+      end;
+
+      2
+    )
+    CRYSTAL
+    (
+      begin
+        1
+      end
+
+      2
+    )
+    CRYSTAL
+
   assert_format "while 1 # foo\n  # bar\n  2\nend", "while 1 # foo\n  # bar\n  2\nend"
   assert_format "foo(\n # foo\n1,\n\n # bar\n2,  \n)", "foo(\n  # foo\n  1,\n\n  # bar\n  2,\n)"
   assert_format "foo do;\n1; end", "foo do\n  1\nend"
@@ -2025,6 +2076,39 @@ describe Crystal::Formatter do
   assert_format "def foo : (A | B(C))\n  nil\nend"
   assert_format "def foo : A | B(C)\n  nil\nend"
   assert_format "def foo(x : (   A  |  B   )) : (   A  |  B   )\nend", "def foo(x : (A | B)) : (A | B)\nend"
+
+  describe "ProcNotation" do
+    assert_format "G_(A ->)"
+    assert_format "G_((A ->))"
+    assert_format "G_((A) ->)"
+
+    assert_format "G_(A, B -> R)"
+    assert_format "G_((A), B -> R)"
+    assert_format "G_((A, B -> R))"
+    assert_format "G_((A, B) -> R)"
+    assert_format "G_(((A), B) -> R)"
+    assert_format "G_((((A), B) -> R))"
+
+    assert_format "G_((A, B ->) | S)"
+
+    assert_format "G_(A, (B -> R))"
+    assert_format "G_(A, ->)"
+    assert_format "G_(A, (->))"
+    pending { assert_format "G_(A, () ->)" } # #16741
+    assert_format "G_(A, -> R)"
+    assert_format "G_(-> R)"
+    pending { assert_format "G_(() -> R)" } # #16741
+
+    assert_format "G_(A -> R | S)"
+    assert_format "G_((A -> R | S))"
+    assert_format "G_((A) -> R | S)"
+
+    assert_format "G_((A -> R) | S)"
+
+    assert_format "G_(A | B -> R)"
+    assert_format "G_((A | B) -> C)"
+    assert_format "G_(A | (B -> C))"
+  end
 
   assert_format "foo &.bar.is_a?(Baz)"
   assert_format "foo &.bar.responds_to?(:baz)"
@@ -2912,4 +2996,26 @@ describe Crystal::Formatter do
       assert_format %(<<-'EOS'\n#{char}\nEOS)
     end
   end
+
+  # #16755
+  assert_format <<-CRYSTAL, <<-CRYSTAL
+    macro foo
+      Foo(
+      )
+    end
+
+    {
+      a:           1,
+      description: 2,
+    }
+    CRYSTAL
+    macro foo
+      Foo()
+    end
+
+    {
+      a:           1,
+      description: 2,
+    }
+    CRYSTAL
 end

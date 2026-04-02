@@ -406,6 +406,11 @@ describe HTTP::Server do
   end
 
   it "can process simultaneous SSL handshakes" do
+    {% if flag?(:win32) && flag?(:gnu) && flag?(:x86_64) %}
+      # FIXME: why does the spec causes the process to die with status code 67?
+      pending! "process dies with exit code 67 on msys2-ucrt-x86_64 on CI"
+    {% end %}
+
     server = HTTP::Server.new do |context|
       context.response.print "ok"
     end
