@@ -271,25 +271,22 @@ module Crystal
           indent(@indent, exp)
         end
 
-        found_comment = skip_space
+        found_comment = skip_space(consume_newline: false)
 
+        next_needs_indent = true
         if @token.type.op_semicolon?
           if needs_two_lines
             skip_semicolon_or_space_or_newline
           else
             found_comment = skip_semicolon_or_space
             if @token.type.newline?
-              write_line
-              next_token_skip_space
-              next_needs_indent = true
+              consume_newlines
             else
               write "; " unless last?(i, node.expressions) || found_comment
               skip_space_or_newline
               next_needs_indent = found_comment
             end
           end
-        else
-          next_needs_indent = true
         end
 
         unless @exp_needs_indent
@@ -301,17 +298,15 @@ module Crystal
           last_found_comment = skip_space_or_newline last: true, next_comes_end: true
         else
           if needs_two_lines
-            unless found_comment
-              if @wrote_newline
-                write_line unless @wrote_double_newlines
-              elsif !@wrote_double_newlines
-                write_line
-                write_line
-              end
-              @wrote_double_newlines = true
-              found_comment = skip_space_or_newline
-              write_line unless found_comment || @wrote_double_newlines
+            if @wrote_newline
+              write_line unless @wrote_double_newlines
+            elsif !@wrote_double_newlines
+              write_line
+              write_line
             end
+            @wrote_double_newlines = true
+            found_comment = skip_space_or_newline
+            write_line unless found_comment || @wrote_double_newlines
           else
             consume_newlines
           end
@@ -1761,10 +1756,20 @@ module Crystal
       write_line
       write value
 
+      # `write` doesn't update `@line` for embedded newlines.
+      # Track the output lines from the formatted macro body explicitly,
+      # then ignore line mutations while consuming original macro tokens.
+      increment_lines(value.count('\n'))
+      line = @line
+
       next_macro_token
 
       until @token.type.macro_end?
         next_macro_token
+      end
+
+      if @line != line
+        increment_lines(line - @line)
       end
 
       skip_space_or_newline
