@@ -5113,15 +5113,15 @@ module Crystal
         end
 
         type = parse_type_splat { parse_union_type }
-        if type.is_a?(Union)
-          type.at(location).at_end(@token.location)
-        end
         if @token.type.op_rparen?
+          end_location = @token.location
           next_token_skip_space
           if @token.type.op_minus_gt? # `(A) -> B` case
-            type = parse_proc_type_output([type], location)
+            type = parse_proc_type_output([type] of ASTNode, location)
           elsif type.is_a?(Splat)
             raise "invalid type splat", type.location.not_nil!
+          else
+            type = Union.parens(type).at(location).at_end(end_location)
           end
         else
           input_types = [type]
@@ -5134,6 +5134,11 @@ module Crystal
             type = parse_proc_type_output(input_types, input_types.first.location)
             check :OP_RPAREN
             next_token_skip_space
+            unless @token.type.op_minus_gt?
+              # Usually the parenthesis is encoded in a Union instance.
+              # But not when nesting proc notations like `(->) ->`.
+              type = Union.parens(type).at(type)
+            end
           else # `(A, B, C) -> D` case
             check :OP_RPAREN
             next_token_skip_space
