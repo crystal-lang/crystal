@@ -823,7 +823,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
       sqe.value.fd = socket.fd
       sqe.value.addr = message.address.to_u64!
     end
-    return Errno.value if res < 0
+    return Errno.new(-res) if res < 0
     return Errno::EBADF if res == 0 && socket.closed?
     res
   end
@@ -834,7 +834,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
       sqe.value.fd = socket.fd
       sqe.value.addr = message.address.to_u64!
     end
-    return Errno.value if res < 0
+    return Errno.new(-res) if res < 0
     return Errno::EBADF if res == 0 && socket.closed?
     res
   end
