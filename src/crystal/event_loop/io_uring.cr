@@ -816,6 +816,28 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
     {res, ::Socket::Address.from(pointerof(sockaddr).as(LibC::Sockaddr*), msghdr.msg_namelen)}
   end
 
+  # Extension to support Kernel TLS in OpenSSL::BIO.
+  def recvmsg(socket : ::Socket, message : Pointer(LibC::Msghdr), flags : Int32) : Int32 | Errno
+    res = async(LibC::IORING_OP_RECVMSG, socket.@read_timeout) do |sqe|
+      sqe.value.fd = socket.fd
+      sqe.value.addr = message.address.to_u64!
+    end
+    return Errno.value if res < 0
+    return Errno::EBADF if res == 0 && socket.closed?
+    res
+  end
+
+  # Extension to support Kernel TLS in OpenSSL::BIO.
+  def sendmsg(socket : ::Socket, message : Pointer(LibC::Msghdr), flags : Int32) : Int32 | Errno
+    res = async(LibC::IORING_OP_SENDMSG, socket.@write_timeout) do |sqe|
+      sqe.value.fd = socket.fd
+      sqe.value.addr = message.address.to_u64!
+    end
+    return Errno.value if res < 0
+    return Errno::EBADF if res == 0 && socket.closed?
+    res
+  end
+
   def shutdown(socket : ::Socket) : Nil
     # unlike IO::FileDescriptor, we can merely shut down the socket to interrupt
     # pending operations (read, write, accept, ...)
