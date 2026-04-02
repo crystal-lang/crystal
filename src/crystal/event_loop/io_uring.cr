@@ -44,6 +44,7 @@
 # which will block the current thread until the ring has been fully drained (all
 # the SQE have completed), at which point it will be unregistered from the event
 # loop that will nillify the entry in the rings array.
+@[Experimental]
 class Crystal::EventLoop::IoUring < Crystal::EventLoop
   # ^-- forward declaration for the require below to not create a module
 end
