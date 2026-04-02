@@ -83,7 +83,7 @@ else
   git commit -m "Add changelog for $VERSION"
   echo git push -u upstream "$branch"
 
-  echo gh pr create --draft --base "$base_branch" \
-    --body "Preview: https://github.com/crystal-lang/crystal/blob/$branch/$changelog_path.md" \
-    --label "topic:infrastructure" -t "Changelog for $VERSION" --milestone "$VERSION"
+  echo "gh pr create --draft --base \"$base_branch\" \
+    --body \"Preview: https://github.com/crystal-lang/crystal/blob/$branch/$changelog_path\" \
+    --label \"topic:infrastructure\" -t \"Changelog for $VERSION\" --milestone \"$VERSION\""
 fi
