@@ -591,7 +591,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
     fd = async(LibC::IORING_OP_OPENAT) do |sqe|
       sqe.value.fd = LibC::AT_FDCWD
       sqe.value.addr = path.to_unsafe.address.to_u64!
-      sqe.value.__u2.open_flags = flags | LibC::O_CLOEXEC
+      sqe.value.open_flags = flags | LibC::O_CLOEXEC
       sqe.value.len = permissions
     end
     return Errno.new(-fd) if fd < 0
@@ -683,7 +683,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
       ring.submit do |sqe|
         sqe.value.opcode = LibC::IORING_OP_ASYNC_CANCEL
         sqe.value.fd = file_descriptor.fd
-        sqe.value.__u2.cancel_flags = LibC::IORING_ASYNC_CANCEL_FD | LibC::IORING_ASYNC_CANCEL_ALL
+        sqe.value.cancel_flags = LibC::IORING_ASYNC_CANCEL_FD | LibC::IORING_ASYNC_CANCEL_ALL
       end
     {% end %}
   end
@@ -740,7 +740,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   def accept(socket : ::Socket) : {::Socket::Handle, Bool}?
     res = async(LibC::IORING_OP_ACCEPT, socket.@read_timeout) do |sqe|
       sqe.value.fd = socket.fd
-      sqe.value.__u2.accept_flags = LibC::SOCK_CLOEXEC
+      sqe.value.accept_flags = LibC::SOCK_CLOEXEC
     end
     return {res, true} unless res < 0
 
@@ -759,7 +759,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
     res = async(LibC::IORING_OP_CONNECT, timeout) do |sqe|
       sqe.value.fd = socket.fd
       sqe.value.addr = sockaddr.address.to_u64!
-      sqe.value.__u1.off = addrlen.to_u64!
+      sqe.value.off = addrlen.to_u64!
     end
     return if res == 0
 
@@ -780,8 +780,8 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
       sqe.value.fd = socket.fd
       sqe.value.addr = slice.to_unsafe.address.to_u64!
       sqe.value.len = slice.size.to_u64!
-      sqe.value.__u1.addr2 = sockaddr.address.to_u64!
-      sqe.value.addr_len[0] = addrlen.to_u16!
+      sqe.value.addr2 = sockaddr.address.to_u64!
+      sqe.value.addr_len = addrlen.to_u16!
     end
 
     if res == 0
@@ -873,7 +873,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
       ring.submit do |sqe|
         sqe.value.opcode = LibC::IORING_OP_ASYNC_CANCEL
         sqe.value.fd = fd
-        sqe.value.__u2.cancel_flags = LibC::IORING_ASYNC_CANCEL_FD | LibC::IORING_ASYNC_CANCEL_ALL
+        sqe.value.cancel_flags = LibC::IORING_ASYNC_CANCEL_FD | LibC::IORING_ASYNC_CANCEL_ALL
       end
     else
       # use sync cancel for modern kernels to notify another ring, but don't wait
@@ -896,7 +896,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
     loop do
       res = async(opcode, timeout, before_suspend) do |sqe|
         sqe.value.fd = io.fd
-        sqe.value.__u1.off = -1
+        sqe.value.off = -1
         sqe.value.addr = slice.to_unsafe.address.to_u64!
         sqe.value.len = slice.size
       end
@@ -912,7 +912,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   private def async_poll(io, poll_events, timeout, &)
     res = async(LibC::IORING_OP_POLL_ADD, timeout) do |sqe|
       sqe.value.fd = io.fd
-      sqe.value.__u2.poll_events = poll_events | LibC::POLLERR | LibC::POLLHUP
+      sqe.value.poll_events = poll_events | LibC::POLLERR | LibC::POLLHUP
     end
     check_open(io)
     raise IO::TimeoutError.new(yield) if res == -LibC::ECANCELED

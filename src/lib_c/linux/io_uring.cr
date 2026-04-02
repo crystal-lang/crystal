@@ -102,12 +102,29 @@ lib LibC
 
   IO_URING_OP_SUPPORTED = 1_u32
 
+  union IoUringSqe__u1__u1
+    cmd_op : UInt32
+    __pad1 : UInt32
+  end
+
   union IoUringSqe__u1
     off : UInt64
     addr2 : UInt64
+    __u1 : IoUringSqe__u1__u1
+  end
+
+  struct IoUringSqe__u2__u1
+    level : UInt32
+    optname : UInt32
   end
 
   union IoUringSqe__u2
+    addr : UInt64
+    splice_off_in : UInt64
+    __u1 : IoUringSqe__u2__u1
+  end
+
+  union IoUringSqe__u3
     rw_flags : Int32
     fsync_flags : UInt32
     poll_events : UInt16
@@ -134,21 +151,62 @@ lib LibC
     pipe_flags : UInt32
   end
 
+  # @[Packed]
+  union IoUringSqe__u4
+    buf_index : UInt16
+    buf_group : UInt16
+  end
+
+  union IoUringSqe__u5__u1
+    addr_len : UInt16
+    __pad3 : UInt16[1]
+  end
+
+  union IoUringSqe__u5__u2
+    write_stream : UInt8
+    __pad3 : UInt8[3]
+  end
+
+  union IoUringSqe__u5
+    splice_fd_in : Int32
+    file_index : UInt32
+    zcrx_ifq_idx : UInt32
+    optlen : UInt32
+    __u1 : IoUringSqe__u5__u1
+    __u2 : IoUringSqe__u5__u2
+  end
+
+  struct IoUringSqe__u6__u1
+    addr3 : UInt64
+    __pad2 : UInt64[1]
+  end
+
+  struct IoUringSqe__u6__u2
+    attr_ptr : UInt64
+    attr_type_mask : UInt64
+  end
+
+  union IoUringSqe__u6
+    __u1 : IoUringSqe__u6__u1
+    __u2 : IoUringSqe__u6__u2
+    optval : UInt64
+    cmd : UInt8[0]
+  end
+
   struct IoUringSqe
     opcode : UInt8
     flags : UInt8
     ioprio : UInt16
     fd : Int32
     __u1 : IoUringSqe__u1
-    addr : UInt64
-    len : UInt32
     __u2 : IoUringSqe__u2
+    len : UInt32
+    __u3 : IoUringSqe__u3
     user_data : UInt64
-    buf_index : UInt16
+    __u4 : IoUringSqe__u4
     personality : UInt16
-    addr_len : UInt16[2]
-    addr3 : UInt64
-    __pad2 : UInt64[1]
+    __u5 : IoUringSqe__u5
+    __u6 : IoUringSqe__u6
   end
 
   struct IoUringCqe
@@ -230,4 +288,70 @@ lib LibC
     resv2 : UInt32[3]
     ops : IoUringProbeOp[0]
   end
+end
+
+# mimic C behavior where members of anonymous nested unions/structs (no member
+# name) are directly accessible on the parent struct, so we don't have to deal
+# with ugly binding details (struct io_uring_sqe abuses it).
+
+struct LibC::IoUringSqe
+  {% for mapping in [
+                      {"off", "__u1"},
+                      {"addr2", "__u1"},
+                      {"cmd_op", "__u1.__u1"},
+
+                      {"addr", "__u2"},
+                      {"splice_off_in", "__u2"},
+                      {"level", "__u2.__u1"},
+                      {"optname", "__u2.__u1"},
+
+                      {"rw_flags", "__u3"},
+                      {"fsync_flags", "__u3"},
+                      {"poll_events", "__u3"},
+                      {"poll32_events", "__u3"},
+                      {"sync_range_flags", "__u3"},
+                      {"msg_flags", "__u3"},
+                      {"timeout_flags", "__u3"},
+                      {"accept_flags", "__u3"},
+                      {"cancel_flags", "__u3"},
+                      {"open_flags", "__u3"},
+                      {"statx_flags", "__u3"},
+                      {"fadvise_advice", "__u3"},
+                      {"splice_flags", "__u3"},
+                      {"rename_flags", "__u3"},
+                      {"unlink_flags", "__u3"},
+                      {"hardlink_flags", "__u3"},
+                      {"xattr_flags", "__u3"},
+                      {"msg_ring_flags", "__u3"},
+                      {"uring_cmd_flags", "__u3"},
+                      {"waitid_flags", "__u3"},
+                      {"futex_flags", "__u3"},
+                      {"install_fd_flags", "__u3"},
+                      {"nop_flags", "__u3"},
+                      {"pipe_flags", "__u3"},
+
+                      {"buf_index", "__u4"},
+                      {"buf_group", "__u4"},
+
+                      {"splice_fd_in", "__u5"},
+                      {"file_index", "__u5"},
+                      {"zcrx_ifq_idx", "__u5"},
+                      {"optlen", "__u5"},
+                      {"addr_len", "__u5.__u1"},
+                      {"write_stream", "__u5.__u2"},
+
+                      {"addr3", "__u6.__u1"},
+                      {"attr_ptr", "__u6.__u2"},
+                      {"attr_type_mask", "__u6.__u2"},
+                      {"optval", "__u6"},
+                      {"cmd", "__u6"},
+                    ] %}
+    def {{mapping[0].id}}
+      {{mapping[1].id}}.{{mapping[0].id}}
+    end
+
+    def {{mapping[0].id}}=(value)
+      {{mapping[1].id}}.{{mapping[0].id}} = value
+    end
+  {% end %}
 end
