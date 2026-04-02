@@ -1484,6 +1484,7 @@ module Crystal
 
     it_parses "macro foo;%var;end", Macro.new("foo", [] of Arg, Expressions.from([MacroVar.new("var"), MacroLiteral.new(";")] of ASTNode))
     it_parses "macro foo;%var{1, x} = hello;end", Macro.new("foo", [] of Arg, Expressions.from([MacroVar.new("var", [1.int32, "x".var] of ASTNode), MacroLiteral.new(" = hello;")] of ASTNode))
+    it_parses "macro foo;%var{}end", Macro.new("foo", [] of Arg, Expressions.from([MacroVar.new("var", [] of ASTNode)] of ASTNode))
 
     # #4087
     describe "suffix `if`/`unless` in macros after macro var" do
