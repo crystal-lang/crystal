@@ -848,7 +848,7 @@ describe Process do
       result.error?.should be_nil
     end
 
-    pending "truncates error output", tags: %w[slow] do
+    it "truncates error output", tags: %w[slow] do
       dashes32 = "-" * (32 << 10)
       input = IO::Memory.new("#{dashes32}X#{dashes32}")
       result = Process.capture_result(to_ary(stdin_to_stderr_command), input: input)
@@ -942,7 +942,7 @@ describe Process do
       result.error?.should be_nil
     end
 
-    pending "truncates error output", tags: %w[slow] do
+    it "truncates error output", tags: %w[slow] do
       dashes32 = "-" * (32 << 10)
       input = IO::Memory.new("#{dashes32}X#{dashes32}")
       result = Process.capture_result?(to_ary(stdin_to_stderr_command), input: input).should be_a(Process::Result)

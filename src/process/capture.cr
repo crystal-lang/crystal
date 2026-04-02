@@ -35,7 +35,8 @@ class Process
     #
     # If `error` was not captured, returns the empty string.
     #
-    # The captured error stream might be truncated.
+    # The captured error stream might be truncated. If the total output is larger
+    # than 64kB, only the first 32kB and the last 32kB are preserved.
     def error : String
       @error || ""
     end
@@ -44,7 +45,8 @@ class Process
     #
     # If `error` was not captured, returns `nil`.
     #
-    # The captured error stream might be truncated.
+    # The captured error stream might be truncated. If the total output is larger
+    # than 64kB, only the first 32kB and the last 32kB are preserved.
     def error? : String?
       @error
     end
@@ -93,7 +95,7 @@ class Process
 
   private def self.capture_result_impl(output, error, & : -> Process)
     if error == Redirect::Pipe
-      error = captured_error = IO::Memory.new
+      error = captured_error = IO::PrefixSuffixBuffer.new(32 << 10)
     end
 
     process = yield error
