@@ -271,6 +271,29 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
     end
   end
 
+  def sendfile(socket : ::Socket, fd : System::FileDescriptor::Handle, offset : Int64, count : Int64, flags : Int32) : Int64 | Errno
+    loop do
+      ret, sent_bytes = System::Socket.sendfile(socket.fd, fd, offset, count, flags)
+      return sent_bytes unless ret == -1
+
+      case errno = Errno.value
+      when Errno::EAGAIN
+        # Darwin/BSD may have written bytes before blocking
+        return sent_bytes if sent_bytes > 0
+
+        socket.evented_wait_writable(timeout: socket.@write_timeout) do
+          return Errno::ETIMEDOUT
+        end
+      when Errno::EINTR, Errno::EBUSY
+        # Darwin/BSD may have written bytes before being interrupted (zero
+        # doesn't necessarily means EOF)
+        return sent_bytes if sent_bytes > 0
+      else
+        return errno
+      end
+    end
+  end
+
   def accept(socket : ::Socket) : {::Socket::Handle, Bool}?
     loop do
       client_fd =

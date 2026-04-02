@@ -40,8 +40,10 @@ module Crystal::System::Socket
 
   class_getter connect_ex
   class_getter accept_ex
+  class_getter transmit_file
   @@connect_ex = uninitialized LibC::ConnectEx
   @@accept_ex = uninitialized LibC::AcceptEx
+  @@transmit_file = uninitialized LibC::TransmitFile
 
   # Some overlapped socket functions are not part of the Winsock specification.
   # The implementation is provider-specific and needs to be queried at runtime
@@ -62,6 +64,7 @@ module Crystal::System::Socket
 
     @@connect_ex = load_extension_function(socket, LibC::WSAID_CONNECTEX, LibC::ConnectEx)
     @@accept_ex = load_extension_function(socket, LibC::WSAID_ACCEPTEX, LibC::AcceptEx)
+    @@transmit_file = load_extension_function(socket, LibC::WSAID_TRANSMITFILE, LibC::TransmitFile)
 
     result = LibC.closesocket(socket)
     unless result.zero?
@@ -467,5 +470,18 @@ module Crystal::System::Socket
   private def system_tcp_keepalive_count=(val : Int)
     setsockopt LibC::TCP_KEEPCNT, val, level: ::Socket::Protocol::TCP
     val
+  end
+
+  private def system_sendfile(file : IO::FileDescriptor, offset : Int64, count : Int64) : Int64
+    # clamp offset and count to be within file size so TransmitFile won't fail
+    # on out of bounds
+    file_size = file.info.size.to_i64
+    return 0_i64 if offset > file_size
+
+    max_count = file_size - offset
+    count = max_count if count > max_count
+    return 0_i64 if count == 0
+
+    event_loop.sendfile(self, file.fd, offset, count, 0)
   end
 end
