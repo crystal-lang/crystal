@@ -273,7 +273,7 @@ lib LibPCRE2
   fun match_data_create_from_pattern = pcre2_match_data_create_from_pattern_8(code : Code*, gcontext : GeneralContext*) : MatchData*
   fun match_data_free = pcre2_match_data_free_8(match_data : MatchData*) : Void
 
-  fun substring_nametable_scan = pcre2_substring_nametable_scan_8(code : Code*, name : UInt8*, first : UInt8*, last : UInt8*) : Int
+  fun substring_nametable_scan = pcre2_substring_nametable_scan_8(code : Code*, name : UInt8*, first : UInt8**, last : UInt8**) : Int
 
   fun get_ovector_pointer = pcre2_get_ovector_pointer_8(match_data : MatchData*) : LibC::SizeT*
   fun get_ovector_count = pcre2_get_ovector_count_8(match_data : MatchData*) : UInt32
