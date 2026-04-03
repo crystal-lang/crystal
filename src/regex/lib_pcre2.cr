@@ -249,13 +249,13 @@ lib LibPCRE2
   type CompileContext = Void
   type MatchData = Void
   type GeneralContext = Void
+  type MatchContext = Void
 
   fun get_error_message = pcre2_get_error_message_8(errorcode : Int, buffer : UInt8*, bufflen : LibC::SizeT) : Int
 
   fun compile = pcre2_compile_8(pattern : UInt8*, length : LibC::SizeT, options : UInt32, errorcode : Int*, erroroffset : LibC::SizeT*, ccontext : CompileContext*) : Code*
   fun code_free = pcre2_code_free_8(code : Code*) : Void
 
-  type MatchContext = Void*
   fun match_context_create = pcre2_match_context_create_8(gcontext : Void*) : MatchContext*
 
   fun jit_compile = pcre2_jit_compile_8(code : Code*, options : UInt32) : Int
