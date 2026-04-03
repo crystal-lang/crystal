@@ -8,12 +8,12 @@ def build_c_dynlib(c_filename, *, lib_name = nil, target_dir = SPEC_CRYSTAL_LOAD
   status =
     {% if flag?(:msvc) %}
       o_basename = o_filename.rchop(".lib")
-      Process.run({ENV.fetch("CC", "cl.exe"), "/nologo", "/LD", c_filename, "/Fo#{o_basename}", "/Fe#{o_basename}"})
+      Process.run [ENV.fetch("CC", "cl.exe"), "/nologo", "/LD", c_filename, "/Fo#{o_basename}", "/Fe#{o_basename}"]
     {% elsif flag?(:win32) && flag?(:gnu) %}
       o_basename = o_filename.rchop(".a")
-      Process.run({ENV.fetch("CC", "cc"), "-shared", "-fvisibility=hidden", c_filename, "-o", "#{o_basename}.dll", "-Wl,--out-implib,#{o_basename}.a"})
+      Process.run [ENV.fetch("CC", "cc"), "-shared", "-fvisibility=hidden", c_filename, "-o", "#{o_basename}.dll", "-Wl,--out-implib,#{o_basename}.a"]
     {% else %}
-      Process.run({ENV.fetch("CC", "cc"), "-shared", "-fvisibility=hidden", c_filename, "-o", o_filename})
+      Process.run [ENV.fetch("CC", "cc"), "-shared", "-fvisibility=hidden", c_filename, "-o", o_filename]
     {% end %}
 
   raise "BUG: failed to compile dynamic library" unless status.success?

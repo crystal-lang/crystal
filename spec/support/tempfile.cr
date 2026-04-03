@@ -86,10 +86,10 @@ def with_temp_c_object_file(c_code, *, filename = "temp_c", file = __FILE__, &)
             "cl.exe"
           end
         end
-        Process.run({cl, "/nologo", "/c", "/MD", c_filename, "/Fo#{o_filename}"})
+        Process.run [cl, "/nologo", "/c", "/MD", c_filename, "/Fo#{o_filename}"]
       {% else %}
         cc = ENV.fetch("CC", "cc")
-        Process.run({cc, c_filename, "-c", "-o", o_filename})
+        Process.run [cc, c_filename, "-c", "-o", o_filename]
       {% end %}
     status.success?.should be_true
 
