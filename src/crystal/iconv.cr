@@ -59,7 +59,7 @@ struct Crystal::Iconv
     {% if flag?(:freebsd) || flag?(:dragonfly) %}
       if @skip_invalid
         err = LibC.__iconv(@iconv, inbuf, inbytesleft, outbuf, outbytesleft, LibC::ICONV_F_HIDE_INVALID, out invalids)
-        if err == Crystal::Iconv::ERROR && Errno.value != Errno::E2BIG
+        if err == ERROR && Errno.value != Errno::E2BIG
           return err
         else
           return
@@ -68,9 +68,10 @@ struct Crystal::Iconv
     {% end %}
 
     err = {{ USE_LIBICONV ? LibIconv : LibC }}.iconv(@iconv, inbuf, inbytesleft, outbuf, outbytesleft)
-    if err == Crystal::Iconv::ERROR && Errno.value != Errno::E2BIG
-      return err
+    if err == Crystal::Iconv::ERROR && Errno.value != Errno::E2BIG && Errno.value != Errno::EINVAL
+      handle_invalid(inbuf, inbytesleft)
     end
+    err
   end
 
   def handle_invalid(inbuf, inbytesleft)
