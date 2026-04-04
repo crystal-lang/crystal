@@ -58,10 +58,20 @@ struct Crystal::Iconv
   def convert(inbuf : UInt8**, inbytesleft : LibC::SizeT*, outbuf : UInt8**, outbytesleft : LibC::SizeT*)
     {% if flag?(:freebsd) || flag?(:dragonfly) %}
       if @skip_invalid
-        return LibC.__iconv(@iconv, inbuf, inbytesleft, outbuf, outbytesleft, LibC::ICONV_F_HIDE_INVALID, out invalids)
+        err = LibC.__iconv(@iconv, inbuf, inbytesleft, outbuf, outbytesleft, LibC::ICONV_F_HIDE_INVALID, out invalids)
+        if err == ERROR && Errno.value != Errno::E2BIG
+          return err
+        else
+          return
+        end
       end
     {% end %}
-    {{ USE_LIBICONV ? LibIconv : LibC }}.iconv(@iconv, inbuf, inbytesleft, outbuf, outbytesleft)
+
+    err = {{ USE_LIBICONV ? LibIconv : LibC }}.iconv(@iconv, inbuf, inbytesleft, outbuf, outbytesleft)
+    if err == Crystal::Iconv::ERROR && Errno.value != Errno::E2BIG && Errno.value != Errno::EINVAL
+      handle_invalid(inbuf, inbytesleft)
+    end
+    err
   end
 
   def handle_invalid(inbuf, inbytesleft)

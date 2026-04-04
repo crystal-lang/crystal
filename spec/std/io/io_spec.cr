@@ -796,6 +796,19 @@ describe IO do
           io.encoding.should eq("UTF-8")
         end
 
+        it "handles long lines correctly with invalid: :skip" do
+          # Using both ASCII characters and a 26-byte Unicode characters to
+          # ensure we hit as many byte boundaries inside the Unicode characters
+          # as we can to get sufficient confidence in this test.
+          text = "test string 👩🏾‍🤝‍👨🏻" * 10240
+          io = IO::Memory.new
+          io.set_encoding "UTF-8", invalid: :skip
+          io << text
+
+          io.bytesize.should eq text.bytesize
+          io.to_slice.should eq text.to_slice
+        end
+
         it "does skips when converting to UTF-8" do
           io = SimpleIOMemory.new(Base64.decode_string("ey8qx+Tl8fwg7+Dw4Ozl8vD7IOLo5+jy4CovfQ=="))
           io.set_encoding("UTF-8", invalid: :skip)
