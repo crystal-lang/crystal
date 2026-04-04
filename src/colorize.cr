@@ -341,7 +341,7 @@ private def each_reset_code(mode : Colorize::Mode, &)
   yield "23" if mode.italic?
   yield "24" if mode.underline?
   yield "25" if mode.blink?
-  yield "26" if mode.blink_fast?
+  yield "25" if mode.blink_fast?
   yield "27" if mode.reverse?
   yield "28" if mode.hidden?
   yield "29" if mode.strikethrough?
