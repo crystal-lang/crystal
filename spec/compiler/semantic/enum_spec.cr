@@ -314,6 +314,14 @@ describe "Semantic: enum" do
       CRYSTAL
   end
 
+  it "reports arithmetic overflow in enum value expression (#11746)" do
+    assert_error <<-CRYSTAL, "Arithmetic overflow", inject_primitives: true
+      enum Foo : UInt64
+        A = 0_u64 - 1_u64
+      end
+      CRYSTAL
+  end
+
   it "errors if using instance var inside enum (#991)" do
     assert_error <<-CRYSTAL, "can't use instance variables inside enums (at enum Foo)"
       enum Foo
