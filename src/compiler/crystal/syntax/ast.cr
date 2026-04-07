@@ -3045,9 +3045,11 @@ module Crystal
         cond.pretty_print(pp)
         pp.comma
         @then.pretty_print(pp)
-        pp.comma
-        @else.pretty_print(pp)
-        pp_option(pp, is_unless?)
+        unless @else.is_a?(Nop)
+          pp.comma
+          @else.pretty_print(pp)
+          pp_option(pp, is_unless?)
+        end
       end
     end
   end
