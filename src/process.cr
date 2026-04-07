@@ -412,23 +412,11 @@ class Process
   # * `Process.run` is a convenient short cut if you just want to run a command
   #    and wait for it to finish.
   # * `Process.exec` replaces the current process.
-  def initialize(args : Enumerable(String), *, env : Env = nil, clear_env : Bool = false,
-                 input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil)
-    raise File::NotFoundError.new("Error executing process: No command", file: "") if args.empty?
-
-    fork_input = stdio_to_fd(input, for: STDIN)
-    fork_output = stdio_to_fd(output, for: STDOUT)
-    fork_error = stdio_to_fd(error, for: STDERR)
-
-    prepared_args = Crystal::System::Process.prepare_args(args)
-    pid = Crystal::System::Process.spawn(prepared_args, false, env, clear_env, fork_input, fork_output, fork_error, chdir.try &.to_s) do |error, command|
+  def self.new(args : Enumerable(String), *, env : Env = nil, clear_env : Bool = false,
+               input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil)
+    new(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir) do |error, command|
       raise ::File::Error.from_os_error("Error executing process", error, file: command)
     end
-    @process_info = Crystal::System::Process.new(pid)
-
-    fork_input.close unless fork_input.in?(input, STDIN)
-    fork_output.close unless fork_output.in?(output, STDOUT)
-    fork_error.close unless fork_error.in?(error, STDERR)
   end
 
   # :nodoc:
@@ -441,8 +429,8 @@ class Process
     fork_error = stdio_to_fd(error, for: STDERR)
 
     prepared_args = Crystal::System::Process.prepare_args(args)
-    pid = Crystal::System::Process.spawn(prepared_args, false, env, clear_env, fork_input, fork_output, fork_error, chdir.try &.to_s) do
-      yield
+    pid = Crystal::System::Process.spawn(prepared_args, false, env, clear_env, fork_input, fork_output, fork_error, chdir.try &.to_s) do |error, command|
+      yield error, command
     end
     @process_info = Crystal::System::Process.new(pid)
 
