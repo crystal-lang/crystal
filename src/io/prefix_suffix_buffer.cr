@@ -52,7 +52,7 @@ class IO::PrefixSuffixBuffer < IO
     end
 
     # The first chunk goes to the ring buffer after `ring_pos`
-    slice += fill(suffix, slice, (@pos + ring_pos) % suffix.bytesize)
+    slice += fill(suffix, slice, ((@pos - @prefix.bytesize).clamp(0..) + ring_pos) % suffix.bytesize)
 
     # The second chunk goes to the ring buffer before `ring_pos`
     fill(suffix, slice, 0)

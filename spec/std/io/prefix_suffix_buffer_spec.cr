@@ -77,6 +77,12 @@ describe IO::PrefixSuffixBuffer do
         io.to_s.should eq("abcde\n...omitted 16 bytes...\nvwxyz")
       end
 
+      it "chunked" do
+        buffer = IO::PrefixSuffixBuffer.new(4)
+        buffer << "---" << "-X-" << "---"
+        buffer.to_s.should eq "----\n...omitted 1 bytes...\n----"
+      end
+
       it "one" do
         io = IO::PrefixSuffixBuffer.new(1)
         io << "abc"
