@@ -51,6 +51,18 @@ describe IO::PrefixSuffixBuffer do
       io << "foo" << "bar"
       io.to_s.should eq("foobar")
     end
+
+    it "supports an empty prefix buffer" do
+      io = IO::PrefixSuffixBuffer.new(Bytes.empty, Bytes.new(3))
+      io << "abcdef"
+      io.to_s.should eq("\n...omitted 3 bytes...\ndef")
+    end
+
+    it "supports an empty suffix buffer" do
+      io = IO::PrefixSuffixBuffer.new(Bytes.new(3), Bytes.empty)
+      io << "abcdef"
+      io.to_s.should eq("abc\n...omitted 3 bytes...\n")
+    end
   end
 
   describe "#to_s" do
