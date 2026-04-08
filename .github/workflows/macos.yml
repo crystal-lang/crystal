@@ -70,7 +70,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: cachix/install-nix-action@616559265b40713947b9c190a8ff4b507b5df49b # v31
+      - uses: cachix/install-nix-action@616559265b40713947b9c190a8ff4b507b5df49b # v31.10.4
         with:
           extra_nix_config: |
             experimental-features = nix-command
