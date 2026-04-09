@@ -494,11 +494,19 @@ module Crystal
         old_indent = @indent
         @indent = column if @string_continuation == 0
         @string_continuation += 1
-        write " \\"
-        write_line
-        write_indent
         next_token_skip_space_or_newline
-        visit(node)
+
+        if @token.type.delimiter_start?
+          write " \\"
+          write_line
+          write_indent
+
+          visit(node)
+        else
+          # empty continuation
+          write_line
+          write_line
+        end
         @indent = old_indent
         @string_continuation -= 1
       else
