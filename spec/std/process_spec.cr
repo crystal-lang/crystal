@@ -32,7 +32,7 @@ end
 
 private def stdin_to_stderr_command(status = 0)
   {% if flag?(:win32) %}
-    {"powershell.exe", {"-C", "while ($line = [Console]::In.ReadLine()) { [Console]::Error.WriteLine($line) }; exit #{status}"}}
+    {"powershell.exe", {"-C", "[Console]::OpenStandardInput().CopyTo([Console]::OpenStandardError()); exit #{status}"}}
   {% else %}
     {"/bin/sh", {"-c", "cat 1>&2; exit #{status}"}}
   {% end %}
