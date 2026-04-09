@@ -491,23 +491,21 @@ module Crystal
       format_regex_modifiers if is_regex
 
       if space_slash_newline?
-        old_indent = @indent
-        @indent = column if @string_continuation == 0
         @string_continuation += 1
-        next_token_skip_space_or_newline
+        @indent = column
+
+        @passed_backslash_newline = true
+        next_token_skip_space
+
+        write_line if @token.type.newline?
+        skip_space_or_newline
 
         if @token.type.delimiter_start?
-          write " \\"
-          write_line
-          write_indent
-
           visit(node)
         else
           # empty continuation
-          write_line
-          write_line
         end
-        @indent = old_indent
+
         @string_continuation -= 1
       else
         next_token
