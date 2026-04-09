@@ -855,7 +855,7 @@ describe Process do
       result.status.success?.should be_true
       result.output?.should eq ""
       error = result.error.should be_a(String)
-      error.should contain "\n...omitted #{{{ flag?(:windows) ? 3 : 1 }}} bytes...\n"
+      error.should contain "\n...omitted 1 bytes...\n"
       error.count("-").should eq(32 << 11)
     end
 
@@ -949,7 +949,7 @@ describe Process do
       result.status.success?.should be_true
       result.output?.should eq ""
       error = result.error.should be_a(String)
-      error.should contain "\n...omitted #{{{ flag?(:windows) ? 3 : 1 }}} bytes...\n"
+      error.should contain "\n...omitted 1 bytes...\n"
       error.count("-").should eq(32 << 11)
     end
 
