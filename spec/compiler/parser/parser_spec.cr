@@ -1802,7 +1802,7 @@ module Crystal
     it_parses "begin; 1; rescue ex; 2; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32, nil, "ex")])
     it_parses "begin; 1; rescue; 2; else; 3; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32)], 3.int32)
     it_parses "begin; 1; rescue ex; 2; end; ex", [ExceptionHandler.new(1.int32, [Rescue.new(2.int32, nil, "ex")]), "ex".var]
-    it_parses "begin; begin; ensure; end; end", [ExceptionHandler.new(Nop.new, ensure: Nop.new)]
+    it_parses "begin; begin; ensure; end; end", [Expressions.new([ExceptionHandler.new(Nop.new, ensure: Nop.new)] of ASTNode)]
     it_parses "begin; begin; ensure; end; rescue; end", [ExceptionHandler.new(ExceptionHandler.new(Nop.new, ensure: Nop.new), rescues: [Rescue.new])]
 
     it_parses "def foo(); 1; rescue; 2; end", Def.new("foo", body: ExceptionHandler.new(1.int32, [Rescue.new(2.int32)]))
