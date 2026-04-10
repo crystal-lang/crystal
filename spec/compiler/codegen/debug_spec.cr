@@ -234,7 +234,7 @@ describe "Code gen: debug" do
       CRYSTAL
 
     str = mod.to_s
-    str.should contain(%(@"Foo::x" = global ptr null, !dbg !))
+    str.should match(/@"Foo::x" = global (?:ptr|%String\*) null, !dbg !/)
     str.should contain("DIGlobalVariable(name: \"Foo::x\", linkageName: \"Foo::x\",")
   end
 
