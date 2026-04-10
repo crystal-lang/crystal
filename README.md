@@ -60,11 +60,11 @@ Have any questions or suggestions? Ask on the [Crystal Forum](https://forum.crys
 
 ## Contributing
 
-The Crystal repository is hosted at [crystal-lang/crystal](https://github.com/crystal-lang/crystal) on GitHub.
+The Crystal repository is hosted here, [crystal-lang/crystal](https://github.com/crystal-lang/crystal)
 
 Read the general [Contributing guide](https://github.com/crystal-lang/crystal/blob/master/CONTRIBUTING.md), and then:
 
-1. Fork it (<https://github.com/crystal-lang/crystal/fork>)
+1. Fork this repository (<https://github.com/crystal-lang/crystal/fork>)
 2. Create your feature branch (`git checkout -b my-new-feature`)
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)
