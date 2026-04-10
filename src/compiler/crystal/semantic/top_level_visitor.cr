@@ -1207,9 +1207,9 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     end
 
     value = call_convention_node.value
-    call_convention = LLVM::CallConvention.parse?(value)
+    call_convention = Crystal::CallConvention.parse?(value)
     unless call_convention
-      call_convention_node.raise "invalid call convention. Valid values are #{LLVM::CallConvention.values.join ", "}"
+      call_convention_node.raise "invalid call convention. Valid values are #{Crystal::CallConvention.values.join ", "}"
     end
     call_convention
   end
