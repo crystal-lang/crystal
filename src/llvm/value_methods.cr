@@ -88,6 +88,11 @@ module LLVM::ValueMethods
     init ? LLVM::Value.new(init) : nil
   end
 
+  def add_debug_info(gv : LibLLVM::MetadataRef)
+    kind = LibLLVM.get_md_kind_id_in_context(type.context, "dbg", 3)
+    LibLLVM.global_set_metadata(self, kind, gv)
+  end
+
   def volatile=(volatile)
     LibLLVM.set_volatile(self, volatile ? 1 : 0)
   end
