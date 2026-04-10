@@ -212,6 +212,42 @@ describe "Code gen: debug" do
       CRYSTAL
   end
 
+  it "emits global debug info for constants" do
+    mod = codegen(<<-CRYSTAL, debug: Crystal::Debug::All)
+      struct Bar
+        def initialize(@x : Int32)
+        end
+      end
+
+      A = Bar.new(41)
+
+      v1 = A
+      v1
+      CRYSTAL
+
+    str = mod.to_s
+    str.should contain("DIGlobalVariable(name: \"A\", linkageName: \"A\",")
+    str.should contain(%(~A:const_init))
+  end
+
+  it "emits global debug info for class vars" do
+    mod = codegen(<<-CRYSTAL, debug: Crystal::Debug::All)
+      class Foo
+        @@x = "world"
+
+        def self.x
+          @@x
+        end
+      end
+
+      Foo.x
+      CRYSTAL
+
+    str = mod.to_s
+    str.should contain(%(@"Foo::x" = global ptr null, !dbg !))
+    str.should contain("DIGlobalVariable(name: \"Foo::x\", linkageName: \"Foo::x\",")
+  end
+
   it "stores and restores debug location after jumping to main (#6920)" do
     codegen(<<-CRYSTAL, debug: Crystal::Debug::All)
       require "prelude"

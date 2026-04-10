@@ -57,7 +57,42 @@ class Crystal::CodeGenVisitor
       global.linkage = LLVM::Linkage::Internal if @single_module
     {% end %}
 
+    declare_const_debug_info(global, const) if @debug.variables?
+
     global
+  end
+
+  private def declare_const_debug_info(global, const)
+    location = const.locations.try &.first?
+    return unless location
+
+    location = location.try &.expanded_location
+    return unless location
+
+    old_llvm_mod = @llvm_mod
+    @llvm_mod = @main_mod
+
+    begin
+      debug_type = get_debug_type(const.value.type)
+      return unless debug_type
+
+      file, dir = file_and_dir(location.filename)
+      file_metadata = di_builder(@main_mod).create_file(file, dir)
+
+      gv_expr = di_builder(@main_mod).create_global_variable_expression(
+        scope: file_metadata,
+        name: const.llvm_name,
+        linkage_name: const.llvm_name,
+        file: file_metadata,
+        line: location.line_number,
+        type: debug_type,
+        local_to_unit: @single_module
+      )
+
+      global.add_debug_info(gv_expr)
+    ensure
+      @llvm_mod = old_llvm_mod
+    end
   end
 
   def declare_const_initialized_flag(const)
@@ -189,26 +224,31 @@ class Crystal::CodeGenVisitor
   end
 
   def read_const(const, node)
-    # We inline constants. Otherwise we use an LLVM const global.
-    @last =
-      case value = const.compile_time_value
-      when Bool    then int1(value ? 1 : 0)
-      when Char    then int32(value.ord)
-      when Int8    then int8(value)
-      when Int16   then int16(value)
-      when Int32   then int32(value)
-      when Int64   then int64(value)
-      when Int128  then int128(value)
-      when UInt8   then int8(value)
-      when UInt16  then int16(value)
-      when UInt32  then int32(value)
-      when UInt64  then int64(value)
-      when UInt128 then int128(value)
-      else
-        set_current_debug_location node if @debug.line_numbers?
-        last = read_const_pointer(const)
-        to_lhs last, const.value.type
-      end
+    if @debug.variables? && @main_mod.globals[const.llvm_name]?
+      set_current_debug_location node if @debug.line_numbers?
+      last = read_const_pointer(const)
+      @last = to_lhs last, const.value.type
+    else
+      @last =
+        case value = const.compile_time_value
+        when Bool    then int1(value ? 1 : 0)
+        when Char    then int32(value.ord)
+        when Int8    then int8(value)
+        when Int16   then int16(value)
+        when Int32   then int32(value)
+        when Int64   then int64(value)
+        when Int128  then int128(value)
+        when UInt8   then int8(value)
+        when UInt16  then int16(value)
+        when UInt32  then int32(value)
+        when UInt64  then int64(value)
+        when UInt128 then int128(value)
+        else
+          set_current_debug_location node if @debug.line_numbers?
+          last = read_const_pointer(const)
+          to_lhs last, const.value.type
+        end
+    end
   end
 
   def read_const_pointer(const)
