@@ -202,6 +202,16 @@ describe "Code gen: debug" do
       CRYSTAL
   end
 
+  it "codegens proc debug info" do
+    codegen(<<-CRYSTAL, debug: Crystal::Debug::All)
+      x = ->(n : Int32) { n &+ 1 }
+      y : Proc(Int32, Int32)? = ->(n : Int32) { n &+ 2 }
+      captured = 40
+      z = ->(n : Int32) { captured &+ n }
+      {x, y, z}
+      CRYSTAL
+  end
+
   it "stores and restores debug location after jumping to main (#6920)" do
     codegen(<<-CRYSTAL, debug: Crystal::Debug::All)
       require "prelude"
