@@ -60,17 +60,27 @@ class CrystalArraySyntheticProvider:
         self.valobj = valobj
         self.buffer = None
         self.size = 0
+        self.type = None
+        self._updated = False
 
     def update(self):
-        if self.valobj.type.is_pointer:
-            self.valobj = self.valobj.Dereference()
-        self.size = int(self.valobj.child[0].value)
-        self.type = self.valobj.type
-        self.buffer = self.valobj.child[3]
+        value = raw_value(self.valobj)
+        self.type = value.GetType()
+        self.size = value.GetChildAtIndex(0).GetValueAsUnsigned(0)
+        self.buffer = value.GetChildAtIndex(3)
+        self._updated = True
+
+    def _ensure_updated(self):
+        if not self._updated:
+            self.update()
 
     def num_children(self):
+        self._ensure_updated()
         size = 0 if self.size is None else self.size
         return size
+
+    def has_children(self):
+        return self.num_children() > 0
 
     def get_child_index(self, name):
         try:
@@ -78,16 +88,42 @@ class CrystalArraySyntheticProvider:
         except:
             return -1
 
-    def get_child_at_index(self,index):
+    def get_child_at_index(self, index):
+        self._ensure_updated()
         if index >= self.size:
             return None
         try:
-            elementType = self.buffer.type.GetPointeeType()
-            offset = elementType.size * index
+            elementType = self.buffer.GetType().GetPointeeType()
+            offset = elementType.GetByteSize() * index
             return self.buffer.CreateChildAtOffset('[' + str(index) + ']', offset, elementType)
         except Exception as e:
             print('Got exception %s' % (str(e)))
             return None
+
+
+def CrystalArray_SummaryProvider(value, dict):
+    try:
+        value = raw_value(value)
+        size = value.GetChildAtIndex(0).GetValueAsUnsigned(0)
+        if size == 0:
+            return '[]'
+
+        buffer = value.GetChildAtIndex(3)
+        element_type = buffer.GetType().GetPointeeType()
+        element_size = element_type.GetByteSize()
+        limit = min(size, 5)
+        items = []
+
+        for index in range(limit):
+            child = buffer.CreateChildAtOffset('[%d]' % index, element_size * index, element_type)
+            items.append(value_summary(child))
+
+        if size > limit:
+            items.append('... (%d total)' % size)
+
+        return '[%s]' % ', '.join(items)
+    except Exception as e:
+        return 'Array(...) (error: %s)' % str(e)
 
 def findType(name, module):
     cachedTypes = module.GetTypes()
@@ -115,27 +151,79 @@ class CrystalHashSyntheticProvider:
     def __init__(self, valobj, internal_dict):
         self.valobj = valobj
         self.entries = []
+        self._updated = False
 
     def update(self):
-        _, self.entries = live_hash_entries(self.valobj)
+        hash_raw, entries = live_hash_entries(self.valobj)
+        size = int(hash_raw.GetChildAtIndex(3).GetValueAsUnsigned())
+        self.entries = []
+
+        for entry in entries:
+            key = entry.GetChildAtIndex(1)
+            value = entry.GetChildAtIndex(2)
+            child = value.Clone('[%s]' % value_summary(key))
+            if child.IsValid():
+                self.entries.append(child)
+
+            if len(self.entries) >= size:
+                break
+
+        self._updated = True
+
+    def _ensure_updated(self):
+        if not self._updated:
+            self.update()
 
     def num_children(self):
+        self._ensure_updated()
         return len(self.entries)
 
+    def has_children(self):
+        return self.num_children() > 0
+
     def get_child_index(self, name):
+        self._ensure_updated()
+
+        for index, child in enumerate(self.entries):
+            if child.GetName() == name:
+                return index
+
         try:
             return int(name.lstrip('[').rstrip(']'))
         except:
             return -1
 
     def get_child_at_index(self, index):
+        self._ensure_updated()
         if index >= len(self.entries):
             return None
         try:
-            return self.entries[index].Clone('[' + str(index) + ']')
+            return self.entries[index]
         except Exception as e:
             print('Hash formatter error: %s' % (str(e)))
             return None
+
+
+def CrystalHash_SummaryProvider(value, dict):
+    try:
+        hash_raw, entries = live_hash_entries(value, limit = 5)
+        size = int(hash_raw.GetChildAtIndex(3).GetValueAsUnsigned())
+
+        if size == 0:
+            return '{}'
+
+        pairs = []
+        for entry in entries:
+            key = entry.GetChildAtIndex(1)
+            item_value = entry.GetChildAtIndex(2)
+            pairs.append('%s => %s' % (value_summary(key), value_summary(item_value)))
+
+        if size > len(entries):
+            pairs.append('... (%d total)' % size)
+
+        return '{%s}' % ', '.join(pairs)
+    except Exception as e:
+        return 'Hash(...) (error: %s)' % str(e)
 
 
 def CrystalSet_SummaryProvider(value, dict):
@@ -177,8 +265,10 @@ def CrystalRange_SummaryProvider(value, dict):
 
 def __lldb_init_module(debugger, dict):
     debugger.HandleCommand(r'type synthetic add -l crystal_formatters.CrystalArraySyntheticProvider -x "^Array\(.+\)(\s*\**)?" -w Crystal')
+    debugger.HandleCommand(r'type summary add -e -F crystal_formatters.CrystalArray_SummaryProvider -x "^Array\(.+\)(\s*\**)?" -w Crystal')
     debugger.HandleCommand(r'type summary add -F crystal_formatters.CrystalString_SummaryProvider -x "^(String|\(String \| Nil\))(\s*\**)?$" -w Crystal')
     debugger.HandleCommand(r'type synthetic add -l crystal_formatters.CrystalHashSyntheticProvider -x "^Hash\(.+,.+\)(\s*\**)?" -w Crystal')
+    debugger.HandleCommand(r'type summary add -e -F crystal_formatters.CrystalHash_SummaryProvider -x "^Hash\(.+,.+\)(\s*\**)?" -w Crystal')
     debugger.HandleCommand(r'type summary add -F crystal_formatters.CrystalSet_SummaryProvider -x "^Set\(.+\)(\s*\**)?" -w Crystal')
     debugger.HandleCommand(r'type summary add -F crystal_formatters.CrystalRange_SummaryProvider -x "^Range\(.+,.+\)(\s*\**)?" -w Crystal')
     debugger.HandleCommand(r'type category enable Crystal')
