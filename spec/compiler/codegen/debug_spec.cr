@@ -220,6 +220,24 @@ describe "Code gen: debug" do
     str.should contain(%(~A:const_init))
   end
 
+  it "emits global debug info once for constants read before assignment" do
+    mod = codegen(<<-CRYSTAL, debug: Crystal::Debug::All)
+      require "prelude"
+
+      struct Bar
+        def initialize(@x : Int32)
+        end
+      end
+
+      A
+      A = Bar.new(41)
+      CRYSTAL
+
+    str = mod.to_s
+    str.scan(%r{DIGlobalVariable\(name: "A", linkageName: "A",}).size.should eq(1)
+    str.should contain(%(~A:const_init))
+  end
+
   it "keeps literal constants inlined in debug mode" do
     mod = codegen(<<-CRYSTAL, debug: Crystal::Debug::All)
       A = 1
