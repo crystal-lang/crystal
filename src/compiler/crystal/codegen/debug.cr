@@ -308,6 +308,7 @@ module Crystal
       element_types = [] of LibLLVM::MetadataRef
       struct_type = llvm_typer.proc_type
       size_ptr = 8u64 * llvm_typer.pointer_size
+      di_builder = di_builder()
 
       arg_types = type.arg_types.compact_map { |arg_type| get_debug_type(arg_type).as(LibLLVM::MetadataRef?) }
       return_type = get_debug_type(type.return_type)
