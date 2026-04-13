@@ -230,6 +230,17 @@ describe "Code gen: debug" do
     str.should contain(%(~A:const_init))
   end
 
+  it "keeps literal constants inlined in debug mode" do
+    mod = codegen(<<-CRYSTAL, debug: Crystal::Debug::All)
+      A = 1
+      A
+      CRYSTAL
+
+    str = mod.to_s
+    str.should_not match(/^@A =/)
+    str.should contain("ret i32 1")
+  end
+
   it "emits global debug info for class vars" do
     mod = codegen(<<-CRYSTAL, debug: Crystal::Debug::All)
       class Foo

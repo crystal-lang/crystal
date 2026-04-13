@@ -346,29 +346,22 @@ class Crystal::CodeGenVisitor
     location = location.expanded_location
     return unless location
 
-    old_llvm_mod = @llvm_mod
-    @llvm_mod = @main_mod
+    debug_type = in_main { get_debug_type(class_var.type) }
+    return unless debug_type
 
-    begin
-      debug_type = get_debug_type(class_var.type)
-      return unless debug_type
+    file, dir = file_and_dir(location.filename)
+    file_metadata = di_builder(@main_mod).create_file(file, dir)
+    global_name = class_var_global_name(class_var)
+    gv_expr = di_builder(@main_mod).create_global_variable_expression(
+      scope: file_metadata,
+      name: global_name,
+      linkage_name: global_name,
+      file: file_metadata,
+      line: location.line_number,
+      type: debug_type,
+      local_to_unit: @single_module
+    )
 
-      file, dir = file_and_dir(location.filename)
-      file_metadata = di_builder(@main_mod).create_file(file, dir)
-      global_name = class_var_global_name(class_var)
-      gv_expr = di_builder(@main_mod).create_global_variable_expression(
-        scope: file_metadata,
-        name: global_name,
-        linkage_name: global_name,
-        file: file_metadata,
-        line: location.line_number,
-        type: debug_type,
-        local_to_unit: @single_module
-      )
-
-      global.add_debug_info(gv_expr)
-    ensure
-      @llvm_mod = old_llvm_mod
-    end
+    global.add_debug_info(gv_expr)
   end
 end
