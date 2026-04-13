@@ -65,19 +65,17 @@ class Crystal::CodeGenVisitor
   end
 
   private def declare_const_debug_info(global, const)
-    location = const.locations.try &.first?
-    return unless location
-
-    location = location.try &.expanded_location
+    location = const.locations.try(&.first?).try(&.expanded_location)
     return unless location
 
     debug_type = in_main { get_debug_type(const.value.type) }
     return unless debug_type
 
     file, dir = file_and_dir(location.filename)
-    file_metadata = di_builder(@main_mod).create_file(file, dir)
+    builder = di_builder(@main_mod)
+    file_metadata = builder.create_file(file, dir)
 
-    gv_expr = di_builder(@main_mod).create_global_variable_expression(
+    gv_expr = builder.create_global_variable_expression(
       scope: file_metadata,
       name: const.llvm_name,
       linkage_name: const.llvm_name,

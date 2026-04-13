@@ -337,22 +337,17 @@ class Crystal::CodeGenVisitor
   end
 
   private def declare_class_var_debug_info(global, class_var)
-    initializer = class_var.initializer
-    return unless initializer
-
-    location = initializer.node.location
-    return unless location
-
-    location = location.expanded_location
+    location = class_var.initializer.try(&.node.location).try(&.expanded_location)
     return unless location
 
     debug_type = in_main { get_debug_type(class_var.type) }
     return unless debug_type
 
     file, dir = file_and_dir(location.filename)
-    file_metadata = di_builder(@main_mod).create_file(file, dir)
+    builder = di_builder(@main_mod)
+    file_metadata = builder.create_file(file, dir)
     global_name = class_var_global_name(class_var)
-    gv_expr = di_builder(@main_mod).create_global_variable_expression(
+    gv_expr = builder.create_global_variable_expression(
       scope: file_metadata,
       name: global_name,
       linkage_name: global_name,
