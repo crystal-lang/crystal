@@ -216,8 +216,6 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
 
   {% unless flag?(:preview_mt) %}
     def after_fork : Nil
-      # @main_ring.close
-      # @main_ring = self.class.create_ring
     end
   {% end %}
 
