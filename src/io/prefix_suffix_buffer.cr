@@ -51,8 +51,10 @@ class IO::PrefixSuffixBuffer < IO
       ring_pos = -suffix.bytesize
     end
 
-    # The first chunk goes to the ring buffer after `ring_pos`
-    slice += fill(suffix, slice, ((@pos - @prefix.bytesize).clamp(0..) + ring_pos) % suffix.bytesize) if suffix.bytesize > 0
+    if suffix.bytesize > 0
+      # The first chunk goes to the ring buffer after `ring_pos`
+      slice += fill(suffix, slice, ((@pos - @prefix.bytesize).clamp(0..) + ring_pos) % suffix.bytesize)
+    end
 
     # The second chunk goes to the ring buffer before `ring_pos`
     fill(suffix, slice, 0)
