@@ -1,6 +1,36 @@
 import lldb
 
 
+def _valid_lldb_value(value):
+    return value is not None and value.IsValid() and value.GetError().Success()
+
+
+def _available_lldb_value(value):
+    if not _valid_lldb_value(value):
+        return False
+
+    try:
+        if not value.IsInScope():
+            return False
+    except Exception:
+        pass
+
+    try:
+        declaration = value.GetDeclaration()
+        frame_line = value.GetFrame().GetLineEntry().GetLine()
+        declaration_line = declaration.GetLine()
+        if declaration_line != 0 and frame_line != 0 and declaration_line > frame_line:
+            return False
+    except Exception:
+        pass
+
+    return True
+
+
+def _has_non_null_pointer(value):
+    return not value.TypeIsPointerType() or value.GetValueAsUnsigned(0) != 0
+
+
 def dereference(value):
     if value.TypeIsPointerType():
         return value.Dereference()
@@ -8,6 +38,8 @@ def dereference(value):
 
 
 def raw_value(value):
+    if not _available_lldb_value(value) or not _has_non_null_pointer(value):
+        return None
     return dereference(value).GetNonSyntheticValue()
 
 
@@ -25,6 +57,9 @@ def value_summary(value):
 
 def live_hash_entries(value, limit = None):
     hash_raw = raw_value(value)
+    if hash_raw is None:
+        return None, []
+
     size = int(hash_raw.GetChildAtIndex(3).GetValueAsUnsigned())
     if size == 0:
         return hash_raw, []
@@ -65,6 +100,11 @@ class CrystalArraySyntheticProvider:
 
     def update(self):
         value = raw_value(self.valobj)
+        if value is None:
+            self.size = 0
+            self.buffer = None
+            self._updated = True
+            return
         self.type = value.GetType()
         self.size = value.GetChildAtIndex(0).GetValueAsUnsigned(0)
         self.buffer = value.GetChildAtIndex(3)
@@ -93,6 +133,8 @@ class CrystalArraySyntheticProvider:
         if index >= self.size:
             return None
         try:
+            if self.buffer is None:
+                return None
             elementType = self.buffer.GetType().GetPointeeType()
             offset = elementType.GetByteSize() * index
             return self.buffer.CreateChildAtOffset('[' + str(index) + ']', offset, elementType)
@@ -104,6 +146,8 @@ class CrystalArraySyntheticProvider:
 def CrystalArray_SummaryProvider(value, dict):
     try:
         value = raw_value(value)
+        if value is None:
+            return None
         size = value.GetChildAtIndex(0).GetValueAsUnsigned(0)
         if size == 0:
             return '[]'
@@ -135,16 +179,35 @@ def findType(name, module):
 
 
 def CrystalString_SummaryProvider(value, dict):
-    error = lldb.SBError()
-    if value.TypeIsPointerType():
-        value = value.Dereference()
-    process = value.GetTarget().GetProcess()
-    byteSize = int(value.child[0].value)
-    len = int(value.child[1].value)
-    len = byteSize or len
-    strAddr = value.child[2].load_addr
-    val = process.ReadCStringFromMemory(strAddr, len + 1, error)
-    return '"%s"' % val
+    try:
+        if not _available_lldb_value(value) or not _has_non_null_pointer(value):
+            return None
+        if value.TypeIsPointerType():
+            if value.GetValueAsUnsigned(0) == 0:
+                return None
+            value = value.Dereference()
+
+        value = value.GetNonSyntheticValue()
+        byte_size = value.GetChildAtIndex(0).GetValue()
+        length = value.GetChildAtIndex(1).GetValue()
+        buffer = value.GetChildAtIndex(2)
+        if byte_size is None or length is None or not buffer.IsValid():
+            return None
+
+        byte_size = int(byte_size)
+        length = int(length)
+        length = byte_size or length
+        str_addr = buffer.GetLoadAddress()
+        if str_addr == lldb.LLDB_INVALID_ADDRESS:
+            return None
+
+        error = lldb.SBError()
+        val = value.GetTarget().GetProcess().ReadCStringFromMemory(str_addr, length + 1, error)
+        if not error.Success():
+            return None
+        return '"%s"' % val
+    except Exception:
+        return None
 
 
 class CrystalHashSyntheticProvider:
@@ -155,6 +218,10 @@ class CrystalHashSyntheticProvider:
 
     def update(self):
         hash_raw, entries = live_hash_entries(self.valobj)
+        if hash_raw is None:
+            self.entries = []
+            self._updated = True
+            return
         size = int(hash_raw.GetChildAtIndex(3).GetValueAsUnsigned())
         self.entries = []
 
@@ -207,6 +274,8 @@ class CrystalHashSyntheticProvider:
 def CrystalHash_SummaryProvider(value, dict):
     try:
         hash_raw, entries = live_hash_entries(value, limit = 5)
+        if hash_raw is None:
+            return None
         size = int(hash_raw.GetChildAtIndex(3).GetValueAsUnsigned())
 
         if size == 0:
@@ -228,9 +297,13 @@ def CrystalHash_SummaryProvider(value, dict):
 
 def CrystalSet_SummaryProvider(value, dict):
     try:
+        if not _available_lldb_value(value) or not _has_non_null_pointer(value):
+            return None
         value = dereference(value)
         hash_ptr = value.GetChildAtIndex(0)
         hash_raw, entries = live_hash_entries(hash_ptr, limit = 10)
+        if hash_raw is None:
+            return None
         size = int(hash_raw.GetChildAtIndex(3).GetValueAsUnsigned())
 
         if size == 0:
@@ -250,6 +323,8 @@ def CrystalSet_SummaryProvider(value, dict):
 
 def CrystalRange_SummaryProvider(value, dict):
     try:
+        if not _available_lldb_value(value) or not _has_non_null_pointer(value):
+            return None
         value = dereference(value)
         begin_val = value.GetChildAtIndex(0).GetValue()
         end_val = value.GetChildAtIndex(1).GetValue()
