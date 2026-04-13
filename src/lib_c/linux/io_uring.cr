@@ -151,7 +151,7 @@ lib LibC
     pipe_flags : UInt32
   end
 
-  # @[Packed]
+  @[Packed]
   union IoUringSqe__u4
     buf_index : UInt16
     buf_group : UInt16
