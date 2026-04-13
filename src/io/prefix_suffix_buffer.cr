@@ -12,7 +12,7 @@ class IO::PrefixSuffixBuffer < IO
   #
   # The maximum size that this instance can consume without omitting data is
   # `size * 2`.
-  def self.new(size : Int32 = 32) : self
+  def self.new(size : Int32 = IO::DEFAULT_BUFFER_SIZE) : self
     buffer_size = size * 2
     String.check_capacity_in_bounds(buffer_size)
 

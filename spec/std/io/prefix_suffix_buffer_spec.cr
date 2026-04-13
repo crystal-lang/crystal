@@ -21,12 +21,12 @@ describe IO::PrefixSuffixBuffer do
   end
 
   it "#total_size" do
-    (IO::PrefixSuffixBuffer.new << "foo").total_size.should eq(3)
+    (IO::PrefixSuffixBuffer.new(32) << "foo").total_size.should eq(3)
   end
 
   describe "#write" do
     it "writes" do
-      io = IO::PrefixSuffixBuffer.new
+      io = IO::PrefixSuffixBuffer.new(32)
       io.total_size.should eq(0)
       io.write Slice.new("hello".to_unsafe, 3)
       io.total_size.should eq(3)
@@ -41,13 +41,13 @@ describe IO::PrefixSuffixBuffer do
     end
 
     it "writes single byte" do
-      io = IO::PrefixSuffixBuffer.new
+      io = IO::PrefixSuffixBuffer.new(32)
       io.write_byte 97_u8
       io.to_s.should eq("a")
     end
 
     it "writes multiple times" do
-      io = IO::PrefixSuffixBuffer.new
+      io = IO::PrefixSuffixBuffer.new(32)
       io << "foo" << "bar"
       io.to_s.should eq("foobar")
     end
@@ -67,10 +67,10 @@ describe IO::PrefixSuffixBuffer do
 
   describe "#to_s" do
     it "appends to another buffer" do
-      s1 = IO::PrefixSuffixBuffer.new
+      s1 = IO::PrefixSuffixBuffer.new(32)
       s1 << "hello"
 
-      s2 = IO::PrefixSuffixBuffer.new
+      s2 = IO::PrefixSuffixBuffer.new(32)
       s1.to_s(s2)
       s2.to_s.should eq("hello")
     end
