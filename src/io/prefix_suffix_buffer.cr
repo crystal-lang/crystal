@@ -7,6 +7,7 @@ require "io"
 # are preserved.
 # `#to_s` renders the buffer contents with a message indicating how many
 # bytes were omitted.
+@[Experimental]
 class IO::PrefixSuffixBuffer < IO
   # Creates an instance with prefix and suffix buffers of the given size.
   #
