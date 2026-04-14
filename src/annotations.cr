@@ -91,8 +91,7 @@ end
 annotation Experimental
 end
 
-# The annotation allows to assume special CPU features for a method, or a
-# specific CPU model.
+# The annotation allows to assume special CPU model/features for a method.
 #
 # It is similar to the `--cpu` and `--mattr` build arguments, but where the
 # scope is limited to the annotated `def` or `fun`. It allows to compile a single
