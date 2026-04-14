@@ -744,7 +744,7 @@ struct Path
   # If *expand_base* is `true`, *base* itself will be expanded in `Dir.current`
   # if it is not an absolute path. This guarantees the method returns an absolute
   # path (assuming that `Dir.current` is absolute).
-  def expand(base : Path | String = Dir.current, *, home : Path | String | Bool = false, expand_base = true) : Path
+  def expand(base : Path | String = Dir.current, *, home : Path | String | Bool = false, expand_base = true, normalize : Bool = true) : Path
     base = Path.new(base) unless base.is_a?(Path)
     base = base.to_kind(@kind)
     if base == self
@@ -810,7 +810,8 @@ struct Path
     end
 
     expanded = new_instance(expanded) unless expanded.is_a?(Path)
-    expanded.normalize(remove_final_separator: false)
+    expanded = expanded.normalize(remove_final_separator: false) if normalize
+    expanded
   end
 
   private def resolve_home(home)

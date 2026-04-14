@@ -4,11 +4,29 @@ class Dir
   # The pattern syntax is similar to shell filename globbing, see `File.match?` for details.
   #
   # NOTE: Path separator in patterns needs to be always `/`. The returned file names use system-specific path separators.
+  def self.[](*patterns : String,
+              match : File::MatchOptions = File::MatchOptions.glob_default,
+              follow_symlinks : Bool = false,
+              base : Path | String = "") : Array(String)
+    glob(patterns, match: match, follow_symlinks: follow_symlinks, base: base)
+  end
+
+  # :ditto:
+  @[Deprecated("Provide patterns as `String`")]
   def self.[](*patterns : Path | String, match : File::MatchOptions = File::MatchOptions.glob_default, follow_symlinks : Bool = false) : Array(String)
     glob(patterns, match: match, follow_symlinks: follow_symlinks)
   end
 
   # :ditto:
+  def self.[](patterns : Enumerable(String),
+              match : File::MatchOptions = File::MatchOptions.glob_default,
+              follow_symlinks : Bool = false,
+              base : Path | String = "") : Array(String)
+    glob(patterns, match: match, follow_symlinks: follow_symlinks, base: base)
+  end
+
+  # :ditto:
+  @[Deprecated("Provide patterns as `Enumerable(String)`")]
   def self.[](patterns : Enumerable, match : File::MatchOptions = File::MatchOptions.glob_default, follow_symlinks : Bool = false) : Array(String)
     glob(patterns, match: match, follow_symlinks: follow_symlinks)
   end
@@ -44,11 +62,33 @@ class Dir
   # The pattern syntax is similar to shell filename globbing, see `File.match?` for details.
   #
   # NOTE: Path separator in patterns needs to be always `/`. The returned file names use system-specific path separators.
+  def self.glob(*patterns : String,
+                match : File::MatchOptions = File::MatchOptions.glob_default,
+                follow_symlinks : Bool = false,
+                base : Path | String = "") : Array(String)
+    glob(patterns, match: match, follow_symlinks: follow_symlinks, base: base)
+  end
+
+  # :ditto:
+  @[Deprecated("Provide patterns as `String`")]
   def self.glob(*patterns : Path | String, match : File::MatchOptions = File::MatchOptions.glob_default, follow_symlinks : Bool = false) : Array(String)
     glob(patterns, match: match, follow_symlinks: follow_symlinks)
   end
 
   # :ditto:
+  def self.glob(patterns : Enumerable(String), *,
+                match : File::MatchOptions = File::MatchOptions.glob_default,
+                follow_symlinks : Bool = false,
+                base : Path | String = "") : Array(String)
+    paths = [] of String
+    glob(patterns, match: match, follow_symlinks: follow_symlinks, base: base) do |path|
+      paths << path
+    end
+    paths
+  end
+
+  # :ditto:
+  @[Deprecated("Provide patterns as `Enumerable(String)`")]
   def self.glob(patterns : Enumerable, match : File::MatchOptions = File::MatchOptions.glob_default, follow_symlinks : Bool = false) : Array(String)
     paths = [] of String
     glob(patterns, match: match, follow_symlinks: follow_symlinks) do |path|
@@ -64,7 +104,7 @@ class Dir
   # equivalent to
   # `match: File::MatchOptions.glob_default | File::MatchOptions::DotFiles`.
   @[Deprecated("Use the overload with a `match` parameter instead")]
-  def self.glob(*patterns : Path | String, match_hidden : Bool, follow_symlinks : Bool = false) : Array(String)
+  def self.glob(*patterns : Path | String, match_hidden : Bool, follow_symlinks : Bool = false)
     glob(patterns, match: match_hidden_to_options(match_hidden), follow_symlinks: follow_symlinks)
   end
 
@@ -88,6 +128,18 @@ class Dir
   # The pattern syntax is similar to shell filename globbing, see `File.match?` for details.
   #
   # NOTE: Path separator in patterns needs to be always `/`. The returned file names use system-specific path separators.
+  def self.glob(*patterns : String,
+                match : File::MatchOptions = File::MatchOptions.glob_default,
+                follow_symlinks : Bool = false,
+                base : Path | String = "",
+                &block : String -> _)
+    glob(patterns, match: match, follow_symlinks: follow_symlinks, base: base) do |path|
+      yield path
+    end
+  end
+
+  # :ditto:
+  @[Deprecated("Provide patterns as `String`")]
   def self.glob(*patterns : Path | String, match : File::MatchOptions = File::MatchOptions.glob_default, follow_symlinks : Bool = false, &block : String -> _)
     glob(patterns, match: match, follow_symlinks: follow_symlinks) do |path|
       yield path
@@ -95,8 +147,20 @@ class Dir
   end
 
   # :ditto:
+  def self.glob(patterns : Enumerable(String), *,
+                match : File::MatchOptions = File::MatchOptions.glob_default,
+                follow_symlinks : Bool = false,
+                base : Path | String = "",
+                &block : String -> _)
+    Globber.glob(patterns, match: match, follow_symlinks: follow_symlinks, base: base) do |path|
+      yield path
+    end
+  end
+
+  # :ditto:
+  @[Deprecated("Provide patterns as `Enumerable(String)`")]
   def self.glob(patterns : Enumerable, match : File::MatchOptions = File::MatchOptions.glob_default, follow_symlinks : Bool = false, &block : String -> _)
-    Globber.glob(patterns, match: match, follow_symlinks: follow_symlinks) do |path|
+    Globber.glob(patterns, match: match, follow_symlinks: follow_symlinks, base: "") do |path|
       yield path
     end
   end
@@ -152,7 +216,7 @@ class Dir
     end
     alias PatternType = DirectoriesOnly | ConstantEntry | EntryMatch | RecursiveDirectories | ConstantDirectory | RootDirectory | DirectoryMatch
 
-    def self.glob(patterns : Enumerable, *, match, follow_symlinks, &block : String -> _)
+    def self.glob(patterns : Enumerable, *, match, follow_symlinks, base, &block : String -> _)
       patterns.each do |pattern|
         if pattern.is_a?(Path)
           pattern = pattern.to_posix.to_s
@@ -161,12 +225,12 @@ class Dir
 
         sequences.each do |sequence|
           if sequence.count(&.is_a?(RecursiveDirectories)) > 1
-            run_tracking(sequence, match: match, follow_symlinks: follow_symlinks) do |match|
-              yield match
+            run_tracking(sequence, match: match, follow_symlinks: follow_symlinks, base: base) do |match|
+              yield Path[match].expand(base, expand_base: false, normalize: false).to_s
             end
           else
-            run(sequence, match: match, follow_symlinks: follow_symlinks) do |match|
-              yield match
+            run(sequence, match: match, follow_symlinks: follow_symlinks, base: base) do |match|
+              yield Path[match].expand(base, expand_base: false, normalize: false).to_s
             end
           end
         end
@@ -233,17 +297,17 @@ class Dir
       true
     end
 
-    private def self.run_tracking(sequence, match, follow_symlinks, &block : String -> _)
+    private def self.run_tracking(sequence, match, follow_symlinks, base, &block : String -> _)
       result_tracker = Set(String).new
 
-      run(sequence, match, follow_symlinks) do |result|
+      run(sequence, match, follow_symlinks, base) do |result|
         if result_tracker.add?(result)
           yield result
         end
       end
     end
 
-    private def self.run(sequence, match, follow_symlinks, &block : String -> _)
+    private def self.run(sequence, match, follow_symlinks, base, &block : String -> _)
       return if sequence.empty?
 
       path_stack = [] of Tuple(Int32, String?, Crystal::System::Dir::Entry?)
@@ -257,7 +321,7 @@ class Dir
         case cmd
         in RootDirectory
           raise "Unreachable" if path
-          path_stack << {next_pos, root, nil}
+          path_stack << {next_pos, root_anchor(base), nil}
         in DirectoriesOnly
           raise "Unreachable" unless path
           # FIXME: [win32] File::SEPARATOR_STRING comparison is not sufficient for Windows paths.
@@ -269,25 +333,25 @@ class Dir
 
           if dir_entry && !dir_entry.dir?.nil?
             yield fullpath
-          elsif dir?(fullpath, follow_symlinks)
+          elsif dir?(fullpath, follow_symlinks, base: base)
             yield fullpath
           end
         in EntryMatch
           next if sequence[pos + 1]?.is_a?(RecursiveDirectories)
-          each_child(path) do |entry|
+          each_child(path, base: base) do |entry|
             next unless matches_file?(entry, match)
             yield join(path, entry.name) if cmd.matches?(entry.name)
           end
         in DirectoryMatch
           next_cmd = sequence[next_pos]?
 
-          each_child(path) do |entry|
+          each_child(path, base: base) do |entry|
             next unless matches_file?(entry, match)
             if cmd.matches?(entry.name)
               is_dir = entry.dir?
               fullpath = join(path, entry.name)
               if is_dir.nil?
-                is_dir = dir?(fullpath, follow_symlinks)
+                is_dir = dir?(fullpath, follow_symlinks, base: base)
               end
               if is_dir
                 path_stack << {next_pos, fullpath, entry}
@@ -299,7 +363,7 @@ class Dir
             next if sequence[pos + 1]?.is_a?(RecursiveDirectories)
           end
           full = join(path, cmd.path)
-          yield full if File.exists?(full) || File.symlink?(full)
+          yield full if exists?(full, base: base)
         in ConstantDirectory
           path_stack << {next_pos, join(path, cmd.path), nil}
           # Don't check if full exists. It just costs us time
@@ -312,7 +376,7 @@ class Dir
           dir_stack = [] of Dir
           dir_path_stack = [dir_path]
           begin
-            dir = Dir.new(path || ".")
+            dir = Dir.new(Path[path || "."].expand(base, expand_base: false))
             dir_stack << dir
           rescue File::Error
             next
@@ -322,7 +386,7 @@ class Dir
           until dir_path_stack.empty?
             if recurse
               begin
-                dir = Dir.new(dir_path)
+                dir = Dir.new(Path[dir_path].expand(base, expand_base: false))
               rescue File::Error
                 dir_path_stack.pop
                 break if dir_path_stack.empty?
@@ -355,7 +419,7 @@ class Dir
 
               is_dir = entry.dir?
               if is_dir.nil?
-                is_dir = dir?(fullpath, follow_symlinks)
+                is_dir = dir?(fullpath, follow_symlinks, base: base)
               end
 
               if is_dir
@@ -379,27 +443,31 @@ class Dir
       end
     end
 
-    private def self.root
-      Path[Dir.current].anchor.not_nil!.to_s
+    private def self.root_anchor(base)
+      Path[base].expand.anchor.not_nil!.to_s
     end
 
-    private def self.dir?(path, follow_symlinks)
-      if info = File.info?(path, follow_symlinks: follow_symlinks)
+    private def self.dir?(path, follow_symlinks, base)
+      if info = File.info?(Path[path].expand(base, expand_base: false), follow_symlinks: follow_symlinks)
         info.type.directory?
       else
         false
       end
     end
 
+    private def self.exists?(path, base)
+      expanded = Path[path].expand(base, expand_base: false)
+      File.exists?(expanded) || File.symlink?(expanded)
+    end
+
     private def self.join(path, entry)
       return entry unless path
-      return "#{root}#{entry}" if path == File::SEPARATOR_STRING
 
       File.join(path, entry)
     end
 
-    private def self.each_child(path, &)
-      Dir.open(path || Dir.current) do |dir|
+    private def self.each_child(path, base, &)
+      Dir.open(Path[path || "."].expand(base, expand_base: false)) do |dir|
         while entry = read_entry(dir)
           next if entry.name.in?(".", "..")
           yield entry
