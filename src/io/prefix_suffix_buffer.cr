@@ -1,4 +1,4 @@
-require "io/memory"
+require "io"
 
 # `PrefixSuffixBuffer` is an `IO` that retains the first bytes in the prefix
 # buffer and the last bytes in the suffix buffer.
