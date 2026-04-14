@@ -95,7 +95,7 @@ end
 # specific CPU model.
 #
 # It is similar to the `--cpu` and `--mattr` build arguments, but where the
-# scope is limited to annotated `def` or `fun`. It allows to compile a single
+# scope is limited to the annotated `def` or `fun`. It allows to compile a single
 # executable, yet allow some optimized functions that will only run when
 # available, such as specific SIMD instructions for example.
 #
@@ -129,7 +129,7 @@ end
 # end
 # ```
 #
-# WARNING: when a method has been compiled with a feature and that feature is
+# WARNING: When a method has been compiled with a feature and that feature is
 # not supported at runtime, calling this method will result in an illegal
 # instruction, and is undefined behaviour.
 annotation TargetFeature
