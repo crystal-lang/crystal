@@ -38,7 +38,7 @@ class Crystal::Command
       elsif File.file?(path)
         yield Compiler::Source.new(path, File.read(path))
       elsif Dir.exists?(path)
-        Dir.glob(::Path[path].to_posix.join("**/*.cr")) do |dir_path|
+        Dir.glob("**/*.cr", base: path) do |dir_path|
           if File.file?(dir_path)
             yield Compiler::Source.new(path, File.read(dir_path))
           end
