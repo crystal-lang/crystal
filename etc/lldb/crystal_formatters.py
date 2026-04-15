@@ -1,4 +1,19 @@
 import lldb
+import os
+
+
+def _env_int(name, default):
+    try:
+        value = int(os.environ.get(name, default))
+        if value > 0:
+            return value
+    except Exception:
+        pass
+    return default
+
+
+MAX_SYNTHETIC_CHILDREN = _env_int('CRYSTAL_LLDB_MAX_SYNTHETIC_CHILDREN', 256)
+MAX_HASH_SCAN = _env_int('CRYSTAL_LLDB_MAX_HASH_SCAN', 4096)
 
 
 def _valid_lldb_value(value):
@@ -55,7 +70,7 @@ def value_summary(value):
     return value.GetTypeName()
 
 
-def live_hash_entries(value, limit = None):
+def live_hash_entries(value, limit=None):
     hash_raw = raw_value(value)
     if hash_raw is None:
         return None, []
@@ -70,7 +85,7 @@ def live_hash_entries(value, limit = None):
     entries = hash_raw.GetChildAtIndex(1)
     entry_type = entries.GetType().GetPointeeType()
     entry_size = entry_type.GetByteSize()
-    target_size = size if limit is None else min(size, limit)
+    target_size = min(size, MAX_SYNTHETIC_CHILDREN if limit is None else limit)
     result = []
 
     if first == deleted_count:
@@ -81,12 +96,14 @@ def live_hash_entries(value, limit = None):
         return hash_raw, result
 
     entry_index = first
-    while entry_index < total_entries and len(result) < target_size:
+    scanned = 0
+    while entry_index < total_entries and len(result) < target_size and scanned < MAX_HASH_SCAN:
         offset = entry_size * entry_index
         entry = entries.CreateChildAtOffset('', offset, entry_type)
         if entry.GetChildAtIndex(0).GetValueAsUnsigned() != 0:
             result.append(entry)
         entry_index += 1
+        scanned += 1
 
     return hash_raw, result
 
@@ -117,7 +134,7 @@ class CrystalArraySyntheticProvider:
     def num_children(self):
         self._ensure_updated()
         size = 0 if self.size is None else self.size
-        return size
+        return min(size, MAX_SYNTHETIC_CHILDREN)
 
     def has_children(self):
         return self.num_children() > 0
@@ -130,7 +147,7 @@ class CrystalArraySyntheticProvider:
 
     def get_child_at_index(self, index):
         self._ensure_updated()
-        if index >= self.size:
+        if index >= self.size or index >= MAX_SYNTHETIC_CHILDREN:
             return None
         try:
             if self.buffer is None:
