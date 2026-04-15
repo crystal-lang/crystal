@@ -45,8 +45,8 @@ def _available_lldb_value(value):
     return True
 
 
-def _has_non_null_pointer(value):
-    return not value.TypeIsPointerType() or value.GetValueAsUnsigned(0) != 0
+def _has_null_pointer(value):
+    return value.TypeIsPointerType() and value.GetValueAsUnsigned(0) == 0
 
 
 def _valid_child(value, index):
@@ -157,7 +157,7 @@ def dereference(value):
 
 
 def raw_value(value):
-    if not _available_lldb_value(value) or not _has_non_null_pointer(value):
+    if not _available_lldb_value(value) or _has_null_pointer(value):
         return None
     return dereference(value).GetNonSyntheticValue()
 
@@ -328,7 +328,7 @@ def findType(name, module):
 
 def CrystalString_SummaryProvider(value, dict):
     try:
-        if not _available_lldb_value(value) or not _has_non_null_pointer(value):
+        if not _available_lldb_value(value) or _has_null_pointer(value):
             return None
         if value.TypeIsPointerType():
             if value.GetValueAsUnsigned(0) == 0:
@@ -445,7 +445,7 @@ def CrystalHash_SummaryProvider(value, dict):
 
 def CrystalSet_SummaryProvider(value, dict):
     try:
-        if not _available_lldb_value(value) or not _has_non_null_pointer(value):
+        if not _available_lldb_value(value) or _has_null_pointer(value):
             return None
         value = dereference(value)
         hash_ptr = _child_at(value, 0)
@@ -585,7 +585,7 @@ def CrystalUnion_SummaryProvider(value, dict):
 
 def CrystalRange_SummaryProvider(value, dict):
     try:
-        if not _available_lldb_value(value) or not _has_non_null_pointer(value):
+        if not _available_lldb_value(value) or _has_null_pointer(value):
             return None
         value = dereference(value)
         begin_val = value.GetChildAtIndex(0).GetValue()
