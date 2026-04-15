@@ -14,6 +14,9 @@ def _env_int(name, default):
 
 MAX_SYNTHETIC_CHILDREN = _env_int('CRYSTAL_LLDB_MAX_SYNTHETIC_CHILDREN', 256)
 MAX_HASH_SCAN = _env_int('CRYSTAL_LLDB_MAX_HASH_SCAN', 4096)
+MAX_REASONABLE_COLLECTION_SIZE = _env_int('CRYSTAL_LLDB_MAX_REASONABLE_COLLECTION_SIZE', 10000000)
+
+TYPE_ID_SYMBOL_CACHE = {}
 
 
 def _valid_lldb_value(value):
@@ -46,6 +49,107 @@ def _has_non_null_pointer(value):
     return not value.TypeIsPointerType() or value.GetValueAsUnsigned(0) != 0
 
 
+def _valid_child(value, index):
+    try:
+        return _valid_lldb_value(value.GetChildAtIndex(index))
+    except Exception:
+        return False
+
+
+def _child_at(value, index):
+    if not _valid_child(value, index):
+        return None
+    return value.GetChildAtIndex(index)
+
+
+def _child_by_name(value, name):
+    try:
+        child = value.GetChildMemberWithName(name)
+        if _valid_lldb_value(child):
+            return child
+    except Exception:
+        pass
+    return None
+
+
+def _unsigned_value(value, default=None):
+    if not _valid_lldb_value(value) or value.GetValue() is None:
+        return default
+
+    try:
+        return value.GetValueAsUnsigned(default if default is not None else 0)
+    except Exception:
+        return default
+
+
+def _unsigned_child(value, index, default=None):
+    child = _child_at(value, index)
+    if child is None:
+        return default
+    return _unsigned_value(child, default)
+
+
+def _reasonable_size(size):
+    return size is not None and size <= MAX_REASONABLE_COLLECTION_SIZE
+
+
+def _valid_pointer_value(value):
+    return _valid_lldb_value(value) and value.GetValueAsUnsigned(0) != 0
+
+
+def _valid_element_storage(pointer, element_type, size):
+    if size == 0:
+        return True
+    if not _valid_pointer_value(pointer):
+        return False
+    return _valid_lldb_value(pointer) and element_type.IsValid() and element_type.GetByteSize() > 0
+
+
+def _read_uint32(target, address):
+    if address == lldb.LLDB_INVALID_ADDRESS:
+        return None
+
+    process = target.GetProcess()
+    if not process.IsValid():
+        return None
+
+    error = lldb.SBError()
+    data = process.ReadMemory(address, 4, error)
+    if not error.Success() or len(data) != 4:
+        return None
+
+    try:
+        byte_order = target.GetByteOrder()
+        endian = 'big' if byte_order == lldb.eByteOrderBig else 'little'
+    except Exception:
+        endian = 'little'
+    return int.from_bytes(bytes(data), byteorder=endian)
+
+
+def crystal_type_id(target, type_name):
+    if type_name == 'Nil':
+        return 0
+
+    key = (target.GetProcess().GetProcessID(), type_name)
+    if key in TYPE_ID_SYMBOL_CACHE:
+        return TYPE_ID_SYMBOL_CACHE[key]
+
+    result = None
+    symbols = target.FindSymbols('%s:type_id' % type_name)
+    for index in range(symbols.GetSize()):
+        symbol = symbols.GetContextAtIndex(index).GetSymbol()
+        if not symbol.IsValid():
+            continue
+
+        address = symbol.GetStartAddress().GetLoadAddress(target)
+        result = _read_uint32(target, address)
+        if result is not None:
+            break
+
+    TYPE_ID_SYMBOL_CACHE[key] = result
+    return result
+
+
 def dereference(value):
     if value.TypeIsPointerType():
         return value.Dereference()
@@ -75,16 +179,30 @@ def live_hash_entries(value, limit=None):
     if hash_raw is None:
         return None, []
 
-    size = int(hash_raw.GetChildAtIndex(3).GetValueAsUnsigned())
+    size = _unsigned_child(hash_raw, 3)
+    if not _reasonable_size(size):
+        return None, []
     if size == 0:
         return hash_raw, []
 
-    first = int(hash_raw.GetChildAtIndex(0).GetValueAsUnsigned())
-    deleted_count = int(hash_raw.GetChildAtIndex(4).GetValueAsUnsigned())
+    first = _unsigned_child(hash_raw, 0)
+    deleted_count = _unsigned_child(hash_raw, 4)
+    if first is None or deleted_count is None or not _reasonable_size(deleted_count):
+        return None, []
+
     total_entries = size + deleted_count
-    entries = hash_raw.GetChildAtIndex(1)
+    if not _reasonable_size(total_entries):
+        return None, []
+
+    entries = _child_at(hash_raw, 1)
+    if entries is None:
+        return None, []
+
     entry_type = entries.GetType().GetPointeeType()
     entry_size = entry_type.GetByteSize()
+    if not _valid_element_storage(entries, entry_type, total_entries):
+        return None, []
+
     target_size = min(size, MAX_SYNTHETIC_CHILDREN if limit is None else limit)
     result = []
 
@@ -123,8 +241,11 @@ class CrystalArraySyntheticProvider:
             self._updated = True
             return
         self.type = value.GetType()
-        self.size = value.GetChildAtIndex(0).GetValueAsUnsigned(0)
-        self.buffer = value.GetChildAtIndex(3)
+        self.size = _unsigned_child(value, 0, 0)
+        self.buffer = _child_at(value, 3)
+        if not _reasonable_size(self.size):
+            self.size = 0
+            self.buffer = None
         self._updated = True
 
     def _ensure_updated(self):
@@ -153,6 +274,8 @@ class CrystalArraySyntheticProvider:
             if self.buffer is None:
                 return None
             elementType = self.buffer.GetType().GetPointeeType()
+            if not _valid_element_storage(self.buffer, elementType, self.size):
+                return None
             offset = elementType.GetByteSize() * index
             return self.buffer.CreateChildAtOffset('[' + str(index) + ']', offset, elementType)
         except Exception as e:
@@ -165,13 +288,21 @@ def CrystalArray_SummaryProvider(value, dict):
         value = raw_value(value)
         if value is None:
             return None
-        size = value.GetChildAtIndex(0).GetValueAsUnsigned(0)
+        size = _unsigned_child(value, 0, 0)
+        if not _reasonable_size(size):
+            return None
         if size == 0:
             return '[]'
 
-        buffer = value.GetChildAtIndex(3)
+        buffer = _child_at(value, 3)
+        if buffer is None:
+            return None
+
         element_type = buffer.GetType().GetPointeeType()
         element_size = element_type.GetByteSize()
+        if not _valid_element_storage(buffer, element_type, size):
+            return None
+
         limit = min(size, 5)
         items = []
 
@@ -293,7 +424,7 @@ def CrystalHash_SummaryProvider(value, dict):
         hash_raw, entries = live_hash_entries(value, limit = 5)
         if hash_raw is None:
             return None
-        size = int(hash_raw.GetChildAtIndex(3).GetValueAsUnsigned())
+        size = _unsigned_child(hash_raw, 3, 0)
 
         if size == 0:
             return '{}'
@@ -317,11 +448,13 @@ def CrystalSet_SummaryProvider(value, dict):
         if not _available_lldb_value(value) or not _has_non_null_pointer(value):
             return None
         value = dereference(value)
-        hash_ptr = value.GetChildAtIndex(0)
+        hash_ptr = _child_at(value, 0)
+        if hash_ptr is None:
+            return None
         hash_raw, entries = live_hash_entries(hash_ptr, limit = 10)
         if hash_raw is None:
             return None
-        size = int(hash_raw.GetChildAtIndex(3).GetValueAsUnsigned())
+        size = _unsigned_child(hash_raw, 3, 0)
 
         if size == 0:
             return 'Set{}'
@@ -336,6 +469,118 @@ def CrystalSet_SummaryProvider(value, dict):
             return 'Set{' + ', '.join(elements) + '}'
     except Exception as e:
         return 'Set{...} (error: %s)' % str(e)
+
+
+def union_fields(value):
+    value = raw_value(value)
+    if value is None:
+        return None, None, None, None
+
+    type_id_value = _child_by_name(value, 'type_id')
+    union_value = _child_by_name(value, 'union')
+    if type_id_value is None or union_value is None:
+        return None, None, None, None
+
+    type_id = _unsigned_value(type_id_value)
+    if type_id is None:
+        return None, None, None, None
+
+    return value, type_id_value, union_value, type_id
+
+
+def selected_union_member(value):
+    _, _, union_value, type_id = union_fields(value)
+    if type_id is None:
+        return None, None, None
+    if type_id == 0:
+        return 'Nil', None, type_id
+
+    target = union_value.GetTarget()
+    for index in range(union_value.GetNumChildren()):
+        child = union_value.GetChildAtIndex(index)
+        if not _valid_lldb_value(child):
+            continue
+
+        type_name = child.GetName()
+        if type_name is None:
+            continue
+
+        if crystal_type_id(target, type_name) == type_id:
+            return type_name, child, type_id
+
+    return None, None, type_id
+
+
+def raw_children(value):
+    value = raw_value(value)
+    if value is None:
+        return []
+
+    result = []
+    for index in range(min(value.GetNumChildren(), MAX_SYNTHETIC_CHILDREN)):
+        child = value.GetChildAtIndex(index)
+        if _valid_lldb_value(child):
+            result.append(child)
+    return result
+
+
+class CrystalUnionSyntheticProvider:
+    def __init__(self, valobj, internal_dict):
+        self.valobj = valobj
+        self.children = []
+        self._updated = False
+
+    def update(self):
+        type_name, value, type_id = selected_union_member(self.valobj)
+        self.children = []
+        if value is not None:
+            child = value.Clone(type_name)
+            if child.IsValid():
+                self.children.append(child)
+        elif type_id is not None and type_id != 0:
+            _, type_id_value, union_value, _ = union_fields(self.valobj)
+            self.children = [child for child in (type_id_value, union_value) if child is not None]
+        elif type_id is None:
+            self.children = raw_children(self.valobj)
+        self._updated = True
+
+    def _ensure_updated(self):
+        if not self._updated:
+            self.update()
+
+    def num_children(self):
+        self._ensure_updated()
+        return len(self.children)
+
+    def has_children(self):
+        return self.num_children() > 0
+
+    def get_child_index(self, name):
+        self._ensure_updated()
+        for index, child in enumerate(self.children):
+            if child.GetName() == name:
+                return index
+        return -1
+
+    def get_child_at_index(self, index):
+        self._ensure_updated()
+        if index >= len(self.children):
+            return None
+        return self.children[index]
+
+
+def CrystalUnion_SummaryProvider(value, dict):
+    try:
+        type_name, member, type_id = selected_union_member(value)
+        if type_id is None:
+            return None
+        if type_id == 0:
+            return 'Nil'
+        if member is None:
+            return None
+        return value_summary(member)
+    except Exception:
+        return None
 
 
 def CrystalRange_SummaryProvider(value, dict):
@@ -358,6 +603,8 @@ def CrystalRange_SummaryProvider(value, dict):
 def __lldb_init_module(debugger, dict):
     debugger.HandleCommand(r'type synthetic add -l crystal_formatters.CrystalArraySyntheticProvider -x "^Array\(.+\)(\s*\**)?" -w Crystal')
     debugger.HandleCommand(r'type summary add -e -F crystal_formatters.CrystalArray_SummaryProvider -x "^Array\(.+\)(\s*\**)?" -w Crystal')
+    debugger.HandleCommand(r'type synthetic add -l crystal_formatters.CrystalUnionSyntheticProvider -x "^\(.+ \| .+\)(\s*\**)?" -w Crystal')
+    debugger.HandleCommand(r'type summary add -F crystal_formatters.CrystalUnion_SummaryProvider -x "^\(.+ \| .+\)(\s*\**)?" -w Crystal')
     debugger.HandleCommand(r'type summary add -F crystal_formatters.CrystalString_SummaryProvider -x "^(String|\(String \| Nil\))(\s*\**)?$" -w Crystal')
     debugger.HandleCommand(r'type synthetic add -l crystal_formatters.CrystalHashSyntheticProvider -x "^Hash\(.+,.+\)(\s*\**)?" -w Crystal')
     debugger.HandleCommand(r'type summary add -e -F crystal_formatters.CrystalHash_SummaryProvider -x "^Hash\(.+,.+\)(\s*\**)?" -w Crystal')
