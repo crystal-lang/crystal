@@ -159,6 +159,27 @@ module Crystal
         end
       end
 
+      # Compare block_arg restrictions
+      self_block_arg = self.def.block_arg
+      other_block_arg = other.def.block_arg
+
+      if self_block_arg && other_block_arg
+        self_block_restriction = self_block_arg.restriction
+        other_block_restriction = other_block_arg.restriction
+
+        case {self_block_restriction, other_block_restriction}
+        when {nil, nil}
+          # No change to strictness
+        when {nil, _}
+          self_is_not_stricter
+        when {_, nil}
+          other_is_not_stricter
+        else
+          self_is_not_stricter unless self_block_restriction.restriction_of?(other_block_restriction, self_owner)
+          other_is_not_stricter unless other_block_restriction.restriction_of?(self_block_restriction, other_owner)
+        end
+      end
+
       stricter_pair_to_num(self_stricter, other_stricter)
     end
 
@@ -506,6 +527,21 @@ module Crystal
         return false
       end
 
+      # Compare block_arg restrictions
+      self_block_arg = self.def.block_arg
+      other_block_arg = other.def.block_arg
+
+      if self_block_arg && other_block_arg
+        self_block_restriction = self_block_arg.restriction
+        other_block_restriction = other_block_arg.restriction
+
+        return false if self_block_restriction == nil && other_block_restriction != nil
+
+        if self_block_restriction && other_block_restriction
+          return false unless self_block_restriction.restriction_of?(other_block_restriction, owner, self_free_vars, other_free_vars)
+        end
+      end
+
       true
     end
 
@@ -798,6 +834,42 @@ module Crystal
       end
 
       super
+    end
+  end
+
+  class ProcNotation
+    def restriction_of?(other : ProcNotation, owner, self_free_vars = nil, other_free_vars = nil)
+      # Compare input types
+      self_inputs = @inputs || [] of ASTNode
+      other_inputs = other.inputs || [] of ASTNode
+      return false unless self_inputs.size == other_inputs.size
+
+      self_inputs.zip(other_inputs) do |self_input, other_input|
+        return false unless self_input.restriction_of?(other_input, owner, self_free_vars, other_free_vars)
+      end
+
+      # Compare output types
+      self_output = @output
+      other_output = other.output
+
+      case {self_output, other_output}
+      when {nil, nil}
+        true
+      when {nil, _}
+        false
+      when {_, nil}
+        true
+      else
+        self_output.restriction_of?(other_output, owner, self_free_vars, other_free_vars)
+      end
+    end
+
+    def restriction_of?(other : ASTNode, owner, self_free_vars = nil, other_free_vars = nil)
+      false
+    end
+
+    def restriction_of?(other : Underscore, owner, self_free_vars = nil, other_free_vars = nil)
+      true
     end
   end
 

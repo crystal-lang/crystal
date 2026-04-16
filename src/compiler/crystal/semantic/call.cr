@@ -18,6 +18,15 @@ class Crystal::Call
     end
   end
 
+  # Raised when a block's return type doesn't match the expected type.
+  # This allows trying other overloads when multiple matches exist.
+  class BlockTypeMismatch < ::Exception
+    def initialize(message : String)
+      super(message)
+      self.callstack = Exception::CallStack.empty
+    end
+  end
+
   def program
     scope.program
   end
@@ -362,11 +371,21 @@ class Crystal::Call
     block = @block
 
     typed_defs = Array(Def).new(matches.size)
+    last_block_type_mismatch : BlockTypeMismatch? = nil
 
     matches.each do |match|
       check_visibility match
 
-      yield_vars, block_arg_type = match_block_arg(match)
+      begin
+        yield_vars, block_arg_type = match_block_arg(match)
+      rescue ex : BlockTypeMismatch
+        # Block doesn't match this overload's restriction.
+        # Reset block state and try the next overload if there are more matches.
+        reset_block_state(block)
+        last_block_type_mismatch = ex
+        next
+      end
+
       use_cache = !block || match.def.block_arg
 
       if block && match.def.block_arg
@@ -433,6 +452,11 @@ class Crystal::Call
       end
 
       typed_defs << typed_def
+    end
+
+    # If no matches succeeded and we had a block type mismatch, re-raise it
+    if typed_defs.empty? && (mismatch = last_block_type_mismatch)
+      raise mismatch.message.not_nil!
     end
 
     typed_defs
@@ -820,7 +844,7 @@ class Crystal::Call
 
         if splat_index = block.splat_index
           if yield_types.size < block.args.size - 1
-            block.raise "too many block parameters (given #{block.args.size - 1}+, expected maximum #{yield_types.size})"
+            ::raise BlockTypeMismatch.new("too many block parameters (given #{block.args.size - 1}+, expected maximum #{yield_types.size})")
           end
           splat_range = (splat_index..splat_index - block.args.size)
           yield_types[splat_range] = program.tuple_of(yield_types[splat_range])
@@ -913,7 +937,7 @@ class Crystal::Call
           if auto_unpack_needed
             yield_var_type = yield_var_type.not_nil!
             if block.args.size > yield_var_type.tuple_types.size
-              block.raise "too many block parameters (given #{block.args.size}, expected maximum #{yield_var_type.tuple_types.size})"
+              ::raise BlockTypeMismatch.new("too many block parameters (given #{block.args.size}, expected maximum #{yield_var_type.tuple_types.size})")
             end
 
             unpack_exps = [] of ASTNode
@@ -975,7 +999,7 @@ class Crystal::Call
               block.freeze_type = output_type || block_type
               block_arg_type = program.proc_of(fun_args, block_type)
             else
-              raise "expected block to return #{output}, not #{block_type}"
+              ::raise BlockTypeMismatch.new("expected block to return #{output}, not #{block_type}")
             end
           elsif output_type
             block.bind_to(block)
@@ -1049,7 +1073,7 @@ class Crystal::Call
                             else
                               output
                             end
-              raise "expected block to return #{output_name}, not #{block_type}"
+              ::raise BlockTypeMismatch.new("expected block to return #{output_name}, not #{block_type}")
             end
           end
 
@@ -1092,6 +1116,19 @@ class Crystal::Call
 
   private def cant_infer_block_return_type
     raise "can't infer block return type, try to cast the block body with `as`. See: https://crystal-lang.org/reference/syntax_and_semantics/as.html#usage-for-when-the-compiler-cant-infer-the-type-of-a-block"
+  end
+
+  # Reset block state so it can be typed again for a different overload.
+  # This is called when block type checking fails for one overload and
+  # we want to try another.
+  private def reset_block_state(block : Block?)
+    return unless block
+
+    block.fun_literal = nil
+    block.visited = false
+    block.args.each do |arg|
+      arg.type = nil
+    end
   end
 
   private def lookup_node_type(context, node)

@@ -389,6 +389,17 @@ module Crystal
         named_arg_types_equal = !match.named_arg_types && !self.named_args
       end
 
+      # When the def has a block_arg with a return type restriction, we can't
+      # consider this an exact match because the block's actual return type
+      # isn't known yet. This allows other overloads with different block
+      # return type restrictions to be considered.
+      if self.block && (block_arg = match.def.block_arg)
+        restriction = block_arg.restriction
+        if restriction.is_a?(Crystal::ProcNotation) && restriction.output
+          return false
+        end
+      end
+
       arg_types_equal && named_arg_types_equal
     end
   end

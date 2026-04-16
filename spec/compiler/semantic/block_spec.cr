@@ -1604,4 +1604,46 @@ describe "Block inference" do
       Foo.new.bar(1_i64) { "hi" }
       CRYSTAL
   end
+
+  it "distinguishes overloads by block return type restriction" do
+    assert_type(<<-CRYSTAL) { int32 }
+      def foo(&block : -> Int32)
+        yield
+      end
+
+      def foo(&block : -> String)
+        yield
+      end
+
+      foo { 1 }
+    CRYSTAL
+  end
+
+  it "distinguishes overloads by block return type restriction (reverse order)" do
+    assert_type(<<-CRYSTAL) { string }
+      def foo(&block : -> Int32)
+        yield
+      end
+
+      def foo(&block : -> String)
+        yield
+      end
+
+      foo { "hello" }
+    CRYSTAL
+  end
+
+  it "prefers more specific block restriction" do
+    assert_type(<<-CRYSTAL) { int32 }
+      def foo(&block : -> Int32)
+        yield
+      end
+
+      def foo(&block)
+        yield
+      end
+
+      foo { 1 }
+    CRYSTAL
+  end
 end
